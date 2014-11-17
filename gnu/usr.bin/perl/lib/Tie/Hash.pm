@@ -1,6 +1,6 @@
 package Tie::Hash;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 =head1 NAME
 
@@ -22,7 +22,8 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
 
     @ISA = qw(Tie::StdHash);
 
-    # All methods provided by default, define only those needing overrides
+    # All methods provided by default, define
+    # only those needing overrides
     # Accessors access the storage in %{$_[0]};
     # TIEHASH should return a reference to the actual storage
     sub DELETE { ... }
@@ -32,10 +33,11 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
 
     @ISA = qw(Tie::ExtraHash);
 
-    # All methods provided by default, define only those needing overrides
+    # All methods provided by default, define 
+    # only those needing overrides
     # Accessors access the storage in %{$_[0][0]};
-    # TIEHASH should return an array reference with the first element being
-    # the reference to the actual storage 
+    # TIEHASH should return an array reference with the first element
+    # being the reference to the actual storage 
     sub DELETE { 
       $_[0][1]->('del', $_[0][0], $_[1]); # Call the report writer
       delete $_[0][0]->{$_[1]};		  #  $_[0]->SUPER::DELETE($_[1])

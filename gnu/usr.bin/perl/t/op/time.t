@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 66;
+plan tests => 70;
 
 # These tests make sure, among other things, that we don't end up
 # burning tons of CPU for dates far in the future.
@@ -210,7 +210,7 @@ SKIP: { #rt #73040
 	|| $small_time == $smallest
         || $big_time - 200 != $biggest
 	|| $big_time == $biggest) {
-	skip "Can't represent test values", 4;
+	skip "Can't represent test values", 8;
     }
     my $small_time_f = sprintf("%.0f", $small_time);
     my $big_time_f = sprintf("%.0f", $big_time);
@@ -221,17 +221,20 @@ SKIP: { #rt #73040
     $warning = '';
     my $date = gmtime($big_time);
     like $warning, qr/^gmtime\($big_time_f\) too large/;
+    like $warning, qr/^gmtime\($big_time_f\) failed/m;
 
     $warning = '';
     $date = localtime($big_time);
     like $warning, qr/^localtime\($big_time_f\) too large/;
+    like $warning, qr/^localtime\($big_time_f\) failed/m;
 
     $warning = '';
     $date = gmtime($small_time);
     like $warning, qr/^gmtime\($small_time_f\) too small/;
+    like $warning, qr/^gmtime\($small_time_f\) failed/m;
 
     $warning = '';
     $date = localtime($small_time);
     like $warning, qr/^localtime\($small_time_f\) too small/;
-  
+    like $warning, qr/^localtime\($small_time_f\) failed/m;
 }

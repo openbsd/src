@@ -4,8 +4,8 @@
 # Author          : Johan Vromans
 # Created On      : Tue Sep 11 15:00:12 1990
 # Last Modified By: Johan Vromans
-# Last Modified On: Tue Mar 12 14:42:25 2013
-# Update Count    : 1638
+# Last Modified On: Tue Oct  1 08:25:52 2013
+# Update Count    : 1651
 # Status          : Released
 
 ################ Module Preamble ################
@@ -17,10 +17,10 @@ use 5.004;
 use strict;
 
 use vars qw($VERSION);
-$VERSION        =  2.39;
+$VERSION        =  2.42;
 # For testing versions only.
 use vars qw($VERSION_STRING);
-$VERSION_STRING = "2.39";
+$VERSION_STRING = "2.42";
 
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK);
@@ -251,7 +251,7 @@ use constant PAT_XINT  =>
   "|".
 	  "0[0-7_]*".
   ")";
-use constant PAT_FLOAT => "[-+]?[0-9._]+(\.[0-9_]+)?([eE][-+]?[0-9_]+)?";
+use constant PAT_FLOAT => "[-+]?[0-9_]+(\.[0-9_]+)?([eE][-+]?[0-9_]+)?";
 
 sub GetOptions(@) {
     # Shift in default array.
@@ -984,9 +984,9 @@ sub FindOption ($$$$$) {
 	    # See if all matches are for the same option.
 	    my %hit;
 	    foreach ( @hits ) {
-		my $hit = $_;
-		$hit = $opctl->{$hit}->[CTL_CNAME]
-		  if defined $opctl->{$hit}->[CTL_CNAME];
+		my $hit = $opctl->{$_}->[CTL_CNAME]
+		  if defined $opctl->{$_}->[CTL_CNAME];
+		$hit = "no" . $hit if $opctl->{$_}->[CTL_TYPE] eq '!';
 		$hit{$hit} = 1;
 	    }
 	    # Remove auto-supplied options (version, help).
@@ -1200,7 +1200,6 @@ sub FindOption ($$$$$) {
     elsif ( $type eq 'f' ) { # real number, int is also ok
 	# We require at least one digit before a point or 'e',
 	# and at least one digit following the point and 'e'.
-	# [-]NN[.NN][eNN]
 	my $o_valid = PAT_FLOAT;
 	if ( $bundling && defined $rest &&
 	     $rest =~ /^($key_valid)($o_valid)(.*)$/s ) {
@@ -2546,7 +2545,7 @@ briefly some of these 'features'.
 
 When no destination is specified for an option, GetOptions will store
 the resultant value in a global variable named C<opt_>I<XXX>, where
-I<XXX> is the primary name of this option. When a progam executes
+I<XXX> is the primary name of this option. When a program executes
 under C<use strict> (recommended), these variables must be
 pre-declared with our() or C<use vars>.
 
@@ -2674,7 +2673,7 @@ Johan Vromans <jvromans@squirrel.nl>
 
 =head1 COPYRIGHT AND DISCLAIMER
 
-This program is Copyright 1990,2010 by Johan Vromans.
+This program is Copyright 1990,2013 by Johan Vromans.
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Perl Artistic License or the
 GNU General Public License as published by the Free Software

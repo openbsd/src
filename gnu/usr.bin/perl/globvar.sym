@@ -23,6 +23,7 @@ magic_data
 magic_vtable_names
 magic_vtables
 memory_wrap
+mod_latin1_uc
 no_aelem
 no_dir_func
 no_func
@@ -42,6 +43,7 @@ opargs
 phase_names
 ppaddr
 reg_extflags_name
+reg_intflags_name
 reg_name
 regkind
 revision

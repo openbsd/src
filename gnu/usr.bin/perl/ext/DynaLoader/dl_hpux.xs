@@ -119,10 +119,11 @@ void
 dl_find_symbol(libhandle, symbolname)
     void *	libhandle
     char *	symbolname
-    CODE:
+    PREINIT:
     shl_t obj = (shl_t) libhandle;
     void *symaddr = NULL;
     int status;
+    CODE:
 #ifdef __hp9000s300
     symbolname = Perl_form_nocontext("_%s", symbolname);
 #endif
@@ -183,6 +184,8 @@ void
 CLONE(...)
     CODE:
     MY_CXT_CLONE;
+
+    PERL_UNUSED_VAR(items);
 
     /* MY_CXT_CLONE just does a memcpy on the whole structure, so to avoid
      * using Perl variables that belong to another thread, we create our 

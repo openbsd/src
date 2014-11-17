@@ -1,12 +1,6 @@
 ################################################################################
 ##
-##  $Revision: 22 $
-##  $Author: mhx $
-##  $Date: 2011/04/13 09:39:16 +0200 $
-##
-################################################################################
-##
-##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -217,6 +211,9 @@ __NEED_DUMMY_VAR__ yy_parser PL_parser;
 
 U32 get_PL_signals_1(void)
 {
+#ifdef PERL_NO_GET_CONTEXT
+  dTHX;
+#endif
   return PL_signals;
 }
 
@@ -281,150 +278,150 @@ int dummy_parser_warning(void);
 
 int
 compare_PL_signals()
-	CODE:
-		{
-		  U32 ref = get_PL_signals_1();
-		  RETVAL = ref == get_PL_signals_2() && ref == get_PL_signals_3();
-		}
-	OUTPUT:
-		RETVAL
+        CODE:
+                {
+                  U32 ref = get_PL_signals_1();
+                  RETVAL = ref == get_PL_signals_2() && ref == get_PL_signals_3();
+                }
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_sv_undef()
-	CODE:
-		RETVAL = newSVsv(&PL_sv_undef);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSVsv(&PL_sv_undef);
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_sv_yes()
-	CODE:
-		RETVAL = newSVsv(&PL_sv_yes);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSVsv(&PL_sv_yes);
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_sv_no()
-	CODE:
-		RETVAL = newSVsv(&PL_sv_no);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSVsv(&PL_sv_no);
+        OUTPUT:
+                RETVAL
 
 int
 PL_na(string)
-	char *string
-	CODE:
-		PL_na = strlen(string);
-		RETVAL = PL_na;
-	OUTPUT:
-		RETVAL
+        char *string
+        CODE:
+                PL_na = strlen(string);
+                RETVAL = PL_na;
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_Sv()
-	CODE:
-		PL_Sv = newSVpv("mhx", 0);
-		RETVAL = PL_Sv;
-	OUTPUT:
-		RETVAL
+        CODE:
+                PL_Sv = newSVpv("mhx", 0);
+                RETVAL = PL_Sv;
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_tokenbuf()
-	CODE:
-		RETVAL = newSViv(PL_tokenbuf[0]);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSViv(PL_tokenbuf[0]);
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_parser()
-	CODE:
-		RETVAL = newSViv(PL_parser != NULL);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSViv(PL_parser != NULL);
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_hexdigit()
-	CODE:
-		RETVAL = newSVpv((char *) PL_hexdigit, 0);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSVpv((char *) PL_hexdigit, 0);
+        OUTPUT:
+                RETVAL
 
 SV *
 PL_hints()
-	CODE:
-		RETVAL = newSViv((IV) PL_hints);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSViv((IV) PL_hints);
+        OUTPUT:
+                RETVAL
 
 void
 PL_ppaddr(string)
-	char *string
-	PPCODE:
-		PUSHMARK(SP);
-		mXPUSHs(newSVpv(string, 0));
-		PUTBACK;
-		ENTER;
-		(void)*(PL_ppaddr[OP_UC])(aTHXR);
-		SPAGAIN;
-		LEAVE;
-		XSRETURN(1);
+        char *string
+        PPCODE:
+                PUSHMARK(SP);
+                mXPUSHs(newSVpv(string, 0));
+                PUTBACK;
+                ENTER;
+                (void)*(PL_ppaddr[OP_UC])(aTHXR);
+                SPAGAIN;
+                LEAVE;
+                XSRETURN(1);
 
 void
 other_variables()
-	PREINIT:
-		int count = 0;
-	PPCODE:
-		ppp_TESTVAR(PL_DBsignal);
-		ppp_TESTVAR(PL_DBsingle);
-		ppp_TESTVAR(PL_DBsub);
-		ppp_TESTVAR(PL_DBtrace);
-		ppp_TESTVAR(PL_compiling);
-		ppp_TESTVAR(PL_curcop);
-		ppp_TESTVAR(PL_curstash);
-		ppp_TESTVAR(PL_debstash);
-		ppp_TESTVAR(PL_defgv);
-		ppp_TESTVAR(PL_diehook);
+        PREINIT:
+                int count = 0;
+        PPCODE:
+                ppp_TESTVAR(PL_DBsignal);
+                ppp_TESTVAR(PL_DBsingle);
+                ppp_TESTVAR(PL_DBsub);
+                ppp_TESTVAR(PL_DBtrace);
+                ppp_TESTVAR(PL_compiling);
+                ppp_TESTVAR(PL_curcop);
+                ppp_TESTVAR(PL_curstash);
+                ppp_TESTVAR(PL_debstash);
+                ppp_TESTVAR(PL_defgv);
+                ppp_TESTVAR(PL_diehook);
 #if { VERSION >= 5.13.7 }
                 /* can't get a pointer any longer */
                 mXPUSHi(PL_dirty ? 1 : 1);
                 count++;
 #else
-		ppp_TESTVAR(PL_dirty);
+                ppp_TESTVAR(PL_dirty);
 #endif
-		ppp_TESTVAR(PL_dowarn);
-		ppp_TESTVAR(PL_errgv);
-		ppp_TESTVAR(PL_laststatval);
-		ppp_TESTVAR(PL_no_modify);
-		ppp_TESTVAR(PL_perl_destruct_level);
-		ppp_TESTVAR(PL_perldb);
-		ppp_TESTVAR(PL_stack_base);
-		ppp_TESTVAR(PL_stack_sp);
-		ppp_TESTVAR(PL_statcache);
-		ppp_TESTVAR(PL_stdingv);
-		ppp_TESTVAR(PL_sv_arenaroot);
-		ppp_TESTVAR(PL_tainted);
-		ppp_TESTVAR(PL_tainting);
+                ppp_TESTVAR(PL_dowarn);
+                ppp_TESTVAR(PL_errgv);
+                ppp_TESTVAR(PL_laststatval);
+                ppp_TESTVAR(PL_no_modify);
+                ppp_TESTVAR(PL_perl_destruct_level);
+                ppp_TESTVAR(PL_perldb);
+                ppp_TESTVAR(PL_stack_base);
+                ppp_TESTVAR(PL_stack_sp);
+                ppp_TESTVAR(PL_statcache);
+                ppp_TESTVAR(PL_stdingv);
+                ppp_TESTVAR(PL_sv_arenaroot);
+                ppp_TESTVAR(PL_tainted);
+                ppp_TESTVAR(PL_tainting);
 
-		ppp_PARSERVAR(ppp_expect_t, PL_expect);
-		ppp_PARSERVAR(line_t, PL_copline);
-		ppp_PARSERVAR(ppp_rsfp_t, PL_rsfp);
-		ppp_PARSERVAR(AV *, PL_rsfp_filters);
-		ppp_PARSERVAR(SV *, PL_linestr);
-		ppp_PARSERVAR(char *, PL_bufptr);
-		ppp_PARSERVAR(char *, PL_bufend);
-		ppp_PARSERVAR(ppp_lex_state_t, PL_lex_state);
-		ppp_PARSERVAR(SV *, PL_lex_stuff);
-		ppp_PARSERVAR(ppp_error_count_t, PL_error_count);
-		ppp_PARSERVAR(ppp_in_my_t, PL_in_my);
+                ppp_PARSERVAR(ppp_expect_t, PL_expect);
+                ppp_PARSERVAR(line_t, PL_copline);
+                ppp_PARSERVAR(ppp_rsfp_t, PL_rsfp);
+                ppp_PARSERVAR(AV *, PL_rsfp_filters);
+                ppp_PARSERVAR(SV *, PL_linestr);
+                ppp_PARSERVAR(char *, PL_bufptr);
+                ppp_PARSERVAR(char *, PL_bufend);
+                ppp_PARSERVAR(ppp_lex_state_t, PL_lex_state);
+                ppp_PARSERVAR(SV *, PL_lex_stuff);
+                ppp_PARSERVAR(ppp_error_count_t, PL_error_count);
+                ppp_PARSERVAR(ppp_in_my_t, PL_in_my);
 #if { VERSION >= 5.5.0 }
-		ppp_PARSERVAR(HV*, PL_in_my_stash);
+                ppp_PARSERVAR(HV*, PL_in_my_stash);
 #else
-		ppp_PARSERVAR_dummy;
+                ppp_PARSERVAR_dummy;
 #endif
-		XSRETURN(count);
+                XSRETURN(count);
 
 int
 no_dummy_parser_vars(check)
-	int check
+        int check
 
 int
 dummy_parser_warning()

@@ -1,6 +1,6 @@
 package subs;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 =head1 NAME
 
@@ -32,7 +32,7 @@ sub import {
     my $callpack = caller;
     my $pack = shift;
     my @imports = @_;
-    foreach $sym (@imports) {
+    foreach my $sym (@imports) {
 	*{"${callpack}::$sym"} = \&{"${callpack}::$sym"};
     }
 };

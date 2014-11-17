@@ -1,6 +1,6 @@
-# $Id: encoding.pm,v 2.11 2013/02/18 02:23:56 dankogai Exp $
+# $Id: encoding.pm,v 2.12 2013/04/26 18:30:46 dankogai Exp $
 package encoding;
-our $VERSION = '2.6_01';
+our $VERSION = sprintf "%d.%02d", q$Revision: 2.12 $ =~ /(\d+)/g;
 
 use Encode;
 use strict;
@@ -212,6 +212,13 @@ encoding - allows you to write your script in non-ascii or non-utf8
 This module is deprecated under perl 5.18.  It uses a mechanism provided by
 perl that is deprecated under 5.18 and higher, and may be removed in a
 future version.
+
+The easiest and the best alternative is to write your script in UTF-8
+and declear:
+
+  use utf8; # not use encoding ':utf8';
+
+See L<perluniintro> and L<utf8> for details.
 
 =head1 SYNOPSIS
 

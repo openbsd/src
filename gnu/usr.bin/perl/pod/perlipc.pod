@@ -124,11 +124,10 @@ example:
     $SIG{CHLD} = sub {
         # don't change $! and $? outside handler
         local ($!, $?);
-        my $pid = waitpid(-1, WNOHANG);
-        return if $pid == -1;
-        return unless defined $children{$pid};
-        delete $children{$pid};
-        cleanup_child($pid, $?);
+        while ( (my $pid = waitpid(-1, WNOHANG)) > 0 ) {
+            delete $children{$pid};
+            cleanup_child($pid, $?);
+        }
     };
 
     while (1) {
@@ -546,7 +545,7 @@ write to the filehandle you opened and your kid will find it in I<his>
 STDIN.  If you open a pipe I<from> minus, you can read from the filehandle
 you opened whatever your kid writes to I<his> STDOUT.
 
-    use English qw[ -no_match_vars ];
+    use English;
     my $PRECIOUS = "/path/to/some/safe/file";
     my $sleep_count;
     my $pid;
@@ -723,9 +722,7 @@ Here the multi-argument form of pipe open() is preferred because the
 pattern and indeed even the filenames themselves might hold metacharacters.
 
 Be aware that these operations are full Unix forks, which means they may
-not be correctly implemented on all alien systems.  Additionally, these are
-not true multithreading.  To learn more about threading, see the F<modules>
-file mentioned below in the SEE ALSO section.
+not be correctly implemented on all alien systems.
 
 =head2 Avoiding Pipe Deadlocks
 
@@ -992,7 +989,7 @@ or firewall machine), fill this in with your real address instead.
                         scalar localtime(), $EOL;
     }
 
-And here's a multithreaded version.  It's multithreaded in that
+And here's a multitasking version.  It's multitasked in that
 like most typical servers, it spawns (fork()s) a slave server to
 handle the client request so that the master server can quickly
 go back to service a new client.
@@ -1008,7 +1005,7 @@ go back to service a new client.
     sub logmsg { print "$0 $$: @_ at ", scalar localtime(), "\n" }
 
     my $port  = shift || 2345;
-    die "invalid port" unless if $port =~ /^ \d+ $/x;
+    die "invalid port" unless $port =~ /^ \d+ $/x;
 
     my $proto = getprotobyname("tcp");
 
@@ -1548,7 +1545,7 @@ you'll have to use the C<sysread> variant of the interactive client above.
 
 This server accepts one of five different commands, sending output back to
 the client.  Unlike most network servers, this one handles only one
-incoming client at a time.  Multithreaded servers are covered in 
+incoming client at a time.  Multitasking servers are covered in
 Chapter 16 of the Camel.
 
 Here's the code.  We'll

@@ -1,7 +1,7 @@
 package Locale::Country;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2013 Sullivan Beck
+# Copyright (c) 2010-2014 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ use warnings;
 use Exporter;
 
 our $VERSION;
-$VERSION='3.25';
+$VERSION='3.30';
 
 our (@ISA,@EXPORT);
 

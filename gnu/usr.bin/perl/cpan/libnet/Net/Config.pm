@@ -13,7 +13,7 @@ use strict;
 
 @EXPORT  = qw(%NetConfig);
 @ISA     = qw(Net::LocalCfg Exporter);
-$VERSION = "1.14";
+$VERSION = "1.13";
 
 eval { local $SIG{__DIE__}; require Net::LocalCfg };
 
@@ -49,9 +49,9 @@ my %nc = (
     ftp_ext_passive => \$InternetConfig{"646F676F\xA5UsePassiveMode"} || 0,
     ftp_int_passive => \$InternetConfig{"646F676F\xA5UsePassiveMode"} || 0,
     socks_hosts     => 
-        \$InternetConfig{ kICUseSocks() }    ? [ \$InternetConfig{ kICSocksHost() }    ] : [],
+    	\$InternetConfig{ kICUseSocks() }    ? [ \$InternetConfig{ kICSocksHost() }    ] : [],
     ftp_firewall    => 
-        \$InternetConfig{ kICUseFTPProxy() } ? [ \$InternetConfig{ kICFTPProxyHost() } ] : [],
+    	\$InternetConfig{ kICUseFTPProxy() } ? [ \$InternetConfig{ kICFTPProxyHost() } ] : [],
 );
 \@NetConfig{keys %nc} = values %nc;
 }
@@ -141,7 +141,7 @@ For example
     # .libnetrc
     {
         nntp_hosts => [ "my_preferred_host" ],
-        ph_hosts   => [ "my_ph_server" ],
+	ph_hosts   => [ "my_ph_server" ],
     }
     __END__
 

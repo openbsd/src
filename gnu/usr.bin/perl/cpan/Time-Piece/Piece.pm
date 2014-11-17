@@ -19,7 +19,7 @@ our %EXPORT_TAGS = (
     ':override' => 'internal',
     );
 
-our $VERSION = '1.20_01';
+our $VERSION = '1.27';
 
 bootstrap Time::Piece $VERSION;
 
@@ -415,7 +415,7 @@ sub week {
 
     # Now that we have the Julian day including fractions
     # convert it to an integer Julian Day Number using nearest
-    # int (since the day changes at midday we oconvert all Julian
+    # int (since the day changes at midday we convert all Julian
     # dates to following midnight).
     $J = int($J+0.5);
 
@@ -639,7 +639,7 @@ Time::Piece - Object Oriented time objects
 
 =head1 DESCRIPTION
 
-This module replaces the standard localtime and gmtime functions with
+This module replaces the standard C<localtime> and C<gmtime> functions with
 implementations that return objects. It does so in a backwards
 compatible manner, so that using localtime/gmtime in the way documented
 in perlfunc will still return what you expect.
@@ -717,6 +717,11 @@ following methods are available on the object:
                             # see strptime man page. Creates a new
                             # Time::Piece object
 
+Note that C<localtime> and C<gmtime> are not listed above.  If called as
+methods on a Time::Piece object, they act as constructors, returning a new
+Time::Piece object for the current time.  In other words: they're not useful as
+methods.
+
 =head2 Local Locales
 
 Both wdayname (day) and monname (month) allow passing in a list to use
@@ -728,7 +733,7 @@ using locales.
 
   my $french_day = localtime->day(@days);
 
-These settings can be overriden globally too:
+These settings can be overridden globally too:
 
   Time::Piece::day_list(@days);
 
@@ -860,7 +865,9 @@ well into the future and past.
 Matt Sergeant, matt@sergeant.org
 Jarkko Hietaniemi, jhi@iki.fi (while creating Time::Piece for core perl)
 
-=head1 License
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2001, Larry Wall.
 
 This module is free software, you may distribute it under the same terms
 as Perl.

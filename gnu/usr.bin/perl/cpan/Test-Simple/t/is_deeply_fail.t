@@ -33,22 +33,22 @@ sub ok ($;$) {
 }
 
 sub is ($$;$) {
-    my($this, $that, $name) = @_;
+    my($thing, $that, $name) = @_;
 
-    my $ok = $TB->is_eq($$this, $that, $name);
+    my $ok = $TB->is_eq($$thing, $that, $name);
 
-    $$this = '';
+    $$thing = '';
 
     return $ok;
 }
 
 sub like ($$;$) {
-    my($this, $regex, $name) = @_;
+    my($thing, $regex, $name) = @_;
     $regex = "/$regex/" if !ref $regex and $regex !~ m{^/.*/$}s;
 
-    my $ok = $TB->like($$this, $regex, $name);
+    my $ok = $TB->like($$thing, $regex, $name);
 
-    $$this = '';
+    $$thing = '';
 
     return $ok;
 }

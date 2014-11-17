@@ -878,6 +878,25 @@ my_maxidx(const char *lnm)
 }
 /*}}}*/
 
+/* Routine to remove the 2-byte prefix from the translation of a
+ * process-permanent file (PPF).
+ */
+static inline unsigned short int
+S_remove_ppf_prefix(const char *lnm, char *eqv, unsigned short int eqvlen)
+{
+    if (*((int *)lnm) == *((int *)"SYS$")                    &&
+        eqvlen >= 4 && eqv[0] == 0x1b && eqv[1] == 0x00      &&
+        ( (lnm[4] == 'O' && !strcmp(lnm,"SYS$OUTPUT"))  ||
+          (lnm[4] == 'I' && !strcmp(lnm,"SYS$INPUT"))   ||
+          (lnm[4] == 'E' && !strcmp(lnm,"SYS$ERROR"))   ||
+          (lnm[4] == 'C' && !strcmp(lnm,"SYS$COMMAND")) )  ) {
+
+        memmove(eqv, eqv+4, eqvlen-4);
+        eqvlen -= 4;
+    }
+    return eqvlen;
+}
+
 /*{{{int vmstrnenv(const char *lnm, char *eqv, unsigned long int idx, struct dsc$descriptor_s **tabvec, unsigned long int flags) */
 int
 Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
@@ -995,32 +1014,21 @@ Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
             retsts = sys$trnlnm(&attr,tabvec[curtab],&lnmdsc,&acmode,lnmlst);
             if (retsts == SS$_IVLOGNAM) { ivlnm = 1; break; }
             if (retsts == SS$_NOLOGNAM) break;
-            /* PPFs have a prefix */
-            if (
-#if INTSIZE == 4
-                 *((int *)uplnm) == *((int *)"SYS$")                    &&
-#endif
-                 eqvlen >= 4 && eqv[0] == 0x1b && eqv[1] == 0x00        &&
-                 ( (uplnm[4] == 'O' && !strcmp(uplnm,"SYS$OUTPUT"))  ||
-                   (uplnm[4] == 'I' && !strcmp(uplnm,"SYS$INPUT"))   ||
-                   (uplnm[4] == 'E' && !strcmp(uplnm,"SYS$ERROR"))   ||
-                   (uplnm[4] == 'C' && !strcmp(uplnm,"SYS$COMMAND")) )  ) {
-              memmove(eqv,eqv+4,eqvlen-4);
-              eqvlen -= 4;
-            }
+            eqvlen = S_remove_ppf_prefix(uplnm, eqv, eqvlen);
             cp2 += eqvlen;
             *cp2 = '\0';
           }
           if ((retsts == SS$_IVLOGNAM) ||
               (retsts == SS$_NOLOGNAM)) { continue; }
+          eqvlen = strlen(eqv);
         }
         else {
           retsts = sys$trnlnm(&attr,tabvec[curtab],&lnmdsc,&acmode,lnmlst);
           if (retsts == SS$_IVLOGNAM) { ivlnm = 1; continue; }
           if (retsts == SS$_NOLOGNAM) continue;
+          eqvlen = S_remove_ppf_prefix(uplnm, eqv, eqvlen);
           eqv[eqvlen] = '\0';
         }
-        eqvlen = strlen(eqv);
         break;
       }
     }
@@ -4328,6 +4336,13 @@ safe_popen(pTHX_ const char *cmd, const char *in_mode, int *psts)
         
 
     } else if (*mode == 'n') {       /* separate subprocess, no Perl i/o */
+        /* Let the child inherit standard input, unless it's a directory. */
+        Stat_t st;
+        if (my_trnlnm("SYS$INPUT", in, 0)) {
+            if (flex_stat(in, &st) != 0 || S_ISDIR(st.st_mode))
+                *in = '\0';
+        }
+
         info->out = pipe_mbxtofd_setup(aTHX_ fileno(stdout), out);
         if (info->out) {
             info->out->pipe_done = &info->out_done;
@@ -5968,6 +5983,9 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
     vmsdir = (char *)PerlMem_malloc(VMS_MAXRSS + 1);
     if (vmsdir == NULL) _ckvmssts_noperl(SS$_INSFMEM);
     cp1 = strpbrk(trndir,"]:>");
+    if (cp1 && *(cp1+1) == ':')   /* DECNet node spec with :: */
+        cp1 = strpbrk(cp1+2,"]:>");
+
     if (hasfilename || !cp1) { /* filename present or not VMS */
 
       if (trndir[0] == '.') {
@@ -6112,9 +6130,11 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
       /* We've picked up everything up to the directory file name.
          Now just add the type and version, and we're set. */
       if ((!decc_efs_case_preserve) && vms_process_case_tolerant)
-          strcat(buf,".dir;1");
+          strcat(buf,".dir");
       else
-          strcat(buf,".DIR;1");
+          strcat(buf,".DIR");
+      if (!decc_filename_unix_no_version)
+          strcat(buf,";1");
       PerlMem_free(trndir);
       PerlMem_free(vmsdir);
       return buf;
@@ -6173,7 +6193,10 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
           rms_set_nam_fnb(dirnam, (NAM$M_EXP_TYPE | NAM$M_EXP_VER));
         }
         else { /* No; just work with potential name */
-          if (dirfab.fab$l_sts == RMS$_FNF) dirnam = savnam;
+          if (dirfab.fab$l_sts    == RMS$_FNF
+              || dirfab.fab$l_sts == RMS$_DNF
+              || dirfab.fab$l_sts == RMS$_FND)
+                dirnam = savnam;
           else { 
 	    int fab_sts;
 	    fab_sts = dirfab.fab$l_sts;
@@ -6349,12 +6372,12 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
           }
         }
         else {  /* This is a top-level dir.  Add the MFD to the path. */
-          cp1 = my_esa;
-          cp2 = buf;
-          while ((*cp1 != ':')  && (*cp1 != '\0')) *(cp2++) = *(cp1++);
-          strcpy(cp2,":[000000]");
-          cp1 += 2;
-          strcpy(cp2+9,cp1);
+          cp1 = strrchr(my_esa, ':');
+          assert(cp1);
+          memmove(buf, my_esa, cp1 - my_esa + 1);
+          memmove(buf + (cp1 - my_esa) + 1, "[000000]", 8);
+          memmove(buf + (cp1 - my_esa) + 9, cp1 + 2, retlen - (cp1 - my_esa + 2));
+          buf[retlen + 7] = '\0';  /* We've inserted '000000]' */
         }
       }
       sts = rms_free_search_context(&dirfab);
@@ -8522,9 +8545,6 @@ static char *int_tovmsspec
     }
     else *(cp1++) = '.';
   }
-  else {
-    *(cp1++) = *cp2;
-  }
   for (; cp2 < dirend; cp2++) {
     if (*cp2 == '/') {
       if (*(cp2-1) == '/') continue;
@@ -8582,8 +8602,7 @@ static char *int_tovmsspec
   }
   if (cp1 > rslt && *(cp1-1) == '.') cp1--; /* Unix spec ending in '/' ==> trailing '.' */
   if (hasdir) *(cp1++) = ']';
-  if (*cp2) cp2++;  /* check in case we ended with trailing '..' */
-  /* fixme for ODS5 */
+  if (*cp2 && *cp2 == '/') cp2++;  /* check in case we ended with trailing '/' */
   no_type_seen = 0;
   if (cp2 > lastdot)
     no_type_seen = 1;
@@ -8596,7 +8615,7 @@ static char *int_tovmsspec
 	  *(cp1++) = '?';
 	cp2++;
     case ' ':
-	if (cp2 > path && *(cp2-1) != '^') /* not previously escaped */
+	if (cp2 >= path && (cp2 == path || *(cp2-1) != '^')) /* not previously escaped */
 	    *(cp1)++ = '^';
 	*(cp1)++ = '_';
 	cp2++;
@@ -8686,15 +8705,17 @@ static char *int_tovmsspec
 	*(cp1++) = *(cp2++);
 	break;
     case ';':
-	/* FIXME: This needs fixing as Perl is putting ".dir;" on UNIX filespecs
-	 * which is wrong.  UNIX notation should be ".dir." unless
-	 * the DECC$FILENAME_UNIX_NO_VERSION is enabled.
-	 * changing this behavior could break more things at this time.
-	 * efs character set effectively does not allow "." to be a version
-	 * delimiter as a further complication about changing this.
-	 */
-	if (decc_filename_unix_report != 0) {
+        /* If it doesn't look like the beginning of a version number,
+         * or we've been promised there are no version numbers, then
+         * escape it.
+         */
+	if (decc_filename_unix_no_version) {
 	  *(cp1++) = '^';
+	}
+	else {
+	  size_t all_nums = strspn(cp2+1, "0123456789");
+	  if (all_nums > 5 || *(cp2 + all_nums + 1) != '\0')
+	    *(cp1++) = '^';
 	}
 	*(cp1++) = *(cp2++);
 	break;
@@ -9966,7 +9987,8 @@ Perl_opendir(pTHX_ const char *name)
     /* Check access before stat; otherwise stat does not
      * accurately report whether it's a directory.
      */
-    if (!cando_by_name_int(S_IRUSR,0,dir,PERL_RMSEXPAND_M_VMS_IN)) {
+    if (!strstr(dir, "::") /* sys$check_access doesn't do remotes */
+        && !cando_by_name_int(S_IRUSR,0,dir,PERL_RMSEXPAND_M_VMS_IN)) {
       /* cando_by_name has already set errno */
       Safefree(dir);
       return NULL;
@@ -12942,12 +12964,12 @@ mod2fname(pTHX_ CV *cv)
   dXSARGS;
   char ultimate_name[NAM$C_MAXRSS+1], work_name[NAM$C_MAXRSS*8 + 1],
        workbuff[NAM$C_MAXRSS*1 + 1];
-  int counter, num_entries;
+  SSize_t counter, num_entries;
   /* ODS-5 ups this, but we want to be consistent, so... */
   int max_name_len = 39;
   AV *in_array = (AV *)SvRV(ST(0));
 
-  num_entries = av_len(in_array);
+  num_entries = av_tindex(in_array);
 
   /* All the names start with PL_. */
   strcpy(ultimate_name, "PL_");
@@ -13908,7 +13930,7 @@ set_feature_default(const char *name, int value)
      */
     if (value > 0) {
         status = simple_trnlnm(name, val_str, sizeof(val_str));
-        if ($VMS_STATUS_SUCCESS(status)) {
+        if (status) {
             val_str[0] = _toupper(val_str[0]);
             if (val_str[0] == 'D' || val_str[0] == '0' || val_str[0] == 'F')
 	        return 0;
@@ -13961,7 +13983,7 @@ vmsperl_set_features(void)
     /* Allow an exception to bring Perl into the VMS debugger */
     vms_debug_on_exception = 0;
     status = simple_trnlnm("PERL_VMS_EXCEPTION_DEBUG", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
        val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_debug_on_exception = 1;
@@ -13972,7 +13994,7 @@ vmsperl_set_features(void)
     /* Debug unix/vms file translation routines */
     vms_debug_fileify = 0;
     status = simple_trnlnm("PERL_VMS_FILEIFY_DEBUG", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
         if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	    vms_debug_fileify = 1;
@@ -13992,7 +14014,7 @@ vmsperl_set_features(void)
     /* enable it so that the impact can be studied.                     */
     vms_bug_stat_filename = 0;
     status = simple_trnlnm("PERL_VMS_BUG_STAT_FILENAME", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
         if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	    vms_bug_stat_filename = 1;
@@ -14004,7 +14026,7 @@ vmsperl_set_features(void)
     /* Create VTF-7 filenames from Unicode instead of UTF-8 */
     vms_vtf7_filenames = 0;
     status = simple_trnlnm("PERL_VMS_VTF7_FILENAMES", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
        val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_vtf7_filenames = 1;
@@ -14014,9 +14036,8 @@ vmsperl_set_features(void)
 
     /* unlink all versions on unlink() or rename() */
     vms_unlink_all_versions = 0;
-    status = simple_trnlnm
-	("PERL_VMS_UNLINK_ALL_VERSIONS", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    status = simple_trnlnm("PERL_VMS_UNLINK_ALL_VERSIONS", val_str, sizeof(val_str));
+    if (status) {
        val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_unlink_all_versions = 1;
@@ -14028,7 +14049,7 @@ vmsperl_set_features(void)
     /* Detect running under GNV Bash or other UNIX like shell */
     gnv_unix_shell = 0;
     status = simple_trnlnm("GNV$UNIX_SHELL", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	 gnv_unix_shell = 1;
 	 set_feature_default("DECC$FILENAME_UNIX_NO_VERSION", 1);
 	 set_feature_default("DECC$FILENAME_UNIX_REPORT", 1);
@@ -14048,7 +14069,7 @@ vmsperl_set_features(void)
     /* PCP mode requires creating /dev/null special device file */
     decc_bug_devnull = 0;
     status = simple_trnlnm("DECC_BUG_DEVNULL", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
        val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
           decc_bug_devnull = 1;
@@ -14129,7 +14150,7 @@ vmsperl_set_features(void)
 #else
     status = simple_trnlnm
 	("DECC$DISABLE_TO_VMS_LOGNAME_TRANSLATION", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
 	if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T')) {
 	   decc_disable_to_vms_logname_translation = 1;
@@ -14138,7 +14159,7 @@ vmsperl_set_features(void)
 
 #ifndef __VAX
     status = simple_trnlnm("DECC$EFS_CASE_PRESERVE", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
 	if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T')) {
 	   decc_efs_case_preserve = 1;
@@ -14147,14 +14168,14 @@ vmsperl_set_features(void)
 #endif
 
     status = simple_trnlnm("DECC$FILENAME_UNIX_REPORT", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
 	if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T')) {
 	   decc_filename_unix_report = 1;
 	}
     }
     status = simple_trnlnm("DECC$FILENAME_UNIX_ONLY", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
 	if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T')) {
 	   decc_filename_unix_only = 1;
@@ -14162,14 +14183,14 @@ vmsperl_set_features(void)
 	}
     }
     status = simple_trnlnm("DECC$FILENAME_UNIX_NO_VERSION", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
 	if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T')) {
 	   decc_filename_unix_no_version = 1;
 	}
     }
     status = simple_trnlnm("DECC$READDIR_DROPDOTNOTYPE", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    if (status) {
 	val_str[0] = _toupper(val_str[0]);
 	if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T')) {
 	   decc_readdir_dropdotnotype = 1;
@@ -14195,9 +14216,8 @@ vmsperl_set_features(void)
 
     /* USE POSIX/DCL Exit codes - Recommended, but needs to default to  */
     /* for strict backward compatibility */
-    status = simple_trnlnm
-	("PERL_VMS_POSIX_EXIT", val_str, sizeof(val_str));
-    if ($VMS_STATUS_SUCCESS(status)) {
+    status = simple_trnlnm("PERL_VMS_POSIX_EXIT", val_str, sizeof(val_str));
+    if (status) {
        val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_posix_exit = 1;

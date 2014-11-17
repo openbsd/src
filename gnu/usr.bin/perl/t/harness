@@ -119,7 +119,6 @@ if (@ARGV) {
     #     par => [
     #         { seq => '../ext/DB_File/t/*' },
     #         { seq => '../ext/IO_Compress_Zlib/t/*' },
-    #         { seq => '../lib/CPANPLUS/*' },
     #         { seq => '../lib/ExtUtils/t/*' },
     #         '*'
     #     ]

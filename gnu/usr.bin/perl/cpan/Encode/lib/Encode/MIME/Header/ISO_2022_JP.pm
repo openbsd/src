@@ -3,7 +3,7 @@ package Encode::MIME::Header::ISO_2022_JP;
 use strict;
 use warnings;
 
-use base qw(Encode::MIME::Header);
+use parent qw(Encode::MIME::Header);
 
 $Encode::Encoding{'MIME-Header-ISO_2022_JP'} =
   bless { encode => 'B', bpl => 76, Name => 'MIME-Header-ISO_2022_JP' } =>
@@ -14,7 +14,7 @@ use constant TAIL => '?=';
 
 use Encode::CJKConstants qw(%RE);
 
-our $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 # I owe the below codes totally to
 #   Jcode by Dan Kogai & http://www.din.or.jp/~ohzaki/perl.htm#JP_Base64

@@ -84,7 +84,7 @@ operator:
 
 That now parses as you'd expect, but you still ought to get in the habit of
 using parentheses in that situation.  For more on prototypes, see
-L<perlsub>
+L<perlsub>.
 
 Subroutines declarations can also be loaded up with the C<require> statement
 or both loaded and imported into your namespace with a C<use> statement.
@@ -429,6 +429,21 @@ those variables is exactly the C<for> loop (the body of the loop
 and the control sections).
 X<my>
 
+As a special case, if the test in the C<for> loop (or the corresponding
+C<while> loop) is empty, it is treated as true.  That is, both
+
+    for (;;) {
+	...
+    }
+
+and
+
+    while () {
+	...
+    }
+
+are treated as infinite loops.
+
 Besides the normal array index looping, C<for> can lend itself
 to many other interesting applications.  Here's one that avoids the
 problem you get into if you explicitly test for end-of-file on
@@ -532,6 +547,12 @@ accidentally executed.  The C<next> explicitly iterates the other loop
 rather than merely terminating the inner one.  And it's faster because
 Perl executes a C<foreach> statement more rapidly than it would the
 equivalent C<for> loop.
+
+Perceptive Perl hackers may have noticed that a C<for> loop has a return
+value, and that this value can be captured by wrapping the loop in a C<do>
+block.  The reward for this discovery is this cautionary advice:  The
+return value of a C<for> loop is unspecified and may change without notice.
+Do not rely on it.
 
 =head2 Basic BLOCKs
 X<block>
@@ -938,21 +959,21 @@ listed below, it is used directly as a boolean.
 
 =over 4
 
-=item 1.
+=item Z<>1.
 
 A user-defined subroutine call or a method invocation.
 
-=item 2.
+=item Z<>2.
 
 A regular expression match in the form of C</REGEX/>, C<$foo =~ /REGEX/>,
 or C<$foo =~ EXPR>.  Also, a negated regular expression match in
 the form C<!/REGEX/>, C<$foo !~ /REGEX/>, or C<$foo !~ EXPR>.
 
-=item 3.
+=item Z<>3.
 
 A smart match that uses an explicit C<~~> operator, such as C<EXPR ~~ EXPR>.
 
-=item 4.
+=item Z<>4.
 
 A boolean comparison operator such as C<$_ E<lt> 10> or C<$x eq "abc">.  The
 relational operators that this applies to are the six numeric comparisons
@@ -963,24 +984,24 @@ B<NOTE:> You will often have to use C<$c ~~ $_> because
 the default case uses C<$_ ~~ $c> , which is frequently
 the opposite of what you want.
 
-=item 5.
+=item Z<>5.
 
 At least the three builtin functions C<defined(...)>, C<exists(...)>, and
 C<eof(...)>.  We might someday add more of these later if we think of them.
 
-=item 6.
+=item Z<>6.
 
 A negated expression, whether C<!(EXPR)> or C<not(EXPR)>, or a logical
 exclusive-or, C<(EXPR1) xor (EXPR2)>.  The bitwise versions (C<~> and C<^>)
 are not included.
 
-=item 7.
+=item Z<>7.
 
 A filetest operator, with exactly 4 exceptions: C<-s>, C<-M>, C<-A>, and
 C<-C>, as these return numerical values, not boolean ones.  The C<-z>
 filetest operator is not included in the exception list.
 
-=item 8.
+=item Z<>8.
 
 The C<..> and C<...> flip-flop operators.  Note that the C<...> flip-flop
 operator is completely different from the C<...> elliptical statement
@@ -997,7 +1018,7 @@ above test to the operands:
 
 =over 4
 
-=item 9.
+=item Z<>9.
 
 If EXPR is C<EXPR1 && EXPR2> or C<EXPR1 and EXPR2>, the test is applied
 I<recursively> to both EXPR1 and EXPR2.
@@ -1005,7 +1026,7 @@ Only if I<both> operands also pass the
 test, I<recursively>, will the expression be treated as boolean.  Otherwise,
 smartmatching is used.
 
-=item 10.
+=item Z<>10.
 
 If EXPR is C<EXPR1 || EXPR2>, C<EXPR1 // EXPR2>, or C<EXPR1 or EXPR2>, the
 test is applied I<recursively> to EXPR1 only (which might itself be a
@@ -1193,7 +1214,7 @@ this works in Perl 5:
     say "that's all, folks!";
 
 But it doesn't work at all in Perl 6.  Instead, you should
-use the (parallelizable) C<any> operator instead:
+use the (parallelizable) C<any> operator:
 
    if any(@primary) eq "red" {
        say "primary smartmatches red";

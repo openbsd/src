@@ -1,4 +1,5 @@
 package CGI::Carp;
+use if $] >= 5.019, 'deprecate';
 
 =head1 NAME
 
@@ -191,13 +192,13 @@ when a C<die()> is done inside an C<eval> body or expression.
 Even though the
 fatalsToBrower support takes precautions to avoid this,
 you still may get the error message printed to STDOUT.
-This may have some undesireable effects when the purpose of doing the
+This may have some undesirable effects when the purpose of doing the
 eval is to determine which of several algorithms is to be used.
 
 By setting C<$CGI::Carp::TO_BROWSER> to 0 you can suppress printing
 the C<die> messages but without all of the complexity of using
 C<set_die_handler>.  You can localize this effect to inside C<eval>
-bodies if this is desireable: For example:
+bodies if this is desirable: For example:
 
  eval {
    local $CGI::Carp::TO_BROWSER = 0;
@@ -344,7 +345,7 @@ use File::Spec;
 
 $main::SIG{__WARN__}=\&CGI::Carp::warn;
 
-$CGI::Carp::VERSION     = '3.51';
+$CGI::Carp::VERSION     = '3.64';
 $CGI::Carp::CUSTOM_MSG  = undef;
 $CGI::Carp::DIE_HANDLER = undef;
 $CGI::Carp::TO_BROWSER  = 1;

@@ -40,7 +40,8 @@ system).  Currently, this port is capable of using one of the
 following compilers on the Intel x86 architecture:
 
       Microsoft Visual C++    version 6.0 or later
-      Gcc by mingw.org        gcc version 3.2 or later
+      Intel C++ Compiler      (experimental)
+      Gcc by mingw.org        gcc version 3.4.5 or later
       Gcc by mingw-w64.sf.net gcc version 4.4.3 or later
 
 Note that the last two of these are actually competing projects both
@@ -62,10 +63,10 @@ that are also supported by perl's makefile.
 =back
 
 The Microsoft Visual C++ compilers are also now being given away free. They are
-available as "Visual C++ Toolkit 2003" or "Visual C++ 2005/2008/2010/2012 Express
+available as "Visual C++ Toolkit 2003" or "Visual C++ 2005-2013 Express
 Edition" (and also as part of the ".NET Framework SDK") and are the same
 compilers that ship with "Visual C++ .NET 2003 Professional" or "Visual C++
-2005/2008/2010/2012 Professional" respectively.
+2005-2013 Professional" respectively.
 
 This port can also be built on IA64/AMD64 using:
 
@@ -131,9 +132,9 @@ and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
 latter step is only essential if you want to use dmake as your default
 make for building extensions using MakeMaker.
 
-=item Microsoft Visual C++ 2008/2010/2012 Express Edition
+=item Microsoft Visual C++ 2008-2013 Express Edition
 
-These free versions of Visual C++ 2008/2010/2012 Professional contain the same
+These free versions of Visual C++ 2008-2013 Professional contain the same
 compilers and linkers that ship with the full versions, and also contain
 everything necessary to build Perl, rather than requiring a separate download
 of the Windows SDK like previous versions did.
@@ -143,14 +144,14 @@ L<http://www.microsoft.com/downloads/search.aspx?displaylang=en>.  (Providing ex
 links to these packages has proven a pointless task because the links keep on
 changing so often.)
 
-Install Visual C++ 2008/2010/2012 Express, then setup your environment using, e.g.
+Install Visual C++ 2008-2013 Express, then setup your environment using, e.g.
 
-	C:\Program Files\Microsoft Visual Studio 11.0\Common7\Tools\vsvars32.bat
+	C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat
 
 (assuming the default installation location was chosen).
 
 Perl should now build using the win32/Makefile.  You will need to edit that
-file to set CCTYPE to MSVC90FREE or MSVC100FREE first.
+file to set CCTYPE to one of MSVC90FREE-MSVC120FREE first.
 
 =item Microsoft Visual C++ 2005 Express Edition
 
@@ -305,12 +306,24 @@ shells available after you install the Platform SDK from the Start Menu.
 
 =item MinGW release 3 with gcc
 
-Perl can be compiled with gcc from MinGW release 3 and later (using gcc 3.2.x
+Perl can be compiled with gcc from MinGW release 3 and later (using gcc 3.4.5
 and later).  It can be downloaded here:
 
 L<http://www.mingw.org/>
 
 You also need dmake.  See L</"Make"> above on how to get it.
+
+=item Intel C++ Compiler
+
+Experimental support for using Intel C++ Compiler has been added. Edit
+win32/Makefile and pick the correct CCTYPE for the Visual C that Intel C was
+installed into. Also uncomment __ICC to enable Intel C on Visual C support.
+To set up the build enviroment, from the Start Menu run
+IA-32 Visual Studio 20__ mode or Intel 64 Visual Studio 20__ mode as
+appropriate. Then run nmake as usually in that prompt box.
+
+Only Intel C++ Compiler v12.1 has been tested. Other versions probably will
+work.
 
 =back
 
@@ -360,6 +373,9 @@ the linker reports an internal error.
 If you want build some core extensions statically into perl's dll, specify
 them in the STATIC_EXT macro.
 
+NOTE: The USE_64_BIT_INT build option is not supported with the 32-bit
+Visual C++ 6.0 compiler.
+
 Be sure to read the instructions near the top of the makefiles carefully.
 
 =item *
@@ -367,7 +383,7 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type "dmake" (or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl518.dll at the perl toplevel, and various other extension dll's
+perl520.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
@@ -380,16 +396,25 @@ the testsuite (many tests will be skipped).
 
 There should be no test failures.
 
+If you build with Visual C++ 2013 then three tests currently may fail with
+Daylight Saving Time related problems: F<t/io/fs.t>,
+F<cpan/HTTP-Tiny/t/110_mirror.t> and F<lib/File.Copy.t>. The failures are
+caused by bugs in the CRT in VC++ 2013 which will be fixed in future releases
+of VC++, as explained by Microsoft here:
+L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>. In the meantime,
+if you need fixed C<stat> and C<utime> functions then have a look at the
+CPAN distribution Win32::UTCFileTime.
+
+If you build with certain versions (e.g. 4.8.1) of gcc from www.mingw.org then
+F<ext/POSIX/t/time.t> may fail test 17 due to a known bug in those gcc builds:
+see L<http://sourceforge.net/p/mingw/bugs/2152/>.
+
 Some test failures may occur if you use a command shell other than the
 native "cmd.exe", or if you are building from a path that contains
 spaces.  So don't do that.
 
 If you are running the tests from a emacs shell window, you may see
 failures in op/stat.t.  Run "dmake test-notty" in that case.
-
-If you run the tests on a FAT partition, you may see some failures for
-C<link()> related tests (I<op/write.t>, I<op/stat.t> ...). Testing on
-NTFS avoids these errors.
 
 Furthermore, you should make sure that during C<make test> you do not
 have any GNU tool packages in your path: some toolkits like Unixutils
@@ -890,6 +915,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 02 January 2012
+Last updated: 22 October 2013
 
 =cut

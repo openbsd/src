@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use Test::Builder::Tester tests => 9;
+use Test::Builder::Tester tests => 10;
 use Test::More;
 
 ok(1,"This is a basic test");
@@ -21,8 +21,12 @@ ok(1,"one");
 ok(2,"two");
 test_test("multiple tests");
 
+test_out(qr/ok 1 - tested\n/);
+ok(1,"tested");
+test_test("regexp matching");
+
 test_out("not ok 1 - should fail");
-test_err("#     Failed test ($0 at line 28)");
+test_err("#     Failed test ($0 at line 32)");
 test_err("#          got: 'foo'");
 test_err("#     expected: 'bar'");
 is("foo","bar","should fail");
@@ -46,7 +50,7 @@ test_test("testing failing on the same line with the same name");
 
 
 test_out("not ok 1 - name # TODO Something");
-test_out("#     Failed (TODO) test ($0 at line 52)");
+test_out("#     Failed (TODO) test ($0 at line 56)");
 TODO: { 
     local $TODO = "Something";
     fail("name");

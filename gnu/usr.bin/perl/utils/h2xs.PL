@@ -991,8 +991,8 @@ if( ! $opt_X ){  # use XS, unless it was disabled
       }
       warn "Scanning $filename for functions...\n";
       my @styles = $Config{gccversion} ? qw(C++ C9X GNU) : qw(C++ C9X);
-      $c = new C::Scan 'filename' => $filename, 'filename_filter' => $filter,
-	'add_cppflags' => $addflags, 'c_styles' => \@styles;
+      $c = C::Scan->new('filename' => $filename, 'filename_filter' => $filter,
+        'add_cppflags' => $addflags, 'c_styles' => \@styles);
       $c->set('includeDirs' => ["$Config::Config{archlib}/CORE", $cwd]);
 
       $c->get('keywords')->{'__restrict'} = 1;
@@ -1917,7 +1917,7 @@ elsif ( $compat_version < 5.006002 )
   $prereq_pm .= q%'Test'        =>  0, %;
 }
 
-if ( $compat_version < 5.006 and !$opt_X and $use_xsloader)
+if (!$opt_X and $use_xsloader)
 {
   $prereq_pm .= q%'XSLoader'    =>  0, %;
 }
@@ -1929,11 +1929,13 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     NAME              => '$module',
-    VERSION_FROM      => '$modpmname', # finds \$VERSION
+    VERSION_FROM      => '$modpmname', # finds \$VERSION, requires EU::MM from perl >= 5.5
     PREREQ_PM         => {$prereq_pm}, # e.g., Module::Name => 1.1
-    (\$] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => '$modpmname', # retrieve abstract from module
-       AUTHOR         => '$author <$email>') : ()),
+    ABSTRACT_FROM     => '$modpmname', # retrieve abstract from module
+    AUTHOR            => '$author <$email>',
+    #LICENSE           => 'perl',
+    #Value must be from legacy list of licenses here
+    #http://search.cpan.org/perldoc?Module%3A%3ABuild%3A%3AAPI
 END
 if (!$opt_X) { # print C stuff, unless XS is disabled
   $opt_F = '' unless defined $opt_F;

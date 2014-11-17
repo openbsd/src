@@ -22,23 +22,10 @@
 #define USE_STDIO
 #endif /* PERL_FOR_X2P */
 
-#if defined(DGUX)
-#include <sys/fcntl.h>
-#endif
-
-#ifdef VOIDUSED
-#   undef VOIDUSED
-#endif
-#define VOIDUSED 1
-
 #ifdef PERL_MICRO
 #   include "uconfig.h"
 #else
-#   ifndef USE_CROSS_COMPILE
-#       include "config.h"
-#   else
-#       include "xconfig.h"
-#   endif
+#   include "config.h"
 #endif
 
 /* See L<perlguts/"The Perl API"> for detailed notes on
@@ -99,7 +86,7 @@
 #   define USE_HEAP_INSTEAD_OF_STACK
 #endif
 
-#/* Use the reentrant APIs like localtime_r and getpwent_r */
+/* Use the reentrant APIs like localtime_r and getpwent_r */
 /* Win32 has naturally threadsafe libraries, no need to use any _r variants. */
 #if defined(USE_ITHREADS) && !defined(USE_REENTRANT_API) && !defined(NETWARE) && !defined(WIN32) && !defined(PERL_DARWIN)
 #   define USE_REENTRANT_API
@@ -107,15 +94,9 @@
 
 /* <--- here ends the logic shared by perl.h and makedef.pl */
 
-/*
- * PERL_DARWIN for MacOSX (__APPLE__ exists but is not officially sanctioned)
- * (The -DPERL_DARWIN comes from the hints/darwin.sh.)
- * __bsdi__ for BSD/OS
- */
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(PERL_DARWIN) || defined(__bsdi__) || defined(BSD41) || defined(BSD42) || defined(BSD43) || defined(BSD44)
-#   ifndef BSDish
-#       define BSDish
-#   endif
+/* Microsoft Visual C++ 6.0 needs special treatment in numerous places */
+#if defined(WIN32) && defined(_MSC_VER) && _MSC_VER >= 1200 && _MSC_VER < 1300
+#  define USING_MSVC6
 #endif
 
 #undef START_EXTERN_C
@@ -194,6 +175,7 @@
 #  define pTHX_7	8
 #  define pTHX_8	9
 #  define pTHX_9	10
+#  define pTHX_12	13
 #  if defined(DEBUGGING) && !defined(PERL_TRACK_MEMPOOL)
 #    define PERL_TRACK_MEMPOOL
 #  endif
@@ -225,11 +207,11 @@
 #define CALLREGCOMP(sv, flags) Perl_pregcomp(aTHX_ (sv),(flags))
 
 #define CALLREGCOMP_ENG(prog, sv, flags) (prog)->comp(aTHX_ sv, flags)
-#define CALLREGEXEC(prog,stringarg,strend,strbeg,minend,screamer,data,flags) \
+#define CALLREGEXEC(prog,stringarg,strend,strbeg,minend,sv,data,flags) \
     RX_ENGINE(prog)->exec(aTHX_ (prog),(stringarg),(strend), \
-        (strbeg),(minend),(screamer),(data),(flags))
-#define CALLREG_INTUIT_START(prog,sv,strpos,strend,flags,data) \
-    RX_ENGINE(prog)->intuit(aTHX_ (prog), (sv), (strpos), \
+        (strbeg),(minend),(sv),(data),(flags))
+#define CALLREG_INTUIT_START(prog,sv,strbeg,strpos,strend,flags,data) \
+    RX_ENGINE(prog)->intuit(aTHX_ (prog), (sv), (strbeg), (strpos), \
         (strend),(flags),(data))
 #define CALLREG_INTUIT_STRING(prog) \
     RX_ENGINE(prog)->checkstr(aTHX_ (prog))
@@ -345,6 +327,78 @@
 #  define PERL_UNUSED_CONTEXT
 #endif
 
+/* gcc (-ansi) -pedantic doesn't allow gcc statement expressions,
+ * g++ allows them but seems to have problems with them
+ * (insane errors ensue).
+ * g++ does not give insane errors now (RMB 2008-01-30, gcc 4.2.2).
+ */
+#if defined(PERL_GCC_PEDANTIC) || \
+    (defined(__GNUC__) && defined(__cplusplus) && \
+	((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 2))))
+#  ifndef PERL_GCC_BRACE_GROUPS_FORBIDDEN
+#    define PERL_GCC_BRACE_GROUPS_FORBIDDEN
+#  endif
+#endif
+
+/* Use PERL_UNUSED_RESULT() to suppress the warnings about unused results
+ * of function calls, e.g. PERL_UNUSED_RESULT(foo(a, b)).
+ *
+ * The main reason for this is that the combination of gcc -Wunused-result
+ * (part of -Wall) and the __attribute__((warn_unused_result)) cannot
+ * be silenced with casting to void.  This causes trouble when the system
+ * header files use the attribute.
+ *
+ * Use PERL_UNUSED_RESULT sparingly, though, since usually the warning
+ * is there for a good reason: you might lose success/failure information,
+ * or leak resources, or changes in resources.
+ *
+ * But sometimes you just want to ignore the return value, e.g. on
+ * codepaths soon ending up in abort, or in "best effort" attempts,
+ * or in situations where there is no good way to handle failures.
+ *
+ * Sometimes PERL_UNUSED_RESULT might not be the most natural way:
+ * another possibility is that you can capture the return value
+ * and use PERL_UNUSED_VAR on that.
+ *
+ * The __typeof__() is used instead of typeof() since typeof() is not
+ * available under strict C89, and because of compilers masquerading
+ * as gcc (clang and icc), we want exactly the gcc extension
+ * __typeof__ and nothing else.
+ */
+#ifndef PERL_UNUSED_RESULT
+#  if defined(__GNUC__) && defined(HASATTRIBUTE_WARN_UNUSED_RESULT)
+#    define PERL_UNUSED_RESULT(v) STMT_START { __typeof__(v) z = (v); (void)sizeof(z); } STMT_END
+#  else
+#    define PERL_UNUSED_RESULT(v) ((void)(v))
+#  endif
+#endif
+
+/* on gcc (and clang), specify that a warning should be temporarily
+ * ignored; e.g.
+ *
+ *    GCC_DIAG_IGNORE(-Wmultichar);
+ *    char b = 'ab';
+ *    GCC_DIAG_RESTORE;
+ *
+ * based on http://dbp-consulting.com/tutorials/SuppressingGCCWarnings.html
+ *
+ * Note that "pragma GCC diagnostic push/pop" was added in GCC 4.6, Mar 2011;
+ * clang only pretends to be GCC 4.2, but still supports push/pop.
+ */
+
+#if defined(__clang) || \
+       (defined( __GNUC__) && ((__GNUC__ * 100) + __GNUC_MINOR__) >= 406)
+#  define GCC_DIAG_DO_PRAGMA_(x) _Pragma (#x)
+
+#  define GCC_DIAG_IGNORE(x) _Pragma("GCC diagnostic push") \
+                             GCC_DIAG_DO_PRAGMA_(GCC diagnostic ignored #x)
+#  define GCC_DIAG_RESTORE   _Pragma("GCC diagnostic pop")
+#else
+#  define GCC_DIAG_IGNORE(w)
+#  define GCC_DIAG_RESTORE
+#endif
+
+
 #define NOOP /*EMPTY*/(void)0
 /* cea2e8a9dd23747f accidentally lost the comment originally from the first
    check in of thread.h, explaining why we need dNOOP at all:  */
@@ -358,7 +412,7 @@
 #endif
 
 #ifndef pTHX
-/* Don't bother defining tTHX and sTHX; using them outside
+/* Don't bother defining tTHX ; using it outside
  * code guarded by PERL_IMPLICIT_CONTEXT is an error.
  */
 #  define pTHX		void
@@ -377,6 +431,7 @@
 #  define pTHX_7	7
 #  define pTHX_8	8
 #  define pTHX_9	9
+#  define pTHX_12	12
 #endif
 
 #ifndef dVAR
@@ -438,27 +493,6 @@
 #  endif
 #endif
 
-#ifdef OP_IN_REGISTER
-#  ifdef __GNUC__
-#    define stringify_immed(s) #s
-#    define stringify(s) stringify_immed(s)
-struct op *Perl_op asm(stringify(OP_IN_REGISTER));
-#  endif
-#endif
-
-/* gcc (-ansi) -pedantic doesn't allow gcc statement expressions,
- * g++ allows them but seems to have problems with them
- * (insane errors ensue).
- * g++ does not give insane errors now (RMB 2008-01-30, gcc 4.2.2).
- */
-#if defined(PERL_GCC_PEDANTIC) || \
-    (defined(__GNUC__) && defined(__cplusplus) && \
-	((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 2))))
-#  ifndef PERL_GCC_BRACE_GROUPS_FORBIDDEN
-#    define PERL_GCC_BRACE_GROUPS_FORBIDDEN
-#  endif
-#endif
-
 #if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN) && !defined(__cplusplus)
 #  ifndef PERL_USE_GCC_BRACE_GROUPS
 #    define PERL_USE_GCC_BRACE_GROUPS
@@ -477,14 +511,8 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   define STMT_START	(void)(	/* gcc supports "({ STATEMENTS; })" */
 #   define STMT_END	)
 # else
-   /* Now which other defined()s do we need here ??? */
-#  if (VOIDFLAGS) && (defined(sun) || defined(__sun__)) && !defined(__GNUC__)
-#   define STMT_START	if (1)
-#   define STMT_END	else (void)0
-#  else
 #   define STMT_START	do
 #   define STMT_END	while (0)
-#  endif
 # endif
 #endif
 
@@ -520,7 +548,7 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 # define STANDARD_C 1
 #endif
 
-#if defined(__cplusplus) || defined(WIN32) || defined(__sgi) || defined(__EMX__) || defined(__DGUX) || defined(__QNX__) || defined(NETWARE) || defined(PERL_MICRO)
+#if defined(__cplusplus) || defined(WIN32) || defined(__sgi) || defined(__EMX__) || defined(__QNX__) || defined(NETWARE) || defined(PERL_MICRO)
 # define DONT_DECLARE_STD 1
 #endif
 
@@ -545,7 +573,7 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
  * DANGER! Using NO_TAINT_SUPPORT or SILENT_NO_TAINT_SUPPORT
  *         voids your nonexistent warranty!
  */
-#if SILENT_NO_TAINT_SUPPORT && !defined(NO_TAINT_SUPPORT)
+#if defined(SILENT_NO_TAINT_SUPPORT) && !defined(NO_TAINT_SUPPORT)
 #  define NO_TAINT_SUPPORT 1
 #endif
 
@@ -553,7 +581,7 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
  * operations into no-ops for a very modest speed-up. Enable only if you
  * know what you're doing: tests and CPAN modules' tests are bound to fail.
  */
-#if NO_TAINT_SUPPORT
+#ifdef NO_TAINT_SUPPORT
 #   define TAINT		NOOP
 #   define TAINT_NOT		NOOP
 #   define TAINT_IF(c)		NOOP
@@ -645,11 +673,7 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #  include <pthread.h>
 #endif
 
-#ifndef _TYPES_		/* If types.h defines this it's easy. */
-#   ifndef major		/* Does everyone's types.h define this? */
-#	include <sys/types.h>
-#   endif
-#endif
+#include <sys/types.h>
 
 #ifdef __cplusplus
 #  ifndef I_STDARG
@@ -695,6 +719,8 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 
 #if !defined(NO_LOCALE) && defined(HAS_SETLOCALE)
 #   define USE_LOCALE
+#   define HAS_SKIP_LOCALE_INIT /* Solely for XS code to test for this
+                                   capability */
 #   if !defined(NO_LOCALE_COLLATE) && defined(LC_COLLATE) \
        && defined(HAS_STRXFRM)
 #	define USE_LOCALE_COLLATE
@@ -705,6 +731,15 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   if !defined(NO_LOCALE_NUMERIC) && defined(LC_NUMERIC)
 #	define USE_LOCALE_NUMERIC
 #   endif
+#   if !defined(NO_LOCALE_MESSAGES) && defined(LC_MESSAGES)
+#	define USE_LOCALE_MESSAGES
+#   endif
+#   if !defined(NO_LOCALE_MONETARY) && defined(LC_MONETARY)
+#	define USE_LOCALE_MONETARY
+#   endif
+#   ifndef WIN32    /* No wrapper except on Windows */
+#       define my_setlocale(a,b) setlocale(a,b)
+#   endif
 #endif /* !NO_LOCALE && HAS_SETLOCALE */
 
 #include <setjmp.h>
@@ -714,6 +749,16 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #	include <sys/types.h>
 #   endif
 #   include <sys/param.h>
+#endif
+
+/* On BSD-derived systems, <sys/param.h> defines BSD to a year-month
+   value something like 199306.  This may be useful if no more-specific
+   feature test is available.
+*/
+#if defined(BSD)
+#   ifndef BSDish
+#       define BSDish
+#   endif
 #endif
 
 /* Use all the "standard" definitions? */
@@ -735,21 +780,12 @@ struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   undef _SC_ARG_MAX /* Symbian has _SC_ARG_MAX but no sysconf() */
 #endif
 
-#if defined(HAS_SYSCALL) && !defined(HAS_SYSCALL_PROTO) && !defined(PERL_MICRO)
+#if defined(HAS_SYSCALL) && !defined(HAS_SYSCALL_PROTO)
 EXTERN_C int syscall(int, ...);
 #endif
 
-#if defined(HAS_USLEEP) && !defined(HAS_USLEEP_PROTO) && !defined(PERL_MICRO)
+#if defined(HAS_USLEEP) && !defined(HAS_USLEEP_PROTO)
 EXTERN_C int usleep(unsigned int);
-#endif
-
-/* Funky places that do not have socket stuff. */
-#if defined(__LIBCATAMOUNT__)
-#  define MYSWAP
-#endif
-
-#ifdef PERL_MICRO /* Last chance to export Perl_my_swap */
-#  define MYSWAP
 #endif
 
 #ifdef PERL_CORE
@@ -803,189 +839,6 @@ EXTERN_C int usleep(unsigned int);
           (((U64)(x) & U64_CONST(0x00ff000000000000)) >> 40) | \
           (((U64)(x) & U64_CONST(0xff00000000000000)) >> 56) ))
 # endif
-
-/*----------------------------------------------------------------------------*/
-# if BYTEORDER == 0x1234 || BYTEORDER == 0x12345678  /*     little-endian     */
-/*----------------------------------------------------------------------------*/
-#  define my_htole16(x)		(x)
-#  define my_letoh16(x)		(x)
-#  define my_htole32(x)		(x)
-#  define my_letoh32(x)		(x)
-#  define my_htobe16(x)		_swab_16_(x)
-#  define my_betoh16(x)		_swab_16_(x)
-#  define my_htobe32(x)		_swab_32_(x)
-#  define my_betoh32(x)		_swab_32_(x)
-#  ifdef HAS_QUAD
-#   define my_htole64(x)	(x)
-#   define my_letoh64(x)	(x)
-#   define my_htobe64(x)	_swab_64_(x)
-#   define my_betoh64(x)	_swab_64_(x)
-#  endif
-#  define my_htoles(x)		(x)
-#  define my_letohs(x)		(x)
-#  define my_htolei(x)		(x)
-#  define my_letohi(x)		(x)
-#  define my_htolel(x)		(x)
-#  define my_letohl(x)		(x)
-#  if SHORTSIZE == 1
-#   define my_htobes(x)		(x)
-#   define my_betohs(x)		(x)
-#  elif SHORTSIZE == 2
-#   define my_htobes(x)		_swab_16_(x)
-#   define my_betohs(x)		_swab_16_(x)
-#  elif SHORTSIZE == 4
-#   define my_htobes(x)		_swab_32_(x)
-#   define my_betohs(x)		_swab_32_(x)
-#  elif SHORTSIZE == 8
-#   define my_htobes(x)		_swab_64_(x)
-#   define my_betohs(x)		_swab_64_(x)
-#  else
-#   define PERL_NEED_MY_HTOBES
-#   define PERL_NEED_MY_BETOHS
-#  endif
-#  if INTSIZE == 1
-#   define my_htobei(x)		(x)
-#   define my_betohi(x)		(x)
-#  elif INTSIZE == 2
-#   define my_htobei(x)		_swab_16_(x)
-#   define my_betohi(x)		_swab_16_(x)
-#  elif INTSIZE == 4
-#   define my_htobei(x)		_swab_32_(x)
-#   define my_betohi(x)		_swab_32_(x)
-#  elif INTSIZE == 8
-#   define my_htobei(x)		_swab_64_(x)
-#   define my_betohi(x)		_swab_64_(x)
-#  else
-#   define PERL_NEED_MY_HTOBEI
-#   define PERL_NEED_MY_BETOHI
-#  endif
-#  if LONGSIZE == 1
-#   define my_htobel(x)		(x)
-#   define my_betohl(x)		(x)
-#  elif LONGSIZE == 2
-#   define my_htobel(x)		_swab_16_(x)
-#   define my_betohl(x)		_swab_16_(x)
-#  elif LONGSIZE == 4
-#   define my_htobel(x)		_swab_32_(x)
-#   define my_betohl(x)		_swab_32_(x)
-#  elif LONGSIZE == 8
-#   define my_htobel(x)		_swab_64_(x)
-#   define my_betohl(x)		_swab_64_(x)
-#  else
-#   define PERL_NEED_MY_HTOBEL
-#   define PERL_NEED_MY_BETOHL
-#  endif
-#  define my_htolen(p,n)	NOOP
-#  define my_letohn(p,n)	NOOP
-#  define my_htoben(p,n)	my_swabn(p,n)
-#  define my_betohn(p,n)	my_swabn(p,n)
-/*----------------------------------------------------------------------------*/
-# elif BYTEORDER == 0x4321 || BYTEORDER == 0x87654321  /*     big-endian      */
-/*----------------------------------------------------------------------------*/
-#  define my_htobe16(x)		(x)
-#  define my_betoh16(x)		(x)
-#  define my_htobe32(x)		(x)
-#  define my_betoh32(x)		(x)
-#  define my_htole16(x)		_swab_16_(x)
-#  define my_letoh16(x)		_swab_16_(x)
-#  define my_htole32(x)		_swab_32_(x)
-#  define my_letoh32(x)		_swab_32_(x)
-#  ifdef HAS_QUAD
-#   define my_htobe64(x)	(x)
-#   define my_betoh64(x)	(x)
-#   define my_htole64(x)	_swab_64_(x)
-#   define my_letoh64(x)	_swab_64_(x)
-#  endif
-#  define my_htobes(x)		(x)
-#  define my_betohs(x)		(x)
-#  define my_htobei(x)		(x)
-#  define my_betohi(x)		(x)
-#  define my_htobel(x)		(x)
-#  define my_betohl(x)		(x)
-#  if SHORTSIZE == 1
-#   define my_htoles(x)		(x)
-#   define my_letohs(x)		(x)
-#  elif SHORTSIZE == 2
-#   define my_htoles(x)		_swab_16_(x)
-#   define my_letohs(x)		_swab_16_(x)
-#  elif SHORTSIZE == 4
-#   define my_htoles(x)		_swab_32_(x)
-#   define my_letohs(x)		_swab_32_(x)
-#  elif SHORTSIZE == 8
-#   define my_htoles(x)		_swab_64_(x)
-#   define my_letohs(x)		_swab_64_(x)
-#  else
-#   define PERL_NEED_MY_HTOLES
-#   define PERL_NEED_MY_LETOHS
-#  endif
-#  if INTSIZE == 1
-#   define my_htolei(x)		(x)
-#   define my_letohi(x)		(x)
-#  elif INTSIZE == 2
-#   define my_htolei(x)		_swab_16_(x)
-#   define my_letohi(x)		_swab_16_(x)
-#  elif INTSIZE == 4
-#   define my_htolei(x)		_swab_32_(x)
-#   define my_letohi(x)		_swab_32_(x)
-#  elif INTSIZE == 8
-#   define my_htolei(x)		_swab_64_(x)
-#   define my_letohi(x)		_swab_64_(x)
-#  else
-#   define PERL_NEED_MY_HTOLEI
-#   define PERL_NEED_MY_LETOHI
-#  endif
-#  if LONGSIZE == 1
-#   define my_htolel(x)		(x)
-#   define my_letohl(x)		(x)
-#  elif LONGSIZE == 2
-#   define my_htolel(x)		_swab_16_(x)
-#   define my_letohl(x)		_swab_16_(x)
-#  elif LONGSIZE == 4
-#   define my_htolel(x)		_swab_32_(x)
-#   define my_letohl(x)		_swab_32_(x)
-#  elif LONGSIZE == 8
-#   define my_htolel(x)		_swab_64_(x)
-#   define my_letohl(x)		_swab_64_(x)
-#  else
-#   define PERL_NEED_MY_HTOLEL
-#   define PERL_NEED_MY_LETOHL
-#  endif
-#  define my_htolen(p,n)	my_swabn(p,n)
-#  define my_letohn(p,n)	my_swabn(p,n)
-#  define my_htoben(p,n)	NOOP
-#  define my_betohn(p,n)	NOOP
-/*----------------------------------------------------------------------------*/
-# else /*                       all other byte-orders                         */
-/*----------------------------------------------------------------------------*/
-#  define PERL_NEED_MY_HTOLE16
-#  define PERL_NEED_MY_LETOH16
-#  define PERL_NEED_MY_HTOBE16
-#  define PERL_NEED_MY_BETOH16
-#  define PERL_NEED_MY_HTOLE32
-#  define PERL_NEED_MY_LETOH32
-#  define PERL_NEED_MY_HTOBE32
-#  define PERL_NEED_MY_BETOH32
-#  ifdef HAS_QUAD
-#   define PERL_NEED_MY_HTOLE64
-#   define PERL_NEED_MY_LETOH64
-#   define PERL_NEED_MY_HTOBE64
-#   define PERL_NEED_MY_BETOH64
-#  endif
-#  define PERL_NEED_MY_HTOLES
-#  define PERL_NEED_MY_LETOHS
-#  define PERL_NEED_MY_HTOBES
-#  define PERL_NEED_MY_BETOHS
-#  define PERL_NEED_MY_HTOLEI
-#  define PERL_NEED_MY_LETOHI
-#  define PERL_NEED_MY_HTOBEI
-#  define PERL_NEED_MY_BETOHI
-#  define PERL_NEED_MY_HTOLEL
-#  define PERL_NEED_MY_LETOHL
-#  define PERL_NEED_MY_HTOBEL
-#  define PERL_NEED_MY_BETOHL
-/*----------------------------------------------------------------------------*/
-# endif /*                     end of byte-order macros                       */
-/*----------------------------------------------------------------------------*/
 
 /* The old value was hard coded at 1008. (4096-16) seems to be a bit faster,
    at least on FreeBSD.  YMMV, so experiment.  */
@@ -1157,9 +1010,6 @@ EXTERN_C int usleep(unsigned int);
 	extern int memcmp (char*, char*, int);
 #    endif
 #  endif
-#  ifdef BUGGY_MSC
-#    pragma function(memcmp)
-#  endif
 #else
 #   ifndef memcmp
 #	define memcmp 	my_memcmp
@@ -1198,12 +1048,6 @@ EXTERN_C int usleep(unsigned int);
 
 #ifdef I_ARPA_INET
 #   include <arpa/inet.h>
-#endif
-
-#if defined(SF_APPEND) && defined(USE_SFIO) && defined(I_SFIO)
-/* <sfio.h> defines SF_APPEND and <sys/stat.h> might define SF_APPEND
- * (the neo-BSD seem to do this).  */
-#   undef SF_APPEND
 #endif
 
 #ifdef I_SYS_STAT
@@ -1321,7 +1165,7 @@ EXTERN_C char **environ;
 #endif
 
 #if defined(__cplusplus)
-#  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#  if defined(BSDish)
 EXTERN_C char **environ;
 #  elif defined(__CYGWIN__)
 EXTERN_C char *crypt(const char *, const char *);
@@ -1356,12 +1200,6 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define SS_IVCHAN  		SS$_IVCHAN
 #   define SS_NORMAL  		SS$_NORMAL
 #else
-#   define SETERRNO(errcode,vmserrcode) (errno = (errcode))
-#   define dSAVEDERRNO    int saved_errno
-#   define dSAVE_ERRNO    int saved_errno = errno
-#   define SAVE_ERRNO     (saved_errno = errno)
-#   define RESTORE_ERRNO  (errno = saved_errno)
-
 #   define LIB_INVARG 		0
 #   define RMS_DIR    		0
 #   define RMS_FAC    		0
@@ -1374,6 +1212,31 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define SS_DEVOFFLINE	0
 #   define SS_IVCHAN  		0
 #   define SS_NORMAL  		0
+#endif
+
+#ifdef WIN32
+#   define dSAVEDERRNO  int saved_errno; DWORD saved_win32_errno
+#   define dSAVE_ERRNO  int saved_errno = errno; DWORD saved_win32_errno = GetLastError()
+#   define SAVE_ERRNO   ( saved_errno = errno, saved_win32_errno = GetLastError() )
+#   define RESTORE_ERRNO ( errno = saved_errno, SetLastError(saved_win32_errno) )
+#endif
+
+#ifdef OS2
+#   define dSAVEDERRNO  int saved_errno; unsigned long saved_os2_errno
+#   define dSAVE_ERRNO  int saved_errno = errno; unsigned long saved_os2_errno = Perl_rc
+#   define SAVE_ERRNO   ( saved_errno = errno, saved_os2_errno = Perl_rc )
+#   define RESTORE_ERRNO ( errno = saved_errno, Perl_rc = saved_os2_errno )
+#endif
+
+#ifndef SETERRNO
+#   define SETERRNO(errcode,vmserrcode) (errno = (errcode))
+#endif
+
+#ifndef dSAVEDERRNO
+#   define dSAVEDERRNO    int saved_errno
+#   define dSAVE_ERRNO    int saved_errno = errno
+#   define SAVE_ERRNO     (saved_errno = errno)
+#   define RESTORE_ERRNO  (errno = saved_errno)
 #endif
 
 #define ERRSV GvSVn(PL_errgv)
@@ -1412,8 +1275,6 @@ EXTERN_C char *crypt(const char *, const char *);
 # define SAVE_DEFSV SAVESPTR(GvSV(PL_defgv))
 #endif
 
-#define ERRHV GvHV(PL_errgv)	/* XXX unused, here for compatibility */
-
 #ifndef errno
 	extern int errno;     /* ANSI allows errno to be an lvalue expr.
 			       * For example in multithreaded environments
@@ -1422,24 +1283,26 @@ EXTERN_C char *crypt(const char *, const char *);
 			       * #define errno (*_errno()) */
 #endif
 
+#define UNKNOWN_ERRNO_MSG "(unknown)"
+
 #ifdef HAS_STRERROR
-#ifndef DONT_DECLARE_STD
+#   ifndef DONT_DECLARE_STD
 #       ifdef VMS
 	char *strerror (int,...);
 #       else
 	char *strerror (int);
 #       endif
-#endif
-#       ifndef Strerror
-#           define Strerror strerror
-#       endif
+#    endif
+#    ifndef Strerror
+#       define Strerror strerror
+#    endif
 #else
 #    ifdef HAS_SYS_ERRLIST
 	extern int sys_nerr;
 	extern char *sys_errlist[];
 #       ifndef Strerror
 #           define Strerror(e) \
-		((e) < 0 || (e) >= sys_nerr ? "(unknown)" : sys_errlist[e])
+		((e) < 0 || (e) >= sys_nerr ? UNKNOWN_ERRNO_MSG : sys_errlist[e])
 #       endif
 #   endif
 #endif
@@ -1494,26 +1357,13 @@ EXTERN_C char *crypt(const char *, const char *);
 #   endif
 #endif
 
-#ifdef PERL_MICRO
-#   ifndef DIR
-#      define DIR void
-#   endif
-#endif
-
-#ifdef FPUTS_BOTCH
-/* work around botch in SunOS 4.0.1 and 4.0.2 */
-#   ifndef fputs
-#	define fputs(sv,fp) fprintf(fp,"%s",sv)
-#   endif
-#endif
-
 /*
  * The following gobbledygook brought to you on behalf of __STDC__.
  * (I could just use #ifndef __STDC__, but this is more bulletproof
  * in the face of half-implementations.)
  */
 
-#if defined(I_SYSMODE) && !defined(PERL_MICRO)
+#if defined(I_SYSMODE)
 #include <sys/mode.h>
 #endif
 
@@ -1657,10 +1507,6 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define S_IEXEC S_IXUSR
 #endif
 
-#ifdef ff_next
-#   undef ff_next
-#endif
-
 #if defined(cray) || defined(gould) || defined(i860) || defined(pyr)
 #   define SLOPPYDIVIDE
 #endif
@@ -1785,16 +1631,17 @@ typedef UVTYPE UV;
 #  else
 #    undef IV_IS_QUAD
 #    undef UV_IS_QUAD
+#if !defined(PERL_CORE) || defined(USING_MSVC6)
+/* We think that removing this decade-old undef this will cause too much
+   breakage on CPAN for too little gain. (See RT #119753)
+   However, we do need HAS_QUAD in the core for use by the drand48 code,
+   but not for Win32 VC6 because it has poor __int64 support. */
 #    undef HAS_QUAD
+#endif
 #  endif
 #endif
 
-#ifndef HAS_QUAD
-# undef PERL_NEED_MY_HTOLE64
-# undef PERL_NEED_MY_LETOH64
-# undef PERL_NEED_MY_HTOBE64
-# undef PERL_NEED_MY_BETOH64
-#endif
+#define SSize_t_MAX (SSize_t)(~(size_t)0 >> 1)
 
 #define IV_DIG (BIT_DIGITS(IVSIZE * 8))
 #define UV_DIG (BIT_DIGITS(UVSIZE * 8))
@@ -2109,7 +1956,7 @@ EXTERN_C long double modfl(long double, long double *);
 #    define Perl_fp_class_zero(x)	(Perl_fp_class(x)==FP_CLASS_NZERO||Perl_fp_class(x)==FP_CLASS_PZERO)
 #endif
 
-#if !defined(Perl_fp_class) && defined(HAS_FP_CLASS) && !defined(PERL_MICRO)
+#if !defined(Perl_fp_class) && defined(HAS_FP_CLASS)
 #    include <math.h>
 #    if !defined(FP_SNAN) && defined(I_FP_CLASS)
 #        include <fp_class.h>
@@ -2418,9 +2265,6 @@ int isnan(double d);
 
 #endif
 
-struct RExC_state_t;
-struct _reg_trie_data;
-
 typedef MEM_SIZE STRLEN;
 
 #ifdef PERL_MAD
@@ -2474,6 +2318,7 @@ typedef struct xpvuv XPVUV;
 typedef struct xpvnv XPVNV;
 typedef struct xpvmg XPVMG;
 typedef struct xpvlv XPVLV;
+typedef struct xpvinvlist XINVLIST;
 typedef struct xpvav XPVAV;
 typedef struct xpvhv XPVHV;
 typedef struct xpvgv XPVGV;
@@ -2494,11 +2339,10 @@ typedef AV PAD;
 typedef AV PADNAMELIST;
 typedef SV PADNAME;
 
-/* XXX for 5.18, disable the COW by default
- * #if !defined(PERL_OLD_COPY_ON_WRITE) && !defined(PERL_NEW_COPY_ON_WRITE) && !defined(PERL_NO_COW)
- * # define PERL_NEW_COPY_ON_WRITE
- * #endif
- */
+/* enable PERL_NEW_COPY_ON_WRITE by default */
+#if !defined(PERL_OLD_COPY_ON_WRITE) && !defined(PERL_NEW_COPY_ON_WRITE) && !defined(PERL_NO_COW)
+#  define PERL_NEW_COPY_ON_WRITE
+#endif
 
 #if defined(PERL_OLD_COPY_ON_WRITE) || defined(PERL_NEW_COPY_ON_WRITE)
 # if defined(PERL_OLD_COPY_ON_WRITE) && defined(PERL_NEW_COPY_ON_WRITE)
@@ -2622,42 +2466,22 @@ typedef SV PADNAME;
 #   else
 #       include "dosish.h"
 #   endif
-#   define ISHISH "dos"
-#endif
-
-#if defined(VMS)
+#elif defined(VMS)
 #   include "vmsish.h"
-#   define ISHISH "vms"
-#endif
-
-#if defined(PLAN9)
+#elif defined(PLAN9)
 #   include "./plan9/plan9ish.h"
-#   define ISHISH "plan9"
-#endif
-
-#if defined(__VOS__)
+#elif defined(__VOS__)
 #   ifdef __GNUC__
 #     include "./vos/vosish.h"
 #   else
 #     include "vos/vosish.h"
 #   endif
-#   define ISHISH "vos"
-#endif
-
-#ifdef __SYMBIAN32__
+#elif defined(__SYMBIAN32__)
 #   include "symbian/symbianish.h"
-#   define ISHISH "symbian"
-#endif
-
-
-#if defined(__HAIKU__)
+#elif defined(__HAIKU__)
 #   include "haiku/haikuish.h"
-#   define ISHISH "haiku"
-#endif
-
-#ifndef ISHISH
+#else
 #   include "unixish.h"
-#   define ISHISH "unix"
 #endif
 
 /* NSIG logic from Configure --> */
@@ -2758,17 +2582,17 @@ typedef SV PADNAME;
 /*
 =for apidoc Am|void|PERL_SYS_INIT|int *argc|char*** argv
 Provides system-specific tune up of the C runtime environment necessary to
-run Perl interpreters. This should be called only once, before creating
+run Perl interpreters.  This should be called only once, before creating
 any Perl interpreters.
 
 =for apidoc Am|void|PERL_SYS_INIT3|int *argc|char*** argv|char*** env
 Provides system-specific tune up of the C runtime environment necessary to
-run Perl interpreters. This should be called only once, before creating
+run Perl interpreters.  This should be called only once, before creating
 any Perl interpreters.
 
 =for apidoc Am|void|PERL_SYS_TERM|
 Provides system-specific clean up of the C runtime environment after
-running Perl interpreters. This should be called only once, after
+running Perl interpreters.  This should be called only once, after
 freeing any remaining Perl interpreters.
 
 =cut
@@ -2862,9 +2686,6 @@ freeing any remaining Perl interpreters.
 #  ifdef NETWARE
 #   include <nw5thread.h>
 #  else
-#  ifdef FAKE_THREADS
-#    include "fakethr.h"
-#  else
 #    ifdef WIN32
 #      include <win32thread.h>
 #    else
@@ -2891,8 +2712,7 @@ typedef pthread_key_t	perl_key;
 #        endif /* I_MACH_CTHREADS */
 #      endif /* OS2 */
 #    endif /* WIN32 */
-#  endif /* FAKE_THREADS */
-#endif	/* NETWARE */
+#  endif /* NETWARE */
 #endif /* USE_ITHREADS */
 
 #if defined(WIN32)
@@ -3145,6 +2965,8 @@ typedef pthread_key_t	perl_key;
 /* flags in PL_exit_flags for nature of exit() */
 #define PERL_EXIT_EXPECTED	0x01
 #define PERL_EXIT_DESTRUCT_END  0x02  /* Run END in perl_destruct */
+#define PERL_EXIT_WARN		0x04  /* Warn if Perl_my_exit() or Perl_my_failure_exit() called */
+#define PERL_EXIT_ABORT		0x08  /* Call abort() if Perl_my_exit() or Perl_my_failure_exit() called */
 
 #ifndef PERL_CORE
 /* format to use for version numbers in file/directory names */
@@ -3166,7 +2988,7 @@ typedef pthread_key_t	perl_key;
  * out there, Solaris being the most prominent.
  */
 #ifndef PERL_FLUSHALL_FOR_CHILD
-# if defined(USE_PERLIO) || defined(FFLUSH_NULL) || defined(USE_SFIO)
+# if defined(USE_PERLIO) || defined(FFLUSH_NULL)
 #  define PERL_FLUSHALL_FOR_CHILD	PerlIO_flush((PerlIO*)NULL)
 # else
 #  ifdef FFLUSH_ALL
@@ -3239,14 +3061,11 @@ typedef pthread_key_t	perl_key;
 
 #define HEKfARG(p) ((void*)(p))
 
-#ifdef PERL_CORE
-/* not used; but needed for backward compatibility with XS code? - RMB */
-#  undef VDf
-#else
-#  ifndef VDf
-#    define VDf "vd"
-#  endif
+/* Takes three arguments: is_utf8, length, str */
+#ifndef UTF8f
+#  define UTF8f "d%" UVuf "%4p"
 #endif
+#define UTF8fARG(u,l,p) (int)cBOOL(u), (UV)(l), (void*)(p)
 
 #ifdef PERL_CORE
 /* not used; but needed for backward compatibility with XS code? - RMB */
@@ -3312,9 +3131,9 @@ typedef pthread_key_t	perl_key;
    appropriate to call return.  In either case, include the lint directive.
  */
 #ifdef HASATTRIBUTE_NORETURN
-#  define NORETURN_FUNCTION_END assert(0); /* NOTREACHED */
+#  define NORETURN_FUNCTION_END NOT_REACHED; /* NOTREACHED */
 #else
-#  define NORETURN_FUNCTION_END assert(0); /* NOTREACHED */ return 0
+#  define NORETURN_FUNCTION_END NOT_REACHED; /* NOTREACHED */ return 0
 #endif
 
 /* Some OS warn on NULL format to printf */
@@ -3329,11 +3148,44 @@ typedef pthread_key_t	perl_key;
 #else
 #  define EXPECT(expr,val)                  (expr)
 #endif
-#define LIKELY(cond)                        EXPECT(cond,1)
-#define UNLIKELY(cond)                      EXPECT(cond,0)
+#define LIKELY(cond)                        EXPECT(cBOOL(cond),TRUE)
+#define UNLIKELY(cond)                      EXPECT(cBOOL(cond),FALSE)
 #ifdef HAS_BUILTIN_CHOOSE_EXPR
 /* placeholder */
 #endif
+
+
+#ifndef __has_builtin
+#  define __has_builtin(x) 0 /* not a clang style compiler */
+#endif
+
+/* ASSUME is like assert(), but it has a benefit in a release build. It is a
+   hint to a compiler about a statement of fact in a function call free
+   expression, which allows the compiler to generate better machine code.
+   In a debug build, ASSUME(x) is a synonym for assert(x). ASSUME(0) means
+   the control path is unreachable. In a for loop, ASSUME can be used to hint
+   that a loop will run atleast X times. ASSUME is based off MSVC's __assume
+   intrinsic function, see its documents for more details.
+*/
+
+#ifndef DEBUGGING
+#  if __has_builtin(__builtin_unreachable) \
+     || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5 || __GNUC__ > 5) /* 4.5 -> */
+#    define ASSUME(x) ((x) ? (void) 0 : __builtin_unreachable())
+#  elif defined(_MSC_VER)
+#    define ASSUME(x) __assume(x)
+#  elif defined(__ARMCC_VERSION) /* untested */
+#    define ASSUME(x) __promise(x)
+#  else
+/* a random compiler might define assert to its own special optimization token
+   so pass it through to C lib as a last resort */
+#    define ASSUME(x) assert(x)
+#  endif
+#else
+#  define ASSUME(x) assert(x)
+#endif
+
+#define NOT_REACHED ASSUME(0)
 
 /* Some unistd.h's give a prototype for pause() even though
    HAS_PAUSE ends up undefined.  This causes the #define
@@ -3383,6 +3235,7 @@ UNION_ANY_DEFINITION;
 union any {
     void*	any_ptr;
     I32		any_i32;
+    U32		any_u32;
     IV		any_iv;
     UV		any_uv;
     long	any_long;
@@ -3402,7 +3255,7 @@ typedef I32 (*filter_t) (pTHX_ int, SV *, int);
 		&& idx >= AvFILLp(PL_parser->rsfp_filters))
 #define PERL_FILTER_EXISTS(i) \
 	    (PL_parser && PL_parser->rsfp_filters \
-		&& (i) <= av_len(PL_parser->rsfp_filters))
+		&& (i) <= av_tindex(PL_parser->rsfp_filters))
 
 #if defined(_AIX) && !defined(_AIX43)
 #if defined(USE_REENTRANT) || defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -3506,8 +3359,25 @@ struct _sublex_info {
 
 typedef struct magic_state MGS;	/* struct magic_state defined in mg.c */
 
-struct scan_data_t;		/* Used in S_* functions in regcomp.c */
-struct regnode_charclass_class;	/* Used in S_* functions in regcomp.c */
+#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_REGEXEC_C)
+
+/* These have to be predeclared, as they are used in proto.h which is #included
+ * before their definitions in regcomp.h. */
+
+struct scan_data_t;
+typedef struct regnode_charclass regnode_charclass;
+
+struct regnode_charclass_class;
+
+/* A hopefully less confusing name.  The sub-classes are all Posix classes only
+ * used under /l matching */
+typedef struct regnode_charclass_class regnode_charclass_posixl;
+
+typedef struct regnode_ssc regnode_ssc;
+typedef struct RExC_state_t RExC_state_t;
+struct _reg_trie_data;
+
+#endif
 
 struct ptr_tbl_ent {
     struct ptr_tbl_ent*		next;
@@ -3537,36 +3407,70 @@ struct ptr_tbl {
 #define HAS_NTOHS
 #endif
 #ifndef HAS_HTONL
-#if (BYTEORDER & 0xffff) != 0x4321
 #define HAS_HTONS
 #define HAS_HTONL
 #define HAS_NTOHS
 #define HAS_NTOHL
-#define MYSWAP
-#define htons my_swap
-#define htonl my_htonl
-#define ntohs my_swap
-#define ntohl my_ntohl
-#endif
-#else
-#if (BYTEORDER & 0xffff) == 0x4321
-#undef HAS_HTONS
-#undef HAS_HTONL
-#undef HAS_NTOHS
-#undef HAS_NTOHL
-#endif
+#  if (BYTEORDER & 0xffff) == 0x4321
+/* Big endian system, so ntohl, ntohs, htonl and htons do not need to
+   re-order their values. However, to behave identically to the alternative
+   implementations, they should truncate to the correct size.  */
+#    define ntohl(x)    ((x)&0xFFFFFFFF)
+#    define htonl(x)    ntohl(x)
+#    define ntohs(x)    ((x)&0xFFFF)
+#    define htons(x)    ntohs(x)
+#  elif BYTEORDER == 0x1234 || BYTEORDER == 0x12345678
+
+/* Note that we can't straight out declare our own htonl and htons because
+   the Win32 build process forcibly undefines HAS_HTONL etc for its miniperl,
+   to avoid the overhead of initialising the socket subsystem, but the headers
+   that *declare* the various functions are still seen. If we declare our own
+   htonl etc they will clash with the declarations in the Win32 headers.  */
+
+PERL_STATIC_INLINE U32
+my_swap32(const U32 x) {
+    return ((x & 0xFF) << 24) | ((x >> 24) & 0xFF)	
+        | ((x & 0x0000FF00) << 8) | ((x & 0x00FF0000) >> 8);
+}
+
+PERL_STATIC_INLINE U16
+my_swap16(const U16 x) {
+    return ((x & 0xFF) << 8) | ((x >> 8) & 0xFF);
+}
+
+#    define htonl(x)    my_swap32(x)
+#    define ntohl(x)    my_swap32(x)
+#    define ntohs(x)    my_swap16(x)
+#    define htons(x)    my_swap16(x)
+#  else
+#    error "Unsupported byteorder"
+/* The C pre-processor doesn't let us return the value of BYTEORDER as part of
+   the error message. Please check the value of the macro BYTEORDER, as defined
+   in config.h. The values of BYTEORDER we expect are
+
+	    big endian  little endian
+   32 bit       0x4321  0x1234
+   64 bit   0x87654321  0x12345678
+
+   If you have a system with a different byte order, please see
+   pod/perlhack.pod for how to submit a patch to add supporting code.
+*/
+#  endif
 #endif
 
 /*
  * Little-endian byte order functions - 'v' for 'VAX', or 'reVerse'.
  * -DWS
  */
-#if BYTEORDER != 0x1234
-# define HAS_VTOHL
-# define HAS_VTOHS
-# define HAS_HTOVL
-# define HAS_HTOVS
-# if BYTEORDER == 0x4321 || BYTEORDER == 0x87654321
+#if BYTEORDER == 0x1234 || BYTEORDER == 0x12345678
+/* Little endian system, so vtohl, vtohs, htovl and htovs do not need to
+   re-order their values. However, to behave identically to the alternative
+   implementations, they should truncate to the correct size.  */
+#  define vtohl(x)      ((x)&0xFFFFFFFF)
+#  define vtohs(x)      ((x)&0xFFFF)
+#  define htovl(x)      vtohl(x)
+#  define htovs(x)      vtohs(x)
+#elif BYTEORDER == 0x4321 || BYTEORDER == 0x87654321
 #  define vtohl(x)	((((x)&0xFF)<<24)	\
 			+(((x)>>24)&0xFF)	\
 			+(((x)&0x0000FF00)<<8)	\
@@ -3574,14 +3478,11 @@ struct ptr_tbl {
 #  define vtohs(x)	((((x)&0xFF)<<8) + (((x)>>8)&0xFF))
 #  define htovl(x)	vtohl(x)
 #  define htovs(x)	vtohs(x)
-# endif
-	/* otherwise default to functions in util.c */
-#ifndef htovs
-short htovs(short n);
-short vtohs(short n);
-long htovl(long n);
-long vtohl(long n);
-#endif
+#else
+#  error "Unsupported byteorder"
+/* If you have need for current perl on PDP-11 or similar, and can help test
+   that blead keeps working on a mixed-endian system, then see
+   pod/perlhack.pod for how to submit patches to things working again.  */
 #endif
 
 /* *MAX Plus 1. A floating point value.
@@ -3619,11 +3520,11 @@ long vtohl(long n);
 #define U_32(n) ((n) < 0.0 ? ((n) < I32_MIN ? (UV) I32_MIN : (U32)(I32) (n)) \
                   : ((n) < U32_MAX_P1 ? (U32) (n) \
                      : ((n) > 0 ? U32_MAX : 0 /* NaN */)))
-#define I_V(n) ((n) < IV_MAX_P1 ? ((n) < IV_MIN ? IV_MIN : (IV) (n)) \
-                  : ((n) < UV_MAX_P1 ? (IV)(UV) (n) \
+#define I_V(n) (LIKELY((n) < IV_MAX_P1) ? (UNLIKELY((n) < IV_MIN) ? IV_MIN : (IV) (n)) \
+                  : (LIKELY((n) < UV_MAX_P1) ? (IV)(UV) (n) \
                      : ((n) > 0 ? (IV)UV_MAX : 0 /* NaN */)))
-#define U_V(n) ((n) < 0.0 ? ((n) < IV_MIN ? (UV) IV_MIN : (UV)(IV) (n)) \
-                  : ((n) < UV_MAX_P1 ? (UV) (n) \
+#define U_V(n) ((n) < 0.0 ? (UNLIKELY((n) < IV_MIN) ? (UV) IV_MIN : (UV)(IV) (n)) \
+                  : (LIKELY((n) < UV_MAX_P1) ? (UV) (n) \
                      : ((n) > 0 ? UV_MAX : 0 /* NaN */)))
 #endif
 
@@ -3698,7 +3599,8 @@ Gid_t getegid (void);
 #define DEBUG_q_FLAG		0x00800000 /*8388608 */
 #define DEBUG_M_FLAG		0x01000000 /*16777216*/
 #define DEBUG_B_FLAG		0x02000000 /*33554432*/
-#define DEBUG_MASK		0x03FFEFFF /* mask of all the standard flags */
+#define DEBUG_L_FLAG		0x04000000 /*67108864*/
+#define DEBUG_MASK		0x07FFEFFF /* mask of all the standard flags */
 
 #define DEBUG_DB_RECURSE_FLAG	0x40000000
 #define DEBUG_TOP_FLAG		0x80000000 /* XXX what's this for ??? Signal
@@ -3730,6 +3632,7 @@ Gid_t getegid (void);
 #  define DEBUG_q_TEST_ (PL_debug & DEBUG_q_FLAG)
 #  define DEBUG_M_TEST_ (PL_debug & DEBUG_M_FLAG)
 #  define DEBUG_B_TEST_ (PL_debug & DEBUG_B_FLAG)
+#  define DEBUG_L_TEST_ (PL_debug & DEBUG_L_FLAG)
 #  define DEBUG_Xv_TEST_ (DEBUG_X_TEST_ && DEBUG_v_TEST_)
 #  define DEBUG_Uv_TEST_ (DEBUG_U_TEST_ && DEBUG_v_TEST_)
 #  define DEBUG_Pv_TEST_ (DEBUG_P_TEST_ && DEBUG_v_TEST_)
@@ -3762,6 +3665,7 @@ Gid_t getegid (void);
 #  define DEBUG_q_TEST DEBUG_q_TEST_
 #  define DEBUG_M_TEST DEBUG_M_TEST_
 #  define DEBUG_B_TEST DEBUG_B_TEST_
+#  define DEBUG_L_TEST DEBUG_L_TEST_
 #  define DEBUG_Xv_TEST DEBUG_Xv_TEST_
 #  define DEBUG_Uv_TEST DEBUG_Uv_TEST_
 #  define DEBUG_Pv_TEST DEBUG_Pv_TEST_
@@ -3813,6 +3717,7 @@ Gid_t getegid (void);
 #  define DEBUG_q(a) DEBUG__(DEBUG_q_TEST, a)
 #  define DEBUG_M(a) DEBUG__(DEBUG_M_TEST, a)
 #  define DEBUG_B(a) DEBUG__(DEBUG_B_TEST, a)
+#  define DEBUG_L(a) DEBUG__(DEBUG_L_TEST, a)
 
 #else /* DEBUGGING */
 
@@ -3842,6 +3747,7 @@ Gid_t getegid (void);
 #  define DEBUG_q_TEST (0)
 #  define DEBUG_M_TEST (0)
 #  define DEBUG_B_TEST (0)
+#  define DEBUG_L_TEST (0)
 #  define DEBUG_Xv_TEST (0)
 #  define DEBUG_Uv_TEST (0)
 #  define DEBUG_Pv_TEST (0)
@@ -3873,6 +3779,7 @@ Gid_t getegid (void);
 #  define DEBUG_q(a)
 #  define DEBUG_M(a)
 #  define DEBUG_B(a)
+#  define DEBUG_L(a)
 #  define DEBUG_Xv(a)
 #  define DEBUG_Uv(a)
 #  define DEBUG_Pv(a)
@@ -4105,7 +4012,7 @@ typedef Sighandler_t Sigsave_t;
 # define RUNOPS_DEFAULT Perl_runops_standard
 #endif
 
-#ifdef USE_PERLIO
+#if defined(USE_PERLIO)
 EXTERN_C void PerlIO_teardown(void);
 # ifdef USE_ITHREADS
 #  define PERLIO_INIT MUTEX_INIT(&PL_perlio_mutex)
@@ -4150,28 +4057,52 @@ EXTERN_C void PerlIO_teardown(void);
 struct perl_memory_debug_header;
 struct perl_memory_debug_header {
   tTHX	interpreter;
-#  ifdef PERL_POISON
+#  if defined(PERL_POISON) || defined(PERL_DEBUG_READONLY_COW)
   MEM_SIZE size;
 #  endif
   struct perl_memory_debug_header *prev;
   struct perl_memory_debug_header *next;
+#  ifdef PERL_DEBUG_READONLY_COW
+  bool readonly;
+#  endif
 };
 
-#  define sTHX	(sizeof(struct perl_memory_debug_header) + \
+#elif defined(PERL_DEBUG_READONLY_COW)
+
+struct perl_memory_debug_header;
+struct perl_memory_debug_header {
+  MEM_SIZE size;
+};
+
+#endif
+
+#if defined (PERL_TRACK_MEMPOOL) || defined (PERL_DEBUG_READONLY_COW)
+
+#  define PERL_MEMORY_DEBUG_HEADER_SIZE \
+        (sizeof(struct perl_memory_debug_header) + \
 	(MEM_ALIGNBYTES - sizeof(struct perl_memory_debug_header) \
 	 %MEM_ALIGNBYTES) % MEM_ALIGNBYTES)
 
 #else
-#  define sTHX	0
+#  define PERL_MEMORY_DEBUG_HEADER_SIZE	0
 #endif
 
 #ifdef PERL_TRACK_MEMPOOL
+# ifdef PERL_DEBUG_READONLY_COW
+#  define INIT_TRACK_MEMPOOL(header, interp)			\
+	STMT_START {						\
+		(header).interpreter = (interp);		\
+		(header).prev = (header).next = &(header);	\
+		(header).readonly = 0;				\
+	} STMT_END
+# else
 #  define INIT_TRACK_MEMPOOL(header, interp)			\
 	STMT_START {						\
 		(header).interpreter = (interp);		\
 		(header).prev = (header).next = &(header);	\
 	} STMT_END
-#  else
+# endif
+# else
 #  define INIT_TRACK_MEMPOOL(header, interp)
 #endif
 
@@ -4183,10 +4114,10 @@ struct perl_memory_debug_header {
 #ifdef MYMALLOC
 #  define Perl_safesysmalloc_size(where)	Perl_malloced_size(where)
 #else
-#  ifdef HAS_MALLOC_SIZE
+#  if defined(HAS_MALLOC_SIZE) && !defined(PERL_DEBUG_READONLY_COW)
 #    ifdef PERL_TRACK_MEMPOOL
 #	define Perl_safesysmalloc_size(where)			\
-	    (malloc_size(((char *)(where)) - sTHX) - sTHX)
+	    (malloc_size(((char *)(where)) - PERL_MEMORY_DEBUG_HEADER_SIZE) - PERL_MEMORY_DEBUG_HEADER_SIZE)
 #    else
 #	define Perl_safesysmalloc_size(where) malloc_size(where)
 #    endif
@@ -4194,7 +4125,7 @@ struct perl_memory_debug_header {
 #  ifdef HAS_MALLOC_GOOD_SIZE
 #    ifdef PERL_TRACK_MEMPOOL
 #	define Perl_malloc_good_size(how_much)			\
-	    (malloc_good_size((how_much) + sTHX) - sTHX)
+	    (malloc_good_size((how_much) + PERL_MEMORY_DEBUG_HEADER_SIZE) - PERL_MEMORY_DEBUG_HEADER_SIZE)
 #    else
 #	define Perl_malloc_good_size(how_much) malloc_good_size(how_much)
 #    endif
@@ -4228,9 +4159,8 @@ EXT char *** environ_pointer;
    /* VMS and some other platforms don't use the environ array */
 #  ifdef USE_ENVIRON_ARRAY
 #    if !defined(DONT_DECLARE_STD) || \
-        (defined(__svr4__) && defined(__GNUC__) && defined(sun)) || \
-        defined(__sgi) || \
-        defined(__DGUX)
+        (defined(__svr4__) && defined(__GNUC__) && defined(__sun)) || \
+        defined(__sgi)
 extern char **	environ;	/* environment variables supplied via exec */
 #    endif
 #  endif
@@ -4254,7 +4184,7 @@ START_EXTERN_C
 EXTCONST char PL_warn_uninit[]
   INIT("Use of uninitialized value%s%s%s");
 EXTCONST char PL_warn_uninit_sv[]
-  INIT("Use of uninitialized value%"SVf"%s%s");
+  INIT("Use of uninitialized value%" SVf "%s%s");
 EXTCONST char PL_warn_nosemi[]
   INIT("Semicolon seems to be missing");
 EXTCONST char PL_warn_reserved[]
@@ -4274,7 +4204,7 @@ EXTCONST char PL_no_usym[]
 EXTCONST char PL_no_aelem[]
   INIT("Modification of non-creatable array value attempted, subscript %d");
 EXTCONST char PL_no_helem_sv[]
-  INIT("Modification of non-creatable hash value attempted, subscript \"%"SVf"\"");
+  INIT("Modification of non-creatable hash value attempted, subscript \"%" SVf "\"");
 EXTCONST char PL_no_modify[]
   INIT("Modification of a read-only value attempted");
 EXTCONST char PL_no_mem[sizeof("Out of memory!\n")]
@@ -4438,7 +4368,6 @@ EXTCONST  unsigned char PL_fold_latin1[] = {
 	248-32,	249-32,	250-32,	251-32,	252-32,	253-32,	254-32,
 	255 /* y with diaeresis */
 };
-#endif  /* !EBCDIC, but still in DOINIT */
 
 /* If these tables are accessed through ebcdic, the access will be converted to
  * latin1 first */
@@ -4513,13 +4442,14 @@ EXTCONST  unsigned char PL_mod_latin1_uc[] = {
 	240-32,	241-32,	242-32,	243-32,	244-32,	245-32,	246-32,	247,
 	248-32,	249-32,	250-32,	251-32,	252-32,	253-32,	254-32,	255
 };
+#endif  /* !EBCDIC, but still in DOINIT */
 #else	/* ! DOINIT */
-#ifndef EBCDIC
+#   ifndef EBCDIC
 EXTCONST unsigned char PL_fold[];
 EXTCONST unsigned char PL_fold_latin1[];
-#endif
 EXTCONST unsigned char PL_mod_latin1_uc[];
 EXTCONST unsigned char PL_latin1_lc[];
+#   endif
 #endif
 
 #ifndef PERL_GLOBAL_STRUCT /* or perlvars.h */
@@ -4674,9 +4604,6 @@ EXTCONST char PL_bincompat_options[] =
 #  ifdef DEBUG_LEAKING_SCALARS_FORK_DUMP
 			     " DEBUG_LEAKING_SCALARS_FORK_DUMP"
 #  endif
-#  ifdef FAKE_THREADS
-			     " FAKE_THREADS"
-#  endif
 #  ifdef FCRYPT
 			     " FCRYPT"
 #  endif
@@ -4695,11 +4622,17 @@ EXTCONST char PL_bincompat_options[] =
 #  ifdef PERLIO_LAYERS
 			     " PERLIO_LAYERS"
 #  endif
+#  ifdef PERL_DEBUG_READONLY_COW
+			     " PERL_DEBUG_READONLY_COW"
+#  endif
 #  ifdef PERL_DEBUG_READONLY_OPS
 			     " PERL_DEBUG_READONLY_OPS"
 #  endif
 #  ifdef PERL_GLOBAL_STRUCT
 			     " PERL_GLOBAL_STRUCT"
+#  endif
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
+			     " PERL_GLOBAL_STRUCT_PRIVATE"
 #  endif
 #  ifdef PERL_IMPLICIT_CONTEXT
 			     " PERL_IMPLICIT_CONTEXT"
@@ -4721,9 +4654,6 @@ EXTCONST char PL_bincompat_options[] =
 #  endif
 #  ifdef PERL_OLD_COPY_ON_WRITE
 			     " PERL_OLD_COPY_ON_WRITE"
-#  endif
-#  ifdef PERL_NEW_COPY_ON_WRITE
-			     " PERL_NEW_COPY_ON_WRITE"
 #  endif
 #  ifdef PERL_POISON
 			     " PERL_POISON"
@@ -4766,9 +4696,6 @@ EXTCONST char PL_bincompat_options[] =
 #  endif
 #  ifdef USE_REENTRANT_API
 			     " USE_REENTRANT_API"
-#  endif
-#  ifdef USE_SFIO
-			     " USE_SFIO"
 #  endif
 #  ifdef USE_SOCKS
 			     " USE_SOCKS"
@@ -4828,6 +4755,8 @@ EXTCONST char *const PL_phase_names[];
 #  define PL_amagic_generation PL_na
 #endif /* !PERL_CORE */
 
+#define PL_hints PL_compiling.cop_hints
+
 END_EXTERN_C
 
 /*****************************************************************************/
@@ -4856,13 +4785,17 @@ typedef enum {
     XATTRBLOCK,
     XATTRTERM,
     XTERMBLOCK,
+    XPOSTDEREF,
     XTERMORDORDOR /* evil hack */
     /* update exp_name[] in toke.c if adding to this enum */
 } expectation;
 
 /* Hints are now stored in a dedicated U32, so the bottom 8 bits are no longer
    special and there is no need for HINT_PRIVATE_MASK for COPs
-   However, bitops store HINT_INTEGER in their op_private.  */
+   However, bitops store HINT_INTEGER in their op_private.
+
+    NOTE: The typical module using these has the bit value hard-coded, so don't
+    blindly change the values of these */
 #define HINT_INTEGER		0x00000001 /* integer pragma */
 #define HINT_STRICT_REFS	0x00000002 /* strict pragma */
 #define HINT_LOCALE		0x00000004 /* locale pragma */
@@ -5214,19 +5147,19 @@ EXTCONST U8 PL_magic_data[256];
 #endif
 
 #ifdef DOINIT
-		        /* NL BD IV NV PV PI PN MG RX GV LV AV HV CV FM IO */
+		        /* NL IV NV PV INV PI PN MG RX GV LV AV HV CV FM IO */
 EXTCONST bool
-PL_valid_types_IVX[]    = { 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
+PL_valid_types_IVX[]    = { 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
 EXTCONST bool
-PL_valid_types_NVX[]    = { 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
+PL_valid_types_NVX[]    = { 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
 EXTCONST bool
-PL_valid_types_PVX[]    = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1 };
+PL_valid_types_PVX[]    = { 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1 };
 EXTCONST bool
-PL_valid_types_RV[]     = { 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1 };
+PL_valid_types_RV[]     = { 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1 };
 EXTCONST bool
-PL_valid_types_IV_set[] = { 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1 };
+PL_valid_types_IV_set[] = { 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1 };
 EXTCONST bool
-PL_valid_types_NV_set[] = { 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
+PL_valid_types_NV_set[] = { 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
 
 #else
 
@@ -5352,25 +5285,39 @@ typedef struct am_table_short AMTS;
 #define PERLDB_SAVESRC_NOSUBS	(PL_perldb && (PL_perldb & PERLDBf_SAVESRC_NOSUBS))
 #define PERLDB_SAVESRC_INVALID	(PL_perldb && (PL_perldb & PERLDBf_SAVESRC_INVALID))
 
+/*
+
+=head1 Locale-related functions and macros
+
+=for apidoc sync_locale
+
+Changing the program's locale should be avoided by XS code.  Nevertheless,
+certain non-Perl libraries called from XS, such as C<Gtk> do so.  When this
+happens, Perl needs to be told that the locale has changed.  Use this macro
+to do so, before returning to Perl code.
+
+=cut
+*/
+
+/* Temporary for maint.  Is a function in 5.21 */
+#define sync_locale() (new_ctype(setlocale(LC_CTYPE, NULL)),        \
+                       new_collate(setlocale(LC_COLLATE, NULL)),    \
+                       set_numeric_local(),                         \
+                       new_numeric(setlocale(LC_NUMERIC, NULL)))
+
 #ifdef USE_LOCALE_NUMERIC
 
-#define SET_NUMERIC_STANDARD() \
-	set_numeric_standard();
-
-#define SET_NUMERIC_LOCAL() \
-	set_numeric_local();
-
-/* Returns non-zero If the plain locale pragma without a parameter is in effect
+/* Returns TRUE if the plain locale pragma without a parameter is in effect
  */
-#define IN_LOCALE_RUNTIME	(CopHINTS_get(PL_curcop) & HINT_LOCALE)
+#define IN_LOCALE_RUNTIME	cBOOL(CopHINTS_get(PL_curcop) & HINT_LOCALE)
 
-/* Returns non-zero If either form of the locale pragma is in effect */
+/* Returns TRUE if either form of the locale pragma is in effect */
 #define IN_SOME_LOCALE_FORM_RUNTIME   \
-		(CopHINTS_get(PL_curcop) & (HINT_LOCALE|HINT_LOCALE_NOT_CHARS))
+           cBOOL(CopHINTS_get(PL_curcop) & (HINT_LOCALE|HINT_LOCALE_NOT_CHARS))
 
-#define IN_LOCALE_COMPILETIME	(PL_hints & HINT_LOCALE)
+#define IN_LOCALE_COMPILETIME	cBOOL(PL_hints & HINT_LOCALE)
 #define IN_SOME_LOCALE_FORM_COMPILETIME \
-			    (PL_hints & (HINT_LOCALE|HINT_LOCALE_NOT_CHARS))
+                          cBOOL(PL_hints & (HINT_LOCALE|HINT_LOCALE_NOT_CHARS))
 
 #define IN_LOCALE \
 	(IN_PERL_COMPILETIME ? IN_LOCALE_COMPILETIME : IN_LOCALE_RUNTIME)
@@ -5378,12 +5325,68 @@ typedef struct am_table_short AMTS;
 	(IN_PERL_COMPILETIME ? IN_SOME_LOCALE_FORM_COMPILETIME \
 	                     : IN_SOME_LOCALE_FORM_RUNTIME)
 
+/* These macros are for toggling between the underlying locale (LOCAL) and the
+ * C locale. */
+
+/* The first set makes sure that the locale is set to C unless within a 'use
+ * locale's scope; otherwise to the default locale.  A function pointer is
+ * used, which can be declared separately by
+ * DECLARATION_FOR_STORE_LC_NUMERIC_SET_TO_NEEDED, followed by the actual
+ * setting (using STORE_LC_NUMERIC_SET_TO_NEEDED()), or the two can be combined
+ * into one call DECLARE_STORE_LC_NUMERIC_SET_TO_NEEDED().
+ * RESTORE_LC_NUMERIC() in all cases restores the locale to what it was before
+ * these were called */
+
+#define DECLARATION_FOR_STORE_LC_NUMERIC_SET_TO_NEEDED                       \
+    void (*_restore_LC_NUMERIC_function)(pTHX) = NULL;
+
+#define STORE_LC_NUMERIC_SET_TO_NEEDED()                                     \
+    if (IN_SOME_LOCALE_FORM) {                                               \
+        if (! PL_numeric_local) {                                            \
+            SET_NUMERIC_LOCAL();                                             \
+            _restore_LC_NUMERIC_function = &Perl_set_numeric_standard;       \
+        }                                                                    \
+    }                                                                        \
+    else {                                                                   \
+        if (! PL_numeric_standard) {                                         \
+            SET_NUMERIC_STANDARD();                                          \
+            _restore_LC_NUMERIC_function = &Perl_set_numeric_local;          \
+        }                                                                    \
+    }
+
+#define DECLARE_STORE_LC_NUMERIC_SET_TO_NEEDED()                             \
+    DECLARATION_FOR_STORE_LC_NUMERIC_SET_TO_NEEDED;                          \
+    STORE_LC_NUMERIC_SET_TO_NEEDED();
+
+#define RESTORE_LC_NUMERIC()                                                 \
+    if (_restore_LC_NUMERIC_function) {                                      \
+        _restore_LC_NUMERIC_function(aTHX);                                  \
+    }
+
+/* The next two macros set unconditionally.  These should be rarely used, and
+ * only after being sure that this is what is needed */
+#define SET_NUMERIC_STANDARD() \
+	set_numeric_standard();
+
+#define SET_NUMERIC_LOCAL() \
+	set_numeric_local();
+
+/* The rest of these LC_NUMERIC macros toggle to one or the other state, with
+ * the RESTORE_foo ones called to switch back, but only if need be */
 #define STORE_NUMERIC_LOCAL_SET_STANDARD() \
-	bool was_local = PL_numeric_local && IN_LOCALE; \
+	bool was_local = PL_numeric_local; \
 	if (was_local) SET_NUMERIC_STANDARD();
 
+/* Doesn't change to underlying locale unless within the scope of some form of
+ * 'use locale'.  This is the usual desired behavior. */
 #define STORE_NUMERIC_STANDARD_SET_LOCAL() \
-	bool was_standard = PL_numeric_standard && IN_LOCALE; \
+	bool was_standard = PL_numeric_standard && IN_SOME_LOCALE_FORM; \
+	if (was_standard) SET_NUMERIC_LOCAL();
+
+/* Rarely, we want to change to the underlying locale even outside of 'use
+ * locale'.  This is principally in the POSIX:: functions */
+#define STORE_NUMERIC_STANDARD_FORCE_LOCAL() \
+	bool was_standard = PL_numeric_standard; \
 	if (was_standard) SET_NUMERIC_LOCAL();
 
 #define RESTORE_NUMERIC_LOCAL() \
@@ -5401,8 +5404,14 @@ typedef struct am_table_short AMTS;
 #define IS_NUMERIC_RADIX(a, b)		(0)
 #define STORE_NUMERIC_LOCAL_SET_STANDARD()	/**/
 #define STORE_NUMERIC_STANDARD_SET_LOCAL()	/**/
+#define STORE_NUMERIC_STANDARD_FORCE_LOCAL()
 #define RESTORE_NUMERIC_LOCAL()		/**/
 #define RESTORE_NUMERIC_STANDARD()	/**/
+#define DECLARATION_FOR_STORE_LC_NUMERIC_SET_TO_NEEDED
+#define STORE_LC_NUMERIC_SET_TO_NEEDED()
+#define DECLARE_STORE_LC_NUMERIC_SET_TO_NEEDED()
+#define RESTORE_LC_NUMERIC()
+
 #define Atof				my_atof
 #define IN_LOCALE_RUNTIME		0
 #define IN_LOCALE_COMPILETIME		0
@@ -5508,7 +5517,7 @@ typedef struct am_table_short AMTS;
 
 #ifndef PERL_MICRO
 #	ifndef PERL_ASYNC_CHECK
-#		define PERL_ASYNC_CHECK() if (PL_sig_pending) PL_signalhook(aTHX)
+#		define PERL_ASYNC_CHECK() if (UNLIKELY(PL_sig_pending)) PL_signalhook(aTHX)
 #	endif
 #endif
 
@@ -5827,6 +5836,12 @@ extern void moncontrol(int);
 #  define do_aexec(really, mark,sp)	do_aexec5(really, mark, sp, 0, 0)
 #endif
 
+/* check embedded \0 characters in pathnames passed to syscalls,
+   but allow one ending \0 */
+#define IS_SAFE_SYSCALL(p, len, what, op_name) (S_is_safe_syscall(aTHX_ (p), (len), (what), (op_name)))
+
+#define IS_SAFE_PATHNAME(p, len, op_name) IS_SAFE_SYSCALL((p), (len), "pathname", (op_name))
+
 #if defined(OEMVS)
 #define NO_ENV_ARRAY_IN_MAIN
 #endif
@@ -5854,6 +5869,8 @@ extern void moncontrol(int);
 #define PERL_PV_ESCAPE_NOBACKSLASH  0x2000
 #define PERL_PV_ESCAPE_NOCLEAR      0x4000
 #define PERL_PV_ESCAPE_RE           0x8000
+
+#define PERL_PV_ESCAPE_DWIM         0x10000
 
 #define PERL_PV_PRETTY_NOCLEAR      PERL_PV_ESCAPE_NOCLEAR
 

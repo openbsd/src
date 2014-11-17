@@ -183,8 +183,9 @@ But testing for taintedness gets you only so far.  Sometimes you have just
 to clear your data's taintedness.  Values may be untainted by using them
 as keys in a hash; otherwise the only way to bypass the tainting
 mechanism is by referencing subpatterns from a regular expression match.
-Perl presumes that if you reference a substring using $1, $2, etc., that
-you knew what you were doing when you wrote the pattern.  That means using
+Perl presumes that if you reference a substring using $1, $2, etc. in a
+non-tainting pattern, that
+you knew what you were doing when you wrote that pattern.  That means using
 a bit of thought--don't just blindly untaint anything, or you defeat the
 entire mechanism.  It's better to verify that the variable has only good
 characters (for certain values of "good") rather than checking whether it
@@ -307,7 +308,7 @@ not called with a string that the shell could expand.  This is by far the
 best way to call something that might be subjected to shell escapes: just
 never call the shell at all.  
 
-        use English '-no_match_vars';
+        use English;
         die "Can't fork: $!" unless defined($pid = open(KID, "-|"));
         if ($pid) {           # parent
             while (<KID>) {
@@ -532,6 +533,9 @@ for that, see L<List::Util>, a standard core module since Perl 5.8.0;
 or the CPAN module C<Algorithm::Numerical::Shuffle>), or for generating
 permutations (use e.g. the CPAN modules C<Algorithm::Permute> or
 C<Algorithm::FastPermute>), or for any cryptographic applications.
+
+Tied hashes may have their own ordering and algorithmic complexity
+attacks.
 
 =item *
 

@@ -195,7 +195,8 @@ TIESCALAR classes are certainly possible.
 X<array, tying>
 
 A class implementing a tied ordinary array should define the following
-methods: TIEARRAY, FETCH, STORE, FETCHSIZE, STORESIZE and perhaps UNTIE and/or DESTROY.
+methods: TIEARRAY, FETCH, STORE, FETCHSIZE, STORESIZE, CLEAR
+and perhaps UNTIE and/or DESTROY.
 
 FETCHSIZE and STORESIZE are used to provide C<$#array> and
 equivalent C<scalar(@array)> access.

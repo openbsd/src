@@ -19,7 +19,7 @@ perlapio - perl's IO abstraction interface.
     int     PerlIO_stdoutf(const char *fmt,...)
     int     PerlIO_puts(PerlIO *f,const char *string);
     int     PerlIO_putc(PerlIO *f,int ch);
-    int     PerlIO_write(PerlIO *f,const void *buf,size_t numbytes);
+    SSize_t PerlIO_write(PerlIO *f,const void *buf,size_t numbytes);
     int     PerlIO_printf(PerlIO *f, const char *fmt,...);
     int     PerlIO_vprintf(PerlIO *f, const char *fmt, va_list args);
     int     PerlIO_flush(PerlIO *f);
@@ -30,7 +30,7 @@ perlapio - perl's IO abstraction interface.
 
     int     PerlIO_getc(PerlIO *d);
     int     PerlIO_ungetc(PerlIO *f,int ch);
-    int     PerlIO_read(PerlIO *f, void *buf, size_t numbytes);
+    SSize_t PerlIO_read(PerlIO *f, void *buf, size_t numbytes);
 
     int     PerlIO_fileno(PerlIO *f);
 
@@ -45,16 +45,16 @@ perlapio - perl's IO abstraction interface.
 
     int     PerlIO_fast_gets(PerlIO *f);
     int     PerlIO_has_cntptr(PerlIO *f);
-    int     PerlIO_get_cnt(PerlIO *f);
+    SSize_t PerlIO_get_cnt(PerlIO *f);
     char   *PerlIO_get_ptr(PerlIO *f);
-    void    PerlIO_set_ptrcnt(PerlIO *f, char *ptr, int count);
+    void    PerlIO_set_ptrcnt(PerlIO *f, char *ptr, SSize_t count);
 
     int     PerlIO_canset_cnt(PerlIO *f);              /* deprecated */
     void    PerlIO_set_cnt(PerlIO *f, int count);      /* deprecated */
 
     int     PerlIO_has_base(PerlIO *f);
     char   *PerlIO_get_base(PerlIO *f);
-    int     PerlIO_get_bufsiz(PerlIO *f);
+    SSize_t PerlIO_get_bufsiz(PerlIO *f);
 
     PerlIO *PerlIO_importFILE(FILE *stdio, const char *mode);
     FILE   *PerlIO_exportFILE(PerlIO *f, int flags);
@@ -90,14 +90,7 @@ functions which call stdio. In this case I<only> PerlIO * is a FILE *.
 This has been the default implementation since the abstraction was
 introduced in perl5.003_02.
 
-=item 2. USE_SFIO
-
-A "legacy" implementation in terms of the "sfio" library. Used for
-some specialist applications on Unix machines ("sfio" is not widely
-ported away from Unix).  Most of above are #define'd to the sfio
-functions. PerlIO * is in this case Sfio_t *.
-
-=item 3. USE_PERLIO
+=item 2. USE_PERLIO
 
 Introduced just after perl5.7.0, this is a re-implementation of the
 above abstraction which allows perl more control over how IO is done

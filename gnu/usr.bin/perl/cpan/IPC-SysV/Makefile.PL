@@ -1,12 +1,6 @@
 ################################################################################
 #
-#  $Revision: 20 $
-#  $Author: mhx $
-#  $Date: 2010/03/07 16:01:41 +0100 $
-#
-################################################################################
-#
-#  Version 2.x, Copyright (C) 2007-2010, Marcus Holland-Moritz <mhx@cpan.org>.
+#  Version 2.x, Copyright (C) 2007-2013, Marcus Holland-Moritz <mhx@cpan.org>.
 #  Version 1.x, Copyright (C) 1999, Graham Barr <gbarr@pobox.com>.
 #
 #  This program is free software; you can redistribute it and/or
@@ -57,7 +51,12 @@ sub configure
   }
   else {
     # IPC::SysV is in the core since 5.005
-    push @moreopts, INSTALLDIRS => ($] >= 5.005 ? 'perl' : 'site');
+    # 5.11.0+ has site before perl
+    push @moreopts, INSTALLDIRS => (
+      ($] >= 5.005 and $] < 5.011)
+        ? 'perl'
+        : 'site'
+    );
   }
 
   $depend{'SysV.xs'} = 'const-c.inc const-xs.inc';

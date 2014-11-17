@@ -58,23 +58,6 @@
 #endif
 #define dXSUB_SYS
 
-/*
- * 5.003_07 and earlier keyed on #ifdef MSDOS for determining if we were 
- * running on DOS, *and* if we had to cope with 16 bit memory addressing 
- * constraints, *and* we need to have memory allocated as unsigned long.
- *
- * with the advent of *real* compilers for DOS, they are not locked together.
- * MSDOS means "I am running on MSDOS". HAS_64K_LIMIT means "I have 
- * 16 bit memory addressing constraints".
- *
- * if you need the last, try #DEFINE MEM_SIZE unsigned long.
- */
-#ifdef MSDOS
-#  ifndef DJGPP
-#    define HAS_64K_LIMIT
-#  endif
-#endif
-
 /* USEMYBINMODE
  *	This symbol, if defined, indicates that the program should
  *	use the routine my_binmode(FILE *fp, char iotype, int mode) to insure

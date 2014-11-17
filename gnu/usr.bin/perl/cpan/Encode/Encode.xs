@@ -1,12 +1,11 @@
 /*
- $Id: Encode.xs,v 2.21 2013/03/05 03:12:49 dankogai Exp dankogai $
+ $Id: Encode.xs,v 2.27 2014/04/29 16:25:06 dankogai Exp dankogai $
  */
 
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#define U8 U8
 #include "encode.h"
 
 # define PERLIO_MODNAME  "PerlIO::encoding"
@@ -45,8 +44,14 @@ Encode_XSEncoding(pTHX_ encode_t * enc)
 {
     dSP;
     HV *stash = gv_stashpv("Encode::XS", TRUE);
-    SV *sv = sv_bless(newRV_noinc(newSViv(PTR2IV(enc))), stash);
+    SV *iv    = newSViv(PTR2IV(enc));
+    SV *sv    = sv_bless(newRV_noinc(iv),stash);
     int i = 0;
+    /* with the SvLEN() == 0 hack, PVX won't be freed. We cast away name's
+    constness, in the hope that perl won't mess with it. */
+    assert(SvTYPE(iv) >= SVt_PV); assert(SvLEN(iv) == 0);
+    SvFLAGS(iv) |= SVp_POK;
+    SvPVX(iv) = (char*) enc->name[0];
     PUSHMARK(sp);
     XPUSHs(sv);
     while (enc->name[i]) {
@@ -101,7 +106,6 @@ encode_method(pTHX_ const encode_t * enc, const encpage_t * dir, SV * src,
     STRLEN tlen  = slen;
     STRLEN ddone = 0;
     STRLEN sdone = 0;
-
     /* We allocate slen+1.
        PerlIO dumps core if this value is smaller than this. */
     SV *dst = sv_2mortal(newSV(slen+1));
@@ -110,6 +114,8 @@ encode_method(pTHX_ const encode_t * enc, const encpage_t * dir, SV * src,
     int code = 0;
     STRLEN trmlen = 0;
     U8 *trm = term ? (U8*) SvPV(term, trmlen) : NULL;
+
+    if (SvTAINTED(src)) SvTAINTED_on(dst); /* propagate taintedness */
 
     if (offset) {
       s += *offset;
@@ -482,6 +488,7 @@ CODE:
     SvCUR_set(src, slen);
     }
     SvUTF8_on(dst);
+    if (SvTAINTED(src)) SvTAINTED_on(dst); /* propagate taintedness */
     ST(0) = dst;
     XSRETURN(1);
 }
@@ -543,6 +550,7 @@ CODE:
     }
     SvPOK_only(dst);
     SvUTF8_off(dst);
+    if (SvTAINTED(src)) SvTAINTED_on(dst); /* propagate taintedness */
     ST(0) = dst;
     XSRETURN(1);
 }
@@ -834,6 +842,10 @@ CODE:
 OUTPUT:
     RETVAL
 
+#ifndef SvIsCOW
+# define SvIsCOW (SvREADONLY(sv) && SvFAKE(sv))
+#endif
+
 SV *
 _utf8_on(sv)
 SV *	sv
@@ -842,6 +854,7 @@ CODE:
     if (SvPOK(sv)) {
     SV *rsv = newSViv(SvUTF8(sv));
     RETVAL = rsv;
+    if (SvIsCOW(sv)) sv_force_normal(sv);
     SvUTF8_on(sv);
     } else {
     RETVAL = &PL_sv_undef;
@@ -858,6 +871,7 @@ CODE:
     if (SvPOK(sv)) {
     SV *rsv = newSViv(SvUTF8(sv));
     RETVAL = rsv;
+    if (SvIsCOW(sv)) sv_force_normal(sv);
     SvUTF8_off(sv);
     } else {
     RETVAL = &PL_sv_undef;

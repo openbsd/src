@@ -34,7 +34,7 @@ For ease of access, the Perl manual has been split up into several sections.
 
 # This section is parsed by Porting/pod_lib.pl for use by pod/buildtoc etc
 
-flag =g  perlmodlib perlapi perlintern
+flag =g  perluniprops perlmodlib perlapi perlintern
 flag =go perltoc
 flag =ro perlcn perljp perlko perltw
 flag =   perlvms
@@ -42,7 +42,7 @@ flag =   perlvms
 path perlfaq.*               cpan/perlfaq/lib/
 path perlglossary            cpan/perlfaq/lib/
 path perlxs(?:tut|typemap)?  dist/ExtUtils-ParseXS/lib/
-path perldoc                 cpan/Pod-Perldoc/lib/
+path perldoc                 cpan/Pod-Perldoc/
 
 aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
 
@@ -179,6 +179,8 @@ aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl5200delta	Perl changes in version 5.20.0
+    perl5182delta	Perl changes in version 5.18.2
     perl5181delta	Perl changes in version 5.18.1
     perl5180delta	Perl changes in version 5.18.0
     perl5161delta	Perl changes in version 5.16.1
@@ -231,10 +233,10 @@ aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
 
     perlaix		Perl notes for AIX
     perlamiga		Perl notes for AmigaOS
+    perlandroid		Perl notes for Android
     perlbs2000		Perl notes for POSIX-BC BS2000
     perlce		Perl notes for WinCE
     perlcygwin		Perl notes for Cygwin
-    perldgux		Perl notes for DG/UX
     perldos		Perl notes for DOS
     perlfreebsd 	Perl notes for FreeBSD
     perlhaiku		Perl notes for Haiku
@@ -254,6 +256,7 @@ aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
     perlriscos		Perl notes for RISC OS
     perlsolaris 	Perl notes for Solaris
     perlsymbian 	Perl notes for Symbian
+    perlsynology 	Perl notes for Synology
     perltru64		Perl notes for Tru64
     perlvms		Perl notes for VMS
     perlvos		Perl notes for Stratus VOS
@@ -265,10 +268,10 @@ aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
 
     perlboot		
     perlbot		
+    perlrepository
     perltodo
     perltooc		
     perltoot		
-    perlrepository
 
 =for buildtoc __END__
 

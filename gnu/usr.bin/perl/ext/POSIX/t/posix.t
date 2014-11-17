@@ -162,7 +162,10 @@ like( getcwd(), qr/$pat/, 'getcwd' );
 SKIP: { 
     skip("strtod() not present", 2) unless $Config{d_strtod};
 
-    $lc = &POSIX::setlocale(&POSIX::LC_NUMERIC, 'C') if $Config{d_setlocale};
+    if ($Config{d_setlocale}) {
+        $lc = &POSIX::setlocale(&POSIX::LC_NUMERIC);
+        &POSIX::setlocale(&POSIX::LC_NUMERIC, 'C');
+    }
 
     # we're just checking that strtod works, not how accurate it is
     ($n, $x) = &POSIX::strtod('3.14159_OR_SO');
@@ -206,13 +209,20 @@ sub try_strftime {
     is($got, $expect, "validating mini_mktime() and strftime(): $expect");
 }
 
-$lc = &POSIX::setlocale(&POSIX::LC_TIME, 'C') if $Config{d_setlocale};
+if ($Config{d_setlocale}) {
+    $lc = &POSIX::setlocale(&POSIX::LC_TIME);
+    &POSIX::setlocale(&POSIX::LC_TIME, 'C');
+}
+
 try_strftime("Wed Feb 28 00:00:00 1996 059", 0,0,0, 28,1,96);
 SKIP: {
     skip("VC++ 8 and Vista's CRTs regard 60 seconds as an invalid parameter", 1)
-	if ($Is_W32 and (($Config{cc} eq 'cl' and
-	                 $Config{ccversion} =~ /^(\d+)/ and $1 >= 14) or
-	                 (Win32::GetOSVersion())[1] >= 6));
+	if ($Is_W32
+	    and (($Config{cc} eq 'cl' and
+		    $Config{ccversion} =~ /^(\d+)/ and $1 >= 14)
+		or ($Config{cc} eq 'icl' and
+		    `cl --version 2>&1` =~ /^.*Version\s+([\d.]+)/ and $1 >= 14)
+		or (Win32::GetOSVersion())[1] >= 6));
 
     try_strftime("Thu Feb 29 00:00:60 1996 060", 60,0,-24, 30,1,96);
 }
@@ -280,36 +290,39 @@ is ($result, undef, "fgets should fail");
 like ($@, qr/^Use method IO::Handle::gets\(\) instead/,
       "check its redef message");
 
-# Simplistic tests for the isXXX() functions (bug #16799)
-ok( POSIX::isalnum('1'),  'isalnum' );
-ok(!POSIX::isalnum('*'),  'isalnum' );
-ok( POSIX::isalpha('f'),  'isalpha' );
-ok(!POSIX::isalpha('7'),  'isalpha' );
-ok( POSIX::iscntrl("\cA"),'iscntrl' );
-ok(!POSIX::iscntrl("A"),  'iscntrl' );
-ok( POSIX::isdigit('1'),  'isdigit' );
-ok(!POSIX::isdigit('z'),  'isdigit' );
-ok( POSIX::isgraph('@'),  'isgraph' );
-ok(!POSIX::isgraph(' '),  'isgraph' );
-ok( POSIX::islower('l'),  'islower' );
-ok(!POSIX::islower('L'),  'islower' );
-ok( POSIX::isupper('U'),  'isupper' );
-ok(!POSIX::isupper('u'),  'isupper' );
-ok( POSIX::isprint('$'),  'isprint' );
-ok(!POSIX::isprint("\n"), 'isprint' );
-ok( POSIX::ispunct('%'),  'ispunct' );
-ok(!POSIX::ispunct('u'),  'ispunct' );
-ok( POSIX::isspace("\t"), 'isspace' );
-ok(!POSIX::isspace('_'),  'isspace' );
-ok( POSIX::isxdigit('f'), 'isxdigit' );
-ok(!POSIX::isxdigit('g'), 'isxdigit' );
-# metaphysical question : what should be returned for an empty string ?
-# anyway this shouldn't segfault (bug #24554)
-ok( POSIX::isalnum(''),   'isalnum empty string' );
-ok( POSIX::isalnum(undef),'isalnum undef' );
-# those functions should stringify their arguments
-ok(!POSIX::isalpha([]),   'isalpha []' );
-ok( POSIX::isprint([]),   'isprint []' );
+{
+    no warnings 'deprecated';
+    # Simplistic tests for the isXXX() functions (bug #16799)
+    ok( POSIX::isalnum('1'),  'isalnum' );
+    ok(!POSIX::isalnum('*'),  'isalnum' );
+    ok( POSIX::isalpha('f'),  'isalpha' );
+    ok(!POSIX::isalpha('7'),  'isalpha' );
+    ok( POSIX::iscntrl("\cA"),'iscntrl' );
+    ok(!POSIX::iscntrl("A"),  'iscntrl' );
+    ok( POSIX::isdigit('1'),  'isdigit' );
+    ok(!POSIX::isdigit('z'),  'isdigit' );
+    ok( POSIX::isgraph('@'),  'isgraph' );
+    ok(!POSIX::isgraph(' '),  'isgraph' );
+    ok( POSIX::islower('l'),  'islower' );
+    ok(!POSIX::islower('L'),  'islower' );
+    ok( POSIX::isupper('U'),  'isupper' );
+    ok(!POSIX::isupper('u'),  'isupper' );
+    ok( POSIX::isprint('$'),  'isprint' );
+    ok(!POSIX::isprint("\n"), 'isprint' );
+    ok( POSIX::ispunct('%'),  'ispunct' );
+    ok(!POSIX::ispunct('u'),  'ispunct' );
+    ok( POSIX::isspace("\t"), 'isspace' );
+    ok(!POSIX::isspace('_'),  'isspace' );
+    ok( POSIX::isxdigit('f'), 'isxdigit' );
+    ok(!POSIX::isxdigit('g'), 'isxdigit' );
+    # metaphysical question : what should be returned for an empty string ?
+    # anyway this shouldn't segfault (bug #24554)
+    ok( POSIX::isalnum(''),   'isalnum empty string' );
+    ok( POSIX::isalnum(undef),'isalnum undef' );
+    # those functions should stringify their arguments
+    ok(!POSIX::isalpha([]),   'isalpha []' );
+    ok( POSIX::isprint([]),   'isprint []' );
+}
 
 eval { use strict; POSIX->import("S_ISBLK"); my $x = S_ISBLK };
 unlike( $@, qr/Can't use string .* as a symbol ref/, "Can import autoloaded constants" );
@@ -331,9 +344,7 @@ SKIP: {
     }
 
     foreach (qw(int_frac_digits frac_digits p_cs_precedes p_sep_by_space
-		n_cs_precedes n_sep_by_space p_sign_posn n_sign_posn
-		int_p_cs_precedes int_p_sep_by_space int_n_cs_precedes
-		int_n_sep_by_space int_p_sign_posn int_n_sign_posn)) {
+		n_cs_precedes n_sep_by_space p_sign_posn n_sign_posn)) {
     SKIP: {
 	    skip("localeconv has no result for $_", 1)
 		unless exists $conv->{$_};

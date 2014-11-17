@@ -5,6 +5,22 @@ perlop - Perl operators and precedence
 
 =head1 DESCRIPTION
 
+In Perl, the operator determines what operation is performed,
+independent of the type of the operands. For example C<$a + $b>
+is always a numeric addition, and if C<$a> or C<$b> do not contain
+numbers, an attempt is made to convert them to numbers first.
+
+This is in contrast to many other dynamic languages, where the
+operation is determined by the type of the first argument. It also
+means that Perl has two versions of some operators, one for numeric
+and one for string comparison. For example C<$a == $b> compares
+two numbers for equality, and C<$a eq $b> compares two strings.
+
+There are a few exceptions though: C<x> can be either string
+repetition or list repetition, depending on the type of the left
+operand, and C<&>, C<|> and C<^> can be either string or numeric bit
+operations.
+
 =head2 Operator Precedence and Associativity
 X<operator, precedence> X<precedence> X<associativity>
 
@@ -136,6 +152,10 @@ Otherwise, the right side is a method name or a simple scalar
 variable containing either the method name or a subroutine reference,
 and the left side must be either an object (a blessed reference)
 or a class name (that is, a package name).  See L<perlobj>.
+
+The dereferencing cases (as opposed to method-calling cases) are
+somewhat extended by the experimental C<postderef> feature.  For the
+details of that feature, consult L<perlref/Postfix Dereference Syntax>.
 
 =head2 Auto-increment and Auto-decrement
 X<increment> X<auto-increment> X<++> X<decrement> X<auto-decrement> X<-->
@@ -497,7 +517,9 @@ First available in Perl 5.10.1 (the 5.10.0 version behaved differently),
 binary C<~~> does a "smartmatch" between its arguments.  This is mostly
 used implicitly in the C<when> construct described in L<perlsyn>, although
 not all C<when> clauses call the smartmatch operator.  Unique among all of
-Perl's operators, the smartmatch operator can recurse.
+Perl's operators, the smartmatch operator can recurse.  The smartmatch
+operator is L<experimental|perlpolicy/experimental> and its behavior is
+subject to change.
 
 It is also unique in that all other Perl operators impose a context
 (usually string or numeric context) on their operands, autoconverting
@@ -784,8 +806,10 @@ C<"IO::Handle=GLOB(0x8039e0)">, then pattern matches against that.
 =head2 Bitwise And
 X<operator, bitwise, and> X<bitwise and> X<&>
 
-Binary "&" returns its operands ANDed together bit by bit.
-(See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
+Binary "&" returns its operands ANDed together bit by bit.  Although no
+warning is currently raised, the result is not well defined when this operation
+is performed on operands that aren't either numbers (see
+L<Integer Arithmetic>) or bitstrings (see L<Bitwise String Operators>).
 
 Note that "&" has lower priority than relational operators, so for example
 the parentheses are essential in a test like
@@ -797,10 +821,13 @@ X<operator, bitwise, or> X<bitwise or> X<|> X<operator, bitwise, xor>
 X<bitwise xor> X<^>
 
 Binary "|" returns its operands ORed together bit by bit.
-(See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
 
 Binary "^" returns its operands XORed together bit by bit.
-(See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
+
+Although no warning is currently raised, the results are not well
+defined when these operations are performed on operands that aren't either
+numbers (see L<Integer Arithmetic>) or bitstrings (see L<Bitwise String
+Operators>).
 
 Note that "|" and "^" have lower priority than relational operators, so
 for example the brackets are essential in a test like
@@ -1026,7 +1053,9 @@ you could use this instead:
 
 However, because there are I<many> other lowercase Greek characters than
 just those, to match lowercase Greek characters in a regular expression,
-you would use the pattern C</(?:(?=\p{Greek})\p{Lower})+/>.
+you could use the pattern C</(?:(?=\p{Greek})\p{Lower})+/> (or the
+L<experimental feature|perlrecharclass/Extended Bracketed Character
+Classes> C<S</(?[ \p{Greek} & \p{Lower} ])+/>>).
 
 Because each operand is evaluated in integer form, C<2.18 .. 3.14> will
 return two elements in list context.
@@ -1405,10 +1434,12 @@ table:
    \c[      chr(27)
    \c]      chr(29)
    \c^      chr(30)
-   \c?      chr(127)
+   \c_      chr(31)
+   \c?      chr(127) # (on ASCII platforms)
 
 In other words, it's the character whose code point has had 64 xor'd with
-its uppercase.  C<\c?> is DELETE because C<ord("?") ^ 64> is 127, and
+its uppercase.  C<\c?> is DELETE on ASCII platforms because
+S<C<ord("?") ^ 64>> is 127, and
 C<\c@> is NULL because the ord of "@" is 64, so xor'ing 64 itself produces 0.
 
 Also, C<\c\I<X>> yields C< chr(28) . "I<X>"> for any I<X>, but cannot come at the
@@ -1417,10 +1448,10 @@ quote.
 
 On ASCII platforms, the resulting characters from the list above are the
 complete set of ASCII controls.  This isn't the case on EBCDIC platforms; see
-L<perlebcdic/OPERATOR DIFFERENCES> for the complete list of what these
-sequences mean on both ASCII and EBCDIC platforms.
+L<perlebcdic/OPERATOR DIFFERENCES> for a full discussion of the
+differences between these for ASCII versus EBCDIC platforms.
 
-Use of any other character following the "c" besides those listed above is
+Use of any other character following the C<"c"> besides those listed above is
 discouraged, and some are deprecated with the intention of removing
 those in a later Perl version.  What happens for any of these
 other characters currently though, is that the value is derived by xor'ing
@@ -1453,12 +1484,6 @@ use this construct only for ordinals C<\077> and below, remembering to pad to
 the left with zeros to make three digits.  For larger ordinals, either use
 C<\o{}>, or convert to something else, such as to hex and use C<\x{}>
 instead.
-
-Having fewer than 3 digits may lead to a misleading warning message that says
-that what follows is ignored.  For example, C<"\128"> in the ASCII character set
-is equivalent to the two characters C<"\n8">, but the warning C<Illegal octal
-digit '8' ignored> will be thrown.  If C<"\n8"> is what you want, you can
-avoid this warning by padding your octal number with C<0>'s: C<"\0128">.
 
 =item [8]
 
@@ -1524,7 +1549,9 @@ If Unicode (for example, C<\N{}> or code points of 0x100 or
 beyond) is being used, the case map used by C<\l>, C<\L>, C<\u>, and
 C<\U> is as defined by Unicode.  That means that case-mapping
 a single character can sometimes produce several characters.
-Under C<use locale>, C<\F> produces the same results as C<\L>.
+Under C<use locale>, C<\F> produces the same results as C<\L>
+for all locales but a UTF-8 one, where it instead uses the Unicode
+definition.
 
 All systems use the virtual C<"\n"> to represent a line terminator,
 called a "newline".  There is no such thing as an unvarying, physical
@@ -1541,7 +1568,7 @@ and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
 X<newline> X<line terminator> X<eol> X<end of line>
-X<\r>
+X<\n> X<\r> X<\r\n>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
@@ -1670,7 +1697,7 @@ modifier has is not propagated, being restricted to those patterns
 explicitly using it.
 
 The last four modifiers listed above, added in Perl 5.14,
-control the character set semantics, but C</a> is the only one you are likely
+control the character set rules, but C</a> is the only one you are likely
 to want to specify explicitly; the other three are selected
 automatically by various pragmas.
 
@@ -1705,8 +1732,8 @@ you can use any pair of non-whitespace (ASCII) characters
 as delimiters.  This is particularly useful for matching path names
 that contain "/", to avoid LTS (leaning toothpick syndrome).  If "?" is
 the delimiter, then a match-only-once rule applies,
-described in C<m?PATTERN?> below.
-If "'" is the delimiter, no interpolation is performed on the PATTERN.
+described in C<m?PATTERN?> below. If "'" (single quote) is the delimiter,
+no interpolation is performed on the PATTERN.
 When using a character valid in an identifier, whitespace is required
 after the C<m>.
 
@@ -1720,7 +1747,7 @@ test and never recompile by adding a C</o> (which stands for "once")
 after the trailing delimiter.
 Once upon a time, Perl would recompile regular expressions
 unnecessarily, and this modifier was useful to tell it not to do so, in the
-interests of speed.  But now, the only reasons to use C</o> are either:
+interests of speed.  But now, the only reasons to use C</o> are one of:
 
 =over
 

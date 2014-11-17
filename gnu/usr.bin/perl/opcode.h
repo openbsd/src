@@ -280,6 +280,7 @@ EXTCONST char* const PL_op_name[] = {
 	"aelemfast_lex",
 	"aelem",
 	"aslice",
+	"kvaslice",
 	"aeach",
 	"akeys",
 	"avalues",
@@ -291,6 +292,7 @@ EXTCONST char* const PL_op_name[] = {
 	"rv2hv",
 	"helem",
 	"hslice",
+	"kvhslice",
 	"unpack",
 	"pack",
 	"split",
@@ -665,6 +667,7 @@ EXTCONST char* const PL_op_desc[] = {
 	"constant lexical array element",
 	"array element",
 	"array slice",
+	"index/value array slice",
 	"each on array",
 	"keys on array",
 	"values on array",
@@ -676,6 +679,7 @@ EXTCONST char* const PL_op_desc[] = {
 	"hash dereference",
 	"hash element",
 	"hash slice",
+	"key/value hash slice",
 	"unpack",
 	"pack",
 	"split",
@@ -1064,6 +1068,7 @@ EXT Perl_ppaddr_t PL_ppaddr[] /* or perlvars.h */
 	Perl_pp_aelemfast_lex,	/* implemented by Perl_pp_aelemfast */
 	Perl_pp_aelem,
 	Perl_pp_aslice,
+	Perl_pp_kvaslice,
 	Perl_pp_aeach,
 	Perl_pp_akeys,
 	Perl_pp_avalues,	/* implemented by Perl_pp_akeys */
@@ -1075,6 +1080,7 @@ EXT Perl_ppaddr_t PL_ppaddr[] /* or perlvars.h */
 	Perl_pp_rv2hv,	/* implemented by Perl_pp_rv2av */
 	Perl_pp_helem,
 	Perl_pp_hslice,
+	Perl_pp_kvhslice,
 	Perl_pp_unpack,
 	Perl_pp_pack,
 	Perl_pp_split,
@@ -1351,7 +1357,7 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_null,		/* srefgen */
 	Perl_ck_fun,		/* ref */
 	Perl_ck_fun,		/* bless */
-	Perl_ck_open,		/* backtick */
+	Perl_ck_backtick,	/* backtick */
 	Perl_ck_glob,		/* glob */
 	Perl_ck_readline,	/* readline */
 	Perl_ck_null,		/* rcatline */
@@ -1459,6 +1465,7 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_null,		/* aelemfast_lex */
 	Perl_ck_null,		/* aelem */
 	Perl_ck_null,		/* aslice */
+	Perl_ck_null,		/* kvaslice */
 	Perl_ck_each,		/* aeach */
 	Perl_ck_each,		/* akeys */
 	Perl_ck_each,		/* avalues */
@@ -1470,6 +1477,7 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_rvconst,	/* rv2hv */
 	Perl_ck_null,		/* helem */
 	Perl_ck_null,		/* hslice */
+	Perl_ck_null,		/* kvhslice */
 	Perl_ck_fun,		/* unpack */
 	Perl_ck_fun,		/* pack */
 	Perl_ck_split,		/* split */
@@ -1506,7 +1514,7 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_null,		/* leavesublv */
 	Perl_ck_fun,		/* caller */
 	Perl_ck_fun,		/* warn */
-	Perl_ck_die,		/* die */
+	Perl_ck_fun,		/* die */
 	Perl_ck_fun,		/* reset */
 	Perl_ck_null,		/* lineseq */
 	Perl_ck_null,		/* nextstate */
@@ -1525,7 +1533,7 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_null,		/* redo */
 	Perl_ck_null,		/* dump */
 	Perl_ck_null,		/* goto */
-	Perl_ck_exit,		/* exit */
+	Perl_ck_fun,		/* exit */
 	Perl_ck_null,		/* method_named */
 	Perl_ck_null,		/* entergiven */
 	Perl_ck_null,		/* leavegiven */
@@ -1848,6 +1856,7 @@ EXTCONST U32 PL_opargs[] = {
 	0x00013040,	/* aelemfast_lex */
 	0x00013204,	/* aelem */
 	0x00023401,	/* aslice */
+	0x00023401,	/* kvaslice */
 	0x00003b00,	/* aeach */
 	0x00003b08,	/* akeys */
 	0x00003b08,	/* avalues */
@@ -1856,9 +1865,10 @@ EXTCONST U32 PL_opargs[] = {
 	0x00004b08,	/* keys */
 	0x00001b00,	/* delete */
 	0x00001b04,	/* exists */
-	0x00000148,	/* rv2hv */
+	0x00000140,	/* rv2hv */
 	0x00014204,	/* helem */
 	0x00024401,	/* hslice */
+	0x00024401,	/* kvhslice */
 	0x00091480,	/* unpack */
 	0x0002140f,	/* pack */
 	0x00111408,	/* split */

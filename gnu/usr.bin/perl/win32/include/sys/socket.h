@@ -177,23 +177,11 @@
 #  define EAI_NODATA WSANO_DATA
 #endif
 
-#include "win32.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#undef ENOTSOCK
-#define ENOTSOCK       WSAENOTSOCK
-
-#undef ECONNABORTED
-#define ECONNABORTED WSAECONNABORTED
-
-#undef ECONNRESET
-#define ECONNRESET WSAECONNRESET
-
-#undef EAFNOSUPPORT
-#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#include "errno2.h"
 
 #ifndef PERL_FD_SETSIZE
 #define PERL_FD_SETSIZE		64

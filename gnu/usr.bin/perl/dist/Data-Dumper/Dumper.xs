@@ -18,16 +18,17 @@
 
 static I32 num_q (const char *s, STRLEN slen);
 static I32 esc_q (char *dest, const char *src, STRLEN slen);
-static I32 esc_q_utf8 (pTHX_ SV *sv, const char *src, STRLEN slen);
-static I32 needs_quote(const char *s, STRLEN len);
+static I32 esc_q_utf8 (pTHX_ SV *sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq);
+static bool globname_needs_quote(const char *s, STRLEN len);
+static bool key_needs_quote(const char *s, STRLEN len);
+static bool safe_decimal_number(const char *p, STRLEN len);
 static SV *sv_x (pTHX_ SV *sv, const char *str, STRLEN len, I32 n);
 static I32 DD_dump (pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval,
 		    HV *seenhv, AV *postav, I32 *levelp, I32 indent,
 		    SV *pad, SV *xpad, SV *apad, SV *sep, SV *pair,
 		    SV *freezer, SV *toaster,
 		    I32 purity, I32 deepcopy, I32 quotekeys, SV *bless,
-		    I32 maxdepth, SV *sortkeys, int use_sparse_seen_hash,
-		    IV maxrecurse);
+		    I32 maxdepth, SV *sortkeys, int use_sparse_seen_hash, I32 useqq);
 
 #ifndef HvNAME_get
 #define HvNAME_get HvNAME
@@ -92,19 +93,19 @@ Perl_utf8_to_uvchr_buf(pTHX_ U8 *s, U8 *send, STRLEN *retlen)
 #define DD_is_integer(sv) SvIOK(sv)
 #endif
 
-/* does a string need to be protected? */
-static I32
-needs_quote(const char *s, STRLEN len)
+/* does a glob name need to be protected? */
+static bool
+globname_needs_quote(const char *s, STRLEN len)
 {
     const char *send = s+len;
 TOP:
     if (s[0] == ':') {
 	if (++s<send) {
 	    if (*s++ != ':')
-		return 1;
+                return TRUE;
 	}
 	else
-	    return 1;
+	    return TRUE;
     }
     if (isIDFIRST(*s)) {
 	while (++s<send)
@@ -112,12 +113,68 @@ TOP:
 		if (*s == ':')
 		    goto TOP;
 		else
-		    return 1;
+                    return TRUE;
 	    }
     }
     else
-	return 1;
-    return 0;
+        return TRUE;
+
+    return FALSE;
+}
+
+/* does a hash key need to be quoted (to the left of => ).
+   Previously this used (globname_)needs_quote() which accepted strings
+   like '::foo', but these aren't safe as unquoted keys under strict.
+*/
+static bool
+key_needs_quote(const char *s, STRLEN len) {
+    const char *send = s+len;
+
+    if (safe_decimal_number(s, len)) {
+        return FALSE;
+    }
+    else if (isIDFIRST(*s)) {
+        while (++s<send)
+            if (!isWORDCHAR(*s))
+                return TRUE;
+    }
+    else
+        return TRUE;
+
+    return FALSE;
+}
+
+/* Check that the SV can be represented as a simple decimal integer.
+ *
+ * The perl code does this by matching against /^(?:0|-?[1-9]\d{0,8})\z/
+*/
+static bool
+safe_decimal_number(const char *p, STRLEN len) {
+    if (len == 1 && *p == '0')
+        return TRUE;
+
+    if (len && *p == '-') {
+        ++p;
+        --len;
+    }
+
+    if (len == 0 || *p < '1' || *p > '9')
+        return FALSE;
+
+    ++p;
+    --len;
+
+    if (len > 8)
+        return FALSE;
+
+    while (len > 0) {
+         /* the perl code checks /\d/ but we don't want unicode digits here */
+         if (*p < '0' || *p > '9')
+             return FALSE;
+         ++p;
+         --len;
+    }
+    return TRUE;
 }
 
 /* count the number of "'"s and "\"s in string */
@@ -159,8 +216,9 @@ esc_q(char *d, const char *s, STRLEN slen)
     return ret;
 }
 
+/* this function is also misused for implementing $Useqq */
 static I32
-esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
+esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq)
 {
     char *r, *rstart;
     const char *s = src;
@@ -175,13 +233,20 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
     STRLEN qq_escapables = 0;	/* " $ @ will need a \ in "" strings.  */
     STRLEN normal = 0;
     int increment;
+    UV next;
 
     /* this will need EBCDICification */
-    for (s = src; s < send; s += increment) {
-        const UV k = utf8_to_uvchr_buf((U8*)s, (U8*) send, NULL);
+    for (s = src; s < send; do_utf8 ? s += increment : s++) {
+        const UV k = do_utf8 ? utf8_to_uvchr_buf((U8*)s, (U8*) send, NULL) : *(U8*)s;
 
         /* check for invalid utf8 */
         increment = (k == 0 && *s != '\0') ? 1 : UTF8SKIP(s);
+
+	/* this is only used to check if the next character is an
+	 * ASCII digit, which are invariant, so if the following collects
+	 * a UTF-8 start byte it does no harm
+	 */
+	next = (s + increment >= send ) ? 0 : *(U8*)(s+increment);
 
 #ifdef EBCDIC
 	if (!isprint(k) || k > 256) {
@@ -196,6 +261,17 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
                 k <= 0xFFFFFFFF ? 8 : UVSIZE * 4
 #endif
                 );
+#ifndef EBCDIC
+	} else if (useqq &&
+	    /* we can't use the short form like '\0' if followed by a digit */
+                   (((k >= 7 && k <= 10) || k == 12 || k == 13 || k == 27)
+                 || (k < 8 && (next < '0' || next > '9')))) {
+	    grow += 2;
+	} else if (useqq && k <= 31 && (next < '0' || next > '9')) {
+	    grow += 3;
+	} else if (useqq && (k <= 31 || k >= 127)) {
+	    grow += 4;
+#endif
         } else if (k == '\\') {
             backslashes++;
         } else if (k == '\'') {
@@ -206,7 +282,7 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
             normal++;
         }
     }
-    if (grow) {
+    if (grow || useqq) {
         /* We have something needing hex. 3 is ""\0 */
         sv_grow(sv, cur + 3 + grow + 2*backslashes + single_quotes
 		+ 2*qq_escapables + normal);
@@ -214,8 +290,8 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
 
         *r++ = '"';
 
-        for (s = src; s < send; s += UTF8SKIP(s)) {
-            const UV k = utf8_to_uvchr_buf((U8*)s, (U8*) send, NULL);
+        for (s = src; s < send; do_utf8 ? s += UTF8SKIP(s) : s++) {
+            const UV k = do_utf8 ? utf8_to_uvchr_buf((U8*)s, (U8*) send, NULL) : *(U8*)s;
 
             if (k == '"' || k == '\\' || k == '$' || k == '@') {
                 *r++ = '\\';
@@ -225,7 +301,44 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
 #ifdef EBCDIC
 	      if (isprint(k) && k < 256)
 #else
-	      if (k < 0x80)
+	      if (useqq && (k <= 31 || k == 127 || (!do_utf8 && k > 127))) {
+	        bool next_is_digit;
+
+		*r++ = '\\';
+		switch (k) {
+		case 7:  *r++ = 'a'; break;
+		case 8:  *r++ = 'b'; break;
+		case 9:  *r++ = 't'; break;
+		case 10: *r++ = 'n'; break;
+		case 12: *r++ = 'f'; break;
+		case 13: *r++ = 'r'; break;
+		case 27: *r++ = 'e'; break;
+		default:
+		    increment = (k == 0 && *s != '\0') ? 1 : UTF8SKIP(s);
+
+		    /* only ASCII digits matter here, which are invariant,
+		     * since we only encode characters \377 and under, or
+		     * \x177 and under for a unicode string
+		     */
+		    next = (s+increment < send) ? *(U8*)(s+increment) : 0;
+		    next_is_digit = next >= '0' && next <= '9';
+
+		    /* faster than
+		     * r = r + my_sprintf(r, "%o", k);
+		     */
+		    if (k <= 7 && !next_is_digit) {
+			*r++ = (char)k + '0';
+		    } else if (k <= 63 && !next_is_digit) {
+			*r++ = (char)(k>>3) + '0';
+			*r++ = (char)(k&7) + '0';
+		    } else {
+			*r++ = (char)(k>>6) + '0';
+			*r++ = (char)((k&63)>>3) + '0';
+			*r++ = (char)(k&7) + '0';
+		    }
+		}
+	    }
+	    else if (k < 0x80)
 #endif
                 *r++ = (char)k;
             else {
@@ -299,10 +412,10 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	AV *postav, I32 *levelp, I32 indent, SV *pad, SV *xpad,
 	SV *apad, SV *sep, SV *pair, SV *freezer, SV *toaster, I32 purity,
 	I32 deepcopy, I32 quotekeys, SV *bless, I32 maxdepth, SV *sortkeys,
-        int use_sparse_seen_hash, IV maxrecurse)
+        int use_sparse_seen_hash, I32 useqq)
 {
     char tmpbuf[128];
-    U32 i;
+    Size_t i;
     char *c, *r, *realpack;
 #ifdef DD_USE_OLD_ID_FORMAT
     char id[128];
@@ -476,10 +589,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    return 1;
 	}
 
-	if (maxrecurse > 0 && *levelp >= maxrecurse) {
-	    croak("Recursion limit of %" IVdf " exceeded", maxrecurse);
-	}
-
 	if (realpack && !no_bless) {				/* we have a blessed ref */
 	    STRLEN blesslen;
 	    const char * const blessstr = SvPV(bless, blesslen);
@@ -498,9 +607,43 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
         if (is_regex) 
         {
             STRLEN rlen;
-	    const char *rval = SvPV(val, rlen);
-	    const char * const rend = rval+rlen;
-	    const char *slash = rval;
+	    SV *sv_pattern = NULL;
+	    SV *sv_flags = NULL;
+	    CV *re_pattern_cv;
+	    const char *rval;
+	    const char *rend;
+	    const char *slash;
+
+	    if ((re_pattern_cv = get_cv("re::regexp_pattern", 0))) {
+	      dSP;
+	      I32 count;
+	      ENTER;
+	      SAVETMPS;
+	      PUSHMARK(SP);
+	      XPUSHs(val);
+	      PUTBACK;
+	      count = call_sv((SV*)re_pattern_cv, G_ARRAY);
+	      SPAGAIN;
+	      if (count >= 2) {
+		sv_flags = POPs;
+	        sv_pattern = POPs;
+		SvREFCNT_inc(sv_flags);
+		SvREFCNT_inc(sv_pattern);
+	      }
+	      PUTBACK;
+	      FREETMPS;
+	      LEAVE;
+	      if (sv_pattern) {
+	        sv_2mortal(sv_pattern);
+	        sv_2mortal(sv_flags);
+	      }
+	    }
+	    else {
+	      sv_pattern = val;
+	    }
+	    rval = SvPV(sv_pattern, rlen);
+	    rend = rval+rlen;
+	    slash = rval;
 	    sv_catpvn(retval, "qr/", 3);
 	    for (;slash < rend; slash++) {
 	      if (*slash == '\\') { ++slash; continue; }
@@ -513,6 +656,8 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    }
 	    sv_catpvn(retval, rval, rlen);
 	    sv_catpvn(retval, "/", 1);
+	    if (sv_flags)
+	      sv_catsv(retval, sv_flags);
 	} 
         else if (
 #if PERL_VERSION < 9
@@ -529,7 +674,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 			postav, levelp,	indent, pad, xpad, apad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys, use_sparse_seen_hash, maxrecurse);
+			maxdepth, sortkeys, use_sparse_seen_hash, useqq);
 		sv_catpvn(retval, ")}", 2);
 	    }						     /* plain */
 	    else {
@@ -537,7 +682,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 			postav, levelp,	indent, pad, xpad, apad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys, use_sparse_seen_hash, maxrecurse);
+			maxdepth, sortkeys, use_sparse_seen_hash, useqq);
 	    }
 	    SvREFCNT_dec(namesv);
 	}
@@ -549,13 +694,13 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 		    postav, levelp,	indent, pad, xpad, apad, sep, pair,
 		    freezer, toaster, purity, deepcopy, quotekeys, bless,
-		    maxdepth, sortkeys, use_sparse_seen_hash, maxrecurse);
+		    maxdepth, sortkeys, use_sparse_seen_hash, useqq);
 	    SvREFCNT_dec(namesv);
 	}
 	else if (realtype == SVt_PVAV) {
 	    SV *totpad;
-	    I32 ix = 0;
-	    const I32 ixmax = av_len((AV *)ival);
+	    SSize_t ix = 0;
+	    const SSize_t ixmax = av_len((AV *)ival);
 	
 	    SV * const ixsv = newSViv(0);
 	    /* allowing for a 24 char wide array index */
@@ -622,7 +767,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ elem, iname, ilen, retval, seenhv, postav,
 			levelp,	indent, pad, xpad, apad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys, use_sparse_seen_hash, maxrecurse);
+			maxdepth, sortkeys, use_sparse_seen_hash, useqq);
 		if (ix < ixmax)
 		    sv_catpvn(retval, ",", 1);
 	    }
@@ -732,7 +877,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		bool do_utf8 = FALSE;
 
                if (sortkeys) {
-                   if (!(keys && (I32)i <= av_len(keys))) break;
+                   if (!(keys && (SSize_t)i <= av_len(keys))) break;
                } else {
                    if (!(entry = hv_iternext((HV *)ival))) break;
                }
@@ -760,31 +905,27 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 
                 sv_catsv(retval, totpad);
                 sv_catsv(retval, ipad);
-                /* old logic was first to check utf8 flag, and if utf8 always
+                /* The (very)
+                   old logic was first to check utf8 flag, and if utf8 always
                    call esc_q_utf8.  This caused test to break under -Mutf8,
                    because there even strings like 'c' have utf8 flag on.
                    Hence with quotekeys == 0 the XS code would still '' quote
                    them based on flags, whereas the perl code would not,
                    based on regexps.
-                   The perl code is correct.
-                   needs_quote() decides that anything that isn't a valid
-                   perl identifier needs to be quoted, hence only correctly
-                   formed strings with no characters outside [A-Za-z0-9_:]
-                   won't need quoting.  None of those characters are used in
-                   the byte encoding of utf8, so anything with utf8
-                   encoded characters in will need quoting. Hence strings
-                   with utf8 encoded characters in will end up inside do_utf8
-                   just like before, but now strings with utf8 flag set but
-                   only ascii characters will end up in the unquoted section.
 
-                   There should also be less tests for the (probably currently)
-                   more common doesn't need quoting case.
-                   The code is also smaller (22044 vs 22260) because I've been
-                   able to pull the common logic out to both sides.  */
-                if (quotekeys || needs_quote(key,keylen)) {
-                    if (do_utf8) {
+                   The old logic checked that the string was a valid
+                   perl glob name (foo::bar), which isn't safe under
+                   strict, and differs from the perl code which only
+                   accepts simple identifiers.
+
+                   With the fix for [perl #120384] I chose to make
+                   their handling of key quoting compatible between XS
+                   and perl.
+                 */
+                if (quotekeys || key_needs_quote(key,keylen)) {
+                    if (do_utf8 || useqq) {
                         STRLEN ocur = SvCUR(retval);
-                        nlen = esc_q_utf8(aTHX_ retval, key, klen);
+                        nlen = esc_q_utf8(aTHX_ retval, key, klen, do_utf8, useqq);
                         nkey = SvPVX(retval) + ocur;
                     }
                     else {
@@ -829,7 +970,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ hval, SvPVX_const(sname), SvCUR(sname), retval, seenhv,
 			postav, levelp,	indent, pad, xpad, newapad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys, use_sparse_seen_hash, maxrecurse);
+			maxdepth, sortkeys, use_sparse_seen_hash, useqq);
 		SvREFCNT_dec(sname);
 		Safefree(nkey_buffer);
 		if (indent >= 2)
@@ -971,14 +1112,14 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 #endif
 		    i = 0; else i -= 4;
 	    }
-	    if (needs_quote(c,i)) {
+            if (globname_needs_quote(c,i)) {
 #ifdef GvNAMEUTF8
 	      if (GvNAMEUTF8(val)) {
 		sv_grow(retval, SvCUR(retval)+2);
 		r = SvPVX(retval)+SvCUR(retval);
 		r[0] = '*'; r[1] = '{';
 		SvCUR_set(retval, SvCUR(retval)+2);
-		esc_q_utf8(aTHX_ retval, c, i);
+		esc_q_utf8(aTHX_ retval, c, i, 1, useqq);
 		sv_grow(retval, SvCUR(retval)+2);
 		r = SvPVX(retval)+SvCUR(retval);
 		r[0] = '}'; r[1] = '\0';
@@ -1038,7 +1179,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 				seenhv, postav, &nlevel, indent, pad, xpad,
 				newapad, sep, pair, freezer, toaster, purity,
 				deepcopy, quotekeys, bless, maxdepth, 
-				sortkeys, use_sparse_seen_hash, maxrecurse);
+				sortkeys, use_sparse_seen_hash, useqq);
 			SvREFCNT_dec(e);
 		    }
 		}
@@ -1064,11 +1205,20 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    sv_catpvn(retval, (const char *)mg->mg_ptr, mg->mg_len);
 	}
 #endif
+
 	else {
         integer_came_from_string:
-	    c = SvPV(val, i);
-	    if (DO_UTF8(val))
-	        i += esc_q_utf8(aTHX_ retval, c, i);
+            c = SvPV(val, i);
+            /* the pure perl and XS non-qq outputs have historically been
+             * different in this case, but for useqq, let's try to match
+             * the pure perl code.
+             * see [perl #74798]
+             */
+            if (useqq && safe_decimal_number(c, i)) {
+                sv_catsv(retval, val);
+            }
+	    else if (DO_UTF8(val) || useqq)
+	        i += esc_q_utf8(aTHX_ retval, c, i, DO_UTF8(val), useqq);
 	    else {
 		sv_grow(retval, SvCUR(retval)+3+2*i); /* 3: ""\0 */
 		r = SvPVX(retval) + SvCUR(retval);
@@ -1099,7 +1249,7 @@ MODULE = Data::Dumper		PACKAGE = Data::Dumper         PREFIX = Data_Dumper_
 #
 # This is the exact equivalent of Dump.  Well, almost. The things that are
 # different as of now (due to Laziness):
-#   * doesn't do double-quotes yet.
+#   * doesn't deparse yet.
 #
 
 void
@@ -1113,12 +1263,12 @@ Data_Dumper_Dumpxs(href, ...)
 	    HV *seenhv = NULL;
 	    AV *postav, *todumpav, *namesav;
 	    I32 level = 0;
-	    I32 indent, terse, i, imax, postlen;
+	    I32 indent, terse, useqq;
+	    SSize_t i, imax, postlen;
 	    SV **svp;
 	    SV *val, *name, *pad, *xpad, *apad, *sep, *pair, *varname;
 	    SV *freezer, *toaster, *bless, *sortkeys;
 	    I32 purity, deepcopy, quotekeys, maxdepth = 0;
-	    IV maxrecurse = 1000;
 	    char tmpbuf[1024];
 	    I32 gimme = GIMME;
             int use_sparse_seen_hash = 0;
@@ -1155,7 +1305,7 @@ Data_Dumper_Dumpxs(href, ...)
 		= freezer = toaster = bless = sortkeys = &PL_sv_undef;
 	    name = sv_newmortal();
 	    indent = 2;
-	    terse = purity = deepcopy = 0;
+	    terse = purity = deepcopy = useqq = 0;
 	    quotekeys = 1;
 	
 	    retval = newSVpvn("", 0);
@@ -1179,10 +1329,8 @@ Data_Dumper_Dumpxs(href, ...)
 		    purity = SvIV(*svp);
 		if ((svp = hv_fetch(hv, "terse", 5, FALSE)))
 		    terse = SvTRUE(*svp);
-#if 0 /* useqq currently unused */
 		if ((svp = hv_fetch(hv, "useqq", 5, FALSE)))
 		    useqq = SvTRUE(*svp);
-#endif
 		if ((svp = hv_fetch(hv, "pad", 3, FALSE)))
 		    pad = *svp;
 		if ((svp = hv_fetch(hv, "xpad", 4, FALSE)))
@@ -1207,8 +1355,6 @@ Data_Dumper_Dumpxs(href, ...)
 		    bless = *svp;
 		if ((svp = hv_fetch(hv, "maxdepth", 8, FALSE)))
 		    maxdepth = SvIV(*svp);
-		if ((svp = hv_fetch(hv, "maxrecurse", 10, FALSE)))
-		    maxrecurse = SvIV(*svp);
 		if ((svp = hv_fetch(hv, "sortkeys", 8, FALSE))) {
 		    sortkeys = *svp;
 		    if (! SvTRUE(sortkeys))
@@ -1288,8 +1434,7 @@ Data_Dumper_Dumpxs(href, ...)
 		    DD_dump(aTHX_ val, SvPVX_const(name), SvCUR(name), valstr, seenhv,
 			    postav, &level, indent, pad, xpad, newapad, sep, pair,
 			    freezer, toaster, purity, deepcopy, quotekeys,
-			    bless, maxdepth, sortkeys, use_sparse_seen_hash,
-			    maxrecurse);
+			    bless, maxdepth, sortkeys, use_sparse_seen_hash, useqq);
 		    SPAGAIN;
 		
 		    if (indent >= 2 && !terse)
@@ -1305,7 +1450,7 @@ Data_Dumper_Dumpxs(href, ...)
 		    sv_catsv(retval, valstr);
 		    sv_catsv(retval, sep);
 		    if (postlen >= 0) {
-			I32 i;
+			SSize_t i;
 			sv_catsv(retval, pad);
 			for (i = 0; i <= postlen; ++i) {
 			    SV *elem;

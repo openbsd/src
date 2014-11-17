@@ -159,15 +159,11 @@ A2p uses no environment variables.
 
 Larry Wall E<lt>F<larry@wall.org>E<gt>
 
-=head1 FILES
-
 =head1 SEE ALSO
 
  perl	The perl compiler/interpreter
 
  s2p	sed to perl translator
-
-=head1 DIAGNOSTICS
 
 =head1 BUGS
 

@@ -173,7 +173,8 @@ enabled. If your program can't run without them, you can say something
 like:
 
     use Config;
-    $Config{useithreads} or die('Recompile Perl with threads to run this program.');
+    $Config{useithreads} or
+        die('Recompile Perl with threads to run this program.');
 
 A possibly-threaded program using a possibly-threaded module might
 have code like this:
@@ -241,7 +242,7 @@ part of the C<threads-E<gt>create()> call, like this:
     sub sub1 {
         my @InboundParameters = @_;
         print("In the thread\n");
-        print('Got parameters >', join('<>', @InboundParameters), "<\n");
+        print('Got parameters >', join('<>',@InboundParameters), "<\n");
     }
 
 The last example illustrates another feature of threads.  You can spawn
@@ -402,7 +403,8 @@ assignment will cause the thread to die. For example:
 
     ... create some threads ...
 
-    $hash{a} = 1;       # All threads see exists($hash{a}) and $hash{a} == 1
+    $hash{a} = 1;       # All threads see exists($hash{a})
+                        # and $hash{a} == 1
     $hash{a} = $var;    # okay - copy-by-value: same effect as previous
     $hash{a} = $svar;   # okay - copy-by-value: same effect as previous
     $hash{a} = \$svar;  # okay - a reference to a shared variable
@@ -674,7 +676,8 @@ gives a quick demonstration:
         while ($TryCount--) {
             $semaphore->down();
             $LocalCopy = $GlobalVariable;
-            print("$TryCount tries left for sub $SubNumber (\$GlobalVariable is $GlobalVariable)\n");
+            print("$TryCount tries left for sub $SubNumber "
+                 ."(\$GlobalVariable is $GlobalVariable)\n");
             sleep(2);
             $LocalCopy++;
             $GlobalVariable = $LocalCopy;
@@ -846,40 +849,40 @@ does not appear in the list returned by C<threads-E<gt>list()>.
 Confused yet? It's time for an example program to show some of the
 things we've covered.  This program finds prime numbers using threads.
 
-     1 #!/usr/bin/perl
-     2 # prime-pthread, courtesy of Tom Christiansen
-     3
-     4 use strict;
-     5 use warnings;
-     6
-     7 use threads;
-     8 use Thread::Queue;
-     9
-    10 sub check_num {
-    11     my ($upstream, $cur_prime) = @_;
-    12     my $kid;
-    13     my $downstream = Thread::Queue->new();
-    14     while (my $num = $upstream->dequeue()) {
-    15         next unless ($num % $cur_prime);
-    16         if ($kid) {
-    17             $downstream->enqueue($num);
-    18         } else {
-    19             print("Found prime: $num\n");
-    20             $kid = threads->create(\&check_num, $downstream, $num);
-    21             if (! $kid) {
-    22                 warn("Sorry.  Ran out of threads.\n");
-    23                 last;
-    24             }
-    25         }
-    26     }
-    27     if ($kid) {
-    28         $downstream->enqueue(undef);
-    29         $kid->join();
-    30     }
-    31 }
-    32
-    33 my $stream = Thread::Queue->new(3..1000, undef);
-    34 check_num($stream, 2);
+   1 #!/usr/bin/perl
+   2 # prime-pthread, courtesy of Tom Christiansen
+   3
+   4 use strict;
+   5 use warnings;
+   6
+   7 use threads;
+   8 use Thread::Queue;
+   9
+  10 sub check_num {
+  11     my ($upstream, $cur_prime) = @_;
+  12     my $kid;
+  13     my $downstream = Thread::Queue->new();
+  14     while (my $num = $upstream->dequeue()) {
+  15         next unless ($num % $cur_prime);
+  16         if ($kid) {
+  17             $downstream->enqueue($num);
+  18         } else {
+  19             print("Found prime: $num\n");
+  20             $kid = threads->create(\&check_num, $downstream, $num);
+  21             if (! $kid) {
+  22                 warn("Sorry.  Ran out of threads.\n");
+  23                 last;
+  24             }
+  25         }
+  26     }
+  27     if ($kid) {
+  28         $downstream->enqueue(undef);
+  29         $kid->join();
+  30     }
+  31 }
+  32
+  33 my $stream = Thread::Queue->new(3..1000, undef);
+  34 check_num($stream, 2);
 
 This program uses the pipeline model to generate prime numbers.  Each
 thread in the pipeline has an input queue that feeds numbers to be

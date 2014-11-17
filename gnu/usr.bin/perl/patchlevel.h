@@ -14,8 +14,8 @@
  * exactly on the third column */
 
 #define PERL_REVISION	5		/* age */
-#define PERL_VERSION	18		/* epoch */
-#define PERL_SUBVERSION	2		/* generation */
+#define PERL_VERSION	20		/* epoch */
+#define PERL_SUBVERSION	1		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -35,7 +35,7 @@
    changing them should not be necessary.
 */
 #define PERL_API_REVISION	5
-#define PERL_API_VERSION	18
+#define PERL_API_VERSION	20
 #define PERL_API_SUBVERSION	0
 /*
    XXX Note:  The selection of non-default Configure options, such
@@ -133,8 +133,6 @@ hunk.
 #  endif
 static const char * const local_patches[] = {
 	NULL
-	,"Update libnet to 1.27"
-	,"CVE-2014-4330"
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
 #endif
@@ -146,7 +144,7 @@ static const char * const local_patches[] = {
 
 /* Initial space prevents this variable from being inserted in config.sh  */
 #  define	LOCAL_PATCH_COUNT	\
-	((int)(sizeof(local_patches)/sizeof(local_patches[0])-2))
+	((int)(C_ARRAY_LENGTH(local_patches)-2))
 
 /* the old terms of reference, add them only when explicitly included */
 #define PATCHLEVEL		PERL_VERSION

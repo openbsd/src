@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.98';
+our $VERSION = '1.001002';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 BEGIN {
@@ -147,6 +147,20 @@ sub create {
     return $self;
 }
 
+
+# Copy an object, currently a shallow.
+# This does *not* bless the destination.  This keeps the destructor from
+# firing when we're just storing a copy of the object to restore later.
+sub _copy {
+    my($src, $dest) = @_;
+
+    %$dest = %$src;
+    _share_keys($dest);
+
+    return;
+}
+
+
 =item B<child>
 
   my $child = $builder->child($name_of_child);
@@ -179,15 +193,20 @@ sub child {
     # Clear $TODO for the child.
     my $orig_TODO = $self->find_TODO(undef, 1, undef);
 
-    my $child = bless {}, ref $self;
-    $child->reset;
+    my $class = ref $self;
+    my $child = $class->create;
 
     # Add to our indentation
     $child->_indent( $self->_indent . '    ' );
-    
-    $child->{$_} = $self->{$_} foreach qw{Out_FH Todo_FH Fail_FH};
-    if ($parent_in_todo) {
-        $child->{Fail_FH} = $self->{Todo_FH};
+
+    # Make the child use the same outputs as the parent
+    for my $method (qw(output failure_output todo_output)) {
+        $child->$method( $self->$method );
+    }
+
+    # Ensure the child understands if they're inside a TODO
+    if( $parent_in_todo ) {
+        $child->failure_output( $self->todo_output );
     }
 
     # This will be reset in finalize. We do this here lest one child failure
@@ -220,17 +239,22 @@ sub subtest {
 
     # Turn the child into the parent so anyone who has stored a copy of
     # the Test::Builder singleton will get the child.
-    my($error, $child, %parent);
+    my $error;
+    my $child;
+    my $parent = {};
     {
         # child() calls reset() which sets $Level to 1, so we localize
         # $Level first to limit the scope of the reset to the subtest.
         local $Test::Builder::Level = $Test::Builder::Level + 1;
 
+        # Store the guts of $self as $parent and turn $child into $self.
         $child  = $self->child($name);
-        %parent = %$self;
-        %$self  = %$child;
+        _copy($self,  $parent);
+        _copy($child, $self);
 
         my $run_the_subtests = sub {
+            # Add subtest name for clarification of starting point
+            $self->note("Subtest: $name");
             $subtests->();
             $self->done_testing unless $self->_plan_handled;
             1;
@@ -242,8 +266,8 @@ sub subtest {
     }
 
     # Restore the parent and the copied child.
-    %$child = %$self;
-    %$self = %parent;
+    _copy($self,   $child);
+    _copy($parent, $self);
 
     # Restore the parent's $TODO
     $self->find_TODO(undef, 1, $child->{Parent_TODO});
@@ -252,7 +276,11 @@ sub subtest {
     die $error if $error and !eval { $error->isa('Test::Builder::Exception') };
 
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    return $child->finalize;
+    my $finalize = $child->finalize;
+
+    $self->BAIL_OUT($child->{Bailed_Out_Reason}) if $child->{Bailed_Out};
+
+    return $finalize;
 }
 
 =begin _private
@@ -322,14 +350,16 @@ sub finalize {
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $ok = 1;
     $self->parent->{Child_Name} = undef;
-    if ( $self->{Skip_All} ) {
-        $self->parent->skip($self->{Skip_All});
-    }
-    elsif ( not @{ $self->{Test_Results} } ) {
-        $self->parent->ok( 0, sprintf q[No tests run for subtest "%s"], $self->name );
-    }
-    else {
-        $self->parent->ok( $self->is_passing, $self->name );
+    unless ($self->{Bailed_Out}) {
+        if ( $self->{Skip_All} ) {
+            $self->parent->skip($self->{Skip_All});
+        }
+        elsif ( not @{ $self->{Test_Results} } ) {
+            $self->parent->ok( 0, sprintf q[No tests run for subtest "%s"], $self->name );
+        }
+        else {
+            $self->parent->ok( $self->is_passing, $self->name );
+        }
     }
     $? = $self->{Child_Error};
     delete $self->{Parent};
@@ -415,7 +445,6 @@ sub reset {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
     $self->{Child_Name}   = undef;
     $self->{Indent}     ||= '';
 
-    share( $self->{Curr_Test} );
     $self->{Curr_Test} = 0;
     $self->{Test_Results} = &share( [] );
 
@@ -434,10 +463,24 @@ sub reset {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
     $self->{Start_Todo} = 0;
     $self->{Opened_Testhandles} = 0;
 
+    $self->_share_keys;
     $self->_dup_stdhandles;
 
     return;
 }
+
+
+# Shared scalar values are lost when a hash is copied, so we have
+# a separate method to restore them.
+# Shared references are retained across copies.
+sub _share_keys {
+    my $self = shift;
+
+    share( $self->{Curr_Test} );
+
+    return;
+}
+
 
 =back
 
@@ -633,7 +676,7 @@ Or to plan a variable number of tests:
     for my $test (@tests) {
         $Test->ok($test);
     }
-    $Test->done_testing(@tests);
+    $Test->done_testing(scalar @tests);
 
 =cut
 
@@ -915,7 +958,7 @@ sub _is_dualvar {
 
     no warnings 'numeric';
     my $numval = $val + 0;
-    return $numval != 0 and $numval ne $val ? 1 : 0;
+    return ($numval != 0 and $numval ne $val ? 1 : 0);
 }
 
 =item B<is_eq>
@@ -1065,38 +1108,38 @@ sub isnt_num {
 
 =item B<like>
 
-  $Test->like($this, qr/$regex/, $name);
-  $Test->like($this, '/$regex/', $name);
+  $Test->like($thing, qr/$regex/, $name);
+  $Test->like($thing, '/$regex/', $name);
 
-Like Test::More's C<like()>.  Checks if $this matches the given C<$regex>.
+Like Test::More's C<like()>.  Checks if $thing matches the given C<$regex>.
 
 =item B<unlike>
 
-  $Test->unlike($this, qr/$regex/, $name);
-  $Test->unlike($this, '/$regex/', $name);
+  $Test->unlike($thing, qr/$regex/, $name);
+  $Test->unlike($thing, '/$regex/', $name);
 
-Like Test::More's C<unlike()>.  Checks if $this B<does not match> the
+Like Test::More's C<unlike()>.  Checks if $thing B<does not match> the
 given C<$regex>.
 
 =cut
 
 sub like {
-    my( $self, $this, $regex, $name ) = @_;
+    my( $self, $thing, $regex, $name ) = @_;
 
     local $Level = $Level + 1;
-    return $self->_regex_ok( $this, $regex, '=~', $name );
+    return $self->_regex_ok( $thing, $regex, '=~', $name );
 }
 
 sub unlike {
-    my( $self, $this, $regex, $name ) = @_;
+    my( $self, $thing, $regex, $name ) = @_;
 
     local $Level = $Level + 1;
-    return $self->_regex_ok( $this, $regex, '!~', $name );
+    return $self->_regex_ok( $thing, $regex, '!~', $name );
 }
 
 =item B<cmp_ok>
 
-  $Test->cmp_ok($this, $type, $that, $name);
+  $Test->cmp_ok($thing, $type, $that, $name);
 
 Works just like Test::More's C<cmp_ok()>.
 
@@ -1106,8 +1149,15 @@ Works just like Test::More's C<cmp_ok()>.
 
 my %numeric_cmps = map { ( $_, 1 ) } ( "<", "<=", ">", ">=", "==", "!=", "<=>" );
 
+# Bad, these are not comparison operators. Should we include more?
+my %cmp_ok_bl = map { ( $_, 1 ) } ( "=", "+=", ".=", "x=", "^=", "|=", "||=", "&&=", "...");
+
 sub cmp_ok {
     my( $self, $got, $type, $expect, $name ) = @_;
+
+    if ($cmp_ok_bl{$type}) {
+        $self->croak("$type is not a valid comparison operator in cmp_ok()");
+    }
 
     my $test;
     my $error;
@@ -1208,6 +1258,13 @@ sub BAIL_OUT {
     my( $self, $reason ) = @_;
 
     $self->{Bailed_Out} = 1;
+
+    if ($self->parent) {
+        $self->{Bailed_Out_Reason} = $reason;
+        $self->no_ending(1);
+        die bless {} => 'Test::Builder::Exception';
+    }
+
     $self->_print("Bail out!  $reason");
     exit 255;
 }
@@ -1343,11 +1400,11 @@ For example, a version of C<like()>, sans the useful diagnostic messages,
 could be written as:
 
   sub laconic_like {
-      my ($self, $this, $regex, $name) = @_;
+      my ($self, $thing, $regex, $name) = @_;
       my $usable_regex = $self->maybe_regex($regex);
       die "expecting regex, found '$regex'\n"
           unless $usable_regex;
-      $self->ok($this =~ m/$usable_regex/, $name);
+      $self->ok($thing =~ m/$usable_regex/, $name);
   }
 
 =cut
@@ -1385,7 +1442,7 @@ sub _is_qr {
 }
 
 sub _regex_ok {
-    my( $self, $this, $regex, $cmp, $name ) = @_;
+    my( $self, $thing, $regex, $cmp, $name ) = @_;
 
     my $ok           = 0;
     my $usable_regex = $self->maybe_regex($regex);
@@ -1397,14 +1454,19 @@ sub _regex_ok {
     }
 
     {
-        ## no critic (BuiltinFunctions::ProhibitStringyEval)
-
         my $test;
         my $context = $self->_caller_context;
 
-        local( $@, $!, $SIG{__DIE__} );    # isolate eval
+        {
+            ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
-        $test = eval $context . q{$test = $this =~ /$usable_regex/ ? 1 : 0};
+            local( $@, $!, $SIG{__DIE__} );    # isolate eval
+
+            # No point in issuing an uninit warning, they'll see it in the diagnostics
+            no warnings 'uninitialized';
+
+            $test = eval $context . q{$test = $thing =~ /$usable_regex/ ? 1 : 0};
+        }
 
         $test = !$test if $cmp eq '!~';
 
@@ -1413,11 +1475,11 @@ sub _regex_ok {
     }
 
     unless($ok) {
-        $this = defined $this ? "'$this'" : 'undef';
+        $thing = defined $thing ? "'$thing'" : 'undef';
         my $match = $cmp eq '=~' ? "doesn't match" : "matches";
 
         local $Level = $Level + 1;
-        $self->diag( sprintf <<'DIAGNOSTIC', $this, $match, $regex );
+        $self->diag( sprintf <<'DIAGNOSTIC', $thing, $match, $regex );
                   %s
     %13s '%s'
 DIAGNOSTIC
@@ -2402,6 +2464,26 @@ sub _ending {
     if( !$self->{Have_Plan} and $self->{Curr_Test} ) {
         $self->is_passing(0);
         $self->diag("Tests were run but no plan was declared and done_testing() was not seen.");
+
+        if($real_exit_code) {
+            $self->diag(<<"FAIL");
+Looks like your test exited with $real_exit_code just after $self->{Curr_Test}.
+FAIL
+            $self->is_passing(0);
+            _my_exit($real_exit_code) && return;
+        }
+
+        # But if the tests ran, handle exit code.
+        my $test_results = $self->{Test_Results};
+        if(@$test_results) {
+            my $num_failed = grep !$_->{'ok'}, @{$test_results}[ 0 .. $self->{Curr_Test} - 1 ];
+            if ($num_failed > 0) {
+
+                my $exit_code = $num_failed <= 254 ? $num_failed : 254;
+                _my_exit($exit_code) && return;
+            }
+        }
+        _my_exit(254) && return;
     }
 
     # Exit if plan() was never called.  This is so "require Test::Simple"

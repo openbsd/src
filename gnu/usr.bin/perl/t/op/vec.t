@@ -6,7 +6,7 @@ BEGIN {
 }
 
 require "test.pl";
-plan( tests => 32 );
+plan( tests => 35 );
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 
@@ -107,3 +107,24 @@ $destroyed = 0;
     $x = bless({}, 'Class');
 }
 is($destroyed, 1, 'Timely scalar destruction with lvalue vec');
+
+use constant roref => \1;
+eval { for (roref) { vec($_,0,1) = 1 } };
+like($@, qr/^Modification of a read-only value attempted at /,
+        'err msg when modifying read-only refs');
+
+
+{
+    # downgradeable utf8 strings should be downgraded before accessing
+    # the byte string.
+    # See the p5p thread with Message-ID:
+    # <CAMx+QJ6SAv05nmpnc7bmp0Wo+sjcx=ssxCcE-P_PZ8HDuCQd9A@mail.gmail.com>
+
+
+    my $x = substr "\x{100}\xff\xfe", 1; # a utf8 string with all ords < 256
+    my $v;
+    $v = vec($x, 0, 8);
+    is($v, 255, "downgraded utf8 try 1");
+    $v = vec($x, 0, 8);
+    is($v, 255, "downgraded utf8 try 2");
+}

@@ -40,7 +40,6 @@ $ENV{HARNESS_ACTIVE} = 0;
         $tb->ok( $_, "We're on $_" );
     }
 
-    $tb->reset_outputs;
     is $tb->read, <<"END", 'Output should nest properly';
 1..7
 ok 1 - We're on 1
@@ -86,7 +85,6 @@ END
     }
 
     $tb->_ending;
-    $tb->reset_outputs;
     is $tb->read, <<"END", 'We should allow arbitrary nesting';
 ok 1 - We're on 1
 # We ran 1
@@ -124,7 +122,6 @@ END
         $child->ok(3);
         $child->finalize;
     }
-    $tb->reset_outputs;
     is $tb->read, <<"END", 'Previous child failures should not force subsequent failures';
     1..3
     ok 1
@@ -194,7 +191,6 @@ END
     $child->todo_end;
     $child->finalize;
     $tb->_ending;
-    $tb->reset_outputs;
     is $tb->read, <<"END", 'TODO tests should not make the parent test fail';
 1..1
     1..1
@@ -209,7 +205,6 @@ END
     my $child = $tb->child;
     $child->finalize;
     $tb->_ending;
-    $tb->reset_outputs;
     my $expected = <<"END";
 1..1
 not ok 1 - No tests run for subtest "Child of $0"

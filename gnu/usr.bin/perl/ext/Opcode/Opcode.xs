@@ -257,11 +257,13 @@ _safe_pkg_prep(Package)
     SV *Package
 PPCODE:
     HV *hv; 
+    char *hvname;
     ENTER;
    
     hv = gv_stashsv(Package, GV_ADDWARN); /* should exist already	*/
 
-    if (strNE(HvNAME_get(hv),"main")) {
+    hvname = HvNAME_get(hv);
+    if (!hvname || strNE(hvname, "main")) {
         /* make it think it's in main:: */
 	hv_name_set(hv, "main", 4, 0);
         (void) hv_store(hv,"_",1,(SV *)PL_defgv,0);  /* connect _ to global */

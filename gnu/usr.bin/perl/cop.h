@@ -31,20 +31,12 @@
 
 struct jmpenv {
     struct jmpenv *	je_prev;
-    Sigjmp_buf		je_buf;		/* only for use if !je_throw */
+    Sigjmp_buf		je_buf;		/* uninit if je_prev is NULL */
     int			je_ret;		/* last exception thrown */
     bool		je_mustcatch;	/* need to call longjmp()? */
 };
 
 typedef struct jmpenv JMPENV;
-
-#ifdef OP_IN_REGISTER
-#define OP_REG_TO_MEM	PL_opsave = op
-#define OP_MEM_TO_REG	op = PL_opsave
-#else
-#define OP_REG_TO_MEM	NOOP
-#define OP_MEM_TO_REG	NOOP
-#endif
 
 /*
  * How to build the first jmpenv.
@@ -58,10 +50,11 @@ typedef struct jmpenv JMPENV;
 
 #define JMPENV_BOOTSTRAP \
     STMT_START {				\
-	Zero(&PL_start_env, 1, JMPENV);		\
+	PERL_POISON_EXPR(PoisonNew(&PL_start_env, 1, JMPENV));\
+	PL_top_env = &PL_start_env;		\
+	PL_start_env.je_prev = NULL;		\
 	PL_start_env.je_ret = -1;		\
 	PL_start_env.je_mustcatch = TRUE;	\
-	PL_top_env = &PL_start_env;		\
     } STMT_END
 
 /*
@@ -107,9 +100,7 @@ typedef struct jmpenv JMPENV;
 	    Perl_deb(aTHX_ "JUMPENV_PUSH level=%d at %s:%d\n",		\
 		         i,  __FILE__, __LINE__);})			\
 	cur_env.je_prev = PL_top_env;					\
-	OP_REG_TO_MEM;							\
 	cur_env.je_ret = PerlProc_setjmp(cur_env.je_buf, SCOPE_SAVES_SIGNAL_MASK);		\
-	OP_MEM_TO_REG;							\
 	PL_top_env = &cur_env;						\
 	cur_env.je_mustcatch = FALSE;					\
 	(v) = cur_env.je_ret;						\
@@ -133,7 +124,6 @@ typedef struct jmpenv JMPENV;
 	    while (p) { i++; p = p->je_prev; }			\
 	    Perl_deb(aTHX_ "JUMPENV_JUMP(%d) level=%d at %s:%d\n", \
 		         (int)v, i, __FILE__, __LINE__);})	\
-	OP_REG_TO_MEM;						\
 	if (PL_top_env->je_prev)				\
 	    PerlProc_longjmp(PL_top_env->je_buf, (v));		\
 	if ((v) == 2)						\
@@ -410,7 +400,7 @@ struct cop {
 				 
 #  ifdef NETWARE
 #    define CopFILE_set(c,pv)	((c)->cop_file = savepv(pv))
-#    define CopFILE_setn(c,pv,l)  ((c)->cop_file = savepv((pv),(l)))
+#    define CopFILE_setn(c,pv,l)  ((c)->cop_file = savepvn((pv),(l)))
 #  else
 #    define CopFILE_set(c,pv)	((c)->cop_file = savesharedpv(pv))
 #    define CopFILE_setn(c,pv,l)  ((c)->cop_file = savesharedpvn((pv),(l)))
@@ -444,8 +434,8 @@ struct cop {
 #  else
 #    define CopFILEAVx(c)	(GvAV(CopFILEGV(c)))
 # endif
-#  define CopFILE(c)		(CopFILEGV(c) && GvSV(CopFILEGV(c)) \
-				    ? SvPVX(GvSV(CopFILEGV(c))) : NULL)
+#  define CopFILE(c)		(CopFILEGV(c) \
+				    ? GvNAME(CopFILEGV(c))+2 : NULL)
 #  define CopSTASH(c)		((c)->cop_stash)
 #  define CopSTASH_set(c,hv)	((c)->cop_stash = (hv))
 #  define CopFILE_free(c)	(SvREFCNT_dec(CopFILEGV(c)),(CopFILEGV(c) = NULL))
@@ -648,6 +638,7 @@ struct block_format {
 
 #define POPSUB(cx,sv)							\
     STMT_START {							\
+	const I32 olddepth = cx->blk_sub.olddepth;			\
 	RETURN_PROBE(CvNAMED(cx->blk_sub.cv)				\
 			? HEK_KEY(CvNAME_HEK(cx->blk_sub.cv))		\
 			: GvENAME(CvGV(cx->blk_sub.cv)),		\
@@ -671,7 +662,8 @@ struct block_format {
 	    }								\
 	}								\
 	sv = MUTABLE_SV(cx->blk_sub.cv);				\
-	if (sv && (CvDEPTH((const CV*)sv) = cx->blk_sub.olddepth))	\
+	LEAVE_SCOPE(PL_scopestack[cx->blk_oldscopesp-1]);		\
+	if (sv && (CvDEPTH((const CV*)sv) = olddepth))			\
 	    sv = NULL;						\
     } STMT_END
 
@@ -681,11 +673,15 @@ struct block_format {
     } STMT_END
 
 #define POPFORMAT(cx)							\
-	setdefout(cx->blk_format.dfoutgv);				\
-	CvDEPTH(cx->blk_format.cv)--;					\
-	if (!CvDEPTH(cx->blk_format.cv))				\
+    STMT_START {							\
+	CV * const cv = cx->blk_format.cv;				\
+	GV * const dfuot = cx->blk_format.dfoutgv;			\
+	setdefout(dfuot);						\
+	LEAVE_SCOPE(PL_scopestack[cx->blk_oldscopesp-1]);		\
+	if (!--CvDEPTH(cv))						\
 	    SvREFCNT_dec_NN(cx->blk_format.cv);				\
-	SvREFCNT_dec_NN(cx->blk_format.dfoutgv);
+	SvREFCNT_dec_NN(dfuot);						\
+    } STMT_END
 
 /* eval context */
 struct block_eval {
@@ -1058,6 +1054,7 @@ L<perlcall>.
 #define G_WRITING_TO_STDERR 1024 /* Perl_write_to_stderr() is calling
 				    Perl_magic_methcall().  */
 #define G_RE_REPARSING 0x800     /* compiling a run-time /(?{..})/ */
+#define G_METHOD_NAMED 4096	/* calling named method, eg without :: or ' */
 
 /* flag bits for PL_in_eval */
 #define EVAL_NULL	0	/* not in an eval */
@@ -1166,14 +1163,14 @@ typedef struct stackinfo PERL_SI;
 =head1 Multicall Functions
 
 =for apidoc Ams||dMULTICALL
-Declare local variables for a multicall. See L<perlcall/LIGHTWEIGHT CALLBACKS>.
+Declare local variables for a multicall.  See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =for apidoc Ams||PUSH_MULTICALL
 Opening bracket for a lightweight callback.
 See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =for apidoc Ams||MULTICALL
-Make a lightweight callback. See L<perlcall/LIGHTWEIGHT CALLBACKS>.
+Make a lightweight callback.  See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =for apidoc Ams||POP_MULTICALL
 Closing bracket for a lightweight callback.

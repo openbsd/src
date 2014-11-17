@@ -1,4 +1,5 @@
 package CGI::Push;
+use if $] >= 5.019, 'deprecate';
 
 # See the bottom of this file for the POD documentation.  Search for the
 # string '=head'.
@@ -16,7 +17,7 @@ package CGI::Push;
 # The most recent version and complete docs are available at:
 #   http://stein.cshl.org/WWW/software/CGI/
 
-$CGI::Push::VERSION='1.05';
+$CGI::Push::VERSION='1.06';
 use CGI;
 use CGI::Util 'rearrange';
 @ISA = ('CGI');

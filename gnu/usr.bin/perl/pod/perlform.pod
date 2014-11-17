@@ -301,7 +301,7 @@ stage in the expression to single-step the debugger through):
 
 If you use the English module, you can even read the variable names:
 
-    use English '-no_match_vars';
+    use English;
     $ofh = select(OUTF);
     $FORMAT_NAME     = "My_Other_Format";
     $FORMAT_TOP_NAME = "My_Top_Format";

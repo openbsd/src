@@ -186,7 +186,7 @@ use 5.009001;
 use Carp;
 $Carp::Internal{__PACKAGE__.""}++;
 
-our $VERSION = '1.31';
+our $VERSION = '1.34';
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;
@@ -194,6 +194,7 @@ our $TRACEONLY = 0;
 our $WARNTRACE = 0;
 
 use Config;
+use Text::Tabs 'expand';
 my $privlib = $Config{privlibexp};
 if ($^O eq 'VMS') {
     require VMS::Filespec;
@@ -208,7 +209,6 @@ unshift @trypod, "./pod/perldiag.pod" if -e "pod/perldiag.pod";
 (my $PODFILE) = ((grep { -e } @trypod), $trypod[$#trypod])[0];
 
 $DEBUG ||= 0;
-my $WHOAMI = ref bless [];  # nobody's business, prolly not even mine
 
 local $| = 1;
 local $_;
@@ -238,7 +238,7 @@ CONFIG: {
 
     if (caller) {
 	INCPATH: {
-	    for my $file ( (map { "$_/$WHOAMI.pm" } @INC), $0) {
+	    for my $file ( (map { "$_/".__PACKAGE__.".pm" } @INC), $0) {
 		warn "Checking $file\n" if $DEBUG;
 		if (open(POD_DIAG, $file)) {
 		    while (<POD_DIAG>) {
@@ -321,7 +321,7 @@ my %msg;
     while (<POD_DIAG>) {
 
 	sub _split_pod_link {
-	    $_[0] =~ '(?:([^|]*)\|)?([^/]*)(?:/("?)(.*)\3)?';
+	    $_[0] =~ m'(?:([^|]*)\|)?([^/]*)(?:/("?)(.*)\3)?'s;
 	    ($1,$2,$4);
 	}
 
@@ -367,6 +367,7 @@ my %msg;
 		{
 		    next;
 		}
+		$_ = expand $_;
 		s/^/    /gm;
 		$msg{$header} .= $_;
 		for my $h(@headers) { $msg{$h} .= $_ }
@@ -393,7 +394,13 @@ my %msg;
 	    }
 	    elsif( s/^=for\s+diagnostics\s*\n(.*?)\s*\z// ) {
 		$for_item = $1;
-	    } 
+	    }
+	    elsif( /^=back/ ) { # Stop processing body here
+		undef $header;
+		undef $for_item;
+		$seen_body = 0;
+		next;
+	    }
 	    next;
 	}
 
@@ -444,7 +451,7 @@ my %msg;
             $transfmt{$header}{len} = length( $header );
 	} 
 
-	print STDERR "$WHOAMI: Duplicate entry: \"$header\"\n"
+	print STDERR __PACKAGE__.": Duplicate entry: \"$header\"\n"
 	    if $msg{$header};
 
 	$msg{$header} = '';
@@ -532,7 +539,7 @@ sub disable {
 
 sub warn_trap {
     my $warning = $_[0];
-    if (caller eq $WHOAMI or !splainthis($warning)) {
+    if (caller eq __PACKAGE__ or !splainthis($warning)) {
 	if ($WARNTRACE) {
 	    print STDERR Carp::longmess($warning);
 	} else {
@@ -557,7 +564,9 @@ sub death_trap {
     }
 
     splainthis($exception) unless $in_eval;
-    if (caller eq $WHOAMI) { print STDERR "INTERNAL EXCEPTION: $exception"; } 
+    if (caller eq __PACKAGE__) {
+	print STDERR "INTERNAL EXCEPTION: $exception";
+    } 
     &$olddie if defined $olddie and $olddie and $olddie ne \&death_trap;
 
     return if $in_eval;

@@ -9,7 +9,7 @@ require Exporter;
 use Carp;
 use Symbol qw(gensym qualify);
 
-$VERSION	= '1.13';
+$VERSION	= '1.16';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open3);
 
@@ -57,7 +57,8 @@ as file descriptors.
 open3() returns the process ID of the child process.  It doesn't return on
 failure: it just raises an exception matching C</^open3:/>.  However,
 C<exec> failures in the child (such as no such file or permission denied),
-are just reported to CHLD_ERR, as it is not possible to trap them.
+are just reported to CHLD_ERR under Windows and OS/2, as it is not possible
+to trap them.
 
 If the child process dies for any reason, the next write to CHLD_IN is
 likely to generate a SIGPIPE in the parent, which is fatal by default.
@@ -98,7 +99,7 @@ C<cat -v> and continually read and write a line from it.
 
 =item L<IPC::Open2>
 
-Like Open3 but without STDERR catpure.
+Like Open3 but without STDERR capture.
 
 =item L<IPC::Run>
 
@@ -184,6 +185,10 @@ sub _open3 {
     # it's too ugly to use @_ throughout to make perl do it for us
     # tchrist 5-Mar-00
 
+    # Historically, open3(undef...) has silently worked, so keep
+    # it working.
+    splice @_, 0, 1, undef if \$_[0] == \undef;
+    splice @_, 1, 1, undef if \$_[1] == \undef;
     unless (eval  {
 	$_[0] = gensym unless defined $_[0] && length $_[0];
 	$_[1] = gensym unless defined $_[1] && length $_[1];
@@ -297,6 +302,7 @@ sub _open3 {
 	    if ($bytes_read) {
 		(my $bang, $to_read) = unpack('II', $buf);
 		read($stat_r, my $err = '', $to_read);
+		waitpid $kidpid, 0; # Reap child which should have exited
 		if ($err) {
 		    utf8::decode $err if $] >= 5.008;
 		} else {

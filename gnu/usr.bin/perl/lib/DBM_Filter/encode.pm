@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 BEGIN
 {
@@ -46,7 +46,7 @@ DBM_Filter::encode - filter for DBM_Filter
 
 =head1 SYNOPSIS
 
-    use SDBM_File; # or DB_File, or GDBM_File, or NDBM_File, or ODBM_File
+    use SDBM_File; # or DB_File, GDBM_File, NDBM_File, ODBM_File
     use DBM_Filter ;
 
     $db = tie %hash, ...

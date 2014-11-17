@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 118;
+plan tests => 119;
 
 $FS = ':';
 
@@ -488,3 +488,7 @@ is($cnt, scalar(@ary));
         "RT #116086: split on string of single hex-20: first element is non-empty; multiple contiguous space characters";
 }
 
+# Nasty interaction between split and use constant
+use constant nought => 0;
+($a,$b,$c) = split //, $foo, nought;
+is nought, 0, 'split does not mangle 0 constants';

@@ -156,7 +156,7 @@ $ ECHO "     cppflags=''$cppflags'"
 $ ECHO "     ccflags =''$ccflags'"                          !->vms_cc_type?
 $ ECHO "     ldflags =''$ldflags'"
 $ ECHO "     stdchar=''$stdchar', d_stdstdio=''$d_stdstdio', usevfork=''$usevfork'"
-$ ECHO "     voidflags=''$voidflags', castflags=''$castflags', d_casti32=''$d_casti32', d_castneg=''$d_castneg'"
+$ ECHO "     castflags=''$castflags', d_casti32=''$d_casti32', d_castneg=''$d_castneg'"
 $ ECHO "     intsize=''$intsize', alignbytes=''$alignbytes', usemymalloc=''$usemymalloc', randbits=''$randbits'"
 $ ECHO "   Libraries:"
 $ ECHO "     so=''$so'"

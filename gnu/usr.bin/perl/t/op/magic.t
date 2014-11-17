@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan (tests => 179);
+    plan (tests => 187);
 }
 
 # Test that defined() returns true for magic variables created on the fly,
@@ -56,11 +56,11 @@ $Is_Dos      = $^O eq 'dos';
 $Is_os2      = $^O eq 'os2';
 $Is_Cygwin   = $^O eq 'cygwin';
 
-$PERL = $ENV{PERL}
-    || ($Is_NetWare           ? 'perl'   :
-       $Is_VMS                ? $^X      :
-       $Is_MSWin32            ? '.\perl' :
-       './perl');
+$PERL =
+   ($Is_NetWare ? 'perl'   :
+    $Is_VMS     ? $^X      :
+    $Is_MSWin32 ? '.\perl' :
+                  './perl');
 
 sub env_is {
     my ($key, $val, $desc) = @_;
@@ -82,7 +82,12 @@ sub env_is {
         $eqv = "\n" if length($eqv) == 2 and $eqv eq "\000\n";
         is $eqv, "$val\n", $desc;
     } else {
-        is `echo \$\Q$key\E`, "$val\n", $desc;
+        my @env = `env`;
+        SKIP: {
+            skip("env doesn't work on this android", 1) if !@env && $^O =~ /android/;
+            chomp (my @env = grep { s/^$key=// } @env);
+            is "@env", $val, $desc;
+        }
     }
 }
 
@@ -105,7 +110,7 @@ else              { is `echo \$FOO`, "hi there\n"; }
 unlink_all 'ajslkdfpqjsjfk';
 $! = 0;
 open(FOO,'ajslkdfpqjsjfk');
-isnt($!, 0);
+isnt($!, 0, "Unlinked file can't be opened");
 close FOO; # just mention it, squelch used-only-once
 
 SKIP: {
@@ -122,7 +127,7 @@ SKIP: {
     sub FETCH { $next_test + pop }
     tie my @tn, __PACKAGE__;
 
-    open( CMDPIPE, "| $PERL");
+    open( CMDPIPE, "|-", $PERL);
 
     print CMDPIPE "\$t1 = $tn[1]; \$t2 = $tn[2];\n", <<'END';
 
@@ -145,7 +150,7 @@ END
 
     close CMDPIPE;
 
-    open( CMDPIPE, "| $PERL");
+    open( CMDPIPE, "|-", $PERL);
     print CMDPIPE "\$t3 = $tn[3];\n", <<'END';
 
     { package X;
@@ -173,9 +178,10 @@ END
     close CMDPIPE;
     $? >>= 8 if $^O eq 'VMS'; # POSIX status hiding in 2nd byte
     my $todo = ($^O eq 'os2' ? ' # TODO: EMX v0.9d_fix4 bug: wrong nibble? ' : '');
+    $todo = ($Config{usecrosscompile} ? '# TODO: Not sure whats going on here when cross-compiling' : '');
     print $? & 0xFF ? "ok $tn[4]$todo\n" : "not ok $tn[4]$todo\n";
 
-    open(CMDPIPE, "| $PERL");
+    open(CMDPIPE, "|-", $PERL);
     print CMDPIPE <<'END';
 
     sub PVBM () { 'foo' }
@@ -199,6 +205,10 @@ END
 @val2 = values(%ENV);
 is join(':',@val1), join(':',@val2);
 cmp_ok @val1, '>', 1;
+
+# deleting $::{ENV}
+is runperl(prog => 'delete $::{ENV}; chdir; print qq-ok\n-'), "ok\n",
+  'deleting $::{ENV}';
 
 # regex vars
 'foobarbaz' =~ /b(a)r/;
@@ -243,6 +253,8 @@ isnt $?, 0;
 eval { die "foo\n" };
 is $@, "foo\n";
 
+ok !*@{HASH}, 'no %@';
+
 cmp_ok($$, '>', 0);
 my $pid = $$;
 eval { $$ = 42 };
@@ -269,6 +281,9 @@ $$ = $pid; # Tests below use $$
       || $Config{usensgetexecutablepath};
     if ($^O eq 'qnx') {
 	chomp($wd = `/usr/bin/fullpath -t`);
+    }
+    elsif($^O =~ /android/) {
+        chomp($wd = `sh -c 'pwd'`);
     }
     elsif($Is_Cygwin || $is_abs) {
        # Cygwin turns the symlink into the real file
@@ -342,7 +357,11 @@ EOF
     if ($Is_MSWin32 || $Is_os2) {
 	is uc $_, uc $s1;
     } else {
-	is $_, $s1;
+  SKIP:
+     {
+	  skip "# TODO: Hit bug posix-2058; exec does not setup argv[0] correctly." if ($^O eq "vos");
+	  is $_, $s1;
+     }
     }
     $_ = `$perl $script`;
     s/\.exe//i if $Is_Dos or $Is_os2 or $Is_Cygwin;
@@ -388,7 +407,7 @@ EOP
 # argv[0] assignment and by calling prctl()
 {
   SKIP: {
-    skip "We don't have prctl() here", 2 unless $Config{d_prctl_set_name};
+    skip "We don't have prctl() here, or we're on Android", 2 unless $Config{d_prctl_set_name} && $^O ne 'android';
 
     # We don't really need these tests. prctl() is tested in the
     # Kernel, but test it anyway for our sanity. If something doesn't
@@ -461,11 +480,13 @@ SKIP:  {
 }
 
 # Check that we don't auto-load packages
-SKIP: {
-    skip "staticly linked; may be preloaded", 4 unless $Config{usedl};
-    foreach (['powie::!', 'Errno'],
-	     ['powie::+', 'Tie::Hash::NamedCapture']) {
-	my ($symbol, $package) = @$_;
+foreach (['powie::!', 'Errno'],
+	 ['powie::+', 'Tie::Hash::NamedCapture']) {
+    my ($symbol, $package) = @$_;
+    SKIP: {
+	(my $extension = $package) =~ s|::|/|g;
+	skip "$package is statically linked", 2
+	    if $Config{static_ext} =~ m|\b\Q$extension\E\b|;
 	foreach my $scalar_first ('', '$$symbol;') {
 	    my $desc = qq{Referencing %{"$symbol"}};
 	    $desc .= qq{ after mentioning \${"$symbol"}} if $scalar_first;
@@ -621,12 +642,37 @@ is ${^LAST_FH}, undef, '${^LAST_FH} is undef when PL_last_in_gv is NULL';
 
 
 # $|
-fresh_perl_is 'print $| = ~$|', "1\n", {switches => ['-l']}, 
+fresh_perl_is 'print $| = ~$|', "1\n", {switches => ['-l']},
  '[perl #4760] print $| = ~$|';
 fresh_perl_is
- 'select f; undef *f; ${q/|/}; print STDOUT qq|ok\n|', "ok\n", {}, 
+ 'select f; undef *f; ${q/|/}; print STDOUT qq|ok\n|', "ok\n", {},
  '[perl #115206] no crash when vivifying $| while *{+select}{IO} is undef';
 
+# ${^OPEN} and $^H interaction
+# Setting ${^OPEN} causes $^H to change, but setting $^H would only some-
+# times make ${^OPEN} change, depending on whether it was in the same BEGIN
+# block.  Don’t test actual values (subject to change); just test for
+# consistency.
+my @stuff;
+eval '
+    BEGIN { ${^OPEN} = "a\0b"; $^H = 0;          push @stuff, ${^OPEN} }
+    BEGIN { ${^OPEN} = "a\0b"; $^H = 0 } BEGIN { push @stuff, ${^OPEN} }
+1' or die $@;
+is $stuff[0], $stuff[1], '$^H modifies ${^OPEN} consistently';
+
+# deleting $::{"\cH"}
+is runperl(prog => 'delete $::{qq-\cH-}; ${^OPEN}=foo; print qq-ok\n-'),
+  "ok\n",
+  'deleting $::{"\cH"}';
+
+# Tests for some non-magic names:
+is ${^MPE}, undef, '${^MPE} starts undefined';
+is ++${^MPE}, 1, '${^MPE} can be incremented';
+
+# This one used to behave as ${^MATCH} due to a missing break:
+is ${^MPEN}, undef, '${^MPEN} starts undefined';
+# This one used to croak due to that missing break:
+is ++${^MPEN}, 1, '${^MPEN} can be incremented';
 
 # ^^^^^^^^^ New tests go here ^^^^^^^^^
 
@@ -708,13 +754,14 @@ SKIP: {
 
     SKIP: {
 	    skip("\$0 check only on Linux and FreeBSD", 2)
-		unless $^O =~ /^(linux|freebsd)$/
+		unless $^O =~ /^(linux|android|freebsd)$/
 		    && open CMDLINE, "/proc/$$/cmdline";
 
 	    chomp(my $line = scalar <CMDLINE>);
 	    my $me = (split /\0/, $line)[0];
 	    is $me, $0, 'altering $0 is effective (testing with /proc/)';
 	    close CMDLINE;
+            skip("\$0 check with 'ps' only on Linux (but not Android) and FreeBSD", 1) if $^O eq 'android';
             # perlbug #22811
             my $mydollarzero = sub {
               my($arg) = shift;

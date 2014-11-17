@@ -106,7 +106,7 @@ echo ""
 # making an unnecessary distinction between AT-qnx and PCI-qnx,
 # for example. I will use uname's architecture for Neutrino.
 #----------------------------------------------------------------
-set X `uname -a`
+set X `$run uname -a`
 shift
 [ "$1" != "QNX" ] && echo "uname doesn't look like QNX!"
 case $4 in
@@ -242,16 +242,55 @@ if [ "$osname" = "qnx" ]; then
 else
   # $^O eq nto
 
-  ccflags='-U__STRICT_ANSI__'
+  ccflags="$ccflags -U__STRICT_ANSI__"
 
   # Options required to get dynamic linking to work
-  lddlflags='-shared'
-  ccdlflags='-Wl,-E'
+  lddlflags="$lddlflags -shared"
+  ccdlflags="$ccdlflags -Wl,-E"
 
-  # Somewhere in the build, something tries to throw a gcc
-  # option to $cc if it knows it invokes gcc. Our cc doesn't
-  # recognize that option, so we're better off setting cc=gcc.
-  cc='gcc'
+  case "$usecrosscompile" in
+  define)
+    # TODO this else should probably be an elif on $2 including
+    # "Blackberry" or similar
+    
+    # Configure detects these, but they won't link for some reason:
+    d_eaccess="$undef"
+    d_dirfd="$undef"
+    d_getspnam="$undef"
+    d_setlinebuf="$undef"
+    
+    # Default to USE_SHELL_ALWAYS -- like with Android, Blackberry's
+    # shell has several commands built-in, and this works around the
+    # issue.
+    d_useshellcmds='define'
+    
+    # By this point, targetarch will be:
+    # For x86 builds, 'ntox86' or 'i486-pc-nto-qnx8.0.0-gcc'
+    # For arm builds, 'ntoarmv7' 'arm-unknown-nto-qnx8.0.0eabi'
+    # This will change those to plain x86 and armle-v7, respectively.
+    case "`$run uname -m`" in
+        *x86*) targetarch=x86;;
+        *) targetarch=armle-v7;;
+    esac
+    
+    libc="$QNX_TARGET/$targetarch/lib/libc.so"
+    
+    ldflags="$ldflags -L${QNX_TARGET}/$targetarch/lib -L${QNX_TARGET}/$targetarch/usr/lib -L${QNX_TARGET}/$targetarch/lib/gcc/4.6.3"
+    
+    ldflags="$ldflags -lc -lm -lsocket"
+    lddlflags="$lddlflags -lc -lm -lsocket "    
+    libpth="$libpth /proc/boot"
+    targetenv="export LC_ALL=C; $targetenv"
+    ;;
+  *)
+    # Somewhere in the build, something tries to throw a gcc
+    # option to $cc if it knows it invokes gcc. Our cc doesn't
+    # recognize that option, so we're better off setting cc=gcc.
+    # Of course, only do this when not cross-compiling, for
+    # obvious reasons.
+    cc='gcc'
+    ;;
+  esac
 
   # gcc uses $QNX_TARGET/usr/include as the include directory.
   usrinc="$QNX_TARGET/usr/include"

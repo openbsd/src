@@ -563,7 +563,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.18.2.
+By default, Configure will use the following directories for 5.20.1.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -1090,6 +1090,17 @@ system.
 
 =back
 
+=head2 Specifying a logical root directory
+
+If you are cross-compiling, or are using a compiler which has it's own
+headers and libraries in a nonstandard location, and your compiler
+understands the C<--sysroot> option, you can use the C<-Dsysroot> option to
+specify the logical root directory under which all libraries and headers
+are searched for. This patch adjusts Configure to search under $sysroot, instead of /.
+    
+--sysroot is added to ccflags and friends so that make in
+ExtUtils::MakeMaker, and other extensions, will use it.
+
 =head2 Overriding an old config.sh
 
 If you want to use an old config.sh produced by a previous run of
@@ -1596,14 +1607,31 @@ and start from the very beginning.  This time, unless you are sure of
 what you are doing, accept the default list of libraries suggested by
 Configure.
 
+If the libs variable is missing -lm, there is a chance that libm.so.1
+is available, but the required (symbolic) link to libm.so is missing.
+(same could be the case for other libraries like libcrypt.so).  You
+should check your installation for packages that create that link, and
+if no package is installed that supplies that link or you cannot install
+them, make the symbolic link yourself e.g.:
+
+ $ rpm -qf /usr/lib64/libm.so
+ glibc-devel-2.15-22.17.1.x86_64
+ $ ls -lgo /usr/lib64/libm.so
+ lrwxrwxrwx 1 16 Jan  7  2013 /usr/lib64/libm.so -> /lib64/libm.so.6
+
+ or
+
+ $ sudo ln -s /lib64/libm.so.6 /lib64/libm.so
+
 If the libs variable looks correct, you might have the
 L<"nm extraction"> problem discussed above.
 
 If you still have missing routines or undefined symbols, you probably
-need to add some library or other, or you need to undefine some feature
-that Configure thought was there but is defective or incomplete.  If
-you used a hint file, see if it has any relevant advice.  You can also
-look through through config.h for likely suspects.
+need to add some library or other, make a symbolic link like described
+above, or you need to undefine some feature that Configure thought was
+there but is defective or incomplete.  If you used a hint file, see if
+it has any relevant advice.  You can also look through through config.h
+for likely suspects.
 
 =item toke.c
 
@@ -1748,19 +1776,20 @@ to avoid the BIND.
 =head2 Cross-compilation
 
 Perl can be cross-compiled.  It is just not trivial, cross-compilation
-rarely is.  Perl is routinely cross-compiled for many platforms (as of
-June 2005 at least PocketPC aka WinCE, Open Zaurus, Symbian, and
-the IBM OS/400).  These platforms are known as the B<target> platforms,
-while the systems where the compilation takes place are the B<host>
-platforms.
+rarely is.  Perl is routinely cross-compiled for several platforms: as of
+January 2014, these include Android, Blackberry 10, PocketPC aka
+WinCE, ARM Linux, and Solaris.  Previous versions of
+Perl also provided support for Open Zaurus, Symbian, and
+the IBM OS/400, but it's unknown if those ports are still functional.
+These platforms are known as the B<target> platforms, while the systems where the compilation takes place are the B<host> platforms.
 
 What makes the situation difficult is that first of all,
 cross-compilation environments vary significantly in how they are set
 up and used, and secondly because the primary way of configuring Perl
 (using the rather large Unix-tool-dependent Configure script) is not
 awfully well suited for cross-compilation.  However, starting from
-version 5.8.0, the Configure script also knows one way of supporting
-cross-compilation support, so please keep reading.
+version 5.18.0, the Configure script also knows two ways of supporting
+cross-compilation, so please keep reading.
 
 See the following files for more information about compiling Perl for
 the particular platforms:
@@ -1769,19 +1798,23 @@ the particular platforms:
 
 =item WinCE/PocketPC
 
-README.ce
+L<README.ce or perlce|perlce>
 
-=item Open Zaurus
+=item Android
 
-Cross/README
+L<"Cross-compilation" in README.android or perlandroid|perlandroid/Cross-compilation>
 
-=item Symbian
+=item Blackberry
 
-README.symbian
+L<"Cross-compilation" in README.qnx or perlqnx|perlqnx/Cross-compilation>
 
-=item OS/400
+=item Solaris
 
-README.os400
+L<"CROSS-COMPILATION" in README.solaris or perlsolaris|perlsolaris/CROSS-COMPILATION>
+
+=item Linux
+
+This document; See below.
 
 =back
 
@@ -1796,28 +1829,25 @@ For some cross-compilation environments the Configure option
 C<-Dinstallprefix=...> might be handy, see L<Changing the installation
 directory>.
 
-About the cross-compilation support of Configure: what is known to
-work is running Configure in a cross-compilation environment and
-building the miniperl executable.  What is known not to work is
-building the perl executable because that would require building
-extensions: Dynaloader statically and File::Glob dynamically, for
-extensions one needs MakeMaker and MakeMaker is not yet
-cross-compilation aware, and neither is the main Makefile.
+About the cross-compilation support of Configure: There's two forms.
+The more common one requires some way of transferring and running executables
+in the target system, such as an ssh connection; this is the
+C<./Configure -Dusecrosscompile -Dtargethost=...> route.  The second method
+doesn't need access to the target system, but requires you to provide 
+a config.sh, and and a canned Makefile; the rest of this section describes
+the former.
 
-The cross-compilation setup of Configure has successfully been used in
-at least two Linux cross-compilation environments.  The setups were
-both such that the host system was Intel Linux with a gcc built for
-cross-compiling into ARM Linux, and there was a SSH connection to the
-target system.
+This cross-compilation setup of Configure has successfully been used in
+a wide variety of setups, such as a 64-bit OS X host for an Android ARM target, or
+an amd64 Linux host targeting x86 Solaris, or even Windows.
 
 To run Configure in cross-compilation mode the basic switch that
-has to be used is C<-Dusecrosscompile>.
+has to be used is C<-Dusecrosscompile>:
 
    sh ./Configure -des -Dusecrosscompile -D...
 
 This will make the cpp symbol USE_CROSS_COMPILE and the %Config
-symbol C<usecrosscompile> available, and C<xconfig.h> will be used
-for cross-compilation.
+symbol C<usecrosscompile> available.
 
 During the Configure and build, certain helper scripts will be created
 into the Cross/ subdirectory.  The scripts are used to execute a
@@ -1840,27 +1870,48 @@ You can also specify a username to use for ssh/rsh logins
 
     -Dtargetuser=luser
 
-but in case you don't, "root" will be used.
+but in case you don't, "root" will be used.  Similarly, you can specify
+a non-standard (i.e. not 22) port for the connection, if applicable, through
 
-Because this is a cross-compilation effort, you will also need to specify
-which target environment and which compilation environment to use.
-This includes the compiler, the header files, and the libraries.
-In the below we use the usual settings for the iPAQ cross-compilation
-environment:
+    -Dtargetport=2222
+
+If the name of C<cc> has the usual GNU C semantics for cross
+compilers, that is, CPU-OS-gcc, the target architecture (C<targetarch>),
+plus names of the C<ar>, C<nm>, and C<ranlib> will also be automatically
+chosen to be CPU-OS-ar and so on.
+(The C<ld> requires more thought and will be chosen later by Configure
+as appropriate).  This will also aid in guessing the proper
+operating system name for the target, which has other repercussions, like
+better defaults and possibly critical fixes for the platform.  If Configure
+isn't guessing the OS name properly, you may need to either add a hint file
+redirecting Configure's guess, or modify Configure to make the correct choice.
+
+If your compiler doesn't follow that convention, you will also need to
+specify which target environment to use, as well as C<ar> and friends:
 
     -Dtargetarch=arm-linux
-    -Dcc=arm-linux-gcc
+    -Dcc=mycrossgcc
+    -Dar=...
+
+Additionally, a cross-compilation toolchain will usually install it's own
+logical system root somewhere -- that is, it'll create a directory somewhere
+which includes subdirectories like 'include' or 'lib'.  For example, you
+may end up with C</skiff/local/arm-linux>, where 
+C</skiff/local/arm-linux/bin> holds the binaries for cross-compilation,
+C</skiff/local/arm-linux/include> has the headers, and 
+C</skiff/local/arm-linux/lib> has the library files.
+If this is the case, and you are using a compiler that understands
+C<--sysroot>, like gcc or clang, you'll want to specify the
+C<-Dsysroot> option for Configure:
+
+    -Dsysroot=/skiff/local/arm-linux
+
+However, if your don't have a suitable directory to pass to C<-Dsysroot>,
+you will also need to specify which target environment to use:
+
     -Dusrinc=/skiff/local/arm-linux/include
     -Dincpth=/skiff/local/arm-linux/include
     -Dlibpth=/skiff/local/arm-linux/lib
-
-If the name of the C<cc> has the usual GNU C semantics for cross
-compilers, that is, CPU-OS-gcc, the names of the C<ar>, C<nm>, and
-C<ranlib> will also be automatically chosen to be CPU-OS-ar and so on.
-(The C<ld> requires more thought and will be chosen later by Configure
-as appropriate.)  Also, in this case the incpth, libpth, and usrinc
-will be guessed by Configure (unless explicitly set to something else,
-in which case Configure's guesses with be appended).
 
 In addition to the default execution/transfer methods you can also
 choose B<rsh> for execution, and B<rcp> or B<cp> for transfer,
@@ -1872,13 +1923,11 @@ Putting it all together:
 
     sh ./Configure -des -Dusecrosscompile \
         -Dtargethost=so.me.ho.st \
-	-Dtargetdir=/tar/get/dir \
+        -Dtargetdir=/tar/get/dir \
         -Dtargetuser=root \
         -Dtargetarch=arm-linux \
         -Dcc=arm-linux-gcc \
-        -Dusrinc=/skiff/local/arm-linux/include \
-        -Dincpth=/skiff/local/arm-linux/include \
-        -Dlibpth=/skiff/local/arm-linux/lib \
+        -Dsysroot=/skiff/local/arm-linux \
         -D...
 
 or if you are happy with the defaults:
@@ -1894,9 +1943,33 @@ F</usr/local/arm/2.95.5>:
     sh ./Configure -des -Dusecrosscompile \
         -Dtargethost=so.me.ho.st \
         -Dcc=/usr/local/arm/2.95.5/bin/arm-linux-gcc \
-        -Dincpth=/usr/local/arm/2.95.5/include \
-        -Dusrinc=/usr/local/arm/2.95.5/include \
-        -Dlibpth=/usr/local/arm/2.95.5/lib
+        -Dsysroot=/usr/local/arm/2.95.5
+
+There is also a C<targetenv> option for Configure which can be used
+to modify the environment of the target just before testing begins
+during 'make test'.  For example, if the target system has a nonstandard
+/tmp location, you could do this:
+
+    -Dtargetenv="export TMPDIR=/other/tmp;"
+
+If you are planning on cross-compiling to several platforms, or some other
+thing that would involve running Configure several times, there are two
+options that can be used to speed things up considerably.
+As a bit of background, when you
+call Configure with C<-Dusecrosscompile>, it begins by actually partially
+building a miniperl on the host machine, as well as the generate_uudmap
+binary, and we end up using that during the build.
+So instead of building that new perl every single time, you can build it just
+once in a separate directory, and then pass the resulting binaries to
+Configure like this:
+
+    -Dhostperl=/path/to/second/build/dir/miniperl
+    -Dhostgenerate=/path/to/second/build/dir/generate_uudmap
+
+Much less commonly, if you are cross-compiling from an ASCII host to an
+EBCDIC target, or vise versa, you'll have to pass C<-Uhostgenerate> to
+Configure, to signify that you want to build a generate_uudmap binary
+that, during make, will be run on the target system.
 
 =head1 make test
 
@@ -2137,9 +2210,6 @@ make install will install the following:
                         different
 			versions of perl.
 	cpan		The CPAN shell.
-	cpan2dist	The CPANPLUS distribution creator.
-	cpanp		The CPANPLUS shell.
-	cpanp-run-perl	A helper for cpanp.
 	enc2xs		Encoding module generator.
 	find2perl	find-to-perl translator.
 	h2ph		Extract constants and simple macros from C
@@ -2154,7 +2224,6 @@ make install will install the following:
 			utility iconv.
 	pl2pm		Convert Perl 4 .pl files to Perl 5 .pm modules.
 	pod2html,	Converters from perl's pod documentation format
-	pod2latex, 	to other useful formats.
 	pod2man,
 	pod2text,
 	pod2usage
@@ -2275,7 +2344,9 @@ or
 	make realclean
 
 The only difference between the two is that make distclean also removes
-your old config.sh and Policy.sh files.
+your old config.sh and Policy.sh files.  (A plain 'make clean' will not
+delete the makefiles used for rebuilding perl, and will also not delete
+a number of library and utility files extracted during the build process.)
 
 If you are upgrading from a previous version of perl, or if you
 change systems or compilers or make other significant changes, or if
@@ -2346,7 +2417,7 @@ http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.18.2 is not binary compatible with earlier versions of Perl.
+Perl 5.20.1 is not binary compatible with earlier versions of Perl.
 In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one version of Perl (e.g.
@@ -2420,9 +2491,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.18.2
+	sh Configure -Dprefix=/opt/perl5.20.1
 
-and adding /opt/perl5.18.2/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.20.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2435,13 +2506,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.17.11 or earlier
+=head2 Upgrading from 5.19.0 or earlier
 
-B<Perl 5.18.2 may not be binary compatible with Perl 5.17.11 or
+B<Perl 5.20.1 may not be binary compatible with Perl 5.19.11 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.18.2.  If you find you do need to rebuild an extension with
-5.18.2, you may safely do so without disturbing the older
+used with 5.20.1.  If you find you do need to rebuild an extension with
+5.20.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2474,15 +2545,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.18.2 is as follows (under $Config{prefix}):
+in Linux with perl-5.20.1 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.18.2/strict.pm
-  ./lib/perl5/5.18.2/warnings.pm
-  ./lib/perl5/5.18.2/i686-linux/File/Glob.pm
-  ./lib/perl5/5.18.2/feature.pm
-  ./lib/perl5/5.18.2/XSLoader.pm
-  ./lib/perl5/5.18.2/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.20.1/strict.pm
+  ./lib/perl5/5.20.1/warnings.pm
+  ./lib/perl5/5.20.1/i686-linux/File/Glob.pm
+  ./lib/perl5/5.20.1/feature.pm
+  ./lib/perl5/5.20.1/XSLoader.pm
+  ./lib/perl5/5.20.1/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591 files,
 (of which 510 are for lib/unicore) totaling about 3.5MB in its i386 version.

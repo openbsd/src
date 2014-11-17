@@ -1,12 +1,6 @@
 ################################################################################
 #
-#  $Revision: 25 $
-#  $Author: mhx $
-#  $Date: 2010/03/07 16:01:43 +0100 $
-#
-################################################################################
-#
-#  Version 2.x, Copyright (C) 2007-2010, Marcus Holland-Moritz <mhx@cpan.org>.
+#  Version 2.x, Copyright (C) 2007-2013, Marcus Holland-Moritz <mhx@cpan.org>.
 #  Version 1.x, Copyright (C) 1997, Graham Barr <gbarr@pobox.com>.
 #
 #  This program is free software; you can redistribute it and/or
@@ -17,16 +11,14 @@
 package IPC::SysV;
 
 use strict;
-use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION $XS_VERSION $AUTOLOAD);
+use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION $AUTOLOAD);
 use Carp;
 use Config;
 
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = do { my @r = '$Snapshot: /IPC-SysV/2.03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
-$XS_VERSION = $VERSION;
-$VERSION = eval $VERSION;
+$VERSION = '2.04';
 
 # To support new constants, just add them to @EXPORT_OK
 # and the C/XS code will be generated automagically.
@@ -66,6 +58,10 @@ $VERSION = eval $VERSION;
 
 ));
 
+%EXPORT_TAGS = (
+  all => [@EXPORT, @EXPORT_OK],
+);
+
 sub AUTOLOAD
 {
   my $constname = $AUTOLOAD;
@@ -92,7 +88,7 @@ BOOT_XS: {
 
   do {
     __PACKAGE__->can('bootstrap') || \&DynaLoader::bootstrap
-  }->(__PACKAGE__, $XS_VERSION);
+  }->(__PACKAGE__, $VERSION);
 }
 
 1;
@@ -113,7 +109,7 @@ C<IPC::SysV> defines and conditionally exports all the constants
 defined in your system include files which are needed by the SysV
 IPC calls.  Common ones include
 
-  IPC_CREATE IPC_EXCL IPC_NOWAIT IPC_PRIVATE IPC_RMID IPC_SET IPC_STAT
+  IPC_CREAT IPC_EXCL IPC_NOWAIT IPC_PRIVATE IPC_RMID IPC_SET IPC_STAT
   GETVAL SETVAL GETPID GETNCNT GETZCNT GETALL SETALL
   SEM_A SEM_R SEM_UNDO
   SHM_RDONLY SHM_RND SHMLBA
@@ -177,7 +173,7 @@ Marcus Holland-Moritz <mhx@cpan.org>
 
 =head1 COPYRIGHT
 
-Version 2.x, Copyright (C) 2007-2010, Marcus Holland-Moritz.
+Version 2.x, Copyright (C) 2007-2013, Marcus Holland-Moritz.
 
 Version 1.x, Copyright (c) 1997, Graham Barr.
 

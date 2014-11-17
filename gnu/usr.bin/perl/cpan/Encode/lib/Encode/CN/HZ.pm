@@ -5,11 +5,11 @@ use warnings;
 use utf8 ();
 
 use vars qw($VERSION);
-$VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
-use base qw(Encode::Encoding);
+use parent qw(Encode::Encoding);
 __PACKAGE__->Define('hz');
 
 # HZ is a combination of ASCII and escaped GB, so we implement it
@@ -23,7 +23,7 @@ sub decode ($$;$) {
     my ( $obj, $str, $chk ) = @_;
 
     my $GB  = Encode::find_encoding('gb2312-raw');
-    my $ret = '';
+    my $ret = substr($str, 0, 0); # to propagate taintedness
     my $in_ascii = 1;    # default mode is ASCII.
 
     while ( length $str ) {
@@ -133,10 +133,10 @@ sub cat_decode {
 }
 
 sub encode($$;$) {
-    my ( $obj, $str, $chk ) = @_;
+     my ( $obj, $str, $chk ) = @_;
 
     my $GB  = Encode::find_encoding('gb2312-raw');
-    my $ret = '';
+    my $ret = substr($str, 0, 0); # to propagate taintedness;
     my $in_ascii = 1;    # default mode is ASCII.
 
     no warnings 'utf8';  # $str may be malformed UTF8 at the end of a chunk.

@@ -5,7 +5,7 @@ use warnings;
 use parent qw(Pod::Perldoc::BaseTo);
 
 use vars qw($VERSION);
-$VERSION = '3.19';
+$VERSION = '3.23';
 
 use File::Spec::Functions qw(catfile);
 use Pod::Man 2.18;
@@ -63,7 +63,7 @@ sub init {
 sub _roffer_candidates {
 	my( $self ) = @_;
 
-	if( $self->is_openbsd ) { qw( mandoc groff nroff ) }
+	if( $self->is_openbsd || $self->is_bitrig ) { qw( mandoc groff nroff ) }
 	else                    { qw( groff nroff mandoc ) }
 	}
 
@@ -136,7 +136,7 @@ sub _get_columns {
 sub _get_podman_switches {
 	my( $self ) = @_;
 
-	my @switches = grep !m/^_/s, keys %$self;
+	my @switches = map { $_, $self->{$_} } grep !m/^_/s, keys %$self;
 
     # There needs to be a cleaner way to handle setting
     # the UTF-8 flag, but for now, comment out this
@@ -212,37 +212,16 @@ sub _have_groff_with_utf8 {
 sub _have_mandoc_with_utf8 {
 	my( $self ) = @_;
 
-	return 0 unless $self->_is_mandoc;
-	my $roffer = $self->__nroffer;
-
-	my $minimum_mandoc_version = '1.11';
-
-	my $version_string = `$roffer -V`;
-	my( $version ) = $version_string =~ /mandoc ((\d+)\.(\d+))/;
-	$self->debug( "Found mandoc $version\n" );
-
-	# is a string comparison good enough?
-	if( $version lt $minimum_mandoc_version ) {
-		$self->warn(
-			"You have an older mandoc." .
-			" Update to version $minimum_mandoc_version for better Unicode support.\n" .
-			"If you don't upgrade, wide characters may come out oddly.\n" .
-			"Your results still might be odd. If you have groff, that's even better.\n"
-			 );
-		}
-
-	$version ge $minimum_mandoc_version;
+       $self->_is_mandoc and not system 'mandoc -Tlocale -V > /dev/null 2>&1';
 	}
 
 sub _collect_nroff_switches {
 	my( $self ) = shift;
 
-	my @render_switches = $self->_is_mandoc ? qw(-mandoc) : qw(-man);
-
-	push @render_switches, $self->_get_device_switches;
+    my @render_switches = ('-man', $self->_get_device_switches);
 
 	# Thanks to Brendan O'Dea for contributing the following block
-	if( $self->_is_roff and $self->is_linux and -t STDOUT and my ($cols) = $self->_get_columns ) {
+	if( $self->_is_roff and -t STDOUT and my ($cols) = $self->_get_columns ) {
 		my $c = $cols * 39 / 40;
 		$cols = $c > $cols - 2 ? $c : $cols -2;
 		push @render_switches, '-rLL=' . (int $c) . 'n' if $cols > 80;
@@ -314,7 +293,7 @@ sub _filter_through_nroff {
         # Eliminate whitespace 
         $switches =~ s/\s//g;
 
-        # Then seperate the switches with a zero-width positive 
+        # Then separate the switches with a zero-width positive 
         # lookahead on the dash.
         #
         # See:

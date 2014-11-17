@@ -1,6 +1,6 @@
 package locale;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 use Config;
 
 $Carp::Internal{ (__PACKAGE__) } = 1;
@@ -11,12 +11,13 @@ locale - Perl pragma to use or avoid POSIX locales for built-in operations
 
 =head1 SYNOPSIS
 
-    @x = sort @y;	# Unicode sorting order
+    @x = sort @y;      # Native-platform/Unicode code point sort order
     {
         use locale;
-        @x = sort @y;   # Locale-defined sorting order
+        @x = sort @y;  # Locale-defined sort order
     }
-    @x = sort @y;	# Unicode sorting order again
+    @x = sort @y;      # Native-platform/Unicode code point sort order
+                       # again
 
 =head1 DESCRIPTION
 
@@ -26,34 +27,11 @@ expressions, LC_COLLATE for string comparison, and LC_NUMERIC for number
 formatting).  Each "use locale" or "no locale"
 affects statements to the end of the enclosing BLOCK.
 
-Starting in Perl 5.16, a hybrid mode for this pragma is available,
-
-    use locale ':not_characters';
-
-which enables only the portions of locales that don't affect the character
-set (that is, all except LC_COLLATE and LC_CTYPE).  This is useful when mixing
-Unicode and locales, including UTF-8 locales.
-
-    use locale ':not_characters';
-    use open ":locale";           # Convert I/O to/from Unicode
-    use POSIX qw(locale_h);       # Import the LC_ALL constant
-    setlocale(LC_ALL, "");        # Required for the next statement
-                                  # to take effect
-    printf "%.2f\n", 12345.67'    # Locale-defined formatting
-    @x = sort @y;                 # Unicode-defined sorting order.
-                                  # (Note that you will get better
-                                  # results using Unicode::Collate.)
-
 See L<perllocale> for more detailed information on how Perl supports
 locales.
 
-=head1 NOTE
-
-If your system does not support locales, then loading this module will
-cause the program to die with a message:
-
-    "Your vendor does not support locales, you cannot use the locale
-    module."
+On systems that don't have locales, this pragma will cause your operations
+to behave as if in the "C" locale; attempts to change the locale will fail.
 
 =cut
 
@@ -69,11 +47,6 @@ $locale::not_chars_hint_bits = 0x10;
 
 sub import {
     shift;  # should be 'locale'; not checked
-
-    if(!$Config{d_setlocale}) {
-        ## No locale support found on this Perl, giving up:
-        die('Your vendor does not support locales, you cannot use the locale module.');
-    }
 
     my $found_not_chars = 0;
     while (defined (my $arg = shift)) {

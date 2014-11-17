@@ -10,7 +10,7 @@ $|  = 1;
 use warnings;
 use Config;
 
-plan tests => 121;
+plan tests => 153;
 
 my $Perl = which_perl();
 
@@ -386,3 +386,90 @@ SKIP: {
     ok( eval { $fh->autoflush(1); 1 }, '$fh->autoflush(1) lives' );
     ok( $INC{'IO/File.pm'}, "IO::File now loaded" );
 }
+
+sub _117941 { package _117941; open my $a, "TEST" }
+delete $::{"_117941::"};
+_117941();
+pass("no crash when open autovivifies glob in freed package");
+
+# [perl #117265] check for embedded nul in pathnames, allow ending \0 though
+{
+    my $WARN;
+    local $SIG{__WARN__} = sub { $WARN = shift };
+    my $temp = tempfile();
+    my $temp_match = quotemeta $temp;
+
+    # create the file, so we can check nothing actually touched it
+    open my $temp_fh, ">", $temp;
+    close $temp_fh;
+    ok(utime(time()-10, time(), $temp), "set mtime to a known value");
+    ok(chmod(0666, $temp), "set mode to a known value");
+    my ($final_mode, $final_mtime) = (stat $temp)[2, 9];
+
+    my $fn = "$temp\0.invalid";
+    my $fno = bless \(my $fn2 = "$temp\0.overload"), "OverloadTest";
+    is(open(I, $fn), undef, "open with nul in pathnames since 5.18 [perl #117265]");
+    like($WARN, qr/^Invalid \\0 character in pathname for open: $temp_match\\0\.invalid/,
+         "warn on embedded nul"); $WARN = '';
+    is(open(I, $fno), undef, "open with nul in pathnames since 5.18 [perl #117265] (overload)");
+    like($WARN, qr/^Invalid \\0 character in pathname for open: $temp_match\\0\.overload/,
+         "warn on embedded nul"); $WARN = '';
+
+    is(chmod(0444, $fn), 0, "chmod fails with \\0 in name");
+    like($WARN, qr/^Invalid \\0 character in pathname for chmod: $temp_match\\0\.invalid/,
+         "also on chmod"); $WARN = '';
+
+    is(chmod(0444, $fno), 0, "chmod fails with \\0 in name (overload)");
+    like($WARN, qr/^Invalid \\0 character in pathname for chmod: $temp_match\\0\.overload/,
+         "also on chmod"); $WARN = '';
+
+    is (glob($fn), undef, "glob fails with \\0 in name");
+    like($WARN, qr/^Invalid \\0 character in pattern for glob: $temp_match\\0\.invalid/,
+         "also on glob"); $WARN = '';
+
+    is (glob($fno), undef, "glob fails with \\0 in name (overload)");
+    like($WARN, qr/^Invalid \\0 character in pattern for glob: $temp_match\\0\.overload/,
+         "also on glob"); $WARN = '';
+
+    {
+        no warnings 'syscalls';
+        $WARN = '';
+        is(open(I, $fn), undef, "open with nul with no warnings syscalls");
+        is($WARN, '', "ignore warning on embedded nul with no warnings syscalls");
+    }
+
+    use Errno 'ENOENT';
+    # check handling of multiple arguments, which the original patch
+    # mis-handled
+    $! = 0;
+    is (unlink($fn, $fn), 0, "check multiple arguments to unlink");
+    is($!+0, ENOENT, "check errno");
+    $! = 0;
+    is (chmod(0644, $fn, $fn), 0, "check multiple arguments to chmod");
+    is($!+0, ENOENT, "check errno");
+    $! = 0;
+    is (utime(time, time, $fn, $fn), 0, "check multiple arguments to utime");
+    is($!+0, ENOENT, "check errno");
+    SKIP: {
+        skip "no chown", 2 unless $Config{d_chown};
+        $! = 0;
+        is(chown(-1, -1, $fn, $fn), 0, "check multiple arguments to chown");
+        is($!+0, ENOENT, "check errno");
+    }
+
+    is (unlink($fn), 0, "unlink fails with \\0 in name");
+    like($WARN, qr/^Invalid \\0 character in pathname for unlink: $temp_match\\0\.invalid/,
+         "also on unlink"); $WARN = '';
+
+    is (unlink($fno), 0, "unlink fails with \\0 in name (overload)");
+    like($WARN, qr/^Invalid \\0 character in pathname for unlink: $temp_match\\0\.overload/,
+         "also on unlink"); $WARN = '';
+
+    ok(-f $temp, "nothing removed the temp file");
+    is((stat $temp)[2], $final_mode, "nothing changed its mode");
+    is((stat $temp)[9], $final_mtime, "nothing changes its mtime");
+}
+
+
+package OverloadTest;
+use overload '""' => sub { ${$_[0]} };

@@ -2011,7 +2011,7 @@ mod2fname(pTHX_ SV *sv)
     if (SvTYPE(sv) != SVt_PVAV) 
       Perl_croak_nocontext("Not array reference given to mod2fname");
 
-    avlen = av_len((AV*)sv);
+    avlen = av_tindex((AV*)sv);
     if (avlen < 0) 
       Perl_croak_nocontext("Empty array reference given to mod2fname");
 
@@ -3461,9 +3461,7 @@ XS(XS_Cwd_sys_cwd)
 	RETVAL = _getcwd2(p, MAXPATHLEN);
 	ST(0) = sv_newmortal();
 	sv_setpv(ST(0), RETVAL);
-#ifndef INCOMPLETE_TAINTS
 	SvTAINTED_on(ST(0));
-#endif
     }
     XSRETURN(1);
 }
@@ -3595,10 +3593,8 @@ XS(XS_Cwd_sys_abspath)
 	    *t = 0;
 	    SvCUR_set(sv, t - SvPVX(sv));
 	}
-#ifndef INCOMPLETE_TAINTS
 	if (!items)
 	    SvTAINTED_on(ST(0));
-#endif
     }
     XSRETURN(1);
 }
@@ -4261,7 +4257,7 @@ XS(XS_OS2_pipe)
 	ST(0) = sv_newmortal();
 	{
 	    GV *gv = newGVgen("OS2::pipe");
-	    if ( do_open(gv, perltype, strlen(perltype), FALSE, 0, 0, perlio) )
+	    if ( do_open6(gv, perltype, strlen(perltype), perlio, NULL, 0) )
 		sv_setsv(ST(0), sv_bless(newRV((SV*)gv), gv_stashpv("IO::Handle",1)));
 	    else
 		ST(0) = &PL_sv_undef;

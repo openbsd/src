@@ -27,7 +27,7 @@
 #include "perl.h"
 
 SV**
-Perl_stack_grow(pTHX_ SV **sp, SV **p, int n)
+Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
 {
     dVAR;
 
@@ -88,7 +88,7 @@ void
 Perl_push_scope(pTHX)
 {
     dVAR;
-    if (PL_scopestack_ix == PL_scopestack_max) {
+    if (UNLIKELY(PL_scopestack_ix == PL_scopestack_max)) {
 	PL_scopestack_max = GROW(PL_scopestack_max);
 	Renew(PL_scopestack, PL_scopestack_max, I32);
 #ifdef DEBUGGING
@@ -141,7 +141,7 @@ Perl_savestack_grow_cnt(pTHX_ I32 need)
 #undef GROW
 
 void
-Perl_tmps_grow(pTHX_ I32 n)
+Perl_tmps_grow(pTHX_ SSize_t n)
 {
     dVAR;
 #ifndef STRESS_REALLOC
@@ -158,13 +158,13 @@ Perl_free_tmps(pTHX)
 {
     dVAR;
     /* XXX should tmps_floor live in cxstack? */
-    const I32 myfloor = PL_tmps_floor;
+    const SSize_t myfloor = PL_tmps_floor;
     while (PL_tmps_ix > myfloor) {      /* clean up after last statement */
 	SV* const sv = PL_tmps_stack[PL_tmps_ix--];
 #ifdef PERL_POISON
 	PoisonWith(PL_tmps_stack + PL_tmps_ix + 1, 1, SV *, 0xAB);
 #endif
-	if (sv && sv != &PL_sv_undef) {
+	if (LIKELY(sv && sv != &PL_sv_undef)) {
 	    SvTEMP_off(sv);
 	    SvREFCNT_dec_NN(sv);		/* note, can modify tmps_ix!!! */
 	}
@@ -214,7 +214,7 @@ Perl_save_scalar(pTHX_ GV *gv)
 
     PERL_ARGS_ASSERT_SAVE_SCALAR;
 
-    if (SvGMAGICAL(*sptr)) {
+    if (UNLIKELY(SvGMAGICAL(*sptr))) {
         PL_localizing = 1;
         (void)mg_get(*sptr);
         PL_localizing = 0;
@@ -321,13 +321,13 @@ Perl_save_ary(pTHX_ GV *gv)
 
     PERL_ARGS_ASSERT_SAVE_ARY;
 
-    if (!AvREAL(oav) && AvREIFY(oav))
+    if (UNLIKELY(!AvREAL(oav) && AvREIFY(oav)))
 	av_reify(oav);
     save_pushptrptr(SvREFCNT_inc_simple_NN(gv), oav, SAVEt_AV);
 
     GvAV(gv) = NULL;
     av = GvAVn(gv);
-    if (SvMAGIC(oav))
+    if (UNLIKELY(SvMAGIC(oav)))
 	mg_localize(MUTABLE_SV(oav), MUTABLE_SV(av), TRUE);
     return av;
 }
@@ -346,7 +346,7 @@ Perl_save_hash(pTHX_ GV *gv)
 
     GvHV(gv) = NULL;
     hv = GvHVn(gv);
-    if (SvMAGIC(ohv))
+    if (UNLIKELY(SvMAGIC(ohv)))
 	mg_localize(MUTABLE_SV(ohv), MUTABLE_SV(hv), TRUE);
     return hv;
 }
@@ -400,7 +400,7 @@ Perl_save_int(pTHX_ int *intp)
 
     PERL_ARGS_ASSERT_SAVE_INT;
 
-    if ((int)(type >> SAVE_TIGHT_SHIFT) != i) {
+    if (UNLIKELY((int)(type >> SAVE_TIGHT_SHIFT) != i)) {
         SS_ADD_INT(i);
         type = SAVEt_INT;
         size++;
@@ -447,7 +447,7 @@ Perl_save_I32(pTHX_ I32 *intp)
 
     PERL_ARGS_ASSERT_SAVE_I32;
 
-    if ((I32)(type >> SAVE_TIGHT_SHIFT) != i) {
+    if (UNLIKELY((I32)(type >> SAVE_TIGHT_SHIFT) != i)) {
         SS_ADD_INT(i);
         type = SAVEt_I32;
         size++;
@@ -455,6 +455,20 @@ Perl_save_I32(pTHX_ I32 *intp)
     SS_ADD_PTR(intp);
     SS_ADD_UV(type);
     SS_ADD_END(size);
+}
+
+void
+Perl_save_strlen(pTHX_ STRLEN *ptr)
+{
+    dVAR;
+    dSS_ADD;
+
+    PERL_ARGS_ASSERT_SAVE_STRLEN;
+
+    SS_ADD_IV(*ptr);
+    SS_ADD_PTR(ptr);
+    SS_ADD_UV(SAVEt_STRLEN);
+    SS_ADD_END(3);
 }
 
 /* Cannot use save_sptr() to store a char* since the SV** cast will
@@ -545,7 +559,7 @@ Perl_save_clearsv(pTHX_ SV **svp)
 
     ASSERT_CURPAD_ACTIVE("save_clearsv");
     SvPADSTALE_off(*svp); /* mark lexical as active */
-    if ((offset_shifted >> SAVE_TIGHT_SHIFT) != offset) {
+    if (UNLIKELY((offset_shifted >> SAVE_TIGHT_SHIFT) != offset)) {
 	Perl_croak(aTHX_ "panic: pad offset %"UVuf" out of range (%p-%p)",
 		   offset, svp, PL_curpad);
     }
@@ -583,14 +597,18 @@ Perl_save_hdelete(pTHX_ HV *hv, SV *keysv)
 }
 
 void
-Perl_save_adelete(pTHX_ AV *av, I32 key)
+Perl_save_adelete(pTHX_ AV *av, SSize_t key)
 {
     dVAR;
+    dSS_ADD;
 
     PERL_ARGS_ASSERT_SAVE_ADELETE;
 
     SvREFCNT_inc_void(av);
-    save_pushi32ptr(key, av, SAVEt_ADELETE);
+    SS_ADD_UV(key);
+    SS_ADD_PTR(av);
+    SS_ADD_IV(SAVEt_ADELETE);
+    SS_ADD_END(3);
 }
 
 void
@@ -647,19 +665,23 @@ S_save_pushptri32ptr(pTHX_ void *const ptr1, const I32 i, void *const ptr2,
 }
 
 void
-Perl_save_aelem_flags(pTHX_ AV *av, I32 idx, SV **sptr, const U32 flags)
+Perl_save_aelem_flags(pTHX_ AV *av, SSize_t idx, SV **sptr,
+			    const U32 flags)
 {
-    dVAR;
+    dVAR; dSS_ADD;
     SV *sv;
 
     PERL_ARGS_ASSERT_SAVE_AELEM_FLAGS;
 
     SvGETMAGIC(*sptr);
-    save_pushptri32ptr(SvREFCNT_inc_simple(av), idx, SvREFCNT_inc(*sptr),
-		       SAVEt_AELEM);
+    SS_ADD_PTR(SvREFCNT_inc_simple(av));
+    SS_ADD_IV(idx);
+    SS_ADD_PTR(SvREFCNT_inc(*sptr));
+    SS_ADD_UV(SAVEt_AELEM);
+    SS_ADD_END(4);
     /* The array needs to hold a reference count on its new element, so it
        must be AvREAL. */
-    if (!AvREAL(av) && AvREIFY(av))
+    if (UNLIKELY(!AvREAL(av) && AvREIFY(av)))
 	av_reify(av);
     save_scalar_at(sptr, flags); /* XXX - FIXME - see #60360 */
     if (flags & SAVEf_KEEPOLDELEM)
@@ -669,7 +691,7 @@ Perl_save_aelem_flags(pTHX_ AV *av, I32 idx, SV **sptr, const U32 flags)
      * won't actually be stored in the array - so it won't get
      * reaped when the localize ends. Ensure it gets reaped by
      * mortifying it instead. DAPM */
-    if (SvTIED_mg((const SV *)av, PERL_MAGIC_tied))
+    if (UNLIKELY(SvTIED_mg((const SV *)av, PERL_MAGIC_tied)))
 	sv_2mortal(sv);
 }
 
@@ -698,7 +720,7 @@ Perl_save_helem_flags(pTHX_ HV *hv, SV *key, SV **sptr, const U32 flags)
      * won't actually be stored in the hash - so it won't get
      * reaped when the localize ends. Ensure it gets reaped by
      * mortifying it instead. DAPM */
-    if (SvTIED_mg((const SV *)hv, PERL_MAGIC_tied))
+    if (UNLIKELY(SvTIED_mg((const SV *)hv, PERL_MAGIC_tied)))
 	sv_2mortal(sv);
 }
 
@@ -723,7 +745,7 @@ Perl_save_alloc(pTHX_ I32 size, I32 pad)
     const UV elems = 1 + ((size + pad - 1) / sizeof(*PL_savestack));
     const UV elems_shifted = elems << SAVE_TIGHT_SHIFT;
 
-    if ((elems_shifted >> SAVE_TIGHT_SHIFT) != elems)
+    if (UNLIKELY((elems_shifted >> SAVE_TIGHT_SHIFT) != elems))
 	Perl_croak(aTHX_
             "panic: save_alloc elems %"UVuf" out of range (%"IVdf"-%"IVdf")",
 		   elems, (IV)size, (IV)pad);
@@ -776,7 +798,7 @@ Perl_leave_scope(pTHX_ I32 base)
     arg1.any_ptr = NULL;
     arg2.any_ptr = NULL;
 
-    if (base < -1)
+    if (UNLIKELY(base < -1))
 	Perl_croak(aTHX_ "panic: corrupt saved stack index %ld", (long) base);
     DEBUG_l(Perl_deb(aTHX_ "savestack: releasing items %ld -> %ld\n",
 			(long)PL_savestack_ix, (long)base));
@@ -811,7 +833,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	switch (type) {
 	case SAVEt_ITEM:			/* normal string */
 	    sv_replace(ARG1_SV, ARG0_SV);
-            if (SvSMAGICAL(ARG1_SV)) {
+            if (UNLIKELY(SvSMAGICAL(ARG1_SV))) {
                 PL_localizing = 2;
                 mg_set(ARG1_SV);
                 PL_localizing = 0;
@@ -833,7 +855,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    SV * const sv = *svp;
 	    *svp = ARG0_SV;
 	    SvREFCNT_dec(sv);
-            if (SvSMAGICAL(ARG0_SV)) {
+            if (UNLIKELY(SvSMAGICAL(ARG0_SV))) {
                 PL_localizing = 2;
                 mg_set(ARG0_SV);
                 PL_localizing = 0;
@@ -891,7 +913,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_AV:				/* array reference */
 	    SvREFCNT_dec(GvAV(ARG1_GV));
 	    GvAV(ARG1_GV) = ARG0_AV;
-            if (SvSMAGICAL(ARG0_SV)) {
+            if (UNLIKELY(SvSMAGICAL(ARG0_SV))) {
                 PL_localizing = 2;
                 mg_set(ARG0_SV);
                 PL_localizing = 0;
@@ -901,7 +923,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_HV:				/* hash reference */
 	    SvREFCNT_dec(GvHV(ARG1_GV));
 	    GvHV(ARG1_GV) = ARG0_HV;
-            if (SvSMAGICAL(ARG0_SV)) {
+            if (UNLIKELY(SvSMAGICAL(ARG0_SV))) {
                 PL_localizing = 2;
                 mg_set(ARG0_SV);
                 PL_localizing = 0;
@@ -914,12 +936,15 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_INT:				/* int reference */
 	    *(int*)ARG0_PTR = (int)ARG1_I32;
 	    break;
+	case SAVEt_STRLEN:			/* STRLEN/size_t ref */
+	    *(STRLEN*)ARG0_PTR = (STRLEN)arg1.any_iv;
+	    break;
 	case SAVEt_BOOL:			/* bool reference */
 	    *(bool*)ARG0_PTR = cBOOL(uv >> 8);
 #ifdef NO_TAINT_SUPPORT
             PERL_UNUSED_VAR(was);
 #else
-	    if (ARG0_PTR == &(TAINT_get)) {
+	    if (UNLIKELY(ARG0_PTR == &(TAINT_get))) {
 		/* If we don't update <was>, to reflect what was saved on the
 		 * stack for PL_tainted, then we will overwrite this attempt to
 		 * restore it when we exit this routine.  Note that this won't
@@ -1011,28 +1036,46 @@ Perl_leave_scope(pTHX_ I32 base)
                     (SvREFCNT(sv) <= 1 && !SvOBJECT(sv)) ? "clear" : "abandon"
                 ));
 
+                assert(SvPADMY(sv));
+
                 /* Can clear pad variable in place? */
-                if (SvREFCNT(sv) <= 1 && !SvOBJECT(sv)) {
-                    /*
-                     * if a my variable that was made readonly is going out of
-                     * scope, we want to remove the readonlyness so that it can
-                     * go out of scope quietly
-                     */
-                    if (SvPADMY(sv) && !SvFAKE(sv))
-                        SvREADONLY_off(sv);
+                if (SvREFCNT(sv) == 1 && !SvOBJECT(sv)) {
 
-                    if (SvTHINKFIRST(sv))
-                        sv_force_normal_flags(sv, SV_IMMEDIATE_UNREF
-                                                 |SV_COW_DROP_PV);
-                    if (SvTYPE(sv) == SVt_PVHV)
-                        Perl_hv_kill_backrefs(aTHX_ MUTABLE_HV(sv));
-                    if (SvMAGICAL(sv))
+                    /* these flags are the union of all the relevant flags
+                     * in the individual conditions within */
+                    if (UNLIKELY(SvFLAGS(sv) & (
+                            SVf_READONLY /* for SvREADONLY_off() */
+                          | (SVs_GMG|SVs_SMG|SVs_RMG) /* SvMAGICAL() */
+                          | SVf_OOK
+                          | SVf_THINKFIRST)))
                     {
-                      sv_unmagic(sv, PERL_MAGIC_backref);
-                      if (SvTYPE(sv) != SVt_PVCV)
-                        mg_free(sv);
-                    }
+                        /* if a my variable that was made readonly is
+                         * going out of scope, we want to remove the
+                         * readonlyness so that it can go out of scope
+                         * quietly
+                         */
+                        if (SvREADONLY(sv) && !SvFAKE(sv))
+                            SvREADONLY_off(sv);
 
+                        if (SvOOK(sv)) { /* OOK or HvAUX */
+                            if (SvTYPE(sv) == SVt_PVHV)
+                                Perl_hv_kill_backrefs(aTHX_ MUTABLE_HV(sv));
+                            else
+                                sv_backoff(sv);
+                        }
+
+                        if (SvMAGICAL(sv)) {
+                            /* note that backrefs (either in HvAUX or magic)
+                             * must be removed before other magic */
+                            sv_unmagic(sv, PERL_MAGIC_backref);
+                            if (SvTYPE(sv) != SVt_PVCV)
+                                mg_free(sv);
+                        }
+                        if (SvTHINKFIRST(sv))
+                            sv_force_normal_flags(sv, SV_IMMEDIATE_UNREF
+                                                     |SV_COW_DROP_PV);
+
+                    }
                     switch (SvTYPE(sv)) {
                     case SVt_NULL:
                         break;
@@ -1052,7 +1095,12 @@ Perl_leave_scope(pTHX_ I32 base)
                         break;
                     }
                     default:
-                        SvOK_off(sv);
+                        /* This looks odd, but these two macros are for use in
+                           expressions and finish with a trailing comma, so
+                           adding a ; after them would be wrong. */
+                        assert_not_ROK(sv)
+                        assert_not_glob(sv)
+                        SvFLAGS(sv) &=~ (SVf_OK|SVf_IVisUV|SVf_UTF8);
                         break;
                     }
                     SvPADSTALE_on(sv); /* mark as no longer live */
@@ -1090,7 +1138,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    Safefree(arg2.any_ptr);
 	    break;
 	case SAVEt_ADELETE:
-	    (void)av_delete(ARG0_AV, ARG1_I32, G_DISCARD);
+	    (void)av_delete(ARG0_AV, arg1.any_iv, G_DISCARD);
 	    SvREFCNT_dec(ARG0_AV);
 	    break;
 	case SAVEt_DESTRUCTOR_X:
@@ -1104,17 +1152,14 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_STACK_POS:		/* Position on Perl stack */
 	    PL_stack_sp = PL_stack_base + arg0.any_i32;
 	    break;
-	case SAVEt_STACK_CXPOS:         /* blk_oldsp on context stack */
-	    cxstack[ARG0_I32].blk_oldsp = ARG1_I32;
-	    break;
 	case SAVEt_AELEM:		/* array element */
-	    svp = av_fetch(ARG2_AV, ARG1_I32, 1);
-	    if (!AvREAL(ARG2_AV) && AvREIFY(ARG2_AV)) /* undo reify guard */
+	    svp = av_fetch(ARG2_AV, arg1.any_iv, 1);
+	    if (UNLIKELY(!AvREAL(ARG2_AV) && AvREIFY(ARG2_AV))) /* undo reify guard */
 		SvREFCNT_dec(ARG0_SV);
-	    if (svp) {
+	    if (LIKELY(svp)) {
 		SV * const sv = *svp;
-		if (sv && sv != &PL_sv_undef) {
-		    if (SvTIED_mg((const SV *)ARG2_AV, PERL_MAGIC_tied))
+		if (LIKELY(sv && sv != &PL_sv_undef)) {
+		    if (UNLIKELY(SvTIED_mg((const SV *)ARG2_AV, PERL_MAGIC_tied)))
 			SvREFCNT_inc_void_NN(sv);
                     refsv = ARG2_SV;
 		    goto restore_sv;
@@ -1127,11 +1172,11 @@ Perl_leave_scope(pTHX_ I32 base)
         {
 	    HE * const he = hv_fetch_ent(ARG2_HV, ARG1_SV, 1, 0);
 	    SvREFCNT_dec(ARG1_SV);
-	    if (he) {
+	    if (LIKELY(he)) {
 		const SV * const oval = HeVAL(he);
-		if (oval && oval != &PL_sv_undef) {
+		if (LIKELY(oval && oval != &PL_sv_undef)) {
 		    svp = &HeVAL(he);
-		    if (SvTIED_mg((const SV *)ARG2_HV, PERL_MAGIC_tied))
+		    if (UNLIKELY(SvTIED_mg((const SV *)ARG2_HV, PERL_MAGIC_tied)))
 			SvREFCNT_inc_void(*svp);
 		    refsv = ARG2_SV; /* what to refcnt_dec */
 		    goto restore_sv;
@@ -1170,7 +1215,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_COMPPAD:
 	    PL_comppad = (PAD*)ARG0_PTR;
-	    if (PL_comppad)
+	    if (LIKELY(PL_comppad))
 		PL_curpad = AvARRAY(PL_comppad);
 	    else
 		PL_curpad = NULL;
@@ -1225,22 +1270,11 @@ Perl_leave_scope(pTHX_ I32 base)
 
 	    PL_compiling.cop_warnings = (STRLEN*)ARG0_PTR;
 	    break;
-	case SAVEt_RE_STATE:
-	    {
-		const struct re_save_state *const state
-		    = (struct re_save_state *)
-		    (PL_savestack + PL_savestack_ix
-		     - SAVESTACK_ALLOC_FOR_RE_SAVE_STATE);
-		PL_savestack_ix -= SAVESTACK_ALLOC_FOR_RE_SAVE_STATE;
-
-		if (PL_reg_poscache != state->re_state_reg_poscache) {
-		    Safefree(PL_reg_poscache);
-		}
-		Copy(state, &PL_reg_state, 1, struct re_save_state);
-	    }
-	    break;
 	case SAVEt_PARSER:
 	    parser_free((yy_parser *) ARG0_PTR);
+	    break;
+	case SAVEt_READONLY_OFF:
+	    SvREADONLY_off(ARG0_SV);
 	    break;
 	default:
 	    Perl_croak(aTHX_ "panic: leave_scope inconsistency %u", type);

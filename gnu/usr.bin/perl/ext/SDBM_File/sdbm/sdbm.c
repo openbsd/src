@@ -301,6 +301,9 @@ makroom(DBM *db, long int hash, int need)
 	char *pag = db->pagbuf;
 	char *New = twin;
 	int smax = SPLTMAX;
+#ifdef BADMESS
+	int rc;
+#endif
 
 	do {
 /*
@@ -375,7 +378,10 @@ makroom(DBM *db, long int hash, int need)
  * we still cannot fit the key. say goodnight.
  */
 #ifdef BADMESS
-	(void) write(2, "sdbm: cannot insert after SPLTMAX attempts.\n", 44);
+	rc = write(2, "sdbm: cannot insert after SPLTMAX attempts.\n", 44);
+	/* PERL_UNUSED_VAR() or PERL_UNUSED_RESULT() would be
+	 * useful here but that would mean pulling in perl.h */
+	(void)rc;
 #endif
 	return 0;
 

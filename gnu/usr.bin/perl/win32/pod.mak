@@ -3,7 +3,6 @@ POD2HTML_ARGS = --htmlroot=$(HTMLROOT) --podroot=.. --podpath=pod:lib:ext:vms
 POD2HTML = ../ext/Pod-Html/pod2html
 POD2MAN = ../cpan/podlators/pod2man
 POD2TEXT = ../cpan/podlators/pod2text
-POD2LATEX = ../cpan/Pod-LaTeX/pod2latex
 PODCHECKER = ../cpan/Pod-Parser/podchecker
 
 all: html
@@ -36,6 +35,8 @@ POD = perl.pod	\
 	perl5180delta.pod	\
 	perl5181delta.pod	\
 	perl5182delta.pod	\
+	perl5200delta.pod	\
+	perl5201delta.pod	\
 	perl561delta.pod	\
 	perl56delta.pod	\
 	perl581delta.pod	\
@@ -164,6 +165,8 @@ MAN = perl.man	\
 	perl5180delta.man	\
 	perl5181delta.man	\
 	perl5182delta.man	\
+	perl5200delta.man	\
+	perl5201delta.man	\
 	perl561delta.man	\
 	perl56delta.man	\
 	perl581delta.man	\
@@ -292,6 +295,8 @@ HTML = perl.html	\
 	perl5180delta.html	\
 	perl5181delta.html	\
 	perl5182delta.html	\
+	perl5200delta.html	\
+	perl5201delta.html	\
 	perl561delta.html	\
 	perl56delta.html	\
 	perl581delta.html	\
@@ -420,6 +425,8 @@ TEX = perl.tex	\
 	perl5180delta.tex	\
 	perl5181delta.tex	\
 	perl5182delta.tex	\
+	perl5200delta.tex	\
+	perl5201delta.tex	\
 	perl561delta.tex	\
 	perl56delta.tex	\
 	perl581delta.tex	\
@@ -529,8 +536,6 @@ man:	$(POD2MAN) $(MAN)
 
 html:	$(POD2HTML) $(HTML)
 
-tex:	$(POD2LATEX) $(TEX)
-
 toc:
 	$(PERL) -I../lib buildtoc >perltoc.pod
 
@@ -551,14 +556,6 @@ toc:
 
 .pod.html:
 	$(PERL) -I../lib $(POD2HTML) $(POD2HTML_ARGS) --infile=$*.pod --outfile=$*.html
-
-.SUFFIXES: .tex
-
-.pm.tex:
-	$(PERL) -I../lib $(POD2LATEX) $*.pm
-
-.pod.tex:
-	$(PERL) -I../lib $(POD2LATEX) $*.pod
 
 clean:
 	rm -f $(MAN)

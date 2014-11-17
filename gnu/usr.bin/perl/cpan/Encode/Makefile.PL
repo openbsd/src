@@ -1,5 +1,5 @@
 #
-# $Id: Makefile.PL,v 2.10 2013/02/18 02:23:56 dankogai Exp $
+# $Id: Makefile.PL,v 2.12 2013/09/14 07:51:59 dankogai Exp $
 #
 use 5.007003;
 use strict;
@@ -44,8 +44,17 @@ WriteMakefile(
     },
     INC         => '-I' . File::Spec->catfile( '.', 'Encode' ),
     LICENSE     => 'perl',
+    PREREQ_PM   => {
+        Exporter   => '5.57',   # use Exporter 'import';
+	parent     => '0.221',  # version bundled with 5.10.1
+    },
     PMLIBDIRS   => \@pmlibdirs,
     INSTALLDIRS => ($] < 5.011 ? 'perl' : 'site'),
+    META_MERGE        => {
+        resources => {
+            repository  =>  'https://github.com/dankogai/p5-encode',
+        },
+    },
 );
 
 package MY;

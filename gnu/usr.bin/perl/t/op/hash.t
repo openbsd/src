@@ -8,8 +8,6 @@ BEGIN {
 
 use strict;
 
-plan tests => 10;
-
 # This will crash perl if it fails
 
 use constant PVBM => 'foo';
@@ -44,7 +42,12 @@ is($destroyed, 1, 'Timely hash destruction with lvalue keys');
     tie my %h, "bar";
     () = $h{\'foo'};
     is ref $key, SCALAR =>
-     'hash keys are not stringified during compilation';
+     'ref hash keys are not stringified during compilation';
+    use constant u => undef;
+    no warnings 'uninitialized'; # work around unfixed bug #105918
+    () = $h{+u};
+    is $key, undef,
+      'undef hash keys are not stringified during compilation, either';
 }
 
 # Part of RT #85026: Deleting the current iterator in void context does not
@@ -117,3 +120,91 @@ pass 'no crash when freeing hash that is being undeffed';
 $::ra = {a=>bless [], 'A'};
 %$::ra = ('a'..'z');
 pass 'no crash when freeing hash that is being exonerated, ahem, cleared';
+
+# If I have these correct then removing any part of the lazy hash fill handling
+# code in hv.c will cause some of these tests to start failing.
+sub validate_hash {
+  my ($desc, $h) = @_;
+  local $::Level = $::Level + 1;
+
+  my $scalar = %$h;
+  my $expect = qr!\A(\d+)/(\d+)\z!;
+  like($scalar, $expect, "$desc in scalar context matches pattern");
+  my ($used, $total) = $scalar =~ $expect;
+  cmp_ok($total, '>', 0, "$desc has >0 array size ($total)");
+  cmp_ok($used, '>', 0, "$desc uses >0 heads ($used)");
+  cmp_ok($used, '<=', $total,
+         "$desc doesn't use more heads than are available");
+  return ($used, $total);
+}
+
+sub torture_hash {
+  my $desc = shift;
+  # Intentionally use an anon hash rather than a lexical, as lexicals default
+  # to getting reused on subsequent calls
+  my $h = {};
+  ++$h->{$_} foreach @_;
+
+  my ($used0, $total0) = validate_hash($desc, $h);
+  # Remove half the keys each time round, until there are only 1 or 2 left
+  my @groups;
+  my ($h2, $h3, $h4);
+  while (keys %$h > 2) {
+    my $take = (keys %$h) / 2 - 1;
+    my @keys = (keys %$h)[0 .. $take];
+    my $scalar = %$h;
+    delete @$h{@keys};
+    push @groups, $scalar, \@keys;
+
+    my $count = keys %$h;
+    my ($used, $total) = validate_hash("$desc (-$count)", $h);
+    is($total, $total0, "$desc ($count) has same array size");
+    cmp_ok($used, '<=', $used0, "$desc ($count) has same or fewer heads");
+    ++$h2->{$_} foreach @keys;
+    my (undef, $total2) = validate_hash("$desc (+$count)", $h2);
+    cmp_ok($total2, '<=', $total0, "$desc ($count) array size no larger");
+
+    # Each time this will get emptied then repopulated. If the fill isn't reset
+    # when the hash is emptied, the used count will likely exceed the array
+    %$h3 = %$h2;
+    my (undef, $total3) = validate_hash("$desc (+$count copy)", $h3);
+    is($total3, $total2, "$desc (+$count copy) has same array size");
+
+    # This might use fewer buckets than the original
+    %$h4 = %$h;
+    my (undef, $total4) = validate_hash("$desc ($count copy)", $h4);
+    cmp_ok($total4, '<=', $total0, "$desc ($count copy) array size no larger");
+  }
+
+  my $scalar = %$h;
+  my @keys = keys %$h;
+  delete @$h{@keys};
+  is(scalar %$h, 0, "scalar keys for empty $desc");
+
+  # Rebuild the original hash, and build a copy
+  # These will fail if hash key addition and deletion aren't handled correctly
+  my $h1;
+  foreach (@keys) {
+    ++$h->{$_};
+    ++$h1->{$_};
+  }
+  is(scalar %$h, $scalar, "scalar keys restored when rebuilding");
+
+  while (@groups) {
+    my $keys = pop @groups;
+    ++$h->{$_} foreach @$keys;
+    my (undef, $total) = validate_hash("$desc " . keys %$h, $h);
+    is($total, $total0, "bucket count is constant when rebuilding");
+    is(scalar %$h, pop @groups, "scalar keys is identical when rebuilding");
+    ++$h1->{$_} foreach @$keys;
+    validate_hash("$desc copy " . keys %$h1, $h1);
+  }
+  # This will fail if the fill count isn't handled correctly on hash split
+  is(scalar %$h1, scalar %$h, "scalar keys is identical on copy and original");
+}
+
+torture_hash('a .. zz', 'a' .. 'zz');
+torture_hash('0 .. 9', 0 .. 9);
+torture_hash("'Perl'", 'Rules');
+
+done_testing();

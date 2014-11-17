@@ -94,11 +94,12 @@
 
 %type <opval> stmtseq fullstmt labfullstmt barestmt block mblock else
 %type <opval> expr term subscripted scalar ary hsh arylen star amper sideff
+%type <opval> sliceme kvslice gelem
 %type <opval> listexpr nexpr texpr iexpr mexpr mnexpr miexpr
 %type <opval> optlistexpr optexpr indirob listop method
-%type <opval> formname subname proto subbody cont my_scalar formblock
+%type <opval> formname subname proto optsubbody cont my_scalar formblock
 %type <opval> subattrlist myattrlist myattrterm myterm
-%type <opval> termbinop termunop anonymous termdo
+%type <opval> realsubbody subsignature termbinop termunop anonymous termdo
 %type <opval> formstmtseq formline formarg
 
 %nonassoc <i_tkval> PREC_LOW
@@ -126,7 +127,7 @@
 %left <i_tkval> MATCHOP
 %right <i_tkval> '!' '~' UMINUS REFGEN
 %right <i_tkval> POWOP
-%nonassoc <i_tkval> PREINC PREDEC POSTINC POSTDEC
+%nonassoc <i_tkval> PREINC PREDEC POSTINC POSTDEC POSTJOIN
 %left <i_tkval> ARROW
 %nonassoc <i_tkval> ')'
 %left <i_tkval> '('
@@ -338,7 +339,7 @@ barestmt:	PLUGSTMT
 			  PL_parser->in_my = 0;
 			  PL_parser->in_my_stash = NULL;
 			}
-		proto subattrlist subbody
+		proto subattrlist optsubbody
 			{
 			  SvREFCNT_inc_simple_void(PL_compcv);
 #ifdef MAD
@@ -727,8 +728,40 @@ myattrlist:	COLONATTR THING
 			}
 	;
 
-/* Subroutine body - either null or a block */
-subbody	:	block	{ $$ = $1; }
+/* Optional subroutine signature */
+subsignature:	/* NULL */ { $$ = (OP*)NULL; }
+	|	'('
+			{
+			  if (!FEATURE_SIGNATURES_IS_ENABLED)
+			    Perl_croak(aTHX_ "Experimental "
+				"subroutine signatures not enabled");
+			  Perl_ck_warner_d(aTHX_
+				packWARN(WARN_EXPERIMENTAL__SIGNATURES),
+				"The signatures feature is experimental");
+			  $<opval>$ = parse_subsignature();
+			}
+		')'
+			{
+			  $$ = op_append_list(OP_LINESEQ, $<opval>2,
+				newSTATEOP(0, NULL, sawparens(newNULLLIST())));
+			  PL_parser->expect = XBLOCK;
+			}
+	;
+
+/* Subroutine body - block with optional signature */
+realsubbody:	remember subsignature '{' stmtseq '}'
+			{
+			  if (PL_parser->copline > (line_t)IVAL($3))
+			      PL_parser->copline = (line_t)IVAL($3);
+			  $$ = block_end($1,
+				op_append_list(OP_LINESEQ, $2, $4));
+			  TOKEN_GETMAD($3,$$,'{');
+			  TOKEN_GETMAD($5,$$,'}');
+			}
+	;
+
+/* Optional subroutine body, for named subroutine declaration */
+optsubbody:	realsubbody { $$ = $1; }
 	|	';'	{ $$ = IF_MAD(
 				    newOP(OP_NULL,0),
 				    (OP*)NULL
@@ -845,7 +878,7 @@ method	:	METHOD
 	;
 
 /* Some kind of subscripted expression */
-subscripted:    star '{' expr ';' '}'        /* *main::{something} */
+subscripted:    gelem '{' expr ';' '}'        /* *main::{something} */
                         /* In this and all the hash accessors, ';' is
                          * provided by the tokeniser */
 			{ $$ = newBINOP(OP_GELEM, 0, $1, scalar($3));
@@ -1052,6 +1085,18 @@ termunop : '-' term %prec UMINUS                       /* -$x */
 					op_lvalue(scalar($1), OP_POSTDEC));
 			  TOKEN_GETMAD($2,$$,'o');
 			}
+	|	term POSTJOIN    /* implicit join after interpolated ->@ */
+			{ $$ = convert(OP_JOIN, 0,
+				       op_append_elem(
+					OP_LIST,
+					newSVREF(scalar(
+					    newSVOP(OP_CONST,0,
+						    newSVpvs("\""))
+					)),
+					$1
+				       ));
+			  TOKEN_GETMAD($2,$$,'o');
+			}
 	|	PREINC term                            /* ++$x */
 			{ $$ = newUNOP(OP_PREINC, 0,
 					op_lvalue(scalar($2), OP_PREINC));
@@ -1088,7 +1133,7 @@ anonymous:	'[' expr ']'
 			  TOKEN_GETMAD($2,$$,';');
 			  TOKEN_GETMAD($3,$$,'}');
 			}
-	|	ANONSUB startanonsub proto subattrlist block	%prec '('
+	|	ANONSUB startanonsub proto subattrlist realsubbody	%prec '('
 			{ SvREFCNT_inc_simple_void(PL_compcv);
 			  $$ = newANONATTRSUB($2, $3, $4, $5);
 			  TOKEN_GETMAD($1,$$,'o');
@@ -1107,49 +1152,6 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 			{ $$ = newUNOP(OP_NULL, OPf_SPECIAL, op_scope($2));
 			  TOKEN_GETMAD($1,$$,'D');
 			}
-	|	DO subname '(' ')'                  /* do somesub() */
-			{ $$ = newUNOP(OP_ENTERSUB,
-			    OPf_SPECIAL|OPf_STACKED,
-			    op_prepend_elem(OP_LIST,
-				scalar(newCVREF(
-				    (OPpENTERSUB_AMPER<<8),
-				    scalar($2)
-				)),(OP*)NULL)); dep();
-			  TOKEN_GETMAD($1,$$,'o');
-			  TOKEN_GETMAD($3,$$,'(');
-			  TOKEN_GETMAD($4,$$,')');
-			}
-	|	DO subname '(' expr ')'             /* do somesub(@args) */
-			{ $$ = newUNOP(OP_ENTERSUB,
-			    OPf_SPECIAL|OPf_STACKED,
-			    op_append_elem(OP_LIST,
-				$4,
-				scalar(newCVREF(
-				    (OPpENTERSUB_AMPER<<8),
-				    scalar($2)
-				)))); dep();
-			  TOKEN_GETMAD($1,$$,'o');
-			  TOKEN_GETMAD($3,$$,'(');
-			  TOKEN_GETMAD($5,$$,')');
-			}
-	|	DO scalar '(' ')'                /* do $subref () */
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
-			    op_prepend_elem(OP_LIST,
-				scalar(newCVREF(0,scalar($2))), (OP*)NULL)); dep();
-			  TOKEN_GETMAD($1,$$,'o');
-			  TOKEN_GETMAD($3,$$,'(');
-			  TOKEN_GETMAD($4,$$,')');
-			}
-	|	DO scalar '(' expr ')'           /* do $subref (@args) */
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
-			    op_prepend_elem(OP_LIST,
-				$4,
-				scalar(newCVREF(0,scalar($2))))); dep();
-			  TOKEN_GETMAD($1,$$,'o');
-			  TOKEN_GETMAD($3,$$,'(');
-			  TOKEN_GETMAD($5,$$,')');
-			}
-
         ;
 
 term	:	termbinop
@@ -1195,21 +1197,53 @@ term	:	termbinop
 			{ $$ = newUNOP(OP_AV2ARYLEN, 0, ref($1, OP_AV2ARYLEN));}
 	|       subscripted
 			{ $$ = $1; }
-	|	ary '[' expr ']'                     /* array slice */
+	|	sliceme '[' expr ']'                     /* array slice */
 			{ $$ = op_prepend_elem(OP_ASLICE,
 				newOP(OP_PUSHMARK, 0),
 				    newLISTOP(OP_ASLICE, 0,
 					list($3),
 					ref($1, OP_ASLICE)));
+			  if ($$ && $1)
+			      $$->op_private |=
+				  $1->op_private & OPpSLICEWARNING;
 			  TOKEN_GETMAD($2,$$,'[');
 			  TOKEN_GETMAD($4,$$,']');
 			}
-	|	ary '{' expr ';' '}'                 /* @hash{@keys} */
+	|	kvslice '[' expr ']'                 /* array key/value slice */
+			{ $$ = op_prepend_elem(OP_KVASLICE,
+				newOP(OP_PUSHMARK, 0),
+				    newLISTOP(OP_KVASLICE, 0,
+					list($3),
+					ref(oopsAV($1), OP_KVASLICE)));
+			  if ($$ && $1)
+			      $$->op_private |=
+				  $1->op_private & OPpSLICEWARNING;
+			  TOKEN_GETMAD($2,$$,'[');
+			  TOKEN_GETMAD($4,$$,']');
+			}
+	|	sliceme '{' expr ';' '}'                 /* @hash{@keys} */
 			{ $$ = op_prepend_elem(OP_HSLICE,
 				newOP(OP_PUSHMARK, 0),
 				    newLISTOP(OP_HSLICE, 0,
 					list($3),
 					ref(oopsHV($1), OP_HSLICE)));
+			  if ($$ && $1)
+			      $$->op_private |=
+				  $1->op_private & OPpSLICEWARNING;
+			    PL_parser->expect = XOPERATOR;
+			  TOKEN_GETMAD($2,$$,'{');
+			  TOKEN_GETMAD($4,$$,';');
+			  TOKEN_GETMAD($5,$$,'}');
+			}
+	|	kvslice '{' expr ';' '}'                 /* %hash{@keys} */
+			{ $$ = op_prepend_elem(OP_KVHSLICE,
+				newOP(OP_PUSHMARK, 0),
+				    newLISTOP(OP_KVHSLICE, 0,
+					list($3),
+					ref($1, OP_KVHSLICE)));
+			  if ($$ && $1)
+			      $$->op_private |=
+				  $1->op_private & OPpSLICEWARNING;
 			    PL_parser->expect = XOPERATOR;
 			  TOKEN_GETMAD($2,$$,'{');
 			  TOKEN_GETMAD($4,$$,';');
@@ -1219,12 +1253,12 @@ term	:	termbinop
 			{ $$ = $1; }
 	|	amper                                /* &foo; */
 			{ $$ = newUNOP(OP_ENTERSUB, 0, scalar($1)); }
-	|	amper '(' ')'                 /* &foo() */
+	|	amper '(' ')'                 /* &foo() or foo() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1));
 			  TOKEN_GETMAD($2,$$,'(');
 			  TOKEN_GETMAD($3,$$,')');
 			}
-	|	amper '(' expr ')'            /* &foo(@args) */
+	|	amper '(' expr ')'          /* &foo(@args) or foo(@args) */
 			{
 			  $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST, $3, scalar($1)));
@@ -1237,10 +1271,31 @@ term	:	termbinop
 			      token_getmad($4,op,')');
 			  });
 			}
-	|	NOAMP subname optlistexpr               /* foo(@args) */
+	|	NOAMP subname optlistexpr       /* foo @args (no parens) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 			    op_append_elem(OP_LIST, $3, scalar($2)));
 			  TOKEN_GETMAD($1,$$,'o');
+			}
+	|	term ARROW '$' '*'
+			{ $$ = newSVREF($1);
+			  TOKEN_GETMAD($3,$$,'$');
+			}
+	|	term ARROW '@' '*'
+			{ $$ = newAVREF($1);
+			  TOKEN_GETMAD($3,$$,'@');
+			}
+	|	term ARROW '%' '*'
+			{ $$ = newHVREF($1);
+			  TOKEN_GETMAD($3,$$,'%');
+			}
+	|	term ARROW '&' '*'
+			{ $$ = newUNOP(OP_ENTERSUB, 0,
+				       scalar(newCVREF(IVAL($3),$1)));
+			  TOKEN_GETMAD($3,$$,'&');
+			}
+	|	term ARROW '*' '*'	%prec '('
+			{ $$ = newGVREF(0,$1);
+			  TOKEN_GETMAD($3,$$,'*');
 			}
 	|	LOOPEX  /* loop exiting command (goto, last, dump, etc) */
 			{ $$ = newOP(IVAL($1), OPf_SPECIAL);
@@ -1409,12 +1464,14 @@ scalar	:	'$' indirob
 
 ary	:	'@' indirob
 			{ $$ = newAVREF($2);
+			  if ($$) $$->op_private |= IVAL($1);
 			  TOKEN_GETMAD($1,$$,'@');
 			}
 	;
 
 hsh	:	'%' indirob
 			{ $$ = newHVREF($2);
+			  if ($$) $$->op_private |= IVAL($1);
 			  TOKEN_GETMAD($1,$$,'%');
 			}
 	;
@@ -1423,11 +1480,36 @@ arylen	:	DOLSHARP indirob
 			{ $$ = newAVREF($2);
 			  TOKEN_GETMAD($1,$$,'l');
 			}
+	|	term ARROW DOLSHARP '*'
+			{ $$ = newAVREF($1);
+			  TOKEN_GETMAD($3,$$,'l');
+			}
 	;
 
 star	:	'*' indirob
 			{ $$ = newGVREF(0,$2);
 			  TOKEN_GETMAD($1,$$,'*');
+			}
+	;
+
+sliceme	:	ary
+	|	term ARROW '@'
+			{ $$ = newAVREF($1);
+			  TOKEN_GETMAD($3,$$,'@');
+			}
+	;
+
+kvslice	:	hsh
+	|	term ARROW '%'
+			{ $$ = newHVREF($1);
+			  TOKEN_GETMAD($3,$$,'@');
+			}
+	;
+
+gelem	:	star
+	|	term ARROW '*'
+			{ $$ = newGVREF(0,$1);
+			  TOKEN_GETMAD($3,$$,'*');
 			}
 	;
 

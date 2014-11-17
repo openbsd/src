@@ -7,7 +7,10 @@ require Tie::Hash;
 require XSLoader;
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.09";
+our $VERSION = "1.11";
+
+our @EXPORT_OK = qw(PAGFEXT DIRFEXT PAIRMAX);
+use Exporter "import";
 
 XSLoader::load();
 
@@ -37,61 +40,73 @@ SDBM_File - Tied access to sdbm files
 =head1 DESCRIPTION
 
 C<SDBM_File> establishes a connection between a Perl hash variable and
-a file in SDBM_File format;.  You can manipulate the data in the file
+a file in SDBM_File format.  You can manipulate the data in the file
 just as if it were in a Perl hash, but when your program exits, the
 data will remain in the file, to be used the next time your program
 runs.
 
+=head2 Tie
+
 Use C<SDBM_File> with the Perl built-in C<tie> function to establish
-the connection between the variable and the file.  The arguments to
-C<tie> should be:
+the connection between the variable and the file.
 
-=over 4
+    tie %hash, 'SDBM_File', $basename, $modeflags, $perms;
 
-=item 1.
+    tie %hash, 'SDBM_File', $dirfile,  $modeflags, $perms, $pagfilename;
 
-The hash variable you want to tie.
+C<$basename> is the base filename for the database.  The database is two
+files with ".dir" and ".pag" extensions appended to C<$basename>,
 
-=item 2. 
+    $basename.dir     (or .sdbm_dir on VMS, per DIRFEXT constant)
+    $basename.pag
 
-The string C<"SDBM_File">.  (Ths tells Perl to use the C<SDBM_File>
-package to perform the functions of the hash.)
+The two filenames can also be given separately in full as C<$dirfile>
+and C<$pagfilename>.  This suits for two files without ".dir" and ".pag"
+extensions, perhaps for example two files from L<File::Temp>.
 
-=item 3. 
+C<$modeflags> can be the following constants from the C<Fcntl> module (in
+the style of the L<open(2)> system call),
 
-The name of the file you want to tie to the hash.  
+    O_RDONLY          read-only access
+    O_WRONLY          write-only access
+    O_RDWR            read and write access
 
-=item 4.
+If you want to create the file if it does not already exist then bitwise-OR
+(C<|>) C<O_CREAT> too.  If you omit C<O_CREAT> and the database does not
+already exist then the C<tie> call will fail.
 
-Flags.  Use one of:
+    O_CREAT           create database if doesn't already exist
 
-=over 2
+C<$perms> is the file permissions bits to use if new database files are
+created.  This parameter is mandatory even when not creating a new database.
+The permissions will be reduced by the user's umask so the usual value here
+would be 0666, or if some very private data then 0600.  (See
+L<perlfunc/umask>.)
 
-=item C<O_RDONLY>
+=head1 EXPORTS
 
-Read-only access to the data in the file.
+SDBM_File optionally exports the following constants:
 
-=item C<O_WRONLY>
+=over
 
-Write-only access to the data in the file.
+=item *
 
-=item C<O_RDWR>
+C<PAGFEXT> - the extension used for the page file, usually C<.pag>.
 
-Both read and write access.
+=item *
+
+C<DIRFEXT> - the extension used for the directory file, C<.dir>
+everywhere but VMS, where it is C<.sdbm_dir>.
+
+=item *
+
+C<PAIRMAX> - the maximum size of a stored hash entry, including the
+length of both the key and value.
 
 =back
 
-If you want to create the file if it does not exist, add C<O_CREAT> to
-any of these, as in the example.  If you omit C<O_CREAT> and the file
-does not already exist, the C<tie> call will fail.
-
-=item 5.
-
-The default permissions to use if a new file is created.  The actual
-permissions will be modified by the user's umask, so you should
-probably use 0666 here. (See L<perlfunc/umask>.)
-
-=back
+These constants can also be used with fully qualified names,
+eg. C<SDBM_File::PAGFEXT>.
 
 =head1 DIAGNOSTICS
 

@@ -404,11 +404,12 @@ there is an executable file F<blah.exe> I<anywhere> on C<PATH>.  In
 other words, C<PATH> is essentially searched twice: once by the OS for
 an executable, then by Perl for scripts.
 
-Note also that executable files on OS/2 can have an arbitrary extension, 
-but F<.exe> will be automatically appended if no dot is present in the name.  
-The workaround is as simple as that:  since F<blah.> and F<blah> denote the 
-same file (at list on FAT and HPFS file systems), to start an executable residing in file F<n:/bin/blah> (no 
-extension) give an argument C<n:/bin/blah.> (dot appended) to system().
+Note also that executable files on OS/2 can have an arbitrary extension, but
+F<.exe> will be automatically appended if no dot is present in the name.  The
+workaround is as simple as that:  since F<blah.> and F<blah> denote the same
+file (at list on FAT and HPFS file systems), to start an executable residing in
+file F<n:/bin/blah> (no extension) give an argument C<n:/bin/blah.> (dot
+appended) to system().
 
 Perl will start PM programs from VIO (=text-mode) Perl process in a
 separate PM session;
@@ -618,7 +619,7 @@ C<set PERLLIB_PREFIX> in F<Config.sys>, see L<"PERLLIB_PREFIX">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.18.2/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.20.1/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -1015,12 +1016,12 @@ The reasons for most important skipped tests are:
 
 =over 4
 
-=item 18
+=item Z<>18
 
 Checks C<atime> and C<mtime> of C<stat()> - unfortunately, HPFS
 provides only 2sec time granularity (for compatibility with FAT?).
 
-=item 25
+=item Z<>25
 
 Checks C<truncate()> on a filehandle just opened for write - I do not
 know why this should or should not work.
@@ -1409,7 +1410,8 @@ For best results compile the C file below with the same options as the Perl
 DLL.  However, a lot of functionality will work even if the executable is not
 an EMX applications, e.g., if compiled with
 
-  gcc -Wall -DDOSISH -DOS2=1 -O2 -s -Zomf -Zsys perl-starter.c -DPERL_DLL_BASENAME=\"perl312F\" -Zstack 8192 -Zlinker /PM:VIO
+  gcc -Wall -DDOSISH -DOS2=1 -O2 -s -Zomf -Zsys perl-starter.c \
+    -DPERL_DLL_BASENAME=\"perl312F\" -Zstack 8192 -Zlinker /PM:VIO
 
 Here is the sample C file:
 

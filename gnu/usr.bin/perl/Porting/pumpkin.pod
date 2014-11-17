@@ -540,9 +540,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xf -
+	gzip -d -c perl5.004_07.tar.gz | tar -xof -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xf -
+	gzip -d -c perl5.004_08.tar.gz | tar -xof -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove
@@ -650,42 +650,6 @@ not for production builds, since otherwise gcc cannot inline certain
 things.
 
 =back
-
-=head1 Running Purify
-
-Purify is a commercial tool that is helpful in identifying memory
-overruns, wild pointers, memory leaks and other such badness.  Perl
-must be compiled in a specific way for optimal testing with Purify.
-
-Use the following commands to test perl with Purify:
-
-	sh Configure -des -Doptimize=-g -Uusemymalloc -Dusemultiplicity \
-	    -Accflags=-DPURIFY
-	setenv PURIFYOPTIONS "-chain-length=25"
-	make all pureperl
-	cd t
-	ln -s ../pureperl perl
-	setenv PERL_DESTRUCT_LEVEL 2
-	./perl TEST
-
-Disabling Perl's malloc allows Purify to monitor allocations and leaks
-more closely; using Perl's malloc will make Purify report most leaks
-in the "potential" leaks category.  Enabling the multiplicity option
-allows perl to clean up thoroughly when the interpreter shuts down, which
-reduces the number of bogus leak reports from Purify.  The -DPURIFY
-enables any Purify-specific debugging code in the sources.
-
-Purify outputs messages in "Viewer" windows by default.  If you don't have
-a windowing environment or if you simply want the Purify output to
-unobtrusively go to a log file instead of to the interactive window,
-use the following options instead:
-
-	setenv PURIFYOPTIONS "-chain-length=25 -windows=no -log-file=perl.log \
-	    -append-logfile=yes"
-
-The only currently known leaks happen when there are compile-time errors
-within eval or require.  (Fixing these is non-trivial, unfortunately, but
-they must be fixed eventually.)
 
 =head1 Common Gotchas
 
@@ -859,18 +823,18 @@ The "fix" is to give the function a different name.  The one
 implemented in 5.003_05 isn't optimal, but here's what was done:
 
     #ifdef HAS_CHSIZE
-    # ifdef my_chsize  /* Probably #defined to Perl_my_chsize in embed.h */
-    #   undef my_chsize
+    # ifdef my_chsize      /* Probably #defined to Perl_my_chsize */
+    #   undef my_chsize    /* in embed.h */
     # endif
     # define my_chsize chsize
     #endif
 
 My explanatory comment in patch 5.003_05 said:
 
-     Undef and then re-define my_chsize from Perl_my_chsize to
-     just plain chsize if this system HAS_CHSIZE.  This probably only
-     applies to SCO.  This shows the perils of having internal
-     functions with the same name as external library functions :-).
+    Undef and then re-define my_chsize from Perl_my_chsize to
+    just plain chsize if this system HAS_CHSIZE.  This probably only
+    applies to SCO.  This shows the perils of having internal
+    functions with the same name as external library functions :-).
 
 Now, we can safely put C<my_chsize> in C<embed.fnc>, export it, and
 hide it with F<embed.h>.
@@ -1053,16 +1017,17 @@ documented in config_h.SH).  Here's what APPLLIB_EXP is for, from
 a mail message from Larry:
 
     The main intent of APPLLIB_EXP is for folks who want to send out a
-    version of Perl embedded in their product.  They would set the symbol
-    to be the name of the library containing the files needed to run or to
-    support their particular application.  This works at the "override"
-    level to make sure they get their own versions of any library code that
-    they absolutely must have configuration control over.
+    version of Perl embedded in their product.  They would set the
+    symbol to be the name of the library containing the files needed
+    to run or to support their particular application.  This works at
+    the "override" level to make sure they get their own versions of
+    any library code that they absolutely must have configuration
+    control over.
 
     As such, I don't see any conflict with a sysadmin using it for a
-    override-ish sort of thing, when installing a generic Perl.  It should
-    probably have been named something to do with overriding though.  Since
-    it's undocumented we could still change it...  :-)
+    override-ish sort of thing, when installing a generic Perl.  It
+    should probably have been named something to do with overriding
+    though.  Since it's undocumented we could still change it...  :-)
 
 Given that it's already there, you can use it to override distribution modules.
 One way to do that is to add

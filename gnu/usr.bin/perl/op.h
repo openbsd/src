@@ -23,7 +23,8 @@
  *	op_static	tell op_free() to skip PerlMemShared_free(), when
  *                      !op_slabbed.
  *	op_savefree	on savestack via SAVEFREEOP
- *	op_spare	Three spare bits
+ *	op_folded	Result/remainder of a constant fold operation.
+ *	op_spare	Two spare bits
  *	op_flags	Flags common to all operations.  See OPf_* below.
  *	op_private	Flags peculiar to a particular operation (BUT,
  *			by default, set to the number of children until
@@ -56,7 +57,8 @@ typedef PERL_BITFIELD16 Optype;
     PERL_BITFIELD16 op_slabbed:1;	\
     PERL_BITFIELD16 op_savefree:1;	\
     PERL_BITFIELD16 op_static:1;	\
-    PERL_BITFIELD16 op_spare:3;		\
+    PERL_BITFIELD16 op_folded:1;	\
+    PERL_BITFIELD16 op_spare:2;		\
     U8		op_flags;		\
     U8		op_private;
 #endif
@@ -78,7 +80,7 @@ typedef PERL_BITFIELD16 Optype;
 =for apidoc Amn|U32|GIMME_V
 The XSUB-writer's equivalent to Perl's C<wantarray>.  Returns C<G_VOID>,
 C<G_SCALAR> or C<G_ARRAY> for void, scalar or list context,
-respectively. See L<perlcall> for a usage example.
+respectively.  See L<perlcall> for a usage example.
 
 =for apidoc Amn|U32|GIMME
 A backward-compatible version of C<GIMME_V> which can only return
@@ -141,6 +143,7 @@ Deprecated.  Use C<GIMME_V> instead.
 				    - After ck_glob, use Perl glob function
 			         */
                                 /*  On OP_PADRANGE, push @_ */
+                                /*  On OP_DUMP, has no label */
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
@@ -168,6 +171,9 @@ Deprecated.  Use C<GIMME_V> instead.
 
 /* Private for OP_LEAVE, OP_LEAVESUB, OP_LEAVESUBLV and OP_LEAVEWRITE */
 #define OPpREFCOUNTED		64	/* op_targ carries a refcount */
+
+/* Private for OP_LEAVE and OP_LEAVELOOP */
+#define OPpLVALUE		128	/* Do not copy return value */
 
 /* Private for OP_AASSIGN */
 #define OPpASSIGN_COMMON	64	/* Left & right have syms in common. */
@@ -199,12 +205,38 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpDEREF_HV		64	/*   Want ref to HV. */
 #define OPpDEREF_SV		(32|64)	/*   Want ref to SV. */
 
+/* OP_ENTERSUB and OP_RV2CV flags
+
+Flags are set on entersub and rv2cv in three phases:
+  parser  - the parser passes the flag to the op constructor
+  check   - the check routine called by the op constructor sets the flag
+  context - application of scalar/ref/lvalue context applies the flag
+
+In the third stage, an entersub op might turn into an rv2cv op (undef &foo,
+\&foo, lock &foo, exists &foo, defined &foo).  The two places where that
+happens (op_lvalue_flags and doref in op.c) need to make sure the flags do
+not conflict.  Flags applied in the context phase are only set when there
+is no conversion of op type.
+
+  bit  entersub flag       phase   rv2cv flag             phase
+  ---  -------------       -----   ----------             -----
+    1  OPpENTERSUB_INARGS  context OPpMAY_RETURN_CONSTANT context
+    2  HINT_STRICT_REFS    check   HINT_STRICT_REFS       check
+    4  OPpENTERSUB_HASTARG check
+    8                              OPpENTERSUB_AMPER      parser
+   16  OPpENTERSUB_DB      check
+   32  OPpDEREF_AV         context
+   64  OPpDEREF_HV         context
+  128  OPpLVAL_INTRO       context OPpENTERSUB_NOPAREN    parser
+
+*/
+
   /* OP_ENTERSUB only */
 #define OPpENTERSUB_DB		16	/* Debug subroutine. */
 #define OPpENTERSUB_HASTARG	4	/* Called from OP tree. */
 #define OPpENTERSUB_INARGS	1	/* Lval used as arg to a sub. */
 /* used by OPpDEREF             (32|64) */
-/* used by HINT_STRICT_SUBS     2          */
+/* used by HINT_STRICT_REFS     2          */
   /* Mask for OP_ENTERSUB flags, the absence of which must be propagated
      in dynamic context */
 #define OPpENTERSUB_LVAL_MASK (OPpLVAL_INTRO|OPpENTERSUB_INARGS)
@@ -218,6 +250,8 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpEARLY_CV		32	/* foo() called before sub foo was parsed */
   /* OP_?ELEM only */
 #define OPpLVAL_DEFER		16	/* Defer creation of array/hash elem */
+  /* OP_RV2[AH]V OP_[AH]SLICE */
+#define OPpSLICEWARNING		4	/* warn about @hash{$scalar} */
   /* OP_RV2[SAH]V, OP_GVSV, OP_ENTERITER only */
 #define OPpOUR_INTRO		16	/* Variable was in an our() */
   /* OP_RV2[AGH]V, OP_PAD[AH]V, OP_[AH]ELEM, OP_[AH]SLICE OP_AV2ARYLEN,
@@ -257,7 +291,6 @@ Deprecated.  Use C<GIMME_V> instead.
 #define	OPpCONST_STRICT		8	/* bareword subject to strict 'subs' */
 #define OPpCONST_ENTERED	16	/* Has been entered as symbol. */
 #define OPpCONST_BARE		64	/* Was a bare word (filehandle?). */
-#define OPpCONST_FOLDED		128	/* Result of constant folding */
 
 /* Private for OP_FLIP/FLOP */
 #define OPpFLIP_LINENUM		64	/* Range arg potentially a line num. */
@@ -290,9 +323,13 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpOPEN_OUT_RAW		64	/* binmode(F,":raw") on output fh */
 #define OPpOPEN_OUT_CRLF	128	/* binmode(F,":crlf") on output fh */
 
-/* Private for OP_EXIT, HUSH also for OP_DIE */
-#define OPpHUSH_VMSISH		64	/* hush DCL exit msg vmsish mode*/
-#define OPpEXIT_VMSISH		128	/* exit(0) vs. exit(1) vmsish mode*/
+/* Private for COPs */
+#define OPpHUSH_VMSISH		32	/* hush DCL exit msg vmsish mode*/
+/* Note: Used for NATIVE_HINTS (shifted from the values in PL_hints),
+	 currently defined by vms/vmsish.h:
+				64
+				128
+ */
 
 /* Private for OP_FTXXX */
 #define OPpFT_ACCESS		2	/* use filetest 'access' */
@@ -323,6 +360,9 @@ Deprecated.  Use C<GIMME_V> instead.
 
 /* Private for OP_(LAST|REDO|NEXT|GOTO|DUMP) */
 #define OPpPV_IS_UTF8		128	/* label is in UTF8 */
+
+/* Private for OP_SPLIT */
+#define OPpSPLIT_IMPLIM		128	/* implicit limit */
 
 struct op {
     BASEOP
@@ -356,7 +396,7 @@ struct pmop {
     OP *	op_first;
     OP *	op_last;
 #ifdef USE_ITHREADS
-    IV          op_pmoffset;
+    PADOFFSET   op_pmoffset;
 #else
     REGEXP *    op_pmregexp;            /* compiled expression */
 #endif
@@ -655,7 +695,7 @@ struct loop {
 #define PERL_LOADMOD_NOIMPORT		0x2	/* use Module () */
 #define PERL_LOADMOD_IMPORT_OPS		0x4	/* use Module (...) */
 
-#if defined(PERL_IN_PERLY_C) || defined(PERL_IN_OP_C)
+#if defined(PERL_IN_PERLY_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_TOKE_C)
 #define ref(o, type) doref(o, type, TRUE)
 #endif
 
@@ -664,9 +704,9 @@ struct loop {
 
 =for apidoc Am|OP*|LINKLIST|OP *o
 Given the root of an optree, link the tree in execution order using the
-C<op_next> pointers and return the first op executed. If this has
+C<op_next> pointers and return the first op executed.  If this has
 already been done, it will not be redone, and C<< o->op_next >> will be
-returned. If C<< o->op_next >> is not already set, I<o> should be at
+returned.  If C<< o->op_next >> is not already set, I<o> should be at
 least an C<UNOP>.
 
 =cut
@@ -765,29 +805,29 @@ struct block_hooks {
 Return the BHK's flags.
 
 =for apidoc mx|void *|BhkENTRY|BHK *hk|which
-Return an entry from the BHK structure. I<which> is a preprocessor token
-indicating which entry to return. If the appropriate flag is not set
-this will return NULL. The type of the return value depends on which
+Return an entry from the BHK structure.  I<which> is a preprocessor token
+indicating which entry to return.  If the appropriate flag is not set
+this will return NULL.  The type of the return value depends on which
 entry you ask for.
 
 =for apidoc Amx|void|BhkENTRY_set|BHK *hk|which|void *ptr
 Set an entry in the BHK structure, and set the flags to indicate it is
-valid. I<which> is a preprocessing token indicating which entry to set.
+valid.  I<which> is a preprocessing token indicating which entry to set.
 The type of I<ptr> depends on the entry.
 
 =for apidoc Amx|void|BhkDISABLE|BHK *hk|which
 Temporarily disable an entry in this BHK structure, by clearing the
-appropriate flag. I<which> is a preprocessor token indicating which
+appropriate flag.  I<which> is a preprocessor token indicating which
 entry to disable.
 
 =for apidoc Amx|void|BhkENABLE|BHK *hk|which
 Re-enable an entry in this BHK structure, by setting the appropriate
-flag. I<which> is a preprocessor token indicating which entry to enable.
+flag.  I<which> is a preprocessor token indicating which entry to enable.
 This will assert (under -DDEBUGGING) if the entry doesn't contain a valid
 pointer.
 
 =for apidoc mx|void|CALL_BLOCK_HOOKS|which|arg
-Call all the registered block hooks for type I<which>. I<which> is a
+Call all the registered block hooks for type I<which>.  I<which> is a
 preprocessing token; the type of I<arg> depends on I<which>.
 
 =cut
@@ -823,8 +863,8 @@ preprocessing token; the type of I<arg> depends on I<which>.
 #define CALL_BLOCK_HOOKS(which, arg) \
     STMT_START { \
 	if (PL_blockhooks) { \
-	    I32 i; \
-	    for (i = av_len(PL_blockhooks); i >= 0; i--) { \
+	    SSize_t i; \
+	    for (i = av_tindex(PL_blockhooks); i >= 0; i--) { \
 		SV *sv = AvARRAY(PL_blockhooks)[i]; \
 		BHK *hk; \
 		\
@@ -858,14 +898,23 @@ preprocessing token; the type of I<arg> depends on I<which>.
 Return the XOP's flags.
 
 =for apidoc Am||XopENTRY|XOP *xop|which
-Return a member of the XOP structure. I<which> is a cpp token indicating
-which entry to return. If the member is not set this will return a
-default value. The return type depends on I<which>.
+Return a member of the XOP structure.  I<which> is a cpp token
+indicating which entry to return.  If the member is not set
+this will return a default value.  The return type depends
+on I<which>.  This macro evaluates its arguments more than
+once.  If you are using C<Perl_custom_op_xop> to retreive a
+C<XOP *> from a C<OP *>, use the more efficient L</XopENTRYCUSTOM> instead.
+
+=for apidoc Am||XopENTRYCUSTOM|const OP *o|which
+Exactly like C<XopENTRY(XopENTRY(Perl_custom_op_xop(aTHX_ o), which)> but more
+efficient.  The I<which> parameter is identical to L</XopENTRY>.
 
 =for apidoc Am|void|XopENTRY_set|XOP *xop|which|value
-Set a member of the XOP structure. I<which> is a cpp token indicating
-which entry to set. See L<perlguts/"Custom Operators"> for details about
-the available members and how they are used.
+Set a member of the XOP structure.  I<which> is a cpp token
+indicating which entry to set.  See L<perlguts/"Custom Operators">
+for details about the available members and how
+they are used.  This macro evaluates its argument
+more than once.
 
 =for apidoc Am|void|XopDISABLE|XOP *xop|which
 Temporarily disable a member of the XOP, by clearing the appropriate flag.
@@ -884,12 +933,32 @@ struct custom_op {
     void	  (*xop_peep)(pTHX_ OP *o, OP *oldop);
 };
 
+/* return value of Perl_custom_op_get_field, similar to void * then casting but
+   the U32 doesn't need truncation on 64 bit platforms in the caller, also
+   for easier macro writing */
+typedef union {
+    const char	   *xop_name;
+    const char	   *xop_desc;
+    U32		    xop_class;
+    void	  (*xop_peep)(pTHX_ OP *o, OP *oldop);
+    XOP            *xop_ptr;
+} XOPRETANY;
+
 #define XopFLAGS(xop) ((xop)->xop_flags)
 
 #define XOPf_xop_name	0x01
 #define XOPf_xop_desc	0x02
 #define XOPf_xop_class	0x04
 #define XOPf_xop_peep	0x08
+
+/* used by Perl_custom_op_get_field for option checking */
+typedef enum {
+    XOPe_xop_ptr = 0, /* just get the XOP *, don't look inside it */
+    XOPe_xop_name = XOPf_xop_name,
+    XOPe_xop_desc = XOPf_xop_desc,
+    XOPe_xop_class = XOPf_xop_class,
+    XOPe_xop_peep = XOPf_xop_peep,
+} xop_flags_enum;
 
 #define XOPd_xop_name	PL_op_name[OP_CUSTOM]
 #define XOPd_xop_desc	PL_op_desc[OP_CUSTOM]
@@ -905,6 +974,9 @@ struct custom_op {
 #define XopENTRY(xop, which) \
     ((XopFLAGS(xop) & XOPf_ ## which) ? (xop)->which : XOPd_ ## which)
 
+#define XopENTRYCUSTOM(o, which) \
+    (Perl_custom_op_get_field(aTHX_ o, XOPe_ ## which).which)
+
 #define XopDISABLE(xop, which) ((xop)->xop_flags &= ~XOPf_ ## which)
 #define XopENABLE(xop, which) \
     STMT_START { \
@@ -912,11 +984,14 @@ struct custom_op {
 	assert(XopENTRY(xop, which)); \
     } STMT_END
 
+#define Perl_custom_op_xop(x) \
+    (Perl_custom_op_get_field(x, XOPe_xop_ptr).xop_ptr)
+
 /*
 =head1 Optree Manipulation Functions
 
 =for apidoc Am|const char *|OP_NAME|OP *o
-Return the name of the provided OP. For core ops this looks up the name
+Return the name of the provided OP.  For core ops this looks up the name
 from the op_type; for custom ops from the op_ppaddr.
 
 =for apidoc Am|const char *|OP_DESC|OP *o
@@ -924,26 +999,68 @@ Return a short description of the provided OP.
 
 =for apidoc Am|U32|OP_CLASS|OP *o
 Return the class of the provided OP: that is, which of the *OP
-structures it uses. For core ops this currently gets the information out
+structures it uses.  For core ops this currently gets the information out
 of PL_opargs, which does not always accurately reflect the type used.
 For custom ops the type is returned from the registration, and it is up
-to the registree to ensure it is accurate. The value returned will be
+to the registree to ensure it is accurate.  The value returned will be
 one of the OA_* constants from op.h.
+
+=for apidoc Am|bool|OP_TYPE_IS|OP *o, Optype type
+Returns true if the given OP is not a NULL pointer
+and if it is of the given type.
+
+The negation of this macro, C<OP_TYPE_ISNT> is also available
+as well as C<OP_TYPE_IS_NN> and C<OP_TYPE_ISNT_NN> which elide
+the NULL pointer check.
+
+=for apidoc Am|bool|OP_TYPE_IS_OR_WAS|OP *o, Optype type
+Returns true if the given OP is not a NULL pointer and
+if it is of the given type or used to be before being
+replaced by an OP of type OP_NULL.
+
+The negation of this macro, C<OP_TYPE_ISNT_AND_WASNT>
+is also available as well as C<OP_TYPE_IS_OR_WAS_NN>
+and C<OP_TYPE_ISNT_AND_WASNT_NN> which elide
+the NULL pointer check.
 
 =cut
 */
 
 #define OP_NAME(o) ((o)->op_type == OP_CUSTOM \
-		    ? XopENTRY(Perl_custom_op_xop(aTHX_ o), xop_name) \
+                    ? XopENTRYCUSTOM(o, xop_name) \
 		    : PL_op_name[(o)->op_type])
 #define OP_DESC(o) ((o)->op_type == OP_CUSTOM \
-		    ? XopENTRY(Perl_custom_op_xop(aTHX_ o), xop_desc) \
+                    ? XopENTRYCUSTOM(o, xop_desc) \
 		    : PL_op_desc[(o)->op_type])
 #define OP_CLASS(o) ((o)->op_type == OP_CUSTOM \
-		     ? XopENTRY(Perl_custom_op_xop(aTHX_ o), xop_class) \
+		     ? XopENTRYCUSTOM(o, xop_class) \
 		     : (PL_opargs[(o)->op_type] & OA_CLASS_MASK))
 
-#define newSUB(f, o, p, b)	Perl_newATTRSUB(aTHX_ (f), (o), (p), NULL, (b))
+#define OP_TYPE_IS(o, type) ((o) && (o)->op_type == (type))
+#define OP_TYPE_IS_NN(o, type) ((o)->op_type == (type))
+#define OP_TYPE_ISNT(o, type) ((o) && (o)->op_type != (type))
+#define OP_TYPE_ISNT_NN(o, type) ((o)->op_type != (type))
+
+#define OP_TYPE_IS_OR_WAS_NN(o, type) \
+    ( ((o)->op_type == OP_NULL \
+       ? (o)->op_targ \
+       : (o)->op_type) \
+      == (type) )
+
+#define OP_TYPE_IS_OR_WAS(o, type) \
+    ( (o) && OP_TYPE_IS_OR_WAS_NN(o, type) )
+
+#define OP_TYPE_ISNT_AND_WASNT_NN(o, type) \
+    ( ((o)->op_type == OP_NULL \
+       ? (o)->op_targ \
+       : (o)->op_type) \
+      != (type) )
+
+#define OP_TYPE_ISNT_AND_WASNT(o, type) \
+    ( (o) && OP_TYPE_ISNT_AND_WASNT_NN(o, type) )
+
+#define newATTRSUB(f, o, p, a, b) Perl_newATTRSUB_x(aTHX_  f, o, p, a, b, FALSE)
+#define newSUB(f, o, p, b)	newATTRSUB((f), (o), (p), NULL, (b))
 
 #ifdef PERL_MAD
 #  define MAD_NULL 1

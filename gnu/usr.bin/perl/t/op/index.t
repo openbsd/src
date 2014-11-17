@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-plan( tests => 114 );
+plan( tests => 121 );
 
 run_tests() unless caller;
 
@@ -217,4 +217,38 @@ is(index('bang', PVBM2), 0, "index isn't confused by format compilation");
     is(index("rules 1 & 2", perl), 0, 'second index of the same constant works');
 }
 
+# PVBM compilation should not flatten ref constants
+use constant riffraff => \our $referent;
+index "foo", riffraff;
+is ref riffraff, 'SCALAR', 'index does not flatten ref constants';
+
+package o { use overload '""' => sub { "foo" } }
+bless \our $referent, o::;
+is index("foo", riffraff), 0,
+    'index respects changes in ref stringification';
+
+use constant quire => ${qr/(?{})/}; # A REGEXP, not a reference to one
+index "foo", quire;
+eval ' "" =~ quire ';
+is $@, "", 'regexp constants containing code blocks are not flattened';
+
+use constant bang => $! = 8;
+index "foo", bang;
+cmp_ok bang, '==', 8, 'dualvar constants are not flattened';
+
+use constant u => undef;
+{
+    my $w;
+    local $SIG{__WARN__} = sub { $w .= shift };
+    eval '
+        use warnings;
+        sub { () = index "foo", u; }
+    ';
+    is $w, undef, 'no warnings from compiling index($foo, undef_constant)';
 }
+is u, undef, 'undef constant is still undef';
+
+is index('the main road', __PACKAGE__), 4,
+    '[perl #119169] __PACKAGE__ as 2nd argument';
+
+} # end of sub run_tests

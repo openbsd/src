@@ -207,75 +207,210 @@ END_EXTERN_C
  */
 #undef fprintf
 #define	fprintf			win32_fprintf
+#ifdef UNDER_CE /* celib also makes these be macros to celib's x* symbols */
+#  undef vfprintf
+#endif
 #define	vfprintf		win32_vfprintf
+#ifdef UNDER_CE
+#  undef printf
+#endif
 #define	printf			win32_printf
+#ifdef UNDER_CE
+#  undef vprintf
+#endif
 #define	vprintf			win32_vprintf
+#ifdef UNDER_CE
+#  undef fread
+#endif
 #define fread(buf,size,count,f)	win32_fread(buf,size,count,f)
+#ifdef UNDER_CE
+#  undef fwrite
+#endif
 #define fwrite(buf,size,count,f)	win32_fwrite(buf,size,count,f)
+#ifdef UNDER_CE
+#  undef fopen
+#endif
 #define fopen			win32_fopen
 #undef fdopen
 #define fdopen			win32_fdopen
+#ifdef UNDER_CE
+#  undef freopen
+#endif
 #define freopen			win32_freopen
 #define	fclose(f)		win32_fclose(f)
+#ifdef UNDER_CE
+#  undef fputs
+#endif
 #define fputs(s,f)		win32_fputs(s,f)
+#ifdef UNDER_CE
+#  undef fputc
+#endif
 #define fputc(c,f)		win32_fputc(c,f)
+#ifdef UNDER_CE
+#  undef ungetc
+#endif
 #define ungetc(c,f)		win32_ungetc(c,f)
 #undef getc
 #define getc(f)			win32_getc(f)
+#ifdef UNDER_CE
+#  undef fileno
+#endif
 #define fileno(f)		win32_fileno(f)
+#ifdef UNDER_CE
+#  undef clearerr
+#endif
 #define clearerr(f)		win32_clearerr(f)
+#ifdef UNDER_CE
+#  undef fflush
+#endif
 #define fflush(f)		win32_fflush(f)
+#ifdef UNDER_CE
+#  undef ftell
+#endif
 #define ftell(f)		win32_ftell(f)
+#ifdef UNDER_CE
+#  undef fseek
+#endif
 #define fseek(f,o,w)		win32_fseek(f,o,w)
+#ifdef UNDER_CE
+#  undef fgetpos
+#endif
 #define fgetpos(f,p)		win32_fgetpos(f,p)
+#ifdef UNDER_CE
+#  undef fsetpos
+#endif
 #define fsetpos(f,p)		win32_fsetpos(f,p)
+#ifdef UNDER_CE
+#  undef rewind
+#endif
 #define rewind(f)		win32_rewind(f)
 #define tmpfile()		win32_tmpfile()
+#ifdef UNDER_CE
+#  undef abort
+#endif
 #define abort()			win32_abort()
+#ifdef UNDER_CE
+#  undef fstat
+#endif
 #define fstat(fd,bufptr)   	win32_fstat(fd,bufptr)
+#ifdef UNDER_CE
+#  undef stat
+#endif
 #define stat(pth,bufptr)   	win32_stat(pth,bufptr)
 #define longpath(pth)   	win32_longpath(pth)
 #define ansipath(pth)   	win32_ansipath(pth)
+#ifdef UNDER_CE
+#  undef rename
+#endif
 #define rename(old,new)		win32_rename(old,new)
+#ifdef UNDER_CE
+#  undef setmode
+#endif
 #define setmode(fd,mode)	win32_setmode(fd,mode)
 #define chsize(fd,sz)		win32_chsize(fd,sz)
+#ifdef UNDER_CE
+#  undef lseek
+#endif
 #define lseek(fd,offset,orig)	win32_lseek(fd,offset,orig)
 #define tell(fd)		win32_tell(fd)
+#ifdef UNDER_CE
+#  undef dup
+#endif
 #define dup(fd)			win32_dup(fd)
+#ifdef UNDER_CE
+#  undef dup2
+#endif
 #define dup2(fd1,fd2)		win32_dup2(fd1,fd2)
+#ifdef UNDER_CE
+#  undef open
+#endif
 #define open			win32_open
+#ifdef UNDER_CE
+#  undef close
+#endif
 #define close(fd)		win32_close(fd)
 #define eof(fd)			win32_eof(fd)
+#ifdef UNDER_CE
+#  undef isatty
+#endif
 #define isatty(fd)		win32_isatty(fd)
+#ifdef UNDER_CE
+#  undef read
+#endif
 #define read(fd,b,s)		win32_read(fd,b,s)
+#ifdef UNDER_CE
+#  undef write
+#endif
 #define write(fd,b,s)		win32_write(fd,b,s)
 #define _open_osfhandle		win32_open_osfhandle
+#ifdef UNDER_CE
+#  undef _get_osfhandle
+#endif
 #define _get_osfhandle		win32_get_osfhandle
 #define spawnvp			win32_spawnvp
+#ifdef UNDER_CE
+#  undef mkdir
+#endif
 #define mkdir			win32_mkdir
+#ifdef UNDER_CE
+#  undef rmdir
+#endif
 #define rmdir			win32_rmdir
+#ifdef UNDER_CE
+#  undef chdir
+#endif
 #define chdir			win32_chdir
 #define flock(fd,o)		win32_flock(fd,o)
+#ifdef UNDER_CE
+#  undef execv
+#endif
 #define execv			win32_execv
+#ifdef UNDER_CE
+#  undef execvp
+#endif
 #define execvp			win32_execvp
+#ifdef UNDER_CE
+#  undef perror
+#endif
 #define perror			win32_perror
 #define setbuf			win32_setbuf
+#ifdef UNDER_CE
+#  undef setvbuf
+#endif
 #define setvbuf			win32_setvbuf
 #undef flushall
 #define flushall		win32_flushall
 #undef fcloseall
 #define fcloseall		win32_fcloseall
+#ifdef UNDER_CE
+#  undef fgets
+#endif
 #define fgets			win32_fgets
+#ifdef UNDER_CE
+#  undef gets
+#endif
 #define gets			win32_gets
+#ifdef UNDER_CE
+#  undef fgetc
+#endif
 #define fgetc			win32_fgetc
 #undef putc
 #define putc			win32_putc
+#ifdef UNDER_CE
+#  undef puts
+#endif
 #define puts			win32_puts
 #undef getchar
 #define getchar			win32_getchar
 #undef putchar
 #define putchar			win32_putchar
+#ifdef UNDER_CE
+#  undef access
+#endif
 #define access(p,m)		win32_access(p,m)
+#ifdef UNDER_CE
+#  undef chmod
+#endif
 #define chmod(p,m)		win32_chmod(p,m)
 
 
@@ -302,19 +437,42 @@ END_EXTERN_C
 #define link			win32_link
 #define unlink			win32_unlink
 #define utime			win32_utime
+#ifdef UNDER_CE
+#  undef gettimeofday
+#endif
 #define gettimeofday		win32_gettimeofday
 #define uname			win32_uname
 #define wait			win32_wait
 #define waitpid			win32_waitpid
+#ifdef UNDER_CE
+#  undef kill
+#endif
 #define kill			win32_kill
+#ifdef UNDER_CE
+#  undef killpg
+#endif
+#define killpg(pid, sig)	win32_kill(pid, -(sig))
 
+
+#ifdef UNDER_CE
+#  undef opendir
+#endif
 #define opendir			win32_opendir
+#ifdef UNDER_CE
+#  undef readdir
+#endif
 #define readdir			win32_readdir
 #define telldir			win32_telldir
 #define seekdir			win32_seekdir
 #define rewinddir		win32_rewinddir
+#ifdef UNDER_CE
+#  undef closedir
+#endif
 #define closedir		win32_closedir
 #define os_id			win32_os_id
+#ifdef UNDER_CE
+#  undef getpid
+#endif
 #define getpid			win32_getpid
 
 #undef crypt

@@ -5,8 +5,8 @@ perlguts - Introduction to the Perl API
 =head1 DESCRIPTION
 
 This document attempts to describe how to use the Perl API, as well as
-to provide some info on the basic workings of the Perl core. It is far
-from complete and probably contains many errors. Please refer any
+to provide some info on the basic workings of the Perl core.  It is far
+from complete and probably contains many errors.  Please refer any
 questions or comments to the author below.
 
 =head1 Variables
@@ -28,7 +28,7 @@ guaranteed to be large enough to hold a pointer (as well as an integer).
 Additionally, there is the UV, which is simply an unsigned IV.
 
 Perl also uses two special typedefs, I32 and I16, which will always be at
-least 32-bits and 16-bits long, respectively. (Again, there are U32 and U16,
+least 32-bits and 16-bits long, respectively.  (Again, there are U32 and U16,
 as well.)  They will usually be exactly 32 and 16 bits long, but on Crays
 they will both be 64 bits.
 
@@ -39,12 +39,11 @@ values that can be loaded: an integer value (IV), an unsigned integer
 value (UV), a double (NV), a string (PV), and another scalar (SV).
 ("PV" stands for "Pointer Value".  You might think that it is misnamed
 because it is described as pointing only to strings.  However, it is
-possible to have it point to other things.  For example, inversion
-lists, used in regular expression data structures, are scalars, each
-consisting of an array of UVs which are accessed through PVs.  But,
+possible to have it point to other things  For example, it could point
+to an array of UVs.  But,
 using it for non-strings requires care, as the underlying assumption of
 much of the internals is that PVs are just for strings.  Often, for
-example, a trailing NUL is tacked on automatically.  The non-string use
+example, a trailing C<NUL> is tacked on automatically.  The non-string use
 is documented only in this paragraph.)
 
 The seven routines are:
@@ -61,10 +60,10 @@ C<STRLEN> is an integer type (Size_t, usually defined as size_t in
 F<config.h>) guaranteed to be large enough to represent the size of
 any string that perl can handle.
 
-In the unlikely case of a SV requiring more complex initialisation, you
+In the unlikely case of a SV requiring more complex initialization, you
 can create an empty SV with newSV(len).  If C<len> is 0 an empty SV of
 type NULL is returned, else an SV of type PV is returned with len + 1 (for
-the NUL) bytes of storage allocated, accessible via SvPVX.  In both cases
+the C<NUL>) bytes of storage allocated, accessible via SvPVX.  In both cases
 the SV has the undef value.
 
     SV *sv = newSV(0);   /* no storage allocated  */
@@ -88,7 +87,7 @@ assigned by using C<sv_setpvn>, C<newSVpvn>, or C<newSVpv>, or you may
 allow Perl to calculate the length by using C<sv_setpv> or by specifying
 0 as the second argument to C<newSVpv>.  Be warned, though, that Perl will
 determine the string's length by using C<strlen>, which depends on the
-string terminating with a NUL character, and not otherwise containing
+string terminating with a C<NUL> character, and not otherwise containing
 NULs.
 
 The arguments of C<sv_setpvf> are processed like C<sprintf>, and the
@@ -106,11 +105,11 @@ the format.
 The C<sv_set*()> functions are not generic enough to operate on values
 that have "magic".  See L<Magic Virtual Tables> later in this document.
 
-All SVs that contain strings should be terminated with a NUL character.
-If it is not NUL-terminated there is a risk of
+All SVs that contain strings should be terminated with a C<NUL> character.
+If it is not C<NUL>-terminated there is a risk of
 core dumps and corruptions from code which passes the string to C
-functions or system calls which expect a NUL-terminated string.
-Perl's own functions typically add a trailing NUL for this reason.
+functions or system calls which expect a C<NUL>-terminated string.
+Perl's own functions typically add a trailing C<NUL> for this reason.
 Nevertheless, you should be very careful when you pass a string stored
 in an SV to a C function or system call.
 
@@ -132,10 +131,11 @@ Historically the C<SvPV> macro with the global variable C<PL_na> has been
 used in this case.  But that can be quite inefficient because C<PL_na> must
 be accessed in thread-local storage in threaded Perl.  In any case, remember
 that Perl allows arbitrary strings of data that may both contain NULs and
-might not be terminated by a NUL.
+might not be terminated by a C<NUL>.
 
 Also remember that C doesn't allow you to safely say C<foo(SvPV(s, len),
-len);>. It might work with your compiler, but it won't work for everyone.
+len);>.  It might work with your
+compiler, but it won't work for everyone.
 Break this sort of statement up into separate assignments:
 
     SV *s;
@@ -156,8 +156,60 @@ Perl to allocate more memory for your SV, you can use the macro
 which will determine if more memory needs to be allocated.  If so, it will
 call the function C<sv_grow>.  Note that C<SvGROW> can only increase, not
 decrease, the allocated memory of an SV and that it does not automatically
-add space for the trailing NUL byte (perl's own string functions typically do
+add space for the trailing C<NUL> byte (perl's own string functions typically do
 C<SvGROW(sv, len + 1)>).
+
+If you want to write to an existing SV's buffer and set its value to a
+string, use SvPV_force() or one of its variants to force the SV to be
+a PV.  This will remove any of various types of non-stringness from
+the SV while preserving the content of the SV in the PV.  This can be
+used, for example, to append data from an API function to a buffer
+without extra copying:
+
+    (void)SvPVbyte_force(sv, len);
+    s = SvGROW(sv, len + needlen + 1);
+    /* something that modifies up to needlen bytes at s+len, but
+       modifies newlen bytes
+         eg. newlen = read(fd, s + len, needlen);
+       ignoring errors for these examples
+     */
+    s[len + newlen] = '\0';
+    SvCUR_set(sv, len + newlen);
+    SvUTF8_off(sv);
+    SvSETMAGIC(sv);
+
+If you already have the data in memory or if you want to keep your
+code simple, you can use one of the sv_cat*() variants, such as
+sv_catpvn().  If you want to insert anywhere in the string you can use
+sv_insert() or sv_insert_flags().
+
+If you don't need the existing content of the SV, you can avoid some
+copying with:
+
+    sv_setpvn(sv, "", 0);
+    s = SvGROW(sv, needlen + 1);
+    /* something that modifies up to needlen bytes at s, but modifies
+       newlen bytes
+         eg. newlen = read(fd, s. needlen);
+     */
+    s[newlen] = '\0';
+    SvCUR_set(sv, newlen);
+    SvPOK_only(sv); /* also clears SVf_UTF8 */
+    SvSETMAGIC(sv);
+
+Again, if you already have the data in memory or want to avoid the
+complexity of the above, you can use sv_setpvn().
+
+If you have a buffer allocated with Newx() and want to set that as the
+SV's value, you can use sv_usepvn_flags().  That has some requirements
+if you want to avoid perl re-allocating the buffer to fit the trailing
+NUL:
+
+   Newx(buf, somesize+1, char);
+   /* ... fill in buf ... */
+   buf[somesize] = '\0';
+   sv_usepvn_flags(sv, buf, somesize, SV_SMAGIC | SV_HAS_TRAILING_NUL);
+   /* buf now belongs to perl, don't release it */
 
 If you have an SV and want to know what kind of data Perl thinks is stored
 in it, you can use the following macros to check the type of SV you have.
@@ -194,7 +246,8 @@ using C<strlen>.  In the second, you specify the length of the string
 yourself.  The third function processes its arguments like C<sprintf> and
 appends the formatted output.  The fourth function works like C<vsprintf>.
 You can specify the address and length of an array of SVs instead of the
-va_list argument. The fifth function extends the string stored in the first
+va_list argument.  The fifth function
+extends the string stored in the first
 SV with the string stored in the second SV.  It also forces the second SV
 to be interpreted as a string.
 
@@ -215,8 +268,8 @@ you can call:
 
 The scalar C<undef> value is stored in an SV instance called C<PL_sv_undef>.
 
-Its address can be used whenever an C<SV*> is needed. Make sure that
-you don't try to compare a random sv with C<&PL_sv_undef>. For example
+Its address can be used whenever an C<SV*> is needed.  Make sure that
+you don't try to compare a random sv with C<&PL_sv_undef>.  For example
 when interfacing Perl code, it'll work correctly for:
 
   foo(undef);
@@ -258,12 +311,13 @@ call is not necessary (see L<Reference Counts and Mortality>).
 Perl provides the function C<sv_chop> to efficiently remove characters
 from the beginning of a string; you give it an SV and a pointer to
 somewhere inside the PV, and it discards everything before the
-pointer. The efficiency comes by means of a little hack: instead of
+pointer.  The efficiency comes by means of a little hack: instead of
 actually removing the characters, C<sv_chop> sets the flag C<OOK>
 (offset OK) to signal to other functions that the offset hack is in
-effect, and it puts the number of bytes chopped off into the IV field
-of the SV. It then moves the PV pointer (called C<SvPVX>) forward that
-many bytes, and adjusts C<SvCUR> and C<SvLEN>.
+effect, and it moves the PV pointer (called C<SvPVX>) forward
+by the number of bytes chopped off, and adjusts C<SvCUR> and C<SvLEN>
+accordingly.  (A portion of the space between the old and new PV
+pointers is used to store the count of chopped bytes.)
 
 Hence, at this point, the start of the buffer that we allocated lives
 at C<SvPVX(sv) - SvIV(sv)> in memory and the PV pointer is pointing
@@ -281,7 +335,7 @@ This is best demonstrated by example:
     LEN = 5
 
 Here the number of bytes chopped off (1) is put into IV, and
-C<Devel::Peek::Dump> helpfully reminds us that this is an offset. The
+C<Devel::Peek::Dump> helpfully reminds us that this is an offset.  The
 portion of the string between the "real" and the "fake" beginnings is
 shown in parentheses, and the values of C<SvCUR> and C<SvLEN> reflect
 the fake beginning, not the real one.
@@ -289,11 +343,11 @@ the fake beginning, not the real one.
 Something similar to the offset hack is performed on AVs to enable
 efficient shifting and splicing off the beginning of the array; while
 C<AvARRAY> points to the first element in the array that is visible from
-Perl, C<AvALLOC> points to the real start of the C array. These are
+Perl, C<AvALLOC> points to the real start of the C array.  These are
 usually the same, but a C<shift> operation can be carried out by
 increasing C<AvARRAY> by one and decreasing C<AvFILL> and C<AvMAX>.
 Again, the location of the real start of the C array only comes into
-play when freeing the array. See C<av_shift> in F<av.c>.
+play when freeing the array.  See C<av_shift> in F<av.c>.
 
 =head2 What's Really Stored in an SV?
 
@@ -314,11 +368,13 @@ These will tell you if you truly have an integer, double, or string pointer
 stored in your SV.  The "p" stands for private.
 
 There are various ways in which the private and public flags may differ.
-For example, a tied SV may have a valid underlying value in the IV slot
-(so SvIOKp is true), but the data should be accessed via the FETCH
-routine rather than directly, so SvIOK is false. Another is when
+For example, in perl 5.16 and earlier a tied SV may have a valid
+underlying value in the IV slot (so SvIOKp is true), but the data
+should be accessed via the FETCH routine rather than directly,
+so SvIOK is false.  (In perl 5.18 onwards, tied scalars use
+the flags the same way as untied scalars.)  Another is when
 numeric conversion has occurred and precision has been lost: only the
-private flag is set on 'lossy' values. So when an NV is converted to an
+private flag is set on 'lossy' values.  So when an NV is converted to an
 IV with loss, SvIOKp, SvNOKp and SvNOK will be set, while SvIOK wont be.
 
 In general, though, it's best to use the C<Sv*V> macros.
@@ -332,7 +388,7 @@ empty AV:
 
 The second method both creates the AV and initially populates it with SVs:
 
-    AV*  av_make(I32 num, SV **ptr);
+    AV*  av_make(SSize_t num, SV **ptr);
 
 The second argument points to an array containing C<num> C<SV*>'s.  Once the
 AV has been created, the SVs can be destroyed, if so desired.
@@ -342,7 +398,7 @@ Once the AV has been created, the following operations are possible on it:
     void  av_push(AV*, SV*);
     SV*   av_pop(AV*);
     SV*   av_shift(AV*);
-    void  av_unshift(AV*, I32 num);
+    void  av_unshift(AV*, SSize_t num);
 
 These should be familiar operations, with the exception of C<av_unshift>.
 This routine adds C<num> elements at the front of the array with the C<undef>
@@ -351,9 +407,9 @@ to these new elements.
 
 Here are some other functions:
 
-    I32   av_top_index(AV*);
-    SV**  av_fetch(AV*, I32 key, I32 lval);
-    SV**  av_store(AV*, I32 key, SV* val);
+    SSize_t av_top_index(AV*);
+    SV**    av_fetch(AV*, SSize_t key, I32 lval);
+    SV**    av_store(AV*, SSize_t key, SV* val);
 
 The C<av_top_index> function returns the highest index value in an array (just
 like $#array in Perl).  If the array is empty, -1 is returned.  The
@@ -370,7 +426,7 @@ A few more:
 
     void  av_clear(AV*);
     void  av_undef(AV*);
-    void  av_extend(AV*, I32 key);
+    void  av_extend(AV*, SSize_t key);
 
 The C<av_clear> function deletes all the elements in the AV* array, but
 does not actually delete the array itself.  The C<av_undef> function will
@@ -520,8 +576,8 @@ decrement the reference count of C<val> to avoid a memory leak.
 
 =head2 AVs, HVs and undefined values
 
-Sometimes you have to store undefined values in AVs or HVs. Although
-this may be a rare case, it can be tricky. That's because you're
+Sometimes you have to store undefined values in AVs or HVs.  Although
+this may be a rare case, it can be tricky.  That's because you're
 used to using C<&PL_sv_undef> if you need an undefined SV.
 
 For example, intuition tells you that this XS code:
@@ -534,12 +590,14 @@ is equivalent to this Perl code:
     my @av;
     $av[0] = undef;
 
-Unfortunately, this isn't true. AVs use C<&PL_sv_undef> as a marker
+Unfortunately, this isn't true.  In perl 5.18 and earlier, AVs use C<&PL_sv_undef> as a marker
 for indicating that an array element has not yet been initialized.
 Thus, C<exists $av[0]> would be true for the above Perl code, but
-false for the array generated by the XS code.
+false for the array generated by the XS code.  In perl 5.20, storing
+&PL_sv_undef will create a read-only element, because the scalar
+&PL_sv_undef itself is stored, not a copy.
 
-Other problems can occur when storing C<&PL_sv_undef> in HVs:
+Similar problems can occur when storing C<&PL_sv_undef> in HVs:
 
     hv_store( hv, "key", 3, &PL_sv_undef, 0 );
 
@@ -549,12 +607,12 @@ the value of C<key>, you'll get the following error:
     Modification of non-creatable hash value attempted
 
 In perl 5.8.0, C<&PL_sv_undef> was also used to mark placeholders
-in restricted hashes. This caused such hash entries not to appear
+in restricted hashes.  This caused such hash entries not to appear
 when iterating over the hash or when checking for the keys
 with the C<hv_exists> function.
 
 You can run into similar problems when you store C<&PL_sv_yes> or
-C<&PL_sv_no> into AVs or HVs. Trying to modify such elements
+C<&PL_sv_no> into AVs or HVs.  Trying to modify such elements
 will give you the following error:
 
     Modification of a read-only value attempted
@@ -666,8 +724,8 @@ The following function tests whether the SV is a reference to a blessed object.
 	int  sv_isobject(SV* sv);
 
 The following function tests whether the SV is derived from the specified
-class. SV can be either a reference to a blessed object or a string
-containing a class name. This is the function implementing the
+class.  SV can be either a reference to a blessed object or a string
+containing a class name.  This is the function implementing the
 C<UNIVERSAL::isa> functionality.
 
 	bool sv_derived_from(SV* sv, const char* name);
@@ -717,7 +775,7 @@ package.
 
 =head2 Reference Counts and Mortality
 
-Perl uses a reference count-driven garbage collection mechanism. SVs,
+Perl uses a reference count-driven garbage collection mechanism.  SVs,
 AVs, or HVs (xV for short in the following) start their life with a
 reference count of 1.  If the reference count of an xV ever drops to 0,
 then it will be destroyed and its memory made available for reuse.
@@ -769,7 +827,7 @@ later be decremented twice.
 "Mortal" SVs are mainly used for SVs that are placed on perl's stack.
 For example an SV which is created just to pass a number to a called sub
 is made mortal to have it cleaned up automatically when it's popped off
-the stack. Similarly, results returned by XSUBs (which are pushed on the
+the stack.  Similarly, results returned by XSUBs (which are pushed on the
 stack) are often made mortal.
 
 To create a mortal variable, use the functions:
@@ -794,7 +852,8 @@ As that is multiple C statements it is quite common so see this idiom instead:
 
 You should be careful about creating mortal variables.  Strange things
 can happen if you make the same value mortal within multiple contexts,
-or if you make a variable mortal multiple times. Thinking of "Mortalization"
+or if you make a variable mortal multiple
+times.  Thinking of "Mortalization"
 as deferred C<SvREFCNT_dec> should help to minimize such problems.
 For example if you are passing an SV which you I<know> has a high enough REFCNT
 to survive its use on the stack you need not do any mortalization.
@@ -901,6 +960,54 @@ following code:
 If the order of C<sv_setiv> and C<sv_setpv> had been reversed, then the
 macro C<SvPOK_on> would need to be called instead of C<SvIOK_on>.
 
+=head2 Read-Only Values
+
+In Perl 5.16 and earlier, copy-on-write (see the next section) shared a
+flag bit with read-only scalars.  So the only way to test whether
+C<sv_setsv>, etc., will raise a "Modification of a read-only value" error
+in those versions is:
+
+    SvREADONLY(sv) && !SvIsCOW(sv)
+
+Under Perl 5.18 and later, SvREADONLY only applies to read-only variables,
+and, under 5.20, copy-on-write scalars can also be read-only, so the above
+check is incorrect.  You just want:
+
+    SvREADONLY(sv)
+
+If you need to do this check often, define your own macro like this:
+
+    #if PERL_VERSION >= 18
+    # define SvTRULYREADONLY(sv) SvREADONLY(sv)
+    #else
+    # define SvTRULYREADONLY(sv) (SvREADONLY(sv) && !SvIsCOW(sv))
+    #endif
+
+=head2 Copy on Write
+
+Perl implements a copy-on-write (COW) mechanism for scalars, in which
+string copies are not immediately made when requested, but are deferred
+until made necessary by one or the other scalar changing.  This is mostly
+transparent, but one must take care not to modify string buffers that are
+shared by multiple SVs.
+
+You can test whether an SV is using copy-on-write with C<SvIsCOW(sv)>.
+
+You can force an SV to make its own copy of its string buffer by calling C<sv_force_normal(sv)> or SvPV_force_nolen(sv).
+
+If you want to make the SV drop its string buffer, use
+C<sv_force_normal_flags(sv, SV_COW_DROP_PV)> or simply
+C<sv_setsv(sv, NULL)>.
+
+All of these functions will croak on read-only scalars (see the previous
+section for more on those).
+
+To test that your code is behaving correctly and not modifying COW buffers,
+on systems that support L<mmap(2)> (i.e., Unix) you can configure perl with
+C<-Accflags=-DPERL_DEBUG_READONLY_COW> and it will turn buffer violations
+into crashes.  You will find it to be marvellously slow, so you may want to
+skip perl's own tests.
+
 =head2 Magic Variables
 
 [This section still under construction.  Ignore everything here.  Post no
@@ -933,14 +1040,15 @@ The C<sv> argument is a pointer to the SV that is to acquire a new magical
 feature.
 
 If C<sv> is not already magical, Perl uses the C<SvUPGRADE> macro to
-convert C<sv> to type C<SVt_PVMG>. Perl then continues by adding new magic
+convert C<sv> to type C<SVt_PVMG>.
+Perl then continues by adding new magic
 to the beginning of the linked list of magical features.  Any prior entry
 of the same type of magic is deleted.  Note that this can be overridden,
 and multiple instances of the same type of magic can be associated with an
 SV.
 
 The C<name> and C<namlen> arguments are used to associate a string with
-the magic, typically the name of a variable. C<namlen> is stored in the
+the magic, typically the name of a variable.  C<namlen> is stored in the
 C<mg_len> field and if C<name> is non-null then either a C<savepvn> copy of
 C<name> or C<name> itself is stored in the C<mg_ptr> field, depending on
 whether C<namlen> is greater than zero or equal to zero respectively.  As a
@@ -950,8 +1058,9 @@ to contain an C<SV*> and is stored as-is with its REFCNT incremented.
 The sv_magic function uses C<how> to determine which, if any, predefined
 "Magic Virtual Table" should be assigned to the C<mg_virtual> field.
 See the L<Magic Virtual Tables> section below.  The C<how> argument is also
-stored in the C<mg_type> field. The value of C<how> should be chosen
-from the set of macros C<PERL_MAGIC_foo> found in F<perl.h>. Note that before
+stored in the C<mg_type> field.  The value of
+C<how> should be chosen from the set of macros
+C<PERL_MAGIC_foo> found in F<perl.h>.  Note that before
 these macros were added, Perl internals used to directly use character
 literals, so you may occasionally come across old code or documentation
 referring to 'U' magic rather than C<PERL_MAGIC_uvar> for example.
@@ -979,7 +1088,8 @@ The C<type> argument should be equal to the C<how> value when the C<SV>
 was initially made magical.
 
 However, note that C<sv_unmagic> removes all magic of a certain C<type> from the
-C<SV>. If you want to remove only certain magic of a C<type> based on the magic
+C<SV>.  If you want to remove only certain
+magic of a C<type> based on the magic
 virtual table, use C<sv_unmagicext> instead:
 
     int sv_unmagicext(SV *sv, int type, MGVTBL *vtbl);
@@ -1037,8 +1147,9 @@ the Perl API, and may not be exported by the Perl library.
 
 The last three slots are a recent addition, and for source code
 compatibility they are only checked for if one of the three flags
-MGf_COPY, MGf_DUP or MGf_LOCAL is set in mg_flags. This means that most
-code can continue declaring a vtable as a 5-element value. These three are
+MGf_COPY, MGf_DUP or MGf_LOCAL is set in mg_flags.
+This means that most code can continue declaring
+a vtable as a 5-element value.  These three are
 currently used exclusively by the threading code, and are highly subject
 to change.
 
@@ -1115,7 +1226,7 @@ will be lost.
 When an uppercase and lowercase letter both exist in the table, then the
 uppercase letter is typically used to represent some kind of composite type
 (a list or a hash), and the lowercase letter is used to represent an element
-of that composite type. Some internals code makes use of this case
+of that composite type.  Some internals code makes use of this case
 relationship.  However, 'v' and 'V' (vec and v-string) are in no way related.
 
 The C<PERL_MAGIC_ext> and C<PERL_MAGIC_uvar> magic types are defined
@@ -1170,7 +1281,7 @@ objects blessed into the same class as the extension is sufficient.
 For C<PERL_MAGIC_ext> magic, it is usually a good idea to define an
 C<MGVTBL>, even if all its fields will be C<0>, so that individual
 C<MAGIC> pointers can be identified as a particular kind of magic
-using their magic virtual table. C<mg_findext> provides an easy way
+using their magic virtual table.  C<mg_findext> provides an easy way
 to do that:
 
     STATIC MGVTBL my_vtbl = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -1200,9 +1311,11 @@ since their implementation handles 'get' magic.
                                        * type */
 
 This routine returns a pointer to a C<MAGIC> structure stored in the SV.
-If the SV does not have that magical feature, C<NULL> is returned. If the
+If the SV does not have that magical
+feature, C<NULL> is returned.  If the
 SV has multiple instances of that magical feature, the first one will be
-returned. C<mg_findext> can be used to find a C<MAGIC> structure of an SV
+returned.  C<mg_findext> can be used
+to find a C<MAGIC> structure of an SV
 based on both its magic type and its magic virtual table:
 
     MAGIC *mg_findext(SV *sv, int type, MGVTBL *vtbl);
@@ -1224,7 +1337,7 @@ magic type.
 WARNING: As of the 5.004 release, proper usage of the array and hash
 access functions requires understanding a few caveats.  Some
 of these caveats are actually considered bugs in the API, to be fixed
-in later releases, and are bracketed with [MAYCHANGE] below. If
+in later releases, and are bracketed with [MAYCHANGE] below.  If
 you find yourself actually applying such information in this section, be
 aware that the behavior may change in the future, umm, without warning.
 
@@ -1233,7 +1346,7 @@ the various GET, SET, etc methods.  To perform the equivalent of the perl
 tie function from an XSUB, you must mimic this behaviour.  The code below
 carries out the necessary steps - firstly it creates a new hash, and then
 creates a second hash which it blesses into the class which will implement
-the tie methods. Lastly it ties the two hashes together, and returns a
+the tie methods.  Lastly it ties the two hashes together, and returns a
 reference to the new tied hash.  Note that the code below does NOT call the
 TIEHASH method in the MyTie class -
 see L<Calling Perl Routines from within C Programs> for details on how
@@ -1323,19 +1436,19 @@ This construction is I<approximately> equivalent to
 
 The biggest difference is that the first construction would
 reinstate the initial value of $var, irrespective of how control exits
-the block: C<goto>, C<return>, C<die>/C<eval>, etc. It is a little bit
+the block: C<goto>, C<return>, C<die>/C<eval>, etc.  It is a little bit
 more efficient as well.
 
 There is a way to achieve a similar task from C via Perl API: create a
 I<pseudo-block>, and arrange for some changes to be automatically
 undone at the end of it, either explicit, or via a non-local exit (via
-die()). A I<block>-like construct is created by a pair of
+die()).  A I<block>-like construct is created by a pair of
 C<ENTER>/C<LEAVE> macros (see L<perlcall/"Returning a Scalar">).
 Such a construct may be created specially for some important localized
 task, or an existing one (like boundaries of enclosing Perl
 subroutine/block, or an existing pair for freeing TMPs) may be
-used. (In the second case the overhead of additional localization must
-be almost negligible.) Note that any XSUB is automatically enclosed in
+used.  (In the second case the overhead of additional localization must
+be almost negligible.)  Note that any XSUB is automatically enclosed in
 an C<ENTER>/C<LEAVE> pair.
 
 Inside such a I<pseudo-block> the following service is available:
@@ -1358,7 +1471,7 @@ C<i> at the end of enclosing I<pseudo-block>.
 =item C<SAVEPPTR(p)>
 
 These macros arrange things to restore the value of pointers C<s> and
-C<p>. C<s> must be a pointer of a type which survives conversion to
+C<p>.  C<s> must be a pointer of a type which survives conversion to
 C<SV*> and back, C<p> should be able to survive conversion to C<char*>
 and back.
 
@@ -1396,7 +1509,7 @@ the end of I<pseudo-block>.
 
 =item C<SAVEDELETE(HV *hv, char *key, I32 length)>
 
-The key C<key> of C<hv> is deleted at the end of I<pseudo-block>. The
+The key C<key> of C<hv> is deleted at the end of I<pseudo-block>.  The
 string pointed to by C<key> is Safefree()ed.  If one has a I<key> in
 short-lived storage, the corresponding string may be reallocated like
 this:
@@ -1441,7 +1554,7 @@ Similar to C<save_scalar>, but localize C<@gv> and C<%gv>.
 
 Duplicates the current value of C<SV>, on the exit from the current
 C<ENTER>/C<LEAVE> I<pseudo-block> will restore the value of C<SV>
-using the stored value. It doesn't handle magic. Use C<save_scalar> if
+using the stored value.  It doesn't handle magic.  Use C<save_scalar> if
 magic is affected.
 
 =item C<void save_list(SV **sarg, I32 maxsarg)>
@@ -1493,7 +1606,7 @@ where C<SP> is the macro that represents the local copy of the stack pointer,
 and C<num> is the number of elements the stack should be extended by.
 
 Now that there is room on the stack, values can be pushed on it using C<PUSHs>
-macro. The pushed values will often need to be "mortal" (See
+macro.  The pushed values will often need to be "mortal" (See
 L</Reference Counts and Mortality>):
 
     PUSHs(sv_2mortal(newSViv(an_integer)))
@@ -1589,78 +1702,11 @@ functions:
 For a detailed description of calling conventions from C to Perl,
 consult L<perlcall>.
 
-=head2 Memory Allocation
-
-=head3 Allocation
-
-All memory meant to be used with the Perl API functions should be manipulated
-using the macros described in this section.  The macros provide the necessary
-transparency between differences in the actual malloc implementation that is
-used within perl.
-
-It is suggested that you enable the version of malloc that is distributed
-with Perl.  It keeps pools of various sizes of unallocated memory in
-order to satisfy allocation requests more quickly.  However, on some
-platforms, it may cause spurious malloc or free errors.
-
-The following three macros are used to initially allocate memory :
-
-    Newx(pointer, number, type);
-    Newxc(pointer, number, type, cast);
-    Newxz(pointer, number, type);
-
-The first argument C<pointer> should be the name of a variable that will
-point to the newly allocated memory.
-
-The second and third arguments C<number> and C<type> specify how many of
-the specified type of data structure should be allocated.  The argument
-C<type> is passed to C<sizeof>.  The final argument to C<Newxc>, C<cast>,
-should be used if the C<pointer> argument is different from the C<type>
-argument.
-
-Unlike the C<Newx> and C<Newxc> macros, the C<Newxz> macro calls C<memzero>
-to zero out all the newly allocated memory.
-
-=head3 Reallocation
-
-    Renew(pointer, number, type);
-    Renewc(pointer, number, type, cast);
-    Safefree(pointer)
-
-These three macros are used to change a memory buffer size or to free a
-piece of memory no longer needed.  The arguments to C<Renew> and C<Renewc>
-match those of C<New> and C<Newc> with the exception of not needing the
-"magic cookie" argument.
-
-=head3 Moving
-
-    Move(source, dest, number, type);
-    Copy(source, dest, number, type);
-    Zero(dest, number, type);
-
-These three macros are used to move, copy, or zero out previously allocated
-memory.  The C<source> and C<dest> arguments point to the source and
-destination starting points.  Perl will move, copy, or zero out C<number>
-instances of the size of the C<type> data structure (using the C<sizeof>
-function).
-
-=head2 PerlIO
-
-The most recent development releases of Perl have been experimenting with
-removing Perl's dependency on the "normal" standard I/O suite and allowing
-other stdio implementations to be used.  This involves creating a new
-abstraction layer that then calls whichever implementation of stdio Perl
-was compiled with.  All XSUBs should now use the functions in the PerlIO
-abstraction layer and not make any assumptions about what kind of stdio
-is being used.
-
-For a complete description of the PerlIO abstraction, consult L<perlapio>.
-
 =head2 Putting a C value on Perl stack
 
 A lot of opcodes (this is an elementary operation in the internal perl
-stack machine) put an SV* on the stack. However, as an optimization
-the corresponding SV is (usually) not recreated each time. The opcodes
+stack machine) put an SV* on the stack.  However, as an optimization
+the corresponding SV is (usually) not recreated each time.  The opcodes
 reuse specially assigned SVs (I<target>s) which are (as a corollary)
 not constantly freed/created.
 
@@ -1674,7 +1720,7 @@ directly used in some opcodes, as well as indirectly in zillions of
 others, which use it via C<(X)PUSH[iunp]>.
 
 Because the target is reused, you must be careful when pushing multiple
-values on the stack. The following code will not do what you think:
+values on the stack.  The following code will not do what you think:
 
     XPUSHi(10);
     XPUSHi(20);
@@ -1711,33 +1757,37 @@ and C<dXSTARG>.
 =head2 Scratchpads
 
 The question remains on when the SVs which are I<target>s for opcodes
-are created. The answer is that they are created when the current
+are created.  The answer is that they are created when the current
 unit--a subroutine or a file (for opcodes for statements outside of
-subroutines)--is compiled. During this time a special anonymous Perl
+subroutines)--is compiled.  During this time a special anonymous Perl
 array is created, which is called a scratchpad for the current unit.
 
 A scratchpad keeps SVs which are lexicals for the current unit and are
-targets for opcodes. One can deduce that an SV lives on a scratchpad
+targets for opcodes.  A previous version of this document
+stated that one can deduce that an SV lives on a scratchpad
 by looking on its flags: lexicals have C<SVs_PADMY> set, and
-I<target>s have C<SVs_PADTMP> set.
+I<target>s have C<SVs_PADTMP> set.  But this have never been fully true.
+C<SVs_PADMY> could be set on a variable that no longer resides in any pad.
+While I<target>s do have C<SVs_PADTMP> set, it can also be set on variables
+that have never resided in a pad, but nonetheless act like I<target>s.
 
-The correspondence between OPs and I<target>s is not 1-to-1. Different
+The correspondence between OPs and I<target>s is not 1-to-1.  Different
 OPs in the compile tree of the unit can use the same target, if this
 would not conflict with the expected life of the temporary.
 
 =head2 Scratchpads and recursion
 
 In fact it is not 100% true that a compiled unit contains a pointer to
-the scratchpad AV. In fact it contains a pointer to an AV of
-(initially) one element, and this element is the scratchpad AV. Why do
+the scratchpad AV.  In fact it contains a pointer to an AV of
+(initially) one element, and this element is the scratchpad AV.  Why do
 we need an extra level of indirection?
 
-The answer is B<recursion>, and maybe B<threads>. Both
+The answer is B<recursion>, and maybe B<threads>.  Both
 these can create several execution pointers going into the same
-subroutine. For the subroutine-child not write over the temporaries
+subroutine.  For the subroutine-child not write over the temporaries
 for the subroutine-parent (lifespan of which covers the call to the
 child), the parent and the child should have different
-scratchpads. (I<And> the lexicals should be separate anyway!)
+scratchpads.  (I<And> the lexicals should be separate anyway!)
 
 So each subroutine is born with an array of scratchpads (of length 1).
 On each entry to the subroutine it is checked that the current
@@ -1747,12 +1797,79 @@ if it is, new scratchpad is created and pushed into the array.
 The I<target>s on this scratchpad are C<undef>s, but they are already
 marked with correct flags.
 
+=head1 Memory Allocation
+
+=head2 Allocation
+
+All memory meant to be used with the Perl API functions should be manipulated
+using the macros described in this section.  The macros provide the necessary
+transparency between differences in the actual malloc implementation that is
+used within perl.
+
+It is suggested that you enable the version of malloc that is distributed
+with Perl.  It keeps pools of various sizes of unallocated memory in
+order to satisfy allocation requests more quickly.  However, on some
+platforms, it may cause spurious malloc or free errors.
+
+The following three macros are used to initially allocate memory :
+
+    Newx(pointer, number, type);
+    Newxc(pointer, number, type, cast);
+    Newxz(pointer, number, type);
+
+The first argument C<pointer> should be the name of a variable that will
+point to the newly allocated memory.
+
+The second and third arguments C<number> and C<type> specify how many of
+the specified type of data structure should be allocated.  The argument
+C<type> is passed to C<sizeof>.  The final argument to C<Newxc>, C<cast>,
+should be used if the C<pointer> argument is different from the C<type>
+argument.
+
+Unlike the C<Newx> and C<Newxc> macros, the C<Newxz> macro calls C<memzero>
+to zero out all the newly allocated memory.
+
+=head2 Reallocation
+
+    Renew(pointer, number, type);
+    Renewc(pointer, number, type, cast);
+    Safefree(pointer)
+
+These three macros are used to change a memory buffer size or to free a
+piece of memory no longer needed.  The arguments to C<Renew> and C<Renewc>
+match those of C<New> and C<Newc> with the exception of not needing the
+"magic cookie" argument.
+
+=head2 Moving
+
+    Move(source, dest, number, type);
+    Copy(source, dest, number, type);
+    Zero(dest, number, type);
+
+These three macros are used to move, copy, or zero out previously allocated
+memory.  The C<source> and C<dest> arguments point to the source and
+destination starting points.  Perl will move, copy, or zero out C<number>
+instances of the size of the C<type> data structure (using the C<sizeof>
+function).
+
+=head1 PerlIO
+
+The most recent development releases of Perl have been experimenting with
+removing Perl's dependency on the "normal" standard I/O suite and allowing
+other stdio implementations to be used.  This involves creating a new
+abstraction layer that then calls whichever implementation of stdio Perl
+was compiled with.  All XSUBs should now use the functions in the PerlIO
+abstraction layer and not make any assumptions about what kind of stdio
+is being used.
+
+For a complete description of the PerlIO abstraction, consult L<perlapio>.
+
 =head1 Compiled code
 
 =head2 Code tree
 
 Here we describe the internal form your code is converted to by
-Perl. Start with a simple example:
+Perl.  Start with a simple example:
 
   $a = $b + $c;
 
@@ -1825,26 +1942,26 @@ The execution order is indicated by C<===E<gt>> marks, thus it is C<3
 C<gvsv gvsv add whatever>.
 
 Each of these nodes represents an op, a fundamental operation inside the
-Perl core. The code which implements each operation can be found in the
+Perl core.  The code which implements each operation can be found in the
 F<pp*.c> files; the function which implements the op with type C<gvsv>
-is C<pp_gvsv>, and so on. As the tree above shows, different ops have
+is C<pp_gvsv>, and so on.  As the tree above shows, different ops have
 different numbers of children: C<add> is a binary operator, as one would
-expect, and so has two children. To accommodate the various different
+expect, and so has two children.  To accommodate the various different
 numbers of children, there are various types of op data structure, and
 they link together in different ways.
 
-The simplest type of op structure is C<OP>: this has no children. Unary
+The simplest type of op structure is C<OP>: this has no children.  Unary
 operators, C<UNOP>s, have one child, and this is pointed to by the
-C<op_first> field. Binary operators (C<BINOP>s) have not only an
-C<op_first> field but also an C<op_last> field. The most complex type of
-op is a C<LISTOP>, which has any number of children. In this case, the
+C<op_first> field.  Binary operators (C<BINOP>s) have not only an
+C<op_first> field but also an C<op_last> field.  The most complex type of
+op is a C<LISTOP>, which has any number of children.  In this case, the
 first child is pointed to by C<op_first> and the last child by
-C<op_last>. The children in between can be found by iteratively
+C<op_last>.  The children in between can be found by iteratively
 following the C<op_sibling> pointer from the first child to the last.
 
 There are also two other op types: a C<PMOP> holds a regular expression,
-and has no children, and a C<LOOP> may or may not have children. If the
-C<op_children> field is non-zero, it behaves like a C<LISTOP>. To
+and has no children, and a C<LOOP> may or may not have children.  If the
+C<op_children> field is non-zero, it behaves like a C<LISTOP>.  To
 complicate matters, if a C<UNOP> is actually a C<null> op after
 optimization (see L</Compile pass 2: context propagation>) it will still
 have children in accordance with its former type.
@@ -1855,7 +1972,7 @@ as L<B::Concise>.
 =head2 Compile pass 1: check routines
 
 The tree is created by the compiler while I<yacc> code feeds it
-the constructions it recognizes. Since I<yacc> works bottom-up, so does
+the constructions it recognizes.  Since I<yacc> works bottom-up, so does
 the first pass of perl compilation.
 
 What makes this pass interesting for perl developers is that some
@@ -1874,7 +1991,7 @@ The check routine returns the node which should be inserted into the
 tree (if the top-level node was not modified, check routine returns
 its argument).
 
-By convention, check routines have names C<ck_*>. They are usually
+By convention, check routines have names C<ck_*>.  They are usually
 called from C<new*OP> subroutines (or C<convert>) (which in turn are
 called from F<perly.y>).
 
@@ -1906,7 +2023,7 @@ of free()ing (i.e. their type is changed to OP_NULL).
 =head2 Compile pass 3: peephole optimization
 
 After the compile tree for a subroutine (or for an C<eval> or a file)
-is created, an additional pass over the code is performed. This pass
+is created, an additional pass over the code is performed.  This pass
 is neither top-down or bottom-up, but in the execution order (with
 additional complications for conditionals).  Optimizations performed
 at this stage are subject to the same restrictions as in the pass 2.
@@ -1964,7 +2081,7 @@ running as fast as possible.
 =head2 Compile-time scope hooks
 
 As of perl 5.14 it is possible to hook into the compile-time lexical
-scope mechanism using C<Perl_blockhook_register>. This is used like
+scope mechanism using C<Perl_blockhook_register>.  This is used like
 this:
 
     STATIC void my_start_hook(pTHX_ int full);
@@ -1975,58 +2092,58 @@ this:
         Perl_blockhook_register(aTHX_ &my_hooks);
 
 This will arrange to have C<my_start_hook> called at the start of
-compiling every lexical scope. The available hooks are:
+compiling every lexical scope.  The available hooks are:
 
 =over 4
 
 =item C<void bhk_start(pTHX_ int full)>
 
-This is called just after starting a new lexical scope. Note that Perl
+This is called just after starting a new lexical scope.  Note that Perl
 code like
 
     if ($x) { ... }
 
 creates two scopes: the first starts at the C<(> and has C<full == 1>,
-the second starts at the C<{> and has C<full == 0>. Both end at the
-C<}>, so calls to C<start> and C<pre/post_end> will match. Anything
+the second starts at the C<{> and has C<full == 0>.  Both end at the
+C<}>, so calls to C<start> and C<pre/post_end> will match.  Anything
 pushed onto the save stack by this hook will be popped just before the
 scope ends (between the C<pre_> and C<post_end> hooks, in fact).
 
 =item C<void bhk_pre_end(pTHX_ OP **o)>
 
 This is called at the end of a lexical scope, just before unwinding the
-stack. I<o> is the root of the optree representing the scope; it is a
+stack.  I<o> is the root of the optree representing the scope; it is a
 double pointer so you can replace the OP if you need to.
 
 =item C<void bhk_post_end(pTHX_ OP **o)>
 
 This is called at the end of a lexical scope, just after unwinding the
-stack. I<o> is as above. Note that it is possible for calls to C<pre_>
+stack.  I<o> is as above.  Note that it is possible for calls to C<pre_>
 and C<post_end> to nest, if there is something on the save stack that
 calls string eval.
 
 =item C<void bhk_eval(pTHX_ OP *const o)>
 
 This is called just before starting to compile an C<eval STRING>, C<do
-FILE>, C<require> or C<use>, after the eval has been set up. I<o> is the
+FILE>, C<require> or C<use>, after the eval has been set up.  I<o> is the
 OP that requested the eval, and will normally be an C<OP_ENTEREVAL>,
 C<OP_DOFILE> or C<OP_REQUIRE>.
 
 =back
 
 Once you have your hook functions, you need a C<BHK> structure to put
-them in. It's best to allocate it statically, since there is no way to
-free it once it's registered. The function pointers should be inserted
+them in.  It's best to allocate it statically, since there is no way to
+free it once it's registered.  The function pointers should be inserted
 into this structure using the C<BhkENTRY_set> macro, which will also set
-flags indicating which entries are valid. If you do need to allocate
+flags indicating which entries are valid.  If you do need to allocate
 your C<BHK> dynamically for some reason, be sure to zero it before you
 start.
 
 Once registered, there is no mechanism to switch these hooks off, so if
-that is necessary you will need to do this yourself. An entry in C<%^H>
+that is necessary you will need to do this yourself.  An entry in C<%^H>
 is probably the best way, so the effect is lexically scoped; however it
 is also possible to use the C<BhkDISABLE> and C<BhkENABLE> macros to
-temporarily switch entries on and off. You should also be aware that
+temporarily switch entries on and off.  You should also be aware that
 generally speaking at least one scope will have opened before your
 extension is loaded, so you will see some C<pre/post_end> pairs that
 didn't have a matching C<start>.
@@ -2037,7 +2154,7 @@ To aid debugging, the source file F<dump.c> contains a number of
 functions which produce formatted output of internal data structures.
 
 The most commonly used of these functions is C<Perl_sv_dump>; it's used
-for dumping SVs, AVs, HVs, and CVs. The C<Devel::Peek> module calls
+for dumping SVs, AVs, HVs, and CVs.  The C<Devel::Peek> module calls
 C<sv_dump> to produce debugging output from Perl-space, so users of that
 module should already be familiar with its format.
 
@@ -2078,11 +2195,11 @@ interpreters, with one interpreter represented either as a C structure,
 or inside a thread-specific structure.  These structures contain all
 the context, the state of that interpreter.
 
-One macro controls the major Perl build flavor: MULTIPLICITY. The
+One macro controls the major Perl build flavor: MULTIPLICITY.  The
 MULTIPLICITY build has a C structure that packages all the interpreter
-state. With multiplicity-enabled perls, PERL_IMPLICIT_CONTEXT is also
+state.  With multiplicity-enabled perls, PERL_IMPLICIT_CONTEXT is also
 normally defined, and enables the support for passing in a "hidden" first
-argument that represents all three data structures. MULTIPLICITY makes
+argument that represents all three data structures.  MULTIPLICITY makes
 multi-threaded perls possible (with the ithreads threading model, related
 to the macro USE_ITHREADS.)
 
@@ -2094,7 +2211,7 @@ struct perl_vars, accessible as (globals) &PL_Vars or PL_VarsPtr or
 the function  Perl_GetVars().  The PERL_GLOBAL_STRUCT_PRIVATE goes
 one step further, there is still a single struct (allocated in main()
 either from heap or from stack) but there are no global data symbols
-pointing to it.  In either case the global struct should be initialised
+pointing to it.  In either case the global struct should be initialized
 as the very first thing in main() using Perl_init_global_struct() and
 correspondingly tear it down after perl_free() using Perl_free_global_struct(),
 please see F<miniperlmain.c> for usage details.  You may also need
@@ -2123,7 +2240,8 @@ First problem: deciding which functions will be public API functions and
 which will be private.  All functions whose names begin C<S_> are private
 (think "S" for "secret" or "static").  All other functions begin with
 "Perl_", but just because a function begins with "Perl_" does not mean it is
-part of the API. (See L</Internal Functions>.) The easiest way to be B<sure> a
+part of the API.  (See L</Internal
+Functions>.)  The easiest way to be B<sure> a
 function is part of the API is to find its entry in L<perlapi>.
 If it exists in L<perlapi>, it's part of the API.  If it doesn't, and you
 think it should be (i.e., you need it for your extension), send mail via
@@ -2367,33 +2485,34 @@ more "hosts", with free association between them.
 All of Perl's internal functions which will be exposed to the outside
 world are prefixed by C<Perl_> so that they will not conflict with XS
 functions or functions used in a program in which Perl is embedded.
-Similarly, all global variables begin with C<PL_>. (By convention,
+Similarly, all global variables begin with C<PL_>.  (By convention,
 static functions start with C<S_>.)
 
 Inside the Perl core (C<PERL_CORE> defined), you can get at the functions
 either with or without the C<Perl_> prefix, thanks to a bunch of defines
-that live in F<embed.h>. Note that extension code should I<not> set
+that live in F<embed.h>.  Note that extension code should I<not> set
 C<PERL_CORE>; this exposes the full perl internals, and is likely to cause
 breakage of the XS in each new perl release.
 
 The file F<embed.h> is generated automatically from
-F<embed.pl> and F<embed.fnc>. F<embed.pl> also creates the prototyping
+F<embed.pl> and F<embed.fnc>.  F<embed.pl> also creates the prototyping
 header files for the internal functions, generates the documentation
-and a lot of other bits and pieces. It's important that when you add
+and a lot of other bits and pieces.  It's important that when you add
 a new function to the core or change an existing one, you change the
-data in the table in F<embed.fnc> as well. Here's a sample entry from
+data in the table in F<embed.fnc> as well.  Here's a sample entry from
 that table:
 
     Apd |SV**   |av_fetch   |AV* ar|I32 key|I32 lval
 
-The second column is the return type, the third column the name. Columns
-after that are the arguments. The first column is a set of flags:
+The second column is the return type, the third column the name.  Columns
+after that are the arguments.  The first column is a set of flags:
 
 =over 3
 
 =item A
 
-This function is a part of the public API. All such functions should also
+This function is a part of the public
+API.  All such functions should also
 have 'd', very few do not.
 
 =item p
@@ -2442,7 +2561,7 @@ or disappear without notice.
 =item o
 
 This function should not have a compatibility macro to define, say,
-C<Perl_parse> to C<parse>. It must be called as C<Perl_parse>.
+C<Perl_parse> to C<parse>.  It must be called as C<Perl_parse>.
 
 =item x
 
@@ -2522,14 +2641,14 @@ and
 =head2 Exception Handling
 
 There are a couple of macros to do very basic exception handling in XS
-modules. You have to define C<NO_XSLOCKS> before including F<XSUB.h> to
+modules.  You have to define C<NO_XSLOCKS> before including F<XSUB.h> to
 be able to use these macros:
 
         #define NO_XSLOCKS
         #include "XSUB.h"
 
 You can use these macros if you call code that may croak, but you need
-to do some cleanup before giving control back to Perl. For example:
+to do some cleanup before giving control back to Perl.  For example:
 
         dXCPT;    /* set up necessary variables */
 
@@ -2544,8 +2663,8 @@ to do some cleanup before giving control back to Perl. For example:
         }
 
 Note that you always have to rethrow an exception that has been
-caught. Using these macros, it is not possible to just catch the
-exception and ignore it. If you have to ignore the exception, you
+caught.  Using these macros, it is not possible to just catch the
+exception and ignore it.  If you have to ignore the exception, you
 have to use the C<call_*> function.
 
 The advantage of using the above macros is that you don't have
@@ -2557,7 +2676,7 @@ macros is faster than using C<call_*>.
 There's an effort going on to document the internal functions and
 automatically produce reference manuals from them - L<perlapi> is one
 such manual which details all the functions which are available to XS
-writers. L<perlintern> is the autogenerated manual for the functions
+writers.  L<perlintern> is the autogenerated manual for the functions
 which are not part of the API and are supposedly for internal use only.
 
 Source documentation is created by putting POD comments into the C
@@ -2577,19 +2696,20 @@ Perl core.
 
 =head2 Backwards compatibility
 
-The Perl API changes over time. New functions are added or the interfaces
-of existing functions are changed. The C<Devel::PPPort> module tries to
+The Perl API changes over time.  New functions are
+added or the interfaces of existing functions are
+changed.  The C<Devel::PPPort> module tries to
 provide compatibility code for some of these changes, so XS writers don't
 have to code it themselves when supporting multiple versions of Perl.
 
 C<Devel::PPPort> generates a C header file F<ppport.h> that can also
-be run as a Perl script. To generate F<ppport.h>, run:
+be run as a Perl script.  To generate F<ppport.h>, run:
 
     perl -MDevel::PPPort -eDevel::PPPort::WriteFile
 
 Besides checking existing XS code, the script can also be used to retrieve
 compatibility information for various API calls using the C<--api-info>
-command line switch. For example:
+command line switch.  For example:
 
   % perl ppport.h --api-info=sv_magicext
 
@@ -2597,18 +2717,18 @@ For details, see C<perldoc ppport.h>.
 
 =head1 Unicode Support
 
-Perl 5.6.0 introduced Unicode support. It's important for porters and XS
+Perl 5.6.0 introduced Unicode support.  It's important for porters and XS
 writers to understand this support and make sure that the code they
 write does not corrupt Unicode data.
 
 =head2 What B<is> Unicode, anyway?
 
-In the olden, less enlightened times, we all used to use ASCII. Most of
-us did, anyway. The big problem with ASCII is that it's American. Well,
+In the olden, less enlightened times, we all used to use ASCII.  Most of
+us did, anyway.  The big problem with ASCII is that it's American.  Well,
 no, that's not actually the problem; the problem is that it's not
-particularly useful for people who don't use the Roman alphabet. What
+particularly useful for people who don't use the Roman alphabet.  What
 used to happen was that particular languages would stick their own
-alphabet in the upper range of the sequence, between 128 and 255. Of
+alphabet in the upper range of the sequence, between 128 and 255.  Of
 course, we then ended up with plenty of variants that weren't quite
 ASCII, and the whole point of it being a standard was lost.
 
@@ -2620,34 +2740,35 @@ to one character.
 
 To fix this, some people formed Unicode, Inc. and
 produced a new character set containing all the characters you can
-possibly think of and more. There are several ways of representing these
-characters, and the one Perl uses is called UTF-8. UTF-8 uses
-a variable number of bytes to represent a character. You can learn more
+possibly think of and more.  There are several ways of representing these
+characters, and the one Perl uses is called UTF-8.  UTF-8 uses
+a variable number of bytes to represent a character.  You can learn more
 about Unicode and Perl's Unicode model in L<perlunicode>.
 
 =head2 How can I recognise a UTF-8 string?
 
-You can't. This is because UTF-8 data is stored in bytes just like
-non-UTF-8 data. The Unicode character 200, (C<0xC8> for you hex types)
+You can't.  This is because UTF-8 data is stored in bytes just like
+non-UTF-8 data.  The Unicode character 200, (C<0xC8> for you hex types)
 capital E with a grave accent, is represented by the two bytes
-C<v196.172>. Unfortunately, the non-Unicode string C<chr(196).chr(172)>
-has that byte sequence as well. So you can't tell just by looking - this
+C<v196.172>.  Unfortunately, the non-Unicode string C<chr(196).chr(172)>
+has that byte sequence as well.  So you can't tell just by looking - this
 is what makes Unicode input an interesting problem.
 
 In general, you either have to know what you're dealing with, or you
 have to guess.  The API function C<is_utf8_string> can help; it'll tell
-you if a string contains only valid UTF-8 characters. However, it can't
-do the work for you. On a character-by-character basis,
+you if a string contains only valid UTF-8 characters.  However, it can't
+do the work for you.  On a character-by-character basis,
 C<is_utf8_char_buf>
 will tell you whether the current character in a string is valid UTF-8. 
 
 =head2 How does UTF-8 represent Unicode characters?
 
 As mentioned above, UTF-8 uses a variable number of bytes to store a
-character. Characters with values 0...127 are stored in one byte, just
-like good ol' ASCII. Character 128 is stored as C<v194.128>; this
-continues up to character 191, which is C<v194.191>. Now we've run out of
-bits (191 is binary C<10111111>) so we move on; 192 is C<v195.128>. And
+character.  Characters with values 0...127 are stored in one
+byte, just like good ol' ASCII.  Character 128 is stored as
+C<v194.128>; this continues up to character 191, which is
+C<v194.191>.  Now we've run out of bits (191 is binary
+C<10111111>) so we move on; 192 is C<v195.128>.  And
 so it goes on, moving to three bytes at character 2048.
 
 Assuming you know you're dealing with a UTF-8 string, you can find out
@@ -2662,13 +2783,13 @@ how long the first character in it is with the C<UTF8SKIP> macro:
 
 Another way to skip over characters in a UTF-8 string is to use
 C<utf8_hop>, which takes a string and a number of characters to skip
-over. You're on your own about bounds checking, though, so don't use it
+over.  You're on your own about bounds checking, though, so don't use it
 lightly.
 
 All bytes in a multi-byte UTF-8 character will have the high bit set,
 so you can test if you need to do something special with this
 character like this (the UTF8_IS_INVARIANT() is a macro that tests
-whether the byte can be encoded as a single byte even in UTF-8):
+whether the byte is encoded as a single byte even in UTF-8):
 
     U8 *utf;
     U8 *utf_end; /* 1 beyond buffer pointed to by utf */
@@ -2695,7 +2816,7 @@ for putting a UV into UTF-8:
 
 You B<must> convert characters to UVs using the above functions if
 you're ever in a situation where you have to match UTF-8 and non-UTF-8
-characters. You may not skip over UTF-8 characters in this case. If you
+characters.  You may not skip over UTF-8 characters in this case.  If you
 do this, you'll lose the ability to match hi-bit non-UTF-8 characters;
 for instance, if your UTF-8 string contains C<v196.172>, and you skip
 that character, you can never match a C<chr(200)> in a non-UTF-8 string.
@@ -2704,11 +2825,13 @@ So don't do that!
 =head2 How does Perl store UTF-8 strings?
 
 Currently, Perl deals with Unicode strings and non-Unicode strings
-slightly differently. A flag in the SV, C<SVf_UTF8>, indicates that the
-string is internally encoded as UTF-8. Without it, the byte value is the
+slightly differently.  A flag in the SV, C<SVf_UTF8>, indicates that the
+string is internally encoded as UTF-8.  Without it, the byte value is the
 codepoint number and vice versa (in other words, the string is encoded
 as iso-8859-1, but C<use feature 'unicode_strings'> is needed to get iso-8859-1
-semantics). You can check and manipulate this flag with the
+semantics).  This flag is only meaningful if the SV is C<SvPOK>
+or immediately after stringification via C<SvPV> or a similar
+macro.  You can check and manipulate this flag with the
 following macros:
 
     SvUTF8(sv)
@@ -2726,7 +2849,7 @@ especially when combining non-UTF-8 and UTF-8 strings.
 
 Never forget that the C<SVf_UTF8> flag is separate to the PV value; you
 need be sure you don't accidentally knock it off while you're
-manipulating SVs. More specifically, you cannot expect to do this:
+manipulating SVs.  More specifically, you cannot expect to do this:
 
     SV *sv;
     SV *nsv;
@@ -2738,8 +2861,9 @@ manipulating SVs. More specifically, you cannot expect to do this:
     nsv = newSVpvn(p, len);
 
 The C<char*> string does not tell you the whole story, and you can't
-copy or reconstruct an SV just by copying the string value. Check if the
-old SV has the UTF8 flag set, and act accordingly:
+copy or reconstruct an SV just by copying the string value.  Check if the
+old SV has the UTF8 flag set (I<after> the C<SvPV> call), and act
+accordingly:
 
     p = SvPV(sv, len);
     frobnicate(p);
@@ -2758,7 +2882,7 @@ passing a C<char *> to an XS function.
 =head2 How do I convert a string to UTF-8?
 
 If you're mixing UTF-8 and non-UTF-8 strings, it is necessary to upgrade
-one of the strings to UTF-8. If you've got an SV, the easiest way to do
+one of the strings to UTF-8.  If you've got an SV, the easiest way to do
 this is:
 
     sv_utf8_upgrade(sv);
@@ -2773,23 +2897,24 @@ strings that came into the operator, and, while it shouldn't be noticeable
 by the end user, it can cause problems in deficient code.
 
 Instead, C<bytes_to_utf8> will give you a UTF-8-encoded B<copy> of its
-string argument. This is useful for having the data available for
-comparisons and so on, without harming the original SV. There's also
+string argument.  This is useful for having the data available for
+comparisons and so on, without harming the original SV.  There's also
 C<utf8_to_bytes> to go the other way, but naturally, this will fail if
 the string contains any characters above 255 that can't be represented
 in a single byte.
 
 =head2 Is there anything else I need to know?
 
-Not really. Just remember these things:
+Not really.  Just remember these things:
 
 =over 3
 
 =item *
 
-There's no way to tell if a string is UTF-8 or not. You can tell if an SV
-is UTF-8 by looking at its C<SvUTF8> flag. Don't forget to set the flag if
-something should be UTF-8. Treat the flag as part of the PV, even though
+There's no way to tell if a string is UTF-8 or not.  You can tell if an SV
+is UTF-8 by looking at its C<SvUTF8> flag after stringifying it
+with C<SvPV> or a similar macro.  Don't forget to set the flag if
+something should be UTF-8.  Treat the flag as part of the PV, even though
 it's not - if you pass on the PV to somewhere, pass on the flag too.
 
 =item *
@@ -2805,7 +2930,8 @@ you can use C<*s = uv>.
 
 =item *
 
-Mixing UTF-8 and non-UTF-8 strings is tricky. Use C<bytes_to_utf8> to get
+Mixing UTF-8 and non-UTF-8 strings is
+tricky.  Use C<bytes_to_utf8> to get
 a new string which is UTF-8 encoded, and then combine them.
 
 =back
@@ -2813,41 +2939,41 @@ a new string which is UTF-8 encoded, and then combine them.
 =head1 Custom Operators
 
 Custom operator support is an experimental feature that allows you to
-define your own ops. This is primarily to allow the building of
+define your own ops.  This is primarily to allow the building of
 interpreters for other languages in the Perl core, but it also allows
 optimizations through the creation of "macro-ops" (ops which perform the
 functions of multiple ops which are usually executed together, such as
 C<gvsv, gvsv, add>.)
 
-This feature is implemented as a new op type, C<OP_CUSTOM>. The Perl
+This feature is implemented as a new op type, C<OP_CUSTOM>.  The Perl
 core does not "know" anything special about this op type, and so it will
-not be involved in any optimizations. This also means that you can
+not be involved in any optimizations.  This also means that you can
 define your custom ops to be any op structure - unary, binary, list and
 so on - you like.
 
-It's important to know what custom operators won't do for you. They
-won't let you add new syntax to Perl, directly. They won't even let you
-add new keywords, directly. In fact, they won't change the way Perl
-compiles a program at all. You have to do those changes yourself, after
-Perl has compiled the program. You do this either by manipulating the op
+It's important to know what custom operators won't do for you.  They
+won't let you add new syntax to Perl, directly.  They won't even let you
+add new keywords, directly.  In fact, they won't change the way Perl
+compiles a program at all.  You have to do those changes yourself, after
+Perl has compiled the program.  You do this either by manipulating the op
 tree using a C<CHECK> block and the C<B::Generate> module, or by adding
 a custom peephole optimizer with the C<optimize> module.
 
 When you do this, you replace ordinary Perl ops with custom ops by
 creating ops with the type C<OP_CUSTOM> and the C<op_ppaddr> of your own
-PP function. This should be defined in XS code, and should look like
-the PP ops in C<pp_*.c>. You are responsible for ensuring that your op
+PP function.  This should be defined in XS code, and should look like
+the PP ops in C<pp_*.c>.  You are responsible for ensuring that your op
 takes the appropriate number of values from the stack, and you are
 responsible for adding stack marks if necessary.
 
 You should also "register" your op with the Perl interpreter so that it
-can produce sensible error and warning messages. Since it is possible to
+can produce sensible error and warning messages.  Since it is possible to
 have multiple custom ops within the one "logical" op type C<OP_CUSTOM>,
 Perl uses the value of C<< o->op_ppaddr >> to determine which custom op
-it is dealing with. You should create an C<XOP> structure for each
+it is dealing with.  You should create an C<XOP> structure for each
 ppaddr you use, set the properties of the custom op with
 C<XopENTRY_set>, and register the structure against the ppaddr using
-C<Perl_custom_op_register>. A trivial example might look like:
+C<Perl_custom_op_register>.  A trivial example might look like:
 
     static XOP my_xop;
     static OP *my_pp(pTHX);
@@ -2863,7 +2989,7 @@ The available fields in the structure are:
 
 =item xop_name
 
-A short name for your op. This will be included in some error messages,
+A short name for your op.  This will be included in some error messages,
 and will also be returned as C<< $op->name >> by the L<B|B> module, so
 it will appear in the output of module like L<B::Concise|B::Concise>.
 
@@ -2873,7 +2999,7 @@ A short description of the function of the op.
 
 =item xop_class
 
-Which of the various C<*OP> structures this op uses. This should be one of
+Which of the various C<*OP> structures this op uses.  This should be one of
 the C<OA_*> constants from F<op.h>, namely
 
 =over 4
@@ -2896,7 +3022,7 @@ the C<OA_*> constants from F<op.h>, namely
 
 =item OA_PVOP_OR_SVOP
 
-This should be interpreted as 'C<PVOP>' only. The C<_OR_SVOP> is because
+This should be interpreted as 'C<PVOP>' only.  The C<_OR_SVOP> is because
 the only core C<PVOP>, C<OP_TRANS>, can sometimes be a C<SVOP> instead.
 
 =item OA_LOOP
@@ -2910,9 +3036,9 @@ The other C<OA_*> constants should not be used.
 =item xop_peep
 
 This member is of type C<Perl_cpeep_t>, which expands to C<void
-(*Perl_cpeep_t)(aTHX_ OP *o, OP *oldop)>. If it is set, this function
+(*Perl_cpeep_t)(aTHX_ OP *o, OP *oldop)>.  If it is set, this function
 will be called from C<Perl_rpeep> when ops of this type are encountered
-by the peephole optimizer. I<o> is the OP that needs optimizing;
+by the peephole optimizer.  I<o> is the OP that needs optimizing;
 I<oldop> is the previous OP optimized, whose C<op_next> points to I<o>.
 
 =back

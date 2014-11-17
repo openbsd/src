@@ -4,13 +4,7 @@
 #
 ################################################################################
 #
-#  $Revision: 32 $
-#  $Author: mhx $
-#  $Date: 2010/03/07 13:15:42 +0100 $
-#
-################################################################################
-#
-#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -72,7 +66,12 @@ sub configure
   }
   else {
     # Devel::PPPort is in the core since 5.7.3
-    push @moreopts, INSTALLDIRS => ($] >= 5.007003 ? 'perl' : 'site');
+    # 5.11.0+ has site before perl
+    push @moreopts, INSTALLDIRS => (
+      ($] >= 5.007003 and $] < 5.011)
+        ? 'perl'
+        : 'site'
+    );
   }
 
   if ($opt{'apicheck'}) {
@@ -138,4 +137,3 @@ CO
 
   return $co;
 }
-

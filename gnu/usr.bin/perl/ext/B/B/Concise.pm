@@ -14,7 +14,7 @@ use warnings; # uses #3 and #4, since warnings uses Carp
 
 use Exporter (); # use #5
 
-our $VERSION   = "0.95_01";
+our $VERSION   = "0.992";
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw( set_style set_style_standard add_callback
 		     concise_subref concise_cv concise_main
@@ -46,7 +46,8 @@ my %style =
     "gt_#seq ",
     "(?(#seq)?)#noise#arg(?([#targarg])?)"],
    "debug" =>
-   ["#class (#addr)\n\top_next\t\t#nextaddr\n\top_sibling\t#sibaddr\n\t"
+   ["#class (#addr)\n\top_next\t\t#nextaddr\n\t(?(op_other\t#otheraddr\n\t)?)"
+    . "op_sibling\t#sibaddr\n\t"
     . "op_ppaddr\tPL_ppaddr[OP_#NAME]\n\top_type\t\t#typenum\n"
     . "\top_flags\t#flagval\n\top_private\t#privval\t#hintsval\n"
     . "(?(\top_first\t#firstaddr\n)?)(?(\top_last\t\t#lastaddr\n)?)"
@@ -594,75 +595,70 @@ sub fmt_line {    # generate text-line for op.
 our %priv; # used to display each opcode's BASEOP.op_private values
 
 $priv{$_}{128} = "LVINTRO"
-  for ("pos", "substr", "vec", "threadsv", "gvsv", "rv2sv", "rv2hv", "rv2gv",
-       "rv2av", "rv2arylen", "aelem", "helem", "aslice", "hslice", "padsv",
-       "padav", "padhv", "enteriter", "entersub", "padrange", "pushmark");
-$priv{$_}{64} = "REFC" for ("leave", "leavesub", "leavesublv", "leavewrite");
-$priv{"aassign"}{64} = "COMMON";
-$priv{"aassign"}{32} = "STATE";
-$priv{"sassign"}{32} = "STATE";
-$priv{"sassign"}{64} = "BKWARD";
-$priv{"sassign"}{128}= "CV2GV";
-$priv{$_}{64} = "RTIME" for ("match", "subst", "substcont", "qr");
-@{$priv{"trans"}}{1,2,4,8,16,64} = ("<UTF", ">UTF", "IDENT", "SQUASH", "DEL",
-				    "COMPL", "GROWS");
-$priv{transr} = $priv{trans};
-$priv{"repeat"}{64} = "DOLIST";
-$priv{"leaveloop"}{64} = "CONT";
-$priv{$_}{4} = "DREFed" for (qw(rv2sv rv2av rv2hv));
-@{$priv{$_}}{32,64,96} = ("DREFAV", "DREFHV", "DREFSV")
-  for (qw(rv2gv rv2sv padsv aelem helem));
-$priv{$_}{16} = "STATE" for ("padav", "padhv", "padsv");
-@{$priv{rv2gv}}{4,16} = qw "NOINIT FAKE";
-@{$priv{"entersub"}}{1,4,16,32,64} = qw( INARGS TARG DBG DEREF );
-@{$priv{rv2cv}}{1,8,128} = ("CONST","AMPER","NO()");
-$priv{"gv"}{32} = "EARLYCV";
-$priv{"aelem"}{16} = $priv{"helem"}{16} = "LVDEFER";
-$priv{$_}{16} = "OURINTR" for ("gvsv", "rv2sv", "rv2av", "rv2hv", "r2gv",
-	"enteriter");
-$priv{$_}{8} = 'LVSUB' for qw(rv2av rv2gv rv2hv padav padhv aelem helem
-                        aslice hslice av2arylen keys rkeys substr pos vec);
-@{$priv{$_}}{32,64} = ('BOOL','BOOL?') for 'rv2hv', 'padhv';
-$priv{substr}{16} = 'REPL1ST';
+  for qw(pos substr vec threadsv gvsv rv2sv rv2hv rv2gv rv2av rv2arylen
+         aelem helem aslice hslice padsv padav padhv enteriter entersub
+         padrange pushmark);
+$priv{$_}{64} = "REFC" for qw(leave leavesub leavesublv leavewrite);
+$priv{$_}{128} = "LV" for qw(leave leaveloop);
+@{$priv{aassign}}{32,64} = qw(STATE COMMON);
+@{$priv{sassign}}{32,64,128} = qw(STATE BKWARD CV2GV);
+$priv{$_}{64} = "RTIME" for qw(match subst substcont qr);
+@{$priv{$_}}{1,2,4,8,16,64} = qw(<UTF >UTF IDENT SQUASH DEL COMPL GROWS)
+  for qw(trans transr);
+$priv{repeat}{64} = "DOLIST";
+$priv{leaveloop}{64} = "CONT";
+@{$priv{$_}}{32,64,96} = qw(DREFAV DREFHV DREFSV)
+  for qw(rv2gv rv2sv padsv aelem helem);
+$priv{$_}{16} = "STATE" for qw(padav padhv padsv);
+@{$priv{rv2gv}}{4,16} = qw(NOINIT FAKE);
+@{$priv{entersub}}{1,4,16,32,64} = qw(INARGS TARG DBG DEREF);
+@{$priv{rv2cv}}{1,8,128} = qw(CONST AMPER NO());
+$priv{gv}{32} = "EARLYCV";
+$priv{$_}{16} = "LVDEFER" for qw(aelem helem);
+$priv{$_}{16} = "OURINTR" for qw(gvsv rv2sv rv2av rv2hv r2gv enteriter);
+$priv{$_}{8} = "LVSUB"
+  for qw(rv2av rv2gv rv2hv padav padhv aelem helem aslice hslice
+         av2arylen keys rkeys substr pos vec);
+$priv{$_}{4} = "SLICEWARN"
+  for qw(rv2hv rv2av padav padhv hslice aslice);
+@{$priv{$_}}{32,64} = qw(BOOL BOOL?) for qw(rv2hv padhv);
+$priv{substr}{16} = "REPL1ST";
 $priv{$_}{16} = "TARGMY"
-  for (map(($_,"s$_"),"chop", "chomp"),
-       map(($_,"i_$_"), "postinc", "postdec", "multiply", "divide", "modulo",
-	   "add", "subtract", "negate"), "pow", "concat", "stringify",
-       "left_shift", "right_shift", "bit_and", "bit_xor", "bit_or",
-       "complement", "atan2", "sin", "cos", "rand", "exp", "log", "sqrt",
-       "int", "hex", "oct", "abs", "length", "index", "rindex", "sprintf",
-       "ord", "chr", "crypt", "quotemeta", "join", "push", "unshift", "flock",
-       "chdir", "chown", "chroot", "unlink", "chmod", "utime", "rename",
-       "link", "symlink", "mkdir", "rmdir", "wait", "waitpid", "system",
-       "exec", "kill", "getppid", "getpgrp", "setpgrp", "getpriority",
-       "setpriority", "time", "sleep");
-$priv{$_}{4} = "REVERSED" for ("enteriter", "iter");
-@{$priv{"const"}}{2,4,8,16,64,128} =
-    ("NOVER","SHORT","STRICT","ENTERED","BARE","FOLD");
-$priv{"flip"}{64} = $priv{"flop"}{64} = "LINENUM";
-$priv{"list"}{64} = "GUESSED";
-$priv{"delete"}{64} = "SLICE";
-$priv{"exists"}{64} = "SUB";
-@{$priv{"sort"}}{1,2,4,8,16,32,64} = ("NUM", "INT", "REV", "INPLACE","DESC","QSORT","STABLE");
-$priv{"reverse"}{8} = "INPLACE";
-$priv{"threadsv"}{64} = "SVREFd";
-@{$priv{$_}}{16,32,64,128} = ("INBIN","INCR","OUTBIN","OUTCR")
-  for ("open", "backtick");
-$priv{"exit"}{128} = "VMS";
+  for map(($_,"s$_"), qw(chop chomp)),
+      map(($_,"i_$_"), qw(postinc postdec multiply divide modulo add
+                          subtract negate)),
+      qw(pow concat stringify left_shift right_shift bit_and bit_xor
+         bit_or complement atan2 sin cos rand exp log sqrt int hex oct
+         abs length index rindex sprintf ord chr crypt quotemeta join
+         push unshift flock chdir chown chroot unlink chmod utime rename
+         link symlink mkdir rmdir wait waitpid system exec kill getppid
+         getpgrp setpgrp getpriority setpriority time sleep);
+$priv{$_}{4} = "REVERSED" for qw(enteriter iter);
+@{$priv{const}}{2,4,8,16,64} = qw(NOVER SHORT STRICT ENTERED BARE);
+$priv{$_}{64} = "LINENUM" for qw(flip flop);
+$priv{list}{64} = "GUESSED";
+$priv{delete}{64} = "SLICE";
+$priv{exists}{64} = "SUB";
+@{$priv{sort}}{1,2,4,8,16,32,64} = qw(NUM INT REV INPLACE DESC QSORT STABLE);
+$priv{reverse}{8} = "INPLACE";
+$priv{threadsv}{64} = "SVREFd";
+@{$priv{$_}}{16,32,64,128} = qw(INBIN INCR OUTBIN OUTCR)
+  for qw(open backtick);
+$priv{$_}{32} = "HUSH" for qw(nextstate dbstate);
 $priv{$_}{2} = "FTACCESS"
-  for ("ftrread", "ftrwrite", "ftrexec", "fteread", "ftewrite", "fteexec");
-@{$priv{"entereval"}}{2,4,8,16} = qw "HAS_HH UNI BYTES COPHH";
-@{$priv{$_}}{4,8,16} = ("FTSTACKED","FTSTACKING","FTAFTERt")
-for ("ftrread", "ftrwrite", "ftrexec", "fteread", "ftewrite", "fteexec",
-     "ftis", "fteowned", "ftrowned", "ftzero", "ftsize", "ftmtime",
-     "ftatime", "ftctime", "ftsock", "ftchr", "ftblk", "ftfile", "ftdir",
-     "ftpipe", "ftlink", "ftsuid", "ftsgid", "ftsvtx", "fttty", "fttext",
-     "ftbinary");
+  for qw(ftrread ftrwrite ftrexec fteread ftewrite fteexec);
+@{$priv{entereval}}{2,4,8,16} = qw(HAS_HH UNI BYTES COPHH);
+@{$priv{$_}}{4,8,16} = qw(FTSTACKED FTSTACKING FTAFTERt)
+  for qw(ftrread ftrwrite ftrexec fteread ftewrite fteexec ftis fteowned
+         ftrowned ftzero ftsize ftmtime ftatime ftctime ftsock ftchr
+         ftblk ftfile ftdir ftpipe ftlink ftsuid ftsgid ftsvtx fttty
+         fttext ftbinary);
 $priv{$_}{2} = "GREPLEX"
-for ("mapwhile", "mapstart", "grepwhile", "grepstart");
-$priv{$_}{128} = '+1' for qw "caller wantarray runcv";
-@{$priv{coreargs}}{1,2,64,128} = ('DREF1','DREF2','$MOD','MARK');
-$priv{$_}{128} = 'UTF' for qw "last redo next goto dump";
+  for qw(mapwhile mapstart grepwhile grepstart);
+$priv{$_}{128} = "+1" for qw(caller wantarray runcv);
+@{$priv{coreargs}}{1,2,64,128} = qw(DREF1 DREF2 $MOD MARK);
+$priv{$_}{128} = "UTF" for qw(last redo next goto dump);
+$priv{split}{128} = "IMPLIM";
 
 our %hints; # used to display each COP's op_hints values
 
@@ -891,6 +887,7 @@ sub concise_op {
     } elsif ($h{class} eq "LOGOP") {
 	undef $lastnext;
 	$h{arg} = "(other->" . seq($op->other) . ")";
+	$h{otheraddr} = sprintf("%#x", $ {$op->other});
     }
     elsif ($h{class} eq "SVOP" or $h{class} eq "PADOP") {
 	unless ($h{name} eq 'aelemfast' and $op->flags & OPf_SPECIAL) {
@@ -921,6 +918,10 @@ sub concise_op {
     $h{flags} = op_flags($op->flags);
     $h{privval} = $op->private;
     $h{private} = private_flags($h{name}, $op->private);
+    if ($op->folded) {
+      $h{private} &&= "$h{private},";
+      $h{private} .= "FOLD";
+    }
     if ($op->can("hints")) {
       $h{hintsval} = $op->hints;
       $h{hints} = hints_flags($h{hintsval});
@@ -1643,7 +1644,7 @@ your program is).
 
 =item B<#opt>
 
-Whether or not the op has been optimised by the peephole optimiser.
+Whether or not the op has been optimized by the peephole optimizer.
 
 Only available in 5.9 and later.
 
@@ -1810,13 +1811,13 @@ B<walk_output> lets you change the print destination from STDOUT to
 another open filehandle, or into a string passed as a ref (unless
 you've built perl with -Uuseperlio).
 
-    my $walker = B::Concise::compile('-terse','aFuncName', \&aSubRef);  # 1
-    walk_output(\my $buf);
-    $walker->();			# 1 renders -terse
-    set_style_standard('concise');	# 2
-    $walker->();			# 2 renders -concise
-    $walker->(@new);			# 3 renders whatever
-    print "3 different renderings: terse, concise, and @new: $buf\n";
+  my $walker = B::Concise::compile('-terse','aFuncName', \&aSubRef); # 1
+  walk_output(\my $buf);
+  $walker->();			        # 1 renders -terse
+  set_style_standard('concise');	# 2
+  $walker->();  		        # 2 renders -concise
+  $walker->(@new);			# 3 renders whatever
+  print "3 different renderings: terse, concise, and @new: $buf\n";
 
 When $walker is called, it traverses the subroutines supplied when it
 was created, and renders them using the current style.  You can change

@@ -3,7 +3,7 @@ package Encode::Encoding;
 # Base class for classes which implement encodings
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 require Encode;
 
@@ -81,7 +81,7 @@ Encode::Encoding - Encode Implementation Base Class
 =head1 SYNOPSIS
 
   package Encode::MyEncoding;
-  use base qw(Encode::Encoding);
+  use parent qw(Encode::Encoding);
 
   __PACKAGE__->Define(qw(myCanonical myAlias));
 
@@ -121,14 +121,14 @@ fragment.  If perlio_ok() is true, SHOULD becomes MUST.
 
 =item *
 
-If I<$check> is is false then C<encode> MUST  make a "best effort" to
+If I<$check> is false then C<encode> MUST  make a "best effort" to
 convert the string - for example, by using a replacement character.
 
 =back
 
 =item -E<gt>decode($octets [,$check])
 
-MUST return the string that I<$octets> represents. 
+MUST return the string that I<$octets> represents.
 
 =over 2
 
@@ -251,7 +251,7 @@ is assumed.
 
   package Encode::ROT13;
   use strict;
-  use base qw(Encode::Encoding);
+  use parent qw(Encode::Encoding);
 
   __PACKAGE__->Define('rot13');
 
@@ -290,7 +290,7 @@ C<Encode::Encoding> as a base class. This allows that class to define
 additional behaviour for all encoding objects.
 
   package Encode::MyEncoding;
-  use base qw(Encode::Encoding);
+  use parent qw(Encode::Encoding);
 
   __PACKAGE__->Define(qw(myCanonical myAlias));
 

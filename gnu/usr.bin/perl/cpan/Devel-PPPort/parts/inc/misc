@@ -1,12 +1,6 @@
 ################################################################################
 ##
-##  $Revision: 56 $
-##  $Author: mhx $
-##  $Date: 2011/09/10 20:38:10 +0200 $
-##
-################################################################################
-##
-##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -41,6 +35,7 @@ EXTERN_C
 STMT_START
 STMT_END
 UTF8_MAXBYTES
+WIDEST_UTYPE
 XSRETURN
 
 =implementation
@@ -146,22 +141,22 @@ __UNDEFINED__  PTR2NV(p)       NUM2PTR(NV,p)
 #undef STMT_START
 #undef STMT_END
 #ifdef PERL_USE_GCC_BRACE_GROUPS
-#  define STMT_START	(void)(	/* gcc supports ``({ STATEMENTS; })'' */
-#  define STMT_END	)
+#  define STMT_START    (void)( /* gcc supports ``({ STATEMENTS; })'' */
+#  define STMT_END      )
 #else
 #  if defined(VOIDFLAGS) && (VOIDFLAGS) && (defined(sun) || defined(__sun__)) && !defined(__GNUC__)
-#    define STMT_START	if (1)
-#    define STMT_END	else (void)0
+#    define STMT_START  if (1)
+#    define STMT_END    else (void)0
 #  else
-#    define STMT_START	do
-#    define STMT_END	while (0)
+#    define STMT_START  do
+#    define STMT_END    while (0)
 #  endif
 #endif
 
 __UNDEFINED__  boolSV(b)    ((b) ? &PL_sv_yes : &PL_sv_no)
 
 /* DEFSV appears first in 5.004_56 */
-__UNDEFINED__  DEFSV	    GvSV(PL_defgv)
+__UNDEFINED__  DEFSV        GvSV(PL_defgv)
 __UNDEFINED__  SAVE_DEFSV   SAVESPTR(GvSV(PL_defgv))
 __UNDEFINED__  DEFSV_set(sv) (DEFSV = (sv))
 
@@ -223,13 +218,13 @@ __UNDEFINED__  UTF8_MAXBYTES   UTF8_MAXLEN
 __UNDEFINED__  CPERLscope(x)   x
 
 __UNDEFINED__  PERL_HASH(hash,str,len) \
-     STMT_START	{ \
-	const char *s_PeRlHaSh = str; \
-	I32 i_PeRlHaSh = len; \
-	U32 hash_PeRlHaSh = 0; \
-	while (i_PeRlHaSh--) \
-	    hash_PeRlHaSh = hash_PeRlHaSh * 33 + *s_PeRlHaSh++; \
-	(hash) = hash_PeRlHaSh; \
+     STMT_START { \
+        const char *s_PeRlHaSh = str; \
+        I32 i_PeRlHaSh = len; \
+        U32 hash_PeRlHaSh = 0; \
+        while (i_PeRlHaSh--) \
+            hash_PeRlHaSh = hash_PeRlHaSh * 33 + *s_PeRlHaSh++; \
+        (hash) = hash_PeRlHaSh; \
     } STMT_END
 
 #ifndef PERLIO_FUNCS_DECL
@@ -255,16 +250,16 @@ typedef OP* (CPERLscope(*Perl_check_t)) (pTHX_ OP*);
 
 #endif
 
-__UNDEFINED__ isPSXSPC(c)	(isSPACE(c) || (c) == '\v')
-__UNDEFINED__ isBLANK(c)	((c) == ' ' || (c) == '\t')
+__UNDEFINED__ isPSXSPC(c)       (isSPACE(c) || (c) == '\v')
+__UNDEFINED__ isBLANK(c)        ((c) == ' ' || (c) == '\t')
 #ifdef EBCDIC
-__UNDEFINED__ isALNUMC(c)	isalnum(c)
-__UNDEFINED__ isASCII(c)	isascii(c)
-__UNDEFINED__ isCNTRL(c)	iscntrl(c)
-__UNDEFINED__ isGRAPH(c)	isgraph(c)
-__UNDEFINED__ isPRINT(c)	isprint(c)
-__UNDEFINED__ isPUNCT(c)	ispunct(c)
-__UNDEFINED__ isXDIGIT(c)	isxdigit(c)
+__UNDEFINED__ isALNUMC(c)       isalnum(c)
+__UNDEFINED__ isASCII(c)        isascii(c)
+__UNDEFINED__ isCNTRL(c)        iscntrl(c)
+__UNDEFINED__ isGRAPH(c)        isgraph(c)
+__UNDEFINED__ isPRINT(c)        isprint(c)
+__UNDEFINED__ isPUNCT(c)        ispunct(c)
+__UNDEFINED__ isXDIGIT(c)       isxdigit(c)
 #else
 # if { VERSION < 5.10.0 }
 /* Hint: isPRINT
@@ -274,13 +269,20 @@ __UNDEFINED__ isXDIGIT(c)	isxdigit(c)
  */
 #  undef isPRINT
 # endif
-__UNDEFINED__ isALNUMC(c)	(isALPHA(c) || isDIGIT(c))
-__UNDEFINED__ isASCII(c)	((U8) (c) <= 127)
-__UNDEFINED__ isCNTRL(c)	((U8) (c) < ' ' || (c) == 127)
-__UNDEFINED__ isGRAPH(c)	(isALNUM(c) || isPUNCT(c))
-__UNDEFINED__ isPRINT(c)	(((c) >= 32 && (c) < 127))
-__UNDEFINED__ isPUNCT(c)	(((c) >= 33 && (c) <= 47) || ((c) >= 58 && (c) <= 64)  || ((c) >= 91 && (c) <= 96) || ((c) >= 123 && (c) <= 126))
-__UNDEFINED__ isXDIGIT(c)	(isDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
+
+#ifdef HAS_QUAD
+# define WIDEST_UTYPE U64TYPE
+#else
+# define WIDEST_UTYPE U32
+#endif
+
+__UNDEFINED__ isALNUMC(c)       (isALPHA(c) || isDIGIT(c))
+__UNDEFINED__ isASCII(c)        ((WIDEST_UTYPE) (c) <= 127)
+__UNDEFINED__ isCNTRL(c)        ((WIDEST_UTYPE) (c) < ' ' || (c) == 127)
+__UNDEFINED__ isGRAPH(c)        (isALNUM(c) || isPUNCT(c))
+__UNDEFINED__ isPRINT(c)        (((c) >= 32 && (c) < 127))
+__UNDEFINED__ isPUNCT(c)        (((c) >= 33 && (c) <= 47) || ((c) >= 58 && (c) <= 64)  || ((c) >= 91 && (c) <= 96) || ((c) >= 123 && (c) <= 126))
+__UNDEFINED__ isXDIGIT(c)       (isDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
 #endif
 
 =xsmisc
@@ -325,163 +327,163 @@ newXS("Devel::PPPort::dAXMARK", XS_Devel__PPPort_dAXMARK, file);
 
 int
 ptrtests()
-	PREINIT:
-		int var, *p = &var;
+        PREINIT:
+                int var, *p = &var;
 
-	CODE:
-		RETVAL = 0;
-		RETVAL += PTR2nat(p) != 0       ?  1 : 0;
-		RETVAL += PTR2ul(p) != 0UL      ?  2 : 0;
-		RETVAL += PTR2UV(p) != (UV) 0   ?  4 : 0;
-		RETVAL += PTR2IV(p) != (IV) 0   ?  8 : 0;
-		RETVAL += PTR2NV(p) != (NV) 0   ? 16 : 0;
-		RETVAL += p > NUM2PTR(int *, 0) ? 32 : 0;
+        CODE:
+                RETVAL = 0;
+                RETVAL += PTR2nat(p) != 0       ?  1 : 0;
+                RETVAL += PTR2ul(p) != 0UL      ?  2 : 0;
+                RETVAL += PTR2UV(p) != (UV) 0   ?  4 : 0;
+                RETVAL += PTR2IV(p) != (IV) 0   ?  8 : 0;
+                RETVAL += PTR2NV(p) != (NV) 0   ? 16 : 0;
+                RETVAL += p > NUM2PTR(int *, 0) ? 32 : 0;
 
-	OUTPUT:
-		RETVAL
+        OUTPUT:
+                RETVAL
 
 int
 gv_stashpvn(name, create)
-	char *name
-	I32 create
-	CODE:
-		RETVAL = gv_stashpvn(name, strlen(name), create) != NULL;
-	OUTPUT:
-		RETVAL
+        char *name
+        I32 create
+        CODE:
+                RETVAL = gv_stashpvn(name, strlen(name), create) != NULL;
+        OUTPUT:
+                RETVAL
 
 int
 get_sv(name, create)
-	char *name
-	I32 create
-	CODE:
-		RETVAL = get_sv(name, create) != NULL;
-	OUTPUT:
-		RETVAL
+        char *name
+        I32 create
+        CODE:
+                RETVAL = get_sv(name, create) != NULL;
+        OUTPUT:
+                RETVAL
 
 int
 get_av(name, create)
-	char *name
-	I32 create
-	CODE:
-		RETVAL = get_av(name, create) != NULL;
-	OUTPUT:
-		RETVAL
+        char *name
+        I32 create
+        CODE:
+                RETVAL = get_av(name, create) != NULL;
+        OUTPUT:
+                RETVAL
 
 int
 get_hv(name, create)
-	char *name
-	I32 create
-	CODE:
-		RETVAL = get_hv(name, create) != NULL;
-	OUTPUT:
-		RETVAL
+        char *name
+        I32 create
+        CODE:
+                RETVAL = get_hv(name, create) != NULL;
+        OUTPUT:
+                RETVAL
 
 int
 get_cv(name, create)
-	char *name
-	I32 create
-	CODE:
-		RETVAL = get_cv(name, create) != NULL;
-	OUTPUT:
-		RETVAL
+        char *name
+        I32 create
+        CODE:
+                RETVAL = get_cv(name, create) != NULL;
+        OUTPUT:
+                RETVAL
 
 void
 xsreturn(two)
-	int two
-	PPCODE:
-		mXPUSHp("test1", 5);
-		if (two)
-		  mXPUSHp("test2", 5);
-		if (two)
-		  XSRETURN(2);
-		else
-		  XSRETURN(1);
+        int two
+        PPCODE:
+                mXPUSHp("test1", 5);
+                if (two)
+                  mXPUSHp("test2", 5);
+                if (two)
+                  XSRETURN(2);
+                else
+                  XSRETURN(1);
 
 SV*
 boolSV(value)
-	int value
-	CODE:
-		RETVAL = newSVsv(boolSV(value));
-	OUTPUT:
-		RETVAL
+        int value
+        CODE:
+                RETVAL = newSVsv(boolSV(value));
+        OUTPUT:
+                RETVAL
 
 SV*
 DEFSV()
-	CODE:
-		RETVAL = newSVsv(DEFSV);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = newSVsv(DEFSV);
+        OUTPUT:
+                RETVAL
 
 void
 DEFSV_modify()
-	PPCODE:
-		XPUSHs(sv_mortalcopy(DEFSV));
-		ENTER;
-		SAVE_DEFSV;
-		DEFSV_set(newSVpvs("DEFSV"));
-		XPUSHs(sv_mortalcopy(DEFSV));
-		/* Yes, this leaks the above scalar; 5.005 with threads for some reason */
-		/* frees it upon LEAVE, thus mortalizing it causes "attempt to free..." */
-		/* sv_2mortal(DEFSV); */
-		LEAVE;
-		XPUSHs(sv_mortalcopy(DEFSV));
-		XSRETURN(3);
+        PPCODE:
+                XPUSHs(sv_mortalcopy(DEFSV));
+                ENTER;
+                SAVE_DEFSV;
+                DEFSV_set(newSVpvs("DEFSV"));
+                XPUSHs(sv_mortalcopy(DEFSV));
+                /* Yes, this leaks the above scalar; 5.005 with threads for some reason */
+                /* frees it upon LEAVE, thus mortalizing it causes "attempt to free..." */
+                /* sv_2mortal(DEFSV); */
+                LEAVE;
+                XPUSHs(sv_mortalcopy(DEFSV));
+                XSRETURN(3);
 
 int
 ERRSV()
-	CODE:
-		RETVAL = SvTRUE(ERRSV);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = SvTRUE(ERRSV);
+        OUTPUT:
+                RETVAL
 
 SV*
 UNDERBAR()
-	CODE:
-		{
-		  dUNDERBAR;
-		  RETVAL = newSVsv(UNDERBAR);
-		}
-	OUTPUT:
-		RETVAL
+        CODE:
+                {
+                  dUNDERBAR;
+                  RETVAL = newSVsv(UNDERBAR);
+                }
+        OUTPUT:
+                RETVAL
 
 void
 prepush()
-	CODE:
-		{
-		  dXSTARG;
-		  XSprePUSH;
-		  PUSHi(42);
-		  XSRETURN(1);
-		}
+        CODE:
+                {
+                  dXSTARG;
+                  XSprePUSH;
+                  PUSHi(42);
+                  XSRETURN(1);
+                }
 
 int
 PERL_ABS(a)
-	int a
+        int a
 
 void
 SVf(x)
-	SV *x
-	PPCODE:
+        SV *x
+        PPCODE:
 #if { VERSION >= 5.004 }
-		x = sv_2mortal(newSVpvf("[%"SVf"]", SVfARG(x)));
+                x = sv_2mortal(newSVpvf("[%"SVf"]", SVfARG(x)));
 #endif
-		XPUSHs(x);
-		XSRETURN(1);
+                XPUSHs(x);
+                XSRETURN(1);
 
 void
 Perl_ppaddr_t(string)
-	char *string
-	PREINIT:
-		Perl_ppaddr_t lower;
-	PPCODE:
-		lower = PL_ppaddr[OP_LC];
-		mXPUSHs(newSVpv(string, 0));
-		PUTBACK;
-		ENTER;
-		(void)*(lower)(aTHXR);
-		SPAGAIN;
-		LEAVE;
-		XSRETURN(1);
+        char *string
+        PREINIT:
+                Perl_ppaddr_t lower;
+        PPCODE:
+                lower = PL_ppaddr[OP_LC];
+                mXPUSHs(newSVpv(string, 0));
+                PUTBACK;
+                ENTER;
+                (void)*(lower)(aTHXR);
+                SPAGAIN;
+                LEAVE;
+                XSRETURN(1);
 
 =tests plan => 39
 
@@ -496,6 +498,7 @@ ok(&Devel::PPPort::UNDERBAR(), "Fred");
 
 if ($] >= 5.009002) {
   eval q{
+    no warnings "deprecated";
     no if $^V > v5.17.9, warnings => "experimental::lexical_topic";
     my $_ = "Tony";
     ok(&Devel::PPPort::DEFSV(), "Fred");
@@ -562,4 +565,3 @@ ok(Devel::PPPort::SVf('abc'), $] >= 5.004 ? '[abc]' : 'abc');
 ok(&Devel::PPPort::Perl_ppaddr_t("FOO"), "foo");
 
 ok(&Devel::PPPort::ptrtests(), 63);
-

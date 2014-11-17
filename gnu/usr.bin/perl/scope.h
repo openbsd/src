@@ -16,7 +16,7 @@
 #define SAVEt_CLEARPADRANGE	1
 #define SAVEt_CLEARSV		2
 #define SAVEt_REGCONTEXT	3
-#define SAVEt_RE_STATE		4
+/*** SPARE      	        4 ***/
 
 #define SAVEt_ARG0_MAX		4
 
@@ -38,12 +38,12 @@
 #define SAVEt_OP		18
 #define SAVEt_PARSER		19
 #define SAVEt_STACK_POS		20
+#define SAVEt_READONLY_OFF	21
 
-#define SAVEt_ARG1_MAX		20
+#define SAVEt_ARG1_MAX		21
 
 /* two args */
 
-#define SAVEt_ADELETE		21
 #define SAVEt_APTR		22
 #define SAVEt_AV		23
 #define SAVEt_DESTRUCTOR	24
@@ -64,21 +64,22 @@
 #define SAVEt_SAVESWITCHSTACK	39
 #define SAVEt_SHARED_PVREF	40
 #define SAVEt_SPTR		41
-#define SAVEt_STACK_CXPOS	42
+#define SAVEt_STRLEN		42
 #define SAVEt_SV		43
 #define SAVEt_SVREF		44
 #define SAVEt_VPTR		45
+#define SAVEt_ADELETE		46
 
-#define SAVEt_ARG2_MAX		45
+#define SAVEt_ARG2_MAX		46
 
 /* three args */
 
-#define SAVEt_AELEM		46
 #define SAVEt_DELETE		47
 #define SAVEt_HELEM		48
 #define SAVEt_PADSV_AND_MORTALIZE 49
 #define SAVEt_SET_SVFLAGS	50
 #define SAVEt_GVSLOT		51
+#define SAVEt_AELEM		52
 
 #define SAVEf_SETMAGIC		1
 #define SAVEf_KEEPOLDELEM	2
@@ -97,8 +98,8 @@
  * macros */
 #define SS_MAXPUSH 4
 
-#define SSCHECK(need) if (PL_savestack_ix + (I32)(need) + SS_MAXPUSH > PL_savestack_max) savestack_grow()
-#define SSGROW(need) if (PL_savestack_ix + (I32)(need) + SS_MAXPUSH > PL_savestack_max) savestack_grow_cnt(need + SS_MAXPUSH)
+#define SSCHECK(need) if (UNLIKELY(PL_savestack_ix + (I32)(need) + SS_MAXPUSH > PL_savestack_max)) savestack_grow()
+#define SSGROW(need) if (UNLIKELY(PL_savestack_ix + (I32)(need) + SS_MAXPUSH > PL_savestack_max)) savestack_grow_cnt(need + SS_MAXPUSH)
 #define SSPUSHINT(i) (PL_savestack[PL_savestack_ix++].any_i32 = (I32)(i))
 #define SSPUSHLONG(i) (PL_savestack[PL_savestack_ix++].any_long = (long)(i))
 #define SSPUSHBOOL(p) (PL_savestack[PL_savestack_ix++].any_bool = (p))
@@ -122,14 +123,14 @@
 
 #define dSS_ADD \
     I32 ix = PL_savestack_ix;     \
-    ANY *ssp = &PL_savestack[ix];
+    ANY *ssp = &PL_savestack[ix]
 
 #define SS_ADD_END(need) \
     assert((need) <= SS_MAXPUSH);                               \
     ix += (need);                                               \
     PL_savestack_ix = ix;                                       \
     assert(ix <= PL_savestack_max);                             \
-    if ((ix + SS_MAXPUSH) > PL_savestack_max) savestack_grow(); \
+    if (UNLIKELY((ix + SS_MAXPUSH) > PL_savestack_max)) savestack_grow(); \
     assert(PL_savestack_ix + SS_MAXPUSH <= PL_savestack_max);
 
 #define SS_ADD_INT(i)   ((ssp++)->any_i32 = (I32)(i))
@@ -185,7 +186,8 @@ scope has the given name. Name must be a literal string.
 =cut
 */
 
-#define SAVETMPS save_int((int*)&PL_tmps_floor), PL_tmps_floor = PL_tmps_ix
+#define SAVETMPS Perl_save_strlen(aTHX_ (STRLEN *)&PL_tmps_floor), \
+		 PL_tmps_floor = PL_tmps_ix
 #define FREETMPS if (PL_tmps_ix > PL_tmps_floor) free_tmps()
 
 #ifdef DEBUGGING
@@ -252,7 +254,7 @@ scope has the given name. Name must be a literal string.
 #define SAVEHDELETE(h,s) \
 	  save_hdelete(MUTABLE_HV(h), (s))
 #define SAVEADELETE(a,k) \
-	  save_adelete(MUTABLE_AV(a), (I32)(k))
+	  save_adelete(MUTABLE_AV(a), (SSize_t)(k))
 #define SAVEDESTRUCTOR(f,p) \
 	  save_destructor((DESTRUCTORFUNC_NOCONTEXT_t)(f), (void*)(p))
 
@@ -286,15 +288,6 @@ scope has the given name. Name must be a literal string.
    as it simplifies the code that does the saves, and reduces the load on the
    save stack.  */
 #define SAVECOMPILEWARNINGS() save_pushptr(PL_compiling.cop_warnings, SAVEt_COMPILE_WARNINGS)
-
-#define SAVESTACK_CXPOS() \
-    STMT_START {                                   \
-        dSS_ADD;                                   \
-        SS_ADD_INT(cxstack[cxstack_ix].blk_oldsp); \
-        SS_ADD_INT(cxstack_ix);                    \
-        SS_ADD_UV(SAVEt_STACK_CXPOS);              \
-        SS_ADD_END(3);                             \
-    } STMT_END
 
 #define SAVEPARSER(p) save_pushptr((p), SAVEt_PARSER)
 

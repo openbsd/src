@@ -146,8 +146,8 @@ local void send_tree      OF((deflate_state *s, ct_data *tree, int max_code));
 local int  build_bl_tree  OF((deflate_state *s));
 local void send_all_trees OF((deflate_state *s, int lcodes, int dcodes,
                               int blcodes));
-local void compress_block OF((deflate_state *s, ct_data *ltree,
-                              ct_data *dtree));
+local void compress_block OF((deflate_state *s, const ct_data *ltree,
+                              const ct_data *dtree));
 local int  detect_data_type OF((deflate_state *s));
 local unsigned bi_reverse OF((unsigned value, int length));
 local void bi_windup      OF((deflate_state *s));
@@ -974,7 +974,8 @@ void ZLIB_INTERNAL _tr_flush_block(
     } else if (s->strategy == Z_FIXED || static_lenb == opt_lenb) {
 #endif
         send_bits(s, (STATIC_TREES<<1)+last, 3);
-        compress_block(s, (ct_data *)static_ltree, (ct_data *)static_dtree);
+        compress_block(s, (const ct_data *)static_ltree,
+                       (const ct_data *)static_dtree);
 #ifdef DEBUG
         s->compressed_len += 3 + s->static_len;
 #endif
@@ -982,7 +983,8 @@ void ZLIB_INTERNAL _tr_flush_block(
         send_bits(s, (DYN_TREES<<1)+last, 3);
         send_all_trees(s, s->l_desc.max_code+1, s->d_desc.max_code+1,
                        max_blindex+1);
-        compress_block(s, (ct_data *)s->dyn_ltree, (ct_data *)s->dyn_dtree);
+        compress_block(s, (const ct_data *)s->dyn_ltree,
+                       (const ct_data *)s->dyn_dtree);
 #ifdef DEBUG
         s->compressed_len += 3 + s->opt_len;
 #endif
@@ -1059,8 +1061,8 @@ int ZLIB_INTERNAL _tr_tally (
  */
 local void compress_block(
     deflate_state *s,
-    ct_data *ltree,
-    ct_data *dtree)
+    const ct_data *ltree,
+    const ct_data *dtree)
 {
     unsigned dist;      /* distance of matched string */
     int lc;             /* match length or unmatched char (if dist == 0) */

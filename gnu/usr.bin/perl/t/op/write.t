@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;	# Amazed that this hackery can be made strict ...
+use Tie::Scalar;
 
 # read in a file
 sub cat {
@@ -17,6 +18,42 @@ sub cat {
     close $fh;
     $data;
 }
+
+# read in a utf-8 file
+#
+sub cat_utf8 {
+    my $file = shift;
+    local $/;
+    open my $fh, '<', $file or die "can't open '$file': $!";
+    binmode $fh, ':utf8';
+    my $data = <$fh> // die "Can't read from '$file': $!";
+    close $fh or die "error closing '$file': $!";
+    $data;
+}
+
+# write a format to a utf8 file, then read it back in and compare
+
+sub is_format_utf8 {
+    my ($glob, $want, $desc) = @_;
+    local $::Level = $::Level + 1;
+    my $file = 'Op_write.tmp';
+    open $glob, '>:utf8', $file or die "Can't create '$file': $!";
+    write $glob;
+    close $glob or die "Could not close '$file': $!";
+    is(cat_utf8($file), $want, $desc);
+}
+
+sub like_format_utf8 {
+    my ($glob, $want, $desc) = @_;
+    local $::Level = $::Level + 1;
+    my $file = 'Op_write.tmp';
+    open $glob, '>:utf8', $file or die "Can't create '$file': $!";
+    write $glob;
+    close $glob or die "Could not close '$file': $!";
+    like(cat_utf8($file), $want, $desc);
+}
+
+
 
 #-- testing numeric fields in all variants (WL)
 
@@ -61,10 +98,10 @@ for my $tref ( @NumTests ){
 my $bas_tests = 21;
 
 # number of tests in section 3
-my $bug_tests = 8 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3 + 96 + 11;
+my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3 + 96 + 11;
 
 # number of tests in section 4
-my $hmb_tests = 35;
+my $hmb_tests = 37;
 
 my $tests = $bas_tests + $num_tests + $bug_tests + $hmb_tests;
 
@@ -351,7 +388,6 @@ $el
 {
     my $test = curr_test();
     # Bug report and testcase by Alexey Tourbin
-    use Tie::Scalar;
     my $v;
     tie $v, 'Tie::StdScalar';
     $v = $test;
@@ -560,6 +596,770 @@ $_
     close OUT21 or die "Could not close: $!";
 })[0];
 
+
+
+# [perl #119847],  [perl #119849], [perl #119851]
+# Non-real vars like tied, overloaded and refs could, when stringified,
+# fail to be processed properly, causing infinite loops on ~~, utf8
+# warnings etc, ad nauseum.
+
+
+my $u22a = "N" x 8;
+
+format OUT22a =
+'^<<<<<<<<'~~
+$u22a
+.
+
+is_format_utf8(\*OUT22a,
+               "'NNNNNNNN '\n");
+
+
+my $u22b = "N" x 8;
+utf8::upgrade($u22b);
+
+format OUT22b =
+'^<<<<<<<<'~~
+$u22b
+.
+
+is_format_utf8(\*OUT22b,
+               "'NNNNNNNN '\n");
+
+my $u22c = "\x{FF}" x 8;
+
+format OUT22c =
+'^<<<<<<<<'~~
+$u22c
+.
+
+is_format_utf8(\*OUT22c,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+my $u22d = "\x{FF}" x 8;
+utf8::upgrade($u22d);
+
+format OUT22d =
+'^<<<<<<<<'~~
+$u22d
+.
+
+is_format_utf8(\*OUT22d,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+my $u22e = "\x{100}" x 8;
+
+format OUT22e =
+'^<<<<<<<<'~~
+$u22e
+.
+
+is_format_utf8(\*OUT22e,
+               "'\x{100}\x{100}\x{100}\x{100}\x{100}\x{100}\x{100}\x{100} '\n");
+
+
+my $u22f = "N" x 8;
+
+format OUT22f =
+'^<'~~
+$u22f
+.
+
+is_format_utf8(\*OUT22f,
+               "'NN'\n"x4);
+
+
+my $u22g = "N" x 8;
+utf8::upgrade($u22g);
+
+format OUT22g =
+'^<'~~
+$u22g
+.
+
+is_format_utf8(\*OUT22g,
+               "'NN'\n"x4);
+
+my $u22h = "\x{FF}" x 8;
+
+format OUT22h =
+'^<'~~
+$u22h
+.
+
+is_format_utf8(\*OUT22h,
+               "'\x{FF}\x{FF}'\n"x4);
+
+my $u22i = "\x{FF}" x 8;
+utf8::upgrade($u22i);
+
+format OUT22i =
+'^<'~~
+$u22i
+.
+
+is_format_utf8(\*OUT22i,
+               "'\x{FF}\x{FF}'\n"x4);
+
+my $u22j = "\x{100}" x 8;
+
+format OUT22j =
+'^<'~~
+$u22j
+.
+
+is_format_utf8(\*OUT22j,
+               "'\x{100}\x{100}'\n"x4);
+
+
+tie my $u23a, 'Tie::StdScalar';
+$u23a = "N" x 8;
+
+format OUT23a =
+'^<<<<<<<<'~~
+$u23a
+.
+
+is_format_utf8(\*OUT23a,
+               "'NNNNNNNN '\n");
+
+
+tie my $u23b, 'Tie::StdScalar';
+$u23b = "N" x 8;
+utf8::upgrade($u23b);
+
+format OUT23b =
+'^<<<<<<<<'~~
+$u23b
+.
+
+is_format_utf8(\*OUT23b,
+               "'NNNNNNNN '\n");
+
+tie my $u23c, 'Tie::StdScalar';
+$u23c = "\x{FF}" x 8;
+
+format OUT23c =
+'^<<<<<<<<'~~
+$u23c
+.
+
+is_format_utf8(\*OUT23c,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+tie my $u23d, 'Tie::StdScalar';
+my $temp = "\x{FF}" x 8;
+utf8::upgrade($temp);
+$u23d = $temp;
+
+format OUT23d =
+'^<<<<<<<<'~~
+$u23d
+.
+
+is_format_utf8(\*OUT23d,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+tie my $u23e, 'Tie::StdScalar';
+$u23e = "\x{100}" x 8;
+
+format OUT23e =
+'^<<<<<<<<'~~
+$u23e
+.
+
+is_format_utf8(\*OUT23e,
+               "'\x{100}\x{100}\x{100}\x{100}\x{100}\x{100}\x{100}\x{100} '\n");
+
+tie my $u23f, 'Tie::StdScalar';
+$u23f = "N" x 8;
+
+format OUT23f =
+'^<'~~
+$u23f
+.
+
+is_format_utf8(\*OUT23f,
+               "'NN'\n"x4);
+
+
+tie my $u23g, 'Tie::StdScalar';
+my $temp = "N" x 8;
+utf8::upgrade($temp);
+$u23g = $temp;
+
+format OUT23g =
+'^<'~~
+$u23g
+.
+
+is_format_utf8(\*OUT23g,
+               "'NN'\n"x4);
+
+tie my $u23h, 'Tie::StdScalar';
+$u23h = "\x{FF}" x 8;
+
+format OUT23h =
+'^<'~~
+$u23h
+.
+
+is_format_utf8(\*OUT23h,
+               "'\x{FF}\x{FF}'\n"x4);
+
+$temp = "\x{FF}" x 8;
+utf8::upgrade($temp);
+tie my $u23i, 'Tie::StdScalar';
+$u23i = $temp;
+
+format OUT23i =
+'^<'~~
+$u23i
+.
+
+is_format_utf8(\*OUT23i,
+               "'\x{FF}\x{FF}'\n"x4);
+
+tie my $u23j, 'Tie::StdScalar';
+$u23j = "\x{100}" x 8;
+
+format OUT23j =
+'^<'~~
+$u23j
+.
+
+is_format_utf8(\*OUT23j,
+               "'\x{100}\x{100}'\n"x4);
+
+{
+    package UTF8Toggle;
+
+    sub TIESCALAR {
+        my $class = shift;
+        my $value = shift;
+        my $state = shift||0;
+        return bless [$value, $state], $class;
+    }
+
+    sub FETCH {
+        my $self = shift;
+        $self->[1] = ! $self->[1];
+        if ($self->[1]) {
+           utf8::downgrade($self->[0]);
+        } else {
+           utf8::upgrade($self->[0]);
+        }
+        $self->[0];
+    }
+
+   sub STORE {
+       my $self = shift;
+       $self->[0] = shift;
+    }
+}
+
+tie my $u24a, 'UTF8Toggle';
+$u24a = "N" x 8;
+
+format OUT24a =
+'^<<<<<<<<'~~
+$u24a
+.
+
+is_format_utf8(\*OUT24a,
+               "'NNNNNNNN '\n");
+
+
+tie my $u24b, 'UTF8Toggle';
+$u24b = "N" x 8;
+utf8::upgrade($u24b);
+
+format OUT24b =
+'^<<<<<<<<'~~
+$u24b
+.
+
+is_format_utf8(\*OUT24b,
+               "'NNNNNNNN '\n");
+
+tie my $u24c, 'UTF8Toggle';
+$u24c = "\x{FF}" x 8;
+
+format OUT24c =
+'^<<<<<<<<'~~
+$u24c
+.
+
+is_format_utf8(\*OUT24c,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+tie my $u24d, 'UTF8Toggle', 1;
+$u24d = "\x{FF}" x 8;
+
+format OUT24d =
+'^<<<<<<<<'~~
+$u24d
+.
+
+is_format_utf8(\*OUT24d,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+
+
+tie my $u24f, 'UTF8Toggle';
+$u24f = "N" x 8;
+
+format OUT24f =
+'^<'~~
+$u24f
+.
+
+is_format_utf8(\*OUT24f,
+               "'NN'\n"x4);
+
+
+tie my $u24g, 'UTF8Toggle';
+my $temp = "N" x 8;
+utf8::upgrade($temp);
+$u24g = $temp;
+
+format OUT24g =
+'^<'~~
+$u24g
+.
+
+is_format_utf8(\*OUT24g,
+               "'NN'\n"x4);
+
+tie my $u24h, 'UTF8Toggle';
+$u24h = "\x{FF}" x 8;
+
+format OUT24h =
+'^<'~~
+$u24h
+.
+
+is_format_utf8(\*OUT24h,
+               "'\x{FF}\x{FF}'\n"x4);
+
+tie my $u24i, 'UTF8Toggle', 1;
+$u24i = "\x{FF}" x 8;
+
+format OUT24i =
+'^<'~~
+$u24i
+.
+
+is_format_utf8(\*OUT24i,
+               "'\x{FF}\x{FF}'\n"x4);
+
+{
+    package OS;
+    use overload '""' => sub { ${$_[0]}; };
+
+    sub new {
+        my ($class, $value) = @_;
+        bless \$value, $class;
+    }
+}
+
+my $u25a = OS->new("N" x 8);
+
+format OUT25a =
+'^<<<<<<<<'~~
+$u25a
+.
+
+is_format_utf8(\*OUT25a,
+               "'NNNNNNNN '\n");
+
+
+my $temp = "N" x 8;
+utf8::upgrade($temp);
+my $u25b = OS->new($temp);
+
+format OUT25b =
+'^<<<<<<<<'~~
+$u25b
+.
+
+is_format_utf8(\*OUT25b,
+               "'NNNNNNNN '\n");
+
+my $u25c = OS->new("\x{FF}" x 8);
+
+format OUT25c =
+'^<<<<<<<<'~~
+$u25c
+.
+
+is_format_utf8(\*OUT25c,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+$temp = "\x{FF}" x 8;
+utf8::upgrade($temp);
+my $u25d = OS->new($temp);
+
+format OUT25d =
+'^<<<<<<<<'~~
+$u25d
+.
+
+is_format_utf8(\*OUT25d,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+my $u25e = OS->new("\x{100}" x 8);
+
+format OUT25e =
+'^<<<<<<<<'~~
+$u25e
+.
+
+is_format_utf8(\*OUT25e,
+               "'\x{100}\x{100}\x{100}\x{100}\x{100}\x{100}\x{100}\x{100} '\n");
+
+
+my $u25f = OS->new("N" x 8);
+
+format OUT25f =
+'^<'~~
+$u25f
+.
+
+is_format_utf8(\*OUT25f,
+               "'NN'\n"x4);
+
+
+$temp = "N" x 8;
+utf8::upgrade($temp);
+my $u25g = OS->new($temp);
+
+format OUT25g =
+'^<'~~
+$u25g
+.
+
+is_format_utf8(\*OUT25g,
+               "'NN'\n"x4);
+
+my $u25h = OS->new("\x{FF}" x 8);
+
+format OUT25h =
+'^<'~~
+$u25h
+.
+
+is_format_utf8(\*OUT25h,
+               "'\x{FF}\x{FF}'\n"x4);
+
+$temp = "\x{FF}" x 8;
+utf8::upgrade($temp);
+my $u25i = OS->new($temp);
+
+format OUT25i =
+'^<'~~
+$u25i
+.
+
+is_format_utf8(\*OUT25i,
+               "'\x{FF}\x{FF}'\n"x4);
+
+my $u25j = OS->new("\x{100}" x 8);
+
+format OUT25j =
+'^<'~~
+$u25j
+.
+
+is_format_utf8(\*OUT25j,
+               "'\x{100}\x{100}'\n"x4);
+
+{
+    package OS::UTF8Toggle;
+    use overload '""' => sub {
+        my $self = shift;
+        $self->[1] = ! $self->[1];
+        if ($self->[1]) {
+            utf8::downgrade($self->[0]);
+        } else {
+            utf8::upgrade($self->[0]);
+        }
+        $self->[0];
+    };
+
+    sub new {
+        my ($class, $value, $state) = @_;
+        bless [$value, $state], $class;
+    }
+}
+
+
+my $u26a = OS::UTF8Toggle->new("N" x 8);
+
+format OUT26a =
+'^<<<<<<<<'~~
+$u26a
+.
+
+is_format_utf8(\*OUT26a,
+               "'NNNNNNNN '\n");
+
+
+my $u26b = OS::UTF8Toggle->new("N" x 8, 1);
+
+format OUT26b =
+'^<<<<<<<<'~~
+$u26b
+.
+
+is_format_utf8(\*OUT26b,
+               "'NNNNNNNN '\n");
+
+my $u26c = OS::UTF8Toggle->new("\x{FF}" x 8);
+
+format OUT26c =
+'^<<<<<<<<'~~
+$u26c
+.
+
+is_format_utf8(\*OUT26c,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+my $u26d = OS::UTF8Toggle->new("\x{FF}" x 8, 1);
+
+format OUT26d =
+'^<<<<<<<<'~~
+$u26d
+.
+
+is_format_utf8(\*OUT26d,
+               "'\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF}\x{FF} '\n");
+
+
+my $u26f = OS::UTF8Toggle->new("N" x 8);
+
+format OUT26f =
+'^<'~~
+$u26f
+.
+
+is_format_utf8(\*OUT26f,
+               "'NN'\n"x4);
+
+
+my $u26g = OS::UTF8Toggle->new("N" x 8, 1);
+
+format OUT26g =
+'^<'~~
+$u26g
+.
+
+is_format_utf8(\*OUT26g,
+               "'NN'\n"x4);
+
+my $u26h = OS::UTF8Toggle->new("\x{FF}" x 8);
+
+format OUT26h =
+'^<'~~
+$u26h
+.
+
+is_format_utf8(\*OUT26h,
+               "'\x{FF}\x{FF}'\n"x4);
+
+my $u26i = OS::UTF8Toggle->new("\x{FF}" x 8, 1);
+
+format OUT26i =
+'^<'~~
+$u26i
+.
+
+is_format_utf8(\*OUT26i,
+               "'\x{FF}\x{FF}'\n"x4);
+
+
+
+{
+    my $zero = $$ - $$;
+
+    package Number;
+
+    sub TIESCALAR {
+        my $class = shift;
+        my $value = shift;
+        return bless \$value, $class;
+    }
+
+    # The return value should always be SvNOK() only:
+    sub FETCH {
+        my $self = shift;
+        # avoid "" getting converted to "0" and thus
+        # causing an infinite loop
+        return "" unless length ($$self);
+        return $$self - 0.5 + $zero + 0.5;
+    }
+
+   sub STORE {
+       my $self = shift;
+       $$self = shift;
+    }
+
+   package ONumber;
+
+   use overload '""' => sub {
+        my $self = shift;
+        return $$self - 0.5 + $zero + 0.5;
+    };
+
+    sub new {
+       my $class = shift;
+       my $value = shift;
+       return bless \$value, $class;
+   }
+}
+
+my $v27a = 1/256;
+
+format OUT27a =
+'^<<<<<<<<<'~~
+$v27a
+.
+
+is_format_utf8(\*OUT27a,
+               "'0.00390625'\n");
+
+my $v27b = 1/256;
+
+format OUT27b =
+'^<'~~
+$v27b
+.
+
+is_format_utf8(\*OUT27b,
+               "'0.'\n'00'\n'39'\n'06'\n'25'\n");
+
+tie my $v27c, 'Number', 1/256;
+
+format OUT27c =
+'^<<<<<<<<<'~~
+$v27c
+.
+
+is_format_utf8(\*OUT27c,
+               "'0.00390625'\n");
+
+my $v27d = 1/256;
+
+format OUT27d =
+'^<'~~
+$v27d
+.
+
+is_format_utf8(\*OUT27d,
+               "'0.'\n'00'\n'39'\n'06'\n'25'\n");
+
+my $v27e = ONumber->new(1/256);
+
+format OUT27e =
+'^<<<<<<<<<'~~
+$v27e
+.
+
+is_format_utf8(\*OUT27e,
+               "'0.00390625'\n");
+
+my $v27f = ONumber->new(1/256);
+
+format OUT27f =
+'^<'~~
+$v27f
+.
+
+is_format_utf8(\*OUT27f,
+               "'0.'\n'00'\n'39'\n'06'\n'25'\n");
+
+{
+    package Ref;
+    use overload '""' => sub {
+	return ${$_[0]};
+    };
+
+    sub new {
+       my $class = shift;
+       my $value = shift;
+       return bless \$value, $class;
+   }
+}
+
+my $v28a = {};
+
+format OUT28a =
+'^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'~~
+$v28a
+.
+
+
+# 'HASH(0x1716b60)     '
+my $qr_hash   = qr/^'HASH\(0x[0-9a-f]+\)\s+'\n$/;
+
+# 'HASH'
+# '(0x1'
+# '716b'
+# 'c0) '
+my $qr_hash_m = qr/^'HASH'\n('[0-9a-fx() ]{4}'\n)+$/;
+
+like_format_utf8(\*OUT28a, $qr_hash);
+
+my $v28b = {};
+
+format OUT28b =
+'^<<<'~~
+$v28b
+.
+
+like_format_utf8(\*OUT28b, $qr_hash_m);
+
+
+tie my $v28c, 'Tie::StdScalar';
+$v28c = {};
+
+format OUT28c =
+'^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'~~
+$v28c
+.
+
+like_format_utf8(\*OUT28c, $qr_hash);
+
+tie my $v28d, 'Tie::StdScalar';
+$v28d = {};
+
+format OUT28d =
+'^<<<'~~
+$v28d
+.
+
+like_format_utf8(\*OUT28d, $qr_hash_m);
+
+my $v28e = Ref->new({});
+
+format OUT28e =
+'^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'~~
+$v28e
+.
+
+like_format_utf8(\*OUT28e, $qr_hash);
+
+my $v28f = Ref->new({});
+
+format OUT28f =
+'^<<<'~~
+$v28f
+.
+
+like_format_utf8(\*OUT28f, $qr_hash_m);
+
+
+
 {
   package Count;
 
@@ -627,8 +1427,11 @@ $_
   # pp_formline attempts to set SvCUR() on an SVt_RV). I suspect that it will
   # be doing something similarly out of bounds on everything from 5.000
   my $ref = [];
-  is swrite('>^*<', $ref), ">$ref<";
-  is swrite('>@*<', $ref), ">$ref<";
+  my $exp = ">$ref<";
+  is swrite('>^*<', $ref), $exp;
+  $ref = [];
+  my $exp = ">$ref<";
+  is swrite('>@*<', $ref), $exp;
 }
 
 format EMPTY =
@@ -1090,6 +1893,25 @@ ${{qw[ Sun 0 Mon 1 Tue 2 Wed 3 Thu 4 Fri 5 Sat 6 ]}}{"Wed"}
 write HASH;
 close HASH or die "Could not close: $!";
 is cat('Op_write.tmp'), "3\n", 'anonymous hashes';
+
+open(HASH2, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+format HASH2 =
+@<<<
++{foo=>"bar"}
+.
+write HASH2;
+close HASH2 or die "Could not close: $!";
+is cat('Op_write.tmp'), "HASH\n", '+{...} is interpreted as anon hash';
+
+# Anonymous hashes
+open(BLOCK, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+format BLOCK =
+@<<< @<<<
+{foo=>"bar"} # this is a block, not a hash!
+.
+write BLOCK;
+close BLOCK or die "Could not close: $!";
+is cat('Op_write.tmp'), "foo  bar\n", 'initial { is always BLOCK';
 
 # pragmata inside argument line
 open(STRICT, '>Op_write.tmp') || die "Can't create Op_write.tmp";

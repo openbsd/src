@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 22;
+plan tests => 26;
 
 @x = (1, 2, 3);
 is( join(':',@x), '1:2:3', 'join an array with character');
@@ -62,6 +62,26 @@ is( $f, 'baeak', 'join back to self, self is join character');
 { my $s = join(chr(0xff), chr(0x1234), chr(0xfe));
   is( $s, "\x{1234}\x{ff}\x{fe}", 'high byte as separator, multi-byte and high byte list');
 }
+
+{ my $s = join('x', ());
+  is( $s, '', 'join should return empty string for empty list');
+}
+
+{ my $s = join('', ());
+  is( $s, '', 'join should return empty string for empty list and empty separator as well');
+}
+
+{ my $w;
+  local $SIG{__WARN__} = sub { $w = shift };
+  use warnings "uninitialized";
+  my $s = join(undef, ());
+  is( $s, '', 'join should return empty string for empty list, when separator is undef');
+  # this warning isn't normative, the implementation may choose to
+  # not evaluate the separator as a string if the list has fewer than
+  # two elements
+  like $w, qr/^Use of uninitialized value in join/, "should warn if separator is undef";
+}
+
 
 { # [perl #24846] $jb2 should be in bytes, not in utf8.
   my $b = "abc\304";

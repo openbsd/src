@@ -52,7 +52,7 @@ Test::More->builder->isnt_num(23, undef,  'isnt_num()');
 
 #line 45
 like( undef, qr/.*/,        'undef is like anything' );
-warnings_like(qr/Use of uninitialized value.* at $Filename line 45\.\n/);
+no_warnings;
 
 eq_array( [undef, undef], [undef, 23] );
 no_warnings;

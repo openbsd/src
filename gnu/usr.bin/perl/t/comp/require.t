@@ -16,13 +16,25 @@ sub do_require {
 # don't make this lexical
 $i = 1;
 
-my @fjles_to_delete = qw (bleah.pm bleah.do bleah.flg urkkk.pm urkkk.pmc
+my @files_to_delete = qw (bleah.pm bleah.do bleah.flg urkkk.pm urkkk.pmc
 krunch.pm krunch.pmc whap.pm whap.pmc);
+
+# there may be another copy of this test script running, or the files may
+# just not have been deleted at the end of the last run; if the former, we
+# wait a while so that creating and unlinking these files won't interfere
+# with the other process; if the latter, then the delay is harmless.  As
+# to why there might be multiple execution of this test file, I don't
+# know; but this is an experiment to see if random smoke failures go away.
+
+if (grep -e, @files_to_delete) {
+    print "# Sleeping for 20 secs waiting for other process to finish\n";
+    sleep 20;
+}
 
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 54;
+my $total_tests = 56;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -199,6 +211,15 @@ if($@ =~ /Can't locate threads in \@INC/) {
     print "not ok - RT #24404$i\n";
 }
 
+# require CORE::foo
+eval ' require CORE::lc "THREADS" ';
+$i++;
+if($@ =~ /Can't locate threads in \@INC/) {
+    print "ok $i - [perl #24482] require CORE::foo\n";
+} else {
+    print "not ok - [perl #24482] require CORE::foo\n";
+}
+
 
 write_file('bleah.pm', qq(die "This is an expected error";\n));
 delete $INC{"bleah.pm"}; ++$::i;
@@ -262,6 +283,21 @@ EOT
     } else {
 	print "not ok $pmc_dies - pmc_dies\n";
     }
+}
+
+
+{
+    # if we 'require "op"', since we're in the t/ directory and '.' is the
+    # first thing in @INC, it will try to load t/op/; it should fail and
+    # move onto the next path; however, the previous value of $! was
+    # leaking into implementation if it was EACCES and we're accessing a
+    # directory.
+
+    $! = eval 'use Errno qw(EACCES); EACCES' || 0;
+    eval q{require 'op'};
+    $i++;
+    print "not " if $@ =~ /Permission denied/;
+    print "ok $i - require op\n";
 }
 
 # Test "require func()" with abs path when there is no .pmc file.
@@ -330,7 +366,7 @@ foreach (sort keys %templates) {
 }
 
 END {
-    foreach my $file (@fjles_to_delete) {
+    foreach my $file (@files_to_delete) {
 	1 while unlink $file;
     }
 }

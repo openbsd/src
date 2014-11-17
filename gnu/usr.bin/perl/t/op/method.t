@@ -13,7 +13,7 @@ BEGIN {
 use strict;
 no warnings 'once';
 
-plan(tests => 142);
+plan(tests => 147);
 
 @A::ISA = 'B';
 @B::ISA = 'C';
@@ -511,10 +511,28 @@ is "3foo"->CORE::uc, '3FOO', '"3foo"->CORE::uc';
 { no strict; @{"3foo::ISA"} = "CORE"; }
 is "3foo"->uc, '3FOO', '"3foo"->uc (autobox style!)';
 
+# *foo vs (\*foo)
+sub myclass::squeak { 'eek' }
+eval { *myclass->squeak };
+like $@,
+     qr/^Can't call method "squeak" without a package or object reference/,
+    'method call on typeglob ignores package';
+eval { (\*myclass)->squeak };
+like $@,
+     qr/^Can't call method "squeak" on unblessed reference/,
+    'method call on \*typeglob';
+*stdout2 = *STDOUT;  # stdout2 now stringifies as *main::STDOUT
+sub IO::Handle::self { $_[0] }
+# This used to stringify the glob:
+is *stdout2->self, (\*stdout2)->self,
+  '*glob->method is equiv to (\*glob)->method';
+sub { $_[0] = *STDOUT; is $_[0]->self, \$::h{k}, '$pvlv_glob->method' }
+ ->($::h{k});
+
 # Test that PL_stashcache doesn't change the resolution behaviour for file
 # handles and package names.
 SKIP: {
-    skip_if_miniperl('file handles as methods requires loading IO::File', 25);
+    skip_if_miniperl('file handles as methods requires loading IO::File', 26);
     require Fcntl;
 
     foreach (qw (Count::DATA Count Colour::H1 Color::H1 C3::H1)) {
@@ -603,7 +621,7 @@ SKIP: {
 
     is(Colour::H1->getline(), <DATA>, 'read from a file');
     is(Color::H1->getline(), <DATA>,
-       'file handles take priority after typeglob assignment');
+       'file handles take priority after io-to-typeglob assignment');
 
     *Color::H1 = *CLOSED{IO};
     {
@@ -615,6 +633,11 @@ SKIP: {
     undef *Color::H1;
     is(Color::H1->getline(), 'method in Color::H1',
        'undefining the typeglob does change object resolution');
+
+    *Color::H1 = *Colour::H1;
+
+    is(Color::H1->getline(), <DATA>,
+       'file handles take priority after typeglob-to-typeglob assignment');
 
     seek Colour::H1, $fh_start, Fcntl::SEEK_SET() or die $!;
     seek DATA, $data_start, Fcntl::SEEK_SET() or die $!;

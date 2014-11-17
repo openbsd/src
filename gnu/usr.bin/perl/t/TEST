@@ -28,7 +28,6 @@ my %dir_to_switch =
 # any of these, to figure out how to remove them from this list, considered
 # "a good thing".
 my %abs = (
-	   '../cpan/Archive-Extract' => 1,
 	   '../cpan/Archive-Tar' => 1,
 	   '../cpan/AutoLoader' => 1,
 	   '../cpan/CPAN' => 1,
@@ -41,15 +40,12 @@ my %abs = (
 	   '../cpan/IPC-Cmd' => 1,
 	   '../cpan/IPC-SysV' => 1,
 	   '../cpan/Locale-Codes' => 1,
-	   '../cpan/Log-Message' => 1,
 	   '../cpan/Module-Build' => 1,
 	   '../cpan/Module-Load' => 1,
 	   '../cpan/Module-Load-Conditional' => 1,
-	   '../cpan/Object-Accessor' => 1,
 	   '../cpan/Package-Constants' => 1,
 	   '../cpan/Parse-CPAN-Meta' => 1,
 	   '../cpan/Pod-Simple' => 1,
-	   '../cpan/Term-UI' => 1,
 	   '../cpan/Test-Simple' => 1,
 	   '../cpan/podlators' => 1,
 	   '../dist/Cwd' => 1,
@@ -142,21 +138,6 @@ if (-f 'TEST' && -f 'harness' && -d '../lib') {
 
 die "You need to run \"make test\" first to set things up.\n"
   unless -e 'perl' or -e 'perl.exe' or -e 'perl.pm';
-
-if ($ENV{PERL_3LOG}) { # Tru64 third(1) tool, see perlhack
-    unless (-x 'perl.third') {
-	unless (-x '../perl.third') {
-	    die "You need to run \"make perl.third first.\n";
-	}
-	else {
-	    print "Symlinking ../perl.third as perl.third...\n";
-	    die "Failed to symlink: $!\n"
-		unless symlink("../perl.third", "perl.third");
-	    die "Symlinked but no executable perl.third: $!\n"
-		unless -x 'perl.third';
-	}
-    }
-}
 
 # check leakage for embedders
 $ENV{PERL_DESTRUCT_LEVEL} = 2 unless exists $ENV{PERL_DESTRUCT_LEVEL};
@@ -731,14 +712,6 @@ EOT
 	if ($type eq 'deparse') {
 	    unlink "./$test.dp";
 	}
-	if ($ENV{PERL_3LOG}) {
-	    my $tpp = $test;
-	    $tpp =~ s:^\.\./::;
-	    $tpp =~ s:/:_:g;
-	    $tpp =~ s:\.t$:.3log:;
-	    rename("perl.3log", $tpp) ||
-		die "rename: perl3.log to $tpp: $!\n";
-	}
 	if (not defined $failure and $next != $max) {
 	    $failure="FAILED--expected $max tests, saw $next";
 	}
@@ -752,8 +725,11 @@ EOT
 	if (defined $failure) {
 	    print "${te}$failure\n";
 	    $::bad_files = $::bad_files + 1;
-	    if ($test =~ /^base/) {
-		die "Failed a basic test ($test) -- cannot continue.\n";
+	    if ($test =~ /^base/ && ! defined &DynaLoader::boot_DynaLoader) {
+		# Die if running under minitest (no DynaLoader).  Otherwise
+		# keep going, as  we know that Perl basically works, or we
+		# would not have been able to actually compile it all the way.
+		die "Failed a basic test ($test) under minitest -- cannot continue.\n";
 	    }
 	    $failed_tests{$test} = 1;
 	}

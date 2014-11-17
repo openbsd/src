@@ -681,7 +681,8 @@ sub tab () {
 sub fileglob_to_re ($) {
     my $x = shift;
     $x =~ s#([./^\$()+])#\\$1#g;
-    $x =~ s#([?*])#.$1#g;
+    $x =~ s#\*#.*#g;
+    $x =~ s#\?#.#g;
     "^$x\\z";
 }
 

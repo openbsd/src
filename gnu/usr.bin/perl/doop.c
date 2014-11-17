@@ -15,8 +15,8 @@
  */
 
 /* This file contains some common functions needed to carry out certain
- * ops. For example both pp_schomp() and pp_chomp() - scalar and array
- * chomp operations - call the function do_chomp() found in this file.
+ * ops. For example, both pp_sprintf() and pp_prtf() call the function
+ * do_printf() found in this file.
  */
 
 #include "EXTERN.h"
@@ -331,7 +331,7 @@ S_do_trans_simple_utf8(pTHX_ SV * const sv)
 	const U8 * const e = s + len;
 	while (t < e) {
 	    const U8 ch = *t++;
-	    hibit = !NATIVE_IS_INVARIANT(ch);
+	    hibit = !NATIVE_BYTE_IS_INVARIANT(ch);
 	    if (hibit) {
 		s = bytes_to_utf8(s, &len);
 		break;
@@ -361,7 +361,7 @@ S_do_trans_simple_utf8(pTHX_ SV * const sv)
 	if (uv < none) {
 	    s += UTF8SKIP(s);
 	    matches++;
-	    d = uvuni_to_utf8(d, uv);
+	    d = uvchr_to_utf8(d, uv);
 	}
 	else if (uv == none) {
 	    const int i = UTF8SKIP(s);
@@ -372,7 +372,7 @@ S_do_trans_simple_utf8(pTHX_ SV * const sv)
 	else if (uv == extra) {
 	    s += UTF8SKIP(s);
 	    matches++;
-	    d = uvuni_to_utf8(d, final);
+	    d = uvchr_to_utf8(d, final);
 	}
 	else
 	    s += UTF8SKIP(s);
@@ -432,7 +432,7 @@ S_do_trans_count_utf8(pTHX_ SV * const sv)
 	const U8 * const e = s + len;
 	while (t < e) {
 	    const U8 ch = *t++;
-	    hibit = !NATIVE_IS_INVARIANT(ch);
+	    hibit = !NATIVE_BYTE_IS_INVARIANT(ch);
 	    if (hibit) {
 		start = s = bytes_to_utf8(s, &len);
 		break;
@@ -487,7 +487,7 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
 	const U8 * const e = s + len;
 	while (t < e) {
 	    const U8 ch = *t++;
-	    hibit = !NATIVE_IS_INVARIANT(ch);
+	    hibit = !NATIVE_BYTE_IS_INVARIANT(ch);
 	    if (hibit) {
 		s = bytes_to_utf8(s, &len);
 		break;
@@ -532,7 +532,7 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
 		matches++;
 		s += UTF8SKIP(s);
 		if (uv != puv) {
-		    d = uvuni_to_utf8(d, uv);
+		    d = uvchr_to_utf8(d, uv);
 		    puv = uv;
 		}
 		continue;
@@ -550,13 +550,13 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
 		if (havefinal) {
 		    s += UTF8SKIP(s);
 		    if (puv != final) {
-			d = uvuni_to_utf8(d, final);
+			d = uvchr_to_utf8(d, final);
 			puv = final;
 		    }
 		}
 		else {
 		    STRLEN len;
-		    uv = utf8n_to_uvuni(s, send - s, &len, UTF8_ALLOW_DEFAULT);
+		    uv = utf8n_to_uvchr(s, send - s, &len, UTF8_ALLOW_DEFAULT);
 		    if (uv != puv) {
 			Move(s, d, len, U8);
 			d += len;
@@ -585,7 +585,7 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
 	    if (uv < none) {
 		matches++;
 		s += UTF8SKIP(s);
-		d = uvuni_to_utf8(d, uv);
+		d = uvchr_to_utf8(d, uv);
 		continue;
 	    }
 	    else if (uv == none) {	/* "none" is unmapped character */
@@ -598,7 +598,7 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
 	    else if (uv == extra && !del) {
 		matches++;
 		s += UTF8SKIP(s);
-		d = uvuni_to_utf8(d, final);
+		d = uvchr_to_utf8(d, final);
 		continue;
 	    }
 	    matches++;			/* "none+1" is delete character */
@@ -632,7 +632,6 @@ Perl_do_trans(pTHX_ SV *sv)
     PERL_ARGS_ASSERT_DO_TRANS;
 
     if (SvREADONLY(sv) && !(PL_op->op_private & OPpTRANS_IDENTICAL)) {
-        if (!SvIsCOW(sv))
             Perl_croak_no_modify();
     }
     (void)SvPV_const(sv, len);
@@ -762,13 +761,14 @@ Perl_do_vecget(pTHX_ SV *sv, SSize_t offset, int size)
 {
     dVAR;
     STRLEN srclen, len, uoffset, bitoffs = 0;
-    const unsigned char *s = (const unsigned char *) SvPV_flags_const(sv, srclen,
-                             SV_GMAGIC | ((PL_op->op_flags & OPf_MOD || LVRET)
-                                          ? SV_UNDEF_RETURNS_NULL : 0));
+    const I32 svpv_flags = ((PL_op->op_flags & OPf_MOD || LVRET)
+                                          ? SV_UNDEF_RETURNS_NULL : 0);
+    unsigned char *s = (unsigned char *)
+                            SvPV_flags(sv, srclen, (svpv_flags|SV_GMAGIC));
     UV retnum = 0;
 
     if (!s) {
-      s = (const unsigned char *)"";
+      s = (unsigned char *)"";
     }
     
     PERL_ARGS_ASSERT_DO_VECGET;
@@ -778,8 +778,11 @@ Perl_do_vecget(pTHX_ SV *sv, SSize_t offset, int size)
     if (size < 1 || (size & (size-1))) /* size < 1 or not a power of two */
 	Perl_croak(aTHX_ "Illegal number of bits in vec");
 
-    if (SvUTF8(sv))
+    if (SvUTF8(sv)) {
 	(void) Perl_sv_utf8_downgrade(aTHX_ sv, TRUE);
+        /* PVX may have changed */
+        s = (unsigned char *) SvPV_flags(sv, srclen, svpv_flags);
+    }
 
     if (size < 8) {
 	bitoffs = ((offset%8)*size)%8;

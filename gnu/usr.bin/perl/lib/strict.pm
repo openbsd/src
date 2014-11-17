@@ -1,6 +1,6 @@
 package strict;
 
-$strict::VERSION = "1.07";
+$strict::VERSION = "1.08";
 
 # Verify that we're called correctly so that strictures will work.
 unless ( __FILE__ =~ /(^|[\/\\])\Q${\__PACKAGE__}\E\.pmc?$/ ) {
@@ -129,9 +129,9 @@ is a simple identifier (no colons) and that it appears in curly braces or
 on the left hand side of the C<< => >> symbol.
 
     use strict 'subs';
-    $SIG{PIPE} = Plumber;   	# blows up
-    $SIG{PIPE} = "Plumber"; 	# just fine: quoted string is always ok
-    $SIG{PIPE} = \&Plumber; 	# preferred form
+    $SIG{PIPE} = Plumber;   # blows up
+    $SIG{PIPE} = "Plumber"; # fine: quoted string is always ok
+    $SIG{PIPE} = \&Plumber; # preferred form
 
 =back
 

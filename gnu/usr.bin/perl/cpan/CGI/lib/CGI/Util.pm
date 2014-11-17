@@ -2,10 +2,11 @@ package CGI::Util;
 use base 'Exporter';
 require 5.008001;
 use strict;
+use if $] >= 5.019, 'deprecate';
 our @EXPORT_OK = qw(rearrange rearrange_header make_attributes unescape escape
         expires ebcdic2ascii ascii2ebcdic);
 
-our $VERSION = '3.62';
+our $VERSION = '3.64';
 
 use constant EBCDIC => "\t" ne "\011";
 
@@ -210,7 +211,7 @@ sub unescape {
 # Byte strings were traditionally used directly as a sequence of octets.
 # This worked if they actually represented binary data (i.e. in CGI::Compress).
 # This also worked if these byte strings were actually utf-8 encoded; e.g.,
-# when the source file used utf-8 without the apropriate "use utf8;".
+# when the source file used utf-8 without the appropriate "use utf8;".
 # This fails if the byte string is actually a Latin 1 encoded string, but it
 # was always so and cannot be fixed without breaking the binary data case.
 # -- Stepan Kasal <skasal@redhat.com>

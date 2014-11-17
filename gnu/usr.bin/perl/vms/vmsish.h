@@ -472,23 +472,12 @@ struct utimbuf {
 #define utime my_utime
 #endif
 
-/* This is what times() returns, but <times.h> calls it tbuffer_t on VMS
- * prior to v7.0.  We check the DECC manifest to see whether it's already
- * done this for us, relying on the fact that perl.h #includes <time.h>
- * before it #includes "vmsish.h".
+/* tbuffer_t was replaced with struct tms in v7.0.  We no longer support
+ * systems prior to v7.0, but there could be old XS code out there that
+ * references tbuffer_t, so provide a compatibility macro.
  */
 
-#ifndef __TMS
-  struct tms {
-    clock_t tms_utime;    /* user time */
-    clock_t tms_stime;    /* system time - always 0 on VMS */
-    clock_t tms_cutime;   /* user time, children */
-    clock_t tms_cstime;   /* system time, children - always 0 on VMS */
-  };
-#else
-   /* The new headers change the times() prototype to tms from tbuffer */
-#  define tbuffer_t struct tms
-#endif
+#define tbuffer_t struct tms
 
 /* Substitute our own routines for gmtime(), localtime(), and time(),
  * which allow us to implement the vmsish 'time' pragma, and work

@@ -36,7 +36,7 @@ use Pod::Simple ();
 
 @ISA = qw(Pod::Simple);
 
-$VERSION = '2.27';
+$VERSION = '2.28';
 
 # Set the debugging level.  If someone has inserted a debug function into this
 # class already, use that.  Otherwise, use any Pod::Simple debug function
@@ -56,6 +56,27 @@ BEGIN { *ASCII = \&Pod::Simple::ASCII }
 # Pretty-print a data structure.  Only used for debugging.
 BEGIN { *pretty = \&Pod::Simple::pretty }
 
+# Formatting instructions for various types of blocks.  cleanup makes hyphens
+# hard, adds spaces between consecutive underscores, and escapes backslashes.
+# convert translates characters into escapes.  guesswork means to apply the
+# transformations done by the guesswork sub.  literal says to protect literal
+# quotes from being turned into UTF-8 quotes.  By default, all transformations
+# are on except literal, but some elements override.
+#
+# DEFAULT specifies the default settings.  All other elements should list only
+# those settings that they are overriding.  Data indicates =for roff blocks,
+# which should be passed along completely verbatim.
+#
+# Formatting inherits negatively, in the sense that if the parent has turned
+# off guesswork, all child elements should leave it off.
+my %FORMATTING = (
+    DEFAULT  => { cleanup => 1, convert => 1, guesswork => 1, literal => 0 },
+    Data     => { cleanup => 0, convert => 0, guesswork => 0, literal => 0 },
+    Verbatim => {                             guesswork => 0, literal => 1 },
+    C        => {                             guesswork => 0, literal => 1 },
+    X        => { cleanup => 0,               guesswork => 0               },
+);
+
 ##############################################################################
 # Object initialization
 ##############################################################################
@@ -73,8 +94,8 @@ sub new {
     $self->nbsp_for_S (1);
 
     # Tell Pod::Simple to keep whitespace whenever possible.
-    if ($self->can ('preserve_whitespace')) {
-        $self->preserve_whitespace (1);
+    if (my $preserve_whitespace = $self->can ('preserve_whitespace')) {
+        $self->$preserve_whitespace (1);
     } else {
         $self->fullstop_space_harden (1);
     }
@@ -257,8 +278,7 @@ sub _handle_text {
 # Given an element name, get the corresponding method name.
 sub method_for_element {
     my ($self, $element) = @_;
-    $element =~ tr/-/_/;
-    $element =~ tr/A-Z/a-z/;
+    $element =~ tr/A-Z-/a-z_/;
     $element =~ tr/_a-z0-9//cd;
     return $element;
 }
@@ -284,13 +304,14 @@ sub _handle_element_start {
         # and also depends on our parent tags.  Thankfully, inside tags that
         # turn off guesswork and reformatting, nothing else can turn it back
         # on, so this can be strictly inherited.
-        my $formatting = $$self{PENDING}[-1][1];
-        $formatting = $self->formatting ($formatting, $element);
+        my $formatting = {
+            %{ $$self{PENDING}[-1][1] || $FORMATTING{DEFAULT} },
+            %{ $FORMATTING{$element} || {} },
+        };
         push (@{ $$self{PENDING} }, [ $attrs, $formatting, '' ]);
         DEBUG > 4 and print "Pending: [", pretty ($$self{PENDING}), "]\n";
-    } elsif ($self->can ("start_$method")) {
-        my $method = 'start_' . $method;
-        $self->$method ($attrs, '');
+    } elsif (my $start_method = $self->can ("start_$method")) {
+        $self->$start_method ($attrs, '');
     } else {
         DEBUG > 2 and print "No $method start method, skipping\n";
     }
@@ -306,13 +327,12 @@ sub _handle_element_end {
 
     # If we have a command handler, pull off the pending text and pass it to
     # the handler along with the saved attribute hash.
-    if ($self->can ("cmd_$method")) {
+    if (my $cmd_method = $self->can ("cmd_$method")) {
         DEBUG > 2 and print "</$element> stops saving a tag\n";
         my $tag = pop @{ $$self{PENDING} };
         DEBUG > 4 and print "Popped: [", pretty ($tag), "]\n";
         DEBUG > 4 and print "Pending: [", pretty ($$self{PENDING}), "]\n";
-        my $method = 'cmd_' . $method;
-        my $text = $self->$method ($$tag[0], $$tag[2]);
+        my $text = $self->$cmd_method ($$tag[0], $$tag[2]);
         if (defined $text) {
             if (@{ $$self{PENDING} } > 1) {
                 $$self{PENDING}[-1][2] .= $text;
@@ -320,9 +340,8 @@ sub _handle_element_end {
                 $self->output ($text);
             }
         }
-    } elsif ($self->can ("end_$method")) {
-        my $method = 'end_' . $method;
-        $self->$method ();
+    } elsif (my $end_method = $self->can ("end_$method")) {
+        $self->$end_method ();
     } else {
         DEBUG > 2 and print "No $method end method, skipping\n";
     }
@@ -331,34 +350,6 @@ sub _handle_element_end {
 ##############################################################################
 # General formatting
 ##############################################################################
-
-# Return formatting instructions for a new block.  Takes the current
-# formatting and the new element.  Formatting inherits negatively, in the
-# sense that if the parent has turned off guesswork, all child elements should
-# leave it off.  We therefore return a copy of the same formatting
-# instructions but possibly with more things turned off depending on the
-# element.
-sub formatting {
-    my ($self, $current, $element) = @_;
-    my %options;
-    if ($current) {
-        %options = %$current;
-    } else {
-        %options = (guesswork => 1, cleanup => 1, convert => 1);
-    }
-    if ($element eq 'Data') {
-        $options{guesswork} = 0;
-        $options{cleanup} = 0;
-        $options{convert} = 0;
-    } elsif ($element eq 'X') {
-        $options{guesswork} = 0;
-        $options{cleanup} = 0;
-    } elsif ($element eq 'Verbatim' || $element eq 'C') {
-        $options{guesswork} = 0;
-        $options{literal} = 1;
-    }
-    return \%options;
-}
 
 # Format a text block.  Takes a hash of formatting options and the text to
 # format.  Currently, the only formatting options are guesswork, cleanup, and
@@ -456,7 +447,7 @@ sub guesswork {
     local $_ = shift;
     DEBUG > 5 and print "   Guesswork called on [$_]\n";
 
-    # By the time we reach this point, all hypens will be escaped by adding a
+    # By the time we reach this point, all hyphens will be escaped by adding a
     # backslash.  We want to undo that escaping if they're part of regular
     # words and there's only a single dash, since that's a real hyphen that
     # *roff gets to consider a possible break point.  Make sure that a dash
@@ -512,7 +503,7 @@ sub guesswork {
     # strings inserted around things that we've made small-caps if later
     # transforms should work on those strings.
 
-    # Italize functions in the form func(), including functions that are in
+    # Italicize functions in the form func(), including functions that are in
     # all capitals, but don't italize if there's anything between the parens.
     # The function must start with an alphabetic character or underscore and
     # then consist of word characters or colons.
@@ -767,7 +758,6 @@ sub start_document {
     if ($$attrs{contentless} && !$$self{ALWAYS_EMIT_SOMETHING}) {
         DEBUG and print "Document is contentless\n";
         $$self{CONTENTLESS} = 1;
-        return;
     } else {
         delete $$self{CONTENTLESS};
     }
@@ -788,17 +778,20 @@ sub start_document {
         }
     }
 
-    # Determine information for the preamble and then output it.
-    my ($name, $section);
-    if (defined $$self{name}) {
-        $name = $$self{name};
-        $section = $$self{section} || 1;
-    } else {
-        ($name, $section) = $self->devise_title;
+    # Determine information for the preamble and then output it unless the
+    # document was content-free.
+    if (!$$self{CONTENTLESS}) {
+        my ($name, $section);
+        if (defined $$self{name}) {
+            $name = $$self{name};
+            $section = $$self{section} || 1;
+        } else {
+            ($name, $section) = $self->devise_title;
+        }
+        my $date = $$self{date} || $self->devise_date;
+        $self->preamble ($name, $section, $date)
+            unless $self->bare_output or DEBUG > 9;
     }
-    my $date = $$self{date} || $self->devise_date;
-    $self->preamble ($name, $section, $date)
-        unless $self->bare_output or DEBUG > 9;
 
     # Initialize a few per-document variables.
     $$self{INDENT}    = 0;      # Current indentation level.
@@ -864,9 +857,7 @@ sub devise_title {
                 $cut = $i + 1;
                 $cut++ if ($dirs[$i + 1] && $dirs[$i + 1] eq 'lib');
                 last;
-            } elsif ($dirs[$i] eq 'lib' && $dirs[$i + 1] && $dirs[0] eq 'ext') {
-                $cut = $i + 1;
-	    }
+            }
         }
         if ($cut > 0) {
             splice (@dirs, 0, $cut);
@@ -990,9 +981,12 @@ sub cmd_para {
         if defined ($line) && DEBUG && !$$self{IN_NAME};
 
     # Force exactly one newline at the end and strip unwanted trailing
-    # whitespace at the end, but leave "\ " backslashed space from an S< >
-    # at the end of a line.
-    $text =~ s/((?:\\ )*)\s*$/$1\n/;
+    # whitespace at the end, but leave "\ " backslashed space from an S< > at
+    # the end of a line.  Reverse the text first, to avoid having to scan the
+    # entire paragraph.
+    $text = reverse $text;
+    $text =~ s/\A\s*?(?= \\|\S|\z)/\n/;
+    $text = reverse $text;
 
     # Output the paragraph.
     $self->output ($self->protect ($self->textmapfonts ($text)));
@@ -1011,8 +1005,11 @@ sub cmd_verbatim {
     return unless $text =~ /\S/;
 
     # Force exactly one newline at the end and strip unwanted trailing
-    # whitespace at the end.
-    $text =~ s/\s*$/\n/;
+    # whitespace at the end.  Reverse the text first, to avoid having to scan
+    # the entire paragraph.
+    $text = reverse $text;
+    $text =~ s/\A\s*/\n/;
+    $text = reverse $text;
 
     # Get a count of the number of lines before the first blank line, which
     # we'll pass to .Vb as its parameter.  This tells *roff to keep that many
@@ -1356,6 +1353,26 @@ sub parse_file {
     return $self->SUPER::parse_file ($in);
 }
 
+# Do the same for parse_lines, just to be polite.  Pod::Simple's man page
+# implies that the caller is responsible for setting this, but I don't see any
+# reason not to set a default.
+sub parse_lines {
+    my ($self, @lines) = @_;
+    unless (defined $$self{output_fh}) {
+        $self->output_fh (\*STDOUT);
+    }
+    return $self->SUPER::parse_lines (@lines);
+}
+
+# Likewise for parse_string_document.
+sub parse_string_document {
+    my ($self, $doc) = @_;
+    unless (defined $$self{output_fh}) {
+        $self->output_fh (\*STDOUT);
+    }
+    return $self->SUPER::parse_string_document ($doc);
+}
+
 ##############################################################################
 # Translation tables
 ##############################################################################
@@ -1549,7 +1566,7 @@ __END__
 =for stopwords
 en em ALLCAPS teeny fixedbold fixeditalic fixedbolditalic stderr utf8
 UTF-8 Allbery Sean Burke Ossanna Solaris formatters troff uppercased
-Christiansen nourls
+Christiansen nourls parsers
 
 =head1 NAME
 
@@ -1623,7 +1640,7 @@ not to throw an exception.  C<pod> says to include a POD ERRORS section
 in the resulting documentation summarizing the errors.  C<none> ignores
 POD errors entirely, as much as possible.
 
-The default is C<output>.
+The default is C<pod>.
 
 =item date
 
@@ -1748,16 +1765,22 @@ L<perlpod(1)> for more information on the C<=encoding> command.
 
 The standard Pod::Simple method parse_file() takes one argument naming the
 POD file to read from.  By default, the output is sent to C<STDOUT>, but
-this can be changed with the output_fd() method.
+this can be changed with the output_fh() method.
 
 The standard Pod::Simple method parse_from_file() takes up to two
 arguments, the first being the input file to read POD from and the second
 being the file to write the formatted output to.
 
 You can also call parse_lines() to parse an array of lines or
-parse_string_document() to parse a document already in memory.  To put the
-output into a string instead of a file handle, call the output_string()
-method.  See L<Pod::Simple> for the specific details.
+parse_string_document() to parse a document already in memory.  As with
+parse_file(), parse_lines() and parse_string_document() default to sending
+their output to C<STDOUT> unless changed with the output_fh() method.
+
+To put the output from any parse method into a string instead of a file
+handle, call the output_string() method instead of output_fh().
+
+See L<Pod::Simple> for more specific details on the methods available to
+all derived parsers.
 
 =head1 DIAGNOSTICS
 

@@ -2,14 +2,14 @@
 
 BEGIN {
     if ($ENV{PERL_CORE}) {
-        chdir 't' if -d 't';
-        @INC = '../lib';
+	chdir 't' if -d 't';
+	@INC = '../lib';
     }
     if (!eval "require Socket") {
-        print "1..0 # no Socket\n"; exit 0;
+	print "1..0 # no Socket\n"; exit 0;
     }
     if (ord('A') == 193 && !eval "require Convert::EBCDIC") {
-        print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
+	print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
     }
     $INC{'IO/Socket.pm'} = 1;
     $INC{'IO/Select.pm'} = 1;
@@ -50,84 +50,84 @@ is( Net::Time::inet_daytime('bob'), 'z', 'inet_daytime() should receive data' );
 
 # magic numbers defined in Net::Time
 my $offset = $^O eq 'MacOS' ?
-        (4 * 31536000) : (70 * 31536000 + 17 * 86400);
+	(4 * 31536000) : (70 * 31536000 + 17 * 86400);
 
 # check for correct args (time, 13)
 # pretend it is only six seconds since the offset, create a fake message
 # inet_time
 IO::Socket::INET::set_message(pack("N", $offset + 6));
 is( Net::Time::inet_time('foo'), 6, 
-        'inet_time() should calculate time since offset for time()' );
+	'inet_time() should calculate time since offset for time()' );
 
 
 my %fail;
 
 sub make_fail {
-        my ($pack, $func, $num) = @_;
-        $num = 1 unless defined $num;
+	my ($pack, $func, $num) = @_;
+	$num = 1 unless defined $num;
 
-        $fail{$pack}{$func} = $num;
+	$fail{$pack}{$func} = $num;
 }
 
 package IO::Socket::INET;
 
 $fail{'IO::Socket::INET'} = {
-        new     => 0,
-        'send'  => 0,
+	new		=> 0,
+	'send'	=> 0,
 };
 
 sub new {
-        my $class = shift;
-        return if $fail{$class}{new} and $fail{$class}{new}--;
-        bless( { @_ }, $class );
+	my $class = shift;
+	return if $fail{$class}{new} and $fail{$class}{new}--;
+	bless( { @_ }, $class );
 }
 
 sub send {
-        my $self = shift;
-        my $class = ref($self);
-        return if $fail{$class}{'send'} and $fail{$class}{'send'}--;
-        $self->{sent} .= shift;
+	my $self = shift;
+	my $class = ref($self);
+	return if $fail{$class}{'send'} and $fail{$class}{'send'}--;
+	$self->{sent} .= shift;
 }
 
 my $msg;
 sub set_message {
-        if (ref($_[0])) {
-                $_[0]->{msg} = $_[1];
-        } else {
-                $msg = shift;
-        }
+	if (ref($_[0])) {
+		$_[0]->{msg} = $_[1];
+	} else {
+		$msg = shift;
+	}
 }
 
 sub do_recv  {
-        my ($len, $msg) = @_[1,2];
-        $_[0] .= substr($msg, 0, $len);
+	my ($len, $msg) = @_[1,2];
+	$_[0] .= substr($msg, 0, $len);
 }
 
 sub recv {
-        my ($self, $buf, $length, $flags) = @_;
-        my $message = exists $self->{msg} ?
-                $self->{msg} : $msg;
+	my ($self, $buf, $length, $flags) = @_;
+	my $message = exists $self->{msg} ?
+		$self->{msg} : $msg;
 
-        if (defined($message)) {
-                do_recv($_[1], $length, $message);
-        }
-        1;
+	if (defined($message)) {
+		do_recv($_[1], $length, $message);
+	}
+	1;
 }
 
 package IO::Select;
 
 sub new {
-        my $class = shift;
-        return if defined $fail{$class}{new} and $fail{$class}{new}--;
-        bless({sock => shift}, $class);
+	my $class = shift;
+	return if defined $fail{$class}{new} and $fail{$class}{new}--;
+	bless({sock => shift}, $class);
 }
 
 sub can_read {
-        my ($self, $timeout) = @_;
-        my $class = ref($self);
-        return if defined $fail{$class}{can_read} and $fail{class}{can_read}--;
-        $self->{sock}{timeout} = $timeout;
-        1;
+	my ($self, $timeout) = @_;
+	my $class = ref($self);
+	return if defined $fail{$class}{can_read} and $fail{class}{can_read}--;
+	$self->{sock}{timeout} = $timeout;
+	1;
 }
 
 1;

@@ -10,7 +10,7 @@
 package Data::Dumper;
 
 BEGIN {
-    $VERSION = '2.145'; # Don't forget to set version and release
+    $VERSION = '2.151'; # Don't forget to set version and release
 }               # date in POD below!
 
 #$| = 1;
@@ -56,7 +56,6 @@ $Useperl    = 0         unless defined $Useperl;
 $Sortkeys   = 0         unless defined $Sortkeys;
 $Deparse    = 0         unless defined $Deparse;
 $Sparseseen = 0         unless defined $Sparseseen;
-$Maxrecurse = 1000      unless defined $Maxrecurse;
 
 #
 # expects an arrayref of values to be dumped.
@@ -88,12 +87,11 @@ sub new {
         terse      => $Terse,      # avoid name output (where feasible)
         freezer    => $Freezer,    # name of Freezer method for objects
         toaster    => $Toaster,    # name of method to revive objects
-        deepcopy   => $Deepcopy,   # dont cross-ref, except to stop recursion
+        deepcopy   => $Deepcopy,   # do not cross-ref, except to stop recursion
         quotekeys  => $Quotekeys,  # quote hash keys
         'bless'    => $Bless,    # keyword to use for "bless"
 #        expdepth   => $Expdepth,   # cutoff depth for explicit dumping
         maxdepth   => $Maxdepth,   # depth beyond which we give up
-	maxrecurse => $Maxrecurse, # depth beyond which we abort
         useperl    => $Useperl,    # use the pure Perl implementation
         sortkeys   => $Sortkeys,   # flag or filter for sorting hash keys
         deparse    => $Deparse,    # use B::Deparse for coderefs
@@ -223,7 +221,6 @@ sub DESTROY {}
 sub Dump {
     return &Dumpxs
     unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl}) ||
-           $Data::Dumper::Useqq   || (ref($_[0]) && $_[0]->{useqq}) ||
            $Data::Dumper::Deparse || (ref($_[0]) && $_[0]->{deparse});
     return &Dumpperl;
 }
@@ -302,7 +299,7 @@ sub _dump {
     $id = format_refaddr($val);
 
     # Note: By this point $name is always defined and of non-zero length.
-    # Keep a tab on it so that we dont fall into recursive pit.
+    # Keep a tab on it so that we do not fall into recursive pit.
     if (exists $s->{seen}{$id}) {
       if ($s->{purity} and $s->{level} > 0) {
         $out = ($realtype eq 'HASH')  ? '{}' :
@@ -353,12 +350,6 @@ sub _dump {
       return qq['$val'];
     }
 
-    # avoid recursing infinitely [perl #122111]
-    if ($s->{maxrecurse} > 0
-        and $s->{level} >= $s->{maxrecurse}) {
-        die "Recursion limit of $s->{maxrecurse} exceeded";
-    }
-
     # we have a blessed ref
     my ($blesspad);
     if ($realpack and !$no_bless) {
@@ -372,25 +363,15 @@ sub _dump {
 
     if ($is_regex) {
         my $pat;
-        # This really sucks, re:regexp_pattern is in ext/re/re.xs and not in
-        # universal.c, and even worse we cant just require that re to be loaded
-        # we *have* to use() it.
-        # We should probably move it to universal.c for 5.10.1 and fix this.
-        # Currently we only use re::regexp_pattern when the re is blessed into another
-        # package. This has the disadvantage of meaning that a DD dump won't round trip
-        # as the pattern will be repeatedly wrapped with the same modifiers.
-        # This is an aesthetic issue so we will leave it for now, but we could use
-        # regexp_pattern() in list context to get the modifiers separately.
-        # But since this means loading the full debugging engine in process we wont
-        # bother unless its necessary for accuracy.
-        if (($realpack ne 'Regexp') && defined(*re::regexp_pattern{CODE})) {
-          $pat = re::regexp_pattern($val);
+        my $flags = "";
+        if (defined(*re::regexp_pattern{CODE})) {
+          ($pat, $flags) = re::regexp_pattern($val);
         }
         else {
           $pat = "$val";
         }
         $pat =~ s <(\\.)|/> { $1 || '\\/' }ge;
-        $out .= "qr/$pat/";
+        $out .= "qr/$pat/$flags";
     }
     elsif ($realtype eq 'SCALAR' || $realtype eq 'REF'
     || $realtype eq 'VSTRING') {
@@ -459,8 +440,15 @@ sub _dump {
          () )
       {
         my $nk = $s->_dump($k, "");
-        $nk = $1
-          if !$s->{quotekeys} and $nk =~ /^[\"\']([A-Za-z_]\w*)[\"\']$/;
+
+        # _dump doesn't quote numbers of this form
+        if ($s->{quotekeys} && $nk =~ /^(?:0|-?[1-9][0-9]{0,8})\z/) {
+          $nk = $s->{useqq} ? qq("$nk") : qq('$nk');
+        }
+        elsif (!$s->{quotekeys} and $nk =~ /^[\"\']([A-Za-z_]\w*)[\"\']$/) {
+          $nk = $1
+        }
+
         $sname = $mname . '{' . $nk . '}';
         $out .= $pad . $ipad . $nk . $pair;
 
@@ -565,7 +553,8 @@ sub _dump {
        and ref $ref eq 'VSTRING' || eval{Scalar::Util::isvstring($val)}) {
       $out .= sprintf "%vd", $val;
     }
-    elsif ($val =~ /^(?:0|-?[1-9]\d{0,8})\z/) { # safe decimal number
+    # \d here would treat "1\x{660}" as a safe decimal number
+    elsif ($val =~ /^(?:0|-?[1-9][0-9]{0,8})\z/) { # safe decimal number
       $out .= $val;
     }
     else {                 # string
@@ -691,11 +680,6 @@ sub Maxdepth {
   defined($v) ? (($s->{'maxdepth'} = $v), return $s) : $s->{'maxdepth'};
 }
 
-sub Maxrecurse {
-  my($s, $v) = @_;
-  defined($v) ? (($s->{'maxrecurse'} = $v), return $s) : $s->{'maxrecurse'};
-}
-
 sub Useperl {
   my($s, $v) = @_;
   defined($v) ? (($s->{'useperl'} = $v), return $s) : $s->{'useperl'};
@@ -732,7 +716,7 @@ sub qquote {
   local($_) = shift;
   s/([\\\"\@\$])/\\$1/g;
   my $bytes; { use bytes; $bytes = length }
-  s/([^\x00-\x7f])/'\x{'.sprintf("%x",ord($1)).'}'/ge if $bytes > length;
+  s/([[:^ascii:]])/'\x{'.sprintf("%x",ord($1)).'}'/ge if $bytes > length;
   return qq("$_") unless
     /[^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~]/;  # fast exit
 
@@ -940,9 +924,9 @@ called with any other type of argument, dies.
 Queries or replaces the internal array of user supplied names for the values
 that will be dumped.  When called without arguments, returns the names.  When
 called with an array of replacement names, returns the object itself.  If the
-number of replacment names exceeds the number of values to be named, the
+number of replacement names exceeds the number of values to be named, the
 excess names will not be used.  If the number of replacement names falls short
-of the number of values to be named, the list of replacment names will be
+of the number of values to be named, the list of replacement names will be
 exhausted and remaining values will not be renamed.  When
 called with any other type of argument, dies.
 
@@ -1118,16 +1102,6 @@ we don't venture into a structure.  Has no effect when
 C<Data::Dumper::Purity> is set.  (Useful in debugger when we often don't
 want to see more than enough).  Default is 0, which means there is
 no maximum depth.
-
-=item *
-
-$Data::Dumper::Maxrecurse  I<or>  $I<OBJ>->Maxrecurse(I<[NEWVAL]>)
-
-Can be set to a positive integer that specifies the depth beyond which
-recursion into a structure will throw an exception.  This is intended
-as a security measure to prevent perl running out of stack space when
-dumping an excessively deep structure.  Can be set to 0 to remove the
-limit.  Default is 1000.
 
 =item *
 
@@ -1418,13 +1392,13 @@ be to use the C<Sortkeys> filter of Data::Dumper.
 
 Gurusamy Sarathy        gsar@activestate.com
 
-Copyright (c) 1996-98 Gurusamy Sarathy. All rights reserved.
+Copyright (c) 1996-2014 Gurusamy Sarathy. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.145  (March 15 2013))
+Version 2.151  (March 7 2014)
 
 =head1 SEE ALSO
 

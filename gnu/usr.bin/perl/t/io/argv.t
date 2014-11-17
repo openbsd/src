@@ -7,7 +7,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan(tests => 23);
+plan(tests => 24);
 
 my ($devnull, $no_devnull);
 
@@ -146,6 +146,16 @@ while (<>) {
 close IN;
 unlink "Io_argv3.tmp";
 **PROG**
+
+# This used to fail an assertion.
+# The tricks with *x and $x are to make PL_argvgv point to a freed SV when
+# the readline op does SvREFCNT_inc on it.  undef *x clears the scalar slot
+# ++$x vivifies it, reusing the just-deleted GV that PL_argvgv still points
+# to.  The BEGIN block ensures it is freed late enough that nothing else
+# has reused it yet.
+is runperl(prog => 'undef *x; delete $::{ARGV}; $x++;'
+                  .'eval q-BEGIN{undef *x} readline-; print qq-ok\n-'),
+  "ok\n", 'deleting $::{ARGV}';
 
 END {
     unlink_all 'Io_argv1.tmp', 'Io_argv1.tmp_bak',

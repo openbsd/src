@@ -17,7 +17,7 @@ use IO::Select;
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(inet_time inet_daytime);
 
-$VERSION = "2.11";
+$VERSION = "2.10";
 
 $TIMEOUT = 120;
 
@@ -107,11 +107,11 @@ Net::Time - time and daytime network client interface
 
     use Net::Time qw(inet_time inet_daytime);
 
-    print inet_time();          # use default host from Net::Config
+    print inet_time();		# use default host from Net::Config
     print inet_time('localhost');
     print inet_time('localhost', 'tcp');
 
-    print inet_daytime();       # use default host from Net::Config
+    print inet_daytime();	# use default host from Net::Config
     print inet_daytime('localhost');
     print inet_daytime('localhost', 'tcp');
 

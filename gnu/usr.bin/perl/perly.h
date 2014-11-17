@@ -5,11 +5,11 @@
  */
 
 #ifdef PERL_CORE
-/* A Bison parser, made by GNU Bison 2.6.1.  */
+/* A Bison parser, made by GNU Bison 2.5.  */
 
 /* Bison interface for Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,13 +37,6 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -125,12 +118,13 @@ extern int yydebug;
      REFGEN = 329,
      UMINUS = 330,
      POWOP = 331,
-     POSTDEC = 332,
-     POSTINC = 333,
-     PREDEC = 334,
-     PREINC = 335,
-     ARROW = 336,
-     PEG = 337
+     POSTJOIN = 332,
+     POSTDEC = 333,
+     POSTINC = 334,
+     PREDEC = 335,
+     PREINC = 336,
+     ARROW = 337,
+     PEG = 338
    };
 #endif
 
@@ -209,12 +203,14 @@ extern int yydebug;
 #define REFGEN 329
 #define UMINUS 330
 #define POWOP 331
-#define POSTDEC 332
-#define POSTINC 333
-#define PREDEC 334
-#define PREINC 335
-#define ARROW 336
-#define PEG 337
+#define POSTJOIN 332
+#define POSTDEC 333
+#define POSTINC 334
+#define PREDEC 335
+#define PREINC 336
+#define ARROW 337
+#define PEG 338
+
 
 
 #ifdef PERL_IN_TOKE_C
@@ -243,7 +239,8 @@ S_is_opval_token(int type) {
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
 {
-/* Line 2049 of yacc.c  */
+
+/* Line 2068 of yacc.c  */
 
     I32	ival; /* __DEFAULT__ (marker for regen_perly.pl;
 				must always be 1st union member) */
@@ -262,7 +259,8 @@ typedef union YYSTYPE
 #endif
 
 
-/* Line 2049 of yacc.c  */
+
+/* Line 2068 of yacc.c  */
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -270,22 +268,10 @@ typedef union YYSTYPE
 #endif
 
 
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void *YYPARSE_PARAM);
-#else
-int yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void);
-#else
-int yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
+
 
 
 /* Generated from:
- * 28c2c7738eefc00762e227af0363c729186c992e9127e0c935684cccbf3a3b4f perly.y
+ * bb8245a1a537b2afb2445b3973f63b210f9ec346a1955071aef7d05ba97196ae perly.y
  * 5c9d2a0262457fe9b70073fc8ad6c188f812f38ad57712b7e2f53daa01b297cc regen_perly.pl
  * ex: set ro: */

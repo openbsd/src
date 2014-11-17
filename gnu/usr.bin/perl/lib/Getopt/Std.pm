@@ -4,42 +4,51 @@ require Exporter;
 
 =head1 NAME
 
-Getopt::Std, getopt, getopts - Process single-character switches with switch clustering
+getopt, getopts - Process single-character switches with switch clustering
 
 =head1 SYNOPSIS
 
     use Getopt::Std;
 
-    getopt('oDI');    # -o, -D & -I take arg.  Sets $opt_* as a side effect.
-    getopt('oDI', \%opts);    # -o, -D & -I take arg.  Values in %opts
     getopts('oif:');  # -o & -i are boolean flags, -f takes an argument
 		      # Sets $opt_* as a side effect.
     getopts('oif:', \%opts);  # options as above. Values in %opts
+    getopt('oDI');    # -o, -D & -I take arg.
+                      # Sets $opt_* as a side effect.
+    getopt('oDI', \%opts);    # -o, -D & -I take arg.  Values in %opts
 
 =head1 DESCRIPTION
 
-The getopt() function processes single-character switches with switch
-clustering.  Pass one argument which is a string containing all switches
-that take an argument.  For each switch found, sets $opt_x (where x is the
-switch name) to the value of the argument if an argument is expected,
-or 1 otherwise.  Switches which take an argument don't care whether
-there is a space between the switch and the argument.
+The C<getopts()> function processes single-character switches with switch
+clustering.  Pass one argument which is a string containing all switches to be
+recognized.  For each switch found, if an argument is expected and provided,
+C<getopts()> sets C<$opt_x> (where C<x> is the switch name) to the value of
+the argument.  If an argument is expected but none is provided, C<$opt_x> is
+set to an undefined value.  If a switch does not take an argument, C<$opt_x>
+is set to C<1>.
 
-The getopts() function is similar, but you should pass to it the list of all
-switches to be recognized.  If unspecified switches are found on the
+Switches which take an argument don't care whether there is a space between
+the switch and the argument.  If unspecified switches are found on the
 command-line, the user will be warned that an unknown option was given.
-The getopts() function returns true unless an invalid option was found.
+
+The C<getopts()> function returns true unless an invalid option was found.
+
+The C<getopt()> function is similar, but its argument is a string containing
+all switches that take an argument.  If no argument is provided for a switch,
+say, C<y>, the corresponding C<$opt_y> will be set to an undefined value.
+Unspecified switches are silently accepted.  B<Use of C<getopts()> is not
+recommended.>
 
 Note that, if your code is running under the recommended C<use strict
-'vars'> pragma, you will need to declare these package variables
-with "our":
+vars> pragma, you will need to declare these package variables
+with C<our>:
 
     our($opt_x, $opt_y);
 
-For those of you who don't like additional global variables being created, getopt()
-and getopts() will also accept a hash reference as an optional second argument. 
-Hash keys will be x (where x is the switch name) with key values the value of
-the argument or 1 if no argument is specified.
+For those of you who don't like additional global variables being created,
+C<getopt()> and C<getopts()> will also accept a hash reference as an optional
+second argument.  Hash keys will be C<x> (where C<x> is the switch name) with
+key values the value of the argument or C<1> if no argument is specified.
 
 To allow programs to process arguments that look like switches, but aren't,
 both functions will stop processing switches when they see the argument
@@ -72,7 +81,7 @@ and version_mess() with the switches string as an argument.
 
 @ISA = qw(Exporter);
 @EXPORT = qw(getopt getopts);
-$VERSION = '1.07';
+$VERSION = '1.10';
 # uncomment the next line to disable 1.03-backward compatibility paranoia
 # $STANDARD_HELP_VERSION = 1;
 

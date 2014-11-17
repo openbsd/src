@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::FAQ;
 
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 1;
 __END__
@@ -184,9 +184,12 @@ Its primary advantages are:
 
 =back
 
-Module::Build is the official heir apparent to MakeMaker and we
-encourage people to work on M::B rather than spending time adding features
-to MakeMaker.
+Module::Build was long the official heir apparent to MakeMaker.  The rate of
+both its development and adoption has slowed in recent years, though, and it is
+unclear what the future holds for it.  That said, Module::Build set the stage
+for I<something> to become the heir to MakeMaker.  MakeMaker's maintainers have
+long said that it is a dead end and should be kept functioning, but not
+extended with new features.  It's complicated enough as it is!
 
 =back
 
@@ -261,9 +264,9 @@ to delete the files.  But you have to be careful.  Here's a script to
 do that.  Use at your own risk.  Have fun blowing holes in your foot.
 
     #!/usr/bin/perl -w
-    
+
     use strict;
-    
+
     use File::Spec;
     use File::Find;
     use ExtUtils::Manifest qw(maniread);
@@ -295,7 +298,7 @@ do that.  Use at your own risk.  Have fun blowing holes in your foot.
 
 =item Which tar should I use on Windows?
 
-We recommend ptar from Archive::Tar not older than 1.66 with '-C' option. 
+We recommend ptar from Archive::Tar not older than 1.66 with '-C' option.
 
 =item Which zip should I use on Windows for '[nd]make zipdist'?
 

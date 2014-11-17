@@ -1,12 +1,6 @@
 ################################################################################
 ##
-##  $Revision: 8 $
-##  $Author: mhx $
-##  $Date: 2010/03/07 13:15:47 +0100 $
-##
-################################################################################
-##
-##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -268,13 +262,15 @@ UVTYPE
 #      endif
 #    endif
 #  endif
-   __UNDEFINED__ IVSIZE 8
-   __UNDEFINED__ PERL_QUAD_MIN  IV_MIN
-   __UNDEFINED__ PERL_QUAD_MAX  IV_MAX
-   __UNDEFINED__ PERL_UQUAD_MIN UV_MIN
-   __UNDEFINED__ PERL_UQUAD_MAX UV_MAX
+  __UNDEFINED__ IVSIZE 8
+  __UNDEFINED__ LONGSIZE 8
+  __UNDEFINED__ PERL_QUAD_MIN  IV_MIN
+  __UNDEFINED__ PERL_QUAD_MAX  IV_MAX
+  __UNDEFINED__ PERL_UQUAD_MIN UV_MIN
+  __UNDEFINED__ PERL_UQUAD_MAX UV_MAX
 #else
   __UNDEFINED__ IVTYPE long
+  __UNDEFINED__ LONGSIZE 4
   __UNDEFINED__ IV_MIN PERL_LONG_MIN
   __UNDEFINED__ IV_MAX PERL_LONG_MAX
   __UNDEFINED__ UV_MIN PERL_ULONG_MIN
@@ -296,31 +292,31 @@ __UNDEFINED__ UVSIZE IVSIZE
 
 IV
 iv_size()
-	CODE:
-		RETVAL = IVSIZE == sizeof(IV);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = IVSIZE == sizeof(IV);
+        OUTPUT:
+                RETVAL
 
 IV
 uv_size()
-	CODE:
-		RETVAL = UVSIZE == sizeof(UV);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = UVSIZE == sizeof(UV);
+        OUTPUT:
+                RETVAL
 
 IV
 iv_type()
-	CODE:
-		RETVAL = sizeof(IVTYPE) == sizeof(IV);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = sizeof(IVTYPE) == sizeof(IV);
+        OUTPUT:
+                RETVAL
 
 IV
 uv_type()
-	CODE:
-		RETVAL = sizeof(UVTYPE) == sizeof(UV);
-	OUTPUT:
-		RETVAL
+        CODE:
+                RETVAL = sizeof(UVTYPE) == sizeof(UV);
+        OUTPUT:
+                RETVAL
 
 =tests plan => 4
 
@@ -328,4 +324,3 @@ ok(&Devel::PPPort::iv_size());
 ok(&Devel::PPPort::uv_size());
 ok(&Devel::PPPort::iv_type());
 ok(&Devel::PPPort::uv_type());
-

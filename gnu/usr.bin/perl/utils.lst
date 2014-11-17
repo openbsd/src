@@ -1,4 +1,3 @@
-cpan/Pod-LaTeX/blib/script/pod2latex
 cpan/podlators/blib/script/pod2man
 cpan/podlators/blib/script/pod2text
 cpan/Pod-Usage/blib/script/pod2usage
@@ -12,19 +11,22 @@ utils/enc2xs
 utils/h2ph
 utils/h2xs
 utils/instmodsh
+utils/json_pp
 utils/libnetcfg
-utils/perlbug
+utils/perlbug	# link = utils/perlthanks
 utils/perldoc
 utils/perlivp
 utils/piconv
 utils/pl2pm
 utils/pod2html
 utils/prove
-utils/cpanp-run-perl
-utils/cpanp
-utils/cpan2dist
+utils/ptar
+utils/ptardiff
+utils/ptargrep
+utils/shasum
 utils/splain
 utils/xsubpp
+utils/zipdetails
 x2p/a2p
 x2p/find2perl
 x2p/s2p         # link = x2p/psed

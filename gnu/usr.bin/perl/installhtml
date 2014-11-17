@@ -15,10 +15,10 @@ installhtml - converts a collection of POD pages to HTML format.
 
 =head1 SYNOPSIS
 
-    installhtml  [--help] [--podpath=<name>:...:<name>] [--podroot=<name>]
-         [--htmldir=<name>] [--htmlroot=<name>]  [--norecurse] [--recurse]
-         [--splithead=<name>,...,<name>]   [--splititem=<name>,...,<name>]
-         [--ignore=<name>,...,<name>]  [--verbose]
+  installhtml  [--help] [--podpath=<name>:...:<name>] [--podroot=<name>]
+       [--htmldir=<name>] [--htmlroot=<name>]  [--norecurse] [--recurse]
+       [--splithead=<name>,...,<name>]   [--splititem=<name>,...,<name>]
+       [--ignore=<name>,...,<name>]  [--verbose]
 
 =head1 DESCRIPTION
 

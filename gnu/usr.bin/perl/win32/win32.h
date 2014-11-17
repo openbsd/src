@@ -13,6 +13,7 @@
 #  define _WIN32_WINNT 0x0500     /* needed for CreateHardlink() etc. */
 #endif
 
+/* Win32 only optimizations for faster building */
 #ifdef PERL_IS_MINIPERL
 /* this macro will remove Winsock only on miniperl, PERL_IMPLICIT_SYS and
  * makedef.pl create dependencies that will keep Winsock linked in even with
@@ -20,6 +21,8 @@
  * level in full perl
  */
 #  define WIN32_NO_SOCKETS
+/* less I/O calls during each require */
+#  define PERL_DISABLE_PMC
 #endif
 
 #ifdef WIN32_NO_SOCKETS
@@ -242,13 +245,23 @@ typedef unsigned short	mode_t;
 
 #pragma  warning(disable: 4102)	/* "unreferenced label" */
 
-#define isnan		_isnan
+#if _MSC_VER < 1800
+#define isnan		_isnan	/* Defined already in VC++ 12.0 */
+#endif
+#ifdef UNDER_CE /* revisit what function this becomes celib vs corelibc, prv warning here*/
+#  undef snprintf
+#endif
 #define snprintf	_snprintf
 #define vsnprintf	_vsnprintf
 
-#if _MSC_VER < 1300
+#ifdef USING_MSVC6
 /* VC6 has broken NaN semantics: NaN == NaN returns true instead of false */
 #define NAN_COMPARE_BROKEN 1
+#endif
+
+/* on VC2003, msvcrt.lib is missing these symbols */
+#if _MSC_VER >= 1300 && _MSC_VER < 1400
+#  pragma intrinsic(_rotl64,_rotr64)
 #endif
 
 #endif /* _MSC_VER */
@@ -312,7 +325,6 @@ extern  gid_t	getegid(void);
 extern  int	setuid(uid_t uid);
 extern  int	setgid(gid_t gid);
 extern  int	kill(int pid, int sig);
-extern  int	killpg(int pid, int sig);
 #ifndef USE_PERL_SBRK
 extern  void	*sbrk(ptrdiff_t need);
 #  define HAS_SBRK_PROTO
@@ -368,6 +380,8 @@ extern char *		win32_get_vendorlib(const char *pl, STRLEN *const len);
 #ifdef PERL_IMPLICIT_SYS
 extern void		win32_delete_internal_host(void *h);
 #endif
+
+extern int		win32_get_errno(int err);
 
 extern const char * const		staticlinkmodules[];
 
@@ -499,6 +513,100 @@ DllExport int win32_async_check(pTHX);
 void win32_wait_for_children(pTHX);
 #  define PERL_WAIT_FOR_CHILDREN win32_wait_for_children(aTHX)
 #endif
+
+#ifdef PERL_CORE
+/* C doesn't like repeat struct definitions */
+#if defined(__MINGW32__) && (__MINGW32_MAJOR_VERSION>=3)
+#undef _CRTIMP
+#endif
+#ifndef _CRTIMP
+#define _CRTIMP __declspec(dllimport)
+#endif
+
+
+/* VV 2005 has multiple ioinfo struct definitions through VC 2005's release life
+ * VC 2008-2012 have been stable but do not assume future VCs will have the
+ * same ioinfo struct, just because past struct stability. If research is done
+ * on the CRTs of future VS, the version check can be bumped up so the newer
+ * VC uses a fixed ioinfo size.
+ */
+#if ! (_MSC_VER < 1400 || (_MSC_VER >= 1500 && _MSC_VER <= 1700) \
+  || defined(__MINGW32__))
+/* size of ioinfo struct is determined at runtime */
+#  define WIN32_DYN_IOINFO_SIZE
+#endif
+
+#ifndef WIN32_DYN_IOINFO_SIZE
+/*
+ * Control structure for lowio file handles
+ */
+typedef struct {
+    intptr_t osfhnd;/* underlying OS file HANDLE */
+    char osfile;    /* attributes of file (e.g., open in text mode?) */
+    char pipech;    /* one char buffer for handles opened on pipes */
+    int lockinitflag;
+    CRITICAL_SECTION lock;
+/* this struct defintion breaks ABI compatibility with
+ * not using, cl.exe's native VS version specitfic CRT. */
+#  if _MSC_VER >= 1400 && _MSC_VER < 1500
+#    error "This ioinfo struct is incomplete for Visual C 2005"
+#  endif
+/* VC 2005 CRT has atleast 3 different definitions of this struct based on the
+ * CRT DLL's build number. */
+#  if _MSC_VER >= 1500
+#    ifndef _SAFECRT_IMPL
+    /* Not used in the safecrt downlevel. We do not define them, so we cannot
+     * use them accidentally */
+    char textmode : 7;/* __IOINFO_TM_ANSI or __IOINFO_TM_UTF8 or __IOINFO_TM_UTF16LE */
+    char unicode : 1; /* Was the file opened as unicode? */
+    char pipech2[2];  /* 2 more peak ahead chars for UNICODE mode */
+    __int64 startpos;      /* File position that matches buffer start */
+    BOOL utf8translations; /* Buffer contains translations other than CRLF*/
+    char dbcsBuffer;       /* Buffer for the lead byte of dbcs when converting from dbcs to unicode */
+    BOOL dbcsBufferUsed;   /* Bool for the lead byte buffer is used or not */
+#    endif
+#  endif
+} ioinfo;
+#else
+typedef intptr_t ioinfo;
+#endif
+
+/*
+ * Array of arrays of control structures for lowio files.
+ */
+EXTERN_C _CRTIMP ioinfo* __pioinfo[];
+
+/*
+ * Definition of IOINFO_L2E, the log base 2 of the number of elements in each
+ * array of ioinfo structs.
+ */
+#define IOINFO_L2E	    5
+
+/*
+ * Definition of IOINFO_ARRAY_ELTS, the number of elements in ioinfo array
+ */
+#define IOINFO_ARRAY_ELTS   (1 << IOINFO_L2E)
+
+/*
+ * Access macros for getting at an ioinfo struct and its fields from a
+ * file handle
+ */
+#ifdef WIN32_DYN_IOINFO_SIZE
+#  define _pioinfo(i) ((intptr_t *) \
+     (((Size_t)__pioinfo[(i) >> IOINFO_L2E])/* * to head of array ioinfo [] */\
+      /* offset to the head of a particular ioinfo struct */ \
+      + (((i) & (IOINFO_ARRAY_ELTS - 1)) * w32_ioinfo_size)) \
+   )
+/* first slice of ioinfo is always the OS handle */
+#  define _osfhnd(i)  (*(_pioinfo(i)))
+#else
+#  define _pioinfo(i) (__pioinfo[(i) >> IOINFO_L2E] + ((i) & (IOINFO_ARRAY_ELTS - 1)))
+#  define _osfhnd(i)  (_pioinfo(i)->osfhnd)
+#endif
+
+/* since we are not doing a dup2(), this works fine */
+#  define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = (intptr_t)osfh)
+#endif /* PERL_CORE */
 
 /* IO.xs and POSIX.xs define PERLIO_NOT_STDIO to 1 */
 #if defined(PERL_EXT_IO) || defined(PERL_EXT_POSIX)

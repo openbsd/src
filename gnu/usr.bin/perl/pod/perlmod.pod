@@ -195,7 +195,8 @@ in a subroutine that gets passed typeglobs as arguments:
 
     sub identify_typeglob {
         my $glob = shift;
-        print 'You gave me ', *{$glob}{PACKAGE}, '::', *{$glob}{NAME}, "\n";
+        print 'You gave me ', *{$glob}{PACKAGE},
+            '::', *{$glob}{NAME}, "\n";
     }
     identify_typeglob *foo;
     identify_typeglob *bar::baz;
@@ -368,7 +369,7 @@ The B<begincheck> program makes it all clear, eventually:
   }
   INIT { print  " 9.   You'll see the difference right away.\n" }
 
-  print         "13.   It merely _looks_ like it should be confusing.\n";
+  print         "13.   It only _looks_ like it should be confusing.\n";
 
   __END__
 

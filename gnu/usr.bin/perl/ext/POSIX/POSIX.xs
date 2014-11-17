@@ -28,6 +28,9 @@
 #include <dirent.h>
 #endif
 #include <errno.h>
+#ifdef WIN32
+#include <sys/errno2.h>
+#endif
 #ifdef I_FLOAT
 #include <float.h>
 #endif
@@ -83,53 +86,16 @@ char *tzname[] = { "" , "" };
 #endif
 
 #if defined(__VMS) && !defined(__POSIX_SOURCE)
-#  include <libdef.h>       /* LIB$_INVARG constant */
-#  include <lib$routines.h> /* prototype for lib$ediv() */
-#  include <starlet.h>      /* prototype for sys$gettim() */
-#  if DECC_VERSION < 50000000
-#    define pid_t int       /* old versions of DECC miss this in types.h */
-#  endif
+
+#  include <utsname.h>
 
 #  undef mkfifo
 #  define mkfifo(a,b) (not_here("mkfifo"),-1)
-#  define tzset() not_here("tzset")
-
-#if ((__VMS_VER >= 70000000) && (__DECC_VER >= 50200000)) || (__CRTL_VER >= 70000000)
-#    define HAS_TZNAME  /* shows up in VMS 7.0 or Dec C 5.6 */
-#    include <utsname.h>
-#  endif /* __VMS_VER >= 70000000 or Dec C 5.6 */
 
    /* The POSIX notion of ttyname() is better served by getname() under VMS */
    static char ttnambuf[64];
 #  define ttyname(fd) (isatty(fd) > 0 ? getname(fd,ttnambuf,0) : NULL)
 
-   /* The non-POSIX CRTL times() has void return type, so we just get the
-      current time directly */
-   clock_t vms_times(struct tms *bufptr) {
-	dTHX;
-	clock_t retval;
-	/* Get wall time and convert to 10 ms intervals to
-	 * produce the return value that the POSIX standard expects */
-#  if defined(__DECC) && defined (__ALPHA)
-#    include <ints.h>
-	uint64 vmstime;
-	_ckvmssts(sys$gettim(&vmstime));
-	vmstime /= 100000;
-	retval = vmstime & 0x7fffffff;
-#  else
-	/* (Older hw or ccs don't have an atomic 64-bit type, so we
-	 * juggle 32-bit ints (and a float) to produce a time_t result
-	 * with minimal loss of information.) */
-	long int vmstime[2],remainder,divisor = 100000;
-	_ckvmssts(sys$gettim((unsigned long int *)vmstime));
-	vmstime[1] &= 0x7fff;  /* prevent overflow in EDIV */
-	_ckvmssts(lib$ediv(&divisor,vmstime,(long int *)&retval,&remainder));
-#  endif
-	/* Fill in the struct tms using the CRTL routine . . .*/
-	times((tbuffer_t *)bufptr);
-	return (clock_t) retval;
-   }
-#  define times(t) vms_times(t)
 #else
 #if defined (__CYGWIN__)
 #    define tzname _tzname
@@ -192,160 +158,6 @@ char *tzname[] = { "" , "" };
 #  endif
 #endif /* WIN32 || NETWARE */
 #endif /* __VMS */
-
-#ifdef WIN32
-   /* Perl on Windows assigns WSAGetLastError() return values to errno
-    * (in win32/win32sck.c).  Therefore we need to map these values
-    * back to standard symbolic names, but only for those names having
-    * no existing value or an existing value >= 100. (VC++ 2010 defines
-    * a group of names with values >= 100 in its errno.h which we *do*
-    * need to redefine.) The Errno.pm module does a similar mapping.
-    */
-#  ifdef EWOULDBLOCK
-#    undef EWOULDBLOCK
-#  endif
-#  define EWOULDBLOCK WSAEWOULDBLOCK
-#  ifdef EINPROGRESS
-#    undef EINPROGRESS
-#  endif
-#  define EINPROGRESS WSAEINPROGRESS
-#  ifdef EALREADY
-#    undef EALREADY
-#  endif
-#  define EALREADY WSAEALREADY
-#  ifdef ENOTSOCK
-#    undef ENOTSOCK
-#  endif
-#  define ENOTSOCK WSAENOTSOCK
-#  ifdef EDESTADDRREQ
-#    undef EDESTADDRREQ
-#  endif
-#  define EDESTADDRREQ WSAEDESTADDRREQ
-#  ifdef EMSGSIZE
-#    undef EMSGSIZE
-#  endif
-#  define EMSGSIZE WSAEMSGSIZE
-#  ifdef EPROTOTYPE
-#    undef EPROTOTYPE
-#  endif
-#  define EPROTOTYPE WSAEPROTOTYPE
-#  ifdef ENOPROTOOPT
-#    undef ENOPROTOOPT
-#  endif
-#  define ENOPROTOOPT WSAENOPROTOOPT
-#  ifdef EPROTONOSUPPORT
-#    undef EPROTONOSUPPORT
-#  endif
-#  define EPROTONOSUPPORT WSAEPROTONOSUPPORT
-#  ifdef ESOCKTNOSUPPORT
-#    undef ESOCKTNOSUPPORT
-#  endif
-#  define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT
-#  ifdef EOPNOTSUPP
-#    undef EOPNOTSUPP
-#  endif
-#  define EOPNOTSUPP WSAEOPNOTSUPP
-#  ifdef EPFNOSUPPORT
-#    undef EPFNOSUPPORT
-#  endif
-#  define EPFNOSUPPORT WSAEPFNOSUPPORT
-#  ifdef EAFNOSUPPORT
-#    undef EAFNOSUPPORT
-#  endif
-#  define EAFNOSUPPORT WSAEAFNOSUPPORT
-#  ifdef EADDRINUSE
-#    undef EADDRINUSE
-#  endif
-#  define EADDRINUSE WSAEADDRINUSE
-#  ifdef EADDRNOTAVAIL
-#    undef EADDRNOTAVAIL
-#  endif
-#  define EADDRNOTAVAIL WSAEADDRNOTAVAIL
-#  ifdef ENETDOWN
-#    undef ENETDOWN
-#  endif
-#  define ENETDOWN WSAENETDOWN
-#  ifdef ENETUNREACH
-#    undef ENETUNREACH
-#  endif
-#  define ENETUNREACH WSAENETUNREACH
-#  ifdef ENETRESET
-#    undef ENETRESET
-#  endif
-#  define ENETRESET WSAENETRESET
-#  ifdef ECONNABORTED
-#    undef ECONNABORTED
-#  endif
-#  define ECONNABORTED WSAECONNABORTED
-#  ifdef ECONNRESET
-#    undef ECONNRESET
-#  endif
-#  define ECONNRESET WSAECONNRESET
-#  ifdef ENOBUFS
-#    undef ENOBUFS
-#  endif
-#  define ENOBUFS WSAENOBUFS
-#  ifdef EISCONN
-#    undef EISCONN
-#  endif
-#  define EISCONN WSAEISCONN
-#  ifdef ENOTCONN
-#    undef ENOTCONN
-#  endif
-#  define ENOTCONN WSAENOTCONN
-#  ifdef ESHUTDOWN
-#    undef ESHUTDOWN
-#  endif
-#  define ESHUTDOWN WSAESHUTDOWN
-#  ifdef ETOOMANYREFS
-#    undef ETOOMANYREFS
-#  endif
-#  define ETOOMANYREFS WSAETOOMANYREFS
-#  ifdef ETIMEDOUT
-#    undef ETIMEDOUT
-#  endif
-#  define ETIMEDOUT WSAETIMEDOUT
-#  ifdef ECONNREFUSED
-#    undef ECONNREFUSED
-#  endif
-#  define ECONNREFUSED WSAECONNREFUSED
-#  ifdef ELOOP
-#    undef ELOOP
-#  endif
-#  define ELOOP WSAELOOP
-#  ifdef EHOSTDOWN
-#    undef EHOSTDOWN
-#  endif
-#  define EHOSTDOWN WSAEHOSTDOWN
-#  ifdef EHOSTUNREACH
-#    undef EHOSTUNREACH
-#  endif
-#  define EHOSTUNREACH WSAEHOSTUNREACH
-#  ifdef EPROCLIM
-#    undef EPROCLIM
-#  endif
-#  define EPROCLIM WSAEPROCLIM
-#  ifdef EUSERS
-#    undef EUSERS
-#  endif
-#  define EUSERS WSAEUSERS
-#  ifdef EDQUOT
-#    undef EDQUOT
-#  endif
-#  define EDQUOT WSAEDQUOT
-#  ifdef ESTALE
-#    undef ESTALE
-#  endif
-#  define ESTALE WSAESTALE
-#  ifdef EREMOTE
-#    undef EREMOTE
-#  endif
-#  define EREMOTE WSAEREMOTE
-#  ifdef EDISCON
-#    undef EDISCON
-#  endif
-#  define EDISCON WSAEDISCON
-#endif
 
 typedef int SysRet;
 typedef long SysRetLong;
@@ -505,12 +317,6 @@ const struct lconv_offset lconv_integers[] = {
     {"n_sep_by_space",    offsetof(struct lconv, n_sep_by_space)},
     {"p_sign_posn",       offsetof(struct lconv, p_sign_posn)},
     {"n_sign_posn",       offsetof(struct lconv, n_sign_posn)},
-    {"int_p_cs_precedes",	offsetof(struct lconv, int_p_cs_precedes)},
-    {"int_p_sep_by_space",	offsetof(struct lconv, int_p_sep_by_space)},
-    {"int_n_cs_precedes",	offsetof(struct lconv, int_n_cs_precedes)},
-    {"int_n_sep_by_space",	offsetof(struct lconv, int_n_sep_by_space)},
-    {"int_p_sign_posn",		offsetof(struct lconv, int_p_sign_posn)},
-    {"int_n_sign_posn",		offsetof(struct lconv, int_n_sign_posn)},
     {NULL, 0}
 };
 
@@ -710,21 +516,43 @@ static XSPROTO(is_common); /* prototype to pass -Wmissing-prototypes */
 static XSPROTO(is_common)
 {
     dXSARGS;
-    SV *charstring;
+    static PTR_TBL_t * is_common_ptr_table;
+
     if (items != 1)
        croak_xs_usage(cv,  "charstring");
 
     {
 	dXSTARG;
 	STRLEN	len;
+        /*int	RETVAL = 0;   YYY means uncomment this to return false on an
+                            * empty string input */
 	int	RETVAL;
 	unsigned char *s = (unsigned char *) SvPV(ST(0), len);
 	unsigned char *e = s + len;
 	isfunc_t isfunc = (isfunc_t) XSANY.any_dptr;
 
+        if (ckWARN_d(WARN_DEPRECATED)) {
+
+            /* Warn exactly once for each lexical place this function is
+             * called.  See thread at
+             * http://markmail.org/thread/jhqcag5njmx7jpyu */
+
+	    if (! is_common_ptr_table) {
+               is_common_ptr_table = ptr_table_new();
+            }
+	    if (! ptr_table_fetch(is_common_ptr_table, PL_op)) {
+                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED),
+                            "Calling POSIX::%"HEKf"() is deprecated",
+                            HEKfARG(GvNAME_HEK(CvGV(cv))));
+                ptr_table_store(is_common_ptr_table, PL_op, (void *) 1);
+            }
+        }
+
+        /*if (e > s) { YYY */
 	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isfunc(*s))
 		RETVAL = 0;
+        /*} YYY */
 	XSprePUSH;
 	PUSHi((IV)RETVAL);
     }
@@ -737,6 +565,10 @@ BOOT:
 {
     CV *cv;
     const char *file = __FILE__;
+
+
+    /* silence compiler warning about not_here() defined but not used */
+    if (0) not_here("");
 
     /* Ensure we get the function, not a macro implementation. Like the C89
        standard says we can...  */
@@ -902,6 +734,8 @@ getiflag(termios_ref)
 	case 3:
 	    RETVAL = termios_ref->c_lflag;
 	    break;
+        default:
+	    RETVAL = 0; /* silence compiler warning */
 	}
 #else
 	not_here(GvNAME(CvGV(cv)));
@@ -1103,8 +937,15 @@ setlocale(category, locale = 0)
     PREINIT:
 	char *		retval;
     CODE:
+#ifdef WIN32    /* Use wrapper on Windows */
+	retval = Perl_my_setlocale(aTHX_ category, locale);
+#else
 	retval = setlocale(category, locale);
-	if (retval) {
+#endif
+	if (! retval) {
+            XSRETURN_UNDEF;
+        }
+        else {
 	    /* Save retval since subsequent setlocale() calls
 	     * may overwrite it. */
 	    RETVAL = savepv(retval);
@@ -1160,13 +1001,10 @@ setlocale(category, locale = 0)
 	    }
 #endif /* USE_LOCALE_NUMERIC */
 	}
-	else
-	    RETVAL = NULL;
     OUTPUT:
 	RETVAL
     CLEANUP:
-        if (RETVAL)
-	    Safefree(RETVAL);
+        Safefree(RETVAL);
 
 NV
 acos(x)
@@ -1634,7 +1472,7 @@ strtod(str)
 	double num;
 	char *unparsed;
     PPCODE:
-	SET_NUMERIC_LOCAL();
+        STORE_NUMERIC_STANDARD_FORCE_LOCAL();
 	num = strtod(str, &unparsed);
 	PUSHs(sv_2mortal(newSVnv(num)));
 	if (GIMME == G_ARRAY) {
@@ -1644,6 +1482,7 @@ strtod(str)
 	    else
 		PUSHs(&PL_sv_undef);
 	}
+        RESTORE_NUMERIC_STANDARD();
 
 void
 strtol(str, base = 0)
@@ -1838,7 +1677,14 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	int		isdst
     CODE:
 	{
-	    char *buf = my_strftime(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst);
+	    char *buf;
+
+            /* allowing user-supplied (rather than literal) formats
+             * is normally frowned upon as a potential security risk;
+             * but this is part of the API so we have to allow it */
+            GCC_DIAG_IGNORE(-Wformat-nonliteral);
+	    buf = my_strftime(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst);
+            GCC_DIAG_RESTORE;
 	    if (buf) {
 		SV *const sv = sv_newmortal();
 		sv_usepvn_flags(sv, buf, strlen(buf), SV_HAS_TRAILING_NUL);

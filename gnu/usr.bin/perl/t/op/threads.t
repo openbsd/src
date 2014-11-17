@@ -9,7 +9,7 @@ BEGIN {
      skip_all_without_config('useithreads');
      skip_all_if_miniperl("no dynamic loading on miniperl, no threads");
 
-     plan(26);
+     plan(27);
 }
 
 use strict;
@@ -135,7 +135,7 @@ EOI
 #
 # run-time usage of newCONSTSUB (as done by the IO boot code) wasn't
 # thread-safe - got occasional coredumps or malloc corruption
-watchdog(600, "process");
+watchdog(180, "process");
 {
     local $SIG{__WARN__} = sub {};   # Ignore any thread creation failure warnings
     my @t;
@@ -390,5 +390,13 @@ EOF
   threads->create(sub { sub { $::hypogamma = 3 } })->join->();
   is $::hypogamma, 3, 'globs cloned and joined are not recloned';
 }
+
+fresh_perl_is(
+  'use threads;' .
+  'async { delete $::{INC}; eval q"my $foo : bar" } ->join; print "ok\n";',
+  "ok",
+   {},
+  'no crash when deleting $::{INC} in thread'
+);
 
 # EOF

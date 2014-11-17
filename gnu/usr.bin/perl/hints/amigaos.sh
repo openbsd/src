@@ -22,7 +22,7 @@ xlibpth="$libpth"
 
 # This should remove unwanted libraries instead of limiting the set
 # to just these few.  E.g. what about Berkeley DB?
-libswanted='gdbm m dld'
+libswanted='gdbm m'
 so=' '
 libs='-lm'
 

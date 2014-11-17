@@ -10,11 +10,11 @@ use warnings;
 use Getopt::Std;
 use Config;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.7 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.12 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
-# AGG is an aggreagated do_now, as built up by &process
+# AGG is an aggregated do_now, as built up by &process
 
 use constant {
   RAW_NEXT => 0,
@@ -50,7 +50,7 @@ use constant {
 # only the leaf "do_now"s cause output bytes, and they in turn point back to
 # the start state.
 
-# For an encoding where there are varaible length input byte sequences, you
+# For an encoding where there are variable length input byte sequences, you
 # will encounter a leaf "do_now" sooner for the shorter input sequences, but
 # as before the leaves will point back to the start state.
 
@@ -68,7 +68,7 @@ use constant {
 # single byte encoding, with  "ABCD" going "abcd". There will be
 # 4 "do_now"s, {"A" => [...,"a",...], "B" => [...,"b",...], "C"=>..., "D"=>...}
 
-# &process then walks the tree, building aggregate "do_now" structres for
+# &process then walks the tree, building aggregate "do_now" structures for
 # adjacent bytes where possible. The aggregate is for a contiguous range of
 # bytes which each produce the same length of output, each move to the
 # same next state, and each have the same fallback flag.
@@ -187,7 +187,6 @@ END
     print C "#include <EXTERN.h>\n";
     print C "#include <perl.h>\n";
     print C "#include <XSUB.h>\n";
-    print C "#define U8 U8\n";
    }
   print C "#include \"encode.h\"\n\n";
 
@@ -314,8 +313,14 @@ Encode_XSEncoding(pTHX_ encode_t *enc)
 {
  dSP;
  HV *stash = gv_stashpv("Encode::XS", TRUE);
- SV *sv    = sv_bless(newRV_noinc(newSViv(PTR2IV(enc))),stash);
+ SV *iv    = newSViv(PTR2IV(enc));
+ SV *sv    = sv_bless(newRV_noinc(iv),stash);
  int i = 0;
+ /* with the SvLEN() == 0 hack, PVX won't be freed. We cast away name's
+ constness, in the hope that perl won't mess with it. */
+ assert(SvTYPE(iv) >= SVt_PV); assert(SvLEN(iv) == 0);
+ SvFLAGS(iv) |= SVp_POK;
+ SvPVX(iv) = (char*) enc->name[0];
  PUSHMARK(sp);
  XPUSHs(sv);
  while (enc->name[i])
@@ -566,7 +571,7 @@ sub enter {
   # as current state.
   $next ||= $current;
   # Making sure it is defined seems to be faster than {no warnings;} in
-  # &process, or passing it in as 0 explicity.
+  # &process, or passing it in as 0 explicitly.
   # XXX $fallback ||= 0;
 
   # Start at the beginning and work forwards through the string to zero.
@@ -595,12 +600,12 @@ sub enter {
       $do_now->[RAW_NEXT] = $next;
       return;
     }
-    # Tail recursion. The intermdiate state may not have a name yet.
+    # Tail recursion. The intermediate state may not have a name yet.
     $current = $do_now->[RAW_NEXT];
   }
 }
 
-# This is purely for optimistation. It's just &enter hard coded for $fallback
+# This is purely for optimisation. It's just &enter hard coded for $fallback
 # of 0, using only a 3 entry array ref to save memory for every entry.
 sub enter_fb0 {
   my ($current,$inbytes,$outbytes,$next) = @_;
@@ -713,7 +718,7 @@ sub outbigstring
 
   # Make the big string in the string accumulator. Longest first, on the hope
   # that this makes it more likely that we find the short strings later on.
-  # Not sure if it helps sorting strings of the same length lexcically.
+  # Not sure if it helps sorting strings of the same length lexically.
   foreach my $s (sort {length $b <=> length $a || $a cmp $b} keys %strings) {
     my $index = index $string_acc, $s;
     if ($index >= 0) {
@@ -951,7 +956,7 @@ sub make_makefile_pl
 {
     eval { require Encode; };
     $@ and die "You need to install Encode to use enc2xs -M\nerror: $@\n";
-    # our used for variable expanstion
+    # our used for variable expansion
     $_Enc2xs = $0;
     $_Version = $VERSION;
     $_E2X = find_e2x();
@@ -978,7 +983,7 @@ sub make_configlocal_pm {
     $@ and die "Unable to require Encode: $@\n";
     eval { require File::Spec; };
 
-    # our used for variable expanstion
+    # our used for variable expantion
     my %in_core = map { $_ => 1 } (
         'ascii',      'iso-8859-1', 'utf8',
         'ascii-ctrl', 'null',       'utf-8-strict'
@@ -1080,7 +1085,7 @@ add a new encoding, just read this chapter and forget the rest.
 
 =over 4
 
-=item 0.
+=item 0.Z<>
 
 Have a .ucm file ready.  You can get it from somewhere or you can write
 your own from scratch or you can grab one from the Encode distribution
@@ -1091,7 +1096,7 @@ in I<my.ucm>.  C<$> is a shell prompt.
   $ ls -F
   my.ucm
 
-=item 1.
+=item 1.Z<>
 
 Issue a command as follows;
 
@@ -1114,7 +1119,7 @@ The following files were created.
 
 =over 4
 
-=item 1.1.
+=item 1.1.Z<>
 
 If you want *.ucm installed together with the modules, do as follows;
 
@@ -1124,20 +1129,20 @@ If you want *.ucm installed together with the modules, do as follows;
 
 =back
 
-=item 2.
+=item 2.Z<>
 
 Edit the files generated.  You don't have to if you have no time AND no
 intention to give it to someone else.  But it is a good idea to edit
 the pod and to add more tests.
 
-=item 3.
+=item 3.Z<>
 
 Now issue a command all Perl Mongers love:
 
   $ perl Makefile.PL
   Writing Makefile for Encode::My
 
-=item 4.
+=item 4.Z<>
 
 Now all you have to do is make.
 
@@ -1158,7 +1163,7 @@ The time it takes varies depending on how fast your machine is and
 how large your encoding is.  Unless you are working on something big
 like euc-tw, it won't take too long.
 
-=item 5.
+=item 5.Z<>
 
 You can "make install" already but you should test first.
 
@@ -1171,11 +1176,11 @@ You can "make install" already but you should test first.
   Files=1, Tests=2,  0 wallclock secs
    ( 0.09 cusr + 0.01 csys = 0.09 CPU)
 
-=item 6.
+=item 6.Z<>
 
 If you are content with the test result, just "make install"
 
-=item 7.
+=item 7.Z<>
 
 If you want to add your encoding to Encode's demand-loading list
 (so you don't have to "use Encode::YourEncoding"), run

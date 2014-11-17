@@ -703,12 +703,6 @@
  */
 /*#define I_NETINET_IN	/ **/
 
-/* I_SFIO:
- *	This symbol, if defined, indicates to the C program that it should
- *	include <sfio.h>.
- */
-/*#define	I_SFIO		/ **/
-
 /* I_STDDEF:
  *	This symbol, if defined, indicates that <stddef.h> exists and should
  *	be included.
@@ -811,26 +805,6 @@
  */
 /*#define I_SYS_WAIT	/ **/
 
-/* I_TERMIO:
- *	This symbol, if defined, indicates that the program should include
- *	<termio.h> rather than <sgtty.h>.  There are also differences in
- *	the ioctl() calls that depend on the value of this symbol.
- */
-/* I_TERMIOS:
- *	This symbol, if defined, indicates that the program should include
- *	the POSIX termios.h rather than sgtty.h or termio.h.
- *	There are also differences in the ioctl() calls that depend on the
- *	value of this symbol.
- */
-/* I_SGTTY:
- *	This symbol, if defined, indicates that the program should include
- *	<sgtty.h> rather than <termio.h>.  There are also differences in
- *	the ioctl() calls that depend on the value of this symbol.
- */
-/*#define I_TERMIO		/ **/
-/*#define I_TERMIOS		/ **/
-/*#define I_SGTTY		/ **/
-
 /* I_UNISTD:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <unistd.h>.
@@ -892,18 +866,6 @@
 #define OSNAME "unknown"		/**/
 #define OSVERS "unknown"		/**/
 
-/* USE_CROSS_COMPILE:
- *	This symbol, if defined, indicates that Perl is being cross-compiled.
- */
-/* PERL_TARGETARCH:
- *	This symbol, if defined, indicates the target architecture
- *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
- */
-#ifndef USE_CROSS_COMPILE
-/*#define	USE_CROSS_COMPILE	/ **/
-#define	PERL_TARGETARCH	""	/**/
-#endif
-
 /* MULTIARCH:
  *	This symbol, if defined, signifies that the build
  *	process will produce some binary files that are going to be
@@ -934,8 +896,8 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-/*#define ARCHLIB "/usr/local/lib/perl5/5.18/unknown"		/ **/
-/*#define ARCHLIB_EXP "/usr/local/lib/perl5/5.18/unknown"		/ **/
+/*#define ARCHLIB "/usr/local/lib/perl5/5.20/unknown"		/ **/
+/*#define ARCHLIB_EXP "/usr/local/lib/perl5/5.20/unknown"		/ **/
 
 /* ARCHNAME:
  *	This symbol holds a string representing the architecture name.
@@ -993,7 +955,7 @@
  *	so the default case (for NeXT) is big endian to catch them.
  *	This might matter for NeXT 3.0.
  */
-#if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
+#if defined(MULTIARCH)
 #  ifdef __LITTLE_ENDIAN__
 #    if LONGSIZE == 4
 #      define BYTEORDER 0x1234
@@ -3045,8 +3007,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/usr/local/lib/perl5/5.18"		/**/
-#define PRIVLIB_EXP "/usr/local/lib/perl5/5.18"		/**/
+#define PRIVLIB "/usr/local/lib/perl5/5.20"		/**/
+#define PRIVLIB_EXP "/usr/local/lib/perl5/5.20"		/**/
 
 /* CAN_PROTOTYPE:
  *	If defined, this macro indicates that the C compiler can handle
@@ -3112,9 +3074,9 @@
  *	function used to generate normalized random numbers.
  *	Values include 15, 16, 31, and 48.
  */
-#define Drand01()		((rand() & 0x7FFF) / (double) ((unsigned long)1 << 15))		/**/
-#define Rand_seed_t		int		/**/
-#define seedDrand01(x)	srand((Rand_seed_t)x)	/**/
+#define Drand01()		Perl_drand48()		/**/
+#define Rand_seed_t		U32		/**/
+#define seedDrand01(x)	Perl_drand48_init((Rand_seed_t)x)	/**/
 #define RANDBITS		48		/**/
 
 /* Select_fd_set_t:
@@ -3189,8 +3151,8 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-/*#define SITEARCH "/usr/local/lib/perl5/5.18/unknown"		/ **/
-/*#define SITEARCH_EXP "/usr/local/lib/perl5/5.18/unknown"		/ **/
+/*#define SITEARCH "/usr/local/lib/perl5/5.20/unknown"		/ **/
+/*#define SITEARCH_EXP "/usr/local/lib/perl5/5.20/unknown"		/ **/
 
 /* SITELIB:
  *	This symbol contains the name of the private library for this package.
@@ -3212,8 +3174,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/usr/local/lib/perl5/5.18"		/**/
-#define SITELIB_EXP "/usr/local/lib/perl5/5.18"		/**/
+#define SITELIB "/usr/local/lib/perl5/5.20"		/**/
+#define SITELIB_EXP "/usr/local/lib/perl5/5.20"		/**/
 #define SITELIB_STEM "/usr/local/lib/perl5"		/**/
 
 /* Size_t_size:
@@ -3330,29 +3292,36 @@
 /*#define PERL_VENDORLIB_EXP ""		/ **/
 /*#define PERL_VENDORLIB_STEM ""		/ **/
 
-/* VOIDFLAGS:
- *	This symbol indicates how much support of the void type is given by this
- *	compiler.  What various bits mean:
- *
- *	    1 = supports declaration of void
- *	    2 = supports arrays of pointers to functions returning void
- *	    4 = supports comparisons between pointers to void functions and
- *		    addresses of void functions
- *	    8 = supports declaration of generic void pointers
- *
- *	The package designer should define VOIDUSED to indicate the requirements
- *	of the package.  This can be done either by #defining VOIDUSED before
- *	including config.h, or by defining defvoidused in Myinit.U.  If the
- *	latter approach is taken, only those flags will be tested.  If the
- *	level of void support necessary is not present, defines void to int.
+/* I_TERMIO:
+ *	This symbol, if defined, indicates that the program should include
+ *	<termio.h> rather than <sgtty.h>.  There are also differences in
+ *	the ioctl() calls that depend on the value of this symbol.
  */
-#ifndef VOIDUSED
-#define VOIDUSED 1
-#endif
-#define VOIDFLAGS 1
-#if (VOIDFLAGS & VOIDUSED) != VOIDUSED
-#define void int		/* is void to be avoided? */
-#define M_VOID			/* Xenix strikes again */
+/* I_TERMIOS:
+ *	This symbol, if defined, indicates that the program should include
+ *	the POSIX termios.h rather than sgtty.h or termio.h.
+ *	There are also differences in the ioctl() calls that depend on the
+ *	value of this symbol.
+ */
+/* I_SGTTY:
+ *	This symbol, if defined, indicates that the program should include
+ *	<sgtty.h> rather than <termio.h>.  There are also differences in
+ *	the ioctl() calls that depend on the value of this symbol.
+ */
+/*#define I_TERMIO		/ **/
+/*#define I_TERMIOS		/ **/
+/*#define I_SGTTY		/ **/
+
+/* USE_CROSS_COMPILE:
+ *	This symbol, if defined, indicates that Perl is being cross-compiled.
+ */
+/* PERL_TARGETARCH:
+ *	This symbol, if defined, indicates the target architecture
+ *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
+ */
+#ifndef USE_CROSS_COMPILE
+/*#define	USE_CROSS_COMPILE	/ **/
+#define	PERL_TARGETARCH	""	/**/
 #endif
 
 /* PERL_USE_DEVEL:
@@ -3917,12 +3886,6 @@
  */
 /*#define HAS_SETPROCTITLE		/ **/
 
-/* USE_SFIO:
- *	This symbol, if defined, indicates that sfio should
- *	be used.
- */
-/*#define	USE_SFIO		/ **/
-
 /* HAS_SIGNBIT:
  *	This symbol, if defined, indicates that the signbit routine is
  *	available to check if the given number has the sign bit set.
@@ -4188,8 +4151,10 @@
 /*#define USE_DYNAMIC_LOADING		/ **/
 
 /* FFLUSH_NULL:
- *	This symbol, if defined, tells that fflush(NULL) does flush
- *	all pending stdio output.
+ *	This symbol, if defined, tells that fflush(NULL) correctly
+ *	flushes all pending stdio output without side effects. In
+ *	particular, on some platforms calling fflush(NULL) *still*
+ *	corrupts STDIN if it is a pipe.
  */
 /* FFLUSH_ALL:
  *	This symbol, if defined, tells that to flush
@@ -4753,6 +4718,6 @@
 #endif
 
 /* Generated from:
- * 2c9dc3f21d37b1665f6a59dfc6d79e6cb08bdf36a9c3e427d11d6b9ddffe2439 config_h.SH
- * 26ab9b4aa382d32761cb91084ba59e7e4b190799502a43366ccb3d2f584783ca uconfig.sh
+ * 7557e985de18f71e80f627226b454bc8eaf20477dcf0c45b5b2c51ec792f5c89 config_h.SH
+ * dbc8d38ba52ae23e5423418bb3f56b1b6fcdaa82cf71ba0be3463e8221bfe0c0 uconfig.sh
  * ex: set ro: */

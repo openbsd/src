@@ -21,17 +21,17 @@
 "Magic" is special data attached to SV structures in order to give them
 "magical" properties.  When any Perl code tries to read from, or assign to,
 an SV marked as magical, it calls the 'get' or 'set' function associated
-with that SV's magic. A get is called prior to reading an SV, in order to
+with that SV's magic.  A get is called prior to reading an SV, in order to
 give it a chance to update its internal value (get on $. writes the line
-number of the last read filehandle into to the SV's IV slot), while
+number of the last read filehandle into the SV's IV slot), while
 set is called after an SV has been written to, in order to allow it to make
 use of its changed value (set on $/ copies the SV's new value to the
 PL_rs global variable).
 
 Magic is implemented as a linked list of MAGIC structures attached to the
-SV. Each MAGIC struct holds the type of the magic, a pointer to an array
+SV.  Each MAGIC struct holds the type of the magic, a pointer to an array
 of functions that implement the get(), set(), length() etc functions,
-plus space for some flags and pointers. For example, a tied variable has
+plus space for some flags and pointers.  For example, a tied variable has
 a MAGIC structure that contains a pointer to the object associated with the
 tie.
 
@@ -90,13 +90,13 @@ struct magic_state {
 /* MGS is typedef'ed to struct magic_state in perl.h */
 
 STATIC void
-S_save_magic(pTHX_ I32 mgs_ix, SV *sv)
+S_save_magic_flags(pTHX_ I32 mgs_ix, SV *sv, U32 flags)
 {
     dVAR;
     MGS* mgs;
     bool bumped = FALSE;
 
-    PERL_ARGS_ASSERT_SAVE_MAGIC;
+    PERL_ARGS_ASSERT_SAVE_MAGIC_FLAGS;
 
     assert(SvMAGICAL(sv));
 
@@ -116,15 +116,15 @@ S_save_magic(pTHX_ I32 mgs_ix, SV *sv)
     mgs = SSPTR(mgs_ix, MGS*);
     mgs->mgs_sv = sv;
     mgs->mgs_magical = SvMAGICAL(sv);
-    mgs->mgs_readonly = SvREADONLY(sv) && !SvIsCOW(sv);
+    mgs->mgs_readonly = SvREADONLY(sv) != 0;
     mgs->mgs_ss_ix = PL_savestack_ix;   /* points after the saved destructor */
     mgs->mgs_bumped = bumped;
 
-    SvMAGICAL_off(sv);
-    /* Turning READONLY off for a copy-on-write scalar (including shared
-       hash keys) is a bad idea.  */
-    if (!SvIsCOW(sv)) SvREADONLY_off(sv);
+    SvFLAGS(sv) &= ~flags;
+    SvREADONLY_off(sv);
 }
+
+#define save_magic(a,b) save_magic_flags(a,b,SVs_GMG|SVs_SMG|SVs_RMG)
 
 /*
 =for apidoc mg_magical
@@ -163,7 +163,7 @@ Perl_mg_magical(pTHX_ SV *sv)
 =for apidoc mg_get
 
 Do magic before a value is retrieved from the SV.  The type of SV must
-be >= SVt_PVMG. See C<sv_magic>.
+be >= SVt_PVMG.  See C<sv_magic>.
 
 =cut
 */
@@ -263,7 +263,7 @@ Perl_mg_set(pTHX_ SV *sv)
 
     if (PL_localizing == 2 && sv == DEFSV) return 0;
 
-    save_magic(mgs_ix, sv);
+    save_magic_flags(mgs_ix, sv, SVs_GMG|SVs_SMG); /* leave SVs_RMG on */
 
     for (mg = SvMAGIC(sv); mg; mg = nextmg) {
         const MGVTBL* vtbl = mg->mg_virtual;
@@ -286,9 +286,7 @@ Perl_mg_set(pTHX_ SV *sv)
 /*
 =for apidoc mg_length
 
-This function is deprecated.
-
-It reports on the SV's length in bytes, calling length magic if available,
+Reports on the SV's length in bytes, calling length magic if available,
 but does not set the UTF8 flag on the sv.  It will fall back to 'get'
 magic if there is no 'length' magic, but with no indication as to
 whether it called 'get' magic.  It assumes the sv is a PVMG or
@@ -397,6 +395,8 @@ S_mg_findext_flags(pTHX_ const SV *sv, int type, const MGVTBL *vtbl, U32 flags)
     if (sv) {
 	MAGIC *mg;
 
+	assert(!(SvTYPE(sv) == SVt_PVAV && AvPAD_NAMELIST(sv)));
+
 	for (mg = SvMAGIC(sv); mg; mg = mg->mg_moremagic) {
 	    if (mg->mg_type == type && (!flags || mg->mg_virtual == vtbl)) {
 		return mg;
@@ -434,6 +434,21 @@ MAGIC*
 Perl_mg_findext(pTHX_ const SV *sv, int type, const MGVTBL *vtbl)
 {
     return S_mg_findext_flags(aTHX_ sv, type, vtbl, 1);
+}
+
+MAGIC *
+Perl_mg_find_mglob(pTHX_ SV *sv)
+{
+    PERL_ARGS_ASSERT_MG_FIND_MGLOB;
+    if (SvTYPE(sv) == SVt_PVLV && LvTYPE(sv) == 'y') {
+        /* This sv is only a delegate.  //g magic must be attached to
+           its target. */
+        vivify_defelem(sv);
+        sv = LvTARG(sv);
+    }
+    if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv))
+        return S_mg_findext_flags(aTHX_ sv, PERL_MAGIC_regex_global, 0, 0);
+    return NULL;
 }
 
 /*
@@ -478,7 +493,8 @@ Perl_mg_copy(pTHX_ SV *sv, SV *nsv, const char *key, I32 klen)
 =for apidoc mg_localize
 
 Copy some of the magic from an existing SV to new localized version of that
-SV. Container magic (eg %ENV, $1, tie) gets copied, value magic doesn't (eg
+SV.  Container magic (eg %ENV, $1, tie)
+gets copied, value magic doesn't (eg
 taint, pos).
 
 If setmagic is false then no set magic will be called on the new (empty) SV.
@@ -511,7 +527,7 @@ Perl_mg_localize(pTHX_ SV *sv, SV *nsv, bool setmagic)
 			    mg->mg_ptr, mg->mg_len);
 
 	/* container types should remain read-only across localization */
-	if (!SvIsCOW(sv)) SvFLAGS(nsv) |= SvREADONLY(sv);
+	SvFLAGS(nsv) |= SvREADONLY(sv);
     }
 
     if (SvTYPE(nsv) >= SVt_PVMG && SvMAGIC(nsv)) {
@@ -646,21 +662,21 @@ Perl_magic_regdatum_get(pTHX_ SV *sv, MAGIC *mg)
 	const REGEXP * const rx = PM_GETRE(PL_curpm);
 	if (rx) {
 	    const I32 paren = mg->mg_len;
-	    I32 s;
-	    I32 t;
+	    SSize_t s;
+	    SSize_t t;
 	    if (paren < 0)
 		return 0;
 	    if (paren <= (I32)RX_NPARENS(rx) &&
 		(s = RX_OFFS(rx)[paren].start) != -1 &&
 		(t = RX_OFFS(rx)[paren].end) != -1)
 		{
-		    I32 i;
+		    SSize_t i;
 		    if (mg->mg_obj)		/* @+ */
 			i = t;
 		    else			/* @- */
 			i = s;
 
-		    if (i > 0 && RX_MATCH_UTF8(rx)) {
+		    if (RX_MATCH_UTF8(rx)) {
 			const char * const b = RX_SUBBEG(rx);
 			if (b)
 			    i = RX_SUBCOFFSET(rx) +
@@ -668,10 +684,12 @@ Perl_magic_regdatum_get(pTHX_ SV *sv, MAGIC *mg)
                                         (U8*)(b-RX_SUBOFFSET(rx)+i));
 		    }
 
-		    sv_setiv(sv, i);
+		    sv_setuv(sv, i);
+		    return 0;
 		}
 	}
     }
+    sv_setsv(sv, NULL);
     return 0;
 }
 
@@ -722,6 +740,47 @@ Perl_emulate_cop_io(pTHX_ const COP *const c, SV *const sv)
     }
 }
 
+STATIC void
+S_fixup_errno_string(pTHX_ SV* sv)
+{
+    /* Do what is necessary to fixup the non-empty string in 'sv' for return to
+     * Perl space. */
+
+    PERL_ARGS_ASSERT_FIXUP_ERRNO_STRING;
+
+    assert(SvOK(sv));
+
+    if(strEQ(SvPVX(sv), "")) {
+	sv_catpv(sv, UNKNOWN_ERRNO_MSG);
+    }
+#if 0
+    /* This is disabled to get v5.20 out the door.  It means that $! behaves as
+     * if in the scope of both 'use locale' and 'use bytes'.  This can cause
+     * mixed encodings and double utf8 upgrading,  See towards the end of the
+     * thread for [perl #119499] */
+    else {
+
+        /* In some locales the error string may come back as UTF-8, in which
+         * case we should turn on that flag.  This didn't use to happen, and to
+         * avoid any possible backward compatibility issues, we don't turn on
+         * the flag unless we have to.  So the flag stays off for an entirely
+         * ASCII string.  We assume that if the string looks like UTF-8, it
+         * really is UTF-8:  "text in any other encoding that uses bytes with
+         * the high bit set is extremely unlikely to pass a UTF-8 validity
+         * test" (http://en.wikipedia.org/wiki/Charset_detection).  There is a
+         * potential that we will get it wrong however, especially on short
+         * error message text.  (If it turns out to be necessary, we could also
+         * keep track if the current LC_MESSAGES locale is UTF-8) */
+        if (! IN_BYTES  /* respect 'use bytes' */
+            && ! is_ascii_string((U8*) SvPVX_const(sv), SvCUR(sv))
+            && is_utf8_string((U8*) SvPVX_const(sv), SvCUR(sv)))
+        {
+            SvUTF8_on(sv);
+        }
+    }
+#endif
+}
+
 #ifdef VMS
 #include <descrip.h>
 #include <starlet.h>
@@ -735,10 +794,22 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
     const char *s = NULL;
     REGEXP *rx;
     const char * const remaining = mg->mg_ptr + 1;
-    const char nextchar = *remaining;
+    char nextchar;
 
     PERL_ARGS_ASSERT_MAGIC_GET;
 
+    if (!mg->mg_ptr) {
+        paren = mg->mg_len;
+        if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
+          do_numbuf_fetch:
+            CALLREG_NUMBUF_FETCH(rx,paren,sv);
+        } else {
+            sv_setsv(sv,&PL_sv_undef);
+        }
+        return 0;
+    }
+
+    nextchar = *remaining;
     switch (*mg->mg_ptr) {
     case '\001':		/* ^A */
 	if (SvOK(PL_bodytarget)) sv_copypv(sv, PL_bodytarget);
@@ -759,55 +830,93 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 	sv_setiv(sv, (IV)(PL_debug & DEBUG_MASK));
 	break;
     case '\005':  /* ^E */
-	 if (nextchar == '\0') {
-#if defined(VMS)
-	     {
-		  char msg[255];
-		  $DESCRIPTOR(msgdsc,msg);
-		  sv_setnv(sv,(NV) vaxc$errno);
-		  if (sys$getmsg(vaxc$errno,&msgdsc.dsc$w_length,&msgdsc,0,0) & 1)
-		       sv_setpvn(sv,msgdsc.dsc$a_pointer,msgdsc.dsc$w_length);
-		  else
-		       sv_setpvs(sv,"");
-	     }
+	 if (nextchar != '\0') {
+            if (strEQ(remaining, "NCODING"))
+                sv_setsv(sv, PL_encoding);
+            break;
+        }
+
+#if defined(VMS) || defined(OS2) || defined(WIN32)
+#   if defined(VMS)
+        {
+            char msg[255];
+            $DESCRIPTOR(msgdsc,msg);
+            sv_setnv(sv,(NV) vaxc$errno);
+            if (sys$getmsg(vaxc$errno,&msgdsc.dsc$w_length,&msgdsc,0,0) & 1)
+                sv_setpvn(sv,msgdsc.dsc$a_pointer,msgdsc.dsc$w_length);
+            else
+                sv_setpvs(sv,"");
+        }
 #elif defined(OS2)
-	     if (!(_emx_env & 0x200)) {	/* Under DOS */
-		  sv_setnv(sv, (NV)errno);
-		  sv_setpv(sv, errno ? Strerror(errno) : "");
-	     } else {
-		  if (errno != errno_isOS2) {
-		       const int tmp = _syserrno();
-		       if (tmp)	/* 2nd call to _syserrno() makes it 0 */
-			    Perl_rc = tmp;
-		  }
-		  sv_setnv(sv, (NV)Perl_rc);
-		  sv_setpv(sv, os2error(Perl_rc));
-	     }
-#elif defined(WIN32)
-	     {
-		  const DWORD dwErr = GetLastError();
-		  sv_setnv(sv, (NV)dwErr);
-		  if (dwErr) {
-		       PerlProc_GetOSError(sv, dwErr);
-		  }
-		  else
-		       sv_setpvs(sv, "");
-		  SetLastError(dwErr);
-	     }
+        if (!(_emx_env & 0x200)) {	/* Under DOS */
+            sv_setnv(sv, (NV)errno);
+            sv_setpv(sv, errno ? Strerror(errno) : "");
+        } else {
+            if (errno != errno_isOS2) {
+                const int tmp = _syserrno();
+                if (tmp)	/* 2nd call to _syserrno() makes it 0 */
+                    Perl_rc = tmp;
+            }
+            sv_setnv(sv, (NV)Perl_rc);
+            sv_setpv(sv, os2error(Perl_rc));
+        }
+        if (SvOK(sv) && strNE(SvPVX(sv), "")) {
+            fixup_errno_string(sv);
+        }
+#   elif defined(WIN32)
+        {
+            const DWORD dwErr = GetLastError();
+            sv_setnv(sv, (NV)dwErr);
+            if (dwErr) {
+                PerlProc_GetOSError(sv, dwErr);
+                fixup_errno_string(sv);
+            }
+            else
+                sv_setpvs(sv, "");
+            SetLastError(dwErr);
+        }
+#   else
+#   error Missing code for platform
+#   endif
+        SvRTRIM(sv);
+        SvNOK_on(sv);	/* what a wonderful hack! */
+	break;
+#endif  /* End of platforms with special handling for $^E; others just fall
+           through to $! */
+
+    case '!':
+	{
+            dSAVE_ERRNO;
+#ifdef VMS
+            sv_setnv(sv, (NV)((errno == EVMSERR) ? vaxc$errno : errno));
 #else
-	     {
-		 dSAVE_ERRNO;
-		 sv_setnv(sv, (NV)errno);
-		 sv_setpv(sv, errno ? Strerror(errno) : "");
-		 RESTORE_ERRNO;
-	     }
+            sv_setnv(sv, (NV)errno);
 #endif
-	     SvRTRIM(sv);
-	     SvNOK_on(sv);	/* what a wonderful hack! */
-	 }
-	 else if (strEQ(remaining, "NCODING"))
-	      sv_setsv(sv, PL_encoding);
-	 break;
+#ifdef OS2
+            if (errno == errno_isOS2 || errno == errno_isOS2_set)
+                sv_setpv(sv, os2error(Perl_rc));
+            else
+#endif
+            if (! errno) {
+                sv_setpvs(sv, "");
+            }
+            else {
+
+                /* Strerror can return NULL on some platforms, which will
+                 * result in 'sv' not being considered SvOK.  The SvNOK_on()
+                 * below will cause just the number part to be valid */
+                sv_setpv(sv, Strerror(errno));
+                if (SvOK(sv)) {
+                    fixup_errno_string(sv);
+                }
+            }
+            RESTORE_ERRNO;
+	}
+
+	SvRTRIM(sv);
+	SvNOK_on(sv);	/* what a wonderful hack! */
+	break;
+
     case '\006':		/* ^F */
 	sv_setiv(sv, (IV)PL_maxsysfd);
 	break;
@@ -847,19 +956,10 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 	}
 	break;
     case '\020':
-	if (nextchar == '\0') {       /* ^P */
-	    sv_setiv(sv, (IV)PL_perldb);
-	} else if (strEQ(remaining, "REMATCH")) { /* $^PREMATCH */
-
-            paren = RX_BUFF_IDX_CARET_PREMATCH;
-	    goto do_numbuf_fetch;
-	} else if (strEQ(remaining, "OSTMATCH")) { /* $^POSTMATCH */
-            paren = RX_BUFF_IDX_CARET_POSTMATCH;
-	    goto do_numbuf_fetch;
-	}
+        sv_setiv(sv, (IV)PL_perldb);
 	break;
     case '\023':		/* ^S */
-	if (nextchar == '\0') {
+        {
 	    if (PL_parser && PL_parser->lex_state != LEX_NOTPARSING)
 		SvOK_off(sv);
 	    else if (PL_in_eval)
@@ -916,26 +1016,6 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 	    }
 	}
 	break;
-    case '\015': /* $^MATCH */
-	if (strEQ(remaining, "ATCH")) {
-            paren = RX_BUFF_IDX_CARET_FULLMATCH;
-	    goto do_numbuf_fetch;
-        }
-
-    case '1': case '2': case '3': case '4':
-    case '5': case '6': case '7': case '8': case '9': case '&':
-        /*
-         * Pre-threads, this was paren = atoi(GvENAME((const GV *)mg->mg_obj));
-         * XXX Does the new way break anything?
-         */
-        paren = atoi(mg->mg_ptr); /* $& is in [0] */
-      do_numbuf_fetch:
-        if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
-            CALLREG_NUMBUF_FETCH(rx,paren,sv);
-            break;
-        }
-        sv_setsv(sv,&PL_sv_undef);
-	break;
     case '+':
 	if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
 	    paren = RX_LASTPAREN(rx);
@@ -952,12 +1032,6 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 	}
 	sv_setsv(sv,&PL_sv_undef);
 	break;
-    case '`':
-        paren = RX_BUFF_IDX_PREMATCH;
-        goto do_numbuf_fetch;
-    case '\'':
-        paren = RX_BUFF_IDX_POSTMATCH;
-        goto do_numbuf_fetch;
     case '.':
 	if (GvIO(PL_last_in_gv)) {
 	    sv_setiv(sv, (IV)IoLINES(GvIOp(PL_last_in_gv)));
@@ -1031,38 +1105,17 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
 	    /* else a value has been assigned manually, so do nothing */
 	}
 	break;
-
-    case '!':
-	{
-	dSAVE_ERRNO;
-#ifdef VMS
-	sv_setnv(sv, (NV)((errno == EVMSERR) ? vaxc$errno : errno));
-#else
-	sv_setnv(sv, (NV)errno);
-#endif
-#ifdef OS2
-	if (errno == errno_isOS2 || errno == errno_isOS2_set)
-	    sv_setpv(sv, os2error(Perl_rc));
-	else
-#endif
-	sv_setpv(sv, errno ? Strerror(errno) : "");
-	RESTORE_ERRNO;
-	}
-
-	SvRTRIM(sv);
-	SvNOK_on(sv);	/* what a wonderful hack! */
-	break;
     case '<':
-	sv_setiv(sv, (IV)PerlProc_getuid());
+        sv_setuid(sv, PerlProc_getuid());
 	break;
     case '>':
-	sv_setiv(sv, (IV)PerlProc_geteuid());
+        sv_setuid(sv, PerlProc_geteuid());
 	break;
     case '(':
-	sv_setiv(sv, (IV)PerlProc_getgid());
+        sv_setgid(sv, PerlProc_getgid());
 	goto add_groups;
     case ')':
-	sv_setiv(sv, (IV)PerlProc_getegid());
+        sv_setgid(sv, PerlProc_getegid());
       add_groups:
 #ifdef HAS_GETGROUPS
 	{
@@ -1706,7 +1759,7 @@ Returns the SV (if any) returned by the method, or NULL on failure.
 */
 
 SV*
-Perl_magic_methcall(pTHX_ SV *sv, const MAGIC *mg, const char *meth, U32 flags,
+Perl_magic_methcall(pTHX_ SV *sv, const MAGIC *mg, SV *meth, U32 flags,
 		    U32 argc, ...)
 {
     dVAR;
@@ -1747,10 +1800,10 @@ Perl_magic_methcall(pTHX_ SV *sv, const MAGIC *mg, const char *meth, U32 flags,
     }
     PUTBACK;
     if (flags & G_DISCARD) {
-	call_method(meth, G_SCALAR|G_DISCARD);
+	call_sv(meth, G_SCALAR|G_DISCARD|G_METHOD_NAMED);
     }
     else {
-	if (call_method(meth, G_SCALAR))
+	if (call_sv(meth, G_SCALAR|G_METHOD_NAMED))
 	    ret = *PL_stack_sp--;
     }
     POPSTACK;
@@ -1760,11 +1813,10 @@ Perl_magic_methcall(pTHX_ SV *sv, const MAGIC *mg, const char *meth, U32 flags,
     return ret;
 }
 
-
 /* wrapper for magic_methcall that creates the first arg */
 
 STATIC SV*
-S_magic_methcall1(pTHX_ SV *sv, const MAGIC *mg, const char *meth, U32 flags,
+S_magic_methcall1(pTHX_ SV *sv, const MAGIC *mg, SV *meth, U32 flags,
     int n, SV *val)
 {
     dVAR;
@@ -1790,7 +1842,7 @@ S_magic_methcall1(pTHX_ SV *sv, const MAGIC *mg, const char *meth, U32 flags,
 }
 
 STATIC int
-S_magic_methpack(pTHX_ SV *sv, const MAGIC *mg, const char *meth)
+S_magic_methpack(pTHX_ SV *sv, const MAGIC *mg, SV *meth)
 {
     dVAR;
     SV* ret;
@@ -1810,7 +1862,7 @@ Perl_magic_getpack(pTHX_ SV *sv, MAGIC *mg)
 
     if (mg->mg_type == PERL_MAGIC_tiedelem)
 	mg->mg_flags |= MGf_GSKIP;
-    magic_methpack(sv,mg,"FETCH");
+    magic_methpack(sv,mg,SV_CONST(FETCH));
     return 0;
 }
 
@@ -1842,7 +1894,7 @@ Perl_magic_setpack(pTHX_ SV *sv, MAGIC *mg)
     else
 	val = sv;
 
-    magic_methcall1(sv, mg, "STORE", G_DISCARD, 2, val);
+    magic_methcall1(sv, mg, SV_CONST(STORE), G_DISCARD, 2, val);
     return 0;
 }
 
@@ -1852,7 +1904,7 @@ Perl_magic_clearpack(pTHX_ SV *sv, MAGIC *mg)
     PERL_ARGS_ASSERT_MAGIC_CLEARPACK;
 
     if (mg->mg_type == PERL_MAGIC_tiedscalar) return 0;
-    return magic_methpack(sv,mg,"DELETE");
+    return magic_methpack(sv,mg,SV_CONST(DELETE));
 }
 
 
@@ -1865,7 +1917,7 @@ Perl_magic_sizepack(pTHX_ SV *sv, MAGIC *mg)
 
     PERL_ARGS_ASSERT_MAGIC_SIZEPACK;
 
-    retsv = magic_methcall1(sv, mg, "FETCHSIZE", 0, 1, NULL);
+    retsv = magic_methcall1(sv, mg, SV_CONST(FETCHSIZE), 0, 1, NULL);
     if (retsv) {
 	retval = SvIV(retsv)-1;
 	if (retval < -1)
@@ -1881,7 +1933,7 @@ Perl_magic_wipepack(pTHX_ SV *sv, MAGIC *mg)
 
     PERL_ARGS_ASSERT_MAGIC_WIPEPACK;
 
-    Perl_magic_methcall(aTHX_ sv, mg, "CLEAR", G_DISCARD, 0);
+    Perl_magic_methcall(aTHX_ sv, mg, SV_CONST(CLEAR), G_DISCARD, 0);
     return 0;
 }
 
@@ -1893,8 +1945,8 @@ Perl_magic_nextpack(pTHX_ SV *sv, MAGIC *mg, SV *key)
 
     PERL_ARGS_ASSERT_MAGIC_NEXTPACK;
 
-    ret = SvOK(key) ? Perl_magic_methcall(aTHX_ sv, mg, "NEXTKEY", 0, 1, key)
-	: Perl_magic_methcall(aTHX_ sv, mg, "FIRSTKEY", 0, 0);
+    ret = SvOK(key) ? Perl_magic_methcall(aTHX_ sv, mg, SV_CONST(NEXTKEY), 0, 1, key)
+	: Perl_magic_methcall(aTHX_ sv, mg, SV_CONST(FIRSTKEY), 0, 0);
     if (ret)
 	sv_setsv(key,ret);
     return 0;
@@ -1905,7 +1957,7 @@ Perl_magic_existspack(pTHX_ SV *sv, const MAGIC *mg)
 {
     PERL_ARGS_ASSERT_MAGIC_EXISTSPACK;
 
-    return magic_methpack(sv,mg,"EXISTS");
+    return magic_methpack(sv,mg,SV_CONST(EXISTS));
 }
 
 SV *
@@ -1931,7 +1983,7 @@ Perl_magic_scalarpack(pTHX_ HV *hv, MAGIC *mg)
     }
    
     /* there is a SCALAR method that we can call */
-    retval = Perl_magic_methcall(aTHX_ MUTABLE_SV(hv), mg, "SCALAR", 0, 0);
+    retval = Perl_magic_methcall(aTHX_ MUTABLE_SV(hv), mg, SV_CONST(SCALAR), 0, 0);
     if (!retval)
 	retval = &PL_sv_undef;
     return retval;
@@ -1941,12 +1993,20 @@ int
 Perl_magic_setdbline(pTHX_ SV *sv, MAGIC *mg)
 {
     dVAR;
-    GV * const gv = PL_DBline;
-    const I32 i = SvTRUE(sv);
-    SV ** const svp = av_fetch(GvAV(gv),
-		     atoi(MgPV_nolen_const(mg)), FALSE);
+    SV **svp;
 
     PERL_ARGS_ASSERT_MAGIC_SETDBLINE;
+
+    /* The magic ptr/len for the debugger's hash should always be an SV.  */
+    if (UNLIKELY(mg->mg_len != HEf_SVKEY)) {
+        Perl_croak(aTHX_ "panic: magic_setdbline len=%"IVdf", ptr='%s'",
+                   (IV)mg->mg_len, mg->mg_ptr);
+    }
+
+    /* Use sv_2iv instead of SvIV() as the former generates smaller code, and
+       setting/clearing debugger breakpoints is not a hot path.  */
+    svp = av_fetch(MUTABLE_AV(mg->mg_obj),
+		   sv_2iv(MUTABLE_SV((mg)->mg_ptr)), FALSE);
 
     if (svp && SvIOKp(*svp)) {
 	OP * const o = INT2PTR(OP*,SvIVX(*svp));
@@ -1955,7 +2015,7 @@ Perl_magic_setdbline(pTHX_ SV *sv, MAGIC *mg)
 	    Slab_to_rw(OpSLAB(o));
 #endif
 	    /* set or clear breakpoint in the relevant control op */
-	    if (i)
+	    if (SvTRUE(sv))
 		o->op_flags |= OPf_SPECIAL;
 	    else
 		o->op_flags &= ~OPf_SPECIAL;
@@ -1978,7 +2038,7 @@ Perl_magic_getarylen(pTHX_ SV *sv, const MAGIC *mg)
     if (obj) {
 	sv_setiv(sv, AvFILL(obj));
     } else {
-	SvOK_off(sv);
+	sv_setsv(sv, NULL);
     }
     return 0;
 }
@@ -2049,21 +2109,19 @@ Perl_magic_getpos(pTHX_ SV *sv, MAGIC *mg)
 {
     dVAR;
     SV* const lsv = LvTARG(sv);
+    MAGIC * const found = mg_find_mglob(lsv);
 
     PERL_ARGS_ASSERT_MAGIC_GETPOS;
     PERL_UNUSED_ARG(mg);
 
-    if (SvTYPE(lsv) >= SVt_PVMG && SvMAGIC(lsv)) {
-	MAGIC * const found = mg_find(lsv, PERL_MAGIC_regex_global);
-	if (found && found->mg_len >= 0) {
-	    I32 i = found->mg_len;
-	    if (DO_UTF8(lsv))
-		sv_pos_b2u(lsv, &i);
-	    sv_setiv(sv, i);
+    if (found && found->mg_len != -1) {
+	    STRLEN i = found->mg_len;
+	    if (found->mg_flags & MGf_BYTES && DO_UTF8(lsv))
+		i = sv_pos_b2u_flags(lsv, i, SV_GMAGIC|SV_CONST_RETURN);
+	    sv_setuv(sv, i);
 	    return 0;
-	}
     }
-    SvOK_off(sv);
+    sv_setsv(sv,NULL);
     return 0;
 }
 
@@ -2081,19 +2139,11 @@ Perl_magic_setpos(pTHX_ SV *sv, MAGIC *mg)
     PERL_ARGS_ASSERT_MAGIC_SETPOS;
     PERL_UNUSED_ARG(mg);
 
-    if (SvTYPE(lsv) >= SVt_PVMG && SvMAGIC(lsv))
-	found = mg_find(lsv, PERL_MAGIC_regex_global);
-    else
-	found = NULL;
+    found = mg_find_mglob(lsv);
     if (!found) {
 	if (!SvOK(sv))
 	    return 0;
-#ifdef PERL_OLD_COPY_ON_WRITE
-    if (SvIsCOW(lsv))
-        sv_force_normal_flags(lsv, 0);
-#endif
-	found = sv_magicext(lsv, NULL, PERL_MAGIC_regex_global, &PL_vtbl_mglob,
-			    NULL, 0);
+	found = sv_magicext_mglob(lsv);
     }
     else if (!SvOK(sv)) {
 	found->mg_len = -1;
@@ -2117,12 +2167,8 @@ Perl_magic_setpos(pTHX_ SV *sv, MAGIC *mg)
     else if (pos > (SSize_t)len)
 	pos = len;
 
-    if (ulen) {
-	pos = sv_or_pv_pos_u2b(lsv, s, pos, 0);
-    }
-
     found->mg_len = pos;
-    found->mg_flags &= ~MGf_MINMATCH;
+    found->mg_flags &= ~(MGf_MINMATCH|MGf_BYTES);
 
     return 0;
 }
@@ -2252,10 +2298,7 @@ Perl_magic_getvec(pTHX_ SV *sv, MAGIC *mg)
     PERL_ARGS_ASSERT_MAGIC_GETVEC;
     PERL_UNUSED_ARG(mg);
 
-    if (lsv)
-	sv_setuv(sv, do_vecget(lsv, LvTARGOFF(sv), LvTARGLEN(sv)));
-    else
-	SvOK_off(sv);
+    sv_setuv(sv, do_vecget(lsv, LvTARGOFF(sv), LvTARGLEN(sv)));
 
     return 0;
 }
@@ -2269,14 +2312,14 @@ Perl_magic_setvec(pTHX_ SV *sv, MAGIC *mg)
     return 0;
 }
 
-int
-Perl_magic_getdefelem(pTHX_ SV *sv, MAGIC *mg)
+SV *
+Perl_defelem_target(pTHX_ SV *sv, MAGIC *mg)
 {
     dVAR;
     SV *targ = NULL;
-
-    PERL_ARGS_ASSERT_MAGIC_GETDEFELEM;
-
+    PERL_ARGS_ASSERT_DEFELEM_TARGET;
+    if (!mg) mg = mg_find(sv, PERL_MAGIC_defelem);
+    assert(mg);
     if (LvTARGLEN(sv)) {
 	if (mg->mg_obj) {
 	    SV * const ahv = LvTARG(sv);
@@ -2284,10 +2327,17 @@ Perl_magic_getdefelem(pTHX_ SV *sv, MAGIC *mg)
             if (he)
                 targ = HeVAL(he);
 	}
-	else {
+	else if (LvSTARGOFF(sv) >= 0) {
 	    AV *const av = MUTABLE_AV(LvTARG(sv));
-	    if ((I32)LvTARGOFF(sv) <= AvFILL(av))
-		targ = AvARRAY(av)[LvTARGOFF(sv)];
+	    if (LvSTARGOFF(sv) <= AvFILL(av))
+	    {
+	      if (SvRMAGICAL(av)) {
+		SV * const * const svp = av_fetch(av, LvSTARGOFF(sv), 0);
+		targ = svp ? *svp : NULL;
+	      }
+	      else
+		targ = AvARRAY(av)[LvSTARGOFF(sv)];
+	    }
 	}
 	if (targ && (targ != &PL_sv_undef)) {
 	    /* somebody else defined it for us */
@@ -2298,10 +2348,18 @@ Perl_magic_getdefelem(pTHX_ SV *sv, MAGIC *mg)
 	    mg->mg_obj = NULL;
 	    mg->mg_flags &= ~MGf_REFCOUNTED;
 	}
+	return targ;
     }
     else
-	targ = LvTARG(sv);
-    sv_setsv(sv, targ ? targ : &PL_sv_undef);
+	return LvTARG(sv);
+}
+
+int
+Perl_magic_getdefelem(pTHX_ SV *sv, MAGIC *mg)
+{
+    PERL_ARGS_ASSERT_MAGIC_GETDEFELEM;
+
+    sv_setsv(sv, defelem_target(sv, mg));
     return 0;
 }
 
@@ -2338,14 +2396,16 @@ Perl_vivify_defelem(pTHX_ SV *sv)
 	if (!value || value == &PL_sv_undef)
 	    Perl_croak(aTHX_ PL_no_helem_sv, SVfARG(mg->mg_obj));
     }
+    else if (LvSTARGOFF(sv) < 0)
+	Perl_croak(aTHX_ PL_no_aelem, LvSTARGOFF(sv));
     else {
 	AV *const av = MUTABLE_AV(LvTARG(sv));
-	if ((I32)LvTARGLEN(sv) < 0 && (I32)LvTARGOFF(sv) > AvFILL(av))
+	if ((I32)LvTARGLEN(sv) < 0 && LvSTARGOFF(sv) > AvFILL(av))
 	    LvTARG(sv) = NULL;	/* array can't be extended */
 	else {
-	    SV* const * const svp = av_fetch(av, LvTARGOFF(sv), TRUE);
-	    if (!svp || (value = *svp) == &PL_sv_undef)
-		Perl_croak(aTHX_ PL_no_aelem, (I32)LvTARGOFF(sv));
+	    SV* const * const svp = av_fetch(av, LvSTARGOFF(sv), TRUE);
+	    if (!svp || !(value = *svp))
+		Perl_croak(aTHX_ PL_no_aelem, LvSTARGOFF(sv));
 	}
     }
     SvREFCNT_inc_simple_void(value);
@@ -2445,46 +2505,30 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
     const char *s;
     I32 paren;
     const REGEXP * rx;
-    const char * const remaining = mg->mg_ptr + 1;
     I32 i;
     STRLEN len;
     MAGIC *tmg;
 
     PERL_ARGS_ASSERT_MAGIC_SET;
 
-    switch (*mg->mg_ptr) {
-    case '\015': /* $^MATCH */
-      if (strEQ(remaining, "ATCH"))
-          goto do_match;
-    case '`': /* ${^PREMATCH} caught below */
-      do_prematch:
-      paren = RX_BUFF_IDX_PREMATCH;
-      goto setparen;
-    case '\'': /* ${^POSTMATCH} caught below */
-      do_postmatch:
-      paren = RX_BUFF_IDX_POSTMATCH;
-      goto setparen;
-    case '&':
-      do_match:
-      paren = RX_BUFF_IDX_FULLMATCH;
-      goto setparen;
-    case '1': case '2': case '3': case '4':
-    case '5': case '6': case '7': case '8': case '9':
-      paren = atoi(mg->mg_ptr);
-      setparen:
+    if (!mg->mg_ptr) {
+        paren = mg->mg_len;
 	if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
-      setparen_got_rx:
+          setparen_got_rx:
             CALLREG_NUMBUF_STORE((REGEXP * const)rx,paren,sv);
 	} else {
             /* Croak with a READONLY error when a numbered match var is
              * set without a previous pattern match. Unless it's C<local $1>
              */
-      croakparen:
+          croakparen:
             if (!PL_localizing) {
                 Perl_croak_no_modify();
             }
         }
-        break;
+        return 0;
+    }
+
+    switch (*mg->mg_ptr) {
     case '\001':	/* ^A */
 	if (SvOK(sv)) sv_copypv(PL_bodytarget, sv);
 	else SvOK_off(PL_bodytarget);
@@ -2593,16 +2637,9 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	}
 	break;
     case '\020':	/* ^P */
-      if (*remaining == '\0') { /* ^P */
           PL_perldb = SvIV(sv);
           if (PL_perldb && !PL_DBsingle)
               init_debugger();
-          break;
-      } else if (strEQ(remaining, "REMATCH")) { /* $^PREMATCH */
-          goto do_prematch;
-      } else if (strEQ(remaining, "OSTMATCH")) { /* $^POSTMATCH */
-          goto do_postmatch;
-      }
       break;
     case '\024':	/* ^T */
 #ifdef BIG_TIME
@@ -2645,8 +2682,11 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 			PL_compiling.cop_warnings = pWARN_NONE;
 		    }
 		    /* Yuck. I can't see how to abstract this:  */
-		    else if (isWARN_on(((STRLEN *)SvPV_nolen_const(sv)) - 1,
-				       WARN_ALL) && !any_fatals) {
+		    else if (isWARN_on(
+                                ((STRLEN *)SvPV_nolen_const(sv)) - 1,
+                                WARN_ALL)
+                            && !any_fatals)
+                    {
 			if (!specialWARN(PL_compiling.cop_warnings))
 			    PerlMemShared_free(PL_compiling.cop_warnings);
 	                PL_compiling.cop_warnings = pWARN_ALL;
@@ -2715,8 +2755,34 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	}
 	break;
     case '/':
-	SvREFCNT_dec(PL_rs);
-	PL_rs = newSVsv(sv);
+        {
+            SV *tmpsv= sv;
+            if (SvROK(sv)) {
+                SV *referent= SvRV(sv);
+                const char *reftype= sv_reftype(referent, 0);
+                /* XXX: dodgy type check: This leaves me feeling dirty, but the alternative
+                 * is to copy pretty much the entire sv_reftype() into this routine, or to do
+                 * a full string comparison on the return of sv_reftype() both of which
+                 * make me feel worse! NOTE, do not modify this comment without reviewing the
+                 * corresponding comment in sv_reftype(). - Yves */
+                if (reftype[0] == 'S' || reftype[0] == 'L') {
+                    IV val= SvIV(referent);
+                    if (val <= 0) {
+                        tmpsv= &PL_sv_undef;
+                        Perl_ck_warner(aTHX_ packWARN(WARN_DEPRECATED),
+                            "Setting $/ to a reference to %s as a form of slurp is deprecated, treating as undef",
+                            SvIV(SvRV(sv)) < 0 ? "a negative integer" : "zero"
+                        );
+                    }
+                } else {
+              /* diag_listed_as: Setting $/ to %s reference is forbidden */
+                    Perl_croak(aTHX_ "Setting $/ to a%s %s reference is forbidden",
+                                      *reftype == 'A' ? "n" : "", reftype);
+                }
+            }
+            SvREFCNT_dec(PL_rs);
+            PL_rs = newSVsv(tmpsv);
+        }
 	break;
     case '\\':
 	SvREFCNT_dec(PL_ors_sv);
@@ -2754,34 +2820,40 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 #else
 #   define PERL_VMS_BANG 0
 #endif
+#if defined(WIN32) && ! defined(UNDER_CE)
+	SETERRNO(win32_get_errno(SvIOK(sv) ? SvIVX(sv) : SvOK(sv) ? sv_2iv(sv) : 0),
+		 (SvIV(sv) == EVMSERR) ? 4 : PERL_VMS_BANG);
+#else
 	SETERRNO(SvIOK(sv) ? SvIVX(sv) : SvOK(sv) ? sv_2iv(sv) : 0,
 		 (SvIV(sv) == EVMSERR) ? 4 : PERL_VMS_BANG);
+#endif
 	}
 	break;
     case '<':
 	{
-	const IV new_uid = SvIV(sv);
+        /* XXX $< currently silently ignores failures */
+	const Uid_t new_uid = SvUID(sv);
 	PL_delaymagic_uid = new_uid;
 	if (PL_delaymagic) {
 	    PL_delaymagic |= DM_RUID;
 	    break;				/* don't do magic till later */
 	}
 #ifdef HAS_SETRUID
-	(void)setruid((Uid_t)new_uid);
+	PERL_UNUSED_RESULT(setruid(new_uid));
 #else
 #ifdef HAS_SETREUID
-	(void)setreuid((Uid_t)new_uid, (Uid_t)-1);
+        PERL_UNUSED_RESULT(setreuid(new_uid, (Uid_t)-1));
 #else
 #ifdef HAS_SETRESUID
-      (void)setresuid((Uid_t)new_uid, (Uid_t)-1, (Uid_t)-1);
+        PERL_UNUSED_RESULT(setresuid(new_uid, (Uid_t)-1, (Uid_t)-1));
 #else
 	if (new_uid == PerlProc_geteuid()) {		/* special case $< = $> */
 #ifdef PERL_DARWIN
 	    /* workaround for Darwin's setuid peculiarity, cf [perl #24122] */
 	    if (new_uid != 0 && PerlProc_getuid() == 0)
-		(void)PerlProc_setuid(0);
+                PERL_UNUSED_RESULT(PerlProc_setuid(0));
 #endif
-	    (void)PerlProc_setuid(new_uid);
+            PERL_UNUSED_RESULT(PerlProc_setuid(new_uid));
 	} else {
 	    Perl_croak(aTHX_ "setruid() not implemented");
 	}
@@ -2792,23 +2864,24 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	}
     case '>':
 	{
-	const UV new_euid = SvIV(sv);
+        /* XXX $> currently silently ignores failures */
+	const Uid_t new_euid = SvUID(sv);
 	PL_delaymagic_euid = new_euid;
 	if (PL_delaymagic) {
 	    PL_delaymagic |= DM_EUID;
 	    break;				/* don't do magic till later */
 	}
 #ifdef HAS_SETEUID
-	(void)seteuid((Uid_t)new_euid);
+	PERL_UNUSED_RESULT(seteuid(new_euid));
 #else
 #ifdef HAS_SETREUID
-	(void)setreuid((Uid_t)-1, (Uid_t)new_euid);
+	PERL_UNUSED_RESULT(setreuid((Uid_t)-1, new_euid));
 #else
 #ifdef HAS_SETRESUID
-	(void)setresuid((Uid_t)-1, (Uid_t)new_euid, (Uid_t)-1);
+	PERL_UNUSED_RESULT(setresuid((Uid_t)-1, new_euid, (Uid_t)-1));
 #else
 	if (new_euid == PerlProc_getuid())		/* special case $> = $< */
-	    PerlProc_setuid(new_euid);
+	    PERL_UNUSED_RESULT(PerlProc_setuid(new_euid));
 	else {
 	    Perl_croak(aTHX_ "seteuid() not implemented");
 	}
@@ -2819,23 +2892,24 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	}
     case '(':
 	{
-	const UV new_gid = SvIV(sv);
+        /* XXX $( currently silently ignores failures */
+	const Gid_t new_gid = SvGID(sv);
 	PL_delaymagic_gid = new_gid;
 	if (PL_delaymagic) {
 	    PL_delaymagic |= DM_RGID;
 	    break;				/* don't do magic till later */
 	}
 #ifdef HAS_SETRGID
-	(void)setrgid((Gid_t)new_gid);
+	PERL_UNUSED_RESULT(setrgid(new_gid));
 #else
 #ifdef HAS_SETREGID
-	(void)setregid((Gid_t)new_gid, (Gid_t)-1);
+	PERL_UNUSED_RESULT(setregid(new_gid, (Gid_t)-1));
 #else
 #ifdef HAS_SETRESGID
-      (void)setresgid((Gid_t)new_gid, (Gid_t)-1, (Gid_t) -1);
+        PERL_UNUSED_RESULT(setresgid(new_gid, (Gid_t)-1, (Gid_t) -1));
 #else
 	if (new_gid == PerlProc_getegid())			/* special case $( = $) */
-	    (void)PerlProc_setgid(new_gid);
+	    PERL_UNUSED_RESULT(PerlProc_setgid(new_gid));
 	else {
 	    Perl_croak(aTHX_ "setrgid() not implemented");
 	}
@@ -2846,7 +2920,8 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	}
     case ')':
 	{
-	UV new_egid;
+        /* XXX $) currently silently ignores failures */
+	Gid_t new_egid;
 #ifdef HAS_SETGROUPS
 	{
 	    const char *p = SvPV_const(sv, len);
@@ -2862,7 +2937,7 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 
             while (isSPACE(*p))
                 ++p;
-            new_egid = Atol(p);
+            new_egid = (Gid_t)Atol(p);
             for (i = 0; i < maxgrp; ++i) {
                 while (*p && !isSPACE(*p))
                     ++p;
@@ -2874,14 +2949,14 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
                     Newx(gary, i + 1, Groups_t);
                 else
                     Renew(gary, i + 1, Groups_t);
-                gary[i] = Atol(p);
+                gary[i] = (Groups_t)Atol(p);
             }
             if (i)
-                (void)setgroups(i, gary);
+                PERL_UNUSED_RESULT(setgroups(i, gary));
 	    Safefree(gary);
 	}
 #else  /* HAS_SETGROUPS */
-	new_egid = SvIV(sv);
+        new_egid = SvGID(sv);
 #endif /* HAS_SETGROUPS */
 	PL_delaymagic_egid = new_egid;
 	if (PL_delaymagic) {
@@ -2889,16 +2964,16 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
 	    break;				/* don't do magic till later */
 	}
 #ifdef HAS_SETEGID
-	(void)setegid((Gid_t)new_egid);
+	PERL_UNUSED_RESULT(setegid(new_egid));
 #else
 #ifdef HAS_SETREGID
-	(void)setregid((Gid_t)-1, (Gid_t)new_egid);
+	PERL_UNUSED_RESULT(setregid((Gid_t)-1, new_egid));
 #else
 #ifdef HAS_SETRESGID
-	(void)setresgid((Gid_t)-1, (Gid_t)new_egid, (Gid_t)-1);
+	PERL_UNUSED_RESULT(setresgid((Gid_t)-1, new_egid, (Gid_t)-1));
 #else
 	if (new_egid == PerlProc_getgid())			/* special case $) = $( */
-	    (void)PerlProc_setgid(new_egid);
+	    PERL_UNUSED_RESULT(PerlProc_setgid(new_egid));
 	else {
 	    Perl_croak(aTHX_ "setegid() not implemented");
 	}
@@ -3180,7 +3255,7 @@ cleanup:
     /* pop any of SAVEFREESV, SAVEDESTRUCTOR_X and "save in progress" */
     PL_savestack_ix = old_ss_ix;
     if (flags & 8)
-	SvREFCNT_dec(sv);
+	SvREFCNT_dec_NN(sv);
     PL_op = myop;			/* Apparently not needed... */
 
     PL_Sv = tSv;			/* Restore global temporaries. */
@@ -3246,7 +3321,7 @@ S_restore_magic(pTHX_ const void *p)
 	    SvTEMP_off(sv);
 	}
 	else
-	    SvREFCNT_dec(sv); /* undo the inc in S_save_magic() */
+	    SvREFCNT_dec_NN(sv); /* undo the inc in S_save_magic() */
     }
 }
 

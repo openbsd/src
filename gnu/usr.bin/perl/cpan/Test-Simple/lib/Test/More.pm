@@ -17,10 +17,10 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '0.98';
+our $VERSION = '1.001002';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
-use Test::Builder::Module;
+use Test::Builder::Module 0.99;
 our @ISA    = qw(Test::Builder::Module);
 our @EXPORT = qw(ok use_ok require_ok
   is isnt like unlike is_deeply
@@ -49,7 +49,6 @@ Test::More - yet another framework for writing test scripts
   # or
   use Test::More;   # see done_testing()
 
-  BEGIN { use_ok( 'Some::Module' ); }
   require_ok( 'Some::Module' );
 
   # Various ways to say "ok"
@@ -269,7 +268,7 @@ For example:
     ok( $exp{9} == 81,                   'simple exponential' );
     ok( Film->can('db_Main'),            'set_db()' );
     ok( $p->tests == 4,                  'saw tests' );
-    ok( !grep !defined $_, @items,       'items populated' );
+    ok( !grep(!defined $_, @items),      'all items defined' );
 
 (Mnemonic:  "This is ok.")
 
@@ -318,7 +317,7 @@ are similar to these:
     ok( $foo ne '',     "Got some foo" );
 
 C<undef> will only ever match C<undef>.  So you can test a value
-agains C<undef> like this:
+against C<undef> like this:
 
     is($not_defined, undef, "undefined as expected");
 
@@ -397,7 +396,7 @@ So this:
 
 is similar to:
 
-    ok( $got =~ /expected/, 'this is like that');
+    ok( $got =~ m/expected/, 'this is like that');
 
 (Mnemonic "This is like that".)
 
@@ -440,8 +439,9 @@ sub unlike ($$;$) {
 
   cmp_ok( $got, $op, $expected, $test_name );
 
-Halfway between ok() and is() lies cmp_ok().  This allows you to
-compare two arguments using any binary perl operator.
+Halfway between C<ok()> and C<is()> lies C<cmp_ok()>.  This allows you
+to compare two arguments using any binary perl operator.  The test
+passes if the comparison is true and fails otherwise.
 
     # ok( $got eq $expected );
     cmp_ok( $got, 'eq', $expected, 'this eq that' );
@@ -577,58 +577,80 @@ you'd like them to be more specific, you can supply an $object_name
 =cut
 
 sub isa_ok ($$;$) {
-    my( $object, $class, $obj_name ) = @_;
+    my( $thing, $class, $thing_name ) = @_;
     my $tb = Test::More->builder;
 
-    my $diag;
+    my $whatami;
+    if( !defined $thing ) {
+        $whatami = 'undef';
+    }
+    elsif( ref $thing ) {
+        $whatami = 'reference';
 
-    if( !defined $object ) {
-        $obj_name = 'The thing' unless defined $obj_name;
-        $diag = "$obj_name isn't defined";
+        local($@,$!);
+        require Scalar::Util;
+        if( Scalar::Util::blessed($thing) ) {
+            $whatami = 'object';
+        }
     }
     else {
-        my $whatami = ref $object ? 'object' : 'class';
-        # We can't use UNIVERSAL::isa because we want to honor isa() overrides
-        my( $rslt, $error ) = $tb->_try( sub { $object->isa($class) } );
-        if($error) {
-            if( $error =~ /^Can't call method "isa" on unblessed reference/ ) {
-                # Its an unblessed reference
-                $obj_name = 'The reference' unless defined $obj_name;
-                if( !UNIVERSAL::isa( $object, $class ) ) {
-                    my $ref = ref $object;
-                    $diag = "$obj_name isn't a '$class' it's a '$ref'";
-                }
-            }
-            elsif( $error =~ /Can't call method "isa" without a package/ ) {
-                # It's something that can't even be a class
-                $obj_name = 'The thing' unless defined $obj_name;
-                $diag = "$obj_name isn't a class or reference";
-            }
-            else {
-                die <<WHOA;
+        $whatami = 'class';
+    }
+
+    # We can't use UNIVERSAL::isa because we want to honor isa() overrides
+    my( $rslt, $error ) = $tb->_try( sub { $thing->isa($class) } );
+
+    if($error) {
+        die <<WHOA unless $error =~ /^Can't (locate|call) method "isa"/;
 WHOA! I tried to call ->isa on your $whatami and got some weird error.
 Here's the error.
 $error
 WHOA
-            }
-        }
-        else {
-            $obj_name = "The $whatami" unless defined $obj_name;
-            if( !$rslt ) {
-                my $ref = ref $object;
-                $diag = "$obj_name isn't a '$class' it's a '$ref'";
-            }
-        }
     }
 
-    my $name = "$obj_name isa $class";
-    my $ok;
-    if($diag) {
-        $ok = $tb->ok( 0, $name );
-        $tb->diag("    $diag\n");
+    # Special case for isa_ok( [], "ARRAY" ) and like
+    if( $whatami eq 'reference' ) {
+        $rslt = UNIVERSAL::isa($thing, $class);
+    }
+
+    my($diag, $name);
+    if( defined $thing_name ) {
+        $name = "'$thing_name' isa '$class'";
+        $diag = defined $thing ? "'$thing_name' isn't a '$class'" : "'$thing_name' isn't defined";
+    }
+    elsif( $whatami eq 'object' ) {
+        my $my_class = ref $thing;
+        $thing_name = qq[An object of class '$my_class'];
+        $name = "$thing_name isa '$class'";
+        $diag = "The object of class '$my_class' isn't a '$class'";
+    }
+    elsif( $whatami eq 'reference' ) {
+        my $type = ref $thing;
+        $thing_name = qq[A reference of type '$type'];
+        $name = "$thing_name isa '$class'";
+        $diag = "The reference of type '$type' isn't a '$class'";
+    }
+    elsif( $whatami eq 'undef' ) {
+        $thing_name = 'undef';
+        $name = "$thing_name isa '$class'";
+        $diag = "$thing_name isn't defined";
+    }
+    elsif( $whatami eq 'class' ) {
+        $thing_name = qq[The class (or class-like) '$thing'];
+        $name = "$thing_name isa '$class'";
+        $diag = "$thing_name isn't a '$class'";
     }
     else {
+        die;
+    }
+
+    my $ok;
+    if($rslt) {
         $ok = $tb->ok( 1, $name );
+    }
+    else {
+        $ok = $tb->ok( 0, $name );
+        $tb->diag("    $diag\n");
     }
 
     return $ok;
@@ -662,7 +684,6 @@ sub new_ok {
     my( $class, $args, $object_name ) = @_;
 
     $args ||= [];
-    $object_name = "The object" unless defined $object_name;
 
     my $obj;
     my( $success, $error ) = $tb->_try( sub { $obj = $class->new(@$args); 1 } );
@@ -671,7 +692,8 @@ sub new_ok {
         isa_ok $obj, $class, $object_name;
     }
     else {
-        $tb->ok( 0, "new() died" );
+        $class = 'undef' if !defined $class;
+        $tb->ok( 0, "$class->new() died" );
         $tb->diag("    Error was:  $error");
     }
 
@@ -705,6 +727,7 @@ This would produce.
 
   1..3
   ok 1 - First test
+      # Subtest: An example subtest
       1..2
       ok 1 - This is a subtest
       ok 2 - So is this
@@ -781,123 +804,39 @@ sub fail (;$) {
 
 =head2 Module tests
 
-You usually want to test if the module you're testing loads ok, rather
-than just vomiting if its load fails.  For such purposes we have
-C<use_ok> and C<require_ok>.
+Sometimes you want to test if a module, or a list of modules, can
+successfully load.  For example, you'll often want a first test which
+simply loads all the modules in the distribution to make sure they
+work before going on to do more complicated testing.
+
+For such purposes we have C<use_ok> and C<require_ok>.
 
 =over 4
-
-=item B<use_ok>
-
-   BEGIN { use_ok($module); }
-   BEGIN { use_ok($module, @imports); }
-
-These simply use the given $module and test to make sure the load
-happened ok.  It's recommended that you run use_ok() inside a BEGIN
-block so its functions are exported at compile-time and prototypes are
-properly honored.
-
-If @imports are given, they are passed through to the use.  So this:
-
-   BEGIN { use_ok('Some::Module', qw(foo bar)) }
-
-is like doing this:
-
-   use Some::Module qw(foo bar);
-
-Version numbers can be checked like so:
-
-   # Just like "use Some::Module 1.02"
-   BEGIN { use_ok('Some::Module', 1.02) }
-
-Don't try to do this:
-
-   BEGIN {
-       use_ok('Some::Module');
-
-       ...some code that depends on the use...
-       ...happening at compile time...
-   }
-
-because the notion of "compile-time" is relative.  Instead, you want:
-
-  BEGIN { use_ok('Some::Module') }
-  BEGIN { ...some code that depends on the use... }
-
-If you want the equivalent of C<use Foo ()>, use a module but not
-import anything, use C<require_ok>.
-
-  BEGIN { require_ok "Foo" }
-
-
-=cut
-
-sub use_ok ($;@) {
-    my( $module, @imports ) = @_;
-    @imports = () unless @imports;
-    my $tb = Test::More->builder;
-
-    my( $pack, $filename, $line ) = caller;
-
-    my $code;
-    if( @imports == 1 and $imports[0] =~ /^\d+(?:\.\d+)?$/ ) {
-        # probably a version check.  Perl needs to see the bare number
-        # for it to work with non-Exporter based modules.
-        $code = <<USE;
-package $pack;
-use $module $imports[0];
-1;
-USE
-    }
-    else {
-        $code = <<USE;
-package $pack;
-use $module \@{\$args[0]};
-1;
-USE
-    }
-
-    my( $eval_result, $eval_error ) = _eval( $code, \@imports );
-    my $ok = $tb->ok( $eval_result, "use $module;" );
-
-    unless($ok) {
-        chomp $eval_error;
-        $@ =~ s{^BEGIN failed--compilation aborted at .*$}
-                {BEGIN failed--compilation aborted at $filename line $line.}m;
-        $tb->diag(<<DIAGNOSTIC);
-    Tried to use '$module'.
-    Error:  $eval_error
-DIAGNOSTIC
-
-    }
-
-    return $ok;
-}
-
-sub _eval {
-    my( $code, @args ) = @_;
-
-    # Work around oddities surrounding resetting of $@ by immediately
-    # storing it.
-    my( $sigdie, $eval_result, $eval_error );
-    {
-        local( $@, $!, $SIG{__DIE__} );    # isolate eval
-        $eval_result = eval $code;              ## no critic (BuiltinFunctions::ProhibitStringyEval)
-        $eval_error  = $@;
-        $sigdie      = $SIG{__DIE__} || undef;
-    }
-    # make sure that $code got a chance to set $SIG{__DIE__}
-    $SIG{__DIE__} = $sigdie if defined $sigdie;
-
-    return( $eval_result, $eval_error );
-}
 
 =item B<require_ok>
 
    require_ok($module);
    require_ok($file);
 
-Like use_ok(), except it requires the $module or $file.
+Tries to C<require> the given $module or $file.  If it loads
+successfully, the test will pass.  Otherwise it fails and displays the
+load error.
+
+C<require_ok> will guess whether the input is a module name or a
+filename.
+
+No exception will be thrown if the load fails.
+
+    # require Some::Module
+    require_ok "Some::Module";
+
+    # require "Some/File.pl";
+    require_ok "Some/File.pl";
+
+    # stop testing if any of your modules will not load
+    for my $module (@module) {
+        require_ok $module or BAIL_OUT "Can't load $module";
+    }
 
 =cut
 
@@ -942,6 +881,124 @@ sub _is_module_name {
 
     return $module =~ /^[a-zA-Z]\w*$/ ? 1 : 0;
 }
+
+
+=item B<use_ok>
+
+   BEGIN { use_ok($module); }
+   BEGIN { use_ok($module, @imports); }
+
+Like C<require_ok>, but it will C<use> the $module in question and
+only loads modules, not files.
+
+If you just want to test a module can be loaded, use C<require_ok>.
+
+If you just want to load a module in a test, we recommend simply using
+C<use> directly.  It will cause the test to stop.
+
+It's recommended that you run use_ok() inside a BEGIN block so its
+functions are exported at compile-time and prototypes are properly
+honored.
+
+If @imports are given, they are passed through to the use.  So this:
+
+   BEGIN { use_ok('Some::Module', qw(foo bar)) }
+
+is like doing this:
+
+   use Some::Module qw(foo bar);
+
+Version numbers can be checked like so:
+
+   # Just like "use Some::Module 1.02"
+   BEGIN { use_ok('Some::Module', 1.02) }
+
+Don't try to do this:
+
+   BEGIN {
+       use_ok('Some::Module');
+
+       ...some code that depends on the use...
+       ...happening at compile time...
+   }
+
+because the notion of "compile-time" is relative.  Instead, you want:
+
+  BEGIN { use_ok('Some::Module') }
+  BEGIN { ...some code that depends on the use... }
+
+If you want the equivalent of C<use Foo ()>, use a module but not
+import anything, use C<require_ok>.
+
+  BEGIN { require_ok "Foo" }
+
+=cut
+
+sub use_ok ($;@) {
+    my( $module, @imports ) = @_;
+    @imports = () unless @imports;
+    my $tb = Test::More->builder;
+
+    my( $pack, $filename, $line ) = caller;
+    $filename =~ y/\n\r/_/; # so it doesn't run off the "#line $line $f" line
+
+    my $code;
+    if( @imports == 1 and $imports[0] =~ /^\d+(?:\.\d+)?$/ ) {
+        # probably a version check.  Perl needs to see the bare number
+        # for it to work with non-Exporter based modules.
+        $code = <<USE;
+package $pack;
+
+#line $line $filename
+use $module $imports[0];
+1;
+USE
+    }
+    else {
+        $code = <<USE;
+package $pack;
+
+#line $line $filename
+use $module \@{\$args[0]};
+1;
+USE
+    }
+
+    my( $eval_result, $eval_error ) = _eval( $code, \@imports );
+    my $ok = $tb->ok( $eval_result, "use $module;" );
+
+    unless($ok) {
+        chomp $eval_error;
+        $@ =~ s{^BEGIN failed--compilation aborted at .*$}
+                {BEGIN failed--compilation aborted at $filename line $line.}m;
+        $tb->diag(<<DIAGNOSTIC);
+    Tried to use '$module'.
+    Error:  $eval_error
+DIAGNOSTIC
+
+    }
+
+    return $ok;
+}
+
+sub _eval {
+    my( $code, @args ) = @_;
+
+    # Work around oddities surrounding resetting of $@ by immediately
+    # storing it.
+    my( $sigdie, $eval_result, $eval_error );
+    {
+        local( $@, $!, $SIG{__DIE__} );    # isolate eval
+        $eval_result = eval $code;              ## no critic (BuiltinFunctions::ProhibitStringyEval)
+        $eval_error  = $@;
+        $sigdie      = $SIG{__DIE__} || undef;
+    }
+    # make sure that $code got a chance to set $SIG{__DIE__}
+    $SIG{__DIE__} = $sigdie if defined $sigdie;
+
+    return( $eval_result, $eval_error );
+}
+
 
 =back
 
@@ -1121,7 +1178,7 @@ You might remember C<ok() or diag()> with the mnemonic C<open() or
 die()>.
 
 B<NOTE> The exact formatting of the diagnostic output is still
-changing, but it is guaranteed that whatever you throw at it it won't
+changing, but it is guaranteed that whatever you throw at it won't
 interfere with the test.
 
 =item B<note>
@@ -1685,14 +1742,45 @@ If you fail more than 254 tests, it will be reported as 254.
 B<NOTE>  This behavior may go away in future versions.
 
 
-=head1 CAVEATS and NOTES
+=head1 COMPATIBILITY
+
+Test::More works with Perls as old as 5.8.1.
+
+Thread support is not very reliable before 5.10.1, but that's
+because threads are not very reliable before 5.10.1.
+
+Although Test::More has been a core module in versions of Perl since 5.6.2, Test::More has evolved since then, and not all of the features you're used to will be present in the shipped version of Test::More. If you are writing a module, don't forget to indicate in your package metadata the minimum version of Test::More that you require. For instance, if you want to use C<done_testing()> but want your test script to run on Perl 5.10.0, you will need to explicitly require Test::More > 0.88.
+
+Key feature milestones include:
 
 =over 4
 
-=item Backwards compatibility
+=item subtests
 
-Test::More works with Perls as old as 5.6.0.
+Subtests were released in Test::More 0.94, which came with Perl 5.12.0. Subtests did not implicitly call C<done_testing()> until 0.96; the first Perl with that fix was Perl 5.14.0 with 0.98.
 
+=item C<done_testing()>
+
+This was released in Test::More 0.88 and first shipped with Perl in 5.10.1 as part of Test::More 0.92. 
+
+=item C<cmp_ok()>
+
+Although C<cmp_ok()> was introduced in 0.40, 0.86 fixed an important bug to make it safe for overloaded objects; the fixed first shipped with Perl in 5.10.1 as part of Test::More 0.92.
+
+=item C<new_ok()> C<note()> and C<explain()>
+
+These were was released in Test::More 0.82, and first shipped with Perl in 5.10.1 as part of Test::More 0.92. 
+
+=back
+
+There is a full version history in the Changes file, and the Test::More versions included as core can be found using L<Module::CoreList>:
+
+    $ corelist -a Test::More
+
+
+=head1 CAVEATS and NOTES
+
+=over 4
 
 =item utf8 / "Wide character in print"
 
@@ -1703,13 +1791,19 @@ Test::More) duplicates STDOUT and STDERR.  So any changes to them,
 including changing their output disciplines, will not be seem by
 Test::More.
 
-The work around is to change the filehandles used by Test::Builder
-directly.
+One work around is to apply encodings to STDOUT and STDERR as early
+as possible and before Test::More (or any other Test module) loads.
+
+    use open ':std', ':encoding(utf8)';
+    use Test::More;
+
+A more direct work around is to change the filehandles used by
+Test::Builder.
 
     my $builder = Test::More->builder;
-    binmode $builder->output,         ":utf8";
-    binmode $builder->failure_output, ":utf8";
-    binmode $builder->todo_output,    ":utf8";
+    binmode $builder->output,         ":encoding(utf8)";
+    binmode $builder->failure_output, ":encoding(utf8)";
+    binmode $builder->todo_output,    ":encoding(utf8)";
 
 
 =item Overloaded objects

@@ -738,12 +738,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$i_niin I_NETINET_IN	/**/
 
-/* I_SFIO:
- *	This symbol, if defined, indicates to the C program that it should
- *	include <sfio.h>.
- */
-#$i_sfio	I_SFIO		/**/
-
 /* I_STDDEF:
  *	This symbol, if defined, indicates that <stddef.h> exists and should
  *	be included.
@@ -846,26 +840,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$i_syswait I_SYS_WAIT	/**/
 
-/* I_TERMIO:
- *	This symbol, if defined, indicates that the program should include
- *	<termio.h> rather than <sgtty.h>.  There are also differences in
- *	the ioctl() calls that depend on the value of this symbol.
- */
-/* I_TERMIOS:
- *	This symbol, if defined, indicates that the program should include
- *	the POSIX termios.h rather than sgtty.h or termio.h.
- *	There are also differences in the ioctl() calls that depend on the
- *	value of this symbol.
- */
-/* I_SGTTY:
- *	This symbol, if defined, indicates that the program should include
- *	<sgtty.h> rather than <termio.h>.  There are also differences in
- *	the ioctl() calls that depend on the value of this symbol.
- */
-#$i_termio I_TERMIO		/**/
-#$i_termios I_TERMIOS		/**/
-#$i_sgtty I_SGTTY		/**/
-
 /* I_UNISTD:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <unistd.h>.
@@ -926,18 +900,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #define OSNAME "$osname"		/**/
 #define OSVERS "$osvers"		/**/
-
-/* USE_CROSS_COMPILE:
- *	This symbol, if defined, indicates that Perl is being cross-compiled.
- */
-/* PERL_TARGETARCH:
- *	This symbol, if defined, indicates the target architecture
- *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
- */
-#ifndef USE_CROSS_COMPILE
-#$usecrosscompile	USE_CROSS_COMPILE	/**/
-#define	PERL_TARGETARCH	"$targetarch"	/**/
-#endif
 
 /* MULTIARCH:
  *	This symbol, if defined, signifies that the build
@@ -1028,7 +990,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	so the default case (for NeXT) is big endian to catch them.
  *	This might matter for NeXT 3.0.
  */
-#if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
+#if defined(MULTIARCH)
 #  ifdef __LITTLE_ENDIAN__
 #    if LONGSIZE == 4
 #      define BYTEORDER 0x1234
@@ -3167,7 +3129,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	/bin/pdksh, /bin/ash, /bin/bash, or even something such as
  *	D:/bin/sh.exe.
  */
-#define SH_PATH "$sh"  /**/
+#define SH_PATH "$targetsh"  /**/
 
 /* SIG_NAME:
  *	This symbol contains a list of signal names in order of
@@ -3365,29 +3327,36 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_vendorlib PERL_VENDORLIB_EXP "$vendorlibexp"		/**/
 #$d_vendorlib PERL_VENDORLIB_STEM "$vendorlib_stem"		/**/
 
-/* VOIDFLAGS:
- *	This symbol indicates how much support of the void type is given by this
- *	compiler.  What various bits mean:
- *
- *	    1 = supports declaration of void
- *	    2 = supports arrays of pointers to functions returning void
- *	    4 = supports comparisons between pointers to void functions and
- *		    addresses of void functions
- *	    8 = supports declaration of generic void pointers
- *
- *	The package designer should define VOIDUSED to indicate the requirements
- *	of the package.  This can be done either by #defining VOIDUSED before
- *	including config.h, or by defining defvoidused in Myinit.U.  If the
- *	latter approach is taken, only those flags will be tested.  If the
- *	level of void support necessary is not present, defines void to int.
+/* I_TERMIO:
+ *	This symbol, if defined, indicates that the program should include
+ *	<termio.h> rather than <sgtty.h>.  There are also differences in
+ *	the ioctl() calls that depend on the value of this symbol.
  */
-#ifndef VOIDUSED
-#define VOIDUSED $defvoidused
-#endif
-#define VOIDFLAGS $voidflags
-#if (VOIDFLAGS & VOIDUSED) != VOIDUSED
-#define void int		/* is void to be avoided? */
-#define M_VOID			/* Xenix strikes again */
+/* I_TERMIOS:
+ *	This symbol, if defined, indicates that the program should include
+ *	the POSIX termios.h rather than sgtty.h or termio.h.
+ *	There are also differences in the ioctl() calls that depend on the
+ *	value of this symbol.
+ */
+/* I_SGTTY:
+ *	This symbol, if defined, indicates that the program should include
+ *	<sgtty.h> rather than <termio.h>.  There are also differences in
+ *	the ioctl() calls that depend on the value of this symbol.
+ */
+#$i_termio I_TERMIO		/**/
+#$i_termios I_TERMIOS		/**/
+#$i_sgtty I_SGTTY		/**/
+
+/* USE_CROSS_COMPILE:
+ *	This symbol, if defined, indicates that Perl is being cross-compiled.
+ */
+/* PERL_TARGETARCH:
+ *	This symbol, if defined, indicates the target architecture
+ *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
+ */
+#ifndef USE_CROSS_COMPILE
+#$usecrosscompile	USE_CROSS_COMPILE	/**/
+#define	PERL_TARGETARCH	"$targetarch"	/**/
 #endif
 
 /* PERL_USE_DEVEL:
@@ -3952,12 +3921,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_setproctitle HAS_SETPROCTITLE		/**/
 
-/* USE_SFIO:
- *	This symbol, if defined, indicates that sfio should
- *	be used.
- */
-#$d_sfio	USE_SFIO		/**/
-
 /* HAS_SIGNBIT:
  *	This symbol, if defined, indicates that the signbit routine is
  *	available to check if the given number has the sign bit set.
@@ -4223,8 +4186,10 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$usedl USE_DYNAMIC_LOADING		/**/
 
 /* FFLUSH_NULL:
- *	This symbol, if defined, tells that fflush(NULL) does flush
- *	all pending stdio output.
+ *	This symbol, if defined, tells that fflush(NULL) correctly
+ *	flushes all pending stdio output without side effects. In
+ *	particular, on some platforms calling fflush(NULL) *still*
+ *	corrupts STDIN if it is a pipe.
  */
 /* FFLUSH_ALL:
  *	This symbol, if defined, tells that to flush

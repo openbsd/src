@@ -211,25 +211,13 @@ RunPerl(int argc, char **argv, char **env)
 {
     int exitstatus;
     PerlInterpreter *my_perl, *new_perl = NULL;
-    OSVERSIONINFO osver;
-    char szModuleName[MAX_PATH];
     char *arg0 = argv[0];
     char *ansi = NULL;
     bool use_environ = (env == environ);
 
-    osver.dwOSVersionInfoSize = sizeof(osver);
-    GetVersionEx(&osver);
-
-    if (osver.dwMajorVersion > 4) {
-        WCHAR widename[MAX_PATH];
-        GetModuleFileNameW(NULL, widename, sizeof(widename)/sizeof(WCHAR));
-        argv[0] = ansi = win32_ansipath(widename);
-    }
-    else {
-        Win_GetModuleFileName(NULL, szModuleName, sizeof(szModuleName));
-        (void)win32_longpath(szModuleName);
-        argv[0] = szModuleName;
-    }
+    WCHAR widename[MAX_PATH];
+    GetModuleFileNameW(NULL, widename, sizeof(widename)/sizeof(WCHAR));
+    argv[0] = ansi = win32_ansipath(widename);
 
 #ifdef PERL_GLOBAL_STRUCT
 #define PERLVAR(prefix,var,type) /**/
@@ -302,7 +290,7 @@ EndSockets(void);
 EXTERN_C		/* GCC in C++ mode mangles the name, otherwise */
 #endif
 BOOL APIENTRY
-DllMain(HANDLE hModule,		/* DLL module handle */
+DllMain(HINSTANCE hModule,	/* DLL module handle */
 	DWORD fdwReason,	/* reason called */
 	LPVOID lpvReserved)	/* reserved */
 { 
@@ -311,14 +299,6 @@ DllMain(HANDLE hModule,		/* DLL module handle */
 	 * initialization or a call to LoadLibrary.
 	 */
     case DLL_PROCESS_ATTACH:
-/* #define DEFAULT_BINMODE */
-#ifdef DEFAULT_BINMODE
-	setmode( fileno( stdin  ), O_BINARY );
-	setmode( fileno( stdout ), O_BINARY );
-	setmode( fileno( stderr ), O_BINARY );
-	_fmode = O_BINARY;
-#endif
-
 #ifndef UNDER_CE
 	DisableThreadLibraryCalls((HMODULE)hModule);
 #endif

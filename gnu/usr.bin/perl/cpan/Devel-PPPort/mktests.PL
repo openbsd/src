@@ -4,13 +4,7 @@
 #
 ################################################################################
 #
-#  $Revision: 33 $
-#  $Author: mhx $
-#  $Date: 2010/03/07 13:15:41 +0100 $
-#
-################################################################################
-#
-#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -35,30 +29,30 @@ sub generate_tests
   for $file (all_files_in_dir('parts/inc')) {
     my($testfile) = $file =~ /(\w+)\.?$/;  # VMS has a trailing dot
     $testfile = "t/$testfile.t";
-  
+
     my $spec = parse_partspec($file);
     my $plan = 0;
-  
+
     if (exists $spec->{tests}) {
       exists $spec->{OPTIONS}{tests} &&
       exists $spec->{OPTIONS}{tests}{plan}
           or die "No plan for tests in $file\n";
-  
+
       print "generating $testfile\n";
-  
+
       my $tmpl = $template;
       $tmpl =~ s/__SOURCE__/$file/mg;
       $tmpl =~ s/__PLAN__/$spec->{OPTIONS}{tests}{plan}/mg;
       $tmpl =~ s/^__TESTS__$/$spec->{tests}/mg;
-  
+
       open FH, ">$testfile" or die "$testfile: $!\n";
       print FH $tmpl;
       close FH;
-  
+
       push @tests, $testfile;
     }
   }
-  
+
   return @tests;
 }
 

@@ -9,6 +9,7 @@ plan(36);
 @array = (1, 2, 3);
 $aref  = [1, 2, 3];
 
+no warnings 'experimental::autoderef';
 {
     no warnings 'syntax';
     $count3 = unshift (@array);

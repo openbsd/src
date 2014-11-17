@@ -24,7 +24,7 @@ use strict;
 use Config;
 
 require "test.pl";
-plan(tests => 8);
+plan(tests => 10);
 
 
 my $reps = 15000;	# How many times to try rand each time.
@@ -242,3 +242,8 @@ DIAG
     ok($r < 1,        'rand() without args is under 1');
 }
 
+{ # [perl #115928] use a standard rand() implementation
+    srand(1);
+    is(int rand(1000), 41, "our own implementation behaves consistently");
+    is(int rand(1000), 454, "and still consistently");
+}

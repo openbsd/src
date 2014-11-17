@@ -5,7 +5,7 @@ perltrap - Perl traps for the unwary
 =head1 DESCRIPTION
 
 The biggest trap of all is forgetting to C<use warnings> or use the B<-w>
-switch; see L<perllexwarn> and L<perlrun>. The second biggest trap is not
+switch; see L<warnings> and L<perlrun>. The second biggest trap is not
 making your entire program runnable under C<use strict>.  The third biggest
 trap is not reading the list of changes in this version of Perl; see
 L<perldelta>.
@@ -202,6 +202,101 @@ success, not 0. (system(), however, returns zero for success.)
 
 Signal handlers deal with signal names, not numbers.  Use C<kill -l>
 to find their names on your system.
+
+=back
+
+=head2 JavaScript Traps
+
+Judicious JavaScript programmers should take note of the following:
+
+=over 4
+
+=item *
+
+In Perl, binary C<+> is always addition.  C<$string1 + $string2> converts
+both strings to numbers and then adds them.  To concatenate two strings,
+use the C<.> operator.
+
+=item *
+
+The C<+> unary operator doesn't do anything in Perl.  It exists to avoid
+syntactic ambiguities.
+
+=item *
+
+Unlike C<for...in>, Perl's C<for> (also spelled C<foreach>) does not allow
+the left-hand side to be an arbitrary expression.  It must be a variable:
+
+   for my $variable (keys %hash) {
+	...
+   }
+
+Furthermore, don't forget the C<keys> in there, as
+C<foreach my $kv (%hash) {}> iterates over the keys and values, and is
+generally not useful ($kv would be a key, then a value, and so on).
+
+=item *
+
+To iterate over the indices of an array, use C<foreach my $i (0 .. $#array)
+{}>.  C<foreach my $v (@array) {}> iterates over the values.
+
+=item *
+
+Perl requires braces following C<if>, C<while>, C<foreach>, etc.
+
+=item *
+
+In Perl, C<else if> is spelled C<elsif>.
+
+=item *
+
+C<? :> has higher precedence than assignment.  In JavaScript, one can
+write:
+
+    condition ? do_something() : variable = 3
+
+and the variable is only assigned if the condition is false.  In Perl, you
+need parentheses:
+
+    $condition ? do_something() : ($variable = 3);
+
+Or just use C<if>.
+
+=item *
+
+Perl requires semicolons to separate statements.
+
+=item *
+
+Variables declared with C<my> only affect code I<after> the declaration.
+You cannot write C<$x = 1; my $x;> and expect the first assignment to
+affect the same variable.  It will instead assign to an C<$x> declared
+previously in an outer scope, or to a global variable.
+
+Note also that the variable is not visible until the following
+I<statement>.  This means that in C<my $x = 1 + $x> the second $x refers
+to one declared previously.
+
+=item *
+
+C<my> variables are scoped to the current block, not to the current
+function.  If you write C<{my $x;} $x;>, the second C<$x> does not refer to
+the one declared inside the block.
+
+=item *
+
+An object's members cannot be made accessible as variables.  The closest
+Perl equivalent to C<with(object) { method() }> is C<for>, which can alias
+C<$_> to the object:
+
+    for ($object) {
+	$_->method;
+    }
+
+=item *
+
+The object or class on which a method is called is passed as one of the
+method's arguments, not as a separate C<this> value.
 
 =back
 

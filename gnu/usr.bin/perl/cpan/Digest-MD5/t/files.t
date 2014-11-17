@@ -21,7 +21,7 @@ EOT
     # This is the output of: 'md5sum README MD5.xs rfc1321.txt'
     $EXPECT = <<EOT;
 2f93400875dbb56f36691d5f69f3eba5  README
-1d2a7c4f7a6180a7f3369d703ffe7cd0  MD5.xs
+f908acbcf6bd32042f282b0deed61264  MD5.xs
 754b9db19f79dbc4992f7166eb0f37ce  rfc1321.txt
 EOT
 }
@@ -44,7 +44,8 @@ for (split /^/, $EXPECT) {
      my $base = $file;
 #     print "# $base\n";
      if ($ENV{PERL_CORE}) {
-         if ($file eq 'rfc1321.txt') { # Don't have it in core.
+         # Don't have these in core.
+         if ($file eq 'rfc1321.txt' or $file eq 'README') {
 	     print "ok ", ++$testno, " # Skip: PERL_CORE\n";
 	     next;
 	 }

@@ -16,7 +16,7 @@ use IO::Socket;
 use Net::Cmd;
 use Net::Config;
 
-$VERSION = "2.34";
+$VERSION = "2.33";
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 
@@ -642,24 +642,24 @@ Example:
 
 
     $smtp = Net::SMTP->new('mailhost',
-                           Hello => 'my.mail.domain',
-                           Timeout => 30,
+			   Hello => 'my.mail.domain',
+			   Timeout => 30,
                            Debug   => 1,
-                          );
+			  );
 
     # the same
     $smtp = Net::SMTP->new(
-                           Host => 'mailhost',
-                           Hello => 'my.mail.domain',
-                           Timeout => 30,
+			   Host => 'mailhost',
+			   Hello => 'my.mail.domain',
+			   Timeout => 30,
                            Debug   => 1,
-                          );
+			  );
 
     # Connect to the default server from Net::config
     $smtp = Net::SMTP->new(
-                           Hello => 'my.mail.domain',
-                           Timeout => 30,
-                          );
+			   Hello => 'my.mail.domain',
+			   Timeout => 30,
+			  );
 
 =back
 

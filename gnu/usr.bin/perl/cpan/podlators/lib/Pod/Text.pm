@@ -38,7 +38,7 @@ use Pod::Simple ();
 # We have to export pod2text for backward compatibility.
 @EXPORT = qw(pod2text);
 
-$VERSION = '3.17';
+$VERSION = '3.18';
 
 ##############################################################################
 # Initialization
@@ -301,7 +301,6 @@ sub start_document {
     my ($self, $attrs) = @_;
     if ($$attrs{contentless} && !$$self{ALWAYS_EMIT_SOMETHING}) {
         $$self{CONTENTLESS} = 1;
-        return;
     } else {
         delete $$self{CONTENTLESS};
     }
@@ -727,6 +726,26 @@ sub parse_file {
     return $self->SUPER::parse_file ($in);
 }
 
+# Do the same for parse_lines, just to be polite.  Pod::Simple's man page
+# implies that the caller is responsible for setting this, but I don't see any
+# reason not to set a default.
+sub parse_lines {
+    my ($self, @lines) = @_;
+    unless (defined $$self{output_fh}) {
+        $self->output_fh (\*STDOUT);
+    }
+    return $self->SUPER::parse_lines (@lines);
+}
+
+# Likewise for parse_string_document.
+sub parse_string_document {
+    my ($self, $doc) = @_;
+    unless (defined $$self{output_fh}) {
+        $self->output_fh (\*STDOUT);
+    }
+    return $self->SUPER::parse_string_document ($doc);
+}
+
 ##############################################################################
 # Module return value and documentation
 ##############################################################################
@@ -736,6 +755,7 @@ __END__
 
 =for stopwords
 alt stderr Allbery Sean Burke's Christiansen UTF-8 pre-Unicode utf8 nourls
+parsers
 
 =head1 NAME
 
@@ -788,7 +808,7 @@ not to throw an exception.  C<pod> says to include a POD ERRORS section
 in the resulting documentation summarizing the errors.  C<none> ignores
 POD errors entirely, as much as possible.
 
-The default is C<output>.
+The default is C<pod>.
 
 =item indent
 
@@ -871,10 +891,24 @@ The column at which to wrap text on the right-hand side.  Defaults to 76.
 
 =back
 
-The standard Pod::Simple method parse_file() takes one argument, the file or
-file handle to read from, and writes output to standard output unless that
-has been changed with the output_fh() method.  See L<Pod::Simple> for the
-specific details and for other alternative interfaces.
+The standard Pod::Simple method parse_file() takes one argument naming the
+POD file to read from.  By default, the output is sent to C<STDOUT>, but
+this can be changed with the output_fh() method.
+
+The standard Pod::Simple method parse_from_file() takes up to two
+arguments, the first being the input file to read POD from and the second
+being the file to write the formatted output to.
+
+You can also call parse_lines() to parse an array of lines or
+parse_string_document() to parse a document already in memory.  As with
+parse_file(), parse_lines() and parse_string_document() default to sending
+their output to C<STDOUT> unless changed with the output_fh() method.
+
+To put the output from any parse method into a string instead of a file
+handle, call the output_string() method instead of output_fh().
+
+See L<Pod::Simple> for more specific details on the methods available to
+all derived parsers.
 
 =head1 DIAGNOSTICS
 

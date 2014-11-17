@@ -33,7 +33,7 @@ EOT
 
 my %OPT = ();
 warn($usage), exit(0) if !getopts('whun:o:a:s:',\%OPT) or $OPT{'h'};
-# NOTE: %0 is already enclosed in doublequotes by cmd.exe, as appropriate
+# NOTE: %0 is already enclosed in double quotes by cmd.exe, as appropriate
 $OPT{'n'} = '-x -S %0 %*' unless exists $OPT{'n'};
 $OPT{'o'} = '-x -S "%0" %1 %2 %3 %4 %5 %6 %7 %8 %9' unless exists $OPT{'o'};
 $OPT{'s'} = '/\\.plx?/' unless exists $OPT{'s'};

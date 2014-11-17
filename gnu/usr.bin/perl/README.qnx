@@ -137,6 +137,67 @@ This is due to a bug in the C library's printf routine.
 printf("'%e'", 0. ) produces '0.000000e+0', but ANSI requires
 '0.000000e+00'. QNX has acknowledged the bug.
 
+=head2 Cross-compilation
+
+Perl supports cross-compiling to QNX NTO through the
+Native Development Kit (NDK) for the Blackberry 10.  This means that you
+can cross-compile for both ARM and x86 versions of the platform.
+
+=head3 Setting up a cross-compilation environment
+
+You can download the NDK from
+L<http://developer.blackberry.com/native/downloads/>.
+
+See
+L<http://developer.blackberry.com/native/documentation/cascades/getting_started/setting_up.html>
+for instructions to set up your device prior to attempting anything else.
+
+Once you've installed the NDK and set up your device, all that's
+left to do is setting up the device and the cross-compilation
+environment.  Blackberry provides a script, C<bbndk-env.sh> (occasionally
+named something like C<bbndk-env_10_1_0_4828.sh>) which can be used
+to do this.  However, there's a bit of a snag that we have to work through:
+The script modifies PATH so that 'gcc' or 'ar' point to their
+cross-compilation equivalents, which screws over the build process.
+
+So instead you'll want to do something like this:
+
+    $ orig_path=$PATH
+    $ source $location_of_bbndk/bbndk-env*.sh
+    $ export PATH="$orig_path:$PATH"
+
+Besides putting the cross-compiler and the rest of the toolchain in your
+PATH, this will also provide the QNX_TARGET variable, which
+we will pass to Configure through -Dsysroot.
+
+=head3 Preparing the target system
+
+It's quite possible that the target system doesn't have a readily
+available /tmp, so it's generall safer to do something like this:
+
+ $ ssh $TARGETUSER@$TARGETHOST 'rm -rf perl; mkdir perl; mkdir perl/tmp'
+ $ export TARGETDIR=`ssh $TARGETUSER@$TARGETHOST pwd`/perl
+ $ export TARGETENV="export TMPDIR=$TARGETDIR/tmp; "
+
+Later on, we'll pass this to Configure through -Dtargetenv
+
+=head3 Calling Configure
+
+If you are targetting an ARM device -- which currently includes the vast 
+majority of phones and tablets -- you'll want to pass
+-Dcc=arm-unknown-nto-qnx8.0.0eabi-gcc to Configure.  Alternatively, if you 
+are targetting an x86 device, or using the simulator provided with the NDK,
+you should specify -Dcc=ntox86-gcc instead.
+
+A sample Configure invocation looks something like this:
+
+    ./Configure -des -Dusecrosscompile \
+        -Dsysroot=$QNX_TARGET          \
+        -Dtargetdir=$TARGETDIR         \
+        -Dtargetenv="$TARGETENV"       \
+        -Dcc=ntox86-gcc                \
+        -Dtarghost=... # Usual cross-compilation options
+
 =head1 AUTHOR
 
 Norton T. Allen (allen@huarp.harvard.edu)

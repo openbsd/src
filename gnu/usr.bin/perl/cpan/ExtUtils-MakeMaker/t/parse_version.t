@@ -11,6 +11,7 @@ use File::Temp qw[tempfile];
 
 my $Has_Version = eval 'require version; "version"->import; 1';
 
+# "undef" - means we expect "undef", undef - eval should be never called for this string
 my %versions = (q[$VERSION = '1.00']            => '1.00',
                 q[*VERSION = \'1.01']           => '1.01',
                 q[($VERSION) = q$Revision: 32208 $ =~ /(\d+)/g;] => 32208,
@@ -20,30 +21,35 @@ my %versions = (q[$VERSION = '1.00']            => '1.00',
                 '$VERSION = 0.0'                => 0.0,
                 '$VERSION = -1.0'               => -1.0,
                 '$VERSION = undef'              => 'undef',
-                '$wibble  = 1.0'                => 'undef',
+                '$wibble  = 1.0'                => undef,
                 q[my $VERSION = '1.01']         => 'undef',
                 q[local $VERISON = '1.02']      => 'undef',
                 q[local $FOO::VERSION = '1.30'] => 'undef',
                 q[if( $Foo::VERSION >= 3.00 ) {]=> 'undef',
                 q[our $VERSION = '1.23';]       => '1.23',
+                q[$CGI::VERSION='3.63']         => '3.63',
+                q[$VERSION = "1.627"; # ==> ALSO update the version in the pod text below!] => '1.627',
 
-                '$Something::VERSION == 1.0'    => 'undef',
-                '$Something::VERSION <= 1.0'    => 'undef',
-                '$Something::VERSION >= 1.0'    => 'undef',
-                '$Something::VERSION != 1.0'    => 'undef',
+                '$Something::VERSION == 1.0'    => undef,
+                '$Something::VERSION <= 1.0'    => undef,
+                '$Something::VERSION >= 1.0'    => undef,
+                '$Something::VERSION != 1.0'    => undef,
+                'my $meta_coder = ($JSON::XS::VERSION >= 1.4) ?' => undef,
 
                 qq[\$Something::VERSION == 1.0\n\$VERSION = 2.3\n]                     => '2.3',
                 qq[\$Something::VERSION == 1.0\n\$VERSION = 2.3\n\$VERSION = 4.5\n]    => '2.3',
 
                 '$VERSION = sprintf("%d.%03d", q$Revision: 3.74 $ =~ /(\d+)\.(\d+)/);' => '3.074',
                 '$VERSION = substr(q$Revision: 2.8 $, 10) + 2 . "";'                   => '4.8',
-                'elsif ( $Something::VERSION >= 1.99 )' => 'undef',
+                q[our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };] => '2.07', # Fucking seriously?
+                'elsif ( $Something::VERSION >= 1.99 )' => undef,
 
                );
 
 if( $Has_Version ) {
     $versions{q[use version; $VERSION = qv("1.2.3");]} = qv("1.2.3");
     $versions{q[$VERSION = qv("1.2.3")]}               = qv("1.2.3");
+    $versions{q[$VERSION = v1.2.3]} = 'v1.2.3';
 }
 
 if( $] >= 5.011001 ) {
@@ -74,14 +80,28 @@ our $VERSION = 2.34;
 END
 }
 
-plan tests => (3 * keys %versions) + 4;
+if ( $] > 5.009 && $] < 5.012 ) {
+  delete $versions{'$VERSION = -1.0'};
+}
+
+plan tests => (3 * keys %versions) + 4 + grep { !defined} (values %versions);
 
 for my $code ( sort keys %versions ) {
     my $expect = $versions{$code};
     (my $label = $code) =~ s/\n/\\n/g;
     my $warnings = "";
     local $SIG{__WARN__} = sub { $warnings .= "@_\n"; };
-    is( parse_version_string($code), $expect, $label );
+	if (defined $expect) {
+		is( parse_version_string($code), $expect, $label );
+	} else {
+		my $is_called = 0;
+		no warnings qw[redefine once];
+		local *MM::get_version = sub {
+			$is_called = 1;
+		};
+		ok !$is_called;
+		is( parse_version_string($code), 'undef', $label );
+	}
     is($warnings, '', "$label does not cause warnings");
 }
 

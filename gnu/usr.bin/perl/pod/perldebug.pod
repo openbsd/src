@@ -68,9 +68,9 @@ On the given program identified by C<program_name>.
 
 Interactively supply an arbitrary C<expression> using C<-e>.
 
-=item perl -d:Ptkdb program_name
+=item perl -d:ptkdb program_name
 
-Debug a given program via the C<Devel::Ptkdb> GUI.
+Debug a given program via the C<Devel::ptkdb> GUI.
 
 =item perl -dt threaded_program_name
 
@@ -1142,7 +1142,7 @@ Without Readline support you may see the symbols "^[[A", "^[[C", "^[[B",
 
 =head2 Editor Support for Debugging
 
-If you have the FSF's version of B<emacs> installed on your system,
+If you have the GNU's version of B<emacs> installed on your system,
 it can interact with the Perl debugger to provide an integrated
 software development environment reminiscent of its interactions
 with C debuggers.
@@ -1151,13 +1151,6 @@ Recent versions of Emacs come with a
 start file for making B<emacs> act like a
 syntax-directed editor that understands (some of) Perl's syntax.
 See L<perlfaq3>.
-
-A similar setup by Tom Christiansen for interacting with any
-vendor-shipped B<vi> and the X11 window system is also available.
-This works similarly to the integrated multiwindow support that
-B<emacs> provides, where the debugger drives the editor.  At the
-time of this writing, however, that tool's eventual location in the
-Perl distribution was uncertain.
 
 Users of B<vi> should also look into B<vim> and B<gvim>, the mousey
 and windy version, for coloring of Perl keywords.

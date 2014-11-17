@@ -101,12 +101,6 @@ eval {
         $have_setlocale++;
     }
 };
-if (
-    !$Config::Config{d_setlocale}
-  || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-) {
-    $have_setlocale = 0;
-}
 
 SKIP: {
     if (!$have_setlocale) {

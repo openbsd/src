@@ -217,7 +217,9 @@ Perl_deb_stack_all(pTHX)
     for (;;)
     {
         const size_t si_name_ix = si->si_type+1; /* -1 is a valid index */
-        const char * const si_name = (si_name_ix >= sizeof(si_names)) ? "????" : si_names[si_name_ix];
+        const char * const si_name =
+            si_name_ix < C_ARRAY_LENGTH(si_names) ?
+            si_names[si_name_ix] : "????";
 	I32 ix;
 	PerlIO_printf(Perl_debug_log, "STACK %"IVdf": %s\n",
 						(IV)si_ix, si_name);
@@ -234,7 +236,7 @@ Perl_deb_stack_all(pTHX)
 		PerlIO_printf(Perl_debug_log, "\n");
 	    else {
 
-		/* Find the current context's stack range by searching
+		/* Find the the current context's stack range by searching
 		 * forward for any higher contexts using this stack; failing
 		 * that, it will be equal to the size of the stack for old
 		 * stacks, or PL_stack_sp for the current stack

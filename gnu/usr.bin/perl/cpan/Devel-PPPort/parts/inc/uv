@@ -1,12 +1,6 @@
 ################################################################################
 ##
-##  $Revision: 18 $
-##  $Author: mhx $
-##  $Date: 2010/03/07 13:15:47 +0100 $
-##
-################################################################################
-##
-##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -58,61 +52,61 @@ __UNDEFINED__  XPUSHu(u)       STMT_START { sv_setuv(TARG, (UV)(u)); XPUSHTARG; 
 
 SV *
 sv_setuv(uv)
-	UV uv
-	CODE:
-		RETVAL = newSViv(1);
-		sv_setuv(RETVAL, uv);
-	OUTPUT:
-		RETVAL
+        UV uv
+        CODE:
+                RETVAL = newSViv(1);
+                sv_setuv(RETVAL, uv);
+        OUTPUT:
+                RETVAL
 
 SV *
 newSVuv(uv)
-	UV uv
-	CODE:
-		RETVAL = newSVuv(uv);
-	OUTPUT:
-		RETVAL
+        UV uv
+        CODE:
+                RETVAL = newSVuv(uv);
+        OUTPUT:
+                RETVAL
 
 UV
 sv_2uv(sv)
-	SV *sv
-	CODE:
-		RETVAL = sv_2uv(sv);
-	OUTPUT:
-		RETVAL
+        SV *sv
+        CODE:
+                RETVAL = sv_2uv(sv);
+        OUTPUT:
+                RETVAL
 
 UV
 SvUVx(sv)
-	SV *sv
-	CODE:
-		sv--;
-		RETVAL = SvUVx(++sv);
-	OUTPUT:
-		RETVAL
+        SV *sv
+        CODE:
+                sv--;
+                RETVAL = SvUVx(++sv);
+        OUTPUT:
+                RETVAL
 
 void
 XSRETURN_UV()
-	PPCODE:
-		XSRETURN_UV(42);
+        PPCODE:
+                XSRETURN_UV(42);
 
 void
 PUSHu()
-	PREINIT:
-		dTARG;
-	PPCODE:
-		TARG = sv_newmortal();
-		EXTEND(SP, 1);
-		PUSHu(42);
-		XSRETURN(1);
+        PREINIT:
+                dTARG;
+        PPCODE:
+                TARG = sv_newmortal();
+                EXTEND(SP, 1);
+                PUSHu(42);
+                XSRETURN(1);
 
 void
 XPUSHu()
-	PREINIT:
-		dTARG;
-	PPCODE:
-		TARG = sv_newmortal();
-		XPUSHu(43);
-		XSRETURN(1);
+        PREINIT:
+                dTARG;
+        PPCODE:
+                TARG = sv_newmortal();
+                XPUSHu(43);
+                XSRETURN(1);
 
 =tests plan => 10
 
@@ -126,4 +120,3 @@ ok(&Devel::PPPort::SvUVx(0xdeadbeef), 0xdeadbeef);
 ok(&Devel::PPPort::XSRETURN_UV(), 42);
 ok(&Devel::PPPort::PUSHu(), 42);
 ok(&Devel::PPPort::XPUSHu(), 43);
-

@@ -10,7 +10,7 @@ use strict;
 
 use vars qw(@ary %ary %hash);
 
-plan 85;
+plan 86;
 
 ok !defined($a);
 
@@ -167,6 +167,13 @@ like $@, qr/^Modification of a read/;
     my ($k, $v) = each %hash;
     is $k, undef, 'each undef at end';
 }
+
+# part of #105906: inlined undef constant getting copied
+BEGIN { $::{z} = \undef }
+for (z,z) {
+    push @_, \$_;
+}
+is $_[0], $_[1], 'undef constants preserve identity';
 
 # this will segfault if it fails
 

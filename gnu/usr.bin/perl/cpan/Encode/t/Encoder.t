@@ -1,5 +1,5 @@
 #
-# $Id: Encoder.t,v 2.0 2004/05/16 20:55:17 dankogai Exp $
+# $Id: Encoder.t,v 2.1 2013/09/14 07:51:59 dankogai Exp $
 #
 
 BEGIN {
@@ -17,7 +17,7 @@ use Test::More tests => 516;
 use Encode::Encoder qw(encoder);
 use MIME::Base64;
 package Encode::Base64;
-use base 'Encode::Encoding';
+use parent 'Encode::Encoding';
 __PACKAGE__->Define('base64');
 use MIME::Base64;
 sub encode{

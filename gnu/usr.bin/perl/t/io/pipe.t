@@ -147,11 +147,10 @@ SKIP: {
       if $^O eq 'VMS';
 
     SKIP: {
-        # Sfio doesn't report failure when closing a broken pipe
+        # POSIX-BC doesn't report failure when closing a broken pipe
         # that has pending output.  Go figure.
-        # Nor does POSIX-BC.
         skip "Won't report failure on broken pipe", 1
-          if $Config{d_sfio} || $^O eq 'posix-bc';
+          if $^O eq 'posix-bc';
 
         local $SIG{PIPE} = 'IGNORE';
         open NIL, qq{|$Perl -e "exit 0"} or die "open failed: $!";

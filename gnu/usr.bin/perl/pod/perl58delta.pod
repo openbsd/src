@@ -1407,7 +1407,7 @@ use/require work.
 
 =item *
 
-In SDBM_File on dosish platforms, some keys went missing because of
+In SDBM_File on DOSish platforms, some keys went missing because of
 lack of support for files with "holes".  A workaround for the problem
 has been added.
 

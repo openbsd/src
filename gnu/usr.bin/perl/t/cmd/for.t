@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..14\n";
+print "1..15\n";
 
 for ($i = 0; $i <= 10; $i++) {
     $x[$i] = $i;
@@ -95,3 +95,9 @@ print $@ =~ /Use of freed value in iteration/ ? "ok" : "not ok", " 13\n";
     print $x == 1 ? "ok" : "not ok", " 14 - double destroy, x=$x\n";
 }
 
+# [perl #78194] foreach() aliasing op return values
+for ("${\''}") {
+    print "not " unless \$_ == \$_;
+    print 'ok 15 - [perl \#78194] \$_ == \$_ inside for("$x"){...}',
+          "\n";
+}

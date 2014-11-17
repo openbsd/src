@@ -93,8 +93,8 @@ else {
 
 if (exists $opt{cc}) {
     # cl version detection borrowed from Test::Smoke's configsmoke.pl
-    if ($opt{cc} eq 'cl') {
-        my $output = `cl --version 2>&1`;
+    if ($opt{cc} =~ /\b(?:cl|icl)/) { #MSVC can come as clarm.exe, icl=Intel C
+        my $output = `$opt{cc} --version 2>&1`;
         $opt{ccversion} = $output =~ /^.*Version\s+([\d.]+)/ ? $1 : '?';
     }
     elsif ($opt{cc} =~ /\bgcc\b/) {
@@ -115,13 +115,13 @@ $opt{libpth} = mungepath($opt{libpth}) if exists $opt{libpth};
 $opt{incpath} = mungepath($opt{incpath}) if exists $opt{incpath};
 
 my($int64, $int64f);
-if ($opt{cc} eq 'cl') {
+if ($opt{cc} =~ /\b(?:cl|icl)/) {
     $int64  = '__int64';
     $int64f = 'I64';
 }
 elsif ($opt{cc} =~ /\bgcc\b/) {
     $int64  = 'long long';
-    $int64f = 'll';
+    $int64f = 'I64';
 }
 
 # set large files options
@@ -195,18 +195,33 @@ else {
 # change the s{GM|LOCAL}TIME_{min|max} for VS2005 (aka VC 8) and
 # VS2008 (aka VC 9) or higher (presuming that later versions will have
 # at least the range of that).
-if ($opt{cc} eq 'cl' and $opt{ccversion} =~ /^(\d+)/) {
+if ($opt{cc} =~ /\bcl/ and $opt{ccversion} =~ /^(\d+)/) {
     my $ccversion = $1;
     if ($ccversion >= 14) {
 	$opt{sGMTIME_max} = 32535291599;
 	$opt{sLOCALTIME_max} = 32535244799;
     }
+    if($ccversion < 13) { #VC6
+	$opt{ar} ='lib';
+    }
+}
+#find out which MSVC this ICC is using
+elsif ($opt{cc} =~ /\bicl/) {
+    my $output = `cl --version 2>&1`;
+    my $num_ver = $output =~ /^.*Version\s+([\d.]+)/ ? $1 : '?';
+    if($num_ver =~ /^(\d+)/ && $1 >= 14) {
+	$opt{sGMTIME_max} = 32535291599;
+	$opt{sLOCALTIME_max} = 32535244799;
+    }
+    $opt{ar} ='xilib';
 }
 
 if ($opt{useithreads} eq 'define' && $opt{ccflags} =~ /-DPERL_IMPLICIT_SYS\b/) {
     $opt{d_pseudofork} = 'define';
 }
 
+#if the fields above are defined, they override the defaults in the premade
+#config file
 while (<>) {
     s/~([\w_]+)~/exists $opt{$1} ? $opt{$1} : ''/eg;
     if (/^([\w_]+)=(.*)$/) {

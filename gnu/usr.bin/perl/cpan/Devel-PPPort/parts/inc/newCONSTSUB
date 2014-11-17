@@ -1,12 +1,6 @@
 ################################################################################
 ##
-##  $Revision: 16 $
-##  $Author: mhx $
-##  $Date: 2010/03/07 13:15:48 +0100 $
-##
-################################################################################
-##
-##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -37,35 +31,35 @@ newCONSTSUB
 void
 newCONSTSUB(HV *stash, const char *name, SV *sv)
 {
-	U32 oldhints = PL_hints;
-	HV *old_cop_stash = PL_curcop->cop_stash;
-	HV *old_curstash = PL_curstash;
-	line_t oldline = PL_curcop->cop_line;
-	PL_curcop->cop_line = D_PPP_PL_copline;
+        U32 oldhints = PL_hints;
+        HV *old_cop_stash = PL_curcop->cop_stash;
+        HV *old_curstash = PL_curstash;
+        line_t oldline = PL_curcop->cop_line;
+        PL_curcop->cop_line = D_PPP_PL_copline;
 
-	PL_hints &= ~HINT_BLOCK_SCOPE;
-	if (stash)
-		PL_curstash = PL_curcop->cop_stash = stash;
+        PL_hints &= ~HINT_BLOCK_SCOPE;
+        if (stash)
+                PL_curstash = PL_curcop->cop_stash = stash;
 
-	newSUB(
+        newSUB(
 
 #if   { VERSION <  5.003_22 }
-		start_subparse(),
+                start_subparse(),
 #elif { VERSION == 5.003_22 }
-     		start_subparse(0),
+                start_subparse(0),
 #else  /* 5.003_23  onwards */
-     		start_subparse(FALSE, 0),
+                start_subparse(FALSE, 0),
 #endif
 
-		newSVOP(OP_CONST, 0, newSVpv((char *) name, 0)),
-		newSVOP(OP_CONST, 0, &PL_sv_no),   /* SvPV(&PL_sv_no) == "" -- GMB */
-		newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
-	);
+                newSVOP(OP_CONST, 0, newSVpv((char *) name, 0)),
+                newSVOP(OP_CONST, 0, &PL_sv_no),   /* SvPV(&PL_sv_no) == "" -- GMB */
+                newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
+        );
 
-	PL_hints = oldhints;
-	PL_curcop->cop_stash = old_cop_stash;
-	PL_curstash = old_curstash;
-	PL_curcop->cop_line = oldline;
+        PL_hints = oldhints;
+        PL_curcop->cop_stash = old_cop_stash;
+        PL_curstash = old_curstash;
+        PL_curcop->cop_line = oldline;
 }
 #endif
 #endif
@@ -79,9 +73,9 @@ newCONSTSUB(HV *stash, const char *name, SV *sv)
 void call_newCONSTSUB_1(void)
 {
 #ifdef PERL_NO_GET_CONTEXT
-	dTHX;
+        dTHX;
 #endif
-	newCONSTSUB(gv_stashpv("Devel::PPPort", FALSE), "test_value_1", newSViv(1));
+        newCONSTSUB(gv_stashpv("Devel::PPPort", FALSE), "test_value_1", newSViv(1));
 }
 
 extern void call_newCONSTSUB_2(void);
@@ -108,4 +102,3 @@ ok(&Devel::PPPort::test_value_2(), 2);
 
 &Devel::PPPort::call_newCONSTSUB_3();
 ok(&Devel::PPPort::test_value_3(), 3);
-

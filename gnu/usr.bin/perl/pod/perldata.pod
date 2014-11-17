@@ -120,7 +120,13 @@ restrictions.
 If working under the effect of the C<use utf8;> pragma, the following
 rules apply:
 
-    / (?[ ( \p{Word} & \p{XID_Start} ) + [_] ]) \p{XID_Continue}* /x
+    / (?[ ( \p{Word} & \p{XID_Start} ) + [_] ])
+      (?[ ( \p{Word} & \p{XID_Continue} ) ]) *    /x
+
+That is, a "start" character followed by any number of "continue"
+characters.  Perl requires every character in an identifier to also
+match C<\w> (this prevents some problematic cases); and Perl
+additionally accepts identfier names beginning with an underscore.
 
 If not under C<use utf8>, the source is treated as ASCII + 128 extra
 controls, and identifiers should match
@@ -135,14 +141,9 @@ quote (C<'>).  Normal identifiers can start or end with a double colon, and
 can contain several parts delimited by double colons.
 Single quotes have similar rules, but with the exception that they are not
 legal at the end of an identifier: That is, C<$'foo> and C<$foo'bar> are
-legal, but C<$foo'bar'> are not.
+legal, but C<$foo'bar'> is not.
 
-
-Finally, if the identifier is preceded by a sigil --
-More so, normal identifiers can start or end with any number
-of double colons (::), and can contain several parts delimited
-by double colons.
-And additionally, if the identifier is preceded by a sigil --
+Additionally, if the identifier is preceded by a sigil --
 that is, if the identifier is part of a variable name -- it
 may optionally be enclosed in braces.
 
@@ -170,12 +171,13 @@ Put together, a grammar to match a basic identifier becomes
       (?<basic_identifier>
         # is use utf8 on?
           (?(?{ (caller(0))[8] & $utf8::hint_bits })
-              (?&Perl_XIDS) \p{XID_Continue}*
+              (?&Perl_XIDS) (?&Perl_XIDC)*
             | (?aa) (?!\d) \w+
           )
       )
       (?<sigil> [&*\$\@\%])
       (?<Perl_XIDS> (?[ ( \p{Word} & \p{XID_Start} ) + [_] ]) )
+      (?<Perl_XIDC> (?[ \p{Word} & \p{XID_Continue} ]) )
   )
  /x
 
@@ -191,18 +193,26 @@ C<$1>, or C<$10000>.
 
 =item A sigil, followed by either a caret and a single POSIX uppercase letter,
 like C<$^V> or C<$^W>, or a sigil followed by a literal control character
-matching the C<\p{POSIX_Cntrl}> property. Due to a historical oddity, if not
+matching the C<\p{POSIX_Cntrl}> property.
+Due to a historical oddity, if not
 running under C<use utf8>, the 128 extra controls in the C<[0x80-0xff]> range
-may also be used in length one variables.
+may also be used in length one variables.  The use of a literal control
+character is deprecated.  Support for this form will be removed in a future
+version of perl.
 
 =item Similar to the above, a sigil, followed by bareword text in brackets,
 where the first character is either a caret followed by an uppercase letter,
-or a literal control, like C<${^GLOBAL_PHASE}> or C<${\7LOBAL_PHASE}>.
+or a literal control, like C<${^GLOBAL_PHASE}> or C<${\7LOBAL_PHASE}>.  The use
+of a literal control character is deprecated.  Support for this form will be
+removed in a future version of perl.
 
 =item A sigil followed by a single character matching the C<\p{POSIX_Punct}>
 property, like C<$!> or C<%+>.
 
 =back
+
+Note that as of Perl 5.20, literal control characters in variable names
+are deprecated.
 
 =head2 Context
 X<context> X<scalar context> X<list context>
@@ -455,7 +465,7 @@ $0 and the $s variables in the (presumably) non-existent package
 C<who>.
 
 In fact, a simple identifier within such curlies is forced to be
-a string, and likewise within a hash subscript. Neither need
+a string, and likewise within a hash subscript.  Neither need
 quoting.  Our earlier example, C<$days{'Feb'}> can be written as
 C<$days{Feb}> and the quotes will be assumed automatically.  But
 anything more complicated in the subscript will be interpreted as an
@@ -914,6 +924,30 @@ or curly) governs whether it's an array or a hash being looked at.
 On the other hand, the leading symbol ('$' or '@') on the array or
 hash indicates whether you are getting back a singular value (a
 scalar) or a plural one (a list).
+
+=head3 Key/Value Hash Slices
+
+Starting in Perl 5.20, a hash slice operation
+with the % symbol is a variant of slice operation
+returning a list of key/value pairs rather than just values:
+
+    %h = (blonk => 2, foo => 3, squink => 5, bar => 8);
+    %subset = %h{'foo', 'bar'}; # key/value hash slice
+    # %subset is now (foo => 3, bar => 8)
+
+However, the result of such a slice cannot be localized, deleted or used
+in assignment.  These are otherwise very much consistent with hash slices
+using the @ symbol.
+
+=head3 Index/Value Array Slices
+
+Similar to key/value hash slices (and also introduced
+in Perl 5.20), the % array slice syntax returns a list
+of index/value pairs:
+
+    @a = "a".."z";
+    @list = %a[3,4,6];
+    # @list is now (3, "d", 4, "e", 6, "g")
 
 =head2 Typeglobs and Filehandles
 X<typeglob> X<filehandle> X<*>

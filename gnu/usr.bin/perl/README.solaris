@@ -530,6 +530,20 @@ to catch all tmpfs situations.
 
 See L<perlhpux/"nss_delete core dump from op/pwent or op/grent">.
 
+=head1 CROSS-COMPILATION
+
+Nothing too unusual here.  You can easily do this if you have a 
+cross-compiler available;  A usual Configure invocation when targetting a
+Solaris x86 looks something like this:
+
+    sh ./Configure -des -Dusecrosscompile \
+        -Dcc=i386-pc-solaris2.11-gcc      \
+        -Dsysroot=$SYSROOT                \
+        -Alddlflags=" -Wl,-z,notext"      \
+        -Dtargethost=... # The usual cross-compilation options
+
+The lddlflags addition is the only abnormal bit.
+
 =head1 PREBUILT BINARIES OF PERL FOR SOLARIS.
 
 You can pick up prebuilt binaries for Solaris from

@@ -14,7 +14,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(struct);
 
-$VERSION = '0.64';
+$VERSION = '0.65';
 
 my $print = 0;
 sub printem {
@@ -262,10 +262,11 @@ Class::Struct - declare struct-like datatypes as Perl classes
     struct( ELEMENT_NAME => ELEMENT_TYPE, ... );
 
     # Declare struct at compile time
-    use Class::Struct CLASS_NAME => [ ELEMENT_NAME => ELEMENT_TYPE, ... ];
-    use Class::Struct CLASS_NAME => { ELEMENT_NAME => ELEMENT_TYPE, ... };
+    use Class::Struct CLASS_NAME => [ELEMENT_NAME => ELEMENT_TYPE, ...];
+    use Class::Struct CLASS_NAME => {ELEMENT_NAME => ELEMENT_TYPE, ...};
 
-    # declare struct at compile time, based on array, implicit class name:
+    # declare struct at compile time, based on array, implicit
+    # class name:
     package CLASS_NAME;
     use Class::Struct ELEMENT_NAME => ELEMENT_TYPE, ... ;
 
@@ -475,11 +476,12 @@ type C<Timeval>.
         tv_usecs => '$',        # microseconds
     ]);
 
-        # create an object:
-    my $t = Rusage->new(ru_utime=>Timeval->new(), ru_stime=>Timeval->new());
+    # create an object:
+    my $t = Rusage->new(ru_utime=>Timeval->new(),
+        ru_stime=>Timeval->new());
 
-        # $t->ru_utime and $t->ru_stime are objects of type Timeval.
-        # set $t->ru_utime to 100.0 sec and $t->ru_stime to 5.0 sec.
+    # $t->ru_utime and $t->ru_stime are objects of type Timeval.
+    # set $t->ru_utime to 100.0 sec and $t->ru_stime to 5.0 sec.
     $t->ru_utime->tv_secs(100);
     $t->ru_utime->tv_usecs(0);
     $t->ru_stime->tv_secs(5);
@@ -549,16 +551,16 @@ that are passed on to the nested struct's constructor.
     ];
 
 
-    my $cat = Cat->new( name     => 'Socks',
-                        kittens  => ['Monica', 'Kenneth'],
-                        markings => { socks=>1, blaze=>"white" },
-                        breed    => Breed->new(name=>'short-hair', cross=>1),
-                   or:  breed    => {name=>'short-hair', cross=>1},
+    my $cat = Cat->new( name => 'Socks',
+               kittens  => ['Monica', 'Kenneth'],
+               markings => { socks=>1, blaze=>"white" },
+               breed    => Breed->new(name=>'short-hair', cross=>1),
+          or:  breed    => {name=>'short-hair', cross=>1},
                       );
 
     print "Once a cat called ", $cat->name, "\n";
     print "(which was a ", $cat->breed->name, ")\n";
-    print "had two kittens: ", join(' and ', @{$cat->kittens}), "\n";
+    print "had 2 kittens: ", join(' and ', @{$cat->kittens}), "\n";
 
 =back
 
@@ -629,7 +631,7 @@ Originally C<Class::Template> by Dean Roehrich.
     #  - Now using my() rather than local().
     #
     # Uses perl5 classes to create nested data types.
-    # This is offered as one implementation of Tom Christiansen's "structs.pl"
-    # idea.
+    # This is offered as one implementation of Tom Christiansen's
+    # "structs.pl" idea.
 
 =cut

@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan(tests => 128);
+plan(tests => 130);
 
 eval 'pass();';
 
@@ -618,3 +618,20 @@ syntax error at (eval 1) line 1, at EOF
 EOE
 	qq'Right line number for eval "$_"';
 }
+
+{
+    my $w;
+    local $SIG{__WARN__} = sub { $w .= shift };
+
+    eval "\${\nfoobar\n} = 10; warn q{should be line 3}";
+    is(
+        $w =~ s/eval \d+/eval 1/ra,
+        "should be line 3 at (eval 1) line 3.\n",
+        'eval qq{\${\nfoo\n}; warn} updates the line number correctly'
+    );
+}
+
+sub _117941 { package _117941; eval '$a' }
+delete $::{"_117941::"};
+_117941();
+pass("eval in freed package does not crash");

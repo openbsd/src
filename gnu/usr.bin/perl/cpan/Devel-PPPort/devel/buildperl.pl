@@ -5,13 +5,7 @@
 #
 ################################################################################
 #
-#  $Revision: 18 $
-#  $Author: mhx $
-#  $Date: 2010/03/07 13:15:42 +0100 $
-#
-################################################################################
-#
-#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -51,18 +45,18 @@ my %opt = (
 
 my %config = (
   default     => {
-	           config_args => '-des',
+                   config_args => '-des',
                  },
   thread      => {
-	           config_args     => '-des -Dusethreads',
-	           masked_versions => [ qr/^5\.00[01234]/ ],
+                   config_args     => '-des -Dusethreads',
+                   masked_versions => [ qr/^5\.00[01234]/ ],
                  },
   thread5005  => {
-	           config_args     => '-des -Duse5005threads',
-	           masked_versions => [ qr/^5\.00[012345]|^5.(9|\d\d)/ ],
+                   config_args     => '-des -Duse5005threads',
+                   masked_versions => [ qr/^5\.00[012345]|^5\.(9|\d\d)|^5\.8\.9/ ],
                  },
   debug       => {
-	           config_args => '-des -Doptimize=-g',
+                   config_args => '-des -Doptimize=-g',
                  },
 );
 
@@ -83,7 +77,7 @@ my @patch = (
   },
   {
     perl => [
-     	      qw/
+              qw/
                 5.6.0
                 5.6.1
                 5.7.0
@@ -91,7 +85,7 @@ my @patch = (
                 5.7.2
                 5.7.3
                 5.8.0
-     	      /,
+              /,
             ],
     subs => [
               [ \&patch_db, 3 ],
@@ -362,7 +356,9 @@ sub build_and_install
   print "building perl $perl->{version} ($current{config})\n";
 
   run_or_die("./Configure $config{$current{config}}{config_args} -Dusedevel -Uinstallusrbinperl -Dprefix=$prefix");
-  run_or_die("sed -i -e '/^.*<builtin>/d' -e '/^.*<built-in>/d' -e '/^.*<command line>/d' -e '/^.*<command-line>/d' makefile x2p/makefile");
+  if (-f "x2p/makefile") {
+    run_or_die("sed -i -e '/^.*<builtin>/d' -e '/^.*<built-in>/d' -e '/^.*<command line>/d' -e '/^.*<command-line>/d' makefile x2p/makefile");
+  }
   run_or_die("make all");
   run("make test") if $opt{test};
   if ($opt{install}) {
@@ -595,7 +591,7 @@ options, use:
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004-2010, Marcus Holland-Moritz.
+Copyright (c) 2004-2013, Marcus Holland-Moritz.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -603,4 +599,3 @@ modify it under the same terms as Perl itself.
 =head1 SEE ALSO
 
 See L<Devel::PPPort> and L<HACKERS>.
-

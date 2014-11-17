@@ -22,7 +22,7 @@ class name for a C++ XS constructor.  This is always a C<char*>.  See C<THIS>.
 
 =for apidoc Amn|(whatever)|RETVAL
 Variable which is setup by C<xsubpp> to hold the return value for an 
-XSUB. This is always the proper type for the XSUB. See 
+XSUB.  This is always the proper type for the XSUB.  See 
 L<perlxs/"The RETVAL Variable">.
 
 =for apidoc Amn|(whatever)|THIS
@@ -48,7 +48,7 @@ Used to access elements on the XSUB's stack.
 
 =for apidoc AmU||XS
 Macro to declare an XSUB and its C parameter list.  This is handled by
-C<xsubpp>. It is the same as using the more explicit XS_EXTERNAL macro.
+C<xsubpp>.  It is the same as using the more explicit XS_EXTERNAL macro.
 
 =for apidoc AmU||XS_INTERNAL
 Macro to declare an XSUB and its C parameter list without exporting the symbols.
@@ -80,12 +80,12 @@ Sets up the C<ix> variable for an XSUB which has aliases.  This is usually
 handled automatically by C<xsubpp>.
 
 =for apidoc Ams||dUNDERBAR
-Sets up any variable needed by the C<UNDERBAR> macro. It used to define
-C<padoff_du>, but it is currently a noop. However, it is strongly advised
+Sets up any variable needed by the C<UNDERBAR> macro.  It used to define
+C<padoff_du>, but it is currently a noop.  However, it is strongly advised
 to still use it for ensuring past and future compatibility.
 
 =for apidoc AmU||UNDERBAR
-The SV* corresponding to the $_ variable. Works even if there
+The SV* corresponding to the $_ variable.  Works even if there
 is a lexical $_ in scope.
 
 =cut

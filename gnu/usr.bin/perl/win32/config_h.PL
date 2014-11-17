@@ -51,6 +51,7 @@ eval $str;
 die "$str:$@" if $@;
 
 open(H,">$file.new") || die "Cannot open $file.new:$!";
+binmode(H);
 while (<SH>)
  {
   last if /^$term$/o;

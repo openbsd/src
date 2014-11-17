@@ -7,8 +7,6 @@
  *    License or the Artistic License, as specified in the README file.
  */
 
-#define VOIDUSED 1
-
 #ifdef WIN32
 #define _INC_WIN32_PERL5	/* kludge around win32 stdio layer */
 #endif

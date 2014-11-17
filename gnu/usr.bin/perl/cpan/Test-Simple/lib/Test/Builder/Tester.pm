@@ -1,9 +1,9 @@
 package Test::Builder::Tester;
 
 use strict;
-our $VERSION = "1.22";
+our $VERSION = "1.23_002";
 
-use Test::Builder;
+use Test::Builder 0.98;
 use Symbol;
 use Carp;
 
@@ -98,14 +98,12 @@ my $err = tie *$error_handle,  "Test::Builder::Tester::Tie", "STDERR";
 # for remembering that we're testing and where we're testing at
 my $testing = 0;
 my $testing_num;
+my $original_is_passing;
 
 # remembering where the file handles were originally connected
 my $original_output_handle;
 my $original_failure_handle;
 my $original_todo_handle;
-
-my $original_test_number;
-my $original_harness_state;
 
 my $original_harness_env;
 
@@ -134,6 +132,8 @@ sub _start_testing {
     $testing     = 1;
     $testing_num = $t->current_test;
     $t->current_test(0);
+    $original_is_passing  = $t->is_passing;
+    $t->is_passing(1);
 
     # look, we shouldn't do the ending stuff
     $t->no_ending(1);
@@ -222,7 +222,7 @@ sub test_fail {
     $line = $line + ( shift() || 0 );    # prevent warnings
 
     # expect that on stderr
-    $err->expect("#     Failed test ($0 at line $line)");
+    $err->expect("#     Failed test ($filename at line $line)");
 }
 
 =item test_diag
@@ -268,7 +268,7 @@ sub test_diag {
 
 Actually performs the output check testing the tests, comparing the
 data (with C<eq>) that we have captured from B<Test::Builder> against
-that that was declared with C<test_out> and C<test_err>.
+what was declared with C<test_out> and C<test_err>.
 
 This takes name/value pairs that effect how the test is run.
 
@@ -329,6 +329,7 @@ sub test_test {
     # restore the test no, etc, back to the original point
     $t->current_test($testing_num);
     $testing = 0;
+    $t->is_passing($original_is_passing);
 
     # re-enable the original setting of the harness
     $ENV{HARNESS_ACTIVE} = $original_harness_env;
@@ -435,7 +436,7 @@ L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-Builder-Tester>
 
 Copyright Mark Fowler E<lt>mark@twoshortplanks.comE<gt> 2002, 2004.
 
-Some code taken from B<Test::More> and B<Test::Catch>, written by by
+Some code taken from B<Test::More> and B<Test::Catch>, written by
 Michael G Schwern E<lt>schwern@pobox.comE<gt>.  Hence, those parts
 Copyright Micheal G Schwern 2001.  Used and distributed with
 permission.
@@ -469,9 +470,17 @@ sub expect {
 
     my @checks = @_;
     foreach my $check (@checks) {
+        $check = $self->_account_for_subtest($check);
         $check = $self->_translate_Failed_check($check);
         push @{ $self->{wanted} }, ref $check ? $check : "$check\n";
     }
+}
+
+sub _account_for_subtest {
+    my( $self, $check ) = @_;
+
+    # Since we ship with Test::Builder, calling a private method is safe...ish.
+    return ref($check) ? $check : $t->_indent . $check;
 }
 
 sub _translate_Failed_check {
@@ -511,7 +520,7 @@ sub complaint {
     my $self   = shift;
     my $type   = $self->type;
     my $got    = $self->got;
-    my $wanted = join "\n", @{ $self->wanted };
+    my $wanted = join '', @{ $self->wanted };
 
     # are we running in colour mode?
     if(Test::Builder::Tester::color) {

@@ -9,6 +9,7 @@ BEGIN {
     @INC = '../lib';
     require Config; import Config;
     require './test.pl';
+    require './loc_tools.pl';   # Contains find_utf8_ctype_locale()
 }
 
 use feature 'unicode_strings';
@@ -416,8 +417,11 @@ foreach my $test_ref (@CF) {
     is( fc($troublesome5), "\x{E9}abda\x{3BC}aaf\x{E8}" );
 }
 
+
 {
     use feature qw( fc unicode_strings );
+    use if $Config{d_setlocale}, qw(POSIX locale_h);
+    setlocale(&POSIX::LC_ALL, "C") if $Config{d_setlocale};
 
     # This tests both code paths in pp_fc
 
@@ -428,7 +432,7 @@ foreach my $test_ref (@CF) {
         utf8::upgrade($utf8);
         is(fc($latin1), fc($utf8), "fc() gives the same results for \\x{$_} in Latin-1 and UTF-8 under unicode_strings");
         SKIP: {
-              skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale}) || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/;
+              skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale});
               BEGIN {
                   if($Config{d_setlocale}) {
                       require locale; import locale;
@@ -437,18 +441,46 @@ foreach my $test_ref (@CF) {
             is(fc($latin1), lc($latin1), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
             is(fc($utf8), lc($utf8), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
         }
-        SKIP: {
-            if (
-                !$Config::Config{d_setlocale}
-            || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-            ) {
-                skip "no locale support", 2
-            }
+        {
             no feature 'unicode_strings';
             is(fc($latin1), lc($latin1), "under nothing, fc() for <256 is the same as lc");
         }
     }
 }
+
+my $utf8_locale = find_utf8_ctype_locale();
+
+{
+    use feature qw( fc );
+    use locale;
+    is(fc("\x{1E9E}"), fc("\x{17F}\x{17F}"), 'fc("\x{1E9E}") eq fc("\x{17F}\x{17F}")');
+    SKIP: {
+        skip 'Can\'t find a UTF-8 locale', 1 unless defined $utf8_locale;
+        setlocale(&LC_CTYPE, $utf8_locale);
+        is(fc("\x{1E9E}"), "ss", 'fc("\x{1E9E}") eq "ss" in a UTF-8 locale)');
+    }
+}
+
+SKIP: {
+    skip 'Can\'t find a UTF-8 locale', 256 unless defined $utf8_locale;
+
+    use feature qw( fc unicode_strings );
+
+    # Get the official fc values outside locale.
+    no locale;
+    my @unicode_fc;
+    for (0..0xff) {
+        push @unicode_fc, fc(chr);
+    }
+
+    # These should match the UTF-8 locale values
+    setlocale(&LC_CTYPE, $utf8_locale);
+    use locale;
+    for (0..0xff) {
+        is(fc(chr), $unicode_fc[$_], "In a UTF-8 locale, fc(chr $_) is the same as official Unicode");
+    }
+}
+
 
 my $num_tests = curr_test() - 1;
 

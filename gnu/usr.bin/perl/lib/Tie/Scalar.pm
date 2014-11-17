@@ -1,6 +1,6 @@
 package Tie::Scalar;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -22,7 +22,8 @@ Tie::Scalar, Tie::StdScalar - base class definitions for tied scalars
 
     @ISA = qw(Tie::StdScalar);
 
-    # All methods provided by default, so define only what needs be overridden
+    # All methods provided by default, so define
+    # only what needs be overridden
     sub FETCH { ... }
 
 

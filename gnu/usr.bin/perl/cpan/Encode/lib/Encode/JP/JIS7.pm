@@ -1,7 +1,7 @@
 package Encode::JP::JIS7;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -16,7 +16,7 @@ for my $name ( '7bit-jis', 'iso-2022-jp', 'iso-2022-jp-1' ) {
     } => __PACKAGE__;
 }
 
-use base qw(Encode::Encoding);
+use parent qw(Encode::Encoding);
 
 # we override this to 1 so PerlIO works
 sub needs_lines { 1 }

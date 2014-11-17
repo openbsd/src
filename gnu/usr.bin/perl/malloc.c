@@ -755,16 +755,7 @@ static const char bucket_of[] =
 #  define POW2_OPTIMIZE_SURPLUS(bucket) 0
 #endif /* !TWO_POT_OPTIMIZE */
 
-#ifdef HAS_64K_LIMIT
-#  define BARK_64K_LIMIT(what,nbytes,size)				\
-	if (nbytes > 0xffff) {						\
-		PerlIO_printf(PerlIO_stderr(),				\
-			      "%s too large: %lx\n", what, size);	\
-		my_exit(1);						\
-	}
-#else /* !HAS_64K_LIMIT */
-#  define BARK_64K_LIMIT(what,nbytes,size)
-#endif /* !HAS_64K_LIMIT */
+#define BARK_64K_LIMIT(what,nbytes,size)
 
 #ifndef MIN_SBRK
 #  define MIN_SBRK 2048
@@ -1212,12 +1203,16 @@ cmp_pat_4bytes(unsigned char *s, size_t nbytes, const unsigned char *fill)
 #  define FILLCHECK_DEADBEEF(s, n)	((void)0)
 #endif
 
-int
-S_ajust_size_and_find_bucket(size_t *nbytes_p)
+STATIC int
+S_adjust_size_and_find_bucket(size_t *nbytes_p)
 {
-  	MEM_SIZE shiftr;
+	MEM_SIZE shiftr;
 	int bucket;
-	size_t nbytes = *nbytes_p;
+	size_t nbytes;
+
+	PERL_ARGS_ASSERT_ADJUST_SIZE_AND_FIND_BUCKET;
+
+	nbytes = *nbytes_p;
 
 	/*
 	 * Convert amount of memory requested into
@@ -1273,7 +1268,7 @@ Perl_malloc(size_t nbytes)
 	    croak("%s", "panic: malloc");
 #endif
 
-	bucket = S_ajust_size_and_find_bucket(&nbytes);
+	bucket = adjust_size_and_find_bucket(&nbytes);
 	MALLOC_LOCK;
 	/*
 	 * If nothing in hash bucket right now,
@@ -2173,7 +2168,7 @@ Perl_malloced_size(void *p)
 MEM_SIZE
 Perl_malloc_good_size(size_t wanted)
 {
-    return BUCKET_SIZE_REAL(S_ajust_size_and_find_bucket(&wanted));
+    return BUCKET_SIZE_REAL(adjust_size_and_find_bucket(&wanted));
 }
 
 #  ifdef BUCKETS_ROOT2

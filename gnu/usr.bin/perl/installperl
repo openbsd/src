@@ -1,20 +1,19 @@
 #!./perl -w
 
 BEGIN {
-    require 5.004;
     chdir '..' if !-d 'lib' and -d '../lib';
     @INC = 'lib';
     $ENV{PERL5LIB} = 'lib';
 
     # This needs to be at BEGIN time, before any use of Config
+    # install_lib itself loads and imports Config into main::
     require './install_lib.pl';
 }
 
 use strict;
 use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_NetWare
 	    %opts $packlist);
-my ($dostrip, $versiononly, $force,
-    $otherperls, $archname, $nwinstall, $nopods);
+my $versiononly;
 
 BEGIN {
     if ($Is_VMS) { eval 'use VMS::Filespec;' }
@@ -25,20 +24,16 @@ my $scr_ext = ($Is_VMS ? '.Com' : $Is_W32 ? '.bat' : '');
 use File::Find;
 use File::Compare;
 use File::Copy ();
-use File::Path ();
 use ExtUtils::Packlist;
 use Cwd;
+# nogetopt_compat to disable treating +v as meaning -v
+use Getopt::Long qw(:config nogetopt_compat no_auto_abbrev noignorecase);
 
 require './Porting/pod_lib.pl';
 
 if ($Is_NetWare) {
     $Is_W32 = 0;
     $scr_ext = '.pl';
-}
-
-# override the ones in the rest of the script
-sub mkpath {
-    File::Path::mkpath(@_) unless $opts{notify};
 }
 
 my $mainperldir = "/usr/bin";
@@ -65,29 +60,31 @@ if ( $Is_VMS ) {
     }
 }
 
-$otherperls = 1;
 # This little hack simplifies making the code after the comment "Fetch some
 # frequently-used items from %Config" warning free. With $opts{destdir} always
 # defined, it's also possible to make the s/\Q$opts{destdir}\E unconditional.
 
 $opts{destdir} = '';
-# Consider refactoring this to use Getopt::Long once Getopt::Long's planned
-# feature is implemented, to distinguish + and - options.
-while (@ARGV) {
-    $opts{notify} = 1 if $ARGV[0] eq '-n';
-    $dostrip = 1 if $ARGV[0] eq '-s';
-    $versiononly = 1 if $ARGV[0] eq '-v';
-    $versiononly = 0 if $ARGV[0] eq '+v';
-    $opts{silent} = 1 if $ARGV[0] eq '-S';
-    $otherperls = 0 if $ARGV[0] eq '-o';
-    $force = 1 if $ARGV[0] eq '-f';
-    $opts{verbose} = 1 if $ARGV[0] eq '-V' || $ARGV [0] eq '-n';
-    $archname = 1 if $ARGV[0] eq '-A';
-    $nwinstall = 1 if $ARGV[0] eq '-netware';
-    $nopods = 1 if $ARGV[0] eq '-p';
-    $opts{destdir} = $1 if $ARGV[0] =~ /^-?-destdir=(.*)$/;
-    if ($ARGV[0] eq '-?' or $ARGV[0] =~ /^-?-h/) {
-	print <<"EOT";
+{
+    my $usage = 0;
+    if (!GetOptions(\%opts, 'notify|n', 'strip|s', 'silent|S',
+                    'skip-otherperls|o', 'force|f', 'verbose|V', 'archname|A',
+                    'netware', 'nopods|p', 'destdir:s', 'help|h|?',
+                    'versiononly|v' => \$versiononly, '<>' => sub {
+                        if ($_[0] eq '+v') {
+                            $versiononly = 0;
+                        } else {
+                            # Any other unknown argument is going to be an error
+                            $usage = 1;
+                        }
+                    },
+                   )) {
+        $usage = 1;
+    }
+    $opts{verbose} ||= $opts{notify};
+
+    if ($usage || $opts{help}) {
+        print <<"EOT";
 Usage $0: [switches]
   -n	    Don't actually run any commands; just print them.
   -s        Run strip on installed binaries.
@@ -104,10 +101,10 @@ Usage $0: [switches]
   -p        Don't install the pod files. [This will break use diagnostics;]
   -netware  Install correctly on a Netware server.
   -destdir  Prefix installation directories by this string.
+  -h        Display this help message.
 EOT
-	exit;
+        exit $usage;
     }
-    shift;
 }
 
 $versiononly = 1 if $Config{versiononly} && !defined $versiononly;
@@ -137,7 +134,6 @@ if ($scr_ext) { @scripts = map { "$_$scr_ext" } @scripts; }
 my %archpms = (
     Config => 1,
     lib => 1,
-    Cwd => 1,
 );
 
 if ($^O eq 'dos') {
@@ -150,7 +146,7 @@ if ((-e "testcompile") && (defined($ENV{'COMPILE'}))) {
 }
 
 # Exclude nonxs extensions that are not architecture dependent
-my @nonxs = grep(!/^(Errno|IO\/Compress)$/, split(' ', $Config{'nonxs_ext'}));
+my @nonxs = grep(!/^Errno$/, split(' ', $Config{'nonxs_ext'}));
 
 my @ext_dirs = qw(cpan dist ext);
 foreach my $ext_dir (@ext_dirs) {
@@ -196,7 +192,7 @@ my $installprivlib = "$opts{destdir}$Config{installprivlib}";
 my $installarchlib = "$opts{destdir}$Config{installarchlib}";
 my $installsitelib = "$opts{destdir}$Config{installsitelib}";
 my $installsitearch = "$opts{destdir}$Config{installsitearch}";
-my $installman1dir = "none";
+my $installman1dir = "$opts{destdir}$Config{installman1dir}";
 my $man1ext = $Config{man1ext};
 my $libperl = $Config{libperl};
 # Shared library and dynamic loading suffixes.
@@ -213,7 +209,7 @@ if ($^O eq 'os390') {
     }
 }
 
-if ($nwinstall) {
+if ($opts{netware}) {
     # This is required only if we are installing on a NetWare server
     $installscript = $Config{installnwscripts};
     $installprivlib = $Config{installnwlib};
@@ -234,7 +230,7 @@ if ($Is_VMS) {  # Hang in there until File::Spec hits the big time
 # Do some quick sanity checks.
 
    $installbin		|| die "No installbin directory in config.sh\n";
--d $installbin		|| mkpath($installbin, $opts{verbose}, 0777);
+-d $installbin	        || mkpath($installbin);
 -d $installbin		|| $opts{notify} || die "$installbin is not a directory\n";
 -w $installbin		|| $opts{notify} || die "$installbin is not writable by you\n"
 	unless $installbin =~ m#^/afs/# || $opts{notify};
@@ -250,9 +246,9 @@ else {
     }
 }
 
-#-f 't/rantests'		|| $Is_W32
-#			|| warn "WARNING: You've never run 'make test' or",
-#				" some tests failed! (Installing anyway.)\n";
+-f 't/rantests'		|| $Is_W32
+			|| warn "WARNING: You've never run 'make test' or",
+				" some tests failed! (Installing anyway.)\n";
 } #if (!$Is_NetWare)
 
 # This will be used to store the packlist
@@ -275,12 +271,8 @@ if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
     safe_unlink("$installbin/$perldll");
     copy("$perldll", "$installbin/$perldll");
     chmod(0755, "$installbin/$perldll");
-    $packlist->{"$installbin/$perldll"} = { type => 'file' };
+    $packlist->{"$Config{installbin}/$perldll"} = { type => 'file' };
 } # if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin)
-
-# Get the install command and flags from the environment
-my @installcmd = $ENV{"INSTALL"} || "install";
-push(@installcmd, $ENV{"INSTALL_COPY"} || "-c");
 
 # First we install the version-numbered executables.
 
@@ -305,20 +297,22 @@ if ($Is_VMS) {
 }
 elsif ($^O ne 'dos') {
     if (!$Is_NetWare) {
-	install("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext",
-	    "0755", $dostrip);
+	safe_unlink("$installbin/$perl_verbase$ver$exe_ext");
+	copy("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext");
+	strip("$installbin/$perl_verbase$ver$exe_ext");
+	chmod(0755, "$installbin/$perl_verbase$ver$exe_ext");
     }
     else {
 	# If installing onto a NetWare server
-	if ($nwinstall) {
+        if ($opts{netware}) {
 	    # Copy perl.nlm, echo.nlm, type.nlm, a2p.nlm & cgi2perl.nlm
-            mkpath($Config{installnwsystem}, $opts{verbose}, 0777);
+            mkpath($Config{installnwsystem});
 	    copy("netware\\".$ENV{'MAKE_TYPE'}."\\perl.nlm", $Config{installnwsystem});
 	    copy("netware\\testnlm\\echo\\echo.nlm", $Config{installnwsystem});
 	    copy("netware\\testnlm\\type\\type.nlm", $Config{installnwsystem});
 	    copy("x2p\\a2p.nlm", $Config{installnwsystem});
 	    chmod(0755, "$Config{installnwsystem}\\perl.nlm");
-            mkpath($Config{installnwlcgi}, $opts{verbose}, 0777);
+            mkpath($Config{installnwlcgi});
 	    copy("lib\\auto\\cgi2perl\\cgi2perl.nlm", $Config{installnwlcgi});
 	}
     } #if (!$Is_NetWare)
@@ -335,8 +329,8 @@ my $do_installprivlib = !samepath($installprivlib, 'lib');
 my $vershort = ($Is_Cygwin and !$Config{usedevel}) ? substr($ver,0,-2) : $ver;
 $do_installprivlib = 0 if $versiononly && !($installprivlib =~ m/\Q$vershort/);
 
-mkpath($installprivlib, $opts{verbose}, 0777);
-mkpath($installarchlib, $opts{verbose}, 0777);
+mkpath($installprivlib);
+mkpath($installarchlib);
 mkpath($installsitelib, $opts{verbose}, 0777) if ($installsitelib);
 mkpath($installsitearch, $opts{verbose}, 0777) if ($installsitearch);
 
@@ -349,7 +343,7 @@ else {
 }
 
 # Install header files and libraries.
-mkpath("$installarchlib/CORE", $opts{verbose}, 0777);
+mkpath("$installarchlib/CORE");
 my @corefiles;
 if ($Is_VMS) {  # We did core file selection during build
     my $coredir = "lib/$Config{archname}/$ver/CORE";
@@ -359,27 +353,26 @@ if ($Is_VMS) {  # We did core file selection during build
 elsif ($Is_Cygwin) { # On Cygwin symlink it to CORE to make Makefile happy
     @corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
     my $coredll = "$installarchlib/CORE/$libperl";
+    my $instcoredll = "$Config{installarchlib}/CORE/$libperl";
     safe_unlink($coredll);
     ( $Config{'d_link'} eq 'define' &&
       eval {
           CORE::link("$installbin/$libperl", $coredll);
-          $packlist->{$coredll} = { from => "$installbin/$libperl",
+          $packlist->{$instcoredll} = { from => "$Config{installbin}/$libperl",
                                     type => 'link' };
       }
     ) ||
     eval {
         symlink("$installbin/$libperl", $coredll);
-        $packlist->{$coredll} = { from => "$installbin/$libperl",
+        $packlist->{$instcoredll} = { from => "$Config{installbin}/$libperl",
                                   type => 'link' };
     } ||
     ( copy("$installbin/$libperl", $coredll) &&
-      push(@corefiles, $coredll)
+      push(@corefiles, $instcoredll)
     )
 } else {
     # [als] hard-coded 'libperl' name... not good!
-    #@corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
-    @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
-    push(@corefiles,<libperl*.*>) unless defined($ENV{"NOLIBINSTALL"});
+    @corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
 
     # AIX needs perl.exp installed as well.
     push(@corefiles,'perl.exp') if $^O eq 'aix';
@@ -414,7 +407,7 @@ if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VM
 
 # For development purposes it can be very useful to have multiple perls
 # build for different "architectures" (eg threading or not) simultaneously.
-if ($archname && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VMS) {
+if ($opts{archname} && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VMS) {
     my $archperl = "$perl_verbase$ver-$Config{archname}$exe_ext";
     safe_unlink("$installbin/$archperl");
     if ($^O eq 'vos') {
@@ -499,7 +492,7 @@ sub script_alias {
 }
 
 # Install scripts.
-mkpath($installscript, $opts{verbose}, 0777);
+mkpath($installscript);
 if ($versiononly) {
     for (@scripts) {
 	(my $base = $_) =~ s#.*/##;
@@ -531,9 +524,9 @@ if ($versiononly) {
 
 # Install pod pages.  Where? I guess in $installprivlib/pod
 # ($installprivlib/pods for cygwin).
-if (!$nopods && (!$versiononly || ($installprivlib =~ m/\Q$vershort/))) {
+if (!$opts{nopods} && (!$versiononly || ($installprivlib =~ m/\Q$vershort/))) {
     my $pod = ($Is_Cygwin || $Is_Darwin || $Is_VMS || $Is_W32) ? 'pods' : 'pod';
-    mkpath("${installprivlib}/$pod", $opts{verbose}, 0777);
+    mkpath("${installprivlib}/$pod");
 
     for (map {$_->[1]} @{get_pod_metadata()->{master}}) {
 	# $_ is a name like  pod/perl.pod
@@ -550,7 +543,7 @@ if (!$nopods && (!$versiononly || ($installprivlib =~ m/\Q$vershort/))) {
 # Also skip $mainperl if the user opted to have it be a link to the
 # installed perl.
 
-if (!$versiononly && $otherperls) {
+if (!$versiononly && !$opts{'skip-otherperls'}) {
     my ($path, @path);
     my $dirsep = ($Is_OS2 || $Is_W32 || $Is_NetWare) ? ';' : ':' ;
     ($path = $ENV{"PATH"}) =~ s:\\:/:g ;
@@ -625,20 +618,6 @@ sub safe_unlink {
     }
 }
 
-sub safe_rename {
-    my($from,$to) = @_;
-    if (-f $to and not unlink($to)) {
-	my($i);
-	for ($i = 1; $i < 50; $i++) {
-	    last if rename($to, "$to.$i");
-	}
-	warn("Cannot rename to '$to.$i': $!"), return 0
-	   if $i >= 50;	# Give up!
-    }
-    link($from,$to) || return 0;
-    unlink($from);
-}
-
 sub copy {
     my($from,$to) = @_;
 
@@ -654,21 +633,6 @@ sub copy {
 	    unless -f $to and (chmod(0666, $to), unlink $to)
 		   and File::Copy::copy($from, $to);
     }
-    $packlist->{$xto} = { type => 'file' };
-}
-
-sub install {
-    my($from,$to,$mode,$strip) = @_;
-
-    my $xto = $to;
-    my $cmd = join(' ', @installcmd);
-    $cmd .= " -m $mode" if $mode;
-    $cmd .= " -s" if $strip;
-    $cmd .= " $from $to";
-    $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
-    print $opts{verbose} ? "  install $from $xto\n" : "  $xto\n" unless $opts{silent};
-    system($cmd);
-    warn "Couldn't $cmd\n" if $?;
     $packlist->{$xto} = { type => 'file' };
 }
 
@@ -690,7 +654,7 @@ sub installlib {
     # this, as $_ becomes a pathname, and so still works. However, it's not
     # obvious that $_ is needed later, and hence $_ must not be modified.
 
-    # Also, many of the regex exlusion tests below are now superfluous, as the
+    # Also, many of the regex exclusion tests below are now superfluous, as the
     # files in question are either no longer in blead, or now in ext/, dist/ or
     # cpan/ and not copied into lib/
 
@@ -710,7 +674,7 @@ sub installlib {
     # lib/Archive/Tar/bin, the config_data script in lib/Module/Build/scripts
     # and zipdetails in cpan/IO-Compress/bin
     # (they're installed later with other utils)
-    return if $name =~ /^(?:cpan|instmodsh|prove|corelist|ptar|cpan2dist|cpanp|cpanp-run-perl|ptardiff|ptargrep|config_data|zipdetails)\z/;
+    return if $name =~ /^(?:cpan|instmodsh|prove|corelist|ptar|ptardiff|ptargrep|config_data|zipdetails)\z/;
     # ignore the Makefiles
     return if $name =~ /^makefile$/i;
     # ignore the test extensions
@@ -769,29 +733,21 @@ sub installlib {
 	return unless $do_installprivlib;
     }
 
-    if ($Is_NetWare && !$nwinstall && /\.(?:nlp|nlm|bs)$/) {
+    if ($Is_NetWare && !$opts{netware} && /\.(?:nlp|nlm|bs)$/) {
         # Don't copy .nlp,.nlm files, doesn't make sense on Windows and also
         # if copied will give problems when building new extensions.
         # Has to be copied if we are installing on a NetWare server and
-        # hence the check !$nwinstall
+        # hence the check !$opts{netware}
         return;
     }
 
     if (-f $_) {
-	if (/\.(?:al|ix)$/ && !($dir =~ m[^auto/(.*)$])) {
-	    $installlib = $installprivlib;
-	    #We're installing *.al and *.ix files into $installprivlib,
-	    #but we have to delete old *.al and *.ix files from the 5.000
-	    #distribution:
-	    #This might not work because $archname might have changed.
-	    unlink("$installarchlib/$name");
-	}
 	my $xname = "$installlib/$name";
 	$xname =~ s/^\Q$opts{destdir}\E//;
 	$packlist->{$xname} = { type => 'file' };
-	if ($force || compare($_, "$installlib/$name") || $opts{notify}) {
+        if ($opts{force} || compare($_, "$installlib/$name") || $opts{notify}) {
 	    unlink("$installlib/$name");
-	    mkpath("$installlib/$dir", $opts{verbose}, 0777);
+	    mkpath("$installlib/$dir");
 	    # HP-UX (at least) needs to maintain execute permissions
 	    # on dynamically-loaded libraries.
             if (copy_if_diff($_, "$installlib/$name")) {
@@ -831,7 +787,7 @@ sub copy_if_diff {
     }
     -f $from || $perlpodbadsymlink || warn "$0: $from not found";
     $packlist->{$xto} = { type => 'file' };
-    if ($force || compare($from, $to) || $opts{notify}) {
+    if ($opts{force} || compare($from, $to) || $opts{notify}) {
 	safe_unlink($to);   # In case we don't have write permissions.
 	if ($perlpodbadsymlink && $from =~ m!^pod/perl(.+)\.pod$!) {
 	    $from = "README.$1";
@@ -850,7 +806,7 @@ sub strip
 {
     my(@args) = @_;
 
-    return unless $dostrip;
+    return unless $opts{strip};
 
     my @opts;
     while (@args && $args[0] =~ /^(-\w+)$/) {

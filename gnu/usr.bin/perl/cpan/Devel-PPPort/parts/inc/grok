@@ -1,12 +1,6 @@
 ################################################################################
 ##
-##  $Revision: 17 $
-##  $Author: mhx $
-##  $Date: 2010/03/07 13:15:49 +0100 $
-##
-################################################################################
-##
-##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -137,7 +131,7 @@ grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
               digit = *s - '0';
               if (digit >= 0 && digit <= 9) {
                 value = value * 10 + digit;
-		if (++s < send) {
+                if (++s < send) {
                   digit = *s - '0';
                   if (digit >= 0 && digit <= 9) {
                     value = value * 10 + digit;
@@ -185,7 +179,7 @@ grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
                                       }
                                     }
                                   }
-				}
+                                }
                               }
                             }
                           }
@@ -197,7 +191,7 @@ grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
               }
             }
           }
-	}
+        }
       }
     }
     numtype |= IS_NUMBER_IN_UV;
@@ -337,22 +331,22 @@ grok_bin(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
                 value_nv = (NV) value;
             }
             value_nv *= 2.0;
-	    /* If an NV has not enough bits in its mantissa to
-	     * represent a UV this summing of small low-order numbers
-	     * is a waste of time (because the NV cannot preserve
-	     * the low-order bits anyway): we could just remember when
-	     * did we overflow and in the end just multiply value_nv by the
-	     * right amount. */
+            /* If an NV has not enough bits in its mantissa to
+             * represent a UV this summing of small low-order numbers
+             * is a waste of time (because the NV cannot preserve
+             * the low-order bits anyway): we could just remember when
+             * did we overflow and in the end just multiply value_nv by the
+             * right amount. */
             value_nv += (NV)(bit - '0');
             continue;
         }
         if (bit == '_' && len && allow_underscores && (bit = s[1])
             && (bit == '0' || bit == '1'))
-	    {
-		--len;
-		++s;
+            {
+                --len;
+                ++s;
                 goto redo;
-	    }
+            }
         if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT))
             warn("Illegal binary digit '%c' ignored", *s);
         break;
@@ -360,10 +354,10 @@ grok_bin(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 
     if (   ( overflowed && value_nv > 4294967295.0)
 #if UVSIZE > 4
-	|| (!overflowed && value > 0xffffffff  )
+        || (!overflowed && value > 0xffffffff  )
 #endif
-	) {
-	warn("Binary number > 0b11111111111111111111111111111111 non-portable");
+        ) {
+        warn("Binary number > 0b11111111111111111111111111111111 non-portable");
     }
     *len_p = s - start;
     if (!overflowed) {
@@ -410,7 +404,7 @@ grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
     }
 
     for (; len-- && *s; s++) {
-	xdigit = strchr((char *) PL_hexdigit, *s);
+        xdigit = strchr((char *) PL_hexdigit, *s);
         if (xdigit) {
             /* Write it in this wonky order with a goto to attempt to get the
                compiler to make the common case integer-only loop pretty tight.
@@ -426,22 +420,22 @@ grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
                 value_nv = (NV) value;
             }
             value_nv *= 16.0;
-	    /* If an NV has not enough bits in its mantissa to
-	     * represent a UV this summing of small low-order numbers
-	     * is a waste of time (because the NV cannot preserve
-	     * the low-order bits anyway): we could just remember when
-	     * did we overflow and in the end just multiply value_nv by the
-	     * right amount of 16-tuples. */
+            /* If an NV has not enough bits in its mantissa to
+             * represent a UV this summing of small low-order numbers
+             * is a waste of time (because the NV cannot preserve
+             * the low-order bits anyway): we could just remember when
+             * did we overflow and in the end just multiply value_nv by the
+             * right amount of 16-tuples. */
             value_nv += (NV)((xdigit - PL_hexdigit) & 15);
             continue;
         }
         if (*s == '_' && len && allow_underscores && s[1]
-		&& (xdigit = strchr((char *) PL_hexdigit, s[1])))
-	    {
-		--len;
-		++s;
+                && (xdigit = strchr((char *) PL_hexdigit, s[1])))
+            {
+                --len;
+                ++s;
                 goto redo;
-	    }
+            }
         if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT))
             warn("Illegal hexadecimal digit '%c' ignored", *s);
         break;
@@ -449,10 +443,10 @@ grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 
     if (   ( overflowed && value_nv > 4294967295.0)
 #if UVSIZE > 4
-	|| (!overflowed && value > 0xffffffff  )
+        || (!overflowed && value > 0xffffffff  )
 #endif
-	) {
-	warn("Hexadecimal number > 0xffffffff non-portable");
+        ) {
+        warn("Hexadecimal number > 0xffffffff non-portable");
     }
     *len_p = s - start;
     if (!overflowed) {
@@ -501,22 +495,22 @@ grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
                 value_nv = (NV) value;
             }
             value_nv *= 8.0;
-	    /* If an NV has not enough bits in its mantissa to
-	     * represent a UV this summing of small low-order numbers
-	     * is a waste of time (because the NV cannot preserve
-	     * the low-order bits anyway): we could just remember when
-	     * did we overflow and in the end just multiply value_nv by the
-	     * right amount of 8-tuples. */
+            /* If an NV has not enough bits in its mantissa to
+             * represent a UV this summing of small low-order numbers
+             * is a waste of time (because the NV cannot preserve
+             * the low-order bits anyway): we could just remember when
+             * did we overflow and in the end just multiply value_nv by the
+             * right amount of 8-tuples. */
             value_nv += (NV)digit;
             continue;
         }
         if (digit == ('_' - '0') && len && allow_underscores
             && (digit = s[1] - '0') && (digit >= 0 && digit <= 7))
-	    {
-		--len;
-		++s;
+            {
+                --len;
+                ++s;
                 goto redo;
-	    }
+            }
         /* Allow \octal to work the DWIM way (that is, stop scanning
          * as soon as non-octal characters are seen, complain only iff
          * someone seems to want to use the digits eight and nine). */
@@ -529,10 +523,10 @@ grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 
     if (   ( overflowed && value_nv > 4294967295.0)
 #if UVSIZE > 4
-	|| (!overflowed && value > 0xffffffff  )
+        || (!overflowed && value > 0xffffffff  )
 #endif
-	) {
-	warn("Octal number > 037777777777 non-portable");
+        ) {
+        warn("Octal number > 037777777777 non-portable");
     }
     *len_p = s - start;
     if (!overflowed) {
@@ -559,107 +553,107 @@ grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 
 UV
 grok_number(string)
-	SV *string
-	PREINIT:
-		const char *pv;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		if (!grok_number(pv, len, &RETVAL))
-		  XSRETURN_UNDEF;
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                const char *pv;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                if (!grok_number(pv, len, &RETVAL))
+                  XSRETURN_UNDEF;
+        OUTPUT:
+                RETVAL
 
 UV
 grok_bin(string)
-	SV *string
-	PREINIT:
-		char *pv;
-		I32 flags;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		RETVAL = grok_bin(pv, &len, &flags, NULL);
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                char *pv;
+                I32 flags;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                RETVAL = grok_bin(pv, &len, &flags, NULL);
+        OUTPUT:
+                RETVAL
 
 UV
 grok_hex(string)
-	SV *string
-	PREINIT:
-		char *pv;
-		I32 flags;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		RETVAL = grok_hex(pv, &len, &flags, NULL);
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                char *pv;
+                I32 flags;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                RETVAL = grok_hex(pv, &len, &flags, NULL);
+        OUTPUT:
+                RETVAL
 
 UV
 grok_oct(string)
-	SV *string
-	PREINIT:
-		char *pv;
-		I32 flags;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		RETVAL = grok_oct(pv, &len, &flags, NULL);
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                char *pv;
+                I32 flags;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                RETVAL = grok_oct(pv, &len, &flags, NULL);
+        OUTPUT:
+                RETVAL
 
 UV
 Perl_grok_number(string)
-	SV *string
-	PREINIT:
-		const char *pv;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		if (!Perl_grok_number(aTHX_ pv, len, &RETVAL))
-		  XSRETURN_UNDEF;
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                const char *pv;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                if (!Perl_grok_number(aTHX_ pv, len, &RETVAL))
+                  XSRETURN_UNDEF;
+        OUTPUT:
+                RETVAL
 
 UV
 Perl_grok_bin(string)
-	SV *string
-	PREINIT:
-		char *pv;
-		I32 flags;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		RETVAL = Perl_grok_bin(aTHX_ pv, &len, &flags, NULL);
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                char *pv;
+                I32 flags;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                RETVAL = Perl_grok_bin(aTHX_ pv, &len, &flags, NULL);
+        OUTPUT:
+                RETVAL
 
 UV
 Perl_grok_hex(string)
-	SV *string
-	PREINIT:
-		char *pv;
-		I32 flags;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		RETVAL = Perl_grok_hex(aTHX_ pv, &len, &flags, NULL);
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                char *pv;
+                I32 flags;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                RETVAL = Perl_grok_hex(aTHX_ pv, &len, &flags, NULL);
+        OUTPUT:
+                RETVAL
 
 UV
 Perl_grok_oct(string)
-	SV *string
-	PREINIT:
-		char *pv;
-		I32 flags;
-		STRLEN len;
-	CODE:
-		pv = SvPV(string, len);
-		RETVAL = Perl_grok_oct(aTHX_ pv, &len, &flags, NULL);
-	OUTPUT:
-		RETVAL
+        SV *string
+        PREINIT:
+                char *pv;
+                I32 flags;
+                STRLEN len;
+        CODE:
+                pv = SvPV(string, len);
+                RETVAL = Perl_grok_oct(aTHX_ pv, &len, &flags, NULL);
+        OUTPUT:
+                RETVAL
 
 =tests plan => 10
 
@@ -674,4 +668,3 @@ ok(!defined(&Devel::PPPort::Perl_grok_number("A")));
 ok(&Devel::PPPort::Perl_grok_bin("10000001"), 129);
 ok(&Devel::PPPort::Perl_grok_hex("deadbeef"), 0xdeadbeef);
 ok(&Devel::PPPort::Perl_grok_oct("377"), 255);
-

@@ -32,7 +32,8 @@ Leon Brocard, Dave Mitchell, Jesse Vincent, Ricardo Signes, Steve Hay,
 Matt S Trout, David Golden, Florian Ragwitz, Tatsuhiko Miyagawa,
 Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
 Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
-Dominic Hargreaves, Aaron Crane and Aristotle Pagaltzis.
+Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall
+and Peter Martini.
 
 =head2 PUMPKIN?
 
@@ -502,6 +503,7 @@ the strings?).
  Aaron    5.17.8        2013-Jan-20
  BinGOs   5.17.9        2013-Feb-20
  Max M    5.17.10       2013-Mar-21
+ Ricardo  5.17.11       2013-Apr-20
 
  Ricardo  5.18.0-RC1    2013-May-11     The 5.18 maintenance track
  Ricardo  5.18.0-RC2    2013-May-12
@@ -517,6 +519,26 @@ the strings?).
  Ricardo   5.19.0       2013-May-20     The 5.19 development track
  David G   5.19.1       2013-Jun-21
  Aristotle 5.19.2       2013-Jul-22
+ Steve     5.19.3       2013-Aug-20
+ Steve     5.19.4       2013-Sep-20
+ Steve     5.19.5       2013-Oct-20
+ BinGOs    5.19.6       2013-Nov-20
+ Abigail   5.19.7       2013-Dec-20
+ Ricardo   5.19.8       2014-Jan-20
+ TonyC     5.19.9       2014-Feb-20
+ Aaron     5.19.10      2014-Mar-20
+ Steve     5.19.11      2014-Apr-20
+
+ Ricardo   5.20.0-RC1   2014-May-16     The 5.20 maintenance track
+ Ricardo   5.20.0       2014-May-27
+ Steve     5.20.1-RC1   2014-Aug-25
+ Steve     5.20.1-RC2   2014-Sep-07
+ Steve     5.20.1       2014-Sep-14
+
+ Ricardo   5.21.0       2014-May-27     The 5.21 development track
+ Matthew H 5.21.1       2014-Jun-20
+ Abigail   5.21.2       2014-Jul-20
+ Peter     5.21.3       2014-Aug-20
 
 =head2 SELECTED RELEASE SIZES
 
@@ -597,6 +619,7 @@ explained below.
  5.14.0         5328 104   1100 114  17779 2479   7697 2130   5871 188
  5.16.0         5562 109   1077  80  20504 2702   8750 2375   4815 152
  5.18.0         5892 113   1088  79  20077 2760   9365 2439   4943 154
+ 5.20.0         6243 115   1187  75  19499 2701   9620 2457   5145 159
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -898,6 +921,28 @@ the Perl source distribution for somewhat more selected releases.
  vos            16    8    16    8     17    8     9    7      8     7
  win32        1841   73  1841   73   1833   72  1655   67   1157    62
  x2p           345   19   345   19    346   19   345   19    344    20
+
+ ======================================================================
+
+                  5.20.0
+
+ Configure    552      1
+ Cross        118     15
+ NetWare      467     61
+ Porting     1204     68
+ djgpp         18      7
+ h2pl          13     15
+ hints        355     90
+ mad          174      8
+ os2          510     70
+ plan9        316     17
+ qnx            1      4
+ symbian      290     54
+ utils        241     27
+ vms          538     12
+ vos            8      7
+ win32       1183     64
+ x2p          341     19
 
 =head2 SELECTED PATCH SIZES
 

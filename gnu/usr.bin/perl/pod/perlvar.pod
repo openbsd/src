@@ -61,11 +61,7 @@ Nevertheless, if you wish to use long variable names, you need only say:
 
 at the top of your program.  This aliases all the short names to the long
 names in the current package.  Some even have medium names, generally
-borrowed from B<awk>.  To avoid a performance hit, if you don't need the
-C<$PREMATCH>, C<$MATCH>, or C<$POSTMATCH> it's best to use the C<English>
-module without them:
-
-    use English '-no_match_vars';
+borrowed from B<awk>.  For more info, please see L<English>.
 
 Before you continue, note the sort order for variables.  In general, we
 first list the variables in case-insensitive, almost-lexigraphical
@@ -218,7 +214,7 @@ semantics, which are POSIX-like.
 
 To see if your system is affected by this discrepancy check if
 C<getconf GNU_LIBPTHREAD_VERSION | grep -q NPTL> returns a false
-value. NTPL threads preserve the POSIX semantics.
+value.  NTPL threads preserve the POSIX semantics.
 
 Mnemonic: same as shells.
 
@@ -413,6 +409,28 @@ X<%ENV>
 The hash C<%ENV> contains your current environment.  Setting a
 value in C<ENV> changes the environment for any child processes
 you subsequently C<fork()> off.
+
+As of v5.18.0, both keys and values stored in C<%ENV> are stringified.
+
+    my $foo = 1;
+    $ENV{'bar'} = \$foo;
+    if( ref $ENV{'bar'} ) {
+        say "Pre 5.18.0 Behaviour";
+    } else {
+        say "Post 5.18.0 Behaviour";
+    }
+
+Previously, only child processes received stringified values:
+
+    my $foo = 1;
+    $ENV{'bar'} = \$foo;
+
+    # Always printed 'non ref'
+    system($^X, '-e',
+           q/print ( ref $ENV{'bar'}  ? 'ref' : 'non ref' ) /);
+
+This happens because you can't really share arbitrary data structures with
+foreign processes.
 
 =item $SYSTEM_FD_MAX
 
@@ -783,22 +801,51 @@ we have not made another match:
     $1 is Mutt; $2 is Jeff
     $1 is Wallace; $2 is Grommit
 
-Due to an unfortunate accident of Perl's implementation, C<use
-English> imposes a considerable performance penalty on all regular
-expression matches in a program because it uses the C<$`>, C<$&>, and
-C<$'>, regardless of whether they occur in the scope of C<use
-English>.  For that reason, saying C<use English> in libraries is
-strongly discouraged unless you import it without the match variables:
+=head3 Performance issues
 
-    use English '-no_match_vars'
+Traditionally in Perl, any use of any of the three variables  C<$`>, C<$&>
+or C<$'> (or their C<use English> equivalents) anywhere in the code, caused
+all subsequent successful pattern matches to make a copy of the matched
+string, in case the code might subsequently access one of those variables.
+This imposed a considerable performance penalty across the whole program,
+so generally the use of these variables has been discouraged.
 
-The C<Devel::NYTProf> and C<Devel::FindAmpersand>
-modules can help you find uses of these
-problematic match variables in your code.
+In Perl 5.6.0 the C<@-> and C<@+> dynamic arrays were introduced that
+supply the indices of successful matches. So you could for example do
+this:
 
-Since Perl v5.10.0, you can use the C</p> match operator flag and the
-C<${^PREMATCH}>, C<${^MATCH}>, and C<${^POSTMATCH}> variables instead
-so you only suffer the performance penalties.
+    $str =~ /pattern/;
+
+    print $`, $&, $'; # bad: perfomance hit
+
+    print             # good: no perfomance hit
+	substr($str, 0,     $-[0]),
+	substr($str, $-[0], $+[0]-$-[0]),
+	substr($str, $+[0]);
+
+In Perl 5.10.0 the C</p> match operator flag and the C<${^PREMATCH}>,
+C<${^MATCH}>, and C<${^POSTMATCH}> variables were introduced, that allowed
+you to suffer the penalties only on patterns marked with C</p>.
+
+In Perl 5.18.0 onwards, perl started noting the presence of each of the
+three variables separately, and only copied that part of the string
+required; so in
+
+    $`; $&; "abcdefgh" =~ /d/
+
+perl would only copy the "abcd" part of the string. That could make a big
+difference in something like
+
+    $str = 'x' x 1_000_000;
+    $&; # whoops
+    $str =~ /x/g # one char copied a million times, not a million chars
+
+In Perl 5.20.0 a new copy-on-write system was enabled by default, which
+finally fixes all performance issues with these three variables, and makes
+them safe to use anywhere.
+
+The C<Devel::NYTProf> and C<Devel::FindAmpersand> modules can help you
+find uses of these problematic match variables in your code.
 
 =over 8
 
@@ -822,11 +869,8 @@ The string matched by the last successful pattern match (not counting
 any matches hidden within a BLOCK or C<eval()> enclosed by the current
 BLOCK).
 
-The use of this variable anywhere in a program imposes a considerable
-performance penalty on all regular expression matches.  To avoid this
-penalty, you can extract the same substring by using L</@->.  Starting
-with Perl v5.10.0, you can use the C</p> match flag and the C<${^MATCH}>
-variable to do the same thing for particular match operations.
+See L</Performance issues> above for the serious performance implications
+of using this variable (even once) in your code.
 
 This variable is read-only and dynamically-scoped.
 
@@ -836,9 +880,14 @@ Mnemonic: like C<&> in some editors.
 X<${^MATCH}>
 
 This is similar to C<$&> (C<$MATCH>) except that it does not incur the
-performance penalty associated with that variable, and is only guaranteed
+performance penalty associated with that variable.
+
+See L</Performance issues> above.
+
+In Perl v5.18 and earlier, it is only guaranteed
 to return a defined value when the pattern was compiled or executed with
-the C</p> modifier.
+the C</p> modifier.  In Perl v5.20, the C</p> modifier does nothing, so
+C<${^MATCH}> does the same thing as C<$MATCH>.
 
 This variable was added in Perl v5.10.0.
 
@@ -853,12 +902,8 @@ The string preceding whatever was matched by the last successful
 pattern match, not counting any matches hidden within a BLOCK or C<eval>
 enclosed by the current BLOCK.
 
-The use of this variable anywhere in a program imposes a considerable
-performance penalty on all regular expression matches.  To avoid this
-penalty, you can extract the same substring by using L</@->.  Starting
-with Perl v5.10.0, you can use the C</p> match flag and the
-C<${^PREMATCH}> variable to do the same thing for particular match
-operations.
+See L</Performance issues> above for the serious performance implications
+of using this variable (even once) in your code.
 
 This variable is read-only and dynamically-scoped.
 
@@ -868,11 +913,16 @@ Mnemonic: C<`> often precedes a quoted string.
 X<$`> X<${^PREMATCH}>
 
 This is similar to C<$`> ($PREMATCH) except that it does not incur the
-performance penalty associated with that variable, and is only guaranteed
-to return a defined value when the pattern was compiled or executed with
-the C</p> modifier.
+performance penalty associated with that variable.
 
-This variable was added in Perl v5.10.0
+See L</Performance issues> above.
+
+In Perl v5.18 and earlier, it is only guaranteed
+to return a defined value when the pattern was compiled or executed with
+the C</p> modifier.  In Perl v5.20, the C</p> modifier does nothing, so
+C<${^PREMATCH}> does the same thing as C<$PREMATCH>.
+
+This variable was added in Perl v5.10.0.
 
 This variable is read-only and dynamically-scoped.
 
@@ -889,12 +939,8 @@ enclosed by the current BLOCK).  Example:
     /def/;
     print "$`:$&:$'\n";  	# prints abc:def:ghi
 
-The use of this variable anywhere in a program imposes a considerable
-performance penalty on all regular expression matches.
-To avoid this penalty, you can extract the same substring by
-using L</@->.  Starting with Perl v5.10.0, you can use the C</p> match flag
-and the C<${^POSTMATCH}> variable to do the same thing for particular
-match operations.
+See L</Performance issues> above for the serious performance implications
+of using this variable (even once) in your code.
 
 This variable is read-only and dynamically-scoped.
 
@@ -904,9 +950,14 @@ Mnemonic: C<'> often follows a quoted string.
 X<${^POSTMATCH}> X<$'> X<$POSTMATCH>
 
 This is similar to C<$'> (C<$POSTMATCH>) except that it does not incur the
-performance penalty associated with that variable, and is only guaranteed
+performance penalty associated with that variable.
+
+See L</Performance issues> above.
+
+In Perl v5.18 and earlier, it is only guaranteed
 to return a defined value when the pattern was compiled or executed with
-the C</p> modifier.
+the C</p> modifier.  In Perl v5.20, the C</p> modifier does nothing, so
+C<${^POSTMATCH}> does the same thing as C<$POSTMATCH>.
 
 This variable was added in Perl v5.10.0.
 
@@ -1353,7 +1404,12 @@ not reading from a record-oriented file (or your OS doesn't have
 record-oriented files), then you'll likely get a full chunk of data
 with every read.  If a record is larger than the record size you've
 set, you'll get the record back in pieces.  Trying to set the record
-size to zero or less will cause reading in the (rest of the) whole file.
+size to zero or less is deprecated and will cause $/ to have the value
+of "undef", which will cause reading in the (rest of the) whole file.
+
+As of 5.19.9 setting C<$/> to any other form of reference will throw a
+fatal exception. This is in preparation for supporting new ways to set
+C<$/> in the future.
 
 On VMS only, record reads bypass PerlIO layers and any associated
 buffering, so you must not mix record and non-record reads on the
@@ -1709,6 +1765,10 @@ It can be used immediately before invoking the C<die()> operator,
 to set the exit value, or to inspect the system error string
 corresponding to error I<n>, or to restore C<$!> to a meaningful state.
 
+Note that when stringified, the text is always returned as if both
+S<L<C<"use locale">|perllocale>> and S<L<C<"use bytes">|bytes>> are in
+effect.  This is likely to change in v5.22.
+
 Mnemonic: What just went bang?
 
 =item %OS_ERROR
@@ -2058,6 +2118,14 @@ were compiled.
 
 Save source code lines into C<@{"_<$filename"}>.
 
+=item 0x800
+
+When saving source, include evals that generate no subroutines.
+
+=item 0x1000
+
+When saving source, include source that did not compile.
+
 =back
 
 Some bits may be relevant at compile-time only, some at
@@ -2123,10 +2191,8 @@ See L<perldiag> for details about error messages.
 
 =over 8
 
-=item $OFMT
-
 =item $#
-X<$#> X<$OFMT>
+X<$#>
 
 C<$#> was a variable that could be used to format printed numbers.
 After a deprecation cycle, its magic was removed in Perl v5.10.0 and
@@ -2152,10 +2218,8 @@ Deprecated in Perl 5.
 
 Removed in Perl v5.10.0.
 
-=item $ARRAY_BASE
-
 =item $[
-X<$[> X<$ARRAY_BASE>
+X<$[>
 
 This variable stores the index of the first element in an array, and
 of the first character in a substring.  The default is 0, but you could
@@ -2183,10 +2247,8 @@ Mnemonic: [ begins subscripts.
 
 Deprecated in Perl v5.12.0.
 
-=item $OLD_PERL_VERSION
-
 =item $]
-X<$]> X<$OLD_PERL_VERSION>
+X<$]>
 
 See L</$^V> for a more modern representation of the Perl version that allows
 accurate string comparisons.
@@ -2195,10 +2257,10 @@ The version + patchlevel / 1000 of the Perl interpreter.  This variable
 can be used to determine whether the Perl interpreter executing a
 script is in the right range of versions:
 
-    warn "No checksumming!\n" if $] < 3.019;
+    warn "No PerlIO!\n" if $] lt '5.008';
 
 The floating point representation can sometimes lead to inaccurate
-numeric comparisons.
+numeric comparisons, so string comparisons are recommended.
 
 See also the documentation of C<use VERSION> and C<require VERSION>
 for a convenient way to fail if the running Perl interpreter is too old.

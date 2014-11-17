@@ -69,7 +69,7 @@ OPTIMIZE = $optimize
 
 .SUFFIXES: .c \$(OBJ_EXT)
 
-RUN = $run
+RUN =
 PERL = $perl
 
 !GROK!THIS!
@@ -77,26 +77,10 @@ PERL = $perl
 cat >>Makefile <<'!NO!SUBS!'
 
 REALPERL = ../perl
-CCCMD = `sh $(shellflags) cflags "optimize='$(OPTIMIZE)'" $@`
-
-public = a2p$(EXE_EXT) s2p find2perl
-
-private = 
-
-manpages = a2p.man s2p.man
-
-util =
-
-sh = Makefile.SH cflags.SH
-shextract = Makefile cflags
+CCCMD = `sh $(shellflags) ../cflags "optimize='$(OPTIMIZE)'" $@`
 
 pl = find2perl.PL s2p.PL
 plextract = find2perl s2p
-plexe = find2perl.exe s2p.exe
-plc   = find2perl.c s2p.c
-plm   = a2p.loadmap
-
-addedbyconf = $(shextract) $(plextract)
 
 h = EXTERN.h INTERN.h ../config.h ../handy.h hash.h a2p.h str.h util.h
 
@@ -110,7 +94,7 @@ lintflags = -phbvxac
 .c$(OBJ_EXT):
 	$(CCCMD) -DPERL_FOR_X2P $*.c
 
-all: $(public) $(private) $(util)
+all: a2p$(EXE_EXT) s2p find2perl
 	@echo " "
 
 a2p$(EXE_EXT): $(obj) a2p$(OBJ_EXT)
@@ -149,13 +133,13 @@ a2p$(OBJ_EXT): a2p.c a2py.c a2p.h EXTERN.h util.h INTERN.h \
 	$(CCCMD) a2p.c
 
 clean:
-	rm -f a2p$(EXE_EXT) psed *$(OBJ_EXT) $(plexe) $(plc) $(plm)
+	rm -f a2p$(EXE_EXT) psed *$(OBJ_EXT) $(plexe) $(plc)
 
 distclean: veryclean
 
 realclean: clean
 	-rmdir .depending
-	rm -f core $(addedbyconf) all
+	rm -f core $(plextract) all
 	rm -f $(FIRSTMAKEFILE) $(FIRSTMAKEFILE).old makefile.old
 
 veryclean: realclean
@@ -170,16 +154,13 @@ lint:
 	lint $(lintflags) $(defs) $(c) > a2p.fuzz
 
 depend: ../makedepend
-	sh ../makedepend MAKE=$(MAKE)
+	sh ../makedepend MAKE=$(MAKE) ../cflags
 
 clist:
 	echo $(c) | tr ' ' $(TRNL) >.clist
 
 hlist:
 	echo $(h) | tr ' ' $(TRNL) >.hlist
-
-shlist:
-	echo $(sh) | tr ' ' $(TRNL) >.shlist
 
 $(plextract):
 	$(RUN) $(PERL) -I../lib $@.PL
@@ -194,10 +175,4 @@ $(obj):
 makedepend: depend
 !NO!SUBS!
 $eunicefix Makefile
-case `pwd` in
-*SH)
-    $rm -f ../Makefile
-    $ln Makefile ../Makefile
-    ;;
-esac
 rm -f $firstmakefile

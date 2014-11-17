@@ -390,16 +390,16 @@ is(stores($x), 0);
 
 is( ( join ' ', map { join '', map ++$_, ($x=1)..4 } 1..2 ), '2345 2345',
     'modifiable variable num range' );
-is( ( join ' ', map { join '', map ++$_, 1..4      } 1..2 ), '2345 3456',
-    'modifiable const num range' );  # Unresolved bug RT#3105
+is( ( join ' ', map { join '', map ++$_, 1..4      } 1..2 ), '2345 2345',
+    'modifiable const num range' );  # RT#3105
 $s = ''; for (1..2) { for (1..4) { $s .= ++$_ } $s.=' ' if $_==1; }
 is( $s, '2345 2345','modifiable num counting loop counter' );
 
 
 is( ( join ' ', map { join '', map ++$_, ($x='a')..'d' } 1..2 ), 'bcde bcde',
     'modifiable variable alpha range' );
-is( ( join ' ', map { join '', map ++$_, 'a'..'d'      } 1..2 ), 'bcde cdef',
-    'modifiable const alpha range' );  # Unresolved bug RT#3105
+is( ( join ' ', map { join '', map ++$_, 'a'..'d'      } 1..2 ), 'bcde bcde',
+    'modifiable const alpha range' );  # RT#3105
 $s = ''; for (1..2) { for ('a'..'d') { $s .= ++$_ } $s.=' ' if $_==1; }
 is( $s, 'bcde bcde','modifiable alpha counting loop counter' );
 

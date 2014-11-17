@@ -10,7 +10,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan tests => 139;
+plan tests => 144;
 
 $a = {};
 bless $a, "Bob";
@@ -111,6 +111,10 @@ ok UNIVERSAL::can(23, "can");
 ++${"23::foo"};
 ok UNIVERSAL::can("23", "can"), '"23" can can when the pack exists';
 ok UNIVERSAL::can(23, "can"), '23 can can when the pack exists';
+sub IO::Handle::turn {}
+ok UNIVERSAL::can(*STDOUT, 'turn'), 'globs with IOs can';
+ok UNIVERSAL::can(\*STDOUT, 'turn'), 'globrefs with IOs can';
+ok UNIVERSAL::can("STDOUT", 'turn'), 'IO barewords can';
 
 ok $a->can("VERSION");
 
@@ -339,3 +343,10 @@ ok(Undeclared->can("foo"));
 ok(!Undeclared->can("something_else"));
 
 ok(Undeclared->isa("UNIVERSAL"));
+
+# keep this at the end to avoid messing up earlier tests, since it modifies
+# @UNIVERSAL::ISA
+@UNIVERSAL::ISA = ('UniversalParent');
+{ package UniversalIsaTest1; }
+ok(UniversalIsaTest1->isa('UniversalParent'));
+ok(UniversalIsaTest2->isa('UniversalParent'));

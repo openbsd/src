@@ -1030,6 +1030,13 @@ EXPECT
 ok
 Modification of a read-only value attempted at - line 16.
 ########
+#
+# And one should not be able to tie read-only COWs
+for(__PACKAGE__) { tie $_, "" }
+sub TIESCALAR {bless []}
+EXPECT
+Modification of a read-only value attempted at - line 3.
+########
 
 # Similarly, read-only regexps cannot be tied.
 sub TIESCALAR { bless [] }
@@ -1332,3 +1339,113 @@ Can't call method "FETCHSIZE" on an undefined value at - line 5.
 Can't call method "FETCHSIZE" on an undefined value at - line 6.
 Can't call method "FETCHSIZE" on an undefined value at - line 7.
 Can't call method "FETCHSIZE" on an undefined value at - line 8.
+########
+
+# Crash when reading negative index when NEGATIVE_INDICES stub exists
+sub NEGATIVE_INDICES;
+sub TIEARRAY{bless[]};
+sub FETCHSIZE{}
+tie @a, "";
+print "ok\n" if ! defined $a[-1];
+EXPECT
+ok
+########
+
+# Assigning vstrings to tied scalars
+sub TIESCALAR{bless[]};
+sub STORE { print ref \$_[1], "\n" }
+tie $x, ""; $x = v3;
+EXPECT
+VSTRING
+########
+
+# [perl #27010] Tying deferred elements
+$\="\n";
+sub TIESCALAR{bless[]};
+sub {
+    tie $_[0], "";
+    print ref tied $h{k};
+    tie $h{l}, "";
+    print ref tied $_[1];
+    untie $h{k};
+    print tied $_[0] // 'undef';
+    untie $_[1];
+    print tied $h{l} // 'undef';
+    # check that tied and untie do not autovivify
+    # XXX should they autovivify?
+    tied $_[2];
+    print exists $h{m} ? "yes" : "no";
+    untie $_[2];
+    print exists $h{m} ? "yes" : "no";
+}->($h{k}, $h{l}, $h{m});
+EXPECT
+main
+main
+undef
+undef
+no
+no
+########
+
+# [perl #78194] Passing op return values to tie constructors
+sub TIEARRAY{
+    print \$_[1] == \$_[1] ? "ok\n" : "not ok\n";
+};
+tie @a, "", "$a$b";
+EXPECT
+ok
+########
+
+# Scalar-tied locked hash keys and copy-on-write
+use Tie::Scalar;
+tie $h{foo}, Tie::StdScalar;
+tie $h{bar}, Tie::StdScalar;
+$h{foo} = __PACKAGE__; # COW
+$h{bar} = 1;       # not COW
+# Moral equivalent of Hash::Util::lock_whatever, but miniperl-compatible
+Internals::SvREADONLY($h{foo},1);
+Internals::SvREADONLY($h{bar},1);
+print $h{foo}, "\n"; # should not croak
+# Whether the value is COW should make no difference here (whether the
+# behaviour is ultimately correct is another matter):
+local $h{foo};
+local $h{bar};
+print "ok\n" if (eval{ $h{foo} = 1 }||$@) eq (eval{ $h{bar} = 1 }||$@);
+EXPECT
+main
+ok
+########
+
+# &xsub and goto &xsub with tied @_
+use Tie::Array;
+tie @_, Tie::StdArray;
+@_ = "\xff";
+&utf8::encode;
+printf "%x\n", $_ for map ord, split //, $_[0];
+print "--\n";
+@_ = "\xff";
+& {sub { goto &utf8::encode }};
+printf "%x\n", $_ for map ord, split //, $_[0];
+EXPECT
+c3
+bf
+--
+c3
+bf
+########
+
+# Defelem pointing to nonexistent element of tied array
+
+use Tie::Array;
+# This sub is called with a deferred element.  Inside the sub, $_[0] pros-
+# pectively points to element 10000 of @a.
+sub {
+  tie @a, "Tie::StdArray";  # now @a is tied
+  $#a = 20000;  # and FETCHSIZE/AvFILL will now return a big number
+  $a[10000] = "crumpets\n";
+  $_ = "$_[0]"; # but defelems don’t expect tied arrays and try to read
+                # AvARRAY[10000], which crashes
+}->($a[10000]);
+print
+EXPECT
+crumpets

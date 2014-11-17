@@ -239,59 +239,59 @@ ERR
 #line 238
 isa_ok(bless([], "Foo"), "Wibble");
 out_ok( <<OUT, <<ERR );
-not ok - The object isa Wibble
+not ok - An object of class 'Foo' isa 'Wibble'
 OUT
-#   Failed test 'The object isa Wibble'
+#   Failed test 'An object of class 'Foo' isa 'Wibble''
 #   at $0 line 238.
-#     The object isn't a 'Wibble' it's a 'Foo'
+#     The object of class 'Foo' isn't a 'Wibble'
 ERR
 
 #line 248
 isa_ok(42,    "Wibble", "My Wibble");
-out_like( <<OUT, <<ERR );
-not ok - My Wibble isa Wibble
+out_ok( <<OUT, <<ERR );
+not ok - 'My Wibble' isa 'Wibble'
 OUT
-#   Failed test 'My Wibble isa Wibble'
+#   Failed test ''My Wibble' isa 'Wibble''
 #   at $0 line 248.
-#     My Wibble isn't a .*
+#     'My Wibble' isn't a 'Wibble'
 ERR
 
-#line 248
+#line 252
 isa_ok(42,    "Wibble");
-out_like( <<OUT, <<ERR );
-not ok - The (thing|class) isa Wibble
+out_ok( <<OUT, <<ERR );
+not ok - The class (or class-like) '42' isa 'Wibble'
 OUT
-#   Failed test 'The (thing|class) isa Wibble'
-#   at $0 line 248.
-#     The (thing|class) isn't a .*
+#   Failed test 'The class (or class-like) '42' isa 'Wibble''
+#   at $0 line 252.
+#     The class (or class-like) '42' isn't a 'Wibble'
 ERR
 
 #line 258
 isa_ok(undef, "Wibble", "Another Wibble");
 out_ok( <<OUT, <<ERR );
-not ok - Another Wibble isa Wibble
+not ok - 'Another Wibble' isa 'Wibble'
 OUT
-#   Failed test 'Another Wibble isa Wibble'
+#   Failed test ''Another Wibble' isa 'Wibble''
 #   at $0 line 258.
-#     Another Wibble isn't defined
+#     'Another Wibble' isn't defined
 ERR
 
 #line 268
 isa_ok([],    "HASH");
 out_ok( <<OUT, <<ERR );
-not ok - The reference isa HASH
+not ok - A reference of type 'ARRAY' isa 'HASH'
 OUT
-#   Failed test 'The reference isa HASH'
+#   Failed test 'A reference of type 'ARRAY' isa 'HASH''
 #   at $0 line 268.
-#     The reference isn't a 'HASH' it's a 'ARRAY'
+#     The reference of type 'ARRAY' isn't a 'HASH'
 ERR
 
 #line 278
 new_ok(undef);
 out_like( <<OUT, <<ERR );
-not ok - new\\(\\) died
+not ok - undef->new\\(\\) died
 OUT
-#   Failed test 'new\\(\\) died'
+#   Failed test 'undef->new\\(\\) died'
 #   at $Filename line 278.
 #     Error was:  Can't call method "new" on an undefined value at .*
 ERR
@@ -299,9 +299,9 @@ ERR
 #line 288
 new_ok( "Does::Not::Exist" );
 out_like( <<OUT, <<ERR );
-not ok - new\\(\\) died
+not ok - Does::Not::Exist->new\\(\\) died
 OUT
-#   Failed test 'new\\(\\) died'
+#   Failed test 'Does::Not::Exist->new\\(\\) died'
 #   at $Filename line 288.
 #     Error was:  Can't locate object method "new" via package "Does::Not::Exist" .*
 ERR
@@ -314,41 +314,41 @@ ERR
 #line 303
 new_ok( "Foo" );
 out_ok( <<OUT, <<ERR );
-not ok - The object isa Foo
+not ok - undef isa 'Foo'
 OUT
-#   Failed test 'The object isa Foo'
+#   Failed test 'undef isa 'Foo''
 #   at $0 line 303.
-#     The object isn't defined
+#     undef isn't defined
 ERR
 
 # line 313
 new_ok( "Bar" );
 out_ok( <<OUT, <<ERR );
-not ok - The object isa Bar
+not ok - A reference of type 'HASH' isa 'Bar'
 OUT
-#   Failed test 'The object isa Bar'
+#   Failed test 'A reference of type 'HASH' isa 'Bar''
 #   at $0 line 313.
-#     The object isn't a 'Bar' it's a 'HASH'
+#     The reference of type 'HASH' isn't a 'Bar'
 ERR
 
 #line 323
 new_ok( "Baz" );
 out_ok( <<OUT, <<ERR );
-not ok - The object isa Baz
+not ok - An object of class 'Wibble' isa 'Baz'
 OUT
-#   Failed test 'The object isa Baz'
+#   Failed test 'An object of class 'Wibble' isa 'Baz''
 #   at $0 line 323.
-#     The object isn't a 'Baz' it's a 'Wibble'
+#     The object of class 'Wibble' isn't a 'Baz'
 ERR
 
 #line 333
 new_ok( "Baz", [], "no args" );
 out_ok( <<OUT, <<ERR );
-not ok - no args isa Baz
+not ok - 'no args' isa 'Baz'
 OUT
-#   Failed test 'no args isa Baz'
+#   Failed test ''no args' isa 'Baz''
 #   at $0 line 333.
-#     no args isn't a 'Baz' it's a 'Wibble'
+#     'no args' isn't a 'Baz'
 ERR
 
 #line 343

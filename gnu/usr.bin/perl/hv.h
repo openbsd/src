@@ -81,6 +81,7 @@ struct mro_meta {
     U32     pkg_gen;         /* Bumps when local methods/@ISA change */
     const struct mro_alg *mro_which; /* which mro alg is in use? */
     HV      *isa;            /* Everything this class @ISA */
+    HV      *super;          /* SUPER method cache */
     U32     destroy_gen;     /* Generation number of DESTROY cache */
 };
 
@@ -112,13 +113,17 @@ struct xpvhv_aux {
  */
     I32		xhv_name_count;
     struct mro_meta *xhv_mro_meta;
-    HV *	xhv_super;	/* SUPER method cache */
 #ifdef PERL_HASH_RANDOMIZE_KEYS
     U32         xhv_rand;       /* random value for hash traversal */
     U32         xhv_last_rand;  /* last random value for hash traversal,
                                    used to detect each() after insert for warnings */
 #endif
+    U32         xhv_fill_lazy;
+    U32         xhv_aux_flags;      /* assorted extra flags */
 };
+
+#define HvAUXf_SCAN_STASH   0x1   /* stash is being scanned by gv_check */
+#define HvAUXf_NO_DEREF     0x2   /* @{}, %{} etc (and nomethod) not present */
 
 /* hash structure: */
 /* This structure must match the beginning of struct xpvmg in sv.h. */
@@ -135,7 +140,7 @@ struct xpvhv {
 =for apidoc AmU||HEf_SVKEY
 This flag, used in the length slot of hash entries and magic structures,
 specifies the structure contains an C<SV*> pointer where a C<char*> pointer
-is to be expected. (For information only--not to be used).
+is to be expected.  (For information only--not to be used).
 
 =head1 Handy Values
 
@@ -157,10 +162,10 @@ Returns the length of the stash's name.
 Returns true if the name is in UTF8 encoding.
 
 =for apidoc Am|char*|HvENAME|HV* stash
-Returns the effective name of a stash, or NULL if there is none. The
+Returns the effective name of a stash, or NULL if there is none.  The
 effective name represents a location in the symbol table where this stash
-resides. It is updated automatically when packages are aliased or deleted.
-A stash that is no longer in the symbol table has no effective name. This
+resides.  It is updated automatically when packages are aliased or deleted.
+A stash that is no longer in the symbol table has no effective name.  This
 name is preferable to C<HvNAME> for use in MRO linearisations and isa
 caches.
 
@@ -171,7 +176,7 @@ Returns the length of the stash's effective name.
 Returns true if the effective name is in UTF8 encoding.
 
 =for apidoc Am|void*|HeKEY|HE* he
-Returns the actual pointer stored in the key slot of the hash entry. The
+Returns the actual pointer stored in the key slot of the hash entry.  The
 pointer may be either C<char*> or C<SV*>, depending on the value of
 C<HeKLEN()>.  Can be assigned to.  The C<HePV()> or C<HeSVKEY()> macros are
 usually preferable for finding the value of a key.
@@ -179,11 +184,12 @@ usually preferable for finding the value of a key.
 =for apidoc Am|STRLEN|HeKLEN|HE* he
 If this is negative, and amounts to C<HEf_SVKEY>, it indicates the entry
 holds an C<SV*> key.  Otherwise, holds the actual length of the key.  Can
-be assigned to. The C<HePV()> macro is usually preferable for finding key
+be assigned to.  The C<HePV()> macro is usually preferable for finding key
 lengths.
 
 =for apidoc Am|SV*|HeVAL|HE* he
-Returns the value slot (type C<SV*>) stored in the hash entry. Can be assigned
+Returns the value slot (type C<SV*>)
+stored in the hash entry.  Can be assigned
 to.
 
   SV *foo= HeVAL(hv);
@@ -201,14 +207,14 @@ not care about what the length of the key is, you may use the global
 variable C<PL_na>, though this is rather less efficient than using a local
 variable.  Remember though, that hash keys in perl are free to contain
 embedded nulls, so using C<strlen()> or similar is not a good way to find
-the length of hash keys. This is very similar to the C<SvPV()> macro
-described elsewhere in this document. See also C<HeUTF8>.
+the length of hash keys.  This is very similar to the C<SvPV()> macro
+described elsewhere in this document.  See also C<HeUTF8>.
 
 If you are using C<HePV> to get values to pass to C<newSVpvn()> to create a
 new SV, you should consider using C<newSVhek(HeKEY_hek(he))> as it is more
 efficient.
 
-=for apidoc Am|char*|HeUTF8|HE* he
+=for apidoc Am|U32|HeUTF8|HE* he
 Returns whether the C<char *> value returned by C<HePV> is encoded in UTF-8,
 doing any necessary dereferencing of possibly C<SV*> keys.  The value returned
 will be 0 or non-0, not necessarily 1 (or even a value with any low bits set),
@@ -233,6 +239,18 @@ C<SV*>.
 
 #define PERL_HASH_DEFAULT_HvMAX 7
 
+/* During hsplit(), if HvMAX(hv)+1 (the new bucket count) is >= this value,
+ * we preallocate the HvAUX() struct.
+ * The assumption being that we are using so much space anyway we might
+ * as well allocate the extra bytes and speed up later keys()
+ * or each() operations. We don't do this to small hashes as we assume
+ * that a) it will be easy/fast to resize them to add the iterator, and b) that
+ * many of them will be objects which won't be traversed. Larger hashes however
+ * will take longer to extend, and the size of the aux struct is swamped by the
+ * overall length of the bucket array.
+ * */
+#define PERL_HV_ALLOC_AUX_SIZE (1 << 9)
+
 /* these hash entry flags ride on hent_klen (for use only in magic/tied HVs) */
 #define HEf_SVKEY	-2	/* hent_key is an SV* */
 
@@ -240,7 +258,7 @@ C<SV*>.
 #  define Nullhv Null(HV*)
 #endif
 #define HvARRAY(hv)	((hv)->sv_u.svu_hash)
-#define HvFILL(hv)	Perl_hv_fill(aTHX_ (const HV *)(hv))
+#define HvFILL(hv)	Perl_hv_fill(aTHX_ MUTABLE_HV(hv))
 #define HvMAX(hv)	((XPVHV*)  SvANY(hv))->xhv_max
 /* This quite intentionally does no flag checking first. That's your
    responsibility.  */
@@ -366,7 +384,9 @@ C<SV*>.
 				 ((HeKLEN(he) == HEf_SVKEY) ?		\
 				  HeKEY_sv(he) :			\
 				  newSVpvn_flags(HeKEY(he),		\
-						 HeKLEN(he), SVs_TEMP)) : \
+                                                 HeKLEN(he),            \
+                                                 SVs_TEMP |             \
+                                      ( HeKUTF8(he) ? SVf_UTF8 : 0 ))) : \
 				 &PL_sv_undef)
 #define HeSVKEY_set(he,sv)	((HeKLEN(he) = HEf_SVKEY), (HeKEY_sv(he) = sv))
 
@@ -466,6 +486,22 @@ C<SV*>.
 #define hv_delete(hv, key, klen, flags)					\
     (MUTABLE_SV(hv_common_key_len((hv), (key), (klen),			\
 				  (flags) | HV_DELETE, NULL, 0)))
+
+#ifdef PERL_CORE
+# define hv_storehek(hv, hek, val) \
+    hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek),	\
+	      HV_FETCH_ISSTORE|HV_FETCH_JUST_SV, (val), HEK_HASH(hek))
+# define hv_fetchhek(hv, hek, lval) \
+    ((SV **)								\
+     hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek),	\
+	       (lval)							\
+		? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)			\
+		: HV_FETCH_JUST_SV,					\
+	       NULL, HEK_HASH(hek)))
+# define hv_deletehek(hv, hek, flags) \
+    hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek), \
+	      (flags)|HV_DELETE, NULL, HEK_HASH(hek))
+#endif
 
 /* This refcounted he structure is used for storing the hints used for lexical
    pragmas. Without threads, it's basically struct he + refcount.

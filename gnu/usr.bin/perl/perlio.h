@@ -21,13 +21,7 @@
    USE_PERLIO  - The primary Configure variable that enables PerlIO.
                  If USE_PERLIO is _NOT_ set
                    then USE_STDIO above will be set to be conservative.
-                 If USE_PERLIO is set
-                   then there are two modes determined by USE_SFIO:
-
-   USE_SFIO    - If set causes PerlIO_xxx() to be #define-d onto sfio functions.
-                 A backward compatibility mode for some specialist applications.
-
-                 If USE_SFIO is not set then PerlIO_xxx() are real functions
+                 PerlIO_xxx() are real functions
                  defined in perlio.c which implement extra functionality
                  required for utf8 support.
 
@@ -80,11 +74,6 @@
 #ifdef PERLIO_IS_STDIO
 /* #define PerlIO_xxxx() as equivalent stdio function */
 #include "perlsdio.h"
-#else				/* PERLIO_IS_STDIO */
-#ifdef USE_SFIO
-/* #define PerlIO_xxxx() as equivalent sfio function */
-#include "perlsfio.h"
-#endif				/* USE_SFIO */
 #endif				/* PERLIO_IS_STDIO */
 
 #ifndef PerlIO
@@ -132,19 +121,19 @@ PERL_EXPORT_C void PerlIO_clone(pTHX_ PerlInterpreter *proto,
  * can set how it wants.
  */
 
-#ifdef PERL_CORE
+#   ifdef PERL_CORE
 /* Make a choice for perl core code
    - currently this is set to try and catch lingering raw stdio calls.
      This is a known issue with some non UNIX ports which still use
      "native" stdio features.
 */
-#ifndef PERLIO_NOT_STDIO
-#define PERLIO_NOT_STDIO 1
-#endif
-#else
-#ifndef PERLIO_NOT_STDIO
-#define PERLIO_NOT_STDIO 0
-#endif
+#       ifndef PERLIO_NOT_STDIO
+#           define PERLIO_NOT_STDIO 1
+#       endif
+    #else
+#   ifndef PERLIO_NOT_STDIO
+#       define PERLIO_NOT_STDIO 0
+#   endif
 #endif
 
 #ifdef PERLIO_NOT_STDIO
@@ -281,10 +270,6 @@ PERL_EXPORT_C void PerlIO_setlinebuf(PerlIO *);
 PERL_EXPORT_C int PerlIO_printf(PerlIO *, const char *, ...)
     __attribute__format__(__printf__, 2, 3);
 #endif
-#ifndef PerlIO_sprintf
-PERL_EXPORT_C int PerlIO_sprintf(char *, int, const char *, ...)
-    __attribute__format__(__printf__, 3, 4);
-#endif
 #ifndef PerlIO_vprintf
 PERL_EXPORT_C int PerlIO_vprintf(PerlIO *, const char *, va_list);
 #endif
@@ -313,19 +298,19 @@ PERL_EXPORT_C int PerlIO_canset_cnt(PerlIO *);
 PERL_EXPORT_C STDCHAR *PerlIO_get_ptr(PerlIO *);
 #endif
 #ifndef PerlIO_get_cnt
-PERL_EXPORT_C int PerlIO_get_cnt(PerlIO *);
+PERL_EXPORT_C SSize_t PerlIO_get_cnt(PerlIO *);
 #endif
 #ifndef PerlIO_set_cnt
-PERL_EXPORT_C void PerlIO_set_cnt(PerlIO *, int);
+PERL_EXPORT_C void PerlIO_set_cnt(PerlIO *, SSize_t);
 #endif
 #ifndef PerlIO_set_ptrcnt
-PERL_EXPORT_C void PerlIO_set_ptrcnt(PerlIO *, STDCHAR *, int);
+PERL_EXPORT_C void PerlIO_set_ptrcnt(PerlIO *, STDCHAR *, SSize_t);
 #endif
 #ifndef PerlIO_get_base
 PERL_EXPORT_C STDCHAR *PerlIO_get_base(PerlIO *);
 #endif
 #ifndef PerlIO_get_bufsiz
-PERL_EXPORT_C int PerlIO_get_bufsiz(PerlIO *);
+PERL_EXPORT_C SSize_t PerlIO_get_bufsiz(PerlIO *);
 #endif
 #ifndef PerlIO_tmpfile
 PERL_EXPORT_C PerlIO *PerlIO_tmpfile(void);

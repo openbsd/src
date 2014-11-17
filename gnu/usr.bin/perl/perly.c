@@ -28,6 +28,7 @@
 #include "EXTERN.h"
 #define PERL_IN_PERLY_C
 #include "perl.h"
+#include "feature.h"
 
 typedef unsigned char yytype_uint8;
 typedef signed char yytype_int8;
@@ -221,6 +222,7 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 	    if (ps->compcv != PL_compcv) {
 		PL_compcv = ps->compcv;
 		PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
+		PL_comppad_name = PadlistNAMES(CvPADLIST(PL_compcv));
 	    }
 	    YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
 	    op_free(ps->val.opval);
@@ -341,9 +343,12 @@ Perl_yyparse (pTHX_ int gramtype)
 	parser->yychar = yylex();
 #endif
 
+/* perly.tab is shipped based on an ASCII system; if it were to be regenerated
+ * on a platform that doesn't use ASCII, this translation back would need to be
+ * removed */
 #  ifdef EBCDIC
 	if (parser->yychar >= 0 && parser->yychar < 255) {
-	    parser->yychar = NATIVE_TO_ASCII(parser->yychar);
+	    parser->yychar = NATIVE_TO_LATIN1(parser->yychar);
 	}
 #  endif
     }
@@ -428,9 +433,6 @@ Perl_yyparse (pTHX_ int gramtype)
     YY_REDUCE_PRINT (yyn);
 
     switch (yyn) {
-
-
-#define dep() deprecate("\"do\" to call subroutines")
 
 #ifdef PERL_IN_MADLY_C
 #  define IVAL(i) (i)->tk_lval.ival

@@ -131,7 +131,7 @@ documented methods on the object.
 Note, however, that (unlike most other OO languages) Perl does not
 ensure or enforce encapsulation in any way. If you want objects to
 actually I<be> opaque you need to arrange for that yourself. This can
-be done in a varierty of ways, including using L<"Inside-Out objects">
+be done in a variety of ways, including using L<"Inside-Out objects">
 or modules from CPAN.
 
 =head3 Objects Are Blessed; Variables Are Not
@@ -688,7 +688,7 @@ X<indirect object>
 B<Outside of the file handle case, use of this syntax is discouraged as
 it can confuse the Perl interpreter. See below for more details.>
 
-Perl suports another method invocation syntax called "indirect object"
+Perl supports another method invocation syntax called "indirect object"
 notation. This syntax is called "indirect" because the method comes
 before the object it is being invoked on.
 

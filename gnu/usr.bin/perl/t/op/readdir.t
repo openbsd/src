@@ -67,4 +67,22 @@ fresh_perl_like(<<'EOP', qr/^no crash/, {}, 'RT #68182');
   print "no crash";
 EOP
 
+SKIP:
+{ # [perl #118651]
+  # test that readdir doesn't modify errno on successfully reaching the end of the list
+  # in scalar context, POSIX requires that readdir() not modify errno on end-of-directory
+  my @s;
+  ok(opendir(OP, "op"), "opendir op");
+  $! = 0;
+  while (defined(my $f = readdir OP)) {
+    push @s, $f
+      if $f =~ /^[^\.].*\.t$/i;
+  }
+  my $errno = $! + 0;
+  closedir OP;
+  is(@s, @D, "should be the same number of files, scalar or list")
+    or skip "mismatch on file count - presumably a readdir error", 1;
+  is($errno, 0, "errno preserved");
+}
+
 done_testing();

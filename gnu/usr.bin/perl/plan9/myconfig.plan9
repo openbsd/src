@@ -25,7 +25,7 @@ Summary of my $package ($baserev version $PERL_VERSION subversion $PERL_SUBVERSI
     cppflags='$cppflags'
     ccflags ='$ccflags'
     stdchar='$stdchar', d_stdstdio=$d_stdstdio, usevfork=$usevfork
-    voidflags=$voidflags, castflags=$castflags, d_casti32=$d_casti32, d_castneg=$d_castneg
+    castflags=$castflags, d_casti32=$d_casti32, d_castneg=$d_castneg
     intsize=$intsize, alignbytes=$alignbytes, usemymalloc=$usemymalloc, randbits=$randbits
   Linker and Libraries:
     ld='$ld', ldflags ='$ldflags'

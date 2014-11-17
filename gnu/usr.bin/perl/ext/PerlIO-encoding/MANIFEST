@@ -1,4 +1,0 @@
-MANIFEST			This list of files
-Makefile.PL
-encoding.pm
-encoding.xs

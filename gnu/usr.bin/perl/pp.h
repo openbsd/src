@@ -30,7 +30,7 @@ the C<SP> macro.  See C<SP>.
 
 =for apidoc ms||djSP
 
-Declare Just C<SP>. This is actually identical to C<dSP>, and declares
+Declare Just C<SP>.  This is actually identical to C<dSP>, and declares
 a local copy of perl's stack pointer, available via the C<SP> macro.
 See C<SP>.  (Available for backward source code compatibility with the
 old (Perl 5.005) thread model.)
@@ -57,7 +57,7 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 
 #define PUSHMARK(p)	\
 	STMT_START {					\
-	    if (++PL_markstack_ptr == PL_markstack_max)	\
+	    if (UNLIKELY(++PL_markstack_ptr == PL_markstack_max))	\
 	    markstack_grow();				\
 	    *PL_markstack_ptr = (I32)((p) - PL_stack_base);\
 	} STMT_END
@@ -133,10 +133,6 @@ Pops a long off the stack.
 #define POPu		((UV)SvUVx(POPs))
 #define POPl		((long)SvIVx(POPs))
 #define POPul		((unsigned long)SvIVx(POPs))
-#ifdef HAS_QUAD
-#define POPq		((Quad_t)SvIVx(POPs))
-#define POPuq		((Uquad_t)SvUVx(POPs))
-#endif
 
 #define TOPs		(*sp)
 #define TOPm1s		(*(sp-1))
@@ -148,16 +144,12 @@ Pops a long off the stack.
 #define TOPu		((UV)SvUV(TOPs))
 #define TOPl		((long)SvIV(TOPs))
 #define TOPul		((unsigned long)SvUV(TOPs))
-#ifdef HAS_QUAD
-#define TOPq		((Quad_t)SvIV(TOPs))
-#define TOPuq		((Uquad_t)SvUV(TOPs))
-#endif
 
 /* Go to some pains in the rare event that we must extend the stack. */
 
 /*
-=for apidoc Am|void|EXTEND|SP|int nitems
-Used to extend the argument stack for an XSUB's return values. Once
+=for apidoc Am|void|EXTEND|SP|SSize_t nitems
+Used to extend the argument stack for an XSUB's return values.  Once
 used, guarantees that there is room for at least C<nitems> to be pushed
 onto the stack.
 
@@ -278,15 +270,25 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 =cut
 */
 
-#define EXTEND(p,n)    (void)(UNLIKELY(PL_stack_max - p < (int)(n)) &&         \
-			    (sp = stack_grow(sp,p, (int) (n))))
+#ifdef STRESS_REALLOC
+# define EXTEND(p,n)	(void)(sp = stack_grow(sp,p, (SSize_t)(n)))
+/* Same thing, but update mark register too. */
+# define MEXTEND(p,n)	STMT_START {					\
+			    const int markoff = mark - PL_stack_base;	\
+			    sp = stack_grow(sp,p,(SSize_t) (n));	\
+			    mark = PL_stack_base + markoff;		\
+			} STMT_END
+#else
+# define EXTEND(p,n)   (void)(UNLIKELY(PL_stack_max - p < (SSize_t)(n)) &&     \
+			    (sp = stack_grow(sp,p, (SSize_t) (n))))
 
 /* Same thing, but update mark register too. */
-#define MEXTEND(p,n)   STMT_START {if (UNLIKELY(PL_stack_max - p < (int)(n))) {\
+# define MEXTEND(p,n)  STMT_START {if (UNLIKELY(PL_stack_max - p < (int)(n))) {\
                            const int markoff = mark - PL_stack_base;           \
-                           sp = stack_grow(sp,p,(int) (n));                    \
+                           sp = stack_grow(sp,p,(SSize_t) (n));                \
                            mark = PL_stack_base + markoff;                     \
                        } } STMT_END
+#endif
 
 #define PUSHs(s)	(*++sp = (s))
 #define PUSHTARG	STMT_START { SvSETMAGIC(TARG); PUSHs(TARG); } STMT_END
@@ -333,12 +335,6 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 #define dPOPiv		IV value = POPi
 #define dTOPuv		UV value = TOPu
 #define dPOPuv		UV value = POPu
-#ifdef HAS_QUAD
-#define dTOPqv		Quad_t value = TOPu
-#define dPOPqv		Quad_t value = POPu
-#define dTOPuqv		Uquad_t value = TOPuq
-#define dPOPuqv		Uquad_t value = POPuq
-#endif
 
 #define dPOPXssrl(X)	SV *right = POPs; SV *left = CAT2(X,s)
 #define dPOPXnnrl(X)	NV right = POPn; NV left = CAT2(X,n)
@@ -404,12 +400,12 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 /* do SvGETMAGIC on the stack args before checking for overload */
 
 #define tryAMAGICun_MG(method, flags) STMT_START { \
-	if ( (SvFLAGS(TOPs) & (SVf_ROK|SVs_GMG)) \
+	if ( UNLIKELY((SvFLAGS(TOPs) & (SVf_ROK|SVs_GMG))) \
 		&& Perl_try_amagic_un(aTHX_ method, flags)) \
 	    return NORMAL; \
     } STMT_END
 #define tryAMAGICbin_MG(method, flags) STMT_START { \
-	if ( ((SvFLAGS(TOPm1s)|SvFLAGS(TOPs)) & (SVf_ROK|SVs_GMG)) \
+	if ( UNLIKELY(((SvFLAGS(TOPm1s)|SvFLAGS(TOPs)) & (SVf_ROK|SVs_GMG))) \
 		&& Perl_try_amagic_bin(aTHX_ method, flags)) \
 	    return NORMAL; \
     } STMT_END
@@ -426,19 +422,20 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 	SV *tmpsv;						\
 	SV *arg= *sp;						\
         int gimme = GIMME_V;                                    \
-	if (SvAMAGIC(arg) &&					\
+	if (UNLIKELY(SvAMAGIC(arg) &&				\
 	    (tmpsv = amagic_call(arg, &PL_sv_undef, meth,	\
 				 AMGf_want_list | AMGf_noright	\
-				|AMGf_unary))) {		\
+				|AMGf_unary))))                 \
+        {                                       		\
 	    SPAGAIN;						\
             if (gimme == G_VOID) {                              \
                 (void)POPs; /* XXX ??? */                       \
             }                                                   \
             else if (gimme == G_ARRAY) {			\
-                int i;                                          \
-                I32 len;                                        \
+                SSize_t i;                                      \
+                SSize_t len;                                    \
                 assert(SvTYPE(tmpsv) == SVt_PVAV);              \
-                len = av_len((AV *)tmpsv) + 1;                  \
+                len = av_tindex((AV *)tmpsv) + 1;               \
                 (void)POPs; /* get rid of the arg */            \
                 EXTEND(sp, len);                                \
                 for (i = 0; i < len; ++i)                       \

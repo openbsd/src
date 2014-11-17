@@ -20,7 +20,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 672;  # Update this when adding/deleting tests.
+plan tests => 722;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -509,13 +509,7 @@ sub run_tests {
         is(qr/\b\v$/,     '(?^:\b\v$)', 'qr/\b\v$/');
     }
 
-    SKIP: {   # Test that charset modifier work, and are interpolated
-        if (
-            !$Config::Config{d_setlocale}
-        || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-        ) {
-            skip "no locale support", 13
-        }
+    {   # Test that charset modifier work, and are interpolated
         is(qr/\b\v$/, '(?^:\b\v$)', 'Verify no locale, no unicode_strings gives default modifier');
         is(qr/(?l:\b\v$)/, '(?^:(?l:\b\v$))', 'Verify infix l modifier compiles');
         is(qr/(?u:\b\v$)/, '(?^:(?u:\b\v$))', 'Verify infix u modifier compiles');
@@ -709,6 +703,14 @@ sub run_tests {
         /.(a)(ba*)?/;
         is($#+, 2, $message);
         is($#-, 1, $message);
+
+        # Check that values don’t stick
+        "     "=~/()()()(.)(..)/;
+        my($m,$p) = (\$-[5], \$+[5]);
+        () = "$$_" for $m, $p; # FETCH (or eqv.)
+        " " =~ /()/;
+        is $$m, undef, 'values do not stick to @- elements';
+        is $$p, undef, 'values do not stick to @+ elements';
     }
 
     foreach ('$+[0] = 13', '$-[0] = 13', '@+ = (7, 6, 5)',
@@ -732,10 +734,38 @@ sub run_tests {
         like($str, qr/^..\G/, $message);
         unlike($str, qr/^...\G/, $message);
         ok($str =~ /\G../ && $& eq 'cd', $message);
-
-        local $::TODO = $::running_as_thread;
         ok($str =~ /.\G./ && $& eq 'bc', $message);
+
     }
+
+    {
+        my $message = '\G and intuit and anchoring';
+	$_ = "abcdef";
+	pos = 0;
+	ok($_ =~ /\Gabc/, $message);
+	ok($_ =~ /^\Gabc/, $message);
+
+	pos = 3;
+	ok($_ =~ /\Gdef/, $message);
+	pos = 3;
+	ok($_ =~ /\Gdef$/, $message);
+	pos = 3;
+	ok($_ =~ /abc\Gdef$/, $message);
+	pos = 3;
+	ok($_ =~ /^abc\Gdef$/, $message);
+	pos = 3;
+	ok($_ =~ /c\Gd/, $message);
+	pos = 3;
+	ok($_ =~ /..\GX?def/, $message);
+    }
+
+    {
+        my $s = '123';
+        pos($s) = 1;
+        my @a = $s =~ /(\d)\G/g; # this infinitely looped up till 5.19.1
+        is("@a", "1", '\G looping');
+    }
+
 
     {
         my $message = 'pos inside (?{ })';
@@ -805,22 +835,19 @@ sub run_tests {
         my $message = '\G anchor checks';
         my $foo = 'aabbccddeeffgg';
         pos ($foo) = 1;
-        {
-            local $::TODO = $::running_as_thread;
-            no warnings 'uninitialized';
-            ok($foo =~ /.\G(..)/g, $message);
-            is($1, 'ab', $message);
 
-            pos ($foo) += 1;
-            ok($foo =~ /.\G(..)/g, $message);
-            is($1, 'cc', $message);
+	ok($foo =~ /.\G(..)/g, $message);
+	is($1, 'ab', $message);
 
-            pos ($foo) += 1;
-            ok($foo =~ /.\G(..)/g, $message);
-            is($1, 'de', $message);
+	pos ($foo) += 1;
+	ok($foo =~ /.\G(..)/g, $message);
+	is($1, 'cc', $message);
 
-            ok($foo =~ /\Gef/g, $message);
-        }
+	pos ($foo) += 1;
+	ok($foo =~ /.\G(..)/g, $message);
+	is($1, 'de', $message);
+
+	ok($foo =~ /\Gef/g, $message);
 
         undef pos $foo;
         ok($foo =~ /\G(..)/g, $message);
@@ -832,6 +859,36 @@ sub run_tests {
         pos ($foo) = 5;
         ok($foo =~ /\G(..)/g, $message);
         is($1, 'cd', $message);
+    }
+
+    {
+        my $message = 'basic \G floating checks';
+        my $foo = 'aabbccddeeffgg';
+        pos ($foo) = 1;
+
+	ok($foo =~ /a+\G(..)/g, "$message: a+\\G");
+	is($1, 'ab', "$message: ab");
+
+	pos ($foo) += 1;
+	ok($foo =~ /b+\G(..)/g, "$message: b+\\G");
+	is($1, 'cc', "$message: cc");
+
+	pos ($foo) += 1;
+	ok($foo =~ /d+\G(..)/g, "$message: d+\\G");
+	is($1, 'de', "$message: de");
+
+	ok($foo =~ /\Gef/g, "$message: \\Gef");
+
+        pos ($foo) = 1;
+
+	ok($foo =~ /(?=a+\G)(..)/g, "$message: (?a+\\G)");
+	is($1, 'aa', "$message: aa");
+
+        pos ($foo) = 2;
+
+	ok($foo =~ /a(?=a+\G)(..)/g, "$message: a(?=a+\\G)");
+	is($1, 'ab', "$message: ab");
+
     }
 
     {
@@ -1162,12 +1219,10 @@ sub run_tests {
         local $SIG{__WARN__} = sub {};
         my $str = "\x{110000}";
 
-        # No non-unicode code points match any Unicode property, even inverse
-        # ones
-        unlike($str, qr/\p{ASCII_Hex_Digit=True}/, "Non-Unicode doesn't match \\p{}");
-        unlike($str, qr/\p{ASCII_Hex_Digit=False}/, "Non-Unicode doesn't match \\p{}");
-        like($str, qr/\P{ASCII_Hex_Digit=True}/, "Non-Unicode matches \\P{}");
-        like($str, qr/\P{ASCII_Hex_Digit=False}/, "Non-Unicode matches \\P{}");
+        unlike($str, qr/\p{ASCII_Hex_Digit=True}/, "Non-Unicode doesn't match \\p{AHEX=True}");
+        like($str, qr/\p{ASCII_Hex_Digit=False}/, "Non-Unicode matches \\p{AHEX=False}");
+        like($str, qr/\P{ASCII_Hex_Digit=True}/, "Non-Unicode matches \\P{AHEX=True}");
+        unlike($str, qr/\P{ASCII_Hex_Digit=False}/, "Non-Unicode matches \\P{AHEX=FALSE}");
     }
 
     {
@@ -1193,7 +1248,7 @@ use utf8;;
 "abc" =~ qr/(?<$char>abc)/;
 EOP
             utf8::encode($prog);
-            fresh_perl_like($prog, qr!Group name must start with a non-digit word character!, "",
+            fresh_perl_like($prog, qr!Group name must start with a non-digit word character!, {},
                         sprintf("'U+%04X not legal IDFirst'", ord($char)));
         }
     }
@@ -1370,8 +1425,8 @@ EOP
     }
 
     {
-        # if we have 87 capture buffers defined then \87 should refer to the
-        # 87th.  test that this is true for 1..100
+        # if we have 87 capture buffers defined then \87 should refer to the 87th.
+        # test that this is true for 1..100
         # Note that this test causes the engine to recurse at runtime, and
         # hence use a lot of C stack.
         for my $i (1..100) {
@@ -1390,21 +1445,147 @@ EOP
         }
     }
 
+    # this mixture of readonly (not COWable) and COWable strings
+    # messed up the capture buffers under COW. The actual test results
+    # are incidental; the issue is was an AddressSanitizer failure
     {
-	# RT #119125
-	# the earlier fix for /[#](?{})/x, although correct, as a
-	# side-effect fixed another long-standing bug where /[#$x]/x
-	# didn't interpolate the var $x. Although fixing that is good,
-	# it's too big a change for maint, so keep the old buggy behaviour
-	# for now.
+	my $c ='AB';
+	my $res = '';
+	for ($c, 'C', $c, 'DE') {
+	    ok(/(.)/, "COWable match");
+	    $res .= $1;
+	}
+	is($res, "ACAD");
+    }
 
+
+    {
+	# RT #45667
+	# /[#$x]/x didn't interpolate the var $x.
 	my $b = 'cd';
 	my $s = 'abcd$%#&';
 	$s =~ s/[a#$b%]/X/g;
-	is ($s, 'XbXX$XX&', 'RT #119125 without /x');
+	is ($s, 'XbXX$XX&', 'RT #45667 without /x');
 	$s = 'abcd$%#&';
 	$s =~ s/[a#$b%]/X/gx;
-	is ($s, 'XXcdXXX&', 'RT #119125 with /x');
+	is ($s, 'XbXX$XX&', 'RT #45667 with /x');
+    }
+
+    {
+	no warnings "uninitialized";
+	my @a;
+	$a[1]++;
+	/@a/;
+	pass('no crash with /@a/ when array has nonexistent elems');
+    }
+
+    {
+	is runperl(prog => 'delete $::{qq-\cR-}; //; print qq-ok\n-'),
+	   "ok\n",
+	   'deleting *^R does not result in crashes';
+	no warnings 'once';
+	*^R = *caretRglobwithnoscalar;
+	"" =~ /(?{42})/;
+	is $^R, 42, 'assigning to *^R does not result in a crash';
+	is runperl(
+	     stderr => 1,
+	     prog => 'eval q|'
+	            .' q-..- =~ /(??{undef *^R;q--})(?{42})/; '
+                    .' print qq-$^R\n-'
+	            .'|'
+	   ),
+	   "42\n",
+	   'undefining *^R within (??{}) does not result in a crash';
+    }
+
+    {
+        # [perl #120446]
+        # this code should be virtually instantaneous. If it takes 10s of
+        # seconds, there a bug in intuit_start.
+        # (this test doesn't actually test for slowness - that involves
+        # too much danger of false positives on loaded machines - but by
+        # putting it here, hopefully someone might notice if it suddenly
+        # runs slowly)
+        my $s = ('a' x 1_000_000) . 'b';
+        my $i = 0;
+        for (1..10_000) {
+            pos($s) = $_;
+            $i++ if $s =~/\Gb/g;
+        }
+        is($i, 0, "RT 120446: mustn't run slowly");
+    }
+
+    {
+        # [perl #120692]
+        # these tests should be virtually instantaneous. If they take 10s of
+        # seconds, there's a bug in intuit_start.
+
+        my $s = 'ab' x 1_000_000;
+        utf8::upgrade($s);
+        1 while $s =~ m/\Ga+ba+b/g;
+        pass("RT#120692 \\G mustn't run slowly");
+
+        $s=~ /^a{1,2}x/ for  1..10_000;
+        pass("RT#120692 a{1,2} mustn't run slowly");
+
+        $s=~ /ab.{1,2}x/;
+        pass("RT#120692 ab.{1,2} mustn't run slowly");
+
+        $s = "-a-bc" x 250_000;
+        $s .= "1a1bc";
+        utf8::upgrade($s);
+        ok($s =~ /\da\d{0,30000}bc/, "\\d{30000}");
+
+        $s = "-ab\n" x 250_000;
+        $s .= "abx";
+        ok($s =~ /^ab.*x/m, "distant float with /m");
+
+        my $r = qr/^abcd/;
+        $s = "abcd-xyz\n" x 500_000;
+        $s =~ /$r\d{1,2}xyz/m for 1..200;
+        pass("BOL within //m  mustn't run slowly");
+
+        $s = "abcdefg" x 1_000_000;
+        $s =~ /(?-m:^)abcX?fg/m for 1..100;
+        pass("BOL within //m  mustn't skip absolute anchored check");
+
+        $s = "abcdefg" x 1_000_000;
+        $s =~ /^XX\d{1,10}cde/ for 1..100;
+        pass("abs anchored float string should fail quickly");
+
+    }
+
+    # These are based on looking at the code in regcomp.c
+    # We don't look for specific code, just the existence of an SSC
+    foreach my $re (qw(     qr/a?c/
+                            qr/a?c/i
+                            qr/[ab]?c/
+                            qr/\R?c/
+                            qr/\d?c/d
+                            qr/\w?c/l
+                            qr/\s?c/a
+                            qr/[[:alpha:]]?c/u
+    )) {
+      SKIP: {
+        skip "no re-debug under miniperl" if is_miniperl;
+        my $prog = <<"EOP";
+use re qw(Debug COMPILE);
+$re;
+EOP
+        fresh_perl_like($prog, qr/synthetic stclass/, { stderr=>1 }, "$re generates a synthetic start class");
+      }
+    }
+
+    {
+        like "\x{AA}", qr/a?[\W_]/d, "\\W with /d synthetic start class works";
+    }
+
+
+
+    {   # Was getting optimized into EXACT (non-folding node)
+        my $x = qr/[x]/i;
+        utf8::upgrade($x);
+        like("X", qr/$x/, "UTF-8 of /[x]/i matches upper case");
     }
 
 } # End of sub run_tests

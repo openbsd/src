@@ -149,7 +149,8 @@ reference to it, you have these options:
 
 On the other hand, if you want the other meaning, you can do this:
 
-    sub showem {        { @_ } }   # ambiguous (currently ok, but may change)
+    sub showem {        { @_ } }   # ambiguous (currently ok,
+                                   # but may change)
     sub showem {       {; @_ } }   # ok
     sub showem { { return @_ } }   # ok
 
@@ -742,6 +743,66 @@ And then at least you can use the values(), which will be
 real refs, instead of the keys(), which won't.
 
 The standard Tie::RefHash module provides a convenient workaround to this.
+
+=head1 Postfix Dereference Syntax
+
+Beginning in v5.20.0, a postfix syntax for using references is
+available.  It behaves as described in L</Using References>, but instead
+of a prefixed sigil, a postfixed sigil-and-star is used.
+
+For example:
+
+    $r = \@a;
+    @b = $r->@*; # equivalent to @$r or @{ $r }
+
+    $r = [ 1, [ 2, 3 ], 4 ];
+    $r->[1]->@*;  # equivalent to @{ $r->[1] }
+
+This syntax must be enabled with C<use feature 'postderef'>.  It is
+experimental, and will warn by default unless C<no warnings
+'experimental::postderef'> is in effect.
+
+Postfix dereference should work in all circumstances where block
+(circumfix) dereference worked, and should be entirely equivalent.  This
+syntax allows dereferencing to be written and read entirely
+left-to-right.  The following equivalencies are defined:
+
+  $sref->$*;  # same as  ${ $sref }
+  $aref->@*;  # same as  @{ $aref }
+  $aref->$#*; # same as $#{ $aref }
+  $href->%*;  # same as  %{ $href }
+  $cref->&*;  # same as  &{ $cref }
+  $gref->**;  # same as  *{ $gref }
+
+Note especially that C<< $cref->&* >> is I<not> equivalent to C<<
+$cref->() >>, and can serve different purposes.
+
+Glob elements can be extracted through the postfix dereferencing feature:
+
+  $gref->*{SCALAR}; # same as *{ $gref }{SCALAR}
+
+Postfix array and scalar dereferencing I<can> be used in interpolating
+strings (double quotes or the C<qq> operator), but only if the
+additional C<postderef_qq> feature is enabled.
+
+=head2 Postfix Reference Slicing
+
+Value slices of arrays and hashes may also be taken with postfix
+dereferencing notation, with the following equivalencies:
+
+  $aref->@[ ... ];  # same as @$aref[ ... ]
+  $href->@{ ... };  # same as @$href{ ... }
+
+Postfix key/value pair slicing, added in 5.20.0 and documented in
+L<the KeyE<sol>Value Hash Slices section of perldata|perldata/"Key/Value Hash
+Slices">, also behaves as expected:
+
+  $aref->%[ ... ];  # same as %$aref[ ... ]
+  $href->%{ ... };  # same as %$href{ ... }
+
+As with postfix array, postfix value slice dereferencing I<can> be used
+in interpolating strings (double quotes or the C<qq> operator), but only
+if the additional C<postderef_qq> L<feature> is enabled.
 
 =head1 SEE ALSO
 

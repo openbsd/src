@@ -1335,6 +1335,12 @@ d_libm_lib_version (d_libm_lib_version.U):
 	which indicates to the C program that math.h defines _LIB_VERSION
 	being available in libm
 
+d_libname_unique (so.U):
+	This variable is defined if the target system insists on unique
+	basenames for shared library files. This is currently true on Android,
+	false everywhere else we know of.
+	Defaults to 'undef'.
+
 d_link (d_link.U):
 	This variable conditionally defines HAS_LINK if link() is
 	available to create hard links.
@@ -2047,10 +2053,6 @@ d_setvbuf (d_setvbuf.U):
 	indicates to the C program that the setvbuf() routine is available
 	to change buffering on an open stdio stream.
 
-d_sfio (d_sfio.U):
-	This variable conditionally defines the USE_SFIO symbol,
-	and indicates whether sfio is available (and should be used).
-
 d_shm (d_shm.U):
 	This variable conditionally defines the HAS_SHM symbol, which
 	indicates that the entire shm*(2) library is present.
@@ -2552,9 +2554,6 @@ db_version_patch (i_db.U):
 	Berkeley DB found in the <db.h> header file.
 	For DB version 1 this is always 0.
 
-defvoidused (voidflags.U):
-	This variable contains the default value of the VOIDUSED symbol (15).
-
 direntrytype (i_dirent.U):
 	This symbol is set to 'struct direct' or 'struct dirent' depending on
 	whether dirent is available or not. You should use this pseudo type to
@@ -2666,7 +2665,7 @@ expr (Loc.U):
 
 extensions (Extensions.U):
 	This variable holds a list of all extension files (both XS and
-	non-xs linked into the package.  It is propagated to Config.pm
+	non-xs) installed with the package.  It is propagated to Config.pm
 	and is typically used to test whether a particular extension
 	is available.
 
@@ -2685,8 +2684,10 @@ fflushall (fflushall.U):
 	even be probed for and will be left undefined.
 
 fflushNULL (fflushall.U):
-	This symbol, if defined, tells that fflush(NULL) does flush
-	all pending stdio output.
+	This symbol, if defined, tells that fflush(NULL) correctly
+	flushes all pending stdio output without side effects. In
+	particular, on some platforms calling fflush(NULL) *still*
+	corrupts STDIN if it is a pipe.
 
 find (Loc.U):
 	This variable is defined but not used by Configure.
@@ -2944,6 +2945,24 @@ hint (Oldconfig.U):
 	Gives the type of hints used for previous answers. May be one of
 	"default", "recommended" or "previous".
 
+hostperl (Cross.U):
+	This variable contains the path to a miniperl binary that can be
+	run on the host OS when cross-compiling.  Useful and available only
+	during Perl build.
+	Empty string '' if not cross-compiling.
+
+hostgenerate (Cross.U):
+	This variable contains the path to a generate_uudmap binary that
+	can be run on the host OS when cross-compiling.  Useful and
+	available only during Perl build.
+	Empty string '' if not cross-compiling.
+
+hostosname (Cross.U):
+	This variable contains the original value of '$^O' for hostperl
+	when cross-compiling.  This is useful to pick the proper tools
+	when running build code in the host.
+	Empty string '' if not cross-compiling.
+
 hostcat (nis.U):
 	This variable contains a command that produces the text of the
 	/etc/hosts file.  This is normally "cat /etc/hosts", but can be
@@ -3026,11 +3045,6 @@ i_dbm (i_dbm.U):
 i_dirent (i_dirent.U):
 	This variable conditionally defines I_DIRENT, which indicates
 	to the C program that it should include <dirent.h>.
-
-i_dld (i_dld.U):
-	This variable conditionally defines the I_DLD symbol, which
-	indicates to the C program that <dld.h> (GNU dynamic loading)
-	exists and should be included.
 
 i_dlfcn (i_dlfcn.U):
 	This variable conditionally defines the I_DLFCN symbol, which
@@ -3167,10 +3181,6 @@ i_rpcsvcdbm (i_dbm.U):
 	This variable conditionally defines the I_RPCSVC_DBM symbol, which
 	indicates to the C program that <rpcsvc/dbm.h> exists and should
 	be included.  Some System V systems might need this instead of <dbm.h>.
-
-i_sfio (i_sfio.U):
-	This variable conditionally defines the I_SFIO symbol,
-	and indicates whether a C program should include <sfio.h>.
 
 i_sgtty (i_termio.U):
 	This variable conditionally defines the I_SGTTY symbol, which
@@ -3409,6 +3419,11 @@ incpath (usrinc.U):
 	right one, as in "$incpath/usr/include" or "$incpath/usr/lib".
 	Value can be "" or "/bsd43" on mips.
 
+incpth (libpth.U):
+	This variable must precede the normal include path to get the
+	right one, as in "$incpath/usr/include" or "$incpath/usr/lib".
+	Value can be "" or "/bsd43" on mips.
+
 inews (Loc.U):
 	This variable is defined but not used by Configure.
 	The value is the empty string and is not useful.
@@ -3620,8 +3635,12 @@ ivtype (perlxv.U):
 	This variable contains the C type used for Perl's IV.
 
 known_extensions (Extensions.U):
-	This variable holds a list of all XS extensions included in
-	the package.
+	This variable holds a list of all extensions (both XS and non-xs)
+	included in the package source distribution.  This information is
+	only really of use during the Perl build, as the list makes no
+	distinction between extensions which were build and installed, and
+	those which where not.  See "extensions" for the list of extensions
+	actually built and available.
 
 ksh (Loc.U):
 	This variable is defined but not used by Configure.
@@ -3990,8 +4009,10 @@ nm_so_opt (usenm.U):
 	Maybe Linux should just always set usenm=false.
 
 nonxs_ext (Extensions.U):
-	This variable holds a list of all non-xs extensions included
-	in the package.  All of them will be built.
+	This variable holds a list of all non-xs extensions built and
+	installed by the package.  By default, all non-xs extensions
+	distributed will be built, with the exception of platform-specific
+	extensions (currently only one VMS specific extension).
 
 nroff (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -4873,6 +4894,12 @@ sysman (sysman.U):
 	pages. Rather it is the place where Configure may look to find manual
 	for unix commands (section 1 of the manual usually). See mansrc.
 
+sysroot (Sysroot.U):
+	This variable is empty unless supplied by the Configure user.
+	It can contain a path to an alternative root directory, under which
+	headers and libraries for the compilation target can be found. This
+	is generally used when cross-compiling using a gcc-like compiler.
+
 tail (Loc.U):
 	This variable is defined but not used by Configure.
 	The value is the empty string and is not useful.
@@ -4884,6 +4911,37 @@ tar (Loc.U):
 targetarch (Cross.U):
 	If cross-compiling, this variable contains the target architecture.
 	If not, this will be empty.
+
+targetdir (Cross.U):
+	This variable contains a path that will be created on the target
+	host using targetmkdir, and then used to copy the cross-compiled
+	executables to. Defaults to '/tmp' if not set.
+
+targetenv (Cross.U):
+	If cross-compiling, this variable can be used to modify the
+	environment on the target system.
+	However, how and where it's used, and even if it's used at all, is
+	entirely dependent on both the transport mechanism (targetrun) and
+	what the target system is.  Unless the relevant documentation says
+	otherwise, it is genereally not useful.
+
+targethost (Cross.U):
+	This variable contains the name of a separate host machine that
+	can be used to run compiled test programs and perl tests on.
+	Set to empty string if not in use.
+
+targetmkdir (Cross.U):
+	This variable contains the command used by Configure to create a
+	new directory on the target host.
+
+targetport (Cross.U):
+	This variable contains the number of a network port to be used to
+	connect to the host in targethost, if unset defaults to 22 for ssh.
+
+targetsh (Cross.U):
+	If cross-compiling, this variable contains the location of sh on the
+	target system.
+	If not, this will be the same as $sh.
 
 tbl (Loc.U):
 	This variable is defined but not used by Configure.
@@ -5122,13 +5180,6 @@ userelocatableinc (bin.U):
 	containing the perl binary, and a logical cleanup of the path is then
 	made around the join point (removing "dir/../" pairs)
 
-usesfio (d_sfio.U):
-	This variable is set to true when the user agrees to use sfio.
-	It is set to false when sfio is not available or when the user
-	explicitly requests not to use sfio.  It is here primarily so
-	that command-line settings can override the auto-detection of
-	d_sfio without running into a "WHOA THERE".
-
 useshrplib (libperl.U):
 	This variable is set to 'true' if the user wishes
 	to build a shared libperl, and 'false' otherwise.
@@ -5343,11 +5394,6 @@ versiononly (versiononly.U):
 vi (Loc.U):
 	This variable is defined but not used by Configure.
 	The value is the empty string and is not useful.
-
-voidflags (voidflags.U):
-	This variable contains the eventual value of the VOIDFLAGS symbol,
-	which indicates how much support of the void type is given by this
-	compiler.  See VOIDFLAGS for more info.
 
 xlibpth (libpth.U):
 	This variable holds extra path (space-separated) used to find
