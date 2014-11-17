@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.22 2011/03/13 22:21:32 guenther Exp $ */
+/*	$OpenBSD: vis.c,v 1.23 2014/11/17 19:48:27 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,9 +29,11 @@
  */
 
 #include <sys/types.h>
-#include <limits.h>
+#include <errno.h>
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
+#include <stdlib.h>
 #include <vis.h>
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
@@ -201,6 +203,25 @@ strnvis(char *dst, const char *src, size_t siz, int flag)
 			dst += vis(tbuf, c, flag, *++src) - tbuf;
 	}
 	return (dst - start);
+}
+
+int
+stravis(char **outp, const char *src, int flag)
+{
+	char *buf;
+	int len, serrno;
+
+	buf = reallocarray(NULL, 4, strlen(src) + 1);
+	if (buf == NULL)
+		return -1;
+	len = strvis(buf, src, flag);
+	serrno = errno;
+	*outp = realloc(buf, len + 1);
+	if (*outp == NULL) {
+		*outp = buf;
+		errno = serrno;
+	}
+	return (len);
 }
 
 int
