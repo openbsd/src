@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.17 2014/06/24 01:13:21 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.18 2014/11/17 00:21:40 djm Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -684,6 +684,7 @@ ssh_krl_to_blob(struct ssh_krl *krl, Buffer *buf, const Key **sign_keys,
 
 	/* Store sections for revoked certificates */
 	TAILQ_FOREACH(rc, &krl->revoked_certs, entry) {
+		buffer_clear(&sect);
 		if (revoked_certs_generate(rc, &sect) != 0)
 			goto out;
 		buffer_put_char(buf, KRL_SECTION_CERTIFICATES);
