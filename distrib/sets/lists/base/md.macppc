@@ -64,7 +64,7 @@
 ./sbin/kbd
 ./sbin/pdisk
 ./sbin/wsconsctl
-./usr/lib/libc.so.77.2
+./usr/lib/libc.so.77.3
 ./usr/lib/libcrypto.so.30.2
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
