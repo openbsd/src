@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.18 2014/11/17 21:00:55 afresh1 Exp $
+# $OpenBSD: config.over,v 1.19 2014/11/17 21:03:08 afresh1 Exp $
 #
 
 # We use a different architecture name than the default
