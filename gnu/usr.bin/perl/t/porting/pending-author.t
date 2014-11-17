@@ -25,12 +25,14 @@ BEGIN {
 }
 use TestInit qw(T); # T is chdir to the top level
 use strict;
+use File::Spec;
 
 require 't/test.pl';
 find_git_or_skip('all');
 
+my $devnull = File::Spec->devnull;
 my $changes;
-foreach (`git status --porcelain 2>/dev/null`) {
+foreach (`git status --porcelain 2>$devnull`) {
     next if /^\?\?/;
     ++$changes;
     last;

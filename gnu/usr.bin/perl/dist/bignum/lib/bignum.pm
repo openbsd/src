@@ -1,7 +1,7 @@
 package bignum;
 use 5.006;
 
-$VERSION = '0.33';
+$VERSION = '0.37';
 use Exporter;
 @ISA 		= qw( bigint );
 @EXPORT_OK	= qw( PI e bexp bpi hex oct ); 
@@ -551,7 +551,7 @@ If you want the code to die instead of falling back, use C<only> instead:
 
 The numbers are stored as objects, and their internals might change at anytime,
 especially between math operations. The objects also might belong to different
-classes, like Math::BigInt, or Math::BigFLoat. Mixing them together, even
+classes, like Math::BigInt, or Math::BigFloat. Mixing them together, even
 with normal scalars is not extraordinary, but normal and expected.
 
 You should not depend on the internal format, all accesses must go through

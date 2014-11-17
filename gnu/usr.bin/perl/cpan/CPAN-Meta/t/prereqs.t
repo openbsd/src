@@ -113,10 +113,50 @@ is_deeply($prereq->as_string_hash, $prereq_struct, "round-trip okay");
     ->requirements_for(qw(runtime requires))
     ->add_minimum(Bar => '2.976');
 
+  $new_prereq
+    ->requirements_for(qw(test requires))
+    ->add_minimum(Baz => '3.1416');
+
+  $new_prereq
+    ->requirements_for(qw(build recommends))
+    ->add_minimum(Bar => '3.000');
+
+  my $expect = {
+      runtime => { requires => { Foo => '1.000', Bar => '2.976' } },
+      test => { requires => { Baz => '3.1416' } },
+      build => { recommends => { Bar => '3.000' } },
+  };
+
   is_deeply(
     $new_prereq->as_string_hash,
-    { runtime => { requires => { Foo => '1.000', Bar => '2.976' } } },
+    $expect,
     'we can accumulate new requirements on a prereq object',
+  );
+
+  my $merged_requires = {
+      Foo => '1.000',
+      Bar => '2.976',
+      Baz => '3.1416',
+  };
+
+  my $merged_all = {
+      Foo => '1.000',
+      Bar => '3.000',
+      Baz => '3.1416',
+  };
+
+  is_deeply(
+    $new_prereq->merged_requirements(
+        [qw/runtime test build/], [qw/requires/]
+    )->as_string_hash,
+    $merged_requires,
+    "we can merge requirements for phases/types"
+  );
+
+  is_deeply(
+    $new_prereq->merged_requirements->as_string_hash,
+    $merged_all,
+    "default merging is runtime/build/test for requires/recommends"
   );
 }
 

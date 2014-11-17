@@ -85,7 +85,7 @@ package DynaLoader;
 # Tim.Bunce@ig.co.uk, August 1994
 
 BEGIN {
-    $VERSION = '1.18';
+    $VERSION = '1.25';
 }
 
 use Config;
@@ -98,6 +98,7 @@ $dl_debug = $ENV{PERL_DL_DEBUG} || 0 unless defined $dl_debug;
 #   0x01  make symbols available for linking later dl_load_file's.
 #         (only known to work on Solaris 2 using dlopen(RTLD_GLOBAL))
 #         (ignored under VMS; effect is built-in to image linking)
+#         (ignored under Android; the linker always uses RTLD_LOCAL)
 #
 # This is called as a class method $module->dl_load_flags.  The
 # definition here will be inherited and result on "default" loading
@@ -235,6 +236,32 @@ if ($ENV{PERL_BUILD_EXPAND_CONFIG_VARS} && $ENV{PERL_BUILD_EXPAND_ENV_VARS}) {
 EOT
 }
 
+if ( $Config::Config{d_libname_unique} ) {
+    printf OUT <<'EOT', length($Config::Config{dlext}) + 1;
+sub mod2fname {
+    my $parts = shift;
+    my $so_len = %d;
+    my $name_max = 255; # No easy way to get this here
+    
+    my $libname = "PL_" .  join("__", @$parts);
+    
+    return $libname if (length($libname)+$so_len) <= $name_max;
+    
+    # It's too darned big, so we need to go strip. We use the same
+    # algorithm as xsubpp does. First, strip out doubled __
+    $libname =~ s/__/_/g;
+    return $libname if (length($libname)+$so_len) <= $name_max;
+    
+    # Strip duplicate letters
+    1 while $libname =~ s/(.)\1/\U$1/i;
+    return $libname if (length($libname)+$so_len) <= $name_max;
+    
+    # Still too long. Truncate.
+    $libname = substr($libname, 0, $name_max - $so_len);
+    return $libname;
+}
+EOT
+}
 
 # following long string contains $^O-specific stuff, which is factored out
 print OUT expand_os_specific(<<'EOT');
@@ -314,7 +341,7 @@ sub bootstrap {
 	next unless -d $dir; # skip over uninteresting directories
 	
 	# check for common cases to avoid autoload of dl_findfile
-	my $try = "$dir/$modfname.$dl_dlext";
+        my $try = "$dir/$modfname.$dl_dlext";
 	last if $file = ($do_expand) ? dl_expandspec($try) : ((-f $try) && $try);
 	
 	# no luck here, save dir for possible later dl_findfile search
@@ -357,7 +384,12 @@ sub bootstrap {
     # in this perl code simply because this was the last perl code
     # it executed.
 
-    my $libref = dl_load_file($file, $module->dl_load_flags) or
+    my $flags = $module->dl_load_flags;
+    <<$^O-eq-android>>
+    # See the note above regarding the linker.
+    $flags = 0x00;
+    <</$^O-eq-android>>
+    my $libref = dl_load_file($file, $flags) or
 	croak("Can't load '$file' for module $module: ".dl_error());
 
     push(@dl_librefs,$libref);  # record loaded object
@@ -566,6 +598,7 @@ DynaLoader Interface Summary
   @dl_resolve_using
   @dl_require_symbols
   $dl_debug
+  $dl_dlext
   @dl_librefs
   @dl_modules
   @dl_shared_objects
@@ -678,6 +711,19 @@ built with the B<-DDEBUGGING> flag.  This can also be set via the
 PERL_DL_DEBUG environment variable.  Set to 1 for minimal information or
 higher for more.
 
+=item $dl_dlext
+
+When specified (localised) in a module's F<.pm> file, indicates the extension
+which the module's loadable object will have. For example:
+
+    local $DynaLoader::dl_dlext = 'unusual_ext';
+
+would indicate that the module's loadable object has an extension of
+C<unusual_ext> instead of the more usual C<$Config{dlext}>.  NOTE: This also
+requires that the module's F<Makefile.PL> specify (in C<WriteMakefile()>):
+
+    DLEXT => 'unusual_ext',
+
 =item dl_findfile()
 
 Syntax:
@@ -765,9 +811,10 @@ Syntax:
 
 Dynamically unload $libref, which must be an opaque 'library reference' as
 returned from dl_load_file.  Returns one on success and zero on failure.
-
 This function is optional and may not necessarily be provided on all platforms.
-If it is defined, it is called automatically when the interpreter exits for
+
+If it is defined and perl is compiled with the C macro C<DL_UNLOAD_ALL_AT_EXIT>
+defined, then it is called automatically when the interpreter exits for
 every shared object or library loaded by DynaLoader::bootstrap.  All such
 library references are stored in @dl_librefs by DynaLoader::Bootstrap as it
 loads the libraries.  The files are unloaded in last-in, first-out order.

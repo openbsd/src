@@ -5,7 +5,7 @@ use strict;
 use Tie::Handle;
 use vars qw(@ISA $VERSION);
 @ISA = 'Tie::Handle';
-$VERSION = '4.3';
+$VERSION = '4.4';
 
 =head1 NAME
 
@@ -64,7 +64,8 @@ sub GETC     { getc($_[0]) }
 sub WRITE
 {
  my $fh = $_[0];
- print $fh substr($_[1],0,$_[2])
+ local $\; # don't print any line terminator
+ print $fh substr($_[1], $_[3], $_[2]);
 }
 
 

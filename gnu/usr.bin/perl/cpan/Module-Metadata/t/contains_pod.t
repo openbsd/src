@@ -1,0 +1,59 @@
+use strict;
+use warnings;
+use Test::More tests => 3;
+use Module::Metadata;
+
+*fh_from_string = $] < 5.008
+  ? require IO::Scalar && sub ($) {
+    IO::Scalar->new(\$_[0]);
+  }
+  : sub ($) {
+    open my $fh, '<', \$_[0];
+    $fh
+  }
+;
+
+{
+    my $src = <<'...';
+package Foo;
+1;
+...
+
+    my $fh = fh_from_string($src);
+    my $module = Module::Metadata->new_from_handle($fh, 'Foo.pm');
+    ok(!$module->contains_pod(), 'This module does not contains POD');
+}
+
+{
+    my $src = <<'...';
+package Foo;
+1;
+
+=head1 NAME
+
+Foo - bar
+...
+
+    my $fh = fh_from_string($src);
+    my $module = Module::Metadata->new_from_handle($fh, 'Foo.pm');
+    ok($module->contains_pod(), 'This module contains POD');
+}
+
+{
+    my $src = <<'...';
+package Foo;
+1;
+
+=head1 NAME
+
+Foo - bar
+
+=head1 AUTHORS
+
+Tokuhiro Matsuno
+...
+
+    my $fh = fh_from_string($src);
+    my $module = Module::Metadata->new_from_handle($fh, 'Foo.pm');
+    ok($module->contains_pod(), 'This module contains POD');
+}

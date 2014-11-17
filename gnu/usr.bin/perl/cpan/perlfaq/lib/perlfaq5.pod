@@ -1134,7 +1134,7 @@ accessing an element of the array actually accesses the corresponding
 line in the file.
 
 If you want to load the entire file, you can use the L<File::Slurp>
-module to do it in one one simple and efficient step:
+module to do it in one simple and efficient step:
 
     use File::Slurp;
 

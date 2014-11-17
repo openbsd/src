@@ -29,18 +29,17 @@ stdout_stderr_of( sub { $mb = $dist->new_from_context('verbose' => 1) } );
 isa_ok( $mb, "Module::Build" );
 like( $mb->cpan_client, qr/^\Q$^X\E/, "cpan_client is mocked with perl" );
 
+my $retval;
 my $out = stdout_of( sub {
-    $dist->run_build('installdeps')
+  $retval = $mb->dispatch('installdeps')
 });
-ok( length($out), "ran mocked Build installdeps");
+ok( $retval, "ran mocked Build installdeps");
 like( $out, qr/File::Spec/, "saw File::Spec prereq" );
 like( $out, qr/Getopt::Long/, "saw Getopt::Long prereq" );
 
 $out = stdout_stderr_of( sub {
-    $dist->run_build('installdeps', '--cpan_client', 'ADLKASJDFLASDJ')
+  $retval = $mb->dispatch('installdeps', cpan_client => 'ADLKASJDFLASDJ');
 });
-like( $out, qr/cpan_client .* is not executable/,
-  "Build installdeps with bad cpan_client dies"
-);
+ok( !$retval, "Build installdeps with bad cpan_client fails" );
 
 # vim:ts=2:sw=2:et:sta:sts=2

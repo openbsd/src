@@ -3,13 +3,11 @@
 package MyResultFactory;
 
 use strict;
-use vars '@ISA';
+use warnings;
 
-use MyCustom;
 use MyResult;
-use TAP::Parser::ResultFactory;
 
-@ISA = qw( TAP::Parser::ResultFactory MyCustom );
+use base qw( TAP::Parser::ResultFactory MyCustom );
 
 sub make_result {
     my $class = shift;

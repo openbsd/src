@@ -30,10 +30,11 @@ $hashsize = 100;
 $maxhash2size = 100;
 $maxarraysize = 100;
 
-# Use MD5 if its available to make random string keys
+# Use Digest::MD5 if its available to make random string keys
 
-eval { require "MD5.pm" };
+eval { require Digest::MD5; };
 $gotmd5 = !$@;
+diag "Will use Digest::MD5" if $gotmd5;
 
 # Use Data::Dumper if debugging and it is available to create an ASCII dump
 
@@ -50,7 +51,7 @@ if ($debugging) {
 
 for (my $i = 0; $i < $hashsize; $i++) {
 	my($k) = int(rand(1_000_000));
-	$k = MD5->hexhash($k) if $gotmd5 and int(rand(2));
+	$k = Digest::MD5::md5_hex($k) if $gotmd5 and int(rand(2));
 	$a1{$k} = { key => "$k", "value" => $i };
 
 	# A third of the elements are references to further hashes

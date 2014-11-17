@@ -3,7 +3,7 @@ BEGIN {
     @INC = '../lib';
     require './test.pl';
 }
-plan tests=>192;
+plan tests=>205;
 
 sub a : lvalue { my $a = 34; ${\(bless \$a)} }  # Return a temporary
 sub b : lvalue { ${\shift} }
@@ -317,6 +317,31 @@ EOE
 
 like($_, qr/Can\'t return a temporary from lvalue subroutine/,
     'returning a PADTMP explicitly (list context)');
+
+# These next two tests are not necessarily normative.  But this way we will
+# know if this discrepancy changes.
+
+$_ = undef;
+eval <<'EOE' or $_ = $@;
+  sub scalarray : lvalue { @a || $b }
+  @a = 1;
+  (scalarray) = (2,3);
+  1;
+EOE
+
+like($_, qr/Can\'t return a temporary from lvalue subroutine/,
+    'returning a scalar-context array via ||');
+
+$_ = undef;
+eval <<'EOE' or $_ = $@;
+  use warnings "FATAL" => "all";
+  sub myscalarray : lvalue { my @a = 1; @a || $b }
+  (myscalarray) = (2,3);
+  1;
+EOE
+
+like($_, qr/Useless assignment to a temporary/,
+    'returning a scalar-context lexical array via ||');
 
 $_ = undef;
 sub lv2t : lvalue { shift }
@@ -774,7 +799,7 @@ is $wheel, 8, 'tied pad var explicitly returned in list ref context';
 }
 
 SKIP: { skip 'no attributes.pm', 1 unless eval 'require attributes';
-fresh_perl_is(<<'----', <<'====', "lvalue can not be set after definition. [perl #68758]");
+fresh_perl_is(<<'----', <<'====', {}, "lvalue can not be set after definition. [perl #68758]");
 use warnings;
 our $x;
 sub foo { $x }
@@ -963,7 +988,57 @@ sub ucfr : lvalue {
 }
 ucfr();
 
+# Test TARG with potential lvalue context, too
+for (sub : lvalue { "$x" }->()) {
+    is \$_, \$_, '\$_ == \$_ in for(sub :lvalue{"$x"}->()){...}'
+}
+
 # [perl #117947] XSUBs should not be treated as lvalues at run time
 eval { &{\&utf8::is_utf8}("") = 3 };
 like $@, qr/^Can't modify non-lvalue subroutine call at /,
         'XSUB not seen at compile time dies in lvalue context';
+
+# [perl #119797] else implicitly returning value
+# This used to cause Bizarre copy of ARRAY in pp_leave
+sub else119797 : lvalue {
+    if ($_[0]) {
+	1; # two statements force a leave op
+	@119797
+    }
+    else {
+	@119797
+    }
+}
+eval { (else119797(0)) = 1..3 };
+is $@, "", '$@ after writing to array returned by else';
+is "@119797", "1 2 3", 'writing to array returned by else';
+eval { (else119797(1)) = 4..6 };
+is $@, "", '$@ after writing to array returned by if (with else)';
+is "@119797", "4 5 6", 'writing to array returned by if (with else)';
+sub if119797 : lvalue {
+    if ($_[0]) {
+	@119797
+    }
+}
+@119797 = ();
+eval { (if119797(1)) = 4..6 };
+is $@, "", '$@ after writing to array returned by if';
+is "@119797", "4 5 6", 'writing to array returned by if';
+sub unless119797 : lvalue {
+    unless ($_[0]) {
+	@119797
+    }
+}
+@119797 = ();
+eval { (unless119797(0)) = 4..6 };
+is $@, "", '$@ after writing to array returned by unless';
+is "@119797", "4 5 6", 'writing to array returned by unless';
+sub bare119797 : lvalue {
+    {;
+	@119797
+    }
+}
+@119797 = ();
+eval { (bare119797(0)) = 4..6 };
+is $@, "", '$@ after writing to array returned by bare block';
+is "@119797", "4 5 6", 'writing to array returned by bare block';

@@ -69,6 +69,31 @@ not_here(const char *s)
     NORETURN_FUNCTION_END;
 }
 
+#ifndef UVCHR_IS_INVARIANT   /* For use with Perls without this macro */
+#   if ('A' == 65)
+#       define UVCHR_IS_INVARIANT(cp) ((cp) < 128)
+#   elif (defined(NATIVE_IS_INVARIANT)) /* EBCDIC on old Perl */
+#       define UVCHR_IS_INVARIANT(cp) ((cp) < 256 && NATIVE_IS_INVARIANT(cp))
+#   elif defined(isASCII)    /* EBCDIC on very old Perl */
+        /* In EBCDIC, the invariants are the code points corresponding to ASCII,
+         * plus all the controls.  All but one EBCDIC control is below SPACE; it
+         * varies depending on the code page, determined by the ord of '^' */
+#       define UVCHR_IS_INVARIANT(cp) (isASCII(cp)                            \
+                                       || (cp) < ' '                          \
+                                       || (('^' == 106)    /* POSIX-BC */     \
+                                          ? (cp) == 95                        \
+                                          : (cp) == 0xFF)) /* 1047 or 037 */
+#   else    /* EBCDIC on very very old Perl */
+        /* This assumes isascii() is available, but that could be fixed by
+         * having the macro test for each printable ASCII char */
+#       define UVCHR_IS_INVARIANT(cp) (isascii(cp)                            \
+                                       || (cp) < ' '                          \
+                                       || (('^' == 106)    /* POSIX-BC */     \
+                                          ? (cp) == 95                        \
+                                          : (cp) == 0xFF)) /* 1047 or 037 */
+#   endif
+#endif
+
 
 #ifndef PerlIO
 #define PerlIO_fileno(f) fileno(f)
@@ -337,7 +362,7 @@ ungetc(handle, c)
                 croak("Negative character number in ungetc()");
 
             v = SvUV(c);
-            if (NATIVE_IS_INVARIANT(v) || (v <= 0xFF && !PerlIO_isutf8(handle)))
+            if (UVCHR_IS_INVARIANT(v) || (v <= 0xFF && !PerlIO_isutf8(handle)))
                 RETVAL = PerlIO_ungetc(handle, (int)v);
             else {
                 U8 buf[UTF8_MAXBYTES + 1], *end;
@@ -350,7 +375,7 @@ ungetc(handle, c)
                  * above-Unicodes */
                 end = uvchr_to_utf8_flags(buf, v, 0);
                 len = end - buf;
-                if (PerlIO_unread(handle, &buf, len) == len)
+                if ((Size_t)PerlIO_unread(handle, &buf, len) == len)
                     XSRETURN_UV(v);
                 else
                     RETVAL = EOF;
@@ -540,7 +565,7 @@ sockatmark (sock)
        int flag = 0;
 #   ifdef SIOCATMARK
 #     if defined(NETWARE) || defined(WIN32)
-       if (ioctl(fd, SIOCATMARK, (void*)&flag) != 0)
+       if (ioctl(fd, SIOCATMARK, (char*)&flag) != 0)
 #     else
        if (ioctl(fd, SIOCATMARK, &flag) != 0)
 #     endif

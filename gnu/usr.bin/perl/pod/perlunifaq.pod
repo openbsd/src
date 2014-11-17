@@ -136,8 +136,6 @@ concern, and you can just C<eval> dumped data as always.
 
 =head2 Why do regex character classes sometimes match only in the ASCII range?
 
-=head2 Why do some characters not uppercase or lowercase correctly?
-
 Starting in Perl 5.14 (and partially in Perl 5.12), just put a
 C<use feature 'unicode_strings'> near the beginning of your program.
 Within its lexical scope you shouldn't have this problem.  It also is
@@ -157,12 +155,16 @@ Unicode, whether the string is encoded in UTF-8 or not, thus avoiding
 the problem.
 
 However, on earlier Perls, or if you pass strings to subroutines outside
-the feature's scope, you can force Unicode semantics by changing the
+the feature's scope, you can force Unicode rules by changing the
 encoding to UTF-8 by doing C<utf8::upgrade($string)>. This can be used
 safely on any string, as it checks and does not change strings that have
 already been upgraded.
 
 For a more detailed discussion, see L<Unicode::Semantics> on CPAN.
+
+=head2 Why do some characters not uppercase or lowercase correctly?
+
+See the answer to the previous question.
 
 =head2 How can I determine if a string is a text string or a binary string?
 

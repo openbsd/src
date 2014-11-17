@@ -4,7 +4,6 @@ use strict;
 use lib 't/lib';
 use MBTest;
 use File::Spec;
-use IO::File;
 use Config;
 
 # Don't let our own verbosity/test_file get mixed up with our subprocess's
@@ -512,7 +511,7 @@ sub test_makefile_pl_requires_perl {
 }
 
 sub find_params_in_makefile {
-  my $fh = IO::File->new( $makefile, 'r' )
+  open(my $fh, '<', $makefile )
     or die "Can't read $makefile: $!";
   local($/) = "\n";
 

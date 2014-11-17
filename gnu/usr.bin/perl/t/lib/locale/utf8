@@ -1,5 +1,5 @@
 use utf8;
-$locales .= <<EOF;
+return split /\n/, <<EOF;
 Català Catalan:ca:es:1 15
 Français French:fr:be ca ch fr lu:1 15
 Gáidhlig Gaelic:gd:gb uk:1 14 15

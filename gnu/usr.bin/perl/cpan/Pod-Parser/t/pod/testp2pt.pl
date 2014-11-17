@@ -141,8 +141,8 @@ sub testpodplaintext( @ ) {
    my %opts = (ref $_[0] eq 'HASH') ? %{shift()} : ();
    my @testpods = @_;
    my ($testname, $testdir) = ("", "");
-   my ($podfile, $cmpfile) = ("", "");
-   my ($outfile, $errfile) = ("", "");
+   my ($podfile , $cmpfile) = ("", "");
+   my ($outfile , $errfile) = ("", "");
    my $passes = 0;
    my $failed = 0;
    local $_;

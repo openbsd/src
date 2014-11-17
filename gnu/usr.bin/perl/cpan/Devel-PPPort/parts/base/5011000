@@ -1,11 +1,10 @@
 5.011000
 Gv_AMupdate                    # E (Perl_Gv_AMupdate)
 PL_opfreehook                  # E
+SVt_REGEXP                     # E
 SvOOK_offset                   # U
 av_iter_p                      # U
-fetch_cop_label                # U
 gv_add_by_type                 # U
-gv_fetchmethod_flags           # U
 is_ascii_string                # U
 pregfree2                      # U
 save_adelete                   # U

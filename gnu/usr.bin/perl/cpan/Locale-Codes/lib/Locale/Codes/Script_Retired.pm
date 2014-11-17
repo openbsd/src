@@ -1,36 +1,9 @@
-package Locale::Codes::Script_Retired;
+package #
+Locale::Codes::Script_Retired;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'deprecate_codes' is run.
-#    Generated on: Wed Feb 27 10:06:46 EST 2013
-
-=pod
-
-=head1 NAME
-
-Locale::Codes::Script_Retired - retired script codes for the Locale::Codes::Script module
-
-=head1 SYNOPSIS
-
-This module contains data used by the Locale::Codes::Script module. It is
-not intended to be used directly, and contains no calleable routines.
-
-=head1 AUTHOR
-
-See Locale::Codes for full author history.
-
-Currently maintained by Sullivan Beck (sbeck@cpan.org).
-
-=head1 COPYRIGHT
-
-   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
-   Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
-
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
-
-=cut
+#    Generated on: Tue Mar  4 13:19:40 EST 2014
 
 use strict;
 require 5.006;
@@ -38,7 +11,7 @@ use warnings;
 use utf8;
 
 our($VERSION);
-$VERSION='3.25';
+$VERSION='3.30';
 
 $Locale::Codes::Retired{'script'}{'alpha'}{'code'} = {
 };
@@ -47,7 +20,9 @@ $Locale::Codes::Retired{'script'}{'num'}{'code'} = {
 };
 
 $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
+   q( multani) => [ q(Mult), q( Multani) ],
    q((alias for hiragana + katakana)) => [ q(Hrkt), q((alias for Hiragana + Katakana)) ],
+   q(ahom, tai ahom) => [ q(Ahom), q(Ahom, Tai Ahom) ],
    q(cuneiform, sumero-akkadian) => [ q(Xsux), q(Cuneiform, Sumero-Akkadian) ],
    q(deseret (mormon)) => [ q(Dsrt), q(Deseret (Mormon)) ],
    q(devanagari (nagari)) => [ q(Deva), q(Devanagari (Nagari)) ],
@@ -62,7 +37,9 @@ $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
    q(lisu (fraser)) => [ q(Lisu), q(Lisu (Fraser)) ],
    q(mandaic, mandaean) => [ q(Mand), q(Mandaic, Mandaean) ],
    q(meitei mayek (meithei, meetei)) => [ q(Mtei), q(Meitei Mayek (Meithei, Meetei)) ],
+   q(mende) => [ q(Mend), q(Mende) ],
    q(miao (pollard)) => [ q(Plrd), q(Miao (Pollard)) ],
+   q(modi, modi) => [ q(Mult), q(Modi, Modi) ],
    q(moon (moon code, moon script, moon type)) => [ q(Moon), q(Moon (Moon code, Moon script, Moon type)) ],
    q(mro, mru) => [ q(Mroo), q(Mro, Mru) ],
    q(myanmar (burmese)) => [ q(Mymr), q(Myanmar (Burmese)) ],
@@ -73,6 +50,7 @@ $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
    q(rejang (redjang, kaganga)) => [ q(Rjng), q(Rejang (Redjang, Kaganga)) ],
    q(sharada, sarada) => [ q(Shrd), q(Sharada, Sarada) ],
    q(shavian (shaw)) => [ q(Shaw), q(Shavian (Shaw)) ],
+   q(siddham, siddham, siddhamatrka) => [ q(Sidd), q(Siddham, Siddham, Siddhamatrka) ],
    q(sindhi) => [ q(Sind), q(Sindhi) ],
    q(tagalog (baybayin, alibata)) => [ q(Tglg), q(Tagalog (Baybayin, Alibata)) ],
    q(tai tham (lanna)) => [ q(Lana), q(Tai Tham (Lanna)) ],
@@ -83,6 +61,7 @@ $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
 };
 
 $Locale::Codes::Retired{'script'}{'num'}{'name'} = {
+   q(mende) => [ q(438), q(Mende) ],
    q(old hungarian) => [ q(176), q(Old Hungarian) ],
    q(tiruta) => [ q(326), q(Tiruta) ],
 };

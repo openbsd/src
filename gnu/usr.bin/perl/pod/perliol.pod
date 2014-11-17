@@ -10,8 +10,7 @@ perliol - C API for Perl's implementation of IO in Layers.
 =head1 DESCRIPTION
 
 This document describes the behavior and implementation of the PerlIO
-abstraction described in L<perlapio> when C<USE_PERLIO> is defined (and
-C<USE_SFIO> is not).
+abstraction described in L<perlapio> when C<USE_PERLIO> is defined.
 
 =head2 History and Background
 

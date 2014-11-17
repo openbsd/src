@@ -19,7 +19,7 @@ like( $@, qr/^Not enough arguments for ExtUtils::MakeMaker::prompt/,
 eval {
     prompt(undef);
 };
-like( $@, qr/^prompt function called without an argument/, 
+like( $@, qr/^prompt function called without an argument/,
                                             'undef message' );
 
 my $stdout = tie *STDOUT, 'TieOut' or die;

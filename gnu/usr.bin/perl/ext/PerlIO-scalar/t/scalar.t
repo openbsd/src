@@ -16,7 +16,7 @@ use Fcntl qw(SEEK_SET SEEK_CUR SEEK_END); # Not 0, 1, 2 everywhere.
 
 $| = 1;
 
-use Test::More tests => 108;
+use Test::More tests => 114;
 
 my $fh;
 my $var = "aaa\n";
@@ -109,6 +109,11 @@ is(<$fh>, "shazam", "reading from magic scalars");
     print $fh "foo";
     close $fh;
     is($warn, 0, "no warnings when writing to an undefined scalar");
+    undef $scalar;
+    open $fh, '>>', \$scalar;
+    print $fh "oof";
+    close $fh;
+    is($warn, 0, "no warnings when appending to an undefined scalar");
 }
 
 {
@@ -340,7 +345,7 @@ sub has_trailing_nul(\$) {
 }
 SKIP: {
     if ($Config::Config{'extensions'} !~ m!\bPerlIO/scalar\b!) {
-	skip "no B", 3;
+	skip "no B", 4;
     }
     require B;
 
@@ -359,6 +364,10 @@ SKIP: {
     print $fh "abc";
     ok has_trailing_nul $memfile,
 	 'write appends null when growing string after seek past end';
+
+    open $fh, ">", \($memfile = "hello");
+    ok has_trailing_nul $memfile,
+	 'initial truncation in ">" mode provides trailing null';
 }
 
 # [perl #112780] Cloning of in-memory handles
@@ -461,4 +470,24 @@ my $byte_warning = "Strings with code points over 0xFF may not be mapped into in
     use warnings "utf8";
     ok(!(print $fh "B"), "write to an non-downgradable SV (and warn)");
     is_deeply(\@warnings, [ $byte_warning ], "check warning");
+}
+
+#  RT #119529: Reading refs should not loop
+
+{
+    my $x = \42;
+    open my $fh, "<", \$x;
+    my $got = <$fh>; # this used to loop
+    like($got, qr/^SCALAR\(0x[0-9a-f]+\)$/, "ref to a ref");
+    is ref $x, "SCALAR", "target scalar is still a reference";
+}
+
+# Appending to refs
+{
+    my $x = \42;
+    my $as_string = "$x";
+    open my $refh, ">>", \$x;
+    is ref $x, "SCALAR", 'still a ref after opening for appending';
+    print $refh "boo\n";
+    is $x, $as_string."boo\n", 'string gets appended to ref';
 }

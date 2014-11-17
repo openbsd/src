@@ -166,11 +166,11 @@ DispHex(ptr, length)
 
 static void
 #ifdef CAN_PROTOTYPE
-DispStream(di_stream * s, char * message)
+DispStream(di_stream * s, const char * message)
 #else
 DispStream(s, message)
     di_stream * s;
-    char * message;
+    const char * message;
 #endif
 {
 
@@ -474,7 +474,7 @@ MODULE = Compress::Raw::Bzip2 PACKAGE = Compress::Raw::Bzip2
 void
 DispStream(s, message=NULL)
     Compress::Raw::Bzip2   s
-    char *  message
+    const char *  message
 
 DualType 
 bzdeflate (s, buf, output)
@@ -485,6 +485,7 @@ bzdeflate (s, buf, output)
     uInt	increment = NO_INIT
     int		RETVAL = 0;
     uInt   bufinc = NO_INIT
+    STRLEN   origlen = NO_INIT
   CODE:
     bufinc = s->bufsize;
 
@@ -496,8 +497,8 @@ bzdeflate (s, buf, output)
     if (DO_UTF8(buf) && !sv_utf8_downgrade(buf, 1))
          croak("Wide character in " COMPRESS_CLASS "::bzdeflate input parameter");
 #endif         
-    s->stream.next_in = (char*)SvPV_nomg_nolen(buf) ;
-    s->stream.avail_in = SvCUR(buf) ;
+    s->stream.next_in = (char*)SvPV_nomg(buf, origlen) ;
+    s->stream.avail_in = origlen;
      
     /* and retrieve the output buffer */
     output = deRef_l(output, "deflate") ;
@@ -532,7 +533,7 @@ bzdeflate (s, buf, output)
     }
 
     s->compressedBytes    += cur_length + increment - s->stream.avail_out ;
-    s->uncompressedBytes  += SvCUR(buf) - s->stream.avail_in  ;
+    s->uncompressedBytes  += origlen - s->stream.avail_in  ;
 
     s->last_error = RETVAL ;
     if (RETVAL == BZ_RUN_OK) {
@@ -713,7 +714,7 @@ MODULE = Compress::Raw::Bunzip2 PACKAGE = Compress::Raw::Bunzip2
 void
 DispStream(s, message=NULL)
     Compress::Raw::Bunzip2   s
-    char *  message
+    const char *  message
 
 DualType 
 bzinflate (s, buf, output)
@@ -725,6 +726,7 @@ bzinflate (s, buf, output)
     uInt	increment = 0;
     uInt    bufinc = NO_INIT
     STRLEN  na = NO_INIT ;
+    STRLEN    origlen = NO_INIT
   PREINIT:
 #ifdef UTF8_AVAILABLE    
     bool	out_utf8  = FALSE;
@@ -745,8 +747,8 @@ bzinflate (s, buf, output)
 #endif         
     
     /* initialise the input buffer */
-    s->stream.next_in = (char*)SvPV_nomg_nolen(buf) ;
-    s->stream.avail_in = SvCUR(buf);
+    s->stream.next_in = (char*)SvPV_nomg(buf, origlen) ;
+    s->stream.avail_in = origlen;
 	
     /* and retrieve the output buffer */
     output = deRef_l(output, "bzinflate") ;
@@ -824,7 +826,7 @@ bzinflate (s, buf, output)
 
         s->bytesInflated = cur_length + increment - s->stream.avail_out - prefix_length;
         s->uncompressedBytes += s->bytesInflated ;
-        s->compressedBytes   += SvCUR(buf) - s->stream.avail_in  ;
+        s->compressedBytes   += origlen - s->stream.avail_in  ;
 
         SvPOK_only(output);
         SvCUR_set(output, prefix_length + s->bytesInflated) ;

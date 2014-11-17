@@ -1,5 +1,9 @@
 =encoding utf8
 
+=head1 NAME
+
+release_schedule - Perl 5 release schedule
+
 =head1 STABLE RELEASE SCHEDULE
 
 This schedule lists the projected or historical development and
@@ -7,19 +11,22 @@ release schedules for the next, current and previous stable versions
 of Perl.  Dates with all question marks will only be releases if
 deemed necessary by the Pumpking.
 
+=head2 Perl 5.20
+
+Code freezes (which happen in the 5.19.X series)
+
+  2014-01-20  5.19.8          Contentious changes freeze
+  2014-02-20  5.19.9          User-visible changes freeze
+  2014-03-20  5.19.10         Full code freeze
+  2014-05-20  5.20.0          Stable release!
+
 =head2 Perl 5.18
-
-Code freezes (which happen in the 5.17.X series)
-
-  2013-01-20  5.17.8    Contentious changes freeze
-  2013-02-20  5.17.9    User-visible changes freeze
-  2013-03-20  5.17.10   Full code freeze
 
 Release schedule (with release manager):
 
-  2013-04-??  5.18.0-RC0      Ricardo Signes
-  ...(interim RC releases)...
-  2013-05-18  5.18.0 (final)  Ricardo Signes
+  2013-05-18  5.18.0 ✓        Ricardo Signes
+  2013-08-12  5.18.1 ✓        Ricardo Signes
+  2013-11-??  5.18.2          Ricardo Signes
 
 (RC0 will be released once we think that all the blockers have been
 addressed.  This typically means some time in April or May.)
@@ -33,16 +40,6 @@ Release schedule (with release managers):
   2012-11-01  5.16.2 ✓        Ricardo Signes
   2013-03-11  5.16.3 ✓        Ricardo Signes
   ????-??-??  5.16.4          ??
-
-=head2 Perl 5.14
-
-Release schedule (with release managers):
-
-  2011-05-14  5.14.0 (final)  Jesse Vincent
-  2011-06-16  5.14.1 ✓        Jesse Vincent
-  2011-09-14  5.14.2 ✓        Florian Ragwitz
-  2012-10-12  5.14.3 ✓        Dominic Hargreaves
-  2013-03-10  5.14.4 ✓        David Mitchell
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -58,31 +55,35 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.17
-
-  2012-05-26  5.17.0  ✓       Zefram
-  2012-06-20  5.17.1  ✓       Jesse Luehrs
-  2012-07-20  5.17.2  ✓       Tony Cook
-  2012-08-20  5.17.3  ✓       Steve Hay
-  2012-09-20  5.17.4  ✓       Florian Ragwitz
-  2012-10-20  5.17.5  ✓       Florian Ragwitz
-  2012-11-20  5.17.6  ✓       Ricardo Signes
-  2012-12-18  5.17.7  ✓       Dave Rolsky
-  2013-01-20  5.17.8  ✓       Aaron Crane
-  2013-02-20  5.17.9  ✓       Chris Williams
-  2013-03-20  5.17.10         Max Maischein
-  2013-04-20  5.17.11
-
 =head2 Perl 5.19
 
   2013-05-20  5.19.0          Ricardo Signes
   2013-06-20  5.19.1          David Golden
   2013-07-20  5.19.2          Aristotle Pagaltzis
   2013-08-20  5.19.3          Steve Hay
-  2013-09-20  5.19.4
-  2013-10-20  5.19.5
-  2013-11-20  5.19.6
-  2013-12-20  5.19.7
+  2013-09-20  5.19.4          Steve Hay
+  2013-10-20  5.19.5          Steve Hay
+  2013-11-20  5.19.6          Chris Williams
+  2013-12-20  5.19.7          Abigail
+  2014-01-20  5.19.8          Ricardo Signes
+  2014-02-20  5.19.9          Tony Cook
+  2014-03-20  5.19.10         Aaron Crane
+  2014-04-20  5.19.11         Steve Hay
+
+=head2 Perl 5.21
+
+  2014-05-20  5.21.0          Ricardo Signes
+  2014-06-20  5.21.1          Matthew Horsfall
+  2014-07-20  5.21.2          Abigail
+  2014-08-20  5.21.3          ?
+  2014-09-20  5.21.4          ?
+  2014-10-20  5.21.5          ?
+  2014-11-20  5.21.6          ?
+  2014-12-20  5.21.7          ?
+  2015-01-20  5.21.8          ?
+  2015-02-20  5.21.9          ?
+  2015-03-20  5.21.10         ?
+  2015-04-20  5.21.11         ?
 
 =head1 VICTIMS
 
@@ -93,27 +94,29 @@ and can't find a substitute amongst this list, mail p5p.
 (Please do not add any names to this list without prior
 consent of the Pumpking.)
 
+Abigail <abigail@abigail.be>
+Aristotle Pagaltzis <pagaltzis@gmx.de>
+Ask Bjørn Hansen <ask@perl.org>
+Chris Williams <bingos@cpan.org>
+Dave Cross <dave@perlhacks.com>
+Dave Rolsky <autarch@urth.org>
+David Golden <dagolden@cpan.org>
+Florian Ragwitz <rafl@debian.org>
+Jesse Luehrs <doy@cpan.org>
 Jesse Vincent <jesse@cpan.org>
 Leon Brocard <acme@astray.com>
-Yves Orton <demerphq@gmail.com>
-Ricardo Signes <rjbs@cpan.org>
-Steve Hay <steve.m.hay@googlemail.com>
-Ask Bjørn Hansen <ask@perl.org>
-David Golden <dagolden@cpan.org>
-Philippe Bruhat <book@cpan.org>
 Matt Trout <mst@shadowcat.co.uk>
-Florian Ragwitz <rafl@debian.org>
+Max Maischein <corion@cpan.org>
+Peter Martini <petercmartini@gmail.com>
+Philippe Bruhat <book@cpan.org>
+Ricardo Signes <rjbs@cpan.org>
+Stevan Little <stevan.little@iinteractive.com>
+Steve Hay <steve.m.hay@googlemail.com>
 Tatsuhiko Miyagawa <miyagawa@bulknews.net>
-Chris Williams <bingos@cpan.org>
+Tony Cook <tony@develop-help.com>
+Yves Orton <demerphq@gmail.com>
 Zefram <zefram@fysh.org>
 Ævar Arnfjörð Bjarmason <avar@cpan.org>
-Stevan Little <stevan.little@iinteractive.com>
-Dave Rolsky <autarch@urth.org>
-Abigail <abigail@abigail.be>
-Max Maischein <corion@cpan.org>
-Dave Cross <dave@perlhacks.com>
-Jesse Luehrs <doy@cpan.org>
-Tony Cook <tony@develop-help.com>
 
 =head1 AUTHOR
 

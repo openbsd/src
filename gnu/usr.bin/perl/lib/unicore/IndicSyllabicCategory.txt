@@ -1,16 +1,16 @@
-# IndicSyllabicCategory-6.2.0.txt
-# Date: 2012-05-15, 21:12:00 GMT [KW]
+# IndicSyllabicCategory-6.3.0.txt
+# Date: 2013-08-01, 21:17:00 GMT [KW, LI]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UAX #44.
+# For documentation, see UAX #44, at http://www.unicode.org/reports/tr44/
 #
 # This file defines the following provisional property:
 #
 #    Indic_Syllabic_Category     enumerated property
 #
-# NB: Provisional properties and data files have no associated stability 
+# NB: Provisional properties and data files have no associated stability
 # guarantees. They are provided in part to determine the possible usefulness
 # of a property or other data and to encourage analysis and further investigation
 # which may result in their improvement. Provisional properties and
@@ -89,18 +89,18 @@
 17C6          ; Bindu # Mn       KHMER SIGN NIKAHIT
 1932          ; Bindu # Mn       LIMBU SMALL LETTER ANUSVARA
 1B00..1B02    ; Bindu # Mn   [3] BALINESE SIGN ULU RICEM..BALINESE SIGN CECEK
-A80B          ; Bindu # Mn       SYLOTI NAGRI SIGN ANUSVARA
-A873          ; Bindu # Lo       PHAGS-PA LETTER CANDRABINDU
-A980..A981    ; Bindu # Mn   [2] JAVANESE SIGN PANYANGGA..JAVANESE SIGN CECAK
 1B80          ; Bindu # Mn       SUNDANESE SIGN PANYECEK
 1C34..1C35    ; Bindu # Mc   [2] LEPCHA CONSONANT SIGN NYIN-DO..LEPCHA CONSONANT SIGN KANG
+A80B          ; Bindu # Mn       SYLOTI NAGRI SIGN ANUSVARA
+A873          ; Bindu # Lo       PHAGS-PA LETTER CANDRABINDU
 A880          ; Bindu # Mc       SAURASHTRA SIGN ANUSVARA
+A980..A981    ; Bindu # Mn   [2] JAVANESE SIGN PANYANGGA..JAVANESE SIGN CECAK
 10A0E         ; Bindu # Mn       KHAROSHTHI SIGN ANUSVARA
 11000         ; Bindu # Mc       BRAHMI SIGN CANDRABINDU
 11001         ; Bindu # Mn       BRAHMI SIGN ANUSVARA
 11080..11081  ; Bindu # Mn   [2] KAITHI SIGN CANDRABINDU..KAITHI SIGN ANUSVARA      
-11100..11101  ; Bindu # Mn       CHAKMA SIGN CANDRABINDU..CHAKMA SIGN ANUSVARA
-11180..11181  ; Bindu # Mn       SHARADA SIGN CANDRABINDU..SHARADA SIGN ANUSVARA
+11100..11101  ; Bindu # Mn   [2] CHAKMA SIGN CANDRABINDU..CHAKMA SIGN ANUSVARA
+11180..11181  ; Bindu # Mn   [2] SHARADA SIGN CANDRABINDU..SHARADA SIGN ANUSVARA
 116AB         ; Bindu # Mn       TAKRI SIGN ANUSVARA
 
 # ================================================
@@ -222,7 +222,7 @@ ABED          ; Virama # Mn       MEETEI MAYEK APUN IYEK
 10A3F         ; Virama # Mn       KHAROSHTHI VIRAMA
 11046         ; Virama # Mn       BRAHMI VIRAMA
 110B9         ; Virama # Mn       KAITHI SIGN VIRAMA
-11133..11134  ; Virama # Mn       CHAKMA VIRAMA..CHAKMA MAAYYAA
+11133..11134  ; Virama # Mn   [2] CHAKMA VIRAMA..CHAKMA MAAYYAA
 111C0         ; Virama # Mc       SHARADA SIGN VIRAMA
 116B6         ; Virama # Mn       TAKRI SIGN VIRAMA
 
@@ -309,7 +309,7 @@ ABD1          ; Vowel_Independent # Lo       MEETEI MAYEK LETTER ATIYA
 0941..0948    ; Vowel_Dependent # Mn   [8] DEVANAGARI VOWEL SIGN U..DEVANAGARI VOWEL SIGN AI
 0949..094C    ; Vowel_Dependent # Mc   [4] DEVANAGARI VOWEL SIGN CANDRA O..DEVANAGARI VOWEL SIGN AU
 094E..094F    ; Vowel_Dependent # Mc   [2] DEVANAGARI VOWEL SIGN PRISHTHAMATRA E..DEVANAGARI VOWEL SIGN AW
-0955..0957    ; Vowel_Dependent # Mn       DEVANAGARI VOWEL SIGN CANDRA LONG E..DEVANAGARI VOWEL SIGN UUE
+0955..0957    ; Vowel_Dependent # Mn   [3] DEVANAGARI VOWEL SIGN CANDRA LONG E..DEVANAGARI VOWEL SIGN UUE
 0962..0963    ; Vowel_Dependent # Mn   [2] DEVANAGARI VOWEL SIGN VOCALIC L..DEVANAGARI VOWEL SIGN VOCALIC LL
 09BE..09C0    ; Vowel_Dependent # Mc   [3] BENGALI VOWEL SIGN AA..BENGALI VOWEL SIGN II
 09C1..09C4    ; Vowel_Dependent # Mn   [4] BENGALI VOWEL SIGN U..BENGALI VOWEL SIGN VOCALIC RR
@@ -508,7 +508,7 @@ A926..A92A    ; Vowel # Mn   [5] KAYAH LI VOWEL UE..KAYAH LI VOWEL O
 
 # [Not derivable]
 
-0915..0939    ; Consonant # Lo  [35] DEVANAGARI LETTER KA..DEVANAGARI LETTER HA
+0915..0939    ; Consonant # Lo  [37] DEVANAGARI LETTER KA..DEVANAGARI LETTER HA
 0958..095F    ; Consonant # Lo   [8] DEVANAGARI LETTER QA..DEVANAGARI LETTER YYA
 0979..097F    ; Consonant # Lo   [7] DEVANAGARI LETTER ZHA..DEVANAGARI LETTER BBA
 0995..09A8    ; Consonant # Lo  [20] BENGALI LETTER KA..BENGALI LETTER NA
@@ -612,7 +612,7 @@ A892..A8B3    ; Consonant # Lo  [34] SAURASHTRA LETTER KA..SAURASHTRA LETTER LLA
 A90A..A921    ; Consonant # Lo  [24] KAYAH LI LETTER KA..KAYAH LI LETTER CA
 A930..A946    ; Consonant # Lo  [23] REJANG LETTER KA..REJANG LETTER A
 A989..A98B    ; Consonant # Lo   [3] JAVANESE LETTER PA CEREK..JAVANESE LETTER NGA LELET RASWADI
-A98F..A9B2    ; Consonant # Lo  [34] JAVANESE LETTER KA..JAVANESE LETTER HA
+A98F..A9B2    ; Consonant # Lo  [36] JAVANESE LETTER KA..JAVANESE LETTER HA
 AA06..AA28    ; Consonant # Lo  [35] CHAM LETTER KA..CHAM LETTER HA
 AA60..AA6F    ; Consonant # Lo  [16] MYANMAR LETTER KHAMTI GA..MYANMAR LETTER KHAMTI FA
 AA71..AA73    ; Consonant # Lo   [3] MYANMAR LETTER KHAMTI XA..MYAMNAR LETTER KHAMTI RA
@@ -693,7 +693,7 @@ A9BD          ; Consonant_Subjoined # Mc       JAVANESE CONSONANT SIGN KERET
 1082          ; Consonant_Medial # Mn       MYANMAR CONSONANT SIGN SHAN MEDIAL WA
 1A55          ; Consonant_Medial # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; Consonant_Medial # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
-A9BE..A9BF    ; Consonant_Medial # Mc       JAVANESE CONSONANT SIGN PENGKAL..JAVANESE CONSONANT SIGN CAKRA
+A9BE..A9BF    ; Consonant_Medial # Mc   [2] JAVANESE CONSONANT SIGN PENGKAL..JAVANESE CONSONANT SIGN CAKRA
 AA33..AA34    ; Consonant_Medial # Mc   [2] CHAM CONSONANT SIGN YA..CHAM CONSONANT SIGN RA
 AA35..AA36    ; Consonant_Medial # Mn   [2] CHAM CONSONANT SIGN LA..CHAM CONSONANT SIGN WA
 

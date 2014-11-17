@@ -194,3 +194,56 @@ use_ok( $FileClass );
                                 "       Expected error reported" );
 }
 
+### bug #78030
+### tests for symlinks with relative paths
+### seen on MSWin32
+{   ok( 1,                      "Testing bug 78030" );
+		my $archname = 'tmp-symlink.tar.gz';
+		{	#build archive
+			unlink $archname if -e $archname;
+			local $Archive::Tar::DO_NOT_USE_PREFIX = 1;
+			my $t=Archive::Tar->new;
+			my $f = $t->add_data( 'tmp/a/b/link.txt', '',
+				{
+					linkname => '../c/ori.txt',
+					type     => 2,
+				} );
+			#why doesn't it keep my wish?
+			$f->{name}   = 'tmp/a/b/link.txt';
+			$f->{prefix} = '';
+			$t->add_data( 'tmp/a/c/ori.txt', 'test case' );
+			$t->write( $archname, 1 );
+		}
+
+    { #use case 1 - in memory extraction
+			my $t=Archive::Tar->new;
+			$t->read( $archname );
+			my $r = eval{ $t->extract };
+			ok( $r && !$@,            "   In memory extraction/symlinks" );
+			ok((stat 'tmp/a/b/link.txt')[7] == 9,
+			                          "       Linked content" ) unless $r;
+			clean_78030();
+		}
+
+		{ #use case 2 - iter extraction
+		  #$DB::single = 2;
+			my $next=Archive::Tar->iter( $archname, 1 );
+			my $failed = 0;
+			#use Data::Dumper;
+			while(my $f = $next->() ){
+			#  print "\$f = ", Dumper( $f ), $/;
+				eval{ $f->extract } or $failed++;
+			}
+			ok( !$failed,             "   From disk extraction/symlinks" );
+			ok((stat 'tmp/a/b/link.txt')[7] == 9,
+			                          "       Linked content" ) unless $failed;
+		}
+
+    #remove tmp files
+		sub clean_78030{
+			unlink for ('tmp/a/c/ori.txt', 'tmp/a/b/link.txt');
+			rmdir for ('tmp/a/c', 'tmp/a/b', 'tmp/a', 'tmp');
+		}
+		clean_78030();
+		unlink $archname;
+}

@@ -407,9 +407,9 @@ sub _loose_name ($) {
                 # Add the constant and go fetch it in.
                 if (defined $file) {
 
-                    # A beginning ! means to invert.  The 0+ makes sure is
-                    # numeric
-                    $invert_it = 0 + $file =~ s/^!//;
+                    # If the file name contains a !, it means to invert.  The
+                    # 0+ makes sure result is numeric
+                    $invert_it = 0 + $file =~ s/!//;
 
                     if ($utf8::why_deprecated{$file}) {
                         warnings::warnif('deprecated', "Use of '$type' in \\p{} or \\P{} is deprecated because: $utf8::why_deprecated{$file};");
@@ -420,7 +420,11 @@ sub _loose_name ($) {
                     {
                         $file = $utf8::caseless_equivalent{$property_and_table};
                     }
-                    $file= "$unicore_dir/lib/$file.pl";
+
+                    # The pseudo-directory '#' means that there really isn't a
+                    # file to read, the data is in-line as part of the string;
+                    # we extract it below.
+                    $file = "$unicore_dir/lib/$file.pl" unless $file =~ m!^#/!;
                     last GETFILE;
                 }
                 print STDERR __LINE__, ": didn't find $property_and_table\n" if DEBUG;
@@ -482,8 +486,8 @@ sub _loose_name ($) {
                         $minbits = 1;
 
                         # The 0+ makes sure is numeric
-                        $invert_it = 0 + $file =~ s/^!//;
-                        $file = "$unicore_dir/lib/$file.pl";
+                        $invert_it = 0 + $file =~ s/!//;
+                        $file = "$unicore_dir/lib/$file.pl" unless $file =~ m!^#/!;
                         last GETFILE;
                     }
                 } }
@@ -504,20 +508,31 @@ sub _loose_name ($) {
                 ## If we reach here, it was due to a 'last GETFILE' above
                 ## (exception: user-defined properties and mappings), so we
                 ## have a filename, so now we load it if we haven't already.
-                ## If we have, return the cached results. The cache key is the
-                ## class and file to load, and whether the results need to be
-                ## inverted.
-                ##
-                my $found = $Cache{$class, $file, $invert_it};
-                if ($found and ref($found) eq $class) {
-                    print STDERR __LINE__, ": Returning cached swash for '$class,$file,$invert_it' for \\p{$type}\n" if DEBUG;
-                    pop @recursed if @recursed;
-                    return $found;
+
+                # The pseudo-directory '#' means the result isn't really a
+                # file, but is in-line, with semi-colons to be turned into
+                # new-lines.  Since it is in-line there is no advantage to
+                # caching the result
+                if ($file =~ s!^#/!!) {
+                    $list = $utf8::inline_definitions[$file];
+                }
+                else {
+                    # Here, we have an actual file to read in and load, but it
+                    # may already have been read-in and cached.  The cache key
+                    # is the class and file to load, and whether the results
+                    # need to be inverted.
+                    my $found = $Cache{$class, $file, $invert_it};
+                    if ($found and ref($found) eq $class) {
+                        print STDERR __LINE__, ": Returning cached swash for '$class,$file,$invert_it' for \\p{$type}\n" if DEBUG;
+                        pop @recursed if @recursed;
+                        return $found;
+                    }
+
+                    local $@;
+                    local $!;
+                    $list = do $file; die $@ if $@;
                 }
 
-                local $@;
-                local $!;
-                $list = do $file; die $@ if $@;
                 $list_is_from_mktables = 1;
             }
         } # End of $type is non-null

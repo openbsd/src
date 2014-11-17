@@ -5,7 +5,7 @@
 
 package warnings;
 
-our $VERSION = '1.18';
+our $VERSION = '1.23';
 
 # Verify that we're called correctly so that warnings will work.
 # see also strict.pm.
@@ -45,15 +45,587 @@ warnings - Perl pragma to control optional warnings
 
 =head1 DESCRIPTION
 
-The C<warnings> pragma is a replacement for the command line flag C<-w>,
-but the pragma is limited to the enclosing block, while the flag is global.
-See L<perllexwarn> for more information and the list of built-in warning
-categories.
+The C<warnings> pragma gives control over which warnings are enabled in
+which parts of a Perl program.  It's a more flexible alternative for
+both the command line flag B<-w> and the equivalent Perl variable,
+C<$^W>.
 
-If no import list is supplied, all possible warnings are either enabled
-or disabled.
+This pragma works just like the C<strict> pragma.
+This means that the scope of the warning pragma is limited to the
+enclosing block.  It also means that the pragma setting will not
+leak across files (via C<use>, C<require> or C<do>).  This allows
+authors to independently define the degree of warning checks that will
+be applied to their module.
 
-A number of functions are provided to assist module authors.
+By default, optional warnings are disabled, so any legacy code that
+doesn't attempt to control the warnings will work unchanged.
+
+All warnings are enabled in a block by either of these:
+
+    use warnings;
+    use warnings 'all';
+
+Similarly all warnings are disabled in a block by either of these:
+
+    no warnings;
+    no warnings 'all';
+
+For example, consider the code below:
+
+    use warnings;
+    my @a;
+    {
+        no warnings;
+	my $b = @a[0];
+    }
+    my $c = @a[0];
+
+The code in the enclosing block has warnings enabled, but the inner
+block has them disabled.  In this case that means the assignment to the
+scalar C<$c> will trip the C<"Scalar value @a[0] better written as $a[0]">
+warning, but the assignment to the scalar C<$b> will not.
+
+=head2 Default Warnings and Optional Warnings
+
+Before the introduction of lexical warnings, Perl had two classes of
+warnings: mandatory and optional. 
+
+As its name suggests, if your code tripped a mandatory warning, you
+would get a warning whether you wanted it or not.
+For example, the code below would always produce an C<"isn't numeric">
+warning about the "2:".
+
+    my $a = "2:" + 3;
+
+With the introduction of lexical warnings, mandatory warnings now become
+I<default> warnings.  The difference is that although the previously
+mandatory warnings are still enabled by default, they can then be
+subsequently enabled or disabled with the lexical warning pragma.  For
+example, in the code below, an C<"isn't numeric"> warning will only
+be reported for the C<$a> variable.
+
+    my $a = "2:" + 3;
+    no warnings;
+    my $b = "2:" + 3;
+
+Note that neither the B<-w> flag or the C<$^W> can be used to
+disable/enable default warnings.  They are still mandatory in this case.
+
+=head2 What's wrong with B<-w> and C<$^W>
+
+Although very useful, the big problem with using B<-w> on the command
+line to enable warnings is that it is all or nothing.  Take the typical
+scenario when you are writing a Perl program.  Parts of the code you
+will write yourself, but it's very likely that you will make use of
+pre-written Perl modules.  If you use the B<-w> flag in this case, you
+end up enabling warnings in pieces of code that you haven't written.
+
+Similarly, using C<$^W> to either disable or enable blocks of code is
+fundamentally flawed.  For a start, say you want to disable warnings in
+a block of code.  You might expect this to be enough to do the trick:
+
+     {
+         local ($^W) = 0;
+	 my $a =+ 2;
+	 my $b; chop $b;
+     }
+
+When this code is run with the B<-w> flag, a warning will be produced
+for the C<$a> line:  C<"Reversed += operator">.
+
+The problem is that Perl has both compile-time and run-time warnings.  To
+disable compile-time warnings you need to rewrite the code like this:
+
+     {
+         BEGIN { $^W = 0 }
+	 my $a =+ 2;
+	 my $b; chop $b;
+     }
+
+The other big problem with C<$^W> is the way you can inadvertently
+change the warning setting in unexpected places in your code.  For example,
+when the code below is run (without the B<-w> flag), the second call
+to C<doit> will trip a C<"Use of uninitialized value"> warning, whereas
+the first will not.
+
+    sub doit
+    {
+        my $b; chop $b;
+    }
+
+    doit();
+
+    {
+        local ($^W) = 1;
+        doit()
+    }
+
+This is a side-effect of C<$^W> being dynamically scoped.
+
+Lexical warnings get around these limitations by allowing finer control
+over where warnings can or can't be tripped.
+
+=head2 Controlling Warnings from the Command Line
+
+There are three Command Line flags that can be used to control when
+warnings are (or aren't) produced:
+
+=over 5
+
+=item B<-w>
+X<-w>
+
+This is  the existing flag.  If the lexical warnings pragma is B<not>
+used in any of you code, or any of the modules that you use, this flag
+will enable warnings everywhere.  See L<Backward Compatibility> for
+details of how this flag interacts with lexical warnings.
+
+=item B<-W>
+X<-W>
+
+If the B<-W> flag is used on the command line, it will enable all warnings
+throughout the program regardless of whether warnings were disabled
+locally using C<no warnings> or C<$^W =0>.
+This includes all files that get
+included via C<use>, C<require> or C<do>.
+Think of it as the Perl equivalent of the "lint" command.
+
+=item B<-X>
+X<-X>
+
+Does the exact opposite to the B<-W> flag, i.e. it disables all warnings.
+
+=back
+
+=head2 Backward Compatibility
+
+If you are used to working with a version of Perl prior to the
+introduction of lexically scoped warnings, or have code that uses both
+lexical warnings and C<$^W>, this section will describe how they interact.
+
+How Lexical Warnings interact with B<-w>/C<$^W>:
+
+=over 5
+
+=item 1.
+
+If none of the three command line flags (B<-w>, B<-W> or B<-X>) that
+control warnings is used and neither C<$^W> nor the C<warnings> pragma
+are used, then default warnings will be enabled and optional warnings
+disabled.
+This means that legacy code that doesn't attempt to control the warnings
+will work unchanged.
+
+=item 2.
+
+The B<-w> flag just sets the global C<$^W> variable as in 5.005.  This
+means that any legacy code that currently relies on manipulating C<$^W>
+to control warning behavior will still work as is. 
+
+=item 3.
+
+Apart from now being a boolean, the C<$^W> variable operates in exactly
+the same horrible uncontrolled global way, except that it cannot
+disable/enable default warnings.
+
+=item 4.
+
+If a piece of code is under the control of the C<warnings> pragma,
+both the C<$^W> variable and the B<-w> flag will be ignored for the
+scope of the lexical warning.
+
+=item 5.
+
+The only way to override a lexical warnings setting is with the B<-W>
+or B<-X> command line flags.
+
+=back
+
+The combined effect of 3 & 4 is that it will allow code which uses
+the C<warnings> pragma to control the warning behavior of $^W-type
+code (using a C<local $^W=0>) if it really wants to, but not vice-versa.
+
+=head2 Category Hierarchy
+X<warning, categories>
+
+A hierarchy of "categories" have been defined to allow groups of warnings
+to be enabled/disabled in isolation.
+
+The current hierarchy is:
+
+    all -+
+         |
+         +- closure
+         |
+         +- deprecated
+         |
+         +- exiting
+         |
+         +- experimental --+
+         |                 |
+         |                 +- experimental::autoderef
+         |                 |
+         |                 +- experimental::lexical_subs
+         |                 |
+         |                 +- experimental::lexical_topic
+         |                 |
+         |                 +- experimental::postderef
+         |                 |
+         |                 +- experimental::regex_sets
+         |                 |
+         |                 +- experimental::signatures
+         |                 |
+         |                 +- experimental::smartmatch
+         |
+         +- glob
+         |
+         +- imprecision
+         |
+         +- io ------------+
+         |                 |
+         |                 +- closed
+         |                 |
+         |                 +- exec
+         |                 |
+         |                 +- layer
+         |                 |
+         |                 +- newline
+         |                 |
+         |                 +- pipe
+         |                 |
+         |                 +- syscalls
+         |                 |
+         |                 +- unopened
+         |
+         +- misc
+         |
+         +- numeric
+         |
+         +- once
+         |
+         +- overflow
+         |
+         +- pack
+         |
+         +- portable
+         |
+         +- recursion
+         |
+         +- redefine
+         |
+         +- regexp
+         |
+         +- severe --------+
+         |                 |
+         |                 +- debugging
+         |                 |
+         |                 +- inplace
+         |                 |
+         |                 +- internal
+         |                 |
+         |                 +- malloc
+         |
+         +- signal
+         |
+         +- substr
+         |
+         +- syntax --------+
+         |                 |
+         |                 +- ambiguous
+         |                 |
+         |                 +- bareword
+         |                 |
+         |                 +- digit
+         |                 |
+         |                 +- illegalproto
+         |                 |
+         |                 +- parenthesis
+         |                 |
+         |                 +- precedence
+         |                 |
+         |                 +- printf
+         |                 |
+         |                 +- prototype
+         |                 |
+         |                 +- qw
+         |                 |
+         |                 +- reserved
+         |                 |
+         |                 +- semicolon
+         |
+         +- taint
+         |
+         +- threads
+         |
+         +- uninitialized
+         |
+         +- unpack
+         |
+         +- untie
+         |
+         +- utf8 ----------+
+         |                 |
+         |                 +- non_unicode
+         |                 |
+         |                 +- nonchar
+         |                 |
+         |                 +- surrogate
+         |
+         +- void
+
+Just like the "strict" pragma any of these categories can be combined
+
+    use warnings qw(void redefine);
+    no warnings qw(io syntax untie);
+
+Also like the "strict" pragma, if there is more than one instance of the
+C<warnings> pragma in a given scope the cumulative effect is additive. 
+
+    use warnings qw(void); # only "void" warnings enabled
+    ...
+    use warnings qw(io);   # only "void" & "io" warnings enabled
+    ...
+    no warnings qw(void);  # only "io" warnings enabled
+
+To determine which category a specific warning has been assigned to see
+L<perldiag>.
+
+Note: Before Perl 5.8.0, the lexical warnings category "deprecated" was a
+sub-category of the "syntax" category.  It is now a top-level category
+in its own right.
+
+=head2 Fatal Warnings
+X<warning, fatal>
+
+The presence of the word "FATAL" in the category list will escalate any
+warnings detected from the categories specified in the lexical scope
+into fatal errors.  In the code below, the use of C<time>, C<length>
+and C<join> can all produce a C<"Useless use of xxx in void context">
+warning.
+
+    use warnings;
+
+    time;
+
+    {
+        use warnings FATAL => qw(void);
+        length "abc";
+    }
+
+    join "", 1,2,3;
+
+    print "done\n";
+
+When run it produces this output
+
+    Useless use of time in void context at fatal line 3.
+    Useless use of length in void context at fatal line 7.  
+
+The scope where C<length> is used has escalated the C<void> warnings
+category into a fatal error, so the program terminates immediately when it
+encounters the warning.
+
+To explicitly turn off a "FATAL" warning you just disable the warning
+it is associated with.  So, for example, to disable the "void" warning
+in the example above, either of these will do the trick:
+
+    no warnings qw(void);
+    no warnings FATAL => qw(void);
+
+If you want to downgrade a warning that has been escalated into a fatal
+error back to a normal warning, you can use the "NONFATAL" keyword.  For
+example, the code below will promote all warnings into fatal errors,
+except for those in the "syntax" category.
+
+    use warnings FATAL => 'all', NONFATAL => 'syntax';
+
+As of Perl 5.20, instead of C<< use warnings FATAL => 'all'; >> you can
+use:
+
+   use v5.20;       # Perl 5.20 or greater is required for the following
+   use warnings 'FATAL';  # short form of "use warnings FATAL => 'all';"
+
+If you want your program to be compatible with versions of Perl before
+5.20, you must use C<< use warnings FATAL => 'all'; >> instead.  (In
+previous versions of Perl, the behavior of the statements
+C<< use warnings 'FATAL'; >>, C<< use warnings 'NONFATAL'; >> and
+C<< no warnings 'FATAL'; >> was unspecified; they did not behave as if
+they included the C<< => 'all' >> portion.  As of 5.20, they do.)
+
+B<NOTE:> Users of FATAL warnings, especially
+those using C<< FATAL => 'all' >>
+should be fully aware that they are risking future portability of their
+programs by doing so.  Perl makes absolutely no commitments to not
+introduce new warnings, or warnings categories in the future, and indeed
+we explicitly reserve the right to do so.  Code that may not warn now may
+warn in a future release of Perl if the Perl5 development team deems it
+in the best interests of the community to do so.  Should code using FATAL
+warnings break due to the introduction of a new warning we will NOT
+consider it an incompatible change.  Users of FATAL warnings should take
+special caution during upgrades to check to see if their code triggers
+any new warnings and should pay particular attention to the fine print of
+the documentation of the features they use to ensure they do not exploit
+features that are documented as risky, deprecated, or unspecified, or where
+the documentation says "so don't do that", or anything with the same sense
+and spirit.  Use of such features in combination with FATAL warnings is
+ENTIRELY AT THE USER'S RISK.
+
+=head2 Reporting Warnings from a Module
+X<warning, reporting> X<warning, registering>
+
+The C<warnings> pragma provides a number of functions that are useful for
+module authors.  These are used when you want to report a module-specific
+warning to a calling module has enabled warnings via the C<warnings>
+pragma.
+
+Consider the module C<MyMod::Abc> below.
+
+    package MyMod::Abc;
+
+    use warnings::register;
+
+    sub open {
+        my $path = shift;
+        if ($path !~ m#^/#) {
+            warnings::warn("changing relative path to /var/abc")
+                if warnings::enabled();
+            $path = "/var/abc/$path";
+        }
+    }
+
+    1;
+
+The call to C<warnings::register> will create a new warnings category
+called "MyMod::Abc", i.e. the new category name matches the current
+package name.  The C<open> function in the module will display a warning
+message if it gets given a relative path as a parameter.  This warnings
+will only be displayed if the code that uses C<MyMod::Abc> has actually
+enabled them with the C<warnings> pragma like below.
+
+    use MyMod::Abc;
+    use warnings 'MyMod::Abc';
+    ...
+    abc::open("../fred.txt");
+
+It is also possible to test whether the pre-defined warnings categories are
+set in the calling module with the C<warnings::enabled> function.  Consider
+this snippet of code:
+
+    package MyMod::Abc;
+
+    sub open {
+        warnings::warnif("deprecated", 
+                         "open is deprecated, use new instead");
+        new(@_);
+    }
+
+    sub new
+    ...
+    1;
+
+The function C<open> has been deprecated, so code has been included to
+display a warning message whenever the calling module has (at least) the
+"deprecated" warnings category enabled.  Something like this, say.
+
+    use warnings 'deprecated';
+    use MyMod::Abc;
+    ...
+    MyMod::Abc::open($filename);
+
+Either the C<warnings::warn> or C<warnings::warnif> function should be
+used to actually display the warnings message.  This is because they can
+make use of the feature that allows warnings to be escalated into fatal
+errors.  So in this case
+
+    use MyMod::Abc;
+    use warnings FATAL => 'MyMod::Abc';
+    ...
+    MyMod::Abc::open('../fred.txt');
+
+the C<warnings::warnif> function will detect this and die after
+displaying the warning message.
+
+The three warnings functions, C<warnings::warn>, C<warnings::warnif>
+and C<warnings::enabled> can optionally take an object reference in place
+of a category name.  In this case the functions will use the class name
+of the object as the warnings category.
+
+Consider this example:
+
+    package Original;
+
+    no warnings;
+    use warnings::register;
+
+    sub new
+    {
+        my $class = shift;
+        bless [], $class;
+    }
+
+    sub check
+    {
+        my $self = shift;
+        my $value = shift;
+
+        if ($value % 2 && warnings::enabled($self))
+          { warnings::warn($self, "Odd numbers are unsafe") }
+    }
+
+    sub doit
+    {
+        my $self = shift;
+        my $value = shift;
+        $self->check($value);
+        # ...
+    }
+
+    1;
+
+    package Derived;
+
+    use warnings::register;
+    use Original;
+    our @ISA = qw( Original );
+    sub new
+    {
+        my $class = shift;
+        bless [], $class;
+    }
+
+
+    1;
+
+The code below makes use of both modules, but it only enables warnings from 
+C<Derived>.
+
+    use Original;
+    use Derived;
+    use warnings 'Derived';
+    my $a = Original->new();
+    $a->doit(1);
+    my $b = Derived->new();
+    $a->doit(1);
+
+When this code is run only the C<Derived> object, C<$b>, will generate
+a warning. 
+
+    Odd numbers are unsafe at main.pl line 7
+
+Notice also that the warning is reported at the line where the object is first
+used.
+
+When registering new categories of warning, you can supply more names to
+warnings::register like this:
+
+    package MyModule;
+    use warnings::register qw(format precision);
+
+    ...
+
+    warnings::warnif('MyModule::format', '...');
+
+=head1 FUNCTIONS
 
 =over 4
 
@@ -156,11 +728,11 @@ Equivalent to:
 =item warnings::register_categories(@names)
 
 This registers warning categories for the given names and is primarily for
-use by the warnings::register pragma, for which see L<perllexwarn>.
+use by the warnings::register pragma.
 
 =back
 
-See L<perlmodlib/Pragmatic Modules> and L<perllexwarn>.
+See also L<perlmodlib/Pragmatic Modules> and L<perldiag>.
 
 =cut
 
@@ -233,130 +805,145 @@ our %Offsets = (
     'experimental::lexical_topic'=> 106,
     'experimental::regex_sets'=> 108,
     'experimental::smartmatch'=> 110,
+
+    # Warnings Categories added in Perl 5.019
+
+    'experimental::autoderef'=> 112,
+    'experimental::postderef'=> 114,
+    'experimental::signatures'=> 116,
+    'syscalls'		=> 118,
   );
 
 our %Bits = (
-    'all'		=> "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55", # [0..55]
-    'ambiguous'		=> "\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00", # [29]
-    'bareword'		=> "\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00", # [30]
-    'closed'		=> "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
-    'closure'		=> "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
-    'debugging'		=> "\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
-    'deprecated'	=> "\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
-    'digit'		=> "\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00", # [31]
-    'exec'		=> "\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
-    'exiting'		=> "\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
-    'experimental'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x55", # [51..55]
-    'experimental::lexical_subs'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", # [52]
-    'experimental::lexical_topic'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04", # [53]
-    'experimental::regex_sets'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10", # [54]
-    'experimental::smartmatch'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40", # [55]
-    'glob'		=> "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
-    'illegalproto'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00", # [47]
-    'imprecision'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00", # [46]
-    'inplace'		=> "\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
-    'internal'		=> "\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00", # [24]
-    'io'		=> "\x00\x54\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [5..11]
-    'layer'		=> "\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
-    'malloc'		=> "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00", # [25]
-    'misc'		=> "\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
-    'newline'		=> "\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
-    'non_unicode'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00", # [48]
-    'nonchar'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00", # [49]
-    'numeric'		=> "\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
-    'once'		=> "\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
-    'overflow'		=> "\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
-    'pack'		=> "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
-    'parenthesis'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00", # [32]
-    'pipe'		=> "\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
-    'portable'		=> "\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
-    'precedence'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00", # [33]
-    'printf'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00", # [34]
-    'prototype'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00", # [35]
-    'qw'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00", # [36]
-    'recursion'		=> "\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
-    'redefine'		=> "\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
-    'regexp'		=> "\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
-    'reserved'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00", # [37]
-    'semicolon'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00", # [38]
-    'severe'		=> "\x00\x00\x00\x00\x00\x54\x05\x00\x00\x00\x00\x00\x00\x00", # [21..25]
-    'signal'		=> "\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00", # [26]
-    'substr'		=> "\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00", # [27]
-    'surrogate'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00", # [50]
-    'syntax'		=> "\x00\x00\x00\x00\x00\x00\x00\x55\x55\x15\x00\x40\x00\x00", # [28..38,47]
-    'taint'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00", # [39]
-    'threads'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00", # [40]
-    'uninitialized'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00", # [41]
-    'unopened'		=> "\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
-    'unpack'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00", # [42]
-    'untie'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00", # [43]
-    'utf8'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x15\x00", # [44,48..50]
-    'void'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00", # [45]
+    'all'		=> "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55", # [0..59]
+    'ambiguous'		=> "\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00", # [29]
+    'bareword'		=> "\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00", # [30]
+    'closed'		=> "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
+    'closure'		=> "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
+    'debugging'		=> "\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
+    'deprecated'	=> "\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
+    'digit'		=> "\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00", # [31]
+    'exec'		=> "\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
+    'exiting'		=> "\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
+    'experimental'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x55\x15", # [51..58]
+    'experimental::autoderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", # [56]
+    'experimental::lexical_subs'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00", # [52]
+    'experimental::lexical_topic'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00", # [53]
+    'experimental::postderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04", # [57]
+    'experimental::regex_sets'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00", # [54]
+    'experimental::signatures'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10", # [58]
+    'experimental::smartmatch'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00", # [55]
+    'glob'		=> "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
+    'illegalproto'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00", # [47]
+    'imprecision'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00", # [46]
+    'inplace'		=> "\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
+    'internal'		=> "\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00", # [24]
+    'io'		=> "\x00\x54\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40", # [5..11,59]
+    'layer'		=> "\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
+    'malloc'		=> "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00", # [25]
+    'misc'		=> "\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
+    'newline'		=> "\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
+    'non_unicode'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00", # [48]
+    'nonchar'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00", # [49]
+    'numeric'		=> "\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
+    'once'		=> "\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
+    'overflow'		=> "\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
+    'pack'		=> "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
+    'parenthesis'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00", # [32]
+    'pipe'		=> "\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
+    'portable'		=> "\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
+    'precedence'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00", # [33]
+    'printf'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00", # [34]
+    'prototype'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00", # [35]
+    'qw'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00", # [36]
+    'recursion'		=> "\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
+    'redefine'		=> "\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
+    'regexp'		=> "\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
+    'reserved'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00", # [37]
+    'semicolon'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00", # [38]
+    'severe'		=> "\x00\x00\x00\x00\x00\x54\x05\x00\x00\x00\x00\x00\x00\x00\x00", # [21..25]
+    'signal'		=> "\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00", # [26]
+    'substr'		=> "\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00", # [27]
+    'surrogate'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00", # [50]
+    'syntax'		=> "\x00\x00\x00\x00\x00\x00\x00\x55\x55\x15\x00\x40\x00\x00\x00", # [28..38,47]
+    'syscalls'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40", # [59]
+    'taint'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00", # [39]
+    'threads'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00", # [40]
+    'uninitialized'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00", # [41]
+    'unopened'		=> "\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
+    'unpack'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00", # [42]
+    'untie'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00", # [43]
+    'utf8'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x15\x00\x00", # [44,48..50]
+    'void'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00", # [45]
   );
 
 our %DeadBits = (
-    'all'		=> "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa", # [0..55]
-    'ambiguous'		=> "\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00", # [29]
-    'bareword'		=> "\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00", # [30]
-    'closed'		=> "\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
-    'closure'		=> "\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
-    'debugging'		=> "\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
-    'deprecated'	=> "\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
-    'digit'		=> "\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00", # [31]
-    'exec'		=> "\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
-    'exiting'		=> "\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
-    'experimental'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xaa", # [51..55]
-    'experimental::lexical_subs'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02", # [52]
-    'experimental::lexical_topic'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08", # [53]
-    'experimental::regex_sets'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20", # [54]
-    'experimental::smartmatch'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80", # [55]
-    'glob'		=> "\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
-    'illegalproto'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00", # [47]
-    'imprecision'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00", # [46]
-    'inplace'		=> "\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
-    'internal'		=> "\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00", # [24]
-    'io'		=> "\x00\xa8\xaa\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [5..11]
-    'layer'		=> "\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
-    'malloc'		=> "\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00", # [25]
-    'misc'		=> "\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
-    'newline'		=> "\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
-    'non_unicode'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00", # [48]
-    'nonchar'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00", # [49]
-    'numeric'		=> "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
-    'once'		=> "\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
-    'overflow'		=> "\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
-    'pack'		=> "\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
-    'parenthesis'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00", # [32]
-    'pipe'		=> "\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
-    'portable'		=> "\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
-    'precedence'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00", # [33]
-    'printf'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00", # [34]
-    'prototype'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00", # [35]
-    'qw'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00", # [36]
-    'recursion'		=> "\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
-    'redefine'		=> "\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
-    'regexp'		=> "\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
-    'reserved'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00", # [37]
-    'semicolon'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00", # [38]
-    'severe'		=> "\x00\x00\x00\x00\x00\xa8\x0a\x00\x00\x00\x00\x00\x00\x00", # [21..25]
-    'signal'		=> "\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00", # [26]
-    'substr'		=> "\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00", # [27]
-    'surrogate'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00", # [50]
-    'syntax'		=> "\x00\x00\x00\x00\x00\x00\x00\xaa\xaa\x2a\x00\x80\x00\x00", # [28..38,47]
-    'taint'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00", # [39]
-    'threads'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00", # [40]
-    'uninitialized'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00", # [41]
-    'unopened'		=> "\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
-    'unpack'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00", # [42]
-    'untie'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00", # [43]
-    'utf8'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x2a\x00", # [44,48..50]
-    'void'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00", # [45]
+    'all'		=> "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa", # [0..59]
+    'ambiguous'		=> "\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00", # [29]
+    'bareword'		=> "\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00", # [30]
+    'closed'		=> "\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
+    'closure'		=> "\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
+    'debugging'		=> "\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
+    'deprecated'	=> "\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
+    'digit'		=> "\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00", # [31]
+    'exec'		=> "\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
+    'exiting'		=> "\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
+    'experimental'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xaa\x2a", # [51..58]
+    'experimental::autoderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02", # [56]
+    'experimental::lexical_subs'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00", # [52]
+    'experimental::lexical_topic'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00", # [53]
+    'experimental::postderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08", # [57]
+    'experimental::regex_sets'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00", # [54]
+    'experimental::signatures'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20", # [58]
+    'experimental::smartmatch'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00", # [55]
+    'glob'		=> "\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
+    'illegalproto'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00", # [47]
+    'imprecision'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00", # [46]
+    'inplace'		=> "\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
+    'internal'		=> "\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00", # [24]
+    'io'		=> "\x00\xa8\xaa\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80", # [5..11,59]
+    'layer'		=> "\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
+    'malloc'		=> "\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00", # [25]
+    'misc'		=> "\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
+    'newline'		=> "\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
+    'non_unicode'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00", # [48]
+    'nonchar'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00", # [49]
+    'numeric'		=> "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
+    'once'		=> "\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
+    'overflow'		=> "\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
+    'pack'		=> "\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
+    'parenthesis'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00", # [32]
+    'pipe'		=> "\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
+    'portable'		=> "\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
+    'precedence'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00", # [33]
+    'printf'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00", # [34]
+    'prototype'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00", # [35]
+    'qw'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00", # [36]
+    'recursion'		=> "\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
+    'redefine'		=> "\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
+    'regexp'		=> "\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
+    'reserved'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00", # [37]
+    'semicolon'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00", # [38]
+    'severe'		=> "\x00\x00\x00\x00\x00\xa8\x0a\x00\x00\x00\x00\x00\x00\x00\x00", # [21..25]
+    'signal'		=> "\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00", # [26]
+    'substr'		=> "\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00", # [27]
+    'surrogate'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00", # [50]
+    'syntax'		=> "\x00\x00\x00\x00\x00\x00\x00\xaa\xaa\x2a\x00\x80\x00\x00\x00", # [28..38,47]
+    'syscalls'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80", # [59]
+    'taint'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00", # [39]
+    'threads'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00", # [40]
+    'uninitialized'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00", # [41]
+    'unopened'		=> "\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
+    'unpack'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00", # [42]
+    'untie'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00", # [43]
+    'utf8'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x2a\x00\x00", # [44,48..50]
+    'void'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00", # [45]
   );
 
-$NONE     = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-$DEFAULT  = "\x10\x01\x00\x00\x00\x50\x04\x00\x00\x00\x00\x00\x00\x55", # [2,52..55,4,22,23,25]
-$LAST_BIT = 112 ;
-$BYTES    = 14 ;
+$NONE     = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+$DEFAULT  = "\x10\x01\x00\x00\x00\x50\x04\x00\x00\x00\x00\x00\x00\x55\x15", # [2,56,52,53,57,54,58,55,4,22,23,25]
+$LAST_BIT = 120 ;
+$BYTES    = 15 ;
 
 $All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
 
@@ -402,7 +989,7 @@ sub bits
     return _bits(undef, @_) ;
 }
 
-sub import 
+sub import
 {
     shift;
 
@@ -412,12 +999,15 @@ sub import
         $mask |= $Bits{'all'} ;
         $mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
     }
-    
+
+    # append 'all' when implied (after a lone "FATAL" or "NONFATAL")
+    push @_, 'all' if @_==1 && ( $_[0] eq 'FATAL' || $_[0] eq 'NONFATAL' );
+
     # Empty @_ is equivalent to @_ = 'all' ;
     ${^WARNING_BITS} = @_ ? _bits($mask, @_) : $mask | $Bits{all} ;
 }
 
-sub unimport 
+sub unimport
 {
     shift;
 
@@ -429,11 +1019,12 @@ sub unimport
         $mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
     }
 
-    push @_, 'all' unless @_;
+    # append 'all' when implied (empty import list or after a lone "FATAL")
+    push @_, 'all' if !@_ || @_==1 && $_[0] eq 'FATAL';
 
     foreach my $word ( @_ ) {
 	if ($word eq 'FATAL') {
-	    next; 
+	    next;
 	}
 	elsif ($catmask = $Bits{$word}) {
 	    $mask &= ~($catmask | $DeadBits{$word} | $All);

@@ -86,9 +86,9 @@ while (@pats) {
     foreach my $b (0..255) {
         my %got;
         my $display_b = sprintf("\\x%02X", $b);
-        for my $type ('unicode','not-unicode') {
+        for my $type ('utf8','not-utf8') {
             my $str=chr($b).chr($b);
-            if ($type eq 'unicode') {
+            if ($type eq 'utf8') {
                 $str.=chr(256);
                 chop $str;
             }
@@ -112,19 +112,19 @@ while (@pats) {
             # procedures
 
             my $chr = chr($b);
-            utf8::upgrade $chr if $type eq 'unicode';
+            utf8::upgrade $chr if $type eq 'utf8';
             ok (($chr =~ /$yes/) != ($chr =~ /$no/),
                 "$type: chr($display_b) isn't both $yes and $no");
         }
         foreach my $which ("[$yes]","[$no]","[^$yes]","[^$no]") {
-            if ($got{$which}{'unicode'} != $got{$which}{'not-unicode'}){
-                is($got{$which}{'unicode'},$got{$which}{'not-unicode'},
+            if ($got{$which}{'utf8'} != $got{$which}{'not-utf8'}){
+                is($got{$which}{'utf8'},$got{$which}{'not-utf8'},
                     "chr($display_b) X 2=~ /$which/ should have the same results regardless of internal string encoding");
                 push @{$singles{$which}},$b;
             }
         }
         foreach my $which ($yes,$no) {
-            foreach my $strtype ('unicode','not-unicode') {
+            foreach my $strtype ('utf8','not-utf8') {
                 if ($got{"[$which]"}{$strtype} == $got{"[^$which]"}{$strtype}) {
                     isnt($got{"[$which]"}{$strtype},$got{"[^$which]"}{$strtype},
                         "chr($display_b) X 2 =~ /[$which]/ should not have the same result as chr($display_b)=~/[^$which]/");

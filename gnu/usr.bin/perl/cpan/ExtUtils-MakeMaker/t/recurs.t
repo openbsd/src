@@ -9,7 +9,12 @@ BEGIN {
 use strict;
 use Config;
 
-use Test::More tests => 26;
+use Test::More
+    $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+    ? (skip_all => "no toolchain installed when cross-compiling")
+    : (tests => 26);
+use File::Temp qw[tempdir];
+
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::Recurs;
 
@@ -20,7 +25,8 @@ delete @ENV{qw(PREFIX LIB MAKEFLAGS)};
 my $perl = which_perl();
 my $Is_VMS = $^O eq 'VMS';
 
-chdir('t');
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 perl_lib;
 
@@ -29,7 +35,7 @@ my $Touch_Time = calibrate_mtime();
 $| = 1;
 
 ok( setup_recurs(), 'setup' );
-END { 
+END {
     ok( chdir File::Spec->updir );
     ok( teardown_recurs(), 'teardown' );
 }
@@ -100,9 +106,9 @@ ok( -e $submakefile, 'sub Makefile written' );
 
 my $inst_script = File::Spec->catdir(File::Spec->updir, 'cgi');
 ok( open(MAKEFILE, $submakefile) ) || diag("Can't open $submakefile: $!");
-{ local $/;  
-  like( <MAKEFILE>, qr/^\s*INST_SCRIPT\s*=\s*\Q$inst_script\E/m, 
-        'prepend .. not stomping WriteMakefile args' ) 
+{ local $/;
+  like( <MAKEFILE>, qr/^\s*INST_SCRIPT\s*=\s*\Q$inst_script\E/m,
+        'prepend .. not stomping WriteMakefile args' )
 }
 close MAKEFILE;
 

@@ -1,7 +1,7 @@
 package Module::Build::Dumper;
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.4003';
+$VERSION = '0.4205';
 
 # This is just a split-out of a wrapper function to do Data::Dumper
 # stuff "the right way".  See:

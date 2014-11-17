@@ -1,9 +1,15 @@
 # Test to perform icmp protocol testing.
 # Root access is required.
 
+use Config;
+
 BEGIN {
   unless (eval "require Socket") {
     print "1..0 \# Skip: no Socket\n";
+    exit;
+  }
+  unless ($Config{d_getpbyname}) {
+    print "1..0 \# Skip: no getprotobyname\n";
     exit;
   }
 }

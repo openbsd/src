@@ -27,7 +27,7 @@ BEGIN {
         skip_all('Not using safe signals');
     }
 
-    plan(3);
+    plan(4);
 };
 
 fresh_perl_is(<<'EOI', 'ok', { }, 'No signal handler in thread');
@@ -83,6 +83,25 @@ fresh_perl_is(<<'EOI', 'ok', { }, 'Handler and signal match');
     eval {
         $thr->kill('STOP');
     };
+    print((! $@) ? 'ok' : 'not ok');
+EOI
+
+fresh_perl_is(<<'EOI', 'ok', { }, 'Ignore signal after thread finishes');
+    use threads;
+
+    my $thr = threads->create(sub {
+        $SIG{KILL} = sub {
+            threads->exit();
+        };
+        return 0;
+    });
+
+    until ($thr->is_joinable()) {
+        threads->yield();
+    }
+
+    $thr->kill('SIGKILL');
+    $thr->join();
     print((! $@) ? 'ok' : 'not ok');
 EOI
 

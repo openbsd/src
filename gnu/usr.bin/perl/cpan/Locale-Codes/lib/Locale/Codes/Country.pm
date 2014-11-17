@@ -1,7 +1,7 @@
 package Locale::Codes::Country;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2013 Sullivan Beck
+# Copyright (c) 2010-2014 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -22,7 +22,7 @@ use Locale::Codes::Country_Retired;
 
 our($VERSION,@ISA,@EXPORT,@EXPORT_OK);
 
-$VERSION='3.25';
+$VERSION='3.30';
 @ISA       = qw(Exporter);
 @EXPORT    = qw(code2country
                 country2code
@@ -32,7 +32,6 @@ $VERSION='3.25';
                 LOCALE_CODE_ALPHA_2
                 LOCALE_CODE_ALPHA_3
                 LOCALE_CODE_NUMERIC
-                LOCALE_CODE_FIPS
                 LOCALE_CODE_DOM
                );
 

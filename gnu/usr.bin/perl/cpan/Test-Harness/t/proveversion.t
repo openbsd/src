@@ -10,6 +10,7 @@ sub _has_TAP_Formatter_HTML {
 }
 
 use strict;
+use warnings;
 use Test::More tests => 1;
 use IO::c55Capture;    # for util
 

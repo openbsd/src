@@ -7,7 +7,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan( tests => 206 );
+plan( tests => 236 );
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -668,8 +668,96 @@ is($name, "cis", q[#22351 bug with 'e' substitution modifier]);
     }
 }
 
-fresh_perl_is( '$_=q(foo);s/(.)\G//g;print' => 'foo', '[perl #69056] positive GPOS regex segfault' );
-fresh_perl_is( '$_="abcef"; s/bc|(.)\G(.)/$1 ? "[$1-$2]" : "XX"/ge; print' => 'aXX[c-e][e-f]f', 'positive GPOS regex substitution failure' );
+fresh_perl_is( '$_=q(foo);s/(.)\G//g;print' => 'foo', {},
+                '[perl #69056] positive GPOS regex segfault' );
+fresh_perl_is( '$_="abcdef"; s/bc|(.)\G(.)/$1 ? "[$1-$2]" : "XX"/ge; print' => 'aXXdef', {},
+                'positive GPOS regex substitution failure (#69056, #114884)' );
+fresh_perl_is( '$_="abcdefg123456"; s/(?<=...\G)?(\d)/($1)/; print' => 'abcdefg(1)23456', {},
+                'positive GPOS lookbehind regex substitution failure #114884' );
+
+# s/..\G//g should stop after the first iteration, rather than working its
+# way backwards, or looping infinitely, or SEGVing (for example)
+{
+    my ($s, $count);
+
+    # use a function to disable constant folding
+    my $f = sub { substr("789", 0, $_[0]) };
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d\G/7/g;
+    is($count, 1, "..\\G count (short)");
+    is($s, "12756", "..\\G s (short)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d\G/78/g;
+    is($count, 1, "..\\G count (equal)");
+    is($s, "127856", "..\\G s (equal)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d\G/789/g;
+    is($count, 1, "..\\G count (long)");
+    is($s, "1278956", "..\\G s (long)");
+
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d\G/$f->(1)/eg;
+    is($count, 1, "..\\G count (short code)");
+    is($s, "12756", "..\\G s (short code)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d\G/$f->(2)/eg;
+    is($count, 1, "..\\G count (equal code)");
+    is($s, "127856", "..\\G s (equal code)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d\G/$f->(3)/eg;
+    is($count, 1, "..\\G count (long code)");
+    is($s, "1278956", "..\\G s (long code)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d(?=\d\G)/7/g;
+    is($count, 1, "..\\G count (lookahead short)");
+    is($s, "17456", "..\\G s (lookahead short)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d(?=\d\G)/78/g;
+    is($count, 1, "..\\G count (lookahead equal)");
+    is($s, "178456", "..\\G s (lookahead equal)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d(?=\d\G)/789/g;
+    is($count, 1, "..\\G count (lookahead long)");
+    is($s, "1789456", "..\\G s (lookahead long)");
+
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d(?=\d\G)/$f->(1)/eg;
+    is($count, 1, "..\\G count (lookahead short code)");
+    is($s, "17456", "..\\G s (lookahead short code)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d(?=\d\G)/$f->(2)/eg;
+    is($count, 1, "..\\G count (lookahead equal code)");
+    is($s, "178456", "..\\G s (lookahead equal code)");
+
+    $s = '123456';
+    pos($s) = 4;
+    $count = $s =~ s/\d\d(?=\d\G)/$f->(3)/eg;
+    is($count, 1, "..\\G count (lookahead long code)");
+    is($s, "1789456", "..\\G s (lookahead long code)");
+}
+
 
 # [perl #71470] $var =~ s/$qr//e calling get-magic on $_ as well as $var
 {
@@ -863,7 +951,7 @@ $_ = "hello";
     local *a = *1;
     s/e(.)\1/a$a/g;
 }
-is $_, 'halo', 's/pat/$alias_to_match_var/';
+is $_, 'halo', 's/pat/foo$alias_to_match_var/';
 # Last-used pattern containing re-evals that modify "constant" rhs
 {
     local *a;
@@ -886,3 +974,31 @@ $@ = "\x{30cb}eval 18";
 $@ =~ s/eval \d+/eval 11/;
 is $@, "\x{30cb}eval 11",
   'loading utf8 tables does not interfere with matches against $@';
+
+$reftobe = 3;
+$reftobe =~ s/3/$reftobe=\ 3;4/e;
+is $reftobe, '4', 'clobbering target with ref in s//.../e';
+$locker{key} = 3;
+SKIP:{
+    skip "no Hash::Util under miniperl", 2 if is_miniperl;
+    require Hash::Util;
+    eval {
+	$locker{key} =~ s/3/
+	    $locker{key} = 3;
+	    &Hash::Util::lock_hash(\%locker);4
+	/e;
+    };
+    is $locker{key}, '3', 'locking target in $hash{key} =~ s//.../e';
+    like $@, qr/^Modification of a read-only value/, 'err msg';
+}
+delete $::{does_not_exist}; # just in case
+eval { no warnings; $::{does_not_exist}=~s/(?:)/*{"does_not_exist"}; 4/e };
+like $@, qr/^Modification of a read-only value/,
+    'vivifying stash elem in $that::{elem} =~ s//.../e';
+
+# COWs should not be exempt from read-only checks.  s/// croaks on read-
+# only values even when the pattern does not match, but it was not doing so
+# for COWs.
+eval { for (__PACKAGE__) { s/b/c/; } };
+like $@, qr/^Modification of a read-only value/,
+    'read-only COW =~ s/does not match// should croak';

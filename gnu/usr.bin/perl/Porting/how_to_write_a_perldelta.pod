@@ -1,4 +1,8 @@
-=head1 How to write a perldelta
+=head1 NAME
+
+how_to_write_a_perldelta - How to write a perldelta
+
+=head2 Description
 
 This is intended as a guide for how to write a perldelta. There has never
 been a formal specification - the working rule is "fake up a document that
@@ -82,13 +86,13 @@ Follows this formula:
 
 For a release on a stable branch, follows this formula:
 
-    This document describes differences between the 5.10.3 release and
-    the 5.10.4 release.
+    This document describes differences between the 5.10.3 release
+    and the 5.10.4 release.
 
 For the start of a new stable branch, follows this formula:
 
-    This document describes differences between the 5.12.0 release and
-    the 5.10.0 release.
+    This document describes differences between the 5.12.0 release
+    and the 5.10.0 release.
 
 Clearly this sets the scope of which changes are to be summarised in the rest
 of the document.
@@ -102,8 +106,8 @@ notice.
 
 For a release on a stable branch, this section aspires to be
 
-    There are no changes intentionally incompatible with 5.10.3. If any exist,
-    they are bugs and reports are welcome.
+    There are no changes intentionally incompatible with 5.10.3.
+    If any exist, they are bugs and reports are welcome.
 
 =item Core Enhancements
 
@@ -122,28 +126,24 @@ source tree.
 
 =item Modules and Pragmata
 
-All changes to installed files in F<ext/> and F<lib/> go here, in a list
-ordered by distribution name. Minimally it should be the module version,
-but it's more useful to the end user to give a paragraph's summary of the
-module's changes. In an ideal world, dual-life modules would have a
-F<Changes> file that could be cribbed.
+All changes to installed files in F<cpan/>, F<dist/>, F<ext/> and F<lib/> go
+here, in a list ordered by distribution name. Minimally it should be the
+module version, but it's more useful to the end user to give a paragraph's
+summary of the module's changes. In an ideal world, dual-life modules would
+have a F<Changes> file that could be cribbed.
 
 Whilst this section could be built by incrementally working through change
 descriptions applying to files, this is prone to error. It's better to
-collate changes to F<ext/> and F<lib/> by module, and then summarise all
-changes to a module as a group. This can be done by partitioning directories
-within F<ext/> and F<lib/> to a number of people.
-
-B<FIXME> - this could be automated better
+collate changes by module, and then summarise all changes to a module as a
+group.
 
 If Module::CoreList has been updated, then F<Porting/corelist-perldelta.pl>
-will automatically print out several sections if relevant that can be
-pasted into F<perldelta>:
+will automatically update two sections in F<perldelta>:
 
     * New Modules and Pragmata
-    * Pragmata Changes
-    * Updated Modules
-    * Removed Modules and Pragmata
+    * Updated Modules and Pragmata
+
+(Currently, it does not update the Removed Modules and Pragmata section.)
 
 Each section will have stub entries following a template like this:
 
@@ -158,23 +158,10 @@ added by hand.
 A more adventurous enhancement would be to automate grabbing
 the changelogs for dual lived modules. For each of them, grab the relevant
 changes files from CPAN for the old and new versions, and if the old one is
-a strict subset of the new one, splice the extra lines right into the output,
-as a basis for summarising.
+a strict subset of the new one, use the extra lines as a basis for summarising.
 
 (And if not, experiment with using F<git> to get the relevant part of changelog
-for the particular file in core)
-
-These could also be enhanced further by using a Pod parser module to produce
-a parse tree of F<perl${whatever}delta.pod>, and splicing in the updates
-correctly without throwing existing entries away.
-
-If you think that's nuts, take a look at what F<pod/buildtoc> already does to
-splice into existing Makefiles on various platforms:
-
-http://perl5.git.perl.org/perl.git/blob/blead:/pod/buildtoc#l498
-
-Perl is this really powerful language for text manipulation. And fun to
-play with. We need to get that message out. :-)
+for the particular file in core.)
 
 =item Utility Changes
 

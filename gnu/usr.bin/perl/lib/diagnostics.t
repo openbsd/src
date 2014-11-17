@@ -4,7 +4,7 @@ BEGIN {
     chdir '..' if -d '../pod' && -d '../t';
     @INC = 'lib';
     require './t/test.pl';
-    plan(24);
+    plan(29);
 }
 
 BEGIN {
@@ -43,14 +43,19 @@ seek STDERR, 0,0;
 $warning = '';
 warn
  'Lexing code attempted to stuff non-Latin-1 character into Latin-1 input';
-like $warning, qr/using lex_stuff_pvn or similar/, 'L<foo|bar/baz>';
+like $warning, qr/lex_stuff_pvn or similar/, 'L<foo|bar/baz>';
 
 # Multiple messages with the same description
 seek STDERR, 0,0;
 $warning = '';
-warn 'Code point 0xBEE5 is not Unicode, may not be portable';
-like $warning, qr/S utf8/,
+warn 'Deep recursion on anonymous subroutine';
+like $warning, qr/W recursion/,
    'Message sharing its description with the following message';
+seek STDERR, 0,0;
+$warning = '';
+warn 'Deep recursion on subroutine "foo"';
+like $warning, qr/W recursion/,
+   'Message sharing its description with the preceding message';
 
 # Periods at end of entries in perldiag.pod get matched correctly
 seek STDERR, 0,0;
@@ -109,7 +114,7 @@ seek STDERR, 0,0;
 $warning = '';
 warn "Perl folding rules are not up-to-date for 0xA; please use the perlbug utility to report; in regex; marked by <-- HERE in m/\ <-- HERE q/";
 like $warning,
-    qr/regular expression folding rules/s,
+    qr/You used a regular expression with case-insensitive matching/s,
     '; works at the end of entries in perldiag.pod';
 
 # Differences in spaces in warnings (Why not be nice and accept them?)
@@ -128,6 +133,59 @@ like $warning,
     qr/The whole warning/s,
     'spaces in warnings with periods at the end are matched lightly';
 
+# Wrapped links
+SKIP: {
+skip("We no longer have any multi-line links", 1);
+seek STDERR, 0,0;
+$warning = '';
+warn "Argument \"%s\" treated as 0 in increment (++)";
+like $warning,
+    qr/Auto-increment.*Auto-decrement/s,
+    'multiline links are not truncated';
+}
+
+{
+# Find last warning in perldiag.pod, and last items if any
+    my $lw;
+    my $inlast;
+    my $item;
+
+    open(my $f, '<', "pod/perldiag.pod")
+        or die "failed to open pod/perldiag.pod for reading: $!";
+
+    while (<$f>) {
+        if ( /^=item\s+(.*)/) {
+            $lw = $1;
+        } elsif (/^=back/) {
+	    $inlast = 1;
+        } elsif ($inlast) {
+            # Skip headings
+            next if /^=/;
+
+            # Strip specials
+            $_ =~ s/\w<(.*?)>/$1/g;
+
+            # And whitespace
+            $_ =~ s/(^\s+|\s+$)//g;
+
+            if ($_) {
+                $item = $_;
+
+                last;
+            }
+        }
+    }
+    close($f);
+
+    ok($item, "(sanity...) found an item to check with ($item)");
+    seek STDERR, 0,0;
+    $warning = '';
+    warn $lw;
+    ok($warning, '(sanity...) got a warning');
+    unlike $warning,
+        qr/\Q$item\E/,
+        "Junk after =back doesn't show up in last warning";
+}
 
 *STDERR = $old_stderr;
 

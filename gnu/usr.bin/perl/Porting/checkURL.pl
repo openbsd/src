@@ -54,7 +54,7 @@ foreach my $filename (@filenames) {
 
         # no need to hit rt.perl.org
         next
-            if $uri =~ m{^https?://rt.perl.org/rt3/Ticket/Display.html?id=\d+$};
+            if $uri =~ m{^https?://rt.perl.org/(?:rt3/)?Ticket/Display.html?id=\d+$};
 
         # no need to hit rt.cpan.org
         next

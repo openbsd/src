@@ -31,7 +31,7 @@ if ($is_thread) {
     ok "# use5005threads: test skipped\n";
 } else {
     $a = `$^X $path "-MO=Showlex" -e "my \@one" 2>&1`;
-    like ($a, qr/sv_undef.*PVNV.*\@one.*sv_undef.*AV/s,
+    like ($a, qr/sv_undef.*PVNV.*\@one.*Nullsv.*AV/s,
 	  "canonical usage works");
 }
 

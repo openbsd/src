@@ -1,8 +1,11 @@
 package Unicode::Normalize;
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
+    unless ('A' eq pack('U', 0x41)) {
 	die "Unicode::Normalize cannot stringify a Unicode code point\n";
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	die "Unicode::Normalize cannot get Unicode code point\n";
     }
 }
 
@@ -13,7 +16,7 @@ use Carp;
 
 no warnings 'utf8';
 
-our $VERSION = '1.16';
+our $VERSION = '1.17';
 our $PACKAGE = __PACKAGE__;
 
 our @EXPORT = qw( NFC NFD NFKC NFKD );
@@ -548,9 +551,10 @@ normalization implemented by this module depends on your perl's version.
      5.8.7-5.8.8          4.1.0
        5.10.0             5.0.0
     5.8.9, 5.10.1         5.1.0
-    5.12.0-5.12.3         5.2.0
+       5.12.x             5.2.0
        5.14.x             6.0.0
        5.16.x             6.1.0
+       5.18.x             6.2.0
 
 =item Correction of decomposition mapping
 

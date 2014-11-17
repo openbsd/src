@@ -1,8 +1,8 @@
-# DerivedBidiClass-6.2.0.txt
-# Date: 2012-05-20, 00:42:30 GMT [MD]
+# DerivedBidiClass-6.3.0.txt
+# Date: 2013-07-05, 14:08:43 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -46,6 +46,15 @@
 #                        U+10840 - U+10FFF,
 #                        U+1E800 - U+1EDFF,
 #                        U+1EF00 - U+1EFFF
+#
+# The unassigned code points that default to ET are in the range:
+#     [\u20A0-\u20CF]
+#
+#     Currency Symbols:  U+20A0  -  U+20CF
+#
+# The unassigned code points that default to BN have one of the following properties:
+#     Default_Ignorable_Code_Point
+#     Noncharacter_Code_Point
 #
 # For all other cases:
 
@@ -392,7 +401,7 @@
 19D0..19D9    ; L # Nd  [10] NEW TAI LUE DIGIT ZERO..NEW TAI LUE DIGIT NINE
 19DA          ; L # No       NEW TAI LUE THAM DIGIT ONE
 1A00..1A16    ; L # Lo  [23] BUGINESE LETTER KA..BUGINESE LETTER HA
-1A19..1A1B    ; L # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; L # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
 1A1E..1A1F    ; L # Po   [2] BUGINESE PALLAWA..BUGINESE END OF SECTION
 1A20..1A54    ; L # Lo  [53] TAI THAM LETTER HIGH KA..TAI THAM LETTER GREAT SA
 1A55          ; L # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
@@ -807,8 +816,8 @@ FFDA..FFDC    ; L # Lo   [3] HALFWIDTH HANGUL LETTER EU..HALFWIDTH HANGUL LETTER
 F0000..FFFFD  ; L # Co [65534] <private-use-F0000>..<private-use-FFFFD>
 100000..10FFFD; L # Co [65534] <private-use-100000>..<private-use-10FFFD>
 
-# The above property value applies to 858959 code points not listed here.
-# Total code points: 1098530
+# The above property value applies to 858938 code points not listed here.
+# Total code points: 1098508
 
 # ================================================
 
@@ -972,6 +981,7 @@ FF0D          ; ES # Pd       FULLWIDTH HYPHEN-MINUS
 17DB          ; ET # Sc       KHMER CURRENCY SYMBOL RIEL
 2030..2034    ; ET # Po   [5] PER MILLE SIGN..TRIPLE PRIME
 20A0..20BA    ; ET # Sc  [27] EURO-CURRENCY SIGN..TURKISH LIRA SIGN
+20BB..20CF    ; ET # Cn  [21] <reserved-20BB>..<reserved-20CF>
 212E          ; ET # So       ESTIMATED SYMBOL
 2213          ; ET # Sm       MINUS-OR-PLUS SIGN
 A838          ; ET # Sc       NORTH INDIC RUPEE MARK
@@ -985,7 +995,7 @@ FF05          ; ET # Po       FULLWIDTH PERCENT SIGN
 FFE0..FFE1    ; ET # Sc   [2] FULLWIDTH CENT SIGN..FULLWIDTH POUND SIGN
 FFE5..FFE6    ; ET # Sc   [2] FULLWIDTH YEN SIGN..FULLWIDTH WON SIGN
 
-# Total code points: 66
+# Total code points: 87
 
 # ================================================
 
@@ -1048,13 +1058,12 @@ FF1A          ; CS # Po       FULLWIDTH COLON
 000C          ; WS # Cc       <control-000C>
 0020          ; WS # Zs       SPACE
 1680          ; WS # Zs       OGHAM SPACE MARK
-180E          ; WS # Zs       MONGOLIAN VOWEL SEPARATOR
 2000..200A    ; WS # Zs  [11] EN QUAD..HAIR SPACE
 2028          ; WS # Zl       LINE SEPARATOR
 205F          ; WS # Zs       MEDIUM MATHEMATICAL SPACE
 3000          ; WS # Zs       IDEOGRAPHIC SPACE
 
-# Total code points: 18
+# Total code points: 17
 
 # ================================================
 
@@ -1207,7 +1216,10 @@ FF1A          ; CS # Po       FULLWIDTH COLON
 21F4..2211    ; ON # Sm  [30] RIGHT ARROW WITH SMALL CIRCLE..N-ARY SUMMATION
 2214..22FF    ; ON # Sm [236] DOT PLUS..Z NOTATION BAG MEMBERSHIP
 2300..2307    ; ON # So   [8] DIAMETER SIGN..WAVY LINE
-2308..230B    ; ON # Sm   [4] LEFT CEILING..RIGHT FLOOR
+2308          ; ON # Ps       LEFT CEILING
+2309          ; ON # Pe       RIGHT CEILING
+230A          ; ON # Ps       LEFT FLOOR
+230B          ; ON # Pe       RIGHT FLOOR
 230C..231F    ; ON # So  [20] BOTTOM RIGHT CROP..BOTTOM RIGHT CORNER
 2320..2321    ; ON # Sm   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
 2322..2328    ; ON # So   [7] FROWN..KEYBOARD
@@ -1532,9 +1544,10 @@ FFFC..FFFD    ; ON # So   [2] OBJECT REPLACEMENT CHARACTER..REPLACEMENT CHARACTE
 007F..0084    ; BN # Cc   [6] <control-007F>..<control-0084>
 0086..009F    ; BN # Cc  [26] <control-0086>..<control-009F>
 00AD          ; BN # Cf       SOFT HYPHEN
+180E          ; BN # Cf       MONGOLIAN VOWEL SEPARATOR
 200B..200D    ; BN # Cf   [3] ZERO WIDTH SPACE..ZERO WIDTH JOINER
 2060..2064    ; BN # Cf   [5] WORD JOINER..INVISIBLE PLUS
-2065..2069    ; BN # Cn   [5] <reserved-2065>..<reserved-2069>
+2065          ; BN # Cn       <reserved-2065>
 206A..206F    ; BN # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
 FDD0..FDEF    ; BN # Cn  [32] <noncharacter-FDD0>..<noncharacter-FDEF>
 FEFF          ; BN # Cf       ZERO WIDTH NO-BREAK SPACE
@@ -1563,7 +1576,7 @@ EFFFE..EFFFF  ; BN # Cn   [2] <noncharacter-EFFFE>..<noncharacter-EFFFF>
 FFFFE..FFFFF  ; BN # Cn   [2] <noncharacter-FFFFE>..<noncharacter-FFFFF>
 10FFFE..10FFFF; BN # Cn   [2] <noncharacter-10FFFE>..<noncharacter-10FFFF>
 
-# Total code points: 4015
+# Total code points: 4012
 
 # ================================================
 
@@ -1689,6 +1702,7 @@ FFFFE..FFFFF  ; BN # Cn   [2] <noncharacter-FFFFE>..<noncharacter-FFFFF>
 1932          ; NSM # Mn       LIMBU SMALL LETTER ANUSVARA
 1939..193B    ; NSM # Mn   [3] LIMBU SIGN MUKPHRENG..LIMBU SIGN SA-I
 1A17..1A18    ; NSM # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
+1A1B          ; NSM # Mn       BUGINESE VOWEL SIGN AE
 1A56          ; NSM # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A58..1A5E    ; NSM # Mn   [7] TAI THAM SIGN MAI KANG LAI..TAI THAM CONSONANT SIGN SA
 1A60          ; NSM # Mn       TAI THAM SIGN SAKOT
@@ -1792,7 +1806,7 @@ FE20..FE26    ; NSM # Mn   [7] COMBINING LIGATURE LEFT HALF..COMBINING CONJOININ
 1D242..1D244  ; NSM # Mn   [3] COMBINING GREEK MUSICAL TRISEME..COMBINING GREEK MUSICAL PENTASEME
 E0100..E01EF  ; NSM # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
-# Total code points: 1290
+# Total code points: 1291
 
 # ================================================
 
@@ -1803,7 +1817,8 @@ E0100..E01EF  ; NSM # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 060B          ; AL # Sc       AFGHANI SIGN
 060D          ; AL # Po       ARABIC DATE SEPARATOR
 061B          ; AL # Po       ARABIC SEMICOLON
-061C..061D    ; AL # Cn   [2] <reserved-061C>..<reserved-061D>
+061C          ; AL # Cf       ARABIC LETTER MARK
+061D          ; AL # Cn       <reserved-061D>
 061E..061F    ; AL # Po   [2] ARABIC TRIPLE DOT PUNCTUATION MARK..ARABIC QUESTION MARK
 0620..063F    ; AL # Lo  [32] ARABIC LETTER KASHMIRI YEH..ARABIC LETTER FARSI YEH WITH THREE DOTS ABOVE
 0640          ; AL # Lm       ARABIC TATWEEL
@@ -1955,6 +1970,38 @@ FEFD..FEFE    ; AL # Cn   [2] <reserved-FEFD>..<reserved-FEFE>
 # Bidi_Class=Pop_Directional_Format
 
 202C          ; PDF # Cf       POP DIRECTIONAL FORMATTING
+
+# Total code points: 1
+
+# ================================================
+
+# Bidi_Class=Left_To_Right_Isolate
+
+2066          ; LRI # Cf       LEFT-TO-RIGHT ISOLATE
+
+# Total code points: 1
+
+# ================================================
+
+# Bidi_Class=Right_To_Left_Isolate
+
+2067          ; RLI # Cf       RIGHT-TO-LEFT ISOLATE
+
+# Total code points: 1
+
+# ================================================
+
+# Bidi_Class=First_Strong_Isolate
+
+2068          ; FSI # Cf       FIRST STRONG ISOLATE
+
+# Total code points: 1
+
+# ================================================
+
+# Bidi_Class=Pop_Directional_Isolate
+
+2069          ; PDI # Cf       POP DIRECTIONAL ISOLATE
 
 # Total code points: 1
 

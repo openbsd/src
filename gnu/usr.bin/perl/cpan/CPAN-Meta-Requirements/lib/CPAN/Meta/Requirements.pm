@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 package CPAN::Meta::Requirements;
-our $VERSION = '2.122'; # VERSION
+our $VERSION = '2.125'; # VERSION
 # ABSTRACT: a set of version requirements for a CPAN dist
 
 
@@ -433,7 +433,10 @@ sub from_string_hash {
 # vim: ts=2 sts=2 sw=2 et:
 
 __END__
+
 =pod
+
+=encoding utf-8
 
 =head1 NAME
 
@@ -441,7 +444,7 @@ CPAN::Meta::Requirements - a set of version requirements for a CPAN dist
 
 =head1 VERSION
 
-version 2.122
+version 2.125
 
 =head1 SYNOPSIS
 
@@ -691,7 +694,7 @@ CPAN::Meta::Requirements object.
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<http://rt.cpan.org/Public/Dist/Display.html?Name=CPAN-Meta-Requirements>.
+at L<https://github.com/dagolden/CPAN-Meta-Requirements/issues>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -699,9 +702,9 @@ You will be notified automatically of any progress on your issue.
 This is open source software.  The code repository is available for
 public review and contribution under the terms of the license.
 
-L<https://github.com/dagolden/cpan-meta-requirements>
+L<https://github.com/dagolden/CPAN-Meta-Requirements>
 
-  git clone https://github.com/dagolden/cpan-meta-requirements.git
+  git clone https://github.com/dagolden/CPAN-Meta-Requirements.git
 
 =head1 AUTHORS
 
@@ -725,4 +728,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-

@@ -12,7 +12,7 @@ use Math::BigInt::FastCalc;
 
 #############################################################################
 package Math::BigInt::FastCalc::LeakCheck;
-use base qw(Math::BigInt::FastCalc);
+use parent qw(Math::BigInt::FastCalc);
 
 my $destroyed = 0;
 sub DESTROY { $destroyed++; }

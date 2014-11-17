@@ -1,6 +1,7 @@
 #!/perl -w
 use 5.010;
 use strict;
+use Config;
 
 # This test checks that anything with an executable bit is
 # identified in Porting/exec-bit.txt to makerel will set
@@ -27,6 +28,10 @@ if ( $^O eq "VMS" ) {
 
 if ( $^O eq "vos" ) {
   skip_all( "VOS combines the read and execute permission bits." );
+}
+
+if ( $Config{usecrosscompile} ) {
+  skip_all( "Not all files are available during cross-compilation" );
 }
 
 plan('no_plan');

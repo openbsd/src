@@ -17,6 +17,595 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.20.1-RC2 - Lorenzo da Ponte, Così fan tutte
+
+L<Announced on 2014-09-07 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2014/09/msg219446.html>
+
+  GUGLIELMO:
+  Oh God, I feel that this foot of mine
+  is reluctant to come before her.
+
+  FERRANDO:
+  My trembling lip
+  can utter no word.
+
+  DON ALFONSO:
+  The hero displays his manliness
+  in the most terrible moments.
+
+  FIORDILIGI, DORABELLA:
+  Now that we have heard the news,
+  you have the lesser duty:
+  Take heart, and plunge your swords
+  into both our hearts.
+
+  FERRANDO, GUGLIELMO:
+  My idol, blame fate
+  that I must abandon you.
+
+  DORABELLA: Ah no, you shall not leave...
+  FIORDILIGI: No, cruel one, you shall not go...
+  DORABELLA: First I want to tear out my heart.
+  FIORDILIGI: First I want to die at your feet.
+  FERRANDO (softly to Don Alfonso): What do you say to that?
+  GUGLIELMO (softly to Don Alfonso): You realise?
+  DON ALFONSO (softly): Steady, friend, finem lauda.
+
+  ALL:
+  Thus destiny defrauds
+  the hopes of mortals.
+  Ah, among so many misfortunes,
+  who can ever love life?
+
+    -- Lorenzo da Ponte, /Così fan tutte/,
+       trans. William Weaver
+
+=head2 v5.20.1-RC1 - Lorenzo da Ponte, Così fan tutte
+
+L<Announced on 2014-08-25 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2014/08/msg218975.html>
+
+  DON ALFONSO:
+  I'd like to speak, but I haven't the heart:
+  my lip stammers.
+  My voice cannot emerge,
+  but remains in my throat.
+  What will you do? What shall I do?
+  Oh what a great catastrophe!
+  There can be nothing worse.
+  I feel pity for you and for them.
+
+  FIORDILIGI: Heavens! For mercy's sake, Signor Alfonso, don't make us
+  die.
+  DON ALFONSO: My children, you must arm yourselves with constancy.
+  DORABELLA: Ye Gods! What evil has occurred? What horrible event? Is my
+  love dead, perhaps?
+  FIORDILIGI: Is mine dead?
+  DON ALFONSO: They are not dead, but they are not far from it.
+  DORABELLA: Wounded?
+  DON ALFONSO: No.
+  FIORDILIGI: Ill?
+  DON ALFONSO: Nor that.
+  FIORDILIGI: What, then?
+  DON ALFONSO: A royal command summons them to the field of battle.
+  FIORDILIGI, DORABELLA: Alas, what do I hear? And they will leave?
+  DON ALFONSO: Immediately.
+  DORABELLA: And there is no way of preventing it?
+  DON ALFONSO: There is none.
+  FIORDILIGI: And not even a single farewell...
+  DON ALFONSO: The unhappy men haven't the courage to see you; but if
+  you wish it, they are ready...
+  DORABELLA: Where are they?
+  DON ALFONSO: Come in, friends.
+
+    -- Lorenzo da Ponte, /Così fan tutte/,
+       trans. William Weaver
+
+=head2 v5.21.3 - Robert Service, The Men that Don't Fit In
+
+L<Announced on 2014-08-20 by Peter Martini|http://www.nntp.perl.org/group/perl.perl5.porters/2014/08/msg218826.html>
+
+    If they just went straight they might go far,
+    They are strong and brave and true;
+    But they're always tired of the things that are,
+    And they want the strange and new.
+    They say: "Could I find my proper groove,
+    What a deep mark I would make!"
+    So they chop and change, and each fresh move
+    Is only a fresh mistake.
+
+=head2 v5.21.2 - Neil Armstrong, Buzz Aldrin, Charlie Duke, Final minutes of communication of the first manned moon landing, July 20, 1969.
+
+L<Announced on 2014-07-20 by Abigail|http://www.nntp.perl.org/group/perl.perl5.porters/2014/07/msg217937.html>
+
+    Armstrong: Okay. Here's a...Looks like a good area here.
+    Aldrin:    I got the shadow out there. 
+    Aldrin:    250, down at 2 1/2, 19 forward.
+    Aldrin:    Altitude, velocity lights. 
+    Aldrin:    3 1/2 down, 220 feet, 13 forward.
+    Aldrin:    11 forward. Coming down nicely.
+    Armstrong: Gonna be right over that crater. 
+    Aldrin:    200 feet, 4 1/2 down.
+    Aldrin:    5 1/2 down.
+    Armstrong: I got a good spot [garbled].
+    Aldrin:    160 feet, 6 1/2 down.
+    Aldrin:    5 1/2 down, 9 forward. You're looking good.
+    Aldrin:    120 feet.
+    Aldrin:    100 feet, 3 1/2 down, 9 forward. Five percent. Quantity light. 
+    Aldrin:    Okay. 75 feet. And it's looking good. Down a half, 6 forward.
+    Duke:      60 seconds.
+    Aldrin:    Light's on. 
+    Aldrin:    60 feet, down 2 1/2. 2 forward. 2 forward. That's good. 
+    Aldrin:    40 feet, down 2 1/2. Picking up some dust. 
+    Aldrin:    30 feet, 2 1/2 down. [Garbled] shadow. 
+    Aldrin:    4 forward. 4 forward. Drifting to the right a little. 20 feet,
+               down a half.
+    Duke:      30 seconds.
+    Aldrin:    Drifting forward just a little bit; that's good.
+    Aldrin:    Contact Light. 
+    Armstrong: Shutdown.
+    Aldrin:    Okay. Engine Stop. 
+    Aldrin:    ACA out of Detent.
+    Armstrong: Out of Detent. Auto.
+    Aldrin:    Mode Control, both Auto. Descent Engine Command Override, Off.
+               Engine Arm, Off. 413 is in. 
+    Duke:      We copy you down, Eagle.
+    Armstrong: Engine arm is off.
+    Armstrong: Houston, Tranquility Base here. The Eagle has landed.
+    Duke:      Roger, Twan...[correcting himself] Tranquility. We copy you on
+               the ground. You got a bunch of guys about to turn blue.
+               We're breathing again. Thanks a lot.
+    Aldrin:    Thank you. 
+
+=head2 v5.21.1 - Robert Jordan, The Crossroads of Twilights, Book 10 of the Wheel of Time
+
+L<Announced on 2014-06-20 by Matthew Horsfall|http://www.nntp.perl.org/group/perl.perl5.porters/2014/06/msg217030.html>
+
+  We rode on the winds of the rising storm,
+    We ran to the sounds of the thunder.
+   We danced among the lightning bolts,
+       and tore the world asunder.
+
+    --     Anonymous fragment of a poem believed
+       written near the end of the previous Age,
+                 known by some as the Third Age.
+              Sometimes attributed to the Dragon
+                                         Reborn.
+
+=head2 v5.21.0 - Friedrich von Schiller, The Song of the Bell
+
+L<Announced on 2014-05-27 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2014/05/msg215826.html>
+
+  Walled in fast within the earth
+  Stands the form burnt out of clay.
+  This must be the bell’s great birth!
+  Fellows, lend a hand to-day.
+    Sweat must trickle now
+    From the burning brow,
+  Till the work its master honour.
+  Blessing comes from Heaven’s Donor.
+
+=head2 v5.20.0 - William Shakespeare, Sonnet 18
+
+L<Announced on 2014-05-27 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2014/05/msg215815.html>
+
+  But thy eternal summer shall not fade,
+  Nor lose possession of that fair thou ow'st;
+  Nor shall Death brag thou wander'st in his shade,
+  When in eternal lines to time thou grow'st:
+    So long as men can breathe or eyes can see,
+    So long lives this, and this gives life to thee.
+
+  -- William Shakespeare, Sonnet 18
+
+=head2 v5.20.0-RC1 - Lindsey Buckingham, "Second Hand News"
+
+L<Announced on 2014-05-17 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2014/05/msg215479.html>
+
+  When times go bad
+  when times go rough
+  Won't you lay me down in tall grass
+  And let me do my stuff
+
+  -- Lindsey Buckingham, "Second Hand News"
+
+=head2 v5.19.11 - Lautréamont, Les Chants de Maldoror
+
+L<Announced on 2014-04-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2014/04/msg214580.html>
+
+O rigorous mathematics, I have not forgotten you since your wise lessons,
+sweeter than honey, filtered into my heart like a refreshing wave.
+Instinctively, from the cradle, I had longed to drink from your source, older
+than the sun, and I continue to tread the sacred sanctuary of your solemn
+temple, I, the most faithful of your devotees.  There was a vagueness in my
+mind, something thick as smoke; but I managed to mount the steps which lead to
+your altar, and you drove away this dark veil, as the wind blows the
+draught-board.  You replaced it with excessive coldness, consummate prudence and
+implacable logic.  With the aid of your fortifying milk, my intellect developed
+rapidly and took on immense proportions amid the ravishing lucidity which you
+bestow as a gift on all those who sincerely love you.  Arithmetic!  Algebra!
+Geometry!  Awe-inspiring trinity!  Luminous triangle!  He who has not known you
+is a fool!
+
+  -- Isidore-Lucien Ducasse [as "Comte de Lautréamont"],
+     /Les Chants de Maldoror/, trans. Paul Knight
+
+=head2 v5.19.10 - John Chadwick, The Decipherment of Linear B
+
+L<Announced on 2014-03-20 by Aaron Crane|http://www.nntp.perl.org/group/perl.perl5.porters/2014/03/msg213851.html>
+
+The urge to discover secrets is deeply ingrained in human nature; even
+the least curious mind is roused by the promise of sharing knowledge
+withheld from others. Some are fortunate enough to find a job which
+consists in the solution of mysteries, whether it be the physicist who
+tracks down a hitherto unknown nuclear particle or the policeman who
+detects a criminal. But most of us are driven to sublimate this urge
+by the solving of artificial puzzles devised for our entertainment.
+
+=head2 v5.19.9 - R. A. MacAvoy, Tea with the Black Dragon
+
+L<Announced on 2014-02-20 by Tony Cook|http://www.nntp.perl.org/group/perl.perl5.porters/2014/02/msg213047.html>
+
+Old hands.  The smell of rain--the smell of Ch'an.  Quiet words in
+rough Cantonese.  "I am not to be your master.  Your master has to be
+stronger than you are--has to tell you you are a fool and make you
+know it.  And make you feel content in being a fool.  How could I do
+that for you?  I'm old.  You are too strong for me; you are full of
+chi."  The old man has paused then, huddled against the wind while
+clouds thickened above them.
+
+"I will tell you this, Long," he continued, "Before you find yourself
+you will lose your chi.  Also you will leave behind you all pride of
+body, pride of mind.  You will be reduced.  Like me."  The old man
+closed his eyes, and rain began to beat against his gray, crew-cut
+hair.  He pulled his coat closer.  Suddenly his eyes snapped open and
+he looked Long in the face.
+
+"You must leave China.  Go across the ocean.  There you will meet your
+master."  He set down his teacup with a palsied hand.  His voice rose,
+grew fierce.
+
+"I tell you this, most honored and impressive visitor.  You are a
+fool, yes, but you will find the very thing you seek.  You will find
+truth!"
+
+=head2 v5.19.8 - Joseph Heller, Catch-22
+
+L<Announced on 2014-01-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2014/01/msg211729.html>
+
+“I used to get a big kick out of saving people’s lives. Now I wonder what the
+hell’s the point, since they all have to die anyway.”
+
+“Oh, there’s a point, all right,” Dunbar assured him.
+
+“Is there? What is the point?”
+
+“The point is to keep them from dying for as long as you can.”
+
+“Yeah, but what’s the point, since they all have to die anyway?”
+
+“The trick is not to think about that.”
+
+“Never mind the trick. What the hell’s the point?”
+
+Dunbar pondered in silence for a few moments. “Who the hell knows?”
+
+=head2 v5.19.7 - Kurt Vonnegut, "Slaughterhouse-Five"
+
+L<Announced on 2013-12-20 by Abigail|http://www.nntp.perl.org/group/perl.perl5.porters/2013/12/msg210882.html>
+
+=over
+
+  And somewhere in there was springtime. The corpse mines were closed
+  down. The soldiers all left to fight the Russians. In the suburbs,
+  the women and children dug rifle pits. Billy and the rest of his group
+  were locked up in the stable in the suburbs. And then, one morning,
+  they got up to discover that the door was unlocked. World War Two in
+  Europe was over.
+
+  Billy and the rest wandered out onto the shady street. The trees were
+  leafing out. There was nothing going on out there, no traffic of any
+  kind. There was only one vehicle, an abandoned wagon drawn by two
+  horses. The wagon was green and coffin-shaped.
+
+  Birds were talking.
+
+  One bird said to Billy Pilgrim, "Pee-tee-weet?"
+
+=back
+
+=head2 v5.19.6 - Monty Python's Flying Circus, "Spam"
+
+L<Announced on 2013-11-20 by Chris 'BinGOs' Williams|http://www.nntp.perl.org/group/perl.perl5.porters/2013/11/msg210043.html>
+
+=over
+
+      Interior: cheap cafe. All the customers are Vikings. Mr and Mrs Bun enter downwards (on wires).
+
+    Mr. Bun: Morning.
+    Waitress: Morning.
+    Mr. Bun: What have you got, then?
+    Waitress: Well there's egg and bacon; egg, sausage and bacon; egg and spam; egg, bacon and spam;
+              egg, bacon, sausage and spam; spam, bacon, sausage and spam; spam, egg, spam, spam, bacon and spam;
+              spam, spam, spam, egg and spam; spam, spam, spam, spam, spam, spam, baked beans, spam, spam, spam and spam;
+              or lobster thermidor aux crevettes, with a mornay sauce garnished with truffle pate, brandy and a fried
+              egg on top and spam
+    Mrs. Bun: Have you got anything without spam in it?
+    Waitress: Well, there's spam, egg, sausage and spam. That's not got MUCH spam in it.
+    Mrs. Bun: I don't want ANY spam.
+    Mr. Bun: Why can't she have egg, bacon, spam and sausage?
+    Mrs. Bun: That's got spam in it!
+    Mr. Bun: Not as much as spam, egg, sausage and spam.
+    Mrs. Bun: Look, could I have egg, bacon, spam and sausage, without the spam.
+    Waitress: Uuuuuuggggh!
+    Mrs. Bun: What d'you mean, uugggh! I don't like spam.
+    Vikings: (singing) Spam, spam, spam, spam, spam ... spam, spam, spam, spam ... lovely spam, wonderful spam ...
+
+      (Brief shot of a Viking ship)
+
+    Waitress: Shut up. Shut up! Shut up! You can't have egg, bacon, spam and sausage without the spam.
+    Mrs. Bun: Why not?
+    Waitress: No, it wouldn't be egg, bacon, spam and sausage, would it?
+    Mrs. Bun: I don't like spam!
+
+=back
+
+=head2 v5.19.5 - Charles Baudelaire, "The Flowers of Evil", 51. The Cat
+
+L<Announced on 2013-10-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2013/10/msg208752.html>
+
+=over
+
+  I
+
+  A cat is strolling through my mind
+  Acting as though he owned the place,
+  A lovely cat -- strong, charming, sweet.
+  When he meows, one scarcely hears,
+
+  So tender and discreet his tone;
+  But whether he should growl or purr
+  His voice is always rich and deep.
+  That is the secret of his charm.
+
+  This purling voice that filters down
+  Into my darkest depths of soul
+  Fulfils me like a balanced verse,
+  Delights me as a potion would.
+
+  It puts to sleep the cruellest ills
+  And keeps a rein on ecstasies --
+  Without the need for any words
+  It can pronounce the longest phrase.
+
+  Oh no, there is no bow that draws
+  Across my heart, fine instrument,
+  And makes to sing so royally
+  The strongest and the purest chord,
+
+  More than your voice, mysterious cat,
+  Exotic cat, seraphic cat,
+  In whom all is, angelically,
+  As subtle as harmonious.
+
+  II
+
+  From his soft fur, golden and brown,
+  Goes out so sweet a scent, one night
+  I might have been embalmed in it
+  By giving him one little pet.
+
+  He is my household's guardian soul;
+  He judges, he presides, inspires
+  All matters in hos royal realm;
+  Might he be fairy? or a god?
+
+  When my eyes, to this cat I love
+  Drawn as by a magnet's force,
+  Turn tamely back from that appeal,
+  And when I look within myself,
+
+  I notice with astonishment
+  The fire of his opal eyes,
+  Clear beacons glowing, living jewels,
+  Taking my measure, steadily.
+
+  -- Charles Baudelaire, /The Flowers of Evil, 51. The Cat/,
+     trans. James McGowan
+
+=back
+
+=head2 v5.19.4 - Washington Irving, "The Widow and Her Son"
+
+L<Announced on 2013-09-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2013/09/msg207969.html>
+
+=over
+
+There is something in sickness that breaks down the pride of manhood;
+that softens the heart and brings it back to the feelings of infancy.
+Who that has languished, even in advanced life, in sickness and
+despondency — who that has pined on a weary bed in the neglect and
+loneliness of a foreign land — but has thought on the mother "that
+looked on his childhood," that smoothed his pillow and administered to
+his helplessness.  — Oh! there is an enduring tenderness in the love
+of a mother to her son that transcends all other affections of the
+heart.  It is neither to be chilled by selfishness — nor daunted by
+danger — nor weakened by worthlessness — nor stifled by ingratitude.
+She will sacrifice every comfort to his convenience — she will
+surrender every pleasure to his enjoyment — she will glory in his fame
+and exult in his prosperity.  And if misfortune overtake him he will
+be the dearer to her from misfortune — and if disgrace settle upon his
+name, she will still love and cherish him in spite of his disgrace —
+and if all the world beside cast him off, she will be all the world to
+him.
+
+=back
+
+=head2 v5.19.3 - Andrew Hodges, "Alan Turing: The Enigma"
+
+L<Announced on 2013-08-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2013/08/msg206318.html>
+
+=over
+
+E.M. Forster, outdoing the King's heresy with grand bravura, had
+written in 1938 that if he were faced with the choice between
+betraying his country and betraying his friends, he hoped he would
+have the courage to betray his country.  He would always put the
+personal above the political.  But for Alan Turing, unlike Forster, or
+Wittgenstein, or G.H. Hardy, it was more than a theoretical question.
+For him not only had the personal become the political, but the
+political was the personal.  He had chosen and promised for himself in
+working for the government.  The choice for him therefore was that
+between betraying one part of himself and betraying another part.  And
+however much he wavered between these alternatives, there was a solid
+logic to the mind of security, one that could not be expected to take
+an interest in notions of freedom and development.  He had no rights
+to such things, as he would have had to admit.  He might have
+outwitted the Home Guard, but when it came to questions that mattered,
+there was no doubt that he had placed himself under military law.
+There was a war on; there was always a war on now.
+
+=back
+
+=head2 v5.19.2 - Fred Brooks, "The Mythical Man-Month"
+
+L<Announced on 2013-07-22 by Aristotle Pagaltzis|http://www.nntp.perl.org/group/perl.perl5.porters/2013/07/msg204905.html>
+
+=over
+
+The magic of myth and legend has come true in our time. One types the
+correct incantation on a keyboard, and a display screen comes to life,
+showing things that never were nor could be. [...] Not all is delight,
+however [...] One must perform perfectly. The computer resembles the
+magic of legend in this respect, too. If one character, one pause, of
+the incantation is not strictly in proper form, the magic doesn't work.
+
+=back
+
+=head2 v5.19.1 - William Shakespeare, "A Midsummer Night's Dream"
+
+L<Announced on 2013-06-21 by David Golden|http://www.nntp.perl.org/group/perl.perl5.porters/2013/06/msg203449.html>
+
+  Over hill, over dale,
+  Thorough bush, thorough briar,
+  Over park, over pale,
+  Thorough flood, thorough fire,
+  I do wander everywhere,
+  Swifter than the moon's sphere;
+  And I serve the fairy queen,
+  To dew her orbs upon the green.
+  The cowslips tall her pensioners be;
+  In their gold coats, spots you see;
+  Those be rubies, fairy favours,
+  In their freckles live our savours.
+  I must go seek some dew-drops here,
+  And hang a perl in every cowslip's ear.
+  Farewell, thou lob of spirits, I'll be gone;
+  My queen and all her elves come here anon!
+
+=head2 v5.19.0 - Batman, of the Joker, in "The Dark Knight Returns"
+
+L<Announced on 2013-05-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/05/msg201980.html>
+
+   From the beginning, I knew…
+  …that there was nothing wrong with you…
+  …that I can't fix…
+  …with my hands…
+
+=head2 v5.18.2 - Miss Manners
+
+L<Announced on 2014-01-06 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2014/01/msg211224.html>
+
+One of the major mistakes people make is that they think manners are
+only the expression of happy ideas. There's a whole range of behavior
+that can be expressed in a mannerly way. That's what civilization is all
+about – doing it in a mannerly and not an antagonistic way. One of the
+places we went wrong was the naturalistic Rousseauean movement of the
+Sixties in which people said, "Why can't you just say what's on your
+mind?" In civilization there have to be some restraints. If we followed
+every impulse, we'd be killing one another.
+
+=head2 v5.18.1 - Chuck Moore
+
+L<Announced on 2013-08-12 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/08/msg205897.html>
+
+The operating system is another concept that is curious. Operating
+systems are dauntingly complex and totally unnecessary. It’s a brilliant
+thing that Bill Gates has done in selling the world on the notion of
+operating systems. It’s probably the greatest con game the world has
+ever seen.
+
+An operating system does absolutely nothing for you. As long as you had
+something — a subroutine called disk driver, a subroutine called some
+kind of communication support, in the modern world, it doesn’t do
+anything else. In fact, Windows spends a lot of time with overlays and
+disk management all stuff like that which are irrelevant. You’ve got
+gigabyte disks; you’ve got megabyte RAMs. The world has changed in a way
+that renders the operating system unnecessary.
+
+=head2 v5.18.1-RC1 - Chuck Moore
+
+L<Announced on 2013-08-02 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/08/msg205445.html>
+
+Compilers are probably the worst code ever written. They are written by
+someone who has never written a compiler before and will never do so
+again.  The more elaborate the language, the more complex, bug-ridden,
+and unusable is the compiler. But a simple compiler for a simple
+language is an essential tool—if only for documentation.
+
+=head2 v5.18.0 - Yevgeny Zamyatin
+
+L<Announced on 2013-05-18 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/05/msg201940.html>
+
+It is an error to divide people into the living and the dead: there are people
+who are dead-alive, and people who are alive-alive. The dead-alive also write,
+walk, speak, act. But they make no mistakes; only machines make no mistakes,
+and they produce only dead things. The alive-alive are constantly in error, in
+search, in questions, in torment.
+
+=head2 v5.18.0-RC4 - Joseph Heller, Catch-22
+
+L<Announced on 2013-04-16 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/05/msg201889.html>
+
+Clevinger was dead. That was the basic flaw in his philosophy.
+
+=head2 v5.18.0-RC3 - Tom Waits, "The Ocean Doesn't Want Me"
+
+L<Announced on 2013-04-14 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/05/msg201823.html>
+
+  I'd love to go drowning
+  And to stay and to stay
+  But the ocean doesn't want me today
+  I'll go in up to here
+  It can't possibly hurt
+  All they will find is my beer
+  And my shirt
+
+=head2 v5.18.0-RC2 - Tom Waits, "Earth Died Screaming"
+
+L<Announced on 2013-05-12 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/05/msg201723.html>
+
+  And the great day of wrath has come
+  And here's mud in your big red eye
+  The poker's in the fire
+  And the locusts take the sky
+  And the earth died screaming
+  While I lay dreaming of you
+
+=head2 v5.18.0-RC1 - Tom Waits, "What's He Building in There?"
+
+L<Announced on 2013-05-11 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/05/msg201651.html>
+
+  What's he building in there?
+
+  We have a right to know…
+
+=head2 v5.17.11 - Nigel Tufnel, This is Spın̈al Tap
+
+L<Announced on 2013-04-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2013/04/msg201056.html>
+
+It's very special because, if you can see, the numbers all go to…
+eleven!  Look, right across the board: eleven, eleven, eleven, eleven!
+
 =head2 v5.17.10 - Vernor Vinge, A Fire Upon The Deep
 
 L<Announced on 2013-03-22 by Max Maischein|http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-03/msg00908.html>
@@ -98,7 +687,7 @@ fully my equal even if he fell away when he became the practising physician.
 I think ridiculous of certain professors of anatomy, who find it beneath
 them to pick up the knife themselves, but merely comment while hired hands
 do the cutting. Sylvius would never have dreamt of sitting on a dais reading
-from an authority while others cut E<0x2014> when he taught, the knife was
+from an authority while others cut — when he taught, the knife was
 in his hand and the blood spattered his coat. Boyle also did not scruple to
 perform his own experiments and, on one occasion in my presence, even showed
 himself willing to anatomise a rat with his very own hands. Nor was he less
@@ -749,7 +1338,7 @@ reading a history of Australian politics in the twentieth century,
 wherein I encountered the startling fact that in 1967 the prime minister,
 Harold Holt, was strolling along a beach in Victoria when he plunged into
 the surf and vanished. No trace of the poor man was ever seen again.
-This seemed doubly astounding to meE<0x2014>first that Australia could
+This seemed doubly astounding to me—first that Australia could
 just I<lose> a prime minister (I mean, come on) and second that news of
 this had never reached me.
 
@@ -764,7 +1353,8 @@ L<Announced on 2011-02-20 by Florian Ragwitz|http://www.xray.mpe.mpg.de/mailing-
       Nay he is mine alone;
   --Then the full-grown poet stood between the two, and took each
       by the hand;
-  And to-day and ever so stands, as blender, uniter, tightly holding hands,
+  And to-day and ever so stands, as blender, uniter, tightly
+      holding hands,
   Which he will never release until he reconciles the two,
   And wholly and joyously blends them.
 
@@ -1284,7 +1874,7 @@ everybody owned. Milo met the challenge by writing the words "A Share"
 on the nearest scrap of paper and handing it away with a virtuous disdain
 that won the envy and admiration of almost everyone who knew him. His
 glory was at a peak, and Colonel Cathcart, who knew and admired his
-war record, was astonished by the deferential humility with which Mil
+war record, was astonished by the deferential humility with which Milo
 presented himself at Group Headquarters and made his fantastic appeal
 for more hazardous assignment.
 
@@ -1820,7 +2410,7 @@ L<Announced on 2004-04-05 by Nicholas Clark|http://groups.google.com/group/perl.
   Then Skimble will appear and he'll saunter to the rear:
   He's been busy in the luggage van!
   He gives one flash of his glass-green eyes
-  And the the signal goes 'All Clear!'
+  And the signal goes 'All Clear!'
   And we're off at last of the northern part
   Of the Northern Hemisphere!
 

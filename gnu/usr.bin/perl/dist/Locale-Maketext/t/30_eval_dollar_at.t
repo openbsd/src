@@ -3,12 +3,12 @@ use warnings;
 
 {
     package TEST;
-    use base 'Locale::Maketext';
+    use parent qw(Locale::Maketext);
 }
 
 {
     package TEST::en;
-    use base 'TEST';
+    use parent -norequire, qw(TEST);
     our %Lexicon = (
         _AUTO => 1,
     );

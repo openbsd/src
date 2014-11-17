@@ -2,7 +2,7 @@
 
 use strict;
 use Test::More;
-BEGIN { 
+BEGIN {
   if ($^O eq 'VMS') {
     # So we can get the return value of system()
     require vmsish;
@@ -43,12 +43,13 @@ ok 1;
 
 is $object_file, $b->compile(source => $source_file, 'C++' => 1);
 
-$lib_file = $b->lib_file($object_file);
+$lib_file = $b->lib_file($object_file, module_name => 'cplust');
 ok 1;
 
 my ($lib, @temps) = $b->link(objects => $object_file,
                              module_name => 'cplust');
 $lib =~ tr/"'//d;
+$_ = File::Spec->rel2abs($_) for $lib_file, $lib;
 is $lib_file, $lib;
 
 for ($source_file, $object_file, $lib_file) {

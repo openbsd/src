@@ -4,6 +4,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
+    require './loc_tools.pl';
 }
 
 use strict;
@@ -35,6 +36,8 @@ $testcases{'[:print:]'} = $testcases{'[:graph:]'};
 $testcases{'[:space:]'} = $testcases{'\s'};
 $testcases{'[:word:]'} = $testcases{'\w'};
 
+my $utf8_locale;
+
 my @charsets = qw(a d u aa);
 if (! is_miniperl() && $Config{d_setlocale}) {
     require POSIX;
@@ -50,15 +53,34 @@ if (! is_miniperl() && $Config{d_setlocale}) {
         # legal, but since we don't know what the right answers should be,
         # skip the locale tests in that situation.
         for my $i (128 .. 255) {
-            goto untestable_locale if chr($i) =~ /[[:print:]]/;
+            goto skip_adding_C_locale if chr($i) =~ /[[:print:]]/;
         }
         push @charsets, 'l';
-    untestable_locale:
+
+    skip_adding_C_locale:
+
+        # Use a pseudo-modifier 'L' to indicate to use /l with a UTF-8 locale
+        $utf8_locale = find_utf8_ctype_locale();
+        push @charsets, 'L' if defined $utf8_locale;
     }
 }
 
 # For each possible character set...
 foreach my $charset (@charsets) {
+    my $locale;
+    my $charset_mod = lc $charset;
+    my $charset_display;
+    if ($charset_mod eq 'l') {
+        $locale = POSIX::setlocale(&POSIX::LC_ALL, ($charset eq 'l')
+                                            ? "C"
+                                            : $utf8_locale
+                           );
+        die "Couldn't change locale" unless $locale;
+        $charset_display = $charset_mod . " ($locale)";
+    }
+    else {
+        $charset_display = $charset_mod;
+    }
 
     # And in utf8 or not
     foreach my $upgrade ("", 'utf8::upgrade($a); ') {
@@ -87,9 +109,9 @@ foreach my $charset (@charsets) {
                                     # match or not
 
                 # Everything always matches in ASCII, or under /u
-                if ($ord < 128 || $charset eq 'u') {
-                    $reason = "\"$char\" is a $class under /$charset";
-                    $neg_reason = "\"$char\" is not a $complement under /$charset";
+                if ($ord < 128 || $charset eq 'u' || $charset eq 'L') {
+                    $reason = "\"$char\" is a $class under /$charset_display";
+                    $neg_reason = "\"$char\" is not a $complement under /$charset_display";
                 }
                 elsif ($charset eq "a" || $charset eq "aa") {
                     $match = 0;
@@ -97,16 +119,16 @@ foreach my $charset (@charsets) {
                     $neg_reason = "\"$char\" is non-ASCII, which is a $complement under /a";
                 }
                 elsif ($ord > 255) {
-                    $reason = "\"$char\" is a $class under /$charset";
-                    $neg_reason = "\"$char\" is not a $complement under /$charset";
+                    $reason = "\"$char\" is a $class under /$charset_display";
+                    $neg_reason = "\"$char\" is not a $complement under /$charset_display";
                 }
                 elsif ($charset eq 'l') {
 
                     # We are using the C locale, which is essentially ASCII,
                     # but under utf8, the above-latin1 chars are treated as
                     # Unicode)
-                    $reason = "\"$char\" is not a $class in this locale under /l";
-                    $neg_reason = "\"$char\" is a $complement in this locale under /l";
+                    $reason = "\"$char\" is not a $class in the C locale under /l";
+                    $neg_reason = "\"$char\" is a $complement in the C locale under /l";
                     $match = 0;
                 }
                 elsif ($upgrade) {
@@ -152,14 +174,14 @@ foreach my $charset (@charsets) {
                     # Test both class and its complement, and with one or more
                     # than one item to match.
                     foreach my $eval (
-                        qq[my \$a = "$char"; $upgrade\$a $op qr/ (?$charset: $lb$class$rb ) /x],
-                        qq[my \$a = "$char" x $length; $upgrade\$a $op qr/ (?$charset: $lb$class$rb\{$length} ) /x],
+                        qq[my \$a = "$char"; $upgrade\$a $op qr/ (?$charset_mod: $lb$class$rb ) /x],
+                        qq[my \$a = "$char" x $length; $upgrade\$a $op qr/ (?$charset_mod: $lb$class$rb\{$length} ) /x],
                     ) {
                         ok (eval $eval, $eval . $reason);
                     }
                     foreach my $eval (
-                        qq[my \$a = "$char"; $upgrade\$a $neg_op qr/ (?$charset: $lb$complement$rb ) /x],
-                        qq[my \$a = "$char" x $length; $upgrade\$a $neg_op qr/ (?$charset: $lb$complement$rb\{$length} ) /x],
+                        qq[my \$a = "$char"; $upgrade\$a $neg_op qr/ (?$charset_mod: $lb$complement$rb ) /x],
+                        qq[my \$a = "$char" x $length; $upgrade\$a $neg_op qr/ (?$charset_mod: $lb$complement$rb\{$length} ) /x],
                     ) {
                         ok (eval $eval, $eval . $neg_reason);
                     }
@@ -169,14 +191,14 @@ foreach my $charset (@charsets) {
 
                 # Test \b, \B at beginning and end of string
                 foreach my $eval (
-                    qq[my \$a = "$char"; $upgrade\$a $op qr/ (?$charset: ^ \\b . ) /x],
-                    qq[my \$a = "$char"; $upgrade\$a $op qr/ (?$charset: . \\b \$) /x],
+                    qq[my \$a = "$char"; $upgrade\$a $op qr/ (?$charset_mod: ^ \\b . ) /x],
+                    qq[my \$a = "$char"; $upgrade\$a $op qr/ (?$charset_mod: . \\b \$) /x],
                 ) {
                     ok (eval $eval, $eval . $reason);
                 }
                 foreach my $eval (
-                    qq[my \$a = "$char"; $upgrade\$a $neg_op qr/(?$charset: ^ \\B . ) /x],
-                    qq[my \$a = "$char"; $upgrade\$a $neg_op qr/(?$charset: . \\B \$ ) /x],
+                    qq[my \$a = "$char"; $upgrade\$a $neg_op qr/(?$charset_mod: ^ \\B . ) /x],
+                    qq[my \$a = "$char"; $upgrade\$a $neg_op qr/(?$charset_mod: . \\B \$ ) /x],
                 ) {
                     ok (eval $eval, $eval . $neg_reason);
                 }
@@ -192,14 +214,14 @@ foreach my $charset (@charsets) {
                     my $space = display(chr $space_ord);
 
                     foreach my $eval (
-                        qq[my \$a = "$space$char"; $upgrade\$a $op qr/ (?$charset: . \\b . ) /x],
-                        qq[my \$a = "$char$space"; $upgrade\$a $op qr/ (?$charset: . \\b . ) /x],
+                        qq[my \$a = "$space$char"; $upgrade\$a $op qr/ (?$charset_mod: . \\b . ) /x],
+                        qq[my \$a = "$char$space"; $upgrade\$a $op qr/ (?$charset_mod: . \\b . ) /x],
                     ) {
                         ok (eval $eval, $eval . $reason . "; \"$space\" is not a \\w");
                     }
                     foreach my $eval (
-                        qq[my \$a = "$space$char"; $upgrade\$a $neg_op qr/ (?$charset: . \\B . ) /x],
-                        qq[my \$a = "$char$space"; $upgrade\$a $neg_op qr/ (?$charset: . \\B . ) /x],
+                        qq[my \$a = "$space$char"; $upgrade\$a $neg_op qr/ (?$charset_mod: . \\B . ) /x],
+                        qq[my \$a = "$char$space"; $upgrade\$a $neg_op qr/ (?$charset_mod: . \\B . ) /x],
                     ) {
                         ok (eval $eval, $eval . $neg_reason . "; \"$space\" is not a \\w");
                     }
@@ -215,16 +237,16 @@ foreach my $charset (@charsets) {
                     # Determine if the other char is a word char in current
                     # circumstances
                     my $other_is_word = 1;
-                    my $other_reason = "\"$other\" is a $class under /$charset";
-                    my $other_neg_reason = "\"$other\" is not a $complement under /$charset";
+                    my $other_reason = "\"$other\" is a $class under /$charset_display";
+                    my $other_neg_reason = "\"$other\" is not a $complement under /$charset_display";
                     if ($other_ord > 127
-                        && $charset ne 'u'
+                        && $charset ne 'u' && $charset ne 'L'
                         && (($charset eq "a" || $charset eq "aa")
                             || ($other_ord < 256 && ($charset eq 'l' || ! $upgrade))))
                     {
                         $other_is_word = 0;
-                        $other_reason = "\"$other\" is not a $class under /$charset";
-                        $other_neg_reason = "\"$other\" is a $complement under /$charset";
+                        $other_reason = "\"$other\" is not a $class under /$charset_display";
+                        $other_neg_reason = "\"$other\" is a $complement under /$charset_display";
                     }
                     my $both_reason = $reason;
                     $both_reason .= "; $other_reason" if $other_ord != $ord;
@@ -243,14 +265,14 @@ foreach my $charset (@charsets) {
                     }
 
                     foreach my $eval (
-                        qq[my \$a = "$other$char"; $upgrade\$a $op qr/ (?$charset: $other \\b $char ) /x],
-                        qq[my \$a = "$char$other"; $upgrade\$a $op qr/ (?$charset: $char \\b $other ) /x],
+                        qq[my \$a = "$other$char"; $upgrade\$a $op qr/ (?$charset_mod: $other \\b $char ) /x],
+                        qq[my \$a = "$char$other"; $upgrade\$a $op qr/ (?$charset_mod: $char \\b $other ) /x],
                     ) {
                         ok (eval $eval, $eval . $both_reason);
                     }
                     foreach my $eval (
-                        qq[my \$a = "$other$char"; $upgrade\$a $neg_op qr/ (?$charset: $other \\B $char ) /x],
-                        qq[my \$a = "$char$other"; $upgrade\$a $neg_op qr/ (?$charset: $char \\B $other ) /x],
+                        qq[my \$a = "$other$char"; $upgrade\$a $neg_op qr/ (?$charset_mod: $other \\B $char ) /x],
+                        qq[my \$a = "$char$other"; $upgrade\$a $neg_op qr/ (?$charset_mod: $char \\B $other ) /x],
                     ) {
                         ok (eval $eval, $eval . $both_neg_reason);
                     }
@@ -261,14 +283,14 @@ foreach my $charset (@charsets) {
                     # on source code analysis, to force the testing of the FBC
                     # (find_by_class) portions of regexec.c.
                     foreach my $eval (
-                        qq[my \$a = "$other$char"; $upgrade\$a $op qr/ (?$charset: \\b $char ) /x],
-                        qq[my \$a = "$char$other"; $upgrade\$a $op qr/ (?$charset: \\b $other ) /x],
+                        qq[my \$a = "$other$char"; $upgrade\$a $op qr/ (?$charset_mod: \\b $char ) /x],
+                        qq[my \$a = "$char$other"; $upgrade\$a $op qr/ (?$charset_mod: \\b $other ) /x],
                     ) {
                         ok (eval $eval, $eval . $both_reason);
                     }
                     foreach my $eval (
-                        qq[my \$a = "$other$char"; $upgrade\$a $neg_op qr/ (?$charset: \\B $char ) /x],
-                        qq[my \$a = "$char$other"; $upgrade\$a $neg_op qr/ (?$charset: \\B $other ) /x],
+                        qq[my \$a = "$other$char"; $upgrade\$a $neg_op qr/ (?$charset_mod: \\B $char ) /x],
+                        qq[my \$a = "$char$other"; $upgrade\$a $neg_op qr/ (?$charset_mod: \\B $other ) /x],
                     ) {
                         ok (eval $eval, $eval . $both_neg_reason);
                     }

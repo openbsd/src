@@ -2,7 +2,7 @@
 
 use strict;
 use lib 't/lib';
-use MBTest tests => 35;
+use MBTest tests => 34;
 
 blib_load('Module::Build');
 
@@ -36,18 +36,15 @@ $dist->regen;
 use File::Spec::Functions qw( catdir );
 
 my $mb = Module::Build->new_from_context(
-  # need default install paths to ensure manpages & HTML get generated
+  # Need default install paths to ensure manpages get generated.
   installdirs => 'site',
   config => {
     installman1dir  => catdir($tmp, 'man', 'man1'),
     installman3dir  => catdir($tmp, 'man', 'man3'),
-    installhtml1dir => catdir($tmp, 'html'),
-    installhtml3dir => catdir($tmp, 'html'),
-
     installsiteman1dir  => catdir($tmp, 'site', 'man', 'man1'),
     installsiteman3dir  => catdir($tmp, 'site', 'man', 'man3'),
-    installsitehtml1dir => catdir($tmp, 'site', 'html'),
-    installsitehtml3dir => catdir($tmp, 'site', 'html'),
+    ## We also used to have HTML paths here, but building HTML docs
+    ## can be super slow, and we never checked the result anyway.
   }
 
 );
@@ -166,10 +163,6 @@ is $@, '';
 					      '--install_base', $basedir])};
   is $@, '';
 
-  eval {$mb->run_perl_script($cmd, [], ['install', '--destdir', $destdir,
-					      '--install_base', $basedir, '--install_base', $basedir])};
-  is $@, '';
-
   $install_to = File::Spec->catfile($destdir, $libdir, $dist->name ) . '.pm';
   is -e $install_to, 1, "Look for file at $install_to";
 
@@ -208,14 +201,6 @@ Simple Man <simple@example.com>
   my $pods = $mb->_find_file_by_type('pod', 'lib');
   is keys %$pods, 1;
   my $expect = $mb->localize_file_path('lib/Simple/Docs.pod');
-
-  # TODO:
-  # True for traditional VMS, but will need to be changed when ODS-5 support
-  # for case preserved filenames is active.
-  # The issue is that the keys to the $pods hash are currently being set to
-  # lowercase on VMS so can not be found in exact case.
-
-  $expect = lc($expect) if $^O eq 'VMS';
 
   is $pods->{$expect}, $expect;
 

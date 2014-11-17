@@ -75,7 +75,7 @@ SKIP: {
 	chmod 0444, 'dasboot.bs';
 
 	SKIP: {
-	    skip("cannot write readonly files", 1) if -w 'dasboot.bs'; 
+	    skip("cannot write readonly files", 1) if -w 'dasboot.bs';
 
 	    eval{ Mkbootstrap('dasboot', 1) };
 	    like( $@, qr/Unable to open dasboot\.bs/, 'should die given bad filename' );
@@ -121,7 +121,7 @@ SKIP: {
     local $DynaLoader::bscode;
 	$DynaLoader::bscode = 'Wall';
 	$ExtUtils::Mkbootstrap::Verbose = 0;
-	
+
 	# if arguments contain '-l' or '-L' or '-R' print dl_findfile message
 	eval{ Mkbootstrap('dasboot', '-Larry') };
 	is( $@, '', 'should be able to open a file again');

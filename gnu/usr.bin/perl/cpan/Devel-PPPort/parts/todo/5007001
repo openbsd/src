@@ -1,5 +1,6 @@
 5.007001
 POPpbytex                      # E
+XCPT_RETHROW                   # U
 bytes_from_utf8                # U
 despatch_signals               # U
 do_openn                       # U

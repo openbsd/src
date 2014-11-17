@@ -146,43 +146,21 @@ void VDir::Init(VDir* pDir, VMem *p)
     else {
 	int bSave = bManageDirectory;
 	DWORD driveBits = GetLogicalDrives();
-        OSVERSIONINFO osver;
-
-        memset(&osver, 0, sizeof(osver));
-        osver.dwOSVersionInfoSize = sizeof(osver);
-        GetVersionEx(&osver);
 
 	bManageDirectory = 0;
-        if (osver.dwMajorVersion < 5) {
-            char szBuffer[MAX_PATH*driveCount];
-            if (GetLogicalDriveStringsA(sizeof(szBuffer), szBuffer)) {
-                char* pEnv = (char*)GetEnvironmentStringsA();
-                char* ptr = szBuffer;
-                for (index = 0; index < driveCount; ++index) {
-                    if (driveBits & (1<<index)) {
-                        ptr += SetDirA(ptr, index) + 1;
-                        FromEnvA(pEnv, index);
-                    }
+        WCHAR szBuffer[MAX_PATH*driveCount];
+        if (GetLogicalDriveStringsW(sizeof(szBuffer), szBuffer)) {
+            WCHAR* pEnv = GetEnvironmentStringsW();
+            WCHAR* ptr = szBuffer;
+            for (index = 0; index < driveCount; ++index) {
+                if (driveBits & (1<<index)) {
+                    ptr += SetDirW(ptr, index) + 1;
+                    FromEnvW(pEnv, index);
                 }
-                FreeEnvironmentStringsA(pEnv);
             }
-            SetDefaultA(".");
+            FreeEnvironmentStringsW(pEnv);
         }
-        else { /* Windows 2000 or later */
-            WCHAR szBuffer[MAX_PATH*driveCount];
-            if (GetLogicalDriveStringsW(sizeof(szBuffer), szBuffer)) {
-                WCHAR* pEnv = GetEnvironmentStringsW();
-                WCHAR* ptr = szBuffer;
-                for (index = 0; index < driveCount; ++index) {
-                    if (driveBits & (1<<index)) {
-                        ptr += SetDirW(ptr, index) + 1;
-                        FromEnvW(pEnv, index);
-                    }
-                }
-                FreeEnvironmentStringsW(pEnv);
-            }
-            SetDefaultW(L".");
-        }
+        SetDefaultW(L".");
 	bManageDirectory = bSave;
   }
 }

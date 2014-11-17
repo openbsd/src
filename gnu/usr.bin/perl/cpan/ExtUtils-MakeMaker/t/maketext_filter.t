@@ -12,7 +12,7 @@ use ExtUtils::MM_VMS;
 
 sub test_filter {
     my($text, $vms_text) = @_;
-    
+
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     is( ExtUtils::MM_Any->maketext_filter($text), $text,     'default filter' );
     is( ExtUtils::MM_VMS->maketext_filter($text), $vms_text, 'VMS filter' );

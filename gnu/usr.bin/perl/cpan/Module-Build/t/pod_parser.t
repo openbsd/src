@@ -2,7 +2,7 @@
 
 use strict;
 use lib 't/lib';
-use MBTest tests => 12;
+use MBTest tests => 14;
 
 blib_load('Module::Build::PodParser');
 
@@ -112,4 +112,26 @@ EOF
 
   is $pp->get_author->[0], 'C<Foo::Bar> was written by Engelbert Humperdinck I<E<lt>eh@example.comE<gt>> in 2004.', 'author';
   is $pp->get_abstract, 'Perl extension for blah blah blah', 'abstract';
+}
+
+{
+local *FH;
+tie *FH, 'IO::StringBased', <<'EOF';
+=head1 NAME
+
+Foo_Bar - Perl extension for eating pie
+
+=head1 AUTHOR
+
+C<Foo_Bar> was written by Engelbert Humperdinck I<E<lt>eh@example.comE<gt>> in 2004.
+
+Home page: http://example.com/~eh/
+
+=cut
+EOF
+
+
+  my $pp = Module::Build::PodParser->new(fh => \*FH);
+  ok $pp, 'object created';
+  is $pp->get_abstract, 'Perl extension for eating pie', 'abstract';
 }

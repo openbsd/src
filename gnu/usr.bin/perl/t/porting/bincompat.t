@@ -6,7 +6,7 @@ use Config;
 
 plan(2);
 
-# Defiantely a white box test...
+# Defiantly a white box test...
 
 # As we need to call it direct, we'll take advantage of its result ordering:
 my @to_check = qw(bincompat_options non_bincompat_options);

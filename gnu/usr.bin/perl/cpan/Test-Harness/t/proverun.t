@@ -5,10 +5,11 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test::More;
 use File::Spec;
 use App::Prove;
-use TAP::Parser::Utils qw( split_shell );
+use Text::ParseWords qw(shellwords);
 
 my @SCHEDULE;
 
@@ -47,7 +48,7 @@ BEGIN {
                             command => [
                                 'PERL',
                                 $ENV{HARNESS_PERL_SWITCHES}
-                                ? split_shell( $ENV{HARNESS_PERL_SWITCHES} )
+                                ? shellwords( $ENV{HARNESS_PERL_SWITCHES} )
                                 : (),
                                 $_->{file},
                             ],
@@ -67,9 +68,8 @@ BEGIN {
 # Waaaaay too much boilerplate
 
 package FakeProve;
-use vars qw( @ISA );
 
-@ISA = qw( App::Prove );
+use base qw( App::Prove );
 
 sub new {
     my $class = shift;
@@ -94,13 +94,11 @@ package main;
     # Patch TAP::Parser::Iterator::Process
     my @call_log = ();
 
-    local $^W;    # no warnings
+    no warnings qw(redefine once);
 
     my $orig_new = TAP::Parser::Iterator::Process->can('new');
 
-    # Avoid "used only once" warning
-    *TAP::Parser::Iterator::Process::new
-      = *TAP::Parser::Iterator::Process::new = sub {
+    *TAP::Parser::Iterator::Process::new = sub {
         push @call_log, [ 'new', @_ ];
 
         # And then new turns round and tramples on our args...

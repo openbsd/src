@@ -15,7 +15,7 @@ require 'regen/regen_lib.pl';
 # in the headers is used to minimize the possibility of things getting
 # out-of-sync, or the wrong data structure being passed.  Currently that
 # random number is:
-my $VERSION_DATA_STRUCTURE_TYPE = 290655244;
+my $VERSION_DATA_STRUCTURE_TYPE = 148565664;
 
 my $out_fh = open_new('charclass_invlists.h', '>',
 		      {style => '*', by => $0,
@@ -36,37 +36,22 @@ sub output_invlist ($$) {
     # Output the inversion list $invlist using the name $name for it.
     # It is output in the exact internal form for inversion lists.
 
-    my $zero_or_one;    # Is the last element of the header 0, or 1 ?
-
-    # If the first element is 0, it goes in the header, instead of the body
-    if ($invlist->[0] == 0) {
-        shift @$invlist;
-
-        $zero_or_one = 0;
-
-        # Add a dummy 0 at the end so that the length is constant.  inversion
-        # lists are always stored with enough room so that if they change from
-        # beginning with 0, they don't have to grow.
-        push @$invlist, 0;
-    }
-    else {
+    # Is the last element of the header 0, or 1 ?
+    my $zero_or_one = 0;
+    if ($invlist->[0] != 0) {
+        unshift @$invlist, 0;
         $zero_or_one = 1;
     }
+    my $count = @$invlist;
 
     print $out_fh "\n#ifndef PERL_IN_XSUB_RE\n" unless exists $include_in_ext_re{$name};
-    print $out_fh "\nstatic UV ${name}_invlist[] = {\n";
+    print $out_fh "\nstatic const UV ${name}_invlist[] = {\n";
 
-    print $out_fh "\t", scalar @$invlist, ",\t/* Number of elements */\n";
-
-    # This should be UV_MAX, but I (khw) am not confident that the suffixes
-    # for specifying the constant are portable, e.g.  'ull' on a 32 bit
-    # machine that is configured to use 64 bits; might need a Configure probe
-    print $out_fh "\t0,\t/* Current iteration position */\n";
-    print $out_fh "\t0,\t/* Cache of previous search index result */\n";
+    print $out_fh "\t$count,\t/* Number of elements */\n";
     print $out_fh "\t$VERSION_DATA_STRUCTURE_TYPE, /* Version and data structure type */\n";
     print $out_fh "\t", $zero_or_one,
-                  ",\t/* 0 if this is the first element of the list proper;",
-                  "\n\t\t   1 if the next element is the first */\n";
+                  ",\t/* 0 if the list starts at 0;",
+                  "\n\t\t   1 if it starts at the element beyond 0 */\n";
 
     # The main body are the UVs passed in to this routine.  Do the final
     # element separately
@@ -118,7 +103,7 @@ for my $i (0 .. @$folds_ref - 1) {
     next unless ref $folds_ref->[$i];   # Skip single-char folds
     push @has_multi_char_fold, $cp_ref->[$i];
 
-    # Add to the the non-finals list each code point that is in a non-final
+    # Add to the non-finals list each code point that is in a non-final
     # position
     for my $j (0 .. @{$folds_ref->[$i]} - 2) {
         push @is_non_final_fold, $folds_ref->[$i][$j]
@@ -126,14 +111,17 @@ for my $i (0 .. @$folds_ref - 1) {
     }
 }
 
-sub _Perl_Multi_Char_Folds {
-    @has_multi_char_fold = sort { $a <=> $b } @has_multi_char_fold;
-    return mk_invlist_from_cp_list(\@has_multi_char_fold);
-}
-
 sub _Perl_Non_Final_Folds {
     @is_non_final_fold = sort { $a <=> $b } @is_non_final_fold;
     return mk_invlist_from_cp_list(\@is_non_final_fold);
+}
+
+sub UpperLatin1 {
+    my @upper_latin1;
+    for my $i (0 .. 255) {  # Complicated because of EBCDIC
+        push @upper_latin1, $i if chr($i) =~ /[[:^ascii:]]/;
+    }
+    return mk_invlist_from_cp_list(\@upper_latin1);
 }
 
 output_invlist("Latin1", [ 0, 256 ]);
@@ -164,37 +152,28 @@ output_invlist("AboveLatin1", [ 256 ]);
 
 for my $prop (qw(
                 ASCII
-                L1Cased
+                Cased
 		VertSpace
-                PerlSpace
-                    XPerlSpace
-                PosixAlnum
-                    L1PosixAlnum
-                PosixAlpha
-                    L1PosixAlpha
-                PosixBlank
-                    XPosixBlank
-                PosixCntrl
-                    XPosixCntrl
-                PosixDigit
-                PosixGraph
-                    L1PosixGraph
-                PosixLower
-                    L1PosixLower
-                PosixPrint
-                    L1PosixPrint
-                PosixPunct
-                    L1PosixPunct
-                PosixSpace
-                    XPosixSpace
-                PosixUpper
-                    L1PosixUpper
-                PosixWord
-                    L1PosixWord
-                PosixXDigit
-                    XPosixXDigit
+                XPerlSpace
+                XPosixAlnum
+                XPosixAlpha
+                XPosixBlank
+                XPosixCntrl
+                XPosixDigit
+                XPosixGraph
+                XPosixLower
+                XPosixPrint
+                XPosixPunct
+                XPosixSpace
+                XPosixUpper
+                XPosixWord
+                XPosixXDigit
+                _Perl_Any_Folds
                 &NonL1_Perl_Non_Final_Folds
-                &_Perl_Multi_Char_Folds
+                _Perl_Folds_To_Multi_Char
+                &UpperLatin1
+                _Perl_IDStart
+                _Perl_IDCont
     )
 ) {
 
@@ -204,7 +183,7 @@ for my $prop (qw(
     # that crosses the 255/256 boundary if it is one that matches the
     # property.  For example, in the Word property, there is a range of code
     # points that start at U+00F8 and goes through U+02C1.  Instead of
-    # artifically cutting that off at 256 because 256 is the first code point
+    # artificially cutting that off at 256 because 256 is the first code point
     # above Latin1, we let the range go to its natural ending.  That gives us
     # extra information with no added space taken.  But if the range that
     # crosses the boundary is one that doesn't match the property, we don't

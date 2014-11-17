@@ -4,9 +4,20 @@ use strict;
 use Test::More;
 use File::Temp qw(tempfile);
 use IO::Handle;
+use File::Spec;
+use FindBin qw($Bin);
+use constant TRUNCATE_ME => File::Spec->catfile($Bin,'truncate_me');
 
-my $tmpfh = tempfile();
-my $truncate_status;
+my ($truncate_status, $tmpfh);
+
+# Some systems have a screwy tempfile. We don't run our tests there.
+eval {
+    $tmpfh = tempfile();
+};
+
+if ($@ or !defined $tmpfh) {
+    plan skip_all => 'tempfile() not happy on this system.';
+}
 
 eval {
     $truncate_status = truncate($tmpfh, 0);
@@ -16,7 +27,7 @@ if ($@ || !defined($truncate_status)) {
     plan skip_all => 'Truncate not implemented or not working on this system';
 }
 
-plan tests => 3;
+plan tests => 12;
 
 SKIP: {
     my $can_truncate_stdout = truncate(\*STDOUT,0);
@@ -51,3 +62,96 @@ eval {
 };
 
 is($@, "", "Truncating a normal file should be fine");
+
+# Time to test truncating via globs.
+
+# Firstly, truncating a closed filehandle should fail.
+# I know we tested this above, but we'll do a full dance of
+# opening and closing TRUNCATE_FH here.
+
+eval {
+    use autodie qw(truncate);
+    truncate(\*TRUNCATE_FH, 0);
+};
+
+isa_ok($@, 'autodie::exception', "Truncating unopened file (TRUNCATE_FH)");
+
+# Now open the file. If this throws an exception, there's something
+# wrong with our tests, or autodie...
+{
+    use autodie qw(open);
+    open(TRUNCATE_FH, '+<', TRUNCATE_ME);
+}
+
+# Now try truncating the filehandle. This should succeed.
+
+eval {
+    use autodie qw(truncate);
+    truncate(\*TRUNCATE_FH,0);
+};
+
+is($@, "", 'Truncating an opened glob (\*TRUNCATE_FH)');
+
+eval {
+    use autodie qw(truncate);
+    truncate(*TRUNCATE_FH,0);
+};
+
+is($@, "", 'Truncating an opened glob (*TRUNCATE_FH)');
+
+# Now let's change packages, since globs are package dependent
+
+eval {
+    package Fatal::Test;
+    no warnings 'once';
+    use autodie qw(truncate);
+    truncate(\*TRUNCATE_FH,0);  # Should die, as now unopened
+};
+
+isa_ok($@, 'autodie::exception', 'Truncating unopened file in different package (\*TRUNCATE_FH)');
+
+eval {
+    package Fatal::Test;
+    no warnings 'once';
+    use autodie qw(truncate);
+    truncate(*TRUNCATE_FH,0);  # Should die, as now unopened
+};
+
+isa_ok($@, 'autodie::exception', 'Truncating unopened file in different package (*TRUNCATE_FH)');
+
+# Now back to our previous test, just to make sure it hasn't changed
+# the original file.
+
+eval {
+    use autodie qw(truncate);
+    truncate(\*TRUNCATE_FH,0);
+};
+
+is($@, "", 'Truncating an opened glob #2 (\*TRUNCATE_FH)');
+
+eval {
+    use autodie qw(truncate);
+    truncate(*TRUNCATE_FH,0);
+};
+
+is($@, "", 'Truncating an opened glob #2 (*TRUNCATE_FH)');
+
+# Now to close the file and retry.
+{
+    use autodie qw(close);
+    close(TRUNCATE_FH);
+}
+
+eval {
+    use autodie qw(truncate);
+    truncate(\*TRUNCATE_FH,0);
+};
+
+isa_ok($@, 'autodie::exception', 'Truncating freshly closed glob (\*TRUNCATE_FH)');
+
+eval {
+    use autodie qw(truncate);
+    truncate(*TRUNCATE_FH,0);
+};
+
+isa_ok($@, 'autodie::exception', 'Truncating freshly closed glob (*TRUNCATE_FH)');

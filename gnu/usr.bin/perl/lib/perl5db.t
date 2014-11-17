@@ -26,9 +26,10 @@ BEGIN {
         print "1..0 # Skip: \$ENV{PERL5DB} is already set to '$ENV{PERL5DB}'\n";
         exit 0;
     }
+    $ENV{PERL_RL} = 'Perl'; # Suppress system Term::ReadLine::Gnu
 }
 
-plan(116);
+plan(119);
 
 my $rc_filename = '.perldb';
 
@@ -71,7 +72,7 @@ sub _out_contents
     rc(
         <<'EOF',
 
-&parse_options("NonStop=0 ReadLine=0 TTY=db.out LineInfo=db.out");
+&parse_options("NonStop=0 ReadLine=0 TTY=db.out");
 
 sub afterinit {
     push(@DB::typeahead,
@@ -107,20 +108,13 @@ EOF
     is( $?, 0, '[perl #116771] autotrace does not crash debugger, exit == 0' );
     like( $output, 'success' , '[perl #116771] code is run' );
 }
-
+# [ perl #41461] Frame=2 noTTY
 {
-    rc(<<'EOF');
-&parse_options("NonStop=0 TTY=db.out LineInfo=db.out");
-
-sub afterinit {
-    push (@DB::typeahead,
-    't 2',
-    'c',
-    'q',
-    );
-
-}
-EOF
+    local $ENV{PERLDB_OPTS} = "frame=2 noTTY nonstop";
+    rc('');
+    my $output = runperl( switches => [ '-d' ], prog => 'print q{success}' );
+    is( $?, 0, '[perl #41461] frame=2 noTTY does not crash debugger, exit == 0' );
+    like( $output, 'success' , '[perl #41461] code is run' );
 }
 
 package DebugWrap;
@@ -273,7 +267,7 @@ sub _quote
 sub _run {
     my $self = shift;
 
-    my $rc = qq{&parse_options("NonStop=0 TTY=db.out LineInfo=db.out");\n};
+    my $rc = qq{&parse_options("NonStop=0 TTY=db.out");\n};
 
     $rc .= join('',
         map { "$_\n"}
@@ -1043,6 +1037,20 @@ sub _calc_trace_wrapper
     );
 }
 
+# Test for n with lvalue subs
+DebugWrap->new({
+    cmds =>
+    [
+        'n', 'print "<$x>\n"',
+        'n', 'print "<$x>\n"',
+        'q',
+    ],
+    prog => '../lib/perl5db/t/lsub-n',
+})->output_like(
+    qr/<1>\n<11>\n/,
+    'n steps over lvalue subs',
+);
+
 # Test for 'M' (module list).
 {
     my $wrapper = DebugWrap->new(
@@ -1227,6 +1235,7 @@ sub _calc_trace_wrapper
     $wrapper->contents_like(
         qr/
             $line_out
+            auto\(-\d+\)\s+DB<\d+>\s+\.\n
             $line_out
         /msx,
         'Test the "." command',
@@ -1496,10 +1505,11 @@ sub _calc_trace_wrapper
         }
     );
 
+    my $nl = $^O eq 'VMS' ? "" : "\\\n";
     $wrapper->output_like(qr#
-        \nVar<Q>=1\n
-        \nVar<Q>=2\n
-        \nVar<Q>=3\n
+        \nVar<Q>=1$nl
+        \nVar<Q>=2$nl
+        \nVar<Q>=3
         #msx,
         "a command is working",
     );
@@ -2269,7 +2279,7 @@ sub _calc_trace_wrapper
     );
 
     $wrapper->output_like(qr#
-        ^This\ program\ dies\.\ at\ \S+\ line\ 18\.\n
+        ^This\ program\ dies\.\ at\ \S+\ line\ 18\N*\.\n
         .*?
         ^\s+main::baz\(\)\ called\ at\ \S+\ line\ 13\n
         \s+main::bar\(\)\ called\ at\ \S+\ line\ 7\n
@@ -2294,7 +2304,7 @@ sub _calc_trace_wrapper
     );
 
     $wrapper->contents_like(qr#
-        ^This\ is\ not\ a\ warning\.\ at\ \S+\ line\ 18\.\n
+        ^This\ is\ not\ a\ warning\.\ at\ \S+\ line\ 18\N*\.\n
         .*?
         ^\s+main::baz\(\)\ called\ at\ \S+\ line\ 13\n
         \s+main::bar\(\)\ called\ at\ \S+\ line\ 25\n
@@ -2372,6 +2382,10 @@ sub _calc_trace_wrapper
     $wrapper->contents_like(qr/
         ^main::\([^:]+:28\):\n
         28:\s+myfunc\(\);\n
+        auto\(-\d+\)\s+DB<1>\s+t\n
+        Trace\ =\ on\n
+        auto\(-\d+\)\s+DB<1>\s+b\ 18\n
+        auto\(-\d+\)\s+DB<2>\s+c\n
         main::myfunc\([^:]+:25\):\n
         25:\s+bar\(\);\n
         /msx,
@@ -2399,10 +2413,14 @@ sub _calc_trace_wrapper
     $wrapper->contents_like(qr/
         ^main::\([^:]+:28\):\n
         28:\s+myfunc\(\);\n
+        auto\(-\d+\)\s+DB<1>\s+o\ AutoTrace\n
+        \s+AutoTrace\s+=\s+'1'\n
+        auto\(-\d+\)\s+DB<2>\s+b\ 18\n
+        auto\(-\d+\)\s+DB<3>\s+c\n
         main::myfunc\([^:]+:25\):\n
         25:\s+bar\(\);\n
         /msx,
-        'Test the t command with function calls.',
+        'Test the o AutoTrace command with function calls.',
     );
 }
 

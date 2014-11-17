@@ -258,6 +258,10 @@ Now you should create a patch file for all your local changes:
   % git format-patch -M origin..
   0001-Rename-Leon-Brocard-to-Orange-Brocard.patch
 
+Or for a lot of changes, e.g. from a topic branch:
+
+  % git format-patch --stdout -M origin.. > topic-branch-changes.patch
+
 You should now send an email to
 L<perlbug@perl.org|mailto:perlbug@perl.org> with a description of your
 changes, and include this patch file as an attachment. In addition to
@@ -318,36 +322,25 @@ When in doubt, before you do anything else, check your status and read
 it carefully, many questions are answered directly by the git status
 output.
 
-=head2 Using git to send patch emails
+=head2 Sending patch emails
 
-Please read L<perlhack> first in order to figure out where your patches
-should be sent.
+After you've generated your patch you should sent it
+to perlbug@perl.org (as discussed L<in the previous
+section|/"Patch workflow"> with a normal mail client as an
+attachment, along with a description of the patch.
 
-In your ~/git/perl repository, set the destination email to perl's bug
-tracker:
+You B<must not> use git-send-email(1) to send patches generated with
+git-format-patch(1). The RT ticketing system living behind
+perlbug@perl.org does not respect the inline contents of E-Mails,
+sending an inline patch to RT guarantees that your patch will be
+destroyed.
 
-  $ git config sendemail.to perlbug@perl.org
-
-Or maybe perl5-porters:
-
-  $ git config sendemail.to perl5-porters@perl.org
-
-Then you can use git directly to send your patch emails:
-
-  $ git send-email 0001-Rename-Leon-Brocard-to-Orange-Brocard.patch
-
-You may need to set some configuration variables for your particular
-email service provider. For example, to set your global git config to
-send email via a gmail account:
-
-  $ git config --global sendemail.smtpserver smtp.gmail.com
-  $ git config --global sendemail.smtpssl 1
-  $ git config --global sendemail.smtpuser YOURUSERNAME@gmail.com
-
-With this configuration, you will be prompted for your gmail password
-when you run 'git send-email'. You can also configure
-C<sendemail.smtppass> with your password if you don't care about having
-your password in the .gitconfig file.
+Someone may download your patch from RT, which will result in the
+subject (the first line of the commit message) being omitted.  See RT
+#74192 and commit a4583001 for an example. Alternatively someone may
+apply your patch from RT after it arrived in their mailbox, by which
+time RT will have modified the inline content of the message.  See RT
+#74532 and commit f9bcfeac for a bad example of this failure mode.
 
 =head2 A note on derived files
 
@@ -889,7 +882,8 @@ Finally, you should then delete the remote smoke-me branch:
 
 (which is likely to produce a warning like this, which can be ignored:
 
-  remote: fatal: ambiguous argument 'refs/heads/smoke-me/tonyc/win32stat': unknown revision or path not in the working tree.
+  remote: fatal: ambiguous argument 'refs/heads/smoke-me/tonyc/win32stat':
+  unknown revision or path not in the working tree.
   remote: Use '--' to separate paths from revisions
 
 ) and then delete your local branch:

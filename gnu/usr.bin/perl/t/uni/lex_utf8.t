@@ -5,6 +5,8 @@
 BEGIN {
     $| = 1;
 
+    chdir 't';
+    @INC = '../lib';
     require './test.pl';
     skip_all_if_miniperl("no dynamic loading on miniperl, no re");
     skip_all('EBCDIC') if $::IS_EBCDIC;
@@ -12,7 +14,7 @@ BEGIN {
 
 use strict;
 
-plan (tests => 11);
+plan (tests => 15);
 use charnames ':full';
 
 use utf8;
@@ -48,5 +50,16 @@ do {
     unlike $@, qr/utf8_heavy/,
 	'No utf8_heavy errors with our() syntax errors';
 }
+
+# [perl #120463]
+$_ = "a";
+eval 's αaαbα';
+is $@, "", 's/// compiles, where / is actually a wide character';
+is $_, "b", 'substitution worked';
+$_ = "a";
+eval 'tr νaνbν';
+is $@, "", 'y/// compiles, where / is actually a wide character';
+is $_, "b", 'transliteration worked';
+
 __END__
 

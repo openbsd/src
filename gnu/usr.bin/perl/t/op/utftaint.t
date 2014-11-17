@@ -18,7 +18,7 @@ sub tainted ($) {
 }
 
 require './test.pl';
-plan(tests => 3*10 + 3*8 + 2*16 + 2);
+plan(tests => 3*10 + 3*8 + 2*16 + 3);
 
 my $arg = $ENV{PATH}; # a tainted value
 use constant UTF8 => "\x{1234}";
@@ -148,4 +148,13 @@ for my $ary ([ascii => 'perl'], [latin1 => "\xB6"]) {
     fresh_perl_is('$a = substr $^X, 0, 0; /$a\x{100}/i || print q,ok,',
 		  'ok', {switches => ["-T", "-l"]},
 		  "therefore swash_init should be taint agnostic");
+}
+
+{
+    # RT #122148: s///e on tainted utf8 strings got pos() messed up in 5.20
+
+    my @p;
+    my $s = "\x{100}\x{100}\x{100}\x{100}". $^X;
+    $s =~ s/\x{100}/push @p, pos($s); "xxxx";/eg;
+    is("@p", "0 1 2 3", "RT #122148");
 }

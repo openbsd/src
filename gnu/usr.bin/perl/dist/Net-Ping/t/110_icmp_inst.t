@@ -2,10 +2,15 @@
 # Root access is required to actually perform icmp testing.
 
 use strict;
+use Config;
 
 BEGIN {
   unless (eval "require Socket") {
     print "1..0 \# Skip: no Socket\n";
+    exit;
+  }
+  unless ($Config{d_getpbyname}) {
+    print "1..0 \# Skip: no getprotobyname\n";
     exit;
   }
 }

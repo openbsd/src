@@ -1,7 +1,7 @@
 package TAP::Object;
 
 use strict;
-use vars qw($VERSION);
+use warnings;
 
 =head1 NAME
 
@@ -9,22 +9,19 @@ TAP::Object - Base class that provides common functionality to all C<TAP::*> mod
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 SYNOPSIS
 
     package TAP::Whatever;
 
     use strict;
-    use vars qw(@ISA);
 
-    use TAP::Object;
-
-    @ISA = qw(TAP::Object);
+    use base 'TAP::Object';
 
     # new() implementation by TAP::Object
     sub _initialize {
@@ -127,7 +124,7 @@ sub _construct {
     unless ( $class->can('new') ) {
         local $@;
         eval "require $class";
-        $self->_croak("Can't load $class") if $@;
+        $self->_croak("Can't load $class: $@") if $@;
     }
 
     return $class->new(@args);

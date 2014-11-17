@@ -398,7 +398,7 @@ random number between 0 and 5 that you can then add to 10.
 
 Hence you derive the following simple function to abstract
 that. It selects a random integer between the two given
-integers (inclusive), For example: C<random_int_between(50,120)>.
+integers (inclusive). For example: C<random_int_between(50,120)>.
 
     sub random_int_between {
         my($min, $max) = @_;
@@ -1615,7 +1615,7 @@ such as C<push>, C<pop>, C<shift>, C<unshift>, or C<splice> to do
 that.
 
 Sometimes, however, linked lists can be useful in situations where you
-want to "shard" an array so you have have many small arrays instead of
+want to "shard" an array so you have many small arrays instead of
 a single big array. You can keep arrays longer than Perl's largest
 array index, lock smaller arrays separately in threaded programs,
 reallocate less memory, or quickly insert elements in the middle of
@@ -2430,7 +2430,7 @@ Usually a hash ref, perhaps like this:
 References are documented in L<perlref> and L<perlreftut>.
 Examples of complex data structures are given in L<perldsc> and
 L<perllol>. Examples of structures and object-oriented classes are
-in L<perltoot>.
+in L<perlootut>.
 
 =head2 How can I use a reference as a hash key?
 

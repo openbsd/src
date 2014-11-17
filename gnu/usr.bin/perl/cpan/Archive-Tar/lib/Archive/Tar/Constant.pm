@@ -3,14 +3,13 @@ package Archive::Tar::Constant;
 BEGIN {
     require Exporter;
 
-    $VERSION    = '1.90';
+    $VERSION    = '1.96';
     @ISA        = qw[Exporter];
 
     require Time::Local if $^O eq "MacOS";
 }
 
-use Package::Constants;
-@EXPORT = Package::Constants->list( __PACKAGE__ );
+@EXPORT = Archive::Tar::Constant->_list_consts( __PACKAGE__ );
 
 use constant FILE           => 0;
 use constant HARDLINK       => 1;
@@ -82,5 +81,30 @@ use constant CAN_CHOWN      => sub { ($> == 0 and $^O ne "MacOS" and $^O ne "MSW
 use constant CAN_READLINK   => ($^O ne 'MSWin32' and $^O !~ /RISC(?:[ _])?OS/i and $^O ne 'VMS');
 use constant ON_UNIX        => ($^O ne 'MSWin32' and $^O ne 'MacOS' and $^O ne 'VMS');
 use constant ON_VMS         => $^O eq 'VMS';
+
+sub _list_consts {
+    my $class = shift;
+    my $pkg   = shift;
+    return unless defined $pkg; # some joker might use '0' as a pkg...
+
+    my @rv;
+    {   no strict 'refs';
+        my $stash = $pkg . '::';
+
+        for my $name (sort keys %$stash ) {
+
+            ### is it a subentry?
+            my $sub = $pkg->can( $name );
+            next unless defined $sub;
+
+            next unless defined prototype($sub) and
+                     not length prototype($sub);
+
+            push @rv, $name;
+        }
+    }
+
+    return sort @rv;
+}
 
 1;

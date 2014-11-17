@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.51';
+our $VERSION = '0.60_01';
 
 require XSLoader;
 
@@ -222,12 +222,14 @@ what it might be medifying).
 =item B<call_sv>, B<call_pv>, B<call_method>
 
 These exercise the C calls of the same names. Everything after the flags
-arg is passed as the the args to the called function. They return whatever
+arg is passed as the args to the called function. They return whatever
 the C function itself pushed onto the stack, plus the return value from
 the function; for example
 
-    call_sv( sub { @_, 'c' }, G_ARRAY,  'a', 'b'); # returns 'a', 'b', 'c', 3
-    call_sv( sub { @_ },      G_SCALAR, 'a', 'b'); # returns 'b', 1
+    call_sv( sub { @_, 'c' }, G_ARRAY,  'a', 'b');
+    # returns 'a', 'b', 'c', 3
+    call_sv( sub { @_ },      G_SCALAR, 'a', 'b');
+    # returns 'b', 1
 
 =item B<eval_sv>
 

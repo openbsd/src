@@ -11,7 +11,7 @@ plan( tests => 58 );
 
 # Used to segfault (bug #15479)
 fresh_perl_like(
-    '%:: = ""',
+    'delete $::{STDERR}; my %a = ""',
     qr/Odd number of elements in hash assignment at - line 1\./,
     { switches => [ '-w' ] },
     'delete $::{STDERR} and print a warning',
@@ -59,16 +59,17 @@ package main;
 {
     local $ENV{PERL_DESTRUCT_LEVEL} = 2;
     fresh_perl_is(
-		  'package A; sub a { // }; %::=""',
+		  'package A::B; sub a { // }; %A::=""',
 		  '',
-		  '',
+		  {},
 		  );
     # Variant of the above which creates an object that persists until global
-    # destruction.
+    # destruction, and triggers an assertion failure prior to change
+    # a420522db95b7762
     fresh_perl_is(
-		  'use Exporter; package A; sub a { // }; %::=""',
+		  'use Exporter; package A; sub a { // }; delete $::{$_} for keys %::',
 		  '',
-		  '',
+		  {},
 		  );
 }
 

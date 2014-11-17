@@ -3,9 +3,10 @@
 
 use strict;
 use Test;
+use utf8;
 
 my @them;
-BEGIN { plan('tests' => 41) };
+BEGIN { plan('tests' => 42) };
 BEGIN { print "# Perl version $] under $^O\n" }
 
 use Pod::Escapes qw(:ALL);
@@ -77,5 +78,8 @@ print "# %Name2character_number test...\n";
 ok scalar keys %Name2character_number;
 ok defined $Name2character_number{'eacute'};
 ok $Name2character_number{'lt'} eq '60';
+
+# e2charnum on BENGALI DIGIT SEVEN should return undef
+ok(!defined(e2charnum('৭')));
 
 # End

@@ -4,6 +4,7 @@
 # process.
 
 use strict;
+use warnings;
 use lib 't/lib';
 use Config;
 
@@ -36,10 +37,9 @@ use lib 'wibble';
 my $test_template = <<'END';
 #!/usr/bin/perl %s
 
-use Test::More tests => 2;
+use Test::More tests => 1;
 
 is $INC[0], "wibble", 'basic order of @INC preserved' or diag "\@INC: @INC";
-like $ENV{PERL5LIB}, qr{wibble};
 
 END
 

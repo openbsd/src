@@ -16,7 +16,7 @@ plan tests => 104;
 
 my $STDOUT = tempfile();
 my $STDERR = tempfile();
-my $PERL = $ENV{PERL} || './perl';
+my $PERL = './perl';
 my $FAILURE_CODE = 119;
 
 delete $ENV{PERLLIB};

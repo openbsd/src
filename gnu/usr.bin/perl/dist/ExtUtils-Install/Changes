@@ -1,5 +1,15 @@
 Revision history for ExtUtils-Install
 
+1.63
+
+- Enable tests to run in parallel
+
+1.62
+
+- Various POD fixes and typos
+- Cross-compilation fixes
+- VMS fixes
+
 1.57
 
 Adds 'skip_cwd' parameter to ExtUtils::Installed.  With this new parameter,

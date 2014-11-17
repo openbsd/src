@@ -309,6 +309,7 @@ EOM
               1 while $x->read($uncomp) > 0 ;
 
               ok $x->close, "  close" ;
+              close FH;
             }
 
             is $uncomp, $hello, "  expected output" ;

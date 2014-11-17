@@ -19,7 +19,8 @@ sub check_for
     require ExtUtils::CBuilder;
     $cb ||= ExtUtils::CBuilder->new( quiet => 1 );
 
-    my $main = $args{main};
+    my $main   = $args{main}   || "";
+    my $header = $args{header} || "";
 
     print "Checking $args{define}...\n";
 
@@ -40,6 +41,7 @@ sub check_for
 # include <netinet/in.h>
 # include <arpa/inet.h>
 #endif
+$header
 int main(int argc, char *argv[])
   {
     (void)argc;
@@ -70,7 +72,7 @@ sub check_for_func
 {
     my %args = @_;
     my $func = delete $args{func};
-    check_for( %args, main => "void *p = &$func; (void)p;" );
+    check_for( %args, main => "void *p = &$func; if(p == NULL) return 1;" );
 }
 
 my %defines = (
@@ -115,7 +117,6 @@ check_for(
     main    => "struct ip_mreq mreq; mreq.imr_multiaddr.s_addr = INADDR_ANY;"
 );
 
-# TODO: Needs adding to perl5 core before importing dual-life again
 check_for(
     confkey => "d_ip_mreq_source",
     define  => "HAS_IP_MREQ_SOURCE",
@@ -126,6 +127,13 @@ check_for(
     confkey => "d_ipv6_mreq",
     define  => "HAS_IPV6_MREQ",
     main    => "struct ipv6_mreq mreq; mreq.ipv6mr_interface = 0;"
+);
+
+# TODO: Needs adding to perl5 core before importing dual-life again
+check_for(
+    confkey => "i_netinet_ip",
+    define  => "I_NETINET_IP",
+    header  => "#include <netinet/ip.h>",
 );
 
 my %makefile_args;
@@ -170,8 +178,10 @@ my @names = (
 
 	IP_ADD_MEMBERSHIP IP_ADD_SOURCE_MEMBERSHIP IP_DROP_MEMBERSHIP
 	IP_DROP_SOURCE_MEMBERSHIP IP_HDRINCL IP_MULTICAST_IF IP_MULTICAST_LOOP
-	IP_MULTICAST_TTL IP_OPTIONS IP_RECVOPTS	IP_RECVRETOPTS IP_RETOPTS IP_TOS
-	IP_TTL 
+	IP_MULTICAST_TTL IP_OPTIONS IP_RECVOPTS IP_RECVRETOPTS IP_RETOPTS IP_TOS
+	IP_TTL
+
+	IPTOS_LOWDELAY IPTOS_THROUGHPUT IPTOS_RELIABILITY IPTOS_MINCOST
 
 	IPV6_ADD_MEMBERSHIP IPV6_DROP_MEMBERSHIP IPV6_JOIN_GROUP
 	IPV6_LEAVE_GROUP IPV6_MTU IPV6_MTU_DISCOVER IPV6_MULTICAST_HOPS

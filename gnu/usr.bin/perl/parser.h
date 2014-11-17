@@ -29,7 +29,6 @@ typedef struct yy_lexshared {
     char		*ls_bufptr;	/* mirrors PL_parser->bufptr */
     char		*re_eval_start;	/* start of "(?{..." text */
     SV			*re_eval_str;	/* "(?{...})" text */
-    line_t		herelines;	/* number of lines in here-doc */
 } LEXSHARED;
 
 typedef struct yy_parser {
@@ -55,7 +54,8 @@ typedef struct yy_parser {
     char	*lex_brackstack;/* what kind of brackets to pop */
     char	*lex_casestack;	/* what kind of case mods in effect */
     U8		lex_defer;	/* state after determined token */
-    bool	lex_dojoin;	/* doing an array interpolation */
+    U8		lex_dojoin;	/* doing an array interpolation
+				   1 = @{...}  2 = ->@ */
     U8		lex_expect;	/* expect after determined token */
     U8		expect;		/* how to interpret ambiguous tokens */
     I32		lex_formbrack;	/* bracket count at outer format level */
@@ -123,11 +123,13 @@ typedef struct yy_parser {
 
     COP		*saved_curcop;	/* the previous PL_curcop */
     char	tokenbuf[256];
-
+    line_t	herelines;	/* number of lines in here-doc */
+    line_t	preambling;	/* line # when processing $ENV{PERL5DB} */
     U8		lex_fakeeof;	/* precedence at which to fake EOF */
     U8		lex_flags;
     PERL_BITFIELD16	in_pod:1;      /* lexer is within a =pod section */
     PERL_BITFIELD16	filtered:1;    /* source filters in evalbytes */
+    PERL_BITFIELD16	saw_infix_sigil:1; /* saw & or * or % operator */
 } yy_parser;
 
 /* flags for lexer API */

@@ -44,12 +44,13 @@ ok 1;
 
 is $object_file, $b->compile(source => $source_file);
 
-$lib_file = $b->lib_file($object_file);
+$lib_file = $b->lib_file($object_file, module_name => 'basict');
 ok 1;
 
 my ($lib, @temps) = $b->link(objects => $object_file,
                              module_name => 'basict');
 $lib =~ tr/"'//d;
+$_ = File::Spec->rel2abs($_) for $lib_file, $lib;
 is $lib_file, $lib;
 
 for ($source_file, $object_file, $lib_file) {

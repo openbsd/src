@@ -2,7 +2,7 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.18';
+$VERSION = '2.22';
 $VERSION = eval $VERSION;
 
 # constant.pm is slow
@@ -55,6 +55,23 @@ else {
     }
 }
 
+if ($] < 5.008) {
+    *_module_to_filename = sub {
+        (my $fn = $_[0]) =~ s!::!/!g;
+        $fn .= '.pm';
+        return $fn;
+    }
+}
+else {
+    *_module_to_filename = sub {
+        (my $fn = $_[0]) =~ s!::!/!g;
+        $fn .= '.pm';
+        utf8::encode($fn);
+        return $fn;
+    }
+}
+
+
 sub import {
     my $class = shift;
 
@@ -78,10 +95,18 @@ sub import {
             my $sigdie;
             {
                 local $SIG{__DIE__};
-                eval "require $base";
+                my $fn = _module_to_filename($base);
+                eval { require $fn };
                 # Only ignore "Can't locate" errors from our eval require.
                 # Other fatal errors (syntax etc) must be reported.
-                die if $@ && $@ !~ /^Can't locate .*? at \(eval /;
+                #
+                # changing the check here is fragile - if the check
+                # here isn't catching every error you want, you should
+                # probably be using parent.pm, which doesn't try to
+                # guess whether require is needed or failed,
+                # see [perl #118561]
+                die if $@ && $@ !~ /^Can't locate \Q$fn\E .*? at .* line [0-9]+(?:, <[^>]*> (?:line|chunk) [0-9]+)?\.\n\z/s
+                          || $@ =~ /Compilation failed in require at .* line [0-9]+(?:, <[^>]*> (?:line|chunk) [0-9]+)?\.\n\z/;
                 unless (%{"$base\::"}) {
                     require Carp;
                     local $" = " ";

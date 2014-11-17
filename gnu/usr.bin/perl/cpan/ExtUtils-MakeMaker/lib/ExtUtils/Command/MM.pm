@@ -8,12 +8,16 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 
-our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall 
-                  warn_if_old_packlist);
-our $VERSION = '6.66';
+our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall
+                  warn_if_old_packlist test_s cp_nonempty);
+our $VERSION = '6.98';
 
 my $Is_VMS = $^O eq 'VMS';
 
+eval {  require Time::HiRes; die unless Time::HiRes->can("stat"); };
+*mtime = $@ ?
+ sub { [             stat($_[0])]->[9] } :
+ sub { [Time::HiRes::stat($_[0])]->[9] } ;
 
 =head1 NAME
 
@@ -108,7 +112,7 @@ sub pod2man {
     # our arguments into @ARGV.  Should be safe.
     my %options = ();
     Getopt::Long::config ('bundling_override');
-    Getopt::Long::GetOptions (\%options, 
+    Getopt::Long::GetOptions (\%options,
                 'section|s=s', 'release|r=s', 'center|c=s',
                 'date|d=s', 'fixed=s', 'fixedbold=s', 'fixeditalic=s',
                 'fixedbolditalic=s', 'official|o', 'quotes|q=s', 'lax|l',
@@ -131,8 +135,8 @@ sub pod2man {
         my ($pod, $man) = splice(@ARGV, 0, 2);
 
         next if ((-e $man) &&
-                 (-M $man < -M $pod) &&
-                 (-M $man < -M "Makefile"));
+                 (mtime($man) > mtime($pod)) &&
+                 (mtime($man) > mtime("Makefile")));
 
         print "Manifying $man\n";
 
@@ -174,7 +178,7 @@ PACKLIST_WARNING
 
 =item B<perllocal_install>
 
-    perl "-MExtUtils::Command::MM" -e perllocal_install 
+    perl "-MExtUtils::Command::MM" -e perllocal_install
         <type> <module name> <key> <value> ...
 
     # VMS only, key|value pairs come on STDIN
@@ -193,7 +197,7 @@ Key/value pairs are extra information about the module.  Fields include:
     installed into      which directory your module was out into
     LINKTYPE            dynamic or static linking
     VERSION             module version number
-    EXE_FILES           any executables installed in a space seperated 
+    EXE_FILES           any executables installed in a space seperated
                         list
 
 =cut
@@ -209,9 +213,9 @@ sub perllocal_install {
     my $pod;
     $pod = sprintf <<POD, scalar localtime;
  =head2 %s: C<$type> L<$name|$name>
- 
+
  =over 4
- 
+
 POD
 
     do {
@@ -219,9 +223,9 @@ POD
 
         $pod .= <<POD
  =item *
- 
+
  C<$key: $val>
- 
+
 POD
 
     } while(@mod_info);
@@ -268,8 +272,43 @@ WARNING
 
 }
 
+=item B<test_s>
+
+   perl "-MExtUtils::Command::MM" -e test_s <file>
+
+Tests if a file exists and is not empty (size > 0).
+I<Exits> with 0 if it does, 1 if it does not.
+
+=cut
+
+sub test_s {
+  exit(-s $ARGV[0] ? 0 : 1);
+}
+
+=item B<cp_nonempty>
+
+  perl "-MExtUtils::Command::MM" -e cp_nonempty <srcfile> <dstfile> <perm>
+
+Tests if the source file exists and is not empty (size > 0). If it is not empty
+it copies it to the given destination with the given permissions.
+
 =back
 
 =cut
+
+sub cp_nonempty {
+  my @args = @ARGV;
+  return 0 unless -s $args[0];
+  require ExtUtils::Command;
+  {
+    local @ARGV = @args[0,1];
+    ExtUtils::Command::cp(@ARGV);
+  }
+  {
+    local @ARGV = @args[2,1];
+    ExtUtils::Command::chmod(@ARGV);
+  }
+}
+
 
 1;

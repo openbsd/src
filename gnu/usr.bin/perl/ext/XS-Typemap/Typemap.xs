@@ -157,7 +157,7 @@ XS_unpack_anotherstructPtrPtr(SV *in)
     else
         Perl_croak(aTHX_ "Argument is not an ARRAY reference");
 
-    nitems = av_len(inary) + 1;
+    nitems = av_tindex(inary) + 1;
 
     /* FIXME dunno if supposed to use perl mallocs here */
     /* N+1 elements so we know the last one is NULL */
@@ -440,6 +440,7 @@ bool
 T_BOOL_2( in )
   bool in
  CODE:
+    PERL_UNUSED_VAR(RETVAL);
  OUTPUT:
    in
 
@@ -568,6 +569,13 @@ T_PV( in )
   char * in
  CODE:
   RETVAL = in;
+ OUTPUT:
+  RETVAL
+
+char *
+T_PV_null()
+ CODE:
+  RETVAL = NULL;
  OUTPUT:
   RETVAL
 

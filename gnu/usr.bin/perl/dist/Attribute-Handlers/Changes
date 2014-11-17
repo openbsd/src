@@ -166,3 +166,6 @@ t Revision history for Perl extension Attribute-Handlers
 	- Spelling fixes (Father Chrysostomos)
 	- Indentation fixes (Father Chrysostomos)
 
+0.96	Fri Mar  7 08:30:00 CET 2014
+	- Documentation fixes
+        - Replace use of base.pm with parent.pm

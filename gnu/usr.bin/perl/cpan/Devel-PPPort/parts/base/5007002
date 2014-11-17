@@ -49,8 +49,6 @@ PERL_MAGIC_fm                  # added by devel/scanprov
 PERL_MAGIC_isa                 # added by devel/scanprov
 PERL_MAGIC_isaelem             # added by devel/scanprov
 PERL_MAGIC_nkeys               # added by devel/scanprov
-PERL_MAGIC_overload            # added by devel/scanprov
-PERL_MAGIC_overload_elem       # added by devel/scanprov
 PERL_MAGIC_overload_table      # added by devel/scanprov
 PERL_MAGIC_pos                 # added by devel/scanprov
 PERL_MAGIC_qr                  # added by devel/scanprov

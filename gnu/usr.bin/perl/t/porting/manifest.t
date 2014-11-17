@@ -1,13 +1,40 @@
 #!./perl -w
 
-# Test the well-formed-ness of the MANIFEST file.
+# What does this test?
+# This tests the well-formed-ness of the MANIFEST file.
+#
+# Why do we test this?
+# TK
+#
+# It's broken - how do I fix it?
+# If MANIFEST is not sorted properly, you will get this error output:
+#      got ''MANIFEST' is NOT sorted properly
+#      # '
+#      # expected /(?^:is sorted properly)/
+#
+# To correct this, run either:
+#
+#   ./perl -Ilib Porting/manisort -o MANIFEST MANIFEST
+#
+# which will output "'MANIFEST' is NOT sorted properly" but which will
+# correct the problem; or:
+#
+#   make manifest
+#
+# which will output "WARNING: re-sorting MANIFEST" but which will also
+# correct the problem.
 
+use Config;
 BEGIN {
     @INC = '..' if -f '../TestInit.pm';
 }
 use TestInit qw(T); # T is chdir to the top level
 
 require 't/test.pl';
+
+skip_all("Cross-compiling, the entire source might not be available")
+    if $Config{usecrosscompile};
+
 
 plan('no_plan');
 
@@ -49,7 +76,8 @@ SKIP: {
 
     my $result = runperl('progfile' => 'Porting/manisort',
                          'args'     => [ '-c', $manifest ],
-                         'stderr'   => 1);
+                         'stderr'   => 1,
+                         'nolib'    => 1 );
 
     like($result, qr/is sorted properly/, 'MANIFEST sorted properly');
 }

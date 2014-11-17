@@ -7,7 +7,7 @@ package _charnames;
 use strict;
 use warnings;
 use File::Spec;
-our $VERSION = '1.36';
+our $VERSION = '1.39';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 
 use bytes ();          # for $bytes::hint_bits
@@ -66,10 +66,10 @@ $Carp::Internal{ (__PACKAGE__) } = 1;
 
 my %system_aliases = (
 
-    'SINGLE-SHIFT 2'                => pack("U", 0x8E),
-    'SINGLE-SHIFT 3'                => pack("U", 0x8F),
-    'PRIVATE USE 1'                 => pack("U", 0x91),
-    'PRIVATE USE 2'                 => pack("U", 0x92),
+    'SINGLE-SHIFT 2'                => pack("U", utf8::unicode_to_native(0x8E)),
+    'SINGLE-SHIFT 3'                => pack("U", utf8::unicode_to_native(0x8F)),
+    'PRIVATE USE 1'                 => pack("U", utf8::unicode_to_native(0x91)),
+    'PRIVATE USE 2'                 => pack("U", utf8::unicode_to_native(0x92)),
 );
 
 # These are the aliases above that differ under :loose and :full matching
@@ -78,7 +78,7 @@ my %system_aliases = (
 #);
 
 #my %deprecated_aliases;
-#$deprecated_aliases{'BELL'} = pack("U", 0x07) if $^V lt v5.17.0;
+#$deprecated_aliases{'BELL'} = pack("U", utf8::unicode_to_native(0x07)) if $^V lt v5.17.0;
 
 #my %loose_deprecated_aliases = (
 #);
@@ -157,7 +157,9 @@ sub alias (@) # Set up a single alias
     # hex, but makes the code easier to maintain, and is called
     # infrequently, only at compile-time
     if ($value !~ $decimal_qr && $value =~ $hex_qr) {
-      $value = CORE::hex $1;
+      my $temp = CORE::hex $1;
+      $temp = utf8::unicode_to_native($temp) if $value =~ /^[Uu]\+/;
+      $value = $temp;
     }
     if ($value =~ $decimal_qr) {
         no warnings qw(non_unicode surrogate nonchar); # Allow any of these
@@ -199,7 +201,8 @@ sub alias (@) # Set up a single alias
   if (@errors) {
     foreach my $name (@errors) {
       my $ok = "";
-      $ok = $1 if $name =~ / ^ ( \p{Alpha} [-\p{XPosixWord} ():\xa0]* ) /x;
+      my $nbsp = chr utf8::unicode_to_native(0xa0);
+      $ok = $1 if $name =~ / ^ ( \p{Alpha} [-\p{XPosixWord} ():$nbsp]* ) /x;
       my $first_bad = substr($name, length($ok), 1);
       $name = "Invalid character in charnames alias definition; marked by <-- HERE in '$ok$first_bad<-- HERE " . substr($name, length($ok) + 1) . "'";
     }
@@ -475,7 +478,7 @@ sub lookup_name ($$$) {
                                   /xs)
           {
               # Even in non-loose matching, the script traditionally has been
-              # case insensitve
+              # case insensitive
               $scripts_trie = "\U$1";
               $lookup_name = $2;
 
@@ -697,6 +700,11 @@ sub import
 # not an issue.
 my %viacode;
 
+my $no_name_code_points_re = join "|", map { sprintf("%05X",
+                                             utf8::unicode_to_native($_)) }
+                                            0x80, 0x81, 0x84, 0x99;
+$no_name_code_points_re = qr/$no_name_code_points_re/;
+
 sub viacode {
 
   # Returns the name of the code point argument
@@ -717,8 +725,10 @@ sub viacode {
   if ($arg =~ $decimal_qr) {
     $hex = sprintf "%05X", $arg;
   } elsif ($arg =~ $hex_qr) {
+    $hex = CORE::hex $1;
+    $hex = utf8::unicode_to_native($hex) if $arg =~ /^[Uu]\+/;
     # Below is the line that differs from the _getcode() source
-    $hex = sprintf "%05X", hex $1;
+    $hex = sprintf "%05X", $hex;
   } else {
     carp("unexpected arg \"$arg\" to charnames::viacode()");
     return;
@@ -751,7 +761,7 @@ sub viacode {
         $return = substr($txt, $+[0], index($txt, "\n", $+[0]) - $+[0]);
 
         # If not one of these 4 code points, return what we've found.
-        if ($hex !~ / ^ 000 (?: 8[014] | 99 ) $ /x) {
+        if ($hex !~ / ^ $no_name_code_points_re $ /x) {
           $viacode{$hex} = $return;
           return $return;
         }
@@ -786,7 +796,7 @@ sub viacode {
   }
   return;
 
-} # _viacode
+} # viacode
 
 1;
 

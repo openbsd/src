@@ -38,11 +38,11 @@ ExtUtils::Install - install files from here to there
 
 =head1 VERSION
 
-1.59
+1.67
 
 =cut
 
-$VERSION = '1.59';  # <---- dont forget to update the POD section just above this line!
+$VERSION = '1.67';  # <-- do not forget to update the POD section just above this line!
 $VERSION = eval $VERSION;
 
 =pod
@@ -57,7 +57,7 @@ ExtUtils::MakeMaker handles the installation and deinstallation of
 perl modules. They are not designed as general purpose tools.
 
 On some operating systems such as Win32 installation may not be possible
-until after a reboot has occured. This can have varying consequences:
+until after a reboot has occurred. This can have varying consequences:
 removing an old DLL does not impact programs using the new one, but if
 a new DLL cannot be installed properly until reboot then anything
 depending on it must wait. The package variable
@@ -66,9 +66,9 @@ depending on it must wait. The package variable
 
 is used to store this status.
 
-If this variable is true then such an operation has occured and
+If this variable is true then such an operation has occurred and
 anything depending on this module cannot proceed until a reboot
-has occured.
+has occurred.
 
 If this value is defined but false then such an operation has
 ocurred, but should not impact later operations.
@@ -162,7 +162,7 @@ $target should be a ref to an array if the file is to be deleted
 otherwise it should be a filespec for a rename. If the file is existing
 it will be replaced.
 
-Sets $MUST_REBOOT to 0 to indicate a deletion operation has occured
+Sets $MUST_REBOOT to 0 to indicate a deletion operation has occurred
 and sets it to 1 to indicate that a move operation has been requested.
 
 returns 1 on success, on failure if $moan is false errors are fatal.
@@ -246,8 +246,6 @@ a derivative of the original in the same directory) so that the caller can
 use it to install under. In all other cases of success returns $file.
 On failure throws a fatal error.
 
-=back
-
 =end _private
 
 =cut
@@ -257,7 +255,14 @@ On failure throws a fatal error.
 sub _unlink_or_rename { #XXX OS-SPECIFIC
     my ( $file, $tryhard, $installing )= @_;
 
-    _chmod( 0666, $file );
+    # this chmod was originally unconditional. However, its not needed on
+    # POSIXy systems since permission to unlink a file is specified by the
+    # directory rather than the file; and in fact it screwed up hard- and
+    # symlinked files. Keep it for other platforms in case its still
+    # needed there.
+    if ($^O =~ /^(dos|os2|MSWin32|VMS)$/) {
+        _chmod( 0666, $file );
+    }
     my $unlink_count = 0;
     while (unlink $file) { $unlink_count++; }
     return $file if $unlink_count > 0;
@@ -294,6 +299,8 @@ sub _unlink_or_rename { #XXX OS-SPECIFIC
 
 
 =pod
+
+=back
 
 =head2 Functions
 
@@ -392,7 +399,7 @@ be created first.
 
 Returns a list, containing: C<($writable, $determined_by, @create)>
 
-C<$writable> says whether whether the directory is (hypothetically) writable
+C<$writable> says whether the directory is (hypothetically) writable
 
 C<$determined_by> is the directory the status was determined from. It will be
 either the C<$dir>, or one of its parents.
@@ -540,7 +547,11 @@ sub _chdir {
 
 =pod
 
+=back
+
 =end _private
+
+=over
 
 =item B<install>
 
@@ -606,7 +617,7 @@ As of version 1.47 the following additions were made to the install interface.
 Note that the new argument style and use of the %result hash is recommended.
 
 The $always_copy parameter which when true causes files to be updated
-regardles as to whether they have changed, if it is defined but false then
+regardless as to whether they have changed, if it is defined but false then
 copies are made only if the files have changed, if it is undefined then the
 value of the environment variable EU_INSTALL_ALWAYS_COPY is used as default.
 
@@ -641,7 +652,7 @@ B<NEW ARGUMENT STYLE>
 If there is only one argument and it is a reference to an array then
 the array is assumed to contain a list of key-value pairs specifying
 the options. In this case the option "from_to" is mandatory. This style
-means that you dont have to supply a cryptic list of arguments and can
+means that you do not have to supply a cryptic list of arguments and can
 use a self documenting argument list that is easier to understand.
 
 This is now the recommended interface to install().
@@ -838,7 +849,7 @@ sub install { #XXX OS-SPECIFIC
 
 =item _do_cleanup
 
-Standardize finish event for after another instruction has occured.
+Standardize finish event for after another instruction has occurred.
 Handles converting $MUST_REBOOT to a die for instance.
 
 =end _private

@@ -120,13 +120,13 @@ On return I<*len> is set to the length of the scanned string,
 and I<*flags> gives output flags.
 
 If the value is <= C<UV_MAX> it is returned as a UV, the output flags are clear,
-and nothing is written to I<*result>. If the value is > UV_MAX C<grok_bin>
+and nothing is written to I<*result>.  If the value is > UV_MAX C<grok_bin>
 returns UV_MAX, sets C<PERL_SCAN_GREATER_THAN_UV_MAX> in the output flags,
 and writes the value to I<*result> (or the value is discarded if I<result>
 is NULL).
 
 The binary number may optionally be prefixed with "0b" or "b" unless
-C<PERL_SCAN_DISALLOW_PREFIX> is set in I<*flags> on entry. If
+C<PERL_SCAN_DISALLOW_PREFIX> is set in I<*flags> on entry.  If
 C<PERL_SCAN_ALLOW_UNDERSCORES> is set in I<*flags> then the binary
 number may use '_' characters to separate digits.
 
@@ -234,7 +234,7 @@ Perl_grok_bin(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 
 converts a string representing a hex number to numeric form.
 
-On entry I<start> and I<*len> give the string to scan, I<*flags> gives
+On entry I<start> and I<*len_p> give the string to scan, I<*flags> gives
 conversion flags, and I<result> should be NULL or a pointer to an NV.
 The scan stops at the end of the string, or the first invalid character.
 Unless C<PERL_SCAN_SILENT_ILLDIGIT> is set in I<*flags>, encountering an
@@ -243,13 +243,13 @@ On return I<*len> is set to the length of the scanned string,
 and I<*flags> gives output flags.
 
 If the value is <= UV_MAX it is returned as a UV, the output flags are clear,
-and nothing is written to I<*result>. If the value is > UV_MAX C<grok_hex>
+and nothing is written to I<*result>.  If the value is > UV_MAX C<grok_hex>
 returns UV_MAX, sets C<PERL_SCAN_GREATER_THAN_UV_MAX> in the output flags,
 and writes the value to I<*result> (or the value is discarded if I<result>
 is NULL).
 
 The hex number may optionally be prefixed with "0x" or "x" unless
-C<PERL_SCAN_DISALLOW_PREFIX> is set in I<*flags> on entry. If
+C<PERL_SCAN_DISALLOW_PREFIX> is set in I<*flags> on entry.  If
 C<PERL_SCAN_ALLOW_UNDERSCORES> is set in I<*flags> then the hex
 number may use '_' characters to separate digits.
 
@@ -291,15 +291,14 @@ Perl_grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
     }
 
     for (; len-- && *s; s++) {
-	const char *hexdigit = strchr(PL_hexdigit, *s);
-        if (hexdigit) {
+        if (isXDIGIT(*s)) {
             /* Write it in this wonky order with a goto to attempt to get the
                compiler to make the common case integer-only loop pretty tight.
                With gcc seems to be much straighter code than old scan_hex.  */
           redo:
             if (!overflowed) {
                 if (value <= max_div_16) {
-                    value = (value << 4) | ((hexdigit - PL_hexdigit) & 15);
+                    value = (value << 4) | XDIGIT_VALUE(*s);
                     continue;
                 }
                 /* Bah. We're just overflowed.  */
@@ -316,11 +315,11 @@ Perl_grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 	     * the low-order bits anyway): we could just remember when
 	     * did we overflow and in the end just multiply value_nv by the
 	     * right amount of 16-tuples. */
-            value_nv += (NV)((hexdigit - PL_hexdigit) & 15);
+            value_nv += (NV) XDIGIT_VALUE(*s);
             continue;
         }
         if (*s == '_' && len && allow_underscores && s[1]
-		&& (hexdigit = strchr(PL_hexdigit, s[1])))
+		&& isXDIGIT(s[1]))
 	    {
 		--len;
 		++s;
@@ -366,7 +365,7 @@ On return I<*len> is set to the length of the scanned string,
 and I<*flags> gives output flags.
 
 If the value is <= UV_MAX it is returned as a UV, the output flags are clear,
-and nothing is written to I<*result>. If the value is > UV_MAX C<grok_oct>
+and nothing is written to I<*result>.  If the value is > UV_MAX C<grok_oct>
 returns UV_MAX, sets C<PERL_SCAN_GREATER_THAN_UV_MAX> in the output flags,
 and writes the value to I<*result> (or the value is discarded if I<result>
 is NULL).
@@ -395,17 +394,14 @@ Perl_grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
     PERL_ARGS_ASSERT_GROK_OCT;
 
     for (; len-- && *s; s++) {
-         /* gcc 2.95 optimiser not smart enough to figure that this subtraction
-            out front allows slicker code.  */
-        int digit = *s - '0';
-        if (digit >= 0 && digit <= 7) {
+        if (isOCTAL(*s)) {
             /* Write it in this wonky order with a goto to attempt to get the
                compiler to make the common case integer-only loop pretty tight.
             */
           redo:
             if (!overflowed) {
                 if (value <= max_div_8) {
-                    value = (value << 3) | digit;
+                    value = (value << 3) | OCTAL_VALUE(*s);
                     continue;
                 }
                 /* Bah. We're just overflowed.  */
@@ -422,20 +418,19 @@ Perl_grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 	     * the low-order bits anyway): we could just remember when
 	     * did we overflow and in the end just multiply value_nv by the
 	     * right amount of 8-tuples. */
-            value_nv += (NV)digit;
+            value_nv += (NV) OCTAL_VALUE(*s);
             continue;
         }
-        if (digit == ('_' - '0') && len && allow_underscores
-            && (digit = s[1] - '0') && (digit >= 0 && digit <= 7))
-	    {
-		--len;
-		++s;
-                goto redo;
-	    }
+        if (*s == '_' && len && allow_underscores && isOCTAL(s[1])) {
+            --len;
+            ++s;
+            goto redo;
+        }
         /* Allow \octal to work the DWIM way (that is, stop scanning
          * as soon as non-octal characters are seen, complain only if
-         * someone seems to want to use the digits eight and nine). */
-        if (digit == 8 || digit == 9) {
+         * someone seems to want to use the digits eight and nine.  Since we
+         * know it is not octal, then if isDIGIT, must be an 8 or 9). */
+        if (isDIGIT(*s)) {
             if (!(*flags & PERL_SCAN_SILENT_ILLDIGIT))
                 Perl_ck_warner(aTHX_ packWARN(WARN_DIGIT),
 			       "Illegal octal digit '%c' ignored", *s);
@@ -466,15 +461,15 @@ Perl_grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 /*
 =for apidoc scan_bin
 
-For backwards compatibility. Use C<grok_bin> instead.
+For backwards compatibility.  Use C<grok_bin> instead.
 
 =for apidoc scan_hex
 
-For backwards compatibility. Use C<grok_hex> instead.
+For backwards compatibility.  Use C<grok_hex> instead.
 
 =for apidoc scan_oct
 
-For backwards compatibility. Use C<grok_oct> instead.
+For backwards compatibility.  Use C<grok_oct> instead.
 
 =cut
  */
@@ -562,7 +557,7 @@ Recognise (or not) a number.  The type of the number is returned
 IS_NUMBER_IN_UV, IS_NUMBER_GREATER_THAN_UV_MAX, IS_NUMBER_NOT_INT,
 IS_NUMBER_NEG, IS_NUMBER_INFINITY, IS_NUMBER_NAN (defined in perl.h).
 
-If the value of the number can fit an in UV, it is returned in the *valuep
+If the value of the number can fit in a UV, it is returned in the *valuep
 IS_NUMBER_IN_UV will be set to indicate that *valuep is valid, IS_NUMBER_IN_UV
 will never be set unless *valuep is valid, but *valuep may have been assigned
 to during processing even though IS_NUMBER_IN_UV is not set on return.
@@ -599,7 +594,7 @@ Perl_grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
     numtype = IS_NUMBER_NEG;
   }
   else if (*s == '+')
-  s++;
+    s++;
 
   if (s == send)
     return 0;
@@ -823,6 +818,17 @@ S_mulexp10(NV value, I32 exponent)
     if (exponent < 0) {
 	negative = 1;
 	exponent = -exponent;
+#ifdef NV_MAX_10_EXP
+        /* for something like 1234 x 10^-309, the action of calculating
+         * the intermediate value 10^309 then returning 1234 / (10^309)
+         * will fail, since 10^309 becomes infinity. In this case try to
+         * refactor it as 123 / (10^308) etc.
+         */
+        while (value && exponent > NV_MAX_10_EXP) {
+            exponent--;
+            value /= 10;
+        }
+#endif
     }
     for (bit = 1; exponent; bit <<= 1) {
 	if (exponent & bit) {
@@ -847,31 +853,36 @@ Perl_my_atof(pTHX_ const char* s)
 
     PERL_ARGS_ASSERT_MY_ATOF;
 
-    if (PL_numeric_local && PL_numeric_radix_sv && IN_SOME_LOCALE_FORM) {
-        const char *standard = NULL, *local = NULL;
-        bool use_standard_radix;
+    {
+        DECLARE_STORE_LC_NUMERIC_SET_TO_NEEDED();
+        if (PL_numeric_local && PL_numeric_radix_sv && IN_SOME_LOCALE_FORM) {
+            const char *standard = NULL, *local = NULL;
+            bool use_standard_radix;
 
-        /* Look through the string for the first thing that looks like a
-         * decimal point: either the value in the current locale or the
-         * standard fallback of '.'. The one which appears earliest in the
-         * input string is the one that we should have atof look for. Note that
-         * we have to determine this beforehand because on some systems,
-         * Perl_atof2 is just a wrapper around the system's atof. */
-        standard = strchr(s, '.');
-        local = strstr(s, SvPV_nolen(PL_numeric_radix_sv));
+            /* Look through the string for the first thing that looks like a
+             * decimal point: either the value in the current locale or the
+             * standard fallback of '.'. The one which appears earliest in the
+             * input string is the one that we should have atof look for. Note
+             * that we have to determine this beforehand because on some
+             * systems, Perl_atof2 is just a wrapper around the system's atof.
+             * */
+            standard = strchr(s, '.');
+            local = strstr(s, SvPV_nolen(PL_numeric_radix_sv));
 
-        use_standard_radix = standard && (!local || standard < local);
+            use_standard_radix = standard && (!local || standard < local);
 
-        if (use_standard_radix)
-            SET_NUMERIC_STANDARD();
+            if (use_standard_radix)
+                SET_NUMERIC_STANDARD();
 
-        Perl_atof2(s, x);
+            Perl_atof2(s, x);
 
-        if (use_standard_radix)
-            SET_NUMERIC_LOCAL();
+            if (use_standard_radix)
+                SET_NUMERIC_LOCAL();
+        }
+        else
+            Perl_atof2(s, x);
+        RESTORE_LC_NUMERIC();
     }
-    else
-	Perl_atof2(s, x);
 #else
     Perl_atof2(s, x);
 #endif

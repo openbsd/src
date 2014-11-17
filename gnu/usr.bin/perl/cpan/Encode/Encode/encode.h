@@ -1,11 +1,8 @@
 #ifndef ENCODE_H
 #define ENCODE_H
 
-#ifndef U8
-/* 
-   A tad devious this:
-   perl normally has a #define for U8 - if that isn't present then we
-   typedef it - leaving it #ifndef so we can do data parts without
+#ifndef H_PERL
+/* check whether we're "in perl" so that we can do data parts without
    getting extern references to the code parts
 */
 typedef unsigned char U8;
@@ -74,7 +71,7 @@ struct encode_s
     const char *const name[2];      /* name(s) of this encoding */
 };
 
-#ifdef U8
+#ifdef H_PERL
 /* See comment at top of file for deviousness */
 
 extern int do_encode(const encpage_t *enc, const U8 *src, STRLEN *slen,
@@ -83,7 +80,7 @@ extern int do_encode(const encpage_t *enc, const U8 *src, STRLEN *slen,
 
 extern void Encode_DefineEncoding(encode_t *enc);
 
-#endif /* U8 */
+#endif /* H_PERL */
 
 #define ENCODE_NOSPACE  1
 #define ENCODE_PARTIAL  2

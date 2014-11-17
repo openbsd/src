@@ -9,13 +9,11 @@ use File::Path;
 use File::Basename;
 use MakeMaker::Test::Utils;
 
-my $Is_VMS = $^O eq 'VMS';
-
 my %Files = (
              'Big-Dummy/lib/Big/Dummy.pm'     => <<'END',
 package Big::Dummy;
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 =head1 NAME
 
@@ -96,8 +94,6 @@ END
 
 
 sub setup_recurs {
-    setup_mm_test_root();
-    chdir 'MM_TEST_ROOT:[t]' if $Is_VMS;
 
     while(my($file, $text) = each %Files) {
         # Convert to a relative, native file path.

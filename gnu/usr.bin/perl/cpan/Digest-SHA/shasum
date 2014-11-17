@@ -2,10 +2,10 @@
 
 	## shasum: filter for computing SHA digests (ref. sha1sum/md5sum)
 	##
-	## Copyright (C) 2003-2013 Mark Shelor, All Rights Reserved
+	## Copyright (C) 2003-2014 Mark Shelor, All Rights Reserved
 	##
-	## Version: 5.84
-	## Sat Mar  9 17:36:08 MST 2013
+	## Version: 5.88
+	## Mon Mar 17 08:46:10 MST 2014
 
 	## shasum SYNOPSIS adapted from GNU Coreutils sha1sum.
 	## Add an "-a" option for algorithm selection, a "-p"
@@ -47,10 +47,11 @@ shasum - Print or Check SHA Checksums
 
    shasum -a 512224 -c checksumfile
 
- The sums are computed as described in FIPS-180-4.  When checking, the
- input should be a former output of this program.  The default mode is to
- print a line with checksum, a character indicating type (`*' for binary,
- ` ' for text, `?' for portable, `^' for BITS), and name for each FILE.
+ The sums are computed as described in FIPS PUB 180-4.  When checking,
+ the input should be a former output of this program.  The default
+ mode is to print a line with checksum, a character indicating type
+ (`*' for binary, ` ' for text, `?' for portable, `^' for BITS),
+ and name for each FILE.
 
  Report shasum bugs to mshelor@cpan.org
 
@@ -82,7 +83,7 @@ the 7-bit message I<0001100>:
 
 =head1 AUTHOR
 
-Copyright (c) 2003-2013 Mark Shelor <mshelor@cpan.org>.
+Copyright (c) 2003-2014 Mark Shelor <mshelor@cpan.org>.
 
 =head1 SEE ALSO
 
@@ -97,23 +98,7 @@ use strict;
 use Fcntl;
 use Getopt::Long;
 
-my $VERSION = "5.84";
-
-
-	## Try to use Digest::SHA.  If not installed, use the slower
-	## but functionally equivalent Digest::SHA::PurePerl instead.
-
-my $MOD_PREFER = "Digest::SHA";
-my $MOD_SECOND = "Digest::SHA::PurePerl";
-
-my $module = $MOD_PREFER;
-eval "require $module";
-if ($@) {
-	$module = $MOD_SECOND;
-	eval "require $module";
-	die "Unable to find $MOD_PREFER or $MOD_SECOND\n" if $@;
-}
-
+my $VERSION = "5.88";
 
 sub usage {
 	my($err, $msg) = @_;
@@ -123,9 +108,11 @@ sub usage {
 		warn($msg . "Type shasum -h for help\n");
 		exit($err);
 	}
-	my($USAGE) = $POD =~ /SYNOPSIS\n\n(.+)\n=head1 DESCRIPTION\n/sm;
+	my($USAGE) = $POD =~ /SYNOPSIS(.+?)^=/sm;
+	$USAGE =~ s/^\s*//;
+	$USAGE =~ s/\s*$//;
 	$USAGE =~ s/^ //gm;
-	print $USAGE;
+	print $USAGE, "\n";
 	exit($err);
 }
 
@@ -139,7 +126,7 @@ select((select(STDERR), $| = 1)[0]);
 	## Collect options from command line
 
 my ($alg, $binary, $check, $text, $status, $warn, $help, $version);
-my ($portable, $BITS);
+my ($portable, $BITS, $modules, $versions);
 
 eval { Getopt::Long::Configure ("bundling") };
 GetOptions(
@@ -148,7 +135,9 @@ GetOptions(
 	's|status' => \$status, 'w|warn' => \$warn,
 	'h|help' => \$help, 'v|version' => \$version,
 	'p|portable' => \$portable,
-	'0|01' => \$BITS
+	'0|01' => \$BITS,
+	'M|MODULES=s' => \$modules,
+	'V|VERSIONS' => \$versions,
 ) or usage(1, "");
 
 
@@ -164,7 +153,29 @@ usage(1, "shasum: --status option used only when verifying checksums\n")
 	if $status && !$check;
 
 
-	## Default to SHA-1 unless overriden by command line option
+	## Try to use Digest::SHA.  If not installed, use the slower
+	## but functionally equivalent Digest::SHA::PurePerl instead.
+
+	## If option -M "Mod::Num1 Mod::Num2 ..." is invoked, try
+	## those modules instead, in the order indicated.
+
+my @MODS = defined $modules
+		? split(" ", $modules)
+		: qw(Digest::SHA Digest::SHA::PurePerl);
+
+my $module;
+for (@MODS) {
+	my $mod = $_;
+	if (eval "require $mod") {
+		$module = $mod;
+		last;
+	}
+}
+die "shasum: Unable to find " . join(" or ", @MODS) . "\n"
+	unless defined $module;
+
+
+	## Default to SHA-1 unless overridden by command line option
 
 $alg = 1 unless defined $alg;
 grep { $_ == $alg } (1, 224, 256, 384, 512, 512224, 512256)
@@ -178,10 +189,17 @@ if ($version) {
 	exit(0);
 }
 
+if ($versions) {
+	print "shasum $VERSION\n";
+	print "$module ", eval "\$${module}::VERSION", "\n";
+	print "perl ", defined $^V ? sprintf("%vd", $^V) : $], "\n";
+	exit(0);
+}
+
 
 	## Try to figure out if the OS is DOS-like.  If it is,
 	## default to binary mode when reading files, unless
-	## explicitly overriden by command line "--text" or
+	## explicitly overridden by command line "--text" or
 	## "--portable" options.
 
 my $isDOSish = ($^O =~ /^(MSWin\d\d|os2|dos|mint|cygwin)$/);

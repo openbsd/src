@@ -18,7 +18,9 @@ use File::Spec;
 use TieOut;
 use Config;
 
-chdir 't';
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 perl_lib;
 
@@ -45,11 +47,13 @@ my $mm = WriteMakefile(
     PERL_CORE     => $ENV{PERL_CORE},
 );
 like( $stdout->read, qr{
+                        Generating\ a\ \w+?-style\ $Makefile\n
                         Writing\ $Makefile\ for\ Big::Liar\n
                         (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
                         Big::Liar's\ vars\n
                         INST_LIB\ =\ \S+\n
                         INST_ARCHLIB\ =\ \S+\n
+                        Generating\ a\ \w+?-style\ $Makefile\n
                         Writing\ $Makefile\ for\ Big::Dummy\n
                         (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
 }x );
@@ -69,7 +73,7 @@ is( !!$mm->{PERL_CORE}, !!$ENV{PERL_CORE}, 'PERL_CORE' );
 
 my($perl_src, $mm_perl_src);
 if( $ENV{PERL_CORE} ) {
-    $perl_src = File::Spec->catdir($Updir, $Updir, $Updir, $Updir);
+    $perl_src = File::Spec->catdir($Updir, $Updir, $Updir, $Updir, $Updir);
     $perl_src = File::Spec->canonpath($perl_src);
     $mm_perl_src = File::Spec->canonpath($mm->{PERL_SRC});
 }
@@ -86,7 +90,7 @@ is( $mm->{PERM_RWX}, 755,    'PERM_RWX' );
 
 
 # INST_*
-is( $mm->{INST_ARCHLIB}, 
+is( $mm->{INST_ARCHLIB},
     $mm->{PERL_CORE} ? $mm->{PERL_ARCHLIB}
                      : File::Spec->catdir($Curdir, 'blib', 'arch'),
                                      'INST_ARCHLIB');
@@ -96,16 +100,20 @@ is( $mm->{INST_BIN},     File::Spec->catdir($Curdir, 'blib', 'bin'),
 is( keys %{$mm->{CHILDREN}}, 1 );
 my($child_pack) = keys %{$mm->{CHILDREN}};
 my $c_mm = $mm->{CHILDREN}{$child_pack};
-is( $c_mm->{INST_ARCHLIB}, 
-    $c_mm->{PERL_CORE} ? $c_mm->{PERL_ARCHLIB}
-                       : File::Spec->catdir($Updir, 'blib', 'arch'),
+# Android passes ARCHLIB through ->rel2abs, so in case the same
+# path is presented in two different ways, we need to
+# pass it through Cwd::realpath.
+my $normalize = $^O =~ /android/ ? \&Cwd::realpath : sub {shift};
+is( $normalize->($c_mm->{INST_ARCHLIB}),
+    $normalize->($c_mm->{PERL_CORE} ? $c_mm->{PERL_ARCHLIB}
+                       : File::Spec->catdir($Updir, 'blib', 'arch')),
                                      'CHILD INST_ARCHLIB');
 is( $c_mm->{INST_BIN},     File::Spec->catdir($Updir, 'blib', 'bin'),
                                      'CHILD INST_BIN' );
 
 
 my $inst_lib = File::Spec->catdir($Curdir, 'blib', 'lib');
-is( $mm->{INST_LIB}, 
+is( $mm->{INST_LIB},
     $mm->{PERL_CORE} ? $mm->{PERL_LIB} : $inst_lib,     'INST_LIB' );
 
 
@@ -127,11 +135,13 @@ $mm = WriteMakefile(
     INST_MAN1DIR         => 'none',
 );
 like( $stdout->read, qr{
+                        Generating\ a\ \w+?-style\ $Makefile\n
                         Writing\ $Makefile\ for\ Big::Liar\n
                         (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
                         Big::Liar's\ vars\n
                         INST_LIB\ =\ \S+\n
                         INST_ARCHLIB\ =\ \S+\n
+                        Generating\ a\ \w+?-style\ $Makefile\n
                         Writing\ $Makefile\ for\ Big::Dummy\n
                         (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
 }x );

@@ -1,11 +1,12 @@
 # -*- Mode: cperl; coding: utf-8; cperl-indent-level: 4 -*-
 # vim: ts=4 sts=4 sw=4:
 
+use 5.006;
 use strict;
 package CPAN::Distroprefs;
 
 use vars qw($VERSION);
-$VERSION = '6';
+$VERSION = '6.0001';
 
 package CPAN::Distroprefs::Result;
 
@@ -147,26 +148,53 @@ sub _load_st {
     return @data;
 }
 
+sub _build_file_list {
+    if (@_ > 3) {
+        die "_build_file_list should be called with 3 arguments, was called with more. First argument is '$_[0]'.";
+    }
+    my ($dir, $dir1, $ext_re) = @_;
+    my @list;
+    my $dh;
+    unless (opendir($dh, $dir)) {
+        $CPAN::Frontend->mywarn("ignoring prefs directory '$dir': $!");
+        return @list;
+    }
+    while (my $fn = readdir $dh) {
+        next if $fn eq '.' || $fn eq '..';
+        if (-d "$dir/$fn") {
+            next if $fn =~ /^[._]/; # prune .svn, .git, .hg, _darcs and what the user wants to hide
+            push @list, _build_file_list("$dir/$fn", "$dir1$fn/", $ext_re);
+        } else {
+            if ($fn =~ $ext_re) {
+                push @list, "$dir1$fn";
+            }
+        }
+    }
+    return @list;
+}
+
 sub find {
     my ($self, $dir, $ext_map) = @_;
 
-    my $dh = DirHandle->new($dir) or Carp::croak("Couldn't open '$dir': $!");
-    my @files = sort $dh->read;
+    return CPAN::Distroprefs::Iterator->new(sub { return }) unless %$ext_map;
+
+    my $possible_ext = join "|", map { quotemeta } keys %$ext_map;
+    my $ext_re = qr/\.($possible_ext)$/;
+
+    my @files = _build_file_list($dir, '', $ext_re);
+    @files = sort @files if @files;
 
     # label the block so that we can use redo in the middle
     return CPAN::Distroprefs::Iterator->new(sub { LOOP: {
-        return unless %$ext_map;
 
-        local $_ = shift @files;
-        return unless defined;
-        redo if $_ eq '.' || $_ eq '..';
+        my $fn = shift @files;
+        return unless defined $fn;
+        my ($ext) = $fn =~ $ext_re;
 
-        my $possible_ext = join "|", map { quotemeta } keys %$ext_map;
-        my ($ext) = /\.($possible_ext)$/ or redo;
         my $loader = $ext_map->{$ext};
 
         my $result = CPAN::Distroprefs::Result->new({
-            file => $_, ext => $ext, dir => $dir
+            file => $fn, ext => $ext, dir => $dir
         });
         # copied from CPAN.pm; is this ever actually possible?
         redo unless -f $result->abs;
@@ -346,7 +374,9 @@ This module encapsulates reading L<Distroprefs|CPAN> and matching them against C
 
     while (my $result = $finder->next) { ... }
 
-Build an iterator which finds distroprefs files in the given directory.
+Build an iterator which finds distroprefs files in the tree below the
+given directory. Within the tree directories matching C<m/^[._]/> are
+pruned.
 
 C<%ext_map> is a hashref whose keys are file extensions and whose values are
 modules used to load matching files:

@@ -5,7 +5,7 @@
 # could not go in this file, and were farmed out to other .t's, where they
 # remain
 #
-# pat	string	y/n/etc	expr	expected-expr	skip-reason
+# pat	string	y/n/etc	expr	expected-expr	skip-reason	comment
 __END__
 abc	abc	y	$&	abc
 abc	abc	y	$-[0]	0
@@ -613,6 +613,8 @@ $(?<=^(a))	a	y	$1	a
 ^[^bcd]*(c+)	aexycd	y	$1	c
 (?{$a=2})a*aa(?{local$a=$a+1})k*c(?{$b=$a})	yaaxxaaaacd	y	$b	3
 (?{$a=2})(a(?{local$a=$a+1}))*aak*c(?{$b=$a})	yaaxxaaaacd	y	$b	4
+# [perl #117917]
+^(a(?{ "x" =~ m{x}})b)(??{ $1 })	abab	y	$&	abab
 (>a+)ab	aaab	n	-	-
 (?>a+)b	aaab	y	-	-
 ([[:]+)	a:[b]:	y	$1	:[
@@ -1421,7 +1423,7 @@ foo(\h)bar	foo\tbar	y	$1	\t
 /[a\N{U+0100}]/	\x{100}	y	$&	\x{100}
 /[a\N{U+0100}]/	a	y	$&	a
 
-# Verify that \N{U+...} forces Unicode semantics
+# Verify that \N{U+...} forces Unicode rules
 /\N{U+41}\x{c1}/i	a\x{e1}	y	$&	a\x{e1}
 /[\N{U+41}\x{c1}]/i	\x{e1}	y	$&	\x{e1}
 
@@ -1488,10 +1490,50 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 [a\o{1000}]	\x{200}	y	$&	\x{200}
 
 # The below were inserting a NULL
-\87	87	y	$&	87
-a\87	a87	y	$&	a87
-a\97	a97	y	$&	a97
+\87	87	c	-	Reference to nonexistent group in regex
+a\87	a87	c	-	Reference to nonexistent group in regex
+a\97	a97	c	-	Reference to nonexistent group in regex
 
+# avoid problems with 32-bit signed integer overflow
+
+(.)\g2147483648}	x	c	-	Reference to nonexistent group in regex
+(.)\g2147483649}	x	c	-	Reference to nonexistent group in regex
+(.)\g2147483650}	x	c	-	Reference to nonexistent group in regex
+(.)\g4294967296}	x	c	-	Reference to nonexistent group in regex
+(.)\g4294967297}	x	c	-	Reference to nonexistent group in regex
+(.)\g4294967298}	x	c	-	Reference to nonexistent group in regex
+a(.)\g2147483648}	x	c	-	Reference to nonexistent group in regex
+a(.)\g2147483649}	x	c	-	Reference to nonexistent group in regex
+a(.)\g2147483650}	x	c	-	Reference to nonexistent group in regex
+a(.)\g4294967296}	x	c	-	Reference to nonexistent group in regex
+a(.)\g4294967297}	x	c	-	Reference to nonexistent group in regex
+a(.)\g4294967298}	x	c	-	Reference to nonexistent group in regex
+
+(.)\g{2147483648}	x	c	-	Reference to nonexistent group in regex
+(.)\g{2147483649}	x	c	-	Reference to nonexistent group in regex
+(.)\g{2147483650}	x	c	-	Reference to nonexistent group in regex
+(.)\g{4294967296}	x	c	-	Reference to nonexistent group in regex
+(.)\g{4294967297}	x	c	-	Reference to nonexistent group in regex
+(.)\g{4294967298}	x	c	-	Reference to nonexistent group in regex
+a(.)\g{2147483648}	x	c	-	Reference to nonexistent group in regex
+a(.)\g{2147483649}	x	c	-	Reference to nonexistent group in regex
+a(.)\g{2147483650}	x	c	-	Reference to nonexistent group in regex
+a(.)\g{4294967296}	x	c	-	Reference to nonexistent group in regex
+a(.)\g{4294967297}	x	c	-	Reference to nonexistent group in regex
+a(.)\g{4294967298}	x	c	-	Reference to nonexistent group in regex
+
+(.)\2147483648	b\o{214}7483648	y	$1	b
+(.)\2147483649	b\o{214}7483649	y	$1	b
+(.)\2147483650	b\o{214}7483650	y	$1	b
+(.)\4294967296	b\o{42}94967296	y	$1	b
+(.)\4294967297	b\o{42}94967297	y	$1	b
+(.)\4294967298	b\o{42}94967298	y	$1	b
+a(.)\2147483648	ab\o{214}7483648	y	$1	b
+a(.)\2147483649	ab\o{214}7483649	y	$1	b
+a(.)\2147483650	ab\o{214}7483650	y	$1	b
+a(.)\4294967296	ab\o{42}94967296	y	$1	b
+a(.)\4294967297	ab\o{42}94967297	y	$1	b
+a(.)\4294967298	ab\o{42}94967298	y	$1	b
 
 # The below was inserting a NULL into the character class.
 [\8\9]	\000	Sn	-	-
@@ -1591,6 +1633,8 @@ ab[c\\\](??{"x"})]{3}d	ab\\](d	y	-	-
 
 /st/i	\x{DF}\x{FB05}	y	$&	\x{FB05}
 /ssst/i	\x{DF}\x{FB05}	y	$&	\x{DF}\x{FB05}
+/[s]s/i	\x{DF}	n	-	-
+/s[s]/i	\x{DF}	n	-	-
 
 # [perl #101970]
 /[[:lower:]]/i	\x{100}	y	$&	\x{100}
@@ -1734,10 +1778,45 @@ ab[c\\\](??{"x"})]{3}d	ab\\](d	y	-	-
 # [ perl #114272]
 \Vn	\xFFn/	y	$&	\xFFn
 
+# These mostly exercize various paths in the optimizer
 /(?l:a?\w)/	b	y	$&	b
+/(?l:a?\D)/	b	y	$&	b
+^_?[^\S_0-9]\w*\z	\t	y	$&	\t
 m?^xy\?$?	xy?	y	$&	xy?
+a?\X	a\x{100}	y	$&	a\x{100}
+a?\R	a\n	y	$&	a\n
+^a?\N$	a\n	y	$&	a
+\N?a	\na	y	$&	a
+/\s?\s/l	\t	y	$&	\t
+/\s?\d/l	3	y	$&	3
+/\s?\S/l	A	y	$&	A
 
-# vim: softtabstop=0 noexpandtab
+# check we have the right utf8ness as we switch back and forth between
+# patterns
+^(\x{100}|a)(??{ qr/.?\xF7/d})	a_\xF7	y	-	-
+
+# [perl #118375]
+/(a|(bc)){0,0}?xyz/	xyz	y	$&	xyz
+/( a | ( bc ) ) {0,0} ? xyz/x	xyz	y	$&	xyz
+
+/(a|(bc)){0,0}+xyz/	xyz	y	$&	xyz
+/( a | ( bc ) ) {0,0} + xyz/x	xyz	y	$&	xyz
+
+(A(*PRUNE)B|A(*PRUNE)C)	AC	n	-	-
+(A(*PRUNE)B|A(*PRUNE)D|A(*PRUNE)C)	AC	n	-	-
+(A(*PRUNE)B|A(*PRUNE)C|A(*PRUNE)D)	AC	n	-	-
+((A(*PRUNE)B|A(*PRUNE)C))	AC	n	-	-
+((A(*PRUNE)B|A(*PRUNE)D|A(*PRUNE)C))	AC	n	-	-
+((A(*PRUNE)B|A(*PRUNE)C|A(*PRUNE)D))	AC	n	-	-
+
+A+?(*THEN)BC	AAABC	y	$&	ABC
+A+?(*PRUNE)BC	AAABC	y	$&	ABC
+A+(*THEN)BC	AAABC	y	$&	AAABC
+A+(*PRUNE)BC	AAABC	y	$&	AAABC
+A+?(*THEN)BC(?{})	AAABC	y	$&	ABC
+A+?(*PRUNE)BC(?{})	AAABC	y	$&	ABC
+A+(*THEN)BC(?{})	AAABC	y	$&	AAABC
+A+(*PRUNE)BC(?{})	AAABC	y	$&	AAABC
 /[#]/	a#b	y	$&	#
 /[#]b/	a#b	y	$&	#b
 /[#]/x	a#b	y	$&	#
@@ -1750,3 +1829,62 @@ m?^xy\?$?	xy?	y	$&	xy?
 /[(?#](??{'b'})/	a#b	y	$&	#b
 /(?#)(?{})b/x	a#b	y	$&	b
 /(?#)(??{'b'})/x	a#b	y	$&	b
+
+# RT #119069: PCRE regression test: no segfault
+^(?=(a)){0}b(?1)	back	y	$&	ba
+# RT #119071: PCRE regression test: No warning of infinite regression
+(?:(a(*SKIP)b)){0}(?:(?1)|ac)	x	n	-	-
+# RT #119073: PCRE regression test: {0} => NOTHING optimization
+(?1)(?:(b)){0}	b	y	$&	b
+# RT #120041
+^A*\z		y	$&	
+/\N* /x	ab	y	$&	ab	         # Under /x was ignoring the '*'
+/\N (?#comment) * /x	ab	y	$&	ab	# likewise
+
+# RT #120600: Variable length lookbehind is not variable
+(?<W>a)(?<BB>(?=(?&W))(?<=(?&W)))(?&BB)	aa	y	$&	a	# test repeated recursive patterns
+
+# This group is from RT #121144
+/^\S+=/d	\x{3a3}=\x{3a0}	y	$&	\x{3a3}=
+/^\S+=/u	\x{3a3}=\x{3a0}	y	$&	\x{3a3}=
+
+# utf8 cache length panics
+\x{100}[xy]\x{100}{2}	\x{100}y\x{100}\x{100}	y	$&	\x{100}y\x{100}\x{100}
+\x{100}a{2,3}	\x{100}aaa	y	$&	\x{100}aaa
+^x?abc?de	abcde	y	$&	abcde
+
+'(?-m:^abc)'m	abcde	y	$&	abc
+'(?-m:^abc)'m	x\nabcde	n	-	-
+
+# RT #121248 - segfault
+/^[+]([^(]+)$/mi	li	n	-	-
+
+# RT #121299 - Inconsistent behavior with backreferences nested inside subpattern references
+/(.)((o)\1)(?2)/	fofof	y	$2	of
+/(.)(?2)((\1)(?4)(\1))/	fffffff	y	$1	f
+/(.)(?2)((.)(?4)(\1))/	foffoff	y	$2	off
+/^(.\2?)(.)(?1)$/	abcb	y	$2	b
+/^(.\1?)(?1)$/	aba	y	$1	a
+/^ (\3(?2)\3)? ((.)) (?1) $/x	aaba	y	$2	a
+/^ (a|\3(?1)\2|(?2)) ((b|c)(?4)?) (?1) (d(?1)) $/x	abbcdcabbda	y	$2	b
+
+# RT #121321 - perl 5.19.10 infinite loops on backrefs > number of capture buffers (npar) where npar>9
+/(a)\2/	a\2	c	-	Reference to nonexistent group in regex
+/(a)(b)\3/	ab\3	c	-	Reference to nonexistent group in regex
+/(a)(b)(c)\4/	abc\4	c	-	Reference to nonexistent group in regex
+/(a)(b)(c)(d)\5/	abcd\5	c	-	Reference to nonexistent group in regex
+/(a)(b)(c)(d)(e)\6/	abcde\6	c	-	Reference to nonexistent group in regex
+/(a)(b)(c)(d)(e)(f)\7/	abcdef\7	c	-	Reference to nonexistent group in regex
+/(a)(b)(c)(d)(e)(f)(g)(h)(i)\10/	abcdefghi\10	y	$&	abcdefghi\10
+/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\11/	abcdefghij\11	y	$&	abcdefghij\11
+/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\12/	abcdefghijk\12	y	$&	abcdefghijk\12
+/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\12\13\14/	abcdefghijk\12\13\14	y	$&	abcdefghijk\12\13\14
+
+\d<(.*?)>	a<>	n	-	-
+[bcd].{2,3}aaaa	XbXaaaaa	y	-	-
+[bcd].{2,3}aaaa	Xb\x{100}aaaaa	y	-	-
+'\Awibble\z'm	wibble	y	-	-
+/(alias|status)es$/i	Statuses	y	$1	Status	# [perl #121778]
+
+# Keep these lines at the end of the file
+# vim: softtabstop=0 noexpandtab

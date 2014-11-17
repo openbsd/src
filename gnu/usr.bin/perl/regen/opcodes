@@ -73,7 +73,7 @@ bless		bless			ck_fun		s@	S S?
 
 # Pushy I/O.
 
-backtick	quoted execution (``, qx)	ck_open		tu%	S?
+backtick	quoted execution (``, qx)	ck_backtick	tu%	S?
 # glob defaults its first arg to $_
 glob		glob			ck_glob		t@	S?
 readline	<HANDLE>		ck_readline	t%	F?
@@ -217,6 +217,7 @@ aelemfast	constant array element	ck_null		s$	A S
 aelemfast_lex	constant lexical array element	ck_null		d0	A S
 aelem		array element		ck_null		s2	A S
 aslice		array slice		ck_null		m@	A L
+kvaslice	index/value array slice	ck_null		m@	A L
 
 aeach		each on array		ck_each		%	A
 akeys		keys on array		ck_each		t%	A
@@ -229,9 +230,10 @@ values		values			ck_each		t%	H
 keys		keys			ck_each		t%	H
 delete		delete			ck_delete	%	S
 exists		exists			ck_exists	is%	S
-rv2hv		hash dereference	ck_rvconst	dt1	
+rv2hv		hash dereference	ck_rvconst	d1	
 helem		hash element		ck_null		s2	H S
 hslice		hash slice		ck_null		m@	H L
+kvhslice	key/value hash slice	ck_null		m@	H L
 
 # Explosives and implosives.
 
@@ -284,7 +286,7 @@ leavesub	subroutine exit		ck_null		1
 leavesublv	lvalue subroutine return	ck_null		1	
 caller		caller			ck_fun		t%	S?
 warn		warn			ck_fun		imst@	L
-die		die			ck_die		dimst@	L
+die		die			ck_fun		dimst@	L
 reset		symbol reset		ck_fun		is%	S?
 
 lineseq		line sequence		ck_null		@	
@@ -304,7 +306,7 @@ next		next			ck_null		ds}
 redo		redo			ck_null		ds}	
 dump		dump			ck_null		ds}	
 goto		goto			ck_null		ds}	
-exit		exit			ck_exit		ds%	S?
+exit		exit			ck_fun		ds%	S?
 method_named	method with known name	ck_null		d$
 
 entergiven	given()			ck_null		d|

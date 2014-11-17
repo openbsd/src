@@ -13,7 +13,7 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 16;
+use Test::More 0.82 tests => 43;
 use t::Watchdog;
 
 my $limit = 0.25; # 25% is acceptable slosh for testing timers
@@ -30,12 +30,18 @@ for (1..5) {
     is $b, "b";
     is ref($stat), "ARRAY";
     push @mtime, $stat->[9];
+    ($a, my $lstat, $b) = ("a", [Time::HiRes::lstat($$)], "b");
+    is $a, "a";
+    is $b, "b";
+    is_deeply $lstat, $stat;
     Time::HiRes::sleep(rand(0.1) + 0.1);
     open(X, "<$$");
     <X>;
     close(X);
     $stat = [Time::HiRes::stat($$)];
     push @atime, $stat->[8];
+    $lstat = [Time::HiRes::lstat($$)];
+    is_deeply $lstat, $stat;
 }
 1 while unlink $$;
 note "mtime = @mtime";
@@ -67,5 +73,28 @@ SKIP: {
     ok $mi/(@mtime-1) >= 0.75 && $ai/(@atime-1) >= 0.75 &&
 	     $ss/(@mtime+@atime) >= 0.2;
 }
+
+my $targetname = "tgt$$";
+my $linkname = "link$$";
+SKIP: {
+    open(X, ">$targetname");
+    print X $$;
+    close(X);
+    eval { symlink $targetname, $linkname or die "can't symlink: $!"; };
+    skip "can't symlink", 7 if $@ ne "";
+    my @tgt_stat = Time::HiRes::stat($targetname);
+    my @tgt_lstat = Time::HiRes::lstat($targetname);
+    my @lnk_stat = Time::HiRes::stat($linkname);
+    my @lnk_lstat = Time::HiRes::lstat($linkname);
+    is scalar(@tgt_stat), 13;
+    is scalar(@tgt_lstat), 13;
+    is scalar(@lnk_stat), 13;
+    is scalar(@lnk_lstat), 13;
+    is_deeply \@tgt_stat, \@tgt_lstat;
+    is_deeply \@tgt_stat, \@lnk_stat;
+    isnt $lnk_lstat[2], $tgt_stat[2];
+}
+1 while unlink $linkname;
+1 while unlink $targetname;
 
 1;

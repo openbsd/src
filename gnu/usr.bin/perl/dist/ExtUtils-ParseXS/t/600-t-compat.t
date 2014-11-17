@@ -11,7 +11,6 @@ use Test::More;
 use ExtUtils::Typemaps;
 use ExtUtils::ParseXS::Utilities qw(
   C_string
-  tidy_type
   trim_whitespace
   process_typemaps
 );
@@ -94,7 +93,7 @@ foreach my $test (@tests) {
 }
 
 
-# The code below is a reproduction of what the pre-ExtUtils::Typemap
+# The code below is a reproduction of what the pre-ExtUtils::Typemaps
 # typemap-parsing/handling code in ExtUtils::ParseXS looked like. For
 # bug-compatibility, we want to produce the same data structures as that
 # code as much as possible.
@@ -157,7 +156,7 @@ sub _process_single_typemap {
             "TYPEMAP entry needs 2 or 3 columns\n"
           ),
           next;
-      $type = tidy_type($type);
+      $type = ExtUtils::Typemaps::tidy_type($type);
       $type_kind_ref->{$type} = $kind;
       # prototype defaults to '$'
       $proto = "\$" unless $proto;

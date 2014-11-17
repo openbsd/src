@@ -1,8 +1,8 @@
-# DerivedNumericValues-6.2.0.txt
-# Date: 2012-08-13, 19:20:22 GMT [MD]
+# DerivedNumericValues-6.3.0.txt
+# Date: 2012-12-20, 22:18:26 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -30,12 +30,6 @@
 # available when used.
 #
 # @missing: 0000..10FFFF; NaN; ; NaN
-
-# ================================================
-
-12456..12457  ; -1.0 ; ; -1 # Nl   [2] CUNEIFORM NUMERIC SIGN NIGIDAMIN..CUNEIFORM NUMERIC SIGN NIGIDAESH
-
-# Total code points: 2
 
 # ================================================
 
@@ -461,6 +455,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 12435         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO BURU
 1244A         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO ASH TENU
 12450         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO BAN2
+12456         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN NIGIDAMIN
 12459         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO ESHE3
 1D361         ; 2.0 ; ; 2 # No       COUNTING ROD UNIT DIGIT TWO
 1D7D0         ; 2.0 ; ; 2 # Nd       MATHEMATICAL BOLD DIGIT TWO
@@ -471,7 +466,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 1F103         ; 2.0 ; ; 2 # No       DIGIT TWO COMMA
 22390         ; 2.0 ; ; 2 # Lo       CJK UNIFIED IDEOGRAPH-22390
 
-# Total code points: 100
+# Total code points: 101
 
 # ================================================
 
@@ -565,6 +560,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 1243A..1243B  ; 3.0 ; ; 3 # Nl   [2] CUNEIFORM NUMERIC SIGN THREE VARIANT FORM ESH16..CUNEIFORM NUMERIC SIGN THREE VARIANT FORM ESH21
 1244B         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE ASH TENU
 12451         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE BAN2
+12457         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN NIGIDAESH
 1D362         ; 3.0 ; ; 3 # No       COUNTING ROD UNIT DIGIT THREE
 1D7D1         ; 3.0 ; ; 3 # Nd       MATHEMATICAL BOLD DIGIT THREE
 1D7DB         ; 3.0 ; ; 3 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT THREE
@@ -577,7 +573,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 22998         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-22998
 23B1B         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-23B1B
 
-# Total code points: 102
+# Total code points: 103
 
 # ================================================
 

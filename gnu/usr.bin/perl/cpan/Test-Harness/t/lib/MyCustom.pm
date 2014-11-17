@@ -2,6 +2,7 @@
 
 package MyCustom;
 use strict;
+use warnings;
 
 sub custom {
     my $self = shift;

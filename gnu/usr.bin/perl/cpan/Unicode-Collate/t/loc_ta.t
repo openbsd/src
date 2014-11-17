@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -30,15 +33,15 @@ ok(1);
 
 #########################
 
-my $Kssa = "\x{B95}\x{BCD}\x{BB7}";
-my $v    = "\x{BCD}";
-
 my $objTa = Unicode::Collate::Locale->
     new(locale => 'TA', normalization => undef);
 
 ok($objTa->getlocale, 'ta');
 
 $objTa->change(level => 1);
+
+my $Kssa = "\x{B95}\x{BCD}\x{BB7}";
+my $v    = "\x{BCD}";
 
 for my $h (0, 1) {
     no warnings 'utf8';
@@ -97,3 +100,5 @@ for my $h (0, 1) {
     ok($objTa->lt("${Kssa}$v$t", "${Kssa}"));
     ok($objTa->lt("${Kssa}$t",   "\x{BBE}"));
 }
+
+# 104

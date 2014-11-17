@@ -3,13 +3,12 @@
 package MyFileSourceHandler;
 
 use strict;
-use vars qw( @ISA $LAST_OBJ $CAN_HANDLE $MAKE_ITER $LAST_SOURCE );
+use warnings;
+our ($LAST_OBJ, $CAN_HANDLE, $MAKE_ITER, $LAST_SOURCE);
 
-use MyCustom;
 use TAP::Parser::IteratorFactory;
-use TAP::Parser::SourceHandler::File;
 
-@ISA         = qw( TAP::Parser::SourceHandler::File MyCustom );
+use base qw( TAP::Parser::SourceHandler::File MyCustom );
 $LAST_OBJ    = undef;
 $CAN_HANDLE  = undef;
 $MAKE_ITER   = undef;

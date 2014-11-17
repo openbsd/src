@@ -84,7 +84,7 @@ ok( my $loaded = Parse::CPAN::Meta->load_file($metafile), 'load saved file' );
 is($loaded->{name},     'Module-Build', 'name correct');
 
 
-ok( $loaded = Parse::CPAN::Meta->load_file('t/data/META-1_4.yml'), 'load META-1.4' );
+ok( $loaded = Parse::CPAN::Meta->load_file('t/data-test/META-1_4.yml'), 'load META-1.4' );
 is($loaded->{name},     'Module-Build', 'name correct');
 
 # Test saving with conversion
@@ -97,5 +97,12 @@ ok( -f $metayml, "save meta to META.yml with conversion" );
 ok( $loaded = Parse::CPAN::Meta->load_file($metayml), 'load saved file' );
 is( $loaded->{name},     'Module-Build', 'name correct');
 is( $loaded->{requires}{perl}, "5.006", 'prereq correct' );
+
+# file without suffix
+
+ok( $loaded = CPAN::Meta->load_file('t/data-test/META-2.meta'), 'load_file META-2.meta' );
+
+my $string = do { open my $fh, '<', 't/data-test/META-2.meta'; local $/; <$fh> };
+ok( $loaded = CPAN::Meta->load_string($string), 'load META-2.meta from string' );
 
 done_testing;

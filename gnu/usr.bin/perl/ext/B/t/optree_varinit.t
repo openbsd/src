@@ -108,9 +108,9 @@ EOT_EOT
 # 3        <$> gvsv(*a) s/OURINTR ->4
 EONT_EONT
 
-checkOptree ( name	=> 'local $a',
-	      prog	=> 'local $a',
-	      errs      => ['Name "main::a" used only once: possible typo at -e line 1.'],
+checkOptree ( name	=> 'local $c',
+	      prog	=> 'local $c',
+	      errs      => ['Name "main::c" used only once: possible typo at -e line 1.'],
 	      bcopts	=> '-basic',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
@@ -118,13 +118,13 @@ checkOptree ( name	=> 'local $a',
 1     <0> enter ->2
 2     <;> nextstate(main 1 -e:1) v:>,<,%,{ ->3
 -     <1> ex-rv2sv vKM/129 ->4
-3        <#> gvsv[*a] s/LVINTRO ->4
+3        <#> gvsv[*c] s/LVINTRO ->4
 EOT_EOT
 # 4  <@> leave[1 ref] vKP/REFC ->(end)
 # 1     <0> enter ->2
 # 2     <;> nextstate(main 1 -e:1) v:>,<,%,{ ->3
 # -     <1> ex-rv2sv vKM/129 ->4
-# 3        <$> gvsv(*a) s/LVINTRO ->4
+# 3        <$> gvsv(*c) s/LVINTRO ->4
 EONT_EONT
 
 pass("MY, OUR, LOCAL, BOTH SUB AND MAIN, = undef");
@@ -238,9 +238,9 @@ EOT_EOT
 # 4           <$> gvsv(*a) s/OURINTR ->5
 EONT_EONT
 
-checkOptree ( name	=> 'local $a=undef',
-	      prog	=> 'local $a=undef',
-	      errs      => ['Name "main::a" used only once: possible typo at -e line 1.'],
+checkOptree ( name	=> 'local $c=undef',
+	      prog	=> 'local $c=undef',
+	      errs      => ['Name "main::c" used only once: possible typo at -e line 1.'],
 	      note	=> 'locals are rare, probably not worth doing',
 	      bcopts	=> '-basic',
 	      strip_open_hints => 1,
@@ -251,7 +251,7 @@ checkOptree ( name	=> 'local $a=undef',
 5     <2> sassign vKS/2 ->6
 3        <0> undef s ->4
 -        <1> ex-rv2sv sKRM*/129 ->5
-4           <#> gvsv[*a] s/LVINTRO ->5
+4           <#> gvsv[*c] s/LVINTRO ->5
 EOT_EOT
 # 6  <@> leave[1 ref] vKP/REFC ->(end)
 # 1     <0> enter ->2
@@ -259,7 +259,7 @@ EOT_EOT
 # 5     <2> sassign vKS/2 ->6
 # 3        <0> undef s ->4
 # -        <1> ex-rv2sv sKRM*/129 ->5
-# 4           <$> gvsv(*a) s/LVINTRO ->5
+# 4           <$> gvsv(*c) s/LVINTRO ->5
 EONT_EONT
 
 checkOptree ( name	=> 'sub {my $a=()}',
@@ -359,9 +359,9 @@ EOT_EOT
 # 6  <@> leave[1 ref] vKP/REFC
 EONT_EONT
 
-checkOptree ( name	=> 'local $a=()',
-	      prog	=> 'local $a=()',
-	      errs      => ['Name "main::a" used only once: possible typo at -e line 1.'],
+checkOptree ( name	=> 'local $c=()',
+	      prog	=> 'local $c=()',
+	      errs      => ['Name "main::c" used only once: possible typo at -e line 1.'],
               #todo	=> 'probly not worth doing',
 	      bcopts	=> '-exec',
 	      strip_open_hints => 1,
@@ -369,14 +369,14 @@ checkOptree ( name	=> 'local $a=()',
 1  <0> enter 
 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 3  <0> stub sP
-4  <#> gvsv[*a] s/LVINTRO
+4  <#> gvsv[*c] s/LVINTRO
 5  <2> sassign vKS/2
 6  <@> leave[1 ref] vKP/REFC
 EOT_EOT
 # 1  <0> enter 
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> stub sP
-# 4  <$> gvsv(*a) s/LVINTRO
+# 4  <$> gvsv(*c) s/LVINTRO
 # 5  <2> sassign vKS/2
 # 6  <@> leave[1 ref] vKP/REFC
 EONT_EONT

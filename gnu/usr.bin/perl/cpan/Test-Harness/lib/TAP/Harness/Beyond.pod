@@ -1,3 +1,7 @@
+=head1 NAME
+
+Test::Harness::Beyond - Beyond make test
+
 =head1 Beyond make test
 
 Test::Harness is responsible for running test scripts, analysing
@@ -223,7 +227,8 @@ document:
 
   package My::TAP::Harness;
 
-  use base qw( TAP::Harness ); use YAML;
+  use base 'TAP::Harness';
+  use YAML;
 
   sub summary {
     my ( $self, $aggregate ) = @_; 

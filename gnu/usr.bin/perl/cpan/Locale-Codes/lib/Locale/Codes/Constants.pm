@@ -1,7 +1,7 @@
 package Locale::Codes::Constants;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2013 Sullivan Beck
+# Copyright (c) 2010-2014 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -17,12 +17,11 @@ require Exporter;
 our($VERSION,@ISA,@EXPORT);
 our(%ALL_CODESETS);
 
-$VERSION='3.25';
+$VERSION='3.30';
 @ISA     = qw(Exporter);
 @EXPORT  = qw(LOCALE_CODE_ALPHA_2
               LOCALE_CODE_ALPHA_3
               LOCALE_CODE_NUMERIC
-              LOCALE_CODE_FIPS
               LOCALE_CODE_DOM
 
               LOCALE_LANG_ALPHA_2
@@ -51,7 +50,6 @@ $VERSION='3.25';
 use constant LOCALE_CODE_ALPHA_2    => 'alpha-2';
 use constant LOCALE_CODE_ALPHA_3    => 'alpha-3';
 use constant LOCALE_CODE_NUMERIC    => 'numeric';
-use constant LOCALE_CODE_FIPS       => 'fips-10';
 use constant LOCALE_CODE_DOM        => 'dom';
 
 $ALL_CODESETS{'country'} = {
@@ -59,7 +57,6 @@ $ALL_CODESETS{'country'} = {
                             'codesets' => { 'alpha-2'  => ['lc'],
                                             'alpha-3'  => ['lc'],
                                             'numeric'  => ['numeric',3],
-                                            'fips-10'  => ['uc'],
                                             'dom'      => ['lc'],
                                           }
                            };

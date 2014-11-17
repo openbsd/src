@@ -2,13 +2,12 @@ package Module::Build::Platform::Windows;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.4003';
+$VERSION = '0.4205';
 $VERSION = eval $VERSION;
 
 use Config;
 use File::Basename;
 use File::Spec;
-use IO::File;
 
 use Module::Build::Base;
 
@@ -49,7 +48,7 @@ sub ACTION_realclean {
       my $null_arg = (Win32::IsWinNT()) ? '""' : '';
       my $cmd = qq(start $null_arg /min "\%comspec\%" /c del "$full_progname");
 
-      my $fh = IO::File->new(">> $basename.bat")
+      open(my $fh, '>>', "$basename.bat")
         or die "Can't create $basename.bat: $!";
       print $fh $cmd;
       close $fh ;
@@ -137,9 +136,9 @@ EOT
   my $start = $Config{startperl};
   $start = "#!perl" unless $start =~ /^#!.*perl/;
 
-  my $in = IO::File->new("< $opts{in}") or die "Can't open $opts{in}: $!";
+  open(my $in, '<', "$opts{in}") or die "Can't open $opts{in}: $!";
   my @file = <$in>;
-  $in->close;
+  close($in);
 
   foreach my $line ( @file ) {
     $linenum++;
@@ -164,13 +163,13 @@ EOT
     }
   }
 
-  my $out = IO::File->new("> $opts{out}") or die "Can't open $opts{out}: $!";
+  open(my $out, '>', "$opts{out}") or die "Can't open $opts{out}: $!";
   print $out $head;
   print $out $start, ( $opts{usewarnings} ? " -w" : "" ),
              "\n#line ", ($headlines+1), "\n" unless $linedone;
   print $out @file[$skiplines..$#file];
   print $out $tail unless $taildone;
-  $out->close;
+  close($out);
 
   return $opts{out};
 }

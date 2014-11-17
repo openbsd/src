@@ -8,6 +8,10 @@ BEGIN {
     plan(skip_all => "GDBM_File was not built")
 	unless $Config{extensions} =~ /\bGDBM_File\b/;
 
+    # https://rt.perl.org/Public/Bug/Display.html?id=117967
+    plan(skip_all => "GDBM_File is flaky in $^O")
+        if $^O =~ /darwin/;
+
     plan(tests => 8);
     use_ok('GDBM_File');
 }

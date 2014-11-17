@@ -125,7 +125,7 @@ ok grep {$_ eq 'save_out'     } $mb->cleanup;
   ok ! -e File::Spec->catdir('Simple-0.01', 'blib');
 
   # Make sure all of the above was done by the new version of Module::Build
-  my $fh = IO::File->new(File::Spec->catfile($dist->dirname, 'META.yml'));
+  open(my $fh, '<', File::Spec->catfile($dist->dirname, 'META.yml'));
   my $contents = do {local $/; <$fh>};
   $contents =~ /Module::Build version ([0-9_.]+)/m;
   cmp_ok $1, '==', $mb->VERSION, "Check version used to create META.yml: $1 == " . $mb->VERSION;
@@ -151,7 +151,7 @@ ok grep {$_ eq 'save_out'     } $mb->cleanup;
 
  SKIP: {
     skip("We do not rewrite shebang on VMS", 1) if $^O eq 'VMS';
-    my $fh = IO::File->new($blib_script);
+    open(my $fh, '<', $blib_script);
     my $first_line = <$fh>;
     isnt $first_line, "#!perl -w\n", "should rewrite the shebang line";
   }

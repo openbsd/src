@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 perlpolicy - Various and sundry policies and commitments related to the Perl core
@@ -205,7 +207,12 @@ an experimental feature useful and want to help shape its future.
 =item deprecated
 
 If something in the Perl core is marked as B<deprecated>, we may remove it
-from the core in the next stable release series, though we may not. As of
+from the core in the future, though we might not.  Generally, backward
+incompatible changes will have deprecation warnings for two release
+cycles before being removed, but may be removed after just one cycle if
+the risk seems quite low or the benefits quite high.
+
+As of
 Perl 5.12, deprecated features and modules warn the user as they're used.
 When a module is deprecated, it will also be made available on CPAN.
 Installing it from CPAN will silence deprecation warnings for that module.
@@ -221,14 +228,14 @@ features.
 
 From time to time, we may mark language constructs and features which we
 consider to have been mistakes as B<discouraged>.  Discouraged features
-aren't candidates for removal in the next major release series, but
+aren't currently candidates for removal, but
 we may later deprecate them if they're found to stand in the way of a
 significant improvement to the Perl core.
 
 =item removed
 
-Once a feature, construct or module has been marked as deprecated for a
-stable release cycle, we may remove it from the Perl core.  Unsurprisingly,
+Once a feature, construct or module has been marked as deprecated, we
+may remove it from the Perl core.  Unsurprisingly,
 we say we've B<removed> these things.  When a module is removed, it will
 no longer ship with Perl, but will continue to be available on CPAN.
 
@@ -255,7 +262,7 @@ acceptable.
 =item *
 
 Acceptable documentation updates are those that correct factual errors,
-explain significant bugs or deficiencies in the current implementation, 
+explain significant bugs or deficiencies in the current implementation,
 or fix broken markup.
 
 =item *
@@ -266,7 +273,7 @@ are not acceptable.
 =item *
 
 Patches that fix crashing bugs that do not otherwise change Perl's
-functionality or negatively impact performance are acceptable.  
+functionality or negatively impact performance are acceptable.
 
 =item *
 
@@ -281,12 +288,12 @@ releases are acceptable.
 
 =item *
 
-Updates to dual-life modules should consist of minimal patches to 
+Updates to dual-life modules should consist of minimal patches to
 fix crashing or security issues (as above).
 
 =item *
 
-Minimal patches that fix platform-specific test failures or
+Minimal patches that fix platform-specific test failures or build or
 installation issues are acceptable. When these changes are made
 to dual-life modules for which CPAN is canonical, any changes
 should be coordinated with the upstream author.
@@ -318,7 +325,7 @@ maint branches.
 
 Any committer may cherry-pick any commit from blead to a maint branch if
 they send mail to perl5-porters announcing their intent to cherry-pick
-a specific commit along with a rationale for doing so and at least two 
+a specific commit along with a rationale for doing so and at least two
 other committers respond to the list giving their assent. (This policy
 applies to current and former pumpkings, as well as other committers.)
 
@@ -477,6 +484,41 @@ in documentation about how behaviour has changed from previous releases,
 but, with very few exceptions, documentation isn't "dual-life" --
 it doesn't need to fully describe how all old versions used to work.
 
+=head1 STANDARDS OF CONDUCT
+
+The official forum for the development of perl is the perl5-porters mailing
+list, mentioned above, and its bugtracker at rt.perl.org.  All participants in
+discussion there are expected to adhere to a standard of conduct.
+
+=over 4
+
+=item *
+
+Always be civil.
+
+=item * 
+
+Heed the moderators.
+
+=back
+
+Civility is simple:  stick to the facts while avoiding demeaning remarks and
+sarcasm.  It is not enough to be factual.  You must also be civil.  Responding
+in kind to incivility is not acceptable.
+
+If the list moderators tell you that you are not being civil, carefully
+consider how your words have appeared before responding in any way.  You may
+protest, but repeated protest in the face of a repeatedly reaffirmed decision
+is not acceptable.
+
+Unacceptable behavior will result in a public and clearly identified warning.
+Repeated unacceptable behavior will result in removal from the mailing list.
+The first removal is for one month.  Subsequent removals will double in length.
+After six months with no warning, a user's ban length is reset.  Removals, like
+warnings, are public.
+
+The list of moderators will be public knowledge.  At present, it is:
+Aaron Crane, Andy Dougherty, Ricardo Signes, Steffen Müller.
 
 =head1 CREDITS
 

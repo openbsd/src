@@ -1,11 +1,23 @@
-
-require 5;
-#                        The documentation is at the end.
-# Time-stamp: "2004-05-07 15:31:25 ADT"
 package Pod::Escapes;
+use strict;
+use warnings;
+use 5.006;
+
+use vars qw(
+  %Code2USASCII
+  %Name2character
+  %Name2character_number
+  %Latin1Code_to_fallback
+  %Latin1Char_to_fallback
+  $FAR_CHAR
+  $FAR_CHAR_NUMBER
+  $NOT_ASCII
+  @ISA $VERSION @EXPORT_OK %EXPORT_TAGS
+);
+
 require Exporter;
 @ISA = ('Exporter');
-$VERSION = '1.04';
+$VERSION = '1.06';
 @EXPORT_OK = qw(
   %Code2USASCII
   %Name2character
@@ -18,18 +30,6 @@ $VERSION = '1.04';
 %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
 #==========================================================================
-
-use strict;
-use vars qw(
-  %Code2USASCII
-  %Name2character
-  %Name2character_number
-  %Latin1Code_to_fallback
-  %Latin1Char_to_fallback
-  $FAR_CHAR
-  $FAR_CHAR_NUMBER
-  $NOT_ASCII
-);
 
 $FAR_CHAR = "?" unless defined $FAR_CHAR;
 $FAR_CHAR_NUMBER = ord($FAR_CHAR) unless defined $FAR_CHAR_NUMBER;
@@ -90,7 +90,7 @@ sub e2charnum {
     $in = hex $1;
   } # else it's decimal, or named
 
-  if($in =~ m/^\d+$/s) {
+  if($in =~ m/^[0-9]+$/s) {
     return 0 + $in;
   } else {
     return $Name2character_number{$in}; # returns undef if unknown
@@ -529,7 +529,7 @@ __END__
 
 =head1 NAME
 
-Pod::Escapes -- for resolving Pod EE<lt>...E<gt> sequences
+Pod::Escapes - for resolving Pod EE<lt>...E<gt> sequences
 
 =head1 SYNOPSIS
 
@@ -567,7 +567,7 @@ C<e2char('0x2F')>, and C<e2char('057')> all return "/",
 because C<EE<lt>solE<gt>>, C<EE<lt>47E<gt>>, C<EE<lt>0x2fE<gt>>,
 and C<EE<lt>057E<gt>>, all mean "/".  If
 the name has no known value (as with a name of "qacute") or is
-syntactally invalid (as with a name of "1/4"), this returns undef.
+syntactically invalid (as with a name of "1/4"), this returns undef.
 
 =item e2charnum($e_content)
 
@@ -579,7 +579,7 @@ C<e2char('0x2F')>, and C<e2char('057')> all return 47,
 because C<EE<lt>solE<gt>>, C<EE<lt>47E<gt>>, C<EE<lt>0x2fE<gt>>,
 and C<EE<lt>057E<gt>>, all mean "/", whose Unicode number is 47.  If
 the name has no known value (as with a name of "qacute") or is
-syntactally invalid (as with a name of "1/4"), this returns undef.
+syntactically invalid (as with a name of "1/4"), this returns undef.
 
 =item $Name2character{I<name>}
 
@@ -641,11 +641,21 @@ C<chr($Name2character_number{$name})>.
 
 =head1 SEE ALSO
 
-L<perlpod|perlpod>
+L<Pod::Browser> - a pod web server based on L<Catalyst>.
 
-L<perlpodspec|perlpodspec>
+L<Pod::Checker> - check pod documents for syntax errors.
 
-L<Text::Unidecode|Text::Unidecode>
+L<Pod::Coverage> - check if the documentation for a module is comprehensive.
+
+L<perlpod> - description of pod format (for people documenting with pod).
+
+L<perlpodspec> - specification of pod format (for people processing it).
+
+L<Text::Unidecode> - ASCII transliteration of Unicode text.
+
+=head1 REPOSITORY
+
+L<https://github.com/neilbowers/Pod-Escapes>
 
 =head1 COPYRIGHT AND DISCLAIMERS
 
@@ -671,12 +681,13 @@ Currently (October 2001), that's these three:
 
 Sean M. Burke C<sburke@cpan.org>
 
+Now being maintained by Neil Bowers E<lt>neilb@cpan.orgE<gt>
+
 =cut
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # What I used for reading the XHTML .ent files:
 
-use strict;
 my(@norms, @good, @bad);
 my $dir = 'c:/sgml/docbook/';
 my %escapes;

@@ -1,8 +1,8 @@
-# DerivedBinaryProperties-6.2.0.txt
-# Date: 2012-05-23, 20:34:43 GMT [MD]
+# DerivedBinaryProperties-6.3.0.txt
+# Date: 2013-07-05, 14:08:44 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -60,7 +60,10 @@
 22D0..22D1    ; Bidi_Mirrored # Sm   [2] DOUBLE SUBSET..DOUBLE SUPERSET
 22D6..22ED    ; Bidi_Mirrored # Sm  [24] LESS-THAN WITH DOT..DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL
 22F0..22FF    ; Bidi_Mirrored # Sm  [16] UP RIGHT DIAGONAL ELLIPSIS..Z NOTATION BAG MEMBERSHIP
-2308..230B    ; Bidi_Mirrored # Sm   [4] LEFT CEILING..RIGHT FLOOR
+2308          ; Bidi_Mirrored # Ps       LEFT CEILING
+2309          ; Bidi_Mirrored # Pe       RIGHT CEILING
+230A          ; Bidi_Mirrored # Ps       LEFT FLOOR
+230B          ; Bidi_Mirrored # Pe       RIGHT FLOOR
 2320..2321    ; Bidi_Mirrored # Sm   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
 2329          ; Bidi_Mirrored # Ps       LEFT-POINTING ANGLE BRACKET
 232A          ; Bidi_Mirrored # Pe       RIGHT-POINTING ANGLE BRACKET

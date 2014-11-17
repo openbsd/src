@@ -6,7 +6,6 @@ use MBTest tests => 2;
 
 blib_load('Module::Build');
 
-use IO::File;
 my $tmp = MBTest->tmpdir;
 
 use DistGen;

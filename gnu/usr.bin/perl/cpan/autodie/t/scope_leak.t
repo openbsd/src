@@ -9,14 +9,15 @@ use lib $FindBin::Bin;
 
 use Test::More 'no_plan';
 
-use constant NO_SUCH_FILE => 'this_file_had_better_not_exist';
-use autodie qw(open);
+use constant NO_SUCH_FILE  => 'this_file_had_better_not_exist';
+use constant NO_SUCH_FILE2 => 'this_file_had_better_not_exist_either';
+use autodie qw(open rename);
 
-eval {
-    open(my $fh, '<', NO_SUCH_FILE);
-};
+eval { open(my $fh, '<', NO_SUCH_FILE); };
+ok($@, "basic autodie test - open");
 
-ok($@, "basic autodie test");
+eval { rename(NO_SUCH_FILE, NO_SUCH_FILE2); };
+ok($@, "basic autodie test - rename");
 
 use autodie_test_module;
 
@@ -24,17 +25,25 @@ use autodie_test_module;
 # just loaded will still have an autodying main::open (although
 # its own open should be unaffected).
 
-eval {
-    leak_test(NO_SUCH_FILE);
-};
-
+eval { leak_test(NO_SUCH_FILE); };
 is($@,"","autodying main::open should not leak to other files");
 
-eval {
-    autodie_test_module::your_open(NO_SUCH_FILE);
-};
-
+eval { autodie_test_module::your_open(NO_SUCH_FILE); };
 is($@,"","Other package open should be unaffected");
+
+# The same should apply for rename (which is different, because
+# it doesn't depend upon packages, and could be cached more
+# aggressively.)
+
+eval { leak_test_rename(NO_SUCH_FILE, NO_SUCH_FILE2); };
+is($@,"","autodying main::rename should not leak to other files");
+
+eval { autodie_test_module::your_rename(NO_SUCH_FILE, NO_SUCH_FILE2); };
+is($@,"","Other package rename should be unaffected");
+
+# Dying rename in the other package should still die.
+eval { autodie_test_module::your_dying_rename(NO_SUCH_FILE, NO_SUCH_FILE2); };
+ok($@, "rename in loaded module should remain autodying.");
 
 # Due to odd filenames reported when doing string evals,
 # older versions of autodie would not propogate into string evals.

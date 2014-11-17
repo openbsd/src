@@ -4,7 +4,7 @@
       "perl5-porters@perl.org"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "CPAN::Meta version 2.120921",
+   "generated_by" : "CPAN::Meta version 2.140640",
    "license" : [
       "perl_5"
    ],
@@ -21,11 +21,11 @@
          "dist/bignum",
          "dist/Carp",
          "dist/constant",
-         "dist/Cwd",
          "dist/Data-Dumper",
          "dist/Devel-SelfStubber",
          "dist/Dumpvalue",
          "dist/Env",
+         "dist/Exporter",
          "dist/ExtUtils-CBuilder",
          "dist/ExtUtils-Command",
          "dist/ExtUtils-Install",
@@ -33,7 +33,6 @@
          "dist/ExtUtils-ParseXS",
          "dist/Filter-Simple",
          "dist/I18N-Collate",
-         "dist/I18N-LangTags",
          "dist/if",
          "dist/IO/",
          "dist/lib/",
@@ -43,6 +42,7 @@
          "dist/Math-BigRat",
          "dist/Module-CoreList",
          "dist/Net-Ping",
+         "dist/PathTools",
          "dist/Safe",
          "dist/Search-Dict",
          "dist/SelfLoader",
@@ -56,7 +56,6 @@
          "dist/threads-shared",
          "dist/Tie-File",
          "dist/XSLoader",
-         "lib/version",
          "mad",
          "win32"
       ],
@@ -105,23 +104,21 @@
          "dist/lib/lib_pm.PL",
          "dist/lib/Makefile.PL",
          "dist/lib/t/01lib.t",
-         "lib/Exporter.pm",
-         "lib/Exporter.t",
-         "lib/Exporter/Heavy.pm",
          "lib/unicore/mktables",
-         "lib/version.pm",
-         "lib/version.pod",
          "pod/perlfilter.pod",
          "pod/perlpodstyle.pod",
          "Porting/Maintainers.pm",
          "Porting/perldelta_template.pod",
-         "TestInit.pm"
+         "TestInit.pm",
+         "vutil.c",
+         "vutil.h",
+         "vxs.inc"
       ]
    },
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "web" : "http://rt.perl.org/perlbug/"
+         "web" : "https://rt.perl.org/"
       },
       "homepage" : "http://www.perl.org/",
       "license" : [
@@ -131,5 +128,5 @@
          "url" : "http://perl5.git.perl.org/"
       }
    },
-   "version" : "5.018002"
+   "version" : "5.020001"
 }

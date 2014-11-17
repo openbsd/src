@@ -3,7 +3,7 @@
     -- [ATTRIBUTION]
 
 We are [SYNONYM FOR 'pleased'] to announce version [VERSION.SUBVERSION],
-the [N-TH] development release of version 17 of Perl 5.
+the [N-TH] development release of version 19 of Perl 5.
 
 You will soon be able to download Perl 5.[VERSION.SUBVERSION] from your
 favorite CPAN mirror or find it at:
@@ -21,7 +21,7 @@ the "pod" directory inside the release and on the web.
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
 We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE
-DATE].  The next major stable release of Perl 5, version 18.0, should
-appear in May 2013.
+DATE].  The next major stable release of Perl 5, version 20.0, should
+appear in May 2014.
 
-[YOUR SALUATION HERE]
+[YOUR SALUTATION HERE]

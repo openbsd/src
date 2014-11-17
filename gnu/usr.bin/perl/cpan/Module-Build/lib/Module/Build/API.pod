@@ -72,6 +72,13 @@ An array reference of files to be cleaned up when the C<clean> action
 is performed. See also the L<add_to_cleanup()|/"add_to_cleanup(@files)">
 method.
 
+=item allow_pureperl
+
+[version 0.4005]
+
+A bool indicating the module is still functional without its xs parts.
+When an XS module is build with --pureperl_only, it will otherwise fail.
+
 =item auto_configure_requires
 
 [version 0.34]
@@ -171,6 +178,15 @@ items before running the C<Build.PL>.
 
 Module::Build may automatically add itself to configure_requires.
 See L</auto_configure_requires> for details.
+
+See the documentation for L<Module::Build::Authoring/"PREREQUISITES">
+for the details of how requirements can be specified.
+
+=item test_requires
+
+[version 0.4004]
+
+Modules listed in this section must be installed before testing the distribution.
 
 See the documentation for L<Module::Build::Authoring/"PREREQUISITES">
 for the details of how requirements can be specified.
@@ -378,6 +394,14 @@ To link your XS code against glib you might write something like:
      extra_compiler_flags => scalar `glib-config --cflags`,
      extra_linker_flags   => scalar `glib-config --libs`,
     );
+
+=item extra_manify_args
+
+[version 0.4006]
+
+Any extra arguments to pass to C<< Pod::Man->new() >> when building
+man pages.  One common choice might be C<< utf8 => 1 >> to get Unicode
+support.
 
 =item get_options
 
@@ -1066,7 +1090,7 @@ This method is the preferred interface for retrieving the arguments passed via
 command line options to F<Build.PL> or F<Build>, minus the Module-Build
 specific options.
 
-When called in in a scalar context with no arguments, this method returns a
+When called in a scalar context with no arguments, this method returns a
 reference to the hash storing all of the arguments; in an array context, it
 returns the hash itself.  When passed a single argument, it returns the value
 stored in the args hash for that option key.  When called with two arguments,
@@ -1753,7 +1777,7 @@ Examples:
 
 Returns a reference to a hash describing all prerequisites.  The keys of the
 hash will be the various prerequisite types ('requires', 'build_requires',
-'configure_requires', 'recommends', or 'conflicts') and the values will be
+'test_requires', 'configure_requires', 'recommends', or 'conflicts') and the values will be
 references to hashes of module names and version numbers.  Only prerequisites
 types that are defined will be included.  The C<prereq_data> action is just a
 thin wrapper around the C<prereq_data()> method and dumps the hash as a string
@@ -1916,6 +1940,8 @@ accessor methods for the following properties:
 
 =item allow_mb_mismatch()
 
+=item allow_pureperl()
+
 =item auto_configure_requires()
 
 =item autosplit()
@@ -1965,6 +1991,8 @@ accessor methods for the following properties:
 =item destdir()
 
 =item dynamic_config()
+
+=item extra_manify_args()
 
 =item get_options()
 
@@ -2016,6 +2044,8 @@ accessor methods for the following properties:
 
 =item program_name()
 
+=item pureperl_only()
+
 =item quiet()
 
 =item recommends()
@@ -2034,6 +2064,8 @@ accessor methods for the following properties:
 
 =item test_file_exts()
 
+=item test_requires()
+
 =item use_rcfile()
 
 =item use_tap_harness()
@@ -2049,7 +2081,7 @@ accessor methods for the following properties:
 If you would like to add other useful metadata, C<Module::Build>
 supports this with the C<meta_add> and C<meta_merge> arguments to
 L</new()>. The authoritative list of supported metadata can be found at
-L<CPAN::META::Spec> but for convenience - here are a few of the more useful ones:
+L<CPAN::Meta::Spec> but for convenience - here are a few of the more useful ones:
 
 =over 4
 
@@ -2087,6 +2119,6 @@ perl(1), L<Module::Build>(3), L<Module::Build::Authoring>(3),
 L<Module::Build::Cookbook>(3), L<ExtUtils::MakeMaker>(3)
 
 F<META.yml> Specification:
-L<CPAN::META::Spec>
+L<CPAN::Meta::Spec>
 
 =cut

@@ -20,7 +20,7 @@ BEGIN
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 98 + $extra ;
+    plan tests => 107 + $extra ;
 
     use_ok('Compress::Raw::Zlib', 2) ; 
 }
@@ -125,5 +125,35 @@ sub getit
     is $$c, $text;
     
                                               
+}
+
+{
+    title "regression test for #92521: Z_OK instead of Z_BUF_ERROR";
+    
+    # 1M "aaa..." 
+    my $in = 'a' x 100000; 
+    my ($deflate, $err) = Compress::Raw::Zlib::Deflate->new(WindowBits => -15, 
+        MemLevel => 8); 
+    ok $deflate ;
+    cmp_ok $err, '==', Z_OK, "  status is Z_OK" ;
+
+    my $status = $deflate->deflate($in, my $zip); 
+    cmp_ok $status, '==', Z_OK, "  status is Z_OK" ;
+
+    cmp_ok $deflate->flush($zip, Z_SYNC_FLUSH), "==", Z_OK; 
+
+    # Compression should stop after 10K "aaa..." with Z_BUF_ERROR 
+    my $inflate;
+    ($inflate, $err)  = Compress::Raw::Zlib::Inflate->new( Bufsize => 10000, 
+        LimitOutput => 1, WindowBits => -15 ); 
+    ok $inflate ;
+    cmp_ok $err, '==', Z_OK, "  status is Z_OK" ;
+
+    $status = $inflate->inflate($zip, my $out); 
+
+    cmp_ok length($out), ">=", 10000;
+    #warn 'RESULT: ', length($out), ' of ', length($in), "\n"; 
+    cmp_ok $status, '==', Z_BUF_ERROR, "  status is Z_BUF_ERROR" ;
+
 }
 

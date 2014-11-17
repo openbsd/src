@@ -2576,7 +2576,7 @@ incoming B<pipe>. See also B<C preprocessor>.
 
 =item primary maintainer
 
-The X<primary maintainer>author that PAUSE allows to assign B<co-maintainer> 
+The X<primary maintainer>author that PAUSE allows to assign B<co-maintainer>
 permissions to a B<namespace>. A primary maintainer can give up this
 distinction by assigning it to another PAUSE author. See Camel chapter 19,
 “CPAN”.

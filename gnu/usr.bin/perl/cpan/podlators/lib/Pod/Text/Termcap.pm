@@ -27,7 +27,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '2.07';
+$VERSION = '2.08';
 
 ##############################################################################
 # Overrides
@@ -104,7 +104,7 @@ sub strip_format {
     return $text;
 }
 
-# Override the wrapping code to igore the special sequences.
+# Override the wrapping code to ignore the special sequences.
 sub wrap {
     my $self = shift;
     local $_ = shift;
@@ -113,7 +113,7 @@ sub wrap {
     my $width = $$self{opt_width} - $$self{MARGIN};
 
     # $codes matches a single special sequence.  $char matches any number of
-    # special sequences preceeding a single character other than a newline.
+    # special sequences preceding a single character other than a newline.
     # We have to do $shortchar and $longchar in variables because the
     # construct ${char}{0,$width} didn't do the right thing until Perl 5.8.x.
     my $codes = "(?:\Q$$self{BOLD}\E|\Q$$self{UNDL}\E|\Q$$self{NORM}\E)";

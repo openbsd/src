@@ -9,7 +9,7 @@ BEGIN { require "./test.pl"; }
 
 # This test depends on t/lib/Devel/switchd*.pm.
 
-plan(tests => 10);
+plan(tests => 18);
 
 my $r;
 
@@ -69,6 +69,17 @@ cmp_ok(
   0,
  'The debugger can see the lines of the main program under #!perl -d',
 );
+
+like
+  runperl(
+   switches => [ '"-Mless ++INC->{q-Devel/_.pm-}"' ],
+   progs    => [
+    '#!perl -d:_',
+    'sub DB::DB{} print line=>__LINE__',
+   ],
+  ),
+  qr/line2/,
+ '#!perl -d:whatever does not throw line numbers off';
 
 # [perl #48332]
 like(
@@ -136,6 +147,16 @@ like(
   qr/^No DB::DB routine defined/,
   "No crash when &DB::DB exists but isn't actually defined",
 );
+# or seen and defined later
+is(
+  runperl(
+    switches => [ '-Ilib', '-d:nodb' ], # nodb.pm contains *DB::DB...if 0
+    prog     => 'warn; sub DB::DB { print qq-ok\n-; exit }',
+    stderr   => 1,
+  ),
+  "ok\n",
+  "DB::DB works after '*DB::DB if 0'",
+);
 
 # [perl #115742] Recursive DB::DB clobbering its own pad
 like(
@@ -162,4 +183,95 @@ like(
   ),
   qr/42/,
   "Recursive DB::DB does not clobber its own pad",
+);
+
+# [perl #118627]
+like(
+  runperl(
+   switches => [ '-Ilib', '-d:switchd_empty' ],
+   prog     => 'print @{q|_<-e|}',
+  ),
+  qr "use Devel::switchd_empty;(?:BEGIN|\r?\nprint)",
+                         # miniperl tacks a BEGIN block on to the same line
+ 'Copy on write does not mangle ${"_<-e"}[0] [perl #118627]',
+);
+
+# PERL5DB with embedded newlines
+{
+    local $ENV{PERL5DB} = "sub DB::DB{}\nwarn";
+    is(
+      runperl(
+       switches => [ '-Ilib', '-ld' ],
+       prog     => 'warn',
+       stderr   => 1
+      ),
+      "Warning: something's wrong.\n"
+     ."Warning: something's wrong at -e line 1.\n",
+     'PERL5DB with embedded newlines',
+    );
+}
+
+# test that DB::goto works
+is(
+  runperl(
+   switches => [ '-Ilib', '-d:switchd_goto' ],
+   prog => 'sub baz { print qq|hello;\n| } sub foo { goto &baz } foo()',
+   stderr => 1,
+  ),
+  "goto<main::baz>;hello;\n",
+  "DB::goto"
+);
+
+# Test that %DB::lsub is not vivified
+is(
+  runperl(
+   switches => [ '-Ilib', '-d:switchd_empty' ],
+   progs => ['sub DB::sub {} sub foo : lvalue {} foo();',
+             'print qq-ok\n- unless defined *DB::lsub{HASH}'],
+  ),
+  "ok\n",
+  "%DB::lsub is not vivified"
+);
+
+# Test setting of breakpoints without *DB::dbline aliased
+is(
+  runperl(
+   switches => [ '-Ilib', '-d:nodb' ],
+   progs => [ split "\n",
+    'sub DB::DB {
+      $DB::single = 0, return if $DB::single; print qq[ok\n]; exit
+     }
+     ${q(_<).__FILE__}{6} = 1; # set a breakpoint
+     sub foo {
+         die; # line 6
+     }
+     foo();
+    '
+   ],
+   stderr => 1
+  ),
+  "ok\n",
+  "setting breakpoints without *DB::dbline aliased"
+);
+
+# [perl #121255]
+# Check that utf8 caches are flushed when $DB::sub is set
+is(
+  runperl(
+   switches => [ '-Ilib', '-d:switchd_empty' ],
+   progs => [ split "\n",
+    'sub DB::sub{length($DB::sub); goto &$DB::sub}
+     ${^UTF8CACHE}=-1;
+     print
+       eval qq|sub oo\x{25f} { 42 }
+               sub ooooo\x{25f} { oo\x{25f}() }
+               ooooo\x{25f}()| 
+        || $@,
+       qq|\n|;
+    '
+   ],
+   stderr => 1
+  ),
+  "42\n",
+  'UTF8 length caches on $DB::sub are flushed'
 );

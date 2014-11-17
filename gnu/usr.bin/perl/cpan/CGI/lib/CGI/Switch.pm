@@ -1,7 +1,8 @@
 package CGI::Switch;
+use if $] >= 5.019, 'deprecate';
 use CGI;
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 1;
 

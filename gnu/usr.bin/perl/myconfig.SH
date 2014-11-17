@@ -37,7 +37,6 @@ Summary of my $package (revision $revision $version_patchlevel_string) configura
     config_args='$config_args'
     hint=$hint, useposix=$useposix, d_sigaction=$d_sigaction
     useithreads=$useithreads, usemultiplicity=$usemultiplicity
-    useperlio=$useperlio, d_sfio=$d_sfio, uselargefiles=$uselargefiles, usesocks=$usesocks
     use64bitint=$use64bitint, use64bitall=$use64bitall, uselongdouble=$uselongdouble
     usemymalloc=$usemymalloc, bincompat5005=undef
   Compiler:

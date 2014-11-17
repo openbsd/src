@@ -48,7 +48,7 @@ package main;
 
 $| = 1;
 BEGIN { require './test.pl' }
-plan tests => 5191;
+plan tests => 5194;
 
 use Scalar::Util qw(tainted);
 
@@ -1293,6 +1293,19 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 }
 
 {
+    # Check readonliness of constants, whether shared hash key
+    # scalars or no (brought up in bug #109744)
+    BEGIN { overload::constant integer => sub { "main" }; }
+    eval { ${\5} = 'whatever' };
+    like $@, qr/^Modification of a read-only value attempted at /,
+	'constant overloading makes read-only constants';
+    BEGIN { overload::constant integer => sub { __PACKAGE__ }; }
+    eval { ${\5} = 'whatever' };
+    like $@, qr/^Modification of a read-only value attempted at /,
+	'... even with shared hash key scalars';
+}
+
+{
     package Sklorsh;
     use overload
 	bool     => sub { shift->is_cool };
@@ -2052,11 +2065,11 @@ fresh_perl_is
     }
 
     package NCmp;
-    use base 'CmpBase';
+    use parent '-norequire', 'CmpBase';
     use overload '<=>' => 'cmp';
 
     package SCmp;
-    use base 'CmpBase';
+    use parent '-norequire', 'CmpBase';
     use overload 'cmp' => 'cmp';
 
     package main;
@@ -2120,7 +2133,7 @@ fresh_perl_is
                 ? $nomethod . "=>'nomethod'," : '';
             eval qq{
                     package NuMB$fall$nomethod;
-                    use base qw/NuMB/;
+                    use parent '-norequire', qw/NuMB/;
                     use overload $nomethod_decl
                     fallback => $fall;
                 };
@@ -2688,6 +2701,35 @@ EOF
 	'overloaded REGEXP'
     );
 }
+
+{
+    # RT #121362
+    # splitting the stash HV while rebuilding the overload cache gave
+    # valgrind errors. This test code triggers such a split. It doesn't
+    # actually test anything; its just there for valgrind to spot
+    # problems.
+
+    package A_121362;
+
+    sub stringify { }
+    use overload '""' => 'stringify';
+
+    package B_121362;
+    our @ISA = qw(A_121362);
+
+    package main;
+
+    my $x = bless { }, 'B_121362';
+
+    for ('a'..'z') {
+        delete $B_121362::{stringify}; # delete cache entry
+        no strict 'refs';
+        *{"B_121362::$_"}  = sub { };  # increase size of %B_121362
+        my $y = $x->{value};       # trigger cache add to %B_121362
+    }
+    pass("RT 121362");
+}
+
 
 { # undefining the overload stash -- KEEP THIS TEST LAST
     package ant;

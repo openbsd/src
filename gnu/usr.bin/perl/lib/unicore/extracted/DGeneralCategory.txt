@@ -1,8 +1,8 @@
-# DerivedGeneralCategory-6.2.0.txt
-# Date: 2012-05-20, 00:42:34 GMT [MD]
+# DerivedGeneralCategory-6.3.0.txt
+# Date: 2013-07-05, 14:08:45 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -29,7 +29,7 @@
 05EB..05EF    ; Cn #   [5] <reserved-05EB>..<reserved-05EF>
 05F5..05FF    ; Cn #  [11] <reserved-05F5>..<reserved-05FF>
 0605          ; Cn #       <reserved-0605>
-061C..061D    ; Cn #   [2] <reserved-061C>..<reserved-061D>
+061D          ; Cn #       <reserved-061D>
 070E          ; Cn #       <reserved-070E>
 074B..074C    ; Cn #   [2] <reserved-074B>..<reserved-074C>
 07B2..07BF    ; Cn #  [14] <reserved-07B2>..<reserved-07BF>
@@ -271,7 +271,7 @@
 1FF0..1FF1    ; Cn #   [2] <reserved-1FF0>..<reserved-1FF1>
 1FF5          ; Cn #       <reserved-1FF5>
 1FFF          ; Cn #       <reserved-1FFF>
-2065..2069    ; Cn #   [5] <reserved-2065>..<reserved-2069>
+2065          ; Cn #       <reserved-2065>
 2072..2073    ; Cn #   [2] <reserved-2072>..<reserved-2073>
 208F          ; Cn #       <reserved-208F>
 209D..209F    ; Cn #   [3] <reserved-209D>..<reserved-209F>
@@ -554,7 +554,7 @@ E01F0..EFFFF  ; Cn # [65040] <reserved-E01F0>..<noncharacter-EFFFF>
 FFFFE..FFFFF  ; Cn #   [2] <noncharacter-FFFFE>..<noncharacter-FFFFF>
 10FFFE..10FFFF; Cn #   [2] <noncharacter-10FFFE>..<noncharacter-10FFFF>
 
-# Total code points: 864414
+# Total code points: 864409
 
 # ================================================
 
@@ -2368,6 +2368,7 @@ FFDA..FFDC    ; Lo #   [3] HALFWIDTH HANGUL LETTER EU..HALFWIDTH HANGUL LETTER I
 1932          ; Mn #       LIMBU SMALL LETTER ANUSVARA
 1939..193B    ; Mn #   [3] LIMBU SIGN MUKPHRENG..LIMBU SIGN SA-I
 1A17..1A18    ; Mn #   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
+1A1B          ; Mn #       BUGINESE VOWEL SIGN AE
 1A56          ; Mn #       TAI THAM CONSONANT SIGN MEDIAL LA
 1A58..1A5E    ; Mn #   [7] TAI THAM SIGN MAI KANG LAI..TAI THAM CONSONANT SIGN SA
 1A60          ; Mn #       TAI THAM SIGN SAKOT
@@ -2468,7 +2469,7 @@ FE20..FE26    ; Mn #   [7] COMBINING LIGATURE LEFT HALF..COMBINING CONJOINING MA
 1D242..1D244  ; Mn #   [3] COMBINING GREEK MUSICAL TRISEME..COMBINING GREEK MUSICAL PENTASEME
 E0100..E01EF  ; Mn # [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
-# Total code points: 1280
+# Total code points: 1281
 
 # ================================================
 
@@ -2551,7 +2552,7 @@ A670..A672    ; Me #   [3] COMBINING CYRILLIC TEN MILLIONS SIGN..COMBINING CYRIL
 1933..1938    ; Mc #   [6] LIMBU SMALL LETTER TA..LIMBU SMALL LETTER LA
 19B0..19C0    ; Mc #  [17] NEW TAI LUE VOWEL SIGN VOWEL SHORTENER..NEW TAI LUE VOWEL SIGN IY
 19C8..19C9    ; Mc #   [2] NEW TAI LUE TONE MARK-1..NEW TAI LUE TONE MARK-2
-1A19..1A1B    ; Mc #   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; Mc #   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
 1A55          ; Mc #       TAI THAM CONSONANT SIGN MEDIAL RA
 1A57          ; Mc #       TAI THAM CONSONANT SIGN LA TANG LAI
 1A61          ; Mc #       TAI THAM VOWEL SIGN A
@@ -2612,7 +2613,7 @@ ABEC          ; Mc #       MEETEI MAYEK LUM IYEK
 1D165..1D166  ; Mc #   [2] MUSICAL SYMBOL COMBINING STEM..MUSICAL SYMBOL COMBINING SPRECHGESANG STEM
 1D16D..1D172  ; Mc #   [6] MUSICAL SYMBOL COMBINING AUGMENTATION DOT..MUSICAL SYMBOL COMBINING FLAG-5
 
-# Total code points: 353
+# Total code points: 352
 
 # ================================================
 
@@ -2738,13 +2739,12 @@ A830..A835    ; No #   [6] NORTH INDIC FRACTION ONE QUARTER..NORTH INDIC FRACTIO
 0020          ; Zs #       SPACE
 00A0          ; Zs #       NO-BREAK SPACE
 1680          ; Zs #       OGHAM SPACE MARK
-180E          ; Zs #       MONGOLIAN VOWEL SEPARATOR
 2000..200A    ; Zs #  [11] EN QUAD..HAIR SPACE
 202F          ; Zs #       NARROW NO-BREAK SPACE
 205F          ; Zs #       MEDIUM MATHEMATICAL SPACE
 3000          ; Zs #       IDEOGRAPHIC SPACE
 
-# Total code points: 18
+# Total code points: 17
 
 # ================================================
 
@@ -2777,12 +2777,14 @@ A830..A835    ; No #   [6] NORTH INDIC FRACTION ONE QUARTER..NORTH INDIC FRACTIO
 
 00AD          ; Cf #       SOFT HYPHEN
 0600..0604    ; Cf #   [5] ARABIC NUMBER SIGN..ARABIC SIGN SAMVAT
+061C          ; Cf #       ARABIC LETTER MARK
 06DD          ; Cf #       ARABIC END OF AYAH
 070F          ; Cf #       SYRIAC ABBREVIATION MARK
+180E          ; Cf #       MONGOLIAN VOWEL SEPARATOR
 200B..200F    ; Cf #   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
 202A..202E    ; Cf #   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
 2060..2064    ; Cf #   [5] WORD JOINER..INVISIBLE PLUS
-206A..206F    ; Cf #   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2066..206F    ; Cf #  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 FEFF          ; Cf #       ZERO WIDTH NO-BREAK SPACE
 FFF9..FFFB    ; Cf #   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANNOTATION TERMINATOR
 110BD         ; Cf #       KAITHI NUMBER SIGN
@@ -2790,7 +2792,7 @@ FFF9..FFFB    ; Cf #   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANNOTATION
 E0001         ; Cf #       LANGUAGE TAG
 E0020..E007F  ; Cf #  [96] TAG SPACE..CANCEL TAG
 
-# Total code points: 139
+# Total code points: 145
 
 # ================================================
 
@@ -2848,6 +2850,8 @@ FF0D          ; Pd #       FULLWIDTH HYPHEN-MINUS
 2045          ; Ps #       LEFT SQUARE BRACKET WITH QUILL
 207D          ; Ps #       SUPERSCRIPT LEFT PARENTHESIS
 208D          ; Ps #       SUBSCRIPT LEFT PARENTHESIS
+2308          ; Ps #       LEFT CEILING
+230A          ; Ps #       LEFT FLOOR
 2329          ; Ps #       LEFT-POINTING ANGLE BRACKET
 2768          ; Ps #       MEDIUM LEFT PARENTHESIS ORNAMENT
 276A          ; Ps #       MEDIUM FLATTENED LEFT PARENTHESIS ORNAMENT
@@ -2910,7 +2914,7 @@ FF5B          ; Ps #       FULLWIDTH LEFT CURLY BRACKET
 FF5F          ; Ps #       FULLWIDTH LEFT WHITE PARENTHESIS
 FF62          ; Ps #       HALFWIDTH LEFT CORNER BRACKET
 
-# Total code points: 72
+# Total code points: 74
 
 # ================================================
 
@@ -2925,6 +2929,8 @@ FF62          ; Ps #       HALFWIDTH LEFT CORNER BRACKET
 2046          ; Pe #       RIGHT SQUARE BRACKET WITH QUILL
 207E          ; Pe #       SUPERSCRIPT RIGHT PARENTHESIS
 208E          ; Pe #       SUBSCRIPT RIGHT PARENTHESIS
+2309          ; Pe #       RIGHT CEILING
+230B          ; Pe #       RIGHT FLOOR
 232A          ; Pe #       RIGHT-POINTING ANGLE BRACKET
 2769          ; Pe #       MEDIUM RIGHT PARENTHESIS ORNAMENT
 276B          ; Pe #       MEDIUM FLATTENED RIGHT PARENTHESIS ORNAMENT
@@ -2987,7 +2993,7 @@ FF5D          ; Pe #       FULLWIDTH RIGHT CURLY BRACKET
 FF60          ; Pe #       FULLWIDTH RIGHT WHITE PARENTHESIS
 FF63          ; Pe #       HALFWIDTH RIGHT CORNER BRACKET
 
-# Total code points: 71
+# Total code points: 73
 
 # ================================================
 
@@ -3175,7 +3181,6 @@ FF64..FF65    ; Po #   [2] HALFWIDTH IDEOGRAPHIC COMMA..HALFWIDTH KATAKANA MIDDL
 21D2          ; Sm #       RIGHTWARDS DOUBLE ARROW
 21D4          ; Sm #       LEFT RIGHT DOUBLE ARROW
 21F4..22FF    ; Sm # [268] RIGHT ARROW WITH SMALL CIRCLE..Z NOTATION BAG MEMBERSHIP
-2308..230B    ; Sm #   [4] LEFT CEILING..RIGHT FLOOR
 2320..2321    ; Sm #   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
 237C          ; Sm #       RIGHT ANGLE WITH DOWNWARDS ZIGZAG ARROW
 239B..23B3    ; Sm #  [25] LEFT PARENTHESIS UPPER HOOK..SUMMATION BOTTOM
@@ -3214,7 +3219,7 @@ FFE9..FFEC    ; Sm #   [4] HALFWIDTH LEFTWARDS ARROW..HALFWIDTH DOWNWARDS ARROW
 1D7C3         ; Sm #       MATHEMATICAL SANS-SERIF BOLD ITALIC PARTIAL DIFFERENTIAL
 1EEF0..1EEF1  ; Sm #   [2] ARABIC MATHEMATICAL OPERATOR MEEM WITH HAH WITH TATWEEL..ARABIC MATHEMATICAL OPERATOR HAH WITH DAL
 
-# Total code points: 952
+# Total code points: 948
 
 # ================================================
 

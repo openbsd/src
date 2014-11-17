@@ -11,7 +11,7 @@ use Carp ();
 use B ();
 #use Devel::Peek;
 
-$JSON::PP::VERSION = '2.27202';
+$JSON::PP::VERSION = '2.27203';
 
 @JSON::PP::EXPORT = qw(encode_json decode_json from_json to_json);
 
@@ -1564,7 +1564,7 @@ sub _incr_parse {
     $self->{incr_text} = substr( $self->{incr_text}, $p );
     $self->{incr_p} = 0;
 
-    return $obj or '';
+    return $obj || '';
 }
 
 

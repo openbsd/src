@@ -24,7 +24,7 @@ require IO::Socket::UNIX if ($^O ne 'epoc' && $^O ne 'symbian');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.36";
+$VERSION = "1.37";
 
 @EXPORT_OK = qw(sockatmark);
 
@@ -135,11 +135,13 @@ sub connect {
 		$@ = "connect: timeout";
 	    }
 	    elsif (!connect($sock,$addr) &&
-                not ($!{EISCONN} || ($! == 10022 && $^O eq 'MSWin32'))
+                not ($!{EISCONN} || ($^O eq 'MSWin32' &&
+                ($! == (($] < 5.019004) ? 10022 : Errno::EINVAL))))
             ) {
 		# Some systems refuse to re-connect() to
 		# an already open socket and set errno to EISCONN.
-		# Windows sets errno to WSAEINVAL (10022)
+		# Windows sets errno to WSAEINVAL (10022) (pre-5.19.4) or
+		# EINVAL (22) (5.19.4 onwards).
 		$err = $!;
 		$@ = "connect: $!";
 	    }

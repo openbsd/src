@@ -4,7 +4,7 @@ BEGIN {
     require "test.pl";
 }
 
-plan(104);
+plan(106);
 
 # A lot of tests to check that reversed for works.
 
@@ -561,4 +561,21 @@ TODO: {
     if(keys(%h)) {
         todo_skip("RT #2166: foreach spuriously autovivifies");
     }
+}
+
+sub {
+    foreach (@_) {
+        is eval { \$_ }, \undef, 'foreach (@array_containing_undef)'
+    }
+}->(undef);
+
+SKIP: {
+    skip "No XS::APItest under miniperl", 1, if is_miniperl;
+    skip "no XS::APItest", 1 if !eval { require XS::APItest };
+    my @a;
+    sub {
+        XS::APItest::alias_av(\@a, 0, undef);
+        eval { \$_[0] }
+    }->($a[0]);
+    is $@, "", 'vivify_defelem does not croak on &PL_sv_undef elements';
 }

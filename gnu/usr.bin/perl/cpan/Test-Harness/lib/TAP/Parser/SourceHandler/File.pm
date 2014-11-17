@@ -1,13 +1,12 @@
 package TAP::Parser::SourceHandler::File;
 
 use strict;
-use vars qw($VERSION @ISA);
+use warnings;
 
-use TAP::Parser::SourceHandler    ();
 use TAP::Parser::IteratorFactory  ();
 use TAP::Parser::Iterator::Stream ();
 
-@ISA = qw(TAP::Parser::SourceHandler);
+use base 'TAP::Parser::SourceHandler';
 
 TAP::Parser::IteratorFactory->register_handler(__PACKAGE__);
 
@@ -17,11 +16,11 @@ TAP::Parser::SourceHandler::File - Stream TAP from a text file.
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 SYNOPSIS
 

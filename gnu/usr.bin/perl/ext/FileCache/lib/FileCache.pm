@@ -1,6 +1,6 @@
 package FileCache;
 
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 
 =head1 NAME
 
@@ -94,7 +94,7 @@ no strict 'refs';
 use vars qw(%saw $cacheout_maxopen);
 $cacheout_maxopen = 16;
 
-use base 'Exporter';
+use parent 'Exporter';
 our @EXPORT = qw[cacheout cacheout_close];
 
 

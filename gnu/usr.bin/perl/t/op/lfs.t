@@ -1,4 +1,4 @@
-# NOTE: this file tests how large files (>2GB) work with perlio (stdio/sfio).
+# NOTE: this file tests how large files (>2GB) work with perlio (or stdio).
 # sysopen(), sysseek(), syswrite(), sysread() are tested in t/lib/syslfs.t.
 # If you modify/add tests here, remember to update also ext/Fcntl/t/syslfs.t.
 

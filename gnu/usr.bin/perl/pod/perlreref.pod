@@ -144,6 +144,7 @@ and L<perlunicode> for details.
    \R      A generic newline           (?>\v|\x0D\x0A)
 
    \C      Match a byte (with Unicode, '.' matches a character)
+           (Deprecated.)
    \pP     Match P-named (Unicode) property
    \p{...} Match Unicode property with name longer than 1 character
    \PP     Match non-P
@@ -275,6 +276,7 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    ${^MATCH}      Entire matched string
    ${^POSTMATCH}  Everything after to matched string
 
+Note to those still using Perl 5.18 or earlier:
 The use of C<$`>, C<$&> or C<$'> will slow down B<all> regex use
 within your program. Consult L<perlvar> for C<@->
 to see equivalent expressions that won't cause slow down.
@@ -282,6 +284,7 @@ See also L<Devel::SawAmpersand>. Starting with Perl 5.10, you
 can also use the equivalent variables C<${^PREMATCH}>, C<${^MATCH}>
 and C<${^POSTMATCH}>, but for them to be defined, you have to
 specify the C</p> (preserve) modifier on your regular expression.
+In Perl 5.20, the use of C<$`>, C<$&> and C<$'> makes no speed difference.
 
    $1, $2 ...  hold the Xth captured expr
    $+    Last parenthesized pattern match
@@ -323,7 +326,7 @@ certain characters like the German "sharp s" there is a difference.
 =head3 Foldcase
 
 Unicode form that is useful when comparing strings regardless of case,
-as certain characters have compex one-to-many case mappings. Primarily a
+as certain characters have complex one-to-many case mappings. Primarily a
 variant of lowercase.
 
 =head1 AUTHOR

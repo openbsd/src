@@ -1,0 +1,8 @@
+5.015007
+toLOWER_utf8                   # U
+toTITLE_utf8                   # U
+toUPPER_utf8                   # U
+to_utf8_fold                   # U
+to_utf8_lower                  # U
+to_utf8_title                  # U
+to_utf8_upper                  # U

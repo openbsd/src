@@ -1,5 +1,5 @@
-# CompositionExclusions-6.2.0.txt
-# Date: 2012-05-15, 22:21:00 GMT [KW, LI]
+# CompositionExclusions-6.3.0.txt
+# Date: 2012-12-11, 11:23:00 GMT [KW, LI]
 #
 # This file lists the characters for the Composition Exclusion Table
 # defined in UAX #15, Unicode Normalization Forms.

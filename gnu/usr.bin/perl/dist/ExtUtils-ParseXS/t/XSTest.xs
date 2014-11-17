@@ -65,3 +65,23 @@ consts (myclass)
     OUTPUT:
 	RETVAL
 
+bool
+T_BOOL(in)
+        bool in
+    CODE:
+        RETVAL = in;
+    OUTPUT: RETVAL
+
+bool
+T_BOOL_2(in)
+        bool in
+    CODE:
+    OUTPUT: in
+
+void
+T_BOOL_OUT( out, in )
+        bool out
+        bool in
+    CODE:
+        out = in;
+    OUTPUT: out

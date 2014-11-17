@@ -490,19 +490,9 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           goto unknown;
       }
 
-    case 4: /* 41 tokens of length 4 */
+    case 4: /* 40 tokens of length 4 */
       switch (name[0])
       {
-        case 'C':
-          if (name[1] == 'O' &&
-              name[2] == 'R' &&
-              name[3] == 'E')
-          {                                       /* CORE             */
-            return -KEY_CORE;
-          }
-
-          goto unknown;
-
         case 'I':
           if (name[1] == 'N' &&
               name[2] == 'I' &&
@@ -3449,5 +3439,5 @@ unknown:
 }
 
 /* Generated from:
- * e5a540774760ea54c761ef17ee4a153cc264e9a700b817d561e390730c457406 regen/keywords.pl
+ * 7c6d47fd2890b2422a40331ec90eac08f9808209b01f2b9c113141410fea91b5 regen/keywords.pl
  * ex: set ro: */

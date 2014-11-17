@@ -48,7 +48,7 @@ sub setup_recurs {
     return 1;
 }
 
-sub teardown_recurs { 
+sub teardown_recurs {
     foreach my $file (keys %Files) {
         my $dir = dirname($file);
         if( -e $dir ) {

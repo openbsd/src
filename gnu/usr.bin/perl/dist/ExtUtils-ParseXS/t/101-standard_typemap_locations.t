@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use Test::More tests =>  3;
-use lib qw( lib );
 use ExtUtils::ParseXS::Utilities qw(
   standard_typemap_locations
 );

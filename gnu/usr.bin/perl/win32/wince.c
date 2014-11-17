@@ -13,7 +13,7 @@
 
 #define PERLIO_NOT_STDIO 0
 
-#if !defined(PERLIO_IS_STDIO) && !defined(USE_SFIO)
+#if !defined(PERLIO_IS_STDIO)
 #define PerlIO FILE
 #endif
 
@@ -2449,9 +2449,7 @@ XS(w32_GetCwd)
   EXTEND(SP,1);
   SvPOK_on(sv);
   ST(0) = sv;
-#ifndef INCOMPLETE_TAINTS
   SvTAINTED_on(ST(0));
-#endif
   XSRETURN(1);
 }
 

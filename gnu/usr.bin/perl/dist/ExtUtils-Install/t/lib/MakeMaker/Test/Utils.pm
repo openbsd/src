@@ -12,7 +12,6 @@ our $Is_MacOS = $^O eq 'MacOS';
 
 our @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
                  make make_run run make_macro calibrate_mtime
-                 setup_mm_test_root
                  have_compiler slurp
                  $Is_VMS $Is_MacOS
                  run_ok
@@ -210,6 +209,7 @@ sub make {
     my $make = $Config{make};
     $make = $ENV{MAKE} if exists $ENV{MAKE};
 
+    return if !can_run($make);
     return $make;
 }
 
@@ -223,6 +223,7 @@ Returns the make to run as with make() plus any necessary switches.
 
 sub make_run {
     my $make = make;
+    return if !$make;
     $make .= ' -nologo' if $make eq 'nmake';
 
     return $make;
@@ -333,32 +334,6 @@ sub run_ok {
     return wantarray ? @out : join "", @out;
 }
 
-=item B<setup_mm_test_root>
-
-Creates a rooted logical to avoid the 8-level limit on older VMS systems.  
-No action taken on non-VMS systems.
-
-=cut
-
-sub setup_mm_test_root {
-    if( $Is_VMS ) {
-        # On older systems we might exceed the 8-level directory depth limit
-        # imposed by RMS.  We get around this with a rooted logical, but we
-        # can't create logical names with attributes in Perl, so we do it
-        # in a DCL subprocess and put it in the job table so the parent sees it.
-        open( MMTMP, '>mmtesttmp.com' ) || 
-          die "Error creating command file; $!";
-        print MMTMP <<'COMMAND';
-$ MM_TEST_ROOT = F$PARSE("SYS$DISK:[--]",,,,"NO_CONCEAL")-".][000000"-"]["-"].;"+".]"
-$ DEFINE/JOB/NOLOG/TRANSLATION=CONCEALED MM_TEST_ROOT 'MM_TEST_ROOT'
-COMMAND
-        close MMTMP;
-
-        system '@mmtesttmp.com';
-        1 while unlink 'mmtesttmp.com';
-    }
-}
-
 =item have_compiler
 
   $have_compiler = have_compiler;
@@ -408,6 +383,58 @@ sub slurp {
     close $fh;
 
     return $text;
+}
+
+=item can_run
+
+C<can_run> takes only one argument: the name of a binary you wish
+to locate. C<can_run> works much like the unix binary C<which> or the bash
+command C<type>, which scans through your path, looking for the requested
+binary.
+
+Unlike C<which> and C<type>, this function is platform independent and
+will also work on, for example, Win32.
+
+If called in a scalar context it will return the full path to the binary
+you asked for if it was found, or C<undef> if it was not.
+
+If called in a list context and the global variable C<$INSTANCES> is a true
+value, it will return a list of the full paths to instances
+of the binary where found in C<PATH>, or an empty list if it was not found.
+
+=cut
+
+sub can_run {
+    my $command = shift;
+
+    # a lot of VMS executables have a symbol defined
+    # check those first
+    if ( $^O eq 'VMS' ) {
+        require VMS::DCLsym;
+        my $syms = VMS::DCLsym->new;
+        return $command if scalar $syms->getsym( uc $command );
+    }
+
+    require File::Spec;
+    require ExtUtils::MakeMaker;
+
+    my @possibles;
+
+    if( File::Spec->file_name_is_absolute($command) ) {
+        return MM->maybe_command($command);
+
+    } else {
+        for my $dir (
+            File::Spec->path,
+            File::Spec->curdir
+        ) {
+            next if ! $dir || ! -d $dir;
+            my $abs = File::Spec->catfile( $^O eq 'MSWin32' ? Win32::GetShortPathName( $dir ) : $dir, $command);
+            push @possibles, $abs if $abs = MM->maybe_command($abs);
+        }
+    }
+    return @possibles if wantarray;
+    return shift @possibles;
 }
 
 =back

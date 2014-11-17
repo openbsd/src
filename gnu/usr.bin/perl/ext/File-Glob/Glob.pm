@@ -37,7 +37,7 @@ pop @{$EXPORT_TAGS{bsd_glob}}; # no "glob"
 
 @EXPORT_OK   = (@{$EXPORT_TAGS{'glob'}}, 'csh_glob');
 
-$VERSION = '1.20_01';
+$VERSION = '1.23';
 
 sub import {
     require Exporter;

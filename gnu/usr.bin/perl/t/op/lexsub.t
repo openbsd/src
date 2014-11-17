@@ -7,8 +7,7 @@ BEGIN {
     *bar::is = *is;
     *bar::like = *like;
 }
-no warnings 'deprecated';
-plan 136;
+plan 120;
 
 # -------------------- Errors with feature disabled -------------------- #
 
@@ -30,17 +29,14 @@ use feature 'lexical_subs';
   our sub foo { 42 }
   is foo, 42, 'calling our sub from same package';
   is &foo, 42, 'calling our sub from same package (amper)';
-  is do foo(), 42, 'calling our sub from same package (do)';
   package bar;
   sub bar::foo { 43 }
   is foo, 42, 'calling our sub from another package';
   is &foo, 42, 'calling our sub from another package (amper)';
-  is do foo(), 42, 'calling our sub from another package (do)';
 }
 package bar;
 is foo, 43, 'our sub falling out of scope';
 is &foo, 43, 'our sub falling out of scope (called via amper)';
-is do foo(), 43, 'our sub falling out of scope (called via amper)';
 package main;
 {
   sub bar::a { 43 }
@@ -49,7 +45,6 @@ package main;
       package bar;
       is a, 43, 'our sub invisible inside itself';
       is &a, 43, 'our sub invisible inside itself (called via amper)';
-      is do a(), 43, 'our sub invisible inside itself (called via do)';
     }
     42
   }
@@ -61,7 +56,6 @@ package main;
       package bar;
       is b, 42, 'our sub visible inside itself after decl';
       is &b, 42, 'our sub visible inside itself after decl (amper)';
-      is do b(), 42, 'our sub visible inside itself after decl (do)';
     }
     42
   }
@@ -74,7 +68,6 @@ sub bar::c { 43 }
   package bar;
   is c, 42, 'our sub foo; makes lex alias for existing sub';
   is &c, 42, 'our sub foo; makes lex alias for existing sub (amper)';
-  is do c(), 42, 'our sub foo; makes lex alias for existing sub (do)';
 }
 {
   our sub d;
@@ -104,23 +97,19 @@ use feature 'state'; # state
   isnt \&::foo, \&foo, 'state sub is not stored in the package';
   is eval foo, 44, 'calling state sub from same package';
   is eval &foo, 44, 'calling state sub from same package (amper)';
-  is eval do foo(), 44, 'calling state sub from same package (do)';
   package bar;
   is eval foo, 44, 'calling state sub from another package';
   is eval &foo, 44, 'calling state sub from another package (amper)';
-  is eval do foo(), 44, 'calling state sub from another package (do)';
 }
 package bar;
 is foo, 43, 'state sub falling out of scope';
 is &foo, 43, 'state sub falling out of scope (called via amper)';
-is do foo(), 43, 'state sub falling out of scope (called via amper)';
 {
   sub sa { 43 }
   state sub sa {
     if (shift) {
       is sa, 43, 'state sub invisible inside itself';
       is &sa, 43, 'state sub invisible inside itself (called via amper)';
-      is do sa(), 43, 'state sub invisible inside itself (called via do)';
     }
     44
   }
@@ -137,9 +126,6 @@ is do foo(), 43, 'state sub falling out of scope (called via amper)';
       eval{&sb};
       like $@, qr/^Undefined subroutine &sb called at /,
         'state sub foo {} after forward declaration (amper)';
-      eval{do sb()};
-      like $@, qr/^Undefined subroutine &sb called at /,
-        'state sub foo {} after forward declaration (do)';
     }
     44
   }
@@ -151,7 +137,6 @@ is do foo(), 43, 'state sub falling out of scope (called via amper)';
       package bar;
       is sb2, 44, 'state sub visible inside itself after decl';
       is &sb2, 44, 'state sub visible inside itself after decl (amper)';
-      is do sb2(), 44, 'state sub visible inside itself after decl (do)';
     }
     44
   }
@@ -187,9 +172,6 @@ sub sc { 43 }
   eval{&sc};
   like $@, qr/^Undefined subroutine &sc called at /,
      'state sub foo; makes no lex alias for existing sub (amper)';
-  eval{do sc()};
-  like $@, qr/^Undefined subroutine &sc called at /,
-     'state sub foo; makes no lex alias for existing sub (do)';
 }
 package main;
 {
@@ -284,6 +266,9 @@ sub make_anon_with_state_sub{
   state sub END { shift }
   is eval{END('jkqeudth')}, jkqeudth,
     'state sub END {shift} implies @_, not @ARGV';
+  state sub CORE { scalar reverse shift }
+  is CORE::uc("hello"), "HELLO",
+    'lexical CORE does not interfere with CORE::...';
 }
 {
   state sub redef {}
@@ -322,7 +307,7 @@ sub make_anon_with_state_sub{
   r(1);
 }
 like runperl(
-      switches => [ '-Mfeature=:all' ],
+      switches => [ '-Mfeature=lexical_subs,state' ],
       prog     => 'state sub a { foo ref } a()',
       stderr   => 1
      ),
@@ -336,23 +321,19 @@ like runperl(
   isnt \&::foo, \&foo, 'my sub is not stored in the package';
   is foo, 44, 'calling my sub from same package';
   is &foo, 44, 'calling my sub from same package (amper)';
-  is do foo(), 44, 'calling my sub from same package (do)';
   package bar;
   is foo, 44, 'calling my sub from another package';
   is &foo, 44, 'calling my sub from another package (amper)';
-  is do foo(), 44, 'calling my sub from another package (do)';
 }
 package bar;
 is foo, 43, 'my sub falling out of scope';
 is &foo, 43, 'my sub falling out of scope (called via amper)';
-is do foo(), 43, 'my sub falling out of scope (called via amper)';
 {
   sub ma { 43 }
   my sub ma {
     if (shift) {
       is ma, 43, 'my sub invisible inside itself';
       is &ma, 43, 'my sub invisible inside itself (called via amper)';
-      is do ma(), 43, 'my sub invisible inside itself (called via do)';
     }
     44
   }
@@ -369,9 +350,6 @@ is do foo(), 43, 'my sub falling out of scope (called via amper)';
       eval{&mb};
       like $@, qr/^Undefined subroutine &mb called at /,
         'my sub foo {} after forward declaration (amper)';
-      eval{do mb()};
-      like $@, qr/^Undefined subroutine &mb called at /,
-        'my sub foo {} after forward declaration (do)';
     }
     44
   }
@@ -383,7 +361,6 @@ is do foo(), 43, 'my sub falling out of scope (called via amper)';
       package bar;
       is mb2, 44, 'my sub visible inside itself after decl';
       is &mb2, 44, 'my sub visible inside itself after decl (amper)';
-      is do mb2(), 44, 'my sub visible inside itself after decl (do)';
     }
     44
   }
@@ -419,15 +396,17 @@ sub mc { 43 }
   eval{&mc};
   like $@, qr/^Undefined subroutine &mc called at /,
      'my sub foo; makes no lex alias for existing sub (amper)';
-  eval{do mc()};
-  like $@, qr/^Undefined subroutine &mc called at /,
-     'my sub foo; makes no lex alias for existing sub (do)';
 }
 package main;
 {
   my sub me ($);
   is prototype eval{\&me}, '$', 'my sub with proto';
   is prototype "me", undef, 'prototype "..." ignores my subs';
+
+  my $coderef = eval "my sub foo (\$\x{30cd}) {1}; \\&foo";
+  my $proto = prototype $coderef;
+  ok(utf8::is_utf8($proto), "my sub with UTF8 proto maintains the UTF8ness");
+  is($proto, "\$\x{30cd}", "check the prototypes actually match");
 }
 {
   my sub if() { 44 }
@@ -621,7 +600,7 @@ not_lexical11();
   is $w, undef, 'no double free from constant my subs';
 }
 like runperl(
-      switches => [ '-Mfeature=:all' ],
+      switches => [ '-Mfeature=lexical_subs,state' ],
       prog     => 'my sub a { foo ref } a()',
       stderr   => 1
      ),
@@ -697,7 +676,7 @@ eval 'sub not_lexical7 { my @x }';
 }
 
 like runperl(
-      switches => [ '-Mfeature=:all', '-Mwarnings=FATAL,all', '-M-warnings=experimental::lexical_subs' ],
+      switches => [ '-Mfeature=lexical_subs,state', '-Mwarnings=FATAL,all', '-M-warnings=experimental::lexical_subs' ],
       prog     => 'my sub foo; sub foo { foo } foo',
       stderr   => 1
      ),
@@ -705,9 +684,20 @@ like runperl(
     'deep recursion warnings for lexical subs do not crash';
 
 like runperl(
-      switches => [ '-Mfeature=:all', '-Mwarnings=FATAL,all', '-M-warnings=experimental::lexical_subs' ],
+      switches => [ '-Mfeature=lexical_subs,state', '-Mwarnings=FATAL,all', '-M-warnings=experimental::lexical_subs' ],
       prog     => 'my sub foo() { 42 } undef &foo',
       stderr   => 1
      ),
      qr/Constant subroutine foo undefined at /,
     'constant undefinition warnings for lexical subs do not crash';
+
+{
+  my sub foo;
+  *AutoloadTestSuper::blah = \&foo;
+  sub AutoloadTestSuper::AUTOLOAD {
+    is $AutoloadTestSuper::AUTOLOAD, "AutoloadTestSuper::blah",
+      "Autoloading via inherited lex stub";
+  }
+  @AutoloadTest::ISA = AutoloadTestSuper::;
+  AutoloadTest->blah;
+}

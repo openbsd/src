@@ -10,6 +10,7 @@ use strict;
 use Test::More tests => 9;
 
 use File::Spec;
+use File::Temp qw[tempdir];
 use TieOut;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
@@ -21,7 +22,8 @@ use ExtUtils::MakeMaker::Config;
 # ensure these tests will still work.
 $Config{installman3dir} = 'none';
 
-chdir 't';
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 perl_lib();
 

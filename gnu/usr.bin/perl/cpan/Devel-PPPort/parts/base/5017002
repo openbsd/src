@@ -1,0 +1,7 @@
+5.017002
+is_uni_blank                   # U
+is_uni_blank_lc                # U
+is_utf8_blank                  # U
+sv_copypv_flags                # U
+sv_copypv_nomg                 # U
+sv_vcatpvfn_flags              # U

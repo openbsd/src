@@ -21,7 +21,7 @@ unless (is_miniperl()) {
 
 use strict;
 
-plan(tests => 60 + !is_miniperl() * (3 + 14 * $can_fork));
+plan(tests => 68 + !is_miniperl() * (3 + 14 * $can_fork));
 
 sub get_temp_fh {
     my $f = tempfile();
@@ -260,6 +260,60 @@ shift @INC;
 
     shift @INC;
 }
+
+unshift @INC, sub { \(my $tmp = '$_ = "are temps freed prematurely?"') };
+eval { require foom };
+is $_||$@, "are temps freed prematurely?",
+           "are temps freed prematurely when returned from inc filters?";
+shift @INC;
+
+# [perl #120657]
+sub fake_module {
+    my (undef,$module_file) = @_;
+    !1
+}
+{
+    local @INC = @INC;
+    unshift @INC, (\&fake_module)x2;
+    eval { require "${\'bralbalhablah'}" };
+    like $@, qr/^Can't locate/,
+        'require PADTMP passing freed var when @INC has multiple subs';
+}    
+
+SKIP: {
+    skip ("Not applicable when run from inccode-tie.t", 6) if tied @INC;
+    require Tie::Scalar;
+    package INCtie {
+        sub TIESCALAR { bless \my $foo }
+        sub FETCH { study; our $count++; ${$_[0]} }
+    }
+    local @INC = undef;
+    my $t = tie $INC[0], 'INCtie';
+    my $called;
+    $$t = sub { $called ++; !1 };
+    delete $INC{'foo.pm'}; # in case another test uses foo
+    eval { require foo };
+    is $INCtie::count, 2, # 2nd time for "Can't locate" -- XXX correct?
+        'FETCH is called once on undef scalar-tied @INC elem';
+    is $called, 1, 'sub in scalar-tied @INC elem is called';
+    () = "$INC[0]"; # force a fetch, so the SV is ROK
+    $INCtie::count = 0;
+    eval { require foo };
+    is $INCtie::count, 2,
+        'FETCH is called once on scalar-tied @INC elem holding ref';
+    is $called, 2, 'sub in scalar-tied @INC elem holding ref is called';
+    $$t = [];
+    $INCtie::count = 0;
+    eval { require foo };
+    is $INCtie::count, 1,
+       'FETCH called once on scalar-tied @INC elem returning array';
+    $$t = "string";
+    $INCtie::count = 0;
+    eval { require foo };
+    is $INCtie::count, 2,
+       'FETCH called once on scalar-tied @INC elem returning string';
+}
+
 
 exit if is_miniperl();
 

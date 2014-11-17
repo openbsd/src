@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Digest::MD5 'md5';
 use File::Find;
 
 =head1 NAME
@@ -61,6 +60,17 @@ Prints C<ABORTED> to STDERR.
 =back
 
 =cut
+
+# In some situations, eg cross-compiling, we get run with miniperl, so we can't use Digest::MD5
+my $has_md5;
+BEGIN {
+    use Carp;
+    $has_md5 = eval { require Digest::MD5; Digest::MD5->import('md5');  1; };
+}
+
+
+# make it clearer when we haven't run to completion, as we can be quite
+# noisy when things are working ok
 
 sub my_die {
     print STDERR "$0: ", @_;
@@ -160,6 +170,120 @@ sub write_or_die {
     close $fh or die "Can't close $filename: $!";
 }
 
+=head2 C<verify_contiguous()>
+
+=over 4
+
+=item * Purpose
+
+Verify that a file contains exactly one contiguous run of lines which matches
+the passed in pattern. C<croak()>s if the pattern is not found, or found in
+more than one place.
+
+=item * Arguments
+
+=over 4
+
+=item * Name of file
+
+=item * Contents of file
+
+=item * Pattern of interest
+
+=item * Name to report on error
+
+=back
+
+=item * Return Value
+
+The contents of the file, with C<qr/\0+/> substituted for the pattern.
+
+=back
+
+=cut
+
+sub verify_contiguous {
+    my ($name, $content, $re, $what) = @_;
+    require Carp;
+    $content =~ s/$re/\0/g;
+    my $sections = () = $content =~ m/\0+/g;
+    Carp::croak("$0: $name contains no $what") if $sections < 1;
+    Carp::croak("$0: $name contains discontiguous $what") if $sections > 1;
+    return $content;
+}
+
+=head2 C<process()>
+
+=over 4
+
+=item * Purpose
+
+Read a file from disk, pass the contents to the callback, and either update
+the file on disk (if changed) or generate TAP output to confirm that the
+version on disk is up to date. C<die>s if the file contains any C<NUL> bytes.
+This permits the callback routine to use C<NUL> bytes as placeholders while
+manipulating the file's contents.
+
+=item * Arguments
+
+=over 4
+
+=item * Description for use in error messages
+
+=item * Name of file
+
+=item * Callback
+
+Passed description and file contents, should return updated file contents.
+
+=item * Test number
+
+If defined, generate TAP output to C<STDOUT>. If defined and false, generate
+an unnumbered test. Otherwise this is the test number in the I<ok> line.
+
+=item * Verbose flag
+
+If true, generate verbose output.
+
+=back
+
+=item * Return Value
+
+Does not return anything.
+
+=back
+
+=cut
+
+sub process {
+    my ($desc, $filename, $callback, $test, $verbose) = @_;
+
+    print "Now processing $filename\n" if $verbose;
+    my $orig = slurp_or_die($filename);
+    my_die "$filename contains NUL bytes" if $orig =~ /\0/;
+
+    my $new = $callback->($desc, $orig);
+
+    if (defined $test) {
+        printf "%s%s # $filename is up to date\n",
+            ($new eq $orig ? 'ok' : 'not ok'), ($test ? " $test" : '');
+        return;
+    } elsif ($new eq $orig) {
+        print "Was not modified\n"
+            if $verbose;
+        return;
+    }
+
+    my $mode = (stat $filename)[2];
+    my_die "Can't stat $filename: $!"
+        unless defined $mode;
+    rename $filename, "$filename.old"
+        or my_die "Can't rename $filename to $filename.old: $!";
+
+    write_or_die($filename, $new);
+    chmod $mode & 0777, $filename or my_die "can't chmod $mode $filename: $!";
+}
+
 =head2 C<pods_to_install()>
 
 =over 4
@@ -251,6 +375,8 @@ my %state = (
     sub is_duplicate_pod {
         my $file = shift;
         local $_;
+
+        return if !$has_md5;
 
         # Initialise the list of possible source files on the first call.
         unless (%Lengths) {
@@ -403,7 +529,7 @@ List of one or more arguments.
 
 =item * Boolean true or false
 
-=item * Reference to a suboutine.
+=item * Reference to a subroutine.
 
 =item * Various other arguments.
 

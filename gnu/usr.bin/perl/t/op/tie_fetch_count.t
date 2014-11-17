@@ -169,10 +169,16 @@ tie my $var1 => 'main', \1;
 $dummy  = $$var1        ; check_count '${}';
 tie my $var2 => 'main', [];
 $dummy  = @$var2        ; check_count '@{}';
-$dummy  = shift $var2   ; check_count 'shift arrayref';
+{
+    no warnings 'experimental::autoderef';
+    $dummy  = shift $var2   ; check_count 'shift arrayref';
+}
 tie my $var3 => 'main', {};
 $dummy  = %$var3        ; check_count '%{}';
-$dummy  = keys $var3    ; check_count 'keys hashref';
+{
+    no warnings 'experimental::autoderef';
+    $dummy  = keys $var3    ; check_count 'keys hashref';
+}
 {
     no strict 'refs';
     tie my $var4 => 'main', *];

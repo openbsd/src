@@ -35,11 +35,10 @@ explanation) into a manpage, and then run F<man> to display it; if
 F<man> isn't available, F<pod2text> will be used instead and the output
 piped through your favourite pager.
 
-=item L<pod2html|pod2html> and L<pod2latex|pod2latex>
+=item L<pod2html|pod2html>
 
-As well as these two, there are two other converters: F<pod2html> will
-produce HTML pages from POD, and F<pod2latex>, which produces LaTeX
-files.
+As well as these two, there is another converter: F<pod2html> will
+produce HTML pages from POD.
 
 =item L<pod2usage|pod2usage>
 
@@ -278,18 +277,6 @@ a lot more.  It is similar to the command line mode of the L<CPAN> module,
 
     perl -MCPAN -e shell
 
-=item L<cpanp>
-
-F<cpanp> is, like F<cpan>, a command-line interface to the CPAN, using
-the C<CPANPLUS> module as a back-end. It can be used interactively or
-imperatively.
-
-=item L<cpan2dist>
-
-F<cpan2dist> is a tool to create distributions (or packages) from CPAN
-modules, then suitable for your package manager of choice. Support for
-specific formats are available from CPAN as C<CPANPLUS::Dist::*> modules.
-
 =item L<instmodsh>
 
 A little interface to ExtUtils::Installed to examine installed modules,
@@ -305,7 +292,7 @@ L<podchecker|podchecker>, L<splain|splain>, L<perldiag>,
 C<roffitall|roffitall>, L<a2p|a2p>, L<s2p|s2p>, L<find2perl|find2perl>,
 L<File::Find|File::Find>, L<pl2pm|pl2pm>, L<perlbug|perlbug>,
 L<h2ph|h2ph>, L<c2ph|c2ph>, L<h2xs|h2xs>, L<enc2xs>, L<xsubpp>,
-L<cpan>, L<cpanp>, L<cpan2dist>, L<instmodsh>, L<piconv>, L<prove>,
+L<cpan>, L<instmodsh>, L<piconv>, L<prove>,
 L<corelist>, L<ptar>, L<ptardiff>, L<shasum>, L<zipdetails>
 
 =cut

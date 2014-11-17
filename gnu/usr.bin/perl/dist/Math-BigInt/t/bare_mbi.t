@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 3635;
+use Test::More tests => 3651;
 
 BEGIN { unshift @INC, 't'; }
 

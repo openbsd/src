@@ -172,7 +172,7 @@ typedef struct {
     I32                 locks;
     perl_cond           cond;
 #ifdef DEBUG_LOCKS
-    char *              file;
+    const char *        file;
     int                 line;
 #endif
 } recursive_lock_t;
@@ -208,7 +208,7 @@ recursive_lock_release(pTHX_ recursive_lock_t *lock)
 }
 
 void
-recursive_lock_acquire(pTHX_ recursive_lock_t *lock, char *file, int line)
+recursive_lock_acquire(pTHX_ recursive_lock_t *lock, const char *file, int line)
 {
     PERL_UNUSED_ARG(file);
     PERL_UNUSED_ARG(line);
@@ -612,7 +612,7 @@ S_abs_2_rel_milli(double abs)
 bool
 Perl_sharedsv_cond_timedwait(perl_cond *cond, perl_mutex *mut, double abs)
 {
-#if defined(NETWARE) || defined(FAKE_THREADS) || defined(I_MACH_CTHREADS)
+#if defined(NETWARE) || defined(I_MACH_CTHREADS)
     Perl_croak_nocontext("cond_timedwait not supported on this platform");
 #else
 #  ifdef WIN32
@@ -671,7 +671,7 @@ Perl_sharedsv_cond_timedwait(perl_cond *cond, perl_mutex *mut, double abs)
     return (got_it);
 #    endif /* OS2 */
 #  endif /* WIN32 */
-#endif /* NETWARE || FAKE_THREADS || I_MACH_CTHREADS */
+#endif /* NETWARE || I_MACH_CTHREADS */
 }
 
 
@@ -1247,9 +1247,11 @@ void
 Perl_sharedsv_init(pTHX)
 {
     dTHXc;
-    /* This pair leaves us in shared context ... */
     PL_sharedsv_space = perl_alloc();
     perl_construct(PL_sharedsv_space);
+    /* The pair above leaves us in shared context (what dTHX would get),
+     * but aTHX still points to caller context */
+    aTHX = PL_sharedsv_space;
     LEAVE; /* This balances the ENTER at the end of perl_construct.  */
     PERL_SET_CONTEXT((aTHX = caller_perl));
     recursive_lock_init(aTHX_ &PL_sharedsv_lock);

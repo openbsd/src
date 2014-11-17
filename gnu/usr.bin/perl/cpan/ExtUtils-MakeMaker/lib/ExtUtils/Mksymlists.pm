@@ -10,7 +10,7 @@ use Config;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(&Mksymlists);
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -86,7 +86,7 @@ sub _write_os2 {
     my $distname = $data->{DISTNAME} || $data->{NAME};
     $distname = "Distribution $distname";
     my $patchlevel = " pl$Config{perl_patchlevel}" || '';
-    my $comment = sprintf "Perl (v%s%s%s) module %s", 
+    my $comment = sprintf "Perl (v%s%s%s) module %s",
       $Config::Config{version}, $threaded, $patchlevel, $data->{NAME};
     chomp $comment;
     if ($data->{INSTALLDIRS} and $data->{INSTALLDIRS} eq 'perl') {
@@ -197,7 +197,7 @@ sub _write_vms {
         if ($isvax) { print $opt "UNIVERSAL=$safe\n" }
         else        { print $opt "SYMBOL_VECTOR=($safe=DATA)\n"; }
     }
-    
+
     close $opt;
 }
 

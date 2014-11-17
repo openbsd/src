@@ -1,6 +1,7 @@
 package MBTest;
 
 use strict;
+use warnings;
 
 use IO::File ();
 use File::Spec;

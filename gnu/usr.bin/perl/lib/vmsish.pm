@@ -1,6 +1,6 @@
 package vmsish;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 =head1 NAME
 
@@ -60,12 +60,12 @@ symbol $STATUS will still have the termination status, but with a
 high-order bit set:
 
 EXAMPLE:
-    $ perl -e"exit 44;"                             Non-hushed error exit
-    %SYSTEM-F-ABORT, abort                          DCL message
+    $ perl -e"exit 44;"                          Non-hushed error exit
+    %SYSTEM-F-ABORT, abort                       DCL message
     $ show sym $STATUS
       $STATUS == "%X0000002C"
 
-    $ perl -e"use vmsish qw(hushed); exit 44;"      Hushed error exit
+    $ perl -e"use vmsish qw(hushed); exit 44;"   Hushed error exit
     $ show sym $STATUS
       $STATUS == "%X1000002C"
 

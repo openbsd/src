@@ -1,6 +1,6 @@
 #!perl -w
 
-use Test::More tests => 18;
+use Test::More tests => 19;
 
 use XS::APItest;
 
@@ -23,3 +23,9 @@ like $@, qr/^Wide character/, 'SvPVbyte fails on Unicode glob';
 package r { use overload '""' => sub { substr "\x{100}\xff", -1 } }
 is SvPVbyte(bless [], r::), "\xff",
   'SvPVbyte on ref returning downgradable utf8 string';
+
+sub TIESCALAR { bless \(my $thing = pop), shift }
+sub FETCH { ${ +shift } }
+tie $tyre, main => bless [], r::;
+is SvPVbyte($tyre), "\xff",
+  'SvPVbyte on tie returning ref that returns downgradable utf8 string';

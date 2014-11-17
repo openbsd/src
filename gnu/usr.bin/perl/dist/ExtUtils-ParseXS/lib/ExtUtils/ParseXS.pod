@@ -4,22 +4,26 @@ ExtUtils::ParseXS - converts Perl XS code into C code
 
 =head1 SYNOPSIS
 
+  use ExtUtils::ParseXS;
+
+  my $pxs = ExtUtils::ParseXS->new;
+  $pxs->process_file( filename => 'foo.xs' );
+
+  $pxs->process_file( filename => 'foo.xs',
+                      output => 'bar.c',
+                      'C++' => 1,
+                      typemap => 'path/to/typemap',
+                      hiertype => 1,
+                      except => 1,
+                      versioncheck => 1,
+                      linenumbers => 1,
+                      optimize => 1,
+                      prototypes => 1,
+                    );
+  
+  # Legacy non-OO interface using a singleton:
   use ExtUtils::ParseXS qw(process_file);
-
   process_file( filename => 'foo.xs' );
-
-  process_file( filename => 'foo.xs',
-                output => 'bar.c',
-                'C++' => 1,
-                typemap => 'path/to/typemap',
-                hiertype => 1,
-                except => 1,
-                prototypes => 1,
-                versioncheck => 1,
-                linenumbers => 1,
-                optimize => 1,
-                prototypes => 1,
-              );
 
 =head1 DESCRIPTION
 
@@ -36,17 +40,26 @@ typemap taking precedence.
 
 =head1 EXPORT
 
-None by default.  C<process_file()> may be exported upon request.
+None by default.  C<process_file()> and/or C<report_error_count()>
+may be exported upon request. Using the functional interface is
+discouraged.
 
-=head1 FUNCTIONS
+=head1 METHODS
 
 =over 4
 
-=item process_file()
+=item $pxs->new()
 
-This function processes an XS file and sends output to a C file.
-Named parameters control how the processing is done.  The following
-parameters are accepted:
+Returns a new, empty XS parser/compiler object.
+
+=item $pxs->process_file()
+
+This method processes an XS file and sends output to a C file.
+The method may be called as a function (this is the legacy
+interface) and will then use a singleton as invocant.
+
+Named parameters control how the processing is done.
+The following parameters are accepted:
 
 =over 4
 
@@ -108,10 +121,13 @@ I<Maintainer note:> I have no clue what this does.  Strips function prefixes?
 
 =back
 
-=item errors()
+=item $pxs->report_error_count()
 
-This function returns the number of [a certain kind of] errors
+This method returns the number of [a certain kind of] errors
 encountered during processing of the XS file.
+
+The method may be called as a function (this is the legacy
+interface) and will then use a singleton as invocant.
 
 =back
 
@@ -143,7 +159,7 @@ Steffen Mueller, <smueller@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2012 by Ken Williams, David Golden and other contributors.  All
+Copyright 2002-2014 by Ken Williams, David Golden and other contributors.  All
 rights reserved.
 
 This library is free software; you can redistribute it and/or

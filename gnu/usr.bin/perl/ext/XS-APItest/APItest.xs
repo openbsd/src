@@ -2,6 +2,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "fakesdio.h"   /* Causes us to use PerlIO below */
 
 typedef SV *SVREF;
 typedef PTR_TBL_t *XS__APItest__PtrTable;
@@ -148,8 +149,8 @@ bitflip_key(pTHX_ IV action, SV *field) {
 		const char *const end = p + len;
 		while (p < end) {
 		    STRLEN len;
-		    UV chr = utf8_to_uvuni_buf((U8 *)p, (U8 *) end, &len);
-		    new_p = (char *)uvuni_to_utf8((U8 *)new_p, chr ^ 32);
+		    UV chr = utf8_to_uvchr_buf((U8 *)p, (U8 *) end, &len);
+		    new_p = (char *)uvchr_to_utf8((U8 *)new_p, chr ^ 32);
 		    p += len;
 		}
 		SvUTF8_on(newkey);
@@ -274,7 +275,7 @@ blockhook_csc_start(pTHX_ int full)
         I32 i;
         AV *const new_av = newAV();
 
-        for (i = 0; i <= av_len(cur); i++) {
+        for (i = 0; i <= av_tindex(cur); i++) {
             av_store(new_av, i, newSVsv(*av_fetch(cur, i, 0)));
         }
 
@@ -532,12 +533,14 @@ STATIC void
 THX_run_cleanup(pTHX_ void *cleanup_code_ref)
 {
     dSP;
+    PUSHSTACK;
     ENTER;
     SAVETMPS;
     PUSHMARK(SP);
     call_sv((SV*)cleanup_code_ref, G_VOID|G_DISCARD);
     FREETMPS;
     LEAVE;
+    POPSTACK;
 }
 
 STATIC OP *
@@ -1049,7 +1052,6 @@ peep_xop(pTHX_ OP *o, OP *oldop)
 static I32
 filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 {
-    SV   *my_sv = FILTER_DATA(idx);
     char *p;
     char *end;
     int n = FILTER_READ(idx + 1, buf_sv, maxlen);
@@ -1151,7 +1153,7 @@ bytes_cmp_utf8(bytes, utf8)
 	RETVAL
 
 AV *
-test_utf8n_to_uvuni(s, len, flags)
+test_utf8n_to_uvchr(s, len, flags)
 
         SV *s
         SV *len
@@ -1162,7 +1164,7 @@ test_utf8n_to_uvuni(s, len, flags)
         STRLEN slen;
 
     CODE:
-        /* Call utf8n_to_uvuni() with the inputs.  It always asks for the
+        /* Call utf8n_to_uvchr() with the inputs.  It always asks for the
          * actual length to be returned
          *
          * Length to assume <s> is; not checked, so could have buffer overflow
@@ -1171,7 +1173,7 @@ test_utf8n_to_uvuni(s, len, flags)
         sv_2mortal((SV*)RETVAL);
 
         ret
-         = utf8n_to_uvuni((U8*) SvPV(s, slen), SvUV(len), &retlen, SvUV(flags));
+         = utf8n_to_uvchr((U8*) SvPV(s, slen), SvUV(len), &retlen, SvUV(flags));
 
         /* Returns the return value in [0]; <retlen> in [1] */
         av_push(RETVAL, newSVuv(ret));
@@ -1534,6 +1536,22 @@ refcounted_he_fetch(key, level=0)
 
 #endif
 
+void
+test_force_keys(HV *hv)
+    PREINIT:
+        HE *he;
+	STRLEN count = 0;
+    PPCODE:
+        hv_iterinit(hv);
+        he = hv_iternext(hv);
+        while (he) {
+	    SV *sv = HeSVKEY_force(he);
+	    ++count;
+	    EXTEND(SP, count);
+	    PUSHs(sv_mortalcopy(sv));
+            he = hv_iternext(hv);
+        }
+
 =pod
 
 sub TIEHASH  { bless {}, $_[0] }
@@ -1621,6 +1639,7 @@ SV *
 AUTOLOADp(...)
     PROTOTYPE: *$
     CODE:
+        PERL_UNUSED_ARG(items);
 	RETVAL = newSVpvn_flags(SvPVX(cv), SvCUR(cv), SvUTF8(cv));
     OUTPUT:
 	RETVAL
@@ -1733,6 +1752,28 @@ xop_build_optree ()
 
         RETVAL = MY_CXT.xop_record;
         MY_CXT.xop_record = NULL;
+    OUTPUT:
+        RETVAL
+
+IV
+xop_from_custom_op ()
+    CODE:
+/* author note: this test doesn't imply Perl_custom_op_xop is or isn't public
+   API or that Perl_custom_op_xop is known to be used outside the core */
+        UNOP *unop;
+        XOP *xop;
+
+        NewOp(1102, unop, 1, UNOP);
+        unop->op_type       = OP_CUSTOM;
+        unop->op_ppaddr     = pp_xop;
+        unop->op_flags      = OPf_KIDS;
+        unop->op_private    = 0;
+        unop->op_first      = NULL;
+        unop->op_next       = NULL;
+
+        xop = Perl_custom_op_xop(aTHX_ (OP *)unop);
+        FreeOp(unop);
+        RETVAL = PTR2IV(xop);
     OUTPUT:
         RETVAL
 
@@ -1904,6 +1945,81 @@ mxpushu()
 	mXPUSHu(3);
 	XSRETURN(3);
 
+void
+call_sv_C()
+PREINIT:
+    CV * i_sub;
+    GV * i_gv;
+    I32 retcnt;
+    SV * errsv;
+    char * errstr;
+    SV * miscsv = sv_newmortal();
+    HV * hv = (HV*)sv_2mortal((SV*)newHV());
+CODE:
+    i_sub = get_cv("i", 0);
+    PUSHMARK(SP);
+    /* PUTBACK not needed since this sub was called with 0 args, and is calling
+      0 args, so global SP doesn't need to be moved before a call_* */
+    retcnt = call_sv((SV*)i_sub, 0); /* try a CV* */
+    SPAGAIN;
+    SP -= retcnt; /* dont care about return count, wipe everything off */
+    sv_setpvs(miscsv, "i");
+    PUSHMARK(SP);
+    retcnt = call_sv(miscsv, 0); /* try a PV */
+    SPAGAIN;
+    SP -= retcnt;
+    /* no add and SVt_NULL are intentional, sub i should be defined already */
+    i_gv = gv_fetchpvn_flags("i", sizeof("i")-1, 0, SVt_NULL);
+    PUSHMARK(SP);
+    retcnt = call_sv((SV*)i_gv, 0); /* try a GV* */
+    SPAGAIN;
+    SP -= retcnt;
+    /* the tests below are not declaring this being public API behavior,
+       only current internal behavior, these tests can be changed in the
+       future if necessery */
+    PUSHMARK(SP);
+    retcnt = call_sv(&PL_sv_yes, 0); /* does nothing */
+    SPAGAIN;
+    SP -= retcnt;
+    PUSHMARK(SP);
+    retcnt = call_sv(&PL_sv_no, G_EVAL);
+    SPAGAIN;
+    SP -= retcnt;
+    errsv = ERRSV;
+    errstr = SvPV_nolen(errsv);
+    if(strnEQ(errstr, "Undefined subroutine &main:: called at",
+              sizeof("Undefined subroutine &main:: called at") - 1)) {
+        PUSHMARK(SP);
+        retcnt = call_sv((SV*)i_sub, 0); /* call again to increase counter */
+        SPAGAIN;
+        SP -= retcnt;
+    }
+    PUSHMARK(SP);
+    retcnt = call_sv(&PL_sv_undef,  G_EVAL);
+    SPAGAIN;
+    SP -= retcnt;
+    errsv = ERRSV;
+    errstr = SvPV_nolen(errsv);
+    if(strnEQ(errstr, "Can't use an undefined value as a subroutine reference at",
+              sizeof("Can't use an undefined value as a subroutine reference at") - 1)) {
+        PUSHMARK(SP);
+        retcnt = call_sv((SV*)i_sub, 0); /* call again to increase counter */
+        SPAGAIN;
+        SP -= retcnt;
+    }
+    PUSHMARK(SP);
+    retcnt = call_sv((SV*)hv,  G_EVAL);
+    SPAGAIN;
+    SP -= retcnt;
+    errsv = ERRSV;
+    errstr = SvPV_nolen(errsv);
+    if(strnEQ(errstr, "Not a CODE reference at",
+              sizeof("Not a CODE reference at") - 1)) {
+        PUSHMARK(SP);
+        retcnt = call_sv((SV*)i_sub, 0); /* call again to increase counter */
+        SPAGAIN;
+        SP -= retcnt;
+    }
 
 void
 call_sv(sv, flags, ...)
@@ -1965,7 +2081,7 @@ newCONSTSUB(stash, name, flags, sv)
     ALIAS:
 	newCONSTSUB_flags = 1
     PREINIT:
-	CV* mycv;
+	CV* mycv = NULL;
 	STRLEN len;
 	const char *pv = SvPV(name, len);
     PPCODE:
@@ -2023,7 +2139,7 @@ gv_fetchmeth_type(stash, methname, type, level, flags)
     PREINIT:
         STRLEN len;
         const char * const name = SvPV_const(methname, len);
-	GV* gv;
+	GV* gv = NULL;
     PPCODE:
         switch (type) {
            case 0:
@@ -2051,7 +2167,7 @@ gv_fetchmeth_autoload_type(stash, methname, type, level, flags)
     PREINIT:
         STRLEN len;
         const char * const name = SvPV_const(methname, len);
-	GV* gv;
+	GV* gv = NULL;
     PPCODE:
         switch (type) {
            case 0:
@@ -2076,7 +2192,7 @@ gv_fetchmethod_flags_type(stash, methname, type, flags)
     int type
     I32 flags
     PREINIT:
-	GV* gv;
+	GV* gv = NULL;
     PPCODE:
         switch (type) {
            case 0:
@@ -2106,7 +2222,7 @@ gv_autoload_type(stash, methname, type, method)
     PREINIT:
         STRLEN len;
         const char * const name = SvPV_const(methname, len);
-	GV* gv;
+	GV* gv = NULL;
 	I32 flags = method ? GV_AUTOLOAD_ISMETHOD : 0;
     PPCODE:
         switch (type) {
@@ -2132,7 +2248,7 @@ whichsig_type(namesv, type)
     PREINIT:
         STRLEN len;
         const char * const name = SvPV_const(namesv, len);
-        I32 i;
+        I32 i = 0;
     PPCODE:
         switch (type) {
            case 0:
@@ -2364,6 +2480,7 @@ utf16_to_utf8 (sv, ...)
 	SV *dest;
 	I32 got; /* Gah, badly thought out APIs */
     CODE:
+	if (ix) (void)SvPV_force_nolen(sv);
 	source = (U8 *)SvPVbyte(sv, len);
 	/* Optionally only convert part of the buffer.  */ 	
 	if (items > 1) {
@@ -2507,13 +2624,12 @@ void
 test_rv2cv_op_cv()
     PROTOTYPE:
     PREINIT:
-	GV *troc_gv, *wibble_gv;
+	GV *troc_gv;
 	CV *troc_cv;
 	OP *o;
     CODE:
 	troc_gv = gv_fetchpv("XS::APItest::test_rv2cv_op_cv", 0, SVt_PVGV);
 	troc_cv = get_cv("XS::APItest::test_rv2cv_op_cv", 0);
-	wibble_gv = gv_fetchpv("XS::APItest::wibble", 0, SVt_PVGV);
 	o = newCVREF(0, newGVOP(OP_GV, 0, troc_gv));
 	if (rv2cv_op_cv(o, 0) != troc_cv) croak_fail();
 	if (rv2cv_op_cv(o, RV2CVOPCV_RETURN_NAME_GV) != (CV*)troc_gv)
@@ -3075,6 +3191,7 @@ CODE:
 	MULTICALL;
     }
     POP_MULTICALL;
+    PERL_UNUSED_VAR(newsp);
     XSRETURN_UNDEF;
 }
 
@@ -3295,7 +3412,7 @@ CV* cv
   for ( i = PadnamelistMAX(pad_namelist); i >= 0; i-- ) {
     PADNAME* name = PadnamelistARRAY(pad_namelist)[i];
 
-    if (SvPOKp(name)) {
+    if (PadnameLEN(name)) {
         av_push(retav, newSVpadname(name));
     }
   }
@@ -3319,10 +3436,8 @@ OUTPUT:
 
 void
 stringify(SV *sv)
-PREINIT:
-    const char *pv;
 CODE:
-    pv = SvPV_nolen(sv);
+    (void)SvPV_nolen(sv);
 
 SV *
 HvENAME(HV *hv)
@@ -3350,6 +3465,8 @@ OUTPUT:
 SV *
 xs_cmp_undef(SV *a, SV *b)
 CODE:
+    PERL_UNUSED_ARG(a);
+    PERL_UNUSED_ARG(b);
     RETVAL = &PL_sv_undef;
 OUTPUT:
     RETVAL
@@ -3394,7 +3511,6 @@ test_newFOROP_without_slab()
 CODE:
     {
 	const I32 floor = start_subparse(0,0);
-	CV * const cv = PL_compcv;
 	/* The slab allocator does not like CvROOT being set. */
 	CvROOT(PL_compcv) = (OP *)1;
 	op_free(newFOROP(0, 0, newOP(OP_PUSHMARK, 0), 0, 0));
@@ -3459,6 +3575,14 @@ sv_mortalcopy(SV *sv)
     OUTPUT:
 	RETVAL
 
+SV *
+newRV(SV *sv)
+
+void
+alias_av(AV *av, IV ix, SV *sv)
+    CODE:
+	av_store(av, ix, SvREFCNT_inc(sv));
+
 MODULE = XS::APItest PACKAGE = XS::APItest::AUTOLOADtest
 
 int
@@ -3467,6 +3591,7 @@ AUTOLOAD(...)
     SV* comms;
     SV* class_and_method;
   CODE:
+    PERL_UNUSED_ARG(items);
     class_and_method = GvSV(CvGV(cv));
     comms = get_sv("main::the_method", 1);
     if (class_and_method == NULL) {
@@ -3517,7 +3642,7 @@ test_get_vtbl()
 	MGVTBL *want;
     CODE:
 #define test_get_this_vtable(name) \
-	want = CAT2(&PL_vtbl_, name); \
+	want = (MGVTBL*)CAT2(&PL_vtbl_, name); \
 	have = get_vtbl(CAT2(want_vtbl_, name)); \
 	if (have != want) \
 	    croak("fail %p!=%p for get_vtbl(want_vtbl_" STRINGIFY(name) ") at " __FILE__ " line %d", have, want, __LINE__)
@@ -4441,5 +4566,229 @@ bool
 test_isQUOTEMETA(UV ord)
     CODE:
         RETVAL = _isQUOTEMETA(ord);
+    OUTPUT:
+        RETVAL
+
+UV
+test_toLOWER(UV ord)
+    CODE:
+        RETVAL = toLOWER(ord);
+    OUTPUT:
+        RETVAL
+
+UV
+test_toLOWER_L1(UV ord)
+    CODE:
+        RETVAL = toLOWER_L1(ord);
+    OUTPUT:
+        RETVAL
+
+UV
+test_toLOWER_LC(UV ord)
+    CODE:
+        RETVAL = toLOWER_LC(ord);
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toLOWER_uni(UV ord)
+    PREINIT:
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        av = newAV();
+        av_push(av, newSVuv(toLOWER_uni(ord, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toLOWER_utf8(SV * p)
+    PREINIT:
+        U8 *input;
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        input = (U8 *) SvPV(p, len);
+        av = newAV();
+        av_push(av, newSVuv(toLOWER_utf8(input, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+UV
+test_toFOLD(UV ord)
+    CODE:
+        RETVAL = toFOLD(ord);
+    OUTPUT:
+        RETVAL
+
+UV
+test_toFOLD_LC(UV ord)
+    CODE:
+        RETVAL = toFOLD_LC(ord);
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toFOLD_uni(UV ord)
+    PREINIT:
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        av = newAV();
+        av_push(av, newSVuv(toFOLD_uni(ord, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toFOLD_utf8(SV * p)
+    PREINIT:
+        U8 *input;
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        input = (U8 *) SvPV(p, len);
+        av = newAV();
+        av_push(av, newSVuv(toFOLD_utf8(input, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+UV
+test_toUPPER(UV ord)
+    CODE:
+        RETVAL = toUPPER(ord);
+    OUTPUT:
+        RETVAL
+
+UV
+test_toUPPER_LC(UV ord)
+    CODE:
+        RETVAL = toUPPER_LC(ord);
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toUPPER_uni(UV ord)
+    PREINIT:
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        av = newAV();
+        av_push(av, newSVuv(toUPPER_uni(ord, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toUPPER_utf8(SV * p)
+    PREINIT:
+        U8 *input;
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        input = (U8 *) SvPV(p, len);
+        av = newAV();
+        av_push(av, newSVuv(toUPPER_utf8(input, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+UV
+test_toTITLE(UV ord)
+    CODE:
+        RETVAL = toTITLE(ord);
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toTITLE_uni(UV ord)
+    PREINIT:
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        av = newAV();
+        av_push(av, newSVuv(toTITLE_uni(ord, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
+    OUTPUT:
+        RETVAL
+
+AV *
+test_toTITLE_utf8(SV * p)
+    PREINIT:
+        U8 *input;
+        U8 s[UTF8_MAXBYTES_CASE + 1];
+        STRLEN len;
+        AV *av;
+        SV *utf8;
+    CODE:
+        input = (U8 *) SvPV(p, len);
+        av = newAV();
+        av_push(av, newSVuv(toTITLE_utf8(input, s, &len)));
+
+        utf8 = newSVpvn((char *) s, len);
+        SvUTF8_on(utf8);
+        av_push(av, utf8);
+
+        av_push(av, newSVuv(len));
+        RETVAL = av;
     OUTPUT:
         RETVAL

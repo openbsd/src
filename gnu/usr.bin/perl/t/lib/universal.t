@@ -10,7 +10,7 @@ BEGIN {
 }
 
 for my $arg ('', 'q[]', qw( 1 undef )) {
-    fresh_perl_is(<<"----", <<'====', "Internals::* functions check their argument under func() AND &func() [perl #77776]");
+    fresh_perl_is(<<"----", <<'====', {}, "Internals::* functions check their argument under func() AND &func() [perl #77776]");
 sub tryit { eval shift or warn \$@ }
 tryit "&Internals::SvREADONLY($arg)";
 tryit "&Internals::SvREFCNT($arg)";

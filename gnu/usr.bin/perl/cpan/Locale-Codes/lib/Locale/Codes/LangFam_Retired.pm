@@ -1,4 +1,5 @@
-package Locale::Codes::LangFam_Retired;
+package #
+Locale::Codes::LangFam_Retired;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'deprecate_codes' is run.
@@ -25,7 +26,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
+   Copyright (c) 2010-2014 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -37,7 +38,7 @@ use warnings;
 require 5.002;
 
 our($VERSION);
-$VERSION='3.25';
+$VERSION='3.30';
 
 $Locale::Codes::Retired{'langfam'}{'alpha'}{'code'} = {
 };

@@ -16,13 +16,13 @@ the semantics.
 
 =over
 
-=cut 
+=cut
 
 use strict;
 use ExtUtils::MakeMaker::Config;
 use File::Basename;
 
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 require ExtUtils::MM_Win32;
 our @ISA = qw(ExtUtils::MM_Win32);
@@ -66,7 +66,7 @@ sub init_platform {
     # To get Win32's setup.
     $self->SUPER::init_platform;
 
-    # incpath is copied to makefile var INCLUDE in constants sub, here just 
+    # incpath is copied to makefile var INCLUDE in constants sub, here just
     # make it empty
     my $libpth = $Config{'libpth'};
     $libpth =~ s( )(;);
@@ -78,7 +78,7 @@ sub init_platform {
     if($self->{'base_import'}) {
         $self->{'BASE_IMPORT'} .= ', ' . $self->{'base_import'};
     }
- 
+
     $self->{'NLM_VERSION'} = $Config{'nlm_version'};
     $self->{'MPKTOOL'}	= $Config{'mpktool'};
     $self->{'TOOLPATH'}	= $Config{'toolpath'};
@@ -110,7 +110,7 @@ sub platform_constants {
     # Setup Win32's constants.
     $make_frag .= $self->SUPER::platform_constants;
 
-    foreach my $macro (qw(LIBPTH BASE_IMPORT NLM_VERSION MPKTOOL 
+    foreach my $macro (qw(LIBPTH BASE_IMPORT NLM_VERSION MPKTOOL
                           TOOLPATH BOOT_SYMBOL NLM_SHORT_NAME INCLUDE PATH
                           MM_NW5_VERSION
                       ))
@@ -231,7 +231,7 @@ MAKE_FRAG
 
     # Taking care of long names like FileHandle, ByteLoader, SDBM_File etc
     if($self->{NLM_SHORT_NAME}) {
-        # In case of nlms with names exceeding 8 chars, build nlm in the 
+        # In case of nlms with names exceeding 8 chars, build nlm in the
         # current dir, rename and move to auto\lib.
         $m .= q{ -o $(NLM_SHORT_NAME).$(DLEXT)}
     } else {
@@ -245,7 +245,7 @@ MAKE_FRAG
 
     if($self->{NLM_SHORT_NAME}) {
         $m .= <<'MAKE_FRAG';
-	if exist $(INST_AUTODIR)\$(NLM_SHORT_NAME).$(DLEXT) del $(INST_AUTODIR)\$(NLM_SHORT_NAME).$(DLEXT) 
+	if exist $(INST_AUTODIR)\$(NLM_SHORT_NAME).$(DLEXT) del $(INST_AUTODIR)\$(NLM_SHORT_NAME).$(DLEXT)
 	move $(NLM_SHORT_NAME).$(DLEXT) $(INST_AUTODIR)
 MAKE_FRAG
     }
@@ -264,6 +264,6 @@ __END__
 
 =back
 
-=cut 
+=cut
 
 

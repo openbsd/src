@@ -7,7 +7,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan (tests => 48);
+plan (tests => 52);
 
 use utf8;
 use open qw( :utf8 :std );
@@ -108,6 +108,48 @@ is ${"main::\345\225\217"}, undef, "..and using the encoded form doesn't";
     $@ =~ s/eval \d+/eval 11/;
     is $@, 'Unrecognized character \x{1f42a}; marked by <-- HERE after  my $ニ <-- HERE near column 8 at (eval 11) line 1.
 ', "'Unrecognized character' croak is UTF-8 clean";
+
+    eval "q\0foobar\0 \x{FFFF}+1";
+    $@ =~ s/eval \d+/eval 11/;
+    is(
+        $@,
+       "Unrecognized character \\x{ffff}; marked by <-- HERE after q\0foobar\0 <-- HERE near column 11 at (eval 11) line 1.\n",
+       "...and nul-clean"
+    );
+
+    {
+        use re 'eval';
+        my $f = qq{(?{\$ネ+ 1; \x{1F42A} })};
+        eval { "a" =~ /^a$f/ };
+        my $e = $@;
+        $e =~ s/eval \d+/eval 11/;
+        is(
+            $e,
+            "Unrecognized character \\x{1f42a}; marked by <-- HERE after (?{\$ネ+ 1; <-- HERE near column 13 at (eval 11) line 1.\n",
+            "Messages from a re-eval are UTF-8 clean"
+        );
+
+        $f = qq{(?{q\0foobar\0 \x{FFFF}+1 })};
+        eval { "a" =~ /^a$f/ };
+        my $e = $@;
+        $e =~ s/eval \d+/eval 11/;
+        is(
+            $e,
+            "Unrecognized character \\x{ffff}; marked by <-- HERE after q\x{0}foobar\x{0} <-- HERE near column 16 at (eval 11) line 1.\n",
+           "...and nul-clean"
+        );
+    }
+    
+    {
+        eval qq{\$ネ+ 1; \x{1F42A}};
+        $@ =~ s/eval \d+/eval 11/;
+        is(
+            $@,
+            "Unrecognized character \\x{1f42a}; marked by <-- HERE after \$ネ+ 1; <-- HERE near column 8 at (eval 11) line 1.\n",
+            "Unrecognized character error doesn't cut off in the middle of characters"
+        )
+    }
+
 }
 
 {

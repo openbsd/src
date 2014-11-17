@@ -143,7 +143,6 @@ esac
 
 # Shared library extension is .dylib.
 # Bundle extension is .bundle.
-ld='cc';
 so='dylib';
 dlext='bundle';
 usedl='define';
@@ -165,6 +164,11 @@ case "$ccdlflags" in		# If passed in from command line, presume user knows best
 '')
    cccdlflags=' '; # space, not empty, because otherwise we get -fpic
 ;;
+esac
+
+# Allow the user to override ld, but modify it as necessary below
+case "$ld" in
+    '') ld='cc';;
 esac
 
 # Perl bundles do not expect two-level namespace, added in Darwin 1.4.

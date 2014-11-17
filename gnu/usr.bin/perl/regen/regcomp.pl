@@ -245,6 +245,10 @@ print $out <<EOP;
 };
 #endif /* DOINIT */
 
+EOP
+
+{
+print $out <<EOP;
 /* PL_reg_extflags_name[] - Opcode/state names in string form, for debugging */
 
 #ifndef DOINIT
@@ -257,13 +261,14 @@ my %rxfv;
 my %definitions;    # Remember what the symbol definitions are
 my $val = 0;
 my %reverse;
+my $REG_EXTFLAGS_NAME_SIZE = 0;
 foreach my $file ("op_reg_common.h", "regexp.h") {
     open FH,"<$file" or die "Can't read $file: $!";
     while (<FH>) {
 
         # optional leading '_'.  Return symbol in $1, and strip it from
         # rest of line
-        if (s/ \# \s* define \s+ ( _? RXf_ \w+ ) \s+ //xi) {
+        if (s/^ \# \s* define \s+ ( _? RXf_ \w+ ) \s+ //xi) {
             chomp;
             my $define = $1;
             my $orig= $_;
@@ -328,6 +333,7 @@ for (0..31) {
     s/\bRXf_(PMf_)?// for $n, $extra;
     printf $out qq(\t%-20s/* 0x%08x%s */\n),
         qq("$n",),$power_of_2, $extra;
+    $REG_EXTFLAGS_NAME_SIZE++;
 }  
  
 print $out <<EOP;
@@ -335,6 +341,60 @@ print $out <<EOP;
 #endif /* DOINIT */
 
 EOP
+print $out <<EOQ
+#ifdef DEBUGGING
+#  define REG_EXTFLAGS_NAME_SIZE $REG_EXTFLAGS_NAME_SIZE
+#endif
+
+EOQ
+}
+{
+print $out <<EOP;
+/* PL_reg_intflags_name[] - Opcode/state names in string form, for debugging */
+
+#ifndef DOINIT
+EXTCONST char * PL_reg_intflags_name[];
+#else
+EXTCONST char * const PL_reg_intflags_name[] = {
+EOP
+
+my %rxfv;
+my %definitions;    # Remember what the symbol definitions are
+my $val = 0;
+my %reverse;
+my $REG_INTFLAGS_NAME_SIZE = 0;
+foreach my $file ("regcomp.h") {
+    open my $fh, "<", $file or die "Can't read $file: $!";
+    while (<$fh>) {
+        # optional leading '_'.  Return symbol in $1, and strip it from
+        # rest of line
+        if (m/^ \# \s* define \s+ ( PREGf_ ( \w+ ) ) \s+ 0x([0-9a-f]+)(?:\s*\/\*(.*)\*\/)?/xi) {
+            chomp;
+            my $define = $1;
+            my $abbr= $2;
+            my $hex= $3;
+            my $comment= $4;
+            my $val= hex($hex);
+            $comment= $comment ? " - $comment" : "";
+
+            printf $out qq(\t%-30s/* 0x%08x - %s%s */\n), qq("$abbr",), $val, $define, $comment;
+            $REG_INTFLAGS_NAME_SIZE++;
+        }
+    }
+}
+
+print $out <<EOP;
+};
+#endif /* DOINIT */
+
+EOP
+print $out <<EOQ;
+#ifdef DEBUGGING
+#  define REG_INTFLAGS_NAME_SIZE $REG_INTFLAGS_NAME_SIZE
+#endif
+
+EOQ
+}
 
 print $out process_flags('V', 'varies', <<'EOC');
 /* The following have no fixed length. U8 so we can do strchr() on it. */

@@ -1,7 +1,7 @@
 package charnames;
 use strict;
 use warnings;
-our $VERSION = '1.36';
+our $VERSION = '1.40';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 use _charnames ();    # The submodule for this where most of the work gets done
 
@@ -171,7 +171,7 @@ charnames ();">> did not enable C<\N{I<CHARNAME>}>.)
 
 Note that C<\N{U+I<...>}>, where the I<...> is a hexadecimal number,
 also inserts a character into a string.
-The character it inserts is the one whose code point
+The character it inserts is the one whose Unicode code point
 (ordinal value) is equal to the number.  For example, C<"\N{U+263a}"> is
 the Unicode (white background, black foreground) smiley face
 equivalent to C<"\N{WHITE SMILING FACE}">.
@@ -228,7 +228,7 @@ input name is that of a character that won't fit into a byte (i.e., whose
 ordinal is above 255).
 
 Otherwise, any string that includes a C<\N{I<charname>}> or
-C<S<\N{U+I<code point>}>> will automatically have Unicode semantics (see
+C<S<\N{U+I<code point>}>> will automatically have Unicode rules (see
 L<perlunicode/Byte and Character Semantics>).
 
 =head1 LOOSE MATCHES
@@ -300,6 +300,10 @@ with C<"U+"> or C<"0x"> with the remainder considered to be a
 hexadecimal integer.  A literal numeric constant must be unsigned; it
 will be interpreted as hex if it has a leading zero or contains
 non-decimal hex digits; otherwise it will be interpreted as decimal.
+If it begins with C<"U+">, it is interpreted as the Unicode code point;
+otherwise it is interpreted as native.  (Only code points below 256 can
+differ between Unicode and native.)  Thus C<U+41> is always the Latin letter
+"A"; but C<0x41> can be "NO-BREAK SPACE" on EBCDIC platforms.
 
 Aliases are added either by the use of anonymous hashes:
 
@@ -402,6 +406,10 @@ with C<"U+"> or C<"0x"> with the remainder considered to be a
 hexadecimal integer.  A literal numeric constant must be unsigned; it
 will be interpreted as hex if it has a leading zero or contains
 non-decimal hex digits; otherwise it will be interpreted as decimal.
+If it begins with C<"U+">, it is interpreted as the Unicode code point;
+otherwise it is interpreted as native.  (Only code points below 256 can
+differ between Unicode and native.)  Thus C<U+41> is always the Latin letter
+"A"; but C<0x41> can be "NO-BREAK SPACE" on EBCDIC platforms.
 
 As mentioned above under L</ALIASES>, Unicode 6.1 defines extra names
 (synonyms or aliases) for some code points, most of which were already

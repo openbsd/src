@@ -4,7 +4,7 @@ use Text::Balanced ':ALL';
 
 use vars qw{ $VERSION @EXPORT };
 
-$VERSION = '0.89';
+$VERSION = '0.91';
 
 use Filter::Util::Call;
 use Carp;
@@ -242,7 +242,6 @@ __END__
 =head1 NAME
 
 Filter::Simple - Simplified source filtering
-
 
 =head1 SYNOPSIS
 
@@ -801,6 +800,6 @@ Damian Conway E<lt>damian@conway.orgE<gt>.
 
 =head1 COPYRIGHT AND LICENSE
 
-    Copyright (c) 2000-2008, Damian Conway. All Rights Reserved.
+    Copyright (c) 2000-2014, Damian Conway. All Rights Reserved.
     This module is free software. It may be used, redistributed
     and/or modified under the same terms as Perl itself.

@@ -41,17 +41,17 @@ S_gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 #include "time64.h"
 
-static const int days_in_month[2][12] = {
+static const char days_in_month[2][12] = {
     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
     {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 };
 
-static const int julian_days_by_month[2][12] = {
+static const short julian_days_by_month[2][12] = {
     {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
     {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},
 };
 
-static const int length_of_year[2] = { 365, 366 };
+static const short length_of_year[2] = { 365, 366 };
 
 /* Number of days in a 400 year Gregorian cycle */
 static const Year years_in_gregorian_cycle = 400;
@@ -59,7 +59,7 @@ static const int days_in_gregorian_cycle  = (365 * 400) + 100 - 4 + 1;
 
 /* 28 year calendar cycle between 2010 and 2037 */
 #define SOLAR_CYCLE_LENGTH 28
-static const int safe_years[SOLAR_CYCLE_LENGTH] = {
+static const short safe_years[SOLAR_CYCLE_LENGTH] = {
     2016, 2017, 2018, 2019,
     2020, 2021, 2022, 2023,
     2024, 2025, 2026, 2027,
@@ -69,7 +69,7 @@ static const int safe_years[SOLAR_CYCLE_LENGTH] = {
     2012, 2013, 2014, 2015
 };
 
-static const int dow_year_start[SOLAR_CYCLE_LENGTH] = {
+static const char dow_year_start[SOLAR_CYCLE_LENGTH] = {
     5, 0, 1, 2,     /* 0       2016 - 2019 */
     3, 5, 6, 0,     /* 4  */
     1, 3, 4, 5,     /* 8  */

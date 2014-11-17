@@ -15,7 +15,6 @@ use File::Basename ();
 use File::Find ();
 use File::Path ();
 use File::Spec ();
-use IO::File ();
 use Tie::CPHash;
 use Data::Dumper;
 
@@ -297,7 +296,7 @@ sub _gen_manifest {
   my $self     = shift;
   my $manifest = shift;
 
-  my $fh = IO::File->new( ">$manifest" ) or do {
+  open(my $fh, '>', $manifest ) or do {
     die "Can't write '$manifest'\n";
   };
 
@@ -368,7 +367,7 @@ sub regen {
         1 while unlink( $fullname );
       }
 
-      my $fh = IO::File->new(">$fullname") or do {
+      open(my $fh, '>', $fullname) or do {
         die "Can't write '$fullname'\n";
       };
       print $fh $self->{filedata}{$file};

@@ -1,0 +1,38 @@
+5.019003
+BhkDISABLE                     # E
+BhkENABLE                      # E
+BhkENTRY_set                   # E
+MULTICALL                      # E
+PERL_SYS_TERM                  # E
+POP_MULTICALL                  # E
+PUSH_MULTICALL                 # E
+PadARRAY                       # E
+PadMAX                         # E
+PadlistARRAY                   # E
+PadlistMAX                     # E
+PadlistNAMES                   # E
+PadlistNAMESARRAY              # E
+PadlistNAMESMAX                # E
+PadnameLEN                     # E
+PadnamePV                      # E
+PadnameSV                      # E
+PadnameUTF8                    # E
+PadnamelistARRAY               # E
+PadnamelistMAX                 # E
+XS_EXTERNAL                    # E
+XS_INTERNAL                    # E
+XopDISABLE                     # E
+XopENABLE                      # E
+XopENTRY                       # E
+XopENTRY_set                   # E
+cophh_new_empty                # E
+croak_memory_wrap              # U (Perl_croak_memory_wrap)
+my_lstat                       # U (Perl_my_lstat)
+my_stat                        # U (Perl_my_stat)
+reentrant_free                 # U
+reentrant_init                 # U
+reentrant_retry                # U
+reentrant_size                 # U
+ref                            # U (Perl_ref)
+sv_pos_b2u_flags               # U
+sv_setref_pvs                  # A

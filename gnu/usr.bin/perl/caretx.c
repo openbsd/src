@@ -1,0 +1,140 @@
+/*    caretx.c
+ *
+ *    Copyright (C) 2013
+ *     by Larry Wall and others
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
+/*
+ *   'I do not know clearly,' said Frodo; 'but the path climbs, I think,
+ * up into the mountains on the northern side of that vale where the old
+ * city stands.  It goes up to a high cleft and so down to -- that which
+ * is beyond.'
+ *   'Do you know the name of that high pass?' said Faramir.
+ *
+ *     [p.691 of _The Lord of the Rings_, IV/xi: "The Forbidden Pool"]
+ */
+
+/* This file contains a single function, set_caret_X, to set the $^X
+ * variable.  It's only used in perl.c, but has various OS dependencies,
+ * so its been moved to its own file to reduce header pollution.
+ * See RT 120314 for details.
+ */
+
+#if defined(PERL_IS_MINIPERL) && !defined(USE_SITECUSTOMIZE)
+#  define USE_SITECUSTOMIZE
+#endif
+
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+
+#ifdef NETWARE
+#include "nwutil.h"
+#endif
+
+#ifdef USE_KERN_PROC_PATHNAME
+#  include <sys/sysctl.h>
+#endif
+
+#ifdef USE_NSGETEXECUTABLEPATH
+# include <mach-o/dyld.h>
+#endif
+
+/* Note: Functions in this file must not have bool parameters.  When
+   PERL_BOOL_AS_CHAR is #defined, mach-o/dyld.h overrides it in this file
+   by #including stdbool.h, so the function parameters here would conflict
+   with those in proto.h.
+*/
+
+void
+Perl_set_caret_X(pTHX) {
+    dVAR;
+    GV* tmpgv = gv_fetchpvs("\030", GV_ADD|GV_NOTQUAL, SVt_PV); /* $^X */
+    if (tmpgv) {
+        SV *const caret_x = GvSV(tmpgv);
+#if defined(OS2)
+        sv_setpv(caret_x, os2_execname(aTHX));
+#else
+#  ifdef USE_KERN_PROC_PATHNAME
+        size_t size = 0;
+        int mib[4];
+        mib[0] = CTL_KERN;
+        mib[1] = KERN_PROC;
+        mib[2] = KERN_PROC_PATHNAME;
+        mib[3] = -1;
+
+        if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0
+            && size > 0 && size < MAXPATHLEN * MAXPATHLEN) {
+            sv_grow(caret_x, size);
+
+            if (sysctl(mib, 4, SvPVX(caret_x), &size, NULL, 0) == 0
+                && size > 2) {
+                SvPOK_only(caret_x);
+                SvCUR_set(caret_x, size - 1);
+                SvTAINT(caret_x);
+                return;
+            }
+        }
+#  elif defined(USE_NSGETEXECUTABLEPATH)
+        char buf[1];
+        uint32_t size = sizeof(buf);
+
+        _NSGetExecutablePath(buf, &size);
+        if (size < MAXPATHLEN * MAXPATHLEN) {
+            sv_grow(caret_x, size);
+            if (_NSGetExecutablePath(SvPVX(caret_x), &size) == 0) {
+                char *const tidied = realpath(SvPVX(caret_x), NULL);
+                if (tidied) {
+                    sv_setpv(caret_x, tidied);
+                    free(tidied);
+                } else {
+                    SvPOK_only(caret_x);
+                    SvCUR_set(caret_x, size);
+                }
+                return;
+            }
+        }
+#  elif defined(HAS_PROCSELFEXE)
+        char buf[MAXPATHLEN];
+        int len = readlink(PROCSELFEXE_PATH, buf, sizeof(buf) - 1);
+
+        /* On Playstation2 Linux V1.0 (kernel 2.2.1) readlink(/proc/self/exe)
+           includes a spurious NUL which will cause $^X to fail in system
+           or backticks (this will prevent extensions from being built and
+           many tests from working). readlink is not meant to add a NUL.
+           Normal readlink works fine.
+        */
+        if (len > 0 && buf[len-1] == '\0') {
+            len--;
+        }
+
+        /* FreeBSD's implementation is acknowledged to be imperfect, sometimes
+           returning the text "unknown" from the readlink rather than the path
+           to the executable (or returning an error from the readlink). Any
+           valid path has a '/' in it somewhere, so use that to validate the
+           result. See http://www.freebsd.org/cgi/query-pr.cgi?pr=35703
+        */
+        if (len > 0 && memchr(buf, '/', len)) {
+            sv_setpvn(caret_x, buf, len);
+            return;
+        }
+#  endif
+        /* Fallback to this:  */
+        sv_setpv(caret_x, PL_origargv[0]);
+#endif
+    }
+}
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 et:
+ */

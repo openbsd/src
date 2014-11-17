@@ -168,23 +168,29 @@ multiple of four bytes:
 
 =item C<regnode_charclass>
 
-Character classes are represented by C<regnode_charclass> structures,
-which have a four-byte argument and then a 32-byte (256-bit) bitmap
-indicating which characters are included in the class.
+Bracketed character classes are represented by C<regnode_charclass>
+structures, which have a four-byte argument and then a 32-byte (256-bit)
+bitmap indicating which characters in the Latin1 range are included in
+the class.
 
     regnode_charclass        U32 arg1;
                              char bitmap[ANYOF_BITMAP_SIZE];
 
-=item C<regnode_charclass_class>
+Various flags whose names begin with C<ANYOF_> are used for special
+situations.  Above Latin1 matches and things not known until run-time
+are stored in L</Perl's pprivate structure>.
+
+=item C<regnode_charclass_posixl>
 
 There is also a larger form of a char class structure used to represent
-POSIX char classes called C<regnode_charclass_class> which has an
-additional 4-byte (32-bit) bitmap indicating which POSIX char classes
+POSIX char classes under C</l> matching,
+called C<regnode_charclass_posixl> which has an
+additional 32-bit bitmap indicating which POSIX char classes
 have been included.
 
-   regnode_charclass_class  U32 arg1;
+   regnode_charclass_posixl U32 arg1;
                             char bitmap[ANYOF_BITMAP_SIZE];
-                            char classflags[ANYOF_CLASSBITMAP_SIZE];
+                            U32 classflags;
 
 =back
 
@@ -396,7 +402,7 @@ routines return a pointer to a C<regnode>, which is usually the last regnode
 added to the program. However, one complication is that reg() returns NULL
 for parsing C<(?:)> syntax for embedded modifiers, setting the flag
 C<TRYAGAIN>. The C<TRYAGAIN> propagates upwards until it is captured, in
-some cases by by C<regatom()>, but otherwise unconditionally by
+some cases by C<regatom()>, but otherwise unconditionally by
 C<regbranch()>. Hence it will never be returned by C<regbranch()> to
 C<reg()>. This flag permits patterns such as C<(?i)+> to be detected as
 errors (I<Quantifier follows nothing in regex; marked by <-- HERE in m/(?i)+
@@ -666,7 +672,7 @@ finding the start point in the string where we should match from,
 and the second being running the regop interpreter.
 
 If we can tell that there is no valid start point then we don't bother running
-interpreter at all. Likewise, if we know from the analysis phase that we
+the interpreter at all. Likewise, if we know from the analysis phase that we
 cannot detect a short-cut to the start position, we go straight to the
 interpreter.
 
@@ -761,40 +767,10 @@ Care must be taken when making changes to make sure that you handle
 UTF-8 properly, both at compile time and at execution time, including
 when the string and pattern are mismatched.
 
-The following comment in F<regcomp.h> gives an example of exactly how
-tricky this can be:
-
-    Two problematic code points in Unicode casefolding of EXACT nodes:
-
-    U+0390 - GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS
-    U+03B0 - GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS
-
-    which casefold to
-
-    Unicode                      UTF-8
-
-    U+03B9 U+0308 U+0301         0xCE 0xB9 0xCC 0x88 0xCC 0x81
-    U+03C5 U+0308 U+0301         0xCF 0x85 0xCC 0x88 0xCC 0x81
-
-    This means that in case-insensitive matching (or "loose matching",
-    as Unicode calls it), an EXACTF of length six (the UTF-8 encoded
-    byte length of the above casefolded versions) can match a target
-    string of length two (the byte length of UTF-8 encoded U+0390 or
-    U+03B0). This would rather mess up the minimum length computation.
-
-    What we'll do is to look for the tail four bytes, and then peek
-    at the preceding two bytes to see whether we need to decrease
-    the minimum length by four (six minus two).
-
-    Thanks to the design of UTF-8, there cannot be false matches:
-    A sequence of valid UTF-8 bytes cannot be a subsequence of
-    another valid sequence of UTF-8 bytes.
-
-
 =head2 Base Structures
 
 The C<regexp> structure described in L<perlreapi> is common to all
-regex engines. Two of its fields that are intended for the private use
+regex engines. Two of its fields are intended for the private use
 of the regex engine that compiled the pattern. These are the
 C<intflags> and pprivate members. The C<pprivate> is a void pointer to
 an arbitrary structure whose use and management is the responsibility
@@ -811,7 +787,7 @@ the engine currently being. used and some of its fields read by perl to
 implement things such as the stringification of C<qr//>.
 
 
-The other structure is pointed to be the C<regexp> struct's
+The other structure is pointed to by the C<regexp> struct's
 C<pprivate> and is in addition to C<intflags> in the same struct
 considered to be the property of the regex engine which compiled the
 regular expression;
@@ -877,7 +853,7 @@ an independent synthetic regop that has been constructed by the optimiser.
 
 =item C<data>
 
-This field points at a reg_data structure, which is defined as follows
+This field points at a C<reg_data> structure, which is defined as follows
 
     struct reg_data {
         U32 count;

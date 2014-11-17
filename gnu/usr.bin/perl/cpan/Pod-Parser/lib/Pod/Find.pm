@@ -14,7 +14,7 @@ package Pod::Find;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.60';   ## Current version of this package
+$VERSION = '1.62';   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -44,6 +44,10 @@ Pod::Find - find POD documents in directory trees
   $location = pod_where( { -inc => 1 }, "Pod::Find" );
 
 =head1 DESCRIPTION
+
+B<NOTE: This module is considered legacy; modern Perl releases (5.18 and
+higher) are going to remove Pod-Parser from core and use L<Pod-Simple>
+for all things POD.>
 
 B<Pod::Find> provides a set of functions to locate POD files.  Note that
 no function is exported by default to avoid pollution of your namespace,

@@ -45,8 +45,8 @@ isa_ok( $base, 'ExtUtils::CBuilder::Base' );
 }
 
 {
-    my $path_to_perl = $^O eq 'VMS' 
-                       ? 'perl_root:[000000]perl.exe' 
+    my $path_to_perl = $^O eq 'VMS'
+                       ? 'perl_root:[000000]perl.exe'
                        : File::Spec->catfile( '', qw| usr bin perl | );
     local $^X = $path_to_perl;
     is(
@@ -194,7 +194,7 @@ is_deeply(
 $seen_ref = { map {$_ => 1} $base->arg_share_object_file('alpha') };
 my %exp = map {$_ => 1} $base->split_like_shell($base->{config}{lddlflags});
 $exp{'-o'} = 1;
-$exp{'alpha'} = 1; 
+$exp{'alpha'} = 1;
 
 is_deeply(
     $seen_ref,
@@ -223,7 +223,7 @@ is_deeply( \%split_seen, \%exp,
     $cwd = cwd();
     my $tdir = tempdir(CLEANUP => 1);
     my $subdir = File::Spec->catdir(
-        $tdir, qw| alpha beta gamma delta epsilon 
+        $tdir, qw| alpha beta gamma delta epsilon
             zeta eta theta iota kappa lambda |
     );
     mkpath($subdir, { mode => 0711 } );

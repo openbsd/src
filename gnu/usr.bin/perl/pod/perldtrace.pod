@@ -127,7 +127,7 @@ paths instead of providing C<Module::Name>-style names.
 
 Fires when Perl has successfully loaded an individual file, whether
 from C<use>, C<require>, or C<do>. This probe fires after the file
-is read from disk and its contentss evaluated. The filename argument
+is read from disk and its contents evaluated. The filename argument
 is converted to local filesystem paths instead of providing
 C<Module::Name>-style names.
 

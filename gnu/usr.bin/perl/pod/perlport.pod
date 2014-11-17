@@ -804,11 +804,11 @@ are a few of the more popular Unix flavors:
     AIX           aix        aix
     BSD/OS        bsdos      i386-bsdos
     Darwin        darwin     darwin
-    dgux          dgux       AViiON-dgux
     DYNIX/ptx     dynixptx   i386-dynixptx
     FreeBSD       freebsd    freebsd-i386    
     Haiku         haiku      BePC-haiku
     Linux         linux      arm-linux
+    Linux         linux      armv5tel-linux
     Linux         linux      i386-linux
     Linux         linux      i586-linux
     Linux         linux      ppc-linux
@@ -1566,6 +1566,9 @@ Access permissions are mapped onto VOS access-control list changes. (VOS)
 The actual permissions set depend on the value of the C<CYGWIN>
 in the SYSTEM environment settings.  (Cygwin)
 
+Setting the exec bit on some locations (generally /sdcard) will return true
+but not actually set the bit. (Android)
+
 =item chown
 
 Not implemented. (Win32, S<Plan 9>, S<RISC OS>)
@@ -1582,6 +1585,8 @@ Not implemented. (Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
 
 May not be available if library or source was not provided when building
 perl. (Win32)
+
+Not implemented. (Android)
 
 =item dbmclose
 
@@ -1600,6 +1605,9 @@ Not supported. (Cygwin, Win32)
 Invokes VMS debugger. (VMS)
 
 =item exec
+
+C<exec LIST> without the use of indirect object syntax (C<exec PROGRAM LIST>)
+may fall back to trying the shell if the first spawn() fails.  (Win32)
 
 Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
@@ -1674,7 +1682,7 @@ Not implemented. (Win32, VMS, S<RISC OS>)
 
 =item getnetbyname
 
-Not implemented. (Win32, S<Plan 9>)
+Not implemented. (Android, Win32, S<Plan 9>)
 
 =item getpwuid
 
@@ -1688,19 +1696,21 @@ Not implemented. (Win32, VMS, S<RISC OS>)
 
 =item getnetbyaddr
 
-Not implemented. (Win32, S<Plan 9>)
+Not implemented. (Android, Win32, S<Plan 9>)
 
 =item getprotobynumber
+
+Not implemented. (Android)
 
 =item getservbyport
 
 =item getpwent
 
-Not implemented. (Win32)
+Not implemented. (Android, Win32)
 
 =item getgrent
 
-Not implemented. (Win32, VMS)
+Not implemented. (Android, Win32, VMS)
 
 =item gethostbyname
 
@@ -1713,19 +1723,23 @@ Not implemented. (Win32)
 
 =item getnetent
 
-Not implemented. (Win32, S<Plan 9>)
+Not implemented. (Android, Win32, S<Plan 9>)
 
 =item getprotoent
 
-Not implemented. (Win32, S<Plan 9>)
+Not implemented. (Android, Win32, S<Plan 9>)
 
 =item getservent
 
 Not implemented. (Win32, S<Plan 9>)
 
+=item seekdir
+
+Not implemented. (Android)
+
 =item sethostent
 
-Not implemented. (Win32, S<Plan 9>, S<RISC OS>)
+Not implemented. (Android, Win32, S<Plan 9>, S<RISC OS>)
 
 =item setnetent
 
@@ -1733,7 +1747,7 @@ Not implemented. (Win32, S<Plan 9>, S<RISC OS>)
 
 =item setprotoent
 
-Not implemented. (Win32, S<Plan 9>, S<RISC OS>)
+Not implemented. (Android, Win32, S<Plan 9>, S<RISC OS>)
 
 =item setservent
 
@@ -1743,21 +1757,23 @@ Not implemented. (S<Plan 9>, Win32, S<RISC OS>)
 
 Not implemented. (Win32)
 
+Either not implemented or a no-op. (Android)
+
 =item endgrent
 
-Not implemented. (S<RISC OS>, VMS, Win32)
+Not implemented. (Android, S<RISC OS>, VMS, Win32)
 
 =item endhostent
 
-Not implemented. (Win32)
+Not implemented. (Android, Win32)
 
 =item endnetent
 
-Not implemented. (Win32, S<Plan 9>)
+Not implemented. (Android, Win32, S<Plan 9>)
 
 =item endprotoent
 
-Not implemented. (Win32, S<Plan 9>)
+Not implemented. (Android, Win32, S<Plan 9>)
 
 =item endservent
 
@@ -1845,7 +1861,7 @@ Return values (especially for device and inode) may be bogus. (Win32)
 
 =item msgrcv
 
-Not implemented. (Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
+Not implemented. (Android, Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
 
 =item open
 
@@ -1882,11 +1898,11 @@ Note that the C<select FILEHANDLE> form is generally portable.
 
 =item semop
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+Not implemented. (Android, Win32, VMS, S<RISC OS>)
 
 =item setgrent
 
-Not implemented. (VMS, Win32, S<RISC OS>)
+Not implemented. (Android, VMS, Win32, S<RISC OS>)
 
 =item setpgrp
 
@@ -1898,7 +1914,7 @@ Not implemented. (Win32, VMS, S<RISC OS>, VOS)
 
 =item setpwent
 
-Not implemented. (Win32, S<RISC OS>)
+Not implemented. (Android, Win32, S<RISC OS>)
 
 =item setsockopt
 
@@ -1912,7 +1928,7 @@ Not implemented. (S<Plan 9>)
 
 =item shmwrite
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+Not implemented. (Android, Win32, VMS, S<RISC OS>)
 
 =item sleep
 
@@ -1998,6 +2014,9 @@ the child program uses a compatible version of the emulation library.
 I<scalar> will call the native command line direct and no such emulation
 of a child Unix program will exists.  Mileage B<will> vary.  (S<RISC OS>)
 
+C<system LIST> without the use of indirect object syntax (C<system PROGRAM LIST>)
+may fall back to trying the shell if the first spawn() fails.  (Win32)
+
 Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
 
@@ -2007,6 +2026,10 @@ room for a made-up value derived from the severity bits of the native
 If the native condition code is one that has a POSIX value encoded, the
 POSIX value will be decoded to extract the expected exit value.
 For more details see L<perlvms/$?>. (VMS)
+
+=item telldir
+
+Not implemented. (Android)
 
 =item times
 
@@ -2091,6 +2114,25 @@ at L<http://www.cpan.org/src>
 
 =item Cygwin
 
+Some tests are known to fail:
+
+=over
+
+=item *
+
+F<ext/XS-APItes/t/call_checker.t> - see
+L<https://rt.perl.org/Ticket/Display.html?id=78502>
+
+=item *
+
+F<dist/I18N-Collate/t/I18N-Collate.t>
+
+=item *
+
+F<ext/Win32CORE/t/win32core.t> - may fail on recent cygwin installs.
+
+=back
+
 =item Solaris (x86, SPARC)
 
 =item OpenVMS
@@ -2141,9 +2183,50 @@ Caveats:
 
 =item AIX
 
+=item Android
+
+=item FreeMINT
+
+Perl now builds with FreeMiNT/Atari. It fails a few tests, that needs
+some investigation.
+
+The FreeMiNT port uses GNU dld for loadable module capabilities. So
+ensure you have that library installed when building perl.
+
 =back
 
-=head1 EOL Platforms (Perl 5.14)
+=head1 EOL Platforms 
+
+=head2 (Perl 5.20)
+
+The following platforms were supported by a previous version of
+Perl but have been officially removed from Perl's source code
+as of 5.20:
+
+=over
+
+=item AT&T 3b1
+
+=back
+
+=head2 (Perl 5.14)
+
+The following platforms were supported up to 5.10.  They may still
+have worked in 5.12, but supporting code has been removed for 5.14:
+
+=over
+
+=item Windows 95
+
+=item Windows 98
+
+=item Windows ME
+
+=item Windows NT4
+
+=back
+
+=head2 (Perl 5.12)
 
 The following platforms were supported by a previous version of
 Perl but have been officially removed from Perl's source code
@@ -2161,20 +2244,6 @@ as of 5.12:
 
 =back
 
-The following platforms were supported up to 5.10.  They may still
-have worked in 5.12, but supporting code has been removed for 5.14:
-
-=over
-
-=item Windows 95
-
-=item Windows 98
-
-=item Windows ME
-
-=item Windows NT4
-
-=back
 
 =head1 Supported Platforms (Perl 5.8)
 
@@ -2309,7 +2378,7 @@ L<http://www.cpan.org/ports/index.html> for binary distributions.
 =head1 SEE ALSO
 
 L<perlaix>, L<perlamiga>, L<perlbs2000>,
-L<perlce>, L<perlcygwin>, L<perldgux>, L<perldos>,
+L<perlce>, L<perlcygwin>, L<perldos>,
 L<perlebcdic>, L<perlfreebsd>, L<perlhurd>, L<perlhpux>, L<perlirix>,
 L<perlmacos>, L<perlmacosx>,
 L<perlnetware>, L<perlos2>, L<perlos390>, L<perlos400>,

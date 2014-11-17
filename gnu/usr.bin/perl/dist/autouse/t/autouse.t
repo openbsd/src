@@ -13,24 +13,26 @@ use Test::More tests => 15;
 BEGIN {
     require autouse;
     eval {
-        "autouse"->import('List::Util' => 'List::Util::first(&@)');
+        "autouse"->import('Scalar::Util' => 'Scalar::Util::set_prototype(&$)');
     };
-    ok( !$@ );
+    ok( !$@, "Function from package with custom 'import()' correctly imported" );
 
     eval {
-        "autouse"->import('List::Util' => 'Foo::min');
+        "autouse"->import('Scalar::Util' => 'Foo::min');
     };
     ok( $@, qr/^autouse into different package attempted/ );
 
-    "autouse"->import('List::Util' => qw(max first(&@)));
+    "autouse"->import('Scalar::Util' => qw(isdual set_prototype(&$)));
 }
 
-my @a = (1,2,3,4,5.5);
-is( max(@a), 5.5);
+ok( isdual($!),
+    "Function imported via 'autouse' performs as expected");
 
 
-# first() has a prototype of &@.  Make sure that's preserved.
-is( (first { $_ > 3 } @a), 4);
+# set_prototype() has a prototype of &$.  Make sure that's preserved.
+sub sum { return $_[0] + $_[1] };
+is( (set_prototype \&sum, '$$'), \&sum,
+    "Subroutine prototype preserved after import via 'autouse'");
 
 
 # Example from the docs.
@@ -40,11 +42,13 @@ use autouse 'Carp' => qw(carp croak);
     my @warning;
     local $SIG{__WARN__} = sub { push @warning, @_ };
     carp "this carp was predeclared and autoused\n";
-    is( scalar @warning, 1 );
-    like( $warning[0], qr/^this carp was predeclared and autoused\n/ );
+    is( scalar @warning, 1, "Expected number of warnings received" );
+    like( $warning[0], qr/^this carp was predeclared and autoused\n/,
+        "Warning received as expected" );
 
     eval { croak "It is but a scratch!" };
-    like( $@, qr/^It is but a scratch!/);
+    like( $@, qr/^It is but a scratch!/,
+        "Failure message received as expected" );
 }
 
 
@@ -52,13 +56,14 @@ use autouse 'Carp' => qw(carp croak);
 use autouse 'Errno' => qw(EPERM);
 
 my $mod_file = 'Errno.pm';   # just fine and portable for %INC
-ok( !exists $INC{$mod_file} );
-ok( EPERM ); # test if non-zero
-ok( exists $INC{$mod_file} );
+ok( !exists $INC{$mod_file}, "Module not yet loaded" );
+ok( EPERM, "Access a constant from that module" ); # test if non-zero
+ok( exists $INC{$mod_file}, "Module has been lazily loaded" );
 
 use autouse Env => "something";
 eval { something() };
-like( $@, qr/^\Qautoused module Env has unique import() method/ );
+like( $@, qr/^\Qautoused module Env has unique import() method/,
+    "Module with unique import() method detected and error reported" );
 
 # Check that UNIVERSAL.pm doesn't interfere with modules that don't use
 # Exporter and have no import() of their own.
@@ -67,7 +72,7 @@ require File::Spec;
 unshift @INC, File::Spec->catdir('t', 'lib'), 'lib';
 autouse->import("MyTestModule" => 'test_function');
 my $ret = test_function();
-is( $ret, 'works' );
+is( $ret, 'works', "No interference from UNIVERSAL.pm" );
 
 # Test that autouse is exempt from all methods of triggering the subroutine
 # redefinition warning.

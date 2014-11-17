@@ -1,5 +1,7 @@
 # Testing service_check method using tcp and syn protocols.
 
+use Config;
+
 BEGIN {
   unless (eval "require IO::Socket") {
     print "1..0 \# Skip: no IO::Socket\n";
@@ -7,6 +9,10 @@ BEGIN {
   }
   unless (getservbyname('echo', 'tcp')) {
     print "1..0 \# Skip: no echo port\n";
+    exit;
+  }
+  unless ($Config{d_getpbyname}) {
+    print "1..0 \# Skip: no getprotobyname\n";
     exit;
   }
 }

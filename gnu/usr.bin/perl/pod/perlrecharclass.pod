@@ -29,7 +29,7 @@ the most well-known character class. By default, a dot matches any
 character, except for the newline. That default can be changed to
 add matching the newline by using the I<single line> modifier: either
 for the entire regular expression with the C</s> modifier, or
-locally with C<(?s)>.  (The C<\N> backslash sequence, described
+locally with C<(?s)>.  (The C<L</\N>> backslash sequence, described
 below, matches any character except newline without regard to the
 I<single line> modifier.)
 
@@ -93,10 +93,12 @@ If the C</a> regular expression modifier is in effect, it matches [0-9].
 Otherwise, it
 matches anything that is matched by C<\p{Digit}>, which includes [0-9].
 (An unlikely possible exception is that under locale matching rules, the
-current locale might not have [0-9] matched by C<\d>, and/or might match
-other characters whose code point is less than 256.  Such a locale
-definition would be in violation of the C language standard, but Perl
-doesn't currently assume anything in regard to this.)
+current locale might not have C<[0-9]> matched by C<\d>, and/or might match
+other characters whose code point is less than 256.  The only such locale
+definitions that are legal would be to match C<[0-9]> plus another set of
+10 consecutive digit characters;  anything else would be in violation of
+the C language standard, but Perl doesn't currently assume anything in
+regard to this.)
 
 What this means is that unless the C</a> modifier is in effect C<\d> not
 only matches the digits '0' - '9', but also Arabic, Devanagari, and
@@ -239,7 +241,7 @@ table below.
 
 =item otherwise ...
 
-C<\s> matches [\t\n\f\r\cK ] and, starting, experimentally in Perl
+C<\s> matches [\t\n\f\r ] and, starting, experimentally in Perl
 v5.18, the vertical tab, C<\cK>.
 (See note C<[1]> below for a discussion of this.)
 Note that this list doesn't include the non-breaking space.
@@ -285,7 +287,7 @@ starting in Perl v5.18, but prior to that, the sole difference was that the
 vertical tab (C<"\cK">) was not matched by C<\s>.
 
 The following table is a complete listing of characters matched by
-C<\s>, C<\h> and C<\v> as of Unicode 6.0.
+C<\s>, C<\h> and C<\v> as of Unicode 6.3.
 
 The first column gives the Unicode code point of the character (in hex format),
 the second column gives the (Unicode) name. The third column indicates
@@ -301,7 +303,6 @@ effect that changes the C<\s> matching).
  0x0085             NEXT LINE (NEL)    vs  [2]
  0x00a0              NO-BREAK SPACE   h s  [2]
  0x1680            OGHAM SPACE MARK   h s
- 0x180e   MONGOLIAN VOWEL SEPARATOR   h s
  0x2000                     EN QUAD   h s
  0x2001                     EM QUAD   h s
  0x2002                    EN SPACE   h s
@@ -325,7 +326,7 @@ effect that changes the C<\s> matching).
 
 Prior to Perl v5.18, C<\s> did not match the vertical tab.  The change
 in v5.18 is considered an experiment, which means it could be backed out
-in v5.20 or v5.22 if experience indicates that it breaks too much
+in v5.22 if experience indicates that it breaks too much
 existing code.  If this change adversely affects you, send email to
 C<perlbug@perl.org>; if it affects you positively, email
 C<perlthanks@perl.org>.  In the meantime, C<[^\S\cK]> (obscurely)
@@ -390,15 +391,19 @@ It is also possible to define your own properties. This is discussed in
 L<perlunicode/User-Defined Character Properties>.
 
 Unicode properties are defined (surprise!) only on Unicode code points.
-A warning is raised and all matches fail on non-Unicode code points
-(those above the legal Unicode maximum of 0x10FFFF).  This can be
-somewhat surprising,
+Starting in v5.20, when matching against C<\p> and C<\P>, Perl treats
+non-Unicode code points (those above the legal Unicode maximum of
+0x10FFFF) as if they were typical unassigned Unicode code points.
 
- chr(0x110000) =~ \p{ASCII_Hex_Digit=True}      # Fails.
- chr(0x110000) =~ \p{ASCII_Hex_Digit=False}     # Also fails!
+Prior to v5.20, Perl raised a warning and made all matches fail on
+non-Unicode code points.  This could be somewhat surprising:
 
-Even though these two matches might be thought of as complements, they
-are so only on Unicode code points.
+ chr(0x110000) =~ \p{ASCII_Hex_Digit=True}     # Fails on Perls < v5.20.
+ chr(0x110000) =~ \p{ASCII_Hex_Digit=False}    # Also fails on Perls
+                                               # < v5.20
+
+Even though these two matches might be thought of as complements, until
+v5.20 they were so only on Unicode code points.
 
 =head4 Examples
 
@@ -644,7 +649,7 @@ X<character class> X<\p> X<\p{}>
 X<alpha> X<alnum> X<ascii> X<blank> X<cntrl> X<digit> X<graph>
 X<lower> X<print> X<punct> X<space> X<upper> X<word> X<xdigit>
 
-POSIX character classes have the form C<[:class:]>, where I<class> is
+POSIX character classes have the form C<[:class:]>, where I<class> is the
 name, and the C<[:> and C<:]> delimiters. POSIX character classes only appear
 I<inside> bracketed character classes, and are a convenient and descriptive
 way of listing a group of characters.
@@ -659,6 +664,7 @@ Be careful about the syntax,
 
 The latter pattern would be a character class consisting of a colon,
 and the letters C<a>, C<l>, C<p> and C<h>.
+
 POSIX character classes can be part of a larger bracketed character class.
 For example,
 
@@ -776,8 +782,7 @@ Same for the two ASCII-only range forms.
 There are various other synonyms that can be used besides the names
 listed in the table.  For example, C<\p{PosixAlpha}> can be written as
 C<\p{Alpha}>.  All are listed in
-L<perluniprops/Properties accessible through \p{} and \P{}>,
-plus all characters matched by each ASCII-range property.
+L<perluniprops/Properties accessible through \p{} and \P{}>.
 
 Both the C<\p> counterparts always assume Unicode rules are in effect.
 On ASCII platforms, this means they assume that the code points from 128
@@ -807,9 +812,26 @@ The POSIX class matches the same as its Full-range counterpart.
 
 =item if locale rules are in effect ...
 
-The POSIX class matches according to the locale, except that
-C<word> uses the platform's native underscore character, no matter what
+The POSIX class matches according to the locale, except:
+
+=over
+
+=item C<word>
+
+also includes the platform's native underscore character, no matter what
 the locale is.
+
+=item C<ascii>
+
+on platforms that don't have the POSIX C<ascii> extension, this matches
+just the platform's native ASCII-range characters.
+
+=item C<blank>
+
+on platforms that don't have the POSIX C<blank> extension, this matches
+just the platform's native tab and space characters.
+
+=back
 
 =item if Unicode rules are in effect ...
 
@@ -901,7 +923,7 @@ We can extend the example above:
 This matches digits that are in either the Thai or Laotian scripts.
 
 Notice the white space in these examples.  This construct always has
-the C<E<sol>x> modifier turned on.
+the C<E<sol>x> modifier turned on within it.
 
 The available binary operators are:
 
@@ -944,8 +966,8 @@ equivalent:
 
  /(?[[ a b ]])/
 
-(You can, of course, specify single characters by using, C<\x{ }>,
-C<\N{ }>, etc.)
+(You can, of course, specify single characters by using, C<\x{...}>,
+C<\N{...}>, etc.)
 
 This last example shows the use of this construct to specify an ordinary
 bracketed character class without additional set operations.  Note the
@@ -973,6 +995,11 @@ You have to have two hex digits after a braceless C<\x> (use a leading
 zero to make two).  These restrictions are to lower the incidence of
 typos causing the class to not match what you thought it would.
 
+If a regular bracketed character class contains a C<\p{}> or C<\P{}> and
+is matched against a non-Unicode code point, a warning may be
+raised, as the result is not Unicode-defined.  No such warning will come
+when using this extended form.
+
 The final difference between regular bracketed character classes and
 these, is that it is not possible to get these to match a
 multi-character fold.  Thus,
@@ -993,7 +1020,7 @@ respect the C<E<sol>a> (and C<E<sol>aa>) modifiers.
 C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt to use
 something which isn't knowable at the time the containing regular
 expression is compiled is a fatal error.  In practice, this means
-just three limitiations:
+just three limitations:
 
 =over 4
 
@@ -1034,7 +1061,7 @@ construct.  There must not be any space between any of the characters
 that form the initial C<(?[>.  Nor may there be space between the
 closing C<])> characters.
 
-Just as in all regular expressions, the pattern can can be built up by
+Just as in all regular expressions, the pattern can be built up by
 including variables that are interpolated at regex compilation time.
 Care must be taken to ensure that you are getting what you expect.  For
 example:

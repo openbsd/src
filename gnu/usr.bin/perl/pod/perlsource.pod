@@ -46,15 +46,20 @@ their tests, unlike other core modules.
 
 =item * F<ext/>
 
-This directory contains XS-using modules which are only released as
-part of the core. These modules generally have their F<Makefile.PL> and
-are laid out more like a typical CPAN module.
+Like F<lib/>, this directory contains modules which are only released
+as part of the core.  Unlike F<lib/>, however, a module under F<ext/>
+generally has a CPAN-style directory- and file-layout and its own
+F<Makefile.PL>.  There is no expectation that a module under F<ext/>
+will work with earlier versions of Perl 5.  Hence, such a module may
+take full advantage of syntactical and other improvements in Perl 5
+blead.
 
 =item * F<dist/>
 
 This directory is for dual-life modules where the blead source is
 canonical. Note that some modules in this directory may not yet have
-been released separately on CPAN.
+been released separately on CPAN.  Modules under F<dist/> should make
+an effort to work with earlier versions of Perl 5.
 
 =item * F<cpan/>
 
@@ -118,10 +123,10 @@ other directories.
 
 =item * F<t/opbasic/>
 
-Tests for perl's built in functions which, like those in F<t/op/>, do not fit
-into any of the other directories, but which, in addition, cannot use
-F<t/test.pl>,as that program depends on functionality which the
-test file itself is testing.
+Tests for perl's built in functions which, like those in F<t/op/>, do
+not fit into any of the other directories, but which, in addition,
+cannot use F<t/test.pl>,as that program depends on functionality which
+the test file itself is testing.
 
 =item * F<t/re/>
 

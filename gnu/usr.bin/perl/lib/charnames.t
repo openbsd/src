@@ -1086,8 +1086,8 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
 
     my @name_aliases;
     use Unicode::UCD;
-    if (ord('A') != 65
-        || pack( "C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v6.1.0)
+    if (ord('A') == 65
+        && pack( "C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v6.1.0)
     {
         open my $fh, "<", "../../lib/unicore/NameAliases.txt"
             or die "Can't open ../../lib/unicore/NameAliases.txt: $!";

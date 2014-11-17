@@ -19,11 +19,10 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = ('../lib','.');
     require './test.pl';
-    skip_all_if_miniperl("no dynamic loading on miniperl, no re");
 }
 
 
-plan tests => 519;  # Update this when adding/deleting tests.
+plan tests => 527;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -341,8 +340,15 @@ sub run_tests {
             is("@ctl_n", "1 2 undef", 'Bug 56194');
             is("@plus", "1 2 undef", 'Bug 56194');
             is($str,
-               "\$1 = undef, \$2 = undef, \$3 = undef, \$4 = undef, \$5 = undef, \$^R = undef",
-               'Bug 56194');
+               "\$1 = undef, \$2 = undef, \$3 = undef, \$4 = undef, \$5 = undef, \$^R = 3",
+               'Bug 56194 ($^R tweaked by 121070)');
+       }
+       {
+            undef $^R;
+            "abcd"=~/(?<Char>.)(?&Char)(?{ 42 })/;
+            is("$^R", 42, 'Bug 121070 - use of (?&Char) should not clobber $^R');
+            "abcd"=~/(?<Char>.)(?&Char)(?{ 42 })(?{ 43 })/;
+            is("$^R", 43, 'related to 121070 - use of (?&Char) should not clobber $^R');
        }
     }
 
@@ -931,6 +937,11 @@ sub run_tests {
 	like($@,
 	    qr/BEGIN failed--compilation aborted at \(eval \d+\) line \d+/,
 	    'syntax error');
+        
+        use utf8;
+        $code = '(?{Ｆｏｏ::$bar})';
+        eval { "a" =~ /^a$code/ };
+        like($@, qr/Bad name after Ｆｏｏ:: at \(eval \d+\) line \d+/, 'UTF8 sytax error');
     }
 
     # make sure that 'use re eval' is propagated into compiling the
@@ -1176,6 +1187,47 @@ sub run_tests {
 	ok("a=" =~ qr//, 'qr completely empty pattern');
     }
 
+    {
+	{ package o; use overload '""'=>sub { "abc" } }
+	my $x = bless [],"o";
+	my $y = \$x;
+	(my $y_addr = "$y") =~ y/()//d; # REF(0x7fcb9c02) -> REF0x7fcb9c02
+	# $y_addr =~ $y should be true, as should $y_addr =~ /(??{$y})/
+	"abc$y_addr" =~ /(??{$x})(??{$y})/;
+	is "$&", "abc$y_addr",
+	   '(??{$x}) does not leak cached qr to (??{\$x}) (match)';
+	is scalar "abcabc" =~ /(??{$x})(??{$y})/, "",
+	   '(??{$x}) does not leak cached qr to (??{\$x}) (no match)';
+    }
+
+    {
+	sub ReEvalTieTest::TIESCALAR {bless[], "ReEvalTieTest"}
+	sub ReEvalTieTest::STORE{}
+	sub ReEvalTieTest::FETCH { "$1" }
+	tie my $t, "ReEvalTieTest";
+	$t = bless [], "o";
+	"aab" =~ /(a)((??{"b" =~ m|(.)|; $t}))/;
+	is "[$1 $2]", "[a b]",
+	   '(??{$tied_former_overload}) sees the right $1 in FETCH';
+    }
+
+    {
+	my @matchsticks;
+	my $ref = bless \my $o, "o";
+	my $foo = sub { push @matchsticks, scalar "abc" =~ /(??{$ref})/ };
+	&$foo;
+	bless \$o;
+	() = "$ref"; # flush AMAGIC flag on main
+	&$foo;
+	is "@matchsticks", "1 ", 'qr magic is not cached on refs';
+    }
+
+    {
+	my ($foo, $bar) = ("foo"x1000, "bar"x1000);
+	"$foo$bar" =~ /(??{".*"})/;
+	is "$&", "foo"x1000 . "bar"x1000,
+	    'padtmp swiping does not affect "$a$b" =~ /(??{})/'
+    }
 
 } # End of sub run_tests
 

@@ -9,7 +9,11 @@ BEGIN {
     require './test.pl';
 }
 
-plan(tests => 50 + 27*14);
+plan(tests => 53 + 27*14);
+
+if ($^O =~ /MSWin32|cygwin|msys/ && !is_miniperl) {
+  require Win32; # for IsAdminUser()
+}
 
 # Tests presume we are in t/op directory and that file 'TEST' is found
 # therein.
@@ -31,7 +35,15 @@ chmod 0555, $ro_empty_file or die "chmod 0555, '$ro_empty_file' failed: $!";
 
 SKIP: {
     my $restore_root;
-    if ($> == 0) {
+    skip "Need Win32::IsAdminUser() on $^O", 1
+      if $^O =~ /MSWin32|cygwin|msys/ && is_miniperl();
+    my $Is_WinAdminUser = ($^O =~ /MSWin32|cygwin|msys/ and Win32::IsAdminUser()) ? 1 : 0;
+    # TODO: skip("On an ACL filesystem like $^O we cannot rely on -w via uid/gid");
+    # We have no filesystem check for ACL in core
+    if ($Is_WinAdminUser) {
+        skip("As Windows Administrator we cannot rely on -w via uid/gid");
+    }
+    elsif ($> == 0) {
 	# root can read and write anything, so switch uid (may not be
 	# implemented)
 	eval '$> = 1';
@@ -99,8 +111,15 @@ like $@, qr/^The stat preceding -l _ wasn't an lstat at /,
 SKIP: {
  use Perl::OSType 'os_type';
  if (os_type ne 'Unix') { skip "Not Unix", 3 }
- chomp(my $ln = `which ln`);
- if ( ! -e $ln ) { skip "No ln"   , 3 }
+ if ( $^O =~ /android/ ) {
+     # Even the most basic toolbox in android provides ln,
+     # but not which.
+     $ln = "ln";
+ }
+ else {
+     chomp(my $ln = `which ln`);
+     if ( ! -e $ln ) { skip "No ln"   , 3 }
+ }
  lstat $ro_empty_file;
  `ln -s $ro_empty_file 1`;
  isnt(-l -e _, 1, 'stacked -l uses previous stat, not previous retval');
@@ -117,6 +136,23 @@ SKIP: {
  ok($warnings[0] =~ /-l on filehandle foo/, 'warning for -l $handle');
  unlink \*foo;
 }
+# More -l $handle warning tests
+{
+ local $^W = 1;
+ my @warnings;
+ local $SIG{__WARN__} = sub { push @warnings, @_ };
+ () = -l \*{"\x{3c6}oo"};
+ like($warnings[0], qr/-l on filehandle \x{3c6}oo/,
+  '-l $handle warning is utf8-clean');
+ () = -l *foo;
+ like($warnings[1], qr/-l on filehandle foo/,
+  '-l $handle warning occurs for globs, not just globrefs');
+ tell foo; # vivify the IO slot
+ () = -l *foo{IO};
+    # (element [3] because tell also warns)
+ like($warnings[3], qr/-l on filehandle at/,
+  '-l $handle warning occurs for iorefs as well');
+} 
 
 # test that _ is a bareword after filetest operators
 

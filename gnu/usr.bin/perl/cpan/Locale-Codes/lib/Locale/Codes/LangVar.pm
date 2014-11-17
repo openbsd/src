@@ -1,5 +1,5 @@
 package Locale::Codes::LangVar;
-# Copyright (c) 2011-2013 Sullivan Beck
+# Copyright (c) 2011-2014 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -20,7 +20,7 @@ use Locale::Codes::LangVar_Retired;
 
 our($VERSION,@ISA,@EXPORT,@EXPORT_OK);
 
-$VERSION='3.25';
+$VERSION='3.30';
 @ISA       = qw(Exporter);
 @EXPORT    = qw(code2langvar
                 langvar2code

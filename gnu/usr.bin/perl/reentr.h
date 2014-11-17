@@ -41,13 +41,11 @@
 
 #ifdef __hpux
 #   undef HAS_CRYPT_R
-#   undef HAS_DRAND48_R
 #   undef HAS_ENDGRENT_R
 #   undef HAS_ENDPWENT_R
 #   undef HAS_GETGRENT_R
 #   undef HAS_GETPWENT_R
 #   undef HAS_SETLOCALE_R
-#   undef HAS_SRAND48_R
 #   undef HAS_STRERROR_R
 #   define NETDB_R_OBSOLETE
 #endif
@@ -101,9 +99,6 @@
 #ifdef I_NETDB
 #   include <netdb.h>
 #endif
-#ifdef I_STDLIB
-#   include <stdlib.h>	/* drand48_data */
-#endif
 #ifdef I_CRYPT
 #   ifdef I_CRYPT
 #       include <crypt.h>
@@ -150,48 +145,43 @@
 #define REENTRANT_PROTO_I_ISD	33
 #define REENTRANT_PROTO_I_LISBI	34
 #define REENTRANT_PROTO_I_LISD	35
-#define REENTRANT_PROTO_I_LS	36
-#define REENTRANT_PROTO_I_SB	37
-#define REENTRANT_PROTO_I_SBI	38
-#define REENTRANT_PROTO_I_SBIE	39
-#define REENTRANT_PROTO_I_SBIH	40
-#define REENTRANT_PROTO_I_SBIR	41
-#define REENTRANT_PROTO_I_SBWR	42
-#define REENTRANT_PROTO_I_SBWRE	43
-#define REENTRANT_PROTO_I_SD	44
-#define REENTRANT_PROTO_I_ST	45
-#define REENTRANT_PROTO_I_St	46
-#define REENTRANT_PROTO_I_TISD	47
-#define REENTRANT_PROTO_I_TS	48
-#define REENTRANT_PROTO_I_TSBI	49
-#define REENTRANT_PROTO_I_TSBIR	50
-#define REENTRANT_PROTO_I_TSBWR	51
-#define REENTRANT_PROTO_I_TSR	52
-#define REENTRANT_PROTO_I_TsISBWRE	53
-#define REENTRANT_PROTO_I_UISBWRE	54
-#define REENTRANT_PROTO_I_iS	55
-#define REENTRANT_PROTO_I_lS	56
-#define REENTRANT_PROTO_I_uISBWRE	57
-#define REENTRANT_PROTO_S_CBI	58
-#define REENTRANT_PROTO_S_CCSBI	59
-#define REENTRANT_PROTO_S_CIISBIE	60
-#define REENTRANT_PROTO_S_CSBI	61
-#define REENTRANT_PROTO_S_CSBIE	62
-#define REENTRANT_PROTO_S_CWISBIE	63
-#define REENTRANT_PROTO_S_CWISBWIE	64
-#define REENTRANT_PROTO_S_ICSBI	65
-#define REENTRANT_PROTO_S_ISBI	66
-#define REENTRANT_PROTO_S_LISBI	67
-#define REENTRANT_PROTO_S_SBI	68
-#define REENTRANT_PROTO_S_SBIE	69
-#define REENTRANT_PROTO_S_SBW	70
-#define REENTRANT_PROTO_S_TISBI	71
-#define REENTRANT_PROTO_S_TSBI	72
-#define REENTRANT_PROTO_S_TSBIE	73
-#define REENTRANT_PROTO_S_TWISBIE	74
-#define REENTRANT_PROTO_V_D	75
-#define REENTRANT_PROTO_V_H	76
-#define REENTRANT_PROTO_V_ID	77
+#define REENTRANT_PROTO_I_SB	36
+#define REENTRANT_PROTO_I_SBI	37
+#define REENTRANT_PROTO_I_SBIE	38
+#define REENTRANT_PROTO_I_SBIH	39
+#define REENTRANT_PROTO_I_SBIR	40
+#define REENTRANT_PROTO_I_SBWR	41
+#define REENTRANT_PROTO_I_SBWRE	42
+#define REENTRANT_PROTO_I_SD	43
+#define REENTRANT_PROTO_I_TISD	44
+#define REENTRANT_PROTO_I_TS	45
+#define REENTRANT_PROTO_I_TSBI	46
+#define REENTRANT_PROTO_I_TSBIR	47
+#define REENTRANT_PROTO_I_TSBWR	48
+#define REENTRANT_PROTO_I_TSR	49
+#define REENTRANT_PROTO_I_TsISBWRE	50
+#define REENTRANT_PROTO_I_UISBWRE	51
+#define REENTRANT_PROTO_I_uISBWRE	52
+#define REENTRANT_PROTO_S_CBI	53
+#define REENTRANT_PROTO_S_CCSBI	54
+#define REENTRANT_PROTO_S_CIISBIE	55
+#define REENTRANT_PROTO_S_CSBI	56
+#define REENTRANT_PROTO_S_CSBIE	57
+#define REENTRANT_PROTO_S_CWISBIE	58
+#define REENTRANT_PROTO_S_CWISBWIE	59
+#define REENTRANT_PROTO_S_ICSBI	60
+#define REENTRANT_PROTO_S_ISBI	61
+#define REENTRANT_PROTO_S_LISBI	62
+#define REENTRANT_PROTO_S_SBI	63
+#define REENTRANT_PROTO_S_SBIE	64
+#define REENTRANT_PROTO_S_SBW	65
+#define REENTRANT_PROTO_S_TISBI	66
+#define REENTRANT_PROTO_S_TSBI	67
+#define REENTRANT_PROTO_S_TSBIE	68
+#define REENTRANT_PROTO_S_TWISBIE	69
+#define REENTRANT_PROTO_V_D	70
+#define REENTRANT_PROTO_V_H	71
+#define REENTRANT_PROTO_V_ID	72
 
 /* Defines for indicating which special features are supported. */
 
@@ -639,10 +629,6 @@ typedef struct {
 	char*	_ctime_buffer;
 	size_t	_ctime_size;
 #endif /* HAS_CTIME_R */
-#ifdef HAS_DRAND48_R
-	struct drand48_data _drand48_struct;
-	double	_drand48_double;
-#endif /* HAS_DRAND48_R */
 #ifdef HAS_GETGRNAM_R
 	struct group	_grent_struct;
 	char*	_grent_buffer;
@@ -740,18 +726,6 @@ typedef struct {
 	FILE*	_spent_fptr;
 #   endif
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_RANDOM_R
-	struct random_data _random_struct;
-#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_iS
-	int	_random_retval;
-#   endif
-#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_lS
-	long	_random_retval;
-#   endif
-#   if RANDOM_R_PROTO == REENTRANT_PROTO_I_St
-	int32_t	_random_retval;
-#   endif
-#endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R
 	struct dirent*	_readdir_struct;
 	size_t	_readdir_size;
@@ -770,9 +744,6 @@ typedef struct {
 	char*	_setlocale_buffer;
 	size_t	_setlocale_size;
 #endif /* HAS_SETLOCALE_R */
-#ifdef HAS_SRANDOM_R
-	struct random_data _srandom_struct;
-#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	char*	_strerror_buffer;
 	size_t	_strerror_size;
@@ -843,15 +814,6 @@ typedef struct {
 #   endif
 #  endif
 #endif /* HAS_CTIME_R */
-
-#ifdef HAS_DRAND48_R
-#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
-#   undef drand48
-#   if !defined(drand48) && DRAND48_R_PROTO == REENTRANT_PROTO_I_ST
-#       define drand48() (drand48_r(&PL_reentrant_buffer->_drand48_struct, &PL_reentrant_buffer->_drand48_double) == 0 ? PL_reentrant_buffer->_drand48_double : 0)
-#   endif
-#  endif
-#endif /* HAS_DRAND48_R */
 
 #ifdef HAS_ENDGRENT_R
 #  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
@@ -1324,21 +1286,6 @@ typedef struct {
 #  endif
 #endif /* HAS_GETSPNAM_R */
 
-#ifdef HAS_RANDOM_R
-#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
-#   undef random
-#   if !defined(random) && RANDOM_R_PROTO == REENTRANT_PROTO_I_iS
-#       define random() (random_r(&PL_reentrant_buffer->_random_retval, &PL_reentrant_buffer->_random_struct) == 0 ? PL_reentrant_buffer->_random_retval : 0)
-#   endif
-#   if !defined(random) && RANDOM_R_PROTO == REENTRANT_PROTO_I_lS
-#       define random() (random_r(&PL_reentrant_buffer->_random_retval, &PL_reentrant_buffer->_random_struct) == 0 ? PL_reentrant_buffer->_random_retval : 0)
-#   endif
-#   if !defined(random) && RANDOM_R_PROTO == REENTRANT_PROTO_I_St
-#       define random() (random_r(&PL_reentrant_buffer->_random_struct, &PL_reentrant_buffer->_random_retval) == 0 ? PL_reentrant_buffer->_random_retval : 0)
-#   endif
-#  endif
-#endif /* HAS_RANDOM_R */
-
 #ifdef HAS_READDIR_R
 #  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
 #   undef readdir
@@ -1443,24 +1390,6 @@ typedef struct {
 #   endif
 #  endif
 #endif /* HAS_SETSERVENT_R */
-
-#ifdef HAS_SRAND48_R
-#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
-#   undef srand48
-#   if !defined(srand48) && SRAND48_R_PROTO == REENTRANT_PROTO_I_LS
-#       define srand48(a) (srand48_r(a, &PL_reentrant_buffer->_drand48_struct) == 0 ? &PL_reentrant_buffer->_drand48_struct : 0)
-#   endif
-#  endif
-#endif /* HAS_SRAND48_R */
-
-#ifdef HAS_SRANDOM_R
-#  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
-#   undef srandom
-#   if !defined(srandom) && SRANDOM_R_PROTO == REENTRANT_PROTO_I_TS
-#       define srandom(a) (srandom_r(a, &PL_reentrant_buffer->_srandom_struct) == 0 ? &PL_reentrant_buffer->_srandom_struct : 0)
-#   endif
-#  endif
-#endif /* HAS_SRANDOM_R */
 
 #ifdef HAS_STRERROR_R
 #  if defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)

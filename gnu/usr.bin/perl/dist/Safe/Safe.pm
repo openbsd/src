@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use Scalar::Util qw(reftype refaddr);
 
-$Safe::VERSION = "2.35";
+$Safe::VERSION = "2.37";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -528,7 +528,7 @@ outside the compartment) placed into the compartment. For example,
 
     $cpt = new Safe;
     sub wrapper {
-        # vet arguments and perform potentially unsafe operations
+      # vet arguments and perform potentially unsafe operations
     }
     $cpt->share('&wrapper');
 
@@ -590,9 +590,7 @@ Deny I<only> the listed operators from being used when compiling code
 in the compartment (I<all> other operators will be permitted, so you probably
 don't want to use this method).
 
-=head2 trap (OP, ...)
-
-=head2 untrap (OP, ...)
+=head2 trap (OP, ...), untrap (OP, ...)
 
 The trap and untrap methods are synonyms for deny and permit
 respectfully.

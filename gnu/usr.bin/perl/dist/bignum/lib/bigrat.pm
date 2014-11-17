@@ -1,7 +1,7 @@
 package bigrat;
 use 5.006;
 
-$VERSION = '0.33';
+$VERSION = '0.36';
 require Exporter;
 @ISA		= qw( bigint );
 @EXPORT_OK 	= qw( PI e bpi bexp hex oct );
@@ -166,6 +166,7 @@ sub import
   require Math::BigFloat;
   Math::BigFloat->import( upgrade => 'Math::BigRat', ':constant' );
   require Math::BigRat;
+  Math::BigRat->import( @import );
 
   bigrat->accuracy($a) if defined $a;
   bigrat->precision($p) if defined $p;

@@ -11,7 +11,7 @@ use warnings::register;
 use     vars qw($VERSION @ISA);
 require Exporter;
 
-$VERSION = "1.21";
+$VERSION = "1.22";
 
 @ISA = qw(Exporter); # This is only so we can do version checking
 
@@ -86,15 +86,24 @@ sub _update
      $vec->[$i] = $f;
    } else {      # remove
      if ( ! defined $fn ) { # remove if fileno undef'd
-         defined($_) && $_ == $f and do { $vec->[FD_COUNT]--; $_ = undef; }
-           for @{$vec}[FIRST_FD .. $#$vec];
-         next;
+       $fn = 0;
+       for my $fe (@{$vec}[FIRST_FD .. $#$vec]) {
+         if (defined($fe) && $fe == $f) {
+	   $vec->[FD_COUNT]--;
+	   $fe = undef;
+	   vec($bits, $fn, 1) = 0;
+	   last;
+	 }
+	 ++$fn;
+       }
      }
-     my $i = $fn + FIRST_FD;
-     next unless defined $vec->[$i];
-     $vec->[FD_COUNT]--;
-     vec($bits, $fn, 1) = 0;
-     $vec->[$i] = undef;
+     else {
+       my $i = $fn + FIRST_FD;
+       next unless defined $vec->[$i];
+       $vec->[FD_COUNT]--;
+       vec($bits, $fn, 1) = 0;
+       $vec->[$i] = undef;
+     }
    }
    $count++;
   }

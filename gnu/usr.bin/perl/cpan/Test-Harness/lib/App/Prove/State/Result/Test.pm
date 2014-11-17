@@ -1,8 +1,7 @@
 package App::Prove::State::Result::Test;
 
 use strict;
-
-use vars qw($VERSION);
+use warnings;
 
 =head1 NAME
 
@@ -10,11 +9,11 @@ App::Prove::State::Result::Test - Individual test results.
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 DESCRIPTION
 
@@ -25,7 +24,7 @@ single test.
 =head1 SYNOPSIS
 
     # Re-run failed tests
-    $ prove --state=fail,save -rbv
+    $ prove --state=failed,save -rbv
 
 =cut
 

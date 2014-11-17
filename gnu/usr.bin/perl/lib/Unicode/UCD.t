@@ -13,6 +13,9 @@ BEGIN {
     }
 }
 
+my @warnings;
+local $SIG{__WARN__} = sub { push @warnings, @_  };
+
 use strict;
 use Unicode::UCD;
 use Test::More;
@@ -343,7 +346,7 @@ is($bt->{AL}, 'Right-to-Left Arabic', 'AL is Right-to-Left Arabic');
 
 # If this fails, then maybe one should look at the Unicode changes to see
 # what else might need to be updated.
-is(Unicode::UCD::UnicodeVersion, '6.2.0', 'UnicodeVersion');
+is(Unicode::UCD::UnicodeVersion, '6.3.0', 'UnicodeVersion');
 
 use Unicode::UCD qw(compexcl);
 
@@ -534,6 +537,8 @@ is(prop_aliases("isgc"), undef,
     "prop_aliases('isgc') returns <undef> since is not covered Perl extension");
 is(prop_aliases("Is_Is_Any"), undef,
                 "prop_aliases('Is_Is_Any') returns <undef> since two is's");
+is(prop_aliases("ccc=vr"), undef,
+                          "prop_aliases('ccc=vr') doesn't generate a warning");
 
 require 'utf8_heavy.pl';
 require "unicore/Heavy.pl";
@@ -628,7 +633,7 @@ while (<$props>) {
 # official properties.  We have no way of knowing if mktables omitted a Perl
 # extension or not, but we do the best we can from its generated lists
 
-foreach my $alias (keys %utf8::loose_to_file_of) {
+foreach my $alias (sort keys %utf8::loose_to_file_of) {
     next if $alias =~ /=/;
     my $lc_name = lc $alias;
     my $loose = &utf8::_loose_name($lc_name);
@@ -818,7 +823,7 @@ while (<$propvalues>) {
 
 # And test as best we can, the non-official pva's that mktables generates.
 foreach my $hash (\%utf8::loose_to_file_of, \%utf8::stricter_to_file_of) {
-    foreach my $test (keys %$hash) {
+    foreach my $test (sort keys %$hash) {
         next if exists $pva_tested{$test};  # Skip if already tested
 
         my ($prop, $value) = split "=", $test;
@@ -992,7 +997,7 @@ my %tested_invlist;
 # strict
 foreach my $set_of_tables (\%utf8::stricter_to_file_of, \%utf8::loose_to_file_of)
 {
-    foreach my $table (keys %$set_of_tables) {
+    foreach my $table (sort keys %$set_of_tables) {
 
         my $mod_table;
         my ($prop_only, $value) = split "=", $table;
@@ -1019,7 +1024,7 @@ foreach my $set_of_tables (\%utf8::stricter_to_file_of, \%utf8::loose_to_file_of
         }
         else {  # Single-form.
 
-            # Like above, use looose if required, and insert underscores
+            # Like above, use loose if required, and insert underscores
             # between digits if strict.
             if ($set_of_tables == \%utf8::loose_to_file_of) {
                 $mod_table = "$extra_chars$table";
@@ -1046,9 +1051,20 @@ foreach my $set_of_tables (\%utf8::stricter_to_file_of, \%utf8::loose_to_file_of
         }
         $tested_invlist{$file} = dclone \@tested;
 
-        # A leading '!' in the file name means that it is to be inverted.
-        my $invert = $file =~ s/^!//;
-        my $official = do "unicore/lib/$file.pl";
+        # A '!' in the file name means that it is to be inverted.
+        my $invert = $file =~ s/!//;
+        my $official;
+
+        # If the file's directory is '#', it is a special case where the
+        # contents are in-lined with semi-colons meaning new-lines, instead of
+        # it being an actual file to read.  The file is an index in to the
+        # array of the definitions
+        if ($file =~ s!^#/!!) {
+            $official = $utf8::inline_definitions[$file];
+        }
+        else {
+            $official = do "unicore/lib/$file.pl";
+        }
 
         # Get rid of any trailing space and comments in the file.
         $official =~ s/\s*(#.*)?$//mg;
@@ -1058,106 +1074,34 @@ foreach my $set_of_tables (\%utf8::stricter_to_file_of, \%utf8::loose_to_file_of
 
         # If we are to test against an inverted file, it is easier to invert
         # our array than the file.
-        # The file only is valid for Unicode code points, while the inversion
-        # list is valid for all possible code points.  Therefore, we must test
-        # just the Unicode part against the file.  Later we will test for
-        # the non-Unicode part.
-
-        my $before_invert;  # Saves the pre-inverted table.
         if ($invert) {
-            $before_invert = dclone \@tested;
             if (@tested && $tested[0] == 0) {
                 shift @tested;
             } else {
                 unshift @tested, 0;
             }
-            if (@tested && $tested[-1] == 0x110000) {
-                pop @tested;
-            }
-            else {
-                push @tested, 0x110000;
-            }
         }
 
         # Now construct a string from the list that should match the file.
-        # The file gives ranges of code points with starting and ending values
-        # in hex, like this:
-        # 0041\t005A
-        # 0061\t007A
-        # 00AA
-        # Our list has even numbered elements start ranges that are in the
-        # list, and odd ones that aren't in the list.  Therefore the odd
-        # numbered ones are one beyond the end of the previous range, but
-        # otherwise don't get reflected in the file.
-        my $tested = "";
-        my $i = 0;
-        for (; $i < @tested - 1; $i += 2) {
-            my $start = $tested[$i];
-            my $end = $tested[$i+1] - 1;
-            if ($start == $end) {
-                $tested .= sprintf("%04X\n", $start);
-            }
-            else {
-                $tested .= sprintf "%04X\t%04X\n", $start, $end;
-            }
-        }
-
-        # As mentioned earlier, the disk files only go up through Unicode,
-        # whereas the prop_invlist() ones go as high as necessary.  The
-        # comparison is only valid through max Unicode.
-        if ($i == @tested - 1 && $tested[$i] <= 0x10FFFF) {
-            $tested .= sprintf("%04X\t10FFFF\n", $tested[$i]);
-        }
+        # The file is inversion list format code points, like this:
+        # V1216
+        # 65      # [26]
+        # 91
+        # 192     # [23]
+        # ...
+        # The V indicates it's an inversion list, and is followed immediately
+        # by the number of elements (lines) that follow giving its contents.
+        # The list has even numbered elements (0th, 2nd, ...) start ranges
+        # that are in the list, and odd ones that aren't in the list.
+        # Therefore the odd numbered ones are one beyond the end of the
+        # previous range, but otherwise don't get reflected in the file.
+        my $tested =  join "\n", ("V" . scalar @tested), @tested;
         local $/ = "\n";
         chomp $tested;
         $/ = $input_record_separator;
         if ($tested ne $official) {
             fail_with_diff($mod_table, $official, $tested, "prop_invlist");
             next;
-        }
-
-        # Here, it matched the table.  Now need to check for if it is correct
-        # for beyond Unicode.  First, calculate if is the default table or
-        # not.  This is the same algorithm as used internally in
-        # prop_invlist(), so if it is wrong there, this test won't catch it.
-        my $prop = lc $table;
-        ($prop_only, $table) = split /\s*[:=]\s*/, $prop;
-        if (defined $table) {
-
-            # May have optional prefixed 'is'
-            $prop = &utf8::_loose_name($prop_only) =~ s/^is//r;
-            $prop = $utf8::loose_property_name_of{$prop};
-            $prop .= "=" . &utf8::_loose_name($table);
-        }
-        else {
-            $prop = &utf8::_loose_name($prop);
-        }
-        my $is_default = exists $Unicode::UCD::loose_defaults{$prop};
-
-        @tested = @$before_invert if $invert;    # Use the original
-        if (@tested % 2 == 0) {
-
-            # If there are an even number of elements, the final one starts a
-            # range (going to infinity) of code points that are not in the
-            # list.
-            if ($is_default) {
-                fail("prop_invlist('$mod_table')");
-                diag("default table doesn't goto infinity");
-                use Data::Dumper;
-                diag Dumper \@tested;
-                next;
-            }
-        }
-        else {
-            # An odd number of elements means the final one starts a range
-            # (going to infinity of code points that are in the list.
-            if (! $is_default) {
-                fail("prop_invlist('$mod_table')");
-                diag("non-default table needs to stop in the Unicode range");
-                use Data::Dumper;
-                diag Dumper \@tested;
-                next;
-            }
         }
 
         pass("prop_invlist('$mod_table')");
@@ -1183,6 +1127,49 @@ is(@list, 0, "prop_invmap('Perl_Charnames') returns <undef> since internal-Perl-
 @list = prop_invmap("Is_Is_Any");
 is(@list, 0, "prop_invmap('Is_Is_Any') returns <undef> since two is's");
 
+# The files for these properties are not used by Perl, but are retained for
+# backwards compatibility with applications that read them directly, with
+# comments in them that their use is deprecated.  Until such time as we remove
+# them completely, we test that they exist, are correct, and that their
+# formats haven't changed.  This hash contains the info needed to test them as
+# if they were regular properties.  'replaced_by' gives the equivalent
+# property now used by Perl.
+my %legacy_props = (
+            Legacy_Case_Folding =>        { replaced_by => 'cf',
+                                            file => 'To/Fold',
+                                            swash_name => 'ToFold'
+                                          },
+            Legacy_Lowercase_Mapping =>   { replaced_by => 'lc',
+                                            file => 'To/Lower',
+                                            swash_name => 'ToLower'
+                                          },
+            Legacy_Titlecase_Mapping =>   { replaced_by => 'tc',
+                                            file => 'To/Title',
+                                            swash_name => 'ToTitle'
+                                          },
+            Legacy_Uppercase_Mapping =>   { replaced_by => 'uc',
+                                            file => 'To/Upper',
+                                            swash_name => 'ToUpper'
+                                          },
+            Legacy_Perl_Decimal_Digit =>  { replaced_by => 'Perl_Decimal_Digit',
+                                            file => 'To/Digit',
+                                            swash_name => 'ToDigit'
+                                           },
+        );
+
+foreach my $legacy_prop (keys %legacy_props) {
+    @list = prop_invmap($legacy_prop);
+    is(@list, 0, "'$legacy_prop' is unknown to prop_invmap");
+}
+
+# The files for these properties shouldn't have their formats changed in case
+# applications use them (though such use is deprecated).
+my @legacy_file_format = (keys %legacy_props,
+                          qw( Bidi_Mirroring_Glyph
+                              NFKC_Casefold
+                           )
+                          );
+
 # The set of properties to test on has already been compiled into %props by
 # the prop_aliases() tests.
 
@@ -1202,19 +1189,54 @@ my %tested_invmaps;
 # lists returned by prop_invlist(), which has already been tested.
 
 PROPERTY:
-foreach my $prop (keys %props) {
+foreach my $prop (sort(keys %props), sort keys %legacy_props) {
+    my $is_legacy = 0;
     my $loose_prop = &utf8::_loose_name(lc $prop);
     my $suppressed = grep { $_ eq $loose_prop }
                           @Unicode::UCD::suppressed_properties;
 
+    my $actual_lookup_prop;
+    my $display_prop;        # The property name that is displayed, as opposed
+                             # to the one that is actually used.
+
     # Find the short and full names that this property goes by
     my ($name, $full_name) = prop_aliases($prop);
     if (! $name) {
-        if (! $suppressed) {
-            fail("prop_invmap('$prop')");
-            diag("is unknown to prop_aliases(), and we need it in order to test prop_invmap");
+
+        # Here, Perl doesn't know about this property.  It could be a
+        # suppressed one, or a legacy one.
+        if (grep { $prop eq $_ } keys %legacy_props) {
+
+            # For legacy properties, we look up the modern equivalent
+            # property instead; later massaging the results to look like the
+            # known format of the legacy property.  We add info about the
+            # legacy property to the data structures for the rest of the
+            # properties; this is to avoid more special cases for the legacies
+            # in the code below
+            $full_name = $name = $prop;
+            $actual_lookup_prop = $legacy_props{$prop}->{'replaced_by'};
+            my $base_file = $legacy_props{$prop}->{'file'};
+
+            # This legacy property is otherwise unknown to Perl; so shouldn't
+            # have any information about it already.
+            ok(! exists $utf8::loose_property_to_file_of{$loose_prop},
+               "There isn't a hash entry for file lookup of $prop");
+            $utf8::loose_property_to_file_of{$loose_prop} = $base_file;
+
+            ok(! exists $utf8::file_to_swash_name{$loose_prop},
+               "There isn't a hash entry for swash lookup of $prop");
+            $utf8::file_to_swash_name{$base_file}
+                                        = $legacy_props{$prop}->{'swash_name'};
+            $display_prop = $prop;
+            $is_legacy = 1;
         }
+        else {
+            if (! $suppressed) {
+                fail("prop_invmap('$prop')");
+                diag("is unknown to prop_aliases(), and we need it in order to test prop_invmap");
+            }
         next PROPERTY;
+        }
     }
 
     # Normalize the short name, as it is stored in the hashes under the
@@ -1223,15 +1245,59 @@ foreach my $prop (keys %props) {
 
     # Add in the characters that are supposed to be ignored to test loose
     # matching, which the tested function applies to all properties
-    my $mod_prop = "$extra_chars$prop";
+    $display_prop = "$extra_chars$prop" unless $display_prop;
+    $actual_lookup_prop = $display_prop unless $actual_lookup_prop;
 
-    my ($invlist_ref, $invmap_ref, $format, $missing) = prop_invmap($mod_prop);
+    my ($invlist_ref, $invmap_ref, $format, $missing) = prop_invmap($actual_lookup_prop);
     my $return_ref = [ $invlist_ref, $invmap_ref, $format, $missing ];
+
+
+    # The legacy property files all are expanded out so that each range is 1
+    # element long.  That isn't true of the modern equivalent we use to check
+    # those files for correctness against.  So take the output of the proxy
+    # and expand it to match the legacy file.
+    if ($is_legacy) {
+        my @expanded_list;
+        my @expanded_map;
+        for my $i (0 .. @$invlist_ref - 1 - 1) {
+            if (ref $invmap_ref->[$i] || $invmap_ref->[$i] eq $missing) {
+
+                # No adjustments should be done for the default mapping and
+                # the multi-char ones.
+                push @expanded_list, $invlist_ref->[$i];
+                push @expanded_map, $invmap_ref->[$i];
+            }
+            else {
+
+                # Expand the range into separate elements for each item.
+                my $offset = 0;
+                for my $j ($invlist_ref->[$i] .. $invlist_ref->[$i+1] -1) {
+                    push @expanded_list, $j;
+                    push @expanded_map, $invmap_ref->[$i] + $offset;
+
+                    # The 'ae' format is for Legacy_Perl_Decimal_Digit; the
+                    # other 4 are kept with leading zeros in the file, so
+                    # convert to that.
+                    $expanded_map[-1] = sprintf("%04X", $expanded_map[-1])
+                                                            if $format ne 'ae';
+                    $offset++;
+                }
+            }
+        }
+
+        # Final element is taken as is.  The map should always be to the
+        # default value, so don't do a sprintf like we did above.
+        push @expanded_list, $invlist_ref->[-1];
+        push @expanded_map, $invmap_ref->[-1];
+
+        $invlist_ref = \@expanded_list;
+        $invmap_ref = \@expanded_map;
+    }
 
     # If have already tested this property under a different name, merely
     # compare the return from now with the saved one from before.
     if (exists $tested_invmaps{$name}) {
-        is_deeply($return_ref, $tested_invmaps{$name}, "prop_invmap('$mod_prop') gave same results as its synonym, '$name'");
+        is_deeply($return_ref, $tested_invmaps{$name}, "prop_invmap('$display_prop') gave same results as its synonym, '$name'");
         next PROPERTY;
     }
     $tested_invmaps{$name} = dclone $return_ref;
@@ -1240,20 +1306,20 @@ foreach my $prop (keys %props) {
     # not generated.
     if ($suppressed) {
         if (defined $format) {
-            fail("prop_invmap('$mod_prop')");
+            fail("prop_invmap('$display_prop')");
             diag("did not return undef for suppressed property $prop");
         }
         next PROPERTY;
     }
     elsif (!defined $format) {
-        fail("prop_invmap('$mod_prop')");
+        fail("prop_invmap('$display_prop')");
         diag("'$prop' is unknown to prop_invmap()");
         next PROPERTY;
     }
 
     # The two parallel arrays must have the same number of elements.
     if (@$invlist_ref != @$invmap_ref) {
-        fail("prop_invmap('$mod_prop')");
+        fail("prop_invmap('$display_prop')");
         diag("invlist has "
              . scalar @$invlist_ref
              . " while invmap has "
@@ -1265,19 +1331,47 @@ foreach my $prop (keys %props) {
     # The last element must be for the above-Unicode code points, and must be
     # for the default value.
     if ($invlist_ref->[-1] != 0x110000) {
-        fail("prop_invmap('$mod_prop')");
+        fail("prop_invmap('$display_prop')");
         diag("The last inversion list element is not 0x110000");
         next PROPERTY;
     }
-    if ($invmap_ref->[-1] ne $missing) {
-        fail("prop_invmap('$mod_prop')");
+
+    my $upper_limit_subtract;
+
+    # prop_invmap() adds an extra element not present in the disk files for
+    # the above-Unicode code points.  For almost all properties, that will be
+    # to $missing.  In that case we don't look further at it when comparing
+    # with the disk files.
+    if ($invmap_ref->[-1] eq $missing) {
+        $upper_limit_subtract = 1;
+    }
+    elsif ($invmap_ref->[-1] eq 'Y' && ! grep { $_ !~ /[YN]/ } @$invmap_ref) {
+
+        # But that's not true for a few binary properties like 'Unassigned'
+        # that are Perl extensions (in this case for Gc=Unassigned) which
+        # match above-Unicode code points (hence the 'Y' in the test above).
+        # For properties where it isn't $missing, we're going to want to look
+        # at the whole thing when comparing with the disk file.
+        $upper_limit_subtract = 0;
+
+        # In those properties like 'Unassigned, the final element should be
+        # just a repetition of the next-to-last element, and won't be in the
+        # disk file, so remove it for the comparison.  Otherwise, we will
+        # compare the whole of the array with the whole of the disk file.
+        if ($invlist_ref->[-2] <= 0x10FFFF && $invmap_ref->[-2] eq 'Y') {
+            pop @$invlist_ref;
+            pop @$invmap_ref;
+        }
+    }
+    else {
+        fail("prop_invmap('$display_prop')");
         diag("The last inversion list element is '$invmap_ref->[-1]', and should be '$missing'");
         next PROPERTY;
     }
 
     if ($name eq 'bmg') {   # This one has an atypical $missing
         if ($missing ne "") {
-            fail("prop_invmap('$mod_prop')");
+            fail("prop_invmap('$display_prop')");
             diag("The missings should be \"\"; got '$missing'");
             next PROPERTY;
         }
@@ -1285,19 +1379,19 @@ foreach my $prop (keys %props) {
     elsif ($format =~ /^ a (?!r) /x) {
         if ($full_name eq 'Perl_Decimal_Digit') {
             if ($missing ne "") {
-                fail("prop_invmap('$mod_prop')");
+                fail("prop_invmap('$display_prop')");
                 diag("The missings should be \"\"; got '$missing'");
                 next PROPERTY;
             }
         }
-        elsif ($missing ne "0") {
-            fail("prop_invmap('$mod_prop')");
+        elsif ($missing ne "0" && ! grep { $prop eq $_ } keys %legacy_props) {
+            fail("prop_invmap('$display_prop')");
             diag("The missings should be '0'; got '$missing'");
             next PROPERTY;
         }
     }
     elsif ($missing =~ /[<>]/) {
-        fail("prop_invmap('$mod_prop')");
+        fail("prop_invmap('$display_prop')");
         diag("The missings should NOT be something with <...>'");
         next PROPERTY;
 
@@ -1322,14 +1416,14 @@ foreach my $prop (keys %props) {
             $proxy_prop = lc $1 . "c";
         }
         if ($format ne "a") {
-            fail("prop_invmap('$mod_prop')");
+            fail("prop_invmap('$display_prop')");
             diag("The format should be 'a'; got '$format'");
             next PROPERTY;
         }
     }
 
     if ($format !~ / ^ (?: a [der]? | ale? | n | sl? ) $ /x) {
-        fail("prop_invmap('$mod_prop')");
+        fail("prop_invmap('$display_prop')");
         diag("Unknown format '$format'");
         next PROPERTY;
     }
@@ -1371,7 +1465,7 @@ foreach my $prop (keys %props) {
             {
                 # Translate the charblocks() data structure to what the file
                 # would like.
-                $official .= sprintf"%04X\t%04X\t%s\n",
+                $official .= sprintf"%X\t%X\t%s\n",
                              $range->[0][0],
                              $range->[0][1],
                              $range->[0][2];
@@ -1392,13 +1486,19 @@ foreach my $prop (keys %props) {
             # property comes along without these characteristics
             if (!defined $base_file) {
                 $base_file = $utf8::loose_to_file_of{$proxy_prop};
-                $is_binary = ($base_file =~ s/^!//) ? -1 : 1;
-                $base_file = "lib/$base_file";
+                $is_binary = ($base_file =~ s/!//) ? -1 : 1;
+                $base_file = "lib/$base_file" unless $base_file =~ m!^#/!;
             }
 
-            # Read in the file
-            $file = "unicore/$base_file.pl";
-            $official = do $file;
+            # Read in the file.  If the file's directory is '#', it is a
+            # special case where the contents are in-lined with semi-colons
+            # meaning new-lines, instead of it being an actual file to read.
+            if ($base_file =~ s!^#/!!) {
+                $official = $utf8::inline_definitions[$base_file];
+            }
+            else {
+                $official = do "unicore/$base_file.pl";
+            }
 
             # Get rid of any trailing space and comments in the file.
             $official =~ s/\s*(#.*)?$//mg;
@@ -1420,7 +1520,7 @@ foreach my $prop (keys %props) {
                     # easier below.
                     if ($end ne "") {
                         for my $i (hex($start) + 1 .. hex $end) {
-                            $official .= sprintf "%04X\t\t%s\n", $i, $value;
+                            $official .= sprintf "%X\t\t%s\n", $i, $value;
                         }
                     }
                 }
@@ -1434,7 +1534,7 @@ foreach my $prop (keys %props) {
         # get a reference to them.
         my $swash_name = $utf8::file_to_swash_name{$base_file};
         my $specials_ref;
-        my $file_format;
+        my $file_format;    # The 'format' given inside the file
         if ($swash_name) {
             $specials_ref = $utf8::SwashInfo{$swash_name}{'specials_name'};
             if ($specials_ref) {
@@ -1447,9 +1547,24 @@ foreach my $prop (keys %props) {
             $file_format = $utf8::SwashInfo{$swash_name}{'format'};
         }
 
+        # Leading zeros used to be used with the values in the files that give,
+        # ranges, but these have been mostly stripped off, except for some
+        # files whose formats should not change in any way.
+        my $file_range_format = (grep { $full_name eq $_ } @legacy_file_format)
+                              ? "%04X"
+                              : "%X";
+        # Currently this property still has leading zeroes in the mapped-to
+        # values, but otherwise, those values follow the same rules as the
+        # ranges.
+        my $file_map_format = ($full_name eq 'Decomposition_Mapping')
+                              ? "%04X"
+                              : $file_range_format;
+
         # Certain of the proxy properties have to be adjusted to match the
         # real ones.
-        if ($full_name =~ /^(Case_Folding|(Lower|Title|Upper)case_Mapping)/) {
+        if ($full_name
+                 =~ /^(Legacy_)?(Case_Folding|(Lower|Title|Upper)case_Mapping)/)
+        {
 
             # Here we have either
             #   1) Case_Folding; or
@@ -1465,7 +1580,7 @@ foreach my $prop (keys %props) {
                 my ($start, $end, $value) = / ^ (.+?) \t (.*?) \t (.+?)
                                                 \s* ( \# .* )? $ /x;
                 $end = $start if $end eq "";
-                push @list, [ hex $start, hex $end, $value ];
+                push @list, [ hex $start, hex $end, hex $value ];
             }
 
             # For these mappings, the file contains all the simple mappings,
@@ -1496,8 +1611,8 @@ foreach my $prop (keys %props) {
                 # element of the range...
                 if ($cp == $list[$i][0]) {
 
-                    # ... and there are other elements in the range, just shorten
-                    # the range to exclude this code point.
+                    # ... and there are other elements in the range, just
+                    # shorten the range to exclude this code point.
                     if ($list[$i][1] > $list[$i][0]) {
                         $list[$i][0]++;
                     }
@@ -1523,14 +1638,20 @@ foreach my $prop (keys %props) {
             for my $element (@list) {
                 $official .= "\n" if $official;
                 if ($element->[1] == $element->[0]) {
-                    $official .= sprintf "%04X\t\t%s", $element->[0], $element->[2];
+                    $official
+                        .= sprintf "$file_range_format\t\t$file_map_format",
+                                    $element->[0],        $element->[2];
                 }
                 else {
-                    $official .= sprintf "%04X\t%04X\t%s", $element->[0], $element->[1], $element->[2];
+                    $official .= sprintf "$file_range_format\t$file_range_format\t$file_map_format",
+                                         $element->[0],
+                                         $element->[1],
+                                         $element->[2];
                 }
             }
         }
-        elsif ($full_name =~ /Simple_(Case_Folding|(Lower|Title|Upper)case_Mapping)/)
+        elsif ($full_name
+            =~ / ^ Simple_(Case_Folding|(Lower|Title|Upper)case_Mapping) $ /x)
         {
 
             # These properties have everything in the regular array, and the
@@ -1555,6 +1676,11 @@ foreach my $prop (keys %props) {
         # appends the next line to the running string.
         my $tested_map = "";
 
+        # For use with files for binary properties only, which are stored in
+        # inversion list format.  This counts the number of data lines in the
+        # file.
+        my $binary_count = 0;
+
         # Create a copy of the file's specials hash.  (It has been undef'd if
         # we know it isn't relevant to this property, so if it exists, it's an
         # error or is relevant).  As we go along, we delete from that copy.
@@ -1562,9 +1688,10 @@ foreach my $prop (keys %props) {
         # it's an error
         my %specials = %$specials_ref if $specials_ref;
 
-        # The extra -1 is because the final element has been tested above to
-        # be for anything above Unicode.  The file doesn't go that high.
-        for (my $i = 0; $i <  @$invlist_ref - 1; $i++) {
+        # The extra -$upper_limit_subtract is because the final element may
+        # have been tested above to be for anything above Unicode, in which
+        # case the file may not go that high.
+        for (my $i = 0; $i < @$invlist_ref - $upper_limit_subtract; $i++) {
 
             # If the map element is a reference, have to stringify it (but
             # don't do so if the format doesn't allow references, so that an
@@ -1576,9 +1703,10 @@ foreach my $prop (keys %props) {
                 if ($format eq 'sl') {
 
                     # At the time of this writing, there are two types of 'sl'
-                    # format  One, in Name_Alias, has multiple separate entries
-                    # for each code point; the other, in Script_Extension, is space
-                    # separated.  Assume the latter for non-Name_Alias.
+                    # format  One, in Name_Alias, has multiple separate
+                    # entries for each code point; the other, in
+                    # Script_Extension, is space separated.  Assume the latter
+                    # for non-Name_Alias.
                     if ($full_name ne 'Name_Alias') {
                         $invmap_ref->[$i] = join " ", @{$invmap_ref->[$i]};
                     }
@@ -1595,10 +1723,11 @@ foreach my $prop (keys %props) {
                         # other property; thus the special handling of the
                         # first line.
                         if (ref $invmap_ref->[$i]) {
-                            my $hex_cp = sprintf("%04X", $invlist_ref->[$i]);
+                            my $hex_cp = sprintf("%X", $invlist_ref->[$i]);
                             my $concatenated = $invmap_ref->[$i][0];
                             for (my $j = 1; $j < @{$invmap_ref->[$i]}; $j++) {
-                                $concatenated .= "\n$hex_cp\t\t" . $invmap_ref->[$i][$j];
+                                $concatenated .= "\n$hex_cp\t\t"
+                                              .  $invmap_ref->[$i][$j];
                             }
                             $invmap_ref->[$i] = $concatenated;
                         }
@@ -1606,18 +1735,20 @@ foreach my $prop (keys %props) {
                 }
                 elsif ($format =~ / ^ al e? $/x) {
 
-                    # For a al property, the stringified result should be in
+                    # For an al property, the stringified result should be in
                     # the specials hash.  The key is the packed code point,
                     # and the value is the packed map.
                     my $value;
-                    if (! defined ($value = delete $specials{pack("C0U", $invlist_ref->[$i]) })) {
-                        fail("prop_invmap('$mod_prop')");
+                    if (! defined ($value = delete $specials{pack("C0U",
+                                                        $invlist_ref->[$i]) }))
+                    {
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf "There was no specials element for %04X", $invlist_ref->[$i]);
                         next PROPERTY;
                     }
                     my $packed = pack "U*", @{$invmap_ref->[$i]};
                     if ($value ne $packed) {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf "For %04X, expected the mapping to be '$packed', but got '$value'");
                         next PROPERTY;
                     }
@@ -1628,7 +1759,7 @@ foreach my $prop (keys %props) {
                     if (($i > 0 && $invlist_ref->[$i] <= $invlist_ref->[$i-1])
                         || $invlist_ref->[$i] >= $invlist_ref->[$i+1])
                     {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                         next PROPERTY;
                     }
@@ -1638,13 +1769,18 @@ foreach my $prop (keys %props) {
 
                     # The decomposition mapping file has the code points as
                     # a string of space-separated hex constants.
-                    $invmap_ref->[$i] = join " ", map { sprintf "%04X", $_ } @{$invmap_ref->[$i]};
+                    $invmap_ref->[$i] = join " ", map { sprintf "%04X", $_ }
+                                                           @{$invmap_ref->[$i]};
                 }
                 else {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag("Can't handle format '$format'");
                     next PROPERTY;
                 }
+            } # Otherwise, the map is to a simple scalar
+            elsif (defined $file_format && $file_format eq 'ax') {
+                # These maps are in hex
+                $invmap_ref->[$i] = sprintf("%X", $invmap_ref->[$i]);
             }
             elsif ($format eq 'ad' || $format eq 'ale') {
 
@@ -1659,7 +1795,8 @@ foreach my $prop (keys %props) {
                     && $invmap_ref->[$i] != 0)
                 {
                     my $next = $invmap_ref->[$i] + 1;
-                    $invmap_ref->[$i] = sprintf("%04X", $invmap_ref->[$i]);
+                    $invmap_ref->[$i] = sprintf($file_map_format,
+                                                $invmap_ref->[$i]);
 
                     # If there are other elements in this range they need to
                     # be adjusted; they must individually be re-mapped.  Do
@@ -1679,13 +1816,15 @@ foreach my $prop (keys %props) {
                     # should be in the specials hash, with the key the packed
                     # code point, and the map just empty.
                     my $value;
-                    if (! defined ($value = delete $specials{pack("C0U", $invlist_ref->[$i]) })) {
-                        fail("prop_invmap('$mod_prop')");
+                    if (! defined ($value = delete $specials{pack("C0U",
+                                                        $invlist_ref->[$i]) }))
+                    {
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf "There was no specials element for %04X", $invlist_ref->[$i]);
                         next PROPERTY;
                     }
                     if ($value ne "") {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf "For %04X, expected the mapping to be \"\", but got '$value'", $invlist_ref->[$i]);
                         next PROPERTY;
                     }
@@ -1696,7 +1835,7 @@ foreach my $prop (keys %props) {
                     if (($i > 0 && $invlist_ref->[$i] <= $invlist_ref->[$i-1])
                         || $invlist_ref->[$i] >= $invlist_ref->[$i+1])
                     {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                         next PROPERTY;
                     }
@@ -1714,7 +1853,7 @@ foreach my $prop (keys %props) {
                 if (($i > 0 && $invlist_ref->[$i] <= $invlist_ref->[$i-1])
                     || $invlist_ref->[$i] >= $invlist_ref->[$i+1])
                 {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                     next PROPERTY;
                 }
@@ -1730,7 +1869,7 @@ foreach my $prop (keys %props) {
                 if (($i > 0 && $invlist_ref->[$i] <= $invlist_ref->[$i-1])
                     || $invlist_ref->[$i] >= $invlist_ref->[$i+1])
                 {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                     next PROPERTY;
                 }
@@ -1740,18 +1879,40 @@ foreach my $prop (keys %props) {
             # Finally have figured out what the map column in the file should
             # be.  Append the line to the running string.
             my $start = $invlist_ref->[$i];
-            my $end = $invlist_ref->[$i+1] - 1;
-            $end = ($start == $end) ? "" : sprintf("%04X", $end);
-            if ($invmap_ref->[$i] ne "") {
-                $tested_map .= sprintf "%04X\t%s\t%s\n", $start, $end, $invmap_ref->[$i];
-            }
-            elsif ($end ne "") {
-                $tested_map .= sprintf "%04X\t%s\n", $start, $end;
+            my $end = (defined $invlist_ref->[$i+1])
+                      ? $invlist_ref->[$i+1] - 1
+                      : $Unicode::UCD::MAX_CP;
+            if ($is_binary) {
+
+                # Files for binary properties are in inversion list format,
+                # without ranges.
+                $tested_map .= "$start\n";
+                $binary_count++;
+
+                # If the final value is infinity, no line for it exists.
+                if ($end < $Unicode::UCD::MAX_CP) {
+                    $tested_map .= ($end + 1) . "\n";
+                    $binary_count++;
+                }
             }
             else {
-                $tested_map .= sprintf "%04X\n", $start;
+                $end = ($start == $end) ? "" : sprintf($file_range_format, $end);
+                if ($invmap_ref->[$i] ne "") {
+                    $tested_map .= sprintf "$file_range_format\t%s\t%s\n",
+                                            $start, $end, $invmap_ref->[$i];
+                }
+                elsif ($end ne "") {
+                    $tested_map .= sprintf "$file_range_format\t%s\n",
+                                            $start,             $end;
+                }
+                else {
+                    $tested_map .= sprintf "$file_range_format\n", $start;
+                }
             }
         } # End of looping over all elements.
+
+        # Binary property files begin with a line count line.
+        $tested_map = "V$binary_count\n$tested_map" if $binary_count;
 
         # Here are done with generating what the file should look like
 
@@ -1761,13 +1922,13 @@ foreach my $prop (keys %props) {
 
         # And compare.
         if ($tested_map ne $official) {
-            fail_with_diff($mod_prop, $official, $tested_map, "prop_invmap");
+            fail_with_diff($display_prop, $official, $tested_map, "prop_invmap");
             next PROPERTY;
         }
 
         # There shouldn't be any specials unaccounted for.
         if (keys %specials) {
-            fail("prop_invmap('$mod_prop')");
+            fail("prop_invmap('$display_prop')");
             diag("Unexpected specials: " . join ", ", keys %specials);
             next PROPERTY;
         }
@@ -1781,7 +1942,7 @@ foreach my $prop (keys %props) {
         # but the Name in order to do the comparison.
 
         if ($missing ne "") {
-            fail("prop_invmap('$mod_prop')");
+            fail("prop_invmap('$display_prop')");
             diag("The missings should be \"\"; got \"missing\"");
             next PROPERTY;
         }
@@ -1839,14 +2000,14 @@ foreach my $prop (keys %props) {
         my @code_point_in_names =
                                @Unicode::UCD::code_points_ending_in_code_point;
 
-        for my $i (0 .. @$invlist_ref - 1 - 1) {
+        for my $i (0 .. @$invlist_ref - 1 - $upper_limit_subtract) {
             my $start = $invlist_ref->[$i];
             my $end = $invlist_ref->[$i+1] - 1;
             if ($invmap_ref->[$i] eq $missing) {
                 if (($i > 0 && $invlist_ref->[$i] <= $invlist_ref->[$i-1])
                     || $invlist_ref->[$i] >= $invlist_ref->[$i+1])
                 {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                     next PROPERTY;
                 }
@@ -1858,29 +2019,29 @@ foreach my $prop (keys %props) {
                 if (($i > 0 && $invlist_ref->[$i] <= $invlist_ref->[$i-1])
                     || $invlist_ref->[$i] >= $invlist_ref->[$i+1])
                 {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                     next PROPERTY;
                 }
                 if ($type eq "<hangul syllable>") {
                     if ($name ne "") {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag("Unexpected text in $invmap_ref->[$i]");
                         next PROPERTY;
                     }
                     if ($start != 0xAC00) {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf("<hangul syllables> should begin at 0xAC00, got %04X", $start));
                         next PROPERTY;
                     }
                     if ($end != $start + 11172 - 1) {
-                        fail("prop_invmap('$mod_prop')");
+                        fail("prop_invmap('$display_prop')");
                         diag(sprintf("<hangul syllables> should end at %04X, got %04X", $start + 11172 -1, $end));
                         next PROPERTY;
                     }
                 }
                 elsif ($type ne "<code point>") {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag("Unexpected text '$type' in $invmap_ref->[$i]");
                     next PROPERTY;
                 }
@@ -1900,7 +2061,7 @@ foreach my $prop (keys %props) {
                             last;
                         }
                         else {
-                            fail("prop_invmap('$mod_prop')");
+                            fail("prop_invmap('$display_prop')");
                             diag("Unexpected code-point-in-name line '$invmap_ref->[$i]'");
                             next PROPERTY;
                         }
@@ -1921,11 +2082,11 @@ foreach my $prop (keys %props) {
         chomp $tested_map;
         $/ = $input_record_separator;
         if ($tested_map ne $official) {
-            fail_with_diff($mod_prop, $official, $tested_map, "prop_invmap");
+            fail_with_diff($display_prop, $official, $tested_map, "prop_invmap");
             next PROPERTY;
         }
         if (@code_point_in_names) {
-            fail("prop_invmap('$mod_prop')");
+            fail("prop_invmap('$display_prop')");
             use Data::Dumper;
             diag("Missing code-point-in-name line(s)" . Dumper \@code_point_in_names);
             next PROPERTY;
@@ -1945,10 +2106,7 @@ foreach my $prop (keys %props) {
         my %maps;
         my $previous_map;
 
-        # (The extra -1 is to not look at the final element in the loop, which
-        # we know is the one that starts just beyond Unicode and goes to
-        # infinity.)
-        for my $i (0 .. @$invlist_ref - 1 - 1) {
+        for my $i (0 .. @$invlist_ref - 1 - $upper_limit_subtract) {
             my $range_start = $invlist_ref->[$i];
 
             # Because we are sorting into buckets, things could be
@@ -1958,7 +2116,7 @@ foreach my $prop (keys %props) {
             if (($i > 0 && $range_start <= $invlist_ref->[$i-1])
                 || $range_start >= $invlist_ref->[$i+1])
             {
-                fail("prop_invmap('$mod_prop')");
+                fail("prop_invmap('$display_prop')");
                 diag(sprintf "Range beginning at %04X is out-of-order.", $invlist_ref->[$i]);
                 next PROPERTY;
             }
@@ -1993,24 +2151,24 @@ foreach my $prop (keys %props) {
         # through each and verify that matches what prop_invlist() returns.
         # We could use is_deeply() for the comparison, but would get multiple
         # messages for each $prop.
-        foreach my $map (keys %maps) {
+        foreach my $map (sort keys %maps) {
             my @off_invlist = prop_invlist("$prop = $map");
             my $min = (@off_invlist >= @{$maps{$map}})
                        ? @off_invlist
                        : @{$maps{$map}};
             for my $i (0 .. $min- 1) {
                 if ($i > @off_invlist - 1) {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag("There is no element [$i] for $prop=$map from prop_invlist(), while [$i] in the implicit one constructed from prop_invmap() is '$maps{$map}[$i]'");
                     next PROPERTY;
                 }
                 elsif ($i > @{$maps{$map}} - 1) {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag("There is no element [$i] from the implicit $prop=$map constructed from prop_invmap(), while [$i] in the one from prop_invlist() is '$off_invlist[$i]'");
                     next PROPERTY;
                 }
                 elsif ($maps{$map}[$i] ne $off_invlist[$i]) {
-                    fail("prop_invmap('$mod_prop')");
+                    fail("prop_invmap('$display_prop')");
                     diag("Element [$i] of the implicit $prop=$map constructed from prop_invmap() is '$maps{$map}[$i]', and the one from prop_invlist() is '$off_invlist[$i]'");
                     next PROPERTY;
                 }
@@ -2019,12 +2177,27 @@ foreach my $prop (keys %props) {
     }
     else {  # Don't know this property nor format.
 
-        fail("prop_invmap('$mod_prop')");
-        diag("Unknown format '$format'");
+        fail("prop_invmap('$display_prop')");
+        diag("Unknown property '$display_prop' or format '$format'");
+        next PROPERTY;
     }
 
-    pass("prop_invmap('$mod_prop')");
+    pass("prop_invmap('$display_prop')");
 }
 
+# A few tests of search_invlist
+use Unicode::UCD qw(search_invlist);
+
+my ($scripts_ranges_ref, $scripts_map_ref) = prop_invmap("Script");
+my $index = search_invlist($scripts_ranges_ref, 0x390);
+is($scripts_map_ref->[$index], "Greek", "U+0390 is Greek");
+my @alpha_invlist = prop_invlist("Alpha");
+is(search_invlist(\@alpha_invlist, ord("\t")), undef, "search_invlist returns undef for code points before first one on the list");
+
 ok($/ eq $input_record_separator,  "The record separator didn't get overridden");
+
+if (! ok(@warnings == 0, "No warnings were generated")) {
+    diag(join "\n", "The warnings are:", @warnings);
+}
+
 done_testing();

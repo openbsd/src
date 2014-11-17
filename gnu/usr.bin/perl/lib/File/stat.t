@@ -112,6 +112,8 @@ foreach ([file => $file],
     my ($what, $pathname) = @$_;
     test_X_ops($pathname, "for $what $pathname");
 
+    my $orig_mode = (CORE::stat $pathname)[2];
+
     my $mode = 01000;
     while ($mode) {
         $mode >>= 1;
@@ -119,8 +121,8 @@ foreach ([file => $file],
         chmod $mode, $pathname or die "Can't chmod $mode_oct $pathname: $!";
         test_X_ops($pathname, "for $what with mode=$mode_oct");
     }
-    chmod 0600, $pathname
-        or die "Can't restore permissions on $pathname to 0600";
+    chmod $orig_mode, $pathname
+        or die "Can't restore permissions on $pathname to ", sprintf("%#o", $orig_mode);
 }
 
 SKIP: {

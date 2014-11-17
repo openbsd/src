@@ -1047,7 +1047,7 @@ there's no I<key> in any of those lexicons, maketext gives up with
 But failure_handler_auto, instead of dying or anything, compiles
 $key, caching it in
 
-    $lh->{'failure_lex'}{$key} = $complied
+    $lh->{'failure_lex'}{$key} = $compiled
 
 and then calls the compiled value, and returns that.  (I.e., if
 $key looks like bracket notation, $compiled is a sub, and we return
@@ -1329,7 +1329,7 @@ gettext documentation asks lots of questions worth thinking
 about, even if some of their answers are sometimes wonky,
 particularly where they start talking about pluralization.
 
-The Locale/Maketext.pm source.  Obverse that the module is much
+The Locale/Maketext.pm source.  Observe that the module is much
 shorter than its documentation!
 
 =head1 COPYRIGHT AND DISCLAIMER

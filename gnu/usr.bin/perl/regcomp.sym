@@ -38,15 +38,15 @@ SEOL        EOL,        no        ; Same, assuming singleline.
 # in regcomp.c uses the enum value of the modifier as an offset from the /d
 # version.  The complements must come after the non-complements.
 # BOUND, POSIX and their complements are affected, as well as EXACTF.
-BOUND       BOUND,      no        ; Match "" at any word boundary using native charset semantics for non-utf8
+BOUND       BOUND,      no        ; Match "" at any word boundary using native charset rules for non-utf8
 BOUNDL      BOUND,      no        ; Match "" at any locale word boundary
-BOUNDU      BOUND,      no        ; Match "" at any word boundary using Unicode semantics
-BOUNDA      BOUND,      no         ; Match "" at any word boundary using ASCII semantics
+BOUNDU      BOUND,      no        ; Match "" at any word boundary using Unicode rules
+BOUNDA      BOUND,      no         ; Match "" at any word boundary using ASCII rules
 # All NBOUND nodes are required by code in regexec.c to be greater than all BOUND ones
-NBOUND      NBOUND,     no        ; Match "" at any word non-boundary using native charset semantics for non-utf8
+NBOUND      NBOUND,     no        ; Match "" at any word non-boundary using native charset rules for non-utf8
 NBOUNDL     NBOUND,     no        ; Match "" at any locale word non-boundary
-NBOUNDU     NBOUND,     no        ; Match "" at any word non-boundary using Unicode semantics
-NBOUNDA     NBOUND,     no        ; Match "" at any word non-boundary using ASCII semantics
+NBOUNDU     NBOUND,     no        ; Match "" at any word non-boundary using Unicode rules
+NBOUNDA     NBOUND,     no        ; Match "" at any word non-boundary using ASCII rules
 GPOS        GPOS,       no        ; Matches where last m//g left off.
 
 #* [Special] alternatives:
@@ -55,8 +55,6 @@ REG_ANY     REG_ANY,    no 0 S    ; Match any one character (except newline).
 SANY        REG_ANY,    no 0 S    ; Match any one character.
 CANY        REG_ANY,    no 0 S    ; Match any one byte.
 ANYOF       ANYOF,      sv 0 S    ; Match character in (or not in) this class, single char match only
-ANYOF_WARN_SUPER ANYOF, sv 0 S    ; Match character in (or not in) this class, warn (if enabled) upon matching a char above Unicode max;
-ANYOF_SYNTHETIC ANYOF,  sv 0 S    ; Synthetic start class
 
 # Order of the below is important.  See ordering comment above.
 POSIXD      POSIXD,     none 0 S   ; Some [[:class:]] under /d; the FLAGS field gives which one
@@ -100,7 +98,7 @@ EXACTFL     EXACT,      str       ; Match this string (not guaranteed to be fold
 EXACTFU     EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding doesn't change if not in UTF-8) using /iu rules (w/len).
 EXACTFA     EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
 EXACTFU_SS  EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding may change even if not in UTF-8) using /iu rules (w/len).
-EXACTFU_TRICKYFOLD EXACT,  str	  ; Match this folded UTF-8 string using /iu rules
+EXACTFA_NO_TRIE  EXACT, str	  ; Match this string (which is not trie-able; not guaranteed to be folded) using /iaa rules (w/len).
 
 #*Do nothing types
 
@@ -133,21 +131,21 @@ OPEN        OPEN,       num 1     ; Mark this point in input as start of #n.
 CLOSE       CLOSE,      num 1     ; Analogous to OPEN.
 
 REF         REF,        num 1 V   ; Match some already matched string
-REFF        REF,        num 1 V   ; Match already matched string, folded using native charset semantics for non-utf8
+REFF        REF,        num 1 V   ; Match already matched string, folded using native charset rules for non-utf8
 REFFL       REF,        num 1 V   ; Match already matched string, folded in loc.
 # N?REFF[AU] could have been implemented using the FLAGS field of the
 # regnode, but by having a separate node type, we can use the existing switch
 # statement to avoid some tests
-REFFU       REF,        num 1 V   ; Match already matched string, folded using unicode semantics for non-utf8
-REFFA       REF,        num 1 V   ; Match already matched string, folded using unicode semantics for non-utf8, no mixing ASCII, non-ASCII
+REFFU       REF,        num 1 V   ; Match already matched string, folded using unicode rules for non-utf8
+REFFA       REF,        num 1 V   ; Match already matched string, folded using unicode rules for non-utf8, no mixing ASCII, non-ASCII
 
 #*Named references.  Code in regcomp.c assumes that these all are after
 #*the numbered references
 NREF        REF,        no-sv 1 V ; Match some already matched string
-NREFF       REF,        no-sv 1 V ; Match already matched string, folded using native charset semantics for non-utf8
+NREFF       REF,        no-sv 1 V ; Match already matched string, folded using native charset rules for non-utf8
 NREFFL      REF,        no-sv 1 V ; Match already matched string, folded in loc.
-NREFFU      REF,        num   1 V ; Match already matched string, folded using unicode semantics for non-utf8
-NREFFA      REF,        num   1 V ; Match already matched string, folded using unicode semantics for non-utf8, no mixing ASCII, non-ASCII
+NREFFU      REF,        num   1 V ; Match already matched string, folded using unicode rules for non-utf8
+NREFFA      REF,        num   1 V ; Match already matched string, folded using unicode rules for non-utf8, no mixing ASCII, non-ASCII
 
 IFMATCH     BRANCHJ,    off 1 . 2 ; Succeeds if the following matches.
 UNLESSM     BRANCHJ,    off 1 . 2 ; Fails if the following matches.

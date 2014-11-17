@@ -71,7 +71,7 @@ view: one "character" is one Unicode code point.
 
 For some combinations of base character and modifiers, there are
 I<precomposed> characters.  There is a single character equivalent, for
-example, to the sequence C<LATIN CAPITAL LETTER A> followed by
+example, for the sequence C<LATIN CAPITAL LETTER A> followed by
 C<COMBINING ACUTE ACCENT>.  It is called  C<LATIN CAPITAL LETTER A WITH
 ACUTE>.  These precomposed characters are, however, only available for
 some combinations, and are mainly meant to support round-trip
@@ -109,7 +109,7 @@ C<block> of consecutive unallocated code points for its characters.  So
 far, the number of code points in these blocks has always been evenly
 divisible by 16.  Extras in a block, not currently needed, are left
 unallocated, for future growth.  But there have been occasions when
-a later relase needed more code points than the available extras, and a
+a later release needed more code points than the available extras, and a
 new block had to allocated somewhere else, not contiguous to the initial
 one, to handle the overflow.  Thus, it became apparent early on that
 "block" wasn't an adequate organizing principal, and so the C<Script>
@@ -461,8 +461,8 @@ UTF-8 encoded.  A C<use open ':encoding(utf8)'> would have avoided the
 bug, or explicitly opening also the F<file> for input as UTF-8.
 
 B<NOTE>: the C<:utf8> and C<:encoding> features work only if your
-Perl has been built with the new PerlIO feature (which is the default
-on most systems).
+Perl has been built with L<PerlIO>, which is the default
+on most systems.
 
 =head2 Displaying Unicode As Text
 
@@ -562,7 +562,7 @@ sections on case mapping in the L<Unicode Standard|http://www.unicode.org>.
 
 As of Perl 5.8.0, the "Full" case-folding of I<Case
 Mappings/SpecialCasing> is implemented, but bugs remain in C<qr//i> with them,
-mostly fixed by 5.14.
+mostly fixed by 5.14, and essentially entirely by 5.18.
 
 =item *
 
@@ -615,7 +615,7 @@ String-To-Number Conversions
 Unicode does define several other decimal--and numeric--characters
 besides the familiar 0 to 9, such as the Arabic and Indic digits.
 Perl does not support string-to-number conversion for digits other
-than ASCII 0 to 9 (and ASCII a to f for hexadecimal).
+than ASCII C<0> to C<9> (and ASCII C<a> to C<f> for hexadecimal).
 To get safe conversions from any Unicode string, use
 L<Unicode::UCD/num()>.
 
@@ -802,18 +802,22 @@ L<http://www.cl.cam.ac.uk/~mgk25/unicode.html>
 
 How Does Unicode Work With Traditional Locales?
 
-Starting in Perl 5.16, you can specify
+If your locale is a UTF-8 locale, starting in Perl v5.20, Perl works
+well for all categories except C<LC_COLLATE> dealing with sorting and
+the C<cmp> operator.
+
+For other locales, starting in Perl 5.16, you can specify
 
     use locale ':not_characters';
 
-to get Perl to work well with tradtional locales.  The catch is that you
+to get Perl to work well with them.  The catch is that you
 have to translate from the locale character set to/from Unicode
 yourself.  See L</Unicode IE<sol>O> above for how to
 
     use open ':locale';
 
 to accomplish this, but full details are in L<perllocale/Unicode and
-UTF-8>, including gotchas that happen if you don't specifiy
+UTF-8>, including gotchas that happen if you don't specify
 C<:not_characters>.
 
 =back

@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -13,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..501\n"; } # 1 + 50 x @Versions
+BEGIN { $| = 1; print "1..551\n"; } # 1 + 50 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -30,7 +33,7 @@ ok(1);
 
 #########################
 
-my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24, 26);
+my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24, 26, 28);
 
 for my $v (@Versions) {
     ok(Unicode::Collate::getHST(0x0000, $v), '');

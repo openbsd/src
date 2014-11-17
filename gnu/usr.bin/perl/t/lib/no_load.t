@@ -26,7 +26,7 @@ foreach my $test ([Carp  => qw(warnings Exporter)],
             use $module;
             print exists \$INC {'$exclude.pm'} ? "not ok" : "ok";
         --
-        fresh_perl_is ($prog, "ok", "", "$module does not load $exclude");
+        fresh_perl_is ($prog, "ok", {}, "$module does not load $exclude");
     }
 }
 

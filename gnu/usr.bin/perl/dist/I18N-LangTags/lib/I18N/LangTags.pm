@@ -19,7 +19,7 @@ require Exporter;
                );
 %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
-$VERSION = "0.39";
+$VERSION = "0.40";
 
 sub uniq { my %seen; return grep(!($seen{$_}++), @_); } # a util function
 
@@ -678,7 +678,7 @@ sub alternate_language_tags {
 
    # My guesses at Slavic intelligibility:
    ([qw(ru be uk)]) x 2,  # Russian, Belarusian, Ukranian
-   'sr' => 'hr', 'hr' => 'sr', # Serb + Croat
+   ([qw(sr hr bs)]) x 2,  # Serbian, Croatian, Bosnian
    'cs' => 'sk', 'sk' => 'cs', # Czech + Slovak
 
    'ms' => 'id', 'id' => 'ms', # Malay + Indonesian

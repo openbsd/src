@@ -1,6 +1,6 @@
 package integer;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME
 
@@ -38,7 +38,7 @@ integers, i.e., -(2**31) .. (2**31-1) on 32-bit architectures, and
     $z = 2.7;
     $a = 2**31 - 1;  # Largest positive integer on 32-bit machines
     $, = ", ";
-    print $x, -$x, $x + $y, $x - $y, $x / $y, $x * $y, $y == $z, $a, $a + 1;
+    print $x, -$x, $x+$y, $x-$y, $x/$y, $x*$y, $y==$z, $a, $a+1;
 
 will print:  5.8, -5, 7, 3, 2, 10, 1, 2147483647, -2147483648
 

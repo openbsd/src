@@ -11,7 +11,7 @@ package Pod::ParseUtils;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.60'; ## Current version of this package
+$VERSION = '1.62'; ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -26,6 +26,10 @@ Pod::ParseUtils - helpers for POD parsing and conversion
   my $link = Pod::Hyperlink->new('Pod::Parser');
 
 =head1 DESCRIPTION
+
+B<NOTE: This module is considered legacy; modern Perl releases (5.18 and
+higher) are going to remove Pod-Parser from core and use L<Pod-Simple>
+for all things POD.>
 
 B<Pod::ParseUtils> contains a few object-oriented helper packages for
 POD parsing and processing (i.e. in POD formatters and translators).
@@ -311,7 +315,7 @@ sub parse {
     # only page
     # problem: a lot of people use (), or (1) or the like to indicate
     # man page sections. But this collides with L<func()> that is supposed
-    # to point to an internal funtion...
+    # to point to an internal function...
     my $page_rx = '[\w.-]+(?:::[\w.-]+)*(?:[(](?:\d\w*|)[)]|)';
     # page name only
     if(/^($page_rx)$/o) {

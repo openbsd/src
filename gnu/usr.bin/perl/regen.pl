@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# regen.pl - a wrapper that runs all *.pl scripts to to autogenerate files
+# regen.pl - a wrapper that runs all *.pl scripts to autogenerate files
 
 require 5.004;	# keep this compatible, an old perl is all we may have before
                 # we build the new one
@@ -13,9 +13,15 @@ require 5.004;	# keep this compatible, an old perl is all we may have before
 
 use strict;
 
-# Which scripts to run.
+my $tap = $ARGV[0] && $ARGV[0] eq '--tap' ? '# ' : '';
+foreach my $pl (map {chomp; "regen/$_"} <DATA>) {
+  my @command =  ($^X, $pl, @ARGV);
+  print "$tap@command\n";
+  system @command
+    and die "@command failed: $?" 
+}
 
-my @scripts = qw(
+__END__
 mg_vtable.pl
 opcode.pl
 overload.pl
@@ -24,11 +30,3 @@ regcomp.pl
 warnings.pl
 embed.pl
 feature.pl
-);
-
-my $tap = $ARGV[0] && $ARGV[0] eq '--tap' ? '# ' : '';
-foreach my $pl (map {"regen/$_"} @scripts) {
-  my @command =  ($^X, $pl, @ARGV);
-  print "$tap@command\n";
-  system @command;
-}

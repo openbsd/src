@@ -1,6 +1,6 @@
 package warnings::register;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 =pod
 
@@ -16,8 +16,7 @@ warnings::register - warnings import function
 
 Creates a warnings category with the same name as the current package.
 
-See L<warnings> and L<perllexwarn> for more information on this module's
-usage.
+See L<warnings> for more information on this module's usage.
 
 =cut
 

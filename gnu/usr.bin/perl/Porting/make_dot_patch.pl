@@ -8,7 +8,7 @@ use warnings;
 # It tries to find which of our primary branches the sha1 can be found on,
 # and then prints to standard out something similar to what our rsync feed
 # would produce for that situation. The main difference being, in that case
-# we KNOW what branch we are on, and in this one we dont, and in that case
+# we KNOW what branch we are on, and in this one we don't, and in that case
 # the $tstamp field holds the time the snapshot was generated (so that multiple
 # fetches will always have an increasing tstamp field), however in this case
 # we use the commit date of the sha1.

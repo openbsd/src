@@ -1,5 +1,5 @@
-# LineBreak-6.2.0.txt
-# Date: 2012-08-08, 19:26:00 GMT [KW]
+# LineBreak-6.3.0.txt
+# Date: 2013-02-06, 19:45:00 GMT [KW, LI]
 #
 # Line Break Properties
 #
@@ -7,12 +7,12 @@
 # Unicode Character Database.
 # It contains both normative and informative data.
 #
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # The format is two fields separated by a semicolon.
 # Field 0: Unicode value
-# Field 1: LineBreak property, consisting of one of the following values:
+# Field 1: Line_Break property, consisting of one of the following values:
 #   Normative:
 #         "BK", "CR", "LF", "CM", "SG", "GL", "CB", "SP", "ZW",
 #         "NL", "WJ", "JL", "JV", "JT", "H2", "H3"
@@ -20,27 +20,31 @@
 #         "XX", "OP", "CL", "CP", "QU", "NS", "EX", "SY",
 #         "IS", "PR", "PO", "NU", "AL", "ID", "IN", "HY",
 #         "BB", "BA", "SA", "AI", "B2", "HL", "CJ", "RI"
-#  - All code points, assigned and unassigned, that are not listed 
+#  - All code points, assigned and unassigned, that are not listed
 #         explicitly are given the value "XX".
 # The unassigned code points that default to "ID" include ranges in the
 # following blocks:
 #     CJK Unified Ideographs Extension A:       U+3400..U+4DBF
 #     CJK Unified Ideographs:                   U+4E00..U+9FFF
 #     CJK Compatibility Ideographs:             U+F900..U+FAFF
-#     CJK Unified Ideographs Extension B:      U+20000..U+2A6DF 
+#     CJK Unified Ideographs Extension B:      U+20000..U+2A6DF
 #     CJK Unified Ideographs Extension C:      U+2A700..U+2B73F
 #     CJK Unified Ideographs Extension D:      U+2B740..U+2B81F
 #     CJK Compatibility Ideographs Supplement: U+2F800..U+2FA1F
 #     and any other reserved code points on
 #         Planes 2 and 3:                      U+20000..U+2FFFD
 #                                              U+30000..U+3FFFD
-#  - Characters ranges are specified as for other property files in
+# The unassigned code points that default to "PR" comprise a range in the
+# following block:
+#     Currency Symbols:                         U+20A0..U+20CF
+#  - Character ranges are specified as for other property files in
 #         the Unicode Character Database.
 #
 # The Unicode name of each character is provided in a comment for help
 # in identifying the characters.
 #
-# See UAX #14: Unicode Line Breaking Algorithm, for more information
+# For more information, see UAX #14: Unicode Line Breaking Algorithm,
+# at http://www.unicode.org/reports/tr14/
 #
 # @missing: 0000..10FFFF; XX
 0000;CM # <control>
@@ -1554,6 +1558,7 @@
 0619;CM # ARABIC SMALL DAMMA
 061A;CM # ARABIC SMALL KASRA
 061B;EX # ARABIC SEMICOLON
+061C;CM # ARABIC LETTER MARK
 061E;EX # ARABIC TRIPLE DOT PUNCTUATION MARK
 061F;EX # ARABIC QUESTION MARK
 0620;AL # ARABIC LETTER KASHMIRI YEH
@@ -7161,6 +7166,10 @@
 2062;AL # INVISIBLE TIMES
 2063;AL # INVISIBLE SEPARATOR
 2064;AL # INVISIBLE PLUS
+2066;CM # LEFT-TO-RIGHT ISOLATE
+2067;CM # RIGHT-TO-LEFT ISOLATE
+2068;CM # FIRST STRONG ISOLATE
+2069;CM # POP DIRECTIONAL ISOLATE
 206A;CM # INHIBIT SYMMETRIC SWAPPING
 206B;CM # ACTIVATE SYMMETRIC SWAPPING
 206C;CM # INHIBIT ARABIC FORM SHAPING
@@ -7236,6 +7245,7 @@
 20B8;PR # TENGE SIGN
 20B9;PR # INDIAN RUPEE SIGN
 20BA;PR # TURKISH LIRA SIGN
+20BB..20CF;PR # <reserved-20BB>..<reserved-20CF>
 20D0;CM # COMBINING LEFT HARPOON ABOVE
 20D1;CM # COMBINING RIGHT HARPOON ABOVE
 20D2;CM # COMBINING LONG VERTICAL LINE OVERLAY
@@ -10711,7 +10721,7 @@
 2FF9;ID # IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM UPPER RIGHT
 2FFA;ID # IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM LOWER LEFT
 2FFB;ID # IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID
-3000;ID # IDEOGRAPHIC SPACE
+3000;BA # IDEOGRAPHIC SPACE
 3001;CL # IDEOGRAPHIC COMMA
 3002;CL # IDEOGRAPHIC FULL STOP
 3003;ID # DITTO MARK
@@ -10764,7 +10774,7 @@
 3032;ID # VERTICAL KANA REPEAT WITH VOICED SOUND MARK
 3033;ID # VERTICAL KANA REPEAT MARK UPPER HALF
 3034;ID # VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
-3035;ID # VERTICAL KANA REPEAT MARK LOWER HALF
+3035;CM # VERTICAL KANA REPEAT MARK LOWER HALF
 3036;ID # CIRCLED POSTAL MARK
 3037;ID # IDEOGRAPHIC TELEGRAPH LINE FEED SEPARATOR SYMBOL
 3038;ID # HANGZHOU NUMERAL TEN

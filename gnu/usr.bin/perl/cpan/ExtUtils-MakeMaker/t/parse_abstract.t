@@ -70,3 +70,12 @@ test_abstract(<<END, "Foo", "the abstract", "more spaces");
 
 Foo   -  the abstract
 END
+
+test_abstract(<<END, "Catalyst::Plugin::Authentication", "Infrastructure plugin for the Catalyst authentication framework.", "contains a line break");
+=pod
+
+=head1 NAME
+
+Catalyst::Plugin::Authentication - Infrastructure plugin for the Catalyst
+authentication framework.
+END

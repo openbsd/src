@@ -112,14 +112,14 @@ BEGIN {
         ExtUtils::Command::chmod();
 
         is( ((stat($Testfile))[2] & 07777) & 0700,
-            ($^O eq 'vos' ? 0500 : 0400), 'change a file to read-only' );
+            0400, 'change a file to read-only' );
 
         # change a file to write-only
         @ARGV = ( '0200', $Testfile );
         ExtUtils::Command::chmod();
 
         is( ((stat($Testfile))[2] & 07777) & 0700,
-            ($^O eq 'vos' ? 0700 : 0200), 'change a file to write-only' );
+            0200, 'change a file to write-only' );
     }
 
     # change a file to read-write
@@ -129,7 +129,7 @@ BEGIN {
     is_deeply( \@ARGV, \@orig_argv, 'chmod preserves @ARGV' );
 
     is( ((stat($Testfile))[2] & 07777) & 0700,
-        ($^O eq 'vos' ? 0700 : 0600), 'change a file to read-write' );
+        0600, 'change a file to read-write' );
 
 
     SKIP: {
@@ -156,14 +156,14 @@ BEGIN {
         ExtUtils::Command::chmod();
 
         is( ((stat('testdir'))[2] & 07777) & 0700,
-            ($^O eq 'vos' ? 0500 : 0400), 'change a dir to read-only' );
+            0400, 'change a dir to read-only' );
 
         # change a dir to write-only
         @ARGV = ( '0200', 'testdir' );
         ExtUtils::Command::chmod();
 
         is( ((stat('testdir'))[2] & 07777) & 0700,
-            ($^O eq 'vos' ? 0700 : 0200), 'change a dir to write-only' );
+            0200, 'change a dir to write-only' );
 
         @ARGV = ('testdir');
         rm_rf;

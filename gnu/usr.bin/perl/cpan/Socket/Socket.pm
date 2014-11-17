@@ -3,7 +3,7 @@ package Socket;
 use strict;
 { use 5.006001; }
 
-our $VERSION = '2.009';
+our $VERSION = '2.013';
 
 =head1 NAME
 
@@ -107,6 +107,10 @@ C<SOL_SOCKET> level.
 
 Socket option name constants for IPv4 socket options at the C<IPPROTO_IP>
 level.
+
+=head2 IPTOS_LOWDELAY, IPTOS_THROUGHPUT, IPTOS_RELIABILITY, ...
+
+Socket option value constants for C<IP_TOS> socket option.
 
 =head2 MSG_BCAST, MSG_OOB, MSG_TRUNC, ...
 
@@ -578,8 +582,8 @@ service on the named host.
  print <$sock>;
 
 Because a list of potential candidates is returned, the C<while> loop tries
-each in turn until it it finds one that succeeds both the socket() and
-connect() calls.
+each in turn until it finds one that succeeds both the socket() and connect()
+calls.
 
 This function performs the work of the legacy functions gethostbyname(),
 getservbyname(), inet_aton() and pack_sockaddr_in().
@@ -758,6 +762,8 @@ our @EXPORT_OK = qw(
 
 	IPPROTO_IP IPPROTO_IPV6 IPPROTO_RAW IPPROTO_ICMP IPPROTO_TCP
 	IPPROTO_UDP
+
+	IPTOS_LOWDELAY IPTOS_THROUGHPUT IPTOS_RELIABILITY IPTOS_MINCOST
 
 	TCP_CONGESTION TCP_CONNECTIONTIMEOUT TCP_CORK TCP_DEFER_ACCEPT TCP_INFO
 	TCP_INIT_CWND TCP_KEEPALIVE TCP_KEEPCNT TCP_KEEPIDLE TCP_KEEPINTVL

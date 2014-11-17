@@ -118,15 +118,15 @@ sub run
             # In this case the uncompression object will have been created,
             # so need to check that subsequent reads from the object fail
             if ($header_size > 0)
-            {
-                my $lex = new LexFile my $name ;
-                my $input;
-            
+            {            
                 for my $mode (qw(block line para record slurp))
                 {
 
                     title "Corruption after header - Mode $mode, Source $fb, Transparent $trans";
-
+                    
+                    my $lex = new LexFile my $name ;
+                    my $input;
+                
                     my $part = substr($compressed, 0, $header_size);
                     # Append corrupt data
                     $part .= "\xFF" x 100 ;
@@ -188,15 +188,15 @@ sub run
             foreach my $i ($header_size .. length($compressed) - 1 - $trailer_size)
             {
                 next if $i == 0 ;
-
-                my $lex = new LexFile my $name ;
-                my $input;
-            
+         
                 for my $mode (qw(block line))
                 {
 
                     title "Compressed Data Truncation - length $i, MOde $mode, Source $fb, Transparent $trans";
 
+                    my $lex = new LexFile my $name ;
+                    my $input;
+                
                     my $part = substr($compressed, 0, $i);
                     if ($fb eq 'filehandle')
                     {

@@ -13,7 +13,7 @@ use Archive::Tar::Constant;
 
 use vars qw[@ISA $VERSION];
 #@ISA        = qw[Archive::Tar];
-$VERSION    = '1.90';
+$VERSION    = '1.96';
 
 ### set value to 1 to oct() it during the unpack ###
 
@@ -224,7 +224,7 @@ sub _new_from_chunk {
 
 
     if(substr($entry{'size'}, 0, 1) eq "\x80") {	# binary size extension for files >8gigs (> octal 77777777777777)	# cdrake
-      my @sz=unpack("aCSNN",$entry{'size'}); $entry{'size'}=$sz[4]+(2**32)*$sz[3]+$sz[2]*(2**64);	# Use the low 80 bits (should use the upper 15 as well, but as at year 2011, that seems unlikley to ever be needed - the numbers are just too big...) # cdrake
+      my @sz=unpack("aCSNN",$entry{'size'}); $entry{'size'}=$sz[4]+(2**32)*$sz[3]+$sz[2]*(2**64);	# Use the low 80 bits (should use the upper 15 as well, but as at year 2011, that seems unlikely to ever be needed - the numbers are just too big...) # cdrake
     } else {	# cdrake
       ($entry{'size'})=($entry{'size'}=~/^([^\0]*)/); $entry{'size'}=oct $entry{'size'};	# cdrake
     }	# cdrake
@@ -481,7 +481,7 @@ concatenation of the C<prefix> and C<name> fields.
 sub full_path {
     my $self = shift;
 
-    ### if prefix field is emtpy
+    ### if prefix field is empty
     return $self->name unless defined $self->prefix and length $self->prefix;
 
     ### or otherwise, catfile'd

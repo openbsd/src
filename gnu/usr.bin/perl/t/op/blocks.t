@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 6;
+plan tests => 7;
 
 my @expect = qw(
 b1
@@ -142,3 +142,6 @@ void
 void
 void
 expEct
+
+fresh_perl_is('END { print "ok\n" } INIT { bless {} and exit }', "ok\n",
+	       {}, 'null PL_curcop in newGP');

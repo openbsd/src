@@ -6,7 +6,9 @@ BEGIN {
     unshift @INC, 't/lib';
 }
 
-chdir 't';
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 use strict;
 use Test::More tests => 5;

@@ -34,8 +34,12 @@
 
 #define AllowAnyUTF (UTF8_ALLOW_SURROGATE|UTF8_ALLOW_BOM|UTF8_ALLOW_FE_FF|UTF8_ALLOW_FFFF)
 
-/* if utf8n_to_uvuni() sets retlen to 0 (?) */
-#define ErrRetlenIsZero "panic (Unicode::Collate): zero-length character"
+/* perl 5.6.x workaround, before 5.8.0 */
+#ifdef utf8n_to_uvuni
+#define GET_UV_FOR_5_6	utf8n_to_uvuni(p, e - p, &retlen, AllowAnyUTF)
+#else
+#define GET_UV_FOR_5_6	retlen = 1 /* avoid an infinite loop */
+#endif /* utf8n_to_uvuni */
 
 /* At present, char > 0x10ffff are unaffected without complaint, right? */
 #define VALID_UTF_MAX    (0x10ffff)
@@ -210,22 +214,8 @@ _isIllegal (sv)
 	XSRETURN_YES;
     uv = SvUVX(sv);
     RETVAL = boolSV(
-	   0x10FFFF < uv		   /* out of range */
-    );
-OUTPUT:
-    RETVAL
-
-
-SV*
-_isNonchar (sv)
-    SV* sv
-  PREINIT:
-    UV uv;
-  CODE:
-    /* should be called only if ! _isIllegal(sv). */
-    uv = SvUVX(sv);
-    RETVAL = boolSV(
-	   ((uv & 0xFFFE) == 0xFFFE)       /* ??FFF[EF] (cf. utf8.c) */
+	   0x10FFFF < uv                   /* out of range */
+	|| ((uv & 0xFFFE) == 0xFFFE)       /* ??FFF[EF] */
 	|| (0xD800 <= uv && uv <= 0xDFFF)  /* unpaired surrogates */
 	|| (0xFDD0 <= uv && uv <= 0xFDEF)  /* other non-characters */
     );
@@ -702,7 +692,7 @@ OUTPUT:
 
 
 void
-unpack_U (src)
+unpackUfor56 (src)
     SV* src
   PREINIT:
     STRLEN srclen, retlen;
@@ -720,9 +710,9 @@ unpack_U (src)
     e = s + srclen;
 
     for (p = s; p < e; p += retlen) {
-	uv = utf8n_to_uvuni(p, e - p, &retlen, AllowAnyUTF);
+	uv = GET_UV_FOR_5_6; /* perl 5.6.x workaround */
 	if (!retlen)
-	    croak(ErrRetlenIsZero);
+	    croak("panic (Unicode::Collate): zero-length character");
 	XPUSHs(sv_2mortal(newSVuv(uv)));
     }
 

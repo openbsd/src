@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan( tests => 91 );
+    plan( tests => 95 );
 }
 
 my @c;
@@ -111,8 +111,8 @@ sub testwarn {
 
     # The repetition number must be set to the value of $BYTES in
     # lib/warnings.pm
-    BEGIN { check_bits( ${^WARNING_BITS}, "\0" x 14, 'all bits off via "no warnings"' ) }
-    testwarn("\0" x 14, 'no bits');
+    BEGIN { check_bits( ${^WARNING_BITS}, "\0" x 15, 'all bits off via "no warnings"' ) }
+    testwarn("\0" x 15, 'no bits');
 
     use warnings;
     BEGIN { check_bits( ${^WARNING_BITS}, $default,
@@ -269,6 +269,19 @@ END
 is eval "(caller 0)[6]", "(caller 0)[6]",
   'eval text returned by caller does not include \n;';
 
+if (1) {
+    is (sub { (caller)[2] }->(), __LINE__,
+      '[perl #115768] caller gets line numbers from nulled cops');
+}
+# Test it at the end of the program, too.
+fresh_perl_is(<<'115768', 2, {},
+  if (1) {
+    foo();
+  }
+  sub foo { print +(caller)[2] }
+115768
+    '[perl #115768] caller gets line numbers from nulled cops (2)');
+
 # PL_linestr should not be modifiable
 eval '"${;BEGIN{  ${\(caller 2)[6]} = *foo  }}"';
 pass "no assertion failure after modifying eval text via caller";
@@ -296,6 +309,26 @@ is eval "s//<<END/e;\nfoo\nEND\n(caller 0)[6]",
  ';
  is $w, 1, 'value from (caller 0)[9] (bitmask) works in ${^WARNING_BITS}';
 }
+
+# This was fixed with commit d4d03940c58a0177, which fixed bug #78742
+fresh_perl_is <<'END', "__ANON__::doof\n", {},
+package foo;
+BEGIN {undef %foo::}
+sub doof { caller(0) }
+print +(doof())[3];
+END
+    "caller should not SEGV when the current package is undefined";
+
+# caller should not SEGV when the eval entry has been cleared #120998
+fresh_perl_is <<'END', 'main', {},
+$SIG{__DIE__} = \&dbdie;
+eval '/x';
+sub dbdie {
+    @x = caller(1);
+    print $x[0];
+}
+END
+    "caller should not SEGV for eval '' stack frames";
 
 $::testing_caller = 1;
 

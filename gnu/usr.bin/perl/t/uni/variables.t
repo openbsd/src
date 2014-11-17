@@ -12,7 +12,7 @@ use utf8;
 use open qw( :utf8 :std );
 no warnings qw(misc reserved);
 
-plan (tests => 65869);
+plan (tests => 65880);
 
 # ${single:colon} should not be valid syntax
 {
@@ -55,6 +55,8 @@ plan (tests => 65869);
 
 # Checking that at least some of the special variables work
 for my $v (qw( ^V ; < > ( ) {^GLOBAL_PHASE} ^W _ 1 4 0 [ ] ! @ / \ = )) {
+  SKIP: {
+    skip_if_miniperl('No $[ under miniperl', 2) if $v eq '[';
     local $@;
     evalbytes "\$$v;";
     is $@, '', "No syntax error for \$$v";
@@ -62,6 +64,7 @@ for my $v (qw( ^V ; < > ( ) {^GLOBAL_PHASE} ^W _ 1 4 0 [ ] ! @ / \ = )) {
     local $@;
     eval "use utf8; \$$v;";
     is $@, '', "No syntax error for \$$v under use utf8";
+  }
 }
 
 # Checking if the Latin-1 range behaves as expected, and that the behavior is the
@@ -202,7 +205,7 @@ EOP
     }
 }
 
-{
+{    
     # bleadperl v5.17.9-109-g3283393 breaks JEREMY/File-Signature-1.009.tar.gz
     # https://rt.perl.org/rt3/Ticket/Display.html?id=117145
     local $@;
@@ -217,6 +220,9 @@ EOP
 
     {
         no strict;
+        # Silence the deprecation warning for literal controls
+        no warnings 'deprecated';
+
         for my $var ( '$', "\7LOBAL_PHASE", "^GLOBAL_PHASE", "^V" ) {
             eval "\${ $var}";
             is($@, '', "\${ $var} works" );
@@ -226,4 +232,62 @@ EOP
             is($@, '', "\${ $var } works" );
         }
     }
+}
+
+{
+    is(
+        "".eval "*{\nOIN}",
+        "*main::OIN",
+        "Newlines at the start of an identifier should be skipped over"
+    );
+    
+    
+    is(
+        "".eval "*{^JOIN}",
+        "*main::\nOIN",
+        "...but \$^J is still legal"
+    );
+    
+    no warnings 'deprecated';
+    my $ret = eval "\${\cT\n}";
+    is($@, "", 'No errors from using ${\n\cT\n}');
+    is($ret, $^T, "...and we got the right value");
+}
+
+{
+    # Originally from t/base/lex.t, moved here since we can't
+    # turn deprecation warnings off in that file.
+    no strict;
+    no warnings 'deprecated';
+    
+    my $CX  = "\cX";
+    $ {$CX} = 17;
+    
+    # Does the syntax where we use the literal control character still work?
+    is(
+       eval "\$ {\cX}",
+       17,
+       "Literal control character variables work"
+    );
+
+    eval "\$\cQ = 24";                 # Literal control character
+    is($@, "", "...and they can be assigned to without error");
+    is(${"\cQ"}, 24, "...and the assignment works");
+    is($^Q, 24, "...even if we access the variable through the caret name");
+    is(\${"\cQ"}, \$^Q, '\${\cQ} == \$^Q');
+}
+
+{
+    # Prior to 5.19.4, the following changed behavior depending
+    # on the presence of the newline after '@{'.
+    sub foo (&) { [1] }
+    my %foo = (a=>2);
+    my $ret = @{ foo { "a" } };
+    is($ret, $foo{a}, '@{ foo { "a" } } is parsed as @foo{a}');
+    
+    $ret = @{
+            foo { "a" }
+        };
+    is($ret, $foo{a}, '@{\nfoo { "a" } } is still parsed as @foo{a}');
+
 }

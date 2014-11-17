@@ -933,10 +933,10 @@ typedef int		(*LPProcExecv)(struct IPerlProc*, const char*,
 			    const char*const*);
 typedef int		(*LPProcExecvp)(struct IPerlProc*, const char*,
 			    const char*const*);
-typedef uid_t		(*LPProcGetuid)(struct IPerlProc*);
-typedef uid_t		(*LPProcGeteuid)(struct IPerlProc*);
-typedef gid_t		(*LPProcGetgid)(struct IPerlProc*);
-typedef gid_t		(*LPProcGetegid)(struct IPerlProc*);
+typedef Uid_t		(*LPProcGetuid)(struct IPerlProc*);
+typedef Uid_t		(*LPProcGeteuid)(struct IPerlProc*);
+typedef Gid_t		(*LPProcGetgid)(struct IPerlProc*);
+typedef Gid_t		(*LPProcGetegid)(struct IPerlProc*);
 typedef char*		(*LPProcGetlogin)(struct IPerlProc*);
 typedef int		(*LPProcKill)(struct IPerlProc*, int, int);
 typedef int		(*LPProcKillpg)(struct IPerlProc*, int, int);

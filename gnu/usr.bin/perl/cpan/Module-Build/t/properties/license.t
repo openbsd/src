@@ -30,8 +30,8 @@ blib_load('Module::Build');
 
   my $meta = $mb->get_metadata( fatal => 0 );
   
-  is( $meta->{license} => 'perl', "META license will be 'perl'" );
-  is( $meta->{resources}{license}, "http://dev.perl.org/licenses/", 
+  is_deeply( $meta->{license} => [ 'perl_5' ], "META license will be 'perl'" );
+  is_deeply( $meta->{resources}{license}, [ "http://dev.perl.org/licenses/" ], 
     "META license URL is correct" 
   );
 
@@ -55,8 +55,8 @@ blib_load('Module::Build');
 
   my $meta = $mb->get_metadata( fatal => 0 );
   
-  is( $meta->{license} => 'unrestricted', "META license will be 'unrestricted'" );
-  is( $meta->{resources}{license}, "http://example.com/vaporware/", 
+  is_deeply( $meta->{license} => [ 'unrestricted' ], "META license will be 'unrestricted'" );
+  is_deeply( $meta->{resources}{license}, [ "http://example.com/vaporware/" ], 
     "META license URL is correct" 
   );
 

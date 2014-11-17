@@ -1,6 +1,7 @@
 package DistGen;
 
 use strict;
+use warnings;
 
 use vars qw( $VERSION $VERBOSE @EXPORT_OK);
 
@@ -182,6 +183,7 @@ sub _gen_default_filedata {
       \$VERSION = '0.01';
 
       use strict;
+      use warnings;
 
       1;
 
@@ -205,6 +207,7 @@ sub _gen_default_filedata {
   $self->$add_unless('t/basic.t', undent(<<"    ---"));
     use Test::More tests => 1;
     use strict;
+    use warnings;
 
     use $self->{name};
     ok 1;
@@ -470,6 +473,7 @@ sub change_build_pl {
 
   $self->change_file( 'Build.PL', undent(<<"    ---") );
     use strict;
+    use warnings;
     use Module::Build;
     my \$b = Module::Build->new(
     # Some CPANPLUS::Dist::Build versions need to allow mismatches

@@ -16,7 +16,7 @@ text.
 Program to prepare dual-life distributions for insertion into the Perl 5
 F<lib/> and F<t/> directories.  Now thought to be largely superseded.
 
-=head2 F<bisect-example.sh>, F<bisect-runner.pl> and F<bisect.pl>
+=head2 F<bisect-example.sh>, F<bisect.pl> and F<bisect-runner.pl>
 
 Use C<git bisect> to pinpoint changes.
 
@@ -30,22 +30,13 @@ number in various files within the perl source.
 Performs pathname portability checks, including whether there are naming
 conflicts when names are truncated to the DOSish, case-ignoring 8.3 format.
 
-=head2 F<checkAUTHORS.pl>
-
-Used by F<t/porting/authors.t> to ensure the F<AUTHORS> list is up to date.
-
-=head2 F<checkURL.pl>
-
-Checks that all the URLs in the Perl source are valid.
-
-=head2 F<checkVERSION.pl>
-
-Used by F<t/porting/cmp_version.t> to ensure changed modules have had their
-versions updated.
-
 =head2 F<checkansi.pl>
 
 Check source code for ANSI-C violations.
+
+=head2 F<checkAUTHORS.pl>
+
+Used by F<t/porting/authors.t> to ensure the F<AUTHORS> list is up to date.
 
 =head2 F<checkcfgvar.pl>
 
@@ -68,6 +59,15 @@ F<MANIFEST>).
 
 Check if POD files contain non-ASCII without specifying
 encoding. Run it as: C<perl Porting/checkpodencoding.pl>.
+
+=head2 F<checkURL.pl>
+
+Checks that all the URLs in the Perl source are valid.
+
+=head2 F<checkVERSION.pl>
+
+Used by F<t/porting/cmp_version.t> to ensure changed modules have had their
+versions updated.
 
 =head2 F<cherrymaint>
 
@@ -114,15 +114,15 @@ same version than the corresponding module on CPAN.
 Prints a table of differences between two Perl versions with respect to
 modules included in the distribution.
 
-=head2 F<corelist.pl>
-
-Generates info for Module::CoreList from this perl tree.
-
 =head2 F<corelist-perldelta.pl>
 
 Generates a list of the module changes for the Perl you are currently
 building.  Also generates a diff between the corelist sections of two
 F<perldelta*> files.
+
+=head2 F<corelist.pl>
+
+Generates info for Module::CoreList from this perl tree.
 
 =head2 F<epigraphs.pod>
 
@@ -146,13 +146,6 @@ Expand C macros using the C preprocessor.
 This script finds reentrant variants of functions used in an executable and
 shared objects.
 
-=head2 F<GitUtils.pm>
-
-This script contains the subroutine to generate a F<.patch file> for a
-committish (the SHA1 checksum of a commit, a number made of 40 hexadecimal
-digits which acts the internal unique identifier for this commit
-(lilypond.org).  Related file: F<make_dot_patch.pl>
-
 =head2 F<git-deltatool>
 
 This script, a rough draft, aids in generating a perldelta file
@@ -166,6 +159,13 @@ id.
 =head2 F<git-make-p4-refs>
 
 This script creates a tag for every p4raw-id.
+
+=head2 F<GitUtils.pm>
+
+This script contains the subroutine to generate a F<.patch file> for a
+committish (the SHA1 checksum of a commit, a number made of 40 hexadecimal
+digits which acts the internal unique identifier for this commit
+(lilypond.org).  Related file: F<make_dot_patch.pl>
 
 =head2 F<Glossary>
 
@@ -201,31 +201,31 @@ F<Maintainers>, F<Maintainers.pm>
 A package to search and show information about which core files/modules are
 associated with maintainers.  Related files: F<Maintainers>, F<Maintainers.pl>
 
-=head2 F<make-rmg-checklist>
-
-This script creates a release checklist as a simple HTML document.
-
 =head2 F<make_dot_patch.pl>
 
 Generate a F<.patch> file to STDOUT for a commit ID specified on the
 command-line.
 
+=head2 F<makemeta>
+
+This script creates F<META.yml> and F<META.json> files.
+
 =head2 F<make_modlib_cpan.pl>
 
 This script generates the list of registered CPAN sites in F<perlmodlib.PL>.
+
+=head2 F<makerel>
+
+This script builds a Perl release tarball.
+
+=head2 F<make-rmg-checklist>
+
+This script creates a release checklist as a simple HTML document.
 
 =head2 F<make_snapshot.pl>
 
 This script is a quick and dirty snapshot generator for the perl5.git.perl.org
 web page to use to generate the snapshot files. 
-
-=head2 F<makemeta>
-
-This script creates F<META.yml> and F<META.json> files.
-
-=head2 F<makerel>
-
-This script builds a Perl release tarball.
 
 =head2 F<manicheck>
 
@@ -279,6 +279,13 @@ Pumpkin - Notes on handling the Perl Patch Pumpkin And Porting Perl.
 Many of these are out of date or superseded by other documents in 
 this directory.
 
+=head2 F<README.pod>
+
+This file.  An exhaustive list of the contents of the F<Porting/>
+directory along with a description of each file.
+The test F<t/porting/readme.t> ensures that this lists every file
+and that every file is listed.
+
 =head2 F<README.y2038>
 
 The y2038 implementation for perl. This is an implementation of POSIX time.h
@@ -288,7 +295,7 @@ L<http://y2038.googlecode.com/>.
 
 =head2 F<release_announcement_template.txt>
 
-Release announcment for minor releasements of the 5.17 development series.
+Release announcement for minor releasements of the 5.19 development series.
 
 =head2 F<release_managers_guide.pod>
 
@@ -312,18 +319,9 @@ This is a script for sorting the warning and error messages in
 F<perldiag.pod>.  POD formatting, printf-style escapes, non-letter characters,
 and case are ignored, as explained in L<perldiag>.
 
-=head2 F<testall.atom>
+=head2 F<sync-with-cpan>
 
-Test suite profiling on Tru 64.
-
-=head2 F<thirdclean>
-
-Script for cleaning out the "known noise" from Third Degree reports: either
-noise caused by F<libc> itself, or F<Perl_yyparse> leaks.
-
-=head2 F<time>
-
-A helper tool for perl's 2038 support. See F<Porting/README.y2038> for details.
+Script to help out with syncing cpan distros.
 
 =head2 F<timecheck2.c>
 
@@ -340,7 +338,7 @@ This is a list of wishes for Perl. The most up-to-date version of this file is
 at L<http://perl5.git.perl.org/perl.git/blob_plain/HEAD:/Porting/todo.pod>.
 The tasks we think are smaller or easier are listed first.  Anyone is welcome
 to work on any of these, but it's a good idea to first contact
-F<perl5-porters@perl.org> to avoid duplication of effort, and to learn from
+I<perl5-porters@perl.org> to avoid duplication of effort, and to learn from
 any previous attempts.
 
 =head2 F<valgrindpp.pl>

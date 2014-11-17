@@ -1,8 +1,9 @@
 package Test::Harness;
 
-require 5.00405;
+use 5.006;
 
 use strict;
+use warnings;
 
 use constant IS_WIN32 => ( $^O =~ /^(MS)?Win32$/ );
 use constant IS_VMS => ( $^O eq 'VMS' );
@@ -12,32 +13,16 @@ use TAP::Parser::Aggregator          ();
 use TAP::Parser::Source              ();
 use TAP::Parser::SourceHandler::Perl ();
 
-use TAP::Parser::Utils qw( split_shell );
+use Text::ParseWords qw(shellwords);
 
 use Config;
-use Exporter;
-
-# TODO: Emulate at least some of these
-use vars qw(
-  $VERSION
-  @ISA @EXPORT @EXPORT_OK
-  $Verbose $Switches $Debug
-  $verbose $switches $debug
-  $Columns
-  $Color
-  $Directives
-  $Timer
-  $Strap
-  $HarnessSubclass
-  $has_time_hires
-  $IgnoreExit
-);
+use base 'Exporter';
 
 # $ML $Last_ML_Print
 
 BEGIN {
     eval q{use Time::HiRes 'time'};
-    $has_time_hires = !$@;
+    our $has_time_hires = !$@;
 }
 
 =head1 NAME
@@ -46,11 +31,11 @@ Test::Harness - Run Perl standard test scripts with statistics
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 # Backwards compatibility for exportable variable names.
 *verbose  = *Verbose;
@@ -67,18 +52,17 @@ END {
     delete $ENV{HARNESS_VERSION};
 }
 
-@ISA       = ('Exporter');
-@EXPORT    = qw(&runtests);
-@EXPORT_OK = qw(&execute_tests $verbose $switches);
+our @EXPORT    = qw(&runtests);
+our @EXPORT_OK = qw(&execute_tests $verbose $switches);
 
-$Verbose = $ENV{HARNESS_VERBOSE} || 0;
-$Debug   = $ENV{HARNESS_DEBUG}   || 0;
-$Switches = '';
-$Columns = $ENV{HARNESS_COLUMNS} || $ENV{COLUMNS} || 80;
+our $Verbose = $ENV{HARNESS_VERBOSE} || 0;
+our $Debug   = $ENV{HARNESS_DEBUG}   || 0;
+our $Switches = '-w';
+our $Columns = $ENV{HARNESS_COLUMNS} || $ENV{COLUMNS} || 80;
 $Columns--;    # Some shells have trouble with a full line of text.
-$Timer      = $ENV{HARNESS_TIMER}       || 0;
-$Color      = $ENV{HARNESS_COLOR}       || 0;
-$IgnoreExit = $ENV{HARNESS_IGNORE_EXIT} || 0;
+our $Timer      = $ENV{HARNESS_TIMER}       || 0;
+our $Color      = $ENV{HARNESS_COLOR}       || 0;
+our $IgnoreExit = $ENV{HARNESS_IGNORE_EXIT} || 0;
 
 =head1 SYNOPSIS
 
@@ -209,7 +193,7 @@ sub _new_harness {
     my $sub_args = shift || {};
 
     my ( @lib, @switches );
-    my @opt = split_shell( $Switches, $ENV{HARNESS_PERL_SWITCHES} );
+    my @opt = map { shellwords($_) } grep { defined } $Switches, $ENV{HARNESS_PERL_SWITCHES};
     while ( my $opt = shift @opt ) {
         if ( $opt =~ /^ -I (.*) $ /x ) {
             push @lib, length($1) ? $1 : shift @opt;
@@ -227,7 +211,7 @@ sub _new_harness {
 
     my $args = {
         timer       => $Timer,
-        directives  => $Directives,
+        directives  => our $Directives,
         lib         => \@lib,
         switches    => \@switches,
         color       => $Color,
@@ -519,6 +503,17 @@ This is the version of C<Test::Harness>.
 
 =over 4
 
+=item C<HARNESS_PERL_SWITCHES>
+
+Setting this adds perl command line switches to each test file run.
+
+For example, C<HARNESS_PERL_SWITCHES=-T> will turn on taint mode.
+C<HARNESS_PERL_SWITCHES=-MDevel::Cover> will run C<Devel::Cover> for
+each test.
+
+C<-w> is always set.  You can turn this off in the test with C<BEGIN {
+$^W = 0 }>.
+
 =item C<HARNESS_TIMER>
 
 Setting this to true will make the harness display the number of
@@ -564,6 +559,16 @@ Multiple options may be separated by colons:
 =item C<HARNESS_SUBCLASS>
 
 Specifies a TAP::Harness subclass to be used in place of TAP::Harness.
+
+=item C<HARNESS_SUMMARY_COLOR_SUCCESS>
+
+Determines the L<Term::ANSIColor> for the summary in case it is successful.
+This color defaults to C<'green'>.
+
+=item C<HARNESS_SUMMARY_COLOR_FAIL>
+
+Determines the L<Term::ANSIColor> for the failure in case it is successful.
+This color defaults to C<'red'>.
 
 =back
 

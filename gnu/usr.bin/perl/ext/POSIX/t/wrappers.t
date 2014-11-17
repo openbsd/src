@@ -9,8 +9,13 @@ plan(skip_all => "POSIX is unavailable")
 
 require POSIX;
 require Symbol;
+require File::Temp;
 
 use constant NOT_HERE => 'this-file-should-not-exist';
+
+# Object destruction causes the file to be deleted.
+my $temp_fh = File::Temp->new();
+my $temp_file = $temp_fh->filename;
 
 # localtime and gmtime in time.t.
 # exit, fork, waitpid, sleep in waitpid.t
@@ -36,7 +41,7 @@ is(do {local $^W;
 
 SKIP: {
     # Win32 doesn't like me trying to fstat STDIN. Bothersome thing.
-    skip("Can't open $^X: $!", 1) unless open my $fh, '<', $^X;
+    skip("Can't open $temp_file: $!", 1) unless open my $fh, '<', $temp_file;
 
     is_deeply([POSIX::fstat(fileno $fh)], [stat $fh], 'fstat');
 }
@@ -108,7 +113,7 @@ is(POSIX::sin(0), 0, 'sin');
 is(POSIX::sleep(0), 0, 'sleep');
 is(POSIX::sprintf('%o', 42), '52', 'sprintf');
 is(POSIX::sqrt(256), 16, 'sqrt');
-is_deeply([POSIX::stat($^X)], [stat $^X], 'stat');
+is_deeply([POSIX::stat($temp_file)], [stat $temp_file], 'stat');
 {
     local $! = 2;
     my $error = "$!";

@@ -25,7 +25,7 @@ my @character_set = ('0'..'9', 'A'..'Z', 'a'..'z');
 my @source = qw(ascii iso8859-1 cp1250);
 my @destiny = qw(cp1047 cp37 posix-bc);
 my @ebcdic_sets = qw(cp1047 cp37 posix-bc);
-plan test => 38+$n*@encodings + 2*@source*@destiny*@character_set + 2*@ebcdic_sets*256 + 6 + 4;
+plan test => 38+$n*@encodings + 2*@source*@destiny*@character_set + 2*@ebcdic_sets*256 + 6 + 5;
 my $str = join('',map(chr($_),0x20..0x7E));
 my $cpy = $str;
 ok(length($str),from_to($cpy,'iso8859-1','Unicode'),"Length Wrong");
@@ -149,6 +149,10 @@ sub new { my $class = shift; bless [ @_  ] => $class }
 package main;
 ok(decode(latin1 => Encode::Dummy->new("foobar")), "foobar");
 ok(encode(utf8   => Encode::Dummy->new("foobar")), "foobar");
+
+# RT#91569
+# decode_utf8 with non-string arguments
+ok(decode_utf8(*1), "*main::1");
 
 # hash keys
 my $key = (keys %{{ "whatever\x{100}" => '' }})[0];

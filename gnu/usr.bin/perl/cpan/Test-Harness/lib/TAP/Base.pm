@@ -1,11 +1,9 @@
 package TAP::Base;
 
 use strict;
-use vars qw($VERSION @ISA);
+use warnings;
 
-use TAP::Object;
-
-@ISA = qw(TAP::Object);
+use base 'TAP::Object';
 
 =head1 NAME
 
@@ -14,11 +12,11 @@ and L<TAP::Harness>
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 use constant GOT_TIME_HIRES => do {
     eval 'use Time::HiRes qw(time);';
@@ -29,10 +27,7 @@ use constant GOT_TIME_HIRES => do {
 
     package TAP::Whatever;
 
-    use TAP::Base;
-    
-    use vars qw($VERSION @ISA);
-    @ISA = qw(TAP::Base);
+    use base 'TAP::Base';
 
     # ... later ...
     

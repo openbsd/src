@@ -83,6 +83,7 @@ my $mb = Module::Build->new_from_context(
       ( installsitehtml1dir => catdir($tmp, 'site', 'html'),
         installsitehtml3dir => catdir($tmp, 'site', 'html') ) : () ),
   },
+  html_links => 0,
 );
 
 
@@ -163,6 +164,7 @@ SKIP: {
       installsiteman1dir  => catdir($tmp, 'site', 'man', 'man1'),
       installsiteman3dir  => catdir($tmp, 'site', 'man', 'man3'),
     },
+    html_links => 0,
   );
 
   $mb->dispatch('ppmdist');

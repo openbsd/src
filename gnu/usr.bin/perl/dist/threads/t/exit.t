@@ -48,7 +48,7 @@ my $rc = $thr->join();
 ok(! defined($rc), 'Exited: threads->exit()');
 
 
-run_perl(prog => 'use threads 1.86;' .
+run_perl(prog => 'use threads 1.92;' .
                  'threads->exit(86);' .
                  'exit(99);',
          nolib => ($ENV{PERL_CORE}) ? 0 : 1,
@@ -98,7 +98,7 @@ $rc = $thr->join();
 ok(! defined($rc), 'Exited: $thr->set_thread_exit_only');
 
 
-run_perl(prog => 'use threads 1.86 qw(exit thread_only);' .
+run_perl(prog => 'use threads 1.92 qw(exit thread_only);' .
                  'threads->create(sub { exit(99); })->join();' .
                  'exit(86);',
          nolib => ($ENV{PERL_CORE}) ? 0 : 1,
@@ -108,7 +108,7 @@ run_perl(prog => 'use threads 1.86 qw(exit thread_only);' .
     is($?>>8, 86, "'use threads 'exit' => 'thread_only'");
 }
 
-my $out = run_perl(prog => 'use threads 1.86;' .
+my $out = run_perl(prog => 'use threads 1.92;' .
                            'threads->create(sub {' .
                            '    exit(99);' .
                            '});' .
@@ -124,7 +124,7 @@ my $out = run_perl(prog => 'use threads 1.86;' .
 like($out, '1 finished and unjoined', "exit(status) in thread");
 
 
-$out = run_perl(prog => 'use threads 1.86 qw(exit thread_only);' .
+$out = run_perl(prog => 'use threads 1.92 qw(exit thread_only);' .
                         'threads->create(sub {' .
                         '   threads->set_thread_exit_only(0);' .
                         '   exit(99);' .
@@ -141,7 +141,7 @@ $out = run_perl(prog => 'use threads 1.86 qw(exit thread_only);' .
 like($out, '1 finished and unjoined', "set_thread_exit_only(0)");
 
 
-run_perl(prog => 'use threads 1.86;' .
+run_perl(prog => 'use threads 1.92;' .
                  'threads->create(sub {' .
                  '   $SIG{__WARN__} = sub { exit(99); };' .
                  '   die();' .

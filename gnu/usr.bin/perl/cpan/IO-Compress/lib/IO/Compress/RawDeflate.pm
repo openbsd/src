@@ -6,15 +6,15 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base 2.060 ;
-use IO::Compress::Base::Common  2.060 qw(:Status );
-use IO::Compress::Adapter::Deflate 2.060 ;
+use IO::Compress::Base 2.064 ;
+use IO::Compress::Base::Common  2.064 qw(:Status );
+use IO::Compress::Adapter::Deflate 2.064 ;
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %DEFLATE_CONSTANTS, %EXPORT_TAGS, $RawDeflateError);
 
-$VERSION = '2.060';
+$VERSION = '2.064';
 $RawDeflateError = '';
 
 @ISA = qw(Exporter IO::Compress::Base);
@@ -116,8 +116,8 @@ sub getExtraParams
     return getZlibParams();
 }
 
-use IO::Compress::Base::Common  2.060 qw(:Parse);
-use Compress::Raw::Zlib  2.060 qw(Z_DEFLATED Z_DEFAULT_COMPRESSION Z_DEFAULT_STRATEGY);
+use IO::Compress::Base::Common  2.064 qw(:Parse);
+use Compress::Raw::Zlib  2.064 qw(Z_DEFLATED Z_DEFAULT_COMPRESSION Z_DEFAULT_STRATEGY);
 our %PARAMS = (
             #'method'   => [IO::Compress::Base::Common::Parse_unsigned,  Z_DEFLATED],
             'level'     => [IO::Compress::Base::Common::Parse_signed,    Z_DEFAULT_COMPRESSION],
@@ -294,7 +294,7 @@ section.
 
 The functional interface needs Perl5.005 or better.
 
-=head2 rawdeflate $input => $output [, OPTS]
+=head2 rawdeflate $input_filename_or_reference => $output_filename_or_reference [, OPTS]
 
 C<rawdeflate> expects at least two parameters,
 C<$input_filename_or_reference> and C<$output_filename_or_reference>.
@@ -877,7 +877,7 @@ Usage is
 
 Closes the current compressed data stream and starts a new one.
 
-OPTS consists of any of the the options that are available when creating
+OPTS consists of any of the options that are available when creating
 the C<$z> object.
 
 See the L</"Constructor Options"> section for more details.
@@ -988,7 +988,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -5,7 +5,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 20;
+plan tests => 24;
 
 my $a = chr(0x100);
 
@@ -28,6 +28,8 @@ is(bytes::chr(0x100), chr(0),  "bytes::chr sanity check");
 }
 
 my $c = chr(0x100);
+my $c2 = chr(0x2c7); # a unicode character that doesn't fold
+utf8::encode(my $c2_utf8 = $c2);
 
 {
     use bytes;
@@ -56,6 +58,12 @@ my $c = chr(0x100);
         is(bytes::rindex($c, "\xc4"), 0, "bytes::rindex under use bytes looks at bytes");
     }
     
+    # [perl #117355] [lu]cfirst don't respect 'use bytes'
+    # and if there's other tests for lc/uc under bytes I didn't find them
+    is(lc($c2), $c2_utf8, "lc under use bytes returns bytes");
+    is(uc($c2), $c2_utf8, "uc under use bytes returns bytes");
+    is(lcfirst($c2), $c2_utf8, "lcfirst under use bytes returns bytes");
+    is(ucfirst($c2), $c2_utf8, "unfirst under use bytes returns bytes");
 }
 
 {

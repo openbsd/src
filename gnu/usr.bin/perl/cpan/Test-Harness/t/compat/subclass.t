@@ -3,6 +3,7 @@
 # Test that HARNESS_SUBCLASS env var is honoured.
 
 use strict;
+use warnings;
 use lib 't/lib';
 
 use Test::More (

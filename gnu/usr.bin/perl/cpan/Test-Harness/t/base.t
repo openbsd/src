@@ -1,6 +1,7 @@
 #!/usr/bin/perl -wT
 
 use strict;
+use warnings;
 use lib 't/lib';
 
 use Test::More tests => 38;
@@ -53,8 +54,7 @@ use TAP::Base;
 package CallbackOK;
 
 use TAP::Base;
-use vars qw(@ISA);
-@ISA = 'TAP::Base';
+use base 'TAP::Base';
 
 sub _initialize {
     my $self = shift;

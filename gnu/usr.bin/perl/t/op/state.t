@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 
-plan tests => 132;
+plan tests => 136;
 
 # Before loading feature.pm, test it with CORE::
 ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
@@ -414,6 +414,36 @@ foreach my $forbidden (<DATA>) {
     state $f = 1;
     foo($f) if 0; # this calls op_free on padmy($f)
     ok(defined $f, 'state init not skipped');
+}
+
+# [perl #121134] Make sure padrange doesn't mess with these
+{
+    sub thing {
+	my $expect = shift;
+        my ($x, $y);
+        state $z;
+
+        is($z, $expect, "State variable is correct");
+
+        $z = 5;
+    }
+
+    thing(undef);
+    thing(5);
+
+    sub thing2 {
+        my $expect = shift;
+        my $x;
+        my $y;
+        state $z;
+
+        is($z, $expect, "State variable is correct");
+
+        $z = 6;
+    }
+
+    thing2(undef);
+    thing2(6);
 }
 
 

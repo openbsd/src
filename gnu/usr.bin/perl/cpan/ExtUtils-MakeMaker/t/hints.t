@@ -4,8 +4,10 @@ use strict;
 use warnings;
 
 use lib 't/lib';
-chdir 't';
 
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 use File::Spec;
 
 use Test::More tests => 3;

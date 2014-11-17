@@ -154,7 +154,6 @@ write() on closed filehandle STDIN at - line 8.
 write() on closed filehandle STDIN at - line 11.
 	(Are you trying to call write() on dirhandle STDIN?)
 ########
-########
 # pp_sys.c [pp_leavewrite]
 use warnings 'unopened';
 format STDIN =
@@ -178,8 +177,8 @@ opendir FOO, ".";
 write STDIN;
 write FOO;
 EXPECT
-write() on unopened filehandle FOO at - line 10.
-write() on unopened filehandle FOO at - line 15.
+write() on unopened filehandle FOO at - line 9.
+write() on unopened filehandle FOO at - line 14.
 	(Are you trying to call write() on dirhandle FOO?)
 ########
 # pp_sys.c [pp_leavewrite]
@@ -807,6 +806,17 @@ Opening filehandle ＦＯＯ also as a directory at - line 9.
 Opening filehandle $ｆｏｏ also as a directory at - line 10.
 ########
 # pp_sys.c [pp_*dir]
+use Config ;
+BEGIN {
+    if ( ! $Config{d_telldir}) {
+        print <<EOM ;
+SKIPPED
+# telldir not present
+EOM
+        exit
+    }
+}
+#line 2
 use warnings 'io';
 opendir FOO, ".";
 opendir $foo, ".";
@@ -839,6 +849,17 @@ closedir() attempted on invalid dirhandle $foo at - line 18.
 ########
 
 # pp_sys.c [pp_*dir]
+use Config ;
+BEGIN {
+    if ( ! $Config{d_telldir}) {
+        print <<EOM ;
+SKIPPED
+# telldir not present
+EOM
+        exit
+    }
+}
+#line 3
 use utf8;
 use open qw( :utf8 :std );
 use warnings 'io';

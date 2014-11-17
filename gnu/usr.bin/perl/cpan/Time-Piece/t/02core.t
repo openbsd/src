@@ -1,4 +1,4 @@
-use Test::More tests => 95;
+use Test::More tests => 96;
 
 my $is_win32 = ($^O =~ /Win32/);
 my $is_qnx = ($^O eq 'qnx');
@@ -214,6 +214,12 @@ cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->wday,  '==', 4);
 cmp_ok(Time::Piece->strptime("2002/12/31", '%Y/%m/%d')->yday,  '==', 364);
 cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->isdst, '==', 0);
 cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->day_of_week, '==', 3);
+
+is(
+  Time::Piece->strptime('12212', "%y%j")->ymd(),
+  '2012-07-30',
+  "day of the year parsing",
+);
 
 cmp_ok(
   Time::Piece->strptime("2000/02/29 12:34:56", '%Y/%m/%d %H:%M:%S')->epoch,

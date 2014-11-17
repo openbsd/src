@@ -6,7 +6,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..74\n";
+print "1..75\n";
 my $test = 0;
 
 sub failed {
@@ -160,4 +160,17 @@ for (0xA, 0) {
   eval qq{#line 42 "figgle"\n#line 85 "doggo"\n labadalabada()\n};
   is $::{"_<doggo"}[85], " labadalabada()\n",
    'subsequent #line 42 "foo" in a string eval updates @{"_<foo"}';
+}
+
+# Modifying ${"_<foo"} should not stop lines from being retained.
+{
+  local $^P = 0x400|0x100|0x10;
+  eval <<'end';
+#line 42 "copfilesv-modification"
+    BEGIN{ ${"_<copfilesv-modification"} = \1 }
+#line 52 "copfilesv-modified"
+    abcdefg();
+end
+  is $::{"_<copfilesv-modified"}[52], "    abcdefg();\n",
+   '#line 42 "foo" in a str eval is not confused by ${"_<foo"} changing';
 }

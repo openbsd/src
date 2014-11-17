@@ -784,12 +784,6 @@
  */
 #define I_NETINET_IN	/**/
 
-/* I_SFIO:
- *	This symbol, if defined, indicates to the C program that it should
- *	include <sfio.h>.
- */
-/*#define	I_SFIO		/**/
-
 /* I_STDDEF:
  *	This symbol, if defined, indicates that <stddef.h> exists and should
  *	be included.
@@ -1029,7 +1023,7 @@
  *	double, or a long double when applicable. Usual values are 2,
  *	4 and 8. The default is eight, for safety.
  */
-#if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
+#if defined(MULTIARCH)
 #  define MEM_ALIGNBYTES 8
 #else
 #define MEM_ALIGNBYTES 8
@@ -1048,7 +1042,7 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define ARCHLIB "c:\\perl\\5.18.2\\lib\\NetWare-x86-multi-thread"		/**/
+#define ARCHLIB "c:\\perl\\5.20.1\\lib\\NetWare-x86-multi-thread"		/**/
 /*#define ARCHLIB_EXP ""	/**/
 
 /* ARCHNAME:
@@ -1079,8 +1073,8 @@
  *	This symbol is the filename expanded version of the BIN symbol, for
  *	programs that do not want to deal with that at run-time.
  */
-#define BIN "c:\\perl\\5.18.2\\bin\\NetWare-x86-multi-thread"	/**/
-#define BIN_EXP "c:\\perl\\5.18.2\\bin\\NetWare-x86-multi-thread"	/**/
+#define BIN "c:\\perl\\5.20.1\\bin\\NetWare-x86-multi-thread"	/**/
+#define BIN_EXP "c:\\perl\\5.20.1\\bin\\NetWare-x86-multi-thread"	/**/
 
 /* BYTEORDER:
  *	This symbol holds the hexadecimal constant defined in byteorder,
@@ -1098,7 +1092,7 @@
  *	so the default case (for NeXT) is big endian to catch them. 
  *	This might matter for NeXT 3.0.
  */
-#if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
+#if defined(MULTIARCH)
 #  ifdef __LITTLE_ENDIAN__
 #    if LONGSIZE == 4
 #      define BYTEORDER 0x1234
@@ -1958,12 +1952,6 @@
  *	to a line-buffered mode.
  */
 #define HAS_SETVBUF		/**/
-
-/* USE_SFIO:
- *	This symbol, if defined, indicates that sfio should
- *	be used.
- */
-/*#define	USE_SFIO		/**/
 
 /* HAS_SHM:
  *	This symbol, if defined, indicates that the entire shm*(2) library is
@@ -3063,7 +3051,7 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define SITEARCH "c:\\perl\\site\\5.18.2\\lib\\NetWare-x86-multi-thread"		/**/
+#define SITEARCH "c:\\perl\\site\\5.20.1\\lib\\NetWare-x86-multi-thread"		/**/
 /*#define SITEARCH_EXP ""	/**/
 
 /* SITELIB:
@@ -3086,7 +3074,7 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "c:\\perl\\site\\5.18.2\\lib"		/**/
+#define SITELIB "c:\\perl\\site\\5.20.1\\lib"		/**/
 /*#define SITELIB_EXP ""	/**/
 #define SITELIB_STEM ""		/**/
 
@@ -3296,31 +3284,6 @@
  */
 /*#define PERL_VENDORLIB_EXP ""		/**/
 /*#define PERL_VENDORLIB_STEM ""		/**/
-
-/* VOIDFLAGS:
- *	This symbol indicates how much support of the void type is given by this
- *	compiler.  What various bits mean:
- *
- *	    1 = supports declaration of void
- *	    2 = supports arrays of pointers to functions returning void
- *	    4 = supports comparisons between pointers to void functions and
- *		    addresses of void functions
- *	    8 = supports declaration of generic void pointers
- *
- *	The package designer should define VOIDUSED to indicate the requirements
- *	of the package.  This can be done either by #defining VOIDUSED before
- *	including config.h, or by defining defvoidused in Myinit.U.  If the
- *	latter approach is taken, only those flags will be tested.  If the
- *	level of void support necessary is not present, defines void to int.
- */
-#ifndef VOIDUSED
-#define VOIDUSED 15
-#endif
-#define VOIDFLAGS 15
-#if (VOIDFLAGS & VOIDUSED) != VOIDUSED
-#define void int		/* is void to be avoided? */
-#define M_VOID			/* Xenix strikes again */
-#endif
 
 /* SETUID_SCRIPTS_ARE_SECURE_NOW:
  *	This symbol, if defined, indicates that the bug that prevents

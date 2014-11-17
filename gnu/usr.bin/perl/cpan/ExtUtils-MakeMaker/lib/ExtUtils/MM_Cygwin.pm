@@ -9,7 +9,7 @@ require ExtUtils::MM_Unix;
 require ExtUtils::MM_Win32;
 our @ISA = qw( ExtUtils::MM_Unix );
 
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 
 =head1 NAME
@@ -90,7 +90,7 @@ sub init_linker {
         }
         $self->{PERL_ARCHIVE} = $libperl;
     } else {
-        $self->{PERL_ARCHIVE} = 
+        $self->{PERL_ARCHIVE} =
           '$(PERL_INC)' .'/'. ("$Config{libperl}" or "libperl.a");
     }
 
@@ -100,20 +100,22 @@ sub init_linker {
 
 =item maybe_command
 
-If our path begins with F</cygdrive/> then we use C<ExtUtils::MM_Win32>
-to determine if it may be a command.  Otherwise we use the tests
-from C<ExtUtils::MM_Unix>.
+Determine whether a file is native to Cygwin by checking whether it
+resides inside the Cygwin installation (using Windows paths). If so,
+use C<ExtUtils::MM_Unix> to determine if it may be a command.
+Otherwise use the tests from C<ExtUtils::MM_Win32>.
 
 =cut
 
 sub maybe_command {
     my ($self, $file) = @_;
 
-    if ($file =~ m{^/cygdrive/}i) {
-        return ExtUtils::MM_Win32->maybe_command($file);
-    }
+    my $cygpath = Cygwin::posix_to_win_path('/', 1);
+    my $filepath = Cygwin::posix_to_win_path($file, 1);
 
-    return $self->SUPER::maybe_command($file);
+    return (substr($filepath,0,length($cygpath)) eq $cygpath)
+    ? $self->SUPER::maybe_command($file) # Unix
+    : ExtUtils::MM_Win32->maybe_command($file); # Win32
 }
 
 =item dynamic_lib

@@ -32,6 +32,9 @@
 #if defined(I_NETINET_IN) || defined(__ultrix__)
 #  include <netinet/in.h>
 #endif
+#if defined(I_NETINET_IP)
+#  include <netinet/ip.h>
+#endif
 #ifdef I_NETDB
 #  if !defined(ultrix)	/* Avoid double definition. */
 #   include <netdb.h>
@@ -44,7 +47,7 @@
 #  include <netinet/tcp.h>
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(UNDER_CE)
 # include <ws2tcpip.h>
 #endif
 
@@ -327,6 +330,11 @@ my_inet_aton(register const char *cp, struct in_addr *addr)
 /* The definitions in Socket.pm and Socket.xs must match */
 #define NIx_NOHOST   (1 << 0)
 #define NIx_NOSERV   (1 << 1)
+
+/* On Windows, ole2.h defines a macro called "interface". We don't need that,
+ * and it will complicate the variables in pack_ip_mreq() etc. (RT87389)
+ */
+#undef interface
 
 
 static int
@@ -714,8 +722,8 @@ unpack_sockaddr_un(sun_sv)
 	STRLEN sockaddrlen;
 	char * sun_ad = SvPVbyte(sun_sv,sockaddrlen);
 	int addr_len;
-#   ifdef __linux__
-	/* On Linux sockaddrlen on sockets returned by accept, recvfrom,
+#   if defined(__linux__) || defined(HAS_SOCKADDR_SA_LEN)
+	/* On Linux or *BSD sockaddrlen on sockets returned by accept, recvfrom,
 	   getpeername and getsockname is not equal to sizeof(addr). */
 	if (sockaddrlen < sizeof(addr)) {
 	  Copy(sun_ad, &addr, sockaddrlen, char);
@@ -723,6 +731,12 @@ unpack_sockaddr_un(sun_sv)
 	} else {
 	  Copy(sun_ad, &addr, sizeof(addr), char);
 	}
+#     ifdef HAS_SOCKADDR_SA_LEN
+	/* In this case, sun_len must be checked */
+	if (sockaddrlen != addr.sun_len)
+		croak("Invalid arg sun_len field for %s, length is %"UVuf", but sun_len is %"UVuf,
+		      "Socket::unpack_sockaddr_un", (UV)sockaddrlen, (UV)addr.sun_len);
+#     endif
 #   else
 	if (sockaddrlen != sizeof(addr))
 		croak("Bad arg length for %s, length is %"UVuf", should be %"UVuf,
@@ -733,14 +747,24 @@ unpack_sockaddr_un(sun_sv)
 	if (addr.sun_family != AF_UNIX)
 		croak("Bad address family for %s, got %d, should be %d",
 		      "Socket::unpack_sockaddr_un", addr.sun_family, AF_UNIX);
-
+#   ifdef __linux__
 	if (addr.sun_path[0] == '\0') {
 		/* Linux-style abstract socket address begins with a nul
 		 * and can contain nuls. */
 		addr_len = (char *)&addr - (char *)&(addr.sun_path) + sockaddrlen;
-	} else {
+	} else
+#   endif
+	{
+#   if defined(HAS_SOCKADDR_SA_LEN)
+		/* On *BSD sun_path not always ends with a '\0' */
+		int maxlen = addr.sun_len - 2; /* should use offsetof(struct sockaddr_un, sun_path) instead of 2 */
+		if (maxlen > (int)sizeof(addr.sun_path))
+		  maxlen = (int)sizeof(addr.sun_path);
+#   else
+		const int maxlen = (int)sizeof(addr.sun_path);
+#   endif
 		for (addr_len = 0; addr.sun_path[addr_len]
-		     && addr_len < (int)sizeof(addr.sun_path); addr_len++);
+		     && addr_len < maxlen; addr_len++);
 	}
 
 	ST(0) = sv_2mortal(newSVpvn(addr.sun_path, addr_len));
@@ -1114,9 +1138,9 @@ unpack_ip_mreq_source(mreq_sv)
 	}
 
 void
-pack_ipv6_mreq(multiaddr, interface)
+pack_ipv6_mreq(multiaddr, ifindex)
 	SV *	multiaddr
-	unsigned int	interface
+	unsigned int	ifindex
 	CODE:
 	{
 #ifdef HAS_IPV6_MREQ
@@ -1131,7 +1155,7 @@ pack_ipv6_mreq(multiaddr, interface)
 		      "Socket::pack_ipv6_mreq", (UV)len, (UV)sizeof(mreq.ipv6mr_multiaddr));
 	Zero(&mreq, sizeof(mreq), char);
 	Copy(multiaddrbytes, &mreq.ipv6mr_multiaddr, sizeof(mreq.ipv6mr_multiaddr), char);
-	mreq.ipv6mr_interface = interface;
+	mreq.ipv6mr_interface = ifindex;
 	ST(0) = sv_2mortal(newSVpvn((char *)&mreq, sizeof(mreq)));
 #else
 	not_here("pack_ipv6_mreq");

@@ -6,7 +6,7 @@ BEGIN {
 	skip_all_without_perlio();
 }
 
-plan tests => 45;
+plan tests => 46;
 
 use_ok('PerlIO');
 
@@ -214,6 +214,14 @@ EOP
 		    qr/\ARecursive call to Perl_load_module in PerlIO_find_layer at/s,
 		    {stderr => 1},
 		    'Mutal recursion between Perl_load_module and PerlIO_find_layer croaks');
+}
+
+{
+    # RT #119287
+    $main::PerlIO_code_injection = 0;
+    local $SIG{__WARN__} = sub {};
+    PerlIO->import('via; $main::PerlIO_code_injection = 1');
+    ok !$main::PerlIO_code_injection, "Can't inject code via PerlIO->import";
 }
 
 END {

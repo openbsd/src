@@ -1,7 +1,13 @@
-?
-    Version 2.40
+Sat Jul 13 18:34:27 IST 2013   Abhijit Menon-Sen <ams@toroid.org>
+    Version 2.45
 
-	Security warnings section added
+       * [perl #118829] Memory leaks in STORABLE_attach
+         (Vladimir Timofeev)
+       * [perl #118139] Don't SEGV during global destruction
+         (Nicholas Clark, report/test from Reini Urban)
+       * Added security warnings section (Steffen Mueller)
+       * Update INSTALLDIRS to favour installation in 'site'
+         (James E Keenan)
 
 Tue 11 Sep 06:51:11 IST 2012   Abhijit Menon-Sen <ams@toroid.org>
     Version 2.39

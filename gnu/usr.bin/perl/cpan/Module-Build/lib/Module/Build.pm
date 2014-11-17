@@ -1,5 +1,7 @@
 package Module::Build;
 
+use if $] >= 5.019, 'deprecate';
+
 # This module doesn't do much of anything itself, it inherits from the
 # modules that do the real work.  The only real thing it has to do is
 # figure out which OS-specific module to pull in.  Many of the
@@ -16,9 +18,8 @@ use Module::Build::Base;
 
 use vars qw($VERSION @ISA);
 @ISA = qw(Module::Build::Base);
-$VERSION = '0.4003';
+$VERSION = '0.4205';
 $VERSION = eval $VERSION;
-
 
 # Inserts the given module into the @ISA hierarchy between
 # Module::Build and its immediate parent
@@ -94,10 +95,7 @@ C<ExtUtils::MakeMaker>.  Developers may alter the behavior of the
 module through subclassing in a much more straightforward way than
 with C<MakeMaker>.  It also does not require a C<make> on your system
 - most of the C<Module::Build> code is pure-perl and written in a very
-cross-platform way.  In fact, you don't even need a shell, so even
-platforms like MacOS (traditional) can use it fairly easily.  Its only
-prerequisites are modules that are included with perl 5.6.0, and it
-works fine on perl 5.005 if you can install a few additional modules.
+cross-platform way.
 
 See L<"MOTIVATIONS"> for more comparisons between C<ExtUtils::MakeMaker>
 and C<Module::Build>.
@@ -378,6 +376,12 @@ installed if the install paths can be determined from values in
 C<Config.pm>.  You can also supply or override install paths on the
 command line by specifying C<install_path> values for the C<binhtml>
 and/or C<libhtml> installation targets.
+
+With an optional C<html_links> argument set to a false value, you can
+skip the search for other documentation to link to, because that can
+waste a lot of time if there aren't any links to generate anyway:
+
+  ./Build html --html_links 0
 
 =item install
 
@@ -747,7 +751,7 @@ executed build actions.
 
 When Module::Build starts up, it will look first for a file,
 F<$ENV{HOME}/.modulebuildrc>.  If it's not found there, it will look
-in the the F<.modulebuildrc> file in the directories referred to by
+in the F<.modulebuildrc> file in the directories referred to by
 the environment variables C<HOMEDRIVE> + C<HOMEDIR>, C<USERPROFILE>,
 C<APPDATA>, C<WINDIR>, C<SYS$LOGIN>.  If the file exists, the options
 specified there will be used as defaults, as if they were typed on the

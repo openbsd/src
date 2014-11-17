@@ -113,7 +113,7 @@ names will be examined.
 
 =item B<XXX_code2code ( CODE ,CODESET ,CODESET2 )>
 
-These functions takes a a code from one code set, and returns the
+These functions takes a code from one code set, and returns the
 corresponding code from another code set. CODE must exists in the code
 set specified by CODESET and must have a corresponding code in the
 code set specified by CODESET2 or C<undef> will be returned.
@@ -285,7 +285,7 @@ they are not necessarily one-to-one, there may be some confusion
 about the relationship between codes from different code sets.
 
 For example, ISO 3166 assigns one code to the country "United States
-Minor Outlying Islands", but the FIPS 10 codes give different codes
+Minor Outlying Islands", but the IANA codes give different codes
 to different islands (Baker Island, Howland Island, etc.).
 
 This may cause some confusion... I've done the best that I could do
@@ -312,7 +312,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
+   Copyright (c) 2010-2014 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

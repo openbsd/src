@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -- # Perl Rules
 
 BEGIN {
     if ($^O eq 'VMS') {
@@ -12,11 +12,13 @@ use warnings;
 
 plan 3;
 
+  my $file = 't/fd.t';
+
 # [perl #76474]
 {
   my $stderr = runperl(
      switches => ['-MIPC::Open3', '-w'],
-     prog => 'open STDIN, q _Makefile_ or die $!; open3(q _<&0_, my $out, undef, $ENV{PERLEXE}, q _-e0_)',
+     prog => "open STDIN, q _${file}_ or die \$!; open3(q _<&0_, my \$out, undef, \$ENV{PERLEXE}, q _-e0_)",
      stderr => 1,
   );
 
@@ -25,18 +27,18 @@ plan 3;
 }
 
 {
-  my $want = qr/\A# This Makefile is for the IPC::Open3 extension to perl\.\r?\z/;
-  open my $fh, '<', 'Makefile' or die "Can't open MAKEFILE: $!";
+  my $want = qr{\A#!\./perl -- # Perl Rules\r?\z};
+  open my $fh, '<', $file or die "Can't open $file: $!";
   my $have = <$fh>;
   chomp $have;
-  like($have, $want, 'No surprises from MakeMaker');
+  like($have, $want, 'We can find our test string');
   close $fh;
 
-  fresh_perl_like(<<'EOP',
+  fresh_perl_like(<<"EOP",
 use IPC::Open3;
-open FOO, 'Makefile' or die $!;
-open3('<&' . fileno FOO, my $out, undef, $ENV{PERLEXE}, '-eprint scalar <STDIN>');
-print <$out>;
+open FOO, '$file' or die \$!;
+open3('<&' . fileno FOO, my \$out, undef, \$ENV{PERLEXE}, '-eprint scalar <STDIN>');
+print <\$out>;
 EOP
 		  $want,
 		  undef,

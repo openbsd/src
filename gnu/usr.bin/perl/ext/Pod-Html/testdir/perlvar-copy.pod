@@ -2,6 +2,11 @@
 
 perlvarcopy - Perl predefined variables
 
+=head1 DISCLAIMER
+
+This is a pod file used for testing purposes by the test suite, please
+see L<perlvar>.
+
 =head1 DESCRIPTION
 
 =head2 Predefined Names

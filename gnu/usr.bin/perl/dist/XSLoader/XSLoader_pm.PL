@@ -1,5 +1,7 @@
 use strict;
 use Config;
+# We require DynaLoader to make sure that mod2fname is loaded
+eval { require DynaLoader };
 
 1 while unlink "XSLoader.pm";
 open OUT, ">XSLoader.pm" or die $!;
@@ -8,7 +10,7 @@ print OUT <<'EOT';
 
 package XSLoader;
 
-$VERSION = "0.16";
+$VERSION = "0.17";
 
 #use strict;
 
@@ -201,7 +203,7 @@ XSLoader - Dynamically load C libraries into Perl code
 
 =head1 VERSION
 
-Version 0.16
+Version 0.17
 
 =head1 SYNOPSIS
 

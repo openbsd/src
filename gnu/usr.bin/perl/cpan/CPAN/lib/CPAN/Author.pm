@@ -178,7 +178,7 @@ sub dir_listing {
         $lc_file = $lc_want;
         # we *could* second-guess and if the user has a file: URL,
         # then we could look there. But on the other hand, if they do
-        # have a file: URL, wy did they choose to set
+        # have a file: URL, why did they choose to set
         # $CPAN::Config->{show_upload_date} to false?
     }
 

@@ -18,7 +18,7 @@ use vars qw($VERSION @ISA @EXPORT) ;
 
 @ISA = qw(Exporter DynaLoader);
 @EXPORT = qw( filter_add filter_del filter_read filter_read_exact) ;
-$VERSION = "1.45" ;
+$VERSION = "1.49" ;
 
 sub filter_read_exact($)
 {
@@ -182,7 +182,7 @@ will result in the C<@_> array having the following values:
 Before terminating, the C<import> function must explicitly install the
 filter by calling C<filter_add>.
 
-B<filter_add()>
+=head2 B<filter_add()>
 
 The function, C<filter_add>, actually installs the filter. It takes one
 parameter which should be a reference. The kind of reference used will
@@ -286,6 +286,11 @@ does not affect the running of the filter. All it does is tell Perl not
 to call filter any more.
 
 See L<Example 4: Using filter_del> for details.
+
+=item I<real_import>
+
+Internal function which adds the filter, based on the L<filter_add>
+argument type.
 
 =back
 

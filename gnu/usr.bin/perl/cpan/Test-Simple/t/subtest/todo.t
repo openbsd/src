@@ -52,6 +52,7 @@ sub test_subtest_in_todo {
         my ($set_via, $todo_reason, $level) = @$combo;
 
         test_out(
+            "    # Subtest: xxx",
             @outlines,
             "not ok 1 - $xxx # TODO $todo_reason",
             "#   Failed (TODO) test '$xxx'",

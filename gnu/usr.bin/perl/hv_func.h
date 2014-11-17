@@ -93,7 +93,7 @@
  */
 
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
-  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+  || defined(_MSC_VER) || defined (__TURBOC__)
 #define U8TO16_LE(d) (*((const U16 *) (d)))
 #endif
 
@@ -472,6 +472,16 @@ S_perl_hash_sdbm(const unsigned char * const seed, const unsigned char *str, con
     return hash;
 }
 
+/* - ONE_AT_A_TIME_HARD is the 5.17+ recommend ONE_AT_A_TIME algorithm
+ * - ONE_AT_A_TIME_OLD is the unmodified 5.16 and older algorithm
+ * - ONE_AT_A_TIME is a 5.17+ tweak of ONE_AT_A_TIME_OLD to
+ *   prevent strings of only \0 but different lengths from colliding
+ *
+ * Security-wise, from best to worst,
+ * ONE_AT_A_TIME_HARD > ONE_AT_A_TIME > ONE_AT_A_TIME_OLD
+ * There is a big drop-off in security between ONE_AT_A_TIME_HARD and
+ * ONE_AT_A_TIME
+ * */
 
 /* This is the "One-at-a-Time" algorithm by Bob Jenkins
  * from requirements by Colin Plumb.

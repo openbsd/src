@@ -59,6 +59,7 @@ ok(&Devel::PPPort::UNDERBAR(), "Fred");
 
 if ($] >= 5.009002) {
   eval q{
+    no warnings "deprecated";
     no if $^V > v5.17.9, warnings => "experimental::lexical_topic";
     my $_ = "Tony";
     ok(&Devel::PPPort::DEFSV(), "Fred");

@@ -3,6 +3,9 @@
 use Config;
 use Cwd;
 use strict;
+BEGIN {
+    require './test.pl';
+}
 
 $| = 1;
 
@@ -90,7 +93,7 @@ for my $cmds (@commands) {
 	my @all_args;
 	my @cmds = defined($cmds) ? (ref($cmds) ? @$cmds : $cmds) : ();
 	my @args = defined($args) ? (ref($args) ? @$args : $args) : ();
-	print "######## [@cmds]\n";
+	note "####### [@cmds]";
 	print "<", join('><',
 			$cmds[$#cmds],
 			map { my $x = $_; $x =~ s/"//g; $x } @args),
@@ -106,7 +109,7 @@ for my $cmds (@commands) {
 	$^D = 0;
 	my $cmdstr = join " ", map { /\s|^$/ && !/\"/
 				    ? qq["$_"] : $_ } @cmds, @args;
-	print "######## '$cmdstr'\n";
+	note "####### '$cmdstr'";
 	if (system($cmdstr) != 0) {
 	    print "Failed, status($?)\n";
 	    if ($Config{ccflags} =~ /\bDDEBUGGING\b/) {

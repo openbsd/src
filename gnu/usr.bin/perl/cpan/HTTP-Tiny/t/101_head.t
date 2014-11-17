@@ -45,7 +45,7 @@ for my $file ( dir_list("t/cases", qr/^head/ ) ) {
   my $res_fh = tmpfile($give_res);
   my $req_fh = tmpfile();
 
-  my $http = HTTP::Tiny->new;
+  my $http = HTTP::Tiny->new( keep_alive => 0 );
   set_socket_source($req_fh, $res_fh);
 
   (my $url_basename = $url) =~ s{.*/}{};

@@ -2,8 +2,13 @@
 
 use strict;
 use warnings;
+use Config;
 
 require './test.pl';
+
+if ( $Config{usecrosscompile} ) {
+  skip_all( "Not all files are available during cross-compilation" );
+}
 
 plan('no_plan');
 

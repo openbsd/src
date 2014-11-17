@@ -2,7 +2,6 @@ package MBTest;
 
 use strict;
 
-use IO::File ();
 use File::Spec;
 use File::Temp ();
 use File::Path ();
@@ -159,7 +158,7 @@ sub stdout_stderr_of {
 }
 
 sub slurp {
-  my $fh = IO::File->new($_[0]) or die "Can't open $_[0]: $!";
+  open(my $fh, '<', $_[0]) or die "Can't open $_[0]: $!";
   local $/;
   return scalar <$fh>;
 }
@@ -198,7 +197,15 @@ sub find_in_path {
 }
 
 sub check_compiler {
-  return (1,1) if $ENV{PERL_CORE};
+  if ($ENV{PERL_CORE}) {
+    require IPC::Cmd;
+    if ( $Config{usecrosscompile} && !IPC::Cmd::can_run($Config{cc}) ) {
+      return;
+    }
+    else {
+      return(1,1);
+    }
+  }
 
   local $SIG{__WARN__} = sub {};
 

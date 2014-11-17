@@ -11,4 +11,3 @@ lex_read_unichar               # U
 lex_stuff_pvn                  # U
 lex_stuff_sv                   # U
 lex_unstuff                    # U
-pad_findmy                     # E (Perl_pad_findmy)

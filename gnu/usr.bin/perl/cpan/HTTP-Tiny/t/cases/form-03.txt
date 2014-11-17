@@ -3,7 +3,7 @@ url
 content
   bar|baz|ack|foo
 datatype
-  ARRAY 
+  HASH
 ----------
 POST /new HTTP/1.1
 Host: example.com

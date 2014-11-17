@@ -14,6 +14,8 @@ or statically linked into perl.  The XS interface description is
 written in the XS language and is the core component of the Perl
 extension interface.
 
+Before writing XS, read the L</CAVEATS> section below.
+
 An B<XSUB> forms the basic unit of the XS interface.  After compilation
 by the B<xsubpp> compiler, each XSUB amounts to a C function definition
 which will provide the glue between Perl calling conventions and C
@@ -110,8 +112,12 @@ This XSUB will be invoked from Perl with the usage shown
 above.  Note that the first three #include statements, for
 C<EXTERN.h>, C<perl.h>, and C<XSUB.h>, will always be present at the
 beginning of an XS file.  This approach and others will be
-expanded later in this document.
+expanded later in this document.  A #define for C<PERL_NO_GET_CONTEXT>
+should be present to fetch the interpreter context more efficiently,
+see L<perlguts|perlguts/How multiple interpreters and concurrency are
+supported> for details.
 
+     #define PERL_NO_GET_CONTEXT
      #include "EXTERN.h"
      #include "perl.h"
      #include "XSUB.h"
@@ -556,7 +562,7 @@ not care about its initial contents.
 Starting with Perl 5.16, you can embed typemaps into your XS code
 instead of or in addition to typemaps in a separate file.  Multiple
 such embedded typemaps will be processed in order of appearance in
-the XS code and like local typemap files take precendence over the
+the XS code and like local typemap files take precedence over the
 default typemap, the embedded typemaps may overwrite previous
 definitions of TYPEMAP, INPUT, and OUTPUT stanzas.  The syntax for
 embedded typemaps is
@@ -1691,7 +1697,7 @@ called and C<THIS> will be given as its parameter.  The generated C++ code for
 
 will look like this:
 
-     color *THIS = ...;	// Initialized as in typemap
+     color *THIS = ...;  // Initialized as in typemap
 
      delete THIS;
 
@@ -1711,22 +1717,23 @@ The following is an example of a typemap that could be used for this C++
 example.
 
     TYPEMAP
-    color *		O_OBJECT
+    color *  O_OBJECT
 
     OUTPUT
     # The Perl object is blessed into 'CLASS', which should be a
     # char* having the name of the package for the blessing.
     O_OBJECT
-	sv_setref_pv( $arg, CLASS, (void*)$var );
+        sv_setref_pv( $arg, CLASS, (void*)$var );
 
     INPUT
     O_OBJECT
-	if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
-		$var = ($type)SvIV((SV*)SvRV( $arg ));
-	else{
-		warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\" );
-		XSRETURN_UNDEF;
-	}
+        if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
+            $var = ($type)SvIV((SV*)SvRV( $arg ));
+        else{
+            warn("${Package}::$func_name() -- " .
+                "$var is not a blessed SV reference");
+            XSRETURN_UNDEF;
+        }
 
 =head2 Interface Strategy
 
@@ -1869,6 +1876,7 @@ the C<-g> (C<--global>) option with h2xs (see L<h2xs>).
 
 Below is an example module that makes use of the macros.
 
+    #define PERL_NO_GET_CONTEXT
     #include "EXTERN.h"
     #include "perl.h"
     #include "XSUB.h"
@@ -1897,7 +1905,6 @@ Below is an example module that makes use of the macros.
 
     int
     newMouse(char * name)
-        char * name;
         PREINIT:
           dMY_CXT;
         CODE:
@@ -1909,24 +1916,28 @@ Below is an example module that makes use of the macros.
               RETVAL = ++ MY_CXT.count;
               strcpy(MY_CXT.name[MY_CXT.count - 1], name);
           }
+        OUTPUT:
+          RETVAL
 
     char *
     get_mouse_name(index)
-      int index
-      CODE:
-        dMY_CXT;
-        RETVAL = MY_CXT.lives ++;
-        if (index > MY_CXT.count)
-          croak("There are only 3 blind mice.");
-        else
-          RETVAL = newSVpv(MY_CXT.name[index - 1]);
+          int index
+        PREINIT:
+          dMY_CXT;
+        CODE:
+          if (index > MY_CXT.count)
+            croak("There are only 3 blind mice.");
+          else
+            RETVAL = MY_CXT.name[index - 1];
+        OUTPUT:
+          RETVAL
 
     void
     CLONE(...)
 	CODE:
-	MY_CXT_CLONE;
+	  MY_CXT_CLONE;
 
-B<REFERENCE>
+=head3 MY_CXT REFERENCE
 
 =over 5
 
@@ -1958,7 +1969,7 @@ of C<my_cxt_t>.
 
 =item MY_CXT_INIT
 
-The MY_CXT_INIT macro initialises storage for the C<my_cxt_t> struct.
+The MY_CXT_INIT macro initializes storage for the C<my_cxt_t> struct.
 
 It I<must> be called exactly once, typically in a BOOT: section. If you
 are maintaining multiple interpreters, it should be called once in each
@@ -2046,6 +2057,7 @@ or even crashes become more likely), nor is it very portable.
 
 File C<RPC.xs>: Interface to some ONC+ RPC bind library functions.
 
+     #define PERL_NO_GET_CONTEXT
      #include "EXTERN.h"
      #include "perl.h"
      #include "XSUB.h"
@@ -2110,6 +2122,96 @@ File C<rpctest.pl>: Perl test program for the RPC extension.
      print "time = $a\n";
      print "netconf = $netconf\n";
 
+=head1 CAVEATS
+
+XS code has full access to system calls including C library functions.
+It thus has the capability of interfering with things that the Perl core
+or other modules have set up, such as signal handlers or file handles.
+It could mess with the memory, or any number of harmful things.  Don't.
+
+Some modules have an event loop, waiting for user-input.  It is highly
+unlikely that two such modules would work adequately together in a
+single Perl application.
+
+In general, the perl interpreter views itself as the center of the
+universe as far as the Perl program goes.  XS code is viewed as a
+help-mate, to accomplish things that perl doesn't do, or doesn't do fast
+enough, but always subservient to perl.  The closer XS code adheres to
+this model, the less likely conflicts will occur.
+
+One area where there has been conflict is in regards to C locales.  (See
+L<perllocale>.)  perl, with one exception and unless told otherwise,
+sets up the underlying locale the program is running in to that passed
+into it from the environment.  As of v5.20, this underlying locale is
+completely hidden from pure perl code outside the lexical scope of
+C<S<use locale>>; except a couple of function calls in the POSIX
+module of necessity use it.  But the underlying locale, with that one
+exception is exposed to XS code, affecting all C library routines whose
+behavior is locale-dependent.   The exception is the
+L<C<LC_NUMERIC>|perllocale/Category LC_NUMERIC: Numeric Formatting>
+locale category, and the reason it is an exception is that experience
+has shown that it can be problematic for XS code, whereas we have not
+had reports of problems with the
+L<other locale categories|perllocale/WHAT IS A LOCALE>.  And the reason
+for this one category being problematic is that the character used as a
+decimal point can vary.  Many European languages use a comma, whereas
+English, and hence Perl are expecting a dot (U+002E: FULL STOP).  Many
+modules can handle only the radix character being a dot, and so perl
+attempts to make it so.  Up through Perl v5.20, the attempt was merely
+to set C<LC_NUMERIC> upon startup to the C<"C"> locale.  Any
+L<setlocale()|perllocale/The setlocale function> otherwise would change
+it; this caused some failures.  Therefore, starting in v5.22, perl tries
+to keep C<LC_NUMERIC> always set to C<"C"> for XS code.
+
+To summarize, here's what to expect and how to handle locales in XS code:
+
+=over
+
+=item Non-locale-aware XS code
+
+Keep in mind that even if you think your code is not locale-aware, it
+may call a C library function that is.  Hopefully the man page for such
+a function will indicate that dependency, but the documentation is
+imperfect.
+
+The current locale is exposed to XS code except possibly C<LC_NUMERIC>.
+There have not been reports of problems with these other categories.
+
+Up through v5.20, Perl initializes things on start-up so that
+C<LC_NUMERIC> is set to the "C" locale.  But if any code anywhere
+changes it, it will stay changed.  This means that your module can't
+count on C<LC_NUMERIC> being something in particular, and you can't
+expect floating point numbers (including version strings) to have dots
+in them.  If you don't allow for a non-dot, your code could break if
+anyone anywhere changes the locale.  For this reason, v5.22 is changing
+the behavior so that Perl tries to keep C<LC_NUMERIC> in the "C" locale
+except around the operations internally where it should be something
+else.  Misbehaving XS code will always be able to change the locale
+anyway, but the most common instance of this is checked for and
+handled.
+
+=item Locale-aware XS code
+
+If the locale from the user's environment is desired, there should be no
+need for XS code to set the locale except for C<LC_NUMERIC>, as perl has
+already set it up.  XS code should avoid changing the locale, as it can
+adversely affect other, unrelated, code and may not be thread safe.
+However, some alien libraries that may be called do set it, such as
+C<Gtk>.  This can cause problems for the perl core and other modules.
+Starting in v5.20.1, calling the function
+L<sync_locale()|perlapi/sync_locale> from XS should be sufficient to
+avoid most of these problems.  Prior to this, you need a pure Perl
+segment that does this:
+
+ POSIX::setlocale(LC_ALL, POSIX::setlocale(LC_ALL));
+
+Macros are provided for XS code to temporarily change to use the
+underlying C<LC_NUMERIC> locale when necessary.  An API is being
+developed for this, but has not yet been nailed down, but will be during
+the course of v5.21.  Send email to L<mailto:perl5-porters@perl.org> for
+guidance.
+
+=back
 
 =head1 XS VERSION
 

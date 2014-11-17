@@ -56,12 +56,15 @@ is( $Eval1::VERSION, '1.01' );
 
 is( $Eval2::VERSION, '1.02' );
 
+my $expected= q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(\@INC contains:/};
+$expected= q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(you may need to install the reallyReAlLyNotexists module\) \(\@INC contains:/}
+    if 5.017005 <= $];
 
 eval q{use parent 'reallyReAlLyNotexists'};
-like( $@, q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(you may need to install the reallyReAlLyNotexists module\) \(\@INC contains:/}, 'baseclass that does not exist');
+like( $@, $expected, 'baseclass that does not exist');
 
 eval q{use parent 'reallyReAlLyNotexists'};
-like( $@, q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(you may need to install the reallyReAlLyNotexists module\) \(\@INC contains:/}, '  still failing on 2nd load');
+like( $@, $expected, '  still failing on 2nd load');
 {
     my $warning;
     local $SIG{__WARN__} = sub { $warning = shift };

@@ -16,151 +16,14 @@ their inception, versions, etc. There's a lot of speculation here.
 
 =over 8
 
-=item -Dusemultiplicity -Duseithreads
-
-Introduced in Perl 5.6.0
-
-=item Long Doubles Still Don't Work In Solaris
-
-Introduced in Perl 5.7.0
-
 =item C<our> can now have an experimental optional attribute C<unique>
 
 Introduced in Perl 5.8.0
 
 Deprecated in Perl 5.10.0
 
-=item Linux abstract Unix domain sockets
-
-Introduced in Perl 5.9.2
-
-See also L<Socket>
-
-=item L<Pod::HTML2Pod|Pod::HTML2Pod>
-
-=item L<Pod::PXML|Pod::PXML>
-
-=item The <:pop> IO pseudolayer
-
-See also L<perlrun>
-
-=item The <:win32> IO pseudolayer
-
-See also L<perlrun>
-
-=item MLDBM
-
-See also L<perldsc>
-
-=item internal functions with M flag
-
-See also L<perlguts>
-
-=item lex_start API
-
-Introduced in Perl 5.13.7
-
-=item internal API for C<%^H>
-
-Introduced in Perl 5.13.7
-
-See also C<cophh_> in L<perlapi>.
-
-=item alloccopstash
-
-Introduced in Perl 5.18.0
-
-=item av_create_and_push
-
-=item av_create_and_unshift_one
-
-=item av_create_and_unshift_one
-
-=item cop_store_label
-
-Introduced in Perl 5.16.0
-
-=item PL_keyword_plugin
-
-=item gv_fetchmethod_*_flags
-
-Introduced in Perl 5.16.0
-
-=item hv_iternext_flags
-
-=item lex_bufutf8
-
-=item lex_discard_to
-
-=item lex_grow_linestr
-
-=item lex_next_chunk
-
-=item lex_peek_unichar
-
-=item lex_read_space
-
-=item lex_read_to
-
-=item lex_read_unichar
-
-=item lex_stuff_pv
-
-=item lex_stuff_pvn
-
-=item lex_stuff_pvs
-
-=item lex_stuff_sv
-
-=item lex_unstuff
-
-=item op_scope
-
-=item op_lvalue
-
-=item parse_fullstmt
-
-=item parse_stmtseq
-
-=item PL_parser-E<gt>bufend
-
-=item PL_parser-E<gt>bufptr
-
-=item PL_parser-E<gt>linestart
-
-=item PL_parser-E<gt>linestr
-
-=item Perl_signbit
-
-=item pad_findmy
-
-=item sv_utf8_decode
-
-=item sv_utf8_downgrade
-
-=item bytes_from_utf8
-
-=item bytes_to_utf8
-
-=item utf8_to_bytes
-
-=item Lvalue subroutines
-
-Introduced in Perl 5.6.0
-
-See also L<perlsub>
-
-=item There is an C<installhtml> target in the Makefile.
-
-=item Unicode in Perl on EBCDIC
-
-=item C<(?{code})>
-
-See also L<perlre>
-
-=item C<(??{ code })>
-
-See also L<perlre>
+The ticket for this feature is
+L<[perl #119313]|https://rt.perl.org/rt3/Ticket/Display.html?id=119313>.
 
 =item Smart match (C<~~>)
 
@@ -168,30 +31,26 @@ Introduced in Perl 5.10.0
 
 Modified in Perl 5.10.1, 5.12.0
 
+Using this feature triggers warnings in the category
+C<experimental::smartmatch>.
+
+The ticket for this feature is
+L<[perl #119317]|https://rt.perl.org/rt3/Ticket/Display.html?id=119317>.
+
 =item Lexical C<$_>
 
 Introduced in Perl 5.10.0
 
-=item Backtracking control verbs
+Using this feature triggers warnings in the category
+C<experimental::lexical_topic>.
 
-C<(*ACCEPT)>
-
-Introduced in: Perl 5.10
-
-See also: L<perlre/"Special Backtracking Control Verbs">
-
-=item Code expressions, conditional expressions, and independent expressions in regexes
-
-
-=item gv_try_downgrade
-
-See also L<perlintern>
-
-=item Experimental Support for Sun Studio Compilers for Linux OS
-
-See also L<perllinux>
+The ticket for this feature is
+L<[perl #119315]|https://rt.perl.org/rt3/Ticket/Display.html?id=119315>.
 
 =item Pluggable keywords
+
+The ticket for this feature is
+L<[perl #119455]|https://rt.perl.org/rt3/Ticket/Display.html?id=119455>.
 
 See L<perlapi/PL_keyword_plugin> for the mechanism.
 
@@ -201,17 +60,60 @@ Introduced in: Perl 5.11.2
 
 Introduced in Perl 5.14.0
 
+The ticket for this feature is
+L<[perl #119437]|https://rt.perl.org/rt3/Ticket/Display.html?id=119437>.
+
 =item Lexical subroutines
 
 Introduced in: Perl 5.18
 
 See also: L<perlsub/Lexical Subroutines>
 
+Using this feature triggers warnings in the category
+C<experimental::lexical_subs>.
+
+The ticket for this feature is
+L<[perl #120085]|https://rt.perl.org/rt3/Ticket/Display.html?id=120085>.
+
 =item Regular Expression Set Operations
 
 Introduced in: Perl 5.18
 
+The ticket for this feature is
+L<[perl #119451]|https://rt.perl.org/rt3/Ticket/Display.html?id=119451>.
+
 See also: L<perlrecharclass/Extended Bracketed Character Classes>
+
+Using this feature triggers warnings in the category
+C<experimental::regex_sets>.
+
+=item C<\s> in regexp matches vertical tab
+
+Introduced in Perl 5.18
+
+=item Postfix dereference syntax
+
+Introduced in Perl 5.20.0
+
+Using this feature triggers warnings in the category
+C<experimental::postderef>.
+
+The ticket for this feature is
+L<[perl #120162]|https://rt.perl.org:443/rt3/Ticket/Display.html?id=120162>.
+
+=item The <:win32> IO pseudolayer
+
+The ticket for this feature is
+L<[perl #119453]|https://rt.perl.org/rt3/Ticket/Display.html?id=119453>.
+
+See also L<perlrun>
+
+=item There is an C<installhtml> target in the Makefile.
+
+The ticket for this feature is
+L<[perl #116487]|https://rt.perl.org/rt3/Ticket/Display.html?id=116487>.
+
+=item Unicode in Perl on EBCDIC
 
 =back
 
@@ -219,24 +121,18 @@ See also: L<perlrecharclass/Extended Bracketed Character Classes>
 
 These features were so wildly successful and played so well with others that
 we decided to remove their experimental status and admit them as full, stable
-features in the world of Perl, lavishing all the benefits and luxuries thereof. 
+features in the world of Perl, lavishing all the benefits and luxuries thereof.
 They are also awarded +5 Stability and +3 Charisma.
 
 =over 8
 
-=item The C<\N> regex character class
+=item 64-bit support
 
-The C<\N> character class, not to be confused with the named character
-sequence C<\N{NAME}>, denotes any non-newline character in a regular
-expression.
+Introduced in Perl 5.005
 
-Introduced in: Perl 5.12
+=item die accepts a reference
 
-=item fork() emulation
-
-Introduced in Perl 5.6.1
-
-See also L<perlfork>
+Introduced in Perl 5.005
 
 =item DB module
 
@@ -252,13 +148,72 @@ Introduced in Perl 5.6.0
 
 Introduced in Perl 5.6.0
 
-=item die accepts a reference
+=item fork() emulation
 
-Introduced in Perl 5.005
+Introduced in Perl 5.6.1
 
-=item 64-bit support
+See also L<perlfork>
 
-Introduced in Perl 5.005
+=item -Dusemultiplicity -Duseithreads
+
+Introduced in Perl 5.6.0
+
+Accepted in Perl 5.8.0
+
+=item Support for long doubles
+
+Introduced in Perl 5.6.0
+
+Accepted in Perl 5.8.1
+
+=item The C<\N> regex character class
+
+The C<\N> character class, not to be confused with the named character
+sequence C<\N{NAME}>, denotes any non-newline character in a regular
+expression.
+
+Introduced in Perl 5.12
+
+Exact version of acceptance unclear, but no later than Perl 5.18.
+
+=item C<(?{code})> and C<(??{ code })>
+
+Introduced in Perl 5.6.0
+
+Accepted in Perl 5.20.0
+
+See also L<perlre>
+
+=item Linux abstract Unix domain sockets
+
+Introduced in Perl 5.9.2
+
+Accepted before Perl 5.20.0.  The Socket library is now primarily maintained
+on CPAN, rather than in the perl core.
+
+See also L<Socket>
+
+=item Lvalue subroutines
+
+Introduced in Perl 5.6.0
+
+Accepted in Perl 5.20.0
+
+See also L<perlsub>
+
+=item Backtracking control verbs
+
+C<(*ACCEPT)>
+
+Introduced in: Perl 5.10
+
+Accepted in Perl 5.20.0
+
+=item The <:pop> IO pseudolayer
+
+See also L<perlrun>
+
+Accepted in Perl 5.20.0
 
 =back
 
@@ -269,38 +224,6 @@ has disappeared. It's your own fault if you wrote production programs using
 these features after we explicitly told you not to (see L<perlpolicy>).
 
 =over 8
-
-=item C<legacy>
-
-The experimental C<legacy> pragma was swallowed by the C<feature> pragma.
-
-Introduced in: 5.11.2
-
-Removed in: 5.11.3
-
-=item Assertions
-
-The C<-A> command line switch
-
-Introduced in Perl 5.9.0
-
-Removed in Perl 5.9.5
-
-=item Test::Harness::Straps
-
-Moved from Perl 5.10.1 to CPAN
-
-=item GetOpt::Long Options can now take multiple values at once (experimental)
-
-C<Getopt::Long> upgraded to version 2.35
-
-Removed in Perl 5.8.8
-
-=item The pseudo-hash data type
-
-Introduced in Perl 5.6.0
-
-Removed in Perl 5.9.0
 
 =item 5.005-style threading
 
@@ -314,7 +237,43 @@ Introduced in Perl 5.005
 
 Moved from Perl 5.9.0 to CPAN
 
+=item The pseudo-hash data type
+
+Introduced in Perl 5.6.0
+
+Removed in Perl 5.9.0
+
+=item GetOpt::Long Options can now take multiple values at once (experimental)
+
+C<Getopt::Long> upgraded to version 2.35
+
+Removed in Perl 5.8.8
+
+=item Assertions
+
+The C<-A> command line switch
+
+Introduced in Perl 5.9.0
+
+Removed in Perl 5.9.5
+
+=item Test::Harness::Straps
+
+Moved from Perl 5.10.1 to CPAN
+
+=item C<legacy>
+
+The experimental C<legacy> pragma was swallowed by the C<feature> pragma.
+
+Introduced in: 5.11.2
+
+Removed in: 5.11.3
+
 =back
+
+=head1 SEE ALSO
+
+For a complete list of features check L<feature>.
 
 =head1 AUTHORS
 

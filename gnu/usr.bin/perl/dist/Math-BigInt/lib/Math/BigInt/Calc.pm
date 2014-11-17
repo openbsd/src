@@ -2,9 +2,9 @@ package Math::BigInt::Calc;
 
 use 5.006002;
 use strict;
-# use warnings;	# dont use warnings for older Perls
+# use warnings;	# do not use warnings for older Perls
 
-our $VERSION = '1.997';
+our $VERSION = '1.998';
 
 # Package to store unsigned big integers in decimal and do math with them
 
@@ -23,7 +23,7 @@ our $VERSION = '1.997';
 
 # Beware of things like:
 # $i = $i * $y + $car; $car = int($i / $BASE); $i = $i % $BASE;
-# This works on x86, but fails on ARM (SA1100, iPAQ) due to whoknows what
+# This works on x86, but fails on ARM (SA1100, iPAQ) due to who knows what
 # reasons. So, use this instead (slower, but correct):
 # $i = $i * $y + $car; $car = int($i / $BASE); $i -= $BASE * $car;
 
@@ -1566,7 +1566,7 @@ sub _nok {
 
     else {
 
-        # Make a copy of the original n, since we'll be modifing n in-place.
+        # Make a copy of the original n, since we'll be modifying n in-place.
 
         my $n_orig = _copy($c, $n);
 

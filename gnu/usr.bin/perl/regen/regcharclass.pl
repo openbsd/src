@@ -4,7 +4,7 @@ use strict;
 use 5.008;
 use warnings;
 use warnings FATAL => 'all';
-use Text::Wrap qw(wrap);
+no warnings 'experimental::autoderef';
 use Data::Dumper;
 $Data::Dumper::Useqq= 1;
 our $hex_fmt= "0x%02X";
@@ -71,7 +71,7 @@ that C<s> contains at least one character.
 =item C<is_WHATEVER_cp(cp)>
 
 Check to see if the string matches a given codepoint (hypothetically a
-U32). The condition is constructed as as to "break out" as early as
+U32). The condition is constructed as to "break out" as early as
 possible if the codepoint is out of range of the condition.
 
 IOW:
@@ -281,12 +281,22 @@ sub __incrdepth {
 # returns the new root opcode of the tree.
 sub __cond_join {
     my ( $cond, $yes, $no )= @_;
-    return {
-        test  => $cond,
-        yes   => __incrdepth( $yes ),
-        no    => $no,
-        depth => 0,
-    };
+    if (ref $yes) {
+        return {
+            test  => $cond,
+            yes   => __incrdepth( $yes ),
+            no    => $no,
+            depth => 0,
+        };
+    }
+    else {
+        return {
+            test  => $cond,
+            yes   => $yes,
+            no    => __incrdepth($no),
+            depth => 0,
+        };
+    }
 }
 
 # Methods
@@ -307,7 +317,7 @@ sub __cond_join {
 # Each string is then stored in the 'strs' subhash as a hash record
 # made up of the results of __uni_latin1, using the keynames
 # 'low','latin1','utf8', as well as the synthesized 'LATIN1', 'high', and
-# 'UTF8' which hold a merge of 'low' and their lowercase equivelents.
+# 'UTF8' which hold a merge of 'low' and their lowercase equivalents.
 #
 # Size data is tracked per type in the 'size' subhash.
 #
@@ -470,7 +480,7 @@ sub _optree {
     $else= 0  unless defined $else;
     $depth= 0 unless defined $depth;
 
-    # if we have an emptry string as a key it means we are in an
+    # if we have an empty string as a key it means we are in an
     # accepting state and unless we can match further on should
     # return the value of the '' key.
     if (exists $trie->{''} ) {
@@ -491,14 +501,30 @@ sub _optree {
     # it means we are an accepting state (end of sequence).
     my @conds= sort { $a <=> $b } grep { length $_ } keys %$trie;
 
-    # if we havent any keys there is no further we can match and we
+    # if we haven't any keys there is no further we can match and we
     # can return the "else" value.
     return $else if !@conds;
 
+    # Assuming Perl is being released from an ASCII platform, the below makes
+    # it work for non-UTF-8 out-of-the box when porting to non-ASCII, by
+    # adding a translation back to ASCII.  This is the wrong thing to do for
+    # UTF-EBCDIC, as that is different from UTF-8.  But the intent here is
+    # that this regen should be run on the target system, which will omit the
+    # translation, and generate the correct UTF-EBCDIC.  On ASCII systems, the
+    # translation macros expand to just their argument, so there is no harm
+    # done nor performance penalty by including them.
+    my $test;
+    if ($test_type =~ /^cp/) {
+        $test = "cp";
+        $test = "NATIVE_TO_UNI($test)" if ASCII_PLATFORM;
+    }
+    else {
+        $test = "((U8*)s)[$depth]";
+        $test = "NATIVE_TO_LATIN1($test)" if ASCII_PLATFORM;
+    }
 
-    my $test= $test_type =~ /^cp/ ? "cp" : "((U8*)s)[$depth]";
-    # first we loop over the possible keys/conditions and find out what they look like
-    # we group conditions with the same optree together.
+    # first we loop over the possible keys/conditions and find out what they
+    # look like; we group conditions with the same optree together.
     my %dmp_res;
     my @res_order;
     local $Data::Dumper::Sortkeys=1;
@@ -598,27 +624,122 @@ sub length_optree {
     die "Can't do a length_optree on type 'cp', makes no sense."
       if $type =~ /^cp/;
 
-    my ( @size, $method );
+    my $else= ( $opt{else} ||= 0 );
 
-    if ( $type =~ /generic/ ) {
-        $method= 'generic_optree';
+    my $method = $type =~ /generic/ ? 'generic_optree' : 'optree';
+    if ($method eq 'optree' && scalar keys %{$self->{size}{$type}} == 1) {
+
+        # Here is non-generic output (meaning that we are only generating one
+        # type), and all things that match have the same number ('size') of
+        # bytes.  The length guard is simply that we have that number of
+        # bytes.
+        my @size = keys %{$self->{size}{$type}};
+        my $cond= "((e) - (s)) >= $size[0]";
+        my $optree = $self->$method(%opt);
+        $else= __cond_join( $cond, $optree, $else );
+    }
+    elsif ($self->{has_multi}) {
+        my @size;
+
+        # Here, there can be a match of a multiple character string.  We use
+        # the traditional method which is to have a branch for each possible
+        # size (longest first) and test for the legal values for that size.
         my %sizes= (
             %{ $self->{size}{low}    || {} },
             %{ $self->{size}{latin1} || {} },
             %{ $self->{size}{utf8}   || {} }
         );
-        @size= sort { $a <=> $b } keys %sizes;
-    } else {
-        $method= 'optree';
-        @size= sort { $a <=> $b } keys %{ $self->{size}{$type} };
+        if ($method eq 'generic_optree') {
+            @size= sort { $a <=> $b } keys %sizes;
+        } else {
+            @size= sort { $a <=> $b } keys %{ $self->{size}{$type} };
+        }
+        for my $size ( @size ) {
+            my $optree= $self->$method( %opt, type => $type, max_depth => $size );
+            my $cond= "((e)-(s) > " . ( $size - 1 ).")";
+            $else= __cond_join( $cond, $optree, $else );
+        }
+    }
+    else {
+        my $utf8;
+
+        # Here, has more than one possible size, and only matches a single
+        # character.  For non-utf8, the needed length is 1; for utf8, it is
+        # found by array lookup 'UTF8SKIP'.
+
+        # If want just the code points above 255, set up to look for those;
+        # otherwise assume will be looking for all non-UTF-8-invariant code
+        # poiints.
+        my $trie_type = ($type eq 'high') ? 'high' : 'utf8';
+
+        # If we do want more than the 0-255 range, find those, and if they
+        # exist...
+        if ($opt{type} !~ /latin1/i && ($utf8 = $self->make_trie($trie_type, 0))) {
+
+            # ... get them into an optree, and set them up as the 'else' clause
+            $utf8 = $self->_optree( $utf8, 'depth', $opt{ret_type}, 0, 0 );
+
+            # We could make this
+            #   UTF8_IS_START(*s) && ((e) - (s)) >= UTF8SKIP(s))";
+            # to avoid doing the UTF8SKIP and subsequent branches for invariants
+            # that don't match.  But the current macros that get generated
+            # have only a few things that can match past this, so I (khw)
+            # don't think it is worth it.  (Even better would be to use
+            # calculate_mask(keys %$utf8) instead of UTF8_IS_START, and use it
+            # if it saves a bunch.
+            my $cond = "(((e) - (s)) >= UTF8SKIP(s))";
+            $else = __cond_join($cond, $utf8, $else);
+
+            # For 'generic', we also will want the latin1 UTF-8 variants for
+            # the case where the input isn't UTF-8.
+            my $latin1;
+            if ($method eq 'generic_optree') {
+                $latin1 = $self->make_trie( 'latin1', 1);
+                $latin1= $self->_optree( $latin1, 'depth', $opt{ret_type}, 0, 0 );
+            }
+
+            # If we want the UTF-8 invariants, get those.
+            my $low;
+            if ($opt{type} !~ /non_low|high/
+                && ($low= $self->make_trie( 'low', 1)))
+            {
+                $low= $self->_optree( $low, 'depth', $opt{ret_type}, 0, 0 );
+
+                # Expand out the UTF-8 invariants as a string so that we
+                # can use them as the conditional
+                $low = $self->_cond_as_str( $low, 0, \%opt);
+
+                # If there are Latin1 variants, add a test for them.
+                if ($latin1) {
+                    $else = __cond_join("(! is_utf8 )", $latin1, $else);
+                }
+                elsif ($method eq 'generic_optree') {
+
+                    # Otherwise for 'generic' only we know that what
+                    # follows must be valid for just UTF-8 strings,
+                    $else->{test} = "( is_utf8 && $else->{test} )";
+                }
+
+                # If the invariants match, we are done; otherwise we have
+                # to go to the 'else' clause.
+                $else = __cond_join($low, 1, $else);
+            }
+            elsif ($latin1) {   # Here, didn't want or didn't have invariants,
+                                # but we do have latin variants
+                $else = __cond_join("(! is_utf8)", $latin1, $else);
+            }
+
+            # We need at least one byte available to start off the tests
+            $else = __cond_join("((e) > (s))", $else, 0);
+        }
+        else {  # Here, we don't want or there aren't any variants.  A single
+                # byte available is enough.
+            my $cond= "((e) > (s))";
+            my $optree = $self->$method(%opt);
+            $else= __cond_join( $cond, $optree, $else );
+        }
     }
 
-    my $else= ( $opt{else} ||= 0 );
-    for my $size ( @size ) {
-        my $optree= $self->$method( %opt, type => $type, max_depth => $size );
-        my $cond= "((e)-(s) > " . ( $size - 1 ).")";
-        $else= __cond_join( $cond, $optree, $else );
-    }
     return $else;
 }
 
@@ -935,7 +1056,7 @@ sub _cond_as_str {
     my @masks;
     if (@ranges > 1) {
 
-        # See if the entire set shares optimizable characterstics, and if so,
+        # See if the entire set shares optimizable characteristics, and if so,
         # return the optimization.  We delay checking for this on sets with
         # just a single range, as there may be better optimizations available
         # in that case.
@@ -1074,10 +1195,18 @@ sub _combine {
     return if !@cond;
     my $item= shift @cond;
     my ( $cstr, $gtv );
-    if ( ref $item ) {
-        $cstr=
+    if ( ref $item ) {  # @item should be a 2-element array giving range start
+                        # and end
+        if ($item->[0] == 0) {  # UV's are never negative, so skip "0 <= "
+                                # test which could generate a compiler warning
+                                # that test is always true
+            $cstr= sprintf( "$test <= $self->{val_fmt}", $item->[1] );
+        }
+        else {
+            $cstr=
           sprintf( "( $self->{val_fmt} <= $test && $test <= $self->{val_fmt} )",
-            @$item );
+                   @$item );
+        }
         $gtv= sprintf "$self->{val_fmt}", $item->[1];
     } else {
         $cstr= sprintf( "$self->{val_fmt} == $test", $item );
@@ -1160,9 +1289,14 @@ sub render {
 # type defaults to 'generic', and ret_type to 'len' unless type is 'cp'
 # in which case it defaults to 'cp' as well.
 #
-# it is illegal to do a type 'cp' macro on a pattern with multi-codepoint
+# It is illegal to do a type 'cp' macro on a pattern with multi-codepoint
 # sequences in it, as the generated macro will accept only a single codepoint
 # as an argument.
+#
+# It is also illegal to do a non-safe macro on a pattern with multi-codepoint
+# sequences in it, as even if it is known to be well-formed, we need to not
+# run off the end of the buffer when say the buffer ends with the first two
+# characters, but three are looked at by the macro.
 #
 # returns the macro.
 
@@ -1171,9 +1305,14 @@ sub make_macro {
     my $self= shift;
     my %opts= @_;
     my $type= $opts{type} || 'generic';
-    die "Can't do a 'cp' on multi-codepoint character class '$self->{op}'"
-      if $type =~ /^cp/
-      and $self->{has_multi};
+    if ($self->{has_multi}) {
+        if ($type =~ /^cp/) {
+            die "Can't do a 'cp' on multi-codepoint character class '$self->{op}'"
+        }
+        elsif (! $opts{safe}) {
+            die "'safe' is required on multi-codepoint character class '$self->{op}'"
+        }
+    }
     my $ret_type= $opts{ret_type} || ( $opts{type} =~ /^cp/ ? 'cp' : 'len' );
     my $method;
     if ( $opts{safe} ) {
@@ -1198,7 +1337,7 @@ sub make_macro {
     return $self->render( $optree, ($type =~ /^cp/) ? 1 : 0, \%opts, $def_fmt );
 }
 
-# if we arent being used as a module (highly likely) then process
+# if we aren't being used as a module (highly likely) then process
 # the __DATA__ below and produce macros in regcharclass.h
 # if an argument is provided to the script then it is assumed to
 # be the path of the file to output to, if the arg is '-' outputs
@@ -1214,7 +1353,12 @@ if ( !caller ) {
     }
     print $out_fh read_only_top( lang => 'C', by => $0,
 				 file => 'regcharclass.h', style => '*',
-				 copyright => [2007, 2011] );
+				 copyright => [2007, 2011],
+                                 final => <<EOF,
+WARNING: These macros are for internal Perl core use only, and may be
+changed or removed without notice.
+EOF
+    );
     print $out_fh "\n#ifndef H_REGCHARCLASS   /* Guard against nested #includes */\n#define H_REGCHARCLASS 1\n\n";
 
     my ( $op, $title, @txt, @types, %mods );
@@ -1245,12 +1389,11 @@ if ( !caller ) {
             my ( $type, $ret )= split /-/, $type_spec;
             $ret ||= 'len';
             foreach my $mod ( @mods ) {
-                next if $mod eq 'safe' and $type =~ /^cp/;
                 delete $mods{$mod};
                 my $macro= $obj->make_macro(
                     type     => $type,
                     ret_type => $ret,
-                    safe     => $mod eq 'safe'
+                    safe     => $mod eq 'safe' && $type !~ /^cp/,
                 );
                 print $out_fh $macro, "\n";
             }
@@ -1403,24 +1546,24 @@ __DATA__
 # 0x1FE3  # GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND OXIA; maps same as 03B0
 
 LNBREAK: Line Break: \R
-=> generic UTF8 LATIN1 :fast safe
+=> generic UTF8 LATIN1 : safe
 "\x0D\x0A"      # CRLF - Network (Windows) line ending
 \p{VertSpace}
 
 HORIZWS: Horizontal Whitespace: \h \H
-=> generic UTF8 LATIN1 high cp cp_high :fast safe
+=> high cp_high : fast
 \p{HorizSpace}
 
 VERTWS: Vertical Whitespace: \v \V
-=> generic UTF8 high LATIN1 cp cp_high :fast safe
+=> high cp_high : fast
 \p{VertSpace}
 
 XDIGIT: Hexadecimal digits
-=> UTF8 high cp_high :fast
+=> high cp_high : fast
 \p{XDigit}
 
 XPERLSPACE: \p{XPerlSpace}
-=> generic UTF8 high cp_high :fast
+=> high cp_high : fast
 \p{XPerlSpace}
 
 REPLACEMENT: Unicode REPLACEMENT CHARACTER
@@ -1491,11 +1634,23 @@ do regen/regcharclass_multi_char_folds.pl
 &regcharclass_multi_char_folds::multi_char_folds(1)
 
 MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
-=> LATIN1 :safe
+=> LATIN1 : safe
 
 &regcharclass_multi_char_folds::multi_char_folds(0)
 # 0 => Latin1-only
 
+FOLDS_TO_MULTI: characters that fold to multi-char strings
+=> UTF8 :fast
+\p{_Perl_Folds_To_Multi_Char}
+
+PROBLEMATIC_LOCALE_FOLD : characters whose fold is problematic under locale
+=> UTF8 cp :fast
+\p{_Perl_Problematic_Locale_Folds}
+
+PROBLEMATIC_LOCALE_FOLDEDS_START : The first folded character of folds which are problematic under locale
+=> UTF8 cp :fast
+\p{_Perl_Problematic_Locale_Foldeds_Start}
+
 PATWS: pattern white space
-=> generic generic_non_low cp : fast safe
+=> generic generic_non_low cp : safe
 \p{PatWS}

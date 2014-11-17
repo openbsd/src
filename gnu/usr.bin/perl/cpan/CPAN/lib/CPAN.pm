@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4:
 use strict;
 package CPAN;
-$CPAN::VERSION = '2.00';
+$CPAN::VERSION = '2.05';
 $CPAN::VERSION =~ s/_//;
 
 # we need to run chdir all over and we would get at wrong libraries
@@ -886,7 +886,7 @@ this variable in either a CPAN/MyConfig.pm or a CPAN/Config.pm in your
 #       be politely squashed.  Any bug that causes every eval {} to have to be
 #       modified should be not so politely squashed.
 #
-#       Those are my current opinions.  It is also my optinion that polite
+#       Those are my current opinions.  It is also my opinion that polite
 #       arguments degenerate to personal arguments far too frequently, and that
 #       when they do, it's because both people wanted it to, or at least didn't
 #       sufficiently want it not to.
@@ -1111,7 +1111,7 @@ sub has_inst {
     my %dont = map { $_ => 1 } keys %{$CPAN::META->{dontload_hash}||{}},
         keys %{$CPAN::Config->{dontload_hash}||{}},
             @{$CPAN::Config->{dontload_list}||[]};
-    if (defined $message && $message eq "no"  # afair only used by Nox
+    if (defined $message && $message eq "no"  # as far as I remember only used by Nox
         ||
         $dont{$mod}
        ) {
@@ -1125,7 +1125,7 @@ sub has_inst {
     if ($INC{$file}) {
         # checking %INC is wrong, because $INC{LWP} may be true
         # although $INC{"URI/URL.pm"} may have failed. But as
-        # I really want to say "bla loaded OK", I have to somehow
+        # I really want to say "blah loaded OK", I have to somehow
         # cache results.
         ### warn "$file in %INC"; #debug
         return 1;
@@ -1746,7 +1746,7 @@ not yet been installed. See also C<is_tested>.
 
 =item is_tested
 
-List all buid directories of distributions that have been tested
+List all build directories of distributions that have been tested
 successfully but have not yet been installed. See also
 C<install_tested>.
 
@@ -1865,7 +1865,7 @@ separated):
 
 Modules know their associated Distribution objects. They always refer
 to the most recent official release. Developers may mark their releases
-as unstable development versions (by inserting an underbar into the
+as unstable development versions (by inserting an unserscore into the
 module version number which will also be reflected in the distribution
 name when you run 'make dist'), so the really hottest and newest
 distribution is not always the default.  If a module Foo circulates
@@ -2110,12 +2110,14 @@ currently defined:
   proxy_user         username for accessing an authenticating proxy
   proxy_pass         password for accessing an authenticating proxy
   randomize_urllist  add some randomness to the sequence of the urllist
+  recommends_policy  whether recommended prerequisites should be included
   scan_cache         controls scanning of cache ('atstart', 'atexit' or 'never')
   shell              your favorite shell
   show_unparsable_versions
                      boolean if r command tells which modules are versionless
   show_upload_date   boolean if commands should try to determine upload date
   show_zero_versions boolean if r command tells for which modules $version==0
+  suggests_policy    whether suggested prerequisites should be included
   tar                location of external program tar
   tar_verbosity      verbosity level for the tar command
   term_is_latin      deprecated: if true Unicode is translated to ISO-8859-1
@@ -2127,6 +2129,7 @@ currently defined:
                      CPAN::Reporter history)
   unzip              location of external program unzip
   urllist            arrayref to nearby CPAN sites (or equivalent locations)
+  use_prompt_default set PERL_MM_USE_DEFAULT for configure/make/test/install
   use_sqlite         use CPAN::SQLite for metadata storage (fast and lean)
   username           your username if you CPAN server wants one
   version_timeout    stops version parsing after this many seconds.
@@ -3755,7 +3758,7 @@ which to try in which order.
 
 Henk P. Penning maintains a site that collects data about CPAN sites:
 
-  http://www.cs.uu.nl/people/henkp/mirmon/cpan.html
+  http://mirrors.cpan.org/
 
 Also, feel free to play with experimental features. Run
 
@@ -3791,8 +3794,9 @@ Speaking of the build directory. Do I have to clean it up myself?
 You have the choice to set the config variable C<scan_cache> to
 C<never>. Then you must clean it up yourself. The other possible
 values, C<atstart> and C<atexit> clean up the build directory when you
-start or exit the CPAN shell, respectively. If you never start up the
-CPAN shell, you probably also have to clean up the build directory
+start (or more precisely, after the first extraction into the build
+directory) or exit the CPAN shell, respectively. If you never start up
+the CPAN shell, you probably also have to clean up the build directory
 yourself.
 
 =back

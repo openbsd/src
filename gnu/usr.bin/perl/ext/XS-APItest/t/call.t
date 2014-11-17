@@ -11,7 +11,7 @@ use strict;
 
 BEGIN {
     require '../../t/test.pl';
-    plan(436);
+    plan(437);
     use_ok('XS::APItest')
 };
 
@@ -27,6 +27,13 @@ sub f {
     pop @_;
     @_, defined wantarray ? wantarray ? 'x' :  'y' : 'z';
 }
+
+our $call_sv_count = 0;
+sub i {
+    $call_sv_count++;
+}
+call_sv_C();
+is($call_sv_count, 6, "call_sv_C passes");
 
 sub d {
     die "its_dead_jim\n";

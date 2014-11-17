@@ -7,7 +7,7 @@
 
 cpan/DB_File
 cpan/IPC-SysV
-cpan/List-Util
+cpan/Scalar-List-Utils
 cpan/Time-HiRes
 cpan/Win32API-File
-dist/Cwd
+dist/PathTools

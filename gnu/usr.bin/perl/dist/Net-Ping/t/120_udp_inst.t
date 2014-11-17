@@ -2,6 +2,7 @@
 # I do not know of any servers that support udp echo anymore.
 
 use strict;
+use Config;
 
 BEGIN {
   unless (eval "require Socket") {
@@ -10,6 +11,10 @@ BEGIN {
   }
   unless (getservbyname('echo', 'udp')) {
     print "1..0 \# Skip: no echo port\n";
+    exit;
+  }
+  unless ($Config{d_getpbyname}) {
+    print "1..0 \# Skip: no getprotobyname\n";
     exit;
   }
 }

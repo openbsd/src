@@ -1,16 +1,16 @@
-# IndicMatraCategory-6.2.0.txt
-# Date: 2012-05-15, 21:10:00 GMT [KW]
+# IndicMatraCategory-6.3.0.txt
+# Date: 2013-01-02, 08:33:00 GMT [KW, LI]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UAX #44.
+# For documentation, see UAX #44, at http://www.unicode.org/reports/tr44/
 #
 # This file defines the following provisional property:
 #
 #    Indic_Matra_Category     enumerated property
 #
-# NB: Provisional properties and data files have no associated stability 
+# NB: Provisional properties and data files have no associated stability
 # guarantees. They are provided in part to determine the possible usefulness
 # of a property or other data and to encourage analysis and further investigation
 # which may result in their improvement. Provisional properties and
@@ -47,7 +47,7 @@
 #   4. Matra display may be contextually determined. This is
 #      notable, for example, in the Tamil script, where the shape
 #      and placement of -u and -uu vowels depends strongly on
-#      which consonant they adjoin. 
+#      which consonant they adjoin.
 #
 # Format:
 #    Field 0  Code Point or Code Point Range
@@ -210,7 +210,7 @@ AAEE          ; Left # Mc       MEETEI MAYEK VOWEL SIGN AU
 # model, these left-side vowels occur first in the backing store (before
 # the consonant letter) and are not reordered during text rendering.
 #
-# [Derivation: Logical_Order_Exception=True]
+# [Derivation: Logical_Order_Exception=Yes]
 
 0E40..0E44    ; Visual_Order_Left # Lo   [5] THAI CHARACTER SARA E..THAI CHARACTER SARA AI MAIMALAI
 0EC0..0EC4    ; Visual_Order_Left # Lo   [5] LAO VOWEL SIGN E..LAO VOWEL SIGN AI

@@ -54,7 +54,7 @@ EOM
  
 my $a = `$Perl "-I." $Inc -e "use ${module} ;"  $redir` ;
 ok(1, (($? >>8) != 0 or (($^O eq 'MSWin32' || $^O eq 'MacOS' || $^O eq 'NetWare' || $^O eq 'mpeix') && $? != 0))) ;
-ok(2, $a =~ /^Can't locate object method "filter" via package "MyTest"/) ;
+ok(2, $a =~ /^Can't locate object method "filter" via package "MyTest"/m) ;
  
 # no reference parameter in filter_add
 ######################################
@@ -72,7 +72,7 @@ EOM
 $a = `$Perl "-I." $Inc -e "use ${module} ;"  $redir` ;
 ok(3, (($? >>8) != 0 or (($^O eq 'MSWin32' || $^O eq 'MacOS' || $^O eq 'NetWare' || $^O eq 'mpeix') && $? != 0))) ;
 #ok(4, $a =~ /^usage: filter_add\(ref\) at ${module}.pm/) ;
-ok(4, $a =~ /^Not enough arguments for Filter::Util::Call::filter_add/) ;
+ok(4, $a =~ /^Not enough arguments for Filter::Util::Call::filter_add/m) ;
  
 
 

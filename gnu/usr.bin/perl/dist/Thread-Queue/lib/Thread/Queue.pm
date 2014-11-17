@@ -3,7 +3,7 @@ package Thread::Queue;
 use strict;
 use warnings;
 
-our $VERSION = '3.02';
+our $VERSION = '3.05';
 $VERSION = eval $VERSION;
 
 use threads::shared 1.21;
@@ -11,9 +11,6 @@ use Scalar::Util 1.10 qw(looks_like_number blessed reftype refaddr);
 
 # Carp errors from threads::shared calls should complain about caller
 our @CARP_NOT = ("threads::shared");
-
-# Predeclarations for internal functions
-my ($validate_count, $validate_index, $validate_timeout);
 
 # Create a new queue possibly pre-populated with items
 sub new
@@ -64,7 +61,7 @@ sub dequeue
     lock(%$self);
     my $queue = $$self{'queue'};
 
-    my $count = @_ ? $validate_count->(shift) : 1;
+    my $count = @_ ? $self->_validate_count(shift) : 1;
 
     # Wait for requisite number of items
     cond_wait(%$self) while ((@$queue < $count) && ! $$self{'ENDED'});
@@ -89,7 +86,7 @@ sub dequeue_nb
     lock(%$self);
     my $queue = $$self{'queue'};
 
-    my $count = @_ ? $validate_count->(shift) : 1;
+    my $count = @_ ? $self->_validate_count(shift) : 1;
 
     # Return single item
     return shift(@$queue) if ($count == 1);
@@ -111,13 +108,13 @@ sub dequeue_timed
     my $queue = $$self{'queue'};
 
     # Timeout may be relative or absolute
-    my $timeout = @_ ? $validate_timeout->(shift) : -1;
+    my $timeout = @_ ? $self->_validate_timeout(shift) : -1;
     # Convert to an absolute time for use with cond_timedwait()
     if ($timeout < 32000000) {   # More than one year
         $timeout += time();
     }
 
-    my $count = @_ ? $validate_count->(shift) : 1;
+    my $count = @_ ? $self->_validate_count(shift) : 1;
 
     # Wait for requisite number of items, or until timeout
     while ((@$queue < $count) && ! $$self{'ENDED'}) {
@@ -134,7 +131,7 @@ sub peek
 {
     my $self = shift;
     lock(%$self);
-    my $index = @_ ? $validate_index->(shift) : 0;
+    my $index = @_ ? $self->_validate_index(shift) : 0;
     return $$self{'queue'}[$index];
 }
 
@@ -151,7 +148,7 @@ sub insert
 
     my $queue = $$self{'queue'};
 
-    my $index = $validate_index->(shift);
+    my $index = $self->_validate_index(shift);
 
     return if (! @_);   # Nothing to insert
 
@@ -186,8 +183,8 @@ sub extract
     lock(%$self);
     my $queue = $$self{'queue'};
 
-    my $index = @_ ? $validate_index->(shift) : 0;
-    my $count = @_ ? $validate_count->(shift) : 1;
+    my $index = @_ ? $self->_validate_index(shift) : 0;
+    my $count = @_ ? $self->_validate_count(shift) : 1;
 
     # Support negative indices
     if ($index < 0) {
@@ -219,10 +216,12 @@ sub extract
     return @items;
 }
 
-### Internal Functions ###
+### Internal Methods ###
 
 # Check value of the requested index
-$validate_index = sub {
+sub _validate_index
+{
+    my $self = shift;
     my $index = shift;
 
     if (! defined($index) ||
@@ -231,7 +230,8 @@ $validate_index = sub {
     {
         require Carp;
         my ($method) = (caller(1))[3];
-        $method =~ s/Thread::Queue:://;
+        my $class_name = ref($self);
+        $method =~ s/$class_name\:://;
         $index = 'undef' if (! defined($index));
         Carp::croak("Invalid 'index' argument ($index) to '$method' method");
     }
@@ -240,7 +240,9 @@ $validate_index = sub {
 };
 
 # Check value of the requested count
-$validate_count = sub {
+sub _validate_count
+{
+    my $self = shift;
     my $count = shift;
 
     if (! defined($count) ||
@@ -250,7 +252,8 @@ $validate_count = sub {
     {
         require Carp;
         my ($method) = (caller(1))[3];
-        $method =~ s/Thread::Queue:://;
+        my $class_name = ref($self);
+        $method =~ s/$class_name\:://;
         $count = 'undef' if (! defined($count));
         Carp::croak("Invalid 'count' argument ($count) to '$method' method");
     }
@@ -259,7 +262,9 @@ $validate_count = sub {
 };
 
 # Check value of the requested timeout
-$validate_timeout = sub {
+sub _validate_timeout
+{
+    my $self = shift;
     my $timeout = shift;
 
     if (! defined($timeout) ||
@@ -267,7 +272,8 @@ $validate_timeout = sub {
     {
         require Carp;
         my ($method) = (caller(1))[3];
-        $method =~ s/Thread::Queue:://;
+        my $class_name = ref($self);
+        $method =~ s/$class_name\:://;
         $timeout = 'undef' if (! defined($timeout));
         Carp::croak("Invalid 'timeout' argument ($timeout) to '$method' method");
     }
@@ -283,7 +289,7 @@ Thread::Queue - Thread-safe queues
 
 =head1 VERSION
 
-This document describes Thread::Queue version 3.02
+This document describes Thread::Queue version 3.05
 
 =head1 SYNOPSIS
 
@@ -447,7 +453,7 @@ L<cond_timedwait()|threads::shared/"cond_timedwait VARIABLE, ABS_TIMEOUT">.
 Fractional seconds (e.g., 2.5 seconds) are also supported (to the extent of
 the underlying implementation).
 
-If C<TIMEOUT> is missing, c<undef>, or less than or equal to 0, then this call
+If C<TIMEOUT> is missing, C<undef>, or less than or equal to 0, then this call
 behaves the same as C<dequeue_nb>.
 
 =item ->pending()

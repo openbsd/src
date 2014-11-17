@@ -16,11 +16,7 @@ BEGIN {
 }
 
 sub test_data_directory {
-	return(
-		$ENV{PERL_CORE}
-		? File::Spec->catdir(File::Spec->updir, qw(lib Parse CPAN Meta t data))
-		: File::Spec->catdir(qw(t data))
-	);
+	return( File::Spec->catdir(qw(t data)) );
 }
 
 # 22 tests per call to yaml_ok

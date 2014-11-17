@@ -19,7 +19,7 @@ use strict;
 use vars qw($VERSION $VMS_TERMCAP);
 use vars qw($termpat $state $first $entry);
 
-$VERSION = '1.13';
+$VERSION = '1.15';
 
 # Version undef: Thu Dec 14 20:02:42 CST 1995 by sanders@bsdi.com
 # Version 1.00:  Thu Nov 30 23:34:29 EST 2000 by schwern@pobox.com
@@ -59,7 +59,11 @@ $VERSION = '1.13';
 #       QNX test fix from Matt Kraai <kraai@ftbfs.org>
 # Version 1.13: Thu Dec 22 22:21:09 GMT 2011
 #       POD error fix from Domin Hargreaves <dom@earth.li>
-#
+# Version 1.14 Sat Oct 26 19:16:38 BST 2013
+#       Applied all patches from RT and updated contact details
+# Version 1.15 Sat Oct 26 21:32:24 BST 2013
+#        Metadata change from David Steinbrunner
+#        Forgot to update the email somewhere
 # TODO:
 # support Berkeley DB termcaps
 # force $FH into callers package?
@@ -185,7 +189,7 @@ It takes a hash reference as an argument with two optional keys:
 
 The terminal output bit rate (often mistakenly called the baud rate)
 for this terminal - if not set a warning will be generated
-and it will be defaulted to 9600.  I<OSPEED> can be be specified as
+and it will be defaulted to 9600.  I<OSPEED> can be specified as
 either a POSIX termios/SYSV termio speeds (where 9600 equals 9600) or
 an old DSD-style speed ( where 13 equals 9600).
 
@@ -245,7 +249,7 @@ sub Tgetent
        }
        else
        {
-          if ( $^O eq 'Win32' )
+          if ( $^O eq 'MSWin32' )
           {
              $self->{TERM} =  'dumb';
           }
@@ -298,6 +302,7 @@ sub Tgetent
                         $entry = $tmp;
                     }
                 };
+                warn "Can't run infocmp to get a termcap entry: $@" if $@;
             }
             else
             {
@@ -478,7 +483,7 @@ It takes three arguments:
 
 The literal string to be output.  If it starts with a number and an optional
 '*' then the padding will be increased by an amount relative to this number,
-if the '*' is present then this amount will me multiplied by $cnt.  This part
+if the '*' is present then this amount will be multiplied by $cnt.  This part
 of $string is removed before output/
 
 =item B<$cnt>
@@ -681,9 +686,9 @@ sub Tgoto
         elsif ( $code eq '>' )
         {
             ( $code, $tmp, $string ) = unpack( "CCa99", $string );
-            if ( $tmp[$[] > $code )
+            if ( $tmp[0] > $code )
             {
-                $tmp[$[] += $tmp;
+                $tmp[0] += $tmp;
             }
         }
         elsif ( $code eq '2' )
@@ -770,7 +775,10 @@ Please see the README file in distribution.
 =head1 AUTHOR
 
 This module is part of the core Perl distribution and is also maintained
-for CPAN by Jonathan Stowe <jns@gellyfish.com>.
+for CPAN by Jonathan Stowe <jns@gellyfish.co.uk>.
+
+The code is hosted on Github: https://github.com/jonathanstowe/Term-Cap
+please feel free to fork, submit patches etc, etc there.
 
 =head1 SEE ALSO
 

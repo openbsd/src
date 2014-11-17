@@ -49,11 +49,13 @@ PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 	s->var = newSVpvn("", 0);
     }
     SvUPGRADE(s->var, SVt_PV);
+
     code = PerlIOBase_pushed(aTHX_ f, mode, Nullsv, tab);
     if (!SvOK(s->var) || (PerlIOBase(f)->flags) & PERLIO_F_TRUNCATE)
     {
 	sv_force_normal(s->var);
 	SvCUR_set(s->var, 0);
+	if (SvPOK(s->var)) *SvPVX(s->var) = 0;
     }
     if (SvUTF8(s->var) && !sv_utf8_downgrade(s->var, TRUE)) {
 	if (ckWARN(WARN_UTF8))
@@ -64,10 +66,7 @@ PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 	return -1;
     }
     if ((PerlIOBase(f)->flags) & PERLIO_F_APPEND)
-    {
-	sv_force_normal(s->var);
-	s->posn = SvCUR(s->var);
-    }
+	s->posn = SvOK(s->var) ? sv_len(s->var) : 0;
     else
 	s->posn = 0;
     SvSETMAGIC(s->var);
@@ -200,7 +199,7 @@ PerlIOScalar_write(pTHX_ PerlIO * f, const void *vbuf, Size_t count)
 	}
 	else {
 	    STRLEN const cur = SvCUR(sv);
-	    if (s->posn > cur) {
+	    if ((STRLEN)s->posn > cur) {
 		dst = SvGROW(sv, (STRLEN)s->posn + count + 1);
 		Zero(SvPVX(sv) + cur, (STRLEN)s->posn - cur, char);
 	    }
@@ -265,10 +264,7 @@ PerlIOScalar_get_cnt(pTHX_ PerlIO * f)
     if (PerlIOBase(f)->flags & PERLIO_F_CANREAD) {
 	PerlIOScalar *s = PerlIOSelf(f, PerlIOScalar);
 	STRLEN len;
-	SvGETMAGIC(s->var);
-	if (isGV_with_GP(s->var))
-	    (void)SvPV(s->var,len);
-	else len = SvCUR(s->var);
+	(void)SvPV(s->var,len);
 	if (len > (STRLEN) s->posn)
 	    return len - (STRLEN)s->posn;
 	else
@@ -294,9 +290,7 @@ PerlIOScalar_set_ptrcnt(pTHX_ PerlIO * f, STDCHAR * ptr, SSize_t cnt)
     PerlIOScalar *s = PerlIOSelf(f, PerlIOScalar);
     STRLEN len;
     PERL_UNUSED_ARG(ptr);
-    SvGETMAGIC(s->var);
-    if (isGV_with_GP(s->var)) (void)SvPV(s->var,len);
-    else len = SvCUR(s->var);
+    (void)SvPV(s->var,len);
     s->posn = len - cnt;
 }
 
@@ -346,7 +340,7 @@ PerlIOScalar_dup(pTHX_ PerlIO * f, PerlIO * o, CLONE_PARAMS * param,
        ing the cloned scalar to be set to the empty string by
        PerlIOScalar_pushed.  So set aside our scalar temporarily. */
     PerlIOScalar * const os = PerlIOSelf(o, PerlIOScalar);
-    PerlIOScalar *fs;
+    PerlIOScalar *fs = NULL; /* avoid "may be used uninitialized" warning */
     SV * const var = os->var;
     os->var = newSVpvs("");
     if ((f = PerlIOBase_dup(aTHX_ f, o, param, flags))) {

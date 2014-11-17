@@ -1,17 +1,1 @@
 5.014000
-BhkDISABLE                     # E
-BhkENABLE                      # E
-BhkENTRY_set                   # E
-MULTICALL                      # E
-PERL_SYS_TERM                  # E
-POP_MULTICALL                  # E
-PUSH_MULTICALL                 # E
-XopDISABLE                     # E
-XopENABLE                      # E
-XopENTRY                       # E
-XopENTRY_set                   # E
-cophh_new_empty                # E
-my_lstat                       # U (Perl_my_lstat)
-my_stat                        # U (Perl_my_stat)
-ref                            # U (Perl_ref)
-stashpv_hvname_match           # U

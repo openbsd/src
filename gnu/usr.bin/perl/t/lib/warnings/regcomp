@@ -1,3 +1,9 @@
   regcomp.c	These tests have been moved to t/re/reg_mesg.t
+		except for those that explicitly test line numbers.
 
 __END__
+use warnings 'regexp';
+$r=qr/(??{ q"\\b+" })/;
+"a" =~ /a$r/; # warning should come from this line
+EXPECT
+\b+ matches null string many times in regex; marked by <-- HERE in m/\b+ <-- HERE / at - line 3.

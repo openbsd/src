@@ -1,8 +1,8 @@
-# PropertyValueAliases-6.2.0.txt
-# Date: 2012-08-14, 16:05:11 GMT [MD]
+# PropertyValueAliases-6.3.0.txt
+# Date: 2013-08-27, 16:02:08 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -32,13 +32,14 @@
 #
 # Loose matching should be applied to all property names and property values, with
 # the exception of String Property values. With loose matching of property names and
-# values, the case distinctions, whitespace, and '_' are ignored. For Numeric Property
-# values, numeric equivalencies are applied: thus "01.00" is equivalent to "1".
+# values, the case distinctions, whitespace, hyphens, and '_' are ignored.
+# For Numeric Property values, numeric equivalence is applied: thus "01.00"
+# is equivalent to "1".
 #
 # NOTE: Property value names are NOT unique across properties. For example:
 #
 #   AL means Arabic Letter for the Bidi_Class property, and
-#   AL means Above_Left for the Combining_Class property, and
+#   AL means Above_Left for the Canonical_Combining_Class property, and
 #   AL means Alphabetic for the Line_Break property.
 #
 # In addition, some property names may be the same as some property value names.
@@ -74,6 +75,7 @@ age; 5.2                              ; V5_2
 age; 6.0                              ; V6_0
 age; 6.1                              ; V6_1
 age; 6.2                              ; V6_2
+age; 6.3                              ; V6_3
 age; NA                               ; Unassigned
 
 # Alphabetic (Alpha)
@@ -91,14 +93,18 @@ bc ; CS                               ; Common_Separator
 bc ; EN                               ; European_Number
 bc ; ES                               ; European_Separator
 bc ; ET                               ; European_Terminator
+bc ; FSI                              ; First_Strong_Isolate
 bc ; L                                ; Left_To_Right
 bc ; LRE                              ; Left_To_Right_Embedding
+bc ; LRI                              ; Left_To_Right_Isolate
 bc ; LRO                              ; Left_To_Right_Override
 bc ; NSM                              ; Nonspacing_Mark
 bc ; ON                               ; Other_Neutral
 bc ; PDF                              ; Pop_Directional_Format
+bc ; PDI                              ; Pop_Directional_Isolate
 bc ; R                                ; Right_To_Left
 bc ; RLE                              ; Right_To_Left_Embedding
+bc ; RLI                              ; Right_To_Left_Isolate
 bc ; RLO                              ; Right_To_Left_Override
 bc ; S                                ; Segment_Separator
 bc ; WS                               ; White_Space
@@ -116,6 +122,17 @@ Bidi_M; Y                             ; Yes                              ; T    
 # Bidi_Mirroring_Glyph (bmg)
 
 # @missing: 0000..10FFFF; Bidi_Mirroring_Glyph; <none>
+
+# Bidi_Paired_Bracket (bpb)
+
+# @missing: 0000..10FFFF; Bidi_Paired_Bracket; <none>
+
+# Bidi_Paired_Bracket_Type (bpt)
+
+# @missing: 0000..10FFFF; Bidi_Paired_Bracket_Type; n
+bpt; c                                ; Close
+bpt; n                                ; None
+bpt; o                                ; Open
 
 # Block (blk)
 
@@ -1186,9 +1203,11 @@ WSpace; Y                             ; Yes                              ; T    
 # Word_Break (WB)
 
 WB ; CR                               ; CR
+WB ; DQ                               ; Double_Quote
 WB ; EX                               ; ExtendNumLet
 WB ; Extend                           ; Extend
 WB ; FO                               ; Format
+WB ; HL                               ; Hebrew_Letter
 WB ; KA                               ; Katakana
 WB ; LE                               ; ALetter
 WB ; LF                               ; LF
@@ -1198,6 +1217,7 @@ WB ; MN                               ; MidNum
 WB ; NL                               ; Newline
 WB ; NU                               ; Numeric
 WB ; RI                               ; Regional_Indicator
+WB ; SQ                               ; Single_Quote
 WB ; XX                               ; Other
 
 # XID_Continue (XIDC)

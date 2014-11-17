@@ -1,10 +1,11 @@
 =head1 NAME
 
-perltodo - Perl TO-DO List
+perltodo - Link to the Perl to-do list
 
 =head1 DESCRIPTION
 
-We no longer install the Perl 5 to-do list as a manpage, as installing
-snapshot that becomes increasingly out of date isn't that useful to anyone.
-The current Perl 5 to-do list is maintained in the git repository, and can
+The Perl 5 to-do list is maintained in the git repository, and can
 be viewed at L<http://perl5.git.perl.org/perl.git/blob/HEAD:/Porting/todo.pod>
+
+(The to-do list used to be here in perltodo. That has stopped, as installing a
+snapshot that becomes increasingly out of date isn't that useful to anyone.)

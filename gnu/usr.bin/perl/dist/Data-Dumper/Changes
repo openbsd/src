@@ -6,6 +6,25 @@ Changes - public release history for Data::Dumper
 
 =over 8
 
+=item 2.151 (Mar 7 2014)
+
+A "useqq" implementation for the XS version of Data::Dumper.
+
+Better compatibility wrt. hash key quoting between PP and XS
+versions of Data::Dumper.
+
+EBCDIC fixes.
+
+64bit safety fixes (for very large arrays).
+
+Build fixes for threaded perls.
+
+clang warning fixes.
+
+Warning fixes in tests on older perls.
+
+Typo fixes in documentation.
+
 =item 2.145 (Mar 15 2013)
 
 Test refactoring and fixing wide and far.

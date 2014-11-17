@@ -1,5 +1,5 @@
-# Blocks-6.2.0.txt
-# Date: 2012-05-14, 22:42:00 GMT [KW, LI]
+# Blocks-6.3.0.txt
+# Date: 2012-12-02, 09:45:00 GMT [KW, LI]
 #
 # Unicode Character Database
 # Copyright (c) 1991-2012 Unicode, Inc.

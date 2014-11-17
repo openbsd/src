@@ -227,6 +227,13 @@ sub x {
 EXPECT
 
 ########
+# pad.c
+use warnings 'closure';
+my $x;
+our $y;
+sub { $x = $y }->();  # should not warn about $y being unavailable
+EXPECT
+########
 use warnings 'misc' ;
 my $x;
 {

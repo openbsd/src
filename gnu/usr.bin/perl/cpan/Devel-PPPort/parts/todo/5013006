@@ -30,4 +30,3 @@ sv_cmp_locale_flags            # U
 sv_collxfrm_flags              # U
 sv_eq_flags                    # U
 sv_setpvs_mg                   # U
-sv_setref_pvs                  # U

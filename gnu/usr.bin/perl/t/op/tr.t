@@ -8,7 +8,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 132;
+plan tests => 134;
 
 my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
@@ -524,6 +524,14 @@ SKIP: {
     $x =~ tr/αα/βγ/;
     note $x;
     is($x, "Perlβ", "Only first of multiple transliterations is used");
+}
+
+# tr/a/b/ should fail even on zero-length read-only strings
+use constant nullrocow => (keys%{{""=>undef}})[0];
+for ("", nullrocow) {
+    eval { $_ =~ y/a/b/ };
+    like $@, qr/^Modification of a read-only value attempted at /,
+        'tr/a/b/ fails on zero-length ro string';
 }
 
 1;

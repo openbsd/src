@@ -3,8 +3,7 @@ use strict;
 use warnings;
 use warnings::register;
 use Carp;
-use Exporter        ();
-use Fcntl           qw< O_WRONLY >;
+use Exporter        qw< import >;
 use File::Basename;
 use POSIX           qw< strftime setlocale LC_TIME >;
 use Socket          qw< :all >;
@@ -12,8 +11,7 @@ require 5.005;
 
 
 {   no strict 'vars';
-    $VERSION = '0.32';
-    @ISA     = qw< Exporter >;
+    $VERSION = '0.33';
 
     %EXPORT_TAGS = (
         standard => [qw(openlog syslog closelog setlogmask)],
@@ -519,11 +517,11 @@ sub _syslog_send_console {
     } else {
         if (open(CONS, ">/dev/console")) {
 	    my $ret = print CONS $buf . "\r";  # XXX: should this be \x0A ?
-	    POSIX::_exit $ret if defined $pid;
+	    POSIX::_exit($ret) if defined $pid;
 	    close CONS;
 	}
 
-	POSIX::_exit if defined $pid;
+	POSIX::_exit(0) if defined $pid;
     }
 }
 
@@ -723,15 +721,21 @@ sub connect_stream {
     # might want syslog_path to be variable based on syslog.h (if only
     # it were in there!)
     $syslog_path = '/dev/conslog' unless defined $syslog_path; 
+
     if (!-w $syslog_path) {
 	push @$errs, "stream $syslog_path is not writable";
 	return 0;
     }
-    if (!sysopen(SYSLOG, $syslog_path, O_WRONLY, 0400)) {
+
+    require Fcntl;
+
+    if (!sysopen(SYSLOG, $syslog_path, Fcntl::O_WRONLY(), 0400)) {
 	push @$errs, "stream can't open $syslog_path: $!";
 	return 0;
     }
+
     $syslog_send = \&_syslog_send_stream;
+
     return 1;
 }
 
@@ -900,7 +904,7 @@ Sys::Syslog - Perl interface to the UNIX syslog(3) calls
 
 =head1 VERSION
 
-This is the documentation of version 0.32
+This is the documentation of version 0.33
 
 =head1 SYNOPSIS
 
@@ -1009,7 +1013,7 @@ process, so this option has no effect on Linux.)
 =item *
 
 C<perror> - Write the message to standard error output as well to the
-system log (added in C<Sys::Syslo> 0.22).
+system log (added in C<Sys::Syslog> 0.22).
 
 =item *
 
@@ -1253,7 +1257,7 @@ Now that the "native" mechanism is supported by C<Sys::Syslog> and selected
 by default, the use of the C<setlogsock()> function is discouraged because 
 other mechanisms are less portable across operating systems.  Authors of 
 modules and programs that use this function, especially its cargo-cult form 
-C<setlogsock("unix")>, are advised to remove any occurence of it unless they 
+C<setlogsock("unix")>, are advised to remove any occurrence of it unless they 
 specifically want to use a given mechanism (like TCP or UDP to connect to 
 a remote host).
 
@@ -1556,6 +1560,14 @@ Perl and C<Sys::Syslog> versions.
 
 
 =head1 SEE ALSO
+
+=head2 Other modules
+
+L<Log::Log4perl> - Perl implementation of the Log4j API
+
+L<Log::Dispatch> - Dispatches messages to one or more outputs
+
+L<Log::Report> - Report a problem, with exceptions and language support
 
 =head2 Manual Pages
 

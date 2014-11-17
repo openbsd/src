@@ -210,6 +210,19 @@ readline() on closed filehandle STDIN at - line 4.
 	(Are you trying to call readline() on dirhandle STDIN?)
 ########
 # pp_hot.c [Perl_do_readline]
+use warnings 'closed' ;
+close STDIN        ; $a .= <STDIN> ;
+opendir STDIN, "." ; $a .= <STDIN> ;
+closedir STDIN;
+no warnings 'closed' ;
+opendir STDIN, "." ; $a .= <STDIN> ;
+$a = <STDIN> ;
+EXPECT
+readline() on closed filehandle STDIN at - line 3.
+readline() on closed filehandle STDIN at - line 4.
+	(Are you trying to call readline() on dirhandle STDIN?)
+########
+# pp_hot.c [Perl_do_readline]
 use warnings 'io' ;
 my $file = "./xcv" ; unlink $file ;
 open (FH, ">$file") or die $! ;

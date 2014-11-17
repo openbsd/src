@@ -1,11 +1,9 @@
 package TAP::Formatter::Console::Session;
 
 use strict;
-use TAP::Formatter::Session;
+use warnings;
 
-use vars qw($VERSION @ISA);
-
-@ISA = qw(TAP::Formatter::Session);
+use base 'TAP::Formatter::Session';
 
 my @ACCESSOR;
 
@@ -28,11 +26,11 @@ TAP::Formatter::Console::Session - Harness output delegate for default console o
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 DESCRIPTION
 

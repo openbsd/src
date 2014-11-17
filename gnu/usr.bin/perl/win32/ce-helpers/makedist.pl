@@ -15,7 +15,7 @@ my %opts = (
     'cross-name' => 'wince',
     'strip-pod' => 0, # strip POD from perl modules
     'adaptation' => 1, # do some adaptation, such as stripping such
-                       # occurences as "if ($^O eq 'VMS'){...}" for Dynaloader.pm
+                       # occurrences as "if ($^O eq 'VMS'){...}" for Dynaloader.pm
     'zip' => 0,     # perform zip
     'clean-exts' => 0,
   #options itself
@@ -110,7 +110,7 @@ if ($opts{adaptation}) {
 if ($opts{'verbose'} >=1) {
   print STDERR "Copying Config.pm, perl.dll and perl.exe...\n";
 }
-copy "../xlib/$opts{'cross-name'}/Config.pm", "$opts{distdir}/lib/Config.pm";
+copy "../lib/Config.pm", "$opts{distdir}/lib/Config.pm";
 copy "$opts{'cross-name'}/perl.exe", "$opts{distdir}/bin/perl.exe";
 copy "$opts{'cross-name'}/perl.dll", "$opts{distdir}/bin/perl.dll";
 # how do we know exact name of perl.dll?
@@ -121,7 +121,7 @@ my %aexcl = (socket=>'Socket_1');
 # on WinCE, %aexcl needed to replace it with a different name that however
 # will be found by Dynaloader
 my @afiles;
-chdir "../xlib/$opts{'cross-name'}/auto";
+chdir "../lib/auto";
 find({no_chdir=>1,wanted=>sub{push @afiles, $_ if /\.(dll|bs)$/}},'.');
 chdir $cwd;
 if ($opts{'verbose'} >=1) {
@@ -129,10 +129,10 @@ if ($opts{'verbose'} >=1) {
 }
 for (@afiles) {
   if (/^(.*)\/(\w+)\.dll$/i && exists $aexcl{lc($2)}) {
-    copy "../xlib/$opts{'cross-name'}/auto/$_", "$opts{distdir}/lib/auto/$1/$aexcl{lc($2)}.dll";
+    copy "../lib/auto/$_", "$opts{distdir}/lib/auto/$1/$aexcl{lc($2)}.dll";
   }
   else {
-    copy "../xlib/$opts{'cross-name'}/auto/$_", "$opts{distdir}/lib/auto/$_";
+    copy "../lib/auto/$_", "$opts{distdir}/lib/auto/$_";
   }
 }
 

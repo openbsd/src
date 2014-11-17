@@ -1,5 +1,38 @@
 Revision history for Perl extension ExtUtils::ParseXS.
 
+3.24 - Wed Mar  5 18:20:00 CET 2014
+  - Native Android build fixes
+  - More lenient syntax for embedded TYPEMAP blocks in XS:
+    a trailing semicolon will not be required for the block
+    terminator.
+  - Code cleanup.
+
+3.22 - Thu Aug 29 19:30:00 CET 2013
+  - Fix parallel testing crashes.
+  - Explicitly require new-enough Exporter.
+
+3.21 - Fri Aug  9 19:08:00 CET 2013
+  - stop "sv_2mortal(&PL_sv_yes)" and "(void)sv_newmortal()" for immortal
+    typemap entries [perl #116152]
+  - Deterministic C output (fix for hash randomization in 5.18).
+
+3.18_04 - Fri Jun 20 17:47:00 CET 2013
+  - Fix targetable size detection (& better tests)
+  - Assorted cleanup and refactoring.
+
+3.18_03 - Fri Apr 19 18:40:00 CET 2013
+  - Heuristic (and flawed) type canonicalization for templated
+    C++ types.
+  - More tests ported from core.
+
+3.18_02 - Mon Apr 15 07:30:00 CET 2013
+  - ExtUtils::ParseXS no longer uses global state (if using OO
+    interface).
+  - New "real" OO interface.
+
+3.18_01 - Thu Apr 11 19:17:00 CET 2013
+  - ExtUtils::Typemaps gains a clone method.
+
 3.18 - Mon Nov 19 07:35:00 CET 2012
   - Restore portability to Perl 5.6, which was lost at EU-PXS 3.00.
   - [perl #112776] avoid warning on an initialized non-parameter

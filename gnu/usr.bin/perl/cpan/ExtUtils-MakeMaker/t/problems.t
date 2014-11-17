@@ -33,7 +33,7 @@ ok( chdir 'Problem-Module', "chdir'd to Problem-Module" ) ||
     eval { $MM->eval_in_subdirs; };
 
     is( $stdout->read, qq{\@INC has .\n}, 'cwd in @INC' );
-    like( $@, 
+    like( $@,
           qr{^ERROR from evaluation of .*subdir.*Makefile.PL: YYYAaaaakkk},
           'Makefile.PL death in subdir warns' );
 

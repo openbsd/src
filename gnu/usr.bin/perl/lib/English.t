@@ -6,7 +6,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 57;
+use Test::More tests => 58;
 
 use English qw( -no_match_vars ) ;
 use Config;
@@ -87,6 +87,7 @@ is( $PROGRAM_NAME, $0, '$PROGRAM_NAME' );
 is( $BASETIME, $^T, '$BASETIME' );
 
 is( $PERL_VERSION, $^V, '$PERL_VERSION' );
+is( $OLD_PERL_VERSION, $], '$OLD_PERL_VERSION' );
 is( $DEBUGGING, $^D, '$DEBUGGING' );
 
 is( $WARNING, 0, '$WARNING' );

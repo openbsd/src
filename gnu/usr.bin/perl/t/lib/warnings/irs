@@ -1,0 +1,14 @@
+Test warnings related to $/
+__END__
+-w
+# warnable code, warnings enabled via command line switch
+$/ = \0;
+EXPECT
+Setting $/ to a reference to zero as a form of slurp is deprecated, treating as undef at - line 3.
+########
+-w
+# warnable code, warnings enabled via command line switch
+$/ = \-1;
+EXPECT
+Setting $/ to a reference to a negative integer as a form of slurp is deprecated, treating as undef at - line 3.
+

@@ -18,7 +18,7 @@ sub BEGIN {
 }
 
 use Storable qw(freeze thaw);
-use Test::More tests => 23;
+use Test::More tests => 25;
 
 ($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);
 
@@ -210,3 +210,13 @@ is($FAULT::fault, 2);
     main::is($b, "ok ");
 }
 
+{
+    # blessed ref to tied object should be thawed blessed
+    my @a;
+    tie @a, TIED_ARRAY;
+    my $r = bless \@a, 'FOO99';
+    my $f = freeze($r);
+    my $t = thaw($f);
+    isnt($t, undef);
+    like("$t", qr/^FOO99=ARRAY/);
+}

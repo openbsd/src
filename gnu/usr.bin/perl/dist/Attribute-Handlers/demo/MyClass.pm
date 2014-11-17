@@ -1,7 +1,7 @@
 package MyClass;
 $VERSION = '1.00';
 use 5.006;
-use base Attribute::Handlers;
+use parent qw(Attribute::Handlers);
 no warnings 'redefine';
 
 

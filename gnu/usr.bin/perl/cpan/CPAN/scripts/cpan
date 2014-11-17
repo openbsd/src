@@ -126,7 +126,7 @@ for a new, custom configuration.
 
 =item -l
 
-List all installed modules wth their versions
+List all installed modules with their versions
 
 =item -L author [ author ... ]
 

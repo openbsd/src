@@ -47,7 +47,11 @@ is(asctime(POSIX::localtime(12345678)), ctime(12345678),
    "asctime() and ctime() at 12345678");
 
 # Careful!  strftime() is locale sensitive.  Let's take care of that
-my $orig_loc = setlocale(LC_TIME, "C") || die "Cannot setlocale() to C:  $!";
+my $orig_loc = 'C';
+if ( $Config{d_setlocale} ) {
+    $orig_loc = setlocale(LC_TIME) || die "Cannot get locale information:  $!";
+    setlocale(LC_TIME, "C") || die "Cannot setlocale() to C:  $!";
+}
 my $jan_16 = 15 * 86400;
 is(ctime($jan_16), strftime("%a %b %d %H:%M:%S %Y\n", CORE::localtime($jan_16)),
         "get ctime() equal to strftime()");
@@ -68,7 +72,9 @@ is(ord strftime($ss, POSIX::localtime(time)),
    223, 'Format string has correct character');
 unlike($ss, qr/\w/, 'Still not internally UTF-8 encoded');
 
-setlocale(LC_TIME, $orig_loc) || die "Cannot setlocale() back to orig: $!";
+if ( $Config{d_setlocale} ) {
+    setlocale(LC_TIME, $orig_loc) || die "Cannot setlocale() back to orig: $!";
+}
 
 # clock() seems to have different definitions of what it does between POSIX
 # and BSD.  Cygwin, Win32, and Linux lean the BSD way.  So, the tests just

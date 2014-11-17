@@ -179,13 +179,32 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	}
 	if( $flags =~ /f/ ) {
 	    my $prefix	= $has_context ? 'pTHX_' : '';
-	    my $args	= scalar @args;
- 	    my $pat	= $args - 1;
-	    my $macro	= @nonnull && $nonnull[-1] == $pat  
+	    my ($args, $pat);
+	    if ($args[-1] eq '...') {
+		$args	= scalar @args;
+		$pat	= $args - 1;
+		$args	= $prefix . $args;
+	    }
+	    else {
+		# don't check args, and guess which arg is the pattern
+		# (one of 'fmt', 'pat', 'f'),
+		$args = 0;
+		my @fmts = grep $args[$_] =~ /\b(f|pat|fmt)$/, 0..$#args;
+		if (@fmts != 1) {
+		    die "embed.pl: '$plain_func': can't determine pattern arg\n";
+		}
+		$pat = $fmts[0] + 1;
+	    }
+	    my $macro	= grep($_ == $pat, @nonnull)
 				? '__attribute__format__'
 				: '__attribute__format__null_ok__';
-	    push @attrs, sprintf "%s(__printf__,%s%d,%s%d)", $macro,
-				$prefix, $pat, $prefix, $args;
+	    if ($plain_func =~ /strftime/) {
+		push @attrs, sprintf "%s(__strftime__,%s1,0)", $macro, $prefix;
+	    }
+	    else {
+		push @attrs, sprintf "%s(__printf__,%s%d,%s)", $macro,
+				    $prefix, $pat, $args;
+	    }
 	}
 	if ( @nonnull ) {
 	    my @pos = map { $has_context ? "pTHX_$_" : $_ } @nonnull;

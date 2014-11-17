@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use Test::More;
 use Module::Metadata;
 use lib "t/lib/0_2";

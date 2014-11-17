@@ -1,4 +1,8 @@
 5.004050
+Copy                           # U
+CopyD                          # E
+Move                           # U
+MoveD                          # E
 do_binmode                     # U
 save_aelem                     # U
 save_helem                     # U

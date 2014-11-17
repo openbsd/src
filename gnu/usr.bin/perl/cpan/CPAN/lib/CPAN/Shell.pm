@@ -47,7 +47,7 @@ use vars qw(
              "CPAN/Tarzip.pm",
              "CPAN/Version.pm",
             );
-$VERSION = "5.5002";
+$VERSION = "5.5004";
 # record the initial timestamp for reload.
 $reload = { map {$INC{$_} ? ($_,(stat $INC{$_})[9]) : ()} @relo };
 @CPAN::Shell::ISA = qw(CPAN::Debug);
@@ -206,7 +206,7 @@ sub a {
 sub globls {
     my($self,$s,$pragmas) = @_;
     # ls is really very different, but we had it once as an ordinary
-    # command in the Shell (upto rev. 321) and we could not handle
+    # command in the Shell (up to rev. 321) and we could not handle
     # force well then
     my(@accept,@preexpand);
     if ($s =~ /[\*\?\/]/) {
@@ -604,7 +604,7 @@ sub _reload_this {
     CPAN->debug("file[$file]") if $CPAN::DEBUG;
     my @inc = @INC;
     unless ($file && -f $file) {
-        # this thingie is not in the INC path, maybe CPAN/MyConfig.pm?
+        # this thingy is not in the INC path, maybe CPAN/MyConfig.pm?
         $file = $INC{$f};
         unless (CPAN->has_inst("File::Basename")) {
             @inc = File::Basename::dirname($file);
@@ -626,9 +626,12 @@ sub _reload_this {
     if ($must_reload) {
         my $fh = FileHandle->new($file) or
             $CPAN::Frontend->mydie("Could not open $file: $!");
-        local($/);
-        local $^W = 1;
-        my $content = <$fh>;
+        my $content;
+        {
+            local($/);
+            local $^W = 1;
+            $content = <$fh>;
+        }
         CPAN->debug(sprintf("reload file[%s] content[%s...]",$file,substr($content,0,128)))
             if $CPAN::DEBUG;
         delete $INC{$f};
@@ -767,6 +770,201 @@ sub scripts {
         }
         $CPAN::Frontend->myprint("$highest\n");
     }
+}
+
+sub _guess_manpage {
+    my($self,$d,$contains,$dist) = @_;
+    $dist =~ s/-/::/g;
+    my $module;
+    if (exists $contains->{$dist}) {
+        $module = $dist;
+    } elsif (1 == keys %$contains) {
+        ($module) = keys %$contains;
+    }
+    my $manpage;
+    if ($module) {
+        my $m = $self->expand("Module",$module);
+        $m->as_string; # called for side-effects, shame
+        $manpage = $m->{MANPAGE};
+    } else {
+        $manpage = "unknown";
+    }
+    return $manpage;
+}
+
+#-> sub CPAN::Shell::_specfile ;
+sub _specfile {
+    my $self = shift;
+    my $distribution = shift;
+    unless ($CPAN::META->has_inst("CPAN::DistnameInfo")){
+        $CPAN::Frontend->mydie("CPAN::DistnameInfo not installed; cannot continue");
+    }
+    my $d = CPAN::Shell->expand("Distribution",$distribution)
+        or $CPAN::Frontend->mydie("Unknowns distribution '$distribution'\n");
+    my $build_dir = $d->{build_dir} or $CPAN::Frontend->mydie("Distribution has not been built yet, cannot proceed");
+    my %contains = map {($_ => undef)} $d->containsmods;
+    my @m;
+    my $width = 16;
+    my $header = sub {
+        my($header,$value) = @_;
+        push @m, sprintf("%-s:%*s%s\n", $header, $width-length($header), "", $value);
+    };
+    my $dni = CPAN::DistnameInfo->new($distribution);
+    my $dist = $dni->dist;
+    my $summary = $self->_guess_manpage($d,\%contains,$dist);
+    $header->("Name", "perl-$dist");
+    my $version = $dni->version;
+    $header->("Version", $version);
+    $header->("Release", "1%{?dist}");
+#Summary:        Template processing system
+#Group:          Development/Libraries
+#License:        GPL+ or Artistic
+#URL:            http://www.template-toolkit.org/
+#Source0:        http://search.cpan.org/CPAN/authors/id/A/AB/ABW/Template-Toolkit-%{version}.tar.gz
+#Patch0:         Template-2.22-SREZIC-01.patch
+#BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+    for my $h_tuple
+        ([Summary    => $summary],
+         [Group      => "Development/Libraries"],
+         [License    =>],
+         [URL        =>],
+         [BuildRoot  => "%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)"],
+         [Requires   => "perl(:MODULE_COMPAT_%(eval \"`%{__perl} -V:version`\"; echo \$version))"],
+        ) {
+        my($h,$v) = @$h_tuple;
+        $v = "unknown" unless defined $v;
+        $header->($h, $v);
+    }
+    $header->("Source0", sprintf(
+                                 "http://search.cpan.org/CPAN/authors/id/%s/%s/%s",
+                                 substr($distribution,0,1),
+                                 substr($distribution,0,2),
+                                 $distribution
+                                ));
+    require POSIX;
+    my @xs = glob "$build_dir/*.xs"; # quick try
+    unless (@xs) {
+        require ExtUtils::Manifest;
+        my $manifest_file = "$build_dir/MANIFEST";
+        my $manifest = ExtUtils::Manifest::maniread($manifest_file);
+        @xs = grep /\.xs$/, keys %$manifest;
+    }
+    if (! @xs) {
+        $header->('BuildArch', 'noarch');
+    }
+    for my $k (sort keys %contains) {
+        my $m = CPAN::Shell->expand("Module",$k);
+        my $v = $contains{$k} = $m->cpan_version;
+        my $vspec = $v eq "undef" ? "" : " = $v";
+        $header->("Provides", "perl($k)$vspec");
+    }
+    if (my $prereq_pm = $d->{prereq_pm}) {
+        my %req;
+        for my $reqkey (keys %$prereq_pm) {
+            while (my($k,$v) = each %{$prereq_pm->{$reqkey}}) {
+                $req{$k} = $v;
+            }
+        }
+        if (-e "$build_dir/Build.PL" && ! exists $req{"Module::Build"}) {
+            $req{"Module::Build"} = 0;
+        }
+        for my $k (sort keys %req) {
+            next if $k eq "perl";
+            my $v = $req{$k};
+            my $vspec = defined $v && length $v && $v > 0 ? " >= $v" : "";
+            $header->(BuildRequires => "perl($k)$vspec");
+            next if $k =~ /^(Module::Build)$/; # MB is always only a
+                                               # BuildRequires; if we
+                                               # turn it into a
+                                               # Requires, then we
+                                               # would have to make it
+                                               # a BuildRequires
+                                               # everywhere we depend
+                                               # on *one* MB built
+                                               # module.
+            $header->(Requires => "perl($k)$vspec");
+        }
+    }
+    push @m, "\n%define _use_internal_dependency_generator     0
+%define __find_requires %{nil}
+%define __find_provides %{nil}
+";
+    push @m, "\n%description\n%{summary}.\n";
+    push @m, "\n%prep\n%setup -q -n $dist-%{version}\n";
+    if (-e "$build_dir/Build.PL") {
+        # see http://www.redhat.com/archives/rpm-list/2002-July/msg00110.html about RPM_BUILD_ROOT vs %{buildroot}
+        push @m, <<'EOF';
+
+%build
+%{__perl} Build.PL --installdirs=vendor --libdoc installvendorman3dir
+./Build
+
+%install
+rm -rf $RPM_BUILD_ROOT
+./Build install destdir=$RPM_BUILD_ROOT create_packlist=0
+find $RPM_BUILD_ROOT -depth -type d -exec rmdir {} 2>/dev/null \;
+%{_fixperms} $RPM_BUILD_ROOT/*
+
+%check
+./Build test
+EOF
+    } elsif (-e "$build_dir/Makefile.PL") {
+        push @m, <<'EOF';
+
+%build
+%{__perl} Makefile.PL INSTALLDIRS=vendor
+make %{?_smp_mflags}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make pure_install DESTDIR=$RPM_BUILD_ROOT
+find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
+find $RPM_BUILD_ROOT -depth -type d -exec rmdir {} 2>/dev/null ';'
+%{_fixperms} $RPM_BUILD_ROOT/*
+
+%check
+make test
+EOF
+    } else {
+        $CPAN::Frontend->mydie("'$distribution' has neither a Build.PL nor a Makefile.PL\n");
+    }
+    push @m, "\n%clean\nrm -rf \$RPM_BUILD_ROOT\n";
+    my $vendorlib = @xs ? "vendorarch" : "vendorlib";
+    my $date = POSIX::strftime("%a %b %d %Y", gmtime);
+    my @doc = grep { -e "$build_dir/$_" } qw(README Changes);
+    my $exe_stanza = "\n";
+    if (my $exe_files = $d->_exe_files) {
+        if (@$exe_files) {
+            $exe_stanza = "%{_mandir}/man1/*.1*\n";
+            for my $e (@$exe_files) {
+                unless (CPAN->has_inst("File::Basename")) {
+                    $CPAN::Frontend->mydie("File::Basename not installed, cannot continue");
+                }
+                my $basename = File::Basename::basename($e);
+                $exe_stanza .= "/usr/bin/$basename\n";
+            }
+        }
+    }
+    push @m, <<EOF;
+
+%files
+%defattr(-,root,root,-)
+%doc @doc
+%{perl_$vendorlib}/*
+%{_mandir}/man3/*.3*
+$exe_stanza
+%changelog
+* $date  <akoenig\@specfile.cpan.org> - $version-1
+- autogenerated by _specfile() in CPAN.pm
+
+EOF
+
+    my $ret = join "", @m;
+    $CPAN::Frontend->myprint($ret);
+    open my $specout, ">", "perl-$dist.spec" or die;
+    print $specout $ret;
+    $CPAN::Frontend->myprint("Wrote perl-$dist.spec");
+    $ret;
 }
 
 #-> sub CPAN::Shell::report ;
@@ -1040,6 +1238,41 @@ sub u {
 #-> sub CPAN::Shell::failed ;
 sub failed {
     my($self,$only_id,$silent) = @_;
+    my @failed = $self->find_failed($only_id);
+    my $scope;
+    if ($only_id) {
+        $scope = "this command";
+    } elsif ($CPAN::Index::HAVE_REANIMATED) {
+        $scope = "this or a previous session";
+        # it might be nice to have a section for previous session and
+        # a second for this
+    } else {
+        $scope = "this session";
+    }
+    if (@failed) {
+        my $print;
+        my $debug = 0;
+        if ($debug) {
+            $print = join "",
+                map { sprintf "%5d %-45s: %s %s\n", @$_ }
+                    sort { $a->[0] <=> $b->[0] } @failed;
+        } else {
+            $print = join "",
+                map { sprintf " %-45s: %s %s\n", @$_[1..3] }
+                    sort {
+                        $a->[0] <=> $b->[0]
+                            ||
+                                $a->[4] <=> $b->[4]
+                       } @failed;
+        }
+        $CPAN::Frontend->myprint("Failed during $scope:\n$print");
+    } elsif (!$only_id || !$silent) {
+        $CPAN::Frontend->myprint("Nothing failed in $scope\n");
+    }
+}
+
+sub find_failed {
+    my($self,$only_id) = @_;
     my @failed;
   DIST: for my $d ($CPAN::META->all_objects("CPAN::Distribution")) {
         my $failed = "";
@@ -1072,6 +1305,10 @@ sub failed {
         next DIST unless $failed;
         my $id = $d->id;
         $id =~ s|^./../||;
+        ### XXX need to flag optional modules as '(optional)' if they are
+        # from recommends/suggests -- i.e. *show* failure, but make it clear
+        # it was failure of optional module -- xdg, 2012-04-01
+        $id = "(optional) $id" if ! $d->{mandatory};
         #$print .= sprintf(
         #                  "  %-45s: %s %s\n",
         push @failed,
@@ -1083,6 +1320,7 @@ sub failed {
               $failed,
               $d->{$failed}->text,
               $d->{$failed}{TIME}||0,
+              !! $d->{mandatory},
              ] :
              [
               1,
@@ -1090,39 +1328,16 @@ sub failed {
               $failed,
               $d->{$failed},
               0,
+              !! $d->{mandatory},
              ]
             );
     }
-    my $scope;
-    if ($only_id) {
-        $scope = "this command";
-    } elsif ($CPAN::Index::HAVE_REANIMATED) {
-        $scope = "this or a previous session";
-        # it might be nice to have a section for previous session and
-        # a second for this
-    } else {
-        $scope = "this session";
-    }
-    if (@failed) {
-        my $print;
-        my $debug = 0;
-        if ($debug) {
-            $print = join "",
-                map { sprintf "%5d %-45s: %s %s\n", @$_ }
-                    sort { $a->[0] <=> $b->[0] } @failed;
-        } else {
-            $print = join "",
-                map { sprintf " %-45s: %s %s\n", @$_[1..3] }
-                    sort {
-                        $a->[0] <=> $b->[0]
-                            ||
-                                $a->[4] <=> $b->[4]
-                       } @failed;
-        }
-        $CPAN::Frontend->myprint("Failed during $scope:\n$print");
-    } elsif (!$only_id || !$silent) {
-        $CPAN::Frontend->myprint("Nothing failed in $scope\n");
-    }
+    return @failed;
+}
+
+sub mandatory_dist_failed {
+    my ($self) = @_;
+    return grep { $_->[5] } $self->find_failed($CPAN::CurrentCommandID);
 }
 
 # XXX intentionally undocumented because completely bogus, unportable,
@@ -1428,6 +1643,14 @@ sub format_result {
     my $print_ornamented_have_warned = 0;
     sub colorize_output {
         my $colorize_output = $CPAN::Config->{colorize_output};
+        if ($colorize_output && $^O eq 'MSWin32' && !$CPAN::META->has_inst("Win32::Console::ANSI")) {
+            unless ($print_ornamented_have_warned++) {
+                # no myprint/mywarn within myprint/mywarn!
+                warn "Colorize_output is set to true but Win32::Console::ANSI is not
+installed. To activate colorized output, please install Win32::Console::ANSI.\n\n";
+            }
+            $colorize_output = 0;
+        }
         if ($colorize_output && !$CPAN::META->has_inst("Term::ANSIColor")) {
             unless ($print_ornamented_have_warned++) {
                 # no myprint/mywarn within myprint/mywarn!
@@ -1461,7 +1684,7 @@ sub print_ornamented {
     }
     if ($self->colorize_output) {
         if ( $CPAN::DEBUG && $swhat =~ /^Debug\(/ ) {
-            # if you want to have this configurable, please file a bugreport
+            # if you want to have this configurable, please file a bug report
             $ornament = $CPAN::Config->{colorize_debug} || "black on_cyan";
         }
         my $color_on = eval { Term::ANSIColor::color($ornament) } || "";
@@ -1591,6 +1814,7 @@ sub unrecoverable_error {
 
 #-> sub CPAN::Shell::mysleep ;
 sub mysleep {
+    return if $ENV{AUTOMATED_TESTING} || ! -t STDOUT;
     my($self, $sleep) = @_;
     if (CPAN->has_inst("Time::HiRes")) {
         Time::HiRes::sleep($sleep);
@@ -1700,7 +1924,7 @@ sub rematein {
                     }
                 }
             }
-            CPAN::Queue->queue_item(qmod => $obj->id, reqtype => "c");
+            CPAN::Queue->queue_item(qmod => $obj->id, reqtype => "c", optional => '');
             push @qcopy, $obj;
         } elsif ($CPAN::META->exists('CPAN::Author',uc($s))) {
             $obj = $CPAN::META->instance('CPAN::Author',uc($s));
@@ -1738,6 +1962,7 @@ to find objects with matching identifiers.
         my $obj;
         my $s = $q->as_string;
         my $reqtype = $q->reqtype || "";
+        my $optional = $q->optional || "";
         $obj = CPAN::Shell->expandany($s);
         unless ($obj) {
             # don't know how this can happen, maybe we should panic,
@@ -1750,6 +1975,23 @@ to find objects with matching identifiers.
             next QITEM;
         }
         $obj->{reqtype} ||= "";
+        my $type = ref $obj;
+        if ( $type eq 'CPAN::Distribution' || $type eq 'CPAN::Bundle' ) {
+            $obj->{mandatory} ||= ! $optional; # once mandatory, always mandatory
+        }
+        elsif ( $type eq 'CPAN::Module' ) {
+            $obj->{mandatory} ||= ! $optional; # once mandatory, always mandatory
+            if (my $d = $obj->distribution) {
+                $d->{mandatory} ||= ! $optional; # once mandatory, always mandatory
+            } elsif ($optional) {
+                # the queue object does not know who was recommending/suggesting us:(
+                # So we only vaguely write "optional".
+                $CPAN::Frontend->mywarn("Warning: optional module '$s' ".
+                                        "not known. Skipping.\n");
+                CPAN::Queue->delete_first($s);
+                next QITEM;
+            }
+        }
         {
             # force debugging because CPAN::SQLite somehow delivers us
             # an empty object;
@@ -1812,11 +2054,18 @@ to find objects with matching identifiers.
             }
             CPAN->debug("Going to panic. meth[$meth]s[$s]") if $CPAN::DEBUG;
             $CPAN::Frontend->mydie("Panic: obj[$serialized] cannot meth[$meth]");
-        } elsif ($obj->$meth()) {
-            CPAN::Queue->delete($s);
-            CPAN->debug("From queue deleted. meth[$meth]s[$s]") if $CPAN::DEBUG;
         } else {
-            CPAN->debug("Failed. pragma[@pragma]meth[$meth]") if $CPAN::DEBUG;
+            my $upgraded_meth = $meth;
+            if ( $meth eq "make" and $obj->{reqtype} eq "b" ) {
+                # rt 86915
+                $upgraded_meth = "test";
+            }
+            if ($obj->$upgraded_meth()) {
+                CPAN::Queue->delete($s);
+                CPAN->debug("Succeeded and deleted from queue. pragma[@pragma]meth[$meth][s][$s]") if $CPAN::DEBUG;
+            } else {
+                CPAN->debug("Failed. pragma[@pragma]meth[$meth]s[$s]") if $CPAN::DEBUG;
+            }
         }
 
         $obj->undelay;
@@ -1826,10 +2075,14 @@ to find objects with matching identifiers.
                 $obj->$unpragma();
             }
         }
-        if ($CPAN::Config->{halt_on_failure}
-                &&
-                    CPAN::Distrostatus::something_has_just_failed()
-              ) {
+        # if any failures occurred and the current object is mandatory, we
+        # still don't know if *it* failed or if it was another (optional)
+        # module, so we have to check that explicitly (and expensively)
+        if (    $CPAN::Config->{halt_on_failure}
+            && $obj->{mandatory}
+            && CPAN::Distrostatus::something_has_just_failed()
+            && $self->mandatory_dist_failed()
+        ) {
             $CPAN::Frontend->mywarn("Stopping: '$meth' failed for '$s'.\n");
             CPAN::Queue->nullify_queue;
             last QITEM;

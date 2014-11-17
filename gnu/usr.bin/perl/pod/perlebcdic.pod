@@ -240,7 +240,7 @@ extensions to ASCII have been labelled with character names roughly
 corresponding to I<The Unicode Standard, Version 6.1> albeit with
 substitutions such as s/LATIN// and s/VULGAR// in all cases, s/CAPITAL
 LETTER// in some cases, and s/SMALL LETTER ([A-Z])/\l$1/ in some other
-cases.  Controls are listed using their Unicode 6.1 abbreviatons.
+cases.  Controls are listed using their Unicode 6.2 abbreviations.
 The differences between the 0037 and 1047 sets are
 flagged with **.  The differences between the 1047 and POSIX-BC sets
 are flagged with ##.  All ord() numbers listed are decimal.  If you
@@ -789,7 +789,7 @@ in the ASCII table is that they can "literally" be constructed
 as control characters in perl, e.g. C<(chr(0)> eq C<\c@>)>
 C<(chr(1)> eq C<\cA>)>, and so on.  Perl on EBCDIC platforms has been
 ported to take C<\c@> to chr(0) and C<\cA> to chr(1), etc. as well, but the
-thirty three characters that result depend on which code page you are
+characters that result depend on which code page you are
 using.  The table below uses the standard acronyms for the controls.
 The POSIX-BC and 1047 sets are
 identical throughout this range and differ from the 0037 set at only
@@ -799,10 +799,12 @@ platforms and cannot be generated as a C<"\c.letter."> control character on
 0037 platforms.  Note also that C<\c\> cannot be the final element in a string
 or regex, as it will absorb the terminator.   But C<\c\I<X>> is a C<FILE
 SEPARATOR> concatenated with I<X> for all I<X>.
+The outlier C<\c?> on ASCII, which yields a non-C0 control C<DEL>,
+yields the outlier control C<APC> on EBCDIC, the one that isn't in the
+block of contiguous controls.
 
  chr   ord   8859-1    0037    1047 && POSIX-BC
  -----------------------------------------------------------------------
- \c?   127   <DEL>       "            "
  \c@     0   <NUL>     <NUL>        <NUL>
  \cA     1   <SOH>     <SOH>        <SOH>
  \cB     2   <STX>     <STX>        <STX>
@@ -835,6 +837,12 @@ SEPARATOR> concatenated with I<X> for all I<X>.
  \c]    29   <GS>      <GS>         <GS>
  \c^    30   <RS>      <RS>         <RS>
  \c_    31   <US>      <US>         <US>
+ \c?    *    <DEL>     <APC>        <APC>
+
+C<*> Note: C<\c?> maps to ordinal 127 (C<DEL>) on ASCII platforms, but
+since ordinal 127 is a not a control character on EBCDIC machines,
+C<\c?> instead maps to C<APC>, which is 255 in 0037 and 1047, and 95 in
+POSIX-BC.
 
 =head1 FUNCTION DIFFERENCES
 
@@ -955,85 +963,51 @@ set of subs:
         $char =~ /[\200-\237]/;
     }
 
-    sub is_latin_1 {
+    sub is_latin_1 {    # But not ASCII; not C1
         my $char = substr(shift,0,1);
         $char =~ /[\240-\377]/;
     }
 
-The above would be adequate if the concern was only with numeric code points.
-However, the concern may be with characters rather than code points
-and on an EBCDIC platform it may be desirable for constructs such as
-C<if (is_print_ascii("A")) {print "A is a printable character\n";}> to print
-out the expected message.  One way to represent the above collection
-of character classification subs that is capable of working across the
-four coded character sets discussed in this document is as follows:
+These are valid only on ASCII platforms, but can be easily rewritten to
+work on any platform as follows:
 
     sub Is_c0 {
         my $char = substr(shift,0,1);
-        if (ord('^')==94)  { # ascii
-            return $char =~ /[\000-\037]/;
-        }
-        if (ord('^')==176) { # 0037
-            return $char =~ /[\000-\003\067\055-\057\026\005\045\013-\023\074\075\062\046\030\031\077\047\034-\037]/;
-        }
-        if (ord('^')==95 || ord('^')==106) { # 1047 || posix-bc
-            return $char =~ /[\000-\003\067\055-\057\026\005\025\013-\023\074\075\062\046\030\031\077\047\034-\037]/;
-        }
+        return $char =~ /[[:cntrl:]]/
+               && $char =~ /[[:ascii:]]/
+               && ! Is_delete($char);
     }
 
     sub Is_print_ascii {
         my $char = substr(shift,0,1);
-        $char =~ /[ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~]/;
+
+        return $char =~ /[[:print:]]/ && $char =~ /[[:ascii:]]/;
+
+        # Alternatively:
+        # return $char
+        #      =~ /[ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~]/;
     }
 
     sub Is_delete {
         my $char = substr(shift,0,1);
-        if (ord('^')==94)  { # ascii
-            return $char eq "\177";
-        }
-        else  {              # ebcdic
-            return $char eq "\007";
-        }
+        return utf8::native_to_unicode(ord $char) == 0x7F;
     }
 
     sub Is_c1 {
+        use feature 'unicode_strings';
         my $char = substr(shift,0,1);
-        if (ord('^')==94)  { # ascii
-            return $char =~ /[\200-\237]/;
-        }
-        if (ord('^')==176) { # 0037
-            return $char =~ /[\040-\044\025\006\027\050-\054\011\012\033\060\061\032\063-\066\010\070-\073\040\024\076\377]/;
-        }
-        if (ord('^')==95)  { # 1047
-            return $char =~ /[\040-\045\006\027\050-\054\011\012\033\060\061\032\063-\066\010\070-\073\040\024\076\377]/;
-        }
-        if (ord('^')==106) { # posix-bc
-            return $char =~
-              /[\040-\045\006\027\050-\054\011\012\033\060\061\032\063-\066\010\070-\073\040\024\076\137]/;
-        }
+        return $char =~ /[[:cntrl:]]/ && $char !~ /[[:ascii:]]/;
     }
 
-    sub Is_latin_1 {
+    sub Is_latin_1 {    # But not ASCII; not C1
+        use feature 'unicode_strings';
         my $char = substr(shift,0,1);
-        if (ord('^')==94)  { # ascii
-            return $char =~ /[\240-\377]/;
-        }
-        if (ord('^')==176) { # 0037
-            return $char =~
-              /[\101\252\112\261\237\262\152\265\275\264\232\212\137\312\257\274\220\217\352\372\276\240\266\263\235\332\233\213\267\270\271\253\144\145\142\146\143\147\236\150\164\161-\163\170\165-\167\254\151\355\356\353\357\354\277\200\375\376\373\374\255\256\131\104\105\102\106\103\107\234\110\124\121-\123\130\125-\127\214\111\315\316\313\317\314\341\160\335\336\333\334\215\216\337]/;
-        }
-        if (ord('^')==95)  { # 1047
-            return $char =~
-              /[\101\252\112\261\237\262\152\265\273\264\232\212\260\312\257\274\220\217\352\372\276\240\266\263\235\332\233\213\267\270\271\253\144\145\142\146\143\147\236\150\164\161-\163\170\165-\167\254\151\355\356\353\357\354\277\200\375\376\373\374\272\256\131\104\105\102\106\103\107\234\110\124\121-\123\130\125-\127\214\111\315\316\313\317\314\341\160\335\336\333\334\215\216\337]/;
-        }
-        if (ord('^')==106) { # posix-bc
-            return $char =~
-              /[\101\252\260\261\237\262\320\265\171\264\232\212\272\312\257\241\220\217\352\372\276\240\266\263\235\332\233\213\267\270\271\253\144\145\142\146\143\147\236\150\164\161-\163\170\165-\167\254\151\355\356\353\357\354\277\200\340\376\335\374\255\256\131\104\105\102\106\103\107\234\110\124\121-\123\130\125-\127\214\111\315\316\313\317\314\341\160\300\336\333\334\215\216\337]/;
-        }
+        return ord($char) < 256
+               && $char !~ [[:ascii:]]
+               && $char !~ [[:cntrl:]];
     }
 
-Note however that only the C<Is_ascii_print()> sub is really independent
-of coded character set.  Another way to write C<Is_latin_1()> would be
+Another way to write C<Is_latin_1()> would be
 to use the characters in the range explicitly:
 
     sub Is_latin_1 {
@@ -1187,7 +1161,8 @@ a URL under the 1047 code page:
     );
     # The following regular expression does not address the
     # mappings for: ('.' => '%2E', '/' => '%2F', ':' => '%3A')
-    $url =~ s/([\t "#%&\(\),;<=>\?\@\[\\\]^`{|}~])/sprintf("%%%02X",$e2a_1047[ord($1)])/ge;
+    $url =~ s/([\t "#%&\(\),;<=>\?\@\[\\\]^`{|}~])/
+                sprintf("%%%02X",$e2a_1047[ord($1)])/xge;
 
 where a more complete solution would split the URL into components
 and apply a full s/// substitution only to the appropriate parts.
@@ -1261,7 +1236,8 @@ array is omitted for brevity):
         @e2a =               # EBCDIC to ASCII map (as shown above)
     }
     $qp_string =~
-      s/([^ !"\#\$%&'()*+,\-.\/0-9:;<>?\@A-Z[\\\]^_`a-z{|}~$delete])/sprintf("=%02X",$e2a[ord($1)])/ge;
+      s/([^ !"\#\$%&'()*+,\-.\/0-9:;<>?\@A-Z[\\\]^_`a-z{|}~$delete])/
+         sprintf("=%02X",$e2a[ord($1)])/xge;
 
 (although in production code the substitutions might be done
 in the EBCDIC branch with the @e2a array and separately in the

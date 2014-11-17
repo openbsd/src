@@ -35,22 +35,7 @@ sub no_proxy {
 }
 
 # mirror(): Its purpose is to deal with proxy authentication. When we
-# call SUPER::mirror, we relly call the mirror method in
-# LWP::UserAgent. LWP::UserAgent will then call
-# $self->get_basic_credentials or some equivalent and this will be
-# $self->dispatched to our own get_basic_credentials method.
-
-# Our own get_basic_credentials sets $USER and $PASSWD, two globals.
-
-# 407 stands for HTTP_PROXY_AUTHENTICATION_REQUIRED. Which means
-# although we have gone through our get_basic_credentials, the proxy
-# server refuses to connect. This could be a case where the username or
-# password has changed in the meantime, so I'm trying once again without
-# $USER and $PASSWD to give the get_basic_credentials routine another
-# chance to set $USER and $PASSWD.
-
-# mirror(): Its purpose is to deal with proxy authentication. When we
-# call SUPER::mirror, we relly call the mirror method in
+# call SUPER::mirror, we really call the mirror method in
 # LWP::UserAgent. LWP::UserAgent will then call
 # $self->get_basic_credentials or some equivalent and this will be
 # $self->dispatched to our own get_basic_credentials method.

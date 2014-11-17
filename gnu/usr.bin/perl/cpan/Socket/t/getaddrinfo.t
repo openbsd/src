@@ -54,8 +54,8 @@ cmp_ok( $err, "==", 0, '$err == 0 for host=127.0.0.1/service=undef' );
 	'$res[0] addr is {"127.0.0.1", ??}' );
 }
 
-( $err, @res ) = getaddrinfo( "", "80", { family => AF_INET, socktype => SOCK_STREAM } );
-cmp_ok( $err, "==", 0, '$err == 0 for service=80/family=AF_INET/socktype=STREAM' );
+( $err, @res ) = getaddrinfo( "", "80", { family => AF_INET, socktype => SOCK_STREAM, protocol => IPPROTO_TCP } );
+cmp_ok( $err, "==", 0, '$err == 0 for service=80/family=AF_INET/socktype=STREAM/protocol=IPPROTO_TCP' );
 is( scalar @res, 1, '@res has 1 result' );
 
 # Just pick the first one
@@ -102,8 +102,12 @@ SKIP: {
 
 # Now check that names with AI_NUMERICHOST fail
 
-( $err, @res ) = getaddrinfo( "localhost", "ftp", { flags => AI_NUMERICHOST, socktype => SOCK_STREAM } );
-ok( $err != 0, '$err != 0 for host=localhost/service=ftp/flags=AI_NUMERICHOST/socktype=SOCK_STREAM' );
+SKIP: {
+    skip "Resolver has no answer for $goodhost", 1 unless gethostbyname( $goodhost );
+
+    ( $err, @res ) = getaddrinfo( $goodhost, "ftp", { flags => AI_NUMERICHOST, socktype => SOCK_STREAM } );
+    ok( $err != 0, "\$err != 0 for host=$goodhost/service=ftp/flags=AI_NUMERICHOST/socktype=SOCK_STREAM" );
+}
 
 # Some sanity checking on the hints hash
 ok( defined eval { getaddrinfo( "127.0.0.1", "80", undef ); 1 },

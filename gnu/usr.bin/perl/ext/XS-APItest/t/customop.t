@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::More tests => 23;
+use Test::More tests => 24;
 use XS::APItest;
 
 my $ppaddr = xop_ppaddr;
@@ -44,6 +44,8 @@ delete $descs->{$ppaddr};
 xop_register;
 
 is $ops->{$ppaddr}, $xop,       "XOP registered OK";
+
+is xop_from_custom_op, $xop,    "XOP lookup from OP roundtrips";
 
 $av = xop_build_optree;
 my $OA_UNOP = xop_OA_UNOP;

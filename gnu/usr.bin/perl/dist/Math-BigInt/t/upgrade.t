@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 2112
+use Test::More tests => 2128
     + 2;			# our own tests
 
 use Math::BigInt upgrade => 'Math::BigFloat';

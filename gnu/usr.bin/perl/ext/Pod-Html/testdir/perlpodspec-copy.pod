@@ -3,6 +3,11 @@
 
 perlpodspeccopy - Plain Old Documentation: format specification and notes
 
+=head1 DISCLAIMER
+
+This is a pod file used for testing purposes by the test suite, please
+see L<perlpodspec>.
+
 =head1 DESCRIPTION
 
 This document is detailed notes on the Pod markup language.  Most

@@ -1,8 +1,8 @@
-# WordBreakProperty-6.2.0.txt
-# Date: 2012-08-13, 19:12:09 GMT [MD]
+# WordBreakProperty-6.3.0.txt
+# Date: 2013-07-05, 14:09:03 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -14,6 +14,33 @@
 #  have the value Other (XX).
 
 # @missing: 0000..10FFFF; Other
+
+# ================================================
+
+0022          ; Double_Quote # Po       QUOTATION MARK
+
+# Total code points: 1
+
+# ================================================
+
+0027          ; Single_Quote # Po       APOSTROPHE
+
+# Total code points: 1
+
+# ================================================
+
+05D0..05EA    ; Hebrew_Letter # Lo  [27] HEBREW LETTER ALEF..HEBREW LETTER TAV
+05F0..05F2    ; Hebrew_Letter # Lo   [3] HEBREW LIGATURE YIDDISH DOUBLE VAV..HEBREW LIGATURE YIDDISH DOUBLE YOD
+FB1D          ; Hebrew_Letter # Lo       HEBREW LETTER YOD WITH HIRIQ
+FB1F..FB28    ; Hebrew_Letter # Lo  [10] HEBREW LIGATURE YIDDISH YOD YOD PATAH..HEBREW LETTER WIDE TAV
+FB2A..FB36    ; Hebrew_Letter # Lo  [13] HEBREW LETTER SHIN WITH SHIN DOT..HEBREW LETTER ZAYIN WITH DAGESH
+FB38..FB3C    ; Hebrew_Letter # Lo   [5] HEBREW LETTER TET WITH DAGESH..HEBREW LETTER LAMED WITH DAGESH
+FB3E          ; Hebrew_Letter # Lo       HEBREW LETTER MEM WITH DAGESH
+FB40..FB41    ; Hebrew_Letter # Lo   [2] HEBREW LETTER NUN WITH DAGESH..HEBREW LETTER SAMEKH WITH DAGESH
+FB43..FB44    ; Hebrew_Letter # Lo   [2] HEBREW LETTER FINAL PE WITH DAGESH..HEBREW LETTER PE WITH DAGESH
+FB46..FB4F    ; Hebrew_Letter # Lo  [10] HEBREW LETTER TSADI WITH DAGESH..HEBREW LIGATURE ALEF LAMED
+
+# Total code points: 74
 
 # ================================================
 
@@ -226,7 +253,8 @@
 19B0..19C0    ; Extend # Mc  [17] NEW TAI LUE VOWEL SIGN VOWEL SHORTENER..NEW TAI LUE VOWEL SIGN IY
 19C8..19C9    ; Extend # Mc   [2] NEW TAI LUE TONE MARK-1..NEW TAI LUE TONE MARK-2
 1A17..1A18    ; Extend # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
-1A19..1A1B    ; Extend # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; Extend # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
+1A1B          ; Extend # Mn       BUGINESE VOWEL SIGN AE
 1A55          ; Extend # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; Extend # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A57          ; Extend # Mc       TAI THAM CONSONANT SIGN LA TANG LAI
@@ -403,12 +431,14 @@ E0100..E01EF  ; Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
 00AD          ; Format # Cf       SOFT HYPHEN
 0600..0604    ; Format # Cf   [5] ARABIC NUMBER SIGN..ARABIC SIGN SAMVAT
+061C          ; Format # Cf       ARABIC LETTER MARK
 06DD          ; Format # Cf       ARABIC END OF AYAH
 070F          ; Format # Cf       SYRIAC ABBREVIATION MARK
+180E          ; Format # Cf       MONGOLIAN VOWEL SEPARATOR
 200E..200F    ; Format # Cf   [2] LEFT-TO-RIGHT MARK..RIGHT-TO-LEFT MARK
 202A..202E    ; Format # Cf   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
 2060..2064    ; Format # Cf   [5] WORD JOINER..INVISIBLE PLUS
-206A..206F    ; Format # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2066..206F    ; Format # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 FEFF          ; Format # Cf       ZERO WIDTH NO-BREAK SPACE
 FFF9..FFFB    ; Format # Cf   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANNOTATION TERMINATOR
 110BD         ; Format # Cf       KAITHI NUMBER SIGN
@@ -416,7 +446,7 @@ FFF9..FFFB    ; Format # Cf   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANN
 E0001         ; Format # Cf       LANGUAGE TAG
 E0020..E007F  ; Format # Cf  [96] TAG SPACE..CANCEL TAG
 
-# Total code points: 136
+# Total code points: 142
 
 # ================================================
 
@@ -472,8 +502,6 @@ FF71..FF9D    ; Katakana # Lo  [45] HALFWIDTH KATAKANA LETTER A..HALFWIDTH KATAK
 0531..0556    ; ALetter # L&  [38] ARMENIAN CAPITAL LETTER AYB..ARMENIAN CAPITAL LETTER FEH
 0559          ; ALetter # Lm       ARMENIAN MODIFIER LETTER LEFT HALF RING
 0561..0587    ; ALetter # L&  [39] ARMENIAN SMALL LETTER AYB..ARMENIAN SMALL LIGATURE ECH YIWN
-05D0..05EA    ; ALetter # Lo  [27] HEBREW LETTER ALEF..HEBREW LETTER TAV
-05F0..05F2    ; ALetter # Lo   [3] HEBREW LIGATURE YIDDISH DOUBLE VAV..HEBREW LIGATURE YIDDISH DOUBLE YOD
 05F3          ; ALetter # Po       HEBREW PUNCTUATION GERESH
 0620..063F    ; ALetter # Lo  [32] ARABIC LETTER KASHMIRI YEH..ARABIC LETTER FARSI YEH WITH THREE DOTS ABOVE
 0640          ; ALetter # Lm       ARABIC TATWEEL
@@ -774,14 +802,7 @@ D7B0..D7C6    ; ALetter # Lo  [23] HANGUL JUNGSEONG O-YEO..HANGUL JUNGSEONG ARAE
 D7CB..D7FB    ; ALetter # Lo  [49] HANGUL JONGSEONG NIEUN-RIEUL..HANGUL JONGSEONG PHIEUPH-THIEUTH
 FB00..FB06    ; ALetter # L&   [7] LATIN SMALL LIGATURE FF..LATIN SMALL LIGATURE ST
 FB13..FB17    ; ALetter # L&   [5] ARMENIAN SMALL LIGATURE MEN NOW..ARMENIAN SMALL LIGATURE MEN XEH
-FB1D          ; ALetter # Lo       HEBREW LETTER YOD WITH HIRIQ
-FB1F..FB28    ; ALetter # Lo  [10] HEBREW LIGATURE YIDDISH YOD YOD PATAH..HEBREW LETTER WIDE TAV
-FB2A..FB36    ; ALetter # Lo  [13] HEBREW LETTER SHIN WITH SHIN DOT..HEBREW LETTER ZAYIN WITH DAGESH
-FB38..FB3C    ; ALetter # Lo   [5] HEBREW LETTER TET WITH DAGESH..HEBREW LETTER LAMED WITH DAGESH
-FB3E          ; ALetter # Lo       HEBREW LETTER MEM WITH DAGESH
-FB40..FB41    ; ALetter # Lo   [2] HEBREW LETTER NUN WITH DAGESH..HEBREW LETTER SAMEKH WITH DAGESH
-FB43..FB44    ; ALetter # Lo   [2] HEBREW LETTER FINAL PE WITH DAGESH..HEBREW LETTER PE WITH DAGESH
-FB46..FBB1    ; ALetter # Lo [108] HEBREW LETTER TSADI WITH DAGESH..ARABIC LETTER YEH BARREE WITH HAMZA ABOVE FINAL FORM
+FB50..FBB1    ; ALetter # Lo  [98] ARABIC LETTER ALEF WASLA ISOLATED FORM..ARABIC LETTER YEH BARREE WITH HAMZA ABOVE FINAL FORM
 FBD3..FD3D    ; ALetter # Lo [363] ARABIC LETTER NG ISOLATED FORM..ARABIC LIGATURE ALEF WITH FATHATAN ISOLATED FORM
 FD50..FD8F    ; ALetter # Lo  [64] ARABIC LIGATURE TEH WITH JEEM WITH MEEM INITIAL FORM..ARABIC LIGATURE MEEM WITH KHAH WITH MEEM INITIAL FORM
 FD92..FDC7    ; ALetter # Lo  [54] ARABIC LIGATURE MEEM WITH JEEM WITH KHAH INITIAL FORM..ARABIC LIGATURE NOON WITH JEEM WITH YEH FINAL FORM
@@ -913,12 +934,13 @@ FFDA..FFDC    ; ALetter # Lo   [3] HALFWIDTH HANGUL LETTER EU..HALFWIDTH HANGUL 
 1EEA5..1EEA9  ; ALetter # Lo   [5] ARABIC MATHEMATICAL DOUBLE-STRUCK WAW..ARABIC MATHEMATICAL DOUBLE-STRUCK YEH
 1EEAB..1EEBB  ; ALetter # Lo  [17] ARABIC MATHEMATICAL DOUBLE-STRUCK LAM..ARABIC MATHEMATICAL DOUBLE-STRUCK GHAIN
 
-# Total code points: 24941
+# Total code points: 24867
 
 # ================================================
 
 003A          ; MidLetter # Po       COLON
 00B7          ; MidLetter # Po       MIDDLE DOT
+02D7          ; MidLetter # Sk       MODIFIER LETTER MINUS SIGN
 0387          ; MidLetter # Po       GREEK ANO TELEIA
 05F4          ; MidLetter # Po       HEBREW PUNCTUATION GERSHAYIM
 2027          ; MidLetter # Po       HYPHENATION POINT
@@ -926,7 +948,7 @@ FE13          ; MidLetter # Po       PRESENTATION FORM FOR VERTICAL COLON
 FE55          ; MidLetter # Po       SMALL COLON
 FF1A          ; MidLetter # Po       FULLWIDTH COLON
 
-# Total code points: 8
+# Total code points: 9
 
 # ================================================
 
@@ -949,7 +971,6 @@ FF1B          ; MidNum # Po       FULLWIDTH SEMICOLON
 
 # ================================================
 
-0027          ; MidNumLet # Po       APOSTROPHE
 002E          ; MidNumLet # Po       FULL STOP
 2018          ; MidNumLet # Pi       LEFT SINGLE QUOTATION MARK
 2019          ; MidNumLet # Pf       RIGHT SINGLE QUOTATION MARK
@@ -958,7 +979,7 @@ FE52          ; MidNumLet # Po       SMALL FULL STOP
 FF07          ; MidNumLet # Po       FULLWIDTH APOSTROPHE
 FF0E          ; MidNumLet # Po       FULLWIDTH FULL STOP
 
-# Total code points: 8
+# Total code points: 7
 
 # ================================================
 

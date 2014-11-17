@@ -71,6 +71,29 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		    break;
 		}
 		break;
+	    default:
+		if (len > 10 && memEQ(name, "prototype(", 10)) {
+		    SV * proto = newSVpvn(name+10,len-11);
+		    HEK *const hek = CvNAME_HEK((CV *)sv);
+		    SV *subname;
+		    if (name[len-1] != ')')
+			Perl_croak(aTHX_ "Unterminated attribute parameter in attribute list");
+		    if (hek)
+			subname = sv_2mortal(newSVhek(hek));
+		    else
+			subname=(SV *)CvGV((const CV *)sv);
+		    if (ckWARN(WARN_ILLEGALPROTO))
+			Perl_validate_proto(aTHX_ subname, proto, TRUE);
+		    Perl_cv_ckproto_len_flags(aTHX_ (const CV *)sv,
+		                                    (const GV *)subname,
+		                                    name+10,
+		                                    len-11,
+		                                    SvUTF8(attr));
+		    sv_setpvn(MUTABLE_SV(sv), name+10, len-11);
+		    if (SvUTF8(attr)) SvUTF8_on(MUTABLE_SV(sv));
+		    continue;
+		}
+		break;
 	    }
 	    break;
 	default:

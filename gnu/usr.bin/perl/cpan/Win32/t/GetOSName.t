@@ -147,7 +147,7 @@ sub check {
 				       $id, $sm||0, $pt||1, $sm||0, $arch, $metrics);
     my $display = Win32::GetOSDisplayName($os, $desc);
 
-    note($pretty);
+    note($pretty) if defined &note;
     is($display, $pretty);
     is($os, "Win$expect", "os:   $os");
     is($desc, $tag, "desc: $desc");

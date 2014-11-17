@@ -10,7 +10,7 @@ BEGIN {
 no utf8; # needed for use utf8 not griping about the raw octets
 
 
-plan(tests => 61);
+plan(tests => 63);
 
 $| = 1;
 
@@ -385,4 +385,17 @@ is($failed, undef);
 
     like( $@, qr/utf8 "\\xEF" does not map to Unicode .+ <F> chunk 1/,
 	  "<:utf8 readline (fixed) must warn about bad utf8");
+    close F;
+}
+
+# getc should reset the utf8 flag and not be affected by previous
+# return values
+SKIP: {
+    skip "no PerlIO::scalar on miniperl", 2, if is_miniperl();
+    open my $fh, "<:raw",  \($buf = chr 255);
+    open my $uh, "<:utf8", \($uuf = "\xc4\x80");
+    for([$uh,chr 256], [$fh,chr 255]) {
+	is getc $$_[0], $$_[1],
+	  'getc returning non-utf8 after utf8';
+    }
 }

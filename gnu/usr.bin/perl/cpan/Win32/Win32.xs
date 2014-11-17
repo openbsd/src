@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN
 #include <wctype.h>
 #include <windows.h>
 #include <shlobj.h>

@@ -65,11 +65,6 @@ U.N. Statistics division.
 If a 2-digit code is entered, it is converted to 3 digits by prepending
 a 0.
 
-=item B<fips-10, LOCALE_CODE_FIPS>
-
-The FIPS 10 data are two-letter (uppercase) codes assigned by the
-National Geospatial-Intelligence Agency.
-
 =item B<dom, LOCALE_CODE_DOM>
 
 The IANA is responsible for delegating management of the top level country
@@ -77,6 +72,9 @@ domains.  The country domains are the two-letter (lowercase) codes from ISO 3166
 with a few other additions.
 
 =back
+
+NOTE: As of version 3.27, the FIPS code set is no longer supported.  See the
+Locale::Codes::Changes document for details.
 
 =head1 ROUTINES
 
@@ -126,8 +124,8 @@ the following two are identical:
 
 and the latter should be used for consistency.
 
-The alias_code function is deprecated and will be removed at some point
-in the future.
+The alias_code function is deprecated and will be removed in the December
+2014 release.
 
 B<Note:> this function was previously called _alias_code, but the
 leading underscore has been dropped. The old name was supported for
@@ -154,19 +152,18 @@ etc), as defined in ISO 3166-2.  This module is not part of the
 Locale-Codes distribution, but is available from CPAN in
 CPAN/modules/by-module/Locale/
 
-=item B<http://www.iso.org/iso/country_codes>
+=item B<http://www.iso.org/iso/home/standards/country_codes.htm>
 
 Official home page for the ISO 3166 maintenance agency.
-
-Unfortunately, they do not make the actual ISO available for free,
-so I cannot check the alpha-3 and numerical codes here.
-
-=item B<http://www.iso.org/iso/list-en1-semic-3.txt>
 
 =item B<http://www.iso.org/iso/home/standards/country_codes/iso-3166-1_decoding_table.htm>
 
 The source of ISO 3166-1 two-letter codes used by this
 module.
+
+=item B<http://www.iana.org/domains/root/db/>
+
+Official source of the top-level domain names.
 
 =item B<http://unstats.un.org/unsd/methods/m49/m49alpha.htm>
 
@@ -175,15 +172,7 @@ three-digit codes.
 
 For some reason, this table is incomplete! Several countries are
 missing from it, and I cannot find them anywhere on the UN site.  I
-get as much of the data from here as I can.
-
-=item B<http://earth-info.nga.mil/gns/html/digraphs.htm>
-
-The official list of the FIPS 10 codes.
-
-=item B<http://www.iana.org/domains/>
-
-Official source of the top-level domain names.
+no longer use this as a source of data.
 
 =item B<https://www.cia.gov/library/publications/the-world-factbook/appendix/print_appendix-d.html>
 
@@ -209,7 +198,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
+   Copyright (c) 2010-2014 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

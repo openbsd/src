@@ -39,6 +39,16 @@ $z = 3
 EXPECT
 Name "main::x" used only once: possible typo at - line 3.
 ########
+# perl.c
+use warnings 'once';
+$\; # test a few
+$:; # punct vars
+$0; # and
+$123; # numbers
+$_;    # and
+$_foo;  # underscores (none of which should warn)
+EXPECT
+########
 -W
 # perl.c
 no warnings 'once' ;
@@ -229,3 +239,17 @@ use warnings 'once';
 $foo++; BEGIN { eval q|@a =~ s///; sub foo;| }
 EXPECT
 Name "main::foo" used only once: possible typo at - line 3.
+########
+
+use warnings 'once';
+BEGIN { ${"_<".__FILE__} = \1 } # should not affect file name in warning
+$foo++;
+EXPECT
+Name "main::foo" used only once: possible typo at - line 4.
+########
+
+use warnings 'once'; # necessary to trigger the crash
+BEGIN{*MUSHROOMS::mushrooms::MUSHROOMS:: = *MUSHROOMS::} # circularity
+$foo++;
+EXPECT
+Name "main::foo" used only once: possible typo at - line 4.

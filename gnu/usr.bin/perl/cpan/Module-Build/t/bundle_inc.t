@@ -5,7 +5,6 @@ use lib 't/lib';
 use MBTest; # or 'no_plan'
 use DistGen;
 use Config;
-use IO::File;
 use File::Spec;
 use ExtUtils::Packlist;
 use ExtUtils::Installed;
@@ -93,15 +92,14 @@ ok( -e File::Spec->catfile( $dist_inc, qw/inc_Module-Build Module Build Base.pm/
 # we can't edit the file.
 
 eval {
-  my $fh;
   chmod 0666, $mb_file;
-  $fh = IO::File->new($mb_file, "<") or die "Could not read $mb_file: $!";
+  open(my $fh, '<', $mb_file) or die "Could not read $mb_file: $!";
   my $mb_code = do { local $/; <$fh> };
   $mb_code =~ s{\$VERSION\s+=\s+\S+}{\$VERSION = 9999;};
-  $fh->close;
-  $fh = IO::File->new($mb_file, ">") or die "Could not write $mb_file: $!";
+  close $fh;
+  open($fh, '>', $mb_file) or die "Could not write $mb_file: $!";
   print {$fh} $mb_code;
-  $fh->close;
+  close $fh;
 };
 
 my $err = $@;
@@ -116,7 +114,7 @@ SKIP: {
   stdout_of( sub { Module::Build->run_perl_script('Build.PL',[],[]) } );
   ok( -e 'MYMETA.yml', 'MYMETA was created' );
 
-  my $meta = IO::File->new('MYMETA.yml');
+  open(my $meta, '<', 'MYMETA.yml');
   ok( $meta, "opened MYMETA.yml" );
   ok( scalar( grep { /generated_by:.*9999/ } <$meta> ),
     "dist_dir Build.PL loaded bundled Module::Build"

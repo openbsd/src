@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -13,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..89\n"; }
+BEGIN { $| = 1; print "1..93\n"; } # 53 + 4 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -242,7 +245,7 @@ ok($el->viewSortKey("L\x{FF2C}\x{216C}\x{2112}\x{24C1}"),
 
 ##### 53
 
-my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26);
+my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26, 28);
 
 for my $v (@Versions) {
     $Collator->change(UCA_Version => $v);
@@ -264,6 +267,4 @@ for my $v (@Versions) {
     ok($Collator->viewSortKey("1+2"),
 	'[0A0C 0A0D | 0020 0020 | 0002 0002 |]');
 }
-
-##### 89
 

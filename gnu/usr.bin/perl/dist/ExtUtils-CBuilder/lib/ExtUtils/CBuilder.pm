@@ -6,7 +6,7 @@ use File::Basename ();
 use Perl::OSType qw/os_type/;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.280210';
+$VERSION = '0.280217';
 $VERSION = eval $VERSION;
 
 # We only use this once - don't waste a symbol table entry on it.

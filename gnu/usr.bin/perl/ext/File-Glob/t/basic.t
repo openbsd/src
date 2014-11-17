@@ -32,6 +32,11 @@ if ($^O eq 'VMS') {
 
 
 # look for the contents of the current directory
+# try it in a directory that doesn't get modified during testing,
+# so parallel testing won't give us race conditions. t/base/ seems
+# fairly static
+
+chdir 'base' or die "chdir base: $!";
 $ENV{PATH} = "/bin";
 delete @ENV{qw(BASH_ENV CDPATH ENV IFS)};
 my @correct = ();
@@ -46,6 +51,7 @@ if (GLOB_ERROR) {
 } else {
     is_deeply(\@a, \@correct);
 }
+chdir '..' or die "chdir .. $!";
 
 # look up the user's home directory
 # should return a list with one item, and not set ERROR

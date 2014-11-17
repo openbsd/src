@@ -8,6 +8,7 @@ use strict;
 use Config;
 
 use Test::More;
+use File::Temp qw[tempdir];
 
 unless( eval { require Data::Dumper } ) {
     plan skip_all => 'Data::Dumper not available';
@@ -27,7 +28,9 @@ my $Perl = which_perl();
 my $Makefile = makefile_name();
 my $Is_VMS = $^O eq 'VMS';
 
-chdir 't';
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
+
 perl_lib;
 
 $| = 1;
@@ -58,7 +61,7 @@ is( $?, 0,         '  exited normally' );
 $prereq_out = run(qq{$Perl Makefile.PL "PRINT_PREREQ=1"});
 ok( !-r $Makefile, "PRINT_PREREQ produces no $Makefile" );
 is( $?, 0,         '  exited normally' );
-::like( $prereq_out, qr/^perl\(strict\) \s* >= \s* 0 \s*$/x, 
+::like( $prereq_out, qr/^perl\(strict\) \s* >= \s* 0 \s*$/x,
                                                       'prereqs dumped' );
 
 

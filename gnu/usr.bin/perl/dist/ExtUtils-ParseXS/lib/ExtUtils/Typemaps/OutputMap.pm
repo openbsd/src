@@ -2,7 +2,7 @@ package ExtUtils::Typemaps::OutputMap;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.18';
+our $VERSION = '3.24';
 
 =head1 NAME
 
@@ -95,15 +95,22 @@ sub cleaned_code {
 
 =head2 targetable
 
-This is an obscure optimization that used to live in C<ExtUtils::ParseXS>
-directly.
+This is an obscure but effective optimization that used to
+live in C<ExtUtils::ParseXS> directly. Not implementing it
+should never result in incorrect use of typemaps, just less
+efficient code.
 
 In a nutshell, this will check whether the output code
-involves calling C<set_iv>, C<set_uv>, C<set_nv>, C<set_pv> or C<set_pvn>
-to set the special C<$arg> placeholder to a new value
+involves calling C<sv_setiv>, C<sv_setuv>, C<sv_setnv>, C<sv_setpv> or
+C<sv_setpvn> to set the special C<$arg> placeholder to a new value
 B<AT THE END OF THE OUTPUT CODE>. If that is the case, the code is
 eligible for using the C<TARG>-related macros to optimize this.
 Thus the name of the method: C<targetable>.
+
+If this optimization is applicable, C<ExtUtils::ParseXS> will
+emit a C<dXSTARG;> definition at the start of the generate XSUB code,
+and type (see below) dependent code to set C<TARG> and push it on
+the stack at the end of the generated XSUB code.
 
 If the optimization can not be applied, this returns undef.
 If it can be applied, this method returns a hash reference containing
@@ -113,7 +120,7 @@ the following information:
   with_size: Bool indicating whether this is the sv_setpvn variant
   what:      The code that actually evaluates to the output scalar
   what_size: If "with_size", this has the string length (as code,
-             not constant)
+             not constant, including leading comma)
 
 =cut
 
@@ -129,6 +136,13 @@ sub targetable {
       \( (??{ $bal }) \)
     )*
   ]x;
+  my $bal_no_comma = qr[
+    (?:
+      (?>[^(),]+)
+      |
+      \( (??{ $bal }) \)
+    )+
+  ]x;
 
   # matches variations on (SV*)
   my $sv_cast = qr[
@@ -139,7 +153,7 @@ sub targetable {
 
   my $size = qr[ # Third arg (to setpvn)
     , \s* (??{ $bal })
-  ]x;
+  ]xo;
 
   my $code = $self->code;
 
@@ -155,10 +169,10 @@ sub targetable {
         \s*
         \( \s*
           $sv_cast \$arg \s* , \s*
-          ( (??{ $bal }) )    # Set from
-        ( (??{ $size }) )?    # Possible sizeof set-from
-        \) \s* ; \s* $
-      ]x
+          ( $bal_no_comma )    # Set from
+          ( $size )?           # Possible sizeof set-from
+        \s* \) \s* ; \s* $
+      ]xo
   );
 
   my $rv = undef;

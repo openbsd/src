@@ -51,8 +51,9 @@ in F<Makefile.PL> for this purpose:
     eval { require 5.007 }
         or die <<EOD;
     ############
-    ### This module uses frobnication framework which is not available before
-    ### version 5.007 of Perl.  Upgrade your Perl before installing Kara::Mba.
+    ### This module uses frobnication framework which is not available
+    ### before version 5.007 of Perl.  Upgrade your Perl before
+    ### installing Kara::Mba.
     ############
     EOD
 
@@ -78,6 +79,21 @@ If you have generated such a statically-linked executable by choice, then
 instead of saying "C<make test>", you should say "C<make test_static>".
 On systems that cannot build dynamically-loadable libraries at all, simply
 saying "C<make test>" is sufficient.
+
+=head2 Threads and PERL_NO_GET_CONTEXT
+
+For threaded builds, perl requires the context pointer for the current
+thread, without C<PERL_NO_GET_CONTEXT>, perl will call a function to
+retrieve the context.
+
+For improved performance, include:
+
+  #define PERL_NO_GET_CONTEXT
+
+as shown below.
+
+For more details, see L<perlguts|perlguts/How multiple interpreters
+and concurrency are supported>.
 
 =head1 TUTORIAL
 
@@ -139,13 +155,15 @@ The file Mytest.pm should start with something like this:
 
     1;
     __END__
-    # Below is the stub of documentation for your module. You better edit it!
+    # Below is the stub of documentation for your module. You better
+    # edit it!
 
 The rest of the .pm file contains sample code for providing documentation for
 the extension.
 
 Finally, the Mytest.xs file should look something like this:
 
+    #define PERL_NO_GET_CONTEXT
     #include "EXTERN.h"
     #include "perl.h"
     #include "XSUB.h"
@@ -178,22 +196,22 @@ Now, running make will produce output that looks something like this (some
 long lines have been shortened for clarity and some extraneous lines have
 been deleted):
 
-    % make
-    cp lib/Mytest.pm blib/lib/Mytest.pm
-    perl xsubpp  -typemap typemap  Mytest.xs > Mytest.xsc && mv Mytest.xsc Mytest.c
-    Please specify prototyping behavior for Mytest.xs (see perlxs manual)
-    cc -c     Mytest.c
-    Running Mkbootstrap for Mytest ()
-    chmod 644 Mytest.bs
-    rm -f blib/arch/auto/Mytest/Mytest.so
-    cc  -shared -L/usr/local/lib Mytest.o  -o blib/arch/auto/Mytest/Mytest.so   \
-                \
+ % make
+ cp lib/Mytest.pm blib/lib/Mytest.pm
+ perl xsubpp  -typemap typemap  Mytest.xs > Mytest.xsc && \
+ mv Mytest.xsc Mytest.c
+ Please specify prototyping behavior for Mytest.xs (see perlxs manual)
+ cc -c     Mytest.c
+ Running Mkbootstrap for Mytest ()
+ chmod 644 Mytest.bs
+ rm -f blib/arch/auto/Mytest/Mytest.so
+ cc -shared -L/usr/local/lib Mytest.o -o blib/arch/auto/Mytest/Mytest.so
 
-    chmod 755 blib/arch/auto/Mytest/Mytest.so
-    cp Mytest.bs blib/arch/auto/Mytest/Mytest.bs
-    chmod 644 blib/arch/auto/Mytest/Mytest.bs
-    Manifying blib/man3/Mytest.3pm
-    %
+ chmod 755 blib/arch/auto/Mytest/Mytest.so
+ cp Mytest.bs blib/arch/auto/Mytest/Mytest.bs
+ chmod 644 blib/arch/auto/Mytest/Mytest.bs
+ Manifying blib/man3/Mytest.3pm
+ %
 
 You can safely ignore the line about "prototyping behavior" - it is
 explained in L<perlxs/"The PROTOTYPES: Keyword">.
@@ -254,8 +272,9 @@ when the test is correct, "not ok" when it is not.
 
     #########################
 
-    # Insert your test code below, the Test::More module is use()ed here so read
-    # its man page ( perldoc Test::More ) for help writing this test script.
+    # Insert your test code below, the Test::More module is use()ed here
+    # so read its man page ( perldoc Test::More ) for help writing this
+    # test script.
 
     is(&Mytest::is_even(0), 1);
     is(&Mytest::is_even(1), 0);
@@ -264,12 +283,13 @@ when the test is correct, "not ok" when it is not.
 We will be calling the test script through the command "C<make test>".  You
 should see output that looks something like this:
 
-    %make test
-    PERL_DL_NONLAZY=1 /usr/bin/perl "-MExtUtils::Command::MM" "-e" "test_harness(0, 'blib/lib', 'blib/arch')" t/*.t
-    t/Mytest....ok
-    All tests successful.
-    Files=1, Tests=4,  0 wallclock secs ( 0.03 cusr +  0.00 csys =  0.03 CPU)
-    %
+ %make test
+ PERL_DL_NONLAZY=1 /usr/bin/perl "-MExtUtils::Command::MM" "-e"
+ "test_harness(0, 'blib/lib', 'blib/arch')" t/*.t
+ t/Mytest....ok
+ All tests successful.
+ Files=1, Tests=4, 0 wallclock secs ( 0.03 cusr + 0.00 csys = 0.03 CPU)
+ %
 
 =head2 What has gone on?
 
@@ -614,7 +634,7 @@ Now we also need to create a typemap because the default Perl doesn't
 currently support the C<const char *> type.  Include a new TYPEMAP
 section in your XS code before the above function:
 
-        TYPEMAP: <<END;
+        TYPEMAP: <<END
 	const char *	T_PV
         END
 
@@ -633,8 +653,8 @@ and add the following lines to the end of the script:
 equality, but rather that the difference between the expected and actual
 result is below a certain amount (called epsilon) which is 0.01 in this case)
 
-Run "C<make test>" and all should be well. There are some warnings on missing tests
-for the Mytest2::mylib extension, but you can ignore them.
+Run "C<make test>" and all should be well. There are some warnings on missing
+tests for the Mytest2::mylib extension, but you can ignore them.
 
 =head2 What has happened here?
 
@@ -845,11 +865,12 @@ For example, consider:
 		char	&a
 		char *	b
 
-The first Perl argument to this function would be treated as a char and assigned
-to the variable a, and its address would be passed into the function foo.
-The second Perl argument would be treated as a string pointer and assigned to the
-variable b.  The I<value> of b would be passed into the function foo.  The
-actual call to the function foo that B<xsubpp> generates would look like this:
+The first Perl argument to this function would be treated as a char and
+assigned to the variable a, and its address would be passed into the function
+foo. The second Perl argument would be treated as a string pointer and assigned
+to the variable b. The I<value> of b would be passed into the function foo.
+The actual call to the function foo that B<xsubpp> generates would look like
+this:
 
 	foo(&a, b);
 
@@ -1088,8 +1109,8 @@ Mytest.xs:
 	    SV * paths
 	INIT:
 	    AV * results;
-	    I32 numpaths = 0;
-	    int i, n;
+	    SSize_t numpaths = 0, n;
+	    int i;
 	    struct statfs buf;
 
 	    SvGETMAGIC(paths);
@@ -1158,18 +1179,18 @@ true, which indicates that paths is a valid reference.  (Simply
 checking C<SvROK> won't trigger FETCH on a tied variable.)  It
 then verifies that the object referenced by paths is an array, using C<SvRV>
 to dereference paths, and C<SvTYPE> to discover its type.  As an added test,
-it checks that the array referenced by paths is non-empty, using the C<av_top_index>
-function (which returns -1 if the array is empty).  The XSRETURN_UNDEF macro
-is used to abort the XSUB and return the undefined value whenever all three of
-these conditions are not met.
+it checks that the array referenced by paths is non-empty, using the
+C<av_top_index> function (which returns -1 if the array is empty). The
+XSRETURN_UNDEF macro is used to abort the XSUB and return the undefined value
+whenever all three of these conditions are not met.
 
 =item *
 
 We manipulate several arrays in this XSUB.  Note that an array is represented
 internally by an AV* pointer.  The functions and macros for manipulating
-arrays are similar to the functions in Perl: C<av_top_index> returns the highest
-index in an AV*, much like $#array; C<av_fetch> fetches a single scalar value
-from an array, given its index; C<av_push> pushes a scalar value onto the
+arrays are similar to the functions in Perl: C<av_top_index> returns the
+highest index in an AV*, much like $#array; C<av_fetch> fetches a single scalar
+value from an array, given its index; C<av_push> pushes a scalar value onto the
 end of the array, automatically extending the array as necessary.
 
 Specifically, we read pathnames one at a time from the input array, and
@@ -1226,6 +1247,7 @@ Suppose that for some strange reason we need a wrapper around the
 standard C library function C<fputs()>. This is all we need:
 
 	#define PERLIO_NOT_STDIO 0
+	#define PERL_NO_GET_CONTEXT
 	#include "EXTERN.h"
 	#include "perl.h"
 	#include "XSUB.h"

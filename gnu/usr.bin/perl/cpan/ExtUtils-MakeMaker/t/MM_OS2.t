@@ -23,18 +23,18 @@ BEGIN {
 use File::Spec;
 
 use_ok( 'ExtUtils::MM_OS2' );
-ok( grep( 'ExtUtils::MM_OS2',  @MM::ISA), 
+ok( grep( 'ExtUtils::MM_OS2',  @MM::ISA),
 	'ExtUtils::MM_OS2 should be parent of MM' );
 
 # dlsyms
-my $mm = bless({ 
-	SKIPHASH => { 
-		dynamic => 1 
-	}, 
+my $mm = bless({
+	SKIPHASH => {
+		dynamic => 1
+	},
 	NAME => 'foo:bar::',
 }, 'ExtUtils::MM_OS2');
 
-is( $mm->dlsyms(), '', 
+is( $mm->dlsyms(), '',
 	'dlsyms() should return nothing with dynamic flag set' );
 
 $mm->{BASEEXT} = 'baseext';
@@ -42,13 +42,13 @@ delete $mm->{SKIPHASH};
 my $res = $mm->dlsyms();
 like( $res, qr/baseext\.def: Makefile/,
 	'... without flag, should return make targets' );
-like( $res, qr/"DL_FUNCS" => \{  \}/, 
+like( $res, qr/"DL_FUNCS" => \{  \}/,
 	'... should provide empty hash refs where necessary' );
 like( $res, qr/"DL_VARS" => \[]/, '... and empty array refs too' );
 
 $mm->{FUNCLIST} = 'funclist';
 $res = $mm->dlsyms( IMPORTS => 'imports' );
-like( $res, qr/"FUNCLIST" => .+funclist/, 
+like( $res, qr/"FUNCLIST" => .+funclist/,
 	'... should pick up values from object' );
 like( $res, qr/"IMPORTS" => .+imports/, '... and allow parameter options too' );
 
@@ -65,7 +65,7 @@ SKIP: {
 
 	local $@;
 	eval { $mm->dlsyms() };
-	like( $@, qr/Can.t mkdir tmp_imp/, 
+	like( $@, qr/Can.t mkdir tmp_imp/,
 		'... should die if directory cannot be made' );
 
 	unlink('tmp_imp') or skip("Cannot remove test file: $!", 9);
@@ -89,15 +89,15 @@ SKIP: {
 	eval { $mm->dlsyms() };
 
 	like( $sysargs, qr/^emximp/, '... should try to call system() though' );
-	like( $@, qr/Cannot make import library/, 
+	like( $@, qr/Cannot make import library/,
 		'... should die if emximp syscall fails' );
 
 	# sysfail is 0 now, call emximp call should succeed
 	eval { $mm->dlsyms() };
 	is( $unlinked, 1, '... should attempt to unlink temp files' );
-	like( $@, qr/Cannot extract import/, 
+	like( $@, qr/Cannot extract import/,
 		'... should die if other syscall fails' );
-	
+
 	# make both syscalls succeed
 	@sysfail = (0, 0);
 	local $@;
@@ -127,9 +127,9 @@ SKIP: {
 	$args->{IMPORTS} = { foo => 1};
 	$ret = ExtUtils::MM_OS2::static_lib( $args );
 	is( $called, 2, '... should call parent method if extra imports passed' );
-	like( $ret, qr/^called static_lib\n\t\$\(AR\) \$\(AR_STATIC_ARGS\)/m, 
+	like( $ret, qr/^called static_lib\n\t\$\(AR\) \$\(AR_STATIC_ARGS\)/m,
 		'... should append make tags to first line from parent method' );
-	like( $ret, qr/\$@\n\n\nline2\nline3\n\nline4/m, 
+	like( $ret, qr/\$@\n\n\nline2\nline3\n\nline4/m,
 		'... should include remaining data from parent method' );
 
 }
@@ -164,7 +164,7 @@ is( ExtUtils::MM_OS2->replace_manpage_separator($sep), '.a.b.c.de',
 			unless (defined $dir) {
 				if (-d $file) {
 					next if ( -x $file . '.exe' or -x $file . '.cmd' );
-					
+
 					$dir = $file;
 					$found++;
 				}
@@ -208,7 +208,7 @@ is( ExtUtils::MM_OS2->replace_manpage_separator($sep), '.a.b.c.de',
 
 	SKIP: {
 		skip('No appropriate directory found', 1) unless defined $dir;
-		is( ExtUtils::MM_OS2->maybe_command( $dir ), undef, 
+		is( ExtUtils::MM_OS2->maybe_command( $dir ), undef,
 			'maybe_command() should ignore directories' );
 	}
 
@@ -234,11 +234,11 @@ is( ExtUtils::MM_OS2->replace_manpage_separator($sep), '.a.b.c.de',
 }
 
 # file_name_is_absolute
-ok( ExtUtils::MM_OS2->file_name_is_absolute( 's:/' ), 
+ok( ExtUtils::MM_OS2->file_name_is_absolute( 's:/' ),
 	'file_name_is_absolute() should be true for paths with volume and slash' );
-ok( ExtUtils::MM_OS2->file_name_is_absolute( '\foo' ), 
+ok( ExtUtils::MM_OS2->file_name_is_absolute( '\foo' ),
 	'... and for paths with leading slash but no volume' );
-ok( ! ExtUtils::MM_OS2->file_name_is_absolute( 'arduk' ), 
+ok( ! ExtUtils::MM_OS2->file_name_is_absolute( 'arduk' ),
 	'... but not for paths with no leading slash or volume' );
 
 
@@ -252,18 +252,18 @@ is( $mm->{PERL_ARCHIVE}, '$(PERL_INC)/libperl$(LIB_EXT)', 'PERL_ARCHIVE' );
 	my $aout = 0;
 	local *OS2::is_aout;
 	*OS2::is_aout = \$aout;
-	
+
         $mm->init_linker;
 	isnt( $mm->{PERL_ARCHIVE_AFTER}, '',
 		'PERL_ARCHIVE_AFTER should be empty without $is_aout set' );
 	$aout = 1;
-	is( $mm->{PERL_ARCHIVE_AFTER}, 
-            '$(PERL_INC)/libperl_override$(LIB_EXT)', 
+	is( $mm->{PERL_ARCHIVE_AFTER},
+            '$(PERL_INC)/libperl_override$(LIB_EXT)',
 		'... and has libperl_override if it is set' );
 }
 
 # EXPORT_LIST
-is( $mm->{EXPORT_LIST}, '$(BASEEXT).def', 
+is( $mm->{EXPORT_LIST}, '$(BASEEXT).def',
 	'EXPORT_LIST should add .def to BASEEXT member' );
 
 END {

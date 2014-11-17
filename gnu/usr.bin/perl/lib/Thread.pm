@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = '3.02';
+our $VERSION = '3.04';
 $VERSION = eval $VERSION;
 
 BEGIN {
@@ -168,7 +168,7 @@ does a C<cond_signal> or C<cond_broadcast> for that same locked
 variable. The variable that C<cond_wait> blocked on is relocked
 after the C<cond_wait> is satisfied.  If there are multiple threads
 C<cond_wait>ing on the same variable, all but one will reblock waiting
-to reaquire the lock on the variable.  (So if you're only using
+to re-acquire the lock on the variable.  (So if you're only using
 C<cond_wait> for synchronization, give up the lock as soon as
 possible.)
 

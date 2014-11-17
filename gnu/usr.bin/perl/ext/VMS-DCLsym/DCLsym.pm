@@ -161,8 +161,9 @@ VMS::DCLsym - Perl extension to manipulate DCL symbols
 
   $handle = new VMS::DCLsym;
   $value = $handle->getsym($name);
-  $handle->setsym($name,$value,'GLOBAL') or die "Can't create symbol: $!\n";
-  $handle->delsym($name,'LOCAL') or die "Can't delete symbol: $!\n";
+  $handle->setsym($name, $value, 'GLOBAL')
+      or die "Can't create symbol: $!\n";
+  $handle->delsym($name, 'LOCAL') or die "Can't delete symbol: $!\n";
   $handle->clearcache();
 
 =head1 DESCRIPTION

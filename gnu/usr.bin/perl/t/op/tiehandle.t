@@ -10,7 +10,7 @@ my $data = "";
 my @data = ();
 
 require './test.pl';
-plan(tests => 63);
+plan(tests => 67);
 
 sub compare {
     local $Level = $Level + 1;
@@ -199,6 +199,11 @@ is($r, 1);
     ::ok( say $fh @expect[2..4] );
     ::is( $ors, "\n",        'say sets $\ to \n in PRINT' );
     ::is( $\,   "something", "  and it's localized" );
+
+    local $\;
+    ::ok( say $fh @expect[2..4] );
+    ::is( $ors, "\n",        'say sets $\ to \n in PRINT' );
+    ::is( $\,   undef, "  and it's localized, even for undef \$\\" );
 }
 
 {

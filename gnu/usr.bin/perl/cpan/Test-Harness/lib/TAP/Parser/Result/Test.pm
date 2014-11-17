@@ -1,12 +1,9 @@
 package TAP::Parser::Result::Test;
 
 use strict;
+use warnings;
 
-use vars qw($VERSION @ISA);
-use TAP::Parser::Result;
-@ISA = 'TAP::Parser::Result';
-
-use vars qw($VERSION);
+use base 'TAP::Parser::Result';
 
 =head1 NAME
 
@@ -14,11 +11,11 @@ TAP::Parser::Result::Test - Test result token.
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 DESCRIPTION
 

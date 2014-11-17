@@ -14,6 +14,11 @@ BEGIN {
     require './t/test.pl';
 }
 
+use Config;
+if ( $Config{usecrosscompile} ) {
+  skip_all( "Odd failures during cross-compilation" );
+}
+
 use strict;
 use warnings;
 use Maintainers qw(show_results process_options finish_tap_output);

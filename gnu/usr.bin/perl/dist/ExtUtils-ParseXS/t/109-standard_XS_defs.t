@@ -3,7 +3,8 @@ use strict;
 use warnings;
 $| = 1;
 use Test::More tests => 5;
-use lib qw( lib t/lib );
+use File::Spec;
+use lib (-d 't' ? File::Spec->catdir(qw(t lib)) : 'lib');
 use ExtUtils::ParseXS::Utilities qw(
     standard_XS_defs
 );

@@ -1,11 +1,9 @@
 package TAP::Parser::Result;
 
 use strict;
-use vars qw($VERSION @ISA);
+use warnings;
 
-use TAP::Object ();
-
-@ISA = 'TAP::Object';
+use base 'TAP::Object';
 
 BEGIN {
 
@@ -26,11 +24,11 @@ TAP::Parser::Result - Base class for TAP::Parser output objects
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 SYNOPSIS
 
@@ -274,9 +272,8 @@ subclass L<TAP::Parser::Grammar> too, or else it'll never get used.
   package MyResult;
 
   use strict;
-  use vars '@ISA';
 
-  @ISA = 'TAP::Parser::Result';
+  use base 'TAP::Parser::Result';
 
   # register with the factory:
   TAP::Parser::ResultFactory->register_type( 'my_type' => __PACKAGE__ );

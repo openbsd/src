@@ -1,8 +1,8 @@
-# SentenceBreakProperty-6.2.0.txt
-# Date: 2012-05-23, 20:35:14 GMT [MD]
+# SentenceBreakProperty-6.3.0.txt
+# Date: 2013-09-25, 18:59:01 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -217,7 +217,8 @@
 19B0..19C0    ; Extend # Mc  [17] NEW TAI LUE VOWEL SIGN VOWEL SHORTENER..NEW TAI LUE VOWEL SIGN IY
 19C8..19C9    ; Extend # Mc   [2] NEW TAI LUE TONE MARK-1..NEW TAI LUE TONE MARK-2
 1A17..1A18    ; Extend # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
-1A19..1A1B    ; Extend # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; Extend # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
+1A1B          ; Extend # Mn       BUGINESE VOWEL SIGN AE
 1A55          ; Extend # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; Extend # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A57          ; Extend # Mc       TAI THAM CONSONANT SIGN LA TANG LAI
@@ -396,13 +397,15 @@ E0100..E01EF  ; Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
 00AD          ; Format # Cf       SOFT HYPHEN
 0600..0604    ; Format # Cf   [5] ARABIC NUMBER SIGN..ARABIC SIGN SAMVAT
+061C          ; Format # Cf       ARABIC LETTER MARK
 06DD          ; Format # Cf       ARABIC END OF AYAH
 070F          ; Format # Cf       SYRIAC ABBREVIATION MARK
+180E          ; Format # Cf       MONGOLIAN VOWEL SEPARATOR
 200B          ; Format # Cf       ZERO WIDTH SPACE
 200E..200F    ; Format # Cf   [2] LEFT-TO-RIGHT MARK..RIGHT-TO-LEFT MARK
 202A..202E    ; Format # Cf   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
 2060..2064    ; Format # Cf   [5] WORD JOINER..INVISIBLE PLUS
-206A..206F    ; Format # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2066..206F    ; Format # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 FEFF          ; Format # Cf       ZERO WIDTH NO-BREAK SPACE
 FFF9..FFFB    ; Format # Cf   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANNOTATION TERMINATOR
 110BD         ; Format # Cf       KAITHI NUMBER SIGN
@@ -410,7 +413,7 @@ FFF9..FFFB    ; Format # Cf   [3] INTERLINEAR ANNOTATION ANCHOR..INTERLINEAR ANN
 E0001         ; Format # Cf       LANGUAGE TAG
 E0020..E007F  ; Format # Cf  [96] TAG SPACE..CANCEL TAG
 
-# Total code points: 137
+# Total code points: 143
 
 # ================================================
 
@@ -419,13 +422,12 @@ E0020..E007F  ; Format # Cf  [96] TAG SPACE..CANCEL TAG
 0020          ; Sp # Zs       SPACE
 00A0          ; Sp # Zs       NO-BREAK SPACE
 1680          ; Sp # Zs       OGHAM SPACE MARK
-180E          ; Sp # Zs       MONGOLIAN VOWEL SEPARATOR
 2000..200A    ; Sp # Zs  [11] EN QUAD..HAIR SPACE
 202F          ; Sp # Zs       NARROW NO-BREAK SPACE
 205F          ; Sp # Zs       MEDIUM MATHEMATICAL SPACE
 3000          ; Sp # Zs       IDEOGRAPHIC SPACE
 
-# Total code points: 21
+# Total code points: 20
 
 # ================================================
 
@@ -2246,6 +2248,10 @@ FF61          ; STerm # Po       HALFWIDTH IDEOGRAPHIC FULL STOP
 207E          ; Close # Pe       SUPERSCRIPT RIGHT PARENTHESIS
 208D          ; Close # Ps       SUBSCRIPT LEFT PARENTHESIS
 208E          ; Close # Pe       SUBSCRIPT RIGHT PARENTHESIS
+2308          ; Close # Ps       LEFT CEILING
+2309          ; Close # Pe       RIGHT CEILING
+230A          ; Close # Ps       LEFT FLOOR
+230B          ; Close # Pe       RIGHT FLOOR
 2329          ; Close # Ps       LEFT-POINTING ANGLE BRACKET
 232A          ; Close # Pe       RIGHT-POINTING ANGLE BRACKET
 275B..275E    ; Close # So   [4] HEAVY SINGLE TURNED COMMA QUOTATION MARK ORNAMENT..HEAVY DOUBLE COMMA QUOTATION MARK ORNAMENT
@@ -2385,7 +2391,7 @@ FF60          ; Close # Pe       FULLWIDTH RIGHT WHITE PARENTHESIS
 FF62          ; Close # Ps       HALFWIDTH LEFT CORNER BRACKET
 FF63          ; Close # Pe       HALFWIDTH RIGHT CORNER BRACKET
 
-# Total code points: 177
+# Total code points: 181
 
 # ================================================
 

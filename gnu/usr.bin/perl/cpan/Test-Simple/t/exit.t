@@ -87,6 +87,8 @@ my %Tests = (
              'require.plx'              => 0,
              'death_with_handler.plx'   => 255,
              'exit.plx'                 => 1,
+             'one_fail_without_plan.plx'    => 1,
+             'missing_done_testing.plx'     => 254,
             );
 
 chdir 't';

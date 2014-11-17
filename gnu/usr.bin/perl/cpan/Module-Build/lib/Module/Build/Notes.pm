@@ -4,10 +4,9 @@ package Module::Build::Notes;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.4003';
+$VERSION = '0.4205';
 $VERSION = eval $VERSION;
 use Data::Dumper;
-use IO::File;
 use Module::Build::Dumper;
 
 sub new {
@@ -24,9 +23,10 @@ sub new {
 sub restore {
   my $self = shift;
 
-  my $fh = IO::File->new("< $self->{file}") or die "Can't read $self->{file}: $!";
+  open(my $fh, '<', $self->{file}) or die "Can't read $self->{file}: $!";
   $self->{disk} = eval do {local $/; <$fh>};
   die $@ if $@;
+  close $fh;
   $self->{new} = {};
 }
 
@@ -107,8 +107,9 @@ sub write {
 sub _dump {
   my ($self, $file, $data) = @_;
 
-  my $fh = IO::File->new("> $file") or die "Can't create '$file': $!";
+  open(my $fh, '>', $file) or die "Can't create '$file': $!";
   print {$fh} Module::Build::Dumper->_data_dump($data);
+  close $fh;
 }
 
 my $orig_template = do { local $/; <DATA> };
@@ -127,11 +128,11 @@ sub write_config_data {
   # recognized for *this* source file
   $template =~ s{$_\n}{} for '=begin private', '=end private';
 
-  my $fh = IO::File->new("> $args{file}") or die "Can't create '$args{file}': $!";
+  open(my $fh, '>', $args{file}) or die "Can't create '$args{file}': $!";
   print {$fh} $template;
   print {$fh} "\n__DATA__\n";
   print {$fh} Module::Build::Dumper->_data_dump([$args{config_data}, $args{feature}, $args{auto_features}]);
-
+  close $fh;
 }
 
 1;
@@ -188,7 +189,6 @@ sub config_names  { keys %$config }
 
 sub write {
   my $me = __FILE__;
-  require IO::File;
 
   # Can't use Module::Build::Dumper here because M::B is only a
   # build-time prereq of this module
@@ -196,7 +196,7 @@ sub write {
 
   my $mode_orig = (stat $me)[2] & 07777;
   chmod($mode_orig | 0222, $me); # Make it writeable
-  my $fh = IO::File->new($me, 'r+') or die "Can't rewrite $me: $!";
+  open(my $fh, '+<', $me) or die "Can't rewrite $me: $!";
   seek($fh, 0, 0);
   while (<$fh>) {
     last if /^__DATA__$/;
@@ -205,11 +205,11 @@ sub write {
 
   seek($fh, tell($fh), 0);
   my $data = [$config, $features, $auto_features];
-  $fh->print( 'do{ my '
+  print($fh 'do{ my '
 	      . Data::Dumper->new([$data],['x'])->Purity(1)->Dump()
 	      . '$x; }' );
   truncate($fh, tell($fh));
-  $fh->close;
+  close $fh;
 
   chmod($mode_orig, $me)
     or warn "Couldn't restore permissions on $me: $!";

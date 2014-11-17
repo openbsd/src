@@ -12,7 +12,7 @@ perlhacktips - Tips for Perl core C code hacking
 =head1 DESCRIPTION
 
 This document will help you learn the best way to go about hacking on
-the Perl core C code. It covers common problems, debugging, profiling,
+the Perl core C code.  It covers common problems, debugging, profiling,
 and more.
 
 If you haven't read L<perlhack> and L<perlhacktut> yet, you might want
@@ -20,7 +20,7 @@ to do that first.
 
 =head1 COMMON PROBLEMS
 
-Perl source plays by ANSI C89 rules: no C99 (or C++) extensions. In
+Perl source plays by ANSI C89 rules: no C99 (or C++) extensions.  In
 some cases we have to take pre-ANSI requirements into consideration.
 You don't care about some particular platform having broken Perl? I
 hear there is still a strong demand for J2EE programmers.
@@ -34,7 +34,7 @@ hear there is still a strong demand for J2EE programmers.
 Not compiling with threading
 
 Compiling with threading (-Duseithreads) completely rewrites the
-function prototypes of Perl. You better try your changes with that.
+function prototypes of Perl.  You better try your changes with that.
 Related to this is the difference between "Perl_-less" and "Perl_-ly"
 APIs, for example:
 
@@ -42,8 +42,8 @@ APIs, for example:
   sv_setiv(...);
 
 The first one explicitly passes in the context, which is needed for
-e.g. threaded builds. The second one does that implicitly; do not get
-them mixed. If you are not passing in a aTHX_, you will need to do a
+e.g. threaded builds.  The second one does that implicitly; do not get
+them mixed.  If you are not passing in a aTHX_, you will need to do a
 dTHX (or a dVAR) as the first thing in the function.
 
 See L<perlguts/"How multiple interpreters and concurrency are
@@ -54,7 +54,7 @@ supported"> for further discussion about context.
 Not compiling with -DDEBUGGING
 
 The DEBUGGING define exposes more code to the compiler, therefore more
-ways for things to go wrong. You should try it.
+ways for things to go wrong.  You should try it.
 
 =item *
 
@@ -62,13 +62,13 @@ Introducing (non-read-only) globals
 
 Do not introduce any modifiable globals, truly global or file static.
 They are bad form and complicate multithreading and other forms of
-concurrency. The right way is to introduce them as new interpreter
+concurrency.  The right way is to introduce them as new interpreter
 variables, see F<intrpvar.h> (at the very end for binary
 compatibility).
 
 Introducing read-only (const) globals is okay, as long as you verify
 with e.g. C<nm libperl.a|egrep -v ' [TURtr] '> (if your C<nm> has
-BSD-style output) that the data you added really is read-only. (If it
+BSD-style output) that the data you added really is read-only.  (If it
 is, it shouldn't show up in the output of that command.)
 
 If you want to have static strings, make them constant:
@@ -83,7 +83,7 @@ right combination of C<const>s:
 
 There is a way to completely hide any modifiable globals (they are all
 moved to heap), the compilation setting
-C<-DPERL_GLOBAL_STRUCT_PRIVATE>. It is not normally used, but can be
+C<-DPERL_GLOBAL_STRUCT_PRIVATE>.  It is not normally used, but can be
 used for testing, read more about it in L<perlguts/"Background and
 PERL_IMPLICIT_CONTEXT">.
 
@@ -93,7 +93,7 @@ Not exporting your new function
 
 Some platforms (Win32, AIX, VMS, OS/2, to name a few) require any
 function that is part of the public API (the shared Perl library) to be
-explicitly marked as exported. See the discussion about F<embed.pl> in
+explicitly marked as exported.  See the discussion about F<embed.pl> in
 L<perlguts>.
 
 =item *
@@ -101,19 +101,19 @@ L<perlguts>.
 Exporting your new function
 
 The new shiny result of either genuine new functionality or your
-arduous refactoring is now ready and correctly exported. So what could
+arduous refactoring is now ready and correctly exported.  So what could
 possibly go wrong?
 
 Maybe simply that your function did not need to be exported in the
-first place. Perl has a long and not so glorious history of exporting
+first place.  Perl has a long and not so glorious history of exporting
 functions that it should not have.
 
 If the function is used only inside one source code file, make it
-static. See the discussion about F<embed.pl> in L<perlguts>.
+static.  See the discussion about F<embed.pl> in L<perlguts>.
 
 If the function is used across several files, but intended only for
 Perl's internal use (and this should be the common case), do not export
-it to the public API. See the discussion about F<embed.pl> in
+it to the public API.  See the discussion about F<embed.pl> in
 L<perlguts>.
 
 =back
@@ -121,13 +121,13 @@ L<perlguts>.
 =head2 Portability problems
 
 The following are common causes of compilation and/or execution
-failures, not common to Perl as such. The C FAQ is good bedtime
-reading. Please test your changes with as many C compilers and
+failures, not common to Perl as such.  The C FAQ is good bedtime
+reading.  Please test your changes with as many C compilers and
 platforms as possible; we will, anyway, and it's nice to save oneself
 from public embarrassment.
 
 If using gcc, you can add the C<-std=c89> option which will hopefully
-catch most of these unportabilities. (However it might also catch
+catch most of these unportabilities.  (However it might also catch
 incompatibilities in your system's header files.)
 
 Use the Configure C<-Dgccansipedantic> flag to enable the gcc C<-ansi
@@ -146,7 +146,7 @@ Also study L<perlport> carefully to avoid any bad assumptions about the
 operating system, filesystems, and so forth.
 
 You may once in a while try a "make microperl" to see whether we can
-still compile Perl with just the bare minimum of interfaces. (See
+still compile Perl with just the bare minimum of interfaces.  (See
 README.micro.)
 
 Do not assume an operating system indicates a certain compiler.
@@ -167,8 +167,8 @@ or
     {
       IV i = (IV)p;
 
-Both are bad, and broken, and unportable. Use the PTR2IV() macro that
-does it right. (Likewise, there are PTR2UV(), PTR2NV(), INT2PTR(), and
+Both are bad, and broken, and unportable.  Use the PTR2IV() macro that
+does it right.  (Likewise, there are PTR2UV(), PTR2NV(), INT2PTR(), and
 NUM2PTR().)
 
 =item *
@@ -186,14 +186,14 @@ Assuming sizeof(int) == sizeof(long)
 
 There are platforms where longs are 64 bits, and platforms where ints
 are 64 bits, and while we are out to shock you, even platforms where
-shorts are 64 bits. This is all legal according to the C standard. (In
+shorts are 64 bits.  This is all legal according to the C standard.  (In
 other words, "long long" is not a portable way to specify 64 bits, and
 "long long" is not even guaranteed to be any wider than "long".)
 
 Instead, use the definitions IV, UV, IVSIZE, I32SIZE, and so forth.
 Avoid things like I32 because they are B<not> guaranteed to be
 I<exactly> 32 bits, they are I<at least> 32 bits, nor are they
-guaranteed to be B<int> or B<long>. If you really explicitly need
+guaranteed to be B<int> or B<long>.  If you really explicitly need
 64-bit variables, use I64 and U64, but only if guarded by HAS_QUAD.
 
 =item *
@@ -212,7 +212,7 @@ Lvalue casts
 
   (int)*p = ...;    /* BAD */
 
-Simply not portable. Get your lvalue to be of the right type, or maybe
+Simply not portable.  Get your lvalue to be of the right type, or maybe
 use temporary variables, or dirty tricks with unions.
 
 =item *
@@ -272,37 +272,37 @@ sizeof() of the field
 
 Assuming the character set is ASCIIish
 
-Perl can compile and run under EBCDIC platforms. See L<perlebcdic>.
+Perl can compile and run under EBCDIC platforms.  See L<perlebcdic>.
 This is transparent for the most part, but because the character sets
 differ, you shouldn't use numeric (decimal, octal, nor hex) constants
-to refer to characters. You can safely say 'A', but not 0x41. You can
-safely say '\n', but not \012. If a character doesn't have a trivial
+to refer to characters.  You can safely say 'A', but not 0x41.  You can
+safely say '\n', but not \012.  If a character doesn't have a trivial
 input form, you should add it to the list in
 F<regen/unicode_constants.pl>, and have Perl create #defines for you,
 based on the current platform.
 
 Also, the range 'A' - 'Z' in ASCII is an unbroken sequence of 26 upper
-case alphabetic characters. That is not true in EBCDIC. Nor for 'a' to
-'z'. But '0' - '9' is an unbroken range in both systems. Don't assume
+case alphabetic characters.  That is not true in EBCDIC.  Nor for 'a' to
+'z'.  But '0' - '9' is an unbroken range in both systems.  Don't assume
 anything about other ranges.
 
 Many of the comments in the existing code ignore the possibility of
-EBCDIC, and may be wrong therefore, even if the code works. This is
+EBCDIC, and may be wrong therefore, even if the code works.  This is
 actually a tribute to the successful transparent insertion of being
 able to handle EBCDIC without having to change pre-existing code.
 
 UTF-8 and UTF-EBCDIC are two different encodings used to represent
-Unicode code points as sequences of bytes. Macros  with the same names
+Unicode code points as sequences of bytes.  Macros  with the same names
 (but different definitions) in C<utf8.h> and C<utfebcdic.h> are used to
 allow the calling code to think that there is only one such encoding.
 This is almost always referred to as C<utf8>, but it means the EBCDIC
-version as well. Again, comments in the code may well be wrong even if
-the code itself is right. For example, the concept of C<invariant
-characters> differs between ASCII and EBCDIC. On ASCII platforms, only
-characters that do not have the high-order bit set (i.e. whose ordinals
+version as well.  Again, comments in the code may well be wrong even if
+the code itself is right.  For example, the concept of C<invariant
+characters> differs between ASCII and EBCDIC.  On ASCII platforms, only
+characters that do not have the high-order bit set (i.e.  whose ordinals
 are strict ASCII, 0 - 127) are invariant, and the documentation and
 comments in the code may assume that, often referring to something
-like, say, C<hibit>. The situation differs and is not so simple on
+like, say, C<hibit>.  The situation differs and is not so simple on
 EBCDIC machines, but as long as the code itself uses the
 C<NATIVE_IS_INVARIANT()> macro appropriately, it works, even if the
 comments are wrong.
@@ -311,10 +311,10 @@ comments are wrong.
 
 Assuming the character set is just ASCII
 
-ASCII is a 7 bit encoding, but bytes have 8 bits in them. The 128 extra
+ASCII is a 7 bit encoding, but bytes have 8 bits in them.  The 128 extra
 characters have different meanings depending on the locale.  Absent a
 locale, currently these extra characters are generally considered to be
-unassigned, and this has presented some problems. This is being changed
+unassigned, and this has presented some problems.  This is being changed
 starting in 5.12 so that these characters will be considered to be
 Latin-1 (ISO-8859-1).
 
@@ -329,7 +329,7 @@ Mixing #define and #ifdef
   ... do it the new way ... \
   #endif
 
-You cannot portably "stack" cpp directives. For example in the above
+You cannot portably "stack" cpp directives.  For example in the above
 you need two separate BURGLE() #defines, one for each #ifdef branch.
 
 =item *
@@ -343,7 +343,7 @@ Adding non-comment stuff after #endif or #else
   #endif SNOSH    /* BAD */
 
 The #endif and #else cannot portably have anything non-comment after
-them. If you want to document what is going (which is a good idea
+them.  If you want to document what is going (which is a good idea
 especially if the branches are long), use (C) comments:
 
   #ifdef SNOSH
@@ -365,7 +365,7 @@ Having a comma after the last element of an enum list
     CINNABAR,     /* BAD */
   };
 
-is not portable. Leave out the last comma.
+is not portable.  Leave out the last comma.
 
 Also note that whether enums are implicitly morphable to ints varies
 between compilers, you might need to (int).
@@ -376,7 +376,7 @@ Using //-comments
 
   // This function bamfoodles the zorklator.   /* BAD */
 
-That is C99 or C++. Perl is C89. Using the //-comments is silently
+That is C99 or C++.  Perl is C89.  Using the //-comments is silently
 allowed by many C compilers but cranking up the ANSI C89 strictness
 (which we like to do) causes the compilation to fail.
 
@@ -390,7 +390,7 @@ Mixing declarations and code
     set_zorkmids(n);    /* BAD */
     int q = 4;
 
-That is C99 or C++. Some C compilers allow that, but you shouldn't.
+That is C99 or C++.  Some C compilers allow that, but you shouldn't.
 
 The gcc option C<-Wdeclaration-after-statements> scans for such
 problems (by default on starting from Perl 5.9.4).
@@ -401,7 +401,7 @@ Introducing variables inside for()
 
   for(int i = ...; ...; ...) {    /* BAD */
 
-That is C99 or C++. While it would indeed be awfully nice to have that
+That is C99 or C++.  While it would indeed be awfully nice to have that
 also in C89, to limit the scope of the loop variable, alas, we cannot.
 
 =item *
@@ -415,11 +415,11 @@ Mixing signed char pointers with unsigned char pointers
 
 While this is legal practice, it is certainly dubious, and downright
 fatal in at least one platform: for example VMS cc considers this a
-fatal error. One cause for people often making this mistake is that a
+fatal error.  One cause for people often making this mistake is that a
 "naked char" and therefore dereferencing a "naked char pointer" have an
 undefined signedness: it depends on the compiler and the flags of the
 compiler and the underlying platform whether the result is signed or
-unsigned. For this very same reason using a 'char' as an array index is
+unsigned.  For this very same reason using a 'char' as an array index is
 bad.
 
 =item *
@@ -434,7 +434,7 @@ Pre-ANSI semantics for that was equivalent to
 
   printf("10umber = %d\10");
 
-which is probably not what you were expecting. Unfortunately at least
+which is probably not what you were expecting.  Unfortunately at least
 one reasonably common and modern C compiler does "real backward
 compatibility" here, in AIX that is what still happens even though the
 rest of the AIX compiler is very happily C89.
@@ -447,7 +447,7 @@ Using printf formats for non-basic C types
    printf("i = %d\n", i);    /* BAD */
 
 While this might by accident work in some platform (where IV happens to
-be an C<int>), in general it cannot. IV might be something larger. Even
+be an C<int>), in general it cannot.  IV might be something larger.  Even
 worse the situation is with more specific types (defined by Perl's
 configuration step in F<config.h>):
 
@@ -487,7 +487,7 @@ The gcc option C<-Wformat> scans for such problems.
 Blindly using variadic macros
 
 gcc has had them for a while with its own syntax, and C99 brought them
-with a standardized syntax. Don't use the former, and use the latter
+with a standardized syntax.  Don't use the former, and use the latter
 only if the HAS_C99_VARIADIC_MACROS is defined.
 
 =item *
@@ -495,7 +495,7 @@ only if the HAS_C99_VARIADIC_MACROS is defined.
 Blindly passing va_list
 
 Not all platforms support passing va_list to further varargs (stdarg)
-functions. The right thing to do is to copy the va_list using the
+functions.  The right thing to do is to copy the va_list using the
 Perl_va_copy() if the NEED_VA_COPY is defined.
 
 =item *
@@ -504,7 +504,7 @@ Using gcc statement expressions
 
    val = ({...;...;...});    /* BAD */
 
-While a nice extension, it's not portable. The Perl code does
+While a nice extension, it's not portable.  The Perl code does
 admittedly use them if available to gain some extra speed (essentially
 as a funky form of inlining), but you shouldn't.
 
@@ -530,7 +530,7 @@ features
 Unless you know with 100% certainty that quux() is only ever available
 for the "Foonix" operating system B<and> that is available B<and>
 correctly working for B<all> past, present, B<and> future versions of
-"Foonix", the above is very wrong. This is more correct (though still
+"Foonix", the above is very wrong.  This is more correct (though still
 not perfect, because the below is a compile-time check):
 
   #ifdef HAS_QUUX
@@ -540,7 +540,7 @@ not perfect, because the below is a compile-time check):
 How does the HAS_QUUX become defined where it needs to be?  Well, if
 Foonix happens to be Unixy enough to be able to run the Configure
 script, and Configure has been taught about detecting and testing
-quux(), the HAS_QUUX will be correctly defined. In other platforms, the
+quux(), the HAS_QUUX will be correctly defined.  In other platforms, the
 corresponding configuration step will hopefully do the same.
 
 In a pinch, if you cannot wait for Configure to be educated, or if you
@@ -568,19 +568,20 @@ separate.
 
 =item *
 
-malloc(0), realloc(0), calloc(0, 0) are non-portable. To be portable
-allocate at least one byte. (In general you should rarely need to work
+malloc(0), realloc(0), calloc(0, 0) are non-portable.  To be portable
+allocate at least one byte.  (In general you should rarely need to work
 at this low level, but instead use the various malloc wrappers.)
 
 =item *
 
-snprintf() - the return type is unportable. Use my_snprintf() instead.
+snprintf() - the return type is unportable.  Use my_snprintf() instead.
 
 =back
 
 =head2 Security problems
 
 Last but not least, here are various tips for safer coding.
+See also L<perlclib> for libc/stdio replacements one should use.
 
 =over 4
 
@@ -588,7 +589,13 @@ Last but not least, here are various tips for safer coding.
 
 Do not use gets()
 
-Or we will publicly ridicule you. Seriously.
+Or we will publicly ridicule you.  Seriously.
+
+=item *
+
+Do not use tmpfile()
+
+Use mkstemp() instead.
 
 =item *
 
@@ -604,8 +611,17 @@ Do not use sprintf() or vsprintf()
 
 If you really want just plain byte strings, use my_snprintf() and
 my_vsnprintf() instead, which will try to use snprintf() and
-vsnprintf() if those safer APIs are available. If you want something
-fancier than a plain byte string, use SVs and Perl_sv_catpvf().
+vsnprintf() if those safer APIs are available.  If you want something
+fancier than a plain byte string, use
+L<C<Perl_form>()|perlapi/form> or SVs and
+L<C<Perl_sv_catpvf()>|perlapi/sv_catpvf>.
+
+Note that glibc C<printf()>, C<sprintf()>, etc. are buggy before glibc
+version 2.17.  They won't allow a C<%.s> format with a precision to
+create a string that isn't valid UTF-8 if the current underlying locale
+of the program is UTF-8.  What happens is that the C<%s> and its operand are
+simply skipped without any notice.
+L<https://sourceware.org/bugzilla/show_bug.cgi?id=6530>.
 
 =back
 
@@ -633,10 +649,10 @@ we might see only the numerical addresses of the functions, which is
 not very helpful).
 
 F<Configure> will also turn on the C<DEBUGGING> compilation symbol
-which enables all the internal debugging code in Perl. There are a
+which enables all the internal debugging code in Perl.  There are a
 whole bunch of things you can debug with this: L<perlrun> lists them
 all, and the best way to find out about them is to play about with
-them. The most useful options are probably
+them.  The most useful options are probably
 
     l  Context (loop) stack processing
     t  Trace execution
@@ -673,7 +689,7 @@ Or if you have a core dump:
     gdb ./perl core
 
 You'll want to do that in your Perl source tree so the debugger can
-read the source code. You should see the copyright message, followed by
+read the source code.  You should see the copyright message, followed by
 the prompt.
 
     (gdb)
@@ -717,11 +733,32 @@ Run until the end of the current function, then stop again.
 Just pressing Enter will do the most recent operation again - it's a
 blessing when stepping through miles of source code.
 
+=item * ptype
+
+Prints the C definition of the argument given.
+
+  (gdb) ptype PL_op
+  type = struct op {
+      OP *op_next;
+      OP *op_sibling;
+      OP *(*op_ppaddr)(void);
+      PADOFFSET op_targ;
+      unsigned int op_type : 9;
+      unsigned int op_opt : 1;
+      unsigned int op_slabbed : 1;
+      unsigned int op_savefree : 1;
+      unsigned int op_static : 1;
+      unsigned int op_folded : 1;
+      unsigned int op_spare : 2;
+      U8 op_flags;
+      U8 op_private;
+  } *
+
 =item * print
 
-Execute the given C code and print its results. B<WARNING>: Perl makes
+Execute the given C code and print its results.  B<WARNING>: Perl makes
 heavy use of macros, and F<gdb> does not necessarily support macros
-(see later L</"gdb macro support">). You'll have to substitute them
+(see later L</"gdb macro support">).  You'll have to substitute them
 yourself, or to invoke cpp on the source code files (see L</"The .i
 Targets">) So, for instance, you can't say
 
@@ -734,15 +771,15 @@ but you have to say
 =back
 
 You may find it helpful to have a "macro dictionary", which you can
-produce by saying C<cpp -dM perl.c | sort>. Even then, F<cpp> won't
+produce by saying C<cpp -dM perl.c | sort>.  Even then, F<cpp> won't
 recursively apply those macros for you.
 
 =head2 gdb macro support
 
 Recent versions of F<gdb> have fairly good macro support, but in order
 to use it you'll need to compile perl with macro definitions included
-in the debugging information. Using F<gcc> version 3.1, this means
-configuring with C<-Doptimize=-g3>. Other compilers might use a
+in the debugging information.  Using F<gcc> version 3.1, this means
+configuring with C<-Doptimize=-g3>.  Other compilers might use a
 different switch (if they support debugging macros at all).
 
 =head2 Dumping Perl Data Structures
@@ -750,9 +787,9 @@ different switch (if they support debugging macros at all).
 One way to get around this macro hell is to use the dumping functions
 in F<dump.c>; these work a little like an internal
 L<Devel::Peek|Devel::Peek>, but they also cover OPs and other
-structures that you can't get at from Perl. Let's take an example.
+structures that you can't get at from Perl.  Let's take an example.
 We'll use the C<$a = $b + $c> we used before, but give it a bit of
-context: C<$b = "6XXXX"; $c = 2.3;>. Where's a good place to stop and
+context: C<$b = "6XXXX"; $c = 2.3;>.  Where's a good place to stop and
 poke around?
 
 What about C<pp_add>, the function we examined earlier to implement the
@@ -762,7 +799,7 @@ C<+> operator:
     Breakpoint 1 at 0x46249f: file pp_hot.c, line 309.
 
 Notice we use C<Perl_pp_add> and not C<pp_add> - see
-L<perlguts/Internal Functions>. With the breakpoint in place, we can
+L<perlguts/Internal Functions>.  With the breakpoint in place, we can
 run our program:
 
     (gdb) run -e '$b = "6XXXX"; $c = 2.3; $a = $b + $c'
@@ -786,20 +823,22 @@ C<right> - let's slightly expand it:
 
 C<POPn> takes the SV from the top of the stack and obtains its NV
 either directly (if C<SvNOK> is set) or by calling the C<sv_2nv>
-function. C<TOPs> takes the next SV from the top of the stack - yes,
-C<POPn> uses C<TOPs> - but doesn't remove it. We then use C<SvNV> to
+function.  C<TOPs> takes the next SV from the top of the stack - yes,
+C<POPn> uses C<TOPs> - but doesn't remove it.  We then use C<SvNV> to
 get the NV from C<leftsv> in the same way as before - yes, C<POPn> uses
 C<SvNV>.
 
 Since we don't have an NV for C<$b>, we'll have to use C<sv_2nv> to
-convert it. If we step again, we'll find ourselves there:
+convert it.  If we step again, we'll find ourselves there:
 
+    (gdb) step
     Perl_sv_2nv (sv=0xa0675d0) at sv.c:1669
     1669        if (!sv)
     (gdb)
 
 We can now use C<Perl_sv_dump> to investigate the SV:
 
+    (gdb) print Perl_sv_dump(sv)
     SV = PV(0xa057cc0) at 0xa0675d0
     REFCNT = 1
     FLAGS = (POK,pPOK)
@@ -817,9 +856,10 @@ subroutine:
     311           dPOPTOPnnrl_ul;
 
 We can also dump out this op: the current op is always stored in
-C<PL_op>, and we can dump it with C<Perl_op_dump>. This'll give us
+C<PL_op>, and we can dump it with C<Perl_op_dump>.  This'll give us
 similar output to L<B::Debug|B::Debug>.
 
+    (gdb) print Perl_op_dump(PL_op)
     {
     13  TYPE = add  ===> 14
         TARG = 1
@@ -837,15 +877,56 @@ similar output to L<B::Debug|B::Debug>.
 
 # finish this later #
 
+=head2 Using gdb to look at specific parts of a program
+
+With the example above, you knew to look for C<Perl_pp_add>, but what if 
+there were multiple calls to it all over the place, or you didn't know what 
+the op was you were looking for?
+
+One way to do this is to inject a rare call somewhere near what you're looking 
+for.  For example, you could add C<study> before your method:
+
+    study;
+
+And in gdb do:
+
+    (gdb) break Perl_pp_study
+
+And then step until you hit what you're
+looking for.  This works well in a loop 
+if you want to only break at certain iterations:
+
+    for my $c (1..100) {
+        study if $c == 50;
+    }
+
+=head2 Using gdb to look at what the parser/lexer are doing
+
+If you want to see what perl is doing when parsing/lexing your code, you can 
+use C<BEGIN {}>:
+
+    print "Before\n";
+    BEGIN { study; }
+    print "After\n";
+
+And in gdb:
+
+    (gdb) break Perl_pp_study
+
+If you want to see what the parser/lexer is doing inside of C<if> blocks and
+the like you need to be a little trickier:
+
+    if ($a && $b && do { BEGIN { study } 1 } && $c) { ... } 
+
 =head1 SOURCE CODE STATIC ANALYSIS
 
 Various tools exist for analysing C source code B<statically>, as
-opposed to B<dynamically>, that is, without executing the code. It is
+opposed to B<dynamically>, that is, without executing the code.  It is
 possible to detect resource leaks, undefined behaviour, type
 mismatches, portability problems, code paths that would cause illegal
 memory accesses, and other similar problems by just parsing the C code
 and looking at the resulting graph, what does it tell about the
-execution and data flows. As a matter of fact, this is exactly how C
+execution and data flows.  As a matter of fact, this is exactly how C
 compilers know to give warnings about dubious code.
 
 =head2 lint, splint
@@ -871,13 +952,13 @@ defect databases.
 
 =head2 cpd (cut-and-paste detector)
 
-The cpd tool detects cut-and-paste coding. If one instance of the
+The cpd tool detects cut-and-paste coding.  If one instance of the
 cut-and-pasted code changes, all the other spots should probably be
-changed, too. Therefore such code should probably be turned into a
+changed, too.  Therefore such code should probably be turned into a
 subroutine or a macro.
 
 cpd (http://pmd.sourceforge.net/cpd.html) is part of the pmd project
-(http://pmd.sourceforge.net/). pmd was originally written for static
+(http://pmd.sourceforge.net/).  pmd was originally written for static
 analysis of Java code, but later the cpd part of it was extended to
 parse also C and C++.
 
@@ -906,7 +987,7 @@ The C<-Wall> is by default on.
 The C<-ansi> (and its sidekick, C<-pedantic>) would be nice to be on
 always, but unfortunately they are not safe on all platforms, they can
 for example cause fatal conflicts with the system headers (Solaris
-being a prime example). If Configure C<-Dgccansipedantic> is used, the
+being a prime example).  If Configure C<-Dgccansipedantic> is used, the
 C<cflags> frontend selects C<-ansi -pedantic> for the platforms where
 they are known to be safe.
 
@@ -968,181 +1049,37 @@ C<-std1> mode on.
 
 B<NOTE 1>: Running under older memory debuggers such as Purify,
 valgrind or Third Degree greatly slows down the execution: seconds
-become minutes, minutes become hours. For example as of Perl 5.8.1, the
+become minutes, minutes become hours.  For example as of Perl 5.8.1, the
 ext/Encode/t/Unicode.t takes extraordinarily long to complete under
-e.g. Purify, Third Degree, and valgrind. Under valgrind it takes more
-than six hours, even on a snappy computer. The said test must be doing
-something that is quite unfriendly for memory debuggers. If you don't
+e.g. Purify, Third Degree, and valgrind.  Under valgrind it takes more
+than six hours, even on a snappy computer.  The said test must be doing
+something that is quite unfriendly for memory debuggers.  If you don't
 feel like waiting, that you can simply kill away the perl process.
 Roughly valgrind slows down execution by factor 10, AddressSanitizer by
 factor 2.
 
 B<NOTE 2>: To minimize the number of memory leak false alarms (see
 L</PERL_DESTRUCT_LEVEL> for more information), you have to set the
-environment variable PERL_DESTRUCT_LEVEL to 2.
-
-For csh-like shells:
-
-    setenv PERL_DESTRUCT_LEVEL 2
-
-For Bourne-type shells:
-
-    PERL_DESTRUCT_LEVEL=2
-    export PERL_DESTRUCT_LEVEL
-
-In Unixy environments you can also use the C<env> command:
+environment variable PERL_DESTRUCT_LEVEL to 2.  For example, like this:
 
     env PERL_DESTRUCT_LEVEL=2 valgrind ./perl -Ilib ...
 
 B<NOTE 3>: There are known memory leaks when there are compile-time
 errors within eval or require, seeing C<S_doeval> in the call stack is
-a good sign of these. Fixing these leaks is non-trivial, unfortunately,
+a good sign of these.  Fixing these leaks is non-trivial, unfortunately,
 but they must be fixed eventually.
 
 B<NOTE 4>: L<DynaLoader> will not clean up after itself completely
 unless Perl is built with the Configure option
 C<-Accflags=-DDL_UNLOAD_ALL_AT_EXIT>.
 
-=head2 Rational Software's Purify
-
-Purify is a commercial tool that is helpful in identifying memory
-overruns, wild pointers, memory leaks and other such badness. Perl must
-be compiled in a specific way for optimal testing with Purify.  Purify
-is available under Windows NT, Solaris, HP-UX, SGI, and Siemens Unix.
-
-=head3 Purify on Unix
-
-On Unix, Purify creates a new Perl binary. To get the most benefit out
-of Purify, you should create the perl to Purify using:
-
-    sh Configure -Accflags=-DPURIFY -Doptimize='-g' \
-     -Uusemymalloc -Dusemultiplicity
-
-where these arguments mean:
-
-=over 4
-
-=item * -Accflags=-DPURIFY
-
-Disables Perl's arena memory allocation functions, as well as forcing
-use of memory allocation functions derived from the system malloc.
-
-=item * -Doptimize='-g'
-
-Adds debugging information so that you see the exact source statements
-where the problem occurs. Without this flag, all you will see is the
-source filename of where the error occurred.
-
-=item * -Uusemymalloc
-
-Disable Perl's malloc so that Purify can more closely monitor
-allocations and leaks. Using Perl's malloc will make Purify report most
-leaks in the "potential" leaks category.
-
-=item * -Dusemultiplicity
-
-Enabling the multiplicity option allows perl to clean up thoroughly
-when the interpreter shuts down, which reduces the number of bogus leak
-reports from Purify.
-
-=back
-
-Once you've compiled a perl suitable for Purify'ing, then you can just:
-
-    make pureperl
-
-which creates a binary named 'pureperl' that has been Purify'ed. This
-binary is used in place of the standard 'perl' binary when you want to
-debug Perl memory problems.
-
-As an example, to show any memory leaks produced during the standard
-Perl testset you would create and run the Purify'ed perl as:
-
-    make pureperl
-    cd t
-    ../pureperl -I../lib harness
-
-which would run Perl on test.pl and report any memory problems.
-
-Purify outputs messages in "Viewer" windows by default. If you don't
-have a windowing environment or if you simply want the Purify output to
-unobtrusively go to a log file instead of to the interactive window,
-use these following options to output to the log file "perl.log":
-
-    setenv PURIFYOPTIONS "-chain-length=25 -windows=no \
-     -log-file=perl.log -append-logfile=yes"
-
-If you plan to use the "Viewer" windows, then you only need this
-option:
-
-    setenv PURIFYOPTIONS "-chain-length=25"
-
-In Bourne-type shells:
-
-    PURIFYOPTIONS="..."
-    export PURIFYOPTIONS
-
-or if you have the "env" utility:
-
-    env PURIFYOPTIONS="..." ../pureperl ...
-
-=head3 Purify on NT
-
-Purify on Windows NT instruments the Perl binary 'perl.exe' on the fly.
- There are several options in the makefile you should change to get the
-most use out of Purify:
-
-=over 4
-
-=item * DEFINES
-
-You should add -DPURIFY to the DEFINES line so the DEFINES line looks
-something like:
-
-   DEFINES = -DWIN32 -D_CONSOLE -DNO_STRICT $(CRYPT_FLAG) -DPURIFY=1
-
-to disable Perl's arena memory allocation functions, as well as to
-force use of memory allocation functions derived from the system
-malloc.
-
-=item * USE_MULTI = define
-
-Enabling the multiplicity option allows perl to clean up thoroughly
-when the interpreter shuts down, which reduces the number of bogus leak
-reports from Purify.
-
-=item * #PERL_MALLOC = define
-
-Disable Perl's malloc so that Purify can more closely monitor
-allocations and leaks. Using Perl's malloc will make Purify report most
-leaks in the "potential" leaks category.
-
-=item * CFG = Debug
-
-Adds debugging information so that you see the exact source statements
-where the problem occurs. Without this flag, all you will see is the
-source filename of where the error occurred.
-
-=back
-
-As an example, to show any memory leaks produced during the standard
-Perl testset you would create and run Purify as:
-
-    cd win32
-    make
-    cd ../t
-    purify ../perl -I../lib harness
-
-which would instrument Perl in memory, run Perl on test.pl, then
-finally report any memory problems.
-
 =head2 valgrind
 
 The valgrind tool can be used to find out both memory leaks and illegal
-heap memory accesses. As of version 3.3.0, Valgrind only supports Linux
-on x86, x86-64 and PowerPC and Darwin (OS X) on x86 and x86-64). The
+heap memory accesses.  As of version 3.3.0, Valgrind only supports Linux
+on x86, x86-64 and PowerPC and Darwin (OS X) on x86 and x86-64).  The
 special "test.valgrind" target can be used to run the tests under
-valgrind. Found errors and memory leaks are logged in files named
+valgrind.  Found errors and memory leaks are logged in files named
 F<testfile.valgrind>.
 
 Valgrind also provides a cachegrind tool, invoked on perl as:
@@ -1150,9 +1087,9 @@ Valgrind also provides a cachegrind tool, invoked on perl as:
     VG_OPTS=--tool=cachegrind make test.valgrind
 
 As system libraries (most notably glibc) are also triggering errors,
-valgrind allows to suppress such errors using suppression files. The
+valgrind allows to suppress such errors using suppression files.  The
 default suppression file that comes with valgrind already catches a lot
-of them. Some additional suppressions are defined in F<t/perl.supp>.
+of them.  Some additional suppressions are defined in F<t/perl.supp>.
 
 To get valgrind and for more information see
 
@@ -1160,12 +1097,12 @@ To get valgrind and for more information see
 
 =head2 AddressSanitizer
 
-AddressSanitizer is a clang extension, included in clang since v3.1. It
-checks illegal heap pointers, global pointers, stack pointers and use
-after free errors, and is fast enough that you can easily compile your
-debugging or optimized perl with it. It does not check memory leaks
-though. AddressSanitizer is available for linux, Mac OS X and soon on
-Windows.
+AddressSanitizer is a clang and gcc extension, included in clang since
+v3.1 and gcc since v4.8.  It checks illegal heap pointers, global
+pointers, stack pointers and use after free errors, and is fast enough
+that you can easily compile your debugging or optimized perl with it.
+It does not check memory leaks though.  AddressSanitizer is available
+for Linux, Mac OS X and soon on Windows.
 
 To build perl with AddressSanitizer, your Configure invocation should
 look like:
@@ -1193,10 +1130,10 @@ Link the perl executable with AddressSanitizer.
 
 =item * -Alddlflags=-shared\ -faddress-sanitizer
 
-Link dynamic extensions with AddressSanitizer. You must manually
+Link dynamic extensions with AddressSanitizer.  You must manually
 specify C<-shared> because using C<-Alddlflags=-shared> will prevent
 Configure from setting a default value for C<lddlflags>, which usually
-contains C<-shared> (at least on linux).
+contains C<-shared> (at least on Linux).
 
 =back
 
@@ -1214,40 +1151,49 @@ I<statistical time-sampling> and I<basic-block counting>.
 The first method takes periodically samples of the CPU program counter,
 and since the program counter can be correlated with the code generated
 for functions, we get a statistical view of in which functions the
-program is spending its time. The caveats are that very small/fast
+program is spending its time.  The caveats are that very small/fast
 functions have lower probability of showing up in the profile, and that
 periodically interrupting the program (this is usually done rather
 frequently, in the scale of milliseconds) imposes an additional
-overhead that may skew the results. The first problem can be alleviated
+overhead that may skew the results.  The first problem can be alleviated
 by running the code for longer (in general this is a good idea for
 profiling), the second problem is usually kept in guard by the
 profiling tools themselves.
 
 The second method divides up the generated code into I<basic blocks>.
 Basic blocks are sections of code that are entered only in the
-beginning and exited only at the end. For example, a conditional jump
-starts a basic block. Basic block profiling usually works by
+beginning and exited only at the end.  For example, a conditional jump
+starts a basic block.  Basic block profiling usually works by
 I<instrumenting> the code by adding I<enter basic block #nnnn>
-book-keeping code to the generated code. During the execution of the
-code the basic block counters are then updated appropriately. The
+book-keeping code to the generated code.  During the execution of the
+code the basic block counters are then updated appropriately.  The
 caveat is that the added extra code can skew the results: again, the
 profiling tools usually try to factor their own effects out of the
 results.
 
 =head2 Gprof Profiling
 
-gprof is a profiling tool available in many Unix platforms, it uses
-F<statistical time-sampling>.
+I<gprof> is a profiling tool available in many Unix platforms which
+uses I<statistical time-sampling>.  You can build a profiled version of
+F<perl> by compiling using gcc with the flag C<-pg>.  Either edit
+F<config.sh> or re-run F<Configure>.  Running the profiled version of
+Perl will create an output file called F<gmon.out> which contains the
+profiling data collected during the execution.
 
-You can build a profiled version of perl called "perl.gprof" by
-invoking the make target "perl.gprof"  (What is required is that Perl
-must be compiled using the C<-pg> flag, you may need to re-Configure).
-Running the profiled version of Perl will create an output file called
-F<gmon.out> is created which contains the profiling data collected
-during the execution.
+quick hint:
 
-The gprof tool can then display the collected data in various ways.
-Usually gprof understands the following options:
+    $ sh Configure -des -Dusedevel -Accflags='-pg' \
+        -Aldflags='-pg' -Alddlflags='-pg -shared' \
+        && make perl
+    $ ./perl ... # creates gmon.out in current directory
+    $ gprof ./perl > out
+    $ less out
+
+(you probably need to add C<-shared> to the <-Alddlflags> line until RT
+#118199 is resolved)
+
+The F<gprof> tool can then display the collected data in various ways.
+Usually F<gprof> understands the following options:
 
 =over 4
 
@@ -1279,112 +1225,106 @@ Display routines that have zero usage.
 =back
 
 For more detailed explanation of the available commands and output
-formats, see your own local documentation of gprof.
-
-quick hint:
-
-    $ sh Configure -des -Dusedevel -Doptimize='-pg' && make perl.gprof
-    $ ./perl.gprof someprog # creates gmon.out in current directory
-    $ gprof ./perl.gprof > out
-    $ view out
+formats, see your own local documentation of F<gprof>.
 
 =head2 GCC gcov Profiling
 
-Starting from GCC 3.0 I<basic block profiling> is officially available
-for the GNU CC.
-
-You can build a profiled version of perl called F<perl.gcov> by
-invoking the make target "perl.gcov" (what is required that Perl must
-be compiled using gcc with the flags C<-fprofile-arcs -ftest-coverage>,
-you may need to re-Configure).
-
-Running the profiled version of Perl will cause profile output to be
-generated. For each source file an accompanying ".da" file will be
-created.
-
-To display the results you use the "gcov" utility (which should be
-installed if you have gcc 3.0 or newer installed). F<gcov> is run on
-source code files, like this
-
-    gcov sv.c
-
-which will cause F<sv.c.gcov> to be created. The F<.gcov> files contain
-the source code annotated with relative frequencies of execution
-indicated by "#" markers.
-
-Useful options of F<gcov> include C<-b> which will summarise the basic
-block, branch, and function call coverage, and C<-c> which instead of
-relative frequencies will use the actual counts. For more information
-on the use of F<gcov> and basic block profiling with gcc, see the
-latest GNU CC manual, as of GCC 3.0 see
-
-    http://gcc.gnu.org/onlinedocs/gcc-3.0/gcc.html
-
-and its section titled "8. gcov: a Test Coverage Program"
-
-    http://gcc.gnu.org/onlinedocs/gcc-3.0/gcc_8.html#SEC132
+I<basic block profiling> is officially available in gcc 3.0 and later.
+You can build a profiled version of F<perl> by compiling using gcc with
+the flags C<-fprofile-arcs -ftest-coverage>.  Either edit F<config.sh>
+or re-run F<Configure>.
 
 quick hint:
 
     $ sh Configure -des -Dusedevel -Doptimize='-g' \
         -Accflags='-fprofile-arcs -ftest-coverage' \
-        -Aldflags='-fprofile-arcs -ftest-coverage' && make perl.gcov
+        -Aldflags='-fprofile-arcs -ftest-coverage' \
+        -Alddlflags='-fprofile-arcs -ftest-coverage -shared' \
+        && make perl
     $ rm -f regexec.c.gcov regexec.gcda
-    $ ./perl.gcov
+    $ ./perl ...
     $ gcov regexec.c
-    $ view regexec.c.gcov
+    $ less regexec.c.gcov
+
+(you probably need to add C<-shared> to the <-Alddlflags> line until RT
+#118199 is resolved)
+
+Running the profiled version of Perl will cause profile output to be
+generated.  For each source file an accompanying F<.gcda> file will be
+created.
+
+To display the results you use the I<gcov> utility (which should be
+installed if you have gcc 3.0 or newer installed).  F<gcov> is run on
+source code files, like this
+
+    gcov sv.c
+
+which will cause F<sv.c.gcov> to be created.  The F<.gcov> files contain
+the source code annotated with relative frequencies of execution
+indicated by "#" markers.  If you want to generate F<.gcov> files for
+all profiled object files, you can run something like this:
+
+    for file in `find . -name \*.gcno`
+    do sh -c "cd `dirname $file` && gcov `basename $file .gcno`"
+    done
+
+Useful options of F<gcov> include C<-b> which will summarise the basic
+block, branch, and function call coverage, and C<-c> which instead of
+relative frequencies will use the actual counts.  For more information
+on the use of F<gcov> and basic block profiling with gcc, see the
+latest GNU CC manual.  As of gcc 4.8, this is at
+L<http://gcc.gnu.org/onlinedocs/gcc/Gcov-Intro.html#Gcov-Intro>
 
 =head1 MISCELLANEOUS TRICKS
 
 =head2 PERL_DESTRUCT_LEVEL
 
 If you want to run any of the tests yourself manually using e.g.
-valgrind, or the pureperl or perl.third executables, please note that
-by default perl B<does not> explicitly cleanup all the memory it has
-allocated (such as global memory arenas) but instead lets the exit() of
-the whole program "take care" of such allocations, also known as
-"global destruction of objects".
+valgrind, please note that by default perl B<does not> explicitly
+cleanup all the memory it has allocated (such as global memory arenas)
+but instead lets the exit() of the whole program "take care" of such
+allocations, also known as "global destruction of objects".
 
 There is a way to tell perl to do complete cleanup: set the environment
-variable PERL_DESTRUCT_LEVEL to a non-zero value. The t/TEST wrapper
+variable PERL_DESTRUCT_LEVEL to a non-zero value.  The t/TEST wrapper
 does set this to 2, and this is what you need to do too, if you don't
-want to see the "global leaks": For example, for "third-degreed" Perl:
+want to see the "global leaks": For example, for running under valgrind
 
-	env PERL_DESTRUCT_LEVEL=2 ./perl.third -Ilib t/foo/bar.t
+	env PERL_DESTRUCT_LEVEL=2 valgrind ./perl -Ilib t/foo/bar.t
 
 (Note: the mod_perl apache module uses also this environment variable
-for its own purposes and extended its semantics. Refer to the mod_perl
-documentation for more information. Also, spawned threads do the
+for its own purposes and extended its semantics.  Refer to the mod_perl
+documentation for more information.  Also, spawned threads do the
 equivalent of setting this variable to the value 1.)
 
 If, at the end of a run you get the message I<N scalars leaked>, you
 can recompile with C<-DDEBUG_LEAKING_SCALARS>, which will cause the
 addresses of all those leaked SVs to be dumped along with details as to
-where each SV was originally allocated. This information is also
-displayed by Devel::Peek. Note that the extra details recorded with
+where each SV was originally allocated.  This information is also
+displayed by Devel::Peek.  Note that the extra details recorded with
 each SV increases memory usage, so it shouldn't be used in production
-environments. It also converts C<new_SV()> from a macro into a real
+environments.  It also converts C<new_SV()> from a macro into a real
 function, so you can use your favourite debugger to discover where
 those pesky SVs were allocated.
 
 If you see that you're leaking memory at runtime, but neither valgrind
 nor C<-DDEBUG_LEAKING_SCALARS> will find anything, you're probably
 leaking SVs that are still reachable and will be properly cleaned up
-during destruction of the interpreter. In such cases, using the C<-Dm>
-switch can point you to the source of the leak. If the executable was
+during destruction of the interpreter.  In such cases, using the C<-Dm>
+switch can point you to the source of the leak.  If the executable was
 built with C<-DDEBUG_LEAKING_SCALARS>, C<-Dm> will output SV
-allocations in addition to memory allocations. Each SV allocation has a
+allocations in addition to memory allocations.  Each SV allocation has a
 distinct serial number that will be written on creation and destruction
-of the SV. So if you're executing the leaking code in a loop, you need
+of the SV.  So if you're executing the leaking code in a loop, you need
 to look for SVs that are created, but never destroyed between each
-cycle. If such an SV is found, set a conditional breakpoint within
+cycle.  If such an SV is found, set a conditional breakpoint within
 C<new_SV()> and make it break only when C<PL_sv_serial> is equal to the
-serial number of the leaking SV. Then you will catch the interpreter in
+serial number of the leaking SV.  Then you will catch the interpreter in
 exactly the state where the leaking SV is allocated, which is
 sufficient in many cases to find the source of the leak.
 
 As C<-Dm> is using the PerlIO layer for output, it will by itself
-allocate quite a bunch of SVs, which are hidden to avoid recursion. You
+allocate quite a bunch of SVs, which are hidden to avoid recursion.  You
 can bypass the PerlIO layer if you use the SV logging provided by
 C<-DPERL_MEM_LOG> instead.
 
@@ -1405,12 +1345,12 @@ so how:
 Memory logging is somewhat similar to C<-Dm> but is independent of
 C<-DDEBUGGING>, and at a higher level; all uses of Newx(), Renew(), and
 Safefree() are logged with the caller's source code file and line
-number (and C function name, if supported by the C compiler). In
-contrast, C<-Dm> is directly at the point of C<malloc()>. SV logging is
+number (and C function name, if supported by the C compiler).  In
+contrast, C<-Dm> is directly at the point of C<malloc()>.  SV logging is
 similar.
 
 Since the logging doesn't use PerlIO, all SV allocations are logged and
-no extra SV allocations are introduced by enabling the logging. If
+no extra SV allocations are introduced by enabling the logging.  If
 compiled with C<-DDEBUG_LEAKING_SCALARS>, the serial number for each SV
 allocation is also logged.
 
@@ -1440,7 +1380,7 @@ so now you can do ivx and pvx lookups or you can plug there the sv_peek
 
   Perl_sv_peek(my_perl, (SV*)()) // sv_peek
 
-(The my_perl is for threaded builds.) Just remember that every line,
+(The my_perl is for threaded builds.)  Just remember that every line,
 but the last one, should end with \n\
 
 Alternatively edit the init file interactively via: 3rd mouse button ->
@@ -1456,19 +1396,36 @@ L<perlclib>.
 
 =head2 Read-only optrees
 
-Under ithreads the optree is read only. If you want to enforce this, to
+Under ithreads the optree is read only.  If you want to enforce this, to
 check for write accesses from buggy code, compile with
-C<-DPERL_DEBUG_READONLY_OPS> to enable code that allocates op memory
-via C<mmap>, and sets it read-only when it is attached to a subroutine. Any
-write access to an op results in a C<SIGBUS> and abort.
+C<-Accflags=-DPERL_DEBUG_READONLY_OPS>
+to enable code that allocates op memory
+via C<mmap>, and sets it read-only when it is attached to a subroutine.
+Any write access to an op results in a C<SIGBUS> and abort.
 
 This code is intended for development only, and may not be portable
-even to all Unix variants. Also, it is an 80% solution, in that it
-isn't able to make all ops read only. Specifically it does not apply to op
-slabs belonging to C<BEGIN> blocks.
+even to all Unix variants.  Also, it is an 80% solution, in that it
+isn't able to make all ops read only.  Specifically it does not apply to
+op slabs belonging to C<BEGIN> blocks.
 
-However, as an 80% solution it is still effective, as it has caught bugs in
-the past.
+However, as an 80% solution it is still effective, as it has caught
+bugs in the past.
+
+=head2 When is a bool not a bool?
+
+On pre-C99 compilers, C<bool> is defined as equivalent to C<char>.
+Consequently assignment of any larger type to a C<bool> is unsafe and may
+be truncated.  The C<cBOOL> macro exists to cast it correctly.
+
+On those platforms and compilers where C<bool> really is a boolean (C++,
+C99), it is easy to forget the cast.  You can force C<bool> to be a C<char>
+by compiling with C<-Accflags=-DPERL_BOOL_AS_CHAR>.  You may also wish to
+run C<Configure> with something like
+
+    -Accflags='-Wconversion -Wno-sign-conversion -Wno-shorten-64-to-32'
+
+or your compiler's equivalent to make it easier to spot any unsafe truncations
+that show up.
 
 =head2 The .i Targets
 

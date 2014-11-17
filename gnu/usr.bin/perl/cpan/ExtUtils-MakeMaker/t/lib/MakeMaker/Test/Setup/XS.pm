@@ -51,7 +51,7 @@ is_even(input)
    CODE:
        RETVAL = (input % 2 == 0);
    OUTPUT:
-       RETVAL        
+       RETVAL
 END
 
              'XS-Test/t/is_even.t'          => <<'END',
@@ -67,8 +67,6 @@ END
 
 
 sub setup_xs {
-    setup_mm_test_root();
-    chdir 'MM_TEST_ROOT:[t]' if $Is_VMS;
 
     while(my($file, $text) = each %Files) {
         # Convert to a relative, native file path.
@@ -84,7 +82,7 @@ sub setup_xs {
     return 1;
 }
 
-sub teardown_xs { 
+sub teardown_xs {
     foreach my $file (keys %Files) {
         my $dir = dirname($file);
         if( -e $dir ) {

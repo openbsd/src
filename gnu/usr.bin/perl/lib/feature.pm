@@ -5,7 +5,7 @@
 
 package feature;
 
-our $VERSION = '1.32';
+our $VERSION = '1.36';
 
 our %feature = (
     fc              => 'feature_fc',
@@ -13,9 +13,12 @@ our %feature = (
     state           => 'feature_state',
     switch          => 'feature_switch',
     evalbytes       => 'feature_evalbytes',
+    postderef       => 'feature_postderef',
     array_base      => 'feature_arybase',
+    signatures      => 'feature_signatures',
     current_sub     => 'feature___SUB__',
     lexical_subs    => 'feature_lexsubs',
+    postderef_qq    => 'feature_postderef_qq',
     unicode_eval    => 'feature_unieval',
     unicode_strings => 'feature_unicode',
 );
@@ -24,7 +27,7 @@ our %feature_bundle = (
     "5.10"    => [qw(array_base say state switch)],
     "5.11"    => [qw(array_base say state switch unicode_strings)],
     "5.15"    => [qw(current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
-    "all"     => [qw(array_base current_sub evalbytes fc lexical_subs say state switch unicode_eval unicode_strings)],
+    "all"     => [qw(array_base current_sub evalbytes fc lexical_subs postderef postderef_qq say signatures state switch unicode_eval unicode_strings)],
     "default" => [qw(array_base)],
 );
 
@@ -34,6 +37,8 @@ $feature_bundle{"5.14"} = $feature_bundle{"5.11"};
 $feature_bundle{"5.16"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.17"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.18"} = $feature_bundle{"5.15"};
+$feature_bundle{"5.19"} = $feature_bundle{"5.15"};
+$feature_bundle{"5.20"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.9.5"} = $feature_bundle{"5.10"};
 
 our $hint_shift   = 26;
@@ -136,7 +141,7 @@ This feature is available starting with Perl 5.10.
 
 =head2 The 'unicode_strings' feature
 
-C<use feature 'unicode_strings'> tells the compiler to use Unicode semantics
+C<use feature 'unicode_strings'> tells the compiler to use Unicode rules
 in all string operations executed within its scope (unless they are also
 within the scope of either C<use locale> or C<use bytes>).  The same applies
 to all regular expressions compiled within the scope, even if executed outside
@@ -144,7 +149,7 @@ it.  It does not change the internal representation of strings, but only how
 they are interpreted.
 
 C<no feature 'unicode_strings'> tells the compiler to use the traditional
-Perl semantics wherein the native character set semantics is used unless it is
+Perl rules wherein the native character set rules is used unless it is
 clear to Perl that Unicode is desired.  This can lead to some surprises
 when the behavior suddenly changes.  (See
 L<perlunicode/The "Unicode Bug"> for details.)  For this reason, if you are
@@ -241,6 +246,26 @@ and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
 
 This feature is available from Perl 5.18 onwards.
 
+=head2 The 'signatures' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+    no warnings "experimental::signatures";
+
+This enables unpacking of subroutine arguments into lexical variables
+by syntax such as
+
+    sub foo ($left, $right) {
+	return $left + $right;
+    }
+
+See L<perlsub/Signatures> for details.
+
+This feature is available from Perl 5.20 onwards.
+
 =head1 FEATURE BUNDLES
 
 It's possible to load multiple features together, using
@@ -265,6 +290,9 @@ The following feature bundles are available:
             unicode_eval evalbytes current_sub fc
 
   :5.18     say state switch unicode_strings
+            unicode_eval evalbytes current_sub fc
+
+  :5.20     say state switch unicode_strings
             unicode_eval evalbytes current_sub fc
 
 The C<:default> bundle represents the feature set that is enabled before

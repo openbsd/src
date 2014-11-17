@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -13,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..497\n"; }
+BEGIN { $| = 1; print "1..528\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -446,6 +449,40 @@ ok($objJa->lt("\x{309E}", "\x{30FE}"));
 
 # 382
 
+ok($objJa->eq("\x{30AC}", "\x{30AB}\x{3099}"));
+ok($objJa->eq("\x{30AE}", "\x{30AD}\x{3099}"));
+ok($objJa->eq("\x{30B0}", "\x{30AF}\x{3099}"));
+ok($objJa->eq("\x{30B2}", "\x{30B1}\x{3099}"));
+ok($objJa->eq("\x{30B4}", "\x{30B3}\x{3099}"));
+ok($objJa->eq("\x{30B6}", "\x{30B5}\x{3099}"));
+ok($objJa->eq("\x{30B8}", "\x{30B7}\x{3099}"));
+ok($objJa->eq("\x{30BA}", "\x{30B9}\x{3099}"));
+ok($objJa->eq("\x{30BC}", "\x{30BB}\x{3099}"));
+ok($objJa->eq("\x{30BE}", "\x{30BD}\x{3099}"));
+ok($objJa->eq("\x{30C0}", "\x{30BF}\x{3099}"));
+ok($objJa->eq("\x{30C2}", "\x{30C1}\x{3099}"));
+ok($objJa->eq("\x{30C5}", "\x{30C4}\x{3099}"));
+ok($objJa->eq("\x{30C7}", "\x{30C6}\x{3099}"));
+ok($objJa->eq("\x{30C9}", "\x{30C8}\x{3099}"));
+ok($objJa->eq("\x{30D0}", "\x{30CF}\x{3099}"));
+ok($objJa->eq("\x{30D1}", "\x{30CF}\x{309A}"));
+ok($objJa->eq("\x{30D3}", "\x{30D2}\x{3099}"));
+ok($objJa->eq("\x{30D4}", "\x{30D2}\x{309A}"));
+ok($objJa->eq("\x{30D6}", "\x{30D5}\x{3099}"));
+ok($objJa->eq("\x{30D7}", "\x{30D5}\x{309A}"));
+ok($objJa->eq("\x{30D9}", "\x{30D8}\x{3099}"));
+ok($objJa->eq("\x{30DA}", "\x{30D8}\x{309A}"));
+ok($objJa->eq("\x{30DC}", "\x{30DB}\x{3099}"));
+ok($objJa->eq("\x{30DD}", "\x{30DB}\x{309A}"));
+ok($objJa->eq("\x{30F4}", "\x{30A6}\x{3099}"));
+ok($objJa->eq("\x{30F7}", "\x{30EF}\x{3099}"));
+ok($objJa->eq("\x{30F8}", "\x{30F0}\x{3099}"));
+ok($objJa->eq("\x{30F9}", "\x{30F1}\x{3099}"));
+ok($objJa->eq("\x{30FA}", "\x{30F2}\x{3099}"));
+ok($objJa->eq("\x{30FE}", "\x{30FD}\x{3099}"));
+
+# 413
+
 ok($objJa->eq("\x{304C}", "\x{304B}\x{3099}"));
 ok($objJa->eq("\x{304E}", "\x{304D}\x{3099}"));
 ok($objJa->eq("\x{3050}", "\x{304F}\x{3099}"));
@@ -474,7 +511,7 @@ ok($objJa->eq("\x{307D}", "\x{307B}\x{309A}"));
 ok($objJa->eq("\x{3094}", "\x{3046}\x{3099}"));
 ok($objJa->eq("\x{309E}", "\x{309D}\x{3099}"));
 
-# 409
+# 440
 
 $objJa->change(katakana_before_hiragana => 1);
 
@@ -567,4 +604,4 @@ ok($objJa->lt("\x{3096}", "\x{30F6}"));
 ok($objJa->lt("\x{309D}", "\x{30FD}"));
 ok($objJa->lt("\x{309E}", "\x{30FE}"));
 
-# 497
+# 528

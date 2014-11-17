@@ -4,7 +4,13 @@ use Pod::Simple::SimpleTree;
 
 my ($tap, $test, %Missing);
 
-@ARGV = grep { not($_ eq '--tap' and $tap = 1) } @ARGV;
+BEGIN {
+    @ARGV = grep { not($_ eq '--tap' and $tap = 1) } @ARGV;
+    if ($tap) {
+        require Test::More;
+        Test::More->import;
+    }
+}
 
 my (%Kinds, %Flavor, @Types);
 my %Omit;
@@ -95,34 +101,26 @@ sub sort_funcs {
 
 if ($tap) {
     foreach my $func (sort_funcs(keys %Flavor)) {
-       ++$test;
-       my $ok = $Type{$func} ? 'ok' : 'not ok';
-       print "$ok $test - $func is mentioned in at least one category group\n";
+       ok ( $Type{$func}, "$func is mentioned in at least one category group");
     }
     foreach (sort keys %Missing) {
         # Ignore anything that looks like an alternative for a function we've
         # already seen;
         s!(?: [A-Z].*| \(\)|\( LIST \)| /PATTERN/.*)!!;
         next if $Flavor{$_};
-        ++$test;
         if (/^[_a-z]/) {
-            print "not ok $test - function '$_' has no summary for Pod::Functions\n";
+            fail( "function '$_' has no summary for Pod::Functions" );
         } else {
-            print "not ok $test - section '$_' has no type for Pod::Functions\n";
+            fail( "for Pod::Functions" );
         }
     }
     foreach my $kind (sort keys %Kinds) {
         my $funcs = $Kinds{$kind};
         ++$test;
         my $want = join ' ', sort_funcs(@$funcs);
-        if ("@$funcs" eq $want) {
-            print "ok $test - category $kind is correctly sorted\n";
-        } else {
-            print "not ok $test - category $kind is correctly sorted\n";
-            print STDERR "# Have @$funcs\n# Want $want\n";
-        }
+        is ("@$funcs", $want, "category $kind is correctly sorted" );
     }
-    print "1..$test\n";
+    done_testing();
     exit;
 }
 
@@ -198,7 +196,7 @@ L<perlfunc/"Perl Functions by Category"> section.
 
 =cut
 
-our $VERSION = '1.06';
+our $VERSION = '1.08';
 
 require Exporter;
 
@@ -265,7 +263,7 @@ foreach my $func (sort_funcs(keys %Flavor)) {
     my $desc = $Flavor{$func};
     die "No types listed for $func" unless $Type{$func};
     next if $Omit{$func};
-    print $fh join("\t", $func, @{$Type{$func}}, $desc), "\n";
+    print $fh join("\t", $func, (sort @{$Type{$func}}), $desc), "\n";
 }
 
 close $fh or die "Can't close '$temp': $!";

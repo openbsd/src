@@ -40,8 +40,6 @@ Perl_reentrant_size(pTHX) {
 #ifdef HAS_CTIME_R
 	PL_reentrant_buffer->_ctime_size = REENTRANTSMALLSIZE;
 #endif /* HAS_CTIME_R */
-#ifdef HAS_DRAND48_R
-#endif /* HAS_DRAND48_R */
 #ifdef HAS_GETGRNAM_R
 #   if defined(HAS_SYSCONF) && defined(_SC_GETGR_R_SIZE_MAX) && !defined(__GLIBC__)
 	PL_reentrant_buffer->_grent_size = sysconf(_SC_GETGR_R_SIZE_MAX);
@@ -116,8 +114,6 @@ Perl_reentrant_size(pTHX) {
 #       endif
 #   endif 
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_RANDOM_R
-#endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R
 	/* This is the size Solaris recommends.
 	 * (though we go static, should use pathconf() instead) */
@@ -131,8 +127,6 @@ Perl_reentrant_size(pTHX) {
 #ifdef HAS_SETLOCALE_R
 	PL_reentrant_buffer->_setlocale_size = REENTRANTSMALLSIZE;
 #endif /* HAS_SETLOCALE_R */
-#ifdef HAS_SRANDOM_R
-#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	PL_reentrant_buffer->_strerror_size = REENTRANTSMALLSIZE;
 #endif /* HAS_STRERROR_R */
@@ -159,8 +153,6 @@ Perl_reentrant_init(pTHX) {
 #ifdef HAS_CTIME_R
 	Newx(PL_reentrant_buffer->_ctime_buffer, PL_reentrant_buffer->_ctime_size, char);
 #endif /* HAS_CTIME_R */
-#ifdef HAS_DRAND48_R
-#endif /* HAS_DRAND48_R */
 #ifdef HAS_GETGRNAM_R
 #   ifdef USE_GRENT_FPTR
 	PL_reentrant_buffer->_grent_fptr = NULL;
@@ -202,8 +194,6 @@ Perl_reentrant_init(pTHX) {
 #   endif
 	Newx(PL_reentrant_buffer->_spent_buffer, PL_reentrant_buffer->_spent_size, char);
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_RANDOM_R
-#endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R
 	PL_reentrant_buffer->_readdir_struct = (struct dirent*)safemalloc(PL_reentrant_buffer->_readdir_size);
 #endif /* HAS_READDIR_R */
@@ -213,8 +203,6 @@ Perl_reentrant_init(pTHX) {
 #ifdef HAS_SETLOCALE_R
 	Newx(PL_reentrant_buffer->_setlocale_buffer, PL_reentrant_buffer->_setlocale_size, char);
 #endif /* HAS_SETLOCALE_R */
-#ifdef HAS_SRANDOM_R
-#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	Newx(PL_reentrant_buffer->_strerror_buffer, PL_reentrant_buffer->_strerror_size, char);
 #endif /* HAS_STRERROR_R */
@@ -239,8 +227,6 @@ Perl_reentrant_free(pTHX) {
 #ifdef HAS_CTIME_R
 	Safefree(PL_reentrant_buffer->_ctime_buffer);
 #endif /* HAS_CTIME_R */
-#ifdef HAS_DRAND48_R
-#endif /* HAS_DRAND48_R */
 #ifdef HAS_GETGRNAM_R
 	Safefree(PL_reentrant_buffer->_grent_buffer);
 #endif /* HAS_GETGRNAM_R */
@@ -273,8 +259,6 @@ Perl_reentrant_free(pTHX) {
 #ifdef HAS_GETSPNAM_R
 	Safefree(PL_reentrant_buffer->_spent_buffer);
 #endif /* HAS_GETSPNAM_R */
-#ifdef HAS_RANDOM_R
-#endif /* HAS_RANDOM_R */
 #ifdef HAS_READDIR_R
 	Safefree(PL_reentrant_buffer->_readdir_struct);
 #endif /* HAS_READDIR_R */
@@ -284,8 +268,6 @@ Perl_reentrant_free(pTHX) {
 #ifdef HAS_SETLOCALE_R
 	Safefree(PL_reentrant_buffer->_setlocale_buffer);
 #endif /* HAS_SETLOCALE_R */
-#ifdef HAS_SRANDOM_R
-#endif /* HAS_SRANDOM_R */
 #ifdef HAS_STRERROR_R
 	Safefree(PL_reentrant_buffer->_strerror_buffer);
 #endif /* HAS_STRERROR_R */
@@ -449,8 +431,10 @@ Perl_reentrant_retry(const char *f, ...)
 		    uid = va_arg(ap, Uid_t);
 #endif
 		    retptr = getpwuid(uid); break;
+#if defined(HAS_GETPWENT) || defined(HAS_GETPWENT_R)
 	        case OP_GPWENT:
 		    retptr = getpwent(); break;
+#endif
 	        default:
 		    SETERRNO(ERANGE, LIB_INVARG);
 		    break;

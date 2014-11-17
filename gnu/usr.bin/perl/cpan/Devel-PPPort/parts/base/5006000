@@ -1,5 +1,4 @@
 5.006000
-PERL_SYS_INIT3                 # U
 POPn                           # E
 PUSHn                          # E
 SvIOK_UV                       # U
@@ -67,6 +66,9 @@ gv_dump                        # E
 init_i18nl10n                  # E (perl_init_i18nl10n)
 init_i18nl14n                  # E (perl_init_i18nl14n)
 isASCII                        # U
+isCNTRL                        # U
+isGRAPH                        # U
+isPUNCT                        # U
 isXDIGIT                       # U
 is_uni_alnum                   # E
 is_uni_alnum_lc                # E
@@ -284,8 +286,5 @@ dTHXa                          # added by devel/scanprov
 dTHXoa                         # added by devel/scanprov
 dXSTARG                        # added by devel/scanprov
 isALNUMC                       # added by devel/scanprov
-isCNTRL                        # added by devel/scanprov
-isGRAPH                        # added by devel/scanprov
-isPUNCT                        # added by devel/scanprov
 pTHX                           # added by devel/scanprov
 pTHX_                          # added by devel/scanprov

@@ -1,5 +1,51 @@
-3.02
+5.020001
+  - Updated for v5.20.1
+
+5.021003
+  - Prepared for v5.21.3
+
+5.021002
+  - Prepared for v5.21.2
+
+5.021001_01
+  - Prepared for v5.21.1
+
+3.11
+  - Prepared for v5.20.0
+  - Fix regression in corelist with -v output listing the same perl
+    multiple times
+  - Fix regression in corelist with v5.x.10 appearing twice in -a output
+
+3.10
+  - Updated for v5.19.11
+
+3.09
+  - updated for v5.19.10
+
+3.08
+  - prepared for v5.19.10
+
+3.07 Fri Feb 21 2014
+ - fix for is_core tests and perls ending in 0
+
+3.06 Thu Feb 20 2014
+ - updated for 5.19.9
+ - fix Module::CoreList::is_core default perl version
+ - fix Module::CoreList::is_core version comparision
+
+3.05
+  - Prepared for v5.19.9
+
+3.04
+  - Prepared for v5.19.8
+
+3.03 Mon Jan  6 2014
+  - Updated for v5.18.2
+
+3.02 Fri Dec 20 2013
   - Prepared for v5.19.7
+  - Added CGI et al deprecation status
+  - Finalised for v5.19.7
 
 3.01 Wed Nov 20 2013
   - Finalised for v5.19.6

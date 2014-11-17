@@ -1,17 +1,49 @@
 ; charset=UTF-8
-@@@	The Unicode Standard 6.2
-@@@+	U62M120808.lst
-	Unicode 6.2 names list, third delta (converted to UTF-8).
-	Updated more annotations in the Bengali block.
-	Added clarifying annotations for 0342.
-	Updated alias for 1110E.
+@@@	The Unicode Standard 6.3.0
+@@@+	U63M130730.lst
+	Unicode 6.3.0 names list, fourteenth delta.
+	Updated annotation for U+A980.
+	Move subhead for U+200C to include U+200B.
+	Commented out alt glyph lines for 222B, 222C.
+	Updated annotations for U+3001 and U+FF0C.
+	Merged with applicable annotations from DAM1 text.
+	Added annotation for 06BA.
+	Added notice about spelling of Oriya as Odia.
+	Added aliases for 09F0 and 09F1.
+	Added annotations and xrefs for 0022, 0027, 05F3, 05F4.
+	Tweaked annotations for 0022, 0027.
+	Added subhead for new bidi format controls at 2066.
+	Added formal name aliases for 122D4 and 122D5.
+	Update xref for 2EE7.
+	Added xrefs for 2696, 1F40F, 264E, 2648.
+	Added notice for Bengali block.
+	Adjustments for adding 061C to repertoire.
+	Added annotation for A9CF.
+	Added annotations for 2592.
+	Added annotation for 111C4.
+	Updated aliases for FEFF.
+	Added xrefs for 2294 and 2A03.
+	Added xrefs for 002D and 2043.
+	Updated annotations for noncharacters, consistent with Corrigendum #9.
+	Updated annotation for 0024.
+	Updated annotation for 0B83.
+	Added annotation for 06AA.
+	Updated notice at 2500.
+	Updated subheads for various Jamo blocks.
+	Updated annotations and cross-references for several math characters.
+	Updated casing for two Assamese annotations.
+	Removed extraneous tab in entry for 1F4AE.
+	Added several explicit standardized variant summary headers.
+	Added notice about the exceptional bidi behavior of FD3E and FD3F.
+	Added xrefs for diamonds and squares related to modal logic.
+	Removed obelus as alias for 2020.
 	This file is semi-automatically derived from UnicodeData.txt and
 	a set of manually created annotations using a script to select
 	or suppress information from the data file. The rules used
 	for this process are aimed at readability for the human reader,
 	at the expense of some details; therefore, this file should not
 	be parsed for machine-readable information.
-@+		Copyright (c) 1991-2012 Unicode, Inc.
+@+		Copyright (c) 1991-2013 Unicode, Inc.
 	For terms of use, see http://www.unicode.org/terms_of_use.html
 @@	0000	C0 Controls and Basic Latin (Basic Latin)	007F
 @@+
@@ -112,9 +144,11 @@
 0022	QUOTATION MARK
 	* neutral (vertical), used as opening or closing quotation mark
 	* preferred characters in English for paired quotation marks are 201C & 201D
+	* 05F4 is preferred for gershayim when writing Hebrew
 	x (modifier letter double prime - 02BA)
 	x (combining double acute accent - 030B)
 	x (combining double vertical line above - 030E)
+	x (hebrew punctuation gershayim - 05F4)
 	x (double prime - 2033)
 	x (ditto mark - 3003)
 0023	NUMBER SIGN
@@ -127,7 +161,7 @@
 	= milréis, escudo
 	* used for many peso currencies in Latin America and elsewhere
 	* glyph may have one or two vertical bars
-	* other currency symbol characters: 20A0-20BA
+	* other currency symbol characters start at 20A0
 	x (currency sign - 00A4)
 	x (peso sign - 20B1)
 	x (heavy dollar sign - 1F4B2)
@@ -145,10 +179,12 @@
 	* neutral (vertical) glyph with mixed usage
 	* 2019 is preferred for apostrophe
 	* preferred characters in English for paired quotation marks are 2018 & 2019
+	* 05F3 is preferred for geresh when writing Hebrew
 	x (modifier letter prime - 02B9)
 	x (modifier letter apostrophe - 02BC)
 	x (modifier letter vertical line - 02C8)
 	x (combining acute accent - 0301)
+	x (hebrew punctuation geresh - 05F3)
 	x (prime - 2032)
 	x (latin small letter saltillo - A78C)
 0028	LEFT PARENTHESIS
@@ -177,6 +213,7 @@
 	x (non-breaking hyphen - 2011)
 	x (figure dash - 2012)
 	x (en dash - 2013)
+	x (hyphen bullet - 2043)
 	x (minus sign - 2212)
 	x (roman uncia sign - 10191)
 002E	FULL STOP
@@ -223,6 +260,7 @@
 	~ 0039 FE0F emoji style
 @		ASCII punctuation and symbols
 003A	COLON
+	* also used to denote division or scale; for that mathematical use 2236 is preferred
 	x (armenian full stop - 0589)
 	x (hebrew punctuation sof pasuq - 05C3)
 	x (ratio - 2236)
@@ -409,7 +447,7 @@
 @		Control character
 007F	<control>
 	= DELETE
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	0080	C1 Controls and Latin-1 Supplement (Latin-1 Supplement)	00FF
 @		C1 controls
 @+		Alias names are those for ISO/IEC 6429:1992.
@@ -573,6 +611,7 @@
 	= midpoint (in typography)
 	= Georgian comma
 	= Greek middle dot (ano teleia)
+	* also used as a raised decimal point or to denote multiplication; for multiplication 22C5 is preferred
 	x (greek ano teleia - 0387)
 	x (runic single punctuation - 16EB)
 	x (bullet - 2022)
@@ -750,8 +789,15 @@
 	: 006F 0308
 @		Mathematical operator
 00F7	DIVISION SIGN
+	= obelus
+	* occasionally used as an alternate, more visually distinct version of 2212 or 2011 in some contexts
+	* historically used as a punctuation mark to denote questionable passages in manuscripts
+	x (syriac harklean obelus - 070B)
+	x (commercial minus sign - 2052)
+	x (minus sign - 2212)
 	x (division slash - 2215)
 	x (divides - 2223)
+	x (ratio - 2236)
 	x (heavy division sign - 2797)
 @		Letters
 00F8	LATIN SMALL LETTER O WITH STROKE
@@ -2549,6 +2595,7 @@
 0360	COMBINING DOUBLE TILDE
 0361	COMBINING DOUBLE INVERTED BREVE
 	= ligature tie
+	x (combining ligature left half - FE20)
 0362	COMBINING DOUBLE RIGHTWARDS ARROW BELOW
 	* IPA: sliding articulation
 @		Medieval superscript letter diacritics
@@ -3588,7 +3635,9 @@
 	= tsvey yudn
 @		Additional punctuation
 05F3	HEBREW PUNCTUATION GERESH
+	x (apostrophe - 0027)
 05F4	HEBREW PUNCTUATION GERSHAYIM
+	x (quotation mark - 0022)
 @@	0600	Arabic	06FF
 @@+
 @		Subtending marks
@@ -3652,6 +3701,10 @@
 	* also used with Thaana and Syriac in modern text
 	x (semicolon - 003B)
 	x (turned semicolon - 2E35)
+@		Format character
+061C	ARABIC LETTER MARK
+	* commonly abbreviated ALM
+@		Punctuation
 061E	ARABIC TRIPLE DOT PUNCTUATION MARK
 061F	ARABIC QUESTION MARK
 	* also used with Thaana and Syriac in modern text
@@ -3919,6 +3972,7 @@
 06A9	ARABIC LETTER KEHEH
 	* Persian, Urdu, ...
 06AA	ARABIC LETTER SWASH KAF
+	* represents a letter distinct from Arabic KAF (0643) in Sindhi
 06AB	ARABIC LETTER KAF WITH RING
 	* Pashto
 	* may appear like an Arabic KAF (0643) with a ring below the base
@@ -3950,6 +4004,7 @@
 06B9	ARABIC LETTER NOON WITH DOT BELOW
 06BA	ARABIC LETTER NOON GHUNNA
 	* Urdu
+	* dotless in all contextual forms
 06BB	ARABIC LETTER RNOON
 	* Sindhi
 06BC	ARABIC LETTER NOON WITH RING
@@ -4105,6 +4160,7 @@
 	* placed at the end of an incomplete word
 070B	SYRIAC HARKLEAN OBELUS
 	* marks the beginning of a phrase, word, or morpheme that has a marginal note
+	x (division sign - 00F7)
 070C	SYRIAC HARKLEAN METOBELUS
 	* marks the end of a section with a marginal note
 070D	SYRIAC HARKLEAN ASTERISCUS
@@ -4575,8 +4631,9 @@
 08FB	ARABIC DOUBLE RIGHT ARROWHEAD ABOVE
 08FC	ARABIC DOUBLE RIGHT ARROWHEAD ABOVE WITH DOT
 08FD	ARABIC RIGHT ARROWHEAD ABOVE WITH DOT
-@		Extended vowel sign for Philippine languages
+@		Extended vowel signs
 08FE	ARABIC DAMMA WITH DOT
+	* Philippine languages
 @@	0900	Devanagari	097F
 @@+
 @		Various signs
@@ -4781,6 +4838,7 @@
 097E	DEVANAGARI LETTER DDDA
 097F	DEVANAGARI LETTER BBA
 @@	0980	Bengali	09FF
+@+		The Bengali script is also known as Bangla. In Assam, the preferred name of the script is Asamiya or Assamese. The Assamese language has also been written historically using distinct regional scripts known as Kamrupi.
 @		Various signs
 0981	BENGALI SIGN CANDRABINDU
 0982	BENGALI SIGN ANUSVARA
@@ -4894,7 +4952,9 @@
 09EF	BENGALI DIGIT NINE
 @		Additions for Assamese
 09F0	BENGALI LETTER RA WITH MIDDLE DIAGONAL
+	= Assamese letter ra
 09F1	BENGALI LETTER RA WITH LOWER DIAGONAL
+	= Assamese letter wa
 	= bengali letter va with lower diagonal (1.0)
 @		Currency signs
 09F2	BENGALI RUPEE MARK
@@ -5148,6 +5208,7 @@
 0AF1	GUJARATI RUPEE SIGN
 	* preferred spelling is 0AB0 0AC2 0AF0
 @@	0B00	Oriya	0B7F
+@+		As of 2012, the name "Oriya" for this script and language is officially spelled "Odia" in India. That change in spelling does not affect the Unicode block or character names, which are constrained by stability guarantees.
 @		Various signs
 0B01	ORIYA SIGN CANDRABINDU
 0B02	ORIYA SIGN ANUSVARA
@@ -5283,7 +5344,7 @@
 	* not used in Tamil
 0B83	TAMIL SIGN VISARGA
 	= aytham
-	* in fonts which display the Tamil pulli as a ring shape, the glyph for aytham also uses rings
+	* just as for the Tamil pulli, the glyph for aytham may use either dots or rings
 @		Independent vowels
 0B85	TAMIL LETTER A
 0B86	TAMIL LETTER AA
@@ -5393,6 +5454,7 @@
 @		Various signs
 0C01	TELUGU SIGN CANDRABINDU
 	= arasunna
+	* indicates a contextually elided nasal
 0C02	TELUGU SIGN ANUSVARA
 	= sunna
 0C03	TELUGU SIGN VISARGA
@@ -6906,6 +6968,7 @@
 1112	HANGUL CHOSEONG HIEUH
 	= H
 	* voiceless glottal fricative
+@		Old initial consonants
 1113	HANGUL CHOSEONG NIEUN-KIYEOK
 1114	HANGUL CHOSEONG SSANGNIEUN
 1115	HANGUL CHOSEONG NIEUN-TIKEUT
@@ -7040,6 +7103,7 @@
 	= YI
 1175	HANGUL JUNGSEONG I
 	= I
+@		Old medial vowels
 1176	HANGUL JUNGSEONG A-O
 1177	HANGUL JUNGSEONG A-U
 1178	HANGUL JUNGSEONG YA-O
@@ -7147,6 +7211,7 @@
 	= P
 11C2	HANGUL JONGSEONG HIEUH
 	= H
+@		Old final consonants
 11C3	HANGUL JONGSEONG KIYEOK-RIEUL
 11C4	HANGUL JONGSEONG KIYEOK-SIOS-KIYEOK
 11C5	HANGUL JONGSEONG NIEUN-KIYEOK
@@ -9203,7 +9268,7 @@
 18A8	MONGOLIAN LETTER MANCHU ALI GALI BHA
 18A9	MONGOLIAN LETTER ALI GALI DAGALGA
 18AA	MONGOLIAN LETTER MANCHU ALI GALI LHA
-@~	Standarized Variation Sequences
+@~	Standardized Variation Sequences
 @+	Unlike other blocks, these variation sequences use the script-specific variation selectors for Mongolian.
 @@	18B0	Unified Canadian Aboriginal Syllabics Extended	18FF
 @		Syllables for Moose Cree
@@ -11873,10 +11938,10 @@
 	* thinner than a thin space
 	* in traditional typography, the thinnest space available
 	# 0020 space
+@		Format characters
 200B	ZERO WIDTH SPACE
 	* commonly abbreviated ZWSP
 	* this character is intended for invisible word separation and for line break control; it has no width, but its presence between two characters does not prevent increased letter spacing in justification
-@		Format characters
 200C	ZERO WIDTH NON-JOINER
 	* commonly abbreviated ZWNJ
 200D	ZERO WIDTH JOINER
@@ -11954,7 +12019,7 @@
 	* has same semantic as 201C, but differs in appearance
 @		General punctuation
 2020	DAGGER
-	= obelisk, obelus, long cross
+	= obelisk, long cross, oblong cross
 	x (turned dagger - 2E38)
 2021	DOUBLE DAGGER
 	= diesis, double obelisk
@@ -12086,6 +12151,7 @@
 	x (right semidirect product - 22CC)
 2042	ASTERISM
 2043	HYPHEN BULLET
+	x (hyphen-minus - 002D)
 2044	FRACTION SLASH
 	= solidus (in typography)
 	* for composing arbitrary fractions
@@ -12125,6 +12191,7 @@
 	* used in Finno-Ugric Phonetic Alphabet to indicate a related borrowed form with different sound
 	x (percent sign - 0025)
 	x (arabic percent sign - 066A)
+	x (division sign - 00F7)
 2053	SWUNG DASH
 	x (tilde - 007E)
 2054	INVERTED UNDERTIE
@@ -12182,6 +12249,11 @@
 	* contiguity operator indicating that adjacent mathematical symbols form a list, e.g. when no visible comma is used between multiple indices
 2064	INVISIBLE PLUS
 	* contiguity operator indicating addition
+@		Format characters
+2066	LEFT-TO-RIGHT ISOLATE
+2067	RIGHT-TO-LEFT ISOLATE
+2068	FIRST STRONG ISOLATE
+2069	POP DIRECTIONAL ISOLATE
 @		Deprecated
 @+		Use of these characters is strongly discouraged.
 206A	INHIBIT SYMMETRIC SWAPPING
@@ -12190,7 +12262,7 @@
 206D	ACTIVATE ARABIC FORM SHAPING
 206E	NATIONAL DIGIT SHAPES
 206F	NOMINAL DIGIT SHAPES
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2070	Superscripts and Subscripts	209F
 @		Superscripts
 @+		See also superscript Latin letters in the Spacing Modifier Letters block starting at 02B0.
@@ -12695,7 +12767,7 @@
 	x (greek small letter digamma - 03DD)
 @		Biblical editorial symbol
 214F	SYMBOL FOR SAMARITAN SOURCE
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2150	Number Forms	218F
 @		Fractions
 @+		Other fraction number forms are found in the Latin-1 Supplement block.
@@ -13024,7 +13096,7 @@
 21FD	LEFTWARDS OPEN-HEADED ARROW
 21FE	RIGHTWARDS OPEN-HEADED ARROW
 21FF	LEFT RIGHT OPEN-HEADED ARROW
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2200	Mathematical Operators	22FF
 @@+
 @		Miscellaneous mathematical symbols
@@ -13161,10 +13233,10 @@
 222B	INTEGRAL
 	x (latin small letter esh - 0283)
 ;experimenting with variant syntax
-	~ 222B ALT1 slanted style
+;	~ 222B ALT1 slanted style
 222C	DOUBLE INTEGRAL
 ;experimenting with variant syntax
-	~ 222C ALT1 slanted style
+;	~ 222C ALT1 slanted style
 	# 222B 222B
 222D	TRIPLE INTEGRAL
 	x (quadruple integral operator - 2A0C)
@@ -13185,6 +13257,7 @@
 2235	BECAUSE
 @		Relations
 2236	RATIO
+	* preferred to 003A for denotation of division or scale in mathematical use
 	x (colon - 003A)
 2237	PROPORTION
 @		Operator
@@ -13359,6 +13432,7 @@
 	x (n-ary square intersection operator - 2A05)
 	~ 2293 FE00 with serifs
 2294	SQUARE CUP
+	x (n-ary square union operator - 2A06)
 	~ 2294 FE00 with serifs
 2295	CIRCLED PLUS
 	= direct sum
@@ -13477,6 +13551,7 @@
 	x (white diamond - 25C7)
 	x (black small diamond - 2B29)
 22C5	DOT OPERATOR
+	* preferred to 00B7 for denotation of multiplication
 	x (middle dot - 00B7)
 22C6	STAR OPERATOR
 	* APL
@@ -13565,10 +13640,7 @@
 22FD	CONTAINS WITH OVERBAR
 22FE	SMALL CONTAINS WITH OVERBAR
 22FF	Z NOTATION BAG MEMBERSHIP
-@@~	Alternative Glyph Listing
-@+	Experimental listing
-@~	Standarized Variation Sequences
-@+	Experimental listing
+@~	Standardized Variation Sequences
 @@	2300	Miscellaneous Technical	23FF
 @		Miscellaneous technical
 2300	DIAMETER SIGN
@@ -14005,7 +14077,7 @@
 23F2	TIMER CLOCK
 23F3	HOURGLASS WITH FLOWING SAND
 	x (hourglass - 231B)
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2400	Control Pictures	243F
 @+		The diagonal lettering glyphs are only exemplary; alternate representations may be, and often are used in the visible display of control codes.
 @		Graphic pictures for control codes
@@ -14401,9 +14473,9 @@
 @		Additional white on black circled number
 24FF	NEGATIVE CIRCLED DIGIT ZERO
 	x (dingbat negative circled digit one - 2776)
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2500	Box Drawing	257F
-@+	All of these characters are intended for compatibility with old sets oriented toward character cell graphics.
+@+		All of these characters are intended for compatibility with character cell graphic sets in use prior to 1990.
 @		Light and heavy solid lines
 2500	BOX DRAWINGS LIGHT HORIZONTAL
 	= Videotex Mosaic DG 15
@@ -14593,7 +14665,9 @@
 2591	LIGHT SHADE
 	* 25%
 2592	MEDIUM SHADE
+	= speckles fill, dotted fill
 	* 50%
+	* used in mapping to cp949
 2593	DARK SHADE
 	* 75%
 @		Block elements
@@ -14622,6 +14696,7 @@
 	= alchemical symbol for salt
 	* may be used to represent a missing ideograph
 	x (combining enclosing square - 20DE)
+	x (white medium square - 25FB)
 	x (ballot box - 2610)
 	x (white large square - 2B1C)
 	x (geta mark - 3013)
@@ -14704,6 +14779,7 @@
 	x (combining enclosing diamond - 20DF)
 	x (diamond operator - 22C4)
 	x (white diamond suit - 2662)
+	x (white concave-sided diamond - 27E1)
 	x (white medium diamond - 2B26)
 	x (alchemical symbol for soap - 1F754)
 25C8	WHITE DIAMOND CONTAINING BLACK SMALL DIAMOND
@@ -14791,6 +14867,7 @@
 25FB	WHITE MEDIUM SQUARE
 	= always (modal operator)
 	x (white square - 25A1)
+	x (white square with leftwards tick - 27E4)
 	~ 25FB FE0E text style
 	~ 25FB FE0F emoji style
 25FC	BLACK MEDIUM SQUARE
@@ -14807,8 +14884,7 @@
 	~ 25FE FE0F emoji style
 25FF	LOWER RIGHT TRIANGLE
 	x (right triangle - 22BF)
-@~	Standarized Variation Sequences
-@+	Emoji style variants include rendering of characters in ways not achievable with traditional or even digital typography. The sample glyphs shown here cannot faithfully represent the range of intended appearances.
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2600	Miscellaneous Symbols	26FF
 @@+
 @		Weather and astrological symbols
@@ -14994,6 +15070,7 @@
 2647	PLUTO
 @		Zodiacal symbols
 2648	ARIES
+	x (ram - 1F40F)
 	~ 2648 FE0E text style
 	~ 2648 FE0F emoji style
 2649	TAURUS
@@ -15013,6 +15090,7 @@
 	~ 264D FE0E text style
 	~ 264D FE0F emoji style
 264E	LIBRA
+	x (scales - 2696)
 	x (alchemical symbol for sublimation - 1F75E)
 	~ 264E FE0E text style
 	~ 264E FE0F emoji style
@@ -15168,6 +15246,7 @@
 	x (caduceus - 2624)
 2696	SCALES
 	= legal term, jurisprudence
+	x (libra - 264E)
 2697	ALEMBIC
 	= chemical term, chemistry
 	x (alchemical symbol for retort - 1F76D)
@@ -15444,7 +15523,7 @@
 	x (teacup without handle - 1F375)
 26FF	WHITE FLAG WITH HORIZONTAL MIDDLE BLACK STRIPE
 	= Japanese self-defence force site
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2700	Dingbats	27BF
 @+		ITC Zapf dingbats series 100. Some of the ITC Zapf dingbats have been unified with geometric shape characters. Gaps in the chart have subsequently been filled with other dingbat-like symbols.
 	x (black telephone - 260E)
@@ -15747,7 +15826,7 @@
 27BE	OPEN-OUTLINED RIGHTWARDS ARROW
 @		Miscellaneous
 27BF	DOUBLE CURLY LOOP
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	27C0	Miscellaneous Mathematical Symbols-A	27EF
 @		Miscellaneous symbols
 27C0	THREE DIMENSIONAL ANGLE
@@ -15840,6 +15919,7 @@
 	x (lozenge - 25CA)
 27E1	WHITE CONCAVE-SIDED DIAMOND
 	= never (modal operator)
+	x (white diamond - 25C7)
 27E2	WHITE CONCAVE-SIDED DIAMOND WITH LEFTWARDS TICK
 	= was never (modal operator)
 27E3	WHITE CONCAVE-SIDED DIAMOND WITH RIGHTWARDS TICK
@@ -15847,6 +15927,7 @@
 27E4	WHITE SQUARE WITH LEFTWARDS TICK
 	= was always (modal operator)
 	x (white square - 25A1)
+	x (white medium square - 25FB)
 27E5	WHITE SQUARE WITH RIGHTWARDS TICK
 	= will always be (modal operator)
 @		Mathematical brackets
@@ -16371,7 +16452,7 @@
 297D	RIGHT FISH TAIL
 297E	UP FISH TAIL
 297F	DOWN FISH TAIL
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2980	Miscellaneous Mathematical Symbols-B	29FF
 @		Miscellaneous mathematical symbols
 2980	TRIPLE VERTICAL BAR DELIMITER
@@ -16606,6 +16687,7 @@
 	x (circled times - 2297)
 	x (heavy circled saltire - 2B59)
 2A03	N-ARY UNION OPERATOR WITH DOT
+	x (multiset multiplication - 228D)
 2A04	N-ARY UNION OPERATOR WITH PLUS
 	x (multiset union - 228E)
 2A05	N-ARY SQUARE INTERSECTION OPERATOR
@@ -17188,7 +17270,7 @@
 2B59	HEAVY CIRCLED SALTIRE
 	= police station
 	x (n-ary circled times operator - 2A02)
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	2C00	Glagolitic	2C5F
 @		Capital letters
 2C00	GLAGOLITIC CAPITAL LETTER AZU
@@ -18113,7 +18195,7 @@
 2EE6	CJK RADICAL C-SIMPLIFIED BIRD
 	x 9E1F
 2EE7	CJK RADICAL C-SIMPLIFIED SALT
-	x 9E75
+	x 5364
 2EE8	CJK RADICAL SIMPLIFIED WHEAT
 	x 9EA6
 2EE9	CJK RADICAL SIMPLIFIED YELLOW
@@ -18590,7 +18672,9 @@
 	x (space - 0020)
 	# <wide> 0020
 3001	IDEOGRAPHIC COMMA
+	* in Chinese, delimits items in a list or series
 	x (comma - 002C)
+	x (fullwidth comma - FF0C)
 3002	IDEOGRAPHIC FULL STOP
 	x (full stop - 002E)
 3003	DITTO MARK
@@ -18726,7 +18810,7 @@
 	* visual indicator that the following ideograph is to be taken as a variant of the intended character
 303F	IDEOGRAPHIC HALF FILL SPACE
 	* visual indicator of a screen space for half of an ideograph
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	3040	Hiragana	309F
 @		Hiragana letters
 3041	HIRAGANA LETTER SMALL A
@@ -19060,7 +19144,7 @@
 312D	BOPOMOFO LETTER IH
 	* for analytic representation of apical vowel
 @@	3130	Hangul Compatibility Jamo	318F
-@		Modern letters
+@		Consonant letters
 3131	HANGUL LETTER KIYEOK
 	# 1100 hangul choseong kiyeok
 3132	HANGUL LETTER SSANGKIYEOK
@@ -19123,6 +19207,7 @@
 314E	HANGUL LETTER HIEUH
 	* voiceless glottal fricative
 	# 1112 hangul choseong hieuh
+@		Vowel letters
 314F	HANGUL LETTER A
 	# 1161 hangul jungseong a
 3150	HANGUL LETTER AE
@@ -19169,7 +19254,7 @@
 3164	HANGUL FILLER
 	= chaeum
 	# 1160 hangul jungseong filler
-@		Old letters
+@		Old consonant letters
 3165	HANGUL LETTER SSANGNIEUN
 	# 1114 hangul choseong ssangnieun
 3166	HANGUL LETTER NIEUN-TIKEUT
@@ -19242,6 +19327,7 @@
 3186	HANGUL LETTER YEORINHIEUH
 	* glottal stop
 	# 1159 hangul choseong yeorinhieuh
+@		Old vowel letters
 3187	HANGUL LETTER YO-YA
 	# 1184 hangul jungseong yo-ya
 3188	HANGUL LETTER YO-YAE
@@ -19990,7 +20076,7 @@
 	# <circle> 30F1
 32FE	CIRCLED KATAKANA WO
 	# <circle> 30F2
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	3300	CJK Compatibility	33FF
 @		Squared Katakana words
 3300	SQUARE APAATO
@@ -23270,7 +23356,7 @@ A953	REJANG VIRAMA
 @		Punctuation
 A95F	REJANG SECTION MARK
 @@	A960	Hangul Jamo Extended-A	A97F
-@		Initial consonants
+@		Old initial consonants
 A960	HANGUL CHOSEONG TIKEUT-MIEUM
 A961	HANGUL CHOSEONG TIKEUT-PIEUP
 A962	HANGUL CHOSEONG TIKEUT-SIOS
@@ -23303,7 +23389,7 @@ A97C	HANGUL CHOSEONG SSANGYEORINHIEUH
 @@	A980	Javanese	A9DF
 @		Various signs
 A980	JAVANESE SIGN PANYANGGA
-	= ardhacandra
+	= candrabindu
 A981	JAVANESE SIGN CECAK
 	= anusvara
 A982	JAVANESE SIGN LAYAR
@@ -23426,6 +23512,7 @@ A9CC	JAVANESE PADA PISELEH
 A9CD	JAVANESE TURNED PADA PISELEH
 @		Syllable reduplicator
 A9CF	JAVANESE PANGRANGKEP
+	* also used in Buginese
 	x (arabic-indic digit two - 0662)
 @		Digits
 A9D0	JAVANESE DIGIT ZERO
@@ -23848,7 +23935,7 @@ ABF9	MEETEI MAYEK DIGIT NINE
 	= mapal
 @@	AC00	Hangul Syllables	D7A3
 @@	D7B0	Hangul Jamo Extended-B	D7FF
-@		Medial vowels
+@		Old medial vowels
 D7B0	HANGUL JUNGSEONG O-YEO
 D7B1	HANGUL JUNGSEONG O-O-I
 D7B2	HANGUL JUNGSEONG YO-A
@@ -23872,7 +23959,7 @@ D7C3	HANGUL JUNGSEONG I-YU
 D7C4	HANGUL JUNGSEONG I-I
 D7C5	HANGUL JUNGSEONG ARAEA-A
 D7C6	HANGUL JUNGSEONG ARAEA-E
-@		Final consonants
+@		Old final consonants
 D7CB	HANGUL JONGSEONG NIEUN-RIEUL
 D7CC	HANGUL JONGSEONG NIEUN-CHIEUCH
 D7CD	HANGUL JONGSEONG SSANGTIKEUT
@@ -24886,6 +24973,7 @@ FAD8	CJK COMPATIBILITY IDEOGRAPH-FAD8
 	: 9F43
 FAD9	CJK COMPATIBILITY IDEOGRAPH-FAD9
 	: 9F8E
+@~	Standardized Variation Sequences
 @@	FB00	Alphabetic Presentation Forms	FB4F
 @		Latin ligatures
 @+		See the Basic Latin block starting at 0020
@@ -25964,6 +26052,7 @@ FD3C	ARABIC LIGATURE ALEF WITH FATHATAN FINAL FORM
 FD3D	ARABIC LIGATURE ALEF WITH FATHATAN ISOLATED FORM
 	# <isolated> 0627 064B
 @		Punctuation
+@+		For legacy reasons, these parentheses do not mirror in bidirectional display and do not have the Bidi_Paired_Bracket property.
 FD3E	ORNATE LEFT PARENTHESIS
 FD3F	ORNATE RIGHT PARENTHESIS
 @		Ligatures (three elements)
@@ -26204,7 +26293,7 @@ FDC6	ARABIC LIGATURE SEEN WITH KHAH WITH YEH FINAL FORM
 FDC7	ARABIC LIGATURE NOON WITH JEEM WITH YEH FINAL FORM
 	# <final> 0646 062C 064A
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 FDD0	<not a character>
 FDD1	<not a character>
 FDD2	<not a character>
@@ -26760,7 +26849,8 @@ FEFC	ARABIC LIGATURE LAM WITH ALEF FINAL FORM
 	# <final> 0644 0627
 @		Special
 FEFF	ZERO WIDTH NO-BREAK SPACE
-	= BYTE ORDER MARK (BOM), ZWNBSP
+	% BYTE ORDER MARK
+	= BOM, ZWNBSP
 	* may be used to detect byte order by contrast with the noncharacter code point FFFE
 	* use as an indication of non-breaking is deprecated; see 2060 instead
 	x (zero width space - 200B)
@@ -26792,6 +26882,8 @@ FF0A	FULLWIDTH ASTERISK
 FF0B	FULLWIDTH PLUS SIGN
 	# <wide> 002B
 FF0C	FULLWIDTH COMMA
+	* in Chinese, indicates a pause
+	x (ideographic comma - 3001)
 	# <wide> 002C
 FF0D	FULLWIDTH HYPHEN-MINUS
 	# <wide> 002D
@@ -27249,13 +27341,11 @@ FFFD	REPLACEMENT CHARACTER
 	* used to replace an incoming character whose value is unknown or unrepresentable in Unicode
 	* compare the use of 001A as a control character to indicate the substitute function
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 FFFE	<not a character>
-	* the value FFFE is guaranteed not to be a Unicode character at all
-	* may be used to detect byte order by contrast with FEFF which is a character
+	* may be used to detect byte order by contrast with FEFF
 	x (zero width no-break space - FEFF)
 FFFF	<not a character>
-	* the value FFFF is guaranteed not to be a Unicode character at all
 @@	10000	Linear B Syllabary	1007F
 @@+
 @		Basic syllables
@@ -29299,6 +29389,8 @@ FFFF	<not a character>
 111C2	SHARADA SIGN JIHVAMULIYA
 111C3	SHARADA SIGN UPADHMANIYA
 111C4	SHARADA OM
+	* use of this character is discouraged
+	* recommended sequence is 1118F 11180
 @		Punctuation
 111C5	SHARADA DANDA
 111C6	SHARADA DOUBLE DANDA
@@ -30117,7 +30209,9 @@ FFFF	<not a character>
 122D2	CUNEIFORM SIGN SHINIG
 122D3	CUNEIFORM SIGN SHIR
 122D4	CUNEIFORM SIGN SHIR TENU
+	% CUNEIFORM SIGN NU11 TENU
 122D5	CUNEIFORM SIGN SHIR OVER SHIR BUR OVER BUR
+	% CUNEIFORM SIGN NU11 OVER NU11 BUR OVER BUR
 122D6	CUNEIFORM SIGN SHITA
 122D7	CUNEIFORM SIGN SHU
 122D8	CUNEIFORM SIGN SHU OVER INVERTED SHU
@@ -35793,7 +35887,7 @@ FFFF	<not a character>
 1F02A	MAHJONG TILE JOKER
 	= baida
 1F02B	MAHJONG TILE BACK
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	1F030	Domino Tiles	1F09F
 @		Horizontal tiles
 1F030	DOMINO TILE HORIZONTAL BACK
@@ -36323,7 +36417,7 @@ FFFF	<not a character>
 1F1FD	REGIONAL INDICATOR SYMBOL LETTER X
 1F1FE	REGIONAL INDICATOR SYMBOL LETTER Y
 1F1FF	REGIONAL INDICATOR SYMBOL LETTER Z
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	1F200	Enclosed Ideographic Supplement	1F2FF
 @		Squared hiragana from ARIB STD B24
 1F200	SQUARE HIRAGANA HOKA
@@ -36512,7 +36606,7 @@ FFFF	<not a character>
 1F251	CIRCLED IDEOGRAPH ACCEPT
 	= accept sign
 	# <circle> 53EF
-@~	Standardized Variation Sequences
+@~	!{FE0E FE0F} Standardized Variation Sequences
 @@	1F300	Miscellaneous Symbols and Pictographs	1F5FF
 @		Weather, landscape, and sky symbols
 1F300	CYCLONE
@@ -36830,6 +36924,7 @@ FFFF	<not a character>
 	* seventh of the signs of the Asian zodiac
 1F40F	RAM
 	* eighth of the signs of the Asian zodiac
+	x (aries - 2648)
 1F410	GOAT
 	* eighth of the signs of the Asian zodiac, used in Vietnam
 1F411	SHEEP
@@ -37718,12 +37813,10 @@ FFFF	<not a character>
 	= uncia semis
 	x (ounce sign - 2125)
 @@	1FF80	Unassigned	1FFFF
-@		Not character codes
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@		Noncharacters
+@+		These codes are intended for process-internal uses.
 1FFFE	<not a character>
-	* the value 1FFFE is guaranteed not to be a Unicode character at all
 1FFFF	<not a character>
-	* the value 1FFFF is guaranteed not to be a Unicode character at all
 @@	20000	CJK Unified Ideographs Extension B	2A6D6
 @@	2A700	CJK Unified Ideographs Extension C	2B734
 @@	2B740	CJK Unified Ideographs Extension D	2B81D
@@ -38824,90 +38917,67 @@ FFFF	<not a character>
 	: 9F3B
 2FA1D	CJK COMPATIBILITY IDEOGRAPH-2FA1D
 	: 2A600
+@~	Standardized Variation Sequences
 @@	2FF80	Unassigned	2FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 2FFFE	<not a character>
-	* the value 2FFFE is guaranteed not to be a Unicode character at all
 2FFFF	<not a character>
-	* the value 2FFFF is guaranteed not to be a Unicode character at all
 @@	3FF80	Unassigned	3FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 3FFFE	<not a character>
-	* the value 3FFFE is guaranteed not to be a Unicode character at all
 3FFFF	<not a character>
-	* the value 3FFFF is guaranteed not to be a Unicode character at all
 @@	4FF80	Unassigned	4FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 4FFFE	<not a character>
-	* the value 4FFFE is guaranteed not to be a Unicode character at all
 4FFFF	<not a character>
-	* the value 4FFFF is guaranteed not to be a Unicode character at all
 @@	5FF80	Unassigned	5FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 5FFFE	<not a character>
-	* the value 5FFFE is guaranteed not to be a Unicode character at all
 5FFFF	<not a character>
-	* the value 5FFFF is guaranteed not to be a Unicode character at all
 @@	6FF80	Unassigned	6FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 6FFFE	<not a character>
-	* the value 6FFFE is guaranteed not to be a Unicode character at all
 6FFFF	<not a character>
-	* the value 6FFFF is guaranteed not to be a Unicode character at all
 @@	7FF80	Unassigned	7FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 7FFFE	<not a character>
-	* the value 7FFFE is guaranteed not to be a Unicode character at all
 7FFFF	<not a character>
-	* the value 7FFFF is guaranteed not to be a Unicode character at all
 @@	8FF80	Unassigned	8FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 8FFFE	<not a character>
-	* the value 8FFFE is guaranteed not to be a Unicode character at all
 8FFFF	<not a character>
-	* the value 8FFFF is guaranteed not to be a Unicode character at all
 @@	9FF80	Unassigned	9FFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 9FFFE	<not a character>
-	* the value 9FFFE is guaranteed not to be a Unicode character at all
 9FFFF	<not a character>
-	* the value 9FFFF is guaranteed not to be a Unicode character at all
 @@	AFF80	Unassigned	AFFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 AFFFE	<not a character>
-	* the value AFFFE is guaranteed not to be a Unicode character at all
 AFFFF	<not a character>
-	* the value AFFFF is guaranteed not to be a Unicode character at all
 @@	BFF80	Unassigned	BFFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 BFFFE	<not a character>
-	* the value BFFFE is guaranteed not to be a Unicode character at all
 BFFFF	<not a character>
-	* the value BFFFF is guaranteed not to be a Unicode character at all
 @@	CFF80	Unassigned	CFFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 CFFFE	<not a character>
-	* the value CFFFE is guaranteed not to be a Unicode character at all
 CFFFF	<not a character>
-	* the value CFFFF is guaranteed not to be a Unicode character at all
 @@	DFF80	Unassigned	DFFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 DFFFE	<not a character>
-	* the value DFFFE is guaranteed not to be a Unicode character at all
 DFFFF	<not a character>
-	* the value DFFFF is guaranteed not to be a Unicode character at all
 @@	E0000	Tags	E007F
 @+		Tag characters are deprecated, and their use is strongly discouraged.
 @		Tag identifiers
@@ -39255,24 +39325,18 @@ E01EE	VARIATION SELECTOR-255
 E01EF	VARIATION SELECTOR-256
 @@	EFF80	Unassigned	EFFFF
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 EFFFE	<not a character>
-	* the value EFFFE is guaranteed not to be a Unicode character at all
 EFFFF	<not a character>
-	* the value EFFFF is guaranteed not to be a Unicode character at all
 @@	FFF80	Supplementary Private Use Area-A	FFFFF
 @+		The entire plane is dedicated to private use with the exception of the last two code points.
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 FFFFE	<not a character>
-	* the value FFFFE is guaranteed not to be a Unicode character at all
 FFFFF	<not a character>
-	* the value FFFFF is guaranteed not to be a Unicode character at all
 @@	10FF80	Supplementary Private Use Area-B	10FFFF
 @+		The entire plane is dedicated to private use with the exception of the last two code points.
 @		Noncharacters
-@+		These codes are intended for process-internal uses, but are not permitted for interchange.
+@+		These codes are intended for process-internal uses.
 10FFFE	<not a character>
-	* the value 10FFFE is guaranteed not to be a Unicode character at all
 10FFFF	<not a character>
-	* the value 10FFFF is guaranteed not to be a Unicode character at all

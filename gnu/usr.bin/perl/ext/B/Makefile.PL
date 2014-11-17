@@ -20,9 +20,8 @@ if ($core) {
     $headerpath = File::Spec->catdir($Config::Config{archlibexp}, "CORE");
 }
 
-my @names = qw(HEf_SVKEY
-	       SVTYPEMASK SVt_PVGV SVt_PVHV
-	       PAD_FAKELEX_ANON PAD_FAKELEX_MULTI);
+my @names = ({ name => 'HEf_SVKEY', macro => 1, type => "IV" },
+             qw(SVTYPEMASK SVt_PVGV SVt_PVHV PAD_FAKELEX_ANON PAD_FAKELEX_MULTI));
 
 
 # First element in each tuple is the file; second is a regex snippet
@@ -56,6 +55,6 @@ foreach my $tuple (['cop.h'],
 WriteConstants(
     PROXYSUBS => {push => 'EXPORT_OK'},
     NAME => 'B',
-    NAMES => [map {ref $_ ? $_ : {name=>$_, macro=>1}} @names],
+    NAMES => [map {ref $_ ? $_ : {name=>$_, macro=>1, type=>"UV"}} @names],
     XS_SUBNAME => undef,
 );

@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.23";
+our $VERSION     = "0.26";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
@@ -570,7 +570,7 @@ results in
 Because the C<here> is before the C<.*> in the pattern, its position
 can be determined exactly. That's not true, however, for the C<there>;
 it could appear at any point after where the anchored string appeared.
-Perl uses both for its optimisations, prefering the longer, or, if they are
+Perl uses both for its optimisations, preferring the longer, or, if they are
 equal, the floating.
 
 B<NOTE:> This may not necessarily be the definitive longest anchored and

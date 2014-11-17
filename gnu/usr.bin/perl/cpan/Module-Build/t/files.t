@@ -6,7 +6,6 @@ use MBTest tests => 4;
 
 blib_load('Module::Build');
 
-use IO::File;
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
@@ -26,9 +25,9 @@ my $mb = Module::Build->new_from_context;
   my $filename = 'file with spaces.txt';
 
   my $file = File::Spec->catfile($tmp[0], $filename);
-  my $fh = IO::File->new($file, '>') or die "Can't create $file: $!";
+  open(my $fh, '>', $file) or die "Can't create $file: $!";
   print $fh "Foo\n";
-  $fh->close;
+  close $fh;
   ok -e $file;
 
 

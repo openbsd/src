@@ -18,9 +18,7 @@ BEGIN {
     }
 
 ok (my $conf = Config::Perl::V::myconfig,	"Read config");
-for (qw( build environment config inc )) {
-    ok (exists $conf->{build},			"Has build entry");
-    }
+ok (exists $conf->{$_},	"Has $_ entry") for qw( build environment config inc );
 is (lc $conf->{build}{osname}, lc $conf->{config}{osname}, "osname");
 
 SKIP: {

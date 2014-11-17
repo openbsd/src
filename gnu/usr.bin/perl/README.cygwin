@@ -390,7 +390,7 @@ Cygwin processes have their own pid, which is different from the
 underlying windows pid.  Most posix compliant Proc functions expect
 the cygwin pid, but several Win32::Process functions expect the
 winpid. E.g. C<$$> is the cygwin pid of F</usr/bin/perl>, which is not
-the winpid.  Use C<Cygwin::winpid_to_pid()> and C<Cygwin::winpid_to_pid()>
+the winpid.  Use C<Cygwin::pid_to_winpid()> and C<Cygwin::winpid_to_pid()>
 to translate between them.
 
 =item * Cygwin vs. Windows errors
@@ -409,7 +409,8 @@ looks like like the following:
 
 or:
 
-  183 [main] perl 3588 C:\cygwin\bin\perl.exe: *** fatal error - unable to remap C:\cygwin\bin\cygsvn_subr-1-0.dll to same address as parent(0x6FB30000) != 0x6FE60000
+  183 [main] perl 3588 C:\cygwin\bin\perl.exe: *** fatal error - unable to remap
+  C:\cygwin\bin\cygsvn_subr-1-0.dll to same address as parent(0x6FB30000) != 0x6FE60000
   46 [main] perl 3488 fork: child 3588 - died waiting for dll loading, errno11
 
 See L<http://cygwin.com/faq/faq-nochunks.html#faq.using.fixing-fork-failures>
@@ -664,15 +665,6 @@ be kept as clean as possible.
   ext/Win32CORE/Win32CORE.pm
                         - History of Win32CORE under Cygwin
   lib/CGI.pm            - binmode and path separator
-  lib/CPANPLUS/Dist/MM.pm - Commented out code that fails under Win32/Cygwin
-  lib/CPANPLUS/Internals/Constants/Report.pm
-                        - OS classifications
-  lib/CPANPLUS/Internals/Constants.pm
-                        - Constants for Cygwin
-  lib/CPANPLUS/Internals/Report.pm
-                        - Example of Cygwin report
-  lib/CPANPLUS/Module.pm
-                        - Abort if running on old Cygwin version
   lib/Cwd.pm            - hook to internal Cwd::cwd
   lib/ExtUtils/CBuilder/Platform/cygwin.pm
                         - use gcc for ld, and link to libperl.dll.a
@@ -728,8 +720,6 @@ be kept as clean as possible.
   lib/AnyDBM_File.t
   lib/Archive/Extract/t/01_Archive-Extract.t
   lib/Archive/Tar/t/02_methods.t
-  lib/CPANPLUS/t/05_CPANPLUS-Internals-Fetch.t
-  lib/CPANPLUS/t/20_CPANPLUS-Dist-MM.t
   lib/ExtUtils/t/Embed.t
   lib/ExtUtils/t/eu_command.t
   lib/ExtUtils/t/MM_Cygwin.t

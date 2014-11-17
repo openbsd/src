@@ -11,14 +11,20 @@ chdir 't';
 use Config;
 use ExtUtils::Embed;
 use File::Spec;
+use IPC::Cmd qw(can_run);
 
+my $cc = $Config{'cc'};
+if ( $Config{usecrosscompile} && !can_run($cc) ) {
+    print "1..0 # SKIP Cross-compiling and the target doesn't have $cc";
+    exit;
+}
 open(my $fh,">embed_test.c") || die "Cannot open embed_test.c:$!";
 print $fh <DATA>;
 close($fh);
 
 $| = 1;
-print "1..9\n";
-my $cc = $Config{'cc'};
+print "1..10\n";
+
 my $cl  = ($^O eq 'MSWin32' && $cc eq 'cl');
 my $skip_exe = $^O eq 'os2' && $Config{ldflags} =~ /(?<!\S)-Zexe\b/;
 my $exe = 'embed_test';
@@ -136,7 +142,7 @@ my $embed_test = File::Spec->catfile(File::Spec->curdir, $exe);
 $embed_test = "run/nodebug $exe" if $^O eq 'VMS';
 print "# embed_test = $embed_test\n";
 $status = system($embed_test);
-print (($status? 'not ':'')."ok 9 # system returned $status\n");
+print (($status? 'not ':'')."ok 10 # system returned $status\n");
 unlink($exe,"embed_test.c",$obj);
 unlink("$exe.manifest") if $cl and $Config{'ccversion'} =~ /^(\d+)/ and $1 >= 14;
 unlink("$exe$Config{exe_ext}") if $skip_exe;
@@ -154,7 +160,7 @@ __END__
 
 #define my_puts(a) if(puts(a) < 0) exit(666)
 
-static const char * cmds [] = { "perl", "-e", "$|=1; print qq[ok 5\\n]", NULL };
+static const char * cmds [] = { "perl", "-e", "$|=1; print qq[ok 5\\n]; $SIG{__WARN__} = sub { print qq[ok 6\\n] if $_[0] =~ /Unexpected exit/; }; exit 5;", NULL };
 
 #ifdef PERL_GLOBAL_STRUCT_PRIVATE
 static struct perl_vars *my_plvarsp;
@@ -169,10 +175,11 @@ int main(int argc, char **argv, char **env) {
 #endif
     PerlInterpreter *my_perl;
 #ifdef PERL_GLOBAL_STRUCT
-    dVAR;
-    struct perl_vars *plvarsp = init_global_struct();
+    struct perl_vars *my_vars = init_global_struct();
 #  ifdef PERL_GLOBAL_STRUCT_PRIVATE
-    my_vars = my_plvarsp = plvarsp;
+    int veto;
+
+    my_plvarsp = my_vars;
 #  endif
 #endif /* PERL_GLOBAL_STRUCT */
 
@@ -185,6 +192,7 @@ int main(int argc, char **argv, char **env) {
     my_puts("ok 2");
 
     perl_construct(my_perl);
+    PL_exit_flags |= PERL_EXIT_WARN;
 
     my_puts("ok 3");
 
@@ -196,20 +204,30 @@ int main(int argc, char **argv, char **env) {
 
     perl_run(my_perl);
 
-    my_puts("ok 6");
+    my_puts("ok 7");
 
     perl_destruct(my_perl);
 
-    my_puts("ok 7");
+    my_puts("ok 8");
 
     perl_free(my_perl);
 
-    my_puts("ok 8");
+    my_puts("ok 9");
 
     PERL_SYS_TERM();
 
 #ifdef PERL_GLOBAL_STRUCT
-    free_global_struct(plvarsp);
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
+    veto = my_plvarsp->Gveto_cleanup;
+#  endif
+    free_global_struct(my_vars);
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
+    if (!veto)
+        my_plvarsp = NULL;
+    /* Remember, functions registered with atexit() can run after this point,
+       and may access "global" variables, and hence end up calling
+       Perl_GetVarsPrivate()  */
+#endif
 #endif /* PERL_GLOBAL_STRUCT */
 
     return 0;

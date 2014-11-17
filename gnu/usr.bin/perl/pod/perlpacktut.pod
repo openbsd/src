@@ -176,7 +176,8 @@ template doesn't match the incoming data, Perl will scream and die.
 
 Hence, putting it all together:
 
-    my($date,$description,$income,$expend) = unpack("A10xA27xA7xA*", $_);
+    my ($date, $description, $income, $expend) =
+        unpack("A10xA27xA7xA*", $_);
 
 Now, that's our data parsed. I suppose what we might want to do now is
 total up our income and expenditure, and add another line to the end of
@@ -184,7 +185,8 @@ our ledger - in the same format - saying how much we've brought in and
 how much we've spent:
 
     while (<>) {
-        my($date, $desc, $income, $expend) = unpack("A10xA27xA7xA*", $_);
+        my ($date, $desc, $income, $expend) =
+            unpack("A10xA27xA7xA*", $_);
         $tot_income += $income;
         $tot_expend += $expend;
     }
@@ -196,7 +198,8 @@ how much we've spent:
 
     # OK, let's go:
 
-    print pack("A10xA27xA7xA*", $date, "Totals", $tot_income, $tot_expend);
+    print pack("A10xA27xA7xA*", $date, "Totals",
+        $tot_income, $tot_expend);
 
 Oh, hmm. That didn't quite work. Let's see what happened:
 
@@ -219,7 +222,8 @@ What we actually need to do is expand the width of the fields. The C<A>
 format pads any non-existent characters with spaces, so we can use the
 additional spaces to line up our fields, like this:
 
-    print pack("A11 A28 A8 A*", $date, "Totals", $tot_income, $tot_expend);
+    print pack("A11 A28 A8 A*", $date, "Totals",
+        $tot_income, $tot_expend);
 
 (Note that you can put spaces in the template to make it more readable,
 but they don't translate to spaces in the output.) Here's what we got
@@ -238,7 +242,8 @@ can get C<sprintf> to do it:
     $tot_income = sprintf("%.2f", $tot_income); 
     $tot_expend = sprintf("%12.2f", $tot_expend);
     $date = POSIX::strftime("%m/%d/%Y", localtime); 
-    print pack("A11 A28 A8 A*", $date, "Totals", $tot_income, $tot_expend);
+    print pack("A11 A28 A8 A*", $date, "Totals",
+        $tot_income, $tot_expend);
 
 This time we get the right answer:
 
@@ -562,7 +567,7 @@ last 4 bits can be ignored anyway.
 
 =head2 Uuencoding
 
-Another odd-man-out in the template alphabet is C<u>, which packs an
+Another odd-man-out in the template alphabet is C<u>, which packs a
 "uuencoded string". ("uu" is short for Unix-to-Unix.) Chances are that
 you won't ever need this encoding technique which was invented to overcome
 the shortcomings of old-fashioned transmission mediums that do not support
@@ -791,7 +796,8 @@ C</> is not implemented in Perls before 5.6, so if your code is required to
 work on older Perls you'll need to C<unpack( 'Z* Z* C')> to get the length,
 then use it to make a new unpack string. For example
 
-   # pack a message: ASCIIZ, ASCIIZ, length, string, byte (5.005 compatible)
+   # pack a message: ASCIIZ, ASCIIZ, length, string, byte
+   # (5.005 compatible)
    my $msg = pack( 'Z* Z* C A* C', $src, $dst, length $sm, $sm, $prio );
 
    # unpack
@@ -1136,7 +1142,7 @@ where a pointer is expected. The read(2) system call comes to mind:
 After reading L<perlfunc> explaining how to use C<syscall> we can write
 this Perl function copying a file to standard output:
 
-    require 'syscall.ph';
+    require 'syscall.ph'; # run h2ph to generate this file
     sub cat($){
         my $path = shift();
         my $size = -s $path;

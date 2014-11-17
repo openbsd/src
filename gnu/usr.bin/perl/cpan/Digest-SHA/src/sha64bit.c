@@ -1,3 +1,15 @@
+/*
+ * sha64bit.c: routines to compute SHA-384/512 digests
+ *
+ * Ref: NIST FIPS PUB 180-4 Secure Hash Standard
+ *
+ * Copyright (C) 2003-2014 Mark Shelor, All Rights Reserved
+ *
+ * Version: 5.88
+ * Mon Mar 17 08:46:10 MST 2014
+ *
+ */
+
 #ifdef SHA_384_512
 
 #undef sha_384_512

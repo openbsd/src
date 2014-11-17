@@ -10,6 +10,7 @@ use strict;
 use TieOut;
 use File::Path;
 use File::Spec;
+use File::Temp qw[tempdir];
 
 use Test::More tests => 70;
 
@@ -22,6 +23,8 @@ foreach my $func (qw(install uninstall pm_to_blib install_default)) {
     can_ok(__PACKAGE__, $func);
 }
 
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 ok( setup_recurs(), 'setup' );
 END {

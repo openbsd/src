@@ -218,8 +218,8 @@ For copyright
 
 For licensing the easiest way is to use the same licensing as Perl itself:
 
-    This library is free software; you may redistribute it and/or modify
-    it under the same terms as Perl itself.
+    This library is free software; you may redistribute it and/or
+    modify it under the same terms as Perl itself.
 
 This makes it easy for people to use your module with Perl.  Note that
 this licensing example is neither an endorsement or a requirement, you are

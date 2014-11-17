@@ -48,73 +48,76 @@ types.  Don't forget that with the new PerlIO layered I/O abstraction
 C<FILE*> types may not even be available. See also the C<perlapio>
 documentation for more information about the following functions:
 
-    Instead Of:                 Use:
+ Instead Of:                 Use:
 
-    stdin                       PerlIO_stdin()
-    stdout                      PerlIO_stdout()
-    stderr                      PerlIO_stderr()
+ stdin                       PerlIO_stdin()
+ stdout                      PerlIO_stdout()
+ stderr                      PerlIO_stderr()
 
-    fopen(fn, mode)             PerlIO_open(fn, mode)
-    freopen(fn, mode, stream)   PerlIO_reopen(fn, mode, perlio) (Deprecated)
-    fflush(stream)              PerlIO_flush(perlio)
-    fclose(stream)              PerlIO_close(perlio)
+ fopen(fn, mode)             PerlIO_open(fn, mode)
+ freopen(fn, mode, stream)   PerlIO_reopen(fn, mode, perlio) (Dep-
+                               recated)
+ fflush(stream)              PerlIO_flush(perlio)
+ fclose(stream)              PerlIO_close(perlio)
 
 =head2 File Input and Output
 
-    Instead Of:                 Use:
+ Instead Of:                 Use:
 
-    fprintf(stream, fmt, ...)   PerlIO_printf(perlio, fmt, ...)
+ fprintf(stream, fmt, ...)   PerlIO_printf(perlio, fmt, ...)
 
-    [f]getc(stream)             PerlIO_getc(perlio)
-    [f]putc(stream, n)          PerlIO_putc(perlio, n)
-    ungetc(n, stream)           PerlIO_ungetc(perlio, n)
+ [f]getc(stream)             PerlIO_getc(perlio)
+ [f]putc(stream, n)          PerlIO_putc(perlio, n)
+ ungetc(n, stream)           PerlIO_ungetc(perlio, n)
 
 Note that the PerlIO equivalents of C<fread> and C<fwrite> are slightly
 different from their C library counterparts:
 
-    fread(p, size, n, stream)   PerlIO_read(perlio, buf, numbytes)
-    fwrite(p, size, n, stream)  PerlIO_write(perlio, buf, numbytes)
+ fread(p, size, n, stream)   PerlIO_read(perlio, buf, numbytes)
+ fwrite(p, size, n, stream)  PerlIO_write(perlio, buf, numbytes)
 
-    fputs(s, stream)            PerlIO_puts(perlio, s)
+ fputs(s, stream)            PerlIO_puts(perlio, s)
 
 There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
 
-    fgets(s, n, stream)         sv_gets(sv, perlio, append)
+ fgets(s, n, stream)         sv_gets(sv, perlio, append)
 
 =head2 File Positioning
 
-    Instead Of:                 Use:
+ Instead Of:                 Use:
 
-    feof(stream)                PerlIO_eof(perlio)
-    fseek(stream, n, whence)    PerlIO_seek(perlio, n, whence)
-    rewind(stream)              PerlIO_rewind(perlio)
+ feof(stream)                PerlIO_eof(perlio)
+ fseek(stream, n, whence)    PerlIO_seek(perlio, n, whence)
+ rewind(stream)              PerlIO_rewind(perlio)
 
-    fgetpos(stream, p)          PerlIO_getpos(perlio, sv)
-    fsetpos(stream, p)          PerlIO_setpos(perlio, sv)
+ fgetpos(stream, p)          PerlIO_getpos(perlio, sv)
+ fsetpos(stream, p)          PerlIO_setpos(perlio, sv)
 
-    ferror(stream)              PerlIO_error(perlio)
-    clearerr(stream)            PerlIO_clearerr(perlio)
+ ferror(stream)              PerlIO_error(perlio)
+ clearerr(stream)            PerlIO_clearerr(perlio)
 
 =head2 Memory Management and String Handling
 
-    Instead Of:                 	Use:
+ Instead Of:                    Use:
 
-    t* p = malloc(n)            	Newx(p, n, t)
-    t* p = calloc(n, s)         	Newxz(p, n, t)
-    p = realloc(p, n)           	Renew(p, n, t)
-    memcpy(dst, src, n)         	Copy(src, dst, n, t)
-    memmove(dst, src, n)        	Move(src, dst, n, t)
-    memcpy(dst, src, sizeof(t))		StructCopy(src, dst, t)
-    memset(dst, 0, n * sizeof(t))	Zero(dst, n, t)
-    memzero(dst, 0)			Zero(dst, n, char)
-    free(p)             	        Safefree(p)
+ t* p = malloc(n)               Newx(p, n, t)
+ t* p = calloc(n, s)            Newxz(p, n, t)
+ p = realloc(p, n)              Renew(p, n, t)
+ memcpy(dst, src, n)            Copy(src, dst, n, t)
+ memmove(dst, src, n)           Move(src, dst, n, t)
+ memcpy(dst, src, sizeof(t))    StructCopy(src, dst, t)
+ memset(dst, 0, n * sizeof(t))  Zero(dst, n, t)
+ memzero(dst, 0)                Zero(dst, n, char)
+ free(p)                        Safefree(p)
 
-    strdup(p)                   savepv(p)
-    strndup(p, n)               savepvn(p, n) (Hey, strndup doesn't exist!)
+ strdup(p)                      savepv(p)
+ strndup(p, n)                  savepvn(p, n) (Hey, strndup doesn't
+                                               exist!)
 
-    strstr(big, little)         instr(big, little)
-    strcmp(s1, s2)              strLE(s1, s2) / strEQ(s1, s2) / strGT(s1,s2)
-    strncmp(s1, s2, n)          strnNE(s1, s2, n) / strnEQ(s1, s2, n)
+ strstr(big, little)            instr(big, little)
+ strcmp(s1, s2)                 strLE(s1, s2) / strEQ(s1, s2)
+                                              / strGT(s1,s2)
+ strncmp(s1, s2, n)             strnNE(s1, s2, n) / strnEQ(s1, s2, n)
 
 Notice the different order of arguments to C<Copy> and C<Move> than used
 in C<memcpy> and C<memmove>.
@@ -122,12 +125,12 @@ in C<memcpy> and C<memmove>.
 Most of the time, though, you'll want to be dealing with SVs internally
 instead of raw C<char *> strings:
 
-    strlen(s)                   sv_len(sv)
-    strcpy(dt, src)             sv_setpv(sv, s)
-    strncpy(dt, src, n)         sv_setpvn(sv, s, n)
-    strcat(dt, src)             sv_catpv(sv, s)
-    strncat(dt, src)            sv_catpvn(sv, s)
-    sprintf(s, fmt, ...)        sv_setpvf(sv, fmt, ...)
+ strlen(s)                   sv_len(sv)
+ strcpy(dt, src)             sv_setpv(sv, s)
+ strncpy(dt, src, n)         sv_setpvn(sv, s, n)
+ strcat(dt, src)             sv_catpv(sv, s)
+ strncat(dt, src)            sv_catpvn(sv, s)
+ sprintf(s, fmt, ...)        sv_setpvf(sv, fmt, ...)
 
 Note also the existence of C<sv_catpvf> and C<sv_vcatpvfn>, combining
 concatenation with formatting.
@@ -140,45 +143,67 @@ any code attempting to use the data without forethought will break
 sooner rather than later.  Poisoning can be done using the Poison()
 macros, which have similar arguments to Zero():
 
-    PoisonWith(dst, n, t, b)    scribble memory with byte b
-    PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)
-    PoisonFree(dst, n, t)       equal to PoisonWith(dst, n, t, 0xEF)
-    Poison(dst, n, t)           equal to PoisonFree(dst, n, t)
+ PoisonWith(dst, n, t, b)    scribble memory with byte b
+ PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)
+ PoisonFree(dst, n, t)       equal to PoisonWith(dst, n, t, 0xEF)
+ Poison(dst, n, t)           equal to PoisonFree(dst, n, t)
 
 =head2 Character Class Tests
 
-There are two types of character class tests that Perl implements: one
-type deals in C<char>s and are thus B<not> Unicode aware (and hence
-deprecated unless you B<know> you should use them) and the other type
-deal in C<UV>s and know about Unicode properties. In the following
-table, C<c> is a C<char>, and C<u> is a Unicode codepoint.
+There are several types of character class tests that Perl implements.
+The only ones described here are those that directly correspond to C
+library functions that operate on 8-bit characters, but there are
+equivalents that operate on wide characters, and UTF-8 encoded strings.
+All are more fully described in L<perlapi/Character classes> and
+L<perlapi/Character case changing>.
 
-    Instead Of:                 Use:            But better use:
+The C library routines listed in the table below return values based on
+the current locale.  Use the entries in the final column for that
+functionality.  The other two columns always assume a POSIX (or C)
+locale.  The entries in the ASCII column are only meaningful for ASCII
+inputs, returning FALSE for anything else.  Use these only when you
+B<know> that is what you want.  The entries in the Latin1 column assume
+that the non-ASCII 8-bit characters are as Unicode defines, them, the
+same as ISO-8859-1, often called Latin 1.
 
-    isalnum(c)                  isALNUM(c)      isALNUM_uni(u)
-    isalpha(c)                  isALPHA(c)      isALPHA_uni(u)
-    iscntrl(c)                  isCNTRL(c)      isCNTRL_uni(u)
-    isdigit(c)                  isDIGIT(c)      isDIGIT_uni(u)
-    isgraph(c)                  isGRAPH(c)      isGRAPH_uni(u)
-    islower(c)                  isLOWER(c)      isLOWER_uni(u)
-    isprint(c)                  isPRINT(c)      isPRINT_uni(u)
-    ispunct(c)                  isPUNCT(c)      isPUNCT_uni(u)
-    isspace(c)                  isSPACE(c)      isSPACE_uni(u)
-    isupper(c)                  isUPPER(c)      isUPPER_uni(u)
-    isxdigit(c)                 isXDIGIT(c)     isXDIGIT_uni(u)
+ Instead Of:  Use for ASCII:   Use for Latin1:      Use for locale:
 
-    tolower(c)                  toLOWER(c)      toLOWER_uni(u)
-    toupper(c)                  toUPPER(c)      toUPPER_uni(u)
+ isalnum(c)  isALPHANUMERIC(c) isALPHANUMERIC_L1(c) isALPHANUMERIC_LC(c)
+ isalpha(c)  isALPHA(c)        isALPHA_L1(c)        isALPHA_LC(u )
+ isascii(c)  isASCII(c)                             isASCII_LC(c)
+ isblank(c)  isBLANK(c)        isBLANK_L1(c)        isBLANK_LC(c)
+ iscntrl(c)  isCNTRL(c)        isCNTRL_L1(c)        isCNTRL_LC(c)
+ isdigit(c)  isDIGIT(c)        isDIGIT_L1(c)        isDIGIT_LC(c)
+ isgraph(c)  isGRAPH(c)        isGRAPH_L1(c)        isGRAPH_LC(c)
+ islower(c)  isLOWER(c)        isLOWER_L1(c)        isLOWER_LC(c)
+ isprint(c)  isPRINT(c)        isPRINT_L1(c)        isPRINT_LC(c)
+ ispunct(c)  isPUNCT(c)        isPUNCT_L1(c)        isPUNCT_LC(c)
+ isspace(c)  isSPACE(c)        isSPACE_L1(c)        isSPACE_LC(c)
+ isupper(c)  isUPPER(c)        isUPPER_L1(c)        isUPPER_LC(c)
+ isxdigit(c) isXDIGIT(c)       isXDIGIT_L1(c)       isXDIGIT_LC(c)
+
+ tolower(c)  toLOWER(c)        toLOWER_L1(c)        toLOWER_LC(c)
+ toupper(c)  toUPPER(c)                             toUPPER_LC(c)
+
+To emphasize that you are operating only on ASCII characters, you can
+append C<_A> to each of the macros in the ASCII column: C<isALPHA_A>,
+C<isDIGIT_A>, and so on.
+
+(There is no entry in the Latin1 column for C<isascii> even though there
+is an C<isASCII_L1>, which is identical to C<isASCII>;  the
+latter name is clearer.  There is no entry in the Latin1 column for
+C<toupper> because the result can be non-Latin1.  You have to use
+C<toUPPER_uni>, as described in L<perlapi/Character case changing>.)
 
 =head2 F<stdlib.h> functions
 
-    Instead Of:                 Use: 
+ Instead Of:                 Use:
 
-    atof(s)                     Atof(s)
-    atol(s)                     Atol(s)
-    strtod(s, &p)               Nothing.  Just don't use it.
-    strtol(s, &p, n)            Strtol(s, &p, n)
-    strtoul(s, &p, n)           Strtoul(s, &p, n)
+ atof(s)                     Atof(s)
+ atol(s)                     Atol(s)
+ strtod(s, &p)               Nothing.  Just don't use it.
+ strtol(s, &p, n)            Strtol(s, &p, n)
+ strtoul(s, &p, n)           Strtoul(s, &p, n)
 
 Notice also the C<grok_bin>, C<grok_hex>, and C<grok_oct> functions in
 F<numeric.c> for converting strings representing numbers in the respective
@@ -189,15 +214,15 @@ built on doesn't actually have strtol and strtoul. But as those 2
 functions are part of the 1989 ANSI C spec we suspect you'll find them
 everywhere by now.
 
-    int rand()                  double Drand01()
-    srand(n)                    { seedDrand01((Rand_seed_t)n); 
-                                  PL_srand_called = TRUE; }
+ int rand()                  double Drand01()
+ srand(n)                    { seedDrand01((Rand_seed_t)n);
+                               PL_srand_called = TRUE; }
 
-    exit(n)                     my_exit(n)
-    system(s)                   Don't. Look at pp_system or use my_popen
+ exit(n)                     my_exit(n)
+ system(s)                   Don't. Look at pp_system or use my_popen
 
-    getenv(s)                   PerlEnv_getenv(s)
-    setenv(s, val)              my_putenv(s, val)
+ getenv(s)                   PerlEnv_getenv(s)
+ setenv(s, val)              my_putenv(s, val)
 
 =head2 Miscellaneous functions
 

@@ -12,7 +12,7 @@ use IO::Socket;
 use Carp;
 
 @ISA = qw(IO::Socket);
-$VERSION = "1.24";
+$VERSION = "1.26";
 $VERSION = eval $VERSION;
 
 IO::Socket::UNIX->register_domain( AF_UNIX );
@@ -74,6 +74,28 @@ IO::Socket::UNIX - Object interface for AF_UNIX domain sockets
 
     use IO::Socket::UNIX;
 
+    my $SOCK_PATH = "$ENV{HOME}/unix-domain-socket-test.sock";
+
+    # Server:
+    my $server = IO::Socket::UNIX->new(
+        Type => SOCK_STREAM(),
+        Local => $SOCK_PATH,
+        Listen => 1,
+    );
+
+    my $count = 1;
+    while (my $conn = $server->accept()) {
+        $conn->print("Hello " . ($count++) . "\n");
+    }
+
+    # Client:
+    my $client = IO::Socket::UNIX->new(
+        Type => SOCK_STREAM(),
+        Peer => $SOCK_PATH,
+    );
+
+    # Now read and write from $client
+
 =head1 DESCRIPTION
 
 C<IO::Socket::UNIX> provides an object interface to creating and using sockets
@@ -96,18 +118,12 @@ C<IO::Socket::UNIX> provides.
     Type    	Type of socket (eg SOCK_STREAM or SOCK_DGRAM)
     Local   	Path to local fifo
     Peer    	Path to peer fifo
-    Listen  	Create a listen socket
+    Listen  	Queue size for listen
 
 If the constructor is only passed a single argument, it is assumed to
 be a C<Peer> specification.
 
-
- NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
-
-As of VERSION 1.18 all IO::Socket objects have autoflush turned on
-by default. This was not the case with earlier releases.
-
- NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+If the C<Listen> argument is given, but false, the queue size will be set to 5.
 
 =back
 

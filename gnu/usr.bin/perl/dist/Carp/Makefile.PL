@@ -8,9 +8,13 @@ WriteMakefile(
 	VERSION_FROM => "lib/Carp.pm",
 	ABSTRACT_FROM => "lib/Carp.pm",
 	PREREQ_PM => {
+		"Config" => 0,
 		"Exporter" => 0,
+		"ExtUtils::MakeMaker" => 0,
 		"IPC::Open3" => "1.0103",
 		"Test::More" => 0,
+		"overload" => 0,
+		"parent" => 0,
 		"strict" => 0,
 		"warnings" => 0,
 	},

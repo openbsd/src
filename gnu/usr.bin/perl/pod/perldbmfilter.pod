@@ -140,8 +140,8 @@ Here is a DBM Filter that does it:
     unlink $filename;
 
 
-    my $db = tie %hash, 'DB_File', $filename, O_CREAT|O_RDWR, 0666, $DB_HASH 
-      or die "Cannot open $filename: $!\n";
+    my $db = tie %hash, 'DB_File', $filename, O_CREAT|O_RDWR, 0666,
+        $DB_HASH or die "Cannot open $filename: $!\n";
 
     $db->filter_fetch_key  ( sub { $_ = unpack("i", $_) } );
     $db->filter_store_key  ( sub { $_ = pack ("i", $_) } );

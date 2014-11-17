@@ -14,9 +14,9 @@ use Test::More;
 
 my $TB = Test::More->builder;
 
-plan tests => 465;
+plan tests => 466;
 
-# We're going to override rename() later on but Perl has to see an override
+# We are going to override rename() later on but Perl has to see an override
 # at compile time to honor it.
 BEGIN { *CORE::GLOBAL::rename = sub { CORE::rename($_[0], $_[1]) }; }
 
@@ -207,7 +207,7 @@ for my $cross_partition_test (0..1) {
   local $SIG{__WARN__} = sub { push @warnings, join '', @_ };
 
   # pie-$$ so that we force a non-constant, else the numeric conversion (of 0)
-  # is cached and we don't get a warning the second time round
+  # is cached and we do not get a warning the second time round
   is eval { copy("file-$$", "copy-$$", "pie-$$"); 1 }, undef,
     "a bad buffer size fails to copy";
   like $@, qr/Bad buffer size for copy/, "with a helpful error message";
@@ -306,7 +306,7 @@ SKIP: {
     foreach my $test (@tests) {
         foreach my $id (0 .. 7) {
             my ($umask, $s_perm, $c_perm1, $c_perm3) = @$test;
-            # Make sure the copies doesn't exist.
+            # Make sure the copies do not exist.
             ! -e $_ or unlink $_ or die $! for $copy1, $copy2, $copy4, $copy5;
 
             $s_perm  |= $id << 9;
@@ -500,7 +500,20 @@ SKIP: {
     1 while unlink $temp_file;
 }
 
+{
+  open(my $F, '>', "file-$$") or die $!;
+  binmode $F; # for DOSISH platforms
+  printf $F "ok\n";
+  close $F;
+
+  my $buffer = (1024 * 1024 * 2) + 1;
+  is eval {copy "file-$$", "copy-$$", $buffer}, 1,
+    "copy with buffer above normal size";
+}
+
+
 END {
+    1 while unlink "copy-$$";
     1 while unlink "file-$$";
     1 while unlink "lib/file-$$";
 }

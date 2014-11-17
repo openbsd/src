@@ -22,7 +22,7 @@ find(
 sub finder {
     my $file = $_;
 
-    return if -B $file;
+    return if -d $file or -B $file;
 
     open my $fh, '<', $file;
 

@@ -16,6 +16,8 @@ SvSetSV_nosteal                # U
 SvTAINTED                      # U
 SvTAINTED_off                  # U
 SvTAINTED_on                   # U
+XCPT_TRY_END                   # U
+XCPT_TRY_START                 # U
 block_gimme                    # U
 call_list                      # U
 cv_const_sv                    # U
@@ -36,7 +38,7 @@ hv_ksplit                      # U
 hv_store_ent                   # U
 ibcmp_locale                   # U
 my_failure_exit                # U
-my_memcmp                      # U
+my_memset                      # U
 my_pclose                      # E (Perl_my_pclose)
 my_popen                       # E (Perl_my_popen)
 newSVpvf                       # U
@@ -63,6 +65,8 @@ sv_vcatpvfn                    # U
 sv_vsetpvf                     # U
 sv_vsetpvf_mg                  # U
 sv_vsetpvfn                    # U
+toLOWER_LC                     # U
+toUPPER                        # U
 unsharepvn                     # U
 vnewSVpvf                      # U
 warner                         # U

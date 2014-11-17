@@ -66,7 +66,18 @@ subtest 'rewrite_interactions' => sub {
                                                 '$q->url(-rewrite=>1,-path=>1), with rewriting detected' );
     is( $q->url(-rewrite=>0,-path=>0), 'http://example.com/real/cgi-bin/dispatch.cgi',
                                                 '$q->url(-rewrite=>0,-path=>1), with rewriting detected' );
-    done_testing();
+};
+
+subtest 'RT#58377: + in PATH_INFO' => sub {
+    local $ENV{PATH_INFO}             = '/hello+world';
+    local $ENV{HTTP_X_FORWARDED_HOST} = undef;
+    local $ENV{'HTTP_HOST'}           = 'example.com';
+    local $ENV{'SCRIPT_NAME'}         = '/script/plus+name.cgi';
+    local $ENV{'SCRIPT_FILENAME'}     = '/script/plus+filename.cgi';
+
+    my $q = CGI->new;
+    is($q->url(), 'http://example.com/script/plus+name.cgi', 'a plus sign in a script name is preserved when calling url()');
+    is($q->path_info(), '/hello+world', 'a plus sign in a script name is preserved when calling path_info()');
 };
 
 

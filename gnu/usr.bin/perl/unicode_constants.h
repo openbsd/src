@@ -20,19 +20,26 @@
  *  "_TAIL"       if instead it represents all but the first byte.  This, and
  *                with no additional suffix are both string constants */
 
+#define LATIN_SMALL_LETTER_LONG_S_UTF8  "\xC5\xBF"    /* U+017F */
 
 #define COMBINING_GRAVE_ACCENT_UTF8  "\xCC\x80"    /* U+0300 */
-#define COMBINING_ACUTE_ACCENT_UTF8  "\xCC\x81"    /* U+0301 */
-#define COMBINING_DIAERESIS_UTF8  "\xCC\x88"    /* U+0308 */
 
-#define GREEK_SMALL_LETTER_IOTA_UTF8  "\xCE\xB9"    /* U+03B9 */
+#define GREEK_CAPITAL_LETTER_IOTA_UTF8  "\xCE\x99"    /* U+0399 */
+#define GREEK_SMALL_LETTER_MU_UTF8  "\xCE\xBC"    /* U+03BC */
 
-#define GREEK_SMALL_LETTER_UPSILON_UTF8  "\xCF\x85"    /* U+03C5 */
+#define LATIN_CAPITAL_LETTER_SHARP_S_UTF8  "\xE1\xBA\x9E"    /* U+1E9E */
+
+#define LATIN_SMALL_LIGATURE_LONG_S_T_UTF8  "\xEF\xAC\x85"    /* U+FB05 */
+#define LATIN_SMALL_LIGATURE_ST_UTF8  "\xEF\xAC\x86"    /* U+FB06 */
 
 #define HYPHEN_UTF8  "\xE2\x80\x90"    /* U+2010 */
 #define FIRST_SURROGATE_UTF8_FIRST_BYTE  0xED    /* U+D800 */
+#define BOM_UTF8_FIRST_BYTE  0xEF    /* U+FEFF */
+#define BOM_UTF8_TAIL  "\xBB\xBF"    /* U+FEFF */
 
 #define DEL_NATIVE  0x7F    /* U+007F */
+#define CR_NATIVE  0x0D    /* U+000D */
+#define LF_NATIVE  0x0A    /* U+000A */
 #define LATIN_SMALL_LETTER_SHARP_S_NATIVE  0xDF    /* U+00DF */
 #define LATIN_SMALL_LETTER_A_WITH_RING_ABOVE_NATIVE  0xE5    /* U+00E5 */
 #define LATIN_CAPITAL_LETTER_A_WITH_RING_ABOVE_NATIVE  0xC5    /* U+00C5 */

@@ -60,7 +60,7 @@
       "/* tiedelem 'p' Tied array or hash element */" },
     { 'q', "want_vtbl_packelem",
       "/* tiedscalar 'q' Tied scalar or handle */" },
-    { 'r', "want_vtbl_regexp | PERL_MAGIC_VALUE_MAGIC",
+    { 'r', "want_vtbl_regexp | PERL_MAGIC_READONLY_ACCEPTABLE | PERL_MAGIC_VALUE_MAGIC",
       "/* qr 'r' precompiled qr// regex */" },
     { 'S', "magic_vtable_max",
       "/* sig 'S' %SIG hash */" },

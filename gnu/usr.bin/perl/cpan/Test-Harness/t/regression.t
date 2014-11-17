@@ -5,6 +5,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 
 use Test::More 'no_plan';
 
@@ -3190,9 +3191,9 @@ my %samples = (
 );
 
 my %HANDLER_FOR = (
-    NOT_ZERO, sub { local $^W; 0 != shift },
-    TRUE,     sub { local $^W; !!shift },
-    FALSE,    sub { local $^W; !shift },
+    NOT_ZERO, sub { no warnings; 0 != shift },
+    TRUE,     sub { no warnings; !!shift },
+    FALSE,    sub { no warnings; !shift },
 );
 
 my $can_open3 = ( $Config{d_fork} || $IsWin32 ) ? 1 : 0;
@@ -3200,7 +3201,7 @@ my $can_open3 = ( $Config{d_fork} || $IsWin32 ) ? 1 : 0;
 for my $hide_fork ( 0 .. $can_open3 ) {
     if ($hide_fork) {
         no strict 'refs';
-        local $^W = 0;
+        no warnings 'redefine';
         *{'TAP::Parser::Iterator::Process::_use_open3'} = sub {return};
     }
 
@@ -3251,7 +3252,7 @@ for my $hide_fork ( 0 .. $can_open3 ) {
                       "... and $method should return a reasonable value ($test)";
                 }
                 elsif ( !ref $answer ) {
-                    local $^W;    # uninit warnings
+                    no warnings 'uninitialized';
 
                     $answer = _vmsify_answer( $method, $answer );
 

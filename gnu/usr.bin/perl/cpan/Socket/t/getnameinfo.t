@@ -32,11 +32,15 @@ is( $host, $expect_host, "\$host is $expect_host for NS" );
 is( $service, "80", '$service is 80 for NS' );
 
 # Probably "www" but we'd better ask the system to be sure
+my $flags = NI_NUMERICHOST;
 my $expect_service = getservbyport( 80, "tcp" );
-defined $expect_service or $expect_service = "80";
+unless( defined $expect_service ) {
+    $expect_service = "80";
+    $flags |= NI_NUMERICSERV; # don't seem to have a service name
+}
 
-( $err, $host, $service ) = getnameinfo( pack_sockaddr_in( 80, inet_aton( "127.0.0.1" ) ), NI_NUMERICHOST );
-cmp_ok( $err, "==", 0, '$err == 0 for {family=AF_INET,port=80,sinaddr=127.0.0.1}/NI_NUMERICHOST' );
+( $err, $host, $service ) = getnameinfo( pack_sockaddr_in( 80, inet_aton( "127.0.0.1" ) ), $flags );
+cmp_ok( $err, "==", 0, '$err == 0 for {family=AF_INET,port=80,sinaddr=127.0.0.1}/NI_NUMERICHOST[|NI_NUMERICSERV]' );
 
 is( $host, "127.0.0.1", '$host is 127.0.0.1 for NH' );
 is( $service, $expect_service, "\$service is $expect_service for NH" );

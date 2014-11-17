@@ -53,20 +53,23 @@ XXX Any deprecated features, syntax, modules etc. should be listed here.
 
 XXX Remove this section if inapplicable.
 
-The following modules will be removed from the core distribution in a future
-release, and will at that time need to be installed from CPAN. Distributions
-on CPAN which require these modules will need to list them as prerequisites.
+The following modules will be removed from the core distribution in a
+future release, and will at that time need to be installed from CPAN.
+Distributions on CPAN which require these modules will need to list them as
+prerequisites.
 
 The core versions of these modules will now issue C<"deprecated">-category
-warnings to alert you to this fact. To silence these deprecation warnings,
+warnings to alert you to this fact.  To silence these deprecation warnings,
 install the modules in question from CPAN.
 
 Note that these are (with rare exceptions) fine modules that you are encouraged
-to continue to use. Their disinclusion from core primarily hinges on their
+to continue to use.  Their disinclusion from core primarily hinges on their
 necessity to bootstrapping a fully functional, CPAN-capable Perl installation,
 not usually on concerns over their design.
 
 =over
+
+=item XXX
 
 XXX Note that deprecated modules should be listed here even if they are listed
 as an updated module in the L</Modules and Pragmata> section.
@@ -94,11 +97,9 @@ XXX
 
 XXX All changes to installed files in F<cpan/>, F<dist/>, F<ext/> and F<lib/>
 go here.  If Module::CoreList is updated, generate an initial draft of the
-following sections using F<Porting/corelist-perldelta.pl>, which prints stub
-entries to STDOUT.  Results can be pasted in place of the '=head2' entries
-below.  A paragraph summary for important changes should then be added by hand.
-In an ideal world, dual-life modules would have a F<Changes> file that could be
-cribbed.
+following sections using F<Porting/corelist-perldelta.pl>.  A paragraph summary
+for important changes should then be added by hand.  In an ideal world,
+dual-life modules would have a F<Changes> file that could be cribbed.
 
 [ Within each section, list entries as a =item entry ]
 
@@ -212,11 +213,11 @@ XXX Describe change here
 XXX Changes to installed programs such as F<perlbug> and F<xsubpp> go here.
 Most of these are built within the directories F<utils> and F<x2p>.
 
-[ List utility changes as a =head3 entry for each utility and =item
+[ List utility changes as a =head2 entry for each utility and =item
 entries for each change
 Use L<XXX> with program names to get proper documentation linking. ]
 
-=head3 L<XXX>
+=head2 L<XXX>
 
 =over 4
 
@@ -357,6 +358,17 @@ XXX
 
 =back
 
+=head1 Errata From Previous Releases
+
+=over 4
+
+=item *
+
+XXX Add anything here that we forgot to add, or were mistaken about, in
+the perldelta of a previous release.
+
+=back
+
 =head1 Obituary
 
 XXX If any significant core contributor has died, we've added a short obituary
@@ -366,13 +378,13 @@ here.
 
 XXX Generate this with:
 
-  perl Porting/acknowledgements.pl v5.18.2..HEAD
+  perl Porting/acknowledgements.pl v5.20.1..HEAD
 
 =head1 Reporting Bugs
 
 If you find what you think is a bug, you might check the articles recently
 posted to the comp.lang.perl.misc newsgroup and the perl bug database at
-http://rt.perl.org/perlbug/ .  There may also be information at
+https://rt.perl.org/ .  There may also be information at
 http://www.perl.org/ , the Perl Home Page.
 
 If you believe you have an unreported bug, please run the L<perlbug> program

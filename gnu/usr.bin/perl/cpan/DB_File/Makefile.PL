@@ -4,8 +4,8 @@ use strict ;
 use ExtUtils::MakeMaker 5.16 ;
 use Config ;
 
-die "DB_File needs Perl 5.004_05 or better. This is $]\n" 
-    if $] <= 5.00404; 
+die "DB_File needs Perl 5.005_04 or better. This is $]\n" 
+    if $] < 5.00504; 
 
 my $VER_INFO ;
 my $LIB_DIR ;
@@ -61,12 +61,15 @@ WriteMakefile(
         : ()
     ),
     
+    ($] < 5.008 || $] > 5.011) 
+        ? (INSTALLDIRS => 'site') 
+        : (INSTALLDIRS => 'perl'),
 
 	#OPTIMIZE	=> '-g',
 	'depend'	=> { 'Makefile'          => 'config.in',
                              'version$(OBJ_EXT)' => 'version.c'},
-	'clean'		=> { FILES => 'constants.h constants.xs' },
-	'macro'		=> { INSTALLDIRS => 'perl', my_files => "@files" },
+	'clean'		=> { FILES => 'constants.h constants.xs DB_File.pm.bak t/db-btree.t.bak t/db-hash.t.bak t/db-recno.t.bak t/pod.t.bak' },
+	'macro'		=> { my_files => "@files" },
         'dist'          => { COMPRESS => 'gzip', SUFFIX => 'gz',
 			     DIST_DEFAULT => 'MyDoubleCheck tardist'},    
 	);

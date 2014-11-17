@@ -390,7 +390,7 @@ backward compatibility, and this will probably make your list order
 unintuitive.  Also, if many elements may be undefined you may see the
 following unattractive method calls:
 
-    $obj->do_something(undef, undef, undef, undef, undef, undef, 1024);
+    $obj->do_something(undef, undef, undef, undef, undef, 1024);
 
 Provide sensible defaults for parameters which have them.  Don't make
 your users specify parameters which will almost always be the same.
@@ -597,6 +597,11 @@ When using Module::Build, this will usually be:
 Release notes or changelogs should be produced for each release of your
 software describing user-visible changes to your module, in terms
 relevant to the user.
+
+Unless you have good reasons for using some other format
+(for example, a format used within your company),
+the convention is to name your changelog file C<Changes>,
+and to follow the simple format described in L<CPAN::Changes::Spec>.
 
 =head1 RELEASE CONSIDERATIONS
 

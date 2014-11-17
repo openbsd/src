@@ -32,7 +32,7 @@ constant that is automatically exported by this module.
 For example, the two are equivalent:
 
    $lang = code2language('en','alpha-2');
-   $lang = code2language('en',LOCALE_CODE_ALPHA_2);
+   $lang = code2language('en',LOCALE_LANG_ALPHA_2);
 
 The codesets currently supported are:
 
@@ -129,7 +129,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
+   Copyright (c) 2010-2014 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

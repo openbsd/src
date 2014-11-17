@@ -11,7 +11,7 @@ unless( eval q{require warnings::register; warnings::register->import; 1} ) {
 }
 use vars qw(%attr $VERSION);
 
-$VERSION = '2.16';
+$VERSION = '2.17';
 
 # constant.pm is slow
 sub PUBLIC     () { 2**0  }
@@ -200,8 +200,12 @@ fields - compile-time class fields
     my $var = Foo->new;
     $var->{foo} = 42;
 
-    # this will generate an error
+    # this will generate a run-time error
     $var->{zap} = 42;
+
+    # this will generate a compile-time error
+    my Foo $foo = Foo->new;
+    $foo->{zap} = 24;
 
     # subclassing
     {
@@ -220,38 +224,34 @@ fields - compile-time class fields
 
 =head1 DESCRIPTION
 
-The C<fields> pragma enables compile-time verified class fields.
+The C<fields> pragma enables compile-time and run-time verified class
+fields.
 
 NOTE: The current implementation keeps the declared fields in the %FIELDS
 hash of the calling package, but this may change in future versions.
 Do B<not> update the %FIELDS hash directly, because it must be created
 at compile-time for it to be fully useful, as is done by this pragma.
 
-B<Only valid for perl before 5.9.0:>
-
-If a typed lexical variable holding a reference is used to access a
+If a typed lexical variable (C<my Class
+$var>) holding a reference is used to access a
 hash element and a package with the same name as the type has
-declared class fields using this pragma, then the operation is
-turned into an array access at compile time.
-
+declared class fields using this pragma, then the hash key is
+verified at compile time.  If the variables are not typed, access is
+only checked at run time.
 
 The related C<base> pragma will combine fields from base classes and any
 fields declared using the C<fields> pragma.  This enables field
-inheritance to work properly.
+inheritance to work properly.  Inherited fields can be overridden but
+will generate a warning if warnings are enabled.
 
-Field names that start with an underscore character are made private to
-the class and are not visible to subclasses.  Inherited fields can be
-overridden but will generate a warning if used together with the C<-w>
-switch.
+B<Only valid for Perl 5.8.x and earlier:> Field names that start with an
+underscore character are made private to the class and are not visible
+to subclasses.
 
-B<Only valid for perls before 5.9.0:>
-
-The effect of all this is that you can have objects with named
-fields which are as compact and as fast arrays to access. This only
-works as long as the objects are accessed through properly typed
-variables. If the objects are not typed, access is only checked at
-run time.
-
+Also, B<in Perl 5.8.x and earlier>, this pragma uses pseudo-hashes, the
+effect being that you can have objects with named fields which are as
+compact and as fast arrays to access, as long as the objects are
+accessed through properly typed variables.
 
 The following functions are supported:
 
@@ -259,15 +259,8 @@ The following functions are supported:
 
 =item new
 
-B< perl before 5.9.0: > fields::new() creates and blesses a
-pseudo-hash comprised of the fields declared using the C<fields>
-pragma into the specified class.
-
-B< perl 5.9.0 and higher: > fields::new() creates and blesses a
-restricted-hash comprised of the fields declared using the C<fields>
-pragma into the specified class.
-
-This function is usable with or without pseudo-hashes.  It is the
+fields::new() creates and blesses a hash comprised of the fields declared
+using the C<fields> pragma into the specified class.  It is the
 recommended way to construct a fields-based object.
 
 This makes it possible to write a constructor like this:
@@ -285,7 +278,11 @@ This makes it possible to write a constructor like this:
 
 =item phash
 
-B< before perl 5.9.0: > 
+B<This function only works in Perl 5.8.x and earlier.>  Pseudo-hashes
+were removed from Perl as of 5.10.  Consider using restricted hashes or
+fields::new() instead (which itself uses restricted hashes under 5.10+).
+See L<Hash::Util>.  Using fields::phash() under 5.10 or higher will
+cause an error.
 
 fields::phash() can be used to create and initialize a plain (unblessed)
 pseudo-hash.  This function should always be used instead of creating
@@ -312,16 +309,10 @@ be used to construct the pseudo hash.  Examples:
 
     my $pseudohash = fields::phash(%args);
 
-B< perl 5.9.0 and higher: >
-
-Pseudo-hashes have been removed from Perl as of 5.10.  Consider using
-restricted hashes or fields::new() instead.  Using fields::phash()
-will cause an error.
-
 =back
 
 =head1 SEE ALSO
 
-L<base>
+L<base>, L<Hash::Util>
 
 =cut

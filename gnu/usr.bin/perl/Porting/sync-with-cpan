@@ -114,7 +114,7 @@ Handle complicated C<FILES>
 
 This is an initial version; no attempt has been made yet to make this
 portable. It shells out instead of trying to find a Perl solution.
-In particular, it assumes wget, git, tar, chmod, perl, make, and rm
+In particular, it assumes git, perl, and make
 to be available.
 
 =cut
@@ -127,6 +127,10 @@ use 5.010;
 use strict;
 use warnings;
 use Getopt::Long;
+use Archive::Tar;
+use File::Path qw( remove_tree );
+use File::Find;
+use Config qw( %Config );
 
 $| = 1;
 
@@ -142,9 +146,11 @@ require "Porting/Maintainers.pl";
 
 my %IGNORABLE    = map {$_ => 1} @IGNORABLE;
 
+my $tmpdir= $ENV{ TEMP } // '/tmp';
+
 my $package      = "02packages.details.txt";
 my $package_url  = "http://www.cpan.org/modules/$package";
-my $package_file = "/tmp/$package";
+my $package_file = "$tmpdir/$package"; # this is a cache
 
 my @problematic = (
     'podlators', # weird CUSTOMIZED section due to .PL files
@@ -157,6 +163,37 @@ GetOptions ('tarball=s'  =>  \my $tarball,
         or  die "Failed to parse arguments";
 
 die "Usage: $0 module [args] [cpan package]" unless @ARGV == 1 || @ARGV == 2;
+
+sub find_type_f {
+    my @res;
+    find( { no_chdir => 1, wanted => sub {
+        my $file= $File::Find::name;
+        return unless -f $file;
+        push @res, $file
+    }}, @_ );
+    @res
+};
+
+# Equivalent of `chmod a-x`
+sub de_exec {
+    for my $filename ( @_ ) {
+        my $mode= (stat $filename)[2] & 0777;
+        if( $mode & 0111 ) { # exec-bit set
+            chmod $mode & 0666, $filename;
+        };
+    }
+}
+
+sub make {
+    my @args= @_;
+    if( $^O eq 'MSWin32') {
+        chdir "Win32";
+        system "$Config{make} @args> ..\\make.log 2>&1" and die "Running make failed, see make.log";
+        chdir '..';
+    } else {
+        system "$Config{make} @args> make.log 2>&1" and die "Running make failed, see make.log";
+    };
+};
 
 my ($module)  = shift;
 my  $cpan_mod = @ARGV ? shift : $module;
@@ -181,7 +218,7 @@ chdir "cpan";
 my  $pkg_dir      = $files[0];
     $pkg_dir      =~ s!.*/!!;
 
-my ($old_version) = $distribution =~ /-([0-9.]+)\.tar\.gz/;
+my ($old_version) = $distribution =~ /-([0-9.]+(?:-TRIAL[0-9]*)?)\.tar\.gz/;
 
 my  $o_module     = $module;
 if ($cpan_mod =~ /-/ && $cpan_mod !~ /::/) {
@@ -198,12 +235,17 @@ unless ($tarball) {
     # Poor man's cache
     #
     unless (-f $package_file && -M $package_file < 1) {
-        system wget => $package_url, '-qO', $package_file;
+        eval {
+            require HTTP::Tiny;
+            my $http= HTTP::Tiny->new();
+            $http->mirror( $package_url => $package_file );
+            1
+        } or system wget => $package_url, '-qO', $package_file;
     }
 
-    my  $new_line = `grep '^$cpan_mod ' $package_file`
+    open my $fh, '<', $package_file;
+    (my $new_line) = grep {/^$cpan_mod/} <$fh> # Yes, this needs a lot of memory
                      or die "Cannot find $cpan_mod on CPAN\n";
-    chomp $new_line;
     (undef, $new_version, my $new_path) = split ' ', $new_line;
     if (defined $version) {
         $new_path =~ s/-$new_version\./-$version\./;
@@ -216,11 +258,16 @@ unless ($tarball) {
     #
     # Fetch the new distro
     #
-    system wget => $url, '-qO', $new_file;
+    eval {
+        require HTTP::Tiny;
+        my $http= HTTP::Tiny->new();
+        $http->mirror( $url => $new_file );
+        1
+    } or system wget => $url, '-qO', $new_file;
 }
 else {
     $new_file     = $tarball;
-    $new_version  = $version // ($new_file =~ /-([0-9._]+)\.tar\.gz/) [0];
+    $new_version  = $version // ($new_file =~ /-([0-9._]+(?:-TRIAL[0-9]*)?)\.tar\.gz/) [0];
 }
 
 my  $old_dir      = "$pkg_dir-$old_version";
@@ -229,11 +276,16 @@ say "Cleaning out old directory";
 system git => 'clean', '-dfxq', $pkg_dir;
 
 say "Unpacking $new_file";
+Archive::Tar->extract_archive( $new_file );
 
-system tar => 'xfz', $new_file;
 (my $new_dir = $new_file) =~ s/\.tar\.gz//;
 # ensure 'make' will update all files
-system('find', $new_dir, '-exec', 'touch', '{}', ';');
+my $t= time;
+for my $file (find_type_f($new_dir)) {
+    open(my $fh,">>$file") || die "Cannot write $file:$!";
+    close($fh);
+    utime($t,$t,$file);
+};
 
 say "Renaming directories";
 rename $pkg_dir => $old_dir;
@@ -252,8 +304,7 @@ if ($$info {EXCLUDED}) {
     }
 }
 
-FILE: for my $file ( `find $new_dir -type f` ) {
-    chomp $file;
+FILE: for my $file ( find_type_f( $new_dir )) {
     my $old_file = $file;
     $file =~ s{^$new_dir/}{};
 
@@ -290,21 +341,19 @@ FILE: for my $file ( `find $new_dir -type f` ) {
 
     rename $old_file => $file;
 }
-system 'rm', '-rf', $new_dir;
+remove_tree( $new_dir );
 
 if (-f "$old_dir/.gitignore") {
     say "Restoring .gitignore";
     system git => 'checkout', "$pkg_dir/.gitignore";
 }
 
-my @new_files = `find $pkg_dir -type f`;
-chomp @new_files;
+my @new_files = find_type_f( $pkg_dir );
 @new_files = grep {$_ ne $pkg_dir} @new_files;
 s!^[^/]+/!! for @new_files;
 my %new_files = map {$_ => 1} @new_files;
 
-my @old_files = `find $old_dir -type f`;
-chomp @old_files;
+my @old_files = find_type_f( $old_dir );
 @old_files = grep {$_ ne $old_dir} @old_files;
 s!^[^/]+/!! for @old_files;
 my %old_files = map {$_ => 1} @old_files;
@@ -331,8 +380,7 @@ foreach my $file (@old_files) {
 #
 # Find all files with an exec bit
 #
-my @exec = `find $pkg_dir -type f -perm +111`;
-chomp @exec;
+my @exec = find_type_f( $pkg_dir );
 my @de_exec;
 foreach my $file (@exec) {
     # Remove leading dir
@@ -368,7 +416,7 @@ print "Hit return to continue; ^C to abort "; <STDIN>;
 unlink "$pkg_dir/$_"                      for @delete;
 system git   => 'add', "$pkg_dir/$_"      for @commit;
 system git   => 'rm', '-f', "$pkg_dir/$_" for @gone;
-system chmod => 'a-x', "$pkg_dir/$_"      for @de_exec;
+de_exec( "$pkg_dir/$_" )                  for @de_exec;
 
 #
 # Restore anything that is customized.
@@ -396,40 +444,41 @@ if (@commit) {
 
 
 print "Running a make ... ";
-system "make > make.log 2>&1" and die "Running make failed, see make.log";
+# Prepare for running (selected) tests
+make 'test-prep';
 print "done\n";
 
 #
 # Must clean up, or else t/porting/FindExt.t will fail.
-# Note that we can always retrieve the orginal directory with a git checkout.
+# Note that we can always retrieve the original directory with a git checkout.
 #
 print "About to clean up; hit return or abort (^C) "; <STDIN>;
 
-chdir "cpan";
-system rm => '-r', $old_dir;
-unlink $new_file unless $tarball;
-
+remove_tree( "cpan/$old_dir" );
+unlink "cpan/$new_file" unless $tarball;
 
 #
 # Run the tests. First the test belonging to the module, followed by the
 # the tests in t/porting
 #
-chdir "../t";
+chdir "t";
 say "Running module tests";
-my @test_files = `find ../cpan/$pkg_dir -name '*.t' -type f`;
-chomp @test_files;
-my $output = `./perl TEST @test_files`;
+my @test_files = grep { /\.t$/ } find_type_f( $pkg_dir );
+my $exe_dir= $^O =~ /MSWin/ ? "..\\" : './';
+my $output = `${exe_dir}perl$Config{_exe} TEST @test_files`;
 unless ($output =~ /All tests successful/) {
     say $output;
     exit 1;
 }
 
 print "Running tests in t/porting ";
-my @tests = `ls porting/*.t`;
+my @tests = glob 'porting/*.t';
 chomp @tests;
 my @failed;
 foreach my $t (@tests) {
-    my @not = `./perl -I../lib -I.. $t | grep ^not | grep -v "# TODO"`;
+    my @not = grep {!/# TODO/ }
+              grep { /^not/ }
+              `${exe_dir}perl -I../lib -I.. $t`;
     print @not ? '!' : '.';
     push @failed => $t if @not;
 }
@@ -470,7 +519,7 @@ while (<$Maintainers_pl>) {
 if ($found) {
     unlink 'Porting/Maintainers.pl';
     rename 'Maintainers.pl' => 'Porting/Maintainers.pl';
-    system chmod => 'a+x', 'Porting/Maintainers.pl';
+    chmod 0755 => 'Porting/Maintainers.pl';
 }
 else {
     say "Could not update Porting/Maintainers.pl.";

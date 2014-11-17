@@ -31,26 +31,22 @@ Encode 延伸模組支援下列正體中文的編碼方式 ('big5' 表示 'big5-
 
 舉例來說, 將 Big5 編碼的檔案轉成 Unicode, 祗需鍵入下列指令:
 
-    perl -Mencoding=big5,STDOUT,utf8 -pe1 < file.big5 > file.utf8
+    perl -MEncode -pe '$_= encode( utf8 => decode( big5 => $_ ) )' \
+      < file.big5 > file.utf8
 
 Perl 也內附了 "piconv", 一支完全以 Perl 寫成的字符轉換工具程式, 用法如下:
 
     piconv -f big5 -t utf8 < file.big5 > file.utf8
     piconv -f utf8 -t big5 < file.utf8 > file.big5
 
-另外, 利用 encoding 模組, 你可以輕易寫出以字符為單位的程式碼, 如下所示:
+另外，若程式碼本身以 utf8 編碼儲存，配合使用 utf8 模組，可讓程式碼中字串以及其運
+算皆以字符為單位，而不以位元為單位，如下所示：
 
     #!/usr/bin/env perl
-    # 啟動 big5 字串解析; 標準輸出入及標準錯誤都設為 big5 編碼
-    use encoding 'big5', STDIN => 'big5', STDOUT => 'big5';
-    print length("駱駝");	     #  2 (雙引號表示字符)
-    print length('駱駝');	     #  4 (單引號表示位元組)
-    print index("諄諄教誨", "彖帢"); # -1 (不包含此子字串)
-    print index('諄諄教誨', '彖帢'); #  1 (從第二個位元組開始)
+    use utf8;
+    print length("駱駝");	     #  2 (不是 6)
+    print index("諄諄教誨", "教誨"); #  2 (從 0 起算第 2 個字符)
 
-在最後一列例子裡, "諄" 的第二個位元組與 "諄" 的第一個位元組結合成 Big5
-碼的 "彖"; "諄" 的第二個位元組則與 "教" 的第一個位元組結合成 "帢".
-這解決了以前 Big5 碼比對處理上常見的問題.
 
 =head2 額外的中文編碼
 
@@ -155,7 +151,7 @@ L<http://www.linux.org.tw/CLDP/>
 
 =head1 SEE ALSO
 
-L<Encode>, L<Encode::TW>, L<encoding>, L<perluniintro>, L<perlunicode>
+L<Encode>, L<Encode::TW>, L<perluniintro>, L<perlunicode>
 
 =head1 AUTHORS
 

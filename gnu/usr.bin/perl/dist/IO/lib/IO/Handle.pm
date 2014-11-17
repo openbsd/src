@@ -271,7 +271,7 @@ use IO ();	# Load the XS module
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = "1.34";
+$VERSION = "1.35";
 $VERSION = eval $VERSION;
 
 @EXPORT_OK = qw(
@@ -625,7 +625,7 @@ sub ioctl {
 # a sub called constant to determine if a constant existed -- GMB
 #
 # The SEEK_* and _IO?BF constants were the only constants at that time
-# any new code should just chech defined(&CONSTANT_NAME)
+# any new code should just check defined(&CONSTANT_NAME)
 
 sub constant {
     no strict 'refs';

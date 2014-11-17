@@ -10,7 +10,7 @@ use File::Path ();
 use File::Spec ();
 use CPAN::Mirrors ();
 use vars qw($VERSION $auto_config);
-$VERSION = "5.5304";
+$VERSION = "5.5306";
 
 =head1 NAME
 
@@ -132,6 +132,9 @@ warnings, debugging output, and the output of the modules being
 installed. Set your favorite colors after some experimenting with the
 Term::ANSIColor module.
 
+Please note that on Windows platforms colorized output also requires
+the Win32::Console::ANSI module.
+
 Do you want to turn on colored output?
 
 =item colorize_print
@@ -203,7 +206,8 @@ Preferred method for determining the current working directory?
 
 Normally, CPAN.pm continues processing the full list of targets and
 dependencies, even if one of them fails.  However, you can specify
-that CPAN should halt after the first failure.
+that CPAN should halt after the first failure.  (Note that optional
+recommended or suggested modules that fail will not cause a halt.)
 
 Do you want to halt on failure (yes/no)?
 
@@ -420,6 +424,14 @@ host should be tried first.
 
 Randomize parameter
 
+=item recommends_policy
+
+(Experimental feature!) Some CPAN modules recommend additional, optional dependencies.  These should
+generally be installed except in resource constrained environments.  When this
+policy is true, recommended modules will be included with required modules.
+
+Included recommended modules?
+
 =item scan_cache
 
 By default, each time the CPAN module is started, cache scanning is
@@ -461,6 +473,14 @@ want this report to be very verbose, say yes to the following
 variable.
 
 Show all individual modules that have a $VERSION of zero?
+
+=item suggests_policy
+
+(Experimental feature!) Some CPAN modules suggest additional, optional dependencies.  These 'suggest'
+dependencies provide enhanced operation.  When this policy is true, suggested
+modules will be included with required modules.
+
+Included suggested modules?
 
 =item tar_verbosity
 
@@ -537,6 +557,17 @@ because of missing dependencies.  Also, tests can be run
 regardless of the history using "force".
 
 Do you want to rely on the test report history (yes/no)?
+
+=item use_prompt_default
+
+When this is true, CPAN will set PERL_MM_USE_DEFAULT to a true
+value.  This causes ExtUtils::MakeMaker (and compatible) prompts
+to use default values instead of stopping to prompt you to answer
+questions. It also sets NONINTERACTIVE_TESTING to a true value to
+signal more generally that distributions should not try to
+interact with you.
+
+Do you want to use prompt defaults (yes/no)?
 
 =item use_sqlite
 
@@ -865,6 +896,8 @@ sub init {
                    'follow|ask|ignore');
     my_prompt_loop(build_requires_install_policy => 'yes', $matcher,
                    'yes|no|ask/yes|ask/no');
+    my_yn_prompt(recommends_policy => 1, $matcher);
+    my_yn_prompt(suggests_policy => 0, $matcher);
 
     #
     #= Module::Signature
@@ -1046,6 +1079,11 @@ sub init {
     my_dflt_prompt(mbuild_install_arg => "", $matcher);
 
     #
+    #== use_prompt_default
+    #
+    my_yn_prompt(use_prompt_default => 0, $matcher);
+
+    #
     #= Alarm period
     #
 
@@ -1224,10 +1262,7 @@ sub init {
             );
         }
         else {
-            $CPAN::Frontend->myprint(
-                "Autoconfigured everything but 'urllist'.\n"
-            );
-            _do_pick_mirrors();
+            $CPAN::Config->{urllist} = [ 'http://www.cpan.org/' ];
         }
     }
     elsif (!$matcher || "urllist" =~ $matcher) {
@@ -1298,16 +1333,18 @@ sub init {
 sub _local_lib_config {
     # Set environment stuff for this process
     require local::lib;
-    my %env = local::lib->build_environment_vars_for(_local_lib_path(), 1);
-    while ( my ($k, $v) = each %env ) {
-        $ENV{$k} = $v;
-    }
 
     # Tell user about environment vars to set
     $CPAN::Frontend->myprint($prompts{local_lib_installed});
     local $ENV{SHELL} = $CPAN::Config->{shell} || $ENV{SHELL};
     my $shellvars = local::lib->environment_vars_string_for(_local_lib_path());
     $CPAN::Frontend->myprint($shellvars);
+
+    # Set %ENV after getting string above
+    my %env = local::lib->build_environment_vars_for(_local_lib_path(), 1);
+    while ( my ($k, $v) = each %env ) {
+        $ENV{$k} = $v;
+    }
 
     # Offer to mangle the shell config
     my $munged_rc;
@@ -1853,8 +1890,7 @@ sub auto_mirrored_by {
     my $local = shift or return;
     local $|=1;
     $CPAN::Frontend->myprint("Looking for CPAN mirrors near you (please be patient)\n");
-    my $mirrors = CPAN::Mirrors->new;
-    $mirrors->parse_mirrored_by($local);
+    my $mirrors = CPAN::Mirrors->new($local);
 
     my $cnt = 0;
     my @best = $mirrors->best_mirrors(

@@ -161,7 +161,7 @@ my @bits;   # Bit map for each code point
 # For each character, calculate which properties it matches.
 for my $ord (0..255) {
     my $char = chr($ord);
-    utf8::upgrade($char);   # Important to use Unicode semantics!
+    utf8::upgrade($char);   # Important to use Unicode rules!
 
     # Look at all the properties we care about here.
     for my $property (@properties) {

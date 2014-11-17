@@ -1,9 +1,13 @@
 #!perl -w
 use strict;
 use Module::CoreList;
-use Test::More tests => 33;
+use Test::More tests => 34;
 
 BEGIN { require_ok('Module::CoreList'); }
+
+# Check default perl
+
+ok(Module::CoreList::is_core('IO::File', $Module::CoreList::version{$]}{'IO::File'}), "is_core is self-consistent");
 
 ok(!Module::CoreList::is_core('Module::Path'), 'Module::Path has never been in core');
 ok(!Module::CoreList::is_core('Module::Path', undef, '5.016003'), 'Module::Path has never been in core');

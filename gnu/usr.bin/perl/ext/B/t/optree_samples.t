@@ -14,7 +14,7 @@ BEGIN {
 }
 use OptreeCheck;
 use Config;
-plan tests	=> 34;
+plan tests	=> 46;
 
 pass("GENERAL OPTREE EXAMPLES");
 
@@ -475,19 +475,18 @@ checkOptree ( name	=> '%h = map { getkey($_) => $_ } @a',
 # 8      <0> enter l
 # 9      <;> nextstate(main 500 (eval 22):1) v:{
 # a      <0> pushmark s
-# b      <0> pushmark s
-# c      <#> gvsv[*_] s
-# d      <#> gv[*getkey] s/EARLYCV
-# e      <1> entersub[t5] lKS/TARG
-# f      <#> gvsv[*_] s
-# g      <@> list lK
-# h      <@> leave lKP
+# b      <#> gvsv[*_] s
+# c      <#> gv[*getkey] s/EARLYCV
+# d      <1> entersub[t5] lKS/TARG
+# e      <#> gvsv[*_] s
+# f      <@> leave lKP
 #            goto 7
-# i  <0> pushmark s
-# j  <#> gv[*h] s
-# k  <1> rv2hv[t2] lKRM*/1
-# l  <2> aassign[t10] KS/COMMON
-# m  <1> leavesub[1 ref] K/REFC,1
+# g  <0> pushmark s
+# h  <#> gv[*h] s
+# i  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# i  <1> rv2hv lKRM*/1             >=5.019006
+# j  <2> aassign[t10] KS/COMMON
+# k  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 501 (eval 22):1) v:{
 # 2  <0> pushmark s
@@ -500,19 +499,18 @@ EOT_EOT
 # 8      <0> enter l
 # 9      <;> nextstate(main 500 (eval 22):1) v:{
 # a      <0> pushmark s
-# b      <0> pushmark s
-# c      <$> gvsv(*_) s
-# d      <$> gv(*getkey) s/EARLYCV
-# e      <1> entersub[t2] lKS/TARG
-# f      <$> gvsv(*_) s
-# g      <@> list lK
-# h      <@> leave lKP
+# b      <$> gvsv(*_) s
+# c      <$> gv(*getkey) s/EARLYCV
+# d      <1> entersub[t2] lKS/TARG
+# e      <$> gvsv(*_) s
+# f      <@> leave lKP
 #            goto 7
-# i  <0> pushmark s
-# j  <$> gv(*h) s
-# k  <1> rv2hv[t1] lKRM*/1
-# l  <2> aassign[t5] KS/COMMON
-# m  <1> leavesub[1 ref] K/REFC,1
+# g  <0> pushmark s
+# h  <$> gv(*h) s
+# i  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# i  <1> rv2hv lKRM*/1             >=5.019006
+# j  <2> aassign[t5] KS/COMMON
+# k  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 
 checkOptree ( name	=> '%h=(); for $_(@a){$h{getkey($_)} = $_}',
@@ -523,7 +521,8 @@ checkOptree ( name	=> '%h=(); for $_(@a){$h{getkey($_)} = $_}',
 # 2  <0> pushmark s
 # 3  <0> pushmark s
 # 4  <#> gv[*h] s
-# 5  <1> rv2hv[t2] lKRM*/1
+# 5  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# 5  <1> rv2hv lKRM*/1             >=5.019006
 # 6  <2> aassign[t3] vKS
 # 7  <;> nextstate(main 506 (eval 24):1) v:{
 # 8  <0> pushmark sM
@@ -553,7 +552,8 @@ EOT_EOT
 # 2  <0> pushmark s
 # 3  <0> pushmark s
 # 4  <$> gv(*h) s
-# 5  <1> rv2hv[t1] lKRM*/1
+# 5  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# 5  <1> rv2hv lKRM*/1             >=5.019006
 # 6  <2> aassign[t2] vKS
 # 7  <;> nextstate(main 506 (eval 24):1) v:{
 # 8  <0> pushmark sM
@@ -631,6 +631,95 @@ EOT_EOT
 # 4  <$> const(PV "junk") s*/FOLD >=5.017002
 # 5  <@> print vK
 # 6  <@> leave[1 ref] vKP/REFC
+EONT_EONT
+
+pass("rpeep - return \$x at end of sub");
+
+checkOptree ( name	=> '-exec sub { return 1 }',
+	      code	=> sub { return 1 },
+	      bcopts	=> '-exec',
+	      strip_open_hints => 1,
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 1  <;> nextstate(main 1 -e:1) v:>,<,%
+# 2  <$> const[IV 1] s
+# 3  <1> leavesub[1 ref] K/REFC,1
+EOT_EOT
+# 1  <;> nextstate(main 1 -e:1) v:>,<,%
+# 2  <$> const(IV 1) s
+# 3  <1> leavesub[1 ref] K/REFC,1
+EONT_EONT
+
+pass("rpeep - if ($a || $b)");
+
+checkOptree ( name	=> 'if ($a || $b) { } return 1',
+	      code	=> 'if ($a || $b) { } return 1',
+	      bcopts	=> '-exec',
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 1  <;> nextstate(main 997 (eval 15):1) v
+# 2  <#> gvsv[*a] s
+# 3  <|> or(other->4) sK/1
+# 4      <#> gvsv[*b] s
+# 5      <|> and(other->6) vK/1
+# 6  <0> stub v
+# 7  <;> nextstate(main 997 (eval 15):1) v
+# 8  <$> const[IV 1] s
+# 9  <1> leavesub[1 ref] K/REFC,1
+EOT_EOT
+# 1  <;> nextstate(main 997 (eval 15):1) v
+# 2  <$> gvsv(*a) s
+# 3  <|> or(other->4) sK/1
+# 4      <$> gvsv(*b) s
+# 5      <|> and(other->6) vK/1
+# 6  <0> stub v
+# 7  <;> nextstate(main 3 (eval 3):1) v
+# 8  <$> const(IV 1) s
+# 9  <1> leavesub[1 ref] K/REFC,1
+EONT_EONT
+
+pass("rpeep - unless ($a && $b)");
+
+checkOptree ( name	=> 'unless ($a && $b) { } return 1',
+	      code	=> 'unless ($a && $b) { } return 1',
+	      bcopts	=> '-exec',
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 1  <;> nextstate(main 997 (eval 15):1) v
+# 2  <#> gvsv[*a] s
+# 3  <|> and(other->4) sK/1
+# 4      <#> gvsv[*b] s
+# 5      <|> or(other->6) vK/1
+# 6  <0> stub v
+# 7  <;> nextstate(main 997 (eval 15):1) v
+# 8  <$> const[IV 1] s
+# 9  <1> leavesub[1 ref] K/REFC,1
+EOT_EOT
+# 1  <;> nextstate(main 997 (eval 15):1) v
+# 2  <$> gvsv(*a) s
+# 3  <|> and(other->4) sK/1
+# 4      <$> gvsv(*b) s
+# 5      <|> or(other->6) vK/1
+# 6  <0> stub v
+# 7  <;> nextstate(main 3 (eval 3):1) v
+# 8  <$> const(IV 1) s
+# 9  <1> leavesub[1 ref] K/REFC,1
+EONT_EONT
+
+pass("rpeep - my $a; my @b; my %c; print 'f'");
+
+checkOptree ( name	=> 'my $a; my @b; my %c; return 1',
+	      code	=> 'my $a; my @b; my %c; return 1',
+	      bcopts	=> '-exec',
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 1  <;> nextstate(main 991 (eval 17):1) v
+# 2  <0> padrange[$a:991,994; @b:992,994; %c:993,994] vM/LVINTRO,3
+# 3  <;> nextstate(main 994 (eval 17):1) v:{
+# 4  <$> const[IV 1] s
+# 5  <1> leavesub[1 ref] K/REFC,1
+EOT_EOT
+# 1  <;> nextstate(main 991 (eval 17):1) v
+# 2  <0> padrange[$a:991,994; @b:992,994; %c:993,994] vM/LVINTRO,3
+# 3  <;> nextstate(main 994 (eval 17):1) v:{
+# 4  <$> const(IV 1) s
+# 5  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 
 __END__

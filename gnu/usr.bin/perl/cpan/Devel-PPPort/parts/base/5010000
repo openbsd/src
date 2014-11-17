@@ -1,4 +1,6 @@
 5.010000
+PERL_SYS_INIT                  # U
+PERL_SYS_INIT3                 # U
 hv_common                      # U
 hv_common_key_len              # U
 sv_destroyable                 # U

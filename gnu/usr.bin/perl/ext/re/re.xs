@@ -17,12 +17,18 @@ extern REGEXP*	my_re_op_compile (pTHX_ SV ** const patternp, int pat_count,
 		     bool *is_bare_re, U32 rx_flags, U32 pm_flags);
 
 extern I32	my_regexec (pTHX_ REGEXP * const prog, char* stringarg, char* strend,
-			    char* strbeg, I32 minend, SV* screamer,
+			    char* strbeg, SSize_t minend, SV* screamer,
 			    void* data, U32 flags);
 
-extern char*	my_re_intuit_start (pTHX_ REGEXP * const prog, SV *sv, char *strpos,
-				    char *strend, const U32 flags,
-				    struct re_scream_pos_data_s *data);
+extern char*	my_re_intuit_start(pTHX_
+                    REGEXP * const rx,
+                    SV *sv,
+                    const char * const strbeg,
+                    char *strpos,
+                    char *strend,
+                    const U32 flags,
+                    re_scream_pos_data *data);
+
 extern SV*	my_re_intuit_string (pTHX_ REGEXP * const prog);
 
 extern void	my_regfree (pTHX_ REGEXP * const r);

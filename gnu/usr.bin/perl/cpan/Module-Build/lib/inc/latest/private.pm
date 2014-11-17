@@ -1,11 +1,13 @@
 package inc::latest::private;
+
+use if $] >= 5.019, 'deprecate';
+
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.4003';
+$VERSION = '0.4205';
 $VERSION = eval $VERSION;
 
 use File::Spec;
-use IO::File;
 
 # must ultimately "goto" the import routine of the module to be loaded
 # so that the calling package is correct when $mod->import() runs.
@@ -60,10 +62,9 @@ sub _search_bundled {
 
   my $mypath = 'inc';
 
-  local *DH;   # Maintain 5.005 compatibility
-  opendir DH, $mypath or die "Can't open directory $mypath: $!";
+  opendir my $DH, $mypath or die "Can't open directory $mypath: $!";
 
-  while (defined(my $e = readdir DH)) {
+  while (defined(my $e = readdir $DH)) {
     next unless $e =~ /^inc_/;
     my $try = File::Spec->catfile($mypath, $e, $file);
 

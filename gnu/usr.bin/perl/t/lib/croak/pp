@@ -1,0 +1,19 @@
+__END__
+# NAME [perl #119809] Attempt to bless into a reference (tied)
+sub TIESCALAR { bless [] }
+sub FETCH { [] }
+tie $t, "";
+bless({}, $t);
+EXPECT
+Attempt to bless into a reference at - line 4.
+########
+# NAME [perl #119809] Attempt to bless into a reference (magical)
+$/ = \1;
+bless [], $/
+EXPECT
+Attempt to bless into a reference at - line 2.
+########
+# NAME Attempt to bless into a reference after method changes
+sub foo{} bless [], bless []
+EXPECT
+Attempt to bless into a reference at - line 1.

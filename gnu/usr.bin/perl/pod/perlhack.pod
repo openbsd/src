@@ -64,25 +64,23 @@ The next step is to submit your patch to the Perl core ticket system
 via email.
 
 If your changes are in a single git commit, run the following commands
-to write the file as a MIME attachment and send it with a meaningful
-subject:
+to generate the patch file and attach it to your bug report:
 
-  % git format-patch -1 --attach
-  % ./perl -Ilib utils/perlbug -s "[PATCH] $(
-        git log -1 --oneline HEAD)" -f 0001-*.patch
+  % git format-patch -1
+  % ./perl -Ilib utils/perlbug -p 0001-*.patch
 
 The perlbug program will ask you a few questions about your email
 address and the patch you're submitting.  Once you've answered them it
 will submit your patch via email.
 
-If your changes are in multiple commits, generate a patch file
-containing them all, and attach that:
+If your changes are in multiple commits, generate a patch file for each
+one and provide them to perlbug's C<-p> option separated by commas:
 
-  % git format-patch origin/blead --attach --stdout > patches
-  % ./perl -Ilib utils/perlbug -f patches
+  % git format-patch -3
+  % ./perl -Ilib utils/perlbug -p 0001-fix1.patch,0002-fix2.patch,\
+  > 0003-fix3.patch
 
-When prompted, pick a subject that summarizes your changes overall and
-has "[PATCH]" at the beginning.
+When prompted, pick a subject that summarizes your changes.
 
 =item * Thank you
 
@@ -175,7 +173,7 @@ You may access the repository over the web.  This allows you to browse
 the tree, see recent commits, subscribe to RSS feeds for the changes,
 search for particular commits and more.  You may access it at
 L<http://perl5.git.perl.org/perl.git>.  A mirror of the repository is
-found at L<http://github.com/mirrors/perl>.
+found at L<https://github.com/Perl/perl5>.
 
 =head2 Read access via rsync
 

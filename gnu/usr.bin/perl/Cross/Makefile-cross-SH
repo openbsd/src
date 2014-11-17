@@ -67,7 +67,7 @@ true)
 	sunos*)
 		linklibperl="-lperl"
 		;;
-	netbsd*|freebsd[234]*|openbsd*|dragonfly*)
+	netbsd*|freebsd[234]*|openbsd*|dragonfly*|bitrig*)
 		linklibperl="-L. -lperl"
 		;;
 	interix*)
@@ -957,7 +957,6 @@ _mopup:
 	-@test -f vms/README_vms.pod && rm -f vms/README_vms.pod
 	-rm -f perl.exp ext.libs extra.pods uni.data opmini.o
 	-rm -f perl.export perl.dll perl.libexp perl.map perl.def
-	-rm -f perl.loadmap miniperl.loadmap perl.prelmap miniperl.prelmap
 	-rm -f perl.third lib*.so.perl.third perl.3log t/perl.third t/perl.3log
 	-rm -f perl.pixie lib*.so.perl.pixie lib*.so.Addrs
 	-rm -f perl.Addrs perl.Counts t/perl.Addrs t/perl.Counts *perl.xok
@@ -1281,12 +1280,6 @@ ctags:
 !NO!SUBS!
 
 $eunicefix $Makefile
-case `pwd` in
-*SH)
-    $rm -f ../$Makefile
-    $ln $Makefile ../$Makefile
-    ;;
-esac
 $rm -f $firstmakefile
 
 # Now do any special processing required before building.

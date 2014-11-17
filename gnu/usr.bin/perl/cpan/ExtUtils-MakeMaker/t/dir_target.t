@@ -1,7 +1,10 @@
 #!/usr/bin/perl -w
 
 use lib 't/lib';
-chdir 't';
+
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 use Test::More tests => 1;
 use ExtUtils::MakeMaker;

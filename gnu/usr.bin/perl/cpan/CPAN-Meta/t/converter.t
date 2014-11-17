@@ -27,15 +27,15 @@ sub new {
 
 package main;
 
-my $data_dir = IO::Dir->new( 't/data' );
+my $data_dir = IO::Dir->new( 't/data-test' );
 my @files = sort grep { /^\w/ } $data_dir->read;
 
-sub _spec_version { return $_[0]->{'meta-spec'}{version} || "1.0" }
+*_spec_version = \&CPAN::Meta::Converter::_extract_spec_version;
 
 #use Data::Dumper;
 
 for my $f ( reverse sort @files ) {
-  my $path = File::Spec->catfile('t','data',$f);
+  my $path = File::Spec->catfile('t','data-test',$f);
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded $f" );
   my $original_v = _spec_version($original);
@@ -106,7 +106,7 @@ for my $f ( reverse sort @files ) {
 
 # specific test for custom key handling
 {
-  my $path = File::Spec->catfile('t','data','META-1_4.yml');
+  my $path = File::Spec->catfile('t','data-test','META-1_4.yml');
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded META-1_4.yml" );
   my $cmc = CPAN::Meta::Converter->new( $original );
@@ -124,7 +124,7 @@ for my $f ( reverse sort @files ) {
 
 # specific test for custom key handling
 {
-  my $path = File::Spec->catfile('t','data','META-2.json');
+  my $path = File::Spec->catfile('t','data-test','META-2.json');
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded META-2.json" );
   my $cmc = CPAN::Meta::Converter->new( $original );
@@ -136,7 +136,7 @@ for my $f ( reverse sort @files ) {
 
 # specific test for generalization of unclear licenses
 {
-  my $path = File::Spec->catfile('t','data','gpl-1_4.yml');
+  my $path = File::Spec->catfile('t','data-test','gpl-1_4.yml');
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded gpl-1_4.yml" );
   my $cmc = CPAN::Meta::Converter->new( $original );
@@ -149,7 +149,7 @@ for my $f ( reverse sort @files ) {
 
 # specific test for upconverting resources
 {
-  my $path = File::Spec->catfile('t','data','resources.yml');
+  my $path = File::Spec->catfile('t','data-test','resources.yml');
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded resources.yml" );
   my $cmc = CPAN::Meta::Converter->new( $original );
@@ -166,9 +166,25 @@ for my $f ( reverse sort @files ) {
   );
 }
 
+# specific test for round-tripping resources
+{
+  my $path = File::Spec->catfile('t','data-test','resources.yml');
+  my $original = Parse::CPAN::Meta->load_file( $path  );
+  ok( $original, "loaded resources.yml" );
+  my $cmc1 = CPAN::Meta::Converter->new( $original );
+  my $converted = $cmc1->convert( version => 2 );
+  my $cmc2 = CPAN::Meta::Converter->new( $converted );
+  my $roundtrip = $cmc2->convert( version => 1.4 );
+  is_deeply(
+    $roundtrip->{resources},
+    $original->{resources},
+    "round-trip of resources (1.4->2->1.4)"
+  );
+}
+
 # specific test for object conversion
 {
-  my $path = File::Spec->catfile('t','data','resources.yml');
+  my $path = File::Spec->catfile('t','data-test','resources.yml');
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded resources.yml" );
   $original->{version} = version->new("1.64");
@@ -180,7 +196,7 @@ for my $f ( reverse sort @files ) {
 
 # specific test for UTF-8 handling
 {
-  my $path = File::Spec->catfile('t','data','unicode.yml');
+  my $path = File::Spec->catfile('t','data-test','unicode.yml');
   my $original = CPAN::Meta->load_file( $path  )
     or die "Couldn't load $path";
   ok( $original, "unicode.yml" );
@@ -198,7 +214,7 @@ for my $f ( reverse sort @files ) {
     my $suffix = $case eq 2 ? "$case.json" : "$case.yml";
     my $version = $case;
     $version =~ tr[_][.];
-    my $path = File::Spec->catfile('t','data','version-ranges-' . $suffix);
+    my $path = File::Spec->catfile('t','data-test','version-ranges-' . $suffix);
     my $original = Parse::CPAN::Meta->load_file( $path  );
     ok( $original, "loaded " . basename $path );
     my $cmc = CPAN::Meta::Converter->new( $original );
@@ -216,13 +232,31 @@ for my $f ( reverse sort @files ) {
 
 # specific test for version numbers
 {
-  my $path = File::Spec->catfile('t','data','version-not-normal.json');
+  my $path = File::Spec->catfile('t','data-test','version-not-normal.json');
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded " . basename $path );
   my $cmc = CPAN::Meta::Converter->new( $original );
   my $converted = $cmc->convert( version => 2 );
   is( $converted->{prereqs}{runtime}{requires}{'File::Find'}, "v0.1.0", "normalize v0.1");
   is( $converted->{prereqs}{runtime}{requires}{'File::Path'}, "v1.0.0", "normalize v1.0.0");
+}
+
+# specific test for missing provides version
+{
+  my $path = File::Spec->catfile('t','data-test','provides-version-missing.json');
+  my $original = Parse::CPAN::Meta->load_file( $path  );
+  ok( $original, "loaded " . basename $path );
+  my $cmc = CPAN::Meta::Converter->new( $original );
+  my $converted = $cmc->convert( version => 2 );
+  is_deeply( $converted->{provides}{"Foo::Bar"}, { file => "lib/Foo/Bar.pm", version => "0.27_02" },
+    "Foo::Bar provides correct"
+  );
+  is_deeply( $converted->{provides}{"Foo::Bar::Blah"}, { file => "lib/Foo/Bar/Blah.pm" },
+    "Foo::Bar::Blah provides correct"
+  );
+  is_deeply( $converted->{provides}{"Foo::Bar::Baz"}, { file => "lib/Foo/Bar/Baz.pm", version => "0.3" },
+    "Foo::Bar provides correct"
+  );
 }
 
 # CMR standardizes stuff in a way that makes it hard to test original vs final
@@ -238,6 +272,27 @@ sub _normalize_reqs {
       $hr->{$k} =~ s{>=\s*}{}g;
     }
   }
+}
+
+# specific test for multiple licenses
+{
+  my $path = File::Spec->catfile('t','data-test','META-2.json');
+  my $original = Parse::CPAN::Meta->load_file( $path  );
+  ok( $original, "loaded META-2.json" );
+  my $cmc = CPAN::Meta::Converter->new( $original );
+  my $cleaned_up = $cmc->convert( version => "2" );
+  is_deeply(
+      $cleaned_up->{license},
+      [ 'perl_5', 'bsd' ],
+      "multiple license preserved (v2)"
+  );
+
+  $cleaned_up = $cmc->convert( version => "1.4" );
+  is(
+      $cleaned_up->{license},
+      'open_source',
+      "multiple license converted to open_source (v1.4)"
+  );
 }
 
 done_testing;

@@ -4,7 +4,7 @@ use strict;
 use ExtUtils::CBuilder::Base;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.280209';
+$VERSION = '0.280217';
 @ISA = qw(ExtUtils::CBuilder::Base);
 
 use File::Spec::Functions qw(catfile catdir);
@@ -116,22 +116,6 @@ sub arg_exec_file {
 sub arg_share_object_file {
   my ($self, $file) = @_;
   return ("$self->{config}{lddlflags}=$file");
-}
-
-
-sub lib_file {
-  my ($self, $dl_file) = @_;
-  $dl_file =~ s/\.[^.]+$//;
-  $dl_file =~ tr/"//d;
-  $dl_file = $dl_file .= '.' . $self->{config}{dlext};
-
-  # Need to create with the same name as DynaLoader will load with.
-  if (defined &DynaLoader::mod2fname) {
-    my ($dev,$dir,$file) = File::Spec->splitpath($dl_file);
-    $file = DynaLoader::mod2fname([$file]);
-    $dl_file = File::Spec->catpath($dev,$dir,$file);
-  }
-  return $dl_file;
 }
 
 # The following is reproduced almost verbatim from ExtUtils::Liblist::Kid::_vms_ext.

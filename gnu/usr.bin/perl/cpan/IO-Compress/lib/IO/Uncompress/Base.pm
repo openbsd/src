@@ -9,12 +9,12 @@ our (@ISA, $VERSION, @EXPORT_OK, %EXPORT_TAGS);
 @ISA    = qw(Exporter IO::File);
 
 
-$VERSION = '2.060';
+$VERSION = '2.064';
 
 use constant G_EOF => 0 ;
 use constant G_ERR => -1 ;
 
-use IO::Compress::Base::Common 2.060 ;
+use IO::Compress::Base::Common 2.064 ;
 
 use IO::File ;
 use Symbol;
@@ -961,7 +961,7 @@ sub _raw_read
             $self->pushBack($trailer)  ;
         }
 
-        # TODO - if want to file file pointer, do it here
+        # TODO - if want file pointer, do it here
 
         if (! $self->smartEof()) {
             *$self->{NewStream} = 1 ;
@@ -1526,7 +1526,7 @@ IO::Uncompress::Base - Base Class for IO::Uncompress modules
 =head1 DESCRIPTION
 
 This module is not intended for direct use in application code. Its sole
-purpose if to to be sub-classed by IO::Uncompress modules.
+purpose is to be sub-classed by IO::Uncompress modules.
 
 =head1 SEE ALSO
 
@@ -1548,7 +1548,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

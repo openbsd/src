@@ -651,7 +651,7 @@
  *	should be included.
  */
 /*#define I_DBM	/**/
-#define I_RPCSVC_DBM	/**/
+/*#define I_RPCSVC_DBM	/ **/
 
 /* I_DIRENT:
  *	This symbol, if defined, indicates to the C program that it should
@@ -727,12 +727,6 @@
  *	include <netinet/in.h>. Otherwise, you may try <sys/in.h>.
  */
 /*#define I_NETINET_IN	/**/
-
-/* I_SFIO:
- *	This symbol, if defined, indicates to the C program that it should
- *	include <sfio.h>.
- */
-/*#define	I_SFIO		/**/
 
 /* I_STDDEF:
  *	This symbol, if defined, indicates that <stddef.h> exists and should
@@ -938,7 +932,7 @@
  *	double, or a long double when applicable. Usual values are 2,
  *	4 and 8. The default is eight, for safety.
  */
-#if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
+#if defined(MULTIARCH)
 #  define MEM_ALIGNBYTES 8
 #else
 #define MEM_ALIGNBYTES 8
@@ -1023,7 +1017,7 @@
  *	so the default case (for NeXT) is big endian to catch them.
  *	This might matter for NeXT 3.0.
  */
-#if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
+#if defined(MULTIARCH)
 #  ifdef __LITTLE_ENDIAN__
 #    if LONGSIZE == 4
 #      define BYTEORDER 0x1234
@@ -2266,12 +2260,6 @@
  *	to a line-buffered mode.
  */
 /*#define HAS_SETVBUF		/**/
-
-/* USE_SFIO:
- *	This symbol, if defined, indicates that sfio should
- *	be used.
- */
-/*#define	USE_SFIO		/**/
 
 /* HAS_SHM:
  *	This symbol, if defined, indicates that the entire shm*(2) library is
@@ -3739,31 +3727,6 @@
  */
 /*#define PERL_VENDORLIB_EXP ""		/**/
 /*#define PERL_VENDORLIB_STEM ""		/**/
-
-/* VOIDFLAGS:
- *	This symbol indicates how much support of the void type is given by this
- *	compiler.  What various bits mean:
- *
- *	    1 = supports declaration of void
- *	    2 = supports arrays of pointers to functions returning void
- *	    4 = supports comparisons between pointers to void functions and
- *		    addresses of void functions
- *	    8 = suports declaration of generic void pointers
- *
- *	The package designer should define VOIDUSED to indicate the requirements
- *	of the package.  This can be done either by #defining VOIDUSED before
- *	including config.h, or by defining defvoidused in Myinit.U.  If the
- *	latter approach is taken, only those flags will be tested.  If the
- *	level of void support necessary is not present, defines void to int.
- */
-#ifndef VOIDUSED
-#define VOIDUSED 15
-#endif
-#define VOIDFLAGS 15
-#if (VOIDFLAGS & VOIDUSED) != VOIDUSED
-#define void int		/* is void to be avoided? */
-#define M_VOID			/* Xenix strikes again */
-#endif
 
 /* HASATTRIBUTE_FORMAT:
  *	Can we handle GCC attribute for checking printf-style formats

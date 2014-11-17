@@ -10,12 +10,12 @@ sub _slurp { do { local(@ARGV,$/)=shift(@_); <> } }
 
 delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
 
-my $data_dir = IO::Dir->new( 't/data-bad' );
+my $data_dir = IO::Dir->new( 't/data-fixable' );
 my @files = sort grep { /^\w/ } $data_dir->read;
 
 for my $f ( sort @files ) {
-  my $path = File::Spec->catfile('t','data-bad',$f);
-  my $meta = eval { CPAN::Meta->load_file( $path, { fix_errors => 1 }  ) };
+  my $path = File::Spec->catfile('t','data-fixable',$f);
+  my $meta = eval { CPAN::Meta->load_file( $path ) };
   ok( defined $meta, "load_file('$f')" ) or diag $@;
   my $string = _slurp($path);
   my $method =  $path =~ /\.json/ ? "load_json_string" : "load_yaml_string";

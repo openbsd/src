@@ -9,7 +9,7 @@ BEGIN {
 # functions imported from t/test.pl or Test::More, as those programs/libraries
 # use operators which are what is being tested in this file.
 
-print "1..167\n";
+print "1..175\n";
 
 sub try ($$$) {
    print +($_[1] ? "ok" : "not ok"), " $_[0] - $_[2]\n";
@@ -456,3 +456,15 @@ else {
   print "ok ", $T++, " - infinity\n";
 }
 
+
+# [perl #120426]
+# small numbers shouldn't round to zero if they have extra floating digits
+
+try $T++,  0.153e-305 != 0.0,              '0.153e-305';
+try $T++,  0.1530e-305 != 0.0,             '0.1530e-305';
+try $T++,  0.15300e-305 != 0.0,            '0.15300e-305';
+try $T++,  0.153000e-305 != 0.0,           '0.153000e-305';
+try $T++,  0.1530000e-305 != 0.0,          '0.1530000e-305';
+try $T++,  0.1530001e-305 != 0.0,          '0.1530001e-305';
+try $T++,  1.17549435100e-38 != 0.0,       'min single';
+try $T++,  2.2250738585072014e-308 != 0.0, 'min double';

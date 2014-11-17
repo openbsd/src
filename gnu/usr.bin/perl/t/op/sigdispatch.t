@@ -12,7 +12,7 @@ use Config;
 plan tests => 29;
 $| = 1;
 
-watchdog(15);
+watchdog(25);
 
 $SIG{ALRM} = sub {
     die "Alarm!\n";
@@ -42,8 +42,9 @@ is($@, "Alarm!\n", 'after the second loop');
 SKIP: {
     skip('We can\'t test blocking without sigprocmask', 17)
 	if is_miniperl() || !$Config{d_sigprocmask};
-    skip('This doesn\'t work on $^O threaded builds RT#88814', 17)
-        if $^O =~ /openbsd|cygwin/ && $Config{useithreads};
+    skip("This doesn\'t work on $^O threaded builds RT#88814", 17)
+        if ($^O =~ /cygwin/ || $^O eq "openbsd" && $Config{osvers} < 5.2)
+	    && $Config{useithreads};
 
     require POSIX;
     my $pending = POSIX::SigSet->new();
@@ -96,7 +97,9 @@ TODO:
 	# of a reliable way to probe for this, so for now, just skip the
 	# tests on production releases
 	skip("some OSes hang here", 3) if (int($]*1000) & 1) == 0;
-
+    
+  SKIP: {
+	skip("Issues on Android", 3) if $^O =~ /android/;
 	my $action = POSIX::SigAction->new(sub { $gotit--, die }, POSIX::SigSet->new, 0);
 	POSIX::sigaction(&POSIX::SIGALRM, $action);
 	eval {
@@ -108,6 +111,7 @@ TODO:
 	} for 1..2;
 	is $gotit, 0, 'Received both signals';
     }
+}
 }
 
 SKIP: {

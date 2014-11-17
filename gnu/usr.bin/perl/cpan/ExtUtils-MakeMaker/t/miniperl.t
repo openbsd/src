@@ -6,13 +6,17 @@
 use strict;
 use lib 't/lib';
 
+use Config;
 use Test::More;
 
 # In a BEGIN block so the END tests aren't registered.
 BEGIN {
     plan skip_all => "miniperl test only necessary for the perl core"
       if !$ENV{PERL_CORE};
-    
+
+    plan skip_all => "no toolchain installed when cross-compiling"
+      if $ENV{PERL_CORE} && $Config{'usecrosscompile'};
+
     plan "no_plan";
 }
 

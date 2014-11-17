@@ -49,8 +49,8 @@ SKIP: {
 
 my $t = bless( qr//, 'foo');
 my $dt = Dumper($t);
-my $o = ($] >= 5.013006 ? <<'PERL' : <<'PERL_LEGACY');
-$VAR1 = bless( qr/(?^:)/, 'foo' );
+my $o = ($] > 5.010 ? <<'PERL' : <<'PERL_LEGACY');
+$VAR1 = bless( qr//, 'foo' );
 PERL
 $VAR1 = bless( qr/(?-xism:)/, 'foo' );
 PERL_LEGACY

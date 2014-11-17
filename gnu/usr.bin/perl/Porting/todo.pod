@@ -41,9 +41,9 @@ documentation.  This would be a good way to learn more about Perl.
 
 =head2 Classify bug tickets by type
 
-Known bugs in Perl are tracked by L<https://rt.perl.org/rt3> (which also
+Known bugs in Perl are tracked by L<https://rt.perl.org/> (which also
 includes Perl 6).  A summary can be found at
-L<https://rt.perl.org/rt3/NoAuth/perl5/Overview.html>.
+L<https://rt.perl.org/NoAuth/perl5/Overview.html>.
 It shows bugs classified by "type".  However, the type of many of the
 bugs is "unknown".  This greatly lowers the chances of them getting
 fixed, as the number of open bugs is overwhelming -- too many to wade
@@ -59,7 +59,7 @@ the poster about it, asking for example code that reproduces the
 problem.  Such code should be added to the test suite as TODO tests, and
 the ticket should be classified by type.  To get started on this task,
 look at the tickets that are marked as "New Issues" in
-L<https://rt.perl.org/rt3/NoAuth/perl5/Overview.html>.
+L<https://rt.perl.org/NoAuth/perl5/Overview.html>.
 
 =head2 Migrate t/ from custom TAP generation
 
@@ -128,8 +128,9 @@ L<Benchmark::Perl::Formance>
 
 =head2 fix tainting bugs
 
-Fix the bugs revealed by running the test suite with the C<-t> switch (via
-C<make test.taintwarn>).
+Fix the bugs revealed by running the test suite with the C<-t> switch.
+Setting the TEST_ARGS environment variable to C<-taintwarn> will accomplish
+this.
 
 =head2 Dual life everything
 
@@ -358,7 +359,7 @@ are needed to our current source code. Prime example of this is Android.
 There are several scripts and tools for cross-compiling perl for other
 platforms. However, these are somewhat inconsistent and scattered across the
 codebase, none are documented well, none are clearly flexible enough to
-be confident that they can support any TARGET/HOST plaform pair other than
+be confident that they can support any TARGET/HOST platform pair other than
 that which they were developed on, and it's not clear how bitrotted they are.
 
 For example, C<Configure> understands C<-Dusecrosscompile> option. This option
@@ -370,7 +371,7 @@ ARM Linux targets, relying on hand curated F<config.sh> files, but that code
 is getting on for 5 years old, and requires insider knowledge of perl's
 build system to draft a F<config.sh> for a new platform.
 
-Jess Robinson has sumbitted a grant to TPF to work on cleaning this up.
+Jess Robinson has submitted a grant to TPF to work on cleaning this up.
 
 =head2 Split "linker" from "compiler"
 
@@ -466,7 +467,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.18.2.
+options would be nice for perl 5.20.1.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -548,7 +549,8 @@ Maybe create a utility that checks after each libperl.a creation that
 none of the above (nor sprintf(), vsprintf(), or *SHUDDER* gets())
 ever creep back to libperl.a.
 
-  nm libperl.a | ./miniperl -alne '$o = $F[0] if /:$/; print "$o $F[1]" if $F[0] eq "U" && $F[1] =~ /^(?:strn?c(?:at|py)|v?sprintf|gets)$/'
+  nm libperl.a | ./miniperl -alne '$o = $F[0] if /:$/;
+    print "$o $F[1]" if $F[0] eq "U" && $F[1] =~ /^(?:strn?c(?:at|py)|v?sprintf|gets)$/'
 
 Note, of course, that this will only tell whether B<your> platform
 is using those naughty interfaces.
@@ -854,7 +856,7 @@ if available-- but B<only> if available, all platforms will B<not>
 have catgets().
 
 For the really pure at heart, consider extending this item to cover
-also the warning messages (see L<perllexwarn>, C<warnings.pl>).
+also the warning messages (see L<warnings>, F<regen/warnings.pl>).
 
 =head1 Tasks that need a knowledge of the interpreter
 
@@ -972,10 +974,11 @@ done." ssh and screen do this with named pipes in /tmp. Maybe we can too.
 The old perltodo notes that lvalue functions don't work for list or hash
 slices. This would be good to fix.
 
-=head2 regexp optimiser optional
+=head2 regexp optimizer optional
 
-The regexp optimiser is not optional. It should configurable to be, to allow
-its performance to be measured, and its bugs to be easily demonstrated.
+The regexp optimizer is not optional. It should be configurable to be optional
+and to allow its performance to be measured and its bugs to be easily
+demonstrated.
 
 =head2 C</w> regex modifier
 
@@ -1118,7 +1121,7 @@ would produce this output
 What might work is to have an optional line number in memory just before the
 BASEOP structure, with a flag bit in the op to say whether it's present.
 Initially during compile every OP would carry its line number. Then add a late
-pass to the optimiser (potentially combined with L</repack the optree>) which
+pass to the optimizer (potentially combined with L</repack the optree>) which
 looks at the two ops on every edge of the graph of the execution path. If
 the line number changes, flags the destination OP with this information.
 Once all paths are traced, replace every op with the flag with a
@@ -1173,7 +1176,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.18.2"
+of 5.20.1"
 
 =head2 make ithreads more robust
 
@@ -1186,13 +1189,6 @@ One bit would be to determine how to clone directory handles on systems
 without a C<fchdir> function (in sv.c:Perl_dirp_dup).
 
 Fix Perl_sv_dup, et al so that threads can return objects.
-
-=head2 Add class set operations to regexp engine
-
-Apparently these are quite useful. Anyway, Jeffery Friedl wants them.
-
-demerphq has this on his todo list, but right at the bottom.  
-
 
 =head1 Tasks for microperl
 

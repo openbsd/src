@@ -30,9 +30,9 @@ BEGIN {
     require 'testutil.pl' if $@;
   }
 
-  if (47) {
+  if (49) {
     load();
-    plan(tests => 47);
+    plan(tests => 49);
   }
 }
 
@@ -76,6 +76,7 @@ ok(&Devel::PPPort::SvPV_nolen_const($mhx), $i++);
 ok(&Devel::PPPort::SvPV_nomg($mhx), $i++);
 ok(&Devel::PPPort::SvPV_nomg_const($mhx), $i++);
 ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), $i++);
+ok(&Devel::PPPort::SvPV_nomg_nolen($mhx), $i++);
 
 $mhx = 42; ok(&Devel::PPPort::SvPV_nolen($mhx), 0);
 $mhx = 42; ok(&Devel::PPPort::SvPV_const($mhx), 2);
@@ -99,8 +100,10 @@ $mhx = 42; ok(&Devel::PPPort::SvPV_nolen_const($mhx), 0);
 $mhx = 42; ok(&Devel::PPPort::SvPV_nomg($mhx), 2);
 $mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
 $mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
+$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
 
 my $str = "";
+&Devel::PPPort::SvPV_force($str);
 my($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 81, "x"x80);
 ok($str, "x"x80);
 ok($s2, "x"x80);
@@ -108,6 +111,7 @@ ok($before < 81);
 ok($after, 81);
 
 $str = "x"x400;
+&Devel::PPPort::SvPV_force($str);
 ($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 41, "x"x40);
 ok($str, "x"x40);
 ok($s2, "x"x40);

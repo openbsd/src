@@ -646,17 +646,17 @@ C<Moose>.
 Like C<Moose>, C<Class::Accessor> generates accessor methods and a
 constructor for your class.
 
-=head2 Object::Tiny
+=head2 Class::Tiny
 
-Finally, we have L<Object::Tiny>. This module truly lives up to its
+Finally, we have L<Class::Tiny>. This module truly lives up to its
 name. It has an incredibly minimal API and absolutely no dependencies
-(core or not). Still, we think it's a lot easier to use than writing
+on any recent Perl. Still, we think it's a lot easier to use than writing
 your own OO code from scratch.
 
 Here's our C<File> class once more:
 
   package File;
-  use Object::Tiny qw( path content last_mod_time );
+  use Class::Tiny qw( path content last_mod_time );
 
   sub print_info {
       my $self = shift;
@@ -666,8 +666,10 @@ Here's our C<File> class once more:
 
 That's it!
 
-With C<Object::Tiny>, all accessors are read-only. It generates a
+With C<Class::Tiny>, all accessors are read-write. It generates a
 constructor for you, as well as the accessors you define.
+
+You can also use L<Class::Tiny::Antlers> for C<Moose>-like syntax.
 
 =head2 Role::Tiny
 
@@ -681,7 +683,7 @@ C<Role::Tiny> provides some of the same features as Moose's role
 system, but in a much smaller package. Most notably, it doesn't support
 any sort of attribute declaration, so you have to do that by hand.
 Still, it's useful, and works well with C<Class::Accessor> and
-C<Object::Tiny>
+C<Class::Tiny>
 
 =head2 OO System Summary
 
@@ -704,16 +706,16 @@ time and is well battle-tested. It also has a minimal C<Moose>
 compatibility mode which makes moving from C<Class::Accessor> to
 C<Moose> easy.
 
-=item * L<Object::Tiny>
+=item * L<Class::Tiny>
 
-C<Object::Tiny> is the absolute minimal option. It has no dependencies,
+C<Class::Tiny> is the absolute minimal option. It has no dependencies,
 and almost no syntax to learn. It's a good option for a super minimal
 environment and for throwing something together quickly without having
 to worry about details.
 
 =item * L<Role::Tiny>
 
-Use C<Role::Tiny> with C<Class::Accessor> or C<Object::Tiny> if you
+Use C<Role::Tiny> with C<Class::Accessor> or C<Class::Tiny> if you
 find yourself considering multiple inheritance. If you go with
 C<Moose>, it comes with its own role implementation.
 
@@ -737,14 +739,14 @@ OO systems on CPAN. While you can still drop down to the bare metal and
 write your classes by hand, there's really no reason to do that with
 modern Perl.
 
-For small systems, L<Object::Tiny> and L<Class::Accessor> both provide
+For small systems, L<Class::Tiny> and L<Class::Accessor> both provide
 minimal object systems that take care of basic boilerplate for you.
 
 For bigger projects, L<Moose> provides a rich set of features that will
 let you focus on implementing your business logic.
 
 We encourage you to play with and evaluate L<Moose>,
-L<Class::Accessor>, and L<Object::Tiny> to see which OO system is right
+L<Class::Accessor>, and L<Class::Tiny> to see which OO system is right
 for you.
 
 =cut

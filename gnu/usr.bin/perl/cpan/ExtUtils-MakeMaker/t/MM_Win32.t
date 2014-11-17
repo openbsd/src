@@ -46,18 +46,18 @@ SKIP: {
     skip( '$ENV{COMSPEC} not set', 2 )
         unless $ENV{COMSPEC} =~ m!((?:[a-z]:)?[^|<>]+)!i;
     my $comspec = $1;
-    is( $MM->maybe_command( $comspec ), 
+    is( $MM->maybe_command( $comspec ),
         $comspec, 'COMSPEC is a maybe_command()' );
     ( my $comspec2 = $comspec ) =~ s|\..{3}$||;
-    like( $MM->maybe_command( $comspec2 ), 
-          qr/\Q$comspec/i, 
+    like( $MM->maybe_command( $comspec2 ),
+          qr/\Q$comspec/i,
           'maybe_command() without extension' );
 }
 
 my $had_pathext = exists $ENV{PATHEXT};
 {
     local $ENV{PATHEXT} = '.exe';
-    ok( ! $MM->maybe_command( 'not_a_command.com' ), 
+    ok( ! $MM->maybe_command( 'not_a_command.com' ),
         'not a maybe_command()' );
 }
 # Bug in Perl.  local $ENV{FOO} won't delete the key afterward.
@@ -65,14 +65,14 @@ delete $ENV{PATHEXT} unless $had_pathext;
 
 # file_name_is_absolute() [Does not support UNC-paths]
 {
-    ok( $MM->file_name_is_absolute( 'C:/' ), 
+    ok( $MM->file_name_is_absolute( 'C:/' ),
         'file_name_is_absolute()' );
     ok( ! $MM->file_name_is_absolute( 'some/path/' ),
         'not file_name_is_absolute()' );
 
 }
 
-# find_perl() 
+# find_perl()
 # Should be able to find running perl... $^X is OK on Win32
 {
     my $my_perl = $1 if $^X  =~ /(.*)/; # are we in -T or -t?
@@ -85,10 +85,10 @@ delete $ENV{PATHEXT} unless $had_pathext;
 {
     my @path_eg = qw( c: trick dir/now_OK );
 
-    is( $MM->catdir( @path_eg ), 
+    is( $MM->catdir( @path_eg ),
          'C:\\trick\\dir\\now_OK', 'catdir()' );
-    is( $MM->catdir( @path_eg ), 
-        File::Spec->catdir( @path_eg ), 
+    is( $MM->catdir( @path_eg ),
+        File::Spec->catdir( @path_eg ),
         'catdir() eq File::Spec->catdir()' );
 
 # catfile() (calls MM_Win32->catdir)
@@ -97,8 +97,8 @@ delete $ENV{PATHEXT} unless $had_pathext;
     is( $MM->catfile( @path_eg ),
         'C:\\trick\\dir\\now_OK\\file.ext', 'catfile()' );
 
-    is( $MM->catfile( @path_eg ), 
-        File::Spec->catfile( @path_eg ), 
+    is( $MM->catfile( @path_eg ),
+        File::Spec->catfile( @path_eg ),
         'catfile() eq File::Spec->catfile()' );
 }
 
@@ -126,7 +126,7 @@ note "init_others creates expected keys"; {
 # init_* methods and check the keys in $mm_w32 directly
 {
     my $mm_w32 = bless {
-        NAME         => 'TestMM_Win32', 
+        NAME         => 'TestMM_Win32',
         VERSION      => '1.00',
         PM           => { 'MM_Win32.pm' => 1 },
         MAKE         => $Config{make},
@@ -175,7 +175,7 @@ note "init_others creates expected keys"; {
 
 # init_linker
 {
-    my $libperl = File::Spec->catfile('$(PERL_INC)', 
+    my $libperl = File::Spec->catfile('$(PERL_INC)',
                                       $Config{libperl} || 'libperl.a');
     my $export  = '$(BASEEXT).def';
     my $after   = '';
@@ -207,19 +207,19 @@ EOSCRIPT
     skip( "Can't write to temp file: $!", 4 )
         unless close SCRIPT;
     # now start tests:
-    is( $MM->perl_script( $script_name ), 
+    is( $MM->perl_script( $script_name ),
         "${script_name}$script_ext", "perl_script ($script_ext)" );
 
     skip( "Can't rename temp file: $!", 3 )
         unless rename $script_name, "${script_name}.pl";
     $script_ext = '.pl';
-    is( $MM->perl_script( $script_name ), 
+    is( $MM->perl_script( $script_name ),
         "${script_name}$script_ext", "perl_script ($script_ext)" );
 
     skip( "Can't rename temp file: $!", 2 )
         unless rename "${script_name}$script_ext", "${script_name}.bat";
     $script_ext = '.bat';
-    is( $MM->perl_script( $script_name ), 
+    is( $MM->perl_script( $script_name ),
         "${script_name}$script_ext", "perl_script ($script_ext)" );
 
     skip( "Can't rename temp file: $!", 1 )
@@ -227,7 +227,7 @@ EOSCRIPT
     $script_ext = '.noscript';
 
     isnt( $MM->perl_script( $script_name ),
-          "${script_name}$script_ext", 
+          "${script_name}$script_ext",
           "not a perl_script anymore ($script_ext)" );
     is( $MM->perl_script( $script_name ), undef,
         "perl_script ($script_ext) returns empty" );

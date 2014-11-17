@@ -1,18 +1,11 @@
-#!/usr/bin/perl
-
 # Testing documents that should fail
-
 use strict;
-BEGIN {
-	$|  = 1;
-	$^W = 1;
-}
+use warnings;
+use lib 't/lib/';
+use Test::More 0.99;
+use TestUtils;
 
 use File::Spec::Functions ':ALL';
-use t::lib::Test;
-use Test::More tests => 1;
-
-
 
 
 
@@ -20,27 +13,31 @@ use Test::More tests => 1;
 # Customized Class
 
 SCOPE: {
-	package Foo;
+    package Foo;
 
-	use CPAN::Meta::YAML;
+    use CPAN::Meta::YAML;
 
-	use vars qw{@ISA};
-	BEGIN {
-		@ISA = 'CPAN::Meta::YAML';
-	}
+    use vars qw{@ISA};
+    BEGIN {
+        @ISA = 'CPAN::Meta::YAML';
+    }
 
-	sub _write_scalar {
-		my $self   = shift;
-		my $string = shift;
-		my $indent = shift;
-		if ( defined $indent ) {
-			return "'$indent'";
-		} else {
-			return 'undef';
-		}
-	}
+    # XXX-INGY subclasses should not use private methods… or if they
+    # do they should expect method name changes.
+    # sub _write_scalar {
 
-	1;
+    sub _dump_scalar {
+        my $self   = shift;
+        my $string = shift;
+        my $is_key = shift;
+        if ( defined $is_key ) {
+            return scalar reverse $string;
+        } else {
+            return $string;
+        }
+    }
+
+    1;
 }
 
 
@@ -51,6 +48,8 @@ SCOPE: {
 # Generate the value
 
 my $object = Foo->new(
-	{ foo => 'bar' }
+    { foo => 'bar' }
 );
-is( $object->write_string, "---\nfoo: '1'\n", 'Subclassing works' );
+is( $object->write_string, "---\noof: bar\n", 'Subclassing works' );
+
+done_testing;

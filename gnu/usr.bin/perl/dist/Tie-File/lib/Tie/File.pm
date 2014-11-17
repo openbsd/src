@@ -7,7 +7,7 @@ use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
 sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
 
 
-$VERSION = "0.99";
+$VERSION = "1.00";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
@@ -656,7 +656,7 @@ sub _mtwrite {
       if (@_) {
         $unwritten = $self->_downcopy($data, $end, $_[1] - $end);
       } else {
-        # Make the file longer to accommodate the last segment that doesn'
+        # Make the file longer to accommodate the last segment that doesn't
         $unwritten = $self->_downcopy($data, $end);
       }
     }
@@ -1921,7 +1921,7 @@ sub set_val {
   return $oval;
 }
 
-# The hask key has changed for an item;
+# The hash key has changed for an item;
 # alter the heap's record of the hash key
 sub rekey {
   my ($self, $n, $new_key) = @_;

@@ -7,6 +7,7 @@ my @tests=(
   'D:\\dev/perl/ver/28321_/perl.exe'=>
   '/(\\.COM|\\.EXE|\\.BAT|\\.CMD|\\.VBS|\\.VBE|\\.JS|\\.JSE|\\.WSF|\\.WSH|\\.pyo|\\.pyc|\\.pyw|\\.py)$/i',
   'q'=>'[q]',
+  "path_sep:\t8490" => '^(\\S{1,9}):\\s*(\\d+)$'
 );
 while (@tests) {
     my ($str,$pat)=splice @tests,0,2;

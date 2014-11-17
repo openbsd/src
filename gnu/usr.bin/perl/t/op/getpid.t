@@ -36,7 +36,7 @@ new threads( sub { ($pid2, $ppid2) = ($$, getppid()); } ) -> join();
 # Newer linuxthreads from gnukfreebsd (0.11) does have POSIX thread
 # semantics, so include a version check
 # <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=675606>
-my $thread_version = qx[getconf GNU_LIBPTHREAD_VERSION 2>&1];
+my $thread_version = qx[getconf GNU_LIBPTHREAD_VERSION 2>&1] // '';
 chomp $thread_version;
 if ($^O =~ /^(?:gnukfreebsd|linux)$/ and
     $thread_version =~ /linuxthreads/ and

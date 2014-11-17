@@ -17,6 +17,13 @@ $f->{c} = 1;
 EXPECT
 No such class field "c" in variable $f of type Foo at - line 8.
 ########
+# NAME "No such field" with block: ${$ref}{key}
+%FIELDS; # empty hash so all keys are invalid
+my main $r;
+${$r}{key};
+EXPECT
+No such class field "key" in variable $r of type main at - line 3.
+########
 # NAME OP_HSLICE fields
 package Foo;
 use fields qw(a b);
@@ -29,10 +36,42 @@ my Foo $f = Foo->new;
 EXPECT
 No such class field "c" in variable $f of type Foo at - line 8.
 ########
+# NAME Single OP_HSLICE field
+%FIELDS; # vivify it, but leave it empty, so all fields are invalid
+my main $f;
+@$f{"a"};
+EXPECT
+No such class field "a" in variable $f of type main at - line 3.
+########
+# NAME OP_KVHSLICE fields
+BEGIN { %FIELDS = qw(a 1 b 1); }
+my main $f;
+%$f{"a","c"};
+EXPECT
+No such class field "c" in variable $f of type main at - line 3.
+########
+# NAME Can't declare conditional
+my($a?$b:$c)
+EXPECT
+Can't declare conditional expression in "my" at - line 1, at EOF
+Execution of - aborted due to compilation errors.
+########
+# NAME Can't declare do block
+my(do{})
+EXPECT
+Can't declare do block in "my" at - line 1, at EOF
+Execution of - aborted due to compilation errors.
+########
 # NAME delete BAD
 delete $x;
 EXPECT
 delete argument is not a HASH or ARRAY element or slice at - line 1.
+########
+# NAME delete sort
+use warnings;
+delete sort; # used to warn about scalar context, too
+EXPECT
+delete argument is not a HASH or ARRAY element or slice at - line 2.
 ########
 # NAME exists BAD
 exists $x;

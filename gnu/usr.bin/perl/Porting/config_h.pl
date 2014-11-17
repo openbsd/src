@@ -36,7 +36,6 @@ my %dep = (
     BYTEORDER		=> [ qw( UVSIZE				) ],
     LONGSIZE		=> [ qw( BYTEORDER			) ],
     MULTIARCH		=> [ qw( BYTEORDER MEM_ALIGNBYTES	) ],
-    USE_CROSS_COMPILE	=> [ qw( BYTEORDER MEM_ALIGNBYTES	) ],
     HAS_QUAD		=> [ qw( I64TYPE			) ],
     HAS_GETGROUPS	=> [ qw( Groups_t			) ],
     HAS_SETGROUPS	=> [ qw( Groups_t			) ],

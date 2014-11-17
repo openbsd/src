@@ -26,7 +26,7 @@ There is no simple answer to this question. Perl frameworks can run everything
 from basic file servers and small scale intranets to massive multinational
 multilingual websites that are the core to international businesses.
 
-Below is a list of a few frameworks with comments which might help you in 
+Below is a list of a few frameworks with comments which might help you in
 making a decision, depending on your specific requirements. Start by reading
 the docs, then ask questions on the relevant mailing list or IRC channel.
 

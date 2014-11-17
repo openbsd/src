@@ -27,7 +27,7 @@ BEGIN {
 }
 
 
-$VERSION = '1.23';
+$VERSION = '1.25';
 @ISA = ();
 
 $MATCH_SUPERS = 1;
@@ -194,7 +194,7 @@ sub maketext {
     my($handle, $phrase) = splice(@_,0,2);
     Carp::confess('No handle/phrase') unless (defined($handle) && defined($phrase));
 
-    # backup $@ in case it it's still being used in the calling code.
+    # backup $@ in case it's still being used in the calling code.
     # If no failures, we'll re-set it back to what it was later.
     my $at = $@;
 
@@ -344,7 +344,7 @@ sub _langtag_munging {
     my($base_class, @languages) = @_;
 
     # We have all these DEBUG statements because otherwise it's hard as hell
-    # to diagnose ifwhen something goes wrong.
+    # to diagnose if/when something goes wrong.
 
     DEBUG and warn 'Lgs1: ', map("<$_>", @languages), "\n";
 
@@ -570,6 +570,7 @@ sub _compile {
                             $c[-1] = ''; # reuse this slot
                         }
                         else {
+                            $c[-1] =~ s/\\\\/\\/g;
                             push @code, ' $c[' . $#c . "],\n";
                             push @c, ''; # new chunk
                         }

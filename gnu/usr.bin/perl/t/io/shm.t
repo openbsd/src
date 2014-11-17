@@ -40,7 +40,7 @@ my $key;
 END { shmctl $key, IPC_RMID, 0 if defined $key }
 
 {
-	local $SIG{SYS} = sub { plan(skip_all => "SIGSYS caught") } if exists $SIG{SYS};
+	local $SIG{SYS} = sub { skip_all("SIGSYS caught") } if exists $SIG{SYS};
 	$key = shmget IPC_PRIVATE, 8, S_IRWXU;
 }
 
@@ -48,7 +48,7 @@ if (not defined $key) {
   my $info = "IPC::SharedMem->new failed: $!";
   if ($! == &IPC::SysV::ENOSPC || $! == &IPC::SysV::ENOSYS ||
       $! == &IPC::SysV::ENOMEM || $! == &IPC::SysV::EACCES) {
-    plan(skip_all => $info);
+    skip_all($info);
   }
   else {
     die $info;

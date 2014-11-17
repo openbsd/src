@@ -35,7 +35,7 @@ SKIP:
                       if $Is_Dosish;
     ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
      $blksize,$blocks) = stat($Dfile);
-    ok(($mode & 0777) == ($^O eq 'vos' ? 0750 : 0640) , "File permissions");
+    ok(($mode & 0777) == 0640 , "File permissions");
 }
 
 while (($key,$value) = each(%h)) {

@@ -8,7 +8,7 @@ use CPAN::Module;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5";
+$VERSION = "5.5001";
 
 sub look {
     my $self = shift;
@@ -229,7 +229,9 @@ Going to $meth that.
         my $obj = $CPAN::META->instance($type,$s);
         $obj->{reqtype} = $self->{reqtype};
         # $obj->$meth();
-       CPAN::Queue->queue_item(qmod => $obj->id, reqtype => $self->{reqtype});
+        # XXX should optional be based on whether bundle was optional? -- xdg, 2012-04-01
+        # A: Sure, what could demand otherwise? --andk, 2013-11-25
+        CPAN::Queue->queue_item(qmod => $obj->id, reqtype => $self->{reqtype}, optional => !$self->{mandatory});
     }
 }
 
@@ -267,7 +269,7 @@ sub clean   { shift->rematein('clean',@_); }
 #-> sub CPAN::Bundle::uptodate ;
 sub uptodate {
     my($self) = @_;
-    return 0 unless $self->SUPER::uptodate; # we mut have the current Bundle def
+    return 0 unless $self->SUPER::uptodate; # we must have the current Bundle def
     my $c;
     foreach $c ($self->contains) {
         my $obj = CPAN::Shell->expandany($c);

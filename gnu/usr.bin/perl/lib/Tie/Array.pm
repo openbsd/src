@@ -3,7 +3,7 @@ package Tie::Array;
 use 5.006_001;
 use strict;
 use Carp;
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 # Pod documentation after __END__ below.
 
@@ -128,10 +128,10 @@ Tie::Array - base class for tied arrays
     sub FETCH { ... }
     sub FETCHSIZE { ... }
 
-    sub STORE { ... }        # mandatory if elements writeable
-    sub STORESIZE { ... }    # mandatory if elements can be added/deleted
-    sub EXISTS { ... }       # mandatory if exists() expected to work
-    sub DELETE { ... }       # mandatory if delete() expected to work
+    sub STORE { ... }       # mandatory if elements writeable
+    sub STORESIZE { ... }   # mandatory if elements can be added/deleted
+    sub EXISTS { ... }      # mandatory if exists() expected to work
+    sub DELETE { ... }      # mandatory if delete() expected to work
 
     # optional methods - for efficiency
     sub CLEAR { ... }

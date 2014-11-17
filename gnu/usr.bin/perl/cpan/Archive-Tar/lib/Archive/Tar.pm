@@ -23,7 +23,7 @@ require Exporter;
 use strict;
 use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
             $DO_NOT_USE_PREFIX $HAS_PERLIO $HAS_IO_STRING $SAME_PERMISSIONS
-            $INSECURE_EXTRACT_MODE $ZERO_PAD_NUMBERS @ISA @EXPORT
+            $INSECURE_EXTRACT_MODE $ZERO_PAD_NUMBERS @ISA @EXPORT $RESOLVE_SYMLINK
          ];
 
 @ISA                    = qw[Exporter];
@@ -31,13 +31,14 @@ use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
 $DEBUG                  = 0;
 $WARN                   = 1;
 $FOLLOW_SYMLINK         = 0;
-$VERSION                = "1.90";
+$VERSION                = "1.96";
 $CHOWN                  = 1;
 $CHMOD                  = 1;
 $SAME_PERMISSIONS       = $> == 0 ? 1 : 0;
 $DO_NOT_USE_PREFIX      = 0;
 $INSECURE_EXTRACT_MODE  = 0;
 $ZERO_PAD_NUMBERS       = 0;
+$RESOLVE_SYMLINK        = $ENV{'PERL5_AT_RESOLVE_SYMLINK'} || 'speed';
 
 BEGIN {
     use Config;
@@ -485,7 +486,7 @@ sub _read_tar {
                 ### but that doesn't *always* happen.. so check if the last
                 ### character is a control character, and if so remove it
                 ### at any rate, we better remove that character here, or tests
-                ### like 'eq' and hashlook ups based on names will SO not work
+                ### like 'eq' and hash lookups based on names will SO not work
                 ### remove it by calculating the proper size, and then
                 ### tossing out everything that's longer than that size.
 
@@ -956,7 +957,7 @@ sub _extract_special_file_as_plain_file {
 
     my $err;
     TRY: {
-        my $orig = $self->_find_entry( $entry->linkname );
+        my $orig = $self->_find_entry( $entry->linkname, $entry );
 
         unless( $orig ) {
             $err =  qq[Could not find file '] . $entry->linkname .
@@ -965,7 +966,7 @@ sub _extract_special_file_as_plain_file {
         }
 
         ### clone the entry, make it appear as a normal file ###
-        my $clone = $entry->clone;
+        my $clone = $orig->clone;
         $clone->_downgrade_to_plainfile;
         $self->_extract_file( $clone, $file ) or last TRY;
 
@@ -1030,10 +1031,46 @@ sub _find_entry {
     ### it's an object already
     return $file if UNIVERSAL::isa( $file, 'Archive::Tar::File' );
 
-    for my $entry ( @{$self->_data} ) {
-        my $path = $entry->full_path;
-        return $entry if $path eq $file;
-    }
+seach_entry:
+		if($self->_data){
+			for my $entry ( @{$self->_data} ) {
+					my $path = $entry->full_path;
+					return $entry if $path eq $file;
+			}
+		}
+
+		if($Archive::Tar::RESOLVE_SYMLINK!~/none/){
+			if(my $link_entry = shift()){#fallback mode when symlinks are using relative notations ( ../a/./b/text.bin )
+				$file = _symlinks_resolver( $link_entry->name, $file );
+				goto seach_entry if $self->_data;
+
+				#this will be slower than never, but won't failed!
+
+				my $iterargs = $link_entry->{'_archive'};
+				if($Archive::Tar::RESOLVE_SYMLINK=~/speed/ && @$iterargs==3){
+				#faster	but whole archive will be read in memory
+					#read whole archive and share data
+					my $archive = Archive::Tar->new;
+					$archive->read( @$iterargs );
+					push @$iterargs, $archive; #take a trace for destruction
+					if($archive->_data){
+						$self->_data( $archive->_data );
+						goto seach_entry;
+					}
+				}#faster
+
+				{#slower but lower memory usage
+					# $iterargs = [$filename, $compressed, $opts];
+					my $next = Archive::Tar->iter( @$iterargs );
+					while(my $e = $next->()){
+						if($e->full_path eq $file){
+							undef $next;
+							return $e;
+						}
+					}
+				}#slower
+			}
+		}
 
     $self->_error( qq[No such file in archive: '$file'] );
     return;
@@ -1553,7 +1590,7 @@ sub add_data {
 
 =head2 $tar->error( [$BOOL] )
 
-Returns the current errorstring (usually, the last error reported).
+Returns the current error string (usually, the last error reported).
 If a true value was specified, it will give the C<Carp::longmess>
 equivalent of the error, in effect giving you a stacktrace.
 
@@ -1729,6 +1766,7 @@ sub iter {
     ) or return;
 
     my @data;
+		my $CONSTRUCT_ARGS = [ $filename, $compressed, $opts ];
     return sub {
         return shift(@data)     if @data;       # more than one file returned?
         return                  unless $handle; # handle exhausted?
@@ -1736,12 +1774,25 @@ sub iter {
         ### read data, should only return file
         my $tarfile = $class->_read_tar($handle, { %$opts, limit => 1 });
         @data = @$tarfile if ref $tarfile && ref $tarfile eq 'ARRAY';
+				if($Archive::Tar::RESOLVE_SYMLINK!~/none/){
+					foreach(@data){
+						#may refine this heuristic for ON_UNIX?
+						if($_->linkname){
+							#is there a better slot to store/share it ?
+							$_->{'_archive'} = $CONSTRUCT_ARGS;
+						}
+					}
+				}
 
         ### return one piece of data
         return shift(@data)     if @data;
 
         ### data is exhausted, free the filehandle
         undef $handle;
+				if(@$CONSTRUCT_ARGS == 4){
+					#free archive in memory
+					undef $CONSTRUCT_ARGS->[-1];
+				}
         return;
     };
 }
@@ -1863,6 +1914,32 @@ sub can_handle_compressed_files { return ZLIB && BZIP ? 1 : 0 }
 
 sub no_string_support {
     croak("You have to install IO::String to support writing archives to strings");
+}
+
+sub _symlinks_resolver{
+  my ($src, $trg) = @_;
+  my @src = split /[\/\\]/, $src;
+  my @trg = split /[\/\\]/, $trg;
+  pop @src; #strip out current object name
+  if(@trg and $trg[0] eq ''){
+    shift @trg;
+    #restart path from scratch
+    @src = ( );
+  }
+  foreach my $part ( @trg ){
+    next if $part eq '.'; #ignore current
+    if($part eq '..'){
+      #got to parent
+      pop @src;
+    }
+    else{
+      #append it
+      push @src, $part;
+    }
+  }
+  my $path = join('/', @src);
+  warn "_symlinks_resolver('$src','$trg') = $path" if $DEBUG;
+  return $path;
 }
 
 1;
@@ -2006,6 +2083,30 @@ This variable holds a boolean indicating if we will create
 zero padded numbers for C<size>, C<mtime> and C<checksum>.
 The default is C<0>, indicating that we will create space padded
 numbers. Added for compatibility with C<busybox> implementations.
+
+=head2 Tuning the way RESOLVE_SYMLINK will works
+
+	You can tune the behaviour by setting the $Archive::Tar::RESOLVE_SYMLINK variable,
+	or $ENV{PERL5_AT_RESOLVE_SYMLINK} before loading the module Archive::Tar.
+
+  Values can be one of the following:
+
+		none
+           Disable this mechanism and failed as it was in previous version (<1.88)
+
+		speed (default)
+           If you prefer speed
+           this will read again the whole archive using read() so all entries
+           will be available
+
+    memory
+           If you prefer memory
+
+	Limitation
+
+		It won't work for terminal, pipe or sockets or every non seekable source.
+
+=cut
 
 =head1 FAQ
 

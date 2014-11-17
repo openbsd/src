@@ -1,17 +1,14 @@
 package TAP::Harness;
 
 use strict;
+use warnings;
 use Carp;
 
 use File::Spec;
 use File::Path;
 use IO::Handle;
 
-use TAP::Base;
-
-use vars qw($VERSION @ISA);
-
-@ISA = qw(TAP::Base);
+use base 'TAP::Base';
 
 =head1 NAME
 
@@ -19,11 +16,11 @@ TAP::Harness - Run test scripts with statistics
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 $ENV{HARNESS_ACTIVE}  = 1;
 $ENV{HARNESS_VERSION} = $VERSION;
@@ -248,7 +245,7 @@ I<NEW to 3.18>.
 
 If set, C<sources> must be a hashref containing the names of the
 L<TAP::Parser::SourceHandler>s to load and/or configure.  The values are a
-hash of configuration that will be accessible to to the source handlers via
+hash of configuration that will be accessible to the source handlers via
 L<TAP::Parser::Source/config_for>.
 
 For example:
@@ -330,20 +327,37 @@ run only one test at a time.
 
 =item * C<rules>
 
-A reference to a hash of rules that control which tests may be
-executed in parallel. This is an experimental feature and the
-interface may change.
+A reference to a hash of rules that control which tests may be executed in
+parallel. If no rules are declared, all tests are eligible for being run in
+parallel. Here some simple examples. For the full details of the data structure
+and the related glob-style pattern matching, see
+L<TAP::Parser::Scheduler/"Rules data structure">.
 
-    $harness->rules(
-        {   par => [
-                { seq => '../ext/DB_File/t/*' },
-                { seq => '../ext/IO_Compress_Zlib/t/*' },
-                { seq => '../lib/CPANPLUS/*' },
-                { seq => '../lib/ExtUtils/t/*' },
-                '*'
-            ]
-        }
-    );
+    # Run all tests in sequence, except those starting with "p"
+    $harness->rules({
+        par => 't/p*.t'
+    });
+
+    # Run all tests in parallel, except those starting with "p"
+    $harness->rules({
+        seq => [
+                  { seq => 't/p*.t' },
+                  { par => '**'     },
+               ],
+    });
+
+    # Run some  startup tests in sequence, then some parallel tests than some
+    # teardown tests in sequence.
+    $harness->rules({
+        seq => [
+            { seq => 't/startup/*.t' },
+            { par => ['t/a/*.t','t/b/*.t','t/c/*.t'], }
+            { seq => 't/shutdown/*.t' },
+        ],
+
+    });
+
+This is an experimental feature and the interface may change.
 
 =item * C<stdout>
 

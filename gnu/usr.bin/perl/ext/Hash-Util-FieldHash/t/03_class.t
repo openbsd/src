@@ -86,7 +86,7 @@ BEGIN {
     }
 
     package Impostor;
-    use base 'Person';
+    use parent '-norequire', 'Person';
 
     {
         CFF::fieldhash my %assumed_title;

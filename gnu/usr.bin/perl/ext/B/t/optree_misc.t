@@ -24,7 +24,7 @@ skip "no perlio in this build", 4 unless $Config::Config{useperlio};
 # All this is much simpler, now that aelemfast_lex has been broken out from
 # aelemfast
 checkOptree ( name	=> 'OP_AELEMFAST opclass',
-	      code	=> sub { my @x; our @y; $x[0] + $y[0]},
+	      code	=> sub { my @x; our @y; $x[127] + $y[-128]},
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # a  <1> leavesub[1 ref] K/REFC,1 ->(end)
@@ -37,12 +37,12 @@ checkOptree ( name	=> 'OP_AELEMFAST opclass',
 # 6        <;> nextstate(main 636 optree_misc.t:25) v:>,<,%,{ ->7
 # 9        <2> add[t6] sK/2 ->a
 # -           <1> ex-aelem sK/2 ->8
-# 7              <0> aelemfast_lex[@x:634,636] sR ->8
+# 7              <0> aelemfast_lex[@x:634,636] sR/127 ->8
 # -              <0> ex-const s ->-
 # -           <1> ex-aelem sK/2 ->9
 # -              <1> ex-rv2av sKR/1 ->-
-# 8                 <#> aelemfast[*y] s ->9
-# -              <0> ex-const s ->-
+# 8                 <#> aelemfast[*y] s/128 ->9
+# -              <0> ex-const s/FOLD ->-
 EOT_EOT
 # a  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->a
@@ -54,12 +54,12 @@ EOT_EOT
 # 6        <;> nextstate(main 636 optree_misc.t:27) v:>,<,%,{ ->7
 # 9        <2> add[t4] sK/2 ->a
 # -           <1> ex-aelem sK/2 ->8
-# 7              <0> aelemfast_lex[@x:634,636] sR ->8
+# 7              <0> aelemfast_lex[@x:634,636] sR/127 ->8
 # -              <0> ex-const s ->-
 # -           <1> ex-aelem sK/2 ->9
 # -              <1> ex-rv2av sKR/1 ->-
-# 8                 <$> aelemfast(*y) s ->9
-# -              <0> ex-const s ->-
+# 8                 <$> aelemfast(*y) s/128 ->9
+# -              <0> ex-const s/FOLD ->-
 EONT_EONT
 
 checkOptree ( name	=> 'PMOP children',

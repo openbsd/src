@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use warnings;
 use lib 't/lib';
 
 use Test::More tests => 76;
@@ -28,8 +29,7 @@ my $setup    = sub { $did_setup++ };
 my $teardown = sub { $did_teardown++ };
 
 package NoForkProcess;
-use vars qw( @ISA );
-@ISA = qw( TAP::Parser::Iterator::Process );
+use base qw( TAP::Parser::Iterator::Process );
 
 sub _use_open3 {return}
 

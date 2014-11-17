@@ -5,6 +5,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 
 use NoFork;
 require('t/multiplexer.t');

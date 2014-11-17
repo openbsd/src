@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use warnings;
 use Test::More (
     $^O eq 'VMS'
     ? ( skip_all => 'VMS' )

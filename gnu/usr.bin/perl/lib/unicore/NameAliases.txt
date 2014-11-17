@@ -1,10 +1,10 @@
-# NameAliases-6.2.0.txt
-# Date: 2012-05-15, 18:44:00 GMT [KW]
+# NameAliases-6.3.0.txt
+# Date: 2013-02-05, 23:33:00 GMT [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 2005-2012 Unicode, Inc.
+# Copyright (c) 2005-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the formal name aliases for Unicode characters.
@@ -216,6 +216,7 @@
 01A2;LATIN CAPITAL LETTER GHA;correction
 01A3;LATIN SMALL LETTER GHA;correction
 034F;CGJ;abbreviation
+061C;ALM;abbreviation
 0709;SYRIAC SUBLINEAR COLON SKEWED LEFT;correction
 0CDE;KANNADA LETTER LLLA;correction
 0E9D;LAO LETTER FO FON;correction
@@ -240,6 +241,10 @@
 202F;NNBSP;abbreviation
 205F;MMSP;abbreviation
 2060;WJ;abbreviation
+2066;LRI;abbreviation
+2067;RLI;abbreviation
+2068;FSI;abbreviation
+2069;PDI;abbreviation
 2118;WEIERSTRASS ELLIPTIC FUNCTION;correction
 2448;MICR ON US SYMBOL;correction
 2449;MICR DASH SYMBOL;correction
@@ -264,6 +269,8 @@ FE0F;VS16;abbreviation
 FEFF;BYTE ORDER MARK;alternate
 FEFF;BOM;abbreviation
 FEFF;ZWNBSP;abbreviation
+122D4;CUNEIFORM SIGN NU11 TENU;correction
+122D5;CUNEIFORM SIGN NU11 OVER NU11 BUR OVER BUR;correction
 1D0C5;BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS;correction
 E0100;VS17;abbreviation
 E0101;VS18;abbreviation

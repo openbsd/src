@@ -2,7 +2,7 @@
 
 use strict;
 use lib 't/lib';
-use MBTest tests => 64;
+use MBTest tests => 63;
 
 blib_load('Module::Build');
 
@@ -183,23 +183,29 @@ print "Hello, World!\n";
   ok my $mb = Module::Build->new(
 				  module_name => $dist->name,
 				  license => 'perl',
-				  meta_add => {foo => 'bar'},
+				  meta_add => {abstract => 'bar'},
 				  conflicts => {'Foo::Barxx' => 0},
 			        );
   my $data = $mb->get_metadata;
-  is $data->{foo}, 'bar';
+  is_deeply $data->{abstract}, 'bar';
 
-  $mb->meta_merge(foo => 'baz');
+  $mb->meta_merge(abstract => 'baz');
   $data = $mb->get_metadata;
-  is $data->{foo}, 'baz';
+  is_deeply $data->{abstract}, 'baz';
 
-  $mb->meta_merge(conflicts => {'Foo::Fooxx' => 0});
+  $mb->meta_merge(
+    'meta-spec' => { version => 2 },
+    prereqs => {
+      test => {
+        requirements => {
+          'Foo::Fooxx' => 0,
+        }
+      }
+    }
+  );
   $data = $mb->get_metadata;
-  is_deeply $data->{conflicts}, {'Foo::Barxx' => 0, 'Foo::Fooxx' => 0};
+  is_deeply $data->{prereqs}{test}{requirements}, { 'Foo::Fooxx' => 0 };
 
-  $mb->meta_add(conflicts => {'Foo::Bazxx' => 0});
-  $data = $mb->get_metadata;
-  is_deeply $data->{conflicts}, {'Foo::Bazxx' => 0, 'Foo::Fooxx' => 0};
 }
 
 {

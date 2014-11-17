@@ -24,7 +24,7 @@ foreach ([0, '', '', 'empty'],
     is(bytes_cmp_utf8($right, $left), -$expect, "$desc reversed");
 }
 
-# Test uft8n_to_uvuni().  These provide essentially complete code coverage.
+# Test uft8n_to_uvchr().  These provide essentially complete code coverage.
 
 # Copied from utf8.h
 my $UTF8_ALLOW_EMPTY            = 0x0001;
@@ -89,7 +89,7 @@ foreach my $test (
 
     # Test what happens when this malformation is not allowed
     undef @warnings;
-    my $ret_ref = test_utf8n_to_uvuni($bytes, $length, 0);
+    my $ret_ref = test_utf8n_to_uvchr($bytes, $length, 0);
     is($ret_ref->[0], 0, "$testname: disallowed: Returns 0");
     is($ret_ref->[1], $expected_len, "$testname: disallowed: Returns expected length");
     if (is(scalar @warnings, 1, "$testname: disallowed: Got a single warning ")) {
@@ -104,7 +104,7 @@ foreach my $test (
     {   # Next test when disallowed, and warnings are off.
         undef @warnings;
         no warnings 'utf8';
-        my $ret_ref = test_utf8n_to_uvuni($bytes, $length, 0);
+        my $ret_ref = test_utf8n_to_uvchr($bytes, $length, 0);
         is($ret_ref->[0], 0, "$testname: disallowed: no warnings 'utf8': Returns 0");
         is($ret_ref->[1], $expected_len, "$testname: disallowed: no warnings 'utf8': Returns expected length");
         if (!is(scalar @warnings, 0, "$testname: disallowed: no warnings 'utf8': no warnings generated")) {
@@ -114,7 +114,7 @@ foreach my $test (
 
     # Test with CHECK_ONLY
     undef @warnings;
-    $ret_ref = test_utf8n_to_uvuni($bytes, $length, $UTF8_CHECK_ONLY);
+    $ret_ref = test_utf8n_to_uvchr($bytes, $length, $UTF8_CHECK_ONLY);
     is($ret_ref->[0], 0, "$testname: CHECK_ONLY: Returns 0");
     is($ret_ref->[1], -1, "$testname: CHECK_ONLY: returns expected length");
     if (! is(scalar @warnings, 0, "$testname: CHECK_ONLY: no warnings generated")) {
@@ -125,7 +125,7 @@ foreach my $test (
 
     # Test when the malformation is allowed
     undef @warnings;
-    $ret_ref = test_utf8n_to_uvuni($bytes, $length, $allow_flags);
+    $ret_ref = test_utf8n_to_uvchr($bytes, $length, $allow_flags);
     is($ret_ref->[0], $allowed_uv, "$testname: allowed: Returns expected uv");
     is($ret_ref->[1], $expected_len, "$testname: allowed: Returns expected length");
     if (!is(scalar @warnings, 0, "$testname: allowed: no warnings generated"))
@@ -166,7 +166,7 @@ my @tests = (
         # This code point is chosen so that it is representable in a UV on
         # 32-bit machines
         $UTF8_WARN_FE_FF, $UTF8_DISALLOW_FE_FF, 'utf8', 0x80000000, 7,
-        qr/Code point beginning with byte .* is not Unicode, and not portable/
+        qr/Code point 0x80000000 is not Unicode, and not portable/
     ],
     [ "overflow with FE/FF",
         # This tests the interaction of WARN_FE_FF/DISALLOW_FE_FF with
@@ -178,9 +178,12 @@ my @tests = (
         ($has_quad)
             ? "\xff\x80\x90\x90\x90\xbf\xbf\xbf\xbf\xbf\xbf\xbf\xbf"
             : "\xfe\x86\x80\x80\x80\x80\x80",
-        $UTF8_WARN_FE_FF, $UTF8_DISALLOW_FE_FF, 'utf8', 0,
+
+        # We include both warning categories to make sure the FE_FF one has
+        # precedence
+        "$UTF8_WARN_FE_FF|$UTF8_WARN_SUPER", "$UTF8_DISALLOW_FE_FF", 'utf8', 0,
         ($has_quad) ? 13 : 7,
-        qr/Code point beginning with byte .* is not Unicode, and not portable/
+        qr/overflow at byte .*, after start byte 0xf/
     ],
 );
 
@@ -188,7 +191,7 @@ if ($has_quad) {    # All FF's will overflow on 32 bit
     push @tests,
         [ "begins with FF", "\xff\x80\x80\x80\x80\x80\x81\x80\x80\x80\x80\x80\x80",
             $UTF8_WARN_FE_FF, $UTF8_DISALLOW_FE_FF, 'utf8', $FF_ret, 13,
-            qr/Code point beginning with byte .* is not Unicode, and not portable/
+            qr/Code point 0x.* is not Unicode, and not portable/
         ];
 }
 
@@ -202,85 +205,114 @@ foreach my $test (@tests) {
     # are several orthogonal variables involved.  We test all the subclasses
     # of utf8 warnings to verify they work with and without the utf8 class,
     # and don't have effects on other sublass warnings
-    foreach my $warning (0, 'utf8', 'surrogate', 'nonchar', 'non_unicode') {
+    foreach my $warning ('utf8', 'surrogate', 'nonchar', 'non_unicode') {
         foreach my $warn_flag (0, $warn_flags) {
             foreach my $disallow_flag (0, $disallow_flags) {
+                foreach my $do_warning (0, 1) {
 
-                no warnings 'utf8';
-                my $eval_warn = $warning eq 0 ? "no warnings" : "use warnings '$warning'";
+                    my $eval_warn = $do_warning
+                                  ? "use warnings '$warning'"
+                                  : $warning eq "utf8"
+                                  ? "no warnings 'utf8'"
+                                  : "use warnings 'utf8'; no warnings '$warning'";
 
-                # is effectively disallowed if will overflow, even if the flag
-                # indicates it is allowed, fix up test name to indicate this
-                # as well
-                my $disallowed = $disallow_flag || $will_overflow;
+                    # is effectively disallowed if will overflow, even if the
+                    # flag indicates it is allowed, fix up test name to
+                    # indicate this as well
+                    my $disallowed = $disallow_flag || $will_overflow;
 
-                my $this_name = "$testname: " . (($disallow_flag)
-                                                  ? 'disallowed'
-                                                  : ($disallowed)
-                                                    ? 'FE_FF allowed'
-                                                    : 'allowed');
-                $this_name .= ", $eval_warn";
-                $this_name .= ", " . (($warn_flag) ? 'with warning flag' : 'no warning flag');
+                    my $this_name = "$testname: " . (($disallow_flag)
+                                                    ? 'disallowed'
+                                                    : ($disallowed)
+                                                        ? 'FE_FF allowed'
+                                                        : 'allowed');
+                    $this_name .= ", $eval_warn";
+                    $this_name .= ", " . (($warn_flag)
+                                          ? 'with warning flag'
+                                          : 'no warning flag');
 
-                undef @warnings;
-                my $ret_ref;
-                #note __LINE__ . ": $eval_warn; \$ret_ref = test_utf8n_to_uvuni('$bytes', $length, $warn_flag|$disallow_flag)";
-                my $eval_text = "$eval_warn; \$ret_ref = test_utf8n_to_uvuni('$bytes', $length, $warn_flag|$disallow_flag)";
-                eval "$eval_text";
-                if (! ok ("$@ eq ''", "$this_name: eval succeeded")) {
-                    note "\$!='$!'; eval'd=\"$eval_text\"";
-                    next;
-                }
-                if ($disallowed) {
-                    is($ret_ref->[0], 0, "$this_name: Returns 0");
-                }
-                else {
-                    is($ret_ref->[0], $allowed_uv, "$this_name: Returns expected uv");
-                }
-                is($ret_ref->[1], $expected_len, "$this_name: Returns expected length");
-
-                if ($will_overflow && ! $disallow_flag && $warning eq 'utf8') {
-
-                    # Will get the overflow message instead of the expected
-                    # message under these circumstances, as they would
-                    # otherwise accept an overflowed value, which the code
-                    # should not allow, so falls back to overflow.
-                    if (is(scalar @warnings, 1, "$this_name: Got a single warning ")) {
-                        like($warnings[0], qr/overflow/, "$this_name: Got overflow warning");
-                    }
-                    else {
-                        if (scalar @warnings) {
-                            note "The warnings were: " . join(", ", @warnings);
-                        }
-                    }
-                }
-                elsif ($warn_flag && ($warning eq 'utf8' || $warning eq $category)) {
-                    if (is(scalar @warnings, 1, "$this_name: Got a single warning ")) {
-                        like($warnings[0], $message, "$this_name: Got expected warning");
-                    }
-                    else {
-                        if (scalar @warnings) {
-                            note "The warnings were: " . join(", ", @warnings);
-                        }
-                    }
-                }
-                else {
-                    if (!is(scalar @warnings, 0, "$this_name: No warnings generated"))
-                    {
-                        note "The warnings were: " . join(", ", @warnings);
-                    }
-                }
-
-                # Check CHECK_ONLY results when the input is disallowed.  Do
-                # this when actually disallowed, not just when the
-                # $disallow_flag is set
-                if ($disallowed) {
                     undef @warnings;
-                    $ret_ref = test_utf8n_to_uvuni($bytes, $length, $disallow_flag|$UTF8_CHECK_ONLY);
-                    is($ret_ref->[0], 0, "$this_name, CHECK_ONLY: Returns 0");
-                    is($ret_ref->[1], -1, "$this_name: CHECK_ONLY: returns expected length");
-                    if (! is(scalar @warnings, 0, "$this_name, CHECK_ONLY: no warnings generated")) {
-                        note "The warnings were: " . join(", ", @warnings);
+                    my $ret_ref;
+                    #note __LINE__ . ": $eval_warn; \$ret_ref = test_utf8n_to_uvchr('$bytes', $length, $warn_flag|$disallow_flag)";
+                    my $eval_text = "$eval_warn; \$ret_ref = test_utf8n_to_uvchr('$bytes', $length, $warn_flag|$disallow_flag)";
+                    eval "$eval_text";
+                    if (! ok ("$@ eq ''", "$this_name: eval succeeded")) {
+                        note "\$!='$!'; eval'd=\"$eval_text\"";
+                        next;
+                    }
+                    if ($disallowed) {
+                        is($ret_ref->[0], 0, "$this_name: Returns 0");
+                    }
+                    else {
+                        is($ret_ref->[0], $allowed_uv,
+                                            "$this_name: Returns expected uv");
+                    }
+                    is($ret_ref->[1], $expected_len,
+                                        "$this_name: Returns expected length");
+
+                    if (! $do_warning
+                        && ($warning eq 'utf8' || $warning eq $category))
+                    {
+                        if (!is(scalar @warnings, 0,
+                                            "$this_name: No warnings generated"))
+                        {
+                            note "The warnings were: " . join(", ", @warnings);
+                        }
+                    }
+                    elsif ($will_overflow
+                           && ! $disallow_flag
+                           && $warning eq 'utf8')
+                    {
+
+                        # Will get the overflow message instead of the expected
+                        # message under these circumstances, as they would
+                        # otherwise accept an overflowed value, which the code
+                        # should not allow, so falls back to overflow.
+                        if (is(scalar @warnings, 1,
+                               "$this_name: Got a single warning "))
+                        {
+                            like($warnings[0], qr/overflow/,
+                                            "$this_name: Got overflow warning");
+                        }
+                        else {
+                            if (scalar @warnings) {
+                                note "The warnings were: "
+                                                        . join(", ", @warnings);
+                            }
+                        }
+                    }
+                    elsif ($warn_flag
+                           && ($warning eq 'utf8' || $warning eq $category))
+                    {
+                        if (is(scalar @warnings, 1,
+                               "$this_name: Got a single warning "))
+                        {
+                            like($warnings[0], $message,
+                                            "$this_name: Got expected warning");
+                        }
+                        else {
+                            if (scalar @warnings) {
+                                note "The warnings were: "
+                                                        . join(", ", @warnings);
+                            }
+                        }
+                    }
+
+                    # Check CHECK_ONLY results when the input is disallowed.  Do
+                    # this when actually disallowed, not just when the
+                    # $disallow_flag is set
+                    if ($disallowed) {
+                        undef @warnings;
+                        $ret_ref = test_utf8n_to_uvchr($bytes, $length,
+                                                $disallow_flag|$UTF8_CHECK_ONLY);
+                        is($ret_ref->[0], 0, "$this_name, CHECK_ONLY: Returns 0");
+                        is($ret_ref->[1], -1,
+                            "$this_name: CHECK_ONLY: returns expected length");
+                        if (! is(scalar @warnings, 0,
+                            "$this_name, CHECK_ONLY: no warnings generated"))
+                        {
+                            note "The warnings were: " . join(", ", @warnings);
+                        }
                     }
                 }
             }

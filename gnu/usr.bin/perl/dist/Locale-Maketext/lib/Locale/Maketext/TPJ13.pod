@@ -715,7 +715,7 @@ right tool for the job.
 However, other accidents of history have made Perl a well-accepted
 language for design of server-side programs (generally in CGI form)
 for Web site interfaces.  Localization of static pages in Web sites is
-trivial, feasable either with simple language-negotiation features in
+trivial, feasible either with simple language-negotiation features in
 servers like Apache, or with some kind of server-side inclusions of
 language-appropriate text into layout templates.  However, I think
 that the localization of Perl-based search systems (or other kinds of

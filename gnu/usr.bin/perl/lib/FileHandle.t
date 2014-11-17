@@ -10,84 +10,87 @@ BEGIN {
     }
 }
 
+use strict;
 use FileHandle;
-use strict subs;
-
 autoflush STDOUT 1;
+use Test::More (tests => 12);
+my $TB = Test::More->builder;
 
-$mystdout = new_from_fd FileHandle 1,"w";
+my $mystdout = new_from_fd FileHandle 1,"w";
 $| = 1;
 autoflush $mystdout;
-print "1..12\n";
 
-print $mystdout "ok ".fileno($mystdout)."\n";
+print $mystdout "ok ".fileno($mystdout),
+    " - ", "create new handle from file descriptor", "\n";
+$TB->current_test($TB->current_test + 1);
 
-$fh = (new FileHandle "./TEST", O_RDONLY
-       or new FileHandle "TEST", O_RDONLY)
-  and print "ok 2\n";
+my $fh = (new FileHandle "./TEST", O_RDONLY
+       or new FileHandle "TEST", O_RDONLY);
+ok(defined($fh), "create new handle O_RDONLY");
 
-
-$buffer = <$fh>;
-print $buffer eq "#!./perl\n" ? "ok 3\n" : "not ok 3\n";
-
+my $buffer = <$fh>;
+is($buffer, "#!./perl\n", "Got expected first line via handle");
 
 ungetc $fh ord 'A';
+my $buf;
 CORE::read($fh, $buf,1);
-print $buf eq 'A' ? "ok 4\n" : "not ok 4\n";
-
+is($buf, 'A', "Got expected ordinal value via ungetc in handle's input stream");
 close $fh;
 
 $fh = new FileHandle;
-
-print "not " unless ($fh->open("< TEST") && <$fh> eq $buffer);
-print "ok 5\n";
+ok(($fh->open("< TEST") && <$fh> eq $buffer),
+    "FileHandle open() method created handle, which got expected first line");
 
 $fh->seek(0,0);
-print "#possible mixed CRLF/LF in t/TEST\nnot " unless (<$fh> eq $buffer);
-print "ok 6\n";
+ok((<$fh> eq $buffer), "Averted possible mixed CRLF/LF in t/TEST");
 
 $fh->seek(0,2);
-$line = <$fh>;
-print "not " if (defined($line) || !$fh->eof);
-print "ok 7\n";
+my $line = <$fh>;
+ok(! (defined($line) || !$fh->eof), "FileHandle seek() and eof() methods");
 
-print "not " unless ($fh->open("TEST","r") && !$fh->tell && $fh->close);
-print "ok 8\n";
+ok(($fh->open("TEST","r") && !$fh->tell && $fh->close),
+    "FileHandle open(), tell() and close() methods");
 
 autoflush STDOUT 0;
-
-print "not " if ($|);
-print "ok 9\n";
+ok(! $|, "handle not auto-flushing current output channel");
 
 autoflush STDOUT 1;
+ok($|, "handle auto-flushing current output channel");
 
-print "not " unless ($|);
-print "ok 10\n";
+SKIP: {
+    skip "No fork or pipe on DOS", 1 if ($^O eq 'dos');
 
-if ($^O eq 'dos')
-{
-    printf("ok %d\n",11);
-    exit(0);
-}
+    my ($rd,$wr) = FileHandle::pipe;
+    my $non_forking = (
+        $^O eq 'VMS' || $^O eq 'os2' || $^O eq 'amigaos' ||
+        $^O eq 'MSWin32' || $^O eq 'NetWare' || $Config{d_fork} ne 'define'
+    );
+    my $content = "Writing to one end of a pipe, reading from the other\n";
+    if ($non_forking) {
+        $wr->autoflush;
+        $wr->print($content);
+        is($rd->getline, $content,
+            "Read content from pipe on non-forking platform");
+    }
+    else {
+        my $child;
+        if ($child = fork) {
+            # parent
+            $wr->close;
+            is($rd->getline, $content,
+                "Read content from pipe on forking platform");
+        }
+        elsif (defined $child) {
+            # child
+            $rd->close;
+            $wr->print($content);
+            exit(0);
+        }
+        else {
+            die "fork failed: $!";
+        }
+    }
 
-($rd,$wr) = FileHandle::pipe;
+} # END: SKIP for dos
 
-if ($^O eq 'VMS' || $^O eq 'os2' || $^O eq 'amigaos' || $^O eq 'MSWin32' || $^O eq 'NetWare' ||
-    $Config{d_fork} ne 'define') {
-  $wr->autoflush;
-  $wr->printf("ok %d\n",11);
-  print $rd->getline;
-}
-else {
-  if (fork) {
-   $wr->close;
-   print $rd->getline;
-  }
-  else {
-   $rd->close;
-   $wr->printf("ok %d\n",11);
-   exit(0);
-  }
-}
-
-print FileHandle->new('','r') ? "not ok 12\n" : "ok 12\n";
+ok(!FileHandle->new('', 'r'), "Can't open empty filename");

@@ -11,8 +11,8 @@ package Pod::Usage;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '1.61';  ## Current version of this package
-require  5.005;    ## requires this Perl version or later
+$VERSION = '1.63';  ## Current version of this package
+require  5.006;    ## requires this Perl version or later
 
 #use diagnostics;
 use Carp;
@@ -22,14 +22,13 @@ use File::Spec;
 
 @EXPORT = qw(&pod2usage);
 BEGIN {
-    $Pod::Usage::Formatter ||=
-      ( $] >= 5.005_58 ? 'Pod::Text' : 'Pod::PlainText');
+    $Pod::Usage::Formatter ||= 'Pod::Text';
     eval "require $Pod::Usage::Formatter";
     die $@ if $@;
     @ISA = ( $Pod::Usage::Formatter );
 }
 
-require Pod::Select;
+our $MAX_HEADING_LEVEL = 3;
 
 ##---------------------------------------------------------------------------
 
@@ -94,7 +93,7 @@ sub pod2usage {
     ## Default the input file
     $opts{'-input'} = $0  unless (defined $opts{'-input'});
 
-    ## Look up input file in path if it doesnt exist.
+    ## Look up input file in path if it doesn't exist.
     unless ((ref $opts{'-input'}) || (-e $opts{'-input'})) {
         my $basename = $opts{'-input'};
         my $pathsep = ($^O =~ /^(?:dos|os2|MSWin32)$/i) ? ';'
@@ -192,6 +191,48 @@ sub new {
     return $self;
 }
 
+# This subroutine was copied in whole-cloth from Pod::Select 1.60 in order to
+# allow the ejection of Pod::Select from the core without breaking Pod::Usage.
+# -- rjbs, 2013-03-18
+sub _compile_section_spec {
+    my ($section_spec) = @_;
+    my (@regexs, $negated);
+
+    ## Compile the spec into a list of regexs
+    local $_ = $section_spec;
+    s{\\\\}{\001}g;  ## handle escaped backward slashes
+    s{\\/}{\002}g;   ## handle escaped forward slashes
+
+    ## Parse the regexs for the heading titles
+    @regexs = split(/\//, $_, $MAX_HEADING_LEVEL);
+
+    ## Set default regex for ommitted levels
+    for (my $i = 0; $i < $MAX_HEADING_LEVEL; ++$i) {
+        $regexs[$i]  = '.*'  unless ((defined $regexs[$i])
+                                     && (length $regexs[$i]));
+    }
+    ## Modify the regexs as needed and validate their syntax
+    my $bad_regexs = 0;
+    for (@regexs) {
+        $_ .= '.+'  if ($_ eq '!');
+        s{\001}{\\\\}g;       ## restore escaped backward slashes
+        s{\002}{\\/}g;        ## restore escaped forward slashes
+        $negated = s/^\!//;   ## check for negation
+        eval "m{$_}";         ## check regex syntax
+        if ($@) {
+            ++$bad_regexs;
+            carp qq{Bad regular expression /$_/ in "$section_spec": $@\n};
+        }
+        else {
+            ## Add the forward and rear anchors (and put the negator back)
+            $_ = '^' . $_  unless (/^\^/);
+            $_ = $_ . '$'  unless (/\$$/);
+            $_ = '!' . $_  if ($negated);
+        }
+    }
+    return  (! $bad_regexs) ? [ @regexs ] : undef;
+}
+
 sub select {
     my ($self, @sections) = @_;
     if ($ISA[0]->can('select')) {
@@ -209,7 +250,7 @@ sub select {
         my $sref = $self->{USAGE_SELECT};
         ## Compile each spec
         for my $spec (@sections) {
-          my $cs = Pod::Select::_compile_section_spec($spec);
+          my $cs = _compile_section_spec($spec);
           if ( defined $cs ) {
             ## Store them in our sections array
             push(@$sref, $cs);
@@ -246,7 +287,7 @@ sub _handle_element_end {
             my @headings = @{$$self{USAGE_HEADINGS}};
             for my $section_spec ( @{$$self{USAGE_SELECT}} ) {
                 my $match = 1;
-                for (my $i = 0; $i < $Pod::Select::MAX_HEADING_LEVEL; ++$i) {
+                for (my $i = 0; $i < $MAX_HEADING_LEVEL; ++$i) {
                     $headings[$i] = '' unless defined $headings[$i];
                     my $regex   = $section_spec->[$i];
                     my $negated = ($regex =~ s/^\!//);
@@ -300,7 +341,7 @@ sub preprocess_paragraph {
     my $self = shift;
     local $_ = shift;
     my $line = shift;
-    ## See if this is a heading and we arent printing the entire manpage.
+    ## See if this is a heading and we aren't printing the entire manpage.
     if (($self->{USAGE_OPTIONS}->{-verbose} < 2) && /^=head/) {
         ## Change the title of the SYNOPSIS section to USAGE
         s/^=head1\s+SYNOPSIS\s*$/=head1 USAGE/;
@@ -401,8 +442,7 @@ is 1, then the "SYNOPSIS" section, along with any section entitled
 corresponding value is 2 or more then the entire manpage is printed.
 
 The special verbosity level 99 requires to also specify the -sections
-parameter; then these sections are extracted (see L<Pod::Select>)
-and printed.
+parameter; then these sections are extracted and printed.
 
 =item C<-sections>
 
@@ -454,9 +494,8 @@ output the POD.
 
 =head2 Formatting base class
 
-The default text formatter depends on the Perl version (L<Pod::Text> or 
-L<Pod::PlainText> for Perl versions E<lt> 5.005_58). The base class for
-Pod::Usage can be defined by pre-setting C<$Pod::Usage::Formatter> I<before>
+The default text formatter is L<Pod::Text>.  The base class for Pod::Usage can
+be defined by pre-setting C<$Pod::Usage::Formatter> I<before>
 loading Pod::Usage, e.g.:
 
     BEGIN { $Pod::Usage::Formatter = 'Pod::Text::Termcap'; }
@@ -753,15 +792,18 @@ Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>
 
 =head1 ACKNOWLEDGMENTS
 
+rjbs for refactoring Pod::Usage to not use Pod::Parser any more.
+
 Steven McDougall E<lt>swmcd@world.std.comE<gt> for his help and patience
 with re-writing this manpage.
 
 =head1 SEE ALSO
 
-B<Pod::Usage> is now a standalone distribution.
+B<Pod::Usage> is now a standalone distribution, depending on
+L<Pod::Text> which in turn depends on L<Pod::Simple>.
 
-L<Pod::Parser>, L<Pod::Perldoc>, L<Getopt::Long>, L<Pod::Find>, L<FindBin>,
-L<Pod::Text>, L<Pod::PlainText>, L<Pod::Text::Termcap>
+L<Pod::Perldoc>, L<Getopt::Long>, L<Pod::Find>, L<FindBin>,
+L<Pod::Text>, L<Pod::Text::Termcap>, L<Pod::Simple>
 
 =cut
 

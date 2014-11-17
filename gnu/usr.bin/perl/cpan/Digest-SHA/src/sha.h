@@ -1,12 +1,12 @@
 /*
  * sha.h: header file for SHA-1/224/256/384/512 routines
  *
- * Ref: NIST FIPS PUB 180-2 Secure Hash Standard
+ * Ref: NIST FIPS PUB 180-4 Secure Hash Standard
  *
- * Copyright (C) 2003-2013 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2014 Mark Shelor, All Rights Reserved
  *
- * Version: 5.84
- * Sat Mar  9 17:36:08 MST 2013
+ * Version: 5.88
+ * Mon Mar 17 08:46:10 MST 2014
  *
  */
 
@@ -105,26 +105,6 @@
 #define SHA_new		New
 #define SHA_newz	Newz
 #define SHA_free	Safefree
-
-#ifdef SHA_PerlIO
-	#define SHA_FILE		PerlIO
-	#define SHA_stdin()		PerlIO_stdin()
-	#define SHA_stdout()		PerlIO_stdout()
-	#define SHA_open		PerlIO_open
-	#define SHA_close		PerlIO_close
-	#define SHA_fprintf		PerlIO_printf
-	#define SHA_feof		PerlIO_eof
-	#define SHA_getc		PerlIO_getc
-#else
-	#define SHA_FILE		FILE
-	#define SHA_stdin()		stdin
-	#define SHA_stdout()		stdout
-	#define SHA_open		fopen
-	#define SHA_close		fclose
-	#define SHA_fprintf		fprintf
-	#define SHA_feof		feof
-	#define SHA_getc		fgetc
-#endif
 
 #define SHA1		1
 #define SHA224		224

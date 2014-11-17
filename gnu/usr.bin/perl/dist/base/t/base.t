@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 11;
+use Test::More tests => 15;
 
 use_ok('base');
 
@@ -80,4 +80,44 @@ like( $@, qr/^Base class package "reallyReAlLyNotexists" is empty\./,
     package Basilisco;
     eval q{ use base 'Schlozhauer' };
     ::is( $@, '', 'Can coexist with a FIELDS constant' );
+}
+
+{
+    use lib 't/lib';
+    package UsingBroken;
+    eval q{use base 'Broken';};
+    ::like( $@, qr/^Can't locate ThisModuleDoesNotExist\.pm/,
+        'base fails to compile by loading nonexistent module');
+}
+
+SKIP: {
+    skip "unicode not supported on perl $]", 2 if $] < 5.008;
+    eval q{
+        package UsingUnicode;
+        my $base = "M\N{U+00D8}dule";
+        no strict 'refs';
+        *{"${base}::foo"} = sub {};
+        eval q{use base $base;};
+        ::is( $@, '', 'nonexistent unicode module allowed');
+    };
+
+    eval q{
+        package UsingUtf8;
+        my $base = "M\N{U+00D8}dule";
+        utf8::encode($base);
+        no strict 'refs';
+        *{"${base}::foo"} = sub {};
+        eval q{use base $base;};
+        ::is( $@, '', 'nonexistent utf8 module allowed');
+    };
+}
+
+{
+    package WithHostileINC;
+    local @INC = (@INC, "a\nb");
+    my $base = "NonExistentModule";
+    no strict 'refs';
+    *{"${base}::foo"} = sub {};
+    eval q{use base $base;};
+    ::is( $@, '', 'nonexistent module allowed when @INC has hostile entries');
 }

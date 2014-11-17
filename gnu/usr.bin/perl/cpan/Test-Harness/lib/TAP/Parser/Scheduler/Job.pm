@@ -1,7 +1,7 @@
 package TAP::Parser::Scheduler::Job;
 
 use strict;
-use vars qw($VERSION);
+use warnings;
 use Carp;
 
 =head1 NAME
@@ -10,11 +10,11 @@ TAP::Parser::Scheduler::Job - A single testing job.
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 SYNOPSIS
 
@@ -31,10 +31,11 @@ Represents a single test 'job'.
 =head3 C<new>
 
     my $job = TAP::Parser::Scheduler::Job->new(
-        $name, $desc 
+        $filename, $description
     );
 
-Returns a new C<TAP::Parser::Scheduler::Job> object.
+Given the filename and description of a test as scalars, returns a new
+L<TAP::Parser::Scheduler::Job> object.
 
 =cut
 
@@ -47,9 +48,14 @@ sub new {
     }, $class;
 }
 
+=head2 Instance Methods
+
 =head3 C<on_finish>
 
-Register a closure to be called when this job is destroyed.
+    $self->on_finish(\&method).
+
+Register a closure to be called when this job is destroyed. The callback
+will be passed the C<TAP::Parser::Scheduler::Job> object as it's only argument.
 
 =cut
 
@@ -60,7 +66,10 @@ sub on_finish {
 
 =head3 C<finish>
 
-Called when a job is complete to unlock it.
+   $self->finish;
+
+Called when a job is complete to unlock it. If a callback has been registered
+with C<on_finish>, it calls it. Otherwise, it does nothing. 
 
 =cut
 
@@ -70,6 +79,15 @@ sub finish {
         $cb->($self);
     }
 }
+
+=head2 Attributes
+
+  $self->filename;
+  $self->description;
+  $self->context;
+
+These are all "getters" which return the data set for these attributes during object construction.
+
 
 =head3 C<filename>
 
@@ -95,6 +113,8 @@ sub as_array_ref {
 }
 
 =head3 C<is_spinner>
+
+  $self->is_spinner;
 
 Returns false indicating that this is a real job rather than a
 'spinner'. Spinners are returned when the scheduler still has pending

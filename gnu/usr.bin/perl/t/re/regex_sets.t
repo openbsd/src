@@ -85,6 +85,9 @@ my $still_fold = qr/(?[ $kelvin_fold ])/;
 like("K", $still_fold, "/i on interpolated (?[ ]) is retained in outer without /i");
 like("k", $still_fold, "/i on interpolated (?[ ]) is retained in outer without /i");
 
+eval 'my $x = qr/(?[ [a] ])/; qr/(?[ $x ])/';
+is($@, "", 'qr/(?[ [a] ])/ can be interpolated');
+
 done_testing();
 
 1;

@@ -20,10 +20,10 @@ our @EXPORT_OK = qw (usleep sleep ualarm alarm gettimeofday time tv_interval
 		 d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
 		 d_nanosleep d_clock_gettime d_clock_getres
 		 d_clock d_clock_nanosleep
-		 stat
+		 stat lstat
 		);
 
-our $VERSION = '1.9725';
+our $VERSION = '1.9726';
 our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -87,7 +87,7 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
 
   use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep
 		      clock_gettime clock_getres clock_nanosleep clock
-                      stat );
+                      stat lstat );
 
   usleep ($microseconds);
   nanosleep ($nanoseconds);
@@ -125,10 +125,11 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
 
   my $ticktock = clock();
 
-  use Time::HiRes qw( stat );
+  use Time::HiRes qw( stat lstat );
 
   my @stat = stat("file");
   my @stat = stat(FH);
+  my @stat = lstat("file");
 
 =head1 DESCRIPTION
 
@@ -168,7 +169,7 @@ any clocks and timers will be imprecise, especially so if you are working
 in a pre-emptive multiuser system.  Understand the difference between
 I<wallclock time> and process time (in UNIX-like systems the sum of
 I<user> and I<system> times).  Any attempt to sleep for X seconds will
-most probably end up sleeping B<more> than that, but don't be surpised
+most probably end up sleeping B<more> than that, but don't be surprised
 if you end up sleeping slightly B<less>.
 
 The following functions can be imported from this module.
@@ -302,7 +303,7 @@ C<$which> can be C<ITIMER_REAL>, C<ITIMER_VIRTUAL>, C<ITIMER_PROF>, or
 C<ITIMER_REALPROF>.  Note that which ones are available depends: true
 UNIX platforms usually have the first three, but only Solaris seems to
 have C<ITIMER_REALPROF> (which is used to profile multithreaded programs).
-Win32 unfortunately does not haveinterval timers.
+Win32 unfortunately does not have interval timers.
 
 C<ITIMER_REAL> results in C<alarm()>-like behaviour.  Time is counted in
 I<real time>; that is, wallclock time.  C<SIGALRM> is delivered when
@@ -392,7 +393,14 @@ compatibility limitations the returned value may wrap around at about
 
 =item stat EXPR
 
-As L<perlfunc/stat> but with the access/modify/change file timestamps
+=item lstat
+
+=item lstat FH
+
+=item lstat EXPR
+
+As L<perlfunc/stat> or L<perlfunc/lstat>
+but with the access/modify/change file timestamps
 in subsecond resolution, if the operating system and the filesystem
 both support such timestamps.  To override the standard stat():
 
@@ -406,7 +414,8 @@ UNIX filesystems often do; NTFS does; FAT doesn't (FAT timestamp
 granularity is B<two> seconds).
 
 A zero return value of &Time::HiRes::d_hires_stat means that
-Time::HiRes::stat is a no-op passthrough for CORE::stat(),
+Time::HiRes::stat is a no-op passthrough for CORE::stat()
+(and likewise for lstat),
 and therefore the timestamps will stay integers.  The same
 thing will happen if the filesystem does not do subsecond timestamps,
 even if the &Time::HiRes::d_hires_stat is non-zero.
@@ -476,7 +485,7 @@ time stamp from t1: it may be equal or I<less>.
 
   use Time::HiRes qw( clock_gettime clock_getres CLOCK_REALTIME );
   # Read the POSIX high resolution timer.
-  my $high = clock_getres(CLOCK_REALTIME);
+  my $high = clock_gettime(CLOCK_REALTIME);
   # But how accurate we can be, really?
   my $reso = clock_getres(CLOCK_REALTIME);
 
@@ -586,7 +595,7 @@ Copyright (c) 1996-2002 Douglas E. Wegscheid.  All rights reserved.
 Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Jarkko Hietaniemi.
 All rights reserved.
 
-Copyright (C) 2011, 2012 Andrew Main (Zefram) <zefram@fysh.org>
+Copyright (C) 2011, 2012, 2013 Andrew Main (Zefram) <zefram@fysh.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

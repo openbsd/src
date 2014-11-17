@@ -1,4 +1,4 @@
-This software is copyright (c) 2012 by Ken Williams.
+This software is copyright (c) 2014 by Ken Williams.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
@@ -12,7 +12,7 @@ b) the "Artistic License"
 
 --- The GNU General Public License, Version 1, February 1989 ---
 
-This software is Copyright (c) 2012 by Ken Williams.
+This software is Copyright (c) 2014 by Ken Williams.
 
 This is free software, licensed under:
 
@@ -22,7 +22,7 @@ This is free software, licensed under:
                      Version 1, February 1989
 
  Copyright (C) 1989 Free Software Foundation, Inc.
- 51 Franklin St, Suite 500, Boston, MA  02110-1335  USA
+ 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
@@ -272,7 +272,7 @@ That's all there is to it!
 
 --- The Artistic License 1.0 ---
 
-This software is Copyright (c) 2012 by Ken Williams.
+This software is Copyright (c) 2014 by Ken Williams.
 
 This is free software, licensed under:
 
@@ -292,21 +292,21 @@ Definitions:
 
   - "Package" refers to the collection of files distributed by the Copyright
     Holder, and derivatives of that collection of files created through
-    textual modification.
+    textual modification. 
   - "Standard Version" refers to such a Package if it has not been modified,
     or has been modified in accordance with the wishes of the Copyright
-    Holder.
+    Holder. 
   - "Copyright Holder" is whoever is named in the copyright or copyrights for
-    the package.
+    the package. 
   - "You" is you, if you're thinking about copying or distributing this Package.
   - "Reasonable copying fee" is whatever you can justify on the basis of media
     cost, duplication charges, time of people involved, and so on. (You will
     not be required to justify it to the Copyright Holder, but only to the
-    computing community at large as a market that must bear the fee.)
+    computing community at large as a market that must bear the fee.) 
   - "Freely Available" means that no fee is charged for the item itself, though
     there may be fees involved in handling the item. It also means that
     recipients of the item may redistribute it under the same conditions they
-    received it.
+    received it. 
 
 1. You may make and give away verbatim copies of the source form of the
 Standard Version of this Package without restriction, provided that you

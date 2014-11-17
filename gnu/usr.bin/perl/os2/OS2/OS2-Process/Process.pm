@@ -20,7 +20,7 @@ BEGIN {
   #require AutoLoader;
 
   our @ISA = qw(Exporter);
-  our $VERSION = "1.08";
+  our $VERSION = "1.09";
   XSLoader::load('OS2::Process', $VERSION);
 }
 
@@ -2006,7 +2006,7 @@ will show the 22nd system icon as the dialog icon (small folder icon).
 
 =item _MessageBox2($text, $buttons_Icon_struct, [$title, ...])
 
-low-level workhorse to implement MessageBox2().  Differs by the dafault
+low-level workhorse to implement MessageBox2().  Differs by the default
 $title, and that $buttons_Icon_struct is required, and is a string with
 low-level C struct.
 

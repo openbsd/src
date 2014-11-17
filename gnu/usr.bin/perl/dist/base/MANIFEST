@@ -11,6 +11,7 @@ t/fields-5_8_0.t
 t/fields-base.t
 t/fields.t
 t/isa.t
+t/lib/Broken.pm
 t/lib/Dummy.pm
 t/lib/HasSigDie.pm
 t/sigdie.t

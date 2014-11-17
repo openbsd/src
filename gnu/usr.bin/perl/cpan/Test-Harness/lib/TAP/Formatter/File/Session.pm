@@ -1,11 +1,8 @@
 package TAP::Formatter::File::Session;
 
 use strict;
-use TAP::Formatter::Session;
-
-use vars qw($VERSION @ISA);
-
-@ISA = qw(TAP::Formatter::Session);
+use warnings;
+use base 'TAP::Formatter::Session';
 
 =head1 NAME
 
@@ -13,11 +10,11 @@ TAP::Formatter::File::Session - Harness output delegate for file output
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 DESCRIPTION
 

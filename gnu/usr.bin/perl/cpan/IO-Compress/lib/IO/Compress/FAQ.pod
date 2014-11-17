@@ -112,7 +112,7 @@ formats store extra information along with the compressed data payload. For
 example, gzip can optionally store the original filename and Zip stores a
 lot of information about the original file. If the original compressed file
 contains any of this extra information, it will not be transferred to the
-new compressed file usign the technique above.
+new compressed file using the technique above.
 
 =head1 ZIP
 
@@ -213,7 +213,7 @@ The example below illustrates this behaviour
     abc
     def
 
-By default C<IO::Uncompress::Gunzip> will I<not> bahave like the gunzip
+By default C<IO::Uncompress::Gunzip> will I<not> behave like the gunzip
 program. It will only uncompress the first gzip data stream in the file, as
 shown below
 
@@ -252,7 +252,7 @@ The example below illustrates this behaviour
     abc
     def
 
-By default C<IO::Uncompress::Bunzip2> will I<not> bahave like the bunzip2
+By default C<IO::Uncompress::Bunzip2> will I<not> behave like the bunzip2
 program. It will only uncompress the first bunzip2 data stream in the file, as
 shown below
 
@@ -665,7 +665,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

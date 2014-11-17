@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010 Jarkko Hietaniemi.
  * All rights reserved.
  *
- * Copyright (C) 2011, 2012 Andrew Main (Zefram) <zefram@fysh.org>
+ * Copyright (C) 2011, 2012, 2013 Andrew Main (Zefram) <zefram@fysh.org>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the same terms as Perl itself.
@@ -40,11 +40,22 @@ extern "C" {
 }
 #endif
 
+#define PERL_VERSION_DECIMAL(r,v,s) (r*1000000 + v*1000 + s)
+#define PERL_DECIMAL_VERSION \
+	PERL_VERSION_DECIMAL(PERL_REVISION,PERL_VERSION,PERL_SUBVERSION)
+#define PERL_VERSION_GE(r,v,s) \
+	(PERL_DECIMAL_VERSION >= PERL_VERSION_DECIMAL(r,v,s))
+
 /* At least ppport.h 3.13 gets this wrong: one really cannot
  * have NVgf as anything else than "g" under Perl 5.6.x. */
 #if PERL_REVISION == 5 && PERL_VERSION == 6
 # undef NVgf
 # define NVgf "g"
+#endif
+
+#if PERL_VERSION_GE(5,7,3) && !PERL_VERSION_GE(5,10,1)
+# undef SAVEOP
+# define SAVEOP() SAVEVPTR(PL_op)
 #endif
 
 #define IV_1E6 1000000
@@ -792,7 +803,7 @@ usleep(useconds)
 	CODE:
 	gettimeofday(&Ta, NULL);
 	if (items > 0) {
-	    if (useconds > 1E6) {
+	    if (useconds >= 1E6) {
 		IV seconds = (IV) (useconds / 1E6);
 		/* If usleep() has been implemented using setitimer()
 		 * then this contortion is unnecessary-- but usleep()
@@ -941,22 +952,33 @@ alarm(seconds,interval=0)
 	if (seconds < 0.0 || interval < 0.0)
 	    croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): negative time not invented yet", seconds, interval);
 	{
-	  IV useconds     = IV_1E6 * seconds;
-	  IV uinterval    = IV_1E6 * interval;
+	  IV iseconds = (IV)seconds;
+	  IV iinterval = (IV)interval;
+	  NV fseconds = seconds - iseconds;
+	  NV finterval = interval - iinterval;
+	  IV useconds, uinterval;
+	  if (fseconds >= 1.0 || finterval >= 1.0)
+		croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): seconds or interval too large to split correctly", seconds, interval);
+	  useconds = IV_1E6 * fseconds;
+	  uinterval = IV_1E6 * finterval;
 #if defined(HAS_SETITIMER) && defined(ITIMER_REAL)
 	  {
-	        struct itimerval itv;
-	        if (hrt_ualarm_itimero(&itv, useconds, uinterval)) {
+	        struct itimerval nitv, oitv;
+		nitv.it_value.tv_sec = iseconds;
+		nitv.it_value.tv_usec = useconds;
+		nitv.it_interval.tv_sec = iinterval;
+		nitv.it_interval.tv_usec = uinterval;
+	        if (setitimer(ITIMER_REAL, &nitv, &oitv)) {
 		  /* To conform to alarm's interface, we're actually ignoring
 		     an error here.  */
 		  RETVAL = 0;
 		} else {
-		  RETVAL = itv.it_value.tv_sec + ((NV)itv.it_value.tv_usec) / NV_1E6;
+		  RETVAL = oitv.it_value.tv_sec + ((NV)oitv.it_value.tv_usec) / NV_1E6;
 		}
 	  }
 #else
-	  if (useconds >= IV_1E6 || uinterval >= IV_1E6)
-		croak("Time::HiRes::alarm(%d, %d): seconds or interval equal to or more than 1.0 ", useconds, uinterval, IV_1E6);
+	  if (iseconds || iinterval)
+		croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): seconds or interval equal to or more than 1.0 ", seconds, interval);
 	    RETVAL = (NV)ualarm( useconds, uinterval ) / NV_1E6;
 #endif
 	}
@@ -1245,17 +1267,28 @@ clock()
 void
 stat(...)
 PROTOTYPE: ;$
+    PREINIT:
+	OP fakeop;
+	int nret;
+    ALIAS:
+	Time::HiRes::lstat = 1
     PPCODE:
 	XPUSHs(sv_2mortal(newSVsv(items == 1 ? ST(0) : DEFSV)));
 	PUTBACK;
 	ENTER;
 	PL_laststatval = -1;
-	(void)*(PL_ppaddr[OP_STAT])(aTHXR);
+	SAVEOP();
+	Zero(&fakeop, 1, OP);
+	fakeop.op_type = ix ? OP_LSTAT : OP_STAT;
+	fakeop.op_ppaddr = PL_ppaddr[fakeop.op_type];
+	fakeop.op_flags = GIMME_V == G_ARRAY ? OPf_WANT_LIST :
+		GIMME_V == G_SCALAR ? OPf_WANT_SCALAR : OPf_WANT_VOID;
+	PL_op = &fakeop;
+	(void)fakeop.op_ppaddr(aTHXR);
 	SPAGAIN;
 	LEAVE;
-	if (PL_laststatval == 0) {
-	  /* We assume that pp_stat() left us with 13 valid stack items,
-	   * and that the timestamps are at offsets 8, 9, and 10. */
+	nret = SP+1 - &ST(0);
+	if (nret == 13) {
 	  UV atime = SvUV(ST( 8));
 	  UV mtime = SvUV(ST( 9));
 	  UV ctime = SvUV(ST(10));
@@ -1269,6 +1302,5 @@ PROTOTYPE: ;$
 	    ST( 9) = sv_2mortal(newSVnv(mtime + 1e-9 * (NV) mtime_nsec));
 	  if (ctime_nsec)
 	    ST(10) = sv_2mortal(newSVnv(ctime + 1e-9 * (NV) ctime_nsec));
-	  XSRETURN(13);
 	}
-	XSRETURN(0);
+	XSRETURN(nret);

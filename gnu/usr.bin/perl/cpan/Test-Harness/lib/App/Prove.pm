@@ -1,15 +1,16 @@
 package App::Prove;
 
 use strict;
-use vars qw($VERSION @ISA);
+use warnings;
 
-use TAP::Object ();
 use TAP::Harness;
-use TAP::Parser::Utils qw( split_shell );
+use Text::ParseWords qw(shellwords);
 use File::Spec;
 use Getopt::Long;
 use App::Prove::State;
 use Carp;
+
+use base 'TAP::Object';
 
 =head1 NAME
 
@@ -17,11 +18,11 @@ App::Prove - Implements the C<prove> command.
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 DESCRIPTION
 
@@ -51,8 +52,6 @@ use constant PLUGINS => 'App::Prove::Plugin';
 my @ATTR;
 
 BEGIN {
-    @ISA = qw(TAP::Object);
-
     @ATTR = qw(
       archive argv blib show_count color directives exec failures comments
       formatter harness includes modules plugins jobs lib merge parse quiet
@@ -574,7 +573,7 @@ sub _get_switches {
         push @switches, '-w';
     }
 
-    push @switches, split_shell( $ENV{HARNESS_PERL_SWITCHES} );
+    push @switches, shellwords( $ENV{HARNESS_PERL_SWITCHES} ) if defined $ENV{HARNESS_PERL_SWITCHES};
 
     return @switches ? \@switches : ();
 }

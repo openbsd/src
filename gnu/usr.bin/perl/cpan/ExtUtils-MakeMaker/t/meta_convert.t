@@ -105,7 +105,7 @@ note "Non-camel case metadata"; {
     );
     my $res = eval { $mm->metafile_target };
     ok $res, q|we know how to deal with non-camel-cased custom meta resource keys defined in Makefile.PL|;
-    like $res, qr/x_Repositoryclone:/, "they're camel-cased";
+    like $res, qr/x_Repositoryclone/, "they're camel-cased";
 }
 
 

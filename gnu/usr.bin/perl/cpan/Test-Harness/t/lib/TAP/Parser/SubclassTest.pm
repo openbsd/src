@@ -3,17 +3,14 @@
 package TAP::Parser::SubclassTest;
 
 use strict;
-use vars qw(@ISA);
+use warnings;
 
-use TAP::Parser;
-
-use MyCustom;
 use MySourceHandler;
 use MyPerlSourceHandler;
 use MyGrammar;
 use MyResultFactory;
 
-@ISA = qw( TAP::Parser MyCustom );
+use base qw( TAP::Parser MyCustom );
 
 sub _default_source_class         {'MySourceHandler'}        # deprecated
 sub _default_perl_source_class    {'MyPerlSourceHandler'}    # deprecated

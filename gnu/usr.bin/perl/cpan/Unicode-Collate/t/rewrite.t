@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -32,7 +35,7 @@ ok(1);
 
 my $code = sub {
     my $line = shift;
-    $line =~ s/\[\.0000\..{4}\..{4}\./[.0000.0000.0000./g;
+    $line =~ s/\[\.0000\..{4}\..{4}([.\]])/[.0000.0000.0000$1/g;
     return $line;
   };
 

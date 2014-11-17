@@ -4,7 +4,7 @@ use strict;
 use warnings;
 require ExtUtils::Typemaps;
 
-our $VERSION = '3.18';
+our $VERSION = '3.24';
 
 =head1 NAME
 
@@ -53,7 +53,7 @@ sub new {
 
   $self->{xstype} = $args{xstype} if defined $args{xstype};
   $self->{ctype} = $args{ctype} if defined $args{ctype};
-  $self->{tidy_ctype} = ExtUtils::Typemaps::_tidy_type($self->{ctype});
+  $self->{tidy_ctype} = ExtUtils::Typemaps::tidy_type($self->{ctype});
   $self->{proto} = $args{'prototype'} if defined $args{'prototype'};
 
   return $self;

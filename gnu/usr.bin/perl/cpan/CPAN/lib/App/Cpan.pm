@@ -1,11 +1,12 @@
 package App::Cpan;
 
-use 5.008;
 use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.61';
+use if $] < 5.008 => "IO::Scalar";
+
+$VERSION = '1.62';
 
 =head1 NAME
 
@@ -124,7 +125,7 @@ for a new, custom configuration.
 
 =item -l
 
-List all installed modules wth their versions
+List all installed modules with their versions
 
 =item -L author [ author ... ]
 
@@ -396,7 +397,7 @@ sub _process_setup_options
 
 Just do it.
 
-The C<run> method returns 0 on success and a postive number on
+The C<run> method returns 0 on success and a positive number on
 failure. See the section on EXIT CODES for details on the values.
 
 =cut
@@ -579,7 +580,12 @@ my @skip_lines = (
 
 sub _get_cpanpm_last_line
 	{
-	open my($fh), "<", \ $scalar;
+	my $fh;
+	if ($] < 5.008) {
+		$fh = IO::Scalar->new(\ $scalar);
+        } else {
+		eval q{open $fh, "<", \\ $scalar;};
+        }
 
 	my @lines = <$fh>;
 
@@ -959,6 +965,7 @@ sub _dump_config # -J
 
 	my $fh = $args->[0] || \*STDOUT;
 
+	local $Data::Dumper::Sortkeys = 1;
 	my $dd = Data::Dumper->new(
 		[$CPAN::Config],
 		['$CPAN::Config']

@@ -63,13 +63,13 @@ in ISO 639-5) to specify families of languages.
 
 =back
 
-Each module can support an arbitrary number of code sets, and it it
+Each module can support an arbitrary number of code sets, and it is
 not required that the relationship between these code sets be
 one-to-one.  For example, the Locale::Codes::Country module supports
-code sets from ISO-3166 and the FIPS 10 standard, and they do not
+code sets from ISO-3166 and the IANA standard, and they do not
 break the world down into exactly the same sets of countries. This
 does not cause any problem (though converting codes from ISO-3166 to
-FIPS or back will not work except for countries that are one-to-one).
+IANA or back will not work except for countries that are one-to-one).
 
 All data in all of these modules comes directly from the original
 standards (or as close to direct as possible), so it should be
@@ -289,7 +289,7 @@ perl problem tracker at:
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001      Michael Hennecke (Locale::Currency)
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
+   Copyright (c) 2010-2014 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

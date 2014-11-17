@@ -433,3 +433,102 @@ print STDERR "The End.\n" ;
 EXPECT
 Unsuccessful open on filename containing newline at - line 5.
 close() on unopened filehandle fred at - line 6.
+########
+
+# 'use warnings' test as the basis for the following tests
+use warnings ;
+my $a = oct "7777777777777777777777777777777777778" ;
+my $b =+ 1 ;
+my $c ; chop $c ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 5.
+Integer overflow in octal number at - line 4.
+Illegal octal digit '8' ignored at - line 4.
+Octal number > 037777777777 non-portable at - line 4.
+Use of uninitialized value $c in scalar chop at - line 6.
+The End.
+########
+
+# 'use warnings NONFATAL=>"all"' should be the same as 'use warnings'
+use warnings NONFATAL=>"all" ;
+my $a = oct "7777777777777777777777777777777777778" ;
+my $b =+ 1 ;
+my $c ; chop $c ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 5.
+Integer overflow in octal number at - line 4.
+Illegal octal digit '8' ignored at - line 4.
+Octal number > 037777777777 non-portable at - line 4.
+Use of uninitialized value $c in scalar chop at - line 6.
+The End.
+########
+
+# 'use warnings "NONFATAL"' should be the same as 'use warnings' [perl #120977]
+use warnings "NONFATAL" ;
+my $a = oct "7777777777777777777777777777777777778" ;
+my $b =+ 1 ;
+my $c ; chop $c ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 5.
+Integer overflow in octal number at - line 4.
+Illegal octal digit '8' ignored at - line 4.
+Octal number > 037777777777 non-portable at - line 4.
+Use of uninitialized value $c in scalar chop at - line 6.
+The End.
+########
+
+# 'use warnings "FATAL"' should be the same as 'use warnings FATAL=>"all"' [perl #120977]
+use warnings "FATAL" ;
+{
+    no warnings ;
+    my $a =+ 1 ;
+}
+my $a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 8.
+########
+
+# 'use warnings "FATAL"' should be the same as 'use warnings FATAL=>"all"' [perl #120977]
+use warnings "FATAL" ;
+{
+    no warnings ;
+    my $a = oct "7777777777777777777777777777777777778" ;
+}
+my $a = oct "7777777777777777777777777777777777778" ;
+print STDERR "The End.\n" ;
+EXPECT
+Integer overflow in octal number at - line 8.
+########
+
+# 'no warnings FATAL=>"all"' should be the same as 'no warnings'
+use warnings ;
+{
+    no warnings FATAL=>"all" ;
+    my $a = oct "7777777777777777777777777777777777778" ;
+    my $b =+ 1 ;
+    my $c ; chop $c ;
+}
+my $a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 10.
+The End.
+########
+
+# 'no warnings "FATAL"' should be the same as 'no warnings' [perl #120977]
+use warnings ;
+{
+    no warnings "FATAL" ;
+    my $a = oct "7777777777777777777777777777777777778" ;
+    my $b =+ 1 ;
+    my $c ; chop $c ;
+}
+my $a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 10.
+The End.

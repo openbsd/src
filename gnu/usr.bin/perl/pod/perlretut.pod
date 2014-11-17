@@ -292,8 +292,9 @@ class> of them.
 
 One such concept is that of a I<character class>.  A character class
 allows a set of possible characters, rather than just a single
-character, to match at a particular point in a regexp.  Character
-classes are denoted by brackets C<[...]>, with the set of characters
+character, to match at a particular point in a regexp.  You can define
+your own custom character classes.  These
+are denoted by brackets C<[...]>, with the set of characters
 to be possibly matched inside.  Here are some examples:
 
     /cat/;       # matches 'cat'
@@ -420,7 +421,7 @@ ASCII with non-ASCII characters; otherwise a Unicode "Kelvin Sign"
 would caselessly match a "k" or "K".)
 
 The C<\d\s\w\D\S\W> abbreviations can be used both inside and outside
-of character classes.  Here are some in use:
+of bracketed character classes.  Here are some in use:
 
     /\d\d:\d\d:\d\d/; # matches a hh:mm:ss time format
     /[\d\s]/;         # matches any digit or whitespace character
@@ -435,6 +436,11 @@ as an ordinary period. Because, for example, C<\d> and C<\w> are sets
 of characters, it is incorrect to think of C<[^\d\w]> as C<[\D\W]>; in
 fact C<[^\d\w]> is the same as C<[^\w]>, which is the same as
 C<[\W]>. Think DeMorgan's laws.
+
+In actuality, the period and C<\d\s\w\D\S\W> abbreviations are
+themselves types of character classes, so the ones surrounded by
+brackets are just one type of character class.  When we need to make a
+distinction, we refer to them as "bracketed character classes."
 
 An anchor useful in basic regexps is the I<word anchor>
 C<\b>.  This matches a boundary between a word character and a non-word
@@ -636,50 +642,50 @@ of what Perl does when it tries to match the regexp
 
 =over 4
 
-=item 0
+=item Z<>0
 
 Start with the first letter in the string 'a'.
 
-=item 1
+=item Z<>1
 
 Try the first alternative in the first group 'abd'.
 
-=item 2
+=item Z<>2
 
 Match 'a' followed by 'b'. So far so good.
 
-=item 3
+=item Z<>3
 
 'd' in the regexp doesn't match 'c' in the string - a dead
 end.  So backtrack two characters and pick the second alternative in
 the first group 'abc'.
 
-=item 4
+=item Z<>4
 
 Match 'a' followed by 'b' followed by 'c'.  We are on a roll
 and have satisfied the first group. Set $1 to 'abc'.
 
-=item 5
+=item Z<>5
 
 Move on to the second group and pick the first alternative
 'df'.
 
-=item 6
+=item Z<>6
 
 Match the 'd'.
 
-=item 7
+=item Z<>7
 
 'f' in the regexp doesn't match 'e' in the string, so a dead
 end.  Backtrack one character and pick the second alternative in the
 second group 'd'.
 
-=item 8
+=item Z<>8
 
 'd' matches. The second grouping is satisfied, so set $2 to
 'd'.
 
-=item 9
+=item Z<>9
 
 We are at the end of the regexp, so we are done! We have
 matched 'abcd' out of the string "abcde".
@@ -859,9 +865,9 @@ well, and this is exactly what the parenthesized construct C<(?|...)>,
 set around an alternative achieves. Here is an extended version of the
 previous pattern:
 
-    if ( $time =~ /(?|(\d\d|\d):(\d\d)|(\d\d)(\d\d))\s+([A-Z][A-Z][A-Z])/ ){
-	print "hour=$1 minute=$2 zone=$3\n";
-    }
+  if($time =~ /(?|(\d\d|\d):(\d\d)|(\d\d)(\d\d))\s+([A-Z][A-Z][A-Z])/){
+      print "hour=$1 minute=$2 zone=$3\n";
+  }
 
 Within the alternative numbering group, group numbers start at the same
 position for each alternative. After the group, numbering continues
@@ -879,8 +885,8 @@ this code
 
     $x = "Mmm...donut, thought Homer";
     $x =~ /^(Mmm|Yech)\.\.\.(donut|peas)/; # matches
-    foreach $expr (1..$#-) {
-        print "Match $expr: '${$expr}' at position ($-[$expr],$+[$expr])\n";
+    foreach $exp (1..$#-) {
+        print "Match $exp: '${$exp}' at position ($-[$exp],$+[$exp])\n";
     }
 
 prints
@@ -900,7 +906,10 @@ of the string after the match.  An example:
 
 In the second match, C<$`> equals C<''> because the regexp matched at the
 first character position in the string and stopped; it never saw the
-second 'the'.  It is important to note that using C<$`> and C<$'>
+second 'the'.
+
+If your code is to run on Perl versions earlier than
+5.20, it is worthwhile to note that using C<$`> and C<$'>
 slows down regexp matching quite a bit, while C<$&> slows it down to a
 lesser extent, because if they are used in one regexp in a program,
 they are generated for I<all> regexps in the program.  So if raw
@@ -913,8 +922,11 @@ C<@+> instead:
     $' is the same as substr( $x, $+[0] )
 
 As of Perl 5.10, the C<${^PREMATCH}>, C<${^MATCH}> and C<${^POSTMATCH}>
-variables may be used. These are only set if the C</p> modifier is present.
-Consequently they do not penalize the rest of the program.
+variables may be used.  These are only set if the C</p> modifier is
+present.  Consequently they do not penalize the rest of the program.  In
+Perl 5.20, C<${^PREMATCH}>, C<${^MATCH}> and C<${^POSTMATCH}> are available
+whether the C</p> has been used or not (the modifier is ignored), and
+C<$`>, C<$'> and C<$&> do not cause any speed difference.
 
 =head2 Non-capturing groupings
 
@@ -999,10 +1011,10 @@ Here are some examples:
     /y(es)?/i;       # matches 'y', 'Y', or a case-insensitive 'yes'
     $year =~ /^\d{2,4}$/;  # make sure year is at least 2 but not more
                            # than 4 digits
-    $year =~ /^\d{4}$|^\d{2}$/;    # better match; throw out 3-digit dates
-    $year =~ /^\d{2}(\d{2})?$/;  # same thing written differently. However,
-                                 # this captures the last two digits in $1
-                                 # and the other does not.
+    $year =~ /^\d{4}$|^\d{2}$/; # better match; throw out 3-digit dates
+    $year =~ /^\d{2}(\d{2})?$/; # same thing written differently.
+                                # However, this captures the last two
+                                # digits in $1 and the other does not.
 
     % simple_grep '^(\w+)\g1$' /usr/dict/words   # isn't this easier?
     beriberi
@@ -1243,35 +1255,35 @@ backtracking.  Here is a step-by-step analysis of the example
 
 =over 4
 
-=item 0
+=item Z<>0
 
 Start with the first letter in the string 't'.
 
-=item 1
+=item Z<>1
 
 The first quantifier '.*' starts out by matching the whole
 string 'the cat in the hat'.
 
-=item 2
+=item Z<>2
 
 'a' in the regexp element 'at' doesn't match the end of the
 string.  Backtrack one character.
 
-=item 3
+=item Z<>3
 
 'a' in the regexp element 'at' still doesn't match the last
 letter of the string 't', so backtrack one more character.
 
-=item 4
+=item Z<>4
 
 Now we can match the 'a' and the 't'.
 
-=item 5
+=item Z<>5
 
 Move on to the third element '.*'.  Since we are at the end of
 the string and '.*' can match 0 times, assign it the empty string.
 
-=item 6
+=item Z<>6
 
 We are done!
 
@@ -1738,7 +1750,8 @@ One other interesting thing that the C<s///r> flag allows is chaining
 substitutions:
 
     $x = "Cats are great.";
-    print $x =~ s/Cats/Dogs/r =~ s/Dogs/Frogs/r =~ s/Frogs/Hedgehogs/r, "\n";
+    print $x =~ s/Cats/Dogs/r =~ s/Dogs/Frogs/r =~
+        s/Frogs/Hedgehogs/r, "\n";
     # prints "Hedgehogs are great."
 
 A modifier available specifically to search and replace is the
@@ -1750,7 +1763,7 @@ computation in the process of replacing text.  This example counts
 character frequencies in a line:
 
     $x = "Bill the cat";
-    $x =~ s/(.)/$chars{$1}++;$1/eg;  # final $1 replaces char with itself
+    $x =~ s/(.)/$chars{$1}++;$1/eg; # final $1 replaces char with itself
     print "frequency of '$_' is $chars{$_}\n"
         foreach (sort {$chars{$b} <=> $chars{$a}} keys %chars);
 
@@ -1938,10 +1951,10 @@ bit encoding, depending on the history of the string, but conceptually
 it is a sequence of characters, not bytes. See L<perlunitut> for a
 tutorial about that.
 
-Let us now discuss Unicode character classes.  Just as with Unicode
-characters, there are named Unicode character classes represented by the
+Let us now discuss Unicode character classes, most usually called
+"character properties".  These are represented by the
 C<\p{name}> escape sequence.  Closely associated is the C<\P{name}>
-character class, which is the negation of the C<\p{name}> class.  For
+property, which is the negation of the C<\p{name}> one.  For
 example, to match lower and uppercase characters,
 
     $x = "BOB";
@@ -1952,39 +1965,20 @@ example, to match lower and uppercase characters,
 
 (The "Is" is optional.)
 
-Here is the association between some Perl named classes and the
-traditional Unicode classes:
+There are many, many Unicode character properties.  For the full list
+see L<perluniprops>.  Most of them have synonyms with shorter names,
+also listed there.  Some synonyms are a single character.  For these,
+you can drop the braces.  For instance, C<\pM> is the same thing as
+C<\p{Mark}>, meaning things like accent marks.
 
-    Perl class name  Unicode class name or regular expression
-
-    IsAlpha          /^[LM]/
-    IsAlnum          /^[LMN]/
-    IsASCII          $code <= 127
-    IsCntrl          /^C/
-    IsBlank          $code =~ /^(0020|0009)$/ || /^Z[^lp]/
-    IsDigit          Nd
-    IsGraph          /^([LMNPS]|Co)/
-    IsLower          Ll
-    IsPrint          /^([LMNPS]|Co|Zs)/
-    IsPunct          /^P/
-    IsSpace          /^Z/ || ($code =~ /^(0009|000A|000B|000C|000D)$/
-    IsSpacePerl      /^Z/ || ($code =~ /^(0009|000A|000C|000D|0085|2028|2029)$/
-    IsUpper          /^L[ut]/
-    IsWord           /^[LMN]/ || $code eq "005F"
-    IsXDigit         $code =~ /^00(3[0-9]|[46][1-6])$/
-
-You can also use the official Unicode class names with C<\p> and
-C<\P>, like C<\p{L}> for Unicode 'letters', C<\p{Lu}> for uppercase
-letters, or C<\P{Nd}> for non-digits.  If a C<name> is just one
-letter, the braces can be dropped.  For instance, C<\pM> is the
-character class of Unicode 'marks', for example accent marks.
-For the full list see L<perlunicode>.
-
-Unicode has also been separated into various sets of characters
-which you can test with C<\p{...}> (in) and C<\P{...}> (not in).
-To test whether a character is (or is not) an element of a script
-you would use the script name, for example C<\p{Latin}>, C<\p{Greek}>,
-or C<\P{Katakana}>.
+The Unicode C<\p{Script}> property is used to categorize every Unicode
+character into the language script it is written in.  For example,
+English, French, and a bunch of other European languages are written in
+the Latin script.  But there is also the Greek script, the Thai script,
+the Katakana script, etc.  You can test whether a character is in a
+particular script with, for example C<\p{Latin}>, C<\p{Greek}>,
+or C<\p{Katakana}>.  To test if it isn't in the Balinese script, you
+would use C<\P{Balinese}>.
 
 What we have described so far is the single form of the C<\p{...}> character
 classes.  There is also a compound form which you may run into.  These
@@ -1992,8 +1986,9 @@ look like C<\p{name=value}> or C<\p{name:value}> (the equals sign and colon
 can be used interchangeably).  These are more general than the single form,
 and in fact most of the single forms are just Perl-defined shortcuts for common
 compound forms.  For example, the script examples in the previous paragraph
-could be written equivalently as C<\p{Script=Latin}>, C<\p{Script:Greek}>, and
-C<\P{script=katakana}> (case is irrelevant between the C<{}> braces).  You may
+could be written equivalently as C<\p{Script=Latin}>, C<\p{Script:Greek}>,
+C<\p{script=katakana}>, and C<\P{script=balinese}> (case is irrelevant
+between the C<{}> braces).  You may
 never have to use the compound forms, but sometimes it is necessary, and their
 use can make your code easier to understand.
 
@@ -2003,7 +1998,7 @@ what appears to be a single character, but may be represented internally by more
 than one.  As an example, using the Unicode full names, e.g., S<C<A + COMBINING
 RING>> is a grapheme cluster with base character C<A> and combining character
 S<C<COMBINING RING>>, which translates in Danish to A with the circle atop it,
-as in the word Angstrom.
+as in the word E<Aring>ngstrom.
 
 For the full and latest information about Unicode see the latest
 Unicode standard, or the Unicode Consortium's website L<http://www.unicode.org>
@@ -2133,14 +2128,14 @@ algorithm.
     % cat > keymatch
     #!/usr/bin/perl
     $kwds = 'copy compare list print';
-    while( $command = <> ){
-        $command =~ s/^\s+|\s+$//g;  # trim leading and trailing spaces
-        if( ( @matches = $kwds =~ /\b$command\w*/g ) == 1 ){
+    while( $cmd = <> ){
+        $cmd =~ s/^\s+|\s+$//g;  # trim leading and trailing spaces
+        if( ( @matches = $kwds =~ /\b$cmd\w*/g ) == 1 ){
             print "command: '@matches'\n";
         } elsif( @matches == 0 ){
-            print "no such command: '$command'\n";
+            print "no such command: '$cmd'\n";
         } else {
-            print "not unique: '$command' (could be one of: @matches)\n";
+            print "not unique: '$cmd' (could be one of: @matches)\n";
         }
     }
     ^D
@@ -2155,7 +2150,7 @@ algorithm.
 
 Rather than trying to match the input against the keywords, we match the
 combined set of keywords against the input.  The pattern matching
-operation S<C<$kwds =~ /\b($command\w*)/g>> does several things at the
+operation S<C<$kwds =~ /\b($cmd\w*)/g>> does several things at the
 same time. It makes sure that the given command begins where a keyword
 begins (C<\b>). It tolerates abbreviations due to the added C<\w*>. It
 tells us the number of matches (C<scalar @matches>) and all the keywords
@@ -2806,14 +2801,14 @@ termcap color sequences.  Here is example output:
     Guessed: match at offset 0
     Matching REx 'a*b+c' against 'abc'
       Setting an EVAL scope, savestack=3
-       0 <> <abc>             |  1:  STAR
-                               EXACT <a> can match 1 times out of 32767...
+       0 <> <abc>           |  1:  STAR
+                             EXACT <a> can match 1 times out of 32767...
       Setting an EVAL scope, savestack=3
-       1 <a> <bc>             |  4:    PLUS
-                               EXACT <b> can match 1 times out of 32767...
+       1 <a> <bc>           |  4:    PLUS
+                             EXACT <b> can match 1 times out of 32767...
       Setting an EVAL scope, savestack=3
-       2 <ab> <c>             |  7:      EXACT <c>
-       3 <abc> <>             |  9:      END
+       2 <ab> <c>           |  7:      EXACT <c>
+       3 <abc> <>           |  9:      END
     Match successful!
     Freeing REx: 'a*b+c'
 
@@ -2845,14 +2840,14 @@ process:
 
     Matching REx 'a*b+c' against 'abc'
       Setting an EVAL scope, savestack=3
-       0 <> <abc>             |  1:  STAR
-                               EXACT <a> can match 1 times out of 32767...
+       0 <> <abc>           |  1:  STAR
+                             EXACT <a> can match 1 times out of 32767...
       Setting an EVAL scope, savestack=3
-       1 <a> <bc>             |  4:    PLUS
-                               EXACT <b> can match 1 times out of 32767...
+       1 <a> <bc>           |  4:    PLUS
+                             EXACT <b> can match 1 times out of 32767...
       Setting an EVAL scope, savestack=3
-       2 <ab> <c>             |  7:      EXACT <c>
-       3 <abc> <>             |  9:      END
+       2 <ab> <c>           |  7:      EXACT <c>
+       3 <abc> <>           |  9:      END
     Match successful!
     Freeing REx: 'a*b+c'
 

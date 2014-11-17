@@ -17,7 +17,7 @@ See ExtUtils::MM_Unix for a documentation of the methods provided
 there. This package overrides the implementation of these methods, not
 the semantics.
 
-=cut 
+=cut
 
 use ExtUtils::MakeMaker::Config;
 use File::Basename;
@@ -27,7 +27,7 @@ use ExtUtils::MakeMaker qw( neatvalue );
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
@@ -153,8 +153,8 @@ sub init_tools {
     $self->{NOOP}     ||= 'rem';
     $self->{DEV_NULL} ||= '> NUL';
 
-    $self->{FIXIN}    ||= $self->{PERL_CORE} ? 
-      "\$(PERLRUN) $self->{PERL_SRC}/win32/bin/pl2bat.pl" : 
+    $self->{FIXIN}    ||= $self->{PERL_CORE} ?
+      "\$(PERLRUN) $self->{PERL_SRC}/win32/bin/pl2bat.pl" :
       'pl2bat.bat';
 
     $self->SUPER::init_tools;
@@ -251,7 +251,7 @@ sub constants {
     #
     # This has to come here before all the constants and not in
     # platform_constants which is after constants.
-    my $size = $self->{MAXLINELENGTH} || 64 * 1024;
+    my $size = $self->{MAXLINELENGTH} || 800000;
     my $prefix = qq{
 # Get dmake to read long commands like PM_TO_BLIB
 MAXLINELENGTH = $size
@@ -349,7 +349,7 @@ INST_DYNAMIC_DEP = '.$inst_dynamic_dep.'
 $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).exists $(EXPORT_LIST) $(PERL_ARCHIVE) $(INST_DYNAMIC_DEP)
 ');
     if ($GCC) {
-      push(@m,  
+      push(@m,
        q{	}.$DLLTOOL.q{ --def $(EXPORT_LIST) --output-exp dll.exp
 	$(LD) -o $@ -Wl,--base-file -Wl,dll.base $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) $(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) dll.exp
 	}.$DLLTOOL.q{ --def $(EXPORT_LIST) --base-file dll.base --output-exp dll.exp
@@ -513,7 +513,7 @@ sub quote_literal {
     # $(MACRO)s in makefiles.
     s{([<>|&^@!])}{^$1}g foreach grep { !/^"[^"]*"$/ } @text;
     $text = join('', @text);
-    
+
     # dmake expands {{ to { and }} to }.
     if( $self->is_make_type('dmake') ) {
         $text =~ s/{/{{/g;
@@ -632,6 +632,6 @@ __END__
 
 =back
 
-=cut 
+=cut
 
 

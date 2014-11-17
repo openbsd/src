@@ -26,12 +26,15 @@ my %feature = (
     state           => 'state',
     switch          => 'switch',
     evalbytes       => 'evalbytes',
+    postderef       => 'postderef',
     array_base      => 'arybase',
     current_sub     => '__SUB__',
     lexical_subs    => 'lexsubs',
+    postderef_qq    => 'postderef_qq',
     unicode_eval    => 'unieval',
     unicode_strings => 'unicode',
     fc              => 'fc',
+    signatures      => 'signatures',
 );
 
 # NOTE: If a feature is ever enabled in a non-contiguous range of Perl
@@ -49,6 +52,8 @@ my %feature_bundle = (
     "5.15"   =>	[qw(say state switch unicode_strings unicode_eval
 		    evalbytes current_sub fc)],
     "5.17"   =>	[qw(say state switch unicode_strings unicode_eval
+		    evalbytes current_sub fc)],
+    "5.19"   =>	[qw(say state switch unicode_strings unicode_eval
 		    evalbytes current_sub fc)],
 );
 
@@ -356,7 +361,7 @@ read_only_bottom_close_and_rename($h);
 __END__
 package feature;
 
-our $VERSION = '1.32';
+our $VERSION = '1.36';
 
 FEATURES
 
@@ -451,7 +456,7 @@ This feature is available starting with Perl 5.10.
 
 =head2 The 'unicode_strings' feature
 
-C<use feature 'unicode_strings'> tells the compiler to use Unicode semantics
+C<use feature 'unicode_strings'> tells the compiler to use Unicode rules
 in all string operations executed within its scope (unless they are also
 within the scope of either C<use locale> or C<use bytes>).  The same applies
 to all regular expressions compiled within the scope, even if executed outside
@@ -459,7 +464,7 @@ it.  It does not change the internal representation of strings, but only how
 they are interpreted.
 
 C<no feature 'unicode_strings'> tells the compiler to use the traditional
-Perl semantics wherein the native character set semantics is used unless it is
+Perl rules wherein the native character set rules is used unless it is
 clear to Perl that Unicode is desired.  This can lead to some surprises
 when the behavior suddenly changes.  (See
 L<perlunicode/The "Unicode Bug"> for details.)  For this reason, if you are
@@ -555,6 +560,26 @@ This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
 and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
 
 This feature is available from Perl 5.18 onwards.
+
+=head2 The 'signatures' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+    no warnings "experimental::signatures";
+
+This enables unpacking of subroutine arguments into lexical variables
+by syntax such as
+
+    sub foo ($left, $right) {
+	return $left + $right;
+    }
+
+See L<perlsub/Signatures> for details.
+
+This feature is available from Perl 5.20 onwards.
 
 =head1 FEATURE BUNDLES
 

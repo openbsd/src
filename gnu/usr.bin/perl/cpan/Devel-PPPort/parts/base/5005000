@@ -1,4 +1,5 @@
 5.005000
+PL_curpad                      # E
 PL_modglobal                   # E
 cx_dump                        # U
 debop                          # U

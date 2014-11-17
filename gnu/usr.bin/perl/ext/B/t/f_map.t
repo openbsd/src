@@ -101,19 +101,18 @@ checkOptree(note   => q{},
 # 8      <0> enter l
 # 9      <;> nextstate(main 475 (eval 10):1) v:{
 # a      <0> pushmark s
-# b      <0> pushmark s
-# c      <#> gvsv[*_] s
-# d      <#> gv[*getkey] s/EARLYCV
-# e      <1> entersub[t5] lKS/TARG
-# f      <#> gvsv[*_] s
-# g      <@> list lK
-# h      <@> leave lKP
+# b      <#> gvsv[*_] s
+# c      <#> gv[*getkey] s/EARLYCV
+# d      <1> entersub[t5] lKS/TARG
+# e      <#> gvsv[*_] s
+# f      <@> leave lKP
 #            goto 7
-# i  <0> pushmark s
-# j  <#> gv[*hash] s
-# k  <1> rv2hv[t2] lKRM*/1
-# l  <2> aassign[t10] KS/COMMON
-# m  <1> leavesub[1 ref] K/REFC,1
+# g  <0> pushmark s
+# h  <#> gv[*hash] s
+# i  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# i  <1> rv2hv lKRM*/1             >=5.019006
+# j  <2> aassign[t10] KS/COMMON
+# k  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 560 (eval 15):1) v:{
 # 2  <0> pushmark s
@@ -126,19 +125,18 @@ EOT_EOT
 # 8      <0> enter l
 # 9      <;> nextstate(main 559 (eval 15):1) v:{
 # a      <0> pushmark s
-# b      <0> pushmark s
-# c      <$> gvsv(*_) s
-# d      <$> gv(*getkey) s/EARLYCV
-# e      <1> entersub[t2] lKS/TARG
-# f      <$> gvsv(*_) s
-# g      <@> list lK
-# h      <@> leave lKP
+# b      <$> gvsv(*_) s
+# c      <$> gv(*getkey) s/EARLYCV
+# d      <1> entersub[t2] lKS/TARG
+# e      <$> gvsv(*_) s
+# f      <@> leave lKP
 #            goto 7
-# i  <0> pushmark s
-# j  <$> gv(*hash) s
-# k  <1> rv2hv[t1] lKRM*/1
-# l  <2> aassign[t5] KS/COMMON
-# m  <1> leavesub[1 ref] K/REFC,1
+# g  <0> pushmark s
+# h  <$> gv(*hash) s
+# i  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# i  <1> rv2hv lKRM*/1             >=5.019006
+# j  <2> aassign[t5] KS/COMMON
+# k  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 
 
@@ -163,7 +161,8 @@ checkOptree(note   => q{},
 # 4  <0> pushmark s
 # 5  <0> pushmark s
 # 6  <#> gv[*hash] s
-# 7  <1> rv2hv[t2] lKRM*/1
+# 7  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# 7  <1> rv2hv lKRM*/1             >=5.019006
 # 8  <2> aassign[t3] vKS
 # 9  <;> nextstate(main 476 (eval 10):1) v:{
 # a  <0> pushmark sM
@@ -196,7 +195,8 @@ EOT_EOT
 # 4  <0> pushmark s
 # 5  <0> pushmark s
 # 6  <$> gv(*hash) s
-# 7  <1> rv2hv[t1] lKRM*/1
+# 7  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# 7  <1> rv2hv lKRM*/1             >=5.019006
 # 8  <2> aassign[t2] vKS
 # 9  <;> nextstate(main 560 (eval 15):1) v:{
 # a  <0> pushmark sM
@@ -254,7 +254,8 @@ checkOptree(note   => q{},
 #            goto 7
 # e  <0> pushmark s
 # f  <#> gv[*hash] s
-# g  <1> rv2hv[t2] lKRM*/1
+# g  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# g  <1> rv2hv lKRM*/1             >=5.019006
 # h  <2> aassign[t10] KS/COMMON
 # i  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
@@ -276,7 +277,8 @@ EOT_EOT
 #            goto 7
 # e  <0> pushmark s
 # f  <$> gv(*hash) s
-# g  <1> rv2hv[t1] lKRM*/1
+# g  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# g  <1> rv2hv lKRM*/1             >=5.019006
 # h  <2> aassign[t6] KS/COMMON
 # i  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
@@ -310,7 +312,8 @@ checkOptree(note   => q{},
 #            goto 7
 # e  <0> pushmark s
 # f  <#> gv[*hash] s
-# g  <1> rv2hv[t2] lKRM*/1
+# g  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# g  <1> rv2hv lKRM*/1             >=5.019006
 # h  <2> aassign[t10] KS/COMMON
 # i  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
@@ -332,7 +335,8 @@ EOT_EOT
 #            goto 7
 # e  <0> pushmark s
 # f  <$> gv(*hash) s
-# g  <1> rv2hv[t1] lKRM*/1
+# g  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# g  <1> rv2hv lKRM*/1             >=5.019006
 # h  <2> aassign[t6] KS/COMMON
 # i  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
@@ -365,7 +369,8 @@ checkOptree(note   => q{},
 #            goto 7
 # d  <0> pushmark s
 # e  <#> gv[*hash] s
-# f  <1> rv2hv[t2] lKRM*/1
+# f  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# f  <1> rv2hv lKRM*/1             >=5.019006
 # g  <2> aassign[t9] KS/COMMON
 # h  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
@@ -386,7 +391,8 @@ EOT_EOT
 #            goto 7
 # d  <0> pushmark s
 # e  <$> gv(*hash) s
-# f  <1> rv2hv[t1] lKRM*/1
+# f  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# f  <1> rv2hv lKRM*/1             >=5.019006
 # g  <2> aassign[t5] KS/COMMON
 # h  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
@@ -417,7 +423,8 @@ checkOptree(note   => q{},
 #            goto 7
 # d  <0> pushmark s
 # e  <#> gv[*hash] s
-# f  <1> rv2hv[t2] lKRM*/1
+# f  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# f  <1> rv2hv lKRM*/1             >=5.019006
 # g  <2> aassign[t8] KS/COMMON
 # h  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
@@ -436,7 +443,8 @@ EOT_EOT
 #            goto 7
 # d  <0> pushmark s
 # e  <$> gv(*hash) s
-# f  <1> rv2hv[t1] lKRM*/1
+# f  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# f  <1> rv2hv lKRM*/1             >=5.019006
 # g  <2> aassign[t5] KS/COMMON
 # h  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
@@ -464,7 +472,8 @@ checkOptree(note   => q{},
 #            goto 7
 # a  <0> pushmark s
 # b  <#> gv[*hash] s
-# c  <1> rv2hv[t2] lKRM*/1
+# c  <1> rv2hv[t2] lKRM*/1         < 5.019006
+# c  <1> rv2hv lKRM*/1             >=5.019006
 # d  <2> aassign[t6] KS/COMMON
 # e  <#> gv[*array] s
 # f  <1> rv2av[t8] K/1
@@ -483,7 +492,8 @@ EOT_EOT
 #            goto 7
 # a  <0> pushmark s
 # b  <$> gv(*hash) s
-# c  <1> rv2hv[t1] lKRM*/1
+# c  <1> rv2hv[t1] lKRM*/1         < 5.019006
+# c  <1> rv2hv lKRM*/1             >=5.019006
 # d  <2> aassign[t4] KS/COMMON
 # e  <$> gv(*array) s
 # f  <1> rv2av[t5] K/1

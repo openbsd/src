@@ -58,7 +58,7 @@ while (<DATA>)
       } elsif ($f =~ /^(numify|length|as_number|as_hex|as_bin)$/) {
         $try .= "\$x->$f();";
       # some unary ops (test the fxxx form, since that is done by AUTOLOAD)
-      } elsif ($f =~ /^f(nan|sstr|neg|floor|ceil|abs)$/) {
+      } elsif ($f =~ /^f(nan|sstr|neg|floor|ceil|int|abs)$/) {
         $try .= "\$x->f$1();";
       # some is_xxx test function	
       } elsif ($f =~ /^is_(zero|one|negative|positive|odd|even|nan|int)$/) {
@@ -1825,3 +1825,12 @@ abc:NaN
 -51:-51
 -51.2:-51
 12.2:13
+&fint
+0:0
+NaN:NaN
++inf:inf
+-inf:-inf
+1:1
+-51:-51
+-51.2:-51
+12.2:12

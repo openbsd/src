@@ -33,10 +33,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require "test.pl";
 }
 
-require "test.pl";
-plan( tests => 64 );
+plan( tests => 67 );
 
 my $ok;
 
@@ -1104,3 +1104,17 @@ redo_113684:
         fail("redo with non-constant label");
     }
 }
+
+# [perl #3112]
+# The original report, which produced a Bizarre copy
+@a  = ();
+eval {
+    for (1) {
+        push @a, last;
+    }
+};
+is @a, 0, 'push @a, last;  does not push';
+is $@, "", 'no error, either';
+# And my japh, which relied on the misbehaviour
+is do{{&{sub{"Just another Perl hacker,\n"}},last}}, undef,
+  'last returns nothing';

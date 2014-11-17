@@ -8,6 +8,16 @@ perlce - Perl for WinCE
 
 =head1 Building Perl for WinCE
 
+=head2 WARNING
+
+B<< Much of this document has become very out of date and needs updating,
+rewriting or deleting. The build process was overhauled during the 5.19
+development track and the current instructions as of that time are given
+in L</CURRENT BUILD INSTRUCTIONS>; the previous build instructions, which
+are largely superseded but may still contain some useful information, are
+left in L</OLD BUILD INSTRUCTIONS> but really need removing after anything
+of use has been extracted from them. >>
+
 =head2 DESCRIPTION
 
 This file gives the instructions for building Perl5.8 and above for
@@ -56,7 +66,138 @@ compile.
 
 =back
 
-=head2 BUILD
+=head2 CURRENT BUILD INSTRUCTIONS
+
+(These instructions assume the host is 32-bit Windows. If you're on 64-bit
+Windows then change "C:\Program Files" to "C:\Program Files (x86)" throughout.)
+
+1. Install EVC4 from
+
+    http://download.microsoft.com/download/c/3/f/c3f8b58b-9753-4c2e-8b96-2dfe3476a2f7/eVC4.exe 
+
+Use the key mentioned at 
+
+    http://download.cnet.com/Microsoft-eMbedded-Visual-C/3000-2212_4-10108490.html?tag=bc 
+
+The installer is ancient and has a few bugs on the paths it uses. You 
+will have to fix them later. Basically, some things go into "C:/Program 
+Files/Windows CE Tools", others go into "C:/Windows CE Tools" regardless 
+of the path you gave to the installer (the default will be "C:/Windows 
+CE Tools"). Reboots will be required for the installer to proceed. Also 
+.c and .h associations with Visual Studio might get overridden when 
+installing EVC4. You have been warned.
+
+2. Download celib from GitHub (using "Download ZIP") at
+
+    https://github.com/bulk88/celib 
+
+Extract it to a spaceless path but not into the perl build source.
+I call this directory "celib-palm-3.0" but in the GitHub 
+snapshot it will be called "celib-master". Make a copy of the 
+"wince-arm-pocket-wce300-release" folder and rename the copy to 
+"wince-arm-pocket-wce400". This is a hack so we can build a CE 4.0 
+binary by linking in CE 3.0 ARM asm; the linker doesn't care. Windows 
+Mobile/WinCE are backwards compatible with machine code like Desktop Windows.
+
+3. Download console-1.3-src.tar.gz from 
+
+    http://sourceforge.net/projects/perlce/files/PerlCE%20support%20files/console/ 
+
+Extract it to a spaceless path but not into the perl build source. 
+Don't extract it into the same directory as celib. Make a copy of the 
+"wince-arm-pocket-wce300" folder and rename the copy to 
+"wince-arm-pocket-wce400". This is a hack so we can build a CE 4.0 
+binary by linking in CE 3.0 ARM asm; the linker doesn't care. Windows 
+Mobile/WinCE are backwards compatible with machine code like Desktop Windows.
+
+4. Open a command prompt, run your regular batch file to set the environment
+for desktop Visual C building, goto the perl source directory, cd into win32/,
+fill out Makefile, and do a "nmake all" to build a Desktop Perl.
+
+5. Open win32/Makefile.ce in a text editor and do something similar to the 
+following patch.
+
+    -CELIBDLLDIR  = h:\src\wince\celib-palm-3.0
+    -CECONSOLEDIR = h:\src\wince\w32console
+    +CELIBDLLDIR  = C:\sources\celib-palm-3.0
+    +CECONSOLEDIR = C:\sources\w32console
+
+Also change
+
+    !if "$(MACHINE)" == ""
+    MACHINE=wince-arm-hpc-wce300
+    #MACHINE=wince-arm-hpc-wce211
+    #MACHINE=wince-sh3-hpc-wce211
+    #MACHINE=wince-mips-hpc-wce211
+    #MACHINE=wince-sh3-hpc-wce200
+    #MACHINE=wince-mips-hpc-wce200
+    #MACHINE=wince-arm-pocket-wce300
+    #MACHINE=wince-mips-pocket-wce300
+    #MACHINE=wince-sh3-pocket-wce300
+    #MACHINE=wince-x86em-pocket-wce300
+    #MACHINE=wince-mips-palm-wce211
+    #MACHINE=wince-sh3-palm-wce211
+    #MACHINE=wince-x86em-palm-wce211
+    #MACHINE=wince-x86-hpc-wce300
+    #MACHINE=wince-arm-pocket-wce400
+    !endif
+
+to
+
+    !if "$(MACHINE)" == ""
+    #MACHINE=wince-arm-hpc-wce300
+    #MACHINE=wince-arm-hpc-wce211
+    #MACHINE=wince-sh3-hpc-wce211
+    #MACHINE=wince-mips-hpc-wce211
+    #MACHINE=wince-sh3-hpc-wce200
+    #MACHINE=wince-mips-hpc-wce200
+    #MACHINE=wince-arm-pocket-wce300
+    #MACHINE=wince-mips-pocket-wce300
+    #MACHINE=wince-sh3-pocket-wce300
+    #MACHINE=wince-x86em-pocket-wce300
+    #MACHINE=wince-mips-palm-wce211
+    #MACHINE=wince-sh3-palm-wce211
+    #MACHINE=wince-x86em-palm-wce211
+    #MACHINE=wince-x86-hpc-wce300
+    MACHINE=wince-arm-pocket-wce400
+    !endif
+
+so wince-arm-pocket-wce400 is the MACHINE type.
+
+6. Use a text editor to open "C:\Program Files\Microsoft eMbedded C++ 
+4.0\EVC\WCE400\BIN\WCEARMV4.BAT". Look for
+
+    if "%SDKROOT%"=="" set SDKROOT=...
+
+On a new install it is "C:\Windows CE Tools". Goto 
+"C:\Windows CE Tools" in a file manager and see if "C:\Windows CE 
+Tools\wce400\STANDARDSDK\Include\Armv4" exists on your disk. If not
+the SDKROOT need to be changed to "C:\Program Files\Windows CE Tools".
+
+Goto celib-palm-3.0\inc\cewin32.h, search for
+
+    typedef struct _ABC {
+
+and uncomment the struct.
+
+7. Open another command prompt, ensure PLATFORM is not set to anything
+already unless you know what you're doing (so that the correct default
+value is set by the next command), and run "C:\Program Files\Microsoft
+eMbedded C++ 4.0\EVC\WCE400\BIN\WCEARMV4.BAT"
+
+8. In the WinCE command prompt you made with WCEARMV4.BAT, goto the perl 
+source directory, cd into win32/ and run "nmake -f Makefile.ce".
+
+9. The ARM perl interpreter (perl519.dll and perl.exe) will be in something
+like "C:\perl519\src\win32\wince-arm-pocket-wce400", with the XS DLLs in
+"C:\perl519\src\xlib\wince-arm-hpc-wce400\auto".
+
+To prove success on the host machine, run
+"dumpbin /headers wince-arm-pocket-wce400\perl.exe" from the win32/ folder
+and look for "machine (ARM)" in the FILE HEADER VALUES and
+"subsystem (Windows CE GUI)" in the OPTIONAL HEADER VALUES.
+
+=head2 OLD BUILD INSTRUCTIONS
 
 This section describes the steps to be performed to build PerlCE.
 You may find additional information about building perl for WinCE
@@ -120,8 +261,10 @@ has proper "MACHINE" parameter set, to, say, C<wince-mips-pocket-wce300>.
 
   compile.bat
   compile.bat dist
-  compile.bat CROSS_NAME=mips-wce300-thr "USE_ITHREADS=define" "USE_IMP_SYS=define" "USE_MULTI=define"
-  compile.bat CROSS_NAME=mips-wce300-thr "USE_ITHREADS=define" "USE_IMP_SYS=define" "USE_MULTI=define" dist
+  compile.bat CROSS_NAME=mips-wce300-thr "USE_ITHREADS=define" ^
+    "USE_IMP_SYS=define" "USE_MULTI=define"
+  compile.bat CROSS_NAME=mips-wce300-thr "USE_ITHREADS=define" ^
+    "USE_IMP_SYS=define" "USE_MULTI=define" dist
 
 If all goes okay and no errors during a build, you'll get two independent
 distributions: C<wince-mips-pocket-wce300> and C<mips-wce300-thr>.
@@ -302,5 +445,9 @@ Many thanks and obligations to Rainer!
 =item Vadim Konovalov
 
 made further support of WinCE port.
+
+=item Daniel Dragan
+
+updated the build process during the 5.19 development track.
 
 =back

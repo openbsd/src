@@ -1,0 +1,8 @@
+5.017008
+_is_uni_FOO                    # U
+_is_uni_perl_idcont            # U
+_is_utf8_FOO                   # U
+_is_utf8_mark                  # U
+_is_utf8_perl_idcont           # U
+isALPHANUMERIC                 # U
+isIDCONT                       # U

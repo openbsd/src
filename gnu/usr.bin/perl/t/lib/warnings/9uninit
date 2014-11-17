@@ -409,10 +409,9 @@ chomp $x; chop $x;
 my $y;
 chomp ($x, $y); chop ($x, $y);
 EXPECT
-Use of uninitialized value ${$/} in scalar chomp at - line 6.
-Use of uninitialized value ${$/} in chomp at - line 8.
-Use of uninitialized value ${$/} in chomp at - line 8.
-Use of uninitialized value $y in chomp at - line 8.
+Use of uninitialized value $m1 in scalar assignment at - line 4.
+Use of uninitialized value $m1 in scalar assignment at - line 4.
+Setting $/ to a reference to zero as a form of slurp is deprecated, treating as undef at - line 4.
 Use of uninitialized value $y in chop at - line 8.
 ########
 use warnings 'uninitialized';
@@ -1064,6 +1063,7 @@ Use of uninitialized value $m2 in formline at - line 8.
 Use of uninitialized value $g1 in formline at - line 8.
 Use of uninitialized value $g2 in formline at - line 8.
 ########
+# SKIP ? !$Config{d_crypt}
 use warnings 'uninitialized';
 my ($m1, $v);
 our ($g1);

@@ -1,8 +1,8 @@
-# DerivedNormalizationProps-6.2.0.txt
-# Date: 2012-05-23, 20:34:48 GMT [MD]
+# DerivedNormalizationProps-6.3.0.txt
+# Date: 2013-03-02, 16:07:38 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -3377,6 +3377,7 @@ FFE3          ; Expands_On_NFKC # Sk       FULLWIDTH MACRON
 0555          ; NFKC_CF; 0585           # L&       ARMENIAN CAPITAL LETTER OH
 0556          ; NFKC_CF; 0586           # L&       ARMENIAN CAPITAL LETTER FEH
 0587          ; NFKC_CF; 0565 0582      # L&       ARMENIAN SMALL LIGATURE ECH YIWN
+061C          ; NFKC_CF;                # Cf       ARABIC LETTER MARK
 0675          ; NFKC_CF; 0627 0674      # Lo       ARABIC LETTER HIGH HAMZA ALEF
 0676          ; NFKC_CF; 0648 0674      # Lo       ARABIC LETTER HIGH HAMZA WAW
 0677          ; NFKC_CF; 06C7 0674      # Lo       ARABIC LETTER U WITH HAMZA ABOVE
@@ -3468,6 +3469,7 @@ FFE3          ; Expands_On_NFKC # Sk       FULLWIDTH MACRON
 115F..1160    ; NFKC_CF;                # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
 17B4..17B5    ; NFKC_CF;                # Mn   [2] KHMER VOWEL INHERENT AQ..KHMER VOWEL INHERENT AA
 180B..180D    ; NFKC_CF;                # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+180E          ; NFKC_CF;                # Cf       MONGOLIAN VOWEL SEPARATOR
 1D2C          ; NFKC_CF; 0061           # Lm       MODIFIER LETTER CAPITAL A
 1D2D          ; NFKC_CF; 00E6           # Lm       MODIFIER LETTER CAPITAL AE
 1D2E          ; NFKC_CF; 0062           # Lm       MODIFIER LETTER CAPITAL B
@@ -3870,8 +3872,8 @@ FFE3          ; Expands_On_NFKC # Sk       FULLWIDTH MACRON
 2057          ; NFKC_CF; 2032 2032 2032 2032 #Po   QUADRUPLE PRIME
 205F          ; NFKC_CF; 0020           # Zs       MEDIUM MATHEMATICAL SPACE
 2060..2064    ; NFKC_CF;                # Cf   [5] WORD JOINER..INVISIBLE PLUS
-2065..2069    ; NFKC_CF;                # Cn   [5] <reserved-2065>..<reserved-2069>
-206A..206F    ; NFKC_CF;                # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2065          ; NFKC_CF;                # Cn       <reserved-2065>
+2066..206F    ; NFKC_CF;                # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 2070          ; NFKC_CF; 0030           # No       SUPERSCRIPT ZERO
 2071          ; NFKC_CF; 0069           # Lm       SUPERSCRIPT LATIN SMALL LETTER I
 2074          ; NFKC_CF; 0034           # No       SUPERSCRIPT FOUR
@@ -8403,7 +8405,7 @@ E0080..E00FF  ; NFKC_CF;                # Cn [128] <reserved-E0080>..<reserved-E
 E0100..E01EF  ; NFKC_CF;                # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 E01F0..E0FFF  ; NFKC_CF;                # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
 
-# Total code points: 9944
+# Total code points: 9946
 
 # ================================================
 
@@ -8698,6 +8700,7 @@ E01F0..E0FFF  ; NFKC_CF;                # Cn [3600] <reserved-E01F0>..<reserved-
 0526          ; Changes_When_NFKC_Casefolded # L&       CYRILLIC CAPITAL LETTER SHHA WITH DESCENDER
 0531..0556    ; Changes_When_NFKC_Casefolded # L&  [38] ARMENIAN CAPITAL LETTER AYB..ARMENIAN CAPITAL LETTER FEH
 0587          ; Changes_When_NFKC_Casefolded # L&       ARMENIAN SMALL LIGATURE ECH YIWN
+061C          ; Changes_When_NFKC_Casefolded # Cf       ARABIC LETTER MARK
 0675..0678    ; Changes_When_NFKC_Casefolded # Lo   [4] ARABIC LETTER HIGH HAMZA ALEF..ARABIC LETTER HIGH HAMZA YEH
 0958..095F    ; Changes_When_NFKC_Casefolded # Lo   [8] DEVANAGARI LETTER QA..DEVANAGARI LETTER YYA
 09DC..09DD    ; Changes_When_NFKC_Casefolded # Lo   [2] BENGALI LETTER RRA..BENGALI LETTER RHA
@@ -8733,6 +8736,7 @@ E01F0..E0FFF  ; NFKC_CF;                # Cn [3600] <reserved-E01F0>..<reserved-
 115F..1160    ; Changes_When_NFKC_Casefolded # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
 17B4..17B5    ; Changes_When_NFKC_Casefolded # Mn   [2] KHMER VOWEL INHERENT AQ..KHMER VOWEL INHERENT AA
 180B..180D    ; Changes_When_NFKC_Casefolded # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+180E          ; Changes_When_NFKC_Casefolded # Cf       MONGOLIAN VOWEL SEPARATOR
 1D2C..1D2E    ; Changes_When_NFKC_Casefolded # Lm   [3] MODIFIER LETTER CAPITAL A..MODIFIER LETTER CAPITAL B
 1D30..1D3A    ; Changes_When_NFKC_Casefolded # Lm  [11] MODIFIER LETTER CAPITAL D..MODIFIER LETTER CAPITAL N
 1D3C..1D4D    ; Changes_When_NFKC_Casefolded # Lm  [18] MODIFIER LETTER CAPITAL O..MODIFIER LETTER SMALL G
@@ -8914,8 +8918,8 @@ E01F0..E0FFF  ; NFKC_CF;                # Cn [3600] <reserved-E01F0>..<reserved-
 2057          ; Changes_When_NFKC_Casefolded # Po       QUADRUPLE PRIME
 205F          ; Changes_When_NFKC_Casefolded # Zs       MEDIUM MATHEMATICAL SPACE
 2060..2064    ; Changes_When_NFKC_Casefolded # Cf   [5] WORD JOINER..INVISIBLE PLUS
-2065..2069    ; Changes_When_NFKC_Casefolded # Cn   [5] <reserved-2065>..<reserved-2069>
-206A..206F    ; Changes_When_NFKC_Casefolded # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2065          ; Changes_When_NFKC_Casefolded # Cn       <reserved-2065>
+2066..206F    ; Changes_When_NFKC_Casefolded # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 2070          ; Changes_When_NFKC_Casefolded # No       SUPERSCRIPT ZERO
 2071          ; Changes_When_NFKC_Casefolded # Lm       SUPERSCRIPT LATIN SMALL LETTER I
 2074..2079    ; Changes_When_NFKC_Casefolded # No   [6] SUPERSCRIPT FOUR..SUPERSCRIPT NINE
@@ -9363,6 +9367,6 @@ E0080..E00FF  ; Changes_When_NFKC_Casefolded # Cn [128] <reserved-E0080>..<reser
 E0100..E01EF  ; Changes_When_NFKC_Casefolded # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 E01F0..E0FFF  ; Changes_When_NFKC_Casefolded # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
 
-# Total code points: 9944
+# Total code points: 9946
 
 # EOF

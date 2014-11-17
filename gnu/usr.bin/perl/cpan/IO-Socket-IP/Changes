@@ -1,0 +1,193 @@
+Revision history for IO-Socket-IP
+
+0.29    2014/02/24 16:06:29
+        [BUGFIXES]
+         * Workaround for OSes that disobey AI_ADDRCONFIG and yield AIs on
+           families the kernel will not support anyway (e.g. HPUX)
+         * Workaround for OSes that lack getprotobyname() (e.g. Android)
+
+0.28    2014/02/10 16:17:59
+        [CHANGES]
+         * Renamed internal _configure method to _io_socket_ip__configure to
+           avoid clashes with modules that try to subclass IO::Socket::INET
+
+        [BUGFIXES]
+         * Disable AI_ADDRCONFIG during one-sided 'v6 tests as sometimes it
+           would otherwise fail
+         * Skip the SO_BROADCAST test on OSes that fail with EACCES (RT92502)
+
+0.27    2014/01/20 18:08:31
+        [BUGFIXES]
+         * Apply a short timeout to unit tests that probe for internet
+           connectivity, in case of bad firewalls, etc... (Perl RT121037)
+         * Defend against machines with IN6ADDR_LOOPBACK not being "::1" in
+           unit tests, similar to the INADDR_LOOPBACK case (RT92295)
+
+0.26    2014/01/16 12:20:02
+        [CHANGES]
+         * Set $VERSION in BEGIN block before 'use base' so that
+           Acme::Override::INET still works
+         * Various minor improvements to documentation
+
+0.25    2014/01/11 17:19:29
+        [BUGFIXES]
+         * Allow both *Host with port and *Port arguments, letting port from
+           Host argument take precedence (INET compat)
+         * Ensure that a Host/Family-less constructor still constructs a
+           socket, by using gai()s AI_ADDRCONFIG hint
+
+0.24    2013/09/19 14:17:22
+        [BUGFIXES]
+         * Defend against INADDR_LOOPBACK not being 127.0.0.1 on machines with
+           odd networking (e.g. FreeBSD jails) during unit testing
+
+0.23    2013/09/11 17:53:19
+        [BUGFIXES]
+         * Check that kernel actually supports SO_REUSEPORT before
+           unit-testing it (RT86177)
+
+0.22    BUGFIXES:
+         * Always pass 'socktype' hint to getaddrinfo() in unit tests because
+           some OSes get upset without it
+         * Don't unit-test that sockaddr is updated with a local bind() on
+           SOCK_DGRAM sockets because some OSes don't
+
+0.21    CHANGES:
+         * Provide a downgrade method to turn an AF_INET-domain socket into a
+           real IO::Socket::INET instance
+         * Ensure that IO::Socket->new( Domain => ... ) definitely returns a
+           socket in the right family
+
+0.20    CHANGES:
+         * Skip the IPV6_V6ONLY tests on machines lacking that constant
+         * Avoid Socket::inet_pton() in unit tests as Strawberry lacks it
+         * Added ->join_addr
+         * Respect subclassing argument to ->accept
+
+0.19    CHANGES:
+         * More IO::Socket::INET compatibility fixes:
+            + Ensure ->connected is false after ->close
+            + Ensure that IO::Socket::IP->new(Family => $family) still creates
+              an unbound, unconnected socket filehandle
+
+0.18    CHANGES:
+         * Work around ->socktype being undef on IO::Socket versions before
+           1.35 by fetching ->sockopt( SO_TYPE ) (RT81549)
+
+        BUGFIXES:
+         * Fix test skip counts in t/21nonblocking-connect-internet.t (RT79393)
+
+0.17    CHANGES:
+         * Only pass AI_ADDRCONFIG as getaddrinfo() flag if no other flags
+           specified, so the caller can disable it if required.
+        
+        BUGFIXES:
+         * Don't count select() invocations during nonblocking unit test
+           because this is too unreliable and races with the kernel/TCP stack
+
+0.16    BUGFIXES:
+         * Don't ->close after all connect attempts fail, because
+           IO::Socket::INET doesn't do that
+
+0.15    BUGFIXES:
+         * (Hopefully) improved ->connect logic for better MSWin32 support
+         * Skip testing AI_NUMERICSERV on OSes that don't support it
+
+0.14    BUGFIXES:
+         * Second attempt at fixing test skip counts
+
+0.13    BUGFIXES:
+         * Updated test skip counts in unit tests so they match the number of
+           tests actually skipped
+
+0.12    CHANGES:
+         * Ensure that all instances have a defined fileno after construction,
+           even in non-blocking mode (RT77726)
+
+0.11    CHANGES:
+         * Ignore unrecognised constructor arguments rather than complaining
+           about their presence (RT77536)
+         * Call $self->connect during constructor because IO::Socket::SSL
+           relies on this to happen (RT77536)
+
+0.10    CHANGES:
+         * Allow specifying other getaddrinfo flags using GetAddrInfoFlags
+           constructor argument (RT75783)
+         * Provide a convenient hostname+port string splitting utility method
+
+0.09    CHANGES:
+         * Attempt to implement IPV6_V6ONLY sockopt wrapper - not all OSes can
+           disable it, so detect and skip those
+         * Provide ->sockaddr and ->peeraddr convenience accessors, same as
+           IO::Socket::INET (RT75071)
+         * Use new NIx_NOHOST and NIx_NOSERV flags to avoid redundant
+           getnameinfo() lookups when only one of host or service name is
+           required
+         * Ensure that errno gets set to EINVAL on getaddrinfo() failures
+
+        BUGFIXES:
+         * Ignore existing-but-undefined constructor arguments
+         * Avoid locale-specific error message testing of $!
+         * Updates to unit tests for cygwin
+
+0.08    CHANGES:
+         * Depend on Socket 1.95 now a full dual-life release has been made
+         * Set the AI_ADDRCONFIG getaddrinfo hint
+         * Fix some spelling mistakes/typoes
+         * MSWin32 fixes:
+            + MSWin32 uses select() exceptfds rather than writefds to report
+              on nonblocking connect() failure
+            + MSWin32 uses EWOULDBLOCK rather than EINPROGRESS to indicate
+              nonblocking connect()
+
+        BUGFIXES:
+         * Ensure ->socket protocol argument is always defined
+         * Bugfix for (e.g.) NetBSD, which gets upset at protocol hint without
+           socktype hint to getaddrinfo()
+         * Pass 'type' rather than 'proto' to constructor in t/11sockopts.t to
+           avoid MSWin32 test failures
+         * Localise $1/$2 to placate [perl #67962]
+
+0.07    CHANGES:
+         * Prepare for Socket::getaddrinfo() in core; prefer it to
+           Socket::GetAddrInfo::getaddrinfo()
+         * Implement Family constructor arg
+         * Optional registration with IO::Socket
+         * Documentation rewordings
+         * Bugfix to local socket connect tests - test using blocking rather
+           than nonblocking sockets to guarantee synchronous packet delivery
+         * Bugfix to t/04, t/05 - skip if unable to bind ::1
+
+0.06    CHANGES:
+         * Implement nonblocking connect
+         * Implement LocalAddrInfo and PeerAddrInfo args
+         * Example of nonblocking usage, using Net::LibAsyncNS
+
+0.05    CHANGES:
+         * Implement combined ->bind and ->connect operations
+         * Accept "host:service" as *Addr args, and PeerAddr as sole
+           constructor argument
+         * Accept "name(port)" as service arguments
+
+0.04    CHANGES:
+         * Try to yield the most appropriate connect/bind/socket error
+         * Implement sockhost/peerhost methods to match ::INET, moved hostname
+           methods to sockhostname/peerhostname
+        
+        BUGFIXES:
+         * Work around IO::Socket bug where ->accept'ed sockets do not get
+           ->sockdomain or ->socktype
+
+0.03    CHANGES:
+         * Set $@ to raise error messages from constructor
+
+        BUGFIXES:
+         * Correctly implement 'Type' constructor argument
+         * Test SO_BROADCAST on udp instead of tcp as some OSes forbid it
+
+0.02    BUGFIXES:
+         * Not all OSes return true sockopts as 1; test simply for non-zero
+         * Gracefully skip IPv6 tests if Socket6 unavailable
+
+0.01    First version, released on an unsuspecting world.
+

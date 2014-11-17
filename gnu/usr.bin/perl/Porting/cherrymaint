@@ -95,7 +95,7 @@ either on the command line with --address, or by doing
 
 HERE
 
-# Note that you can vote through your browser by pointing it at the the local
+# Note that you can vote through your browser by pointing it at the local
 # end of the tunnel.  For example, L<http://localhost:3000/> if you went with
 # the suggested default values
 }

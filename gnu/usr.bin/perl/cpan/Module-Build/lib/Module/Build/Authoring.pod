@@ -183,6 +183,10 @@ ways to use this distribution without having them installed.  You
 might also think of this as "can use" or "is aware of" or "changes
 behavior in the presence of".
 
+=item test_requires
+
+Items that are necessary for testing.
+
 =item conflicts
 
 Items that can cause problems with this distribution when installed.
@@ -313,7 +317,7 @@ perl(1), L<Module::Build>(3), L<Module::Build::API>(3),
 L<Module::Build::Cookbook>(3), L<ExtUtils::MakeMaker>(3), L<YAML>(3)
 
 F<META.yml> Specification:
-L<CPAN::META::Spec>
+L<CPAN::Meta::Spec>
 
 L<http://www.dsmit.com/cons/>
 

@@ -1,8 +1,8 @@
-# PropertyAliases-6.2.0.txt
-# Date: 2012-05-20, 17:41:20 GMT [MD]
+# PropertyAliases-6.3.0.txt
+# Date: 2013-03-05, 21:40:52 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -74,6 +74,7 @@ uc                       ; Uppercase_Mapping
 # Miscellaneous Properties
 # ================================================
 bmg                      ; Bidi_Mirroring_Glyph
+bpb                      ; Bidi_Paired_Bracket
 cjkIICore                ; kIICore
 cjkIRG_GSource           ; kIRG_GSource
 cjkIRG_HSource           ; kIRG_HSource
@@ -103,6 +104,7 @@ sc                       ; Script
 # Enumerated Properties
 # ================================================
 bc                       ; Bidi_Class
+bpt                      ; Bidi_Paired_Bracket_Type
 ccc                      ; Canonical_Combining_Class
 dt                       ; Decomposition_Type
 ea                       ; East_Asian_Width
@@ -186,6 +188,6 @@ XO_NFKC                  ; Expands_On_NFKC
 XO_NFKD                  ; Expands_On_NFKD
 
 # ================================================
-# Total:    115
+# Total:    117
 
 # EOF

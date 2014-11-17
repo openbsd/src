@@ -43,7 +43,7 @@
 #
 # Note there are various files and directories that it skips; these are
 # ones that are unlikely to contain anything needing bumping, but which
-# will generate lots fo false positives (eg pod/*). These are listed on
+# will generate lots of false positives (eg pod/*). These are listed on
 # STDERR as they are skipped.
 
 use strict;
@@ -197,6 +197,13 @@ my @maps =  (
         qr/uconfig/,
     ],
 
+    # win32/Makefile.ce
+    [
+        qr/(PV\s*=\s*)(\d\d{2})\b$/,
+        sub { $2, "$1$newx$newy" },
+        "$oldx$oldy",
+        qr/Makefile\.ce/,
+    ],
 );
 
 

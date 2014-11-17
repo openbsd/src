@@ -1,8 +1,8 @@
-# PropList-6.2.0.txt
-# Date: 2012-05-23, 20:34:59 GMT [MD]
+# PropList-6.3.0.txt
+# Date: 2013-09-25, 18:58:50 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -13,7 +13,6 @@
 0085          ; White_Space # Cc       <control-0085>
 00A0          ; White_Space # Zs       NO-BREAK SPACE
 1680          ; White_Space # Zs       OGHAM SPACE MARK
-180E          ; White_Space # Zs       MONGOLIAN VOWEL SEPARATOR
 2000..200A    ; White_Space # Zs  [11] EN QUAD..HAIR SPACE
 2028          ; White_Space # Zl       LINE SEPARATOR
 2029          ; White_Space # Zp       PARAGRAPH SEPARATOR
@@ -21,14 +20,16 @@
 205F          ; White_Space # Zs       MEDIUM MATHEMATICAL SPACE
 3000          ; White_Space # Zs       IDEOGRAPHIC SPACE
 
-# Total code points: 26
+# Total code points: 25
 
 # ================================================
 
+061C          ; Bidi_Control # Cf       ARABIC LETTER MARK
 200E..200F    ; Bidi_Control # Cf   [2] LEFT-TO-RIGHT MARK..RIGHT-TO-LEFT MARK
 202A..202E    ; Bidi_Control # Cf   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
+2066..2069    ; Bidi_Control # Cf   [4] LEFT-TO-RIGHT ISOLATE..POP DIRECTIONAL ISOLATE
 
-# Total code points: 7
+# Total code points: 12
 
 # ================================================
 
@@ -230,6 +231,10 @@ FF64          ; Terminal_Punctuation # Po       HALFWIDTH IDEOGRAPHIC COMMA
 21D5..21DB    ; Other_Math # So   [7] UP DOWN DOUBLE ARROW..RIGHTWARDS TRIPLE ARROW
 21DD          ; Other_Math # So       RIGHTWARDS SQUIGGLE ARROW
 21E4..21E5    ; Other_Math # So   [2] LEFTWARDS ARROW TO BAR..RIGHTWARDS ARROW TO BAR
+2308          ; Other_Math # Ps       LEFT CEILING
+2309          ; Other_Math # Pe       RIGHT CEILING
+230A          ; Other_Math # Ps       LEFT FLOOR
+230B          ; Other_Math # Pe       RIGHT FLOOR
 23B4..23B5    ; Other_Math # So   [2] TOP SQUARE BRACKET..BOTTOM SQUARE BRACKET
 23B7          ; Other_Math # So       RADICAL SYMBOL BOTTOM
 23D0          ; Other_Math # So       VERTICAL LINE EXTENSION
@@ -358,7 +363,7 @@ FF3E          ; Other_Math # Sk       FULLWIDTH CIRCUMFLEX ACCENT
 1EEA5..1EEA9  ; Other_Math # Lo   [5] ARABIC MATHEMATICAL DOUBLE-STRUCK WAW..ARABIC MATHEMATICAL DOUBLE-STRUCK YEH
 1EEAB..1EEBB  ; Other_Math # Lo  [17] ARABIC MATHEMATICAL DOUBLE-STRUCK LAM..ARABIC MATHEMATICAL DOUBLE-STRUCK GHAIN
 
-# Total code points: 1358
+# Total code points: 1362
 
 # ================================================
 
@@ -538,7 +543,8 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 19B0..19C0    ; Other_Alphabetic # Mc  [17] NEW TAI LUE VOWEL SIGN VOWEL SHORTENER..NEW TAI LUE VOWEL SIGN IY
 19C8..19C9    ; Other_Alphabetic # Mc   [2] NEW TAI LUE TONE MARK-1..NEW TAI LUE TONE MARK-2
 1A17..1A18    ; Other_Alphabetic # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
-1A19..1A1B    ; Other_Alphabetic # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; Other_Alphabetic # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
+1A1B          ; Other_Alphabetic # Mn       BUGINESE VOWEL SIGN AE
 1A55          ; Other_Alphabetic # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; Other_Alphabetic # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A57          ; Other_Alphabetic # Mc       TAI THAM CONSONANT SIGN LA TANG LAI
@@ -966,7 +972,7 @@ FA27..FA29    ; Unified_Ideograph # Lo   [3] CJK COMPATIBILITY IDEOGRAPH-FA27..C
 034F          ; Other_Default_Ignorable_Code_Point # Mn       COMBINING GRAPHEME JOINER
 115F..1160    ; Other_Default_Ignorable_Code_Point # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
 17B4..17B5    ; Other_Default_Ignorable_Code_Point # Mn   [2] KHMER VOWEL INHERENT AQ..KHMER VOWEL INHERENT AA
-2065..2069    ; Other_Default_Ignorable_Code_Point # Cn   [5] <reserved-2065>..<reserved-2069>
+2065          ; Other_Default_Ignorable_Code_Point # Cn       <reserved-2065>
 3164          ; Other_Default_Ignorable_Code_Point # Lo       HANGUL FILLER
 FFA0          ; Other_Default_Ignorable_Code_Point # Lo       HALFWIDTH HANGUL FILLER
 FFF0..FFF8    ; Other_Default_Ignorable_Code_Point # Cn   [9] <reserved-FFF0>..<reserved-FFF8>
@@ -975,7 +981,7 @@ E0002..E001F  ; Other_Default_Ignorable_Code_Point # Cn  [30] <reserved-E0002>..
 E0080..E00FF  ; Other_Default_Ignorable_Code_Point # Cn [128] <reserved-E0080>..<reserved-E00FF>
 E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
 
-# Total code points: 3780
+# Total code points: 3776
 
 # ================================================
 
@@ -1210,7 +1216,10 @@ E0100..E01EF  ; Variation_Selector # Mn [240] VARIATION SELECTOR-17..VARIATION S
 21D5..21F3    ; Pattern_Syntax # So  [31] UP DOWN DOUBLE ARROW..UP DOWN WHITE ARROW
 21F4..22FF    ; Pattern_Syntax # Sm [268] RIGHT ARROW WITH SMALL CIRCLE..Z NOTATION BAG MEMBERSHIP
 2300..2307    ; Pattern_Syntax # So   [8] DIAMETER SIGN..WAVY LINE
-2308..230B    ; Pattern_Syntax # Sm   [4] LEFT CEILING..RIGHT FLOOR
+2308          ; Pattern_Syntax # Ps       LEFT CEILING
+2309          ; Pattern_Syntax # Pe       RIGHT CEILING
+230A          ; Pattern_Syntax # Ps       LEFT FLOOR
+230B          ; Pattern_Syntax # Pe       RIGHT FLOOR
 230C..231F    ; Pattern_Syntax # So  [20] BOTTOM RIGHT CROP..BOTTOM RIGHT CORNER
 2320..2321    ; Pattern_Syntax # Sm   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
 2322..2328    ; Pattern_Syntax # So   [7] FROWN..KEYBOARD

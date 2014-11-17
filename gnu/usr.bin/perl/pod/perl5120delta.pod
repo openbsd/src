@@ -279,7 +279,7 @@ functions to check a scalar against these rules.
 
 =head2 @INC reorganization
 
-In C<@INC>, C<ARCHLIB> and C<PRIVLIB> now occur after after the current
+In C<@INC>, C<ARCHLIB> and C<PRIVLIB> now occur after the current
 version's C<site_perl> and C<vendor_perl>.  Modules installed into
 C<site_perl> and C<vendor_perl> will now be loaded in preference to
 those installed in C<ARCHLIB> and C<PRIVLIB>.
@@ -743,7 +743,7 @@ the most widely used are the soft hyphen (U+00AD), and BOM, ZWSP, ZWNJ,
 WJ, and similar characters, plus bidirectional controls.
 
 C<\p{Alpha}> now matches the same characters as C<\p{Alphabetic}>. Before
-5.12, Perl's definition definition included a number of things that aren't
+5.12, Perl's definition included a number of things that aren't
 really alpha (all marks) while omitting many that were. The definitions
 of C<\p{Alnum}> and C<\p{Word}> depend on Alpha's definition and have
 changed accordingly.

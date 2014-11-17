@@ -3,7 +3,7 @@
 select(STDERR); $| = 1;
 select(STDOUT); $| = 1;
 
-print "1..23\n";
+print "1..27\n";
 
 use IO::Select 1.09;
 
@@ -129,3 +129,23 @@ IO::Select::has_error();
 print "not " unless $w == 1 ;
 $w = 0 ;
 print "ok 23\n" ;
+
+{
+    # perl #75156 - test we can delete a closed handle
+    require IO::Socket::INET;
+    my $fh = IO::Socket::INET->new(
+      Listen => 5,
+    );
+    my $sel = IO::Select->new(\*STDIN);
+    $sel->add($fh);
+    my $oldbits = $sel->bits;
+    print "not " unless $sel->count == 2;
+    print "ok 24 - added socket\n";
+    close $fh;
+    print "not " unless $sel->remove($fh) == 1;
+    print "ok 25 - removed closed socket\n";
+    print "not " unless $sel->count == 1;
+    print "ok 26 - count() updated\n";
+    print "not " unless $sel->bits ne $oldbits;
+    print "ok 27 - bits() updated\n";
+}

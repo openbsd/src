@@ -436,6 +436,7 @@ FETCH(...)
 void
 STORE(SV *sv, IV newbase)
     CODE:
+      PERL_UNUSED_VAR(sv);
       if (FEATURE_ARYBASE_IS_ENABLED) {
 	SV *base = cop_hints_fetch_pvs(PL_curcop, "$[", 0);
 	if (SvOK(base) ? SvIV(base) == newbase : !newbase) XSRETURN_EMPTY;

@@ -39,31 +39,7 @@ $make = $ENV{MAKE} if exists $ENV{MAKE};
 if ($^O eq 'MSWin32' && $make eq 'nmake') { $make .= " -nologo"; }
 
 # VMS may be using something other than MMS/MMK
-my $mms_or_mmk = 0;
-my $vms_lc = 0;
-my $vms_nodot = 0;
-if ($^O eq 'VMS') {
-    $mms_or_mmk = 1 if (($make eq 'MMK') || ($make eq 'MMS'));
-    $vms_lc = 1;
-    $vms_nodot = 1;
-    my $vms_unix_rpt = 0;
-    my $vms_efs = 0;
-    my $vms_efs_case = 0;
-    if (eval 'require VMS::Feature') {
-        $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
-        $vms_efs = VMS::Feature::current("efs_case_preserve");
-        $vms_efs_case = VMS::Feature::current("efs_charset");
-    } else {
-        my $unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
-        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
-        my $efs_case = $ENV{'DECC$EFS_CASE_PRESERVE'} || '';
-        $vms_unix_rpt = $unix_rpt =~ /^[ET1]/i; 
-        $vms_efs = $efs_charset =~ /^[ET1]/i; 
-        $vms_efs_case = $efs_case =~ /^[ET1]/i; 
-    }
-    $vms_lc = 0 if $vms_efs_case;
-    $vms_nodot = 0 if $vms_unix_rpt;
-}
+my $mms_or_mmk = ($make =~ m/^MM(S|K)/i) ? 1 : 0;
 
 # Renamed by make clean
 my $makefile = ($mms_or_mmk ? 'descrip' : 'Makefile');
@@ -125,12 +101,12 @@ package main;
 
 sub check_for_bonus_files {
   my $dir = shift;
-  my %expect = map {($vms_lc ? lc($_) : $_), 1} @_;
+  my %expect = map {($^O eq 'VMS' ? lc($_) : $_), 1} @_;
 
   my $fail;
   opendir DIR, $dir or die "opendir '$dir': $!";
   while (defined (my $entry = readdir DIR)) {
-    $entry =~ s/\.$// if $vms_nodot;  # delete trailing dot that indicates no extension
+    $entry =~ s/(.*?)\.?$/\L$1/ if $^O eq 'VMS';
     next if $expect{$entry};
     print "# Extra file '$entry'\n";
     $fail = 1;

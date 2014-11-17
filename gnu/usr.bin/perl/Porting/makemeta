@@ -47,7 +47,7 @@ my $distmeta = {
     },
     'homepage' => 'http://www.perl.org/',
     'bugtracker' => {
-      'web' => 'http://rt.perl.org/perlbug/'
+      'web' => 'https://rt.perl.org/'
     },
     'license' => [
       'http://dev.perl.org/licenses/'

@@ -31,6 +31,8 @@
 # Column 6, if present, contains a reason why the test is skipped.
 # This is printed with "skipped", for harness to pick up.
 #
+# Column 7 can be used for comments
+#
 # \n in the tests are interpolated, as are variables of the form ${\w+}.
 #
 # Blanks lines are treated as PASSING tests to keep the line numbers
@@ -101,6 +103,9 @@ foreach (@tests) {
     chomp;
     s/\\n/\n/g unless $regex_sets;
     my ($pat, $subject, $result, $repl, $expect, $reason) = split(/\t/,$_,6);
+    if (!defined $subject) {
+        die "Bad test definition on line $test: $_\n";
+    }
     $reason = '' unless defined $reason;
     my $input = join(':',$pat,$subject,$result,$repl,$expect);
     # the double '' below keeps simple syntax highlighters from going crazy

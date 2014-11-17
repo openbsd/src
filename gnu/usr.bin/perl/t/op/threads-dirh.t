@@ -33,6 +33,8 @@ fresh_perl_is <<'# this is no comment', 'ok', {}, 'crash when duping dirh';
 
 my $dir;
 SKIP: {
+ skip "telldir or seekdir not defined on this platform", 5
+    if !$Config::Config{d_telldir} || !$Config::Config{d_seekdir};
  my $skip = sub {
    chdir($dir);
    chdir updir;

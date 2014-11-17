@@ -19,7 +19,7 @@ blib_load('Module::Build');
   } elsif ( !$Config{usedl} ) {
     plan skip_all => 'Perl not compiled for dynamic loading'
   } else {
-    plan tests => 20;
+    plan tests => 22;
   }
   require Cwd;
   $tmp = MBTest->tmpdir( $tmp_exec ? () : (DIR => Cwd::cwd) );
@@ -116,6 +116,14 @@ is $@, '';
 
 stdout_stderr_of( sub { eval { $mb->dispatch('test') } } );
 is $@, '';
+
+eval { $mb->dispatch('clean') };
+
+eval { $mb->dispatch('build', 'pureperl_only' => 1) };
+like $@, qr/\ACan\'t build xs files under --pureperl-only/, 'Can\'t build xs under pureperl';
+
+eval { $mb->dispatch('build', pureperl_only => 1, allow_pureperl => 1) };
+is $@, '', 'Can\'t build xs under pureperl, unless allow_pureperl';
 
 eval { $mb->dispatch('realclean') };
 is $@, '';

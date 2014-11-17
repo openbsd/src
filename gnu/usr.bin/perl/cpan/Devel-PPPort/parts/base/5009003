@@ -2,6 +2,7 @@
 Newx                           # E
 Newxc                          # E
 Newxz                          # E
+PL_check                       # E
 SvMAGIC_set                    # U
 SvRV_set                       # U
 SvSTASH_set                    # U
@@ -20,7 +21,6 @@ hv_eiter_set                   # U
 hv_fetchs                      # U
 hv_name_set                    # U
 hv_placeholders_get            # U
-hv_placeholders_p              # U
 hv_placeholders_set            # U
 hv_riter_p                     # U
 hv_riter_set                   # U
@@ -31,6 +31,7 @@ newSVhek                       # U
 newSVpvs                       # U
 newSVpvs_share                 # U
 newWHENOP                      # U
+pad_compname_type              # U
 savepvs                        # U
 sortsv_flags                   # U
 sv_catpvs                      # U

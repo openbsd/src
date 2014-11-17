@@ -5,8 +5,8 @@ BEGIN {
 }
 chdir 't';
 
-BEGIN { 
-    use Test::More; 
+BEGIN {
+    use Test::More;
 
     if( $^O =~ /^VMS|os2|MacOS|MSWin32|cygwin|beos|netware$/i ) {
         plan skip_all => 'Non-Unix platform';
@@ -26,9 +26,9 @@ my $class = 'ExtUtils::MM_Unix';
 # only one of the following can be true
 # test should be removed if MM_Unix ever stops handling other OS than Unix
 my $os =  ($ExtUtils::MM_Unix::Is{OS2}   || 0)
-        + ($ExtUtils::MM_Unix::Is{Win32} || 0) 
+        + ($ExtUtils::MM_Unix::Is{Win32} || 0)
         + ($ExtUtils::MM_Unix::Is{Dos}   || 0)
-        + ($ExtUtils::MM_Unix::Is{VMS}   || 0); 
+        + ($ExtUtils::MM_Unix::Is{VMS}   || 0);
 cmp_ok ( $os, '<=', 1,  'There can be only one (or none)');
 
 is($ExtUtils::MM_Unix::VERSION, $ExtUtils::MakeMaker::VERSION, 'MM_Unix has a $VERSION');
@@ -45,7 +45,7 @@ is ($class->catdir('xx','xx'), File::Spec->catdir('xx','xx'),
 is ($class->catfile('xx','xx','yy'), File::Spec->catfile('xx','xx','yy'),
      'catfile(xx, xx) => xx/xx');
 
-is ($class->file_name_is_absolute('Bombdadil'), 
+is ($class->file_name_is_absolute('Bombdadil'),
     File::Spec->file_name_is_absolute('Bombdadil'),
      'file_name_is_absolute()');
 
@@ -130,7 +130,7 @@ ok ( join (' ', $class->dist_basics()), 'distclean :: realclean distcheck');
 # has_link_code tests
 
 my $t = bless { NAME => "Foo" }, $class;
-$t->{HAS_LINK_CODE} = 1; 
+$t->{HAS_LINK_CODE} = 1;
 is ($t->has_link_code(),1,'has_link_code'); is ($t->{HAS_LINK_CODE},1);
 
 $t->{HAS_LINK_CODE} = 0;
@@ -198,9 +198,9 @@ foreach (qw/ post_constants postamble post_initialize/) {
 }
 
 ###############################################################################
-# replace_manpage_separator 
+# replace_manpage_separator
 
-is ($t->replace_manpage_separator('Foo/Bar'),'Foo::Bar','manpage_separator'); 
+is ($t->replace_manpage_separator('Foo/Bar'),'Foo::Bar','manpage_separator');
 
 ###############################################################################
 
@@ -208,7 +208,7 @@ $t->init_linker;
 foreach (qw/ EXPORT_LIST PERL_ARCHIVE PERL_ARCHIVE_AFTER /)
 {
     ok( exists $t->{$_}, "$_ was defined" );
-    is( $t->{$_}, '', "$_ is empty on Unix"); 
+    is( $t->{$_}, '', "$_ is empty on Unix");
 }
 
 

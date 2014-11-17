@@ -527,12 +527,13 @@ my $x = "foo";
 EXPECT
 foo
 ########
+# [perl #3066]
 sub C () { 1 }
-sub M { $_[0] = 2; }
+sub M { print "$_[0]\n" }
 eval "C";
 M(C);
 EXPECT
-Modification of a read-only value attempted at - line 2.
+1
 ########
 print qw(ab a\b a\\b);
 EXPECT
@@ -756,32 +757,6 @@ It's good! >A< >B<
 $_="foo";utf8::upgrade($_);/bar/i,warn$_;
 EXPECT
 foo at - line 1.
-######## glob() bug Mon, 01 Sep 2003 02:25:41 -0700 <200309010925.h819Pf0X011457@smtp3.ActiveState.com>
--lw
-# Make sure the presence of the CORE::GLOBAL::glob typeglob does not affect
-# whether File::Glob::csh_glob is called.
-if ($^O eq 'VMS') {
-    # A pattern with a double quote in it is a syntax error to LIB$FIND_FILE
-    # Should we strip quotes in Perl_vms_start_glob the way csh_glob() does?
-    print "ok1\nok2\n";
-}
-else {
-    ++$INC{"File/Glob.pm"}; # prevent it from loading
-    my $called1 =
-    my $called2 = 0;
-    *File::Glob::csh_glob = sub { ++$called1 };
-    my $output1 = eval q{ glob(q(./"TEST")) };
-    undef *CORE::GLOBAL::glob; # but leave the typeglob itself there
-    ++$CORE::GLOBAL::glob if 0; # "used only once"
-    undef *File::Glob::csh_glob; # avoid redefinition warnings
-    *File::Glob::csh_glob = sub { ++$called2 };
-    my $output2 = eval q{ glob(q(./"TEST")) };
-    print "ok1" if $called1 eq $called2;
-    print "ok2" if $output1 eq $output2;
-}
-EXPECT
-ok1
-ok2
 ######## "#75146: 27e904532594b7fb (fix for #23810) introduces a #regression"
 use strict;
 

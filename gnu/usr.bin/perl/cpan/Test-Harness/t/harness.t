@@ -5,11 +5,19 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 
 use Test::More;
 use IO::c55Capture;
 
 use TAP::Harness;
+
+# This is done to prevent the colors environment variables from
+# interfering.
+local $ENV{HARNESS_SUMMARY_COLOR_FAIL};
+local $ENV{HARNESS_SUMMARY_COLOR_SUCCESS};
+delete $ENV{HARNESS_SUMMARY_COLOR_FAIL};
+delete $ENV{HARNESS_SUMMARY_COLOR_SUCCESS};
 
 my $HARNESS = 'TAP::Harness';
 
@@ -74,7 +82,7 @@ for my $test_args ( get_arg_sets() ) {
 
 {
     my @output;
-    local $^W;
+    no warnings 'redefine';
     local *TAP::Formatter::Base::_output = sub {
         my $self = shift;
         push @output => grep { $_ ne '' }

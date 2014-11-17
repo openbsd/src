@@ -1,7 +1,7 @@
 package bigint;
 use 5.006;
 
-$VERSION = '0.34';
+$VERSION = '0.36';
 use Exporter;
 @ISA		= qw( Exporter );
 @EXPORT_OK	= qw( PI e bpi bexp hex oct );
@@ -523,7 +523,7 @@ B<both> the original and the copy being destroyed:
 	$x = 9; $y = $x;
 	print $x->bmul(2), " ", $y,"\n";	# prints 18 18
 
-Using methods that do not modify, but testthe contents works:
+Using methods that do not modify, but test that the contents works:
 
 	$x = 9; $y = $x;
 	$z = 9 if $x->is_zero();		# works fine

@@ -5,7 +5,7 @@
 #
 
 SRCDIR     = ..
-PV         = 517
+PV         = 520
 
 # INSTALL_ROOT specifies a path where this perl will be installed on CE device
 INSTALL_ROOT=/netzwerk/sprache/perl
@@ -13,7 +13,7 @@ INST_TOP=$(INSTALL_ROOT)
 INST_VER=
 
 # PERLCEDIR shoud be set to current directory
-PERLCEDIR  = H:\src\wince\perl\win32
+PERLCEDIR  = $(MAKEDIR)
 
 # WCEROOT is a directory where Windows CE Tools was installed
 WCEROOT    = D:\Windows CE Tools
@@ -32,12 +32,6 @@ MSVCDIR         = D:\MSVStudio\VC98
 CCHOME		= $(MSVCDIR)
 CCINCDIR	= $(CCHOME)\include
 CCLIBDIR	= $(CCHOME)\lib
-
-# Only for WIN2000
-#YES        = /y
-COPY       = copy $(YES)
-XCOPY      = xcopy $(YES) /f /r /i /d
-RCOPY	   = xcopy $(YES) /f /r /i /e /d
 
 # cecopy program. Make shure it is in your path, as well as cemkdir, cedel
 CECOPY     = cecopy
@@ -63,6 +57,15 @@ NOOP	   = @echo
 # keep this untouched!
 NULL	   =
 
+#
+# uncomment exactly one of the following
+#
+# Embedded Visual C++ 4 and older
+CCTYPE		= MSVC60
+# Smart Devices for Visual C++ 2005 (aka Visual C++ 8.x) (full version)
+#CCTYPE		= MSVC80
+# Smart Devices for Visual C++ 2008 (aka Visual C++ 9.x) (full version)
+#CCTYPE		= MSVC90
 
 #CFG=DEBUG
 CFG=RELEASE
@@ -82,6 +85,7 @@ MACHINE=wince-arm-hpc-wce300
 #MACHINE=wince-sh3-palm-wce211
 #MACHINE=wince-x86em-palm-wce211
 #MACHINE=wince-x86-hpc-wce300
+#MACHINE=wince-arm-pocket-wce400
 !endif
 
 # set this to your email address
@@ -354,16 +358,36 @@ STARTOBJS  = $(CECONSOLEDIR)/$(MACHINE)/wmain.obj \
              $(CECONSOLEDIR)/$(MACHINE)/w32console.obj
 !endif
 
+!if "$(MACHINE)" == "wince-arm-pocket-wce400"
+#CC         = clarm.exe #set in WCEARMV4.BAT
+ARCH       = ARM
+CPU        = ARM
+TARGETCPU  = ARM
+CEVersion  = 400
+#OSVERSION  = WCE300 #set in WCEARMV4.BAT
+PLATFORM   = MS Pocket PC
+MCFLAGS    = -D ARM -D arm -D _ARM_ -D _arm_ -DPROCESSOR_ARM \
+             -D _MT -D _DLL -DPALM_SIZE -DPOCKET_SIZE \
+             -I $(CELIBDLLDIR)\inc
+MACH       = -machine:arm
+SUBSYS     = -subsystem:windowsce,4.00
+CELIBPATH  = $(CELIBDLLDIR)\$(MACHINE)-release
+LDLIBPATH  = -libpath:$(CELIBPATH)
+STARTOBJS  = $(CECONSOLEDIR)/$(MACHINE)/wmain.obj \
+             $(CECONSOLEDIR)/$(MACHINE)/w32console.obj
+!endif
+
+
 ######################################################################
 # common section
 
 CEDEFS    = -D_WINDOWS -D_WIN32_WCE=$(CEVersion) -DUNDER_CE=$(CEVersion) \
             $(MCFLAGS) -D PERL
 
-CECFLAGS  = $(CEDEFS)
+CECFLAGS  = $(CEDEFS) -Zi
 
 !if "$(CFG)" == "DEBUG"
-CECFLAGS  = $(CECFLAGS) -Zi -Od
+CECFLAGS  = $(CECFLAGS) -Od
 !endif
 
 !if "$(CFG)" == "RELEASE"
@@ -371,21 +395,28 @@ CECFLAGS  = $(CECFLAGS) -Zi -Od
 # Also the dll cannot be loaded by perl.exe...
 !if "$(CPU)" == "SH3"
 !else
-CECFLAGS  = $(CECFLAGS) -O2 -Ot
+CECFLAGS  = $(CECFLAGS) -O1
 !endif
-
+!  IF "$(CCTYPE)" != "MSVC60"
+#turn on LTCG optimization for CCs that have it
+CECFLAGS	= $(CECFLAGS) -GL
+!  ENDIF
+!  IF "$(CCTYPE)" == "MSVC80" || "$(CCTYPE)" == "MSVC90"
+#no stack security cookie for CCs where its on by default
+CECFLAGS	= $(CECFLAGS) -GS-
+!  ENDIF
 !endif
 
 RCDEFS    = /l 0x407 /r /d "UNICODE" /d UNDER_CE=$(CEVersion) \
             /d _WIN32_WCE=$(CEVersion)
 
-PATH=$(CEPATH);$(PATH)
+#PATH=$(CEPATH);$(PATH)
 
 # attention, for eVC 4, these paths are not generated correctly since the
 # WinCE SDK is organized differently from eVC 3, replace the next 2 macros
 # with absolute paths to the correct directories on your system
-INCLUDE=$(WCEROOT)\$(OSVERSION)\$(PLATFORM)\include
-LIB=$(WCEROOT)\$(OSVERSION)\$(PLATFORM)\lib\$(ARCH)
+#INCLUDE=$(WCEROOT)\$(OSVERSION)\$(PLATFORM)\include
+#LIB=$(WCEROOT)\$(OSVERSION)\$(PLATFORM)\lib\$(ARCH)
 
 ######################################################################
 
@@ -466,10 +497,11 @@ PROCESSOR_ARCHITECTURE = $(TARGETCPU)
 ARCHNAME	= $(PLATFORM)-$(OSVERSION)-$(PROCESSOR_ARCHITECTURE)
 ARCHDIR		= ..\lib\$(ARCHNAME)
 COREDIR		= ..\lib\CORE
-XCOREDIR	= ..\xlib\$(CROSS_NAME)\CORE
 AUTODIR		= ..\lib\auto
 LIBDIR		= ..\lib
 EXTDIR		= ..\ext
+DISTDIR		= ..\dist
+CPANDIR		= ..\cpan
 PODDIR		= ..\pod
 EXTUTILSDIR	= $(LIBDIR)\ExtUtils
 
@@ -497,25 +529,25 @@ CELIB           = celib.lib
 CELIBS          = -nodefaultlib \
                   ws2.lib $(CELIB) coredll.lib
 
+#this libc's purpose is WinCE entrypoint to main wrapper, not a real C std lib
 !if $(CEVersion) > 200
-CELIBS          = $(CELIBS) corelibc.lib
+LIBC          = corelibc.lib
 !else
-CELIBS          = $(CELIBS) msvcrt.lib
+LIBC          = msvcrt.lib
 !endif
 
 LIBBASEFILES	= $(CRYPT_LIB) $(CELIBS)
 
 LIBFILES	= $(LIBBASEFILES) $(LIBC)
 
-CFLAGS		= -nologo -Gf -W3 $(INCLUDES) $(DEFINES) $(LOCDEFS) \
+CFLAGS		= -nologo -GF -W3 $(INCLUDES) $(DEFINES) $(LOCDEFS) \
 		$(PCHFLAGS) $(OPTIMIZE)
 
-LINK_FLAGS	= -nologo -opt:ref,icf -machine:$(PROCESSOR_ARCHITECTURE)
+LINK_FLAGS	= -nologo -debug -opt:ref,icf -machine:$(PROCESSOR_ARCHITECTURE)
 
-!if "$(CFG)" == "DEBUG"
-LINK_FLAGS      = $(LINK_FLAGS) -debug
-!else
-LINK_FLAGS      = $(LINK_FLAGS) -release
+!if "$(CFG)" == "RELEASE" && "$(CCTYPE)" != "MSVC60"
+#see matching flag in CECFLAGS
+LINK_FLAGS	= $(LINK_FLAGS) -ltcg
 !endif
 
 OBJOUT_FLAG	= -Fo
@@ -549,15 +581,20 @@ $(o).dll:
 	$(RSC) -i.. $<
 
 # This must be relative to ../lib/CORE, else the ext dll build fails...
-PERLIMPLIB_EXP	= ..\..\..\xlib\$(CROSS_NAME)\CORE\perl$(PV).lib
+PERLIMPLIB_EXP	= perl$(PV).lib
 PERLIMPLIB	= $(PERLCEDIR)\$(MACHINE)\perl$(PV).lib
 PERLDLL		= $(MACHINE)\perl$(PV).dll
 
 DLLDIR          = $(MACHINE)\dll
 PERLEXE		= $(MACHINE)\perl.exe
 
-CONFIGPM	= ..\xlib\$(CROSS_NAME)\Config.pm
-MINIMOD		= ..\lib\ExtUtils\Miniperl.pm
+CONFIGPM	= ..\lib\Config.pm ..\lib\Config_heavy.pl
+GENUUDMAP	= ..\generate_uudmap.exe
+
+UUDMAP_H	= ..\uudmap.h
+BITCOUNT_H	= ..\bitcount.h
+MG_DATA_H	= ..\mg_data.h
+GENERATED_HEADERS = $(UUDMAP_H) $(BITCOUNT_H) $(MG_DATA_H)
 
 # Unicode data files generated by mktables
 FIRSTUNIFILE     = ..\lib\unicore\Decomposition.pl
@@ -583,12 +620,21 @@ UNIDATADIR2	= ..\lib\unicore\lib
 PERLDEP		= perldll.def
 
 MAKE		= nmake -nologo
+MAKE_BARE	= nmake
 
 CFGSH_TMPL	= config.ce
 CFGH_TMPL	= config_H.ce
 
+XCOPY		= xcopy /f /r /i /d /y
+RCOPY		= xcopy /f /r /i /e /d /y
+NOOP		= @rem
+NULL		=
+
+DEL		= del
+
 MICROCORE_SRC	=		\
 		..\av.c		\
+		..\caretx.c	\
 		..\deb.c	\
 		..\doio.c	\
 		..\doop.c	\
@@ -661,7 +707,6 @@ CORE_NOCFG_H	=		\
 		..\perl.h	\
 		..\perlapi.h	\
 		..\perlsdio.h	\
-		..\perlsfio.h	\
 		..\perly.h	\
 		..\pp.h		\
 		..\proto.h	\
@@ -679,6 +724,7 @@ CORE_NOCFG_H	=		\
 		..\intrpvar.h	\
 		.\include\dirent.h	\
 		.\include\netdb.h	\
+		.\include\sys\errno2.h	\
 		.\include\sys\socket.h	\
 		.\win32.h
 
@@ -701,34 +747,36 @@ CFG_VARS = \
  "INST_VER=$(INST_VER)" \
  "INST_ARCH=$(INST_ARCH)" \
  "archname=$(ARCHNAME)" \
- "CC=$(CC)" \
+ "cc=$(CC)" \
+ "ld=$(LINK32)"	 \
  "ccflags=$(OPTIMIZE) $(DEFINES) $(BUILDOPT)" \
  "cppflags=$(OPTIMIZE) $(DEFINES) $(BUILDOPT)" \
  "cf_by=vkon" \
  "cf_email=$(EMAIL)" \
- "d_crypt=$(D_CRYPT)" \
+#9cef8306
  "d_mymalloc=$(PERL_MALLOC)" \
  "libs=$(LIBFILES)" \
  "incpath=$(CCINCDIR)" \
  "libperl=$(PERLIMPLIB_EXP)" \
  "libpth=$(LIBPATH)" \
  "libc=$(LIBC)" \
- "make=nmake" \
+ "make=$(MAKE_BARE)" \
  "static_ext=$(STATIC_EXT)" \
  "dynamic_ext=$(DYNAMIC_EXT)" \
+ "usethreads=$(USE_ITHREADS)" \
  "useithreads=$(USE_ITHREADS)" \
  "usemultiplicity=$(USE_MULTI)" \
  "useperlio=$(USE_PERLIO)" \
+ "use64bitint=undef" \
+ "uselargefiles=undef" \
  "LINK_FLAGS=$(LDLIBPATH) $(LINK_FLAGS) $(SUBSYS)" \
- "optimize=$(OPTIMIZE)"
-
-ICWD = -I..\dist\Cwd -I..\dist\Cwd\lib
-ICWD1 = -I..\..\dist\Cwd -I..\..\dist\Cwd\lib
+ "optimize=$(OPTIMIZE)" \
+ "WIN64=$(WIN64)"
 
 #
 # filenames given to xsubpp must have forward slashes (since it puts
 # full pathnames in #line strings)
-XSUBPP		= $(HPERL) -I..\..\lib $(ICWD1) -MCross=$(CROSS_NAME) ..\$(EXTUTILSDIR)\xsubpp \
+XSUBPP		= $(HPERL) -I..\..\lib ..\$(EXTUTILSDIR)\xsubpp \
 		-C++ -prototypes
 
 
@@ -736,33 +784,58 @@ XSUBPP		= $(HPERL) -I..\..\lib $(ICWD1) -MCross=$(CROSS_NAME) ..\$(EXTUTILSDIR)\
 # Top targets
 #
 
-all: hostminiperl $(MINIMOD) $(CONFIGPM) $(UNIDATAFILES) $(PERLEXE) MakePPPort Extensions
+all: hostminiperl force_config_h ..\lib\buildcustomize.pl .\config.h ..\git_version.h $(CONFIGPM) $(UNIDATAFILES) $(PERLEXE) MakePPPort Extensions
 
-$(DYNALOADER)$(o) : $(DYNALOADER).c xconfig.h $(EXTDIR)\DynaLoader\dlutils.c
+$(DYNALOADER)$(o) : $(DYNALOADER).c config.h $(EXTDIR)\DynaLoader\dlutils.c
 
-$(CONFIGPM) : $(HPERL) ..\Cross\config-$(MACHINE).sh config_h.PL ..\minimod.pl
-	cd .. && $(HPERL) -Ilib configpm --cross=$(CROSS_NAME) --no-glossary
-	-mkdir $(XCOREDIR)
-	$(XCOPY) ..\*.h $(XCOREDIR)\*.*
-	$(XCOPY) ..\*.inc $(XCOREDIR)\*.*
-	$(XCOPY) *.h $(XCOREDIR)\*.*
-	$(XCOPY) ..\ext\re\re.pm $(LIBDIR)\*.*
-	$(RCOPY) include $(XCOREDIR)\*.*
+#convenience target
+configpm_targ : $(CONFIGPM)
 
-.\xconfig.h:
-	-del /f xconfig.h
-	-mkdir $(XCOREDIR)
-	-$(HPERL) -I..\lib $(ICWD) -MCross=$(CROSS_NAME) config_h.PL "INST_VER=$(INST_VER)" "CORE_DIR=$(XCOREDIR)" "CONFIG_H=xconfig.h"
-	$(XCOPY) xconfig.h $(XCOREDIR)\config.h
+force_config_h:
+	-@$(DEL) /f config.h
+	-@$(DEL) /f config.sh
+	-@$(DEL) /f ..\config.h
+	-@$(DEL) /f ..\config.sh
+	-@$(DEL) $(PERLEXE_RES)
+	-@mkdir ..\host
+	-@copy $(HPERL) ..\host\miniperl.exe
+	-@copy $(GENUUDMAP) ..\host\generate_uudmap.exe
+	-@$(MAKE) -f Makefile distclean
+	-@copy ..\host\miniperl.exe $(HPERL)
+	-@copy ..\host\generate_uudmap.exe $(GENUUDMAP)
+	$(GENUUDMAP) $(GENERATED_HEADERS)
+	type NUL > force_config_h
 
-..\Cross\config-$(MACHINE).sh: config.ce config_sh.PL
-	$(HPERL) -I..\lib -I. config_sh.PL $(CFG_VARS) config.ce > ..\Cross\config-$(MACHINE).sh
+$(UUDMAP_H) $(MG_DATA_H) : $(BITCOUNT_H)
 
-$(MINIMOD) : ..\minimod.pl
-	cd .. && $(HPERL) minimod.pl > lib\ExtUtils\Miniperl.pm
+$(BITCOUNT_H) :
+	$(GENUUDMAP) $(GENERATED_HEADERS)
 
-MakePPPort: $(MINIPERL) $(CONFIGPM)
-	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) ..\mkppport
+$(CONFIGPM) : $(HPERL) ..\config.sh config_h.PL ..\git_version.h
+	cd .. && $(HPERL) -Ilib configpm --no-glossary
+	if exist lib\* $(RCOPY) lib\*.* ..\lib\$(NULL)
+	$(XCOPY) ..\*.h $(COREDIR)\*.*
+	$(XCOPY) *.h $(COREDIR)\*.*
+	$(RCOPY) include $(COREDIR)\*.*
+	if errorlevel 1 $(MAKE) /$(MAKEFLAGS) $(CONFIGPM)
+
+.\config.h: $(CONFIGPM) ..\config.sh
+	-@$(DEL) /f config.h
+	-$(HPERL) -I..\lib config_h.PL "INST_VER=$(INST_VER)" "CORE_DIR=$(COREDIR)" "CONFIG_H=config.h"
+	copy config.h ..\config.h
+
+..\config.sh : config.ce config_sh.PL FindExt.pm
+	-@$(DEL) /f config.sh
+	$(HPERL) -I..\lib -I. config_sh.PL $(CFG_VARS) config.ce > ..\config.sh
+
+..\git_version.h : ..\make_patchnum.pl
+	cd .. && $(HPERL) -Ilib make_patchnum.pl && cd win32
+
+# make sure that we recompile perl.c if the git version changes
+$(DLLDIR)\perl.obj : ..\git_version.h
+
+MakePPPort: $(HPERL) $(CONFIGPM) Extensions_nonxs
+	$(HPERL) -I..\lib ..\mkppport
 
 MakePPPort_clean:
 	-if exist $(HPERL) $(HPERL) -I..\lib ..\mkppport --clean
@@ -776,30 +849,38 @@ NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
 NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
 !endif
 
-Extensions: ..\make_ext.pl $(PERLDEP) $(CONFIGPM)
-	$(HPERL) -I..\lib -I. -MCross=$(CROSS_NAME) ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --all \
-	!POSIX $(NOT_COMPILE_EXT)
+Extensions: ..\make_ext.pl $(CONFIGPM)
+	$(HPERL) -I..\lib -I. ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR)  --all \
+	!POSIX !Win32 !Win32API/File !Time/HiRes !Time/Piece !re !SDBM_File $(NOT_COMPILE_EXT)
+
+
+Extensions_nonxs: ..\make_ext.pl ..\lib\buildcustomize.pl $(CONFIGPM) ..\pod\perlfunc.pod
+	$(XCOPY) ..\*.h $(COREDIR)\*.*
+	$(HPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --nonxs
 
 Extensions_clean:
-	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --all --target=clean
+	-if exist $(HPERL) $(HPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR)  --all --target=clean 
 
 #----------------------------------------------------------------------------------
 
 $(PERLEXE_RES): perlexe.rc perl.rc $(PERLEXE_MANIFEST) $(PERLEXE_ICO)
 	rc $(RCDEFS) perlexe.rc
 
-clean:
-	-rm -f $(MACHINE)/dll/*
-	-rm -f $(MACHINE)/*.obj
-	-rm -f $(MACHINE)/*.exe
-	-rm -f $(MACHINE)/*.dll
-	-rm -f $(MACHINE)/*.lib
-	-rm -f ..\Cross\config-$(MACHINE).sh ../lib/Config.pm
-	-rm -f config.h xconfig.h perl.res
-	-rm -f ../t/test_state
+clean: Extensions_clean
+        -if exist .\$(MACHINE)\dll rmdir /s /q .\$(MACHINE)\dll
+  -@$(DEL) .\$(MACHINE)\*.obj
+  -@$(DEL) .\$(MACHINE)\*.exe
+  -@$(DEL) .\$(MACHINE)\*.dll
+  -@$(DEL) .\$(MACHINE)\*.lib
+        -@$(DEL) .\$(MACHINE)\*.exp
+        -@$(DEL) .\$(MACHINE)\*.pdb
+	-@$(DEL) ..\git_version.h
+  -@$(DEL) config.h perl.res
+  -@$(DEL) ..\t\test_state
 
 XDLLOBJS = \
 $(DLLDIR)\av.obj \
+$(DLLDIR)\caretx.obj \
 $(DLLDIR)\deb.obj \
 $(DLLDIR)\doio.obj \
 $(DLLDIR)\doop.obj \
@@ -849,6 +930,26 @@ XDLLOBJS	= $(XDLLOBJS) $(DLLDIR)\malloc.obj
 XDLLOBJS	= $(XDLLOBJS) $(DLLDIR)\fcrypt.obj
 !ENDIF
 
+#sanity checks to make sure all our external files (celib, w32console, and
+#MS CE SDK) are locatable
+lib_check :
+    @if not exist $(CECONSOLEDIR)\$(MACHINE)\w32console.obj cmd /k \
+        "echo w32console.obj doesn't seem to exist, check your w32console directory \
+        & exit 1"
+    @if not exist $(CELIBDLLDIR)\$(MACHINE)-release\celib.lib cmd /k \
+        "echo celib.lib doesn't seem to exist, check your celib directory \
+        & exit 1"
+    @for %X in ( $(LIBC) ) do @if exist %~^$LIB:X ( exit 0 ) \
+        else ( echo $(LIBC) doesn't seem to exist, check your build enviroment & exit 1 )
+
+#specific header files to check picked at random
+header_check  :
+    @if not exist $(CELIBDLLDIR)\inc\cewin32.h  cmd /k \
+        "echo cewin32.h doesn't seem to exist, check your celib directory \
+        & exit 1"
+    @for %X in (ceconfig.h) do @if exist %~^$INCLUDE:X ( exit 0 ) \
+        else ( echo ceconfig.h doesn't seem to exist, check your build enviroment & exit 1 )
+
 {$(SRCDIR)}.c{$(DLLDIR)}.obj:
     $(CC) -c $(CFLAGS_O) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ $<
 
@@ -868,12 +969,12 @@ $(DLLDIR)\perllib$(o)	: perllib.c .\perlhost.h .\vdir.h .\vmem.h
 	rem (frustrated) mv perllib.obj $(DLLDIR)
 !ENDIF
 
-perldll.def : $(HPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl create_perllibst_h.pl .\xconfig.h
-	$(HPERL) -I..\lib -MCross create_perllibst_h.pl
-	$(HPERL) -I..\lib -MCross -w ..\makedef.pl PLATFORM=wince $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
+perldll.def : $(HPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl create_perllibst_h.pl .\config.h
+	$(HPERL) -I..\lib create_perllibst_h.pl
+	$(HPERL) -I..\lib -w ..\makedef.pl PLATFORM=wince $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
 	    CCTYPE=$(CCTYPE) -DPERL_DLL=$(PERLDLL) TARG_DIR=..\ > perldll.def
 
-$(PERLDLL) : $(DLLDIR) perldll.def $(XDLLOBJS) $(PERLDLL_RES)
+$(PERLDLL) : header_check lib_check $(DLLDIR) perldll.def $(XDLLOBJS) $(PERLDLL_RES)
 	$(LINK32) -dll -def:perldll.def -base:0x28000000 -out:$@ \
                   $(SUBSYS) $(LDLIBPATH) \
 		  $(LINK_FLAGS) $(LIBFILES) \
@@ -882,6 +983,9 @@ $(PERLDLL) : $(DLLDIR) perldll.def $(XDLLOBJS) $(PERLDLL_RES)
 $(DLLDIR) :
 	if not exist "$(DLLDIR)" mkdir "$(DLLDIR)"
 
+$(EXTDIR)\DynaLoader\DynaLoader.c :
+	$(HPERL) -I..\lib -I. ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --dynaloader
+
 $(DLLDIR)\DynaLoader.obj: $(EXTDIR)\DynaLoader\DynaLoader.c
     $(CC) -c $(CFLAGS_O) -DPERL_EXTERNAL_GLOB -Fo$(DLLDIR)\ \
           $(EXTDIR)\DynaLoader\DynaLoader.c
@@ -889,8 +993,11 @@ $(DLLDIR)\DynaLoader.obj: $(EXTDIR)\DynaLoader\DynaLoader.c
 XPERLEXEOBJS = \
 $(MACHINE)\perlmaince.obj
 
+..\lib\buildcustomize.pl :
+	$(HPERL) -I..\lib -f ..\write_buildcustomize.pl ..
+
 $(PERLEXE) : $(PERLDLL) $(CONFIGPM) $(XPERLEXEOBJS) $(PERLEXE_RES) $(STARTOBJS)
-	$(XCOPY) $(MACHINE)\*.lib $(XCOREDIR)
+	$(XCOPY) $(MACHINE)\*.lib $(COREDIR)
 	$(LINK32) $(SUBSYS) $(LDLIBPATH) \
             -entry:wWinMainCRTStartup \
             -out:$(MACHINE)\perl.exe \
@@ -906,22 +1013,22 @@ dumperdll: $(DUMPER_DLL)
 
 dlls: socketdll iodll dumperdll
 	-xmkdir -p $(MACHINE)/lib/auto/IO
-	cp ../lib/auto/IO/IO.bs $(MACHINE)/lib/auto/IO
-	cp ../lib/auto/IO/IO.dll $(MACHINE)/lib/auto/IO
+	copy ../lib/auto/IO/IO.bs $(MACHINE)/lib/auto/IO
+	copy ../lib/auto/IO/IO.dll $(MACHINE)/lib/auto/IO
 	-xmkdir $(MACHINE)/lib/auto/Socket
-	cp ../lib/auto/Socket/Socket.bs $(MACHINE)/lib/auto/Socket
-	cp ../lib/auto/Socket/Socket.dll $(MACHINE)/lib/auto/Socket
+	copy ../lib/auto/Socket/Socket.bs $(MACHINE)/lib/auto/Socket
+	copy ../lib/auto/Socket/Socket.dll $(MACHINE)/lib/auto/Socket
 	-xmkdir -p $(MACHINE)/lib/auto/Data/Dumper
-	cp ../lib/auto/Data/Dumper/Dumper.bs $(MACHINE)/lib/auto/Data/Dumper
-	cp ../lib/auto/Data/Dumper/Dumper.dll $(MACHINE)/lib/auto/Data/Dumper
+	copy ../lib/auto/Data/Dumper/Dumper.bs $(MACHINE)/lib/auto/Data/Dumper
+	copy ../lib/auto/Data/Dumper/Dumper.dll $(MACHINE)/lib/auto/Data/Dumper
 
 makedist: all dlls
 	$(COPY) $(CELIBPATH)\celib.dll $(MACHINE)
-	cp perl.txt $(MACHINE)
-	cp registry.bat $(MACHINE)
-	cp ../lib/Config.pm $(MACHINE)/lib
+	copy perl.txt $(MACHINE)
+	copy registry.bat $(MACHINE)
+	copy ../lib/Config.pm $(MACHINE)/lib
 	cd $(MACHINE)
-	rm -f perl-$(MACHINE).tar.gz
+	-@$(DEL) perl-$(MACHINE).tar.gz
 	sh -c "tar cf perl-$(MACHINE).tar *.exe *.dll *.txt *.bat lib"
 	gzip -9 perl-$(MACHINE).tar
 	mv perl-$(MACHINE).tar.gz h:/freenet/new
@@ -933,21 +1040,21 @@ install: all
 	-cemkdir "$(INSTALL_ROOT)\lib"
 	$(CECOPY) "pc:$(MACHINE)/perl.exe" "ce:$(INSTALL_ROOT)/bin"
 	$(CECOPY) "pc:$(MACHINE)/perl$(PV).dll" "ce:$(INSTALL_ROOT)/bin"
-	$(CECOPY) "pc:../xlib/$(CROSS_NAME)/Config.pm" "ce:$(INSTALL_ROOT)/lib"
+	$(CECOPY) "pc:../lib/Config.pm" "ce:$(INSTALL_ROOT)/lib"
 
-$(UNIDATAFILES) : $(HPERL) $(CONFIGPM) ..\lib\unicore\mktables
+$(UNIDATAFILES) : $(HPERL) $(CONFIGPM) ..\lib\unicore\mktables MakePPPort
 	cd ..\lib\unicore && \
-	$(HPERL) -I.. -I..\..\lib $(ICWD1) -MCross=$(CROSS_NAME) mktables -P ..\..\pod -maketest -makelist -p -check $@ $(FIRSTUNIFILE)
+	$(HPERL) -I.. -I..\..\lib mktables -P ..\..\pod -maketest -makelist -p -check $@ $(FIRSTUNIFILE)
 
 dist: all
-	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME)
+	$(HPERL) -I..\lib ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME)
 
 zipdist: all
-	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME)
-	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME) --zip
+	$(HPERL) -I..\lib ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME)
+	$(HPERL) -I..\lib ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME) --zip
 
 zip:
-	$(HPERL) -I..\lib -MCross=$(CROSS_NAME) ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME) --zip
+	$(HPERL) -I..\lib ce-helpers\makedist.pl --distdir=dist-$(CROSS_NAME) --cross-name=$(CROSS_NAME) --zip
 
 hostminiperl: ..\miniperl.exe
 
@@ -956,10 +1063,9 @@ hostminiperl: ..\miniperl.exe
 	$(MAKE) -f Makefile "CCHOME=$(MSVCDIR)" "CCINCDIR=$(CCHOME)\include" "CCLIBDIR=$(CCHOME)\lib" "INCLUDE=$(CCHOME)\include" "LIB=$(CCHOME)\lib" "LINK_FLAGS=" .\config.h ..\miniperl.exe
 
 host-install:
-	perl -MConfig -MExtUtils::Install -we "install({'../lib/CORE', qq#$$Config{installprefixexp}/xlib/$(CROSS_NAME)/CORE#},1)"
-	perl -MConfig -MExtUtils::Install -we "install({'../xlib/$(CROSS_NAME)', qq#$$Config{installprefixexp}/xlib/$(CROSS_NAME)#},1)"
-	perl -MConfig -MFile::Copy -we "copy qq#./$(MACHINE)/perl$(PV).lib#, qq#$$Config{installprefixexp}/xlib/$(CROSS_NAME)/CORE#"
-	perl -MConfig -MFile::Copy -we "copy qq#../lib/Cross.pm#, qq#$$Config{installprefixexp}/lib#"
+	perl -MConfig -MExtUtils::Install -we "install({'../lib/CORE', qq#$$Config{installprefixexp}/lib/CORE#},1)"
+	perl -MConfig -MExtUtils::Install -we "install({'../lib', qq#$$Config{installprefixexp}/lib#},1)"
+	perl -MConfig -MFile::Copy -we "copy qq#./$(MACHINE)/perl$(PV).lib#, qq#$$Config{installprefixexp}/lib/CORE#"
 	perl -MConfig -we "system qq#perl -pi.bak -we \"s{((arch^|priv)libexp)='.*'}{\$$1='# . \
 	 quotemeta($$Config{installprefixexp}) . \
-	 qq#/xlib/$(CROSS_NAME)'}\" $$Config{installprefixexp}/xlib/$(CROSS_NAME)/Config.pm#"
+	 qq#/lib'}\" $$Config{installprefixexp}/lib/Config.pm#"

@@ -79,3 +79,12 @@ lotsa junk
 nothing
 EXPECT
 ok
+########
+# Which package is __DATA__ in?
+package foo;
+BEGIN{*foo::=*bar::}
+print <DATA>;
+__DATA__
+123
+EXPECT
+123

@@ -44,21 +44,20 @@ pv_uni_display                 # U
 save_shared_pvref              # U
 savesharedpv                   # U
 sortsv                         # U
-sv_copypv                      # U
 sv_magicext                    # U
 sv_nolocking                   # U
 sv_nosharing                   # U
 sv_recode_to_utf8              # U
 sv_uni_display                 # U
+toFOLD_uni                     # U
+toLOWER_uni                    # A
+toTITLE_uni                    # A
+toUPPER_uni                    # A
 to_uni_fold                    # U
 to_uni_lower                   # E (Perl_to_uni_lower)
 to_uni_title                   # E (Perl_to_uni_title)
 to_uni_upper                   # E (Perl_to_uni_upper)
 to_utf8_case                   # U
-to_utf8_fold                   # U
-to_utf8_lower                  # E (Perl_to_utf8_lower)
-to_utf8_title                  # E (Perl_to_utf8_title)
-to_utf8_upper                  # E (Perl_to_utf8_upper)
 unpack_str                     # U
 uvchr_to_utf8_flags            # U
 uvuni_to_utf8_flags            # U

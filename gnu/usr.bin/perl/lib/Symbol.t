@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 19;
+use Test::More tests => 26;
 
 BEGIN { $_ = 'foo'; }  # because Symbol used to clobber $_
 
@@ -75,3 +75,16 @@ Symbol::delete_package('Transient');
 ok( !exists $Transient::{variable}, 'transient variable no longer in stash' );
 is( scalar(keys %Transient::), 0, 'transient stash is empty' );
 ok( !exists $::{'Transient::'}, 'no transient stash' );
+
+$Foo::variable = 43;
+ok( exists $::{'Foo::'}, 'second transient stash exists' );
+ok( defined $Foo::{variable}, 'second transient variable in stash' );
+Symbol::delete_package('::Foo');
+is( scalar(keys %Foo::), 0, 'second transient stash is empty' );
+ok( !exists $::{'Foo::'}, 'no second transient stash' );
+
+$Bar::variable = 44;
+ok( exists $::{'Bar::'}, 'third transient stash exists' );
+ok( defined $Bar::{variable}, 'third transient variable in stash' );
+ok( ! defined(Symbol::delete_package('Bar::Bar::')),
+    'delete_package() returns undef due to undefined leaf');

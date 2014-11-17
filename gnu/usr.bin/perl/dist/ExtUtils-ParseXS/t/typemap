@@ -240,7 +240,7 @@ T_SYSRET
 T_ENUM
 	sv_setiv($arg, (IV)$var);
 T_BOOL
-	$arg = boolSV($var);
+	${"$var" eq "RETVAL" ? \"$arg = boolSV($var);" : \"sv_setsv($arg, boolSV($var));"}
 T_U_INT
 	sv_setuv($arg, (UV)$var);
 T_SHORT

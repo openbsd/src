@@ -133,6 +133,7 @@ D_SCRIPT
 );
 
 dtrace_like(<< 'PERL_SCRIPT',
+    BEGIN {@INC = '../lib'}
     use strict;
     require HTTP::Tiny;
     do "run/dtrace.pl";

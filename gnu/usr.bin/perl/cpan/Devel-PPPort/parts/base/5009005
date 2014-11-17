@@ -20,7 +20,6 @@ ptr_table_new                  # U
 ptr_table_split                # U
 ptr_table_store                # U
 re_compile                     # U
-re_intuit_start                # E (Perl_re_intuit_start)
 reg_named_buff_all             # U
 reg_named_buff_exists          # U
 reg_named_buff_fetch           # U

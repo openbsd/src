@@ -4,7 +4,7 @@
 
 # libnsl is unusable on the Hurd.
 # XXX remove this once SUNRPC is implemented.
-set `echo X "$libswanted "| sed -e 's/ nsl / /' -e 's/ c / pthread /'`
+set `echo X "$libswanted "| sed -e 's/ bsd / /' -e 's/ nsl / /' -e 's/ c / pthread /'`
 shift
 libswanted="$*"
 

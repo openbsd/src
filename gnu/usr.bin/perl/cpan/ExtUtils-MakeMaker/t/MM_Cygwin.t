@@ -42,7 +42,7 @@ delete $MM->{CFLAGS};
 
 # ExtUtils::MM_Cygwin::cflags() calls this, fake the output
 {
-    local $SIG{__WARN__} = sub { 
+    local $SIG{__WARN__} = sub {
         warn @_ unless $_[0] =~ /^Subroutine .* redefined/;
     };
     *ExtUtils::MM_Unix::cflags = sub { return $_[1] };

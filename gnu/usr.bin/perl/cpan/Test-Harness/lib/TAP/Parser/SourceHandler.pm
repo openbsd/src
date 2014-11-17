@@ -1,12 +1,10 @@
 package TAP::Parser::SourceHandler;
 
 use strict;
-use vars qw($VERSION @ISA);
+use warnings;
 
-use TAP::Object           ();
 use TAP::Parser::Iterator ();
-
-@ISA = qw(TAP::Object);
+use base 'TAP::Object';
 
 =head1 NAME
 
@@ -14,11 +12,11 @@ TAP::Parser::SourceHandler - Base class for different TAP source handlers
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 SYNOPSIS
 
@@ -27,7 +25,7 @@ $VERSION = '3.26';
 
   # must be sub-classed for use
   package MySourceHandler;
-  use base qw( TAP::Parser::SourceHandler );
+  use base 'TAP::Parser::SourceHandler';
   sub can_handle    { return $confidence_level }
   sub make_iterator { return $iterator }
 
@@ -105,7 +103,7 @@ a quick overview.
 
 Start by familiarizing yourself with L<TAP::Parser::Source> and
 L<TAP::Parser::IteratorFactory>.  L<TAP::Parser::SourceHandler::RawTAP> is
-the easiest sub-class to use an an example.
+the easiest sub-class to use as an example.
 
 It's important to point out that if you want your subclass to be automatically
 used by L<TAP::Parser> you'll have to and make sure it gets loaded somehow.
@@ -123,12 +121,11 @@ L<TAP::Parser::IteratorFactory/register_handler>.
   package MySourceHandler;
 
   use strict;
-  use vars '@ISA'; # compat with older perls
 
   use MySourceHandler; # see TAP::Parser::SourceHandler
   use TAP::Parser::IteratorFactory;
 
-  @ISA = qw( TAP::Parser::SourceHandler );
+  use base 'TAP::Parser::SourceHandler';
 
   TAP::Parser::IteratorFactory->register_handler( __PACKAGE__ );
 

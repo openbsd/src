@@ -70,9 +70,14 @@
 #  define AT_LEAST_ZLIB_1_2_5_2
 #endif
 
+#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1280
+#  define AT_LEAST_ZLIB_1_2_8
+#endif
+
 #ifdef USE_PPPORT_H
 #  define NEED_sv_2pvbyte
 #  define NEED_sv_2pv_nolen
+#  define NEED_sv_pvn_force_flags
 #  include "ppport.h"
 #endif
 
@@ -417,11 +422,11 @@ DispHex(ptr, length)
 
 static void
 #ifdef CAN_PROTOTYPE
-DispStream(di_stream * s, char * message)
+DispStream(di_stream * s, const char * message)
 #else
 DispStream(s, message)
     di_stream * s;
-    char * message;
+    const char * message;
 #endif
 {
 
@@ -860,13 +865,14 @@ _inflateInit(flags, windowBits, bufsize, dictionary)
             Safefree(s) ;
             s = NULL ;
 	}
-	else if (SvCUR(dictionary)) {
+	else if (sv_len(dictionary)) {
 #ifdef AT_LEAST_ZLIB_1_2_2_1
         /* Zlib 1.2.2.1 or better allows a dictionary with raw inflate */
         if (s->WindowBits < 0) {
+            STRLEN dlen;
+            const Bytef* b = (const Bytef*)SvPVbyte(dictionary, dlen);
             err = inflateSetDictionary(&(s->stream), 
-                (const Bytef*)SvPVbyte_nolen(dictionary),
-                SvCUR(dictionary));
+                b, dlen);
             if (err != Z_OK) {
                 Safefree(s) ;
                 s = NULL ;
@@ -911,7 +917,7 @@ MODULE = Compress::Raw::Zlib PACKAGE = Compress::Raw::Zlib::deflateStream
 void
 DispStream(s, message=NULL)
     Compress::Raw::Zlib::deflateStream   s
-    char *  message
+    const char *  message
 
 DualType
 deflateReset(s)
@@ -934,6 +940,7 @@ deflate (s, buf, output)
     uInt	prefix    = NO_INIT
     int		RETVAL = 0;
     uLong     bufinc = NO_INIT
+    STRLEN    origlen = NO_INIT
   CODE:
     bufinc = s->bufsize;
 
@@ -945,8 +952,8 @@ deflate (s, buf, output)
     if (DO_UTF8(buf) && !sv_utf8_downgrade(buf, 1))
          croak("Wide character in Compress::Raw::Zlib::Deflate::deflate input parameter");
 #endif         
-    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
-    s->stream.avail_in = SvCUR(buf) ;
+    s->stream.next_in = (Bytef*)SvPV_nomg(buf, origlen) ;
+    s->stream.avail_in = origlen;
     
     if (s->flags & FLAG_CRC32)
         s->crc32 = crc32(s->crc32, s->stream.next_in, s->stream.avail_in) ;
@@ -1029,7 +1036,7 @@ deflate (s, buf, output)
     }
 
     s->compressedBytes += cur_length + increment - prefix - s->stream.avail_out ;
-    s->uncompressedBytes  += SvCUR(buf) - s->stream.avail_in  ;
+    s->uncompressedBytes  += origlen - s->stream.avail_in  ;
 
     s->last_error = RETVAL ;
     if (RETVAL == Z_OK) {
@@ -1333,7 +1340,7 @@ MODULE = Compress::Raw::Zlib PACKAGE = Compress::Raw::Zlib::inflateStream
 void
 DispStream(s, message=NULL)
     Compress::Raw::Zlib::inflateStream   s
-    char *  message
+    const char *  message
 
 DualType
 inflateReset(s)
@@ -1361,6 +1368,7 @@ inflate (s, buf, output, eof=FALSE)
 #ifdef UTF8_AVAILABLE    
     bool	out_utf8  = FALSE;
 #endif    
+    STRLEN	origlen;
   CODE: 
     bufinc = s->bufsize;
     /* If the buffer is a reference, dereference it */
@@ -1377,8 +1385,8 @@ inflate (s, buf, output, eof=FALSE)
 #endif         
     
     /* initialise the input buffer */
-    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
-    s->stream.avail_in = SvCUR(buf) ;
+    s->stream.next_in = (Bytef*)SvPV_nomg(buf, origlen) ;
+    s->stream.avail_in = origlen ;
 	
     /* and retrieve the output buffer */
     output = deRef_l(output, "inflate") ;
@@ -1441,14 +1449,21 @@ Perl_sv_dump(output); */
 
     
         if (RETVAL == Z_NEED_DICT && s->dictionary) {
+            STRLEN dlen;
+            const Bytef* b = (const Bytef*)SvPV(s->dictionary, dlen) ;
             s->dict_adler = s->stream.adler ;
             RETVAL = inflateSetDictionary(&(s->stream), 
-            (const Bytef*)SvPVX(s->dictionary),
-            SvCUR(s->dictionary));
+                b, dlen);
             if (RETVAL == Z_OK)
                 continue;
         }
         
+        if (s->flags & FLAG_LIMIT_OUTPUT && 
+                (RETVAL == Z_OK || RETVAL == Z_BUF_ERROR )) {
+            if (s->stream.avail_out == 0)
+                RETVAL = Z_BUF_ERROR;
+            break;
+        }
         if (s->flags & FLAG_LIMIT_OUTPUT && 
                 (RETVAL == Z_OK || RETVAL == Z_BUF_ERROR ))
             break;
@@ -1493,7 +1508,7 @@ Perl_sv_dump(output); */
 
         s->bytesInflated = cur_length + increment - s->stream.avail_out - prefix_length;
         s->uncompressedBytes += s->bytesInflated ;
-        s->compressedBytes   += SvCUR(buf) - s->stream.avail_in  ;
+        s->compressedBytes   += origlen - s->stream.avail_in  ;
 
         SvPOK_only(output);
         SvCUR_set(output, prefix_length + s->bytesInflated) ;
@@ -1567,7 +1582,7 @@ inflateSync (s, buf)
 #endif         
     
     /* initialise the input buffer */
-    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
+    s->stream.next_in = (Bytef*)SvPV_force_nomg_nolen(buf) ;
     s->stream.avail_in = SvCUR(buf) ;
 	
     /* inflateSync doesn't create any output */
@@ -1707,7 +1722,7 @@ DESTROY(s)
 void
 DispStream(s, message=NULL)
     Compress::Raw::Zlib::inflateScanStream   s
-    char *  message
+    const char *  message
 
 DualType
 inflateReset(s)

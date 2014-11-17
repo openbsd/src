@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.21;
+our $VERSION = 0.22;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -237,6 +237,19 @@ what you are doing.  You have been warned.
 Indicates that the referenced subroutine
 is a method.  A subroutine so marked
 will not trigger the "Ambiguous call resolved as CORE::%s" warning.
+
+=item prototype(..)
+
+The "prototype" attribute is an alternate means of specifying a prototype
+on a sub.  The desired prototype is within the parens.
+
+The prototype from the attribute is assigned to the sub immediately after
+the prototype from the sub, which means that if both are declared at the
+same time, the traditionally defined prototype is ignored.  In other words,
+C<sub foo($$) : prototype(@) {}> is indistinguishable from C<sub foo(@){}>.
+
+If illegalproto warnings are enabled, the prototype declared inside this
+attribute will be sanity checked at compile time.
 
 =item locked
 

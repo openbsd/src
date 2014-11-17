@@ -1,8 +1,8 @@
-# DerivedJoiningType-6.2.0.txt
-# Date: 2012-05-23, 20:34:48 GMT [MD]
+# DerivedJoiningType-6.3.0.txt
+# Date: 2013-03-02, 16:07:37 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -21,9 +21,10 @@
 
 0640          ; C # Lm       ARABIC TATWEEL
 07FA          ; C # Lm       NKO LAJANYALAN
+180A          ; C # Po       MONGOLIAN NIRUGU
 200D          ; C # Cf       ZERO WIDTH JOINER
 
-# Total code points: 3
+# Total code points: 4
 
 # ================================================
 
@@ -65,8 +66,15 @@
 0855          ; D # Lo       MANDAIC LETTER AT
 08A0          ; D # Lo       ARABIC LETTER BEH WITH SMALL V BELOW
 08A2..08A9    ; D # Lo   [8] ARABIC LETTER JEEM WITH TWO DOTS ABOVE..ARABIC LETTER YEH WITH TWO DOTS BELOW AND DOT ABOVE
+1807          ; D # Po       MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER
+1820..1842    ; D # Lo  [35] MONGOLIAN LETTER A..MONGOLIAN LETTER CHI
+1843          ; D # Lm       MONGOLIAN LETTER TODO LONG VOWEL SIGN
+1844..1877    ; D # Lo  [52] MONGOLIAN LETTER TODO E..MONGOLIAN LETTER MANCHU ZHA
+1887..18A8    ; D # Lo  [34] MONGOLIAN LETTER ALI GALI A..MONGOLIAN LETTER MANCHU ALI GALI BHA
+18AA          ; D # Lo       MONGOLIAN LETTER MANCHU ALI GALI LHA
+A840..A871    ; D # Lo  [50] PHAGS-PA LETTER KA..PHAGS-PA SUBJOINED LETTER RA
 
-# Total code points: 215
+# Total code points: 389
 
 # ================================================
 
@@ -111,6 +119,14 @@
 
 # ================================================
 
+# Joining_Type=Left_Joining
+
+A872          ; L # Lo       PHAGS-PA SUPERFIXED LETTER RA
+
+# Total code points: 1
+
+# ================================================
+
 # Joining_Type=Transparent
 
 00AD          ; T # Cf       SOFT HYPHEN
@@ -123,6 +139,7 @@
 05C4..05C5    ; T # Mn   [2] HEBREW MARK UPPER DOT..HEBREW MARK LOWER DOT
 05C7          ; T # Mn       HEBREW POINT QAMATS QATAN
 0610..061A    ; T # Mn  [11] ARABIC SIGN SALLALLAHOU ALAYHE WASSALLAM..ARABIC SMALL KASRA
+061C          ; T # Cf       ARABIC LETTER MARK
 064B..065F    ; T # Mn  [21] ARABIC FATHATAN..ARABIC WAVY HAMZA BELOW
 0670          ; T # Mn       ARABIC LETTER SUPERSCRIPT ALEF
 06D6..06DC    ; T # Mn   [7] ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA..ARABIC SMALL HIGH SEEN
@@ -237,6 +254,7 @@
 1932          ; T # Mn       LIMBU SMALL LETTER ANUSVARA
 1939..193B    ; T # Mn   [3] LIMBU SIGN MUKPHRENG..LIMBU SIGN SA-I
 1A17..1A18    ; T # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
+1A1B          ; T # Mn       BUGINESE VOWEL SIGN AE
 1A56          ; T # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A58..1A5E    ; T # Mn   [7] TAI THAM SIGN MAI KANG LAI..TAI THAM CONSONANT SIGN SA
 1A60          ; T # Mn       TAI THAM SIGN SAKOT
@@ -351,6 +369,6 @@ E0001         ; T # Cf       LANGUAGE TAG
 E0020..E007F  ; T # Cf  [96] TAG SPACE..CANCEL TAG
 E0100..E01EF  ; T # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
-# Total code points: 1423
+# Total code points: 1425
 
 # EOF

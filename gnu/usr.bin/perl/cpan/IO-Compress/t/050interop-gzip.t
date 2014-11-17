@@ -48,7 +48,7 @@ sub readWithGzip
 
     my $lex = new LexFile my $outfile;
 
-    my $comp = "$GZIP -dc" ;
+    my $comp = "$GZIP -d -c" ;
 
     if ( system("$comp $file >$outfile") == 0 )
     {

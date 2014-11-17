@@ -1,8 +1,8 @@
-# DerivedCoreProperties-6.2.0.txt
-# Date: 2012-05-20, 00:42:31 GMT [MD]
+# DerivedCoreProperties-6.3.0.txt
+# Date: 2013-09-25, 18:58:40 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -83,7 +83,10 @@
 21DD          ; Math # So       RIGHTWARDS SQUIGGLE ARROW
 21E4..21E5    ; Math # So   [2] LEFTWARDS ARROW TO BAR..RIGHTWARDS ARROW TO BAR
 21F4..22FF    ; Math # Sm [268] RIGHT ARROW WITH SMALL CIRCLE..Z NOTATION BAG MEMBERSHIP
-2308..230B    ; Math # Sm   [4] LEFT CEILING..RIGHT FLOOR
+2308          ; Math # Ps       LEFT CEILING
+2309          ; Math # Pe       RIGHT CEILING
+230A          ; Math # Ps       LEFT FLOOR
+230B          ; Math # Pe       RIGHT FLOOR
 2320..2321    ; Math # Sm   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
 237C          ; Math # Sm       RIGHT ANGLE WITH DOWNWARDS ZIGZAG ARROW
 239B..23B3    ; Math # Sm  [25] LEFT PARENTHESIS UPPER HOOK..SUMMATION BOTTOM
@@ -643,7 +646,8 @@ FFE9..FFEC    ; Math # Sm   [4] HALFWIDTH LEFTWARDS ARROW..HALFWIDTH DOWNWARDS A
 19C8..19C9    ; Alphabetic # Mc   [2] NEW TAI LUE TONE MARK-1..NEW TAI LUE TONE MARK-2
 1A00..1A16    ; Alphabetic # Lo  [23] BUGINESE LETTER KA..BUGINESE LETTER HA
 1A17..1A18    ; Alphabetic # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
-1A19..1A1B    ; Alphabetic # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; Alphabetic # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
+1A1B          ; Alphabetic # Mn       BUGINESE VOWEL SIGN AE
 1A20..1A54    ; Alphabetic # Lo  [53] TAI THAM LETTER HIGH KA..TAI THAM LETTER GREAT SA
 1A55          ; Alphabetic # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; Alphabetic # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
@@ -2326,7 +2330,7 @@ FF21..FF3A    ; Uppercase # L&  [26] FULLWIDTH LATIN CAPITAL LETTER A..FULLWIDTH
 # ================================================
 
 # Derived Property:   Cased (Cased)
-#  As defined by Unicode Standard Definition D120
+#  As defined by Unicode Standard Definition D135
 #  C has the Lowercase or Uppercase property or has a General_Category value of Titlecase_Letter.
 
 0041..005A    ; Cased # L&  [26] LATIN CAPITAL LETTER A..LATIN CAPITAL LETTER Z
@@ -2466,9 +2470,9 @@ FF41..FF5A    ; Cased # L&  [26] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH LATIN
 # ================================================
 
 # Derived Property:   Case_Ignorable (CI)
-#  As defined by Unicode Standard Definition D121
+#  As defined by Unicode Standard Definition D136
 #  C is defined to be case-ignorable if
-#    Word_Break(C) = MidLetter or MidNumLet, or
+#    Word_Break(C) = MidLetter or MidNumLet or Single_Quote, or
 #    General_Category(C) = Nonspacing_Mark (Mn), Enclosing_Mark (Me), Format (Cf), Modifier_Letter (Lm), or Modifier_Symbol (Sk).
 
 0027          ; Case_Ignorable # Po       APOSTROPHE
@@ -2509,6 +2513,7 @@ FF41..FF5A    ; Cased # L&  [26] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH LATIN
 05F4          ; Case_Ignorable # Po       HEBREW PUNCTUATION GERSHAYIM
 0600..0604    ; Case_Ignorable # Cf   [5] ARABIC NUMBER SIGN..ARABIC SIGN SAMVAT
 0610..061A    ; Case_Ignorable # Mn  [11] ARABIC SIGN SALLALLAHOU ALAYHE WASSALLAM..ARABIC SMALL KASRA
+061C          ; Case_Ignorable # Cf       ARABIC LETTER MARK
 0640          ; Case_Ignorable # Lm       ARABIC TATWEEL
 064B..065F    ; Case_Ignorable # Mn  [21] ARABIC FATHATAN..ARABIC WAVY HAMZA BELOW
 0670          ; Case_Ignorable # Mn       ARABIC LETTER SUPERSCRIPT ALEF
@@ -2630,6 +2635,7 @@ FF41..FF5A    ; Cased # L&  [26] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH LATIN
 17D7          ; Case_Ignorable # Lm       KHMER SIGN LEK TOO
 17DD          ; Case_Ignorable # Mn       KHMER SIGN ATTHACAN
 180B..180D    ; Case_Ignorable # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+180E          ; Case_Ignorable # Cf       MONGOLIAN VOWEL SEPARATOR
 1843          ; Case_Ignorable # Lm       MONGOLIAN LETTER TODO LONG VOWEL SIGN
 18A9          ; Case_Ignorable # Mn       MONGOLIAN LETTER ALI GALI DAGALGA
 1920..1922    ; Case_Ignorable # Mn   [3] LIMBU VOWEL SIGN A..LIMBU VOWEL SIGN U
@@ -2637,6 +2643,7 @@ FF41..FF5A    ; Cased # L&  [26] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH LATIN
 1932          ; Case_Ignorable # Mn       LIMBU SMALL LETTER ANUSVARA
 1939..193B    ; Case_Ignorable # Mn   [3] LIMBU SIGN MUKPHRENG..LIMBU SIGN SA-I
 1A17..1A18    ; Case_Ignorable # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
+1A1B          ; Case_Ignorable # Mn       BUGINESE VOWEL SIGN AE
 1A56          ; Case_Ignorable # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A58..1A5E    ; Case_Ignorable # Mn   [7] TAI THAM SIGN MAI KANG LAI..TAI THAM CONSONANT SIGN SA
 1A60          ; Case_Ignorable # Mn       TAI THAM SIGN SAKOT
@@ -2685,7 +2692,7 @@ FF41..FF5A    ; Cased # L&  [26] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH LATIN
 2027          ; Case_Ignorable # Po       HYPHENATION POINT
 202A..202E    ; Case_Ignorable # Cf   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
 2060..2064    ; Case_Ignorable # Cf   [5] WORD JOINER..INVISIBLE PLUS
-206A..206F    ; Case_Ignorable # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2066..206F    ; Case_Ignorable # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 2071          ; Case_Ignorable # Lm       SUPERSCRIPT LATIN SMALL LETTER I
 207F          ; Case_Ignorable # Lm       SUPERSCRIPT LATIN SMALL LETTER N
 2090..209C    ; Case_Ignorable # Lm  [13] LATIN SUBSCRIPT SMALL LETTER A..LATIN SUBSCRIPT SMALL LETTER T
@@ -2805,13 +2812,13 @@ E0001         ; Case_Ignorable # Cf       LANGUAGE TAG
 E0020..E007F  ; Case_Ignorable # Cf  [96] TAG SPACE..CANCEL TAG
 E0100..E01EF  ; Case_Ignorable # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
-# Total code points: 1799
+# Total code points: 1806
 
 # ================================================
 
 # Derived Property:   Changes_When_Lowercased (CWL)
 #  Characters whose normalized forms are not stable under a toLowercase mapping.
-#  For more information, see D124 in Section 3.13, "Default Case Algorithms".
+#  For more information, see D139 in Section 3.13, "Default Case Algorithms".
 #  Changes_When_Lowercased(X) is true when toLowercase(toNFD(X)) != toNFD(X)
 
 0041..005A    ; Changes_When_Lowercased # L&  [26] LATIN CAPITAL LETTER A..LATIN CAPITAL LETTER Z
@@ -3392,7 +3399,7 @@ FF21..FF3A    ; Changes_When_Lowercased # L&  [26] FULLWIDTH LATIN CAPITAL LETTE
 
 # Derived Property:   Changes_When_Uppercased (CWU)
 #  Characters whose normalized forms are not stable under a toUppercase mapping.
-#  For more information, see D125 in Section 3.13, "Default Case Algorithms".
+#  For more information, see D140 in Section 3.13, "Default Case Algorithms".
 #  Changes_When_Uppercased(X) is true when toUppercase(toNFD(X)) != toNFD(X)
 
 0061..007A    ; Changes_When_Uppercased # L&  [26] LATIN SMALL LETTER A..LATIN SMALL LETTER Z
@@ -3988,7 +3995,7 @@ FF41..FF5A    ; Changes_When_Uppercased # L&  [26] FULLWIDTH LATIN SMALL LETTER 
 
 # Derived Property:   Changes_When_Titlecased (CWT)
 #  Characters whose normalized forms are not stable under a toTitlecase mapping.
-#  For more information, see D126 in Section 3.13, "Default Case Algorithms".
+#  For more information, see D141 in Section 3.13, "Default Case Algorithms".
 #  Changes_When_Titlecased(X) is true when toTitlecase(toNFD(X)) != toNFD(X)
 
 0061..007A    ; Changes_When_Titlecased # L&  [26] LATIN SMALL LETTER A..LATIN SMALL LETTER Z
@@ -4585,7 +4592,7 @@ FF41..FF5A    ; Changes_When_Titlecased # L&  [26] FULLWIDTH LATIN SMALL LETTER 
 
 # Derived Property:   Changes_When_Casefolded (CWCF)
 #  Characters whose normalized forms are not stable under case folding.
-#  For more information, see D127 in Section 3.13, "Default Case Algorithms".
+#  For more information, see D142 in Section 3.13, "Default Case Algorithms".
 #  Changes_When_Casefolded(X) is true when toCasefold(toNFD(X)) != toNFD(X)
 
 0041..005A    ; Changes_When_Casefolded # L&  [26] LATIN CAPITAL LETTER A..LATIN CAPITAL LETTER Z
@@ -5177,7 +5184,7 @@ FF21..FF3A    ; Changes_When_Casefolded # L&  [26] FULLWIDTH LATIN CAPITAL LETTE
 
 # Derived Property:   Changes_When_Casemapped (CWCM)
 #  Characters whose normalized forms are not stable under case mapping.
-#  For more information, see D128 in Section 3.13, "Default Case Algorithms".
+#  For more information, see D143 in Section 3.13, "Default Case Algorithms".
 #  Changes_When_Casemapped(X) is true when CWL(X), or CWT(X), or CWU(X)
 
 0041..005A    ; Changes_When_Casemapped # L&  [26] LATIN CAPITAL LETTER A..LATIN CAPITAL LETTER Z
@@ -6307,7 +6314,8 @@ FFDA..FFDC    ; ID_Start # Lo   [3] HALFWIDTH HANGUL LETTER EU..HALFWIDTH HANGUL
 19DA          ; ID_Continue # No       NEW TAI LUE THAM DIGIT ONE
 1A00..1A16    ; ID_Continue # Lo  [23] BUGINESE LETTER KA..BUGINESE LETTER HA
 1A17..1A18    ; ID_Continue # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
-1A19..1A1B    ; ID_Continue # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; ID_Continue # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
+1A1B          ; ID_Continue # Mn       BUGINESE VOWEL SIGN AE
 1A20..1A54    ; ID_Continue # Lo  [53] TAI THAM LETTER HIGH KA..TAI THAM LETTER GREAT SA
 1A55          ; ID_Continue # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; ID_Continue # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
@@ -7831,7 +7839,8 @@ FFDA..FFDC    ; XID_Start # Lo   [3] HALFWIDTH HANGUL LETTER EU..HALFWIDTH HANGU
 19DA          ; XID_Continue # No       NEW TAI LUE THAM DIGIT ONE
 1A00..1A16    ; XID_Continue # Lo  [23] BUGINESE LETTER KA..BUGINESE LETTER HA
 1A17..1A18    ; XID_Continue # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
-1A19..1A1B    ; XID_Continue # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; XID_Continue # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
+1A1B          ; XID_Continue # Mn       BUGINESE VOWEL SIGN AE
 1A20..1A54    ; XID_Continue # Lo  [53] TAI THAM LETTER HIGH KA..TAI THAM LETTER GREAT SA
 1A55          ; XID_Continue # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
 1A56          ; XID_Continue # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
@@ -8356,14 +8365,16 @@ E0100..E01EF  ; XID_Continue # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTO
 
 00AD          ; Default_Ignorable_Code_Point # Cf       SOFT HYPHEN
 034F          ; Default_Ignorable_Code_Point # Mn       COMBINING GRAPHEME JOINER
+061C          ; Default_Ignorable_Code_Point # Cf       ARABIC LETTER MARK
 115F..1160    ; Default_Ignorable_Code_Point # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
 17B4..17B5    ; Default_Ignorable_Code_Point # Mn   [2] KHMER VOWEL INHERENT AQ..KHMER VOWEL INHERENT AA
 180B..180D    ; Default_Ignorable_Code_Point # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+180E          ; Default_Ignorable_Code_Point # Cf       MONGOLIAN VOWEL SEPARATOR
 200B..200F    ; Default_Ignorable_Code_Point # Cf   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
 202A..202E    ; Default_Ignorable_Code_Point # Cf   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
 2060..2064    ; Default_Ignorable_Code_Point # Cf   [5] WORD JOINER..INVISIBLE PLUS
-2065..2069    ; Default_Ignorable_Code_Point # Cn   [5] <reserved-2065>..<reserved-2069>
-206A..206F    ; Default_Ignorable_Code_Point # Cf   [6] INHIBIT SYMMETRIC SWAPPING..NOMINAL DIGIT SHAPES
+2065          ; Default_Ignorable_Code_Point # Cn       <reserved-2065>
+2066..206F    ; Default_Ignorable_Code_Point # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
 3164          ; Default_Ignorable_Code_Point # Lo       HANGUL FILLER
 FE00..FE0F    ; Default_Ignorable_Code_Point # Mn  [16] VARIATION SELECTOR-1..VARIATION SELECTOR-16
 FEFF          ; Default_Ignorable_Code_Point # Cf       ZERO WIDTH NO-BREAK SPACE
@@ -8378,7 +8389,7 @@ E0080..E00FF  ; Default_Ignorable_Code_Point # Cn [128] <reserved-E0080>..<reser
 E0100..E01EF  ; Default_Ignorable_Code_Point # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 E01F0..E0FFF  ; Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
 
-# Total code points: 4167
+# Total code points: 4169
 
 # ================================================
 
@@ -8521,6 +8532,7 @@ E01F0..E0FFF  ; Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>..<rese
 1932          ; Grapheme_Extend # Mn       LIMBU SMALL LETTER ANUSVARA
 1939..193B    ; Grapheme_Extend # Mn   [3] LIMBU SIGN MUKPHRENG..LIMBU SIGN SA-I
 1A17..1A18    ; Grapheme_Extend # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
+1A1B          ; Grapheme_Extend # Mn       BUGINESE VOWEL SIGN AE
 1A56          ; Grapheme_Extend # Mn       TAI THAM CONSONANT SIGN MEDIAL LA
 1A58..1A5E    ; Grapheme_Extend # Mn   [7] TAI THAM SIGN MAI KANG LAI..TAI THAM CONSONANT SIGN SA
 1A60          ; Grapheme_Extend # Mn       TAI THAM SIGN SAKOT
@@ -8629,7 +8641,7 @@ FF9E..FF9F    ; Grapheme_Extend # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK.
 1D242..1D244  ; Grapheme_Extend # Mn   [3] COMBINING GREEK MUSICAL TRISEME..COMBINING GREEK MUSICAL PENTASEME
 E0100..E01EF  ; Grapheme_Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
-# Total code points: 1317
+# Total code points: 1318
 
 # ================================================
 
@@ -9077,7 +9089,6 @@ E0100..E01EF  ; Grapheme_Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELE
 1800..1805    ; Grapheme_Base # Po   [6] MONGOLIAN BIRGA..MONGOLIAN FOUR DOTS
 1806          ; Grapheme_Base # Pd       MONGOLIAN TODO SOFT HYPHEN
 1807..180A    ; Grapheme_Base # Po   [4] MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER..MONGOLIAN NIRUGU
-180E          ; Grapheme_Base # Zs       MONGOLIAN VOWEL SEPARATOR
 1810..1819    ; Grapheme_Base # Nd  [10] MONGOLIAN DIGIT ZERO..MONGOLIAN DIGIT NINE
 1820..1842    ; Grapheme_Base # Lo  [35] MONGOLIAN LETTER A..MONGOLIAN LETTER CHI
 1843          ; Grapheme_Base # Lm       MONGOLIAN LETTER TODO LONG VOWEL SIGN
@@ -9103,7 +9114,7 @@ E0100..E01EF  ; Grapheme_Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELE
 19DA          ; Grapheme_Base # No       NEW TAI LUE THAM DIGIT ONE
 19DE..19FF    ; Grapheme_Base # So  [34] NEW TAI LUE SIGN LAE..KHMER SYMBOL DAP-PRAM ROC
 1A00..1A16    ; Grapheme_Base # Lo  [23] BUGINESE LETTER KA..BUGINESE LETTER HA
-1A19..1A1B    ; Grapheme_Base # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+1A19..1A1A    ; Grapheme_Base # Mc   [2] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN O
 1A1E..1A1F    ; Grapheme_Base # Po   [2] BUGINESE PALLAWA..BUGINESE END OF SECTION
 1A20..1A54    ; Grapheme_Base # Lo  [53] TAI THAM LETTER HIGH KA..TAI THAM LETTER GREAT SA
 1A55          ; Grapheme_Base # Mc       TAI THAM CONSONANT SIGN MEDIAL RA
@@ -9286,7 +9297,10 @@ E0100..E01EF  ; Grapheme_Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELE
 21D5..21F3    ; Grapheme_Base # So  [31] UP DOWN DOUBLE ARROW..UP DOWN WHITE ARROW
 21F4..22FF    ; Grapheme_Base # Sm [268] RIGHT ARROW WITH SMALL CIRCLE..Z NOTATION BAG MEMBERSHIP
 2300..2307    ; Grapheme_Base # So   [8] DIAMETER SIGN..WAVY LINE
-2308..230B    ; Grapheme_Base # Sm   [4] LEFT CEILING..RIGHT FLOOR
+2308          ; Grapheme_Base # Ps       LEFT CEILING
+2309          ; Grapheme_Base # Pe       RIGHT CEILING
+230A          ; Grapheme_Base # Ps       LEFT FLOOR
+230B          ; Grapheme_Base # Pe       RIGHT FLOOR
 230C..231F    ; Grapheme_Base # So  [20] BOTTOM RIGHT CROP..BOTTOM RIGHT CORNER
 2320..2321    ; Grapheme_Base # Sm   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
 2322..2328    ; Grapheme_Base # So   [7] FROWN..KEYBOARD
@@ -9980,7 +9994,7 @@ FFFC..FFFD    ; Grapheme_Base # So   [2] OBJECT REPLACEMENT CHARACTER..REPLACEME
 2B740..2B81D  ; Grapheme_Base # Lo [222] CJK UNIFIED IDEOGRAPH-2B740..CJK UNIFIED IDEOGRAPH-2B81D
 2F800..2FA1D  ; Grapheme_Base # Lo [542] CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
 
-# Total code points: 108661
+# Total code points: 108659
 
 # ================================================
 

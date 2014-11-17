@@ -9,6 +9,7 @@ BEGIN {
 # nearly everything
 
 use strict;
+use warnings;
 use Test::More;
 
 my $useOrigOpen;

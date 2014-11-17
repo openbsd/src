@@ -65,6 +65,7 @@ sub getContent
 }
 
 
+
 {
     title "Create a simple zip - All Deflate";
 
@@ -332,7 +333,7 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
 }
 
 {
-    title "Memember & Comment 0";
+    title "Member & Comment 0";
 
     my $lex = new LexFile my $file1;
 
@@ -358,3 +359,4 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
     
     is $u->getHeaderInfo()->{Name}, "0", "Name is '0'";
 }
+

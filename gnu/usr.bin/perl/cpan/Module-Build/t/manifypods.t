@@ -68,13 +68,11 @@ my $mb = Module::Build->new(
   scripts      => [ File::Spec->catfile( 'bin', 'nopod.pl'  ),
                     File::Spec->catfile( 'bin', 'haspod.pl' )  ],
 
-  # need default install paths to ensure manpages & HTML get generated
+  # Need default install paths to ensure manpages get generated
   installdirs => 'site',
   config => {
     installsiteman1dir  => catdir($tmp, 'site', 'man', 'man1'),
     installsiteman3dir  => catdir($tmp, 'site', 'man', 'man3'),
-    installsitehtml1dir => catdir($tmp, 'site', 'html'),
-    installsitehtml3dir => catdir($tmp, 'site', 'html'),
   }
 
 );

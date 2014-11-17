@@ -3,55 +3,177 @@ package HTTP::Tiny;
 use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
-our $VERSION = '0.025'; # VERSION
+our $VERSION = '0.043'; # VERSION
 
 use Carp ();
 
+# =method new
+#
+#     $http = HTTP::Tiny->new( %attributes );
+#
+# This constructor returns a new HTTP::Tiny object.  Valid attributes include:
+#
+# =for :list
+# * C<agent>
+# A user-agent string (defaults to 'HTTP-Tiny/$VERSION'). If C<agent> ends in a space character, the default user-agent string is appended.
+# * C<cookie_jar>
+# An instance of L<HTTP::CookieJar> or equivalent class that supports the C<add> and C<cookie_header> methods
+# * C<default_headers>
+# A hashref of default headers to apply to requests
+# * C<local_address>
+# The local IP address to bind to
+# * C<keep_alive>
+# Whether to reuse the last connection (if for the same scheme, host and port) (defaults to 1)
+# * C<max_redirect>
+# Maximum number of redirects allowed (defaults to 5)
+# * C<max_size>
+# Maximum response size (only when not using a data callback).  If defined, responses larger than this will return an exception.
+# * C<http_proxy>
+# URL of a proxy server to use for HTTP connections (default is C<$ENV{http_proxy}> if set)
+# * C<https_proxy>
+# URL of a proxy server to use for HTTPS connections (default is C<$ENV{https_proxy}> if set)
+# * C<proxy>
+# URL of a generic proxy server for both HTTP and HTTPS connections (default is C<$ENV{all_proxy}> if set)
+# * C<no_proxy>
+# List of domain suffixes that should not be proxied.  Must be a comma-separated string or an array reference. (default is C<$ENV{no_proxy}>)
+# * C<timeout>
+# Request timeout in seconds (default is 60)
+# * C<verify_SSL>
+# A boolean that indicates whether to validate the SSL certificate of an C<https>
+# connection (default is false)
+# * C<SSL_options>
+# A hashref of C<SSL_*> options to pass through to L<IO::Socket::SSL>
+#
+# Exceptions from C<max_size>, C<timeout> or other errors will result in a
+# pseudo-HTTP status code of 599 and a reason of "Internal Exception". The
+# content field in the response will contain the text of the exception.
+#
+# The C<keep_alive> parameter enables a persistent connection, but only to a
+# single destination scheme, host and port.  Also, if any connection-relevant
+# attributes are modified, a persistent connection will be dropped.  If you want
+# persistent connections across multiple destinations, use multiple HTTP::Tiny
+# objects.
+#
+# See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
+#
+# =cut
 
 my @attributes;
 BEGIN {
-    @attributes = qw(agent default_headers local_address max_redirect max_size proxy timeout SSL_options verify_SSL);
+    @attributes = qw(
+        cookie_jar default_headers http_proxy https_proxy keep_alive
+        local_address max_redirect max_size proxy no_proxy timeout
+        SSL_options verify_SSL
+    );
+    my %persist_ok = map {; $_ => 1 } qw(
+        cookie_jar default_headers max_redirect max_size
+    );
     no strict 'refs';
+    no warnings 'uninitialized';
     for my $accessor ( @attributes ) {
         *{$accessor} = sub {
-            @_ > 1 ? $_[0]->{$accessor} = $_[1] : $_[0]->{$accessor};
+            @_ > 1
+                ? do {
+                    delete $_[0]->{handle} if !$persist_ok{$accessor} && $_[1] ne $_[0]->{$accessor};
+                    $_[0]->{$accessor} = $_[1]
+                }
+                : $_[0]->{$accessor};
         };
     }
+}
+
+sub agent {
+    my($self, $agent) = @_;
+    if( @_ > 1 ){
+        $self->{agent} =
+            (defined $agent && $agent =~ / $/) ? $agent . $self->_agent : $agent;
+    }
+    return $self->{agent};
 }
 
 sub new {
     my($class, %args) = @_;
 
-    (my $default_agent = $class) =~ s{::}{-}g;
-    $default_agent .= "/" . ($class->VERSION || 0);
-
     my $self = {
-        agent        => $default_agent,
         max_redirect => 5,
         timeout      => 60,
+        keep_alive   => 1,
         verify_SSL   => $args{verify_SSL} || $args{verify_ssl} || 0, # no verification by default
+        no_proxy     => $ENV{no_proxy},
     };
 
-    $args{agent} .= $default_agent
-        if defined $args{agent} && $args{agent} =~ / $/;
+    bless $self, $class;
+
+    $class->_validate_cookie_jar( $args{cookie_jar} ) if $args{cookie_jar};
 
     for my $key ( @attributes ) {
         $self->{$key} = $args{$key} if exists $args{$key}
     }
 
-    # Never override proxy argument as this breaks backwards compat.
-    if (!exists $self->{proxy} && (my $http_proxy = $ENV{http_proxy})) {
-        if ($http_proxy =~ m{\Ahttp://[^/?#:@]+:\d+/?\z}) {
-            $self->{proxy} = $http_proxy;
+    $self->agent( exists $args{agent} ? $args{agent} : $class->_agent );
+
+    $self->_set_proxies;
+
+    return $self;
+}
+
+sub _set_proxies {
+    my ($self) = @_;
+
+    if (! $self->{proxy} ) {
+        $self->{proxy} = $ENV{all_proxy} || $ENV{ALL_PROXY};
+        if ( defined $self->{proxy} ) {
+            $self->_split_proxy( 'generic proxy' => $self->{proxy} ); # validate
         }
         else {
-            Carp::croak(qq{Environment 'http_proxy' must be in format http://<host>:<port>/\n});
+            delete $self->{proxy};
         }
     }
 
-    return bless $self, $class;
+    if (! $self->{http_proxy} ) {
+        $self->{http_proxy} = $ENV{http_proxy} || $self->{proxy};
+        if ( defined $self->{http_proxy} ) {
+            $self->_split_proxy( http_proxy => $self->{http_proxy} ); # validate
+            $self->{_has_proxy}{http} = 1;
+        }
+        else {
+            delete $self->{http_proxy};
+        }
+    }
+
+    if (! $self->{https_proxy} ) {
+        $self->{https_proxy} = $ENV{https_proxy} || $ENV{HTTPS_PROXY} || $self->{proxy};
+        if ( $self->{https_proxy} ) {
+            $self->_split_proxy( https_proxy => $self->{https_proxy} ); # validate
+            $self->{_has_proxy}{https} = 1;
+        }
+        else {
+            delete $self->{https_proxy};
+        }
+    }
+
+    # Split no_proxy to array reference if not provided as such
+    unless ( ref $self->{no_proxy} eq 'ARRAY' ) {
+        $self->{no_proxy} =
+            (defined $self->{no_proxy}) ? [ split /\s*,\s*/, $self->{no_proxy} ] : [];
+    }
+
+    return;
 }
 
+# =method get|head|put|post|delete
+#
+#     $response = $http->get($url);
+#     $response = $http->get($url, \%options);
+#     $response = $http->head($url);
+#
+# These methods are shorthand for calling C<request()> for the given method.  The
+# URL must have unsafe characters escaped and international domain names encoded.
+# See C<request()> for valid options and a description of the response.
+#
+# The C<success> field of the response will be true if the status code is 2XX.
+#
+# =cut
 
 for my $sub_name ( qw/get head put post delete/ ) {
     my $req_method = uc $sub_name;
@@ -66,6 +188,25 @@ for my $sub_name ( qw/get head put post delete/ ) {
 HERE
 }
 
+# =method post_form
+#
+#     $response = $http->post_form($url, $form_data);
+#     $response = $http->post_form($url, $form_data, \%options);
+#
+# This method executes a C<POST> request and sends the key/value pairs from a
+# form data hash or array reference to the given URL with a C<content-type> of
+# C<application/x-www-form-urlencoded>.  If data is provided as an array
+# reference, the order is preserved; if provided as a hash reference, the terms
+# are sorted on key and value for consistency.  See documentation for the
+# C<www_form_urlencode> method for details on the encoding.
+#
+# The URL must have unsafe characters escaped and international domain names
+# encoded.  See C<request()> for valid options and a description of the response.
+# Any C<content-type> header or content in the options hashref will be ignored.
+#
+# The C<success> field of the response will be true if the status code is 2XX.
+#
+# =cut
 
 sub post_form {
     my ($self, $url, $data, $args) = @_;
@@ -89,6 +230,28 @@ sub post_form {
     );
 }
 
+# =method mirror
+#
+#     $response = $http->mirror($url, $file, \%options)
+#     if ( $response->{success} ) {
+#         print "$file is up to date\n";
+#     }
+#
+# Executes a C<GET> request for the URL and saves the response body to the file
+# name provided.  The URL must have unsafe characters escaped and international
+# domain names encoded.  If the file already exists, the request will include an
+# C<If-Modified-Since> header with the modification timestamp of the file.  You
+# may specify a different C<If-Modified-Since> header yourself in the C<<
+# $options->{headers} >> hash.
+#
+# The C<success> field of the response will be true if the status code is 2XX
+# or if the status code is 304 (unmodified).
+#
+# If the file was modified and the server response includes a properly
+# formatted C<Last-Modified> header, the file modification time will
+# be updated accordingly.
+#
+# =cut
 
 sub mirror {
     my ($self, $url, $file, $args) = @_;
@@ -98,13 +261,16 @@ sub mirror {
         $args->{headers}{'if-modified-since'} ||= $self->_http_date($mtime);
     }
     my $tempfile = $file . int(rand(2**31));
-    open my $fh, ">", $tempfile
-        or Carp::croak(qq/Error: Could not open temporary file $tempfile for downloading: $!\n/);
+
+    require Fcntl;
+    sysopen my $fh, $tempfile, Fcntl::O_CREAT()|Fcntl::O_EXCL()|Fcntl::O_WRONLY()
+       or Carp::croak(qq/Error: Could not create temporary file $tempfile for downloading: $!\n/);
     binmode $fh;
     $args->{data_callback} = sub { print {$fh} $_[0] };
     my $response = $self->request('GET', $url, $args);
     close $fh
-        or Carp::croak(qq/Error: Could not close temporary file $tempfile: $!\n/);
+        or Carp::croak(qq/Error: Caught error closing temporary file $tempfile: $!\n/);
+
     if ( $response->{success} ) {
         rename $tempfile, $file
             or Carp::croak(qq/Error replacing $file with $tempfile: $!\n/);
@@ -118,6 +284,86 @@ sub mirror {
     return $response;
 }
 
+# =method request
+#
+#     $response = $http->request($method, $url);
+#     $response = $http->request($method, $url, \%options);
+#
+# Executes an HTTP request of the given method type ('GET', 'HEAD', 'POST',
+# 'PUT', etc.) on the given URL.  The URL must have unsafe characters escaped and
+# international domain names encoded.
+#
+# If the URL includes a "user:password" stanza, they will be used for Basic-style
+# authorization headers.  (Authorization headers will not be included in a
+# redirected request.) For example:
+#
+#     $http->request('GET', 'http://Aladdin:open sesame@example.com/');
+#
+# If the "user:password" stanza contains reserved characters, they must
+# be percent-escaped:
+#
+#     $http->request('GET', 'http://john%40example.com:password@example.com/');
+#
+# A hashref of options may be appended to modify the request.
+#
+# Valid options are:
+#
+# =for :list
+# * C<headers>
+# A hashref containing headers to include with the request.  If the value for
+# a header is an array reference, the header will be output multiple times with
+# each value in the array.  These headers over-write any default headers.
+# * C<content>
+# A scalar to include as the body of the request OR a code reference
+# that will be called iteratively to produce the body of the request
+# * C<trailer_callback>
+# A code reference that will be called if it exists to provide a hashref
+# of trailing headers (only used with chunked transfer-encoding)
+# * C<data_callback>
+# A code reference that will be called for each chunks of the response
+# body received.
+#
+# If the C<content> option is a code reference, it will be called iteratively
+# to provide the content body of the request.  It should return the empty
+# string or undef when the iterator is exhausted.
+#
+# If the C<content> option is the empty string, no C<content-type> or
+# C<content-length> headers will be generated.
+#
+# If the C<data_callback> option is provided, it will be called iteratively until
+# the entire response body is received.  The first argument will be a string
+# containing a chunk of the response body, the second argument will be the
+# in-progress response hash reference, as described below.  (This allows
+# customizing the action of the callback based on the C<status> or C<headers>
+# received prior to the content body.)
+#
+# The C<request> method returns a hashref containing the response.  The hashref
+# will have the following keys:
+#
+# =for :list
+# * C<success>
+# Boolean indicating whether the operation returned a 2XX status code
+# * C<url>
+# URL that provided the response. This is the URL of the request unless
+# there were redirections, in which case it is the last URL queried
+# in a redirection chain
+# * C<status>
+# The HTTP status code of the response
+# * C<reason>
+# The response phrase returned by the server
+# * C<content>
+# The body of the response.  If the response does not have any content
+# or if a data callback is provided to consume the response body,
+# this will be the empty string
+# * C<headers>
+# A hashref of header fields.  All header field names will be normalized
+# to be lower case. If a header is repeated, the value will be an arrayref;
+# it will otherwise be a scalar string containing the value
+#
+# On an exception during the execution of the request, the C<status> field will
+# contain 599, and the C<content> field will contain the text of the exception.
+#
+# =cut
 
 my %idempotent = map { $_ => 1 } qw/GET HEAD PUT DELETE OPTIONS TRACE/;
 
@@ -135,7 +381,14 @@ sub request {
             && $@ =~ m{^(?:Socket closed|Unexpected end)};
     }
 
-    if (my $e = "$@") {
+    if (my $e = $@) {
+        # maybe we got a response hash thrown from somewhere deep
+        if ( ref $e eq 'HASH' && exists $e->{status} ) {
+            return $e;
+        }
+
+        # otherwise, stringify it
+        $e = "$e";
         $response = {
             url     => $url,
             success => q{},
@@ -151,13 +404,26 @@ sub request {
     return $response;
 }
 
+# =method www_form_urlencode
+#
+#     $params = $http->www_form_urlencode( $data );
+#     $response = $http->get("http://example.com/query?$params");
+#
+# This method converts the key/value pairs from a data hash or array reference
+# into a C<x-www-form-urlencoded> string.  The keys and values from the data
+# reference will be UTF-8 encoded and escaped per RFC 3986.  If a value is an
+# array reference, the key will be repeated with each of the values of the array
+# reference.  If data is provided as a hash reference, the key/value pairs in the
+# resulting string will be sorted by key and value for consistent ordering.
+#
+# =cut
 
 sub www_form_urlencode {
     my ($self, $data) = @_;
     (@_ == 2 && ref $data)
         or Carp::croak(q/Usage: $http->www_form_urlencode(DATAREF)/ . "\n");
     (ref $data eq 'HASH' || ref $data eq 'ARRAY')
-        or Carp::croak("form data must be a hash or array reference");
+        or Carp::croak("form data must be a hash or array reference\n");
 
     my @params = ref $data eq 'HASH' ? %$data : @$data;
     @params % 2 == 0
@@ -174,7 +440,7 @@ sub www_form_urlencode {
         }
     }
 
-    return join("&", sort @terms);
+    return join("&", (ref $data eq 'ARRAY') ? (@terms) : (sort @terms) );
 }
 
 #--------------------------------------------------------------------------#
@@ -186,64 +452,188 @@ my %DefaultPort = (
     https => 443,
 );
 
+sub _agent {
+    my $class = ref($_[0]) || $_[0];
+    (my $default_agent = $class) =~ s{::}{-}g;
+    return $default_agent . "/" . ($class->VERSION || 0);
+}
+
 sub _request {
     my ($self, $method, $url, $args) = @_;
 
-    my ($scheme, $host, $port, $path_query) = $self->_split_url($url);
+    my ($scheme, $host, $port, $path_query, $auth) = $self->_split_url($url);
 
     my $request = {
         method    => $method,
         scheme    => $scheme,
+        host      => $host,
         host_port => ($port == $DefaultPort{$scheme} ? $host : "$host:$port"),
         uri       => $path_query,
         headers   => {},
     };
 
-    my $handle  = HTTP::Tiny::Handle->new(
-        timeout         => $self->{timeout},
-        SSL_options     => $self->{SSL_options},
-        verify_SSL      => $self->{verify_SSL},
-        local_address   => $self->{local_address},
-    );
-
-    if ($self->{proxy}) {
-        $request->{uri} = "$scheme://$request->{host_port}$path_query";
-        die(qq/HTTPS via proxy is not supported\n/)
-            if $request->{scheme} eq 'https';
-        $handle->connect(($self->_split_url($self->{proxy}))[0..2]);
+    # We remove the cached handle so it is not reused in the case of redirect.
+    # If all is well, it will be recached at the end of _request.  We only
+    # reuse for the same scheme, host and port
+    my $handle = delete $self->{handle};
+    if ( $handle ) {
+        unless ( $handle->can_reuse( $scheme, $host, $port ) ) {
+            $handle->close;
+            undef $handle;
+        }
     }
-    else {
-        $handle->connect($scheme, $host, $port);
-    }
+    $handle ||= $self->_open_handle( $request, $scheme, $host, $port );
 
-    $self->_prepare_headers_and_cb($request, $args);
+    $self->_prepare_headers_and_cb($request, $args, $url, $auth);
     $handle->write_request($request);
 
     my $response;
     do { $response = $handle->read_response_header }
         until (substr($response->{status},0,1) ne '1');
 
+    $self->_update_cookie_jar( $url, $response ) if $self->{cookie_jar};
+
     if ( my @redir_args = $self->_maybe_redirect($request, $response, $args) ) {
         $handle->close;
         return $self->_request(@redir_args, $args);
     }
 
+    my $known_message_length;
     if ($method eq 'HEAD' || $response->{status} =~ /^[23]04/) {
         # response has no message body
+        $known_message_length = 1;
     }
     else {
         my $data_cb = $self->_prepare_data_cb($response, $args);
-        $handle->read_body($data_cb, $response);
+        $known_message_length = $handle->read_body($data_cb, $response);
     }
 
-    $handle->close;
-    $response->{success} = substr($response->{status},0,1) eq '2';
+    if ( $self->{keep_alive}
+        && $known_message_length
+        && $response->{protocol} eq 'HTTP/1.1'
+        && ($response->{headers}{connection} || '') ne 'close'
+    ) {
+        $self->{handle} = $handle;
+    }
+    else {
+        $handle->close;
+    }
+
+    $response->{success} = substr( $response->{status}, 0, 1 ) eq '2';
     $response->{url} = $url;
     return $response;
 }
 
+sub _open_handle {
+    my ($self, $request, $scheme, $host, $port) = @_;
+
+    my $handle  = HTTP::Tiny::Handle->new(
+        timeout         => $self->{timeout},
+        SSL_options     => $self->{SSL_options},
+        verify_SSL      => $self->{verify_SSL},
+        local_address   => $self->{local_address},
+        keep_alive      => $self->{keep_alive}
+    );
+
+    if ($self->{_has_proxy}{$scheme} && ! grep { $host =~ /\Q$_\E$/ } @{$self->{no_proxy}}) {
+        return $self->_proxy_connect( $request, $handle );
+    }
+    else {
+        return $handle->connect($scheme, $host, $port);
+    }
+}
+
+sub _proxy_connect {
+    my ($self, $request, $handle) = @_;
+
+    my @proxy_vars;
+    if ( $request->{scheme} eq 'https' ) {
+        Carp::croak(qq{No https_proxy defined}) unless $self->{https_proxy};
+        @proxy_vars = $self->_split_proxy( https_proxy => $self->{https_proxy} );
+        if ( $proxy_vars[0] eq 'https' ) {
+            Carp::croak(qq{Can't proxy https over https: $request->{uri} via $self->{https_proxy}});
+        }
+    }
+    else {
+        Carp::croak(qq{No http_proxy defined}) unless $self->{http_proxy};
+        @proxy_vars = $self->_split_proxy( http_proxy => $self->{http_proxy} );
+    }
+
+    my ($p_scheme, $p_host, $p_port, $p_auth) = @proxy_vars;
+
+    if ( length $p_auth && ! defined $request->{headers}{'proxy-authorization'} ) {
+        $self->_add_basic_auth_header( $request, 'proxy-authorization' => $p_auth );
+    }
+
+    $handle->connect($p_scheme, $p_host, $p_port);
+
+    if ($request->{scheme} eq 'https') {
+        $self->_create_proxy_tunnel( $request, $handle );
+    }
+    else {
+        # non-tunneled proxy requires absolute URI
+        $request->{uri} = "$request->{scheme}://$request->{host_port}$request->{uri}";
+    }
+
+    return $handle;
+}
+
+sub _split_proxy {
+    my ($self, $type, $proxy) = @_;
+
+    my ($scheme, $host, $port, $path_query, $auth) = eval { $self->_split_url($proxy) };
+
+    unless(
+        defined($scheme) && length($scheme) && length($host) && length($port)
+        && $path_query eq '/'
+    ) {
+        Carp::croak(qq{$type URL must be in format http[s]://[auth@]<host>:<port>/\n});
+    }
+
+    return ($scheme, $host, $port, $auth);
+}
+
+sub _create_proxy_tunnel {
+    my ($self, $request, $handle) = @_;
+
+    $handle->_assert_ssl;
+
+    my $agent = exists($request->{headers}{'user-agent'})
+        ? $request->{headers}{'user-agent'} : $self->{agent};
+
+    my $connect_request = {
+        method    => 'CONNECT',
+        uri       => $request->{host_port},
+        headers   => {
+            host => $request->{host_port},
+            'user-agent' => $agent,
+        }
+    };
+
+    if ( $request->{headers}{'proxy-authorization'} ) {
+        $connect_request->{headers}{'proxy-authorization'} =
+            delete $request->{headers}{'proxy-authorization'};
+    }
+
+    $handle->write_request($connect_request);
+    my $response;
+    do { $response = $handle->read_response_header }
+        until (substr($response->{status},0,1) ne '1');
+
+    # if CONNECT failed, throw the response so it will be
+    # returned from the original request() method;
+    unless (substr($response->{status},0,1) eq '2') {
+        die $response;
+    }
+
+    # tunnel established, so start SSL handshake
+    $handle->start_ssl( $request->{host} );
+
+    return;
+}
+
 sub _prepare_headers_and_cb {
-    my ($self, $request, $args) = @_;
+    my ($self, $request, $args, $url, $auth) = @_;
 
     for ($self->{default_headers}, $args->{headers}) {
         next unless defined;
@@ -252,23 +642,25 @@ sub _prepare_headers_and_cb {
         }
     }
     $request->{headers}{'host'}         = $request->{host_port};
-    $request->{headers}{'connection'}   = "close";
     $request->{headers}{'user-agent'} ||= $self->{agent};
+    $request->{headers}{'connection'}   = "close"
+        unless $self->{keep_alive};
 
-    if (defined $args->{content}) {
-        $request->{headers}{'content-type'} ||= "application/octet-stream";
+    if ( defined $args->{content} ) {
         if (ref $args->{content} eq 'CODE') {
+            $request->{headers}{'content-type'} ||= "application/octet-stream";
             $request->{headers}{'transfer-encoding'} = 'chunked'
               unless $request->{headers}{'content-length'}
                   || $request->{headers}{'transfer-encoding'};
             $request->{cb} = $args->{content};
         }
-        else {
+        elsif ( length $args->{content} ) {
             my $content = $args->{content};
             if ( $] ge '5.008' ) {
                 utf8::downgrade($content, 1)
                     or die(qq/Wide character in request message body\n/);
             }
+            $request->{headers}{'content-type'} ||= "application/octet-stream";
             $request->{headers}{'content-length'} = length $content
               unless $request->{headers}{'content-length'}
                   || $request->{headers}{'transfer-encoding'};
@@ -277,6 +669,26 @@ sub _prepare_headers_and_cb {
         $request->{trailer_cb} = $args->{trailer_callback}
             if ref $args->{trailer_callback} eq 'CODE';
     }
+
+    ### If we have a cookie jar, then maybe add relevant cookies
+    if ( $self->{cookie_jar} ) {
+        my $cookies = $self->cookie_jar->cookie_header( $url );
+        $request->{headers}{cookie} = $cookies if length $cookies;
+    }
+
+    # if we have Basic auth parameters, add them
+    if ( length $auth && ! defined $request->{headers}{authorization} ) {
+        $self->_add_basic_auth_header( $request, 'authorization' => $auth );
+    }
+
+    return;
+}
+
+sub _add_basic_auth_header {
+    my ($self, $request, $header, $auth) = @_;
+    require MIME::Base64;
+    $request->{headers}{$header} =
+        "Basic " . MIME::Base64::encode_base64($auth, "");
     return;
 }
 
@@ -298,6 +710,31 @@ sub _prepare_data_cb {
         }
     }
     return $data_cb;
+}
+
+sub _update_cookie_jar {
+    my ($self, $url, $response) = @_;
+
+    my $cookies = $response->{headers}->{'set-cookie'};
+    return unless defined $cookies;
+
+    my @cookies = ref $cookies ? @$cookies : $cookies;
+
+    $self->cookie_jar->add( $url, $_ ) for @cookies;
+
+    return;
+}
+
+sub _validate_cookie_jar {
+    my ($class, $jar) = @_;
+
+    # duck typing
+    for my $method ( qw/add cookie_header/ ) {
+        Carp::croak(qq/Cookie jar must provide the '$method' method\n/)
+            unless ref($jar) && ref($jar)->can($method);
+    }
+
+    return;
 }
 
 sub _maybe_redirect {
@@ -326,15 +763,25 @@ sub _split_url {
     $scheme     = lc $scheme;
     $path_query = "/$path_query" unless $path_query =~ m<\A/>;
 
-    my $host = (length($authority)) ? lc $authority : 'localhost';
-       $host =~ s/\A[^@]*@//;   # userinfo
+    my ($auth,$host);
+    $authority = (length($authority)) ? $authority : 'localhost';
+    if ( $authority =~ /@/ ) {
+        ($auth,$host) = $authority =~ m/\A([^@]*)@(.*)\z/;   # user:pass@host
+        # userinfo might be percent escaped, so recover real auth info
+        $auth =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+    }
+    else {
+        $host = $authority;
+        $auth = '';
+    }
+    $host = lc $host;
     my $port = do {
        $host =~ s/:([0-9]*)\z// && length $1
          ? $1
          : ($scheme eq 'http' ? 80 : $scheme eq 'https' ? 443 : undef);
     };
 
-    return ($scheme, $host, $port, $path_query);
+    return ($scheme, $host, $port, $path_query, $auth);
 }
 
 # Date conversions adapted from HTTP::Date
@@ -397,6 +844,14 @@ use warnings;
 use Errno      qw[EINTR EPIPE];
 use IO::Socket qw[SOCK_STREAM];
 
+# PERL_HTTP_TINY_IPV4_ONLY is a private environment variable to force old
+# behavior if someone is unable to boostrap CPAN from a new perl install; it is
+# not intended for general, per-client use and may be removed in the future
+my $SOCKET_CLASS =
+    $ENV{PERL_HTTP_TINY_IPV4_ONLY} ? 'IO::Socket::INET' :
+    eval { require IO::Socket::IP; IO::Socket::IP->VERSION(0.25) } ? 'IO::Socket::IP' :
+    'IO::Socket::INET';
+
 sub BUFSIZE () { 32768 } ## no critic
 
 my $Printable = sub {
@@ -428,48 +883,61 @@ sub connect {
     my ($self, $scheme, $host, $port) = @_;
 
     if ( $scheme eq 'https' ) {
-        die(qq/IO::Socket::SSL 1.56 must be installed for https support\n/)
-            unless eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.56)};
-        die(qq/Net::SSLeay 1.49 must be installed for https support\n/)
-            unless eval {require Net::SSLeay; Net::SSLeay->VERSION(1.49)};
+        $self->_assert_ssl;
     }
     elsif ( $scheme ne 'http' ) {
       die(qq/Unsupported URL scheme '$scheme'\n/);
     }
-    $self->{fh} = 'IO::Socket::INET'->new(
+    $self->{fh} = $SOCKET_CLASS->new(
         PeerHost  => $host,
         PeerPort  => $port,
         $self->{local_address} ?
             ( LocalAddr => $self->{local_address} ) : (),
         Proto     => 'tcp',
         Type      => SOCK_STREAM,
-        Timeout   => $self->{timeout}
+        Timeout   => $self->{timeout},
+        KeepAlive => !!$self->{keep_alive}
     ) or die(qq/Could not connect to '$host:$port': $@\n/);
 
     binmode($self->{fh})
       or die(qq/Could not binmode() socket: '$!'\n/);
 
-    if ( $scheme eq 'https') {
-        my $ssl_args = $self->_ssl_args($host);
-        IO::Socket::SSL->start_SSL(
-            $self->{fh},
-            %$ssl_args,
-            SSL_create_ctx_callback => sub {
-                my $ctx = shift;
-                Net::SSLeay::CTX_set_mode($ctx, Net::SSLeay::MODE_AUTO_RETRY());
-            },
-        );
+    $self->start_ssl($host) if $scheme eq 'https';
 
-        unless ( ref($self->{fh}) eq 'IO::Socket::SSL' ) {
-            my $ssl_err = IO::Socket::SSL->errstr;
-            die(qq/SSL connection failed for $host: $ssl_err\n/);
-        }
-    }
-
+    $self->{scheme} = $scheme;
     $self->{host} = $host;
     $self->{port} = $port;
 
     return $self;
+}
+
+sub start_ssl {
+    my ($self, $host) = @_;
+
+    # As this might be used via CONNECT after an SSL session
+    # to a proxy, we shut down any existing SSL before attempting
+    # the handshake
+    if ( ref($self->{fh}) eq 'IO::Socket::SSL' ) {
+        unless ( $self->{fh}->stop_SSL ) {
+            my $ssl_err = IO::Socket::SSL->errstr;
+            die(qq/Error halting prior SSL connection: $ssl_err/);
+        }
+    }
+
+    my $ssl_args = $self->_ssl_args($host);
+    IO::Socket::SSL->start_SSL(
+        $self->{fh},
+        %$ssl_args,
+        SSL_create_ctx_callback => sub {
+            my $ctx = shift;
+            Net::SSLeay::CTX_set_mode($ctx, Net::SSLeay::MODE_AUTO_RETRY());
+        },
+    );
+
+    unless ( ref($self->{fh}) eq 'IO::Socket::SSL' ) {
+        my $ssl_err = IO::Socket::SSL->errstr;
+        die(qq/SSL connection failed for $host: $ssl_err\n/);
+    }
 }
 
 sub close {
@@ -645,11 +1113,13 @@ my %HeaderCase = (
     'x-xss-protection' => 'X-XSS-Protection',
 );
 
+# to avoid multiple small writes and hence nagle, you can pass the method line or anything else to
+# combine writes.
 sub write_header_lines {
-    (@_ == 2 && ref $_[1] eq 'HASH') || die(q/Usage: $handle->write_header_lines(headers)/ . "\n");
-    my($self, $headers) = @_;
+    (@_ == 2 || @_ == 3 && ref $_[1] eq 'HASH') || die(q/Usage: $handle->write_header_lines(headers[,prefix])/ . "\n");
+    my($self, $headers, $prefix_data) = @_;
 
-    my $buf = '';
+    my $buf = (defined $prefix_data ? $prefix_data : '');
     while (my ($k, $v) = each %$headers) {
         my $field_name = lc $k;
         if (exists $HeaderCase{$field_name}) {
@@ -671,17 +1141,17 @@ sub write_header_lines {
     return $self->write($buf);
 }
 
+# return value indicates whether message length was defined; this is generally
+# true unless there was no content-length header and we just read until EOF.
+# Other message length errors are thrown as exceptions
 sub read_body {
     @_ == 3 || die(q/Usage: $handle->read_body(callback, response)/ . "\n");
     my ($self, $cb, $response) = @_;
     my $te = $response->{headers}{'transfer-encoding'} || '';
-    if ( grep { /chunked/i } ( ref $te eq 'ARRAY' ? @$te : $te ) ) {
-        $self->read_chunked_body($cb, $response);
-    }
-    else {
-        $self->read_content_body($cb, $response);
-    }
-    return;
+    my $chunked = grep { /chunked/i } ( ref $te eq 'ARRAY' ? @$te : $te ) ;
+    return $chunked
+        ? $self->read_chunked_body($cb, $response)
+        : $self->read_content_body($cb, $response);
 }
 
 sub write_body {
@@ -700,18 +1170,18 @@ sub read_content_body {
     my ($self, $cb, $response, $content_length) = @_;
     $content_length ||= $response->{headers}{'content-length'};
 
-    if ( $content_length ) {
+    if ( defined $content_length ) {
         my $len = $content_length;
         while ($len > 0) {
             my $read = ($len > BUFSIZE) ? BUFSIZE : $len;
             $cb->($self->read($read, 0), $response);
             $len -= $read;
         }
+        return length($self->{rbuf}) == 0;
     }
-    else {
-        my $chunk;
-        $cb->($chunk, $response) while length( $chunk = $self->read(BUFSIZE, 1) );
-    }
+
+    my $chunk;
+    $cb->($chunk, $response) while length( $chunk = $self->read(BUFSIZE, 1) );
 
     return;
 }
@@ -760,7 +1230,7 @@ sub read_chunked_body {
           or die(qq/Malformed chunk: missing CRLF after chunk data\n/);
     }
     $self->read_header_lines($response->{headers});
-    return;
+    return 1;
 }
 
 sub write_chunked_body {
@@ -809,10 +1279,10 @@ sub read_response_header {
         unless $version =~ /0*1\.0*[01]/;
 
     return {
-        status   => $status,
-        reason   => $reason,
-        headers  => $self->read_header_lines,
-        protocol => $protocol,
+        status       => $status,
+        reason       => $reason,
+        headers      => $self->read_header_lines,
+        protocol     => $protocol,
     };
 }
 
@@ -820,8 +1290,7 @@ sub write_request_header {
     @_ == 4 || die(q/Usage: $handle->write_request_header(method, request_uri, headers)/ . "\n");
     my ($self, $method, $request_uri, $headers) = @_;
 
-    return $self->write("$method $request_uri HTTP/1.1\x0D\x0A")
-         + $self->write_header_lines($headers);
+    return $self->write_header_lines($headers, "$method $request_uri HTTP/1.1\x0D\x0A");
 }
 
 sub _do_timeout {
@@ -858,6 +1327,9 @@ sub _do_timeout {
 sub can_read {
     @_ == 1 || @_ == 2 || die(q/Usage: $handle->can_read([timeout])/ . "\n");
     my $self = shift;
+    if ( ref($self->{fh}) eq 'IO::Socket::SSL' ) {
+        return 1 if $self->{fh}->pending;
+    }
     return $self->_do_timeout('read', @_)
 }
 
@@ -865,6 +1337,27 @@ sub can_write {
     @_ == 1 || @_ == 2 || die(q/Usage: $handle->can_write([timeout])/ . "\n");
     my $self = shift;
     return $self->_do_timeout('write', @_)
+}
+
+sub _assert_ssl {
+    # Need IO::Socket::SSL 1.42 for SSL_create_ctx_callback
+    die(qq/IO::Socket::SSL 1.42 must be installed for https support\n/)
+        unless eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.42)};
+    # Need Net::SSLeay 1.49 for MODE_AUTO_RETRY
+    die(qq/Net::SSLeay 1.49 must be installed for https support\n/)
+        unless eval {require Net::SSLeay; Net::SSLeay->VERSION(1.49)};
+}
+
+sub can_reuse {
+    my ($self,$scheme,$host,$port) = @_;
+    return 0 if
+         length($self->{rbuf})
+        || $scheme ne $self->{scheme}
+        || $host ne $self->{host}
+        || $port ne $self->{port}
+        || eval { $self->can_read(0) }
+        || $@ ;
+        return 1;
 }
 
 # Try to find a CA bundle to validate the SSL cert,
@@ -894,9 +1387,13 @@ sub _find_CA_file {
 sub _ssl_args {
     my ($self, $host) = @_;
 
-    my %ssl_args = (
-        SSL_hostname        => $host,  # SNI
-    );
+    my %ssl_args;
+
+    # This test reimplements IO::Socket::SSL::can_client_sni(), which wasn't
+    # added until IO::Socket::SSL 1.84
+    if ( Net::SSLeay::OPENSSL_VERSION_NUMBER() >= 0x01000000 ) {
+        $ssl_args{SSL_hostname} = $host,          # Sane SNI support
+    }
 
     if ($self->{verify_SSL}) {
         $ssl_args{SSL_verifycn_scheme}  = 'http'; # enable CN validation
@@ -923,13 +1420,15 @@ __END__
 
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
 HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.025
+version 0.043
 
 =head1 SYNOPSIS
 
@@ -951,12 +1450,16 @@ version 0.025
 
 =head1 DESCRIPTION
 
-This is a very simple HTTP/1.1 client, designed for doing simple GET
+This is a very simple HTTP/1.1 client, designed for doing simple
 requests without the overhead of a large framework like L<LWP::UserAgent>.
 
 It is more correct and more complete than L<HTTP::Lite>.  It supports
-proxies (currently only non-authenticating ones) and redirection.  It
-also correctly resumes after EINTR.
+proxies and redirection.  It also correctly resumes after EINTR.
+
+If L<IO::Socket::IP> 0.25 or later is installed, HTTP::Tiny will use it instead
+of L<IO::Socket::INET> for transparent support for both IPv4 and IPv6.
+
+Cookie support requires L<HTTP::CookieJar> or an equivalent class.
 
 =head1 METHODS
 
@@ -976,6 +1479,12 @@ A user-agent string (defaults to 'HTTP-Tiny/$VERSION'). If C<agent> ends in a sp
 
 =item *
 
+C<cookie_jar>
+
+An instance of L<HTTP::CookieJar> or equivalent class that supports the C<add> and C<cookie_header> methods
+
+=item *
+
 C<default_headers>
 
 A hashref of default headers to apply to requests
@@ -988,6 +1497,12 @@ The local IP address to bind to
 
 =item *
 
+C<keep_alive>
+
+Whether to reuse the last connection (if for the same scheme, host and port) (defaults to 1)
+
+=item *
+
 C<max_redirect>
 
 Maximum number of redirects allowed (defaults to 5)
@@ -996,14 +1511,31 @@ Maximum number of redirects allowed (defaults to 5)
 
 C<max_size>
 
-Maximum response size (only when not using a data callback).  If defined,
-responses larger than this will return an exception.
+Maximum response size (only when not using a data callback).  If defined, responses larger than this will return an exception.
+
+=item *
+
+C<http_proxy>
+
+URL of a proxy server to use for HTTP connections (default is C<$ENV{http_proxy}> if set)
+
+=item *
+
+C<https_proxy>
+
+URL of a proxy server to use for HTTPS connections (default is C<$ENV{https_proxy}> if set)
 
 =item *
 
 C<proxy>
 
-URL of a proxy server to use (default is C<$ENV{http_proxy}> if set)
+URL of a generic proxy server for both HTTP and HTTPS connections (default is C<$ENV{all_proxy}> if set)
+
+=item *
+
+C<no_proxy>
+
+List of domain suffixes that should not be proxied.  Must be a comma-separated string or an array reference. (default is C<$ENV{no_proxy}>)
 
 =item *
 
@@ -1030,6 +1562,12 @@ Exceptions from C<max_size>, C<timeout> or other errors will result in a
 pseudo-HTTP status code of 599 and a reason of "Internal Exception". The
 content field in the response will contain the text of the exception.
 
+The C<keep_alive> parameter enables a persistent connection, but only to a
+single destination scheme, host and port.  Also, if any connection-relevant
+attributes are modified, a persistent connection will be dropped.  If you want
+persistent connections across multiple destinations, use multiple HTTP::Tiny
+objects.
+
 See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
 
 =head2 get|head|put|post|delete
@@ -1051,7 +1589,9 @@ The C<success> field of the response will be true if the status code is 2XX.
 
 This method executes a C<POST> request and sends the key/value pairs from a
 form data hash or array reference to the given URL with a C<content-type> of
-C<application/x-www-form-urlencoded>.  See documentation for the
+C<application/x-www-form-urlencoded>.  If data is provided as an array
+reference, the order is preserved; if provided as a hash reference, the terms
+are sorted on key and value for consistency.  See documentation for the
 C<www_form_urlencode> method for details on the encoding.
 
 The URL must have unsafe characters escaped and international domain names
@@ -1069,7 +1609,7 @@ The C<success> field of the response will be true if the status code is 2XX.
 
 Executes a C<GET> request for the URL and saves the response body to the file
 name provided.  The URL must have unsafe characters escaped and international
-domain names encoded.  If the file already exists, the request will includes an
+domain names encoded.  If the file already exists, the request will include an
 C<If-Modified-Since> header with the modification timestamp of the file.  You
 may specify a different C<If-Modified-Since> header yourself in the C<<
 $options->{headers} >> hash.
@@ -1088,8 +1628,20 @@ be updated accordingly.
 
 Executes an HTTP request of the given method type ('GET', 'HEAD', 'POST',
 'PUT', etc.) on the given URL.  The URL must have unsafe characters escaped and
-international domain names encoded.  A hashref of options may be appended to
-modify the request.
+international domain names encoded.
+
+If the URL includes a "user:password" stanza, they will be used for Basic-style
+authorization headers.  (Authorization headers will not be included in a
+redirected request.) For example:
+
+    $http->request('GET', 'http://Aladdin:open sesame@example.com/');
+
+If the "user:password" stanza contains reserved characters, they must
+be percent-escaped:
+
+    $http->request('GET', 'http://john%40example.com:password@example.com/');
+
+A hashref of options may be appended to modify the request.
 
 Valid options are:
 
@@ -1129,6 +1681,9 @@ body received.
 If the C<content> option is a code reference, it will be called iteratively
 to provide the content body of the request.  It should return the empty
 string or undef when the iterator is exhausted.
+
+If the C<content> option is the empty string, no C<content-type> or
+C<content-length> headers will be generated.
 
 If the C<data_callback> option is provided, it will be called iteratively until
 the entire response body is received.  The first argument will be a string
@@ -1198,26 +1753,32 @@ This method converts the key/value pairs from a data hash or array reference
 into a C<x-www-form-urlencoded> string.  The keys and values from the data
 reference will be UTF-8 encoded and escaped per RFC 3986.  If a value is an
 array reference, the key will be repeated with each of the values of the array
-reference.  The key/value pairs in the resulting string will be sorted by key
-and value.
+reference.  If data is provided as a hash reference, the key/value pairs in the
+resulting string will be sorted by key and value for consistent ordering.
 
-=for Pod::Coverage agent
+=for Pod::Coverage SSL_options
+agent
+cookie_jar
 default_headers
+http_proxy
+https_proxy
+keep_alive
 local_address
 max_redirect
 max_size
+no_proxy
 proxy
 timeout
 verify_SSL
-SSL_options
 
 =head1 SSL SUPPORT
 
 Direct C<https> connections are supported only if L<IO::Socket::SSL> 1.56 or
 greater and L<Net::SSLeay> 1.49 or greater are installed. An exception will be
 thrown if a new enough versions of these modules not installed or if the SSL
-encryption fails. There is no support for C<https> connections via proxy (i.e.
-RFC 2817).
+encryption fails. An C<https> connection may be made via an C<http> proxy that
+supports the CONNECT command (i.e. RFC 2817).  You may not proxy C<https> via
+a proxy that itself requires C<https> to communicate.
 
 SSL provides two distinct capabilities:
 
@@ -1294,6 +1855,43 @@ client certificate for authentication to a server or controlling the choice of
 cipher used for the SSL connection. See L<IO::Socket::SSL> documentation for
 details.
 
+=head1 PROXY SUPPORT
+
+HTTP::Tiny can proxy both C<http> and C<https> requests.  Only Basic proxy
+authorization is supported and it must be provided as part of the proxy URL:
+C<http://user:pass@proxy.example.com/>.
+
+HTTP::Tiny supports the following proxy environment variables:
+
+=over 4
+
+=item *
+
+http_proxy
+
+=item *
+
+https_proxy or HTTPS_PROXY
+
+=item *
+
+all_proxy or ALL_PROXY
+
+=back
+
+Tunnelling C<https> over an C<http> proxy using the CONNECT method is
+supported.  If your proxy uses C<https> itself, you can not tunnel C<https>
+over it.
+
+Be warned that proxying an C<https> connection opens you to the risk of a
+man-in-the-middle attack by the proxy server.
+
+The C<no_proxy> environment variable is supported in the format of a
+comma-separated list of domain extensions proxy should not be used for.
+
+Proxy arguments passed to C<new> will override their corresponding
+environment variables.
+
 =head1 LIMITATIONS
 
 HTTP::Tiny is I<conditionally compliant> with the
@@ -1327,23 +1925,6 @@ mandated by the specification.  There is no automatic support for status 305
 
 =item *
 
-Persistent connections are not supported.  The C<Connection> header will
-always be set to C<close>.
-
-=item *
-
-Cookies are not directly supported.  Users that set a C<Cookie> header
-should also set C<max_redirect> to zero to ensure cookies are not
-inappropriately re-transmitted.
-
-=item *
-
-Only the C<http_proxy> environment variable is supported in the format
-C<http://HOST:PORT/>.  If a C<proxy> argument is passed to C<new> (including
-undef), then the C<http_proxy> environment variable is ignored.
-
-=item *
-
 There is no provision for delaying a request body using an C<Expect> header.
 Unexpected C<1XX> responses are silently ignored as per the specification.
 
@@ -1355,11 +1936,11 @@ Only 'chunked' C<Transfer-Encoding> is supported.
 
 There is no support for a Request-URI of '*' for the 'OPTIONS' request.
 
-=item *
-
-There is no support for IPv6 of any kind.
-
 =back
+
+Despite the limitations listed above, HTTP::Tiny is considered
+feature-complete.  New feature requests should be directed to
+L<HTTP::Tiny::UA>.
 
 =head1 SEE ALSO
 
@@ -1367,19 +1948,35 @@ There is no support for IPv6 of any kind.
 
 =item *
 
-L<LWP::UserAgent>
+L<HTTP::Tiny::UA> - Higher level UA features for HTTP::Tiny
 
 =item *
 
-L<IO::Socket::SSL>
+L<HTTP::Thin> - HTTP::Tiny wrapper with L<HTTP::Request>/L<HTTP::Response> compatibility
 
 =item *
 
-L<Mozilla::CA>
+L<HTTP::Tiny::Mech> - Wrap L<WWW::Mechanize> instance in HTTP::Tiny compatible interface
 
 =item *
 
-L<Net::SSLeay>
+L<IO::Socket::IP> - Required for IPv6 support
+
+=item *
+
+L<IO::Socket::SSL> - Required for SSL support
+
+=item *
+
+L<LWP::UserAgent> - If HTTP::Tiny isn't enough for you, this is the "standard" way to do things
+
+=item *
+
+L<Mozilla::CA> - Required if you want to validate SSL certificates
+
+=item *
+
+L<Net::SSLeay> - Required for SSL support
 
 =back
 
@@ -1390,7 +1987,7 @@ L<Net::SSLeay>
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<https://rt.cpan.org/Public/Dist/Display.html?Name=HTTP-Tiny>.
+at L<https://github.com/chansen/p5-http-tiny/issues>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -1398,9 +1995,9 @@ You will be notified automatically of any progress on your issue.
 This is open source software.  The code repository is available for
 public review and contribution under the terms of the license.
 
-L<https://github.com/dagolden/http-tiny>
+L<https://github.com/chansen/p5-http-tiny>
 
-  git clone git://github.com/dagolden/http-tiny.git
+  git clone https://github.com/chansen/p5-http-tiny.git
 
 =head1 AUTHORS
 
@@ -1414,15 +2011,93 @@ Christian Hansen <chansen@cpan.org>
 
 David Golden <dagolden@cpan.org>
 
+=back
+
+=head1 CONTRIBUTORS
+
+=over 4
+
+=item *
+
+Alan Gardner <gardner@pythian.com>
+
+=item *
+
+Alessandro Ghedini <al3xbio@gmail.com>
+
+=item *
+
+Brad Gilbert <bgills@cpan.org>
+
+=item *
+
+Chris Nehren <apeiron@cpan.org>
+
+=item *
+
+Chris Weyl <cweyl@alumni.drew.edu>
+
+=item *
+
+Claes Jakobsson <claes@surfar.nu>
+
+=item *
+
+Clinton Gormley <clint@traveljury.com>
+
+=item *
+
+Craig Berry <cberry@cpan.org>
+
+=item *
+
+David Mitchell <davem@iabyn.com>
+
+=item *
+
+Edward Zborowski <ed@rubensteintech.com>
+
+=item *
+
+Jess Robinson <castaway@desert-island.me.uk>
+
+=item *
+
+Lukas Eklund <leklund@gmail.com>
+
+=item *
+
+Martin J. Evans <mjegh@ntlworld.com>
+
+=item *
+
+Martin-Louis Bright <mlbright@gmail.com>
+
 =item *
 
 Mike Doherty <doherty@cpan.org>
+
+=item *
+
+Petr Písař <ppisar@redhat.com>
+
+=item *
+
+Serguei Trouchelle <stro@cpan.org>
+
+=item *
+
+Syohei YOSHIDA <syohex@gmail.com>
+
+=item *
+
+Tony Cook <tony@develop-help.com>
 
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2012 by Christian Hansen.
+This software is copyright (c) 2014 by Christian Hansen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 19;
+plan tests => 24;
 
 # not() tests
 pass("logical negation of empty list") if not();
@@ -76,3 +76,20 @@ SKIP:
     my $c = Scalar::Util::dualvar(0,"1");
     is not($c), "", 'not(dualvar) ignores false int when string is true';
 }
+
+# test truth of regexps
+is not(${qr//}), "", 'dereferenced regexps are true';
+
+# not’s return value should be read-only, as it is the same global scalar
+# each time (and test that it is, too).
+*yes = \not 0;
+*no  = \not 1;
+for (!0) { eval { $_ = 43 } }
+like $@, qr/^Modification of a read-only value attempted at /,
+   'not 0 is read-only';
+for (!1) { eval { $_ = 43 } }
+like $@, qr/^Modification of a read-only value attempted at /,
+   'not 1 is read-only';
+require Config;
+is \!0, \$yes, '!0 returns the same value each time [perl #114838]';
+is \!1, \$no,  '!1 returns the same value each time [perl #114838]';

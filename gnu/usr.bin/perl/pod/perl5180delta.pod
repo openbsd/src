@@ -112,7 +112,7 @@ Repeated runs of the same program should produce the same output every time.
 
 C<PERL_HASH_SEED> implies a non-default C<PERL_PERTURB_KEYS> setting. Setting
 C<PERL_HASH_SEED=0> (exactly one 0) implies C<PERL_PERTURB_KEYS=0> (hash key
-randomization disabled); settng C<PERL_HASH_SEED> to any other value implies
+randomization disabled); setting C<PERL_HASH_SEED> to any other value implies
 C<PERL_PERTURB_KEYS=2> (deterministic and repeatable hash key randomization).
 Specifying C<PERL_PERTURB_KEYS> explicitly to a different level overrides this
 behavior.
@@ -219,7 +219,7 @@ empty string.
 Several more built-in functions have been added as subroutines to the
 CORE:: namespace - namely, those non-overridable keywords that can be
 implemented without custom parsers: C<defined>, C<delete>, C<exists>,
-C<glob>, C<pos>, C<protoytpe>, C<scalar>, C<split>, C<study>, and C<undef>.
+C<glob>, C<pos>, C<prototype>, C<scalar>, C<split>, C<study>, and C<undef>.
 
 As some of these have prototypes, C<prototype('CORE::...')> has been
 changed to not make a distinction between overridable and non-overridable
@@ -534,12 +534,16 @@ in L<perlsub/Lexical Subroutines>.
 
 =head2 Defined values stored in environment are forced to byte strings
 
-A value stored in an environment variable has always been stringified.  In this
-release, it is converted to be only a byte string.  First, it is forced to be
-only a string.  Then if the string is utf8 and the equivalent of
-C<utf8::downgrade()> works, that result is used; otherwise, the equivalent of
-C<utf8::encode()> is used, and a warning is issued about wide characters
-(L</Diagnostics>).
+A value stored in an environment variable has always been stringified when
+inherited by child processes.
+
+In this release, when assigning to C<%ENV>, values are immediately stringified,
+and converted to be only a byte string.
+
+First, it is forced to be a only a string.  Then if the string is utf8 and the
+equivalent of C<utf8::downgrade()> works, that result is used; otherwise, the
+equivalent of C<utf8::encode()> is used, and a warning is issued about wide
+characters (L</Diagnostics>).
 
 =head2 C<require> dies for unreadable files
 
@@ -1015,7 +1019,7 @@ respect the other pragma when in scope.
 =item *
 
 Using any of these three pragmata would cause C<hex> and C<oct> anywhere
-else in the program to evalute their arguments in list context and prevent
+else in the program to evaluate their arguments in list context and prevent
 them from inferring $_ when called without arguments.
 
 =item *
@@ -1420,7 +1424,7 @@ the buffer or gives it a typeglob or shared hash key scalar.
 
 L<PerlIO::scalar> has been upgraded to 0.16.
 
-The buffer scalar supplied may now only contain code pounts 0xFF or
+The buffer scalar supplied may now only contain code points 0xFF or
 lower. [perl #109828]
 
 =item *
@@ -1908,7 +1912,7 @@ may need to install the hopping module) (@INC contains: ...)"
 
 L<vector argument not supported with alpha versions|perldiag/vector argument not supported with alpha versions>
 
-This warning was not suppressable, even with C<no warnings>.  Now it is
+This warning was not suppressible, even with C<no warnings>.  Now it is
 suppressible, and has been moved from the "internal" category to the
 "printf" category.
 
@@ -2344,11 +2348,6 @@ for tied or overloaded values or for non-PVs any more.
 
 C<sv_mortalcopy> now copies string buffers of shared hash key scalars when
 called from XS modules [perl #79824].
-
-=item *
-
-C<RXf_SPLIT> and C<RXf_SKIPWHITE> are no longer used.  They are now
-#defined as 0.
 
 =item *
 

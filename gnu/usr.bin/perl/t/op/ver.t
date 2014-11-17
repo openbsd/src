@@ -11,7 +11,7 @@ $DOWARN = 1; # enable run-time warnings now
 
 use Config;
 
-plan( tests => 57 );
+plan( tests => 58 );
 
 eval 'use v5.5.640';
 is( $@, '', "use v5.5.640; $@");
@@ -275,6 +275,10 @@ is ref \$a, 'SCALAR',
   's/// flattens vstrings even when the subst results in the same value';
 $a = v102; $a =~ y/f/g/;
 is ref \$a, 'SCALAR', 'y/// flattens vstrings';
+
+sub { $_[0] = v3;
+      is ref \$h{nonexistent}, 'VSTRING', 'defelems can pass vstrings' }
+->($h{nonexistent});
 
 # The following tests whether v-strings are correctly
 # interpreted by the tokeniser when it's in a XTERMORDORDOR

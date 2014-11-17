@@ -15,7 +15,7 @@ BEGIN {
 use strict;
 
 use Data::Dumper;
-use Test::More tests => 10;
+use Test::More tests => 18;
 use lib qw( ./t/lib );
 use Testing qw( _dumptostr );
 
@@ -90,5 +90,46 @@ sub run_tests_for_quotekeys {
     isnt($dumps{'ddqkzero'}, $dumps{'objqkundef'},
         "\$Data::Dumper::Quotekeys = undef and = 0 are equivalent");
     %dumps = ();
+
+    local $Data::Dumper::Quotekeys = 1;
+    local $Data::Dumper::Sortkeys = 1;
+    local $Data::Dumper::Indent = 0;
+    local $Data::Dumper::Useqq = 0;
+
+    my %qkdata =
+      (
+       0 => 1,
+       '012345' => 1,
+       12 => 1,
+       123456789 => 1,
+       1234567890 => 1,
+       '::de::fg' => 1,
+       ab => 1,
+       'hi::12' => 1,
+       "1\x{660}" => 1,
+      );
+
+    is(Dumper(\%qkdata),
+       q($VAR1 = {'0' => 1,'012345' => 1,'12' => 1,'123456789' => 1,'1234567890' => 1,"1\x{660}" => 1,'::de::fg' => 1,'ab' => 1,'hi::12' => 1};),
+       "always quote when quotekeys true");
+
+    {
+        local $Data::Dumper::Useqq = 1;
+        is(Dumper(\%qkdata),
+	   q($VAR1 = {"0" => 1,"012345" => 1,"12" => 1,"123456789" => 1,"1234567890" => 1,"1\x{660}" => 1,"::de::fg" => 1,"ab" => 1,"hi::12" => 1};),
+	   "always quote when quotekeys true (useqq)");
+    }
+
+    local $Data::Dumper::Quotekeys = 0;
+
+    is(Dumper(\%qkdata),
+       q($VAR1 = {0 => 1,'012345' => 1,12 => 1,123456789 => 1,'1234567890' => 1,"1\x{660}" => 1,'::de::fg' => 1,ab => 1,'hi::12' => 1};),
+	      "avoid quotes when quotekeys false");
+    {
+        local $Data::Dumper::Useqq = 1;
+	is(Dumper(\%qkdata),
+	   q($VAR1 = {0 => 1,"012345" => 1,12 => 1,123456789 => 1,"1234567890" => 1,"1\x{660}" => 1,"::de::fg" => 1,ab => 1,"hi::12" => 1};),
+	      "avoid quotes when quotekeys false (useqq)");
+    }
 }
 

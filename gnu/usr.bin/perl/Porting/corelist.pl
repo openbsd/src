@@ -10,6 +10,7 @@
 use autodie;
 use strict;
 use warnings;
+no  warnings 'experimental::autoderef';
 use File::Find;
 use ExtUtils::MM_Unix;
 use version;
@@ -22,6 +23,7 @@ use HTTP::Tiny;
 use IO::Uncompress::Gunzip;
 
 my $corelist_file = 'dist/Module-CoreList/lib/Module/CoreList.pm';
+my $utils_file = 'dist/Module-CoreList/lib/Module/CoreList/Utils.pm';
 my $pod_file = 'dist/Module-CoreList/lib/Module/CoreList.pod';
 
 my %lines;
@@ -42,6 +44,19 @@ if ( !-f 'MANIFEST' ) {
 
 open( my $corelist_fh, '<', $corelist_file );
 my $corelist = join( '', <$corelist_fh> );
+close $corelist_fh;
+
+unless (
+    $corelist =~ /^%released \s* = \s* \(
+        .*?
+        $perl_vnum \s* => \s* .*?
+        \);/ismx
+    )
+{
+    warn "Adding $perl_vnum to the list of released perl versions. Please consider adding a release date.\n";
+    $corelist =~ s/^(%released \s* = \s* .*?) ( \) )
+                /$1  $perl_vnum => '????-??-??',\n  $2/ismx;
+}
 
 if ($cpan) {
     my $modlistfile = File::Spec->catfile( $cpan, 'modules', '02packages.details.txt' );
@@ -92,13 +107,15 @@ find(
         $version =~ /\d/ and $version = "'$version'";
 
         # some heuristics to figure out the module name from the file name
-        $module =~ s{^(lib|cpan|dist|(?:symbian/)?ext)/}{}
+        $module =~ s{^(lib|cpan|dist|(?:symbian/)?ext|os2/OS2)/}{}
 			and $1 ne 'lib'
             and (
             $module =~ s{\b(\w+)/\1\b}{$1},
             $module =~ s{^B/O}{O},
             $module =~ s{^Devel-PPPort}{Devel},
             $module =~ s{^libnet/}{},
+            $module =~ s{^PathTools/}{},
+            $module =~ s{REXX/DLL}{DLL},
             $module =~ s{^Encode/encoding}{encoding},
             $module =~ s{^IPC-SysV/}{IPC/},
             $module =~ s{^MIME-Base64/QuotedPrint}{MIME/QuotedPrint},
@@ -114,6 +131,7 @@ find(
         $lines{$module}          = $version;
         $module_to_file{$module} = $File::Find::name;
     },
+    'os2/OS2',
     'symbian/ext',
     'lib',
     'ext',
@@ -121,7 +139,7 @@ find(
 	'dist'
 );
 
--e 'configpm' and $lines{Config} = 'undef';
+-e 'configpm' and $lines{Config} = "$]";
 
 if ( open my $ucdv, "<", "lib/unicore/version" ) {
     chomp( my $ucd = <$ucdv> );
@@ -146,12 +164,13 @@ foreach my $key (sort keys $delta_data->{changed}) {
 $versions_in_release .= "        },\n";
 $versions_in_release .= "        removed => {\n";
 for my $key (sort keys($delta_data->{removed} || {})) {
-  $versions_in_release .= sprintf "           %-24s=> %s,\n", "'$key'", 1;
+  $versions_in_release .= sprintf "            %-24s=> %s,\n", "'$key'", 1;
 }
 $versions_in_release .= "        }\n";
 $versions_in_release .= "    },\n";
 
-$corelist =~ s/^(my %delta\s*=\s*.*?)(^\);)$/$1$versions_in_release$2/ism;
+$corelist =~ s/^(%delta\s*=\s*.*?)^\s*$perl_vnum\s*=>\s*{.*?},\s*(^\);)$/$1$2/ism;
+$corelist =~ s/^(%delta\s*=\s*.*?)(^\);)$/$1$versions_in_release$2/ism;
 
 exit unless %modlist;
 
@@ -178,12 +197,12 @@ my %module_to_deprecated;
 while ( my ( $module, $file ) = each %module_to_file ) {
     my $M = $file_to_M->{$file};
     next unless $M;
-    next if $Modules{$M}{MAINTAINER} && $Modules{$M}{MAINTAINER} eq 'p5p';
+    next if $Modules{$M}{MAINTAINER} && $Modules{$M}{MAINTAINER} eq 'P5P';
     $module_to_upstream{$module} = $Modules{$M}{UPSTREAM};
     $module_to_deprecated{$module} = 1 if $Modules{$M}{DEPRECATED};
     next
         if defined $module_to_upstream{$module}
-            && $module_to_upstream{$module} =~ /^(?:blead|first-come)$/;
+            && $module_to_upstream{$module} eq 'blead';
     my $dist = $modlist{$module};
     unless ($dist) {
         warn "Can't find a distribution for $module\n";
@@ -256,6 +275,7 @@ $corelist =~ s/^%upstream .*? ;$/$upstream_stanza/ismx;
   $deprecated_stanza .= "        }\n";
   $deprecated_stanza .= "    },\n";
 
+  $corelist =~ s/^(%deprecated\s*=\s*.*?)^\s*$perl_vnum\s*=>\s*{.*?},\s*(^\);)$/$1$2/ism;
   $corelist =~ s/^(%deprecated\s*=\s*.*?)(^\);)$/$1$deprecated_stanza$2/xism;
 }
 
@@ -263,8 +283,7 @@ my $tracker = "%bug_tracker = (\n";
 foreach my $module ( sort keys %module_to_upstream ) {
     my $upstream = defined $module_to_upstream{$module};
     next
-        if defined $upstream
-            and $upstream eq 'blead' || $upstream eq 'first-come';
+        if defined $upstream and $upstream eq 'blead';
 
     my $bug_tracker;
 
@@ -281,18 +300,6 @@ $tracker .= ");";
 
 $corelist =~ s/^%bug_tracker .*? ;/$tracker/eismx;
 
-unless (
-    $corelist =~ /^%released \s* = \s* \(
-        .*?
-        $perl_vnum => .*?
-        \);/ismx
-    )
-{
-    warn "Adding $perl_vnum to the list of released perl versions. Please consider adding a release date.\n";
-    $corelist =~ s/^(%released \s* = \s* .*?) ( \) )
-                /$1  $perl_vnum => '????-??-??',\n  $2/ismx;
-}
-
 write_corelist($corelist,$corelist_file);
 
 open( my $pod_fh, '<', $pod_file );
@@ -305,8 +312,37 @@ unless ( $pod =~ /and $perl_vstring releases of perl/ ) {
 
 write_corelist($pod,$pod_file);
 
-warn "All done. Please check over $corelist_file and $pod_file carefully before committing. Thanks!\n";
+open( my $utils_fh, '<', $utils_file );
+my $utils = join( '', <$utils_fh> );
+close $utils_fh;
 
+my %utils = map { ( $_ => 1 ) } parse_utils_lst();
+
+my $delta_utils = make_coreutils_delta($perl_vnum, \%utils);
+
+my $utilities_in_release = "    " . $perl_vnum . " => {\n";
+$utilities_in_release .= "        delta_from => $delta_utils->{delta_from},\n";
+$utilities_in_release .= "        changed => {\n";
+foreach my $key (sort keys $delta_utils->{changed}) {
+  $utilities_in_release .= sprintf "            %-24s=> %s,\n", "'$key'",
+      defined $delta_utils->{changed}{$key} ? "'"
+        . $delta_utils->{changed}{$key} . "'" : "undef";
+}
+$utilities_in_release .= "        },\n";
+$utilities_in_release .= "        removed => {\n";
+for my $key (sort keys($delta_utils->{removed} || {})) {
+  $utilities_in_release .= sprintf "            %-24s=> %s,\n", "'$key'", 1;
+}
+$utilities_in_release .= "        }\n";
+$utilities_in_release .= "    },\n";
+
+$utils =~ s/^(my %delta\s*=\s*.*?)^\s*$perl_vnum\s*=>\s*{.*?},\s*(^\);)$/$1$2/ism;
+$utils =~ s/^(my %delta\s*=\s*.*?)(^\);)$/$1$utilities_in_release$2/ism;
+
+write_corelist($utils,$utils_file);
+
+warn "All done. Please check over the following files carefully before committing.\nThanks!\n";
+warn "$corelist_file\n$pod_file\n$utils_file\n";
 
 sub write_corelist {
     my $content = shift;
@@ -341,7 +377,7 @@ sub make_corelist_delta {
   my %deltas;
   # Search for the release with the least amount of changes (this avoids having
   # to ask for where this perl was branched from).
-  for my $previous(reverse sort keys %$existing) {
+  for my $previous (reverse sort keys %$existing) {
     # Shouldn't happen, but ensure we don't load weird data...
     next if $previous > $version || $previous == $version && $previous eq $version;
 
@@ -351,8 +387,43 @@ sub make_corelist_delta {
   }
 
   my $smallest = (sort {
-      (keys($deltas{$a}->{changed}) + keys($deltas{$a}->{removed})) <=>
-      (keys($deltas{$b}->{changed})+ keys($deltas{$b}->{removed}))
+      ((keys($deltas{$a}->{changed}) + keys($deltas{$a}->{removed})) <=>
+       (keys($deltas{$b}->{changed}) + keys($deltas{$b}->{removed}))) ||
+      $b <=> $a
+    } keys %deltas)[0];
+
+  return {
+    delta_from => $smallest,
+    changed => $deltas{$smallest}{changed},
+    removed => $deltas{$smallest}{removed},
+  }
+}
+
+sub make_coreutils_delta {
+  my($version, $lines) = @_;
+  # Trust core perl, if someone does use a weird version number the worst that
+  # can happen is an extra delta entry for a module.
+  my %utilities = map { $_ => eval $lines->{$_} } keys %$lines;
+
+  # Ensure we have the corelist data loaded from this perl checkout, not the system one.
+  require $utils_file;
+
+  my %deltas;
+  # Search for the release with the least amount of changes (this avoids having
+  # to ask for where this perl was branched from).
+  for my $previous (reverse sort keys %Module::CoreList::Utils::utilities) {
+    # Shouldn't happen, but ensure we don't load weird data...
+    next if $previous > $version || $previous == $version && $previous eq $version;
+
+    my $delta = $deltas{$previous} = {};
+    ($delta->{changed}, $delta->{removed}) = calculate_delta(
+      $Module::CoreList::Utils::utilities{$previous}, \%utilities);
+  }
+
+  my $smallest = (sort {
+      ((keys($deltas{$a}->{changed}) + keys($deltas{$a}->{removed})) <=>
+       (keys($deltas{$b}->{changed}) + keys($deltas{$b}->{removed}))) ||
+      $b <=> $a
     } keys %deltas)[0];
 
   return {
@@ -393,4 +464,21 @@ sub quote {
     # the simplest possible thing that'll allow me to release 5.17.7.  --rafl
     $str =~ s/'/\\'/g;
     "'${str}'";
+}
+
+sub parse_utils_lst {
+  require File::Spec::Unix;
+  my @scripts;
+  open my $fh, '<', 'utils.lst' or die "$!\n";
+  while (<$fh>) {
+    chomp;
+    my ($file,$extra) = split m!#!;
+    $file =~ s!\s+!!g;
+    push @scripts, $file;
+    $extra =~ s!\s+!!g if $extra;
+    if ( $extra and my ($link) = $extra =~ m!^link=(.+?)$! ) {
+      push @scripts, $link;
+    }
+  }
+  return map { +( File::Spec::Unix->splitpath( $_ ) )[-1] } @scripts;
 }

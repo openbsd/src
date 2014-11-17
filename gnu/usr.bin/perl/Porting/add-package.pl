@@ -94,7 +94,7 @@ my $ModName;        # name of the module
 my @ModFiles;       # the .PMs in this package
 {   print "Creating top level dir..." if $Verbose;
 
-    ### make sure we get the shortest file, so we dont accidentally get
+    ### make sure we get the shortest file, so we don't accidentally get
     ### a subdir
     @ModFiles   =  sort { length($a) <=> length($b) }
                    map  { chomp; $_ }
@@ -283,8 +283,8 @@ my @ChangedFiles;
             push @NewFiles, $file;
         }
 
-        ### add an entry to utils/Makefile.SH for $bin
-        {   my $file = "utils/Makefile.SH";
+        ### add an entry to utils/Makefile.PL for $bin
+        {   my $file = "utils/Makefile.PL";
 
             ### not there already?
             unless( `grep $bin $Repo/$file` ) {
@@ -344,7 +344,7 @@ my @ChangedFiles;
         }
 
         ### we need some entries in a vms specific file as well..
-        ### except, i dont understand how it works or what it does, and it
+        ### except, I don't understand how it works or what it does, and it
         ### looks all a bit odd... so lets just print a warning...
         ### the entries look something like this:
         # ./vms/descrip_mms.template:utils4 = [.utils]enc2xs.com
@@ -358,8 +358,8 @@ my @ChangedFiles;
                 print $/.$/;
                 print "    WARNING! You should add entries like the following\n"
                     . "    to $file (Using $TestBin as an example)\n"
-                    . "    Unfortunately I dont understand what these entries\n"
-                    . "    do, so I wont change them automatically:\n\n";
+                    . "    Unfortunately I don't understand what these entries\n"
+                    . "    do, so I won't change them automatically:\n\n";
 
                 print `grep -nC1 $TestBin $Repo/$file`;
                 print $/.$/;

@@ -71,7 +71,7 @@ foreach my $s (keys %classes) {
 
 # Expected number of tests is one each for every combination of a
 # known is<xxx> function and string listed above.
-plan(tests => keys(%classes) * keys(%functions));
+plan(tests => keys(%classes) * keys(%functions) + 1);
 
 # Main test loop: Run all POSIX::is<xxx> tests on each string defined above.
 # Only the character classes listed for that string should return 1.  We
@@ -81,8 +81,41 @@ plan(tests => keys(%classes) * keys(%functions));
 foreach my $s (sort keys %classes) {
     foreach my $f (sort keys %functions) {
 	my $expected = exists $classes{$s}->{$f};
-	my $actual   = eval "POSIX::$f( \$s )";
+	my $actual   = eval "no warnings 'deprecated'; POSIX::$f( \$s )";
 
 	cmp_ok($actual, '==', $expected, "$f('$s')");
     }
+}
+
+{
+    my @warnings;
+    local $SIG {__WARN__} = sub { push @warnings, @_; };
+
+    foreach (0 .. 3) {
+        my $a;
+        $a =POSIX::isalnum("a");
+        $a =POSIX::isalpha("a");
+        $a =POSIX::iscntrl("a");
+        $a =POSIX::isdigit("a");
+        $a =POSIX::isgraph("a");
+        $a =POSIX::islower("a");
+        $a =POSIX::ispunct("a");
+        $a =POSIX::isspace("a");
+        $a =POSIX::isupper("a");
+        $a =POSIX::isxdigit("a");
+        $a =POSIX::isalnum("a");
+        $a =POSIX::isalpha("a");
+        $a =POSIX::iscntrl("a");
+        $a =POSIX::isdigit("a");
+        $a =POSIX::isgraph("a");
+        $a =POSIX::islower("a");
+        $a =POSIX::ispunct("a");
+        $a =POSIX::isspace("a");
+        $a =POSIX::isupper("a");
+        $a =POSIX::isxdigit("a");
+    }
+
+    # Each of the 10 classes should warn twice, because each has 2 lexical
+    # calls
+    is(scalar @warnings, 20);
 }

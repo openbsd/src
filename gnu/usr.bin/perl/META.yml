@@ -4,11 +4,11 @@ author:
   - perl5-porters@perl.org
 build_requires: {}
 dynamic_config: 1
-generated_by: 'CPAN::Meta version 2.120921, CPAN::Meta::Converter version 2.120921'
+generated_by: 'CPAN::Meta version 2.140640, CPAN::Meta::Converter version 2.140640'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: perl
 no_index:
   directory:
@@ -19,11 +19,11 @@ no_index:
     - dist/bignum
     - dist/Carp
     - dist/constant
-    - dist/Cwd
     - dist/Data-Dumper
     - dist/Devel-SelfStubber
     - dist/Dumpvalue
     - dist/Env
+    - dist/Exporter
     - dist/ExtUtils-CBuilder
     - dist/ExtUtils-Command
     - dist/ExtUtils-Install
@@ -31,7 +31,6 @@ no_index:
     - dist/ExtUtils-ParseXS
     - dist/Filter-Simple
     - dist/I18N-Collate
-    - dist/I18N-LangTags
     - dist/if
     - dist/IO/
     - dist/lib/
@@ -41,6 +40,7 @@ no_index:
     - dist/Math-BigRat
     - dist/Module-CoreList
     - dist/Net-Ping
+    - dist/PathTools
     - dist/Safe
     - dist/Search-Dict
     - dist/SelfLoader
@@ -54,7 +54,6 @@ no_index:
     - dist/threads-shared
     - dist/Tie-File
     - dist/XSLoader
-    - lib/version
     - mad
     - win32
   file:
@@ -102,20 +101,18 @@ no_index:
     - dist/lib/lib_pm.PL
     - dist/lib/Makefile.PL
     - dist/lib/t/01lib.t
-    - lib/Exporter.pm
-    - lib/Exporter.t
-    - lib/Exporter/Heavy.pm
     - lib/unicore/mktables
-    - lib/version.pm
-    - lib/version.pod
     - pod/perlfilter.pod
     - pod/perlpodstyle.pod
     - Porting/Maintainers.pm
     - Porting/perldelta_template.pod
     - TestInit.pm
+    - vutil.c
+    - vutil.h
+    - vxs.inc
 resources:
-  bugtracker: http://rt.perl.org/perlbug/
+  bugtracker: https://rt.perl.org/
   homepage: http://www.perl.org/
   license: http://dev.perl.org/licenses/
   repository: http://perl5.git.perl.org/
-version: 5.018002
+version: '5.020001'

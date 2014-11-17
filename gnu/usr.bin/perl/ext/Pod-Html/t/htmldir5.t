@@ -42,7 +42,7 @@ __DATA__
 <link rev="made" href="mailto:[PERLADMIN]" />
 </head>
 
-<body style="background-color: white">
+<body>
 
 
 

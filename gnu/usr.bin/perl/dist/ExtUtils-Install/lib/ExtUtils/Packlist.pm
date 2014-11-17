@@ -5,7 +5,7 @@ use strict;
 use Carp qw();
 use Config;
 use vars qw($VERSION $Relocations);
-$VERSION = '1.46';
+$VERSION = '1.48';
 $VERSION = eval $VERSION;
 
 # Used for generating filehandle globs.  IO::File might not be available!

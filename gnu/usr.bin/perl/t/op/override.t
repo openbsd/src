@@ -4,9 +4,11 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
+    require Config; # load these before we mess with *CORE::GLOBAL::require
+    require 'Config_heavy.pl'; # since runperl will need them
 }
 
-plan tests => 28;
+plan tests => 35;
 
 #
 # This file tries to test builtin override using CORE::GLOBAL
@@ -144,3 +146,39 @@ BEGIN { *OverridenPop::pop = sub { ::is( $_[0][0], "ok" ) }; }
     };
     is $@, '';
 }
+
+# Constant inlining should not countermand "use subs" overrides
+BEGIN { package other; *::caller = \&::caller }
+sub caller() { 42 }
+caller; # inline the constant
+is caller, 42, 'constant inlining does not undo "use subs" on keywords';
+
+is runperl(prog => 'sub CORE::GLOBAL::do; do file; print qq-ok\n-'),
+  "ok\n",
+  'no crash with CORE::GLOBAL::do stub';
+is runperl(prog => 'sub CORE::GLOBAL::glob; glob; print qq-ok\n-'),
+  "ok\n",
+  'no crash with CORE::GLOBAL::glob stub';
+is runperl(prog => 'sub CORE::GLOBAL::require; require re; print qq-o\n-'),
+  "o\n",
+  'no crash with CORE::GLOBAL::require stub';
+
+like runperl(prog => 'use constant foo=>1; '
+                    .'BEGIN { *{q|CORE::GLOBAL::readpipe|} = \&{q|foo|};1}'
+                    .'warn ``',
+             stderr => 1),
+     qr/Too many arguments/,
+    '`` does not ignore &CORE::GLOBAL::readpipe aliased to a constant';
+like runperl(prog => 'use constant foo=>1; '
+                    .'BEGIN { *{q|CORE::GLOBAL::readline|} = \&{q|foo|};1}'
+                    .'warn <a>',
+             stderr => 1),
+     qr/Too many arguments/,
+    '<> does not ignore &CORE::GLOBAL::readline aliased to a constant';
+
+is runperl(prog => 'use constant t=>42; '
+                  .'BEGIN { *{q|CORE::GLOBAL::time|} = \&{q|t|};1}'
+                  .'print time, chr 10',
+          stderr => 1),
+   "42\n",
+   'keywords respect global constant overrides';

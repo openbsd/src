@@ -10,7 +10,7 @@ $perl = VMS::Filespec::vmsify($perl) if $^O eq 'VMS';
 
 my $Invoke_Perl = qq(MCR $perl "-I[-.lib]");
 
-use Test::More tests => 25;
+use Test::More tests => 29;
 
 SKIP: {
     skip("tests for non-VMS only", 1) if $^O eq 'VMS';
@@ -24,7 +24,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip("tests for VMS only", 24) unless $^O eq 'VMS';
+    skip("tests for VMS only", 28) unless $^O eq 'VMS';
 
 #========== vmsish status ==========
 `$Invoke_Perl -e 1`;  # Avoid system() from a pipe from harness.  Mutter.
@@ -60,6 +60,11 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
   ok(length($msg)==0,"vmsish OK exit, DCL error message check");
   is($?&1,1, "vmsish status check, vmsish OK exit");
 
+  $msg = do_a_perl('-e "\&CORE::exit;use vmsish qw(exit);&CORE::exit(1)"');
+    $msg =~ s/\n/\\n/g; # keep output on one line
+  ok(length($msg)==0,"vmsish OK exit (via &CORE::), DCL err msg check");
+  is($?&1,1, "vmsish status check, vmsish OK exit (&CORE::exit)");
+
   $msg = do_a_perl('-e "use vmsish qw(exit); exit 44"');
     $msg =~ s/\n/\\n/g; # keep output on one line
   like($msg, qr/ABORT/, "vmsish ERR exit, DCL error message check");
@@ -68,6 +73,12 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
   $msg = do_a_perl('-e "use vmsish qw(hushed); exit 1"');
   $msg =~ s/\n/\\n/g; # keep output on one line
   ok(($msg !~ /ABORT/),"POSIX ERR exit, vmsish hushed, DCL error message check");
+
+  $msg = do_a_perl('-e "\&CORE::exit; use vmsish qw(hushed); '
+                  .'vmsish::hushed(0); &CORE::exit 1"');
+  $msg =~ s/\n/\\n/g; # keep output on one line
+  ok(($msg !~ /ABORT/),
+   "POSIX ERR exit, vmsish hushed, DCL error message check (&CORE::exit)");
 
   $msg = do_a_perl('-e "use vmsish qw(exit hushed); exit 44"');
     $msg =~ s/\n/\\n/g; # keep output on one line
@@ -80,6 +91,11 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
   $msg = do_a_perl('-e "use vmsish qw(hushed); die(qw(blah));"');
   $msg =~ s/\n/\\n/g; # keep output on one line
   ok(($msg !~ /ABORT/),"die, vmsish hushed, DCL error message check");
+
+  $msg = do_a_perl('-e "\&CORE::die; use vmsish qw(hushed); '
+                  .'vmsish::hushed(0); &CORE::die(qw(blah));"');
+  $msg =~ s/\n/\\n/g; # keep output on one line
+  ok(($msg !~ /ABORT/),"&CORE::die, vmsish hushed, DCL error msg check");
 
   $msg = do_a_perl('-e "use vmsish qw(hushed); use Carp; croak(qw(blah));"');
   $msg =~ s/\n/\\n/g; # keep output on one line

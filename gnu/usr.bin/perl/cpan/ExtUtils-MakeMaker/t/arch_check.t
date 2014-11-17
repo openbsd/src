@@ -9,7 +9,7 @@ use Test::More 'no_plan';
 use Config;
 use ExtUtils::MakeMaker;
 
-ok( my $stdout = tie *STDOUT, 'TieOut' );    
+ok( my $stdout = tie *STDOUT, 'TieOut' );
 
 # Create a normalized MM object to test with
 my $mm = bless {}, "MM";
@@ -32,11 +32,11 @@ ok $mm->arch_check(
     );
 
     like $stdout->read, qr{\Q
-Your perl and your Config.pm seem to have different ideas about the 
+Your perl and your Config.pm seem to have different ideas about the
 architecture they are running on.
 Perl thinks: [arch1]
 Config says: [$Config{archname}]
-This may or may not cause problems. Please check your installation of perl 
+This may or may not cause problems. Please check your installation of perl
 if you have problems building this extension.
 };
 

@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Config;
+use constant IS_CROSS => defined $Config::Config{usecrosscompile} ? 1 : 0;
 
 my $is_Win32 = $^O eq 'MSWin32';
 my $is_VMS = $^O eq 'VMS';
@@ -43,8 +44,9 @@ my $ext_dirs_re = '(?:' . join('|', @ext_dirs) . ')';
 # Mostly because they still not ported to specified platform.
 # 
 # If any extensions are listed with a '+' char then only those
-# extensions will be built, but only if they arent countermanded
+# extensions will be built, but only if they aren't countermanded
 # by an '!ext' and are appropriate to the type of building being done.
+# An extensions follows the format of Foo/Bar, which would be extension Foo::Bar
 
 # It may be deleted in a later release of perl so try to
 # avoid using it for other purposes.
@@ -118,15 +120,13 @@ unless(defined $makecmd and $makecmd =~ /^MAKE=(.*)$/) {
 # names, but neither did what it replaced. Once there is a use case that needs
 # it, please supply patches. Until then, I'm sticking to KISS
 my @make = split ' ', $1 || $Config{make} || $ENV{MAKE};
-# Using an array of 0 or 1 elements makes the subsequent code simpler.
-my @run = $Config{run};
-@run = () if not defined $run[0] or $run[0] eq '';
 
 
 if ($target eq '') {
     die "make_ext: no make target specified (eg all or clean)\n";
-} elsif ($target !~ /(?:^all|clean)$/) {
-    # for the time being we are strict about what make_ext is used for
+} elsif ($target !~ /^(?:all|clean|distclean|realclean|veryclean)$/) {
+    # we are strict about what make_ext is used for because we emulate these
+    # targets for simple modules:
     die "$0: unknown make target '$target'\n";
 }
 
@@ -154,7 +154,7 @@ if ($is_Win32) {
     unless (-f "$pl2bat.bat") {
 	my @args = ($perl, "-I$topdir\\lib", ("$pl2bat.pl") x 2);
 	print "@args\n";
-	system(@args) unless defined $::Cross::platform;
+	system(@args) unless IS_CROSS;
     }
 
     print "In $build";
@@ -230,6 +230,11 @@ foreach my $spec (@extspec)  {
     # Try new style ext/Data-Dumper/ first
     my $copy = $spec;
     $copy =~ tr!/!-!;
+
+    # List/Util.xs lives in Scalar-List-Utils, Cwd.xs lives in PathTools
+    $copy = 'Scalar-List-Utils' if $copy eq 'List-Util';
+    $copy = 'PathTools'         if $copy eq 'Cwd';
+
     foreach my $dir (@ext_dirs) {
 	if (-d "$dir/$copy") {
 	    $ext_pathname = "$dir/$copy";
@@ -249,12 +254,12 @@ foreach my $spec (@extspec)  {
 
     print "\tMaking $mname ($target)\n";
 
-    build_extension($ext_pathname, $perl, $mname,
+    build_extension($ext_pathname, $perl, $mname, $target,
 		    [@pass_through, @{$extra_passthrough{$spec} || []}]);
 }
 
 sub build_extension {
-    my ($ext_dir, $perl, $mname, $pass_through) = @_;
+    my ($ext_dir, $perl, $mname, $target, $pass_through) = @_;
 
     unless (chdir "$ext_dir") {
 	warn "Cannot cd to $ext_dir: $!";
@@ -298,13 +303,51 @@ sub build_extension {
 	    require ExtUtils::MM_Unix;
 	    defined (my $newv = parse_version MM $vmod) or last;
 	    if ($newv ne $oldv) {
-		1 while unlink $makefile
+		close $mfh or die "close $makefile: $!";
+		_unlink($makefile);
+		{
+		    no warnings 'deprecated';
+		    goto NO_MAKEFILE;
+		}
 	    }
 	}
+
+        if (IS_CROSS) {
+            # If we're cross-compiling, it's possible that the host's
+            # Makefiles are around.
+            seek($mfh, 0, 0) or die "Cannot seek $makefile: $!";
+            
+            my $cross_makefile;
+            while (<$mfh>) {
+                # XXX This might not be throughout enough.
+                # For example, it's possible to cause a false-positive
+                # if cross compiling on and for the Raspberry Pi,
+                # which is insane but plausible.
+                # False positives are really not troublesome, though;
+                # all they mean is that the module gets rebuilt.
+                if (/^CC = \Q$Config{cc}\E/) {
+                    $cross_makefile = 1;
+                    last;
+                }
+            }
+            
+            if (!$cross_makefile) {
+                print "Deleting non-Cross makefile\n";
+                close $mfh or die "close $makefile: $!";
+                _unlink($makefile);
+            }
+        }
     }
 
     if (!-f $makefile) {
+	NO_MAKEFILE:
 	if (!-f 'Makefile.PL') {
+            unless (just_pm_to_blib($target, $ext_dir, $mname, $return_dir)) {
+                # No problems returned, so it has faked everything for us. :-)
+                chdir $return_dir || die "Cannot cd to $return_dir: $!";
+                return;
+            }
+
 	    print "\nCreating Makefile.PL in $ext_dir for $mname\n";
 	    my ($fromname, $key, $value);
 	    if ($mname eq 'podlators') {
@@ -323,6 +366,7 @@ sub build_extension {
 		my $leafname = "$leaf.pm";
 		my $pathname = join '/', @dirs, $leafname;
 		my @locations = ($leafname, $pathname, "lib/$pathname");
+		unshift @locations, 'lib/IO/Compress/Base.pm' if $mname eq 'IO::Compress';
 		foreach (@locations) {
 		    if (-f $_) {
 			$fromname = $_;
@@ -402,20 +446,54 @@ EOM
 		my $ftime = time - 4;
 		utime $ftime, $ftime, 'Makefile.PL';
 	    };
+        } elsif ($mname =~ /\A(?:Carp
+                            |ExtUtils::CBuilder
+                            |Safe
+                            |Search::Dict)\z/x) {
+            # An explicit list of dual-life extensions that have a Makefile.PL
+            # for CPAN, but we have verified can also be built using the fakery.
+            my ($problem) = just_pm_to_blib($target, $ext_dir, $mname, $return_dir);
+            # We really need to sanity test that we can fake it.
+            # Otherwise "skips" will go undetected, and the build slow down for
+            # everyone, defeating the purpose.
+            if (defined $problem) {
+                if (-d "$return_dir/.git") {
+                    # Get the list of files that git isn't ignoring:
+                    my @files = `git ls-files --cached --others --exclude-standard 2>/dev/null`;
+                    # on error (eg no git) we get nothing, but that's not a
+                    # problem. The goal is to see if git thinks that the problem
+                    # file is interesting, by getting a positive match with
+                    # something git told us about, and if so bail out:
+                    foreach (@files) {
+                        chomp;
+                        # We really need to sanity test that we can fake it.
+                        # The intent is that this should only fail because
+                        # you've just added a file to the dual-life dist that
+                        # we can't handle. In which case you should either
+                        # 1) remove the dist from the regex a few lines above.
+                        # or
+                        # 2) add the file to regex of "safe" filenames earlier
+                        #    in this function, that starts with ChangeLog
+                        die "FATAL - $0 has $mname in the list of simple extensions, but it now contains file '$problem' which we can't handle"
+                            if $problem eq $_;
+                    }
+                    # There's an unexpected file, but it seems to be something
+                    # that git will ignore. So fall through to the regular
+                    # Makefile.PL handling code below, on the assumption that
+                    # we won't get here for a clean build.
+                }
+                warn "WARNING - $0 is building $mname using EU::MM, as it found file '$problem'";
+            } else {
+                # It faked everything for us.
+                chdir $return_dir || die "Cannot cd to $return_dir: $!";
+                return;
+            }
 	}
+
+        # We are going to have to use Makefile.PL:
 	print "\nRunning Makefile.PL in $ext_dir\n";
 
-	# Presumably this can be simplified
-	my @cross;
-	if (defined $::Cross::platform) {
-	    # Inherited from win32/buildext.pl
-	    @cross = "-MCross=$::Cross::platform";
-	} elsif ($opts{cross}) {
-	    # Inherited from make_ext.pl
-	    @cross = '-MCross';
-	}
-
-	my @args = ("-I$lib_dir", @cross, 'Makefile.PL');
+	my @args = ("-I$lib_dir", 'Makefile.PL');
 	if ($is_VMS) {
 	    my $libd = VMS::Filespec::vmspath($lib_dir);
 	    push @args, "INST_LIB=$libd", "INST_ARCHLIB=$libd";
@@ -425,8 +503,8 @@ EOM
 	}
 	push @args, @$pass_through;
 	_quote_args(\@args) if $is_VMS;
-	print join(' ', @run, $perl, @args), "\n";
-	my $code = system @run, $perl, @args;
+	print join(' ', $perl, @args), "\n";
+	my $code = system $perl, @args;
 	warn "$code from $ext_dir\'s Makefile.PL" if $code;
 
 	# Right. The reason for this little hack is that we're sitting inside
@@ -441,14 +519,8 @@ EOM
 	# But this always used to be a problem with the old /bin/sh version of
 	# this.
 	if ($is_Unix) {
-	    my $suffix = '.sh';
 	    foreach my $clean_target ('realclean', 'veryclean') {
-		my $file = "$return_dir/$clean_target$suffix";
-		open my $fh, '>>', $file or die "open $file: $!";
-		# Quite possible that we're being run in parallel here.
-		# Can't use Fcntl this early to get the LOCK_EX
-		flock $fh, 2 or warn "flock $file: $!";
-		print $fh <<"EOS";
+                fallback_cleanup($return_dir, $clean_target, <<"EOS");
 cd $ext_dir
 if test ! -f Makefile -a -f Makefile.old; then
     echo "Note: Using Makefile.old"
@@ -461,7 +533,6 @@ else
 fi
 cd $return_dir
 EOS
-		close $fh or die "close $file: $!";
 	    }
 	}
     }
@@ -482,11 +553,11 @@ EOS
 	# Give makefile an opportunity to rewrite itself.
 	# reassure users that life goes on...
 	my @args = ('config', @$pass_through);
-	system(@run, @make, @args) and print "@run @make @args failed, continuing anyway...\n";
+	system(@make, @args) and print "@make @args failed, continuing anyway...\n";
     }
     my @targ = ($target, @$pass_through);
-    print "Making $target in $ext_dir\n@run @make @targ\n";
-    my $code = system(@run, @make, @targ);
+    print "Making $target in $ext_dir\n@make @targ\n";
+    my $code = system(@make, @targ);
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
     chdir $return_dir || die "Cannot cd to $return_dir: $!";
@@ -502,4 +573,162 @@ sub _quote_args {
         }
     } @{$args}
     ;
+}
+
+#guarentee that a file is deleted or die, void _unlink($filename)
+#xxx replace with _unlink_or_rename from EU::Install?
+sub _unlink {
+    1 while unlink $_[0];
+    my $err = $!;
+    die "Can't unlink $_[0]: $err" if -f $_[0];
+}
+
+# Figure out if this extension is simple enough that it would only use
+# ExtUtils::MakeMaker's pm_to_blib target. If we're confident that it would,
+# then do all the work ourselves (returning an empty list), else return the
+# name of a file that we identified as beyond our ability to handle.
+#
+# While this is clearly quite a bit more work than just letting
+# ExtUtils::MakeMaker do it, and effectively is some code duplication, the time
+# savings are impressive.
+
+sub just_pm_to_blib {
+    my ($target, $ext_dir, $mname, $return_dir) = @_;
+    my ($has_lib, $has_top, $has_topdir);
+    my ($last) = $mname =~ /([^:]+)$/;
+    my ($first) = $mname =~ /^([^:]+)/;
+
+    my $pm_to_blib = $is_VMS ? 'pm_to_blib.ts' : 'pm_to_blib';
+
+    foreach my $leaf (<*>) {
+        if (-d $leaf) {
+            $leaf =~ s/\.DIR\z//i
+                if $is_VMS;
+            next if $leaf =~ /\A(?:\.|\.\.|t|demo)\z/;
+            if ($leaf eq 'lib') {
+                ++$has_lib;
+                next;
+            }
+            if ($leaf eq $first) {
+                ++$has_topdir;
+                next;
+            }
+        }
+        return $leaf
+            unless -f _;
+        $leaf =~ s/\.\z//
+            if $is_VMS;
+        # Makefile.PL is "safe" to ignore because we will only be called for
+        # directories that hold a Makefile.PL if they are in the exception list.
+        next
+            if $leaf =~ /\A(ChangeLog
+                            |Changes
+                            |LICENSE
+                            |Makefile\.PL
+                            |MANIFEST
+                            |META\.yml
+                            |\Q$pm_to_blib\E
+                            |README
+                            |README\.patching
+                            |README\.release
+                            )\z/xi; # /i to deal with case munging systems.
+        if ($leaf eq "$last.pm") {
+            ++$has_top;
+            next;
+        }
+        return $leaf;
+    }
+    return 'no lib/'
+        unless $has_lib || $has_top;
+    die "Inconsistent module $mname has both lib/ and $first/"
+        if $has_lib && $has_topdir;
+
+    print "\nRunning pm_to_blib for $ext_dir directly\n";
+
+    my %pm;
+    if ($has_top) {
+        my $to = $mname =~ s!::!/!gr;
+        $pm{"$last.pm"} = "../../lib/$to.pm";
+    }
+    if ($has_lib || $has_topdir) {
+        # strictly ExtUtils::MakeMaker uses the pm_to_blib target to install
+        # .pm, pod and .pl files. We're just going to do it for .pm and .pod
+        # files, to avoid problems on case munging file systems. Specifically,
+        # _pm.PL which ExtUtils::MakeMaker should run munges to _PM.PL, and
+        # looks a lot like a regular foo.pl (ie FOO.PL)
+        my @found;
+        require File::Find;
+        unless (eval {
+            File::Find::find({
+                              no_chdir => 1,
+                              wanted => sub {
+                                  return if -d $_;
+                                  # Bail out immediately with the problem file:
+                                  die \$_
+                                      unless -f _;
+                                  die \$_
+                                      unless /\A[^.]+\.(?:pm|pod)\z/i;
+                                  push @found, $_;
+                              }
+                             }, $has_lib ? 'lib' : $first);
+            1;
+        }) {
+            # Problem files aren't really errors:
+            return ${$@}
+                if ref $@ eq 'SCALAR';
+            # But anything else is:
+            die $@;
+        }
+        if ($has_lib) {
+            $pm{$_} = "../../$_"
+                foreach @found;
+        } else {
+            $pm{$_} = "../../lib/$_"
+                foreach @found;
+        }
+    }
+    # This is running under miniperl, so no autodie
+    if ($target eq 'all') {
+        require ExtUtils::Install;
+        ExtUtils::Install::pm_to_blib(\%pm, '../../lib/auto');
+        open my $fh, '>', $pm_to_blib
+            or die "Can't open '$pm_to_blib': $!";
+        print $fh "$0 has handled pm_to_blib directly\n";
+        close $fh
+            or die "Can't close '$pm_to_blib': $!";
+	if ($is_Unix) {
+            # Fake the fallback cleanup
+            my $fallback
+                = join '', map {s!^\.\./\.\./!!; "rm -f $_\n"} sort values %pm;
+            foreach my $clean_target ('realclean', 'veryclean') {
+                fallback_cleanup($return_dir, $clean_target, $fallback);
+            }
+        }
+    } else {
+        # A clean target.
+        # For now, make the targets behave the same way as ExtUtils::MakeMaker
+        # does
+        _unlink($pm_to_blib);
+        unless ($target eq 'clean') {
+            # but cheat a bit, by relying on the top level Makefile clean target
+            # to take out our directory lib/auto/...
+            # (which it has to deal with, as cpan/foo/bar creates
+            # lib/auto/foo/bar, but the EU::MM rule will only
+            # rmdir lib/auto/foo/bar, leaving lib/auto/foo
+            _unlink("../../$_")
+                foreach sort values %pm;
+        }
+    }
+    return;
+}
+
+sub fallback_cleanup {
+    my ($dir, $clean_target, $contents) = @_;
+    my $file = "$dir/$clean_target.sh";
+    open my $fh, '>>', $file or die "open $file: $!";
+    # Quite possible that we're being run in parallel here.
+    # Can't use Fcntl this early to get the LOCK_EX
+    flock $fh, 2 or warn "flock $file: $!";
+    print $fh $contents or die "print $file: $!";
+    close $fh or die "close $file: $!";
 }

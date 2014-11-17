@@ -19,6 +19,7 @@ WriteMakefile
     'PREREQ_PM' => {
         'Test::More' => '0',
         'List::Util' => 0,
+        'version' => 0.88,
     },
     'EXE_FILES' => [ _scripts() ],
     'INSTALLDIRS' => ($] < 5.011 ? 'perl' : 'site'),

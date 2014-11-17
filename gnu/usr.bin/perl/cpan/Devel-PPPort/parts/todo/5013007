@@ -1,7 +1,6 @@
 5.013007
 HvENAME                        # U
 OP_CLASS                       # U
-SvPV_nomg_nolen                # U
 XopFLAGS                       # E
 amagic_deref_call              # U
 bytes_cmp_utf8                 # U

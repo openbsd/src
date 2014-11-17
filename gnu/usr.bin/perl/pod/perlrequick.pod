@@ -85,8 +85,9 @@ for a carriage return.  Arbitrary bytes are represented by octal
 escape sequences, e.g., C<\033>, or hexadecimal escape sequences,
 e.g., C<\x1B>:
 
-    "1000\t2000" =~ m(0\t2)      # matches
-    "cat"      =~ /\143\x61\x74/ # matches in ASCII, but a weird way to spell cat
+    "1000\t2000" =~ m(0\t2)  # matches
+    "cat" =~ /\143\x61\x74/  # matches in ASCII, but 
+                             # a weird way to spell cat
 
 Regexes are treated mostly as double-quoted strings, so variable
 substitution works:
@@ -353,7 +354,7 @@ Here are some examples:
     /(\w+)\s+\g1/;    # match doubled words of arbitrary length
     $year =~ /^\d{2,4}$/;  # make sure year is at least 2 but not more
                            # than 4 digits
-    $year =~ /^\d{4}$|^\d{2}$/;    # better match; throw out 3 digit dates
+    $year =~ /^\d{4}$|^\d{2}$/; # better match; throw out 3 digit dates
 
 These quantifiers will try to match as much of the string as possible,
 while still allowing the regex to match.  So we have
@@ -437,7 +438,8 @@ substitute was bound to with C<=~>):
     print "$x $y\n"; # prints "I like dogs. I like cats."
 
     $x = "Cats are great.";
-    print $x =~ s/Cats/Dogs/r =~ s/Dogs/Frogs/r =~ s/Frogs/Hedgehogs/r, "\n";
+    print $x =~ s/Cats/Dogs/r =~ s/Dogs/Frogs/r =~
+        s/Frogs/Hedgehogs/r, "\n";
     # prints "Hedgehogs are great."
 
     @foo = map { s/[a-z]/X/r } qw(a b c 1 2 3);

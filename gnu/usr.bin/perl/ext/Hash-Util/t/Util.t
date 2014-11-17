@@ -37,7 +37,7 @@ BEGIN {
                      hv_store
                      lock_hash_recurse unlock_hash_recurse
                     );
-    plan tests => 234 + @Exported_Funcs;
+    plan tests => 236 + @Exported_Funcs;
     use_ok 'Hash::Util', @Exported_Funcs;
 }
 foreach my $func (@Exported_Funcs) {
@@ -197,6 +197,7 @@ like(
     qr/^Attempt to access disallowed key 'I_DONT_EXIST' in a restricted hash/,
     'locked %ENV'
 );
+unlock_keys(%ENV); # Test::Builder cannot print test failures otherwise
 
 {
     my %hash;
@@ -324,6 +325,18 @@ like(
     lock_keys(%hash);
     %hash = ();
     ok(keys(%hash) == 0, 'clear empty lock_keys() hash');
+}
+
+# Copy-on-write scalars should not be deletable after lock_hash;
+{
+    my %hash = (key=>__PACKAGE__);
+    lock_hash(%hash);
+    eval { delete $hash{key} };
+    like $@, qr/^Attempt to delete readonly key /,
+        'COW scalars are not exempt from lock_hash (delete)';
+    eval { %hash = () };
+    like $@, qr/^Attempt to delete readonly key /,
+        'COW scalars are not exempt from lock_hash (clear)';
 }
 
 my $hash_seed = hash_seed();

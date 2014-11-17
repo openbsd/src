@@ -3,7 +3,7 @@ package Module::CoreList::TieHashDelta;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = "3.03";
+$VERSION = '5.020001';
 
 sub TIEHASH {
     my ($class, $changed, $removed, $parent) = @_;
@@ -32,12 +32,14 @@ sub FETCH {
 sub EXISTS {
     my ($self, $key) = @_;
 
+    restart:
     if (exists $self->{changed}{$key}) {
         return 1;
     } elsif (exists $self->{removed}{$key}) {
         return '';
     } elsif (defined $self->{parent}) {
-        return exists $self->{parent}{$key};
+        $self = tied %{$self->{parent}}; #avoid extreme magic/tie recursion
+        goto restart;
     }
     return '';
 }

@@ -20,6 +20,7 @@ package Tie::CPHash;
 
 require 5.000;
 use strict;
+use warnings;
 use vars qw(@ISA $VERSION);
 
 @ISA = qw();

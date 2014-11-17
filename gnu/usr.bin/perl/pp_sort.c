@@ -53,9 +53,12 @@
  * The original code was written in conjunction with BSD Computer Software
  * Research Group at University of California, Berkeley.
  *
- * See also: "Optimistic Merge Sort" (SODA '92)
+ * See also: "Optimistic Sorting and Information Theoretic Complexity"
+ *           Peter McIlroy
+ *           SODA (Fourth Annual ACM-SIAM Symposium on Discrete Algorithms),
+ *           pp 467-474, Austin, Texas, 25-27 January 1993.
  *
- * The integration to Perl is by John P. Linderman <jpl@research.att.com>.
+ * The integration to Perl is by John P. Linderman <jpl.jpl@gmail.com>.
  *
  * The code can be distributed under the same terms as Perl itself.
  *
@@ -1430,11 +1433,11 @@ S_qsortsv(pTHX_ gptr *list1, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
 
 =for apidoc sortsv
 
-Sort an array. Here is an example:
+Sort an array.  Here is an example:
 
     sortsv(AvARRAY(av), av_top_index(av)+1, Perl_sv_cmp_locale);
 
-Currently this always uses mergesort. See sortsv_flags for a more
+Currently this always uses mergesort.  See sortsv_flags for a more
 flexible routine.
 
 =cut
@@ -1474,15 +1477,15 @@ PP(pp_sort)
 {
     dVAR; dSP; dMARK; dORIGMARK;
     SV **p1 = ORIGMARK+1, **p2;
-    I32 max, i;
+    SSize_t max, i;
     AV* av = NULL;
-    HV *stash;
     GV *gv;
     CV *cv = NULL;
     I32 gimme = GIMME;
     OP* const nextop = PL_op->op_next;
     I32 overloading = 0;
     bool hasargs = FALSE;
+    bool copytmps;
     I32 is_xsub = 0;
     I32 sorting_av = 0;
     const U8 priv = PL_op->op_private;
@@ -1509,14 +1512,13 @@ PP(pp_sort)
     SAVEVPTR(PL_sortcop);
     if (flags & OPf_STACKED) {
 	if (flags & OPf_SPECIAL) {
-	    OP *kid = cLISTOP->op_first->op_sibling;	/* pass pushmark */
-	    kid = kUNOP->op_first;			/* pass rv2gv */
-	    kid = kUNOP->op_first;			/* pass leave */
-	    PL_sortcop = kid->op_next;
-	    stash = CopSTASH(PL_curcop);
+	    OP *nullop = cLISTOP->op_first->op_sibling;	/* pass pushmark */
+            assert(nullop->op_type == OP_NULL);
+	    PL_sortcop = nullop->op_next;
 	}
 	else {
 	    GV *autogv = NULL;
+	    HV *stash;
 	    cv = sv_2cv(*++MARK, &stash, &gv, GV_ADD);
 	  check_cv:
 	    if (cv && SvPOK(cv)) {
@@ -1564,7 +1566,6 @@ PP(pp_sort)
     }
     else {
 	PL_sortcop = NULL;
-	stash = CopSTASH(PL_curcop);
     }
 
     /* optimiser converts "@a = sort @a" to "sort \@a";
@@ -1588,7 +1589,10 @@ PP(pp_sort)
 	    if (SvREADONLY(av))
 		Perl_croak_no_modify();
 	    else
+	    {
 		SvREADONLY_on(av);
+		save_pushptr((void *)av, SAVEt_READONLY_OFF);
+	    }
 	    p1 = p2 = AvARRAY(av);
 	    sorting_av = 1;
 	}
@@ -1601,8 +1605,13 @@ PP(pp_sort)
     /* shuffle stack down, removing optional initial cv (p1!=p2), plus
      * any nulls; also stringify or converting to integer or number as
      * required any args */
+    copytmps = !sorting_av && PL_sortcop;
     for (i=max; i > 0 ; i--) {
 	if ((*p1 = *p2++)) {			/* Weed out nulls. */
+	    if (copytmps && SvPADTMP(*p1)) {
+                assert(!IS_PADGV(*p1));
+		*p1 = sv_mortalcopy(*p1);
+            }
 	    SvTEMP_off(*p1);
 	    if (!PL_sortcop) {
 		if (priv & OPpSORT_NUMERIC) {
@@ -1646,12 +1655,14 @@ PP(pp_sort)
 	    CATCH_SET(TRUE);
 	    PUSHSTACKi(PERLSI_SORT);
 	    if (!hasargs && !is_xsub) {
-		SAVESPTR(PL_firstgv);
-		SAVESPTR(PL_secondgv);
-		SAVESPTR(PL_sortstash);
-		PL_firstgv = gv_fetchpvs("a", GV_ADD|GV_NOTQUAL, SVt_PV);
-		PL_secondgv = gv_fetchpvs("b", GV_ADD|GV_NOTQUAL, SVt_PV);
-		PL_sortstash = stash;
+		SAVEGENERICSV(PL_firstgv);
+		SAVEGENERICSV(PL_secondgv);
+		PL_firstgv = MUTABLE_GV(SvREFCNT_inc(
+		    gv_fetchpvs("a", GV_ADD|GV_NOTQUAL, SVt_PV)
+		));
+		PL_secondgv = MUTABLE_GV(SvREFCNT_inc(
+		    gv_fetchpvs("b", GV_ADD|GV_NOTQUAL, SVt_PV)
+		));
 		SAVESPTR(GvSV(PL_firstgv));
 		SAVESPTR(GvSV(PL_secondgv));
 	    }

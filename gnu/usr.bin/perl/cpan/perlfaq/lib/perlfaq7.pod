@@ -174,7 +174,7 @@ Here's an example:
     $person->{AGE}  = 24;           # set field AGE to 24
     $person->{NAME} = "Nat";        # set field NAME to "Nat"
 
-If you're looking for something a bit more rigorous, try L<perltoot>.
+If you're looking for something a bit more rigorous, try L<perlootut>.
 
 =head2 How do I create a module?
 
@@ -189,8 +189,8 @@ to automate as much as possible.
 Detailed documentation about modules can be found at:
 L<perlmod>, L<perlmodlib>, L<perlmodstyle>.
 
-If you need to include C code or C library interfaces 
-use h2xs. h2xs will create the module distribution structure 
+If you need to include C code or C library interfaces
+use h2xs. h2xs will create the module distribution structure
 and the initial interface files.
 L<perlxs> and L<perlxstut> explain the details.
 
@@ -201,7 +201,7 @@ transfer the module to you.
 
 If you can not reach the author for some reason contact
 the PAUSE admins at modules@perl.org who may be able to help,
-but each case it treated seperatly.
+but each case it treated separately.
 
 =over 4
 
@@ -240,10 +240,7 @@ Perl doesn't get more formal than that and lets you set up the package
 just the way that you like it (that is, it doesn't set up anything for
 you).
 
-The Perl documentation has several tutorials that cover class
-creation, including L<perlboot> (Barnyard Object Oriented Tutorial),
-L<perltoot> (Tom's Object Oriented Tutorial), L<perlbot> (Bag o'
-Object Tricks), and L<perlobj>.
+See also L<perlootut>, a tutorial that covers class creation, and L<perlobj>.
 
 =head2 How can I tell if a variable is tainted?
 
@@ -633,7 +630,7 @@ then you'll want to use the C<use overload> pragma, documented
 in L<overload>.
 
 If you're talking about obscuring method calls in parent classes,
-see L<perltoot/"Overridden Methods">.
+see L<perlootut/"Overriding methods and method resolution">.
 
 =head2 What's the difference between calling a function as &foo and foo()?
 
@@ -644,29 +641,49 @@ the prototype of C<foo> and passes it the current value of the argument
 list, C<@_>. Here's an example; the C<bar> subroutine calls C<&foo>,
 which prints its arguments list:
 
-    sub bar { &foo }
+    sub foo { print "Args in foo are: @_\n"; }
 
-    sub foo { print "Args in foo are: @_\n" }
+    sub bar { &foo; }
 
-    bar( qw( a b c ) );
+    bar( "a", "b", "c" );
 
 When you call C<bar> with arguments, you see that C<foo> got the same C<@_>:
 
     Args in foo are: a b c
 
 Calling the subroutine with trailing parentheses, with or without arguments,
-does not use the current C<@_> and respects the subroutine prototype. Changing
-the example to put parentheses after the call to C<foo> changes the program:
+does not use the current C<@_>. Changing the example to put parentheses after
+the call to C<foo> changes the program:
 
-    sub bar { &foo() }
+    sub foo { print "Args in foo are: @_\n"; }
 
-    sub foo { print "Args in foo are: @_\n" }
+    sub bar { &foo(); }
 
-    bar( qw( a b c ) );
+    bar( "a", "b", "c" );
 
 Now the output shows that C<foo> doesn't get the C<@_> from its caller.
 
     Args in foo are:
+
+However, using C<&> in the call still overrides the prototype of C<foo> if
+present:
+
+    sub foo ($$$) { print "Args infoo are: @_\n"; }
+
+    sub bar_1 { &foo; }
+    sub bar_2 { &foo(); }
+    sub bar_3 { foo( $_[0], $_[1], $_[2] ); }
+    # sub bar_4 { foo(); }
+    # bar_4 doesn't compile: "Not enough arguments for main::foo at ..."
+
+    bar_1( "a", "b", "c" );
+    # Args in foo are: a b c
+
+    bar_2( "a", "b", "c" );
+    # Args in foo are:
+
+    bar_3( "a", "b", "c" );
+    # Args in foo are: a b c
 
 The main use of the C<@_> pass-through feature is to write subroutines
 whose main job it is to call other subroutines for you. For further
@@ -772,9 +789,8 @@ when complex syntax is involved.
 
 =head2 How can I catch accesses to undefined variables, functions, or methods?
 
-The AUTOLOAD method, discussed in L<perlsub/"Autoloading"> and
-L<perltoot/"AUTOLOAD: Proxy Methods">, lets you capture calls to
-undefined functions and methods.
+The AUTOLOAD method, discussed in L<perlsub/"Autoloading"> lets you capture
+calls to undefined functions and methods.
 
 When it comes to undefined variables that would trigger a warning
 under C<use warnings>, you can promote the warning to an error.
@@ -785,7 +801,7 @@ under C<use warnings>, you can promote the warning to an error.
 
 Some possible reasons: your inheritance is getting confused, you've
 misspelled the method name, or the object is of the wrong type. Check
-out L<perltoot> for details about any of the above cases. You may
+out L<perlootut> for details about any of the above cases. You may
 also use C<print ref($object)> to find out the class C<$object> was
 blessed into.
 
@@ -1046,9 +1062,17 @@ If you get a message like "perl: command not found", perl is not in
 your PATH, which might also mean that the location of perl is not
 where you expect it so you need to adjust your shebang line.
 
+=head2 Do I need to recompile XS modules when there is a change in the C library?
+
+(contributed by Alex Beamish)
+
+If the new version of the C library is ABI-compatible (that's Application
+Binary Interface compatible) with the version you're upgrading from, and if the
+shared library version didn't change, no re-compilation should be necessary.
+
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2010 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2013 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

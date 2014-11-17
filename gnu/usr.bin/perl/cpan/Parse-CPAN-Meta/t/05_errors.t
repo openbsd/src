@@ -5,16 +5,6 @@ delete $ENV{PERL_JSON_BACKEND};
 
 # Testing of basic document structures
 
-BEGIN {
-	if( $ENV{PERL_CORE} ) {
-		chdir 't';
-		@INC = ('../lib', 'lib');
-	}
-	else {
-		unshift @INC, 't/lib/';
-	}
-}
-
 use strict;
 BEGIN {
 	$|  = 1;

@@ -33,11 +33,7 @@
  * Important ones in the first cache line (if alignment is done right) */
 
 PERLVAR(I, stack_sp,	SV **)		/* top of the stack */
-#ifdef OP_IN_REGISTER
-PERLVAR(I, opsave,	OP *)
-#else
 PERLVAR(I, op,		OP *)		/* currently executing op */
-#endif
 PERLVAR(I, curpad,	SV **)		/* active pad (lexicals+tmps) */
 
 PERLVAR(I, stack_base,	SV **)
@@ -53,9 +49,9 @@ PERLVAR(I, scopestack_ix, I32)
 PERLVAR(I, scopestack_max, I32)
 
 PERLVAR(I, tmps_stack,	SV **)		/* mortals we've made */
-PERLVARI(I, tmps_ix,	I32,	-1)
-PERLVARI(I, tmps_floor,	I32,	-1)
-PERLVAR(I, tmps_max,	I32)
+PERLVARI(I, tmps_ix,	SSize_t,	-1)
+PERLVARI(I, tmps_floor,	SSize_t,	-1)
+PERLVAR(I, tmps_max,	SSize_t)
 
 PERLVARI(I, sub_generation, U32, 1)	/* incr to invalidate method cache */
 
@@ -80,6 +76,7 @@ PERLVAR(I, tainted,	bool)		/* using variables controlled by $< */
 PERLVAR(I, delaymagic,	U16)		/* ($<,$>) = ... */
 PERLVAR(I, localizing,	U8)		/* are we processing a local() list? */
 PERLVAR(I, in_eval,	U8)		/* trap "fatal" errors? */
+PERLVAR(I, defgv,	GV *)           /* the *_ glob */
 /*
 
 =for apidoc mn|bool|PL_dowarn
@@ -113,16 +110,18 @@ PERLVAR(I, mainstack,	AV *)		/* the stack when nothing funny is
 /* memory management */
 PERLVAR(I, sv_count,	IV)		/* how many SV* are currently allocated */
 PERLVAR(I, sv_objcount,	IV)		/* DEPRECATED AND UNMAINTAINED.
-                                         * Will be removed in Perl 5.20.
+                                         * Will be removed in Perl 5.22.
                                          * Used to be: how many objects are currently allocated. */
 
 PERLVAR(I, sv_root,	SV *)		/* storage for SVs belonging to interp */
 PERLVAR(I, sv_arenaroot, SV *)		/* list of areas for garbage collection */
 
-PERLVAR(I, reg_state,	struct re_save_state)
+/* fake PMOP that PL_curpm points to while in (?{}) so $1 et al are visible */
+PERLVARI(I, reg_curpm, PMOP*, NULL)
 
 /* the currently active slab in a chain of slabs of regmatch states,
- * and the currently active state within that slab */
+ * and the currently active state within that slab. This stack of states
+ * is shared amongst re-entrant calls to the regex engine */
 
 PERLVARI(I, regmatch_slab, regmatch_slab *,	NULL)
 PERLVAR(I, regmatch_state, regmatch_state *)
@@ -175,6 +174,7 @@ PERLVAR(I, statgv,	GV *)
 PERLVARI(I, statname,	SV *,	NULL)
 
 #ifdef HAS_TIMES
+/* Will be removed soon after v5.21.0. See RT #121351 */
 PERLVAR(I, timesbuf,	struct tms)
 #endif
 
@@ -185,7 +185,7 @@ The input record separator - C<$/> in Perl space.
 
 =for apidoc mn|GV*|PL_last_in_gv
 
-The GV which was last used for a filehandle input operation. (C<< <FH> >>)
+The GV which was last used for a filehandle input operation.  (C<< <FH> >>)
 
 =for apidoc mn|GV*|PL_ofsgv
 
@@ -226,16 +226,15 @@ PERLVAR(I, secondgv,	GV *)		/* $b */
 PERLVAR(I, efloatbuf,	char *)
 PERLVAR(I, efloatsize,	STRLEN)
 
-PERLVAR(I, regdummy,	regnode)	/* from regcomp.c */
-
 PERLVARI(I, dumpindent,	U16,	4)	/* number of blanks per dump
 					   indentation level */
 
 PERLVAR(I, exit_flags,	U8)		/* was exit() unexpected, etc. */
 
 PERLVAR(I, utf8locale,	bool)		/* utf8 locale detected */
+PERLVAR(I, in_utf8_CTYPE_locale, bool)
 
-PERLVARA(I, colors,6,	char *)		/* from regcomp.c */
+PERLVARA(I, colors,6,	char *)		/* values from PERL_RE_COLORS env var */
 
 /*
 =for apidoc Amn|peep_t|PL_peepp
@@ -352,7 +351,6 @@ PERLVAR(I, psig_pend, int *)		/* per-signal "count" of pending */
 /* shortcuts to various I/O objects */
 PERLVAR(I, stdingv,	GV *)		/*  *STDIN      */
 PERLVAR(I, stderrgv,	GV *)		/*  *STDERR     */
-PERLVAR(I, defgv,	GV *)
 PERLVAR(I, argvgv,	GV *)		/*  *ARGV       */
 PERLVAR(I, argvoutgv,	GV *)		/*  *ARGVOUT    */
 PERLVAR(I, argvout_stack, AV *)
@@ -540,8 +538,6 @@ PERLVAR(I, padix,	I32)		/* max used index in current "register" pad */
 
 PERLVAR(I, padix_floor,	I32)		/* how low may inner block reset padix */
 
-PERLVAR(I, hints,	U32)		/* pragma-tic compile-time flags */
-
 #ifdef USE_LOCALE_COLLATE
 PERLVAR(I, collation_name, char *)	/* Name of current collation */
 PERLVAR(I, collxfrm_base, Size_t)	/* Basic overhead in *xfrm() */
@@ -556,7 +552,7 @@ PERLVAR(I, sawampersand, U8)		/* must save all match strings */
 #endif
 
 PERLVAR(I, unsafe,	bool)
-PERLVAR(I, colorset,	bool)		/* from regcomp.c */
+PERLVAR(I, colorset,	bool)		/* PERL_RE_COLORS env var is in use */
 
 /* current phase the interpreter is in
    for ordering this structure to remove holes, we're assuming that this is 4
@@ -582,8 +578,8 @@ PERLVAR(I, numeric_radix_sv, SV *)	/* The radix separator if not '.' */
 #endif /* !USE_LOCALE_NUMERIC */
 
 /* Unicode inversion lists */
-PERLVAR(I, ASCII,	SV *)
 PERLVAR(I, Latin1,	SV *)
+PERLVAR(I, UpperLatin1,	SV *)   /* Code points 128 - 255 */
 PERLVAR(I, AboveLatin1,	SV *)
 
 PERLVAR(I, NonL1NonFinalFold,   SV *)
@@ -602,7 +598,6 @@ PERLVAR(I, utf8_charname_continue, SV *)
 
 PERLVARA(I, utf8_swash_ptrs, POSIX_SWASH_COUNT, SV *)
 PERLVARA(I, Posix_ptrs, POSIX_CC_COUNT, SV *)
-PERLVARA(I, L1Posix_ptrs, POSIX_CC_COUNT, SV *)
 PERLVARA(I, XPosix_ptrs, POSIX_CC_COUNT, SV *)
 
 PERLVAR(I, last_swash_hv, HV *)
@@ -741,7 +736,7 @@ PERLVAR(I, debug_pad,	struct perl_debug_pad)	/* always needed because of the re 
 /* Hook for File::Glob */
 PERLVARI(I, globhook,	globhook_t, NULL)
 
-/* The last unconditional member of the interpreter structure when 5.18.2 was
+/* The last unconditional member of the interpreter structure when 5.20.1 was
    released. The offset of the end of this is baked into a global variable in 
    any shared perl library which will allow a sanity test in future perl
    releases.  */
@@ -774,6 +769,19 @@ PERLVARI(I, xmlfp,	PerlIO *, NULL)
 #ifdef DEBUG_LEAKING_SCALARS
 PERLVARI(I, sv_serial,	U32,	0)	/* SV serial number, used in sv.c */
 #endif
+
+PERLVARA(I, sv_consts, SV_CONSTS_COUNT, SV*)	/* constant SVs with precomputed hash value */
+
+#ifdef PERL_TRACE_OPS
+PERLVARA(I, op_exec_cnt, OP_max+2, UV)	/* Counts of executed OPs of the given type.
+                                           If PERL_TRACE_OPS is enabled, we'll dump
+                                           a summary count of all ops executed in the
+                                           program at perl_destruct time. For
+                                           profiling/debugging only. Works only if
+                                           DEBUGGING is enabled, too. */
+#endif
+
+PERLVAR(I, random_state, PL_RANDOM_STATE_TYPE)
 
 /* If you are adding a U8 or U16, check to see if there are 'Space' comments
  * above on where there are gaps which currently will be structure padding.  */

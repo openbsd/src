@@ -5,12 +5,14 @@
 BEGIN {
     chdir 't';
     @INC = '../lib';
+    require Config; import Config;
     require './test.pl';
+    require './loc_tools.pl';   # Contains find_utf8_ctype_locale()
 }
 
 use feature qw( fc );
 
-plan tests => 128;
+plan tests => 134 + 4 * 256;
 
 is(lc(undef),	   "", "lc(undef) is ''");
 is(lcfirst(undef), "", "lcfirst(undef) is ''");
@@ -256,17 +258,26 @@ for (1, 4, 9, 16, 25) {
 }
 
 # bug #43207
-my $temp = "Hello";
+my $temp = "HellO";
 for ("$temp") {
     lc $_;
-    is($_, "Hello");
+    is($_, "HellO", '[perl #43207] lc($_) modifying $_');
 }
-
-# bug #43207
-my $temp = "Hello";
 for ("$temp") {
     fc $_;
-    is($_, "Hello");
+    is($_, "HellO", '[perl #43207] fc($_) modifying $_');
+}
+for ("$temp") {
+    uc $_;
+    is($_, "HellO", '[perl #43207] uc($_) modifying $_');
+}
+for ("$temp") {
+    ucfirst $_;
+    is($_, "HellO", '[perl #43207] ucfirst($_) modifying $_');
+}
+for ("$temp") {
+    lcfirst $_;
+    is($_, "HellO", '[perl #43207] lcfirst($_) modifying $_');
 }
 
 # new in Unicode 5.1.0
@@ -279,4 +290,63 @@ is(lc("\x{1E9E}"), "\x{df}", "lc(LATIN CAPITAL LETTER SHARP S)");
     is(lcfirst("\xc0"), "\xc0", "lcfirst of above-ASCII Latin1 is itself under use bytes");
     is(uc("\xe0"), "\xe0", "uc of above-ASCII Latin1 is itself under use bytes");
     is(ucfirst("\xe0"), "\xe0", "ucfirst of above-ASCII Latin1 is itself under use bytes");
+}
+
+# Brought up in ticket #117855: Constant folding applied to uc() should use
+# the right set of hints.
+fresh_perl_like(<<'constantfolding', qr/^(\d+),\1\z/, {},
+    my $function = "uc";
+    my $char = "\xff";
+    {
+        use feature 'unicode_strings';
+        print ord uc($char), ",",
+              ord eval "$function('$char')", "\n";
+    }
+constantfolding
+    'folded uc() in string eval uses the right hints');
+
+# In-place lc/uc should not corrupt string buffers when given a non-utf8-
+# flagged thingy that stringifies to utf8
+$h{k} = bless[], "\x{3b0}\x{3b0}\x{3b0}bcde"; # U+03B0 grows with uc()
+   # using delete marks it as TEMP, so uc-in-place is permitted
+like uc delete $h{k}, qr "^(?:\x{3a5}\x{308}\x{301}){3}BCDE=ARRAY\(.*\)",
+    'uc(TEMP ref) does not produce a corrupt string';
+$h{k} = bless[], "\x{130}bcde"; # U+0130 grows with lc()
+   # using delete marks it as TEMP, so uc-in-place is permitted
+like lc delete $h{k}, qr "^i\x{307}bcde=array\(.*\)",
+    'lc(TEMP ref) does not produce a corrupt string';
+
+
+my $utf8_locale = find_utf8_ctype_locale();
+
+SKIP: {
+    skip 'Can\'t find a UTF-8 locale', 4*256 unless defined $utf8_locale;
+
+    use feature qw( unicode_strings );
+
+    no locale;
+
+    my @unicode_lc;
+    my @unicode_uc;
+    my @unicode_lcfirst;
+    my @unicode_ucfirst;
+
+    # Get all the values outside of 'locale'
+    for my $i (0 .. 255) {
+        push @unicode_lc, lc(chr $i);
+        push @unicode_uc, uc(chr $i);
+        push @unicode_lcfirst, lcfirst(chr $i);
+        push @unicode_ucfirst, ucfirst(chr $i);
+    }
+
+    use if $Config{d_setlocale}, qw(POSIX locale_h);
+    use locale;
+    setlocale(LC_CTYPE, $utf8_locale);
+
+    for my $i (0 .. 255) {
+        is(lc(chr $i), $unicode_lc[$i], "In a UTF-8 locale, lc(chr $i) is the same as official Unicode");
+        is(uc(chr $i), $unicode_uc[$i], "In a UTF-8 locale, uc(chr $i) is the same as official Unicode");
+        is(lcfirst(chr $i), $unicode_lcfirst[$i], "In a UTF-8 locale, lcfirst(chr $i) is the same as official Unicode");
+        is(ucfirst(chr $i), $unicode_ucfirst[$i], "In a UTF-8 locale, ucfirst(chr $i) is the same as official Unicode");
+    }
 }

@@ -3,7 +3,7 @@ use strict;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = 1.18;
+$VERSION = 1.21;
 @ISA = qw(Exporter);
 @EXPORT = qw(pod2html htmlify);
 @EXPORT_OK = qw(anchorify);
@@ -369,14 +369,12 @@ sub pod2html {
     my $bodyid = $Backlink ? ' id="_podtop_"' : '';
 
     my $csslink = '';
-    my $bodystyle = ' style="background-color: white"';
-    my $tdstyle = ' style="background-color: #cccccc"';
+    my $tdstyle = ' style="background-color: #cccccc; color: #000"';
 
     if ($Css) {
         $csslink = qq(\n<link rel="stylesheet" href="$Css" type="text/css" />);
         $csslink =~ s,\\,/,g;
         $csslink =~ s,(/.):,$1|,;
-        $bodystyle = '';
         $tdstyle= '';
     }
 
@@ -400,7 +398,7 @@ END_OF_BLOCK
 <link rev="made" href="mailto:$Config{perladmin}" />
 </head>
 
-<body$bodyid$bodystyle>
+<body$bodyid>
 $block
 HTMLHEAD
 
@@ -447,9 +445,14 @@ sub usage {
     my $podfile = shift;
     warn "$0: $podfile: @_\n" if @_;
     die <<END_OF_USAGE;
-Usage:  $0 --help --htmlroot=<name> --infile=<name> --outfile=<name>
-           --podpath=<name>:...:<name> --podroot=<name> --cachedir=<name>
-           --recurse --verbose --index --norecurse --noindex
+Usage:  $0 --help --htmldir=<name> --htmlroot=<URL>
+           --infile=<name> --outfile=<name>
+           --podpath=<name>:...:<name> --podroot=<name>
+           --cachedir=<name> --flush --recurse --norecurse
+           --quiet --noquiet --verbose --noverbose
+           --index --noindex --backlink --nobacklink
+           --header --noheader --poderrors --nopoderrors
+           --css=<URL> --title=<name>
 
   --[no]backlink  - turn =head1 directives into links pointing to the top of
                       the page (off by default).
@@ -706,7 +709,7 @@ sub _unixify {
 package Pod::Simple::XHTML::LocalPodLinks;
 use strict;
 use warnings;
-use base 'Pod::Simple::XHTML';
+use parent 'Pod::Simple::XHTML';
 
 use File::Spec;
 use File::Spec::Unix;

@@ -274,6 +274,13 @@ eval q{
 };
 pass("hv_store works on the hint hash");
 
+{
+    # [perl #79074] HeSVKEY_force loses UTF8ness
+    my %hash = ( "\xff" => 1, "\x{100}" => 1 );
+    my @keys = sort ( XS::APItest::Hash::test_force_keys(\%hash) );
+    is_deeply(\@keys, [ sort keys %hash ], "check HeSVKEY_force()");
+}
+
 done_testing;
 exit;
 

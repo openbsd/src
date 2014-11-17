@@ -91,7 +91,7 @@ We updated the Github mirror link in L<perlrepository> to mirrors/perl, not gith
 
 =item *
 
-We fixed a a minor error in L<perl5114delta.pod>.
+We fixed a minor error in L<perl5114delta.pod>.
 
 =item * 
 

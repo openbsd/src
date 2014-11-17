@@ -1,14 +1,12 @@
 package TAP::Parser::IteratorFactory;
 
 use strict;
-use vars qw($VERSION @ISA);
-
-use TAP::Object ();
+use warnings;
 
 use Carp qw( confess );
 use File::Basename qw( fileparse );
 
-@ISA = qw(TAP::Object);
+use base 'TAP::Object';
 
 use constant handlers => [];
 
@@ -18,11 +16,11 @@ TAP::Parser::IteratorFactory - Figures out which SourceHandler objects to use fo
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 SYNOPSIS
 
@@ -302,11 +300,8 @@ But in case you find the need to...
   package MyIteratorFactory;
 
   use strict;
-  use vars '@ISA';
 
-  use TAP::Parser::IteratorFactory;
-
-  @ISA = qw( TAP::Parser::IteratorFactory );
+  use base 'TAP::Parser::IteratorFactory';
 
   # override source detection algorithm
   sub detect_source {

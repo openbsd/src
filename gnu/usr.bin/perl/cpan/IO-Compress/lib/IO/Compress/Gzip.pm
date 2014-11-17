@@ -8,12 +8,12 @@ use bytes;
 
 require Exporter ;
 
-use IO::Compress::RawDeflate 2.060 () ; 
-use IO::Compress::Adapter::Deflate 2.060 ;
+use IO::Compress::RawDeflate 2.064 () ; 
+use IO::Compress::Adapter::Deflate 2.064 ;
 
-use IO::Compress::Base::Common  2.060 qw(:Status );
-use IO::Compress::Gzip::Constants 2.060 ;
-use IO::Compress::Zlib::Extra 2.060 ;
+use IO::Compress::Base::Common  2.064 qw(:Status );
+use IO::Compress::Gzip::Constants 2.064 ;
+use IO::Compress::Zlib::Extra 2.064 ;
 
 BEGIN
 {
@@ -25,7 +25,7 @@ BEGIN
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $GzipError);
 
-$VERSION = '2.060';
+$VERSION = '2.064';
 $GzipError = '' ;
 
 @ISA    = qw(Exporter IO::Compress::RawDeflate);
@@ -194,7 +194,7 @@ sub mkHeader
     my $self = shift ;
     my $param = shift ;
 
-    # stort-circuit if a minimal header is requested.
+    # short-circuit if a minimal header is requested.
     return GZIP_MINIMUM_HEADER if $param->getValue('minimal') ;
 
     # METHOD
@@ -257,7 +257,8 @@ sub mkHeader
     }
 
     # HEADER CRC
-    $out .= pack("v", Compress::Raw::Zlib::crc32($out) & 0x00FF ) if $param->getValue('headercrc') ;
+    $out .= pack("v", Compress::Raw::Zlib::crc32($out) & 0x00FF ) 
+        if $param->getValue('headercrc') ;
 
     noUTF8($out);
 
@@ -347,7 +348,7 @@ section.
 
 The functional interface needs Perl5.005 or better.
 
-=head2 gzip $input => $output [, OPTS]
+=head2 gzip $input_filename_or_reference => $output_filename_or_reference [, OPTS]
 
 C<gzip> expects at least two parameters,
 C<$input_filename_or_reference> and C<$output_filename_or_reference>.
@@ -801,7 +802,7 @@ and set the CRC16 header field to the CRC of the complete gzip header
 except the CRC16 field itself.
 
 B<Note> that gzip files created with the C<HeaderCRC> flag set to 1 cannot
-be read by most, if not all, of the the standard gunzip utilities, most
+be read by most, if not all, of the standard gunzip utilities, most
 notably gzip version 1.2.4. You should therefore avoid using this option if
 you want to maximize the portability of your gzip files.
 
@@ -1132,7 +1133,7 @@ Usage is
 
 Closes the current compressed data stream and starts a new one.
 
-OPTS consists of any of the the options that are available when creating
+OPTS consists of any of the options that are available when creating
 the C<$z> object.
 
 See the L</"Constructor Options"> section for more details.
@@ -1243,7 +1244,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

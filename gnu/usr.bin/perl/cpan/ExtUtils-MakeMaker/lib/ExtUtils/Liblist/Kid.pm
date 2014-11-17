@@ -11,7 +11,7 @@ use 5.006;
 
 use strict;
 use warnings;
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 use ExtUtils::MakeMaker::Config;
 use Cwd 'cwd';
@@ -28,10 +28,10 @@ sub _unix_os2_ext {
     my ( $self, $potential_libs, $verbose, $give_libs ) = @_;
     $verbose ||= 0;
 
-    if ( $^O =~ 'os2' and $Config{perllibs} ) {
+    if ( $^O =~ /os2|android/ and $Config{perllibs} ) {
 
         # Dynamic libraries are not transitive, so we may need including
-        # the libraries linked against perl.dll again.
+        # the libraries linked against perl.dll/libperl.so again.
 
         $potential_libs .= " " if $potential_libs;
         $potential_libs .= $Config{perllibs};
@@ -59,7 +59,7 @@ sub _unix_os2_ext {
     foreach my $thislib ( split ' ', $potential_libs ) {
 
         # Handle possible linker path arguments.
-        if ( $thislib =~ s/^(-[LR]|-Wl,-R)// ) {    # save path flag type
+        if ( $thislib =~ s/^(-[LR]|-Wl,-R|-Wl,-rpath,)// ) {    # save path flag type
             my ( $ptype ) = $1;
             unless ( -d $thislib ) {
                 warn "$ptype$thislib ignored, directory does not exist\n"
@@ -67,8 +67,8 @@ sub _unix_os2_ext {
                 next;
             }
             my ( $rtype ) = $ptype;
-            if ( ( $ptype eq '-R' ) or ( $ptype eq '-Wl,-R' ) ) {
-                if ( $Config{'lddlflags'} =~ /-Wl,-R/ ) {
+            if ( ( $ptype eq '-R' ) or ( $ptype =~ m!^-Wl,-[Rr]! ) ) {
+                if ( $Config{'lddlflags'} =~ /-Wl,-[Rr]/ ) {
                     $rtype = '-Wl,-R';
                 }
                 elsif ( $Config{'lddlflags'} =~ /-R/ ) {
@@ -82,6 +82,12 @@ sub _unix_os2_ext {
             push( @searchpath, $thislib );
             push( @extralibs,  "$ptype$thislib" );
             push( @ldloadlibs, "$rtype$thislib" );
+            next;
+        }
+
+        if ( $thislib =~ m!^-Wl,! ) {
+            push( @extralibs,  $thislib );
+            push( @ldloadlibs, $thislib );
             next;
         }
 
@@ -151,6 +157,8 @@ sub _unix_os2_ext {
             elsif ( -f ( $fullname = "$thispth/$thislib$Config_libext" ) ) {
             }
             elsif ( -f ( $fullname = "$thispth/lib$thislib.dll$Config_libext" ) ) {
+            }
+            elsif ( $^O eq 'cygwin' && -f ( $fullname = "$thispth/$thislib.dll" ) ) {
             }
             elsif ( -f ( $fullname = "$thispth/Slib$thislib$Config_libext" ) ) {
             }
@@ -420,11 +428,11 @@ sub _win32_try_attach_extension {
 }
 
 sub _win32_lib_extensions {
-    my %extensions;
-    $extensions{ $Config{'lib_ext'} } = 1 if $Config{'lib_ext'};
-    $extensions{".dll.a"} = 1 if $extensions{".a"};
-    $extensions{".lib"}   = 1;
-    return [ keys %extensions ];
+    my @extensions;
+    push @extensions, $Config{'lib_ext'} if $Config{'lib_ext'};
+    push @extensions, '.dll.a' if grep { m!^\.a$! } @extensions;
+    push @extensions, '.lib' unless grep { m!^\.lib$! } @extensions;
+    return \@extensions;
 }
 
 sub _debug {

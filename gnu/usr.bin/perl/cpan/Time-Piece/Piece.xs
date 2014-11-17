@@ -1,6 +1,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -133,6 +134,10 @@ my_init_tm(struct tm *ptm)        /* see mktime, strftime and asctime    */
 
 #undef getenv
 #undef putenv
+#  ifdef UNDER_CE
+#    define getenv xcegetenv
+#    define putenv xceputenv
+#  endif
 #undef malloc
 #undef free
 
@@ -584,6 +589,7 @@ label:
 				return 0;
 
 			tm->tm_yday = i - 1;
+			tm->tm_mday = 0;
 			break;
 
 		case 'M':
@@ -943,14 +949,63 @@ label:
 	return (char *)buf;
 }
 
-
-char *
-our_strptime(pTHX_ const char *buf, const char *fmt, struct tm *tm)
+/* Saves alot of machine code.
+   Takes a (auto) SP, which may or may not have been PUSHed before, puts
+   tm struct members on Perl stack, then returns new, advanced, SP to caller.
+   Assign the return of push_common_tm to your SP, so you can continue to PUSH
+   or do a PUTBACK and return eventually.
+   !!!! push_common_tm does not touch PL_stack_sp !!!!
+   !!!! do not use PUTBACK then SPAGAIN semantics around push_common_tm !!!!
+   !!!! You must mortalize whatever push_common_tm put on stack yourself to
+        avoid leaking !!!!
+*/
+SV **
+push_common_tm(pTHX_ SV ** SP, struct tm *mytm)
 {
-	char *ret;
-	int got_GMT = 0;
+	PUSHs(newSViv(mytm->tm_sec));
+	PUSHs(newSViv(mytm->tm_min));
+	PUSHs(newSViv(mytm->tm_hour));
+	PUSHs(newSViv(mytm->tm_mday));
+	PUSHs(newSViv(mytm->tm_mon));
+	PUSHs(newSViv(mytm->tm_year));
+	PUSHs(newSViv(mytm->tm_wday));
+	PUSHs(newSViv(mytm->tm_yday));
+	return SP;
+}
 
-	return _strptime(aTHX_ buf, fmt, tm, &got_GMT);
+/* specialized common end of 2 XSUBs
+  SV ** SP -- pass your (auto) SP, which has not been PUSHed before, but was
+              reset to 0 (PPCODE only or SP -= items or XSprePUSH)
+  tm *mytm -- a tm *, will be proprocessed with my_mini_mktime
+  return   -- none, after calling return_11part_tm, you must call "return;"
+              no exceptions
+*/
+void
+return_11part_tm(pTHX_ SV ** SP, struct tm *mytm)
+{
+       my_mini_mktime(mytm);
+
+  /* warn("tm: %d-%d-%d %d:%d:%d\n", mytm.tm_year, mytm.tm_mon, mytm.tm_mday, mytm.tm_hour, mytm.tm_min, mytm.tm_sec); */
+
+       EXTEND(SP, 11);
+       SP = push_common_tm(aTHX_ SP, mytm);
+       /* isdst */
+       PUSHs(newSViv(0));
+       /* epoch */
+       PUSHs(newSViv(0));
+       /* islocal */
+       PUSHs(newSViv(0));
+       PUTBACK;
+       {
+            SV ** endsp = SP; /* the SV * under SP needs to be mortaled */
+            SP -= (11 - 1); /* subtract 0 based count of SVs to mortal */
+/* mortal target of SP, then increment before function call
+   so SP is already calculated before next comparison to not stall CPU */
+            do {
+                sv_2mortal(*SP++);
+            } while(SP <= endsp);
+       }
+       return;
 }
 
 MODULE = Time::Piece     PACKAGE = Time::Piece
@@ -1036,8 +1091,9 @@ _strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1
 void
 _tzset()
   PPCODE:
+    PUTBACK; /* makes rest of this function tailcall friendly */
     my_tzset(aTHX);
-
+    return; /* skip XSUBPP's PUTBACK */
 
 void
 _strptime ( string, format )
@@ -1047,36 +1103,22 @@ _strptime ( string, format )
        struct tm mytm;
        time_t t;
        char * remainder;
+       int got_GMT;
   PPCODE:
        t = 0;
        mytm = *gmtime(&t);
-       remainder = (char *)our_strptime(aTHX_ string, format, &mytm);
+       got_GMT = 0;
+
+       remainder = (char *)_strptime(aTHX_ string, format, &mytm, &got_GMT);
        if (remainder == NULL) {
            croak("Error parsing time");
        }
        if (*remainder != '\0') {
            warn("garbage at end of string in strptime: %s", remainder);
        }
-	  
-       my_mini_mktime(&mytm);
 
-  /* warn("tm: %d-%d-%d %d:%d:%d\n", mytm.tm_year, mytm.tm_mon, mytm.tm_mday, mytm.tm_hour, mytm.tm_min, mytm.tm_sec); */
-	  
-       EXTEND(SP, 11);
-       PUSHs(sv_2mortal(newSViv(mytm.tm_sec)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_min)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_hour)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_mday)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_mon)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_year)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_wday)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_yday)));
-       /* isdst */
-       PUSHs(sv_2mortal(newSViv(0)));
-       /* epoch */
-       PUSHs(sv_2mortal(newSViv(0)));
-       /* islocal */
-       PUSHs(sv_2mortal(newSViv(0)));
+       return_11part_tm(aTHX_ SP, &mytm);
+       return;
 
 void
 _mini_mktime(int sec, int min, int hour, int mday, int mon, int year)
@@ -1093,61 +1135,32 @@ _mini_mktime(int sec, int min, int hour, int mday, int mon, int year)
        mytm.tm_mday = mday;
        mytm.tm_mon = mon;
        mytm.tm_year = year;
-       
-       my_mini_mktime(&mytm);
 
-       EXTEND(SP, 11);
-       PUSHs(sv_2mortal(newSViv(mytm.tm_sec)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_min)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_hour)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_mday)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_mon)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_year)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_wday)));
-       PUSHs(sv_2mortal(newSViv(mytm.tm_yday)));
-       /* isdst */
-       PUSHs(sv_2mortal(newSViv(0)));
-       /* epoch */
-       PUSHs(sv_2mortal(newSViv(0)));
-       /* islocal */
-       PUSHs(sv_2mortal(newSViv(0)));
+       return_11part_tm(aTHX_ SP, &mytm);
+       return;
 
 void
 _crt_localtime(time_t sec)
+    ALIAS:
+        _crt_gmtime = 1
     PREINIT:
         struct tm mytm;
     PPCODE:
-        mytm = *localtime(&sec);
+        if(ix) mytm = *gmtime(&sec);
+        else mytm = *localtime(&sec);
         /* Need to get: $s,$n,$h,$d,$m,$y */
         
         EXTEND(SP, 9);
-        PUSHs(sv_2mortal(newSViv(mytm.tm_sec)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_min)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_hour)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_mday)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_mon)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_year)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_year)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_wday)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_yday)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_isdst)));
-        
-void
-_crt_gmtime(time_t sec)
-    PREINIT:
-        struct tm mytm;
-    PPCODE:
-        mytm = *gmtime(&sec);
-        /* Need to get: $s,$n,$h,$d,$m,$y */
-        
-        EXTEND(SP, 9);
-        PUSHs(sv_2mortal(newSViv(mytm.tm_sec)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_min)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_hour)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_mday)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_mon)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_year)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_wday)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_yday)));
-        PUSHs(sv_2mortal(newSViv(mytm.tm_isdst)));
-        
+        SP = push_common_tm(aTHX_ SP, &mytm);
+        PUSHs(newSViv(mytm.tm_isdst));
+        PUTBACK;
+        {
+            SV ** endsp = SP; /* the SV * under SP needs to be mortaled */
+            SP -= (9 - 1); /* subtract 0 based count of SVs to mortal */
+/* mortal target of SP, then increment before function call
+   so SP is already calculated before next comparison to not stall CPU */
+            do {
+                sv_2mortal(*SP++);
+            } while(SP <= endsp);
+        }
+        return;

@@ -7,6 +7,7 @@ typedef IV MyType2;
 typedef IV MyType3;
 typedef IV MyType4;
 typedef IV MyType5;
+typedef IV MyType6;
 
 
 =for testing
@@ -99,6 +100,9 @@ T_WITHSEMICOLON
     $var = ($type)SvIV($arg); 
 END
 
+TYPEMAP: <<SEMICOLONHERE;
+MyType6	T_IV
+SEMICOLONHERE
 
 MyType
 typemaptest1()
@@ -122,6 +126,14 @@ typemaptest3(foo, bar, baz)
   CODE:
     PERL_UNUSED_VAR(bar);
     PERL_UNUSED_VAR(baz);
+    RETVAL = foo;
+  OUTPUT:
+    RETVAL
+
+MyType6
+typemaptest6(foo)
+    MyType6 foo
+  CODE:
     RETVAL = foo;
   OUTPUT:
     RETVAL

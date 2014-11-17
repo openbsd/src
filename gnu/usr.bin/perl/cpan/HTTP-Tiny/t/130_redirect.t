@@ -47,7 +47,7 @@ for my $file ( dir_list("t/cases", qr/^redirect/ ) ) {
   clear_socket_source();
   set_socket_source(@$_) for @socket_pairs;
 
-  my $http = HTTP::Tiny->new(%new_args);
+  my $http = HTTP::Tiny->new(keep_alive => 0, %new_args);
   my $response  = $http->request(@$call_args);
 
   my $calls = 0

@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -13,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..35\n"; }
+BEGIN { $| = 1; print "1..65\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -30,129 +33,186 @@ ok(1);
 
 #########################
 
-##### 2..6
+##### 2..31
 
-my $all_undef_8 = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideCJK => undef,
-  overrideHangul => undef,
-  UCA_Version => 8,
-);
+{
+    my $all_undef_8 = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideCJK => undef,
+	overrideHangul => undef,
+	UCA_Version => 8,
+    );
+    # All in the Unicode code point order.
+    # No hangul decomposition.
 
-# All in the Unicode code point order.
-# No hangul decomposition.
+    ok($all_undef_8->lt("\x{1100}", "\x{3402}"));
+    ok($all_undef_8->lt("\x{3402}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4DFF}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4E00}", "\x{AC00}"));
+    ok($all_undef_8->gt("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_8->gt("\x{AC00}", "\x{ABFF}"));
+    # U+ABFF: not assigned
 
-ok($all_undef_8->lt("\x{3402}", "\x{4E00}"));
-ok($all_undef_8->lt("\x{4DFF}", "\x{4E00}"));
-ok($all_undef_8->lt("\x{4E00}", "\x{AC00}"));
-ok($all_undef_8->gt("\x{AC00}", "\x{1100}\x{1161}"));
-ok($all_undef_8->gt("\x{AC00}", "\x{ABFF}"));
+    # a hangul syllable is decomposed into jamo.
+    $all_undef_8->change(overrideHangul => 0);
+    ok($all_undef_8->lt("\x{1100}", "\x{3402}"));
+    ok($all_undef_8->lt("\x{3402}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4DFF}", "\x{4E00}"));
+    ok($all_undef_8->gt("\x{4E00}", "\x{AC00}"));
+    ok($all_undef_8->eq("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_8->lt("\x{AC00}", "\x{ABFF}"));
 
+    # CJK defined < Jamo undefined
+    $all_undef_8->change(overrideCJK => 0);
+    ok($all_undef_8->gt("\x{1100}", "\x{3402}"));
+    ok($all_undef_8->lt("\x{3402}", "\x{4E00}"));
+    ok($all_undef_8->gt("\x{4DFF}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4E00}", "\x{AC00}"));
+    ok($all_undef_8->eq("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_8->lt("\x{AC00}", "\x{ABFF}"));
 
-##### 7..11
+    # CJK undefined > Jamo undefined
+    $all_undef_8->change(overrideCJK => undef);
+    ok($all_undef_8->lt("\x{1100}", "\x{3402}"));
+    ok($all_undef_8->lt("\x{3402}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4DFF}", "\x{4E00}"));
+    ok($all_undef_8->gt("\x{4E00}", "\x{AC00}"));
+    ok($all_undef_8->eq("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_8->lt("\x{AC00}", "\x{ABFF}"));
 
-my $all_undef_9 = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideCJK => undef,
-  overrideHangul => undef,
-  UCA_Version => 9,
-);
+    $all_undef_8->change(overrideHangul => undef);
+    ok($all_undef_8->lt("\x{1100}", "\x{3402}"));
+    ok($all_undef_8->lt("\x{3402}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4DFF}", "\x{4E00}"));
+    ok($all_undef_8->lt("\x{4E00}", "\x{AC00}"));
+    ok($all_undef_8->gt("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_8->gt("\x{AC00}", "\x{ABFF}"));
+}
 
-# CJK Ideo. < CJK ext A/B < Others.
-# No hangul decomposition.
+##### 32..38
 
-ok($all_undef_9->lt("\x{4E00}", "\x{3402}"));
-ok($all_undef_9->lt("\x{3402}", "\x{20000}"));
-ok($all_undef_9->lt("\x{20000}", "\x{AC00}"));
-ok($all_undef_9->gt("\x{AC00}", "\x{1100}\x{1161}"));
-ok($all_undef_9->gt("\x{AC00}", "\x{ABFF}")); # U+ABFF: not assigned
+{
+    my $all_undef_9 = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideCJK => undef,
+	overrideHangul => undef,
+	UCA_Version => 9,
+    );
+    # CJK Ideo. < CJK ext A/B < Others.
+    # No hangul decomposition.
 
-##### 12..16
+    ok($all_undef_9->lt("\x{4E00}", "\x{3402}"));
+    ok($all_undef_9->lt("\x{3402}", "\x{20000}"));
+    ok($all_undef_9->lt("\x{20000}", "\x{AC00}"));
+    ok($all_undef_9->gt("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_9->gt("\x{AC00}", "\x{ABFF}"));
+    # U+ABFF: not assigned
 
-my $ignoreHangul = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideHangul => sub {()},
-  entry => <<'ENTRIES',
-AE00 ; [.0100.0020.0002.AE00]  # Hangul GEUL
-ENTRIES
-);
+    # a hangul syllable is decomposed into jamo.
+    $all_undef_9->change(overrideHangul => 0);
+    ok($all_undef_9->eq("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($all_undef_9->lt("\x{AC00}", "\x{ABFF}"));
+}
 
-# All Hangul Syllables except U+AE00 are ignored.
+##### 39..46
 
-ok($ignoreHangul->eq("\x{AC00}", ""));
-ok($ignoreHangul->lt("\x{AC00}", "\0"));
-ok($ignoreHangul->lt("\x{AC00}", "\x{AE00}"));
-ok($ignoreHangul->lt("\x{AC00}", "\x{1100}\x{1161}")); # Jamo are not ignored.
-ok($ignoreHangul->lt("Pe\x{AE00}rl", "Perl")); # 'r' is unassigned.
+{
+    my $ignoreHangul = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideHangul => sub {()},
+	entry => 'AE00 ; [.0100.0020.0002.AE00]  # Hangul GEUL',
+    );
+    # All Hangul Syllables except U+AE00 are ignored.
 
-##### 17..21
+    ok($ignoreHangul->eq("\x{AC00}", ""));
+    ok($ignoreHangul->lt("\x{AC00}", "\0"));
+    ok($ignoreHangul->lt("\x{AC00}", "\x{AE00}"));
+    ok($ignoreHangul->lt("\x{AC00}", "\x{1100}\x{1161}")); # Jamo are not ignored.
+    ok($ignoreHangul->eq("Pe\x{AC00}rl", "Perl"));
+    ok($ignoreHangul->lt("Pe\x{AE00}rl", "Perl"));
+    # 'r' is unassigned.
 
-my $undefHangul = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideHangul => sub {
-    my $u = shift;
-    return $u == 0xAE00 ? 0x100 : undef;
-  }
-);
+    $ignoreHangul->change(overrideHangul => 0);
+    ok($ignoreHangul->eq("\x{AC00}", "\x{1100}\x{1161}"));
 
-# All Hangul Syllables except U+AE00 are undefined.
+    $ignoreHangul->change(overrideHangul => undef);
+    ok($ignoreHangul->gt("\x{AC00}", "\x{1100}\x{1161}"));
+}
 
-ok($undefHangul->lt("\x{AE00}", "r"));
-ok($undefHangul->gt("\x{AC00}", "r"));
-ok($undefHangul->gt("\x{AC00}", "\x{1100}\x{1161}"));
-ok($undefHangul->lt("Pe\x{AE00}rl", "Perl")); # 'r' is unassigned.
-ok($undefHangul->lt("\x{AC00}", "\x{B000}"));
+##### 47..51
 
-##### 22..25
+{
+    my $undefHangul = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideHangul => sub {
+	    my $u = shift;
+	    return $u == 0xAE00 ? 0x100 : undef;
+	}
+    );
+    # All Hangul Syllables except U+AE00 are undefined.
 
-my $undefCJK = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideCJK => sub {
-    my $u = shift;
-    return $u == 0x4E00 ? 0x100 : undef;
-  }
-);
+    ok($undefHangul->lt("\x{AE00}", "r"));
+    ok($undefHangul->gt("\x{AC00}", "r"));
+    ok($undefHangul->gt("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($undefHangul->lt("Pe\x{AE00}rl", "Perl")); # 'r' is unassigned.
+    ok($undefHangul->lt("\x{AC00}", "\x{B000}"));
+}
 
-# All CJK Ideographs except U+4E00 are undefined.
+##### 52..55
 
-ok($undefCJK->lt("\x{4E00}", "r"));
-ok($undefCJK->lt("\x{5000}", "r")); # still CJK < unassigned
-ok($undefCJK->lt("Pe\x{4E00}rl", "Perl")); # 'r' is unassigned.
-ok($undefCJK->lt("\x{5000}", "\x{6000}"));
+{
+    my $undefCJK = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideCJK => sub {
+	    my $u = shift;
+	    return $u == 0x4E00 ? 0x100 : undef;
+	}
+    );
+    # All CJK Ideographs except U+4E00 are undefined.
 
-##### 26..30
+    ok($undefCJK->lt("\x{4E00}", "r"));
+    ok($undefCJK->lt("\x{5000}", "r")); # still CJK < unassigned
+    ok($undefCJK->lt("Pe\x{4E00}rl", "Perl"));
+    ok($undefCJK->lt("\x{5000}", "\x{6000}"));
+}
 
-my $cpHangul = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideHangul => sub { shift }
-);
+##### 56..60
 
-ok($cpHangul->lt("\x{AC00}", "\x{AC01}"));
-ok($cpHangul->lt("\x{AC01}", "\x{D7A3}"));
-ok($cpHangul->lt("\x{D7A3}", "r")); # 'r' is unassigned.
-ok($cpHangul->lt("r", "\x{D7A4}"));
-ok($cpHangul->lt("\x{D7A3}", "\x{4E00}"));
+{
+    my $cpHangul = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideHangul => sub { shift }
+    );
 
-##### 31..35
+    ok($cpHangul->lt("\x{AC00}", "\x{AC01}"));
+    ok($cpHangul->lt("\x{AC01}", "\x{D7A3}"));
+    ok($cpHangul->lt("\x{D7A3}", "r"));
+    ok($cpHangul->lt("r", "\x{D7A4}"));
+    ok($cpHangul->lt("\x{D7A3}", "\x{4E00}"));
+}
 
-my $arrayHangul = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  overrideHangul => sub {
-    my $u = shift;
-    return [$u, 0x20, 0x2, $u];
-  }
-);
+##### 61..65
 
-ok($arrayHangul->lt("\x{AC00}", "\x{AC01}"));
-ok($arrayHangul->lt("\x{AC01}", "\x{D7A3}"));
-ok($arrayHangul->lt("\x{D7A3}", "r")); # 'r' is unassigned.
-ok($arrayHangul->lt("r", "\x{D7A4}"));
-ok($arrayHangul->lt("\x{D7A3}", "\x{4E00}"));
+{
+    my $arrayHangul = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	overrideHangul => sub {
+	    my $u = shift;
+	    return [$u, 0x20, 0x2, $u];
+	}
+    );
+
+    ok($arrayHangul->lt("\x{AC00}", "\x{AC01}"));
+    ok($arrayHangul->lt("\x{AC01}", "\x{D7A3}"));
+    ok($arrayHangul->lt("\x{D7A3}", "r"));
+    ok($arrayHangul->lt("r", "\x{D7A4}"));
+    ok($arrayHangul->lt("\x{D7A3}", "\x{4E00}"));
+}
 

@@ -21,7 +21,7 @@ sub eval_ok ($;$) {
     is( $@, '', @_);
 }
 
-fresh_perl_is 'use attributes; print "ok"', 'ok',
+fresh_perl_is 'use attributes; print "ok"', 'ok', {},
    'attributes.pm can load without warnings.pm already loaded';
 
 eval 'sub è1 ($) : plùgh ;';

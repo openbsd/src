@@ -22,7 +22,7 @@ glob_ophook(pTHX_ OP *o)
     if (!MY_CXT.x_DG_ENTRIES)
 	MY_CXT.x_DG_ENTRIES = get_hv("File::DosGlob::entries", 0);
     if (MY_CXT.x_DG_ENTRIES)
-	hv_delete(MY_CXT.x_DG_ENTRIES, (char *)&o, sizeof(OP *),G_DISCARD);
+	(void)hv_delete(MY_CXT.x_DG_ENTRIES, (char *)&o, sizeof(OP *),G_DISCARD);
     if (MY_CXT.x_DG_OLD_OPHOOK) MY_CXT.x_DG_OLD_OPHOOK(aTHX_ o);
   }
 }
@@ -45,6 +45,7 @@ BOOT:
 SV *
 _callsite(...)
     CODE:
+        PERL_UNUSED_VAR(items);
 	RETVAL = newSVpvn(
 		   (char *)&cxstack[cxstack_ix].blk_sub.retop, sizeof(OP *)
 		 );

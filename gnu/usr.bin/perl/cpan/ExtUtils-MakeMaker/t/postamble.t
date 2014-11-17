@@ -13,7 +13,9 @@ use MakeMaker::Test::Setup::BFD;
 use ExtUtils::MakeMaker;
 use TieOut;
 
-chdir 't';
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 perl_lib;
 $| = 1;
 
@@ -49,7 +51,7 @@ ok( chdir 'Big-Dummy', q{chdir'd to Big-Dummy} ) ||
 sub MY::postamble {
     my($self, %extra) = @_;
 
-    is_deeply( \%extra, { FOO => 1, BAR => 'fugawazads' }, 
+    is_deeply( \%extra, { FOO => 1, BAR => 'fugawazads' },
                'postamble args passed' );
 
     return <<OUT;
@@ -60,7 +62,7 @@ OUT
 
 
 ok( open(MAKEFILE, $Makefile) ) or diag "Can't open $Makefile: $!";
-{ local $/; 
+{ local $/;
   like( <MAKEFILE>, qr/^\# This makes sure the postamble gets written\n/m,
         'postamble added to the Makefile' );
 }

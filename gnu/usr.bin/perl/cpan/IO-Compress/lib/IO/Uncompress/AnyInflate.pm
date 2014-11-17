@@ -6,22 +6,22 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.060 ();
+use IO::Compress::Base::Common  2.064 ();
 
-use IO::Uncompress::Adapter::Inflate  2.060 ();
+use IO::Uncompress::Adapter::Inflate  2.064 ();
 
 
-use IO::Uncompress::Base  2.060 ;
-use IO::Uncompress::Gunzip  2.060 ;
-use IO::Uncompress::Inflate  2.060 ;
-use IO::Uncompress::RawInflate  2.060 ;
-use IO::Uncompress::Unzip  2.060 ;
+use IO::Uncompress::Base  2.064 ;
+use IO::Uncompress::Gunzip  2.064 ;
+use IO::Uncompress::Inflate  2.064 ;
+use IO::Uncompress::RawInflate  2.064 ;
+use IO::Uncompress::Unzip  2.064 ;
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyInflateError);
 
-$VERSION = '2.060';
+$VERSION = '2.064';
 $AnyInflateError = '';
 
 @ISA = qw( Exporter IO::Uncompress::Base );
@@ -48,7 +48,7 @@ sub anyinflate
 
 sub getExtraParams
 {
-    use IO::Compress::Base::Common  2.060 qw(:Parse);
+    use IO::Compress::Base::Common  2.064 qw(:Parse);
     return ( 'rawinflate' => [Parse_boolean,  0] ) ;
 }
 
@@ -210,7 +210,7 @@ section.
 
 The functional interface needs Perl5.005 or better.
 
-=head2 anyinflate $input => $output [, OPTS]
+=head2 anyinflate $input_filename_or_reference => $output_filename_or_reference [, OPTS]
 
 C<anyinflate> expects at least two parameters,
 C<$input_filename_or_reference> and C<$output_filename_or_reference>.
@@ -704,7 +704,7 @@ Usage is
 
     $status = $z->read($buffer)
 
-Reads a block of compressed data (the size the the compressed block is
+Reads a block of compressed data (the size of the compressed block is
 determined by the C<Buffer> option in the constructor), uncompresses it and
 writes any uncompressed data into C<$buffer>. If the C<Append> parameter is
 set in the constructor, the uncompressed data will be appended to the
@@ -742,7 +742,7 @@ Usage is
 
 Reads a single line. 
 
-This method fully supports the use of of the variable C<$/> (or
+This method fully supports the use of the variable C<$/> (or
 C<$INPUT_RECORD_SEPARATOR> or C<$RS> when C<English> is in use) to
 determine what constitutes an end of line. Paragraph mode, record mode and
 file slurp mode are all supported. 
@@ -810,7 +810,7 @@ It is a fatal error to attempt to seek backward.
 Note that the implementation of C<seek> in this module does not provide
 true random access to a compressed file/buffer. It  works by uncompressing
 data from the current offset in the file/buffer until it reaches the
-ucompressed offset specified in the parameters to C<seek>. For very small
+uncompressed offset specified in the parameters to C<seek>. For very small
 files this may be acceptable behaviour. For large files it may cause an
 unacceptable delay.
 
@@ -859,7 +859,7 @@ Returns the current uncompressed line number. If C<EXPR> is present it has
 the effect of setting the line number. Note that setting the line number
 does not change the current position within the file/buffer being read.
 
-The contents of C<$/> are used to to determine what constitutes a line
+The contents of C<$/> are used to determine what constitutes a line
 terminator.
 
 =head2 fileno
@@ -995,7 +995,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -8,11 +8,11 @@ BEGIN {
 use warnings;
 use strict;
 use vars qw($foo $bar $baz $ballast);
-use Test::More tests => 196;
+use Test::More tests => 195;
 
 use Benchmark qw(:all);
 
-my $delta = 0.4;
+my $DELTA = 0.4;
 
 # Some timing ballast
 sub fib {
@@ -31,6 +31,15 @@ my $Nop_Pattern =
 # Please don't trust the matching parentheses to be useful in this :-)
 my $Default_Pattern = qr/$All_Pattern|$Noc_Pattern/;
 
+# see if the ratio of two integer values is within (1+$delta)
+
+sub cmp_delta {
+    my ($min, $max, $delta) = @_;
+    ($min, $max) = ($max, $min) if $max < $min;
+    return 0 if $min < 1; # avoid / 0
+    return $max/$min <= (1+$delta);
+}
+
 my $t0 = new Benchmark;
 isa_ok ($t0, 'Benchmark', "Ensure we can create a benchmark object");
 
@@ -47,9 +56,7 @@ timeit( 1, sub { $foo = @_ });
 is ($foo, 0, "benchmarked code called without arguments");
 
 
-print "# Burning CPU to benchmark things will take time...\n";
-
-
+print "# Burning CPU to benchmark things; will take time...\n";
 
 # We need to do something fairly slow in the coderef.
 # Same coderef. Same place in memory.
@@ -86,22 +93,6 @@ my $in_onesec_adj = $in_onesec;
 $in_onesec_adj *= (1/$cpu1); # adjust because may not have run for exactly 1s
 print "# in_onesec_adj=$in_onesec_adj adjusted iterations\n";
 
-{
-  my $difference = $in_onesec_adj - $estimate;
-  my $actual = abs ($difference / $in_onesec_adj);
-  cmp_ok($actual, '<=', $delta, "is $in_onesec_adj within $delta of estimate ($estimate)")
-    or do {
-	diag("  in_threesecs     = $in_threesecs");
-	diag("  in_threesecs_adj = $in_threesecs_adj");
-	diag("  cpu3             = $cpu3");
-	diag("  sys3             = $sys3");
-	diag("  estimate         = $estimate");
-	diag("  in_onesec        = $in_onesec");
-	diag("  in_onesec_adj    = $in_onesec_adj");
-	diag("  cpu1             = $cpu1");
-	diag("  sys1             = $sys1");
-    };
-}
 
 # I found that the eval'ed version was 3 times faster than the coderef.
 # (now it has a different ballast value)
@@ -410,7 +401,9 @@ sub check_graph {
 {
     select(OUT);
     my $start = times;
-    my $chart = cmpthese( -0.1, { a => "++\$i", b => "\$i = sqrt(\$i++)" }, "auto" ) ;
+    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i)",
+                                  b => "\$i = sqrt(\$i++)",
+                                }, "auto" ) ;
     my $end = times;
     select(STDOUT);
     ok (($end - $start) > 0.05, "benchmarked code ran for over 0.05 seconds");
@@ -432,7 +425,8 @@ sub check_graph {
 {
     select(OUT);
     my $start = times;
-    my $chart = cmpthese( -0.1, { a => "++\$i", b => "\$i = sqrt(\$i++)" } ) ;
+    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i)",
+                                  b => "\$i = sqrt(\$i++)" });
     my $end = times;
     select(STDOUT);
     ok (($end - $start) > 0.05, "benchmarked code ran for over 0.05 seconds");

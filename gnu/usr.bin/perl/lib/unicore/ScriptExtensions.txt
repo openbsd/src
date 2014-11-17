@@ -1,8 +1,8 @@
-# ScriptExtensions-6.2.0.txt
-# Date: 2012-08-13, 20:52:17 GMT [MD]
+# ScriptExtensions-6.3.0.txt
+# Date: 2013-03-02, 16:07:55 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 # The Script_Extensions property indicates which characters are commonly used
@@ -90,6 +90,14 @@ FDFD          ; Arab Thaa # So       ARABIC LIGATURE BISMILLAH AR-RAHMAN AR-RAHE
 
 # ================================================
 
+# Script_Extensions=Bugi Java
+
+A9CF          ; Bugi Java # Lm       JAVANESE PANGRANGKEP
+
+# Total code points: 1
+
+# ================================================
+
 # Script_Extensions=Cprt Linb
 
 10100..10102  ; Cprt Linb # Po   [3] AEGEAN WORD SEPARATOR LINE..AEGEAN CHECK MARK
@@ -105,6 +113,14 @@ FDFD          ; Arab Thaa # So       ARABIC LIGATURE BISMILLAH AR-RAHMAN AR-RAHE
 0485..0486    ; Cyrl Latn # Mn   [2] COMBINING CYRILLIC DASIA PNEUMATA..COMBINING CYRILLIC PSILI PNEUMATA
 
 # Total code points: 2
+
+# ================================================
+
+# Script_Extensions=Deva Kthi
+
+0966..096F    ; Deva Kthi # Nd  [10] DEVANAGARI DIGIT ZERO..DEVANAGARI DIGIT NINE
+
+# Total code points: 10
 
 # ================================================
 
@@ -151,9 +167,26 @@ FF9E..FF9F    ; Hira Kana # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFW
 
 060C          ; Arab Syrc Thaa # Po       ARABIC COMMA
 061B          ; Arab Syrc Thaa # Po       ARABIC SEMICOLON
+061C          ; Arab Syrc Thaa # Cf       ARABIC LETTER MARK
 061F          ; Arab Syrc Thaa # Po       ARABIC QUESTION MARK
 
-# Total code points: 3
+# Total code points: 4
+
+# ================================================
+
+# Script_Extensions=Beng Cakm Sylo
+
+09E6..09EF    ; Beng Cakm Sylo # Nd  [10] BENGALI DIGIT ZERO..BENGALI DIGIT NINE
+
+# Total code points: 10
+
+# ================================================
+
+# Script_Extensions=Cakm Mymr Tale
+
+1040..1049    ; Cakm Mymr Tale # Nd  [10] MYANMAR DIGIT ZERO..MYANMAR DIGIT NINE
+
+# Total code points: 10
 
 # ================================================
 

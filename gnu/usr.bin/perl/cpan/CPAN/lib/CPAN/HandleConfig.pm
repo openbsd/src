@@ -95,11 +95,13 @@ $VERSION = "5.5003"; # see also CPAN::Config::VERSION at end of file
      "proxy_pass",
      "proxy_user",
      "randomize_urllist",
+     "recommends_policy",
      "scan_cache",
      "shell",
      "show_unparsable_versions",
      "show_upload_date",
      "show_zero_versions",
+     "suggests_policy",
      "tar",
      "tar_verbosity",
      "term_is_latin",
@@ -108,6 +110,7 @@ $VERSION = "5.5003"; # see also CPAN::Config::VERSION at end of file
      "trust_test_report_history",
      "unzip",
      "urllist",
+     "use_prompt_default",
      "use_sqlite",
      "username",
      "version_timeout",
@@ -765,7 +768,7 @@ sub prefs_lookup {
 
     use strict;
     use vars qw($AUTOLOAD $VERSION);
-    $VERSION = "5.5001";
+    $VERSION = "5.5002";
 
     # formerly CPAN::HandleConfig was known as CPAN::Config
     sub AUTOLOAD { ## no critic

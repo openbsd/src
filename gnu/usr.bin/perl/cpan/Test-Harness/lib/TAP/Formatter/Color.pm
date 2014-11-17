@@ -1,11 +1,11 @@
 package TAP::Formatter::Color;
 
 use strict;
-use vars qw($VERSION @ISA);
+use warnings;
 
 use constant IS_WIN32 => ( $^O =~ /^(MS)?Win32$/ );
 
-@ISA = qw(TAP::Object);
+use base 'TAP::Object';
 
 my $NO_COLOR;
 
@@ -71,11 +71,11 @@ TAP::Formatter::Color - Run Perl test scripts with color
 
 =head1 VERSION
 
-Version 3.26
+Version 3.30
 
 =cut
 
-$VERSION = '3.26';
+our $VERSION = '3.30';
 
 =head1 DESCRIPTION
 

@@ -32,8 +32,10 @@ my $ungetc_count = 8200;    # Somewhat over the likely buffer size
 
     SKIP:
     {
-	skip_if_miniperl("miniperl can't rely on loading PerlIO::scalar");
-	skip("no PerlIO::scalar") unless $Config{extensions} =~ m!\bPerlIO/scalar\b!;
+	skip_if_miniperl("miniperl can't rely on loading PerlIO::scalar",
+			  2 * $ungetc_count + 1);
+	skip("no PerlIO::scalar", 2 * $ungetc_count + 1)
+	    unless $Config{extensions} =~ m!\bPerlIO/scalar\b!;
 	require PerlIO::scalar;
 	my $fcontents = join "", map {"$_\015\012"} "a".."zzz";
 	open my $fh, "<:crlf", \$fcontents;

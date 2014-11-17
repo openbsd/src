@@ -4,7 +4,7 @@ use Carp;
 use warnings;
 use strict;
 use vars qw($VERSION $AUTOLOAD);
-$VERSION = '0.94'; # remember to update version in POD!
+$VERSION = '0.96'; # remember to update version in POD!
 # $DB::single=1;
 
 my %symcache;
@@ -266,8 +266,7 @@ Attribute::Handlers - Simpler definition of attribute handlers
 
 =head1 VERSION
 
-This document describes version 0.93 of Attribute::Handlers,
-released July 20, 2011.
+This document describes version 0.96 of Attribute::Handlers.
 
 =head1 SYNOPSIS
 
@@ -878,7 +877,7 @@ C<SCALAR>, C<ARRAY>, C<HASH>, C<CODE>, or C<ANY>.
 =item C<Attribute handler %s doesn't handle %s attributes>
 
 A handler for attributes of the specified name I<was> defined, but not
-for the specified type of declaration. Typically encountered whe trying
+for the specified type of declaration. Typically encountered when trying
 to apply a C<VAR> attribute handler to a subroutine, or a C<SCALAR>
 attribute handler to some other type of variable.
 
@@ -931,6 +930,6 @@ Bug reports and other feedback are most welcome.
 
 =head1 COPYRIGHT AND LICENSE
 
-         Copyright (c) 2001-2009, Damian Conway. All Rights Reserved.
+         Copyright (c) 2001-2014, Damian Conway. All Rights Reserved.
        This module is free software. It may be used, redistributed
            and/or modified under the same terms as Perl itself.

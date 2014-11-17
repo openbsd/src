@@ -518,14 +518,14 @@ Perl functions were implemented in the VMS port of Perl
     caller, chdir, chmod, chown, chomp, chop, chr,
     close, closedir, cos, crypt*, defined, delete, die, do, dump*, 
     each, endgrent, endpwent, eof, eval, exec*, exists, exit, exp, 
-    fileno, flock  getc, getgrent*, getgrgid*, getgrnam, getlogin, getppid,
-    getpwent*, getpwnam*, getpwuid*, glob, gmtime*, goto,
+    fileno, flock  getc, getgrent*, getgrgid*, getgrnam, getlogin,
+    getppid, getpwent*, getpwnam*, getpwuid*, glob, gmtime*, goto,
     grep, hex, ioctl, import, index, int, join, keys, kill*,
-    last, lc, lcfirst, lchown*, length, link*, local, localtime, log, lstat, m//,
-    map, mkdir, my, next, no, oct, open, opendir, ord, pack,
-    pipe, pop, pos, print, printf, push, q//, qq//, qw//,
-    qx//*, quotemeta, rand, read, readdir, readlink*, redo, ref, rename,
-    require, reset, return, reverse, rewinddir, rindex,
+    last, lc, lcfirst, lchown*, length, link*, local, localtime, log,
+    lstat, m//, map, mkdir, my, next, no, oct, open, opendir, ord,
+    pack, pipe, pop, pos, print, printf, push, q//, qq//, qw//,
+    qx//*, quotemeta, rand, read, readdir, readlink*, redo, ref,
+    rename, require, reset, return, reverse, rewinddir, rindex,
     rmdir, s///, scalar, seek, seekdir, select(internal),
     select (system call)*, setgrent, setpwent, shift, sin, sleep,
     socketpair, sort, splice, split, sprintf, sqrt, srand, stat,
@@ -1001,8 +1001,8 @@ logical name to be created, it is defined in supervisor mode.
 (The same is done if an existing logical name was defined in
 executive or kernel mode; an existing user or supervisor mode
 logical name is reset to the new value.)  If the value is an empty
-string, the logical name's translation is defined as a single NUL
-(ASCII 00) character, since a logical name cannot translate to a
+string, the logical name's translation is defined as a single C<NUL>
+(ASCII C<\0>) character, since a logical name cannot translate to a
 zero-length string.  (This restriction does not apply to CLI symbols
 or CRTL C<environ> values; they are set to the empty string.)
 An element of the CRTL C<environ> array can be set only if your
@@ -1064,7 +1064,7 @@ You do need to be careful with the logical names representing
 process-permanent files, such as C<SYS$INPUT> and C<SYS$OUTPUT>.
 The translations for these logical names are prepended with a
 two-byte binary value (0x1B 0x00) that needs to be stripped off
-if you wantto use it. (In previous versions of Perl it wasn't
+if you want to use it. (In previous versions of Perl it wasn't
 possible to get the values of these logical names, as the null
 byte acted as an end-of-string marker)
 

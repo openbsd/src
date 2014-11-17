@@ -78,7 +78,7 @@ sub _auth_headers {
 
     # Get user credentials for mode
     my $cred_method = "get_" . ($mode ? "proxy" : "non_proxy") ."_credentials";
-    my ($user, $pass) = return CPAN::HTTP::Credentials->$cred_method;
+    my ($user, $pass) = CPAN::HTTP::Credentials->$cred_method;
 
     # Generate the header for the mode & type
     my $header = $mode eq 'proxy' ? 'Proxy-Authorization' : 'Authorization';

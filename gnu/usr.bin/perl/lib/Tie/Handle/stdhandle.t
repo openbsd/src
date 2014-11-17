@@ -5,47 +5,74 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Tie::StdHandle;
+use Test::More tests => 27;
+
+use_ok('Tie::StdHandle');
+
 tie *tst,Tie::StdHandle;
 
 $f = 'tst';
 
-print "1..14\n";
+unlink("afile") if -f "afile";
 
-# my $file tests
+ok(open($f,"+>afile"), "open +>afile");
+ok(open($f, "+<", "afile"), "open +<, afile");
+ok(binmode($f), "binmode")
+    or diag("binmode: $!\n");
 
-unlink("afile.new") if -f "afile";
-print "$!\nnot " unless open($f,"+>afile") && open($f, "+<", "afile");
-print "ok 1\n";
-print "$!\nnot " unless binmode($f);
-print "ok 2\n";
-print "not " unless -f "afile";
-print "ok 3\n";
-print "not " unless print $f "SomeData\n";
-print "ok 4\n";
-print "not " unless tell($f) == 9;
-print "ok 5\n";
-print "not " unless printf $f "Some %d value\n",1234;
-print "ok 6\n";
-print "not " unless seek($f,0,0);
-print "ok 7\n";
+ok(-f "afile", "-f afile");
+
+# write some lines
+
+ok(print($f "SomeData\n"), "print SomeData");    # line 1
+is(tell($f), 9, "tell");
+ok(printf($f "Some %d value\n",1234), "printf"); # line 2
+ok(print($f "ABCDEF\n"), "print ABCDEF");        # line 3
+{
+    local $\ = "X\n";
+    ok(print($f "rhubarb"), "print rhubarb");    # line 4
+}
+
+ok(syswrite($f, "123456789\n", 3, 7), "syswrite");# line 5
+
+# read some lines back
+
+ok(seek($f,0,0), "seek");
+
+# line 1
+#
 $b = <$f>;
-print "not " unless $b eq "SomeData\n";
-print "ok 8\n";
-print "not " if eof($f);
-print "ok 9\n";
-read($f,($b=''),4);
-print "'$b' not " unless $b eq 'Some';
-print "ok 10\n";
-print "not " unless getc($f) eq ' ';
-print "ok 11\n";
+is($b, "SomeData\n", "b eq SomeData");
+ok(!eof($f), "!eof");
+
+#line 2
+
+is(read($f,($b=''),4), 4, "read(4)");
+is($b, 'Some', "b eq Some");
+is(getc($f), ' ', "getc");
 $b = <$f>;
-print "not " unless eof($f);
-print "ok 12\n";
-seek($f,0,0);
-read($f,($b='scrinches'),4,4); # with offset
-print "'$b' not " unless $b eq 'scriSome';
-print "ok 13\n";
-print "not " unless close($f);
-print "ok 14\n";
+is($b, "1234 value\n", "b eq 1234 value");
+ok(!eof($f), "eof");
+
+# line 3
+
+is(read($f,($b='scrinches'),4,4), 4, "read(4,4)"); # with offset
+is($b, 'scriABCD', "b eq scriABCD");
+$b = <$f>;
+is($b, "EF\n", "EF");
+ok(!eof($f), "eof");
+
+# line 4
+
+$b = <$f>;
+is($b, "rhubarbX\n", "b eq rhubarbX");
+
+# line 5
+
+$b = <$f>;
+is($b, "89\n", "b eq 89");
+
+ok(eof($f), "eof");
+ok(close($f), "close");
+
 unlink("afile");

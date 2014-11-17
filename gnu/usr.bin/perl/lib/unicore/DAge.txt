@@ -1,8 +1,8 @@
-# DerivedAge-6.2.0.txt
-# Date: 2012-09-20, 21:30:39 GMT [MD]
+# DerivedAge-6.3.0.txt
+# Date: 2013-08-27, 18:11:46 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -503,7 +503,8 @@ FFFC          ; 2.1 #       OBJECT REPLACEMENT CHARACTER
 16A0..16F0    ; 3.0 #  [81] RUNIC LETTER FEHU FEOH FE F..RUNIC BELGTHOR SYMBOL
 1780..17DC    ; 3.0 #  [93] KHMER LETTER KA..KHMER SIGN AVAKRAHASANYA
 17E0..17E9    ; 3.0 #  [10] KHMER DIGIT ZERO..KHMER DIGIT NINE
-1800..180E    ; 3.0 #  [15] MONGOLIAN BIRGA..MONGOLIAN VOWEL SEPARATOR
+1800..180D    ; 3.0 #  [14] MONGOLIAN BIRGA..MONGOLIAN FREE VARIATION SELECTOR THREE
+180E          ; 3.0 #       MONGOLIAN VOWEL SEPARATOR
 1810..1819    ; 3.0 #  [10] MONGOLIAN DIGIT ZERO..MONGOLIAN DIGIT NINE
 1820..1877    ; 3.0 #  [88] MONGOLIAN LETTER A..MONGOLIAN LETTER MANCHU ZHA
 1880..18A9    ; 3.0 #  [42] MONGOLIAN LETTER ALI GALI ANUSVARA ONE..MONGOLIAN LETTER ALI GALI DAGALGA
@@ -1303,5 +1304,16 @@ FA2E..FA2F    ; 6.1 #   [2] CJK COMPATIBILITY IDEOGRAPH-FA2E..CJK COMPATIBILITY 
 20BA          ; 6.2 #       TURKISH LIRA SIGN
 
 # Total code points: 1
+
+# ================================================
+
+# Age=V6_3
+
+# Newly assigned in Unicode 6.3.0 (September, 2013)
+
+061C          ; 6.3 #       ARABIC LETTER MARK
+2066..2069    ; 6.3 #   [4] LEFT-TO-RIGHT ISOLATE..POP DIRECTIONAL ISOLATE
+
+# Total code points: 5
 
 # EOF

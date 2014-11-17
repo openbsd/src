@@ -67,3 +67,10 @@ foreach my $package (qw(klonk urkkk kapow kayo thwacke zzzzzwap whamm)) {
 	object_ok($ref, $class, $package);
     }
 }
+
+package _119433 {
+    use mro 'c3';
+    no warnings 'uninitialized';
+    $#_119433::ISA++;
+    ::pass "no crash when ISA contains nonexistent elements";
+}

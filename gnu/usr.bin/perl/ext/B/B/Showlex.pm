@@ -1,6 +1,6 @@
 package B::Showlex;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 use strict;
 use B qw(svref_2object comppadlist class);
@@ -196,7 +196,7 @@ example.  See L<B::Concise> for a fuller explanation of reasons.
 Some of the reported info, such as hex addresses, is not particularly
 valuable.  Other information would be more useful for the typical
 programmer, such as line-numbers, pad-slot reuses, etc..  Given this,
--newlex isnt a particularly good flag-name.
+-newlex is not a particularly good flag-name.
 
 =head1 AUTHOR
 

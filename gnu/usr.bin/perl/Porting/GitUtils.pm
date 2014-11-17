@@ -45,7 +45,7 @@ sub gen_dot_patch {
         last if $branch ne 'undefined';
     }
     for ($branch) {
-        $_  ||= "error";            # hmm, we didnt get /anything/ from name-rev?
+        $_  ||= "error";            # hmm, we did not get /anything/ from name-rev?
         s!^\Q$reftype\E/!! ||       # strip off the reftype
         s!^refs/heads/!!   ||       # possible other places it was found
         s!^refs/remotes/!! ||       # ...

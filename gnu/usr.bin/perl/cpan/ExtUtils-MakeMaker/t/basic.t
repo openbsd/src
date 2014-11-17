@@ -11,17 +11,22 @@ use strict;
 use Config;
 use ExtUtils::MakeMaker;
 
-use Test::More tests => 171;
+use Test::More
+    $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+    ? (skip_all => "no toolchain installed when cross-compiling")
+    : (tests => 171);
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
 use File::Find;
 use File::Spec;
 use File::Path;
+use File::Temp qw[tempdir];
 
 my $perl = which_perl();
 my $Is_VMS = $^O eq 'VMS';
 
-chdir 't';
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 perl_lib;
 
@@ -45,7 +50,7 @@ cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) ||
   diag(@mpl_out);
 
 my $makefile = makefile_name();
-ok( grep(/^Writing $makefile for Big::Dummy/, 
+ok( grep(/^Writing $makefile for Big::Dummy/,
          @mpl_out) == 1,
                                            'Makefile.PL output looks right');
 
@@ -79,12 +84,12 @@ ok( open(PPD, 'Big-Dummy.ppd'), '  .ppd file generated' );
 my $ppd_html;
 { local $/; $ppd_html = <PPD> }
 close PPD;
-like( $ppd_html, qr{^<SOFTPKG NAME="Big-Dummy" VERSION="0.01">}m, 
+like( $ppd_html, qr{^<SOFTPKG NAME="Big-Dummy" VERSION="0.01">}m,
                                                            '  <SOFTPKG>' );
 like( $ppd_html,
       qr{^\s*<ABSTRACT>Try "our" hot dog's, \$andwiche\$ and \$\(ub\)\$!</ABSTRACT>}m,
                                                            '  <ABSTRACT>');
-like( $ppd_html, 
+like( $ppd_html,
       qr{^\s*<AUTHOR>Michael G Schwern &lt;schwern\@pobox.com&gt;</AUTHOR>}m,
                                                            '  <AUTHOR>'  );
 like( $ppd_html, qr{^\s*<IMPLEMENTATION>}m,          '  <IMPLEMENTATION>');
@@ -106,7 +111,7 @@ END { unlink 'Big-Dummy.ppd' }
 
 my $test_out = run("$make test");
 like( $test_out, qr/All tests successful/, 'make test' );
-is( $?, 0,                                 '  exited normally' ) || 
+is( $?, 0,                                 '  exited normally' ) ||
     diag $test_out;
 
 # Test 'make test TEST_VERBOSE=1'
@@ -124,14 +129,14 @@ like( $install_out, qr/^Installing /m );
 
 ok( -r '../dummy-install',     '  install dir created' );
 my %files = ();
-find( sub { 
+find( sub {
     # do it case-insensitive for non-case preserving OSs
     my $file = lc $_;
 
     # VMS likes to put dots on the end of things that don't have them.
     $file =~ s/\.$// if $Is_VMS;
 
-    $files{$file} = $File::Find::name; 
+    $files{$file} = $File::Find::name;
 }, '../dummy-install' );
 ok( $files{'dummy.pm'},     '  Dummy.pm installed' );
 ok( $files{'liar.pm'},      '  Liar.pm installed'  );
@@ -163,14 +168,14 @@ SKIP: {
     skip 'VMS install targets do not preserve $(DESTDIR)', 10 if $Is_VMS;
 
     $install_out = run("$make install PREFIX= DESTDIR=other");
-    is( $?, 0, 'install with DESTDIR' ) || 
+    is( $?, 0, 'install with DESTDIR' ) ||
         diag $install_out;
     like( $install_out, qr/^Installing /m );
 
     ok( -d 'other',  '  destdir created' );
     %files = ();
     my $perllocal;
-    find( sub { 
+    find( sub {
         $files{$_} = $File::Find::name;
     }, 'other' );
     ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
@@ -179,7 +184,7 @@ SKIP: {
     ok( $files{'.packlist'},    '  packlist created'   );
     ok( $files{'perllocal.pod'},'  perllocal.pod created' );
 
-    ok( open(PERLLOCAL, $files{'perllocal.pod'} ) ) || 
+    ok( open(PERLLOCAL, $files{'perllocal.pod'} ) ) ||
         diag("Can't open $files{'perllocal.pod'}: $!");
     { local $/;
       unlike(<PERLLOCAL>, qr/other/, 'DESTDIR should not appear in perllocal');
@@ -187,7 +192,7 @@ SKIP: {
     close PERLLOCAL;
 
 # TODO not available in the min version of Test::Harness we require
-#    ok( open(PACKLIST, $files{'.packlist'} ) ) || 
+#    ok( open(PACKLIST, $files{'.packlist'} ) ) ||
 #        diag("Can't open $files{'.packlist'}: $!");
 #    { local $/;
 #      local $TODO = 'DESTDIR still in .packlist';
@@ -203,7 +208,7 @@ SKIP: {
     skip 'VMS install targets do not preserve $(PREFIX)', 9 if $Is_VMS;
 
     $install_out = run("$make install PREFIX=elsewhere DESTDIR=other/");
-    is( $?, 0, 'install with PREFIX override and DESTDIR' ) || 
+    is( $?, 0, 'install with PREFIX override and DESTDIR' ) ||
         diag $install_out;
     like( $install_out, qr/^Installing /m );
 
@@ -394,7 +399,7 @@ note "META file validity"; {
 cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
 
 ok( grep(/^Writing $makefile for Big::Dummy/, @mpl_out) == 1,
-                                'init_dirscan skipped distdir') || 
+                                'init_dirscan skipped distdir') ||
   diag(@mpl_out);
 
 # I know we'll get ignored errors from make here, that's ok.

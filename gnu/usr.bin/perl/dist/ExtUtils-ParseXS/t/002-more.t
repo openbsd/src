@@ -9,16 +9,20 @@ use ExtUtils::CBuilder;
 use attributes;
 use overload;
 
-plan tests => 28;
+plan tests => 29;
 
 my ($source_file, $obj_file, $lib_file);
 
 require_ok( 'ExtUtils::ParseXS' );
 ExtUtils::ParseXS->import('process_file');
 
-chdir 't' or die "Can't chdir to t/, $!";
+chdir 't' if -d 't';
 
 use Carp; $SIG{__WARN__} = \&Carp::cluck;
+
+# See the comments about this in 001-basics.t
+@INC = map { File::Spec->rel2abs($_) } @INC
+    if $^O =~ /android/;
 
 #########################
 
@@ -43,7 +47,7 @@ SKIP: {
 }
 
 SKIP: {
-  skip "no dynamic loading", 24
+  skip "no dynamic loading", 25
     if !$b->have_compiler || !$Config{usedl};
   my $module = 'XSMore';
   $lib_file = $b->link( objects => $obj_file, module_name => $module );
@@ -95,6 +99,7 @@ SKIP: {
   is XSMore::typemaptest1(), 42, 'Simple embedded typemap works';
   is XSMore::typemaptest2(), 42, 'Simple embedded typemap works with funny end marker';
   is XSMore::typemaptest3(12, 13, 14), 12, 'Simple embedded typemap works for input, too';
+  is XSMore::typemaptest6(5), 5, '<<END; (with semicolon) matches delimiter "END"';
 
   # Win32 needs to close the DLL before it can unlink it, but unfortunately
   # dl_unload_file was missing on Win32 prior to perl change #24679!

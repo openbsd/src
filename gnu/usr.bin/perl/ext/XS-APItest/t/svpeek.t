@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 50;
+use Test::More tests => 52;
 
 BEGIN { use_ok('XS::APItest') };
 
@@ -47,7 +47,12 @@ like (DPeek ($1), qr'^PVMG\("',			' $1');
   is (DPeek (sub {}),	'\CV(__ANON__)',	'sub {}');
 
 { our ($VAR, @VAR, %VAR);
+if ($^O eq 'vos') {
+  # VOS uses .pm as a required executable suffix
+  open VAR, "<", "$^X.pm" or die "Can't open $^X.pm: $!";
+} else {
   open VAR, "<", $^X or die "Can't open $^X: $!";
+}
   sub VAR {}
   format VAR =
 .
@@ -69,6 +74,11 @@ like (DPeek ($1), qr'^PVMG\("',			' $1');
   $VAR = sub { "VAR" };
   is (DPeek ($VAR),	'\CV(__ANON__)',	' $VAR sub { "VAR" }');
   is (DPeek (\$VAR),	'\\\CV(__ANON__)',	'\$VAR sub { "VAR" }');
+  
+  $VAR = eval qq{sub \x{30cd} { "VAR" } \\&\x{30cd}};
+  is (DPeek ($VAR),     '\CV(\x{30cd})',        ' $VAR sub \x{30cd} { "VAR" }');
+  is (DPeek (\$VAR),    '\\\\CV(\x{30cd})',      '\$VAR sub \x{30cd} { "VAR" }');
+
   $VAR = 0;
 
   is (DPeek (\&VAR),	'\CV(VAR)',		'\&VAR');

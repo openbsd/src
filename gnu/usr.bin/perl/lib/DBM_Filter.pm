@@ -2,7 +2,7 @@ package DBM_Filter ;
 
 use strict;
 use warnings;
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 package Tie::Hash ;
 
@@ -230,7 +230,7 @@ DBM_Filter -- Filter DBM keys/values
 =head1 SYNOPSIS
 
     use DBM_Filter ;
-    use SDBM_File; # or DB_File, or GDBM_File, or NDBM_File, or ODBM_File
+    use SDBM_File; # or DB_File, GDBM_File, NDBM_File, or ODBM_File
 
     $db = tie %hash, ...
 

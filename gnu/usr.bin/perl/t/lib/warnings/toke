@@ -35,10 +35,6 @@ toke.c	AOK
      You need to quote \"%s\"" 
 	sub fred {} ; $SIG{TERM} = fred;
 
-     Scalar value %.*s better written as $%.*s" 
-	@a[3] = 2;
-	@a{3} = 2;
-
      Can't use \\%c to mean $%c in expression 
 	$_ = "ab" ; s/(ab)/\1/e;
 
@@ -82,6 +78,8 @@ toke.c	AOK
 
     Useless use of \\E.
         $a = "abcd\E" ;
+
+    Postfix dereference is experimental
 
     %s number > %s non-portable
         my $a =  0b011111111111111111111111111111110 ;
@@ -150,6 +148,32 @@ $a = <<;
 
 EXPECT
 Use of bare << to mean <<"" is deprecated at - line 2.
+########
+# toke.c
+eval "\$\cT";
+eval "\${\7LOBAL_PHASE}";
+eval "\${\cT}";
+eval "\${\n\cT}";
+eval "\${\cT\n}";
+my $ret = eval "\${\n\cT\n}";
+print "ok\n" if $ret == $^T;
+
+no warnings 'deprecated' ;
+eval "\$\cT";
+eval "\${\7LOBAL_PHASE}";
+eval "\${\cT}";
+eval "\${\n\cT}";
+eval "\${\cT\n}";
+eval "\${\n\cT\n}";
+
+EXPECT
+Use of literal control characters in variable names is deprecated at (eval 1) line 1.
+Use of literal control characters in variable names is deprecated at (eval 2) line 1.
+Use of literal control characters in variable names is deprecated at (eval 3) line 1.
+Use of literal control characters in variable names is deprecated at (eval 4) line 2.
+Use of literal control characters in variable names is deprecated at (eval 5) line 1.
+Use of literal control characters in variable names is deprecated at (eval 6) line 2.
+ok
 ########
 # toke.c
 $a =~ m/$foo/eq;
@@ -278,45 +302,11 @@ You need to quote "ふれど" at - line 5.
 ########
 # toke.c
 use warnings 'syntax' ;
-@a[3] = 2;
-@a{3} = 2;
-no warnings 'syntax' ;
-@a[3] = 2;
-@a{3} = 2;
-EXPECT
-Scalar value @a[3] better written as $a[3] at - line 3.
-Scalar value @a{3} better written as $a{3} at - line 4.
-########
-# toke.c
-use utf8;
-use open qw( :utf8 :std );
-use warnings 'syntax' ;
-@à[3] = 2;
-@à{3} = 2;
-no warnings 'syntax' ;
-@à[3] = 2;
-@à{3} = 2;
-EXPECT
-Scalar value @à[3] better written as $à[3] at - line 5.
-Scalar value @à{3} better written as $à{3} at - line 6.
-########
-# toke.c
-use utf8;
-use open qw( :utf8 :std );
-use warnings 'syntax' ;
-@ぁ[3] = 2;
-@ぁ{3} = 2;
-no warnings 'syntax' ;
-@ぁ[3] = 2;
-@ぁ{3} = 2;
-EXPECT
-Scalar value @ぁ[3] better written as $ぁ[3] at - line 5.
-Scalar value @ぁ{3} better written as $ぁ{3} at - line 6.
-########
-# toke.c
-use warnings 'syntax' ;
 $_ = "ab" ; 
 s/(ab)/\1/e;
+s//\(2)/e; # should be exempt
+s/${\2}//; # same here
+()="${\2}"; # metoo
 no warnings 'syntax' ;
 $_ = "ab" ; 
 s/(ab)/\1/e;
@@ -417,6 +407,37 @@ EXPECT
 Ambiguous use of ${time{...}} resolved to $time{...} at - line 3.
 ########
 # toke.c
+use warnings 'ambiguous' ;
+$a = ${
+
+    time
+        {2}
+};
+warn "after";
+EXPECT
+Ambiguous use of ${time{...}} resolved to $time{...} at - line 5.
+after at - line 8.
+########
+# toke.c
+use warnings 'ambiguous' ;
+$a = ${
+
+time[2]
+
+};
+$a = ${
+
+time    
+   [2]
+
+};
+warn "after";
+EXPECT
+Ambiguous use of ${time[...]} resolved to $time[...] at - line 5.
+Ambiguous use of ${time[...]} resolved to $time[...] at - line 10.
+after at - line 14.
+########
+# toke.c
 no warnings 'ambiguous' ;
 $a = ${time{2}};
 EXPECT
@@ -425,10 +446,57 @@ EXPECT
 # toke.c
 use warnings 'ambiguous' ;
 $a = ${time} ;
+$a = @{time} ;
+$a = $#{time} ; # This one is special cased in toke.c
+$a = %{time} ;
+$a = *{time} ;
+$a = defined &{time} ; # To avoid calling &::time
 no warnings 'ambiguous' ;
 $a = ${time} ;
+$a = @{time} ;
+$a = $#{time} ; # This one is special cased in toke.c
+$a = %{time} ;
+$a = *{time} ;
+$a = defined &{time} ; # To avoid calling &::time
 EXPECT
 Ambiguous use of ${time} resolved to $time at - line 3.
+Ambiguous use of @{time} resolved to @time at - line 4.
+Ambiguous use of @{time} resolved to @time at - line 5.
+Ambiguous use of %{time} resolved to %time at - line 6.
+Ambiguous use of *{time} resolved to *time at - line 7.
+Ambiguous use of &{time} resolved to &time at - line 8.
+########
+# toke.c
+use warnings 'ambiguous' ;
+$a = ${
+time
+} ;
+$a = @{
+time
+} ;
+$a = $#{
+time
+} ;
+$a = %{
+time
+} ;
+$a = *{
+time
+} ;
+$a = defined &{
+time
+
+
+} ;
+warn "last";
+EXPECT
+Ambiguous use of ${time} resolved to $time at - line 4.
+Ambiguous use of @{time} resolved to @time at - line 7.
+Ambiguous use of @{time} resolved to @time at - line 10.
+Ambiguous use of %{time} resolved to %time at - line 13.
+Ambiguous use of *{time} resolved to *time at - line 16.
+Ambiguous use of &{time} resolved to &time at - line 19.
+last at - line 23.
 ########
 # toke.c
 use warnings 'ambiguous' ;
@@ -875,6 +943,11 @@ $^W = 0 ;
     *foo *foo ;
 }
 *foo *foo ;
+# These should not warn [perl #117535]:
+foo**foo ;
+no warnings 'deprecated';
+sort $*foo ;
+sort $ *foo ;
 EXPECT
 Operator or semicolon missing before *foo at - line 3.
 Ambiguous use of * resolved as operator * at - line 3.
@@ -882,6 +955,59 @@ Operator or semicolon missing before *foo at - line 8.
 Ambiguous use of * resolved as operator * at - line 8.
 Operator or semicolon missing before *foo at - line 10.
 Ambiguous use of * resolved as operator * at - line 10.
+########
+# toke.c
+$^W = 0 ;
+%foo %foo ;
+{
+    no warnings 'ambiguous' ;
+    %foo %foo ;
+    use warnings 'ambiguous' ;
+    %foo %foo ;
+}
+%foo %foo ;
+# This should not produce ambiguity warnings [perl #117535]:
+sort $%foo ;
+sort $ %foo ;
+EXPECT
+Operator or semicolon missing before %foo at - line 3.
+Ambiguous use of % resolved as operator % at - line 3.
+Operator or semicolon missing before %foo at - line 8.
+Ambiguous use of % resolved as operator % at - line 8.
+Operator or semicolon missing before %foo at - line 10.
+Ambiguous use of % resolved as operator % at - line 10.
+Bareword found where operator expected at - line 12, near "$%foo"
+	(Missing operator before foo?)
+Bareword found where operator expected at - line 13, near "$ %foo"
+	(Missing operator before foo?)
+Illegal modulus zero at - line 3.
+########
+# toke.c
+$^W = 0 ;
+&foo &foo ;
+{
+    no warnings 'ambiguous' ;
+    &foo &foo ;
+    use warnings 'ambiguous' ;
+    &foo &foo ;
+}
+&foo &foo ;
+# These should not warn produce ambiguity warnings [perl #76910]:
+foo&&foo ;
+sort $&foo ;
+sort $ &foo ;
+EXPECT
+Operator or semicolon missing before &foo at - line 3.
+Ambiguous use of & resolved as operator & at - line 3.
+Operator or semicolon missing before &foo at - line 8.
+Ambiguous use of & resolved as operator & at - line 8.
+Operator or semicolon missing before &foo at - line 10.
+Ambiguous use of & resolved as operator & at - line 10.
+Bareword found where operator expected at - line 13, near "$&foo"
+	(Missing operator before foo?)
+Bareword found where operator expected at - line 14, near "$ &foo"
+	(Missing operator before foo?)
+Undefined subroutine &main::foo called at - line 3.
 ########
 # toke.c
 use utf8;
@@ -918,6 +1044,17 @@ no warnings 'misc' ;
 $a = "abcd\E" ;
 EXPECT
 Useless use of \E at - line 3.
+########
+# toke.c
+use feature 'postderef', 'postderef_qq';
+(\$_)->$*;
+"$_->$*";
+no warnings 'experimental::postderef';
+(\$_)->$*;
+"$_->$*";
+EXPECT
+Postfix dereference is experimental at - line 3.
+Postfix dereference is experimental at - line 4.
 ########
 # toke.c
 use warnings 'portable' ;
@@ -1224,19 +1361,27 @@ no
 ########
 # toke.c
 use warnings;
-my $a = "\c{ack}";
 $a = "\c,";
 $a = "\c`";
 no warnings 'syntax';
-$a = "\c{ack}";
 $a = "\c,";
 $a = "\c`";
-no warnings 'deprecated';
 EXPECT
-"\c{" is deprecated and is more clearly written as ";" at - line 3.
-"\c," is more clearly written simply as "l" at - line 4.
-"\c`" is more clearly written simply as "\ " at - line 5.
-"\c{" is deprecated and is more clearly written as ";" at - line 7.
+"\c," is more clearly written simply as "l" at - line 3.
+"\c`" is more clearly written simply as "\ " at - line 4.
+########
+# toke.c
+use warnings;
+my $a = "\c{ack}";
+EXPECT
+OPTION fatal
+Use ";" instead of "\c{" at - line 3.
+########
+# toke.c
+my $a = "\câ";
+EXPECT
+OPTION fatal
+Character following "\c" must be printable ASCII at - line 2.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -1308,22 +1453,34 @@ sub { # do not actually call require
 EXPECT
 ########
 # toke.c
-# [perl #113094]
+# [perl #113094], [perl #119101]
 print "aa" =~ m{^a\{1,2\}$}, "\n";
 print "aa" =~ m{^a\x\{61\}$}, "\n";
+print "a\\x{6F}" =~ m{^a\\x\{6F\}$}, "\n";
+print "a\\o" =~ m{^a\\\x\{6F\}$}, "\n";
+print "a\\\\x{6F}" =~ m{^a\\\\x\{6F\}$}, "\n";
+print "a\\\\o"     =~ m{^a\\\\\x\{6F\}$}, "\n";
 print "aa" =~ m{^a{1,2}$}, "\n";
 print "aq" =~ m[^a\[a-z\]$], "\n";
 print "aq" =~ m(^a\(q\)$), "\n";
 no warnings 'deprecated';
 print "aa" =~ m{^a\{1,2\}$}, "\n";
 print "aa" =~ m{^a\x\{61\}$}, "\n";
+print "a\\x{6F}" =~ m{^a\\x\{6F\}$}, "\n";
+print "a\\o" =~ m{^a\\\x\{6f\}$}, "\n";
 print "aq" =~ m[^a\[a-z\]$], "\n";
 print "aq" =~ m(^a\(q\)$), "\n";
 EXPECT
 Useless use of '\'; doesn't escape metacharacter '{' at - line 3.
 Useless use of '\'; doesn't escape metacharacter '{' at - line 4.
-Useless use of '\'; doesn't escape metacharacter '[' at - line 6.
-Useless use of '\'; doesn't escape metacharacter '(' at - line 7.
+Useless use of '\'; doesn't escape metacharacter '{' at - line 6.
+Useless use of '\'; doesn't escape metacharacter '{' at - line 8.
+Useless use of '\'; doesn't escape metacharacter '[' at - line 10.
+Useless use of '\'; doesn't escape metacharacter '(' at - line 11.
+1
+1
+1
+1
 1
 1
 1
@@ -1332,4 +1489,24 @@ q
 1
 1
 1
+1
+1
 q
+########
+# toke.c
+#[perl #119123] disallow literal control character variables
+eval "\$\cQ = 25";
+eval "\${ \cX } = 24";
+*{
+    Foo
+}; # shouldn't warn on {\n, even though \n is a control character
+EXPECT
+Use of literal control characters in variable names is deprecated at (eval 1) line 1.
+Use of literal control characters in variable names is deprecated at (eval 2) line 1.
+########
+# toke.c
+# [perl #120288] -X at start of line gave spurious warning, where X is not
+# a filetest operator
+-a;
+;-a;
+EXPECT

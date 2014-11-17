@@ -200,6 +200,23 @@ logically match their complements.
 C<\R> matches a generic linebreak, that is, vertical whitespace, plus
 the multi-character sequence C<"\x0D\x0A">.
 
+=item Optional pre-match and post-match captures with the /p flag
+
+There is a new flag C</p> for regular expressions.  Using this
+makes the engine preserve a copy of the part of the matched string before
+the matching substring to the new special variable C<${^PREMATCH}>, the
+part after the matching substring to C<${^POSTMATCH}>, and the matched
+substring itself to C<${^MATCH}>.
+
+Perl is still able to store these substrings to the special variables
+C<$`>, C<$'>, C<$&>, but using these variables anywhere in the program
+adds a penalty to all regular expression matches, whereas if you use
+the C</p> flag and the new special variables instead, you pay only for
+the regular expressions where the flag is used.
+
+For more detail on the new variables, see L<perlvar>; for the use of
+the regular expression flag, see L<perlop> and L<perlre>.
+
 =back
 
 =head2 C<say()>

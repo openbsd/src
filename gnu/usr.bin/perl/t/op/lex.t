@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-require './test.pl';
+BEGIN { chdir 't'; require './test.pl'; }
 
-plan(tests => 7);
+plan(tests => 8);
 
 {
     no warnings 'deprecated';
@@ -73,3 +73,18 @@ fresh_perl_is(
    { stderr => 1 },
   'no crash when charnames cannot load and %^H holds string reference'
 );
+
+# not fresh_perl_is, as it seems to hide the error
+is runperl(
+    nolib => 1, # -Ilib may also hide the error
+    progs => [
+      '*{',
+      '         XS::APItest::gv_fetchmeth_type()',
+      '}'
+    ],
+    stderr => 1,
+   ),
+  "Undefined subroutine &XS::APItest::gv_fetchmeth_type called at -e line "
+ ."2.\n",
+  'no buffer corruption with multiline *{...expr...}'
+;

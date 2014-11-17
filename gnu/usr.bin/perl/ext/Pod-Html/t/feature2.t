@@ -41,9 +41,9 @@ __DATA__
 <link rev="made" href="mailto:[PERLADMIN]" />
 </head>
 
-<body id="_podtop_" style="background-color: white">
+<body id="_podtop_">
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" style="background-color: #cccccc" valign="middle">
+<tr><td class="_podblock_" style="background-color: #cccccc; color: #000" valign="middle">
 <big><strong><span class="_podblock_">&nbsp;</span></strong></big>
 </td></tr>
 </table>
@@ -70,7 +70,7 @@ some html
 <p>some text and a link <a>crossref</a></p>
 
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" style="background-color: #cccccc" valign="middle">
+<tr><td class="_podblock_" style="background-color: #cccccc; color: #000" valign="middle">
 <big><strong><span class="_podblock_">&nbsp;</span></strong></big>
 </td></tr>
 </table>

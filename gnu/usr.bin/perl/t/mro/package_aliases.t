@@ -10,7 +10,7 @@ BEGIN {
 
 use strict;
 use warnings;
-plan(tests => 53);
+plan(tests => 54);
 
 {
     package New;
@@ -408,3 +408,11 @@ local *Fooo:: = \%Baro::;
     no warnings;
     is 'Bazo'->ber, 'black sheep', 'localised *glob=$stashref assignment';
 }
+
+# $Stash::{"entries::"} that are not globs.
+# These used to crash.
+$NotGlob::{"NotGlob::"} = 0; () = $NewNotGlob::NotGlob::;
+*NewNotGlob:: = *NotGlob::;
+pass(
+   "no crash when clobbering sub-'stash' whose parent stash entry is no GV"
+);

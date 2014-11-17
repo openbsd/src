@@ -67,6 +67,7 @@ sub run_tests {
         # CURLYX and WHILEM blocks, except those related to LONGJMP, the
         # super-linear cache and warnings. It executes about 0.5M regexes
 
+        no warnings 'regexp';   # Silence "has useless greediness modifier"
         my $r = qr/^
                     (?:
                         ( (?:a|z+)+ )
@@ -99,6 +100,7 @@ sub run_tests {
                     )*
                     ( (?:l|z+)+ )
               $/x;
+        use warnings 'regexp';
           
         my $ok = 1;
         my $msg = "CURLYX stress test";

@@ -4,6 +4,8 @@ apply_attrs_string             # U
 bytes_to_utf8                  # U
 gv_efullname4                  # U
 gv_fullname4                   # U
+isBLANK                        # U
+isPSXSPC                       # U
 is_utf8_string                 # U
 save_generic_pvref             # U
 utf16_to_utf8                  # E (Perl_utf16_to_utf8)
@@ -13,5 +15,3 @@ G_METHOD                       # added by devel/scanprov
 NVef                           # added by devel/scanprov
 NVff                           # added by devel/scanprov
 NVgf                           # added by devel/scanprov
-isBLANK                        # added by devel/scanprov
-isPSXSPC                       # added by devel/scanprov

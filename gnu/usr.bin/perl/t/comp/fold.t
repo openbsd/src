@@ -4,7 +4,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..26\n";
+print "1..29\n";
 my $test = 0;
 
 # Historically constant folding was performed by evaluating the ops, and if
@@ -149,3 +149,25 @@ eval "truncate 1 ? $n : 0, 0;";
 print "not " unless -z $n;
 print "ok ", ++$test, " - truncate(const ? word : ...)\n";
 unlink $n;
+
+# Constant folding should not change the mutability of returned values.
+for(1+2) {
+    eval { $_++ };
+    print "not " unless $_ eq 4;
+    print "ok ", ++$test,
+          " - 1+2 returns mutable value, just like \$a+\$b",
+          "\n";
+}
+
+# [perl #119055]
+# We hide the implementation detail that qq "foo" is implemented using
+# constant folding.
+eval { ${\"hello\n"}++ };
+print "not " unless $@ =~ "Modification of a read-only value attempted at";
+print "ok ", ++$test, " - qq with no vars is a constant\n";
+
+# [perl #119501]
+my @values;
+for (1,2) { for (\(1+3)) { push @values, $$_; $$_++ } }
+is "@values", "4 4",
+   '\1+3 folding making modification affect future retvals';

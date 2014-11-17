@@ -7,6 +7,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require Config; import Config;
 }
 
 BEGIN { require "./test.pl"; }
@@ -15,7 +16,7 @@ plan(tests => 115);
 
 use Config;
 use Errno qw(EACCES EISDIR);
-use POSIX qw(setlocale LC_ALL);
+BEGIN { eval 'use POSIX qw(setlocale LC_ALL)' }
 
 # due to a bug in VMS's piping which makes it impossible for runperl()
 # to emulate echo -n (ie. stdin always winds up with a newline), these 
@@ -109,7 +110,10 @@ SWTEST
     );
 }
 
-{
+SKIP: {
+    skip "no POSIX on miniperl", 1, unless $INC{"POSIX.pm"};
+    skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
+
     my $tempdir = tempfile;
     mkdir $tempdir, 0700 or die "Can't mkdir '$tempdir': $!";
 

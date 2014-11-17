@@ -15,7 +15,7 @@ use Exporter;
 use Errno;
 
 @ISA = qw(IO::Socket);
-$VERSION = "1.33";
+$VERSION = "1.35";
 
 my $EINVAL = exists(&Errno::EINVAL) ? Errno::EINVAL() : 1;
 
@@ -50,7 +50,7 @@ sub _get_proto_number {
     return undef unless defined $name;
     return $proto_number{$name} if exists $proto_number{$name};
 
-    my @proto = getprotobyname($name);
+    my @proto = eval { getprotobyname($name) };
     return undef unless @proto;
     _cache_proto(@proto);
 
@@ -62,7 +62,7 @@ sub _get_proto_name {
     return undef unless defined $num;
     return $proto_name{$num} if exists $proto_name{$num};
 
-    my @proto = getprotobynumber($num);
+    my @proto = eval { getprotobynumber($num) };
     return undef unless @proto;
     _cache_proto(@proto);
 
@@ -358,7 +358,8 @@ C<IO::Socket::INET> provides.
 
 If C<Listen> is defined then a listen socket is created, else if the
 socket type, which is derived from the protocol, is SOCK_STREAM then
-connect() is called.
+connect() is called.  If the C<Listen> argument is given, but false,
+the queue size will be set to 5.
 
 Although it is not illegal, the use of C<MultiHomed> on a socket
 which is in non-blocking mode is of little use. This is because the

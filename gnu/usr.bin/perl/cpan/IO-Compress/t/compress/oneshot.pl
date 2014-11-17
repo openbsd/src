@@ -16,7 +16,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 989 + $extra ;
+    plan tests => 995 + $extra ;
 
     use_ok('IO::Uncompress::AnyUncompress', qw(anyuncompress $AnyUncompressError)) ;
 
@@ -183,8 +183,10 @@ sub run
                 use Config;
 
                 skip 'readonly + threads', 1
-                    if $Config{useithreads};
+                    if $Config{useithreads} ;
 
+                skip '\\ returns mutable value in 5.19.3', 1
+                    if $] >= 5.019003;
                 
                 eval { $a = $Func->(\$in, \$out, TrailingData => \"abc") ;} ;
                 like $@, mkErr("^$TopType: Parameter 'TrailingData' not writable"),
@@ -302,6 +304,7 @@ sub run
                     is $keep, $buffer, "  Input buffer not changed" ;
                     my $got = anyUncompress(\$output, $already);
                     $got = undef if ! defined $buffer && $got eq '' ;
+                    ok ! $$Error, "  no error [$$Error]" ;
                     is $got, $buffer, "  Uncompressed matches original";
 
                 }

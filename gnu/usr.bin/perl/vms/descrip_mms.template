@@ -34,6 +34,8 @@
 ~FLAGS~
 ~LARGEFILE~
 ~ARCHNAME~
+~USEVMSDEBUG~
+~PREFIX~
 
 #: >>>>> Architecture-specific options <<<<<
 .ifdef IXE
@@ -151,14 +153,6 @@ THRLIBS2 = sys$share:cma$open_lib_shr/share|sys$share:cma$open_rtl/share
 .endif
 .endif
 
-.ifdef FAKETHREADED
-THREADDEF = 
-THREADH = fakethr.h
-THREAD = THREAD
-.else
-THREADH =
-.endif
-
 .ifdef MTU
 .ifdef MTK
 MTHREADLINKFLAGS = /THREADS=(MULTIPLE_KERNEL,UPCALLS)
@@ -189,7 +183,7 @@ NOOP = continue
 # Macros to invoke a copy of miniperl during the build.  Targets which
 # are built using these macros should depend on $(MINIPERL_EXE)
 MINIPERL_EXE = Sys$Disk:[]miniperl$(E)
-MINIPERL = MCR $(MINIPERL_EXE) "-I[.lib]" "-I[.dist.Cwd]" "-I[.dist.Cwd.lib]"
+MINIPERL = MCR $(MINIPERL_EXE) "-I[.lib]"
 MINIPERLQ = MCR $(MINIPERL_EXE) ""-I[.lib]""
 XSUBPP = $(MINIPERL) "-I[.ext.re]" [.lib.extutils]xsubpp -noprototypes
 # Macro to invoke a preexisting copy of Perl.  This is used to regenerate
@@ -234,14 +228,14 @@ FULLLIBS2 = $(LIBS2)|$(THRLIBS1)|$(THRLIBS2)
 
 #### End of system configuration section. ####
 
-c0 = $(MALLOC_C) av.c deb.c doio.c doop.c dump.c globals.c gv.c hv.c mro.c
+c0 = $(MALLOC_C) av.c caretx.c deb.c doio.c doop.c dump.c globals.c gv.c hv.c mro.c
 c1 = mg.c locale.c mathoms.c miniperlmain.c numeric.c op.c pad.c perl.c perlapi.c perlio.c
 c2 = perly.c pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c regcomp.c regexec.c reentr.c
 c3 = run.c scope.c sv.c taint.c toke.c universal.c utf8.c util.c vms.c keywords.c
 c = $(c0) $(c1) $(c2) $(c3)
 
 obj0 = perl$(O)
-obj1 = $(MALLOC_O) av$(O) deb$(O) doio$(O) doop$(O) dump$(O) mro$(O) globals$(O) gv$(O) hv$(O) 
+obj1 = $(MALLOC_O) av$(O) caretx$(O) deb$(O) doio$(O) doop$(O) dump$(O) mro$(O) globals$(O) gv$(O) hv$(O) 
 obj2 = keywords$(O) locale$(O) mathoms$(O) mg$(O) miniperlmain$(O) numeric$(O) op$(O) pad$(O) perlapi$(O) perlio$(O) 
 obj3 = perly$(O) pp$(O) pp_ctl$(O) pp_hot$(O) reentr$(O) pp_pack$(O) pp_sort$(O) pp_sys$(O) regcomp$(O) 
 obj4 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O)
@@ -255,9 +249,8 @@ h2 = iperlsys.h keywords.h mydtrace.h mg.h mg_vtable.h nostdio.h op.h
 h3 = op_reg_common.h opcode.h opnames.h overload.h pad.h parser.h patchlevel.h 
 h4 = perl.h perlapi.h perlio.h perlsdio.h perlvars.h perly.h
 h5 = pp.h pp_proto.h proto.h regcomp.h regexp.h regnodes.h scope.h
-h6 = sv.h thread.h utf8.h util.h vmsish.h warnings.h
-h7 = xsub.h $(THREADH)
-h = $(h0) $(h1) $(h2) $(h3) $(h4) $(h5) $(h6) $(h7)
+h6 = sv.h thread.h utf8.h util.h vmsish.h warnings.h xsub.h
+h = $(h0) $(h1) $(h2) $(h3) $(h4) $(h5) $(h6)
 
 acopt = $(ARCHCORE)perlshr_attr.opt $(ARCHCORE)$(DBG)perlshr_bld.opt
 ac = archcore_includes.ts $(acopt)
@@ -288,13 +281,13 @@ CRTLOPTS =,$(CRTL)/Options
 unidatadirs = lib/unicore/To lib/unicore/lib
 
 # Modules which must be installed before we can build extensions
-LIBPREREQ = $(ARCHDIR)Config.pm $(ARCHDIR)Config_heavy.pl [.lib.VMS]Filespec.pm $(ARCHDIR)vmspipe.com [.lib]buildcustomize.pl
+LIBPREREQ = $(ARCHDIR)Config.pm $(ARCHDIR)Config_heavy.pl $(ARCHDIR)vmspipe.com
 
-utils1 = [.utils]perldoc.com [.lib.ExtUtils]Miniperl.pm [.utils]c2ph.com [.utils]h2ph.com 
+utils1 = [.utils]perldoc.com [.utils]c2ph.com [.utils]h2ph.com 
 utils2 = [.utils]h2xs.com [.utils]libnetcfg.com [.lib]perlbug.com [.utils]json_pp.com
 utils3 = [.utils]perlivp.com [.lib]splain.com [.utils]pl2pm.com [.utils]xsubpp.com [.utils]pod2html.com [.utils]instmodsh.com
 utils4 = [.utils]enc2xs.com [.utils]piconv.com [.utils]cpan.com [.utils]prove.com [.utils]ptar.com [.utils]ptardiff.com [.utils]shasum.com
-utils5 = [.utils]corelist.com [.utils]config_data.com [.utils]cpanp.com [.utils]cpan2dist.com [.utils]cpanp-run-perl.com [.utils]ptargrep.com [.utils]zipdetails.com
+utils5 = [.utils]corelist.com [.utils]config_data.com [.utils]ptargrep.com [.utils]zipdetails.com
 
 .ifdef NOX2P
 all : base extras archcorefiles preplibrary [.pod]perltoc.pod
@@ -326,16 +319,16 @@ x2p : [.x2p]$(DBG)a2p$(E) [.x2p]s2p.com [.x2p]find2perl.com
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5182delta.pod
+PERLDELTA_CURRENT = [.pod]perl5201delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)
 
-[.pod]perlapi.pod : embed.fnc autodoc.pl $(MINIPERL_EXE)
-	$(MINIPERL) autodoc.pl
-
 [.pod]perlmodlib.pod : [.pod]perlmodlib.pl MANIFEST $(MINIPERL_EXE)
 	$(MINIPERL) [.pod]perlmodlib.pl "-q"
+
+[.pod]perlapi.pod : [.pod]perlintern.pod
+	@ $(NOOP)
 
 [.pod]perlintern.pod : embed.fnc autodoc.pl $(MINIPERL_EXE)
 	$(MINIPERL) autodoc.pl
@@ -347,16 +340,20 @@ $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 archcorefiles : $(ac) $(ARCHAUTO)time.stamp
 	@ $(NOOP)
 
-[.lib]buildcustomize.pl : write_buildcustomize.pl $(MINIPERL_EXE)
-       $(MINIPERL) write_buildcustomize.pl > [.lib]buildcustomize.pl
+# See the comment in Makefile.SH explaining this seemingly cranky ordering
+$(MINIPERL_EXE) : [.lib]buildcustomize.pl
+	@ $(NOOP)
 
 vmspipe.com : [.vms]vmspipe.com
 	Copy/NoConfirm/Log $(MMS$SOURCE) []
 
 miniperl : $(DBG)miniperl$(E)  vmspipe.com
 	@ Continue
-$(MINIPERL_EXE) :  miniperlmain$(O), $(DBG)libperlmini$(OLB) $(CRTL)
-	Link $(LINKFLAGS)/NoDebug/Trace/NoMap/NoFull/NoCross/Exe=$(MMS$TARGET) miniperlmain$(O), $(DBG)libperlmini$(OLB)/Library/Include=globals $(CRTLOPTS)
+
+[.lib]buildcustomize.pl :  miniperlmain$(O), $(DBG)libperlmini$(OLB) $(CRTL) write_buildcustomize.pl
+	Link $(LINKFLAGS)/NoDebug/Trace/NoMap/NoFull/NoCross/Exe=$(MINIPERL_EXE) miniperlmain$(O), $(DBG)libperlmini$(OLB)/Library/Include=globals $(CRTLOPTS)
+       $(MINIPERL) "-f" write_buildcustomize.pl
+
 $(DBG)miniperl$(E) :  miniperlmain$(O), $(DBG)libperlmini$(OLB) $(CRTL)
 	Link $(LINKFLAGS)/Trace/Exe=$(MMS$TARGET) miniperlmain$(O), $(DBG)libperlmini$(OLB)/Library/Include=globals  $(CRTLOPTS)
 
@@ -368,8 +365,8 @@ $(DBG)libperlmini$(OLB) : $(mini_obj)
 	@ If F$Search("$(MMS$TARGET)").eqs."" Then Library/Object/Create $(MMS$TARGET)
 	Library/Object/Replace $(MMS$TARGET) $(MMS$SOURCE_LIST)
 
-perlmain.c : miniperlmain.c $(MINIPERL_EXE) [.lib.ExtUtils]Miniperl.pm
-	$(MINIPERL) -"MExtUtils::Miniperl" -e "writemain(@ARGV)" "$(EXT)" > perlmain.c
+perlmain.c : miniperlmain.c $(MINIPERL_EXE) nonxsext
+	$(MINIPERL) -"MExtUtils::Miniperl" -e "writemain(\'perlmain.c', @ARGV)" "$(EXT)"
 
 .ifdef __DEBUG__
 # Link an extra perl that doesn't invoke the debugger
@@ -443,7 +440,7 @@ unidatafiles.ts : $(MINIPERL_EXE) [.lib]Config.pm [.lib.unicore]mktables nonxsex
 	@ If F$Search("$(MMS$TARGET)").nes."" Then Delete/NoLog/NoConfirm $(MMS$TARGET);*
 	@ Copy/NoConfirm _NLA0: $(MMS$TARGET)
  
-DynaLoader$(O) : [.lib]buildcustomize.pl $(ARCHDIR)Config.pm $(MINIPERL_EXE) [.lib.VMS]Filespec.pm 
+DynaLoader$(O) : [.lib]buildcustomize.pl $(ARCHDIR)Config.pm $(MINIPERL_EXE)
 	$(MINIPERL) make_ext.pl "MAKE=$(MMS)" "DynaLoader"
 
 dynext : $(LIBPREREQ) $(DBG)perlshr$(E) unidatafiles.ts DynaLoader$(O) preplibrary makeppport $(MINIPERL_EXE)
@@ -452,29 +449,13 @@ dynext : $(LIBPREREQ) $(DBG)perlshr$(E) unidatafiles.ts DynaLoader$(O) preplibra
 nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
        $(MINIPERL) make_ext.pl "MAKE=$(MMS)" "--nonxs"
 
-[.lib.VMS]Filespec.pm : [.vms.ext]Filespec.pm
-	@ If F$Search("[.lib]VMS.Dir").eqs."" Then Create/Directory [.lib.VMS]
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.VMS]
-
 [.utils]perldoc.com : [.utils]perldoc.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-[.lib.ExtUtils]Miniperl.pm : Minimod.PL miniperlmain.c $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE) >$(MMS$TARGET)
 
 [.utils]perlivp.com : [.utils]perlivp.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 [.utils]cpan.com : [.utils]cpan.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-[.utils]cpanp.com : [.utils]cpanp.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-[.utils]cpan2dist.com : [.utils]cpan2dist.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-[.utils]cpanp-run-perl.com : [.utils]cpanp-run-perl.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 [.utils]prove.com : [.utils]prove.PL $(ARCHDIR)Config.pm
@@ -584,7 +565,7 @@ makeppport : $(MINIPERL_EXE) $(ARCHDIR)Config.pm nonxsext
 	$(MINIPERL) mkppport
 
 install.html : [.pod]perltoc.pod
-	@ @perl_setup.com
+	@ @perl_setup.com "$(PREFIX)"
 	@ If F$Search("perl_root:[lib]html.dir").eqs."" Then Create/Directory perl_root:[lib.html]
 	$(MINIPERL) installhtml. "--podroot=. --recurse --htmldir=/perl_root/lib/html --htmlroot=.. --verbose"
 
@@ -615,32 +596,27 @@ regen_headers :
 perly$(O) : perly.c, perly.h, $(h)
 .endif
 
-VMSFSPEC_T = [.t.lib]vmsfspec.t
-
-$(VMSFSPEC_T) : [.vms.ext]filespec.t
-	Copy/NoConfirm/Log $(MMS$SOURCE) $(VMSFSPEC_T)
-
 check : test
 	@ Continue
 
-test : all [.t.lib]vmsfspec.t
+test : all
 	@ PERL_TEST_DRIVER == "TEST."
 	- @[.vms]test.com "$(E)" "$(__DEBUG__)"
 	@ $(MINIPERL) -e "print ""Ran tests"";" > [.t]rantests.
 
-test_harness : all [.t.lib]vmsfspec.t
+test_harness : all
 	@ PERL_TEST_DRIVER == "harness."
 	- @[.vms]test.com "$(E)" "$(__DEBUG__)"
 	@ $(MINIPERL) -e "print ""Ran tests"";" > [.t]rantests.
 
-minitest : $(MINITEST_EXE) [.lib.VMS]Filespec.pm unidatafiles.ts
+minitest : $(MINITEST_EXE) unidatafiles.ts
 	@ PERL_TEST_DRIVER == "minitest"
 	- @[.vms]test.com "$(E)" "$(__DEBUG__)"
 
 # install ought not need a source, but it doesn't work if one's not
 # there. Go figure...
 install : $(PERL_EXE)
-	@ @perl_setup.com
+	@ @perl_setup.com "$(PREFIX)"
 	If F$TrnLnm("Sys") .nes. "" Then Deass SYS
 	@ define/user_mode $(DBG)PERLSHR SYS$DISK:[]$(DBG)perlshr$(E)
 	$(PERL) installperl
@@ -688,6 +664,8 @@ $(ARCHAUTO)time.stamp :
 #	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 # AUTOMATICALLY GENERATED MAKE DEPENDENCIES--PUT NOTHING BELOW THIS LINE
 av$(O) : av.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+caretx$(O) : caretx.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 deb$(O) : deb.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
@@ -835,15 +813,12 @@ tidy : cleanlis
 	- If F$Search("mg_data.h;-1")   .nes."" Then Purge/NoConfirm/Log mg_data.h
 	- If F$Search("Perlshr_Gbl*.Mar;-1")   .nes."" Then Purge/NoConfirm/Log Perlshr_Gbl*.Mar
 	- If F$Search("[.ext.Opcode...];-1").nes."" Then Purge/NoConfirm/Log [.ext.Opcode]
-	- If F$Search("[.vms.ext...]*.C;-1").nes."" Then Purge/NoConfirm/Log [.vms.ext...]*.C
-	- If F$Search("[.vms.ext...]*$(O);-1").nes."" Then Purge/NoConfirm/Log [.vms.ext...]*$(O)
 	- If F$Search("[.lib.auto...]*.al;-1").nes."" Then Purge/NoConfirm/Log [.lib.auto...]*.al
 	- If F$Search("[.lib.auto...]autosplit.ix;-1").nes."" Then Purge/NoConfirm/Log [.lib.auto...]autosplit.ix
 	- If F$Search("[.lib]Config.pm;-1").nes."" Then Purge/NoConfirm/Log [.lib]Config.pm
 	- If F$Search("$(ARCHDIR)Config.pm;-1").nes."" Then Purge/NoConfirm/Log $(ARCHDIR)Config.pm
 	- If F$Search("[.lib]Config_heavy.pl;-1").nes."" Then Purge/NoConfirm/Log [.lib]Config_heavy.pl
 	- If F$Search("$(ARCHDIR)Config_heavy.pl;-1").nes."" Then Purge/NoConfirm/Log $(ARCHDIR)Config_heavy.pl
-	- If F$Search("[.lib.ExtUtils]Miniperl.pm").nes."" Then Purge/NoConfirm/Log [.lib.ExtUtils]Miniperl.pm
 	- If F$Search("[.lib.VMS]*.*;-1").nes."" Then Purge/NoConfirm/Log [.lib.VMS]*.*
 	- If F$Search("$(ARCHCORE)*.*").nes."" Then Purge/NoConfirm/Log $(ARCHCORE)*.*
 	- If F$Search("[.lib]*.com;-1").nes."" Then Purge/NoConfirm/Log [.lib]*.com
@@ -865,8 +840,6 @@ clean : tidy cleantest
 	- If F$Search("mg_data.h")   .nes."" Then Delete/NoConfirm/Log mg_data.h;*
 	- If F$Search("Perlshr_Gbl*.Mar")   .nes."" Then Delete/NoConfirm/Log Perlshr_Gbl*.Mar;*
 	- If F$Search("*.TS").nes."" Then Delete/NoConfirm/Log *.TS;*
-	- If F$Search("[.vms.ext...]*.C").nes."" Then Delete/NoConfirm/Log [.vms.ext...]*.C;*
-	- If F$Search("[.vms.ext...]*$(O)").nes."" Then Delete/NoConfirm/Log [.vms.ext...]*$(O);*
 	- If F$Search("[.pod]*.com").nes."" Then Delete/NoConfirm/Log [.pod]*.com;*
 	- If F$Search("[.pod]roffitall").nes."" Then Delete/NoConfirm/Log [.pod]roffitall;*
 	- If F$Search("$(PERLDELTA_CURRENT)").nes."" Then Delete/NoConfirm/Log $(PERLDELTA_CURRENT);*
@@ -904,16 +877,12 @@ realclean : clean
 	- If F$Search("[.x2p]*.com").nes."" Then Delete/NoConfirm/Log [.x2p]*.com;*
 	- If F$Search("$(ARCHDIR)Config.pm").nes."" Then Delete/NoConfirm/Log $(ARCHDIR)Config.pm;*
 	- If F$Search("$(ARCHDIR)Config_heavy.pl").nes."" Then Delete/NoConfirm/Log $(ARCHDIR)Config_heavy.pl;*
-	- If F$Search("[.lib.ExtUtils]Miniperl.pm").nes."" Then Delete/NoConfirm/Log [.lib.ExtUtils]Miniperl.pm;*
 	- If F$Search("[.utils]perldoc.com").nes."" Then Delete/NoConfirm/Log [.utils]perldoc.com;*
 	- If F$Search("[.utils]perlivp.com").nes."" Then Delete/NoConfirm/Log [.utils]perlivp.com;*
-	- If F$Search("[.t.lib]vms*.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vms*.t;*
 	- If F$Search("[...]*$(E)").nes."" Then Delete/NoConfirm/Log [...]*$(E);*
 	- If F$Search("Perl_Setup.Com").nes."" Then Delete/NoConfirm/Log Perl_Setup.Com;*
 	- If F$Search("[.t]rantests.").nes."" Then Delete/NoConfirm/Log [.t]rantests.;*
 	- If F$Search("[.t]test_state.").nes."" Then Delete/NoConfirm/Log [.t]test_state.;*
-	- If F$Search("[.t.lib]vmsfspec.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vmsfspec.t;*
-	- If F$Search("[.t.lib]vmsish.t").nes."" Then Delete/NoConfirm/Log [.t.lib]vmsish.t;*
 	- If F$Search("vmspipe.com").nes."" Then Delete/NoConfirm/Log vmspipe.com;*
 	- If F$Search("[.lib]buildcustomize.pl").nes."" Then Delete/NoConfirm/Log [.lib]buildcustomize.pl;*
 	- If F$Search("[.lib]config.pod").nes."" Then Delete/NoConfirm/Log [.lib]config.pod;*

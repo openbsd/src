@@ -17,10 +17,11 @@ following format:
                          REGEXP * const rx,
                          char* stringarg,
                          char* strend, char* strbeg,
-                         I32 minend, SV* screamer,
+                         SSize_t minend, SV* sv,
                          void* data, U32 flags);
         char*   (*intuit) (pTHX_
                            REGEXP * const rx, SV *sv,
+			   const char * const strbeg,
                            char *strpos, char *strend, U32 flags,
                            struct re_scream_pos_data_s *data);
         SV*     (*checkstr) (pTHX_ REGEXP * const rx);
@@ -142,7 +143,7 @@ TODO: Document this
 
 =item Character set
 
-The character set semantics are determined by an enum that is contained
+The character set rules are determined by an enum that is contained
 in this field.  This is still experimental and subject to change, but
 the current interface returns the rules by use of the in-line function
 C<get_regex_charset(const U32 flags)>.  The only currently documented
@@ -226,7 +227,7 @@ faster than C<unpack>.
 =item RXf_NO_INPLACE_SUBST
 
 Added in perl 5.18.0, this flag indicates that a regular expression might
-perform an operation that would interfere with inplace substituion. For
+perform an operation that would interfere with inplace substitution. For
 instance it might contain lookbehind, or assign to non-magical variables
 (such as $REGMARK and $REGERROR) during matching.  C<s///> will skip
 certain optimisations when this is set.
@@ -237,7 +238,7 @@ certain optimisations when this is set.
 
     I32 exec(pTHX_ REGEXP * const rx,
              char *stringarg, char* strend, char* strbeg,
-             I32 minend, SV* screamer,
+             SSize_t minend, SV* sv,
              void* data, U32 flags);
 
 Execute a regexp. The arguments are
@@ -248,9 +249,9 @@ Execute a regexp. The arguments are
 
 The regular expression to execute.
 
-=item screamer
+=item sv
 
-This strangely-named arg is the SV to be matched against.  Note that the
+This is the SV to be matched against.  Note that the
 actual char array to be matched against is supplied by the arguments
 described below; the SV is just used to determine UTF8ness, C<pos()> etc.
 
@@ -261,7 +262,7 @@ Pointer to the physical start of the string.
 =item strend
 
 Pointer to the character following the physical end of the string (i.e.
-the C<\0>).
+the C<\0>, if any).
 
 =item stringarg
 
@@ -286,15 +287,35 @@ Optimisation flags; subject to change.
 
 =head2 intuit
 
-    char* intuit(pTHX_ REGEXP * const rx,
-                  SV *sv, char *strpos, char *strend,
-                  const U32 flags, struct re_scream_pos_data_s *data);
+    char* intuit(pTHX_
+		REGEXP * const rx,
+		SV *sv,
+		const char * const strbeg,
+		char *strpos,
+		char *strend,
+		const U32 flags,
+		struct re_scream_pos_data_s *data);
 
 Find the start position where a regex match should be attempted,
 or possibly if the regex engine should not be run because the
 pattern can't match.  This is called, as appropriate, by the core,
 depending on the values of the C<extflags> member of the C<regexp>
 structure.
+
+Arguments:
+
+    rx:     the regex to match against
+    sv:     the SV being matched: only used for utf8 flag; the string
+	    itself is accessed via the pointers below. Note that on
+	    something like an overloaded SV, SvPOK(sv) may be false
+	    and the string pointers may point to something unrelated to
+	    the SV itself.
+    strbeg: real beginning of string
+    strpos: the point in the string at which to begin matching
+    strend: pointer to the byte following the last char of the string
+    flags   currently unused; set to 0
+    data:   currently unused; set to NULL
+
 
 =head2 checkstr
 
@@ -315,7 +336,7 @@ Perl will handle releasing anything else contained in the C<regexp> structure.
 =head2 Numbered capture callbacks
 
 Called to get/set the value of C<$`>, C<$'>, C<$&> and their named
-equivalents, ${^PREMATCH}, ${^POSTMATCH} and $^{MATCH}, as well as the
+equivalents, ${^PREMATCH}, ${^POSTMATCH} and ${^MATCH}, as well as the
 numbered capture groups (C<$1>, C<$2>, ...).
 
 The C<paren> parameter will be C<1> for C<$1>, C<2> for C<$2> and so
@@ -397,7 +418,7 @@ doesn't have to modify the value.  This is exactly how tied variables
 behave in the same situation:
 
     package CaptureVar;
-    use base 'Tie::Scalar';
+    use parent 'Tie::Scalar';
 
     sub TIESCALAR { bless [] }
     sub FETCH { undef }

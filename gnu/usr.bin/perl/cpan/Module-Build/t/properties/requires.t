@@ -31,7 +31,7 @@ $mb = $dist->new_from_context();
 isa_ok( $mb, "Module::Build" );
 
 $prereqs = $mb->_normalize_prereqs;
-is($prereqs->{requires}{'File::Basename'}, 0, "undef prereq converted to 0");
+is($prereqs->{runtime}{requires}{'File::Basename'}, 0, "undef prereq converted to 0");
 
 #--------------------------------------------------------------------------#
 # try empty string prereq version
@@ -48,7 +48,7 @@ $mb = $dist->new_from_context();
 isa_ok( $mb, "Module::Build" );
 
 $prereqs = $mb->_normalize_prereqs;
-is($prereqs->{requires}{'File::Basename'}, 0, "empty string prereq converted to 0");
+is($prereqs->{runtime}{requires}{'File::Basename'}, 0, "empty string prereq converted to 0");
 
 
 # vim:ts=2:sw=2:et:sta:sts=2

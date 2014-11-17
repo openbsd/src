@@ -4,28 +4,19 @@ use strict;
 use Getopt::Long qw(:config bundling no_auto_abbrev);
 use Pod::Usage;
 use Config;
-use Carp;
 
 my @targets
-    = qw(config.sh config.h miniperl lib/Config.pm Fcntl perl test_prep);
-
-my $cpus;
-if (open my $fh, '<', '/proc/cpuinfo') {
-    while (<$fh>) {
-        ++$cpus if /^processor\s+:\s+\d+$/;
-    }
-} elsif (-x '/sbin/sysctl') {
-    $cpus = 1 + $1 if `/sbin/sysctl hw.ncpu` =~ /^hw\.ncpu: (\d+)$/;
-} elsif (-x '/usr/bin/getconf') {
-    $cpus = 1 + $1 if `/usr/bin/getconf _NPROCESSORS_ONLN` =~ /^(\d+)$/;
-}
+    = qw(none config.sh config.h miniperl lib/Config.pm Fcntl perl test_prep);
 
 my %options =
     (
-     jobs => defined $cpus ? $cpus + 1 : 2,
      'expect-pass' => 1,
      clean => 1, # mostly for debugging this
     );
+
+# We accept #!./miniperl and #!./perl
+# We don't accept #!miniperl and #!perl as their intent is ambiguous
+my $run_with_our_perl = qr{\A#!(\./(?:mini)?perl)\b};
 
 my $linux64 = `uname -sm` eq "Linux x86_64\n" ? '64' : '';
 
@@ -45,28 +36,35 @@ if ($^O eq 'linux') {
             push @paths, $_;
         }
     }
+    push @paths, map {$_ . $linux64} qw(/usr/local/lib /lib /usr/lib)
+        if $linux64;
 }
-
-push @paths, map {$_ . $linux64} qw(/usr/local/lib /lib /usr/lib);
 
 my %defines =
     (
      usedevel => '',
      optimize => '-g',
      ld => 'cc',
-     ($linux64 ? (libpth => \@paths) : ()),
+     (@paths ? (libpth => \@paths) : ()),
     );
+
+# Needed for the 'ignore_versioned_solibs' emulation below.
+push @paths, qw(/usr/local/lib /lib /usr/lib)
+        unless $linux64;
 
 unless(GetOptions(\%options,
                   'target=s', 'make=s', 'jobs|j=i', 'expect-pass=i',
                   'expect-fail' => sub { $options{'expect-pass'} = 0; },
-                  'clean!', 'one-liner|e=s', 'c', 'l', 'w', 'match=s',
+                  'clean!', 'one-liner|e=s@', 'c', 'l', 'w', 'match=s',
                   'no-match=s' => sub {
                       $options{match} = $_[1];
                       $options{'expect-pass'} = 0;
                   },
-                  'force-manifest', 'force-regen', 'test-build', 'validate',
-                  'check-args', 'check-shebang!', 'usage|help|?', 'A=s@',
+                  'force-manifest', 'force-regen', 'setpgrp!', 'timeout=i',
+                  'test-build', 'validate',
+                  'all-fixups', 'early-fixup=s@', 'late-fixup=s@', 'valgrind',
+                  'check-args', 'check-shebang!', 'usage|help|?', 'gold=s',
+                  'A=s@',
                   'D=s@' => sub {
                       my (undef, $val) = @_;
                       if ($val =~ /\A([^=]+)=(.*)/s) {
@@ -82,12 +80,49 @@ unless(GetOptions(\%options,
     pod2usage(exitval => 255, verbose => 1);
 }
 
-my ($target, $j, $match) = @options{qw(target jobs match)};
+my ($target, $match) = @options{qw(target match)};
 
 @ARGV = ('sh', '-c', 'cd t && ./perl TEST base/*.t')
     if $options{validate} && !@ARGV;
 
 pod2usage(exitval => 0, verbose => 2) if $options{usage};
+
+# This needs to be done before the next arguments check, as it's populating
+# @ARGV
+if (defined $target && $target =~ /\.t\z/) {
+    # t/TEST don't have a reliable way to run the test script under valgrind
+    # The $ENV{VALGRIND} code was only added after v5.8.0, and is more
+    # geared to logging than to exiting on failure if errors are found.
+    # I guess one could fudge things by replacing the symlink t/perl with a
+    # wrapper script which invokes valgrind, but leave doing that until
+    # someone needs it. (If that's you, then patches welcome.)
+    foreach (qw(valgrind match validate test-build one-liner)) {
+        die_255("$0: Test-case targets can't be run with --$_")
+            if $options{$_};
+    }
+    die_255("$0: Test-case targets can't be combined with an explict test")
+        if @ARGV;
+
+    # Needing this unless is a smell suggesting that this implementation of
+    # test-case targets is not really in the right place.
+    unless ($options{'check-args'}) {
+        # The top level sanity tests refuse to start or end a test run at a
+        # revision which skips, hence this test ensures reasonable sanity at
+        # automatically picking a suitable start point for both normal operation
+        # and --expect-fail
+        skip("Test case $target is not a readable file")
+            unless -f $target && -r _;
+    }
+
+    # t/TEST runs from and takes pathnames relative to t/, so need to strip
+    # out a leading t, or add ../ otherwise
+    unless ($target =~ s!\At/!!) {
+        $target = "../$target";
+    }
+    @ARGV = ('sh', '-c', "cd t && ./perl TEST " . quotemeta $target);
+    $target = 'test_prep';
+}
+
 pod2usage(exitval => 255, verbose => 1)
     unless @ARGV || $match || $options{'test-build'} || defined $options{'one-liner'};
 pod2usage(exitval => 255, verbose => 1)
@@ -108,19 +143,21 @@ bisect.pl - use git bisect to pinpoint changes
     .../Porting/bisect.pl -e 'my $a := 2;'
     # When did this stop being an error?
     .../Porting/bisect.pl --expect-fail -e '1 // 2'
+    # When did this test start failing?
+    .../Porting/bisect.pl --target t/op/sort.t
     # When were all lines matching this pattern removed from all files?
     .../Porting/bisect.pl --match '\b(?:PL_)hash_seed_set\b'
     # When was some line matching this pattern added to some file?
     .../Porting/bisect.pl --expect-fail --match '\buseithreads\b'
     # When did this test program stop exiting 0?
     .../Porting/bisect.pl -- ./perl -Ilib ../test_prog.pl
-    # When did this test start failing?
-    .../Porting/bisect.pl -- ./perl -Ilib t/TEST op/sort.t
     # When did this first become valid syntax?
     .../Porting/bisect.pl --target=miniperl --end=v5.10.0 \
          --expect-fail -e 'my $a := 2;'
     # What was the last revision to build with these options?
     .../Porting/bisect.pl --test-build -Dd_dosuid
+    # When did this test program start generating errors from valgrind?
+    .../Porting/bisect.pl --valgrind ../test_prog.pl
 
 =head1 DESCRIPTION
 
@@ -154,22 +191,41 @@ end revisions.
 By default F<bisect.pl> will process all options, then use the rest of the
 command line as arguments to list C<system> to run a test case. By default,
 the test case should pass (exit with 0) on earlier perls, and fail (exit
-non-zero) on I<blead> (note that running most of perl's test files directly
-won't do this, you'll need to run them through a harness to get the proper
-error code). F<bisect.pl> will use F<bisect-runner.pl> to find the earliest
-stable perl version on which the test case passes, check that it fails on
-blead, and then use F<bisect-runner.pl> with C<git bisect run> to find the
-commit which caused the failure.
+non-zero) on I<blead>. F<bisect.pl> will use F<bisect-runner.pl> to find the
+earliest stable perl version on which the test case passes, check that it
+fails on blead, and then use F<bisect-runner.pl> with C<git bisect run> to
+find the commit which caused the failure.
+
+Many of perl's own test scripts exit 0 even if their TAP reports test
+failures, and some need particular setup (such as running from the right
+directory, or adding C<-T> to the command line). Hence if you want to bisect
+a test script, you can specify it with the I<--target> option, and it will
+be invoked using F<t/TEST> which performs all the setup, and exits non-zero
+if the TAP reports failures. This works for any file ending C<.t>, so you can
+use it with a file outside of the working checkout, for example to test a
+particular version of a test script, as a path inside the repository will
+(of course) be testing the version of the script checked out for the current
+revision, which may be too early to have the test you are interested in.
 
 Because the test case is the complete argument to C<system>, it is easy to
 run something other than the F<perl> built, if necessary. If you need to run
-the perl built, you'll probably need to invoke it as C<./perl -Ilib ...>
+the perl built, you'll probably need to invoke it as C<./perl -Ilib ...>.
+As a special case, if the first argument of the test case is a readable file
+(whether executable or not), matching C<qr{\A#!./(?:mini)?perl\b}> then it
+will have C<./perl> <-Ilib> (or C<./miniperl>) prepended to it.
 
-You need a clean checkout to run a bisect, and you can't use the checkout
-which contains F<Porting/bisect.pl> (because C<git bisect>) will check out
-a revision before F<Porting/bisect-runner.pl> was added, which
-C<git bisect run> needs). If your working checkout is called F<perl>, the
-simplest solution is to make a local clone, and run from that. I<i.e.>:
+You need a clean checkout to run a bisect. You can use the checkout
+containing F<Porting/bisect.pl> if you wish - in this case
+F<Porting/bisect.pl> will copy F<Porting/bisect-runner.pl> to a temporary
+file generated by C<File::Temp::tempfile()>. If doing this, beware that when
+the bisect ends (or you abort it) then your checkout is no longer at
+C<blead>, so you will need to C<git checkout blead> before restarting, to
+get the current version of F<Porting/bisect.pl> again. It's often easier
+either to copy F<Porting/bisect.pl> and F<Porting/bisect-runner.pl> to
+another directory (I<e.g.> F<~/bin>, if you have one), or to create a second
+git repository for running bisect. To create a second local repository, if
+your working checkout is called F<perl>, a simple solution is to make a
+local clone, and run from that. I<i.e.>:
 
     cd ..
     git clone perl perl2
@@ -192,10 +248,13 @@ If your F<db.h> is old enough you can override this with C<-Unoextensions>.
 
 Earliest revision to test, as a I<commit-ish> (a tag, commit or anything
 else C<git> understands as a revision). If not specified, F<bisect.pl> will
-search stable perl releases until it finds one where the test case passes.
-The default is to search from 5.002 to 5.14.0. If F<bisect.pl> detects that
-the checkout is on a case insensitive file system, it will search from
-5.005 to 5.14.0
+search stable .0 perl releases until it finds one where the test case
+passes. The default is to search from 5.002 to the most recent tagged stable
+release (v5.18.0 at the time of writing). If F<bisect.pl> detects that the
+checkout is on a case insensitive file system, it will search from 5.005 to
+the most recent tagged stable release. Only .0 stable releases are used
+because these are the only stable releases that are parents of blead, and
+hence suitable for a bisect run.
 
 =item *
 
@@ -212,6 +271,14 @@ F<Makefile> target (or equivalent) needed, to run the test case. If specified,
 this should be one of
 
 =over 4
+
+=item *
+
+I<none>
+
+Don't build anything - just run the user test case against a clean checkout.
+Using this gives a couple of features that a plain C<git bisect run> can't
+offer - automatic start revision detection, and test case C<--timeout>.
 
 =item *
 
@@ -264,6 +331,14 @@ is automatically substituted. For very old F<Makefile>s, C<make test> is
 run, as there is no target provided to just get things ready, and for 5.004
 and earlier the tests run very quickly.
 
+=item *
+
+A file ending C<.t>
+
+Build everything needed to run the tests, and then run this test script using
+F<t/TEST>. This is actually implemented internally by using the target
+I<test_prep>, and setting the test case to "sh", "-c", "cd t && ./TEST ..."
+
 =back
 
 =item *
@@ -280,7 +355,8 @@ This prepends C<./perl -Ilib -e 'code to run'> to the test case given,
 or F<./miniperl> if I<target> is C<miniperl>.
 
 (Usually you'll use C<-e> instead of providing a test case in the
-non-option arguments to F<bisect.pl>)
+non-option arguments to F<bisect.pl>. You can repeat C<-e> on the command
+line, just like you can with C<perl>)
 
 C<-E> intentionally isn't supported, as it's an error in 5.8.0 and earlier,
 which interferes with detecting errors in the example code itself.
@@ -360,10 +436,11 @@ to use F<gmake> in place of the system F<make>.
 
 -j I<jobs>
 
-Number of C<make> jobs to run in parallel. If F</proc/cpuinfo> exists and
-can be parsed, or F</sbin/sysctl> exists and reports C<hw.ncpu>, or
-F</usr/bin/getconf> exists and reports C<_NPROCESSORS_ONLN> defaults to 1 +
-I<number of CPUs>. Otherwise defaults to 2.
+Number of C<make> jobs to run in parallel. A value of 0 suppresses
+parallelism. If F</proc/cpuinfo> exists and can be parsed, or F</sbin/sysctl>
+exists and reports C<hw.ncpu>, or F</usr/bin/getconf> exists and reports
+C<_NPROCESSORS_ONLN> defaults to 1 + I<number of CPUs>. On HP-UX with the
+system make defaults to 0, otherwise defaults to 2.
 
 =item *
 
@@ -406,6 +483,24 @@ permits one to easily search in a file that changed its name. For example:
     .../Porting/bisect.pl --match 'Pod.*Functions' 'pod/buildtoc*'
 
 C<--no-match ...> is implemented as C<--expect-fail --match ...>
+
+=item *
+
+--valgrind
+
+Run the test program under C<valgrind>. If you need to test for memory
+errors when parsing invalid programs, the default parser fail exit code of
+255 will always override C<valgrind>, so try putting the test case invalid
+code inside a I<string> C<eval>, so that the perl interpreter will exit with 0.
+(Be sure to check the output of $@, to avoid missing mistakes such as
+unintended C<eval> failures due to incorrect C<@INC>)
+
+Specifically, this option prepends C<valgrind> C<--error-exitcode=124> to
+the command line that runs the testcase, to cause valgrind to exit non-zero
+if it detects errors, with the assumption that the test program itself
+always exits with zero. If you require more flexibility than this, either
+specify your C<valgrind> invocation explicitly as part of the test case, or
+use a wrapper script to control the command line or massage the exit codes.
 
 =item *
 
@@ -463,6 +558,92 @@ C<--expect-pass=0> is equivalent to C<--expect-fail>. I<1> is the default.
 
 =item *
 
+--timeout I<seconds>
+
+Run the testcase with the given timeout. If this is exceeded, kill it (and
+by default all its children), and treat it as a failure.
+
+=item *
+
+--setpgrp
+
+Run the testcase in its own process group. Specifically, call C<setpgrp 0, 0>
+just before C<exec>-ing the user testcase. The default is not to set the
+process group, unless a timeout is used.
+
+=item *
+
+--all-fixups
+
+F<bisect-runner.pl> will minimally patch various files on a platform and
+version dependent basis to get the build to complete. Normally it defers
+doing this as long as possible - C<.SH> files aren't patched until after
+F<Configure> is run, and C<C> and C<XS> code isn't patched until after
+F<miniperl> is built. If C<--all-fixups> is specified, all the fixups are
+done before running C<Configure>. In rare cases adding this may cause a
+bisect to abort, because an inapplicable patch or other fixup is attempted
+for a revision which would usually have already I<skip>ed. If this happens,
+please report it as a bug, giving the OS and problem revision.
+
+=item *
+
+--early-fixup file
+
+=item *
+
+--late-fixup file
+
+Specify a file containing a patch or other fixup for the source code. The
+action to take depends on the first line of the fixup file
+
+=over 4
+
+=item *
+
+C<#!perl>
+
+If the first line starts C<#!perl> then the file is run using C<$^X>
+
+=item *
+
+C<#!/absolute/path>
+
+If a shebang line is present the file is executed using C<system>
+
+=item *
+
+C<I<filename> =~ /I<pattern>/>
+
+=item *
+
+C<I<filename> !~ /I<pattern>/>
+
+If I<filename> does not exist then the fixup file's contents are ignored.
+Otherwise, for C<=~>, if it contains a line matching I<pattern>, then the
+file is fed to C<patch -p1> on standard input. For C<=~>, the patch is
+applied if no lines match the pattern.
+
+As the empty pattern in Perl is a special case (it matches the most recent
+sucessful match) which is not useful here, an the treatment of empty pattern
+is special-cased. C<I<filename> =~ //> applies the patch if filename is
+present. C<I<filename> !~ //> applies the patch if filename missing. This
+makes it easy to unconditionally apply patches to files, and to use a patch
+as a way of creating a new file.
+
+=item *
+
+Otherwise, the file is assumed to be a patch, and always applied.
+
+=back
+
+I<early-fixup>s are applied before F<./Configure> is run. I<late-fixup>s are
+applied just after F<./Configure> is run.
+
+These options can be specified more than once. I<file> is actually expanded
+as a glob pattern. Globs that do not match are errors, as are missing files.
+
+=item *
+
 --no-clean
 
 Tell F<bisect-runner.pl> not to clean up after the build. This allows one
@@ -475,12 +656,12 @@ Passing this to F<bisect.pl> will likely cause the bisect to fail badly.
 
 --validate
 
-Test that all stable revisions can be built. By default, attempts to build
-I<blead>, I<v5.14.0> .. I<perl-5.002> (or I<perl5.005> on a case insensitive
-file system). Stops at the first failure, without
-cleaning the checkout. Use I<--start> to specify the earliest revision to
-test, I<--end> to specify the most recent. Useful for validating a new
-OS/CPU/compiler combination. For example
+Test that all stable (.0) revisions can be built. By default, attempts to
+build I<blead>, then tagged stable releases in reverse order down to
+I<perl-5.002> (or I<perl5.005> on a case insensitive file system). Stops at
+the first failure, without cleaning the checkout. Use I<--start> to specify
+the earliest revision to test, I<--end> to specify the most recent. Useful
+for validating a new OS/CPU/compiler combination. For example
 
     ../perl/Porting/bisect.pl --validate -le 'print "Hello from $]"'
 
@@ -499,13 +680,21 @@ Validate the options and arguments, and exit silently if they are valid.
 
 Validate that the test case isn't an executable file with a
 C<#!/usr/bin/perl> line (or similar). As F<bisect-runner.pl> does B<not>
-prepend C<./perl> to the test case, a I<#!> line specifying an external
-F<perl> binary will cause the test case to always run with I<that> F<perl>,
-not the F<perl> built by the bisect runner. Likely this is not what you
-wanted. If your test case is actually a wrapper script to run other
+automatically prepend C<./perl> to the test case, a I<#!> line specifying an
+external F<perl> binary will cause the test case to always run with I<that>
+F<perl>, not the F<perl> built by the bisect runner. Likely this is not what
+you wanted. If your test case is actually a wrapper script to run other
 commands, you should run it with an explicit interpreter, to be clear. For
 example, instead of C<../perl/Porting/bisect.pl ~/test/testcase.pl> you'd
 run C<../perl/Porting/bisect.pl /usr/bin/perl ~/test/testcase.pl>
+
+=item *
+
+--gold
+
+Revision to use when checking out known-good recent versions of files,
+such as F<makedepend.SH>. F<bisect-runner.pl> defaults this to I<blead>,
+but F<bisect.pl> will default it to the most recent stable release.
 
 =item *
 
@@ -525,7 +714,44 @@ Display the usage information and exit.
 
 =cut
 
-die "$0: Can't build $target" if defined $target && !grep {@targets} $target;
+# Ensure we always exit with 255, to cause git bisect to abort.
+sub croak_255 {
+    my $message = join '', @_;
+    if ($message =~ /\n\z/) {
+        print STDERR $message;
+    } else {
+        my (undef, $file, $line) = caller 1;
+        print STDERR "@_ at $file line $line\n";
+    }
+    exit 255;
+}
+
+sub die_255 {
+    croak_255(@_);
+}
+
+die_255("$0: Can't build $target")
+    if defined $target && !grep {@targets} $target;
+
+foreach my $phase (qw(early late)) {
+    next unless $options{"$phase-fixup"};
+    my $bail_out;
+    require File::Glob;
+    my @expanded;
+    foreach my $glob (@{$options{"$phase-fixup"}}) {
+        my @got = File::Glob::bsd_glob($glob);
+        push @expanded, @got ? @got : $glob;
+    }
+    @expanded = sort @expanded;
+    $options{"$phase-fixup"} = \@expanded;
+    foreach (@expanded) {
+        unless (-f $_) {
+            print STDERR "$phase-fixup '$_' is not a readable file\n";
+            ++$bail_out;
+        }
+    }
+    exit 255 if $bail_out;
+}
 
 unless (exists $defines{cc}) {
     # If it fails, the heuristic of 63f9ec3008baf7d6 is noisy, and hence
@@ -536,7 +762,7 @@ unless (exists $defines{cc}) {
     $defines{cc} = (`ccache -V`, $?) ? 'cc' : 'ccache cc';
 }
 
-$j = "-j$j" if $j =~ /\A\d+\z/;
+my $j = $options{jobs} ? "-j$options{jobs}" : '';
 
 if (exists $options{make}) {
     if (!exists $defines{make}) {
@@ -554,7 +780,7 @@ if (exists $options{make}) {
 sub open_or_die {
     my $file = shift;
     my $mode = @_ ? shift : '<';
-    open my $fh, $mode, $file or croak("Can't open $file: $!");
+    open my $fh, $mode, $file or croak_255("Can't open $file: $!");
     ${*$fh{SCALAR}} = $file;
     return $fh;
 }
@@ -562,8 +788,78 @@ sub open_or_die {
 sub close_or_die {
     my $fh = shift;
     return if close $fh;
-    croak("Can't close: $!") unless ref $fh eq 'GLOB';
-    croak("Can't close ${*$fh{SCALAR}}: $!");
+    croak_255("Can't close: $!") unless ref $fh eq 'GLOB';
+    croak_255("Can't close ${*$fh{SCALAR}}: $!");
+}
+
+sub system_or_die {
+    my $command = '</dev/null ' . shift;
+    system($command) and croak_255("'$command' failed, \$!=$!, \$?=$?");
+}
+
+sub run_with_options {
+    my $options = shift;
+    my $name = $options->{name};
+    $name = "@_" unless defined $name;
+
+    my $setgrp = $options->{setpgrp};
+    if ($options->{timeout}) {
+        # Unless you explicitly disabled it on the commandline, set it:
+        $setgrp = 1 unless defined $setgrp;
+    }
+    my $pid = fork;
+    die_255("Can't fork: $!") unless defined $pid;
+    if (!$pid) {
+        if (exists $options->{stdin}) {
+            open STDIN, '<', $options->{stdin}
+              or die "Can't open STDIN from $options->{stdin}: $!";
+        }
+        if ($setgrp) {
+            setpgrp 0, 0
+                or die "Can't setpgrp 0, 0: $!";
+        }
+        { exec @_ };
+        die_255("Failed to start $name: $!");
+    }
+    my $start;
+    if ($options->{timeout}) {
+        require Errno;
+        require POSIX;
+        die_255("No POSIX::WNOHANG")
+            unless &POSIX::WNOHANG;
+        $start = time;
+        $SIG{ALRM} = sub {
+            my $victim = $setgrp ? -$pid : $pid;
+            my $delay = 1;
+            kill 'TERM', $victim;
+            waitpid(-1, &POSIX::WNOHANG);
+            while (kill 0, $victim) {
+                sleep $delay;
+                waitpid(-1, &POSIX::WNOHANG);
+                $delay *= 2;
+                if ($delay > 8) {
+                    if (kill 'KILL', $victim) {
+                        print STDERR "$0: Had to kill 'KILL', $victim\n"
+                    } elsif (! $!{ESRCH}) {
+                        print STDERR "$0: kill 'KILL', $victim failed: $!\n";
+                    }
+                    last;
+                }
+            }
+            report_and_exit(0, 'No timeout', 'Timeout', "when running $name");
+        };
+        alarm $options->{timeout};
+    }
+    waitpid $pid, 0
+      or die_255("wait for $name, pid $pid failed: $!");
+    alarm 0;
+    if ($options->{timeout}) {
+        my $elapsed = time - $start;
+        if ($elapsed / $options->{timeout} > 0.8) {
+            print STDERR "$0: Beware, took $elapsed seconds of $options->{timeout} permitted to run $name\n";
+        }
+    }
+    return $?;
 }
 
 sub extract_from_file {
@@ -583,11 +879,11 @@ sub edit_file {
     local $/;
     my $fh = open_or_die($file);
     my $orig = <$fh>;
-    die "Can't read $file: $!" unless defined $orig && close $fh;
+    die_255("Can't read $file: $!") unless defined $orig && close $fh;
     my $new = $munger->($orig);
     return if $new eq $orig;
     $fh = open_or_die($file, '>');
-    print $fh $new or die "Can't print to $file: $!";
+    print $fh $new or die_255("Can't print to $file: $!");
     close_or_die($fh);
 }
 
@@ -624,7 +920,7 @@ sub ud2cd {
     }
 
     if (!length $diff_in) {
-        die "That didn't seem to be a diff";
+        die_255("That didn't seem to be a diff");
     }
 
     if ($diff_in =~ /\A\*\*\* /ms) {
@@ -644,11 +940,11 @@ sub ud2cd {
         }
         $diff_in =~ s/\A([^\n]+\n?)//ms;
         my $line = $1;
-        die "Can't parse '$line'" unless $line =~ s/\A--- /*** /ms;
+        die_255("Can't parse '$line'") unless $line =~ s/\A--- /*** /ms;
         $diff_out .= $line;
         $diff_in =~ s/\A([^\n]+\n?)//ms;
         $line = $1;
-        die "Can't parse '$line'" unless $line =~ s/\A\+\+\+ /--- /ms;
+        die_255("Can't parse '$line'") unless $line =~ s/\A\+\+\+ /--- /ms;
         $diff_out .= $line;
 
         # Loop for hunks
@@ -661,7 +957,8 @@ sub ud2cd {
             my $to_end = $to_start + $to_count - 1;
             my ($from_out, $to_out, $has_from, $has_to, $add, $delete);
             while (length $diff_in && ($from_count || $to_count)) {
-                die "Confused in $hunk" unless $diff_in =~ s/\A([^\n]*)\n//ms;
+                die_255("Confused in $hunk")
+                    unless $diff_in =~ s/\A([^\n]*)\n//ms;
                 my $line = $1;
                 $line = ' ' unless length $line;
                 if ($line =~ /^ .*/) {
@@ -680,14 +977,14 @@ sub ud2cd {
                     push @$add, $1;
                     --$to_count;
                 } else {
-                    die "Can't parse '$line' as part of hunk $hunk";
+                    die_255("Can't parse '$line' as part of hunk $hunk");
                 }
             }
             process_hunk(\$from_out, \$to_out, \$has_from, \$has_to,
                          $delete, $add);
-            die "No lines in hunk $hunk"
+            die_255("No lines in hunk $hunk")
                 unless length $from_out || length $to_out;
-            die "No changes in hunk $hunk"
+            die_255("No changes in hunk $hunk")
                 unless $has_from || $has_to;
             $diff_out .= "***************\n";
             $diff_out .= "*** $from_start,$from_end ****\n";
@@ -706,13 +1003,17 @@ sub ud2cd {
 
         if (!defined $use_context) {
             my $version = `patch -v 2>&1`;
-            die "Can't run `patch -v`, \$?=$?, bailing out"
+            die_255("Can't run `patch -v`, \$?=$?, bailing out")
                 unless defined $version;
             if ($version =~ /Free Software Foundation/) {
                 $use_context = 0;
             } elsif ($version =~ /Header: patch\.c,v.*\blwall\b/) {
                 # The system patch is older than Linux, and probably older than
                 # Windows NT.
+                $use_context = 1;
+            } elsif ($version =~ /Header: patch\.c,v.*\babhinav\b/) {
+                # Thank you HP. No, we have no idea *which* version this is:
+                # $Header: patch.c,v 76.1.1.2.1.3 2001/12/03 12:24:52 abhinav Exp $
                 $use_context = 1;
             } else {
                 # Don't know.
@@ -728,25 +1029,25 @@ sub apply_patch {
     my ($patch, $what, $files) = @_;
     $what = 'patch' unless defined $what;
     unless (defined $files) {
-        $patch =~ m!^--- a/(\S+)\n\+\+\+ b/\1!sm;
+        $patch =~ m!^--- [ab]/(\S+)\n\+\+\+ [ba]/\1!sm;
         $files = " $1";
     }
     my $patch_to_use = placate_patch_prog($patch);
-    open my $fh, '|-', 'patch', '-p1' or die "Can't run patch: $!";
+    open my $fh, '|-', 'patch', '-p1' or die_255("Can't run patch: $!");
     print $fh $patch_to_use;
     return if close $fh;
     print STDERR "Patch is <<'EOPATCH'\n${patch}EOPATCH\n";
     print STDERR "\nConverted to a context diff <<'EOCONTEXT'\n${patch_to_use}EOCONTEXT\n"
         if $patch_to_use ne $patch;
-    die "Can't $what$files: $?, $!";
+    die_255("Can't $what$files: $?, $!");
 }
 
 sub apply_commit {
     my ($commit, @files) = @_;
     my $patch = `git show $commit @files`;
     if (!defined $patch) {
-        die "Can't get commit $commit for @files: $?" if @files;
-        die "Can't get commit $commit: $?";
+        die_255("Can't get commit $commit for @files: $?") if @files;
+        die_255("Can't get commit $commit: $?");
     }
     apply_patch($patch, "patch $commit", @files ? " for @files" : '');
 }
@@ -755,32 +1056,33 @@ sub revert_commit {
     my ($commit, @files) = @_;
     my $patch = `git show -R $commit @files`;
     if (!defined $patch) {
-        die "Can't get revert commit $commit for @files: $?" if @files;
-        die "Can't get revert commit $commit: $?";
+        die_255("Can't get revert commit $commit for @files: $?") if @files;
+        die_255("Can't get revert commit $commit: $?");
     }
     apply_patch($patch, "revert $commit", @files ? " for @files" : '');
 }
 
 sub checkout_file {
     my ($file, $commit) = @_;
-    $commit ||= 'blead';
+    $commit ||= $options{gold} || 'blead';
     system "git show $commit:$file > $file </dev/null"
-        and die "Could not extract $file at revision $commit";
+        and die_255("Could not extract $file at revision $commit");
 }
 
 sub check_shebang {
     my $file = shift;
     return unless -e $file;
-    if (!-x $file) {
-        die "$file is not executable.
-system($file, ...) is always going to fail.
-
-Bailing out";
-    }
     my $fh = open_or_die($file);
     my $line = <$fh>;
+    return if $line =~ $run_with_our_perl;
+    if (!-x $file) {
+        die_255("$file is not executable.
+system($file, ...) is always going to fail.
+
+Bailing out");
+    }
     return unless $line =~ m{\A#!(/\S+/perl\S*)\s};
-    die "$file will always be run by $1
+    die_255("$file will always be run by $1
 It won't be tested by the ./perl we build.
 If you intended to run it with that perl binary, please change your
 test case to
@@ -795,14 +1097,14 @@ test case to
 [You may also need to add -- before ./perl to prevent that -Ilib as being
 parsed as an argument to bisect.pl]
 
-Bailing out";
+Bailing out");
 }
 
 sub clean {
     if ($options{clean}) {
         # Needed, because files that are build products in this checked out
         # version might be in git in the next desired version.
-        system 'git clean -dxf </dev/null';
+        system 'git clean -qdxf </dev/null';
         # Needed, because at some revisions the build alters checked out files.
         # (eg pod/perlapi.pod). Also undoes any changes to makedepend.SH
         system 'git reset --hard HEAD </dev/null';
@@ -817,18 +1119,25 @@ sub skip {
 }
 
 sub report_and_exit {
-    my ($ret, $pass, $fail, $desc) = @_;
+    my ($good, $pass, $fail, $desc) = @_;
 
     clean();
 
-    my $got = ($options{'expect-pass'} ? !$ret : $ret) ? 'good' : 'bad';
-    if ($ret) {
-        print "$got - $fail $desc\n";
-    } else {
+    my $got = ($options{'expect-pass'} ? $good : !$good) ? 'good' : 'bad';
+    if ($good) {
         print "$got - $pass $desc\n";
+    } else {
+        print "$got - $fail $desc\n";
     }
 
     exit($got eq 'bad');
+}
+
+sub run_report_and_exit {
+    my $ret = run_with_options({setprgp => $options{setpgrp},
+                                timeout => $options{timeout},
+                               }, @_);
+    report_and_exit(!$ret, 'zero exit from', 'non-zero exit from', "@_");
 }
 
 sub match_and_exit {
@@ -867,17 +1176,20 @@ sub match_and_exit {
         }
         close_or_die($fh);
     }
-    report_and_exit(!$matches,
+    report_and_exit($matches,
                     $matches == 1 ? '1 match for' : "$matches matches for",
                     'no matches for', $match);
 }
 
 # Not going to assume that system perl is yet new enough to have autodie
-system 'git clean -dxf </dev/null' and die;
+system_or_die('git clean -dxf');
 
 if (!defined $target) {
     match_and_exit(undef, @ARGV) if $match;
     $target = 'test_prep';
+} elsif ($target eq 'none') {
+    match_and_exit(undef, @ARGV) if $match;
+    run_report_and_exit(@ARGV);
 }
 
 skip('no Configure - is this the //depot/perlext/Compiler branch?')
@@ -886,7 +1198,7 @@ skip('no Configure - is this the //depot/perlext/Compiler branch?')
 my $case_insensitive;
 {
     my ($dev_C, $ino_C) = stat 'Configure';
-    die "Could not stat Configure: $!" unless defined $dev_C;
+    die_255("Could not stat Configure: $!") unless defined $dev_C;
     my ($dev_c, $ino_c) = stat 'configure';
     ++$case_insensitive
         if defined $dev_c && $dev_C == $dev_c && $ino_C == $ino_c;
@@ -898,8 +1210,29 @@ my $major
 			qr/^#define\s+(?:PERL_VERSION|PATCHLEVEL)\s+(\d+)\s/,
 			0);
 
+my $unfixable_db_file;
+
+if ($major < 10
+    && !extract_from_file('ext/DB_File/DB_File.xs',
+                          qr!^#else /\* Berkeley DB Version > 2 \*/$!)) {
+    # This DB_File.xs is really too old to patch up.
+    # Skip DB_File, unless we're invoked with an explicit -Unoextensions
+    if (!exists $defines{noextensions}) {
+        $defines{noextensions} = 'DB_File';
+    } elsif (defined $defines{noextensions}) {
+        $defines{noextensions} .= ' DB_File';
+    }
+    ++$unfixable_db_file;
+}
+
 patch_Configure();
 patch_hints();
+if ($options{'all-fixups'}) {
+    patch_SH();
+    patch_C();
+    patch_ext();
+}
+apply_fixups($options{'early-fixup'});
 
 # if Encode is not needed for the test, you can speed up the bisect by
 # excluding it from the runs with -Dnoextensions=Encode
@@ -916,16 +1249,22 @@ patch_hints();
 # bail out pretty early on. Configure won't let us override libswanted, but it
 # will let us override the entire libs list.
 
+foreach (@{$options{A}}) {
+    push @paths, $1 if /^libpth=(.*)/s;
+}
+
 unless (extract_from_file('Configure', 'ignore_versioned_solibs')) {
     # Before 1cfa4ec74d4933da, so force the libs list.
 
     my @libs;
     # This is the current libswanted list from Configure, less the libs removed
     # by current hints/linux.sh
-    foreach my $lib (qw(sfio socket inet nsl nm ndbm gdbm dbm db malloc dl dld
+    foreach my $lib (qw(sfio socket inet nsl nm ndbm gdbm dbm db malloc dl
 			ld sun m crypt sec util c cposix posix ucb BSD)) {
 	foreach my $dir (@paths) {
-	    next unless -f "$dir/lib$lib.so";
+            # Note the wonderful consistency of dot-or-not in the config vars:
+            next unless -f "$dir/lib$lib.$Config{dlext}"
+                || -f "$dir/lib$lib$Config{lib_ext}";
 	    push @libs, "-l$lib";
 	    last;
 	}
@@ -956,39 +1295,32 @@ foreach my $key (sort keys %defines) {
 }
 push @ARGS, map {"-A$_"} @{$options{A}};
 
-# </dev/null because it seems that some earlier versions of Configure can
-# call commands in a way that now has them reading from stdin (and hanging)
-my $pid = fork;
-die "Can't fork: $!" unless defined $pid;
-if (!$pid) {
-    open STDIN, '<', '/dev/null';
-    # If a file in MANIFEST is missing, Configure asks if you want to
-    # continue (the default being 'n'). With stdin closed or /dev/null,
-    # it exits immediately and the check for config.sh below will skip.
-    exec './Configure', @ARGS;
-    die "Failed to start Configure: $!";
-}
-waitpid $pid, 0
-    or die "wait for Configure, pid $pid failed: $!";
+# If a file in MANIFEST is missing, Configure asks if you want to
+# continue (the default being 'n'). With stdin closed or /dev/null,
+# it exits immediately and the check for config.sh below will skip.
+# Without redirecting stdin, the commands called will attempt to read from
+# stdin (and thus effectively hang)
+run_with_options({stdin => '/dev/null', name => 'Configure'},
+                 './Configure', @ARGS);
 
-patch_SH();
+patch_SH() unless $options{'all-fixups'};
+apply_fixups($options{'late-fixup'});
 
 if (-f 'config.sh') {
     # Emulate noextensions if Configure doesn't support it.
     fake_noextensions()
         if $major < 10 && $defines{noextensions};
-    system './Configure -S </dev/null' and die;
+    system_or_die('./Configure -S');
 }
 
 if ($target =~ /config\.s?h/) {
     match_and_exit($target, @ARGV) if $match && -f $target;
-    report_and_exit(!-f $target, 'could build', 'could not build', $target)
+    report_and_exit(-f $target, 'could build', 'could not build', $target)
         if $options{'test-build'};
 
     skip("could not build $target") unless -f $target;
 
-    my $ret = system @ARGV;
-    report_and_exit($ret, 'zero exit from', 'non-zero exit from', "@ARGV");
+    run_report_and_exit(@ARGV);
 } elsif (!-f 'config.sh') {
     # Skip if something went wrong with Configure
 
@@ -1002,12 +1334,13 @@ if($options{'force-regen'}
    && extract_from_file('Makefile', qr/\bregen_headers\b/)) {
     # regen_headers was added in e50aee73b3d4c555, patch.1m for perl5.001
     # It's not worth faking it for earlier revisions.
-    system "make regen_headers </dev/null"
-        and die;
+    system_or_die('make regen_headers');
 }
 
-patch_C();
-patch_ext();
+unless ($options{'all-fixups'}) {
+    patch_C();
+    patch_ext();
+}
 
 # Parallel build for miniperl is safe
 system "$options{make} $j miniperl </dev/null";
@@ -1053,12 +1386,12 @@ if ($expected_file_found && $expected_file eq 't/perl') {
         undef $expected_file_found;
         my $link = readlink $expected_file;
         warn "'t/perl' => '$link', not 'perl'";
-        die "Could not realink t/perl: $!" unless defined $link;
+        die_255("Could not realink t/perl: $!") unless defined $link;
     }
 }
 
 if ($options{'test-build'}) {
-    report_and_exit(!$expected_file_found, 'could build', 'could not build',
+    report_and_exit($expected_file_found, 'could build', 'could not build',
                     $real_target);
 } elsif (!$expected_file_found) {
     skip("could not build $real_target");
@@ -1068,11 +1401,31 @@ match_and_exit($real_target, @ARGV) if $match;
 
 if (defined $options{'one-liner'}) {
     my $exe = $target =~ /^(?:perl$|test)/ ? 'perl' : 'miniperl';
-    unshift @ARGV, '-e', $options{'one-liner'};
+    unshift @ARGV, map {('-e', $_)} @{$options{'one-liner'}};
     foreach (qw(c l w)) {
         unshift @ARGV, "-$_" if $options{$_};
     }
     unshift @ARGV, "./$exe", '-Ilib';
+}
+
+if (-f $ARGV[0]) {
+    my $fh = open_or_die($ARGV[0]);
+    my $line = <$fh>;
+    unshift @ARGV, $1, '-Ilib'
+        if $line =~ $run_with_our_perl;
+}
+
+if ($options{valgrind}) {
+    # Turns out to be too confusing to use an optional argument with the path
+    # of the valgrind binary, as if --valgrind takes an optional argument,
+    # then specifying it as the last option eats the first part of the testcase.
+    # ie this: .../bisect.pl --valgrind testcase
+    # is treated as --valgrind=testcase and as there is no test case given,
+    # it's an invalid commandline, bailing out with the usage message.
+
+    # Currently, the test script can't signal a skip with 125, so anything
+    # non-zero would do. But to keep that option open in future, use 124
+    unshift @ARGV, 'valgrind', '--error-exitcode=124';
 }
 
 # This is what we came here to run:
@@ -1088,9 +1441,7 @@ if (exists $Config{ldlibpthname}) {
     }
 }
 
-my $ret = system @ARGV;
-
-report_and_exit($ret, 'zero exit from', 'non-zero exit from', "@ARGV");
+run_report_and_exit(@ARGV);
 
 ############################################################################
 #
@@ -1131,12 +1482,12 @@ sub force_manifest {
         while (@parts) {
             $path .= '/' . shift @parts;
             next if -d $path;
-            mkdir $path, 0700 or die "Can't create $path: $!";
+            mkdir $path, 0700 or die_255("Can't create $path: $!");
             unshift @created_dirs, $path;
         }
         $fh = open_or_die($pathname, '>');
         close_or_die($fh);
-        chmod 0, $pathname or die "Can't chmod 0 $pathname: $!";
+        chmod 0, $pathname or die_255("Can't chmod 0 $pathname: $!");
     }
     return \@missing, \@created_dirs;
 }
@@ -1162,10 +1513,10 @@ sub force_manifest_cleanup {
             push @errors,
                 "Added file $file had sized changed by Configure to $size";
         }
-        unlink $file or die "Can't unlink $file: $!";
+        unlink $file or die_255("Can't unlink $file: $!");
     }
     foreach my $dir (@$created_dirs) {
-        rmdir $dir or die "Can't rmdir $dir: $!";
+        rmdir $dir or die_255("Can't rmdir $dir: $!");
     }
     skip("@errors")
         if @errors;
@@ -1228,8 +1579,8 @@ EOPATCH
         my $mips = extract_from_file('Configure',
                                      qr!(''\) if (?:\./)?mips; then)!);
         # This is part of perl-5.001n. It's needed, to add -L/usr/local/lib to
-        # theld flags if libraries are found there. It shifts the code to set up
-        # libpth earlier, and then adds the code to add libpth entries to
+        # the ld flags if libraries are found there. It shifts the code to set
+        # up libpth earlier, and then adds the code to add libpth entries to
         # ldflags
         # mips was changed to ./mips in ecfc54246c2a6f42, perl5.000 patch.0g
         apply_patch(sprintf <<'EOPATCH', $mips);
@@ -1370,6 +1721,33 @@ index 53649d5..0635a6e 100755
 EOPATCH
     }
 
+    if ($major == 4 && extract_from_file('Configure', qr/^d_gethbynam=/)) {
+        # Fixes a bug introduced in 4599a1dedd47b916
+        apply_commit('3cbc818d1d0ac470');
+    }
+
+    if ($major == 4 && extract_from_file('Configure',
+                                         qr/gethbadd_addr_type=`echo \$gethbadd_addr_type/)) {
+        # Fixes a bug introduced in 3fd537d4b944bc7a
+        apply_commit('6ff9219da6cf8cfd');
+    }
+
+    if ($major == 4 && extract_from_file('Configure',
+                                         qr/^pthreads_created_joinable=/)) {
+        # Fix for bug introduced in 52e1cb5ebf5e5a8c
+        # Part of commit ce637636a41b2fef
+        edit_file('Configure', sub {
+                      my $code = shift;
+                      $code =~ s{^pthreads_created_joinable=''}
+                                {d_pthreads_created_joinable=''}ms
+                                    or die_255("Substitution failed");
+                      $code =~ s{^pthreads_created_joinable='\$pthreads_created_joinable'}
+                                {d_pthreads_created_joinable='\$d_pthreads_created_joinable'}ms
+                           or die_255("Substitution failed");
+                      return $code;
+                  });
+    }
+
     if ($major < 5 && extract_from_file('Configure',
                                         qr!if \$cc \$ccflags try\.c -o try >/dev/null 2>&1; then!)) {
         # Analogous to the more general fix of dfe9444ca7881e71
@@ -1430,13 +1808,13 @@ EOPATCH
         edit_file('Configure', sub {
                       my $code = shift;
                       $code =~ s/(optstr = ")([^"]+";\s*# getopt-style specification)/$1A:$2/
-                          or die "Substitution failed";
+                          or die_255("Substitution failed");
                       $code =~ s!^(: who configured the system)!
 touch posthint.sh
 . ./posthint.sh
 
 $1!ms
-                          or die "Substitution failed";
+                          or die_255("Substitution failed");
                       return $code;
                   });
         apply_patch(<<'EOPATCH');
@@ -1595,7 +1973,7 @@ eval "$2=$tval"'
 
 EOC
                       $code =~ s/\n: is a C symbol defined\?\n.*?\neval "\$2=\$tval"'\n\n/$fixed/sm
-                          or die "substitution failed";
+                          or die_255("substitution failed");
                       return $code;
                   });
     }
@@ -1855,7 +2233,7 @@ EOPATCH
                 } elsif(!extract_from_file('hints/linux.sh',
                                            qr/^sparc-linux\)$/)) {
                     my $fh = open_or_die('hints/linux.sh', '>>');
-                    print $fh <<'EOT' or die $!;
+                    print $fh <<'EOT' or die_255($!);
 
 case "`uname -m`" in
 sparc*)
@@ -1869,6 +2247,11 @@ EOT
                     close_or_die($fh);
                 }
             }
+        }
+    } elsif ($^O eq 'solaris') {
+        if (($major == 13 || $major == 14)
+            && extract_from_file('hints/solaris_2.sh', qr/getconfldllflags/)) {
+            apply_commit('c80bde4388070c45');
         }
     }
 }
@@ -1921,6 +2304,29 @@ index f61d0db..6097954 100644
 +
 +$spitshell >>Makefile <<'!NO!SUBS!'
  
+EOPATCH
+        }
+
+        if ($major == 15 && $^O !~ /^(linux|darwin|.*bsd)$/
+            && extract_from_file('Makefile.SH', qr/^V.* \?= /)) {
+            # Remove the GNU-make-ism (which the BSD makes also support, but
+            # most other makes choke on)
+            apply_patch(<<'EOPATCH');
+diff --git a/Makefile.SH b/Makefile.SH
+index 94952bd..13e9001 100755
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -338,8 +338,8 @@ linux*|darwin)
+ $spitshell >>$Makefile <<!GROK!THIS!
+ # If you're going to use valgrind and it can't be invoked as plain valgrind
+ # then you'll need to change this, or override it on the make command line.
+-VALGRIND ?= valgrind
+-VG_TEST  ?= ./perl -e 1 2>/dev/null
++VALGRIND = valgrind
++VG_TEST  = ./perl -e 1 2>/dev/null
+ 
+ !GROK!THIS!
+ 	;;
 EOPATCH
         }
 
@@ -2379,6 +2785,26 @@ EOPATCH
         }
     }
 
+    if ($major < 4 && $^O eq 'hpux'
+        && extract_from_file('sv.c', qr/i = _filbuf\(/)) {
+            apply_patch(<<'EOPATCH');
+diff --git a/sv.c b/sv.c
+index a1f1d60..0a806f1 100644
+--- a/sv.c
++++ b/sv.c
+@@ -2641,7 +2641,7 @@ I32 append;
+ 
+ 	FILE_cnt(fp) = cnt;		/* deregisterize cnt and ptr */
+ 	FILE_ptr(fp) = ptr;
+-	i = _filbuf(fp);		/* get more characters */
++	i = __filbuf(fp);		/* get more characters */
+ 	cnt = FILE_cnt(fp);
+ 	ptr = FILE_ptr(fp);		/* reregisterize cnt and ptr */
+ 
+
+EOPATCH
+    }
+
     if ($major == 4 && extract_from_file('scope.c', qr/\(SV\*\)SSPOPINT/)) {
         # [PATCH] 5.004_04 +MAINT_TRIAL_1 broken when sizeof(int) != sizeof(void)
         # Fixes a bug introduced in 161b7d1635bc830b
@@ -2417,7 +2843,22 @@ EOPATCH
     if ($major == 4 && $^O eq 'linux') {
         # Whilst this is fixed properly in f0784f6a4c3e45e1 which provides the
         # Configure probe, it's easier to back out the problematic changes made
-        # in these previous commits:
+        # in these previous commits.
+
+        # In maint-5.004, the simplest addition is to "correct" the file to
+        # use the same pre-processor macros as blead had used. Whilst commit
+        # 9b599b2a63d2324d (reverted below) is described as
+        # [win32] merge change#887 from maintbranch
+        # it uses __sun__ and __svr4__ instead of the __sun and __SVR4 of the
+        # maint branch commit 6cdf74fe31f049dc
+
+        edit_file('doio.c', sub {
+                      my $code = shift;
+                      $code =~ s{defined\(__sun\) && defined\(__SVR4\)}
+                                {defined(__sun__) && defined(__svr4__)}g;
+                      return $code;
+                  });
+
         if (extract_from_file('doio.c',
                               qr!^/\* XXX REALLY need metaconfig test \*/$!)) {
             revert_commit('4682965a1447ea44', 'doio.c');
@@ -2734,6 +3175,16 @@ index 2a6cbcd..eab2de1 100644
 EOPATCH
     }
 
+    if ($major == 7 && $^O eq 'aix' &&
+        extract_from_file('ext/List/Util/Util.xs', qr/PUSHBLOCK/)
+        && !extract_from_file('makedef.pl', qr/^Perl_cxinc/)) {
+        # Need this to get List::Utils 1.03 and later to compile.
+        # 1.03 also expects to call Perl_pp_rand. Commit d3632a54487acc5f
+        # fixes this (for the unthreaded case), but it's not until 1.05,
+        # two days later, that this is fixed properly.
+        apply_commit('cbb96eed3f175499');
+    }
+
     if (($major >= 7 || $major <= 9) && $^O eq 'openbsd'
         && `uname -m` eq "sparc64\n"
         # added in 2000 by commit cb434fcc98ac25f5:
@@ -2918,15 +3369,8 @@ EOPATCH
     }
 
     if ($major < 10) {
-        if (!extract_from_file('ext/DB_File/DB_File.xs',
-                               qr!^#else /\* Berkeley DB Version > 2 \*/$!)) {
-            # This DB_File.xs is really too old to patch up.
-            # Skip DB_File, unless we're invoked with an explicit -Unoextensions
-            if (!exists $defines{noextensions}) {
-                $defines{noextensions} = 'DB_File';
-            } elsif (defined $defines{noextensions}) {
-                $defines{noextensions} .= ' DB_File';
-            }
+        if ($unfixable_db_file) {
+            # Nothing we can do.
         } elsif (!extract_from_file('ext/DB_File/DB_File.xs',
                                     qr/^#ifdef AT_LEAST_DB_4_1$/)) {
             # This line is changed by commit 3245f0580c13b3ab
@@ -2999,6 +3443,45 @@ EOFIX
 (#ifdef newCONSTSUB|/\* Required)!$fixed$1!ms;
                       return $xs;
                   });
+    }
+}
+
+sub apply_fixups {
+    my $fixups = shift;
+    return unless $fixups;
+    foreach my $file (@$fixups) {
+        my $fh = open_or_die($file);
+        my $line = <$fh>;
+        close_or_die($fh);
+        if ($line =~ /^#!perl\b/) {
+            system $^X, $file
+                and die_255("$^X $file failed: \$!=$!, \$?=$?");
+        } elsif ($line =~ /^#!(\/\S+)/) {
+            system $file
+                and die_255("$file failed: \$!=$!, \$?=$?");
+        } else {
+            if (my ($target, $action, $pattern)
+                = $line =~ m#^(\S+) ([=!])~ /(.*)/#) {
+                if (length $pattern) {
+                    next unless -f $target;
+                    if ($action eq '=') {
+                        next unless extract_from_file($target, $pattern);
+                    } else {
+                        next if extract_from_file($target, $pattern);
+                    }
+                } else {
+                    # Avoid the special case meaning of the empty pattern,
+                    # and instead use this to simply test for the file being
+                    # present or absent
+                    if ($action eq '=') {
+                        next unless -f $target;
+                    } else {
+                        next if -f $target;
+                    }
+                }
+            }
+            system_or_die("patch -p1 <$file");
+        }
     }
 }
 

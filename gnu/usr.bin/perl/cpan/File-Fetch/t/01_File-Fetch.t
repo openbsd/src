@@ -7,6 +7,7 @@ use Test::More 'no_plan';
 
 use Cwd             qw[cwd];
 use File::Basename  qw[basename];
+use File::Path      qw[rmtree];
 use Data::Dumper;
 
 use_ok('File::Fetch');
@@ -14,6 +15,8 @@ use_ok('File::Fetch');
 ### optionally set debugging ###
 $File::Fetch::DEBUG = $File::Fetch::DEBUG   = 1 if $ARGV[0];
 $IPC::Cmd::DEBUG    = $IPC::Cmd::DEBUG      = 1 if $ARGV[0];
+
+$File::Fetch::FORCEIPV4=1;
 
 unless( $ENV{PERL_CORE} ) {
     warn qq[
@@ -46,7 +49,7 @@ if( $File::Fetch::DEBUG ) {
 }
 
 ### Heuristics
-my %heuristics = map { $_ => 1 } qw(http ftp rsync file);
+my %heuristics = map { $_ => 1 } qw(http ftp rsync file git);
 ### _parse_uri tests
 ### these go on all platforms
 my @map = (
@@ -61,6 +64,12 @@ my @map = (
         host	=> 'cpan.pair.com',
         path	=> '/CPAN/',
         file	=> 'MIRRORING.FROM',
+    },
+    {	uri	    => 'git://github.com/jib/file-fetch.git',
+        scheme	=> 'git',
+        host	=> 'github.com',
+        path	=> '/jib/',
+        file	=> 'file-fetch.git',
     },
     {   uri     => 'http://localhost/tmp/index.txt',
         scheme  => 'http',
@@ -216,6 +225,21 @@ for my $entry (@map) {
     }
 }
 
+### Heuristics
+{
+  require IO::Socket::INET;
+  my $sock = IO::Socket::INET->new( PeerAddr => 'github.com', PeerPort => 9418, Timeout => 20 )
+     or $heuristics{git} = 0;
+}
+
+### git:// tests ###
+{   my $uri = 'git://github.com/jib/file-fetch.git';
+
+    for (qw[git]) {
+        _fetch_uri( git => $uri, $_ );
+    }
+}
+
 sub _fetch_uri {
     my $type    = shift;
     my $uri     = shift;
@@ -240,7 +264,7 @@ sub _fetch_uri {
         for my $to ( 'tmp', do { \my $o } ) { SKIP: {
 
 
-            my $how     = ref $to ? 'slurp' : 'file';
+            my $how     = ref $to && $type ne 'git' ? 'slurp' : 'file';
             my $skip    = ref $to ? 4       : 3;
 
             ok( 1,              "   Fetching '$uri' in $how mode" );
@@ -258,7 +282,7 @@ sub _fetch_uri {
             ok( $file,          "   File ($file) fetched with $method ($uri)" );
 
             ### check we got some contents if we were meant to slurp
-            if( ref $to ) {
+            if( ref $to && $type ne 'git' ) {
                 ok( $$to,       "   Contents slurped" );
             }
 
@@ -267,7 +291,7 @@ sub _fetch_uri {
             is( $file && basename($file), $ff->output_file,
                                 "   File has expected name" );
 
-            unlink $file;
+            rmtree $file;
         }}
     }
 }

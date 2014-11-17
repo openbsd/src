@@ -22,7 +22,7 @@ BEGIN {
 }
 
 
-plan tests => 38;
+plan tests => 48;
 
 my $results = runperl(
 			switches => [ '-Dr' ],
@@ -192,4 +192,28 @@ comp_n(6, <<'CODE', 'embedded code qr');
 my $x = qr/a/i;
 my $y = qr/a/;
 "a" =~ qr/a$_/ for $x, $y, $x, $y;
+CODE
+
+comp_n(2, <<'CODE', '(??{"constant"})');
+"bb" =~ /(??{"abc"})/;
+CODE
+
+comp_n(2, <<'CODE', '(??{"folded"."constant"})');
+"bb" =~ /(??{"ab"."c"})/;
+CODE
+
+comp_n(2, <<'CODE', '(??{$preused_scalar})');
+$s = "abc";
+"bb" =~ /(??{$s})/;
+CODE
+
+comp_n(2, <<'CODE', '(??{number})');
+"bb" =~ /(??{123})/;
+CODE
+
+comp_n(2, <<'CODE', '(??{$pvlv_regexp})');
+sub {
+   $_[0] = ${qr/abc/};
+  "bb" =~ /(??{$_[0]})/;
+}->($_[0]);
 CODE

@@ -10,6 +10,8 @@ cflags.SH
 configpm
 configure.gnu
 config_h.SH
+cpan/autodie/t/chmod.t
+cpan/CPAN-Meta-YAML/t/tml
 cpan/Test-Harness/t/source_tests/source.sh
 cpan/Test-Harness/t/source_tests/source_args.sh
 installperl
@@ -25,9 +27,7 @@ regen/regcharclass.pl
 regen/uconfig_h.pl
 runtests.SH
 t/TEST
-vms/ext/filespec.t
 x2p/Makefile.SH
-x2p/cflags.SH
 Porting/Maintainers.pl
 Porting/add-package.pl
 Porting/bisect.pl

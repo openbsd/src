@@ -14,7 +14,7 @@ our $VERSION;
 our $host;
 
 BEGIN {
-    $VERSION = '1.17';
+    $VERSION = '1.18';
     {
 	local $SIG{__DIE__};
 	eval {
@@ -92,7 +92,7 @@ sub hostname {
     || eval {
 	local $SIG{__DIE__};
 	local $SIG{CHLD};
-	$host = `(hostname) 2>/dev/null`; # bsdish
+	$host = `(hostname) 2>/dev/null`; # BSDish
     }
 
     # method 4 - use POSIX::uname(), which strictly can't be expected to be

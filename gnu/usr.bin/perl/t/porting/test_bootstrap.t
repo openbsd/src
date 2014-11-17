@@ -30,6 +30,8 @@ while (my $file = <$fh>) {
 
     local $/;
     open my $t, '<', $file or die "Can't open $file: $!";
+    # avoid PERL_UNICODE causing us to read non-UTF-8 files as UTF-8
+    binmode $t;
     my $contents = <$t>;
     # Make sure that we don't match ourselves
     unlike($contents, qr/use\s+Test::More/, "$file doesn't use Test::\QMore");
@@ -54,22 +56,23 @@ while (my $file = <$fh>) {
 # and replaced with copy-on-write.
 
 # We still allow PL_sawampersand to be enabled with
-# -Accflags=-DPERL_SAWAMPERSAND, so when that is defined we can still run
-# these tests.  When it is not enabled, PL_sawampersand makes no observable
-# difference so the tests fail.
+# -Accflags=-DPERL_SAWAMPERSAND, or with -DPERL_NO_COW, so its still worth
+# checking.
+# There's no portable, reliable way to check whether PL_sawampersand is
+# set, so instead we just "grep $`|$&|$' test.pl"
 
-require Config;
-exit unless "@{[Config::bincompat_options()]}" =~ /\bPERL_SAWAMPERSAND\b/;
-
-# This very much relies on a bug in the regexp implementation, but for now it's
-# the best way to work out whether PL_sawampersand is true.
-# Then again, PL_sawampersand *is* a bug, for precisely the reason that this
-# test can detect the behaviour change.
-
-isnt($INC{'./test.pl'}, undef, 'We loaded test.pl');
-ok("Perl rules" =~ /Perl/, 'Perl rules');
-is(eval '$&', undef, 'Nothing in test.pl mentioned $&');
-is(eval '$`', undef, 'Nothing in test.pl mentioned $`');
-is(eval '$\'', undef, 'Nothing in test.pl mentioned $\'');
-# Currently seeing any of the 3 triggers the setting of all 3.
-# $` and $' will be '' rather than undef if the regexp sets them.
+{
+    my $file = '';
+    my $fh;
+    if (ok(open(my $fh, '<', 'test.pl'), "opened test.pl")) {
+	$file = do { local $/; <$fh> };
+	$file //= '';
+    }
+    else {
+	diag("error: $!");
+    }
+    ok(length($file) > 0, "read test.pl successfully");
+    ok($file !~ /\$&/, 'Nothing in test.pl mentioned $&');
+    ok($file !~ /\$`/, 'Nothing in test.pl mentioned $`');
+    ok($file !~ /\$'/, 'Nothing in test.pl mentioned $\'');
+}

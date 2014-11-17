@@ -6,7 +6,7 @@
 
 package File::DosGlob;
 
-our $VERSION = '1.10';
+our $VERSION = '1.12';
 use strict;
 use warnings;
 
@@ -156,7 +156,7 @@ sub glob {
 	    }
 	    #print "Sould have "GOT" vs "Got"!\n";
 		#FIXME: There should be checking for this.
-		#  How or what should be done about failure is beond me.
+		#  How or what should be done about failure is beyond me.
 	}
 	if ( $#appendpat != -1
 		) {
@@ -257,7 +257,7 @@ glob()
 =head1 BUGS
 
 Should probably be built into the core, and needs to stop
-pandering to DOS habits.  Needs a dose of optimizium too.
+pandering to DOS habits.  Needs a dose of optimization too.
 
 =head1 AUTHOR
 

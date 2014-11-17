@@ -21,13 +21,18 @@ typedef FILE * InputStream;
 
 static const char* const svclassnames[] = {
     "B::NULL",
+#if PERL_VERSION < 19
     "B::BIND",
+#endif
     "B::IV",
     "B::NV",
 #if PERL_VERSION <= 10
     "B::RV",
 #endif
     "B::PV",
+#if PERL_VERSION >= 19
+    "B::INVLIST",
+#endif
     "B::PVIV",
     "B::PVNV",
     "B::PVMG",
@@ -636,88 +641,98 @@ static XSPROTO(intrpvar_sv_common)
 
 
 
-#define SVp            0x00000
-#define U32p           0x10000
-#define line_tp        0x20000
-#define OPp            0x30000
-#define PADOFFSETp     0x40000
-#define U8p            0x50000
-#define IVp            0x60000
-#define char_pp        0x70000
+#define SVp                 0x0
+#define U32p                0x1
+#define line_tp             0x2
+#define OPp                 0x3
+#define PADOFFSETp          0x4
+#define U8p                 0x5
+#define IVp                 0x6
+#define char_pp             0x7
+/* Keep this last:  */
+#define op_offset_special   0x8
 
 /* table that drives most of the B::*OP methods */
 
 struct OP_methods {
     const char *name;
-    STRLEN namelen;
-    I32    type;
-    size_t offset; /* if -1, access is handled on a case-by-case basis */
+    U8 namelen;
+    U8    type; /* if op_offset_special, access is handled on a case-by-case basis */
+    U16 offset;
 } op_methods[] = {
-    STR_WITH_LEN("next"),    OPp,    offsetof(struct op, op_next),       /* 0*/
-    STR_WITH_LEN("sibling"), OPp,    offsetof(struct op, op_sibling),    /* 1*/
-    STR_WITH_LEN("targ"),    PADOFFSETp, offsetof(struct op, op_targ),   /* 2*/
-    STR_WITH_LEN("flags"),   U8p,    offsetof(struct op, op_flags),      /* 3*/
-    STR_WITH_LEN("private"), U8p,    offsetof(struct op, op_private),    /* 4*/
-    STR_WITH_LEN("first"),   OPp,    offsetof(struct unop, op_first),     /* 5*/
-    STR_WITH_LEN("last"),    OPp,    offsetof(struct binop, op_last),    /* 6*/
-    STR_WITH_LEN("other"),   OPp,    offsetof(struct logop, op_other),   /* 7*/
-    STR_WITH_LEN("pmreplstart"), 0, -1,                                  /* 8*/
-    STR_WITH_LEN("redoop"),  OPp,    offsetof(struct loop, op_redoop),   /* 9*/
-    STR_WITH_LEN("nextop"),  OPp,    offsetof(struct loop, op_nextop),   /*10*/
-    STR_WITH_LEN("lastop"),  OPp,    offsetof(struct loop, op_lastop),   /*11*/
-    STR_WITH_LEN("pmflags"), U32p,   offsetof(struct pmop, op_pmflags),  /*12*/
+  { STR_WITH_LEN("next"),    OPp,    offsetof(struct op, op_next),     },/* 0*/
+  { STR_WITH_LEN("sibling"), OPp,    offsetof(struct op, op_sibling),  },/* 1*/
+  { STR_WITH_LEN("targ"),    PADOFFSETp, offsetof(struct op, op_targ), },/* 2*/
+  { STR_WITH_LEN("flags"),   U8p,    offsetof(struct op, op_flags),    },/* 3*/
+  { STR_WITH_LEN("private"), U8p,    offsetof(struct op, op_private),  },/* 4*/
+  { STR_WITH_LEN("first"),   OPp,    offsetof(struct unop, op_first),  },/* 5*/
+  { STR_WITH_LEN("last"),    OPp,    offsetof(struct binop, op_last),  },/* 6*/
+  { STR_WITH_LEN("other"),   OPp,    offsetof(struct logop, op_other), },/* 7*/
+  { STR_WITH_LEN("pmreplstart"), op_offset_special, 0,                 },/* 8*/
+  { STR_WITH_LEN("redoop"),  OPp,    offsetof(struct loop, op_redoop), },/* 9*/
+  { STR_WITH_LEN("nextop"),  OPp,    offsetof(struct loop, op_nextop), },/*10*/
+  { STR_WITH_LEN("lastop"),  OPp,    offsetof(struct loop, op_lastop), },/*11*/
+  { STR_WITH_LEN("pmflags"), U32p,   offsetof(struct pmop, op_pmflags),},/*12*/
 #if PERL_VERSION >= 17
-    STR_WITH_LEN("code_list"),OPp,   offsetof(struct pmop, op_code_list),/*13*/
+  { STR_WITH_LEN("code_list"),OPp,   offsetof(struct pmop, op_code_list),},/*13*/
 #else
-    STR_WITH_LEN("code_list"),0,     -1,
+  { STR_WITH_LEN("code_list"),op_offset_special, 0,
 #endif
-    STR_WITH_LEN("sv"),      SVp,     offsetof(struct svop, op_sv),      /*14*/
-    STR_WITH_LEN("gv"),      SVp,     offsetof(struct svop, op_sv),      /*15*/
-    STR_WITH_LEN("padix"),   PADOFFSETp,offsetof(struct padop, op_padix),/*16*/
-    STR_WITH_LEN("cop_seq"), U32p,    offsetof(struct cop, cop_seq),     /*17*/
-    STR_WITH_LEN("line"),    line_tp, offsetof(struct cop, cop_line),    /*18*/
-    STR_WITH_LEN("hints"),   U32p,    offsetof(struct cop, cop_hints),   /*19*/
+  { STR_WITH_LEN("sv"),      SVp,     offsetof(struct svop, op_sv),    },/*14*/
+  { STR_WITH_LEN("gv"),      SVp,     offsetof(struct svop, op_sv),    },/*15*/
+  { STR_WITH_LEN("padix"),   PADOFFSETp,offsetof(struct padop, op_padix),},/*16*/
+  { STR_WITH_LEN("cop_seq"), U32p,    offsetof(struct cop, cop_seq),   },/*17*/
+  { STR_WITH_LEN("line"),    line_tp, offsetof(struct cop, cop_line),  },/*18*/
+  { STR_WITH_LEN("hints"),   U32p,    offsetof(struct cop, cop_hints), },/*19*/
 #ifdef USE_ITHREADS
-    STR_WITH_LEN("pmoffset"),IVp,     offsetof(struct pmop, op_pmoffset),/*20*/
-    STR_WITH_LEN("filegv"),  0,       -1,                                /*21*/
-    STR_WITH_LEN("file"),    char_pp, offsetof(struct cop, cop_file),    /*22*/
-    STR_WITH_LEN("stash"),   0,       -1,                                /*23*/
+  { STR_WITH_LEN("pmoffset"),IVp,     offsetof(struct pmop, op_pmoffset),},/*20*/
+  { STR_WITH_LEN("filegv"),  op_offset_special, 0,                     },/*21*/
+  { STR_WITH_LEN("file"),    char_pp, offsetof(struct cop, cop_file),  },/*22*/
+  { STR_WITH_LEN("stash"),   op_offset_special, 0,                     },/*23*/
 #  if PERL_VERSION < 17
-    STR_WITH_LEN("stashpv"), char_pp, offsetof(struct cop, cop_stashpv), /*24*/
-    STR_WITH_LEN("stashoff"),0,       -1,                                /*25*/
+  { STR_WITH_LEN("stashpv"), char_pp, offsetof(struct cop, cop_stashpv),}, /*24*/
+  { STR_WITH_LEN("stashoff"),op_offset_special, 0,                     },/*25*/
 #  else
-    STR_WITH_LEN("stashpv"), 0,       -1,                                /*24*/
-    STR_WITH_LEN("stashoff"),PADOFFSETp,offsetof(struct cop, cop_stashoff),/*25*/
+  { STR_WITH_LEN("stashpv"), op_offset_special, 0,                     },/*24*/
+  { STR_WITH_LEN("stashoff"),PADOFFSETp,offsetof(struct cop,cop_stashoff),},/*25*/
 #  endif
 #else
-    STR_WITH_LEN("pmoffset"),0,       -1,                                /*20*/
-    STR_WITH_LEN("filegv"),  SVp,     offsetof(struct cop, cop_filegv),  /*21*/
-    STR_WITH_LEN("file"),    0,       -1,                                /*22*/
-    STR_WITH_LEN("stash"),   SVp,     offsetof(struct cop, cop_stash),   /*23*/
-    STR_WITH_LEN("stashpv"), 0,       -1,                                /*24*/
-    STR_WITH_LEN("stashoff"),0,       -1,                                /*25*/
+  { STR_WITH_LEN("pmoffset"),op_offset_special, 0,                     },/*20*/
+  { STR_WITH_LEN("filegv"),  SVp,     offsetof(struct cop, cop_filegv),},/*21*/
+  { STR_WITH_LEN("file"),    op_offset_special, 0,                     },/*22*/
+  { STR_WITH_LEN("stash"),   SVp,     offsetof(struct cop, cop_stash), },/*23*/
+  { STR_WITH_LEN("stashpv"), op_offset_special, 0,                     },/*24*/
+  { STR_WITH_LEN("stashoff"),op_offset_special, 0,                     },/*25*/
 #endif
-    STR_WITH_LEN("size"),    0,       -1,                                /*26*/
-    STR_WITH_LEN("name"),    0,       -1,                                /*27*/
-    STR_WITH_LEN("desc"),    0,       -1,                                /*28*/
-    STR_WITH_LEN("ppaddr"),  0,       -1,                                /*29*/
-    STR_WITH_LEN("type"),    0,       -1,                                /*30*/
-    STR_WITH_LEN("opt"),     0,       -1,                                /*31*/
-    STR_WITH_LEN("spare"),   0,       -1,                                /*32*/
-    STR_WITH_LEN("children"),0,       -1,                                /*33*/
-    STR_WITH_LEN("pmreplroot"), 0,    -1,                                /*34*/
-    STR_WITH_LEN("pmstashpv"), 0,     -1,                                /*35*/
-    STR_WITH_LEN("pmstash"), 0,       -1,                                /*36*/
-    STR_WITH_LEN("precomp"), 0,       -1,                                /*37*/
-    STR_WITH_LEN("reflags"), 0,       -1,                                /*38*/
-    STR_WITH_LEN("sv"),      0,       -1,                                /*39*/
-    STR_WITH_LEN("gv"),      0,       -1,                                /*40*/
-    STR_WITH_LEN("pv"),      0,       -1,                                /*41*/
-    STR_WITH_LEN("label"),   0,       -1,                                /*42*/
-    STR_WITH_LEN("arybase"), 0,       -1,                                /*43*/
-    STR_WITH_LEN("warnings"),0,       -1,                                /*44*/
-    STR_WITH_LEN("io"),      0,       -1,                                /*45*/
-    STR_WITH_LEN("hints_hash"),0,     -1,                                /*46*/
+  { STR_WITH_LEN("size"),    op_offset_special, 0,                     },/*26*/
+  { STR_WITH_LEN("name"),    op_offset_special, 0,                     },/*27*/
+  { STR_WITH_LEN("desc"),    op_offset_special, 0,                     },/*28*/
+  { STR_WITH_LEN("ppaddr"),  op_offset_special, 0,                     },/*29*/
+  { STR_WITH_LEN("type"),    op_offset_special, 0,                     },/*30*/
+  { STR_WITH_LEN("opt"),     op_offset_special, 0,                     },/*31*/
+  { STR_WITH_LEN("spare"),   op_offset_special, 0,                     },/*32*/
+  { STR_WITH_LEN("children"),op_offset_special, 0,                     },/*33*/
+  { STR_WITH_LEN("pmreplroot"), op_offset_special, 0,                  },/*34*/
+  { STR_WITH_LEN("pmstashpv"), op_offset_special, 0,                   },/*35*/
+  { STR_WITH_LEN("pmstash"), op_offset_special, 0,                     },/*36*/
+  { STR_WITH_LEN("precomp"), op_offset_special, 0,                     },/*37*/
+  { STR_WITH_LEN("reflags"), op_offset_special, 0,                     },/*38*/
+  { STR_WITH_LEN("sv"),      op_offset_special, 0,                     },/*39*/
+  { STR_WITH_LEN("gv"),      op_offset_special, 0,                     },/*40*/
+  { STR_WITH_LEN("pv"),      op_offset_special, 0,                     },/*41*/
+  { STR_WITH_LEN("label"),   op_offset_special, 0,                     },/*42*/
+  { STR_WITH_LEN("arybase"), op_offset_special, 0,                     },/*43*/
+  { STR_WITH_LEN("warnings"),op_offset_special, 0,                     },/*44*/
+  { STR_WITH_LEN("io"),      op_offset_special, 0,                     },/*45*/
+  { STR_WITH_LEN("hints_hash"),op_offset_special, 0,                   },/*46*/
+#if PERL_VERSION >= 17
+  { STR_WITH_LEN("slabbed"), op_offset_special, 0,                     },/*47*/
+  { STR_WITH_LEN("savefree"),op_offset_special, 0,                     },/*48*/
+  { STR_WITH_LEN("static"),  op_offset_special, 0,                     },/*49*/
+#  if PERL_VERSION >= 19
+  { STR_WITH_LEN("folded"),  op_offset_special, 0,                     },/*50*/
+#  endif
+#endif
 };
 
 #include "const-c.inc"
@@ -989,14 +1004,14 @@ next(o)
 	B::COP::warnings     = 44
 	B::COP::io           = 45
 	B::COP::hints_hash   = 46
+	B::OP::slabbed       = 47
+	B::OP::savefree      = 48
+	B::OP::static        = 49
+	B::OP::folded        = 50
     PREINIT:
-	char *ptr;
 	SV *ret;
-	I32 type;
-	I32 offset;
-	STRLEN len;
     PPCODE:
-	if (ix < 0 || ix > 46)
+	if (ix < 0 || (U32)ix >= C_ARRAY_LENGTH(op_methods))
 	    croak("Illegal alias %d for B::*OP::next", (int)ix);
 	ret = get_overlay_object(aTHX_ o,
 			    op_methods[ix].name, op_methods[ix].namelen);
@@ -1007,8 +1022,7 @@ next(o)
 
 	/* handle non-direct field access */
 
-	offset = op_methods[ix].offset;
-	if (offset < 0) {
+	if (op_methods[ix].type == op_offset_special)
 	    switch (ix) {
 	    case 8: /* pmreplstart */
 		ret = make_op_object(aTHX_
@@ -1064,10 +1078,22 @@ next(o)
 	    case 30: /* type  */
 	    case 31: /* opt   */
 	    case 32: /* spare */
-	    /* These 3 are all bitfields, so we can't take their addresses */
+#if PERL_VERSION >= 17
+	    case 47: /* slabbed  */
+	    case 48: /* savefree */
+	    case 49: /* static   */
+#if PERL_VERSION >= 19
+	    case 50: /* folded   */
+#endif
+#endif
+	    /* These are all bitfields, so we can't take their addresses */
 		ret = sv_2mortal(newSVuv((UV)(
 				      ix == 30 ? o->op_type
 		                    : ix == 31 ? o->op_opt
+		                    : ix == 47 ? o->op_slabbed
+		                    : ix == 48 ? o->op_savefree
+		                    : ix == 49 ? o->op_static
+		                    : ix == 50 ? o->op_folded
 		                    :            o->op_spare)));
 		break;
 	    case 33: /* children */
@@ -1117,6 +1143,8 @@ next(o)
 			}
 			else {
 			    sv_setpvn(ret, RX_PRECOMP(rx), RX_PRELEN(rx));
+                            if (RX_UTF8(rx))
+                                SvUTF8_on(ret);
 			}
 		    }
 		}
@@ -1174,44 +1202,38 @@ next(o)
 		break;
 	    default:
 		croak("method %s not implemented", op_methods[ix].name);
+	} else {
+	    /* do a direct structure offset lookup */
+	    const char *const ptr = (char *)o + op_methods[ix].offset;
+	    switch (op_methods[ix].type) {
+	    case OPp:
+		ret = make_op_object(aTHX_ *((OP **)ptr));
+		break;
+	    case PADOFFSETp:
+		ret = sv_2mortal(newSVuv(*((PADOFFSET*)ptr)));
+		break;
+	    case U8p:
+		ret = sv_2mortal(newSVuv(*((U8*)ptr)));
+		break;
+	    case U32p:
+		ret = sv_2mortal(newSVuv(*((U32*)ptr)));
+		break;
+	    case SVp:
+		ret = make_sv_object(aTHX_ *((SV **)ptr));
+		break;
+	    case line_tp:
+		ret = sv_2mortal(newSVuv(*((line_t *)ptr)));
+		break;
+	    case IVp:
+		ret = sv_2mortal(newSViv(*((IV*)ptr)));
+		break;
+	    case char_pp:
+		ret = sv_2mortal(newSVpv(*((char **)ptr), 0));
+		break;
+	    default:
+		croak("Illegal type 0x%x for B::*OP::%s",
+		      (unsigned)op_methods[ix].type, op_methods[ix].name);
 	    }
-	    ST(0) = ret;
-	    XSRETURN(1);
-	}
-
-	/* do a direct structure offset lookup */
-
-	ptr  = (char *)o + offset;
-	type = op_methods[ix].type;
-	switch ((U8)(type >> 16)) {
-	case  (U8)(OPp >> 16):
-	    ret = make_op_object(aTHX_ *((OP **)ptr));
-	    break;
-	case  (U8)(PADOFFSETp >> 16):
-	    ret = sv_2mortal(newSVuv(*((PADOFFSET*)ptr)));
-	    break;
-	case (U8)(U8p >> 16):
-	    ret = sv_2mortal(newSVuv(*((U8*)ptr)));
-	    break;
-	case (U8)(U32p >> 16):
-	    ret = sv_2mortal(newSVuv(*((U32*)ptr)));
-	    break;
-	case (U8)(SVp >> 16):
-	    ret = make_sv_object(aTHX_ *((SV **)ptr));
-	    break;
-	case (U8)(line_tp >> 16):
-	    ret = sv_2mortal(newSVuv(*((line_t *)ptr)));
-	    break;
-	case (U8)(IVp >> 16):
-	    ret = sv_2mortal(newSViv(*((IV*)ptr)));
-	    break;
-	case (U8)(char_pp >> 16):
-	    ret = sv_2mortal(newSVpv(*((char **)ptr), 0));
-	    break;
-	default:
-	    croak("Illegal type 0x%08x for B::*OP::%s",
-		    (unsigned)type, op_methods[ix].name);
-
 	}
 	ST(0) = ret;
 	XSRETURN(1);
@@ -1288,15 +1310,13 @@ MODULE = B	PACKAGE = B::IV
 
 #define PVMG_stash_ix	sv_SVp | offsetof(struct xpvmg, xmg_stash)
 
-#if PERL_VERSION > 14
+#if PERL_VERSION > 18
+#    define PVBM_useful_ix	sv_IVp | offsetof(struct xpviv, xiv_u.xivu_iv)
+#elif PERL_VERSION > 14
 #    define PVBM_useful_ix	sv_I32p | offsetof(struct xpvgv, xnv_u.xbm_s.xbm_useful)
-#    define PVBM_previous_ix	sv_UVp | offsetof(struct xpvuv, xuv_uv)
 #else
 #define PVBM_useful_ix	sv_I32p | offsetof(struct xpvgv, xiv_u.xivu_i32)
-#define PVBM_previous_ix    sv_U32p | offsetof(struct xpvgv, xnv_u.xbm_s.xbm_previous)
 #endif
-
-#define PVBM_rare_ix	sv_U8p | offsetof(struct xpvgv, xnv_u.xbm_s.xbm_rare)
 
 #define PVLV_targoff_ix	sv_U32p | offsetof(struct xpvlv, xlv_targoff)
 #define PVLV_targlen_ix	sv_U32p | offsetof(struct xpvlv, xlv_targlen)
@@ -1330,7 +1350,7 @@ MODULE = B	PACKAGE = B::IV
 #define PVCV_file_ix	sv_char_pp | offsetof(struct xpvcv, xcv_file)
 #define PVCV_outside_ix	sv_SVp | offsetof(struct xpvcv, xcv_outside)
 #define PVCV_outside_seq_ix sv_U32p | offsetof(struct xpvcv, xcv_outside_seq)
-#define PVCV_flags_ix	sv_U16p | offsetof(struct xpvcv, xcv_flags)
+#define PVCV_flags_ix	sv_U32p | offsetof(struct xpvcv, xcv_flags)
 
 #define PVHV_max_ix	sv_STRLENp | offsetof(struct xpvhv, xhv_max)
 
@@ -1364,8 +1384,6 @@ IVX(sv)
 	B::GV::STASH = PVGV_stash_ix
 	B::GV::GvFLAGS = PVGV_flags_ix
 	B::BM::USEFUL = PVBM_useful_ix
-	B::BM::PREVIOUS = PVBM_previous_ix
-	B::BM::RARE = PVBM_rare_ix
 	B::IO::LINES =  PVIO_lines_ix
 	B::IO::PAGE = PVIO_page_ix
 	B::IO::PAGE_LEN = PVIO_page_len_ix
@@ -1665,6 +1683,32 @@ MOREMAGIC(mg)
 	    break;
 	}
 
+MODULE = B	PACKAGE = B::BM		PREFIX = Bm
+
+U32
+BmPREVIOUS(sv)
+	B::BM	sv
+    CODE:
+#if PERL_VERSION >= 19
+        PERL_UNUSED_VAR(sv);
+#endif
+	RETVAL = BmPREVIOUS(sv);
+    OUTPUT:
+        RETVAL
+
+
+U8
+BmRARE(sv)
+	B::BM	sv
+    CODE:
+#if PERL_VERSION >= 19
+        PERL_UNUSED_VAR(sv);
+#endif
+	RETVAL = BmRARE(sv);
+    OUTPUT:
+        RETVAL
+
+
 MODULE = B	PACKAGE = B::GV		PREFIX = Gv
 
 void
@@ -1696,16 +1740,16 @@ void*
 GvGP(gv)
 	B::GV	gv
 
-#define GP_sv_ix	SVp | offsetof(struct gp, gp_sv)
-#define GP_io_ix	SVp | offsetof(struct gp, gp_io)
-#define GP_cv_ix	SVp | offsetof(struct gp, gp_cv)
-#define GP_cvgen_ix	U32p | offsetof(struct gp, gp_cvgen)
-#define GP_refcnt_ix	U32p | offsetof(struct gp, gp_refcnt)
-#define GP_hv_ix	SVp | offsetof(struct gp, gp_hv)
-#define GP_av_ix	SVp | offsetof(struct gp, gp_av)
-#define GP_form_ix	SVp | offsetof(struct gp, gp_form)
-#define GP_egv_ix	SVp | offsetof(struct gp, gp_egv)
-#define GP_line_ix	line_tp | offsetof(struct gp, gp_line)
+#define GP_sv_ix	(SVp << 16) | offsetof(struct gp, gp_sv)
+#define GP_io_ix	(SVp << 16) | offsetof(struct gp, gp_io)
+#define GP_cv_ix	(SVp << 16) | offsetof(struct gp, gp_cv)
+#define GP_cvgen_ix	(U32p << 16) | offsetof(struct gp, gp_cvgen)
+#define GP_refcnt_ix	(U32p << 16) | offsetof(struct gp, gp_refcnt)
+#define GP_hv_ix	(SVp << 16) | offsetof(struct gp, gp_hv)
+#define GP_av_ix	(SVp << 16) | offsetof(struct gp, gp_av)
+#define GP_form_ix	(SVp << 16) | offsetof(struct gp, gp_form)
+#define GP_egv_ix	(SVp << 16) | offsetof(struct gp, gp_egv)
+#define GP_line_ix	(line_tp << 16) | offsetof(struct gp, gp_line)
 
 void
 SV(gv)
@@ -1733,13 +1777,13 @@ SV(gv)
 	}
 	ptr = (ix & 0xFFFF) + (char *)gp;
 	switch ((U8)(ix >> 16)) {
-	case (U8)(SVp >> 16):
+	case SVp:
 	    ret = make_sv_object(aTHX_ *((SV **)ptr));
 	    break;
-	case (U8)(U32p >> 16):
+	case U32p:
 	    ret = sv_2mortal(newSVuv(*((U32*)ptr)));
 	    break;
-	case (U8)(line_tp >> 16):
+	case line_tp:
 	    ret = sv_2mortal(newSVuv(*((line_t *)ptr)));
 	    break;
 	default:
@@ -1810,12 +1854,15 @@ AvARRAYelt(av, idx)
 
 MODULE = B	PACKAGE = B::FM		PREFIX = Fm
 
-#undef FmLINES
-#define FmLINES(sv) 0
-
 IV
-FmLINES(form)
-	B::FM	form
+FmLINES(format)
+	B::FM	format
+    CODE:
+        PERL_UNUSED_VAR(format);
+       RETVAL = 0;
+    OUTPUT:
+        RETVAL
+
 
 MODULE = B	PACKAGE = B::CV		PREFIX = Cv
 
@@ -1905,14 +1952,18 @@ HvARRAY(hv)
 	B::HV	hv
     PPCODE:
 	if (HvUSEDKEYS(hv) > 0) {
-	    SV *sv;
-	    char *key;
-	    I32 len;
+	    HE *he;
 	    (void)hv_iterinit(hv);
 	    EXTEND(sp, HvUSEDKEYS(hv) * 2);
-	    while ((sv = hv_iternextsv(hv, &key, &len))) {
-		mPUSHp(key, len);
-		PUSHs(make_sv_object(aTHX_ sv));
+	    while ((he = hv_iternext(hv))) {
+                if (HeSVKEY(he)) {
+                    mPUSHs(HeSVKEY(he));
+                } else if (HeKUTF8(he)) {
+                    PUSHs(newSVpvn_flags(HeKEY(he), HeKLEN(he), SVf_UTF8|SVs_TEMP));
+                } else {
+                    mPUSHp(HeKEY(he), HeKLEN(he));
+                }
+		PUSHs(make_sv_object(aTHX_ HeVAL(he)));
 	    }
 	}
 
@@ -1955,7 +2006,7 @@ PadlistARRAY(padlist)
     PPCODE:
 	if (PadlistMAX(padlist) >= 0) {
 	    PAD **padp = PadlistARRAY(padlist);
-	    PADOFFSET i;
+            SSize_t i;
 	    for (i = 0; i <= PadlistMAX(padlist); i++)
 		XPUSHs(make_sv_object(aTHX_ (SV *)padp[i]));
 	}
@@ -1963,7 +2014,7 @@ PadlistARRAY(padlist)
 void
 PadlistARRAYelt(padlist, idx)
 	B::PADLIST	padlist
-	PADOFFSET	idx
+	SSize_t 	idx
     PPCODE:
 	if (PadlistMAX(padlist) >= 0
 	 && idx <= PadlistMAX(padlist))
@@ -1976,6 +2027,7 @@ U32
 PadlistREFCNT(padlist)
 	B::PADLIST	padlist
     CODE:
+        PERL_UNUSED_VAR(padlist);
 	RETVAL = PadlistREFCNT(padlist);
     OUTPUT:
 	RETVAL

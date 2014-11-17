@@ -3,34 +3,98 @@ package Carp;
 { use 5.006; }
 use strict;
 use warnings;
-
 BEGIN {
-    no strict "refs";
-    if(exists($::{"utf8::"}) && exists(*{$::{"utf8::"}}{HASH}->{"is_utf8"}) &&
-	    defined(*{*{$::{"utf8::"}}{HASH}->{"is_utf8"}}{CODE})) {
-	*is_utf8 = \&{"utf8::is_utf8"};
+    # Very old versions of warnings.pm load Carp.  This can go wrong due
+    # to the circular dependency.  If warnings is invoked before Carp,
+    # then warnings starts by loading Carp, then Carp (above) tries to
+    # invoke warnings, and gets nothing because warnings is in the process
+    # of loading and hasn't defined its import method yet.  If we were
+    # only turning on warnings ("use warnings" above) this wouldn't be too
+    # bad, because Carp would just gets the state of the -w switch and so
+    # might not get some warnings that it wanted.  The real problem is
+    # that we then want to turn off Unicode warnings, but "no warnings
+    # 'utf8'" won't be effective if we're in this circular-dependency
+    # situation.  So, if warnings.pm is an affected version, we turn
+    # off all warnings ourselves by directly setting ${^WARNING_BITS}.
+    # On unaffected versions, we turn off just Unicode warnings, via
+    # the proper API.
+    if(!defined($warnings::VERSION) || eval($warnings::VERSION) < 1.06) {
+	${^WARNING_BITS} = "";
     } else {
-	*is_utf8 = sub { 0 };
+	"warnings"->unimport("utf8");
     }
 }
 
+sub _fetch_sub { # fetch sub without autovivifying
+    my($pack, $sub) = @_;
+    $pack .= '::';
+    # only works with top-level packages
+    return unless exists($::{$pack});
+    for ($::{$pack}) {
+	return unless ref \$_ eq 'GLOB' && *$_{HASH} && exists $$_{$sub};
+	for ($$_{$sub}) {
+	    return ref \$_ eq 'GLOB' ? *$_{CODE} : undef
+	}
+    }
+}
+
+# UTF8_REGEXP_PROBLEM is a compile-time constant indicating whether Carp
+# must avoid applying a regular expression to an upgraded (is_utf8)
+# string.  There are multiple problems, on different Perl versions,
+# that require this to be avoided.  All versions prior to 5.13.8 will
+# load utf8_heavy.pl for the swash system, even if the regexp doesn't
+# use character classes.  Perl 5.6 and Perls [5.11.2, 5.13.11) exhibit
+# specific problems when Carp is being invoked in the aftermath of a
+# syntax error.
 BEGIN {
-    no strict "refs";
-    if(exists($::{"utf8::"}) && exists(*{$::{"utf8::"}}{HASH}->{"downgrade"}) &&
-	    defined(*{*{$::{"utf8::"}}{HASH}->{"downgrade"}}{CODE})) {
+    if("$]" < 5.013011) {
+	*UTF8_REGEXP_PROBLEM = sub () { 1 };
+    } else {
+	*UTF8_REGEXP_PROBLEM = sub () { 0 };
+    }
+}
+
+# is_utf8() is essentially the utf8::is_utf8() function, which indicates
+# whether a string is represented in the upgraded form (using UTF-8
+# internally).  As utf8::is_utf8() is only available from Perl 5.8
+# onwards, extra effort is required here to make it work on Perl 5.6.
+BEGIN {
+    if(defined(my $sub = _fetch_sub utf8 => 'is_utf8')) {
+	*is_utf8 = $sub;
+    } else {
+	# black magic for perl 5.6
+	*is_utf8 = sub { unpack("C", "\xaa".$_[0]) != 170 };
+    }
+}
+
+# The downgrade() function defined here is to be used for attempts to
+# downgrade where it is acceptable to fail.  It must be called with a
+# second argument that is a true value.
+BEGIN {
+    if(defined(my $sub = _fetch_sub utf8 => 'downgrade')) {
 	*downgrade = \&{"utf8::downgrade"};
     } else {
-	*downgrade = sub {};
+	*downgrade = sub {
+	    my $r = "";
+	    my $l = length($_[0]);
+	    for(my $i = 0; $i != $l; $i++) {
+		my $o = ord(substr($_[0], $i, 1));
+		return if $o > 255;
+		$r .= chr($o);
+	    }
+	    $_[0] = $r;
+	};
     }
 }
 
-our $VERSION = '1.29';
+our $VERSION = '1.3301';
 
 our $MaxEvalLen = 0;
 our $Verbose    = 0;
 our $CarpLevel  = 0;
 our $MaxArgLen  = 64;    # How much of each argument to print. 0 = all.
 our $MaxArgNums = 8;     # How many arguments to print. 0 = all.
+our $RefArgFormatter = undef; # allow caller to format reference arguments
 
 require Exporter;
 our @ISA       = ('Exporter');
@@ -70,6 +134,7 @@ sub _cgc {
 }
 
 sub longmess {
+    local($!, $^E);
     # Icky backwards compatibility wrapper. :-(
     #
     # The story is that the original implementation hard-coded the
@@ -90,6 +155,7 @@ sub longmess {
 our @CARP_NOT;
 
 sub shortmess {
+    local($!, $^E);
     my $cgc = _cgc();
 
     # Icky backwards compatibility wrapper. :-(
@@ -145,10 +211,7 @@ sub caller_info {
             my $where = eval {
                 my $func    = $cgc or return '';
                 my $gv      =
-                    *{
-                        ( $::{"B::"} || return '')       # B stash
-                          ->{svref_2object} || return '' # entry in stash
-                     }{CODE}                             # coderef in entry
+                    (_fetch_sub B => 'svref_2object' or return '')
                         ->($func)->GV;
                 my $package = $gv->STASH->NAME;
                 my $subname = $gv->NAME;
@@ -185,32 +248,91 @@ sub caller_info {
 }
 
 # Transform an argument to a function into a string.
+our $in_recurse;
 sub format_arg {
     my $arg = shift;
+
     if ( ref($arg) ) {
-        $arg = defined($overload::VERSION) ? overload::StrVal($arg) : "$arg";
+         # legitimate, let's not leak it.
+        if (!$in_recurse &&
+	    do {
+                local $@;
+	        local $in_recurse = 1;
+		local $SIG{__DIE__} = sub{};
+                eval {$arg->can('CARP_TRACE') }
+            })
+        {
+            return $arg->CARP_TRACE();
+        }
+        elsif (!$in_recurse &&
+	       defined($RefArgFormatter) &&
+	       do {
+                local $@;
+	        local $in_recurse = 1;
+		local $SIG{__DIE__} = sub{};
+                eval {$arg = $RefArgFormatter->($arg); 1}
+                })
+        {
+            return $arg;
+        }
+        else
+        {
+	    my $sub = _fetch_sub(overload => 'StrVal');
+	    return $sub ? &$sub($arg) : "$arg";
+        }
     }
-    if ( defined($arg) ) {
-        $arg =~ s/'/\\'/g;
-        $arg = str_len_trim( $arg, $MaxArgLen );
+    return "undef" if !defined($arg);
+    downgrade($arg, 1);
+    return $arg if !(UTF8_REGEXP_PROBLEM && is_utf8($arg)) &&
+	    $arg =~ /\A-?[0-9]+(?:\.[0-9]*)?(?:[eE][-+]?[0-9]+)?\z/;
+    my $suffix = "";
+    if ( 2 < $MaxArgLen and $MaxArgLen < length($arg) ) {
+        substr ( $arg, $MaxArgLen - 3 ) = "";
+	$suffix = "...";
+    }
+    if(UTF8_REGEXP_PROBLEM && is_utf8($arg)) {
+	for(my $i = length($arg); $i--; ) {
+	    my $c = substr($arg, $i, 1);
+	    my $x = substr($arg, 0, 0);   # work around bug on Perl 5.8.{1,2}
+	    if($c eq "\"" || $c eq "\\" || $c eq "\$" || $c eq "\@") {
+		substr $arg, $i, 0, "\\";
+		next;
+	    }
+	    my $o = ord($c);
+	    substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+		if $o < 0x20 || $o > 0x7f;
+	}
+    } else {
+	$arg =~ s/([\"\\\$\@])/\\$1/g;
+	$arg =~ s/([^ -~])/sprintf("\\x{%x}",ord($1))/eg;
+    }
+    downgrade($arg, 1);
+    return "\"".$arg."\"".$suffix;
+}
 
-        # Quote it?
-        # Downgrade, and use [0-9] rather than \d, to avoid loading
-        # Unicode tables, which would be liable to fail if we're
-        # processing a syntax error.
-        downgrade($arg, 1);
-        $arg = "'$arg'" unless $arg =~ /^-?[0-9.]+\z/;
+sub Regexp::CARP_TRACE {
+    my $arg = "$_[0]";
+    downgrade($arg, 1);
+    if(UTF8_REGEXP_PROBLEM && is_utf8($arg)) {
+	for(my $i = length($arg); $i--; ) {
+	    my $o = ord(substr($arg, $i, 1));
+	    my $x = substr($arg, 0, 0);   # work around bug on Perl 5.8.{1,2}
+	    substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+		if $o < 0x20 || $o > 0x7f;
+	}
+    } else {
+	$arg =~ s/([^ -~])/sprintf("\\x{%x}",ord($1))/eg;
     }
-    else {
-        $arg = 'undef';
+    downgrade($arg, 1);
+    my $suffix = "";
+    if($arg =~ /\A\(\?\^?([a-z]*)(?:-[a-z]*)?:(.*)\)\z/s) {
+	($suffix, $arg) = ($1, $2);
     }
-
-    # The following handling of "control chars" is direct from
-    # the original code - it is broken on Unicode though.
-    # Suggestions?
-    is_utf8($arg)
-        or $arg =~ s/([[:cntrl:]]|[[:^ascii:]])/sprintf("\\x{%x}",ord($1))/eg;
-    return $arg;
+    if ( 2 < $MaxArgLen and $MaxArgLen < length($arg) ) {
+        substr ( $arg, $MaxArgLen - 3 ) = "";
+	$suffix = "...".$suffix;
+    }
+    return "qr($arg)$suffix";
 }
 
 # Takes an inheritance cache and a package and returns
@@ -431,10 +553,15 @@ sub trusts {
 sub trusts_directly {
     my $class = shift;
     no strict 'refs';
-    no warnings 'once';
-    return @{"$class\::CARP_NOT"}
-        ? @{"$class\::CARP_NOT"}
-        : @{"$class\::ISA"};
+    my $stash = \%{"$class\::"};
+    for my $var (qw/ CARP_NOT ISA /) {
+        # Don't try using the variable until we know it exists,
+        # to avoid polluting the caller's namespace.
+        if ( $stash->{$var} && *{$stash->{$var}}{ARRAY} && @{$stash->{$var}} ) {
+           return @{$stash->{$var}}
+        }
+    }
+    return;
 }
 
 if(!defined($warnings::VERSION) ||
@@ -489,6 +616,13 @@ For a shorter message you can use C<carp()> or C<croak()> which report the
 error as being from where your module was called.  C<shortmess()> returns the
 contents of this error message.  There is no guarantee that that is where the
 error was, but it is a good educated guess.
+
+C<Carp> takes care not to clobber the status variables C<$!> and C<$^E>
+in the course of assembling its error messages.  This means that a
+C<$SIG{__DIE__}> or C<$SIG{__WARN__}> handler can capture the error
+information held in those variables, if it is required to augment the
+error message, and if the code calling C<Carp> left useful values there.
+Of course, C<Carp> can't guarantee the latter.
 
 You can also alter the way the output and logic of C<Carp> works, by
 changing some global variables in the C<Carp> namespace. See the
@@ -560,6 +694,41 @@ environment variable.
 Alternately, you can set the global variable C<$Carp::Verbose> to true.
 See the C<GLOBAL VARIABLES> section below.
 
+=head2 Stack Trace formatting
+
+At each stack level, the subroutine's name is displayed along with
+its parameters.  For simple scalars, this is sufficient.  For complex
+data types, such as objects and other references, this can simply
+display C<'HASH(0x1ab36d8)'>.
+
+Carp gives two ways to control this.
+
+=over 4
+
+=item 1.
+
+For objects, a method, C<CARP_TRACE>, will be called, if it exists.  If
+this method doesn't exist, or it recurses into C<Carp>, or it otherwise
+throws an exception, this is skipped, and Carp moves on to the next option,
+otherwise checking stops and the string returned is used.  It is recommended
+that the object's type is part of the string to make debugging easier.
+
+=item 2.
+
+For any type of reference, C<$Carp::RefArgFormatter> is checked (see below).
+This variable is expected to be a code reference, and the current parameter
+is passed in.  If this function doesn't exist (the variable is undef), or
+it recurses into C<Carp>, or it otherwise throws an exception, this is
+skipped, and Carp moves on to the next option, otherwise checking stops
+and the string returned is used.
+
+=item 3.
+
+Otherwise, if neither C<CARP_TRACE> nor C<$Carp::RefArgFormatter> is
+available, stringify the value ignoring any overloading.
+
+=back
+
 =head1 GLOBAL VARIABLES
 
 =head2 $Carp::MaxEvalLen
@@ -591,6 +760,17 @@ just like C<cluck()> and C<confess()>.  This is how C<use Carp 'verbose'>
 is implemented internally.
 
 Defaults to C<0>.
+
+=head2 $Carp::RefArgFormatter
+
+This variable sets a general argument formatter to display references.
+Plain scalars and objects that implement C<CARP_TRACE> will not go through
+this formatter.  Calling C<Carp> from within this function is not supported.
+
+local $Carp::RefArgFormatter = sub {
+    require Data::Dumper;
+    Data::Dumper::Dump($_[0]); # not necessarily safe
+};
 
 =head2 @CARP_NOT
 
@@ -685,6 +865,9 @@ The Carp routines don't handle exception objects currently.
 If called with a first argument that is a reference, they simply
 call die() or warn(), as appropriate.
 
+Some of the Carp code assumes that Perl's basic character encoding is
+ASCII, and will go wrong on an EBCDIC platform.
+
 =head1 SEE ALSO
 
 L<Carp::Always>,
@@ -699,9 +882,9 @@ distribution.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1994-2012 Larry Wall
+Copyright (C) 1994-2013 Larry Wall
 
-Copyright (C) 2011, 2012 Andrew Main (Zefram) <zefram@fysh.org>
+Copyright (C) 2011, 2012, 2013 Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 LICENSE
 

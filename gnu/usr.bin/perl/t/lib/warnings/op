@@ -6,6 +6,10 @@
      Found = in conditional, should be ==
 	1 if $a = 1 ;
 
+     Scalar value %.*s better written as $%.*s" 
+	@a[3] = 2;
+	@a{3} = 2;
+
      Useless use of time in void context
      Useless use of a variable in void context
      Useless use of a constant in void context
@@ -60,6 +64,12 @@
      Array @%s missing the @ in argument %d of %s() 
 	push fred ;
  
+     push on reference is experimental			[ck_fun]
+     pop on reference is experimental
+     shift on reference is experimental
+     unshift on reference is experimental
+     splice on reference is experimental
+ 
      Hash %%%s missing the %% in argument %d of %s() 
 	keys joe ;
  
@@ -79,6 +89,10 @@
      "my %s" used in sort comparison
 
      $[ used in comparison (did you mean $] ?)
+
+     each on reference is experimental			[ck_each]
+     keys on reference is experimental
+     values on reference is experimental
 
      length() used on @array (did you mean "scalar(@array)"?)
      length() used on %hash (did you mean "scalar(keys %hash)"?)
@@ -137,6 +151,171 @@ use constant foo => 1;
 no warnings 'syntax' ;
 1 if $a = foo ;
 EXPECT
+########
+# op.c
+use warnings 'syntax' ;
+@a[3];
+@a{3};
+@a["]"];
+@a{"]"};
+@a["}"];
+@a{"}"};
+@a{$_};
+@a{--$_};
+@a[$_];
+@a[--$_];
+no warnings 'syntax' ;
+@a[3];
+@a{3};
+EXPECT
+Scalar value @a[3] better written as $a[3] at - line 3.
+Scalar value @a{3} better written as $a{3} at - line 4.
+Scalar value @a["]"] better written as $a["]"] at - line 5.
+Scalar value @a{"]"} better written as $a{"]"} at - line 6.
+Scalar value @a["}"] better written as $a["}"] at - line 7.
+Scalar value @a{"}"} better written as $a{"}"} at - line 8.
+Scalar value @a{...} better written as $a{...} at - line 9.
+Scalar value @a{...} better written as $a{...} at - line 10.
+Scalar value @a[...] better written as $a[...] at - line 11.
+Scalar value @a[...] better written as $a[...] at - line 12.
+########
+# op.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'syntax' ;
+@à[3];
+@à{3};
+no warnings 'syntax' ;
+@à[3];
+@à{3};
+EXPECT
+Scalar value @à[3] better written as $à[3] at - line 5.
+Scalar value @à{3} better written as $à{3} at - line 6.
+########
+# op.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'syntax' ;
+@ぁ[3];
+@ぁ{3};
+no warnings 'syntax' ;
+@ぁ[3];
+@ぁ{3};
+EXPECT
+Scalar value @ぁ[3] better written as $ぁ[3] at - line 5.
+Scalar value @ぁ{3} better written as $ぁ{3} at - line 6.
+########
+# op.c
+# "Scalar value better written as" false positives
+# [perl #28380] and [perl #114024]
+use warnings 'syntax';
+
+# hashes
+@h{qw"a b c"} = 1..3;
+@h{qw'a b c'} = 1..3;
+@h{qw$a b c$} = 1..3;
+@h{qw-a b c-} = 1..3;
+@h{qw#a b c#} = 1..3;
+@h{ qw#a b c#} = 1..3;
+@h{	qw#a b c#} = 1..3; # tab before qw
+@h{qw "a"};
+@h{ qw "a"};
+@h{	qw "a"};
+sub foo() { qw/abc def ghi/ }
+@X{+foo} = ( 1 .. 3 );
+$_ = "abc"; @X{split ""} = ( 1 .. 3 );
+my @s = @f{"}", "a"};
+my @s = @f{"]", "a"};
+@a{$],0};
+@_{0} = /(.*)/;
+@h{m "$re"};
+@h{qx ""} if 0;
+@h{glob ""};
+@h{readline ""};
+@h{m ""};
+use constant phoo => 1..3;
+@h{+phoo}; # rv2av
+{
+    no warnings 'deprecated';
+    @h{each H};
+    @h{values H};
+    @h{keys H};
+}
+@h{sort foo};
+@h{reverse foo};
+@h{caller 0};
+@h{lstat ""};
+@h{stat ""};
+@h{readdir ""};
+@h{system ""} if 0;
+@h{+times} if 0;
+@h{localtime 0};
+@h{gmtime 0};
+@h{eval ""};
+{
+    no warnings 'experimental::autoderef';
+    @h{each $foo} if 0;
+    @h{keys $foo} if 0;
+    @h{values $foo} if 0;
+}
+
+# arrays
+@h[qw"a b c"] = 1..3;
+@h[qw'a b c'] = 1..3;
+@h[qw$a b c$] = 1..3;
+@h[qw-a b c-] = 1..3;
+@h[qw#a b c#] = 1..3;
+@h[ qw#a b c#] = 1..3;
+@h[	qw#a b c#] = 1..3; # tab before qw
+@h[qw "a"];
+@h[ qw "a"];
+@h[	qw "a"];
+sub foo() { qw/abc def ghi/ }
+@X[+foo] = ( 1 .. 3 );
+$_ = "abc"; @X[split ""] = ( 1 .. 3 );
+my @s = @f["}", "a"];
+my @s = @f["]", "a"];
+@a[$],0];
+@_[0] = /(.*)/;
+@h[m "$re"];
+@h[qx ""] if 0;
+@h[glob ""];
+@h[readline ""];
+@h[m ""];
+use constant phoo => 1..3;
+@h[+phoo]; # rv2av
+{
+    no warnings 'deprecated';
+    @h[each H];
+    @h[values H];
+    @h[keys H];
+}
+@h[sort foo];
+@h[reverse foo];
+@h[caller 0];
+@h[lstat ""];
+@h[stat ""];
+@h[readdir ""];
+@h[system ""] if 0;
+@h[+times] if 0;
+@h[localtime 0];
+@h[gmtime 0];
+@h[eval ""];
+{
+    no warnings 'experimental::autoderef';
+    @h[each $foo] if 0;
+    @h[keys $foo] if 0;
+    @h[values $foo] if 0;
+}
+EXPECT
+########
+# op.c
+# "Scalar value better written as" should not trigger for syntax errors
+use warnings 'syntax';
+@a[]
+EXPECT
+syntax error at - line 4, near "[]"
+Execution of - aborted due to compilation errors.
 ########
 # op.c
 my (@foo, %foo);
@@ -225,6 +404,9 @@ eval { getpwuid 1 };	# OP_GPWUID
 prototype "foo";	# OP_PROTOTYPE
 $a ~~ $b;		# OP_SMARTMATCH
 $a <=> $b;		# OP_NCMP
+"dsatrewq";
+"diatrewq";
+"igatrewq";
 use 5.015;
 __SUB__			# OP_RUNCV
 EXPECT
@@ -269,7 +451,10 @@ Useless use of getpwuid in void context at - line 53.
 Useless use of subroutine prototype in void context at - line 54.
 Useless use of smart match in void context at - line 55.
 Useless use of numeric comparison (<=>) in void context at - line 56.
-Useless use of __SUB__ in void context at - line 58.
+Useless use of a constant ("dsatrewq") in void context at - line 57.
+Useless use of a constant ("diatrewq") in void context at - line 58.
+Useless use of a constant ("igatrewq") in void context at - line 59.
+Useless use of __SUB__ in void context at - line 61.
 ########
 # op.c
 use warnings 'void' ; close STDIN ;
@@ -552,6 +737,7 @@ U;
 qq/"	\n/;
 5 || print "bad\n";	# test OPpCONST_SHORTCIRCUIT
 print "boo\n" if U;	# test OPpCONST_SHORTCIRCUIT
+if($foo){}elsif(""){}	# test OPpCONST_SHORTCIRCUIT
 no warnings 'void' ;
 "abc"; # OP_CONST
 7 ; # OP_CONST
@@ -603,6 +789,7 @@ my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;my $d = 'test';
 %$c =~ tr/a/b/ ;
 $d =~ tr/a/b/d ;
 $d2 =~ tr/a/bc/;
+$d3 =~ tr//b/c;
 {
 no warnings 'misc' ;
 my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ; my $d = 'test';
@@ -620,6 +807,7 @@ my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ; my $d = 'test';
 %$c =~ tr/a/b/ ;
 $d =~ tr/a/b/d ;
 $d =~ tr/a/bc/ ;
+$d =~ tr//b/c;
 }
 EXPECT
 Applying pattern match (m//) to @a will act on scalar(@a) at - line 5.
@@ -637,7 +825,7 @@ Applying transliteration (tr///) to %hash will act on scalar(%hash) at - line 16
 Useless use of /d modifier in transliteration operator at - line 17.
 Replacement list is longer than search list at - line 18.
 Can't modify array dereference in substitution (s///) at - line 6, near "s/a/b/ ;"
-BEGIN not safe after errors--compilation aborted at - line 20.
+BEGIN not safe after errors--compilation aborted at - line 21.
 ########
 # op.c
 use warnings 'parenthesis' ;
@@ -844,6 +1032,26 @@ push FRED;
 EXPECT
 Array @FRED missing the @ in argument 1 of push() at - line 2.
 ########
+# op.c [Perl_ck_fun]
+$fred = [];
+push $fred;
+pop $fred;
+shift $fred;
+unshift $fred;
+splice $fred;
+no warnings 'experimental::autoderef' ;
+push $fred;
+pop $fred;
+shift $fred;
+unshift $fred;
+splice $fred;
+EXPECT
+push on reference is experimental at - line 3.
+pop on reference is experimental at - line 4.
+shift on reference is experimental at - line 5.
+unshift on reference is experimental at - line 6.
+splice on reference is experimental at - line 7.
+########
 # op.c
 @a = keys FRED ;
 no warnings 'deprecated' ;
@@ -852,7 +1060,7 @@ EXPECT
 Hash %FRED missing the % in argument 1 of keys() at - line 2.
 ########
 # op.c
-use warnings 'syntax' ;
+use warnings 'exec' ;
 exec "$^X -e 1" ; 
 my $a
 EXPECT
@@ -860,7 +1068,7 @@ Statement unlikely to be reached at - line 4.
 	(Maybe you meant system() when you said exec()?)
 ########
 # op.c, no warning if exec isn't a statement.
-use warnings 'syntax' ;
+use warnings 'exec' ;
 $a || exec "$^X -e 1" ;
 my $a
 EXPECT
@@ -896,7 +1104,7 @@ defined(%hash) is deprecated at - line 2.
 	(Maybe you should just omit the defined()?)
 ########
 # op.c
-no warnings 'syntax' ;
+no warnings 'exec' ;
 exec "$^X -e 1" ; 
 my $a
 EXPECT
@@ -925,48 +1133,54 @@ Prototype mismatch: sub main::frèd () vs ($) at - line 5.
 use utf8;
 use open qw( :utf8 :std );
 use warnings;
-eval "sub fòò (\$\0) {}";
+eval "sub fòò (@\$\0) {}";
 EXPECT
-Illegal character in prototype for main::fòò : $\0 at (eval 1) line 1.
+Prototype after '@' for main::fòò : @$\0 at (eval 1) line 1.
+Illegal character in prototype for main::fòò : @$\0 at (eval 1) line 1.
 ########
 # op.c
 use utf8;
 use open qw( :utf8 :std );
 use warnings;
-eval "sub foo (\0) {}";
+eval "sub foo (@\0) {}";
 EXPECT
-Illegal character in prototype for main::foo : \0 at (eval 1) line 1.
+Prototype after '@' for main::foo : @\0 at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\0 at (eval 1) line 1.
 ########
 # op.c
 use utf8;
 use open qw( :utf8 :std );
 use warnings;
-BEGIN { $::{"foo"} = "\$\0L\351on" }
-BEGIN { eval "sub foo (\$\0L\x{c3}\x{a9}on) {}"; }
+BEGIN { $::{"foo"} = "\@\$\0L\351on" }
+BEGIN { eval "sub foo (@\$\0L\x{c3}\x{a9}on) {}"; }
 EXPECT
-Illegal character in prototype for main::foo : $\x{0}L... at (eval 1) line 1.
+Prototype after '@' for main::foo : @$\x{0}L... at (eval 1) line 1.
+Illegal character in prototype for main::foo : @$\x{0}L... at (eval 1) line 1.
 ########
 # op.c
 use utf8;
 use open qw( :utf8 :std );
 use warnings;
-BEGIN { eval "sub foo (\0) {}"; }
+BEGIN { eval "sub foo (@\0) {}"; }
 EXPECT
-Illegal character in prototype for main::foo : \0 at (eval 1) line 1.
+Prototype after '@' for main::foo : @\0 at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\0 at (eval 1) line 1.
 ########
 # op.c
 use warnings;
-eval "sub foo (\xAB) {}";
+eval "sub foo (@\xAB) {}";
 EXPECT
-Illegal character in prototype for main::foo : \x{ab} at (eval 1) line 1.
+Prototype after '@' for main::foo : @\x{ab} at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\x{ab} at (eval 1) line 1.
 ########
 # op.c
 use utf8;
 use open qw( :utf8 :std );
 use warnings;
-BEGIN { eval "sub foo (\x{30cb}) {}"; }
+BEGIN { eval "sub foo (@\x{30cb}) {}"; }
 EXPECT
-Illegal character in prototype for main::foo : \x{30cb} at (eval 1) line 1.
+Prototype after '@' for main::foo : @\x{30cb} at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\x{30cb} at (eval 1) line 1.
 ########
 # op.c
 use utf8;
@@ -1161,6 +1375,20 @@ $[ used in numeric lt (<) (did you mean $] ?) at - line 17.
 $[ used in numeric gt (>) (did you mean $] ?) at - line 18.
 $[ used in numeric le (<=) (did you mean $] ?) at - line 19.
 $[ used in numeric ge (>=) (did you mean $] ?) at - line 20.
+########
+# op.c [Perl_ck_each]
+$fred = {};
+keys $fred;
+values $fred;
+each $fred;
+no warnings 'experimental::autoderef' ;
+keys $fred;
+values $fred;
+each $fred;
+EXPECT
+keys on reference is experimental at - line 3.
+values on reference is experimental at - line 4.
+each on reference is experimental at - line 5.
 ########
 # op.c [Perl_ck_length]
 use warnings 'syntax' ;
@@ -1561,3 +1789,135 @@ OPTION regex
 ?(?s).*
 Subroutine DynaLoader::dl_error redefined at \(eval 2\) line 2\.
 ########
+# op.c
+use warnings;
+sub do_warn_1  { return $a or $b; }
+sub do_warn_2  { return $a and $b; }
+sub do_warn_3  { return $a xor $b; }
+sub do_warn_4  { die $a or $b; }
+sub do_warn_5  { die $a and $b; }
+sub do_warn_6  { die $a xor $b; }
+sub do_warn_7  { exit $a or $b; }
+sub do_warn_8  { exit $a and $b; }
+sub do_warn_9  { exit $a xor $b; }
+
+# Since exit is an unary operator, it is even stronger than
+# || and &&.
+sub do_warn_10 { exit $a || $b; }
+sub do_warn_11 { exit $a && $b; }
+
+sub do_warn_12 { goto $a or $b; }
+sub do_warn_13 { goto $a and $b; }
+sub do_warn_14 { goto $a xor $b; }
+sub do_warn_15 { next $a or $b while(1);  }
+sub do_warn_16 { next $a and $b while(1); }
+sub do_warn_17 { next $a xor $b while(1); }
+sub do_warn_18 { last $a or $b while(1);  }
+sub do_warn_19 { last $a and $b while(1); }
+sub do_warn_20 { last $a xor $b while(1); }
+sub do_warn_21 { redo $a or $b while(1); }
+sub do_warn_22 { redo $a and $b while(1); }
+sub do_warn_23 { redo $a xor $b while(1); }
+# These get re-written to "(return/die $a) and $b"
+sub do_warn_24 { $b if return $a; }
+sub do_warn_25 { $b if die $a; }
+EXPECT
+Possible precedence issue with control flow operator at - line 3.
+Possible precedence issue with control flow operator at - line 4.
+Possible precedence issue with control flow operator at - line 5.
+Possible precedence issue with control flow operator at - line 6.
+Possible precedence issue with control flow operator at - line 7.
+Possible precedence issue with control flow operator at - line 8.
+Possible precedence issue with control flow operator at - line 9.
+Possible precedence issue with control flow operator at - line 10.
+Possible precedence issue with control flow operator at - line 11.
+Possible precedence issue with control flow operator at - line 15.
+Possible precedence issue with control flow operator at - line 16.
+Possible precedence issue with control flow operator at - line 18.
+Possible precedence issue with control flow operator at - line 19.
+Possible precedence issue with control flow operator at - line 20.
+Possible precedence issue with control flow operator at - line 21.
+Possible precedence issue with control flow operator at - line 22.
+Possible precedence issue with control flow operator at - line 23.
+Possible precedence issue with control flow operator at - line 24.
+Possible precedence issue with control flow operator at - line 25.
+Possible precedence issue with control flow operator at - line 26.
+Possible precedence issue with control flow operator at - line 27.
+Possible precedence issue with control flow operator at - line 28.
+Possible precedence issue with control flow operator at - line 29.
+Possible precedence issue with control flow operator at - line 31.
+Possible precedence issue with control flow operator at - line 32.
+########
+# op.c
+#  (same as above, except these should not warn)
+use constant FEATURE => 1;
+use constant MISSING_FEATURE => 0;
+
+sub dont_warn_1  { MISSING_FEATURE and return or dont_warn_3(); }
+sub dont_warn_2  { FEATURE || return and dont_warn_3(); }
+sub dont_warn_3  { not FEATURE and return or dont_warn_3(); }
+sub dont_warn_4  { !MISSING_FEATURE || return and dont_warn_3(); }
+sub dont_warn_5  { MISSING_FEATURE and die or dont_warn_3(); }
+sub dont_warn_6  { FEATURE || die and dont_warn_3(); }
+sub dont_warn_7  { not FEATURE and die or dont_warn_3(); }
+sub dont_warn_8  { !MISSING_FEATURE || die and dont_warn_3(); }
+sub dont_warn_9  { MISSING_FEATURE and goto $a or dont_warn_3(); }
+sub dont_warn_10 { FEATURE || goto $a and dont_warn_3(); }
+sub dont_warn_11 { not FEATURE and goto $a or dont_warn_3(); }
+sub dont_warn_12 { !MISSING_FEATURE || goto $a and dont_warn_3(); }
+
+sub dont_warn_13 { MISSING_FEATURE and exit $a or dont_warn_3(); }
+sub dont_warn_14 { FEATURE || exit $a and dont_warn_3(); }
+sub dont_warn_15 { not FEATURE and exit $a or dont_warn_3(); }
+sub dont_warn_16 { !MISSING_FEATURE || exit $a and dont_warn_3(); }
+
+sub dont_warn_17 { MISSING_FEATURE and next or dont_warn_3() while(1); }
+sub dont_warn_18 { FEATURE || next and dont_warn_3() while(1); }
+sub dont_warn_19 { not FEATURE and next or dont_warn_3() while(1); }
+sub dont_warn_20 { !MISSING_FEATURE || next and dont_warn_3() while(1); }
+sub dont_warn_21 { MISSING_FEATURE and redo or dont_warn_3() while(1); }
+sub dont_warn_22 { FEATURE || redo and dont_warn_3() while(1); }
+sub dont_warn_23 { not FEATURE and redo or dont_warn_3() while(1); }
+sub dont_warn_24 { !MISSING_FEATURE || redo and dont_warn_3() while(1); }
+sub dont_warn_25 { MISSING_FEATURE and last or dont_warn_3() while(1); }
+sub dont_warn_26 { FEATURE || last and dont_warn_3() while(1); }
+sub dont_warn_27 { not FEATURE and last or dont_warn_3() while(1); }
+sub dont_warn_28 { !MISSING_FEATURE || last and dont_warn_3() while(1); }
+
+# These are weird, but at least not ambiguous.
+sub dont_warn_29 { return ($a or $b); }
+sub dont_warn_30 { return ($a and $b); }
+sub dont_warn_31 { return ($a xor $b); }
+sub dont_warn_32 { die ($a or $b); }
+sub dont_warn_33 { die ($a and $b); }
+sub dont_warn_34 { die ($a xor $b); }
+sub dont_warn_35 { goto ($a or $b); }
+sub dont_warn_36 { goto ($a and $b); }
+sub dont_warn_37 { goto ($a xor $b); }
+sub dont_warn_38 { next ($a or $b) while(1);  }
+sub dont_warn_39 { next ($a and $b) while(1); }
+sub dont_warn_40 { next ($a xor $b) while(1); }
+sub dont_warn_41 { last ($a or $b) while(1);  }
+sub dont_warn_42 { last ($a and $b) while(1); }
+sub dont_warn_43 { last ($a xor $b) while(1); }
+sub dont_warn_44 { redo ($a or $b) while(1);  }
+sub dont_warn_45 { redo ($a and $b) while(1); }
+sub dont_warn_46 { redo ($a xor $b) while(1); }
+EXPECT
+########
+use feature "signatures";
+sub aaa { 2 }
+sub bbb ($a) { 4 }
+$aaa = sub { 2 };
+$bbb = sub ($a) { 4 };
+EXPECT
+The signatures feature is experimental at - line 3.
+The signatures feature is experimental at - line 5.
+########
+no warnings "experimental::signatures";
+use feature "signatures";
+sub aaa { 2 }
+sub bbb ($a) { 4 }
+$aaa = sub { 2 };
+$bbb = sub ($a) { 4 };
+EXPECT

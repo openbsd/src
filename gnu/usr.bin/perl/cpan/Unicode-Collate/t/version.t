@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -31,8 +34,8 @@ ok(1);
 #########################
 
 # Fix me when UCA and/or keys.txt is upgraded.
-my $UCA_Version = "26";
-my $Base_Unicode_Version = "6.2.0";
+my $UCA_Version = "28";
+my $Base_Unicode_Version = "6.3.0";
 my $Key_Version = "3.1.1";
 
 ok(Unicode::Collate::UCA_Version, $UCA_Version);

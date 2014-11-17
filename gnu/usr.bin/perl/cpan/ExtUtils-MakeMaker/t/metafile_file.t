@@ -103,7 +103,7 @@ YAML
 
 
 {
-    my @meta = ( 
+    my @meta = (
         name => 'My-Module',
         version => '0.1',
         version_from => 'lib/My/Module.pm',
@@ -145,7 +145,7 @@ YAML
 }
 
 {
-    my @meta = ( 
+    my @meta = (
         name => 'My-Module',
         version => '0.1',
         version_from => 'lib/My/Module.pm',
@@ -196,7 +196,7 @@ YAML
 }
 
 {
-    my @meta = ( 
+    my @meta = (
         name => 'My-Module',
         version => '0.1',
         version_from => 'lib/My/Module.pm',
@@ -267,7 +267,7 @@ YAML
 
 
     SKIP: {
-        # Load() behaves diffrently in versions prior to 1.06 
+        # Load() behaves diffrently in versions prior to 1.06
         skip "Need YAML::Tiny to test if it can load META.yml", 2
           unless eval { require YAML::Tiny } and $YAML::Tiny::VERSION >= 1.06;
 
@@ -294,7 +294,7 @@ YAML
     my @meta = ( k => \*STDOUT );
     eval { $mm->metafile_file(@meta) };
 
-    like($@, qr/^only nested hashes, arrays and objects are supported/, 
+    like($@, qr/^only nested hashes, arrays and objects are supported/,
          "we don't like but hash/array refs");
 }
 
@@ -302,7 +302,7 @@ YAML
     my @meta = ( k => [ [] ] );
     eval { $mm->metafile_file(@meta) };
 
-    like($@, qr/^only nested arrays of non-refs are supported/, 
+    like($@, qr/^only nested arrays of non-refs are supported/,
          "we also don't like but array of strings");
 }
 

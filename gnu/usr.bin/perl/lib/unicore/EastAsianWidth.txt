@@ -1,39 +1,40 @@
-# EastAsianWidth-6.2.0.txt
-# Date: 2012-05-15, 18:30:00 GMT [KW]
+# EastAsianWidth-6.3.0.txt
+# Date: 2013-02-05, 20:09:00 GMT [KW, LI]
 #
 # East Asian Width Properties
 #
 # This file is an informative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2013 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # The format is two fields separated by a semicolon.
 # Field 0: Unicode value
-# Field 1: East Asian Width property, consisting of one of the following values:
+# Field 1: East_Asian_Width property, consisting of one of the following values:
 #         "N", "A", "H", "W", "F", "Na"
-#  - All code points, assigned or unassigned, that are not listed 
+#  - All code points, assigned or unassigned, that are not listed
 #         explicitly are given the value "N".
 # The unassigned code points that default to "W" include ranges in the
 # following blocks:
 #     CJK Unified Ideographs Extension A:       U+3400..U+4DBF
 #     CJK Unified Ideographs:                   U+4E00..U+9FFF
 #     CJK Compatibility Ideographs:             U+F900..U+FAFF
-#     CJK Unified Ideographs Extension B:      U+20000..U+2A6DF 
+#     CJK Unified Ideographs Extension B:      U+20000..U+2A6DF
 #     CJK Unified Ideographs Extension C:      U+2A700..U+2B73F
 #     CJK Unified Ideographs Extension D:      U+2B740..U+2B81F
 #     CJK Compatibility Ideographs Supplement: U+2F800..U+2FA1F
 #     and any other reserved code points on
 #         Planes 2 and 3:                      U+20000..U+2FFFD
 #                                              U+30000..U+3FFFD
-#  - Characters ranges are specified as for other property files in
+#  - Character ranges are specified as for other property files in
 #         the Unicode Character Database.
 #
 # The Unicode name of each character is provided in a comment for help
 # in identifying the characters.
 #
-# See UAX #11: East Asian Width, for more information.
+# For more information, see UAX #11: East Asian Width,
+# at http://www.unicode.org/reports/tr11/
 #
 # @missing: 0000..10FFFF; N
 0000;N # <control>
@@ -1547,6 +1548,7 @@
 0619;N # ARABIC SMALL DAMMA
 061A;N # ARABIC SMALL KASRA
 061B;N # ARABIC SEMICOLON
+061C;N # ARABIC LETTER MARK
 061E;N # ARABIC TRIPLE DOT PUNCTUATION MARK
 061F;N # ARABIC QUESTION MARK
 0620;N # ARABIC LETTER KASHMIRI YEH
@@ -7154,6 +7156,10 @@
 2062;N # INVISIBLE TIMES
 2063;N # INVISIBLE SEPARATOR
 2064;N # INVISIBLE PLUS
+2066;N # LEFT-TO-RIGHT ISOLATE
+2067;N # RIGHT-TO-LEFT ISOLATE
+2068;N # FIRST STRONG ISOLATE
+2069;N # POP DIRECTIONAL ISOLATE
 206A;N # INHIBIT SYMMETRIC SWAPPING
 206B;N # ACTIVATE SYMMETRIC SWAPPING
 206C;N # INHIBIT ARABIC FORM SHAPING

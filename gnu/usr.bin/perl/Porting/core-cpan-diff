@@ -14,8 +14,8 @@ use File::Basename ();
 use File::Copy     ();
 use File::Temp     ();
 use File::Path     ();
+use File::Spec;
 use File::Spec::Functions;
-use Archive::Extract;
 use IO::Uncompress::Gunzip ();
 use File::Compare          ();
 use ExtUtils::Manifest;
@@ -26,17 +26,11 @@ BEGIN { die "Must be run from root of perl source tree\n" unless -d 'Porting' }
 use lib 'Porting';
 use Maintainers ();
 
-# if running from blead, we may be doing -Ilib, which means when we
-# 'chdir /tmp/foo', Archive::Extract may not find Archive::Tar etc.
-# So preload the things we need, and tell it to check %INC first:
-
 use Archive::Tar;
+use Cwd qw[cwd chdir];
 use IPC::Open3;
 use IO::Select;
-$Module::Load::Conditional::CHECK_INC_HASH = 1;
-
-# stop Archive::Extract whinging about lack of Archive::Zip
-$Archive::Extract::WARN = 0;
+local $Archive::Tar::WARN=0;
 
 # where, under the cache dir, to download tarballs to
 use constant SRC_DIR => 'tarballs';
@@ -103,7 +97,7 @@ sub run {
     my $mirror_url = "http://www.cpan.org/";
     my $use_diff;
     my $output_file;
-    my $verbose;
+    my $verbose = 0;
     my $force;
     my $do_crosscheck;
 
@@ -118,19 +112,17 @@ sub run {
         'o|output=s'    => \$output_file,
         'r|reverse'     => \$reverse,
         'u|upstream=s@' => \@wanted_upstreams,
-        'v|verbose'     => \$verbose,
+        'v|verbose:1'   => \$verbose,
         'x|crosscheck'  => \$do_crosscheck,
     ) or usage;
-
-    @wanted_upstreams = map { $_ eq 'undef' ? undef : $_ } @wanted_upstreams;
 
     my @modules;
 
     usage("Cannot mix -a with module list") if $scan_all && @ARGV;
 
     if ($do_crosscheck) {
-        usage("can't use -r, -d, --diffopts, -v with --crosscheck")
-          if ( $reverse || $use_diff || $diff_opts || $verbose );
+        usage("can't use -r, -d, --diffopts with --crosscheck")
+          if ( $reverse || $use_diff || $diff_opts );
     }
     else {
         $diff_opts = '-u -b' unless defined $diff_opts;
@@ -172,11 +164,12 @@ sub run {
 
     if ($do_crosscheck) {
         do_crosscheck(
-            $outfh, $cache_dir, $mirror_url,
+            $outfh, $cache_dir, $mirror_url, $verbose,
             $force, \@modules,  \@wanted_upstreams
         );
     }
     else {
+        $verbose > 2 and $use_diff++;
         do_compare(
             \@modules,  $outfh,      $output_file,
             $cache_dir, $mirror_url, $verbose,
@@ -247,7 +240,7 @@ sub do_compare {
             warn "WARNING: duplicate entry for $dist in $module\n";
         }
 
-        my $upstream = $m->{UPSTREAM};
+        my $upstream = $m->{UPSTREAM} // 'undef';
         next if @$wanted_upstreams and !$wanted_upstream{$upstream};
 
         print $outfh "\n$module - "
@@ -345,8 +338,10 @@ EOF
               file_diff( $outfh, $abs_cpan_file, $mapped_file, $reverse,
                 $diff_opts );
             if ( $different && customized( $m, $relative_mapped_file ) ) {
-                if (! $use_diff ) {
-                    print $outfh "  Customized for blead: $relative_mapped_file\n";
+		print $outfh "  Customized for blead: $relative_mapped_file\n";
+                if ( $use_diff && $verbose ) {
+                    $different =~ s{^(--- |\+\+\+ )/tmp/[^/]+/}{$1}gm;
+                    print $outfh $different;
                 }
             }
             elsif ($different) {
@@ -405,6 +400,24 @@ EOF
                 print $outfh "  Perl only: $_\n" unless $use_diff;
             }
         }
+        if ( $verbose ) {
+            foreach my $exclude (@$excluded) {
+                my $seen = 0;
+                foreach my $cpan_file (@cpan_files) {
+                    # may be a simple string to match exactly, or a pattern
+                    if ( ref $exclude ) {
+                        $seen = 1 if $cpan_file =~ $exclude;
+                    }
+                    else {
+                        $seen = 1 if $cpan_file eq $exclude;
+                    }
+                    last if $seen;
+                }
+                if ( not $seen ) {
+                    print $outfh "  Unnecessary exclusion: $exclude\n";
+                }
+            }
+        }
     }
 }
 
@@ -430,7 +443,7 @@ sub distro_base {
 
 sub do_crosscheck {
     my (
-        $outfh, $cache_dir, $mirror_url,
+        $outfh, $cache_dir, $mirror_url, $verbose,
         $force, $modules,   $wanted_upstreams,
     ) = @_;
 
@@ -483,6 +496,8 @@ sub do_crosscheck {
         my $m = $Maintainers::Modules{$module}
           or die "ERROR: No such module in Maintainers.pl: '$module'\n";
 
+        $verbose and warn "Checking $module\n";
+
         unless ( $m->{CPAN} ) {
             print $outfh "\nWARNING: $module is not dual-life; skipping\n";
             next;
@@ -496,7 +511,7 @@ sub do_crosscheck {
         my $pdist = $m->{DISTRIBUTION};
         die "ERROR: $module has no DISTRIBUTION entry\n" unless defined $pdist;
 
-        my $upstream = $m->{UPSTREAM};
+        my $upstream = $m->{UPSTREAM} // 'undef';
         next if @$wanted_upstreams and !$wanted_upstream{$upstream};
 
         my $cdist = $modules{$module};
@@ -525,7 +540,7 @@ sub do_crosscheck {
 }
 
 # get the EXCLUDED and MAP entries for this module, or
-# make up defauts if they don't exist
+# make up defaults if they don't exist
 
 sub get_map {
     my ( $m, $module_name, $perl_files ) = @_;
@@ -667,13 +682,10 @@ sub get_distribution {
 
     # extract it unless we already have it cached or tarball is newer
     if ( !-d $path || ( -M $download_file < -M $path ) ) {
-        my $ae = Archive::Extract->new( archive => $download_file );
-        $ae->extract( to => $untar_dir )
+        $path = extract( $download_file, $untar_dir )
           or die
           "ERROR: failed to extract distribution '$download_file to temp. dir: "
-          . $ae->error() . "\n";
-
-        $path = $ae->extract_path;
+          . $! . "\n";
     }
 
     die "ERROR: Extracted tarball does not appear as $path\n" unless -d $path;
@@ -703,6 +715,71 @@ sub file_diff {
 sub customized {
     my ( $module_data, $file ) = @_;
     return grep { $file eq $_ } @{ $module_data->{CUSTOMIZED} };
+}
+
+sub extract {
+  my ($archive,$to) = @_;
+  my $cwd = cwd();
+  chdir $to or die "$!\n";
+  my @files;
+  EXTRACT: {
+    local $Archive::Tar::CHOWN = 0;
+    my $next;
+    unless ( $next = Archive::Tar->iter( $archive, 1 ) ) {
+       $! = $Archive::Tar::error;
+       last EXTRACT;
+    }
+    while ( my $file = $next->() ) {
+      push @files, $file->full_path;
+      unless ( $file->extract ) {
+        $! = $Archive::Tar::error;
+        last EXTRACT;
+      }
+    }
+  }
+  my $path = __get_extract_dir( \@files );
+  chdir $cwd or die "$!\n";
+  return $path;
+}
+
+sub __get_extract_dir {
+    my $files   = shift || [];
+
+    return unless scalar @$files;
+
+    my($dir1, $dir2);
+    for my $aref ( [ \$dir1, 0 ], [ \$dir2, -1 ] ) {
+        my($dir,$pos) = @$aref;
+
+        ### add a catdir(), so that any trailing slashes get
+        ### take care of (removed)
+        ### also, a catdir() normalises './dir/foo' to 'dir/foo';
+        ### which was the problem in bug #23999
+        my $res = -d $files->[$pos]
+                    ? File::Spec->catdir( $files->[$pos], '' )
+                    : File::Spec->catdir( File::Basename::dirname( $files->[$pos] ) );
+
+        $$dir = $res;
+    }
+
+    ### if the first and last dir don't match, make sure the
+    ### dirname is not set wrongly
+    my $dir;
+
+    ### dirs are the same, so we know for sure what the extract dir is
+    if( $dir1 eq $dir2 ) {
+        $dir = $dir1;
+
+    ### dirs are different.. do they share the base dir?
+    ### if so, use that, if not, fall back to '.'
+    } else {
+        my $base1 = [ File::Spec->splitdir( $dir1 ) ]->[0];
+        my $base2 = [ File::Spec->splitdir( $dir2 ) ]->[0];
+
+        $dir = File::Spec->rel2abs( $base1 eq $base2 ? $base1 : '.' );
+    }
+
+    return File::Spec->rel2abs( $dir );
 }
 
 run();

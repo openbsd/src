@@ -26,7 +26,7 @@ BEGIN {
     'Time::HiRes'=> q| ::is( ref Time::HiRes->can('usleep'),'CODE' ) |,  # 5.7.3
 );
 
-plan tests => 22 + keys(%modules) * 3;
+plan tests => 26 + keys(%modules) * 3;
 
 
 # Try to load the module
@@ -112,11 +112,13 @@ SKIP: {
     # (not at least by that name) that the dl_findfile()
     # could find.
     skip "dl_findfile test not appropriate on $^O", 1
-	if $^O =~ /(win32|vms|openbsd|cygwin)/i;
+	if $^O =~ /(win32|vms|openbsd|bitrig|cygwin|vos)/i;
     # Play safe and only try this test if this system
     # looks pretty much Unix-like.
     skip "dl_findfile test not appropriate on $^O", 1
 	unless -d '/usr' && -f '/bin/ls';
+    skip "dl_findfile test not always appropriate when cross-compiling", 1
+        if $Config{usecrosscompile};
     cmp_ok( scalar @files, '>=', 1, "array should contain one result result or more: libc => (@files)" );
 }
 
@@ -141,13 +143,46 @@ is( scalar @DynaLoader::dl_modules, scalar keys %modules, "checking number of it
 
 my @loaded_modules = @DynaLoader::dl_modules;
 for my $libref (reverse @DynaLoader::dl_librefs) {
-  SKIP: {
-    skip "unloading unsupported on $^O", 2 if ($old_darwin || $^O eq 'VMS');
-    my $module = pop @loaded_modules;
-    skip "File::Glob sets PL_opfreehook", 2 if $module eq 'File::Glob';
-    my $r = eval { DynaLoader::dl_unload_file($libref) };
-    is( $@, '', "calling dl_unload_file() for $module" );
-    is( $r,  1, " - unload was successful" );
-  }
+ TODO: {
+        todo_skip "Can't safely unload with -DPERL_GLOBAL_STRUCT_PRIVATE (RT #119409)", 2
+            if $Config{ccflags} =~ /(?:^|\s)-DPERL_GLOBAL_STRUCT_PRIVATE\b/;
+    SKIP: {
+            skip "unloading unsupported on $^O", 2
+                if ($old_darwin || $^O eq 'VMS');
+            my $module = pop @loaded_modules;
+            skip "File::Glob sets PL_opfreehook", 2 if $module eq 'File::Glob';
+            my $r = eval { DynaLoader::dl_unload_file($libref) };
+            is( $@, '', "calling dl_unload_file() for $module" );
+            is( $r,  1, " - unload was successful" );
+        }
+    }
 }
 
+SKIP: {
+    skip "mod2fname not defined on this platform", 4
+        unless defined &DynaLoader::mod2fname && $Config{d_libname_unique};
+
+    is(
+        DynaLoader::mod2fname(["Hash", "Util"]),
+        "PL_Hash__Util",
+        "mod2fname + libname_unique works"
+    );
+
+    is(
+        DynaLoader::mod2fname([("Hash", "Util") x 25]),
+        "PL_" . join("_", ("Hash", "Util")x25),
+        "mod2fname + libname_unique collapses double __'s for long names"
+    );
+
+    is(
+        DynaLoader::mod2fname([("Haash", "Uttil") x 25]),
+        "PL_" . join("_", ("HAsh", "UTil")x25),
+        "mod2fname + libname_unique collapses repeated characters for long names"
+    );
+
+    is(
+        DynaLoader::mod2fname([("Hash", "Util")x30]),
+        substr(("PL_" . join("_", ("Hash", "Util")x30)), 0, 255 - (length($Config::Config{dlext})+1)),
+        "mod2fname + libname_unique correctly truncates long names"
+    );
+}

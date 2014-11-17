@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::Tutorial;
 
-our $VERSION = '6.66';
+our $VERSION = '6.98';
 
 
 =head1 NAME

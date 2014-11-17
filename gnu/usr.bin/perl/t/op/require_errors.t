@@ -7,7 +7,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan(tests => 11);
+plan(tests => 17);
 
 my $nonfile = tempfile();
 
@@ -111,3 +111,25 @@ SKIP: {
 # I can't see how to test the EMFILE case
 # I can't see how to test the case of not displaying @INC in the message.
 # (and does that only happen on VMS?)
+
+# fail and print the full filename
+eval { no warnings 'syscalls'; require "strict.pm\0invalid"; };
+like $@, qr/^Can't locate strict\.pm\\0invalid: /, 'require nul check [perl #117265]';
+eval { no warnings 'syscalls'; do "strict.pm\0invalid"; };
+like $@, qr/^Can't locate strict\.pm\\0invalid: /, 'do nul check';
+{
+  my $WARN;
+  local $SIG{__WARN__} = sub { $WARN = shift };
+  eval { require "strict.pm\0invalid"; };
+  like $WARN, qr{^Invalid \\0 character in pathname for require: strict\.pm\\0invalid at }, 'nul warning';
+  like $@, qr{^Can't locate strict\.pm\\0invalid: }, 'nul error';
+
+  $WARN = '';
+  local @INC = @INC;
+  unshift @INC, "lib\0invalid";
+  eval { require "unknown.pm" };
+  like $WARN, qr{^Invalid \\0 character in \@INC entry for require: lib\\0invalid at }, 'nul warning';
+}
+eval "require strict\0::invalid;";
+like $@, qr/^syntax error at \(eval \d+\) line 1/, 'parse error with \0 in barewords module names';
+

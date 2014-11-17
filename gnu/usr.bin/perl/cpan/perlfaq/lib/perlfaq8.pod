@@ -654,9 +654,9 @@ To capture a program's STDOUT, but discard its STDERR:
 
     use IPC::Open3;
     use File::Spec;
-    use Symbol qw(gensym);
+    my $in = '';
     open(NULL, ">", File::Spec->devnull);
-    my $pid = open3(gensym, \*PH, ">&NULL", "cmd");
+    my $pid = open3($in, \*PH, ">&NULL", "cmd");
     while( <PH> ) { }
     waitpid($pid, 0);
 
@@ -664,17 +664,17 @@ To capture a program's STDERR, but discard its STDOUT:
 
     use IPC::Open3;
     use File::Spec;
-    use Symbol qw(gensym);
+    my $in = '';
     open(NULL, ">", File::Spec->devnull);
-    my $pid = open3(gensym, ">&NULL", \*PH, "cmd");
+    my $pid = open3($in, ">&NULL", \*PH, "cmd");
     while( <PH> ) { }
     waitpid($pid, 0);
 
 To capture a program's STDERR, and let its STDOUT go to our own STDERR:
 
     use IPC::Open3;
-    use Symbol qw(gensym);
-    my $pid = open3(gensym, ">&STDERR", \*PH, "cmd");
+    my $in = '';
+    my $pid = open3($in, ">&STDERR", \*PH, "cmd");
     while( <PH> ) { }
     waitpid($pid, 0);
 
@@ -683,11 +683,11 @@ redirect them to temp files, let the command run, then read the temp
 files:
 
     use IPC::Open3;
-    use Symbol qw(gensym);
     use IO::File;
+    my $in = '';
     local *CATCHOUT = IO::File->new_tmpfile;
     local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, ">&CATCHOUT", ">&CATCHERR", "cmd");
+    my $pid = open3($in, ">&CATCHOUT", ">&CATCHERR", "cmd");
     waitpid($pid, 0);
     seek $_, 0, 0 for \*CATCHOUT, \*CATCHERR;
     while( <CATCHOUT> ) {}
@@ -697,10 +697,10 @@ But there's no real need for B<both> to be tempfiles... the following
 should work just as well, without deadlocking:
 
     use IPC::Open3;
-    use Symbol qw(gensym);
+    my $in = '';
     use IO::File;
     local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", "cmd");
+    my $pid = open3($in, \*CATCHOUT, ">&CATCHERR", "cmd");
     while( <CATCHOUT> ) {}
     waitpid($pid, 0);
     seek CATCHERR, 0, 0;
@@ -1399,6 +1399,26 @@ environment variables, run-time switches, and in-code statements:
 The last is particularly useful because it knows about machine-dependent
 architectures. The C<lib.pm> pragmatic module was first
 included with the 5.002 release of Perl.
+
+=head2 Where are modules installed?
+
+Modules are installed on a case-by-case basis (as provided by the methods
+described in the previous section), and in the operating system. All of these
+paths are stored in @INC, which you can display with the one-liner
+
+    perl -e 'print join("\n",@INC,"")'
+
+The same information is displayed at the end of the output from the command
+
+    perl -V
+
+To find out where a module's source code is located, use
+
+    perldoc -l Encode
+
+to display the path to the module. In some cases (for example, the C<AutoLoader>
+module), this command will show the path to a separate C<pod> file; the module
+itself should be in the same directory, with a 'pm' file extension.
 
 =head2 What is socket.ph and where do I get it?
 

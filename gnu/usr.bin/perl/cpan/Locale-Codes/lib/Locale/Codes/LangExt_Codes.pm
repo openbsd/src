@@ -1,36 +1,9 @@
-package Locale::Codes::LangExt_Codes;
+package #
+Locale::Codes::LangExt_Codes;
 
 # This file was automatically generated.  Any changes to this file will
-# be lost the next time 'get_codes' is run.
-#    Generated on: Wed Feb 27 10:04:32 EST 2013
-
-=pod
-
-=head1 NAME
-
-Locale::Codes::LangExt_Codes - langext codes for the Locale::Codes::LangExt module
-
-=head1 SYNOPSIS
-
-This module contains data used by the Locale::Codes::LangExt module. It is
-not intended to be used directly, and contains no calleable routines.
-
-=head1 AUTHOR
-
-See Locale::Codes for full author history.
-
-Currently maintained by Sullivan Beck (sbeck@cpan.org).
-
-=head1 COPYRIGHT
-
-   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
-   Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2013 Sullivan Beck
-
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
-
-=cut
+# be lost the next time 'harvest_data' is run.
+#    Generated on: Thu Feb 27 15:45:50 EST 2014
 
 use strict;
 require 5.006;
@@ -38,7 +11,7 @@ use warnings;
 use utf8;
 
 our($VERSION);
-$VERSION='3.25';
+$VERSION='3.30';
 
 $Locale::Codes::Data{'langext'}{'id'} = '0228';
 
@@ -966,7 +939,7 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(finlandssvenskt teckensprak) => [
       q(0077),
-      q(0),
+      q(1),
       ],
    q(finnish sign language) => [
       q(0075),
@@ -974,11 +947,11 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(flemish sign language) => [
       q(0209),
-      q(0),
+      q(1),
       ],
    q(french belgian sign language) => [
       q(0178),
-      q(0),
+      q(1),
       ],
    q(french sign language) => [
       q(0076),
@@ -1050,7 +1023,7 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(heung kong sau yue) => [
       q(0091),
-      q(0),
+      q(1),
       ],
    q(hijazi arabic) => [
       q(0006),
@@ -1142,7 +1115,7 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(kaapor sign language) => [
       q(0205),
-      q(0),
+      q(1),
       ],
    q(kaur) => [
       q(0210),
@@ -1162,7 +1135,7 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(kiswahili) => [
       q(0192),
-      q(0),
+      q(1),
       ],
    q(konkani (individual language)) => [
       q(0113),
@@ -1198,15 +1171,15 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(lengua de senas catalana) => [
       q(0054),
-      q(0),
+      q(1),
       ],
    q(lengua de senas del paraguay) => [
       q(0173),
-      q(0),
+      q(1),
       ],
    q(lengua de senas panamenas) => [
       q(0126),
-      q(0),
+      q(1),
       ],
    q(libyan arabic) => [
       q(0033),
@@ -1226,11 +1199,11 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(llengua de signes catalana) => [
       q(0054),
-      q(0),
+      q(2),
       ],
    q(llengua de signes valenciana) => [
       q(0214),
-      q(0),
+      q(1),
       ],
    q(loncong) => [
       q(0119),
@@ -1558,7 +1531,7 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(suomenruotsalainen viittomakieli) => [
       q(0077),
-      q(0),
+      q(2),
       ],
    q(swahili (individual language)) => [
       q(0192),
@@ -1626,7 +1599,7 @@ $Locale::Codes::Data{'langext'}{'alias2id'} = {
       ],
    q(turk isaret dili) => [
       q(0197),
-      q(0),
+      q(1),
       ],
    q(turkish sign language) => [
       q(0197),

@@ -1,6 +1,6 @@
 package PerlIO;
 
-our $VERSION = '1.07';
+our $VERSION = '1.09';
 
 # Map layer name to package that defines it
 our %alias;
@@ -19,7 +19,7 @@ sub import
     {
      $layer = "${class}::$layer";
     }
-   eval "require $layer";
+   eval { require $layer =~ s{::}{/}gr . '.pm' };
    warn $@ if $@;
   }
 }
@@ -35,9 +35,10 @@ PerlIO - On demand loader for PerlIO layers and root of PerlIO::* name space
 
 =head1 SYNOPSIS
 
-  open($fh,"<:crlf", "my.txt"); # support platform-native and CRLF text files
+  open($fh, "<:crlf", "my.txt"); # support platform-native and 
+                                 # CRLF text files
 
-  open($fh,"<","his.jpg");      # portably open a binary file for reading
+  open($fh, "<", "his.jpg"); # portably open a binary file for reading
   binmode($fh);
 
   Shell:
@@ -102,6 +103,9 @@ represent to be read from or written to the stream. The UTF-X encoding
 is chosen to render simple text parts (i.e.  non-accented letters,
 digits and common punctuation) human readable in the encoded file.
 
+(B<CAUTION>: This layer does not validate byte sequences.  For reading input,
+you should instead use C<:encoding(utf8)> instead of bare C<:utf8>.)
+
 Here is how to write your native data out using UTF-8 (or UTF-EBCDIC)
 and then read it back in.
 
@@ -113,9 +117,6 @@ and then read it back in.
 	$in = <F>;
 	close(F);
 
-Note that this layer does not validate byte sequences. For reading
-input, using C<:encoding(utf8)> instead of bare C<:utf8> is strongly
-recommended.
 
 =item :bytes
 
@@ -156,11 +157,10 @@ will construct a "binary" stream, but then enable UTF-8 translation.
 
 =item :pop
 
-A pseudo layer that removes the top-most layer. Gives perl code
-a way to manipulate the layer stack. Should be considered
-as experimental. Note that C<:pop> only works on real layers
-and will not undo the effects of pseudo layers like C<:utf8>.
-An example of a possible use might be:
+A pseudo layer that removes the top-most layer. Gives perl code a
+way to manipulate the layer stack.  Note that C<:pop> only works on
+real layers and will not undo the effects of pseudo layers like
+C<:utf8>.  An example of a possible use might be:
 
     open($fh,...)
     ...

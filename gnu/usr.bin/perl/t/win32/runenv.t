@@ -28,7 +28,7 @@ skip_all "requires compilation with PERL_IMPLICIT_SYS"
 
 plan tests => $::tests;
 
-my $PERL = $ENV{PERL} || '.\perl';
+my $PERL = '.\perl';
 my $NL = $/;
 
 delete $ENV{PERLLIB};

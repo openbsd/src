@@ -59,7 +59,7 @@ LOCALE_CODE_ALPHA_2
 bol
 LOCALE_CODE_ALPHA_3
    ~
-   Bolivia (Plurinational State of)
+   Bolivia, Plurinational State of
 
 pk ~ Pakistan
 

@@ -21,7 +21,6 @@ use Locale::Codes::Country;
 %type = ( "LOCALE_CODE_ALPHA_2" => LOCALE_CODE_ALPHA_2,
           "LOCALE_CODE_ALPHA_3" => LOCALE_CODE_ALPHA_3,
           "LOCALE_CODE_NUMERIC" => LOCALE_CODE_NUMERIC,
-          "LOCALE_CODE_FIPS"    => LOCALE_CODE_FIPS,
           "LOCALE_CODE_DOM"     => LOCALE_CODE_DOM,
         );
 
@@ -192,11 +191,6 @@ Zimbabwe
 LOCALE_CODE_NUMERIC
    ~
    716
-
-Zimbabwe
-LOCALE_CODE_FIPS
-   ~
-   ZI
 
 Zimbabwe
 LOCALE_CODE_DOM

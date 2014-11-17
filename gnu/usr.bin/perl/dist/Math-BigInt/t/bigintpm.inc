@@ -73,7 +73,7 @@ while (<DATA>)
    } elsif ($f eq "bone") {
     $try .= "\$x->bone('$args[1]');";
   # some unary ops
-   } elsif ($f =~ /^b(nan|floor|ceil|sstr|neg|abs|sgn|inc|dec|not|sqrt|fac)$/) {
+   } elsif ($f =~ /^b(nan|floor|ceil|int|sstr|neg|abs|sgn|inc|dec|not|sqrt|fac)$/) {
     $try .= "\$x->$f();";
    } elsif ($f =~ /^(numify|length|stringify|as_hex|as_bin)$/) {
     $try .= "\$x->$f();";
@@ -2656,7 +2656,7 @@ NaNone:0
 2:0
 -1:0
 -2:0
-# floor and ceil tests are pretty pointless in integer space...but play safe
+# floor, ceil, and int are pretty pointless in integer space, but play safe
 &bfloor
 0:0
 NaNfloor:NaN
@@ -2677,6 +2677,15 @@ NaNceil:NaN
 2:2
 3:3
 abc:NaN
+&bint
+NaN:NaN
++inf:inf
+-inf:-inf
+0:0
+-1:-1
+-2:-2
+2:2
+3:3
 &as_hex
 128:0x80
 -128:-0x80

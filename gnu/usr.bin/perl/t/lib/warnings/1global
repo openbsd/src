@@ -10,25 +10,25 @@ EXPECT
 ########
 -w
 # warnable code, warnings enabled via command line switch
-$a =+ 3 ;
+$c =+ 3 ;
 EXPECT
 Reversed += operator at - line 3.
-Name "main::a" used only once: possible typo at - line 3.
+Name "main::c" used only once: possible typo at - line 3.
 ########
 #! perl -w
 # warnable code, warnings enabled via #! line
-$a =+ 3 ;
+$c =+ 3 ;
 EXPECT
 Reversed += operator at - line 3.
-Name "main::a" used only once: possible typo at - line 3.
+Name "main::c" used only once: possible typo at - line 3.
 ########
 
 # warnable code, warnings enabled via compile time $^W
 BEGIN { $^W = 1 }
-$a =+ 3 ;
+$c =+ 3 ;
 EXPECT
 Reversed += operator at - line 4.
-Name "main::a" used only once: possible typo at - line 4.
+Name "main::c" used only once: possible typo at - line 4.
 ########
 -w
 # warnable code, warnings enabled via command line switch

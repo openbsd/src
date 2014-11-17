@@ -5,6 +5,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use TAP::Harness;
 use Test::More tests => 13;
 

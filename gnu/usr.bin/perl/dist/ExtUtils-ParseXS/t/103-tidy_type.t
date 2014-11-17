@@ -1,23 +1,23 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Test::More tests =>  3;
-use lib qw( lib );
-use ExtUtils::ParseXS::Utilities qw(
-  tidy_type
+use Test::More;
+use ExtUtils::Typemaps;
+
+my @tests = (
+  [' *  ** ', '***'],
+  [' *     ** ', '***'],
+  [' *     ** foobar  *   ', '*** foobar *'],
+  ['unsigned int', 'unsigned int'],
+  ['std::vector<int>', 'std::vector<int>'],
+  ['std::vector< unsigned int >', 'std::vector<unsigned int>'],
+  ['std::vector< vector<unsigned int> >', 'std::vector<vector<unsigned int> >'],
+  ['std::map< map <unsigned int, int>, int>', 'std::map<map<unsigned int, int>, int>'],
 );
 
-my $input;
+plan tests => scalar(@tests);
 
-$input = ' *  ** ';
-is( tidy_type($input), '***',
-    "Got expected value for '$input'" );
-
-$input = ' *     ** ';
-is( tidy_type($input), '***',
-    "Got expected value for '$input'" );
-
-$input = ' *     ** foobar  *  ';
-is( tidy_type($input), '*** foobar *',
-    "Got expected value for '$input'" );
+foreach my $test (@tests) {
+  is(ExtUtils::Typemaps::tidy_type($test->[0]), $test->[1], "Tidying '$test->[0]'");
+}
 

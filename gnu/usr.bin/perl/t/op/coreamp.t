@@ -422,6 +422,15 @@ test_proto 'dbmopen';
   $db{1} = 2; $db{3} = 4;
   &mydbmclose(\%db);
   is scalar keys %db, 0, '&dbmopen and &dbmclose';
+  my $Dfile = "$filename.pag";
+  if (! -e $Dfile) {
+    ($Dfile) = <$filename*>;
+  }
+  if ($^O eq 'VMS') {
+    unlink "$filename.sdbm_dir", $Dfile;
+  } else {
+    unlink "$filename.dir", $Dfile;
+  }
 }
 
 test_proto 'die';
@@ -637,7 +646,11 @@ test_proto 'quotemeta', '$', '\$';
 
 test_proto 'rand';
 $tests += 3;
-like &CORE::rand, qr/^0[.\d+-e]*\z/, '&rand';
+my $r = &CORE::rand;
+ok eval {
+    use warnings FATAL => qw{numeric uninitialized};
+    $r >= 0 && $r < 1;
+}, '&rand returns a valid number';
 unlike join(" ", &CORE::rand), qr/ /, '&rand in list context';
 &cmp_ok(&CORE::rand(78), qw '< 78', '&rand with 1 arg');
 

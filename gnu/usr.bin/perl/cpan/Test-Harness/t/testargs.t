@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use warnings;
 use lib 't/lib';
 
 use Test::More;
@@ -81,8 +82,7 @@ sub make_shell_test {
 
 package Test::Prove;
 
-use vars qw(@ISA);
-@ISA = 'App::Prove';
+use base 'App::Prove';
 
 sub _runtests {
     my $self = shift;

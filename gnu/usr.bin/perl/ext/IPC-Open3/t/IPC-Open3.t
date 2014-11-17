@@ -14,10 +14,11 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 37;
+use Test::More tests => 38;
 
 use IO::Handle;
 use IPC::Open3;
+use POSIX ":sys_wait_h";
 
 my $perl = $^X;
 
@@ -154,6 +155,10 @@ $TB->current_test($test);
     isnt($@, '',
 	 'open3 of a non existent program fails with an exception in the parent')
 	or do {waitpid $pid, 0};
+    SKIP: {
+	skip 'open3 returned, our responsibility to reap', 1 unless $@;
+	is(waitpid(-1, WNOHANG), -1, 'failed exec child is reaped');
+    }
 }
 
 $pid = eval { open3 'WRITE', '', 'ERROR', '/non/existent/program'; };

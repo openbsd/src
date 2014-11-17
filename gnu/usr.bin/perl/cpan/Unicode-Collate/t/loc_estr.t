@@ -1,8 +1,11 @@
 
 BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate " .
-	    "cannot stringify a Unicode code point\n";
+    unless ('A' eq pack('U', 0x41)) {
+	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
+	exit 0;
+    }
+    unless (0x41 == unpack('U', 'A')) {
+	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
 	exit 0;
     }
     if ($ENV{PERL_CORE}) {
@@ -34,7 +37,7 @@ my $objEsTrad = Unicode::Collate::Locale->
     new(locale => 'ES-trad', normalization => undef);
 
 ok($objEsTrad->getlocale, 'es__traditional');
-ok($objEsTrad->locale_version, 0.93);
+ok($objEsTrad->locale_version, 1.01);
 
 $objEsTrad->change(level => 1);
 

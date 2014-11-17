@@ -25,9 +25,17 @@ my %unsupported = map +($_=>1), qw (
 );
 my %args_for = (
   dbmopen  => '%1,$2,$3',
-  dbmclose => '%1',
+ (dbmclose => '%1',
+  keys     =>
+  values   =>
+  each     =>)[0,1,2,1,3,1,4,1],
   delete   => '$1[2]',
   exists   => '$1[2]',
+ (push     => '@1',
+  pop      =>
+  shift    =>
+  unshift  =>
+  splice   =>)[0,1,2,1,3,1,4,1,5,1],
 );
 my %desc = (
   pos => 'match position',

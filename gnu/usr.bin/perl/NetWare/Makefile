@@ -86,7 +86,7 @@ NLM_VERSION    = 3,20,0
 
 
 # Here comes the CW tools - TO BE FILLED TO BUILD WITH CW -
-MODULE_DESC     = "Perl 5.18.2 for NetWare"
+MODULE_DESC     = "Perl 5.20.1 for NetWare"
 CCTYPE          = CodeWarrior
 C_COMPILER		= mwccnlm -c
 CPP_COMPILER	= mwccnlm
@@ -462,7 +462,7 @@ INST_NW_TOP2 = $(INST_NW_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-INST_VER	= \5.18.2
+INST_VER	= \5.20.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -666,7 +666,6 @@ UTILS		=			\
 		..\utils\h2xs		\
 		..\utils\perldoc	\
 		..\pod\pod2html		\
-		..\pod\pod2latex	\
 		..\pod\pod2man		\
 		..\pod\pod2text		\
 		..\pod\pod2usage	\
@@ -765,7 +764,6 @@ CORE_NOCFG_H	=		\
 		..\perl.h	\
 		..\perlapi.h	\
 		..\perlsdio.h	\
-		..\perlsfio.h	\
 		..\perly.h	\
 		..\pp.h		\
 		..\proto.h	\
@@ -850,7 +848,6 @@ EXTENSION_NPM =	\
 
 POD2HTML	= $(PODDIR)\pod2html
 POD2MAN		= $(PODDIR)\pod2man
-POD2LATEX	= $(PODDIR)\pod2latex
 POD2TEXT	= $(PODDIR)\pod2text
 
 #

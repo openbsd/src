@@ -21,7 +21,6 @@ use Locale::Country;
 %type = ( "LOCALE_CODE_ALPHA_2" => LOCALE_CODE_ALPHA_2,
           "LOCALE_CODE_ALPHA_3" => LOCALE_CODE_ALPHA_3,
           "LOCALE_CODE_NUMERIC" => LOCALE_CODE_NUMERIC,
-          "LOCALE_CODE_FIPS"    => LOCALE_CODE_FIPS,
         );
 
 sub test {

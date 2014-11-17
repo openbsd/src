@@ -8,7 +8,7 @@ chdir 't';
 
 use Test::More tests => 5;
 
-BEGIN { 
+BEGIN {
     # non-core tests will have blib in their path.  We remove it
     # and just use the one in lib/.
     unless( $ENV{PERL_CORE} ) {

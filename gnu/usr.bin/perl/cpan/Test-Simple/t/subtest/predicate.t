@@ -16,7 +16,7 @@ BEGIN {
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Test::Builder;
 use Test::Builder::Tester;
 
@@ -40,6 +40,7 @@ sub foobar_ok ($;$) {
     };
 }
 {
+    test_out("    # Subtest: namehere");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -64,6 +65,7 @@ sub foobar_ok_2 ($;$) {
     foobar_ok($value, $name);
 }
 {
+    test_out("    # Subtest: namehere");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -93,6 +95,7 @@ sub barfoo_ok ($;$) {
     });
 }
 {
+    test_out("    # Subtest: namehere");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -117,6 +120,7 @@ sub barfoo_ok_2 ($;$) {
     barfoo_ok($value, $name);
 }
 {
+    test_out("    # Subtest: namehere");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -134,8 +138,10 @@ sub barfoo_ok_2 ($;$) {
 
 # A subtest-based predicate called from within a subtest
 {
+    test_out("    # Subtest: outergroup");
     test_out("    1..2");
     test_out("    ok 1 - this passes");
+    test_out("        # Subtest: namehere");
     test_out("        1..2");
     test_out("        ok 1 - foo");
     test_out("        not ok 2 - bar");
@@ -145,6 +151,7 @@ sub barfoo_ok_2 ($;$) {
     test_out("    not ok 2 - namehere");
     test_err("    #   Failed test 'namehere'");
     test_err("    #   at $0 line $line{ipredcall}.");
+    test_err("    # Looks like you failed 1 test of 2.");
     test_out("not ok 1 - outergroup");
     test_err("#   Failed test 'outergroup'");
     test_err("#   at $0 line $line{outercall}.");
@@ -154,5 +161,6 @@ sub barfoo_ok_2 ($;$) {
         ok 1, "this passes";
         barfoo_ok_2 "foot", "namehere"; BEGIN{ $line{ipredcall} = __LINE__ }
     }; BEGIN{ $line{outercall} = __LINE__ }
-}
 
+    test_test("outergroup with internal barfoo_ok_2 failing line numbers");
+}

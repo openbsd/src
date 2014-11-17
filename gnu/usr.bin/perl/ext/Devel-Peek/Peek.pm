@@ -3,7 +3,7 @@
 
 package Devel::Peek;
 
-$VERSION = '1.11';
+$VERSION = '1.16';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -13,7 +13,7 @@ require XSLoader;
 @ISA = qw(Exporter);
 @EXPORT = qw(Dump mstat DeadCode DumpArray DumpWithOP DumpProg
 	     fill_mstats mstats_fillhash mstats2hash runops_debug debug_flags);
-@EXPORT_OK = qw(SvREFCNT SvREFCNT_inc SvREFCNT_dec CvGV);
+@EXPORT_OK = qw(SvREFCNT CvGV);
 %EXPORT_TAGS = ('ALL' => [@EXPORT, @EXPORT_OK]);
 
 XSLoader::load();
@@ -76,6 +76,8 @@ Devel::Peek - A data debugging tool for the XS programmer
         use Devel::Peek;
         Dump( $a );
         Dump( $a, 5 );
+        Dump( @a );
+        Dump( %h );
         DumpArray( 5, $a, $b, ... );
 	mstat "Point 5";
 
@@ -98,11 +100,17 @@ Devel::Peek supplies a C<Dump()> function which can dump a raw Perl
 datatype, and C<mstat("marker")> function to report on memory usage
 (if perl is compiled with corresponding option).  The function
 DeadCode() provides statistics on the data "frozen" into inactive
-C<CV>.  Devel::Peek also supplies C<SvREFCNT()>, C<SvREFCNT_inc()>, and
-C<SvREFCNT_dec()> which can query, increment, and decrement reference
+C<CV>.  Devel::Peek also supplies C<SvREFCNT()> which can query reference
 counts on SVs.  This document will take a passive, and safe, approach
 to data debugging and for that it will describe only the C<Dump()>
 function.
+
+The C<Dump()> function takes one or two arguments: something to dump, and
+an optional limit for recursion and array elements (default is 4).  The
+first argument is evaluted in rvalue scalar context, with exceptions for
+@array and %hash, which dump the array or hash itself.  So C<Dump @array>
+works, as does C<Dump $foo>.  And C<Dump pos> will call C<pos> in rvalue
+context, whereas C<Dump ${\pos}> will call it in lvalue context.
 
 Function C<DumpArray()> allows dumping of multiple values (useful when you
 need to analyze returns of functions).
@@ -145,8 +153,9 @@ Three additional functions allow access to this statistic from Perl.
 First, use C<mstats_fillhash(%hash)> to get the information contained
 in the output of mstat() into %hash. The field of this hash are
 
-  minbucket nbuckets sbrk_good sbrk_slack sbrked_remains sbrks start_slack
-  topbucket topbucket_ev topbucket_odd total total_chain total_sbrk totfree
+  minbucket nbuckets sbrk_good sbrk_slack sbrked_remains sbrks
+  start_slack topbucket topbucket_ev topbucket_odd total total_chain
+  total_sbrk totfree
 
 Two additional fields C<free>, C<used> contain array references which
 provide per-bucket count of free and used chunks.  Two other fields

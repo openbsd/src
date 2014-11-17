@@ -1,18 +1,26 @@
-# vi:tw=72
+# XXX RULES FOR PATCHING THIS FILE XXX
+# Patches that fix typos or formatting are acceptable.  Patches
+# that change semantics are not acceptable without prior approval
+# by David Golden or Ricardo Signes.
+
 use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta::Spec;
-our $VERSION = '2.120921'; # VERSION
+our $VERSION = '2.140640'; # VERSION
 
 1;
 
 # ABSTRACT: specification for CPAN distribution metadata
 
 
+# vi:tw=72
 
 __END__
+
 =pod
+
+=encoding UTF-8
 
 =head1 NAME
 
@@ -20,7 +28,7 @@ CPAN::Meta::Spec - specification for CPAN distribution metadata
 
 =head1 VERSION
 
-version 2.120921
+version 2.140640
 
 =head1 SYNOPSIS
 
@@ -74,7 +82,7 @@ version 2.120921
     keywords => [ qw/ toolchain cpan dual-life / ],
     'meta-spec' => {
       version => '2',
-      url     => 'http://search.cpan.org/perldoc?CPAN::Meta::Spec',
+      url     => 'https://metacpan.org/pod/CPAN::Meta::Spec',
     },
     generated_by => 'Module::Build version 0.36',
   };
@@ -307,7 +315,7 @@ Example:
 
   license => [ 'perl_5' ]
 
-  license => [ 'apache_2', 'mozilla_1_0' ]
+  license => [ 'apache_2_0', 'mozilla_1_0' ]
 
 (Spec 2) [required] {List of one or more License Strings}
 
@@ -387,6 +395,20 @@ This is a I<URL> of the metadata specification document corresponding to
 the given version.  This is strictly for human-consumption and should
 not impact the interpretation of the document.
 
+For the version 2 spec, either of these are recommended:
+
+=over 4
+
+=item *
+
+C<https://metacpan.org/pod/CPAN::Meta::Spec>
+
+=item *
+
+C<http://search.cpan.org/perldoc?CPAN::Meta::Spec>
+
+=back
+
 =back
 
 =head3 name
@@ -400,7 +422,8 @@ Example:
 This field is the name of the distribution.  This is often created by
 taking the "main package" in the distribution and changing C<::> to
 C<->, but the name may be completely unrelated to the packages within
-the distribution.  C.f. L<http://search.cpan.org/dist/libwww-perl/>.
+the distribution.  For example, L<LWP::UserAgent> is distributed as part
+of the distribution name "libwww-perl".
 
 =head3 release_status
 
@@ -585,7 +608,7 @@ I<Suggestion for disuse:> Because there is currently no way for a
 distribution to specify a dependency on an optional feature of another
 dependency, the use of C<optional_feature> is discouraged.  Instead,
 create a separate, installable distribution that ensures the desired
-feature is available.  For example, if C<Foo::Bar> has a "Baz" feature,
+feature is available.  For example, if C<Foo::Bar> has a C<Baz> feature,
 release a separate C<Foo-Bar-Baz> distribution that satisfies
 requirements for the feature.
 
@@ -639,14 +662,14 @@ Example:
   provides => {
     'Foo::Bar' => {
       file    => 'lib/Foo/Bar.pm',
-      version => 0.27_02
+      version => '0.27_02',
     },
     'Foo::Bar::Blah' => {
       file    => 'lib/Foo/Bar/Blah.pm',
     },
     'Foo::Bar::Baz' => {
       file    => 'lib/Foo/Bar/Baz.pm',
-      version => 0.3,
+      version => '0.3',
     },
   }
 
@@ -654,23 +677,26 @@ Example:
 
 This describes all packages provided by this distribution.  This
 information is used by distribution and automation mechanisms like
-PAUSE, CPAN, and search.cpan.org to build indexes saying in which
-distribution various packages can be found.
+PAUSE, CPAN, metacpan.org and search.cpan.org to build indexes saying in
+which distribution various packages can be found.
 
 The keys of C<provides> are package names that can be found within
-the distribution.  The values are Maps with the following valid subkeys:
+the distribution.  If a package name key is provided, it must
+have a Map with the following valid subkeys:
 
 =over
 
 =item file
 
-This field is required.  The value must contain a Unix-style relative
-file path from the root of the distribution to the module containing the
-package.
+This field is required.  It must contain a Unix-style relative file path
+from the root of the distribution directory to a file that contains or
+generates the package.
 
 =item version
 
-This field contains a I<Version> String for the package, if one exists.
+If it exists, this field must contains a I<Version> String for the
+package.  If the package does not have a C<$VERSION>, this field must
+be omitted.
 
 =back
 
@@ -731,7 +757,8 @@ is a Map with the following valid keys:
 Because a url like C<http://myrepo.example.com/> is ambiguous as to
 type, producers should provide a C<type> whenever a C<url> key is given.
 The C<type> field should be the name of the most common program used
-to work with the repository, e.g. git, svn, cvs, darcs, bzr or hg.
+to work with the repository, e.g. C<git>, C<svn>, C<cvs>, C<darcs>,
+C<bzr> or C<hg>.
 
 =back
 
@@ -992,7 +1019,7 @@ described in the L<Version Ranges> section.
 Another subtle error that can occur in resolving prerequisites comes from
 the way that modules in prerequisites are indexed to distribution files on
 CPAN.  When a module is deleted from a distribution, prerequisites calling
-for that module could indicate an older distribution should installed,
+for that module could indicate an older distribution should be installed,
 potentially overwriting files from a newer distribution.
 
 For example, as of Oct 31, 2009, the CPAN index file contained these
@@ -1078,23 +1105,43 @@ this presents security implications.
 
 =head1 SEE ALSO
 
+=over 4
+
+=item *
+
 CPAN, L<http://www.cpan.org/>
 
-CPAN.pm, L<http://search.cpan.org/dist/CPAN/>
-
-CPANPLUS, L<http://search.cpan.org/dist/CPANPLUS/>
-
-ExtUtils::MakeMaker, L<http://search.cpan.org/dist/ExtUtils-MakeMaker/>
-
-Module::Build, L<http://search.cpan.org/dist/Module-Build/>
-
-Module::Install, L<http://search.cpan.org/dist/Module-Install/>
+=item *
 
 JSON, L<http://json.org/>
 
+=item *
+
 YAML, L<http://www.yaml.org/>
 
-=head1 CONTRIBUTORS
+=item *
+
+L<CPAN>
+
+=item *
+
+L<CPANPLUS>
+
+=item *
+
+L<ExtUtils::MakeMaker>
+
+=item *
+
+L<Module::Build>
+
+=item *
+
+L<Module::Install>
+
+=back
+
+=head1 HISTORY
 
 Ken Williams wrote the original CPAN Meta Spec (also known as the
 "META.yml spec") in 2003 and maintained it through several revisions
@@ -1106,21 +1153,6 @@ In late 2009, David Golden organized the version 2 proposal review
 process.  David and Ricardo Signes drafted the final version 2 spec
 in April 2010 based on the version 1.4 spec and patches contributed
 during the proposal process.
-
-Several others have contributed patches over the years.  The full list
-of contributors in the repository history currently includes:
-
-  2shortplanks
-  Avar Arnfjord Bjarmason
-  Christopher J. Madsen
-  Damyan Ivanov
-  David Golden
-  Eric Wilhelm
-  Ken Williams
-  Lars DIECKOW
-  Michael G. Schwern
-  Randy Sims
-  Ricardo Signes
 
 =head1 AUTHORS
 
@@ -1144,4 +1176,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-

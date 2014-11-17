@@ -59,7 +59,7 @@ users the informal support will more than suffice. See the answer to
 There is often a matter of opinion and taste, and there isn't any one
 answer that fits everyone. In general, you want to use either the current
 stable release, or the stable release immediately prior to that one.
-Currently, those are perl5.14.x and perl5.12.x, respectively.
+Currently, those are perl5.18.x and perl5.16.x, respectively.
 
 Beyond that, you have to consider several things and decide which is best
 for you.
@@ -94,7 +94,7 @@ problems others have if you are risk averse.
 
 =item *
 
-The immediate, previous releases (i.e. perl5.8.x ) are usually maintained
+The immediate, previous releases (i.e. perl5.14.x ) are usually maintained
 for a while, although not at the same level as the current releases.
 
 =item *
@@ -113,10 +113,10 @@ usable, 'early adopter'" distribution of Perl 6 (called Rakudo Star) in July of
 
 There are really two tracks of perl development: a maintenance version
 and an experimental version. The maintenance versions are stable, and
-have an even number as the minor release (i.e. perl5.10.x, where 10 is the
+have an even number as the minor release (i.e. perl5.18.x, where 18 is the
 minor release). The experimental versions may include features that
 don't make it into the stable versions, and have an odd number as the
-minor release (i.e. perl5.9.x, where 9 is the minor release).
+minor release (i.e. perl5.19.x, where 9 is the minor release).
 
 =back
 
@@ -173,6 +173,23 @@ averaged about one production release per year.
 The Perl development team occasionally make changes to the
 internal core of the language, but all possible efforts are made toward
 backward compatibility.
+
+=head2 How often are new versions of Perl released?
+
+Recently, the plan has been to release a new version of Perl roughly every
+April, but getting the release right is more important than sticking rigidly to
+a calendar date, so the release date is somewhat flexible.  The historical
+release dates can be viewed at L<http://www.cpan.org/src/README.html>.
+
+Even numbered minor versions (5.14, 5.16, 5.18) are production versions, and
+odd numbered minor versions (5.15, 5.17, 5.19) are development versions. Unless
+you want to try out an experimental feature, you probably never want to install
+a development version of Perl.
+
+The Perl development team are called Perl 5 Porters, and their
+organization is described at L<http://perldoc.perl.org/perlpolicy.html>.
+The organizational rules really just boil down to one: Larry is always
+right, even when he was wrong.
 
 =head2 Is Perl difficult to learn?
 

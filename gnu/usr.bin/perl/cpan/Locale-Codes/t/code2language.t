@@ -140,11 +140,11 @@ mh
 
 nb
    ~
-   Bokmal, Norwegian
+   Norwegian Bokmal
 
 nd
    ~
-   Ndebele, North
+   North Ndebele
 
 ng
    ~
@@ -156,7 +156,7 @@ nn
 
 nr
    ~
-   Ndebele, South
+   South Ndebele
 
 nv
    ~
@@ -164,7 +164,7 @@ nv
 
 ny
    ~
-   Chichewa
+   Nyanja
 
 oc
    ~

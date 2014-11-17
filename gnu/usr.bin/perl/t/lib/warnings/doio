@@ -187,6 +187,8 @@ no warnings 'io' ;
 exec "lskdjfalksdjfdjfkls","" ;
 EXPECT
 OPTION regex
+Statement unlikely to be reached at - line .+
+	\(Maybe you meant system\(\) when you said exec\(\)\?\)
 Can't exec "lskdjfalksdjfdjfkls": .+
 ########
 # doio.c [Perl_do_exec3]
@@ -196,6 +198,8 @@ no warnings 'io' ;
 exec "lskdjfalksdjfdjfkls", "abc" ;
 EXPECT
 OPTION regex
+Statement unlikely to be reached at - line .+
+	\(Maybe you meant system\(\) when you said exec\(\)\?\)
 Can't exec "lskdjfalksdjfdjfkls(:? abc)?": .+
 ########
 # doio.c [win32_execvp]
@@ -205,31 +209,45 @@ EXPECT
 ########
 # doio.c [Perl_nextargv]
 $^W = 0 ;
+# These happen to warn at different points within doio.c
+# This will open read only, and then be caught by an explicit check:
 my $filename = "./temp.dir" ;
+# Whereas these two will fail to open:
+my $dir0 = "./zero.dir" ;
+# but files and directories have a different error message if they don't open:
+my $file3 = "date|" ;
 mkdir $filename, 0777 
   or die "Cannot create directory $filename: $!\n" ;
+mkdir $dir0, 0
+  or die "Cannot create directory dir0: $!\n" ;
 {
-    local (@ARGV) = ($filename) ;
+    local (@ARGV) = ($filename, $dir0, $file3) ;
     local ($^I) = "" ;
     my $x = <> ;
 }
 {
     no warnings 'inplace' ;
-    local (@ARGV) = ($filename) ;
+    local (@ARGV) = ($filename, $dir0, $file3) ;
     local ($^I) = "" ;
     my $x = <> ;
 }
 {
     use warnings 'inplace' ;
-    local (@ARGV) = ($filename) ;
+    local (@ARGV) = ($filename, $dir0, $file3) ;
     local ($^I) = "" ;
     my $x = <> ;
 }
 rmdir $filename ;
+chmod 0777, $dir0 ;
+rmdir $dir0 ;
 EXPECT
-Can't do inplace edit: ./temp.dir is not a regular file at - line 9.
-Can't do inplace edit: ./temp.dir is not a regular file at - line 21.
-
+OPTION regex
+Can't do inplace edit: \./temp\.dir is not a regular file at - line 17\.
+Can't do inplace edit: \./zero\.dir is not a regular file at - line 17\.
+Can't open date\|: .*? at - line 17\.
+Can't do inplace edit: \./temp\.dir is not a regular file at - line 29\.
+Can't do inplace edit: \./zero\.dir is not a regular file at - line 29\.
+Can't open date\|: .*? at - line 29\.
 ########
 # doio.c [Perl_do_eof]
 use warnings 'io' ;
@@ -362,3 +380,35 @@ open ᶠᚻ2, ">doiowarn.tmp"; close ᶠᚻ2;
 unlink "doiowarn.tmp";
 EXPECT
 Filehandle STDIN reopened as ᶠᚻ1 only for output at - line 16.
+########
+open(my $i, "foo\0bar");
+use warnings 'io';
+open(my $i, "foo\0bar");
+EXPECT
+Invalid \0 character in pathname for open: foo\0bar at - line 3.
+########
+chmod(0, "foo\0bar");
+use warnings 'io';
+chmod(0, "foo\0bar");
+EXPECT
+Invalid \0 character in pathname for chmod: foo\0bar at - line 3.
+########
+unlink("foo\0bar", "foo\0bar2");
+use warnings 'io';
+unlink("foo\0bar", "foo\0bar2");
+EXPECT
+Invalid \0 character in pathname for unlink: foo\0bar at - line 3.
+Invalid \0 character in pathname for unlink: foo\0bar2 at - line 3.
+########
+utime(-1, -1, "foo\0bar", "foo\0bar2");
+use warnings 'io';
+utime(-1, -1, "foo\0bar", "foo\0bar2");
+EXPECT
+Invalid \0 character in pathname for utime: foo\0bar at - line 3.
+Invalid \0 character in pathname for utime: foo\0bar2 at - line 3.
+########
+my @foo = glob "foo\0bar";
+use warnings 'io';
+my @bar = glob "foo\0bar";
+EXPECT
+Invalid \0 character in pattern for glob: foo\0bar at - line 3.

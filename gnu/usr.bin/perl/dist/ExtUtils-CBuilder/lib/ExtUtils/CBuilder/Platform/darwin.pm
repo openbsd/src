@@ -4,7 +4,7 @@ use strict;
 use ExtUtils::CBuilder::Platform::Unix;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.280209';
+$VERSION = '0.280217';
 @ISA = qw(ExtUtils::CBuilder::Platform::Unix);
 
 sub compile {
