@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.38 2014/05/16 22:11:00 jmc Exp $
+.\" $OpenBSD: crypt.3,v 1.39 2014/11/17 16:47:28 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 16 2014 $
+.Dd $Mdocdate: November 17 2014 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -54,6 +54,8 @@
 .Fn crypt "const char *key" "const char *setting"
 .Ft int
 .Fn crypt_checkpass "const char *password" "const char *hash"
+.Ft int
+.Fn crypt_newhash "const char *password" "login_cap_t *lc" "char *hash" "size_t hashsize"
 .Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
@@ -102,6 +104,19 @@ If the hash is NULL, authentication will always fail, but a default
 amount of work is performed to simulate the hashing operation.
 A successful match will return 0.
 A failure will return \-1 and set errno.
+.Pp
+The
+.Fn crypt_newhash
+function is provided to simplify the creation of new password hashes.
+The provided
+.Fa password
+is randomly salted and hashed and stored in
+.Fa hash .
+The login class argument
+.Fa lc
+is used to identify the preferred hashing algorithm and parameters.
+Refer to
+.Xr login.conf 5 .
 .Ss Extended crypt
 The
 .Ar key
