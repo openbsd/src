@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.118 2014/11/17 04:26:53 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.119 2014/11/17 04:31:08 deraadt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -182,7 +182,8 @@ uvm_km_init(vaddr_t start, vaddr_t end)
 	    );
 	kernel_map_store.pmap = pmap_kernel();
 	if (base != start && uvm_map(&kernel_map_store, &base, start - base,
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(PROT_MASK, PROT_MASK,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 	    UVM_INH_NONE, POSIX_MADV_RANDOM, UVM_FLAG_FIXED)) != 0)
 		panic("uvm_km_init: could not reserve space for kernel");
 	
@@ -209,7 +210,8 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *min, vaddr_t *max, vsize_t size,
 
 	/* first allocate a blank spot in the parent map */
 	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(PROT_MASK, PROT_MASK, UVM_INH_NONE,
+	    UVM_MAPFLAG(PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE, UVM_INH_NONE,
 	    POSIX_MADV_RANDOM, mapflags)) != 0) {
 	       panic("uvm_km_suballoc: unable to allocate space in parent map");
 	}
@@ -455,7 +457,8 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 
 	/* allocate some virtual space */
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(PROT_MASK, PROT_MASK,
+	    UVM_UNKNOWN_OFFSET, align,
+	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 	    UVM_INH_NONE, POSIX_MADV_RANDOM, 0)) != 0)) {
 		return(0);
 	}
@@ -542,7 +545,8 @@ uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
 	/* allocate some virtual space, demand filled by kernel_object. */
 
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(PROT_MASK, PROT_MASK,
+	    UVM_UNKNOWN_OFFSET, align,
+	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 	    UVM_INH_NONE, POSIX_MADV_RANDOM, flags)) != 0)) {
 		return(0);
 	}
@@ -576,8 +580,9 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		 * by kernel_object.
 		 */
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
-		    prefer, 0, UVM_MAPFLAG(PROT_MASK,
-		    PROT_MASK, UVM_INH_NONE, POSIX_MADV_RANDOM, 0)) == 0)) {
+		    prefer, 0,
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+		    UVM_INH_NONE, POSIX_MADV_RANDOM, 0)) == 0)) {
 			return(kva);
 		}
 
