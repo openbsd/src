@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.15 2008/03/17 09:17:56 sobrado Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.16 2014/11/17 22:14:25 schwarze Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -33,7 +33,6 @@ short disp[11] = {
 	074717, 074757, 071111, 075757, 075717, 002020
 };
 long old[6], next[6], new[6], mask;
-char scrol;
 
 volatile sig_atomic_t sigtermed = 0;
 
@@ -55,10 +54,12 @@ main(int argc, char *argv[])
 {
 	long t, a;
 	int i, j, s, k;
+	int scrol;
 	int n = 0;
 	struct timeval nowtv;
 	struct timespec delay;
-	char *ep;
+	const char *errstr;
+	long scroldelay = 50000000;
 
 	scrol = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1)
@@ -77,17 +78,18 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		usage();
 	if (argc == 1) {
-		t = strtol(*argv, &ep, 10);
-		if ((*argv)[0] == '\0' || *ep != '\0')
-			usage();
-		if (t < 1 || t >= INT_MAX) {
-			fprintf(stderr, "number of seconds is out of range");
+		n = strtonum(*argv, 1, INT_MAX, &errstr);
+		if (errstr) {
+			fprintf(stderr, "number of seconds is %s\n", errstr);
 			usage();
 		}
-		n = t;
 	}
 
 	initscr();
+	if (COLS < 67 || LINES < 17) {
+		endwin();
+		errx(1, "screen too small");
+	}
 
 	signal(SIGINT,sighndl);
 	signal(SIGTERM,sighndl);
@@ -170,6 +172,16 @@ main(int argc, char *argv[])
 					refresh();
 				}
 			}
+			if (scrol && k <= 4) {
+				gettimeofday(&nowtv, NULL);
+				TIMEVAL_TO_TIMESPEC(&nowtv, &now);
+				delay.tv_sec = 0;
+				delay.tv_nsec = 1000000000 - now.tv_nsec
+				    - (4-k) * scroldelay;
+				if (delay.tv_nsec <= scroldelay &&
+				    delay.tv_nsec > 0)
+					nanosleep(&delay, NULL);
+			}
 		}
 		movto(6, 0);
 		refresh();
@@ -177,6 +189,9 @@ main(int argc, char *argv[])
 		TIMEVAL_TO_TIMESPEC(&nowtv, &now);
 		delay.tv_sec = 0;
 		delay.tv_nsec = (1000000000 - now.tv_nsec);
+		/* want scrolling to END on the second */
+		if (scrol)
+			delay.tv_nsec -= 5 * scroldelay;
 		nanosleep(&delay, NULL);
 		now.tv_sec++;
 
