@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_addr.c,v 1.13 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: v3_addr.c,v 1.14 2014/11/18 03:28:05 tedu Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1019,7 +1019,7 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		length = length_from_afi(afi);
 
 		/*
-		 * Handle SAFI, if any, and BUF_strdup() so we can null-terminate
+		 * Handle SAFI, if any, and strdup() so we can null-terminate
 		 * the other input values.
 		 */
 		if (safi != NULL) {
