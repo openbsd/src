@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.h,v 1.15 2014/11/11 19:03:10 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.16 2014/11/18 01:14:40 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,10 +62,10 @@
 #define	TYPE_Nd		 0x0000008000000000ULL
 
 #define	NAME_SYN	 0x0000004000000001ULL
-#define	NAME_FILE	 0x0000004000000002ULL
-#define	NAME_TITLE	 0x000000400000000cULL
-#define	NAME_FIRST	 0x0000004000000008ULL
-#define	NAME_HEAD	 0x0000004000000010ULL
+#define	NAME_FIRST	 0x0000004000000004ULL
+#define	NAME_TITLE	 0x0000004000000006ULL
+#define	NAME_HEAD	 0x0000004000000008ULL
+#define	NAME_FILE	 0x0000004000000010ULL
 #define	NAME_MASK	 0x000000000000001fULL
 
 #define	FORM_CAT	 0  /* manual page is preformatted */
@@ -85,6 +85,7 @@ struct	manpage {
 	char		*names; /* a list of names with sections */
 	char		*output; /* user-defined additional output */
 	size_t		 ipath; /* number of the manpath */
+	uint64_t	 bits; /* name type mask */
 	int		 sec; /* section number, 10 means invalid */
 	int		 form; /* 0 == catpage */
 };
