@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.48 2014/10/04 18:10:14 brad Exp $
+#	$OpenBSD: Makefile.aviion,v 1.49 2014/11/18 01:17:36 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,8 +38,8 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-T ${_machdir}/conf/ld.script \
-		-Ttext 0x80000 -e __start -X -N --warn-common -nopie
+LDSCRIPT=	${_machdir}/conf/ld.script
+LINKFLAGS=	-T ${LDSCRIPT} -Ttext 0x80000 -e __start -X -N --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -73,7 +73,7 @@ PROFILE_C=	${CC} -S -c ${CFLAGS} ${CPPFLAGS} $<; \
 #	${SYSTEM_LD_TAIL}
 SYSTEM_HEAD=	locore.o param.o ioconf.o
 SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS}
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ${LDSCRIPT}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
