@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.33 2014/11/18 02:00:29 tedu Exp $	*/
+/*	$OpenBSD: file.h,v 1.34 2014/11/18 15:16:35 mikeb Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct file {
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
-#define	DTYPE_CRYPTO	5	/* crypto */
+/* was define	DTYPE_CRYPTO	5 */
 #define	DTYPE_SYSTRACE	6	/* system call tracing */
 	short	f_type;		/* descriptor type */
 	long	f_count;	/* reference count */
