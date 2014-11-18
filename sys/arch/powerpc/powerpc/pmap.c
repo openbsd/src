@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.132 2014/11/16 12:30:58 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.133 2014/11/18 15:20:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1220,25 +1220,7 @@ pmap_collect(pmap_t pm)
 void
 pmap_zero_page(struct vm_page *pg)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#ifdef USE_DCBZ
-	int i;
-	paddr_t addr = zero_page;
-#endif
-
-	/* simple_lock(&pmap_zero_page_lock); */
-	pmap_kenter_pa(zero_page, pa, PROT_READ | PROT_WRITE);
-#ifdef USE_DCBZ
-	for (i = PAGE_SIZE/CACHELINESIZE; i>0; i--) {
-		__asm volatile ("dcbz 0,%0" :: "r"(addr));
-		addr += CACHELINESIZE;
-	}
-#else
-	bzero((void *)zero_page, PAGE_SIZE);
-#endif
-	pmap_kremove_pg(zero_page);
-	
-	/* simple_unlock(&pmap_zero_page_lock); */
+	bzero((void *)pmap_map_direct(pg), PAGE_SIZE);
 }
 
 /*
