@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.34 2014/11/16 05:46:20 brad Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.35 2014/11/18 01:56:32 brad Exp $	*/
 
 /*
  *
@@ -280,6 +280,7 @@ next:
 			desc += strlen("local-mac-address") + 1;
 					
 			bcopy(desc, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+			sc->sc_arpcom.ac_enaddr[5] += pa->pa_device;
 			rv = 0;
 		}
 		break;
