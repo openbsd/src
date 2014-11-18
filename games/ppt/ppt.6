@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ppt.6,v 1.1 2014/11/07 22:17:49 schwarze Exp $
+.\"	$OpenBSD: ppt.6,v 1.2 2014/11/18 02:25:12 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)bcd.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: November 7 2014 $
+.Dd $Mdocdate: November 18 2014 $
 .Dt PPT 6
 .Os
 .Sh NAME
@@ -62,7 +62,23 @@ is printed for undecipherable input lines.
 .El
 .Sh SEE ALSO
 .Xr bcd 6
+.Sh STANDARDS
 .Rs
 .%I ECMA-10
 .%R "ECMA Standard for Data Interchange on Punched Tape"
 .Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Bx 4.3 Tahoe .
+The options
+.Fl d
+and
+.Fl b
+first appeared in
+.Ox 3.3 .
+.Sh AUTHORS
+.An Keith Bostic
+.An Paul Janzen Aq Mt pjanzen@foatdi.net
+.An Michael Shalayeff Aq Mt mickey@lucifier.net
