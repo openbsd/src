@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.134 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: dc.c,v 1.135 2014/11/18 22:53:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2481,10 +2481,8 @@ dc_intr(void *arg)
 			}
 		}
 
-		if (status & DC_ISR_BUS_ERR) {
-			dc_reset(sc);
+		if (status & DC_ISR_BUS_ERR)
 			dc_init(sc);
-		}
 	}
 
 	/* Re-enable interrupts. */
@@ -2986,8 +2984,6 @@ dc_watchdog(struct ifnet *ifp)
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
-	dc_stop(sc, 0);
-	dc_reset(sc);
 	dc_init(sc);
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
