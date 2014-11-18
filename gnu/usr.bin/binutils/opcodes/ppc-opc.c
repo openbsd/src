@@ -1585,6 +1585,9 @@ extract_tbr (unsigned long insn,
 /* An XRTRA_MASK, but with L bit clear.  */
 #define XRTLRA_MASK (XRTRA_MASK & ~((unsigned long) 1 << 21))
 
+/* An X form instruction with the L bit specified.  */
+#define XOPL(op, xop, l) (X ((op), (xop)) | ((((unsigned long)(l)) & 1) << 21))
+
 /* An X form comparison instruction.  */
 #define XCMPL(op, xop, l) (X ((op), (xop)) | ((((unsigned long)(l)) & 1) << 21))
 
@@ -4303,6 +4306,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 { "tlbli",   X(31,1010), XRTRA_MASK,	PPC,		{ RB } },
 
+{ "dcbzl",   XOPL(31,1014,1), XRT_MASK,POWER4,            { RA, RB } },
 { "dcbz",    X(31,1014), XRT_MASK,	PPC,		{ RA, RB } },
 { "dclz",    X(31,1014), XRT_MASK,	PPC,		{ RA, RB } },
 
