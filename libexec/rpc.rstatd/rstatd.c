@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.24 2014/10/11 03:44:02 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.25 2014/11/18 20:51:00 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -38,7 +38,6 @@
 #include <pwd.h>
 #include <syslog.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rstat.h>
 

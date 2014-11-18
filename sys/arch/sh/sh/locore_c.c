@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.11 2014/04/14 07:36:12 mpi Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.12 2014/11/18 20:51:01 krw Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -108,7 +108,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
-#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

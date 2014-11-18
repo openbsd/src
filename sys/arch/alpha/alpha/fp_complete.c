@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.10 2014/05/08 20:46:49 miod Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.11 2014/11/18 20:51:00 krw Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <machine/cpu.h>
 #include <machine/fpu.h>
 #include <machine/reg.h>
-#include <machine/cpu.h>
 #include <alpha/alpha/db_instruction.h>
 
 #include <lib/libkern/softfloat.h>

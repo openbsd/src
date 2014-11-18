@@ -43,7 +43,6 @@
 #include "rune_local.h"
 #include "citrus_ctype.h"
 #include "citrus_none.h"
-#include <stdlib.h>
 
 _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,

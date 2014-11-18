@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.29 2014/11/18 15:18:01 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.30 2014/11/18 20:51:00 krw Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -26,7 +26,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
-#include <sys/pool.h>
 
 #include <crypto/cryptodev.h>
 #include <crypto/rijndael.h>

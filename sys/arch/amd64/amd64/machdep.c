@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.195 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.196 2014/11/18 20:51:00 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -108,7 +108,6 @@
 #include <machine/fpu.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
-#include <machine/reg.h>
 #include <machine/kcore.h>
 #include <machine/tss.h>
 

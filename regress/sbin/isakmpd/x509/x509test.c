@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.1 2005/04/08 17:12:50 cloder Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.2 2014/11/18 20:51:00 krw Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
