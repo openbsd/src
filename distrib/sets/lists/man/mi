@@ -22,6 +22,7 @@
 ./usr/share/info/stabs.info
 ./usr/share/info/texinfo
 ./usr/share/man/man1/Mail.1
+./usr/share/man/man1/Test::Harness::Beyond.1
 ./usr/share/man/man1/[.1
 ./usr/share/man/man1/a2p.1
 ./usr/share/man/man1/amd64
@@ -70,7 +71,6 @@
 ./usr/share/man/man1/corelist.1
 ./usr/share/man/man1/cp.1
 ./usr/share/man/man1/cpan.1
-./usr/share/man/man1/Test::Harness::Beyond.1
 ./usr/share/man/man1/cpio.1
 ./usr/share/man/man1/cpp.1
 ./usr/share/man/man1/crontab.1
@@ -251,6 +251,8 @@
 ./usr/share/man/man1/perl5180delta.1
 ./usr/share/man/man1/perl5181delta.1
 ./usr/share/man/man1/perl5182delta.1
+./usr/share/man/man1/perl5200delta.1
+./usr/share/man/man1/perl5201delta.1
 ./usr/share/man/man1/perl561delta.1
 ./usr/share/man/man1/perl56delta.1
 ./usr/share/man/man1/perl581delta.1
@@ -264,6 +266,7 @@
 ./usr/share/man/man1/perl589delta.1
 ./usr/share/man/man1/perl58delta.1
 ./usr/share/man/man1/perl5db.1
+./usr/share/man/man1/perlandroid.1
 ./usr/share/man/man1/perlapi.1
 ./usr/share/man/man1/perlapio.1
 ./usr/share/man/man1/perlartistic.1
@@ -355,6 +358,7 @@
 ./usr/share/man/man1/perlstyle.1
 ./usr/share/man/man1/perlsub.1
 ./usr/share/man/man1/perlsyn.1
+./usr/share/man/man1/perlsynology.1
 ./usr/share/man/man1/perlthrtut.1
 ./usr/share/man/man1/perltie.1
 ./usr/share/man/man1/perltoc.1
@@ -592,10 +596,6 @@
 ./usr/share/man/man3p/Compress::Zlib.3p
 ./usr/share/man/man3p/Config.3p
 ./usr/share/man/man3p/Config::Extensions.3p
-./usr/share/man/man1/perl5200delta.1
-./usr/share/man/man1/perl5201delta.1
-./usr/share/man/man1/perlandroid.1
-./usr/share/man/man1/perlsynology.1
 ./usr/share/man/man3p/Config::Perl::V.3p
 ./usr/share/man/man3p/Cwd.3p
 ./usr/share/man/man3p/DB.3p

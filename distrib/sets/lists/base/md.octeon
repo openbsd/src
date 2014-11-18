@@ -29,7 +29,7 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.28.0
-./usr/lib/libssl.so.28.0
+./usr/lib/libssl.so.29.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
