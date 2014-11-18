@@ -2,7 +2,6 @@
 # define OPENSSL_NO_CMS
 # define OPENSSL_NO_COMP
 # define OPENSSL_NO_GMP
-# define OPENSSL_NO_GOST
 # define OPENSSL_NO_JPAKE
 # define OPENSSL_NO_KRB5
 # define OPENSSL_NO_MD2
