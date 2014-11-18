@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.76 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.77 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -299,6 +299,8 @@
 #define SSL_SHA384		0x00000020L
 /* Not a real MAC, just an indication it is part of cipher */
 #define SSL_AEAD		0x00000040L
+#define SSL_STREEBOG256		0x00000080L
+#define SSL_STREEBOG512		0x00000100L
 
 /* Bits for algorithm_ssl (protocol version) */
 #define SSL_SSLV3		0x00000002L
@@ -313,11 +315,13 @@
 #define SSL_HANDSHAKE_MAC_GOST94 0x40
 #define SSL_HANDSHAKE_MAC_SHA256 0x80
 #define SSL_HANDSHAKE_MAC_SHA384 0x100
+#define SSL_HANDSHAKE_MAC_STREEBOG256 0x200
+#define SSL_HANDSHAKE_MAC_STREEBOG512 0x400
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
 /* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
  * make sure to update this constant too */
-#define SSL_MAX_DIGEST 6
+#define SSL_MAX_DIGEST 8
 
 #define SSL3_CK_ID		0x03000000
 #define SSL3_CK_VALUE_MASK	0x0000ffff
@@ -330,6 +334,7 @@
 #define TLS1_PRF_SHA256 (SSL_HANDSHAKE_MAC_SHA256 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_SHA384 (SSL_HANDSHAKE_MAC_SHA384 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_GOST94 (SSL_HANDSHAKE_MAC_GOST94 << TLS1_PRF_DGST_SHIFT)
+#define TLS1_PRF_STREEBOG256 (SSL_HANDSHAKE_MAC_STREEBOG256 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
 
 /* Stream MAC for GOST ciphersuites from cryptopro draft

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.66 2014/11/03 17:21:30 tedu Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.67 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -587,6 +587,9 @@ static unsigned char tls12_sigalgs[] = {
 	TLSEXT_hash_sha512, TLSEXT_signature_rsa,
 	TLSEXT_hash_sha512, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha512, TLSEXT_signature_ecdsa,
+#ifndef OPENSSL_NO_GOST
+	TLSEXT_hash_streebog_512, TLSEXT_signature_gostr12_512,
+#endif
 
 	TLSEXT_hash_sha384, TLSEXT_signature_rsa,
 	TLSEXT_hash_sha384, TLSEXT_signature_dsa,
@@ -595,6 +598,11 @@ static unsigned char tls12_sigalgs[] = {
 	TLSEXT_hash_sha256, TLSEXT_signature_rsa,
 	TLSEXT_hash_sha256, TLSEXT_signature_dsa,
 	TLSEXT_hash_sha256, TLSEXT_signature_ecdsa,
+
+#ifndef OPENSSL_NO_GOST
+	TLSEXT_hash_streebog_256, TLSEXT_signature_gostr12_256,
+	TLSEXT_hash_gost94, TLSEXT_signature_gostr01,
+#endif
 
 	TLSEXT_hash_sha224, TLSEXT_signature_rsa,
 	TLSEXT_hash_sha224, TLSEXT_signature_dsa,
@@ -2166,13 +2174,17 @@ static tls12_lookup tls12_md[] = {
 	{NID_sha224, TLSEXT_hash_sha224},
 	{NID_sha256, TLSEXT_hash_sha256},
 	{NID_sha384, TLSEXT_hash_sha384},
-	{NID_sha512, TLSEXT_hash_sha512}
+	{NID_sha512, TLSEXT_hash_sha512},
+	{NID_id_GostR3411_94, TLSEXT_hash_gost94},
+	{NID_id_tc26_gost3411_2012_256, TLSEXT_hash_streebog_256},
+	{NID_id_tc26_gost3411_2012_512, TLSEXT_hash_streebog_512}
 };
 
 static tls12_lookup tls12_sig[] = {
 	{EVP_PKEY_RSA, TLSEXT_signature_rsa},
 	{EVP_PKEY_DSA, TLSEXT_signature_dsa},
-	{EVP_PKEY_EC, TLSEXT_signature_ecdsa}
+	{EVP_PKEY_EC, TLSEXT_signature_ecdsa},
+	{EVP_PKEY_GOSTR01, TLSEXT_signature_gostr01},
 };
 
 static int
@@ -2225,6 +2237,14 @@ tls12_get_hash(unsigned char hash_alg)
 		return EVP_sha384();
 	case TLSEXT_hash_sha512:
 		return EVP_sha512();
+#ifndef OPENSSL_NO_GOST
+	case TLSEXT_hash_gost94:
+		return EVP_gostr341194();
+	case TLSEXT_hash_streebog_256:
+		return EVP_streebog256();
+	case TLSEXT_hash_streebog_512:
+		return EVP_streebog512();
+#endif
 	default:
 		return NULL;
 	}
@@ -2251,6 +2271,8 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
 	c->pkeys[SSL_PKEY_ECC].digest = NULL;
+	c->pkeys[SSL_PKEY_GOST94].digest = NULL;
+	c->pkeys[SSL_PKEY_GOST01].digest = NULL;
 
 	for (i = 0; i < dsize; i += 2) {
 		unsigned char hash_alg = data[i], sig_alg = data[i + 1];
@@ -2264,6 +2286,11 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 			break;
 		case TLSEXT_signature_ecdsa:
 			idx = SSL_PKEY_ECC;
+			break;
+		case TLSEXT_signature_gostr01:
+		case TLSEXT_signature_gostr12_256:
+		case TLSEXT_signature_gostr12_512:
+			idx = SSL_PKEY_GOST01;
 			break;
 		default:
 			continue;
@@ -2291,5 +2318,11 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	}
 	if (!c->pkeys[SSL_PKEY_ECC].digest)
 		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
+#ifndef OPENSSL_NO_GOST
+	if (!c->pkeys[SSL_PKEY_GOST94].digest)
+		c->pkeys[SSL_PKEY_GOST94].digest = EVP_gostr341194();
+	if (!c->pkeys[SSL_PKEY_GOST01].digest)
+		c->pkeys[SSL_PKEY_GOST01].digest = EVP_gostr341194();
+#endif
 	return 1;
 }

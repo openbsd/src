@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.72 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.73 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -446,6 +446,18 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
 		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
 		    mac_secret_size, (unsigned char *)mac_secret);
+	}
+
+	if (s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
+		int nid;
+		if (s->s3->tmp.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
+			nid = NID_id_Gost28147_89_CryptoPro_A_ParamSet;
+		else
+			nid = NID_id_tc26_gost_28147_param_Z;
+
+		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GOST_SET_SBOX, nid, 0);
+		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_GOST89MAC)
+			EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_GOST_SET_SBOX, nid, 0);
 	}
 
 	return (1);

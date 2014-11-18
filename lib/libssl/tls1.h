@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.21 2014/10/31 15:50:28 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.22 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -275,6 +275,10 @@ extern "C" {
 #define TLSEXT_signature_rsa				1
 #define TLSEXT_signature_dsa				2
 #define TLSEXT_signature_ecdsa				3
+/* FIXME IANA */
+#define TLSEXT_signature_gostr01			237
+#define TLSEXT_signature_gostr12_256			238
+#define TLSEXT_signature_gostr12_512			239
 
 #define TLSEXT_hash_none				0
 #define TLSEXT_hash_md5					1
@@ -283,6 +287,10 @@ extern "C" {
 #define TLSEXT_hash_sha256				4
 #define TLSEXT_hash_sha384				5
 #define TLSEXT_hash_sha512				6
+/* FIXME IANA */
+#define TLSEXT_hash_gost94				237
+#define TLSEXT_hash_streebog_256			238
+#define TLSEXT_hash_streebog_512			239
 
 #define TLSEXT_MAXLEN_host_name 255
 
@@ -669,9 +677,11 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_CT_ECDSA_FIXED_ECDH 	66
 #define TLS_CT_GOST94_SIGN		21
 #define TLS_CT_GOST01_SIGN		22
+#define TLS_CT_GOST12_256_SIGN		238 /* FIXME: IANA */
+#define TLS_CT_GOST12_512_SIGN		239 /* FIXME: IANA */
 /* when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there) */
-#define TLS_CT_NUMBER			9
+#define TLS_CT_NUMBER			11
 
 #define TLS1_FINISH_MAC_LENGTH		12
 

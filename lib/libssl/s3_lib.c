@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.84 2014/10/31 15:25:55 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.85 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1759,6 +1759,40 @@ SSL_CIPHER ssl3_ciphers[] = {
 	},
 #endif
 
+	/* Cipher FF85 FIXME IANA */
+	{
+		.valid = 1,
+		.name = "GOST2012256-GOST89-GOST89",
+		.id = 0x300ff85, /* FIXME IANA */
+		.algorithm_mkey = SSL_kGOST,
+		.algorithm_auth = SSL_aGOST01,
+		.algorithm_enc = SSL_eGOST2814789CNT,
+		.algorithm_mac = SSL_GOST89MAC,
+		.algorithm_ssl = SSL_TLSV1,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_STREEBOG256|TLS1_PRF_STREEBOG256|
+		    TLS1_STREAM_MAC,
+		.strength_bits = 256,
+		.alg_bits = 256
+	},
+
+	/* Cipher FF87 FIXME IANA */
+	{
+		.valid = 1,
+		.name = "GOST2012256-NULL-STREEBOG256",
+		.id = 0x300ff87, /* FIXME IANA */
+		.algorithm_mkey = SSL_kGOST,
+		.algorithm_auth = SSL_aGOST01,
+		.algorithm_enc = SSL_eNULL,
+		.algorithm_mac = SSL_STREEBOG256,
+		.algorithm_ssl = SSL_TLSV1,
+		.algo_strength = SSL_STRONG_NONE,
+		.algorithm2 = SSL_HANDSHAKE_MAC_STREEBOG256|TLS1_PRF_STREEBOG256,
+		.strength_bits = 0,
+		.alg_bits = 0
+	},
+
+
 	/* end of list */
 };
 
@@ -2415,12 +2449,11 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
-	if (s->version >= TLS1_VERSION) {
-		if (alg_k & SSL_kGOST) {
-			p[ret++] = TLS_CT_GOST94_SIGN;
-			p[ret++] = TLS_CT_GOST01_SIGN;
-			return (ret);
-		}
+	if ((alg_k & SSL_kGOST) && (s->version >= TLS1_VERSION)) {
+		p[ret++] = TLS_CT_GOST94_SIGN;
+		p[ret++] = TLS_CT_GOST01_SIGN;
+		p[ret++] = TLS_CT_GOST12_256_SIGN;
+		p[ret++] = TLS_CT_GOST12_512_SIGN;
 	}
 #endif
 

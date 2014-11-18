@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.90 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.91 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,6 +159,9 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/dh.h>
+#ifndef OPENSSL_NO_GOST
+#include <openssl/gost.h>
+#endif
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <openssl/objects.h>
@@ -516,6 +519,7 @@ ssl3_accept(SSL *s)
 			ret = ssl3_get_client_key_exchange(s);
 			if (ret <= 0)
 				goto end;
+			alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 			if (ret == 2) {
 				/*
 				 * For the ECDH ciphersuites when
@@ -535,7 +539,7 @@ ssl3_accept(SSL *s)
 					s->state = SSL3_ST_SR_FINISHED_A;
 #endif
 				s->init_num = 0;
-			} else if (SSL_USE_SIGALGS(s)) {
+			} else if (SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) {
 				s->state = SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num = 0;
 				if (!s->session->peer)
@@ -842,6 +846,7 @@ ssl3_get_client_hello(SSL *s)
 	unsigned char *p, *d;
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
+	unsigned long alg_k;
 
 	/*
 	 * We do this so that we will respond with our native type.
@@ -1175,7 +1180,9 @@ ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher = s->session->cipher;
 	}
 
-	if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
+	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) ||
+	    !(s->verify_mode & SSL_VERIFY_PEER)) {
 		if (!ssl3_digest_cached_records(s)) {
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
@@ -2336,7 +2343,7 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 
-		if (EVP_VerifyFinal(&mctx, p , i, pkey) <= 0) {
+		if (EVP_VerifyFinal(&mctx, p, i, pkey) <= 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
 			    SSL_R_BAD_SIGNATURE);
@@ -2384,38 +2391,65 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else
+#ifndef OPENSSL_NO_GOST
 	if (pkey->type == NID_id_GostR3410_94 ||
 	    pkey->type == NID_id_GostR3410_2001) {
-		unsigned char signature[64];
-		int idx;
+		long hdatalen = 0;
+		void *hdata;
+		unsigned char signature[128];
+		unsigned int siglen = sizeof(signature);
+		int nid;
 		EVP_PKEY_CTX *pctx;
-	       
-		if (i != 64) {
+
+		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+		if (hdatalen <= 0) {
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
-			    SSL_R_WRONG_SIGNATURE_SIZE);
-			al = SSL_AD_DECODE_ERROR;
+			    ERR_R_INTERNAL_ERROR);
+			al = SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+		}
+		if (!EVP_PKEY_get_default_digest_nid(pkey, &nid) ||
+				!(md = EVP_get_digestbynid(nid))) {
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+					ERR_R_EVP_LIB);
+			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
 		pctx = EVP_PKEY_CTX_new(pkey, NULL);
-		if (pctx == NULL) {
+		if (!pctx) {
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
-			    ERR_R_INTERNAL_ERROR);
-			al = SSL_AD_DECODE_ERROR;
+			    ERR_R_EVP_LIB);
+			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
-		EVP_PKEY_verify_init(pctx);
-		for (idx = 0; idx < 64; idx++)
-			signature[63 - idx] = p[idx];
-		j = EVP_PKEY_verify(pctx, signature, 64,
-		    s->s3->tmp.cert_verify_md, 32);
-		EVP_PKEY_CTX_free(pctx);
-		if (j <= 0) {
+		if (!EVP_DigestInit_ex(&mctx, md, NULL) ||
+		    !EVP_DigestUpdate(&mctx, hdata, hdatalen) ||
+		    !EVP_DigestFinal(&mctx, signature, &siglen) ||
+		    (EVP_PKEY_verify_init(pctx) <= 0) ||
+		    (EVP_PKEY_CTX_set_signature_md(pctx, md) <= 0) ||
+		    (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_VERIFY,
+				       EVP_PKEY_CTRL_GOST_SIG_FORMAT,
+				       GOST_SIG_FORMAT_RS_LE,
+				       NULL) <= 0)) {
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+			    ERR_R_EVP_LIB);
+			al = SSL_AD_INTERNAL_ERROR;
+			EVP_PKEY_CTX_free(pctx);
+			goto f_err;
+		}
+
+		if (EVP_PKEY_verify(pctx, p, i, signature, siglen) <= 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
-			    SSL_R_BAD_ECDSA_SIGNATURE);
+			    SSL_R_BAD_SIGNATURE);
+			EVP_PKEY_CTX_free(pctx);
 			goto f_err;
 		}
-	} else {
+
+		EVP_PKEY_CTX_free(pctx);
+	} else
+#endif
+	{
 		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
 		    ERR_R_INTERNAL_ERROR);
 		al = SSL_AD_UNSUPPORTED_CERTIFICATE;

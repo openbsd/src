@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.73 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.74 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,30 +175,33 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 #define SSL_MD_GOST89MAC_IDX 3
 #define SSL_MD_SHA256_IDX 4
 #define SSL_MD_SHA384_IDX 5
+#define SSL_MD_STREEBOG256_IDX 6
+#define SSL_MD_STREEBOG512_IDX 7
 /*Constant SSL_MAX_DIGEST equal to size of digests array should be 
  * defined in the
  * ssl_locl.h */
 #define SSL_MD_NUM_IDX	SSL_MAX_DIGEST 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
-	NULL, NULL, NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 /* PKEY_TYPE for GOST89MAC is known in advance, but, because
  * implementation is engine-provided, we'll fill it only if
  * corresponding EVP_PKEY_METHOD is found 
  */
 static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
-	EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
-	EVP_PKEY_HMAC, EVP_PKEY_HMAC
+	EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_GOSTIMIT,
+	EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC,
 };
 
 static int ssl_mac_secret_size[SSL_MD_NUM_IDX] = {
-	0, 0, 0, 0, 0, 0
+	0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static int ssl_handshake_digest_flag[SSL_MD_NUM_IDX] = {
 	SSL_HANDSHAKE_MAC_MD5, SSL_HANDSHAKE_MAC_SHA,
 	SSL_HANDSHAKE_MAC_GOST94, 0, SSL_HANDSHAKE_MAC_SHA256,
-	SSL_HANDSHAKE_MAC_SHA384
+	SSL_HANDSHAKE_MAC_SHA384, SSL_HANDSHAKE_MAC_STREEBOG256,
+	SSL_HANDSHAKE_MAC_STREEBOG512
 };
 
 #define CIPHER_ADD	1
@@ -325,7 +328,7 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.name = SSL_TXT_aGOST,
 		.algorithm_auth = SSL_aGOST94|SSL_aGOST01,
 	},
-	
+
 	/* aliases combining key exchange and server authentication */
 	{
 		.name = SSL_TXT_DHE,
@@ -450,6 +453,14 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.name = SSL_TXT_SHA384,
 		.algorithm_mac = SSL_SHA384,
 	},
+	{
+		.name = SSL_TXT_STREEBOG256,
+		.algorithm_mac = SSL_STREEBOG256,
+	},
+	{
+		.name = SSL_TXT_STREEBOG512,
+		.algorithm_mac = SSL_STREEBOG512,
+	},
 	
 	/* protocol version aliases */
 	{
@@ -566,7 +577,6 @@ ssl_load_ciphers(void)
 	}
 	ssl_digest_methods[SSL_MD_GOST89MAC_IDX]=
 	EVP_get_digestbyname(SN_id_Gost28147_89_MAC);
-	ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
 	if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]) {
 		ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
 	}
@@ -579,6 +589,14 @@ ssl_load_ciphers(void)
 	EVP_get_digestbyname(SN_sha384);
 	ssl_mac_secret_size[SSL_MD_SHA384_IDX]=
 	EVP_MD_size(ssl_digest_methods[SSL_MD_SHA384_IDX]);
+	ssl_digest_methods[SSL_MD_STREEBOG256_IDX]=
+	EVP_get_digestbyname(SN_id_tc26_gost3411_2012_256);
+	ssl_mac_secret_size[SSL_MD_STREEBOG256_IDX]=
+	EVP_MD_size(ssl_digest_methods[SSL_MD_STREEBOG256_IDX]);
+	ssl_digest_methods[SSL_MD_STREEBOG512_IDX]=
+	EVP_get_digestbyname(SN_id_tc26_gost3411_2012_512);
+	ssl_mac_secret_size[SSL_MD_STREEBOG512_IDX]=
+	EVP_MD_size(ssl_digest_methods[SSL_MD_STREEBOG512_IDX]);
 }
 
 int
@@ -671,6 +689,12 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		break;
 	case SSL_GOST89MAC:
 		i = SSL_MD_GOST89MAC_IDX;
+		break;
+	case SSL_STREEBOG256:
+		i = SSL_MD_STREEBOG256_IDX;
+		break;
+	case SSL_STREEBOG512:
+		i = SSL_MD_STREEBOG512_IDX;
 		break;
 	default:
 		i = -1;
@@ -829,7 +853,7 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 		*auth |= SSL_aGOST01;
 	}
 	/* Disable GOST key exchange if no GOST signature algs are available. */
-	if ((*auth & (SSL_aGOST94|SSL_aGOST01)) == (SSL_aGOST94|SSL_aGOST01)) {
+	if (((~*auth) & (SSL_aGOST94|SSL_aGOST01)) == 0) {
 		*mkey |= SSL_kGOST;
 	}
 #ifdef SSL_FORBID_ENULL
@@ -853,7 +877,9 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 	*mac |= (ssl_digest_methods[SSL_MD_SHA256_IDX] == NULL) ? SSL_SHA256 : 0;
 	*mac |= (ssl_digest_methods[SSL_MD_SHA384_IDX] == NULL) ? SSL_SHA384 : 0;
 	*mac |= (ssl_digest_methods[SSL_MD_GOST94_IDX] == NULL) ? SSL_GOST94 : 0;
-	*mac |= (ssl_digest_methods[SSL_MD_GOST89MAC_IDX] == NULL || ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]==NID_undef) ? SSL_GOST89MAC : 0;
+	*mac |= (ssl_digest_methods[SSL_MD_GOST89MAC_IDX] == NULL) ? SSL_GOST89MAC : 0;
+	*mac |= (ssl_digest_methods[SSL_MD_STREEBOG256_IDX] == NULL) ? SSL_STREEBOG256 : 0;
+	*mac |= (ssl_digest_methods[SSL_MD_STREEBOG512_IDX] == NULL) ? SSL_STREEBOG512 : 0;
 
 }
 
@@ -1581,6 +1607,9 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kECDHE:
 		kx = "ECDH";
 		break;
+	case SSL_kGOST:
+		kx = "GOST";
+		break;
 	default:
 		kx = "unknown";
 	}
@@ -1600,6 +1629,12 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aECDSA:
 		au = "ECDSA";
+		break;
+	case SSL_aGOST94:
+		au = "GOST94";
+		break;
+	case SSL_aGOST01:
+		au = "GOST01";
 		break;
 	default:
 		au = "unknown";
@@ -1643,6 +1678,9 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_CHACHA20POLY1305:
 		enc = "ChaCha20-Poly1305";
 		break;
+	case SSL_eGOST2814789CNT:
+		enc = "GOST-28178-89-CNT";
+		break;
 	default:
 		enc = "unknown";
 		break;
@@ -1663,6 +1701,18 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_AEAD:
 		mac = "AEAD";
+		break;
+	case SSL_GOST94:
+		mac = "GOST94";
+		break;
+	case SSL_GOST89MAC:
+		mac = "GOST89IMIT";
+		break;
+	case SSL_STREEBOG256:
+		mac = "STREEBOG256";
+		break;
+	case SSL_STREEBOG512:
+		mac = "STREEBOG512";
 		break;
 	default:
 		mac = "unknown";

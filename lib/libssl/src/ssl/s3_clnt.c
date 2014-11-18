@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.93 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.94 2014/11/18 05:33:43 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,6 +161,9 @@
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
+#ifndef OPENSSL_NO_GOST
+#include <openssl/gost.h>
 #endif
 
 static const SSL_METHOD *ssl3_get_client_method(int ver);
@@ -781,6 +784,7 @@ ssl3_get_server_hello(SSL *s)
 	unsigned int		 j, cipher_id;
 	uint16_t		 cipher_value;
 	long			 n;
+	unsigned long		 alg_k;
 
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
 	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, /* ?? */ &ok);
@@ -943,7 +947,9 @@ ssl3_get_server_hello(SSL *s)
 	 * Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
 	 */
-	if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s)) {
+	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) &&
+	    !ssl3_digest_cached_records(s)) {
 		al = SSL_AD_INTERNAL_ERROR;
 		goto f_err;
 	}
@@ -1937,7 +1943,6 @@ ssl3_get_server_done(SSL *s)
 	return (ret);
 }
 
-
 int
 ssl3_send_client_key_exchange(SSL *s)
 {
@@ -2273,18 +2278,16 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			size_t msglen;
 			unsigned int md_len;
-			int keytype;
 			unsigned char premaster_secret[32], shared_ukm[32],
 			    tmp[256];
 			EVP_MD_CTX *ukm_hash;
 			EVP_PKEY *pub_key;
+			int nid;
 
 			/* Get server sertificate PKEY and create ctx from it */
-			peer_cert = s->session->sess_cert->peer_pkeys[(
-			    keytype = SSL_PKEY_GOST01)].x509;
+			peer_cert = s->session->sess_cert->peer_pkeys[SSL_PKEY_GOST01].x509;
 			if (!peer_cert)
-				peer_cert = s->session->sess_cert->peer_pkeys[
-				    (keytype = SSL_PKEY_GOST94)].x509;
+				peer_cert = s->session->sess_cert->peer_pkeys[SSL_PKEY_GOST94].x509;
 			if (!peer_cert) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
@@ -2329,8 +2332,12 @@ ssl3_send_client_key_exchange(SSL *s)
 				    ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
-			EVP_DigestInit(ukm_hash,
-			    EVP_get_digestbynid(NID_id_GostR3411_94));
+
+			if (ssl_get_algorithm2(s) & SSL_HANDSHAKE_MAC_GOST94)
+				nid = NID_id_GostR3411_94;
+			else
+				nid = NID_id_tc26_gost3411_2012_256;
+			EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid));
 			EVP_DigestUpdate(ukm_hash,
 			    s->s3->client_random, SSL3_RANDOM_SIZE);
 			EVP_DigestUpdate(ukm_hash,
@@ -2498,24 +2505,48 @@ ssl3_send_client_verify(SSL *s)
 			}
 			s2n(j, p);
 			n = j + 2;
+#ifndef OPENSSL_NO_GOST
 		} else if (pkey->type == NID_id_GostR3410_94 ||
-		    pkey->type == NID_id_GostR3410_2001) {
-			unsigned char signbuf[64];
-			int i;
-			size_t sigsize = 64;
-			s->method->ssl3_enc->cert_verify_mac(s,
-			    NID_id_GostR3411_94, data);
-			if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data, 32)
-			    <= 0) {
+			   pkey->type == NID_id_GostR3410_2001) {
+			unsigned char signbuf[128];
+			long hdatalen = 0;
+			void *hdata;
+			const EVP_MD *md;
+			int nid;
+			size_t sigsize;
+
+			hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+			if (hdatalen <= 0) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
 				    ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			for (i = 63, j = 0; i >= 0; j++, i--) {
-				p[2 + j] = signbuf[i];
+			if (!EVP_PKEY_get_default_digest_nid(pkey, &nid) ||
+			    !(md = EVP_get_digestbynid(nid))) {
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+						ERR_R_EVP_LIB);
+				goto err;
 			}
+			if (!EVP_DigestInit_ex(&mctx, md, NULL) ||
+			    !EVP_DigestUpdate(&mctx, hdata, hdatalen) ||
+			    !EVP_DigestFinal(&mctx, signbuf, &u) ||
+			    (EVP_PKEY_CTX_set_signature_md(pctx, md) <= 0) ||
+			    (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+					       EVP_PKEY_CTRL_GOST_SIG_FORMAT,
+					       GOST_SIG_FORMAT_RS_LE,
+					       NULL) <= 0) ||
+			    (EVP_PKEY_sign(pctx, &(p[2]), &sigsize,
+					   signbuf, u) <= 0)) {
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+				    ERR_R_EVP_LIB);
+				goto err;
+			}
+			if (!ssl3_digest_cached_records(s))
+				goto err;
+			j = sigsize;
 			s2n(j, p);
 			n = j + 2;
+#endif
 		} else {
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
 			    ERR_R_INTERNAL_ERROR);
