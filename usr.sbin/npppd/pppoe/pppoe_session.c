@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe_session.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: pppoe_session.c,v 1.8 2014/11/18 20:54:28 krw Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $
+ * $Id: pppoe_session.c,v 1.8 2014/11/18 20:54:28 krw Exp $
  */
 
 #include <sys/types.h>
@@ -49,7 +49,6 @@
 #include <stdio.h>
 #include <event.h>
 #include <syslog.h>
-#include <stdlib.h>
 #include <stdarg.h>
 
 #include "hash.h"

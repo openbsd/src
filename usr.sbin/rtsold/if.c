@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.27 2014/07/11 16:44:13 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.28 2014/11/18 20:54:29 krw Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/in.h>
 #include <netinet/icmp6.h>
 
 #include <netinet6/in6_var.h>

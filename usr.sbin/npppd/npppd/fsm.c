@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.c,v 1.5 2012/12/05 23:20:26 deraadt Exp $ */
+/*	$OpenBSD: fsm.c,v 1.6 2014/11/18 20:54:28 krw Exp $ */
 
 /**@file
  * This file was adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/fsm.c
@@ -50,7 +50,6 @@
 #include <netinet/in.h>
 #include <net/if_dl.h>
 #include <time.h>
-#include <sys/time.h>
 #include <event.h>
 #include "debugutil.h"
 #include "slist.h"

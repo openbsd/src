@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.16 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: hello.c,v 1.17 2014/11/18 20:54:28 krw Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -22,7 +22,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
-#include <sys/socket.h>
 #include <stdlib.h>
 #include <string.h>
 #include <event.h>

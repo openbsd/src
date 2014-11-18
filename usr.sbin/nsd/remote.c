@@ -77,7 +77,6 @@
 #include "nsd.h"
 #include "options.h"
 #include "difffile.h"
-#include "xfrd.h"
 #include "ipc.h"
 
 #ifdef HAVE_SYS_TYPES_H

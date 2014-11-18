@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.72 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: mib.c,v 1.73 2014/11/18 20:54:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -30,7 +30,6 @@
 #include <sys/sysctl.h>
 #include <sys/sensors.h>
 #include <sys/sched.h>
-#include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
 #include <sys/disk.h>

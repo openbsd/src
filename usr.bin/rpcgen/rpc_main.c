@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.27 2013/11/28 18:24:54 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.28 2014/11/18 20:54:28 krw Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -45,7 +45,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <sys/stat.h>
 #include "rpc_parse.h"

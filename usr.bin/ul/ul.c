@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.15 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: ul.c,v 1.16 2014/11/18 20:54:28 krw Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include <curses.h>
 #include <err.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <term.h>

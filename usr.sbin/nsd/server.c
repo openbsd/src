@@ -29,7 +29,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <netdb.h>
 #ifndef SHUT_WR
 #define SHUT_WR 1

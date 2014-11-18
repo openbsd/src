@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2014/10/17 20:19:15 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.28 2014/11/18 20:54:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -47,7 +47,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <vis.h>
-#include <err.h>
 #include "finger.h"
 #include "extern.h"
 

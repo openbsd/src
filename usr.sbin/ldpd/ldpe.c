@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.24 2014/07/12 20:16:38 krw Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.25 2014/11/18 20:54:28 krw Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -34,7 +34,6 @@
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "ldp.h"
 #include "ldpd.h"

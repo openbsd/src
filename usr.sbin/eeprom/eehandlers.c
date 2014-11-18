@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.18 2014/07/24 19:19:26 miod Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.19 2014/11/18 20:54:28 krw Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 

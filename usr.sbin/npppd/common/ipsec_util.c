@@ -23,14 +23,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ipsec_util.c,v 1.5 2012/05/08 13:18:37 yasuoka Exp $ */
+/* $Id: ipsec_util.c,v 1.6 2014/11/18 20:54:28 krw Exp $ */
 /*@file IPsec related utility functions */
 /*
  * RFC 2367 PF_KEY Key Management API, Version 2
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <net/pfkeyv2.h>

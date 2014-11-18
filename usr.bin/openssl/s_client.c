@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.7 2014/11/07 14:16:48 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.8 2014/11/18 20:54:28 krw Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,7 +148,6 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
