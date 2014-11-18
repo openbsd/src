@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.3 2014/11/13 20:29:55 miod Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.4 2014/11/18 05:27:05 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -593,7 +593,7 @@ param_copy_gost01(EVP_PKEY *to, const EVP_PKEY *from)
 {
 	GOST_KEY *eto = to->pkey.gost;
 	const GOST_KEY *efrom = from->pkey.gost;
-	int ret = 0;
+	int ret = 1;
 
 	if (EVP_PKEY_base_id(from) != EVP_PKEY_base_id(to)) {
 		GOSTerr(GOST_F_PARAM_COPY_GOST01,
