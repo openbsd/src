@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.128 2014/07/12 18:44:01 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.129 2014/11/18 10:42:15 dlg Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/specdev.h>
+#include <crypto/siphash.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -938,14 +939,13 @@ softdep_flushfiles(struct mount *oldmnt, int flags, struct proc *p)
 #define DEPALLOC	0x0001	/* allocate structure if lookup fails */
 #define NODELAY         0x0002  /* cannot do background work */
 
+SIPHASH_KEY softdep_hashkey;
+
 /*
  * Structures and routines associated with pagedep caching.
  */
 LIST_HEAD(pagedep_hashhead, pagedep) *pagedep_hashtbl;
 u_long	pagedep_hash;		/* size of hash table - 1 */
-#define	PAGEDEP_HASH(mp, inum, lbn) \
-	(&pagedep_hashtbl[((((register_t)(mp)) >> 13) + (inum) + (lbn)) & \
-	    pagedep_hash])
 STATIC struct sema pagedep_in_progress;
 
 /*
@@ -959,6 +959,7 @@ STATIC int
 pagedep_lookup(struct inode *ip, daddr_t lbn, int flags,
     struct pagedep **pagedeppp)
 {
+	SIPHASH_CTX ctx;
 	struct pagedep *pagedep;
 	struct pagedep_hashhead *pagedephd;
 	struct mount *mp;
@@ -971,7 +972,12 @@ pagedep_lookup(struct inode *ip, daddr_t lbn, int flags,
 		panic("pagedep_lookup: lock not held");
 #endif
 	mp = ITOV(ip)->v_mount;
-	pagedephd = PAGEDEP_HASH(mp, ip->i_number, lbn);
+
+	SipHash24_Init(&ctx, &softdep_hashkey);
+	SipHash24_Update(&ctx, &mp, sizeof(mp));
+	SipHash24_Update(&ctx, &ip->i_number, sizeof(ip->i_number));
+	SipHash24_Update(&ctx, &lbn, sizeof(lbn));
+	pagedephd = &pagedep_hashtbl[SipHash24_End(&ctx) & pagedep_hash];
 top:
 	LIST_FOREACH(pagedep, pagedephd, pd_hash)
 		if (ip->i_number == pagedep->pd_ino &&
@@ -1015,8 +1021,6 @@ top:
 LIST_HEAD(inodedep_hashhead, inodedep) *inodedep_hashtbl;
 STATIC u_long	inodedep_hash;	/* size of hash table - 1 */
 STATIC long	num_inodedep;	/* number of inodedep allocated */
-#define	INODEDEP_HASH(fs, inum) \
-      (&inodedep_hashtbl[((((register_t)(fs)) >> 13) + (inum)) & inodedep_hash])
 STATIC struct sema inodedep_in_progress;
 
 /*
@@ -1029,6 +1033,7 @@ STATIC int
 inodedep_lookup(struct fs *fs, ufsino_t inum, int flags,
     struct inodedep **inodedeppp)
 {
+	SIPHASH_CTX ctx;
 	struct inodedep *inodedep;
 	struct inodedep_hashhead *inodedephd;
 	int firsttry;
@@ -1040,7 +1045,10 @@ inodedep_lookup(struct fs *fs, ufsino_t inum, int flags,
 		panic("inodedep_lookup: lock not held");
 #endif
 	firsttry = 1;
-	inodedephd = INODEDEP_HASH(fs, inum);
+	SipHash24_Init(&ctx, &softdep_hashkey);
+	SipHash24_Update(&ctx, &fs, sizeof(fs));
+	SipHash24_Update(&ctx, &inum, sizeof(inum));
+	inodedephd = &inodedep_hashtbl[SipHash24_End(&ctx) & inodedep_hash];
 top:
 	LIST_FOREACH(inodedep, inodedephd, id_hash)
 		if (inum == inodedep->id_ino && fs == inodedep->id_fs)
@@ -1092,8 +1100,6 @@ top:
  */
 LIST_HEAD(newblk_hashhead, newblk) *newblk_hashtbl;
 u_long	newblk_hash;		/* size of hash table - 1 */
-#define	NEWBLK_HASH(fs, inum) \
-	(&newblk_hashtbl[((((register_t)(fs)) >> 13) + (inum)) & newblk_hash])
 STATIC struct sema newblk_in_progress;
 
 /*
@@ -1105,10 +1111,14 @@ STATIC int
 newblk_lookup(struct fs *fs, daddr_t newblkno, int flags,
     struct newblk **newblkpp)
 {
+	SIPHASH_CTX ctx;
 	struct newblk *newblk;
 	struct newblk_hashhead *newblkhd;
 
-	newblkhd = NEWBLK_HASH(fs, newblkno);
+	SipHash24_Init(&ctx, &softdep_hashkey);
+	SipHash24_Update(&ctx, &fs, sizeof(fs));
+	SipHash24_Update(&ctx, &newblkno, sizeof(newblkno));
+	newblkhd = &newblk_hashtbl[SipHash24_End(&ctx) & newblk_hash];
 top:
 	LIST_FOREACH(newblk, newblkhd, nb_hash)
 		if (newblkno == newblk->nb_newblkno && fs == newblk->nb_fs)
@@ -1155,6 +1165,7 @@ softdep_initialize(void)
 #else
 	max_softdeps = desiredvnodes * 4;
 #endif
+	arc4random_buf(&softdep_hashkey, sizeof(softdep_hashkey));
 	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP, M_WAITOK,
 	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);

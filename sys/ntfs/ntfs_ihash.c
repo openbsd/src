@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.16 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.17 2014/11/18 10:42:15 dlg Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -41,6 +41,8 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 
+#include <crypto/siphash.h>
+
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_inode.h>
 #include <ntfs/ntfs_ihash.h>
@@ -48,9 +50,11 @@
 /*
  * Structures associated with inode cacheing.
  */
+u_int ntfs_hash(dev_t, ntfsino_t);
 static LIST_HEAD(nthashhead, ntnode) *ntfs_nthashtbl;
+static SIPHASH_KEY ntfs_nthashkey;
 static u_long	ntfs_nthash;		/* size of hash table - 1 */
-#define	NTNOHASH(device, inum)	((minor(device) + (inum)) & ntfs_nthash)
+#define	NTNOHASH(device, inum) ntfs_hash((device), (inum))
 struct rwlock ntfs_hashlock = RWLOCK_INITIALIZER("ntfs_nthashlock");
 
 /*
@@ -72,6 +76,20 @@ ntfs_nthashinit(void)
 	}
 	ntfs_nthashtbl = nthashtbl;
 	ntfs_nthash = nthash;
+
+	arc4random_buf(&ntfs_nthashkey, sizeof(ntfs_nthashkey));
+}
+
+u_int
+ntfs_hash(dev_t dev, ntfsino_t inum)
+{
+	SIPHASH_CTX ctx;
+
+	SipHash24_Init(&ctx, &ntfs_nthashkey);
+	SipHash24_Update(&ctx, &dev, sizeof(dev));
+	SipHash24_Update(&ctx, &inum, sizeof(inum));
+
+	return (SipHash24_End(&ctx) & ntfs_nthash);
 }
 
 /*

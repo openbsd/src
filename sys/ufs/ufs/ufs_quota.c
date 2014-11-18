@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.35 2014/10/13 03:46:33 guenther Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.36 2014/11/18 10:42:15 dlg Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -52,6 +52,8 @@
 #include <ufs/ufs/ufs_extern.h>
 
 #include <sys/queue.h>
+
+#include <crypto/siphash.h>
 
 /*
  * The following structure records disk usage for a user or group on a
@@ -805,9 +807,8 @@ qsync(struct mount *mp)
 /*
  * Code pertaining to management of the in-core dquot data structures.
  */
-#define DQHASH(dqvp, id) \
-	(&dqhashtbl[((((long)(dqvp)) >> 8) + id) & dqhash])
 LIST_HEAD(dqhash, dquot) *dqhashtbl;
+SIPHASH_KEY dqhashkey;
 u_long dqhash;
 
 /*
@@ -824,6 +825,7 @@ void
 ufs_quota_init(void)
 {
 	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, M_WAITOK, &dqhash);
+	arc4random_buf(&dqhashkey, sizeof(dqhashkey));
 	TAILQ_INIT(&dqfreelist);
 }
 
@@ -835,6 +837,7 @@ int
 dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
+	SIPHASH_CTX ctx;
 	struct proc *p = curproc;
 	struct dquot *dq;
 	struct dqhash *dqh;
@@ -851,7 +854,11 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	/*
 	 * Check the cache first.
 	 */
-	dqh = DQHASH(dqvp, id);
+	SipHash24_Init(&ctx, &dqhashkey);
+	SipHash24_Update(&ctx, &dqvp, sizeof(dqvp));
+	SipHash24_Update(&ctx, &id, sizeof(id));
+	dqh = &dqhashtbl[SipHash24_End(&ctx) & dqhash];
+
 	LIST_FOREACH(dq, dqh, dq_hash) {
 		if (dq->dq_id != id ||
 		    dq->dq_vp != dqvp)

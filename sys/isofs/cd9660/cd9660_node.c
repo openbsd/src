@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.25 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.26 2014/11/18 10:42:15 dlg Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -48,6 +48,8 @@
 #include <sys/malloc.h>
 #include <sys/stat.h>
 
+#include <crypto/siphash.h>
+
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
@@ -56,9 +58,12 @@
 /*
  * Structures associated with iso_node caching.
  */
+u_int cd9660_isohash(dev_t, cdino_t);
+
 struct iso_node **isohashtbl;
 u_long isohash;
-#define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & isohash)
+SIPHASH_KEY isohashkey;
+#define	INOHASH(device, inum) cd9660_isohash((device), (inum))
 
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
@@ -73,7 +78,19 @@ cd9660_init(vfsp)
 {
 
 	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
+	arc4random_buf(&isohashkey, sizeof(isohashkey));
 	return (0);
+}
+
+u_int
+cd9660_isohash(dev_t device, cdino_t inum)
+{
+	SIPHASH_CTX ctx;
+
+	SipHash24_Init(&ctx, &isohashkey);
+	SipHash24_Update(&ctx, &device, sizeof(device));
+	SipHash24_Update(&ctx, &inum, sizeof(inum));
+	return (SipHash24_End(&ctx) & isohash);
 }
 
 /*

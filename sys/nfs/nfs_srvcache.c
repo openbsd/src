@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.25 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.26 2014/11/18 10:42:15 dlg Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -49,6 +49,8 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 
+#include <crypto/siphash.h>
+
 #include <netinet/in.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -63,11 +65,12 @@ long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 struct nfsrvcache	*nfsrv_lookupcache(struct nfsrv_descript *);
 void			 nfsrv_cleanentry(struct nfsrvcache *);
 
-#define	NFSRCHASH(xid)	\
-	(&nfsrvhashtbl[((xid) + ((xid) >> 24)) & nfsrvhash])
 LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
+SIPHASH_KEY nfsrvhashkey;
 TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
 u_long nfsrvhash;
+#define	NFSRCHASH(xid) \
+    (&nfsrvhashtbl[SipHash24(&nfsrvhashkey, &(xid), sizeof(xid)) & nfsrvhash])
 
 #define	NETFAMILY(rp)	\
 	(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_UNSPEC)
@@ -104,6 +107,7 @@ nfsrv_initcache(void)
 {
 
 	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, M_WAITOK, &nfsrvhash);
+	arc4random_buf(&nfsrvhashkey, sizeof(nfsrvhashkey));
 	TAILQ_INIT(&nfsrvlruhead);
 }
 
@@ -125,6 +129,7 @@ int
 nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
     struct mbuf **repp)
 {
+	struct nfsrvhash *hash;
 	struct nfsrvcache *rp;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
@@ -203,7 +208,8 @@ nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 		break;
 	};
 	rp->rc_proc = nd->nd_procnum;
-	LIST_INSERT_HEAD(NFSRCHASH(nd->nd_retxid), rp, rc_hash);
+	hash = NFSRCHASH(nd->nd_retxid);
+	LIST_INSERT_HEAD(hash, rp, rc_hash);
 	rp->rc_flag &= ~RC_LOCKED;
 	if (rp->rc_flag & RC_WANTED) {
 		rp->rc_flag &= ~RC_WANTED;
@@ -269,10 +275,12 @@ nfsrv_cleancache(void)
 struct nfsrvcache *
 nfsrv_lookupcache(struct nfsrv_descript *nd)
 {
+	struct nfsrvhash	*hash;
 	struct nfsrvcache	*rp;
 
+	hash = NFSRCHASH(nd->nd_retxid);
 loop:
-	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
+	LIST_FOREACH(rp, hash, rc_hash) {
 		if (nd->nd_retxid == rp->rc_xid &&
 		    nd->nd_procnum == rp->rc_proc &&
 		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
