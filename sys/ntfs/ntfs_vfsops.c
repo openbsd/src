@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.40 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.41 2014/11/18 23:55:01 krw Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/disk.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/specdev.h>

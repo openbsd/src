@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.20 2014/09/25 04:19:45 jsg Exp $ */
+/*	$OpenBSD: acx111.c,v 1.21 2014/11/18 23:55:01 krw Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -63,8 +63,6 @@
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_media.h>
-
-#include <net/if.h>
 
 #ifdef INET
 #include <netinet/in.h>

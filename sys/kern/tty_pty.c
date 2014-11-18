@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.68 2014/07/13 15:29:04 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.69 2014/11/18 23:55:01 krw Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
-#include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>

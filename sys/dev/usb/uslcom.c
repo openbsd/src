@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.31 2014/07/12 21:24:33 mpi Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.32 2014/11/18 23:55:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -28,7 +28,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
 #ifdef USLCOM_DEBUG

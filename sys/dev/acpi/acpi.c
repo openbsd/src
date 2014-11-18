@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.273 2014/11/08 07:45:10 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.274 2014/11/18 23:55:01 krw Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -47,7 +47,6 @@
 #include <dev/acpi/dsdt.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 

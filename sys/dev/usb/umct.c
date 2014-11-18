@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.41 2014/07/12 20:26:33 mpi Exp $	*/
+/*	$OpenBSD: umct.c,v 1.42 2014/11/18 23:55:01 krw Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
 #include <dev/usb/umct.h>

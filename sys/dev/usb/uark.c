@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.20 2014/07/12 20:26:33 mpi Exp $	*/
+/*	$OpenBSD: uark.c,v 1.21 2014/11/18 23:55:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -28,7 +28,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
 #ifdef UARK_DEBUG

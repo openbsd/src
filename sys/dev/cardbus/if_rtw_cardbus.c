@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.21 2012/12/05 23:20:16 deraadt Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.22 2014/11/18 23:55:01 krw Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -107,7 +107,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers used by the RTL8180.

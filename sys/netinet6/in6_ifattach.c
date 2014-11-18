@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.75 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.76 2014/11/18 23:55:01 krw Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #ifdef MROUTING
 #include <netinet6/ip6_mroute.h>
