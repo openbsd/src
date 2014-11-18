@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.169 2014/10/05 08:40:29 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.170 2014/11/18 02:37:30 tedu Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -60,8 +60,6 @@
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
-
-#include <dev/rndvar.h>
 
 struct cfdriver ehci_cd = {
 	NULL, "ehci", DV_DULL

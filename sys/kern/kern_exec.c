@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.148 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.149 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -64,8 +64,6 @@
 #ifdef __HAVE_MD_TCB
 # include <machine/tcb.h>
 #endif
-
-#include <dev/rndvar.h>
 
 #include "systrace.h"
 

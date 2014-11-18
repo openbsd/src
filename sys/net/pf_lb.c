@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.35 2014/11/10 18:49:42 bluhm Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.36 2014/11/18 02:37:31 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -73,7 +73,6 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_pcb.h>
 
-#include <dev/rndvar.h>
 #include <net/pfvar.h>
 #include <net/if_pflog.h>
 #include <net/if_pflow.h>

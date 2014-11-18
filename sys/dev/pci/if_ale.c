@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.31 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.32 2014/11/18 02:37:30 tedu Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -64,8 +64,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <dev/rndvar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

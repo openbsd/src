@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.90 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.91 2014/11/18 02:37:31 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -29,8 +29,6 @@
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/hash.h>
-
-#include <dev/rndvar.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>

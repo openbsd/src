@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.15 2014/07/12 18:44:22 tedu Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.16 2014/11/18 02:37:31 tedu Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -40,7 +40,6 @@
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>
-#include <dev/rndvar.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

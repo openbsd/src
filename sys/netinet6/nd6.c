@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.124 2014/11/01 21:40:39 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.125 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/task.h>
-#include <dev/rndvar.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

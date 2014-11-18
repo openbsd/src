@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.83 2014/11/10 10:46:10 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.84 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
-
-#include <dev/rndvar.h>
 
 #include "carp.h"
 #if NCARP > 0

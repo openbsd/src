@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.56 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.57 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -51,8 +51,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip.h>		/* for ECN definitions */
-
-#include <dev/rndvar.h>
 
 /*
  * Define it to get a correct behavior on per-interface statistics.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.23 2014/11/14 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.24 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include <nfs/rpcv2.h>
 #include <nfs/krpc.h>
 #include <nfs/xdr_subs.h>
-#include <dev/rndvar.h>
 #include <crypto/idgen.h>
 
 /*

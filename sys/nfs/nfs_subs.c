@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.118 2014/11/14 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.119 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 
 #include <netinet/in.h>
 
-#include <dev/rndvar.h>
 #include <crypto/idgen.h>
 
 int	nfs_attrtimeo(struct nfsnode *np);

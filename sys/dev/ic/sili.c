@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.54 2014/09/14 14:17:25 jsg Exp $ */
+/*	$OpenBSD: sili.c,v 1.55 2014/11/18 02:37:30 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -54,10 +54,6 @@ int silidebug = SILI_D_VERBOSE;
 int sili_error_pmp_ports = 0;		/* bitmask containing ports to fail*/
 int sili_error_test_inv_p = 500;	/* 1/P(error) */
 int sili_error_restart_type = SILI_PREG_PCS_PORTINIT; /* or _DEVRESET */
-
-#ifdef SILI_ERROR_TEST
-#include <dev/rndvar.h>
-#endif
 
 struct cfdriver sili_cd = {
 	NULL, "sili", DV_DULL

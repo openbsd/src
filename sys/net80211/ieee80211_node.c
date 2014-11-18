@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.84 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.85 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -65,8 +65,6 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>
-
-#include <dev/rndvar.h>
 
 struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
 void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);

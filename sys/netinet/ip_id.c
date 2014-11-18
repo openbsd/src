@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_id.c,v 1.23 2011/03/31 10:36:42 jasper Exp $ */
+/*	$OpenBSD: ip_id.c,v 1.24 2014/11/18 02:37:31 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Theo de Raadt, Ryan McBride
@@ -26,7 +26,7 @@
  * be reused for at least 32768 calls.
  */
 #include <sys/param.h>
-#include <dev/rndvar.h>
+#include <sys/systm.h>
 
 static u_int16_t ip_shuffle[65536];
 static int isindex = 0;

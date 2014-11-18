@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.23 2014/08/19 16:13:25 miod Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.24 2014/11/18 02:37:30 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -61,8 +61,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <dev/rndvar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

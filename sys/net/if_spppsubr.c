@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.126 2014/10/08 20:28:27 sthen Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.127 2014/11/18 02:37:31 tedu Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -52,9 +52,6 @@
 #include <net/netisr.h>
 #include <net/if_types.h>
 #include <net/route.h>
-
-/* for arc4random() */
-#include <dev/rndvar.h>
 
 #include <sys/stdarg.h>
 

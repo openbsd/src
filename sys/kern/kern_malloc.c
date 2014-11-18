@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.124 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.125 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/rwlock.h>
-
-#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 

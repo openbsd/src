@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.41 2014/08/13 12:03:40 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.42 2014/11/18 02:37:31 tedu Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -50,9 +50,6 @@
 #include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-/* for arc4random() */
-#include <dev/rndvar.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

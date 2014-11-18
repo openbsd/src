@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.162 2014/11/15 10:55:47 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.163 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-#include <dev/rndvar.h>
 
 #include <sys/mount.h>
 #include <nfs/nfsproto.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.227 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.228 2014/11/18 02:37:31 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -50,9 +50,6 @@
 #include <net/if_types.h>
 #include <net/if_llc.h>
 #include <net/netisr.h>
-
-/* for arc4random() */
-#include <dev/rndvar.h>
 
 #ifdef INET
 #include <netinet/in.h>

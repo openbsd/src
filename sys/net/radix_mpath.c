@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.25 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.26 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <net/radix.h>
 #include <net/radix_mpath.h>
 #include <net/route.h>
-#include <dev/rndvar.h>
 
 #include <netinet/in.h>
 #include <netinet/ip_var.h>

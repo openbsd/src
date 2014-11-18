@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.114 2014/10/30 17:26:23 tedu Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.115 2014/11/18 02:37:30 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -54,7 +54,6 @@
 #include <scsi/scsi_disk.h>
 
 #include <dev/softraidvar.h>
-#include <dev/rndvar.h>
 
 /*
  * The per-I/O data that we need to preallocate. We cannot afford to allow I/O

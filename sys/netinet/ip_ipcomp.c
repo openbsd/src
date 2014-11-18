@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.36 2014/07/22 11:06:10 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.37 2014/11/18 02:37:31 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -36,8 +36,6 @@
 
 #include <net/if.h>
 #include <net/bpf.h>
-
-#include <dev/rndvar.h>
 
 #ifdef INET
 #include <netinet/in.h>

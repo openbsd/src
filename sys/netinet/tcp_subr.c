@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.137 2014/11/16 17:40:17 tedu Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.138 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
-#include <dev/rndvar.h>
 
 #ifdef INET6
 #include <netinet6/ip6protosw.h>

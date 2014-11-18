@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.8 2014/09/14 14:17:26 jsg Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.9 2014/11/18 02:37:31 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -24,8 +24,6 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/fusebuf.h>
-
-#include <dev/rndvar.h>
 
 #include "fusefs_node.h"
 #include "fusefs.h"

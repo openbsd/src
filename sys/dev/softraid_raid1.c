@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.58 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.59 2014/11/18 02:37:30 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -42,7 +42,6 @@
 #include <scsi/scsi_disk.h>
 
 #include <dev/softraidvar.h>
-#include <dev/rndvar.h>
 
 /* RAID 1 functions. */
 int	sr_raid1_create(struct sr_discipline *, struct bioc_createraid *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.118 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.119 2014/11/18 02:37:30 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -56,7 +56,6 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#include <dev/rndvar.h>
 #include <crypto/arc4.h>
 
 #include <dev/pci/if_iwireg.h>

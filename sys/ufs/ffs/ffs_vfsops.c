@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.143 2014/07/14 08:11:34 beck Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.144 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -52,8 +52,6 @@
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/specdev.h>
-
-#include <dev/rndvar.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>

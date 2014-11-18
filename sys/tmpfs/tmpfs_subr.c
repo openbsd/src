@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.7 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.8 2014/11/18 02:37:31 tedu Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $")
 #include <sys/vnode.h>
 
 #include <uvm/uvm_aobj.h>
-
-#include <dev/rndvar.h>
 
 #include <tmpfs/tmpfs.h>
 #include <tmpfs/tmpfs_vnops.h>
