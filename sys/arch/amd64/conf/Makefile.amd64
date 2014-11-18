@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.62 2014/11/17 23:54:32 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.63 2014/11/18 01:11:13 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -42,7 +42,7 @@ CMACHFLAGS+=	-Wa,-n
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LDSCRIPT=	${_machdir}/conf/kern.ldscript
+LDSCRIPT=	${_machdir}/conf/ld.script
 LINKFLAGS=	-T ${LDSCRIPT} -X --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
