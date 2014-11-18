@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.31 2014/07/13 23:59:58 tedu Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.32 2014/11/18 05:23:14 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -51,9 +51,6 @@
 #include <dev/systrace.h>
 #endif
 
-#if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
-#define FDSCRIPTS		/* Need this for safe set-id scripts. */
-#endif
 
 /*
  * exec_script_makecmds(): Check if it's an executable shell script.
@@ -75,11 +72,9 @@ exec_script_makecmds(struct proc *p, struct exec_package *epp)
 	char *cp, *shellname, *shellarg, *oldpnbuf;
 	char **shellargp = NULL, **tmpsap;
 	struct vnode *scriptvp;
-#ifdef SETUIDSCRIPTS
 	uid_t script_uid = -1;
 	gid_t script_gid = -1;
 	u_short script_sbits;
-#endif
 
 	/*
 	 * remember the old vp and pnbuf for later, so we can restore
@@ -152,7 +147,6 @@ exec_script_makecmds(struct proc *p, struct exec_package *epp)
 	*cp++ = '\0';
 
 check_shell:
-#ifdef SETUIDSCRIPTS
 	/*
 	 * MNT_NOSUID and STRC are already taken care of by check_exec,
 	 * so we don't need to worry about them now or later.
@@ -162,8 +156,6 @@ check_shell:
 		script_uid = epp->ep_vap->va_uid;
 		script_gid = epp->ep_vap->va_gid;
 	}
-#endif
-#ifdef FDSCRIPTS
 	/*
 	 * if the script isn't readable, or it's set-id, then we've
 	 * gotta supply a "/dev/fd/..." for the shell to read.
@@ -174,11 +166,7 @@ check_shell:
 	vn_lock(scriptvp, LK_EXCLUSIVE|LK_RETRY, p);
 	error = VOP_ACCESS(scriptvp, VREAD, p->p_ucred, p);
 	VOP_UNLOCK(scriptvp, 0, p);
-	if (error == EACCES
-#ifdef SETUIDSCRIPTS
-	    || script_sbits
-#endif
-	    ) {
+	if (error == EACCES || script_sbits) {
 		struct file *fp;
 
 #ifdef DIAGNOSTIC
@@ -199,7 +187,6 @@ check_shell:
 		fp->f_flag = FREAD;
 		FILE_SET_MATURE(fp, p);
 	}
-#endif
 
 	/* set up the parameters for the recursive check_exec() call */
 	epp->ep_ndp->ni_dirfd = AT_FDCWD;
@@ -217,9 +204,7 @@ check_shell:
 		strlcpy(*tmpsap++, shellarg, shellarglen + 1);
 	}
 	*tmpsap = malloc(MAXPATHLEN, M_EXEC, M_WAITOK);
-#ifdef FDSCRIPTS
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
-#endif
 		/* normally can't fail, but check for it if diagnostic */
 #if NSYSTRACE > 0
 		if (ISSET(p->p_flag, P_SYSTRACE)) {
@@ -235,20 +220,15 @@ check_shell:
 				error = copystr(epp->ep_name, *tmpsap++,
 				    MAXPATHLEN, NULL);
 		} else
+#endif
 			error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
 			    NULL);
-#else
-		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
-		    (size_t *)0);
-#endif
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			panic("exec_script: copyinstr couldn't fail");
 #endif
-#ifdef FDSCRIPTS
 	} else
 		snprintf(*tmpsap++, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
-#endif
 	*tmpsap = NULL;
 
 	/*
@@ -275,7 +255,6 @@ check_shell:
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
-#ifdef SETUIDSCRIPTS
 		/*
 		 * set things up so that set-id scripts will be
 		 * handled appropriately
@@ -285,15 +264,12 @@ check_shell:
 			epp->ep_vap->va_uid = script_uid;
 		if (script_sbits & VSGID)
 			epp->ep_vap->va_gid = script_gid;
-#endif
 		return (0);
 	}
 
 	/* XXX oldpnbuf not set for "goto fail" path */
 	epp->ep_ndp->ni_cnd.cn_pnbuf = oldpnbuf;
-#ifdef FDSCRIPTS
 fail:
-#endif
 	/* note that we've clobbered the header */
 	epp->ep_flags |= EXEC_DESTR;
 
