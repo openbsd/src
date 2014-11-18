@@ -154,6 +154,10 @@ case "$openbsd_distribution" in
 		useshrplib=true
 		libperl=`. $src/shlib_version; echo libperl.so.${major}.${minor}`
 	fi
+
+	# Don't support DBM not in base
+	i_gdbm='undef'
+	i_dbm='undef'
 	;;
 esac
 
