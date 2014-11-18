@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.3 2014/11/18 05:30:07 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -87,27 +87,31 @@ gost2814789_ctl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	}
 }
 
-static int gost2814789_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-	const unsigned char *iv, int enc)
+static int
+gost2814789_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
 {
 	EVP_GOST2814789_CTX *c = ctx->cipher_data;
 
 	return Gost2814789_set_key(&c->ks, key, ctx->key_len * 8);
 }
 
-int gost2814789_set_asn1_params(EVP_CIPHER_CTX * ctx, ASN1_TYPE * params)
+int
+gost2814789_set_asn1_params(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 {
 	int len = 0;
 	unsigned char *buf = NULL;
 	unsigned char *p = NULL;
 	EVP_GOST2814789_CTX *c = ctx->cipher_data;
-	GOST_CIPHER_PARAMS *gcp = GOST_CIPHER_PARAMS_new();
 	ASN1_OCTET_STRING *os = NULL;
-	if (!gcp) {
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);
+	GOST_CIPHER_PARAMS *gcp = GOST_CIPHER_PARAMS_new();
+
+	if (gcp == NULL) {
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS,
+		    ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!ASN1_OCTET_STRING_set(gcp->iv, ctx->iv, ctx->cipher->iv_len)) {
+	if (ASN1_OCTET_STRING_set(gcp->iv, ctx->iv, ctx->cipher->iv_len) == 0) {
 		GOST_CIPHER_PARAMS_free(gcp);
 		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_ASN1_LIB);
 		return 0;
@@ -117,17 +121,24 @@ int gost2814789_set_asn1_params(EVP_CIPHER_CTX * ctx, ASN1_TYPE * params)
 
 	len = i2d_GOST_CIPHER_PARAMS(gcp, NULL);
 	p = buf = malloc(len);
-	if (!buf) {
+	if (buf == NULL) {
 		GOST_CIPHER_PARAMS_free(gcp);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS,
+		    ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	i2d_GOST_CIPHER_PARAMS(gcp, &p);
 	GOST_CIPHER_PARAMS_free(gcp);
 
 	os = ASN1_OCTET_STRING_new();
-
-	if (!os || !ASN1_OCTET_STRING_set(os, buf, len)) {
+	if (os == NULL) {
+		free(buf);
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS,
+		    ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	if (ASN1_OCTET_STRING_set(os, buf, len) == 0) {
+		ASN1_OCTET_STRING_free(os);
 		free(buf);
 		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_ASN1_LIB);
 		return 0;
