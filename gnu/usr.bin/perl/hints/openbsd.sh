@@ -157,7 +157,6 @@ case "$openbsd_distribution" in
 
 	# Don't support DBM not in base
 	i_gdbm='undef'
-	i_dbm='undef'
 	;;
 esac
 
