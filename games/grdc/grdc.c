@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.17 2014/11/18 05:09:38 schwarze Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.18 2014/11/18 20:09:45 tedu Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -12,6 +12,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <curses.h>
 #include <limits.h>
 #include <signal.h>
@@ -33,18 +34,25 @@ short disp[11] = {
 long old[6], next[6], new[6], mask;
 
 volatile sig_atomic_t sigtermed = 0;
+volatile sig_atomic_t sigwinched = 0;
 
 int hascolor = 0;
 
 void set(int, int);
 void standt(int);
-void movto(int, int);
+void getwinsize(int *, int *);
 void usage(void);
 
 void
 sighndl(int signo)
 {
 	sigtermed=signo;
+}
+
+void
+sigresize(int signo)
+{
+	sigwinched = signo;
 }
 
 int
@@ -60,8 +68,9 @@ main(int argc, char *argv[])
 	long scroldelay = 50000000;
 	int xbase;
 	int ybase;
+	int wintoosmall;
 
-	scrol = 0;
+	scrol = wintoosmall = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1)
 		switch (i) {
 		case 's':
@@ -86,17 +95,12 @@ main(int argc, char *argv[])
 	}
 
 	initscr();
-	if (COLS < XLENGTH + 2 || LINES < YDEPTH + 2 ) {
-		endwin();
-		errx(1, "screen too small");
-	}
-
-	xbase = (COLS - XLENGTH) / 2;
-	ybase = (LINES - YDEPTH) / 2;
 
 	signal(SIGINT,sighndl);
 	signal(SIGTERM,sighndl);
 	signal(SIGHUP,sighndl);
+	signal(SIGWINCH, sigresize);
+	signal(SIGCONT, sigresize);	/* for resizes during suspend */
 
 	cbreak();
 	noecho();
@@ -112,30 +116,48 @@ main(int argc, char *argv[])
 	}
 
 	curs_set(0);
-	clear();
-	refresh();
-	if(hascolor) {
-		attrset(COLOR_PAIR(3));
+	sigwinched = 1;	/* force initial sizing */
 
-		mvaddch(ybase - 1,  xbase - 1, ACS_ULCORNER);
-		hline(ACS_HLINE, XLENGTH);
-		mvaddch(ybase - 1,  xbase + XLENGTH, ACS_URCORNER);
-
-		mvaddch(ybase + YDEPTH,  xbase - 1, ACS_LLCORNER);
-		hline(ACS_HLINE, XLENGTH);
-		mvaddch(ybase + YDEPTH,  xbase + XLENGTH, ACS_LRCORNER);
-
-		move(ybase,  xbase - 1);
-		vline(ACS_VLINE, YDEPTH);
-
-		move(ybase,  xbase + XLENGTH);
-		vline(ACS_VLINE, YDEPTH);
-
-		attrset(COLOR_PAIR(2));
-	}
 	gettimeofday(&nowtv, NULL);
 	TIMEVAL_TO_TIMESPEC(&nowtv, &now);
 	do {
+		if (sigwinched) {
+			sigwinched = 0;
+			wintoosmall = 0;
+			getwinsize(&i, &j);
+			if (i >= XLENGTH + 2)
+				xbase = (i - XLENGTH) / 2;
+			else
+				wintoosmall = 1;
+			if (j >= YDEPTH + 2)
+				ybase = (j - YDEPTH) / 2;
+			else
+				wintoosmall = 1;
+			resizeterm(j, i);
+			clear();
+			refresh();
+			if (hascolor && !wintoosmall) {
+				attrset(COLOR_PAIR(3));
+
+				mvaddch(ybase - 1,  xbase - 1, ACS_ULCORNER);
+				hline(ACS_HLINE, XLENGTH);
+				mvaddch(ybase - 1,  xbase + XLENGTH, ACS_URCORNER);
+
+				mvaddch(ybase + YDEPTH,  xbase - 1, ACS_LLCORNER);
+				hline(ACS_HLINE, XLENGTH);
+				mvaddch(ybase + YDEPTH,  xbase + XLENGTH, ACS_LRCORNER);
+
+				move(ybase,  xbase - 1);
+				vline(ACS_VLINE, YDEPTH);
+
+				move(ybase,  xbase + XLENGTH);
+				vline(ACS_VLINE, YDEPTH);
+
+				attrset(COLOR_PAIR(2));
+			}
+			for (k = 0; k < 6; k++)
+				old[k] = 0;
+		}
 		mask = 0;
 		tm = localtime(&now.tv_sec);
 		set(tm->tm_sec%10, 0);
@@ -146,7 +168,11 @@ main(int argc, char *argv[])
 		set(tm->tm_hour/10, 24);
 		set(10, 7);
 		set(10, 17);
-		for(k=0; k<6; k++) {
+		if (wintoosmall) {
+			move(0, 0);
+			printw("%02d:%02d:%02d", tm->tm_hour, tm->tm_min,
+			    tm->tm_sec);
+		} else for (k = 0; k < 6; k++) {
 			if(scrol) {
 				for(i=0; i<5; i++)
 					new[i] = (new[i]&~mask) | (new[i+1]&mask);
@@ -161,7 +187,7 @@ main(int argc, char *argv[])
 						for(j=0,t=1<<26; t; t>>=1,j++) {
 							if(a&t) {
 								if(!(a&(t<<1))) {
-									movto(ybase + i+1, xbase + 2*(j+1));
+									move(ybase + i+1, xbase + 2*(j+1));
 								}
 								addstr("  ");
 							}
@@ -186,14 +212,14 @@ main(int argc, char *argv[])
 					nanosleep(&delay, NULL);
 			}
 		}
-		movto(6, 0);
+		move(6, 0);
 		refresh();
 		gettimeofday(&nowtv, NULL);
 		TIMEVAL_TO_TIMESPEC(&nowtv, &now);
 		delay.tv_sec = 0;
 		delay.tv_nsec = (1000000000 - now.tv_nsec);
 		/* want scrolling to END on the second */
-		if (scrol)
+		if (scrol && !wintoosmall)
 			delay.tv_nsec -= 5 * scroldelay;
 		nanosleep(&delay, NULL);
 		now.tv_sec++;
@@ -247,9 +273,17 @@ standt(int on)
 }
 
 void
-movto(int line, int col)
+getwinsize(int *wid, int *ht)
 {
-	move(line, col);
+	struct winsize size;
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) < 0) {
+		*wid = 80;     /* Default */
+		*ht = 24;
+	} else {
+		*wid = size.ws_col;
+		*ht = size.ws_row;
+	}
 }
 
 void
