@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.16 2014/11/17 22:14:25 schwarze Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.17 2014/11/18 05:09:38 schwarze Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -20,8 +20,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#define YBASE	10
-#define XBASE	10
 #define XLENGTH 58
 #define YDEPTH  7
 
@@ -60,6 +58,8 @@ main(int argc, char *argv[])
 	struct timespec delay;
 	const char *errstr;
 	long scroldelay = 50000000;
+	int xbase;
+	int ybase;
 
 	scrol = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1)
@@ -86,10 +86,13 @@ main(int argc, char *argv[])
 	}
 
 	initscr();
-	if (COLS < 67 || LINES < 17) {
+	if (COLS < XLENGTH + 2 || LINES < YDEPTH + 2 ) {
 		endwin();
 		errx(1, "screen too small");
 	}
+
+	xbase = (COLS - XLENGTH) / 2;
+	ybase = (LINES - YDEPTH) / 2;
 
 	signal(SIGINT,sighndl);
 	signal(SIGTERM,sighndl);
@@ -114,18 +117,18 @@ main(int argc, char *argv[])
 	if(hascolor) {
 		attrset(COLOR_PAIR(3));
 
-		mvaddch(YBASE - 2,  XBASE - 3, ACS_ULCORNER);
+		mvaddch(ybase - 1,  xbase - 1, ACS_ULCORNER);
 		hline(ACS_HLINE, XLENGTH);
-		mvaddch(YBASE - 2,  XBASE - 2 + XLENGTH, ACS_URCORNER);
+		mvaddch(ybase - 1,  xbase + XLENGTH, ACS_URCORNER);
 
-		mvaddch(YBASE + YDEPTH - 1,  XBASE - 3, ACS_LLCORNER);
+		mvaddch(ybase + YDEPTH,  xbase - 1, ACS_LLCORNER);
 		hline(ACS_HLINE, XLENGTH);
-		mvaddch(YBASE + YDEPTH - 1,  XBASE - 2 + XLENGTH, ACS_LRCORNER);
+		mvaddch(ybase + YDEPTH,  xbase + XLENGTH, ACS_LRCORNER);
 
-		move(YBASE - 1,  XBASE - 3);
+		move(ybase,  xbase - 1);
 		vline(ACS_VLINE, YDEPTH);
 
-		move(YBASE - 1,  XBASE - 2 + XLENGTH);
+		move(ybase,  xbase + XLENGTH);
 		vline(ACS_VLINE, YDEPTH);
 
 		attrset(COLOR_PAIR(2));
@@ -158,7 +161,7 @@ main(int argc, char *argv[])
 						for(j=0,t=1<<26; t; t>>=1,j++) {
 							if(a&t) {
 								if(!(a&(t<<1))) {
-									movto(YBASE + i, XBASE + 2*j);
+									movto(ybase + i+1, xbase + 2*(j+1));
 								}
 								addstr("  ");
 							}
