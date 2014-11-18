@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.42 2014/11/17 10:58:09 tobias Exp $	*/
+/*	$OpenBSD: pch.c,v 1.43 2014/11/18 17:03:35 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -344,9 +344,9 @@ intuit_diff_type(void)
 				ok_to_create_file = true;
 			/*
 			 * If this is a new context diff the character just
-			 * before the newline is a '*'.
+			 * at the end of the line is a '*'.
 			 */
-			while (*s != '\n')
+			while (*s && *s != '\n')
 				s++;
 			p_indent = indent;
 			p_start = previous_line;
