@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.103 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: systm.h,v 1.104 2014/11/18 18:34:50 miod Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -215,7 +215,8 @@ int	copyin(const void *, void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,2,3)));
 int	copyout(const void *, void *, size_t);
 
-void arc4random_buf(void *, size_t);
+void	arc4random_buf(void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,2)));
 u_int32_t arc4random(void);
 u_int32_t arc4random_uniform(u_int32_t);
 
