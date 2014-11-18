@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.114 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.115 2014/11/18 01:59:58 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <sys/poll.h>
+#include <sys/unistd.h>
 
 #include <sys/namei.h>
 
