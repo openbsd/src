@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.798 2014/11/11 21:31:29 rpe Exp $
+#	$OpenBSD: install.sub,v 1.799 2014/11/18 19:00:16 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1306,6 +1306,10 @@ install_files() {
 		$auto && exit 1
 		return
 	fi
+
+	# XXX Delete this chunk after 5.8 (not a supported upgrade path)
+	# XXX Undo old configurations where /var/tmp is a directory
+	[[ $MODE == upgrade ]] && rm -rf /mnt/var/tmp
 
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
