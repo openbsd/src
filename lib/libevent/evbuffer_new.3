@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evbuffer_new.3,v 1.4 2014/11/19 23:55:54 dlg Exp $
+.\"	$OpenBSD: evbuffer_new.3,v 1.5 2014/11/19 23:57:23 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -172,7 +172,7 @@ in the evbuffer
 .Fn evbuffer_readline
 reads and drains a single line from the evbuffer
 .Fa buf .
-A line is delimited by "\\n", "\\r", "\\r\\n", or "\\n\\r".
+A line is delimited by "\en", "\er", "\er\en", or "\en\er".
 It is the responsibility of the caller to free the returned line with
 .Xr free 3 .
 .Pp
