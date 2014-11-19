@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.92 2014/10/08 04:52:54 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.93 2014/11/19 18:04:54 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -83,6 +83,11 @@ struct nlist vnodenl[] = {
 
 struct nlist *globalnl;
 
+struct e_vnode {
+	struct vnode *vptr;
+	struct vnode vnode;
+};
+
 int	usenumflag;
 int	totalflag;
 int	kflag;
@@ -109,8 +114,6 @@ struct mount *
 	getmnt(struct mount *);
 struct e_vnode *
 	kinfo_vnodes(int *);
-struct e_vnode *
-	loadvnodes(int *);
 void	mount_print(struct mount *);
 void	nfs_header(void);
 int	nfs_print(struct vnode *);
@@ -334,7 +337,7 @@ vnodemode(void)
 
 	globalnl = vnodenl;
 
-	e_vnodebase = loadvnodes(&numvnodes);
+	e_vnodebase = kinfo_vnodes(&numvnodes);
 	if (totalflag) {
 		(void)printf("%7d vnodes\n", numvnodes);
 		return;
@@ -777,34 +780,6 @@ mount_print(struct mount *mp)
 	(void)printf("\n");
 }
 
-struct e_vnode *
-loadvnodes(int *avnodes)
-{
-	int mib[2];
-	size_t copysize;
-	struct e_vnode *vnodebase;
-
-	if (memf != NULL) {
-		/*
-		 * do it by hand
-		 */
-		return (kinfo_vnodes(avnodes));
-	}
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_VNODE;
-	if (sysctl(mib, 2, NULL, &copysize, NULL, 0) == -1)
-		err(1, "sysctl: KERN_VNODE");
-	if ((vnodebase = malloc(copysize)) == NULL)
-		err(1, "malloc: vnode table");
-	if (sysctl(mib, 2, vnodebase, &copysize, NULL, 0) == -1)
-		err(1, "sysctl: KERN_VNODE");
-	if (copysize % sizeof(struct e_vnode))
-		errx(1, "vnode size mismatch");
-	*avnodes = copysize / sizeof(struct e_vnode);
-
-	return (vnodebase);
-}
-
 /*
  * simulate what a running kernel does in kinfo_vnode
  */
@@ -834,7 +809,8 @@ kinfo_vnodes(int *avnodes)
 	    (sizeof(struct vnode *) + sizeof(struct vnode));
 	KGET(V_MOUNTLIST, kvm_mountlist);
 	num = 0;
-	TAILQ_FOREACH(mp, &kvm_mountlist, mnt_list) {
+	for (mp = TAILQ_FIRST(&kvm_mountlist); mp != NULL;
+	    mp = TAILQ_NEXT(&mount, mnt_list)) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = LIST_FIRST(&mount.mnt_vnodelist);
 		    vp != NULL; vp = LIST_NEXT(&vnode, v_mntvnodes)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.221 2014/11/14 23:26:48 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.222 2014/11/19 18:04:54 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1289,70 +1289,6 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return(ret);
 	}
 	return (EOPNOTSUPP);
-}
-
-int kinfo_vdebug = 1;
-#define KINFO_VNODESLOP	10
-/*
- * Dump vnode list (via sysctl).
- * Copyout address of vnode followed by vnode.
- */
-/* ARGSUSED */
-int
-sysctl_vnode(char *where, size_t *sizep, struct proc *p)
-{
-	struct mount *mp, *nmp;
-	struct vnode *vp, *nvp;
-	char *bp = where, *savebp;
-	char *ewhere;
-	int error;
-
-	if (where == NULL) {
-		*sizep = (numvnodes + KINFO_VNODESLOP) * sizeof(struct e_vnode);
-		return (0);
-	}
-	ewhere = where + *sizep;
-
-	TAILQ_FOREACH_SAFE(mp, &mountlist, mnt_list, nmp) {
-		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
-			continue;
-		savebp = bp;
-again:
-		LIST_FOREACH_SAFE(vp, &mp->mnt_vnodelist, v_mntvnodes, nvp) {
-			/*
-			 * Check that the vp is still associated with
-			 * this filesystem.  RACE: could have been
-			 * recycled onto the same filesystem.
-			 */
-			if (vp->v_mount != mp) {
-				if (kinfo_vdebug)
-					printf("kinfo: vp changed\n");
-				bp = savebp;
-				goto again;
-			}
-			if (bp + sizeof(struct e_vnode) > ewhere) {
-				*sizep = bp - where;
-				vfs_unbusy(mp);
-				return (ENOMEM);
-			}
-			if ((error = copyout(&vp,
-			    &((struct e_vnode *)bp)->vptr,
-			    sizeof(struct vnode *))) ||
-			   (error = copyout(vp,
-			    &((struct e_vnode *)bp)->vnode,
-			    sizeof(struct vnode)))) {
-				vfs_unbusy(mp);
-				return (error);
-			}
-			bp += sizeof(struct e_vnode);
-		}
-
-		vfs_unbusy(mp);
-	}
-
-	*sizep = bp - where;
-
-	return (0);
 }
 
 /*

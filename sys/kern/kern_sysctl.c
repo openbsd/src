@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.270 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.271 2014/11/19 18:04:54 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -355,8 +355,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		TIMESPEC_TO_TIMEVAL(&bt, &boottime);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
 	  }
-	case KERN_VNODE:
-		return (sysctl_vnode(oldp, oldlenp, p));
 #ifndef SMALL_KERNEL
 	case KERN_PROC:
 		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));

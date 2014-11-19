@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.242 2014/08/27 14:04:15 florian Exp $
+.\"	$OpenBSD: sysctl.3,v 1.243 2014/11/19 18:04:54 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2014 $
+.Dd $Mdocdate: November 19 2014 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -463,7 +463,6 @@ information.
 .It Dv KERN_TTYCOUNT Ta "integer" Ta "no"
 .It Dv KERN_USERMOUNT Ta "integer" Ta "yes"
 .It Dv KERN_VERSION Ta "string" Ta "no"
-.It Dv KERN_VNODE Ta "struct e_vnode" Ta "no"
 .It Dv KERN_WATCHDOG Ta "node" Ta "not applicable"
 .El
 .Bl -tag -width "123456"
@@ -1033,16 +1032,6 @@ requests.
 The default value is 0.
 .It Dv KERN_VERSION
 The system version string.
-.It Dv KERN_VNODE
-Return the entire vnode table.
-Note, the vnode table is not necessarily a consistent snapshot of
-the system.
-The returned data consists of an array whose size depends on the
-current number of such objects in the system.
-Each element of the array contains the kernel address of a vnode
-.Pq Li struct vnode *
-followed by the vnode itself
-.Pq Li struct vnode .
 .It Dv KERN_WATCHDOG
 Return information on hardware watchdog timers.
 If the kernel does not support a hardware watchdog timer,
