@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evbuffer_new.3,v 1.1 2014/11/19 23:50:22 dlg Exp $
+.\"	$OpenBSD: evbuffer_new.3,v 1.2 2014/11/19 23:53:23 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -40,7 +40,11 @@
 .Ft void
 .Fn "evbuffer_free" "struct evbuffer *buf"
 .Ft void
-.Fn "evbuffer_setcb" "struct evbufbuffer *buf" "void (*cb)(struct evbuffer *, size_t, size_t, void *)" "void *cbarg"
+.Fo evbuffer_setcb
+.Fa "struct evbufbuffer *buf"
+.Fa "void (*cb)(struct evbuffer *, size_t, size_t, void *)"
+.Fa "void *cbarg"
+.Fc
 .Ft int
 .Fn "evbuffer_expand" "struct evbuffer *buf" "size_t datlen"
 .Ft int
@@ -64,7 +68,11 @@
 .Ft "char *"
 .Fn "evbuffer_readline" "struct evbuffer *buf"
 .Ft "char *"
-.Fn "evbuffer_readln" "struct evbuffer *buf" "size_t *read_out" "enum evbuffer_eol_style eol_style"
+.Fo evbuffer_readln
+.Fa "struct evbuffer *buf"
+.Fa "size_t *read_out"
+.Fa "enum evbuffer_eol_style eol_style"
+.Fc
 .Sh DESCRIPTION
 The evbuffer API provides an implementation of buffering for use with
 libevent.
