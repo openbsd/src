@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.288 2014/08/26 11:01:21 mikeb Exp $ */
+/* $OpenBSD: if_em.c,v 1.289 2014/11/19 23:47:22 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -914,11 +914,9 @@ em_intr(void *arg)
 
 	/* Link status change */
 	if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
-		timeout_del(&sc->timer_handle);
 		sc->hw.get_link_status = 1;
 		em_check_for_link(&sc->hw);
 		em_update_link_status(sc);
-		timeout_add_sec(&sc->timer_handle, 1); 
 	}
 
 	if (reg_icr & E1000_ICR_RXO) {
@@ -1480,8 +1478,6 @@ em_local_timer(void *arg)
 
 	s = splnet();
 
-	em_check_for_link(&sc->hw);
-	em_update_link_status(sc);
 #ifndef SMALL_KERNEL
 	em_update_stats_counters(sc);
 #ifdef EM_DEBUG
@@ -3200,21 +3196,36 @@ em_fill_descriptors(u_int64_t address, u_int32_t length,
 void
 em_update_stats_counters(struct em_softc *sc)
 {
-	struct ifnet   *ifp;
+	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
+	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
+	sc->stats.mpc += E1000_READ_REG(&sc->hw, MPC);
+	sc->stats.ecol += E1000_READ_REG(&sc->hw, ECOL);
+
+	sc->stats.latecol += E1000_READ_REG(&sc->hw, LATECOL);
+	sc->stats.colc += E1000_READ_REG(&sc->hw, COLC);
+
+	sc->stats.ruc += E1000_READ_REG(&sc->hw, RUC);
+	sc->stats.roc += E1000_READ_REG(&sc->hw, ROC);
+
+	if (sc->hw.mac_type >= em_82543) {
+		sc->stats.algnerrc += 
+		E1000_READ_REG(&sc->hw, ALGNERRC);
+		sc->stats.rxerrc += 
+		E1000_READ_REG(&sc->hw, RXERRC);
+		sc->stats.cexterr += 
+		E1000_READ_REG(&sc->hw, CEXTERR);
+	}
+
+#ifdef EM_DEBUG
 	if (sc->hw.media_type == em_media_type_copper ||
 	    (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU)) {
 		sc->stats.symerrs += E1000_READ_REG(&sc->hw, SYMERRS);
 		sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
 	}
-	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
-	sc->stats.mpc += E1000_READ_REG(&sc->hw, MPC);
 	sc->stats.scc += E1000_READ_REG(&sc->hw, SCC);
-	sc->stats.ecol += E1000_READ_REG(&sc->hw, ECOL);
 
 	sc->stats.mcc += E1000_READ_REG(&sc->hw, MCC);
-	sc->stats.latecol += E1000_READ_REG(&sc->hw, LATECOL);
-	sc->stats.colc += E1000_READ_REG(&sc->hw, COLC);
 	sc->stats.dc += E1000_READ_REG(&sc->hw, DC);
 	sc->stats.rlec += E1000_READ_REG(&sc->hw, RLEC);
 	sc->stats.xonrxc += E1000_READ_REG(&sc->hw, XONRXC);
@@ -3242,9 +3253,7 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.gotch += E1000_READ_REG(&sc->hw, GOTCH);
 
 	sc->stats.rnbc += E1000_READ_REG(&sc->hw, RNBC);
-	sc->stats.ruc += E1000_READ_REG(&sc->hw, RUC);
 	sc->stats.rfc += E1000_READ_REG(&sc->hw, RFC);
-	sc->stats.roc += E1000_READ_REG(&sc->hw, ROC);
 	sc->stats.rjc += E1000_READ_REG(&sc->hw, RJC);
 
 	sc->stats.torl += E1000_READ_REG(&sc->hw, TORL);
@@ -3264,20 +3273,14 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.bptc += E1000_READ_REG(&sc->hw, BPTC);
 
 	if (sc->hw.mac_type >= em_82543) {
-		sc->stats.algnerrc += 
-		E1000_READ_REG(&sc->hw, ALGNERRC);
-		sc->stats.rxerrc += 
-		E1000_READ_REG(&sc->hw, RXERRC);
 		sc->stats.tncrs += 
 		E1000_READ_REG(&sc->hw, TNCRS);
-		sc->stats.cexterr += 
-		E1000_READ_REG(&sc->hw, CEXTERR);
 		sc->stats.tsctc += 
 		E1000_READ_REG(&sc->hw, TSCTC);
 		sc->stats.tsctfc += 
 		E1000_READ_REG(&sc->hw, TSCTFC);
 	}
-	ifp = &sc->interface_data.ac_if;
+#endif
 
 	/* Fill out the OS statistics structure */
 	ifp->if_collisions = sc->stats.colc;
