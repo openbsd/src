@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.26 2014/07/12 14:15:04 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.27 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -181,14 +181,15 @@ control_accept(int listenfd, short event, void *arg)
 
 	imsg_init(&c->iev.ibuf, connfd);
 	if (cs->cs_agentx) {
-		c->data = snmp_agentx_alloc(c->iev.ibuf.fd);
-		if (c->data == NULL) {
+		c->handle = snmp_agentx_alloc(c->iev.ibuf.fd);
+		if (c->handle == NULL) {
 			free(c);
 			log_warn("%s: agentx", __func__);
 			return;
 		}
 		c->flags |= CTL_CONN_LOCKED;
 		c->iev.handler = control_dispatch_agentx;
+		TAILQ_INIT(&c->oids);
 	} else
 		c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
@@ -302,8 +303,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 
 			/* enable AgentX socket */
-			c->data = snmp_agentx_alloc(c->iev.ibuf.fd);
-			if (c->data == NULL) {
+			c->handle = snmp_agentx_alloc(c->iev.ibuf.fd);
+			if (c->handle == NULL) {
 				log_debug("control_dispatch_imsg: "
 				    "could not allocate restricted socket");
 				imsg_free(&imsg);
@@ -342,12 +343,25 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	imsg_event_add(&c->iev);
 }
 
+static void
+purge_registered_oids(struct oidlist *oids)
+{
+	struct oid	*oid;
+
+	while ((oid = TAILQ_FIRST(oids)) != NULL) {
+		if (!(oid->o_flags & OID_REGISTERED))
+			fatalx("attempting to unregister a static mib");
+		smi_delete(oid);
+		TAILQ_REMOVE(oids, oid, o_list);
+	}
+}
+
 /* ARGSUSED */
 void
 control_dispatch_agentx(int fd, short event, void *arg)
 {
 	struct ctl_conn			*c = arg;
-	struct agentx_handle		*h = c->data;
+	struct agentx_handle		*h = c->handle;
 	struct agentx_pdu		*pdu;
 	struct timeval			 tv;
 	struct agentx_open_timeout	 to;
@@ -437,12 +451,145 @@ control_dispatch_agentx(int fd, short event, void *arg)
 			/* no processing, just an empty response */
 			break;
 
-		/* unimplemented */
+		case AGENTX_REGISTER: {
+			struct agentx_register_hdr	 rhdr;
+			struct oidlist			 oids;
+			struct oid			*miboid;
+			uint32_t			 ubound = 0;
+
+			TAILQ_INIT(&oids);
+
+			if (snmp_agentx_read_raw(pdu,
+			    &rhdr, sizeof(rhdr)) == -1 ||
+			    snmp_agentx_read_oid(pdu,
+			    (struct snmp_oid *)&oid) == -1) {
+				error = AGENTX_ERR_PARSE_ERROR;
+				break;
+			}
+
+			do {
+				if ((miboid = calloc(1, sizeof(*miboid))) == NULL) {
+					purge_registered_oids(&oids);
+					error = AGENTX_ERR_PARSE_ERROR;
+					goto dodone;
+				}
+				bcopy(&oid, &miboid->o_id, sizeof(oid));
+				miboid->o_flags = OID_RD|OID_WR|OID_REGISTERED;
+				miboid->o_session = c;
+				if (smi_insert(miboid) == -1) {
+					purge_registered_oids(&oids);
+					error = AGENTX_ERR_DUPLICATE_REGISTRATION;
+					goto dodone;
+				}
+				TAILQ_INSERT_TAIL(&oids, miboid, o_list);
+			} while (++oid.bo_id[rhdr.subrange] <= ubound);
+
+			while ((miboid = TAILQ_FIRST(&oids)) != NULL) {
+				TAILQ_REMOVE(&oids, miboid, o_list);
+				TAILQ_INSERT_TAIL(&c->oids, miboid, o_list);
+			}
+ dodone:
+			break;
+		}
+
+		case AGENTX_UNREGISTER: {
+			struct agentx_unregister_hdr	 uhdr;
+			struct oid			*miboid;
+			uint32_t			 ubound = 0;
+
+			if (snmp_agentx_read_raw(pdu,
+			    &uhdr, sizeof(uhdr)) == -1 ||
+			    snmp_agentx_read_oid(pdu,
+			    (struct snmp_oid *)&oid) == -1) {
+				error = AGENTX_ERR_PARSE_ERROR;
+				break;
+			}
+
+			do {
+				if ((miboid = smi_find((struct oid *)&oid)) == NULL) {
+					log_warnx("attempting to remove unregistered MIB");
+					continue;
+				}
+				if (miboid->o_session != c) {
+					log_warnx("attempting to remove MIB registered by other session");
+					continue;
+				}
+				smi_delete(miboid);
+			} while (++oid.bo_id[uhdr.subrange] <= ubound);
+			break;
+		}
+
+		case AGENTX_RESPONSE: {
+			struct snmp_message		*msg = pdu->request->cookie;
+			struct agentx_response_data	 resp;
+			struct agentx_varbind_hdr	 vbhdr;
+			struct ber_element		**elm, **iter;
+
+			if (snmp_agentx_read_response(pdu, &resp) == -1) {
+				msg->sm_error = SNMP_ERROR_GENERR;
+				goto dispatch;
+			}
+
+			switch (resp.error) {
+			case AGENTX_ERR_NONE:
+				break;
+
+			/* per RFC, resp.error may be an SNMP error value */
+			case SNMP_ERROR_TOOBIG:
+			case SNMP_ERROR_NOSUCHNAME:
+			case SNMP_ERROR_BADVALUE:
+			case SNMP_ERROR_READONLY:
+			case SNMP_ERROR_GENERR:
+			case SNMP_ERROR_NOACCESS:
+			case SNMP_ERROR_WRONGTYPE:
+			case SNMP_ERROR_WRONGLENGTH:
+			case SNMP_ERROR_WRONGENC:
+			case SNMP_ERROR_WRONGVALUE:
+			case SNMP_ERROR_NOCREATION:
+			case SNMP_ERROR_INCONVALUE:
+			case SNMP_ERROR_RESUNAVAIL:
+			case SNMP_ERROR_COMMITFAILED:
+			case SNMP_ERROR_UNDOFAILED:
+			case SNMP_ERROR_AUTHERROR:
+			case SNMP_ERROR_NOTWRITABLE:
+			case SNMP_ERROR_INCONNAME:
+				msg->sm_error = resp.error;
+				msg->sm_errorindex = resp.index;
+				break;
+
+			case AGENTX_ERR_INDEX_WRONG_TYPE:
+			case AGENTX_ERR_UNSUPPORTED_CONTEXT:
+			case AGENTX_ERR_PARSE_ERROR:
+			case AGENTX_ERR_REQUEST_DENIED:
+			case AGENTX_ERR_PROCESSING_ERROR:
+			default:
+				msg->sm_error = SNMP_ERROR_GENERR;
+				msg->sm_errorindex = resp.index;
+				break;
+			}
+
+			iter = elm = &msg->sm_varbindresp;
+
+			while (pdu->datalen > sizeof(struct agentx_hdr)) {
+				if (snmp_agentx_read_raw(pdu, &vbhdr, sizeof(vbhdr)) == -1 ||
+				    varbind_convert(pdu, &vbhdr, elm, iter)
+				    != AGENTX_ERR_NONE) {
+					msg->sm_error = SNMP_ERROR_GENERR;
+					msg->sm_errorindex = msg->sm_i;
+					goto dispatch;
+				}
+			}
+ dispatch:
+			snmpe_dispatchmsg(msg);
+			break;
+		}
+
+		/* unimplemented, but parse and accept for now */
 		case AGENTX_ADD_AGENT_CAPS:
 		case AGENTX_REMOVE_AGENT_CAPS:
-		case AGENTX_RESPONSE:
-		case AGENTX_REGISTER:
-		case AGENTX_UNREGISTER:
+			break;
+
+		/* unimplemented */
 		case AGENTX_GET:
 		case AGENTX_GET_NEXT:
 		case AGENTX_GET_BULK:
@@ -493,6 +640,7 @@ control_dispatch_agentx(int fd, short event, void *arg)
  teardown:
 	log_debug("subagent session '%i' destroyed", h->sessionid);
 	snmp_agentx_free(h);
+	purge_registered_oids(&c->oids);
 	if (varcpy)
 		free(varcpy);
 	control_close(c);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2014/11/16 19:07:51 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -372,7 +372,12 @@ mib		: OBJECTID oid NAME STRING optwrite objtype	{
 			if ($5)
 				oid->o_flags |= OID_WR;
 
-			smi_insert(oid);
+			if (smi_insert(oid) == -1) {
+				yyerror("duplicate oid");
+				free(oid->o_name);
+				free(oid->o_data);
+				YYERROR;
+			}
 		}
 		;
 

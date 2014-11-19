@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.18 2013/10/02 09:36:21 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.19 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,8 @@ extern struct snmpd *env;
 
 struct ber_oid *
 	 mps_table(struct oid *, struct ber_oid *, struct ber_oid *);
+
+extern void control_event_add(struct ctl_conn *, int, int, struct timeval *); /* XXX */
 
 int
 mps_getstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
@@ -113,23 +115,39 @@ mps_getts(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	return (0);
 }
 
-struct ber_element *
-mps_getreq(struct ber_element *root, struct ber_oid *o, u_int sm_version)
+int
+mps_getreq(struct snmp_message *msg, struct ber_element *root,
+    struct ber_oid *o, u_int sm_version)
 {
 	struct ber_element	*elm = root;
 	struct oid		 key, *value;
 	unsigned long		 error_type = 0;	/* noSuchObject */
 
 	if (o->bo_n > BER_MAX_OID_LEN)
-		return (NULL);
+		return (-1);
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
 	value = smi_find(&key);
 	if (value == NULL)
-		return (NULL);
+		goto fail;
+
 	if (OID_NOTSET(value))
-		return (NULL);
+		return (-1);
+
+	if (value->o_flags & OID_REGISTERED) {
+		struct agentx_pdu	*pdu;
+
+		if ((pdu = snmp_agentx_get_pdu((struct snmp_oid *)o, 1)) == NULL)
+			return (-1);
+		pdu->cookie = msg;
+		if (snmp_agentx_send(value->o_session->handle, pdu) == -1)
+			return (-1);
+
+		control_event_add(value->o_session,
+		    value->o_session->handle->fd, EV_WRITE, NULL);
+		return (1);
+	}
 
 	if (value->o_get == NULL)
 		goto fail;
@@ -143,23 +161,24 @@ mps_getreq(struct ber_element *root, struct ber_oid *o, u_int sm_version)
 	if ((value->o_flags & OID_TABLE) == 0)
 		elm = ber_add_oid(elm, o);
 	if (value->o_get(value, o, &elm) != 0)
-		return (NULL);
+		return (-1);
 
-	return (elm);
+	return (0);
 
 fail:
 	if (sm_version == 0)
-		return NULL;
+		return (-1);
 
 	/* Set SNMPv2 extended error response. */
 	elm = ber_add_oid(elm, o);
 	elm = ber_add_null(elm);
 	ber_set_header(elm, BER_CLASS_CONTEXT, error_type);
-	return (elm);
+	return (0);
 }
 
 int
-mps_setreq(struct ber_element *ber, struct ber_oid *o)
+mps_setreq(struct snmp_message *msg, struct ber_element *ber,
+    struct ber_oid *o)
 {
 	struct oid		 key, *value;
 
@@ -177,8 +196,9 @@ mps_setreq(struct ber_element *ber, struct ber_oid *o)
 	return (value->o_set(value, o, &ber));
 }
 
-struct ber_element *
-mps_getnextreq(struct ber_element *root, struct ber_oid *o)
+int
+mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
+    struct ber_oid *o)
 {
 	struct oid		*next = NULL;
 	struct ber_element	*ber = root;
@@ -187,13 +207,28 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 	struct ber_oid		 no;
 
 	if (o->bo_n > BER_MAX_OID_LEN)
-		return (NULL);
+		return (-1);
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
 	value = smi_find(&key);
 	if (value == NULL)
-		return (NULL);
+		return (-1);
+
+	if (value->o_flags & OID_REGISTERED) {
+		struct agentx_pdu	*pdu;
+
+		if ((pdu = snmp_agentx_getnext_pdu((struct snmp_oid *)o, 1)) == NULL)
+			return (-1);
+		pdu->cookie = msg;
+		if (snmp_agentx_send(value->o_session->handle, pdu) == -1)
+			return (-1);
+
+		control_event_add(value->o_session,
+		    value->o_session->handle->fd, EV_WRITE, NULL);
+		return (1);
+	}
+
 	if (value->o_flags & OID_TABLE) {
 		/* Get the next table row for this column */
 		if (mps_table(value, o, &no) != NULL) {
@@ -203,9 +238,9 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 			ret = 1;
 		switch (ret) {
 		case 0:
-			return (ber);
+			return (0);
 		case -1:
-			return (NULL);
+			return (-1);
 		case 1:	/* end-of-rows */
 			break;
 		}
@@ -223,7 +258,7 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 			break;
 	}
 	if (next == NULL || next->o_get == NULL)
-		return (NULL);
+		return (-1);
 
 	if (next->o_flags & OID_TABLE) {
 		/* Get the next table row for this column */
@@ -237,20 +272,58 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 				value = next;
 				goto getnext;
 			}
-			return (NULL);
+			return (-1);
 		}
 	} else {
 		bcopy(&next->o_id, o, sizeof(*o));
  appendzero:
 		/* No instance identifier specified. Append .0. */
 		if (o->bo_n + 1 > BER_MAX_OID_LEN)
-			return (NULL);
+			return (-1);
 		ber = ber_add_noid(ber, o, ++o->bo_n);
 		if ((ret = next->o_get(next, o, &ber)) != 0)
-			return (NULL);
+			return (-1);
 	}
 
-	return (ber);
+	return (0);
+}
+
+int
+mps_getbulkreq(struct snmp_message *msg, struct ber_element **root,
+    struct ber_oid *o, int max)
+{
+	struct ber_element *c, *d, *e;
+	size_t len;
+	int j, ret;
+
+	j = max;
+	c = *root;
+
+	for (d = NULL, len = 0; j > 0; j--) {
+		e = ber_add_sequence(NULL);
+		if (c == NULL)
+			c = e;
+		ret = mps_getnextreq(msg, e, o);
+		if (ret == 1)
+			return (1);
+		if (ret == -1) {
+			ber_free_elements(e);
+			if (d == NULL)
+				return (-1);
+			break;
+		}
+		len += ber_calc_len(e);
+		if (len > SNMPD_MAXVARBINDLEN) {
+			ber_free_elements(e);
+			break;
+		}
+		if (d != NULL)
+			ber_link_elements(d, e);
+		d = e;
+	}
+
+	*root = c;
+	return (0);
 }
 
 int

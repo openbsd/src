@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.57 2014/11/16 19:07:51 bluhm Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.58 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -173,18 +173,6 @@ enum blockmodes {
 	BM_NONBLOCK
 };
 
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	 entry;
-	u_int8_t		 flags;
-#define CTL_CONN_NOTIFY		 0x01
-#define CTL_CONN_LOCKED		 0x02	/* restricted mode */
-	struct imsgev		 iev;
-	void 			*data;
-	struct control_sock	*cs;
-};
-TAILQ_HEAD(ctl_connlist, ctl_conn);
-extern  struct ctl_connlist ctl_conns;
-
 /*
  * kroute
  */
@@ -307,9 +295,13 @@ struct oid {
 	long long		 o_val;
 	void			*o_data;
 
+	struct ctl_conn		*o_session;
+
 	RB_ENTRY(oid)		 o_element;
 	RB_ENTRY(oid)		 o_keyword;
+	TAILQ_ENTRY(oid)	 o_list;
 };
+TAILQ_HEAD(oidlist, oid);
 
 #define OID_ROOT		0x00
 #define OID_RD			0x01
@@ -319,6 +311,7 @@ struct oid {
 #define OID_TABLE		0x10	/* dynamic sub-elements */
 #define OID_MIB			0x20	/* root-OID of a supported MIB */
 #define OID_KEY			0x40	/* lookup tables */
+#define	OID_REGISTERED		0x80	/* OID registered by subagent */
 
 #define OID_RS			(OID_RD|OID_IFSET)
 #define OID_WS			(OID_WR|OID_IFSET)
@@ -340,6 +333,19 @@ struct oid {
 #define MIBDECL(...)		{ { MIB_##__VA_ARGS__ } }, #__VA_ARGS__
 #define MIB(...)		{ { MIB_##__VA_ARGS__ } }, NULL
 #define MIBEND			{ { 0 } }, NULL
+
+struct ctl_conn {
+	TAILQ_ENTRY(ctl_conn)	 entry;
+	u_int8_t		 flags;
+#define CTL_CONN_NOTIFY		 0x01
+#define CTL_CONN_LOCKED		 0x02	/* restricted mode */
+	struct imsgev		 iev;
+	struct control_sock	*cs;
+	struct agentx_handle	*handle;
+	struct oidlist		 oids;
+};
+TAILQ_HEAD(ctl_connlist, ctl_conn);
+extern  struct ctl_connlist ctl_conns;
 
 /*
  * pf
@@ -384,10 +390,18 @@ struct snmp_message {
 	struct ber_element	*sm_req;
 	struct ber_element	*sm_resp;
 
+	int			 sm_i;
+	struct ber_element	*sm_a;
+	struct ber_element	*sm_b;
+	struct ber_element	*sm_c;
+	struct ber_element	*sm_next;
+	struct ber_element	*sm_last;
+
 	u_int8_t		 sm_data[READ_BUF_SIZE];
 	size_t			 sm_datalen;
 
 	u_int			 sm_version;
+	u_int			 sm_state;
 
 	/* V1, V2c */
 	char			 sm_community[SNMPD_MAXCOMMUNITYLEN];
@@ -609,6 +623,7 @@ struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
 /* snmpe.c */
 pid_t		 snmpe(struct privsep *, struct privsep_proc *);
 void		 snmpe_shutdown(void);
+void		 snmpe_dispatchmsg(struct snmp_message *);
 
 /* trap.c */
 void		 trap_init(void);
@@ -618,13 +633,14 @@ int		 trap_agentx(struct agentx_handle *, struct agentx_pdu *,
 int		 trap_send(struct ber_oid *, struct ber_element *);
 
 /* mps.c */
-struct ber_element *
-		 mps_getreq(struct ber_element *, struct ber_oid *, u_int);
-struct ber_element *
-		 mps_getnextreq(struct ber_element *, struct ber_oid *);
-struct ber_element *
-		 mps_getbulkreq(struct ber_element *, struct ber_oid *, int);
-int		 mps_setreq(struct ber_element *, struct ber_oid *);
+int		 mps_getreq(struct snmp_message *, struct ber_element *,
+		    struct ber_oid *, u_int);
+int		 mps_getnextreq(struct snmp_message *, struct ber_element *,
+		    struct ber_oid *);
+int		 mps_getbulkreq(struct snmp_message *, struct ber_element **,
+		    struct ber_oid *, int);
+int		 mps_setreq(struct snmp_message *, struct ber_element *,
+		    struct ber_oid *);
 int		 mps_set(struct ber_oid *, void *, long long);
 int		 mps_getstr(struct oid *, struct ber_oid *,
 		    struct ber_element **);
@@ -674,7 +690,7 @@ void		 smi_scalar_oidlen(struct ber_oid *);
 char		*smi_oid2string(struct ber_oid *, char *, size_t, size_t);
 int		 smi_string2oid(const char *, struct ber_oid *);
 void		 smi_delete(struct oid *);
-void		 smi_insert(struct oid *);
+int		 smi_insert(struct oid *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
 int		 smi_key_cmp(struct oid *, struct oid *);
 unsigned long	 smi_application(struct ber_element *);
@@ -734,5 +750,9 @@ void	 trapcmd_free(struct trapcmd *);
 int	 trapcmd_add(struct trapcmd *);
 struct trapcmd *
 	 trapcmd_lookup(struct ber_oid *);
+
+/* util.c */
+int	 varbind_convert(struct agentx_pdu *, struct agentx_varbind_hdr *,
+	    struct ber_element **, struct ber_element **);
 
 #endif /* _SNMPD_H */

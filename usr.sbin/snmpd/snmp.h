@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.12 2014/07/21 01:51:11 guenther Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.13 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -264,7 +264,7 @@ struct agentx_hdr {
 struct agentx_oid_hdr {
 	uint8_t		n_subid;	/* # of oid elements (named in RFC) */
 	uint8_t		prefix;		/* if not 0, OID is 1.3.6.1.<prefix> */
-	uint8_t		include;	/* ??? */
+	uint8_t		include;	/* is OID included in search range */
 	uint8_t		reserved;	/* always 0 */
 } __packed;
 
@@ -284,6 +284,13 @@ struct agentx_register_hdr {
 	uint8_t		priority;
 	uint8_t		subrange;
 	uint8_t		reserved;
+} __packed;
+
+struct agentx_unregister_hdr {
+	uint8_t		reserved1;
+	uint8_t		priority;
+	uint8_t		subrange;
+	uint8_t		reserved2;
 } __packed;
 
 struct agentx_null_oid {
@@ -312,6 +319,11 @@ struct agentx_close_request {
 	struct agentx_close_request_data data;
 } __packed;
 
+struct agentx_getbulk_repeaters {
+	uint16_t		nonrepeaters;
+	uint16_t		maxrepetitions;
+} __packed;
+
 struct agentx_pdu {
 	uint8_t		*buffer;
 	uint8_t		*ptr;
@@ -320,6 +332,10 @@ struct agentx_pdu {
 	size_t		 datalen;
 	struct agentx_hdr *hdr;
 
+	char		*context;
+	uint32_t	 contextlen;
+
+	void		  *cookie;
 	struct agentx_pdu *request;	/* request this is a response to */
 	TAILQ_ENTRY(agentx_pdu) entry;
 };
@@ -338,9 +354,12 @@ struct agentx_handle {
 	struct agentx_pdulist inflight;
 
 	struct agentx_pdu *r;
+};
 
-	void		(*cb)(struct agentx_handle *, struct agentx_pdu *, void *);
-	void		*cb_arg;
+struct agentx_search_range {
+	struct snmp_oid	start;
+	struct snmp_oid	end;
+	int		include; /* is start oid included in search range */
 };
 
 struct agentx_handle *
@@ -350,13 +369,11 @@ struct agentx_handle *
 struct agentx_handle *
 	snmp_agentx_fdopen(int, char *, struct snmp_oid *);
 int	snmp_agentx_response(struct agentx_handle *, struct agentx_pdu *);
+int	snmp_agentx_read_response(struct agentx_pdu *, struct agentx_response_data *);
 int	snmp_agentx_open_response(struct agentx_handle *, struct agentx_pdu *);
 struct agentx_pdu *
 	snmp_agentx_open_pdu(struct agentx_handle *, char *descr,
 	    struct snmp_oid *);
-void	snmp_agentx_set_callback(struct agentx_handle *,
-	    void (*)(struct agentx_handle *, struct agentx_pdu *, void *),
-	    void *);
 struct agentx_pdu *
 	snmp_agentx_close_pdu(struct agentx_handle *, uint8_t);
 int	snmp_agentx_close(struct agentx_handle *, uint8_t);
@@ -371,14 +388,24 @@ struct agentx_pdu *
 int	snmp_agentx_varbind(struct agentx_pdu *, struct snmp_oid *, int,
 	    void *, int);
 int	snmp_agentx_send(struct agentx_handle *, struct agentx_pdu *);
+int	snmp_agentx_enqueue(struct agentx_handle *, struct agentx_pdu *);
+int	snmp_agentx_flush(struct agentx_handle *);
 struct agentx_pdu *
 	snmp_agentx_recv(struct agentx_handle *);
 struct agentx_pdu *
 	snmp_agentx_response_pdu(int, int, int);
 struct agentx_pdu *
 	snmp_agentx_register_pdu(struct snmp_oid *, int, int, int);
+struct agentx_pdu *
+	snmp_agentx_unregister_pdu(struct snmp_oid *, int, int);
+struct agentx_pdu *
+	snmp_agentx_get_pdu(struct snmp_oid *, int);
+struct agentx_pdu *
+	snmp_agentx_getnext_pdu(struct snmp_oid *, int);
 char	*snmp_agentx_read_octetstr(struct agentx_pdu *, int *);
 int	snmp_agentx_read_oid(struct agentx_pdu *, struct snmp_oid *);
+int	snmp_agentx_read_searchrange(struct agentx_pdu *,
+	    struct agentx_search_range *);
 int	snmp_agentx_read_raw(struct agentx_pdu *, void *, int);
 int	snmp_agentx_copy_raw(struct agentx_pdu *, void *, int);
 char	*snmp_agentx_type2name(int);
@@ -389,6 +416,9 @@ int	snmp_agentx_read_vbhdr(struct agentx_pdu *, struct
 	    agentx_varbind_hdr *);
 struct agentx_pdu *snmp_agentx_pdu_alloc(void);
 void	snmp_agentx_pdu_free(struct agentx_pdu *);
+char	*snmp_oid2string(struct snmp_oid *, char *, size_t);
+int	snmp_oid_cmp(struct snmp_oid *, struct snmp_oid *);
+void	snmp_oid_increment(struct snmp_oid *);
 
 #if BYTE_ORDER == BIG_ENDIAN
 

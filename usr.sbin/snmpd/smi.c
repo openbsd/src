@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.15 2014/04/28 12:48:36 blambert Exp $	*/
+/*	$OpenBSD: smi.c,v 1.16 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -181,7 +181,7 @@ smi_delete(struct oid *oid)
 	}
 }
 
-void
+int
 smi_insert(struct oid *oid)
 {
 	struct oid		 key, *value;
@@ -193,9 +193,10 @@ smi_insert(struct oid *oid)
 	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
 	value = RB_FIND(oidtree, &smi_oidtree, &key);
 	if (value != NULL)
-		smi_delete(value);
+		return (-1);
 
 	RB_INSERT(oidtree, &smi_oidtree, oid);
+	return (0);
 }
 
 void
@@ -570,9 +571,11 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 
 	/*
 	 * Return success if the matched object is a table
+	 * or a MIB registered by a subagent
 	 * (it will match any sub-elements)
 	 */
-	if ((b->o_flags & OID_TABLE) &&
+	if ((b->o_flags & OID_TABLE ||
+	    b->o_flags & OID_REGISTERED) &&
 	    (a->o_flags & OID_KEY) == 0 &&
 	    (a->o_oidlen > b->o_oidlen))
 		return (0);

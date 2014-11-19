@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.38 2014/04/21 19:47:27 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.39 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -41,8 +41,9 @@
 #include "mib.h"
 
 void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
-int	 snmpe_parse(struct sockaddr_storage *,
-	    struct ber_element *, struct snmp_message *);
+int	 snmpe_parse(struct snmp_message *);
+int	 snmpe_parsevarbinds(struct snmp_message *);
+void	 snmpe_response(int, struct snmp_message *);
 unsigned long
 	 snmpe_application(struct ber_element *);
 void	 snmpe_sig_handler(int sig, short, void *);
@@ -50,6 +51,7 @@ int	 snmpe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 snmpe_bind(struct address *);
 void	 snmpe_recvmsg(int fd, short, void *);
 int	 snmpe_encode(struct snmp_message *);
+void	 snmp_msgfree(struct snmp_message *);
 
 struct snmpd	*env = NULL;
 
@@ -146,20 +148,21 @@ snmpe_bind(struct address *addr)
 }
 
 int
-snmpe_parse(struct sockaddr_storage *ss,
-    struct ber_element *root, struct snmp_message *msg)
+snmpe_parse(struct snmp_message *msg)
 {
 	struct snmp_stats	*stats = &env->sc_stats;
-	struct ber_element	*a, *b, *c, *d, *e, *f, *next, *last;
-	const char		*errstr = "invalid message";
+	struct ber_element	*a;
 	long long		 ver, req;
 	long long		 errval, erridx;
 	unsigned long		 type;
-	u_int			 class, state, i = 0, j = 0;
-	char			*comn, buf[BUFSIZ], host[MAXHOSTNAMELEN];
+	u_int			 class;
+	char			*comn;
 	char			*flagstr, *ctxname;
-	struct ber_oid		 o;
 	size_t			 len;
+	struct sockaddr_storage *ss = &msg->sm_ss;
+	struct ber_element	*root = msg->sm_req;
+
+	msg->sm_errstr = "invalid message";
 
 	if (ber_scanf_elements(root, "{ie", &ver, &a) != 0)
 		goto parsefail;
@@ -176,7 +179,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 		if (strlcpy(msg->sm_community, comn,
 		    sizeof(msg->sm_community)) >= sizeof(msg->sm_community)) {
 			stats->snmp_inbadcommunitynames++;
-			errstr = "community name too long";
+			msg->sm_errstr = "community name too long";
 			goto fail;
 		}
 		break;
@@ -190,13 +193,13 @@ snmpe_parse(struct sockaddr_storage *ss,
 		if (MSG_SECLEVEL(msg) < env->sc_min_seclevel ||
 		    msg->sm_secmodel != SNMP_SEC_USM) {
 			/* XXX currently only USM supported */
-			errstr = "unsupported security model";
+			msg->sm_errstr = "unsupported security model";
 			stats->snmp_usmbadseclevel++;
 			msg->sm_usmerr = OIDVAL_usmErrSecLevel;
 			goto parsefail;
 		}
 
-		if ((a = usm_decode(msg, a, &errstr)) == NULL)
+		if ((a = usm_decode(msg, a, &msg->sm_errstr)) == NULL)
 			goto parsefail;
 
 		if (ber_scanf_elements(a, "{xxe",
@@ -211,7 +214,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 	default:
 	badversion:
 		stats->snmp_inbadversions++;
-		errstr = "bad snmp version";
+		msg->sm_errstr = "bad snmp version";
 		goto fail;
 	}
 
@@ -221,17 +224,21 @@ snmpe_parse(struct sockaddr_storage *ss,
 	/* SNMP PDU context */
 	if (class != BER_CLASS_CONTEXT)
 		goto parsefail;
+
 	switch (type) {
 	case SNMP_C_GETBULKREQ:
 		if (msg->sm_version == SNMP_V1) {
 			stats->snmp_inbadversions++;
-			errstr = "invalid request for protocol version 1";
+			msg->sm_errstr =
+			    "invalid request for protocol version 1";
 			goto fail;
 		}
 		/* FALLTHROUGH */
+
 	case SNMP_C_GETREQ:
 		stats->snmp_ingetrequests++;
 		/* FALLTHROUGH */
+
 	case SNMP_C_GETNEXTREQ:
 		if (type == SNMP_C_GETNEXTREQ)
 			stats->snmp_ingetnexts++;
@@ -239,11 +246,12 @@ snmpe_parse(struct sockaddr_storage *ss,
 		    strcmp(env->sc_rdcommunity, msg->sm_community) != 0 &&
 		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0) {
 			stats->snmp_inbadcommunitynames++;
-			errstr = "wrong read community";
+			msg->sm_errstr = "wrong read community";
 			goto fail;
 		}
 		msg->sm_context = type;
 		break;
+
 	case SNMP_C_SETREQ:
 		stats->snmp_insetrequests++;
 		if (msg->sm_version != SNMP_V3 &&
@@ -252,28 +260,31 @@ snmpe_parse(struct sockaddr_storage *ss,
 				stats->snmp_inbadcommunitynames++;
 			else
 				stats->snmp_inbadcommunityuses++;
-			errstr = "wrong write community";
+			msg->sm_errstr = "wrong write community";
 			goto fail;
 		}
 		msg->sm_context = type;
 		break;
+
 	case SNMP_C_GETRESP:
 		stats->snmp_ingetresponses++;
-		errstr = "response without request";
+		msg->sm_errstr = "response without request";
 		goto parsefail;
+
 	case SNMP_C_TRAP:
 	case SNMP_C_TRAPV2:
 		if (msg->sm_version != SNMP_V3 &&
 		    strcmp(env->sc_trcommunity, msg->sm_community) != 0) {
 			stats->snmp_inbadcommunitynames++;
-			errstr = "wrong trap community";
+			msg->sm_errstr = "wrong trap community";
 			goto fail;
 		}
 		stats->snmp_intraps++;
-		errstr = "received trap";
+		msg->sm_errstr = "received trap";
 		goto fail;
+
 	default:
-		errstr = "invalid context";
+		msg->sm_errstr = "invalid context";
 		goto parsefail;
 	}
 
@@ -282,12 +293,12 @@ snmpe_parse(struct sockaddr_storage *ss,
 	    &req, &errval, &erridx, &msg->sm_pduend,
 	    &msg->sm_varbind, &class, &type) != 0) {
 		stats->snmp_silentdrops++;
-		errstr = "invalid PDU";
+		msg->sm_errstr = "invalid PDU";
 		goto fail;
 	}
 	if (class != BER_CLASS_UNIVERSAL || type != BER_TYPE_SEQUENCE) {
 		stats->snmp_silentdrops++;
-		errstr = "invalid varbind";
+		msg->sm_errstr = "invalid varbind";
 		goto fail;
 	}
 
@@ -295,33 +306,60 @@ snmpe_parse(struct sockaddr_storage *ss,
 	msg->sm_error = errval;
 	msg->sm_errorindex = erridx;
 
-	print_host(ss, host, sizeof(host));
+	print_host(ss, msg->sm_host, sizeof(msg->sm_host));
 	if (msg->sm_version == SNMP_V3)
-		log_debug("snmpe_parse: %s: SNMPv3 context %d, flags %#x, "
+		log_debug("%s: %s: SNMPv3 context %d, flags %#x, "
 		    "secmodel %lld, user '%s', ctx-engine %s, ctx-name '%s', "
-		    "request %lld", host, msg->sm_context, msg->sm_flags,
-		    msg->sm_secmodel, msg->sm_username,
+		    "request %lld", __func__, msg->sm_host, msg->sm_context,
+		    msg->sm_flags, msg->sm_secmodel, msg->sm_username,
 		    tohexstr(msg->sm_ctxengineid, msg->sm_ctxengineid_len),
 		    msg->sm_ctxname, msg->sm_request);
 	else
-		log_debug("snmpe_parse: %s: SNMPv%d '%s' context %d "
-		    "request %lld", host, msg->sm_version + 1,
+		log_debug("%s: %s: SNMPv%d '%s' context %d request %lld",
+		    __func__, msg->sm_host, msg->sm_version + 1,
 		    msg->sm_community, msg->sm_context, msg->sm_request);
 
-	errstr = "invalid varbind element";
-	for (i = 1, a = msg->sm_varbind, last = NULL;
-	    a != NULL && i < SNMPD_MAXVARBIND; a = next, i++) {
-		next = a->be_next;
+	return (0);
 
-		if (a->be_class != BER_CLASS_UNIVERSAL ||
-		    a->be_type != BER_TYPE_SEQUENCE)
+ parsefail:
+	stats->snmp_inasnparseerrs++;
+ fail:
+	print_host(ss, msg->sm_host, sizeof(msg->sm_host));
+	log_debug("%s: %s: %s", __func__, msg->sm_host, msg->sm_errstr);
+	return (-1);
+}
+
+int
+snmpe_parsevarbinds(struct snmp_message *msg)
+{
+	struct snmp_stats	*stats = &env->sc_stats;
+	char			 buf[BUFSIZ];
+	struct ber_oid		 o;
+	int			 ret = 0;
+
+	msg->sm_errstr = "invalid varbind element";
+
+	if (msg->sm_i == 0) {
+		msg->sm_i = 1;
+		msg->sm_a = msg->sm_varbind;
+		msg->sm_last = NULL;
+	}
+
+	 for (; msg->sm_a != NULL && msg->sm_i < SNMPD_MAXVARBIND;
+	    msg->sm_a = msg->sm_next, msg->sm_i++) {
+		msg->sm_next = msg->sm_a->be_next;
+
+		if (msg->sm_a->be_class != BER_CLASS_UNIVERSAL ||
+		    msg->sm_a->be_type != BER_TYPE_SEQUENCE)
 			continue;
-		if ((b = a->be_sub) == NULL)
+		if ((msg->sm_b = msg->sm_a->be_sub) == NULL)
 			continue;
-		for (state = 0; state < 2 && b != NULL; b = b->be_next) {
-			switch (state++) {
+
+		for (msg->sm_state = 0; msg->sm_state < 2 && msg->sm_b != NULL;
+		    msg->sm_b = msg->sm_b->be_next) {
+			switch (msg->sm_state++) {
 			case 0:
-				if (ber_get_oid(b, &o) != 0)
+				if (ber_get_oid(msg->sm_b, &o) != 0)
 					goto varfail;
 				if (o.bo_n < BER_MIN_OID_LEN ||
 				    o.bo_n > BER_MAX_OID_LEN)
@@ -330,92 +368,81 @@ snmpe_parse(struct sockaddr_storage *ss,
 					stats->snmp_intotalsetvars++;
 				else
 					stats->snmp_intotalreqvars++;
-				log_debug("snmpe_parse: %s: oid %s", host,
+				log_debug("%s: %s: oid %s",
+				    __func__, msg->sm_host,
 				    smi_oid2string(&o, buf, sizeof(buf), 0));
 				break;
 			case 1:
-				c = d = NULL;
+				msg->sm_c = NULL;
+
 				switch (msg->sm_context) {
+
 				case SNMP_C_GETNEXTREQ:
-					c = ber_add_sequence(NULL);
-					if ((d = mps_getnextreq(c, &o)) != NULL)
+					msg->sm_c = ber_add_sequence(NULL);
+					ret = mps_getnextreq(msg, msg->sm_c,
+					    &o);
+					if (ret == 0 || ret == 1)
 						break;
-					ber_free_elements(c);
-					c = NULL;
+					ber_free_elements(msg->sm_c);
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-					msg->sm_errorindex = i;
-					break;	/* ignore error */
-				case SNMP_C_GETREQ:
-					c = ber_add_sequence(NULL);
-					if ((d = mps_getreq(c, &o,
-					    msg->sm_version)) != NULL)
-						break;
-					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-					ber_free_elements(c);
 					goto varfail;
-				case SNMP_C_SETREQ:
-					if (env->sc_readonly == 0
-					    && mps_setreq(b, &o) == 0)
+
+				case SNMP_C_GETREQ:
+					msg->sm_c = ber_add_sequence(NULL);
+					ret = mps_getreq(msg, msg->sm_c, &o,
+					    msg->sm_version);
+					if (ret == 0 || ret == 1)
 						break;
+					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
+					ber_free_elements(msg->sm_c);
+					goto varfail;
+
+				case SNMP_C_SETREQ:
+					if (env->sc_readonly == 0) {
+						ret = mps_setreq(msg,
+						    msg->sm_b, &o);
+						if (ret == 0)
+							break;
+					}
 					msg->sm_error = SNMP_ERROR_READONLY;
 					goto varfail;
+
 				case SNMP_C_GETBULKREQ:
-					j = msg->sm_maxrepetitions;
-					msg->sm_errorindex = 0;
+					ret = mps_getbulkreq(msg, &msg->sm_c,
+					    &o, msg->sm_maxrepetitions);
+					if (ret == 0 || ret == 1)
+						break;
 					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-					for (d = NULL, len = 0; j > 0; j--) {
-						e = ber_add_sequence(NULL);
-						if (c == NULL)
-							c = e;
-						f = mps_getnextreq(e, &o);
-						if (f == NULL) {
-							ber_free_elements(e);
-							if (d == NULL)
-								goto varfail;
-							break;
-						}
-						len += ber_calc_len(e);
-						if (len > SNMPD_MAXVARBINDLEN) {
-							ber_free_elements(e);
-							break;
-						}
-						if (d != NULL)
-							ber_link_elements(d, e);
-						d = e;
-					}
-					msg->sm_error = 0;
-					break;
+					goto varfail;
+
 				default:
 					goto varfail;
 				}
-				if (c == NULL)
+				if (msg->sm_c == NULL)
 					break;
-				if (last == NULL)
-					msg->sm_varbindresp = c;
+				if (msg->sm_last == NULL)
+					msg->sm_varbindresp = msg->sm_c;
 				else
-					ber_link_elements(last, c);
-				last = c;
+					ber_link_elements(msg->sm_last, msg->sm_c);
+				msg->sm_last = msg->sm_c;
 				break;
 			}
 		}
-		if (state < 2)  {
-			log_debug("snmpe_parse: state %d", state);
+		if (msg->sm_state < 2)  {
+			log_debug("%s: state %d", __func__, msg->sm_state);
 			goto varfail;
 		}
 	}
 
-	return (0);
+	msg->sm_errstr = "none";
+
+	return (ret);
  varfail:
-	log_debug("snmpe_parse: %s: %s, error index %d", host, errstr, i);
+	log_debug("%s: %s: %s, error index %d", __func__,
+	    msg->sm_host, msg->sm_errstr, msg->sm_i);
 	if (msg->sm_error == 0)
 		msg->sm_error = SNMP_ERROR_GENERR;
-	msg->sm_errorindex = i;
-	return (0);
- parsefail:
-	stats->snmp_inasnparseerrs++;
- fail:
-	print_host(ss, host, sizeof(host));
-	log_debug("snmpe_parse: %s: %s", host, errstr);
+	msg->sm_errorindex = msg->sm_i;
 	return (-1);
 }
 
@@ -423,51 +450,75 @@ void
 snmpe_recvmsg(int fd, short sig, void *arg)
 {
 	struct snmp_stats	*stats = &env->sc_stats;
-	struct sockaddr_storage	 ss;
-	u_int8_t		*ptr = NULL;
-	socklen_t		 slen;
 	ssize_t			 len;
-	struct ber		 ber;
-	struct ber_element	*req = NULL;
-	struct snmp_message	 msg;
+	struct snmp_message	*msg;
 
-	bzero(&msg, sizeof(msg));
-	slen = sizeof(ss);
-	if ((len = recvfrom(fd, msg.sm_data, sizeof(msg.sm_data), 0,
-	    (struct sockaddr *)&ss, &slen)) < 1)
+	if ((msg = calloc(1, sizeof(*msg))) == NULL)
 		return;
 
+	msg->sm_slen = sizeof(msg->sm_ss);
+	if ((len = recvfrom(fd, msg->sm_data, sizeof(msg->sm_data), 0,
+	    (struct sockaddr *)&msg->sm_ss, &msg->sm_slen)) < 1) {
+		free(msg);
+		return;
+	}
+
 	stats->snmp_inpkts++;
-	msg.sm_datalen = (size_t)len;
+	msg->sm_datalen = (size_t)len;
 
-	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
-	ber_set_application(&ber, smi_application);
-	ber_set_readbuf(&ber, msg.sm_data, msg.sm_datalen);
+	bzero(&msg->sm_ber, sizeof(msg->sm_ber));
+	msg->sm_ber.fd = -1;
+	ber_set_application(&msg->sm_ber, smi_application);
+	ber_set_readbuf(&msg->sm_ber, msg->sm_data, msg->sm_datalen);
 
-	req = ber_read_elements(&ber, NULL);
-	if (req == NULL) {
+	msg->sm_req = ber_read_elements(&msg->sm_ber, NULL);
+	if (msg->sm_req == NULL) {
 		stats->snmp_inasnparseerrs++;
-		goto done;
+		snmp_msgfree(msg);
+		return;
 	}
 
 #ifdef DEBUG
 	fprintf(stderr, "recv msg:\n");
-	smi_debug_elements(req);
+	smi_debug_elements(msg->sm_req);
 #endif
 
-	if (snmpe_parse(&ss, req, &msg) == -1) {
-		if (msg.sm_usmerr != 0 && MSG_REPORT(&msg))
-			usm_make_report(&msg);
-		else
-			goto done;
-	} else
-		msg.sm_context = SNMP_C_GETRESP;
+	if (snmpe_parse(msg) == -1) {
+		if (msg->sm_usmerr != 0 && MSG_REPORT(msg)) {
+			usm_make_report(msg);
+			snmpe_response(fd, msg);
+			return;
+		} else {
+			snmp_msgfree(msg);
+			return;
+		}
+	}
 
-	if (msg.sm_varbindresp == NULL && msg.sm_pduend != NULL)
-		msg.sm_varbindresp = ber_unlink_elements(msg.sm_pduend);
+	snmpe_dispatchmsg(msg);
+}
 
-	switch (msg.sm_error) {
+void
+snmpe_dispatchmsg(struct snmp_message *msg)
+{
+	if (snmpe_parsevarbinds(msg) == 1)
+		return;
+
+	/* not dispatched to subagent; respond directly */
+	msg->sm_context = SNMP_C_GETRESP;
+	snmpe_response(env->sc_sock, msg);
+}
+
+void
+snmpe_response(int fd, struct snmp_message *msg)
+{
+	struct snmp_stats	*stats = &env->sc_stats;
+	u_int8_t		*ptr = NULL;
+	ssize_t			 len;
+
+	if (msg->sm_varbindresp == NULL && msg->sm_pduend != NULL)
+		msg->sm_varbindresp = ber_unlink_elements(msg->sm_pduend);
+
+	switch (msg->sm_error) {
 	case SNMP_ERROR_TOOBIG:
 		stats->snmp_intoobigs++;
 		break;
@@ -487,24 +538,32 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	}
 
 	/* Create new SNMP packet */
-	if (snmpe_encode(&msg) < 0)
+	if (snmpe_encode(msg) < 0)
 		goto done;
 
-	len = ber_write_elements(&ber, msg.sm_resp);
-	if (ber_get_writebuf(&ber, (void *)&ptr) == -1)
+	len = ber_write_elements(&msg->sm_ber, msg->sm_resp);
+	if (ber_get_writebuf(&msg->sm_ber, (void *)&ptr) == -1)
 		goto done;
 
-	usm_finalize_digest(&msg, ptr, len);
-	len = sendto(fd, ptr, len, 0, (struct sockaddr *)&ss, slen);
+	usm_finalize_digest(msg, ptr, len);
+	len = sendto(fd, ptr, len, 0, (struct sockaddr *)&msg->sm_ss,
+	    msg->sm_slen);
 	if (len != -1)
 		stats->snmp_outpkts++;
 
  done:
-	ber_free(&ber);
-	if (req != NULL)
-		ber_free_elements(req);
-	if (msg.sm_resp != NULL)
-		ber_free_elements(msg.sm_resp);
+	snmp_msgfree(msg);
+}
+
+void
+snmp_msgfree(struct snmp_message *msg)
+{
+	ber_free(&msg->sm_ber);
+	if (msg->sm_req != NULL)
+		ber_free_elements(msg->sm_req);
+	if (msg->sm_resp != NULL)
+		ber_free_elements(msg->sm_resp);
+	free(msg);
 }
 
 int

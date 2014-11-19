@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2014/04/14 12:55:10 blambert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2014/11/19 10:19:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -59,14 +59,11 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
     char **varcpy, int *vcpylen)
 {
 	struct agentx_varbind_hdr	 vbhdr;
+	u_int32_t			 d;
 	struct ber_oid			 o, oid;
 	struct ber_oid			 uptime = OID(MIB_sysUpTime);
 	struct ber_oid			 trapoid = OID(MIB_snmpTrapOID);
-	u_int32_t			 d;
-	u_int64_t			 l;
-	char				*str;
-	int				 slen;
-	struct ber_element		*a, *ber, *varbind;
+	struct ber_element		*varbind, *iter;
 	int				 x = 0, state = 0;
 	int				 ret = AGENTX_ERR_NONE;
 	int				 seensysuptime, seentrapoid;
@@ -75,7 +72,7 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 	char				*v = NULL;
 
 	*varcpy = NULL;
-	ber = varbind = NULL;
+	varbind = NULL;
 	seensysuptime = seentrapoid = 0;
 
 	if (pdu->hdr->flags & AGENTX_NON_DEFAULT_CONTEXT) {
@@ -92,12 +89,16 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 	while (pdu->datalen > sizeof(struct agentx_hdr)) {
 		x++;
 
-		if (snmp_agentx_read_vbhdr(pdu, &vbhdr) == -1 ||
-		    snmp_agentx_read_oid(pdu, (struct snmp_oid *)&oid) == -1) {
+		if (snmp_agentx_read_vbhdr(pdu, &vbhdr) == -1) {
 			ret = AGENTX_ERR_PARSE_ERROR;
 			goto done;
 		}
+
 		if (state < 2) {
+			if (snmp_agentx_read_oid(pdu, (struct snmp_oid *)&oid) == -1) {
+				ret = AGENTX_ERR_PARSE_ERROR;
+				goto done;
+			}
 			if (state == 0 && ber_oid_cmp(&oid, &uptime) == 0) {
 				if (snmp_agentx_read_int(pdu, &d) == -1) {
 					ret = AGENTX_ERR_PARSE_ERROR;
@@ -119,79 +120,9 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 			}
 		}
 
-		ber = ber_add_sequence(ber);
-		if (varbind == NULL)
-		varbind = ber;
-
-		a = ber_add_oid(ber, &oid);
-
-		switch (vbhdr.type) {
-		case AGENTX_NO_SUCH_OBJECT:
-		case AGENTX_NO_SUCH_INSTANCE:
-		case AGENTX_END_OF_MIB_VIEW:
-		case AGENTX_NULL:
-			a = ber_add_null(a);
-			break;
-
-		case AGENTX_IP_ADDRESS:
-		case AGENTX_OPAQUE:
-		case AGENTX_OCTET_STRING:
-			str = snmp_agentx_read_octetstr(pdu, &slen);
-			if (str == NULL) {
-				ret = AGENTX_ERR_PARSE_ERROR;
-				goto done;
-			}
-			a = ber_add_nstring(a, str, slen);
-			break;
-
-		case AGENTX_OBJECT_IDENTIFIER:
-			if (snmp_agentx_read_oid(pdu,
-			    (struct snmp_oid *)&oid) == -1) {
-				ret = AGENTX_ERR_PARSE_ERROR;
-				goto done;
-			}
-			a = ber_add_oid(a, &oid);
-			break;
-
-		case AGENTX_INTEGER:
-		case AGENTX_COUNTER32:
-		case AGENTX_GAUGE32:
-		case AGENTX_TIME_TICKS:
-			if (snmp_agentx_read_int(pdu, &d) == -1) {
-				ret = AGENTX_ERR_PARSE_ERROR;
-				goto done;
-			}
-			a = ber_add_integer(a, d);
-			break;
-
-		case AGENTX_COUNTER64:
-			if (snmp_agentx_read_int64(pdu, &l) == -1) {
-				ret = AGENTX_ERR_PARSE_ERROR;
-				goto done;
-			}
-			a = ber_add_integer(a, l);
-			break;
-
-		default:
-			log_debug("unknown data type '%i'", vbhdr.type);
-			ret = AGENTX_ERR_PARSE_ERROR;
+		ret = varbind_convert(pdu, &vbhdr, &varbind, &iter);
+		if (ret != AGENTX_ERR_NONE)
 			goto done;
-		}
-
-		/* AgentX types correspond to BER types */
-		switch (vbhdr.type) {
-		case BER_TYPE_INTEGER:
-		case BER_TYPE_BITSTRING:
-		case BER_TYPE_OCTETSTRING:
-		case BER_TYPE_NULL:
-		case BER_TYPE_OBJECT:
-			/* universal types */
-			break;
-		default:
-			/* application-specific types */
-			ber_set_header(a, BER_CLASS_APPLICATION, vbhdr.type);
-			break;
-		}
 	}
 
 	if (varbind != NULL)
