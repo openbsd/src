@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.37 2014/09/07 00:21:23 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.38 2014/11/19 01:20:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2014 $
+.Dd $Mdocdate: November 19 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -745,9 +745,11 @@ If the first character of COND is
 .Pq even page ,
 .Sq r
 .Pq register accessed ,
-or
 .Sq t
 .Pq troff mode ,
+or
+.Sq v
+.Pq vroff mode ,
 COND evaluates to false.
 .It
 If COND starts with a parenthesis or with an optionally signed
