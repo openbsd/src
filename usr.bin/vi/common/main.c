@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2014/11/14 20:27:03 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2014/11/19 03:42:40 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -461,7 +461,7 @@ v_end(GS *gp)
 	perl_end(gp);
 #endif
 
-#if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
+#if defined(DEBUG) || defined(PURIFY)
 	{ FREF *frp;
 		/* Free FREF's. */
 		while ((frp = TAILQ_FIRST(&gp->frefq))) {
@@ -505,13 +505,13 @@ v_end(GS *gp)
 		(void)fprintf(stderr, "%s%.*s",
 		    mp->mtype == M_ERR ? "ex/vi: " : "", (int)mp->len, mp->buf);
 		LIST_REMOVE(mp, q);
-#if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
+#if defined(DEBUG) || defined(PURIFY)
 		free(mp->buf);
 		free(mp);
 #endif
 	}
 
-#if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
+#if defined(DEBUG) || defined(PURIFY)
 	/* Free any temporary space. */
 	if (gp->tmp_bp != NULL)
 		free(gp->tmp_bp);

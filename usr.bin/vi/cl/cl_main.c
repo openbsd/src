@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.24 2014/11/14 20:27:03 tedu Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.25 2014/11/19 03:42:40 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Free the global and CL private areas. */
-#if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
+#if defined(DEBUG) || defined(PURIFY)
 	free(clp);
 	free(gp);
 #endif
