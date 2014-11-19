@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2014/10/31 12:50:31 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.40 2014/11/19 23:50:22 dlg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ LIB=	event
 SRCS=	buffer.c evbuffer.c event.c event_tagging.c evutil.c kqueue.c \
 	log.c poll.c select.c signal.c
 HDRS=	event.h evutil.h
-MAN=	event.3
+MAN=	event.3 evbuffer_new.3
 MLINKS=	event.3 bufferevent_base_set.3 \
 	event.3 bufferevent_disable.3 \
 	event.3 bufferevent_enable.3 \
@@ -16,17 +16,6 @@ MLINKS=	event.3 bufferevent_base_set.3 \
 	event.3 bufferevent_settimeout.3 \
 	event.3 bufferevent_write.3 \
 	event.3 bufferevent_write_buffer.3 \
-	event.3 evbuffer_add.3 \
-	event.3 evbuffer_add_buffer.3 \
-	event.3 evbuffer_add_printf.3 \
-	event.3 evbuffer_add_vprintf.3 \
-	event.3 evbuffer_drain.3 \
-	event.3 evbuffer_find.3 \
-	event.3 evbuffer_free.3 \
-	event.3 evbuffer_new.3 \
-	event.3 evbuffer_read.3 \
-	event.3 evbuffer_readline.3 \
-	event.3 evbuffer_write.3 \
 	event.3 event_add.3 \
 	event.3 event_base_dispatch.3 \
 	event.3 event_base_free.3 \
@@ -58,7 +47,21 @@ MLINKS=	event.3 bufferevent_base_set.3 \
 	event.3 signal_pending.3 \
 	event.3 signal_set.3 \
 	event.3 event_asr_run.3 \
-	event.3 event_asr_abort.3
+	event.3 event_asr_abort.3 \
+	evbuffer_new.3 evbuffer_add.3 \
+	evbuffer_new.3 evbuffer_add_buffer.3 \
+	evbuffer_new.3 evbuffer_add_printf.3 \
+	evbuffer_new.3 evbuffer_add_vprintf.3 \
+	evbuffer_new.3 evbuffer_drain.3 \
+	evbuffer_new.3 evbuffer_expand.3 \
+	evbuffer_new.3 evbuffer_find.3 \
+	evbuffer_new.3 evbuffer_free.3 \
+	evbuffer_new.3 evbuffer_read.3 \
+	evbuffer_new.3 evbuffer_readline.3 \
+	evbuffer_new.3 evbuffer_readln.3 \
+	evbuffer_new.3 evbuffer_remove.3 \
+	evbuffer_new.3 evbuffer_setcb.3 \
+	evbuffer_new.3 evbuffer_write.3
 
 CFLAGS+= -I${.CURDIR} -DNDEBUG
 

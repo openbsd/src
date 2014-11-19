@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.44 2014/11/19 20:29:03 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.45 2014/11/19 23:50:22 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -66,17 +66,6 @@
 .Nm bufferevent_disable ,
 .Nm bufferevent_settimeout ,
 .Nm bufferevent_base_set ,
-.Nm evbuffer_new ,
-.Nm evbuffer_free ,
-.Nm evbuffer_add ,
-.Nm evbuffer_add_buffer ,
-.Nm evbuffer_add_printf ,
-.Nm evbuffer_add_vprintf ,
-.Nm evbuffer_drain ,
-.Nm evbuffer_write ,
-.Nm evbuffer_read ,
-.Nm evbuffer_find ,
-.Nm evbuffer_readline ,
 .Nm event_asr_run ,
 .Nm event_asr_abort
 .Nd execute a function when a specific event occurs
@@ -161,28 +150,6 @@
 .Fn "bufferevent_settimeout" "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
 .Ft int
 .Fn "bufferevent_base_set" "struct event_base *base" "struct bufferevent *bufev"
-.Ft "struct evbuffer *"
-.Fn "evbuffer_new" "void"
-.Ft void
-.Fn "evbuffer_free" "struct evbuffer *buf"
-.Ft int
-.Fn "evbuffer_add" "struct evbuffer *buf" "const void *data" "size_t size"
-.Ft int
-.Fn "evbuffer_add_buffer" "struct evbuffer *dst" "struct evbuffer *src"
-.Ft int
-.Fn "evbuffer_add_printf" "struct evbuffer *buf" "const char *fmt" "..."
-.Ft int
-.Fn "evbuffer_add_vprintf" "struct evbuffer *buf" "const char *fmt" "va_list ap"
-.Ft void
-.Fn "evbuffer_drain" "struct evbuffer *buf" "size_t size"
-.Ft int
-.Fn "evbuffer_write" "struct evbuffer *buf" "int fd"
-.Ft int
-.Fn "evbuffer_read" "struct evbuffer *buf" "int fd" "int size"
-.Ft "u_char *"
-.Fn "evbuffer_find" "struct evbuffer *buf" "const u_char *data" "size_t size"
-.Ft "char *"
-.Fn "evbuffer_readline" "struct evbuffer *buf"
 .Ft "struct event_asr *"
 .Fn event_asr_run "struct asr_query *aq" "void (*fn)(struct asr_result *, void *)" "void *"
 .Ft "void"
