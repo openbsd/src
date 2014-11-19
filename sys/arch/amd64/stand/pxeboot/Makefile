@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2014/07/15 22:14:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2014/11/19 20:09:58 miod Exp $
 
 MAN=	pxeboot.8
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	pxeboot
-SRCS=	srt0.S conf.c devopen.c net.c open.c
+SRCS=	srt0.S conf.c devopen.c open.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie
@@ -20,7 +20,7 @@ BINMODE=644
 SRCS+=	machdep.c exec_i386.c cmd_i386.c
 SRCS+=	gidt.S random_i386.S alloca.S biosdev.c bioscons.c gateA20.c \
 	memprobe.c diskprobe.c time.c ## biosprobe.c
-SRCS+=	pxe.c pxe_call.S pxe_net.c
+SRCS+=	pxe.c pxe_call.S pxe_net.c pxe_udp.c
 SRCS+=	softraid.c
 
 .PATH:	${S}/stand/boot
@@ -35,7 +35,7 @@ SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
 	read.c stat.c write.c cread.c readdir.c cons.c loadfile.c \
 	elf32.c elf64.c
-SRCS+=	ether.c netif.c rpc.c
+SRCS+=	ether.c net.c netif.c rpc.c
 SRCS+=	bootp.c bootparam.c
 SRCS+=	ufs.c nfs.c tftp.c
 

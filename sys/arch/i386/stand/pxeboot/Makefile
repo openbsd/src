@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2014/07/15 22:14:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2014/11/19 20:10:01 miod Exp $
 
 MAN=	pxeboot.8
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	pxeboot
-SRCS=	srt0.S conf.c devopen.c net.c open.c
+SRCS=	srt0.S conf.c devopen.c open.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie
@@ -21,7 +21,7 @@ SRCS+=	alloca.S debug_i386.S gidt.S random_i386.S
 SRCS+=	cmd_i386.c exec_i386.c gateA20.c machdep.c
 SRCS+=	apmprobe.c bioscons.c biosdev.c debug.c diskprobe.c memprobe.c \
 	pciprobe.c ps2probe.c time.c
-SRCS+=	pxe_call.S pxe.c pxe_net.c
+SRCS+=	pxe_call.S pxe.c pxe_net.c pxe_udp.c
 SRCS+=	softraid.c
 
 .PATH:	${S}/stand/boot
@@ -35,7 +35,7 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
 SRCS+=	nfs.c ufs.c tftp.c
-SRCS+=	bootp.c ether.c netif.c rpc.c
+SRCS+=	bootp.c ether.c net.c netif.c rpc.c
 SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 
 .PATH:	${S}/lib/libkern/arch/i386
