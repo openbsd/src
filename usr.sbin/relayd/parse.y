@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.193 2014/11/07 13:48:06 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.194 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -3018,6 +3018,7 @@ table_inherit(struct table *tb)
 		h->tablename = tb->conf.name;
 		SLIST_INIT(&h->children);
 		TAILQ_INSERT_TAIL(&tb->hosts, h, entry);
+		TAILQ_INSERT_TAIL(&conf->sc_hosts, h, globalentry);
 	}
 
 	conf->sc_tablecount++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.131 2014/08/18 12:59:00 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.132 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -200,6 +200,8 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&ps->ps_rcsocks);
 	env->sc_conffile = conffile;
 	env->sc_opts = opts;
+	TAILQ_INIT(&env->sc_hosts);
+	TAILQ_INIT(&env->sc_sessions);
 
 	if (parse_config(env->sc_conffile, env) == -1)
 		exit(1);
@@ -453,6 +455,9 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
 		break;
+	case IMSG_SNMPSOCK:
+		(void)snmp_setsock(env, p->p_id);
+		break;
 	default:
 		return (-1);
 	}
@@ -474,9 +479,6 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		scr.retval = script_exec(env, &scr);
 		proc_compose_imsg(ps, PROC_HCE, -1, IMSG_SCRIPT,
 		    -1, &scr, sizeof(scr));
-		break;
-	case IMSG_SNMPSOCK:
-		(void)snmp_setsock(env, p->p_id);
 		break;
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);

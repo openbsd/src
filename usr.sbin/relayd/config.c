@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.18 2014/07/11 16:59:38 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.19 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -407,6 +407,7 @@ config_gethost(struct relayd *env, struct imsg *imsg)
 
 	SLIST_INIT(&host->children);
 	TAILQ_INSERT_TAIL(&tb->hosts, host, entry);
+	TAILQ_INSERT_TAIL(&env->sc_hosts, host, globalentry);
 
 	DPRINTF("%s: %s %d received host %s for table %s", __func__,
 	    env->sc_ps->ps_title[privsep_process], env->sc_ps->ps_instance,

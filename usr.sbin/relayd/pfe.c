@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.75 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.76 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -67,6 +67,8 @@ pfe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
+
+	snmp_init(env, PROC_PARENT);
 
 	p->p_shutdown = pfe_shutdown;
 }
@@ -141,6 +143,8 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		log_debug("%s: state %d for host %u %s", __func__,
 		    st.up, host->conf.id, host->conf.name);
 
+		snmp_hosttrap(env, table, host);
+
 		/*
 		 * Do not change the table state when the host
 		 * state switches between UNKNOWN and DOWN.
@@ -212,6 +216,9 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_RESET:
 		config_getreset(env, imsg);
 		break;
+	case IMSG_SNMPSOCK:
+		snmp_getsock(env, imsg);
+		break;
 	default:
 		return (-1);
 	}
@@ -226,8 +233,9 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ctl_stats	 crs;
 	struct relay		*rlay;
 	struct ctl_conn		*c;
-	struct rsession		 con;
+	struct rsession		 con, *s, *t;
 	int			 cid;
+	objid_t			 sid;
 
 	switch (imsg->hdr.type) {
 	case IMSG_NATLOOK:
@@ -281,6 +289,34 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			imsg_compose_event(&c->iev, IMSG_CTL_END,
 			    0, 0, -1, NULL, 0);
 		}
+		break;
+	case IMSG_SESS_PUBLISH:
+		IMSG_SIZE_CHECK(imsg, s);
+		if ((s = calloc(1, sizeof(*s))) == NULL)
+			return (0);		/* XXX */
+		memcpy(s, imsg->data, sizeof(*s));
+		TAILQ_FOREACH(t, &env->sc_sessions, se_entry) {
+			if (t->se_id == s->se_id)	/* duplicate registration */
+				return (0);
+			if (t->se_id > s->se_id)
+				break;
+		}
+		if (t)
+			TAILQ_INSERT_BEFORE(t, s, se_entry);
+		else
+			TAILQ_INSERT_TAIL(&env->sc_sessions, s, se_entry);
+		break;
+	case IMSG_SESS_UNPUBLISH:
+		IMSG_SIZE_CHECK(imsg, &sid);
+		memcpy(&sid, imsg->data, sizeof(sid));
+		TAILQ_FOREACH(s, &env->sc_sessions, se_entry)
+			if (s->se_id == sid)
+				break;
+		if (s) {
+			TAILQ_REMOVE(&env->sc_sessions, s, se_entry);
+			free(s);
+		} else
+			log_warnx("removal of unpublished session %i", sid);
 		break;
 	default:
 		return (-1);

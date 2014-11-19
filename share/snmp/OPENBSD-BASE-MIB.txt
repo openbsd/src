@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-BASE-MIB.txt,v 1.5 2012/02/23 03:54:38 joel Exp $
+-- $OpenBSD: OPENBSD-BASE-MIB.txt,v 1.6 2014/11/19 10:24:39 blambert Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 -- Copyright (c) 2004-2007 Joel Knight <knight.joel@gmail.com>
@@ -51,7 +51,7 @@ openBSD MODULE-IDENTITY
 
 pfMIBObjects		OBJECT IDENTIFIER ::= { openBSD 1 }
 sensorsMIBObjects	OBJECT IDENTIFIER ::= { openBSD 2 }
--- relaydMIBObjects	OBJECT IDENTIFIER ::= { openBSD 3 }
+relaydMIBObjects	OBJECT IDENTIFIER ::= { openBSD 3 }
 -- ipsecMIBObjects	OBJECT IDENTIFIER ::= { openBSD 4 }
 memMIBObjects		OBJECT IDENTIFIER ::= { openBSD 5 }
 carpMIBObjects		OBJECT IDENTIFIER ::= { openBSD 6 }

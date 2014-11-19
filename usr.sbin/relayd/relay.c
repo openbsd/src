@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.180 2014/11/07 13:48:06 jsing Exp $	*/
+/*	$OpenBSD: relay.c,v 1.181 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -54,6 +54,8 @@ int		 relay_dispatch_pfe(int, struct privsep_proc *,
 		    struct imsg *);
 int		 relay_dispatch_ca(int, struct privsep_proc *,
 		    struct imsg *);
+int		 relay_dispatch_hce(int, struct privsep_proc *,
+		    struct imsg *);
 void		 relay_shutdown(void);
 
 void		 relay_protodebug(struct relay *);
@@ -99,7 +101,8 @@ int				 proc_id;
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	relay_dispatch_parent },
 	{ "pfe",	PROC_PFE,	relay_dispatch_pfe },
-	{ "ca",		PROC_CA,	relay_dispatch_ca }
+	{ "ca",		PROC_CA,	relay_dispatch_ca },
+	{ "hce",	PROC_HCE,	relay_dispatch_hce },
 };
 
 pid_t
@@ -334,6 +337,20 @@ relay_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	evtimer_set(&env->sc_statev, relay_statistics, NULL);
 	bcopy(&env->sc_statinterval, &tv, sizeof(tv));
 	evtimer_add(&env->sc_statev, &tv);
+}
+
+void
+relay_session_publish(struct rsession *s)
+{
+	proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_SESS_PUBLISH, -1,
+	    s, sizeof(*s));
+}
+
+void
+relay_session_unpublish(struct rsession *s)
+{
+	proc_compose_imsg(env->sc_ps, PROC_PFE, -1, IMSG_SESS_UNPUBLISH, -1,
+	    &s->se_id, sizeof(s->se_id));
 }
 
 void
@@ -1076,6 +1093,7 @@ relay_accept(int fd, short event, void *arg)
 
 	relay_sessions++;
 	SPLAY_INSERT(session_tree, &rlay->rl_sessions, con);
+	relay_session_publish(con);
 
 	/* Increment the per-relay session counter */
 	rlay->rl_stats[proc_id].last++;
@@ -1575,6 +1593,7 @@ relay_close(struct rsession *con, const char *msg)
 	struct protocol	*proto = rlay->rl_proto;
 
 	SPLAY_REMOVE(session_tree, &rlay->rl_sessions, con);
+	relay_session_unpublish(con);
 
 	event_del(&con->se_ev);
 	if (con->se_in.bev != NULL)
@@ -1951,6 +1970,17 @@ relay_ssl_callback_dh(SSL *ssl, int export, int keylen)
 	dh = relay_ssl_get_dhparams(MIN(keylen, maxlen));
 
 	return (dh);
+}
+
+int
+relay_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	switch (imsg->hdr.type) {
+	default:
+		break;
+	}
+
+	return (-1);
 }
 
 SSL_CTX *

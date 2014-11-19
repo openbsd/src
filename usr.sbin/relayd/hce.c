@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.65 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: hce.c,v 1.66 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,6 +48,7 @@ void	 hce_disable_events(void);
 
 int	 hce_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 hce_dispatch_pfe(int, struct privsep_proc *, struct imsg *);
+int	 hce_dispatch_relay(int, struct privsep_proc *, struct imsg *);
 
 static struct relayd *env = NULL;
 int			 running = 0;
@@ -55,6 +56,7 @@ int			 running = 0;
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	hce_dispatch_parent },
 	{ "pfe",	PROC_PFE,	hce_dispatch_pfe },
+	{ "relay",	PROC_RELAY,	hce_dispatch_relay },
 };
 
 pid_t
@@ -78,8 +80,6 @@ hce_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	/* Allow maximum available sockets for TCP checks */
 	socket_rlimit(-1);
-
-	snmp_init(env, PROC_PARENT);
 }
 
 void
@@ -274,9 +274,6 @@ hce_notify_done(struct host *host, enum host_error he)
 		    print_availability(host->check_cnt, host->up_cnt));
 	}
 
-	if (host->last_up != host->up)
-		snmp_hosttrap(env, table, host);
-
 	host->last_up = host->up;
 
 	if (SLIST_EMPTY(&host->children))
@@ -361,9 +358,6 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_HOST:
 		config_gethost(env, imsg);
 		break;
-	case IMSG_SNMPSOCK:
-		snmp_getsock(env, imsg);
-		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
 		break;
@@ -378,4 +372,15 @@ hce_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+int
+hce_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	switch (imsg->hdr.type) {
+	default:
+		break;
+	}
+
+	return (-1);
 }

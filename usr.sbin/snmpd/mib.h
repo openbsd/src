@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.34 2014/04/28 12:03:32 mikeb Exp $	*/
+/*	$OpenBSD: mib.h,v 1.35 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -665,6 +665,16 @@
 #define MIB_sensorUnits			MIB_sensorEntry, 6
 #define MIB_sensorStatus		MIB_sensorEntry, 7
 #define MIB_relaydMIBObjects		MIB_openBSD, 3
+#define MIB_relaydHostTrap		MIB_relaydMIBObjects, 1
+#define MIB_relaydHostTrapHostName	MIB_relaydHostTrap, 1
+#define MIB_relaydHostTrapUp		MIB_relaydHostTrap, 2
+#define MIB_relaydHostTrapLastUp	MIB_relaydHostTrap, 3
+#define MIB_relaydHostTrapUpCount	MIB_relaydHostTrap, 4
+#define MIB_relaydHostTrapCheckCount	MIB_relaydHostTrap, 5
+#define MIB_relaydHostTrapTableName	MIB_relaydHostTrap, 6
+#define MIB_relaydHostTrapTableUp	MIB_relaydHostTrap, 7
+#define MIB_relaydHostTrapRetry		MIB_relaydHostTrap, 8
+#define MIB_relaydHostTrapRetryCount	MIB_relaydHostTrap, 9
 #define MIB_ipsecMIBObjects		MIB_openBSD, 4
 #define MIB_memMIBObjects		MIB_openBSD, 5
 #define MIB_memMIBVersion		MIB_memMIBObjects, 1
@@ -1200,6 +1210,17 @@
 	{ MIBDECL(pfsyncNoMemory) },			\
 	{ MIBDECL(pfsyncOutputErrors) },		\
 	{ MIBDECL(sensorsMIBObjects) },			\
+	{ MIBDECL(relaydMIBObjects) },			\
+	{ MIBDECL(relaydHostTrap) },			\
+	{ MIBDECL(relaydHostTrapHostName) },		\
+	{ MIBDECL(relaydHostTrapUp) },			\
+	{ MIBDECL(relaydHostTrapLastUp) },		\
+	{ MIBDECL(relaydHostTrapUpCount) },		\
+	{ MIBDECL(relaydHostTrapCheckCount) },		\
+	{ MIBDECL(relaydHostTrapTableName) },		\
+	{ MIBDECL(relaydHostTrapTableUp) },		\
+	{ MIBDECL(relaydHostTrapRetry) },		\
+	{ MIBDECL(relaydHostTrapRetryCount) },		\
 	{ MIBDECL(sensors) },				\
 	{ MIBDECL(sensorNumber) },			\
 	{ MIBDECL(sensorTable) },			\

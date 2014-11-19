@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.196 2014/11/07 13:48:06 jsing Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.197 2014/11/19 10:24:40 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -384,6 +384,7 @@ struct host_config {
 
 struct host {
 	TAILQ_ENTRY(host)	 entry;
+	TAILQ_ENTRY(host)	 globalentry;
 	SLIST_ENTRY(host)	 child;
 	SLIST_HEAD(,host)	 children;
 	struct host_config	 conf;
@@ -537,8 +538,10 @@ struct rsession {
 	int				 se_cid;
 	pid_t				 se_pid;
 	SPLAY_ENTRY(rsession)		 se_nodes;
+	TAILQ_ENTRY(rsession)		 se_entry;
 };
 SPLAY_HEAD(session_tree, rsession);
+TAILQ_HEAD(sessionlist, rsession);
 
 enum prototype {
 	RELAY_PROTO_TCP		= 0,
@@ -935,7 +938,9 @@ enum imsg_type {
 	IMSG_CFG_RELAY_TABLE,
 	IMSG_CFG_DONE,
 	IMSG_CA_PRIVENC,
-	IMSG_CA_PRIVDEC
+	IMSG_CA_PRIVDEC,
+	IMSG_SESS_PUBLISH,	/* from relay to hce */
+	IMSG_SESS_UNPUBLISH
 };
 
 enum privsep_procid {
@@ -1017,12 +1022,14 @@ struct relayd {
 	struct protocol		 sc_proto_default;
 	struct event		 sc_ev;
 	struct tablelist	*sc_tables;
+	struct hostlist		 sc_hosts;
 	struct rdrlist		*sc_rdrs;
 	struct protolist	*sc_protos;
 	struct relaylist	*sc_relays;
 	struct routerlist	*sc_rts;
 	struct netroutelist	*sc_routes;
 	struct ca_pkeylist	*sc_pkeys;
+	struct sessionlist	 sc_sessions;
 	u_int16_t		 sc_prefork_relay;
 	char			 sc_demote_group[IFNAMSIZ];
 	u_int16_t		 sc_id;
@@ -1152,6 +1159,10 @@ int	 relay_test(struct protocol *, struct ctl_relay_event *);
 void	 relay_calc_skip_steps(struct relay_rules *);
 void	 relay_match(struct kvlist *, struct kv *, struct kv *,
 	    struct kvtree *);
+void	 relay_session_insert(struct rsession *);
+void	 relay_session_remove(struct rsession *);
+void	 relay_session_publish(struct rsession *);
+void	 relay_session_unpublish(struct rsession *);
 
 SPLAY_PROTOTYPE(session_tree, rsession, se_nodes, relay_session_cmp);
 
