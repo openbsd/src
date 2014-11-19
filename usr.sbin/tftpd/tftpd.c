@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.22 2014/08/13 17:41:58 tobias Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.23 2014/11/19 11:48:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -434,13 +434,16 @@ rewrite_events(void)
 void
 rewrite_map(struct tftp_client *client, const char *filename)
 {
-	char nicebuf[MAXPATHLEN];
+	char *nicebuf;
 
-	(void)strnvis(nicebuf, filename, MAXPATHLEN, VIS_SAFE|VIS_OCTAL);
+	if (stravis(&nicebuf, filename, VIS_SAFE|VIS_OCTAL) == -1)
+		lerr(1, "rwmap stravis");
 
 	if (evbuffer_add_printf(rwmap->wrbuf, "%s %s %s\n", getip(&client->ss),
 	    client->opcode == WRQ ? "write" : "read", nicebuf) == -1)
 		lerr(1, "rwmap printf");
+
+	free(nicebuf);
 
 	TAILQ_INSERT_TAIL(&rwmap->clients, client, entry);
 
