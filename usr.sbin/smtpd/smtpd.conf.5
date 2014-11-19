@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.121 2014/07/09 12:44:54 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.122 2014/11/19 04:05:44 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 9 2014 $
+.Dd $Mdocdate: November 19 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ decision comes the optional tag matching:
 .It Xo
 .Ic tagged
 .Op Ic \&!
-.Ic tag
+.Ar tag
 .Xc
 If specified, the rule will only be matched if the client session was tagged with
 .Ar tag .
@@ -283,7 +283,7 @@ or to the
 .Ux
 .Ar socket
 over LMTP.
-.It Ic deliver to maildir Ar path
+.It Ic deliver to maildir Op Ar path
 Mail is added to a maildir.
 Its location,
 .Ar path ,
