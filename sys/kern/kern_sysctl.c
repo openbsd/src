@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.271 2014/11/19 18:04:54 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.272 2014/11/19 21:17:37 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -167,8 +167,6 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	switch (name[0]) {
 	case CTL_KERN:
 		fn = kern_sysctl;
-		if (name[1] == KERN_VNODE)	/* XXX */
-			dolock = 0;
 		break;
 	case CTL_HW:
 		fn = hw_sysctl;
