@@ -1,4 +1,4 @@
-/*	$OpenBSD: getfile.c,v 1.5 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: getfile.c,v 1.6 2014/11/19 20:28:56 miod Exp $	*/
 /*	$NetBSD: getfile.c,v 1.6 1996/10/14 04:49:21 cgd Exp $	*/
 
 /*-
@@ -35,10 +35,10 @@
 
 #define CTRL(x) (x&037)
 
-int	getfile(char *, int);
+int	getfile(const char *, int);
 
 int
-getfile(char *prompt, int mode)
+getfile(const char *prompt, int mode)
 {
 	int fd;
 	char buf[100];

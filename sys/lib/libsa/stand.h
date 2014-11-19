@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.58 2014/07/13 09:26:08 jasper Exp $	*/
+/*	$OpenBSD: stand.h,v 1.59 2014/11/19 20:28:56 miod Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ void	*alloca(size_t);
 void	free(void *, u_int);
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
-u_int	dkcksum(struct disklabel *);
+u_int	dkcksum(const struct disklabel *);
 
 #define BOOTRANDOM	"/etc/random.seed"
 #define BOOTRANDOM_MAX	512
@@ -163,7 +163,7 @@ ssize_t	read(int, void *, size_t);
 ssize_t	write(int, void *, size_t);
 int	stat(const char *path, struct stat *sb);
 int	fstat(int fd, struct stat *sb);
-int	opendir(char *);
+int	opendir(const char *);
 int	readdir(int, char *);
 void	closedir(int);
 int	nodev(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.11 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.12 2014/11/19 20:28:56 miod Exp $	*/
 /*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ struct nfs_iodesc nfs_root_node;
  * On error, return non-zero and set errno.
  */
 static int
-nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
+nfs_getrootfh(struct iodesc *d, const char *path, u_char *fhp)
 {
 	int len;
 	struct args {
@@ -326,7 +326,7 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
  * On error, return non-zero and set errno.
  */
 int
-nfs_mount(int sock, struct in_addr ip, char *path)
+nfs_mount(int sock, struct in_addr ip, const char *path)
 {
 	struct iodesc *desc;
 	struct nfsv2_fattrs *fa;
@@ -583,8 +583,9 @@ nfs_seek(struct open_file *f, off_t offset, int where)
 }
 
 /* NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 */
-int nfs_stat_types[8] = {
-	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0 };
+const int nfs_stat_types[8] = {
+	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0
+};
 
 int
 nfs_stat(struct open_file *f, struct stat *sb)

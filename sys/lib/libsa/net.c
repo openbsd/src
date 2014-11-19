@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.16 2014/11/19 20:01:33 miod Exp $	*/
+/*	$OpenBSD: net.c,v 1.17 2014/11/19 20:28:56 miod Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ sendrecv(struct iodesc *d, ssize_t (*sproc)(struct iodesc *, void *, size_t),
  * Return values are in network order.
  */
 u_int32_t
-inet_addr(char *cp)
+inet_addr(const char *cp)
 {
 	u_long val;
 	int n;
@@ -193,14 +193,14 @@ inet_addr(char *cp)
 	return (htonl(INADDR_NONE));
 }
 
-char *
+const char *
 inet_ntoa(struct in_addr ia)
 {
 	return (intoa(ia.s_addr));
 }
 
 /* Similar to inet_ntoa() */
-char *
+const char *
 intoa(u_int32_t addr)
 {
 	char *cp;
@@ -230,8 +230,8 @@ intoa(u_int32_t addr)
 	return (cp+1);
 }
 
-static char *
-number(char *s, int *n)
+static const char *
+number(const char *s, int *n)
 {
 	for (*n = 0; isdigit(*s); s++)
 		*n = (*n * 10) + *s - '0';
@@ -239,7 +239,7 @@ number(char *s, int *n)
 }
 
 u_int32_t
-ip_convertaddr(char *p)
+ip_convertaddr(const char *p)
 {
 #define IP_ANYADDR	0
 	u_int32_t addr = 0, n;

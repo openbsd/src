@@ -1,4 +1,4 @@
-/*	$OpenBSD: saerrno.h,v 1.8 2014/11/19 19:59:25 miod Exp $	*/
+/*	$OpenBSD: saerrno.h,v 1.9 2014/11/19 20:28:56 miod Exp $	*/
 /*	$NetBSD: saerrno.h,v 1.6 1995/09/18 21:19:45 pk Exp $	*/
 
 /*
@@ -48,4 +48,4 @@ extern int errno;
 #define	EHER	(ELAST+9)	/* hard error */
 #define	ESALAST	(ELAST+9)
 
-char	*strerror(int err);
+const char *strerror(int err);

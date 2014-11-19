@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.9 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: net.h,v 1.10 2014/11/19 20:28:56 miod Exp $	*/
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ extern struct iodesc sockets[SOPEN_MAX];
 u_char	*arpwhohas(struct iodesc *, struct in_addr);
 void	arp_reply(struct iodesc *, void *);
 int	rarp_getipaddress(int);
-u_int32_t	ip_convertaddr(char *);
+u_int32_t	ip_convertaddr(const char *);
 
 /* Link functions: */
 ssize_t sendether(struct iodesc *d, void *pkt, size_t len,
@@ -114,11 +114,11 @@ ssize_t	sendrecv(struct iodesc *,
 	    void *, size_t);
 
 /* Utilities: */
-char	*ether_sprintf(u_char *);
-int	in_cksum(void *, int);
-char	*inet_ntoa(struct in_addr);
-char	*intoa(u_int32_t);		/* similar to inet_ntoa */
-u_int32_t inet_addr(char *);
+const char *ether_sprintf(const u_char *);
+int	in_cksum(const void *, int);
+const char *inet_ntoa(struct in_addr);
+const char *intoa(u_int32_t);		/* similar to inet_ntoa */
+u_int32_t inet_addr(const char *);
 
 /* Machine-dependent functions: */
 time_t	getsecs(void);
