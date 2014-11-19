@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <poll.h>
 #include <termios.h>
 #include <sndio.h>
 #include "tools.h"

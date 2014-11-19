@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2014/11/19 13:35:37 krw Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include <time.h>
 #include <ctype.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>

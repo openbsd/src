@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.39 2014/11/03 17:20:46 bluhm Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.40 2014/11/19 13:35:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -108,7 +108,6 @@
 #include <db.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
