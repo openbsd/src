@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.159 2014/10/24 23:30:05 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.160 2014/11/19 02:37:41 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2070,7 +2070,44 @@ re_stop(struct ifnet *ifp)
 
 	mii_down(&sc->sc_mii);
 
-	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
+	/*
+	 * Disable accepting frames to put RX MAC into idle state.
+	 * Otherwise it's possible to get frames while stop command
+	 * execution is in progress and controller can DMA the frame
+	 * to already freed RX buffer during that period.
+	 */
+	CSR_WRITE_4(sc, RL_RXCFG, CSR_READ_4(sc, RL_RXCFG) &
+	    ~(RL_RXCFG_RX_ALLPHYS | RL_RXCFG_RX_BROAD | RL_RXCFG_RX_INDIV |
+	    RL_RXCFG_RX_MULTI));
+
+	if (sc->rl_flags & RL_FLAG_WAIT_TXPOLL) {
+		for (i = RL_TIMEOUT; i > 0; i--) {
+			if ((CSR_READ_1(sc, sc->rl_txstart) &
+			    RL_TXSTART_START) == 0)
+				break;
+			DELAY(20);
+		}
+		if (i == 0)
+			printf("%s: stopping TX poll timed out!\n",
+			    sc->sc_dev.dv_xname);
+		CSR_WRITE_1(sc, RL_COMMAND, 0x00);
+	} else if (sc->rl_flags & RL_FLAG_CMDSTOP) {
+		CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_STOPREQ | RL_CMD_TX_ENB |
+		    RL_CMD_RX_ENB);
+		if (sc->rl_flags & RL_FLAG_CMDSTOP_WAIT_TXQ) {
+			for (i = RL_TIMEOUT; i > 0; i--) {
+				if ((CSR_READ_4(sc, RL_TXCFG) &
+				    RL_TXCFG_QUEUE_EMPTY) != 0)
+					break;
+				DELAY(100);
+			}
+			if (i == 0)
+				printf("%s: stopping TXQ timed out!\n",
+				    sc->sc_dev.dv_xname);
+		}
+	} else
+		CSR_WRITE_1(sc, RL_COMMAND, 0x00);
+	DELAY(1000);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
 	CSR_WRITE_2(sc, RL_ISR, 0xFFFF);
 
@@ -2261,6 +2298,8 @@ re_wol(struct ifnet *ifp, int enable)
 			printf("%s: no auxiliary power, cannot do WOL from D3 "
 			    "(power-off) state\n", sc->sc_dev.dv_xname);
 	}
+
+	re_iff(sc);
 
 	/* Temporarily enable write to configuration registers. */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);

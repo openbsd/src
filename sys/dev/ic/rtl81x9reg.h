@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.86 2014/09/06 04:46:58 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.87 2014/11/19 02:37:41 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -149,6 +149,7 @@
  */
 #define RL_TXCFG_CLRABRT	0x00000001	/* retransmit aborted pkt */
 #define RL_TXCFG_MAXDMA		0x00000700	/* max DMA burst size */
+#define RL_TXCFG_QUEUE_EMPTY	0x00000800	/* 8168E-VL or higher */
 #define RL_TXCFG_CRCAPPEND	0x00010000	/* CRC append (0 = yes) */
 #define RL_TXCFG_LOOPBKTST	0x00060000	/* loopback test */
 #define RL_TXCFG_IFG2		0x00080000	/* 8169 only */
