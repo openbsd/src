@@ -1,0 +1,9 @@
+AQ-EMPTY(1)                 General Commands Manual                AQ-EMPTY(1)
+
+NNAAMMEE
+     AAqq--eemmppttyy – empty implicit enclosure macros
+
+DDEESSCCRRIIPPTTIIOONN
+     An empty ⟨⟩ and a full ⟨user@host⟩ return path.  And another ⟨full⟩ one.
+
+OpenBSD                         August 6, 2010                         OpenBSD

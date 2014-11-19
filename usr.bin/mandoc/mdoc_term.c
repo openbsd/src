@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.189 2014/11/17 06:44:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.190 2014/11/19 21:59:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1852,7 +1852,8 @@ termp_quote_pre(DECL_ARGS)
 	case MDOC_Ao:
 		/* FALLTHROUGH */
 	case MDOC_Aq:
-		term_word(p, "<");
+		term_word(p, n->parent->prev != NULL &&
+		    n->parent->prev->tok == MDOC_An ?  "<" : "\\(la");
 		break;
 	case MDOC_Bro:
 		/* FALLTHROUGH */
@@ -1923,7 +1924,8 @@ termp_quote_post(DECL_ARGS)
 	case MDOC_Ao:
 		/* FALLTHROUGH */
 	case MDOC_Aq:
-		term_word(p, ">");
+		term_word(p, n->parent->prev != NULL &&
+		    n->parent->prev->tok == MDOC_An ?  ">" : "\\(ra");
 		break;
 	case MDOC_Bro:
 		/* FALLTHROUGH */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.71 2014/11/17 06:44:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.72 2014/11/19 21:59:19 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -44,6 +44,7 @@ static  void	  font_push(char);
 static	void	  font_pop(void);
 static	void	  mid_it(void);
 static	void	  post__t(DECL_ARGS);
+static	void	  post_aq(DECL_ARGS);
 static	void	  post_bd(DECL_ARGS);
 static	void	  post_bf(DECL_ARGS);
 static	void	  post_bk(DECL_ARGS);
@@ -70,6 +71,7 @@ static	void	  post_vt(DECL_ARGS);
 static	int	  pre__t(DECL_ARGS);
 static	int	  pre_an(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
+static	int	  pre_aq(DECL_ARGS);
 static	int	  pre_bd(DECL_ARGS);
 static	int	  pre_bf(DECL_ARGS);
 static	int	  pre_bk(DECL_ARGS);
@@ -170,8 +172,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre__t, post__t, NULL, NULL }, /* %T */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %V */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ac */
-	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Ao */
-	{ cond_body, pre_enc, post_enc, "<", ">" }, /* Aq */
+	{ cond_body, pre_aq, post_aq, NULL, NULL }, /* Ao */
+	{ cond_body, pre_aq, post_aq, NULL, NULL }, /* Aq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* At */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Bc */
 	{ NULL, pre_bf, post_bf, NULL, NULL }, /* Bf */
@@ -865,6 +867,25 @@ pre_ap(DECL_ARGS)
 	print_word("'");
 	outflags &= ~MMAN_spc;
 	return(0);
+}
+
+static int
+pre_aq(DECL_ARGS)
+{
+
+	print_word(n->parent->prev != NULL &&
+	    n->parent->prev->tok == MDOC_An ?  "<" : "\\(la");
+	outflags &= ~MMAN_spc;
+	return(1);
+}
+
+static void
+post_aq(DECL_ARGS)
+{
+
+	outflags &= ~(MMAN_spc | MMAN_nl);
+	print_word(n->parent->prev != NULL &&
+	    n->parent->prev->tok == MDOC_An ?  ">" : "\\(ra");
 }
 
 static int

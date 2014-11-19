@@ -1,0 +1,10 @@
+.Dd November 19, 2014
+.Dt AQ-AUTHOR 1
+.Os OpenBSD
+.Sh NAME
+.Nm Aq-author
+.Nd angle brackets after an author name macro
+.Sh DESCRIPTION
+.An Name Ao Mt addr Ac An Name Aq Mt addr
+.Sh AUTHORS
+.An Name Ao Mt addr Ac An Name Aq Mt addr
