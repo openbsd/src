@@ -1,4 +1,4 @@
-/*	$OpenBSD: ether.c,v 1.8 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: ether.c,v 1.9 2014/11/19 19:59:39 miod Exp $	*/
 /*	$NetBSD: ether.c,v 1.8 1996/10/13 02:29:00 christos Exp $	*/
 
 /*
@@ -55,15 +55,10 @@
 
 /* Caller must leave room for ethernet header in front!! */
 ssize_t
-sendether(d, pkt, len, dea, etype)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	u_char *dea;
-	int etype;
+sendether(struct iodesc *d, void *pkt, size_t len, u_char *dea, int etype)
 {
-ssize_t n;
-struct ether_header *eh;
+	ssize_t n;
+	struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
 	if (debug)
@@ -91,15 +86,11 @@ struct ether_header *eh;
  * NOTE: Caller must leave room for the Ether header.
  */
 ssize_t
-readether(d, pkt, len, tleft, etype)
-struct iodesc *d;
-void *pkt;
-size_t len;
-	time_t tleft;
-u_int16_t *etype;
+readether(struct iodesc *d, void *pkt, size_t len, time_t tleft,
+    u_int16_t *etype)
 {
-ssize_t n;
-struct ether_header *eh;
+	ssize_t n;
+	struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
 	if (debug)
