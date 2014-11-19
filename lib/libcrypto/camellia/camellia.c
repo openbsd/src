@@ -1,4 +1,4 @@
-/* $OpenBSD: camellia.c,v 1.9 2014/11/13 20:01:58 miod Exp $ */
+/* $OpenBSD: camellia.c,v 1.10 2014/11/19 11:37:52 bcook Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -84,9 +84,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/camellia.h>
 #include <openssl/opensslconf.h>
 
-#include "camellia.h"
 #include "cmll_locl.h"
 
 /* 32-bit rotations */
