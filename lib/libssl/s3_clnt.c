@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.94 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.95 2014/11/19 05:51:25 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1988,6 +1988,7 @@ ssl3_send_client_key_exchange(SSL *s)
 					SSLerr(
 					    SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 					    ERR_R_INTERNAL_ERROR);
+					EVP_PKEY_free(pkey);
 					goto err;
 				}
 				rsa = pkey->pkey.rsa;
