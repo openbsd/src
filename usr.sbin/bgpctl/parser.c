@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.68 2014/01/05 20:53:56 deraadt Exp $ */
+/*	$OpenBSD: parser.c,v 1.69 2014/11/19 21:11:41 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -386,9 +386,9 @@ const struct token	*match_token(int *argc, char **argv[],
 			    const struct token []);
 void			 show_valid_args(const struct token []);
 int			 parse_addr(const char *, struct bgpd_addr *);
-int			 parse_prefix(const char *, struct bgpd_addr *,
+int			 parse_prefix(const char *, size_t, struct bgpd_addr *,
 			     u_int8_t *);
-int			 parse_asnum(const char *, u_int32_t *);
+int			 parse_asnum(const char *, size_t, u_int32_t *);
 int			 parse_number(const char *, struct parse_result *,
 			     enum token_type);
 int			 getcommunity(const char *);
@@ -442,20 +442,22 @@ match_token(int *argc, char **argv[], const struct token table[])
 	const struct token	*t = NULL;
 	struct filter_set	*fs;
 	const char		*word = *argv[0];
+	size_t			wordlen = 0;
 
 	match = 0;
-
+	if (word != NULL)
+		wordlen = strlen(word);
 	for (i = 0; table[i].type != ENDTOKEN; i++) {
 		switch (table[i].type) {
 		case NOTOKEN:
-			if (word == NULL || strlen(word) == 0) {
+			if (word == NULL || wordlen == 0) {
 				match++;
 				t = &table[i];
 			}
 			break;
 		case KEYWORD:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    strlen(word)) == 0) {
+			    wordlen) == 0) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -464,7 +466,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			break;
 		case FLAG:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    strlen(word)) == 0) {
+			    wordlen) == 0) {
 				match++;
 				t = &table[i];
 				res.flags |= t->value;
@@ -508,7 +510,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			}
 			break;
 		case PREFIX:
-			if (parse_prefix(word, &res.addr, &res.prefixlen)) {
+			if (parse_prefix(word, wordlen, &res.addr, &res.prefixlen)) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -517,20 +519,20 @@ match_token(int *argc, char **argv[], const struct token table[])
 			break;
 		case ASTYPE:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    strlen(word)) == 0) {
+			    wordlen) == 0) {
 				match++;
 				t = &table[i];
 				res.as.type = t->value;
 			}
 			break;
 		case ASNUM:
-			if (parse_asnum(word, &res.as.as)) {
+			if (parse_asnum(word, wordlen, &res.as.as)) {
 				match++;
 				t = &table[i];
 			}
 			break;
 		case PEERDESC:
-			if (!match && word != NULL && strlen(word) > 0) {
+			if (!match && word != NULL && wordlen > 0) {
 				if (strlcpy(res.peerdesc, word,
 				    sizeof(res.peerdesc)) >=
 				    sizeof(res.peerdesc))
@@ -541,7 +543,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			}
 			break;
 		case RIBNAME:
-			if (!match && word != NULL && strlen(word) > 0) {
+			if (!match && word != NULL && wordlen > 0) {
 				if (strlcpy(res.rib, word, sizeof(res.rib)) >=
 				    sizeof(res.rib))
 					errx(1, "rib name too long");
@@ -550,7 +552,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			}
 			break;
 		case COMMUNITY:
-			if (word != NULL && strlen(word) > 0 &&
+			if (word != NULL && wordlen > 0 &&
 			    parse_community(word, &res)) {
 				match++;
 				t = &table[i];
@@ -562,21 +564,21 @@ match_token(int *argc, char **argv[], const struct token table[])
 		case PREPSELF:
 		case WEIGHT:
 		case RTABLE:
-			if (word != NULL && strlen(word) > 0 &&
+			if (word != NULL && wordlen > 0 &&
 			    parse_number(word, &res, table[i].type)) {
 				match++;
 				t = &table[i];
 			}
 			break;
 		case NEXTHOP:
-			if (word != NULL && strlen(word) > 0 &&
+			if (word != NULL && wordlen > 0 &&
 			    parse_nexthop(word, &res)) {
 				match++;
 				t = &table[i];
 			}
 			break;
 		case PFTABLE:
-			if (word != NULL && strlen(word) > 0) {
+			if (word != NULL && wordlen > 0) {
 				if ((fs = calloc(1,
 				    sizeof(struct filter_set))) == NULL)
 					err(1, NULL);
@@ -596,7 +598,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			}
 			break;
 		case FILENAME:
-			if (word != NULL && strlen(word) > 0) {
+			if (word != NULL && wordlen > 0) {
 				if ((res.mrtfd = open(word, O_RDONLY)) == -1) {
 					/*
 					 * ignore error if path has no / and
@@ -732,7 +734,7 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 }
 
 int
-parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
+parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr, u_int8_t *prefixlen)
 {
 	char		*p, *ps;
 	const char	*errstr;
@@ -744,13 +746,14 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 	bzero(addr, sizeof(struct bgpd_addr));
 
 	if ((p = strrchr(word, '/')) != NULL) {
+		size_t plen = strlen(p);
 		mask = strtonum(p + 1, 0, 128, &errstr);
 		if (errstr)
 			errx(1, "netmask %s", errstr);
 
-		if ((ps = malloc(strlen(word) - strlen(p) + 1)) == NULL)
+		if ((ps = malloc(wordlen - plen + 1)) == NULL)
 			err(1, "parse_prefix: malloc");
-		strlcpy(ps, word, strlen(word) - strlen(p) + 1);
+		strlcpy(ps, word, wordlen - plen + 1);
 
 		if (parse_addr(ps, addr) == 0) {
 			free(ps);
@@ -784,7 +787,7 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 }
 
 int
-parse_asnum(const char *word, u_int32_t *asnum)
+parse_asnum(const char *word, size_t wordlen, u_int32_t *asnum)
 {
 	const char	*errstr;
 	char		*dot;
@@ -793,7 +796,7 @@ parse_asnum(const char *word, u_int32_t *asnum)
 	if (word == NULL)
 		return (0);
 
-	if (strlen(word) < 1 || word[0] < '0' || word[0] > '9')
+	if (wordlen < 1 || word[0] < '0' || word[0] > '9')
 		return (0);
 
 	if ((dot = strchr(word,'.')) != NULL) {
