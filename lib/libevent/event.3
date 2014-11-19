@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.45 2014/11/19 23:50:22 dlg Exp $
+.\"	$OpenBSD: event.3,v 1.46 2014/11/19 23:55:54 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -70,8 +70,8 @@
 .Nm event_asr_abort
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
-.Fd #include <sys/time.h>
-.Fd #include <event.h>
+.In sys/time.h
+.In event.h
 .Ft "struct event_base *"
 .Fn "event_init" "void"
 .Ft int
