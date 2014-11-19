@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2014/07/13 21:18:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/11/19 20:01:35 miod Exp $
 
 LIB=sa
 
@@ -18,7 +18,7 @@ SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c loadfile.c \
 	close.c closeall.c dev.c dkcksum.c \
 	lseek.c open.c nullfs.c read.c fstat.c disklabel.c \
 	ufs.c cread.c
-SRCS+= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
+SRCS+= arp.c ether.c in_cksum.c net.c netif.c netudp.c rpc.c nfs.c \
 	rarp.c bootparam.c
 
 .PATH:	${S}/lib/libkern/arch/m88k ${S}/lib/libkern
