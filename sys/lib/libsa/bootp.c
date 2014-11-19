@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.14 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.15 2014/11/19 19:58:40 miod Exp $	*/
 /*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ static	char vm_cmu[4] = VM_CMU;
 /* Local forwards */
 static	ssize_t bootpsend(struct iodesc *, void *, size_t);
 static	ssize_t bootprecv(struct iodesc *, void *, size_t, time_t);
-static	void vend_cmu(u_char *);
-static	void vend_rfc1048(u_char *, u_int);
+static	void vend_cmu(const u_char *);
+static	void vend_rfc1048(const u_char *, u_int);
 
 /* Fetch required bootp information */
 void
@@ -260,15 +260,15 @@ bad:
 }
 
 static void
-vend_cmu(u_char *cp)
+vend_cmu(const u_char *cp)
 {
-	struct cmu_vend *vp;
+	const struct cmu_vend *vp;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
 		printf("vend_cmu bootp info.\n");
 #endif
-	vp = (struct cmu_vend *)cp;
+	vp = (const struct cmu_vend *)cp;
 
 	if (vp->v_smask.s_addr != 0)
 		smask = vp->v_smask.s_addr;
@@ -277,9 +277,9 @@ vend_cmu(u_char *cp)
 }
 
 static void
-vend_rfc1048(u_char *cp, u_int len)
+vend_rfc1048(const u_char *cp, u_int len)
 {
-	u_char *ep;
+	const u_char *ep;
 	int size;
 	u_char tag;
 

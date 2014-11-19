@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.14 2013/11/12 19:55:12 deraadt Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.15 2014/11/19 19:58:40 miod Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -43,14 +43,6 @@
 
 #include <lib/libkern/libkern.h>
 
-/* THIS IS AN UGLY HACK!!!			XXX */
-struct fid;
-struct mbuf;
-struct nameidata;
-struct netexport { int x; };
-struct proc;
-struct statfs;
-struct ucred;
 #include <isofs/cd9660/iso.h>
 
 #include "stand.h"
@@ -75,9 +67,9 @@ struct ptable_ent {
 #define	cdb2devb(bno)	((bno) * ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE)
 
 static int
-pnmatch(char *path, struct ptable_ent *pp)
+pnmatch(const char *path, struct ptable_ent *pp)
 {
-	char *cp;
+	const char *cp;
 	int i;
 
 	cp = pp->name;
@@ -92,9 +84,9 @@ pnmatch(char *path, struct ptable_ent *pp)
 }
 
 static int
-dirmatch(char *path, struct iso_directory_record *dp)
+dirmatch(const char *path, struct iso_directory_record *dp)
 {
-	char *cp;
+	const char *cp;
 	int i;
 
 	/* This needs to be a regular file */
