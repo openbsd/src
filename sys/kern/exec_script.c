@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.32 2014/11/18 05:23:14 tedu Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.33 2014/11/19 21:19:15 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -205,7 +205,6 @@ check_shell:
 	}
 	*tmpsap = malloc(MAXPATHLEN, M_EXEC, M_WAITOK);
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
-		/* normally can't fail, but check for it if diagnostic */
 #if NSYSTRACE > 0
 		if (ISSET(p->p_flag, P_SYSTRACE)) {
 			error = systrace_scriptname(p, *tmpsap);
@@ -223,10 +222,8 @@ check_shell:
 #endif
 			error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
 			    NULL);
-#ifdef DIAGNOSTIC
 		if (error != 0)
-			panic("exec_script: copyinstr couldn't fail");
-#endif
+			goto fail;
 	} else
 		snprintf(*tmpsap++, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
 	*tmpsap = NULL;
