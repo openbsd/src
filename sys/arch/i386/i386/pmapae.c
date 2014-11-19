@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.24 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.25 2014/11/19 20:09:01 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -561,9 +561,7 @@ boolean_t	 pmap_remove_pte_pae(struct pmap *, struct vm_page *,
 		     pt_entry_t *, vaddr_t, int32_t *);
 void		 pmap_unmap_ptes_pae(struct pmap *);
 vaddr_t		 pmap_tmpmap_pa_pae(paddr_t);
-pt_entry_t	*pmap_tmpmap_pvepte_pae(struct pv_entry *);
 void		 pmap_tmpunmap_pa_pae(void);
-void		 pmap_tmpunmap_pvepte_pae(struct pv_entry *);
 
 /*
  * pmap_tmpmap_pa: map a page in for tmp usage
@@ -608,42 +606,6 @@ pmap_tmpunmap_pa_pae()
 	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
 	 */
 #endif
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- */
-
-pt_entry_t *
-pmap_tmpmap_pvepte_pae(struct pv_entry *pve)
-{
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa_pae(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- */
-
-void
-pmap_tmpunmap_pvepte_pae(struct pv_entry *pve)
-{
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa_pae();
 }
 
 /*

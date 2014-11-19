@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.161 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.162 2014/11/19 20:09:01 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -343,9 +343,7 @@ void		 pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
 #define PMAP_REMOVE_SKIPWIRED	1
 
 vaddr_t		 pmap_tmpmap_pa(paddr_t);
-pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
 void		 pmap_tmpunmap_pa(void);
-void		 pmap_tmpunmap_pvepte(struct pv_entry *);
 void		 pmap_apte_flush(void);
 void		pmap_unmap_ptes(struct pmap *);
 void		pmap_exec_account(struct pmap *, vaddr_t, pt_entry_t,
@@ -443,42 +441,6 @@ pmap_tmpunmap_pa()
 	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
 	 */
 #endif
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- */
-
-pt_entry_t *
-pmap_tmpmap_pvepte(struct pv_entry *pve)
-{
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- */
-
-void
-pmap_tmpunmap_pvepte(struct pv_entry *pve)
-{
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa();
 }
 
 void
@@ -757,7 +719,7 @@ pmap_kremove(vaddr_t sva, vsize_t len)
  *      fully init'd later...
  *
  * => on i386, locore.s has already enabled the MMU by allocating
- *	a PDP for the kernel, and nkpde PTP's for the kernel.
+ *	a PDP for the kernel, and nkpde PTPs for the kernel.
  * => kva_start is the first free virtual address in kernel space
  */
 
@@ -2775,7 +2737,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
  * cpus we need to send the IPI to, then we grab the counter, then
  * we send the IPIs, then we finally do our own shootdown.
  *
- * Our shootdown is last to make it parallell with the other cpus
+ * Our shootdown is last to make it parallel with the other cpus
  * to shorten the spin time.
  *
  * Notice that we depend on failures to send IPIs only being able to
