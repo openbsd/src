@@ -19,9 +19,6 @@
 #include <crypto/rijndael.h>
 #include <crypto/key_wrap.h>
 
-void
-ovbcopy(const void *src, void *dst, size_t len);
-
 static void
 print_hex(const char *str, unsigned char *buf, int len)
 {
@@ -34,13 +31,6 @@ print_hex(const char *str, unsigned char *buf, int len)
 		printf("%02X", buf[i]);
 	}
 	printf("\n");
-}
-
-void
-ovbcopy(const void *src, void *dst, size_t len)
-{
-	/* userspace does not have ovbcopy: fake it */
-	memmove(dst, src, len);
 }
 
 static void
