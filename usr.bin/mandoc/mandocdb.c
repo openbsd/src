@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.123 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.124 2014/11/19 20:40:28 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -128,6 +128,7 @@ struct	mdoc_handler {
 static	void	 dbclose(int);
 static	void	 dbadd(struct mpage *, struct mchars *);
 static	void	 dbadd_mlink(const struct mlink *mlink);
+static	void	 dbadd_mlink_name(const struct mlink *mlink);
 static	int	 dbopen(int);
 static	void	 dbprune(void);
 static	void	 filescan(const char *);
@@ -1143,7 +1144,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 					 */
 
 					if (mpage_dest->pageid)
-						dbadd_mlink(mlink);
+						dbadd_mlink_name(mlink);
 
 					if (NULL == mlink->next)
 						break;
@@ -1718,7 +1719,8 @@ putkeys(const struct mpage *mpage,
 	if (TYPE_Nm & v) {
 		htab = &names;
 		v &= name_mask;
-		name_mask &= ~NAME_FIRST;
+		if (v & NAME_FIRST)
+			name_mask &= ~NAME_FIRST;
 		if (debug > 1)
 			say(mpage->mlinks->file,
 			    "Adding name %*s", sz, cp);
@@ -1933,9 +1935,17 @@ dbadd_mlink(const struct mlink *mlink)
 	SQL_BIND_INT64(stmts[STMT_INSERT_LINK], i, mlink->mpage->pageid);
 	SQL_STEP(stmts[STMT_INSERT_LINK]);
 	sqlite3_reset(stmts[STMT_INSERT_LINK]);
+}
+
+static void
+dbadd_mlink_name(const struct mlink *mlink)
+{
+	size_t		 i;
+
+	dbadd_mlink(mlink);
 
 	i = 1;
-	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, NAME_FILE);
+	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, NAME_FILE & NAME_MASK);
 	SQL_BIND_TEXT(stmts[STMT_INSERT_NAME], i, mlink->name);
 	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, mlink->mpage->pageid);
 	SQL_STEP(stmts[STMT_INSERT_NAME]);
