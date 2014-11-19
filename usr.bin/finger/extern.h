@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2014/10/17 20:19:15 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2014/11/19 22:07:13 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,5 @@ void	 sflag_print(void);
 int	 show_text(char *, char *, char *);
 PERSON **sort(void);
 void	 stimeprint(WHERE *);
-char	*vs(const char *);
 void	 userlist(int, char **);
 void	 vputc(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2014/11/18 20:54:28 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.29 2014/11/19 22:07:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -89,8 +89,10 @@ userinfo(PERSON *pn, struct passwd *pw)
 	char *p;
 	char *bp, name[1024];
 	struct stat sb;
+	int len;
 
 	pn->realname = pn->office = pn->officephone = pn->homephone = NULL;
+	pn->mailrecv = -1;		/* -1 == not_valid */
 
 	pn->uid = pw->pw_uid;
 	pn->name = estrdup(pw->pw_name);
@@ -103,24 +105,32 @@ userinfo(PERSON *pn, struct passwd *pw)
 	if (!(p = strsep(&bp, ",")))
 		return;
 	expandusername(p, pw->pw_name, name, sizeof(name));
-	pn->realname = vs(name);
-	pn->office = ((p = strsep(&bp, ",")) && *p) ?
-	    vs(p) : NULL;
-	pn->officephone = ((p = strsep(&bp, ",")) && *p) ?
-	    vs(p) : NULL;
-	pn->homephone = ((p = strsep(&bp, ",")) && *p) ?
-	    vs(p) : NULL;
-	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
+	if (stravis(&pn->realname, p, VIS_SAFE|VIS_NOSLASH) == -1)
+		err(1, "stravis");
+	if ((p = strsep(&bp, ",")) && *p) {
+		if (stravis(&pn->office, p, VIS_SAFE|VIS_NOSLASH) == -1)
+			err(1, "stravis");
+	}
+	if ((p = strsep(&bp, ",")) && *p) {
+		if (stravis(&pn->officephone, p, VIS_SAFE|VIS_NOSLASH) == -1)
+			err(1, "stravis");
+	}
+	if ((p = strsep(&bp, ",")) && *p) {
+		if (stravis(&pn->homephone, p, VIS_SAFE|VIS_NOSLASH) == -1)
+			err(1, "stravis");
+	}
+	len = snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
 	    pw->pw_name);
-	pn->mailrecv = -1;		/* -1 == not_valid */
-	if (stat(tbuf, &sb) < 0) {
-		if (errno != ENOENT) {
-			warn("%s", tbuf);
-			return;
+	if (len != -1 && len < sizeof(tbuf)) {
+		if (stat(tbuf, &sb) < 0) {
+			if (errno != ENOENT) {
+				warn("%s", tbuf);
+				return;
+			}
+		} else if (sb.st_size != 0) {
+			pn->mailrecv = sb.st_mtime;
+			pn->mailread = sb.st_atime;
 		}
-	} else if (sb.st_size != 0) {
-		pn->mailrecv = sb.st_mtime;
-		pn->mailread = sb.st_atime;
 	}
 }
 
@@ -362,23 +372,4 @@ prphone(char *num)
 	*p++ = *num++;
 	*p = '\0';
 	return (pbuf);
-}
-
-/*
- * Like strvis(), but use malloc() to get the space and returns a pointer
- * to the destination string.
- *
- * The caller is responsible for free()'ing the returned string.
- */
-char *
-vs(const char *src)
-{
-	char *dst;
-
-	/* This will allocate 3 extra bytes but gives overflow protection. */
-	dst = reallocarray(NULL, 4, strlen(src) + 1);
-	if (dst == NULL)
-		err(1, "reallocarray");
-	strvis(dst, src, VIS_SAFE|VIS_NOSLASH);
-	return (dst);
 }
