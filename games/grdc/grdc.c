@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.18 2014/11/18 20:09:45 tedu Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.19 2014/11/19 03:27:45 schwarze Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	int i, j, s, k;
 	int scrol;
 	int n = 0;
-	struct timeval nowtv;
+	struct timeval nowtv, endtv;
 	struct timespec delay;
 	const char *errstr;
 	long scroldelay = 50000000;
@@ -120,6 +120,8 @@ main(int argc, char *argv[])
 
 	gettimeofday(&nowtv, NULL);
 	TIMEVAL_TO_TIMESPEC(&nowtv, &now);
+	if (n)
+		endtv.tv_sec = nowtv.tv_sec + n - 1;
 	do {
 		if (sigwinched) {
 			sigwinched = 0;
@@ -232,7 +234,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "grdc terminated by signal %d\n", sigtermed);
 			exit(1);
 		}
-	} while(--n);
+	} while (n == 0 || nowtv.tv_sec < endtv.tv_sec);
 	standend();
 	clear();
 	refresh();
