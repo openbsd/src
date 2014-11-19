@@ -1,4 +1,4 @@
-/*	$OpenBSD: saerrno.h,v 1.7 2011/09/20 22:26:05 miod Exp $	*/
+/*	$OpenBSD: saerrno.h,v 1.8 2014/11/19 19:59:25 miod Exp $	*/
 /*	$NetBSD: saerrno.h,v 1.6 1995/09/18 21:19:45 pk Exp $	*/
 
 /*
@@ -42,10 +42,10 @@ extern int errno;
 #define	EUNIT	(ELAST+3)	/* bad drive */
 #define	EPART	(ELAST+4)	/* bad partition */
 #define	ERDLAB	(ELAST+5)	/* can't read disk label */
-#define	EOFFSET	(ELAST+7)	/* relative seek not supported */
-#define	EBSE	(ELAST+9)	/* bad sector error */
-#define	EECC	(ELAST+11)	/* uncorrectable ecc error */
-#define	EHER	(ELAST+12)	/* hard error */
-#define	ESALAST	(ELAST+12)	/* */
+#define	EOFFSET	(ELAST+6)	/* relative seek not supported */
+#define	EBSE	(ELAST+7)	/* bad sector error */
+#define	EECC	(ELAST+8)	/* uncorrectable ecc error */
+#define	EHER	(ELAST+9)	/* hard error */
+#define	ESALAST	(ELAST+9)
 
 char	*strerror(int err);
