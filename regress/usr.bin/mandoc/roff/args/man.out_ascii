@@ -28,8 +28,10 @@ DDEESSCCRRIIPPTTIIOONN
        double eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
        triple eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
        unterminated quotes: _o_n_e _o_n_ettwwoo text
+       tab after macro: _o_n_ettwwoo text
+       escape sequence after macro: _o_n_ettwwoo text
        backslash at eol: _o_n_ettwwoo
 
 
 
-                                January 1, 2011                    ARGS-MAN(1)
+                               November 19, 2014                   ARGS-MAN(1)

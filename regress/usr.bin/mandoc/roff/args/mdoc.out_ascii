@@ -7,6 +7,7 @@ DDEESSCCRRIIPPTTIIOONN
      standard unquoted: --oonnee --ttwwoo text
      escaped blanks: --oonnee oonnee --ttwwoo ttwwoo text
      escaped 'e' character: --oonnee\\oonnee --ttwwoo text
+     escaped backslash before 'e' character: --oonnee\\ --ttwwoo text
      double inter-argument space: --oonnee --ttwwoo text
      triple inter-argument space: --oonnee --ttwwoo text
      single eol blank: --oonnee --ttwwoo text
@@ -26,6 +27,8 @@ DDEESSCCRRIIPPTTIIOONN
      unterminated quotes: --oonnee --oonnee --ttwwoo text
      single trailing blank in unterminated quotes: --oonnee  --oonnee --ttwwoo  text
      double trailing blank in unterminated quotes: --oonnee   --oonnee --ttwwoo   text
+     tab after macro: --oonnee --ttwwoo text
+     escape sequence after macro: --oonnee --ttwwoo text
      backslash at eol: --oonnee --ttwwoo
 
-OpenBSD                        December 15, 2013                       OpenBSD
+OpenBSD                        November 19, 2014                       OpenBSD

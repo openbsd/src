@@ -1,4 +1,4 @@
-.Dd December 15, 2013
+.Dd November 19, 2014
 .Dt ARGS-MDOC 1
 .Os OpenBSD
 .Sh NAME
@@ -21,10 +21,10 @@ text
 .\"Fl one\\ two
 .\"text
 .\"br
-.\"escaped backslash before 'e' character:
-.\"Fl one\\e two
-.\"text
-.\"br
+escaped backslash before 'e' character:
+.Fl one\\e two
+text
+.br
 double inter-argument space:
 .Fl one  two
 text
@@ -110,6 +110,14 @@ text
 double trailing blank in unterminated quotes:
 .Fl "one  
 .Fl one "two  
+text
+.br
+tab after macro:
+.Fl	one two
+text
+.br
+escape sequence after macro:
+.Fl\(lqone two
 text
 .br
 backslash at eol:

@@ -10,3 +10,4 @@ mandoc: mdoc.in:106:10: WARNING: unterminated quoted argument
 mandoc: mdoc.in:107:14: WARNING: unterminated quoted argument
 mandoc: mdoc.in:111:11: WARNING: unterminated quoted argument
 mandoc: mdoc.in:112:15: WARNING: unterminated quoted argument
+mandoc: mdoc.in:120:1: ERROR: escaped character not allowed in a name: Fl\(

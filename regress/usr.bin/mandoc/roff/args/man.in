@@ -1,4 +1,4 @@
-.TH ARGS-MAN 1 "January 1, 2011"
+.TH ARGS-MAN 1 "November 19, 2014"
 .SH NAME
 args-man - arguments to man macros
 .SH DESCRIPTION
@@ -109,5 +109,13 @@ text
 .\"IB one "two  
 .\"text
 .\"br
+tab after macro:
+.IB     one two
+text
+.br
+escape sequence after macro:
+.IB\(lqone two
+text
+.br
 backslash at eol:
 .IB one two\

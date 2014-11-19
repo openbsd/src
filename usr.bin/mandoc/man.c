@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.90 2014/11/03 23:17:21 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.91 2014/11/19 03:07:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -481,35 +481,50 @@ man_ptext(struct man *man, int line, char *buf, int offs)
 static int
 man_pmacro(struct man *man, int ln, char *buf, int offs)
 {
-	char		 mac[5];
 	struct man_node	*n;
+	const char	*cp;
 	enum mant	 tok;
 	int		 i, ppos;
 	int		 bline;
+	char		 mac[5];
 
 	ppos = offs;
 
 	/*
 	 * Copy the first word into a nil-terminated buffer.
-	 * Stop copying when a tab, space, or eoln is encountered.
+	 * Stop when a space, tab, escape, or eoln is encountered.
 	 */
 
 	i = 0;
-	while (i < 4 && '\0' != buf[offs] && ' ' != buf[offs] &&
-	    '\t' != buf[offs])
+	while (i < 4 && strchr(" \t\\", buf[offs]) == NULL)
 		mac[i++] = buf[offs++];
 
 	mac[i] = '\0';
 
 	tok = (i > 0 && i < 4) ? man_hash_find(mac) : MAN_MAX;
 
-	if (MAN_MAX == tok) {
+	if (tok == MAN_MAX) {
 		mandoc_msg(MANDOCERR_MACRO, man->parse,
 		    ln, ppos, buf + ppos - 1);
 		return(1);
 	}
 
-	/* The macro is sane.  Jump to the next word. */
+	/* Skip a leading escape sequence or tab. */
+
+	switch (buf[offs]) {
+	case '\\':
+		cp = buf + offs + 1;
+		mandoc_escape(&cp, NULL, NULL);
+		offs = cp - buf;
+		break;
+	case '\t':
+		offs++;
+		break;
+	default:
+		break;
+	}
+
+	/* Jump to the next non-whitespace word. */
 
 	while (buf[offs] && ' ' == buf[offs])
 		offs++;
