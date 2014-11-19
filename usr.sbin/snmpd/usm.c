@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.7 2013/09/26 09:11:30 reyk Exp $	*/
+/*	$OpenBSD: usm.c,v 1.8 2014/11/19 11:14:06 blambert Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -491,7 +491,7 @@ usm_make_report(struct snmp_message *msg)
 	if (msg->sm_varbindresp != NULL)
 		ber_free_elements(msg->sm_varbindresp);
 	msg->sm_varbindresp = ber_add_sequence(NULL);
-	mps_getreq(msg->sm_varbindresp, &usmstat, msg->sm_version);
+	mps_getreq(NULL, msg->sm_varbindresp, &usmstat, msg->sm_version);
 	return;
 }
 
