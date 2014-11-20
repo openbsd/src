@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.84 2014/09/01 11:29:15 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.85 2014/11/20 11:39:29 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -328,7 +328,7 @@ sub pack_header
 	return $header;
 }
 
-my $random_name = "A_random_name000";
+my $whatever = "usual_suspect000";
 
 sub mkheader
 {
@@ -394,8 +394,8 @@ sub mkheader
 	}
 	if ($x) {
 		my $extended = $archive->pack_header(XHDR, length($x), $entry,
-		    '', $random_name, '', $uname, $gname, $major, $minor);
-		$random_name++;
+		    '', $whatever, '', $uname, $gname, $major, $minor);
+		$whatever++;
 		if ((length $x) % 512) {
 			$x .= "\0" x (512 - ((length $x) % 512));
 		}
