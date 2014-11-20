@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.49 2012/11/06 02:50:47 lteo Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.50 2014/11/20 15:22:39 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <net/if.h>

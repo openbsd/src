@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.77 2014/10/22 13:31:04 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.78 2014/11/20 15:22:39 tedu Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/socket.h>

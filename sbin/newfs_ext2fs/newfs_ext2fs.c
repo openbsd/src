@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.13 2014/06/29 00:32:50 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.14 2014/11/20 15:22:39 tedu Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/disklabel.h>
-#include <sys/file.h>
 #include <sys/mount.h>
 
 #include <ufs/ext2fs/ext2fs.h>
@@ -46,6 +45,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <paths.h>

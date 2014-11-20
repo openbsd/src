@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.19 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.20 2014/11/20 15:22:39 tedu Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/file.h>
 #include <sys/stat.h>
 
 #include "ed.h"
