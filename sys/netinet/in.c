@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.108 2014/11/20 10:05:37 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.109 2014/11/20 10:06:54 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ int
 in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa;						\
+	struct ifaddr *ifa;
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
