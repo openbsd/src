@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.26 2014/10/28 18:48:56 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.27 2014/11/20 13:55:23 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -149,12 +149,14 @@ ascii_setwidth(struct termp *p, int iop, size_t width)
 {
 
 	p->rmargin = p->defrmargin;
-	if (0 < iop)
+	if (iop > 0)
 		p->defrmargin += width;
-	else if (0 > iop)
+	else if (iop == 0)
+		p->defrmargin = width ? width : p->lastrmargin;
+	else if (p->defrmargin > width)
 		p->defrmargin -= width;
 	else
-		p->defrmargin = width ? width : p->lastrmargin;
+		p->defrmargin = 0;
 	p->lastrmargin = p->rmargin;
 	p->rmargin = p->maxrmargin = p->defrmargin;
 }
