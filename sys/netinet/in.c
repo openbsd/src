@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.109 2014/11/20 10:06:54 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.110 2014/11/20 15:55:04 tedu Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -964,7 +964,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 */
 		memcpy(&ifr.ifr_addr, &inm->inm_sin, sizeof(inm->inm_sin));
 		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
-			free(inm, M_IPMADDR, 0);
+			free(inm, M_IPMADDR, sizeof(*inm));
 			return (NULL);
 		}
 
@@ -1017,7 +1017,7 @@ in_delmulti(struct in_multi *inm)
 			splx(s);
 		}
 
-		free(inm, M_IPMADDR, 0);
+		free(inm, M_IPMADDR, sizeof(*inm));
 	}
 }
 

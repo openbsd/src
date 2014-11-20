@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.271 2014/11/05 14:03:02 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.272 2014/11/20 15:55:04 tedu Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -945,6 +945,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 	struct proc *p = curproc; /* XXX */
 #ifdef IPSEC
 	struct ipsec_ref *ipr;
+	size_t iprlen;
 	u_int16_t opt16val;
 #endif
 	int error = 0;
@@ -1221,8 +1222,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				}
 			}
 
-			ipr = malloc(sizeof(struct ipsec_ref) + m->m_len - 2,
-			       M_CREDENTIALS, M_NOWAIT);
+			iprlen = sizeof(struct ipsec_ref) + m->m_len - 2;
+			ipr = malloc(iprlen, M_CREDENTIALS, M_NOWAIT);
 			if (ipr == NULL) {
 				error = ENOBUFS;
 				break;
@@ -1240,7 +1241,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
 				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
 				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					free(ipr, M_CREDENTIALS, 0);
+					free(ipr, M_CREDENTIALS, iprlen);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_srcid != NULL)
@@ -1253,7 +1254,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
 				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
 				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					free(ipr, M_CREDENTIALS, 0);
+					free(ipr, M_CREDENTIALS, iprlen);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_dstid != NULL)
@@ -1264,7 +1265,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			case IP_IPSEC_LOCAL_CRED:
 				if (ipr->ref_type < IPSP_CRED_KEYNOTE ||
 				    ipr->ref_type > IPSP_CRED_X509) {
-					free(ipr, M_CREDENTIALS, 0);
+					free(ipr, M_CREDENTIALS, iprlen);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_local_cred != NULL)
@@ -1275,7 +1276,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			case IP_IPSEC_LOCAL_AUTH:
 				if (ipr->ref_type < IPSP_AUTH_PASSPHRASE ||
 				    ipr->ref_type > IPSP_AUTH_RSA) {
-					free(ipr, M_CREDENTIALS, 0);
+					free(ipr, M_CREDENTIALS, iprlen);
 					error = EINVAL;
 				} else {
 					if (inp->inp_ipo->ipo_local_auth != NULL)
@@ -1672,8 +1673,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * No multicast option buffer attached to the pcb;
 		 * allocate one and initialize to default values.
 		 */
-		imo = (struct ip_moptions *)malloc(sizeof(*imo), M_IPMOPTS,
-		    M_WAITOK|M_ZERO);
+		imo = malloc(sizeof(*imo), M_IPMOPTS, M_WAITOK|M_ZERO);
 		immp = (struct in_multi **)malloc(
 		    (sizeof(*immp) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 		    M_WAITOK|M_ZERO);
@@ -1930,7 +1930,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	    imo->imo_multicast_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
 		free(imo->imo_membership , M_IPMOPTS, 0);
-		free(*imop, M_IPMOPTS, 0);
+		free(*imop, M_IPMOPTS, sizeof(**imop));
 		*imop = NULL;
 	}
 
@@ -1995,7 +1995,7 @@ ip_freemoptions(struct ip_moptions *imo)
 		for (i = 0; i < imo->imo_num_memberships; ++i)
 			in_delmulti(imo->imo_membership[i]);
 		free(imo->imo_membership, M_IPMOPTS, 0);
-		free(imo, M_IPMOPTS, 0);
+		free(imo, M_IPMOPTS, sizeof(*imo));
 	}
 }
 
