@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.130 2014/10/14 09:52:26 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.131 2014/11/20 11:05:19 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -397,6 +397,13 @@ ip6_input(struct mbuf *m)
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 	  	struct	in6_multi *in6m = 0;
+
+		/*
+		 * Make sure M_MCAST is set.  It should theoretically
+		 * already be there, but let's play safe because upper
+		 * layers check for this flag.
+		 */
+		m->m_flags |= M_MCAST;
 
 		in6_ifstat_inc(ifp, ifs6_in_mcast);
 		/*

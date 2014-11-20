@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.241 2014/11/05 14:03:02 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.242 2014/11/20 11:05:19 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -348,6 +348,14 @@ ipv4_input(struct mbuf *m)
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
+
+		/*
+		 * Make sure M_MCAST is set.  It should theoretically
+		 * already be there, but let's play safe because upper
+		 * layers check for this flag.
+		 */
+		m->m_flags |= M_MCAST;
+
 #ifdef MROUTING
 		if (ipmforwarding && ip_mrouter) {
 			if (m->m_flags & M_EXT) {
