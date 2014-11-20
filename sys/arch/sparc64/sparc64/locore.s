@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.176 2014/11/20 07:50:45 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.177 2014/11/20 08:47:00 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4733,9 +4733,6 @@ print_dtlb:
 
 	.align	8
 dostart:
-	mov	1, %g1
-	sllx	%g1, 63, %g1
-	wr	%g1, TICK_CMPR	! Clear and disable %tick_cmpr
 	/*
 	 * Startup.
 	 *
