@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.34 2014/11/11 17:09:30 mlarkin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.35 2014/11/20 06:51:41 mlarkin Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -95,7 +95,6 @@ lapic_map(paddr_t lapic_base)
 	int s;
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
-	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
 
 	disable_intr();
 	s = lapic_tpr;

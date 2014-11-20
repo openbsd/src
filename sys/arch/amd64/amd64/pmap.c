@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2014/11/20 06:45:45 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2014/11/20 06:51:41 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -460,8 +460,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (va >= (vaddr_t)NBPD_L2)
 		npte |= PG_G;
 
-	if ((cpu_feature & CPUID_NXE) && !(prot & PROT_EXEC))
-		npte |= PG_NX;
+	if (!(prot & PROT_EXEC))
+		npte |= pg_nx;
 	opte = pmap_pte_set(pte, npte);
 #ifdef LARGEPAGES
 	/* XXX For now... */
@@ -535,7 +535,6 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	struct pmap *kpm;
 	int i;
 	unsigned long p1i;
-	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
 	long ndmpdp;
 	paddr_t dmpd, dmpdp;
 
@@ -629,7 +628,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 
 		*((pd_entry_t *)va) = ((paddr_t)i << L2_SHIFT);
 		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G | PG_U |
-		    PG_M;
+		    PG_M | pg_nx;
 	}
 
 	for (i = NDML2_ENTRIES; i < ndmpdp; i++) {
@@ -640,7 +639,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 		va = PMAP_DIRECT_MAP(pdp);
 
 		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
-		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M;
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M | pg_nx;
 	}
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_V | PG_KW | PG_U |
@@ -1789,8 +1788,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	eva &= PG_FRAME;
 
 	nx = 0;
-	if ((cpu_feature & CPUID_NXE) && !(prot & PROT_EXEC))
-		nx = PG_NX;
+	if (!(prot & PROT_EXEC))
+		nx = pg_nx;
 
 	if ((eva - sva > 32 * PAGE_SIZE) && pmap != pmap_kernel())
 		shootall = 1;
