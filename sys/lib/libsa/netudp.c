@@ -1,4 +1,4 @@
-/*	$OpenBSD: netudp.c,v 1.1 2014/11/19 20:01:33 miod Exp $	*/
+/*	$OpenBSD: netudp.c,v 1.2 2014/11/20 14:51:42 krw Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
-#include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.22 2014/07/22 02:58:32 guenther Exp $ */
+/*	$OpenBSD: ppp.c,v 1.23 2014/11/20 14:51:42 krw Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.22 2014/07/22 02:58:32 guenther Exp $ */
+/* $Id: ppp.c,v 1.23 2014/11/20 14:51:42 krw Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -74,8 +74,6 @@
 #define	PPP_ASSERT(cond)
 #define	PPP_DBG(x)
 #endif
-
-#include "debugutil.h"
 
 static u_int ppp_seq = 0;
 

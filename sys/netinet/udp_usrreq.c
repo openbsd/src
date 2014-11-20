@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.192 2014/11/20 11:05:19 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.193 2014/11/20 14:51:42 krw Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -95,9 +95,6 @@
 #endif
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6protosw.h>

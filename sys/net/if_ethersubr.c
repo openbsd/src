@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.178 2014/11/19 19:47:52 tedu Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.179 2014/11/20 14:51:42 krw Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -132,9 +132,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.122 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.123 2014/11/20 14:51:42 krw Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -63,9 +63,6 @@
 #include <netinet/udp.h>
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>

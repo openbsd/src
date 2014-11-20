@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.62 2014/11/04 15:24:40 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.63 2014/11/20 14:51:42 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -59,12 +59,10 @@
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
-#include <sys/time.h>
 #include <net/bpf.h>
 #endif
 
 #ifdef INET
-#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #ifdef INET6

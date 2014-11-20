@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.61 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.62 2014/11/20 14:51:42 krw Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -117,9 +117,6 @@
 #include <netinet/in_pcb.h>
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #endif
 
