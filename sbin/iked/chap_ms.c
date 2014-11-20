@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.7 2014/04/16 04:59:56 miod Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.8 2014/11/20 03:48:12 tedu Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -330,52 +330,6 @@ mschap_msk(u_int8_t *password, int passwordlen,
 	bzero(msk, MSCHAP_MSK_SZ);
 	memcpy(msk, &recvkey, sizeof(recvkey));
 	memcpy(msk + sizeof(recvkey), &sendkey, sizeof(sendkey));
-}
-
-void
-mschap_newkey(u_int8_t *startkey, u_int8_t *sessionkey,
-    long sessionkeylen, u_int8_t *key)
-{
-	EVP_MD_CTX	 ctx;
-	u_int8_t	 md[SHA_DIGEST_LENGTH];
-	u_int		 mdlen;
-
-	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, startkey, sessionkeylen);
-	EVP_DigestUpdate(&ctx, sha1_pad1, sizeof(sha1_pad1));
-	EVP_DigestUpdate(&ctx, sessionkey, sessionkeylen);
-	EVP_DigestUpdate(&ctx, sha1_pad2, sizeof(sha1_pad2));
-	EVP_DigestFinal(&ctx, md, &mdlen);
-
-	memcpy(key, md, sessionkeylen);
-}
-
-void
-mschap_nt(u_int8_t *password_hash, u_int8_t *challenge)
-{
-	u_int8_t	 response[24];
-
-	mschap_challenge_response(challenge, password_hash, response);
-	memcpy(password_hash, response, sizeof(response));
-	password_hash[24] = 1;	/* NT-style response */
-}
-
-void
-mschap_lanman(u_int8_t *digest, u_int8_t *challenge, u_int8_t *secret)
-{
-	static u_int8_t	 salt[] = "KGS!@#$%"; /* RASAPI32.dll */
-	u_int8_t	 SECRET[14 + 1], *ptr, *end;
-	u_int8_t	 hash[MSCHAP_HASH_SZ];
-
-	bzero(&SECRET, sizeof(SECRET));
-	end = SECRET + (sizeof(SECRET) - 1);
-	for (ptr = SECRET; *secret && ptr < end; ptr++, secret++)
-		*ptr = toupper(*secret);
-
-	mschap_des_encrypt(salt, SECRET, hash);
-	mschap_des_encrypt(salt, SECRET + 7, hash + 8);
-
-	mschap_challenge_response(challenge, hash, digest);
 }
 
 void

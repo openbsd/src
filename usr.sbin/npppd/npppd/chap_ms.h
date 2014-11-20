@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.h,v 1.3 2010/09/22 11:48:38 yasuoka Exp $	*/
+/*	$OpenBSD: chap_ms.h,v 1.4 2014/11/20 03:48:12 tedu Exp $	*/
 /*	$vantronix: chap_ms.h,v 1.6 2010/05/19 09:37:00 reyk Exp $	*/
 
 /*
@@ -35,16 +35,12 @@ void	 mschap_nt_response(u_int8_t *, u_int8_t *, u_int8_t *, int,
 void	 mschap_auth_response(u_int8_t *, int, u_int8_t *, u_int8_t *,
 	    u_int8_t *, u_int8_t *, int, u_int8_t *);
 
-void	 mschap_nt(u_int8_t *, u_int8_t *);
-void	 mschap_lanman(u_int8_t *, u_int8_t *, u_int8_t *);
-
 void	 mschap_ntpassword_hash(u_int8_t *, int, u_int8_t *);
 void	 mschap_challenge_hash(u_int8_t *, u_int8_t *, u_int8_t *,
 	    int, u_int8_t *);
 
 void	 mschap_asymetric_startkey(u_int8_t *, u_int8_t *, int, int, int);
 void	 mschap_masterkey(u_int8_t *, u_int8_t *, u_int8_t *);
-void	 mschap_newkey(u_int8_t *, u_int8_t *, long, u_int8_t *);
 void	 mschap_radiuskey(u_int8_t *, const u_int8_t *, const u_int8_t *,
 	    const u_int8_t *);
 void	 mschap_msk(u_int8_t *, int, u_int8_t *, u_int8_t *);
