@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.895 2014/11/18 02:37:31 tedu Exp $ */
+/*	$OpenBSD: pf.c,v 1.896 2014/11/20 13:54:24 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -824,6 +824,11 @@ pf_state_key_addr_setup(struct pf_pdesc *pd, void *arg, int sidx,
 	default:
 		if (multi == PF_ICMP_MULTI_LINK) {
 			key->addr[sidx].addr32[0] = __IPV6_ADDR_INT32_MLL;
+
+			if (IN6_IS_SCOPE_EMBED(&key->addr[didx].v6))
+				key->addr[sidx].addr16[1] =
+				    key->addr[didx].addr16[1];
+
 			key->addr[sidx].addr32[1] = 0;
 			key->addr[sidx].addr32[2] = 0;
 			key->addr[sidx].addr32[3] = __IPV6_ADDR_INT32_ONE;
@@ -5796,7 +5801,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (IN6_IS_SCOPE_EMBED(&dst->sin6_addr))
 		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		nd6_output(ifp, ifp, m0, dst, NULL);
+		nd6_output(ifp, m0, dst, NULL);
 	} else {
 		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		if (r->rt != PF_DUPTO)

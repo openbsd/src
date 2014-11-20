@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.40 2014/11/10 10:46:10 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.41 2014/11/20 13:54:24 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -283,8 +283,8 @@ void nd6_rtrequest(int, struct rtentry *);
 int nd6_ioctl(u_long, caddr_t, struct ifnet *);
 struct rtentry *nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
 	char *, int, int, int);
-int nd6_output(struct ifnet *, struct ifnet *, struct mbuf *,
-	struct sockaddr_in6 *, struct rtentry *);
+int nd6_output(struct ifnet *, struct mbuf *, struct sockaddr_in6 *,
+    struct rtentry *);
 int nd6_storelladdr(struct ifnet *, struct rtentry *, struct mbuf *,
 	 struct sockaddr *, u_char *);
 int nd6_sysctl(int, void *, size_t *, void *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.131 2014/11/20 11:05:19 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.132 2014/11/20 13:54:24 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -267,6 +267,13 @@ ip6_input(struct mbuf *m)
 		    in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		    goto bad;
 	}
+	/* Drop packets if interface ID portion is already filled. */
+	if (((IN6_IS_SCOPE_EMBED(&ip6->ip6_src) && ip6->ip6_src.s6_addr16[1]) ||
+	    (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst) && ip6->ip6_dst.s6_addr16[1])) &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0) {
+		ip6stat.ip6s_badscope++;
+		goto bad;
+	}
 	if (IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst) &&
 	    !(m->m_flags & M_LOOP)) {
 		/*
@@ -314,6 +321,18 @@ ip6_input(struct mbuf *m)
 	}
 #endif
 
+	/*
+	 * If the packet has been received on a loopback interface it
+	 * can be destinated to any local address, not necessarily to
+	 * an address configured on `ifp'.
+	 */
+	if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
+			ip6->ip6_src.s6_addr16[1] = htons(ifp->if_index);
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
+			ip6->ip6_dst.s6_addr16[1] = htons(ifp->if_index);
+	}
+
 #if NPF > 0
         /*
          * Packet filter
@@ -344,43 +363,6 @@ ip6_input(struct mbuf *m)
 
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
-		ours = 1;
-		deliverifp = ifp;
-		goto hbhcheck;
-	}
-
-	/* drop packets if interface ID portion is already filled */
-	if ((IN6_IS_SCOPE_EMBED(&ip6->ip6_src) && ip6->ip6_src.s6_addr16[1]) ||
-	    (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst) && ip6->ip6_dst.s6_addr16[1])) {
-		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
-			ip6stat.ip6s_badscope++;
-			goto bad;
-		}
-	}
-
-	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1] = htons(ifp->if_index);
-	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] = htons(ifp->if_index);
-
-	/*
-	 * We use rt->rt_ifp to determine if the address is ours or not.
-	 * If rt_ifp is lo0, the address is ours.
-	 * The problem here is, rt->rt_ifp for fe80::%lo0/64 is set to lo0,
-	 * so any address under fe80::%lo0/64 will be mistakenly considered
-	 * local.  The special case is supplied to handle the case properly
-	 * by actually looking at interface addresses
-	 * (using in6ifa_ifpwithaddr).
-	 */
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0 &&
-	    IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
-		if (!in6ifa_ifpwithaddr(ifp, &ip6->ip6_dst)) {
-			icmp6_error(m, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_ADDR, 0);
-			/* m is already freed */
-			return;
-		}
-
 		ours = 1;
 		deliverifp = ifp;
 		goto hbhcheck;
@@ -463,18 +445,11 @@ ip6_input(struct mbuf *m)
 	}
 
 	/*
-	 * Accept the packet if the forwarding interface to the destination
-	 * according to the routing table is the loopback interface,
-	 * unless the associated route has a gateway.
-	 * Note that this approach causes to accept a packet if there is a
-	 * route to the loopback interface for the destination of the packet.
-	 * But we think it's even useful in some situations, e.g. when using
-	 * a special daemon which wants to intercept the packet.
+	 * Accept the packet if the route to the destination is marked
+	 * as local.
 	 */
 	if (ip6_forward_rt.ro_rt &&
-	    (ip6_forward_rt.ro_rt->rt_flags &
-	     (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
+	    ISSET(ip6_forward_rt.ro_rt->rt_flags, RTF_LOCAL)) {
 		struct in6_ifaddr *ia6 =
 			ifatoia6(ip6_forward_rt.ro_rt->rt_ifa);
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)

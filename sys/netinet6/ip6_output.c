@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.161 2014/11/01 21:40:39 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.162 2014/11/20 13:54:24 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -158,14 +158,13 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
     struct inpcb *inp)
 {
 	struct ip6_hdr *ip6;
-	struct ifnet *ifp, *origifp = NULL;
+	struct ifnet *ifp;
 	struct mbuf *m = m0;
 	int hlen, tlen;
 	struct route_in6 ip6route;
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *dst, dstsock;
 	int error = 0;
-	struct in6_ifaddr *ia6 = NULL;
 	u_long mtu;
 	int alwaysfrag, dontfrag;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
@@ -572,25 +571,13 @@ reroute:
 	/*
 	 * then rt (for unicast) and ifp must be non-NULL valid values.
 	 */
-	if (rt) {
-		ia6 = ifatoia6(rt->rt_ifa);
+	if (rt)
 		rt->rt_use++;
-	}
 
 	if ((flags & IPV6_FORWARDING) == 0) {
 		/* XXX: the FORWARDING flag can be set for mrouting. */
 		in6_ifstat_inc(ifp, ifs6_out_request);
 	}
-
-	/*
-	 * The outgoing interface must be in the zone of source and
-	 * destination addresses.  We should use ia_ifp to support the
-	 * case of sending packets to an address of our own.
-	 */
-	if (ia6 != NULL && ia6->ia_ifp)
-		origifp = ia6->ia_ifp;
-	else
-		origifp = ifp;
 
 	if (rt && !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		if (opt && opt->ip6po_nextroute.ro_rt) {
@@ -708,49 +695,6 @@ reroute:
 		}
 	}
 
-	/* Fake scoped addresses */
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
-		/*
-		 * If source or destination address is a scoped address, and
-		 * the packet is going to be sent to a loopback interface,
-		 * we should keep the original interface.
-		 */
-
-		/*
-		 * XXX: this is a very experimental and temporary solution.
-		 * We eventually have sockaddr_in6 and use the sin6_scope_id
-		 * field of the structure here.
-		 * We rely on the consistency between two scope zone ids
-		 * of source add destination, which should already be assured
-		 * Larger scopes than link will be supported in the near
-		 * future.
-		 */
-		origifp = NULL;
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
-			origifp = if_get(ntohs(ip6->ip6_src.s6_addr16[1]));
-		else if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
-			origifp = if_get(ntohs(ip6->ip6_dst.s6_addr16[1]));
-		/*
-		 * XXX: origifp can be NULL even in those two cases above.
-		 * For example, if we remove the (only) link-local address
-		 * from the loopback interface, and try to send a link-local
-		 * address without link-id information.  Then the source
-		 * address is ::1, and the destination address is the
-		 * link-local address with its s6_addr16[1] being zero.
-		 * What is worse, if the packet goes to the loopback interface
-		 * by a default rejected route, the null pointer would be
-		 * passed to looutput, and the kernel would hang.
-		 * The following last resort would prevent such disaster.
-		 */
-		if (origifp == NULL)
-			origifp = ifp;
-	} else
-		origifp = ifp;
-	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] = 0;
-
 	/*
 	 * If the outgoing packet contains a hop-by-hop options header,
 	 * it must be examined and processed even by the source node.
@@ -801,6 +745,19 @@ reroute:
 		goto reroute;
 	}
 #endif
+
+	/*
+	 * If the packet is not going on the wire it can be destinated
+	 * to any local address.  In this case do not clear its scopes
+	 * to let ip6_input() find a matching local route.
+	 */
+	if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
+			ip6->ip6_src.s6_addr16[1] = 0;
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
+			ip6->ip6_dst.s6_addr16[1] = 0;
+	}
+
 	in6_proto_cksum_out(m, ifp);
 
 	/*
@@ -861,7 +818,7 @@ reroute:
 	 * transmit packet without fragmentation
 	 */
 	if (dontfrag || (!alwaysfrag && tlen <= mtu)) {	/* case 1-a and 2-a */
-		error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
+		error = nd6_output(ifp, m, dst, ro->ro_rt);
 		goto done;
 	}
 
@@ -949,7 +906,7 @@ reroute:
 		if (error == 0) {
 			ip6stat.ip6s_ofragments++;
 			in6_ifstat_inc(ifp, ifs6_out_fragcreat);
-			error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
+			error = nd6_output(ifp, m, dst, ro->ro_rt);
 		} else
 			m_freem(m);
 	}
