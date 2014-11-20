@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.58 2014/11/20 06:51:41 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.59 2014/11/20 08:56:52 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ longmode_hi:
 	movq	$(NKL2_KIMG_ENTRIES+1),%rcx
 	leaq	(PROC0_PTP2_OFF)(%rsi),%rbx
 	addq	%r8, %rbx
-1:	movq	_C_LABEL(pg_nx),(%rbx)
+1:	movq	$0 ,(%rbx)
 	addq	$8,%rbx
 	loop	1b
 #endif
@@ -663,8 +663,7 @@ longmode_hi:
 	movq	$NKL3_KIMG_ENTRIES,%rcx
 	leaq	(PROC0_PTP3_OFF)(%rsi),%rbx
 	addq	%r8, %rbx
-	movq	_C_LABEL(pg_nx), %r9
-1:	movq	%r9 ,(%rbx)
+1:	movq	$0 ,(%rbx)
 	addq	$8,%rbx
 	loop	1b
 #endif
@@ -672,8 +671,7 @@ longmode_hi:
 	movq	$NKL4_KIMG_ENTRIES,%rcx
 	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys  address of PML4
 	addq	%r8, %rbx			# new, virtual address of PML4
-	movq	_C_LABEL(pg_nx), %r9
-1:	movq	%r9, (%rbx)
+1:	movq	$0, (%rbx)
 	addq	$8,%rbx
 	loop	1b
 
