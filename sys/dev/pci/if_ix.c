@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.107 2014/11/12 16:06:47 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.108 2014/11/20 03:35:56 brad Exp $	*/
 
 /******************************************************************************
 
@@ -2822,7 +2822,6 @@ ixgbe_rxeof(struct ix_queue *que)
 		eop = ((staterr & IXGBE_RXD_STAT_EOP) != 0);
 
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) {
-			ifp->if_ierrors++;
 			sc->dropped_pkts++;
 
 			if (rxbuf->fmp) {
@@ -3323,14 +3322,7 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 	sc->stats.bptc += IXGBE_READ_REG(hw, IXGBE_BPTC);
 #endif
 
-#if 0
 	/* Fill out the OS statistics structure */
-	ifp->if_ipackets = sc->stats.gprc;
-	ifp->if_opackets = sc->stats.gptc;
-	ifp->if_ibytes = sc->stats.gorc;
-	ifp->if_obytes = sc->stats.gotc;
-	ifp->if_imcasts = sc->stats.mprc;
-#endif
 	ifp->if_collisions = 0;
 	ifp->if_oerrors = sc->watchdog_events;
 	ifp->if_ierrors = total_missed_rx + sc->stats.crcerrs + sc->stats.rlec;
