@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.32 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.33 2014/11/20 14:53:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -189,8 +189,7 @@ yp_passwd(char *username)
 char *
 ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 {
-	static char buf[_PASSWORD_LEN+1];
-	char salt[_PASSWORD_LEN];
+	char buf[1024], hash[_PASSWORD_LEN];
 	sig_t saveint, savequit;
 	int tries, pwd_tries;
 	char *p;
@@ -236,15 +235,17 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	if (!pwd_gensalt(salt, _PASSWORD_LEN, lc, 'y')) {
-		(void)printf("Couldn't generate salt.\n");
-		pw_error(NULL, 0, 0);
-	}
-	p = strdup(crypt(buf, salt));
-	if (p == NULL)
-		pw_error(NULL, 1, 1);
+
 	(void)signal(SIGINT, saveint);
 	(void)signal(SIGQUIT, savequit);
+
+	if (crypt_newhash(buf, lc, hash, sizeof(hash)) == -1) {
+		(void)printf("Couldn't generate hash.\n");
+		pw_error(NULL, 0, 0);
+	}
+	p = strdup(hash);
+	if (p == NULL)
+		pw_error(NULL, 1, 1);
 
 	return (p);
 }
