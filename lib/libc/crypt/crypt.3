@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.40 2014/11/18 22:17:50 jmc Exp $
+.\" $OpenBSD: crypt.3,v 1.41 2014/11/20 19:18:25 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,13 +31,11 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: November 18 2014 $
+.Dd $Mdocdate: November 20 2014 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
 .Nm crypt ,
-.Nm crypt_checkpass ,
-.Nm crypt_newhash ,
 .Nm setkey ,
 .Nm encrypt ,
 .Nm des_setkey ,
@@ -54,10 +52,6 @@
 .Ft char *
 .Fn crypt "const char *key" "const char *setting"
 .Ft int
-.Fn crypt_checkpass "const char *password" "const char *hash"
-.Ft int
-.Fn crypt_newhash "const char *password" "login_cap_t *lc" "char *hash" "size_t hashsize"
-.Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
 .Fn des_setkey "const char *key"
@@ -69,6 +63,11 @@
 .Ft char *
 .Fn bcrypt "const char *key" "const char *salt"
 .Sh DESCRIPTION
+These functions are deprecated in favor of
+.Xr crypt_checkpass 3
+and
+.Xr crypt_newhash 3 .
+.Pp
 The
 .Fn crypt
 function performs password hashing based on the
@@ -94,30 +93,6 @@ and a number then a different algorithm is used depending on the number.
 At the moment
 .Ql $2
 chooses Blowfish hashing; see below for more information.
-.Pp
-The
-.Fn crypt_checkpass
-function is provided to simplify checking a user's password.
-If both the hash and the password are the empty string, authentication
-is a success.
-Otherwise, the password is hashed and compared to the provided hash.
-If the hash is NULL, authentication will always fail, but a default
-amount of work is performed to simulate the hashing operation.
-A successful match will return 0.
-A failure will return \-1 and set errno.
-.Pp
-The
-.Fn crypt_newhash
-function is provided to simplify the creation of new password hashes.
-The provided
-.Fa password
-is randomly salted and hashed and stored in
-.Fa hash .
-The login class argument
-.Fa lc
-is used to identify the preferred hashing algorithm and parameters.
-Refer to
-.Xr login.conf 5 .
 .Ss Extended crypt
 The
 .Ar key
@@ -298,6 +273,7 @@ return 0 on success and 1 on failure.
 .Xr login 1 ,
 .Xr passwd 1 ,
 .Xr blowfish 3 ,
+.Xr crypt_checkpass 3 ,
 .Xr getpass 3 ,
 .Xr md5 3 ,
 .Xr passwd 5
