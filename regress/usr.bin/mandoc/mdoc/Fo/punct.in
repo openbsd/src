@@ -1,0 +1,9 @@
+.Dd November 20, 2014
+.Dt FO-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-punct
+.Nd punctuation on function name input lines
+.Sh DESCRIPTION
+.Ft double
+.Fn sin , cos

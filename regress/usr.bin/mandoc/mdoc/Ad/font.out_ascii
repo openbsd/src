@@ -4,6 +4,6 @@ NNAAMMEE
      AAdd--ffoonntt - changing fonts inside the address macro
 
 DDEESSCCRRIIPPTTIIOONN
-     normal text _e_m_p_h_a_s_i_sbboolldd_b_a_c_k trailing text
+     normal text _e_m_p_h_a_s_i_sbboolldd_b_a_c_k | _a_f_t_e_r: _p_u_n_c_t_u_a_t_i_o_n trailing text
 
-OpenBSD                          July 9, 2012                          OpenBSD
+OpenBSD                        November 20, 2014                       OpenBSD

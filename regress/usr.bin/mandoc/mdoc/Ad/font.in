@@ -1,4 +1,4 @@
-.Dd July 9, 2012
+.Dd November 20, 2014
 .Dt AD-FONT 1
 .Os OpenBSD
 .Sh NAME
@@ -6,5 +6,5 @@
 .Nd changing fonts inside the address macro
 .Sh DESCRIPTION
 normal text
-.Ad emphasis\\fBbold\\fPback
+.Ad emphasis\\fBbold\\fPback | after : punctuation
 trailing text
