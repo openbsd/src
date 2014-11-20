@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.16 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.17 2014/11/20 04:01:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -75,7 +75,7 @@ sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 
 	ts_print(&h->ts);
 
-	if (caplen < SLIP_HDRLEN) {
+	if (caplen < SLIP_HDRLEN || length < SLIP_HDRLEN) {
 		printf("[|slip]");
 		goto out;
 	}
