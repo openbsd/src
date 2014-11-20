@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2014/11/03 20:15:31 bluhm Exp $ */
+/*	$OpenBSD: parse.y,v 1.34 2014/11/20 05:51:20 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -595,6 +595,9 @@ top:
 			} else if (c == quotec) {
 				*p = '\0';
 				break;
+			} else if (c == '\0') {
+				yyerror("syntax error");
+				return (findeol());
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
 				yyerror("string too long");

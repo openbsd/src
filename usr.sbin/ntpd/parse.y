@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.54 2014/11/14 03:20:37 doug Exp $ */
+/*	$OpenBSD: parse.y,v 1.55 2014/11/20 05:51:20 jsg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -520,6 +520,9 @@ yylex(void)
 			} else if (c == quotec) {
 				*p = '\0';
 				break;
+			} else if (c == '\0') {
+				yyerror("syntax error");
+				return (findeol());
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
 				yyerror("string too long");
