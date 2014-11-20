@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2014/03/26 21:36:40 sthen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2014/11/20 04:48:06 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -83,7 +83,8 @@ install: maninstall
 .endfor
 
 BEFOREMAN= ${.OBJDIR}/config.status
-CLEANFILES+= ${MAN} doc/example.conf doc/libunbound.3
+CLEANFILES+= ${MAN} dnstap/dnstap_config.h doc/example.conf doc/libunbound.3 \
+		smallapp/unbound-control-setup.sh
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
