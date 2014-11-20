@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.20 2014/11/07 22:17:49 schwarze Exp $
+.\"	$OpenBSD: bcd.6,v 1.21 2014/11/20 01:35:47 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)bcd.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: November 7 2014 $
+.Dd $Mdocdate: November 20 2014 $
 .Dt BCD 6
 .Os
 .Sh NAME
@@ -53,16 +53,23 @@ The options are as follows:
 .It Fl d
 Decode punch cards on the standard input back to ASCII.
 .It Fl l
-Create 80 column punch cards.
+Create or decode 80 column punch cards.
 The default is 48 columns.
 .El
 .Sh SEE ALSO
 .Xr ppt 6
+.Sh STANDARDS
 .Rs
 .%I ISO 1681:1973
 .%R "Information processing--Unpunched paper cards--Specification"
 .Re
+.Pp
 .Rs
 .%I ISO 1682:1973
 .%R "Information processing--80 columns punched paper cards--Dimensions and location of rectangular punched holes"
 .Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Bx 3 .
