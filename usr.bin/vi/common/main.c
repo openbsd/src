@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2014/11/19 03:42:40 bentley Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2014/11/20 08:50:53 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -456,10 +456,6 @@ v_end(GS *gp)
 		(void)screen_end(sp);	/* Removes sp from the queue. */
 	while ((sp = TAILQ_FIRST(&gp->hq)))
 		(void)screen_end(sp);	/* Removes sp from the queue. */
-
-#ifdef HAVE_PERL_INTERP
-	perl_end(gp);
-#endif
 
 #if defined(DEBUG) || defined(PURIFY)
 	{ FREF *frp;

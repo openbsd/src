@@ -1,27 +1,5 @@
-/*	$OpenBSD: com_extern.h,v 1.6 2014/11/10 21:40:11 tedu Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.7 2014/11/20 08:50:53 bentley Exp $	*/
 
-SCR *api_fscreen(int, char *);
-int api_aline(SCR *, recno_t, char *, size_t);
-int api_dline(SCR *, recno_t);
-int api_gline(SCR *, recno_t, char **, size_t *);
-int api_iline(SCR *, recno_t, char *, size_t);
-int api_lline(SCR *, recno_t *);
-int api_sline(SCR *, recno_t, char *, size_t);
-int api_getmark(SCR *, int, MARK *);
-int api_setmark(SCR *, int, MARK *);
-int api_nextmark(SCR *, int, char *);
-int api_getcursor(SCR *, MARK *);
-int api_setcursor(SCR *, MARK *);
-void api_emessage(SCR *, char *);
-void api_imessage(SCR *, char *);
-int api_edit(SCR *, char *, SCR **, int);
-int api_escreen(SCR *);
-int api_swscreen(SCR *, SCR *);
-int api_map(SCR *, char *, char *, size_t);
-int api_unmap(SCR *, char *);
-int api_opts_get(SCR *, char *, char **, int *);
-int api_opts_set(SCR *, char *, char *, u_long, int);
-int api_run_str(SCR *, char *);
 int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
 int cut_line(SCR *, recno_t, size_t, size_t, CB *);
 void cut_close(GS *);

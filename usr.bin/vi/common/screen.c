@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.11 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: screen.c,v 1.12 2014/11/20 08:50:53 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -157,10 +157,6 @@ screen_end(SCR *sp)
 	F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
 
 	rval = 0;
-#ifdef HAVE_PERL_INTERP
-	if (perl_screen_end(sp))		/* End perl. */
-		rval = 1;
-#endif
 	if (v_screen_end(sp))			/* End vi. */
 		rval = 1;
 	if (ex_screen_end(sp))			/* End ex. */

@@ -1,10 +1,7 @@
-#	$OpenBSD: Makefile,v 1.20 2014/11/14 20:26:12 tedu Exp $
+#	$OpenBSD: Makefile,v 1.21 2014/11/20 08:50:53 bentley Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
-
-# Uncomment to build with an embedded perl interpreter
-#PERLINTERP=	yes
 
 # Modern curses (ncurses)
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
@@ -24,7 +21,7 @@ SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	ex_at.c ex_bang.c ex_cd.c ex_cmd.c ex_cscope.c ex_delete.c \
 	ex_display.c ex_edit.c ex_equal.c ex_file.c ex_filter.c \
 	ex_global.c ex_init.c ex_join.c ex_map.c ex_mark.c ex_mkexrc.c \
-	ex_move.c ex_open.c ex_perl.c ex_preserve.c ex_print.c ex_put.c \
+	ex_move.c ex_open.c ex_preserve.c ex_print.c ex_put.c \
 	ex_quit.c ex_read.c ex_screen.c ex_script.c ex_set.c ex_shell.c \
 	ex_shift.c ex_source.c ex_stop.c ex_subst.c ex_tag.c \
 	ex_txt.c ex_undo.c ex_usage.c ex_util.c ex_version.c ex_visual.c \
@@ -38,29 +35,12 @@ SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	v_zexit.c vi.c vs_line.c vs_msg.c vs_refresh.c vs_relative.c \
 	vs_smap.c vs_split.c
 
-.ifdef PERLINTERP
-SRCS+=	api.c perl.c perlsfio.c
-PERLARCH!=perl -MConfig -e 'print $$Config{archlibexp}'
-CFLAGS+=-DHAVE_PERL_5_003_01 -DHAVE_PERL_INTERP -I${PERLARCH}/CORE
-LDADD+= -lperl ${PERLARCH}/auto/DynaLoader/DynaLoader.a
-DPADD+= ${LIBPERL}
-.endif
-
 LINKS=	${BINDIR}/vi ${BINDIR}/ex
 LINKS+=	${BINDIR}/vi ${BINDIR}/view
 MLINKS=	vi.1 ex.1
 MLINKS+=	vi.1 view.1
 
-CLEANFILES+= VI.pm perl.c
-
-.PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../perl_api ${.CURDIR}/../docs/USD.doc/vi.man
-
-perl.c: ${.CURDIR}/../perl_api/perl.xs ${.CURDIR}/../perl_api/typemap
-	echo "#define _PATH_PERLSCRIPTS \"${SHAREDIR}/vi/perl\"" > ${.TARGET}
-	perl /usr/libdata/perl5/ExtUtils/xsubpp -typemap \
-	    /usr/libdata/perl5/ExtUtils/typemap ${.CURDIR}/../perl_api/perl.xs >> ${.TARGET}
-	(perl  -ne 'print "sub $$1 {\$$curscr->$$1(\@_)}\n" \
-	    if /newXS\("VI::([^":]*)"/;' ${.TARGET} ; echo "1;") > VI.pm
+.PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
@@ -71,7 +51,3 @@ afterinstall:
 	${INSTALL} -d ${DESTDIR}${SHAREDIR}/vi/catalog
 	(cd ${.CURDIR}/../catalog && ${INSTALL} -m ${NONBINMODE} -c ${CATALOGS} ${DESTDIR}/usr/share/vi/catalog )
 	${INSTALL} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} -c ${.CURDIR}/recover ${DESTDIR}/usr/libexec/vi.recover
-.ifdef PERLINTERP
-	${INSTALL} -d ${DESTDIR}${SHAREDIR}/vi/perl
-	(cd ${.CURDIR}/../perl_scripts; for i in *.pl; do ${INSTALL} -m ${NONBINMODE} -c $$i ${DESTDIR}/usr/share/vi/perl; done)
-.endif

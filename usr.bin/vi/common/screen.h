@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.h,v 1.6 2013/11/28 22:12:40 krw Exp $	*/
+/*	$OpenBSD: screen.h,v 1.7 2014/11/20 08:50:53 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -91,7 +91,6 @@ struct _scr {
 
 	void	*ex_private;		/* Ex private area. */
 	void	*vi_private;		/* Vi private area. */
-	void	*perl_private;		/* Perl private area. */
 
 /* PARTIALLY OR COMPLETELY COPIED FROM PREVIOUS SCREEN. */
 	char	*alt_name;		/* Ex/vi: alternate file name. */

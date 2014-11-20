@@ -1,4 +1,4 @@
-#	$OpenBSD: LAYOUT,v 1.5 2014/11/06 11:35:02 bentley Exp $
+#	$OpenBSD: LAYOUT,v 1.6 2014/11/20 08:50:53 bentley Exp $
 
 #	@(#)LAYOUT	8.12 (Berkeley) 10/10/96
 
@@ -90,12 +90,6 @@ ex/
 
 include/
 	Replacement include files.
-
-perl_api/
-	Source code supporting the Perl scripting language for nvi.
-
-perl_scripts/
-	Scripts for Perl included with nvi.
 
 vi/
 	The vi source code.

@@ -165,8 +165,6 @@ EX COMMANDS:
       number: change display to number lines
 	open: enter "open" mode (not implemented)
        print: display lines
-	perl: run the perl interpreter with the command
-      perldo: run the perl interpreter with the command, on each line
     preserve: preserve an edit session for recovery
  [Pp]revious: edit the previous file in the file argument list
 	 put: append a cut buffer to the line

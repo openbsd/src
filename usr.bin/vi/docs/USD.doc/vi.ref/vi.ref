@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.ref,v 1.10 2004/01/24 12:26:47 jmc Exp $
+.\"	$OpenBSD: vi.ref,v 1.11 2014/11/20 08:50:53 bentley Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -272,17 +272,6 @@ command increments or decrements the number referenced by the cursor.
 The
 .CO previous
 command edits the previous file from the argument list.
-.IP "Scripting languages"
-The
-.CO ":pe[rl] cmd" ,
-.CO ":perld[o] cmd"
-and
-.CO ":tc[l] cmd"
-commands execute Perl and Tcl/Tk commands, respectively,
-on lines from the edit buffer.
-See the
-.QB "Scripting Languages"
-section and the specific commands for more information.
 .\".IP "Shell screens"
 .\"The
 .\".CO ":sc[ript] [file ...]"
@@ -1202,128 +1191,6 @@ the matched line to be split into two lines at that point.
 (The
 .LI <control-M>
 will be discarded.)
-.SH 1 "Scripting Languages"
-.pp
-The
-.CO nvi
-editor currently supports two scripting languages, Tcl/Tk and Perl.
-(Note that Perl4 isn't sufficient, and that the Perl5 used must be
-version 5.002 or later.
-See the
-.QB "Building Nvi"
-section for more information.)
-Note that the Tcl/Tk interface is not supported in the current version
-of OpenBSD.
-.pp
-The scripting language interface is still being worked on,
-therefore the following information is probably incomplete,
-probably wrong in cases, and likely to change.
-See the
-.LI perl_api
-and
-.LI tcl_api
-source directories for more information.
-As a quick reference, the following function calls are provided for
-both the Perl and Tcl interfaces.
-The Perl interface uses a slightly different naming convention,
-e.g. ``viFindScreen'' is named ``VI::FindScreen''.
-.IP "viFindScreen file"
-Return the
-.LI "screenId" associated with
-.LI file .
-.IP "viAppendLine screenId lineNumber text"
-Append
-.LI text
-as a new line after line number
-.LI lineNumber ,
-in the screen
-.LI screenId .
-.IP "viDelLine screenId lineNum"
-Delete the line
-.LI lineNumber
-from the screen
-.LI screenId .
-.IP "viGetLine screenId lineNumber"
-Return the line
-.LI lineNumber
-from the screen
-.LI screenId .
-.IP "viInsertLine screenId lineNumber text"
-Insert
-.LI text
-as a new line before line number
-.LI lineNumber
-in the screen
-.LI screenId .
-.IP "viLastLine screenId"
-Return the line number of the last line in the screen
-.LI screenId .
-.IP "viSetLine screenId lineNumber text"
-Change the line
-.LI lineNumber
-in the screen
-.LI screenId
-to match the specified
-.LI text .
-.IP "viGetMark screenId mark"
-Return the current line and column for the specified
-.LI mark
-from the screen
-.LI screenId .
-.IP "viSetMark screenId mark line column"
-Set the specified
-.LI mark
-to be at line
-.LI line ,
-column
-.LI column ,
-in the screen
-.LI screenId .
-.IP "viGetCursor screenId"
-Return the current line and column for the cursor in the screen
-.LI screenId .
-.IP "viSetCursor screenId line column"
-Set the cursor in the screen
-.LI screenId
-to the specified
-.LI line
-and
-.LI column .
-.IP "viMsg screenId text"
-Display the specified
-.LI text
-as a vi message in the screen
-.LI screenId .
-.IP "viNewScreen screenId [file]"
-Create a new screen.
-.IP "viEndScreen screenId"
-Exit the screen
-.LI screenId .
-.IP "viSwitchScreen screenId screenId"
-Switch from the screen
-.LI screenId
-to the screen
-.LI screenId .
-.IP "viMapKey screenId key tclproc"
-Map the specified
-.LI key
-in the screen
-.LI screenId
-to the Tcl procedure
-.LI tclproc .
-.IP "viUnmMapKey screenId key"
-Unmap the specified
-.LI key
-in the screen
-.LI screenId
-.IP "viGetOpt screenId option"
-Return the value of the specified
-.LI option
-from the screen
-.LI screenId .
-.IP "viSetOpt screenId command"
-Set one or more options in the screen
-.LI screenId .
 .SH 1 "General Editor Description"
 .pp
 When

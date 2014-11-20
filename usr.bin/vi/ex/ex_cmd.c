@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cmd.c,v 1.8 2014/11/14 20:26:13 tedu Exp $	*/
+/*	$OpenBSD: ex_cmd.c,v 1.9 2014/11/20 08:50:53 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -247,18 +247,6 @@ EXCMDLIST const cmds[] = {
 	    "ca1",
 	    "[line [,line]] p[rint] [count] [#l]",
 	    "display lines"},
-/* C_PERLCMD */
-	{"perl",	ex_perl,	E_ADDR2_ALL|E_ADDR_ZERO|
-					    E_ADDR_ZERODEF|E_SECURE,
-	    "s",
-	    "pe[rl] cmd",
-	    "run the perl interpreter with the command"},
-/* C_PERLDOCMD */
-	{"perldo",	ex_perl,	E_ADDR2_ALL|E_ADDR_ZERO|
-					    E_ADDR_ZERODEF|E_SECURE,
-	    "s",
-	    "perld[o] cmd",
-	    "run the perl interpreter with the command, on each line"},
 /* C_PRESERVE */
 	{"preserve",	ex_preserve,	0,
 	    "",
