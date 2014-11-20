@@ -3862,11 +3862,15 @@
 ./usr/share/man/man3/evbuffer_add_printf.3
 ./usr/share/man/man3/evbuffer_add_vprintf.3
 ./usr/share/man/man3/evbuffer_drain.3
+./usr/share/man/man3/evbuffer_expand.3
 ./usr/share/man/man3/evbuffer_find.3
 ./usr/share/man/man3/evbuffer_free.3
 ./usr/share/man/man3/evbuffer_new.3
 ./usr/share/man/man3/evbuffer_read.3
 ./usr/share/man/man3/evbuffer_readline.3
+./usr/share/man/man3/evbuffer_readln.3
+./usr/share/man/man3/evbuffer_remove.3
+./usr/share/man/man3/evbuffer_setcb.3
 ./usr/share/man/man3/evbuffer_write.3
 ./usr/share/man/man3/event.3
 ./usr/share/man/man3/event_add.3
