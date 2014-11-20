@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atm.c,v 1.10 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-atm.c,v 1.11 2014/11/20 04:11:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -65,6 +65,11 @@ atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	}
 	if (p[0] != 0xaa || p[1] != 0xaa || p[2] != 0x03) {
 		/*XXX assume 802.6 MAC header from fore driver */
+#define MIN_ATM_8026_HDRLEN (20 + 8)
+		if (caplen < MIN_ATM_8026_HDRLEN) {
+			printf("[|atm]");
+			goto out;
+		}
 		if (eflag)
 			printf("%04x%04x %04x%04x ",
 			       p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3],
