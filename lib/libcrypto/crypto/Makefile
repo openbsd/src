@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2014/11/18 05:31:47 miod Exp $
+# $OpenBSD: Makefile,v 1.50 2014/11/20 19:19:09 miod Exp $
 
 LIB=	crypto
 
@@ -436,6 +436,7 @@ CFLAGS+=-DOPENSSL_NO_ASM
 SRCS+= aes_core.c aes_cbc.c 
 SRCS+= bf_enc.c
 SRCS+= bn_asm.c
+SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 SRCS+= des_enc.c fcrypt_b.c
 SRCS+= rc4_enc.c rc4_skey.c
 #SRCS+= rc5_enc.c 
