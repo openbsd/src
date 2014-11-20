@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.107 2014/11/05 14:40:51 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.108 2014/11/20 10:05:37 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 void in_purgeaddr(struct ifaddr *);
 int in_addprefix(struct in_ifaddr *);
 int in_scrubprefix(struct in_ifaddr *);
-int in_addhost(struct in_ifaddr *);
-int in_scrubhost(struct in_ifaddr *);
+int in_addhost(struct in_ifaddr *, struct sockaddr_in *);
+int in_scrubhost(struct in_ifaddr *, struct sockaddr_in *);
 int in_insert_prefix(struct in_ifaddr *);
 void in_remove_prefix(struct in_ifaddr *);
 
@@ -313,11 +313,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			splx(s);
 			return (error);
 		}
-		if (ia->ia_flags & IFA_ROUTE) {
-			rt_ifa_del(&ia->ia_ifa, RTF_HOST, sintosa(&oldaddr));
-			rt_ifa_add(&ia->ia_ifa, RTF_UP | RTF_HOST,
-			    ia->ia_ifa.ifa_dstaddr);
-		}
+		in_scrubhost(ia, &oldaddr);
+		in_addhost(ia, &ia->ia_dstaddr);
 		splx(s);
 		break;
 
@@ -597,7 +594,7 @@ void
 in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
 {
 	if (ISSET(ifp->if_flags, IFF_POINTOPOINT))
-		in_scrubhost(ia);
+		in_scrubhost(ia, &ia->ia_dstaddr);
 	else if (!ISSET(ifp->if_flags, IFF_LOOPBACK))
 		in_scrubprefix(ia);
 }
@@ -657,22 +654,23 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	 * Add route for the network.
 	 */
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ISSET(ifp->if_flags, IFF_BROADCAST)) {
 		if (IN_RFC3021_SUBNET(ia->ia_netmask))
 			ia->ia_broadaddr.sin_addr.s_addr = 0;
 		else {
 			ia->ia_broadaddr.sin_addr.s_addr =
 			    ia->ia_net | ~ia->ia_netmask;
 		}
-	} else if (ifp->if_flags & IFF_POINTOPOINT) {
-		if (ia->ia_dstaddr.sin_family != AF_INET)
-			goto out;
 	}
 
-	if (ISSET(ifp->if_flags, IFF_POINTOPOINT))
-		error = in_addhost(ia);
-	else if (!ISSET(ifp->if_flags, IFF_LOOPBACK))
+	if (ISSET(ifp->if_flags, IFF_POINTOPOINT)) {
+		/* XXX We should not even call in_ifinit() in this case. */
+		if (ia->ia_dstaddr.sin_family != AF_INET)
+			goto out;
+		error = in_addhost(ia, &ia->ia_dstaddr);
+	} else if (!ISSET(ifp->if_flags, IFF_LOOPBACK)) {
 		error = in_addprefix(ia);
+	}
 
 	/*
 	 * If the interface supports multicast, join the "all hosts"
@@ -728,80 +726,15 @@ in_purgeaddr(struct ifaddr *ifa)
 }
 
 int
-in_addhost(struct in_ifaddr *ia0)
+in_addhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	struct in_ifaddr *ia;
-	struct in_addr dst;
-	int error;
-
-	dst = ia0->ia_dstaddr.sin_addr;
-
-	/*
-	 * If an interface already have a route to the same
-	 * destination don't do anything.
-	 */
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp->if_rdomain != ia0->ia_ifp->if_rdomain)
-			continue;
-
-		if (dst.s_addr != ia->ia_dstaddr.sin_addr.s_addr)
-			continue;
-
-		if ((ia->ia_flags & IFA_ROUTE) == 0)
-			continue;
-
-		return (0);
-	}
-
-	error = rt_ifa_add(&ia0->ia_ifa, RTF_UP | RTF_HOST,
-	    ia0->ia_ifa.ifa_dstaddr);
-	if (!error)
-		ia0->ia_flags |= IFA_ROUTE;
-
-	return (error);
+	return rt_ifa_add(&ia->ia_ifa, RTF_UP|RTF_HOST|RTF_MPATH, sintosa(dst));
 }
 
 int
-in_scrubhost(struct in_ifaddr *ia0)
+in_scrubhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	struct in_ifaddr *ia;
-	struct in_addr dst;
-	int error;
-
-	if ((ia0->ia_flags & IFA_ROUTE) == 0)
-		return (0);
-
-	dst = ia0->ia_dstaddr.sin_addr;
-
-	/*
-	 * Because we only add one route for a given destination at
-	 * a time, here we need to do some magic to move this route
-	 * to another interface if it has the same destination.
-	 */
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp->if_rdomain != ia0->ia_ifp->if_rdomain)
-			continue;
-
-		if (dst.s_addr != ia->ia_dstaddr.sin_addr.s_addr)
-			continue;
-
-		if ((ia->ia_flags & IFA_ROUTE) != 0)
-			continue;
-
-		rt_ifa_del(&ia0->ia_ifa, RTF_HOST, ia0->ia_ifa.ifa_dstaddr);
-		ia0->ia_flags &= ~IFA_ROUTE;
-		error = rt_ifa_add(&ia->ia_ifa, RTF_UP | RTF_HOST,
-		    ia->ia_ifa.ifa_dstaddr);
-		if (!error)
-			ia->ia_flags |= IFA_ROUTE;
-
-		return (error);
-	}
-
-	rt_ifa_del(&ia0->ia_ifa, RTF_HOST, ia0->ia_ifa.ifa_dstaddr);
-	ia0->ia_flags &= ~IFA_ROUTE;
-
-	return (0);
+	return rt_ifa_del(&ia->ia_ifa, RTF_HOST|RTF_MPATH, sintosa(dst));
 }
 
 /*
