@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.31 2014/02/06 16:55:01 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.32 2014/11/20 14:10:18 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,6 @@ sub wipe_directory
 	my $realname = $state->{destdir}.$d;
 
 	for my $i (@{$h->{$d}}) {
-		$state->log->set_context('-'.$i->{pkgname});
 		$i->cleanup($state);
 	}
 	if (!rmdir $realname) {
@@ -157,6 +156,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
+	$state->log->set_context('-'.$self->{pkgname});
 	$state->log("You may wish to remove #1 from man.conf", $fullname);
 	for my $f (OpenBSD::Paths->man_cruft) {
 		unlink("$fullname/$f");
@@ -168,6 +168,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
+	$state->log->set_context('-'.$self->{pkgname});
 	$state->log("You may wish to remove #1 from your font path", $fullname);
 	for my $f (OpenBSD::Paths->font_cruft) {
 		unlink("$fullname/$f");
