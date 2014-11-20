@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.31 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.32 2014/11/20 01:53:06 deraadt Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -142,9 +142,6 @@ int	rasops_alloc_mattr(void *, int, int, int, long *);
 int	rasops_do_cursor(struct rasops_info *);
 void	rasops_init_devcmap(struct rasops_info *);
 void	rasops_unpack_attr(void *, long, int *, int *, int *);
-#if NRASOPS_BSWAP > 0
-static void slow_ovbcopy(void *, void *, size_t);
-#endif
 #if NRASOPS_ROTATION > 0
 void	rasops_copychar(void *, int, int, int, int);
 int	rasops_copycols_rotated(void *, int, int, int, int);
@@ -644,7 +641,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 /*
  * Copy columns. This is slow, and hard to optimize due to alignment,
  * and the fact that we have to copy both left->right and right->left.
- * We simply cop-out here and use ovbcopy(), since it handles all of
+ * We simply cop-out here and use bcopy(), since it handles all of
  * these cases anyway.
  */
 int
@@ -694,7 +691,7 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 #if NRASOPS_BSWAP > 0
 	if (ri->ri_flg & RI_BSWAP) {
 		while (height--) {
-			slow_ovbcopy(sp, dp, num);
+			slow_bcopy(sp, dp, num);
 			dp += ri->ri_stride;
 			sp += ri->ri_stride;
 		}
@@ -1201,7 +1198,7 @@ rasops_copychar(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 #if NRASOPS_BSWAP > 0
 	if (ri->ri_flg & RI_BSWAP) {
 		while (height--) {
-			slow_ovbcopy(sp, dp, ri->ri_xscale);
+			slow_bcopy(sp, dp, ri->ri_xscale);
 			dp += ri->ri_stride;
 			sp += ri->ri_stride;
 		}
@@ -1330,13 +1327,13 @@ rasops_eraserows_rotated(void *cookie, int row, int num, long attr)
 
 #if NRASOPS_BSWAP > 0
 /*
- * Strictly byte-only ovbcopy() version, to be used with RI_BSWAP, as the
- * regular ovbcopy() may want to optimize things by doing larger-than-byte
+ * Strictly byte-only bcopy() version, to be used with RI_BSWAP, as the
+ * regular bcopy() may want to optimize things by doing larger-than-byte
  * reads or write. This may confuse things if src and dst have different
  * alignments.
  */
 void
-slow_ovbcopy(void *s, void *d, size_t len)
+slow_bcopy(void *s, void *d, size_t len)
 {
 	u_int8_t *src = s;
 	u_int8_t *dst = d;
