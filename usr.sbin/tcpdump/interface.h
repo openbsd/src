@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.63 2014/06/20 04:01:42 lteo Exp $	*/
+/*	$OpenBSD: interface.h,v 1.64 2014/11/20 03:56:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.63 2014/06/20 04:01:42 lteo Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.64 2014/11/20 03:56:33 jsg Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -276,7 +276,7 @@ extern void slow_print(const u_char *, u_int);
 extern void gtp_print(const u_char *, u_int, u_short, u_short);
 
 #ifdef INET6
-extern void ip6_print(const u_char *, int);
+extern void ip6_print(const u_char *, u_int);
 extern void ip6_opt_print(const u_char *, int);
 extern int hbhopt_print(const u_char *);
 extern int dstopt_print(const u_char *);

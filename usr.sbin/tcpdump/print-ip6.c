@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.16 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.17 2014/11/20 03:56:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -50,7 +50,7 @@
  * print an IP6 datagram.
  */
 void
-ip6_print(register const u_char *bp, register int length)
+ip6_print(register const u_char *bp, register u_int length)
 {
 	register const struct ip6_hdr *ip6;
 	register int hlen;
