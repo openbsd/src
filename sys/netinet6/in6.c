@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.144 2014/11/01 21:40:39 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.145 2014/11/20 09:55:57 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2141,28 +2141,6 @@ in6if_do_dad(struct ifnet *ifp)
 
 		return (1);
 	}
-}
-
-/*
- * Calculate max IPv6 MTU through all the interfaces and store it
- * to in6_maxmtu.
- */
-void
-in6_setmaxmtu(void)
-{
-	unsigned long maxmtu = 0;
-	struct ifnet *ifp;
-
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		/* this function can be called during ifnet initialization */
-		if (!ifp->if_afdata[AF_INET6])
-			continue;
-		if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
-		    IN6_LINKMTU(ifp) > maxmtu)
-			maxmtu = IN6_LINKMTU(ifp);
-	}
-	if (maxmtu)	     /* update only when maxmtu is positive */
-		in6_maxmtu = maxmtu;
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.90 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.91 2014/11/20 09:55:57 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -460,11 +460,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 		maxmtu = (ndi->maxmtu && ndi->maxmtu < ifp->if_mtu)
 		    ? ndi->maxmtu : ifp->if_mtu;
 		if (mtu <= maxmtu) {
-			int change = (ndi->linkmtu != mtu);
-
 			ndi->linkmtu = mtu;
-			if (change) /* in6_maxmtu may change */
-				in6_setmaxmtu();
 		} else {
 			nd6log((LOG_INFO, "nd6_ra_input: bogus mtu "
 			    "mtu=%lu sent from %s; "

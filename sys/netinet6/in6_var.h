@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.50 2014/08/25 14:00:34 florian Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.51 2014/11/20 09:55:57 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -514,7 +514,6 @@ int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *,
 	struct in6_ifaddr *);
 void	in6_purgeaddr(struct ifaddr *);
 int	in6if_do_dad(struct ifnet *);
-void	in6_setmaxmtu(void);
 void	*in6_domifattach(struct ifnet *);
 void	in6_domifdetach(struct ifnet *, void *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);

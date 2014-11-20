@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.76 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.77 2014/11/20 09:55:57 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #ifdef MROUTING
 #include <netinet6/ip6_mroute.h>
 #endif
-
-unsigned long in6_maxmtu = 0;
 
 int ip6_auto_linklocal = 1;	/* enable by default */
 

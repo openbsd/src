@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.125 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.126 2014/11/20 09:55:57 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -199,9 +199,6 @@ nd6_setmtu0(struct ifnet *ifp, struct nd_ifinfo *ndi)
 		    "new link MTU on %s (%lu) is too small for IPv6\n",
 		    ifp->if_xname, (unsigned long)ndi->maxmtu);
 	}
-
-	if (ndi->maxmtu > in6_maxmtu)
-		in6_setmaxmtu(); /* check all interfaces just in case */
 }
 
 void
