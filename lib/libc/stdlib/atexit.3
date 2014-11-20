@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atexit.3,v 1.9 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: atexit.3,v 1.10 2014/11/20 04:55:43 guenther Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: November 20 2014 $
 .Dt ATEXIT 3
 .Os
 .Sh NAME
@@ -55,6 +55,15 @@ no arguments are passed.
 At least 32 functions can always be registered,
 and more are allowed as long as sufficient memory can be allocated.
 .Pp
+If a shared object is unloaded from process memory using
+.Xr dlclose 3 ,
+then any functions registered by calling
+.Fn atexit
+from that shared object will be called in reverse order and unregistered.
+Note that it is the source of the call to
+.Fn atexit
+that matters, not the source of the function that was registered.
+.Pp
 .Fn atexit
 is very difficult to use correctly without creating
 .Xr exit 3 Ns -time
@@ -75,3 +84,6 @@ The
 .Fn atexit
 function conforms to
 .St -ansiC .
+.Pp
+The behavior when a shared object is unloaded is an extension to
+that standard.
