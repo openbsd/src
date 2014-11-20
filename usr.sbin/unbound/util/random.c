@@ -62,21 +62,32 @@
 #include "util/log.h"
 #include <time.h>
 
+#ifdef HAVE_NSS
+/* nspr4 */
+#include "prerror.h"
+/* nss3 */
+#include "secport.h"
+#include "pk11pub.h"
+#endif
+
 /** 
  * Max random value.  Similar to RAND_MAX, but more portable
  * (mingw uses only 15 bits random).
  */
 #define MAX_VALUE 0x7fffffff
 
+#ifndef HAVE_NSS
 void
-ub_systemseed(unsigned int seed)
+ub_systemseed(unsigned int ATTR_UNUSED(seed))
 {
+	/* arc4random_uniform does not need seeds, it gets kernel entropy */
 }
 
 struct ub_randstate* 
-ub_initstate(unsigned int seed, struct ub_randstate* from)
+ub_initstate(unsigned int ATTR_UNUSED(seed),
+	struct ub_randstate* ATTR_UNUSED(from))
 {
-	struct ub_randstate* s = (struct ub_randstate*)malloc(0);
+	struct ub_randstate* s = (struct ub_randstate*)malloc(1);
 	if(!s) {
 		log_err("malloc failure in random init");
 		return NULL;
@@ -85,7 +96,7 @@ ub_initstate(unsigned int seed, struct ub_randstate* from)
 }
 
 long int 
-ub_random(struct ub_randstate* s)
+ub_random(struct ub_randstate* ATTR_UNUSED(s))
 {
 	/* This relies on MAX_VALUE being 0x7fffffff. */
 	return (long)arc4random() & MAX_VALUE;
@@ -94,12 +105,62 @@ ub_random(struct ub_randstate* s)
 long int
 ub_random_max(struct ub_randstate* state, long int x)
 {
-	return (long)arc4random_uniform(x);
+	(void)state;
+	/* on OpenBSD, this does not need _seed(), or _stir() calls */
+	return (long)arc4random_uniform((uint32_t)x);
 }
+
+#else
+
+/* not much to remember for NSS since we use its pk11_random, placeholder */
+struct ub_randstate {
+	int ready;
+};
+
+void ub_systemseed(unsigned int ATTR_UNUSED(seed))
+{
+}
+
+struct ub_randstate* ub_initstate(unsigned int ATTR_UNUSED(seed), 
+	struct ub_randstate* ATTR_UNUSED(from))
+{
+	struct ub_randstate* s = (struct ub_randstate*)calloc(1, sizeof(*s));
+	if(!s) {
+		log_err("malloc failure in random init");
+		return NULL;
+	}
+	return s;
+}
+
+long int ub_random(struct ub_randstate* ATTR_UNUSED(state))
+{
+	long int x;
+	/* random 31 bit value. */
+	SECStatus s = PK11_GenerateRandom((unsigned char*)&x, (int)sizeof(x));
+	if(s != SECSuccess) {
+		log_err("PK11_GenerateRandom error: %s",
+			PORT_ErrorToString(PORT_GetError()));
+	}
+	return x & MAX_VALUE;
+}
+
+long int
+ub_random_max(struct ub_randstate* state, long int x)
+{
+	/* make sure we fetch in a range that is divisible by x. ignore
+	 * values from d .. MAX_VALUE, instead draw a new number */
+	long int d = MAX_VALUE - (MAX_VALUE % x); /* d is divisible by x */
+	long int v = ub_random(state);
+	while(d <= v)
+		v = ub_random(state);
+	return (v % x);
+}
+#endif /* HAVE_NSS */
 
 void 
 ub_randfree(struct ub_randstate* s)
 {
 	if(s)
 		free(s);
+	/* user app must do RAND_cleanup(); */
 }
