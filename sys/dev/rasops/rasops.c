@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.33 2014/11/20 08:15:07 deraadt Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.34 2014/11/20 10:37:21 landry Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -142,7 +142,9 @@ int	rasops_alloc_mattr(void *, int, int, int, long *);
 int	rasops_do_cursor(struct rasops_info *);
 void	rasops_init_devcmap(struct rasops_info *);
 void	rasops_unpack_attr(void *, long, int *, int *, int *);
+#if NRASOPS_BSWAP > 0
 static void slow_bcopy(void *, void *, size_t);
+#endif
 #if NRASOPS_ROTATION > 0
 void	rasops_copychar(void *, int, int, int, int);
 int	rasops_copycols_rotated(void *, int, int, int, int);
