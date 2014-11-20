@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.6 2014/10/13 03:46:33 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.7 2014/11/20 18:44:10 krw Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -197,7 +197,7 @@ ktrstat(const struct stat *statp)
 	print_timespec(&statp->st_mtim, 0);
 	printf(", ctime=");
 	print_timespec(&statp->st_ctim, 0);
-	printf(", size=%lld, blocks=%lld, blksize=%u, flags=0x%x, gen=0x%x",
+	printf(", size=%lld, blocks=%lld, blksize=%d, flags=0x%x, gen=0x%x",
 	    statp->st_size, statp->st_blocks, statp->st_blksize,
 	    statp->st_flags, statp->st_gen);
 	printf(" }\n");

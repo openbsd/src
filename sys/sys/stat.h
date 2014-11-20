@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.25 2014/08/22 23:05:15 krw Exp $	*/
+/*	$OpenBSD: stat.h,v 1.26 2014/11/20 18:44:10 krw Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ struct stat {
 #endif /* __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE */
 	off_t	  st_size;		/* file size, in bytes */
 	blkcnt_t  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_blksize;		/* optimal blocksize for I/O */
+	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 #if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
