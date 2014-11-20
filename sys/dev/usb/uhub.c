@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.78 2014/11/11 20:57:27 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.79 2014/11/20 10:24:09 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -324,6 +324,8 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: port %d power on failed, %s\n",
 			       sc->sc_dev.dv_xname, port,
 			       usbd_errstr(err));
+		/* Make sure we check the port status at least once. */
+		sc->sc_status |= (1 << port);
 	}
 
 	/* Wait for stable power. */
@@ -573,16 +575,15 @@ uhub_detach(struct device *self, int flags)
 }
 
 /*
- * Hub interrupt.
- * This an indication that some port has changed status.
- * Notify the bus event handler thread that we need
- * to be explored again.
+ * This is an indication that some port has changed status.  Remember
+ * the ports that need attention and notify the USB task thread that
+ * we need to be explored again.
  */
 void
 uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
-	uint32_t stats;
+	uint32_t stats = 0;
 	int i;
 
 	if (usbd_is_dying(sc->sc_hub))
