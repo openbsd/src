@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.175 2013/06/15 10:05:58 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.176 2014/11/20 07:50:45 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6419,38 +6419,17 @@ ENTRY(pseg_set)
 
 
 /*
- * kernel bcopy/memcpy
- * Assumes regions do not overlap; has no useful return value.
+ * memcpy(dst, src, len) - always copies forward.
  *
  * Must not use %g7 (see copyin/copyout above).
  */
 ENTRY(memcpy) /* dest, src, size */
-	/*
-	 * Swap args for bcopy.  Gcc generates calls to memcpy for
-	 * structure assignments.
-	 */
-	mov	%o0, %o3
-	mov	%o1, %o0
-	mov	%o3, %o1
-	ba,pt	%xcc, Lbcopy_start
-	 cmp	%o2, BCOPY_SMALL
-ENTRY(bcopy) /* src, dest, size */
-	/*
-	 * Check for overlaps and punt.
-	 *
-	 * If src <= dest <= src+len we have a problem.
-	 */
-
-	sub	%o1, %o0, %o3
-
-	cmp	%o3, %o2
-	blu,pn	%xcc, Lovbcopy
-	 cmp	%o2, BCOPY_SMALL
-Lbcopy_start:
+	cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
+Lmemcpy_start:
 	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
 	 nop
 
-	mov	%o1, %o5	! Save memcpy return value
+	mov	%o0, %o5	! Save memcpy return value
 	/*
 	 * Not much to copy, just do it a byte at a time.
 	 */
@@ -6458,46 +6437,16 @@ Lbcopy_start:
 	bl	1f
 !	 XXX check no delay slot
 0:
-	inc	%o0
-	ldsb	[%o0 - 1], %o4	!	(++dst)[-1] = *src++;
-	stb	%o4, [%o1]
+	inc	%o1
+	ldsb	[%o1 - 1], %o4	!	(++dst)[-1] = *src++;
+	stb	%o4, [%o0]
 	deccc	%o2
 	bge	0b
-	 inc	%o1
+	 inc	%o0
 1:
 	retl
 	 mov	%o5, %o0
 	NOTREACHED
-
-	/*
-	 * Overlapping bcopies -- punt.
-	 */
-Lovbcopy:
-
-	/*
-	 * Since src comes before dst, and the regions might overlap,
-	 * we have to do the copy starting at the end and working backwards.
-	 *
-	 * We could optimize this, but it almost never happens.
-	 */
-	mov	%o1, %o5	! Retval
-	add	%o2, %o0, %o0	! src += len
-	add	%o2, %o1, %o1	! dst += len
-	
-	deccc	%o2
-	bl,pn	%xcc, 1f
-	 dec	%o0
-0:
-	dec	%o1
-	ldsb	[%o0], %o4
-	dec	%o0
-	
-	deccc	%o2
-	bge,pt	%xcc, 0b
-	 stb	%o4, [%o1]
-1:
-	retl
-	 mov	%o5, %o0
 
 	/*
 	 * Plenty of data to copy, so try to do it optimally.
@@ -6511,8 +6460,8 @@ Lbcopy_fancy:
 
 	save	%sp, -CC64FSZ, %sp
 	
-	mov	%i0, %l0
-	mov	%i1, %l1
+	mov	%i1, %l0
+	mov	%i0, %l1
 	
 	mov	%i2, %l2
 	btst	1, %l1
@@ -6825,7 +6774,7 @@ Lbcopy_finish:
 2:	
 Lbcopy_complete:
 	ret
-	 restore %i1, %g0, %o0
+	 restore %i0, %g0, %o0
 	
 /*
  * bzero(addr, len)
@@ -6841,7 +6790,6 @@ ENTRY(bzero)
 	clr	%o1			! Initialize our pattern
 /*
  * memset(addr, c, len)
- *
  */
 ENTRY(memset)
 	! %o0 = addr, %o1 = pattern, %o2 = len
@@ -7109,29 +7057,34 @@ Lkcerr:
 	 mov	EFAULT, %o0
 	NOTREACHED
 
-ENTRY(memmove) /* dest, src, size */
+/*
+ * bcopy(src, dest, size - overlaps detected and copied in reverse
+ */
+ENTRY(bcopy)
 	/*
-	 * Swap args and continue to ovbcopy.
+	 * Swap args and continue to memmove.
 	 */
 	mov	%o0, %o3
 	mov	%o1, %o0
 	mov	%o3, %o1
 /*
- * ovbcopy(src, dst, len): like bcopy, but regions may overlap.
+ * memmove(dst, src, len) - overlaps detected and copied in reverse
  */
-ENTRY(ovbcopy)
-	cmp	%o0, %o1	! src < dst?
-	bgeu	Lbcopy_start	! no, go copy forwards as via bcopy
+ENTRY(memmove)
+	mov	%o0, %o5	! Save memcpy return value
+
+	cmp	%o1, %o0	! src < dst?
+	bgeu	Lmemcpy_start	! no, go copy forwards as via memcpy
 	 cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
 
 	/*
 	 * Since src comes before dst, and the regions might overlap,
 	 * we have to do the copy starting at the end and working backwards.
 	 */
-	add	%o2, %o0, %o0	! src += len
-	add	%o2, %o1, %o1	! dst += len
+	add	%o2, %o1, %o1	! src += len
+	add	%o2, %o0, %o0	! dst += len
 	bge,a	Lback_fancy	! if len >= BCOPY_SMALL, go be fancy
-	 btst	3, %o0
+	 btst	3, %o1
 
 	/*
 	 * Not much to copy, just do it a byte at a time.
@@ -7140,24 +7093,25 @@ ENTRY(ovbcopy)
 	bl	1f
 !	 XXX check no delay slot
 0:
-	dec	%o0		!	*--dst = *--src;
-	ldsb	[%o0], %o4
-	dec	%o1
+	dec	%o1		!	*--dst = *--src;
+	ldsb	[%o1], %o4
+	dec	%o0
 	deccc	%o2
 	bge	0b
-	 stb	%o4, [%o1]
+	 stb	%o4, [%o0]
 1:
 	retl
-	 nop
+	 mov	%o5, %o0
+	NOTREACHED
 
 	/*
 	 * Plenty to copy, try to be optimal.
 	 * We only bother with word/halfword/byte copies here.
 	 */
 Lback_fancy:
-!	btst	3, %o0		! done already
+!	btst	3, %o1		! done already
 	bnz	1f		! if ((src & 3) == 0 &&
-	 btst	3, %o1		!     (dst & 3) == 0)
+	 btst	3, %o0		!     (dst & 3) == 0)
 	bz,a	Lback_words	!	goto words;
 	 dec	4, %o2		! (done early for word copy)
 
@@ -7165,21 +7119,21 @@ Lback_fancy:
 	/*
 	 * See if the low bits match.
 	 */
-	xor	%o0, %o1, %o3	! t = src ^ dst;
+	xor	%o1, %o0, %o3	! t = src ^ dst;
 	btst	1, %o3
 	bz,a	3f		! if (t & 1) == 0, can do better
-	 btst	1, %o0
+	 btst	1, %o1
 
 	/*
 	 * Nope; gotta do byte copy.
 	 */
 2:
-	dec	%o0		! do {
-	ldsb	[%o0], %o4	!	*--dst = *--src;
-	dec	%o1
+	dec	%o1		! do {
+	ldsb	[%o1], %o4	!	*--dst = *--src;
+	dec	%o0
 	deccc	%o2		! } while (--len != 0);
 	bnz	2b
-	 stb	%o4, [%o1]
+	 stb	%o4, [%o0]
 	retl
 	 nop
 
@@ -7187,13 +7141,13 @@ Lback_fancy:
 	/*
 	 * Can do halfword or word copy, but might have to copy 1 byte first.
 	 */
-!	btst	1, %o0		! done earlier
+!	btst	1, %o1		! done earlier
 	bz,a	4f		! if (src & 1) {	/* copy 1 byte */
 	 btst	2, %o3		! (done early)
-	dec	%o0		!	*--dst = *--src;
-	ldsb	[%o0], %o4
-	dec	%o1
-	stb	%o4, [%o1]
+	dec	%o1		!	*--dst = *--src;
+	ldsb	[%o1], %o4
+	dec	%o0
+	stb	%o4, [%o0]
 	dec	%o2		!	len--;
 	btst	2, %o3		! }
 
@@ -7203,19 +7157,19 @@ Lback_fancy:
 	 */
 !	btst	2, %o3		! done earlier
 	bz,a	6f		! if (t & 2) == 0, can do word copy
-	 btst	2, %o0		! (src&2, done early)
+	 btst	2, %o1		! (src&2, done early)
 
 	/*
 	 * Gotta do halfword copy.
 	 */
 	dec	2, %o2		! len -= 2;
 5:
-	dec	2, %o0		! do {
-	ldsh	[%o0], %o4	!	src -= 2;
-	dec	2, %o1		!	dst -= 2;
+	dec	2, %o1		! do {
+	ldsh	[%o1], %o4	!	src -= 2;
+	dec	2, %o0		!	dst -= 2;
 	deccc	2, %o2		!	*(short *)dst = *(short *)src;
 	bge	5b		! } while ((len -= 2) >= 0);
-	 sth	%o4, [%o1]
+	 sth	%o4, [%o0]
 	b	Lback_mopb	! goto mop_up_byte;
 	 btst	1, %o2		! (len&1, done early)
 
@@ -7224,13 +7178,13 @@ Lback_fancy:
 	 * We can do word copies, but we might have to copy
 	 * one halfword first.
 	 */
-!	btst	2, %o0		! done already
+!	btst	2, %o1		! done already
 	bz	7f		! if (src & 2) {
 	 dec	4, %o2		! (len -= 4, done early)
-	dec	2, %o0		!	src -= 2, dst -= 2;
-	ldsh	[%o0], %o4	!	*(short *)dst = *(short *)src;
-	dec	2, %o1
-	sth	%o4, [%o1]
+	dec	2, %o1		!	src -= 2, dst -= 2;
+	ldsh	[%o1], %o4	!	*(short *)dst = *(short *)src;
+	dec	2, %o0
+	sth	%o4, [%o0]
 	dec	2, %o2		!	len -= 2;
 				! }
 
@@ -7242,12 +7196,12 @@ Lback_words:
 	 */
 !	dec	4, %o2		! len -= 4, done already
 0:				! do {
-	dec	4, %o0		!	src -= 4;
 	dec	4, %o1		!	src -= 4;
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
+	dec	4, %o0		!	src -= 4;
+	ld	[%o1], %o4	!	*(int *)dst = *(int *)src;
 	deccc	4, %o2		! } while ((len -= 4) >= 0);
 	bge	0b
-	 st	%o4, [%o1]
+	 st	%o4, [%o0]
 
 	/*
 	 * Check for trailing shortword.
@@ -7255,10 +7209,10 @@ Lback_words:
 	btst	2, %o2		! if (len & 2) {
 	bz,a	1f
 	 btst	1, %o2		! (len&1, done early)
-	dec	2, %o0		!	src -= 2, dst -= 2;
-	ldsh	[%o0], %o4	!	*(short *)dst = *(short *)src;
-	dec	2, %o1
-	sth	%o4, [%o1]	! }
+	dec	2, %o1		!	src -= 2, dst -= 2;
+	ldsh	[%o1], %o4	!	*(short *)dst = *(short *)src;
+	dec	2, %o0
+	sth	%o4, [%o0]	! }
 	btst	1, %o2
 
 	/*
@@ -7268,13 +7222,16 @@ Lback_words:
 Lback_mopb:
 !	btst	1, %o2		! (done already)
 	bnz,a	1f		! if (len & 1) {
-	 ldsb	[%o0 - 1], %o4	!	b = src[-1];
+	 ldsb	[%o1 - 1], %o4	!	b = src[-1];
 	retl
-	 nop
-1:
-	retl			!	dst[-1] = b;
-	 stb	%o4, [%o1 - 1]	! }
+	 mov	%o5, %o0
+	NOTREACHED
 
+1:
+	stb	%o4, [%o0 - 1]	! }
+	retl			!	dst[-1] = b;
+	 mov	%o5, %o0
+	NOTREACHED
 
 /*
  * clearfpstate()
