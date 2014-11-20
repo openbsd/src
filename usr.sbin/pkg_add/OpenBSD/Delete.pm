@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.137 2014/05/20 05:55:43 espie Exp $
+# $OpenBSD: Delete.pm,v 1.138 2014/11/20 15:08:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -142,7 +142,10 @@ sub delete_plist
 		manpages_unindex($state);
 		$state->progress->visit_with_size($plist, 'delete', $state);
 		if ($plist->has(UNDISPLAY)) {
-			$plist->get(UNDISPLAY)->prepare($state);
+			my $d = $plist->get(UNDISPLAY)->{d};
+			if (!$state->{known_displays}{$$d}) {
+				$plist->get(UNDISPLAY)->prepare($state);
+			}
 		}
 	}
 
