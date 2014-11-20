@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.332 2014/11/17 16:18:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.333 2014/11/20 19:27:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -488,6 +488,12 @@ main(int argc, char *argv[])
 		error("config calloc");
 	TAILQ_INIT(&config->reject_list);
 
+	client = calloc(1, sizeof(*client));
+	if (client == NULL)
+		error("client calloc");
+	TAILQ_INIT(&client->leases);
+	TAILQ_INIT(&client->offered_leases);
+
 	read_client_conf();	/* Needed for config->link_timeout below! */
 
 	if (interface_status(ifi->name) == 0) {
@@ -529,12 +535,6 @@ main(int argc, char *argv[])
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
-
-	client = calloc(1, sizeof(*client));
-	if (client == NULL)
-		error("client calloc");
-	TAILQ_INIT(&client->leases);
-	TAILQ_INIT(&client->offered_leases);
 
 	/* 2nd stage (post fork) config setup. */
 	if (ignore_list)
