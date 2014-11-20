@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrlimit.2,v 1.22 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: getrlimit.2,v 1.23 2014/11/20 03:16:32 tedu Exp $
 .\"	$NetBSD: getrlimit.2,v 1.8 1995/10/12 15:40:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getrlimit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: November 20 2014 $
 .Dt GETRLIMIT 2
 .Os
 .Sh NAME
@@ -64,9 +64,10 @@ The maximum amount of CPU time (in seconds) to be used by
 each process.
 .It Li RLIMIT_DATA
 The maximum size (in bytes) of the data segment for a process;
-this defines how far a program may extend its break with the
-.Xr sbrk 2
-system call.
+this includes memory allocated via
+.Xr malloc 2
+and all other anonymous memory mapped via
+.Xr mmap 2 .
 .It Li RLIMIT_FSIZE
 The largest size (in bytes) file that may be created.
 .It Li RLIMIT_MEMLOCK
