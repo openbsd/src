@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evbuffer_new.3,v 1.10 2014/11/20 13:35:59 jmc Exp $
+.\"	$OpenBSD: evbuffer_new.3,v 1.11 2014/11/20 13:39:13 jmc Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -220,7 +220,7 @@ or -1 on failure and set
 .Va errno
 to indicate the failure.
 .Pp
-.Fn evbuffer_add_printf ,
+.Fn evbuffer_add_printf
 and
 .Fn evbuffer_add_vprintf
 return the number of bytes added on success,
@@ -247,7 +247,7 @@ or
 .Dv NULL
 on failure.
 .Pp
-.Fn evbuffer_readline ,
+.Fn evbuffer_readline
 and
 .Fn evbuffer_readln
 return a pointer to the line on success,
