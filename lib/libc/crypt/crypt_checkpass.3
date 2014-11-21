@@ -1,6 +1,6 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.2 2014/11/21 05:13:44 tedu Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.3 2014/11/21 12:44:18 schwarze Exp $
 .\"
-.\" Copyright (c) Ted Unangst <tedu@openbsd.org>
+.\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -34,10 +34,13 @@ function is provided to simplify checking a user's password.
 If both the hash and the password are the empty string, authentication
 is a success.
 Otherwise, the password is hashed and compared to the provided hash.
-If the hash is NULL, authentication will always fail, but a default
+If the hash is
+.Dv NULL,
+authentication will always fail, but a default
 amount of work is performed to simulate the hashing operation.
 A successful match will return 0.
-A failure will return \-1 and set errno.
+A failure will return \-1 and set
+.Xr errno 2 .
 .Pp
 The
 .Fn crypt_newhash
@@ -52,9 +55,39 @@ argument identifies the preferred hashing algorithm and parameters.
 Refer to
 .Xr login.conf 5 .
 .Sh RETURN VALUES
-These functions
-return 0 on success and -1 on failure.
+.Rv -std crypt_checkpass crypt_newhash
+.Sh ERRORS
+The
+.Fn crypt_checkpass
+function sets
+.Va errno
+to
+.Er EACCESS
+when authentication fails.
+.Pp
+The
+.Fn crypt_newhash
+function sets
+.Va errno
+to
+.Er EINVAL
+or any of the errors specified for
+.Xr strtonum 3
+if
+.Fa pref
+is unsupported.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr login.conf 5 ,
 .Xr passwd 5
+.Sh HISTORY
+The function
+.Fn crypt_checkpass
+first appeared in
+.Ox 5.6 ,
+and
+.Fn crypt_newhash
+in
+.Ox 5.7 .
+.Sh AUTHORS
+.An Ted Unangst Aq Mt tedu@openbsd.org
