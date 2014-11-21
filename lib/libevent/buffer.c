@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.26 2014/10/30 16:45:37 bluhm Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.27 2014/11/21 07:44:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -198,7 +198,7 @@ evbuffer_readline(struct evbuffer *buffer)
 		return (NULL);
 
 	if ((line = malloc(i + 1)) == NULL) {
-		fprintf(stderr, "%s: out of memory\n", __func__);
+		event_warn("%s: out of memory", __func__);
 		return (NULL);
 	}
 
@@ -294,7 +294,7 @@ evbuffer_readln(struct evbuffer *buffer, size_t *n_read_out,
 	n_to_drain = end_of_eol - data;
 
 	if ((line = malloc(n_to_copy+1)) == NULL) {
-		event_warn("%s: out of memory\n", __func__);
+		event_warn("%s: out of memory", __func__);
 		return (NULL);
 	}
 
