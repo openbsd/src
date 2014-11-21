@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evbuffer_new.3,v 1.11 2014/11/20 13:39:13 jmc Exp $
+.\"	$OpenBSD: evbuffer_new.3,v 1.12 2014/11/21 06:59:00 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2014 $
+.Dd $Mdocdate: November 21 2014 $
 .Dt EVBUFFER_NEW 3
 .Os
 .Sh NAME
@@ -237,6 +237,7 @@ to indicate the failure.
 .Pp
 .Fn evbuffer_read
 returns the number of bytes appended to the evbuffer on success,
+0 on an end of file condition,
 or -1 on failure and sets
 .Va errno
 to indicate the failure.
