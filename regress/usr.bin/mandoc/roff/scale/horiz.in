@@ -1,4 +1,4 @@
-.TH HORIZ 1 "August 12, 2014" OpenBSD
+.TH HORIZ 1 "November 20, 2014" OpenBSD
 .SH NAME
 horiz \- horizontal distances
 .SH DESCRIPTION
@@ -21,5 +21,7 @@ initial text
 10n
 .in 5m
 5m
+.in 79n
+79n
 .PP
 final text

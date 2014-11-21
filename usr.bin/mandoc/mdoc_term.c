@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.190 2014/11/19 21:59:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.191 2014/11/21 01:52:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -403,6 +403,7 @@ static void
 print_mdoc_foot(struct termp *p, const void *arg)
 {
 	const struct mdoc_meta *meta;
+	size_t sz;
 
 	meta = (const struct mdoc_meta *)arg;
 
@@ -419,8 +420,9 @@ print_mdoc_foot(struct termp *p, const void *arg)
 	term_vspace(p);
 
 	p->offset = 0;
-	p->rmargin = (p->maxrmargin -
-	    term_strlen(p, meta->date) + term_len(p, 1)) / 2;
+	sz = term_strlen(p, meta->date);
+	p->rmargin = p->maxrmargin > sz ?
+	    (p->maxrmargin + term_len(p, 1) - sz) / 2 : 0;
 	p->trailspace = 1;
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 
@@ -428,7 +430,8 @@ print_mdoc_foot(struct termp *p, const void *arg)
 	term_flushln(p);
 
 	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin - term_strlen(p, meta->os);
+	sz = term_strlen(p, meta->os);
+	p->rmargin = p->maxrmargin > sz ? p->maxrmargin - sz : 0;
 	p->flags |= TERMP_NOSPACE;
 
 	term_word(p, meta->date);
@@ -490,7 +493,7 @@ print_mdoc_head(struct termp *p, const void *arg)
 	p->offset = 0;
 	p->rmargin = 2 * (titlen+1) + vollen < p->maxrmargin ?
 	    (p->maxrmargin - vollen + term_len(p, 1)) / 2 :
-	    p->maxrmargin - vollen;
+	    vollen < p->maxrmargin ?  p->maxrmargin - vollen : 0;
 
 	term_word(p, title);
 	term_flushln(p);
@@ -871,11 +874,8 @@ termp_it_pre(DECL_ARGS)
 		assert(width);
 		if (MDOC_HEAD == n->type)
 			p->rmargin = p->offset + width;
-		else {
+		else
 			p->offset += width;
-			if (p->rmargin < p->offset)
-				p->rmargin = p->offset;
-		}
 		break;
 	case LIST_column:
 		assert(width);
@@ -1008,8 +1008,6 @@ termp_nm_pre(DECL_ARGS)
 		     MDOC_TEXT == n->prev->child->type ?
 		     term_strlen(p, n->prev->child->string) :
 		     term_len(p, 5));
-		if (p->rmargin < p->offset)
-			p->rmargin = p->offset;
 		return(1);
 	}
 

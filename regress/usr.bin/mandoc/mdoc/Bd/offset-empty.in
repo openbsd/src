@@ -1,4 +1,4 @@
-.Dd October 30, 2014
+.Dd November 20, 2014
 .Dt BD-OFFSET-EMPTY 1
 .Os OpenBSD
 .Sh NAME
@@ -25,4 +25,7 @@ Bd literal offset mystring
 .Ed
 .Bd -literal -offset Ds
 Bd literal offset Ds
+.Ed
+.Bd -literal -offset 78n
+Bd literal offset 78n
 .Ed

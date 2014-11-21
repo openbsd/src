@@ -1,4 +1,4 @@
-.TH HP-SPACING 1 "February 5, 2011" OpenBSD
+.TH HP-SPACING 1 "November 20, 2014" OpenBSD
 .SH NAME
 HP-spacing \- spacing in hanged lists
 .SH DESCRIPTION
@@ -21,5 +21,8 @@ Indented text.
 .HP
 a much longer tag
 Indented text.
+.HP 78n
+Testing a hanged paragraph with a large indentation width,
+in this case 78n, requires more text.
 .LP
 Normal text.

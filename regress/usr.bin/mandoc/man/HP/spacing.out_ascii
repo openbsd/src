@@ -20,8 +20,14 @@ DDEESSCCRRIIPPTTIIOONN
 
        a much longer tag Indented text.
 
+       Testing a hanged paragraph with a large indentation width, in this case
+                                                                                     78n,
+                                                                                     requires
+                                                                                     more
+                                                                                     text.
+
        Normal text.
 
 
 
-OpenBSD                        February 5, 2011                  HP-SPACING(1)
+OpenBSD                        November 20, 2014                 HP-SPACING(1)

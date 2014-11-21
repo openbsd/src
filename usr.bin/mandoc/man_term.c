@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.108 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.109 2014/11/21 01:52:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -454,11 +454,6 @@ pre_in(DECL_ARGS)
 	else
 		p->offset = v;
 
-	/* Don't let this creep beyond the right margin. */
-
-	if (p->offset > p->rmargin)
-		p->offset = p->rmargin;
-
 	return(0);
 }
 
@@ -652,8 +647,7 @@ pre_IP(DECL_ARGS)
 		return(0);
 	case MAN_BODY:
 		p->offset = mt->offset + len;
-		p->rmargin = p->maxrmargin > p->offset ?
-		    p->maxrmargin : p->offset;
+		p->rmargin = p->maxrmargin;
 		break;
 	default:
 		break;
@@ -744,8 +738,7 @@ pre_TP(DECL_ARGS)
 		return(0);
 	case MAN_BODY:
 		p->offset = mt->offset + len;
-		p->rmargin = p->maxrmargin > p->offset ?
-		    p->maxrmargin : p->offset;
+		p->rmargin = p->maxrmargin;
 		p->trailspace = 0;
 		p->flags &= ~TERMP_NOBREAK;
 		break;
@@ -896,8 +889,7 @@ pre_RS(DECL_ARGS)
 
 	mt->offset += sz;
 	p->offset = mt->offset;
-	p->rmargin = p->maxrmargin > p->offset ?
-	    p->maxrmargin : p->offset;
+	p->rmargin = p->maxrmargin;
 
 	if (++mt->lmarginsz < MAXMARGINS)
 		mt->lmargincur = mt->lmarginsz;
@@ -1061,7 +1053,7 @@ print_man_foot(struct termp *p, const void *arg)
 {
 	const struct man_meta	*meta;
 	char			*title;
-	size_t			 datelen;
+	size_t			 datelen, titlen;
 
 	meta = (const struct man_meta *)arg;
 	assert(meta->title);
@@ -1098,7 +1090,8 @@ print_man_foot(struct termp *p, const void *arg)
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 	p->trailspace = 1;
 	p->offset = 0;
-	p->rmargin = (p->maxrmargin - datelen + term_len(p, 1)) / 2;
+	p->rmargin = p->maxrmargin > datelen ?
+	    (p->maxrmargin + term_len(p, 1) - datelen) / 2 : 0;
 
 	if (meta->source)
 		term_word(p, meta->source);
@@ -1106,11 +1099,10 @@ print_man_foot(struct termp *p, const void *arg)
 
 	/* At the bottom in the middle: manual date. */
 
-	p->flags |= TERMP_NOSPACE;
 	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin - term_strlen(p, title);
-	if (p->offset + datelen >= p->rmargin)
-		p->rmargin = p->offset + datelen;
+	titlen = term_strlen(p, title);
+	p->rmargin = p->maxrmargin > titlen ? p->maxrmargin - titlen : 0;
+	p->flags |= TERMP_NOSPACE;
 
 	term_word(p, meta->date);
 	term_flushln(p);
@@ -1153,7 +1145,7 @@ print_man_head(struct termp *p, const void *arg)
 	p->offset = 0;
 	p->rmargin = 2 * (titlen+1) + vollen < p->maxrmargin ?
 	    (p->maxrmargin - vollen + term_len(p, 1)) / 2 :
-	    p->maxrmargin - vollen;
+	    vollen < p->maxrmargin ? p->maxrmargin - vollen : 0;
 
 	term_word(p, title);
 	term_flushln(p);

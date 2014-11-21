@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.95 2014/11/16 21:29:27 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.96 2014/11/21 01:52:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -98,7 +98,7 @@ term_flushln(struct termp *p)
 	size_t		 j;     /* temporary loop index for p->buf */
 	size_t		 jhy;	/* last hyph before overflow w/r/t j */
 	size_t		 maxvis; /* output position of visible boundary */
-	size_t		 mmax; /* used in calculating bp */
+	size_t		 rmargin; /* the rightmost of the two margins */
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -111,13 +111,17 @@ term_flushln(struct termp *p)
 	 * is negative, it gets sign extended.  Subtracting that
 	 * very large size_t effectively adds a small number to dv.
 	 */
-	assert  (p->rmargin >= p->offset);
-	dv     = p->rmargin - p->offset;
+	rmargin = p->rmargin > p->offset ? p->rmargin : p->offset;
+	dv = p->rmargin - p->offset;
 	maxvis = (int)dv > p->overstep ? dv - (size_t)p->overstep : 0;
-	dv     = p->maxrmargin - p->offset;
-	mmax   = (int)dv > p->overstep ? dv - (size_t)p->overstep : 0;
 
-	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
+	if (p->flags & TERMP_NOBREAK) {
+		dv = p->maxrmargin > p->offset ?
+		     p->maxrmargin - p->offset : 0;
+		bp = (int)dv > p->overstep ?
+		     dv - (size_t)p->overstep : 0;
+	} else
+		bp = maxvis;
 
 	/*
 	 * Calculate the required amount of padding.
@@ -186,8 +190,8 @@ term_flushln(struct termp *p)
 			(*p->endline)(p);
 			p->viscol = 0;
 			if (TERMP_BRIND & p->flags) {
-				vbl = p->rmargin;
-				vend += p->rmargin - p->offset;
+				vbl = rmargin;
+				vend += rmargin - p->offset;
 			} else
 				vbl = p->offset;
 
