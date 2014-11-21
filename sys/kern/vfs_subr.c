@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.222 2014/11/19 18:04:54 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.223 2014/11/21 07:14:17 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -406,7 +406,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, struct vops *vops,
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
-	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
 	return (0);
 }
 
