@@ -8,6 +8,7 @@
 
 ENTRY(memset)
 	movq	%rsi,%rax
+	andq	$0xff,%rax
 	movq	%rdx,%rcx
 	movq	%rdi,%r11
 
