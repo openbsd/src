@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.80 2014/11/20 06:51:41 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.81 2014/11/21 06:41:17 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -975,7 +975,7 @@ pmap_pdp_ctor(pd_entry_t *pdir)
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
 	/* put in recursive PDE to map the PTEs */
-	pdir[PDIR_SLOT_PTE] = pdirpa | PG_V | PG_KW;
+	pdir[PDIR_SLOT_PTE] = pdirpa | PG_V | PG_KW | pg_nx;
 
 	npde = nkptp[PTP_LEVELS - 1];
 
@@ -2208,7 +2208,7 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 
 		for (i = index; i <= endindex; i++) {
 			pmap_get_physpage(va, level - 1, &pa);
-			pdep[i] = pa | PG_RW | PG_V;
+			pdep[i] = pa | PG_RW | PG_V | pg_nx;
 			nkptp[level - 1]++;
 			va += nbpd[level - 1];
 		}
