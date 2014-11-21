@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptutil.c,v 1.3 2014/11/21 05:13:44 tedu Exp $ */
+/* $OpenBSD: cryptutil.c,v 1.4 2014/11/21 12:32:38 schwarze Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -38,7 +38,9 @@ crypt_checkpass(const char *pass, const char *goodhash)
 		return 0;
 
 	if (goodhash[0] == '$' && goodhash[1] == '2') {
-		return bcrypt_checkpass(pass, goodhash);
+		if (bcrypt_checkpass(pass, goodhash))
+			goto fail;
+		return 0;
 	}
 
 	/* have to do it the hard way */
