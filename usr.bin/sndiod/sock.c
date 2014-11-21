@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.13 2014/06/02 07:54:23 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.14 2014/11/21 09:05:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1140,6 +1140,7 @@ sock_execmsg(struct sock *f)
 		AMSG_INIT(m);
 		m->cmd = htonl(AMSG_GETPAR);
 		m->u.par.legacy_mode = s->mode;
+		m->u.par.xrun = s->xrun;
 		m->u.par.bits = s->par.bits;
 		m->u.par.bps = s->par.bps;
 		m->u.par.sig = s->par.sig;
