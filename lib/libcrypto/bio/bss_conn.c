@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.30 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.31 2014/11/21 18:15:40 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -218,7 +218,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			}
 			c->state = BIO_CONN_S_CONNECT;
 
-#if defined(SO_KEEPALIVE) && !defined(OPENSSL_SYS_MPE)
+#if defined(SO_KEEPALIVE)
 			i = 1;
 			i = setsockopt(b->num, SOL_SOCKET, SO_KEEPALIVE,(char *)&i, sizeof(i));
 			if (i < 0) {
