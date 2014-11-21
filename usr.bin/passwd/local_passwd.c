@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.43 2014/11/20 14:53:15 tedu Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.44 2014/11/21 05:13:44 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -147,7 +147,7 @@ char *
 getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 {
 	static char hash[_PASSWORD_LEN];
-	char *p;
+	char *p, *pref;
 	int tries, pwd_tries;
 	char buf[1024];
 	sig_t saveint, savequit;
@@ -198,10 +198,12 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	(void)signal(SIGINT, saveint);
 	(void)signal(SIGQUIT, savequit);
 
-	if (crypt_newhash(buf, lc, hash, sizeof(hash)) != 0) {
+	pref = login_getcapstr(lc, "localcipher", NULL, NULL);
+	if (crypt_newhash(buf, pref, hash, sizeof(hash)) != 0) {
 		(void)printf("Couldn't generate hash.\n");
 		pw_error(NULL, 0, 0);
 	}
+	free(pref);
 	return hash;
 }
 

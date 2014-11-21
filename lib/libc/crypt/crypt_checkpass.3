@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.1 2014/11/20 19:18:25 tedu Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.2 2014/11/21 05:13:44 tedu Exp $
 .\"
 .\" Copyright (c) Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2014 $
+.Dd $Mdocdate: November 21 2014 $
 .Dt CRYPT_CHECKPASS 3
 .Os
 .Sh NAME
@@ -25,9 +25,8 @@
 .In unistd.h
 .Ft int
 .Fn crypt_checkpass "const char *password" "const char *hash"
-.In login_cap.h
 .Ft int
-.Fn crypt_newhash "const char *password" "login_cap_t *lc" "char *hash" "size_t hashsize"
+.Fn crypt_newhash "const char *password" "const char *pref" "char *hash" "size_t hashsize"
 .Sh DESCRIPTION
 The
 .Fn crypt_checkpass
@@ -47,9 +46,9 @@ The provided
 .Fa password
 is randomly salted and hashed and stored in
 .Fa hash .
-The login class argument
-.Fa lc
-is used to identify the preferred hashing algorithm and parameters.
+The
+.Fa pref
+argument identifies the preferred hashing algorithm and parameters.
 Refer to
 .Xr login.conf 5 .
 .Sh RETURN VALUES

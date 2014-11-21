@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.33 2014/11/20 14:53:15 tedu Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.34 2014/11/21 05:13:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -192,7 +192,7 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 	char buf[1024], hash[_PASSWORD_LEN];
 	sig_t saveint, savequit;
 	int tries, pwd_tries;
-	char *p;
+	char *p, *pref;
 
 	saveint = signal(SIGINT, kbintr);
 	savequit = signal(SIGQUIT, kbintr);
@@ -239,10 +239,12 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 	(void)signal(SIGINT, saveint);
 	(void)signal(SIGQUIT, savequit);
 
-	if (crypt_newhash(buf, lc, hash, sizeof(hash)) == -1) {
+	pref = login_getcapstr(lc, "localcipher", NULL, NULL);
+	if (crypt_newhash(buf, pref, hash, sizeof(hash)) == -1) {
 		(void)printf("Couldn't generate hash.\n");
 		pw_error(NULL, 0, 0);
 	}
+	free(pref);
 	p = strdup(hash);
 	if (p == NULL)
 		pw_error(NULL, 1, 1);

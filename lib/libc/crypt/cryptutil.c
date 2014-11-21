@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptutil.c,v 1.2 2014/11/17 16:47:28 tedu Exp $ */
+/* $OpenBSD: cryptutil.c,v 1.3 2014/11/21 05:13:44 tedu Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -55,16 +55,14 @@ fail:
 }
 
 int
-crypt_newhash(const char *pass, login_cap_t *lc, char *hash, size_t hashlen)
+crypt_newhash(const char *pass, const char *pref, char *hash, size_t hashlen)
 {
 	int rv = -1;
-	char *pref;
-	char *defaultpref = "blowfish,8";
+	const char *defaultpref = "blowfish,8";
 	const char *errstr;
 	int rounds;
 
-	if (lc == NULL ||
-	    (pref = login_getcapstr(lc, "localcipher", NULL, NULL)) == NULL)
+	if (pref == NULL)
 		pref = defaultpref;
 	if (strncmp(pref, "blowfish,", 9) != 0) {
 		errno = EINVAL;
@@ -76,7 +74,5 @@ crypt_newhash(const char *pass, login_cap_t *lc, char *hash, size_t hashlen)
 	rv = bcrypt_newhash(pass, rounds, hash, hashlen);
 
 err:
-	if (pref != defaultpref)
-		free(pref);
 	return rv;
 }

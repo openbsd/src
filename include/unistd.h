@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.93 2014/09/18 04:37:56 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.94 2014/11/21 05:13:44 tedu Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -489,6 +489,7 @@ int	pipe2(int [2], int);
 int	 acct(const char *);
 int	 closefrom(int);
 int	 crypt_checkpass(const char *, const char *);
+int	 crypt_newhash(const char *, const char *, char *, size_t);
 int	 des_cipher(const char *, char *, int32_t, int);
 int	 des_setkey(const char *);
 void	 endusershell(void);
