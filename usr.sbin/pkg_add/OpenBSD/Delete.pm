@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.138 2014/11/20 15:08:21 espie Exp $
+# $OpenBSD: Delete.pm,v 1.139 2014/11/21 15:07:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -141,12 +141,6 @@ sub delete_plist
 		$plist->register_manpage($state, 'rmman');
 		manpages_unindex($state);
 		$state->progress->visit_with_size($plist, 'delete', $state);
-		if ($plist->has(UNDISPLAY)) {
-			my $d = $plist->get(UNDISPLAY)->{d};
-			if (!$state->{known_displays}{$$d}) {
-				$plist->get(UNDISPLAY)->prepare($state);
-			}
-		}
 	}
 
 	unregister_dependencies($plist, $state);
@@ -340,6 +334,7 @@ sub record_shared
 	$self->{pkgname} = $pkgname;
 	push(@{$recorder->{dirs}{$self->fullname}} , $self);
 }
+
 package OpenBSD::PackingElement::Fontdir;
 sub record_shared
 {
@@ -678,6 +673,33 @@ sub copy_old_stuff
 	my ($self, $plist, $state) = @_;
 
 	OpenBSD::PackingElement::Comment->add($plist, "\@".$self->keyword." ".$self->stringize);
+}
+
+package OpenBSD::PackingElement::FDISPLAY;
+sub delete
+{
+	my ($self, $state) = @_;
+	$state->{known_displays}{$self->{d}->key} = 1;
+	$self->SUPER::delete($state);
+}
+
+package OpenBSD::PackingElement::FUNDISPLAY;
+sub delete
+{
+	my ($self, $state) = @_;
+	my $d = $self->{d};
+	if (!$state->{known_displays}{$self->{d}->key}) {
+		$self->prepare($state);
+	}
+	$self->SUPER::delete($state);
+}
+
+package OpenBSD::PackingElement::Mandir;
+sub delete
+{
+	my ($self, $state) = @_;
+	$state->{knownmandirs}{$self->fullname} = 1;
+	$self->SUPER::delete($state);
 }
 
 1;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.75 2014/11/20 15:08:21 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.76 2014/11/21 15:07:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -736,10 +736,6 @@ sub delete_old_packages
 		require OpenBSD::Delete;
 		try {
 			OpenBSD::Delete::delete_plist($o->plist, $state);
-			if ($o->plist->has(DISPLAY)) {
-				my $d = $o->plist->get(DISPLAY)->{d};
-				$state->{known_displays}{$$d} = 1;
-			}
 		} catchall {
 			$state->errsay($_);
 			$state->fatal(partial_install(
@@ -816,10 +812,6 @@ sub really_add
 		try {
 			OpenBSD::Add::perform_extraction($handle,
 			    $state);
-			if ($handle->plist->has(UNDISPLAY)) {
-				my $d = $handle->plist->get(UNDISPLAY)->{d};
-				$state->{known_displays}{$$d} = 1;
-			}
 		} catchall {
 			unless ($state->{interrupted}) {
 				$state->errsay($_);
@@ -871,12 +863,6 @@ sub really_add
 		add_installed($pkgname);
 		delete $handle->{partial};
 		OpenBSD::PkgCfl::register($handle, $state);
-		if ($plist->has(DISPLAY)) {
-			my $d = $plist->get(DISPLAY)->{d};
-			if (!$state->{known_displays}{$$d}) {
-				$plist->get(DISPLAY)->prepare($state);
-			}
-		}
 	}
 	delete $state->{partial};
 	$set->{solver}->register_dependencies($state);
