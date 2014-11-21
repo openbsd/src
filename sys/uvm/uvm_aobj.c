@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.71 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.72 2014/11/21 07:18:44 tedu Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1552,9 +1552,7 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 	 * the swap slots we've freed.
 	 */
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
 	}
 }
