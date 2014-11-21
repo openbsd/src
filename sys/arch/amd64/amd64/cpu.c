@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.67 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.68 2014/11/21 07:02:11 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -893,9 +893,6 @@ cpu_init_msrs(struct cpu_info *ci)
 	wrmsr(MSR_FSBASE, 0);
 	wrmsr(MSR_GSBASE, (u_int64_t)ci);
 	wrmsr(MSR_KERNELGSBASE, 0);
-
-	if (cpu_feature & CPUID_NXE)
-		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
 
 void
