@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.119 2014/11/17 04:31:08 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.120 2014/11/21 06:40:40 deraadt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -842,7 +842,7 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	}
 
 #ifdef __HAVE_PMAP_DIRECT
-	if (kv->kv_align || kv->kv_executable)
+	if (kv->kv_align)
 		goto alloc_va;
 #if 1
 	/*
@@ -874,11 +874,7 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	}
 #endif
 alloc_va:
-	if (kv->kv_executable) {
-		prot = PROT_READ | PROT_WRITE | PROT_EXEC;
-	} else {
-		prot = PROT_READ | PROT_WRITE;
-	}
+	prot = PROT_READ | PROT_WRITE;
 
 	if (kp->kp_pageable) {
 		KASSERT(kp->kp_object);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.123 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.124 2014/11/21 06:40:40 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -337,7 +337,6 @@ struct kmem_va_mode {
 	vsize_t kv_align;
 	char kv_wait;
 	char kv_singlepage;
-	char kv_executable;
 };
 
 /*
