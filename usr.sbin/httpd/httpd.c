@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.24 2014/11/11 15:54:45 beck Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.25 2014/11/21 17:49:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -565,7 +565,7 @@ url_decode(char *url)
 			 * We don't have to validate "hex" because it is
 			 * guaranteed to include two hex chars followed by nul.
 			 */
-			x = strtoul(hex, NULL, 16);		
+			x = strtoul(hex, NULL, 16);
 			*q = (char)x;
 			p += 2;
 			break;
