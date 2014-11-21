@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.3 2014/11/21 12:44:18 schwarze Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.4 2014/11/21 12:52:54 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -35,7 +35,7 @@ If both the hash and the password are the empty string, authentication
 is a success.
 Otherwise, the password is hashed and compared to the provided hash.
 If the hash is
-.Dv NULL,
+.Dv NULL ,
 authentication will always fail, but a default
 amount of work is performed to simulate the hashing operation.
 A successful match will return 0.
