@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.13 2014/06/23 03:46:17 guenther Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.14 2014/11/21 17:49:00 mikeb Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -67,7 +67,6 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 
