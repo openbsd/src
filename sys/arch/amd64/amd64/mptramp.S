@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.8 2014/01/05 20:23:56 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.9 2014/11/21 09:08:20 mlarkin Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -90,7 +90,6 @@
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 #define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
 
-	.globl	_C_LABEL(mpidle)
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
@@ -98,8 +97,6 @@
 	.global _C_LABEL(mp_pdirpa)
 
 	.global	gdt64
-
-#define HALT	1: jmp 1b
 
 	.text
 	.align 4,0x0
