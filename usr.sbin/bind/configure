@@ -5952,7 +5952,6 @@ fi
 case "$use_randomdev" in
 	unspec)
 		devrandom=/dev/random
-		esac
 		{ echo "$as_me:$LINENO: result: $devrandom" >&5
 echo "${ECHO_T}$devrandom" >&6; }
 		as_ac_File=`echo "ac_cv_file_$devrandom" | $as_tr_sh`
