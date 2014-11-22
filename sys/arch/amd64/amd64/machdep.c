@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.197 2014/11/22 18:31:46 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.198 2014/11/22 18:55:20 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1175,7 +1175,8 @@ cpu_init_extents(void)
 #if defined(MULTIPROCESSOR) || \
     (NACPI > 0 && !defined(SMALL_KERNEL))
 void
-map_tramps(void) {
+map_tramps(void)
+{
 	struct pmap *kmp = pmap_kernel();
 
 	pmap_kenter_pa(lo32_vaddr, lo32_paddr, PROT_READ | PROT_WRITE);
