@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.10 2014/11/22 18:31:46 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.11 2014/11/22 20:09:36 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -53,7 +53,7 @@
 
 #define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 32)
 /* HIBERNATE_HIBALLOC_PAGE must be the last stolen page (see machdep.c) */
-#define HIBERNATE_HIBALLOC_PAGE (PAGE_SIZE * 33)
+#define HIBERNATE_HIBALLOC_PAGE	(PAGE_SIZE * 33)
 
 /* Use 4MB hibernation chunks */
 #define HIBERNATE_CHUNK_SIZE		0x400000
