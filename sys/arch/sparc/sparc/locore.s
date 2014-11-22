@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.95 2014/10/23 19:09:04 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.96 2014/11/22 22:49:44 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2627,8 +2627,13 @@ nmi_sun4m:
 	sethi	%hi(ICR_PI_CLR), %o0
 	set	PINTR_IC, %o1
 	st	%o1, [%o0 + %lo(ICR_PI_CLR)]
+	 nop; nop; nop;
+	ld	[%o0 + %lo(ICR_PI_PEND)], %g0 ! drain register!?
+	 nop;
 
-	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
+	or	%l0, PSR_PIL, %o4	! splhigh()
+	wr	%o4, 0, %psr
+	wr	%o4, PSR_ET, %psr	! okay, turn traps on again
 
 	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
 	rd	%y, %l4			! save y
