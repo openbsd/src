@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.41 2014/08/15 09:45:54 rpe Exp $
+#	$OpenBSD: install.md,v 1.42 2014/11/22 15:02:27 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -41,10 +41,11 @@ NCPU=$(sysctl -n hw.ncpufound)
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp"; SANESETS="bsd bsd.mp"; }
 
 md_installboot() {
-	# Use cat to avoid holes created by cp(1)
-	cat /mnt/usr/mdec/ofwboot > /mnt/ofwboot
-	sync
-	/mnt/usr/mdec/installboot /mnt/usr/mdec/bootblk /dev/r${1}c
+	if ! installboot -r /mnt ${1}; then
+		echo "\nFailed to install bootblocks."
+		echo "You will not be able to boot OpenBSD from ${1}."
+		exit
+	fi
 }
 
 md_prep_disklabel() {

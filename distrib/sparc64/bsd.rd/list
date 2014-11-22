@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.48 2014/07/20 02:37:35 deraadt Exp $
+#	$OpenBSD: list,v 1.49 2014/11/22 15:02:27 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -58,6 +58,7 @@ LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
+LINK	instbin					usr/bin/installboot
 LINK	instbin					sbin/bioctl
 
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

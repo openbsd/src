@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.44 2014/07/20 02:37:35 deraadt Exp $
+#	$OpenBSD: list,v 1.45 2014/11/22 15:02:27 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -53,6 +53,7 @@ LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
+LINK	instbin					usr/bin/installboot
 
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk

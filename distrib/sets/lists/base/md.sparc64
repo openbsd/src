@@ -2181,7 +2181,6 @@
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/mdec/bootblk
-./usr/mdec/installboot
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
 ./usr/sbin/ZZZ

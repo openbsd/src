@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2013/10/18 14:04:05 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2014/11/22 15:02:27 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -36,7 +36,7 @@ ${FS}:	bsd.rd
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTFLOPPY}
-	/usr/mdec/installboot -v ${DESTDIR}/usr/mdec/bootblk ${VND_CRDEV}
+	installboot -v ${VND}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""

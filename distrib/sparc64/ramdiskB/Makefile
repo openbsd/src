@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2013/10/15 22:46:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.22 2014/11/22 15:02:28 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,6 @@ MTREE=		${UTILS}/mtree.conf
 FLOPPY=		floppyB${REV}.fs
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
-INSTALLBOOT?=	/usr/mdec/installboot
 
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
@@ -64,8 +63,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	${INSTALLBOOT} -v ${DESTDIR}/usr/mdec/bootblk \
-		`echo ${VND_RDEV} | sed -e 's/a$$/c/'`
+	installboot -v ${VND}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""

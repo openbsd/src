@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2013/10/18 14:04:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2014/11/22 15:02:27 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,7 +20,6 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 STRIP?=		strip
 GZIPCMD?=	gzip
 GZIPFLAGS?=	-9fn
-INSTALLBOOT?=	/usr/mdec/installboot -v
 MTREE=		${UTILS}/mtree.conf
 
 RAMDISK=	RAMDISK

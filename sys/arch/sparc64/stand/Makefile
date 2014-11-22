@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 2007/11/25 18:25:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/11/22 15:02:28 deraadt Exp $
 
 .if ${MACHINE} == "sparc64"
 SUBDIR= bootblk libsa libz ofwboot ofwboot.net
 .endif
-
-SUBDIR+= installboot
 
 
 .include <bsd.subdir.mk>

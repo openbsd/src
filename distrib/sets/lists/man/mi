@@ -2637,7 +2637,6 @@
 ./usr/share/man/man8/sparc64/apmd.8
 ./usr/share/man/man8/sparc64/boot_sparc64.8
 ./usr/share/man/man8/sparc64/eeprom.8
-./usr/share/man/man8/sparc64/installboot.8
 ./usr/share/man/man8/sparc64/ldomctl.8
 ./usr/share/man/man8/sparc64/ldomd.8
 ./usr/share/man/man8/sparc64/zzz.8
