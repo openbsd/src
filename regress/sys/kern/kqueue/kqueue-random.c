@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-random.c,v 1.7 2011/07/07 01:42:05 guenther Exp $	*/
+/*	$OpenBSD: kqueue-random.c,v 1.8 2014/11/22 18:58:33 deraadt Exp $	*/
 /*	Written by Michael Shalayeff, 2002, Public Domain	*/
 
 #include <stdlib.h>
@@ -23,8 +23,8 @@ do_random(void)
 	struct kevent ev;
 	u_int32_t buf[BUFSIZ];
 
-	if ((fd = open("/dev/arandom", O_RDONLY)) < 0) {
-		warn("open: /dev/arandom");
+	if ((fd = open("/dev/random", O_RDONLY)) < 0) {
+		warn("open: /dev/random");
 		return (1);
 	}
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
