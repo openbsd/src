@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.167 2014/11/17 21:39:19 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.168 2014/11/22 07:30:17 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4847,7 +4847,7 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 
 	/*
-	 * Since the caller might request either a removal of PROT_EXECUTE
+	 * Since the caller might request either a removal of PROT_EXEC
 	 * or PROT_WRITE, we don't attempt to guess what to do, just lower
 	 * to read-only and let the real protection be faulted in.
 	 */
