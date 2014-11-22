@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.557 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.558 2014/11/22 18:54:37 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3320,15 +3320,15 @@ init386(paddr_t first_avail)
 #endif
 
 #ifdef MULTIPROCESSOR
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,  /* virtual */
-	    (paddr_t)MP_TRAMPOLINE,             /* physical */
-	    PROT_MASK);                       /* protection */
+	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,		/* virtual */
+	    (paddr_t)MP_TRAMPOLINE,			/* physical */
+	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
 #endif
 
 #if NACPI > 0 && !defined(SMALL_KERNEL)
-	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,/* virtual */
-	    (paddr_t)ACPI_TRAMPOLINE,           /* physical */
-	    PROT_MASK);                       /* protection */
+	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,	/* virtual */
+	    (paddr_t)ACPI_TRAMPOLINE,			/* physical */
+	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
 #endif
 
 	tlbflush();
