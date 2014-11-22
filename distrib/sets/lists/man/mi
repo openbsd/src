@@ -1769,6 +1769,7 @@
 ./usr/share/man/man4/sparc/cgtwo.4
 ./usr/share/man/man4/sparc/clock.4
 ./usr/share/man/man4/sparc/daadio.4
+./usr/share/man/man4/sparc/eccmemctl.4
 ./usr/share/man/man4/sparc/esp.4
 ./usr/share/man/man4/sparc/fga.4
 ./usr/share/man/man4/sparc/fvme.4
@@ -1781,6 +1782,7 @@
 ./usr/share/man/man4/sparc/ledma.4
 ./usr/share/man/man4/sparc/magma.4
 ./usr/share/man/man4/sparc/mem.4
+./usr/share/man/man4/sparc/memreg.4
 ./usr/share/man/man4/sparc/mgx.4
 ./usr/share/man/man4/sparc/oclock.4
 ./usr/share/man/man4/sparc/openprom.4
