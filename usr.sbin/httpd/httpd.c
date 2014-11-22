@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.25 2014/11/21 17:49:10 deraadt Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.26 2014/11/22 00:24:22 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -493,7 +493,7 @@ canonicalize_host(const char *host, char *name, size_t len)
 {
 	struct sockaddr_in	 sin4;
 	struct sockaddr_in6	 sin6;
-	u_int			 i, j;
+	size_t			 i, j;
 	size_t			 plen;
 	char			 c;
 
@@ -692,7 +692,7 @@ evbuffer_getline(struct evbuffer *evb)
 	u_int8_t	*ptr = EVBUFFER_DATA(evb);
 	size_t		 len = EVBUFFER_LENGTH(evb);
 	char		*str;
-	u_int		 i;
+	size_t		 i;
 
 	/* Safe version of evbuffer_readline() */
 	if ((str = get_string(ptr, len)) == NULL)
