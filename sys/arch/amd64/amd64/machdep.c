@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.196 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.197 2014/11/22 18:31:46 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1178,7 +1178,7 @@ void
 map_tramps(void) {
 	struct pmap *kmp = pmap_kernel();
 
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, PROT_READ | PROT_WRITE | PROT_EXEC);
+	pmap_kenter_pa(lo32_vaddr, lo32_paddr, PROT_READ | PROT_WRITE);
 
 	/*
 	 * The initial PML4 pointer must be below 4G, so if the
@@ -1191,10 +1191,13 @@ map_tramps(void) {
 	} else
 		tramp_pdirpa = kmp->pm_pdirpa;
 
+	pmap_kremove(lo32_vaddr, PAGE_SIZE);
+
 #ifdef MULTIPROCESSOR
+	/* Map trampoline code page RW (to copy code) */
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
-	    PROT_MASK);		/* protection */
+	    PROT_READ | PROT_WRITE);	/* protection */
 #endif /* MULTIPROCESSOR */
 
 	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE, /* virtual */
@@ -1286,6 +1289,8 @@ init_x86_64(paddr_t first_avail)
 #ifdef MULTIPROCESSOR
 	if (avail_start < MP_TRAMPOLINE + PAGE_SIZE)
 		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
+	if (avail_start < MP_TRAMP_DATA + PAGE_SIZE)
+		avail_start = MP_TRAMP_DATA + PAGE_SIZE;
 #endif
 
 #if (NACPI > 0 && !defined(SMALL_KERNEL))

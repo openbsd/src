@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.31 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.32 2014/11/22 18:31:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -141,9 +141,20 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->nranges++;
 #endif
 #ifdef MULTIPROCESSOR
+	/* Record MP trampoline code page */
 	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = MP_TRAMPOLINE;
+	hiber_info->ranges[hiber_info->nranges].end =
+	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
+	hiber_info->image_size += PAGE_SIZE;
+	hiber_info->nranges++;
+
+	/* Record MP trampoline data page */
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
+	hiber_info->ranges[hiber_info->nranges].base =
+		MP_TRAMP_DATA;
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;

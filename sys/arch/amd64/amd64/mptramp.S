@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.9 2014/11/21 09:08:20 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.10 2014/11/22 18:31:46 mlarkin Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -90,11 +90,17 @@
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 #define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
 
+#define _TRMP_DATA_LABEL(a)  a = . - _C_LABEL(mp_tramp_data_start) + \
+				MP_TRAMP_DATA
+#define _TRMP_DATA_OFFSET(a)  a = . - _C_LABEL(mp_tramp_data_start)
+
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(local_apic)
 	.global _C_LABEL(mp_pdirpa)
+	.global _C_LABEL(mp_tramp_data_start)
+	.global _C_LABEL(mp_tramp_data_end)
 
 	.global	gdt64
 
@@ -103,8 +109,9 @@
 	.code16
 _C_LABEL(cpu_spinup_trampoline):
 	cli
+	movw    $(MP_TRAMP_DATA >> 4), %ax
+	movw	%ax, %ds
 	movw	%cs, %ax
-	movw    %ax, %ds
 	movw    %ax, %es
 	movw    %ax, %ss
 	data32 addr32 lgdt (mptramp_gdt32_desc)   # load flat descriptor table
@@ -122,9 +129,9 @@ _TRMP_LABEL(mp_startup)
 	movw    %ax, %es
 	movw    %ax, %fs
 	movw    %ax, %gs
-	
-	movl    $ (MP_TRAMPOLINE+NBPG-16),%esp       # bootstrap stack end,
-						     # with scratch space..
+
+	movl    $(MP_TRAMP_DATA + NBPG - 16),%esp	# bootstrap stack end,
+							# with scratch space..
 
 	/* First, reset the PSL. */
 	pushl   $PSL_MBO
@@ -164,6 +171,7 @@ _TRMP_LABEL(mp_startup)
 
 	movl	$mptramp_gdt64_desc,%eax
 	lgdt	(%eax)
+
 	movl	$mptramp_jmp64,%eax
 
 	movl    %cr0,%ecx               # get control word
@@ -172,36 +180,10 @@ _TRMP_LABEL(mp_startup)
 
 	ljmp	*(%eax)
 
-_TRMP_LABEL(mptramp_jmp64)
-	.long   mptramp_longmode
-	.word   GSEL(GCODE_SEL, SEL_KPL)
-
-_TRMP_LABEL(mptramp_gdt32)
-	.quad 0x0000000000000000
-	.quad 0x00cf9f000000ffff
-	.quad 0x00cf93000000ffff
-_TRMP_OFFSET(mptramp_gdt32_desc)
-	.word 0x17
-	.long mptramp_gdt32
-
-_TRMP_LABEL(mptramp_gdt64)
-	.quad 0x0000000000000000
-	.quad 0x00af9a000000ffff
-	.quad 0x00cf92000000ffff
-_TRMP_LABEL(mptramp_gdt64_desc)
-	.word 0x17
-	.long mptramp_gdt64
-
-	.global mp_pdirpa
-_TRMP_LABEL(mp_pdirpa)
-_TRMP_LABEL(mp_tramp_pdirpa)
-	.long 0
-
 _TRMP_LABEL(mptramp_longmode)
 	.code64
 	movabsq	$_C_LABEL(cpu_spinup_trampoline_end),%rax
 	jmp	*%rax
-	
 
 	
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
@@ -232,3 +214,32 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movq    %rax,%cr0
 	call	_C_LABEL(cpu_hatch)
 	/* NOTREACHED */
+
+
+_C_LABEL(mp_tramp_data_start):
+_TRMP_DATA_LABEL(mptramp_jmp64)
+	.long   mptramp_longmode
+	.word   GSEL(GCODE_SEL, SEL_KPL)
+
+	.global mp_pdirpa
+_TRMP_DATA_LABEL(mp_pdirpa)
+_TRMP_DATA_LABEL(mp_tramp_pdirpa)
+	.long 0
+
+
+_TRMP_DATA_LABEL(mptramp_gdt32)
+	.quad 0x0000000000000000
+	.quad 0x00cf9f000000ffff
+	.quad 0x00cf93000000ffff
+_TRMP_DATA_OFFSET(mptramp_gdt32_desc)
+	.word 0x17
+	.long mptramp_gdt32
+
+_TRMP_DATA_LABEL(mptramp_gdt64)
+	.quad 0x0000000000000000
+	.quad 0x00af9a000000ffff
+	.quad 0x00cf92000000ffff
+_TRMP_DATA_LABEL(mptramp_gdt64_desc)
+	.word 0x17
+	.long mptramp_gdt64
+_C_LABEL(mp_tramp_data_end):
