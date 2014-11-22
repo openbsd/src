@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2014/11/22 22:48:38 miod Exp $
+#	$OpenBSD: Makefile,v 1.45 2014/11/22 22:58:09 miod Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
 
 MAN=	agten.4 audioamd.4 audiocs.4 autoconf.4 auxreg.4 \
@@ -10,7 +10,7 @@ MAN=	agten.4 audioamd.4 audiocs.4 autoconf.4 auxreg.4 \
 	fga.4 \
 	ie.4 intro.4 \
 	le.4 led.4 \
-	magma.4 mem.4 mgx.4 \
+	magma.4 mem.4 memreg.4 mgx.4 \
 	openprom.4 \
 	pninek.4 pnozz.4 presto.4 \
 	qe.4 qec.4 \

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eccmemctl.4,v 1.2 2014/11/22 22:58:09 miod Exp $
+.\"	$OpenBSD: memreg.4,v 1.1 2014/11/22 22:58:09 miod Exp $
 .\"
 .\" Copyright (c) 2014, Miodrag Vallat.
 .\"
@@ -15,21 +15,23 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 22 2014 $
-.Dt ECCMEMCTL 4 sparc
+.Dt MEMREG 4 sparc
 .Os
 .Sh NAME
-.Nm eccmemctl
-.Nd ECC memory controller
+.Nm memreg
+.Nd parity memory error register
 .Sh SYNOPSIS
-.Cd "eccmemctl0 at mainbus0                            " Pq "sun4m"
+.Cd "memreg0 at mainbus0                               " Pq "sun4c and sun4e"
+.Cd "memreg0 at obio0                                  " Pq "sun4m"
+.Cd "memreg0 at obio0 addr 0xf4000000                  " Pq "sun4"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the ECC memory controller found on some
-sun4m systems.
-It will enable ECC memory checking, and will report detailed information about
-memory errors occuring.
+driver provides support for the parity error register found on sparc systems
+without ECC memory controllers.
+It will report detailed information about synchronous and asynchronous memory
+errors.
 .Sh SEE ALSO
+.Xr eccmemctl 4 ,
 .Xr intro 4 ,
-.Xr mainbus 4 ,
-.Xr memreg 4
+.Xr mainbus 4
