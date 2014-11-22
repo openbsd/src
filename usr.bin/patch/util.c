@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.36 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.37 2014/11/22 15:49:28 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -374,7 +374,7 @@ fetchname(const char *at, bool *exists, int strip_leading)
 }
 
 /*
- * Takes the name returned by fetchname and looks in RCS/SCCS directories
+ * Takes the name returned by fetchname and looks in RCS directory
  * for a checked in version.
  */
 char *
@@ -391,9 +391,7 @@ checked_in(char *file)
 
 	if (try("%s/RCS/%s%s", filedir, filebase, RCSSUFFIX) ||
 	    try("%s/RCS/%s%s", filedir, filebase, "") ||
-	    try("%s/%s%s", filedir, filebase, RCSSUFFIX) ||
-	    try("%s/SCCS/%s%s", filedir, SCCSPREFIX, filebase) ||
-	    try("%s/%s%s", filedir, SCCSPREFIX, filebase))
+	    try("%s/%s%s", filedir, filebase, RCSSUFFIX))
 		return file;
 
 	return NULL;

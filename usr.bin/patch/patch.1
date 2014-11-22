@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.27 2014/04/15 06:26:54 jmc Exp $
+.\"	$OpenBSD: patch.1,v 1.28 2014/11/22 15:49:28 tobias Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 15 2014 $
+.Dd $Mdocdate: November 22 2014 $
 .Dt PATCH 1
 .Os
 .Sh NAME
@@ -481,8 +481,8 @@ the shortest basename, and the shortest total file name length (in that order).
 .It
 If no file exists,
 .Nm
-checks for the existence of the files in an SCCS or RCS directory
-(using the appropriate prefix or suffix) using the criteria specified
+checks for the existence of the files in an RCS directory
+(using the appropriate suffix) using the criteria specified
 above.
 If found,
 .Nm

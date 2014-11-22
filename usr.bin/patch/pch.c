@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.43 2014/11/18 17:03:35 tobias Exp $	*/
+/*	$OpenBSD: pch.c,v 1.44 2014/11/22 15:49:28 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -1451,7 +1451,7 @@ posix_name(const struct file_name *names, bool assume_exists)
 	if (path == NULL && !assume_exists) {
 		/*
 		 * No files found, look for something we can checkout from
-		 * RCS/SCCS dirs.  Same order as above.
+		 * RCS dirs.  Same order as above.
 		 */
 		for (i = 0; i < MAX_FILE; i++) {
 			if (names[i].path != NULL &&

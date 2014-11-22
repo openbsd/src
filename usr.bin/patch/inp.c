@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.39 2014/11/15 16:35:47 tobias Exp $	*/
+/*	$OpenBSD: inp.c,v 1.40 2014/11/22 15:49:28 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -163,7 +163,7 @@ plan_a(const char *filename)
 	}
 	if (statfailed && check_only)
 		fatal("%s not found, -C mode, can't probe further\n", filename);
-	/* For nonexistent or read-only files, look for RCS or SCCS versions.  */
+	/* For nonexistent or read-only files, look for RCS versions.  */
 	if (statfailed ||
 	    /* No one can write to it.  */
 	    (filestat.st_mode & 0222) == 0 ||
@@ -187,11 +187,6 @@ plan_a(const char *filename)
 			snprintf(buf, sizeof buf, CHECKOUT, filename);
 			snprintf(lbuf, sizeof lbuf, RCSDIFF, filename);
 			cs = "RCS";
-		} else if (try("%s/SCCS/%s%s", filedir, SCCSPREFIX, filebase) ||
-		    try("%s/%s%s", filedir, SCCSPREFIX, filebase)) {
-			snprintf(buf, sizeof buf, GET, s);
-			snprintf(lbuf, sizeof lbuf, SCCSDIFF, s, filename);
-			cs = "SCCS";
 		} else if (statfailed)
 			fatal("can't find %s\n", filename);
 		/*

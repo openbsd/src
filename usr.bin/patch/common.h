@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.26 2006/03/11 19:41:30 otto Exp $	*/
+/*	$OpenBSD: common.h,v 1.27 2014/11/22 15:49:28 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -38,10 +38,6 @@
 #define INITHUNKMAX 125		/* initial dynamic allocation size */
 #define MAXLINELEN 8192
 #define BUFFERSIZE 1024
-
-#define SCCSPREFIX "s."
-#define GET "get -e %s"
-#define SCCSDIFF "get -p %s | diff - %s >/dev/null"
 
 #define RCSSUFFIX ",v"
 #define CHECKOUT "co -l %s"
