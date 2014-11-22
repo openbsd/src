@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.61 2014/10/16 02:51:26 lteo Exp $
+.\"	$OpenBSD: ssl.8,v 1.62 2014/11/22 18:06:35 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 16 2014 $
+.Dd $Mdocdate: November 22 2014 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -45,33 +45,6 @@ The libcrypto library is also used by various programs such as
 .Xr sshd 8 ,
 and
 .Xr isakmpd 8 .
-.Sh RANDOM DATA SOURCE
-.Ox
-uses the
-.Xr arandom 4
-device as the default source for random data when needed by the routines in
-libcrypto and libssl.
-If the
-.Xr arandom 4
-device does not exist or is not readable, many of the routines will fail.
-This is most commonly seen by users as the RSA routines failing in
-applications such as
-.Xr ssh 1
-and
-.Xr httpd 8 .
-.Pp
-It is important to remember when using a random data source for certificate
-and key generation that the random data source should not be visible by
-people who could duplicate the process and come up with the same result.
-You should ensure that nobody who you don't trust is in a position to read
-the same random data used by you to generate keys and certificates.
-The
-.Xr arandom 4
-device ensures that no two users on the same machine will see the same
-data.
-See
-.Xr openssl 1
-for more information on how to use different sources of random data.
 .Sh SERVER CERTIFICATES
 The most common uses of SSL/TLS will require you to generate a server
 certificate, which is provided by your host as evidence of its identity
@@ -210,7 +183,6 @@ You can also sign the key yourself, using the command:
 .Xr openssl 1 ,
 .Xr ssh 1 ,
 .Xr ssl 3 ,
-.Xr arandom 4 ,
 .Xr httpd 8 ,
 .Xr isakmpd 8 ,
 .Xr rc 8 ,
