@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.8 2014/11/16 19:14:34 bluhm Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.9 2014/11/22 15:51:40 tobias Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -224,7 +224,7 @@ rcsparse_init(RCSFILE *rfp)
 	if (rfp->rf_flags & RCS_PARSED)
 		return (0);
 
-	pdp = xmalloc(sizeof(*pdp));
+	pdp = xcalloc(sizeof(*pdp));
 	pdp->rp_buf = xmalloc(RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
