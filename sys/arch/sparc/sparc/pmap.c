@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.168 2014/11/22 07:30:17 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.169 2014/11/22 22:51:29 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3402,6 +3402,7 @@ mmu_install_tables(sc)
 #endif
 }
 
+#ifdef MULTIPROCESSOR
 /*
  * Allocate per-CPU page tables.
  * Note: this routine is called in the context of the boot CPU
@@ -3448,7 +3449,7 @@ pmap_alloc_cpu(sc)
 	bcopy(sp->sg_pte, pagtable, SRMMU_L3SIZE * sizeof(int));
 	pagtable[vpg] =
 		(VA2PA((caddr_t)cpustore) >> SRMMU_PPNPASHIFT) |
-		(SRMMU_TEPTE | PPROT_RWX_RWX | SRMMU_PG_C);
+		(SRMMU_TEPTE | PPROT_RW_RW | SRMMU_PG_C);
 
 	/* Install L1 table in context 0 */
 	ctxtable[0] = ((u_int)regtable >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
@@ -3462,6 +3463,8 @@ pmap_alloc_cpu(sc)
 	}
 #endif
 }
+#endif /* MULTIPROCESSOR */
+
 #endif /* defined sun4m */
 
 
