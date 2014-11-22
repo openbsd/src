@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.106 2014/10/25 16:51:31 miod Exp $
+#	$OpenBSD: GENERIC,v 1.107 2014/11/22 22:48:38 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -72,6 +72,9 @@ oclock0	at obio0 addr 0xf3000000		# sun4/100 and sun4/200
 memreg0	at mainbus0				# sun4c and sun4e
 memreg0	at obio0				# sun4m
 memreg0	at obio0 addr 0xf4000000		# sun4
+
+# ECC memory control
+eccmemctl0 at mainbus0				# sun4m
 
 # Timer chip found on 4/300, sun4c, and sun4m systems.
 timer0	at mainbus0				# sun4c and sun4e

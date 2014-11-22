@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.39 2014/07/12 18:44:43 tedu Exp $ */
+/*	$OpenBSD: intr.c,v 1.40 2014/11/22 22:48:38 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -92,15 +92,16 @@ strayintr(fp)
 
 #if defined(SUN4M)
 void	nmi_hard(void);
+
+int	(*memerr_handler)(void);
+
 void
 nmi_hard()
 {
 	/*
          * A level 15 hard interrupt.
          */
-#ifdef noyet
 	int fatal = 0;
-#endif
 	u_int32_t si;
 	u_int afsr, afva;
 
@@ -125,12 +126,12 @@ nmi_hard()
 	si = *((u_int32_t *)ICR_SI_PEND);
 	printf("NMI: system interrupts: %b\n", si, SINTR_BITS);
 
-#ifdef notyet
 	if ((si & SINTR_M) != 0) {
 		/* ECC memory error */
                 if (memerr_handler != NULL)
                         fatal |= (*memerr_handler)();
         }
+#ifdef notyet
         if ((si & SINTR_I) != 0) {
                 /* MBus/SBus async error */
                 if (sbuserr_handler != NULL)
@@ -146,9 +147,11 @@ nmi_hard()
                 if (moduleerr_handler != NULL)
                         fatal |= (*moduleerr_handler)();
         }
+#else
+	fatal |= si & (SINTR_I | SINTR_V | SINTR_ME);
+#endif
 
         if (fatal)
-#endif
                 panic("nmi");
 }
 #endif

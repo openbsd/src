@@ -1,0 +1,35 @@
+.\"	$OpenBSD: eccmemctl.4,v 1.1 2014/11/22 22:48:38 miod Exp $
+.\"
+.\" Copyright (c) 2014, Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 22 2014 $
+.Dt ECCMEMCTL 4 sparc
+.Os
+.Sh NAME
+.Nm eccmemctl
+.Nd ECC memory controller
+.Sh SYNOPSIS
+.Cd "eccmemctl0 at mainbus0                            " Pq "sun4m"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the ECC memory controller found on some
+sun4m systems.
+It will enable ECC memory checking, and will report detailed information about
+memory errors occuring.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr mainbus 4
+.\" .Xr memreg 4

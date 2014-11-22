@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.83 2014/10/25 16:51:31 miod Exp $
+#	$OpenBSD: SUN4M,v 1.84 2014/11/22 22:48:38 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -51,6 +51,9 @@ clock0	at obio0				# sun4m
 
 # Memory error registers.
 memreg0	at obio0				# sun4m
+
+# ECC memory control
+eccmemctl0 at mainbus0				# sun4m
 
 # Timer chip found on 4/300, sun4c, and sun4m systems.
 timer0	at obio0				# sun4m

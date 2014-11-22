@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.76 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.77 2014/11/22 22:48:38 miod Exp $
 
 machine		sparc
 maxusers	4
@@ -50,6 +50,8 @@ oclock0		at obio0 addr 0xf3000000	# sun4/100 and sun4/200
 memreg0		at mainbus0			# sun4c and sun4e
 memreg0		at obio0			# sun4m
 memreg0		at obio0 addr 0xf4000000	# sun4
+
+eccmemctl0 at mainbus0				# sun4m
 
 timer0		at mainbus0			# sun4c and sun4e
 timer0		at obio0			# sun4m

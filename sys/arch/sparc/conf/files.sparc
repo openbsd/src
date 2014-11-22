@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.96 2014/10/12 19:21:41 miod Exp $
+#	$OpenBSD: files.sparc,v 1.97 2014/11/22 22:48:38 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -60,6 +60,10 @@ file	arch/sparc/sparc/cpu.c
 device	memreg
 attach	memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
+
+device	eccmemctl
+attach	eccmemctl at mainbus
+file	arch/sparc/sparc/memecc.c		eccmemctl
 
 device	zs {[channel = -1]}
 attach	zs at mainbus, obio
