@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_lpd,v 1.7 2014/07/20 04:29:07 deraadt Exp $
+# $OpenBSD: usr_sbin_lpd,v 1.8 2014/11/22 18:15:41 deraadt Exp $
 #
 # Policy for lpd.
 # This policy works for the default configuration of lpd.
@@ -21,7 +21,6 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-fchmod: permit
 	native-fcntl: permit
 	native-fork: permit
-	native-fsread: filename eq "/dev/arandom" then permit
 	native-fsread: filename eq "/etc/hosts" then permit
 	native-fsread: filename eq "/etc/malloc.conf" then permit
 	native-fsread: filename eq "/etc/printcap" then permit

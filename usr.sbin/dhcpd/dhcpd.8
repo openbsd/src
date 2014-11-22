@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.25 2014/07/11 13:53:47 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.26 2014/11/22 18:15:41 deraadt Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 11 2014 $
+.Dd $Mdocdate: November 22 2014 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -461,7 +461,7 @@ and use it as a shared key to authenticate the synchronisation messages.
 The file itself can contain any data.
 For example, to create a secure random key:
 .Bd -literal -offset indent
-# dd if=/dev/arandom of=/var/db/dhcpd.key bs=2048 count=1
+# dd if=/dev/random of=/var/db/dhcpd.key bs=2048 count=1
 .Ed
 .Pp
 The file needs to be copied to all hosts

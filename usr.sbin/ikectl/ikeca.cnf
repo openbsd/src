@@ -1,6 +1,6 @@
-# $OpenBSD: ikeca.cnf,v 1.5 2012/10/25 12:35:55 reyk Exp $
+# $OpenBSD: ikeca.cnf,v 1.6 2014/11/22 18:15:41 deraadt Exp $
 
-RANDFILE		= /dev/arandom
+RANDFILE		= /dev/random
 
 CERT_C			= DE
 CERT_ST			= Lower Saxony

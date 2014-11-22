@@ -5951,13 +5951,7 @@ fi
 
 case "$use_randomdev" in
 	unspec)
-		case "$host" in
-			*-openbsd*)
-				devrandom=/dev/arandom
-				;;
-			*)
-				devrandom=/dev/random
-				;;
+		devrandom=/dev/random
 		esac
 		{ echo "$as_me:$LINENO: result: $devrandom" >&5
 echo "${ECHO_T}$devrandom" >&6; }
