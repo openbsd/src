@@ -1,11 +1,16 @@
 Afghanistan:Kabul
+Armenia:Yerevan
+Azerbaijan:Baku
 Australia:Canberra
 Bahrain:Manama
 Bangladesh:Dacca
-Bhutan:Thimbu
-Burma:Rangoon
+Bhutan:Thim[b|ph]u
+Brunei:Bandar Seri Begawan
+Cambodia:P{h}nom Penh
 China:Beijing|Peking
 Cyprus:Nicosia
+East Timor:Dili
+Georgia:Tbilisi
 India:New Delhi
 Indonesia:Jakarta|Djakarta
 Iran:Tehran
@@ -13,16 +18,17 @@ Iraq:Baghdad
 Israel:Jerusalem
 Japan:Tokyo
 Jordan:Amman
-Khmer|Cambodia:P{h}nom Penh
-Kuwait:Al-kuwait
+Kazakhstan:Astana
+Kuwait:Al-Kuwait|Kuwait City
+Kyrgyzstan:Bishkek
 Laos:Vientiane
 Lebanon:Beirut
 Malaysia:Kuala Lumpur
 Maldive Islands:Male
-Mongolia:Ulan Bator
-Nepal:Katmandu
+Mongolia:Ulaanbaatar|Ulan Bator
+Myanmar|Burma:Naypyidaw|Nay Pyi Taw
+Nepal:Kat{h}mandu
 North Korea:P{'}yongyang
-North Yemen:San{'}a
 Oman:Muscat
 Pakistan:Islamabad
 Papua[-| ]New Guinea:Port Moresby
@@ -31,11 +37,13 @@ Qatar:Doha
 Saudi Arabia:Riyadh
 Singapore:Singapore
 South Korea:Seoul
-South Yemen:Aden
 Sri Lanka:Colombo
 Syria:Damascus
 Taiwan:Taipei
 Thailand:Bangkok
 Turkey:Ankara
+Turkmenistan:Ashgabat
 United Arab Emirates:Abu Dhabi
+Uzbekistan:Tashkent
 Vietnam:Hanoi
+Yemen:San{'}a
