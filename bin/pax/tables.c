@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.36 2014/07/14 06:00:22 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.37 2014/11/23 05:32:20 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -35,10 +35,9 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -1126,7 +1125,7 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 {
 	DIRDATA *dblk;
 	sigset_t allsigs, savedsigs;
-	char realname[MAXPATHLEN], *rp;
+	char realname[PATH_MAX], *rp;
 
 	if (dirp == NULL)
 		return;

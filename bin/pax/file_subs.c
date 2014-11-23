@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.36 2014/07/14 05:58:19 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.37 2014/11/23 05:32:20 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -34,13 +34,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/uio.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -343,7 +342,7 @@ node_creat(ARCHD *arcn)
 	int pass = 0;
 	mode_t file_mode;
 	struct stat sb;
-	char target[MAXPATHLEN];
+	char target[PATH_MAX];
 	char *nm = arcn->name;
 	int len;
 
