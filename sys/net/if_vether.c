@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.20 2014/07/12 18:44:22 tedu Exp $ */
+/* $OpenBSD: if_vether.c,v 1.21 2014/11/23 07:39:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -108,7 +108,7 @@ vether_clone_destroy(struct ifnet *ifp)
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	free(sc, M_DEVBUF, 0);
+	free(sc, M_DEVBUF, sizeof(*sc));
 	return (0);
 }
 

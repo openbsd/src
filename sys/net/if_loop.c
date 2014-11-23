@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.59 2014/10/14 13:04:04 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.60 2014/11/23 07:39:02 deraadt Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ loop_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 
-	free(ifp, M_DEVBUF, 0);
+	free(ifp, M_DEVBUF, sizeof(*ifp));
 	return (0);
 }
 

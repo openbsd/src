@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.110 2014/10/07 11:16:23 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.111 2014/11/23 07:39:02 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -931,7 +931,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 
 		return (0);
 	}
-	free(fcode, M_DEVBUF, 0);
+	free(fcode, M_DEVBUF, size);
 	return (EINVAL);
 }
 
@@ -1567,7 +1567,7 @@ void
 bpfilter_destroy(struct bpf_d *bd)
 {
 	LIST_REMOVE(bd, bd_list);
-	free(bd, M_DEVBUF, 0);
+	free(bd, M_DEVBUF, sizeof(*bd));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.16 2014/11/18 02:37:31 tedu Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.17 2014/11/23 07:39:02 deraadt Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -556,7 +556,7 @@ lacp_port_destroy(struct trunk_port *tp)
 	lacp_unselect(lp);
 
 	LIST_REMOVE(lp, lp_next);
-	free(lp, M_DEVBUF, 0);
+	free(lp, M_DEVBUF, sizeof(*lp));
 }
 
 void
@@ -759,7 +759,7 @@ lacp_detach(struct trunk_softc *sc)
 	timeout_del(&lsc->lsc_transit_callout);
 	timeout_del(&lsc->lsc_callout);
 
-	free(lsc, M_DEVBUF, 0);
+	free(lsc, M_DEVBUF, sizeof(*lsc));
 	return (0);
 }
 
@@ -1066,7 +1066,7 @@ lacp_aggregator_delref(struct lacp_softc *lsc, struct lacp_aggregator *la)
 
 	TAILQ_REMOVE(&lsc->lsc_aggregators, la, la_q);
 
-	free(la, M_DEVBUF, 0);
+	free(la, M_DEVBUF, sizeof(*la));
 }
 
 /*

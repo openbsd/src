@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.69 2014/07/22 11:06:09 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.70 2014/11/23 07:39:02 deraadt Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ gif_clone_destroy(struct ifnet *ifp)
 	if (sc->gif_pdst)
 		free((caddr_t)sc->gif_pdst, M_IFADDR, 0);
 	sc->gif_pdst = NULL;
-	free(sc, M_DEVBUF, 0);
+	free(sc, M_DEVBUF, sizeof(*sc));
 	return (0);
 }
 

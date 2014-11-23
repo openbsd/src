@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.303 2014/11/03 11:02:08 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.304 2014/11/23 07:39:02 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ if_congestion_clear(void *arg)
 	struct timeout *to = ifq->ifq_congestion;
 
 	ifq->ifq_congestion = NULL;
-	free(to, M_TEMP, 0);
+	free(to, M_TEMP, sizeof(*to));
 }
 
 #define	equal(a1, a2)	\
@@ -1877,7 +1877,7 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		return (ENOMEM);
 
 	if ((ifgm = malloc(sizeof(*ifgm), M_TEMP, M_NOWAIT)) == NULL) {
-		free(ifgl, M_TEMP, 0);
+		free(ifgl, M_TEMP, sizeof(*ifgl));
 		return (ENOMEM);
 	}
 
@@ -1886,8 +1886,8 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 			break;
 
 	if (ifg == NULL && (ifg = if_creategroup(groupname)) == NULL) {
-		free(ifgl, M_TEMP, 0);
-		free(ifgm, M_TEMP, 0);
+		free(ifgl, M_TEMP, sizeof(*ifgl));
+		free(ifgm, M_TEMP, sizeof(*ifgm));
 		return (ENOMEM);
 	}
 
@@ -1928,7 +1928,7 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 
 	if (ifgm != NULL) {
 		TAILQ_REMOVE(&ifgl->ifgl_group->ifg_members, ifgm, ifgm_next);
-		free(ifgm, M_TEMP, 0);
+		free(ifgm, M_TEMP, sizeof(*ifgm));
 	}
 
 	if (--ifgl->ifgl_group->ifg_refcnt == 0) {
@@ -1939,7 +1939,7 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 		free(ifgl->ifgl_group, M_TEMP, 0);
 	}
 
-	free(ifgl, M_TEMP, 0);
+	free(ifgl, M_TEMP, sizeof(*ifgl));
 
 #if NPF > 0
 	pfi_group_change(groupname);

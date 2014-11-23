@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.109 2014/10/07 11:16:23 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.110 2014/11/23 07:39:02 deraadt Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -164,7 +164,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 	vlan_unconfig(ifp, NULL);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	free(ifv, M_DEVBUF, 0);
+	free(ifv, M_DEVBUF, sizeof(*ifv));
 	return (0);
 }
 
