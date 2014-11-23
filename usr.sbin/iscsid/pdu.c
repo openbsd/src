@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.9 2014/04/21 12:26:50 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.10 2014/11/23 13:05:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -393,8 +393,8 @@ pdu_parse(struct connection *c)
 				}
 			}
 			p->resid = 0; /* reset resid so pdu can be reused */
-			task_pdu_cb(c, p);
 			c->prbuf.wip = NULL;
+			task_pdu_cb(c, p);
 		}
 	} while (1);
 fail:
