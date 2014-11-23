@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.147 2013/06/13 02:26:53 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.148 2014/11/23 00:25:05 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@
  * These are used on interrupt or trap entry or exit.
  */
 #define	INTRENTRY \
+	cld			; \
 	pushl	%eax		; \
 	pushl	%ecx		; \
 	pushl	%edx		; \

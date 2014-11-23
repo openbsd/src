@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.34 2013/11/02 14:23:38 kettenis Exp $	*/
+/*	$OpenBSD: vector.S,v 1.35 2014/11/23 00:25:05 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ IDTVEC(trap07)
 	pushq	$T_DNA
 	INTRENTRY
 	sti
+	cld
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -247,6 +248,7 @@ NENTRY(alltraps)
 	sti
 	.globl	calltrap
 calltrap:
+	cld
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
@@ -332,6 +334,7 @@ IDTVEC(resume_lapic_ipi)
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
         sti
+	cld
 	pushq	%rbx
 	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
@@ -413,6 +416,7 @@ IDTVEC(resume_lapic_ltimer)
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
+	cld
 	pushq	%rbx
 	xorq	%rdi,%rdi
 	call	_C_LABEL(lapic_clockintr)
@@ -463,6 +467,7 @@ IDTVEC(intr_##name##num)						;\
 	pushq	%r13							;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
 	sti								;\
+	cld								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
 6:									\
