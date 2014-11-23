@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.44 2014/11/23 08:01:06 bentley Exp $
+.\"	$OpenBSD: less.1,v 1.45 2014/11/23 09:56:32 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -41,7 +41,7 @@
 .Op Fl p Ar pattern
 .Op Fl T Ar tagsfile
 .Op Fl t Ar tag
-.Op Fl x Ar n Ns , Ns Ar ...
+.Op Fl x Ar n , Ns Ar ...
 .Op Fl y Ar n
 .Op Fl z Ar n
 .Op Ar
@@ -2018,7 +2018,8 @@ to get the terminal characteristics necessary to manipulate the screen.
 .It Ev VISUAL
 Specifies the default editor.
 If not set,
-.Ev EDITOR is used;
+.Ev EDITOR
+is used;
 if that is not set,
 .Xr vi 1
 is used.
