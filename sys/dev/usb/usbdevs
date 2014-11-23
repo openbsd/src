@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.639 2014/10/31 21:17:42 tedu Exp $
+$OpenBSD: usbdevs,v 1.640 2014/11/23 21:20:54 sasano Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3812,7 +3812,7 @@ product SILABS3 GPRS_MODEM	0xea61	GPRS Modem
 product SILABS4 100EU_MODEM	0xea61	GPRS Modem 100EU
 product SILABS CP210X_3		0xea70	CP210x Serial
 product SILABS INFINITY_MIC	0xea71	Infinity GPS-MIC-1
-product SILABS CP210X_4		0xea80	CP210x Serial
+product SILABS CP2110		0xea80	CP2110 USB HID Serial
 product SILABS USBSCOPE50	0xf001	USBscope50
 product SILABS USBWAVE12	0xf002	USBwave12
 product SILABS USBPULSE100	0xf003	USBpulse100
