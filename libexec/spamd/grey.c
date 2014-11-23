@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.56 2014/10/09 02:43:43 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.57 2014/11/23 21:19:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -19,15 +19,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
 #include <sys/wait.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <net/pfvar.h>
-#include <arpa/inet.h>
 #include <ctype.h>
 #include <db.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>

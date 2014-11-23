@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.10 2013/11/19 18:33:07 deraadt Exp $	*/
+/*	$OpenBSD: sync.c,v 1.11 2014/11/23 21:19:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -16,10 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/file.h>
-#include <sys/wait.h>
 #include <sys/socket.h>
-#include <sys/resource.h>
 #include <sys/uio.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -28,10 +25,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <err.h>
 #include <errno.h>
-#include <getopt.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

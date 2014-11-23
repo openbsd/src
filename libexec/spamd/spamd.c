@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.115 2014/10/09 02:43:43 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.116 2014/11/23 21:19:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -18,8 +18,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/file.h>
-#include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
@@ -29,6 +27,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <pwd.h>
 #include <stdio.h>

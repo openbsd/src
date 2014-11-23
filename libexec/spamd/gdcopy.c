@@ -16,10 +16,7 @@
 
 #include <sys/types.h>
 #include <db.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "grey.h"
 
