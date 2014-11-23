@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.274 2014/11/18 23:55:01 krw Exp $ */
+/* $OpenBSD: acpi.c,v 1.275 2014/11/23 20:33:47 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2251,10 +2251,8 @@ fail_alloc:
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
 
-	/*
-	 * If we woke up but the lid is closed, go back to sleep
-	 */
-	if (!acpibtn_checklidopen())
+	/* If we woke up but all the lids are closed, go back to sleep */
+	if (acpibtn_numopenlids() == 0)
 		acpi_addtask(sc, acpi_sleep_task, sc, state);
 
 fail_tts:
