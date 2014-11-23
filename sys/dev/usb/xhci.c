@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.41 2014/11/16 18:31:07 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.42 2014/11/23 10:46:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -847,10 +847,9 @@ xhci_xfer_done(struct usbd_xfer *xfer)
 	int ntrb, i;
 
 #ifdef XHCI_DEBUG
-	if (xp->pending_xfers[xx->index] == NULL) {
+	if (xx->index == -1 || xp->pending_xfers[xx->index] == NULL) {
 		printf("%s: xfer=%p already done (index=%d)\n", __func__,
 		    xfer, xx->index);
-		return;
 	}
 #endif
 
@@ -898,12 +897,6 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 
 	KASSERT(xp->slot == 0);
 
-#ifdef XHCI_DEBUG
-	struct usbd_device *dev = pipe->device;
-	printf("%s: pipe=%p addr=%d depth=%d port=%d speed=%d\n", __func__,
-	    pipe, dev->address, dev->depth, dev->powersrc->portno, dev->speed);
-#endif
-
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
@@ -918,8 +911,6 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 			break;
 		default:
 			pipe->methods = NULL;
-			DPRINTF(("%s: bad bEndpointAddress 0x%02x\n", __func__,
-			    ed->bEndpointAddress));
 			return (USBD_INVAL);
 		}
 		return (USBD_NORMAL_COMPLETION);
@@ -967,7 +958,6 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 		pipe->methods = &xhci_device_generic_methods;
 		break;
 	default:
-		DPRINTF(("%s: bad xfer type %d\n", __func__, xfertype));
 		return (USBD_INVAL);
 	}
 
@@ -1019,9 +1009,6 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 		mep = 0;
 		atl = 0;
 	}
-
-	DPRINTF(("%s: max ESIT payload = %u, average TRB length = %u\n",
-	    DEVNAME(sc), mep, atl));
 
 	return (XHCI_EPCTX_MAX_ESIT_PAYLOAD(mep) | XHCI_EPCTX_AVG_TRB_LEN(atl));
 }
@@ -1082,9 +1069,6 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 
 	if (pipe->interval != USBD_DEFAULT_INTERVAL)
 		ival = min(ival, pipe->interval);
-
-	DPRINTF(("%s: speed %d mps %d rhport %d route 0x%x\n", DEVNAME(sc),
-	    speed, mps, rhport, route));
 
 	/* Setup the endpoint context */
 	if (xfertype != UE_ISOCHRONOUS)
@@ -1171,8 +1155,13 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
 	int error;
 
-	DPRINTF(("%s: dev %d dci %u (epAddr=0x%x)\n", DEVNAME(sc), xp->slot,
-	    xp->dci, pipe->endpoint->edesc->bEndpointAddress));
+#ifdef XHCI_DEBUG
+	struct usbd_device *dev = pipe->device;
+	printf("%s: pipe=%p addr=%d depth=%d port=%d speed=%d dev %d dci %u"
+	    " (epAddr=0x%x)\n", __func__, pipe, dev->address, dev->depth,
+	    dev->powersrc->portno, dev->speed, xp->slot, xp->dci,
+	    pipe->endpoint->edesc->bEndpointAddress);
+#endif
 
 	if (xhci_ring_alloc(sc, &xp->ring, XHCI_MAX_TRANSFERS))
 		return (ENOMEM);
@@ -1565,7 +1554,7 @@ xhci_cmd_configure_ep(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 {
 	struct xhci_trb trb;
 
-	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+	DPRINTF(("%s: %s dev %u\n", DEVNAME(sc), __func__, slot));
 
 	trb.trb_paddr = htole64(addr);
 	trb.trb_status = 0;
@@ -1581,7 +1570,7 @@ xhci_cmd_stop_ep(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 {
 	struct xhci_trb trb;
 
-	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+	DPRINTF(("%s: %s dev %u dci %u\n", DEVNAME(sc), __func__, slot, dci));
 
 	trb.trb_paddr = 0;
 	trb.trb_status = 0;
@@ -1597,7 +1586,7 @@ xhci_cmd_reset_endpoint_async(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 {
 	struct xhci_trb trb;
 
-	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+	DPRINTF(("%s: %s dev %u dci %u\n", DEVNAME(sc), __func__, slot, dci));
 
 	trb.trb_paddr = 0;
 	trb.trb_status = 0;
@@ -1614,7 +1603,7 @@ xhci_cmd_set_tr_deq_async(struct xhci_softc *sc, uint8_t slot, uint8_t dci,
 {
 	struct xhci_trb trb;
 
-	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+	DPRINTF(("%s: %s dev %u dci %u\n", DEVNAME(sc), __func__, slot, dci));
 
 	trb.trb_paddr = htole64(addr);
 	trb.trb_status = 0;
@@ -1672,7 +1661,7 @@ xhci_cmd_evaluate_ctx(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 {
 	struct xhci_trb trb;
 
-	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
+	DPRINTF(("%s: %s dev %u\n", DEVNAME(sc), __func__, slot));
 
 	trb.trb_paddr = htole64(addr);
 	trb.trb_status = 0;
