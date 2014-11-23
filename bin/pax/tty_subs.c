@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.15 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.16 2014/11/23 05:28:12 guenther Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ tty_init(void)
 {
 	int ttyfd;
 
-	if ((ttyfd = open(DEVTTY, O_RDWR)) >= 0) {
+	if ((ttyfd = open(DEVTTY, O_RDWR | O_CLOEXEC)) >= 0) {
 		if ((ttyoutf = fdopen(ttyfd, "w")) != NULL) {
 			if ((ttyinf = fdopen(ttyfd, "r")) != NULL)
 				return(0);
