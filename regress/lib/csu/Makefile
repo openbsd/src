@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2012/09/08 20:09:49 matthew Exp $
+#	$OpenBSD: Makefile,v 1.5 2014/11/23 08:46:49 guenther Exp $
 
 SUBDIR+= ctors dtors init_priority
+
+.if !defined(NOPIC)
+SUBDIR+= callbacks
+.endif
 
 install:
 
