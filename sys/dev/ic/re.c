@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.160 2014/11/19 02:37:41 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.161 2014/11/23 10:03:49 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -524,6 +524,36 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 void
 re_miibus_statchg(struct device *dev)
 {
+	struct rl_softc		*sc = (struct rl_softc *)dev;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
+	struct mii_data		*mii = &sc->sc_mii;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	sc->rl_flags &= ~RL_FLAG_LINK;
+	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
+	    (IFM_ACTIVE | IFM_AVALID)) {
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_10_T:
+		case IFM_100_TX:
+			sc->rl_flags |= RL_FLAG_LINK;
+			break;
+		case IFM_1000_T:
+			if ((sc->rl_flags & RL_FLAG_FASTETHER) != 0)
+				break;
+			sc->rl_flags |= RL_FLAG_LINK;
+			break;
+		default:
+			break;
+		}
+	}
+
+	/*
+	 * RealTek controllers do not provide an interface to
+	 * Tx/Rx MACs for resolved speed, duplex and flow-control
+	 * parameters.
+	 */
 }
 
 void
@@ -1469,17 +1499,10 @@ re_tick(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (sc->rl_flags & RL_FLAG_LINK) {
-		if (!(mii->mii_media_status & IFM_ACTIVE))
-			sc->rl_flags &= ~RL_FLAG_LINK;
-	} else {
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			sc->rl_flags |= RL_FLAG_LINK;
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
-				re_start(ifp);
-		}
-	}
+
+	if ((sc->rl_flags & RL_FLAG_LINK) == 0)
+		re_miibus_statchg(&sc->sc_dev);
+
 	splx(s);
 
 	timeout_add_sec(&sc->timer_handle, 1);
