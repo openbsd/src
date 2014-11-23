@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.48 2014/11/20 04:14:15 guenther Exp $	*/
+/*	$OpenBSD: fts.c,v 1.49 2014/11/23 00:14:22 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -159,7 +159,8 @@ fts_open(char * const *argv, int options,
 	 * and ".." are all fairly nasty problems.  Note, if we can't get the
 	 * descriptor we run anyway, just more slowly.
 	 */
-	if (!ISSET(FTS_NOCHDIR) && (sp->fts_rfd = open(".", O_RDONLY, 0)) < 0)
+	if (!ISSET(FTS_NOCHDIR) &&
+	    (sp->fts_rfd = open(".", O_RDONLY | O_CLOEXEC)) < 0)
 		SET(FTS_NOCHDIR);
 
 	if (nitems == 0)
@@ -284,7 +285,8 @@ fts_read(FTS *sp)
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE)) {
 		p->fts_info = fts_stat(sp, p, 1, -1);
 		if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
-			if ((p->fts_symfd = open(".", O_RDONLY, 0)) < 0) {
+			if ((p->fts_symfd =
+			    open(".", O_RDONLY | O_CLOEXEC)) < 0) {
 				p->fts_errno = errno;
 				p->fts_info = FTS_ERR;
 			} else
@@ -374,7 +376,7 @@ next:	tmp = p;
 			p->fts_info = fts_stat(sp, p, 1, -1);
 			if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
 				if ((p->fts_symfd =
-				    open(".", O_RDONLY, 0)) < 0) {
+				    open(".", O_RDONLY | O_CLOEXEC)) < 0) {
 					p->fts_errno = errno;
 					p->fts_info = FTS_ERR;
 				} else
@@ -513,7 +515,7 @@ fts_children(FTS *sp, int instr)
 	    ISSET(FTS_NOCHDIR))
 		return (sp->fts_child = fts_build(sp, instr));
 
-	if ((fd = open(".", O_RDONLY, 0)) < 0)
+	if ((fd = open(".", O_RDONLY | O_CLOEXEC)) < 0)
 		return (NULL);
 	sp->fts_child = fts_build(sp, instr);
 	if (fchdir(fd)) {
@@ -1026,7 +1028,7 @@ fts_safe_changedir(FTS *sp, FTSENT *p, int fd, char *path)
 	newfd = fd;
 	if (ISSET(FTS_NOCHDIR))
 		return (0);
-	if (fd < 0 && (newfd = open(path, O_RDONLY, 0)) < 0)
+	if (fd < 0 && (newfd = open(path, O_RDONLY|O_DIRECTORY|O_CLOEXEC)) < 0)
 		return (-1);
 	if (fstat(newfd, &sb)) {
 		ret = -1;
