@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.146 2014/11/14 15:07:09 henning Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.147 2014/11/23 10:18:55 jsg Exp $
 
 machine		amd64
 maxusers	4
@@ -63,13 +63,13 @@ cardslot*	at cbb?
 cardbus*	at cardslot?
 pcmcia*		at cardslot?
 
-#xhci*		at pci?
+xhci*		at pci?
 ehci*		at pci?
 ehci*		at cardbus?
 uhci*		at pci?
 ohci*		at pci?
 ohci*		at cardbus?
-#usb*		at xhci?
+usb*		at xhci?
 usb*		at ehci?
 usb*		at uhci?
 usb*		at ohci?

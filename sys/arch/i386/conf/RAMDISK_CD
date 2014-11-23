@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.220 2014/11/14 15:07:09 henning Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.221 2014/11/23 10:18:55 jsg Exp $
 
 machine		i386
 maxusers	4
@@ -72,13 +72,13 @@ pcic2		at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
 pcic*		at pci?
 pcmcia*		at pcic?
 
-#xhci*		at pci?
+xhci*		at pci?
 ehci*		at pci?
 ehci*		at cardbus?
 uhci*		at pci?
 ohci*		at pci?
 ohci*		at cardbus?
-#usb*		at xhci?
+usb*		at xhci?
 usb*		at ehci?
 usb*		at uhci?
 usb*		at ohci?
