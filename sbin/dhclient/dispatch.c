@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.92 2014/11/16 12:12:01 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.93 2014/11/23 14:02:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -60,14 +60,14 @@ void
 discover_interface(void)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct ifreq *tif;
 	struct option_data *opt;
 	char *data;
-	int len;
+	int found;
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
 
+	found = 0;
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
@@ -76,6 +76,7 @@ discover_interface(void)
 
 		if (strcmp(ifi->name, ifa->ifa_name))
 			continue;
+		found = 1;
 
 		/*
 		 * If we have the capability, extract & save link information.
@@ -109,17 +110,9 @@ discover_interface(void)
 				}
 			}
 		}
-
-		if (!ifi->ifp) {
-			len = IFNAMSIZ + sizeof(struct sockaddr_storage);
-			if ((tif = malloc(len)) == NULL)
-				error("no space to remember ifp");
-			strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
-			ifi->ifp = tif;
-		}
 	}
 
-	if (!ifi->ifp)
+	if (!found)
 		error("%s: not found", ifi->name);
 
 	freeifaddrs(ifap);
@@ -147,7 +140,7 @@ dispatch(void)
 			quit = INTERNALSIG;
 			continue;
 		}
-		if (ifi->rfdesc == -1) {
+		if (ifi->bfdesc == -1) {
 			warning("%s bpf socket gone; exiting", ifi->name);
 			quit = INTERNALSIG;
 			continue;
@@ -181,7 +174,7 @@ dispatch(void)
 		 *  fds[1] == routing socket for incoming RTM messages
 		 *  fds[2] == imsg socket to privileged process
 		*/
-		fds[0].fd = ifi->rfdesc;
+		fds[0].fd = ifi->bfdesc;
 		fds[1].fd = routefd;
 		fds[2].fd = unpriv_ibuf->fd;
 		fds[0].events = fds[1].events = fds[2].events = POLLIN;
@@ -201,7 +194,7 @@ dispatch(void)
 		}
 
 		if ((fds[0].revents & (POLLIN | POLLHUP))) {
-			if (ifi && ifi->linkstat && ifi->rfdesc != -1)
+			if (ifi && ifi->linkstat && ifi->bfdesc != -1)
 				got_one();
 		}
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
@@ -242,7 +235,7 @@ got_one(void)
 		    strerror(errno));
 		ifi->errors++;
 		if ((!interface_status(ifi->name)) ||
-		    (ifi->noifmedia && ifi->errors > 20)) {
+		    ((ifi->flags & IFI_NOMEDIA) && ifi->errors > 20)) {
 			/* our interface has gone away. */
 			error("Interface %s no longer appears valid.",
 			    ifi->name);
@@ -317,7 +310,7 @@ interface_status(char *ifname)
 		goto inactive;
 
 	/* Next, check carrier on the interface if possible. */
-	if (ifi->noifmedia)
+	if (ifi->flags & IFI_NOMEDIA)
 		goto active;
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
@@ -332,7 +325,7 @@ interface_status(char *ifname)
 			    strerror(errno));
 #endif
 
-		ifi->noifmedia = 1;
+		ifi->flags |= IFI_NOMEDIA;
 		goto active;
 	}
 	if (ifmr.ifm_status & IFM_AVALID) {

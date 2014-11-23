@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.142 2014/11/01 15:49:07 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.143 2014/11/23 14:02:21 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -171,17 +171,13 @@ struct client_state {
 
 struct interface_info {
 	struct ether_addr	hw_address;
-	struct in_addr	 primary_address;
 	char		 name[IFNAMSIZ];
-	int		 rfdesc;
-	int		 wfdesc;
-	int		 ufdesc; /* unicast */
+	int		 bfdesc; /* bpf - reading & broadcast writing*/
+	int		 ufdesc; /* udp - unicast writing */
 	unsigned char	*rbuf;
 	size_t		 rbuf_max;
 	size_t		 rbuf_offset;
 	size_t		 rbuf_len;
-	struct ifreq	*ifp;
-	int		 noifmedia;
 	int		 errors;
 	u_int16_t	 index;
 	int		 linkstat;
@@ -189,6 +185,7 @@ struct interface_info {
 	int		 flags;
 #define IFI_NEW_LLADDR	0x00000001
 #define IFI_HUP		0x00000002
+#define IFI_NOMEDIA	0x00000004
 };
 
 struct dhcp_timeout {
