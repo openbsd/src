@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.24 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.25 2014/11/23 04:34:48 guenther Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.43 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.44 2014/11/23 04:34:48 guenther Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/mount.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
