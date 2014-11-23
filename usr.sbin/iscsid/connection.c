@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.19 2014/05/10 11:30:47 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.20 2014/11/23 13:10:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -289,13 +289,14 @@ conn_parse_kvp(struct connection *c, struct kvp *kvp)
 
 
 	for (k = kvp; k->key; k++) {
+log_debug("conn_parse_kvp: %s = %s", k->key, k->value);
 		/* XXX handle NotUnderstood|Irrelevant|Reject */
 		SET_NUM(k, s, MaxBurstLength, 512, 16777215);
 		SET_NUM(k, s, FirstBurstLength, 512, 16777215);
 		SET_NUM(k, s, DefaultTime2Wait, 0, 3600);
 		SET_NUM(k, s, DefaultTime2Retain, 0, 3600);
 		SET_NUM(k, s, MaxOutstandingR2T, 1, 65535);
-		SET_NUM(k, s, TargetPortalGroupTag, 1, 65535);
+		SET_NUM(k, s, TargetPortalGroupTag, 0, 65535);
 		SET_NUM(k, s, MaxConnections, 1, 65535);
 		SET_BOOL(k, s, InitialR2T);
 		SET_BOOL(k, s, ImmediateData);
