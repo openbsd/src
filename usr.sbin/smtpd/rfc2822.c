@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc2822.c,v 1.2 2014/10/15 19:23:29 gilles Exp $	*/
+/*	$OpenBSD: rfc2822.c,v 1.3 2014/11/23 21:27:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -82,7 +82,12 @@ parser_feed_header(struct rfc2822_parser *rp, char *line)
 			return 0;
 		memset(rp->header.name, 0, sizeof rp->header.name);
 		(void)memcpy(rp->header.name, line, pos - line);
-		return parser_feed_header(rp, pos + 1);
+		if (isspace(*(pos + 1)))
+			return parser_feed_header(rp, pos + 1);
+		else {
+			*pos = ' ';
+			return parser_feed_header(rp, pos);
+		}
 	}
 
 	/* continuation */
