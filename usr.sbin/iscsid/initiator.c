@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.13 2014/05/10 11:30:47 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.14 2014/11/23 13:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -433,6 +433,8 @@ initiator_login_cb(struct connection *c, void *arg, struct pdu *p)
 		break;
 	case ISCSI_LOGIN_STG_FULL:
 		conn_fsm(c, CONN_EV_LOGGED_IN);
+		conn_task_cleanup(c, &tl->task);
+		free(tl);
 		goto done;
 	default:
 		log_warnx("initiator_login_cb: exit stage left");
@@ -445,8 +447,6 @@ initiator_login_cb(struct connection *c, void *arg, struct pdu *p)
 	conn_task_issue(c, &tl->task);
 	return;
 done:
-	conn_task_cleanup(c, &tl->task);
-	free(tl);
 	if (p)
 		pdu_free(p);
 }
@@ -488,6 +488,8 @@ initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
 		    ISCSI_PDU_OPCODE(lresp->opcode));
 fail:
 		conn_fail(c);
+		pdu_free(p);
+		return;
 	}
 	conn_task_cleanup(c, t);
 	free(t);
@@ -528,7 +530,8 @@ initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
 	default:
 		/* need to retry logout after loresp->time2wait secs */
 		conn_fail(tl->c);
-		break;
+		pdu_free(p);
+		return;
 	}
 
 	conn_task_cleanup(c, &tl->task);
