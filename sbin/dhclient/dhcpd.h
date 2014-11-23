@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.143 2014/11/23 14:02:21 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.144 2014/11/23 18:22:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -249,7 +249,6 @@ ssize_t send_packet(struct in_addr, struct in_addr);
 ssize_t receive_packet(struct sockaddr_in *, struct ether_addr *);
 
 /* dispatch.c */
-void discover_interface(void);
 void dispatch(void);
 void set_timeout(time_t, void (*)(void));
 void set_timeout_interval(time_t, void (*)(void));
@@ -257,6 +256,7 @@ void cancel_timeout(void);
 void interface_link_forceup(char *);
 int interface_status(char *);
 int get_rdomain(char *);
+void get_hw_address(void);
 int subnet_exists(struct client_lease *);
 
 /* tables.c */

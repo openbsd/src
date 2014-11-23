@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.333 2014/11/20 19:27:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.334 2014/11/23 18:22:45 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -327,7 +327,7 @@ routehandler(void)
 		}
 
 		memcpy(&hw, &ifi->hw_address, sizeof(hw));
-		discover_interface();
+		get_hw_address();
 		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 			warning("LLADDR changed; restarting");
 			ifi->flags |= IFI_NEW_LLADDR;
@@ -398,6 +398,7 @@ main(int argc, char *argv[])
 	int	 ch, fd, i = 0, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
+	struct option_data *opt;
 	char *ignore_list = NULL;
 	ssize_t tailn;
 	int rtfilter, tailfd;
@@ -525,8 +526,24 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
 
-	/* set up the interface */
-	discover_interface();
+	get_hw_address();
+	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
+	/*
+	 * Check both len && data so
+	 *     send dhcp-client-identifier "";
+	 * can be used to suppress sending the default client
+	 * identifier.
+	 */
+	if (opt->len == 0 && opt->data == NULL) {
+		/* Build default client identifier. */
+		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
+		if (opt->data != NULL) {
+			opt->data[0] = HTYPE_ETHER;
+			memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
+			    ETHER_ADDR_LEN);
+			opt->len = ETHER_ADDR_LEN + 1;
+		}
+	}
 
 	/* Register the interface. */
 	if_register_receive();

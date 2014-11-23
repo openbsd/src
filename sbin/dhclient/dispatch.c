@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.93 2014/11/23 14:02:21 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.94 2014/11/23 18:22:45 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 
 #include <net/if_media.h>
+#include <net/if_types.h>
 #include <ifaddrs.h>
 #include <poll.h>
 
@@ -52,16 +53,11 @@ struct dhcp_timeout timeout;
 
 void got_one(void);
 
-/*
- * Use getifaddrs() to get a list of all the attached interfaces.  Find
- * our interface on the list and store the interesting information about it.
- */
 void
-discover_interface(void)
+get_hw_address(void)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct option_data *opt;
-	char *data;
+	struct sockaddr_dl *sdl;
 	int found;
 
 	if (getifaddrs(&ifap) != 0)
@@ -78,38 +74,17 @@ discover_interface(void)
 			continue;
 		found = 1;
 
-		/*
-		 * If we have the capability, extract & save link information.
-		 */
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			struct sockaddr_dl *foo =
-			    (struct sockaddr_dl *)ifa->ifa_addr;
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
 
-			if (foo->sdl_alen != ETHER_ADDR_LEN)
-				continue;
+		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		if (sdl->sdl_type != IFT_ETHER ||
+		    sdl->sdl_alen != ETHER_ADDR_LEN)
+			continue;
 
-			ifi->index = foo->sdl_index;
-			memcpy(ifi->hw_address.ether_addr_octet, LLADDR(foo),
-			    ETHER_ADDR_LEN);
-			opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
-			/*
-			 * Check both len && data so
-			 *     send dhcp-client-identifier "";
-			 * can be used to suppress sending the default client
-			 * identifier.
-			 */
-			if (opt->len == 0 && opt->data == NULL) {
-				/* Build default client identifier. */
-				data = calloc(1, ETHER_ADDR_LEN + 1);
-				if (data != NULL) {
-					data[0] = HTYPE_ETHER;
-					memcpy(&data[1], LLADDR(foo),
-					    ETHER_ADDR_LEN);
-					opt->data = data;
-					opt->len = ETHER_ADDR_LEN + 1;
-				}
-			}
-		}
+		ifi->index = sdl->sdl_index;
+		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
+		    ETHER_ADDR_LEN);
 	}
 
 	if (!found)
