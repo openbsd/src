@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.22 2014/07/10 14:16:49 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.23 2014/11/23 04:31:42 guenther Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -10,11 +10,9 @@
 #ifndef _SYS_SEM_H_
 #define _SYS_SEM_H_
 
-#include <sys/cdefs.h>
 #ifndef _SYS_IPC_H_
 #include <sys/ipc.h>
 #endif
-#include <sys/queue.h>
 
 #if __BSD_VISIBLE
 
@@ -104,6 +102,8 @@ union semun {
 
 
 #ifdef _KERNEL
+#include <sys/queue.h>
+
 /*
  * Kernel implementation stuff
  */

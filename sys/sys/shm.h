@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.26 2014/10/09 04:04:27 tedu Exp $	*/
+/*	$OpenBSD: shm.h,v 1.27 2014/11/23 04:31:42 guenther Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #ifndef _SYS_SHM_H_
 #define _SYS_SHM_H_
 
-#include <sys/cdefs.h>
 #ifndef _SYS_IPC_H_
 #include <sys/ipc.h>
 #endif

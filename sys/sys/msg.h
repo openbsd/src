@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.18 2012/02/05 18:30:32 guenther Exp $	*/
+/*	$OpenBSD: msg.h,v 1.19 2014/11/23 04:31:42 guenther Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -24,7 +24,6 @@
 #define _SYS_MSG_H_
 
 #include <sys/ipc.h>
-#include <sys/queue.h>
 
 /*
  * The MSG_NOERROR identifier value, the msqid_ds struct and the msg struct
@@ -52,6 +51,8 @@ struct msqid_ds {
 };
 
 #ifdef _KERNEL
+#include <sys/queue.h>
+
 struct msg {
 	long		 msg_type;
 	size_t		 msg_len;
@@ -158,8 +159,6 @@ struct msg_sysctl_info {
 
 
 #ifndef _KERNEL
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 int msgctl(int, int, struct msqid_ds *);
 int msgget(key_t, int);
