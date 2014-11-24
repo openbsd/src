@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.45 2014/07/20 04:22:34 guenther Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.46 2014/11/24 22:47:01 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -50,6 +50,7 @@
 #define BCRYPT_MINLOGROUNDS 4	/* we have log2(rounds) in salt */
 
 #define	BCRYPT_SALTSPACE	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
+#define	BCRYPT_HASHSPACE	61
 
 char   *bcrypt_gensalt(u_int8_t);
 
@@ -95,6 +96,9 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
+
+	if (encryptedlen < BCRYPT_HASHSPACE)
+		return -1;
 
 	/* Check and discard "$" identifier */
 	if (salt[0] != '$')
@@ -177,17 +181,9 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	}
 
 
-	i = 0;
-	encrypted[i++] = '$';
-	encrypted[i++] = BCRYPT_VERSION;
-	encrypted[i++] = minor;
-	encrypted[i++] = '$';
-
-	snprintf(encrypted + i, 4, "%2.2u$", logr);
-
-	encode_base64(encrypted + i + 3, csalt, BCRYPT_MAXSALT);
-	encode_base64(encrypted + strlen(encrypted), ciphertext,
-	    4 * BCRYPT_BLOCKS - 1);
+	snprintf(encrypted, 8, "$2%c$%2.2u$", minor, logr);
+	encode_base64(encrypted + 7, csalt, BCRYPT_MAXSALT);
+	encode_base64(encrypted + 7 + 22, ciphertext, 4 * BCRYPT_BLOCKS - 1);
 	explicit_bzero(&state, sizeof(state));
 	explicit_bzero(ciphertext, sizeof(ciphertext));
 	explicit_bzero(csalt, sizeof(csalt));
@@ -216,7 +212,7 @@ bcrypt_newhash(const char *pass, int log_rounds, char *hash, size_t hashlen)
 int
 bcrypt_checkpass(const char *pass, const char *goodhash)
 {
-	char hash[_PASSWORD_LEN];
+	char hash[BCRYPT_HASHSPACE];
 
 	if (bcrypt_hashpass(pass, goodhash, hash, sizeof(hash)) != 0)
 		return -1;
@@ -345,7 +341,7 @@ bcrypt_gensalt(u_int8_t log_rounds)
 char *
 bcrypt(const char *pass, const char *salt)
 {
-	static char    gencrypted[_PASSWORD_LEN];
+	static char    gencrypted[BCRYPT_HASHSPACE];
 	static char    gerror[2];
 
 	/* How do I handle errors ? Return ':' */
@@ -355,4 +351,3 @@ bcrypt(const char *pass, const char *salt)
 
 	return gencrypted;
 }
-
