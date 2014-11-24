@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.43 2014/11/24 12:55:16 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.44 2014/11/24 13:02:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -2376,9 +2376,10 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	trb->trb_status = htole32(
 	    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(1) | XHCI_TRB_LEN(xfer->length)
 	);
-	trb->trb_flags = htole32(
-	    XHCI_TRB_TYPE_NORMAL | XHCI_TRB_ISP | XHCI_TRB_IOC | toggle
-	);
+	trb->trb_flags = htole32(XHCI_TRB_TYPE_NORMAL | XHCI_TRB_IOC | toggle);
+
+	if (usbd_xfer_isread(xfer))
+		trb->trb_flags |= htole32(XHCI_TRB_ISP);
 
 	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb),
 	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
