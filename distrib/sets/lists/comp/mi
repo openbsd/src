@@ -6513,9 +6513,9 @@
 ./usr/share/man/man9/rrw_status.9
 ./usr/share/man/man9/rssadapt.9
 ./usr/share/man/man9/rt_ifa_add.9
-./usr/share/man/man9/rt_ifa_addloop.9
+./usr/share/man/man9/rt_ifa_addlocal.9
 ./usr/share/man/man9/rt_ifa_del.9
-./usr/share/man/man9/rt_ifa_delloop.9
+./usr/share/man/man9/rt_ifa_dellocal.9
 ./usr/share/man/man9/rt_lookup.9
 ./usr/share/man/man9/rt_setgate.9
 ./usr/share/man/man9/rt_timer_add.9
