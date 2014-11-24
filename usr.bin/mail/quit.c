@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.20 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: quit.c,v 1.21 2014/11/24 20:01:43 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ int
 quit(void)
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
-	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
+	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *abuf;
 	struct message *mp;
 	int c, fd;
 	struct stat minfo;
@@ -154,10 +154,6 @@ quit(void)
 			mp->m_flag |= holdbit;
 	}
 	modify = 0;
-	if (Tflag != NULL) {
-		if ((readstat = Fopen(Tflag, "w")) == NULL)
-			Tflag = NULL;
-	}
 	for (c = 0, p = 0, mp = &message[0]; mp < &message[msgCount]; mp++) {
 		if (mp->m_flag & MBOX)
 			c++;
@@ -165,15 +161,7 @@ quit(void)
 			p++;
 		if (mp->m_flag & MODIFY)
 			modify++;
-		if (Tflag != NULL && (mp->m_flag & (MREAD|MDELETED)) != 0) {
-			char *id;
-
-			if ((id = hfield("article-id", mp)) != NULL)
-				fprintf(readstat, "%s\n", id);
-		}
 	}
-	if (Tflag != NULL)
-		(void)Fclose(readstat);
 	if (p == msgCount && !modify && !anystat) {
 		printf("Held %d message%s in %s\n",
 			p, p == 1 ? "" : "s", mailname);
@@ -399,17 +387,13 @@ edstop(void)
 {
 	int gotcha, c;
 	struct message *mp;
-	FILE *obuf, *ibuf, *readstat = NULL;
+	FILE *obuf, *ibuf;
 	struct stat statb;
 	char tempname[PATHSIZE];
 
 	if (readonly)
 		return(0);
 	holdsigs();
-	if (Tflag != NULL) {
-		if ((readstat = Fopen(Tflag, "w")) == NULL)
-			Tflag = NULL;
-	}
 	for (mp = &message[0], gotcha = 0; mp < &message[msgCount]; mp++) {
 		if (mp->m_flag & MNEW) {
 			mp->m_flag &= ~MNEW;
@@ -417,16 +401,8 @@ edstop(void)
 		}
 		if (mp->m_flag & (MODIFY|MDELETED|MSTATUS))
 			gotcha++;
-		if (Tflag != NULL && (mp->m_flag & (MREAD|MDELETED)) != 0) {
-			char *id;
-
-			if ((id = hfield("article-id", mp)) != NULL)
-				fprintf(readstat, "%s\n", id);
-		}
 	}
-	if (Tflag != NULL)
-		(void)Fclose(readstat);
-	if (!gotcha || Tflag != NULL)
+	if (!gotcha)
 		goto done;
 	ibuf = NULL;
 	if (stat(mailname, &statb) >= 0 && statb.st_size > mailsize) {

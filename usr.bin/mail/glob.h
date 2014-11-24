@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.7 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.8 2014/11/24 20:01:43 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 int	msgCount;			/* Count of messages read in */
 int	rcvmode;			/* True if receiving mail */
 int	sawcom;				/* Set after first command */
-char	*Tflag;				/* -T temp file for netnews */
 int	senderr;			/* An error while checking */
 int	edit;				/* Indicates editing a file */
 int	readonly;			/* Will be unable to rewrite file */

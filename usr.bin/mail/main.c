@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2014/11/24 20:01:43 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -78,18 +78,8 @@ main(int argc, char **argv)
 	bcc = NULL;
 	smopts = NULL;
 	subject = NULL;
-	while ((i = getopt(argc, argv, "EINT:b:c:dfins:u:v")) != -1) {
+	while ((i = getopt(argc, argv, "EIN:b:c:dfins:u:v")) != -1) {
 		switch (i) {
-		case 'T':
-			/*
-			 * Next argument is temp file to write which
-			 * articles have been read/deleted for netnews.
-			 */
-			Tflag = optarg;
-			if ((i = creat(Tflag, 0600)) < 0)
-				err(1, "%s", Tflag);
-			(void)close(i);
-			break;
 		case 'u':
 			/*
 			 * Next argument is person to pretend to be.
