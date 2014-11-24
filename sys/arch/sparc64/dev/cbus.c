@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.11 2013/07/16 19:45:37 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.12 2014/11/24 10:58:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -124,17 +124,12 @@ cbus_intr_map(int node, int ino, uint64_t *sysino)
 {
 	int parent;
 	int reg;
-	int err;
 
 	parent = OF_parent(node);
 	if (OF_getprop(parent, "reg", &reg, sizeof(reg)) != sizeof(reg))
 		return (-1);
 
 	*sysino = CBUS_HANDLE(reg) | CBUS_INO(ino);
-	err = hv_vintr_setcookie(reg, ino, *sysino);
-	if (err != H_EOK)
-		return (-1);
-
 	return (0);
 }
 
@@ -183,6 +178,12 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	err = hv_vintr_setenabled(devhandle, devino, INTR_DISABLED);
 	if (err != H_EOK) {
 		printf("hv_vintr_setenabled: %d\n", err);
+		return (NULL);
+	}
+
+	err = hv_vintr_setcookie(devhandle, devino, (vaddr_t)ih);
+	if (err != H_EOK) {
+		printf("hv_vintr_setcookie: %d\n", err);
 		return (NULL);
 	}
 
