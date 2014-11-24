@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.177 2014/11/20 08:47:00 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.178 2014/11/24 10:55:49 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3998,19 +3998,21 @@ sun4v_dev_mondo:
 	GET_CPUINFO_PA(%g3)
 	add	%g3, CI_DEVMQ, %g3
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
-	ldxa	[%g3 + %g2] ASI_PHYS_CACHED, %g4
+	ldxa	[%g3 + %g2] ASI_PHYS_CACHED, %g5
 	add	%g2, 64, %g2
 	and	%g2, 0x7ff, %g2
 	stxa	%g2, [%g1] ASI_QUEUE
 	membar	#Sync
 
-	and	%g4, 0x7ff, %g4
-	sllx	%g4, 3, %g5
+	cmp	%g5, MAXINTNUM
+	bgeu,pt	%xcc, 1f
+	 nop
 
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	or	%g3, %lo(_C_LABEL(intrlev)), %g3
+	sllx	%g5, 3, %g5		! Calculate entry number
 	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
-
+1:
 	brnz,pt	%g5, setup_sparcintr
 	 nop
 
