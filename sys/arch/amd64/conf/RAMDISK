@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.64 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.65 2014/11/24 02:03:36 brad Exp $
 
 machine		amd64
 maxusers	4
@@ -86,7 +86,7 @@ wd*		at pciide? flags 0x0000
 atapiscsi*	at pciide?
 
 fxp*		at pci?			# EtherExpress 10/100B ethernet
-rl*		at pci?			# RealTek 81[23]9 ethernet
+rl*		at pci?			# Realtek 81[23]9 ethernet
 re*		at pci?			# Realtek 8169/8169S/8110S
 em*		at pci?			# Intel Pro/1000 ethernet
 bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
@@ -95,8 +95,8 @@ inphy*		at mii?			# Intel 82555 PHYs
 iophy*		at mii?			# Intel 82553 PHYs
 lxtphy*		at mii?			# Level1 LXT970 PHYs
 nsphy*		at mii?			# NS and compatible PHYs
-nsphyter*	at mii?		# NS and compatible PHYs
-rlphy*		at mii?			# RealTek 8139 internal PHYs
+nsphyter*	at mii?			# NS and compatible PHYs
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 brgphy*		at mii?			# Broadcom Gigabit PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 ciphy*		at mii?			# Cicada CS8201 10/100/1000 copper PHY

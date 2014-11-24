@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.9 2014/11/09 05:12:15 jsg Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.10 2014/11/24 02:03:37 brad Exp $
 #
 # GENERIC machine description file
 #
@@ -132,7 +132,7 @@ rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 # XXX missing usable drivers, like run(4).
 
 ukphy*		at mii?			# "unknown" PHYs
-rlphy*		at mii?			# RealTek 8139 internal PHYs
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 
 scsibus*	at scsi?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.35 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.36 2014/11/24 02:03:37 brad Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -112,7 +112,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 ural*		at uhub?		# Ralink RT2500USB
 url*		at uhub?		# Realtek RTL8150L based adapters
-urtw*		at uhub?		# RealTek 8187
+urtw*		at uhub?		# Realtek 8187
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 zyd*		at uhub?		# Zydas ZD1211
 ugen*		at uhub?		# USB Generic driver
@@ -158,7 +158,7 @@ nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*		at mii?			# Quality Semi QS6612 PHYs
 sqphy*		at mii?			# Seeq 8x220 PHYs
 luphy*		at mii?			# Lucent LU6612 PHY
-rlphy*		at mii?			# RealTek 8139 internal PHYs
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 mtdphy*		at mii?			# Myson MTD972 PHYs
 dcphy*		at mii?			# Digital Clone PHYs
 acphy*		at mii?			# Altima AC101 PHYs

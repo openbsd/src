@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.378 2014/11/16 05:33:58 brad Exp $
+#	$OpenBSD: GENERIC,v 1.379 2014/11/24 02:03:36 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -248,9 +248,9 @@ otus*	at uhub?		# Atheros AR9001U
 athn*	at uhub?		# Atheros AR9002U
 zyd*	at uhub?		# Zydas ZD1211
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
-urtw*	at uhub?		# RealTek 8187
-rsu*	at uhub?		# RealTek RTL8188SU/RTL8191SU/RTL8192SU
-urtwn*	at uhub?		# RealTek RTL8188CU/RTL8192CU
+urtw*	at uhub?		# Realtek 8187
+rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor
@@ -408,8 +408,8 @@ sm*	at pcmcia?			# PCMCIA based sm ethernet
 xe*	at pcmcia?			# Xircom ethernet
 xl*	at pci?				# 3C9xx ethernet
 xl*	at cardbus?			# 3C575/3C656 ethernet
-rl*	at pci?				# RealTek 81[23]9 ethernet
-rl*	at cardbus?			# RealTek 81[23]9 ethernet
+rl*	at pci?				# Realtek 81[23]9 ethernet
+rl*	at cardbus?			# Realtek 81[23]9 ethernet
 #mtd*	at pci?				# Myson MTD800/803/891
 epic*	at pci?				# SMC EPIC/100 ethernet
 #tl*	at pci?				# Compaq Thunderlan ethernet
@@ -498,7 +498,7 @@ nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
-rlphy* at mii?				# RealTek 8139 internal PHYs
+rlphy* at mii?				# Realtek 8139 internal PHYs
 mtdphy* at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs
 acphy*	at mii?				# Altima AC101 PHYs

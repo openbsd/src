@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.584 2014/11/15 10:29:42 dlg Exp $
+#	$OpenBSD: files,v 1.585 2014/11/24 02:03:37 brad Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -73,7 +73,7 @@ define	wlan
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
 define	dp8390nic	# 8390-family Ethernet controllers
-define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
+define	rtl80x9		# Realtek 8019/8029 NE2000-compatible
 define	dl10019		# DL10019/10022-family Ethernet controllers
 define	ax88190		# AX88190-family Ethernet controllers
 
@@ -293,7 +293,7 @@ file	dev/ic/fxp.c			fxp
 device	mtd: ether, ifnet, ifmedia, mii
 file	dev/ic/mtd8xx.c			mtd
 
-# RealTek 8129/8139
+# Realtek 8129/8139
 device	rl: ether, ifnet, ifmedia, mii
 file	dev/ic/rtl81x9.c		rl
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.129 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.130 2014/11/24 02:03:37 brad Exp $
 
 machine		i386
 maxusers	4
@@ -106,7 +106,7 @@ iophy*		at mii?			# Intel 82553 PHYs
 icsphy*		at mii?			# ICS 1890 PHYs
 nsphy*		at mii?			# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
-rlphy*		at mii?			# RealTek 8139 internal PHYs
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 mtdphy*		at mii?			# Myson MTD972 PHYs
 dcphy*		at mii?			# Digital Clone PHYs
 amphy*		at mii?			# AMD 79C873 PHYs

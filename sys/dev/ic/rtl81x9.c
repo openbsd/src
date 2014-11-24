@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.83 2014/09/06 05:41:35 jsg Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.84 2014/11/24 02:03:37 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -33,10 +33,10 @@
  */
 
 /*
- * RealTek 8129/8139 PCI NIC driver
+ * Realtek 8129/8139 PCI NIC driver
  *
  * Supports several extremely cheap PCI 10/100 adapters based on
- * the RealTek chipset. Datasheets can be obtained from
+ * the Realtek chipset. Datasheets can be obtained from
  * www.realtek.com.tw.
  *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
@@ -45,7 +45,7 @@
  */
 
 /*
- * The RealTek 8139 PCI NIC redefines the meaning of 'low end.' This is
+ * The Realtek 8139 PCI NIC redefines the meaning of 'low end.' This is
  * probably the worst PCI ethernet controller ever made, with the possible
  * exception of the FEAST chip made by SMC. The 8139 supports bus-master
  * DMA, but it has a terrible interface that nullifies any performance
@@ -587,11 +587,11 @@ rl_rxeof(struct rl_softc *sc)
 
 		/*
 		 * Here's a totally undocumented fact for you. When the
-		 * RealTek chip is in the process of copying a packet into
+		 * Realtek chip is in the process of copying a packet into
 		 * RAM for you, the length will be 0xfff0. If you spot a
 		 * packet header with this value, you need to stop. The
 		 * datasheet makes absolutely no mention of this and
-		 * RealTek should be shot for this.
+		 * Realtek should be shot for this.
 		 */
 		rxstat = htole32(rxstat);
 		total_len = rxstat >> 16;
@@ -617,7 +617,7 @@ rl_rxeof(struct rl_softc *sc)
 		rx_bytes += total_len + 4;
 
 		/*
-		 * XXX The RealTek chip includes the CRC with every
+		 * XXX The Realtek chip includes the CRC with every
 		 * received frame, and there's no way to turn this
 		 * behavior off (at least, I can't find anything in
 		 * the manual that explains how to do it) so we have
@@ -805,7 +805,7 @@ rl_encap(struct rl_softc *sc, struct mbuf *m_head)
 	struct mbuf	*m_new;
 
 	/*
-	 * The RealTek is brain damaged and wants longword-aligned
+	 * The Realtek is brain damaged and wants longword-aligned
 	 * TX buffers, plus we can only have one fragment buffer
 	 * per packet. We have to copy pretty much all the time.
 	 */

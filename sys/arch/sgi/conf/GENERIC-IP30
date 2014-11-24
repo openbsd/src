@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.49 2014/09/14 18:59:18 brad Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.50 2014/11/24 02:03:37 brad Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -123,7 +123,7 @@ cue*		at uhub?	# CATC USB-EL1201A based Ethernet
 kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet
 mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
 otus*		at uhub?	# Atheros AR9001U
-rsu*		at uhub?	# RealTek RTL8188SU/RTL8191SU/RTL8192SU
+rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 rum*		at uhub?	# Ralink RT2501USB/RT2601USB
 run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
 smsc*		at uhub?	# SMSC LAN95xx Ethernet
@@ -134,8 +134,8 @@ upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host `network'
 ural*		at uhub?	# Ralink RT2500USB
 url*		at uhub?	# Realtek RTL8150L based adapters
-urtw*		at uhub?	# RealTek 8187
-urtwn*		at uhub?	# RealTek RTL8188CU/RTL8192CU
+urtw*		at uhub?	# Realtek 8187
+urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
 ugen*		at uhub?	# USB Generic driver
@@ -200,7 +200,7 @@ nsphyter*	at mii?		# NS and compatible PHYs
 qsphy*		at mii?		# Quality Semi QS6612 PHYs
 sqphy*		at mii?		# Seeq 8x220 PHYs
 luphy*		at mii?		# Lucent LU6612 PHY
-rlphy*		at mii?		# RealTek 8139 internal PHYs
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 mtdphy*		at mii?		# Myson MTD972 PHYs
 dcphy*		at mii?		# Digital Clone PHYs
 acphy*		at mii?		# Altima AC101 PHYs

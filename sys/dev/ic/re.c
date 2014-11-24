@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.161 2014/11/23 10:03:49 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.162 2014/11/24 02:03:37 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 /*
- * RealTek 8139C+/8169/8169S/8110S PCI NIC driver
+ * Realtek 8139C+/8169/8169S/8110S PCI NIC driver
  *
  * Written by Bill Paul <wpaul@windriver.com>
  * Senior Networking Software Engineer
@@ -41,7 +41,7 @@
  */
 
 /*
- * This driver is designed to support RealTek's next generation of
+ * This driver is designed to support Realtek's next generation of
  * 10/100 and 10/100/1000 PCI ethernet controllers. There are currently
  * seven devices in this family: the RTL8139C+, the RTL8169, the RTL8169S,
  * RTL8110S, the RTL8168, the RTL8111 and the RTL8101E.
@@ -96,7 +96,7 @@
  * (the 'S' stands for 'single-chip'). These devices have the same
  * programming API as the older 8169, but also have some vendor-specific
  * registers for the on-board PHY. The 8110S is a LAN-on-motherboard
- * part designed to be pin-compatible with the RealTek 8100 10/100 chip.
+ * part designed to be pin-compatible with the Realtek 8100 10/100 chip.
  * 
  * This driver takes advantage of the RX and TX checksum offload and
  * VLAN tag insertion/extraction features. It also implements TX
@@ -550,7 +550,7 @@ re_miibus_statchg(struct device *dev)
 	}
 
 	/*
-	 * RealTek controllers do not provide an interface to
+	 * Realtek controllers do not provide an interface to
 	 * Tx/Rx MACs for resolved speed, duplex and flow-control
 	 * parameters.
 	 */
@@ -604,7 +604,7 @@ re_iff(struct rl_softc *sc)
 	}
 
 	/*
-	 * For some unfathomable reason, RealTek decided to reverse
+	 * For some unfathomable reason, Realtek decided to reverse
 	 * the order of the multicast hash registers in the PCI Express
 	 * parts. This means we have to write the hash pattern in reverse
 	 * order for those devices.
@@ -1310,7 +1310,7 @@ re_rxeof(struct rl_softc *sc)
 		 * it is 13 bits (since the max RX frame length is 16K).
 		 * Unfortunately, all 32 bits in the status word
 		 * were already used, so to make room for the extra
-		 * length bit, RealTek took out the 'frame alignment
+		 * length bit, Realtek took out the 'frame alignment
 		 * error' bit and shifted the other status bits
 		 * over one slot. The OWN, EOR, FS and LS bits are
 		 * still in the same places. We have already extracted

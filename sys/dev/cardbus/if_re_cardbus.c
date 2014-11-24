@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.25 2014/09/06 04:46:58 brad Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.26 2014/11/24 02:03:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -86,7 +86,7 @@ const struct pci_matchid re_cardbus_devices[] = {
 };
 
 /*
- * Probe for a RealTek 8169/8110 chip. Check the PCI vendor and device
+ * Probe for a Realtek 8169/8110 chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
  */
 int

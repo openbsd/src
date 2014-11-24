@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2014/07/11 21:58:09 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.45 2014/11/24 02:03:37 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -152,7 +152,7 @@ upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host `network'
 ural*		at uhub?	# Ralink RT2500USB
 url*		at uhub?	# Realtek RTL8150L based adapters
-urtw*		at uhub?	# RealTek 8187
+urtw*		at uhub?	# Realtek 8187
 rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
@@ -188,7 +188,7 @@ amphy*		at mii?		# AMD 79C873 PHYs
 bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 series PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
-rlphy*		at mii?		# RealTek 8139 internal PHYs
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 ukphy*		at mii?		# "unknown" PHYs
 

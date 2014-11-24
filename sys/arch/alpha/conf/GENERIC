@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.248 2014/09/27 08:28:12 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.249 2014/11/24 02:03:36 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -219,7 +219,7 @@ stge*	at pci?				# Sundance TC9021 GigE
 lge*	at pci?				# Level1 LXT1001 GigE
 hme*	at pci?				# Sun Happy Meal
 ti*	at pci?				# Alteon Tigon 1Gb ethernet
-rl*	at pci?				# RealTek 81[23]9 ethernet
+rl*	at pci?				# Realtek 81[23]9 ethernet
 vr*	at pci?				# VIA Rhine ethernet
 em*	at pci?				# Intel Pro/1000 ethernet
 #ixgb*	at pci?				# Intel Pro/10Gb ethernet
@@ -263,7 +263,7 @@ qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
 tlphy*	at mii?				# ThunderLAN PHYs
-rlphy*	at mii?				# RealTek 8139 internal PHYs
+rlphy*	at mii?				# Realtek 8139 internal PHYs
 mtdphy*	at mii?				# Myson MTD972 PHYs
 dcphy*	at mii?				# Digital Clone PHYs
 acphy*	at mii?				# Altima AC101 PHYs

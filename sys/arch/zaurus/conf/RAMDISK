@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.51 2014/10/10 05:43:36 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.52 2014/11/24 02:03:37 brad Exp $
 
 machine		zaurus arm
 maxusers	4
@@ -106,7 +106,7 @@ nsphy*		at mii?			# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*		at mii?			# Quality Semi QS6612 PHYs
 sqphy*		at mii?			# Seeq 8x220 PHYs
-rlphy*		at mii?			# RealTek 8139 internal PHYs
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 mtdphy*		at mii?			# Myson MTD972 PHYs
 acphy*		at mii?			# Altima AC101 PHYs
 amphy*		at mii?			# AMD 79C873 PHYs

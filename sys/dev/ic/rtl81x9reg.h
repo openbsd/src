@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.87 2014/11/19 02:37:41 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.88 2014/11/24 02:03:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -35,7 +35,7 @@
  */
 
 /*
- * RealTek 8129/8139 register offsets
+ * Realtek 8129/8139 register offsets
  */
 #define	RL_IDR0		0x0000		/* ID register 0 (station addr) */
 #define RL_IDR1		0x0001		/* Must use 32-bit accesses (?) */
@@ -522,7 +522,7 @@
 #define RL_GMEDIASTAT_TBI	0x80	/* TBI enabled */
 
 /*
- * The RealTek doesn't use a fragment-based descriptor mechanism.
+ * The Realtek doesn't use a fragment-based descriptor mechanism.
  * Instead, there are only four register sets, each of which represents
  * one 'descriptor.' Basically, each TX descriptor is just a contiguous
  * packet buffer (32-bit aligned!) and we place the buffer addresses in
@@ -945,12 +945,12 @@ struct rl_softc {
 /*
  * General constants that are fun to know.
  *
- * RealTek PCI vendor ID
+ * Realtek PCI vendor ID
  */
 #define	RT_VENDORID				0x10EC
 
 /*
- * RealTek chip device IDs.
+ * Realtek chip device IDs.
  */
 #define RT_DEVICEID_8129			0x8129
 #define RT_DEVICEID_8101E			0x8136

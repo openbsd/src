@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.55 2014/08/20 06:14:42 mikeb Exp $ 
+# $OpenBSD: GENERIC,v 1.56 2014/11/24 02:03:37 brad Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -176,7 +176,7 @@ acphy*		at mii?		# Altima AC101 PHYs
 qsphy*		at mii?		# Quality Semi QS6612 PHYs
 luphy*		at mii?		# Lucent LU6612 PHY
 sqphy*		at mii?		# Seeq 8022[013] PHYs
-rlphy*		at mii?		# RealTek 8139 internal PHYs
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 tqphy*		at mii?		# TDK Semiconductor PHYs
 brgphy*		at mii?		# Broadcom 10/100/1000 PHYs

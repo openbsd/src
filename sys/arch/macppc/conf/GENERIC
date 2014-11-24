@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.241 2014/09/27 08:28:12 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.242 2014/11/24 02:03:37 brad Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -75,7 +75,7 @@ hme*		at pci?		# HME ethernet
 vge*		at pci?		# VIA VT612x
 dc*		at pci?		# DEC Tulip 21143 clones
 xl*		at pci?		# 3C9xx ethernet
-rl*		at pci?		# RealTek 81[23]9 ethernet
+rl*		at pci?		# Realtek 81[23]9 ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
 #ixgb*		at pci?		# Intel Pro/10Gb ethernet
 epic*		at pci?		# SMC EPIC/100 ethernet
@@ -115,7 +115,7 @@ acphy*		at mii?		# Altima AC101 PHYs
 qsphy*		at mii?		# Quality Semi QS6612 PHYs
 luphy*		at mii?		# Lucent LU6612 PHY
 sqphy*		at mii?		# Seeq 8022[013] PHYs
-rlphy*		at mii?		# RealTek 8139 internal PHYs
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 tqphy*		at mii?		# TDK Semiconductor PHYs
 brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
@@ -281,7 +281,7 @@ otus*	at uhub?		# Atheros AR9001U
 athn*	at uhub?		# Atheros AR9002U
 zyd*	at uhub?		# Zydas ZD1211
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
-urtw*	at uhub?		# RealTek 8187
+urtw*	at uhub?		# Realtek 8187
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 umbg*	at uhub?		# Meinberg Funkuhren USB5131
 uthum*	at uhidev?		# TEMPerHUM sensor
@@ -331,7 +331,7 @@ malo*		at pcmcia?	# Marvell 88W8385
 dc*		at cardbus?	# 21143, "tulip" clone ethernet
 fxp*		at cardbus?	# Intel PRO/100 ethernet
 xl*		at cardbus?	# 3C575/3C656 ethernet
-rl*		at cardbus?	# RealTek 81[23]9 ethernet
+rl*		at cardbus?	# Realtek 81[23]9 ethernet
 re*		at cardbus?	# Realtek 8169/8169S/8110S
 rtw*		at cardbus?	# Realtek 8180
 wdc*		at pcmcia?

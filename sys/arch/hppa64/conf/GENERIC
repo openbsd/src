@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 2014/07/12 21:56:56 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.34 2014/11/24 02:03:37 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -129,7 +129,7 @@ siop*	at pci?			# NCR 538XX SCSI controllers(new)
 #epic*	at pci?			# SMC EPIC/100 ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 #dc*	at cardbus?
-#rl*	at pci?			# RealTek 81[23]9 ethernet
+#rl*	at pci?			# Realtek 81[23]9 ethernet
 #rl*	at cardbus?
 #ep*	at pci?			# 3c59x
 #ep*	at cardbus?

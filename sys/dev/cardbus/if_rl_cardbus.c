@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.26 2014/08/11 12:45:45 mpi Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.27 2014/11/24 02:03:37 brad Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -30,10 +30,10 @@
 
 /*
  * if_rl_cardbus.c:
- *	Cardbus specific routines for RealTek 8139 ethernet adapter.
+ *	Cardbus specific routines for Realtek 8139 ethernet adapter.
  *	Tested for 
  *		- elecom-Laneed	LD-10/100CBA (Accton MPX5030)
- *		- MELCO		LPC3-TX-CB   (RealTek 8139)
+ *		- MELCO		LPC3-TX-CB   (Realtek 8139)
  */
 
 #include "bpfilter.h"
@@ -79,7 +79,7 @@
  * there appear to be problems with memory mapped mode: it looks like
  * doing too many memory mapped access back to back in rapid succession
  * can hang the bus. I'm inclined to blame this on crummy design/construction
- * on the part of RealTek. Memory mapped mode does appear to work on
+ * on the part of Realtek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
 #define RL_USEIOSPACE 

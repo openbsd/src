@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.107 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.108 2014/11/24 02:03:37 brad Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -98,7 +98,7 @@ mtdphy*		at mii?			# Myson MTD972 PHYs
 qsphy*		at mii?			# Quality Semiconductor QS6612 PHYs
 luphy*		at mii?			# Lucent LU6612 PHY
 sqphy*		at mii?			# Seeq 80220/80221/80223 PHYs
-rlphy*		at mii?			# RealTek 8139 internal PHYs
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 tqphy*		at mii?			# TDK Semiconductor PHYs
 brgphy*		at mii?			# Broadcom 10/100/1000 PHYs
 bmtphy*		at mii?			# Broadcom 10/100 PHYs
@@ -174,7 +174,7 @@ wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 dc*		at cardbus?		# 21143, "tulip" clone ethernet
 fxp*		at cardbus?		# Intel PRO/100 ethernet
 xl*		at cardbus?		# 3C575/3C656 ethernet
-rl*		at cardbus?		# RealTek 81[23]9 ethernet
+rl*		at cardbus?		# Realtek 81[23]9 ethernet
 re*		at cardbus?		# Realtek 8169/8169S/8110S
 wdc*		at pcmcia?
 ral*		at cardbus?		# Ralink RT2500/RT2501/RT2600

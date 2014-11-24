@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.32 2014/11/18 02:37:30 tedu Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.33 2014/11/24 02:03:37 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1504,7 +1504,7 @@ ale_rxeof(struct ale_softc *sc)
 			 * reproduce this and I doubt it could be related
 			 * with FIFO overflow of hardware or activity of Tx
 			 * CMB updates. I also remember similar behaviour
-			 * seen on RealTek 8139 which uses resembling Rx
+			 * seen on Realtek 8139 which uses resembling Rx
 			 * scheme.
 			 */
 			if (aledebug)

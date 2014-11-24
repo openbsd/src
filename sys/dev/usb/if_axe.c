@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.126 2014/07/13 15:52:49 mpi Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.127 2014/11/24 02:03:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -65,7 +65,7 @@
 
 /*
  * The AX88172 provides USB ethernet supports at 10 and 100Mbps.
- * It uses an external PHY (reference designs use a RealTek chip),
+ * It uses an external PHY (reference designs use a Realtek chip),
  * and has a 64-bit multicast hash filter. There is some information
  * missing from the manual which one needs to know in order to make
  * the chip function:

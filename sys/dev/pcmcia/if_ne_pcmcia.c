@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.96 2013/05/09 19:53:48 miod Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.97 2014/11/24 02:03:37 brad Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -777,7 +777,7 @@ again:
 	}
 
 	/*
-	 * Check for a RealTek 8019.
+	 * Check for a Realtek 8019.
 	 */
 	bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
 	    ED_CR_PAGE_0 | ED_CR_STP);
