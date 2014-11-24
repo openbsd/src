@@ -1,4 +1,4 @@
-/*	$OpenBSD: msi.c,v 1.2 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: msi.c,v 1.3 2014/11/24 13:16:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2011 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -45,7 +45,7 @@ msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size)
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &meq->meq_map) != 0)
 		return (NULL);
 
-	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &meq->meq_seg, 1,
+	if (bus_dmamem_alloc(t, size, size, 0, &meq->meq_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
 		goto destroy;
 
