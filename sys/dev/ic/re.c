@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.162 2014/11/24 02:03:37 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.163 2014/11/24 10:33:37 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2040,6 +2040,10 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->rl_ldata.rl_rx_ring);
+ 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}

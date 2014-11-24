@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.117 2014/11/24 03:47:55 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.118 2014/11/24 10:33:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2245,6 +2245,11 @@ xl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		else
 			error = ifmedia_ioctl(ifp, ifr,
 			    &mii->mii_media, command);
+		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->xl_cdata.xl_rx_ring);
 		break;
 
 	default:
