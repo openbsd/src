@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.12 2014/11/24 10:58:37 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.13 2014/11/24 12:47:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -190,7 +190,11 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 		ih->ih_mpsafe = 1;
 
-	intr_establish(ih->ih_pil, ih);
+	if (ih->ih_name)
+		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
+	else
+		evcount_attach(&ih->ih_count, "unknown", NULL);
+
 	ih->ih_ack = cbus_intr_ack;
 
 	err = hv_vintr_settarget(devhandle, devino, cpus->ci_upaid);
