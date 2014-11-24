@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.32 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.33 2014/11/24 00:13:42 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -196,7 +196,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 
 		/*
-		 * The RealTek PHY's autonegotiation doesn't need to be
+		 * The Realtek PHY's autonegotiation doesn't need to be
 		 * kicked; it continues in the background.
 		 */
 		break;
@@ -280,20 +280,20 @@ rlphy_status(struct mii_softc *sc)
 		 */
 
 		/*
-		 * The RealTek PHY supports non-NWAY link speed
+		 * The Realtek PHY supports non-NWAY link speed
 		 * detection, however it does not report the link
 		 * detection results via the ANLPAR or BMSR registers.
-		 * (What? RealTek doesn't do things the way everyone
+		 * (What? Realtek doesn't do things the way everyone
 		 * else does? I'm just shocked, shocked I tell you.)
 		 * To determine the link speed, we have to do one
 		 * of two things:
 		 *
-		 * - If this is a standalone RealTek RTL8201(L) PHY,
+		 * - If this is a standalone Realtek RTL8201(L) PHY,
 		 *   we can determine the link speed by testing bit 0
 		 *   in the magic, vendor-specific register at offset
 		 *   0x19.
 		 *
-		 * - If this is a RealTek MAC with integrated PHY, we
+		 * - If this is a Realtek MAC with integrated PHY, we
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephyreg.h,v 1.5 2014/01/21 05:55:25 brad Exp $	*/
+/*	$OpenBSD: rgephyreg.h,v 1.6 2014/11/24 00:13:42 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -37,7 +37,7 @@
 #define	_DEV_MII_RGEPHYREG_H_
 
 /*
- * RealTek 8169S/8110S gigE PHY registers
+ * Realtek 8169S/8110S gigE PHY registers
  */
 
 #define RGEPHY_MII_BMCR		0x00

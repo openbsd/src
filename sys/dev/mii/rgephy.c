@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.33 2013/12/30 22:35:29 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.34 2014/11/24 00:13:42 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 /*
- * Driver for the RealTek 8169S/8110S internal 10/100/1000 PHY.
+ * Driver for the Realtek 8169S/8110S internal 10/100/1000 PHY.
  */
 
 #include <sys/param.h>
@@ -280,7 +280,7 @@ setit:
 
 	/*
 	 * Callback if something changed. Note that we need to poke
-	 * the DSP on the RealTek PHYs if the media changes.
+	 * the DSP on the Realtek PHYs if the media changes.
 	 *
 	 */
 	if (sc->mii_media_active != mii->mii_media_active || 
@@ -418,7 +418,7 @@ rgephy_loop(struct mii_softc *sc)
 	PHY_WRITE(x, y, (PHY_READ(x, y) & ~(z)))
 
 /*
- * Initialize RealTek PHY per the datasheet. The DSP in the PHYs of
+ * Initialize Realtek PHY per the datasheet. The DSP in the PHYs of
  * existing revisions of the 8169S/8110S chips need to be tuned in
  * order to reliably negotiate a 1000Mbps link. This is only needed
  * for rev 0 and rev 1 of the PHY. Later versions work without
@@ -479,6 +479,19 @@ rgephy_load_dspcode(struct mii_softc *sc)
 void
 rgephy_reset(struct mii_softc *sc)
 {
+	uint16_t reg;
+
+	if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8251) {
+		PHY_WRITE(sc, 31, 0x0a43);
+		reg = PHY_READ(sc, RGEPHY_CR);
+		if ((reg & RGEPHY_CR_ALDPS) != 0) {
+			printf("rgephy disabling ALDPS");
+			reg &= ~RGEPHY_CR_ALDPS;
+			PHY_WRITE(sc, RGEPHY_CR, reg);
+		}
+		PHY_WRITE(sc, 31, 0x0000);
+	}
+
 	mii_phy_reset(sc);
 	DELAY(1000);
 	rgephy_load_dspcode(sc);
