@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.16 2014/11/24 22:09:32 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.17 2014/11/24 22:41:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -268,15 +268,15 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	    IPL_HIGH, 0, vpci_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
 		goto disable_queue;
 
-	err = hv_pci_msiq_setstate(pbm->vp_devhandle, 0, PCI_MSIQSTATE_IDLE);
-	if (err != H_EOK) {
-		printf("%s: pci_msiq_setstate: err %d\n", __func__, err);
-		goto disable_queue;
-	}
-
 	err = hv_pci_msiq_setvalid(pbm->vp_devhandle, 0, PCI_MSIQ_VALID);
 	if (err != H_EOK) {
 		printf("%s: pci_msiq_setvalid: err %d\n", __func__, err);
+		goto disable_queue;
+	}
+
+	err = hv_pci_msiq_setstate(pbm->vp_devhandle, 0, PCI_MSIQSTATE_IDLE);
+	if (err != H_EOK) {
+		printf("%s: pci_msiq_setstate: err %d\n", __func__, err);
 		goto disable_queue;
 	}
 
@@ -544,15 +544,15 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 			return (NULL);
 		}
 
-		err = hv_pci_msi_setstate(pbm->vp_devhandle, msinum, PCI_MSISTATE_IDLE);
-		if (err != H_EOK) {
-			printf("%s: pci_msi_setstate: err %d\n", __func__, err);
-			return (NULL);
-		}
-
 		err = hv_pci_msi_setvalid(pbm->vp_devhandle, msinum, PCI_MSI_VALID);
 		if (err != H_EOK) {
 			printf("%s: pci_msi_setvalid: err %d\n", __func__, err);
+			return (NULL);
+		}
+
+		err = hv_pci_msi_setstate(pbm->vp_devhandle, msinum, PCI_MSISTATE_IDLE);
+		if (err != H_EOK) {
+			printf("%s: pci_msi_setstate: err %d\n", __func__, err);
 			return (NULL);
 		}
 
