@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.42 2014/11/23 10:46:46 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.43 2014/11/24 12:55:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -847,9 +847,9 @@ xhci_xfer_done(struct usbd_xfer *xfer)
 	int ntrb, i;
 
 #ifdef XHCI_DEBUG
-	if (xx->index == -1 || xp->pending_xfers[xx->index] == NULL) {
-		printf("%s: xfer=%p already done (index=%d)\n", __func__,
-		    xfer, xx->index);
+	if (xx->index < 0 || xp->pending_xfers[xx->index] == NULL) {
+		printf("%s: xfer=%p done (index=%d, ntrb=%zd)\n", __func__,
+		    xfer, xx->index, xx->ntrb);
 	}
 #endif
 
@@ -1455,7 +1455,7 @@ xhci_xfer_get_trb(struct xhci_softc *sc, struct usbd_xfer* xfer,
 	xp->pending_xfers[xp->ring.index] = xfer;
 	xp->free_trbs--;
 
-	xx->index = (last) ? xp->ring.index : -1;
+	xx->index = (last) ? xp->ring.index : -2;
 	xx->ntrb += 1;
 
 	*togglep = xp->ring.toggle;
@@ -1818,23 +1818,25 @@ const usb_hub_descriptor_t xhci_hubd = {
 void
 xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
-	int s;
+	splsoftassert(IPL_SOFTUSB);
 
-	DPRINTF(("%s: xfer=%p err=%s\n", __func__, xfer, usbd_errstr(status)));
+	DPRINTF(("%s: xfer=%p status=%s err=%s actlen=%d len=%d index=%d\n",
+	    __func__, xfer, usbd_errstr(xfer->status), usbd_errstr(status),
+	    xfer->actlen, xfer->length, ((struct xhci_xfer *)xfer)->index));
 
 	xfer->status = status;
-
-	s = splusb();
 	xhci_xfer_done(xfer);
-	splx(s);
 }
 
 void
 xhci_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
+	int s;
 
+	s = splusb();
 	xhci_abort_xfer(xfer, USBD_TIMEOUT);
+	splx(s);
 }
 
 usbd_status
