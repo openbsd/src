@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.15 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.16 2014/11/24 22:09:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -232,7 +232,7 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	u_int32_t msi_eq_devino[3] = { 0, 36, 24 };
 	uint64_t sysino;
 	int msis, msi_eq_size;
-	int64_t err;
+	int err;
 
 	if (OF_getprop(sc->sc_node, "msi-address-ranges",
 	    msi_addr_range, sizeof(msi_addr_range)) <= 0)
@@ -268,9 +268,17 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	    IPL_HIGH, 0, vpci_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
 		goto disable_queue;
 
+	err = hv_pci_msiq_setstate(pbm->vp_devhandle, 0, PCI_MSIQSTATE_IDLE);
+	if (err != H_EOK) {
+		printf("%s: pci_msiq_setstate: err %d\n", __func__, err);
+		goto disable_queue;
+	}
+
 	err = hv_pci_msiq_setvalid(pbm->vp_devhandle, 0, PCI_MSIQ_VALID);
-	if (err != H_EOK)
-		panic("vpci: can't enable msi eq");
+	if (err != H_EOK) {
+		printf("%s: pci_msiq_setvalid: err %d\n", __func__, err);
+		goto disable_queue;
+	}
 
 	pbm->vp_flags |= PCI_FLAGS_MSI_ENABLED;
 	return;
@@ -532,13 +540,19 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 
 		err = hv_pci_msi_setmsiq(pbm->vp_devhandle, msinum, 0, 0);
 		if (err != H_EOK) {
-			printf("pci_msi_setmsiq: err %d\n", err);
+			printf("%s: pci_msi_setmsiq: err %d\n", __func__, err);
+			return (NULL);
+		}
+
+		err = hv_pci_msi_setstate(pbm->vp_devhandle, msinum, PCI_MSISTATE_IDLE);
+		if (err != H_EOK) {
+			printf("%s: pci_msi_setstate: err %d\n", __func__, err);
 			return (NULL);
 		}
 
 		err = hv_pci_msi_setvalid(pbm->vp_devhandle, msinum, PCI_MSI_VALID);
 		if (err != H_EOK) {
-			printf("pci_msi_setvalid: err %d\n", err);
+			printf("%s: pci_msi_setvalid: err %d\n", __func__, err);
 			return (NULL);
 		}
 
@@ -588,11 +602,11 @@ vpci_msi_eq_intr(void *arg)
 
 	err = hv_pci_msiq_gethead(pbm->vp_devhandle, 0, &head);
 	if (err != H_EOK)
-		printf("%s: hv_pci_msiq_gethead: %d\n", __func__, err);
+		printf("%s: pci_msiq_gethead: %d\n", __func__, err);
 
 	err = hv_pci_msiq_gettail(pbm->vp_devhandle, 0, &tail);
 	if (err != H_EOK)
-		printf("%s: hv_pci_msiq_gettail: %d\n", __func__, err);
+		printf("%s: pci_msiq_gettail: %d\n", __func__, err);
 
 	if (head == tail)
 		return (0);
@@ -609,7 +623,7 @@ vpci_msi_eq_intr(void *arg)
 		err = hv_pci_msi_setstate(pbm->vp_devhandle,
 		    msinum, PCI_MSISTATE_IDLE);
 		if (err != H_EOK)
-			printf("%s: hv_pci_msiq_setstate: %d\n", __func__, err);
+			printf("%s: pci_msi_setstate: %d\n", __func__, err);
 
 		send_softint(-1, ih->ih_pil, ih);
 
