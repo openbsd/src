@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.29 2011/05/30 22:25:22 oga Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.30 2014/11/24 16:40:29 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -360,6 +360,8 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		scsi2comp = (klscctl_t *)comp;
 		for (i = 0; i < scsi2comp->scsi_buscnt; i++) {
 			scsicomp = (klscsi_t *)scsi2comp->scsi_bus[i];
+			if (scsicomp == NULL)
+				continue;
 			DB_PRF(("\t\tbus %d, physid 0x%02x virtid %d,"
 			    " specific %ld, numdevs %d\n",
 			    i, scsicomp->scsi_info.physid,

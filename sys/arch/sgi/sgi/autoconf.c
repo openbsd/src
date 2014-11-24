@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.38 2014/03/21 22:00:59 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.39 2014/11/24 16:40:29 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -641,6 +641,8 @@ dksc_scan_cmp(klinfo_t *cmp, void *arg)
 		scsi2comp = (klscctl_t *)cmp;
 		for (i = 0; i < scsi2comp->scsi_buscnt; i++) {
 			scsicomp = (klscsi_t *)scsi2comp->scsi_bus[i];
+			if (scsicomp == NULL)
+				continue;
 			if (scsicomp->scsi_info.virtid == dksc_ctrl) {
 				kl_get_location(cmp, &dksc_device);
 				dksc_device.specific = i;	/* port # */
