@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.190 2014/11/10 10:38:46 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.191 2014/11/24 12:43:54 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1182,13 +1182,14 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 }
 
 /*
- * Add ifa's address as a loopback rtentry.
+ * Add ifa's address as a local rtentry.
  */
-void
-rt_ifa_addloop(struct ifaddr *ifa)
+int
+rt_ifa_addlocal(struct ifaddr *ifa)
 {
 	struct rtentry *rt;
 	u_int flags = RTF_HOST|RTF_LOCAL;
+	int error = 0;
 
 	/*
 	 * If the configured address correspond to the magical "any"
@@ -1199,13 +1200,13 @@ rt_ifa_addloop(struct ifaddr *ifa)
 	switch (ifa->ifa_addr->sa_family) {
 	case AF_INET:
 		if (satosin(ifa->ifa_addr)->sin_addr.s_addr == INADDR_ANY)
-			return;
+			return (0);
 		break;
 #ifdef INET6
 	case AF_INET6:
 		if (IN6_ARE_ADDR_EQUAL(&satosin6(ifa->ifa_addr)->sin6_addr,
 		    &in6addr_any))
-			return;
+			return (0);
 		break;
 #endif
 	default:
@@ -1218,19 +1219,22 @@ rt_ifa_addloop(struct ifaddr *ifa)
 	/* If there is no loopback entry, allocate one. */
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || !ISSET(rt->rt_flags, flags));
-		rt_ifa_add(ifa, RTF_UP | flags, ifa->ifa_addr);
+		error = rt_ifa_add(ifa, RTF_UP | flags, ifa->ifa_addr);
 	if (rt)
 		rtfree(rt);
+
+	return (error);
 }
 
 /*
- * Remove loopback rtentry of ifa's addresss if it exists.
+ * Remove local rtentry of ifa's addresss if it exists.
  */
-void
-rt_ifa_delloop(struct ifaddr *ifa)
+int
+rt_ifa_dellocal(struct ifaddr *ifa)
 {
 	struct rtentry *rt;
 	u_int flags = RTF_HOST|RTF_LOCAL;
+	int error = 0;
 
 	/*
 	 * We do not add local routes for such address, so do not bother
@@ -1239,13 +1243,13 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	switch (ifa->ifa_addr->sa_family) {
 	case AF_INET:
 		if (satosin(ifa->ifa_addr)->sin_addr.s_addr == INADDR_ANY)
-			return;
+			return (0);
 		break;
 #ifdef INET6
 	case AF_INET6:
 		if (IN6_ARE_ADDR_EQUAL(&satosin6(ifa->ifa_addr)->sin6_addr,
 		    &in6addr_any))
-			return;
+			return (0);
 		break;
 #endif
 	default:
@@ -1265,9 +1269,11 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	 */
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt != NULL && ISSET(rt->rt_flags, flags))
-		rt_ifa_del(ifa, flags, ifa->ifa_addr);
+		error = rt_ifa_del(ifa, flags, ifa->ifa_addr);
 	if (rt)
 		rtfree(rt);
+
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.145 2014/11/20 09:55:57 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.146 2014/11/24 12:43:54 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1062,7 +1062,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 	}
 
 	if (ia6_count == 1)
-		rt_ifa_delloop(&(ia6->ia_ifa));
+		rt_ifa_dellocal(&(ia6->ia_ifa));
 
 	/*
 	 * leave from multicast groups we have joined for the interface
@@ -1402,7 +1402,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 		if ((ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0)
 			ia6->ia_ifa.ifa_rtrequest = nd6_rtrequest;
 
-		rt_ifa_addloop(&(ia6->ia_ifa));
+		rt_ifa_addlocal(&(ia6->ia_ifa));
 	}
 
 	return (error);
