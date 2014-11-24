@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.110 2014/10/19 03:54:56 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.111 2014/11/24 23:28:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -616,6 +616,11 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		mii = &sc_if->sk_mii;
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, sc_if->sk_pktlen, &sc_if->sk_cdata.sk_rx_ring);
+ 		break;
 
 	default:
 		error = ether_ioctl(ifp, &sc_if->arpcom, command, data);
