@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.66 2014/11/24 20:01:43 millert Exp $
+.\"	$OpenBSD: mail.1,v 1.67 2014/11/24 20:03:33 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,13 +79,16 @@ to output all sorts of information useful for debugging
 .Nm mail .
 .It Fl E
 Don't send messages with an empty body.
-.It Fl f Op Ar file
-Read in the contents of your mailbox
-(or the specified
-.Ar file )
-for processing; when you quit,
+.It Fl f
+Use an alternate mailbox.
+Defaults to the user's
+.Ar mbox
+if no
+.Ar file
+is specified.
+When quit,
 .Nm mail
-writes undeleted messages back to this
+will write undeleted messages back to this
 .Ar file .
 .It Fl I
 Forces
