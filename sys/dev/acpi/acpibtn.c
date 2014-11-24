@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.39 2014/11/23 20:33:47 mlarkin Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.40 2014/11/24 03:54:06 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -78,32 +78,31 @@ const char *acpibtn_hids[] = { ACPI_DEV_LD, ACPI_DEV_PBD, ACPI_DEV_SBD, 0 };
 /*
  * acpibtn_numopenlids
  *
- * Return the number of _LID devices that are in the "open" state. Used to
- * determine if we should go back to sleep/hibernate if we woke up with the all
- * the lids still closed for some reason. If the machine has no lids, returns
- * -1.
+ * Return the number of _LID devices that are in the "open" state.
+ * Used to determine if we should go back to sleep/hibernate if we
+ * woke up with the all the lids still closed for some reason. If
+ * the machine has no lids, returns -1.
  */
 int
 acpibtn_numopenlids(void)
 {
-	int64_t val, ct;
 	struct acpi_lid *lid;
+	int64_t val;
+	int ct = 0;
 
 	/* If we have no lids ... */
 	if (SLIST_EMPTY(&acpibtn_lids))
 		return (-1);
 
-	ct = 0;
-
 	/*
-	 * Determine how many lids are open. Assumes _LID evals to 1 or 0, for
-	 * on / off (which is what the spec says).
+	 * Determine how many lids are open. Assumes _LID evals to
+	 * non-0 or 0, for on / off (which is what the spec says).
 	 */
 	SLIST_FOREACH(lid, &acpibtn_lids, abl_link)
 		if (!aml_evalinteger(lid->abl_softc->sc_acpi,
-		    lid->abl_softc->sc_devnode, "_LID", 0, NULL, &val))
-			ct += val;
-
+		    lid->abl_softc->sc_devnode, "_LID", 0, NULL, &val) &&
+		    val != 0)
+			ct++;
 	return (ct);
 }
 
