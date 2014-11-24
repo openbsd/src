@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.18 2014/11/19 10:24:40 blambert Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.19 2014/11/24 05:48:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -532,7 +532,6 @@ snmp_agentx_process(struct agentx_handle *h, struct agentx_pdu *pdu, void *arg)
 			if (snmp_agentx_response(h, pdu) == -1)
 				break;
 			break;
-		break;
 
 		case AGENTX_UNREGISTER:
 			if (snmp_agentx_response(h, pdu) == -1)
