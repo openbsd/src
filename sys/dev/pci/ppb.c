@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.59 2014/09/15 14:22:07 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.60 2014/11/24 13:48:49 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		name = malloc(32, M_DEVBUF, M_NOWAIT);
 		if (name) {
 			snprintf(name, 32, "%s pcimem", sc->sc_dev.dv_xname);
-			sc->sc_memex = extent_create(name, 0, 0xffffffff,
+			sc->sc_memex = extent_create(name, 0, (u_long)-1L,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 			extent_free(sc->sc_memex, sc->sc_membase,
 			    sc->sc_memlimit - sc->sc_membase + 1,
@@ -273,7 +273,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_PREFMEM);
 	sc->sc_pmembase = (blr & 0x0000fff0) << 16;
 	sc->sc_pmemlimit = (blr & 0xfff00000) | 0x000fffff;
-#ifdef __LP64__	/* XXX because extents use long... */
+#ifdef __LP64__
 	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_PREFBASE_HI32);
 	sc->sc_pmembase |= ((uint64_t)blr) << 32;
 	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_PREFLIM_HI32);
