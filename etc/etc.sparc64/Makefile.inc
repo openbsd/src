@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2011/07/22 09:30:54 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2014/11/24 11:27:57 stsp Exp $
 
 KERNELS += GENERIC.MP bsd.mp
 
@@ -7,4 +7,4 @@ bootblocks:
 
 MDEXT=	bsd.rd cd${OSrev}.iso \
 	miniroot${OSrev}.fs floppy${OSrev}.fs floppyB${OSrev}.fs \
-	bootblk installboot ofwboot ofwboot.net
+	bootblk ofwboot ofwboot.net
