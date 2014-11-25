@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcrypt_pbkdf.3,v 1.5 2014/09/27 06:40:07 doug Exp $
+.\"	$OpenBSD: bcrypt_pbkdf.3,v 1.6 2014/11/25 03:37:12 tedu Exp $
 .\"
 .\" Copyright (c) 2012 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2014 $
+.Dd $Mdocdate: November 25 2014 $
 .Dt BCRYPT_PBKDF 3
 .Os
 .Sh NAME
@@ -64,6 +64,6 @@ function returns 0 to indicate success and \-1 for failure.
 .Sh CAVEATS
 This implementation deviates slightly from the PBKDF2 standard by mixing
 output key bits nonlinearly.
-By mixing the output bytes together, we require an attacker to perform
+By mixing the output bytes together, an attacker is required to perform
 all of the work without taking any shortcuts.
 .\" .Sh BUGS
