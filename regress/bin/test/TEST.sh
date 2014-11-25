@@ -26,7 +26,7 @@
 #
 # TEST.sh - check if test(1) or builtin test works
 #
-# $OpenBSD: TEST.sh,v 1.1 2011/07/09 03:58:12 nicm Exp $
+# $OpenBSD: TEST.sh,v 1.2 2014/11/25 23:09:22 daniel Exp $
 
 # force a specified test program, e.g. `env test=/bin/test sh TEST.sh'
 : ${test=test}		
@@ -105,7 +105,7 @@ t 0 'true -o -X'
 t 0 '\( \( \( a = a \) -o 1 \) -a 1 \) -a true'
 t 1 '-h /'
 t 0 '-r /'
-t 1 '-w /'
+t 1 '-w /bin/sh'
 t 0 '-x /bin/sh'
 t 0 '-c /dev/null'
 t 0 '-b /dev/fd0a -o -b /dev/rfd0a -o true'
