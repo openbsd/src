@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.136 2014/11/01 21:40:38 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.137 2014/11/25 13:10:03 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1525,7 +1525,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	{
 		struct sadb_protocol *sab;
 		union sockaddr_union *ssrc;
-		struct route_enc re;
+		struct rtentry *rt;
 		int exists = 0;
 
 		sab = (struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE];
@@ -1561,19 +1561,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		/* Determine whether the exact same SPD entry already exists. */
 		bzero(&encapgw, sizeof(struct sockaddr_encap));
-		bzero(&re, sizeof(struct route_enc));
-		bcopy(&encapdst, &re.re_dst, sizeof(struct sockaddr_encap));
 
 		s = splsoftnet();
-
-		/* Set the rdomain that was obtained from the socket */
-		re.re_tableid = rdomain;
-
-		re.re_rt = rtalloc((struct sockaddr *)&re.re_dst,
-		    RT_REPORT|RT_RESOLVE, re.re_tableid);
-		if (re.re_rt != NULL) {
-			ipo = ((struct sockaddr_encap *) re.re_rt->rt_gateway)->sen_ipsp;
-			rtfree(re.re_rt);
+		rt = rtalloc((struct sockaddr *)&encapdst, RT_REPORT|RT_RESOLVE,
+		    rdomain);
+		if (rt != NULL) {
+			ipo = ((struct sockaddr_encap *)rt->rt_gateway)->sen_ipsp;
+			rtfree(rt);
 
 			/* Verify that the entry is identical */
 			if (bcmp(&ipo->ipo_addr, &encapdst,

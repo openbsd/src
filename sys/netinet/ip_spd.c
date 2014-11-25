@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.75 2014/11/01 21:40:39 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.76 2014/11/25 13:10:03 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -87,9 +87,9 @@ struct tdb *
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
     struct tdb *tdbp, struct inpcb *inp, u_int32_t ipsecflowinfo)
 {
-	struct route_enc re0, *re = &re0;
+	struct rtentry *rt;
 	union sockaddr_union sdst, ssrc;
-	struct sockaddr_encap *ddst;
+	struct sockaddr_encap *ddst, dst;
 	struct ipsec_policy *ipo;
 	struct ipsec_ref *dstid = NULL, *srcid = NULL;
 	struct tdb *tdbin = NULL;
@@ -116,10 +116,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		return NULL;
 	}
 
-	memset(re, 0, sizeof(struct route_enc));
+	memset(&dst, 0, sizeof(dst));
 	memset(&sdst, 0, sizeof(union sockaddr_union));
 	memset(&ssrc, 0, sizeof(union sockaddr_union));
-	ddst = (struct sockaddr_encap *) &re->re_dst;
+	ddst = (struct sockaddr_encap *)&dst;
 	ddst->sen_family = PF_KEY;
 	ddst->sen_len = SENT_LEN;
 
@@ -240,13 +240,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		return NULL;
 	}
 
-	/* Set the rdomain that was obtained from the mbuf */
-	re->re_tableid = rdomain;
-
 	/* Actual SPD lookup. */
-	re->re_rt = rtalloc((struct sockaddr *)&re->re_dst,
-	    RT_REPORT|RT_RESOLVE, re->re_tableid);
-	if (re->re_rt == NULL) {
+	rt = rtalloc((struct sockaddr *)&dst, RT_REPORT|RT_RESOLVE, rdomain);
+	if (rt == NULL) {
 		/*
 		 * Return whatever the socket requirements are, there are no
 		 * system-wide policies.
@@ -257,17 +253,17 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	}
 
 	/* Sanity check. */
-	if ((re->re_rt->rt_gateway == NULL) ||
-	    (((struct sockaddr_encap *) re->re_rt->rt_gateway)->sen_type !=
+	if ((rt->rt_gateway == NULL) ||
+	    (((struct sockaddr_encap *)rt->rt_gateway)->sen_type !=
 		SENT_IPSP)) {
-		rtfree(re->re_rt);
+		rtfree(rt);
 		*error = EHOSTUNREACH;
 		DPRINTF(("ip_spd_lookup: no gateway in SPD entry!"));
 		return NULL;
 	}
 
-	ipo = ((struct sockaddr_encap *) (re->re_rt->rt_gateway))->sen_ipsp;
-	rtfree(re->re_rt);
+	ipo = ((struct sockaddr_encap *)(rt->rt_gateway))->sen_ipsp;
+	rtfree(rt);
 	if (ipo == NULL) {
 		*error = EHOSTUNREACH;
 		DPRINTF(("ip_spd_lookup: no policy attached to SPD entry!"));

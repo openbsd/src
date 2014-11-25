@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.156 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.157 2014/11/25 13:10:03 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -256,18 +256,6 @@ struct ipsec_policy {
 #define	IPSP_IDENTITY_FQDN		2
 #define	IPSP_IDENTITY_USERFQDN		3
 #define	IPSP_IDENTITY_CONNECTION	4
-
-/*
- * For encapsulation routes are possible not only for the destination
- * address but also for the protocol, source and destination ports
- * if available
- */
-
-struct route_enc {
-	struct rtentry		*re_rt;
-	u_long			re_tableid; /* u_long because of alignment */
-	struct sockaddr_encap	re_dst;
-};
 
 struct tdb {				/* tunnel descriptor block */
 	/*
