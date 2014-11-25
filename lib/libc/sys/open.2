@@ -1,4 +1,4 @@
-.\"	$OpenBSD: open.2,v 1.47 2014/05/29 06:30:12 guenther Exp $
+.\"	$OpenBSD: open.2,v 1.48 2014/11/25 15:02:13 schwarze Exp $
 .\"	$NetBSD: open.2,v 1.8 1995/02/27 12:35:14 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)open.2	8.2 (Berkeley) 11/16/93
 .\"
-.Dd $Mdocdate: May 29 2014 $
+.Dd $Mdocdate: November 25 2014 $
 .Dt OPEN 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm openat
 .Nd open or create a file for reading or writing
 .Sh SYNOPSIS
-.Fd #include <fcntl.h>
+.In fcntl.h
 .Ft int
 .Fn open "const char *path" "int flags" ...
 .Ft int
@@ -64,7 +64,9 @@ as described in
 and modified by the process' umask value (see
 .Xr umask 2 ) .
 .Pp
-The flags specified are a bitwise OR of the following values.
+The
+.Fa flags
+specified are a bitwise OR of the following values.
 Exactly one of the first three values (file access modes) must be specified:
 .Pp
 .Bl -tag -width O_DIRECTORY -offset indent -compact
@@ -91,7 +93,9 @@ must be supplied to the call.
 .It Dv O_TRUNC
 Truncate size to 0.
 .It Dv O_EXCL
-Error if create and file exists.
+Error if
+.Dv O_CREAT
+is set and file exists.
 .It Dv O_SYNC
 Perform synchronous I/O operations.
 .It Dv O_SHLOCK
@@ -253,7 +257,8 @@ A component of the path name that must exist does not exist.
 Search permission is denied for a component of the path prefix.
 .It Bq Er EACCES
 The required permissions (for reading and/or writing)
-are denied for the given flags.
+are denied for the given
+.Fa flags .
 .It Bq Er EACCES
 .Dv O_CREAT
 is specified,
@@ -269,7 +274,9 @@ flag was specified and the target is a symbolic link.
 The named file is a directory, and the arguments specify
 it is to be opened for writing.
 .It Bq Er EINVAL
-The flags specified for opening the file are not valid.
+The
+.Fa flags
+specified for opening the file are not valid.
 .It Bq Er EROFS
 The named file resides on a read-only file system,
 and the file is to be modified.
@@ -429,7 +436,7 @@ system call first appeared in
 .At v1 .
 The
 .Fa flags
-arguments has been supported since
+argument has been supported since
 .Bx 4.2 .
 Before that, a dedicated
 .Fn creat
