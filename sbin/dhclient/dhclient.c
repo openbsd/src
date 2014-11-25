@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.334 2014/11/23 18:22:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.335 2014/11/25 17:03:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -337,13 +337,17 @@ routehandler(void)
 
 		linkstat =
 		    LINK_STATE_IS_UP(ifm->ifm_data.ifi_link_state) ? 1 : 0;
+		linkstat = linkstat || (ifi->flags & IFI_NOMEDIA);
+		linkstat = linkstat &&
+			((ifm->ifm_flags & (IFF_UP | IFF_RUNNING)) ==
+			(IFF_UP | IFF_RUNNING));
 		if (linkstat != ifi->linkstat) {
 #ifdef DEBUG
 			debug("link state %s -> %s",
 			    ifi->linkstat ? "up" : "down",
 			    linkstat ? "up" : "down");
 #endif
-			ifi->linkstat = interface_status(ifi->name);
+			ifi->linkstat = linkstat;
 			if (ifi->linkstat) {
 				client->state = S_REBOOTING;
 				state_reboot();
