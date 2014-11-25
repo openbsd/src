@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.19 2014/11/24 05:48:25 jsg Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.20 2014/11/25 09:17:00 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1639,7 +1639,7 @@ snmp_session(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 		getmonotime(&now);
 		timerclear(&tv);
 		timersub(&now, &session->se_tv_start, &tv);
-		ticks = tv.tv_sec * 100 + tv.tv_usec / 10;
+		ticks = tv.tv_sec * 100 + tv.tv_usec / 10000;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &ticks,
 		    sizeof(ticks)) == -1)
@@ -1649,7 +1649,7 @@ snmp_session(struct relayd *env, struct snmp_oid *oid, struct agentx_pdu *resp,
 		getmonotime(&now);
 		timerclear(&tv);
 		timersub(&now, &session->se_tv_last, &tv);
-		ticks = tv.tv_sec * 100 + tv.tv_usec / 10;
+		ticks = tv.tv_sec * 100 + tv.tv_usec / 10000;
 		if (snmp_agentx_varbind(resp, oid,
 		    AGENTX_INTEGER, &ticks,
 		    sizeof(ticks)) == -1)
