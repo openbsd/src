@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.101 2014/11/20 00:30:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.102 2014/11/25 03:04:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -435,9 +435,11 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 * Default block rewinding rules.
 	 * In particular, always skip block end markers,
 	 * and let all blocks rewind Nm children.
+	 * Do not warn again when closing a block,
+	 * since closing the body already warned.
 	 */
 	if (ENDBODY_NOT != p->end || MDOC_Nm == p->tok ||
-	    (MDOC_BLOCK == p->type &&
+	    MDOC_BLOCK == type || (MDOC_BLOCK == p->type &&
 	    ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)))
 		return(REWIND_MORE);
 

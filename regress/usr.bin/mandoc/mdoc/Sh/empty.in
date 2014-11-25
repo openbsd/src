@@ -1,0 +1,10 @@
+.Dd November 21, 2014
+.Dt SH-EMPTY 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sh-empty
+.Nd empty sections
+.Sh SYNOPSIS
+.Sh DESCRIPTION Xo
+.Sh BUGS
+Quite some.

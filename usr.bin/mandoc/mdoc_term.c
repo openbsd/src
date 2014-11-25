@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.191 2014/11/21 01:52:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.192 2014/11/25 03:04:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1372,14 +1372,17 @@ static int
 termp_sh_pre(DECL_ARGS)
 {
 
-	/* No vspace between consecutive `Sh' calls. */
-
 	switch (n->type) {
 	case MDOC_BLOCK:
-		if (n->prev && MDOC_Sh == n->prev->tok)
-			if (NULL == n->prev->body->child)
-				break;
-		term_vspace(p);
+		/*
+		 * Vertical space before sections, except
+		 * when the previous section was empty.
+		 */
+		if (n->prev == NULL ||
+		    MDOC_Sh != n->prev->tok ||
+		    (n->prev->body != NULL &&
+		     n->prev->body->child != NULL))
+			term_vspace(p);
 		break;
 	case MDOC_HEAD:
 		term_fontpush(p, TERMFONT_BOLD);

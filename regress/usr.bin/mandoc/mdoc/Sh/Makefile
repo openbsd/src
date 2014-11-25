@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2014/08/14 02:00:53 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2014/11/25 03:04:32 schwarze Exp $
 
-REGRESS_TARGETS	= before subbefore first emptyNAME badNAME order
-LINT_TARGETS	= before subbefore first emptyNAME badNAME order
+REGRESS_TARGETS	= before subbefore first emptyNAME badNAME order empty
+LINT_TARGETS	= before subbefore first emptyNAME badNAME order empty
 
-SKIP_GROFF	= subbefore first
+SKIP_GROFF	= subbefore first empty
 SKIP_ASCII	= first
 
 .include <bsd.regress.mk>
