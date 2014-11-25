@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.h,v 1.13 2014/09/27 12:26:16 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.h,v 1.14 2014/11/25 14:50:46 mpi Exp $	*/
 /*	$KAME: radix_mpath.h,v 1.9 2004/03/30 11:21:49 keiichi Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 /*
  * Radix tree API with multipath support
  */
-struct route;
 struct rtentry;
 struct sockaddr;
 int	rn_mpath_capable(struct radix_node_head *);
