@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.193 2014/11/20 14:51:42 krw Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.194 2014/11/25 12:13:59 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -795,12 +795,10 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		cmdarg = NULL;
 		/* XXX: translate addresses into internal form */
 		sa6 = *(struct sockaddr_in6 *)sa;
-#ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6.sin6_addr, &sa6, NULL, NULL)) {
 			/* should be impossible */
 			return;
 		}
-#endif
 	}
 
 	if (ip6cp && ip6cp->ip6c_finaldst) {
@@ -811,21 +809,17 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		/* XXX: assuming M is valid in this case */
 		sa6.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
 		    ip6cp->ip6c_finaldst);
-#ifndef SCOPEDROUTING
 		if (in6_embedscope(ip6cp->ip6c_finaldst, &sa6, NULL, NULL)) {
 			/* should be impossible */
 			return;
 		}
-#endif
 	} else {
 		/* XXX: translate addresses into internal form */
 		sa6 = *(struct sockaddr_in6 *)sa;
-#ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6.sin6_addr, &sa6, NULL, NULL)) {
 			/* should be impossible */
 			return;
 		}
-#endif
 	}
 
 	if (ip6) {
@@ -848,12 +842,10 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		sa6_src.sin6_addr = ip6->ip6_src;
 		sa6_src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
 		    &ip6->ip6_src);
-#ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6_src.sin6_addr, &sa6_src, NULL, NULL)) {
 			/* should be impossible */
 			return;
 		}
-#endif
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
