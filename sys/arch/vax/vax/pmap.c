@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2014/11/17 21:39:19 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.72 2014/11/25 20:31:41 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -473,7 +473,7 @@ rmpage(struct pmap *pm, pt_entry_t *br)
 	struct pv_entry *pv, *pl, *pf;
 	vaddr_t vaddr;
 	struct vm_page *pg;
-	int found = 0;
+	int s, found = 0;
 
 	/*
 	 * Check that we are working on a managed page.
@@ -489,16 +489,21 @@ rmpage(struct pmap *pm, pt_entry_t *br)
 	else
 		vaddr = (br - pm->pm_p1br) * VAX_NBPG + 0x40000000;
 
-	pv = pg->mdpage.pv_head;
-
+	s = splvm();
 	for (pl = NULL, pv = pg->mdpage.pv_head; pv != NULL; pl = pv, pv = pf) {
 		pf = pv->pv_next;
 		if (pv->pv_pmap == pm && pv->pv_va == vaddr) {
-			if (((br[0] & PG_PROT) == PG_RW) && 
-			    (pg->mdpage.pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
-				pg->mdpage.pv_attr |=
-				    br[0] | br[1] | br[2] | br[3] |
-				    br[4] | br[5] | br[6] | br[7];
+			if ((pg->mdpage.pv_attr & (PG_V|PG_M)) != (PG_V|PG_M)) {
+				switch (br[0] & PG_PROT) {
+				case PG_URKW:
+				case PG_KW:
+				case PG_RW:
+					pg->mdpage.pv_attr |=
+					    br[0] | br[1] | br[2] | br[3] |
+					    br[4] | br[5] | br[6] | br[7];
+					break;
+				}
+			}
 			if (pf != NULL) {
 				*pv = *pf;
 				free_pventry(pf);
@@ -513,6 +518,7 @@ rmpage(struct pmap *pm, pt_entry_t *br)
 			break;
 		}
 	}
+	splx(s);
 	if (found == 0)
 		panic("rmpage: pg %p br %p", pg, br);
 }
@@ -654,6 +660,8 @@ pmap_rmproc(struct pmap *pm)
 				outpri = slpp->p_slptime;
 			}
 		}
+		if (didswap)
+			break;
 next_process:	;
 	}
 
@@ -1097,9 +1105,14 @@ pmap_enter(struct pmap *pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
 	oldpte = *pteptr & ~(PG_V | PG_M);
 
 	/* just a wiring change ? */
-	if (newpte == (oldpte | PG_W)) {
-		*pteptr |= PG_W; /* Just wiring change */
-		pmap->pm_stats.wired_count++;
+	if ((newpte ^ oldpte) == PG_W) {
+		if (flags & PMAP_WIRED) {
+			pmap->pm_stats.wired_count++;
+			*pteptr |= PG_W;
+		} else {
+			pmap->pm_stats.wired_count--;
+			*pteptr &= ~PG_W;
+		}
 		RECURSEEND;
 		return 0;
 	}
@@ -1413,6 +1426,7 @@ pmap_clear_reference(struct vm_page *pg)
 	struct pv_entry *pv;
 	pt_entry_t *pte;
 	boolean_t ref = FALSE;
+	int s;
 
 	PMDEBUG(("pmap_clear_reference: pg %p\n", pg));
 
@@ -1422,19 +1436,19 @@ pmap_clear_reference(struct vm_page *pg)
 	pg->mdpage.pv_attr &= ~PG_V;
 
 	RECURSESTART;
+	s = splvm();
 	for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next) {
 		pte = vaddrtopte(pv);
-		if ((pte[0] & PG_W) == 0) {
-			pte[0] &= ~PG_V;
-			pte[1] &= ~PG_V;
-			pte[2] &= ~PG_V;
-			pte[3] &= ~PG_V;
-			pte[4] &= ~PG_V;
-			pte[5] &= ~PG_V;
-			pte[6] &= ~PG_V;
-			pte[7] &= ~PG_V;
-		}
+		pte[0] &= ~PG_V;
+		pte[1] &= ~PG_V;
+		pte[2] &= ~PG_V;
+		pte[3] &= ~PG_V;
+		pte[4] &= ~PG_V;
+		pte[5] &= ~PG_V;
+		pte[6] &= ~PG_V;
+		pte[7] &= ~PG_V;
 	}
+	splx(s);
 
 	RECURSEEND;
 	mtpr(0, PR_TBIA);
@@ -1449,6 +1463,8 @@ pmap_is_modified(struct vm_page *pg)
 {
 	struct pv_entry *pv;
 	pt_entry_t *pte;
+	boolean_t rv = FALSE;
+	int s;
 
 	PMDEBUG(("pmap_is_modified: pg %p pv_attr %x\n",
 	    pg, pg->mdpage.pv_attr));
@@ -1456,14 +1472,18 @@ pmap_is_modified(struct vm_page *pg)
 	if (pg->mdpage.pv_attr & PG_M)
 		return TRUE;
 
+	s = splvm();
 	for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next) {
 		pte = vaddrtopte(pv);
 		if ((pte[0] | pte[1] | pte[2] | pte[3] | pte[4] | pte[5] |
-		     pte[6] | pte[7]) & PG_M)
-			return TRUE;
+		     pte[6] | pte[7]) & PG_M) {
+			rv = TRUE;
+			break;
+		}
 	}
+	splx(s);
 
-	return FALSE;
+	return rv;
 }
 
 /*
@@ -1475,6 +1495,7 @@ pmap_clear_modify(struct vm_page *pg)
 	struct pv_entry *pv;
 	pt_entry_t *pte;
 	boolean_t rv = FALSE;
+	int s;
 
 	PMDEBUG(("pmap_clear_modify: pg %p\n", pg));
 
@@ -1482,6 +1503,7 @@ pmap_clear_modify(struct vm_page *pg)
 		rv = TRUE;
 	pg->mdpage.pv_attr &= ~PG_M;
 
+	s = splvm();
 	for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next) {
 		pte = vaddrtopte(pv);
 		if ((pte[0] | pte[1] | pte[2] | pte[3] | pte[4] | pte[5] |
@@ -1498,6 +1520,7 @@ pmap_clear_modify(struct vm_page *pg)
 			pte[7] &= ~PG_M;
 		}
 	}
+	splx(s);
 
 	return rv;
 }
@@ -1523,8 +1546,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		return;
 
 	RECURSESTART;
+	s = splvm();
 	if (prot == PROT_NONE) {
-		s = splvm();
 		npv = pg->mdpage.pv_head;
 		pg->mdpage.pv_head = NULL;
 		while ((pv = npv) != NULL) {
@@ -1544,7 +1567,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			}
 			free_pventry(pv);
 		}
-		splx(s);
 	} else { /* read-only */
 		for (pv = pg->mdpage.pv_head; pv != NULL; pv = pv->pv_next) {
 			pt_entry_t pr;
@@ -1563,6 +1585,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			pte[7] = (pte[7] & ~PG_PROT) | pr;
 		}
 	}
+	splx(s);
 	RECURSEEND;
 	mtpr(0, PR_TBIA);
 }
@@ -1603,6 +1626,7 @@ pmap_activate(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	int s;
 
 	PMDEBUG(("pmap_activate: p %p pcb %p pm %p (%08x %08x %08x %08x)\n",
 	    p, pcb, pmap, pmap->pm_p0br, pmap->pm_p0lr, pmap->pm_p1br,
@@ -1614,11 +1638,13 @@ pmap_activate(struct proc *p)
 	pcb->P1LR = pmap->pm_p1lr;
 
 	if (pcb->pcb_pm != pmap) {
+		s = splsched();
 		if (pcb->pcb_pm != NULL)
 			pmap_remove_pcb(pcb->pcb_pm, pcb);
 		pcb->pcb_pmnext = pmap->pm_pcbs;
 		pmap->pm_pcbs = pcb;
 		pcb->pcb_pm = pmap;
+		splx(s);
 	}
 
 	if (p == curproc) {
@@ -1635,15 +1661,18 @@ pmap_deactivate(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	int s;
 
 	PMDEBUG(("pmap_deactivate: p %p pcb %p\n", p, pcb));
 
-	if (pcb->pcb_pm == NULL)
-		return;
+	if (pcb->pcb_pm != NULL) {
+		s = splsched();
 #ifdef DIAGNOSTIC
-	if (pcb->pcb_pm != pmap)
-		panic("%s: proc %p pcb %p not owned by pmap %p",
-		    __func__, p, pcb, pmap);
+		if (pcb->pcb_pm != pmap)
+			panic("%s: proc %p pcb %p not owned by pmap %p",
+			    __func__, p, pcb, pmap);
 #endif
-	pmap_remove_pcb(pmap, pcb);
+		pmap_remove_pcb(pmap, pcb);
+		splx(s);
+	}
 }
