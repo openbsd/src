@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.22 2014/05/17 13:27:55 tedu Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.23 2014/11/25 03:04:22 tedu Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -162,8 +162,8 @@ const u_char	_des_bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
 static const u_int32_t *bits28, *bits24;
 static u_char	init_perm[64], final_perm[64];
-static u_int32_t en_keysl[16], en_keysr[16];
-static u_int32_t de_keysl[16], de_keysr[16];
+static u_int32_t g_en_keysl[16], g_en_keysr[16];
+static u_int32_t g_de_keysl[16], g_de_keysr[16];
 int	_des_initialised = 0;
 static u_char	m_sbox[4][4096];
 static u_int32_t psbox[4][256];
@@ -171,7 +171,6 @@ static u_int32_t ip_maskl[8][256], ip_maskr[8][256];
 static u_int32_t fp_maskl[8][256], fp_maskr[8][256];
 static u_int32_t key_perm_maskl[8][128], key_perm_maskr[8][128];
 static u_int32_t comp_maskl[8][128], comp_maskr[8][128];
-static u_int32_t old_rawkey0, old_rawkey1;
 
 static u_char	ascii64[] =
 	 "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -202,7 +201,6 @@ _des_init(void)
 	int	i, j, b, k, inbit, obit;
 	u_int32_t	*p, *il, *ir, *fl, *fr;
 
-	old_rawkey0 = old_rawkey1 = 0;
 	bits24 = (bits28 = _des_bits32 + 4) + 4;
 
 	/*
@@ -342,8 +340,8 @@ _des_setup_salt(int32_t salt)
 	return saltbits;
 }
 
-int
-des_setkey(const char *key)
+static int
+_des_do_setkey(const char *key, u_int32_t *en_keysl, u_int32_t *en_keysr)
 {
 	u_int32_t k0, k1, rawkey0, rawkey1;
 	int	shifts, round;
@@ -353,20 +351,6 @@ des_setkey(const char *key)
 
 	rawkey0 = ntohl(*(u_int32_t *) key);
 	rawkey1 = ntohl(*(u_int32_t *) (key + 4));
-
-	if ((rawkey0 | rawkey1)
-	    && rawkey0 == old_rawkey0
-	    && rawkey1 == old_rawkey1) {
-		/*
-		 * Already setup for this key.
-		 * This optimisation fails on a zero key (which is weak and
-		 * has bad parity anyway) in order to simplify the starting
-		 * conditions.
-		 */
-		return(0);
-	}
-	old_rawkey0 = rawkey0;
-	old_rawkey1 = rawkey1;
 
 	/*
 	 *	Do key permutation and split into two 28-bit subkeys.
@@ -399,7 +383,7 @@ des_setkey(const char *key)
 		t0 = (k0 << shifts) | (k0 >> (28 - shifts));
 		t1 = (k1 << shifts) | (k1 >> (28 - shifts));
 
-		de_keysl[15 - round] =
+		g_de_keysl[15 - round] = /* XXX global */
 		en_keysl[round] = comp_maskl[0][(t0 >> 21) & 0x7f]
 				| comp_maskl[1][(t0 >> 14) & 0x7f]
 				| comp_maskl[2][(t0 >> 7) & 0x7f]
@@ -409,7 +393,7 @@ des_setkey(const char *key)
 				| comp_maskl[6][(t1 >> 7) & 0x7f]
 				| comp_maskl[7][t1 & 0x7f];
 
-		de_keysr[15 - round] =
+		g_de_keysr[15 - round] = /* XXX global */
 		en_keysr[round] = comp_maskr[0][(t0 >> 21) & 0x7f]
 				| comp_maskr[1][(t0 >> 14) & 0x7f]
 				| comp_maskr[2][(t0 >> 7) & 0x7f]
@@ -423,8 +407,14 @@ des_setkey(const char *key)
 }
 
 int
+des_setkey(const char *key)
+{
+	return _des_do_setkey(key, g_en_keysl, g_en_keysr);
+}
+
+int
 _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
-    int count, u_int32_t saltbits)
+    int count, u_int32_t saltbits, u_int32_t *en_keysl, u_int32_t *en_keysr)
 {
 	/*
 	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
@@ -443,11 +433,11 @@ _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
 		kr1 = en_keysr;
 	} else {
 		/*
-		 * Decrypting
+		 * Decrypting XXX global
 		 */
 		count = -count;
-		kl1 = de_keysl;
-		kr1 = de_keysr;
+		kl1 = g_de_keysl;
+		kr1 = g_de_keysr;
 	}
 
 	/*
@@ -540,7 +530,8 @@ _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
 }
 
 int
-des_cipher(const char *in, char *out, int32_t salt, int count)
+_des_do_cipher(const char *in, char *out, int32_t salt, int count,
+    u_int32_t *en_keysl, u_int32_t *en_keysr)
 {
 	u_int32_t l_out, r_out, rawl, rawr, saltbits;
 	u_int32_t x[2];
@@ -554,7 +545,7 @@ des_cipher(const char *in, char *out, int32_t salt, int count)
 	memcpy(x, in, sizeof x);
 	rawl = ntohl(x[0]);
 	rawr = ntohl(x[1]);
-	retval = _des_do_des(rawl, rawr, &l_out, &r_out, count, saltbits);
+	retval = _des_do_des(rawl, rawr, &l_out, &r_out, count, saltbits, en_keysl, en_keysr);
 
 	x[0] = htonl(l_out);
 	x[1] = htonl(r_out);
@@ -562,9 +553,16 @@ des_cipher(const char *in, char *out, int32_t salt, int count)
 	return(retval);
 }
 
+int
+des_cipher(const char *in, char *out, int32_t salt, int count)
+{
+	return _des_do_cipher(in, out, salt, count, g_en_keysl, g_en_keysr);
+}
+
 static int
 crypt_hashpass(const char *key, const char *setting, char *output)
 {
+	u_int32_t	en_keysl[16], en_keysr[16];
 	int		i;
 	u_int32_t	count, salt, l, r0, r1, saltbits, keybuf[2];
 	u_char		*p, *q;
@@ -581,7 +579,7 @@ crypt_hashpass(const char *key, const char *setting, char *output)
 		if ((*q++ = *key << 1))
 			key++;
 	}
-	if (des_setkey((char *) keybuf))
+	if (_des_do_setkey((char *)keybuf, en_keysl, en_keysr))
 		return(-1);
 
 	if (*setting == _PASSWORD_EFMT1) {
@@ -600,7 +598,7 @@ crypt_hashpass(const char *key, const char *setting, char *output)
 			/*
 			 * Encrypt the key with itself.
 			 */
-			if (des_cipher((char *)keybuf, (char *)keybuf, 0, 1))
+			if (_des_do_cipher((char *)keybuf, (char *)keybuf, 0, 1, en_keysl, en_keysr))
 				return(-1);
 			/*
 			 * And XOR with the next 8 characters of the key.
@@ -610,7 +608,7 @@ crypt_hashpass(const char *key, const char *setting, char *output)
 					*key)
 				*q++ ^= *key++ << 1;
 
-			if (des_setkey((char *) keybuf))
+			if (_des_do_setkey((char *)keybuf, en_keysl, en_keysr))
 				return(-1);
 		}
 		strlcpy((char *)output, setting, 10);
@@ -650,7 +648,7 @@ crypt_hashpass(const char *key, const char *setting, char *output)
 	/*
 	 * Do it.
 	 */
-	if (_des_do_des(0, 0, &r0, &r1, count, saltbits))
+	if (_des_do_des(0, 0, &r0, &r1, count, saltbits, en_keysl, en_keysr))
 		return(-1);
 	/*
 	 * Now encode the result...
