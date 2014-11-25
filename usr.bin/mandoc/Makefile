@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.83 2014/10/30 00:05:02 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.84 2014/11/25 22:20:22 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -45,7 +45,7 @@ LIBMDOC_OBJS =	mdoc_argv.o mdoc_hash.o mdoc_macro.o mdoc_validate.o \
 LIBMAN_OBJS =	man.o man_hash.o man_macro.o man_validate.o
 LIBROFF_OBJS =	roff.o eqn.o tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
-		mandoc.o mandoc_aux.o chars.o msec.o read.o
+		mandoc.o mandoc_aux.o chars.o msec.o preconv.o read.o
 HTML_OBJS =	html.o mdoc_html.o man_html.o tbl_html.o eqn_html.o out.o
 CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
 		mansearch.o mansearch_const.o cgi.o
