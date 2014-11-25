@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.25 2014/07/18 06:20:36 jmc Exp $
+.\"	$OpenBSD: random.3,v 1.26 2014/11/25 17:40:38 millert Exp $
 .\"
-.Dd $Mdocdate: July 18 2014 $
+.Dd $Mdocdate: November 25 2014 $
 .Dt RANDOM 3
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nm srandomdev ,
 .Nm initstate ,
 .Nm setstate
-.Nd better random number generator; routines for changing generators
+.Nd pseudo-random number generator; routines for changing generators
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft long
@@ -186,5 +186,5 @@ functions appeared in
 .Sh AUTHORS
 .An Earl T. Cohen
 .Sh BUGS
-About 2/3 the speed of
-.Xr rand 3 .
+The historical implementation used to have very weak seeding.
+As a result, the random sequence did not vary much with the seed.
