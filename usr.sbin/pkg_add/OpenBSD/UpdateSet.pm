@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.75 2014/02/04 18:06:01 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.76 2014/11/25 14:16:15 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -110,6 +110,8 @@ sub cleanup
 		$self->{errorinfo} //= $errorinfo;
 	}
 	delete $self->{solver};
+	delete $self->{known_mandirs};
+	delete $self->{known_displays};
 	$self->mark_as_finished;
 }
 

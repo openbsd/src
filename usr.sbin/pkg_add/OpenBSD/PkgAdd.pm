@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.76 2014/11/21 15:07:09 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.77 2014/11/25 14:16:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -774,9 +774,6 @@ sub really_add
 	if ($set->older_to_do) {
 		$replacing = 1;
 	}
-#	if (defined $plist->{old_libs}) {
-#		$replacing = 1;
-#	}
 	$state->{replacing} = $replacing;
 
 	my $handler = sub {
@@ -923,9 +920,26 @@ sub newer_is_bad_arch
 	return 0;
 }
 
+sub may_tie_files
+{
+	my ($set, $state) = @_;
+	if ($set->newer > 0 && $set->older_to_do > 0 && !$state->defines('donttie')) {
+		my $sha = {};
+
+		for my $o ($set->older_to_do) {
+			$o->{plist}->hash_files($sha, $state);
+		}
+		for my $n ($set->newer) {
+			$n->{plist}->tie_files($sha, $state);
+		}
+	}
+}
+
 sub process_set
 {
 	my ($self, $set, $state) = @_;
+
+	$state->{current_set} = $set;
 
 	if (!$state->updater->process_set($set, $state)) {
 		return ();
@@ -1026,16 +1040,7 @@ sub process_set
 			return ();
 		}
 	}
-	if ($set->newer > 0 && $set->older_to_do > 0 && !$state->defines('donttie')) {
-		my $sha = {};
-
-		for my $o ($set->older_to_do) {
-			$o->{plist}->hash_files($sha, $state);
-		}
-		for my $n ($set->newer) {
-			$n->{plist}->tie_files($sha, $state);
-		}
-	}
+	may_tie_files($set, $state);
 	if ($set->newer > 0 || $set->older_to_do > 0) {
 		for my $h ($set->newer) {
 			$h->plist->set_infodir($h->location->info);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.139 2014/11/21 15:07:09 espie Exp $
+# $OpenBSD: Delete.pm,v 1.140 2014/11/25 14:16:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -679,7 +679,7 @@ package OpenBSD::PackingElement::FDISPLAY;
 sub delete
 {
 	my ($self, $state) = @_;
-	$state->{known_displays}{$self->{d}->key} = 1;
+	$state->{current_set}{known_displays}{$self->{d}->key} = 1;
 	$self->SUPER::delete($state);
 }
 
@@ -688,7 +688,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $d = $self->{d};
-	if (!$state->{known_displays}{$self->{d}->key}) {
+	if (!$state->{current_set}{known_displays}{$self->{d}->key}) {
 		$self->prepare($state);
 	}
 	$self->SUPER::delete($state);
@@ -698,7 +698,7 @@ package OpenBSD::PackingElement::Mandir;
 sub delete
 {
 	my ($self, $state) = @_;
-	$state->{knownmandirs}{$self->fullname} = 1;
+	$state->{current_set}{known_mandirs}{$self->fullname} = 1;
 	$self->SUPER::delete($state);
 }
 

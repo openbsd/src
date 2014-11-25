@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.162 2014/11/21 15:07:09 espie Exp $
+# $OpenBSD: Add.pm,v 1.163 2014/11/25 14:16:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -694,7 +694,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	if (!$state->{knownmandirs}{$self->fullname}) {
+	if (!$state->{current_set}{known_mandirs}{$self->fullname}) {
 		$state->log("You may wish to add #1 to /etc/man.conf", 
 		    $self->fullname);
 	}
@@ -883,7 +883,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	my $d = $self->{d};
-	if (!$state->{known_displays}{$self->{d}->key}) {
+	if (!$state->{current_set}{known_displays}{$self->{d}->key}) {
 		$self->prepare($state);
 	}
 	$self->SUPER::install($state);
@@ -893,7 +893,7 @@ package OpenBSD::PackingElement::FUNDISPLAY;
 sub find_extractible
 {
 	my ($self, $state, $wanted, $tied) = @_;
-	$state->{known_displays}{$self->{d}->key} = 1;
+	$state->{current_set}{known_displays}{$self->{d}->key} = 1;
 	$self->SUPER::find_extractible($state, $wanted, $tied);
 }
 
