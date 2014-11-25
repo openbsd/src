@@ -1,4 +1,4 @@
-/*	$Id: tbl_opts.c,v 1.5 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: tbl_opts.c,v 1.6 2014/11/25 06:39:20 bentley Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -178,7 +178,7 @@ again:	/*
 	 *
 	 * options	::= option_list [:space:]* [;][\n]
 	 * option_list	::= option option_tail
-	 * option_tail	::= [:space:]+ option_list |
+	 * option_tail	::= [,:space:]+ option_list |
 	 *		::= epsilon
 	 * option	::= [:alpha:]+ args
 	 * args		::= [:space:]* [(] [:alpha:]+ [)]
@@ -209,7 +209,7 @@ again:	/*
 
 	buf[i] = '\0';
 
-	while (isspace((unsigned char)p[*pos]))
+	while (isspace((unsigned char)p[*pos]) || p[*pos] == ',')
 		(*pos)++;
 
 	/*
