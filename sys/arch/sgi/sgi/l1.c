@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.8 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: l1.c,v 1.9 2014/11/25 19:08:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -111,7 +111,7 @@ l1_serial_getc(int16_t nasid)
 
 	if (n == 0) {
 #ifdef L1_DEBUG
-		printf("%s: RX timeout, lsr %02x\n", __func__, lsr);
+		printf("%s: RX timeout, lsr %02llx\n", __func__, lsr);
 #endif
 		return -1;
 	}
@@ -134,7 +134,7 @@ l1_serial_putc(int16_t nasid, u_char val)
 
 	if (n == 0) {
 #ifdef L1_DEBUG
-		printf("%s: TX timeout, lsr %02x\n", __func__, lsr);
+		printf("%s: TX timeout, lsr %02llx\n", __func__, lsr);
 #endif
 		return EWOULDBLOCK;
 	}
@@ -608,7 +608,7 @@ l1_read_board_ia(int16_t nasid, int type, u_char **ria, size_t *rialen)
 
 	if (pktlen < 6) {
 #ifdef L1_DEBUG
-		printf("truncated response (length %d)\n", pktlen);
+		printf("truncated response (length %zu)\n", pktlen);
 #endif
 		return EIO;
 	}
@@ -688,7 +688,7 @@ l1_read_board_ia(int16_t nasid, int type, u_char **ria, size_t *rialen)
 
 		if (pktlen < 6) {
 #ifdef L1_DEBUG
-			printf("truncated response (length %d)\n", pktlen);
+			printf("truncated response (length %zu)\n", pktlen);
 #endif
 			rc = EIO;
 			goto fail;
@@ -743,7 +743,7 @@ l1_read_board_ia(int16_t nasid, int type, u_char **ria, size_t *rialen)
 		memcpy(ia + iapos, chunk, chunklen);
 		iapos += chunklen;
 #ifdef L1_DEBUG
-		printf("got %02x bytes of eeprom, %x/%x\n",
+		printf("got %02zx bytes of eeprom, %zx/%zx\n",
 		    chunklen, iapos, ialen);
 #endif
 	}
@@ -953,7 +953,7 @@ l1_exec_command(int16_t nasid, const char *cmd)
 
 	if (pktlen < 6) {
 #ifdef L1_DEBUG
-		printf("truncated response (length %d)\n", pktlen);
+		printf("truncated response (length %zu)\n", pktlen);
 #endif
 		return EIO;
 	}
@@ -1042,7 +1042,7 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 
 	if (pktlen < 6) {
 #ifdef L1_DEBUG
-		printf("truncated response (length %d)\n", pktlen);
+		printf("truncated response (length %zu)\n", pktlen);
 #endif
 		return EIO;
 	}
@@ -1122,7 +1122,7 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 
 		if (pktlen < 6) {
 #ifdef L1_DEBUG
-			printf("truncated response (length %d)\n", pktlen);
+			printf("truncated response (length %zu)\n", pktlen);
 #endif
 			rc = EIO;
 			goto fail;
@@ -1177,7 +1177,7 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 		memcpy(spd + spdpos, chunk, chunklen);
 		spdpos += chunklen;
 #ifdef L1_DEBUG
-		printf("got %02x bytes of eeprom, %x/%x\n",
+		printf("got %02zx bytes of eeprom, %zx/%zx\n",
 		    chunklen, spdpos, spdlen);
 #endif
 	}
@@ -1190,4 +1190,71 @@ fail:
 	if (spd != NULL)
 		free(spd, M_DEVBUF, 0);
 	return rc;
+}
+
+int
+l1_display(int16_t nasid, int down, const char *message)
+{
+	char line[1 + 12];
+	u_char pkt[64];	/* command packet buffer */
+	size_t pktlen;
+	uint32_t data;
+	int rc;
+
+	if (sys_config.system_subtype == IP35_FUEL)
+		return ENXIO;
+
+	/* pad the line with spaces and truncate at 12 chars */
+	(void)snprintf(line, sizeof line, "%s            ", message);
+
+	/*
+	 * Build the command packet.
+	 */
+	pktlen = l1_command_build(pkt, sizeof pkt,
+	    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
+	    down ? L1_REQ_DISP2 : L1_REQ_DISP1, 1,
+	    L1_ARG_ASCII, line);
+	if (pktlen > sizeof pkt) {
+#ifdef DIAGNOSTIC
+		panic("%s: L1 command packet too large (%zu) for buffer",
+		    __func__, pktlen);
+#endif
+		return ENOMEM;
+	}
+
+	if (l1_packet_put(nasid, pkt, pktlen) != 0)
+		return EWOULDBLOCK;
+
+	pktlen = sizeof pkt;
+	if (l1_receive_response(nasid, pkt, &pktlen) != 0)
+		return EWOULDBLOCK;
+
+	if (pktlen < 6) {
+#ifdef L1_DEBUG
+		printf("truncated response (length %zu)\n", pktlen);
+#endif
+		return EIO;
+	}
+
+	/*
+	 * Check the response code.
+	 */
+
+	data = l1_packet_get_be32(&pkt[1]);
+	rc = l1_response_to_errno(data);
+	if (rc != 0)
+		return rc;
+
+	/*
+	 * We do not expect anything in return.
+	 */
+
+	if (pkt[5] != 0) {
+#ifdef L1_DEBUG
+		printf("unexpected L1 response: %d values\n", pkt[5]);
+#endif
+		return EIO;
+	}
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.h,v 1.5 2010/05/09 18:37:47 miod Exp $	*/
+/*	$OpenBSD: l1.h,v 1.6 2014/11/25 19:08:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -92,6 +92,7 @@ struct spdmem_attach_args {
 	int				dimm;
 };
 
+int	l1_display(int16_t, int, const char *);
 int	l1_exec_command(int16_t, const char *);
 int	l1_get_brick_ethernet_address(int16_t, uint8_t *);
 int	l1_get_brick_spd_record(int16_t, int, u_char **, size_t *);

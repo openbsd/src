@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.64 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.65 2014/11/25 19:08:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -361,6 +361,8 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 	currentnasid = nasid;
 	bzero(&u, sizeof u);
 	if (ip35) {
+		l1_display(nasid, TRUE, "OpenBSD/sgi");
+
 		u.maa.maa_name = "spdmem";
 		u.maa.maa_nasid = nasid;
 		for (dimm = 0; dimm < L1_SPD_DIMM_MAX; dimm++) {
