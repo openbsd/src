@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.242 2014/11/24 02:03:37 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.243 2014/11/25 01:45:25 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,7 +62,7 @@ ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
 #ami*		at pci?
 pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
 qlw*		at pci?		# QLogic ISP SCSI
-qla*		at pci?		# QLogic ISP 2[123]xx FibreChannel
+#qla*		at pci?		# QLogic ISP 2[123]xx FibreChannel
 qle*		at pci?		# QLogic ISP 2[45]xx FibreChannel
 mpi*		at pci?		# LSI Logic MPT-Fusion Message Passing Interface
 arc*		at pci?		# Areca RAID Controllers
