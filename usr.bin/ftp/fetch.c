@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.134 2014/10/31 13:48:21 jsing Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.135 2014/11/25 08:22:09 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -514,6 +514,10 @@ noslash:
 		}
 	}
 #endif /* !SMALL */
+
+	/* ensure consistent order of the output */
+	if (verbose)
+		setvbuf(ttyout, NULL, _IOLBF, 0);
 
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
