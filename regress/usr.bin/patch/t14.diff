@@ -1,0 +1,13 @@
+1d0
+< line 0
+2a2
+> line between 1 and 2
+4,5c4,5
+< line 3
+< line 4
+---
+> adjusted line 3
+> adjusted line 4
+7,8d6
+< line 6
+< line 7

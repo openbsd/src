@@ -1,0 +1,19 @@
+*** t15.orig	Tue Nov 25 15:33:48 2014
+--- t15.in	Tue Nov 25 15:33:56 2014
+***************
+*** 1,8 ****
+- line 0
+  line 1
+  line 2
+! line 3
+! line 4
+  line 5
+- line 6
+- line 7
+--- 1,6 ----
+  line 1
++ line between 1 and 2
+  line 2
+! adjusted line 3
+! adjusted line 4
+  line 5
