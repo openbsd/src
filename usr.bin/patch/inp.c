@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.40 2014/11/22 15:49:28 tobias Exp $	*/
+/*	$OpenBSD: inp.c,v 1.41 2014/11/25 10:22:08 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -303,7 +303,7 @@ plan_a(const char *filename)
 	/* now check for revision, if any */
 
 	if (revision != NULL) {
-		if (!rev_in_string(i_womp)) {
+		if (i_womp == NULL || !rev_in_string(i_womp)) {
 			if (force) {
 				if (verbose)
 					say("Warning: this file doesn't appear "
