@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.121 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.122 2014/11/25 15:35:10 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -275,9 +275,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 #endif /* INET6 */
 		{
 			if ((sin->sin_addr.s_addr == INADDR_ANY) ||
+			    (sin->sin_addr.s_addr == INADDR_BROADCAST) ||
 			    IN_MULTICAST(sin->sin_addr.s_addr) ||
-			    in_broadcast(sin->sin_addr, NULL,
-			    inp->inp_rtableid)) {
+			    in_broadcast(sin->sin_addr, inp->inp_rtableid)) {
 				error = EINVAL;
 				break;
 			}

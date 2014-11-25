@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.111 2014/11/24 12:43:54 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.112 2014/11/25 15:35:10 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -876,36 +876,19 @@ in_scrubprefix(struct in_ifaddr *ia0)
 }
 
 /*
- * Return 1 if the address might be a local broadcast address.
+ * Return 1 if the address is a local broadcast address.
  */
 int
-in_broadcast(struct in_addr in, struct ifnet *ifp, u_int rtableid)
+in_broadcast(struct in_addr in, u_int rtableid)
 {
-	struct ifnet *ifn, *if_first, *if_target;
+	struct ifnet *ifn;
 	struct ifaddr *ifa;
 	u_int rdomain;
 
 	rdomain = rtable_l2(rtableid);
 
-	if (in.s_addr == INADDR_BROADCAST ||
-	    in.s_addr == INADDR_ANY)
-		return 1;
-
-	if (ifp == NULL) {
-	  	if_first = TAILQ_FIRST(&ifnet);
-		if_target = 0;
-	} else {
-		if_first = ifp;
-		if_target = TAILQ_NEXT(ifp, if_list);
-	}
-
 #define ia (ifatoia(ifa))
-	/*
-	 * Look through the list of addresses for a match
-	 * with a broadcast address.
-	 * If ifp is NULL, check against all the interfaces.
-	 */
-        for (ifn = if_first; ifn != if_target; ifn = TAILQ_NEXT(ifn, if_list)) {
+	TAILQ_FOREACH(ifn, &ifnet, if_list) {
 		if (ifn->if_rdomain != rdomain)
 			continue;
 		if ((ifn->if_flags & IFF_BROADCAST) == 0)

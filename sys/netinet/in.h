@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.109 2014/07/12 16:25:08 guenther Exp $	*/
+/*	$OpenBSD: in.h,v 1.110 2014/11/25 15:35:10 mpi Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -782,7 +782,7 @@ extern	   int inetctlerrmap[];
 extern	   struct ifqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
 
-int	   in_broadcast(struct in_addr, struct ifnet *, u_int);
+int	   in_broadcast(struct in_addr, u_int);
 int	   in_canforward(struct in_addr);
 int	   in_cksum(struct mbuf *, int);
 int	   in4_cksum(struct mbuf *, u_int8_t, int, int);
