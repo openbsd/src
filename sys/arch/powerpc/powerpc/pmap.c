@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.133 2014/11/18 15:20:15 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.134 2014/11/25 10:45:07 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -112,9 +112,6 @@ u_int	pmap_ptab_mask;
 #define HTABSIZE_64	(ffs(pmap_ptab_cnt) - 12)
 
 static u_int usedsr[NPMAPS / sizeof(u_int) / 8];
-paddr_t zero_page;
-paddr_t copy_src_page;
-paddr_t copy_dst_page;
 
 struct pte_desc {
 	/* Linked list of phys -> virt entries */
@@ -1220,27 +1217,36 @@ pmap_collect(pmap_t pm)
 void
 pmap_zero_page(struct vm_page *pg)
 {
-	bzero((void *)pmap_map_direct(pg), PAGE_SIZE);
+	vaddr_t va = pmap_map_direct(pg);
+	int i;
+
+	/*
+	 * Loop over & zero cache lines.  This code assumes that 64-bit
+	 * CPUs have 128-byte cache lines.  We explicitely use ``dcbzl''
+	 * here because we do not clear the DCBZ_SIZE bit of the HID5
+	 * register in order to be compatible with code using ``dcbz''
+	 * and assuming that cache line size is 32.
+	 */
+	if (ppc_proc_is_64b) {
+		for (i = 0; i < PAGE_SIZE; i += 128)
+			asm volatile ("dcbzl 0,%0" :: "r"(va + i));
+		return;
+	}
+
+	for (i = 0; i < PAGE_SIZE; i += CACHELINESIZE)
+		asm volatile ("dcbz 0,%0" :: "r"(va + i));
 }
 
 /*
- * copy the given physical page with zeros.
+ * Copy a page.
  */
 void
 pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
-	paddr_t srcpa = VM_PAGE_TO_PHYS(srcpg);
-	paddr_t dstpa = VM_PAGE_TO_PHYS(dstpg);
-	/* simple_lock(&pmap_copy_page_lock); */
+	vaddr_t srcva = pmap_map_direct(srcpg);
+	vaddr_t dstva = pmap_map_direct(dstpg);
 
-	pmap_kenter_pa(copy_src_page, srcpa, PROT_READ);
-	pmap_kenter_pa(copy_dst_page, dstpa, PROT_READ | PROT_WRITE);
-
-	bcopy((void *)copy_src_page, (void *)copy_dst_page, PAGE_SIZE);
-	
-	pmap_kremove_pg(copy_src_page);
-	pmap_kremove_pg(copy_dst_page);
-	/* simple_unlock(&pmap_copy_page_lock); */
+	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 }
 
 int pmap_id_avail = 0;
@@ -1702,12 +1708,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		}
 	}
 
-	zero_page = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
-	ppc_kvm_stolen += PAGE_SIZE;
-	copy_src_page = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
-	ppc_kvm_stolen += PAGE_SIZE;
-	copy_dst_page = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
-	ppc_kvm_stolen += PAGE_SIZE;
 	ppc_kvm_stolen += reserve_dumppages( (caddr_t)(VM_MIN_KERNEL_ADDRESS +
 	    ppc_kvm_stolen));
 
