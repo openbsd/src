@@ -9,9 +9,9 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.\"	$OpenBSD: rand48.3,v 1.15 2014/09/08 01:27:54 schwarze Exp $
+.\"	$OpenBSD: rand48.3,v 1.16 2014/11/25 17:26:34 millert Exp $
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: November 25 2014 $
 .Dt RAND48 3
 .Os
 .Sh NAME
@@ -46,6 +46,12 @@
 .Ft void
 .Fn lcong48 "unsigned short p[7]"
 .Sh DESCRIPTION
+.Bf -symbolic
+This interface is not cryptographically secure, so consider using
+.Xr arc4random 3
+instead.
+.Ef
+.Pp
 The
 .Fn rand48
 family of functions generates pseudo-random numbers using a linear
@@ -154,9 +160,6 @@ It is thus not possible to use values greater than 0xffff as the addend.
 Note that all three methods of seeding the random number generator
 always also set the multiplicand and addend for any of the six
 generator calls.
-.Pp
-For a more powerful random number generator, see
-.Xr arc4random 3 .
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr rand 3 ,
