@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2014/07/11 22:28:51 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/11/25 23:13:54 daniel Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
 # p5-Hash-Merge		merge associative arrays
+# p5-YAML               YAML ain't a markup language
 #
 # Check wether all required perl packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
@@ -10,6 +11,7 @@
 PERL_REQUIRE != perl -Mstrict -Mwarnings -e ' \
     eval { require AnyEvent } or print $@; \
     eval { require Hash::Merge } or print $@; \
+    eval { require YAML } or print $@; \
 '
 .if ! empty (PERL_REQUIRE)
 regress:
@@ -17,10 +19,10 @@ regress:
 	@echo install these perl packages for additional tests
 .endif
 
-# Fill out these variables with you own system parameters
+# Fill out these variables with your own system parameters
 # You need a tun device and an unused /24 IPv4 network.
 
-TUNNUM ?=		6
+TUNNUM ?=		3
 TUNIP ?=		10.188.6.17
 RTRID ?=		10.188.0.17
 
