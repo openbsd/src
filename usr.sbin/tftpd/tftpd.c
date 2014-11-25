@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.23 2014/11/19 11:48:39 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.24 2014/11/25 23:52:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -453,8 +453,16 @@ rewrite_map(struct tftp_client *client, const char *filename)
 void
 rewrite_req(int fd, short events, void *arg)
 {
-	if (evbuffer_write(rwmap->wrbuf, fd) == -1)
-		lerr(1, "rwmap read");
+	if (evbuffer_write(rwmap->wrbuf, fd) == -1) {
+		switch (errno) {
+		case EINTR:
+		case EAGAIN:
+			event_add(&rwmap->wrev, NULL);
+			return;
+		}
+
+		lerr(1, "rewrite socket write");
+	}
 
 	if (EVBUFFER_LENGTH(rwmap->wrbuf))
 		event_add(&rwmap->wrev, NULL);
@@ -467,8 +475,19 @@ rewrite_res(int fd, short events, void *arg)
 	char *filename;
 	size_t len;
 
-	if (evbuffer_read(rwmap->rdbuf, fd, MAXPATHLEN) == -1)
-		lerr(1, "rwmap read");
+	switch (evbuffer_read(rwmap->rdbuf, fd, MAXPATHLEN)) {
+	case -1:
+		switch (errno) {
+		case EINTR:
+		case EAGAIN:
+			return;
+		}
+		lerr(1, "rewrite socket read");
+	case 0:
+		lerrx(1, "rewrite socket closed");
+	default:
+		break;
+	}
 
 	while ((filename = evbuffer_readln(rwmap->rdbuf, &len,
 	    EVBUFFER_EOL_LF)) != NULL) {
