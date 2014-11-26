@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2014/07/12 02:47:51 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2014/11/26 18:34:51 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -141,7 +141,7 @@ top:
 		if (fstat(STDIN_FILENO, &sb) || !S_ISFIFO(sb.st_mode)) {
 			if (lseek(STDIN_FILENO, 0, SEEK_CUR)) {
 				interactive = 1;
-				setlinebuf(stdout);
+				setvbuf(stdout, NULL, _IOLBF, 0);
 			}
 		}
 	}

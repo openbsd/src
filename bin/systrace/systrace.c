@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.60 2014/08/25 07:50:25 doug Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.61 2014/11/26 18:34:51 millert Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -503,7 +503,7 @@ requestor_start(char *path, int docradle)
 				err(1, "dup2");
 			if (dup2(pair[1], fileno(stdout)) == -1)
 				err(1, "dup2");
-			setlinebuf(stdout);
+			setvbuf(stdout, NULL, _IOLBF, 0);
 
 			close(pair[1]);
 		}
@@ -524,7 +524,7 @@ requestor_start(char *path, int docradle)
 
 		close(pair[0]);
 
-		setlinebuf(stdout);
+		setvbuf(stdout, NULL, _IOLBF, 0);
 
 		connected = 1;
 	}

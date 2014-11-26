@@ -1,4 +1,4 @@
-/*	$OpenBSD: cradle.c,v 1.7 2014/10/25 03:17:45 lteo Exp $	*/
+/*	$OpenBSD: cradle.c,v 1.8 2014/11/26 18:34:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Marius Aamodt Eriksen <marius@monkey.org>
@@ -241,7 +241,7 @@ cradle_start(char *path, char *uipath, char *guipath)
 		err(1, "dup2");
 	if (dup2(s, fileno(stdout)) == -1)
 		err(1, "dup2");
-	setlinebuf(stdout);
+	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	connected = 1;
 }

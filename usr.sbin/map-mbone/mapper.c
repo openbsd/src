@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.20 2011/09/21 18:48:43 jsg Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.21 2014/11/26 18:34:51 millert Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -810,7 +810,7 @@ int main(int argc, char *argv[])
     init_igmp();
     setuid(getuid());
 
-    setlinebuf(stderr);
+    setvbuf(stderr, NULL, _IOLBF, 0);
 
     while ((ch = getopt(argc, argv, "d::fgnr:t:")) != -1) {
 	    switch (ch) {

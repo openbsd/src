@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.27 2014/10/08 04:08:13 doug Exp $	*/
+/*	$OpenBSD: rup.c,v 1.28 2014/11/26 18:34:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -314,7 +314,7 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		}
 
-	setlinebuf(stdout);
+	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	if (argc == optind)
 		allhosts();

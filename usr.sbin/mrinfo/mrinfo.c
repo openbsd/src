@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid");
 
-	setlinebuf(stderr);
+	setvbuf(stderr, NULL, _IOLBF, 0);
 
 	while ((ch = getopt(argc, argv, "d::nr:t:")) != -1) {
 		switch (ch) {

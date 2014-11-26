@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.45 2014/10/29 04:39:02 deraadt Exp $	*/
+/*	$OpenBSD: cron.c,v 1.46 2014/11/26 18:34:52 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -72,10 +72,8 @@ main(int argc, char *argv[]) {
 
 	setlocale(LC_ALL, "");
 
-#if defined(BSD)
-	setlinebuf(stdout);
-	setlinebuf(stderr);
-#endif
+	setvbuf(stdout, NULL, _IOLBF, 0);
+	setvbuf(stderr, NULL, _IOLBF, 0);
 
 	NoFork = 0;
 	parse_args(argc, argv);

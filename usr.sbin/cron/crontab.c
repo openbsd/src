@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.64 2011/08/22 19:32:42 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.65 2014/11/26 18:34:52 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -82,9 +82,7 @@ main(int argc, char *argv[]) {
 
 	setlocale(LC_ALL, "");
 
-#if defined(BSD)
-	setlinebuf(stderr);
-#endif
+	setvbuf(stderr, NULL, _IOLBF, 0);
 	parse_args(argc, argv);		/* sets many globals, opens a file */
 	set_cron_cwd();
 	if (!allowed(RealUser, CRON_ALLOW, CRON_DENY)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.42 2014/04/22 12:36:36 okan Exp $	*/
+/*	$OpenBSD: last.c,v 1.43 2014/11/26 18:34:51 millert Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 		exit(0);
 
 	if (argc) {
-		setlinebuf(stdout);
+		setvbuf(stdout, NULL, _IOLBF, 0);
 		for (argv += optind; *argv; ++argv) {
 #define	COMPATIBILITY
 #ifdef	COMPATIBILITY

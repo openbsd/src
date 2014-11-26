@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.28 2011/07/04 07:06:49 guenther Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.29 2014/11/26 18:34:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			++follow;
-			setlinebuf(stdout);
+			setvbuf(stdout, NULL, _IOLBF, 0);
 			break;
 		case 'j':
 			++jflag;

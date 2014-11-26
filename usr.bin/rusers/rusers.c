@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.32 2014/10/08 04:08:47 doug Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.33 2014/11/26 18:34:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 			termwidth = 80;
 	} else
 		termwidth = 80;
-	setlinebuf(stdout);
+	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	if (argc == optind) {
 		if (hflag || iflag || uflag) {

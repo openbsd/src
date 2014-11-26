@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.11 2014/10/20 23:57:13 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.12 2014/11/26 18:34:51 millert Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,7 +45,7 @@ log_open(const char *path)
 	if (log_file == NULL)
 		return;
 
-	setlinebuf(log_file);
+	setvbuf(log_file, NULL, _IOLBF, 0);
 	event_set_log_callback(log_event_cb);
 
 	tzset();

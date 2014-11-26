@@ -1003,7 +1003,7 @@ main(int argc, char **argv)
 	struct statctx *udp_sc = NULL;
 
 	/* Init world */
-	setlinebuf(stdout);
+	setvbuf(stdout, NULL, _IOLBF, 0);
 	ptb = &tcpbench;
 	ptb->dummybuf_len = 0;
 	ptb->Sflag = ptb->sflag = ptb->vflag = 0;

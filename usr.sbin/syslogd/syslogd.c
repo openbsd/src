@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.130 2014/11/01 12:07:41 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.131 2014/11/26 18:34:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -347,7 +347,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (Debug)
-		setlinebuf(stdout);
+		setvbuf(stdout, NULL, _IOLBF, 0);
 
 	if ((fd = nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
 		logerror("Couldn't open /dev/null");

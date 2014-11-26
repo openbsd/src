@@ -89,7 +89,6 @@ typedef void (*ihfunc_t)(int);
 #ifdef SYSV
 #define bcopy(a, b, c)	memcpy(b, a, c)
 #define bzero(s, n)	memset((s), 0, (n))
-#define setlinebuf(s)	setvbuf(s, NULL, _IOLBF, 0)
 #define signal(s,f)	sigset(s,f)
 #endif
 

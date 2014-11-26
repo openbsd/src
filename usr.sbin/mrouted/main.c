@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, "must be root\n");
 	exit(1);
     }
-    setlinebuf(stderr);
+    setvbuf(stderr, NULL, _IOLBF, 0);
 
     while ((ch = getopt(argc, argv, "c:d::p")) != -1) {
 	    switch (ch) {
