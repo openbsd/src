@@ -1,4 +1,4 @@
-#	$OpenBSD: genfth.cf,v 1.4 2008/06/26 05:42:13 ray Exp $
+#	$OpenBSD: genfth.cf,v 1.5 2014/11/26 19:57:41 stsp Exp $
 #	$NetBSD: genfth.cf,v 1.1 2000/08/20 14:58:46 mrg Exp $
 
 #
@@ -69,10 +69,32 @@
 #
 
 include <sys/param.h>
+include <sys/disklabel.h>
 include <sys/time.h>
+
+include <dev/sun/disklabel.h>
+
 include <ufs/ufs/dinode.h>
 include <ufs/ufs/dir.h>
 include <ufs/ffs/fs.h>
+
+#ifdef SOFTRAID
+include <sys/stdarg.h> /* XXX */
+include <sys/device.h>
+include <sys/sensors.h>
+include <dev/softraidvar.h>
+#endif
+
+#
+# sun disklabel
+#
+struct sun_disklabel
+member sl_types
+member sl_magic
+
+define sun_dkmagic	SUN_DKMAGIC
+define fs_bsdffs	FS_BSDFFS
+define fs_raid		FS_RAID
 
 #
 # ufs sizing constants
@@ -149,3 +171,22 @@ define	rootino		ROOTINO
 define	ifmt		IFMT
 define	ifdir		IFDIR
 define	iflnk		IFLNK
+
+#
+# softraid
+#
+#ifdef SOFTRAID
+struct	sr_meta_invariant
+member	ssd_magic
+member	ssd_version
+member	ssd_vol_flags
+
+define	sr_magic1	(SR_MAGIC >> 32)
+define	sr_magic2	(SR_MAGIC & 0xffffffff)
+define	sr_meta_offset	SR_META_OFFSET
+define	sr_meta_size	SR_META_SIZE
+define	sr_boot_offset	SR_BOOT_LOADER_OFFSET
+define	sr_boot_size	SR_BOOT_LOADER_SIZE
+
+define	bioc_scbootable	BIOC_SCBOOTABLE
+#endif

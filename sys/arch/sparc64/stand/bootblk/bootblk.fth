@@ -1,4 +1,4 @@
-\	$OpenBSD: bootblk.fth,v 1.7 2010/02/27 22:23:16 kettenis Exp $
+\	$OpenBSD: bootblk.fth,v 1.8 2014/11/26 19:57:41 stsp Exp $
 \	$NetBSD: bootblk.fth,v 1.3 2001/08/15 20:10:24 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
@@ -126,10 +126,9 @@ fload	assym.fth.h
 sbsize buffer: sb-buf
 -1 value boot-ihandle
 dev_bsize value bsize
-0 value raid-offset	\ Offset if it's a raid-frame partition
 
 : strategy ( addr size start -- nread )
-   raid-offset + bsize * 0 " seek" boot-ihandle $call-method
+   bsize * 0 " seek" boot-ihandle $call-method
    -1 = if 
       ." strategy: Seek failed" cr
       abort
@@ -317,7 +316,7 @@ h# 2000 buffer: indir-block
 
 \
 \ Read inode into cur-inode -- uses cur-block
-\ 
+\
 
 : read-inode ( inode fs -- )
    twiddle				( inode fs -- inode fs )
@@ -356,7 +355,7 @@ h# 2000 buffer: indir-block
 
 \
 \ Hunt for directory entry:
-\ 
+\
 \ repeat
 \    load a buffer
 \    while entries do
@@ -416,7 +415,7 @@ h# 2000 buffer: indir-block
 ;
 
 : read-super ( sector -- )
-0 " seek" boot-ihandle $call-method
+   0 " seek" boot-ihandle $call-method
    -1 = if 
       ." Seek failed" cr
       abort
@@ -433,21 +432,10 @@ h# 2000 buffer: indir-block
 ;
 
 : ufs-open ( bootpath,len -- )
-   boot-ihandle -1 =  if
-      over cif-open dup 0=  if 		( boot-path len ihandle? )
-         ." Could not open device" space type cr 
-         abort
-      then 				( boot-path len ihandle )
-      to boot-ihandle			\ Save ihandle to boot device
-   then 2drop
    sboff read-super
    sb-buf fs_magic l@ fs_magic_value <>  if
-      64 dup to raid-offset 
-      dev_bsize * sboff + read-super
-      sb-buf fs_magic l@ fs_magic_value <>  if
-         ." Invalid superblock magic" cr
-         abort
-      then
+      ." Invalid superblock magic" cr
+      abort
    then
    sb-buf fs_bsize l@ dup maxbsize >  if
       ." Superblock bsize" space . ." too large" cr
@@ -458,14 +446,11 @@ h# 2000 buffer: indir-block
       abort
    then
    ffs_oldcompat	( fs_bsize -- fs_bsize )
-   dup to cur-blocksize alloc-mem to cur-block    \ Allocate cur-block
+   dup to cur-blocksize alloc-mem to cur-block	\ Allocate cur-block
    boot-debug?  if ." ufs-open complete" cr then
 ;
 
-: ufs-close ( -- ) 
-   boot-ihandle dup -1 <>  if
-      cif-close -1 to boot-ihandle 
-   then
+: ufs-close ( -- )
    cur-block 0<> if
       cur-block cur-blocksize free-mem
    then
@@ -508,7 +493,7 @@ h# 2000 buffer: indir-block
    -rot					( load-file len ino -- pino load-file len )
    \
    \ For each path component
-   \ 
+   \
    begin split-path dup 0<> while	( pino right len left len -- )
       cur-inode is-dir? not  if ." Inode not directory" cr abort then
       boot-debug?  if ." Looking for" space 2dup type space ." in directory..." cr then
@@ -583,6 +568,7 @@ h# 6000 constant loader-base
 : load-file ( load-file len boot-path len -- load-base )
    boot-debug?  if load-file-signon then
    the-file file_SIZEOF 0 fill		\ Clear out file structure
+
    ufs-open 				( load-file len )
    find-file				( )
 
@@ -603,19 +589,128 @@ h# 6000 constant loader-base
    nip					( addr )
 ;
 
-: do-boot ( bootfile -- )
-   ." OpenBSD IEEE 1275 Bootblock 1.3" cr
-   boot-path load-file ( -- load-base )
-   dup 0<> if  " to load-base init-program" evaluate then
+0 value dev-block			\ Buffer for reading device blocks
+0 value dev-blocksize			\ Size of device block buffer
+-1 value dev-blockno
+
+0 value part-type			\ Type of 'a' partition.
+
+: read-disklabel ( )
+   dev-block dev-blocksize 0		\ LABELSECTOR == 0
+   strategy				( buf len start -- nread )
+   dev-blocksize <> if
+      ." Failed to read disklabel" cr
+      abort
+   then
+   dev-block sl_magic w@ dup sun_dkmagic <> if
+      ." Invalid disklabel magic" space . cr
+      abort
+   then drop
+   dev-block sl_types c@ dup to part-type
+   drop
 ;
 
+: is-bootable-softraid? ( -- softraid? )
+   part-type fs_raid <> if false exit then
+
+   dev-block dev-blocksize sr_meta_offset
+   strategy				( buf len block -- nread )
+   dev-blocksize <> if
+      ." Failed to read softraid metadata" cr
+      abort
+   then
+
+   dev-block ssd_magic l@ sr_magic1 <> if false exit then
+   dev-block ssd_magic 4 + l@ sr_magic2 <> if false exit then
+
+   boot-debug? if ." found softraid metadata" cr then
+
+   \ Metadata version must be 4 or greater.
+   dev-block ssd_version l@ dup 4 < if
+      ." softraid version " space . space ." does not support booting" cr
+      abort
+   then drop
+
+   \ Is this softraid volume bootable?
+   dev-block ssd_vol_flags l@ bioc_scbootable and bioc_scbootable <> if
+      ." softraid volume is not bootable" cr
+      abort
+   then
+
+   true
+;
+
+: softraid-boot ( offset size -- load-base )
+   boot-debug? if ." softraid-boot " 2dup . . cr then
+   swap to dev-blockno
+   loader-base
+
+   \ Load boot loader from softraid boot area
+   begin over 0> while
+      dev-block dev-blocksize dev-blockno
+      strategy				( size addr buf len start -- nread )
+      dup dev-blocksize <> if
+         ." softraid-boot: block read failed" cr
+         abort
+      then
+      dev-blockno 1 + to dev-blockno
+      2dup dev-block rot rot		( size addr nread buf addr len )
+      move				( size addr nread )
+      dup rot +				( nread size newaddr )
+      rot rot - swap			( newsize newaddr )
+   repeat
+   2drop
+
+   loader-base
+;
+
+: do-boot ( bootfile -- )
+   ." OpenBSD IEEE 1275 Bootblock 1.4" cr
+
+   \ Open boot device
+   boot-path				( boot-path len )
+   boot-debug? if
+      ." Booting from device" space 2dup type cr
+   then
+   drop
+   cif-open dup 0= if			( ihandle? )
+      ." Could not open device" space type cr
+      abort
+   then
+   to boot-ihandle			\ Save ihandle to boot device
+
+   \ Allocate memory for reading disk blocks
+   dev_bsize dup to dev-blocksize	( blocksize )
+   alloc-mem to dev-block
+
+   \ Read disklabel
+   read-disklabel
+
+   \ Are we booting from a softraid volume?
+   is-bootable-softraid? if
+      sr_boot_offset sr_boot_size dev_bsize *
+      softraid-boot			( blockno size -- load-base )
+   else
+      " /ofwboot" load-file		( -- load-base )
+   then
+
+   \ Free memory for reading disk blocks
+   cur-block 0<> if
+      dev-block dev-blocksize free-mem
+   then
+
+   \ Close boot device
+   boot-ihandle dup -1 <> if
+      cif-close -1 to boot-ihandle 
+   then
+   
+   dup 0<> if " to load-base init-program" evaluate then
+;
 
 boot-args ascii V strchr 0<> swap drop if
- true to boot-debug?
+   true to boot-debug?
 then
 
 boot-args ascii D strchr 0= swap drop if
-  " /ofwboot" do-boot
+   do-boot
 then exit
-
-
