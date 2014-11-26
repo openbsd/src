@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2014/05/31 14:15:53 claudio Exp $
+# $OpenBSD: Makefile,v 1.5 2014/11/26 11:55:08 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -170,6 +170,39 @@ rttest${n}:
 	${RCMD} add -mpath 10.8.1/24 192.0.2.3
 	${RCMD} add -mpath 10.8.1/24 192.0.2.4
 	${RCMD} change -mpath 10.8.1/24 192.0.2.5 && exit 1 || exit 0
+
+# Changing MTU should not change the ifa
+n=	14
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig lo10001 inet6 eui64 
+	${SUDO} ifconfig lo10002 inet6 fd88::1/64
+	${SUDO} ifconfig lo10003 inet6 fd99::1/64
+	${RCMD} add -inet6 fd88::666 fd99::1
+	${RCMD} change fd88::666 -mtu 1500
+	${RCMD} show -inet6 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Changing the ifa should not change the gw
+n=	15
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add 10.0/16 192.0.2.4
+	${RCMD} change 10.0/16 -ifa 192.0.2.2
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Changing ifp should not change the gw
+n=	16
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig lo10001 inet6 eui64 
+	${SUDO} ifconfig lo10002 inet6 fd88::1/64
+	${SUDO} ifconfig lo10003 inet6 fd99::1/64
+	${RCMD} add -inet6 fd88::666 fd99::1
+	${RCMD} change fd88::666 -ifp lo10002
+	${RCMD} show -inet6 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
