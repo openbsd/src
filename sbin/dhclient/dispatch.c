@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.94 2014/11/23 18:22:45 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.95 2014/11/26 00:15:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -51,7 +51,7 @@
 
 struct dhcp_timeout timeout;
 
-void got_one(void);
+void packethandler(void);
 
 void
 get_hw_address(void)
@@ -170,7 +170,7 @@ dispatch(void)
 
 		if ((fds[0].revents & (POLLIN | POLLHUP))) {
 			if (ifi && ifi->linkstat && ifi->bfdesc != -1)
-				got_one();
+				packethandler();
 		}
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
 			if (ifi)
@@ -198,7 +198,7 @@ dispatch(void)
 }
 
 void
-got_one(void)
+packethandler(void)
 {
 	struct sockaddr_in from;
 	struct ether_addr hfrom;
