@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.192 2014/10/09 14:33:51 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.193 2014/11/26 15:52:30 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -38,12 +38,8 @@ stripcom() {
 	} < $_file
 }
 
-sm_echo() {
-	echo "$@" | tee -a ${_WRKDIR}/sysmerge.log
-}
-
 sm_error() {
-	(($#)) && sm_echo "!!!! ERROR: $@"
+	(($#)) && echo "!!!! ERROR: $@"
 
 	# restore sum files from backups or remove the newly created ones
 	for _i in ${_WRKDIR}/{etcsum,xetcsum,examplessum,pkgsum}; do
@@ -64,7 +60,7 @@ sm_error() {
 trap "sm_error; exit 1" 1 2 3 13 15
 
 sm_warn() {
-	(($#)) && sm_echo "**** WARNING: $@" || true
+	(($#)) && echo "**** WARNING: $@" || true
 }
 
 sm_extract_sets() {
@@ -190,7 +186,7 @@ sm_init() {
 		if [[ -f /usr/share/sysmerge/${_i} && \
 			-f ./usr/share/sysmerge/${_i} ]] && \
 			! ${DIFFMODE}; then
-			# redirect stderr; file may not exist
+			# redirect stderr: file may not exist
 			_matchsum=$(sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
 				sed -n 's/^(SHA256) \(.*\): OK$/\1/p')
 			# delete file in temproot if it has not changed since
@@ -222,7 +218,7 @@ sm_init() {
 						[[ -f ${_k} ]] && rm ${_k} && \
 						continue
 				fi
-				# redirect stderr; file may not exist
+				# redirect stderr: file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
 				grep -q "${_cursum}" /usr/share/sysmerge/${_i} && \
 					! grep -q "${_cursum}" ./usr/share/sysmerge/${_i} && \
@@ -321,18 +317,18 @@ sm_install() {
 	case ${TARGET} in
 	/etc/login.conf)
 		if [[ -f /etc/login.conf.db ]]; then
-			sm_echo " (running cap_mkdb(1), needs a relog)"
+			echo " (running cap_mkdb(1), needs a relog)"
 			sm_warn $(cap_mkdb /etc/login.conf 2>&1)
 		else
-			sm_echo
+			echo
 		fi
 		;;
 	/etc/mail/aliases)
-		sm_echo " (running newaliases(8))"
+		echo " (running newaliases(8))"
 		sm_warn $(newaliases 2>&1 >/dev/null)
 		;;
 	*)
-		sm_echo
+		echo
 		;;
 	esac
 }
@@ -348,7 +344,7 @@ sm_add_user_grp() {
 		_u=${_l%%:*}
 		if [[ ${_u} != root ]]; then
 			if ! grep -Eq "^${_u}:" /etc/master.passwd; then
-				sm_echo "===> Adding the ${_u} user"
+				echo "===> Adding the ${_u} user"
 				chpass -la "${_l}" && \
 					set -A _newusr -- ${_newusr[@]} ${_u}
 			fi
@@ -357,7 +353,7 @@ sm_add_user_grp() {
 
 	while IFS=: read -r -- _g _p _gid _rest; do
 		if ! grep -Eq "^${_g}:" /etc/group; then
-			sm_echo "===> Adding the ${_g} group"
+			echo "===> Adding the ${_g} group"
 			groupadd -g ${_gid} ${_g} && \
 				set -A _newgrp -- ${_newgrp[@]} ${_g}
 		fi
@@ -394,7 +390,7 @@ sm_merge_loop() {
 				;;
 			[iI])
 				mv ${COMPFILE}.merged ${COMPFILE}
-				sm_echo -n "\n===> Merging ${TARGET}"
+				echo -n "\n===> Merging ${TARGET}"
 				sm_install || \
 					(echo && sm_warn "problem merging ${TARGET}")
 				_tomerge=false
@@ -424,7 +420,6 @@ sm_merge_loop() {
 				return 1
 				;;
 			'')
-				sm_echo "===> ${COMPFILE} will remain for your consideration"
 				_tomerge=false
 				;;
 			*)
@@ -455,7 +450,7 @@ sm_diff_loop() {
 				# only by CVS Id or that are binaries
 				if [[ -z $(diff -q -I'[$]OpenBSD:.*$' ${TARGET} ${COMPFILE}) ]] || \
 					${FORCE_UPG} || ${IS_BIN}; then
-					sm_echo -n "===> Updating ${TARGET}"
+					echo -n "===> Updating ${TARGET}"
 					sm_install && \
 						_autoinst="${_autoinst}${TARGET}\n" || \
 						(echo && sm_warn "problem updating ${TARGET}")
@@ -475,9 +470,9 @@ sm_diff_loop() {
 			# file does not exist on the target system
 			if ${IS_LINK}; then
 				if ${DIFFMODE}; then
-					sm_echo && _nonexistent=true
+					echo && _nonexistent=true
 				else
-					sm_echo "===> Linking ${TARGET}"
+					echo "===> Linking ${TARGET}"
 					sm_install && \
 						_autoinst="${_autoinst}${TARGET}\n" || \
 						sm_warn "problem creating ${TARGET} link"
@@ -485,9 +480,9 @@ sm_diff_loop() {
 				fi
 			fi
 			if ${DIFFMODE}; then
-				sm_echo && _nonexistent=true
+				echo && _nonexistent=true
 			else
-				sm_echo -n "===> Installing ${TARGET}"
+				echo -n "===> Installing ${TARGET}"
 				sm_install && \
 					_autoinst="${_autoinst}${TARGET}\n" || \
 					(echo && sm_warn "problem installing ${TARGET}")
@@ -518,14 +513,14 @@ sm_diff_loop() {
 			echo "\n===> Deleting ${COMPFILE}"
 			;;
 		[iI])
-			sm_echo
+			echo
 			if ${IS_LINK}; then
-				sm_echo "===> Linking ${TARGET}"
+				echo "===> Linking ${TARGET}"
 				sm_install && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
 					sm_warn "problem creating ${TARGET} link"
 			else
-				sm_echo -n "===> Updating ${TARGET}"
+				echo -n "===> Updating ${TARGET}"
 				sm_install && \
 					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
 					(echo && sm_warn "problem updating ${TARGET}")
@@ -550,7 +545,7 @@ sm_diff_loop() {
 			fi
 			;;
 		'')
-			sm_echo "===> ${COMPFILE} will remain for your consideration"
+			echo -n
 			;;
 		*)
 			echo "invalid choice: ${_handle}\n"
@@ -584,30 +579,23 @@ sm_check_an_eg() {
 }
 
 sm_post() {
-	local _i _files_in_tmproot _files_in_bkpdir
+	# XXX drop -f after OPENBSD_5_7
+	rm -f ${_WRKDIR}/*sum
+	cd ${_WRKDIR} && \
+		find . -type d -depth -empty -exec rmdir -p '{}' + 2>/dev/null
+	rmdir ${_WRKDIR} 2>/dev/null
 
-	_files_in_tmproot=$(find . -type f ! -name \*.merged -size +0)
 	[[ -d ${_BKPDIR} ]] && \
-		_files_in_bkpdir=$(find ${_BKPDIR} -type f -size +0)
+		echo "===> Backup file(s):" && \
+		find ${_BKPDIR} -type f -size +0
 
-	[[ -n ${_files_in_tmproot} ]] && \
-		sm_warn "some files are still left for comparison"
+	[[ -d ${_TMPROOT} ]] && \
+		sm_warn "file(s) left for comparison:" && \
+		find ${_TMPROOT} -type f ! -name \*.merged -size +0
 
 	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
 	[[ -d /etc/X11 ]] && \
 		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
-
-	if [[ -e ${_WRKDIR}/sysmerge.log ]]; then
-		# XXX drop -f after OPENBSD_5_7
-		rm -f ${_WRKDIR}/*sum
-		sed '/^$/d' ${_WRKDIR}/sysmerge.log >${_WRKDIR}/sysmerge.log.bak
-		mv ${_WRKDIR}/sysmerge.log.bak ${_WRKDIR}/sysmerge.log
-		cd ${_WRKDIR} && \
-			find . -type d -depth -empty -exec rmdir -p '{}' + 2>/dev/null
-		echo "===> Log available at ${_WRKDIR}/sysmerge.log"
-	else
-		rm -rf ${_WRKDIR}
-	fi
 }
 
 BATCHMODE=false
@@ -628,7 +616,7 @@ shift $(( OPTIND -1 ))
 [[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && usage
 
 # global constants
-_WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
+_WRKDIR=$(mktemp -d -p ${TMPDIR:=/tmp} sysmerge.XXXXXXXXXX) || exit 1
 _BKPDIR=${_WRKDIR}/backups
 _TMPROOT=${_WRKDIR}/temproot
 _RELINT=$(uname -r | tr -d '.') || exit 1
@@ -641,5 +629,4 @@ PAGER=${PAGER:=/usr/bin/more}
 mkdir -p ${_TMPROOT} || sm_error "cannot create ${_TMPROOT}"
 cd ${_TMPROOT} || sm_error "cannot enter ${_TMPROOT}"
 
-sm_init
-sm_post
+sm_init && sm_post
