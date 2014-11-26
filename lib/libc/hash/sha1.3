@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.40 2014/03/23 23:27:22 naddy Exp $
+.\"	$OpenBSD: sha1.3,v 1.41 2014/11/26 02:05:58 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://csrc.nist.gov/publications/fips/fips180-1/fip180-1.txt
 .\" for the detailed standard
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: November 26 2014 $
 .Dt SHA1 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ functions with which they share a similar interface.
 The
 .Fn SHA1Init
 function initializes a SHA1_CTX
-.Ar context
+.Fa context
 for use with
 .Fn SHA1Update ,
 and
@@ -76,16 +76,16 @@ and
 The
 .Fn SHA1Update
 function adds
-.Ar data
+.Fa data
 of length
-.Ar len
+.Fa len
 to the SHA1_CTX specified by
-.Ar context .
+.Fa context .
 .Fn SHA1Final
 is called when all data has been added via
 .Fn SHA1Update
 and stores a message digest in the
-.Ar digest
+.Fa digest
 parameter.
 .Pp
 The
@@ -123,7 +123,9 @@ function calculates the digest for a file and returns the result via
 .Fn SHA1End .
 If
 .Fn SHA1File
-is unable to open the file a NULL pointer is returned.
+is unable to open the file a
+.Dv NULL
+pointer is returned.
 .Pp
 .Fn SHA1FileChunk
 behaves like
@@ -154,17 +156,22 @@ For each of the
 and
 .Fn SHA1Data
 functions the
-.Ar buf
+.Fa buf
 parameter should either be a string of at least 41 characters in
-size or a NULL pointer.
+size or a
+.Dv NULL
+pointer.
 In the latter case, space will be dynamically allocated via
 .Xr malloc 3
 and should be freed using
 .Xr free 3
 when it is no longer needed.
 .Sh EXAMPLES
-The follow code fragment will calculate the digest for
-the string "abc" which is ``0xa9993e364706816aba3e25717850c26c9cd0d89d''.
+The following code fragment will calculate the digest for
+the string
+.Qq abc
+which is
+.Dq 0xa9993e364706816aba3e25717850c26c9cd0d89d .
 .Bd -literal -offset indent
 SHA1_CTX sha;
 u_int8_t results[SHA1_DIGEST_LENGTH];
@@ -215,7 +222,9 @@ printf("0x%s\en", SHA1Data(buf, strlen(buf), output));
 The SHA-1 functions appeared in
 .Ox 2.0 .
 .Sh AUTHORS
-This implementation of SHA-1 was written by Steve Reid.
+.An -nosplit
+This implementation of SHA-1 was written by
+.An Steve Reid .
 .Pp
 The
 .Fn SHA1End ,
@@ -223,7 +232,8 @@ The
 .Fn SHA1FileChunk ,
 and
 .Fn SHA1Data
-helper functions are derived from code written by Poul-Henning Kamp.
+helper functions are derived from code written by
+.An Poul-Henning Kamp .
 .Sh CAVEATS
 This implementation of SHA-1 has not been validated by NIST
 and as such is not in official compliance with the standard.

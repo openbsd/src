@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.20 2014/03/23 23:27:22 naddy Exp $
+.\"	$OpenBSD: sha2.3,v 1.21 2014/11/26 02:05:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -20,7 +20,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: November 26 2014 $
 .Dt SHA2 3
 .Os
 .Sh NAME
@@ -130,7 +130,7 @@ For brevity, only the 256-bit variants are described below.
 The
 .Fn SHA256Init
 function initializes a SHA2_CTX
-.Ar context
+.Fa context
 for use with
 .Fn SHA256Update
 and
@@ -138,16 +138,16 @@ and
 The
 .Fn SHA256Update
 function adds
-.Ar data
+.Fa data
 of length
-.Ar len
+.Fa len
 to the SHA2_CTX specified by
-.Ar context .
+.Fa context .
 .Fn SHA256Final
 is called when all data has been added via
 .Fn SHA256Update
 and stores a message digest in the
-.Ar digest
+.Fa digest
 parameter.
 .Pp
 The
@@ -219,7 +219,7 @@ For each of the
 and
 .Fn SHA256Data
 functions the
-.Ar buf
+.Fa buf
 parameter should either be a string large enough to hold the resulting digest
 (e.g.\&
 .Ev SHA224_DIGEST_STRING_LENGTH ,
@@ -280,7 +280,9 @@ printf("0x%s\en", SHA256Data(buf, strlen(buf), output));
 The SHA2 functions appeared in
 .Ox 3.4 .
 .Sh AUTHORS
-This implementation of the SHA functions was written by Aaron D. Gifford.
+.An -nosplit
+This implementation of the SHA functions was written by
+.An Aaron D. Gifford .
 .Pp
 The
 .Fn SHA256End ,
@@ -288,7 +290,8 @@ The
 .Fn SHA256FileChunk ,
 and
 .Fn SHA256Data
-helper functions are derived from code written by Poul-Henning Kamp.
+helper functions are derived from code written by
+.An Poul-Henning Kamp .
 .Sh CAVEATS
 This implementation of the Secure Hash Standard has not been validated by
 NIST and as such is not in official compliance with the standard.
