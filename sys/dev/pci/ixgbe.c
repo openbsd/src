@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.13 2013/08/05 19:58:05 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.14 2014/11/26 17:03:52 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -36,6 +36,10 @@
 /* FreeBSD: src/sys/dev/ixgbe/ixgbe_mbx.c 230775 Jan 30 16:42:02 2012 UTC */
 
 #include <dev/pci/ixgbe.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
 
 void ixgbe_set_pci_config_data_generic(struct ixgbe_hw *hw,
 				       uint16_t link_status);
@@ -617,6 +621,14 @@ int32_t ixgbe_get_mac_addr_generic(struct ixgbe_hw *hw, uint8_t *mac_addr)
 	uint16_t i;
 
 	DEBUGFUNC("ixgbe_get_mac_addr_generic");
+
+#ifdef __sparc64__
+	struct ixgbe_osdep *os = hw->back;
+ 
+	if (OF_getprop(PCITAG_NODE(os->os_pa.pa_tag), "local-mac-address",
+	    mac_addr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
+		return IXGBE_SUCCESS;
+#endif
 
 	rar_high = IXGBE_READ_REG(hw, IXGBE_RAH(0));
 	rar_low = IXGBE_READ_REG(hw, IXGBE_RAL(0));
