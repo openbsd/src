@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.35 2014/11/26 05:37:26 bcook Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.36 2014/11/26 05:39:06 bcook Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -325,7 +325,7 @@ dgram_read(BIO *b, char *out, int outl)
 
 	if (out != NULL) {
 		errno = 0;
-		memset(&sa.peer, 0x00, sizeof(sa.peer));
+		memset(&sa.peer, 0, sizeof(sa.peer));
 		dgram_adjust_rcv_timeout(b);
 		ret = recvfrom(b->num, out, outl, 0, &sa.peer.sa, &sa.len);
 
@@ -577,7 +577,7 @@ default:
 			}
 		} else {
 			data->connected = 0;
-			memset(&(data->peer), 0x00, sizeof(data->peer));
+			memset(&(data->peer), 0, sizeof(data->peer));
 		}
 		break;
 	case BIO_CTRL_DGRAM_GET_PEER:
@@ -852,7 +852,7 @@ dgram_sctp_read(BIO *b, char *out, int outl)
 		errno = 0;
 
 		do {
-			memset(&data->rcvinfo, 0x00, sizeof(struct bio_dgram_sctp_rcvinfo));
+			memset(&data->rcvinfo, 0, sizeof(struct bio_dgram_sctp_rcvinfo));
 			iov.iov_base = out;
 			iov.iov_len = outl;
 			msg.msg_name = NULL;
@@ -1061,7 +1061,7 @@ dgram_sctp_write(BIO *b, const char *in, int inl)
 	 * disable all user parameters and flags.
 	 */
 	if (in[0] != 23) {
-		memset(&handshake_sinfo, 0x00, sizeof(struct bio_dgram_sctp_sndinfo));
+		memset(&handshake_sinfo, 0, sizeof(struct bio_dgram_sctp_sndinfo));
 #ifdef SCTP_SACK_IMMEDIATELY
 		handshake_sinfo.snd_flags = SCTP_SACK_IMMEDIATELY;
 #endif
@@ -1405,7 +1405,7 @@ BIO_dgram_sctp_wait_for_dry(BIO *b)
 		return -1;
 
 	/* peek for notification */
-	memset(&snp, 0x00, sizeof(union sctp_notification));
+	memset(&snp, 0, sizeof(union sctp_notification));
 	iov.iov_base = (char *)&snp;
 	iov.iov_len = sizeof(union sctp_notification);
 	msg.msg_name = NULL;
@@ -1426,7 +1426,7 @@ BIO_dgram_sctp_wait_for_dry(BIO *b)
 
 	/* if we find a notification, process it and try again if necessary */
 	while (msg.msg_flags & MSG_NOTIFICATION) {
-		memset(&snp, 0x00, sizeof(union sctp_notification));
+		memset(&snp, 0, sizeof(union sctp_notification));
 		iov.iov_base = (char *)&snp;
 		iov.iov_len = sizeof(union sctp_notification);
 		msg.msg_name = NULL;
@@ -1478,7 +1478,7 @@ BIO_dgram_sctp_wait_for_dry(BIO *b)
 			data->handle_notifications(b, data->notification_context, (void*) &snp);
 
 		/* found notification, peek again */
-		memset(&snp, 0x00, sizeof(union sctp_notification));
+		memset(&snp, 0, sizeof(union sctp_notification));
 		iov.iov_base = (char *)&snp;
 		iov.iov_len = sizeof(union sctp_notification);
 		msg.msg_name = NULL;
@@ -1525,7 +1525,7 @@ BIO_dgram_sctp_msg_waiting(BIO *b)
 	/* Check if there are any messages waiting to be read */
 	do
 	{
-		memset(&snp, 0x00, sizeof(union sctp_notification));
+		memset(&snp, 0, sizeof(union sctp_notification));
 		iov.iov_base = (char *)&snp;
 		iov.iov_len = sizeof(union sctp_notification);
 		msg.msg_name = NULL;
@@ -1548,7 +1548,7 @@ BIO_dgram_sctp_msg_waiting(BIO *b)
 				dgram_sctp_handle_auth_free_key_event(b, &snp);
 #endif
 
-			memset(&snp, 0x00, sizeof(union sctp_notification));
+			memset(&snp, 0, sizeof(union sctp_notification));
 			iov.iov_base = (char *)&snp;
 			iov.iov_len = sizeof(union sctp_notification);
 			msg.msg_name = NULL;
