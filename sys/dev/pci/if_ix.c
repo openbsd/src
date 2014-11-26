@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.108 2014/11/20 03:35:56 brad Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.109 2014/11/26 00:09:27 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -2080,7 +2080,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	 */
 #if NVLAN > 0
 	if (mp->m_flags & M_VLANTAG) {
-		vtag = htole16(mp->m_pkthdr.ether_vtag);
+		vtag = mp->m_pkthdr.ether_vtag;
 		vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
 	} else
 #endif
