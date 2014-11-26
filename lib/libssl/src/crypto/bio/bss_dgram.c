@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.33 2014/08/24 16:08:30 bcook Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.34 2014/11/26 05:01:47 bcook Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -79,10 +79,6 @@
 #include <fcntl.h>
 #define OPENSSL_SCTP_DATA_CHUNK_TYPE            0x00
 #define OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE 0xc0
-#endif
-
-#if defined(OPENSSL_SYS_LINUX) && !defined(IP_MTU)
-#define IP_MTU      14 /* linux is lame */
 #endif
 
 static int dgram_write(BIO *h, const char *buf, int num);
@@ -394,7 +390,7 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 	int *ip;
 	struct sockaddr *to = NULL;
 	bio_dgram_data *data = NULL;
-#if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
+#if (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
 	int sockopt_val = 0;
 	socklen_t sockopt_len;	/* assume that system supporting IP_MTU is
 				 * modern enough to define socklen_t */
@@ -463,7 +459,7 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 		/* (Linux)kernel sets DF bit on outgoing IP packets */
 	case BIO_CTRL_DGRAM_MTU_DISCOVER:
-#if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
+#if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
 		addr_len = (socklen_t)sizeof(addr);
 		memset((void *)&addr, 0, sizeof(addr));
 		if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
@@ -496,7 +492,7 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 #endif
 	case BIO_CTRL_DGRAM_QUERY_MTU:
-#if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU)
+#if defined(IP_MTU)
 		addr_len = (socklen_t)sizeof(addr);
 		memset((void *)&addr, 0, sizeof(addr));
 		if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
