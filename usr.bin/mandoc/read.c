@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.72 2014/11/01 06:02:43 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.73 2014/11/26 21:40:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,6 +58,7 @@ struct	mparse {
 	int		  filenc; /* encoding of the current file */
 	int		  reparse_count; /* finite interp. stack */
 	int		  line; /* line number in the file */
+	pid_t		  child; /* the gunzip(1) process */
 };
 
 static	void	  choose_parser(struct mparse *);
@@ -800,8 +801,7 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 }
 
 enum mandoclevel
-mparse_open(struct mparse *curp, int *fd, const char *file,
-	pid_t *child_pid)
+mparse_open(struct mparse *curp, int *fd, const char *file)
 {
 	int		  pfd[2];
 	char		 *cp;
@@ -811,7 +811,7 @@ mparse_open(struct mparse *curp, int *fd, const char *file,
 	curp->file = file;
 	if ((cp = strrchr(file, '.')) == NULL ||
 	    strcmp(cp + 1, "gz")) {
-		*child_pid = 0;
+		curp->child = 0;
 		if ((*fd = open(file, O_RDONLY)) == -1) {
 			err = MANDOCERR_SYSOPEN;
 			goto out;
@@ -824,7 +824,7 @@ mparse_open(struct mparse *curp, int *fd, const char *file,
 		goto out;
 	}
 
-	switch (*child_pid = fork()) {
+	switch (curp->child = fork()) {
 	case -1:
 		err = MANDOCERR_SYSFORK;
 		close(pfd[0]);
@@ -848,7 +848,7 @@ mparse_open(struct mparse *curp, int *fd, const char *file,
 
 out:
 	*fd = -1;
-	*child_pid = 0;
+	curp->child = 0;
 	curp->file_status = MANDOCLEVEL_SYSERR;
 	if (curp->mmsg)
 		(*curp->mmsg)(err, curp->file_status, file,
@@ -859,11 +859,14 @@ out:
 }
 
 enum mandoclevel
-mparse_wait(struct mparse *curp, pid_t child_pid)
+mparse_wait(struct mparse *curp)
 {
 	int	  status;
 
-	if (waitpid(child_pid, &status, 0) == -1) {
+	if (curp->child == 0)
+		return(MANDOCLEVEL_OK);
+
+	if (waitpid(curp->child, &status, 0) == -1) {
 		mandoc_msg(MANDOCERR_SYSWAIT, curp, 0, 0,
 		    strerror(errno));
 		curp->file_status = MANDOCLEVEL_SYSERR;

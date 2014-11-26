@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.107 2014/11/11 19:03:10 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.108 2014/11/26 21:40:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 	char		 sec;
 	enum mandoclevel rc;
 	enum outmode	 outmode;
-	pid_t		 child_pid;
 	int		 fd;
 	int		 show_usage;
 	int		 use_pager;
@@ -375,8 +374,7 @@ main(int argc, char *argv[])
 
 	while (argc) {
 		if (resp != NULL) {
-			rc = mparse_open(curp.mp, &fd, resp->file,
-			    &child_pid);
+			rc = mparse_open(curp.mp, &fd, resp->file);
 			if (fd == -1)
 				/* nothing */;
 			else if (resp->form & FORM_SRC) {
@@ -388,14 +386,12 @@ main(int argc, char *argv[])
 				    synopsis_only);
 			resp++;
 		} else {
-			rc = mparse_open(curp.mp, &fd, *argv++,
-			    &child_pid);
+			rc = mparse_open(curp.mp, &fd, *argv++);
 			if (fd != -1)
 				parse(&curp, fd, argv[-1], &rc);
 		}
 
-		if (child_pid &&
-		    mparse_wait(curp.mp, child_pid) != MANDOCLEVEL_OK)
+		if (mparse_wait(curp.mp) != MANDOCLEVEL_OK)
 			rc = MANDOCLEVEL_SYSERR;
 
 		if (MANDOCLEVEL_OK != rc && curp.wstop)
