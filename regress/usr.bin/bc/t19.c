@@ -1,4 +1,4 @@
-/*	$OpenBSD: t19.c,v 1.2 2012/03/13 10:34:04 otto Exp $	*/
+/*	$OpenBSD: t19.c,v 1.3 2014/11/26 15:23:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2012 Otto Moerbeek <otto@drijf.net>
@@ -57,7 +57,7 @@ main()
 				pclose(fp);
 				d2 = funcs[fi].f(v);
 				diff = fabsl(d1 - d2);
-				prec = pow(10, -scale[si]);
+				prec = powl(10.0L, (long double)-scale[si]);
 				if (prec < LDBL_EPSILON)
 					prec = LDBL_EPSILON;
 				prec *= 2;

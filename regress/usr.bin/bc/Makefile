@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2012/03/13 10:12:52 otto Exp $
+# $OpenBSD: Makefile,v 1.12 2014/11/26 15:23:13 otto Exp $
 
 BC=bc
 
@@ -28,6 +28,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18\
 # t16: boolean or
 # t17: long var names
 # t18: towers of hanoi
+# t19: check precions of -l functions against native computed values
 
 all: clean
 
