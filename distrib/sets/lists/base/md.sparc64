@@ -2182,6 +2182,7 @@
 ./usr/local/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/mdec/bootblk
 ./usr/mdec/ofwboot
+./usr/mdec/ofwbootfd
 ./usr/mdec/ofwboot.net
 ./usr/sbin/ZZZ
 ./usr/sbin/apm
