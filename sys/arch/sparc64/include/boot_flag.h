@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_flag.h,v 1.4 2014/07/20 18:24:34 deraadt Exp $	*/
+/*	$OpenBSD: boot_flag.h,v 1.5 2014/11/26 20:06:53 stsp Exp $	*/
 /*	$NetBSD: boot_flag.h,v 1.3 2001/07/01 02:56:21 gmcgarry Exp $	*/
 
 /*-
@@ -61,5 +61,21 @@
 	} /* switch */						\
 								\
 	} while (/* CONSTCOND */ 0)
+
+
+/* softraid boot information */
+#define BOOTSR_UUID_MAX 16
+#define BOOTSR_CRYPTO_MAXKEYBYTES 32
+
+/* MD boot data in .openbsd.bootdata ELF segment */
+struct openbsd_bootdata {
+	u_int64_t 	version;
+	u_int64_t 	len;	/* of structure */
+
+	u_int8_t	sr_uuid[BOOTSR_UUID_MAX];
+	u_int8_t	sr_maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
+} __packed;
+
+#define BOOTDATA_VERSION	1
 
 #endif /* _MACHINE_BOOT_FLAG_H_ */

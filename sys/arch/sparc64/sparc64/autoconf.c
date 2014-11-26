@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.121 2014/09/26 09:45:59 stsp Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.122 2014/11/26 20:06:53 stsp Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -67,6 +67,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/boot_flag.h>
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
 #include <machine/mdesc.h>
@@ -79,6 +80,8 @@
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/vbusvar.h>
 #include <sparc64/dev/cbusvar.h>
+
+#include <stand/boot/bootarg.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -94,6 +97,16 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif
+
+#include "softraid.h"
+#if NSOFTRAID > 0
+#include <sys/sensors.h>
+#include <dev/softraidvar.h>
+
+/* XXX */
+#undef DPRINTF
+#undef DNPRINTF
 #endif
 
 int printspl = 0;
@@ -126,6 +139,8 @@ int	bootnode;
 static	void bootpath_build(void);
 static	void bootpath_print(struct bootpath *);
 void bootpath_nodes(struct bootpath *, int);
+
+struct openbsd_bootdata obd __attribute__((section(".openbsd.bootdata")));
 
 int bus_class(struct device *);
 int instance_match(struct device *, void *, struct bootpath *bp);
@@ -636,6 +651,16 @@ cpu_configure()
 	if (CPU_ISSUN4V)
 		mdesc_init();
 #endif
+
+	if (obd.version == BOOTDATA_VERSION &&
+	    obd.len == sizeof(struct openbsd_bootdata)) {
+#if NSOFTRAID > 0
+		memcpy(sr_bootuuid.sui_id, obd.sr_uuid,
+		    sizeof(sr_bootuuid.sui_id));
+		memcpy(sr_bootkey, obd.sr_maskkey, sizeof(sr_bootkey));
+#endif
+		explicit_bzero(obd.sr_maskkey, sizeof(obd.sr_maskkey));
+	}
 
 	/* build the bootpath */
 	bootpath_build();
