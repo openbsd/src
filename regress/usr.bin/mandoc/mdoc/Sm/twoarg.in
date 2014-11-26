@@ -1,0 +1,21 @@
+.Dd November 26, 2014
+.Dt SM-TWOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sm-twoarg
+.Nd spacing macro with multiple arguments
+.Sh DESCRIPTION
+.Sy default :
+.Fl f Ar on
+.br
+.Sy off two :
+.Sm off two
+.Fl f Ar off
+.br
+.Sy bad two :
+.Sm bad two
+.Fl f Ar off
+.br
+.Sy on two :
+.Sm on two
+.Fl f Ar on

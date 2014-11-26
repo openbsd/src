@@ -1,0 +1,12 @@
+SM-TWOARG(1)                General Commands Manual               SM-TWOARG(1)
+
+NNAAMMEE
+     SSmm--ttwwooaarrgg - spacing macro with multiple arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     ddeeffaauulltt: --ff _o_n
+     ooffff ttwwoo: two--ff_o_f_f
+     bbaaddttwwoo: bad two --ff _o_f_f
+     oonn ttwwoo: two --ff _o_n
+
+OpenBSD                        November 26, 2014                       OpenBSD

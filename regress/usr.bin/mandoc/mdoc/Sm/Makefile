@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.6 2014/07/05 12:33:54 schwarze Exp $
+# $OpenBSD: Makefile,v 1.7 2014/11/26 19:22:44 schwarze Exp $
 
-REGRESS_TARGETS	= noarg badarg scope spacing-No spacing-Op
-LINT_TARGETS	= badarg
+REGRESS_TARGETS	= noarg badarg scope spacing-No spacing-Op twoarg
+LINT_TARGETS	= badarg twoarg
 
 SKIP_TMAN ?= scope
 
