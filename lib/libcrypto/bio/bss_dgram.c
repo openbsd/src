@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.36 2014/11/26 05:39:06 bcook Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.37 2014/11/26 05:41:44 bcook Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -103,8 +103,6 @@ static void dgram_sctp_handle_auth_free_key_event(BIO *b,
 #endif
 
 static int BIO_dgram_should_retry(int s);
-
-static void get_current_time(struct timeval *t);
 
 static BIO_METHOD methods_dgramp = {
 	.type = BIO_TYPE_DGRAM,
@@ -257,7 +255,7 @@ dgram_adjust_rcv_timeout(BIO *b)
 		}
 
 		/* Get current time */
-		get_current_time(&timenow);
+		gettimeofday(&timenow, NULL);
 
 		/* Calculate time left until timer expires */
 		memcpy(&timeleft, &(data->next_timeout), sizeof(struct timeval));
@@ -1609,11 +1607,6 @@ BIO_dgram_non_fatal_error(int err)
 		break;
 	}
 	return (0);
-}
-
-static void
-get_current_time(struct timeval *t) {
-	gettimeofday(t, NULL);
 }
 
 #endif
