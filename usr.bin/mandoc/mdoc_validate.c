@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.171 2014/11/17 06:44:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.172 2014/11/26 19:23:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1634,8 +1634,6 @@ ebool(struct mdoc *mdoc)
 			mdoc->flags ^= MDOC_SMOFF;
 		return(1);
 	}
-
-	check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_LT, 2);
 
 	assert(MDOC_TEXT == nch->type);
 
