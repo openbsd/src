@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.10 2014/10/16 20:47:52 kettenis Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.11 2014/11/26 19:47:03 stsp Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -714,6 +714,71 @@ OF_claim(void *virt, u_int size, u_int align)
 #endif
 }
 
+int
+OF_peer(int phandle)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t sibling;
+	} args;
+
+	args.name = ADR2CELL("peer");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.sibling;
+}
+
+int
+OF_child(int phandle)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t child;
+	} args;
+	
+	args.name = ADR2CELL("child");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.child;
+}
+
+int
+OF_package_to_path(int phandle, char *buf, int buflen)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t buf;
+		cell_t buflen;
+		cell_t length;
+	} args;
+	
+	if (buflen > PAGE_SIZE)
+		return -1;
+	args.name = ADR2CELL("package-to-path");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	args.buf = ADR2CELL(buf);
+	args.buflen = buflen;
+	if (openfirmware(&args) < 0)
+		return -1;
+	return args.length;
+}
 
 void
 putchar(int c)
