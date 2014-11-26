@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.98 2014/11/17 21:36:21 afresh1 Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.99 2014/11/26 18:27:21 afresh1 Exp $
 #
 # Build wrapper for Perl 5.20.1-RC2
 #
@@ -29,7 +29,7 @@ SRCS1=	gv.c toke.c perly.c pad.c regcomp.c dump.c util.c mg.c reentr.c \
 	mro.c keywords.c hv.c av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c \
 	pp_sys.c doop.c doio.c regexec.c utf8.c taint.c deb.c universal.c \
 	globals.c perlio.c perlapi.c numeric.c mathoms.c locale.c \
-	pp_pack.c pp_sort.c
+	pp_pack.c pp_sort.c caretx.c
 SRCS=	${SRCS1} op.c perl.c
 
 # We must not try to mkdep DynaLoader.c as it requires miniperl
@@ -157,17 +157,14 @@ CFLAGS+= -fno-tree-ter
 .endif
 
 # The DynaLoader extension is now compiled statically into libperl
-miniperl: ${GENERATED} ${SRCS1:S/.c/.o/g} caretx.o opmini.o perlmini.o miniperlmain.o
-	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} caretx.o opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm -lutil
+miniperl: ${GENERATED} ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o
+	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm -lutil
 
 opmini.c: op.c
 	rm -f opmini.c
 	cp op.c opmini.c
 
 opmini.o: opmini.c
-	${CC} ${CPPFLAGS} ${CFLAGS} -DPERL_EXTERNAL_GLOB -c  $> -o $@
-
-caretx.o: caretx.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -DPERL_EXTERNAL_GLOB -c  $> -o $@
 
 perlmini.o: perlmini.c
