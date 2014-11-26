@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.73 2014/11/26 21:40:11 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.74 2014/11/26 23:27:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -759,28 +759,25 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 	curp->file = svfile;
 }
 
+/*
+ * If a file descriptor is given, use it and assume it points
+ * to the named file.  Otherwise, open the named file.
+ * Read the whole file into memory and call the parsers.
+ * Called recursively when an .so request is encountered.
+ */
 enum mandoclevel
 mparse_readfd(struct mparse *curp, int fd, const char *file)
 {
 	struct buf	 blk;
 	int		 with_mmap;
 	int		 save_filenc;
+	pid_t		 save_child;
 
-	if (-1 == fd && -1 == (fd = open(file, O_RDONLY, 0))) {
-		curp->file_status = MANDOCLEVEL_SYSERR;
-		if (curp->mmsg)
-			(*curp->mmsg)(MANDOCERR_SYSOPEN,
-			    curp->file_status,
-			    file, 0, 0, strerror(errno));
-		return(curp->file_status);
-	}
-
-	/*
-	 * Run for each opened file; may be called more than once for
-	 * each full parse sequence if the opened file is nested (i.e.,
-	 * from `so').  Simply sucks in the whole file and moves into
-	 * the parse phase for the file.
-	 */
+	save_child = curp->child;
+	if (fd != -1)
+		curp->child = 0;
+	else if (mparse_open(curp, &fd, file) >= MANDOCLEVEL_SYSERR)
+		goto out;
 
 	if (read_whole_file(curp, file, fd, &blk, &with_mmap)) {
 		save_filenc = curp->filenc;
@@ -794,9 +791,12 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 			free(blk.buf);
 	}
 
-	if (STDIN_FILENO != fd && -1 == close(fd))
+	if (fd != STDIN_FILENO && close(fd) == -1)
 		perror(file);
 
+	mparse_wait(curp);
+out:
+	curp->child = save_child;
 	return(curp->file_status);
 }
 
@@ -804,20 +804,39 @@ enum mandoclevel
 mparse_open(struct mparse *curp, int *fd, const char *file)
 {
 	int		  pfd[2];
+	int		  save_errno;
 	char		 *cp;
 	enum mandocerr	  err;
 
 	pfd[1] = -1;
 	curp->file = file;
+
+	/* Unless zipped, try to just open the file. */
+
 	if ((cp = strrchr(file, '.')) == NULL ||
 	    strcmp(cp + 1, "gz")) {
 		curp->child = 0;
-		if ((*fd = open(file, O_RDONLY)) == -1) {
-			err = MANDOCERR_SYSOPEN;
-			goto out;
-		}
-		return(MANDOCLEVEL_OK);
+		if ((*fd = open(file, O_RDONLY)) != -1)
+			return(MANDOCLEVEL_OK);
+
+		/* Open failed; try to append ".gz". */
+
+		mandoc_asprintf(&cp, "%s.gz", file);
+		file = cp;
+	} else
+		cp = NULL;
+
+	/* Before forking, make sure the file can be read. */
+
+	save_errno = errno;
+	if (access(file, R_OK) == -1) {
+		if (cp != NULL)
+			errno = save_errno;
+		err = MANDOCERR_SYSOPEN;
+		goto out;
 	}
+
+	/* Run gunzip(1). */
 
 	if (pipe(pfd) == -1) {
 		err = MANDOCERR_SYSPIPE;
@@ -847,11 +866,12 @@ mparse_open(struct mparse *curp, int *fd, const char *file)
 	}
 
 out:
+	free(cp);
 	*fd = -1;
 	curp->child = 0;
 	curp->file_status = MANDOCLEVEL_SYSERR;
 	if (curp->mmsg)
-		(*curp->mmsg)(err, curp->file_status, file,
+		(*curp->mmsg)(err, curp->file_status, curp->file,
 		    0, 0, strerror(errno));
 	if (pfd[1] != -1)
 		exit(1);
