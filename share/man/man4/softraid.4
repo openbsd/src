@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.36 2014/02/08 17:05:15 chris Exp $
+.\"	$OpenBSD: softraid.4,v 1.37 2014/11/26 22:30:47 stsp Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 8 2014 $
+.Dd $Mdocdate: November 26 2014 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -107,7 +107,7 @@ in the boot storage area of the
 .Nm
 volume.
 Boot support is currently limited to the CRYPTO and RAID 1 disciplines
-on amd64 and i386 platforms.
+on amd64, i386, and sparc64 platforms.
 At the
 .Xr boot 8
 prompt, softraid volumes have names beginning with

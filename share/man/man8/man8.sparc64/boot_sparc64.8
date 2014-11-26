@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.13 2010/01/03 16:43:46 schwarze Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.14 2014/11/26 22:30:47 stsp Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: November 26 2014 $
 .Dt BOOT_SPARC64 8 sparc64
 .Os
 .Sh NAME
@@ -79,6 +79,29 @@ To reset this variable to its default, empty, value, type the following:
 .Em \	ok
 set-default
 .Em boot-file
+.Pp
+To boot from a
+.Xr softraid 4
+volume by default,
+.Em boot-device
+must be set to a disk device hosting a chunk of the softraid volume:
+.Pp
+.Em \	ok
+setenv
+.Em boot-device
+disk0
+.Pp
+and
+.Em boot-file
+must contain the
+.Pq Dq sr
+device name of the softraid volume and optionally a partition letter
+and/or kernel:
+.Pp
+.Em \	ok
+setenv
+.Em boot-file
+sr0a:/bsd
 .Pp
 Autoboot is enabled by setting the
 .Em auto-boot?\&
@@ -142,9 +165,12 @@ secondary bootstrap (usually also installed as
 .Pa /ofwboot )
 .It Pa /usr/mdec/ofwboot.net
 network bootstrap
+.It Pa /usr/mdec/ofwbootfd
+floppy disk bootstrap
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr softraid 4 ,
 .Xr boot_config 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
