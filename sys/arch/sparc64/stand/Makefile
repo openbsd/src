@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2014/11/22 15:02:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/11/26 08:15:41 stsp Exp $
 
 .if ${MACHINE} == "sparc64"
-SUBDIR= bootblk libsa libz ofwboot ofwboot.net
+SUBDIR= bootblk libsa libz ofwboot ofwboot.net ofwbootfd
 .endif
 
 
