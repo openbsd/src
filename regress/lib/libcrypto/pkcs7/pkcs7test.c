@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.2 2014/07/09 06:42:01 bcook Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.3 2014/11/26 05:48:00 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -115,7 +115,7 @@ message_compare(const char *out, size_t len)
 		    len, sizeof(message));
 		exit(1);
 	}
-	if (bcmp(out, message, len) != 0) {
+	if (memcmp(out, message, len) != 0) {
 		fprintf(stderr, "FAILURE: message mismatch\n");
 		fprintf(stderr, "Got:\n%s\n", out);
 		fprintf(stderr, "Want:\n%s\n", message);
