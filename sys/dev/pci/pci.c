@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.107 2014/11/24 13:48:49 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.108 2014/11/26 09:29:17 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -848,21 +848,41 @@ pci_reserve_resources(struct pci_attach_args *pa)
 				break;
 			}
 			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
-			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
-				    bus, dev, func, base, size);
-				pci_conf_write(pc, tag, reg, 0);
-				if (type & PCI_MAPREG_MEM_TYPE_64BIT)
-					pci_conf_write(pc, tag, reg + 4, 0);
+			    base, size, EX_NOWAIT) == 0) {
+				break;
 			}
+#ifdef __sparc64__
+			/*
+			 * Certain SPARC T5 systems assign
+			 * non-prefetchable 64-bit BARs of its onboard
+			 * mpii(4) controllers addresses in the
+			 * prefetchable memory range.  This is
+			 * (probably) safe, as reads from the device
+			 * registers mapped by these BARs are
+			 * side-effect free.  So assume the firmware
+			 * knows what it is doing.
+			 */
+			if (base >= 0x100000000 &&
+			    pa->pa_pmemex && extent_alloc_region(pa->pa_pmemex,
+			    base, size, EX_NOWAIT) == 0) {
+				break;
+			}
+#endif
+			printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
+			       bus, dev, func, base, size);
+			pci_conf_write(pc, tag, reg, 0);
+			if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+				pci_conf_write(pc, tag, reg + 4, 0);
 			break;
 		case PCI_MAPREG_TYPE_IO:
 			if (pa->pa_ioex && extent_alloc_region(pa->pa_ioex,
-			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: io address conflict 0x%lx/0x%lx\n",
-				    bus, dev, func, base, size);
-				pci_conf_write(pc, tag, reg, 0);
+			    base, size, EX_NOWAIT) == 0) {
+				break;
 			}
+
+			printf("%d:%d:%d: io address conflict 0x%lx/0x%lx\n",
+			       bus, dev, func, base, size);
+			pci_conf_write(pc, tag, reg, 0);
 			break;
 		}
 
