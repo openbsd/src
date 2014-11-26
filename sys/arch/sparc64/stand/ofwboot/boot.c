@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.20 2013/12/28 21:00:21 kettenis Exp $	*/
+/*	$OpenBSD: boot.c,v 1.21 2014/11/26 20:30:41 stsp Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -55,6 +55,16 @@
 #include <machine/boot_flag.h>
 
 #include <machine/cpu.h>
+
+#ifdef SOFTRAID
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
+
+#include "disk.h"
+#include "softraid.h"
+#endif
 
 #include "ofdev.h"
 #include "openfirm.h"
@@ -254,6 +264,9 @@ loadfile(int fd, char *args)
 
 	close(fd);
 
+#ifdef SOFTRAID
+	sr_clear_keys();
+#endif
 	chain(entry, args, ssym, esym);
 	/* NOTREACHED */
 
@@ -286,6 +299,67 @@ fail:
 	return (-1);
 }
 
+#ifdef SOFTRAID
+/* Set bootdev_dip to the software boot volume, if specified. */
+static int
+srbootdev(const char *bootline)
+{
+	struct sr_boot_volume *bv;
+	struct diskinfo *dip;
+	int unit;
+
+	bootdev_dip = NULL;
+
+	/* 
+	 * Look for softraid disks in bootline.
+	 * E.g. 'sr0', 'sr0:bsd', or 'sr0a:/bsd'
+	 */
+	if (bootline[0] == 's' && bootline[1] == 'r' &&
+	    '0' <= bootline[2] && bootline[2] <= '9') {
+		unit = bootline[2] - '0';
+
+		/* Create a fake diskinfo for this softraid volume. */
+		SLIST_FOREACH(bv, &sr_volumes, sbv_link)
+			if (bv->sbv_unit == unit)
+				break;
+		if (bv == NULL) {
+			printf("Unknown device: sr%d\n", unit);
+			return ENODEV;
+		}
+
+		if ((bv->sbv_flags & BIOC_SCBOOTABLE) == 0) {
+			printf("device sr%d is not bootable\n", unit);
+			return ENODEV;
+		}
+
+		if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
+			if (sr_crypto_decrypt_keys(bv) != 0)
+				return EPERM;
+
+		if (bv->sbv_diskinfo == NULL) {
+			dip = alloc(sizeof(struct diskinfo));
+			bzero(dip, sizeof(*dip));
+			dip->sr_vol = bv;
+			bv->sbv_diskinfo = dip;
+		}
+
+		/* strategy() and devopen() will use bootdev_dip */
+		bootdev_dip = bv->sbv_diskinfo;
+
+		/* Attempt to read disklabel. */
+		bv->sbv_part = 'c';
+		if (sr_getdisklabel(bv, &dip->disklabel)) {
+			free(bv->sbv_diskinfo, sizeof(struct diskinfo));
+			bv->sbv_diskinfo = NULL;
+			bootdev_dip = NULL;
+			return ERDLAB;
+		}
+	}
+
+	return 0;
+}
+#endif
+
 int
 main()
 {
@@ -294,6 +368,9 @@ main()
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	int i, fd;
+#ifdef SOFTRAID
+	int err;
+#endif
 	char **bootlp;
 	char *just_bootline[2];
 	
@@ -308,6 +385,16 @@ main()
 		printf("Invalid Openfirmware environment\n");
 		exit();
 	}
+
+#ifdef SOFTRAID
+	diskprobe();
+	srprobe();
+	err = srbootdev(bootline);
+	if (err) {
+		printf("Cannot boot from softraid: %s\n", strerror(err));
+		_rtt();
+	}
+#endif
 
 	/*
 	 * case 1:	boot net -a
@@ -364,20 +451,13 @@ main()
 		cp = bootline;
 #else
 		strlcpy(bootline, opened_name, sizeof bootline);
-		cp = bootline + strlen(bootline);
-		*cp++ = ' ';
 #endif
-		*cp = '-';
 		if (boothowto & RB_ASKNAME)
-			*++cp = 'a';
+			strlcat(bootline, " -a", sizeof bootline);
 		if (boothowto & RB_SINGLE)
-			*++cp = 's';
+			strlcat(bootline, " -s", sizeof bootline);
 		if (boothowto & RB_KDB)
-			*++cp = 'd';
-		if (*cp == '-')
-			*--cp = 0;
-		else
-			*++cp = 0;
+			strlcat(bootline, " -d", sizeof bootline);
 #ifdef	__notyet__
 		OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
 #endif

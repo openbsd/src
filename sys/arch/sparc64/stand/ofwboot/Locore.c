@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.11 2014/11/26 19:47:03 stsp Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.12 2014/11/26 20:30:41 stsp Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -76,6 +76,10 @@ _rtt(void)
 		cell_t nargs;
 		cell_t nreturns;
 	} args;
+
+#ifdef SOFTRAID
+	sr_clear_keys();
+#endif
 
 	args.name = ADR2CELL("exit");
 	args.nargs = 0;

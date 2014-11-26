@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2012/08/30 19:29:14 pascal Exp $
+#	$OpenBSD: Makefile,v 1.19 2014/11/26 20:30:41 stsp Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -13,12 +13,27 @@ WARNS=		0
 PROG?=		ofwboot
 NOMAN=		ja, man!
 
+.if ${PROG} == "ofwboot"
+SOFTRAID?=	yes
+.else
+SOFTRAID?=	no
+.endif
+
 .PATH:		${S}/arch/sparc64/sparc64
 SRCS=		srt0.s Locore.c alloc.c boot.c elf64_exec.c net.c netif_of.c \
 		ofdev.c vers.c
+.if ${SOFTRAID:L} == "yes"
+SRCS+=		diskprobe.c softraid.c
+.endif
 
 .PATH:		${S}/lib/libkern/arch/sparc64 ${S}/lib/libkern
 SRCS+=		strlcpy.c strcmp.c strlcat.c strlen.c
+
+.if ${SOFTRAID:L} == "yes"
+.PATH:		${S}/lib/libsa
+SRCS+=		aes_xts.c explicit_bzero.c hmac_sha1.c sha1.c pbkdf2.c \
+		rijndael.c
+.endif
 
 CWARNFLAGS+=	-Wno-main
 AFLAGS+=	-Wa,-Av9a
@@ -48,6 +63,9 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 #
 CPPFLAGS+=	-DSPARC_BOOT_UFS
 #CPPFLAGS+=	-DSPARC_BOOT_HSFS
+.if ${SOFTRAID:L} == "yes"
+CPPFLAGS+=	-DSOFTRAID
+.endif
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:

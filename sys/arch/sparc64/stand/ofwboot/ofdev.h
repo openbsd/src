@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.h,v 1.4 2009/11/04 12:03:57 jsing Exp $	*/
+/*	$OpenBSD: ofdev.h,v 1.5 2014/11/26 20:30:41 stsp Exp $	*/
 /*	$NetBSD: ofdev.h,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -56,10 +56,14 @@ struct of_dev {
 /* Known types: */
 #define	OFDEV_NET	1
 #define	OFDEV_DISK	2
+#define	OFDEV_SOFTRAID	3
 
 #define	DEFAULT_KERNEL	"/bsd"
 
 extern char opened_name[];
 extern int floppyboot;
+
+int load_disklabel(struct of_dev *, struct disklabel *);
+int strategy(void *, int, daddr32_t, size_t, void *, size_t *);
 
 #endif

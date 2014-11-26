@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.6 2014/07/12 21:03:38 tedu Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.7 2014/11/26 20:30:41 stsp Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -54,6 +54,19 @@
 #include <sys/param.h>
 #include <sys/exec_elf.h>
 
+#include <machine/boot_flag.h>
+
+#ifdef SOFTRAID
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/disklabel.h>
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
+
+#include "disk.h"
+#include "softraid.h"
+#endif
+
 #include "openfirm.h"
 
 int
@@ -65,6 +78,10 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 	u_int align;
 	int i, first = 1;
 	int n;
+	struct openbsd_bootdata *obd;
+#ifdef SOFTRAID
+	struct sr_boot_volume *bv;
+#endif
 
 	/*
 	 * Don't display load address for ELF; it's encoded in
@@ -77,6 +94,35 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
+		}
+
+		if (phdr.p_type == PT_OPENBSD_BOOTDATA) {
+			memset((void *) (long)phdr.p_paddr, 0, phdr.p_filesz);
+
+			if (phdr.p_filesz < sizeof(struct openbsd_bootdata))
+				continue;
+
+			obd = (struct openbsd_bootdata *)(long)phdr.p_paddr;
+			obd->version = BOOTDATA_VERSION;
+			obd->len = sizeof(struct openbsd_bootdata);
+#ifdef SOFTRAID
+			/* 
+			 * If booting from softraid we must pass additional
+			 * information to the kernel:
+			 * 1) The uuid of the softraid volume we booted from.
+			 * 2) The maskkey for decryption, if applicable.
+			 */
+			if (bootdev_dip && bootdev_dip->sr_vol) {
+				bv = bootdev_dip->sr_vol;
+				memcpy(obd->sr_uuid, bv->sbv_uuid.sui_id,
+				    sizeof(obd->sr_uuid));
+				if (bv->sbv_maskkey)
+					memcpy(obd->sr_maskkey, bv->sbv_maskkey,
+					    sizeof(obd->sr_maskkey));
+			}
+
+#endif
+			continue;
 		}
 
 		if (phdr.p_type == PT_OPENBSD_RANDOMIZE) {

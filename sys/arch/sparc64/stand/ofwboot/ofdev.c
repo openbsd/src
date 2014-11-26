@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.22 2014/06/08 16:01:00 jsg Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.23 2014/11/26 20:30:41 stsp Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -45,6 +45,12 @@
 #include <lib/libsa/cd9660.h>
 #ifdef NETBOOT
 #include <lib/libsa/nfs.h>
+#endif
+
+#ifdef SOFTRAID
+#include <sys/queue.h>
+#include <dev/softraidvar.h>
+#include "disk.h"
 #endif
 
 #include <dev/sun/disklabel.h>
@@ -106,7 +112,7 @@ filename(char *str, char *ppart)
 	return 0;
 }
 
-static int
+int
 strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
     size_t *rsize)
 {
@@ -116,6 +122,12 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	
 	if (rw != F_READ)
 		return EPERM;
+#ifdef SOFTRAID
+	/* Intercept strategy for softraid volumes. */
+	if (dev->type == OFDEV_SOFTRAID)
+		return sr_strategy(bootdev_dip->sr_vol, rw,
+		    blk, size, buf, rsize);
+#endif
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
 	
@@ -151,8 +163,15 @@ devclose(struct open_file *of)
 	if (op->type == OFDEV_NET)
 		net_close(op);
 #endif
+#ifdef SOFTRAID
+	if (op->type == OFDEV_SOFTRAID) {
+		op->handle = -1;
+		return 0;
+	}
+#endif
 	OF_close(op->handle);
 	op->handle = -1;
+	return 0;
 }
 
 struct devsw devsw[1] = {
@@ -407,7 +426,6 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	struct mbr_partition *p;
 	int i;
 	u_long poff;
-	static int recursion;
 
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
@@ -448,6 +466,38 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 }
 
 int
+load_disklabel(struct of_dev *ofdev, struct disklabel *label)
+{
+	char buf[DEV_BSIZE];
+	size_t read;
+	int error = 0;
+	char *errmsg = NULL;
+
+	/* First try to find a disklabel without MBR partitions */
+	DNPRINTF(BOOT_D_OFDEV, "load_disklabel: trying to read disklabel\n");
+	if (strategy(ofdev, F_READ,
+		     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
+	    || read != DEV_BSIZE
+	    || (errmsg = getdisklabel(buf, label))) {
+#ifdef BOOT_DEBUG
+		if (errmsg)
+			DNPRINTF(BOOT_D_OFDEV,
+			    "load_disklabel: getdisklabel says %s\n", errmsg);
+#endif
+		/* Else try MBR partitions */
+		errmsg = search_label(ofdev, LABELSECTOR, buf,
+		    label, 0);
+		if (errmsg) { 
+			printf("load_disklabel: search_label says %s\n",
+			    errmsg);
+			error = ERDLAB;
+		}
+	}
+
+	return (error);
+}
+
+int
 devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
@@ -456,9 +506,10 @@ devopen(struct open_file *of, const char *name, char **file)
 	char buf[DEV_BSIZE];
 	struct disklabel label;
 	int handle, part;
-	size_t read;
-	char *errmsg = NULL;
 	int error = 0;
+#ifdef SOFTRAID
+	char volno;
+#endif
 
 	if (ofdev.handle != -1)
 		panic("devopen");
@@ -466,27 +517,98 @@ devopen(struct open_file *of, const char *name, char **file)
 		return EPERM;
 	DNPRINTF(BOOT_D_OFDEV, "devopen: you want %s\n", name);
 	strlcpy(fname, name, sizeof fname);
-	cp = filename(fname, &partition);
-	if (cp) {
-		strlcpy(buf, cp, sizeof buf);
-		*cp = 0;
+#ifdef SOFTRAID
+	if (bootdev_dip) {
+		if (fname[0] == 's' && fname[1] == 'r' &&
+		    '0' <= fname[2] && fname[2] <= '9') {
+			volno = fname[2];
+			if ('a' <= fname[3] &&
+			    fname[3] <= 'a' + MAXPARTITIONS) {
+				partition = fname[3];
+				if (fname[4] == ':')
+					cp = &fname[5];
+				else
+					cp = &fname[4];
+			} else {
+				partition = 'a';
+				cp = &fname[3];
+			}
+		} else {
+			volno = '0';
+			partition = 'a';
+			cp = &fname[0];
+		}
+		snprintf(buf, sizeof buf, "sr%c:%c", volno, partition);
+		strlcpy(opened_name, buf, sizeof opened_name);
+		*file = opened_name + strlen(opened_name);
+		if (!*cp)
+			strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
+		else
+			snprintf(buf, sizeof buf, "%s%s",
+			    *cp == '/' ? "" : "/", cp);
+		strlcat(opened_name, buf, sizeof opened_name);
+	} else {
+#endif
+		cp = filename(fname, &partition);
+		if (cp) {
+			strlcpy(buf, cp, sizeof buf);
+			*cp = 0;
+		}
+		if (!cp || !*buf)
+			strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
+		if (!*fname)
+			strlcpy(fname, bootdev, sizeof fname);
+		strlcpy(opened_name, fname,
+		    partition ? (sizeof opened_name) - 2 : sizeof opened_name);
+		if (partition) {
+			cp = opened_name + strlen(opened_name);
+			*cp++ = ':';
+			*cp++ = partition;
+			*cp = 0;
+		}
+		if (*buf != '/')
+			strlcat(opened_name, "/", sizeof opened_name);
+		strlcat(opened_name, buf, sizeof opened_name);
+		*file = opened_name + strlen(fname) + 1;
+#ifdef SOFTRAID
 	}
-	if (!cp || !*buf)
-		strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
-	if (!*fname)
-		strlcpy(fname, bootdev, sizeof fname);
-	strlcpy(opened_name, fname, sizeof opened_name);
-	if (partition) {
-		cp = opened_name + strlen(opened_name);
-		*cp++ = ':';
-		*cp++ = partition;
-		*cp = 0;
-	}
-	if (*buf != '/')
-		strlcat(opened_name, "/", sizeof opened_name);
-	strlcat(opened_name, buf, sizeof opened_name);
-	*file = opened_name + strlen(fname) + 1;
+#endif
 	DNPRINTF(BOOT_D_OFDEV, "devopen: trying %s\n", fname);
+#ifdef SOFTRAID
+	if (bootdev_dip) {
+		/* Redirect to the softraid boot volume. */
+		struct partition *pp;
+
+		bzero(&ofdev, sizeof ofdev);
+		ofdev.type = OFDEV_SOFTRAID;
+
+		if (partition) {
+			if (partition < 'a' ||
+			    partition >= 'a' + MAXPARTITIONS) {
+			    	printf("invalid partition '%c'\n", partition);
+				return EINVAL;
+			}
+			part = partition - 'a';
+			pp = &bootdev_dip->disklabel.d_partitions[part];
+			if (pp->p_fstype == FS_UNUSED || pp->p_size == 0) {
+			    	printf("invalid partition '%c'\n", partition);
+				return EINVAL;
+			}
+			bootdev_dip->sr_vol->sbv_part = partition;
+		} else
+			bootdev_dip->sr_vol->sbv_part = 'a';
+
+		of->f_dev = devsw;
+		of->f_devdata = &ofdev;
+
+#ifdef SPARC_BOOT_UFS
+		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
+#else
+#error "-DSOFTRAID requires -DSPARC_BOOT_UFS"
+#endif
+		return 0;
+	}
+#endif
 	if ((handle = OF_finddevice(fname)) == -1)
 		return ENOENT;
 	DNPRINTF(BOOT_D_OFDEV, "devopen: found %s\n", fname);
@@ -504,32 +626,13 @@ devopen(struct open_file *of, const char *name, char **file)
 	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is now open\n", fname);
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
+	ofdev.type = OFDEV_DISK;
+	ofdev.bsize = DEV_BSIZE;
 	if (!strcmp(buf, "block")) {
-		ofdev.type = OFDEV_DISK;
-		ofdev.bsize = DEV_BSIZE;
-		/* First try to find a disklabel without MBR partitions */
-		DNPRINTF(BOOT_D_OFDEV, "devopen: trying to read disklabel\n");
-		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
-		    || read != DEV_BSIZE
-		    || (errmsg = getdisklabel(buf, &label))) {
-#ifdef BOOT_DEBUG
-			if (errmsg)
-				DNPRINTF(BOOT_D_OFDEV,
-				    "devopen: getdisklabel says %s\n", errmsg);
-#endif
-			/* Else try MBR partitions */
-			errmsg = search_label(&ofdev, LABELSECTOR, buf,
-			    &label, 0);
-			if (errmsg) { 
-				printf("devopen: search_label says %s\n", errmsg);
-				error = ERDLAB;
-			}
-			if (error && error != ERDLAB)
-				goto bad;
-		}
-
-		if (error == ERDLAB) {
+		error = load_disklabel(&ofdev, &label);
+		if (error && error != ERDLAB)
+			goto bad;
+		else if (error == ERDLAB) {
 			if (partition)
 				/* User specified a parititon, but there is none */
 				goto bad;
