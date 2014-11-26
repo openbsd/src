@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack.c,v 1.11 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: stack.c,v 1.12 2014/11/26 15:05:51 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -129,14 +129,12 @@ stack_swap(struct stack *stack)
 static void
 stack_grow(struct stack *stack)
 {
-	size_t new_size, i;
+	size_t new_size;
 
 	if (++stack->sp == stack->size) {
 		new_size = stack->size * 2 + 1;
 		stack->stack = brealloc(stack->stack,
 		    new_size * sizeof(*stack->stack));
-		for (i = stack->size; i < new_size; i++)
-			stack->stack[i].array = NULL;
 		stack->size = new_size;
 	}
 }
@@ -147,6 +145,7 @@ stack_pushnumber(struct stack *stack, struct number *b)
 	stack_grow(stack);
 	stack->stack[stack->sp].type = BCODE_NUMBER;
 	stack->stack[stack->sp].u.num = b;
+	stack->stack[stack->sp].array = NULL;
 }
 
 void
@@ -155,6 +154,7 @@ stack_pushstring(struct stack *stack, char *string)
 	stack_grow(stack);
 	stack->stack[stack->sp].type = BCODE_STRING;
 	stack->stack[stack->sp].u.string = string;
+	stack->stack[stack->sp].array = NULL;
 }
 
 void
