@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.58 2014/10/13 02:49:53 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.59 2014/11/26 05:37:26 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -318,8 +318,7 @@ again:
 	if (bind_mode == BIO_BIND_REUSEADDR) {
 		int i = 1;
 
-		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&i,
-		    sizeof(i));
+		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i));
 		bind_mode = BIO_BIND_NORMAL;
 	}
 	if (bind(s, &server.sa, addrlen) == -1) {

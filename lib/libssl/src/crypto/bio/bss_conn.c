@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.31 2014/11/21 18:15:40 deraadt Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.32 2014/11/26 05:37:26 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,7 +220,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 
 #if defined(SO_KEEPALIVE)
 			i = 1;
-			i = setsockopt(b->num, SOL_SOCKET, SO_KEEPALIVE,(char *)&i, sizeof(i));
+			i = setsockopt(b->num, SOL_SOCKET, SO_KEEPALIVE, &i, sizeof(i));
 			if (i < 0) {
 				SYSerr(SYS_F_SOCKET, errno);
 				ERR_asprintf_error_data("host=%s:%s",

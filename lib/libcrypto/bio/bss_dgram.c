@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.34 2014/11/26 05:01:47 bcook Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.35 2014/11/26 05:37:26 bcook Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -244,21 +244,17 @@ dgram_adjust_rcv_timeout(BIO *b)
 {
 #if defined(SO_RCVTIMEO)
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
-		union { size_t s;
-		int i;
-	} sz = {0};
 
 	/* Is a timer active? */
 	if (data->next_timeout.tv_sec > 0 || data->next_timeout.tv_usec > 0) {
 		struct timeval timenow, timeleft;
 
 		/* Read current socket timeout */
-		sz.i = sizeof(data->socket_timeout);
+		socklen_t sz = sizeof(data->socket_timeout);
 		if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-		    &(data->socket_timeout), (void *)&sz) < 0) {
+		    &(data->socket_timeout), &sz) < 0) {
 			perror("getsockopt");
-		} else if (sizeof(sz.s) != sizeof(sz.i) && sz.i == 0)
-			OPENSSL_assert(sz.s <= sizeof(data->socket_timeout));
+		}
 
 		/* Get current time */
 		get_current_time(&timenow);
@@ -469,17 +465,18 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		switch (addr.sa.sa_family) {
 		case AF_INET:
 			sockopt_val = IP_PMTUDISC_DO;
-			if ((ret = setsockopt(b->num, IPPROTO_IP,
-			    IP_MTU_DISCOVER, &sockopt_val,
-			    sizeof(sockopt_val))) < 0)
+			ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
+			    &sockopt_val, sizeof(sockopt_val));
+			if (ret < 0)
 				perror("setsockopt");
 			break;
 #if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
 		case AF_INET6:
 			sockopt_val = IPV6_PMTUDISC_DO;
-			if ((ret = setsockopt(b->num, IPPROTO_IPV6,
+			ret = setsockopt(b->num, IPPROTO_IPV6,
 			    IPV6_MTU_DISCOVER, &sockopt_val,
-			    sizeof(sockopt_val))) < 0)
+			    sizeof(sockopt_val));
+			if (ret < 0)
 				perror("setsockopt");
 			break;
 #endif
@@ -502,9 +499,9 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		sockopt_len = sizeof(sockopt_val);
 		switch (addr.sa.sa_family) {
 		case AF_INET:
-			if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU,
-			    (void *)&sockopt_val, &sockopt_len)) < 0 ||
-			    sockopt_val < 0) {
+			ret = getsockopt(b->num, IPPROTO_IP, IP_MTU,
+			    &sockopt_val, &sockopt_len);
+			if (ret < 0 || sockopt_val < 0) {
 				ret = 0;
 			} else {
 				/* we assume that the transport protocol is UDP and no
@@ -516,9 +513,9 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			break;
 #if defined(IPV6_MTU)
 		case AF_INET6:
-			if ((ret = getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU,
-			    (void *)&sockopt_val, &sockopt_len)) < 0 ||
-			    sockopt_val < 0) {
+			ret = getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU,
+			    &sockopt_val, &sockopt_len);
+			if (ret < 0 || sockopt_val < 0) {
 				ret = 0;
 			} else {
 				/* we assume that the transport protocol is UDP and no
@@ -626,20 +623,13 @@ default:
 		break;
 	case BIO_CTRL_DGRAM_GET_RECV_TIMEOUT:
 		{
-			union {
-				size_t s;
-				int i;
-			} sz = {0};
-			sz.i = sizeof(struct timeval);
+			socklen_t sz = sizeof(struct timeval);
 			if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-			    ptr, (void *)&sz) < 0) {
+			    ptr, &sz) < 0) {
 				perror("getsockopt");
 				ret = -1;
-			} else if (sizeof(sz.s)!=sizeof(sz.i) && sz.i==0) {
-				OPENSSL_assert(sz.s <= sizeof(struct timeval));
-				ret = (int)sz.s;
 			} else
-				ret = sz.i;
+				ret = sz;
 		}
 		break;
 #endif
@@ -653,20 +643,13 @@ default:
 		break;
 	case BIO_CTRL_DGRAM_GET_SEND_TIMEOUT:
 		{
-			union {
-				size_t s;
-				int i;
-			} sz = {0};
-			sz.i = sizeof(struct timeval);
+			socklen_t sz = sizeof(struct timeval);
 			if (getsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO,
-			    ptr, (void *)&sz) < 0) {
+			    ptr, &sz) < 0) {
 				perror("getsockopt");
 				ret = -1;
-			} else if (sizeof(sz.s) != sizeof(sz.i) && sz.i == 0) {
-				OPENSSL_assert(sz.s <= sizeof(struct timeval));
-				ret = (int)sz.s;
 			} else
-				ret = sz.i;
+				ret = sz;
 		}
 		break;
 #endif
@@ -1295,7 +1278,7 @@ dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 			if (authkeyid.scact_keynumber > 0) {
 				authkeyid.scact_keynumber = authkeyid.scact_keynumber - 1;
 				ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_DELETE_KEY,
-				&authkeyid, sizeof(struct sctp_authkeyid));
+				    &authkeyid, sizeof(struct sctp_authkeyid));
 				if (ret < 0)
 					break;
 			}
