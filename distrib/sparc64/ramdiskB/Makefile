@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2014/11/22 15:02:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2014/11/26 08:18:25 stsp Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,9 +61,9 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	disklabel -w ${VND} ${FLOPPYTYPE}
 	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/
+	cp ${DESTDIR}/usr/mdec/ofwbootfd ${MOUNT_POINT}/ofwboot
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	installboot -v ${VND}
+	installboot -v ${VND} /usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
