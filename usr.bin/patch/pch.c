@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.45 2014/11/25 10:26:07 tobias Exp $	*/
+/*	$OpenBSD: pch.c,v 1.46 2014/11/26 10:11:21 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -585,12 +585,17 @@ another_hunk(void)
 					if (!*s)
 						malformed();
 					p_ptrn_lines = strtolinenum(s, &s) - p_first + 1;
+					if (p_ptrn_lines < 0)
+						malformed();
 				} else if (p_first)
 					p_ptrn_lines = 1;
 				else {
 					p_ptrn_lines = 0;
 					p_first = 1;
 				}
+				if (p_first >= LINENUM_MAX - p_ptrn_lines ||
+				    p_ptrn_lines >= LINENUM_MAX - 6)
+					malformed();
 
 				/* we need this much at least */
 				p_max = p_ptrn_lines + 6;
@@ -652,12 +657,17 @@ another_hunk(void)
 							malformed();
 						p_repl_lines = strtolinenum(s, &s) -
 						    p_newfirst + 1;
+						if (p_repl_lines < 0)
+							malformed();
 					} else if (p_newfirst)
 						p_repl_lines = 1;
 					else {
 						p_repl_lines = 0;
 						p_newfirst = 1;
 					}
+					if (p_newfirst >= LINENUM_MAX - p_repl_lines ||
+					    p_repl_lines >= LINENUM_MAX - p_end)
+						malformed();
 					p_max = p_repl_lines + p_end;
 					if (p_max > MAXHUNKSIZE)
 						fatal("hunk too large (%ld lines) at line %ld: %s",
@@ -868,6 +878,10 @@ hunk_done:
 			s++;
 		if (*s != '@')
 			malformed();
+		if (p_first >= LINENUM_MAX - p_ptrn_lines ||
+		    p_newfirst > LINENUM_MAX - p_repl_lines ||
+		    p_ptrn_lines >= LINENUM_MAX - p_repl_lines - 1)
+			malformed();
 		if (!p_ptrn_lines)
 			p_first++;	/* do append rather than insert */
 		p_max = p_ptrn_lines + p_repl_lines + 1;
@@ -1010,8 +1024,12 @@ hunk_done:
 		p_first = strtolinenum(buf, &s);
 		if (*s == ',') {
 			p_ptrn_lines = strtolinenum(s + 1, &s) - p_first + 1;
+			if (p_ptrn_lines < 0)
+				malformed();
 		} else
 			p_ptrn_lines = (*s != 'a');
+		if (p_first >= LINENUM_MAX - p_ptrn_lines)
+			malformed();
 		hunk_type = *s;
 		if (hunk_type == 'a')
 			p_first++;	/* do append rather than insert */
@@ -1020,16 +1038,21 @@ hunk_done:
 			max = strtolinenum(s + 1, &s);
 		else
 			max = min;
+		if (min < 0 || min > max || max - min == LINENUM_MAX)
+			malformed();
 		if (hunk_type == 'd')
 			min++;
-		p_end = p_ptrn_lines + 1 + max - min + 1;
+		p_newfirst = min;
+		p_repl_lines = max - min + 1;
+		if (p_newfirst > LINENUM_MAX - p_repl_lines ||
+		    p_ptrn_lines >= LINENUM_MAX - p_repl_lines - 1)
+			malformed();
+		p_end = p_ptrn_lines + p_repl_lines + 1;
 		if (p_end > MAXHUNKSIZE)
 			fatal("hunk too large (%ld lines) at line %ld: %s",
 			    p_end, p_input_line, buf);
 		while (p_end >= hunkmax)
 			grow_hunkmax();
-		p_newfirst = min;
-		p_repl_lines = max - min + 1;
 		snprintf(buf, sizeof buf, "*** %ld,%ld\n", p_first,
 		    p_first + p_ptrn_lines - 1);
 		p_line[0] = savestr(buf);
