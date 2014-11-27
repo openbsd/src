@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.14 2014/11/26 22:30:47 stsp Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.15 2014/11/27 14:57:36 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 26 2014 $
+.Dd $Mdocdate: November 27 2014 $
 .Dt BOOT_SPARC64 8 sparc64
 .Os
 .Sh NAME
@@ -48,63 +48,50 @@ System boot blocks are installed near the start of the boot disk
 using the procedure described in
 .Xr installboot 8 .
 The boot program attempts to load the kernel from the selected
-boot device,
-which must currently be an
-.Tn SCSI
-.Pq Dq sd
+boot device, which must currently be an SCSI
+.Pq Pa sd
 or IDE
-.Pq Dq wd
+.Pq Pa wd
 disk drive, or a CD-ROM
-.Pq Dq cd ,
-or an
-.Tn SCSI
-tape drive
-.Pq Dq st .
+.Pq Pa cd ,
+or an SCSI tape drive
+.Pq Pa st .
 .Pp
-The UltraSPARC
-.Tn Open Firmware
+The UltraSPARC Open Firmware
 will normally look for a bootloader on the device specified by the
-.Em boot-device
+.Va boot-device
 variable.
 The
 .Ox
 bootloader will then look for a kernel named
 .Pa bsd
 by default, unless the
-.Em boot-file
+.Va boot-file
 variable is set, or a different filename has been specified
 in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
-.Em \	ok
-set-default
-.Em boot-file
+.D1 Sy ok Li set-default boot-file
 .Pp
 To boot from a
 .Xr softraid 4
 volume by default,
-.Em boot-device
+.Va boot-device
 must be set to a disk device hosting a chunk of the softraid volume:
 .Pp
-.Em \	ok
-setenv
-.Em boot-device
-disk0
+.D1 Sy ok Li setenv boot-device disk0
 .Pp
 and
-.Em boot-file
+.Va boot-file
 must contain the
-.Pq Dq sr
+.Pq Pa sr
 device name of the softraid volume and optionally a partition letter
 and/or kernel:
 .Pp
-.Em \	ok
-setenv
-.Em boot-file
-sr0a:/bsd
+.D1 Sy ok Li setenv boot-file sr0a:/bsd
 .Pp
 Autoboot is enabled by setting the
-.Em auto-boot?\&
+.Va auto-boot?\&
 variable to
 .Dq true ,
 and is the factory default.
@@ -132,12 +119,12 @@ The system will be booted multi-user unless this option is specified.
 If the
 .Xr sysctl 8
 variable
-.Em ddb.console
+.Va ddb.console
 is enabled, at any time you can break back to the ROM by pressing the
-.Dq L1
+.Sq L1
 .Pq also known as the Dq stop key
 and
-.Dq a
+.Sq a
 keys at the same time (if the console is a serial port the same is
 achieved by sending a
 .Dq break ) ,
