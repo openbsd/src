@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.108 2014/11/26 09:29:17 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.109 2014/11/27 19:03:44 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -847,10 +847,6 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			    base, size, EX_NOWAIT) == 0) {
 				break;
 			}
-			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
-			    base, size, EX_NOWAIT) == 0) {
-				break;
-			}
 #ifdef __sparc64__
 			/*
 			 * Certain SPARC T5 systems assign
@@ -868,21 +864,22 @@ pci_reserve_resources(struct pci_attach_args *pa)
 				break;
 			}
 #endif
-			printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
-			       bus, dev, func, base, size);
-			pci_conf_write(pc, tag, reg, 0);
-			if (type & PCI_MAPREG_MEM_TYPE_64BIT)
-				pci_conf_write(pc, tag, reg + 4, 0);
+			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
+			    base, size, EX_NOWAIT)) {
+				printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
+				    bus, dev, func, base, size);
+				pci_conf_write(pc, tag, reg, 0);
+				if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+					pci_conf_write(pc, tag, reg + 4, 0);
+			}
 			break;
 		case PCI_MAPREG_TYPE_IO:
 			if (pa->pa_ioex && extent_alloc_region(pa->pa_ioex,
-			    base, size, EX_NOWAIT) == 0) {
-				break;
+			    base, size, EX_NOWAIT)) {
+				printf("%d:%d:%d: io address conflict 0x%lx/0x%lx\n",
+				    bus, dev, func, base, size);
+				pci_conf_write(pc, tag, reg, 0);
 			}
-
-			printf("%d:%d:%d: io address conflict 0x%lx/0x%lx\n",
-			       bus, dev, func, base, size);
-			pci_conf_write(pc, tag, reg, 0);
 			break;
 		}
 
