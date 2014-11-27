@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alereg.h,v 1.2 2011/05/20 08:36:55 kevlo Exp $	*/
+/*	$OpenBSD: if_alereg.h,v 1.3 2014/11/27 14:52:04 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -598,7 +598,6 @@ struct smb {
 	uint32_t tx_multi_colls;
 	uint32_t tx_late_colls;
 	uint32_t tx_excess_colls;
-	uint32_t tx_abort;
 	uint32_t tx_underrun;
 	uint32_t tx_desc_underrun;
 	uint32_t tx_lenerrs;
@@ -886,7 +885,6 @@ struct ale_hw_stats {
 	uint32_t tx_multi_colls;
 	uint32_t tx_late_colls;
 	uint32_t tx_excess_colls;
-	uint32_t tx_abort;
 	uint32_t tx_underrun;
 	uint32_t tx_desc_underrun;
 	uint32_t tx_lenerrs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alcreg.h,v 1.4 2011/05/25 02:22:20 kevlo Exp $	*/
+/*	$OpenBSD: if_alcreg.h,v 1.5 2014/11/27 14:52:04 brad Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -848,7 +848,6 @@ struct smb {
 	uint32_t tx_multi_colls;
 	uint32_t tx_late_colls;
 	uint32_t tx_excess_colls;
-	uint32_t tx_abort;
 	uint32_t tx_underrun;
 	uint32_t tx_desc_underrun;
 	uint32_t tx_lenerrs;
@@ -1118,7 +1117,6 @@ struct alc_hw_stats {
 	uint32_t tx_multi_colls;
 	uint32_t tx_late_colls;
 	uint32_t tx_excess_colls;
-	uint32_t tx_abort;
 	uint32_t tx_underrun;
 	uint32_t tx_desc_underrun;
 	uint32_t tx_lenerrs;
