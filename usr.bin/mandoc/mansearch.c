@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.37 2014/11/18 01:14:40 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.38 2014/11/27 01:57:42 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -402,7 +402,6 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 {
 	char		*newnames, *prevsec, *prevarch;
 	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch, *fsec;
-	const char	*gzip;
 	size_t		 i;
 	int		 c;
 
@@ -465,7 +464,7 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 
 		/* Also save the first file name encountered. */
 
-		if (NULL != mpage->file)
+		if (mpage->file != NULL)
 			continue;
 
 		if (form & FORM_SRC) {
@@ -475,22 +474,18 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 			sep1 = "cat";
 			fsec = "0";
 		}
-		if (form & FORM_GZ)
-			gzip = ".gz";
-		else
-			gzip = "";
-		sep2 = '\0' == *arch ? "" : "/";
-		mandoc_asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s%s",
-		    path, sep1, sec, sep2, arch, name, fsec, gzip);
+		sep2 = *arch == '\0' ? "" : "/";
+		mandoc_asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s",
+		    path, sep1, sec, sep2, arch, name, fsec);
 	}
-	if (SQLITE_DONE != c)
+	if (c != SQLITE_DONE)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 	sqlite3_reset(s);
 
 	/* Append one final section to the names. */
 
-	if (NULL != prevsec) {
-		sep2 = '\0' == *prevarch ? "" : "/";
+	if (prevsec != NULL) {
+		sep2 = *prevarch == '\0' ? "" : "/";
 		mandoc_asprintf(&newnames, "%s(%s%s%s)",
 		    mpage->names, prevsec, sep2, prevarch);
 		free(mpage->names);
