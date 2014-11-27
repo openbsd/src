@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.109 2014/11/26 00:09:27 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.110 2014/11/27 07:54:06 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -1414,7 +1414,6 @@ ixgbe_setup_optics(struct ix_softc *sc)
 int
 ixgbe_allocate_legacy(struct ix_softc *sc)
 {
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct ixgbe_osdep	*os = &sc->osdep;
 	struct pci_attach_args	*pa = &os->os_pa;
 	const char		*intrstr = NULL;
@@ -1438,7 +1437,7 @@ ixgbe_allocate_legacy(struct ix_softc *sc)
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->tag = pci_intr_establish(pc, ih, IPL_NET,
-	    ixgbe_intr, sc, ifp->if_xname);
+	    ixgbe_intr, sc, sc->dev.dv_xname);
 	if (sc->tag == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
