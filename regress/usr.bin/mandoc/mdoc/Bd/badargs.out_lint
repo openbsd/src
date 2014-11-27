@@ -5,3 +5,6 @@ mandoc: badargs.in:14:51: WARNING: duplicate argument: Bd -offset 6n
 mandoc: badargs.in:19:2: WARNING: missing display type, using -ragged: Bd
 mandoc: badargs.in:24:2: WARNING: skipping duplicate display type: Bd -unfilled
 mandoc: badargs.in:28:2: WARNING: skipping duplicate display type: Bd -ragged
+mandoc: badargs.in:33:2: ERROR: NOT IMPLEMENTED: Bd -file
+mandoc: badargs.in:38:2: ERROR: NOT IMPLEMENTED: Bd -file
+mandoc: badargs.in:43:2: ERROR: NOT IMPLEMENTED: Bd -file

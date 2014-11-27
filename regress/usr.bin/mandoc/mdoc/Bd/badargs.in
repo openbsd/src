@@ -29,3 +29,18 @@ unfilled
 unfilled
 ragged
 .Ed
+file /dev/null:
+.Bd -ragged -file /dev/null -offset indent
+ragged
+offset indent
+.Ed
+trailing -file:
+.Bd -ragged -offset indent -file
+ragged
+offset indent
+.Ed
+missing -file argument:
+.Bd -ragged -offset indent -file -compact
+ragged
+offset indent
+.Ed

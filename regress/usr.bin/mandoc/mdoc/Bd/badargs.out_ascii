@@ -16,5 +16,14 @@ DDEESSCCRRIIPPTTIIOONN
      ragged unfilled
      unfilled
      ragged
+     file /dev/null:
+
+           ragged offset indent
+     trailing -file:
+
+           ragged offset indent
+     missing -file argument:
+
+           ragged offset indent
 
 OpenBSD                          July 5, 2014                          OpenBSD

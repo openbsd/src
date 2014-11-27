@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.74 2014/11/26 23:27:13 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.75 2014/11/27 23:35:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -196,6 +196,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	/* related to request and macro arguments */
 	"escaped character not allowed in a name",
 	"argument count wrong",
+	"NOT IMPLEMENTED: Bd -file",
 	"missing list type, using -item",
 	"missing manual name, using \"\"",
 	"uname(3) system call failed, using UNKNOWN",
@@ -208,7 +209,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"generic fatal error",
 
 	"input too large",
-	"NOT IMPLEMENTED: Bd -file",
 	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
 	".so request failed",
 
