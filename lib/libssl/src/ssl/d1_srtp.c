@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.9 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.10 2014/11/27 16:07:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -355,7 +355,6 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len, int *al)
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
 		    SSL_R_BAD_SRTP_MKI_VALUE);
 		*al = SSL_AD_DECODE_ERROR;
-		sk_SRTP_PROTECTION_PROFILE_free(clnt);
 		goto done;
 	}
 
