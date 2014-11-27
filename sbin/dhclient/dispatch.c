@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.97 2014/11/26 19:25:31 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.98 2014/11/27 23:04:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,6 @@ get_hw_address(void)
 		    sdl->sdl_alen != ETHER_ADDR_LEN)
 			continue;
 
-		ifi->index = sdl->sdl_index;
 		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
 		    ETHER_ADDR_LEN);
 	}

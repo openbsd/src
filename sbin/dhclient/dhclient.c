@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.335 2014/11/25 17:03:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.336 2014/11/27 23:04:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -468,6 +468,9 @@ main(int argc, char *argv[])
 	if (ifi == NULL)
 		error("ifi calloc");
 	get_ifname(argv[0]);
+	ifi->index = if_nametoindex(ifi->name);
+	if (ifi->index == 0)
+		error("'%s' is not an interface", ifi->name);
 
 	tzset();
 
