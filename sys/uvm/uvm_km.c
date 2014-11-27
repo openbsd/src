@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.120 2014/11/21 06:40:40 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.121 2014/11/27 21:40:52 kettenis Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -458,7 +458,8 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	/* allocate some virtual space */
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align,
-	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+	    UVM_MAPFLAG(PROT_READ | PROT_WRITE,
+	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    UVM_INH_NONE, POSIX_MADV_RANDOM, 0)) != 0)) {
 		return(0);
 	}
