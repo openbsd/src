@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.29 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.30 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef HTML_H
-#define HTML_H
 
 __BEGIN_DECLS
 
@@ -173,5 +171,3 @@ void		  buffmt_includes(struct html *, const char *);
 int		  html_strlen(const char *);
 
 __END_DECLS
-
-#endif /*!HTML_H*/

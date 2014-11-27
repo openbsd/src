@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.59 2014/11/17 06:44:35 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.60 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef LIBMDOC_H
-#define LIBMDOC_H
 
 enum	mdoc_next {
 	MDOC_NEXT_SIBLING = 0,
@@ -140,5 +138,3 @@ int		  mdoc_macroend(struct mdoc *);
 enum mdelim	  mdoc_isdelim(const char *);
 
 __END_DECLS
-
-#endif /*!LIBMDOC_H*/

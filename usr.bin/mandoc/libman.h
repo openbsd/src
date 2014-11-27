@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.39 2014/11/03 23:17:21 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.40 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef LIBMAN_H
-#define LIBMAN_H
 
 enum	man_next {
 	MAN_NEXT_SIBLING = 0,
@@ -76,5 +74,3 @@ int		  man_valid_post(struct man *);
 int		  man_unscope(struct man *, const struct man_node *);
 
 __END_DECLS
-
-#endif /*!LIBMAN_H*/

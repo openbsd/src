@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.12 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.13 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef	MAIN_H
-#define	MAIN_H
 
 __BEGIN_DECLS
 
@@ -56,5 +54,3 @@ void		  terminal_mdoc(void *, const struct mdoc *);
 void		  terminal_man(void *, const struct man *);
 
 __END_DECLS
-
-#endif /*!MAIN_H*/

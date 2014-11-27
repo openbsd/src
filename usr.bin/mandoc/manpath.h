@@ -1,4 +1,4 @@
-/*	$Id: manpath.h,v 1.4 2013/05/29 23:15:11 schwarze Exp $ */
+/*	$Id: manpath.h,v 1.5 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef MANPATH_H
-#define MANPATH_H
 
 /*
  * Unsorted list of unique, absolute paths to be searched for manual
@@ -34,5 +32,3 @@ void	 manpath_parse(struct manpaths *, const char *, char *, char *);
 void	 manpath_free(struct manpaths *);
 
 __END_DECLS
-
-#endif /*!MANPATH_H*/

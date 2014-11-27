@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.49 2014/10/28 17:35:42 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.50 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef TERM_H
-#define TERM_H
-
 __BEGIN_DECLS
 
 struct	termp;
@@ -134,5 +131,3 @@ void		  term_fontrepl(struct termp *, enum termfont);
 void		  term_fontlast(struct termp *);
 
 __END_DECLS
-
-#endif /*!TERM_H*/

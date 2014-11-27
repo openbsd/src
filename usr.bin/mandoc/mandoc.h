@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.112 2014/11/26 21:40:11 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.113 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef MANDOC_H
-#define MANDOC_H
 
 #define ASCII_NBRSP	 31  /* non-breaking space */
 #define	ASCII_HYPH	 30  /* breakable hyphen */
@@ -447,5 +445,3 @@ const char	 *mparse_strlevel(enum mandoclevel);
 enum mandoclevel  mparse_wait(struct mparse *);
 
 __END_DECLS
-
-#endif /*!MANDOC_H*/

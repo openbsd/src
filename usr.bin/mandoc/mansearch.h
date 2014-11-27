@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.h,v 1.17 2014/11/27 01:57:42 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.18 2014/11/27 14:31:29 deraadt Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef MANSEARCH_H
-#define MANSEARCH_H
 
 #define	MANDOC_DB	 "mandoc.db"
 
@@ -109,5 +107,3 @@ int	mansearch(const struct mansearch *cfg, /* options */
 void	mansearch_free(struct manpage *, size_t);
 
 __END_DECLS
-
-#endif /* MANSEARCH_H */
