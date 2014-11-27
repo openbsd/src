@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.103 2014/11/26 19:22:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.104 2014/11/27 22:27:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -691,6 +691,7 @@ static int
 blk_exp_close(MACRO_PROT_ARGS)
 {
 	struct mdoc_node *body;		/* Our own body. */
+	struct mdoc_node *endbody;	/* Our own end marker. */
 	struct mdoc_node *later;	/* A sub-block starting later. */
 	struct mdoc_node *n;		/* For searching backwards. */
 
@@ -717,7 +718,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	 * both of our own and of pending sub-blocks.
 	 */
 	atok = rew_alt(tok);
-	body = later = NULL;
+	body = endbody = later = NULL;
 	for (n = mdoc->last; n; n = n->parent) {
 		if (MDOC_VALID & n->flags)
 			continue;
@@ -756,6 +757,10 @@ blk_exp_close(MACRO_PROT_ARGS)
 			if ( ! mdoc_endbody_alloc(mdoc, line, ppos,
 			    atok, body, ENDBODY_SPACE))
 				return(0);
+			if (maxargs) {
+				endbody = mdoc->last;
+				mdoc->next = MDOC_NEXT_CHILD;
+			}
 			break;
 		}
 
@@ -785,15 +790,28 @@ blk_exp_close(MACRO_PROT_ARGS)
 	if ( ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
 		return(0);
 
-	if (NULL == later && maxargs > 0)
-		if ( ! mdoc_tail_alloc(mdoc, line, ppos, rew_alt(tok)))
+	if (maxargs && endbody == NULL) {
+		if (n == NULL) {
+			/*
+			 * Stray .Ec without previous .Eo:
+			 * Break the output line, ignore any arguments.
+			 */
+			if ( ! mdoc_elem_alloc(mdoc, line, ppos,
+			    MDOC_br, NULL))
+				return(0);
+			if ( ! rew_elem(mdoc, MDOC_br))
+				return(0);
+		} else if ( ! mdoc_tail_alloc(mdoc, line, ppos, atok))
 			return(0);
+	}
 
-	for (flushed = j = 0; ; j++) {
+	flushed = n == NULL;
+	for (j = 0; ; j++) {
 		lastarg = *pos;
 
 		if (j == maxargs && ! flushed) {
-			if ( ! rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos))
+			if ( ! (endbody != NULL ? rew_last(mdoc, endbody) :
+			    rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos)))
 				return(0);
 			flushed = 1;
 		}
@@ -817,7 +835,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 		}
 
 		if ( ! flushed) {
-			if ( ! rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos))
+			if ( ! (endbody != NULL ? rew_last(mdoc, endbody) :
+			    rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos)))
 				return(0);
 			flushed = 1;
 		}
@@ -829,7 +848,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 		break;
 	}
 
-	if ( ! flushed && ! rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos))
+	if ( ! flushed && ! (endbody != NULL ? rew_last(mdoc, endbody) :
+	    rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos)))
 		return(0);
 
 	if ( ! nl)

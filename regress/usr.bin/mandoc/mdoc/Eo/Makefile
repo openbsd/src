@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2014/07/02 03:47:07 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2014/11/27 22:27:40 schwarze Exp $
 
-REGRESS_TARGETS = empty obsolete
-
-LINT_TARGETS = obsolete
+REGRESS_TARGETS	= break empty obsolete
+LINT_TARGETS	= break obsolete
 
 .include <bsd.regress.mk>

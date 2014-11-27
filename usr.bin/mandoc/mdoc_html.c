@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.87 2014/11/27 16:20:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.88 2014/11/27 22:27:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -421,13 +421,12 @@ print_mdoc_node(MDOC_ARGS)
 		 * the "meta" table state.  This will be reopened on the
 		 * next table element.
 		 */
-		if (h->tblt) {
+		if (h->tblt != NULL) {
 			print_tblclose(h);
 			t = h->tags.head;
 		}
-
-		assert(NULL == h->tblt);
-		if (mdocs[n->tok].pre && ENDBODY_NOT == n->end)
+		assert(h->tblt == NULL);
+		if (mdocs[n->tok].pre && (n->end == ENDBODY_NOT || n->child))
 			child = (*mdocs[n->tok].pre)(meta, n, h);
 		break;
 	}
@@ -452,8 +451,13 @@ print_mdoc_node(MDOC_ARGS)
 	case MDOC_EQN:
 		break;
 	default:
-		if (mdocs[n->tok].post && ENDBODY_NOT == n->end)
-			(*mdocs[n->tok].post)(meta, n, h);
+		if ( ! mdocs[n->tok].post || n->flags & MDOC_ENDED)
+			break;
+		(*mdocs[n->tok].post)(meta, n, h);
+		if (n->end != ENDBODY_NOT)
+			n->pending->flags |= MDOC_ENDED;
+		if (n->end == ENDBODY_NOSPACE)
+			h->flags |= HTML_NOSPACE;
 		break;
 	}
 }
@@ -2140,10 +2144,11 @@ static void
 mdoc_quote_post(MDOC_ARGS)
 {
 
-	if (MDOC_BODY != n->type)
+	if (n->type != MDOC_BODY && n->type != MDOC_ELEM)
 		return;
 
-	if (MDOC_En != n->tok)
+	if ( ! (n->tok == MDOC_En ||
+	    (n->tok == MDOC_Eo && n->end == ENDBODY_SPACE)))
 		h->flags |= HTML_NOSPACE;
 
 	switch (n->tok) {

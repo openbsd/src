@@ -13,3 +13,6 @@ and a full
 user@host
 .Ec >>
 quotation.
+And a stray
+.Ec ignore this
+end macro.

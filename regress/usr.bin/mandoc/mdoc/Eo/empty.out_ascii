@@ -4,6 +4,7 @@ NNAAMMEE
      EEoo--eemmppttyy - empty implicit enclosure macros
 
 DDEESSCCRRIIPPTTIIOONN
-     An empty <<>> and a full <<user@host>> quotation.
+     An empty <<>> and a full <<user@host>> quotation.  And a stray
+     ignore this end macro.
 
 OpenBSD                        October 21, 2010                        OpenBSD

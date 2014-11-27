@@ -1,0 +1,9 @@
+EO-BREAK(1)                 General Commands Manual                EO-BREAK(1)
+
+NNAAMMEE
+     EEoo--bbrreeaakk - breaking a custom enclosure block
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text <<eo [bo ec>> bc] final text
+
+OpenBSD                        November 27, 2014                       OpenBSD

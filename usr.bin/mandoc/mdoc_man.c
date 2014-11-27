@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.73 2014/11/27 16:20:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.74 2014/11/27 22:27:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -83,6 +83,7 @@ static	int	  pre_en(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_em(DECL_ARGS);
 static	int	  pre_skip(DECL_ARGS);
+static	int	  pre_eo(DECL_ARGS);
 static	int	  pre_ex(DECL_ARGS);
 static	int	  pre_fa(DECL_ARGS);
 static	int	  pre_fd(DECL_ARGS);
@@ -188,7 +189,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ef */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */
-	{ NULL, NULL, post_eo, NULL, NULL }, /* Eo */
+	{ cond_body, pre_eo, post_eo, NULL, NULL }, /* Eo */
 	{ NULL, pre_ux, NULL, "FreeBSD", NULL }, /* Fx */
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Ms */
 	{ NULL, pre_no, NULL, NULL, NULL }, /* No */
@@ -605,8 +606,8 @@ print_node(DECL_ARGS)
 		 * node.
 		 */
 		act = manacts + n->tok;
-		cond = NULL == act->cond || (*act->cond)(meta, n);
-		if (cond && act->pre && ENDBODY_NOT == n->end)
+		cond = act->cond == NULL || (*act->cond)(meta, n);
+		if (cond && act->pre && (n->end == ENDBODY_NOT || n->nchild))
 			do_sub = (*act->pre)(meta, n);
 	}
 
@@ -1121,11 +1122,19 @@ post_en(DECL_ARGS)
 	return;
 }
 
+static int
+pre_eo(DECL_ARGS)
+{
+
+	outflags &= ~(MMAN_spc | MMAN_nl);
+	return(1);
+}
+
 static void
 post_eo(DECL_ARGS)
 {
 
-	if (MDOC_HEAD == n->type || MDOC_BODY == n->type)
+	if (n->end != ENDBODY_SPACE)
 		outflags &= ~MMAN_spc;
 }
 
