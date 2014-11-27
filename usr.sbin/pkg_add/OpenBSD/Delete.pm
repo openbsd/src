@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.140 2014/11/25 14:16:15 espie Exp $
+# $OpenBSD: Delete.pm,v 1.141 2014/11/27 14:15:48 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -99,6 +99,8 @@ sub delete_package
 				$state->errsay("NOT deleting #1", $pkgname);
 				return;
 			}
+		} else {
+			return;
 		}
 	}
 
