@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.72 2014/11/19 21:59:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.73 2014/11/27 16:20:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -82,7 +82,7 @@ static	int	  pre_dl(DECL_ARGS);
 static	int	  pre_en(DECL_ARGS);
 static	int	  pre_enc(DECL_ARGS);
 static	int	  pre_em(DECL_ARGS);
-static	int	  pre_es(DECL_ARGS);
+static	int	  pre_skip(DECL_ARGS);
 static	int	  pre_ex(DECL_ARGS);
 static	int	  pre_fa(DECL_ARGS);
 static	int	  pre_fd(DECL_ARGS);
@@ -181,7 +181,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Bq */
 	{ NULL, pre_ux, NULL, "BSD/OS", NULL }, /* Bsx */
 	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
-	{ NULL, NULL, NULL, NULL, NULL }, /* Db */
+	{ NULL, pre_skip, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
 	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Do */
 	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Dq */
@@ -233,7 +233,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Bro */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %C */
-	{ NULL, pre_es, NULL, NULL, NULL }, /* Es */
+	{ NULL, pre_skip, NULL, NULL, NULL }, /* Es */
 	{ cond_body, pre_en, post_en, NULL, NULL }, /* En */
 	{ NULL, pre_ux, NULL, "DragonFly", NULL }, /* Dx */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %Q */
@@ -1130,13 +1130,6 @@ post_eo(DECL_ARGS)
 }
 
 static int
-pre_es(DECL_ARGS)
-{
-
-	return(0);
-}
-
-static int
 pre_fa(DECL_ARGS)
 {
 	int	 am_Fa;
@@ -1672,6 +1665,13 @@ pre_rv(DECL_ARGS)
 
 	print_word("is set to indicate the error.");
 	outflags |= MMAN_nl;
+	return(0);
+}
+
+static int
+pre_skip(DECL_ARGS)
+{
+
 	return(0);
 }
 

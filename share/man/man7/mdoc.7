@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.123 2014/11/16 20:45:27 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.124 2014/11/27 16:20:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2014 $
+.Dd $Mdocdate: November 27 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1185,13 +1185,12 @@ See also
 and
 .Sx \&Dl .
 .Ss \&Db
-Switch debugging mode.
-Its syntax is as follows:
-.Pp
-.D1 Pf \. Sx \&Db Cm on | off
-.Pp
-This macro is ignored by
-.Xr mandoc 1 .
+This macro is obsolete.
+No replacement is needed.
+It is ignored by
+.Xr mandoc 1
+and groff including its arguments.
+It was formerly used to toggle a debugging mode.
 .Ss \&Dc
 Close a
 .Sx \&Do

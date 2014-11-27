@@ -1,0 +1,14 @@
+.Dd November 27, 2014
+.Dt DB-ARGS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Db-args
+.Nd obsolete debug macro
+.Sh DESCRIPTION
+no args
+.Db
+one arg
+.Db on
+two args
+.Db foo bar
+end of text

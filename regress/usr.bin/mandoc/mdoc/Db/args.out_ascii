@@ -1,0 +1,9 @@
+DB-ARGS(1)                  General Commands Manual                 DB-ARGS(1)
+
+NNAAMMEE
+     DDbb--aarrggss - obsolete debug macro
+
+DDEESSCCRRIIPPTTIIOONN
+     no args one arg two args end of text
+
+OpenBSD                        November 27, 2014                       OpenBSD

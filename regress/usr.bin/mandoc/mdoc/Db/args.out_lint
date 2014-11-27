@@ -1,0 +1,3 @@
+mandoc: args.in:9:2: WARNING: obsolete macro: Db
+mandoc: args.in:11:2: WARNING: obsolete macro: Db
+mandoc: args.in:13:2: WARNING: obsolete macro: Db
