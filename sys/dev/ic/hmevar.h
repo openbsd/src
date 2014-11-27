@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.16 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.17 2014/11/27 14:53:42 brad Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -79,10 +79,6 @@ struct hme_softc {
 	struct hme_ring		sc_rb;
 
 	int			sc_debug;
-
-	/* Special hardware hooks */
-	void	(*sc_hwreset)(struct hme_softc *);
-	void	(*sc_hwinit)(struct hme_softc *);
 
 	struct hme_sxd sc_txd[HME_TX_RING_MAX], sc_rxd[HME_RX_RING_MAX];
 	bus_dmamap_t	sc_rxmap_spare;

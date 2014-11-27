@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.68 2014/11/27 05:47:25 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.69 2014/11/27 14:53:42 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -518,15 +518,6 @@ hme_init(struct hme_softc *sc)
 	/* Re-initialize the MIF */
 	hme_mifinit(sc);
 
-	/* Call MI reset function if any */
-	if (sc->sc_hwreset)
-		(*sc->sc_hwreset)(sc);
-
-#if 0
-	/* Mask all MIF interrupts, just in case */
-	bus_space_write_4(t, mif, HME_MIFI_IMASK, 0xffff);
-#endif
-
 	/* step 3. Setup data structures in host memory */
 	hme_meminit(sc);
 
@@ -628,12 +619,6 @@ hme_init(struct hme_softc *sc)
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
 	v |= (HME_MAC_TXCFG_ENABLE | HME_MAC_TXCFG_DGIVEUP);
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
-
-	/* step 14. Issue Transmit Pending command */
-
-	/* Call MI initialization function if any */
-	if (sc->sc_hwinit)
-		(*sc->sc_hwinit)(sc);
 
 	/* Set the current media. */
 	mii_mediachg(&sc->sc_mii);
