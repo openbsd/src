@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.95 2014/11/19 05:51:25 doug Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.96 2014/11/27 16:13:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1964,17 +1964,17 @@ ssl3_send_client_key_exchange(SSL *s)
 
 		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
+		if (s->session->sess_cert == NULL) {
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_UNEXPECTED_MESSAGE);
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+			    ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+
 		if (alg_k & SSL_kRSA) {
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
-
-			if (s->session->sess_cert == NULL) {
-				/* We should always have a server
-				 * certificate with SSL_kRSA. */
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
 
 			if (s->session->sess_cert->peer_rsa_tmp != NULL)
 				rsa = s->session->sess_cert->peer_rsa_tmp;
@@ -2025,14 +2025,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
 		} else if (alg_k & SSL_kDHE) {
 			DH *dh_srvr, *dh_clnt;
-
-			if (s->session->sess_cert == NULL) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_UNEXPECTED_MESSAGE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_UNEXPECTED_MESSAGE);
-				goto err;
-			}
 
 			if (s->session->sess_cert->peer_dh_tmp != NULL)
 				dh_srvr = s->session->sess_cert->peer_dh_tmp;
@@ -2092,14 +2084,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			EC_KEY *tkey;
 			int ecdh_clnt_cert = 0;
 			int field_size = 0;
-
-			if (s->session->sess_cert == NULL) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_UNEXPECTED_MESSAGE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_UNEXPECTED_MESSAGE);
-				goto err;
-			}
 
 			/*
 			 * Did we send out the client's ECDH share for use
