@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.67 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.68 2014/11/27 05:47:25 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1210,6 +1210,11 @@ hme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->sc_rx_ring);
+ 		break;
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
