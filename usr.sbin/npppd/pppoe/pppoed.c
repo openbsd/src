@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.15 2014/07/21 01:51:11 guenther Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.16 2014/11/27 10:22:38 tobias Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.15 2014/07/21 01:51:11 guenther Exp $
+ * $Id: pppoed.c,v 1.16 2014/11/27 10:22:38 tobias Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -440,7 +440,7 @@ pppoed_uninit(pppoed *_this)
 	slist_fini(&_this->listener);
 }
 
-/* it called when the PPPoE session was closed */
+/* it is called when the PPPoE session was closed */
 void
 pppoed_pppoe_session_close_notify(pppoed *_this, pppoe_session *session)
 {
@@ -533,7 +533,7 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 	if (slist_set_size(&_this->listener, count) != 0)
 		goto fail;
 
-	/* garbage collection of listner context */
+	/* garbage collection of listener context */
 	slist_itr_first(&rmlist);
 	while (slist_itr_has_next(&rmlist)) {
 		l = slist_itr_next(&rmlist);
@@ -678,7 +678,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 		    "pppoe length field.";
 		goto bad_packet;
 	}
-	/* use PPPoE heade value as lpkt */
+	/* use PPPoE header value as lpkt */
 	lpkt = pppoe->length;
 
 	if (pppoe->type != PPPOE_RFC2516_TYPE ||
@@ -700,7 +700,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	}
 
 	/*
-	 * PPPoE-Discovery Packet proccessing.
+	 * PPPoE-Discovery Packet processing.
 	 */
 	slist_init(&tag_list);
 	while (lpkt > 0) {
