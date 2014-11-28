@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.92 2014/11/28 05:51:29 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.93 2014/11/28 06:26:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -315,7 +315,7 @@ man_node_delete(struct man *man, struct man_node *p)
 	man_node_free(p);
 }
 
-int
+void
 man_addeqn(struct man *man, const struct eqn *ep)
 {
 	struct man_node	*n;
@@ -327,10 +327,9 @@ man_addeqn(struct man *man, const struct eqn *ep)
 	man_node_append(man, n);
 	man->next = MAN_NEXT_SIBLING;
 	man_descope(man, ep->ln, ep->pos);
-	return(1);
 }
 
-int
+void
 man_addspan(struct man *man, const struct tbl_span *sp)
 {
 	struct man_node	*n;
@@ -340,7 +339,6 @@ man_addspan(struct man *man, const struct tbl_span *sp)
 	man_node_append(man, n);
 	man->next = MAN_NEXT_SIBLING;
 	man_descope(man, sp->line, 0);
-	return(1);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.121 2014/11/28 04:46:30 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.122 2014/11/28 06:26:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -196,7 +196,7 @@ mdoc_endparse(struct mdoc *mdoc)
 	return(1);
 }
 
-int
+void
 mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 {
 	struct mdoc_node *n;
@@ -207,10 +207,9 @@ mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 		n->flags |= MDOC_LINE;
 	node_append(mdoc, n);
 	mdoc->next = MDOC_NEXT_SIBLING;
-	return(1);
 }
 
-int
+void
 mdoc_addspan(struct mdoc *mdoc, const struct tbl_span *sp)
 {
 	struct mdoc_node *n;
@@ -219,7 +218,6 @@ mdoc_addspan(struct mdoc *mdoc, const struct tbl_span *sp)
 	n->span = sp;
 	node_append(mdoc, n);
 	mdoc->next = MDOC_NEXT_SIBLING;
-	return(1);
 }
 
 /*
