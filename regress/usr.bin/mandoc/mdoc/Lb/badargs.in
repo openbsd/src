@@ -5,7 +5,6 @@
 .Nm Lb-badargs
 .Nd bad arguments to the library macro
 .Sh LIBRARY
-.Lb libc
 .Lb murks
 .Lb
-.Lb libc another
+.Lb mylib another

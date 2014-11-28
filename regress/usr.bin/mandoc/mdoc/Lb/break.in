@@ -5,8 +5,8 @@
 .Nm Lb-break
 .Nd output line breaks after the library macro
 .Sh LIBRARY
-.Lb libc
+.Lb mylib
 text
 .Sh DESCRIPTION
-.Lb libc
+.Lb mylib
 text

@@ -6,5 +6,5 @@
 .Nd end of sentence handling after the library macro
 .Sh DESCRIPTION
 Let's use the
-.Lb libm  .
+.Lb mylib .
 And some other libraries.

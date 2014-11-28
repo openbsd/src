@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.175 2014/11/28 01:05:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.176 2014/11/28 17:23:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -936,22 +936,12 @@ static void
 post_lb(POST_ARGS)
 {
 	struct mdoc_node	*n;
-	const char		*stdlibname;
 	char			*libname;
 
 	check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 1);
-
 	n = mdoc->last->child;
-
-	assert(n);
 	assert(MDOC_TEXT == n->type);
-
-	if (NULL == (stdlibname = mdoc_a2lib(n->string)))
-		mandoc_asprintf(&libname,
-		    "library \\(lq%s\\(rq", n->string);
-	else
-		libname = mandoc_strdup(stdlibname);
-
+	mandoc_asprintf(&libname, "library \\(lq%s\\(rq", n->string);
 	free(n->string);
 	n->string = libname;
 }

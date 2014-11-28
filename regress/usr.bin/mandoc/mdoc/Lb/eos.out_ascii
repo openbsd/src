@@ -4,6 +4,6 @@ NNAAMMEE
      LLbb--eeooss - end of sentence handling after the library macro
 
 DDEESSCCRRIIPPTTIIOONN
-     Let's use the Math Library (libm, -lm).  And some other libraries.
+     Let's use the library ``mylib''.  And some other libraries.
 
 OpenBSD                        November 17, 2012                       OpenBSD
