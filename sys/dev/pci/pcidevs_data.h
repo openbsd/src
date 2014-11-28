@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1748 2014/11/15 10:33:32 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1749 2014/11/28 14:12:19 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8566,6 +8566,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89HPES24T3G2,
 	    "89HPES24T3G2",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_89H64H16G3,
+	    "89H64H16G3",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
@@ -21718,6 +21722,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO,
 	    "Psycho PCI",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_PCIE2,
+	    "SPARC PCIE",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SPARC_PCIE3,
+	    "SPARC PCIE",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,

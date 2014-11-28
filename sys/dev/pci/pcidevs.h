@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1748 2014/11/15 10:33:32 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1749 2014/11/28 14:12:19 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2748,6 +2748,7 @@
 #define	PCI_PRODUCT_IDT_89HPES4T4	0x803a		/* 89HPES4T4 */
 #define	PCI_PRODUCT_IDT_89HPES5T5ZB	0x803c		/* 89HPES5T5ZB */
 #define	PCI_PRODUCT_IDT_89HPES24T3G2	0x806a		/* 89HPES24T3G2 */
+#define	PCI_PRODUCT_IDT_89H64H16G3	0x80bf		/* 89H64H16G3 */
 
 /* Industrial Computer Source */
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* WDT 50x Watchdog Timer */
@@ -6288,6 +6289,8 @@
 #define	PCI_PRODUCT_SUN_SCA1K	0x5455		/* Crypto 1K */
 #define	PCI_PRODUCT_SUN_SCA6K	0x5ca0		/* Crypto 6K */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* Psycho PCI */
+#define	PCI_PRODUCT_SUN_SPARC_PCIE2	0x8186		/* SPARC PCIE */
+#define	PCI_PRODUCT_SUN_SPARC_PCIE3	0x8196		/* SPARC PCIE */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 #define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
