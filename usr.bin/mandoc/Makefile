@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.86 2014/11/28 18:07:38 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.87 2014/11/28 18:35:37 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ LDADD	+= -lsqlite3 -lutil
 SRCS=	mandoc.c mandoc_aux.c preconv.c read.c \
 	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
 SRCS+=	mdoc_macro.c mdoc.c mdoc_hash.c \
-	mdoc_argv.c mdoc_validate.c att.c vol.c msec.c st.c
+	mdoc_argv.c mdoc_validate.c att.c msec.c st.c
 SRCS+=	man_macro.c man.c man_hash.c man_validate.c
 SRCS+=	main.c mdoc_term.c chars.c term.c tree.c man_term.c eqn_term.c
 SRCS+=	mdoc_man.c
@@ -40,7 +40,7 @@ CLEANFILES += man.cgi cgi.o man.cgi.8.manlint
 # After that, read:	man man.cgi.8
 
 LIBMDOC_OBJS =	mdoc_argv.o mdoc_hash.o mdoc_macro.o mdoc_validate.o \
-		mdoc.o att.o st.o vol.o
+		mdoc.o att.o st.o
 LIBMAN_OBJS =	man.o man_hash.o man_macro.o man_validate.o
 LIBROFF_OBJS =	roff.o eqn.o tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \

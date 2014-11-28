@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.124 2014/11/27 16:20:27 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.125 2014/11/28 18:35:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2014 $
+.Dd $Mdocdate: November 28 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -433,7 +433,7 @@ in the alphabetical
 .Ss Document preamble and NAME section macros
 .Bl -column "Brq, Bro, Brc" description
 .It Sx \&Dd Ta document date: Cm $\&Mdocdate$ | Ar month day , year
-.It Sx \&Dt Ta document title: Ar TITLE section Op Ar volume | arch
+.It Sx \&Dt Ta document title: Ar TITLE section Op Ar arch
 .It Sx \&Os Ta operating system version: Op Ar system Op Ar version
 .It Sx \&Nm Ta document name (one argument)
 .It Sx \&Nd Ta document description (one line)
@@ -1299,7 +1299,7 @@ Its syntax is as follows:
 .Pf \. Sx \&Dt
 .Ar TITLE
 .Ar section
-.Op Ar volume | arch
+.Op Ar arch
 .Ed
 .Pp
 Its arguments are as follows:
@@ -1348,35 +1348,6 @@ or
 .Pq paper .
 It should correspond to the manual's filename suffix and defaults to
 the empty string if unspecified.
-.It Ar volume
-This overrides the volume inferred from
-.Ar section .
-This field is optional, and if specified, must be one of
-.Cm USD
-.Pq users' supplementary documents ,
-.Cm PS1
-.Pq programmers' supplementary documents ,
-.Cm AMD
-.Pq administrators' supplementary documents ,
-.Cm SMM
-.Pq system managers' manuals ,
-.Cm URM
-.Pq users' reference manuals ,
-.Cm PRM
-.Pq programmers' reference manuals ,
-.Cm KM
-.Pq kernel manuals ,
-.Cm IND
-.Pq master index ,
-.Cm MMI
-.Pq master index ,
-.Cm LOCAL
-.Pq local manuals ,
-.Cm LOC
-.Pq local manuals ,
-or
-.Cm CON
-.Pq contributed manuals .
 .It Ar arch
 This specifies the machine architecture a manual page applies to,
 where relevant.
@@ -1410,7 +1381,6 @@ and
 .Pp
 Examples:
 .Dl \&.Dt FOO 1
-.Dl \&.Dt FOO 4 KM
 .Dl \&.Dt FOO 9 i386
 .Pp
 See also
