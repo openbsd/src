@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.176 2014/11/28 17:23:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.177 2014/11/28 18:07:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2274,11 +2274,9 @@ post_dt(POST_ARGS)
 	if (NULL == (nn = nn->next))
 		goto out;
 
-	/* Handles: `.Dt TITLE SEC VOL'
-	 * title = TITLE,
-	 * volume = VOL is vol ? format(VOL) :
-	 *	    VOL is arch ? format(arch) :
-	 *	    VOL
+	/*
+	 * If the third argument is a volume name, format is,
+	 * otherwise assume it's an architecture.
 	 */
 
 	cp = mdoc_a2vol(nn->string);
@@ -2286,14 +2284,9 @@ post_dt(POST_ARGS)
 		free(mdoc->meta.vol);
 		mdoc->meta.vol = mandoc_strdup(cp);
 	} else {
-		cp = mdoc_a2arch(nn->string);
-		if (NULL == cp) {
-			mandoc_vmsg(MANDOCERR_ARCH_BAD, mdoc->parse,
-			    nn->line, nn->pos, "Dt ... %s", nn->string);
-			free(mdoc->meta.vol);
-			mdoc->meta.vol = mandoc_strdup(nn->string);
-		} else
-			mdoc->meta.arch = mandoc_strdup(cp);
+		for (p = nn->string; *p; p++)
+			*p = tolower((unsigned char)*p);
+		mdoc->meta.arch = mandoc_strdup(nn->string);
 	}
 
 	/* Ignore any subsequent parameters... */

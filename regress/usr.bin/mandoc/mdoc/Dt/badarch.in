@@ -1,8 +1,0 @@
-.Dd June 13, 2014
-.Dt DT-BADARCH 1 Cray
-.Os OpenBSD
-.Sh NAME
-.Nm Dt-badarch
-.Nd unknown manual volume or arch
-.Sh DESCRIPTION
-some text

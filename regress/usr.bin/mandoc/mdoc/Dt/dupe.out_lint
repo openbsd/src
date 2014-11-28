@@ -1,3 +1,2 @@
-mandoc: dupe.in:2:16: WARNING: unknown manual volume or arch: Dt ... first_arch
 mandoc: dupe.in:4:2: WARNING: duplicate prologue macro: Dt
 mandoc: dupe.in:10:2: WARNING: skipping late title macro: Dt DT-LAST 3 last_arch
