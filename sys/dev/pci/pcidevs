@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1748 2014/11/15 10:33:32 brad Exp $
+$OpenBSD: pcidevs,v 1.1749 2014/11/28 14:12:19 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2743,6 +2743,7 @@ product IDT 89HPES24T6		0x802e	89HPES24T6
 product IDT 89HPES4T4		0x803a	89HPES4T4
 product IDT 89HPES5T5ZB		0x803c	89HPES5T5ZB
 product IDT 89HPES24T3G2	0x806a	89HPES24T3G2
+product IDT 89H64H16G3		0x80bf	89H64H16G3
 
 /* Industrial Computer Source */
 product INDCOMPSRC WDT50x	0x22c0	WDT 50x Watchdog Timer
@@ -6283,6 +6284,8 @@ product SUN 5821		0x5454	Crypto 5821
 product SUN SCA1K		0x5455	Crypto 1K
 product SUN SCA6K		0x5ca0	Crypto 6K
 product SUN PSYCHO		0x8000	Psycho PCI
+product SUN SPARC_PCIE2		0x8186  SPARC PCIE
+product SUN SPARC_PCIE3		0x8196  SPARC PCIE
 product SUN MS_IIep		0x9000	microSPARC IIep PCI
 product SUN US_IIi		0xa000	UltraSPARC IIi PCI
 product SUN US_IIe		0xa001	UltraSPARC IIe PCI
