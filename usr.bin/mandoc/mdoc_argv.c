@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.52 2014/07/06 19:08:56 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.53 2014/11/28 03:13:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,9 +52,9 @@ static	void		 argn_free(struct mdoc_arg *, int);
 static	enum margserr	 args(struct mdoc *, int, int *,
 				char *, enum argsflag, char **);
 static	int		 args_checkpunct(const char *, int);
-static	int		 argv_multi(struct mdoc *, int,
+static	void		 argv_multi(struct mdoc *, int,
 				struct mdoc_argv *, int *, char *);
-static	int		 argv_single(struct mdoc *, int,
+static	void		 argv_single(struct mdoc *, int,
 				struct mdoc_argv *, int *, char *);
 
 static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
@@ -340,12 +340,10 @@ mdoc_argv(struct mdoc *mdoc, int line, enum mdoct tok,
 
 	switch (argvflags[tmp.arg]) {
 	case ARGV_SINGLE:
-		if ( ! argv_single(mdoc, line, &tmp, pos, buf))
-			return(ARGV_ERROR);
+		argv_single(mdoc, line, &tmp, pos, buf);
 		break;
 	case ARGV_MULTI:
-		if ( ! argv_multi(mdoc, line, &tmp, pos, buf))
-			return(ARGV_ERROR);
+		argv_multi(mdoc, line, &tmp, pos, buf);
 		break;
 	case ARGV_NONE:
 		break;
@@ -650,7 +648,7 @@ args_checkpunct(const char *buf, int i)
 	return('\0' == buf[i]);
 }
 
-static int
+static void
 argv_multi(struct mdoc *mdoc, int line,
 		struct mdoc_argv *v, int *pos, char *buf)
 {
@@ -658,25 +656,21 @@ argv_multi(struct mdoc *mdoc, int line,
 	char		*p;
 
 	for (v->sz = 0; ; v->sz++) {
-		if ('-' == buf[*pos])
+		if (buf[*pos] == '-')
 			break;
 		ac = args(mdoc, line, pos, buf, ARGSFL_NONE, &p);
-		if (ARGS_ERROR == ac)
-			return(0);
-		else if (ARGS_EOLN == ac)
+		if (ac == ARGS_EOLN)
 			break;
 
-		if (0 == v->sz % MULTI_STEP)
+		if (v->sz % MULTI_STEP == 0)
 			v->value = mandoc_reallocarray(v->value,
 			    v->sz + MULTI_STEP, sizeof(char *));
 
 		v->value[(int)v->sz] = mandoc_strdup(p);
 	}
-
-	return(1);
 }
 
-static int
+static void
 argv_single(struct mdoc *mdoc, int line,
 		struct mdoc_argv *v, int *pos, char *buf)
 {
@@ -684,14 +678,10 @@ argv_single(struct mdoc *mdoc, int line,
 	char		*p;
 
 	ac = args(mdoc, line, pos, buf, ARGSFL_NONE, &p);
-	if (ARGS_ERROR == ac)
-		return(0);
-	if (ARGS_EOLN == ac)
-		return(1);
+	if (ac == ARGS_EOLN)
+		return;
 
 	v->sz = 1;
 	v->value = mandoc_malloc(sizeof(char *));
 	v->value[0] = mandoc_strdup(p);
-
-	return(1);
 }

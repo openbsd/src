@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.119 2014/11/28 01:05:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.120 2014/11/28 03:13:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -381,7 +381,7 @@ node_alloc(struct mdoc *mdoc, int line, int pos,
 	return(p);
 }
 
-int
+void
 mdoc_tail_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 {
 	struct mdoc_node *p;
@@ -389,24 +389,22 @@ mdoc_tail_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 	p = node_alloc(mdoc, line, pos, tok, MDOC_TAIL);
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_CHILD;
-	return(1);
 }
 
-int
+struct mdoc_node *
 mdoc_head_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 {
 	struct mdoc_node *p;
 
 	assert(mdoc->first);
 	assert(mdoc->last);
-
 	p = node_alloc(mdoc, line, pos, tok, MDOC_HEAD);
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_CHILD;
-	return(1);
+	return(p);
 }
 
-int
+struct mdoc_node *
 mdoc_body_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 {
 	struct mdoc_node *p;
@@ -414,10 +412,10 @@ mdoc_body_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 	p = node_alloc(mdoc, line, pos, tok, MDOC_BODY);
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_CHILD;
-	return(1);
+	return(p);
 }
 
-int
+void
 mdoc_endbody_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok,
 		struct mdoc_node *body, enum mdoc_endbody end)
 {
@@ -429,10 +427,9 @@ mdoc_endbody_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok,
 	p->end = end;
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_SIBLING;
-	return(1);
 }
 
-int
+struct mdoc_node *
 mdoc_block_alloc(struct mdoc *mdoc, int line, int pos,
 		enum mdoct tok, struct mdoc_arg *args)
 {
@@ -460,10 +457,10 @@ mdoc_block_alloc(struct mdoc *mdoc, int line, int pos,
 	}
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_CHILD;
-	return(1);
+	return(p);
 }
 
-int
+void
 mdoc_elem_alloc(struct mdoc *mdoc, int line, int pos,
 		enum mdoct tok, struct mdoc_arg *args)
 {
@@ -483,10 +480,9 @@ mdoc_elem_alloc(struct mdoc *mdoc, int line, int pos,
 	}
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_CHILD;
-	return(1);
 }
 
-int
+void
 mdoc_word_alloc(struct mdoc *mdoc, int line, int pos, const char *p)
 {
 	struct mdoc_node *n;
@@ -495,7 +491,6 @@ mdoc_word_alloc(struct mdoc *mdoc, int line, int pos, const char *p)
 	n->string = roff_strdup(mdoc->roff, p);
 	node_append(mdoc, n);
 	mdoc->next = MDOC_NEXT_SIBLING;
-	return(1);
 }
 
 void
@@ -577,13 +572,12 @@ mdoc_node_delete(struct mdoc *mdoc, struct mdoc_node *p)
 	mdoc_node_free(p);
 }
 
-int
+void
 mdoc_node_relink(struct mdoc *mdoc, struct mdoc_node *p)
 {
 
 	mdoc_node_unlink(mdoc, p);
 	node_append(mdoc, p);
-	return(1);
 }
 
 /*
@@ -667,7 +661,7 @@ mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 		mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
 		    line, (int)(ws-buf), NULL);
 
-	if ('\0' == buf[offs] && ! (MDOC_LITERAL & mdoc->flags)) {
+	if (buf[offs] == '\0' && ! (mdoc->flags & MDOC_LITERAL)) {
 		mandoc_msg(MANDOCERR_FI_BLANK, mdoc->parse,
 		    line, (int)(c - buf), NULL);
 
@@ -676,19 +670,15 @@ mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 		 * blank lines aren't allowed, but enough manuals assume this
 		 * behaviour that we want to work around it.
 		 */
-		if ( ! mdoc_elem_alloc(mdoc, line, offs, MDOC_sp, NULL))
-			return(0);
-
+		mdoc_elem_alloc(mdoc, line, offs, MDOC_sp, NULL);
 		mdoc->next = MDOC_NEXT_SIBLING;
-
 		mdoc_valid_post(mdoc);
 		return(1);
 	}
 
-	if ( ! mdoc_word_alloc(mdoc, line, offs, buf+offs))
-		return(0);
+	mdoc_word_alloc(mdoc, line, offs, buf+offs);
 
-	if (MDOC_LITERAL & mdoc->flags)
+	if (mdoc->flags & MDOC_LITERAL)
 		return(1);
 
 	/*

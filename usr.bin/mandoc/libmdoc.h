@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.61 2014/11/28 01:05:40 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.62 2014/11/28 03:13:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -104,20 +104,19 @@ extern	const struct mdoc_macro *const mdoc_macros;
 __BEGIN_DECLS
 
 int		  mdoc_macro(MACRO_PROT_ARGS);
-int		  mdoc_word_alloc(struct mdoc *,
-			int, int, const char *);
+void		  mdoc_word_alloc(struct mdoc *, int, int, const char *);
 void		  mdoc_word_append(struct mdoc *, const char *);
-int		  mdoc_elem_alloc(struct mdoc *, int, int,
+void		  mdoc_elem_alloc(struct mdoc *, int, int,
 			enum mdoct, struct mdoc_arg *);
-int		  mdoc_block_alloc(struct mdoc *, int, int,
+struct mdoc_node *mdoc_block_alloc(struct mdoc *, int, int,
 			enum mdoct, struct mdoc_arg *);
-int		  mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
-int		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
-int		  mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
-int		  mdoc_endbody_alloc(struct mdoc *, int, int, enum mdoct,
+struct mdoc_node *mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
+void		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
+struct mdoc_node *mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
+void		  mdoc_endbody_alloc(struct mdoc *, int, int, enum mdoct,
 			struct mdoc_node *, enum mdoc_endbody);
 void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
-int		  mdoc_node_relink(struct mdoc *, struct mdoc_node *);
+void		  mdoc_node_relink(struct mdoc *, struct mdoc_node *);
 void		  mdoc_hash_init(void);
 enum mdoct	  mdoc_hash_find(const char *);
 const char	 *mdoc_a2att(const char *);
