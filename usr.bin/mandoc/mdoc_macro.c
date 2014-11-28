@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.107 2014/11/28 04:46:30 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.108 2014/11/28 23:20:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -841,7 +841,6 @@ static void
 in_line(MACRO_PROT_ARGS)
 {
 	int		 la, scope, cnt, firstarg, mayopen, nc, nl;
-	enum margverr	 av;
 	enum mdoct	 ntok;
 	enum margserr	 ac;
 	enum mdelim	 d;
@@ -874,15 +873,7 @@ in_line(MACRO_PROT_ARGS)
 		break;
 	}
 
-	for (arg = NULL;; ) {
-		la = *pos;
-		av = mdoc_argv(mdoc, line, tok, &arg, pos, buf);
-		if (av == ARGV_ARG)
-			continue;
-		if (av == ARGV_WORD)
-			*pos = la;
-		break;
-	}
+	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 
 	d = DELIM_NONE;
 	firstarg = 1;
@@ -1039,7 +1030,6 @@ blk_full(MACRO_PROT_ARGS)
 	struct mdoc_node *n;
 	enum mdoct	  ntok;
 	enum margserr	  ac, lac;
-	enum margverr	  av;
 	char		 *p;
 
 	nl = MDOC_NEWLINE & mdoc->flags;
@@ -1076,16 +1066,7 @@ blk_full(MACRO_PROT_ARGS)
 	 * regular child nodes.
 	 */
 
-	for (arg = NULL;; ) {
-		la = *pos;
-		av = mdoc_argv(mdoc, line, tok, &arg, pos, buf);
-		if (av == ARGV_ARG)
-			continue;
-		if (av == ARGV_WORD)
-			*pos = la;
-		break;
-	}
-
+	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	mdoc_block_alloc(mdoc, line, ppos, tok, arg);
 	head = body = NULL;
 
@@ -1400,7 +1381,6 @@ in_line_argn(MACRO_PROT_ARGS)
 {
 	int		 la, flushed, j, maxargs, nl;
 	enum margserr	 ac;
-	enum margverr	 av;
 	struct mdoc_arg	*arg;
 	char		*p;
 	enum mdoct	 ntok;
@@ -1435,15 +1415,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		break;
 	}
 
-	for (arg = NULL; ; ) {
-		la = *pos;
-		av = mdoc_argv(mdoc, line, tok, &arg, pos, buf);
-		if (av == ARGV_ARG)
-			continue;
-		if (av == ARGV_WORD)
-			*pos = la;
-		break;
-	}
+	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 
 	for (flushed = j = 0; ; ) {
 		la = *pos;
@@ -1500,7 +1472,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 {
 	int		 la;
 	enum margserr	 ac;
-	enum margverr	 av;
 	struct mdoc_arg	*arg;
 	char		*p;
 	enum mdoct	 ntok;
@@ -1510,20 +1481,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 	if (tok == MDOC_Pp)
 		rew_sub(MDOC_BLOCK, mdoc, MDOC_Nm, line, ppos);
 
-	/* Parse macro arguments. */
-
-	for (arg = NULL; ; ) {
-		la = *pos;
-		av = mdoc_argv(mdoc, line, tok, &arg, pos, buf);
-		if (av == ARGV_ARG)
-			continue;
-		if (av == ARGV_WORD)
-			*pos = la;
-		break;
-	}
-
-	/* Open element scope. */
-
+	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
 
 	/* Parse argument terms. */

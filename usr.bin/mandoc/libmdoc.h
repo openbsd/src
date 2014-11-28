@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.65 2014/11/28 18:35:37 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.66 2014/11/28 23:20:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -75,13 +75,6 @@ enum	margserr {
 	ARGS_PEND /* last phrase (-column) */
 };
 
-enum	margverr {
-	ARGV_ERROR,
-	ARGV_EOLN, /* end of line */
-	ARGV_ARG, /* valid argument */
-	ARGV_WORD /* normal word (or bad argument---same thing) */
-};
-
 /*
  * A punctuation delimiter is opening, closing, or "middle mark"
  * punctuation.  These govern spacing.
@@ -124,7 +117,7 @@ const char	 *mdoc_a2st(const char *);
 const char	 *mdoc_a2arch(const char *);
 void		  mdoc_valid_pre(struct mdoc *, struct mdoc_node *);
 void		  mdoc_valid_post(struct mdoc *);
-enum margverr	  mdoc_argv(struct mdoc *, int, enum mdoct,
+void		  mdoc_argv(struct mdoc *, int, enum mdoct,
 			struct mdoc_arg **, int *, char *);
 void		  mdoc_argv_free(struct mdoc_arg *);
 enum margserr	  mdoc_args(struct mdoc *, int,

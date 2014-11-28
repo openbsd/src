@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.53 2014/11/28 03:13:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.54 2014/11/28 23:20:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -268,98 +268,105 @@ static	const struct mdocarg mdocargs[MDOC_MAX] = {
 
 
 /*
- * Parse an argument from line text.  This comes in the form of -key
- * [value0...], which may either have a single mandatory value, at least
- * one mandatory value, an optional single value, or no value.
+ * Parse flags and their arguments from the input line.
+ * These come in the form -flag [argument ...].
+ * Some flags take no argument, some one, some multiple.
  */
-enum margverr
+void
 mdoc_argv(struct mdoc *mdoc, int line, enum mdoct tok,
-		struct mdoc_arg **v, int *pos, char *buf)
+	struct mdoc_arg **reta, int *pos, char *buf)
 {
-	char		 *p, sv;
-	struct mdoc_argv tmp;
-	struct mdoc_arg	 *arg;
-	const enum mdocargt *ap;
+	struct mdoc_argv	  tmpv;
+	struct mdoc_argv	**retv;
+	const enum mdocargt	 *argtable;
+	char			 *argname;
+	int			  ipos, retc;
+	char			  savechar;
 
-	if ('\0' == buf[*pos])
-		return(ARGV_EOLN);
-	else if (NULL == (ap = mdocargs[tok].argvs))
-		return(ARGV_WORD);
-	else if ('-' != buf[*pos])
-		return(ARGV_WORD);
+	*reta = NULL;
 
-	/* Seek to the first unescaped space. */
+	/* Which flags does this macro support? */
 
-	p = &buf[++(*pos)];
+	argtable = mdocargs[tok].argvs;
+	if (argtable == NULL)
+		return;
 
-	assert(*pos > 0);
+	/* Loop over the flags on the input line. */
 
-	for ( ; buf[*pos] ; (*pos)++)
-		if (' ' == buf[*pos] && '\\' != buf[*pos - 1])
-			break;
+	ipos = *pos;
+	while (buf[ipos] == '-') {
 
-	/*
-	 * We want to nil-terminate the word to look it up (it's easier
-	 * that way).  But we may not have a flag, in which case we need
-	 * to restore the line as-is.  So keep around the stray byte,
-	 * which we'll reset upon exiting (if necessary).
-	 */
+		/* Seek to the first unescaped space. */
 
-	if ('\0' != (sv = buf[*pos]))
-		buf[(*pos)++] = '\0';
+		for (argname = buf + ++ipos; buf[ipos] != '\0'; ipos++)
+			if (buf[ipos] == ' ' && buf[ipos - 1] != '\\')
+				break;
 
-	/*
-	 * Now look up the word as a flag.  Use temporary storage that
-	 * we'll copy into the node's flags, if necessary.
-	 */
-
-	memset(&tmp, 0, sizeof(struct mdoc_argv));
-
-	tmp.line = line;
-	tmp.pos = *pos;
-	tmp.arg = MDOC_ARG_MAX;
-
-	while (MDOC_ARG_MAX != (tmp.arg = *ap++))
-		if (0 == strcmp(p, mdoc_argnames[tmp.arg]))
-			break;
-
-	if (MDOC_ARG_MAX == tmp.arg) {
 		/*
-		 * The flag was not found.
-		 * Restore saved zeroed byte and return as a word.
+		 * We want to nil-terminate the word to look it up.
+		 * But we may not have a flag, in which case we need
+		 * to restore the line as-is.  So keep around the
+		 * stray byte, which we'll reset upon exiting.
 		 */
-		if (sv)
-			buf[*pos - 1] = sv;
-		return(ARGV_WORD);
+
+		if ((savechar = buf[ipos]) != '\0')
+			buf[ipos++] = '\0';
+
+		/*
+		 * Now look up the word as a flag.  Use temporary
+		 * storage that we'll copy into the node's flags.
+		 */
+
+		while ((tmpv.arg = *argtable++) != MDOC_ARG_MAX)
+			if ( ! strcmp(argname, mdoc_argnames[tmpv.arg]))
+				break;
+
+		/* If it isn't a flag, restore the saved byte. */
+
+		if (tmpv.arg == MDOC_ARG_MAX) {
+			if (savechar != '\0')
+				buf[ipos - 1] = savechar;
+			break;
+		}
+
+		/* Read to the next word (the first argument). */
+
+		while (buf[ipos] == ' ')
+			ipos++;
+
+		/* Parse the arguments of the flag. */
+
+		tmpv.line  = line;
+		tmpv.pos   = ipos;
+		tmpv.sz    = 0;
+		tmpv.value = NULL;
+
+		switch (argvflags[tmpv.arg]) {
+		case ARGV_SINGLE:
+			argv_single(mdoc, line, &tmpv, &ipos, buf);
+			break;
+		case ARGV_MULTI:
+			argv_multi(mdoc, line, &tmpv, &ipos, buf);
+			break;
+		case ARGV_NONE:
+			break;
+		}
+
+		/* Append to the return values. */
+
+		if (*reta == NULL)
+			*reta = mandoc_calloc(1, sizeof(**reta));
+
+		retc = ++(*reta)->argc;
+		retv = &(*reta)->argv;
+		*retv = mandoc_reallocarray(*retv, retc, sizeof(**retv));
+		memcpy(*retv + retc - 1, &tmpv, sizeof(**retv));
+
+		/* Prepare for parsing the next flag. */
+
+		*pos = ipos;
+		argtable = mdocargs[tok].argvs;
 	}
-
-	/* Read to the next word (the argument). */
-
-	while (buf[*pos] && ' ' == buf[*pos])
-		(*pos)++;
-
-	switch (argvflags[tmp.arg]) {
-	case ARGV_SINGLE:
-		argv_single(mdoc, line, &tmp, pos, buf);
-		break;
-	case ARGV_MULTI:
-		argv_multi(mdoc, line, &tmp, pos, buf);
-		break;
-	case ARGV_NONE:
-		break;
-	}
-
-	if (NULL == (arg = *v))
-		arg = *v = mandoc_calloc(1, sizeof(struct mdoc_arg));
-
-	arg->argc++;
-	arg->argv = mandoc_reallocarray(arg->argv,
-	    arg->argc, sizeof(struct mdoc_argv));
-
-	memcpy(&arg->argv[(int)arg->argc - 1], &tmp,
-	    sizeof(struct mdoc_argv));
-
-	return(ARGV_ARG);
 }
 
 void
