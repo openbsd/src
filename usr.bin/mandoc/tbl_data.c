@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.18 2014/04/23 16:07:06 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.19 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>

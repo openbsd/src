@@ -1,4 +1,4 @@
-/*	$Id: manpath.h,v 1.5 2014/11/27 14:31:29 deraadt Exp $ */
+/*	$OpenBSD: manpath.h,v 1.6 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>

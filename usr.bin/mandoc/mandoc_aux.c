@@ -1,4 +1,4 @@
-/*	$Id: mandoc_aux.c,v 1.3 2014/04/23 21:06:33 schwarze Exp $ */
+/*	$OpenBSD: mandoc_aux.c,v 1.4 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>

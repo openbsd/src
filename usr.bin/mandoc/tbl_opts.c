@@ -1,4 +1,4 @@
-/*	$Id: tbl_opts.c,v 1.6 2014/11/25 06:39:20 bentley Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.7 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>

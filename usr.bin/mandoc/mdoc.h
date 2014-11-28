@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.56 2014/11/27 14:31:29 deraadt Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.57 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *

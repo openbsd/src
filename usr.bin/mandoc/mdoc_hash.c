@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.15 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_hash.c,v 1.16 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *

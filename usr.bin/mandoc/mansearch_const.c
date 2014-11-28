@@ -1,4 +1,4 @@
-/*	$Id: mansearch_const.c,v 1.4 2014/04/10 02:45:04 schwarze Exp $ */
+/*	$OpenBSD: mansearch_const.c,v 1.5 2014/11/28 19:25:03 schwarze Exp $ */
 /*
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
+
 #include <stdint.h>
 
 #include "manpath.h"
