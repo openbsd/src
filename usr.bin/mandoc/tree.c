@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.26 2014/10/20 01:43:06 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.27 2014/11/28 05:51:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -198,9 +198,6 @@ print_man(const struct man_node *n, int indent)
 	case MAN_BODY:
 		t = "block-body";
 		break;
-	case MAN_TAIL:
-		t = "block-tail";
-		break;
 	case MAN_TBL:
 		break;
 	case MAN_EQN:
@@ -220,8 +217,6 @@ print_man(const struct man_node *n, int indent)
 	case MAN_BLOCK:
 		/* FALLTHROUGH */
 	case MAN_HEAD:
-		/* FALLTHROUGH */
-	case MAN_TAIL:
 		/* FALLTHROUGH */
 	case MAN_BODY:
 		p = man_macronames[n->tok];
