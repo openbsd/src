@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.54 2014/11/28 23:20:55 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.55 2014/11/29 03:37:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -410,22 +410,17 @@ argn_free(struct mdoc_arg *p, int iarg)
 }
 
 enum margserr
-mdoc_zargs(struct mdoc *mdoc, int line, int *pos, char *buf, char **v)
-{
-
-	return(args(mdoc, line, pos, buf, ARGSFL_NONE, v));
-}
-
-enum margserr
 mdoc_args(struct mdoc *mdoc, int line, int *pos,
 		char *buf, enum mdoct tok, char **v)
 {
-	enum argsflag	  fl;
 	struct mdoc_node *n;
+	char		 *v_local;
+	enum argsflag	  fl;
 
-	fl = mdocargs[tok].flags;
-
-	if (MDOC_It != tok)
+	if (v == NULL)
+		v = &v_local;
+	fl = tok == MDOC_MAX ? ARGSFL_NONE : mdocargs[tok].flags;
+	if (tok != MDOC_It)
 		return(args(mdoc, line, pos, buf, fl, v));
 
 	/*
