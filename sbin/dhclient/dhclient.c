@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.336 2014/11/27 23:04:12 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.337 2014/11/29 22:06:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -630,10 +630,10 @@ main(int argc, char *argv[])
 
 	setproctitle("%s", ifi->name);
 
-	if (ifi->linkstat) {
-		client->state = S_REBOOTING;
+	client->state = S_REBOOTING;
+	if (ifi->linkstat)
 		state_reboot();
-	} else
+	else
 		go_daemon();
 
 	dispatch();
