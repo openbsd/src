@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.44 2012/04/28 12:00:10 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.45 2014/11/29 10:42:51 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -134,13 +134,8 @@ sub collision_report
 	}
 	my $dorepair = 0;
 	if ($found == 0) {
-		if ($state->defines('repair')) {
-			$dorepair = 1;
-		} elsif ($state->{interactive}) {
-			if ($state->confirm("It seems to be a missing package registration\nRepair", 0)) {
-				$dorepair = 1;
-			}
-		}
+		$dorepair = $state->defines('repair') ||
+		    $state->confirm("It seems to be a missing package registration\nRepair", 0));
 	}
 	if ($dorepair == 1) {
 		for my $f (@$list) {

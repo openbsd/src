@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.54 2014/07/27 22:18:36 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.55 2014/11/29 10:42:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -306,15 +306,8 @@ sub handle_options
 	my $self = shift;
 	$self->{no_exports} = 1;
 
-	$self->SUPER::handle_options('fB:Iiq',
+	$self->SUPER::handle_options('fB:q',
 		'[-fIimnqvx] [-B pkg-destdir] [-D value]');
-	if ($self->opt('i')) {
-		$self->{interactive} = 1;
-	} elsif ($self->opt('I')) {
-		$self->{interactive} = 0;
-	} else {
-		$self->{interactive} = -t STDIN;
-	}
 	$self->{force} = $self->opt('f');
 	$self->{quick} = $self->opt('q');
 	if (defined $self->opt('B')) {
@@ -390,12 +383,9 @@ sub ask_delete_deps
 	my ($self, $state, $l) = @_;
 	if ($state->{force}) {
 		$self->{req}->delete(@$l);
-	} elsif ($state->{interactive}) {
-		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive::confirm("Remove missing ".
+	} elsif ($state->confirm("Remove missing ".
 		    $state->safe($self->string(@$l)))) {
 			$self->{req}->delete(@$l);
-		}
 	}
 }
 
@@ -404,12 +394,9 @@ sub ask_add_deps
 	my ($self, $state, $l) = @_;
 	if ($state->{force}) {
 		$self->{req}->add(@$l);
-	} elsif ($state->{interactive}) {
-		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive::confirm("Add missing ".
+	} elsif ($state->confirm("Add missing ".
 		    $self->string(@$l))) {
 			$self->{req}->add(@$l);
-		}
 	}
 }
 
@@ -605,11 +592,8 @@ sub may_remove
 	my ($self, $state, $name) = @_;
 	if ($state->{force}) {
 		$self->remove($state, $name);
-	} elsif ($state->{interactive}) {
-		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive::confirm("Remove wrong package $name")) {
+	} elsif ($state->confirm("Remove wrong package $name")) {
 			$self->remove($state, $name);
-		}
 	}
 	$state->{bogus}{$name} = 1;
 }
@@ -740,9 +724,7 @@ sub install_pkglocate
 	if (OpenBSD::PkgSpec->new($spec)->match_ref(\@l)) {
 		return 1;
 	}
-	require OpenBSD::Interactive;
-	unless (OpenBSD::Interactive::confirm(
-	    "Unknown file system entries.\n".
+	unless ($state->confirm("Unknown file system entries.\n".
 	    "Do you want to install $spec to look them up")) {
 	    	return 0;
 	}
@@ -785,11 +767,8 @@ sub display_tmps
 	}
 	if ($state->{force}) {
 		unlink(@{$state->{tmps}});
-	} elsif ($state->{interactive}) {
-		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive::confirm("Remove")) {
+	} elsif ($state->confirm("Remove")) {
 			unlink(@{$state->{tmps}});
-		}
 	}
 }
 

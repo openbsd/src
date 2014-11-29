@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.17 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.18 2014/11/29 10:42:51 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -19,25 +19,34 @@ use warnings;
 
 package OpenBSD::Interactive;
 
-my $always = 0;
+sub new
+{
+	my ($class, $state) = @_;
+	bless {
+	    state => $state,
+	    always => 0,
+	}, $class;
+}
 
 sub ask_list
 {
-	my ($prompt, $interactive, @values) = @_;
-	if (!$interactive || !-t STDIN || $always) {
+	my ($self, $prompt, @values) = @_;
+	if ($self->{always}) {
 		return $values[0];
 	}
-	print STDERR $prompt, "\n";
+
+	$self->{state}->errsay('#1', $prompt);
 	my $i = 0;
 	for my $v (@values) {
-		printf STDERR "%s\t%2d: %s\n", $i == 0 ? " a" : "" , $i, $v;
+		$self->{state}->errsay("#1\t#2: #3", 
+		    $i == 0 ? "a" : "", $i, $v);
 		$i++;
 	}
 LOOP:
-	print STDERR "Your choice: ";
+	$self->{state}->errprint("Your choice: ");
 	my $result = <STDIN>;
 	unless (defined $result) {
-		print STDERR "\n";
+		$self->{state}->errsay("");
 		return $values[0];
 	}
 	chomp $result;
@@ -45,40 +54,38 @@ LOOP:
 		return $values[0];
 	}
 	if ($result eq 'a') {
-		$always = 1;
+		$self->{always} = 1;
 		return $values[0];
 	}
 	if ($result =~ m/^\d+$/o) {
 		if ($result >= 0 && $result < @values) {
 			return $values[$result];
 		}
-		print STDERR "invalid numeric value !\n";
+		$self->{state}->errsay("invalid numeric value !");
 		goto LOOP;
 	}
 	if (grep { $result eq $_ } @values) {
 		return $result;
 	} else {
-		print STDERR "Ambiguous value !\n";
+		$self->{state}->errsay("Ambiguous value !");
 		goto LOOP;
 	}
 }
 
 sub confirm
 {
-	my ($prompt, $default) = @_;
-	if (!-t STDIN) {
-		return 0;
-	}
-	if ($always) {
+	my ($self, $prompt, $yesno) = @_;
+	if ($self->{always}) {
 		return 1;
 	}
 LOOP2:
-	print STDERR $prompt, $default ? "? [Y/n/a] " : "? [y/N/a] ";
+	$self->{state}->errprint("#1 ?[#2/a] ", 
+	    $prompt, $yesno ? "Y/n" : "y/N");
 
 	my $result = <STDIN>;
 	unless(defined $result) {
-		print STDERR "\n";
-		return $default;
+		$self->{state}->errsay("");
+		return $yesno;
 	}
 	chomp $result;
 	$result =~ s/\s+//go;
@@ -90,14 +97,19 @@ LOOP2:
 		return 0;
 	}
 	if ($result eq 'a') {
-		$always = 1;
+		$self->{always} = 1;
 		return 1;
 	}
 	if ($result eq '') {
-		return $default;
+		return $yesno;
 	}
-	print STDERR "Ambiguous answer\n";
+	$self->{state}->errsay("Ambiguous answer");
 	goto LOOP2;
+}
+
+sub is_interactive
+{
+	return 1;
 }
 
 1;

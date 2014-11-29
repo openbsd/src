@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.88 2014/02/11 08:58:34 sthen Exp $
+# $OpenBSD: Replace.pm,v 1.89 2014/11/29 10:42:51 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -112,8 +112,7 @@ sub is_set_safe
 	if (!$state->defines('paranoid')) {
 		$state->errsay("Running update");
 		return 1;
-	} elsif ($state->{interactive}) {
-
+	} elsif ($state->is_interactive) {
 		if ($state->confirm("proceed with update anyway", 0)) {
 			return 1;
 		} else {
