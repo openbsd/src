@@ -79,9 +79,8 @@ configfile.
 .P
 Normally
 .B NSD
-should be started with the `nsd\-control(8) start` command invoked from a
-.I /etc/rc.d/nsd.sh
-script or similar at the operating system startup.
+should be started with the `nsd\-control(8) start` command invoked from
+.IR /etc/rc.d/nsd .
 .TP
 .B \-4
 Only listen to IPv4 connections.
@@ -184,12 +183,7 @@ to the daemon periodically.
 .B \-t\fI chroot
 Specifies a directory to 
 .I chroot 
-to upon startup. This option requires you to ensure that appropriate 
-syslogd(8) socket (e.g.
-.I chrootdir 
-/dev/log) is available, otherwise
-.B NSD
-won't produce any log output.
+to upon startup.
 .TP
 .B \-u\fI username
 Drop user and group privileges to those of
