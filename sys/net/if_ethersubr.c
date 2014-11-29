@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.179 2014/11/20 14:51:42 krw Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.180 2014/11/29 18:50:06 tedu Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -209,8 +209,8 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 			if (*m == NULL)
 				return (-1);
 			evh = mtod(*m, struct ether_vlan_header *);
-			memmove(evh->evl_dhost, edst, sizeof(evh->evl_dhost));
-			memmove(evh->evl_shost, esrc, sizeof(evh->evl_shost));
+			memcpy(evh->evl_dhost, edst, sizeof(evh->evl_dhost));
+			memcpy(evh->evl_shost, esrc, sizeof(evh->evl_shost));
 			evh->evl_proto = etype;
 			evh->evl_encap_proto = htons(ifv->ifv_type);
 			evh->evl_tag = htons(ifv->ifv_tag +
@@ -225,8 +225,8 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 		return (-1);
 	eh = mtod(*m, struct ether_header *);
 	eh->ether_type = etype;
-	memmove(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
-	memmove(eh->ether_shost, esrc, sizeof(eh->ether_shost));
+	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
+	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 	return (0);
 }
 
