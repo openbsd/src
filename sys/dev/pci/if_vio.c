@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.18 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.19 2014/11/29 22:53:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -822,8 +822,9 @@ int
 vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vio_softc *sc = ifp->if_softc;
-	int s, r = 0;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int s, r = 0;
 
 	s = splnet();
 	switch (cmd) {
@@ -853,8 +854,11 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		r = ifmedia_ioctl(ifp, (struct ifreq *)data, &sc->sc_media,
-		    cmd);
+		r = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+	case SIOCGIFRXR:
+		r = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->sc_rx_ring);
 		break;
 	default:
 		r = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
