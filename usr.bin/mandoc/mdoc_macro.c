@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.109 2014/11/29 03:37:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.110 2014/11/29 04:31:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -55,7 +55,8 @@ static	enum mdoct	lookup(enum mdoct, const char *);
 static	int		macro_or_word(MACRO_PROT_ARGS, int);
 static	int		make_pending(struct mdoc_node *, enum mdoct,
 				struct mdoc *, int, int);
-static	void		phrase(struct mdoc *, int, int *, char *);
+static	int		parse_rest(struct mdoc *, enum mdoct,
+				int, int *, char *);
 static	enum mdoct	rew_alt(enum mdoct);
 static	enum rew	rew_dohalt(enum mdoct, enum mdoc_type,
 				const struct mdoc_node *);
@@ -1179,7 +1180,7 @@ blk_full(MACRO_PROT_ARGS)
 				mdoc->flags |= MDOC_PPHRASE;
 			if (ac == ARGS_PEND && lac == ARGS_PPHRASE)
 				mdoc->flags |= MDOC_PPHRASE;
-			phrase(mdoc, line, &la, buf);
+			parse_rest(mdoc, MDOC_MAX, line, &la, buf);
 			mdoc->flags &= ~MDOC_PPHRASE;
 			continue;
 		}
@@ -1471,7 +1472,6 @@ in_line_argn(MACRO_PROT_ARGS)
 static void
 in_line_eoln(MACRO_PROT_ARGS)
 {
-	int		 la;
 	struct mdoc_arg	*arg;
 
 	if (tok == MDOC_Pp)
@@ -1479,15 +1479,28 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
+	if (parse_rest(mdoc, tok, line, pos, buf))
+		return;
+	rew_elem(mdoc, tok);
+}
+
+/*
+ * The simplest argument parser available: Parse the remaining
+ * words until the end of the phrase or line and return 0
+ * or until the next macro, call that macro, and return 1.
+ */
+static int
+parse_rest(struct mdoc *mdoc, enum mdoct tok, int line, int *pos, char *buf)
+{
+	int		 la;
 
 	for (;;) {
 		la = *pos;
 		if (mdoc_args(mdoc, line, pos, buf, tok, NULL) == ARGS_EOLN)
-			break;
+			return(0);
 		if (macro_or_word(mdoc, tok, line, la, pos, buf, 1))
-			return;
+			return(1);
 	}
-	rew_elem(mdoc, tok);
 }
 
 static void
@@ -1510,17 +1523,6 @@ ctx_synopsis(MACRO_PROT_ARGS)
  * macro is encountered.
  */
 static void
-phrase(struct mdoc *mdoc, int line, int *pos, char *buf)
-{
-	int		 la;
-
-	do
-		la = *pos;
-	while (mdoc_args(mdoc, line, pos, buf, MDOC_MAX, NULL) != ARGS_EOLN &&
-	    !macro_or_word(mdoc, MDOC_MAX, line, la, pos, buf, 1));
-}
-
-static void
 phrase_ta(MACRO_PROT_ARGS)
 {
 	struct mdoc_node *n;
@@ -1540,5 +1542,5 @@ phrase_ta(MACRO_PROT_ARGS)
 
 	rew_sub(MDOC_BODY, mdoc, MDOC_It, line, ppos);
 	mdoc_body_alloc(mdoc, line, ppos, MDOC_It);
-	phrase(mdoc, line, pos, buf);
+	parse_rest(mdoc, MDOC_MAX, line, pos, buf);
 }
