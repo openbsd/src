@@ -2,7 +2,6 @@
 
 ENTRY(bcmp)
 	xorl	%eax,%eax		/* clear return value */
-	cld				/* set compare direction forward */
 
 	movq	%rdx,%rcx		/* compare by words */
 	shrq	$3,%rcx

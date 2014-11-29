@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanc.S,v 1.2 1996/09/27 06:47:48 mickey Exp $	*/
+/*	$OpenBSD: scanc.S,v 1.3 2014/11/29 18:51:23 tedu Exp $	*/
 /*	$NetBSD: scanc.S,v 1.5 1994/10/26 06:39:13 cgd Exp $	*/
 
 /*
@@ -42,7 +42,6 @@ ENTRY(scanc)
 	movl	20(%esp),%edi
 	movb	24(%esp),%dl
 	xorl	%eax,%eax
-	cld
 1:
 	lodsb
 	testb	%dl,(%eax,%edi)

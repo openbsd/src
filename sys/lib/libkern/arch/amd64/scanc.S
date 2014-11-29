@@ -43,7 +43,6 @@ ENTRY(scanc)
 	jz	2f
 	movq	%r11,%rdi
 	xorq	%rax,%rax
-	cld
 1:
 	lodsb
 	testb	%dl,(%rax,%rdi)

@@ -11,7 +11,6 @@ ENTRY(memchr)
 	movq	%rdx,%rcx		/* set length of search */
 	testq	%rcx,%rcx		/* test for len == 0 */
 	jz	L1
-	cld				/* set search forward */
 	repne				/* search! */
 	scasb
 	jne	L1			/* scan failed, return null */

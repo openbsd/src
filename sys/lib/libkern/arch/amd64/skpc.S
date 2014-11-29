@@ -39,7 +39,6 @@ ENTRY(skpc)
 	movl	%edi,%eax
 	movq	%rsi,%rcx
 	movq	%rdx,%rdi
-	cld
 	repe
 	scasb
 	je	1f

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memchr.S,v 1.1 1997/11/04 19:08:06 chuck Exp $	*/
+/*	$OpenBSD: memchr.S,v 1.2 2014/11/29 18:51:23 tedu Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -14,7 +14,6 @@ ENTRY(memchr)
 	movl	16(%esp),%ecx		/* set length of search */
 	testl	%ecx,%ecx		/* test for len == 0 */
 	jz	L1
-	cld				/* set search forward */
 	repne				/* search! */
 	scasb
 	jne	L1			/* scan failed, return null */

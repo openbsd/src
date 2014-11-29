@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.6 2014/01/09 05:39:41 tedu Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.7 2014/11/29 18:51:23 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -74,7 +74,6 @@ ENTRY(memcpy)
 	movl	20(%esp),%ecx
 docopyf:
 	movl	%edi,%eax		# setup return value for memcpy/memmove
-	cld				# copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl

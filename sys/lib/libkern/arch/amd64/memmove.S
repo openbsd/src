@@ -57,7 +57,6 @@ ENTRY(memcpy)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
 2:
-	cld			/* copy forwards. */
 	shrq	$3,%rcx		/* copy by words */
 	rep
 	movsq

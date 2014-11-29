@@ -7,7 +7,6 @@
 #include <machine/asm.h>
 
 ENTRY(memcmp)
-	cld				/* set compare direction forward */
 	movq	%rdx,%rcx		/* compare by longs */
 	shrq	$3,%rcx
 	repe

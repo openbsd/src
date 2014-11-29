@@ -12,8 +12,6 @@ ENTRY(memset)
 	movq	%rdx,%rcx
 	movq	%rdi,%r11
 
-	cld				/* set fill direction forward */
-
 	/*
 	 * if the string is too short, it's really not worth the overhead
 	 * of aligning to word boundaries, etc.  So we jump to a plain
