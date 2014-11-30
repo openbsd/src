@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.h,v 1.2 2009/05/10 12:37:01 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.h,v 1.3 2014/11/30 22:26:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -42,7 +42,9 @@ extern size_t mdesc_len;
 
 void	 mdesc_init(void);
 uint64_t mdesc_get_prop_val(int, const char *);
-const char * mdesc_get_prop_str(int, const char *);
+const char *mdesc_get_prop_str(int, const char *);
+const char *mdesc_get_prop_data(int, const char *, size_t *);
 int	mdesc_find(const char *, uint64_t);
 int	mdesc_find_child(int, const char *, uint64_t);
+int	mdesc_find_node(const char *);
 #endif

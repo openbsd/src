@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.122 2014/11/26 20:06:53 stsp Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.123 2014/11/30 22:26:14 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -648,8 +648,46 @@ void
 cpu_configure()
 {
 #ifdef SUN4V
-	if (CPU_ISSUN4V)
+	int pause = 0;
+
+	if (CPU_ISSUN4V) {
+		const char *prop;
+		size_t len;
+		int idx;
+
 		mdesc_init();
+		idx = mdesc_find_node("cpu");
+		prop = mdesc_get_prop_data(idx, "hwcap-list", &len);
+		if (prop) {
+			while (len > 0) {
+				if (strcmp(prop, "pause") == 0)
+					pause = 1;
+				len -= strlen(prop) + 1;
+				prop += strlen(prop) + 1;
+			}
+		}
+	}
+
+	if (pause) {
+		struct sun4v_patch {
+			u_int32_t addr;
+			u_int32_t insn;
+		} *p;
+		paddr_t pa;
+
+		extern struct sun4v_patch sun4v_pause_patch;
+		extern struct sun4v_patch sun4v_pause_patch_end;
+
+		/*
+		 * Use physical addresses to patch since kernel .text
+		 * is already mapped read-only at this point.
+		 */
+		for (p = &sun4v_pause_patch; p < &sun4v_pause_patch_end; p++) {
+			pmap_extract(pmap_kernel(), (vaddr_t)p->addr, &pa);
+			stwa(pa, ASI_PHYS_NON_CACHED, p->insn);
+			flush((void *)(vaddr_t)p->addr);
+		}
+	}
 #endif
 
 	if (obd.version == BOOTDATA_VERSION &&

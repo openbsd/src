@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.178 2014/11/24 10:55:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.179 2014/11/30 22:26:14 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -104,6 +104,16 @@ _C_LABEL(sun4v_patch):
 	.section	.sun4v_patch_end, "ax"
 	.globl _C_LABEL(sun4v_patch_end)
 _C_LABEL(sun4v_patch_end):
+	.previous
+
+	.section	.sun4v_pause_patch, "ax"
+	.globl _C_LABEL(sun4v_pause_patch)
+_C_LABEL(sun4v_pause_patch):
+	.previous
+
+	.section	.sun4v_pause_patch_end, "ax"
+	.globl _C_LABEL(sun4v_pause_patch_end)
+_C_LABEL(sun4v_pause_patch_end):
 	.previous
 
 #ifdef MULTIPROCESSOR
