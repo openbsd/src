@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.29 2014/09/16 08:51:38 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.30 2014/11/30 16:44:04 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -116,7 +116,7 @@ sub prepare_long
 		} else {
 			delete $entry->{uid};
 		}
-	} elsif ($< && $entry->{uid} == $<) {
+	} else {
 		$entry->{uname} = "root";
 		delete $entry->{uid};
 	}
@@ -127,8 +127,17 @@ sub prepare_long
 		} else {
 			delete $entry->{gid};
 		}
-	} elsif ($< && $( =~ m/\b$entry->{gid}\b/) {
+	} else {
 		$entry->{gname} = "bin";
+		delete $entry->{gid};
+	}
+	# likewise, we skip links on extractions, so hey, don't even care
+	# about modes and stuff.
+	if ($entry->isSymLink) {
+		$entry->{mode} = 0777;
+		$entry->{uname} = 'root';
+		$entry->{gname} = 'wheel';
+		delete $entry->{uid};
 		delete $entry->{gid};
 	}
 	$entry->recheck_owner;
@@ -151,15 +160,6 @@ sub prepare_long
 	}
 	if (defined $item->{ts}) {
 		delete $entry->{mtime};
-	}
-	# likewise, we skip links on extractions, so hey, don't even care
-	# about modes and stuff.
-	if ($entry->isSymLink) {
-		$entry->{mode} = 0777;
-		$entry->{uid} = 0;
-		$entry->{gid} = 0;
-		$entry->{uname} = 'root';
-		$entry->{gname} = 'wheel';
 	}
 
 	$entry->set_name($item->name);
