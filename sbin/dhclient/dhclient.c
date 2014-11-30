@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.337 2014/11/29 22:06:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.338 2014/11/30 00:09:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -326,13 +326,15 @@ routehandler(void)
 			goto die;
 		}
 
-		memcpy(&hw, &ifi->hw_address, sizeof(hw));
-		get_hw_address();
-		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
-			warning("LLADDR changed; restarting");
-			ifi->flags |= IFI_NEW_LLADDR;
-			quit = SIGHUP;
-			goto done;
+		if (ifi->linkstat) {
+			memcpy(&hw, &ifi->hw_address, sizeof(hw));
+			get_hw_address();
+			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
+				warning("LLADDR changed; restarting");
+				ifi->flags |= IFI_NEW_LLADDR;
+				quit = SIGHUP;
+				goto done;
+			}
 		}
 
 		linkstat =
@@ -402,7 +404,6 @@ main(int argc, char *argv[])
 	int	 ch, fd, i = 0, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
-	struct option_data *opt;
 	char *ignore_list = NULL;
 	ssize_t tailn;
 	int rtfilter, tailfd;
@@ -533,25 +534,6 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
 
-	get_hw_address();
-	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
-	/*
-	 * Check both len && data so
-	 *     send dhcp-client-identifier "";
-	 * can be used to suppress sending the default client
-	 * identifier.
-	 */
-	if (opt->len == 0 && opt->data == NULL) {
-		/* Build default client identifier. */
-		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
-		if (opt->data != NULL) {
-			opt->data[0] = HTYPE_ETHER;
-			memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
-			    ETHER_ADDR_LEN);
-			opt->len = ETHER_ADDR_LEN + 1;
-		}
-	}
-
 	/* Register the interface. */
 	if_register_receive();
 	if_register_send();
@@ -660,11 +642,31 @@ void
 state_reboot(void)
 {
 	struct client_lease *lp;
+	struct option_data *opt;
 	time_t cur_time;
 
 	cancel_timeout();
 	deleting.s_addr = INADDR_ANY;
 	adding.s_addr = INADDR_ANY;
+
+	get_hw_address();
+	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
+	/*
+	 * Check both len && data so
+	 *     send dhcp-client-identifier "";
+	 * can be used to suppress sending the default client
+	 * identifier.
+	 */
+	if (opt->len == 0 && opt->data == NULL) {
+		/* Build default client identifier. */
+		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
+		if (opt->data != NULL) {
+			opt->data[0] = HTYPE_ETHER;
+			memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
+			    ETHER_ADDR_LEN);
+			opt->len = ETHER_ADDR_LEN + 1;
+		}
+	}
 
 	time(&cur_time);
 	if (client->active && client->active->expiry <= cur_time)
