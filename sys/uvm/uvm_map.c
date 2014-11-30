@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.179 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.180 2014/11/30 19:50:53 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1011,6 +1011,10 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	/* Check protection. */
 	if ((prot & maxprot) != prot)
 		return EACCES;
+
+	if (map == kernel_map &&
+	    (prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC))
+		panic("uvm_map: kernel map W^X violation requested\n");
 
 	/*
 	 * Before grabbing the lock, allocate a map entry for later
@@ -2869,6 +2873,9 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 			error = EACCES;
 			goto out;
 		}
+		if (map == kernel_map &&
+		    (new_prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC))
+			panic("uvm_map_protect: kernel map W^X violation requested\n");
 	}
 
 	/* Fix protections.  */
