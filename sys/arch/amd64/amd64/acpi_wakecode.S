@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.31 2014/11/22 18:31:46 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.32 2014/11/30 18:29:11 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -198,7 +198,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * out here.
 	 */
 	movl	acpi_saved_efer, %ebx
-	andl 	$(EFER_LME | EFER_LMA | EFER_NXE | EFER_SCE), %ebx	
+	andl 	$(EFER_LME | EFER_NXE | EFER_SCE), %ebx	
 
 	/*
 	 * Set up a temporary long mode GDT describing 2

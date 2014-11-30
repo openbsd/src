@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.28 2014/07/03 21:15:28 matthew Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.29 2014/11/30 18:29:11 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -374,8 +374,8 @@
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
 #define 	EFER_SCE		0x00000001	/* SYSCALL extension */
-#define 	EFER_LME		0x00000100	/* Long Mode Active */
-#define		EFER_LMA		0x00000400	/* Long Mode Enabled */
+#define 	EFER_LME		0x00000100	/* Long Mode Enabled */
+#define		EFER_LMA		0x00000400	/* Long Mode Active */
 #define 	EFER_NXE		0x00000800	/* No-Execute Enabled */
 
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
