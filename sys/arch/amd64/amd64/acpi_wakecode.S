@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.32 2014/11/30 18:29:11 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.33 2014/11/30 20:48:51 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -192,24 +192,16 @@ _C_LABEL(acpi_protected_mode_resume):
 	mov	%eax,%cr4
 
 	/*
-	 * Stash away our previously saved EFER in EBX.
-	 * We have to make sure we don't write to any
-	 * of the EFER reserved bits, so we zero those
-	 * out here.
-	 */
-	movl	acpi_saved_efer, %ebx
-	andl 	$(EFER_LME | EFER_NXE | EFER_SCE), %ebx	
-
-	/*
 	 * Set up a temporary long mode GDT describing 2
 	 * segments, one for code and one for data.
 	 */
 	lgdt 	tmp_gdt64	
 
-	/* Prepare to enter long mode by enabling LME in EFER */
+	/* Restore saved EFER (LME, NXE, etc) */
 	movl	$MSR_EFER, %ecx
 	rdmsr
-	orl	$EFER_LME, %eax
+	movl	acpi_saved_efer, %eax
+	andl 	$(EFER_LME | EFER_NXE | EFER_SCE), %eax	
 	wrmsr
 
 	/* Reenable paging using temporary cr3 */
@@ -238,14 +230,10 @@ _C_LABEL(acpi_protected_mode_resume):
 	.align 16
 _ACPI_TRMP_LABEL(acpi_long_mode_trampoline)
 _C_LABEL(acpi_long_mode_resume):
-	/* Restore the stashed copy of EFER we set aside earlier */	
-	movl	%ebx, %eax
-	movl	$MSR_EFER, %ecx
-	wrmsr
 
 	/* Load GDT based on our saved copy */
 	lgdt	acpi_saved_gdt
-	
+
 	/* Reset segment registers */
 	movw    $GSEL(GDATA_SEL, SEL_KPL),%ax
 	movw    %ax,%ds
