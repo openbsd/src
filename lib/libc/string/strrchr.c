@@ -1,4 +1,4 @@
-/*	$OpenBSD: rindex.c,v 1.7 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: strrchr.c,v 1.1 2014/11/30 19:43:57 deraadt Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include <string.h>
 
 char *
-rindex(const char *p, int ch)
+strrchr(const char *p, int ch)
 {
 	char *save;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: index.c,v 1.6 2014/11/30 19:43:56 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,11 +31,7 @@
 #include <string.h>
 
 char *
-#ifdef STRCHR
-strchr(const char *p, int ch)
-#else
 index(const char *p, int ch)
-#endif
 {
 	for (;; ++p) {
 		if (*p == ch)

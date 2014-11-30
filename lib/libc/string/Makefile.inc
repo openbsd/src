@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.35 2014/06/13 02:12:17 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.36 2014/11/30 19:43:56 deraadt Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
 SRCS+=	explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
 	strcasecmp.c strcasestr.c strcoll.c strdup.c \
-	strerror.c strerror_r.c strlcat.c strmode.c strndup.c strnlen.c \
+	strerror.c strerror_r.c strmode.c strndup.c strnlen.c \
 	strsignal.c strtok.c strxfrm.c \
 	timingsafe_bcmp.c timingsafe_memcmp.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
@@ -14,135 +14,14 @@ SRCS+=	explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
 	wmemmove.c wmemset.c wcsdup.c wcscasecmp.c
 
 # machine-dependent net sources
-# m-d Makefile.inc must include sources for:
+# ../arch/ARCH/Makefile.inc must include sources for:
 #	bcmp() bcopy() bzero() ffs() index() memchr() memcmp() memset()
-#	rindex() strcat() strcmp() strcpy() strcspn() strlen() strlcpy()
-#	strncat() strncmp() strncpy() strpbrk() strsep()
-#	strspn() strstr() swav()
-# m-d Makefile.inc may include sources for:
-#	memcpy() memmove() strchr() strrchr()
+#	memcpy() memmove() memset() rindex() strcat() strchr()
+#	strcmp() strcpy() strcspn() strlen() strlcat() strlcpy()
+#	strncat() strncmp() strncpy() strpbrk() strrchr() strsep()
+#	strspn() strstr() swab()
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/string/Makefile.inc"
-
-# if no machine specific memmove(3), build one out of bcopy(3).
-.if empty(SRCS:Mmemmove.S)
-OBJS+=	memmove.o
-memmove.o: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-memmove.go: bcopy.c
-	${CC} -g -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-memmove.po: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -X -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-memmove.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-		-o ${.TARGET}
-
-memmove.do: bcopy.c
-	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-.endif
-
-# if no machine specific memcpy(3), build one out of bcopy(3).
-# if there is a machine specific memmove(3), we'll assume it aliases
-# memcpy(3).
-.if empty(SRCS:Mmemcpy.S)
-.if empty(SRCS:Mmemmove.S)
-OBJS+=	memcpy.o
-memcpy.o: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-memcpy.go: bcopy.c
-	${CC} -g -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-memcpy.po: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -X -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-memcpy.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-		-o ${.TARGET}
-
-memcpy.do: bcopy.c
-	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-.endif
-.endif
-
-# if no machine specific strchr(3), build one out of index(3).
-.if empty(SRCS:Mstrchr.S)
-OBJS+=	strchr.o
-strchr.o: index.c
-	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-strchr.go: index.c
-	${CC} -g -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-strchr.po: index.c
-	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -X -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-strchr.so: index.c
-	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
-
-strchr.do: index.c
-	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-.endif
-
-# if no machine specific strrchr(3), build one out of rindex(3).
-.if empty(SRCS:Mstrrchr.S)
-OBJS+=	strrchr.o
-strrchr.o: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-strrchr.go: rindex.c
-	${CC} -g -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-strrchr.po: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -X -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-
-strrchr.so: rindex.c
-	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
-
-strrchr.do: rindex.c
-	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
-	    -o ${.TARGET}
-	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
-	@mv ${.TARGET}.tmp ${.TARGET}
-.endif
 
 MAN+=	bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 	memcmp.3 memcpy.3 memmem.3 memmove.3 memset.3 stpcpy.3 strcasecmp.3 \

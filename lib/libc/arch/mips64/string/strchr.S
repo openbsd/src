@@ -1,7 +1,10 @@
-/*	$OpenBSD: rindex.c,v 1.7 2014/11/30 19:43:56 deraadt Exp $ */
-/*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+/*	$OpenBSD: strchr.S,v 1.1 2014/11/30 19:43:56 deraadt Exp $ */
+/*-
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,18 +31,20 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
+#include <machine/asm.h>
 
-char *
-rindex(const char *p, int ch)
-{
-	char *save;
-
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
-	}
-	/* NOTREACHED */
-}
+LEAF(strchr, 0)
+ALEAF(index)
+	.set	reorder
+0:
+	lbu	a2, 0(a0)		# get a byte
+	daddu	a0, a0, 1
+	beq	a2, a1, fnd
+	bne	a2, zero, 0b
+notfnd:
+	move	v0, zero
+	j	ra
+fnd:
+	dsubu	v0, a0, 1
+	j	ra
+END(strchr)

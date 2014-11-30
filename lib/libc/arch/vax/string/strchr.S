@@ -1,7 +1,7 @@
-/*	$OpenBSD: rindex.c,v 1.7 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: strchr.S,v 1.1 2014/11/30 19:43:56 deraadt Exp $ */
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,18 +28,31 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
+/*
+ * Find the first occurrence of c in the string cp.
+ * Return pointer to match or null pointer.
+ *
+ * char *strchr(char *cp, char c)
+ */
+#include "DEFS.h"
 
-char *
-rindex(const char *p, int ch)
-{
-	char *save;
+/* Alas not quite twice as fast as the generic C version on a uvax2 */
 
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
-	}
-	/* NOTREACHED */
-}
+STRONG_ALIAS(index, strchr)
+ENTRY(strchr, 0)
+	movq	4(%ap),%r0	# r0 = cp; r1 = c
+	tstb	%r1		# special case, looking for '\0'
+	jeql	3f
+1:
+	cmpb	(%r0),%r1
+	jeql	2f
+	tstb	(%r0)+
+	jneq	1b
+	clrl	%r0		# return NULL if no match
+2:
+	ret
+3:
+	tstb	(%r0)+
+	jneq	3b
+	decl	%r0
+	jbr	2b

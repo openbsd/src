@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.5 2005/08/07 11:30:38 espie Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.6 2014/11/30 19:43:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,30 +33,18 @@
 
 #include <machine/asm.h>
 
-	/*
-	 * (ov)bcopy (src,dst,cnt)
-	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
-	 */
+/*
+ * bcopy(src, dst, cnt)
+ *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
+ */
 
-#ifdef MEMCOPY
-ENTRY(memcpy)
-#else
-#ifdef MEMMOVE
-ENTRY(memmove)
-#else
 ENTRY(bcopy)
-#endif
-#endif
 	pushl	%esi
 	pushl	%edi
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	12(%esp),%edi
-	movl	16(%esp),%esi
-	movl	%edi, %eax
-#else
+
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
-#endif
+
 	movl	20(%esp),%ecx
 	movl	%ecx,%edx
 	cmpl	%esi,%edi	/* potentially overlapping? */

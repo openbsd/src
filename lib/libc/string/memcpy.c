@@ -1,10 +1,10 @@
-/*	$OpenBSD: rindex.S,v 1.4 2009/12/11 05:10:17 miod Exp $ */
+/*	$OpenBSD: memcpy.c,v 1.1 2014/11/30 19:43:56 deraadt Exp $ */
 /*-
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,17 +31,69 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include <string.h>
+#include <stdlib.h>
+#include <syslog.h>
 
-LEAF(rindex, 0)
-	.set	reorder
-	move	v0, zero		# default if not found
-1:
-	lbu	a3, 0(a0)		# get a byte
-	daddu	a0, a0, 1
-	bne	a3, a1, 2f
-	dsubu	v0, a0, 1		# save address of last match
-2:
-	bne	a3, zero, 1b		# continue if not end
-	j	ra
-END(rindex)
+/*
+ * sizeof(word) MUST BE A POWER OF TWO
+ * SO THAT wmask BELOW IS ALL ONES
+ */
+typedef	long word;		/* "word" used for optimal copy speed */
+
+#define	wsize	sizeof(word)
+#define	wmask	(wsize - 1)
+
+/*
+ * Copy a block of memory, not handling overlap.
+ */
+void *
+memcpy(void *dst0, const void *src0, size_t length)
+{
+	char *dst = dst0;
+	const char *src = src0;
+	size_t t;
+
+	if (length == 0 || dst == src)		/* nothing to do */
+		goto done;
+
+	if ((dst < src && dst + length > src) ||
+	    (src < dst && src + length > dst)) {
+		struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+		syslog_r(LOG_CRIT, &sdata, "backwards memcpy");
+		abort();
+	}
+
+	/*
+	 * Macros: loop-t-times; and loop-t-times, t>0
+	 */
+#define	TLOOP(s) if (t) TLOOP1(s)
+#define	TLOOP1(s) do { s; } while (--t)
+
+	/*
+	 * Copy forward.
+	 */
+	t = (long)src;	/* only need low bits */
+	if ((t | (long)dst) & wmask) {
+		/*
+		 * Try to align operands.  This cannot be done
+		 * unless the low bits match.
+		 */
+		if ((t ^ (long)dst) & wmask || length < wsize)
+			t = length;
+		else
+			t = wsize - (t & wmask);
+		length -= t;
+		TLOOP1(*dst++ = *src++);
+	}
+	/*
+	 * Copy whole words, then mop up any trailing bytes.
+	 */
+	t = length / wsize;
+	TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize);
+	t = length & wmask;
+	TLOOP(*dst++ = *src++);
+done:
+	return (dst0);
+}

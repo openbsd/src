@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.S,v 1.3 2008/06/26 05:42:04 ray Exp $	*/
+/*	$OpenBSD: memcpy.S,v 1.4 2014/11/30 19:43:56 deraadt Exp $	*/
 /*	$NetBSD: memcpy.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
@@ -31,6 +31,12 @@
  */
 
 #include <machine/asm.h>
+
+/*
+ * XXX
+ * the _memcpy function which this calls is actually a _memmove
+ * variant which handles overlaps...  That should be fixed.
+ */
 
 ENTRY(memcpy)
 	stmfd	sp!, {r0, lr}

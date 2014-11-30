@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.c,v 1.6 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: memmove.c,v 1.1 2014/11/30 19:43:56 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -45,8 +45,8 @@ typedef	long word;		/* "word" used for optimal copy speed */
 /*
  * Copy a block of memory, handling overlap.
  */
-void
-bcopy(const void *src0, void *dst0, size_t length)
+void *
+memmove(void *dst0, const void *src0, size_t length)
 {
 	char *dst = dst0;
 	const char *src = src0;
@@ -108,5 +108,5 @@ bcopy(const void *src0, void *dst0, size_t length)
 		TLOOP(*--dst = *--src);
 	}
 done:
-	return;
+	return (dst0);
 }

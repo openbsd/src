@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.6 2013/06/11 21:16:15 deraadt Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.7 2014/11/30 19:43:54 deraadt Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.3 1996/10/17 03:08:11 cgd Exp $	*/
 
 /*
@@ -31,28 +31,14 @@
 
 #include <machine/asm.h>
 
-#if defined(MEMCOPY) || defined(MEMMOVE)
-#ifdef MEMCOPY
-#define	FUNCTION	memcpy
-#else
-#define FUNCTION	memmove
-#endif
-#define	SRCREG		a1
-#define	DSTREG		a0
-#else /* !(defined(MEMCOPY) || defined(MEMMOVE)) */
-#define	FUNCTION	bcopy
 #define	SRCREG		a0
 #define	DSTREG		a1
-#endif /* !(defined(MEMCOPY) || defined(MEMMOVE)) */
-
 #define	SIZEREG		a2
 
 /*
  * Copy bytes.
  *
  * void bcopy(char *from, char *to, size_t len);
- * char *memcpy(void *to, const void *from, size_t len);
- * char *memmove(void *to, const void *from, size_t len);
  *
  * No matter how invoked, the source and destination registers
  * for calculation.  There's no point in copying them to "working"
@@ -60,13 +46,7 @@
  * copying them would be slower.
  */
 
-LEAF(FUNCTION,3)
-
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	/* set up return value, while we still can */
-	mov	DSTREG,v0
-#endif
-
+LEAF(bcopy,3)
 	/* Check for zero length */
 	beq	SIZEREG,bcopy_done
 
@@ -286,4 +266,4 @@ bcopy_ov_short:
 	ldq_u	t2,0(SRCREG)
 	br	zero,bcopy_da_finish
 
-	END(FUNCTION)
+	END(bcopy)

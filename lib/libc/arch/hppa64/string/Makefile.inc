@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2014/07/16 20:02:17 okan Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2014/11/30 19:43:56 deraadt Exp $
 
-SRCS+=	bcmp.c bzero.c bcopy.c memchr.c memcmp.c memset.c index.c rindex.c \
-	strcat.c strcmp.c strcpy.c strlcpy.c strcspn.c strlen.c \
-	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c ffs.c
+SRCS+=	bcopy.c memcpy.c memmove.c \
+	index.c rindex.c strchr.c strrchr.c \
+	bcmp.c bzero.c ffs.c memchr.c memcmp.c \
+	memset.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
+	strlcat.c strlcpy.c strncat.c strncmp.c strncpy.c \
+	strpbrk.c strsep.c strspn.c strstr.c swab.c

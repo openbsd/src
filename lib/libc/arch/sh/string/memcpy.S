@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: memcpy.S,v 1.2 2014/11/30 19:43:56 deraadt Exp $	*/
 /*	$NetBSD: memcpy.S,v 1.2 2006/04/22 23:53:47 uwe Exp $	*/
 
 /*
@@ -30,36 +30,17 @@
 
 #include <machine/asm.h>
 
-#if !defined(MEMCOPY) && !defined(MEMMOVE) && !defined(BCOPY)
-#define MEMCOPY
-#endif
-
-#if defined(MEMCOPY) || defined(MEMMOVE)
 #define	REG_DST0	r3
 #define	REG_SRC		r5
 #define	REG_DST		r4
-#else
-#define	REG_SRC		r4
-#define	REG_DST		r5
-#endif
-
 #define	REG_LEN		r6
 
-#if defined(MEMCOPY)
 ENTRY(memcpy)
-#elif defined(MEMMOVE)
-ENTRY(memmove)
-#elif defined(BCOPY)
-ENTRY(bcopy)
-#endif
-#ifdef REG_DST0
 	mov	REG_DST,REG_DST0
-#endif
 	cmp/eq	REG_DST,REG_SRC	/* if ( src == dst ) return; */
 	bt/s	bcopy_return
-	cmp/hi	REG_DST,REG_SRC
-	bf/s	bcopy_overlap
 
+	/* copy forward */
 	mov	REG_SRC,r0
 	xor	REG_DST,r0
 	and	#3,r0
@@ -155,114 +136,4 @@ no_align_delay:
 	add	#1,REG_DST	/* }                       */
 bcopy_return:
 	rts
-#ifdef REG_DST0
 	mov	REG_DST0,r0
-#else
-	nop
-#endif
-
-
-bcopy_overlap:
-	add	REG_LEN,REG_SRC
-	add	REG_LEN,REG_DST
-
-	mov	REG_SRC,r0
-	xor	REG_DST,r0
-	and	#3,r0
-	mov	r0,r1
-	tst	r0,r0		/* (src ^ dst) & 3         */
-	bf/s	ov_word_align
-
-ov_longword_align:
-	tst	REG_LEN,REG_LEN	/* if ( len==0 ) return;   */
-	bt/s	bcopy_return
-
-
-	mov	REG_SRC,r0
-	tst	#1,r0		/* if ( src & 1 )          */
-	bt	1f
-	add	#-1,REG_SRC	/*    *--dst = *--src;     */
-	mov.b	@REG_SRC,r0
-	mov.b	r0,@-REG_DST
-	add	#-1,REG_LEN
-1:
-
-
-	mov	#1,r0
-	cmp/hi	r0,REG_LEN	/* if ( (len > 1) &&       */
-	bf/s	1f
-	mov	REG_SRC,r0
-	tst	#2,r0		/*      (src & 2) {        */
-	bt	1f
-	add	#-2,REG_SRC	/*        *--((unsigned short*)dst) = *--((unsigned short*)src); */
-	mov.w	@REG_SRC,r0
-	add	#-2,REG_LEN	/*        len -= 2;                                              */
-	mov.w	r0,@-REG_DST	/* }                       */
-1:
-
-
-	mov	#3,r1
-	cmp/hi	r1,REG_LEN	/* while ( len > 3 ) {     */
-	bf/s	ov_no_align_delay
-	tst	REG_LEN,REG_LEN
-2:
-	add	#-4,REG_SRC
-	mov.l	@REG_SRC,r0	/*   *((unsigned long*)dst)++ = *((unsigned long*)src)++;        */
-	add	#-4,REG_LEN	/*   len -= 4;                                                   */
-	cmp/hi	r1,REG_LEN
-	bt/s	2b
-	mov.l	r0,@-REG_DST	/* }                       */
-
-	bra	ov_no_align_delay
-	tst	REG_LEN,REG_LEN
-
-
-ov_word_align:
-	mov	r1,r0
-	tst	#1,r0
-	bf/s	ov_no_align_delay
-	tst	REG_LEN,REG_LEN	/* if ( len == 0 ) return; */
-	bt	bcopy_return
-
-
-	mov	REG_SRC,r0	/* if ( src & 1 )          */
-	tst	#1,r0
-	bt	1f
-	add	#-1,REG_SRC
-	mov.b	@REG_SRC,r0	/*    *--dst = *--src;     */
-	add	#-1,REG_LEN
-	mov.b	r0,@-REG_DST
-1:
-
-
-	mov	#1,r1
-	cmp/hi	r1,REG_LEN	/* while ( len > 1 ) {     */
-	bf/s	ov_no_align_delay
-	tst	REG_LEN,REG_LEN
-2:
-	add	#-2,REG_SRC
-	mov.w	@REG_SRC,r0	/*   *--((unsigned short*)dst) = *--((unsigned short*)src);      */
-	add	#-2,REG_LEN	/*   len -= 2;                                                   */
-	cmp/hi	r1,REG_LEN
-	bt/s	2b
-	mov.w	r0,@-REG_DST	/* }                       */
-
-
-ov_no_align:
-	tst	REG_LEN,REG_LEN	/* while ( len!= ) {       */
-ov_no_align_delay:
-	bt	9f
-1:
-	add	#-1,REG_SRC
-	mov.b	@REG_SRC,r0	/*    *--dst = *--src;     */
-	add	#-1,REG_LEN	/*    len--;               */
-	tst	REG_LEN,REG_LEN
-	bf/s	1b
-	mov.b	r0,@-REG_DST	/* }                       */
-9:
-	rts
-#ifdef REG_DST0
-	mov	REG_DST0,r0
-#else
-	nop
-#endif
