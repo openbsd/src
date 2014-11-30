@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.110 2014/11/29 04:31:33 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.111 2014/11/30 02:31:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,7 +51,8 @@ static	void		phrase_ta(MACRO_PROT_ARGS);
 static	void		dword(struct mdoc *, int, int, const char *,
 				 enum mdelim, int);
 static	void		append_delims(struct mdoc *, int, int *, char *);
-static	enum mdoct	lookup(enum mdoct, const char *);
+static	enum mdoct	lookup(struct mdoc *, enum mdoct,
+				int, int, const char *);
 static	int		macro_or_word(MACRO_PROT_ARGS, int);
 static	int		make_pending(struct mdoc_node *, enum mdoct,
 				struct mdoc *, int, int);
@@ -243,14 +244,19 @@ mdoc_macroend(struct mdoc *mdoc)
  * or as a line macro if from == MDOC_MAX.
  */
 static enum mdoct
-lookup(enum mdoct from, const char *p)
+lookup(struct mdoc *mdoc, enum mdoct from, int line, int ppos, const char *p)
 {
 	enum mdoct	 res;
 
 	if (from == MDOC_MAX || mdoc_macros[from].flags & MDOC_PARSED) {
 		res = mdoc_hash_find(p);
-		if (res != MDOC_MAX && mdoc_macros[res].flags & MDOC_CALLABLE)
-			return(res);
+		if (res != MDOC_MAX) {
+			if (mdoc_macros[res].flags & MDOC_CALLABLE)
+				return(res);
+			if (res != MDOC_br && res != MDOC_sp && res != MDOC_ll)
+				mandoc_msg(MANDOCERR_MACRO_CALL,
+				    mdoc->parse, line, ppos, p);
+		}
 	}
 	return(MDOC_MAX);
 }
@@ -669,7 +675,7 @@ macro_or_word(MACRO_PROT_ARGS, int parsed)
 	else if (*p == '"')
 		p++;
 	else if (parsed)
-		ntok = lookup(tok, p);
+		ntok = lookup(mdoc, tok, line, ppos, p);
 
 	if (ntok == MDOC_MAX) {
 		dword(mdoc, line, ppos, p, DELIM_MAX, tok == MDOC_MAX ||
@@ -830,7 +836,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN)
 			break;
 
-		ntok = ac == ARGS_QWORD ? MDOC_MAX : lookup(tok, p);
+		ntok = ac == ARGS_QWORD ? MDOC_MAX :
+		    lookup(mdoc, tok, line, lastarg, p);
 
 		if (ntok == MDOC_MAX) {
 			dword(mdoc, line, lastarg, p, DELIM_MAX,
@@ -931,7 +938,7 @@ in_line(MACRO_PROT_ARGS)
 		}
 
 		ntok = (ac == ARGS_QWORD || (tok == MDOC_Fn && !cnt)) ?
-		    MDOC_MAX : lookup(tok, p);
+		    MDOC_MAX : lookup(mdoc, tok, line, la, p);
 
 		/*
 		 * In this case, we've located a submacro and must
@@ -1438,7 +1445,8 @@ in_line_argn(MACRO_PROT_ARGS)
 			flushed = 1;
 		}
 
-		ntok = ac == ARGS_QWORD ? MDOC_MAX : lookup(tok, p);
+		ntok = ac == ARGS_QWORD ? MDOC_MAX :
+		    lookup(mdoc, tok, line, la, p);
 
 		if (ntok != MDOC_MAX) {
 			if ( ! flushed)
