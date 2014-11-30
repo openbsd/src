@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.152 2014/02/01 11:37:58 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.153 2014/11/30 09:49:48 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -577,6 +577,7 @@ sub find_dep_in_repositories
 		# put default first if available
 		@pkgs = ((grep {$_ eq $dep->{def}} @pkgs),
 		    (sort (grep {$_ ne $dep->{def}} @pkgs)));
+		$state->progress->clear;
 		my $good = $state->ask_list(
 		    'Ambiguous: choose dependency for '.$self->{set}->print.': ',
 		    $state->{interactive}, @pkgs);
