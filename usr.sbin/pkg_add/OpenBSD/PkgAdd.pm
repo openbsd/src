@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.78 2014/11/29 10:42:51 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.79 2014/11/30 15:53:54 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1166,13 +1166,13 @@ sub finish_display
 		$warn = 1;
 	}
 	if ($warn && $state->{packages_without_sig}) {
-		print "UNSIGNED PACKAGES: ",
-		    join(', ', keys %{$state->{packages_without_sig}}), "\n";
+		$state->say("UNSIGNED PACKAGES: ",
+		    join(', ', keys %{$state->{packages_without_sig}}));
 	}
 	if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
-		print "Forced updates, bogus dependencies for ",
+		$state->say("Forced updates, bogus dependencies for ",
 		    join(' ', sort(keys %{$state->{updatedepends}})),
-		    " may remain\n";
+		    " may remain");
 	}
 	inform_user_of_problems($state);
 }
