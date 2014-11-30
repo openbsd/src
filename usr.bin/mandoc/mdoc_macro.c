@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.111 2014/11/30 02:31:32 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.112 2014/11/30 05:28:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1394,7 +1394,7 @@ in_line_argn(MACRO_PROT_ARGS)
 	char		*p;
 	enum mdoct	 ntok;
 
-	nl = MDOC_NEWLINE & mdoc->flags;
+	nl = mdoc->flags & MDOC_NEWLINE;
 
 	/*
 	 * A line macro that has a fixed number of arguments (maxargs).
@@ -1426,11 +1426,18 @@ in_line_argn(MACRO_PROT_ARGS)
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 
-	for (flushed = j = 0; ; ) {
+	p = NULL;
+	flushed = j = 0;
+	for (;;) {
 		la = *pos;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
-		if (ac == ARGS_PUNCT || ac == ARGS_EOLN)
+		if (ac == ARGS_PUNCT || ac == ARGS_EOLN) {
+			if (j < 2 && tok == MDOC_Pf)
+				mandoc_vmsg(MANDOCERR_PF_SKIP,
+				    mdoc->parse, line, ppos, "Pf %s",
+				    p == NULL ? "at eol" : p);
 			break;
+		}
 
 		if ( ! (mdoc_macros[tok].flags & MDOC_IGNDELIM) &&
 		    ac != ARGS_QWORD && j == 0 &&
@@ -1445,8 +1452,8 @@ in_line_argn(MACRO_PROT_ARGS)
 			flushed = 1;
 		}
 
-		ntok = ac == ARGS_QWORD ? MDOC_MAX :
-		    lookup(mdoc, tok, line, la, p);
+		ntok = (ac == ARGS_QWORD || (tok == MDOC_Pf && j == 0)) ?
+		    MDOC_MAX : lookup(mdoc, tok, line, la, p);
 
 		if (ntok != MDOC_MAX) {
 			if ( ! flushed)
@@ -1469,8 +1476,11 @@ in_line_argn(MACRO_PROT_ARGS)
 		j++;
 	}
 
-	if (j == 0)
+	if (j == 0) {
 		mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
+		if (ac == ARGS_PUNCT && tok == MDOC_Pf)
+			append_delims(mdoc, line, pos, buf);
+	}
 	if ( ! flushed)
 		rew_elem(mdoc, tok);
 	if (nl)

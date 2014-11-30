@@ -1,0 +1,3 @@
+mandoc: spacing.in:24:2: WARNING: nothing follows prefix: Pf prefixed
+mandoc: spacing.in:27:9: WARNING: nothing follows prefix: Pf .
+mandoc: spacing.in:31:9: WARNING: nothing follows prefix: Pf at eol

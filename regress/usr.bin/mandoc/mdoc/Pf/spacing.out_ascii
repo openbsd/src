@@ -5,7 +5,11 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      Closing punctuation goes .right.  But .. double prefixes don't work.
-     Opening punctuation goes (right as well.  But again, prefix () pairs
-     don't work.  Even normal text gets prefixed.
+     Opening punctuation goes (left.  But again, prefix () pairs don't work.
+     Even normal text gets prefixed.  The first Argument is not parsed.
+     Nothing can be prefixed to the next line.  Trailing punctuation still
+     counts as _e_o_s .  (But it does not fall out of enclosures .)
 
-OpenBSD                         October 1, 2010                        OpenBSD
+     It makes no sense at the very _e_n_d
+
+OpenBSD                        November 30, 2014                       OpenBSD

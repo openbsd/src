@@ -1,4 +1,4 @@
-.Dd October 1, 2010
+.Dd November 30, 2014
 .Dt PF-SPACING 1
 .Os OpenBSD
 .Sh NAME
@@ -11,10 +11,21 @@ But
 .Pf . . double
 prefixes don't work.
 Opening punctuation goes
-.Pf ( right as
-well.
+.Pf ( left .
 But again, prefix
 .Pf ( ) pairs
 don't work.
 Even normal text gets
 .Pf pre fixed .
+The first
+.Pf Ar gument
+is not parsed.
+Nothing can be
+.Pf prefixed
+to the next line.
+Trailing punctuation still counts as
+.Em eos Pf .
+.Po But it does not fall out of enclosures Pf . Pc
+.Pp
+It makes no sense at the very
+.Em end Pf
