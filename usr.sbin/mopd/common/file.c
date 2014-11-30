@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.15 2013/10/17 08:02:21 deraadt Exp $ */
+/*	$OpenBSD: file.c,v 1.16 2014/11/30 13:47:42 miod Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -975,7 +975,8 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 		if (dlslot->e_curpos >= (dlslot->e_sections[sec].s_loff +
 					 dlslot->e_sections[sec].s_fsize +
 					 dlslot->e_sections[sec].s_pad))
-			dlslot->e_cursec++;
+			if (++sec != dlslot->e_nsec)
+				dlslot->e_cursec = sec;
 		break;
 
 	case IMAGE_TYPE_AOUT:
