@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.32 2014/07/27 22:19:18 espie Exp $
+# $OpenBSD: State.pm,v 1.33 2014/11/30 15:56:15 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -186,6 +186,10 @@ sub repo
 	return $self->{repo};
 }
 
+sub sync_display
+{
+}
+
 OpenBSD::Auto::cache(config,
 	sub {
 		return OpenBSD::Configuration->new(shift);
@@ -243,6 +247,7 @@ sub _fatal
 	# implementation note: to print "fatal errors" elsewhere,
 	# the way is to eval { croak @_}; and decide what to do with $@.
 	delete $SIG{__DIE__};
+	$self->sync_display;
 	croak "Fatal error: ", @_, "\n";
 }
 
@@ -255,12 +260,14 @@ sub fatal
 sub _print
 {
 	my $self = shift;
+	$self->sync_display;
 	print @_;
 }
 
 sub _errprint
 {
 	my $self = shift;
+	$self->sync_display;
 	print STDERR @_;
 }
 
@@ -403,6 +410,7 @@ sub child_error
 sub _system
 {
 	my $self = shift;
+	$self->sync_display;
 	my $r = fork;
 	my ($todo, $todo2);
 	if (ref $_[0] eq 'CODE') {

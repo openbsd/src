@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.26 2014/11/29 10:42:51 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.27 2014/11/30 15:56:15 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -49,16 +49,10 @@ sub not
 	return $self->{not};
 }
 
-sub _print
+sub sync_display
 {
 	my $self = shift;
-	$self->progress->print(@_);
-}
-
-sub _errprint
-{
-	my $self = shift;
-	$self->progress->errprint(@_);
+	$self->progress->clear;
 }
 
 sub handle_options
@@ -119,7 +113,6 @@ sub vsystem
 sub system
 {
 	my $self = shift;
-	$self->progress->clear;
 	$self->SUPER::system(@_);
 }
 
