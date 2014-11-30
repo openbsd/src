@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setreuid.2,v 1.9 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: setreuid.2,v 1.10 2014/11/30 22:42:57 schwarze Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"      @(#)setreuid.2	8.2 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: November 30 2014 $
 .Dt SETREUID 2
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@ current process are set according to the arguments.
 The saved user ID will be set to the new value of the real
 user ID if a real user ID is specified and either
 the new real user ID value is different from the current value
-or the effective user ID is changed to a value other than the
+or the new value of the effective user ID differs from the
 current saved user ID.
 .Pp
 Unprivileged users may change either user ID to the current value
@@ -90,28 +90,17 @@ was specified.
 The
 .Fn setreuid
 function conforms to the
-.St -p1003.1-2001
-and
-.St -xpg4.3
-specifications.
+.St -p1003.1-2008
+specification, except that the conditions for changing the saved
+user ID differ and that, if it is changed, the saved user ID
+is set to the real user ID instead of the effective user ID.
 .Sh HISTORY
 The
 .Fn setreuid
 system call first appeared in
-.Bx 4.1c .
+.Bx 4.1c ,
+predating POSIX.
 A semantically different version appeared in
 .Bx 4.4 .
 The current version, with the original semantics restored, appeared in
 .Ox 3.3 .
-.Sh CAVEATS
-The
-.Fn setreuid
-function predates
-.Tn POSIX
-saved user IDs.
-This implementation changes the saved user ID to the new value of
-the real user ID only if the real user ID is specified and either
-changed
-or the effective user ID is changed to a value other than the current
-saved user ID.
-Other implementations may behave differently.
