@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2014/11/20 04:48:06 brad Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2014/11/30 05:54:38 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -54,14 +54,12 @@ config: .FORCE
 	cd ${.OBJDIR} && \
 		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 		${XCFLAGS} \
-		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
 
 ${.OBJDIR}/config.status:
 	cd ${.OBJDIR} && \
 		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 		${XCFLAGS} \
-		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
 
 .ifdef NOMAN
