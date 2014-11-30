@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flock.2,v 1.18 2013/08/14 06:32:28 jmc Exp $
+.\"	$OpenBSD: flock.2,v 1.19 2014/11/30 19:56:12 schwarze Exp $
 .\"	$NetBSD: flock.2,v 1.5 1995/02/27 12:32:32 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,19 +30,14 @@
 .\"
 .\"     @(#)flock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: November 30 2014 $
 .Dt FLOCK 2
 .Os
 .Sh NAME
 .Nm flock
 .Nd apply or remove an advisory lock on an open file
 .Sh SYNOPSIS
-.Fd #include <fcntl.h>
-.Pp
-.Fd #define	LOCK_SH	1	/* shared lock */
-.Fd #define	LOCK_EX	2	/* exclusive lock */
-.Fd #define	LOCK_NB	4	/* don't block when locking */
-.Fd #define	LOCK_UN	8	/* unlock */
+.In fcntl.h
 .Ft int
 .Fn flock "int fd" "int operation"
 .Sh DESCRIPTION
@@ -51,18 +46,25 @@ applies or removes an
 .Em advisory
 lock on the file associated with the file descriptor
 .Fa fd .
-A lock is applied by specifying an
+The
 .Fa operation
-parameter that is one of
+argument is one of:
+.Pp
+.Bl -tag -width LOCK_SH -offset indent -compact
+.It Dv LOCK_SH
+Apply a shared lock.
+.It Dv LOCK_EX
+Apply an exclusive lock.
+.It Dv LOCK_UN
+Remove an existing lock.
+.El
+.Pp
 .Dv LOCK_SH
-or
+and
 .Dv LOCK_EX
-with the optional addition of
-.Dv LOCK_NB .
-To unlock an existing lock,
-.Fa operation
-should be
-.Dv LOCK_UN .
+may be combined with the optional
+.Dv LOCK_NB
+for nonblocking mode.
 .Pp
 Advisory locks allow cooperating processes to perform
 consistent operations on files, but do not guarantee
@@ -89,9 +91,13 @@ after other processes have gained and released the lock).
 Requesting a lock on an object that is already locked normally causes
 the caller to be blocked until the lock may be acquired.
 If
+.Fa operation
+is the bitwise OR of
 .Dv LOCK_NB
-is included in
-.Fa operation ,
+and
+.Dv LOCK_SH
+or
+.Dv LOCK_EX ,
 then this will not happen; instead the call will fail and the error
 .Er EWOULDBLOCK
 will be returned.
