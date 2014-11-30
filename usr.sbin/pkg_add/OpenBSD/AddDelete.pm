@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.67 2014/11/29 10:42:51 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.68 2014/11/30 15:46:45 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -175,16 +175,6 @@ sub handle_options
 	}
 	# XXX RequiredBy
 	$main::not = $state->{not};
-	if ($state->opt('i') && $state->opt('I')) {
-		$state->usage("-i and -I are reverse options, make up your mind");
-	}
-	if ($state->opt('i')) {
-		$state->{interactive} = 1;
-	} elsif ($state->opt('I')) {
-		$state->{interactive} = 0;
-	} else {
-		$state->{interactive} = -t STDIN;
-	}
 	$state->{localbase} = $state->opt('L') // OpenBSD::Paths->localbase;
 	$ENV{PATH} = join(':',
 	    '/bin',
