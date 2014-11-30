@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.141 2014/11/27 14:15:48 espie Exp $
+# $OpenBSD: Delete.pm,v 1.142 2014/11/30 15:53:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -94,7 +94,7 @@ sub delete_package
 			$plist->pkgname, $pkgname);
 	}
 	if ($plist->has('firmware')) {
-		if ($state->{interactive}) {
+		if ($state->is_interactive) {
 			if (!$state->confirm("\nDelete firmware $pkgname", 0)) {
 				$state->errsay("NOT deleting #1", $pkgname);
 				return;
