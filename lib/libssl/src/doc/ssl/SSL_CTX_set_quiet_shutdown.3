@@ -1,4 +1,4 @@
-.Dd $Mdocdate: October 12 2014 $
+.Dd $Mdocdate: November 30 2014 $
 .Dt SSL_CTX_SET_QUIET_SHUTDOWN 3
 .Os
 .Sh NAME
@@ -79,18 +79,14 @@ When setting the
 flag to 1,
 .Xr SSL_shutdown 3
 will set the internal flags to
-.Dv SSL_SENT_SHUTDOWN Ns
-.Pf |
-.Dv SSL_RECEIVED_SHUTDOWN .
+.Dv SSL_SENT_SHUTDOWN Ns | Ns Dv SSL_RECEIVED_SHUTDOWN
 .Po
 .Xr SSL_shutdown 3
 then behaves like
 .Xr SSL_set_shutdown 3
 called with
-.Dv SSL_SENT_SHUTDOWN Ns
-.Pf |
-.Dv SSL_RECEIVED_SHUTDOWN .
-.Pc
+.Dv SSL_SENT_SHUTDOWN Ns | Ns Dv SSL_RECEIVED_SHUTDOWN
+.Pc .
 The session is thus considered to be shut down, but no
 .Dq close notify
 alert is sent to the peer.
