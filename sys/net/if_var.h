@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.12 2014/07/08 04:02:14 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.13 2014/12/01 15:06:54 mikeb Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ struct mbuf;
 struct proc;
 struct rtentry;
 struct socket;
+struct timeout;
 struct ether_header;
 struct arpcom;
 struct rt_addrinfo;
@@ -147,6 +148,7 @@ struct ifnet {				/* and the entries */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 	u_short	if_rtlabelid;		/* next route label */
 	u_int8_t if_priority;
+	struct	timeout *if_slowtimo;	/* watchdog timeout */
 
 	/* procedure handles */
 					/* output routine (enqueue) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.91 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.92 2014/12/01 15:06:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -344,10 +344,12 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tp->tp_iftype = ifp->if_type;
 	ifp->if_type = IFT_IEEE8023ADLAG;
 	ifp->if_tp = (caddr_t)tp;
-	tp->tp_watchdog = ifp->if_watchdog;
-	ifp->if_watchdog = trunk_port_watchdog;
 	tp->tp_ioctl = ifp->if_ioctl;
 	ifp->if_ioctl = trunk_port_ioctl;
+
+	timeout_del(ifp->if_slowtimo);
+	tp->tp_watchdog = ifp->if_watchdog;
+	ifp->if_watchdog = trunk_port_watchdog;
 
 	tp->tp_if = ifp;
 	tp->tp_trunk = tr;
@@ -464,6 +466,9 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	/* Update trunk capabilities */
 	tr->tr_capabilities = trunk_capabilities(tr);
+
+	/* Reestablish watchdog timeout */
+	if_slowtimo(ifp);
 
 	return (0);
 }
