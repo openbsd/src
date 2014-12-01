@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.81 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.82 2014/12/01 01:59:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -342,6 +342,7 @@ int		vic_load_txb(struct vic_softc *, struct vic_txbuf *,
 		    struct mbuf *);
 void		vic_watchdog(struct ifnet *);
 int		vic_ioctl(struct ifnet *, u_long, caddr_t);
+int		vic_rxrinfo(struct vic_softc *, struct if_rxrinfo *);
 void		vic_init(struct ifnet *);
 void		vic_stop(struct ifnet *);
 void		vic_tick(void *);
@@ -1234,6 +1235,10 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
+	case SIOCGIFRXR:
+		error = vic_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
@@ -1246,6 +1251,22 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 	return (error);
+}
+
+int
+vic_rxrinfo(struct vic_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info ifr[2];
+
+	memset(ifr, 0, sizeof(ifr));
+
+	ifr[0].ifr_size = MCLBYTES;
+	ifr[0].ifr_info = sc->sc_rxq[0].ring;
+
+	ifr[1].ifr_size = 4096;
+	ifr[1].ifr_info = sc->sc_rxq[1].ring;
+
+	return (if_rxr_info_ioctl(ifri, nitems(ifr), ifr));
 }
 
 void
