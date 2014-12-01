@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.13 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.14 2014/12/01 06:36:32 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -573,22 +573,22 @@ increase(void)
 	newsz = szchanges == 0 ? 64 : 2 * szchanges;
 	incr = newsz - szchanges;
 
-	p = realloc(d13, newsz * sizeof(struct diff));
+	p = reallocarray(d13, newsz, sizeof(struct diff));
 	if (p == NULL)
 		err(1, NULL);
 	memset(p + szchanges, 0, incr * sizeof(struct diff));
 	d13 = p;
-	p = realloc(d23, newsz * sizeof(struct diff));
+	p = reallocarray(d23, newsz, sizeof(struct diff));
 	if (p == NULL)
 		err(1, NULL);
 	memset(p + szchanges, 0, incr * sizeof(struct diff));
 	d23 = p;
-	p = realloc(de, newsz * sizeof(struct diff));
+	p = reallocarray(de, newsz, sizeof(struct diff));
 	if (p == NULL)
 		err(1, NULL);
 	memset(p + szchanges, 0, incr * sizeof(struct diff));
 	de = p;
-	q = realloc(overlap, newsz * sizeof(char));
+	q = reallocarray(overlap, newsz, sizeof(char));
 	if (q == NULL)
 		err(1, NULL);
 	memset(q + szchanges, 0, incr * sizeof(char));
