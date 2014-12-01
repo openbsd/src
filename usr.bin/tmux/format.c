@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.52 2014/11/08 12:50:38 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.53 2014/12/01 14:30:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -470,6 +470,8 @@ format_window(struct format_tree *ft, struct window *w)
 	format_add(ft, "window_height", "%u", w->sy);
 	format_add(ft, "window_layout", "%s", layout);
 	format_add(ft, "window_panes", "%u", window_count_panes(w));
+	format_add(ft, "window_zoomed_flag", "%u",
+	    !!(w->flags & WINDOW_ZOOMED));
 
 	free(layout);
 }
@@ -497,8 +499,6 @@ format_winlink(struct format_tree *ft, struct session *s, struct winlink *wl)
 	    !!(wl->flags & WINLINK_SILENCE));
 	format_add(ft, "window_last_flag", "%u",
 	    !!(wl == TAILQ_FIRST(&s->lastw)));
-	format_add(ft, "window_zoomed_flag", "%u",
-	    !!(wl->flags & WINDOW_ZOOMED));
 
 	free(flags);
 }
