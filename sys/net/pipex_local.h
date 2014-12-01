@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.20 2014/10/21 10:52:53 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.21 2014/12/01 06:55:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -217,7 +217,8 @@ struct pipex_gre_header {
 #define PIPEX_GRE_SFLAG			0x1000	/* seq present */
 #define PIPEX_GRE_AFLAG			0x0080	/* ack present */
 #define PIPEX_GRE_VER			0x0001	/* gre version code */
-#define PIPEX_GRE_VERMASK		0x0003	/* gre version mask */
+#define PIPEX_GRE_VERMASK		0x0007	/* gre version mask */
+#define PIPEX_GRE_UNUSEDFLAGS		0xcf78	/* unused at pptp. set 0 in rfc2637 */
 
 	uint16_t type;
 #define PIPEX_GRE_PROTO_PPP		0x880b	/* gre/ppp */
