@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.64 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.65 2014/12/01 04:22:34 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -276,8 +276,6 @@ acpi_resume_clocks(struct acpi_softc *sc)
 int
 acpi_sleep_cpu(struct acpi_softc *sc, int state)
 {
-	/* amd64 does not do lazy pmap_activate */
-
 	/*
 	 * ACPI defines two wakeup vectors. One is used for ACPI 1.0
 	 * implementations - it's in the FACS table as wakeup_vector and
@@ -292,7 +290,8 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
-	/* Copy the current cpu registers into a safe place for resume.
+	/*
+	 * Copy the current cpu registers into a safe place for resume.
 	 * acpi_savecpu actually returns twice - once in the suspend
 	 * path and once in the resume path (see setjmp(3)).
 	 */
@@ -312,7 +311,8 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 		}
 #endif
 
-		/* XXX
+		/*
+		 * XXX
 		 * Flag to disk drivers that they should "power down" the disk
 		 * when we get to DVACT_POWERDOWN.
 		 */
