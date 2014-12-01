@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 2006/01/16 08:09:25 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2014/12/01 13:13:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -34,7 +34,7 @@ struct number	*new_number(void);
 void		free_number(struct number *);
 struct number	*dup_number(const struct number *);
 void		*bmalloc(size_t);
-void		*brealloc(void *, size_t);
+void		*breallocarray(void *, size_t, size_t);
 char		*bstrdup(const char *p);
 void		bn_check(int);
 void		bn_checkp(const void *);
