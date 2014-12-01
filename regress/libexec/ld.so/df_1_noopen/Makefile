@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2013/12/22 12:29:25 kettenis Exp $
+# $OpenBSD: Makefile,v 1.6 2014/12/01 01:16:46 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ CLEANFILES+=lib1.so lib2.so lib3.so dlopen dlopen1 dlopen2 dlopen3
 
 .PHONY: test
 test: lib1.so lib2.so lib3.so dlopen dlopen1 dlopen2 dlopen3
-	${.CURDIR}/test.sh
+	${SHELL} ${.CURDIR}/test.sh
 
 lib1.so: ${LIB_DEPENDS}
 	cc -o lib1.so ${EMPTYFILE} -fPIC -shared -Wl,-znodlopen
