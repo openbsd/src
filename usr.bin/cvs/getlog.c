@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.97 2014/01/08 13:23:55 okan Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.98 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -413,7 +413,7 @@ push_date(char *dest, const char *src)
 	len = strlen(dest) + strlen(src) + 2;
 
 	dest[strlen(dest)] = ';';
-	dest = xrealloc(dest, len, 1);
+	dest = xreallocarray(dest, len, 1);
 	strlcat(dest, src, len);
 	return (dest);
 }

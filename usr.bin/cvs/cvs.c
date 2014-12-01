@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.153 2014/01/08 13:23:55 okan Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.154 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -156,7 +156,7 @@ cvs_build_cmd(char ***cmd_argv, char **argv, int argc)
 
 		if (cmd_argc == cur) {
 			cur += 8;
-			*cmd_argv = xrealloc(*cmd_argv, cur,
+			*cmd_argv = xreallocarray(*cmd_argv, cur,
 			    sizeof(char *));
 		}
 
@@ -165,7 +165,7 @@ cvs_build_cmd(char ***cmd_argv, char **argv, int argc)
 
 	if (cmd_argc + argc > cur) {
 		cur = cmd_argc + argc + 1;
-		*cmd_argv = xrealloc(*cmd_argv, cur,
+		*cmd_argv = xreallocarray(*cmd_argv, cur,
 		    sizeof(char *));
         }
 

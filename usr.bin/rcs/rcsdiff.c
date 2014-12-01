@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.80 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.81 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -457,7 +457,7 @@ push_ignore_pats(char *pattern)
 	} else {
 		/* old + "|" + new + NUL */
 		len = strlen(diff_ignore_pats) + strlen(pattern) + 2;
-		diff_ignore_pats = xrealloc(diff_ignore_pats, len, 1);
+		diff_ignore_pats = xreallocarray(diff_ignore_pats, len, 1);
 		strlcat(diff_ignore_pats, "|", len);
 		strlcat(diff_ignore_pats, pattern, len);
 	}

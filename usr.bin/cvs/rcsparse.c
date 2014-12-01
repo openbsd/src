@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.10 2014/11/22 18:01:09 deraadt Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.11 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -1202,7 +1202,7 @@ rcsparse_growbuf(RCSFILE *rfp)
 {
 	struct rcs_pdata *pdp = (struct rcs_pdata *)rfp->rf_pdata;
 	
-	pdp->rp_buf = xrealloc(pdp->rp_buf, 1,
+	pdp->rp_buf = xreallocarray(pdp->rp_buf, 1,
 		pdp->rp_blen + RCS_BUFEXTSIZE);
 	pdp->rp_blen += RCS_BUFEXTSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;

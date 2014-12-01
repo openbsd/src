@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.22 2011/07/06 15:36:52 nicm Exp $	*/
+/*	$OpenBSD: buf.c,v 1.23 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -325,6 +325,6 @@ buf_write_stmp(BUF *b, char *template)
 static void
 buf_grow(BUF *b, size_t len)
 {
-	b->cb_buf = xrealloc(b->cb_buf, 1, b->cb_size + len);
+	b->cb_buf = xreallocarray(b->cb_buf, 1, b->cb_size + len);
 	b->cb_size += len;
 }

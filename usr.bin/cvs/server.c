@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.100 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.101 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -489,7 +489,7 @@ cvs_server_argument(char *data)
 	if (data == NULL)
 		fatal("Missing argument for Argument");
 
-	server_argv = xrealloc(server_argv, server_argc + 2,
+	server_argv = xreallocarray(server_argv, server_argc + 2,
 	    sizeof(*server_argv));
 	server_argv[server_argc] = xstrdup(data);
 	server_argv[++server_argc] = NULL;
@@ -507,7 +507,7 @@ cvs_server_argumentx(char *data)
 	idx = server_argc - 1;
 
 	len = strlen(server_argv[idx]) + strlen(data) + 2;
-	server_argv[idx] = xrealloc(server_argv[idx], len, sizeof(char));
+	server_argv[idx] = xreallocarray(server_argv[idx], len, sizeof(char));
 	strlcat(server_argv[idx], "\n", len);
 	strlcat(server_argv[idx], data, len);
 }

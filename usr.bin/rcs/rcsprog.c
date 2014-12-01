@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.153 2014/10/10 08:03:39 otto Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.154 2014/12/01 21:58:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -100,7 +100,7 @@ build_cmd(char ***cmd_argv, char **argv, int argc)
 
 		if (cmd_argc == cur) {
 			cur += 8;
-			*cmd_argv = xrealloc(*cmd_argv, cur,
+			*cmd_argv = xreallocarray(*cmd_argv, cur,
 			    sizeof(char *));
 		}
 
@@ -109,7 +109,7 @@ build_cmd(char ***cmd_argv, char **argv, int argc)
 
 	if (cmd_argc + argc > cur) {
 		cur = cmd_argc + argc + 1;
-		*cmd_argv = xrealloc(*cmd_argv, cur,
+		*cmd_argv = xreallocarray(*cmd_argv, cur,
 		    sizeof(char *));
 	}
 
