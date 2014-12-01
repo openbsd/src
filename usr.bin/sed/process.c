@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.19 2013/11/28 18:24:55 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.20 2014/12/01 06:37:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -102,9 +102,9 @@ redirect:
 				goto redirect;
 			case 'a':
 				if (appendx >= appendnum) {
-					appends = xrealloc(appends,
-					    sizeof(struct s_appends) *
-					    (appendnum * 2));
+					appends = xreallocarray(appends,
+					    appendnum *= 2,
+					    sizeof(struct s_appends));
 					appendnum *= 2;
 				}
 				appends[appendx].type = AP_STRING;
@@ -196,9 +196,9 @@ redirect:
 				exit(0);
 			case 'r':
 				if (appendx >= appendnum)
-					appends = xrealloc(appends,
-					    sizeof(struct s_appends) *
-					    (appendnum *= 2));
+					appends = xreallocarray(appends,
+					    appendnum *= 2,
+					    sizeof(struct s_appends));
 				appends[appendx].type = AP_FILE;
 				appends[appendx].s = cp->t;
 				appends[appendx].len = strlen(cp->t);
