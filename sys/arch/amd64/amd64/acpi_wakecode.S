@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.33 2014/11/30 20:48:51 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.34 2014/12/01 04:33:00 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -509,56 +509,6 @@ _ACPI_TRMP_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
-
-	/*
-	 * gdt_16 is the gdt used when returning to real mode for bios
-	 * reads/writes (sets up a 16 bit segment)
-	 */
-	.align 8
-_ACPI_TRMP_LABEL(gdt_16)
-	.word   gdt_16_end - gdt_16_table
-	.long   gdt_16_table
-
-	.align 8
-_ACPI_TRMP_LABEL(gdt_16_table)
-	/*
-	 * null
-	 */
-	.word   0, 0
-	.byte   0, 0, 0, 0
-	/*
-	 * Code
-	 * Limit: 0xffffffff
-	 * Base: 0x00000000
-	 * Descriptor Type: Code
-	 * Segment Type: CRA
-	 * Present: True
-	 * Priv: 0
-	 * AVL: False
-	 * 64-bit: False
-	 * 32-bit: False
-	 *
-	 */
-	.word   0xffff, 0
-	.byte   0, 0x9f, 0x8f, 0
-
-	/*
-	 * Data
-	 * Limit: 0xffffffff
-	 * Base: 0x00000000
-	 * Descriptor Type:
-	 * Segment Type: W
-	 * Present: True
-	 * Priv: 0
-	 * AVL: False
-	 * 64-bit: False
-	 * 32-bit: False
-	 *
-	 */
-	.word   0xffff, 0
-	.byte   0, 0x93, 0x8f, 0
-
-_ACPI_TRMP_LABEL(gdt_16_end)
 
 	.align 8
 _ACPI_TRMP_LABEL(tmp_gdt64)
