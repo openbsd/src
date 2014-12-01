@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.57 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.58 2014/12/01 08:05:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,11 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "man.h"
 #include "out.h"
 #include "html.h"
-#include "man.h"
 #include "main.h"
 
 /* TODO: preserve ident widths. */

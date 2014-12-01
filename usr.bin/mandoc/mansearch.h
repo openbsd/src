@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.h,v 1.18 2014/11/27 14:31:29 deraadt Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.19 2014/12/01 08:05:02 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,6 +96,8 @@ struct	mansearch {
 };
 
 __BEGIN_DECLS
+
+struct	manpaths;
 
 int	mansearch_setup(int);
 int	mansearch(const struct mansearch *cfg, /* options */

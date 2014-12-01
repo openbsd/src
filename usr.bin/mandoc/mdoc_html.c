@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.89 2014/11/30 05:28:00 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.90 2014/12/01 08:05:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,11 +24,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "mdoc.h"
 #include "out.h"
 #include "html.h"
-#include "mdoc.h"
 #include "main.h"
 
 #define	INDENT		 5

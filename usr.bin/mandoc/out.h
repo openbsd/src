@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.h,v 1.16 2014/11/27 14:31:29 deraadt Exp $ */
+/*	$OpenBSD: out.h,v 1.17 2014/12/01 08:05:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 enum	roffscale {
 	SCALE_CM, /* centimeters (c) */
 	SCALE_IN, /* inches (i) */
@@ -49,8 +50,6 @@ struct	rofftbl {
 	void		*arg; /* passed to slen and len */
 };
 
-__BEGIN_DECLS
-
 #define	SCALE_VS_INIT(p, v) \
 	do { (p)->unit = SCALE_VS; \
 	     (p)->scale = (v); } \
@@ -60,6 +59,10 @@ __BEGIN_DECLS
 	do { (p)->unit = SCALE_EN; \
 	     (p)->scale = (v); } \
 	while (/* CONSTCOND */ 0)
+
+__BEGIN_DECLS
+
+struct	tbl_span;
 
 int		  a2roffsu(const char *, struct roffsu *, enum roffscale);
 void		  tblcalc(struct rofftbl *tbl,
