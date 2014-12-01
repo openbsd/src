@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.46 2014/11/26 10:11:21 tobias Exp $	*/
+/*	$OpenBSD: pch.c,v 1.47 2014/12/01 06:38:04 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -150,15 +150,15 @@ grow_hunkmax(void)
 	if (p_line == NULL || p_len == NULL || p_char == NULL)
 		fatal("Internal memory allocation error\n");
 
-	new_p_line = realloc(p_line, new_hunkmax * sizeof(char *));
+	new_p_line = reallocarray(p_line, new_hunkmax, sizeof(char *));
 	if (new_p_line == NULL)
 		free(p_line);
 
-	new_p_len = realloc(p_len, new_hunkmax * sizeof(short));
+	new_p_len = reallocarray(p_len, new_hunkmax, sizeof(short));
 	if (new_p_len == NULL)
 		free(p_len);
 
-	new_p_char = realloc(p_char, new_hunkmax * sizeof(char));
+	new_p_char = reallocarray(p_char, new_hunkmax, sizeof(char));
 	if (new_p_char == NULL)
 		free(p_char);
 
