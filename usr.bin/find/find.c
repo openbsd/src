@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.16 2012/01/02 23:19:45 pascal Exp $	*/
+/*	$OpenBSD: find.c,v 1.17 2014/12/01 03:11:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -180,7 +180,7 @@ find_execute(PLAN *plan,	/* search plan */
 		case FTS_ERR:
 		case FTS_NS:
 			(void)fflush(stdout);
-			warn("%s", entry->fts_path);
+			warnc(entry->fts_errno, "%s", entry->fts_path);
 			rval = 1;
 			continue;
 		}
