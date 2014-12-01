@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.47 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.48 2014/12/01 06:36:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -174,7 +174,7 @@ add_pattern(char *pat, size_t len)
 	}
 	if (patterns == pattern_sz) {
 		pattern_sz *= 2;
-		pattern = grep_realloc(pattern, ++pattern_sz * sizeof(*pattern));
+		pattern = grep_reallocarray(pattern, ++pattern_sz, sizeof(*pattern));
 	}
 	if (len > 0 && pat[len - 1] == '\n')
 		--len;
@@ -358,7 +358,8 @@ main(int argc, char *argv[])
 			/* defer adding of expressions until all arguments are parsed */
 			if (exprs == expr_sz) {
 				expr_sz *= 2;
-				expr = grep_realloc(expr, ++expr_sz * sizeof(*expr));
+				expr = grep_reallocarray(expr, ++expr_sz,
+				    sizeof(*expr));
 			}
 			needpattern = 0;
 			expr[exprs] = optarg;

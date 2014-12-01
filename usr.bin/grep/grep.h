@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.19 2013/11/26 13:21:16 deraadt Exp $	*/
+/*	$OpenBSD: grep.h,v 1.20 2014/12/01 06:36:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -84,6 +84,7 @@ int		 grep_tree(char **argv);
 void		*grep_malloc(size_t size);
 void		*grep_calloc(size_t nmemb, size_t size);
 void		*grep_realloc(void *ptr, size_t size);
+void		*grep_reallocarray(void *ptr, size_t nmemb, size_t size);
 void		 printline(str_t *line, int sep, regmatch_t *pmatch);
 int		 fastcomp(fastgrep_t *, const char *);
 void		 fgrepcomp(fastgrep_t *, const unsigned char *);
