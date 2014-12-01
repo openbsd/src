@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.40 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: tty.4,v 1.41 2014/12/01 21:59:06 nicm Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: December 1 2014 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@
 This section describes the interface to the terminal drivers
 in the system.
 .Ss Terminal Special Files
-Each hardware terminal port on the system usually has a terminal special device
-file associated with it in the directory
+Each hardware terminal port (such as a serial port) on the system usually has a
+terminal special device file associated with it in the directory
 .Pa /dev/
 (for
 example,
@@ -86,7 +86,7 @@ requires a hardware signal to indicate to the system that it is active,
 the dial-out device (the
 .Em cua )
 does not, and hence can communicate unimpeded
-with a device such as a modem.
+with a device such as a modem, or with another system over a serial link.
 This means that a process like
 .Xr getty 8
 will wait on a dial-in device until a connection is established.
@@ -102,7 +102,7 @@ If a connecting call comes in after the dial-out connection has finished, the
 process will deal with it properly, without having noticed the
 intervening dial-out action.
 For more information on dial-out, see
-.Xr tip 1 .
+.Xr cu 1 .
 .Pp
 When an interactive user logs in, the system prepares the line to
 behave in a certain way (called a
@@ -490,6 +490,7 @@ above in the integer pointed to by
 controlling terminal, if any
 .El
 .Sh SEE ALSO
+.Xr cu 1 ,
 .Xr stty 1 ,
 .Xr tty 1 ,
 .Xr ioctl 2 ,
