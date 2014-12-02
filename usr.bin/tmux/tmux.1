@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.408 2014/11/12 22:57:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.409 2014/12/02 23:19:45 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2014 $
+.Dd $Mdocdate: December 2 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3039,12 +3039,17 @@ and
 .Ql } ,
 for example
 .Ql #{session_name} .
-Some variables also have an shorter alias such as
-.Ql #S .
+The possible variables are listed in the table below, or the name of a
+.Nm
+option may be used for an option's value.
+Some variables have a shorter alias such as
+.Ql #S ,
+and
 .Ql ##
 is replaced by a single
 .Ql # .
-Conditionals are also accepted by prefixing with
+.Pp
+Conditionals are available by prefixing with
 .Ql \&?
 and separating two alternatives with a comma;
 if the specified variable exists and is not zero, the first alternative
@@ -3055,7 +3060,15 @@ will include the string
 .Ql attached
 if the session is attached and the string
 .Ql not attached
-if it is unattached.
+if it is unattached, or
+.Ql #{?automatic-rename,yes,no}
+will include
+.Ql yes
+if
+.Ic automatic-rename
+is enabled, or
+.Ql no
+if not.
 A limit may be placed on the length of the resultant string by prefixing it
 by an
 .Ql = ,
