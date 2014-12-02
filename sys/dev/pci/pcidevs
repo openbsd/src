@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1749 2014/11/28 14:12:19 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1750 2014/12/02 00:08:50 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6079,6 +6079,7 @@ product SAFENET SAFEXCEL	0x1141	SafeXcel
 
 /* Samsung products */
 product SAMSUNG SWL2210P	0xa000	MagicLAN SWL-2210P
+product SAMSUNG2 S4LN053X01	0x1600	S4LN053X01
 product SAMSUNG2 XP941		0xa800	XP941
 
 /* Sangoma products */
