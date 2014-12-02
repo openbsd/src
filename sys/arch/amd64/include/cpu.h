@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.86 2014/09/12 09:52:45 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.87 2014/12/02 18:13:10 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -69,7 +69,6 @@ struct cpu_info {
 	struct cpu_info *ci_next;
 
 	struct proc *ci_curproc;
-	struct simplelock ci_slock;
 	u_int ci_cpuid;
 	u_int ci_apicid;
 	u_int32_t ci_randseed;

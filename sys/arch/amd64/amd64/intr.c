@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.38 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.39 2014/12/02 18:13:10 tedu Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -180,7 +180,6 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 	start = CPU_IS_PRIMARY(ci) ? NUM_LEGACY_IRQS : 0;
 	slot = -1;
 
-	simple_lock(&ci->ci_slock);
 	for (i = 0; i < start; i++) {
 		isp = ci->ci_isources[i];
 		if (isp != NULL && isp->is_pic == pic && isp->is_pin == pin) {
@@ -201,7 +200,6 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		}
 	}
 	if (slot == -1) {
-		simple_unlock(&ci->ci_slock);
 		return EBUSY;
 	}
 
@@ -210,14 +208,12 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		isp = malloc(sizeof (struct intrsource), M_DEVBUF,
 		    M_NOWAIT|M_ZERO);
 		if (isp == NULL) {
-			simple_unlock(&ci->ci_slock);
 			return ENOMEM;
 		}
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
 		    "pin %d", pin);
 		ci->ci_isources[slot] = isp;
 	}
-	simple_unlock(&ci->ci_slock);
 
 	*index = slot;
 	return 0;
@@ -263,9 +259,7 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 			snprintf(isp->is_evname, sizeof (isp->is_evname),
 			    "pin %d", pin);
 
-			simple_lock(&ci->ci_slock);
 			ci->ci_isources[slot] = isp;
-			simple_unlock(&ci->ci_slock);
 		} else {
 			if (isp->is_pic != pic || isp->is_pin != pin) {
 				if (pic == &i8259_pic)
@@ -314,10 +308,8 @@ other:
 found:
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
 		if (idtvec == 0) {
-			simple_lock(&ci->ci_slock);
 			free(ci->ci_isources[slot], M_DEVBUF, 0);
 			ci->ci_isources[slot] = NULL;
-			simple_unlock(&ci->ci_slock);
 			return EBUSY;
 		}
 	}
@@ -383,8 +375,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		return NULL;
 	}
 
-	simple_lock(&ci->ci_slock);
-
 	source->is_pin = pin;
 	source->is_pic = pic;
 
@@ -400,7 +390,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE) {
-			simple_unlock(&ci->ci_slock);
 			printf("intr_establish: pic %s pin %d: can't share "
 			       "type %d with %d\n", pic->pic_name, pin,
 				source->is_type, type);
@@ -409,7 +398,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		}
 		break;
 	default:
-		simple_unlock(&ci->ci_slock);
 		panic("intr_establish: bad intr type %d for pic %s pin %d",
 		    source->is_type, pic->pic_dev.dv_xname, pin);
 	}
@@ -440,8 +428,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	*p = ih;
 
 	intr_calculatemasks(ci);
-
-	simple_unlock(&ci->ci_slock);
 
 	if (ci->ci_isources[slot]->is_resume == NULL ||
 	    source->is_idtvec != idt_vec) {
@@ -487,7 +473,6 @@ intr_disestablish(struct intrhand *ih)
 	source = ci->ci_isources[ih->ih_slot];
 	idtvec = source->is_idtvec;
 
-	simple_lock(&ci->ci_slock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
 	x86_atomic_clearbits_u64(&ci->ci_ipending, (1UL << ih->ih_slot));
 
@@ -498,7 +483,6 @@ intr_disestablish(struct intrhand *ih)
 	     p = &q->ih_next)
 		;
 	if (q == NULL) {
-		simple_unlock(&ci->ci_slock);
 		panic("intr_disestablish: handler not registered");
 	}
 
@@ -525,8 +509,6 @@ intr_disestablish(struct intrhand *ih)
 
 	evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF, 0);
-
-	simple_unlock(&ci->ci_slock);
 }
 
 int
@@ -664,7 +646,6 @@ intr_printconfig(void)
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
-		simple_lock(&ci->ci_slock);
 		for (i = 0; i < MAX_INTR_SOURCES; i++) {
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
@@ -678,7 +659,6 @@ intr_printconfig(void)
 				    ih->ih_fun, ih->ih_level);
 
 		}
-		simple_unlock(&ci->ci_slock);
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.198 2014/11/22 18:55:20 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.199 2014/12/02 18:13:10 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1067,7 +1067,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
-struct simplelock idt_lock;
 char *gdtstore;
 extern  struct user *proc0paddr;
 
@@ -1720,15 +1719,12 @@ idt_vec_alloc(int low, int high)
 {
 	int vec;
 
-	simple_lock(&idt_lock);
 	for (vec = low; vec <= high; vec++) {
 		if (idt_allocmap[vec] == 0) {
 			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
 			return vec;
 		}
 	}
-	simple_unlock(&idt_lock);
 	return 0;
 }
 
@@ -1746,10 +1742,8 @@ idt_vec_set(int vec, void (*function)(void))
 void
 idt_vec_free(int vec)
 {
-	simple_lock(&idt_lock);
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
 }
 
 #ifdef DIAGNOSTIC

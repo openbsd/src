@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.162 2014/11/19 20:09:01 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.163 2014/12/02 18:13:10 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -195,9 +195,6 @@
 /*
  * locking data structures
  */
-
-struct simplelock pvalloc_lock;
-struct simplelock pmaps_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
@@ -469,17 +466,7 @@ pmap_map_ptes(struct pmap *pmap)
 
 	/* if curpmap then we are always mapped */
 	if (pmap_is_curpmap(pmap)) {
-		simple_lock(&pmap->pm_obj.vmobjlock);
 		return(PTE_BASE);
-	}
-
-	/* need to lock both curpmap and pmap: use ordered locking */
-	if ((unsigned) pmap < (unsigned) curpcb->pcb_pmap) {
-		simple_lock(&pmap->pm_obj.vmobjlock);
-		simple_lock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
-	} else {
-		simple_lock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
-		simple_lock(&pmap->pm_obj.vmobjlock);
 	}
 
 	/* need to load a new alternate pt space into curpmap? */
@@ -507,15 +494,11 @@ pmap_unmap_ptes(struct pmap *pmap)
 	if (pmap == pmap_kernel())
 		return;
 
-	if (pmap_is_curpmap(pmap)) {
-		simple_unlock(&pmap->pm_obj.vmobjlock);
-	} else {
+	if (!pmap_is_curpmap(pmap)) {
 #if defined(MULTIPROCESSOR)
 		*APDP_PDE = 0;
 		pmap_apte_flush();
 #endif
-		simple_unlock(&pmap->pm_obj.vmobjlock);
-		simple_unlock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
 	}
 }
 
@@ -873,8 +856,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * init the static-global locks and global lists.
 	 */
 
-	simple_lock_init(&pvalloc_lock);
-	simple_lock_init(&pmaps_lock);
 	LIST_INIT(&pmaps);
 	TAILQ_INIT(&pv_freepages);
 	TAILQ_INIT(&pv_unusedpgs);
@@ -977,8 +958,6 @@ pmap_alloc_pv(struct pmap *pmap, int mode)
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
 
-	simple_lock(&pvalloc_lock);
-
 	if (!TAILQ_EMPTY(&pv_freepages)) {
 		pvpage = TAILQ_FIRST(&pv_freepages);
 		pvpage->pvinfo.pvpi_nfree--;
@@ -1010,7 +989,6 @@ pmap_alloc_pv(struct pmap *pmap, int mode)
 			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
 	}
 
-	simple_unlock(&pvalloc_lock);
 	return(pv);
 }
 
@@ -1165,7 +1143,6 @@ pmap_free_pv_doit(struct pv_entry *pv)
 void
 pmap_free_pv(struct pmap *pmap, struct pv_entry *pv)
 {
-	simple_lock(&pvalloc_lock);
 	pmap_free_pv_doit(pv);
 
 	/*
@@ -1175,8 +1152,6 @@ pmap_free_pv(struct pmap *pmap, struct pv_entry *pv)
 	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
-
-	simple_unlock(&pvalloc_lock);
 }
 
 /*
@@ -1190,8 +1165,6 @@ pmap_free_pvs(struct pmap *pmap, struct pv_entry *pvs)
 {
 	struct pv_entry *nextpv;
 
-	simple_lock(&pvalloc_lock);
-
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
 		nextpv = pvs->pv_next;
 		pmap_free_pv_doit(pvs);
@@ -1204,8 +1177,6 @@ pmap_free_pvs(struct pmap *pmap, struct pv_entry *pvs)
 	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
-
-	simple_unlock(&pvalloc_lock);
 }
 
 
@@ -1469,7 +1440,6 @@ pmap_pinit(struct pmap *pmap)
 	 * malloc since malloc allocates out of a submap and we should have
 	 * already allocated kernel PTPs to cover the range...
 	 */
-	simple_lock(&pmaps_lock);
 	/* put in kernel VM PDEs */
 	bcopy(&PDP_BASE[PDSLOT_KERN], &pmap->pm_pdir[PDSLOT_KERN],
 	       nkpde * sizeof(pd_entry_t));
@@ -1477,7 +1447,6 @@ pmap_pinit(struct pmap *pmap)
 	bzero(&pmap->pm_pdir[PDSLOT_KERN + nkpde],
 	       NBPG - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
-	simple_unlock(&pmaps_lock);
 }
 
 /*
@@ -1499,9 +1468,7 @@ pmap_destroy(struct pmap *pmap)
 	pmap_tlb_droppmap(pmap);	
 #endif
 
-	simple_lock(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
-	simple_unlock(&pmaps_lock);
 
 	/* Free any remaining PTPs. */
 	while ((pg = RB_ROOT(&pmap->pm_obj.memt)) != NULL) {
@@ -1537,9 +1504,7 @@ pmap_destroy(struct pmap *pmap)
 void
 pmap_reference(struct pmap *pmap)
 {
-	simple_lock(&pmap->pm_obj.vmobjlock);
 	pmap->pm_obj.uo_refs++;
-	simple_unlock(&pmap->pm_obj.vmobjlock);
 }
 
 #if defined(PMAP_FORK)
@@ -1551,9 +1516,6 @@ pmap_reference(struct pmap *pmap)
 void
 pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 {
-	simple_lock(&pmap1->pm_obj.vmobjlock);
-	simple_lock(&pmap2->pm_obj.vmobjlock);
-
 #ifdef USER_LDT
 	/* Copy the LDT, if necessary. */
 	if (pmap1->pm_flags & PMF_USER_LDT) {
@@ -1573,9 +1535,6 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		ldt_alloc(pmap2, new_ldt, len);
 	}
 #endif /* USER_LDT */
-
-	simple_unlock(&pmap2->pm_obj.vmobjlock);
-	simple_unlock(&pmap1->pm_obj.vmobjlock);
 }
 #endif /* PMAP_FORK */
 
@@ -1592,8 +1551,6 @@ pmap_ldt_cleanup(struct proc *p)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
-
-	simple_lock(&pmap->pm_obj.vmobjlock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		ldt_free(pmap);
@@ -1613,8 +1570,6 @@ pmap_ldt_cleanup(struct proc *p)
 		pmap->pm_ldt_len = 0;
 		pmap->pm_flags &= ~PMF_USER_LDT;
 	}
-
-	simple_unlock(&pmap->pm_obj.vmobjlock);
 
 	if (old_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len);
@@ -2620,7 +2575,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 */
 
 	s = splhigh();	/* to be safe */
-	simple_lock(&kpm->pm_obj.vmobjlock);
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
@@ -2654,15 +2608,12 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			uvm_wait("pmap_growkernel");
 
 		/* distribute new kernel PTP to all active pmaps */
-		simple_lock(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
-		simple_unlock(&pmaps_lock);
 	}
 
-	simple_unlock(&kpm->pm_obj.vmobjlock);
 	splx(s);
 
 out:

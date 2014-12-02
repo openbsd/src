@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.25 2014/11/19 20:09:01 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.26 2014/12/02 18:13:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -627,17 +627,7 @@ pmap_map_ptes_pae(struct pmap *pmap)
 
 	/* if curpmap then we are always mapped */
 	if (pmap_is_curpmap(pmap)) {
-		simple_lock(&pmap->pm_obj.vmobjlock);
 		return(PTE_BASE);
-	}
-
-	/* need to lock both curpmap and pmap: use ordered locking */
-	if ((unsigned) pmap < (unsigned) curpcb->pcb_pmap) {
-		simple_lock(&pmap->pm_obj.vmobjlock);
-		simple_lock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
-	} else {
-		simple_lock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
-		simple_lock(&pmap->pm_obj.vmobjlock);
 	}
 
 	/* need to load a new alternate pt space into curpmap? */
@@ -663,9 +653,7 @@ pmap_unmap_ptes_pae(struct pmap *pmap)
 	if (pmap == pmap_kernel())
 		return;
 
-	if (pmap_is_curpmap(pmap)) {
-		simple_unlock(&pmap->pm_obj.vmobjlock);
-	} else {
+	if (!pmap_is_curpmap(pmap)) {
 #if defined(MULTIPROCESSOR)
 		APDP_PDE[0] = 0;
 		APDP_PDE[1] = 0;
@@ -673,8 +661,6 @@ pmap_unmap_ptes_pae(struct pmap *pmap)
 		APDP_PDE[3] = 0;
 		pmap_apte_flush(curpcb->pcb_pmap);
 #endif
-		simple_unlock(&pmap->pm_obj.vmobjlock);
-		simple_unlock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
 	}
 }
 
@@ -851,8 +837,7 @@ pmap_try_steal_pv_pae(struct pv_head *pvh, struct pv_entry *cpv,
 	 * we never steal kernel mappings or mappings from pmaps we can't lock
 	 */
 
-	if (cpv->pv_pmap == pmap_kernel() ||
-	    !simple_lock_try(&cpv->pv_pmap->pm_obj.vmobjlock))
+	if (cpv->pv_pmap == pmap_kernel())
 		return(FALSE);
 
 	/*
@@ -876,7 +861,6 @@ pmap_try_steal_pv_pae(struct pv_head *pvh, struct pv_entry *cpv,
 		pmap_tmpunmap_pvepte_pae(cpv);
 	}
 	if (ptep == NULL) {
-		simple_unlock(&cpv->pv_pmap->pm_obj.vmobjlock);
 		return(FALSE);	/* wired page, abort! */
 	}
 	cpv->pv_pmap->pm_stats.resident_count--;
@@ -1015,7 +999,6 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	 * malloc since malloc allocates out of a submap and we should have
 	 * already allocated kernel PTPs to cover the range...
 	 */
-	simple_lock(&pmaps_lock);
 	/* put in kernel VM PDEs */
 	bcopy(&PDP_BASE[PDSLOT_KERN], &PDE(pmap, PDSLOT_KERN),
 	       nkpde * sizeof(pd_entry_t));
@@ -1023,7 +1006,6 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	bzero(&PDE(pmap, PDSLOT_KERN + nkpde), pmap->pm_pdirsize -
 	    ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
-	simple_unlock(&pmaps_lock);
 }
 
 /*
@@ -1214,11 +1196,9 @@ pmap_remove_ptes_pae(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #endif
 
 		/* sync R/M bits */
-		simple_lock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 		vm_physmem[bank].pmseg.attrs[off] |= (opte & (PG_U|PG_M));
 		pve = pmap_remove_pv(&vm_physmem[bank].pmseg.pvhead[off], pmap,
 				     startva);
-		simple_unlock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 
 		if (pve) {
 			pve->pv_next = pv_tofree;
@@ -1295,10 +1275,8 @@ pmap_remove_pte_pae(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #endif
 
 	/* sync R/M bits */
-	simple_lock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 	vm_physmem[bank].pmseg.attrs[off] |= (opte & (PG_U|PG_M));
 	pve = pmap_remove_pv(&vm_physmem[bank].pmseg.pvhead[off], pmap, va);
-	simple_unlock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 
 	if (pve)
 		pmap_free_pv(pmap, pve);
@@ -1542,9 +1520,6 @@ pmap_page_remove_pae(struct vm_page *pg)
 	/* set pv_head => pmap locking */
 	PMAP_HEAD_TO_MAP_LOCK();
 
-	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
-
 	for (pve = pvh->pvh_list ; pve != NULL ; pve = pve->pv_next) {
 		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
 
@@ -1620,7 +1595,6 @@ pmap_page_remove_pae(struct vm_page *pg)
 	}
 	pmap_free_pvs(NULL, pvh->pvh_list);
 	pvh->pvh_list = NULL;
-	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -1675,8 +1649,6 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 
 	/* nope, gonna have to do it the hard way */
 	PMAP_HEAD_TO_MAP_LOCK();
-	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
 
 	for (pve = pvh->pvh_list; pve != NULL && (*myattrs & testbits) == 0;
 	     pve = pve->pv_next) {
@@ -1690,8 +1662,6 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 	 * note that we will exit the for loop with a non-null pve if
 	 * we have found the bits we are testing for.
 	 */
-
-	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	return((*myattrs & testbits) != 0);
 }
@@ -1723,8 +1693,6 @@ pmap_change_attrs_pae(struct vm_page *pg, int setbits, int clearbits)
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
-	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
 
 	myattrs = &vm_physmem[bank].pmseg.attrs[off];
 	result = *myattrs & clearbits;
@@ -1750,7 +1718,6 @@ pmap_change_attrs_pae(struct vm_page *pg, int setbits, int clearbits)
 		pmap_unmap_ptes_pae(pve->pv_pmap);	/* unlocks pmap */
 	}
 
-	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
 
@@ -1990,9 +1957,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 					      atop(pa));
 #endif
 				pvh = &vm_physmem[bank].pmseg.pvhead[off];
-				simple_lock(&pvh->pvh_lock);
 				vm_physmem[bank].pmseg.attrs[off] |= opte;
-				simple_unlock(&pvh->pvh_lock);
 			} else {
 				pvh = NULL;	/* ensure !PG_PVLIST */
 			}
@@ -2017,10 +1982,8 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
 #endif
 			pvh = &vm_physmem[bank].pmseg.pvhead[off];
-			simple_lock(&pvh->pvh_lock);
 			pve = pmap_remove_pv(pvh, pmap, va);
 			vm_physmem[bank].pmseg.attrs[off] |= opte;
-			simple_unlock(&pvh->pvh_lock);
 		} else {
 			pve = NULL;
 		}
@@ -2131,7 +2094,6 @@ pmap_growkernel_pae(vaddr_t maxkvaddr)
 	 */
 
 	s = splhigh();	/* to be safe */
-	simple_lock(&kpm->pm_obj.vmobjlock);
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
@@ -2167,15 +2129,12 @@ pmap_growkernel_pae(vaddr_t maxkvaddr)
 		PDE(kpm, PDSLOT_KERN + nkpde) &= ~PG_u;
 
 		/* distribute new kernel PTP to all active pmaps */
-		simple_lock(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			PDE(pm, PDSLOT_KERN + nkpde) =
 				PDE(kpm, PDSLOT_KERN + nkpde);
 		}
-		simple_unlock(&pmaps_lock);
 	}
 
-	simple_unlock(&kpm->pm_obj.vmobjlock);
 	splx(s);
 
 out:

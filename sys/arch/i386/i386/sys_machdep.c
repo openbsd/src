@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.32 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.33 2014/12/02 18:13:10 tedu Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -114,8 +114,6 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 
 	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
 
-	simple_lock(&pmap->pm_lock);
-
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
 		lp = pmap->pm_ldt;
@@ -125,7 +123,6 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 	}
 
 	if (ua.start > nldt) {
-		simple_unlock(&pmap->pm_lock);
 		free(cp, M_TEMP, 0);
 		return (EINVAL);
 	}
@@ -141,7 +138,6 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 #endif
 
 	memcpy(cp, lp, num * sizeof(union descriptor));
-	simple_unlock(&pmap->pm_lock);
 
 	error = copyout(cp, ua.desc, num * sizeof(union descriptor));
 	if (error == 0)
@@ -249,7 +245,6 @@ i386_set_ldt(struct proc *p, void *args, register_t *retval)
 	}
 
 	/* allocate user ldt */
-	simple_lock(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
@@ -259,14 +254,12 @@ i386_set_ldt(struct proc *p, void *args, register_t *retval)
 			ldt_len *= 2;
 		new_len = ldt_len * sizeof(union descriptor);
 
-		simple_unlock(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len);
 		if (new_ldt == NULL) {
 			error = ENOMEM;
 			goto out;
 		}
-		simple_lock(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
 			/*
@@ -313,8 +306,6 @@ copy:
 	/* Now actually replace the descriptors. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
-
-	simple_unlock(&pmap->pm_lock);
 
 	*retval = ua.start;
 

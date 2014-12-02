@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.66 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.67 2014/12/02 18:13:10 tedu Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 /*
  * The pmap structure
  *
- * Note that the pm_obj contains the simple_lock, the reference count,
+ * Note that the pm_obj contains the reference count,
  * page list, and number of PTPs within the pmap.
  */
 
