@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: ocsp.c,v 1.2 2014/12/02 19:39:16 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -57,12 +57,13 @@
  */
 #ifndef OPENSSL_NO_OCSP
 
-#include <sys/select.h>
+#include <sys/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <poll.h>
 #include <time.h>
 
 /* Needs to be included before the openssl headers! */
@@ -1102,8 +1103,7 @@ query_responder(BIO * err, BIO * cbio, char *path,
 	int i;
 	OCSP_REQ_CTX *ctx = NULL;
 	OCSP_RESPONSE *rsp = NULL;
-	fd_set confds;
-	struct timeval tv;
+	struct pollfd pfd[1];
 
 	if (req_timeout != -1)
 		BIO_set_nbio(cbio, 1);
@@ -1119,13 +1119,15 @@ query_responder(BIO * err, BIO * cbio, char *path,
 		goto err;
 	}
 	if (req_timeout != -1 && rv <= 0) {
-		FD_ZERO(&confds);
-		FD_SET(fd, &confds);
-		tv.tv_usec = 0;
-		tv.tv_sec = req_timeout;
-		rv = select(fd + 1, NULL, &confds, NULL, &tv);
+		pfd[0].fd = fd;
+		pfd[0].events = POLLOUT;
+		rv = poll(pfd, 1, req_timeout * 1000);
 		if (rv == 0) {
 			BIO_puts(err, "Timeout on connect\n");
+			return NULL;
+		}
+		if (rv == -1) {
+			BIO_puts(err, "Poll error\n");
 			return NULL;
 		}
 	}
@@ -1148,24 +1150,22 @@ query_responder(BIO * err, BIO * cbio, char *path,
 			break;
 		if (req_timeout == -1)
 			continue;
-		FD_ZERO(&confds);
-		FD_SET(fd, &confds);
-		tv.tv_usec = 0;
-		tv.tv_sec = req_timeout;
+		pfd[0].fd = fd;
 		if (BIO_should_read(cbio))
-			rv = select(fd + 1, &confds, NULL, NULL, &tv);
+			pfd[0].events = POLLIN;
 		else if (BIO_should_write(cbio))
-			rv = select(fd + 1, NULL, &confds, NULL, &tv);
+			pfd[0].events = POLLOUT;
 		else {
 			BIO_puts(err, "Unexpected retry condition\n");
 			goto err;
 		}
+		rv = poll(pfd, 1, req_timeout * 1000);
 		if (rv == 0) {
 			BIO_puts(err, "Timeout on request\n");
 			break;
 		}
-		if (rv == -1) {
-			BIO_puts(err, "Select error\n");
+		if (rv == -1 || (pfd[0].revents & (POLLERR|POLLNVAL))) {
+			BIO_puts(err, "Poll error\n");
 			break;
 		}
 	}
