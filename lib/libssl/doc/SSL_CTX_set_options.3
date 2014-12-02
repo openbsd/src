@@ -1,4 +1,7 @@
-.Dd $Mdocdate: October 12 2014 $
+.\"
+.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.2 2014/12/02 14:11:01 jmc Exp $
+.\"
+.Dd $Mdocdate: December 2 2014 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -164,7 +167,7 @@ This option must be used to prevent small subgroup attacks, when the DH
 parameters were not generated using
 .Dq strong
 primes (e.g., when using DSA-parameters, see
-.Xr dhparam 1 ) .
+.Xr openssl 1 ) .
 If
 .Dq strong
 primes were used, it is not strictly necessary to generate a new DH key during
@@ -341,7 +344,7 @@ return the current bitmask.
 .Fn SSL_get_secure_renegotiation_support
 returns 1 is the peer supports secure renegotiation and 0 if it does not.
 .Sh SEE ALSO
-.Xr dhparam 1 ,
+.Xr openssl 1 ,
 .Xr ssl 3 ,
 .Xr SSL_clear 3 ,
 .Xr SSL_CTX_set_tmp_dh_callback 3 ,

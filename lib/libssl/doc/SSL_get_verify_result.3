@@ -1,4 +1,7 @@
-.Dd $Mdocdate: October 12 2014 $
+.\"
+.\"	$OpenBSD: SSL_get_verify_result.3,v 1.2 2014/12/02 14:11:01 jmc Exp $
+.\"
+.Dd $Mdocdate: December 2 2014 $
 .Dt SSL_GET_VERIFY_RESULT 3
 .Os
 .Sh NAME
@@ -29,10 +32,10 @@ The following return values can currently occur:
 The verification succeeded or no peer certificate was presented.
 .It Any other value
 Documented in
-.Xr verify 1 .
+.Xr openssl 1 .
 .El
 .Sh SEE ALSO
-.Xr verify 1 ,
+.Xr openssl 1 ,
 .Xr ssl 3 ,
 .Xr SSL_get_peer_certificate 3 ,
 .Xr SSL_set_verify_result 3

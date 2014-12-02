@@ -1,4 +1,7 @@
-.Dd $Mdocdate: October 12 2014 $
+.\"
+.\"	$OpenBSD: SSL_CTX_set_session_cache_mode.3,v 1.2 2014/12/02 14:11:01 jmc Exp $
+.\"
+.Dd $Mdocdate: December 2 2014 $
 .Dt SSL_CTX_SET_SESSION_CACHE_MODE 3
 .Os
 .Sh NAME
@@ -93,7 +96,7 @@ the flag has no effect on clients.
 Depending on the presence of
 .Dv SSL_SESS_CACHE_CLIENT
 and/or
-.Dv SSL_SESS_CACHE_SERVER,
+.Dv SSL_SESS_CACHE_SERVER ,
 sessions negotiated in an SSL/TLS handshake may be cached for possible reuse.
 Normally a new session is added to the internal cache as well as any external
 session caching (callback) that is configured for the

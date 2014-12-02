@@ -1,4 +1,7 @@
-.Dd $Mdocdate: October 12 2014 $
+.\"
+.\"	$OpenBSD: SSL_CTX_set_tmp_dh_callback.3,v 1.2 2014/12/02 14:11:01 jmc Exp $
+.\"
+.Dd $Mdocdate: December 2 2014 $
 .Dt SSL_CTX_SET_TMP_DH_CALLBACK 3
 .Os
 .Sh NAME
@@ -107,11 +110,11 @@ The risk in reusing DH parameters is that an attacker may specialize on a very
 often used DH group.
 Applications should therefore generate their own DH parameters during the
 installation process using the openssl
-.Xr dhparam 1
+.Xr openssl 1
 application.
 In order to reduce the computer time needed for this generation,
 it is possible to use DSA parameters instead (see
-.Xr dhparam 1 ) ,
+.Xr openssl 1 ) ,
 but in this case
 .Dv SSL_OP_SINGLE_DH_USE
 is mandatory.
@@ -132,10 +135,10 @@ which use safe primes and were generated verifiably pseudo-randomly.
 These files can be converted into C code using the
 .Fl C
 option of the
-.Xr dhparam 1
+.Xr openssl 1
 application.
 Authors may also generate their own set of parameters using
-.Xr dhparam 1 ,
+.Xr openssl 1 ,
 but a user may not be sure how the parameters were generated.
 The generation of DH parameters during installation is therefore recommended.
 .Pp
@@ -225,8 +228,7 @@ tmp_dh_callback(SSL *s, int is_export, int keylength)
 }
 .Ed
 .Sh SEE ALSO
-.Xr ciphers 1 ,
-.Xr dhparam 1 ,
+.Xr openssl 1 ,
 .Xr ssl 3 ,
 .Xr SSL_CTX_set_cipher_list 3 ,
 .Xr SSL_CTX_set_options 3 ,
