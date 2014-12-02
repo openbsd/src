@@ -1,10 +1,12 @@
-/*	$OpenBSD: memmove.S,v 1.4 2014/11/30 19:43:56 deraadt Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.5 2014/12/02 03:07:13 tedu Exp $	*/
 
 /*-
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * This code is derived from locore.s.
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,46 +33,69 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/param.h>
 #include <machine/asm.h>
 
 /*
- * memmove(src, dst, cnt)
- *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
+ * Emulate bcopy() by swapping the first two arguments, and jumping
+ * into memmove(), which handles overlapping regions.
  */
+ENTRY(bcopy)
+	pushl	%esi
+	pushl	%edi
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	jmp	docopy
 
+/*
+ * memmove(caddr_t dst, caddr_t src, size_t len);
+ * Copy len bytes, coping with overlapping space.
+ */
 ENTRY(memmove)
 	pushl	%esi
 	pushl	%edi
-
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
-	movl	%edi, %eax
-
+docopy:
 	movl	20(%esp),%ecx
-	movl	%ecx,%edx
-	cmpl	%esi,%edi	/* potentially overlapping? */
-	jnb	1f
-	cld			/* nope, copy forwards. */
-	shrl	$2,%ecx		/* copy by words */
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax		# overlapping?
+	jb	1f
+	jmp	docopyf			# nope
+/*
+ * memcpy() doesn't worry about overlap and always copies forward
+ */
+// ENTRY(memcpy)
+	pushl	%esi
+	pushl	%edi
+	movl	12(%esp),%edi
+	movl	16(%esp),%esi
+	movl	20(%esp),%ecx
+docopyf:
+	movl	%edi,%eax		# setup return value for memcpy/memmove
+	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl
-	movl	%edx,%ecx
-	andl	$3,%ecx		/* any bytes left? */
+	movl	20(%esp),%ecx
+	andl	$3,%ecx			# any bytes left?
 	rep
 	movsb
 	popl	%edi
 	popl	%esi
 	ret
-1:
-	addl	%ecx,%edi	/* copy backwards. */
+
+	_ALIGN_TEXT
+1:	movl	%edi,%eax		# setup return value for memmove
+	addl	%ecx,%edi		# copy backward
 	addl	%ecx,%esi
 	std
-	andl	$3,%ecx		/* any fractional bytes? */
+	andl	$3,%ecx			# any fractional bytes?
 	decl	%edi
 	decl	%esi
 	rep
 	movsb
-	movl	%edx,%ecx
+	movl	20(%esp),%ecx		# copy remainder by 32-bit words
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
@@ -80,3 +105,4 @@ ENTRY(memmove)
 	popl	%esi
 	cld
 	ret
+
