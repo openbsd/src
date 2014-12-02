@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.42 2014/11/25 03:36:34 tedu Exp $
+.\" $OpenBSD: crypt.3,v 1.43 2014/12/02 07:39:58 schwarze Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: November 25 2014 $
+.Dd $Mdocdate: December 2 2014 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -71,21 +71,27 @@ and
 The
 .Fn crypt
 function performs password hashing based on the
-.Tn NBS
-Data Encryption Standard (DES).
+NBS Data Encryption Standard (DES).
 Additional code has been added to deter key search attempts and to use
 stronger hashing algorithms.
 .Pp
 The first argument to
 .Fn crypt
-is a
-.Dv NUL Ns -terminated
-string, typically a user's typed password.
-The second is in one of three forms:
+is a NUL-terminated
+string
+.Fa key ,
+typically a user's typed password.
+The second,
+.Fa setting ,
+is in one of three forms:
 if it begins with an underscore
 .Pq Ql _
 then an extended format is used
-in interpreting both the key and the setting, as outlined below.
+in interpreting both the
+.Fa key
+and the
+.Fa setting ,
+as outlined below.
 If it begins
 with a string character
 .Pq Ql $
@@ -95,7 +101,7 @@ At the moment
 chooses Blowfish hashing; see below for more information.
 .Ss Extended crypt
 The
-.Ar key
+.Fa key
 is divided into groups of 8 characters (the last group is null-padded)
 and the low-order 7 bits of each character (56 bits per group) are
 used to form the DES key as follows:
@@ -103,7 +109,9 @@ the first group of 56 bits becomes the initial DES key.
 For each additional group, the XOR of the encryption of the current DES
 key with itself and the group bits becomes the next DES key.
 .Pp
-The setting is a 9-character array consisting of an underscore followed
+The
+.Fa setting
+is a 9-character array consisting of an underscore followed
 by 4 bytes of iteration count and 4 bytes of salt.
 These are encoded as printable characters, 6 bits per character,
 least significant character first.
@@ -113,15 +121,12 @@ This allows 24 bits for both
 .Fa count
 and
 .Fa salt .
-.Ss "Blowfish" crypt
-The
-.Tn Blowfish
-version of crypt has 128 bits of
+.Ss Blowfish crypt
+The Blowfish version of crypt has 128 bits of
 .Fa salt
 in order to make building dictionaries of common passwords space consuming.
 The initial state of the
-.Tn Blowfish
-cipher is expanded using the
+Blowfish cipher is expanded using the
 .Fa salt
 and the
 .Fa password
@@ -132,9 +137,7 @@ The final Blowfish password entry is created by encrypting the string
 .Pp
 .Dq OrpheanBeholderScryDoubt
 .Pp
-with the
-.Tn Blowfish
-state 64 times.
+with the Blowfish state 64 times.
 .Pp
 The version number, the logarithm of the number of rounds and
 the concatenation of salt and hashed password are separated by the
@@ -150,13 +153,15 @@ A valid Blowfish password looks like this:
 The whole Blowfish password string is passed as
 .Fa setting
 for interpretation.
-.Ss "Traditional" crypt
-The first 8 bytes of the key are null-padded, and the low-order 7 bits of
-each character is used to form the 56-bit
-.Tn DES
-key.
+.Ss Traditional crypt
+The first 8 bytes of the
+.Fa key
+are null-padded, and the low-order 7 bits of
+each character is used to form the 56-bit DES key.
 .Pp
-The setting is a 2-character array of the ASCII-encoded salt.
+The
+.Fa setting
+is a 2-character array of the ASCII-encoded salt.
 Thus only 12 bits of
 .Fa salt
 are used.
@@ -165,29 +170,24 @@ is set to 25.
 .Ss DES Algorithm
 The
 .Fa salt
-introduces disorder in the
-.Tn DES
+introduces disorder in the DES
 algorithm in one of 16777216 or 4096 possible ways
 (i.e., with 24 or 12 bits: if bit
 .Em i
 of the
-.Ar salt
+.Fa salt
 is set, then bits
 .Em i
 and
 .Em i+24
-are swapped in the
-.Tn DES
-E-box output).
+are swapped in the DES E-box output).
 .Pp
 The DES key is used to encrypt a 64-bit constant using
-.Ar count
-iterations of
-.Tn DES .
-The value returned is a
-.Dv NUL Ns -terminated
+.Fa count
+iterations of DES.
+The value returned is a NUL-terminated
 string, 20 or 13 bytes (plus NUL) in length, consisting of the
-.Ar setting
+.Fa setting
 followed by the encoded 64-bit encryption.
 .Pp
 The functions
@@ -197,8 +197,7 @@ The functions
 and
 .Fn des_cipher
 provide access to the
-.Tn DES
-algorithm itself.
+DES algorithm itself.
 .Fn setkey
 is passed a 64-byte array of binary values (numeric 0 or 1).
 A 56-bit key is extracted from this array by dividing the
@@ -237,16 +236,14 @@ using
 .Xr abs 3
 of
 .Fa count
-iterations of
-.Tn DES
+iterations of DES
 and stores the 64-bit result in the 8 characters at
 .Fa out
 (which may be the same as
 .Fa in ) .
 The
 .Fa salt
-specifies perturbations to the
-.Tn DES
+specifies perturbations to the DES
 E-box output as described above.
 .Pp
 The

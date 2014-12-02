@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.4 2014/11/21 12:52:54 jmc Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.5 2014/12/02 07:39:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2014 $
+.Dd $Mdocdate: December 2 2014 $
 .Dt CRYPT_CHECKPASS 3
 .Os
 .Sh NAME
@@ -31,10 +31,19 @@
 The
 .Fn crypt_checkpass
 function is provided to simplify checking a user's password.
-If both the hash and the password are the empty string, authentication
+If both the
+.Fa hash
+and the
+.Fa password
+are the empty string, authentication
 is a success.
-Otherwise, the password is hashed and compared to the provided hash.
-If the hash is
+Otherwise, the
+.Fa password
+is hashed and compared to the provided
+.Fa hash .
+If the
+.Fa hash
+is
 .Dv NULL ,
 authentication will always fail, but a default
 amount of work is performed to simulate the hashing operation.
