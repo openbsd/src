@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.13 2014/04/14 22:12:01 tedu Exp $	*/
+/*	$OpenBSD: ed.h,v 1.14 2014/12/02 20:34:14 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -156,8 +156,6 @@ void add_line_node(line_t *);
 int append_lines(int);
 int apply_subst_template(char *, regmatch_t *, int, int);
 int build_active_list(int);
-int cbc_decode(char *, FILE *);
-int cbc_encode(char *, int, FILE *);
 int check_addr_range(int, int);
 void clear_active_list(void);
 void clear_undo_stack(void);
@@ -176,7 +174,6 @@ line_t *get_addressed_line_node(int);
 pattern_t *get_compiled_pattern(void);
 char *get_extended_line(int *, int);
 char *get_filename(void);
-int get_keyword(void);
 int get_line_node_addr(line_t *);
 int get_matching_node_addr(pattern_t *, int);
 int get_marked_node_addr(int);
@@ -188,9 +185,7 @@ void handle_hup(int);
 void handle_int(int);
 void handle_winch(int);
 int has_trailing_escape(char *, char *);
-int hex_to_binary(int, int);
 void init_buffers(void);
-int is_legal_filename(char *);
 int join_lines(int, int);
 int mark_line_node(line_t *, int);
 int move_lines(int);
