@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.41 2014/03/05 20:01:59 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.42 2014/12/02 11:09:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 5 2014 $
+.Dd $Mdocdate: December 2 2014 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -716,8 +716,7 @@ may be a value between 0 and 2.
 .Sh BUGS
 The
 .Xr audio 4
-driver doesn't drain playback buffers, thus if
-.Lb libsndio
+driver doesn't drain playback buffers, thus if sndio
 is used to directly access an
 .Xr audio 4
 device,
