@@ -1,1 +1,0 @@
-/* This code is contained in memmove.S */
