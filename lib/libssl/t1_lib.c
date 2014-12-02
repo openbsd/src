@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.67 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.68 2014/12/02 20:46:19 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,12 +249,15 @@ static const unsigned char ecformats_default[] = {
 static const unsigned char eccurves_default[] = {
 	0,14,			/* sect571r1 (14) */
 	0,13,			/* sect571k1 (13) */
-	0,25,			/* secp521r1 (25) */	
+	0,25,			/* secp521r1 (25) */
+	0,28,			/* brainpool512r1 (28) */
 	0,11,			/* sect409k1 (11) */
 	0,12,			/* sect409r1 (12) */
+	0,27,			/* brainpoolP384r1 (27) */
 	0,24,			/* secp384r1 (24) */
 	0,9,			/* sect283k1 (9) */
 	0,10,			/* sect283r1 (10) */
+	0,26,			/* brainpoolP256r1 (26) */
 	0,22,			/* secp256k1 (22) */
 	0,23,			/* secp256r1 (23) */
 	0,8,			/* sect239k1 (8) */
