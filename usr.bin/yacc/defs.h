@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.17 2014/03/08 01:05:39 tedu Exp $	*/
+/*	$OpenBSD: defs.h,v 1.18 2014/12/02 15:56:22 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -306,42 +306,42 @@ extern void set_first_derives(void);
 extern void closure(short *, int);
 extern void finalize_closure(void);
 
-extern void fatal(char *);
+extern __dead void fatal(char *);
 
 extern void reflexive_transitive_closure(unsigned *, int);
-extern void done(int);
+extern __dead void done(int);
 
-extern void no_space(void);
-extern void open_error(char *);
-extern void open_write_error(char *);
-extern void unexpected_EOF(void);
+extern __dead void no_space(void);
+extern __dead void open_error(char *);
+extern __dead void open_write_error(char *);
+extern __dead void unexpected_EOF(void);
 extern void print_pos(char *, char *);
-extern void syntax_error(int, char *, char *);
-extern void unterminated_comment(int, char *, char *);
-extern void unterminated_string(int, char *, char *);
-extern void unterminated_text(int, char *, char *);
-extern void unterminated_union(int, char *, char *);
-extern void over_unionized(char *);
-extern void illegal_tag(int, char *, char *);
-extern void illegal_character(char *);
-extern void used_reserved(char *);
-extern void tokenized_start(char *);
+extern __dead void syntax_error(int, char *, char *);
+extern __dead void unterminated_comment(int, char *, char *);
+extern __dead void unterminated_string(int, char *, char *);
+extern __dead void unterminated_text(int, char *, char *);
+extern __dead void unterminated_union(int, char *, char *);
+extern __dead void over_unionized(char *);
+extern __dead void illegal_tag(int, char *, char *);
+extern __dead void illegal_character(char *);
+extern __dead void used_reserved(char *);
+extern __dead void tokenized_start(char *);
 extern void retyped_warning(char *);
 extern void reprec_warning(char *);
 extern void revalued_warning(char *);
-extern void terminal_start(char *);
+extern __dead void terminal_start(char *);
 extern void restarted_warning(void);
-extern void no_grammar(void);
-extern void terminal_lhs(int);
+extern __dead void no_grammar(void);
+extern __dead void terminal_lhs(int);
 extern void prec_redeclared(void);
-extern void unterminated_action(int, char *, char *);
+extern __dead void unterminated_action(int, char *, char *);
 extern void dollar_warning(int, int);
-extern void dollar_error(int, char *, char *);
-extern void untyped_lhs(void);
-extern void untyped_rhs(int, char *);
-extern void unknown_rhs(int);
+extern __dead void dollar_error(int, char *, char *);
+extern __dead void untyped_lhs(void);
+extern __dead void untyped_rhs(int, char *);
+extern __dead void unknown_rhs(int);
 extern void default_action_warning(void);
-extern void undefined_goal(char *);
+extern __dead void undefined_goal(char *);
 extern void undefined_symbol_warning(char *);
 
 extern void lalr(void);

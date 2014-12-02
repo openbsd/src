@@ -1,4 +1,4 @@
-/* $OpenBSD: reader.c,v 1.29 2014/10/09 03:02:18 deraadt Exp $	 */
+/* $OpenBSD: reader.c,v 1.30 2014/12/02 15:56:22 millert Exp $	 */
 /* $NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	 */
 
 /*
@@ -928,7 +928,6 @@ declare_tokens(int assoc)
 		c = nextc();
 		if (c == EOF)
 			unexpected_EOF();
-		value = UNDEFINED;
 		if (isdigit(c)) {
 			value = get_number();
 			if (bp->value != UNDEFINED && value != bp->value)
