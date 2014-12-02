@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.108 2014/11/26 21:40:11 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.109 2014/12/02 11:31:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 	/* Parser and formatter options. */
 
 	memset(&curp, 0, sizeof(struct curparse));
-	curp.outtype = OUTT_ASCII;
+	curp.outtype = OUTT_LOCALE;
 	curp.wlevel  = MANDOCLEVEL_FATAL;
 	options = MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1;
 	defos = NULL;

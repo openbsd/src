@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.67 2014/11/25 03:44:35 bentley Exp $
+.\"	$OpenBSD: mandoc.1,v 1.68 2014/12/02 11:31:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2014 $
+.Dd $Mdocdate: December 2 2014 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ or
 text from stdin, implying
 .Fl m Ns Cm andoc ,
 and produces
-.Fl T Ns Cm ascii
+.Fl T Ns Cm locale
 output.
 .Pp
 The options are as follows:
@@ -146,7 +146,7 @@ See
 .Sx Output Formats
 for available formats.
 Defaults to
-.Fl T Ns Cm ascii .
+.Fl T Ns Cm locale .
 .It Fl V
 Print version and exit.
 .It Fl W Ns Ar level
@@ -255,7 +255,6 @@ arguments, which correspond to output modes:
 .Bl -tag -width "-Tlocale"
 .It Fl T Ns Cm ascii
 Produce 7-bit ASCII output.
-This is the default.
 See
 .Sx ASCII Output .
 .It Fl T Ns Cm html
@@ -268,6 +267,7 @@ Implies
 .Fl W Ns Cm warning .
 .It Fl T Ns Cm locale
 Encode output using the current locale.
+This is the default.
 See
 .Sx Locale Output .
 .It Fl T Ns Cm man
@@ -299,8 +299,8 @@ If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
 .Ss ASCII Output
 Output produced by
-.Fl T Ns Cm ascii ,
-which is the default, is rendered in standard 7-bit ASCII documented in
+.Fl T Ns Cm ascii
+is rendered in standard 7-bit ASCII documented in
 .Xr ascii 7 .
 .Pp
 Font styles are applied by using back-spaced encoding such that an
@@ -409,6 +409,8 @@ relative URI.
 .Ss Locale Output
 Locale-depending output encoding is triggered with
 .Fl T Ns Cm locale .
+This is the default.
+.Pp
 This option is not available on all systems: systems without locale
 support, or those whose internal representation is not natively UCS-4,
 will fall back to
