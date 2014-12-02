@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.23 2014/03/13 01:18:22 tedu Exp $	*/
+/*	$OpenBSD: output.c,v 1.24 2014/12/02 15:40:37 otto Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ pack_vector(int vector)
 					high = loc;
 			}
 
-			while (check[lowzero] != -1)
+			while (lowzero < maxtable && check[lowzero] != -1)
 				++lowzero;
 
 			return (j);
