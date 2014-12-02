@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.6 2014/11/06 14:50:12 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.7 2014/12/02 19:44:49 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,7 +148,6 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
 #include <sys/socket.h>
 
 #include <assert.h>
@@ -158,6 +157,7 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include "apps.h"
 
@@ -1279,14 +1279,12 @@ static int
 sv_body(char *hostname, int s, unsigned char *context)
 {
 	char *buf = NULL;
-	fd_set readfds;
-	int ret = 1, width;
+	int ret = 1;
 	int k, i;
 	unsigned long l;
 	SSL *con = NULL;
 	BIO *sbio;
 	struct timeval timeout;
-	struct timeval *timeoutp;
 
 	if ((buf = malloc(bufsize)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
@@ -1366,35 +1364,45 @@ sv_body(char *hostname, int s, unsigned char *context)
 		SSL_set_tlsext_debug_arg(con, bio_s_out);
 	}
 
-	width = s + 1;
 	for (;;) {
 		int read_from_terminal;
 		int read_from_sslcon;
+		struct pollfd pfd[2];
+		int ptimeout;
 
 		read_from_terminal = 0;
 		read_from_sslcon = SSL_pending(con);
 
 		if (!read_from_sslcon) {
-			FD_ZERO(&readfds);
-			FD_SET(fileno(stdin), &readfds);
-			FD_SET(s, &readfds);
+			pfd[0].fd = fileno(stdin);
+			pfd[0].events = POLLIN;
+			pfd[1].fd = s;
+			pfd[1].events = POLLIN;
+
 			if ((SSL_version(con) == DTLS1_VERSION) &&
 			    DTLSv1_get_timeout(con, &timeout))
-				timeoutp = &timeout;
+				ptimeout = timeout.tv_sec * 1000 +
+				    timeout.tv_usec / 1000;
 			else
-				timeoutp = NULL;
+				ptimeout = -1;
 
-			i = select(width, &readfds, NULL, NULL, timeoutp);
+			i = poll(pfd, 2, ptimeout);
 
 			if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0) {
 				BIO_printf(bio_err, "TIMEOUT occured\n");
 			}
 			if (i <= 0)
 				continue;
-			if (FD_ISSET(fileno(stdin), &readfds))
+			if (pfd[0].revents) {
+				if ((pfd[0].revents & (POLLERR|POLLNVAL)))
+					continue;
 				read_from_terminal = 1;
-			if (FD_ISSET(s, &readfds))
+			}
+			if (pfd[1].revents) {
+				if ((pfd[1].revents & (POLLERR|POLLNVAL)))
+					continue;
 				read_from_sslcon = 1;
+			}
 		}
 		if (read_from_terminal) {
 			if (s_crlf) {
