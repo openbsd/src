@@ -1,4 +1,4 @@
-.Dd May 28, 2012
+.Dd December 2, 2014
 .Dt ESC-C 1
 .Os OpenBSD
 .Sh NAME
@@ -11,3 +11,7 @@ and
 .Dq word :
 one\c
 word
+.Bd -literal
+one\c
+word
+.Ed

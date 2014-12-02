@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.31 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.32 2014/12/02 10:07:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -126,6 +126,7 @@ struct	html {
 #define	HTML_SKIPCHAR	 (1 << 6) /* skip the next character */
 #define	HTML_NOSPLIT	 (1 << 7) /* do not break line before .An */
 #define	HTML_SPLIT	 (1 << 8) /* break line before .An */
+#define	HTML_NONEWLINE	 (1 << 9) /* No line break in nofill mode. */
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */

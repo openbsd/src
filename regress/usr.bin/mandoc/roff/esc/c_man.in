@@ -1,0 +1,12 @@
+.TH ESC-C_MAN 1 "December 2, 2014" OpenBSD
+.SH NAME
+esc-c_man \- the roff escape c sequence: remove trailing space
+.SH DESCRIPTION
+No space between "one" and "word":
+one\c
+word
+.nf
+one\c
+word
+.fi
+final text

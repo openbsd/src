@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.58 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.59 2014/12/02 10:07:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -210,21 +210,14 @@ print_man_node(MAN_ARGS)
 		man_root_pre(man, n, mh, h);
 		break;
 	case MAN_TEXT:
-		/*
-		 * If we have a blank line, output a vertical space.
-		 * If we have a space as the first character, break
-		 * before printing the line's data.
-		 */
 		if ('\0' == *n->string) {
 			print_paragraph(h);
 			return;
 		}
-
-		if (' ' == *n->string && MAN_LINE & n->flags)
+		if (n->flags & MAN_LINE && (*n->string == ' ' || 
+		    (n->prev != NULL && mh->fl & MANH_LITERAL &&
+		     ! (h->flags & HTML_NONEWLINE))))
 			print_otag(h, TAG_BR, 0, NULL);
-		else if (MANH_LITERAL & mh->fl && n->prev)
-			print_otag(h, TAG_BR, 0, NULL);
-
 		print_text(h, n->string);
 		return;
 	case MAN_EQN:

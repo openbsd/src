@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.51 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.52 2014/12/02 10:07:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,6 +79,7 @@ struct	termp {
 #define	TERMP_HANG	 (1 << 11)	/* See term_flushln(). */
 #define	TERMP_NOSPLIT	 (1 << 12)	/* Do not break line before .An. */
 #define	TERMP_SPLIT	 (1 << 13)	/* Break line before .An. */
+#define	TERMP_NONEWLINE	 (1 << 14)	/* No line break in nofill mode. */
 	int		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	const struct mchars *symtab;	/* Character table. */

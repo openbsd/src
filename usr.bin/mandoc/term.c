@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.96 2014/11/21 01:52:45 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.97 2014/12/02 10:07:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -415,7 +415,7 @@ term_word(struct termp *p, const char *word)
 	else
 		p->flags |= TERMP_NOSPACE;
 
-	p->flags &= ~TERMP_SENTENCE;
+	p->flags &= ~(TERMP_SENTENCE | TERMP_NONEWLINE);
 
 	while ('\0' != *word) {
 		if ('\\' != *word) {
@@ -485,7 +485,7 @@ term_word(struct termp *p, const char *word)
 			if (TERMP_SKIPCHAR & p->flags)
 				p->flags &= ~TERMP_SKIPCHAR;
 			else if ('\0' == *word)
-				p->flags |= TERMP_NOSPACE;
+				p->flags |= (TERMP_NOSPACE | TERMP_NONEWLINE);
 			continue;
 		case ESCAPE_SKIPCHAR:
 			p->flags |= TERMP_SKIPCHAR;

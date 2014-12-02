@@ -1,0 +1,15 @@
+ESC-C_MAN(1)                General Commands Manual               ESC-C_MAN(1)
+
+
+
+NNAAMMEE
+       esc-c_man - the roff escape c sequence: remove trailing space
+
+DDEESSCCRRIIPPTTIIOONN
+       No space between "one" and "word": oneword
+       oneword
+       final text
+
+
+
+OpenBSD                        December 2, 2014                   ESC-C_MAN(1)
