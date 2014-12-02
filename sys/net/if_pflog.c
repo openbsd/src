@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.64 2014/09/08 18:10:01 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.65 2014/12/02 18:11:56 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -117,7 +117,7 @@ pflogifs_resize(size_t n)
 	if (n == 0)
 		p = NULL;
 	else
-		if ((p = malloc(n * sizeof(*p), M_DEVBUF,
+		if ((p = mallocarray(n, sizeof(*p), M_DEVBUF,
 		    M_NOWAIT|M_ZERO)) == NULL)
 			return (ENOMEM);
 	for (i = 0; i < n; i++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.42 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: radix.c,v 1.43 2014/12/02 18:11:56 tedu Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -1185,7 +1185,7 @@ rn_init(void)
 		    "rn_init: radix functions require max_keylen be set\n");
 		return;
 	}
-	rn_zeros = malloc(3 * max_keylen, M_RTABLE, M_NOWAIT | M_ZERO);
+	rn_zeros = mallocarray(3, max_keylen, M_RTABLE, M_NOWAIT | M_ZERO);
 	if (rn_zeros == NULL)
 		panic("rn_init");
 	rn_ones = cp = rn_zeros + max_keylen;

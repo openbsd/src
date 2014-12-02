@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.74 2014/07/22 11:06:09 mpi Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.75 2014/12/02 18:11:56 tedu Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -91,7 +91,7 @@ pfi_initialize(void)
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
 	pfi_buffer_max = 64;
-	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
+	pfi_buffer = mallocarray(pfi_buffer_max, sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
 
 	if ((pfi_all = pfi_kif_get(IFG_ALL)) == NULL)
@@ -552,7 +552,7 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 			    pfi_buffer_cnt, PFI_BUFFER_MAX);
 			return;
 		}
-		p = malloc(new_max * sizeof(*pfi_buffer), PFI_MTYPE,
+		p = mallocarray(new_max, sizeof(*pfi_buffer), PFI_MTYPE,
 		    M_DONTWAIT);
 		if (p == NULL) {
 			DPFPRINTF(LOG_ERR,

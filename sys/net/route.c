@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.191 2014/11/24 12:43:54 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.192 2014/12/02 18:11:56 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ rtable_init(struct radix_node_head ***table, u_int id)
 	struct domain	 *dom;
 	u_int8_t	  i;
 
-	if ((p = malloc(sizeof(void *) * (rtafidx_max + 1), M_RTABLE,
+	if ((p = mallocarray(rtafidx_max + 1, sizeof(void *), M_RTABLE,
 	    M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
@@ -242,15 +242,19 @@ rtable_add(u_int id)
 		return (EINVAL);
 
 	if (id == 0 || id > rtbl_id_max) {
-		size_t	newlen = sizeof(void *) * (id+1);
-		size_t	newlen2 = sizeof(u_int) * (id+1);
+		size_t	newlen;
+		size_t	newlen2;
 
-		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
+		if ((p = mallocarray(id + 1, sizeof(void *), M_RTABLE,
+		    M_NOWAIT|M_ZERO)) == NULL)
 			return (ENOMEM);
-		if ((q = malloc(newlen2, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL) {
-			free(p, M_RTABLE, 0);
+		newlen = sizeof(void *) * (id+1);
+		if ((q = mallocarray(id + 1, sizeof(u_int), M_RTABLE,
+		    M_NOWAIT|M_ZERO)) == NULL) {
+			free(p, M_RTABLE, newlen);
 			return (ENOMEM);
 		}
+		newlen2 = sizeof(u_int) * (id+1);
 		if (rt_tables) {
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
 			bcopy(rt_tab2dom, q, sizeof(u_int) * (rtbl_id_max+1));
