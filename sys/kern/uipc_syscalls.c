@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.93 2014/09/09 02:07:17 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.94 2014/12/02 01:21:35 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
-	if (type & SOCK_CLOEXEC)
+	if (error == 0 && (type & SOCK_CLOEXEC))
 		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
 	fdpunlock(fdp);
 	if (error != 0)
@@ -240,7 +240,7 @@ redo:
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &tmpfd);
-	if (flags & SOCK_CLOEXEC)
+	if (error == 0 && (flags & SOCK_CLOEXEC))
 		fdp->fd_ofileflags[tmpfd] |= UF_EXCLOSE;
 	fdpunlock(fdp);
 	if (error != 0) {
