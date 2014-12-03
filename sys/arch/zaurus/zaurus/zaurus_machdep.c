@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.53 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.54 2014/12/03 20:09:32 krw Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -127,7 +127,6 @@
 
 #include <sys/conf.h>
 #include <sys/queue.h>
-#include <sys/device.h>
 #include <dev/cons.h>
 #include <dev/ic/smc91cxxreg.h>
 #include <sys/socket.h>

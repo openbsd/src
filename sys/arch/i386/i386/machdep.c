@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.558 2014/11/22 18:54:37 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.559 2014/12/03 20:09:32 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -111,7 +111,6 @@
 #include <machine/gdt.h>
 #include <machine/kcore.h>
 #include <machine/pio.h>
-#include <machine/bus.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2014/12/03 20:09:32 krw Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -56,7 +56,6 @@ db_regs_t ddb_regs;		/* register state */
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
-#include <ddb/db_run.h>
 #include <ddb/db_var.h>
 
 void kdb_printtrap(u_int, int);
