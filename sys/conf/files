@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.589 2014/12/03 07:33:27 tedu Exp $
+#	$OpenBSD: files,v 1.590 2014/12/03 18:16:50 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -852,7 +852,7 @@ file netinet/ip_ah.c			inet & ipsec
 file netinet/ip_carp.c			carp			needs-count
 file netinet/ip_ipcomp.c		inet & ipsec
 file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt | wlan
-file crypto/md5.c			(inet & ipsec) | crypto | tcp_signature | wlan
+file crypto/md5.c			
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto | carp | wlan
 file crypto/sha2.c
