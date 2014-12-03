@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.99 2014/07/11 15:28:27 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.100 2014/12/03 23:04:52 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -602,9 +602,7 @@ main(int argc, char *argv[])
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
-	memset(nonce, 0, sizeof(nonce));
-	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
-		*((u_int32_t *)&nonce[i]) = arc4random();
+	arc4random_buf(nonce, sizeof(nonce));
 
 	optval = 1;
 
