@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.88 2014/03/20 08:49:32 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.89 2014/12/03 19:39:57 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 20 2014 $
+.Dd $Mdocdate: December 3 2014 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -191,16 +191,8 @@ option.
 .It Ic -empty
 True if the current file or directory is empty.
 .Pp
-.It Xo
-.Ic -exec Ar utility
-.Op argument ...
-.No ;
-.Xc
-.It Xo
-.Ic -exec Ar utility
-.Op argument ...
-.No {} +
-.Xc
+.It Ic -exec Ar utility Oo Ar argument ... Oc \&;
+.It Ic -exec Ar utility Oo Ar argument ... Oc {} +
 Execute the specified
 .Ar utility .
 Optional arguments may be passed to the utility.
@@ -237,11 +229,7 @@ and is also limited such that the invocation of
 does not exceed
 .Dv ARG_MAX .
 .Pp
-.It Xo
-.Ic -execdir Ar utility
-.Op argument ...
-.No ;
-.Xc
+.It Ic -execdir Ar utility Oo Ar argument ... Oc \&;
 Identical to the first form of the
 .Ic -exec
 primary with the exception that
@@ -320,7 +308,7 @@ If the file is a block or character special file, the major and minor numbers
 will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked-to file will be
 displayed preceded by
-.Dq -\*(Gt .
+.Dq -> .
 The format is identical to that produced by
 .Dq ls -dils .
 .Pp
@@ -362,11 +350,7 @@ True if the file belongs to an unknown group.
 .It Ic -nouser
 True if the file belongs to an unknown user.
 .Pp
-.It Xo
-.Ic -ok Ar utility
-.Op argument ...
-.No ;
-.Xc
+.It Ic -ok Ar utility Oo Ar argument ... Oc \&;
 Identical to the
 .Ic -exec
 primary with the exception that
@@ -524,24 +508,18 @@ This is the unary
 operator.
 It evaluates to true if the expression is false.
 .Pp
+.It Ar expression Cm -a Ar expression
 .It Ar expression Cm -and Ar expression
 .It Ar expression expression
-The
-.Cm -and
-operator is the logical
-.Tn AND
-operator.
+The logical AND operator.
 As it is implied by the juxtaposition of two expressions it does not
 have to be specified.
 The expression evaluates to true if both expressions are true.
 The second expression is not evaluated if the first expression is false.
 .Pp
+.It Ar expression Cm -o Ar expression
 .It Ar expression Cm -or Ar expression
-The
-.Cm -or
-operator is the logical
-.Tn OR
-operator.
+The logical OR operator.
 The expression evaluates to true if either the first or the second expression
 is true.
 The second expression is not evaluated if the first expression is true.
@@ -555,7 +533,7 @@ i.e. they should be separated by whitespace.
 The
 .Nm
 utility exits with a value of 0 on successful traversal of all path operands
-or with a value \*(Gt0 if an error occurred.
+or with a value >0 if an error occurred.
 .Sh EXAMPLES
 Print out a list of all the files whose names end in
 .Dq \&.c :
