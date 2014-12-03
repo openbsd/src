@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.9 2014/11/18 02:37:31 tedu Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.10 2014/12/03 23:00:49 deraadt Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -36,7 +36,7 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	fbuf = pool_get(&fusefs_fbuf_pool, PR_WAITOK | PR_ZERO);
 	fbuf->fb_len = len;
 	fbuf->fb_err = 0;
-	fbuf->fb_uuid = ((uint64_t)arc4random() << 32 | arc4random());
+	arc4random_buf(&fbuf->fb_uuid, sizeof fbuf->fb_uuid);
 	fbuf->fb_type = op;
 	fbuf->fb_ino = ino;
 	if (len == 0)
