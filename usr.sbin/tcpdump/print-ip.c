@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.39 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.40 2014/12/03 13:19:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -358,6 +358,11 @@ ip_print(register const u_char *bp, register u_int length)
 	register const u_char *cp;
 
 	ip = (const struct ip *)bp;
+	if ((u_char *)(ip + 1) > snapend) {
+		printf("[|ip]");
+		return;
+	}
+
 	/*
 	 * If the IP header is not aligned, copy into abuf.
 	 * This will never happen with BPF.  It does happen with raw packet

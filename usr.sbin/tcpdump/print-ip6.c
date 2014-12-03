@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.17 2014/11/20 03:56:33 jsg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.18 2014/12/03 13:19:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -58,8 +58,12 @@ ip6_print(register const u_char *bp, register u_int length)
 	register const u_char *cp;
 	int nh;
 	u_int flow;
-	
+
 	ip6 = (const struct ip6_hdr *)bp;
+	if ((u_char *)(ip6 + 1) > snapend) {
+		printf("[|ip6]");
+		return;
+	}
 
 	/*
 	 * The IP header is not word aligned, so copy into abuf.
@@ -89,10 +93,6 @@ ip6_print(register const u_char *bp, register u_int length)
 		}
 	}
 
-	if ((u_char *)(ip6 + 1) > snapend) {
-		printf("[|ip6]");
-		return;
-	}
 	if (length < sizeof (struct ip6_hdr)) {
 		(void)printf("truncated-ip6 %d", length);
 		return;
