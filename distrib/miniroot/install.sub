@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.799 2014/11/18 19:00:16 rpe Exp $
+#	$OpenBSD: install.sub,v 1.800 2014/12/03 19:55:49 florian Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -936,16 +936,16 @@ v6_config() {
 	set -- $(v6_info $_ifs)
 	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
 
-	[[ -x /sbin/rtsol ]] && _prompt="or 'rtsol' "
+	ifconfig $_ifs inet6 >/dev/null 2>&1 && _prompt="or 'rtsol' "
 	_prompt="IPv6 address for $_ifs? (${_prompt}or 'none')"
 	ask_until "$_prompt" "${_addr:-none}"
 
 	case $resp in
 	none)	return
 		;;
-	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol."; return; }
+	rtsol)	ifconfig $_ifs inet6 >/dev/null 2>&1 || { echo "No INET6 support."; return; }
 		ifconfig $_ifs up
-		rtsol -F $_ifs && echo "up\nrtsol" >>$_hn
+		ifconfig $_ifs inet6 autoconf && echo "up\nrtsol" >>$_hn
 		return
 		;;
 	esac
@@ -1049,8 +1049,12 @@ ifstart () {
 			fi
 			;;
 		"rtsol")
-			rtsolif="$rtsolif $if"
-			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
+			if ifconfig $if inet6 >/dev/null 2>&1; then
+				rtsolif="$rtsolif $if"
+				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
+			else
+				cmd="$cmd; echo no INET6 support - skipping rtsol request."
+			fi
 			;;
 		*)	read dt dtaddr
 			if [ "$name" = "alias" ]; then
@@ -1148,7 +1152,7 @@ enable_network() {
 		ifstart $hn
 	done
 
-	[[ -n $rtsolif ]] && /mnt/sbin/rtsol -F $rtsolif
+	[[ -n $rtsolif ]] && ifconfig $rtsolif inet6 autoconf
 
 	# /mnt/etc/mygate, if it exists, contains the address(es) of my
 	# default gateway(s). Use for ipv4 if no interfaces configured via

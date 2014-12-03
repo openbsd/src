@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.143 2014/09/28 12:58:02 claudio Exp $
+#	$OpenBSD: netstart,v 1.144 2014/12/03 19:55:49 florian Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -245,7 +245,7 @@ if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
 	if [ "x$fw" = "x0" ]; then
 		echo "IPv6 autoconf:$rtsolif"
-		rtsol $rtsolif
+		ifconfig $rtsolif inet6 autoconf
 	else
 		echo "IPv6 autoconf not supported while IPv6 forwarding is enabled"
 	fi
