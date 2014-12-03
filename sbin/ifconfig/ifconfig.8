@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.247 2014/10/01 10:02:16 mpi Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.248 2014/12/03 20:15:37 florian Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 1 2014 $
+.Dd $Mdocdate: December 3 2014 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -293,8 +293,7 @@ on the given interface and remove all configured
 .Xr inet6 4
 addresses, including the link-local ones.
 This is the default.
-To turn inet6 on, use eui64, assign any inet6 address or run
-.Xr rtsol 8 .
+To turn inet6 on, use eui64, use autoconf or assign any inet6 address.
 .It Cm instance Ar minst
 Set the media instance to
 .Ar minst .
