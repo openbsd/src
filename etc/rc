@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.445 2014/11/30 18:06:45 dcoppa Exp $
+#	$OpenBSD: rc,v 1.446 2014/12/03 20:13:49 florian Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -491,9 +491,7 @@ start_daemon relayd dhcpd dhcrelay mrouted dvmrpd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
-	if [ X"${fw}" = X"0" ]; then
-		start_daemon rtsold
-	else
+	if [ X"${fw}" = X"1" ]; then
 		start_daemon route6d rtadvd
 	fi
 fi
