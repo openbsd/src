@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.60 2014/12/03 21:55:51 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.61 2014/12/03 22:14:38 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,6 @@
 #include <netinet/tcp.h>
 
 #include <errno.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -191,17 +190,6 @@ struct hostent *
 BIO_gethostbyname(const char *name)
 {
 	return gethostbyname(name);
-}
-
-int
-BIO_sock_init(void)
-{
-	return (1);
-}
-
-void
-BIO_sock_cleanup(void)
-{
 }
 
 int
@@ -453,15 +441,4 @@ int
 BIO_set_tcp_ndelay(int s, int on)
 {
 	return (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) == 0);
-}
-
-int
-BIO_socket_nbio(int s, int mode)
-{
-	int flags = fcntl(s, F_GETFD);
-	if (mode && !(flags & O_NONBLOCK))
-		return (fcntl(s, F_SETFL, flags | O_NONBLOCK) != -1);
-	else if (!mode && (flags & O_NONBLOCK))
-		return (fcntl(s, F_SETFL, flags & ~O_NONBLOCK) != -1);
-	return (1);
 }

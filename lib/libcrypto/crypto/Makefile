@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.50 2014/11/20 19:19:09 miod Exp $
+# $OpenBSD: Makefile,v 1.51 2014/12/03 22:14:38 bcook Exp $
 
 LIB=	crypto
 
@@ -58,7 +58,7 @@ SRCS+= bio_lib.c bio_cb.c bio_err.c
 SRCS+= bss_mem.c bss_null.c bss_fd.c
 SRCS+= bss_file.c bss_sock.c bss_conn.c
 SRCS+= bf_null.c bf_buff.c b_print.c b_dump.c
-SRCS+= b_sock.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c
+SRCS+= b_posix.c b_sock.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c
 SRCS+= bss_dgram.c
 
 # bn/
@@ -96,7 +96,7 @@ SRCS+= conf_err.c conf_lib.c conf_api.c conf_def.c conf_mod.c
 SRCS+= conf_mall.c conf_sap.c
 
 # des/
-SRCS+= cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c 
+SRCS+= cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c
 SRCS+= ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c
 SRCS+= fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c
 SRCS+= qud_cksm.c rand_key.c set_key.c xcbc_enc.c
@@ -433,13 +433,13 @@ obj_dat.h: obj_mac.h
 .include "${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc"
 .else
 CFLAGS+=-DOPENSSL_NO_ASM
-SRCS+= aes_core.c aes_cbc.c 
+SRCS+= aes_core.c aes_cbc.c
 SRCS+= bf_enc.c
 SRCS+= bn_asm.c
 SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 SRCS+= des_enc.c fcrypt_b.c
 SRCS+= rc4_enc.c rc4_skey.c
-#SRCS+= rc5_enc.c 
+#SRCS+= rc5_enc.c
 SRCS+= wp_block.c
 .endif
 
