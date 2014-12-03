@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.12 2014/11/07 14:16:48 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.13 2014/12/03 22:16:02 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2205,27 +2205,6 @@ next_protos_parse(unsigned short *outlen, const char *in)
 #endif
 /* !OPENSSL_NO_NEXTPROTONEG */
 
-double
-app_tminterval(int stop, int usertime)
-{
-	double ret = 0;
-	struct tms rus;
-	clock_t now = times(&rus);
-	static clock_t tmstart;
-
-	if (usertime)
-		now = rus.tms_utime;
-
-	if (stop == TM_START)
-		tmstart = now;
-	else {
-		long int tck = sysconf(_SC_CLK_TCK);
-		ret = (now - tmstart) / (double) tck;
-	}
-
-	return (ret);
-}
-
 int
 app_isdir(const char *name)
 {
@@ -2341,7 +2320,7 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 				if (opt->func(opt, NULL) != 0)
 					return (1);
 				break;
-				
+
 			case OPTION_FLAG:
 				*opt->opt.flag = 1;
 				break;
