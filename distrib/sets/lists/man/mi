@@ -2590,8 +2590,6 @@
 ./usr/share/man/man8/rquotad.8
 ./usr/share/man/man8/rrestore.8
 ./usr/share/man/man8/rtadvd.8
-./usr/share/man/man8/rtsol.8
-./usr/share/man/man8/rtsold.8
 ./usr/share/man/man8/rwalld.8
 ./usr/share/man/man8/sa.8
 ./usr/share/man/man8/sasyncd.8

@@ -176,7 +176,6 @@
 ./etc/rc.d/ripd
 ./etc/rc.d/route6d
 ./etc/rc.d/rtadvd
-./etc/rc.d/rtsold
 ./etc/rc.d/sasyncd
 ./etc/rc.d/sensorsd
 ./etc/rc.d/slowcgi
@@ -282,7 +281,6 @@
 ./sbin/restore
 ./sbin/route
 ./sbin/rrestore
-./sbin/rtsol
 ./sbin/savecore
 ./sbin/scan_ffs
 ./sbin/scsi
@@ -2370,7 +2368,6 @@
 ./usr/sbin/rpc.statd
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtadvd
-./usr/sbin/rtsold
 ./usr/sbin/sa
 ./usr/sbin/sasyncd
 ./usr/sbin/sendmail
