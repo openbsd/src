@@ -1,0 +1,13 @@
+ESC-E(1)                    General Commands Manual                   ESC-E(1)
+
+NNAAMMEE
+     eesscc--ee - escaping backslashes
+
+DDEESSCCRRIIPPTTIIOONN
+     In plain text: "\" and "\"
+
+     On macro lines: "\(at" and "@"
+
+     In a macro definition: "\$1" and "two"
+
+OpenBSD                        December 3, 2014                        OpenBSD

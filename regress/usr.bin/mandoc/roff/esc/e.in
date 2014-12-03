@@ -1,0 +1,19 @@
+.Dd December 3, 2014
+.Dt ESC-E 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-e
+.Nd escaping backslashes
+.Sh DESCRIPTION
+In plain text: "\e" and "\\"
+.Pp
+On macro lines:
+.Qq \e(at
+and
+.Qq \\(at
+.Pp
+In a macro definition:
+.de mytest
+"\e$1" and "\\$2"
+..
+.mytest one two
