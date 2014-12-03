@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.131 2014/11/26 18:34:52 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.132 2014/12/03 17:00:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1815,7 +1815,7 @@ unix_socket(char *path, int type, mode_t mode)
 
 	memset(&s_un, 0, sizeof(s_un));
 	s_un.sun_family = AF_UNIX;
-	if (strlcpy(s_un.sun_path, path, sizeof(s_un.sun_path)) >
+	if (strlcpy(s_un.sun_path, path, sizeof(s_un.sun_path)) >=
 	    sizeof(s_un.sun_path)) {
 		snprintf(errbuf, sizeof(errbuf), "socket path too long: %s",
 		    path);
