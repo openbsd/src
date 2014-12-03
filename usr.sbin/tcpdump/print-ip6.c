@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.18 2014/12/03 13:19:03 mikeb Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.19 2014/12/03 13:22:18 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -56,6 +56,8 @@ ip6_print(register const u_char *bp, register u_int length)
 	register int hlen;
 	register int len;
 	register const u_char *cp;
+	const u_char *pktp = packetp;
+	const u_char *send = snapend;
 	int nh;
 	u_int flow;
 
@@ -95,11 +97,11 @@ ip6_print(register const u_char *bp, register u_int length)
 
 	if (length < sizeof (struct ip6_hdr)) {
 		(void)printf("truncated-ip6 %d", length);
-		return;
+		goto out;
 	}
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 		(void)printf("bad-ip6-version %u", ip6->ip6_vfc >> 4);
-		return;
+		goto out;
 	}
 	hlen = sizeof(struct ip6_hdr);
 
@@ -206,7 +208,7 @@ ip6_print(register const u_char *bp, register u_int length)
 	}
 
  end:
-	
+
 	flow = ntohl(ip6->ip6_flow);
 #if 0
 	/* rfc1883 */
@@ -232,6 +234,10 @@ ip6_print(register const u_char *bp, register u_int length)
 			(void)printf(", hlim %d", (int)ip6->ip6_hlim);
 		printf(")");
 	}
+
+ out:
+	packetp = pktp;
+	snapend = send;
 }
 
 #endif /* INET6 */
