@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.32 2014/10/08 05:47:03 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.33 2014/12/03 23:18:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -68,9 +68,9 @@ config_getspi(void)
 {
 	u_int64_t	 spi;
 
-	spi = ((u_int64_t)arc4random() << 32) | arc4random();
-	if (spi == 0)
-		return (config_getspi());
+	do {
+		arc4random_buf(&spi, sizeof spi);
+	} while (spi == 0);
 
 	return (spi);
 }
