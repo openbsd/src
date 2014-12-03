@@ -1,6 +1,7 @@
 /*	$OpenBSD	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
+ * Copyright (c) 2013,2014 Artturi Alm
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,13 +45,21 @@
 #define	SXIAHCI_TIMEOUT	0x100000
 #define SXIAHCI_PWRPIN	40
 
+#define SXIAHCI_PREG_DMA	0x70
+#define  SXIAHCI_PREG_DMA_MASK	(0xff<<8)
+#define  SXIAHCI_PREG_DMA_INIT	(0x44<<8)
+
 void	sxiahci_attach(struct device *, struct device *, void *);
 int	sxiahci_detach(struct device *, int);
 int	sxiahci_activate(struct device *, int);
+int	sxiahci_port_start(struct ahci_port *, int);
 
 extern int ahci_intr(void *);
 extern u_int32_t ahci_read(struct ahci_softc *, bus_size_t);
 extern void ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
+extern u_int32_t ahci_pread(struct ahci_port *, bus_size_t);
+extern void ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
+extern int ahci_default_port_start(struct ahci_port *, int);
 
 struct sxiahci_softc {
 	struct ahci_softc	sc;
@@ -75,18 +84,15 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	struct armv7_attach_args *aa = args;
 	struct sxiahci_softc *sxisc = (struct sxiahci_softc *)self;
 	struct ahci_softc *sc = &sxisc->sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	uint32_t timo;
 
-	sc->sc_iot = iot = aa->aa_iot;
+	sc->sc_iot = aa->aa_iot;
 	sc->sc_ios = aa->aa_dev->mem[0].size;
 	sc->sc_dmat = aa->aa_dmat;
 
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
+	    sc->sc_ios, 0, &sc->sc_ioh))
 		panic("sxiahci_attach: bus_space_map failed!");
-	ioh = sc->sc_ioh;
 
 	/* enable clock */
 	sxiccmu_enablemodule(CCMU_AHCI);
@@ -99,13 +105,13 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	SXISET4(sc, SXIAHCI_PHYCS1, 1 << 19);
 	delay(10);
 
-	SXICMS4(sc, SXIAHCI_PHYCS0, 1 << 25,
-	    1 << 23 | 1 << 24 | 1 << 18 | 1 << 26);
+	SXICMS4(sc, SXIAHCI_PHYCS0, 7 << 24,
+	    1 << 23 | 5 << 24 | 1 << 18);
 	delay(10);
 
 	SXICMS4(sc, SXIAHCI_PHYCS1,
-	    1 << 16 | 1 << 12 | 1 << 11 | 1 << 8 | 1 << 6,
-	    1 << 17 | 1 << 10 | 1 << 9 | 1 << 7);
+	    3 << 16 | 0x1f << 8 | 3 << 6,
+	    2 << 16 | 0x06 << 8 | 2 << 6);
 	delay(10);
 
 	SXISET4(sc, SXIAHCI_PHYCS1, 1 << 28 | 1 << 15);
@@ -114,18 +120,15 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	SXICLR4(sc, SXIAHCI_PHYCS1, 1 << 19);
 	delay(10);
 
-	SXICMS4(sc, SXIAHCI_PHYCS0, 1 << 21 | 1 << 20, 1 << 22);
-	delay(10);
-
-	SXICMS4(sc, SXIAHCI_PHYCS2, 1 << 7 | 1 << 6,
-	    1 << 9 | 1 << 8 | 1 << 5);
+	SXICMS4(sc, SXIAHCI_PHYCS0, 0x07 << 20, 0x03 << 20);
+	SXICMS4(sc, SXIAHCI_PHYCS2, 0x1f <<  5, 0x19 << 5);
 	delay(5000);
 
 	SXISET4(sc, SXIAHCI_PHYCS0, 1 << 19);
 	delay(20);
 
 	timo = SXIAHCI_TIMEOUT;
-	while ((SXIREAD4(sc, SXIAHCI_PHYCS0) >> 28 & 3) != 2 && --timo)
+	while ((SXIREAD4(sc, SXIAHCI_PHYCS0) >> 28 & 7) != 2 && --timo)
 		delay(10);
 	if (!timo) {
 		printf(": AHCI phy power up failed.\n");
@@ -158,7 +161,8 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 
 	SXIWRITE4(sc, SXIAHCI_PI, 1);
 	SXICLR4(sc, SXIAHCI_CAP, AHCI_REG_CAP_SPM);
-	sc->sc_flags |= AHCI_F_NO_PMP; /* XXX enough? */
+	sc->sc_flags |= AHCI_F_NO_PMP;
+	sc->sc_port_start = sxiahci_port_start;
 	if (ahci_attach(sc) != 0) {
 		/* error printed by ahci_attach */
 		goto irq;
@@ -192,4 +196,18 @@ sxiahci_activate(struct device *self, int act)
 	struct ahci_softc *sc = &sxisc->sc;
 
 	return ahci_activate((struct device *)sc, act);
+}
+
+int
+sxiahci_port_start(struct ahci_port *ap, int fre_only)
+{
+	u_int32_t			r;
+
+	/* Setup DMA */
+	r = ahci_pread(ap, SXIAHCI_PREG_DMA);
+	r &= ~SXIAHCI_PREG_DMA_MASK;
+	r |= SXIAHCI_PREG_DMA_INIT; /* XXX if fre_only? */
+	ahci_pwrite(ap, SXIAHCI_PREG_DMA, r);
+
+	return (ahci_default_port_start(ap, fre_only));
 }

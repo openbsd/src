@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.8 2014/04/14 04:42:22 dlg Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.9 2014/12/03 04:33:06 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -137,9 +137,12 @@ struct ahci_softc {
 	u_int32_t		sc_ccc_ports;
 	u_int32_t		sc_ccc_ports_cur;
 #endif
+
+	int			(*sc_port_start)(struct ahci_port *, int);
 };
 
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
+#define ahci_port_start(_p, _f)	((_p)->ap_sc->sc_port_start((_p), (_f)))
 
 int			ahci_attach(struct ahci_softc *);
 int			ahci_detach(struct ahci_softc *, int);

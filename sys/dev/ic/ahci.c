@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.16 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: ahci.c,v 1.17 2014/12/03 04:33:06 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -75,7 +75,7 @@ int			ahci_port_alloc(struct ahci_softc *, u_int);
 void			ahci_port_free(struct ahci_softc *, u_int);
 int			ahci_port_init(struct ahci_softc *, u_int);
 
-int			ahci_port_start(struct ahci_port *, int);
+int			ahci_default_port_start(struct ahci_port *, int);
 int			ahci_port_stop(struct ahci_port *, int);
 int			ahci_port_clo(struct ahci_port *);
 int			ahci_port_softreset(struct ahci_port *);
@@ -174,6 +174,9 @@ ahci_attach(struct ahci_softc *sc)
 	struct atascsi_attach_args	aaa;
 	u_int32_t			pi;
 	int				i;
+
+	if (sc->sc_port_start == NULL)
+		sc->sc_port_start = ahci_default_port_start;
 
 	if (ahci_init(sc) != 0) {
 		/* error already printed by ahci_init */
@@ -832,7 +835,7 @@ reterr:
 }
 
 int
-ahci_port_start(struct ahci_port *ap, int fre_only)
+ahci_default_port_start(struct ahci_port *ap, int fre_only)
 {
 	u_int32_t			r;
 
