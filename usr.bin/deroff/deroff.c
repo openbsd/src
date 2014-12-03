@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.8 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.9 2014/12/03 16:44:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -745,10 +745,11 @@ void
 inpic(void)
 {
 	int c1;
-	char *p1;
+	char *p1, *ep;
 
 	SKIP;
 	p1 = line;
+	ep = line + sizeof(line) - 1;
 	c = '\n';
 	for (;;) {
 		c1 = c;
@@ -781,8 +782,11 @@ inpic(void)
 						continue;
 					ungetc(c, infile);
 					backsl();
-				} else
+				} else if (p1 + 1 >= ep) {
+					errx(1, ".PS length exceeds limit");
+				} else {
 					*p1++ = c;
+				}
 			}
 			*p1++ = ' ';
 		}
