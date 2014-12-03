@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.248 2014/12/03 20:15:37 florian Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.249 2014/12/03 21:30:30 florian Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -155,9 +155,11 @@ Disable the use of ARP.
 Enable autoconfiguration.
 Valid for
 .Dq inet6
-only,
+only.
+If
 .Cm autoconf
-controls whether router advertisements will be accepted on this interface.
+is enabled router advertisements are accepted on this interface and
+the kernel sends periodic router solicitations from this interface.
 .It Fl autoconf
 Disable autoconfiguration.
 .It Cm broadcast Ar addr
