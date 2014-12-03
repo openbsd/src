@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ec_print.c,v 1.6 2014/12/03 19:45:16 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -141,7 +141,7 @@ EC_POINT_point2hex(const EC_GROUP * group, const EC_POINT * point,
 		free(buf);
 		return NULL;
 	}
-	ret = malloc(buf_len * 2 + 2);
+	ret = reallocarray(NULL, buf_len + 1, 2);
 	if (ret == NULL) {
 		free(buf);
 		return NULL;
