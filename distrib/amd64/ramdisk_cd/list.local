@@ -1,8 +1,7 @@
-# $OpenBSD: list.local,v 1.24 2014/01/19 00:33:40 deraadt Exp $
+# $OpenBSD: list.local,v 1.25 2014/12/03 20:11:19 florian Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/ping6
-LINK	instbin					sbin/rtsol
 
 LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/bioctl

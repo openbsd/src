@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.49 2014/11/22 15:02:27 deraadt Exp $
+#	$OpenBSD: list,v 1.50 2014/12/03 20:11:19 florian Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -49,7 +49,6 @@ LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/restore
 LINK	instbin					sbin/route
-LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/ftp
