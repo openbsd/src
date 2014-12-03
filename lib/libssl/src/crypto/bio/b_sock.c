@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.59 2014/11/26 05:37:26 bcook Exp $ */
+/* $OpenBSD: b_sock.c,v 1.60 2014/12/03 21:55:51 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,8 +94,7 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 		goto err;
 	}
 
-	/* cast to short because of win16 winsock definition */
-	if ((short)he->h_addrtype != AF_INET) {
+	if (he->h_addrtype != AF_INET) {
 		BIOerr(BIO_F_BIO_GET_HOST_IP,
 		    BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
 		goto err;
