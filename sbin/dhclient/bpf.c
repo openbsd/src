@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.36 2014/11/23 14:02:21 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.37 2014/12/03 18:47:03 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -111,7 +111,7 @@ if_register_send(void)
  * Packet filter program.
  *
  * XXX: Changes to the filter program may require changes to the
- * constant offsets used in if_register_send to patch the BPF program!
+ * constant offsets used in if_register_receive to patch the BPF program!
  */
 struct bpf_insn dhcp_bpf_filter[] = {
 	/* Make sure this is an IP packet. */
