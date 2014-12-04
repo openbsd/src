@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.118 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: files.usb,v 1.119 2014/12/04 11:05:26 mpi Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -309,6 +309,11 @@ file	dev/usb/uark.c			uark
 device	moscom: ucombus
 attach	moscom at uhub
 file	dev/usb/moscom.c		moscom
+
+# MosChip MCS78x0 serials
+device	umcs: ucombus
+attach	umcs at uhub
+file	dev/usb/umcs.c			umcs
 
 # simple serial
 device	uscom: ucombus
