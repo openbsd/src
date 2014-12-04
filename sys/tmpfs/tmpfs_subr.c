@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.8 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.9 2014/12/04 08:19:03 dcoppa Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -395,6 +395,11 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 
 	if (TMPFS_DIRSEQ_FULL(dnode)) {
 		error = ENOSPC;
+		goto out;
+	}
+
+	if (dnode->tn_links == 0) {
+		error = ENOENT;
 		goto out;
 	}
 
