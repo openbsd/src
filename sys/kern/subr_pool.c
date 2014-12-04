@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.168 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.169 2014/12/04 03:12:05 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -434,8 +434,9 @@ pool_get(struct pool *pp, int flags)
 		yield();
 
 	if (v == NULL) {
-		struct pool_get_memory mem =
-		    { MUTEX_INITIALIZER(pp->pr_ipl), NULL };
+		struct pool_get_memory mem = {
+		    MUTEX_INITIALIZER((pp->pr_ipl == -1) ?
+		    IPL_NONE : pp->pr_ipl), NULL };
 		struct pool_request pr;
 
 		pool_request_init(&pr, pool_get_done, &mem);
