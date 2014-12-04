@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2014/11/20 05:51:20 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.43 2014/12/04 02:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -30,7 +30,6 @@
 #include <sys/stat.h>
 #include <sys/queue.h>
 #include <sys/ioctl.h>
-#include <sys/hash.h>
 
 #include <net/if.h>
 #include <net/pfvar.h>

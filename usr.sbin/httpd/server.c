@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.46 2014/10/31 13:49:52 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.47 2014/12/04 02:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/un.h>
 #include <sys/uio.h>
 #include <sys/tree.h>
-#include <sys/hash.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

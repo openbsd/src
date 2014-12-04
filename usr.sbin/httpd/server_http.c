@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.54 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.55 2014/12/04 02:44:42 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/tree.h>
-#include <sys/hash.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
