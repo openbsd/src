@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.45 2014/07/12 21:56:56 tedu Exp $
+# $OpenBSD: GENERIC,v 1.46 2014/12/04 11:19:17 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -106,6 +106,8 @@ uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 moscom*	at uhub?		# MosChip MCS7703 serial
 ucom*	at moscom?
+umcs*	at uhub?		# MosChip MCS78x0 serial
+ucom*	at umcs?
 uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
 umsm*	at uhub?		# Qualcomm MSM EVDO
