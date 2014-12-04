@@ -20,13 +20,12 @@ Any time you are prompted while the board is displayed you can type:
 to see where "word" is on the board.
 
 Usage:
-    boggle [-Bbcd] [-s seed] [-t time] [-w length] [+[+]] [boardspec]
+    boggle [-Bbcd] [-t time] [-w length] [+[+]] [boardspec]
 
     -B: big boggle mode, uses a 5x5 board
     -b: batch mode (boardspec must be present); dictionary read from stdin
     -c: a challenge cube will be added to the board
     -d: debug mode
-    -s seed: use "seed" as the random number seed
     -t time: time limit in seconds instead of default 180
     -w length: minimum word length in letters instead of default 3
     +: can reuse a cube, but not twice in succession

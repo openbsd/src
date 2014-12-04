@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.13 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: mach.c,v 1.14 2014/12/04 06:12:33 deraadt Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -94,17 +94,12 @@ static void	winch_catcher(int);
  * This is called once, when the program starts
  */
 int
-setup(char *seed)
+setup(void)
 {
 	char *cp, *ep;
 
 	if (tty_setup() < 0)
 		return(-1);
-
-	if (seed != NULL)
-		srandom(atol(seed));
-	else
-		srandomdev();
 
 	separator = malloc(4 * grid + 2);
 	if (separator == NULL)

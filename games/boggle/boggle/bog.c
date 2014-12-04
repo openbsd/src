@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.23 2014/10/11 03:58:11 doug Exp $	*/
+/*	$OpenBSD: bog.c,v 1.24 2014/12/04 06:12:33 deraadt Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -88,14 +88,14 @@ int
 main(int argc, char *argv[])
 {
 	int ch, done;
-	char *bspec, *p, *seed;
+	char *bspec, *p;
 
 	batch = debug = reuse = selfuse;
-	bspec = seed = NULL;
+	bspec = NULL;
 	minlength = -1;
 	tlimit = 180;		/* 3 minutes is standard */
 
-	while ((ch = getopt(argc, argv, "Bbcds:t:w:")) != -1)
+	while ((ch = getopt(argc, argv, "Bbcdt:w:")) != -1)
 		switch(ch) {
 		case 'B':
 			grid = 5;
@@ -108,9 +108,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug = 1;
-			break;
-		case 's':
-			seed = optarg;
 			break;
 		case 't':
 			if ((tlimit = atoi(optarg)) < 1)
@@ -163,7 +160,7 @@ main(int argc, char *argv[])
 			(void) printf("%s\n", p);
 		exit(0);
 	}
-	setup(seed);
+	setup();
 	prompt("Loading the dictionary...");
 	if ((dictfp = opendict(DICT)) == NULL) {
 		warn("%s", DICT);
@@ -606,7 +603,7 @@ newgame(char *b)
 		/* Shuffle the cubes using Fisher-Yates (aka Knuth P). */
 		p = ncubes;
 		while (--p) {
-			q = (int)random() % (p + 1);
+			q = (int)arc4random_uniform(p + 1);
 			tmp = cubes[p];
 			cubes[p] = cubes[q];
 			cubes[q] = tmp;
@@ -614,15 +611,15 @@ newgame(char *b)
 
 		/* Build the board by rolling each cube. */
 		for (i = 0; i < ncubes; i++)
-			board[i] = cubes[i][random() % 6];
+			board[i] = cubes[i][arc4random_uniform(6)];
 
 		/*
 		 * For challenge mode, roll chal_cube and replace a random
 		 * cube with its value.  Set the high bit to distinguish it.
 		 */
 		if (challenge) {
-			i = random() % ncubes;
-			board[i] = SETHI(chal_cube[random() % 6]);
+			i = arc4random_uniform(ncubes);
+			board[i] = SETHI(chal_cube[arc4random_uniform(6)]);
 		}
 	} else {
 		for (i = 0; i < ncubes; i++)
@@ -756,7 +753,7 @@ usage(void)
 	extern char *__progname;
 
 	(void) fprintf(stderr, "usage: "
-	    "%s [-Bbcd] [-s seed] [-t time] [-w length] [+[+]] [boardspec]\n",
+	    "%s [-Bbcd] [-t time] [-w length] [+[+]] [boardspec]\n",
 	    __progname);
 	exit(1);
 }
