@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.30 2014/09/14 14:17:27 jsg Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.31 2014/12/04 00:01:08 tedu Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -42,8 +42,9 @@ __FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwm
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
-#include <sys/hash.h>
 #include <sys/mutex.h>
+
+#include <crypto/siphash.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -62,6 +63,7 @@ int ufs_dirhashmaxmem;
 int ufs_dirhashmem;
 int ufs_dirhashcheck;
 
+SIPHASH_KEY ufsdirhash_key;
 
 int ufsdirhash_hash(struct dirhash *dh, char *name, int namelen);
 void ufsdirhash_adjfree(struct dirhash *dh, doff_t offset, int diff);
@@ -857,17 +859,7 @@ ufsdirhash_checkblock(struct inode *ip, char *buf, doff_t offset)
 int
 ufsdirhash_hash(struct dirhash *dh, char *name, int namelen)
 {
-	u_int32_t hash;
-
-	/*
-	 * We hash the name and then some other bit of data that is
-	 * invariant over the dirhash's lifetime. Otherwise names
-	 * differing only in the last byte are placed close to one
-	 * another in the table, which is bad for linear probing.
-	 */
-	hash = hash32_buf(name, namelen, HASHINIT);
-	hash = hash32_buf(&dh, sizeof(dh), hash);
-	return (hash % dh->dh_hlen);
+	return SipHash24(&ufsdirhash_key, name, namelen) % dh->dh_hlen;
 }
 
 /*
@@ -1059,6 +1051,7 @@ ufsdirhash_init(void)
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(doff_t), 0, 0, 0,
 	    "dirhash", &pool_allocator_nointr);
 	mtx_init(&ufsdirhash_mtx, IPL_NONE);
+	arc4random_buf(&ufsdirhash_key, sizeof(ufsdirhash_key));
 	TAILQ_INIT(&ufsdirhash_list);
 #if defined (__sparc__) && !defined (__sparc64__)
 	if (!CPU_ISSUN4OR4C)
