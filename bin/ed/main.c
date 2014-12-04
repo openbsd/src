@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2014/12/04 08:34:04 daniel Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -594,8 +594,7 @@ exec_command(void)
 		break;
 	case 'i':
 		if (second_addr == 0) {
-			seterrmsg("invalid address");
-			return ERR;
+			second_addr = 1;
 		}
 		GET_COMMAND_SUFFIX();
 		if (!isglobal) clear_undo_stack();
