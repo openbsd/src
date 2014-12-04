@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.126 2014/11/27 01:57:42 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.127 2014/12/04 17:35:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -118,7 +118,8 @@ enum	stmt {
 	STMT__MAX
 };
 
-typedef	int (*mdoc_fp)(struct mpage *, const struct mdoc_node *);
+typedef	int (*mdoc_fp)(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
 
 struct	mdoc_handler {
 	mdoc_fp		 fp; /* optional handler */
@@ -144,15 +145,24 @@ static	void	 mpages_merge(struct mchars *, struct mparse *);
 static	void	 names_check(void);
 static	void	 parse_cat(struct mpage *, int);
 static	void	 parse_man(struct mpage *, const struct man_node *);
-static	void	 parse_mdoc(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_body(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_head(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_Fd(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_Fn(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_Nd(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_Nm(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_Sh(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_Xr(struct mpage *, const struct mdoc_node *);
+static	void	 parse_mdoc(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_body(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_head(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_Fd(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_Fn(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_Nd(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_Nm(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_Sh(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
+static	int	 parse_mdoc_Xr(struct mpage *, const struct mdoc_meta *,
+			const struct mdoc_node *);
 static	void	 putkey(const struct mpage *, char *, uint64_t);
 static	void	 putkeys(const struct mpage *,
 			const char *, size_t, uint64_t);
@@ -1207,7 +1217,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		if (NULL != mdoc) {
 			if (NULL != (cp = mdoc_meta(mdoc)->name))
 				putkey(mpage, cp, NAME_HEAD);
-			parse_mdoc(mpage, mdoc_node(mdoc));
+			parse_mdoc(mpage, mdoc_meta(mdoc), mdoc_node(mdoc));
 		} else if (NULL != man)
 			parse_man(mpage, man_node(man));
 		else
@@ -1532,7 +1542,8 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 }
 
 static void
-parse_mdoc(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 
 	assert(NULL != n);
@@ -1548,7 +1559,7 @@ parse_mdoc(struct mpage *mpage, const struct mdoc_node *n)
 			/* FALLTHROUGH */
 		case MDOC_TAIL:
 			if (NULL != mdocs[n->tok].fp)
-			       if (0 == (*mdocs[n->tok].fp)(mpage, n))
+			       if (0 == (*mdocs[n->tok].fp)(mpage, meta, n))
 				       break;
 			if (mdocs[n->tok].mask)
 				putmdockey(mpage, n->child,
@@ -1559,12 +1570,13 @@ parse_mdoc(struct mpage *mpage, const struct mdoc_node *n)
 			continue;
 		}
 		if (NULL != n->child)
-			parse_mdoc(mpage, n);
+			parse_mdoc(mpage, meta, n);
 	}
 }
 
 static int
-parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 	const char	*start, *end;
 	size_t		 sz;
@@ -1607,7 +1619,8 @@ parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_node *n)
 }
 
 static int
-parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 	char	*cp;
 
@@ -1640,7 +1653,8 @@ parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_node *n)
 }
 
 static int
-parse_mdoc_Xr(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_Xr(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 	char	*cp;
 
@@ -1659,7 +1673,8 @@ parse_mdoc_Xr(struct mpage *mpage, const struct mdoc_node *n)
 }
 
 static int
-parse_mdoc_Nd(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_Nd(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 
 	if (MDOC_BODY == n->type)
@@ -1668,32 +1683,40 @@ parse_mdoc_Nd(struct mpage *mpage, const struct mdoc_node *n)
 }
 
 static int
-parse_mdoc_Nm(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_Nm(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 
 	if (SEC_NAME == n->sec)
 		putmdockey(mpage, n->child, NAME_TITLE);
-	else if (SEC_SYNOPSIS == n->sec && MDOC_HEAD == n->type)
-		putmdockey(mpage, n->child, NAME_SYN);
+	else if (SEC_SYNOPSIS == n->sec && MDOC_HEAD == n->type) {
+		if (n->child == NULL)
+			putkey(mpage, meta->name, NAME_SYN);
+		else
+			putmdockey(mpage, n->child, NAME_SYN);
+	}
 	return(0);
 }
 
 static int
-parse_mdoc_Sh(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_Sh(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 
 	return(SEC_CUSTOM == n->sec && MDOC_HEAD == n->type);
 }
 
 static int
-parse_mdoc_head(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_head(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 
 	return(MDOC_HEAD == n->type);
 }
 
 static int
-parse_mdoc_body(struct mpage *mpage, const struct mdoc_node *n)
+parse_mdoc_body(struct mpage *mpage, const struct mdoc_meta *meta,
+	const struct mdoc_node *n)
 {
 
 	return(MDOC_BODY == n->type);
