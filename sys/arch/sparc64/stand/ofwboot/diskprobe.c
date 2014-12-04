@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.1 2014/11/26 20:30:41 stsp Exp $ */
+/*	$OpenBSD: diskprobe.c,v 1.2 2014/12/04 10:33:41 stsp Exp $ */
 
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -37,16 +37,34 @@ new_diskinfo(int node)
 	struct diskinfo *dip;
 	struct of_dev ofdev;
 	int ihandle = -1;
+	int len;
+	const char *unit;
+	int i;
 
 	dip = alloc(sizeof(*dip));
 	bzero(dip, sizeof(*dip));
 
-	if (OF_package_to_path(node, dip->path, sizeof(dip->path)) > 0)
-		DPRINTF("found disk %s\n", dip->path);
-	else {
+	len = OF_package_to_path(node, dip->path, sizeof(dip->path));
+	if (len < 0 || len >= sizeof(dip->path)) {
 		DPRINTF("could not get path for disk node %x\n", node);
 		goto bad;
-	}	
+	}
+	dip->path[len] = '\0';
+
+	/* If no device unit was supplied by the firmware, add it. */
+	unit = NULL;
+	for (i = len - 1; i >= 0; i--) {
+		if (dip->path[i] == '/')
+			break;
+		else if (dip->path[i] == '@') {
+			unit = &dip->path[i];
+			break;
+		}
+	}
+	if (unit == NULL)
+		strlcat(dip->path, "@0", sizeof(dip->path));
+
+	DPRINTF("found disk %s\n", dip->path);
 
 	ihandle = OF_open(dip->path);
 	if (ihandle == -1)
