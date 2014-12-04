@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.74 2014/07/11 21:54:37 tedu Exp $
+#	$OpenBSD: files.amd64,v 1.75 2014/12/04 21:03:50 tedu Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -182,15 +182,6 @@ include	"dev/wscons/files.wscons"
 include	"dev/pckbc/files.pckbc"
 
 file	arch/amd64/amd64/wscons_machdep.c	wsdisplay
-
-# Floppy disk controller
-device	fdc {[drive = -1]}
-attach	fdc at isa
-file	dev/isa/fdc.c				fdc needs-flag
-
-device	fd: disk, isa_dma
-attach	fd at fdc
-file	dev/isa/fd.c				fd needs-flag
 
 pseudo-device	pctr
 file	arch/amd64/amd64/pctr.c		pctr needs-flag

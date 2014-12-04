@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.116 2014/10/18 15:37:06 miod Exp $
+#	$OpenBSD: files.isa,v 1.117 2014/12/04 21:03:51 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -7,6 +7,7 @@
 
 # ports should specify appropriate major numbers for the following
 # devices:
+#	fd
 #	wd
 
 device	isa {[port = -1], [size = 0],
@@ -23,6 +24,15 @@ define	isa_dma
 device	isadma
 attach	isadma at isa: isa_dma
 file	dev/isa/isadma.c		isadma needs-flag
+
+# Floppy disk controller
+device	fdc {[drive = -1]}
+attach	fdc at isa
+file	dev/isa/fdc.c				fdc needs-flag
+
+device	fd: disk, isa_dma
+attach	fd at fdc
+file	dev/isa/fd.c				fd needs-flag
 
 #
 # 8250/16[45]50-based multi-port serial boards

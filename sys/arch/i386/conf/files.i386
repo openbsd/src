@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.218 2014/09/08 01:47:05 guenther Exp $
+#	$OpenBSD: files.i386,v 1.219 2014/12/04 21:03:51 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -177,6 +177,7 @@ file	dev/pci/if_hme_pci.c		hme_pci
 #
 
 major	{wd = 0}
+major	{fd = 2}
 
 include "dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isabus
@@ -203,17 +204,6 @@ file	arch/i386/isa/mms.c		mms needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/pckbc/files.pckbc"
-
-# Floppy disk controller
-# XXX temporarily conflicts with arc, will soon move to files.isa
-device	fdc {[drive = -1]}
-attach	fdc at isa
-file	dev/isa/fdc.c		fdc needs-flag
-
-device	fd: disk, isa_dma
-attach	fd at fdc
-file	dev/isa/fd.c		fd needs-flag
-major	{fd = 2}
 
 # Adaptec AHA-284x VL SCSI controllers
 # device declaration in sys/conf/files
