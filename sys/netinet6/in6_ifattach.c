@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.77 2014/11/20 09:55:57 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.78 2014/12/04 00:02:15 tedu Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-#include <crypto/md5.h>
+#include <crypto/sha2.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -80,15 +80,15 @@ int in6_ifattach_loopback(struct ifnet *);
  * IEEE802/EUI64 address sources.
  * The goal here is to get an interface identifier that is
  * (1) random enough and (2) does not change across reboot.
- * We currently use MD5(hostname) for it.
+ * We currently use SHA512(hostname) for it.
  *
  * in6 - upper 64bits are preserved
  */
 int
 get_last_resort_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
-	MD5_CTX ctxt;
-	u_int8_t digest[16];
+	SHA2_CTX ctx;
+	u_int8_t digest[SHA512_DIGEST_LENGTH];
 
 #if 0
 	/* we need at least several letters as seed for ifid */
@@ -97,10 +97,9 @@ get_last_resort_ifid(struct ifnet *ifp, struct in6_addr *in6)
 #endif
 
 	/* generate 8 bytes of pseudo-random value. */
-	bzero(&ctxt, sizeof(ctxt));
-	MD5Init(&ctxt);
-	MD5Update(&ctxt, hostname, hostnamelen);
-	MD5Final(digest, &ctxt);
+	SHA512Init(&ctx);
+	SHA512Update(&ctx, hostname, hostnamelen);
+	SHA512Final(digest, &ctx);
 
 	/* assumes sizeof(digest) > sizeof(ifid) */
 	bcopy(digest, &in6->s6_addr[8], 8);
@@ -500,8 +499,8 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 {
 	const char *p;
 	u_int8_t *q;
-	MD5_CTX ctxt;
-	u_int8_t digest[16];
+	SHA2_CTX ctx;
+	u_int8_t digest[SHA512_DIGEST_LENGTH];
 	u_int8_t l;
 	u_int8_t n[64];	/* a single label must not exceed 63 chars */
 
@@ -522,11 +521,10 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 	}
 
 	/* generate 8 bytes of pseudo-random value. */
-	bzero(&ctxt, sizeof(ctxt));
-	MD5Init(&ctxt);
-	MD5Update(&ctxt, &l, sizeof(l));
-	MD5Update(&ctxt, n, l);
-	MD5Final(digest, &ctxt);
+	SHA512Init(&ctx);
+	SHA512Update(&ctx, &l, sizeof(l));
+	SHA512Update(&ctx, n, l);
+	SHA512Final(digest, &ctx);
 
 	bzero(sa6, sizeof(*sa6));
 	sa6->sin6_family = AF_INET6;
