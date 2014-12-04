@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.128 2014/12/04 18:31:04 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.129 2014/12/04 20:13:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,6 +94,7 @@ struct	mpage {
 	char		*desc;    /* description from file content */
 	struct mlink	*mlinks;  /* singly linked list */
 	int		 form;    /* format from file content */
+	int		 name_head_done;
 };
 
 struct	mlink {
@@ -144,7 +145,8 @@ static	void	 mpages_free(void);
 static	void	 mpages_merge(struct mchars *, struct mparse *);
 static	void	 names_check(void);
 static	void	 parse_cat(struct mpage *, int);
-static	void	 parse_man(struct mpage *, const struct man_node *);
+static	void	 parse_man(struct mpage *, const struct man_meta *,
+			const struct man_node *);
 static	void	 parse_mdoc(struct mpage *, const struct mdoc_meta *,
 			const struct mdoc_node *);
 static	int	 parse_mdoc_body(struct mpage *, const struct mdoc_meta *,
@@ -1215,16 +1217,14 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			putkey(mpage, mlink->name, NAME_FILE);
 		}
 
-		assert(NULL == mpage->desc);
-		if (NULL != mdoc) {
-			if (NULL != (cp = mdoc_meta(mdoc)->name))
-				putkey(mpage, cp, NAME_HEAD);
+		assert(mpage->desc == NULL);
+		if (mdoc != NULL)
 			parse_mdoc(mpage, mdoc_meta(mdoc), mdoc_node(mdoc));
-		} else if (NULL != man)
-			parse_man(mpage, man_node(man));
+		else if (man != NULL)
+			parse_man(mpage, man_meta(man), man_node(man));
 		else
 			parse_cat(mpage, fd);
-		if (NULL == mpage->desc)
+		if (mpage->desc == NULL)
 			mpage->desc = mandoc_strdup(mpage->mlinks->name);
 
 		if (warnings && !use_all)
@@ -1429,7 +1429,8 @@ putmdockey(const struct mpage *mpage,
 }
 
 static void
-parse_man(struct mpage *mpage, const struct man_node *n)
+parse_man(struct mpage *mpage, const struct man_meta *meta,
+	const struct man_node *n)
 {
 	const struct man_node *head, *body;
 	char		*start, *title;
@@ -1495,6 +1496,11 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 					break;
 
 				putkey(mpage, start, NAME_TITLE);
+				if ( ! (mpage->name_head_done ||
+				    strcasecmp(start, meta->title))) {
+					putkey(mpage, start, NAME_HEAD);
+					mpage->name_head_done = 1;
+				}
 
 				if (' ' == byte) {
 					start += sz + 1;
@@ -1509,6 +1515,11 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 
 			if (start == title) {
 				putkey(mpage, start, NAME_TITLE);
+				if ( ! (mpage->name_head_done ||
+				    strcasecmp(start, meta->title))) {
+					putkey(mpage, start, NAME_HEAD);
+					mpage->name_head_done = 1;
+				}
 				free(title);
 				return;
 			}
@@ -1539,7 +1550,7 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 	for (n = n->child; n; n = n->next) {
 		if (NULL != mpage->desc)
 			break;
-		parse_man(mpage, n);
+		parse_man(mpage, meta, n);
 	}
 }
 
@@ -1709,6 +1720,12 @@ parse_mdoc_Nm(struct mpage *mpage, const struct mdoc_meta *meta,
 			putkey(mpage, meta->name, NAME_SYN);
 		else
 			putmdockey(mpage, n->child, NAME_SYN);
+	}
+	if ( ! (mpage->name_head_done ||
+	    n->child == NULL || n->child->string == NULL ||
+	    strcasecmp(n->child->string, meta->title))) {
+		putkey(mpage, n->child->string, NAME_HEAD);
+		mpage->name_head_done = 1;
 	}
 	return(0);
 }
