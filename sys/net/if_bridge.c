@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.228 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.229 2014/12/04 16:16:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2705,6 +2705,11 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 		m_freem(m);
 }
 
+#if NVLAN > 0
+extern int vlan_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *);
+#endif
+
 int
 bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 {
@@ -2726,22 +2731,33 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 	 * If the underlying interface cannot do VLAN tag insertion itself,
 	 * create an encapsulation header.
 	 */
-	if ((m->m_flags & M_VLANTAG) &&
-	    (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING) == 0) {
-		struct ether_vlan_header evh;
+	if (ifp->if_output == vlan_output) {
+		struct ifvlan	*ifv = ifp->if_softc;
+		struct ifnet	*p = ifv->ifv_p;
 
-		m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
-		evh.evl_proto = evh.evl_encap_proto;
-		evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-		evh.evl_tag = htons(m->m_pkthdr.ether_vtag);
-		m_adj(m, ETHER_HDR_LEN);
-		M_PREPEND(m, sizeof(evh), M_DONTWAIT);
-		if (m == NULL) {
-			sc->sc_if.if_oerrors++;
-			return (ENOBUFS);
+		/* should we use the tx tagging hw offload at all? */
+		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
+			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
+			    (m->m_pkthdr.pf.prio << EVL_PRIO_BITS);
+			m->m_flags |= M_VLANTAG;
+		} else {
+			struct ether_vlan_header evh;
+
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
+			evh.evl_proto = evh.evl_encap_proto;
+			evh.evl_encap_proto = htons(ifv->ifv_type);
+			evh.evl_tag = htons(ifv->ifv_tag +
+			    (m->m_pkthdr.pf.prio << EVL_PRIO_BITS));
+			m_adj(m, ETHER_HDR_LEN);
+			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
+			if (m == NULL) {
+				sc->sc_if.if_oerrors++;
+				return (ENOBUFS);
+			}
+			m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
+			m->m_flags &= ~M_VLANTAG;
 		}
-		m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
-		m->m_flags &= ~M_VLANTAG;
 	}
 #endif
 	len = m->m_pkthdr.len;
