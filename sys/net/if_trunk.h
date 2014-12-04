@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.18 2013/11/18 09:16:30 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.19 2014/12/04 00:01:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -214,16 +214,15 @@ struct trunk_softc {
 #define IFCAP_TRUNK_FULLDUPLEX	0x00010000	/* full duplex with >1 ports */
 
 /* Private data used by the loadbalancing protocol */
-#define TRUNK_LB_MAXKEYS	8
 struct trunk_lb {
-	u_int32_t		lb_key;
+	SIPHASH_KEY		lb_key;
 	struct trunk_port	*lb_ports[TRUNK_MAX_PORTS];
 };
 
 int	 	trunk_input(struct ifnet *, struct ether_header *,
 		    struct mbuf *);
 int		trunk_enqueue(struct ifnet *, struct mbuf *);
-u_int32_t	trunk_hashmbuf(struct mbuf *, u_int32_t);
+u_int32_t	trunk_hashmbuf(struct mbuf *, SIPHASH_KEY *);
 #endif /* _KERNEL */
 
 #endif /* _NET_TRUNK_H */

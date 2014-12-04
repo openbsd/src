@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.7 2013/10/24 18:50:16 deraadt Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.8 2014/12/04 00:01:53 tedu Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ struct lacp_softc {
 	LIST_HEAD(, lacp_port)	lsc_ports;
 	struct lacp_portmap	lsc_pmap[2];
 	volatile u_int		lsc_activemap;
-	u_int32_t		lsc_hashkey;
+	SIPHASH_KEY		lsc_hashkey;
 };
 
 #define	LACP_TYPE_ACTORINFO	1
