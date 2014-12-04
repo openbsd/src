@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.92 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.93 2014/12/04 21:52:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -133,6 +133,7 @@ struct xbpci_softc {
 	char	xb_intrstr[BRIDGE_NINTRS][sizeof("irq #, xbow irq ###")];
 
 	int		xb_err_intrsrc;
+	int		(*xb_pci_intr_handler)(void *);
 
 	uint64_t	xb_ier;		/* copy of BRIDGE_IER value */
 
@@ -214,6 +215,7 @@ int	xbridge_get_widget(void *);
 int	xbridge_get_dl(void *, pcitag_t, struct sgi_device_location *);
 
 int	xbridge_pci_intr_handler(void *);
+int	xbridge_picv1_pci_intr_handler(void *);
 int	xbridge_err_intr_handler(void *);
 
 uint8_t xbridge_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -513,6 +515,15 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 		xb->xb_read_reg = bridge_read_reg;
 		xb->xb_write_reg = bridge_write_reg;
 	}
+
+	/*
+	 * Revision 1 of PIC requires a wrapper around
+	 * xbridge_pci_intr_handler().
+	 */
+	if (ISSET(xb->xb_flags, XF_PIC) && xb->xb_revision <= 1)
+		xb->xb_pci_intr_handler = xbridge_picv1_pci_intr_handler;
+	else
+		xb->xb_pci_intr_handler = xbridge_pci_intr_handler;
 
 	/*
 	 * Map Bridge registers.
@@ -1113,7 +1124,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		 * XXX at IPL_BIO, in case the interrupt will be shared
 		 * XXX between devices of different levels.
 		 */
-		if (xbow_intr_establish(xbridge_pci_intr_handler, xi, intrsrc,
+		if (xbow_intr_establish(xb->xb_pci_intr_handler, xi, intrsrc,
 		    IPL_BIO, NULL, NULL)) {
 			printf("%s: unable to register interrupt handler\n",
 			    DEVNAME(xb));
@@ -1230,18 +1241,6 @@ xbridge_pci_intr_handler(void *v)
 	int rc;
 	uint64_t isr;
 
-	/*
-	 * Revision 1 of PIC is supposed to need the interrupt enable bit
-	 * to be toggled to prevent loss of interrupt.
-	 */
-	if (ISSET(xb->xb_flags, XF_PIC) && xb->xb_revision <= 1) {
-		xbridge_write_reg(xb, BRIDGE_IER,
-		    xb->xb_ier & ~(1L << xi->xi_intrbit));
-		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
-		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
-		(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
-	}
-
 	/* XXX shouldn't happen, and assumes interrupt is not shared */
 	if (LIST_EMPTY(&xi->xi_handlers)) {
 		printf("%s: spurious irq %d\n", DEVNAME(xb), xi->xi_intrbit);
@@ -1321,6 +1320,24 @@ xbridge_pci_intr_handler(void *v)
 	}
 
 	return rc;
+}
+
+int
+xbridge_picv1_pci_intr_handler(void *v)
+{
+	struct xbridge_intr *xi = (struct xbridge_intr *)v;
+	struct xbpci_softc *xb = xi->xi_bus;
+
+	/*
+	 * Revision 1 of PIC is supposed to need the interrupt enable bit
+	 * to be toggled to prevent loss of interrupt.
+	 */
+	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier & ~(1L << xi->xi_intrbit));
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+
+	return xbridge_pci_intr_handler(v);
 }
 
 /*
