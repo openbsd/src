@@ -3,7 +3,7 @@ SP-BADARGS-MAN(1)           General Commands Manual          SP-BADARGS-MAN(1)
 
 
 NNAAMMEE
-       sp-badargs-man - bad numbers of arguments to .sp macros in man(7)
+       sp-badargs-man - bad arguments to .sp macros in man(7)
 
 DDEESSCCRRIIPPTTIIOONN
        no arguments:
@@ -15,8 +15,10 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
+       no scaling unit specified:
+
        end of test document
 
 
 
-OpenBSD                        January 17, 2010              SP-BADARGS-MAN(1)
+OpenBSD                        December 4, 2014              SP-BADARGS-MAN(1)

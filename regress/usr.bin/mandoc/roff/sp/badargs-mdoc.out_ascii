@@ -1,7 +1,7 @@
 SP-BADARGS-MDOC(1)          General Commands Manual         SP-BADARGS-MDOC(1)
 
 NNAAMMEE
-     sspp--bbaaddaarrggss--mmddoocc - bad numbers of arguments to .sp macros in mdoc(7)
+     sspp--bbaaddaarrggss--mmddoocc - bad arguments to .sp macros in mdoc(7)
 
 DDEESSCCRRIIPPTTIIOONN
      no arguments:
@@ -13,6 +13,8 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
+     no scaling unit specified:
+
      end of test document
 
-OpenBSD                         January 2, 2011                        OpenBSD
+OpenBSD                        December 4, 2014                        OpenBSD

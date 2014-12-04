@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.25 2014/10/14 18:16:57 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.26 2014/12/04 02:05:16 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -108,7 +108,7 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 	case '\0':
 		if (SCALE_MAX == def)
 			return(0);
-		unit = SCALE_EN;
+		unit = def;
 		break;
 	case 'u':
 		unit = SCALE_BU;
