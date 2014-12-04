@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.31 2014/07/14 08:49:27 schwarze Exp $
+# $OpenBSD: security,v 1.32 2014/12/04 00:07:21 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -95,7 +95,8 @@ sub check_passwd {
 		}
 		nag length $name > 31,
 		    "Login $name has more than 31 characters.";
-		nag $pwd eq '',
+		nag $pwd eq '' && !($name eq 'anoncvs' &&
+				    $shell =~ /\/anoncvssh$/),
 		    "Login $name has no password.";
 		if ($pwd ne '' &&
 		    $pwd ne 'skey' &&
