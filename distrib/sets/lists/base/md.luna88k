@@ -1198,6 +1198,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umass_quirks.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umass_scsi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umassvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umcs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umidireg.ph

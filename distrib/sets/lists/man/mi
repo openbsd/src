@@ -1967,6 +1967,7 @@
 ./usr/share/man/man4/ulpt.4
 ./usr/share/man/man4/umass.4
 ./usr/share/man/man4/umbg.4
+./usr/share/man/man4/umcs.4
 ./usr/share/man/man4/umct.4
 ./usr/share/man/man4/umidi.4
 ./usr/share/man/man4/umodem.4

@@ -1339,6 +1339,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umass_quirks.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umass_scsi.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umassvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umcs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/umidireg.ph

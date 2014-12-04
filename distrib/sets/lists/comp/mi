@@ -780,6 +780,7 @@
 ./usr/include/dev/usb/umass_quirks.h
 ./usr/include/dev/usb/umass_scsi.h
 ./usr/include/dev/usb/umassvar.h
+./usr/include/dev/usb/umcs.h
 ./usr/include/dev/usb/umct.h
 ./usr/include/dev/usb/umidi_quirks.h
 ./usr/include/dev/usb/umidireg.h

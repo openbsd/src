@@ -864,6 +864,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umass_quirks.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umass_scsi.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umassvar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umcs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umidireg.ph
@@ -2182,8 +2183,8 @@
 ./usr/local/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/mdec/bootblk
 ./usr/mdec/ofwboot
-./usr/mdec/ofwbootfd
 ./usr/mdec/ofwboot.net
+./usr/mdec/ofwbootfd
 ./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
