@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.640 2014/11/23 21:20:54 sasano Exp $
+$OpenBSD: usbdevs,v 1.641 2014/12/04 10:41:42 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1032,8 +1032,9 @@ product ASUSTEK WL140		0x3300	WL-140
 product ATEN UC1284		0x2001	Parallel
 product ATEN UC10T		0x2002	10Mbps Ethernet
 product ATEN UC110T		0x2007	UC-110T Ethernet
-product ATEN UC232A		0x2008	Serial
+product ATEN UC232A		0x2008	UC232A Serial
 product ATEN UC210T		0x2009	UC210T Ethernet
+product ATEN UC2324		0x2011	UC2324 Serial
 product ATEN DSB650C		0x4000	DSB-650C
 
 /* Atheros Communications products */
@@ -2986,8 +2987,11 @@ product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 product MOSCHIP MCS7703		0x7703	MCS7703 Serial
 product	MOSCHIP	MCS7715		0x7715	MCS7715	Serial Parallel
 product MOSCHIP MCS7730		0x7730	MCS7730 Ethernet
+product MOSCHIP MCS7810		0x7810	MCS7810 Serial
+product MOSCHIP MCS7820		0x7820	MCS7820 Serial
 product MOSCHIP MCS7830		0x7830	MCS7830 Ethernet
 product MOSCHIP MCS7832		0x7832	MCS7832 Ethernet
+product MOSCHIP MCS7840		0x7840	MCS7840 Serial
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
