@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.129 2014/12/04 20:13:13 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.130 2014/12/04 21:48:26 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,6 +115,7 @@ enum	stmt {
 	STMT_INSERT_PAGE,	/* insert mpage */
 	STMT_INSERT_LINK,	/* insert mlink */
 	STMT_INSERT_NAME,	/* insert name */
+	STMT_SELECT_NAME,	/* retrieve existing name flags */
 	STMT_INSERT_KEY,	/* insert parsed key */
 	STMT__MAX
 };
@@ -1779,7 +1780,7 @@ putkeys(const struct mpage *mpage,
 			name_mask &= ~NAME_FIRST;
 		if (debug > 1)
 			say(mpage->mlinks->file,
-			    "Adding name %*s", sz, cp);
+			    "Adding name %*s, bits=%d", sz, cp, v);
 	} else {
 		htab = &strings;
 		if (debug > 1)
@@ -1996,12 +1997,21 @@ dbadd_mlink(const struct mlink *mlink)
 static void
 dbadd_mlink_name(const struct mlink *mlink)
 {
+	uint64_t	 bits;
 	size_t		 i;
 
 	dbadd_mlink(mlink);
 
 	i = 1;
-	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, NAME_FILE & NAME_MASK);
+	SQL_BIND_INT64(stmts[STMT_SELECT_NAME], i, mlink->mpage->pageid);
+	bits = NAME_FILE & NAME_MASK;
+	if (sqlite3_step(stmts[STMT_SELECT_NAME]) == SQLITE_ROW) {
+		bits |= sqlite3_column_int64(stmts[STMT_SELECT_NAME], 0);
+		sqlite3_reset(stmts[STMT_SELECT_NAME]);
+	}
+
+	i = 1;
+	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, bits);
 	SQL_BIND_TEXT(stmts[STMT_INSERT_NAME], i, mlink->name);
 	SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, mlink->mpage->pageid);
 	SQL_STEP(stmts[STMT_INSERT_NAME]);
@@ -2314,7 +2324,8 @@ create_tables:
 	      " \"bits\" INTEGER NOT NULL,\n"
 	      " \"name\" TEXT NOT NULL,\n"
 	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(pageid) "
-		"ON DELETE CASCADE\n"
+		"ON DELETE CASCADE,\n"
+	      " UNIQUE (\"name\", \"pageid\") ON CONFLICT REPLACE\n"
 	      ");\n"
 	      "\n"
 	      "CREATE TABLE \"keys\" (\n"
@@ -2352,6 +2363,8 @@ prepare_statements:
 	sql = "INSERT INTO mlinks "
 		"(sec,arch,name,pageid) VALUES (?,?,?,?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_LINK], NULL);
+	sql = "SELECT bits FROM names where pageid = ?";
+	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_SELECT_NAME], NULL);
 	sql = "INSERT INTO names "
 		"(bits,name,pageid) VALUES (?,?,?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_NAME], NULL);
