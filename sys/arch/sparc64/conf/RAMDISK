@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.115 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.116 2014/12/05 16:48:09 kettenis Exp $
 
 machine		sparc64
 maxusers	4
@@ -204,11 +204,11 @@ ohci*		at cardbus?
 uhci*		at pci?
 ehci*		at pci?
 ehci*		at cardbus?
-#xhci*		at pci?
+xhci*		at pci?
 usb*		at ohci?
 usb*		at uhci?
 usb*		at ehci?
-#usb*		at xhci?
+usb*		at xhci?
 
 uhub*		at usb?
 uhub*		at uhub?
