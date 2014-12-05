@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.111 2014/07/22 11:06:10 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.112 2014/12/05 15:50:04 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -44,6 +44,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/bpf.h>
 
 #ifdef INET

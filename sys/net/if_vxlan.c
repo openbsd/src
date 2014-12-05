@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.16 2014/11/23 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.17 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/route.h>

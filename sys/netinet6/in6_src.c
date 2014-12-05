@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.48 2014/11/01 21:40:39 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.49 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/time.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.11 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.12 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,7 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <netinet/in.h>
 
 #include <net/pfvar.h>

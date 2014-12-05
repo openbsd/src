@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.20 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.21 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -52,7 +52,7 @@
 # include <net/if_dl.h>
 # include <net/if_types.h>
 # include <net/if.h>
-# include <net/netisr.h>
+# include <net/if_var.h>
 # include <net/if_media.h>
 # include <net/ppp_defs.h>
 # include <net/if_ppp.h>

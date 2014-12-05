@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.c,v 1.13 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_san_te1.c,v 1.14 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -47,6 +47,7 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 #include <net/if_sppp.h>
 #include <netinet/in.h>

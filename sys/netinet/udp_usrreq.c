@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.194 2014/11/25 12:13:59 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.195 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 #include <net/route.h>
 

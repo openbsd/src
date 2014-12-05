@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.41 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.42 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/if_gif.h>
 

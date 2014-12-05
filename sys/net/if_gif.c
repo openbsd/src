@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.70 2014/11/23 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.71 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/bpf.h>

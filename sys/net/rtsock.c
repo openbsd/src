@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.152 2014/08/12 13:52:08 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.153 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/protosw.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
 

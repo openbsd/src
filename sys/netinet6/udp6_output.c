@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.32 2014/11/09 22:05:08 bluhm Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.33 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/if_types.h>
 

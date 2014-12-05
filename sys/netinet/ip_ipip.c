@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.54 2014/09/14 14:17:26 jsg Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.55 2014/12/05 15:50:04 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -48,6 +48,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/bpf.h>

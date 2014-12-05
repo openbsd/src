@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.56 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.57 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -28,6 +28,7 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_enc.h>
 #include <net/if_types.h>
 #if NBPFILTER > 0

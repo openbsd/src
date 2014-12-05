@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.54 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.55 2014/12/05 15:50:04 mpi Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -47,6 +47,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.70 2014/11/20 13:54:24 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.71 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_enc.h>
 #include <net/route.h>
 

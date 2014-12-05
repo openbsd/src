@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.70 2014/11/09 22:05:08 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.71 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/if_types.h>
 #if NPF > 0

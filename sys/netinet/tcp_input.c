@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.284 2014/11/20 11:05:19 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.285 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

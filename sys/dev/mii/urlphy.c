@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.15 2013/12/28 03:30:41 deraadt Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.16 2014/12/05 15:50:04 mpi Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>

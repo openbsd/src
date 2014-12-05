@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.40 2014/11/01 21:40:39 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.41 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>

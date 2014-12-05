@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.38 2014/11/01 21:40:38 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.39 2014/12/05 15:50:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>

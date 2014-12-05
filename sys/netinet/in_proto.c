@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.62 2014/11/20 14:51:42 krw Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.63 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -104,6 +104,7 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/radix.h>
 #ifndef SMALL_KERNEL

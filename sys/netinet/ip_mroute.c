@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.71 2014/09/30 12:54:22 jsg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.72 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

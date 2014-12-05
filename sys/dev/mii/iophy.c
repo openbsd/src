@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.18 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.19 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>

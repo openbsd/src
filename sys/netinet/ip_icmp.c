@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.126 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.127 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

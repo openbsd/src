@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.33 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.34 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/protosw.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 
 #if NPF > 0
 #include <net/pfvar.h>

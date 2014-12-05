@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.53 2014/01/09 06:29:05 tedu Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.54 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -147,6 +147,9 @@ struct	ether_arp {
 #define	arp_op	ea_hdr.ar_op
 
 #ifdef _KERNEL
+
+#include <net/if_var.h>	/* for "struct ifnet" */
+
 /*
  * Structure shared between the ethernet driver modules and
  * the address resolution code.  For example, each ec_softc or il_softc

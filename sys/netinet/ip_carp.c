@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.239 2014/11/20 15:55:04 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.240 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
 

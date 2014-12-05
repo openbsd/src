@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.57 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.58 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.31 2010/02/09 13:18:04 claudio Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.32 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -82,8 +82,9 @@
 
 #ifdef _KERNEL
 
-#include <sys/queue.h>
+struct ifnet;
 
+#include <sys/queue.h>
 /*
  * Driver callbacks for media status and change requests.
  */

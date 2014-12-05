@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.150 2014/11/01 21:40:39 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.151 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/domain.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>

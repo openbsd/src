@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.75 2014/08/27 14:04:16 florian Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.76 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/radix.h>
 #ifndef SMALL_KERNEL
 #include <net/radix_mpath.h>

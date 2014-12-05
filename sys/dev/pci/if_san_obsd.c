@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.16 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.17 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -54,10 +54,10 @@
 # include <net/bpf.h>
 #endif
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
-#include <net/netisr.h>
-#include <net/if_sppp.h>
 #include <netinet/in.h>
+#include <net/if_sppp.h>
 
 #include <netinet/udp.h>
 #include <netinet/ip.h>

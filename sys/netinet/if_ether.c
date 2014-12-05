@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.137 2014/11/01 21:40:38 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.138 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/if_types.h>

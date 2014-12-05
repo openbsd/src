@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd-comp.c,v 1.9 2014/12/02 18:11:56 tedu Exp $	*/
+/*	$OpenBSD: bsd-comp.c,v 1.10 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -46,6 +46,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>

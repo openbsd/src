@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.76 2014/11/20 09:55:57 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.77 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -421,6 +421,8 @@ extern	u_char inet6ctlerrmap[];
 extern	struct ifqueue ip6intrq;	/* IP6 packet input queue */
 extern	struct in6_addr zeroin6_addr;
 
+struct mbuf;
+struct ifnet;
 struct cmsghdr;
 
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);

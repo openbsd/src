@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphy.c,v 1.13 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.14 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -38,6 +38,7 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>

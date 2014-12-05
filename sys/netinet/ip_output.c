@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.272 2014/11/20 15:55:04 tedu Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.273 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_enc.h>
 #include <net/route.h>
 

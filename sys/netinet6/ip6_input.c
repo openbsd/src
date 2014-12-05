@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.132 2014/11/20 13:54:24 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.133 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>

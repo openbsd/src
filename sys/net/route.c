@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.192 2014/12/02 18:11:56 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.193 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -115,6 +115,7 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/route.h>
 

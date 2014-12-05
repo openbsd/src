@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdcphy.c,v 1.2 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: rdcphy.c,v 1.3 2014/12/05 15:50:04 mpi Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>

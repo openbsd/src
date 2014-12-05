@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.91 2014/11/20 09:55:57 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.92 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>

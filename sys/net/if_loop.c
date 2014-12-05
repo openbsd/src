@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.60 2014/11/23 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.61 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -118,6 +118,7 @@
 
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brswphy.c,v 1.1 2014/05/06 17:09:02 pirofti Exp $	*/
+/*	$OpenBSD: brswphy.c,v 1.2 2014/12/05 15:50:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -93,6 +93,7 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>

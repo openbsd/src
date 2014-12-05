@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.65 2014/12/02 18:11:56 tedu Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.66 2014/12/05 15:50:04 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
 

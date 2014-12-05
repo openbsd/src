@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.170 2014/11/18 02:37:31 tedu Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.171 2014/12/05 15:50:04 mpi Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -41,6 +41,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
 #include <net/if_pflog.h>

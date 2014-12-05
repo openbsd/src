@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.122 2014/11/25 15:35:10 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.123 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

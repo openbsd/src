@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.85 2014/11/20 13:54:24 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.86 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.242 2014/11/20 11:05:19 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.243 2014/12/05 15:50:04 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/route.h>
 

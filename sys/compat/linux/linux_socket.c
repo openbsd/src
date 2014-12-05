@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.55 2014/10/25 03:29:32 lteo Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.56 2014/12/05 15:50:03 mpi Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
