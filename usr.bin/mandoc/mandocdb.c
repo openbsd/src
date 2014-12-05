@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.131 2014/12/05 14:26:23 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.132 2014/12/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1670,6 +1670,9 @@ static int
 parse_mdoc_Fo(struct mpage *mpage, const struct mdoc_meta *meta,
 	const struct mdoc_node *n)
 {
+
+	if (n->type != MDOC_HEAD)
+		return(1);
 
 	putmdockey(mpage, n->child, TYPE_Fn);
 	if (n->sec == SEC_SYNOPSIS)
