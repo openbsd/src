@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.130 2014/12/04 21:48:26 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.131 2014/12/05 14:26:23 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,10 +74,9 @@ enum	op {
 };
 
 struct	str {
-	char		*rendered; /* key in UTF-8 or ASCII form */
 	const struct mpage *mpage; /* if set, the owning parse */
 	uint64_t	 mask; /* bitmask in sequence */
-	char		 key[]; /* may contain escape sequences */
+	char		 key[]; /* rendered text */
 };
 
 struct	inodev {
@@ -129,7 +128,7 @@ struct	mdoc_handler {
 };
 
 static	void	 dbclose(int);
-static	void	 dbadd(struct mpage *, struct mchars *);
+static	void	 dbadd(struct mpage *);
 static	void	 dbadd_mlink(const struct mlink *mlink);
 static	void	 dbadd_mlink_name(const struct mlink *mlink);
 static	int	 dbopen(int);
@@ -143,7 +142,7 @@ static	void	 mlink_check(struct mpage *, struct mlink *);
 static	void	 mlink_free(struct mlink *);
 static	void	 mlinks_undupe(struct mpage *);
 static	void	 mpages_free(void);
-static	void	 mpages_merge(struct mchars *, struct mparse *);
+static	void	 mpages_merge(struct mparse *);
 static	void	 names_check(void);
 static	void	 parse_cat(struct mpage *, int);
 static	void	 parse_man(struct mpage *, const struct man_meta *,
@@ -169,11 +168,10 @@ static	int	 parse_mdoc_Sh(struct mpage *, const struct mdoc_meta *,
 static	int	 parse_mdoc_Xr(struct mpage *, const struct mdoc_meta *,
 			const struct mdoc_node *);
 static	void	 putkey(const struct mpage *, char *, uint64_t);
-static	void	 putkeys(const struct mpage *,
-			const char *, size_t, uint64_t);
+static	void	 putkeys(const struct mpage *, char *, size_t, uint64_t);
 static	void	 putmdockey(const struct mpage *,
 			const struct mdoc_node *, uint64_t);
-static	void	 render_key(struct mchars *, struct str *);
+static	int	 render_string(char **, size_t *);
 static	void	 say(const char *, const char *, ...);
 static	int	 set_basedir(const char *, int);
 static	int	 treescan(void);
@@ -190,6 +188,7 @@ static	int		 write_utf8; /* write UTF-8 output; else ASCII */
 static	int		 exitcode; /* to be returned by main */
 static	enum op		 op; /* operational mode */
 static	char		 basedir[PATH_MAX]; /* current base directory */
+static	struct mchars	*mchars; /* table of named characters */
 static	struct ohash	 mpages; /* table of distinct manual pages */
 static	struct ohash	 mlinks; /* table of directory entries */
 static	struct ohash	 names; /* table of all names */
@@ -331,7 +330,6 @@ mandocdb(int argc, char *argv[])
 	int		  ch, i;
 	size_t		  j, sz;
 	const char	 *path_arg;
-	struct mchars	 *mc;
 	struct manpaths	  dirs;
 	struct mparse	 *mp;
 	struct ohash_info mpages_info, mlinks_info;
@@ -431,9 +429,9 @@ mandocdb(int argc, char *argv[])
 	}
 
 	exitcode = (int)MANDOCLEVEL_OK;
-	mc = mchars_alloc();
+	mchars = mchars_alloc();
 	mp = mparse_alloc(mparse_options, MANDOCLEVEL_FATAL, NULL,
-	    mc, NULL);
+	    mchars, NULL);
 	ohash_init(&mpages, 6, &mpages_info);
 	ohash_init(&mlinks, 6, &mlinks_info);
 
@@ -469,7 +467,7 @@ mandocdb(int argc, char *argv[])
 				goto out;
 		}
 		if (OP_DELETE != op)
-			mpages_merge(mc, mp);
+			mpages_merge(mp);
 		dbclose(OP_DEFAULT == op ? 0 : 1);
 	} else {
 		/*
@@ -516,7 +514,7 @@ mandocdb(int argc, char *argv[])
 			if (0 == dbopen(0))
 				continue;
 
-			mpages_merge(mc, mp);
+			mpages_merge(mp);
 			if (warnings && !nodb &&
 			    ! (MPARSE_QUICK & mparse_options))
 				names_check();
@@ -532,7 +530,7 @@ mandocdb(int argc, char *argv[])
 out:
 	manpath_free(&dirs);
 	mparse_free(mp);
-	mchars_free(mc);
+	mchars_free(mchars);
 	mpages_free();
 	ohash_delete(&mpages);
 	ohash_delete(&mlinks);
@@ -1079,7 +1077,7 @@ mlink_check(struct mpage *mpage, struct mlink *mlink)
  * and filename to determine whether the file is parsable or not.
  */
 static void
-mpages_merge(struct mchars *mc, struct mparse *mp)
+mpages_merge(struct mparse *mp)
 {
 	char			 any[] = "any";
 	struct ohash_info	 str_info;
@@ -1233,7 +1231,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			     mlink = mlink->next)
 				mlink_check(mpage, mlink);
 
-		dbadd(mpage, mc);
+		dbadd(mpage);
 
 nextpage:
 		if (mparse_wait(mp) != MANDOCLEVEL_OK) {
@@ -1592,7 +1590,7 @@ static int
 parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_meta *meta,
 	const struct mdoc_node *n)
 {
-	const char	*start, *end;
+	char		*start, *end;
 	size_t		 sz;
 
 	if (SEC_SYNOPSIS != n->sec ||
@@ -1761,17 +1759,18 @@ parse_mdoc_body(struct mpage *mpage, const struct mdoc_meta *meta,
  * When we finish the manual, we'll dump the table.
  */
 static void
-putkeys(const struct mpage *mpage,
-	const char *cp, size_t sz, uint64_t v)
+putkeys(const struct mpage *mpage, char *cp, size_t sz, uint64_t v)
 {
 	struct ohash	*htab;
 	struct str	*s;
 	const char	*end;
 	unsigned int	 slot;
-	int		 i;
+	int		 i, mustfree;
 
 	if (0 == sz)
 		return;
+
+	mustfree = render_string(&cp, &sz);
 
 	if (TYPE_Nm & v) {
 		htab = &names;
@@ -1805,6 +1804,9 @@ putkeys(const struct mpage *mpage,
 	}
 	s->mpage = mpage;
 	s->mask = v;
+
+	if (mustfree)
+		free(cp);
 }
 
 /*
@@ -1860,20 +1862,19 @@ utf8(unsigned int cp, char out[7])
 }
 
 /*
- * Store the rendered version of a key, or alias the pointer
- * if the key contains no escape sequences.
+ * If the string contains escape sequences,
+ * replace it with an allocated rendering and return 1,
+ * such that the caller can free it after use.
+ * Otherwise, do nothing and return 0.
  */
-static void
-render_key(struct mchars *mc, struct str *key)
+static int
+render_string(char **public, size_t *psz)
 {
-	size_t		 sz, bsz, pos;
+	const char	*src, *scp, *addcp, *seq;
+	char		*dst;
+	size_t		 ssz, dsz, addsz;
 	char		 utfbuf[7], res[6];
-	char		*buf;
-	const char	*seq, *cpp, *val;
-	int		 len, u;
-	enum mandoc_esc	 esc;
-
-	assert(NULL == key->rendered);
+	int		 seqlen, unicode;
 
 	res[0] = '\\';
 	res[1] = '\t';
@@ -1882,68 +1883,62 @@ render_key(struct mchars *mc, struct str *key)
 	res[4] = ASCII_BREAK;
 	res[5] = '\0';
 
-	val = key->key;
-	bsz = strlen(val);
+	src = scp = *public;
+	ssz = *psz;
+	dst = NULL;
+	dsz = 0;
 
-	/*
-	 * Pre-check: if we have no stop-characters, then set the
-	 * pointer as ourselvse and get out of here.
-	 */
-	if (strcspn(val, res) == bsz) {
-		key->rendered = key->key;
-		return;
-	}
+	while (scp < src + *psz) {
 
-	/* Pre-allocate by the length of the input */
+		/* Leave normal characters unchanged. */
 
-	buf = mandoc_malloc(++bsz);
-	pos = 0;
-
-	while ('\0' != *val) {
-		/*
-		 * Halt on the first escape sequence.
-		 * This also halts on the end of string, in which case
-		 * we just copy, fallthrough, and exit the loop.
-		 */
-		if ((sz = strcspn(val, res)) > 0) {
-			memcpy(&buf[pos], val, sz);
-			pos += sz;
-			val += sz;
+		if (strchr(res, *scp) == NULL) {
+			if (dst != NULL)
+				dst[dsz++] = *scp;
+			scp++;
+			continue;
 		}
 
-		switch (*val) {
-		case ASCII_HYPH:
-			buf[pos++] = '-';
-			val++;
-			continue;
+		/*
+		 * Found something that requires replacing,
+		 * make sure we have a destination buffer.
+		 */
+
+		if (dst == NULL) {
+			dst = mandoc_malloc(ssz + 1);
+			dsz = scp - src;
+			memcpy(dst, src, dsz);
+		}
+
+		/* Handle single-char special characters. */
+
+		switch (*scp) {
+		case '\\':
+			break;
 		case '\t':
 			/* FALLTHROUGH */
 		case ASCII_NBRSP:
-			buf[pos++] = ' ';
-			val++;
+			dst[dsz++] = ' ';
+			scp++;
+			continue;
+		case ASCII_HYPH:
+			dst[dsz++] = '-';
 			/* FALLTHROUGH */
 		case ASCII_BREAK:
+			scp++;
 			continue;
 		default:
-			break;
+			abort();
 		}
-		if ('\\' != *val)
-			break;
-
-		/* Read past the slash. */
-
-		val++;
 
 		/*
-		 * Parse the escape sequence and see if it's a
-		 * predefined character or special character.
+		 * Found an escape sequence.
+		 * Read past the slash, then parse it.
+		 * Ignore everything except characters.
 		 */
 
-		esc = mandoc_escape((const char **)&val,
-		    &seq, &len);
-		if (ESCAPE_ERROR == esc)
-			break;
-		if (ESCAPE_SPECIAL != esc)
+		scp++;
+		if (mandoc_escape(&scp, &seq, &seqlen) != ESCAPE_SPECIAL)
 			continue;
 
 		/*
@@ -1952,32 +1947,44 @@ render_key(struct mchars *mc, struct str *key)
 		 */
 
 		if (write_utf8) {
-			if ((u = mchars_spec2cp(mc, seq, len)) <= 0)
+			unicode = mchars_spec2cp(mchars, seq, seqlen);
+			if (unicode <= 0)
 				continue;
-			cpp = utfbuf;
-			if (0 == (sz = utf8(u, utfbuf)))
+			addsz = utf8(unicode, utfbuf);
+			if (addsz == 0)
 				continue;
-			sz = strlen(cpp);
+			addcp = utfbuf;
 		} else {
-			cpp = mchars_spec2str(mc, seq, len, &sz);
-			if (NULL == cpp)
+			addcp = mchars_spec2str(mchars, seq, seqlen, &addsz);
+			if (addcp == NULL)
 				continue;
-			if (ASCII_NBRSP == *cpp) {
-				cpp = " ";
-				sz = 1;
+			if (*addcp == ASCII_NBRSP) {
+				addcp = " ";
+				addsz = 1;
 			}
 		}
 
 		/* Copy the rendered glyph into the stream. */
 
-		bsz += sz;
-		buf = mandoc_realloc(buf, bsz);
-		memcpy(&buf[pos], cpp, sz);
-		pos += sz;
+		ssz += addsz;
+		dst = mandoc_realloc(dst, ssz + 1);
+		memcpy(dst + dsz, addcp, addsz);
+		dsz += addsz;
+	}
+	if (dst != NULL) {
+		*public = dst;
+		*psz = dsz;
 	}
 
-	buf[pos] = '\0';
-	key->rendered = buf;
+	/* Trim trailing whitespace and NUL-terminate. */
+
+	while (*psz > 0 && (*public)[*psz - 1] == ' ')
+		--*psz;
+	if (dst != NULL) {
+		(*public)[*psz] = '\0';
+		return(1);
+	} else
+		return(0);
 }
 
 static void
@@ -2025,28 +2032,24 @@ dbadd_mlink_name(const struct mlink *mlink)
  * Also, handle escape sequences at the last possible moment.
  */
 static void
-dbadd(struct mpage *mpage, struct mchars *mc)
+dbadd(struct mpage *mpage)
 {
 	struct mlink	*mlink;
 	struct str	*key;
+	char		*cp;
 	size_t		 i;
 	unsigned int	 slot;
+	int		 mustfree;
 
 	mlink = mpage->mlinks;
 
 	if (nodb) {
 		for (key = ohash_first(&names, &slot); NULL != key;
-		     key = ohash_next(&names, &slot)) {
-			if (key->rendered != key->key)
-				free(key->rendered);
+		     key = ohash_next(&names, &slot))
 			free(key);
-		}
 		for (key = ohash_first(&strings, &slot); NULL != key;
-		     key = ohash_next(&strings, &slot)) {
-			if (key->rendered != key->key)
-				free(key->rendered);
+		     key = ohash_next(&strings, &slot))
 			free(key);
-		}
 		if (0 == debug)
 			return;
 		while (NULL != mlink) {
@@ -2075,21 +2078,17 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	if (debug)
 		say(mlink->file, "Adding to database");
 
-	i = strlen(mpage->desc) + 1;
-	key = mandoc_calloc(1, sizeof(struct str) + i);
-	memcpy(key->key, mpage->desc, i);
-	render_key(mc, key);
-
+	cp = mpage->desc;
+	i = strlen(cp);
+	mustfree = render_string(&cp, &i);
 	i = 1;
-	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, key->rendered);
+	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, cp);
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
 	mpage->pageid = sqlite3_last_insert_rowid(db);
 	sqlite3_reset(stmts[STMT_INSERT_PAGE]);
-
-	if (key->rendered != key->key)
-		free(key->rendered);
-	free(key);
+	if (mustfree)
+		free(cp);
 
 	while (NULL != mlink) {
 		dbadd_mlink(mlink);
@@ -2100,31 +2099,23 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	for (key = ohash_first(&names, &slot); NULL != key;
 	     key = ohash_next(&names, &slot)) {
 		assert(key->mpage == mpage);
-		if (NULL == key->rendered)
-			render_key(mc, key);
 		i = 1;
 		SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, key->mask);
-		SQL_BIND_TEXT(stmts[STMT_INSERT_NAME], i, key->rendered);
+		SQL_BIND_TEXT(stmts[STMT_INSERT_NAME], i, key->key);
 		SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, mpage->pageid);
 		SQL_STEP(stmts[STMT_INSERT_NAME]);
 		sqlite3_reset(stmts[STMT_INSERT_NAME]);
-		if (key->rendered != key->key)
-			free(key->rendered);
 		free(key);
 	}
 	for (key = ohash_first(&strings, &slot); NULL != key;
 	     key = ohash_next(&strings, &slot)) {
 		assert(key->mpage == mpage);
-		if (NULL == key->rendered)
-			render_key(mc, key);
 		i = 1;
 		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, key->mask);
-		SQL_BIND_TEXT(stmts[STMT_INSERT_KEY], i, key->rendered);
+		SQL_BIND_TEXT(stmts[STMT_INSERT_KEY], i, key->key);
 		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, mpage->pageid);
 		SQL_STEP(stmts[STMT_INSERT_KEY]);
 		sqlite3_reset(stmts[STMT_INSERT_KEY]);
-		if (key->rendered != key->key)
-			free(key->rendered);
 		free(key);
 	}
 }
