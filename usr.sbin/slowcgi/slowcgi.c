@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.36 2014/12/05 19:56:24 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.37 2014/12/05 19:57:27 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -355,7 +355,7 @@ slowcgi_listen(char *path, struct passwd *pw)
 	struct listener		 *l = NULL;
 	struct sockaddr_un	 sun;
 	size_t			 len;
-	mode_t			 old_umask, mode;
+	mode_t			 old_umask;
 	int			 fd;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
