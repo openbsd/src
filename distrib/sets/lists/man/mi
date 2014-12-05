@@ -109,7 +109,6 @@
 ./usr/share/man/man1/find.1
 ./usr/share/man/man1/find2perl.1
 ./usr/share/man/man1/finger.1
-./usr/share/man/man1/flex++.1
 ./usr/share/man/man1/fmt.1
 ./usr/share/man/man1/fold.1
 ./usr/share/man/man1/from.1
@@ -2576,7 +2575,6 @@
 ./usr/share/man/man8/ripd.8
 ./usr/share/man/man8/rmgroup.8
 ./usr/share/man/man8/rmt.8
-./usr/share/man/man8/rmuser.8
 ./usr/share/man/man8/route.8
 ./usr/share/man/man8/route6d.8
 ./usr/share/man/man8/rpc.bootparamd.8
