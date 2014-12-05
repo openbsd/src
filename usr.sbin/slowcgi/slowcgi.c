@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.38 2014/12/05 19:58:47 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.39 2014/12/05 19:59:55 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -599,7 +599,6 @@ slowcgi_request(int fd, short events, void *arg)
 	size_t		 n, parsed;
 
 	c = arg;
-	parsed = 0;
 
 	n = read(fd, c->buf + c->buf_pos + c->buf_len,
 	    FCGI_RECORD_SIZE - c->buf_pos-c->buf_len);
@@ -649,8 +648,6 @@ fail:
 void
 parse_begin_request(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 {
-	struct fcgi_begin_request_body	*b;
-
 	/* XXX -- FCGI_CANT_MPX_CONN */
 	if (c->request_started) {
 		lwarnx("unexpected FCGI_BEGIN_REQUEST, ignoring");
@@ -664,7 +661,6 @@ parse_begin_request(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 	}
 
 	c->request_started = 1;
-	b = (struct fcgi_begin_request_body*) buf;
 
 	c->id = id;
 	SLIST_INIT(&c->env);
