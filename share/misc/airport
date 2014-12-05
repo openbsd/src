@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.27 2014/07/08 11:46:14 kettenis Exp $
+#	$OpenBSD: airport,v 1.28 2014/12/05 14:11:13 kettenis Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1443,6 +1443,7 @@ SDX:Sedona, AZ, USA
 SDY:Sidney, MT, USA
 SEA:Seattle-Tacoma International, Washington, USA
 SEL:Kimpo International, Seoul, South Korea
+SEN:Southend, London, England, United Kingdom
 SEZ:Mahe Island Seychelles Intl, Mahe Island, Seychelles
 SFA:Sfax, Tunisia
 SFG:Esperance, St Martin, Netherlands Antilles
