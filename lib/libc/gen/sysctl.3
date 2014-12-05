@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.243 2014/11/19 18:04:54 tedu Exp $
+.\"	$OpenBSD: sysctl.3,v 1.244 2014/12/05 04:12:48 uebayasi Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2014 $
+.Dd $Mdocdate: December 5 2014 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -443,6 +443,7 @@ information.
 .It Dv KERN_PROC_ARGS Ta "node" Ta "not applicable"
 .It Dv KERN_PROC_CWD Ta "string" Ta "not applicable"
 .It Dv KERN_PROC_NOBROADKILL Ta "string" Ta "not applicable"
+.It Dv KERN_PROC_VMMAP Ta "struct kinfo_vmentry" Ta "no"
 .It Dv KERN_PROF Ta "node" Ta "not applicable"
 .It Dv KERN_RAWPARTITION Ta "integer" Ta "no"
 .It Dv KERN_RND Ta "struct rndstats" Ta "no"
@@ -739,6 +740,14 @@ A NUL-terminated string is returned.
 .It Dv KERN_PROC_NOBROADKILL
 When set, a process will no longer be signaled when sending broadcast signals.
 The third level name is the target process ID.
+.It Dv KERN_PROC_VMMAP
+Return the entire process VM map entries.
+An array of
+.Li struct kinfo_vmentry
+structures is returned,
+whose size depends on the current number of VM map entries of the selected process.
+Iteration is possible by setting the base address in the first element of
+.Li struct kinfo_vmentry .
 .It Dv KERN_PROF
 Return profiling information about the kernel.
 If the kernel is not compiled for profiling,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.180 2014/11/30 19:50:53 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.181 2014/12/05 04:12:48 uebayasi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -91,6 +91,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -4879,6 +4880,61 @@ vm_map_unbusy_ln(struct vm_map *map, char *file, int line)
 	if (oflags & VM_MAP_WANTLOCK)
 		wakeup(&map->flags);
 }
+
+#ifndef SMALL_KERNEL
+int
+uvm_map_fill_vmmap(struct vm_map *map, struct kinfo_vmentry *kve,
+    size_t *lenp)
+{
+	struct vm_map_entry *entry;
+	vaddr_t start;
+	int cnt, maxcnt, error = 0;
+
+	KASSERT(*lenp > 0);
+	KASSERT((*lenp % sizeof(*kve)) == 0);
+	cnt = 0;
+	maxcnt = *lenp / sizeof(*kve);
+	KASSERT(maxcnt > 0);
+
+	/*
+	 * Return only entries whose address is above the given base
+	 * address.  This allows userland to iterate without knowing the
+	 * number of entries beforehand.
+	 */
+	start = (vaddr_t)kve[0].kve_start;
+
+	vm_map_lock(map);
+	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+		if (cnt == maxcnt) {
+			error = ENOMEM;
+			break;
+		}
+		if (start != 0 && entry->start < start)
+			continue;
+		kve->kve_start = entry->start;
+		kve->kve_end = entry->end;
+		kve->kve_guard = entry->guard;
+		kve->kve_fspace = entry->fspace;
+		kve->kve_fspace_augment = entry->fspace_augment;
+		kve->kve_offset = entry->offset;
+		kve->kve_wired_count = entry->wired_count;
+		kve->kve_etype = entry->etype;
+		kve->kve_protection = entry->protection;
+		kve->kve_max_protection = entry->max_protection;
+		kve->kve_advice = entry->advice;
+		kve->kve_inheritance = entry->inheritance;
+		kve->kve_flags = entry->flags;
+		kve++;
+		cnt++;
+	}
+	vm_map_unlock(map);
+
+	KASSERT(cnt <= maxcnt);
+
+	*lenp = sizeof(*kve) * cnt;
+	return error;
+}
+#endif
 
 
 #undef RB_AUGMENT

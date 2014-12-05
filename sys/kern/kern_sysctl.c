@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.272 2014/11/19 21:17:37 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.273 2014/12/05 04:12:48 uebayasi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -77,6 +77,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/cons.h>
 #include <dev/rndvar.h>
 #include <dev/systrace.h>
@@ -117,6 +119,7 @@ int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_proc_cwd(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_proc_nobroadcastkill(int *, u_int, void *, size_t, void *, size_t *,
 	struct proc *);
+int sysctl_proc_vmmap(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
@@ -276,6 +279,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_PROC_ARGS:
 		case KERN_PROC_CWD:
 		case KERN_PROC_NOBROADCASTKILL:
+		case KERN_PROC_VMMAP:
 		case KERN_SYSVIPC_INFO:
 		case KERN_SEMINFO:
 		case KERN_SHMINFO:
@@ -365,6 +369,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_PROC_NOBROADCASTKILL:
 		return (sysctl_proc_nobroadcastkill(name + 1, namelen - 1,
 		     newp, newlen, oldp, oldlenp, p));
+	case KERN_PROC_VMMAP:
+		return (sysctl_proc_vmmap(name + 1, namelen - 1, oldp, oldlenp,
+		     p));
 	case KERN_FILE:
 		return (sysctl_file(name + 1, namelen - 1, oldp, oldlenp, p));
 #endif
@@ -1835,6 +1842,99 @@ sysctl_proc_nobroadcastkill(int *name, u_int namelen, void *newp, size_t newlen,
 			atomic_clearbits_int(&findpr->ps_flags,
 			    PS_NOBROADCASTKILL);
 	}
+
+	return (error);
+}
+
+/* Arbitrary but reasonable limit for one iteration. */
+#define	VMMAP_MAXLEN	MAXPHYS
+
+int
+sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    struct proc *cp)
+{
+	struct process *findpr;
+	pid_t pid;
+	int error;
+	size_t oldlen, len;
+	struct kinfo_vmentry *kve, *ukve;
+	u_long *ustart, start;
+
+	if (namelen > 1)
+		return (ENOTDIR);
+	if (namelen < 1)
+		return (EINVAL);
+
+	/* Provide max buffer length as hint. */
+	if (oldp == NULL) {
+		if (oldlenp == NULL)
+			return (EINVAL);
+		else {
+			*oldlenp = VMMAP_MAXLEN;
+			return (0);
+		}
+	}
+
+	pid = name[0];
+	if (pid > 0) {
+		if ((findpr = prfind(pid)) == NULL)
+			return (ESRCH);
+
+		/* Either system process or exiting/zombie */
+		if (findpr->ps_flags & (PS_SYSTEM | PS_EXITING))
+			return (EINVAL);
+
+		/* Only owner or root can get vmmap */
+		if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
+		    (error = suser(cp, 0)) != 0)
+			return (error);
+	} else {
+		/* Only root can get kernel_map */
+		if ((error = suser(cp, 0)) != 0)
+			return (error);
+		findpr = NULL;
+	}
+
+	/* Check the given size. */
+	oldlen = *oldlenp;
+	if (oldlen == 0 || oldlen % sizeof(*kve) != 0)
+		return (EINVAL);
+
+	/* Deny huge allocation. */
+	if (oldlen > VMMAP_MAXLEN)
+		return (EINVAL);
+
+	/*
+	 * Iterate from the given address passed as the first element's
+	 * kve_start via oldp.
+	 */
+	ukve = (struct kinfo_vmentry *)oldp;
+	ustart = &ukve->kve_start;
+	error = copyin(ustart, &start, sizeof(start));
+	if (error != 0)
+		return (error);
+
+	/* Allocate wired memory to not block. */
+	kve = malloc(oldlen, M_TEMP, M_WAITOK);
+
+	/* Set the base address and read entries. */
+	kve[0].kve_start = start;
+	len = oldlen;
+	error = fill_vmmap(findpr, kve, &len);
+	if (error != 0 && error != ENOMEM)
+		goto done;
+	if (len == 0)
+		goto done;
+
+	KASSERT(len <= oldlen);
+	KASSERT((len % sizeof(struct kinfo_vmentry)) == 0);
+
+	error = copyout(kve, oldp, len);
+
+done:
+	*oldlenp = len;
+
+	free(kve, M_TEMP, oldlen);
 
 	return (error);
 }

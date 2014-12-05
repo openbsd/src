@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.151 2014/11/19 18:04:54 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.152 2014/12/05 04:12:48 uebayasi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -180,7 +180,8 @@ struct ctlname {
 #define	KERN_POOL_DEBUG		77	/* int: enable pool_debug */
 #define	KERN_PROC_CWD		78      /* node: proc cwd */
 #define	KERN_PROC_NOBROADCASTKILL 79	/* node: proc no broadcast kill */
-#define	KERN_MAXID		80	/* number of valid kern ids */
+#define	KERN_PROC_VMMAP		80      /* node: proc vmmap */
+#define	KERN_MAXID		81	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -263,6 +264,7 @@ struct ctlname {
 	{ "pool_debug", CTLTYPE_INT }, \
 	{ "proc_cwd", CTLTYPE_NODE }, \
 	{ "proc_nobroadcastkill", CTLTYPE_NODE }, \
+	{ "proc_vmmap", CTLTYPE_NODE }, \
 }
 
 /*
@@ -436,6 +438,50 @@ struct kinfo_proc {
 	int32_t   p_tid;		/* PID_T: Thread identifier. */
 	u_int32_t p_rtableid;		/* U_INT: Routing table identifier. */
 };
+
+/*
+ * VM address range entry, matching struct vm_map_entry.  Useful for
+ * debuggers to know process's addresses.
+ *
+ * To iterate entries, set the last kve_end as the base address into
+ * kve_start.
+ */
+struct kinfo_vmentry {
+	u_long kve_start;		/* vaddr_t */
+	u_long kve_end;			/* vaddr_t */
+	u_long kve_guard;		/* vsize_t */
+	u_long kve_fspace;		/* vsize_t */
+	u_long kve_fspace_augment;	/* vsize_t */
+	u_int64_t kve_offset;		/* voff_t */
+	int kve_wired_count;
+	int kve_etype;
+	int kve_protection;
+	int kve_max_protection;
+	int kve_advice;
+	int kve_inheritance;
+	u_int8_t kve_flags;		/* u_int8_t */
+};
+
+#define KVE_ET_OBJ		0x00000001
+#define KVE_ET_SUBMAP		0x00000002
+#define KVE_ET_COPYONWRITE 	0x00000004
+#define KVE_ET_NEEDSCOPY	0x00000008
+#define KVE_ET_HOLE		0x00000010
+#define KVE_ET_NOFAULT		0x00000020
+#define KVE_ET_FREEMAPPED	0x00000080
+#define KVE_PROT_NONE		0x00000000
+#define KVE_PROT_READ		0x00000001
+#define KVE_PROT_WRITE		0x00000002
+#define KVE_PROT_EXEC		0x00000004
+#define KVE_ADV_NORMAL		0x00000000
+#define KVE_ADV_RANDOM		0x00000001
+#define KVE_ADV_SEQUENTIAL	0x00000002
+#define KVE_INH_SHARE		0x00000000
+#define KVE_INH_COPY		0x00000010
+#define KVE_INH_NONE		0x00000020
+#define KVE_INH_ZERO		0x00000030
+#define KVE_F_STATIC		0x01
+#define KVE_F_KMEM		0x02
 
 #if defined(_KERNEL) || defined(_LIBKVM)
 

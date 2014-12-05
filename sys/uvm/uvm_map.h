@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.51 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.52 2014/12/05 04:12:48 uebayasi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -399,6 +399,11 @@ int		uvm_map_mquery(struct vm_map*, vaddr_t*, vsize_t, voff_t, int);
 void		uvm_unmap_detach(struct uvm_map_deadq*, int);
 void		uvm_unmap_remove(struct vm_map*, vaddr_t, vaddr_t,
 		    struct uvm_map_deadq*, boolean_t, boolean_t);
+
+struct kinfo_vmentry;
+
+int		uvm_map_fill_vmmap(struct vm_map *, struct kinfo_vmentry *,
+		    size_t *);
 
 #endif /* _KERNEL */
 

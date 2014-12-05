@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.124 2014/11/21 06:40:40 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.125 2014/12/05 04:12:48 uebayasi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -476,6 +476,11 @@ void			uvm_pagezero_thread(void *);
 void			kmeminit_nkmempages(void);
 void			kmeminit(void);
 extern u_int		nkmempages;
+
+struct process;
+struct kinfo_vmentry;
+int			fill_vmmap(struct process *, struct kinfo_vmentry *,
+			    size_t *);
 
 #endif /* _KERNEL */
 
