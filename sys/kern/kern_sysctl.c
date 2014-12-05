@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.273 2014/12/05 04:12:48 uebayasi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.274 2014/12/05 04:35:08 uebayasi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1877,6 +1877,11 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	pid = name[0];
 	if (pid > 0) {
+#if 1
+		/* XXX Allow only root for now */
+		if ((error = suser(cp, 0)) != 0)
+			return (error);
+#endif
 		if ((findpr = prfind(pid)) == NULL)
 			return (ESRCH);
 
