@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.47 2014/09/17 06:21:46 jmc Exp $
+.\" $OpenBSD: keynote.3,v 1.48 2014/12/05 15:06:09 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 17 2014 $
+.Dd $Mdocdate: December 5 2014 $
 .Dt KEYNOTE 3
 .\" .TH KeyNote 3 local
 .Os
@@ -81,7 +81,19 @@ struct keynote_keylist {
 .Ft int
 .Fn kn_close "int sessid"
 .Ft int
-.Fn kn_query "struct environment *env" "char **returnvalues, int numvalues" "char **trusted, int *trustedlen, int numtrusted" "char **untrusted, int *untrustedlen, int numuntrusted" "char **authorizers, int numauthauthorizers"
+.Fo kn_query
+.Fa "struct environment *env"
+.Fa "char **returnvalues"
+.Fa "int numvalues"
+.Fa "char **trusted"
+.Fa "int *trustedlen"
+.Fa "int numtrusted"
+.Fa "char **untrusted"
+.Fa "int *untrustedlen"
+.Fa "int numuntrusted"
+.Fa "char **authorizers"
+.Fa "int numauthauthorizers"
+.Fc
 .Ft char **
 .Fn kn_read_asserts "char *array" "int arraylen" "int *numassertions"
 .Ft int

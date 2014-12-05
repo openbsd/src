@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.35 2013/07/16 15:21:11 schwarze Exp $
+.\" $OpenBSD: keynote.1,v 1.36 2014/12/05 15:06:09 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: December 5 2014 $
 .Dt KEYNOTE 1
 .\" .TH keynote 1 local
 .Os
@@ -28,7 +28,8 @@
 .Nm keynote
 .Nd command line tool for keynote operations
 .Sh SYNOPSIS
-.Nm keynote keygen
+.Nm keynote
+.Cm keygen
 .Ar AlgorithmName
 .Ar KeySize
 .Ar PublicKeyFile
@@ -36,7 +37,8 @@
 .Op Ar print-offset
 .Op Ar print-length
 .Pp
-.Nm keynote sign
+.Nm
+.Cm sign
 .Op Fl v
 .Ar AlgorithmName
 .Ar AssertionFile
@@ -44,10 +46,12 @@
 .Op Ar print-offset
 .Op Ar print-length
 .Pp
-.Nm keynote sigver
+.Nm
+.Cm sigver
 .Op Ar AssertionFile
 .Pp
-.Nm keynote verify
+.Nm
+.Cm verify
 .Op Fl h
 .Op Fl e Ar file
 .Op Fl k Ar file
@@ -59,7 +63,8 @@ For more details on
 .Nm KeyNote ,
 see RFC 2704.
 .Sh KEY GENERATION
-.Nm keynote keygen
+.Nm
+.Cm keygen
 creates a public/private key of size
 .Ar KeySize
 (in bits), for the algorithm specified by
@@ -104,7 +109,8 @@ the end of each line, and the double quotes at the beginning and end
 of the key encoding.
 Default values are 12 and 50 respectively.
 .Sh ASSERTION SIGNING
-.Nm keynote sign
+.Nm
+.Cm sign
 reads the assertion contained in
 .Ar AssertionFile
 and generates a signature specified by
@@ -112,7 +118,8 @@ and generates a signature specified by
 using the private key stored in
 .Ar PrivateKeyFile .
 The private key is expected to be of the form output by
-.Nm keynote keygen .
+.Nm
+.Cm keygen .
 The private key algorithm and the
 .Ar AlgorithmName
 specified as an argument are expected to match.
@@ -161,7 +168,8 @@ string.
 If the
 .Fl v
 flag is provided,
-.Nm keynote sign
+.Nm
+.Cm sign
 will also verify the newly-created signature using the
 .Ar Authorizer
 field key.
@@ -184,14 +192,16 @@ the end of each line, and the double quotes at the beginning and end
 of the signature encoding.
 Default values are 12 and 50 respectively.
 .Sh SIGNATURE VERIFICATION
-.Nm keynote sigver
+.Nm
+.Cm sigver
 reads the assertions contained in
 .Ar AssertionFile
 and verifies the public-key signatures on all of them.
 .Sh QUERY TOOL
 For each operand that names a
 .Ar file ,
-.Nm keynote verify
+.Nm
+.Cm verify
 reads the file and parses the assertions contained therein (one assertion
 per file).
 .Pp
@@ -240,10 +250,12 @@ and
 .Fl k
 flags should be given per invocation.
 If no flags are given,
-.Nm keynote verify
+.Nm
+.Cm verify
 prints the usage message and exits with error code \-1.
 .Pp
-.Nm keynote verify
+.Nm
+.Cm verify
 exits with code \-1 if there was an error, and 0 on success.
 .Sh SEE ALSO
 .Xr keynote 3 ,
