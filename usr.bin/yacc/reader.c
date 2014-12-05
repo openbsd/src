@@ -1,4 +1,4 @@
-/* $OpenBSD: reader.c,v 1.30 2014/12/02 15:56:22 millert Exp $	 */
+/* $OpenBSD: reader.c,v 1.31 2014/12/05 04:03:57 jsg Exp $	 */
 /* $NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	 */
 
 /*
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include <limits.h>
 #include "defs.h"
 
 /* The line size must be a positive integer.  One hundred was chosen	 */
@@ -820,13 +821,14 @@ get_name(void)
 int
 get_number(void)
 {
-	int c, n;
+	unsigned long ul;
+	char *p;
 
-	n = 0;
-	for (c = (unsigned char) *cptr; isdigit(c); c = (unsigned char) *++cptr)
-		n = 10 * n + (c - '0');
-
-	return (n);
+	ul = strtoul(cptr, &p, 10);
+	if (ul > INT_MAX)
+		syntax_error(lineno, line, cptr);
+	cptr = p;
+	return (ul);
 }
 
 
