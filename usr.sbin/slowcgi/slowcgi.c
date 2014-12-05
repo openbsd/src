@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.37 2014/12/05 19:57:27 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.38 2014/12/05 19:58:47 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -430,15 +430,15 @@ slowcgi_accept(int fd, short events, void *arg)
 {
 	struct listener		*l;
 	struct sockaddr_storage	 ss;
-	struct timeval		 pause;
+	struct timeval		 backoff;
 	struct request		*c;
 	struct requests		*requests;
 	socklen_t		 len;
 	int			 s;
 
 	l = arg;
-	pause.tv_sec = 1;
-	pause.tv_usec = 0;
+	backoff.tv_sec = 1;
+	backoff.tv_usec = 0;
 	c = NULL;
 
 	len = sizeof(ss);
@@ -452,7 +452,7 @@ slowcgi_accept(int fd, short events, void *arg)
 		case EMFILE:
 		case ENFILE:
 			event_del(&l->ev);
-			evtimer_add(&l->pause, &pause);
+			evtimer_add(&l->pause, &backoff);
 			return;
 		default:
 			lerr(1, "accept");
