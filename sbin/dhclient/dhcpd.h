@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.144 2014/11/23 18:22:45 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.145 2014/12/05 15:47:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -108,6 +108,7 @@ struct client_lease {
 
 /* Possible states in which the client can be. */
 enum dhcp_state {
+	S_PREBOOT,
 	S_REBOOTING,
 	S_INIT,
 	S_SELECTING,

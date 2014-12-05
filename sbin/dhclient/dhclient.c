@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.338 2014/11/30 00:09:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.339 2014/12/05 15:47:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -113,6 +113,7 @@ void add_classless_static_routes(int, struct option_data *, struct in_addr);
 int compare_lease(struct client_lease *, struct client_lease *);
 void set_lease_times(struct client_lease *);
 
+void state_preboot(void);
 void state_reboot(void);
 void state_init(void);
 void state_selecting(void);
@@ -351,8 +352,10 @@ routehandler(void)
 #endif
 			ifi->linkstat = linkstat;
 			if (ifi->linkstat) {
+				if (client->state == S_PREBOOT)
+					state_preboot();
 				client->state = S_REBOOTING;
-				state_reboot();
+				set_timeout_interval(1, state_reboot);
 			} else if (strlen(path_option_db)) {
 				/* Let monitoring programs see link loss. */
 				write_file(path_option_db,
@@ -401,7 +404,7 @@ int
 main(int argc, char *argv[])
 {
 	struct stat sb;
-	int	 ch, fd, i = 0, socket_fd[2];
+	int	 ch, fd, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
 	char *ignore_list = NULL;
@@ -503,40 +506,13 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&client->leases);
 	TAILQ_INIT(&client->offered_leases);
 
-	read_client_conf();	/* Needed for config->link_timeout below! */
+	read_client_conf();
 
-	if (interface_status(ifi->name) == 0) {
-		interface_link_forceup(ifi->name);
-		/* Give it up to 4 seconds of silent grace to find link */
-		i = -4;
-	} else
-		i = 0;
-
-	while (!(ifi->linkstat = interface_status(ifi->name))) {
-		if (i == 0)
-			fprintf(stderr, "%s: no link ...", ifi->name);
-		else if (i > 0)
-			fprintf(stderr, ".");
-		fflush(stderr);
-		if (++i > config->link_timeout) {
-			fprintf(stderr, " sleeping\n");
-			goto dispatch;
-		}
-		sleep(1);
-	}
-	if (i > 0)
-		fprintf(stderr, " got link\n");
-
- dispatch:
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		error("cannot open %s: %s", _PATH_DEVNULL, strerror(errno));
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
-
-	/* Register the interface. */
-	if_register_receive();
-	if_register_send();
 
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
@@ -596,6 +572,14 @@ main(int argc, char *argv[])
 	    sizeof(ifi->rdomain)) == -1)
 		error("setsockopt(ROUTE_TABLEFILTER): %s", strerror(errno));
 
+	ifi->linkstat = interface_status(ifi->name);
+	if (ifi->linkstat == 0)
+		interface_link_forceup(ifi->name);
+
+	/* Register the interface. */
+	if_register_receive();
+	if_register_send();
+
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot");
 	if (chdir("/") == -1)
@@ -612,11 +596,13 @@ main(int argc, char *argv[])
 
 	setproctitle("%s", ifi->name);
 
-	client->state = S_REBOOTING;
-	if (ifi->linkstat)
+	if (ifi->linkstat) {
+		client->state = S_REBOOTING;
 		state_reboot();
-	else
-		go_daemon();
+	} else {
+		client->state = S_PREBOOT;
+		state_preboot();
+	}
 
 	dispatch();
 
@@ -633,6 +619,49 @@ usage(void)
 	    "usage: %s [-d | -q] [-u] [-c file] [-i options] [-L file] [-l file] "
 	    "interface\n", __progname);
 	exit(1);
+}
+
+void
+state_preboot(void)
+{
+	static int preamble;
+	time_t cur_time;
+	int interval;
+
+	time(&cur_time);
+
+	if (client->first_sending == 0)
+		client->first_sending = cur_time;
+
+	interval = (int)(cur_time - client->first_sending);
+
+	if (log_perror && interval > 3) {
+		if (!preamble) {
+			fprintf(stderr, "%s: no link ....", ifi->name);
+			fflush(stderr);
+			preamble = 1;
+		}
+		if (ifi->linkstat) {
+			fprintf(stderr, " got link\n");
+			fflush(stderr);
+		} else if (interval > config->link_timeout) {
+			fprintf(stderr, " sleeping\n");
+			fflush(stderr);
+		} else {
+			fprintf(stderr, ".");
+			fflush(stderr);
+		}
+	}
+
+	if (!ifi->linkstat) {
+		if (interval > config->link_timeout) {
+			go_daemon();
+			client->state = S_REBOOTING;
+			set_timeout_interval(config->retry_interval,
+			    state_reboot);
+		} else
+			set_timeout_interval(1, state_preboot);
+	}
 }
 
 /*
