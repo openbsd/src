@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.39 2014/12/05 19:59:55 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.40 2014/12/05 20:01:39 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -682,8 +682,6 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 		return;
 	}
 
-	name_len = val_len = 0;
-
 	/*
 	 * If this is the last FastCGI parameter record,
 	 * begin execution of the CGI script.
@@ -723,7 +721,9 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 				} else
 					return;
 			}
-		}
+		} else
+			return;
+
 		if (n < name_len + val_len)
 			return;
 
