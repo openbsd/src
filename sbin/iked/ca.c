@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.31 2014/07/10 12:50:05 jsg Exp $	*/
+/*	$OpenBSD: ca.c,v 1.32 2014/12/05 07:24:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -534,7 +534,7 @@ ca_reload(struct iked *env)
 	X509_OBJECT		*xo;
 	X509			*x509;
 	DIR			*dir;
-	int			 i, len, iovcnt = 2;
+	int			 i, len, iovcnt = 0;
 
 	/*
 	 * Load CAs
@@ -620,8 +620,10 @@ ca_reload(struct iked *env)
 		env->sc_certreqtype = IKEV2_CERT_X509_CERT;
 		iov[0].iov_base = &env->sc_certreqtype;
 		iov[0].iov_len = sizeof(env->sc_certreqtype);
+		iovcnt++;
 		iov[1].iov_base = ibuf_data(env->sc_certreq);
 		iov[1].iov_len = ibuf_length(env->sc_certreq);
+		iovcnt++;
 
 		log_debug("%s: loaded %zu ca certificate%s", __func__,
 		    ibuf_length(env->sc_certreq) / SHA_DIGEST_LENGTH,
@@ -677,6 +679,8 @@ ca_reload(struct iked *env)
 
 	iov[0].iov_base = &env->sc_certreqtype;
 	iov[0].iov_len = sizeof(env->sc_certreqtype);
+	if (iovcnt == 0)
+		iovcnt++;
 	(void)proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
 	    IMSG_CERTREQ, -1, iov, iovcnt);
 
