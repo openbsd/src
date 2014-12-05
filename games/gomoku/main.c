@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2014/12/05 00:48:57 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -126,9 +126,6 @@ main(argc, argv)
 	}
 
 	if (!debug)
-#ifdef SVR4
-		srand(time(0));
-#endif
 	if (interactive)
 		cursinit();		/* initialize curses */
 again:
