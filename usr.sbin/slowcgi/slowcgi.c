@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.35 2014/09/19 21:28:32 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.36 2014/12/05 19:56:24 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -191,8 +191,8 @@ void		dump_fcgi_end_request_body(const char *,
 void		cleanup_request(struct request *);
 
 struct loggers {
-	void (*err)(int, const char *, ...);
-	void (*errx)(int, const char *, ...);
+	__dead void (*err)(int, const char *, ...);
+	__dead void (*errx)(int, const char *, ...);
 	void (*warn)(const char *, ...);
 	void (*warnx)(const char *, ...);
 	void (*info)(const char *, ...);
@@ -208,13 +208,13 @@ const struct loggers conslogger = {
 	warnx /* debug */
 };
 
-void	syslog_err(int, const char *, ...);
-void	syslog_errx(int, const char *, ...);
-void	syslog_warn(const char *, ...);
-void	syslog_warnx(const char *, ...);
-void	syslog_info(const char *, ...);
-void	syslog_debug(const char *, ...);
-void	syslog_vstrerror(int, int, const char *, va_list);
+__dead void	syslog_err(int, const char *, ...);
+__dead void	syslog_errx(int, const char *, ...);
+void		syslog_warn(const char *, ...);
+void		syslog_warnx(const char *, ...);
+void		syslog_info(const char *, ...);
+void		syslog_debug(const char *, ...);
+void		syslog_vstrerror(int, int, const char *, va_list);
 
 const struct loggers syslogger = {
 	syslog_err,
@@ -1195,7 +1195,7 @@ syslog_vstrerror(int e, int priority, const char *fmt, va_list ap)
 	free(s);
 }
 
-void
+__dead void
 syslog_err(int ecode, const char *fmt, ...)
 {
 	va_list ap;
@@ -1206,7 +1206,7 @@ syslog_err(int ecode, const char *fmt, ...)
 	exit(ecode);
 }
 
-void
+__dead void
 syslog_errx(int ecode, const char *fmt, ...)
 {
 	va_list ap;
