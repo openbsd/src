@@ -1,7 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1 2013/05/23 12:03:24 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/12/05 20:02:41 florian Exp $
 
 PROG=	slowcgi
 SRCS=	slowcgi.c
+CFLAGS+= -Wall
+CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+= -Wmissing-declarations
+CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
+CFLAGS+= -Wsign-compare
 LDADD=	-levent
 DPADD=	${LIBEVENT}
 MAN=	slowcgi.8
