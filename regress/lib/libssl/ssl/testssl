@@ -15,20 +15,6 @@ fi
 
 #############################################################################
 
-echo test sslv2
-$ssltest -ssl2 $extra || exit 1
-
-echo test sslv2 with server authentication
-$ssltest -ssl2 -server_auth $CA $extra || exit 1
-
-if [ $dsa_cert = NO ]; then
-  echo test sslv2 with client authentication
-  $ssltest -ssl2 -client_auth $CA $extra || exit 1
-
-  echo test sslv2 with both client and server authentication
-  $ssltest -ssl2 -server_auth -client_auth $CA $extra || exit 1
-fi
-
 echo test sslv3
 $ssltest -ssl3 $extra || exit 1
 
@@ -52,20 +38,6 @@ $ssltest -client_auth $CA $extra || exit 1
 
 echo test sslv2/sslv3 with both client and server authentication
 $ssltest -server_auth -client_auth $CA $extra || exit 1
-
-echo test sslv2 via BIO pair
-$ssltest -bio_pair -ssl2 $extra || exit 1
-
-echo test sslv2 with server authentication via BIO pair
-$ssltest -bio_pair -ssl2 -server_auth $CA $extra || exit 1
-
-if [ $dsa_cert = NO ]; then
-  echo test sslv2 with client authentication via BIO pair
-  $ssltest -bio_pair -ssl2 -client_auth $CA $extra || exit 1
-
-  echo test sslv2 with both client and server authentication via BIO pair
-  $ssltest -bio_pair -ssl2 -server_auth -client_auth $CA $extra || exit 1
-fi
 
 echo test sslv3 via BIO pair
 $ssltest -bio_pair -ssl3 $extra || exit 1
@@ -103,7 +75,7 @@ echo test sslv2/sslv3 with both client and server authentication via BIO pair an
 $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
 echo "Testing ciphersuites"
-for protocol in TLSv1.2 SSLv3; do
+for protocol in SSLv3 TLSv1.2; do
   echo "Testing ciphersuites for $protocol"
   for cipher in `$openssl ciphers "RSA+$protocol" | tr ':' ' '`; do
     echo "Testing $cipher"
