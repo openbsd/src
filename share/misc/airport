@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.30 2014/12/06 05:20:54 deraadt Exp $
+#	$OpenBSD: airport,v 1.31 2014/12/06 06:02:33 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1418,6 +1418,7 @@ RST:Rochester Municipal, MN, USA
 RSU:Yosu, South Korea
 RSW:Ft. Meyers Southwest Florida Regional, USA
 RTB:Roatan, Roatan, Honduras
+TMS:Sao Tome International, Sao Tome and Principe
 RTM:Rotterdam The Hague, Rotterdam, Netherlands
 RUH:King Khaled Intl, Riyadh, Saudi Arabia
 RUI:Ruidoso, NM, USA
