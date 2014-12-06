@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.68 2014/12/02 20:46:19 miod Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.69 2014/12/06 13:21:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1334,7 +1334,13 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		else if (type == TLSEXT_TYPE_ec_point_formats &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
-			int ecpointformatlist_length = *(sdata++);
+			int ecpointformatlist_length;
+
+			if (size < 1) {
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+			}
+			ecpointformatlist_length = *(sdata++);
 
 			if (ecpointformatlist_length != size - 1) {
 				*al = TLS1_AD_DECODE_ERROR;
@@ -1354,7 +1360,13 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		} else if (type == TLSEXT_TYPE_elliptic_curves &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
-			int ellipticcurvelist_length = (*(sdata++) << 8);
+			int ellipticcurvelist_length;
+
+			if (size < 2) {
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+			}
+			ellipticcurvelist_length = (*(sdata++) << 8);
 			ellipticcurvelist_length += (*(sdata++));
 
 			if (ellipticcurvelist_length != size - 2 ||
