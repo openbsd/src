@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.69 2014/12/06 13:21:14 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.70 2014/12/06 13:28:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1370,7 +1370,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			ellipticcurvelist_length += (*(sdata++));
 
 			if (ellipticcurvelist_length != size - 2 ||
-			    ellipticcurvelist_length < 1) {
+			    ellipticcurvelist_length < 1 ||
+			    ellipticcurvelist_length % 2 != 0) {
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 			}
