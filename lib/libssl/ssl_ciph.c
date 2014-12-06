@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.74 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.75 2014/12/06 15:25:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -530,73 +530,73 @@ get_optional_pkey_id(const char *pkey_name)
 void
 ssl_load_ciphers(void)
 {
-	ssl_cipher_methods[SSL_ENC_DES_IDX]=
-	EVP_get_cipherbyname(SN_des_cbc);
-	ssl_cipher_methods[SSL_ENC_3DES_IDX]=
-	EVP_get_cipherbyname(SN_des_ede3_cbc);
-	ssl_cipher_methods[SSL_ENC_RC4_IDX]=
-	EVP_get_cipherbyname(SN_rc4);
+	ssl_cipher_methods[SSL_ENC_DES_IDX] =
+	    EVP_get_cipherbyname(SN_des_cbc);
+	ssl_cipher_methods[SSL_ENC_3DES_IDX] =
+	    EVP_get_cipherbyname(SN_des_ede3_cbc);
+	ssl_cipher_methods[SSL_ENC_RC4_IDX] =
+	    EVP_get_cipherbyname(SN_rc4);
 #ifndef OPENSSL_NO_IDEA
-	ssl_cipher_methods[SSL_ENC_IDEA_IDX]=
-	EVP_get_cipherbyname(SN_idea_cbc);
+	ssl_cipher_methods[SSL_ENC_IDEA_IDX] =
+	    EVP_get_cipherbyname(SN_idea_cbc);
 #else
 	ssl_cipher_methods[SSL_ENC_IDEA_IDX] = NULL;
 #endif
-	ssl_cipher_methods[SSL_ENC_AES128_IDX]=
-	EVP_get_cipherbyname(SN_aes_128_cbc);
-	ssl_cipher_methods[SSL_ENC_AES256_IDX]=
-	EVP_get_cipherbyname(SN_aes_256_cbc);
-	ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX]=
-	EVP_get_cipherbyname(SN_camellia_128_cbc);
-	ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX]=
-	EVP_get_cipherbyname(SN_camellia_256_cbc);
-	ssl_cipher_methods[SSL_ENC_GOST89_IDX]=
-	EVP_get_cipherbyname(SN_gost89_cnt);
+	ssl_cipher_methods[SSL_ENC_AES128_IDX] =
+	    EVP_get_cipherbyname(SN_aes_128_cbc);
+	ssl_cipher_methods[SSL_ENC_AES256_IDX] =
+	    EVP_get_cipherbyname(SN_aes_256_cbc);
+	ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] =
+	    EVP_get_cipherbyname(SN_camellia_128_cbc);
+	ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX] =
+	    EVP_get_cipherbyname(SN_camellia_256_cbc);
+	ssl_cipher_methods[SSL_ENC_GOST89_IDX] =
+	    EVP_get_cipherbyname(SN_gost89_cnt);
 
-	ssl_cipher_methods[SSL_ENC_AES128GCM_IDX]=
-	EVP_get_cipherbyname(SN_aes_128_gcm);
-	ssl_cipher_methods[SSL_ENC_AES256GCM_IDX]=
-	EVP_get_cipherbyname(SN_aes_256_gcm);
+	ssl_cipher_methods[SSL_ENC_AES128GCM_IDX] =
+	    EVP_get_cipherbyname(SN_aes_128_gcm);
+	ssl_cipher_methods[SSL_ENC_AES256GCM_IDX] =
+	    EVP_get_cipherbyname(SN_aes_256_gcm);
 
-	ssl_digest_methods[SSL_MD_MD5_IDX]=
-	EVP_get_digestbyname(SN_md5);
-	ssl_mac_secret_size[SSL_MD_MD5_IDX]=
-	EVP_MD_size(ssl_digest_methods[SSL_MD_MD5_IDX]);
+	ssl_digest_methods[SSL_MD_MD5_IDX] =
+	    EVP_get_digestbyname(SN_md5);
+	ssl_mac_secret_size[SSL_MD_MD5_IDX] =
+	    EVP_MD_size(ssl_digest_methods[SSL_MD_MD5_IDX]);
 	OPENSSL_assert(ssl_mac_secret_size[SSL_MD_MD5_IDX] >= 0);
-	ssl_digest_methods[SSL_MD_SHA1_IDX]=
-	EVP_get_digestbyname(SN_sha1);
-	ssl_mac_secret_size[SSL_MD_SHA1_IDX]=
-	EVP_MD_size(ssl_digest_methods[SSL_MD_SHA1_IDX]);
+	ssl_digest_methods[SSL_MD_SHA1_IDX] =
+	    EVP_get_digestbyname(SN_sha1);
+	ssl_mac_secret_size[SSL_MD_SHA1_IDX] =
+	    EVP_MD_size(ssl_digest_methods[SSL_MD_SHA1_IDX]);
 	OPENSSL_assert(ssl_mac_secret_size[SSL_MD_SHA1_IDX] >= 0);
-	ssl_digest_methods[SSL_MD_GOST94_IDX]=
-	EVP_get_digestbyname(SN_id_GostR3411_94);
+	ssl_digest_methods[SSL_MD_GOST94_IDX] =
+	    EVP_get_digestbyname(SN_id_GostR3411_94);
 	if (ssl_digest_methods[SSL_MD_GOST94_IDX]) {
-		ssl_mac_secret_size[SSL_MD_GOST94_IDX]=
-		EVP_MD_size(ssl_digest_methods[SSL_MD_GOST94_IDX]);
+		ssl_mac_secret_size[SSL_MD_GOST94_IDX] =
+		    EVP_MD_size(ssl_digest_methods[SSL_MD_GOST94_IDX]);
 		OPENSSL_assert(ssl_mac_secret_size[SSL_MD_GOST94_IDX] >= 0);
 	}
-	ssl_digest_methods[SSL_MD_GOST89MAC_IDX]=
-	EVP_get_digestbyname(SN_id_Gost28147_89_MAC);
+	ssl_digest_methods[SSL_MD_GOST89MAC_IDX] =
+	    EVP_get_digestbyname(SN_id_Gost28147_89_MAC);
 	if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]) {
 		ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
 	}
 
-	ssl_digest_methods[SSL_MD_SHA256_IDX]=
-	EVP_get_digestbyname(SN_sha256);
-	ssl_mac_secret_size[SSL_MD_SHA256_IDX]=
-	EVP_MD_size(ssl_digest_methods[SSL_MD_SHA256_IDX]);
-	ssl_digest_methods[SSL_MD_SHA384_IDX]=
-	EVP_get_digestbyname(SN_sha384);
-	ssl_mac_secret_size[SSL_MD_SHA384_IDX]=
-	EVP_MD_size(ssl_digest_methods[SSL_MD_SHA384_IDX]);
-	ssl_digest_methods[SSL_MD_STREEBOG256_IDX]=
-	EVP_get_digestbyname(SN_id_tc26_gost3411_2012_256);
-	ssl_mac_secret_size[SSL_MD_STREEBOG256_IDX]=
-	EVP_MD_size(ssl_digest_methods[SSL_MD_STREEBOG256_IDX]);
-	ssl_digest_methods[SSL_MD_STREEBOG512_IDX]=
-	EVP_get_digestbyname(SN_id_tc26_gost3411_2012_512);
-	ssl_mac_secret_size[SSL_MD_STREEBOG512_IDX]=
-	EVP_MD_size(ssl_digest_methods[SSL_MD_STREEBOG512_IDX]);
+	ssl_digest_methods[SSL_MD_SHA256_IDX] =
+	    EVP_get_digestbyname(SN_sha256);
+	ssl_mac_secret_size[SSL_MD_SHA256_IDX] =
+	    EVP_MD_size(ssl_digest_methods[SSL_MD_SHA256_IDX]);
+	ssl_digest_methods[SSL_MD_SHA384_IDX] =
+	    EVP_get_digestbyname(SN_sha384);
+	ssl_mac_secret_size[SSL_MD_SHA384_IDX] =
+	    EVP_MD_size(ssl_digest_methods[SSL_MD_SHA384_IDX]);
+	ssl_digest_methods[SSL_MD_STREEBOG256_IDX] =
+	    EVP_get_digestbyname(SN_id_tc26_gost3411_2012_256);
+	ssl_mac_secret_size[SSL_MD_STREEBOG256_IDX] =
+	    EVP_MD_size(ssl_digest_methods[SSL_MD_STREEBOG256_IDX]);
+	ssl_digest_methods[SSL_MD_STREEBOG512_IDX] =
+	    EVP_get_digestbyname(SN_id_tc26_gost3411_2012_512);
+	ssl_mac_secret_size[SSL_MD_STREEBOG512_IDX] =
+	    EVP_MD_size(ssl_digest_methods[SSL_MD_STREEBOG512_IDX]);
 }
 
 int
@@ -884,13 +884,11 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 }
 
 static void
-ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
-    int num_of_ciphers,
-unsigned long disabled_mkey, unsigned long disabled_auth,
+ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method, int num_of_ciphers,
+    unsigned long disabled_mkey, unsigned long disabled_auth,
     unsigned long disabled_enc, unsigned long disabled_mac,
-unsigned long disabled_ssl,
-    CIPHER_ORDER *co_list,
-CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+    unsigned long disabled_ssl, CIPHER_ORDER *co_list,
+    CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 {
 	int i, co_list_num;
 	const SSL_CIPHER *c;
@@ -937,7 +935,8 @@ CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 				co_list[i].next = &co_list[i + 1];
 			}
 
-			co_list[co_list_num - 1].prev = &co_list[co_list_num - 2];
+			co_list[co_list_num - 1].prev =
+			    &co_list[co_list_num - 2];
 		}
 
 		co_list[co_list_num - 1].next = NULL;
@@ -1562,7 +1561,8 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	if (*cipher_list_by_id != NULL)
 		sk_SSL_CIPHER_free(*cipher_list_by_id);
 	*cipher_list_by_id = tmp_cipher_list;
-	(void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id, ssl_cipher_ptr_id_cmp);
+	(void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,
+	    ssl_cipher_ptr_id_cmp);
 
 	sk_SSL_CIPHER_sort(*cipher_list_by_id);
 	return (cipherstack);
