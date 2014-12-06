@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1750 2014/12/02 00:08:50 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1751 2014/12/06 02:47:16 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1246,6 +1246,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_PCIE_5,
 	    "AMD64 14h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_MISC,
+	    "AMD64 16h Misc Cfg",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_LINK,
@@ -8780,6 +8784,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 3000",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_0,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_1,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_2,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_3,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_4,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_5,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_6,
+	    "Medfield Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_7,
+	    "Medfield Video",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_HB,
 	    "Core 3G Host",
 	},
@@ -9164,8 +9200,68 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Iris Graphics 5100",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_0,
+	    "GMA 3600",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_D2000_IGD,
 	    "Atom D2000/N2000 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_2,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_3,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_4,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_5,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_6,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_7,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_8,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_9,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_A,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_B,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_C,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_D,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_E,
+	    "GMA 3600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_F,
+	    "GMA 3600",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_D2000_HB_2,
@@ -14074,6 +14170,42 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5400_RAS_1,
 	    "5400 RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_0,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_1,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_2,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_3,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_4,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_5,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_6,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_7,
+	    "GMA 600",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_8,
+	    "GMA 600",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E600_HB,
