@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.5 2014/09/05 20:01:49 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.6 2014/12/06 10:11:46 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -67,7 +67,7 @@
 
 #define MAX_XFER	MAX(MAXPHYS,MAXBSIZE)
 /* Number of DMA segments for buffers that the device must support */
-#define SEG_MAX		(MAX_XFER/PAGE_SIZE)
+#define SEG_MAX		(MAX_XFER/PAGE_SIZE + 1)
 /* In the virtqueue, we need space for header and footer, too */
 #define ALLOC_SEGS	(SEG_MAX + 2)
 
