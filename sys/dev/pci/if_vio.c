@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.19 2014/11/29 22:53:58 brad Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.20 2014/12/06 10:09:10 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -667,7 +667,8 @@ vio_init(struct ifnet *ifp)
 	struct vio_softc *sc = ifp->if_softc;
 
 	vio_stop(ifp, 0);
-	if_rxr_init(&sc->sc_rx_ring, 4, sc->sc_vq[VQRX].vq_num);
+	if_rxr_init(&sc->sc_rx_ring, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1),
+	    sc->sc_vq[VQRX].vq_num);
 	vio_populate_rx_mbufs(sc);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
