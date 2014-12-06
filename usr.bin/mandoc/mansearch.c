@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.38 2014/11/27 01:57:42 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.39 2014/12/06 01:22:28 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
@@ -238,7 +239,8 @@ mansearch(const struct mansearch *search,
 		    SQLITE_OPEN_READONLY, NULL);
 
 		if (SQLITE_OK != c) {
-			perror(MANDOC_DB);
+			fprintf(stderr, "%s/%s: %s\n",
+			    paths->paths[i], MANDOC_DB, strerror(errno));
 			sqlite3_close(db);
 			continue;
 		}
