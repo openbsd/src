@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.111 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.112 2014/12/06 23:20:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -60,7 +60,6 @@
 #endif
 
 #if NVLAN > 0
-#include <net/if_types.h>
 #include <net/if_vlan_var.h>
 #endif
 

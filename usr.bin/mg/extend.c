@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.57 2014/11/16 04:16:41 guenther Exp $	*/
+/*	$OpenBSD: extend.c,v 1.58 2014/12/06 23:20:17 krw Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,8 +22,6 @@
 #define	BINDKEY			/* bindkey is used by FKEYS startup code */
 #endif /* !BINDKEY */
 #endif /* FKEYS */
-
-#include <ctype.h>
 
 static int	 remap(KEYMAP *, int, PF, KEYMAP *);
 static KEYMAP	*reallocmap(KEYMAP *);
