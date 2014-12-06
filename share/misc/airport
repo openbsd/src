@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.36 2014/12/06 09:15:54 matthieu Exp $
+#	$OpenBSD: airport,v 1.37 2014/12/06 22:23:41 naddy Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -150,7 +150,7 @@ BEH:Southwest Michigan Regional, Benton Harbor, MI, USA
 BEI:Beica, Ethiopia
 BEL:Val De Caes International, Belem, Para, Brazil
 BEO:Belmont, Newcastle, New South Wales, Australia
-BER:Berling/Brandenburg, Berlin, Germany
+BER:Berlin Brandenburg, Berlin, Germany
 BES:Brest/Bretagne, Brest, France
 BET:Bethel, AK, USA
 BEW:Beira, Mozambique
@@ -308,7 +308,7 @@ CGD:Changde, China
 CGH:Congonhas, Sao Paulo, Sao Paulo, Brazil
 CGI:Cape Girardeau, MO, USA
 CGK:Soekarno Hatta International, Jakarta, Indonesia
-CGN:Konrad Adenauer, Koln/Bonn, Germany
+CGN:Konrad Adenauer, Cologne/Bonn, Germany
 CGO:Zhengzhou, China
 CGP:Patenga, Chittagong, Bangladesh
 CGQ:Changchun, China
@@ -647,7 +647,6 @@ HAN:Noibai, Hanoi, Vietnam
 HAU:Karmoy, Haugesund, Norway
 HAV:Jose Marti, Havana, Cuba
 HBA:Hobart, Tasmania, Australia
-HDB:Heidelberg, Germany
 HDN:Yampa Valley Regional, Hayden, CO, USA
 HDY:Hat Yai, Thailand
 HEL:Helsinki-Vantaa, Finland
@@ -658,6 +657,7 @@ HFT:Hammerfest, Norway
 HGH:Hangzhou, China
 HGN:Mae Hong Son, Thailand
 HGR:Washington County Regional, Hagerstown, MD, USA
+HHN:Frankfurt-Hahn, Kirchberg, Germany
 HHH:Municipal, Hilton Head, SC, USA
 HIJ:Hiroshima, Japan
 HIR:Henderson International, Honiara/Guadalcanal, Solomon Islands
