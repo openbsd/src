@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.28 2014/12/05 14:11:13 kettenis Exp $
+#	$OpenBSD: airport,v 1.29 2014/12/06 05:14:03 yasuoka Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -671,6 +671,7 @@ HMA:Malmo Harbour, Sweden
 HMO:General Ignacio Pesqueira Garcia, Hermosillo, Sonora, Mexico
 HMV:Hemavan, Sweden
 HNA:Hanamaki, Morioka, Japan
+HND:Haneda, Tokyo, Japan
 HNH:Hoonah, AK, USA
 HNL:Honolulu International, Hawaii, USA
 HNS:Haines, AK, USA
