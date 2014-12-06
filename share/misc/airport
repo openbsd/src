@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.32 2014/12/06 06:22:38 deraadt Exp $
+#	$OpenBSD: airport,v 1.33 2014/12/06 08:33:05 ajacoutot Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -214,6 +214,7 @@ BNE:Brisbane International, Queensland, Australia
 BNJ:Hangelar, Bonn, Germany
 BNN:Bronnoysun, Bronnoysund, Norway
 BNS:Barinas, Venezuela
+BOB:Bora Bora, French Polynesia
 BOD:Merignac, Bordeaux, France
 BOG:El Dorado International, Bogota, Colombia
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
@@ -724,6 +725,7 @@ IGM:Mohave County, Kingman, AZ, USA
 IGR:Iguazu International, Misiones, Argentina
 IGU:Iguassu Falls, Parana, Brazil
 IJK:Izhevsk, Russia
+IKA:Imam Khomeini International Airport, Tehran, Iran
 IKT:Irkutsk, Russia
 ILE:Killeen, TX, USA
 ILF:Ilford, Manitoba, Canada
@@ -1321,6 +1323,7 @@ POU:Dutchess County, Poughkeepsie, NY, USA
 POZ:Lawica, Poznan, Poland
 PPG:Pago Pago International, American Samoa
 PPS:Puerto Princesa, Philippines
+PPT:Pape'ete, Tahiti, French Polynesia
 PQI:Presque Isle, ME, USA
 PQQ:Port Macquarie, New South Wales, Australia
 PRC:Prescott, AZ, USA
@@ -1358,6 +1361,7 @@ PXM:Puerto Escondido, Oaxaca, Mexico
 PXO:Porto Santo, Madeira Islands, Portugal
 PZE:Penzance, England, United Kingdom
 PZO:Puerto Ordaz, Venezuela
+PZU:Port Sudan, Sudan
 QBF:Vail/Eagle, CO, USA
 QDU:Main Train Station, Duesseldorf, Germany
 QDV:All Airports around Denver, Colorado, USA
