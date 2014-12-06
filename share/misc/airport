@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.31 2014/12/06 06:02:33 deraadt Exp $
+#	$OpenBSD: airport,v 1.32 2014/12/06 06:22:38 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1339,6 +1339,7 @@ PTG:Pietersburg, South Africa
 PTP:Le Raizet, Pointe A Pitre, Guadeloupe
 PTY:Tocumen International, Panama City, Panama
 PUB:Pueblo, CO, USA
+PUF:Pau Pyrenees, Pau, France
 PUJ:Punta Cana, Dominican Republic
 PUQ:Presidente Ibanez, Punta Arenas, Chile
 PUS:Kimhae, Pusan, South Korea
@@ -1418,7 +1419,6 @@ RST:Rochester Municipal, MN, USA
 RSU:Yosu, South Korea
 RSW:Ft. Meyers Southwest Florida Regional, USA
 RTB:Roatan, Roatan, Honduras
-TMS:Sao Tome International, Sao Tome and Principe
 RTM:Rotterdam The Hague, Rotterdam, Netherlands
 RUH:King Khaled Intl, Riyadh, Saudi Arabia
 RUI:Ruidoso, NM, USA
@@ -1636,6 +1636,7 @@ TLH:Tallahassee, FL, USA
 TLL:Ulemiste, Tallinn, Estonia
 TLS:Blagnac, Toulouse, France
 TLV:Ben-Gurion, Tel Aviv, Israel
+TMS:Sao Tome International, Sao Tome and Principe
 TMW:Tamworth, New South Wales, Australia
 TNG:Boukhalef Souahel, Tangier, Morocco
 TNR:Ivato, Antananarivo, Madagascar
@@ -1698,6 +1699,7 @@ UEL:Quelimane, Mozambique
 UET:Quetta, Pakistan
 UGC:Urgench, Uzbekistan
 UIB:Quibdo, Colombia
+UII:Utila, Honduras
 UIN:Baldwin Field, Quincy, IL, USA
 UIO:Mariscal, Quito, Ecuador
 UIP:Pluguffan, Quimper, France
