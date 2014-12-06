@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.132 2014/12/03 17:00:15 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.133 2014/12/06 12:18:32 tobias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1498,7 +1498,7 @@ cfline(char *line, char *prog)
 			}
 
 			pri = decode(buf, prioritynames);
-			if (pri < 0) {
+			if (pri < 0 || pri > LOG_PRIMASK) {
 				(void)snprintf(ebuf, sizeof ebuf,
 				    "unknown priority name \"%s\"", buf);
 				logerror(ebuf);
@@ -1517,7 +1517,7 @@ cfline(char *line, char *prog)
 					f->f_pmask[i] = pri;
 			else {
 				i = decode(buf, facilitynames);
-				if (i < 0) {
+				if (i < 0 || (i >> 3) > LOG_NFACILITIES) {
 					(void)snprintf(ebuf, sizeof(ebuf),
 					    "unknown facility name \"%s\"",
 					    buf);
