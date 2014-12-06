@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.72 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: ssl.h,v 1.73 2014/12/06 13:51:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -500,9 +500,10 @@ struct ssl_session_st {
 	struct ssl_session_st *prev, *next;
 	char *tlsext_hostname;
 	size_t tlsext_ecpointformatlist_length;
-	unsigned char *tlsext_ecpointformatlist; /* peer's list */
+	uint8_t *tlsext_ecpointformatlist; /* peer's list */
 	size_t tlsext_ellipticcurvelist_length;
-	unsigned char *tlsext_ellipticcurvelist; /* peer's list */
+	uint16_t *tlsext_ellipticcurvelist; /* peer's list */
+
 	/* RFC4507 info */
 	unsigned char *tlsext_tick;	/* Session ticket */
 	size_t tlsext_ticklen;		/* Session ticket length */
@@ -1142,9 +1143,9 @@ struct ssl_st {
 	/* RFC4507 session ticket expected to be received or sent */
 	int tlsext_ticket_expected;
 	size_t tlsext_ecpointformatlist_length;
-	unsigned char *tlsext_ecpointformatlist; /* our list */
+	uint8_t *tlsext_ecpointformatlist; /* our list */
 	size_t tlsext_ellipticcurvelist_length;
-	unsigned char *tlsext_ellipticcurvelist; /* our list */
+	uint16_t *tlsext_ellipticcurvelist; /* our list */
 
 	/* TLS Session Ticket extension override */
 	TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
