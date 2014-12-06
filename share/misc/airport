@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.35 2014/12/06 09:14:20 matthieu Exp $
+#	$OpenBSD: airport,v 1.36 2014/12/06 09:15:54 matthieu Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -501,7 +501,7 @@ ESC:Delta County, Escanaba, MI, USA
 ESD:Eastsound/Orcas Island, WA, USA
 ESR:El Salvador, Chile
 ETH:Elat, Israel
-ETZ:Frescaty, Metz/Nancy, France
+ETZ:Metz/Nancy Lorraine, France
 EUG:Eugene, OR, USA
 EVE:Evenes, Norway
 EVG:Sveg, Sweden
@@ -1005,7 +1005,7 @@ LYC:Lycksele, Sweden
 LYH:Lynchburg, VA, USA
 LYP:Lyallpur, Faisalabad, Pakistan
 LYR:Svalbard, Longyearbyen, Norway
-LYS:Satolas, Lyon, France
+LYS:Lyon Saint-Exupery, France
 LZC:Na, Lazaro Cardenas, Michoacan, Mexico
 MAA:Meenambarkkam, Madras, India
 MAD:Barajas, Madrid, Spain
