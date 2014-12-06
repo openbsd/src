@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.37 2014/12/06 22:23:41 naddy Exp $
+#	$OpenBSD: airport,v 1.38 2014/12/06 23:19:50 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -670,6 +670,7 @@ HKT:Phuket, Thailand
 HKV:Haskovo, Bulgaria
 HKY:Hickory, NC, USA
 HLF:Hultsfred, Smaland, Sweden
+HLI:Hollister, CA, USA
 HLN:Helena, MT, USA
 HLP:Halim Perdana Kusama, Jakarta, Indonesia
 HLZ:Hamilton, New Zealand
@@ -994,6 +995,7 @@ LUG:Agno, Lugano, Switzerland
 LUN:Lusaka, Zambia
 LUX:Findel, Luxembourg
 LVI:Livingstone, Zambia
+LVK:Livermore, CA, USA
 LWB:Greenbrier, WV, USA
 LWK:Tingwall, Shetland Islands /Shetland Isd, Scotland, United Kingdom
 LWO:Snilow, Lvov, Ukraine
@@ -1395,6 +1397,7 @@ RGA:Rio Grande, Tierra Del Fuego, Argentina
 RGN:Mingaladon, Yangon, Myanmar
 RHI:Rhinelander Oneida County, WI, USA
 RHO:Paradisi, Rhodes, Greece
+RHV:Reid-Hillview Airport, San Jose, CA, USA
 RIC:Richmond International/Byrd Field, Virginia, USA
 RIO:All Airports around Rio de Janeiro, RJ, Brazil
 RIW:Riverton, WY, USA
