@@ -1,4 +1,4 @@
-/*	$OpenBSD: km.c,v 1.8 2013/09/17 13:42:34 kettenis Exp $	*/
+/*	$OpenBSD: km.c,v 1.9 2014/12/06 03:52:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -29,7 +29,7 @@
 
 
 /*
- * AMD Family 10h/11h/14h/15h Processors, Function 3 -- Miscellaneous Control
+ * AMD Family > 10h Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
@@ -72,7 +72,8 @@ static const struct pci_matchid km_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_MISC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_MISC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_MISC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_MISC }
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_MISC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_MISC }
 };
 
 
