@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.29 2014/12/06 05:14:03 yasuoka Exp $
+#	$OpenBSD: airport,v 1.30 2014/12/06 05:20:54 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -122,7 +122,7 @@ AUH:Abu Dhabi International, Abu Dhabi, United Arab Emirates
 AUS:Austin-Bergstrom International, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
 AVN:Avignon/Caumont, Avignon, France
-AVP:Wilkes-Barre/Scranton International Airport, Pennsylvania, USA
+AVP:Wilkes-Barre/Scranton International, Pennsylvania, USA
 AVV:Avalon Airport, Victoria, Australia
 AXA:Wallblake, The Valley, Anguilla
 AXD:Alexandroupolis International, Alexandroupolis, Greece
@@ -189,6 +189,7 @@ BIQ:Biarritz-Anglet-Bayonne, Biarritz, France
 BIS:Bismarck Municipal, North Dakota, USA
 BJI:Bemidji Regional, Bemidji, MN, USA
 BJL:Banjul International, Banjul, Gambia
+BJV:Bodrum, Turkey
 BJX:Del Bajio International, Leon/Guanajuato, Guanajuato, Mexico
 BKI:Kota Kinabalu International, Kota Kinabalu, Sabah, Malaysia
 BKK:Suvarnabhumi Airport, Bangkok, Thailand
@@ -427,7 +428,7 @@ DLC:Dalian, China
 DLH:Duluth, MN, USA
 DLM:Dalaman, Mugla, Turkey
 DME:Domodedovo, Moscow, Russia
-DMK:Don Mueang International Airport, Bangkok, Thailand
+DMK:Don Mueang International, Bangkok, Thailand
 DMR:Dhamar, Yemen
 DND:Dundee, Scotland, United Kingdom
 DNK:Dnepropetrovsk, Ukraine
@@ -436,6 +437,7 @@ DNV:Vermilion County, Danville, IL, USA
 DOH:Doha, Qatar
 DOK:Donetsk, Ukraine
 DOL:Saint Gatien, Deauville, France
+DOM:Melville Hall, Dominica
 DPL:Dipolog, Dipolog, Philippines
 DPO:Devonport, Tasmania, Australia
 DPS:Ngurah Rai, Denpasar Bali, Indonesia
@@ -453,6 +455,7 @@ DUB:Dublin, Ireland
 DUD:Momona, Dunedin, New Zealand
 DUJ:Jefferson County, Du Bois, PA, USA
 DUQ:Quamichan Lake, Duncan / Quam, British Columbia, Canada
+DUR:King Shaka International, Durban, South Africa
 DUR:Louis Botha, Durban, South Africa
 DUS:Dusseldorf, Germany
 DUT:Dutch Harbor, AK, USA
@@ -546,6 +549,7 @@ FRM:Fairmont Municipal, MN, USA
 FRO:Floro, Norway
 FRS:Flores, Guatemala
 FRU:Bishkek, Kyrgyzstan
+FSC:Figari, Corsica, France
 FSD:Joe Foss Field, Sioux Falls, South Dakota, USA
 FSM:Fort Smith Municipal, AR, USA
 FSP:St Pierre, St. Pierre And Miquelon
@@ -756,10 +760,12 @@ IST:Ataturk International Istanbul, Turkey
 ITH:Ithaca Tompkins County, New York, USA
 ITM:Itami International, Osaka, Japan
 ITO:Hilo General Lyman Field, Hawaii, USA
+IVC:Invercargill, New Zealand
 IWD:Gogebic County, Ironwood, MI, USA
 IXB:Bagdogra, India
 IXE:Bajpe, Mangalore, India
 IXJ:Satwari, Jammu, India
+IXL:Leh, India
 IXM:Madurai, India
 IXU:Chikkalthana, Aurangabad, India
 IXZ:Port Blair, India
@@ -880,6 +886,7 @@ KTW:Pyrzowice, Katowice, Poland
 KUA:Padang Geroda, Kuantan, Malaysia
 KUF:Samara, Russia
 KUL:Subang Kuala Lumpur International, Malaysia
+KUM:Yakushima, Japan
 KUN:Kaunas, Lithuania
 KUO:Kuopio, Finland
 KUS:Kulusuk Metropolitan Area, Greenland
@@ -1097,7 +1104,7 @@ MQT:Marquette, MI, USA
 MRD:Alberto Carnevalli, Merida, Venezuela
 MRK:Marco Island, FL, USA
 MRS:Marseille, France
-MRU:Plaisance, Mauritius
+MRU:Sir Seewoosagur Ramgoolam Airport, Mauritius
 MRY:Monterey, California, USA
 MSJ:Misawa, Japan
 MSL:Muscle Shoals, Muscle Shoals / Florence / Sheffield, AL, USA
@@ -1136,6 +1143,7 @@ NAN:International, Nadi, Fiji
 NAP:Capodichino, Naples, Italy
 NAS:Nassau, Bahamas
 NAT:Agusto Severo, Natal, Rio Grande Do Norte, Brazil
+NAV:Nevsehir Kapadokya Airport, Nevsehir, Turkey
 NAY:Beijing, China
 NBO:Jomo Kenyatta Internatonal, Nairobi, Kenya
 NCA:North Caicos, Turks And Caicos Islands
@@ -1372,6 +1380,7 @@ RDU:Raleigh-Durham, North Carolina, USA
 REC:Guararapes International, Recife, Pernambuco, Brazil
 REG:Tito Menniti, Reggio Calabria, Italy
 REL:Trelew, Chubut, Argentina
+REP:Siem Reap, Cambodia
 RES:Resistencia, Chaco, Argentina
 REU:Reus, Spain
 REX:General Lucio Blanco, Reynosa, Tamaulipas, Mexico
@@ -1412,6 +1421,7 @@ RTB:Roatan, Roatan, Honduras
 RTM:Rotterdam The Hague, Rotterdam, Netherlands
 RUH:King Khaled Intl, Riyadh, Saudi Arabia
 RUI:Ruidoso, NM, USA
+RUN:Roland Garros Airport, Reunion Island, France
 RUT:Rutland, VT, USA
 RWI:Wilson, Rocky Mount, NC, USA
 SAB:Saba Island, Netherlands Antilles
@@ -1423,6 +1433,7 @@ SAO:All Airports around Sao Paulo, SP, Brazil
 SAP:La Mesa, San Pedro Sula, Honduras
 SAT:San Antonio International, Texas, USA
 SAV:Savannah International, Georgia, USA
+SAW:Sabiha Gokcen International, Istanbul, Turkey
 SBA:Santa Barbara Municipal, California, USA
 SBH:St Barthelemy, Guadeloupe
 SBN:Michiana Regional, South Bend, IN, USA
@@ -1573,6 +1584,7 @@ SYY:Stornoway, Scotland, United Kingdom
 SYZ:Shiraz, Iran
 SZG:Salzburg, Austria
 SZR:Stara Zagora, Bulgaria
+SZS:Ryan's Creek, Stewart Island, New Zealand
 SZX:Shenzhen, China
 SZZ:Goleniow, Szczecin, Poland
 TAB:Crown Point, Tobago, Trinidad And Tobago
@@ -1825,6 +1837,7 @@ YBC:Baie-Comeau, Quebec, Canada
 YBG:Bagotville, Quebec, Canada
 YBL:Campbell River, British Columbia, Canada
 YBR:Brandon, Manitoba, Canada
+YBW:Springbank Airport, Calgary, Alberta, Canada
 YBX:Blanc Sablon, Quebec, Canada
 YCA:Courtenay, British Columbia, Canada
 YCB:Cambridge Bay, Northwest Territories, Canada
