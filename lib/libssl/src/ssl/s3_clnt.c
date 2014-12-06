@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.96 2014/11/27 16:13:36 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.97 2014/12/06 14:24:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1191,9 +1191,6 @@ ssl3_get_key_exchange(SSL *s)
 
 	param = p = (unsigned char *)s->init_msg;
 	if (s->session->sess_cert != NULL) {
-		RSA_free(s->session->sess_cert->peer_rsa_tmp);
-		s->session->sess_cert->peer_rsa_tmp = NULL;
-
 		DH_free(s->session->sess_cert->peer_dh_tmp);
 		s->session->sess_cert->peer_dh_tmp = NULL;
 
@@ -1210,63 +1207,7 @@ ssl3_get_key_exchange(SSL *s)
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	EVP_MD_CTX_init(&md_ctx);
 
-	if (alg_k & SSL_kRSA) {
-		if ((rsa = RSA_new()) == NULL) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		if (2 > n)
-			goto truncated;
-		n2s(p, i);
-		param_len = i + 2;
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_RSA_MODULUS_LENGTH);
-			goto f_err;
-		}
-		if (!(rsa->n = BN_bin2bn(p, i, rsa->n))) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_BN_LIB);
-			goto err;
-		}
-		p += i;
-
-		if (param_len + 2 > n)
-			goto truncated;
-		n2s(p, i);
-		param_len += i + 2;
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_RSA_E_LENGTH);
-			goto f_err;
-		}
-		if (!(rsa->e = BN_bin2bn(p, i, rsa->e))) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_BN_LIB);
-			goto err;
-		}
-		p += i;
-		n -= param_len;
-
-		/*
-		 * This should be because we are using an
-		 * export cipher
-		 */
-		if (alg_a & SSL_aRSA)
-			pkey = X509_get_pubkey(
-			    s->session->sess_cert->peer_pkeys[
-			    SSL_PKEY_RSA_ENC].x509);
-		else {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-		s->session->sess_cert->peer_rsa_tmp = rsa;
-		rsa = NULL;
-	} else if (alg_k & SSL_kDHE) {
+	if (alg_k & SSL_kDHE) {
 		if ((dh = DH_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 			    ERR_R_DH_LIB);
@@ -1976,24 +1917,19 @@ ssl3_send_client_key_exchange(SSL *s)
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 
-			if (s->session->sess_cert->peer_rsa_tmp != NULL)
-				rsa = s->session->sess_cert->peer_rsa_tmp;
-			else {
-				pkey = X509_get_pubkey(
-				    s->session->sess_cert->peer_pkeys[
-				    SSL_PKEY_RSA_ENC].x509);
-				if ((pkey == NULL) ||
-				    (pkey->type != EVP_PKEY_RSA) ||
-				    (pkey->pkey.rsa == NULL)) {
-					SSLerr(
-					    SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-					    ERR_R_INTERNAL_ERROR);
-					EVP_PKEY_free(pkey);
-					goto err;
-				}
-				rsa = pkey->pkey.rsa;
+			pkey = X509_get_pubkey(
+			    s->session->sess_cert->peer_pkeys[
+			    SSL_PKEY_RSA_ENC].x509);
+			if ((pkey == NULL) ||
+			    (pkey->type != EVP_PKEY_RSA) ||
+			    (pkey->pkey.rsa == NULL)) {
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_INTERNAL_ERROR);
 				EVP_PKEY_free(pkey);
+				goto err;
 			}
+			rsa = pkey->pkey.rsa;
+			EVP_PKEY_free(pkey);
 
 			tmp_buf[0] = s->client_version >> 8;
 			tmp_buf[1] = s->client_version & 0xff;
@@ -2631,7 +2567,6 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	long		 alg_k, alg_a;
 	EVP_PKEY	*pkey = NULL;
 	SESS_CERT	*sc;
-	RSA		*rsa;
 	DH		*dh;
 
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
@@ -2647,8 +2582,6 @@ ssl3_check_cert_and_algorithm(SSL *s)
 		    ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-
-	rsa = s->session->sess_cert->peer_rsa_tmp;
 	dh = s->session->sess_cert->peer_dh_tmp;
 
 	/* This is the passed certificate. */
@@ -2681,7 +2614,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 		goto f_err;
 	}
 	if ((alg_k & SSL_kRSA) &&
-	    !(has_bits(i, EVP_PK_RSA|EVP_PKT_ENC) || (rsa != NULL))) {
+	    !has_bits(i, EVP_PK_RSA|EVP_PKT_ENC)) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_RSA_ENCRYPTING_CERT);
 		goto f_err;

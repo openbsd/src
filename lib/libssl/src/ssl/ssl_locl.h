@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.78 2014/12/06 13:51:06 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.79 2014/12/06 14:24:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -467,7 +467,6 @@ typedef struct sess_cert_st {
 	/* Obviously we don't have the private keys of these,
 	 * so maybe we shouldn't even use the CERT_PKEY type here. */
 
-	RSA *peer_rsa_tmp;
 	DH *peer_dh_tmp;
 	EC_KEY *peer_ecdh_tmp;
 
