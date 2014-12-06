@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.81 2014/07/28 15:00:27 jsg Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.82 2014/12/06 03:01:42 jsg Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -157,15 +157,35 @@ static const struct vga_device_description vga_devs[] = {
 	 * Finally the last value indicates if we should repost via 
 	 * vga_pci (i.e. the x86emulator) * bios.
 	 */
-	{	/* All machines with Intel US15W (until more evidence) */
+	{	/* All machines with GMA500/Poulsbo */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,
 	    	0x0000, 0x0000 },
 	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1
 	},
-	{	/* All machines with Intel US15L (until more evidence) */
+	{	/* All machines with GMA500/Poulsbo */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15L_IGD,
 	    	0x0000, 0x0000 },
 	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1
+	},
+	{	/* All machines with GMA600/Oaktrail, 0x4100:4107 */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_0,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xfff8, 0x0000, 0x0000 }, 1
+	},
+	{	/* All machines with GMA600/Oaktrail, 0x4108 */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA600_8,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1
+	},
+	{	/* All machines with Medfield, 0x0130:0x0137 */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MDFLD_IGD_0,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xfff8, 0x0000, 0x0000 }, 1
+	},
+	{	/* All machines with GMA36x0/Cedartrail, 0x0be0:0x0bef */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GMA3600_0,
+	    	0x0000, 0x0000 },
+	    {	0xffff, 0xfff0, 0x0000, 0x0000 }, 1
 	},
 };
 #endif
