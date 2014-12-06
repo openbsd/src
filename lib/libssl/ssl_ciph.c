@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.75 2014/12/06 15:25:40 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.76 2014/12/06 15:27:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,10 +184,7 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
-/* PKEY_TYPE for GOST89MAC is known in advance, but, because
- * implementation is engine-provided, we'll fill it only if
- * corresponding EVP_PKEY_METHOD is found 
- */
+
 static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
 	EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_GOSTIMIT,
 	EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC,
