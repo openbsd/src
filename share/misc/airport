@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.34 2014/12/06 08:34:59 ajacoutot Exp $
+#	$OpenBSD: airport,v 1.35 2014/12/06 09:14:20 matthieu Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -488,6 +488,7 @@ ELY:Yelland Field, Ely, NV, USA
 EMA:East Midlands, England, United Kingdom
 EMD:Emerald, Queensland, Australia
 ENA:Kenai Municipal, AK, USA
+ENC:Nancy-Essey, France
 ENS:Twente, Enschede, Netherlands
 EOH:Enrique Olaya Herrara, Medellin, Colombia
 EPR:Esperance, Western Australia, Australia
@@ -1834,6 +1835,7 @@ XSC:South Caicos, Turks And Caicos Islands
 XTY:Strathroy / Via Rail Service, Ontario, Canada
 XVV:Belleville / Via Rail Service, Ontario, Canada
 XWY:Wyoming / Via Rail Service, Ontario, Canada
+XYT:Montaudran, Toulouse, France
 XZB:Casselman / Via Rail Service, Ontario, Canada
 XZC:Glencoe / Via Rail Service, Ontario, Canada
 YAM:Sault Ste Marie, Ontario, Canada
