@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.18 2014/11/18 03:28:05 tedu Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.19 2014/12/06 19:26:37 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -177,6 +177,7 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 {
 	int idx;
 	X509_TRUST *trtmp;
+	char *name_dup;
 
 	/* This is set according to what we change: application can't set it */
 	flags &= ~X509_TRUST_DYNAMIC;
@@ -199,12 +200,14 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 		}
 	}
 
+	if ((name_dup = strdup(name)) == NULL)
+		goto err;
+
 	/* free existing name if dynamic */
 	if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
 		free(trtmp->name);
 	/* dup supplied name */
-	if ((trtmp->name = strdup(name)) == NULL)
-		goto err;
+	trtmp->name = name_dup;
 	/* Keep the dynamic flag of existing entry */
 	trtmp->flags &= X509_TRUST_DYNAMIC;
 	/* Set all other flags */
@@ -226,10 +229,9 @@ X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	return 1;
 
 err:
-	if (idx == -1) {
-		free(trtmp->name);
+	free(name_dup);
+	if (idx == -1)
 		free(trtmp);
-	}
 	X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_purp.c,v 1.23 2014/10/05 18:33:57 miod Exp $ */
+/* $OpenBSD: v3_purp.c,v 1.24 2014/12/06 19:26:37 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -203,6 +203,9 @@ X509_PURPOSE_add(int id, int trust, int flags,
 {
 	int idx;
 	X509_PURPOSE *ptmp;
+	char *name_dup, *sname_dup;
+
+	name_dup = sname_dup = NULL;
 
 	if (name == NULL || sname == NULL) {
 		X509V3err(X509V3_F_X509_PURPOSE_ADD,
@@ -227,16 +230,19 @@ X509_PURPOSE_add(int id, int trust, int flags,
 	} else
 		ptmp = X509_PURPOSE_get0(idx);
 
+	if ((name_dup = strdup(name)) == NULL)
+		goto err;
+	if ((sname_dup = strdup(sname)) == NULL)
+		goto err;
+
 	/* free existing name if dynamic */
 	if (ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {
 		free(ptmp->name);
 		free(ptmp->sname);
 	}
 	/* dup supplied name */
-	ptmp->name = strdup(name);
-	ptmp->sname = strdup(sname);
-	if (ptmp->name == NULL || ptmp->sname == NULL)
-		goto err;
+	ptmp->name = name_dup;
+	ptmp->sname = sname_dup;
 	/* Keep the dynamic flag of existing entry */
 	ptmp->flags &= X509_PURPOSE_DYNAMIC;
 	/* Set all other flags */
@@ -258,14 +264,10 @@ X509_PURPOSE_add(int id, int trust, int flags,
 	return 1;
 
 err:
-	free(ptmp->name);
-	free(ptmp->sname);
+	free(name_dup);
+	free(sname_dup);
 	if (idx == -1)
 		free(ptmp);
-	else {
-		ptmp->name = NULL;
-		ptmp->sname = NULL;
-	}
 	X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
 	return 0;
 }
