@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.33 2014/12/06 08:33:05 ajacoutot Exp $
+#	$OpenBSD: airport,v 1.34 2014/12/06 08:34:59 ajacoutot Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1463,7 +1463,7 @@ SEL:Kimpo International, Seoul, South Korea
 SEN:Southend, London, England, United Kingdom
 SEZ:Mahe Island Seychelles Intl, Mahe Island, Seychelles
 SFA:Sfax, Tunisia
-SFG:Esperance, St Martin, Netherlands Antilles
+SFG:Esperance, St Martin, French Antilles
 SFJ:Sondre Stromfjord, Kangerlussuaq, Greenland
 SFN:Santa Fe, Santa Fe, Argentina
 SFO:San Francisco International, California, USA
