@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2014/11/17 20:31:22 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2014/12/07 15:45:44 miod Exp $
 
 # mips64-specific libcrypto build rules
 
@@ -9,9 +9,14 @@ SSLASM+= aes aes-mips aes-mips
 # bf
 SRCS+= bf_enc.c
 # bn
+.if ${MACHINE} == "sgi"	# because of R4000 support
+SRCS+= bn_asm.c
+.else
 SSLASM+= bn mips bn-mips
+CFLAGS+= -DBN_DIV3W
+.endif
 SSLASM+= bn mips-mont mips-mont
-CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV3W
+CFLAGS+= -DOPENSSL_BN_ASM_MONT
 # camellia
 SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
