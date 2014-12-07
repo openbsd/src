@@ -49,6 +49,12 @@
 #
 $flavour = shift; # supported flavours are o32,n32,64,nubi32,nubi64
 
+if ($flavour =~ /64/i) {
+	$LA="dla";
+} else {
+	$LA="la";
+}
+
 if ($flavour =~ /64|n32/i) {
 	$PTR_ADD="dadd";	# incidentally works even on n32
 	$PTR_SUB="dsub";	# incidentally works even on n32
@@ -385,7 +391,7 @@ $code.=<<___ if ($flavour !~ /o32/i);	# non-o32 PIC-ification
 ___
 $code.=<<___;
 	.set	reorder
-	la	$Tbl,AES_Te		# PIC-ified 'load address'
+	$LA	$Tbl,AES_Te		# PIC-ified 'load address'
 
 	lwl	$s0,0+$MSB($inp)
 	lwl	$s1,4+$MSB($inp)
@@ -721,7 +727,7 @@ $code.=<<___ if ($flavour !~ /o32/i);	# non-o32 PIC-ification
 ___
 $code.=<<___;
 	.set	reorder
-	la	$Tbl,AES_Td		# PIC-ified 'load address'
+	$LA	$Tbl,AES_Td		# PIC-ified 'load address'
 
 	lwl	$s0,0+$MSB($inp)
 	lwl	$s1,4+$MSB($inp)
@@ -1060,7 +1066,7 @@ $code.=<<___ if ($flavour !~ /o32/i);	# non-o32 PIC-ification
 ___
 $code.=<<___;
 	.set	reorder
-	la	$Tbl,AES_Te		# PIC-ified 'load address'
+	$LA	$Tbl,AES_Te		# PIC-ified 'load address'
 
 	bal	_mips_AES_set_encrypt_key
 
@@ -1115,7 +1121,7 @@ $code.=<<___ if ($flavour !~ /o32/i);	# non-o32 PIC-ification
 ___
 $code.=<<___;
 	.set	reorder
-	la	$Tbl,AES_Te		# PIC-ified 'load address'
+	$LA	$Tbl,AES_Te		# PIC-ified 'load address'
 
 	bal	_mips_AES_set_encrypt_key
 

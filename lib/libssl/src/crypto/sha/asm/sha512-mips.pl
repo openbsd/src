@@ -47,6 +47,12 @@
 #
 $flavour = shift; # supported flavours are o32,n32,64,nubi32,nubi64
 
+if ($flavour =~ /64/i) {
+	$LA="dla";
+} else {
+	$LA="la";
+}
+
 if ($flavour =~ /64|n32/i) {
 	$PTR_ADD="dadd";	# incidentally works even on n32
 	$PTR_SUB="dsub";	# incidentally works even on n32
@@ -284,7 +290,7 @@ $code.=<<___ if ($flavour !~ /o32/i);	# non-o32 PIC-ification
 ___
 $code.=<<___;
 	.set	reorder
-	la	$Ktbl,K${label}		# PIC-ified 'load address'
+	$LA	$Ktbl,K${label}		# PIC-ified 'load address'
 
 	$LD	$A,0*$SZ($ctx)		# load context
 	$LD	$B,1*$SZ($ctx)
