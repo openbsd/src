@@ -1,4 +1,4 @@
-.\"	$OpenBSD: assert.3,v 1.8 2013/06/05 03:42:03 tedu Exp $
+.\"	$OpenBSD: assert.3,v 1.9 2014/12/07 01:27:03 schwarze Exp $
 .\"	$NetBSD: assert.3,v 1.5 1994/11/30 15:24:30 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)assert.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: December 7 2014 $
 .Dt ASSERT 3
 .Os
 .Sh NAME
@@ -43,16 +43,16 @@
 The
 .Fn assert
 macro tests the given
-.Ar expression
+.Fa expression
 and if it is false, the calling process is terminated.
 A diagnostic message is written to
-.Em stderr
+.Dv stderr
 and the
 .Xr abort 3
 function is called, effectively terminating the program.
 .Pp
 If
-.Ar expression
+.Fa expression
 is true, the
 .Fn assert
 macro does nothing.
@@ -65,9 +65,9 @@ option
 .Fl DNDEBUG .
 .Sh DIAGNOSTICS
 The following diagnostic message is written to
-.Em stderr
+.Dv stderr
 if
-.Ar expression
+.Fa expression
 is false:
 .Bd -literal -offset indent
 "assertion \e"%s\e" failed: file \e"%s\e", line %d\en", \e
