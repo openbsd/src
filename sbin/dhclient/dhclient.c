@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.340 2014/12/07 15:28:23 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.341 2014/12/07 17:01:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -350,8 +350,10 @@ routehandler(void)
 #endif
 			ifi->linkstat = linkstat;
 			if (ifi->linkstat) {
-				if (client->state == S_PREBOOT)
+				if (client->state == S_PREBOOT) {
 					state_preboot();
+					get_hw_address();
+				}
 				client->state = S_REBOOTING;
 				set_timeout_interval(1, state_reboot);
 			} else if (strlen(path_option_db)) {
