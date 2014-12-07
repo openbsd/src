@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.2 2014/07/16 17:38:19 miod Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.3 2014/12/07 20:00:13 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -79,7 +79,6 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 		{
 			.cipher_id = 0x03000000L | 1,
 			.ssl_version = TLS1_2_VERSION,
-			.sid_ctx = "abcdefghijklmnopqrstuvwxyz",
 			.master_key_length = 26,
 			.session_id = "0123456789",
 			.session_id_length = 10,
@@ -105,7 +104,6 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 		{
 			.cipher_id = 0x03000000L | 1,
 			.ssl_version = TLS1_2_VERSION,
-			.sid_ctx = "abcdefghijklmnopqrstuvwxyz",
 			.master_key_length = 26,
 			.session_id = "0123456789",
 			.session_id_length = 10,
