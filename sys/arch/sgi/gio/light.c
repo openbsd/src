@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.6 2014/12/07 16:35:53 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.7 2014/12/07 17:15:56 miod Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -126,6 +126,9 @@ int	light_alloc_screen(void *, const struct wsscreen_descr *, void **,
 void	light_free_screen(void *, void *);
 int	light_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+int	light_load_font(void *, void *, struct wsdisplay_font *);
+int	light_list_font(void *, struct wsdisplay_font *);
+void	light_burner(void *, u_int, u_int);
 
 struct wsdisplay_accessops light_accessops = {
 	.ioctl = light_ioctl,
@@ -133,6 +136,9 @@ struct wsdisplay_accessops light_accessops = {
 	.alloc_screen = light_alloc_screen,
 	.free_screen = light_free_screen,
 	.show_screen = light_show_screen,
+	.load_font = light_load_font,
+	.list_font = light_list_font,
+	.burn_screen = light_burner
 };
 
 int	light_do_cursor(struct rasops_info *);
@@ -230,17 +236,17 @@ rex_copy_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 	dy = from_y - to_y;
 
 	if (to_y > from_y) {
-		ystarti = to_y + height;
+		ystarti = to_y + height - 1;
 		yendi = to_y;
 	} else {
 		ystarti = to_y;
-		yendi = to_y + height;
+		yendi = to_y + height - 1;
 	}
 
 	rex_wait(dc);
 
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, to_x);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, to_x + width);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, to_x + width - 1);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, ystarti);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, yendi);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COMMAND, REX_OP_DRAW |
@@ -260,9 +266,9 @@ rex_fill_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 	rex_wait(dc);
 
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, from_y);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, to_y);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, to_y - 1);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, from_x);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, to_x);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, to_x - 1);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORREDI,
 	    ri->ri_devcmap[bg] & 0xff);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COMMAND, REX_OP_DRAW |
@@ -541,9 +547,9 @@ light_putchar(void *c, int row, int col, u_int ch, long attr)
 	rex_wait(dc);
 
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, y);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, y + font->fontheight);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, y + font->fontheight - 1);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, x);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, x + font->fontwidth);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, x + font->fontwidth - 1);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORREDI,
 	    ri->ri_devcmap[fg] & 0xff);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORBACK,
@@ -753,4 +759,35 @@ light_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	return 0;
+}
+
+int
+light_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct light_devconfig *dc = v;
+	struct rasops_info *ri = &dc->dc_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+light_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct light_devconfig *dc = v;
+	struct rasops_info *ri = &dc->dc_ri;
+
+	return rasops_list_font(ri, font);
+}
+
+void
+light_burner(void *v, u_int on, u_int flags)
+{
+	struct light_devconfig *dc = v;
+
+	if (on)
+		rex_vc1_sysctl_write(dc, rex_vc1_sysctl_read(dc) |
+		    VC1_SYSCTL_VIDEO_ON);
+	else
+		rex_vc1_sysctl_write(dc, rex_vc1_sysctl_read(dc) &
+		    ~VC1_SYSCTL_VIDEO_ON);
 }
