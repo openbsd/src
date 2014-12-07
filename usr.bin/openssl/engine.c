@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: engine.c,v 1.2 2014/12/07 15:08:32 jsing Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -96,8 +96,6 @@ identity(char *ptr)
 static int
 append_buf(char **buf, const char *s, int *size, int step)
 {
-	int l = strlen(s);
-
 	if (*buf == NULL) {
 		*size = step;
 		*buf = malloc(*size);
@@ -105,8 +103,6 @@ append_buf(char **buf, const char *s, int *size, int step)
 			return 0;
 		**buf = '\0';
 	}
-	if (**buf != '\0')
-		l += 2;		/* ", " */
 
 	if (strlen(*buf) + strlen(s) >= (unsigned int) *size) {
 		*size += step;
