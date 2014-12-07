@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.38 2014/12/06 23:19:50 mlarkin Exp $
+#	$OpenBSD: airport,v 1.39 2014/12/07 11:03:06 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -328,6 +328,7 @@ CIX:Cornel Ruiz, Chiclayo, Peru
 CJB:Peelamedu, Coimbatore, India
 CJS:International Abraham Gonzalez, Ciudad Juarez, Chihuahua, Mexico
 CJU:Cheju, Cheju, South Korea
+CKB:North Central West Virginia, Bridgeport, WV, USA
 CKS:International / Brasilia Brazil, Carajas, Para, Brazil
 CKY:Conakry, Conakry, Guinea
 CLD:Carlsbad/Palomar, CA, USA
@@ -478,6 +479,7 @@ EGE:Eagle County Regional, Vail/Eagle, CO, USA
 EIN:Welschap, Eindhoven, Netherlands
 EIS:Tortola/Beef Island, Virgin Islands (British)
 EJA:Variguies, Barrancabermeja, Colombia
+EKN:Elkins-Randolph Country, Elkins, WV, USA
 EKO:J C Harris Field, Elko, NV, USA
 ELD:El Dorado, AR, USA
 ELH:North Eleuthera, Bahamas
@@ -996,7 +998,7 @@ LUN:Lusaka, Zambia
 LUX:Findel, Luxembourg
 LVI:Livingstone, Zambia
 LVK:Livermore, CA, USA
-LWB:Greenbrier, WV, USA
+LWB:Greenbrier Valley, WV, USA
 LWK:Tingwall, Shetland Islands /Shetland Isd, Scotland, United Kingdom
 LWO:Snilow, Lvov, Ukraine
 LWT:Lewistown Municipal, MT, USA
@@ -1056,7 +1058,7 @@ MFW:All Airports around Miami, Ft. Lauderdale and West Palm Beach, Florida, USA
 MGA:Managua, Nicaragua
 MGM:Montgomery Municipal/Dannelly Field, Alabama, USA
 MGQ:Mogadishu, Somalia
-MGW:Morgantown, WV, USA
+MGW:Morgantown Municipal, WV, USA
 MHH:Marsh Harbour, Bahamas
 MHK:Manhattan Municipal, KS, USA
 MHQ:Mariehamn, Aland Island, Finland
@@ -1399,6 +1401,7 @@ RHI:Rhinelander Oneida County, WI, USA
 RHO:Paradisi, Rhodes, Greece
 RHV:Reid-Hillview Airport, San Jose, CA, USA
 RIC:Richmond International/Byrd Field, Virginia, USA
+RIG:Rio Grande, Rio Grande Do Sul, Brazil
 RIO:All Airports around Rio de Janeiro, RJ, Brazil
 RIW:Riverton, WY, USA
 RIX:Riga, Latvia
