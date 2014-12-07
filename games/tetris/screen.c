@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.14 2011/04/03 10:25:59 dcoppa Exp $	*/
+/*	$OpenBSD: screen.c,v 1.15 2014/12/07 21:06:57 deraadt Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -358,11 +358,7 @@ scr_clear(void)
 	memset((char *)curscreen, 0, sizeof(curscreen));
 }
 
-#if vax && !__GNUC__
-typedef int regcell;	/* pcc is bad at `register char', etc */
-#else
 typedef cell regcell;
-#endif
 
 /*
  * Update the screen.
