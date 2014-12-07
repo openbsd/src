@@ -1,4 +1,4 @@
-/* $OpenBSD: gost2814789.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gost2814789.c,v 1.3 2014/12/07 16:33:51 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -416,8 +416,8 @@ GOST2814789IMIT_Init(GOST2814789IMIT_CTX *c, int nid)
 }
 
 static void
-GOST2814789IMIT_block_data_order(GOST2814789IMIT_CTX *ctx, const void *p,
-    size_t num)
+GOST2814789IMIT_block_data_order(GOST2814789IMIT_CTX *ctx,
+    const unsigned char *p, size_t num)
 {
 	int i;
 

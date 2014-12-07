@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341194.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gostr341194.c,v 1.3 2014/12/07 16:33:51 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -207,7 +207,8 @@ GOSTR341194_Init(GOSTR341194_CTX *c, int nid)
 }
 
 static void
-GOSTR341194_block_data_order(GOSTR341194_CTX *ctx, const void *p, size_t num)
+GOSTR341194_block_data_order(GOSTR341194_CTX *ctx, const unsigned char *p,
+    size_t num)
 {
 	int i;
 

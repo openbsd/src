@@ -1,4 +1,4 @@
-/* $OpenBSD: streebog.c,v 1.3 2014/12/07 16:07:56 miod Exp $ */
+/* $OpenBSD: streebog.c,v 1.4 2014/12/07 16:33:51 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -1269,7 +1269,8 @@ streebog_single_block(STREEBOG_CTX *ctx, const unsigned char *in, size_t num)
 
 
 static void
-streebog_block_data_order(STREEBOG_CTX *ctx, const void *in, size_t num)
+streebog_block_data_order(STREEBOG_CTX *ctx, const unsigned char *in,
+    size_t num)
 {
 	int i;
 
@@ -1280,12 +1281,12 @@ streebog_block_data_order(STREEBOG_CTX *ctx, const void *in, size_t num)
 int
 STREEBOG512_Final(unsigned char *md, STREEBOG_CTX *c)
 {
-	int n;
 	unsigned char *p = (unsigned char *)c->data;
-	STREEBOG_LONG64 Z[STREEBOG_LBLOCK] = {};
+	STREEBOG_LONG64 Z[STREEBOG_LBLOCK] = {0};
+	int n;
 
 	if (c->num == STREEBOG_CBLOCK) {
-		streebog_block_data_order(c, c->data, 1);
+		streebog_block_data_order(c, p, 1);
 		c->num -= STREEBOG_CBLOCK;
 	}
 
