@@ -40,7 +40,6 @@ _quick3p=
     cpan 1				utils/cpan \
     enc2xs 1				utils/enc2xs \
     find2perl 1				x2p/find2perl \
-    function 1				cpan/Pod-Perldoc/corpus/perlfunc.pod \
     h2ph 1				utils/h2ph \
     h2xs 1				utils/h2xs \
     instmodsh 1				utils/instmodsh \
