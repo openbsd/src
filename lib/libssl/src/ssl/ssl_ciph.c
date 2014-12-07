@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.76 2014/12/06 15:27:45 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.77 2014/12/07 12:13:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -488,42 +488,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 };
 
-/* Search for public key algorithm with given name and 
- * return its pkey_id if it is available. Otherwise return 0
- */
-#ifdef OPENSSL_NO_ENGINE
-
-static int
-get_optional_pkey_id(const char *pkey_name)
-{
-	const EVP_PKEY_ASN1_METHOD *ameth;
-	int pkey_id = 0;
-	ameth = EVP_PKEY_asn1_find_str(NULL, pkey_name, -1);
-	if (ameth) {
-		EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
-	}
-	return pkey_id;
-}
-
-#else
-
-static int
-get_optional_pkey_id(const char *pkey_name)
-{
-	const EVP_PKEY_ASN1_METHOD *ameth;
-	ENGINE *tmpeng = NULL;
-	int pkey_id = 0;
-	ameth = EVP_PKEY_asn1_find_str(&tmpeng, pkey_name, -1);
-	if (ameth) {
-		EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
-	}
-	if (tmpeng)
-		ENGINE_finish(tmpeng);
-	return pkey_id;
-}
-
-#endif
-
 void
 ssl_load_ciphers(void)
 {
@@ -840,19 +804,17 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 	*ssl = 0;
 
 	/*
-	 * Check for presence of GOST 34.10 algorithms, and if they
-	 * do not present, disable  appropriate auth and key exchange.
+	 * Check for the availability of GOST 34.10 public/private key
+	 * algorithms. If they are not available disable the associated
+	 * authentication and key exchange algorithms.
 	 */
-	if (!get_optional_pkey_id("gost94")) {
+	if (EVP_PKEY_meth_find(NID_id_GostR3410_94) == NULL)
 		*auth |= SSL_aGOST94;
-	}
-	if (!get_optional_pkey_id("gost2001")) {
+	if (EVP_PKEY_meth_find(NID_id_GostR3410_2001) == NULL)
 		*auth |= SSL_aGOST01;
-	}
-	/* Disable GOST key exchange if no GOST signature algs are available. */
-	if (((~*auth) & (SSL_aGOST94|SSL_aGOST01)) == 0) {
+	if (((~*auth) & (SSL_aGOST94|SSL_aGOST01)) == 0)
 		*mkey |= SSL_kGOST;
-	}
+
 #ifdef SSL_FORBID_ENULL
 	*enc |= SSL_eNULL;
 #endif
