@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.40 2014/12/07 17:13:07 sthen Exp $
+#	$OpenBSD: airport,v 1.41 2014/12/07 17:13:56 sthen Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -915,6 +915,7 @@ LAW:Municipal, Lawton, Oklahoma, USA
 LAX:Los Angeles International, California, USA
 LBA:Leeds/Bradford, England, United Kingdom
 LBB:Lubbock, Texas, USA
+LBC:Lubeck, Germany
 LBE:Westmoreland County, Latrobe, Pennsylvania, USA
 LBF:North Platte Lee Bird Field, Nebraska, USA
 LBL:Glenn L Martin Terminal, Liberal, Kansas, USA
