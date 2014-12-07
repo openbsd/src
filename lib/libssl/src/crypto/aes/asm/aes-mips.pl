@@ -85,10 +85,6 @@ my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
 
 $code.=<<___;
 .text
-#ifdef OPENSSL_FIPSCANISTER
-# include <openssl/fipssyms.h>
-#endif
-
 #if !defined(__vxworks) || defined(__pic__)
 .option	pic2
 #endif
