@@ -1602,6 +1602,7 @@
 ./usr/share/man/man1/c++.1
 ./usr/share/man/man1/c++filt.1
 ./usr/share/man/man1/cc.1
+./usr/share/man/man1/flex++.1
 ./usr/share/man/man1/flex.1
 ./usr/share/man/man1/g++.1
 ./usr/share/man/man1/gcc-local.1
