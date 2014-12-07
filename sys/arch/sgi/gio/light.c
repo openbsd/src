@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.5 2014/03/18 23:23:09 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.6 2014/12/07 16:35:53 miod Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -229,7 +229,6 @@ rex_copy_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 	dx = from_x - to_x;
 	dy = from_y - to_y;
 
-	/* adjust for y. NB: STOPONX, STOPONY are inclusive */
 	if (to_y > from_y) {
 		ystarti = to_y + height;
 		yendi = to_y;
@@ -352,7 +351,7 @@ light_loadcmap(struct light_devconfig *dc, int from, int count)
 	/* XXX should wait for retrace first */
 
 	cmap += 3 * from;
-	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_DAC_RADDR);
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_DAC_WADDR);
 	rex_write(dc, REX_PAGE1_SET, REX_P1REG_DAC_ADDRDATA, from);
 	rex_write(dc, REX_PAGE1_GO, REX_P1REG_DAC_ADDRDATA, from);
 
