@@ -1,4 +1,4 @@
-/*	$OpenBSD: verifytest.c,v 1.1 2014/11/01 11:55:27 jsing Exp $	*/
+/*	$OpenBSD: verifytest.c,v 1.2 2014/12/07 16:56:17 bcook Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -20,8 +20,9 @@
 #include <stdlib.h>
 
 #include <openssl/x509v3.h>
+#include <tls.h>
 
-extern int tls_check_hostname(X509 *cert, const char *host);
+extern int tls_check_hostname(struct tls *ctx, X509 *cert, const char *host);
 
 struct verify_test {
 	const char common_name[128];
@@ -162,6 +163,7 @@ do_verify_test(int test_no, struct verify_test *vt)
 	GENERAL_NAME *alt_name;
 	X509_NAME *name;
 	X509 *cert;
+	struct tls *tls;
 
 	/* Build certificate structure. */
 	if ((cert = X509_new()) == NULL)
@@ -174,6 +176,8 @@ do_verify_test(int test_no, struct verify_test *vt)
 	if (X509_set_subject_name(cert, name) == 0)
 		errx(1, "failed to set subject name");
 	X509_NAME_free(name);
+	if ((tls = tls_client()) == NULL)
+		errx(1, "failed to malloc tls_client");
 
 	if (vt->alt_name_type != 0) {
 		if ((alt_name_stack = sk_GENERAL_NAME_new_null()) == NULL)
@@ -209,7 +213,7 @@ do_verify_test(int test_no, struct verify_test *vt)
 		sk_GENERAL_NAME_pop_free(alt_name_stack, GENERAL_NAME_free);
 	}
 
-	if (tls_check_hostname(cert, vt->hostname) != vt->want) {
+	if (tls_check_hostname(tls, cert, vt->hostname) != vt->want) {
 		fprintf(stderr, "FAIL: test %i failed with common name "
 		    "'%s', alt name '%s' and hostname '%s'\n", test_no,
 		    vt->common_name, vt->alt_name, vt->hostname);

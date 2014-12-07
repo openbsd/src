@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.3 2014/12/07 15:48:02 bcook Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.4 2014/12/07 16:56:17 bcook Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -62,7 +62,7 @@ struct tls {
 struct tls *tls_new(void);
 struct tls *tls_server_conn(struct tls *ctx);
 
-int tls_check_hostname(X509 *cert, const char *host);
+int tls_check_hostname(struct tls *ctx, X509 *cert, const char *host);
 int tls_configure_keypair(struct tls *ctx);
 int tls_configure_server(struct tls *ctx);
 int tls_configure_ssl(struct tls *ctx);
