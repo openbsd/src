@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.88 2014/05/15 04:36:33 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.89 2014/12/07 02:58:14 deraadt Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -465,7 +465,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
  * profiling virtual time timers are kept internally in the
  * way they are specified externally: in time until they expire.
  *
- * The real time interval timer's it_value, in contast, is kept as an 
+ * The real time interval timer's it_value, in contrast, is kept as an 
  * absolute time rather than as a delta, so that it is easy to keep
  * periodic real-time signals from drifting.
  *
