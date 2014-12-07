@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.341 2014/12/07 17:01:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.342 2014/12/07 22:45:39 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -656,9 +656,8 @@ state_preboot(void)
 	if (!ifi->linkstat) {
 		if (interval > config->link_timeout) {
 			go_daemon();
-			client->state = S_REBOOTING;
 			set_timeout_interval(config->retry_interval,
-			    state_reboot);
+			    state_preboot);
 		} else
 			set_timeout_interval(1, state_preboot);
 	}
