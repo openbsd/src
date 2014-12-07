@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.36 2014/07/12 18:48:53 tedu Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.37 2014/12/07 13:07:18 miod Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -95,7 +95,8 @@
 
 /*
  * Make sure we always have at least one font.
- * Sparc, sparc64 always provide a 8x16 font and a larger 12x22 font.
+ * Some platforms (currently luna88k, sgi, sparc and sparc64) always provide
+ * a 8x16 font and a larger 12x22 font.
  * Other platforms also provide both, but the 12x22 font is omitted if
  * option SMALL_KERNEL.
  */
@@ -103,7 +104,8 @@
 #define HAVE_FONT 1
 
 #define	FONT_BOLD8x16_ISO1
-#if defined(__sparc__) || defined(__sparc64__) || defined(__luna88k__) || !defined(SMALL_KERNEL)
+#if defined(__luna88k__) || defined(__sgi__) || defined(__sparc__) || \
+    defined(__sparc64__) || !defined(SMALL_KERNEL)
 #define	FONT_GALLANT12x22
 #endif
 
