@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.4 2014/10/13 02:46:14 bcook Exp $ */
+/* $OpenBSD: ecparam.c,v 1.5 2014/12/07 14:58:50 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -434,8 +434,9 @@ ecparam_main(int argc, char **argv)
 			    ec_b, NULL))
 				goto end;
 		} else {
-			/* TODO */
-			goto end;
+			if (!EC_GROUP_get_curve_GF2m(group, ec_p, ec_a,
+			    ec_b, NULL))
+				goto end;
 		}
 
 		if ((point = EC_GROUP_get0_generator(group)) == NULL)
@@ -504,8 +505,9 @@ ecparam_main(int argc, char **argv)
 			    "GFp(tmp_1, tmp_2, tmp_3, NULL)) == NULL)"
 			    "\n\t\tgoto err;\n\n");
 		} else {
-			/* TODO */
-			goto end;
+			BIO_printf(out, "\tif ((group = EC_GROUP_new_curve_"
+			    "GF2m(tmp_1, tmp_2, tmp_3, NULL)) == NULL)"
+			    "\n\t\tgoto err;\n\n");
 		}
 		BIO_printf(out, "\t/* build generator */\n");
 		BIO_printf(out, "\tif ((tmp_1 = BN_bin2bn(ec_gen_%d, "
