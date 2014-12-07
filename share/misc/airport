@@ -1,9 +1,9 @@
-#	$OpenBSD: airport,v 1.43 2014/12/07 22:13:35 tedu Exp $
+#	$OpenBSD: airport,v 1.44 2014/12/07 22:54:05 daniel Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
 # http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
-# available at http://www.mapping.com/airportcodes.html
+# available at http://www.mapping.com/airportcodes.shtml
 #
 # Only use the IATA airport codes.
 #
@@ -159,7 +159,7 @@ BFD:Bradford Regional, Pennsylvania, USA
 BFF:Western Nebraska Regional/William B. Heilig Field, Scottsbluff, Nebraska, USA
 BFI:Seattle Kings County International/Boeing Field, Washington, USA
 BFL:Meadows Field, Bakersfield, California, USA
-BFN:Bloemfontein International, Bloemfontein, South Africa
+BFN:Bram Fischer International, Bloemfontein, South Africa
 BFS:Belfast International, Belfast, Northern Ireland, United Kingdom
 BGA:Palonegro, Bucaramanga, Colombia
 BGF:Bangui M'Poko International, Bangui, Central African Republic
@@ -362,7 +362,7 @@ CPC:San Martin De Los Andes, Neuquen, Argentina
 CPH:Copenhagen, Denmark
 CPQ:Campinas International, Sao Paulo, Brazil
 CPR:Casper/Natrone County International, Wyoming, USA
-CPT:D F Malan, Cape Town, South Africa
+CPT:Cape Town International, Cape Town, South Africa
 CRD:Comodoro Rivadavia, Chubut, Argentina
 CRI:Crooked Island, Bahamas
 CRM:Charleston (WV) Yeager, South Carolina, USA
@@ -458,7 +458,6 @@ DUD:Momona, Dunedin, New Zealand
 DUJ:Jefferson County, Du Bois, Pennsylvania, USA
 DUQ:Quamichan Lake, Duncan / Quam, British Columbia, Canada
 DUR:King Shaka International, Durban, South Africa
-DUR:Louis Botha, Durban, South Africa
 DUS:Dusseldorf, Germany
 DUT:Dutch Harbor, Alaska, USA
 DVO:Mati, Davao, Philippines
@@ -485,7 +484,7 @@ ELD:El Dorado, Arkansas, USA
 ELH:North Eleuthera, Bahamas
 ELM:Elmira Corning Regional, New York, USA
 ELP:El Paso International, Texas, USA
-ELS:Ben Shoeman, East London, South Africa
+ELS:East London Airport, East London, South Africa
 ELY:Yelland Field, Ely, Nevada, USA
 EMA:East Midlands, England, United Kingdom
 EMD:Emerald, Queensland, Australia
@@ -611,7 +610,7 @@ GPS:Baltra, Galapagos Islands, Ecuador
 GPT:Gulfport/Biloxi, Gulfport, Mississippi, USA
 GRB:Austin/Straybel Field, Green Bay, Wisconsin, USA
 GRI:Central Nebraska Regional, Grand Island, Nebraska, USA
-GRJ:George, South Africa
+GRJ:George Airport, George, South Africa
 GRO:Costa Brava, Gerona, Spain
 GRQ:Eelde, Groningen, Netherlands
 GRR:Grand Rapids/Kent County International, Michigan, USA
@@ -805,7 +804,7 @@ JMK:Mikonos, Greece
 JMM:Malmo Harbour Heliport, Malmo, Sweden
 JMO:Jomsom, Nepal
 JMS:Jamestown, North Dakota, USA
-JNB:Jan Smuts, Johannesburg, South Africa
+JNB:O R Tambo International, Johannesburg, South Africa
 JNS:Narssaq, Greenland
 JNU:Juneau International, Alaska, USA
 JNX:Naxos, Cyclades Islands, Greece
@@ -1108,6 +1107,7 @@ MPL:Frejorgues, Montpellier, France
 MPM:Maputo International, Mozambique
 MQL:Mildura, Victoria, Australia
 MQN:Rossvoll, Mo I Rana, Norway
+MQP:Kruger Mpumalanga International, Nelspruit, South Africa
 MQT:Marquette, Michigan, USA
 MRD:Alberto Carnevalli, Merida, Venezuela
 MRK:Marco Island, Florida, USA
@@ -1167,7 +1167,6 @@ NKC:Nouakchott, Mauritania
 NKG:Nanjing, China
 NLA:Ndola, Zambia
 NLD:Nuevo Laredo, Tamaulipas, Mexico
-NLP:Nelspruit, South Africa
 NNG:Nanning, China
 NOC:Rep Of Ireland, Connaught, Ireland
 NOU:Tontouta, Noumea, New Caledonia
@@ -1302,7 +1301,7 @@ PLQ:Palanga, Lithuania
 PLS:Providenciales, Turks And Caicos Islands
 PLU:Confins/Pampulha, Belo Horizon, Minas Gerais, Brazil
 PLW:Mutiara, Palu, Indonesia
-PLZ:Hf Verwoerd, Port Elizabeth, South Africa
+PLZ:Port Elizabeth International, Port Elizabeth, South Africa
 PMC:Tepual, Puerto Montt, Chile
 PMD:Air Force 42, Palmdale, California, USA
 PMI:Palma De Mallorca, Spain
@@ -1344,7 +1343,7 @@ PSP:Palm Springs Municipal, California, USA
 PSR:Liberi, Pescara, Italy
 PSZ:Puerto Suarez, Bolivia
 PTF:Malololailai, Fiji
-PTG:Pietersburg, South Africa
+PTG:Polokwane International, Polokwane, South Africa
 PTP:Le Raizet, Pointe A Pitre, Guadeloupe
 PTY:Tocumen International, Panama City, Panama
 PUB:Pueblo, Colorado, USA
@@ -1730,7 +1729,7 @@ USH:Ushuaia, Tierra Del Fuego, Argentina
 USM:Koh Samui, Thailand
 USN:Ulsan, South Korea
 UTH:Udon Thani, Thailand
-UTN:Upington Municipal, South Africa
+UTN:Upington Airport, Upington, South Africa
 UUD:Ulan-Ude, Russia
 UVF:Hewanorra, St Lucia, Saint Lucia
 VAA:Vaasa, Finland
