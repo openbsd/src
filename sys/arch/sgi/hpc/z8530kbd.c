@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.6 2014/05/22 19:37:07 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.7 2014/12/07 13:10:45 miod Exp $	*/
 /*	$NetBSD: zs_kbd.c,v 1.8 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -118,6 +118,8 @@ struct zskbd_devconfig {
 	int		enabled;
 };
 
+struct zskbd_devconfig zskbd_consdc;
+
 int	zskbd_match(struct device *, void *, void *);
 void	zskbd_attach(struct device *, struct device *, void *);
 
@@ -136,7 +138,7 @@ void	zskbd_softint(struct zs_chanstate *);
 int	zskbd_send(struct zs_chanstate *, uint8_t *, u_int);
 int	zskbd_poll(struct zs_chanstate *, uint8_t *);
 void	zskbd_ctrl(struct zs_chanstate *, uint8_t, uint8_t, uint8_t, uint8_t);
-void	zskbd_process(struct zs_chanstate *, uint8_t);
+int	zskbd_process(struct zskbd_devconfig *, uint8_t);
 
 void	zskbd_wskbd_input(struct zs_chanstate *, uint8_t);
 int	zskbd_wskbd_enable(void *, int);
@@ -163,9 +165,28 @@ static struct zsops zskbd_zsops = {
 };
 
 extern const struct wscons_keydesc wssgi_keydesctab[];
-const struct wskbd_mapdata sgikbd_wskbd_keymapdata = {
+struct wskbd_mapdata sgikbd_wskbd_keymapdata = {
 	wssgi_keydesctab,
 	KB_US | KB_DEFAULT
+};
+
+const int zskbd_layouts[] = {
+	KB_US,
+	KB_DE,
+	KB_FR,
+	KB_IT,
+	KB_DK,
+	KB_ES,
+	KB_NO,
+	KB_SV,
+	KB_SF,
+	KB_UK,
+	KB_BE,
+	KB_SG,
+	KB_NL,
+	-1,	/* finnish */
+	KB_PT,
+	-1	/* greek */
 };
 
 const struct wskbd_accessops zskbd_wskbd_accessops = {
@@ -198,13 +219,14 @@ zskbd_match(struct device *parent, void *vcf, void *aux)
 void
 zskbd_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct zskbd_softc	       *sc = (struct zskbd_softc *)self;
-	struct zsc_softc      	       *zsc = (struct zsc_softc *)parent;
-	struct zsc_attach_args	       *args = aux;
-	struct zs_chanstate	       *cs;
-	struct wskbddev_attach_args	wskaa;
-	int				s, channel, rc;
-	uint8_t				key;
+	struct zskbd_softc *sc = (struct zskbd_softc *)self;
+	struct zsc_softc *zsc = (struct zsc_softc *)parent;
+	struct zsc_attach_args *args = aux;
+	struct zs_chanstate *cs;
+	struct zskbd_devconfig *dc;
+	struct wskbddev_attach_args wskaa;
+	int s, channel, rc;
+	uint8_t key;
 
 	printf(": ");
 
@@ -214,8 +236,12 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	cs->cs_ops = &zskbd_zsops;
 	cs->cs_private = sc;
 
-	sc->sc_dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	if (zskbd_is_console)
+		dc = &zskbd_consdc;
+	else
+		dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+	sc->sc_dc = dc;
 
 	s = splzs();
 	zs_write_reg(cs, 9, (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET);
@@ -234,33 +260,37 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	while ((zs_read_csr(cs) & ZSRR0_RX_READY) != 0)
 		(void)zs_read_data(cs);
 
-	/*
-	 * Ask the keyboard for its DIP switch settings. This will also let
-	 * us know whether the keyboard is connected.
-	 */
-	sc->sc_dc->expected = 2;
-	zskbd_ctrl(cs, ZSKBD_CTRL_A_RCB, 0, 0, 0);
-	while (sc->sc_dc->expected != 0) {
-		rc = zskbd_poll(cs, &key);
-		if (rc != 0) {
-			if (rc == ENXIO && sc->sc_dc->expected == 2) {
-				printf("no keyboard");
-				/*
-				 * Attach wskbd nevertheless, in case the
-				 * keyboard is plugged late.
-				 */
-				sc->sc_dc->expected = 0;
-				goto dip;
-			} else {
-				printf("i/o error\n");
-				return;
+	if (!zskbd_is_console) {
+		/*
+		 * Ask the keyboard for its DIP switch settings. This will
+		 * also let us know whether the keyboard is connected.
+		 */
+		dc->expected = 2;
+		zskbd_ctrl(cs, ZSKBD_CTRL_A_RCB, 0, 0, 0);
+		while (dc->expected != 0) {
+			rc = zskbd_poll(cs, &key);
+			if (rc != 0) {
+				if (rc == ENXIO && dc->expected == 2) {
+					printf("no keyboard");
+					/*
+					 * Attach wskbd nevertheless, in case
+					 * the keyboard is plugged late.
+					 */
+					dc->expected = 0;
+					goto dip;
+				} else {
+					printf("i/o error\n");
+					return;
+				}
 			}
-		}
 
-		zskbd_process(cs, key);
+			zskbd_process(dc, key);
+		}
 	}
 
-	printf("dip switches %02x", sc->sc_dc->dip);
+	printf("dipsw %02x", dc->dip);
+	if (dc->dip < nitems(zskbd_layouts) && zskbd_layouts[dc->dip] != -1)
+		sgikbd_wskbd_keymapdata.layout = zskbd_layouts[dc->dip];
 dip:
 
 	/*
@@ -275,22 +305,22 @@ dip:
 	printf("\n");
 
 	if (zskbd_is_console)
-		sc->sc_dc->enabled = 1;
+		dc->enabled = 1;
 
 	/* attach wskbd */
-	wskaa.console =		zskbd_is_console;
-	wskaa.keymap =		&sgikbd_wskbd_keymapdata;
-	wskaa.accessops =	&zskbd_wskbd_accessops;
-	wskaa.accesscookie =	cs;
-	sc->sc_dc->wskbddev =	config_found(self, &wskaa, wskbddevprint);
+	wskaa.console = zskbd_is_console;
+	wskaa.keymap = &sgikbd_wskbd_keymapdata;
+	wskaa.accessops = &zskbd_wskbd_accessops;
+	wskaa.accesscookie = cs;
+	dc->wskbddev = config_found(self, &wskaa, wskbddevprint);
 }
 
 void
 zskbd_rxint(struct zs_chanstate *cs)
 {
-	struct zskbd_softc     *sc = cs->cs_private;
+	struct zskbd_softc *sc = cs->cs_private;
 	struct zskbd_devconfig *dc = sc->sc_dc;
-	uint8_t			c, r;
+	uint8_t c, r;
 
 	/* clear errors */
 	r = zs_read_reg(cs, 1);
@@ -326,6 +356,7 @@ zskbd_softint(struct zs_chanstate *cs)
 	struct zskbd_softc *sc = cs->cs_private;
 	struct zskbd_devconfig *dc = sc->sc_dc;
 	int rr0;
+	uint8_t key;
 
 	/* handle pending transmissions */
 	if (dc->txq_head != dc->txq_tail) {
@@ -344,17 +375,28 @@ zskbd_softint(struct zs_chanstate *cs)
 
 	/* handle incoming keystrokes/config */
 	while (dc->rxq_head != dc->rxq_tail) {
-		zskbd_process(cs, dc->rxq[dc->rxq_head]);
+		key = dc->rxq[dc->rxq_head];
 		dc->rxq_head = (dc->rxq_head + 1) & ~ZSKBD_RXQ_LEN;
+		if (zskbd_process(dc, key) != 0) {
+			/*
+			 * The `international' key (only found in non-us
+			 * layouts) is supposed to be keycode 111, but is
+			 * apparently 110 (same as the status byte prefix)
+			 * on some (all?) models.
+			 */
+			if (key == ZSKBD_DIP_SYNC)
+				key = ZSKBD_INTL_KEY;
+
+			/* toss wskbd a bone */
+			if (dc->enabled)
+				zskbd_wskbd_input(cs, key);
+		}
 	}
 }
 
-void
-zskbd_process(struct zs_chanstate *cs, uint8_t key)
+int
+zskbd_process(struct zskbd_devconfig *dc, uint8_t key)
 {
-	struct zskbd_softc *sc = cs->cs_private;
-	struct zskbd_devconfig *dc = sc->sc_dc;
-
 	switch (dc->expected) {
 	case 2:
 		if (key != ZSKBD_DIP_SYNC) {
@@ -364,24 +406,14 @@ zskbd_process(struct zs_chanstate *cs, uint8_t key)
 			/* transition state anyway */
 		}
 		dc->expected--;
-		break;
+		return 0;
 	case 1:
 		dc->dip = key;
 		dc->expected--;
-		break;
+		return 0;
+	default:
 	case 0:
-		/*
-		 * The `international' key (only found in non-us layouts) is
-		 * supposed to be keycode 111, but is apparently 110 (same as
-		 * the status byte prefix) on some (all?) models.
-		 */
-		if (key == ZSKBD_DIP_SYNC)
-			key = ZSKBD_INTL_KEY;
-
-		/* toss wskbd a bone */
-		if (dc->enabled)
-			zskbd_wskbd_input(cs, key);
-		break;
+		return 1;
 	}
 }
 
@@ -389,7 +421,7 @@ zskbd_process(struct zs_chanstate *cs, uint8_t key)
 int
 zskbd_send(struct zs_chanstate *cs, uint8_t *c, u_int len)
 {
-	struct zskbd_softc     *sc = cs->cs_private;
+	struct zskbd_softc *sc = cs->cs_private;
 	struct zskbd_devconfig *dc = sc->sc_dc;
 	u_int i;
 	int rr0;
@@ -460,8 +492,8 @@ void
 zskbd_ctrl(struct zs_chanstate *cs, uint8_t a_on, uint8_t a_off, uint8_t b_on,
     uint8_t b_off)
 {
-	struct zskbd_softc	*sc = cs->cs_private;
-	struct zskbd_devconfig	*dc = sc->sc_dc;
+	struct zskbd_softc *sc = cs->cs_private;
+	struct zskbd_devconfig *dc = sc->sc_dc;
 
 	dc->kbd_conf[ZSKBD_CTRL_A] |=   a_on;
 	dc->kbd_conf[ZSKBD_CTRL_A] &= ~(a_off | ZSKBD_CTRL_B);
@@ -482,10 +514,10 @@ zskbd_ctrl(struct zs_chanstate *cs, uint8_t a_on, uint8_t a_off, uint8_t b_on,
 void
 zskbd_wskbd_input(struct zs_chanstate *cs, uint8_t key)
 {
-	struct zskbd_softc     *sc = cs->cs_private;
-	u_int			type;
+	struct zskbd_softc *sc = cs->cs_private;
+	u_int type;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	int			s;
+	int s;
 #endif
 
 	if (sc->sc_dc->wskbddev == NULL)
@@ -564,9 +596,9 @@ zskbd_wskbd_set_leds(void *cookie, int leds)
 int
 zskbd_wskbd_get_leds(void *cookie)
 {
-	struct zs_chanstate    *cs = cookie;
-	struct zskbd_softc     *sc = cs->cs_private;
-	int		 	leds;
+	struct zs_chanstate *cs = cookie;
+	struct zskbd_softc *sc = cs->cs_private;
+	int leds;
 
 	leds = 0;
 
@@ -586,8 +618,8 @@ zskbd_wskbd_get_leds(void *cookie)
 void
 zskbd_wskbd_set_keyclick(void *cookie, int on)
 {
-	struct zs_chanstate    *cs = cookie;
-	int			s;
+	struct zs_chanstate *cs = cookie;
+	int s;
 
 	if (on) {
 		if (!zskbd_wskbd_get_keyclick(cookie)) {
@@ -662,8 +694,28 @@ zskbd_wskbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
 void
 zskbd_cnattach(int zsunit, int zschan)
 {
-	wskbd_cnattach(&zskbd_wskbd_consops, zs_get_chan_addr(zsunit, zschan),
-	    &sgikbd_wskbd_keymapdata);
+	struct zschan *zs;
+	struct zskbd_devconfig *dc;
+
+	zs = zs_get_chan_addr(zsunit, zschan);
+	dc = &zskbd_consdc;
+
+	/*
+	 * Try and figure out our dip switches early, in order to pick
+	 * the right keyboard layout.
+	 */
+	dc->expected = 2;
+	zs_putc(zs, ZSKBD_CTRL_A_RCB);
+	zs_putc(zs, ZSKBD_CTRL_B);	/* unnecessary? */
+
+	while (dc->expected != 0) {
+		zskbd_process(dc, zs_getc(zs));
+	}
+
+	if (dc->dip < nitems(zskbd_layouts) && zskbd_layouts[dc->dip] != -1)
+		sgikbd_wskbd_keymapdata.layout = zskbd_layouts[dc->dip];
+
+	wskbd_cnattach(&zskbd_wskbd_consops, zs, &sgikbd_wskbd_keymapdata);
 	zskbd_is_console = 1;
 }
 
