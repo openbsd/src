@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdarg.3,v 1.18 2014/11/30 21:21:59 schwarze Exp $
+.\"	$OpenBSD: stdarg.3,v 1.19 2014/12/07 17:45:19 schwarze Exp $
 .\"	$NetBSD: stdarg.3,v 1.15 2002/08/18 08:57:07 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)stdarg.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: December 7 2014 $
 .Dt STDARG 3
 .Os
 .Sh NAME
@@ -57,15 +57,15 @@
 A function may be called with a varying number of arguments of varying
 types.
 The include file
-.Aq Pa stdarg.h
+.In stdarg.h
 declares a type
-.Pq Li va_list
+.Vt va_list
 and defines three macros for stepping
 through a list of arguments whose number and types are not known to
 the called function.
 .Pp
 The called function must declare an object of type
-.Li va_list
+.Vt va_list
 which is used by the macros
 .Fn va_start ,
 .Fn va_arg ,
@@ -95,17 +95,13 @@ macro, it should not be declared as a register variable, nor as a
 function, nor an array type.
 .Pp
 The
-.Fn va_start
-macro returns no value.
-.Pp
-The
 .Fn va_arg
 macro expands to an expression that has the type and value of the next
 argument in the call.
 The parameter
 .Fa ap
 is the
-.Li va_list Fa ap
+.Va va_list ap
 initialized by
 .Fn va_start .
 Each call to
@@ -134,33 +130,24 @@ promoted type should be used as the argument to
 The following describes which types should be promoted (and to what):
 .Bl -dash -compact
 .It
-.Va short
+.Vt short
 is promoted to
-.Va int
+.Vt int
 .It
-.Va float
+.Vt float
 is promoted to
-.Va double
+.Vt double
 .It
-.Va char
+.Vt char
 is promoted to
-.Va int
+.Vt int
 .El
 .Pp
 The same rules apply to unsigned versions of the above types, as well
 as their bit-type equivalents (e.g.\&
-.Dv int8_t
+.Vt int8_t
 and
-.Dv int16_t ) .
-.Pp
-The first use of the
-.Fn va_arg
-macro after that of the
-.Fn va_start
-macro returns the argument after
-.Fa last .
-Successive invocations return the values of the remaining
-arguments.
+.Vt int16_t ) .
 .Pp
 The
 .Fn va_copy
@@ -176,20 +163,28 @@ macro as had previously been used to reach the present state of
 .Fa src .
 .Pp
 The
-.Fn va_copy
-macro returns no value.
-.Pp
-The
 .Fn va_end
 macro handles a normal return from the function whose variable argument
 list was initialized by
 .Fn va_start
 or
 .Fn va_copy .
+.Sh RETURN VALUES
+The first use of the
+.Fn va_arg
+macro after that of the
+.Fn va_start
+macro returns the argument after
+.Fa last .
+Successive invocations return the values of the remaining
+arguments.
 .Pp
 The
+.Fn va_start ,
+.Fn va_copy
+and
 .Fn va_end
-macro returns no value.
+macros return no value.
 .Sh EXAMPLES
 The function
 .Fn foo
@@ -232,7 +227,7 @@ These macros are
 compatible with the historic macros they replace.
 A backward compatible version can be found in the include
 file
-.Aq Pa varargs.h .
+.In varargs.h .
 .Pp
 The
 .Fn va_start ,
@@ -248,7 +243,7 @@ The
 and
 .Fn va_end
 macros were introduced in
-.St -ansiC-89 .
+.St -ansiC .
 The
 .Fn va_copy
 macro was introduced in
@@ -267,7 +262,7 @@ code to
 code,
 but it also creates difficulties for variadic functions that
 wish to pass all of their arguments on to a function
-that takes a
-.Li va_list
-argument, such as
+that takes an argument of type
+.Vt va_list ,
+such as
 .Xr vfprintf 3 .
