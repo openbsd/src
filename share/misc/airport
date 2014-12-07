@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.41 2014/12/07 17:13:56 sthen Exp $
+#	$OpenBSD: airport,v 1.42 2014/12/07 19:02:04 tedu Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1171,7 +1171,7 @@ NLP:Nelspruit, South Africa
 NNG:Nanning, China
 NOC:Rep Of Ireland, Connaught, Ireland
 NOU:Tontouta, Noumea, New Caledonia
-NPL:, New Plymouth, New Zealand
+NPL:New Plymouth, New Zealand
 NQY:Newquay Civil, England, United Kingdom
 NRK:Norrkoping, Sweden
 NRT:Narita, Tokyo, Japan
@@ -1218,7 +1218,7 @@ OPO:Porto, Portugal
 ORB:Orebro, Sweden
 ORD:Chicago-O'Hare International, Illinois, USA
 ORF:Norfolk International, Virginia, USA
-ORH:Worcester /James D O'brien Field, Worcester, Massachusetts, USA
+ORH:Worcester Regional, Massachusetts, USA
 ORK:Cork, Ireland
 ORL:Herndon, Orlando, Florida, USA
 ORN:Es Senia, Oran, Algeria
