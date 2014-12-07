@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.2 2014/12/07 15:00:32 bcook Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -27,8 +27,8 @@
 #include "tls_internal.h"
 
 int tls_match_hostname(const char *cert_hostname, const char *hostname);
-int tls_check_subject_altname(X509 *cert, const char *host);
-int tls_check_common_name(X509 *cert, const char *host);
+int tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host);
+int tls_check_common_name(struct tls *ctx, X509 *cert, const char *host);
 
 int
 tls_match_hostname(const char *cert_hostname, const char *hostname)
@@ -80,7 +80,7 @@ tls_match_hostname(const char *cert_hostname, const char *hostname)
 }
 
 int
-tls_check_subject_altname(X509 *cert, const char *host)
+tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
 {
 	STACK_OF(GENERAL_NAME) *altname_stack = NULL;
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
@@ -123,10 +123,11 @@ tls_check_subject_altname(X509 *cert, const char *host)
 
 				if (ASN1_STRING_length(altname->d.dNSName) !=
 				    (int)strlen(data)) {
-					fprintf(stdout, "%s: NUL byte in "
-					    "subjectAltName, probably a "
-					    "malicious certificate.\n",
-					    getprogname());
+					tls_set_error(ctx,
+					    "error verifying host '%s': "
+					    "NUL byte in subjectAltName, "
+					    "probably a malicious certificate",
+					    host);
 					rv = -2;
 					break;
 				}
@@ -135,10 +136,7 @@ tls_check_subject_altname(X509 *cert, const char *host)
 					rv = 0;
 					break;
 				}
-			} else
-				fprintf(stdout, "%s: unhandled subjectAltName "
-				    "dNSName encoding (%d)\n", getprogname(),
-				    format);
+			}
 
 		} else if (type == GEN_IPADD) {
 			unsigned char	*data;
@@ -160,7 +158,7 @@ tls_check_subject_altname(X509 *cert, const char *host)
 }
 
 int
-tls_check_common_name(X509 *cert, const char *host)
+tls_check_common_name(struct tls *ctx, X509 *cert, const char *host)
 {
 	X509_NAME *name;
 	char *common_name = NULL;
@@ -186,8 +184,9 @@ tls_check_common_name(X509 *cert, const char *host)
 
 	/* NUL bytes in CN? */
 	if (common_name_len != (int)strlen(common_name)) {
-		fprintf(stdout, "%s: NUL byte in Common Name field, "
-		    "probably a malicious certificate.\n", getprogname());
+		tls_set_error(ctx, "error verifying host '%s': "
+		    "NUL byte in Common Name field, "
+		    "probably a malicious certificate.", host);
 		rv = -2;
 		goto out;
 	}
@@ -213,13 +212,13 @@ out:
 }
 
 int
-tls_check_hostname(X509 *cert, const char *host)
+tls_check_hostname(struct tls *ctx, X509 *cert, const char *host)
 {
 	int	rv;
 
-	rv = tls_check_subject_altname(cert, host);
+	rv = tls_check_subject_altname(ctx, cert, host);
 	if (rv == 0 || rv == -2)
 		return rv;
 
-	return tls_check_common_name(cert, host);
+	return tls_check_common_name(ctx, cert, host);
 }

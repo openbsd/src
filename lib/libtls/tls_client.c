@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.2 2014/11/02 14:45:05 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.3 2014/12/07 15:00:32 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -209,9 +209,11 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 			tls_set_error(ctx, "no server certificate");
 			goto err;
 		}
-		if (tls_check_hostname(cert, hostname) != 0) {
-			tls_set_error(ctx, "host `%s' not present in"
-			    " server certificate", hostname);
+		tls_clear_error(ctx);
+		if (tls_check_hostname(ctx, cert, hostname) != 0) {
+			if (tls_error(ctx) == NULL)
+				tls_set_error(ctx, "host `%s' not present in"
+				    " server certificate", hostname);
 			goto err;
 		}
 	}

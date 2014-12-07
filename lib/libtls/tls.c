@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.2 2014/12/07 15:00:32 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -56,15 +56,22 @@ tls_error(struct tls *ctx)
 	return ctx->errmsg;
 }
 
+void
+tls_clear_error(struct tls *ctx)
+{
+	ctx->err = 0;
+	free(ctx->errmsg);
+	ctx->errmsg = NULL;
+}
+
 int
 tls_set_error(struct tls *ctx, char *fmt, ...)
 {
 	va_list ap;
 	int rv;
 
+	tls_clear_error(ctx);
 	ctx->err = errno;
-	free(ctx->errmsg);
-	ctx->errmsg = NULL;
 
 	va_start(ap, fmt);
 	rv = vasprintf(&ctx->errmsg, fmt, ap);
