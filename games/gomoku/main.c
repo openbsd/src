@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2014/12/05 00:48:57 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2014/12/07 19:56:19 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,6 @@ main(argc, argv)
 			err(1, "%s", *argv);
 	}
 
-	if (!debug)
 	if (interactive)
 		cursinit();		/* initialize curses */
 again:
