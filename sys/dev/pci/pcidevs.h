@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1751 2014/12/06 02:47:16 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1752 2014/12/07 03:59:25 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4815,6 +4815,7 @@
 
 /* Nanjing QinHeng Electronics products */
 #define	PCI_PRODUCT_WCH_CH352	0x3253		/* CH352 */
+#define	PCI_PRODUCT_WCH2_CH351	0x2273		/* CH351 */
 #define	PCI_PRODUCT_WCH2_CH382_1	0x3253		/* CH382 */
 #define	PCI_PRODUCT_WCH2_CH382_2	0x3250		/* CH382 */
 
