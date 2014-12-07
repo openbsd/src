@@ -1,4 +1,4 @@
-/* $OpenBSD: streebog.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: streebog.c,v 1.3 2014/12/07 16:07:56 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -49,6 +49,9 @@
  * ====================================================================
  */
 
+#include <machine/endian.h>
+
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -60,8 +63,7 @@
 
 #include "gost_locl.h"
 
-static const STREEBOG_LONG64 A_PI_table[8][256] =
-{
+static const STREEBOG_LONG64 A_PI_table[8][256] = {
 	{ /* 0 */
 		U64(0xd01f715b5c7ef8e6), U64(0x16fa240980778325),
 		U64(0xa8a42e857ee049c8), U64(0x6ac1068fa186465b),
@@ -1097,8 +1099,7 @@ static const STREEBOG_LONG64 A_PI_table[8][256] =
 	},
 };
 
-static const STREEBOG_LONG64 C16[12][8] =
-{
+static const STREEBOG_LONG64 C16[12][8] = {
 	{
 		U64(0xdd806559f2a64507), U64(0x05767436cc744d23),
 		U64(0xa2422a08a460d315), U64(0x4b7ce09192676901),
@@ -1309,6 +1310,16 @@ STREEBOG512_Final(unsigned char *md, STREEBOG_CTX *c)
 		for (n = 0; n < STREEBOG256_LENGTH / 8; n++) {
 			STREEBOG_LONG64 t = c->h[4+n];
 
+#if BYTE_ORDER == BIG_ENDIAN
+			*(md++) = (unsigned char)(t);
+			*(md++) = (unsigned char)(t >> 8);
+			*(md++) = (unsigned char)(t >> 16);
+			*(md++) = (unsigned char)(t >> 24);
+			*(md++) = (unsigned char)(t >> 32);
+			*(md++) = (unsigned char)(t >> 40);
+			*(md++) = (unsigned char)(t >> 48);
+			*(md++) = (unsigned char)(t >> 56);
+#else
 			*(md++) = (unsigned char)(t >> 56);
 			*(md++) = (unsigned char)(t >> 48);
 			*(md++) = (unsigned char)(t >> 40);
@@ -1317,12 +1328,23 @@ STREEBOG512_Final(unsigned char *md, STREEBOG_CTX *c)
 			*(md++) = (unsigned char)(t >> 16);
 			*(md++) = (unsigned char)(t >> 8);
 			*(md++) = (unsigned char)(t);
+#endif
 		}
 		break;
 	case STREEBOG512_LENGTH:
 		for (n = 0; n < STREEBOG512_LENGTH / 8; n++) {
 			STREEBOG_LONG64 t = c->h[n];
 
+#if BYTE_ORDER == BIG_ENDIAN
+			*(md++) = (unsigned char)(t);
+			*(md++) = (unsigned char)(t >> 8);
+			*(md++) = (unsigned char)(t >> 16);
+			*(md++) = (unsigned char)(t >> 24);
+			*(md++) = (unsigned char)(t >> 32);
+			*(md++) = (unsigned char)(t >> 40);
+			*(md++) = (unsigned char)(t >> 48);
+			*(md++) = (unsigned char)(t >> 56);
+#else
 			*(md++) = (unsigned char)(t >> 56);
 			*(md++) = (unsigned char)(t >> 48);
 			*(md++) = (unsigned char)(t >> 40);
@@ -1331,6 +1353,7 @@ STREEBOG512_Final(unsigned char *md, STREEBOG_CTX *c)
 			*(md++) = (unsigned char)(t >> 16);
 			*(md++) = (unsigned char)(t >> 8);
 			*(md++) = (unsigned char)(t);
+#endif
 		}
 		break;
 		/* ... as well as make sure md_len is not abused. */
