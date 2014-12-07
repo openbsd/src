@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.3 2014/12/07 15:48:02 bcook Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.4 2014/12/07 16:01:03 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -155,7 +155,7 @@ tls_check_subject_altname(X509 *cert, const char *host)
 		}
 	}
 
-	sk_GENERAL_NAME_free(altname_stack);
+	sk_GENERAL_NAME_pop_free(altname_stack, GENERAL_NAME_free);
 	return rv;
 }
 
