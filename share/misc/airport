@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.42 2014/12/07 19:02:04 tedu Exp $
+#	$OpenBSD: airport,v 1.43 2014/12/07 22:13:35 tedu Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1562,7 +1562,7 @@ STL:St. Louis/Lambert International, Missouri, USA
 STM:Santarem, Para, Brazil
 STN:Stansted, London, England, United Kingdom
 STO:All Airports around Stockholm, Sweden
-STP:At Paul Downtown, Minnesota, USA
+STP:St Paul Downtown, Minnesota, USA
 STR:Echterdingen, Stuttgart, Germany
 STS:Sonoma County, Santa Rosa, California, USA
 STT:Cyril E King, St Thomas Island, US Virgin Islands, USA
