@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.94 2014/09/22 21:16:20 sasano Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.95 2014/12/07 03:59:25 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -2070,6 +2070,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* "WinChipHead CH351 (2S)", */
+	    {	PCI_VENDOR_WCH2, PCI_PRODUCT_WCH2_CH351,	0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_COM_POW2(0), 0x14, 0x0000 },
 	    },
 	},
 	{   /* "WinChipHead CH352", */

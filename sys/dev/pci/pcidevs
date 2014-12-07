@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1751 2014/12/06 02:47:16 jsg Exp $
+$OpenBSD: pcidevs,v 1.1752 2014/12/07 03:59:25 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4810,6 +4810,7 @@ product MUTECH MV1000		0x0001	MV1000
 
 /* Nanjing QinHeng Electronics products */
 product WCH CH352		0x3253	CH352
+product WCH2 CH351		0x2273	CH351
 product WCH2 CH382_1		0x3253	CH382
 product WCH2 CH382_2		0x3250	CH382
 
