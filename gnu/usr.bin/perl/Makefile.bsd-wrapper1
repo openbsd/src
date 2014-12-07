@@ -240,7 +240,6 @@ _quick3p=
     bignum 3p				lib/bignum.pm \
     bigrat 3p				lib/bigrat.pm \
     blib 3p				lib/blib.pm \
-    Bster 3p				cpan/Pod-Perldoc/corpus/utf8.pod \
     bytes 3p				lib/bytes.pm \
     Carp 3p				lib/Carp.pm \
     CGI 3p				lib/CGI.pm \
