@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.44 2014/11/24 13:02:15 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.45 2014/12/08 13:32:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -51,7 +51,8 @@ int xhcidebug = 3;
 
 #define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
 
-#define TRBOFF(ring, trb)	((char *)(trb) - (char *)((ring).trbs))
+#define TRBOFF(r, trb)	((char *)(trb) - (char *)((r).trbs))
+#define DEQPTR(r)	(DMAADDR(&(r).dma, sizeof(struct xhci_trb) * (r).index))
 
 struct pool *xhcixfer;
 
@@ -97,7 +98,7 @@ void	xhci_xfer_done(struct usbd_xfer *xfer);
 int	xhci_command_submit(struct xhci_softc *, struct xhci_trb *, int);
 int	xhci_command_abort(struct xhci_softc *);
 
-void	xhci_cmd_reset_endpoint_async(struct xhci_softc *, uint8_t, uint8_t);
+void	xhci_cmd_reset_ep_async(struct xhci_softc *, uint8_t, uint8_t);
 void	xhci_cmd_set_tr_deq_async(struct xhci_softc *, uint8_t, uint8_t, uint64_t);
 int	xhci_cmd_configure_ep(struct xhci_softc *, uint8_t, uint64_t);
 int	xhci_cmd_stop_ep(struct xhci_softc *, uint8_t, uint8_t);
@@ -635,8 +636,7 @@ xhci_event_dequeue(struct xhci_softc *sc)
 
 	}
 
-	paddr = (uint64_t)DMAADDR(&sc->sc_evt_ring.dma,
-	    sizeof(struct xhci_trb) * sc->sc_evt_ring.index);
+	paddr = (uint64_t)DEQPTR(sc->sc_evt_ring);
 	XRWRITE4(sc, XHCI_ERDP_LO(0), ((uint32_t)paddr) | XHCI_ERDP_LO_BUSY);
 	XRWRITE4(sc, XHCI_ERDP_HI(0), (uint32_t)(paddr >> 32));
 }
@@ -726,7 +726,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		 * is fully reset before calling usb_transfer_complete().
 		 */
 		xp->halted = 1;
-		xhci_cmd_reset_endpoint_async(sc, slot, dci);
+		xhci_cmd_reset_ep_async(sc, slot, dci);
 		return;
 	default:
 #if 1
@@ -769,30 +769,22 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 
 	switch (flags & XHCI_TRB_TYPE_MASK) {
 	case XHCI_CMD_RESET_EP:
-		/*
-		 * Clear the TRBs and reconfigure the dequeue pointer
-		 * before declaring the endpoint ready.
-		 */
 		xp = sc->sc_sdevs[slot].pipes[dci - 1];
 		if (xp == NULL)
 			break;
 
-		xhci_ring_reset(sc, &xp->ring);
-		xp->free_trbs = xp->ring.ntrb;
+		/* Update the dequeue pointer past the last TRB. */
 		xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
-		    DMAADDR(&xp->ring.dma, 0) | XHCI_EPCTX_DCS);
+		    DEQPTR(xp->ring) | xp->ring.toggle);
 		break;
 	case XHCI_CMD_SET_TR_DEQ:
-		/*
-		 * Now that the endpoint is in its initial state, we
-		 * can finish all its pending transfers and let the
-		 * stack play with it again.
-		 */
 		xp = sc->sc_sdevs[slot].pipes[dci - 1];
 		if (xp == NULL)
 			break;
 
 		xp->halted = 0;
+
+		/* Complete all pending transfers. */
 		for (i = 0; i < XHCI_MAX_TRANSFERS; i++) {
 			xfer = xp->pending_xfers[i];
 			if (xfer != NULL && xfer->done == 0) {
@@ -800,7 +792,6 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 					xfer->status = USBD_IOERROR;
 				xhci_xfer_done(xfer);
 			}
-			xp->pending_xfers[i] = NULL;
 		}
 		break;
 	default:
@@ -1087,8 +1078,7 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	);
 	sdev->ep_ctx[xp->dci-1]->txinfo = htole32(xhci_get_txinfo(sc, pipe));
 	sdev->ep_ctx[xp->dci-1]->deqp = htole64(
-	    DMAADDR(&xp->ring.dma, sizeof(struct xhci_trb) * xp->ring.index) |
-	    XHCI_EPCTX_DCS
+	    DEQPTR(xp->ring) | xp->ring.toggle
 	);
 
 	/* Unmask the new endoint */
@@ -1582,7 +1572,7 @@ xhci_cmd_stop_ep(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 }
 
 void
-xhci_cmd_reset_endpoint_async(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
+xhci_cmd_reset_ep_async(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 {
 	struct xhci_trb trb;
 

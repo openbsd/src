@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.5 2014/11/10 14:29:49 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.6 2014/12/08 13:32:34 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -302,7 +302,6 @@ struct xhci_epctx {
 #define  XHCI_SPEED_SUPER	4
 
 	 uint64_t		deqp;
-#define XHCI_EPCTX_DCS		0x1
 
 	 uint32_t		txinfo;
 #define XHCI_EPCTX_AVG_TRB_LEN(x)	((x) & 0xffff)
