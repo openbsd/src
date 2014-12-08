@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.127 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.128 2014/12/08 10:51:00 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -913,19 +913,16 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 struct rtentry *
 icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 {
-	struct sockaddr_in *sin;
-	struct route ro;
+	struct sockaddr_in sin;
 	struct rtentry *rt;
 	int error;
 
-	memset(&ro, 0, sizeof(ro));
-	ro.ro_tableid = rtableid;
-	sin = satosin(&ro.ro_dst);
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_addr = dst;
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
+	sin.sin_addr = dst;
 
-	rt = rtalloc(&ro.ro_dst, RT_REPORT|RT_RESOLVE, rtableid);
+	rt = rtalloc(sintosa(&sin), RT_REPORT|RT_RESOLVE, rtableid);
 	if (rt == NULL)
 		return (NULL);
 
@@ -941,7 +938,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 		struct rt_addrinfo info;
 
 		memset(&info, 0, sizeof(info));
-		info.rti_info[RTAX_DST] = sintosa(sin);
+		info.rti_info[RTAX_DST] = sintosa(&sin);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 

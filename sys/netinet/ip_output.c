@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.273 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.274 2014/12/08 10:51:00 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1664,8 +1664,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	struct ifnet *ifp = NULL;
 	struct ip_moptions *imo = *imop;
 	struct in_multi **immp;
-	struct route ro;
-	struct sockaddr_in *dst, sin;
+	struct rtentry *rt;
+	struct sockaddr_in sin;
 	int i, error = 0;
 	u_char loop;
 
@@ -1769,21 +1769,18 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * the route to the given multicast address.
 		 */
 		if (mreq->imr_interface.s_addr == INADDR_ANY) {
-			ro.ro_rt = NULL;
-			dst = satosin(&ro.ro_dst);
-			dst->sin_len = sizeof(*dst);
-			dst->sin_family = AF_INET;
-			dst->sin_addr = mreq->imr_multiaddr;
-			if (!(ro.ro_rt && ro.ro_rt->rt_ifp &&
-			    (ro.ro_rt->rt_flags & RTF_UP)))
-				ro.ro_rt = rtalloc(&ro.ro_dst,
-				    RT_REPORT|RT_RESOLVE, rtableid);
-			if (ro.ro_rt == NULL) {
+			memset(&sin, 0, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_addr = mreq->imr_multiaddr;
+			rt = rtalloc(sintosa(&sin), RT_REPORT|RT_RESOLVE,
+			    rtableid);
+			if (rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
-			ifp = ro.ro_rt->rt_ifp;
-			rtfree(ro.ro_rt);
+			ifp = rt->rt_ifp;
+			rtfree(rt);
 		} else {
 			memset(&sin, 0, sizeof(sin));
 			sin.sin_len = sizeof(sin);
