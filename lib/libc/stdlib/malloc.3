@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.86 2014/12/06 18:54:55 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.87 2014/12/08 20:42:23 tedu Exp $
 .\"
-.Dd $Mdocdate: December 6 2014 $
+.Dd $Mdocdate: December 8 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -41,7 +41,6 @@
 .Nm reallocarray ,
 .Nm realloc ,
 .Nm free ,
-.Nm cfree
 .Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .In stdlib.h
@@ -55,8 +54,6 @@
 .Fn realloc "void *ptr" "size_t size"
 .Ft void
 .Fn free "void *ptr"
-.Ft void
-.Fn cfree "void *ptr"
 .Ft char * Ns
 .Va malloc_options ;
 .Sh DESCRIPTION
@@ -139,13 +136,6 @@ was previously freed by
 or
 .Fn reallocarray ,
 the behavior is undefined and the double free is a security concern.
-.Pp
-A
-.Fn cfree
-function is also provided for compatibility with old systems and other
-.Nm malloc
-libraries; it is simply an alias for
-.Fn free .
 .Sh RETURN VALUES
 Upon successful completion, the functions
 .Fn malloc ,
@@ -187,9 +177,7 @@ to
 .Pp
 The
 .Fn free
-and
-.Fn cfree
-functions return no value.
+function returns no value.
 .Sh IDIOMS
 Consider
 .Fn calloc
@@ -510,10 +498,6 @@ The
 .Fn reallocarray
 function appeared in
 .Ox 5.6 .
-.Pp
-The
-.Fn cfree
-function appeared in SunOS 4.x.
 .Sh CAVEATS
 When using
 .Fn malloc ,
