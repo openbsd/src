@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.140 2014/10/05 08:40:29 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.141 2014/12/08 21:47:10 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1311,6 +1311,8 @@ ohci_softintr(void *v)
 
 			if (cc == OHCI_CC_STALL)
 				xfer->status = USBD_STALLED;
+			else if (cc == OHCI_CC_DATA_UNDERRUN)
+				xfer->status = USBD_NORMAL_COMPLETION;
 			else
 				xfer->status = USBD_IOERROR;
 			s = splusb();
