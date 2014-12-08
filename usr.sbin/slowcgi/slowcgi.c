@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.40 2014/12/05 20:01:39 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.41 2014/12/08 12:12:46 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -596,7 +596,8 @@ void
 slowcgi_request(int fd, short events, void *arg)
 {
 	struct request	*c;
-	size_t		 n, parsed;
+	ssize_t		 n;
+	size_t		 parsed;
 
 	c = arg;
 
