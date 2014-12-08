@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.37 2014/12/07 15:02:27 jsg Exp $
+# $OpenBSD: Makefile,v 1.38 2014/12/08 03:43:12 jsg Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 \
 	t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 \
 	t25 t26 t27 t28 t29 t30 t31 t32 t33 t34 t35 t36 \
-	t37 t38 t38j t39 t40
+	t37 t38 t38j t39 t40 t41 t42
 
 MALLOC_OPTIONS?=AJ
 t1: t1.out
@@ -164,6 +164,12 @@ t39:
 
 t40:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk36 2>/dev/null
+
+t41:
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk37 2>/dev/null || test $$? -ge 128; then false; fi
+
+t42:
+	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk38 2>/dev/null || test $$? -ge 128; then false; fi
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
