@@ -48,7 +48,7 @@ __warn_references(rand_r,
 int
 rand(void)
 {
-	if (rand_deterministic)
+	if (rand_deterministic == 0)
 		return (arc4random() % ((u_int)RAND_MAX + 1));
 	return (rand_r(&next));
 }
