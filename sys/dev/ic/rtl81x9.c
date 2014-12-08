@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.84 2014/11/24 02:03:37 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.85 2014/12/08 10:58:45 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -739,7 +739,6 @@ rl_txeof(struct rl_softc *sc)
 				CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
 			oldthresh = sc->rl_txthresh;
 			/* error recovery */
-			rl_reset(sc);
 			rl_init(sc);
 			/* restore original threshold */
 			sc->rl_txthresh = oldthresh;
@@ -779,10 +778,8 @@ rl_intr(void *arg)
 			rl_rxeof(sc);
 		if ((status & RL_ISR_TX_OK) || (status & RL_ISR_TX_ERR))
 			rl_txeof(sc);
-		if (status & RL_ISR_SYSTEM_ERR) {
-			rl_reset(sc);
+		if (status & RL_ISR_SYSTEM_ERR)
 			rl_init(sc);
-		}
 		claimed = 1;
 	}
 
@@ -925,6 +922,9 @@ rl_init(void *xsc)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	rl_stop(sc);
+
+	/* Put controller into known state. */
+	rl_reset(sc);
 
 	/*
 	 * Init our MAC address.  Even though the chipset

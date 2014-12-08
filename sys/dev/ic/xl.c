@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.118 2014/11/24 10:33:37 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.119 2014/12/08 10:58:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -201,14 +201,11 @@ xl_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
-		if (ifp->if_flags & IFF_RUNNING) {
-			xl_reset(sc);
+		if (ifp->if_flags & IFF_RUNNING)
 			xl_stop(sc);
-		}
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		xl_reset(sc);
 		if (ifp->if_flags & IFF_UP)
 			xl_init(sc);
 		break;
@@ -1506,10 +1503,8 @@ xl_intr(void *arg)
 			xl_txeoc(sc);
 		}
 
-		if (status & XL_STAT_ADFAIL) {
-			xl_reset(sc);
+		if (status & XL_STAT_ADFAIL)
 			xl_init(sc);
-		}
 
 		if (status & XL_STAT_STATSOFLOW) {
 			sc->xl_stats_no_timeout = 1;
@@ -1917,6 +1912,9 @@ xl_init(void *xsc)
 	 */
 	xl_stop(sc);
 
+	/* Reset the chip to a known state. */
+	xl_reset(sc);
+
 	if (sc->xl_hasmii)
 		mii = &sc->sc_mii;
 
@@ -2285,7 +2283,6 @@ xl_watchdog(struct ifnet *ifp)
 	xl_txeoc(sc);
 	xl_txeof(sc);
 	xl_rxeof(sc);
-	xl_reset(sc);
 	xl_init(sc);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -2569,12 +2566,8 @@ xl_attach(struct xl_softc *sc)
 	 * a 10/100 card of some kind, we need to force the transceiver
 	 * type to something sane.
 	 */
-	if (sc->xl_xcvr == XL_XCVR_AUTO) {
+	if (sc->xl_xcvr == XL_XCVR_AUTO)
 		xl_choose_xcvr(sc, 0);
-		i = splnet();
-		xl_reset(sc);
-		splx(i);
-	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
 		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);

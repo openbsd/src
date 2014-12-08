@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.118 2014/11/24 10:33:37 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.119 2014/12/08 10:58:45 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1552,10 +1552,8 @@ sis_intr(void *arg)
 		    sis_rx_list[sc->sis_cdata.sis_rx_cons]));
 	}
 
-	if (status & SIS_ISR_SYSERR) {
-		sis_reset(sc);
+	if (status & SIS_ISR_SYSERR)
 		sis_init(sc);
-	}
 
 	/*
 	 * XXX: Re-enable RX engine every time otherwise it occasionally
@@ -1696,6 +1694,11 @@ sis_init(void *xsc)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	sis_stop(sc);
+
+	/*
+	 * Reset the chip to a known state.
+	 */
+	sis_reset(sc);
 
 #if NS_IHR_DELAY > 0
 	/* Configure interrupt holdoff register. */
@@ -1926,8 +1929,6 @@ sis_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	s = splnet();
-	sis_stop(sc);
-	sis_reset(sc);
 	sis_init(sc);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
