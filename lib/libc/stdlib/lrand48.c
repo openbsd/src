@@ -1,4 +1,4 @@
-/*	$OpenBSD: lrand48.c,v 1.3 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: lrand48.c,v 1.4 2014/12/08 21:45:20 deraadt Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -19,6 +19,8 @@ extern unsigned short __rand48_seed[3];
 long
 lrand48(void)
 {
+	if (__rand48_deterministic == 0)
+		return arc4random() & 0x7fffffff;
 	__dorand48(__rand48_seed);
 	return ((long) __rand48_seed[2] << 15) + ((long) __rand48_seed[1] >> 1);
 }

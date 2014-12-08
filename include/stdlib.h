@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.61 2014/12/08 20:39:56 tedu Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.62 2014/12/08 21:45:19 deraadt Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -131,6 +131,7 @@ void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);
 void	 srand(unsigned);
+void	 srand_deterministic(unsigned);
 double	 strtod(const char *, char **);
 float	 strtof(const char *, char **);
 long	 strtol(const char *, char **, int);
@@ -159,11 +160,14 @@ double	 drand48(void);
 double	 erand48(unsigned short[3]);
 long	 jrand48(unsigned short[3]);
 void	 lcong48(unsigned short[7]);
+void	 lcong48_deterministic(unsigned short[7]);
 long	 lrand48(void);
 long	 mrand48(void);
 long	 nrand48(unsigned short[3]);
 unsigned short *seed48(unsigned short[3]);
+unsigned short *seed48_deterministic(unsigned short[3]);
 void	 srand48(long);
+void	 srand48_deterministic(long);
 
 int	 putenv(char *);
 #endif
@@ -190,6 +194,7 @@ char	*initstate(unsigned int, char *, size_t)
 long	 random(void);
 char	*setstate(char *);
 void	 srandom(unsigned int);
+void	 srandom_deterministic(unsigned int);
 
 char	*realpath(const char *, char *)
 		__attribute__((__bounded__ (__minbytes__,2,1024)));

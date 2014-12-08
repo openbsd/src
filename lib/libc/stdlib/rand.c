@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
+static int rand_deterministic;
 static u_int next = 1;
 
 int
@@ -47,6 +48,8 @@ __warn_references(rand_r,
 int
 rand(void)
 {
+	if (rand_deterministic)
+		return (arc4random() % ((u_int)RAND_MAX + 1));
 	return (rand_r(&next));
 }
 
@@ -58,10 +61,12 @@ __warn_references(rand,
 void
 srand(u_int seed)
 {
-	next = seed;
+	rand_deterministic = 0;
 }
 
-#if defined(APIWARN)
-__warn_references(srand,
-    "warning: srand() seed choices are invariably poor");
-#endif
+void
+srand_deterministic(u_int seed)
+{
+	rand_deterministic = 1;
+	next = seed;
+}

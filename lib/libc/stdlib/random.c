@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.24 2014/10/13 20:54:13 chl Exp $ */
+/*	$OpenBSD: random.c,v 1.25 2014/12/08 21:45:20 deraadt Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -176,7 +176,7 @@ static int rand_type = TYPE_3;
 static int rand_deg = DEG_3;
 static int rand_sep = SEP_3;
 
-static int use_arc4random;
+static int random_deterministic;
 
 _THREAD_PRIVATE_MUTEX(random);
 static long random_l(void);
@@ -203,7 +203,7 @@ srandom_l(unsigned int x)
 	int32_t test;
 	div_t val;
 
-	use_arc4random = 0;
+	random_deterministic = 1;
 	if (rand_type == TYPE_0)
 		state[0] = x;
 	else {
@@ -231,38 +231,22 @@ srandom_l(unsigned int x)
 void
 srandom(unsigned int x)
 {
+	random_deterministic = 0;
+}
+
+void
+srandomdev(void)
+{
+	random_deterministic = 0;	/* back to the default */
+}
+
+void
+srandom_deterministic(unsigned int x)
+{
 	LOCK();
 	srandom_l(x);
 	UNLOCK();
 }
-
-#if defined(APIWARN)
-__warn_references(srandom,
-    "warning: srandom() seed choices are invariably poor");
-#endif
-
-/*
- * srandomdev:
- *
- * Many programs choose the seed value in a totally predictable manner.
- * This often causes problems.  We seed the generator using random data.
- * Note that this particular seeding procedure can generate states
- * which are impossible to reproduce by calling srandom() with any
- * value, since the succeeding terms in the state buffer are no longer
- * derived from the LC algorithm applied to a fixed seed.
- */
-void
-srandomdev(void)
-{
-	LOCK();
-	use_arc4random = 1;
-	UNLOCK();
-}
-
-#if defined(APIWARN)
-__warn_references(srandomdev,
-    "warning: srandomdev() usage; consider switching to arc4random()");
-#endif
 
 /*
  * initstate:
@@ -289,7 +273,7 @@ initstate(u_int seed, char *arg_state, size_t n)
 	char *ostate = (char *)(&state[-1]);
 
 	LOCK();
-	use_arc4random = 0;
+	random_deterministic = 1;
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -354,7 +338,7 @@ setstate(char *arg_state)
 	char *ostate = (char *)(&state[-1]);
 
 	LOCK();
-	use_arc4random = 0;
+	random_deterministic = 1;
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -405,7 +389,7 @@ random_l(void)
 {
 	int32_t i;
 
-	if (use_arc4random)
+	if (random_deterministic == 0)
 		return arc4random() & 0x7fffffff;
 
 	if (rand_type == TYPE_0)
@@ -431,8 +415,3 @@ random(void)
 	UNLOCK();
 	return r;
 }
-
-#if defined(APIWARN)
-__warn_references(random,
-    "warning: random() isn't random; consider using arc4random()");
-#endif

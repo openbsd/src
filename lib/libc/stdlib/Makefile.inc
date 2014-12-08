@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.56 2014/12/08 20:39:16 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.57 2014/12/08 21:45:20 deraadt Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -43,12 +43,14 @@ MLINKS+=malloc.3 free.3 malloc.3 realloc.3 malloc.3 calloc.3
 MLINKS+=malloc.3 reallocarray.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=radixsort.3 sradixsort.3
-MLINKS+=rand.3 srand.3 rand.3 rand_r.3
+MLINKS+=rand.3 srand.3 rand.3 rand_r.3 rand.3 srand_deterministic.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3
-MLINKS+=random.3 srandom.3 random.3 srandomdev.3
+MLINKS+=random.3 srandom.3 random.3 srandomdev.3 random.3 srandom_deterministic.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
 MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
-MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
+MLINKS+=rand48.3 srand48.3 rand48.3 srand48_deterministic.3
+MLINKS+=rand48.3 seed48.3 rand48.3 seed48_deterministic.3
+MLINKS+=rand48.3 lcong48.3 rand48.3 lcong48_deterministic.3
 MLINKS+=ptsname.3 grantpt.3 ptsname.3 unlockpt.3
 MLINKS+=strtod.3 strtof.3 strtod.3 strtold.3
 MLINKS+=strtol.3 strtoll.3 strtol.3 strtoq.3 strtol.3 strtoimax.3

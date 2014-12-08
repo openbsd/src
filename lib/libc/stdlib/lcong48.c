@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcong48.c,v 1.3 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: lcong48.c,v 1.4 2014/12/08 21:45:20 deraadt Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -21,6 +21,14 @@ extern unsigned short __rand48_add;
 void
 lcong48(unsigned short p[7])
 {
+	lcong48_deterministic(p);
+	__rand48_deterministic = 0;
+}
+
+void
+lcong48_deterministic(unsigned short p[7])
+{
+	__rand48_deterministic = 1;
 	__rand48_seed[0] = p[0];
 	__rand48_seed[1] = p[1];
 	__rand48_seed[2] = p[2];
