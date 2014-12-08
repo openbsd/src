@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.24 2014/11/25 03:23:22 tedu Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.25 2014/12/08 20:36:18 tedu Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -158,7 +158,7 @@ const u_int32_t _des_bits32[32] =
 	0x00000008, 0x00000004, 0x00000002, 0x00000001
 };
 
-const u_char	_des_bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+static const u_char	_des_bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
 static const u_int32_t *bits28, *bits24;
 static u_char	init_perm[64], final_perm[64];
@@ -196,7 +196,7 @@ ascii_to_bin(char ch)
 	return(0);
 }
 
-void
+static void
 _des_init(void)
 {
 	int	i, j, b, k, inbit, obit;
@@ -324,7 +324,7 @@ _des_init(void)
 	_des_initialised = 1;
 }
 
-u_int32_t
+static u_int32_t
 _des_setup_salt(int32_t salt)
 {
 	u_int32_t	obit, saltbit, saltbits;
@@ -342,7 +342,7 @@ _des_setup_salt(int32_t salt)
 	return saltbits;
 }
 
-int
+static int
 des_setkey(const char *key)
 {
 	u_int32_t k0, k1, rawkey0, rawkey1;
@@ -422,7 +422,7 @@ des_setkey(const char *key)
 	return(0);
 }
 
-int
+static int
 _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
     int count, u_int32_t saltbits)
 {
@@ -539,7 +539,7 @@ _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
 	return(0);
 }
 
-int
+static int
 des_cipher(const char *in, char *out, int32_t salt, int count)
 {
 	u_int32_t l_out, r_out, rawl, rawr, saltbits;
