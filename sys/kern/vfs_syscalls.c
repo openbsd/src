@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.214 2014/11/14 23:26:48 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.215 2014/12/08 20:56:11 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ int dofaccessat(struct proc *, int, const char *, int, int);
 int dofstatat(struct proc *, int, const char *, struct stat *, int);
 int doreadlinkat(struct proc *, int, const char *, char *, size_t,
     register_t *);
+int dochflagsat(struct proc *, int, const char *, u_int, int);
+int dovchflags(struct proc *, struct vnode *, u_int);
 int dofchmodat(struct proc *, int, const char *, mode_t, int);
 int dofchownat(struct proc *, int, const char *, uid_t, gid_t, int);
 int dorenameat(struct proc *, int, const char *, int, const char *);
@@ -1825,7 +1827,6 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 /*
  * Change flags of a file given a path name.
  */
-/* ARGSUSED */
 int
 sys_chflags(struct proc *p, void *v, register_t *retval)
 {
@@ -1833,43 +1834,44 @@ sys_chflags(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(u_int) flags;
 	} */ *uap = v;
-	struct vnode *vp;
-	struct vattr vattr;
-	int error;
-	struct nameidata nd;
-	u_int flags = SCARG(uap, flags);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	return (dochflagsat(p, AT_FDCWD, SCARG(uap, path),
+	    SCARG(uap, flags), 0));
+}
+
+int
+sys_chflagsat(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_chflagsat_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(u_int) flags;
+		syscallarg(int) atflags;
+	} */ *uap = v;
+
+	return (dochflagsat(p, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, flags), SCARG(uap, atflags)));
+}
+
+int
+dochflagsat(struct proc *p, int fd, const char *path, u_int flags, int atflags)
+{
+	struct nameidata nd;
+	int error, follow;
+
+	if (atflags & ~AT_SYMLINK_NOFOLLOW)
+		return (EINVAL);
+
+	follow = (atflags & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = nd.ni_vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else if (flags == VNOVAL)
-		error = EINVAL;
-	else {
-		if (suser(p, 0)) {
-			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
-				goto out;
-			if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
-				error = EINVAL;
-				goto out;
-			}
-		}
-		VATTR_NULL(&vattr);
-		vattr.va_flags = flags;
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-out:
-	vput(vp);
-	return (error);
+	return (dovchflags(p, nd.ni_vp, flags));
 }
 
 /*
  * Change flags of a file given a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_fchflags(struct proc *p, void *v, register_t *retval)
 {
@@ -1877,15 +1879,24 @@ sys_fchflags(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(u_int) flags;
 	} */ *uap = v;
-	struct vattr vattr;
-	struct vnode *vp;
 	struct file *fp;
+	struct vnode *vp;
 	int error;
-	u_int flags = SCARG(uap, flags);
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
+	vref(vp);
+	FRELE(fp, p);
+	return (dovchflags(p, vp, SCARG(uap, flags)));
+}
+
+int
+dovchflags(struct proc *p, struct vnode *vp, u_int flags)
+{
+	struct vattr vattr;
+	int error;
+
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
@@ -1906,8 +1917,7 @@ sys_fchflags(struct proc *p, void *v, register_t *retval)
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 out:
-	VOP_UNLOCK(vp, 0, p);
-	FRELE(fp, p);
+	vput(vp);
 	return (error);
 }
 

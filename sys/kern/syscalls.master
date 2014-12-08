@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.148 2014/10/09 03:35:06 tedu Exp $
+;	$OpenBSD: syscalls.master,v 1.149 2014/12/08 20:56:11 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -223,7 +223,8 @@
 105	STD		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, socklen_t valsize); }
 106	STD		{ int sys_listen(int s, int backlog); }
-107	OBSOL		vtimes
+107	STD		{ int sys_chflagsat(int fd, const char *path, \
+			    u_int flags, int atflags); }
 108	OBSOL		osigvec
 109	STD		{ int sys_ppoll(struct pollfd *fds, \
 			    u_int nfds, const struct timespec *ts, \

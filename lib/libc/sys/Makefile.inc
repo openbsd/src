@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.123 2014/11/14 00:24:28 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.124 2014/12/08 20:56:11 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -27,7 +27,7 @@ SRCS+=	stack_protector.c
 ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	__sysctl.o __threxit.o __thrsigdivert.o __thrsleep.o \
 	__thrwakeup.o accept.o accept4.o access.o acct.o adjfreq.o adjtime.o \
-	bind.o chdir.o chflags.o chmod.o chown.o chroot.o \
+	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
 	clock_getres.o clock_gettime.o clock_settime.o close.o \
 	closefrom.o connect.o dup.o dup2.o dup3.o execve.o faccessat.o \
 	fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
@@ -228,7 +228,7 @@ MLINKS+=accept.2 accept4.2
 MLINKS+=access.2 faccessat.2
 MLINKS+=brk.2 sbrk.2
 MLINKS+=chdir.2 fchdir.2
-MLINKS+=chflags.2 fchflags.2
+MLINKS+=chflags.2 chflagsat.2 chflags.2 fchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 fchmodat.2
 MLINKS+=chown.2 fchown.2 chown.2 fchownat.2 chown.2 lchown.2
 MLINKS+=clock_gettime.2 clock_getres.2

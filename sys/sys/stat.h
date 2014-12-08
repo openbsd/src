@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.26 2014/11/20 18:44:10 krw Exp $	*/
+/*	$OpenBSD: stat.h,v 1.27 2014/12/08 20:56:11 guenther Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -209,6 +209,7 @@ int	futimens(int, const struct timespec [2]);
 #endif
 #if __BSD_VISIBLE
 int	chflags(const char *, unsigned int);
+int	chflagsat(int, const char *, unsigned int, int);
 int	fchflags(int, unsigned int);
 int	fchmod(int, mode_t);
 int	lstat(const char *, struct stat *);
