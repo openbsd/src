@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.32 2014/11/22 18:31:46 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.33 2014/12/08 07:12:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -132,9 +132,19 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	}
 
 #if NACPI > 0
+	/* Record ACPI trampoline code page */
 	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMPOLINE;
+	hiber_info->ranges[hiber_info->nranges].end =
+	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
+	hiber_info->image_size += PAGE_SIZE;
+	hiber_info->nranges++;
+
+	/* Record ACPI trampoline data page */
+	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		return (1);
+	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMP_DATA;
 	hiber_info->ranges[hiber_info->nranges].end =
 	    hiber_info->ranges[hiber_info->nranges].base + PAGE_SIZE;
 	hiber_info->image_size += PAGE_SIZE;

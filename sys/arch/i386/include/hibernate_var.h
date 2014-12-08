@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.11 2014/11/22 20:09:36 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.12 2014/12/08 07:12:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -18,13 +18,13 @@
 
 #define PIGLET_PAGE_MASK (PD_MASK)
 
-#define HIBERNATE_PD_PAGE	(PAGE_SIZE * 20)
-#define HIBERNATE_PT_PAGE	(PAGE_SIZE * 21)
+#define HIBERNATE_PD_PAGE	(PAGE_SIZE * 21)
+#define HIBERNATE_PT_PAGE	(PAGE_SIZE * 22)
 /* 2 pages for stack */
-#define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 23)
-#define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 24)
+#define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 24)
+#define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 25)
 /* HIBERNATE_HIBALLOC_PAGE must be the last stolen page (see machdep.c) */
-#define HIBERNATE_HIBALLOC_PAGE (PAGE_SIZE * 25)
+#define HIBERNATE_HIBALLOC_PAGE (PAGE_SIZE * 26)
 
 /* Use 4MB hibernation chunks */
 #define HIBERNATE_CHUNK_SIZE		0x400000

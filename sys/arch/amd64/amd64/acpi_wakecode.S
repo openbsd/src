@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.34 2014/12/01 04:33:00 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.35 2014/12/08 07:12:37 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -53,9 +53,14 @@
 #include <machine/segments.h>
 #include <dev/acpi/acpivar.h>
 
-#define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + ACPI_TRAMPOLINE
+#define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + \
+	ACPI_TRAMPOLINE
 #define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
-#define _ACPI_RM_SEGMENT (ACPI_TRAMPOLINE >> 4)
+#define _ACPI_TRMP_DATA_LABEL(a) a = . - _C_LABEL(acpi_tramp_data_start) + \
+	ACPI_TRAMP_DATA
+#define _ACPI_TRMP_DATA_OFFSET(a) a = . - _C_LABEL(acpi_tramp_data_start)
+#define _ACPI_RM_CODE_SEG (ACPI_TRAMPOLINE >> 4)
+#define _ACPI_RM_DATA_SEG (ACPI_TRAMP_DATA >> 4)
 
 /*
  * On wakeup, we'll start executing at acpi_real_mode_resume.
@@ -76,7 +81,6 @@
  *     4. Enter long mode
  *     5. Restore saved CPU registers
  */
-
 	.text
 	.code16
 	.align 4
@@ -85,6 +89,8 @@
 	.global _C_LABEL(acpi_long_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
 	.global _C_LABEL(acpi_pdirpa)
+	.global _C_LABEL(acpi_tramp_data_start)
+	.global _C_LABEL(acpi_tramp_data_end)
 _C_LABEL(acpi_real_mode_resume):
 _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	nop
@@ -97,10 +103,11 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * ant real dependencies on data or stack, so we'll just use
 	 * the code segment for data and stack (eg, a 64k memory space).
 	 */
-	movw	%cs,%ax
-	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%ss
+	movw	$(_ACPI_RM_DATA_SEG), %ax
+	movw	%ax, %ds
+	movw	%ax, %ss
+	movw	%cs, %ax
+	movw	%ax, %es
 	lidtl	clean_idt
 
 	/*
@@ -118,13 +125,6 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	popfl
 
 	/*
-	 * Set up esi to point to start of current routine's CS.
-	 */
-	xorl    %esi,%esi
-	movw    %cs,%si
-	shll    $4,%esi
-
-	/*
 	 * Flush instruction prefetch queue
 	 */
 	jmp     1f
@@ -137,8 +137,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * extending from 0x00000000-0xffffffff and one for data
 	 * with the same range. This GDT will only be in use for a short
 	 * time, until we restore the saved GDT that we had when we went
-	 * to sleep (although on i386, the saved GDT will most likely
-	 * represent something similar based on machine/segment.h).
+	 * to sleep.
 	 */ 
 	data32 addr32 lgdt	tmp_gdt
 
@@ -150,11 +149,9 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	mov	%eax,%cr0
 
 	/*
-	 * Force CPU into protected mode 
-	 * by making an intersegment jump (to ourselves, just a few lines
-	 * down from here. We rely on the kernel to fixup the jump
-	 * target addres previously. 
-	 *
+	 * Force CPU into protected mode by making an intersegment jump (to
+	 * ourselves, just a few lines down from here). We rely on the kernel
+	 * to fixup the jump target addres previously. 
 	 */
 	ljmpl	$0x8, $acpi_protected_mode_trampoline
 
@@ -184,8 +181,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * because we haven't put anything on the stack via a
 	 * call or push that we haven't cleaned up already.
 	 */
-	movl    %esi, %esp
-	addl    $0x0FFE, %esp
+	addl    $(ACPI_TRAMP_DATA), %esp
 
 	/* Set CR4 to something sane for entry into long mode */
 	mov	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT|CR4_PSE),%eax
@@ -213,6 +209,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	jmp 	1f
 1:	jmp	1f
 1:
+
 	/* Reenable paging by setting the appropriate bits in CR0 */
 	movl    %cr0,%eax
 	orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
@@ -230,6 +227,9 @@ _C_LABEL(acpi_protected_mode_resume):
 	.align 16
 _ACPI_TRMP_LABEL(acpi_long_mode_trampoline)
 _C_LABEL(acpi_long_mode_resume):
+
+	/* Reset stack */
+	movq	$(ACPI_TRAMP_DATA + 0x0FF8), %rsp
 
 	/* Load GDT based on our saved copy */
 	lgdt	acpi_saved_gdt
@@ -292,6 +292,7 @@ _C_LABEL(acpi_long_mode_resume):
 	jmp 	1f
 1:	jmp	1f
 1:
+
 	movq	acpi_saved_cr2, %rax
 	movq	%rax, %cr2
 	movq	acpi_saved_cr0,	%rax
@@ -355,10 +356,8 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_2)
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
+	/* Jump out of 64 bit mode, to hibernate_resume_vector_3 below */
 	ljmp	*(hibernate_indirect_16)
-_ACPI_TRMP_LABEL(hibernate_indirect_16)
-	.long	hibernate_resume_vector_3
-	.word	0x18
 
 _ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
 	.code16
@@ -371,8 +370,9 @@ _ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
 	movl	%eax, %cr0
 
 	/* Set up real mode segment selectors */
-	movw	$(ACPI_TRAMPOLINE >> 4), %ax
+	movw	$(_ACPI_RM_DATA_SEG), %ax
 	movw	%ax, %ds
+	movw	%ax, %ss
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %gs
@@ -380,7 +380,7 @@ _ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
 	lidtl	clean_idt
 
 	/* Jump to the S3 resume vector */
-	ljmp	$(ACPI_TRAMPOLINE >> 4), $acpi_s3_vector_real
+	ljmp	$(_ACPI_RM_CODE_SEG), $acpi_s3_vector_real
 
 NENTRY(hibernate_drop_to_real_mode)
 	.code64
@@ -393,10 +393,8 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_2b)
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
+	/* Jump out of 64 bit mode, to hibernate_resume_vector_3b below */
 	ljmp	*(hibernate_indirect_16b)
-_ACPI_TRMP_LABEL(hibernate_indirect_16b)
-	.long	hibernate_resume_vector_3b
-	.word	0x18
 
 _ACPI_TRMP_OFFSET(hibernate_resume_vector_3b)
 	.code16
@@ -409,19 +407,18 @@ _ACPI_TRMP_OFFSET(hibernate_resume_vector_3b)
 	movl	%eax, %cr0
 
 	/* Set up real mode segment selectors */
-	movw	$(ACPI_TRAMPOLINE >> 4), %ax
+	movw	$(_ACPI_RM_DATA_SEG), %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %gs
+	movw	%ax, %ss
 	movl	$0x0FFE, %esp
 	lidtl	clean_idt
 
-	ljmp	$(ACPI_TRAMPOLINE >> 4), $hib_hlt_real
-
 _ACPI_TRMP_OFFSET(hib_hlt_real)
 	hlt
-	ljmp 	$(ACPI_TRAMPOLINE >> 4), $hib_hlt_real
+	ljmp	$(_ACPI_RM_CODE_SEG), $hib_hlt_real
 
 	.code64
 	/* Switch to hibernate resume pagetable */
@@ -459,13 +456,23 @@ NENTRY(hibernate_flush)
 	ret
 #endif /* HIBERNATE */
 
-	.align 8
-_ACPI_TRMP_OFFSET(tmp_gdt)
+	/*
+	 * End of resume code (code copied to ACPI_TRAMPOLINE)
+	 */
+_C_LABEL(acpi_resume_end):
+
+	/*
+	 * Initial copy of this data gets placed in .rodata, kernel makes
+	 * RW copy of it in the tramp data page.
+	 */
+	.section .rodata
+_C_LABEL(acpi_tramp_data_start):
+_ACPI_TRMP_DATA_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
 	.long	tmp_gdtable
 
 	.align 8
-_ACPI_TRMP_LABEL(tmp_gdtable)
+_ACPI_TRMP_DATA_LABEL(tmp_gdtable)
 	/*
 	 * null
 	 */
@@ -502,129 +509,132 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	 */ 
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
-_ACPI_TRMP_LABEL(tmp_gdt_end)
+_ACPI_TRMP_DATA_LABEL(tmp_gdt_end)
 
 	.align 8
-_ACPI_TRMP_OFFSET(clean_idt)
+_ACPI_TRMP_DATA_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
 
 	.align 8
-_ACPI_TRMP_LABEL(tmp_gdt64)
+_ACPI_TRMP_DATA_LABEL(tmp_gdt64)
 	.word 	tmp_gdt64_end - tmp_gdtable64
 	.long	tmp_gdtable64
 
 	.align 8
-_ACPI_TRMP_LABEL(tmp_gdtable64)
+_ACPI_TRMP_DATA_LABEL(tmp_gdtable64)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
-_ACPI_TRMP_LABEL(tmp_gdt64_end)
+_ACPI_TRMP_DATA_LABEL(tmp_gdt64_end)
 
 	.align 8
-_ACPI_TRMP_LABEL(tmp_gdt6416)
+_ACPI_TRMP_DATA_LABEL(tmp_gdt6416)
 	.word 	tmp_gdt6416_end - tmp_gdtable6416
 	.quad	tmp_gdtable6416
 
 	.align 8
-_ACPI_TRMP_LABEL(tmp_gdtable6416)
+_ACPI_TRMP_DATA_LABEL(tmp_gdtable6416)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
 	.word	0x0fff, (ACPI_TRAMPOLINE % 0x10000)
 	.byte	(ACPI_TRAMPOLINE >> 16), 0x9a, 0, 0
-_ACPI_TRMP_LABEL(tmp_gdt6416_end)
+_ACPI_TRMP_DATA_LABEL(tmp_gdt6416_end)
 
 	.align 8
-_ACPI_TRMP_LABEL(acpi_saved_rbx)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rbx)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_rcx)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rcx)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_rdx)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rdx)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_rbp)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rbp)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_rsi)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rsi)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_rdi)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rdi)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_rsp)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_rsp)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r8)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r8)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r9)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r9)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r10)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r10)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r11)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r11)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r12)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r12)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r13)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r13)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r14)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r14)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_r15)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_r15)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_fl)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_fl)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_cr0)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr0)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_cr2)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr2)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_cr3)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr3)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_cr4)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr4)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_cr8)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cr8)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_ret)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ret)
 	.quad 0
 
 	.align 8
-_ACPI_TRMP_LABEL(acpi_saved_idt)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_idt)
 	.space 10
 
 	.align 8
-_ACPI_TRMP_LABEL(acpi_saved_gdt)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_gdt)
 	.space 10
 
 	.align 8
-_ACPI_TRMP_LABEL(acpi_saved_ldt)	
+_ACPI_TRMP_DATA_LABEL(acpi_saved_ldt)	
 	.space 10
 	
-_ACPI_TRMP_LABEL(acpi_saved_tr)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_tr)
 	.short 0
 
 	.align 4
-_ACPI_TRMP_LABEL(acpi_saved_efer)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_efer)
 	.long 0
 
 	.align 8
-_ACPI_TRMP_LABEL(acpi_saved_fsbase)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_fsbase)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_gsbase)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_gsbase)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_kgs)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_kgs)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_star)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_star)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_lstar)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_lstar)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_cstar)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_cstar)
 	.quad 0
-_ACPI_TRMP_LABEL(acpi_saved_sfmask)
+_ACPI_TRMP_DATA_LABEL(acpi_saved_sfmask)
 	.quad 0
 
 	.align 4
-_ACPI_TRMP_LABEL(acpi_pdirpa)
+_ACPI_TRMP_DATA_LABEL(acpi_pdirpa)
 	.long 0
+_ACPI_TRMP_DATA_LABEL(hibernate_indirect_16)
+	.long	hibernate_resume_vector_3
+	.word	0x18
+_ACPI_TRMP_DATA_LABEL(hibernate_indirect_16b)
+	.long	hibernate_resume_vector_3b
+	.word	0x18
 
-	/*
-	 * End of resume code (code copied to ACPI_TRAMPOLINE)
-	 */
-_C_LABEL(acpi_resume_end):
+_C_LABEL(acpi_tramp_data_end):
 
 	/*
 	 * acpi_savecpu saves the processor's registers and flags

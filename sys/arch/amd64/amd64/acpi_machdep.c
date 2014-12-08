@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.65 2014/12/01 04:22:34 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.66 2014/12/08 07:12:37 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -56,6 +56,7 @@
 #endif
 
 extern u_char acpi_real_mode_resume[], acpi_resume_end[];
+extern u_char acpi_tramp_data_start[], acpi_tramp_data_end[];
 extern u_int32_t acpi_pdirpa;
 extern paddr_t tramp_pdirpa;
 
@@ -224,8 +225,17 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	 */
 	KASSERT(acpi_resume_end - acpi_real_mode_resume < PAGE_SIZE);
 
-	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE,
+	memcpy((caddr_t)ACPI_TRAMPOLINE, acpi_real_mode_resume,
 	    acpi_resume_end - acpi_real_mode_resume);
+
+	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
+	    PROT_READ | PROT_WRITE);
+	memcpy((caddr_t)ACPI_TRAMP_DATA, acpi_tramp_data_start,
+	    acpi_tramp_data_end - acpi_tramp_data_start);
+
+	/* Remap trampoline code page RX */
+	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE,
+	    PROT_READ | PROT_EXEC);
 
 	acpi_pdirpa = tramp_pdirpa;
 }
