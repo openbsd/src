@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.342 2014/12/07 22:45:39 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.343 2014/12/08 02:04:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -636,19 +636,17 @@ state_preboot(void)
 	interval = (int)(cur_time - client->first_sending);
 
 	if (log_perror && interval > 3) {
-		if (!preamble) {
+		if (!preamble && !ifi->linkstat) {
 			fprintf(stderr, "%s: no link ....", ifi->name);
-			fflush(stderr);
 			preamble = 1;
 		}
-		if (ifi->linkstat) {
-			fprintf(stderr, " got link\n");
-			fflush(stderr);
-		} else if (interval > config->link_timeout) {
-			fprintf(stderr, " sleeping\n");
-			fflush(stderr);
-		} else {
-			fprintf(stderr, ".");
+		if (preamble) {
+			if (ifi->linkstat)
+				fprintf(stderr, " got link\n");
+			else if (interval > config->link_timeout)
+				fprintf(stderr, " sleeping\n");
+			else
+				fprintf(stderr, ".");
 			fflush(stderr);
 		}
 	}
