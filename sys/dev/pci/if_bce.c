@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.38 2014/07/22 13:12:11 mpi Exp $ */
+/* $OpenBSD: if_bce.c,v 1.39 2014/12/08 16:21:38 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -508,11 +508,6 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifp->if_flags & IFF_RUNNING)
 			bce_set_filter(ifp);
 		error = 0;
-	}
-
-	if (error == 0) {
-		/* Try to get more packets going. */
-		bce_start(ifp);
 	}
 
 	splx(s);

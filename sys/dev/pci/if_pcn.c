@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.30 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.31 2014/12/08 16:21:38 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1090,9 +1090,6 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		else
 			error = 0;
 	}
-
-	/* Try to get more packets going. */
-	pcn_start(ifp);
 
 	splx(s);
 	return (error);
