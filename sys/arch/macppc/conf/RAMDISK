@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.109 2014/12/02 17:41:55 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.110 2014/12/08 11:40:41 brad Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -33,7 +33,7 @@ cpu0		at mainbus0
 mpcpcibr*	at mainbus0		# MPC106 PCI Bridge.
 memc*		at mainbus0
 openpic*	at memc?		# openpic interrupt controller
-kiic*           at memc?        	# Keywest I2C
+kiic*		at memc?		# Keywest I2C
 pchb*		at pci?			# host bridge identifiers
 ht*		at mainbus0
 smu*		at mainbus0
