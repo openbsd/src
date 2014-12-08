@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.57 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.58 2014/12/08 10:46:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -99,10 +99,14 @@ enc_clone_create(struct if_clone *ifc, int unit)
 		if_addgroup(ifp, ifc->ifc_name);
 	/*
 	 * enc(4) does not have a link-layer address but rtrequest1()
-	 * wants an ifa for every route entry.  So let's allocate
-	 * a fake and empty ifa of type AF_LINK for this purpose.
+	 * wants an ifa for every route entry.  So let's setup a fake
+	 * and empty ifa of type AF_LINK for this purpose.
 	 */
 	if_alloc_sadl(ifp);
+	sc->sc_ifa.ifa_ifp = ifp;
+	sc->sc_ifa.ifa_rtrequest = link_rtrequest;
+	sc->sc_ifa.ifa_addr = (struct sockaddr *)ifp->if_sadl;
+	sc->sc_ifa.ifa_netmask = NULL;
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
@@ -226,6 +230,19 @@ enc_getif(u_int id, u_int unit)
 	return (enc_ifps[id]);
 }
 
+struct ifaddr
+*enc_getifa(u_int id, u_int unit)
+{
+	struct ifnet		*ifp;
+	struct enc_softc	*sc;
+
+	ifp = enc_getif(id, unit);
+	if (ifp == NULL)
+		return (NULL);
+
+	sc = ifp->if_softc;
+	return (&sc->sc_ifa);
+}
 int
 enc_setif(struct ifnet *ifp, u_int id)
 {

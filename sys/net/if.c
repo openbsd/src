@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.305 2014/12/01 15:06:54 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.306 2014/12/08 10:46:14 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -283,10 +283,9 @@ if_attachsetup(struct ifnet *ifp)
 void
 if_alloc_sadl(struct ifnet *ifp)
 {
-	unsigned int socksize, ifasize;
+	unsigned int socksize;
 	int namelen, masklen;
 	struct sockaddr_dl *sdl;
-	struct ifaddr *ifa;
 
 	/*
 	 * If the interface already has a link name, release it
@@ -303,9 +302,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	if (socksize < sizeof(*sdl))
 		socksize = sizeof(*sdl);
 	socksize = ROUNDUP(socksize);
-	ifasize = sizeof(*ifa) + socksize;
-	ifa = malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
-	sdl = (struct sockaddr_dl *)(ifa + 1);
+	sdl = malloc(socksize, M_IFADDR, M_WAITOK|M_ZERO);
 	sdl->sdl_len = socksize;
 	sdl->sdl_family = AF_LINK;
 	bcopy(ifp->if_xname, sdl->sdl_data, namelen);
@@ -313,12 +310,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	sdl->sdl_alen = ifp->if_addrlen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
-	ifp->if_lladdr = ifa;
-	ifa->ifa_ifp = ifp;
-	ifa->ifa_rtrequest = link_rtrequest;
-	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
-	ifa->ifa_netmask = NULL;
 }
 
 /*
@@ -329,19 +321,8 @@ if_alloc_sadl(struct ifnet *ifp)
 void
 if_free_sadl(struct ifnet *ifp)
 {
-	struct ifaddr *ifa;
-	int s;
-
-	ifa = ifp->if_lladdr;
-	if (ifa == NULL)
-		return;
-
-	s = splnet();
-	rt_ifa_del(ifa, 0, ifa->ifa_addr);
-	ifafree(ifp->if_lladdr);
-	ifp->if_lladdr = NULL;
+	free(ifp->if_sadl, M_IFADDR, 0);
 	ifp->if_sadl = NULL;
-	splx(s);
 }
 
 void
@@ -1223,7 +1204,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
@@ -1596,10 +1576,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFLLADDR:
 		if ((error = suser(p, 0)))
 			return (error);
-		ifa = ifp->if_lladdr;
-		if (ifa == NULL)
-			return (EINVAL);
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		sdl = (struct sockaddr_dl *)ifp->if_sadl;
 		if (sdl == NULL)
 			return (EINVAL);
 		if (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN)

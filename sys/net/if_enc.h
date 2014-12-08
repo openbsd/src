@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.h,v 1.11 2013/06/25 09:16:34 mpi Exp $	*/
+/*	$OpenBSD: if_enc.h,v 1.12 2014/12/08 10:46:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -32,9 +32,11 @@ struct enchdr {
 struct enc_softc {
 	struct ifnet		 sc_if;		/* virtual interface */
 	u_int			 sc_unit;
+	struct ifaddr		 sc_ifa;	/* needed to attach rtentry */
 };
 
 struct ifnet	*enc_getif(u_int, u_int);
+struct ifaddr	*enc_getifa(u_int, u_int);
 #endif /* _KERNEL */
 
 #endif /* _NET_ENC_H */

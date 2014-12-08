@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.193 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.194 2014/12/08 10:46:14 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -128,8 +128,6 @@
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 #include <net/if_enc.h>
-
-struct ifaddr	*encap_findgwifa(struct sockaddr *, u_int);
 #endif
 
 struct	rtstat		   rtstat;
@@ -163,26 +161,6 @@ struct rt_label {
 };
 
 TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
-
-#ifdef IPSEC
-struct ifaddr *
-encap_findgwifa(struct sockaddr *gw, u_int rdomain)
-{
-	struct ifnet	*encif;
-
-	if ((encif = enc_getif(rdomain, 0)) == NULL)
-		return (NULL);
-
-	/*
-	 * This is not a real link-layer address, it is an empty ifa of
-	 * type AF_LINK.
-	 * It is used when adding an encap route entry because RTM_ADD
-	 * and rt_getifa() want an ifa to find an ifp to associate it to
-	 * the route.
-	 */
-	return (encif->if_lladdr);
-}
-#endif
 
 int
 rtable_init(struct radix_node_head ***table, u_int id)
@@ -609,17 +587,6 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 {
 	struct ifaddr	*ifa;
 
-#ifdef IPSEC
-	/*
-	 * If the destination is a PF_KEY address, we'll look
-	 * for the existence of a encap interface number or address
-	 * in the options list of the gateway. By default, we'll return
-	 * enc0.
-	 */
-	if (dst && (dst->sa_family == PF_KEY))
-		return (encap_findgwifa(gateway, rtableid));
-#endif
-
 	if ((flags & RTF_GATEWAY) == 0) {
 		/*
 		 * If we are adding a route to an interface,
@@ -649,7 +616,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 			if (ifp == NULL)
 				ifp = ifunit(sdl->sdl_data);
 			if (ifp != NULL)
-				ifa = ifp->if_lladdr;
+				ifa = ifaof_ifpforaddr(dst, ifp);
 		} else {
 			ifa = ifa_ifwithnet(gateway, rtableid);
 		}
@@ -696,6 +663,18 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 		if (ifp == NULL)
 			ifp = ifunit(sdl->sdl_data);
 	}
+
+#ifdef IPSEC
+	/*
+	 * If the destination is a PF_KEY address, we'll look
+	 * for the existence of a encap interface number or address
+	 * in the options list of the gateway. By default, we'll return
+	 * enc0.
+	 */
+	if (info->rti_info[RTAX_DST] &&
+	    info->rti_info[RTAX_DST]->sa_family == PF_KEY)
+		info->rti_ifa = enc_getifa(rtid, 0);
+#endif
 
 	if (info->rti_ifa == NULL && info->rti_info[RTAX_IFA] != NULL)
 		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rtid);
