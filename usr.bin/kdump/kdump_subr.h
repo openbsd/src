@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.14 2014/10/13 03:46:33 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.15 2014/12/08 21:23:44 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -34,11 +34,12 @@
 	print_or(#flag,orflag); }                  \
 	while (0)
 
-void fcntlcmdname(int, int);
+void fcntlcmdname(int);
 void rtprioname(int);
 void modename(int);
 void doflagsname(int, int);
 void flagsname(int);
+void openflagsname(int);
 void atflagsname(int);
 void accessmodename(int);
 void mmapprotname(int);
@@ -93,3 +94,4 @@ void ktracefacname(int);
 void itimername(int);
 
 extern int decimal, resolv, fancy;
+extern int arg1;

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.23 2014/10/13 03:46:33 guenther Exp $
+# $OpenBSD: mksubr,v 1.24 2014/12/08 21:23:44 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -77,7 +77,7 @@ _EOF_
 cat <<_EOF_
 	printf(">");
 	if (or == 0)
-		(void)printf("<invalid>%ld", (long)arg);
+		(void)printf("<invalid>%d", arg);
 }
 
 _EOF_
@@ -115,7 +115,7 @@ _EOF_
 cat <<_EOF_
 	printf(">");
 	if (or == 0)
-		(void)printf("<invalid>%ld", (long)arg);
+		(void)printf("<invalid>%d", arg);
 }
 
 _EOF_
@@ -174,12 +174,18 @@ cat <<_EOF_
 }
 
 /*
- * A wrapper of the above to use with pn()
+ * Wrappers of the above to use with pn()
  */
 void
 flagsname(int flags)
 {
 	doflagsname(flags, 0);
+}
+
+void
+openflagsname(int flags)
+{
+	doflagsname(flags, 1);
 }
 
 
@@ -213,7 +219,7 @@ _EOF_
 		printf "\tcase %s:\n\t\t(void)printf(\"%s\");\n\t\tbreak;\n", $i, $i }'
 cat <<_EOF_
 	default: /* Should not reach */
-		(void)printf("<invalid=%ld>", (long)arg);
+		(void)printf("<invalid=%d>", arg);
 	}
 }
 
@@ -244,7 +250,7 @@ _EOF_
 		printf "if (arg == %s) \n\t\tprintf(\"%s\");\n", $2, $2 }'
 cat <<_EOF_
 	else /* Should not reach */
-		(void)printf("<invalid=%ld>", (long)arg);
+		(void)printf("<invalid=%d>", arg);
 }
 
 _EOF_
@@ -310,8 +316,8 @@ auto_or_type "mmapflagsname" "(__)?MAP_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mm
 auto_orz_type "wait4optname" "W[A-Z]+[[:space:]]+[0-9]+" "sys/wait.h"
 #auto_or_type "timerflagsname" "TIMER_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/time.h"
 #auto_or_type "getfsstatflagsname" "MNT_[A-Z]+[[:space:]]+[1-9][0-9]*" "sys/mount.h"
-#auto_or_type "mountflagsname" "MNT_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mount.h"
-#auto_or_type "rebootoptname" "RB_[A-Z]+[[:space:]]+0x[0-9]+" "sys/reboot.h"
+auto_or_type "mountflagsname" "MNT_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mount.h"
+auto_or_type "rebootoptname" "RB_[A-Z]+[[:space:]]+0x[0-9]+" "sys/reboot.h"
 auto_or_type "flockname" "LOCK_[A-Z]+[[:space:]]+0x[0-9]+" "sys/fcntl.h"
 #auto_or_type "thrcreateflagsname" "THR_[A-Z]+[[:space:]]+0x[0-9]+" "sys/thr.h"
 auto_or_type "mlockallname" "MCL_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mman.h"
@@ -322,7 +328,7 @@ auto_switch_type "whencename" "SEEK_[A-Z]+[[:space:]]+[0-9]+" "sys/unistd.h"
 auto_switch_type "pathconfname" "_PC_[_A-Z]+[[:space:]]+[0-9]+" "sys/unistd.h"
 auto_switch_type "rlimitname" "RLIMIT_[A-Z]+[[:space:]]+[0-9]+" "sys/resource.h"
 auto_switch_type "shutdownhowname" "SHUT_[A-Z]+[[:space:]]+[0-9]+" "sys/socket.h"
-#auto_switch_type "prioname" "PRIO_[A-Z]+[[:space:]]+[0-9]" "sys/resource.h"
+auto_switch_type "prioname" "PRIO_[A-Z]+[[:space:]]+[0-9]" "sys/resource.h"
 auto_switch_type "madvisebehavname" "_?MADV_[A-Z]+[[:space:]]+[0-9]+" "sys/mman.h"
 auto_switch_type "msyncflagsname" "MS_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mman.h"
 auto_switch_type "clocktypename" "CLOCK_[_A-Z]+[[:space:]]+[0-9]+" "sys/_time.h"
@@ -360,9 +366,9 @@ cat <<_EOF_
  * grouped in fcntl.h, and this awk script grabs the first group.
  */
 void
-fcntlcmdname (int cmd, int arg)
+fcntlcmdname (int arg)
 {
-	switch (cmd) {
+	switch (arg1) {
 _EOF_
 egrep "^#[[:space:]]*define[[:space:]]+F_[A-Z_]+[[:space:]]+[0-9]+[[:space:]]*" \
 	$include_dir/sys/fcntl.h | \
@@ -377,31 +383,22 @@ egrep "^#[[:space:]]*define[[:space:]]+F_[A-Z_]+[[:space:]]+[0-9]+[[:space:]]*" 
 		o = $(i+1) }'
 cat <<_EOF_
 	default: /* Should not reach */
-		(void)printf("<invalid=%ld>", (long)cmd);
+		(void)printf("<invalid=%d>", arg1);
 	}
-	if (cmd == F_SETFD) {
+	if (arg1 == F_SETFD) {
 		(void)putchar(',');
 		if (arg == FD_CLOEXEC)
 			(void)printf("FD_CLOEXEC");
 		else if (arg == 0)
 			(void)printf("0");
-		else {
-			if (decimal)
-				(void)printf("<invalid>%ld", (long)arg);
-			else
-				(void)printf("<invalid>%#lx", (long)arg);
-		}
-
-	} else if (cmd == F_SETFL) {
-		(void)putchar(',');
-		flagsname(arg);
-	} else if (!fancy || (cmd != F_GETFD && cmd != F_GETFL)) {
-		(void)putchar(',');
-		if (decimal)
-			(void)printf("%ld", (long)arg);
 		else
-			(void)printf("%#lx", (long)arg);
-	}
+			(void)printf("<invalid>%#x", arg);
+
+	} else if (arg1 == F_SETFL) {
+		(void)putchar(',');
+		doflagsname(arg, 0);
+	} else if (!fancy || (arg1 != F_GETFD && arg1 != F_GETFL))
+		(void)printf(",%#x", arg);
 }
 
 /*

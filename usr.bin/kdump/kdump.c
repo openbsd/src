@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.91 2014/10/13 03:46:33 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.92 2014/12/08 21:23:44 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -133,10 +133,6 @@ static char *ptrace_ops[] = {
 	"PT_GET_THREAD_FIRST", "PT_GET_THREAD_NEXT",
 };
 
-static int narg;
-static register_t *ap;
-static char sep;
-
 static void mappidtoemul(pid_t, struct emulation *);
 static struct emulation * findemul(pid_t);
 static int fread_tail(void *, size_t, size_t);
@@ -152,15 +148,16 @@ static void ktrsysret(struct ktr_sysret *);
 static void ktruser(struct ktr_user *, size_t);
 static void setemul(const char *);
 static void usage(void);
+static void ioctldecode(int);
+static void ptracedecode(int);
 static void atfd(int);
 static void polltimeout(int);
-static void pgid(int);
 static void wait4pid(int);
 static void signame(int);
 static void semctlname(int);
 static void shmctlname(int);
 static void semgetname(int);
-static void flagsandmodename(int, int);
+static void flagsandmodename(int);
 static void clockname(int);
 static void sockoptlevelname(int);
 static void ktraceopname(int);
@@ -400,134 +397,493 @@ dumpheader(struct ktr_header *kth)
 	(void)printf("%s  ", type);
 }
 
-static void
-ioctldecode(u_long cmd)
+/*
+ * Base Formatters
+ */
+
+/* some syscalls have padding that shouldn't be shown */
+static int
+pad(long arg)
 {
-	char dirbuf[4], *dir = dirbuf;
+	/* nothing printed */
+	return (1);
+}
 
-	if (cmd & IOC_IN)
-		*dir++ = 'W';
-	if (cmd & IOC_OUT)
-		*dir++ = 'R';
-	*dir = '\0';
+/* a formatter that just saves the argument for the next formatter */
+int arg1;
+static int
+pass_two(long arg)
+{
+	arg1 = (int)arg;
 
-	printf(decimal ? ",_IO%s('%c',%lu" : ",_IO%s('%c',%#lx",
-	    dirbuf, (int)((cmd >> 8) & 0xff), cmd & 0xff);
-	if ((cmd & IOC_VOID) == 0)
-		printf(decimal ? ",%lu)" : ",%#lx)", (cmd >> 16) & 0xff);
+	/* nothing printed */
+	return (1);
+}
+
+static int
+pdeclong(long arg)
+{
+	(void)printf("%ld", arg);
+	return (0);
+}
+
+static int
+pdeculong(long arg)
+{
+	(void)printf("%lu", arg);
+	return (0);
+}
+
+static int
+phexlong(long arg)
+{
+	(void)printf("%#lx", arg);
+	return (0);
+}
+
+static int
+pnonfancy(long arg)
+{
+	if (decimal)
+		(void)printf("%ld", arg);
 	else
-		printf(")");
+		(void)printf("%#lx", arg);
+	return (0);
 }
 
 static void
-ptracedecode(void)
+pdecint(int arg)
 {
-	if (*ap >= 0 && *ap <
-	    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
-		(void)printf("%s", ptrace_ops[*ap]);
-	else switch(*ap) {
-#ifdef PT_GETFPREGS
-	case PT_GETFPREGS:
-		(void)printf("PT_GETFPREGS");
-		break;
-#endif
-	case PT_GETREGS:
-		(void)printf("PT_GETREGS");
-		break;
-#ifdef PT_GETXMMREGS
-	case PT_GETXMMREGS:
-		(void)printf("PT_GETXMMREGS");
-		break;
-#endif
-#ifdef PT_SETFPREGS
-	case PT_SETFPREGS:
-		(void)printf("PT_SETFPREGS");
-		break;
-#endif
-	case PT_SETREGS:
-		(void)printf("PT_SETREGS");
-		break;
-#ifdef PT_SETXMMREGS
-	case PT_SETXMMREGS:
-		(void)printf("PT_SETXMMREGS");
-		break;
-#endif
-#ifdef PT_STEP
-	case PT_STEP:
-		(void)printf("PT_STEP");
-		break;
-#endif
-#ifdef PT_WCOOKIE
-	case PT_WCOOKIE:
-		(void)printf("PT_WCOOKIE");
-		break;
-#endif
-	default:
-		(void)printf("%ld", (long)*ap);
-		break;
-	}
-	sep = ',';
-	ap++;
-	narg--;
+	(void)printf("%d", arg);
 }
 
 static void
-pn(void (*f)(int))
+pdecuint(int arg)
 {
-	if (sep)
-		(void)putchar(sep);
-	if (fancy && f != NULL)
-		f((int)*ap);
-	else if (decimal)
-		(void)printf("%ld", (long)*ap);
-	else
-		(void)printf("%#lx", (long)*ap);
-	ap++;
-	narg--;
-	sep = ',';
+	(void)printf("%u", arg);
 }
+
+static void
+phexint(int arg)
+{
+	(void)printf("%#x", arg);
+}
+
+static void
+poctint(int arg)
+{
+	(void)printf("%#o", arg);
+}
+
 
 #ifdef __LP64__
-#define plln()	pn(NULL)
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-static void
-plln(void)
+
+/* on LP64, long long arguments are the same as long arguments */
+#define Phexlonglong	Phexlong
+#define phexll		NULL		/* not actually used on LP64 */
+
+#else /* __LP64__ */
+
+/* on ILP32, long long arguments are passed as two 32bit args */
+#define Phexlonglong	PASS_LONGLONG, Phexll
+
+static int
+phexll(long arg2)
 {
-	long long val = ((long long)*ap) & 0xffffffff;
-	ap++;
-	val |= ((long long)*ap) << 32;
-	ap++;
-	narg -= 2;
-	if (sep)
-		(void)putchar(sep);
-	if (decimal)
-		(void)printf("%lld", val);
-	else
-		(void)printf("%#llx", val);
-	sep = ',';
-}
+	long long val;
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	val = ((long long)arg2 << 32) | ((long long)arg1 & 0xffffffff);
 #else
-static void
-plln(void)
-{
-	long long val = ((long long)*ap) << 32;
-	ap++;
-	val |= ((long long)*ap) & 0xffffffff;
-	ap++;
-	narg -= 2;
-	if (sep)
-		(void)putchar(sep);
-	if (decimal)
-		(void)printf("%lld", val);
-	else
-		(void)printf("%#llx", val);
-	sep = ',';
-}
+	val = ((long long)arg1 << 32) | ((long long)arg2 & 0xffffffff);
 #endif
+
+	if (fancy || !decimal)
+		(void)printf("%#llx", val);
+	else
+		(void)printf("%lld", val);
+	return (0);
+}
+
+#endif /* __LP64__ */
+
+static int (*long_formatters[])(long) = {
+	NULL,
+	pdeclong,
+	pdeculong,
+	phexlong,
+	pass_two,
+	pass_two,
+	phexll,
+	pad,
+	pnonfancy,
+};
+
+static void (*formatters[])(int) = {
+	NULL,
+	pdecint,
+	phexint,
+	poctint,
+	pdecuint,
+	ioctldecode,
+	ptracedecode,
+	atfd,
+	polltimeout,
+	wait4pid,
+	signame,
+	semctlname,
+	shmctlname,
+	semgetname,
+	flagsandmodename,
+	clockname,
+	sockoptlevelname,
+	ktraceopname,
+	fcntlcmdname,
+	modename,
+	flagsname,
+	openflagsname,
+	atflagsname,
+	accessmodename,
+	mmapprotname,
+	mmapflagsname,
+	wait4optname,
+	sendrecvflagsname,
+	mountflagsname,
+	rebootoptname,
+	flockname,
+	sockoptname,
+	sockdomainname,
+	sockipprotoname,
+	socktypename,
+	sockflagsname,
+	sockfamilyname,
+	mlockallname,
+	shmatname,
+	whencename,
+	pathconfname,
+	rlimitname,
+	shutdownhowname,
+	prioname,
+	madvisebehavname,
+	msyncflagsname,
+	clocktypename,
+	rusagewho,
+	sigactionflagname,
+	sigprocmaskhowname,
+	minheritname,
+	quotactlname,
+	sigill_name,
+	sigtrap_name,
+	sigemt_name,
+	sigfpe_name,
+	sigbus_name,
+	sigsegv_name,
+	sigchld_name,
+	ktracefacname,
+	itimername,
+	sigset,
+};
+
+enum {
+	/* the end of the (known) arguments is recognized by the zero fill */
+	end_of_args	=  0,
+
+	/* negative are the negative of the index into long_formatters[] */
+	Pdeclong	= -1,
+	Pdeculong	= -2,
+	Phexlong	= -3,
+	PASS_TWO	= -4,
+
+/* the remaining long formatters still get called when non-fancy (-n option) */
+#define FMT_IS_NONFANCY(x)	((x) <= PASS_LONGLONG)
+	PASS_LONGLONG	= -5,
+	Phexll		= -6,
+	PAD		= -7,
+	Pnonfancy	= -8,
+
+	/* positive values are the index into formatters[] */
+	Pdecint		= 1,
+	Phexint,
+	Poctint,
+	Pdecuint,
+	Ioctldecode,
+	Ptracedecode,
+	Atfd,
+	Polltimeout,
+	Wait4pid,
+	Signame,
+	Semctlname,
+	Shmctlname,
+	Semgetname,
+	Flagsandmodename,
+	Clockname,
+	Sockoptlevelname,
+	Ktraceopname,
+	Fcntlcmdname,
+	Modename,
+	Flagsname,
+	Openflagsname,
+	Atflagsname,
+	Accessmodename,
+	Mmapprotname,
+	Mmapflagsname,
+	Wait4optname,
+	Sendrecvflagsname,
+	Mountflagsname,
+	Rebootoptname,
+	Flockname,
+	Sockoptname,
+	Sockdomainname,
+	Sockipprotoname,
+	Socktypename,
+	Sockflagsname,
+	Sockfamilyname,
+	Mlockallname,
+	Shmatname,
+	Whencename,
+	Pathconfname,
+	Rlimitname,
+	Shutdownhowname,
+	Prioname,
+	Madvisebehavname,
+	Msyncflagsname,
+	Clocktypename,
+	Rusagewho,
+	Sigactionflagname,
+	Sigprocmaskhowname,
+	Minheritname,
+	Quotactlname,
+	Sigill_name,
+	Sigtrap_name,
+	Sigemt_name,
+	Sigfpe_name,
+	Sigbus_name,
+	Sigsegv_name,
+	Sigchld_name,
+	Ktracefacname,
+	Itimername,
+	Sigset,
+};
+
+#define Pptr		Phexlong
+#define	Psize		Pdeculong	/* size_t for small buffers */
+#define	Pbigsize	Phexlong	/* size_t for I/O buffers */
+#define Pcount		Pdecint		/* int for a count of something */
+#define Pfd		Pdecint
+#define Ppath		Phexlong
+#define Pdev_t		Pdecint
+#define Ppid_t		Pdecint
+#define Ppgid		Pdecint		/* pid or negative pgid */
+#define Poff_t		Phexlonglong
+#define Pmsqid		Pdecint
+#define Pshmid		Pdecint
+#define Psemid		Pdecint
+#define Pkey_t		Pdecint
+#define Pucount		Pdecuint
+#define Puid_t		Pdecuint
+#define Pgid_t		Pdecuint
+#define Chflagsname	Phexlong	/* to be added */
+#define Sockprotoname	Phexlong	/* to be added */
+#define Swapctlname	Phexlong	/* to be added */
+#define Msgflgname	Phexlong	/* to be added */
+
+
+typedef signed char formatter;
+static const formatter scargs[][8] = {
+    [SYS_exit]		= { Pdecint },
+    [SYS_read]		= { Pfd, Pptr, Pbigsize },
+    [SYS_write]		= { Pfd, Pptr, Pbigsize },
+    [SYS_open]		= { Ppath, PASS_TWO, Flagsandmodename },
+    [SYS_close]		= { Pfd },
+    [SYS_getentropy]	= { Pptr, Psize },
+    [SYS___tfork]	= { Pptr, Psize },
+    [SYS_link]		= { Ppath, Ppath },
+    [SYS_unlink]	= { Ppath },
+    [SYS_wait4]		= { Wait4pid, Pptr, Wait4optname },
+    [SYS_chdir]		= { Ppath },
+    [SYS_fchdir]	= { Pfd },
+    [SYS_mknod]		= { Ppath, Modename, Pdev_t },
+    [SYS_chmod]		= { Ppath, Modename },
+    [SYS_chown]		= { Ppath, Puid_t, Pgid_t },
+    [SYS_break]		= { Pptr },
+    [SYS_getrusage]	= { Rusagewho, Pptr },
+    [SYS_mount]		= { Pptr, Ppath, Mountflagsname, Pptr },
+    [SYS_unmount]	= { Ppath, Mountflagsname },
+    [SYS_setuid]	= { Puid_t },
+    [SYS_ptrace]	= { Ptracedecode, Ppid_t, Pptr, Pdecint },
+    [SYS_recvmsg]	= { Pfd, Pptr, Sendrecvflagsname },
+    [SYS_sendmsg]	= { Pfd, Pptr, Sendrecvflagsname },
+    [SYS_recvfrom]	= { Pfd, Pptr, Pbigsize, Sendrecvflagsname },
+    [SYS_accept]	= { Pfd, Pptr, Pptr },
+    [SYS_getpeername]	= { Pfd, Pptr, Pptr },
+    [SYS_getsockname]	= { Pfd, Pptr, Pptr },
+    [SYS_access]	= { Ppath, Accessmodename },
+    [SYS_chflags]	= { Ppath, Chflagsname },
+    [SYS_fchflags]	= { Pfd, Chflagsname },
+    [SYS_kill]		= { Ppgid, Signame },
+    [SYS_stat]		= { Ppath, Pptr },
+    [SYS_lstat]		= { Ppath, Pptr },
+    [SYS_dup]		= { Pfd },
+    [SYS_fstatat]	= { Atfd, Ppath, Pptr, Atflagsname },
+    [SYS_profil]	= { Pptr, Pbigsize, Pbigsize, Pdecuint },
+    [SYS_ktrace]	= { Ppath, Ktraceopname, Ktracefacname, Ppgid },
+    [SYS_sigaction]	= { Signame, Pptr, Pptr },
+    [SYS_sigprocmask]	= { Sigprocmaskhowname, Sigset },
+    [SYS_getlogin]	= { Pptr, Pucount },
+    [SYS_setlogin]	= { Pptr },
+    [SYS_acct]		= { Ppath },
+    [SYS_fstat]		= { Pfd, Pptr },
+    [SYS_ioctl]		= { Pfd, Ioctldecode, Pptr },
+    [SYS_reboot]	= { Rebootoptname },
+    [SYS_revoke]	= { Ppath },
+    [SYS_symlink]	= { Ppath, Ppath },
+    [SYS_readlink]	= { Ppath, Pptr, Psize },
+    [SYS_execve]	= { Ppath, Pptr, Pptr },
+    [SYS_umask]		= { Modename },
+    [SYS_chroot]	= { Ppath },
+    [SYS_getfsstat]	= { Pptr, Pbigsize, Mountflagsname },
+    [SYS_statfs]	= { Ppath, Pptr },
+    [SYS_fstatfs]	= { Pfd, Pptr },
+    [SYS_fhstatfs]	= { Pptr, Pptr },
+    [SYS_gettimeofday]	= { Pptr, Pptr },
+    [SYS_settimeofday]	= { Pptr, Pptr },
+    [SYS_setitimer]	= { Itimername, Pptr, Pptr },
+    [SYS_getitimer]	= { Itimername, Pptr },
+    [SYS_select]	= { Pcount, Pptr, Pptr, Pptr, Pptr },
+    [SYS_kevent]	= { Pfd, Pptr, Pcount, Pptr, Pcount, Pptr },
+    [SYS_munmap]	= { Pptr, Pbigsize },
+    [SYS_mprotect]	= { Pptr, Pbigsize, Mmapprotname },
+    [SYS_madvise]	= { Pptr, Pbigsize, Madvisebehavname },
+    [SYS_utimes]	= { Ppath, Pptr },
+    [SYS_futimes]	= { Pfd, Pptr },
+    [SYS_mincore]	= { Pptr, Pbigsize, Pptr },
+    [SYS_getgroups]	= { Pcount, Pptr },
+    [SYS_setgroups]	= { Pcount, Pptr },
+    [SYS_setpgid]	= { Ppid_t, Ppid_t },
+    [SYS_sendsyslog]	= { Pptr, Psize },
+    [SYS_utimensat]	= { Atfd, Ppath, Pptr, Atflagsname },
+    [SYS_futimens]	= { Pfd, Pptr },
+    [SYS_clock_gettime]	= { Clockname, Pptr },
+    [SYS_clock_settime]	= { Clockname, Pptr },
+    [SYS_clock_getres]	= { Clockname, Pptr },
+    [SYS_dup2]		= { Pfd, Pfd },
+    [SYS_nanosleep]	= { Pptr, Pptr },
+    [SYS_fcntl]		= { Pfd, PASS_TWO, Fcntlcmdname },
+    [SYS_accept4]	= { Pfd, Pptr, Pptr, Sockflagsname },
+    [SYS___thrsleep]	= { Pptr, Clockname, Pptr, Pptr, Pptr },
+    [SYS_fsync]		= { Pfd },
+    [SYS_setpriority]	= { Prioname, Ppid_t, Pdecint },
+    [SYS_socket]	= { Sockdomainname, Socktypename, Sockprotoname },
+    [SYS_connect]	= { Pfd, Pptr, Pucount },
+    [SYS_getdents]	= { Pfd, Pptr, Pbigsize },
+    [SYS_getpriority]	= { Prioname, Ppid_t },
+    [SYS_pipe2]		= { Pptr, Flagsname },
+    [SYS_dup3]		= { Pfd, Pfd, Flagsname },
+    [SYS_sigreturn]	= { Pptr },
+    [SYS_bind]		= { Pfd, Pptr, Pucount },
+    [SYS_setsockopt]	= { Pfd, PASS_TWO, Sockoptlevelname, Pptr, Pdecint },
+    [SYS_listen]	= { Pfd, Pdecint },
+    [SYS_chflagsat]	= { Atfd, Ppath, Chflagsname, Atflagsname },
+    [SYS_ppoll]		= { Pptr, Pucount, Pptr, Pptr },
+    [SYS_pselect]	= { Pcount, Pptr, Pptr, Pptr, Pptr, Pptr },
+    [SYS_sigsuspend]	= { Sigset },
+    [SYS_getsockopt]	= { Pfd, PASS_TWO, Sockoptlevelname, Pptr, Pptr },
+    [SYS_readv]		= { Pfd, Pptr, Pcount },
+    [SYS_writev]	= { Pfd, Pptr, Pcount },
+    [SYS_fchown]	= { Pfd, Puid_t, Pgid_t },
+    [SYS_fchmod]	= { Pfd, Modename },
+    [SYS_setreuid]	= { Puid_t, Puid_t },
+    [SYS_setregid]	= { Pgid_t, Pgid_t },
+    [SYS_rename]	= { Ppath, Ppath },
+    [SYS_flock]		= { Pfd, Flockname },
+    [SYS_mkfifo]	= { Ppath, Modename },
+    [SYS_sendto]	= { Pfd, Pptr, Pbigsize, Sendrecvflagsname },
+    [SYS_shutdown]	= { Pfd, Shutdownhowname },
+    [SYS_socketpair]	= { Sockdomainname, Socktypename, Sockprotoname, Pptr },
+    [SYS_mkdir]		= { Ppath, Modename },
+    [SYS_rmdir]		= { Ppath },
+    [SYS_adjtime]	= { Pptr, Pptr },
+    [SYS_quotactl]	= { Ppath, Quotactlname, Puid_t, Pptr },
+    [SYS_nfssvc]	= { Phexint, Pptr },
+    [SYS_getfh]		= { Ppath, Pptr },
+    [SYS_sysarch]	= { Pdecint, Pptr },
+    [SYS_pread]		= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
+    [SYS_pwrite]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
+    [SYS_setgid]	= { Pgid_t },
+    [SYS_setegid]	= { Pgid_t },
+    [SYS_seteuid]	= { Puid_t },
+    [SYS_pathconf]	= { Ppath, Pathconfname },
+    [SYS_fpathconf]	= { Pfd, Pathconfname },
+    [SYS_swapctl]	= { Swapctlname, Pptr, Pdecint },
+    [SYS_getrlimit]	= { Rlimitname, Pptr },
+    [SYS_setrlimit]	= { Rlimitname, Pptr },
+    [SYS_mmap]		= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
+    [SYS_lseek]		= { Pfd, PAD, Poff_t, Whencename },
+    [SYS_truncate]	= { Ppath, PAD, Poff_t },
+    [SYS_ftruncate]	= { Pfd, PAD, Poff_t },
+    /* [SYS___sysctl]	= { }, Magic */
+    [SYS_mlock]		= { Pptr, Pbigsize },
+    [SYS_munlock]	= { Pptr, Pbigsize },
+    [SYS_getpgid]	= { Ppid_t },
+    [SYS_utrace]	= { Pptr, Pptr, Psize },
+    [SYS_semget]	= { Pkey_t, Pcount, Semgetname },
+    [SYS_msgget]	= { Pkey_t, Msgflgname },
+    [SYS_msgsnd]	= { Pmsqid, Pptr, Psize, Msgflgname },
+    [SYS_msgrcv]	= { Pmsqid, Pptr, Psize, Pdeclong, Msgflgname },
+    [SYS_shmat]		= { Pshmid, Pptr, Shmatname },
+    [SYS_shmdt]		= { Pptr },
+    [SYS_minherit]	= { Pptr, Pbigsize, Minheritname },
+    [SYS_poll]		= { Pptr, Pucount, Polltimeout },
+    [SYS_lchown]	= { Ppath, Puid_t, Pgid_t },
+    [SYS_getsid]	= { Ppid_t },
+    [SYS_msync]		= { Pptr, Pbigsize, Msyncflagsname },
+    [SYS_pipe]		= { Pptr },
+    [SYS_fhopen]	= { Pptr, Openflagsname },
+    [SYS_preadv]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
+    [SYS_pwritev]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
+    [SYS_mlockall]	= { Mlockallname },
+    [SYS_getresuid]	= { Pptr, Pptr, Pptr },
+    [SYS_setresuid]	= { Puid_t, Puid_t, Puid_t },
+    [SYS_getresgid]	= { Pptr, Pptr, Pptr },
+    [SYS_setresgid]	= { Pgid_t, Pgid_t, Pgid_t },
+    [SYS_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
+    [SYS_closefrom]	= { Pfd },
+    [SYS_sigaltstack]	= { Pptr, Pptr },
+    [SYS_shmget]	= { Pkey_t, Pbigsize, Semgetname },
+    [SYS_semop]		= { Psemid, Pptr, Psize },
+    [SYS_fhstat]	= { Pptr, Pptr },
+    [SYS___semctl]	= { Psemid, Pcount, Semctlname, Pptr },
+    [SYS_shmctl]	= { Pshmid, Shmctlname, Pptr },
+    [SYS_msgctl]	= { Pmsqid, Shmctlname, Pptr },
+    [SYS___thrwakeup]	= { Pptr, Pcount },
+    [SYS___threxit]	= { Pptr },
+    [SYS___thrsigdivert] = { Sigset, Pptr, Pptr },
+    [SYS___getcwd]	= { Pptr, Psize },
+    [SYS_adjfreq]	= { Pptr, Pptr },
+    [SYS_setrtable]	= { Pdecint },
+    [SYS_faccessat]	= { Atfd, Ppath, Accessmodename, Atflagsname },
+    [SYS_fchmodat]	= { Atfd, Ppath, Modename, Atflagsname },
+    [SYS_fchownat]	= { Atfd, Ppath, Puid_t, Pgid_t, Atflagsname },
+    [SYS_linkat]	= { Atfd, Ppath, Atfd, Ppath, Atflagsname },
+    [SYS_mkdirat]	= { Atfd, Ppath, Modename },
+    [SYS_mkfifoat]	= { Atfd, Ppath, Modename },
+    [SYS_mknodat]	= { Atfd, Ppath, Modename, Pdev_t },
+    [SYS_openat]	= { Atfd, Ppath, PASS_TWO, Flagsandmodename },
+    [SYS_readlinkat]	= { Atfd, Ppath, Pptr, Psize },
+    [SYS_renameat]	= { Atfd, Ppath, Atfd, Ppath },
+    [SYS_symlinkat]	= { Atfd, Ppath, Ppath },
+    [SYS_unlinkat]	= { Atfd, Ppath, Atflagsname },
+    [SYS___set_tcb]	= { Pptr },
+};
+
 
 static void
 ktrsyscall(struct ktr_syscall *ktr)
 {
+	register_t *ap;
+	int narg;
+	char sep;
+
 	narg = ktr->ktr_argsize / sizeof(register_t);
 	sep = '\0';
 
@@ -541,27 +897,12 @@ ktrsyscall(struct ktr_syscall *ktr)
 	if (current != &emulations[0])
 		goto nonnative;
 
-	switch (ktr->ktr_code) {
-	case SYS_ioctl: {
-		const char *cp;
-
-		pn(NULL);
-		if (!fancy)
-			break;
-		if ((cp = ioctlname(*ap)) != NULL)
-			(void)printf(",%s", cp);
-		else
-			ioctldecode(*ap);
-		ap++;
-		narg--;
-		break;
-	}
-	case SYS___sysctl: {
+	if (ktr->ktr_code == SYS___sysctl) {
 		const char *s;
 		int *np, n, i, *top;
 
 		if (!fancy)
-			break;
+			goto nonnative;
 		n = ap[1];
 		if (n > CTL_MAXNAME)
 			n = CTL_MAXNAME;
@@ -579,343 +920,24 @@ ktrsyscall(struct ktr_syscall *ktr)
 		sep = ',';
 		ap += 2;
 		narg -= 2;
-		break;
-	}
-	case SYS_ptrace: 
-		if (!fancy)
-			break;
-		ptracedecode();
-		break;
-	case SYS_accept4:
-		pn(NULL);
-		pn(NULL);
-		pn(NULL);
-		pn(sockflagsname);
-		break;
-	case SYS_access:
-		pn(NULL);
-		pn(accessmodename);
-		break;
-	case SYS_chmod:
-	case SYS_fchmod: 
-	case SYS_mkdir:
-	case SYS_mkfifo:
-	case SYS_mknod:
-		pn(NULL);
-		pn(modename);
-		break;
-	case SYS_umask:
-		pn(modename);
-		break;
-	case SYS_dup3:
-		pn(NULL);
-		pn(NULL);
-		pn(flagsname);
-		break;
-	case SYS_fcntl: {
-		int cmd;
-		int arg;
-		pn(NULL);
-		if (!fancy)
-			break;
-		cmd = ap[0];
-		arg = ap[1];
-		(void)putchar(',');
-		fcntlcmdname(cmd, arg);
-		ap += 2;
-		narg -= 2;
-		break;
-	}
-	case SYS_flock:
-		pn(NULL);
-		pn(flockname);
-		break;
-	case SYS_getrlimit:
-	case SYS_setrlimit:
-		pn(rlimitname);
-		break;
-	case SYS_getsockopt:
-	case SYS_setsockopt: {
-		int level;
+	} else if (ktr->ktr_code < nitems(scargs)) {
+		const formatter *fmts = scargs[ktr->ktr_code];
+		int fmt;
 
-		pn(NULL);
-		level = *ap;
-		pn(sockoptlevelname);
-		if (level == SOL_SOCKET)
-			pn(sockoptname);
-		break;
-	}
-	case SYS_kill:
-		pn(pgid);
-		pn(signame);
-		break;
-	case SYS_lseek:
-		pn(NULL);
-		/* skip padding */
-		ap++;
-		narg--;
-		plln();
-		pn(whencename);
-		break;
-	case SYS_madvise:
-		pn(NULL);
-		pn(NULL);
-		pn(madvisebehavname);
-		break;
-	case SYS_minherit:
-		pn(NULL);
-		pn(NULL);
-		pn(minheritname);
-		break;
-	case SYS_mlockall:
-		pn(mlockallname);
-		break;
-	case SYS_mmap:
-	case SYS_mquery:
-		pn(NULL);
-		pn(NULL);
-		pn(mmapprotname);
-		pn(mmapflagsname);
-		pn(NULL);
-		/* skip padding */
-		ap++;
-		narg--;
-		plln();
-		break;
-	case SYS_mprotect:
-		pn(NULL);
-		pn(NULL);
-		pn(mmapprotname);
-		break;
-	case SYS_msync:
-		pn(NULL);
-		pn(NULL);
-		pn(msyncflagsname);
-		break;
-	case SYS_msgctl:
-		pn(NULL);
-		pn(shmctlname);
-		break;
-	case SYS_open: {
-		int     flags;
-		int     mode;
-
-		pn(NULL);
-		if (!fancy)
-			break;
-		flags = ap[0];
-		mode = ap[1];
-		(void)putchar(',');
-		flagsandmodename(flags, mode);
-		ap += 2;
-		narg -= 2;
-		break;
-	}
-	case SYS_pipe2:
-		pn(NULL);
-		pn(flagsname);
-		break;
-	case SYS_pread:
-	case SYS_preadv:
-	case SYS_pwrite:
-	case SYS_pwritev:
-		pn(NULL);
-		pn(NULL);
-		pn(NULL);
-		/* skip padding */
-		ap++;
-		narg--;
-		plln();
-		break;
-	case SYS_recvmsg:
-	case SYS_sendmsg:
-		pn(NULL);
-		pn(NULL);
-		pn(sendrecvflagsname);
-		break;
-	case SYS_recvfrom:
-	case SYS_sendto:
-		pn(NULL);
-		pn(NULL);
-		pn(NULL);
-		pn(sendrecvflagsname);
-		break;
-	case SYS_shutdown:
-		pn(NULL);
-		pn(shutdownhowname);
-		break;
-	case SYS___semctl:
-		pn(NULL);
-		pn(NULL);
-		pn(semctlname);
-		break;
-	case SYS_semget:
-		pn(NULL);
-		pn(NULL);
-		pn(semgetname);
-		break;
-	case SYS_shmat:
-		pn(NULL);
-		pn(NULL);
-		pn(shmatname);
-		break;
-	case SYS_shmctl:
-		pn(NULL);
-		pn(shmctlname);
-		break;
-	case SYS_clock_gettime:
-	case SYS_clock_settime:
-	case SYS_clock_getres:
-		pn(clockname);
-		break;
-	case SYS_poll:
-		pn(NULL);
-		pn(NULL);
-		pn(polltimeout);
-		break;
-	case SYS_sigaction:
-		pn(signame);
-		break;
-	case SYS_sigprocmask:
-		pn(sigprocmaskhowname);
-		pn(sigset);
-		break;
-	case SYS_sigsuspend:
-		pn(sigset);
-		break;
-	case SYS_socket: {
-		int sockdomain = *ap;
-
-		pn(sockdomainname);
-		pn(socktypename);
-		if (sockdomain == PF_INET || sockdomain == PF_INET6)
-			pn(sockipprotoname);
-		break;
-	}
-	case SYS_socketpair:
-		pn(sockdomainname);
-		pn(socktypename);
-		break;
-	case SYS_truncate:
-	case SYS_ftruncate:
-		pn(NULL);
-		/* skip padding */
-		ap++;
-		narg--;
-		plln();
-		break;
-	case SYS_wait4:
-		pn(wait4pid);
-		pn(NULL);
-		pn(wait4optname);
-		break;
-	case SYS_getrusage:
-		pn(rusagewho);
-		break;
-	case SYS___thrsleep:
-		pn(NULL);
-		pn(clockname);
-		break;
-	case SYS___thrsigdivert:
-		pn(sigset);
-		break;
-	case SYS_faccessat:
-		pn(atfd);
-		pn(NULL);
-		pn(accessmodename);
-		pn(atflagsname);
-		break;
-	case SYS_fchmodat:
-		pn(atfd);
-		pn(NULL);
-		pn(modename);
-		pn(atflagsname);
-		break;
-	case SYS_fchownat:
-		pn(atfd);
-		pn(NULL);
-		pn(NULL);
-		pn(NULL);
-		pn(atflagsname);
-		break;
-	case SYS_fstatat:
-		pn(atfd);
-		pn(NULL);
-		pn(NULL);
-		pn(atflagsname);
-		break;
-	case SYS_linkat:
-		pn(atfd);
-		pn(NULL);
-		pn(atfd);
-		pn(NULL);
-		pn(atflagsname);
-		break;
-	case SYS_mkdirat:
-	case SYS_mkfifoat:
-	case SYS_mknodat:
-		pn(atfd);
-		pn(NULL);
-		pn(modename);
-		break;
-	case SYS_openat: {
-		int     flags;
-		int     mode;
-
-		pn(atfd);
-		pn(NULL);
-		if (!fancy)
-			break;
-		flags = ap[0];
-		mode = ap[1];
-		(void)putchar(',');
-		flagsandmodename(flags, mode);
-		ap += 2;
-		narg -= 2;
-		break;
-	}
-	case SYS_readlinkat:
-		pn(atfd);
-		break;
-	case SYS_renameat:
-		pn(atfd);
-		pn(NULL);
-		pn(atfd);
-		break;
-	case SYS_symlinkat:
-		pn(NULL);
-		pn(atfd);
-		break;
-	case SYS_unlinkat:
-		pn(atfd);
-		pn(NULL);
-		pn(atflagsname);
-		break;
-	case SYS_utimensat:
-		pn(atfd);
-		pn(NULL);
-		pn(NULL);
-		pn(atflagsname);
-		break;
-	case SYS_pathconf:
-	case SYS_fpathconf: 
-		pn(NULL);
-		pn(pathconfname);
-		break;
-	case SYS_ktrace:
-		pn(NULL);
-		pn(ktraceopname);
-		pn(ktracefacname);
-		pn(pgid);
-		break;
-	case SYS_setitimer:
-	case SYS_getitimer:
-		pn(itimername);
-		break;
-	case SYS_quotactl:
-		pn(NULL);
-		pn(quotactlcmdname);
-		break;
+		while (narg && (fmt = *fmts) != 0) {
+			if (sep)
+				putchar(sep);
+			sep = ',';
+			if (!fancy && !FMT_IS_NONFANCY(fmt))
+				fmt = Pnonfancy;
+			if (fmt > 0)
+				formatters[fmt]((int)*ap);
+			else if (long_formatters[-fmt](*ap))
+				sep = '\0';
+			fmts++;
+			ap++;
+			narg--;
+		}
 	}
 
 nonnative:
@@ -1337,15 +1359,90 @@ setemul(const char *name)
 	warnx("Emulation `%s' unknown", name);
 }
 
+/*
+ * FORMATTERS
+ */
+
+static void
+ioctldecode(int cmd)
+{
+	char dirbuf[4], *dir = dirbuf;
+	const char *cp;
+
+	if ((cp = ioctlname((unsigned)cmd)) != NULL) {
+		(void)printf("%s", cp);
+		return;
+	}
+
+	if (cmd & IOC_IN)
+		*dir++ = 'W';
+	if (cmd & IOC_OUT)
+		*dir++ = 'R';
+	*dir = '\0';
+
+	printf("_IO%s('%c',%lu",
+	    dirbuf, (int)((cmd >> 8) & 0xff), cmd & 0xff);
+	if ((cmd & IOC_VOID) == 0)
+		printf(decimal ? ",%u)" : ",%#x)", (cmd >> 16) & 0xff);
+	else
+		printf(")");
+}
+
+static void
+ptracedecode(int request)
+{
+	if (request >= 0 && request < nitems(ptrace_ops))
+		(void)printf("%s", ptrace_ops[request]);
+	else switch(request) {
+#ifdef PT_GETFPREGS
+	case PT_GETFPREGS:
+		(void)printf("PT_GETFPREGS");
+		break;
+#endif
+	case PT_GETREGS:
+		(void)printf("PT_GETREGS");
+		break;
+#ifdef PT_GETXMMREGS
+	case PT_GETXMMREGS:
+		(void)printf("PT_GETXMMREGS");
+		break;
+#endif
+#ifdef PT_SETFPREGS
+	case PT_SETFPREGS:
+		(void)printf("PT_SETFPREGS");
+		break;
+#endif
+	case PT_SETREGS:
+		(void)printf("PT_SETREGS");
+		break;
+#ifdef PT_SETXMMREGS
+	case PT_SETXMMREGS:
+		(void)printf("PT_SETXMMREGS");
+		break;
+#endif
+#ifdef PT_STEP
+	case PT_STEP:
+		(void)printf("PT_STEP");
+		break;
+#endif
+#ifdef PT_WCOOKIE
+	case PT_WCOOKIE:
+		(void)printf("PT_WCOOKIE");
+		break;
+#endif
+	default:
+		pdecint(request);
+	}
+}
+
+
 static void
 atfd(int fd)
 {
 	if (fd == AT_FDCWD)
 		(void)printf("AT_FDCWD");
-	else if (decimal)
-		(void)printf("%d", fd);
 	else
-		(void)printf("%#x", fd);
+		pdecint(fd);
 }
 
 static void
@@ -1353,16 +1450,8 @@ polltimeout(int timeout)
 {
 	if (timeout == INFTIM)
 		(void)printf("INFTIM");
-	else if (decimal)
-		(void)printf("%d", timeout);
 	else
-		(void)printf("%#x", timeout);
-}
-
-static void
-pgid(int pid)
-{
-	(void)printf("%d", pid);
+		pdecint(timeout);
 }
 
 static void
@@ -1373,7 +1462,7 @@ wait4pid(int pid)
 	else if (pid == WAIT_MYPGRP)
 		(void)printf("WAIT_MYPGRP");
 	else
-		pgid(pid);
+		pdecint(pid);		/* ppgid */
 }
 
 static void
@@ -1449,7 +1538,7 @@ semctlname(int cmd)
 		(void)printf("IPC_STAT");
 		break;
 	default: /* Should not reach */
-		(void)printf("<invalid=%ld>", (long)cmd);
+		(void)printf("<invalid=%d>", cmd);
 	}
 }
 
@@ -1467,7 +1556,7 @@ shmctlname(int cmd)
 		(void)printf("IPC_STAT");
 		break;
 	default: /* Should not reach */
-		(void)printf("<invalid=%ld>", (long)cmd);
+		(void)printf("<invalid=%d>", cmd);
 	}
 }
 
@@ -1484,28 +1573,26 @@ semgetname(int flag)
 	if_print_or(flag, (SEM_A>>3), or);
 	if_print_or(flag, (SEM_R>>6), or);
 	if_print_or(flag, (SEM_A>>6), or);
+
+	if (flag & ~(IPC_CREAT|IPC_EXCL|SEM_R|SEM_A|((SEM_R|SEM_A)>>3)|
+	    ((SEM_R|SEM_A)>>6)))
+		printf("<invalid=%#x>", flag);
 }
 
 
 /*
- * Only used by SYS_open. Unless O_CREAT is set in flags, the
+ * Only used by SYS_open and SYS_openat. Unless O_CREAT is set in flags, the
  * mode argument is unused (and often bogus and misleading).
  */
 static void
-flagsandmodename(int flags, int mode)
+flagsandmodename(int mode)
 {
-	doflagsname(flags, 1);
-	if ((flags & O_CREAT) == O_CREAT) {
+	openflagsname(arg1);
+	if ((arg1 & O_CREAT) == O_CREAT) {
 		(void)putchar(',');
-		modename (mode);
-	} else if (!fancy) {
-		(void)putchar(',');
-		if (decimal) {
-			(void)printf("<unused>%ld", (long)mode);
-		} else {
-			(void)printf("<unused>%#lx", (long)mode);
-		}
-	}
+		modename(mode);
+	} else if (!fancy)
+		(void)printf(",<unused>%#o", mode);
 }
 
 static void
@@ -1524,15 +1611,10 @@ clockname(int clockid)
 static void
 sockoptlevelname(int level)
 {
-	if (level == SOL_SOCKET) {
+	if (level == SOL_SOCKET)
 		(void)printf("SOL_SOCKET");
-	} else {
-		if (decimal) {
-			(void)printf("%ld", (long)level);
-		} else {
-			(void)printf("%#lx", (long)level);
-		}
-	}
+	else
+		pdecint(level);
 }
 
 static void
@@ -1556,8 +1638,8 @@ ktraceopname(int ops)
 		invalid = 1;
 		break;
 	}
-	if (ops & KTRFLAG_DESCEND) printf ("|%s", "KTRFLAG_DESCEND");
+	if (ops & KTRFLAG_DESCEND) printf("|KTRFLAG_DESCEND");
 	printf(">");
 	if (invalid || (ops & ~(KTROP((unsigned)-1) | KTRFLAG_DESCEND)))
-		(void)printf("<invalid>%ld", (long)ops);
+		(void)printf("<invalid>%d", ops);
 }
