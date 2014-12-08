@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_cb.c,v 1.15 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bio_cb.c,v 1.16 2014/12/08 03:54:19 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,7 +76,7 @@ BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi, long argl,
 	if (BIO_CB_RETURN & cmd)
 		r = ret;
 
-	snprintf(buf, sizeof buf, "BIO[%08lX]:", (unsigned long)bio);
+	snprintf(buf, sizeof buf, "BIO[%p]:", bio);
 	p = &(buf[14]);
 	p_maxlen = sizeof buf - 14;
 	switch (cmd) {
