@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.55 2014/12/06 18:54:55 schwarze Exp $
+#	$OpenBSD: Makefile.inc,v 1.56 2014/12/08 20:39:16 tedu Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
-	cfree.c exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
+	exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
 	getsubopt.c hcreate.c heapsort.c imaxabs.c imaxdiv.c insque.c \
 	l64a.c llabs.c lldiv.c lsearch.c malloc.c reallocarray.c \
 	merge.c posix_pty.c qsort.c radixsort.c rand.c random.c \
@@ -40,7 +40,7 @@ MLINKS+=insque.3 remque.3
 MLINKS+=labs.3 llabs.3
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 free.3 malloc.3 realloc.3 malloc.3 calloc.3
-MLINKS+=malloc.3 reallocarray.3 malloc.3 cfree.3
+MLINKS+=malloc.3 reallocarray.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=radixsort.3 sradixsort.3
 MLINKS+=rand.3 srand.3 rand.3 rand_r.3
