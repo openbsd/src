@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.146 2014/11/24 12:43:54 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.147 2014/12/08 10:38:48 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1053,6 +1053,9 @@ in6_purgeaddr(struct ifaddr *ifa)
 	 * XXX: we should avoid such a configuration in IPv6...
 	 */
 	TAILQ_FOREACH(tmp, &in6_ifaddr, ia_list) {
+		if (tmp->ia_ifp->if_rdomain != ifp->if_rdomain)
+			continue;
+
 		if (IN6_ARE_ADDR_EQUAL(&tmp->ia_addr.sin6_addr,
 		    &ia6->ia_addr.sin6_addr)) {
 			ia6_count++;
