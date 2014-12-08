@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.55 2014/12/04 02:44:42 tedu Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.56 2014/12/08 19:31:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -664,10 +664,11 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = &srv->srv_conf;
 	struct bufferevent	*bev = clt->clt_bev;
-	const char		*httperr = NULL, *text = "";
-	char			*httpmsg, *extraheader = NULL;
+	struct http_descriptor	*desc = clt->clt_descreq;
+	const char		*httperr = NULL, *style;
+	char			*httpmsg, *body = NULL, *extraheader = NULL;
 	char			 tmbuf[32], hbuf[128];
-	const char		*style;
+	int			 bodylen;
 
 	if ((httperr = server_httperror_byid(code)) == NULL)
 		httperr = "Unknown Error";
@@ -709,15 +710,9 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	style = "body { background-color: white; color: black; font-family: "
 	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
 	    "hr { border: 0; border-bottom: 1px dashed; }\n";
-	/* Generate simple HTTP+HTML error document */
-	if (asprintf(&httpmsg,
-	    "HTTP/1.0 %03d %s\r\n"
-	    "Date: %s\r\n"
-	    "Server: %s\r\n"
-	    "Connection: close\r\n"
-	    "Content-Type: text/html\r\n"
-	    "%s"
-	    "\r\n"
+
+	/* Generate simple HTML error document */
+	if ((bodylen = asprintf(&body,
 	    "<!DOCTYPE HTML PUBLIC "
 	    "\"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
 	    "<html>\n"
@@ -727,14 +722,26 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    "</head>\n"
 	    "<body>\n"
 	    "<h1>%03d %s</h1>\n"
-	    "<div id='m'>%s</div>\n"
 	    "<hr>\n<address>%s</address>\n"
 	    "</body>\n"
 	    "</html>\n",
-	    code, httperr, tmbuf, HTTPD_SERVERNAME,
+	    code, httperr, style, code, httperr, HTTPD_SERVERNAME)) == -1)
+		goto done;
+
+	/* Add basic HTTP headers */
+	if (asprintf(&httpmsg,
+	    "HTTP/1.0 %03d %s\r\n"
+	    "Date: %s\r\n"
+	    "Server: %s\r\n"
+	    "Connection: close\r\n"
+	    "Content-Type: text/html\r\n"
+	    "Content-Length: %d\r\n"
+	    "%s"
+	    "\r\n"
+	    "%s",
+	    code, httperr, tmbuf, HTTPD_SERVERNAME, bodylen,
 	    extraheader == NULL ? "" : extraheader,
-	    code, httperr, style, code, httperr, text,
-	    HTTPD_SERVERNAME) == -1)
+	    desc->http_method == HTTP_METHOD_HEAD ? "" : body) == -1)
 		goto done;
 
 	/* Dump the message without checking for success */
@@ -742,6 +749,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	free(httpmsg);
 
  done:
+	free(body);
 	free(extraheader);
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
 		server_close(clt, msg);
