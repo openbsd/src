@@ -555,7 +555,6 @@
 ./usr/share/man/man3p/B::Terse.3p
 ./usr/share/man/man3p/B::Xref.3p
 ./usr/share/man/man3p/Benchmark.3p
-./usr/share/man/man3p/Bster.3p
 ./usr/share/man/man3p/CGI.3p
 ./usr/share/man/man3p/CGI::Apache.3p
 ./usr/share/man/man3p/CGI::Carp.3p
