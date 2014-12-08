@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.60 2014/08/31 02:21:18 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.61 2014/12/08 20:39:56 tedu Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -194,8 +194,6 @@ void	 srandom(unsigned int);
 char	*realpath(const char *, char *)
 		__attribute__((__bounded__ (__minbytes__,2,1024)));
 
-int	 setkey(const char *);
-
 /*
  * XSI functions marked LEGACY in XPG5 and removed in IEEE Std 1003.1-2001
  */
@@ -282,8 +280,6 @@ int	 cgetustr(char *, const char *, char **);
 int	 daemon(int, int);
 char	*devname(int, mode_t);
 int	 getloadavg(double [], int);
-
-void	 cfree(void *);
 
 const char *
 	getprogname(void);

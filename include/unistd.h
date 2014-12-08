@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.94 2014/11/21 05:13:44 tedu Exp $ */
+/*	$OpenBSD: unistd.h,v 1.95 2014/12/08 20:39:56 tedu Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -413,7 +413,6 @@ int	 fdatasync(int);
 
 #if __XPG_VISIBLE || __BSD_VISIBLE
 char	*crypt(const char *, const char *);
-int	 encrypt(char *, int);
 int	 fchdir(int);
 int	 fchown(int, uid_t, gid_t);
 long	 gethostid(void);
@@ -423,7 +422,6 @@ int	 lchown(const char *, uid_t, gid_t);
 int	 mkstemp(char *);
 char	*mktemp(char *);
 int	 nice(int);
-int	 setkey(const char *);
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
 void	 swab(const void *, void *, size_t);
@@ -490,8 +488,6 @@ int	 acct(const char *);
 int	 closefrom(int);
 int	 crypt_checkpass(const char *, const char *);
 int	 crypt_newhash(const char *, const char *, char *, size_t);
-int	 des_cipher(const char *, char *, int32_t, int);
-int	 des_setkey(const char *);
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 char	*fflagstostr(u_int32_t);
