@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.10 2014/11/22 18:31:46 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.11 2014/12/08 07:49:17 mlarkin Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	call	_C_LABEL(cpu_hatch)
 	/* NOTREACHED */
 
-
+	.section .rodata
 _C_LABEL(mp_tramp_data_start):
 _TRMP_DATA_LABEL(mptramp_jmp64)
 	.long   mptramp_longmode
