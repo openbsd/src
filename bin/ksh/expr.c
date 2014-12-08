@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.23 2013/12/17 16:37:06 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.24 2014/12/08 14:26:31 otto Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -175,6 +175,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
 	curstate.noassign = 0;
 	curstate.arith = arith;
 	curstate.evaling = (struct tbl *) 0;
+	curstate.val = (struct tbl *) 0;
 
 	newenv(E_ERRH);
 	i = sigsetjmp(e->jbuf, 0);
@@ -547,7 +548,7 @@ do_ppmm(Expr_state *es, enum token op, struct tbl *vasn, bool is_prefix)
 static void
 assign_check(Expr_state *es, enum token op, struct tbl *vasn)
 {
-	if (es->tok == END ||
+	if (es->tok == END || vasn == NULL ||
 	    (vasn->name[0] == '\0' && !(vasn->flag & EXPRLVALUE)))
 		evalerr(es, ET_LVALUE, opinfo[(int) op].name);
 	else if (vasn->flag & RDONLY)
