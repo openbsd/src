@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.52 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.53 2014/12/08 21:59:36 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 	for (open_patch_file(filearg[1]); there_is_another_patch();
 	    reinitialize_almost_everything()) {
 		/* for each patch in patch file */
-		
+
 		patch_seen = true;
 
 		warn_on_invalid_line = true;
@@ -394,7 +394,7 @@ main(int argc, char *argv[])
 		}
 		set_signals(1);
 	}
-	
+
 	if (!patch_seen)
 		error = 2;
 

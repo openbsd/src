@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.47 2014/12/01 06:38:04 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.48 2014/12/08 21:59:36 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -1580,7 +1580,7 @@ strtolinenum(char *nptr, char **endptr)
 	if (errstr != NULL)
 		fatal("invalid line number at line %ld: `%s' is %s\n",
 		    p_input_line, nptr, errstr);
- 
+
 	*p = c;
 	*endptr = p;
 
