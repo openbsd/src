@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.38 2013/12/20 17:53:09 zhuk Exp $	*/
+/*	$OpenBSD: var.c,v 1.39 2014/12/08 21:48:27 deraadt Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -868,12 +868,6 @@ makenv(void)
 }
 
 /*
- * Someone has set the srand() value, therefore from now on
- * we return values from rand() instead of arc4random()
- */
-int use_rand = 0;
-
-/*
  * Called after a fork in parent to bump the random number generator.
  * Done to ensure children will not get the same random number sequence
  * if the parent doesn't use $RANDOM.
@@ -881,8 +875,7 @@ int use_rand = 0;
 void
 change_random(void)
 {
-	if (use_rand)
-		rand();
+	rand();
 }
 
 /*
@@ -929,10 +922,7 @@ getspec(struct tbl *vp)
 		break;
 	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
-		if (use_rand)
-			setint(vp, (long) (rand() & 0x7fff));
-		else
-			setint(vp, (long) (arc4random() & 0x7fff));
+		setint(vp, (long) (rand() & 0x7fff));
 		vp->flag |= SPECIAL;
 		break;
 #ifdef HISTORY
@@ -1032,8 +1022,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
-		srand((unsigned int)intval(vp));
-		use_rand = 1;
+		srand_deterministic((unsigned int)intval(vp));
 		vp->flag |= SPECIAL;
 		break;
 	case V_SECONDS:
