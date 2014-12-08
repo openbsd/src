@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.36 2014/12/01 03:18:50 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.37 2014/12/08 21:50:09 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -66,7 +66,6 @@ void tempfree(Cell *p) {
 /* #endif */
 
 jmp_buf env;
-int use_srandom;
 extern	int	pairstack[];
 extern	Awkfloat	srand_seed;
 
@@ -1582,19 +1581,13 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		u = (Awkfloat) system(getsval(x)) / 256;   /* 256 is unix-dep */
 		break;
 	case FRAND:
-		if (use_srandom)
-			u = (Awkfloat) (random() % RAND_MAX) / RAND_MAX;
-		else
-			u = (Awkfloat)arc4random() / 0xffffffff;
+		u = (Awkfloat) (random() % RAND_MAX) / RAND_MAX;
 		break;
 	case FSRAND:
-		if (isrec(x))	/* no argument provided, want arc4random() */
-			use_srandom = 0;
-		else {
-			use_srandom = 1;
+		if (!isrec(x)) {
 			u = getfval(x);
 			tmp = u;
-			srandom((unsigned int) u);
+			srandom_deterministic((unsigned int) u);
 			u = srand_seed;
 			srand_seed = tmp;
 		}
