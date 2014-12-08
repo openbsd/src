@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.28 2014/11/07 13:56:29 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.29 2014/12/08 22:00:11 mpi Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.28 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -49,12 +49,6 @@ usbd_status	usbd_get_hub_ss_descriptor(struct usbd_device *,
 		    usb_hub_ss_descriptor_t *, uint8_t);
 struct usb_hid_descriptor *usbd_get_hid_descriptor(struct usbd_device *,
 		   usb_interface_descriptor_t *);
-usbd_status	usbd_get_report(struct usbd_device *, int, int, int, void *,
-		    int);
-usbd_status	usbd_set_report(struct usbd_device *, int, int, int, void *,
-		    int);
-usbd_status	usbd_set_report_async(struct usbd_device *, int, int, int,
-		    void *, int);
 usbd_status	usbd_set_idle(struct usbd_device *, int, int, int);
 usbd_status	usbd_get_report_descriptor(struct usbd_device *, int, void *,
 		    int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.63 2014/08/10 12:48:43 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.64 2014/12/08 22:00:11 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -264,12 +264,16 @@ int
 uhidev_use_rdesc(struct uhidev_softc *sc, int vendor, int product,
     void **descp, int *sizep)
 {
-	static uByte reportbuf[] = {2, 2, 2};
+	static uByte reportbuf[] = {2, 2};
 	const void *descptr = NULL;
 	void *desc;
 	int size;
 
 	if (vendor == USB_VENDOR_WACOM) {
+		struct uhidev wacom;
+
+		/* XXX until we pass the parent directly. */
+		wacom.sc_parent = sc;
 
 		/* The report descriptor for the Wacom Graphire is broken. */
 		switch (product) {
@@ -279,9 +283,8 @@ uhidev_use_rdesc(struct uhidev_softc *sc, int vendor, int product,
 			break;
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
 		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
-			usbd_set_report(sc->sc_udev, sc->sc_ifaceno,
-			    UHID_FEATURE_REPORT, 2, &reportbuf,
-			    sizeof(reportbuf));
+			uhidev_set_report(&wacom, UHID_FEATURE_REPORT,
+			    2, &reportbuf, sizeof(reportbuf));
 			size = sizeof(uhid_graphire3_4x5_report_descr);
 			descptr = uhid_graphire3_4x5_report_descr;
 			break;
@@ -629,23 +632,30 @@ usbd_status
 uhidev_set_report(struct uhidev *scd, int type, int id, void *data, int len)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
-	char *buf;
-	usbd_status retstat;
+	usb_device_request_t req;
+	usbd_status err;
+	char *buf = data;
 
-	if (id == 0)
-		return usbd_set_report(sc->sc_udev, sc->sc_ifaceno, type,
-				       id, data, len);
+	/* Prepend the reportID. */
+	if (id > 0) {
+		len++;
+		buf = malloc(len, M_TEMP, M_WAITOK);
+		buf[0] = id;
+		memcpy(buf + 1, data, len - 1);
+	}
 
-	buf = malloc(len + 1, M_TEMP, M_WAITOK);
-	buf[0] = id;
-	memcpy(buf+1, data, len);
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UR_SET_REPORT;
+	USETW2(req.wValue, type, id);
+	USETW(req.wIndex, sc->sc_ifaceno);
+	USETW(req.wLength, len);
 
-	retstat = usbd_set_report(sc->sc_udev, sc->sc_ifaceno, type,
-				  id, buf, len + 1);
+	err = usbd_do_request(sc->sc_udev, &req, buf);
 
-	free(buf, M_TEMP, 0);
+	if (id > 0)
+		free(buf, M_TEMP, len);
 
-	return retstat;
+	return (err);
 }
 
 usbd_status
@@ -653,39 +663,52 @@ uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
     int len)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
-	char *buf;
-	usbd_status retstat;
+	usb_device_request_t req;
+	usbd_status err;
+	char *buf = data;
 
-	if (id == 0)
-		return usbd_set_report_async(sc->sc_udev, sc->sc_ifaceno, type,
-					     id, data, len);
+	/* Prepend the reportID. */
+	if (id > 0) {
+		len++;
+		buf = malloc(len, M_TEMP, M_NOWAIT);
+		if (buf == NULL)
+			return (USBD_NOMEM);
+		buf[0] = id;
+		memcpy(buf + 1, data, len - 1);
+	}
 
-	buf = malloc(len + 1, M_TEMP, M_NOWAIT);
-	if (buf == NULL)
-		return (USBD_NOMEM);
-	buf[0] = id;
-	memcpy(buf+1, data, len);
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UR_SET_REPORT;
+	USETW2(req.wValue, type, id);
+	USETW(req.wIndex, sc->sc_ifaceno);
+	USETW(req.wLength, len);
 
-	retstat = usbd_set_report_async(sc->sc_udev, sc->sc_ifaceno, type,
-					id, buf, len + 1);
+	err = usbd_do_request_async(sc->sc_udev, &req, buf);
 
 	/*
 	 * Since report requests are write-only it is safe to free
 	 * the buffer right after submitting the transfer because
 	 * it won't be used afterward.
 	 */
-	free(buf, M_TEMP, 0);
+	if (id > 0)
+		free(buf, M_TEMP, len);
 
-	return retstat;
+	return (err);
 }
 
 usbd_status
 uhidev_get_report(struct uhidev *scd, int type, int id, void *data, int len)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
+	usb_device_request_t req;
 
-	return usbd_get_report(sc->sc_udev, sc->sc_ifaceno, type,
-			       id, data, len);
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = UR_GET_REPORT;
+	USETW2(req.wValue, type, id);
+	USETW(req.wIndex, sc->sc_ifaceno);
+	USETW(req.wLength, len);
+
+	return (usbd_do_request(sc->sc_udev, &req, data));
 }
 
 usbd_status
