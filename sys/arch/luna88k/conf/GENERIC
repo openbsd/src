@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2014/04/16 12:01:33 aoyama Exp $
+#	$OpenBSD: GENERIC,v 1.18 2014/12/08 13:24:04 aoyama Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,7 +43,8 @@ spc0		at mainbus0
 spc1		at mainbus0
 
 # PC-9801 extension board slot
-pcex0		at mainbus0
+cbus0		at mainbus0
+pcex0		at cbus0
 
 # Workstation Console attachments
 wsdisplay*	at fb?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.21 2014/11/08 21:18:42 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.22 2014/12/08 13:24:04 aoyama Exp $
 #
 maxpartitions 16
 
@@ -65,8 +65,12 @@ file arch/luna88k/dev/mb89352.c				spc
 #file arch/luna88k/dev/nec86hw.c			pcm needs-flag
 #file arch/luna88k/dev/nec86_luna88k.c			pcm needs-flag
 
+device cbus {}
+attach	cbus at mainbus
+file	arch/luna88k/dev/cbus.c
+
 device pcex
-attach	pcex at mainbus
+attach	pcex at cbus
 file	arch/luna88k/dev/pcex.c				pcex needs-flag
 
 # list of standard files

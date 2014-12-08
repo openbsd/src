@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.11 2014/05/08 13:31:00 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.12 2014/12/08 13:24:04 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -54,12 +54,7 @@ static const struct mainbus_attach_args devs[] = {
 	{ "fb",	   0xc1100000, -1, LUNA_88K|LUNA_88K2 }, /* BrookTree RAMDAC */
 	{ "spc",   0xe1000000, 3,  LUNA_88K|LUNA_88K2 }, /* MB89352 */
 	{ "spc",   0xe1000040, 3,  LUNA_88K2 },          /* ditto, LUNA-88K2 only */
-#if NPCM > 0
-	{ "pcm",   0x91000000, 4,  LUNA_88K2 }, 	 /* NEC-9801-86 Sound board (under testing) */
-#endif
-#if NPCEX > 0
-	{ "pcex",  0x91000000, 4,  LUNA_88K2 },		 /* PC-9801 extension slot */
-#endif
+	{ "cbus",  0x91000000, 4,  LUNA_88K2 },		 /* PC-9801 extension slot */
 };
 
 void	mainbus_attach(struct device *, struct device *, void *);
