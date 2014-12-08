@@ -1,4 +1,4 @@
-/*	$OpenBSD: prop.c,v 1.7 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: prop.c,v 1.8 2014/12/08 21:11:02 tedu Exp $	*/
 /*	$NetBSD: prop.c,v 1.3 1995/03/23 08:35:06 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ add_list(plr, head, op_sqr)
 	last_tp = NULL;
 	for (tp = *head; tp && value(tp->sqr) < val; tp = tp->next)
 		if (val == value(tp->sqr)) {
-			cfree(op);
+			free(op);
 			return;
 		}
 		else
@@ -113,7 +113,7 @@ del_list(plr, head, op_sqr)
 		*head = op->next;
 	else {
 		last_op->next = op->next;
-		cfree(op);
+		free(op);
 	}
 }
 /*
