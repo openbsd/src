@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.9 2013/08/29 14:35:49 naddy Exp $	*/
+/*	$OpenBSD: setup.c,v 1.10 2014/12/08 21:56:28 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ setup()
 		d = 0;
 		for (i = 0; Game.passwd[i]; i++)
 			d += Game.passwd[i] << i;
-		srandom(d);
+		srandom_deterministic(d);
 	}
 	Param.bases = Now.bases = ranf(6 - Game.skill) + 2;
 	if (Game.skill == 6)

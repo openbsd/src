@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.18 2014/07/13 19:40:57 tedu Exp $	*/
+/*	$OpenBSD: io.c,v 1.19 2014/12/08 21:56:27 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -201,7 +201,6 @@ rdata(void)			/* "read" data from virtual file */
 	char    ch;
 
 	inptr = data_file;	/* Pointer to virtual data file */
-	srandom(SEED);		/* which is slightly obfuscated.*/
 
 	clsses = 1;
 	for (;;) {		/* read data sections		*/

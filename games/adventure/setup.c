@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.10 2014/07/13 19:40:57 tedu Exp $	*/
+/*	$OpenBSD: setup.c,v 1.11 2014/12/08 21:56:27 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "hdr.h"	/* SEED lives in there; keep them coordinated. */
 
 #define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
@@ -76,7 +75,6 @@ main(int argc, char *argv[])
 	puts(SIG2);
 	puts(" */");
 	printf("\n\nchar data_file[] =\n{");
-	srandom(SEED);
 	count = 0;
 	linestart = YES;
 

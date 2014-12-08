@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.15 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.16 2014/12/08 21:56:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -177,7 +177,6 @@ main(int argc, char **argv)
 	gettty();
 	setbuf(stdout,obuf);
 	umask(007);
-	srandomdev();
 	startup();
 	cls();
 	u.uhp = 1;	/* prevent RIP on early quits */
@@ -275,7 +274,7 @@ main(int argc, char **argv)
 		if ((sfoo = getenv("MAGIC")))
 			while(*sfoo) {
 				switch(*sfoo++) {
-				case 'n': (void) srandom(*sfoo++);
+				case 'n': (void) srandom_deterministic(*sfoo++);
 					break;
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.11 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.12 2014/12/08 21:56:27 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -213,7 +213,6 @@ void
 startup(void)
 {
 	demo = Start();
-	srandomdev();
 	hinted[3] = yes(65, 1, 0);
 	newloc = 1;
 	delhit = 0;

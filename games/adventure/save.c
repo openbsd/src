@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.9 2014/07/13 19:40:57 tedu Exp $	*/
+/*	$OpenBSD: save.c,v 1.10 2014/12/08 21:56:27 deraadt Exp $	*/
 /*	$NetBSD: save.c,v 1.2 1995/03/21 12:05:08 cgd Exp $	*/
 
 /*-
@@ -127,7 +127,7 @@ save(const char *outfile)
 	crc_start();
 	for (p = save_array; p->address != NULL; p++)
 		sum = crc(p->address, p->width);
-	srandom((int) sum);
+	srandom_deterministic((int) sum);
 
 	if ((out = fopen(outfile, "wb")) == NULL) {
 		fprintf(stderr,
@@ -163,7 +163,7 @@ restore(const char *infile)
 	}
 
 	fread(&sum, sizeof(sum), 1, in);	/* Get the seed */
-	srandom((unsigned int) sum);
+	srandom_deterministic((unsigned int) sum);
 	for (p = save_array; p->address != NULL; p++) {
 		fread(p->address, p->width, 1, in);
 		for (s = p->address, i = 0; i < p->width; i++, s++)
