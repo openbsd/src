@@ -1330,6 +1330,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/signal.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/siphash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/soundcard.ph

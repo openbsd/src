@@ -1291,6 +1291,7 @@
 ./usr/include/sha1.h
 ./usr/include/sha2.h
 ./usr/include/signal.h
+./usr/include/siphash.h
 ./usr/include/skey.h
 ./usr/include/sndio.h
 ./usr/include/soundcard.h
@@ -1682,6 +1683,7 @@
 ./usr/share/man/man2/brk.2
 ./usr/share/man/man2/chdir.2
 ./usr/share/man/man2/chflags.2
+./usr/share/man/man2/chflagsat.2
 ./usr/share/man/man2/chmod.2
 ./usr/share/man/man2/chown.2
 ./usr/share/man/man2/chroot.2
@@ -3172,6 +3174,11 @@
 ./usr/share/man/man3/SSLv3_client_method.3
 ./usr/share/man/man3/SSLv3_method.3
 ./usr/share/man/man3/SSLv3_server_method.3
+./usr/share/man/man3/SipHash24.3
+./usr/share/man/man3/SipHash24_End.3
+./usr/share/man/man3/SipHash24_Final.3
+./usr/share/man/man3/SipHash24_Init.3
+./usr/share/man/man3/SipHash24_Update.3
 ./usr/share/man/man3/TAILQ_EMPTY.3
 ./usr/share/man/man3/TAILQ_ENTRY.3
 ./usr/share/man/man3/TAILQ_FIRST.3
@@ -3522,7 +3529,6 @@
 ./usr/share/man/man3/cfgetispeed.3
 ./usr/share/man/man3/cfgetospeed.3
 ./usr/share/man/man3/cfmakeraw.3
-./usr/share/man/man3/cfree.3
 ./usr/share/man/man3/cfsetispeed.3
 ./usr/share/man/man3/cfsetospeed.3
 ./usr/share/man/man3/cfsetspeed.3
@@ -3759,12 +3765,10 @@
 ./usr/share/man/man3/delscreen.3
 ./usr/share/man/man3/delwin.3
 ./usr/share/man/man3/derwin.3
-./usr/share/man/man3/des_cipher.3
 ./usr/share/man/man3/des_read_2passwords.3
 ./usr/share/man/man3/des_read_password.3
 ./usr/share/man/man3/des_read_pw.3
 ./usr/share/man/man3/des_read_pw_string.3
-./usr/share/man/man3/des_setkey.3
 ./usr/share/man/man3/devname.3
 ./usr/share/man/man3/dh.3
 ./usr/share/man/man3/difftime.3
@@ -3822,7 +3826,6 @@
 ./usr/share/man/man3/el_wparse.3
 ./usr/share/man/man3/el_wpush.3
 ./usr/share/man/man3/el_wset.3
-./usr/share/man/man3/encrypt.3
 ./usr/share/man/man3/end.3
 ./usr/share/man/man3/endfsent.3
 ./usr/share/man/man3/endgrent.3
@@ -4552,6 +4555,7 @@
 ./usr/share/man/man3/l64a.3
 ./usr/share/man/man3/labs.3
 ./usr/share/man/man3/lcong48.3
+./usr/share/man/man3/lcong48_deterministic.3
 ./usr/share/man/man3/ldexp.3
 ./usr/share/man/man3/ldexpf.3
 ./usr/share/man/man3/ldexpl.3
@@ -5230,6 +5234,7 @@
 ./usr/share/man/man3/scrollok.3
 ./usr/share/man/man3/secure_path.3
 ./usr/share/man/man3/seed48.3
+./usr/share/man/man3/seed48_deterministic.3
 ./usr/share/man/man3/seekdir.3
 ./usr/share/man/man3/sem_close.3
 ./usr/share/man/man3/sem_destroy.3
@@ -5304,7 +5309,6 @@
 ./usr/share/man/man3/sethostid.3
 ./usr/share/man/man3/sethostname.3
 ./usr/share/man/man3/setjmp.3
-./usr/share/man/man3/setkey.3
 ./usr/share/man/man3/setlinebuf.3
 ./usr/share/man/man3/setlocale.3
 ./usr/share/man/man3/setlogmask.3
@@ -5429,7 +5433,10 @@
 ./usr/share/man/man3/sradixsort.3
 ./usr/share/man/man3/srand.3
 ./usr/share/man/man3/srand48.3
+./usr/share/man/man3/srand48_deterministic.3
+./usr/share/man/man3/srand_deterministic.3
 ./usr/share/man/man3/srandom.3
+./usr/share/man/man3/srandom_deterministic.3
 ./usr/share/man/man3/srandomdev.3
 ./usr/share/man/man3/sscanf.3
 ./usr/share/man/man3/ssl.3

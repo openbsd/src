@@ -7,7 +7,7 @@
 ./etc/firmware/tigon2
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/lib/libc.so.77.3
+./usr/lib/libc.so.78.0
 ./usr/lib/libcrypto.so.30.3
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
@@ -1444,6 +1444,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/signal.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/siphash.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/soundcard.ph

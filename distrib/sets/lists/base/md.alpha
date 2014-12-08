@@ -61,7 +61,7 @@
 ./sbin/kbd
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
-./usr/lib/libc.so.77.3
+./usr/lib/libc.so.78.0
 ./usr/lib/libcrypto.so.30.3
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
@@ -1950,6 +1950,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/signal.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/siphash.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/soundcard.ph

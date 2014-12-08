@@ -1513,6 +1513,7 @@
 ./usr/share/man/man4/lpt.4
 ./usr/share/man/man4/luna88k
 ./usr/share/man/man4/luna88k/autoconf.4
+./usr/share/man/man4/luna88k/cbus.4
 ./usr/share/man/man4/luna88k/intro.4
 ./usr/share/man/man4/luna88k/kmem.4
 ./usr/share/man/man4/luna88k/lcd.4
