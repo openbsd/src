@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.52 2014/07/08 15:45:32 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.53 2014/12/08 08:19:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -650,7 +650,7 @@ queue_generate_msgid(void)
 {
 	uint32_t msgid;
 
-	while ((msgid = arc4random_uniform(0xffffffff)) == 0)
+	while ((msgid = arc4random()) == 0)
 		;
 
 	return msgid;
@@ -662,7 +662,7 @@ queue_generate_evpid(uint32_t msgid)
 	uint32_t rnd;
 	uint64_t evpid;
 
-	while ((rnd = arc4random_uniform(0xffffffff)) == 0)
+	while ((rnd = arc4random()) == 0)
 		;
 
 	evpid = msgid;
