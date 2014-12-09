@@ -42,7 +42,7 @@ rand_r(u_int *seed)
 
 #if defined(APIWARN)
 __warn_references(rand_r,
-    "warning: rand_r() isn't random; consider using arc4random()");
+    "warning: rand_r() is not random, it is deterministic.");
 #endif
 
 int
@@ -55,7 +55,7 @@ rand(void)
 
 #if defined(APIWARN)
 __warn_references(rand,
-    "warning: rand() isn't random; consider using arc4random()");
+    "warning: rand() may return determinstic values, is that what you want?");
 #endif
 
 void
