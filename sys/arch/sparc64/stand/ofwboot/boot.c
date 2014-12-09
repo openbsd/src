@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.21 2014/11/26 20:30:41 stsp Exp $	*/
+/*	$OpenBSD: boot.c,v 1.22 2014/12/09 18:05:16 stsp Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -367,7 +367,7 @@ main()
 	int chosen;
 	char bootline[512];		/* Should check size? */
 	char *cp;
-	int i, fd;
+	int i, fd, len;
 #ifdef SOFTRAID
 	int err;
 #endif
@@ -423,7 +423,12 @@ main()
 				kernels[0] = 0;	/* no more iteration */
 			} else if (cp != bootline) {
 				printf("Trying %s...\n", cp);
-				strlcpy(bootline, cp, sizeof bootline);
+				if (strlcpy(bootline, cp, sizeof bootline)
+				    >= sizeof bootline) {
+					printf("bootargs too long: %s\n",
+					    bootline);
+					_rtt();
+				}	
 			}
 		}
 		if (!bootlp) {
@@ -450,14 +455,16 @@ main()
 		OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
 		cp = bootline;
 #else
-		strlcpy(bootline, opened_name, sizeof bootline);
+		len = snprintf(bootline, sizeof bootline, "%s%s%s%s",
+		    opened_name,
+		    (boothowto & RB_ASKNAME) ? " -a" : "",
+		    (boothowto & RB_SINGLE) ? " -s" : "",
+		    (boothowto & RB_KDB) ? " -d" : "");
+		if (len >= sizeof bootline) {
+			printf("bootargs too long: %s\n", bootline);
+			_rtt();
+		}
 #endif
-		if (boothowto & RB_ASKNAME)
-			strlcat(bootline, " -a", sizeof bootline);
-		if (boothowto & RB_SINGLE)
-			strlcat(bootline, " -s", sizeof bootline);
-		if (boothowto & RB_KDB)
-			strlcat(bootline, " -d", sizeof bootline);
 #ifdef	__notyet__
 		OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
 #endif

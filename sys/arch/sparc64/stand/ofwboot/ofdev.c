@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.23 2014/11/26 20:30:41 stsp Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.24 2014/12/09 18:05:16 stsp Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -516,7 +516,8 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (of->f_flags != F_READ)
 		return EPERM;
 	DNPRINTF(BOOT_D_OFDEV, "devopen: you want %s\n", name);
-	strlcpy(fname, name, sizeof fname);
+	if (strlcpy(fname, name, sizeof fname) >= sizeof fname)
+		return ENAMETOOLONG;
 #ifdef SOFTRAID
 	if (bootdev_dip) {
 		if (fname[0] == 's' && fname[1] == 'r' &&
@@ -539,36 +540,58 @@ devopen(struct open_file *of, const char *name, char **file)
 			cp = &fname[0];
 		}
 		snprintf(buf, sizeof buf, "sr%c:%c", volno, partition);
-		strlcpy(opened_name, buf, sizeof opened_name);
+		if (strlcpy(opened_name, buf, sizeof opened_name)
+		    >= sizeof opened_name)
+			return ENAMETOOLONG;
 		*file = opened_name + strlen(opened_name);
-		if (!*cp)
-			strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
-		else
-			snprintf(buf, sizeof buf, "%s%s",
-			    *cp == '/' ? "" : "/", cp);
-		strlcat(opened_name, buf, sizeof opened_name);
+		if (!*cp) {
+			if (strlcpy(buf, DEFAULT_KERNEL, sizeof buf)
+			    >= sizeof buf)
+				return ENAMETOOLONG;
+		} else {
+			if (snprintf(buf, sizeof buf, "%s%s",
+			    *cp == '/' ? "" : "/", cp) >= sizeof buf)
+				return ENAMETOOLONG;
+		}
+		if (strlcat(opened_name, buf, sizeof opened_name) >=
+		    sizeof opened_name)
+			return ENAMETOOLONG;
 	} else {
 #endif
 		cp = filename(fname, &partition);
 		if (cp) {
-			strlcpy(buf, cp, sizeof buf);
+			if (strlcpy(buf, cp, sizeof buf) >= sizeof buf)
+				return ENAMETOOLONG;
 			*cp = 0;
 		}
-		if (!cp || !*buf)
-			strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
-		if (!*fname)
-			strlcpy(fname, bootdev, sizeof fname);
-		strlcpy(opened_name, fname,
-		    partition ? (sizeof opened_name) - 2 : sizeof opened_name);
+		if (!cp || !*buf) {
+			if (strlcpy(buf, DEFAULT_KERNEL, sizeof buf)
+			    >= sizeof buf)
+				return ENAMETOOLONG;
+		}
+		if (!*fname) {
+			if (strlcpy(fname, bootdev, sizeof fname)
+			    >= sizeof fname)
+				return ENAMETOOLONG;
+		}
+		if (strlcpy(opened_name, fname,
+		    partition ? (sizeof opened_name) - 2 : sizeof opened_name)
+		    >= sizeof opened_name)
+			return ENAMETOOLONG;
 		if (partition) {
 			cp = opened_name + strlen(opened_name);
 			*cp++ = ':';
 			*cp++ = partition;
 			*cp = 0;
 		}
-		if (*buf != '/')
-			strlcat(opened_name, "/", sizeof opened_name);
-		strlcat(opened_name, buf, sizeof opened_name);
+		if (*buf != '/') {
+			if (strlcat(opened_name, "/", sizeof opened_name) >=
+			    sizeof opened_name)
+				return ENAMETOOLONG;
+		}
+		if (strlcat(opened_name, buf, sizeof opened_name) >=
+		    sizeof opened_name)
+			return ENAMETOOLONG;
 		*file = opened_name + strlen(fname) + 1;
 #ifdef SOFTRAID
 	}

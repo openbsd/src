@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.2 2014/12/04 10:33:41 stsp Exp $ */
+/*	$OpenBSD: diskprobe.c,v 1.3 2014/12/09 18:05:16 stsp Exp $ */
 
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -45,8 +45,11 @@ new_diskinfo(int node)
 	bzero(dip, sizeof(*dip));
 
 	len = OF_package_to_path(node, dip->path, sizeof(dip->path));
-	if (len < 0 || len >= sizeof(dip->path)) {
+	if (len < 0) { 
 		DPRINTF("could not get path for disk node %x\n", node);
+		goto bad;
+	} else if (len >= sizeof(dip->path)) {
+		printf("disk device path too long: %s", dip->path);
 		goto bad;
 	}
 	dip->path[len] = '\0';
@@ -61,8 +64,13 @@ new_diskinfo(int node)
 			break;
 		}
 	}
-	if (unit == NULL)
-		strlcat(dip->path, "@0", sizeof(dip->path));
+	if (unit == NULL) {
+		len = strlcat(dip->path, "@0", sizeof(dip->path));
+		if (len >= sizeof(dip->path)) {
+			printf("disk device path too long: %s", dip->path);
+			goto bad;
+		}
+	}
 
 	DPRINTF("found disk %s\n", dip->path);
 
