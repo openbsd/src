@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2011/11/05 15:07:12 otto Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/12/09 00:49:21 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1995/02/16 19:38:45 cgd Exp $
 
 PROG=	re
@@ -18,7 +18,7 @@ do-reg-long: ${PROG}
 	./re -el < ${TESTS}
 do-reg-backref: ${PROG}
 	./re -er < ${TESTS}
-do-t_exhaust: t_exhaust
-	./t_exhaust
+#do-t_exhaust: t_exhaust
+#	./t_exhaust
 
 .include <bsd.regress.mk>
