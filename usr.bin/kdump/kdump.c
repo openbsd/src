@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.92 2014/12/08 21:23:44 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.93 2014/12/09 00:46:43 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -142,7 +142,7 @@ static void ktremul(char *, size_t);
 static void ktrgenio(struct ktr_genio *, size_t);
 static void ktrnamei(const char *, size_t);
 static void ktrpsig(struct ktr_psig *);
-static void ktrsyscall(struct ktr_syscall *);
+static void ktrsyscall(struct ktr_syscall *, size_t);
 static const char *kresolvsysctl(int, int *, int);
 static void ktrsysret(struct ktr_sysret *);
 static void ktruser(struct ktr_user *, size_t);
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 		current = findemul(ktr_header.ktr_pid);
 		switch (ktr_header.ktr_type) {
 		case KTR_SYSCALL:
-			ktrsyscall((struct ktr_syscall *)m);
+			ktrsyscall((struct ktr_syscall *)m, ktrlen);
 			break;
 		case KTR_SYSRET:
 			ktrsysret((struct ktr_sysret *)m);
@@ -878,11 +878,15 @@ static const formatter scargs[][8] = {
 
 
 static void
-ktrsyscall(struct ktr_syscall *ktr)
+ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 {
 	register_t *ap;
 	int narg;
 	char sep;
+
+	if (ktr->ktr_argsize > ktrlen)
+		errx(1, "syscall argument length %d > ktr header length %zu",
+		    ktr->ktr_argsize, ktrlen);
 
 	narg = ktr->ktr_argsize / sizeof(register_t);
 	sep = '\0';
@@ -906,6 +910,8 @@ ktrsyscall(struct ktr_syscall *ktr)
 		n = ap[1];
 		if (n > CTL_MAXNAME)
 			n = CTL_MAXNAME;
+		if (n < 0)
+			errx(1, "invalid sysctl length %d", n);
 		np = top = (int *)(ap + 6);
 		for (i = 0; n--; np++, i++) {
 			if (sep)
@@ -941,7 +947,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 	}
 
 nonnative:
-	while (narg) {
+	while (narg > 0) {
 		if (sep)
 			putchar(sep);
 		if (decimal)
@@ -1250,7 +1256,12 @@ static void
 ktrgenio(struct ktr_genio *ktr, size_t len)
 {
 	unsigned char *dp = (unsigned char *)ktr + sizeof(struct ktr_genio);
-	size_t datalen = len - sizeof(struct ktr_genio);
+	size_t datalen;
+
+	if (len < sizeof(struct ktr_genio))
+		errx(1, "invalid ktr genio length %zu", len);
+
+	datalen = len - sizeof(struct ktr_genio);
 
 	printf("fd %d %s %zu bytes\n", ktr->ktr_fd,
 		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
@@ -1266,7 +1277,7 @@ ktrgenio(struct ktr_genio *ktr, size_t len)
 static void
 ktrpsig(struct ktr_psig *psig)
 {
-	(void)printf("SIG%s ", sys_signame[psig->signo]);
+	signame(psig->signo);
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL");
 	else {
@@ -1328,6 +1339,8 @@ ktrcsw(struct ktr_csw *cs)
 static void
 ktruser(struct ktr_user *usr, size_t len)
 {
+	if (len < sizeof(struct ktr_user))
+		errx(1, "invalid ktr user length %zu", len);
 	len -= sizeof(struct ktr_user);
 	printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
 	printf(" %zu bytes\n", len);
