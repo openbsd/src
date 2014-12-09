@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.43 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.44 2014/12/09 15:40:23 tedu Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ wtmp(void)
 {
 	time_t	delta, total = 0;
 	int	timesize, wfd, snapfound = 0;
-	char	*ct, *crmsg;
+	char	*ct, *crmsg = "invalid";
 	struct utmp	*bp;
 	struct stat	stb;
 	ssize_t	bytes;
