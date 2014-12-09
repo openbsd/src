@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.343 2014/12/08 02:04:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.344 2014/12/09 02:27:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -559,6 +559,16 @@ main(int argc, char *argv[])
 	rewrite_client_leases();
 	close(fd);
 
+	/*
+	 * Do the initial status check and possible force up before creating
+	 * the routing socket. If we bounce the interface down and up while
+	 * the routing socket is listening, the RTM_IFINFO message with the
+	 * RTF_UP flag reset will cause premature exit.
+	 */
+	ifi->linkstat = interface_status(ifi->name);
+	if (ifi->linkstat == 0)
+		interface_link_forceup(ifi->name);
+
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("socket(PF_ROUTE, SOCK_RAW): %s", strerror(errno));
 
@@ -571,10 +581,6 @@ main(int argc, char *argv[])
 	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		error("setsockopt(ROUTE_TABLEFILTER): %s", strerror(errno));
-
-	ifi->linkstat = interface_status(ifi->name);
-	if (ifi->linkstat == 0)
-		interface_link_forceup(ifi->name);
 
 	/* Register the interface. */
 	if_register_receive();
