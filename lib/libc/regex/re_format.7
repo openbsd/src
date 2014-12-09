@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.18 2014/09/10 15:10:19 jmc Exp $
+.\"	$OpenBSD: re_format.7,v 1.19 2014/12/09 14:39:37 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)re_format.7	8.3 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: September 10 2014 $
+.Dd $Mdocdate: December 9 2014 $
 .Dt RE_FORMAT 7
 .Os
 .Sh NAME
@@ -280,9 +280,7 @@ blank	lower	upper
 cntrl	print	xdigit
 .Ed
 .Pp
-These stand for the character classes defined in
-.Xr ctype 3 .
-A locale may provide others.
+A locale may provide other character classes.
 A character class may not be used as an endpoint of a range.
 .Pp
 There are two special cases** of bracket expressions:
@@ -298,7 +296,7 @@ word characters.
 A word character is an
 .Em alnum
 character (as defined by
-.Xr ctype 3 )
+.Xr isalnum 3 )
 or an underscore.
 This is an extension,
 compatible with but not specified by POSIX,
@@ -728,7 +726,6 @@ If the comma is also omitted, then it matches exactly
 times.
 .El
 .Sh SEE ALSO
-.Xr ctype 3 ,
 .Xr regex 3
 .Sh STANDARDS
 .St -p1003.1-2004 :
