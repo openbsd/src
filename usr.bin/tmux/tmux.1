@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.410 2014/12/02 23:39:02 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.411 2014/12/09 19:23:35 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2014 $
+.Dd $Mdocdate: December 9 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3117,6 +3117,7 @@ The following variables are available, where appropriate:
 .It Li "pane_bottom" Ta "" Ta "Bottom of pane"
 .It Li "pane_current_command" Ta "" Ta "Current command if available"
 .It Li "pane_dead" Ta "" Ta "1 if pane is dead"
+.It Li "pane_dead_status" Ta "" Ta "Exit status of process in dead pane"
 .It Li "pane_height" Ta "" Ta "Height of pane"
 .It Li "pane_id" Ta "#D" Ta "Unique pane ID"
 .It Li "pane_in_mode" Ta "" Ta "If pane is in a mode"
