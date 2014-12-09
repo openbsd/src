@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.23 2014/12/09 14:39:37 jmc Exp $
+.\"	$OpenBSD: tr.1,v 1.24 2014/12/09 15:37:14 schwarze Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -224,6 +224,12 @@ and
 .Dq lower
 classes, characters are entered in
 ascending order.
+.Pp
+For specific information as to which ASCII characters are included
+in these classes, see
+.Xr isalnum 3 ,
+.Xr isalpha 3 ,
+and related manual pages.
 .It [=equiv=]
 Represents all characters or collating (sorting) elements belonging to
 the same equivalence class as
