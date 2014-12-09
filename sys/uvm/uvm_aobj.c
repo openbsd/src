@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.72 2014/11/21 07:18:44 tedu Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.73 2014/12/09 07:16:41 doug Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ uao_shrink_convert(struct uvm_object *uobj, int pages)
 	struct uao_swhash_elt *elt;
 	int i, *new_swslots;
 
-	new_swslots = malloc(pages * sizeof(int), M_UVMAOBJ,
+	new_swslots = mallocarray(pages, sizeof(int), M_UVMAOBJ,
 	    M_WAITOK | M_CANFAIL | M_ZERO);
 	if (new_swslots == NULL)
 		return ENOMEM;
@@ -520,7 +520,7 @@ uao_shrink_array(struct uvm_object *uobj, int pages)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	int i, *new_swslots;
 
-	new_swslots = malloc(pages * sizeof(int), M_UVMAOBJ,
+	new_swslots = mallocarray(pages, sizeof(int), M_UVMAOBJ,
 	    M_WAITOK | M_CANFAIL | M_ZERO);
 	if (new_swslots == NULL)
 		return ENOMEM;
@@ -575,7 +575,7 @@ uao_grow_array(struct uvm_object *uobj, int pages)
 
 	KASSERT(aobj->u_pages <= UAO_SWHASH_THRESHOLD);
 
-	new_swslots = malloc(pages * sizeof(int), M_UVMAOBJ,
+	new_swslots = mallocarray(pages, sizeof(int), M_UVMAOBJ,
 	    M_WAITOK | M_CANFAIL | M_ZERO);
 	if (new_swslots == NULL)
 		return ENOMEM;
@@ -748,7 +748,7 @@ uao_create(vsize_t size, int flags)
 				panic("uao_create: hashinit swhash failed");
 			}
 		} else {
-			aobj->u_swslots = malloc(pages * sizeof(int),
+			aobj->u_swslots = mallocarray(pages, sizeof(int),
 			    M_UVMAOBJ, mflags|M_ZERO);
 			if (aobj->u_swslots == NULL) {
 				if (flags & UAO_FLAG_CANFAIL) {

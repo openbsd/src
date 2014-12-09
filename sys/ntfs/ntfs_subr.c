@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.39 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.40 2014/12/09 07:16:41 doug Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -611,8 +611,8 @@ ntfs_runtovrun(cn_t **rcnp, cn_t **rclp, u_long *rcntp, u_int8_t *run)
 		off += (run[off] & 0xF) + ((run[off] >> 4) & 0xF) + 1;
 		cnt++;
 	}
-	cn = malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
-	cl = malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
+	cn = mallocarray(cnt, sizeof(cn_t), M_NTFSRUN, M_WAITOK);
+	cl = mallocarray(cnt, sizeof(cn_t), M_NTFSRUN, M_WAITOK);
 
 	off = 0;
 	cnt = 0;

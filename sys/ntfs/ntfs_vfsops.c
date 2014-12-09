@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.41 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.42 2014/12/09 07:16:41 doug Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -411,7 +411,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 		}
 
 		/* Alloc memory for attribute definitions */
-		ntmp->ntm_ad = malloc(num * sizeof(struct ntvattrdef),
+		ntmp->ntm_ad = mallocarray(num, sizeof(struct ntvattrdef),
 		    M_NTFSMNT, M_WAITOK);
 
 		ntmp->ntm_adnum = num;

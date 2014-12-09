@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.100 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.101 2014/12/09 07:16:41 doug Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	 */
 	if (npgs >= (0xffffffff >> PAGE_SHIFT))
 		return (E2BIG);
-	pgs = malloc(sizeof(*pgs) * npgs, M_TEMP, M_WAITOK | M_CANFAIL);
+	pgs = mallocarray(npgs, sizeof(*pgs), M_TEMP, M_WAITOK | M_CANFAIL);
 	if (pgs == NULL)
 		return (ENOMEM);
 	pgi = pgs;

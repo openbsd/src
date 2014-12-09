@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.55 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.56 2014/12/09 07:16:41 doug Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		newppref = malloc(slotalloc *sizeof(int), M_UVMAMAP,
+		newppref = mallocarray(slotalloc, sizeof(int), M_UVMAMAP,
 		    M_WAITOK | M_CANFAIL);
 		if (newppref == NULL) {
 			/* give up if malloc fails */
@@ -744,7 +744,7 @@ void
 amap_pp_establish(struct vm_amap *amap)
 {
 
-	amap->am_ppref = malloc(sizeof(int) * amap->am_maxslot,
+	amap->am_ppref = mallocarray(amap->am_maxslot, sizeof(int),
 	    M_UVMAMAP, M_NOWAIT|M_ZERO);
 
 	/* if we fail then we just won't use ppref for this amap */
