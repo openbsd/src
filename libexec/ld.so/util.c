@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2014/07/14 03:54:50 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.36 2014/12/09 15:36:36 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -69,8 +69,9 @@ _dl_strdup(const char *orig)
 }
 
 void
-_dl_randombuf(void *buf, size_t buflen)
+_dl_randombuf(void *v, size_t buflen)
 {
+	char *buf = v;
 	size_t chunk;
 
 	while (buflen != 0) {
