@@ -9,9 +9,9 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.\"	$OpenBSD: rand48.3,v 1.17 2014/12/08 21:45:20 deraadt Exp $
+.\"	$OpenBSD: rand48.3,v 1.18 2014/12/09 21:55:39 jmc Exp $
 .\"
-.Dd $Mdocdate: December 8 2014 $
+.Dd $Mdocdate: December 9 2014 $
 .Dt RAND48 3
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ In
 the
 seeding parameters are ignored, and strong random number results will be
 provided from
-.Xr arc4random 3.
+.Xr arc4random 3 .
 In other systems, the
 parameters prime a simplistic deterministic algorithm.
 .Pp
@@ -233,6 +233,8 @@ The
 .Fn srand48_deterministic ,
 and
 .Fn lcong48_deterministic
-functions are OpenBSD extensions.
+functions are
+.Ox
+extensions.
 .Sh AUTHORS
 .An Martin Birgmeier

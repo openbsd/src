@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.27 2014/12/08 21:45:20 deraadt Exp $
+.\"	$OpenBSD: random.3,v 1.28 2014/12/09 21:55:39 jmc Exp $
 .\"
-.Dd $Mdocdate: December 8 2014 $
+.Dd $Mdocdate: December 9 2014 $
 .Dt RANDOM 3
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ In
 the
 .Ar seed
 variable is ignored, and strong random number results will be provided from
-.Xr arc4random 3.
+.Xr arc4random 3 .
 In other systems, the
 .Ar seed
 variable primes a simplistic deterministic algorithm.
@@ -183,7 +183,9 @@ function is an extension.
 .Pp
 The
 .Fn srandom_deterministic
-function is an OpenBSD extension.
+function is an
+.Ox
+extension.
 .Sh HISTORY
 These
 functions appeared in
