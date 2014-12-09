@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.68 2014/07/12 18:50:41 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.69 2014/12/09 07:05:06 doug Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -524,7 +524,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 		error = EINVAL;
 		goto error_exit;
 	}
-	pmp->pm_inusemap = malloc(bmapsiz * sizeof(*pmp->pm_inusemap),
+	pmp->pm_inusemap = mallocarray(bmapsiz, sizeof(*pmp->pm_inusemap),
 	    M_MSDOSFSFAT, M_WAITOK | M_CANFAIL);
 	if (pmp->pm_inusemap == NULL) {
 		error = EINVAL;

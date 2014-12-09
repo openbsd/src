@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.113 2014/11/10 11:01:13 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.114 2014/12/09 07:05:06 doug Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -491,8 +491,8 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	nendpt = ifc->idesc->bNumEndpoints;
 	DPRINTFN(4,("usbd_fill_iface_data: found idesc nendpt=%d\n", nendpt));
 	if (nendpt != 0) {
-		ifc->endpoints = malloc(nendpt * sizeof(struct usbd_endpoint),
-					M_USB, M_NOWAIT);
+		ifc->endpoints = mallocarray(nendpt,
+		    sizeof(struct usbd_endpoint), M_USB, M_NOWAIT);
 		if (ifc->endpoints == NULL)
 			return (USBD_NOMEM);
 	} else
@@ -744,7 +744,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
 	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
-	dev->ifaces = malloc(nifc * sizeof(struct usbd_interface),
+	dev->ifaces = mallocarray(nifc, sizeof(struct usbd_interface),
 	    M_USB, M_NOWAIT | M_ZERO);
 	if (dev->ifaces == NULL) {
 		err = USBD_NOMEM;

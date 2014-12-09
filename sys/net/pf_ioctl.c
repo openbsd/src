@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.278 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.279 2014/12/09 07:05:06 doug Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -759,8 +759,9 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 	rs->rules.inactive.ptr_array = NULL;
 
 	if (rs->rules.inactive.rcount) {
-		rs->rules.inactive.ptr_array = malloc(sizeof(caddr_t) *
-		    rs->rules.inactive.rcount,  M_TEMP, M_NOWAIT);
+		rs->rules.inactive.ptr_array =
+		    mallocarray(rs->rules.inactive.rcount, sizeof(caddr_t),
+		    M_TEMP, M_NOWAIT);
 
 		if (!rs->rules.inactive.ptr_array)
 			return (ENOMEM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.6 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.7 2014/12/09 07:05:06 doug Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -627,8 +627,8 @@ struct ttm_tt *radeon_ttm_tt_create(struct ttm_bo_device *bdev,
 		return NULL;
 	}
 
-	gtt->segs = malloc(gtt->ttm.ttm.num_pages * sizeof(bus_dma_segment_t),
-			   M_DRM, M_WAITOK | M_ZERO);
+	gtt->segs = mallocarray(gtt->ttm.ttm.num_pages,
+	    sizeof(bus_dma_segment_t), M_DRM, M_WAITOK | M_ZERO);
 	if (gtt->segs == NULL) {
 		ttm_dma_tt_fini(&gtt->ttm);
 		free(gtt, M_DRM, 0);

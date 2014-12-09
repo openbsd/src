@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.23 2014/11/23 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.24 2014/12/09 07:05:06 doug Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -303,7 +303,7 @@ pfkey_buildprotosw(void)
 			j++;
 
 	if (j) {
-		if (!(protosw = malloc(j * sizeof(struct protosw),
+		if (!(protosw = mallocarray(j, sizeof(struct protosw),
 		    M_PFKEY, M_DONTWAIT)))
 			return (ENOMEM);
 

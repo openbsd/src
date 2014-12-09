@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.39 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.40 2014/12/09 07:05:06 doug Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -449,10 +449,9 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 	sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = fp->num_out_ep;
 	sc->sc_in_num_endpoints = fp->num_in_ep;
-	sc->sc_endpoints = malloc(sizeof(*sc->sc_out_ep)*
-				  (sc->sc_out_num_endpoints+
-				   sc->sc_in_num_endpoints),
-				  M_USBDEV, M_WAITOK | M_CANFAIL);
+	sc->sc_endpoints = mallocarray(sc->sc_out_num_endpoints +
+	    sc->sc_in_num_endpoints, sizeof(*sc->sc_out_ep), M_USBDEV,
+	    M_WAITOK | M_CANFAIL);
 	if (!sc->sc_endpoints) {
 		return USBD_NOMEM;
 	}
@@ -592,10 +591,9 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		sc->sc_in_num_endpoints = 0;
 		sc->sc_in_num_jacks = 0;
 	}
-	sc->sc_endpoints = malloc(sizeof(struct umidi_endpoint)*
-				  (sc->sc_out_num_endpoints+
-				   sc->sc_in_num_endpoints),
-				  M_USBDEV, M_WAITOK | M_CANFAIL);
+	sc->sc_endpoints = mallocarray(sc->sc_out_num_endpoints +
+	    sc->sc_in_num_endpoints, sizeof(struct umidi_endpoint),
+	    M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (!sc->sc_endpoints)
 		return USBD_NOMEM;
 	if (sc->sc_out_num_endpoints) {
@@ -636,8 +634,8 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 
 	interface_desc = usbd_get_interface_descriptor(sc->sc_iface);
 	num_ep = interface_desc->bNumEndpoints;
-	sc->sc_endpoints = p = malloc(sizeof(struct umidi_endpoint) * num_ep,
-				      M_USBDEV, M_WAITOK | M_CANFAIL);
+	sc->sc_endpoints = p = mallocarray(num_ep,
+	    sizeof(struct umidi_endpoint), M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (!p)
 		return USBD_NOMEM;
 
@@ -727,10 +725,8 @@ alloc_all_jacks(struct umidi_softc *sc)
 	struct umidi_jack *jack, **rjack;
 
 	/* allocate/initialize structures */
-	sc->sc_jacks =
-	    malloc(sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+
-					      sc->sc_out_num_jacks),
-		   M_USBDEV, M_WAITOK | M_CANFAIL);
+	sc->sc_jacks = mallocarray(sc->sc_in_num_jacks + sc->sc_out_num_jacks,
+	    sizeof(*sc->sc_out_jacks), M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (!sc->sc_jacks)
 		return USBD_NOMEM;
 	sc->sc_out_jacks =
@@ -968,8 +964,8 @@ static usbd_status
 alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 {
 	sc->sc_num_mididevs = nmidi;
-	sc->sc_mididevs = malloc(sizeof(*sc->sc_mididevs)*nmidi, M_USBDEV,
-	    M_WAITOK | M_CANFAIL | M_ZERO);
+	sc->sc_mididevs = mallocarray(nmidi, sizeof(*sc->sc_mididevs),
+	    M_USBDEV, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (!sc->sc_mididevs)
 		return USBD_NOMEM;
 

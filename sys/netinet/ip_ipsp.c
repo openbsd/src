@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.200 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.201 2014/12/09 07:05:06 doug Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -598,11 +598,11 @@ tdb_rehash(void)
 
 	tdb_hashmask = (tdb_hashmask << 1) | 1;
 
-	new_tdbh = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB,
+	new_tdbh = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *), M_TDB,
 	    M_WAITOK | M_ZERO);
-	new_tdbaddr = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB,
+	new_tdbaddr = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *), M_TDB,
 	    M_WAITOK | M_ZERO);
-	new_srcaddr = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB,
+	new_srcaddr = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *), M_TDB,
 	    M_WAITOK | M_ZERO);
 
 	for (i = 0; i <= old_hashmask; i++) {
@@ -654,11 +654,11 @@ puttdb(struct tdb *tdbp)
 	int s = splsoftnet();
 
 	if (tdbh == NULL) {
-		tdbh = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB,
-		    M_WAITOK | M_ZERO);
-		tdbaddr = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1),
+		tdbh = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *),
 		    M_TDB, M_WAITOK | M_ZERO);
-		tdbsrc = malloc(sizeof(struct tdb *) * (tdb_hashmask + 1),
+		tdbaddr = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *),
+		    M_TDB, M_WAITOK | M_ZERO);
+		tdbsrc = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *),
 		    M_TDB, M_WAITOK | M_ZERO);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.106 2014/11/18 23:55:01 krw Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.107 2014/12/09 07:05:06 doug Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1443,8 +1443,8 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		return NULL;
 	case UDESCSUB_AC_MIXER:
 		it->inputs_size = 0;
-		it->inputs = malloc(sizeof(struct terminal_list *)
-				    * it->d.mu->bNrInPins, M_TEMP, M_NOWAIT);
+		it->inputs = mallocarray(it->d.mu->bNrInPins,
+		    sizeof(struct terminal_list *), M_TEMP, M_NOWAIT);
 		if (it->inputs == NULL) {
 			printf("uaudio_io_terminaltype: no memory\n");
 			return NULL;
@@ -1458,8 +1458,8 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		return uaudio_merge_terminal_list(it);
 	case UDESCSUB_AC_SELECTOR:
 		it->inputs_size = 0;
-		it->inputs = malloc(sizeof(struct terminal_list *)
-				    * it->d.su->bNrInPins, M_TEMP, M_NOWAIT);
+		it->inputs = mallocarray(it->d.su->bNrInPins,
+		    sizeof(struct terminal_list *), M_TEMP, M_NOWAIT);
 		if (it->inputs == NULL) {
 			printf("uaudio_io_terminaltype: no memory\n");
 			return NULL;
@@ -1473,8 +1473,8 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		return uaudio_merge_terminal_list(it);
 	case UDESCSUB_AC_PROCESSING:
 		it->inputs_size = 0;
-		it->inputs = malloc(sizeof(struct terminal_list *)
-				    * it->d.pu->bNrInPins, M_TEMP, M_NOWAIT);
+		it->inputs = mallocarray(it->d.pu->bNrInPins,
+		    sizeof(struct terminal_list *), M_TEMP, M_NOWAIT);
 		if (it->inputs == NULL) {
 			printf("uaudio_io_terminaltype: no memory\n");
 			return NULL;
@@ -1488,8 +1488,8 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		return uaudio_merge_terminal_list(it);
 	case UDESCSUB_AC_EXTENSION:
 		it->inputs_size = 0;
-		it->inputs = malloc(sizeof(struct terminal_list *)
-				    * it->d.eu->bNrInPins, M_TEMP, M_NOWAIT);
+		it->inputs = mallocarray(it->d.eu->bNrInPins,
+		    sizeof(struct terminal_list *), M_TEMP, M_NOWAIT);
 		if (it->inputs == NULL) {
 			printf("uaudio_io_terminaltype: no memory\n");
 			return NULL;
@@ -1562,7 +1562,7 @@ uaudio_create_encodings(struct uaudio_softc *sc)
 	}
 
 	sc->sc_nencs = 0;
-	sc->sc_encs = malloc(sizeof(struct audio_encoding) * nencs,
+	sc->sc_encs = mallocarray(nencs, sizeof(struct audio_encoding),
 	    M_USBDEV, M_NOWAIT);
 	if (sc->sc_encs == NULL) {
 		printf("%s: no memory\n", __func__);

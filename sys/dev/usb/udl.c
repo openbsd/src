@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.80 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: udl.c,v 1.81 2014/12/09 07:05:06 doug Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -652,7 +652,7 @@ udl_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*curyp = 0;
 
 	/* allocate character backing store */
-	sc->sc_cbs = malloc((sc->sc_ri.ri_rows * sc->sc_ri.ri_cols) *
+	sc->sc_cbs = mallocarray(sc->sc_ri.ri_rows, sc->sc_ri.ri_cols *
 	    sizeof(*sc->sc_cbs), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_cbs == NULL) {
 		printf("%s: can't allocate mem for character backing store!\n",

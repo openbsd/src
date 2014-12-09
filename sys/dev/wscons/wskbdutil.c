@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.13 2014/07/12 18:48:53 tedu Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.14 2014/12/09 07:05:06 doug Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -381,7 +381,7 @@ wskbd_init_keymap(int newlen, struct wscons_keymap **map, int *maplen)
 		if (*maplen > 0)
 			free(*map, M_DEVBUF, 0);
 		*maplen = newlen;
-		*map = malloc(newlen*sizeof(struct wscons_keymap),
+		*map = mallocarray(newlen, sizeof(struct wscons_keymap),
 		    M_DEVBUF, M_WAITOK);
 	}
 

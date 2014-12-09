@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.59 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.60 2014/12/09 07:05:06 doug Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -528,9 +528,9 @@ shminit(void)
 	pool_init(&shm_pool, sizeof(struct shmid_ds) +
 	    sizeof(struct shm_handle), 0, 0, 0, "shmpl",
 	    &pool_allocator_nointr);
-	shmsegs = malloc(shminfo.shmmni * sizeof(struct shmid_ds *),
+	shmsegs = mallocarray(shminfo.shmmni, sizeof(struct shmid_ds *),
 	    M_SHM, M_WAITOK|M_ZERO);
-	shmseqs = malloc(shminfo.shmmni * sizeof(unsigned short),
+	shmseqs = mallocarray(shminfo.shmmni, sizeof(unsigned short),
 	    M_SHM, M_WAITOK|M_ZERO);
 
 	shminfo.shmmax *= PAGE_SIZE;	/* actually in pages */

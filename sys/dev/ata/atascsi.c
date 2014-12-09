@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.120 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.121 2014/12/09 07:05:06 doug Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -193,8 +193,8 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_link.adapter_target = aaa->aaa_nports;
 	as->as_link.openings = 1;
 
-	as->as_host_ports = malloc(sizeof(struct atascsi_host_port *) *
-	    aaa->aaa_nports, M_DEVBUF, M_WAITOK | M_ZERO);
+	as->as_host_ports = mallocarray(aaa->aaa_nports,
+	    sizeof(struct atascsi_host_port *),	M_DEVBUF, M_WAITOK | M_ZERO);
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->as_link;
@@ -320,8 +320,8 @@ atascsi_probe(struct scsi_link *link)
 			ahp->ahp_nports = 1;
 			ap->ap_pmp_port = 0;
 		}
-		ahp->ahp_ports = malloc(sizeof(struct atascsi_port *) *
-		    ahp->ahp_nports, M_DEVBUF, M_WAITOK | M_ZERO);
+		ahp->ahp_ports = mallocarray(ahp->ahp_nports,
+		    sizeof(struct atascsi_port *), M_DEVBUF, M_WAITOK | M_ZERO);
 	} else {
 		ahp = as->as_host_ports[port];
 		ap->ap_pmp_port = link->lun - 1;

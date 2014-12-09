@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.33 2014/11/01 16:32:06 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.34 2014/12/09 07:05:06 doug Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -197,7 +197,7 @@ sdmmc_alloc_ccbs(struct sdmmc_scsi_softc *scbus, int nccbs)
 	struct sdmmc_ccb *ccb;
 	int i;
 
-	scbus->sc_ccbs = malloc(sizeof(struct sdmmc_ccb) * nccbs,
+	scbus->sc_ccbs = mallocarray(nccbs, sizeof(struct sdmmc_ccb),
 	    M_DEVBUF, M_NOWAIT);
 	if (scbus->sc_ccbs == NULL)
 		return 1;

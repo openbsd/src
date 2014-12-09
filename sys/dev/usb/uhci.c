@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.132 2014/10/30 23:50:25 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.133 2014/12/09 07:05:06 doug Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2610,7 +2610,8 @@ uhci_device_setintr(struct uhci_softc *sc, struct uhci_pipe *upipe, int ival)
 	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
 	DPRINTFN(2, ("uhci_device_setintr: ival=%d npoll=%d\n", ival, npoll));
 
-	qhs = malloc(npoll * sizeof(struct uhci_soft_qh *), M_USBHC, M_NOWAIT);
+	qhs = mallocarray(npoll, sizeof(struct uhci_soft_qh *), M_USBHC,
+	    M_NOWAIT);
 	if (qhs == NULL)
 		return (USBD_NOMEM);
 
