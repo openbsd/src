@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.19 2014/12/03 13:22:18 mikeb Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.20 2014/12/09 17:03:19 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -72,7 +72,7 @@ ip6_print(register const u_char *bp, register u_int length)
 	 * This will never happen with BPF.  It does happen with
 	 * raw packet dumps from -r.
 	 */
-	if ((intptr_t)ip6 & (sizeof(long)-1)) {
+	if ((intptr_t)ip6 & (sizeof(u_int32_t)-1)) {
 		static u_char *abuf = NULL;
 		static int didwarn = 0;
 		int clen = snapend - bp;
