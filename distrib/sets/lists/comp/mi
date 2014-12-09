@@ -3464,7 +3464,6 @@
 ./usr/share/man/man3/box_set.3
 ./usr/share/man/man3/bsd_auth.3
 ./usr/share/man/man3/bsearch.3
-./usr/share/man/man3/bstring.3
 ./usr/share/man/man3/btoa8.3
 ./usr/share/man/man3/btoe.3
 ./usr/share/man/man3/btowc.3
@@ -3631,7 +3630,6 @@
 ./usr/share/man/man3/ctermid.3
 ./usr/share/man/man3/ctime.3
 ./usr/share/man/man3/ctime_r.3
-./usr/share/man/man3/ctype.3
 ./usr/share/man/man3/current_field.3
 ./usr/share/man/man3/current_item.3
 ./usr/share/man/man3/curs_add_wch.3
@@ -5461,7 +5459,6 @@
 ./usr/share/man/man3/strerror.3
 ./usr/share/man/man3/strerror_r.3
 ./usr/share/man/man3/strftime.3
-./usr/share/man/man3/string.3
 ./usr/share/man/man3/strlcat.3
 ./usr/share/man/man3/strlcpy.3
 ./usr/share/man/man3/strlen.3
