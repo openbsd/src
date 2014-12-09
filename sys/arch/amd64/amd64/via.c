@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.17 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: via.c,v 1.18 2014/12/09 06:58:28 doug Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 		if (ses == NULL) {
 			sesn = sc->sc_nsessions;
-			ses = malloc((sesn + 1) * sizeof(*ses), M_DEVBUF,
+			ses = mallocarray(sesn + 1, sizeof(*ses), M_DEVBUF,
 			    M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);

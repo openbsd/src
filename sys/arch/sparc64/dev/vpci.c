@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.17 2014/11/24 22:41:12 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.18 2014/12/09 06:58:29 doug Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -241,8 +241,8 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	pbm->vp_msiaddr |= ((bus_addr_t)msi_addr_range[0]) << 32;
 
 	msis = getpropint(sc->sc_node, "#msi", 256);
-	pbm->vp_msi = malloc(msis * sizeof(*pbm->vp_msi),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	pbm->vp_msi = mallocarray(msis, sizeof(*pbm->vp_msi), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (pbm->vp_msi == NULL)
 		return;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.29 2014/07/12 18:48:17 tedu Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.30 2014/12/09 06:58:29 doug Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -294,7 +294,8 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		addr += entry->madt_lapic.length;
 	}
 
-	mp_intrs = malloc(nlapic_nmis * sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
+	mp_intrs = mallocarray(nlapic_nmis, sizeof(struct mp_intr_map),
+	    M_DEVBUF, M_NOWAIT);
 	if (mp_intrs == NULL)
 		return;
 

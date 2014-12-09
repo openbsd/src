@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.27 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.28 2014/12/09 06:58:29 doug Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -304,8 +304,8 @@ pyro_init_msi(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	pbm->pp_msiaddr |= ((bus_addr_t)msi_addr_range[0]) << 32;
 
 	msis = getpropint(sc->sc_node, "#msi", 256);
-	pbm->pp_msi = malloc(msis * sizeof(*pbm->pp_msi),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	pbm->pp_msi = mallocarray(msis, sizeof(*pbm->pp_msi), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (pbm->pp_msi == NULL)
 		return;
 

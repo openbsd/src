@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.9 2011/05/23 11:58:03 pirofti Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.10 2014/12/09 06:58:29 doug Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -283,7 +283,7 @@ acpivout_get_bcl(struct acpivout_softc *sc)
 	}
 	sc->sc_bcl_len = res.length - 2;
 
-	sc->sc_bcl = malloc(sc->sc_bcl_len * sizeof(int), M_DEVBUF,
+	sc->sc_bcl = mallocarray(sc->sc_bcl_len, sizeof(int), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
 
 	for (i = 0; i < sc->sc_bcl_len; i++) {

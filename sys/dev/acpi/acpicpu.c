@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.61 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.62 2014/12/09 06:58:29 doug Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -607,7 +607,7 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 	if (sc->sc_pss)
 		free(sc->sc_pss, M_DEVBUF, 0);
 
-	sc->sc_pss = malloc(res.length * sizeof *sc->sc_pss, M_DEVBUF,
+	sc->sc_pss = mallocarray(res.length, sizeof(*sc->sc_pss), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
 
 	c = 0;

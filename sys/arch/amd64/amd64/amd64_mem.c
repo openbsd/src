@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.8 2014/07/13 12:11:01 jasper Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.9 2014/12/09 06:58:28 doug Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -551,7 +551,7 @@ mrinit(struct mem_range_softc *sc)
 
 	printf("\n");
 	
-	sc->mr_desc = malloc(nmdesc * sizeof(struct mem_range_desc),
+	sc->mr_desc = mallocarray(nmdesc, sizeof(struct mem_range_desc),
 	     M_MEMDESC, M_WAITOK|M_ZERO);
 	sc->mr_ndesc = nmdesc;
 	

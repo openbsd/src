@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.49 2014/12/09 06:58:28 doug Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4133,7 +4133,7 @@ pmap_postinit(void)
 
 	needed = (maxprocess - 1) / PMAP_DOMAINS;
 
-	l1 = malloc(sizeof(*l1) * needed, M_VMPMAP, M_WAITOK);
+	l1 = mallocarray(needed, sizeof(*l1), M_VMPMAP, M_WAITOK);
 
 	for (loop = 0; loop < needed; loop++, l1++) {
 		/* Allocate a L1 page table */

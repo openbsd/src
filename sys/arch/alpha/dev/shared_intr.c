@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.19 2014/07/12 18:44:40 tedu Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.20 2014/12/09 06:58:28 doug Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -70,7 +70,7 @@ alpha_shared_intr_alloc(n)
 	struct alpha_shared_intr *intr;
 	unsigned int i;
 
-	intr = malloc(n * sizeof (struct alpha_shared_intr), M_DEVBUF,
+	intr = mallocarray(n, sizeof(struct alpha_shared_intr), M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (intr == NULL)
 		panic("alpha_shared_intr_alloc: couldn't malloc intr");

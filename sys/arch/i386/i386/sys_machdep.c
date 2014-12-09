@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.33 2014/12/02 18:13:10 tedu Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.34 2014/12/09 06:58:28 doug Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 	    ua.start + ua.num > 8192)
 		return (EINVAL);
 
-	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	cp = mallocarray(ua.num, sizeof(union descriptor), M_TEMP, M_WAITOK);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
@@ -168,7 +168,7 @@ i386_set_ldt(struct proc *p, void *args, register_t *retval)
 	    ua.start + ua.num > 8192)
 		return (EINVAL);
 
-	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
+	descv = mallocarray(ua.num, sizeof(*descv), M_TEMP, M_NOWAIT);
 	if (descv == NULL)
 		return (ENOMEM);
 

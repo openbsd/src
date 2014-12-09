@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.36 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.37 2014/12/09 06:58:28 doug Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -637,9 +637,9 @@ mpbios_scan(struct device *self)
 			}
 		}
 
-		mp_busses = malloc(sizeof(struct mp_bus) * mp_nbusses,
+		mp_busses = mallocarray(mp_nbusses, sizeof(struct mp_bus),
 		    M_DEVBUF, M_NOWAIT|M_ZERO);
-		mp_intrs = malloc(sizeof(struct mp_intr_map) * intr_cnt,
+		mp_intrs = mallocarray(intr_cnt, sizeof(struct mp_intr_map),
 		    M_DEVBUF, M_NOWAIT);
 
 		/* re-walk the table, recording info of interest */

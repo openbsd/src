@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.13 2014/07/12 18:44:40 tedu Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.14 2014/12/09 06:58:28 doug Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -148,7 +148,7 @@ alpha_sgmap_dmamap_setup(map, nsegments, flags)
 	int nsegments;
 	int flags;
 {
-	map->_dm_cookie = malloc(nsegments * sizeof(struct extent_region),
+	map->_dm_cookie = mallocarray(nsegments, sizeof(struct extent_region),
 	    M_DEVBUF, (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
 	return (map->_dm_cookie == NULL);
 }

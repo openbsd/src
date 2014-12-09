@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.33 2014/11/22 18:55:20 deraadt Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.34 2014/12/09 06:58:28 doug Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -336,7 +336,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK) >>
 	    IOAPIC_ID_SHIFT;
 
-	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
+	sc->sc_pins = mallocarray(sc->sc_apic_sz, sizeof(struct ioapic_pin),
 	    M_DEVBUF, M_WAITOK);
 
 	for (i = 0; i < sc->sc_apic_sz; i++) {

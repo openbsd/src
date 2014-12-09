@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.10 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.11 2014/12/09 06:58:29 doug Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -509,7 +509,7 @@ grtwo_init_screen(struct grtwo_devconfig *dc, int malloc_flags)
 	 * be able to paint an inverted cursor.
 	 */
 	if (dc->dc_bs == NULL) {
-		dc->dc_bs = malloc(ri->ri_rows * ri->ri_cols *
+		dc->dc_bs = mallocarray(ri->ri_rows, ri->ri_cols *
 		    sizeof(struct wsdisplay_charcell), M_DEVBUF,
 		    malloc_flags | M_ZERO);
 		if (dc->dc_bs == NULL)

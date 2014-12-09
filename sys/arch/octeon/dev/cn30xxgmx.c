@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.16 2014/08/11 19:00:50 miod Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.17 2014/12/09 06:58:28 doug Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -215,8 +215,8 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 
 	cn30xxgmx_init(sc);
 
-	sc->sc_ports = malloc(sizeof(*sc->sc_ports) * sc->sc_nports, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	sc->sc_ports = mallocarray(sc->sc_nports, sizeof(*sc->sc_ports),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		port_sc = &sc->sc_ports[i];

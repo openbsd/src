@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.28 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.29 2014/12/09 06:58:28 doug Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -377,7 +377,8 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 
 	if (ses == NULL) {
 		sesn = sc->sc_nsessions;
-		ses = malloc((sesn + 1) * sizeof(*ses), M_DEVBUF, M_NOWAIT);
+		ses = mallocarray(sesn + 1, sizeof(*ses), M_DEVBUF,
+		    M_NOWAIT);
 		if (ses == NULL)
 			return (ENOMEM);
 		if (sesn != 0) {

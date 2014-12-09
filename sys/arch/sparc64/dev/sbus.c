@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.42 2014/07/12 20:18:09 uebayasi Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.43 2014/12/09 06:58:29 doug Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -600,7 +600,8 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
 		pri = INTLEVENCODE(2);
 
 		/* Change format to an `struct sbus_intr' array */
-		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
+		ip = mallocarray(*np, sizeof(struct sbus_intr), M_DEVBUF,
+		    M_NOWAIT);
 		if (ip == NULL)
 			return (ENOMEM);
 

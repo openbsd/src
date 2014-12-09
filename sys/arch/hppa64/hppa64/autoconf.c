@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2014/10/12 20:39:46 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2014/12/09 06:58:28 doug Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -382,7 +382,7 @@ printf("num %d ", pdc_pat_io_num.num);
 		return (NULL);
 	}
 
-	if (!(rt = malloc(num * sizeof(*rt), M_DEVBUF, M_NOWAIT)))
+	if (!(rt = mallocarray(num, sizeof(*rt), M_DEVBUF, M_NOWAIT)))
 		return (NULL);
 
 	if (cell >= 0) {
