@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.18 2014/07/13 13:00:40 tedu Exp $	*/
+/*	$OpenBSD: log.c,v 1.19 2014/12/09 05:01:14 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -199,7 +199,9 @@ log_score(int list_em)
 			changed++;
 		}
 
-		if (changed) {
+		if (seeded) {
+			puts("The high score list does not include '-r' seeded games.");
+		} else if (changed) {
 			if (found)
 				puts("You beat your previous score!");
 			else

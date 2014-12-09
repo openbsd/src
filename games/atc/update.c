@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.15 2014/12/08 21:56:27 deraadt Exp $	*/
+/*	$OpenBSD: update.c,v 1.16 2014/12/09 05:01:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,6 @@
 
 #include "include.h"
 
-int seeded;
 void
 setseed(const char *seed)
 {
