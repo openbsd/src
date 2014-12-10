@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.94 2014/11/03 03:08:00 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.95 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	 */
 	if (KTRPOINT(p, KTR_GENIO)) {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		bcopy(auio.uio_iov, ktriov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -348,7 +348,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	 */
 	if (KTRPOINT(p, KTR_GENIO)) {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		bcopy(auio.uio_iov, ktriov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;

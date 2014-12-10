@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.223 2014/11/21 07:14:17 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.224 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1273,7 +1273,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 		/* Make a copy, clear out kernel pointers */
 		tmpvfsp = malloc(sizeof(*tmpvfsp), M_TEMP, M_WAITOK);
-		bcopy(vfsp, tmpvfsp, sizeof(*tmpvfsp));
+		memcpy(tmpvfsp, vfsp, sizeof(*tmpvfsp));
 		tmpvfsp->vfc_vfsops = NULL;
 		tmpvfsp->vfc_next = NULL;
 
@@ -2222,9 +2222,9 @@ copy_statfs_info(struct statfs *sbp, const struct mount *mp)
 	sbp->f_syncreads = mbp->f_syncreads;
 	sbp->f_asyncreads = mbp->f_asyncreads;
 	sbp->f_namemax = mbp->f_namemax;
-	bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-	bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-	bcopy(mp->mnt_stat.f_mntfromspec, sbp->f_mntfromspec, MNAMELEN);
-	bcopy(&mp->mnt_stat.mount_info.ufs_args, &sbp->mount_info.ufs_args,
+	memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+	memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
+	memcpy(sbp->f_mntfromspec, mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	memcpy(&sbp->mount_info.ufs_args, &mp->mnt_stat.mount_info.ufs_args,
 	    sizeof(struct ufs_args));
 }

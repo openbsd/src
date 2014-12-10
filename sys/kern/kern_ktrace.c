@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.70 2014/10/26 20:34:37 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.71 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 {
 	ktrinitheaderraw(kth, type, p->p_p->ps_pid,
 	    p->p_pid + THREAD_PID_OFFSET);
-	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);
+	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 }
 
 void
@@ -341,7 +341,7 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 	buflen = strlen(name) + 1 + datalen;
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	strlcpy(buf, name, buflen);
-	bcopy(data, buf + strlen(name) + 1, datalen);
+	memcpy(buf + strlen(name) + 1, data, datalen);
 	kth.ktr_len = buflen;
 
 	ktrwrite(p, &kth, buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.48 2014/12/03 04:17:15 tedu Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.49 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ badlink:
 			goto badlink;
 		}
 		if (ndp->ni_pathlen > 1) {
-			bcopy(ndp->ni_next, cp + linklen, ndp->ni_pathlen);
+			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			cnp->cn_pnbuf = cp;
 		} else

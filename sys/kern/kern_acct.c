@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.28 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.29 2014/12/10 02:44:46 tedu Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -176,7 +176,7 @@ acct_process(struct proc *p)
 	 */
 
 	/* (1) The name of the command that ran */
-	bcopy(p->p_comm, acct.ac_comm, sizeof acct.ac_comm);
+	memcpy(acct.ac_comm, p->p_comm, sizeof acct.ac_comm);
 
 	/* (2) The amount of user and system time that was used */
 	calctsru(&pr->ps_tu, &ut, &st, NULL);

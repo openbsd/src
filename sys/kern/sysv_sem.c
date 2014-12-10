@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.50 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.51 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -877,11 +877,11 @@ sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		/* Expand semsegs and semseqs arrays */
 		sema_new = mallocarray(val, sizeof(struct semid_ds *),
 		    M_SEM, M_WAITOK|M_ZERO);
-		bcopy(sema, sema_new,
+		memcpy(sema_new, sema,
 		    seminfo.semmni * sizeof(struct semid_ds *));
 		newseqs = mallocarray(val, sizeof(unsigned short), M_SEM,
 		    M_WAITOK|M_ZERO);
-		bcopy(semseqs, newseqs,
+		memcpy(newseqs, semseqs,
 		    seminfo.semmni * sizeof(unsigned short));
 		free(sema, M_SEM, 0);
 		free(semseqs, M_SEM, 0);

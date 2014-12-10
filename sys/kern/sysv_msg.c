@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.28 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.29 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -703,7 +703,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 			return (ENOMEM);
 		}
 
-		bcopy(&msginfo, &info->msginfo, sizeof(struct msginfo));
+		memcpy(&info->msginfo, &msginfo, sizeof(struct msginfo));
 
 		/*
 		 * Special case #3: the previous array-based implementation
@@ -711,7 +711,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 		 * upon these indices, so keep behavior consisitent.
 		 */
 		TAILQ_FOREACH(que, &msg_queues, que_next)
-			bcopy(&que->msqid_ds, &info->msgids[que->que_ix],
+			memcpy(&info->msgids[que->que_ix], &que->msqid_ds,
 			    sizeof(struct msqid_ds));
 
 		error = copyout(info, where, infolen);

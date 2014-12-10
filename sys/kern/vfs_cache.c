@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.37 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.38 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ncp->nc_dvp = dvp;
 	ncp->nc_dvpid = dvp->v_id;
 	ncp->nc_nlen = cnp->cn_namelen;
-	bcopy(cnp->cn_nameptr, ncp->nc_name, (unsigned)ncp->nc_nlen);
+	memcpy(ncp->nc_name, cnp->cn_nameptr, ncp->nc_nlen);
 	if (RB_EMPTY(&dvp->v_nc_tree)) {
 		vhold(dvp);
 	}

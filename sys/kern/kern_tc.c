@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.27 2014/11/01 23:58:28 tedu Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.28 2014/12/10 02:44:47 tedu Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -393,7 +393,7 @@ tc_windup(void)
 	th = tho->th_next;
 	ogen = th->th_generation;
 	th->th_generation = 0;
-	bcopy(tho, th, offsetof(struct timehands, th_generation));
+	memcpy(th, tho, offsetof(struct timehands, th_generation));
 
 	/*
 	 * Capture a timecounter delta on the current timecounter and if

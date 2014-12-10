@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.274 2014/12/05 04:35:08 uebayasi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.275 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2131,7 +2131,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 #ifdef SYSVSEM
 			case KERN_SYSVIPC_SEM_INFO:
 				if (sema[i] != NULL)
-					bcopy(sema[i], &semsi->semids[i],
+					memcpy(&semsi->semids[i], sema[i],
 					    dssize);
 				else
 					memset(&semsi->semids[i], 0, dssize);
@@ -2140,7 +2140,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 #ifdef SYSVSHM
 			case KERN_SYSVIPC_SHM_INFO:
 				if (shmsegs[i] != NULL)
-					bcopy(shmsegs[i], &shmsi->shmids[i],
+					memcpy(&shmsi->shmids[i], shmsegs[i],
 					    dssize);
 				else
 					memset(&shmsi->shmids[i], 0, dssize);

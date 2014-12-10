@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.51 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.52 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -511,7 +511,7 @@ limcopy(struct plimit *lim)
 	}
 
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
-	bcopy(lim->pl_rlimit, newlim->pl_rlimit,
+	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
 	newlim->p_refcnt = 1;
 	return (newlim);

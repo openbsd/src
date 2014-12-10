@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.60 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.61 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ shmfork(struct vmspace *vm1, struct vmspace *vm2)
 	shmmap_h = (struct shmmap_head *)vm1->vm_shm;
 	size = sizeof(int) + shmmap_h->shmseg * sizeof(struct shmmap_state);
 	vm2->vm_shm = malloc(size, M_SHM, M_WAITOK);
-	bcopy(vm1->vm_shm, vm2->vm_shm, size);
+	memcpy(vm2->vm_shm, vm1->vm_shm, size);
 	for (i = 0, shmmap_s = shmmap_h->state; i < shmmap_h->shmseg;
 	    i++, shmmap_s++) {
 		if (shmmap_s->shmid != -1 &&
@@ -594,13 +594,13 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		/* Expand shmsegs and shmseqs arrays */
 		newsegs = mallocarray(val, sizeof(struct shmid_ds *),
 		    M_SHM, M_WAITOK|M_ZERO);
-		bcopy(shmsegs, newsegs,
+		memcpy(newsegs, shmsegs,
 		    shminfo.shmmni * sizeof(struct shmid_ds *));
 		free(shmsegs, M_SHM, 0);
 		shmsegs = newsegs;
 		newseqs = mallocarray(val, sizeof(unsigned short), M_SHM,
 		    M_WAITOK|M_ZERO);
-		bcopy(shmseqs, newseqs,
+		memcpy(newseqs, shmseqs,
 		    shminfo.shmmni * sizeof(unsigned short));
 		free(shmseqs, M_SHM, 0);
 		shmseqs = newseqs;

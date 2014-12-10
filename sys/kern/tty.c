@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.116 2014/12/01 07:51:47 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.117 2014/12/10 02:44:47 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -814,7 +814,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCGETA: {		/* get termios struct */
 		struct termios *t = (struct termios *)data;
 
-		bcopy(&tp->t_termios, t, sizeof(struct termios));
+		memcpy(t, &tp->t_termios, sizeof(struct termios));
 		break;
 	}
 	case TIOCGETD:			/* get line discipline */
@@ -926,7 +926,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else
 			CLR(t->c_lflag, EXTPROC);
 		tp->t_lflag = t->c_lflag | ISSET(tp->t_lflag, PENDIN);
-		bcopy(t->c_cc, tp->t_cc, sizeof(t->c_cc));
+		memcpy(tp->t_cc, t->c_cc, sizeof(t->c_cc));
 		splx(s);
 		break;
 	}
@@ -1284,7 +1284,7 @@ void
 ttychars(struct tty *tp)
 {
 
-	bcopy(ttydefchars, tp->t_cc, sizeof(ttydefchars));
+	memcpy(tp->t_cc, ttydefchars, sizeof(ttydefchars));
 }
 
 /*
