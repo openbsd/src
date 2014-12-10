@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.18 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: bind.2,v 1.19 2014/12/10 07:18:44 guenther Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt BIND 2
 .Os
 .Sh NAME
 .Nm bind
 .Nd bind a name to a socket
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft int
 .Fn bind "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION
@@ -64,14 +64,11 @@ when it is no longer needed (using
 The rules used in name binding vary between communication domains.
 Consult the manual entries in section 4 for detailed information.
 .Sh RETURN VALUES
-If the bind is successful, a 0 value is returned.
-A return value of \-1 indicates an error, which is
-further specified in the global
-.Va errno .
+.Rv -std
 .Sh ERRORS
 The
 .Fn bind
-call will fail if:
+function will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa s
