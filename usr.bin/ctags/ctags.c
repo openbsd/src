@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.13 2010/11/03 19:39:38 millert Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.14 2014/12/10 19:44:21 tobias Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 NODE	*head;			/* head of the sorted binary tree */
 
 				/* boolean "func" (see init()) */
-bool	_wht[256], _etk[256], _itk[256], _btk[256], _gd[256];
+bool	_wht[256], _itk[256], _btk[256];
 
 FILE	*inf;			/* ioptr for current input file */
 FILE	*outf;			/* ioptr for tags file */
@@ -183,25 +183,17 @@ init(void)
 	int		i;
 	unsigned char	*sp;
 
-	for (i = 0; i < 256; i++) {
-		_wht[i] = _etk[i] = _itk[i] = _btk[i] = NO;
-		_gd[i] = YES;
-	}
+	for (i = 0; i < 256; i++)
+		_wht[i] = _itk[i] = _btk[i] = NO;
 #define	CWHITE	" \f\t\n"
 	for (sp = CWHITE; *sp; sp++)	/* white space chars */
 		_wht[*sp] = YES;
-#define	CTOKEN	" \t\n\"'#()[]{}=-+%*/&|^~!<>;,.:?"
-	for (sp = CTOKEN; *sp; sp++)	/* token ending chars */
-		_etk[*sp] = YES;
 #define	CINTOK	"ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz0123456789"
 	for (sp = CINTOK; *sp; sp++)	/* valid in-token chars */
 		_itk[*sp] = YES;
 #define	CBEGIN	"ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
 	for (sp = CBEGIN; *sp; sp++)	/* token starting chars */
 		_btk[*sp] = YES;
-#define	CNOTGD	",;"
-	for (sp = CNOTGD; *sp; sp++)	/* invalid after-function chars */
-		_gd[*sp] = NO;
 }
 
 /*

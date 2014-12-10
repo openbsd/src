@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.h,v 1.7 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: ctags.h,v 1.8 2014/12/10 19:44:21 tobias Exp $	*/
 /*	$NetBSD: ctags.h,v 1.3 1995/03/26 20:14:07 glass Exp $	*/
 
 /*
@@ -47,8 +47,6 @@
 #define	iswhite(arg)	(_wht[(unsigned)arg])	/* T if char is white */
 #define	begtoken(arg)	(_btk[(unsigned)arg])	/* T if char can start token */
 #define	intoken(arg)	(_itk[(unsigned)arg])	/* T if char can be in token */
-#define	endtoken(arg)	(_etk[(unsigned)arg])	/* T if char ends tokens */
-#define	isgood(arg)	(_gd[(unsigned)arg])	/* T if char can be after ')' */
 
 typedef struct nd_st {			/* sorting structure */
 	struct nd_st	*left,
@@ -70,7 +68,7 @@ extern int	dflag;			/* -d: non-macro defines */
 extern int	vflag;			/* -v: vgrind style index output */
 extern int	wflag;			/* -w: suppress warnings */
 extern int	xflag;			/* -x: cxref style output */
-extern bool	_wht[], _etk[], _itk[], _btk[], _gd[];
+extern bool	_wht[], _itk[], _btk[];
 extern char	lbuf[LINE_MAX];
 extern char    *lbp;
 extern char	searchar;		/* ex search character */
