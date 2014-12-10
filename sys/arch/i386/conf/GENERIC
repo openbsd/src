@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.790 2014/12/04 11:19:17 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.791 2014/12/10 05:50:58 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -183,6 +183,9 @@ nvt*	at iic?				# Novoton W83795G
 
 #isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
 #isagpio1 at isa? port 0x80
+
+skgpio0 at isa? port 0x680		# Soekris net6501 GPIO and LEDs
+gpio* at skgpio?
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.380 2014/12/04 11:19:17 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.381 2014/12/10 05:50:58 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -140,6 +140,9 @@ spdmem*	at iic?			# SPD memory eeproms
 sdtemp*	at iic?			# SO-DIMM (JC-42.4) temperature
 wbng*	at iic?			# Winbond W83793G
 nvt*	at iic?			# Novoton W83795G
+
+skgpio0 at isa? port 0x680	# Soekris net6501 GPIO and LEDs
+gpio* at skgpio?
 
 #option PCMCIAVERBOSE
 
