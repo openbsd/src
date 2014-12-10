@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.79 2014/08/10 14:59:22 rpe Exp $
+#	$OpenBSD: upgrade.sh,v 1.80 2014/12/10 08:57:41 giovanni Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -86,13 +86,6 @@ feed_random
 
 # Install sets.
 install_sets
-
-# XXX To be removed after 5.6 is released.
-# XXX smtpd got privsep'ed and the _smtpq user is now used to manage these
-# XXX directories. Ensure proper ownership in case smtpd has been started
-# XXX before this change.
-(cd /mnt/var/spool/smtpd &&
-	chown -R 103 corrupt incoming purge queue temporary) 2>/dev/null
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
