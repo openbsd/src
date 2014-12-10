@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.134 2014/12/07 13:59:55 tobias Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.135 2014/12/10 19:40:21 tobias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -121,8 +121,8 @@ const char ctty[] = _PATH_CONSOLE;
 
 struct filed {
 	struct	filed *f_next;		/* next in linked list */
-	short	f_type;			/* entry type, see below */
-	short	f_file;			/* file descriptor */
+	int	f_type;			/* entry type, see below */
+	int	f_file;			/* file descriptor */
 	time_t	f_time;			/* time this was last written */
 	u_char	f_pmask[LOG_NFACILITIES+1];	/* priority mask */
 	char	*f_program;		/* program this applies to */
