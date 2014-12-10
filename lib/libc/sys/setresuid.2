@@ -1,4 +1,4 @@
-.\" $OpenBSD: setresuid.2,v 1.7 2013/08/14 06:32:29 jmc Exp $
+.\" $OpenBSD: setresuid.2,v 1.8 2014/12/10 19:19:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2000
 .\"      Sheldon Hearn.  All rights reserved.
@@ -21,7 +21,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/setresuid.2,v 1.12 2001/10/01 16:09:02 ru Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt SETRESUID 2
 .Os
 .Sh NAME
@@ -64,10 +64,7 @@ and
 calls retrieve the real, effective, and saved group and user IDs of
 the current process, respectively.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EPERM

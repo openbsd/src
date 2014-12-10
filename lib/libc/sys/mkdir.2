@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.14 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: mkdir.2,v 1.15 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -82,9 +82,7 @@ parameter, the current working directory is used
 and the behavior is identical to a call to
 .Fn mkdir .
 .Sh RETURN VALUES
-A 0 return value indicates success.
-A \-1 return value indicates an error, and an error code is stored in
-.Va errno .
+.Rv -std
 .Sh ERRORS
 .Fn mkdir
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.2,v 1.11 2013/04/01 20:16:31 guenther Exp $
+.\"	$OpenBSD: mkfifo.2,v 1.12 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: mkfifo.2,v 1.8 1995/02/27 12:34:27 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mkfifo.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 1 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt MKFIFO 2
 .Os
 .Sh NAME
@@ -84,9 +84,7 @@ parameter, the current working directory is used
 and the behavior is identical to a call to
 .Fn mkfifo .
 .Sh RETURN VALUES
-A 0 return value indicates success.
-A \-1 return value indicates an error, and an error code is stored in
-.Va errno .
+.Rv -std
 .Sh ERRORS
 .Fn mkfifo
 and

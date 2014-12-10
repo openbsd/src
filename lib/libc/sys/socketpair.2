@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.16 2014/08/31 01:42:36 guenther Exp $
+.\"	$OpenBSD: socketpair.2,v 1.17 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ Set close-on-exec flag on both the new descriptors.
 Set non-blocking I/O mode on both the new sockets.
 .El
 .Sh RETURN VALUES
-A 0 is returned if the call succeeds, \-1 if it fails.
+.Rv -std
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er

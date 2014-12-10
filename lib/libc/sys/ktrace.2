@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.24 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: ktrace.2,v 1.25 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -162,10 +162,7 @@ The type specific records are defined in the
 .In sys/ktrace.h
 include file.
 .Sh RETURN VALUES
-On successful completion a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to show the error.
+.Rv -std
 .Sh ERRORS
 .Fn ktrace
 will fail if:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adjtime.2,v 1.20 2013/08/14 06:32:28 jmc Exp $
+.\"	$OpenBSD: adjtime.2,v 1.21 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: adjtime.2,v 1.5 1995/10/12 15:40:44 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)adjtime.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt ADJTIME 2
 .Os
 .Sh NAME
@@ -80,10 +80,7 @@ Only the superuser may adjust the time using the
 .Fn adjtime
 function.
 .Sh RETURN VALUES
-A return value of 0 indicates that the call succeeded.
-A return value of \-1 indicates that an error occurred, and in this
-case an error code is stored in the global variable
-.Va errno .
+.Rv -std
 .Sh ERRORS
 .Fn adjtime
 will fail if:

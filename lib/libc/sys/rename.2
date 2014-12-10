@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.19 2013/05/08 16:13:12 tedu Exp $
+.\"	$OpenBSD: rename.2,v 1.20 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 8 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -108,11 +108,7 @@ or
 .Fa to
 argument.
 .Sh RETURN VALUES
-A 0 value is returned if the operation succeeds, otherwise
-.Fn rename
-returns \-1 and the global variable
-.Va errno
-indicates the reason for the failure.
+.Rv -std
 .Sh ERRORS
 .Fn rename
 and

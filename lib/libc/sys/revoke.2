@@ -1,4 +1,4 @@
-.\"	$OpenBSD: revoke.2,v 1.9 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: revoke.2,v 1.10 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: revoke.2,v 1.3 1995/10/12 15:41:11 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)revoke.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt REVOKE 2
 .Os
 .Sh NAME
@@ -67,10 +67,7 @@ The
 function is normally used to prepare a terminal device for a new login session,
 preventing any access by a previous user of the terminal.
 .Sh RETURN VALUES
-A 0 value indicated that the call succeeded.
-A \-1 return value indicates an error occurred and
-.Va errno
-is set to indicated the reason.
+.Rv -std
 .Sh ERRORS
 Access to the named file is revoked unless one of the following:
 .Bl -tag -width Er

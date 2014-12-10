@@ -1,4 +1,4 @@
-.\"	$OpenBSD: listen.2,v 1.13 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: listen.2,v 1.14 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: listen.2,v 1.7 1996/02/16 20:38:45 phil Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)listen.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt LISTEN 2
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ receive an error with an indication of
 or, if the underlying protocol supports retransmission,
 the request may be ignored so that retries may succeed.
 .Sh RETURN VALUES
-A 0 return value indicates success; \-1 indicates an error.
+.Rv -std
 .Sh ERRORS
 .Fn listen
 will fail if:

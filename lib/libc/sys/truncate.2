@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.15 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: truncate.2,v 1.16 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -59,10 +59,7 @@ With
 .Fn ftruncate ,
 the file must be open for writing.
 .Sh RETURN VALUES
-A value of 0 is returned if the call succeeds.
-If the call fails a \-1 is returned, and the global variable
-.Va errno
-specifies the error.
+.Rv -std
 .Sh ERRORS
 .Fn truncate
 and

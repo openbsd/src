@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setgroups.2,v 1.11 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: setgroups.2,v 1.12 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: setgroups.2,v 1.7 1995/02/27 12:36:49 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)setgroups.2	8.2 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt SETGROUPS 2
 .Os
 .Sh NAME
@@ -54,9 +54,7 @@ more than
 .Pp
 Only the superuser may set new groups.
 .Sh RETURN VALUES
-A 0 value is returned on success, \-1 on error, with
-an error code stored in
-.Va errno .
+.Rv -std
 .Sh ERRORS
 The
 .Fn setgroups

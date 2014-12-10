@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.22 2013/07/20 19:33:34 naddy Exp $
+.\"	$OpenBSD: statfs.2,v 1.23 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: July 20 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -99,10 +99,7 @@ Note that
 .Fa f_fsid
 will be empty unless the user is the superuser.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn statfs
 fails if one or more of the following are true:

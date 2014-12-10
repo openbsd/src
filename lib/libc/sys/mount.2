@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.2,v 1.41 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: mount.2,v 1.42 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: mount.2,v 1.12 1996/02/29 23:47:48 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt MOUNT 2
 .Os
 .Sh NAME
@@ -243,17 +243,7 @@ Active special devices continue to work,
 but any further accesses to any other active files result in errors
 even if the filesystem is later remounted.
 .Sh RETURN VALUES
-.Fn mount
-returns the value 0 if the mount was successful; otherwise, \-1 is returned
-and the variable
-.Va errno
-is set to indicate the error.
-.Pp
-.Fn unmount
-returns the value 0 if the unmount was successful; otherwise, \-1 is returned
-and the variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn mount
 will fail when one of the following occurs:

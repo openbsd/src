@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getentropy.2,v 1.6 2014/07/18 18:20:17 deraadt Exp $
+.\"	$OpenBSD: getentropy.2,v 1.7 2014/12/10 19:19:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt GETENTROPY 2
 .Os
 .Sh NAME
@@ -42,10 +42,7 @@ is not intended for regular code; please use the
 .Xr arc4random 3
 family of functions instead.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn getentropy
 will succeed unless:

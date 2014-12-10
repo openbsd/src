@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chdir.2,v 1.11 2013/03/31 08:34:27 guenther Exp $
+.\"	$OpenBSD: chdir.2,v 1.12 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: chdir.2,v 1.7 1995/02/27 12:32:00 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt CHDIR 2
 .Os
 .Sh NAME
@@ -66,10 +66,7 @@ a slash
 In order for a directory to become the current directory,
 a process must have execute (search) access to the directory.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn chdir
 will fail and the current working directory will be unchanged if

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.26 2014/07/13 23:12:02 schwarze Exp $
+.\"	$OpenBSD: getitimer.2,v 1.27 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -172,10 +172,7 @@ and stores the result in
 adds two timers and stores the result in
 .Fa res .
 .Sh RETURN VALUES
-If the calls succeed, a value of 0 is returned.
-If an error occurs, the value \-1 is returned, and a more precise
-error code is placed in the global variable
-.Va errno .
+.Rv -std
 .Sh ERRORS
 .Fn getitimer
 and

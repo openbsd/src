@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.2,v 1.17 2014/12/04 20:10:16 schwarze Exp $
+.\"	$OpenBSD: symlink.2,v 1.18 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: symlink.2,v 1.7 1995/02/27 12:38:34 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)symlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 4 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt SYMLINK 2
 .Os
 .Sh NAME
@@ -85,10 +85,7 @@ parameter, the current working directory is used
 and the behavior is identical to a call to
 .Fn symlink .
 .Sh RETURN VALUES
-Upon successful completion, a zero value is returned.
-If an error occurs, the error code is stored in
-.Va errno
-and a \-1 value is returned.
+.Rv -std
 .Sh ERRORS
 The symbolic link succeeds unless:
 .Bl -tag -width Er

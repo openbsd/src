@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.12 2014/02/11 21:59:51 schwarze Exp $
+.\"	$OpenBSD: quotactl.2,v 1.13 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)quotactl.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 11 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt QUOTACTL 2
 .Os
 .Sh NAME
@@ -140,10 +140,7 @@ and
 parameters are ignored.
 .El
 .Sh RETURN VALUES
-A successful call returns 0,
-otherwise the value \-1 is returned and the global variable
-.Va errno
-indicates the reason for the failure.
+.Rv -std
 .Sh ERRORS
 A
 .Fn quotactl

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.21 2014/02/13 07:30:39 guenther Exp $
+.\"	$OpenBSD: utimes.2,v 1.22 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -137,10 +137,7 @@ If
 names a symbolic link, then the timestamps of the symbolic link are changed.
 .El
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn utimes
 and

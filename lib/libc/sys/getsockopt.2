@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.46 2014/04/07 10:04:17 mpi Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.47 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -452,7 +452,7 @@ returns any pending error on the socket and clears the error status.
 It may be used to check for asynchronous errors on connected
 datagram sockets or for other asynchronous errors.
 .Sh RETURN VALUES
-A 0 is returned if the call succeeds, \-1 if it fails.
+.Rv -std
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er

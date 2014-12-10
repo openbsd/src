@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.15 2013/04/08 19:35:00 guenther Exp $
+.\"	$OpenBSD: getfh.2,v 1.16 2014/12/10 19:19:00 schwarze Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt GETFH 2
 .Os
 .Sh NAME
@@ -49,10 +49,7 @@ in the file handle pointed to by
 .Fa fhp .
 This system call is restricted to the superuser.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn getfh
 fails if one or more of the following are true:

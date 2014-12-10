@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.2 2014/07/12 17:06:06 jmc Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.3 2014/12/10 19:19:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
@@ -35,8 +35,7 @@ This is used internally by
 .Xr syslog_r 3 ,
 so that messages can be sent during difficult situations.
 .Sh RETURN VALUES
-The call returns 0 on success, or \-1
-if an error occurred.
+.Rv -std
 .Sh ERRORS
 .Fn sendsyslog
 can fail if:
