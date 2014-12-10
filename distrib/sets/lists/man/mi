@@ -1202,6 +1202,7 @@
 ./usr/share/man/man4/amd64/mtrr.4
 ./usr/share/man/man4/amd64/nvram.4
 ./usr/share/man/man4/amd64/pctr.4
+./usr/share/man/man4/amd64/skgpio.4
 ./usr/share/man/man4/amd64/tcpcib.4
 ./usr/share/man/man4/amdiic.4
 ./usr/share/man/man4/amdpm.4
@@ -1432,6 +1433,7 @@
 ./usr/share/man/man4/i386/piixpcib.4
 ./usr/share/man/man4/i386/sb.4
 ./usr/share/man/man4/i386/sea.4
+./usr/share/man/man4/i386/skgpio.4
 ./usr/share/man/man4/i386/tcpcib.4
 ./usr/share/man/man4/i386/uha.4
 ./usr/share/man/man4/i386/wds.4
