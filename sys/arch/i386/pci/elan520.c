@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.20 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.21 2014/12/10 12:27:56 mikeb Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@ struct elansc_softc {
 
 int	elansc_match(struct device *, void *, void *);
 void	elansc_attach(struct device *, struct device *, void *);
+int	elansc_activate(struct device *, int);
 void	elansc_update_cpuspeed(void);
 void	elansc_setperf(int);
 int	elansc_cpuspeed(int *);
@@ -86,7 +87,8 @@ void	elansc_gpio_pin_ctl(void *, int, int);
 u_int	elansc_tc_read(struct timecounter *);
 
 struct cfattach elansc_ca = {
-	sizeof(struct elansc_softc), elansc_match, elansc_attach
+	sizeof(struct elansc_softc), elansc_match, elansc_attach,
+	NULL, elansc_activate
 };
 
 struct cfdriver elansc_cd = {
@@ -229,6 +231,18 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	tc->tc_quality = 1000;
 	tc->tc_priv = sc;
 	tc_init(tc);
+}
+
+int
+elansc_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 u_int

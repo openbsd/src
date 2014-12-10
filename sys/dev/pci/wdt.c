@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.21 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.22 2014/12/10 12:27:57 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -53,6 +53,7 @@ struct wdt_softc {
 
 int	wdt_probe(struct device *, void *, void *);
 void	wdt_attach(struct device *, struct device *, void *);
+int	wdt_activate(struct device *, int);
 
 int	wdt_is501(struct wdt_softc *);
 void	wdt_8254_count(struct wdt_softc *, int, u_int16_t);
@@ -64,7 +65,8 @@ void	wdt_timer_disable(struct wdt_softc *);
 void	wdt_buzzer_enable(struct wdt_softc *);
 
 struct cfattach wdt_ca = {
-	sizeof(struct wdt_softc), wdt_probe, wdt_attach
+	sizeof(struct wdt_softc), wdt_probe, wdt_attach,
+	NULL, wdt_activate
 };
 
 struct cfdriver wdt_cd = {
@@ -157,6 +159,18 @@ wdt_attach(struct device *parent, struct device *self, void *aux)
 	 * register with the watchdog framework
 	 */
 	wdog_register(wdt_set_timeout, wdt);
+}
+
+int
+wdt_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 /*

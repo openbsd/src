@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.73 2014/10/21 08:48:38 uebayasi Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.74 2014/12/10 12:27:57 mikeb Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -158,6 +158,7 @@ int	ipmi_watchdog(void *, int);
 int	ipmi_intr(void *);
 int	ipmi_match(struct device *, void *, void *);
 void	ipmi_attach(struct device *, struct device *, void *);
+int	ipmi_activate(struct device *, int);
 
 long	ipow(long, int);
 long	ipmi_convert(u_int8_t, struct sdrtype1 *, long);
@@ -835,7 +836,8 @@ struct ipmi_bmc_response {
 };
 
 struct cfattach ipmi_ca = {
-	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach
+	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach,
+	NULL, ipmi_activate
 };
 
 struct cfdriver ipmi_cd = {
@@ -1758,6 +1760,18 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wakeup = 0;
 	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
 	timeout_set(&sc->sc_timeout, _bmc_io_wait, sc);
+}
+
+int
+ipmi_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 int

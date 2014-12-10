@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.4 2014/11/01 07:08:43 jsg Exp $ */
+/* $OpenBSD: sxidog.c,v 1.5 2014/12/10 12:27:56 mikeb Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -66,6 +66,7 @@ struct sxidog_softc {
 struct sxidog_softc *sxidog_sc = NULL;	/* for sxidog_reset() */
 
 void sxidog_attach(struct device *, struct device *, void *);
+int sxidog_activate(struct device *, int);
 int sxidog_callback(void *, int);
 #if 0
 int sxidog_intr(void *);
@@ -73,7 +74,8 @@ int sxidog_intr(void *);
 void sxidog_reset(void);
 
 struct cfattach	sxidog_ca = {
-	sizeof (struct sxidog_softc), NULL, sxidog_attach
+	sizeof (struct sxidog_softc), NULL, sxidog_attach,
+	NULL, sxidog_activate
 };
 
 struct cfdriver sxidog_cd = {

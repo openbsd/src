@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichwdt.c,v 1.4 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: ichwdt.c,v 1.5 2014/12/10 12:27:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -53,13 +53,16 @@ struct ichwdt_softc {
 
 int	ichwdt_match(struct device *, void *, void *);
 void	ichwdt_attach(struct device *, struct device *, void *);
+int	ichwdt_activate(struct device *, int);
 
 int	ichwdt_cb(void *, int);
 
 struct cfattach ichwdt_ca = {
 	sizeof(struct ichwdt_softc),
 	ichwdt_match,
-	ichwdt_attach
+	ichwdt_attach,
+	NULL,
+	ichwdt_activate
 };
 
 struct cfdriver ichwdt_cd = {
@@ -137,6 +140,18 @@ ichwdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Register new watchdog */
 	wdog_register(ichwdt_cb, sc);
+}
+
+int
+ichwdt_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.13 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.14 2014/12/10 12:27:57 mikeb Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -160,6 +160,7 @@ struct schsio_softc {
 
 int	schsio_probe(struct device *, void *, void *);
 void	schsio_attach(struct device *, struct device *, void *);
+int	schsio_activate(struct device *, int);
 
 static __inline void schsio_config_enable(bus_space_tag_t iot,
     bus_space_handle_t ioh);
@@ -184,7 +185,9 @@ int schsio_wdt_cb(void *arg, int period);
 struct cfattach schsio_ca = {
 	sizeof(struct schsio_softc),
 	schsio_probe,
-	schsio_attach
+	schsio_attach,
+	NULL,
+	schsio_activate
 };
 
 struct cfdriver schsio_cd = {
@@ -316,6 +319,18 @@ schsio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Escape from configuration mode */
 	schsio_config_disable(sc->sc_iot, sc->sc_ioh);
+}
+
+int
+schsio_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 void

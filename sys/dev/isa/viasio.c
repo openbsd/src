@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.13 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.14 2014/12/10 12:27:57 mikeb Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -62,6 +62,7 @@ struct viasio_softc {
 
 int	viasio_probe(struct device *, void *, void *);
 void	viasio_attach(struct device *, struct device *, void *);
+int	viasio_activate(struct device *, int);
 
 void	viasio_hm_init(struct viasio_softc *);
 void	viasio_hm_refresh(void *);
@@ -72,7 +73,9 @@ int	viasio_wdg_cb(void *, int);
 struct cfattach viasio_ca = {
 	sizeof(struct viasio_softc),
 	viasio_probe,
-	viasio_attach
+	viasio_attach,
+	NULL,
+	viasio_activate
 };
 
 struct cfdriver viasio_cd = {
@@ -194,6 +197,18 @@ viasio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Escape from configuration mode */
 	viasio_conf_disable(sc->sc_iot, sc->sc_ioh);
+}
+
+int
+viasio_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 void

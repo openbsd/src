@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.44 2013/04/10 01:35:55 guenther Exp $	*/
+/*	$OpenBSD: it.c,v 1.45 2014/12/10 12:27:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -48,6 +48,7 @@
 
 int it_match(struct device *, void *, void *);
 void it_attach(struct device *, struct device *, void *);
+int it_activate(struct device *, int);
 u_int8_t it_readreg(bus_space_tag_t, bus_space_handle_t, int);
 void it_writereg(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
 void it_enter(bus_space_tag_t, bus_space_handle_t, int);
@@ -289,6 +290,18 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 }
 
+int
+it_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
+}
+
 u_int8_t
 it_readreg(bus_space_tag_t iot, bus_space_handle_t ioh, int r)
 {
@@ -525,7 +538,9 @@ it_wdog_cb(void *arg, int period)
 struct cfattach it_ca = {
 	sizeof(struct it_softc),
 	it_match,
-	it_attach
+	it_attach,
+	NULL,
+	it_activate
 };
 
 struct cfdriver it_cd = {

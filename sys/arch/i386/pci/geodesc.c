@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.12 2012/12/05 23:20:12 deraadt Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.13 2014/12/10 12:27:56 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -41,6 +41,7 @@ struct geodesc_softc {
 
 int	geodesc_match(struct device *, void *, void *);
 void	geodesc_attach(struct device *, struct device *, void *);
+int	geodesc_activate(struct device *, int);
 void	sc1100_sysreset(void);
 
 #ifndef SMALL_KERNEL
@@ -48,7 +49,8 @@ int	geodesc_wdogctl_cb(void *, int);
 #endif /* SMALL_KERNEL */
 
 struct cfattach geodesc_ca = {
-	sizeof(struct geodesc_softc), geodesc_match, geodesc_attach
+	sizeof(struct geodesc_softc), geodesc_match, geodesc_attach,
+	NULL, geodesc_activate
 };
 
 struct cfdriver geodesc_cd = {
@@ -129,6 +131,20 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* We have a special way to reset the CPU on the SC1100 */
 	cpuresetfn = sc1100_sysreset;
+}
+
+int
+geodesc_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+#ifndef SMALL_KERNEL
+		wdog_shutdown(self);
+#endif
+		break;
+	}
+
+	return (0);
 }
 
 #ifndef SMALL_KERNEL

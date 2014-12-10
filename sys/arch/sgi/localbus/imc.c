@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.18 2014/10/08 05:22:48 deraadt Exp $	*/
+/*	$OpenBSD: imc.c,v 1.19 2014/12/10 12:27:56 mikeb Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -75,10 +75,11 @@
 
 int	imc_match(struct device *, void *, void *);
 void	imc_attach(struct device *, struct device *, void *);
+int	imc_activate(struct device *, int);
 int	imc_print(void *, const char *);
 
 const struct cfattach imc_ca = {
-	sizeof(struct device), imc_match, imc_attach
+	sizeof(struct device), imc_match, imc_attach, NULL, imc_activate
 };
 
 struct cfdriver imc_cd = {
@@ -696,6 +697,23 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	/* Register watchdog */
 	wdog_register(imc_watchdog_cb, self);
 #endif
+}
+
+int
+imc_activate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+#ifndef SMALL_KERNEL
+		wdog_shutdown(self);
+#endif
+		rv = config_activate_children(self, act);
+		break;
+	}
+
+	return (rv);
 }
 
 int

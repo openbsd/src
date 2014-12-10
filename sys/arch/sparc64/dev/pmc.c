@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmc.c,v 1.3 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: pmc.c,v 1.4 2014/12/10 12:27:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -50,10 +50,11 @@ struct pmc_softc {
 
 int	pmc_match(struct device *, void *, void *);
 void	pmc_attach(struct device *, struct device *, void *);
+int	pmc_activate(struct device *, int);
 int	pmc_wdog_cb(void *, int);
 
 struct cfattach pmc_ca = {
-	sizeof(struct pmc_softc), pmc_match, pmc_attach
+	sizeof(struct pmc_softc), pmc_match, pmc_attach, NULL, pmc_activate
 };
 
 struct cfdriver pmc_cd = {
@@ -100,6 +101,18 @@ pmc_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	wdog_register(pmc_wdog_cb, sc);
+}
+
+int
+pmc_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 int

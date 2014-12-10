@@ -1,4 +1,4 @@
-/*	$OpenBSD: fins.c,v 1.3 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: fins.c,v 1.4 2014/12/10 12:27:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -124,6 +124,7 @@ struct fins_softc {
 
 int  fins_match(struct device *, void *, void *);
 void fins_attach(struct device *, struct device *, void *);
+int  fins_activate(struct device *, int);
 
 void fins_unlock(bus_space_tag_t, bus_space_handle_t);
 void fins_lock(bus_space_tag_t, bus_space_handle_t);
@@ -150,7 +151,9 @@ int fins_wdog_cb(void *, int);
 struct cfattach fins_ca = {
 	sizeof(struct fins_softc),
 	fins_match,
-	fins_attach
+	fins_attach,
+	NULL,
+	fins_activate
 };
 
 struct cfdriver fins_cd = {
@@ -303,6 +306,18 @@ fins_attach(struct device *parent, struct device *self, void *aux)
 	wdog_register(fins_wdog_cb, sc);
 attach_done:
 	printf("\n");
+}
+
+int
+fins_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 u_int8_t

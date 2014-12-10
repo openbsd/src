@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpcib.c,v 1.7 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: tcpcib.c,v 1.8 2014/12/10 12:27:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -293,6 +293,11 @@ tcpcib_activate(struct device *self, int act)
 		if (sc->sc_active & E600_HPET_ACTIVE)
 			bus_space_write_4(sc->sc_hpet_iot, sc->sc_hpet_ioh,
 			    E600_HPET_GC, E600_HPET_GC_ENABLE);
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		if (sc->sc_active & E600_WDT_ACTIVE)
+			wdog_shutdown(self);
 		rv = config_activate_children(self, act);
 		break;
 	default:

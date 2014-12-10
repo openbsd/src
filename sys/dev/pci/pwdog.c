@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.8 2012/10/17 22:32:01 deraadt Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.9 2014/12/10 12:27:57 mikeb Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -40,10 +40,12 @@ struct pwdog_softc {
 
 int pwdog_probe(struct device *, void *, void *);
 void pwdog_attach(struct device *, struct device *, void *);
+int pwdog_activate(struct device *, int);
 int pwdog_set_timeout(void *, int);
 
 struct cfattach pwdog_ca = {
-	sizeof(struct pwdog_softc), pwdog_probe, pwdog_attach
+	sizeof(struct pwdog_softc), pwdog_probe, pwdog_attach,
+	NULL, pwdog_activate
 };
 
 struct cfdriver pwdog_cd = {
@@ -80,6 +82,18 @@ pwdog_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	bus_space_write_1(pwdog->iot, pwdog->ioh, PWDOG_DISABLE, 0);
 	wdog_register(pwdog_set_timeout, pwdog);
+}
+
+int
+pwdog_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 int

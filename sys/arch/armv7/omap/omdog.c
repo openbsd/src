@@ -1,4 +1,4 @@
-/*	$OpenBSD: omdog.c,v 1.4 2014/11/01 07:08:43 jsg Exp $	*/
+/*	$OpenBSD: omdog.c,v 1.5 2014/12/10 12:27:56 mikeb Exp $	*/
 /*
  * Copyright (c) 2013 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
@@ -57,6 +57,7 @@ struct omdog_softc {
 struct omdog_softc *omdog_sc;
 
 void	omdog_attach(struct device *, struct device *, void *);
+int	omdog_activate(struct device *, int);
 void	omdog_start(struct omdog_softc *);
 void	omdog_stop(struct omdog_softc *);
 void	omdog_sync(struct omdog_softc *);
@@ -64,7 +65,7 @@ int	omdog_cb(void *, int);
 void	omdog_reset(void);
 
 struct cfattach	omdog_ca = {
-	sizeof (struct omdog_softc), NULL, omdog_attach
+	sizeof (struct omdog_softc), NULL, omdog_attach, NULL, omdog_activate
 };
 
 struct cfdriver omdog_cd = {
@@ -93,6 +94,20 @@ omdog_attach(struct device *parent, struct device *self, void *args)
 #ifndef SMALL_KERNEL
 	wdog_register(omdog_cb, sc);
 #endif
+}
+
+int
+omdog_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+#ifndef SMALL_KERNEL
+		wdog_shutdown(self);
+#endif
+		break;
+	}
+
+	return (0);
 }
 
 void

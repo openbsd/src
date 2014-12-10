@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.7 2012/10/17 22:32:01 deraadt Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.8 2014/12/10 12:27:57 mikeb Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -46,6 +46,7 @@ struct berkwdt_softc {
 
 int berkwdt_match(struct device *, void *, void *);
 void berkwdt_attach(struct device *, struct device *, void *);
+int berkwdt_activate(struct device *, int);
 
 void berkwdt_start(struct berkwdt_softc *sc);
 void berkwdt_stop(struct berkwdt_softc *sc);
@@ -55,7 +56,8 @@ int berkwdt_send_command(struct berkwdt_softc *sc, u_int8_t cmd, int *val);
 int berkwdt_set_timeout(void *, int);
 
 struct cfattach berkwdt_ca = {
-	sizeof(struct berkwdt_softc), berkwdt_match, berkwdt_attach
+	sizeof(struct berkwdt_softc), berkwdt_match, berkwdt_attach,
+	NULL, berkwdt_activate
 };
 
 struct cfdriver berkwdt_cd = {
@@ -211,6 +213,18 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* register with the watchdog framework */
 	wdog_register(berkwdt_set_timeout, sc);
+}
+
+int
+berkwdt_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return (0);
 }
 
 int
