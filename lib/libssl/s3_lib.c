@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.85 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.86 2014/12/10 14:58:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1905,6 +1905,8 @@ ssl3_free(SSL *s)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 	BIO_free(s->s3->handshake_buffer);
 	ssl3_free_digest_list(s);
+	free(s->s3->alpn_selected);
+
 	OPENSSL_cleanse(s->s3, sizeof *s->s3);
 	free(s->s3);
 	s->s3 = NULL;
@@ -1938,6 +1940,9 @@ ssl3_clear(SSL *s)
 	s->s3->handshake_buffer = NULL;
 
 	ssl3_free_digest_list(s);
+
+	free(s->s3->alpn_selected);
+	s->s3->alpn_selected = NULL;
 
 	memset(s->s3, 0, sizeof *s->s3);
 	s->s3->rbuf.buf = rp;

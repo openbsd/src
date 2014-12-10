@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.71 2014/12/06 13:51:06 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.72 2014/12/10 14:58:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -878,6 +878,18 @@ skip_ext:
 	}
 #endif
 
+	if (s->alpn_client_proto_list != NULL &&
+	    s->s3->tmp.finish_md_len == 0) {
+		if ((size_t)(limit - ret) < 6 + s->alpn_client_proto_list_len)
+			return (NULL);
+		s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
+		s2n(2 + s->alpn_client_proto_list_len, ret);
+		s2n(s->alpn_client_proto_list_len, ret);
+		memcpy(ret, s->alpn_client_proto_list,
+		    s->alpn_client_proto_list_len);
+		ret += s->alpn_client_proto_list_len;
+	}
+
 #ifndef OPENSSL_NO_SRTP
 	if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
 		int el;
@@ -1107,11 +1119,95 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 #endif
 
+	if (s->s3->alpn_selected != NULL) {
+		const unsigned char *selected = s->s3->alpn_selected;
+		unsigned int len = s->s3->alpn_selected_len;
+
+		if ((long)(limit - ret - 4 - 2 - 1 - len) < 0)
+			return (NULL);
+		s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
+		s2n(3 + len, ret);
+		s2n(1 + len, ret);
+		*ret++ = len;
+		memcpy(ret, selected, len);
+		ret += len;
+	}
+
 	if ((extdatalen = ret - p - 2) == 0)
 		return p;
 
 	s2n(extdatalen, p);
 	return ret;
+}
+
+/*
+ * tls1_alpn_handle_client_hello is called to process the ALPN extension in a
+ * ClientHello.
+ *   data: the contents of the extension, not including the type and length.
+ *   data_len: the number of bytes in data.
+ *   al: a pointer to the alert value to send in the event of a non-zero
+ *       return.
+ *   returns: 1 on success.
+ */
+static int
+tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
+    unsigned int data_len, int *al)
+{
+	const unsigned char *selected;
+	unsigned char selected_len;
+	unsigned int proto_len;
+	unsigned int i;
+	int r;
+
+	if (s->ctx->alpn_select_cb == NULL)
+		return (1);
+
+	if (data_len < 2)
+		goto parse_error;
+
+	/*
+	 * data should contain a uint16 length followed by a series of 8-bit,
+	 * length-prefixed strings.
+	 */
+	i = ((unsigned int)data[0]) << 8 | ((unsigned int)data[1]);
+	data_len -= 2;
+	data += 2;
+	if (data_len != i)
+		goto parse_error;
+
+	if (data_len < 2)
+		goto parse_error;
+
+	for (i = 0; i < data_len; ) {
+		proto_len = data[i];
+		i++;
+
+		if (proto_len == 0)
+			goto parse_error;
+
+		if (i + proto_len < i || i + proto_len > data_len)
+			goto parse_error;
+
+		i += proto_len;
+	}
+
+	r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
+	    data, data_len, s->ctx->alpn_select_cb_arg);
+	if (r == SSL_TLSEXT_ERR_OK) {
+		free(s->s3->alpn_selected);
+		if ((s->s3->alpn_selected = malloc(selected_len)) == NULL) {
+			*al = SSL_AD_INTERNAL_ERROR;
+			return (-1);
+		}
+		memcpy(s->s3->alpn_selected, selected, selected_len);
+		s->s3->alpn_selected_len = selected_len;
+	}
+
+	return (1);
+
+parse_error:
+	*al = SSL_AD_DECODE_ERROR;
+	return (0);
 }
 
 /* ssl_check_for_safari attempts to fingerprint Safari using OS X
@@ -1211,6 +1307,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	s->s3->next_proto_neg_seen = 0;
 #endif
+	free(s->s3->alpn_selected);
+	s->s3->alpn_selected = NULL;
 
 	if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 		ssl_check_for_safari(s, data, d, n);
@@ -1520,7 +1618,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 		}
 #ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (type == TLSEXT_TYPE_next_proto_neg &&
-		    s->s3->tmp.finish_md_len == 0) {
+		    s->s3->tmp.finish_md_len == 0 &&
+		    s->s3->alpn_selected == NULL) {
 			/* We shouldn't accept this extension on a
 			 * renegotiation.
 			 *
@@ -1539,6 +1638,16 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			s->s3->next_proto_neg_seen = 1;
 		}
 #endif
+		else if (type ==
+		    TLSEXT_TYPE_application_layer_protocol_negotiation &&
+		    s->ctx->alpn_select_cb != NULL &&
+		    s->s3->tmp.finish_md_len == 0) {
+			if (tls1_alpn_handle_client_hello(s, data,
+			    size, al) != 1)
+				return (0);
+			/* ALPN takes precedence over NPN. */
+			s->s3->next_proto_neg_seen = 0;
+		}
 
 		/* session ticket processed earlier */
 #ifndef OPENSSL_NO_SRTP
@@ -1601,6 +1710,8 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	s->s3->next_proto_neg_seen = 0;
 #endif
+	free(s->s3->alpn_selected);
+	s->s3->alpn_selected = NULL;
 
 	if (data >= (d + n - 2))
 		goto ri_check;
@@ -1716,7 +1827,45 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			s->s3->next_proto_neg_seen = 1;
 		}
 #endif
-		else if (type == TLSEXT_TYPE_renegotiate) {
+		else if (type ==
+		    TLSEXT_TYPE_application_layer_protocol_negotiation) {
+			unsigned int len;
+
+			/* We must have requested it. */
+			if (s->alpn_client_proto_list == NULL) {
+				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
+				return 0;
+			}
+			if (size < 4) {
+				*al = TLS1_AD_DECODE_ERROR;
+				return (0);
+			}
+
+			/* The extension data consists of:
+			 *   uint16 list_length
+			 *   uint8 proto_length;
+			 *   uint8 proto[proto_length]; */
+			len = ((unsigned int)data[0]) << 8 |
+			    ((unsigned int)data[1]);
+			if (len != (unsigned int)size - 2) {
+				*al = TLS1_AD_DECODE_ERROR;
+				return (0);
+			}
+			len = data[2];
+			if (len != (unsigned int)size - 3) {
+				*al = TLS1_AD_DECODE_ERROR;
+				return (0);
+			}
+			free(s->s3->alpn_selected);
+			s->s3->alpn_selected = malloc(len);
+			if (s->s3->alpn_selected == NULL) {
+				*al = TLS1_AD_INTERNAL_ERROR;
+				return (0);
+			}
+			memcpy(s->s3->alpn_selected, data + 3, len);
+			s->s3->alpn_selected_len = len;
+
+		} else if (type == TLSEXT_TYPE_renegotiate) {
 			if (!ssl_parse_serverhello_renegotiate_ext(s, data, size, al))
 				return 0;
 			renegotiate_seen = 1;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.29 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: ssl3.h,v 1.30 2014/12/10 14:58:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -496,6 +496,20 @@ typedef struct ssl3_state_st {
 	 */
 	int next_proto_neg_seen;
 #endif
+
+	/*
+	 * ALPN information
+	 * (we are in the process of transitioning from NPN to ALPN).
+	 */
+
+	/*
+	 * In a server these point to the selected ALPN protocol after the
+	 * ClientHello has been processed. In a client these contain the
+	 * protocol that the server selected once the ServerHello has been
+	 * processed.
+	 */
+	unsigned char *alpn_selected;
+	unsigned int alpn_selected_len;
 
 	/* This is set to true if we believe that this is a version of Safari
 	 * running on OS X 10.6 or newer. We wish to know this because Safari

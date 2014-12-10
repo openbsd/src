@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.74 2014/12/10 14:51:00 bcook Exp $ */
+/* $OpenBSD: ssl.h,v 1.75 2014/12/10 14:58:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -861,9 +861,33 @@ struct ssl_ctx_st {
 	    unsigned int inlen, void *arg);
 	void *next_proto_select_cb_arg;
 # endif
+
+	/*
+	 * ALPN information
+	 * (we are in the process of transitioning from NPN to ALPN).
+	 */
+
+	/*
+	 * Server callback function that allows the server to select the
+	 * protocol for the connection.
+	 *   out: on successful return, this must point to the raw protocol
+	 *       name (without the length prefix).
+	 *   outlen: on successful return, this contains the length of out.
+	 *   in: points to the client's list of supported protocols in
+	 *       wire-format.
+	 *   inlen: the length of in.
+	 */
+	int (*alpn_select_cb)(SSL *s, const unsigned char **out,
+	    unsigned char *outlen, const unsigned char *in, unsigned int inlen,
+	    void *arg);
+	void *alpn_select_cb_arg;
+
+	/* Client list of supported protocols in wire format. */
+	unsigned char *alpn_client_proto_list;
+	unsigned int alpn_client_proto_list_len;
+
 	/* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
-
 };
 
 #endif
@@ -954,6 +978,15 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
 #define OPENSSL_NPN_NO_OVERLAP	2
 #endif
 
+int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
+    unsigned int protos_len);
+int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
+    unsigned int protos_len);
+void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
+    int (*cb)(SSL *ssl, const unsigned char **out, unsigned char *outlen,
+    const unsigned char *in, unsigned int inlen, void *arg), void *arg);
+void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
+    unsigned int *len);
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
@@ -1186,6 +1219,10 @@ struct ssl_st {
 					   */
 	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
 	unsigned int tlsext_hb_seq;	/* HeartbeatRequest sequence number */
+
+	/* Client list of supported protocols in wire format. */
+	unsigned char *alpn_client_proto_list;
+	unsigned int alpn_client_proto_list_len;
 
 	int renegotiate;/* 1 if we are renegotiating.
 		 	 * 2 if we are a server and are inside a handshake
