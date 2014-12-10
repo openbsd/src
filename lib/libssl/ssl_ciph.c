@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.77 2014/12/07 12:13:06 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.78 2014/12/10 15:36:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -314,16 +314,12 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.algorithm_auth = SSL_aECDSA,
 	},
 	{
-		.name = SSL_TXT_aGOST94,
-		.algorithm_auth = SSL_aGOST94,
-	},
-	{
 		.name = SSL_TXT_aGOST01,
 		.algorithm_auth = SSL_aGOST01,
 	},
 	{
 		.name = SSL_TXT_aGOST,
-		.algorithm_auth = SSL_aGOST94|SSL_aGOST01,
+		.algorithm_auth = SSL_aGOST01,
 	},
 
 	/* aliases combining key exchange and server authentication */
@@ -808,12 +804,10 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 	 * algorithms. If they are not available disable the associated
 	 * authentication and key exchange algorithms.
 	 */
-	if (EVP_PKEY_meth_find(NID_id_GostR3410_94) == NULL)
-		*auth |= SSL_aGOST94;
-	if (EVP_PKEY_meth_find(NID_id_GostR3410_2001) == NULL)
+	if (EVP_PKEY_meth_find(NID_id_GostR3410_2001) == NULL) {
 		*auth |= SSL_aGOST01;
-	if (((~*auth) & (SSL_aGOST94|SSL_aGOST01)) == 0)
 		*mkey |= SSL_kGOST;
+	}
 
 #ifdef SSL_FORBID_ENULL
 	*enc |= SSL_eNULL;
@@ -1588,9 +1582,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aECDSA:
 		au = "ECDSA";
-		break;
-	case SSL_aGOST94:
-		au = "GOST94";
 		break;
 	case SSL_aGOST01:
 		au = "GOST01";

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.91 2014/12/10 14:58:56 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.92 2014/12/10 15:36:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2051,11 +2051,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		mask_k |= SSL_kGOST;
 		mask_a |= SSL_aGOST01;
 	}
-	cpk = &(c->pkeys[SSL_PKEY_GOST94]);
-	if (cpk->x509 != NULL && cpk->privatekey !=NULL) {
-		mask_k |= SSL_kGOST;
-		mask_a |= SSL_aGOST94;
-	}
 
 	if (rsa_enc)
 		mask_k|=SSL_kRSA;
@@ -2211,8 +2206,6 @@ ssl_get_server_send_pkey(const SSL *s)
 			i = SSL_PKEY_RSA_SIGN;
 		else
 			i = SSL_PKEY_RSA_ENC;
-	} else if (alg_a & SSL_aGOST94) {
-		i = SSL_PKEY_GOST94;
 	} else if (alg_a & SSL_aGOST01) {
 		i = SSL_PKEY_GOST01;
 	} else { /* if (alg_a & SSL_aNULL) */

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.91 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.92 2014/12/10 15:36:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2134,9 +2134,7 @@ ssl3_get_client_key_exchange(SSL *s)
 
 		/* Get our certificate private key*/
 		alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-		if (alg_a & SSL_aGOST94)
-			pk = s->cert->pkeys[SSL_PKEY_GOST94].privatekey;
-		else if (alg_a & SSL_aGOST01)
+		if (alg_a & SSL_aGOST01)
 			pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
 
 		pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);

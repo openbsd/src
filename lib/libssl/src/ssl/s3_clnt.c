@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.97 2014/12/06 14:24:26 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.98 2014/12/10 15:36:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2207,8 +2207,6 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			/* Get server sertificate PKEY and create ctx from it */
 			peer_cert = s->session->sess_cert->peer_pkeys[SSL_PKEY_GOST01].x509;
-			if (!peer_cert)
-				peer_cert = s->session->sess_cert->peer_pkeys[SSL_PKEY_GOST94].x509;
 			if (!peer_cert) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);

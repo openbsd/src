@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.32 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.33 2014/12/10 15:36:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -542,9 +542,6 @@ ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	}
 	else if (i == EVP_PKEY_EC) {
 		ret = SSL_PKEY_ECC;
-	}
-	else if (i == NID_id_GostR3410_94 || i == NID_id_GostR3410_94_cc) {
-		ret = SSL_PKEY_GOST94;
 	} else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) {
 		ret = SSL_PKEY_GOST01;
 	}

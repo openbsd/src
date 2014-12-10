@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.79 2014/12/06 14:24:26 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.80 2014/12/10 15:36:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -266,7 +266,6 @@
 #define SSL_aNULL 		0x00000004L /* no auth (i.e. use ADH or AECDH) */
 #define SSL_aECDH 		0x00000010L /* Fixed ECDH auth (kECDHe or kECDHr) */
 #define SSL_aECDSA              0x00000040L /* ECDSA auth*/
-#define SSL_aGOST94		0x00000100L /* GOST R 34.10-94 signature auth */
 #define SSL_aGOST01 		0x00000200L /* GOST R 34.10-2001 signature auth */
 
 
@@ -398,9 +397,8 @@
 #define SSL_PKEY_DH_RSA		3
 #define SSL_PKEY_DH_DSA		4
 #define SSL_PKEY_ECC            5
-#define SSL_PKEY_GOST94		6
-#define SSL_PKEY_GOST01		7
-#define SSL_PKEY_NUM		8
+#define SSL_PKEY_GOST01		6
+#define SSL_PKEY_NUM		7
 
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)

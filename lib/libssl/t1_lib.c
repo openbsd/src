@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.72 2014/12/10 14:58:56 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.73 2014/12/10 15:36:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2448,7 +2448,6 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
 	c->pkeys[SSL_PKEY_ECC].digest = NULL;
-	c->pkeys[SSL_PKEY_GOST94].digest = NULL;
 	c->pkeys[SSL_PKEY_GOST01].digest = NULL;
 
 	for (i = 0; i < dsize; i += 2) {
@@ -2496,8 +2495,6 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	if (!c->pkeys[SSL_PKEY_ECC].digest)
 		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 #ifndef OPENSSL_NO_GOST
-	if (!c->pkeys[SSL_PKEY_GOST94].digest)
-		c->pkeys[SSL_PKEY_GOST94].digest = EVP_gostr341194();
 	if (!c->pkeys[SSL_PKEY_GOST01].digest)
 		c->pkeys[SSL_PKEY_GOST01].digest = EVP_gostr341194();
 #endif
