@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.344 2014/12/09 02:27:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.345 2014/12/10 01:05:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -338,10 +338,7 @@ routehandler(void)
 			}
 		}
 
-		linkstat =
-		    LINK_STATE_IS_UP(ifm->ifm_data.ifi_link_state) ? 1 : 0;
-		linkstat = linkstat || (ifi->flags & IFI_NOMEDIA);
-		linkstat = linkstat && (ifm->ifm_flags & IFF_UP);
+		linkstat = interface_status(ifi->name);
 		if (linkstat != ifi->linkstat) {
 #ifdef DEBUG
 			debug("link state %s -> %s",
@@ -353,9 +350,10 @@ routehandler(void)
 				if (client->state == S_PREBOOT) {
 					state_preboot();
 					get_hw_address();
+				} else {
+					client->state = S_REBOOTING;
+					state_reboot();
 				}
-				client->state = S_REBOOTING;
-				set_timeout_interval(1, state_reboot);
 			} else if (strlen(path_option_db)) {
 				/* Let monitoring programs see link loss. */
 				write_file(path_option_db,
@@ -641,6 +639,8 @@ state_preboot(void)
 
 	interval = (int)(cur_time - client->first_sending);
 
+	ifi->linkstat = interface_status(ifi->name);
+
 	if (log_perror && interval > 3) {
 		if (!preamble && !ifi->linkstat) {
 			fprintf(stderr, "%s: no link ....", ifi->name);
@@ -657,13 +657,14 @@ state_preboot(void)
 		}
 	}
 
-	if (!ifi->linkstat) {
-		if (interval > config->link_timeout) {
+	if (ifi->linkstat) {
+		client->state = S_REBOOTING;
+		set_timeout_interval(1, state_reboot);
+	} else {
+		if (interval > config->link_timeout)
 			go_daemon();
-			set_timeout_interval(config->retry_interval,
-			    state_preboot);
-		} else
-			set_timeout_interval(1, state_preboot);
+		client->state = S_PREBOOT;
+		set_timeout_interval(1, state_preboot);
 	}
 }
 
