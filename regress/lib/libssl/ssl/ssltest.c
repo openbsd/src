@@ -284,6 +284,128 @@ verify_npn(SSL *client, SSL *server)
 }
 #endif
 
+static const char *alpn_client;
+static const char *alpn_server;
+static const char *alpn_expected;
+static unsigned char *alpn_selected;
+
+/*
+ * next_protos_parse parses a comma separated list of strings into a string
+ * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
+ *   outlen: (output) set to the length of the resulting buffer on success.
+ *   err: (maybe NULL) on failure, an error message line is written to this BIO.
+ *   in: a NUL terminated string like "abc,def,ghi"
+ *
+ *   returns: a malloced buffer or NULL on failure.
+ */
+static unsigned char *
+next_protos_parse(unsigned short *outlen, const char *in)
+{
+	size_t i, len, start = 0;
+	unsigned char *out;
+
+	len = strlen(in);
+	if (len >= 65535)
+		return (NULL);
+
+	if ((out = malloc(strlen(in) + 1)) == NULL)
+		return (NULL);
+
+	for (i = 0; i <= len; ++i) {
+		if (i == len || in[i] == ',') {
+			if (i - start > 255) {
+				free(out);
+				return (NULL);
+			}
+			out[start] = i - start;
+			start = i + 1;
+		} else
+			out[i+1] = in[i];
+	}
+	*outlen = len + 1;
+	return (out);
+}
+
+static int
+cb_server_alpn(SSL *s, const unsigned char **out, unsigned char *outlen,
+    const unsigned char *in, unsigned int inlen, void *arg)
+{
+	unsigned char *protos;
+	unsigned short protos_len;
+
+	if ((protos = next_protos_parse(&protos_len, alpn_server)) == NULL) {
+		fprintf(stderr,
+		    "failed to parser ALPN server protocol string: %s\n",
+		    alpn_server);
+		abort();
+	}
+
+	if (SSL_select_next_proto((unsigned char **)out, outlen, protos,
+	    protos_len, in, inlen) != OPENSSL_NPN_NEGOTIATED) {
+		free(protos);
+		return (SSL_TLSEXT_ERR_NOACK);
+	}
+
+	/*
+	 * Make a copy of the selected protocol which will be freed in
+	 * verify_alpn.
+	 */
+	if ((alpn_selected = malloc(*outlen)) == NULL) {
+		fprintf(stderr, "malloc failed\n");
+		abort();
+	}
+	memcpy(alpn_selected, *out, *outlen);
+	*out = alpn_selected;
+	free(protos);
+
+	return (SSL_TLSEXT_ERR_OK);
+}
+
+static int
+verify_alpn(SSL *client, SSL *server)
+{
+	const unsigned char *client_proto, *server_proto;
+	unsigned int client_proto_len = 0, server_proto_len = 0;
+
+	SSL_get0_alpn_selected(client, &client_proto, &client_proto_len);
+	SSL_get0_alpn_selected(server, &server_proto, &server_proto_len);
+
+	free(alpn_selected);
+	alpn_selected = NULL;
+
+	if (client_proto_len != server_proto_len ||
+	    memcmp(client_proto, server_proto, client_proto_len) != 0) {
+		BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
+		goto err;
+	}
+
+	if (client_proto_len > 0 && alpn_expected == NULL) {
+		BIO_printf(bio_stdout, "ALPN unexpectedly negotiated\n");
+		goto err;
+	}
+
+	if (alpn_expected != NULL &&
+	    (client_proto_len != strlen(alpn_expected) ||
+	     memcmp(client_proto, alpn_expected, client_proto_len) != 0)) {
+		BIO_printf(bio_stdout, "ALPN selected protocols not equal to "
+		    "expected protocol: %s\n", alpn_expected);
+		goto err;
+	}
+
+	return (0);
+
+err:
+	BIO_printf(bio_stdout, "ALPN results: client: '");
+	BIO_write(bio_stdout, client_proto, client_proto_len);
+	BIO_printf(bio_stdout, "', server: '");
+	BIO_write(bio_stdout, server_proto, server_proto_len);
+	BIO_printf(bio_stdout, "'\n");
+	BIO_printf(bio_stdout, "ALPN configured: client: '%s', server: '%s'\n",
+	    alpn_client, alpn_server);
+
+	return (-1);
+}
+
 static char *cipher = NULL;
 static int verbose = 0;
 static int debug = 0;
@@ -334,6 +456,9 @@ sv_usage(void)
 	fprintf(stderr, " -npn_server - have server side offer NPN\n");
 	fprintf(stderr, " -npn_server_reject - have server reject NPN\n");
 #endif
+	fprintf(stderr, " -alpn_client <string> - have client side offer ALPN\n");
+	fprintf(stderr, " -alpn_server <string> - have server side offer ALPN\n");
+	fprintf(stderr, " -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
 }
 
 static void
@@ -584,7 +709,19 @@ main(int argc, char *argv[])
 			npn_server_reject = 1;
 		}
 #endif
-		else {
+		else if (strcmp(*argv, "-alpn_client") == 0) {
+			if (--argc < 1)
+				goto bad;
+			alpn_client = *(++argv);
+		} else if (strcmp(*argv, "-alpn_server") == 0) {
+			if (--argc < 1)
+				goto bad;
+			alpn_server = *(++argv);
+		} else if (strcmp(*argv, "-alpn_expected") == 0) {
+			if (--argc < 1)
+				goto bad;
+			alpn_expected = *(++argv);
+		} else {
 			fprintf(stderr, "unknown option %s\n", *argv);
 			badop = 1;
 			break;
@@ -758,6 +895,21 @@ bad:
 		    cb_server_rejects_npn, NULL);
 	}
 #endif
+
+	if (alpn_server != NULL)
+		SSL_CTX_set_alpn_select_cb(s_ctx, cb_server_alpn, NULL);
+
+	if (alpn_client != NULL) {
+		unsigned short alpn_len;
+		unsigned char *alpn = next_protos_parse(&alpn_len, alpn_client);
+
+		if (alpn == NULL) {
+			BIO_printf(bio_err, "Error parsing -alpn_client argument\n");
+			goto end;
+		}
+		SSL_CTX_set_alpn_protos(c_ctx, alpn, alpn_len);
+		free(alpn);
+	}
 
 	c_ssl = SSL_new(c_ctx);
 	s_ssl = SSL_new(s_ctx);
@@ -1163,6 +1315,10 @@ doit_biopair(SSL *s_ssl, SSL *c_ssl, long count, clock_t *s_time,
 		goto err;
 	}
 #endif
+	if (verify_alpn(c_ssl, s_ssl) < 0) {
+		ret = 1;
+		goto err;
+	}
 
 end:
 	ret = 0;
@@ -1416,6 +1572,10 @@ doit(SSL *s_ssl, SSL *c_ssl, long count)
 		goto err;
 	}
 #endif
+	if (verify_alpn(c_ssl, s_ssl) < 0) {
+		ret = 1;
+		goto err;
+	}
 
 	ret = 0;
 err:

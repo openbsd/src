@@ -155,3 +155,22 @@ $ssltest -bio_pair -tls1 -npn_client -npn_server_reject || exit 1
 $ssltest -bio_pair -tls1 -npn_client -npn_server || exit 1
 $ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 || exit 1
 $ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 -reuse || exit 1
+
+#
+# ALPN tests
+#
+echo "Testing ALPN..."
+$ssltest -bio_pair -tls1 -alpn_client foo -alpn_server bar || exit 1
+$ssltest -bio_pair -tls1 -alpn_client foo -alpn_server foo \
+  -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server foo \
+  -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server foo \
+  -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server foo,bar \
+  -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server bar,foo \
+  -alpn_expected bar || exit 1
+$ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server bar,foo \
+  -alpn_expected bar || exit 1
+$ssltest -bio_pair -tls1 -alpn_client baz -alpn_server bar,foo || exit 1
