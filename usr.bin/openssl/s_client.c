@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.9 2014/12/02 19:44:49 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.10 2014/12/10 15:24:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -253,6 +253,7 @@ sc_usage(void)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err, " -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 #endif
+	BIO_printf(bio_err, " -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 #ifndef OPENSSL_NO_SRTP
 	BIO_printf(bio_err, " -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
 #endif
@@ -374,6 +375,7 @@ s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 #endif
+	const char *alpn_in = NULL;
 	char *sess_in = NULL;
 	char *sess_out = NULL;
 	struct sockaddr peer;
@@ -544,7 +546,11 @@ s_client_main(int argc, char **argv)
 			next_proto_neg_in = *(++argv);
 		}
 #endif
-		else if (strcmp(*argv, "-serverpref") == 0)
+		else if (strcmp(*argv, "-alpn") == 0) {
+			if (--argc < 1)
+				goto bad;
+			alpn_in = *(++argv);
+		} else if (strcmp(*argv, "-serverpref") == 0)
 			off |= SSL_OP_CIPHER_SERVER_PREFERENCE;
 		else if (strcmp(*argv, "-legacy_renegotiation") == 0)
 			; /* no-op */
@@ -736,6 +742,17 @@ bad:
 	if (next_proto.data)
 		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
+	if (alpn_in) {
+		unsigned short alpn_len;
+		unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
+
+		if (alpn == NULL) {
+			BIO_printf(bio_err, "Error parsing -alpn argument\n");
+			goto end;
+		}
+		SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len);
+		free(alpn);
+	}
 
 	if (state)
 		SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
@@ -1423,6 +1440,17 @@ print_stuff(BIO * bio, SSL * s, int full)
 		BIO_write(bio, "\n", 1);
 	}
 #endif
+	{
+		const unsigned char *proto;
+		unsigned int proto_len;
+		SSL_get0_alpn_selected(s, &proto, &proto_len);
+		if (proto_len > 0) {
+			BIO_printf(bio, "ALPN protocol: ");
+			BIO_write(bio, proto, proto_len);
+			BIO_write(bio, "\n", 1);
+		} else
+			BIO_printf(bio, "No ALPN negotiated\n");
+	}
 
 #ifndef OPENSSL_NO_SRTP
 	{
