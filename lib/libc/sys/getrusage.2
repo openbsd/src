@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrusage.2,v 1.15 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: getrusage.2,v 1.16 2014/12/10 07:16:58 guenther Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,29 +29,30 @@
 .\"
 .\"     @(#)getrusage.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt GETRUSAGE 2
 .Os
 .Sh NAME
 .Nm getrusage
 .Nd get information about resource utilization
 .Sh SYNOPSIS
-.Fd #include <sys/resource.h>
-.Pp
-.Fd #define RUSAGE_SELF		0
-.Fd #define RUSAGE_CHILDREN	(-1)
+.In sys/resource.h
 .Ft int
 .Fn getrusage "int who" "struct rusage *rusage"
 .Sh DESCRIPTION
 .Fn getrusage
-returns information describing the resources utilized by the current
-process, or all its terminated child processes.
-The
-.Fa who
-parameter is either
-.Dv RUSAGE_SELF
-or
-.Dv RUSAGE_CHILDREN .
+returns resource usage information for argument
+.Fa who ,
+which can be one of the following:
+.Bl -tag -width RUSAGE_CHILDREN -offset indent
+.It Dv RUSAGE_SELF
+Resources used by the current process.
+.It Dv RUSAGE_CHILDREN
+Resources used by all the terminated children of the current process.
+.It Dv RUSAGE_THREAD
+Resources used by the current thread.
+.El
+.Pp
 The buffer to which
 .Fa rusage
 points will be filled in with
@@ -136,10 +137,7 @@ account only for real
 I/O; data supplied by the caching mechanism is charged only
 to the first process to read or write the data.
 .Sh RETURN VALUES
-Upon success, a value of zero is returned.
-Otherwise, \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn getrusage
 will fail if:
@@ -162,6 +160,10 @@ The
 .Fn getrusage
 function conforms to
 .St -p1003.1-2008 .
+.Pp
+The
+.Dv RUSAGE_THREAD
+flag is an extension to that specification.
 .Sh HISTORY
 A predecessor to
 .Fn getrusage ,
@@ -172,6 +174,11 @@ The
 .Fn getrusage
 system call first appeared in
 .Bx 4.1c .
+.Pp
+The
+.Dv RUSAGE_THREAD
+flag has been available since
+.Ox 4.8 .
 .Sh BUGS
 There is no way to obtain information about a child process
 that has not yet terminated.
