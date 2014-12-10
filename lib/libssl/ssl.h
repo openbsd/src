@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.73 2014/12/06 13:51:06 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.74 2014/12/10 14:51:00 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,6 +142,8 @@
 
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
+
+#include <stdint.h>
 
 #include <openssl/opensslconf.h>
 #include <openssl/hmac.h>
