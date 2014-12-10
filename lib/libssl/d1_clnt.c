@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.39 2014/12/06 14:24:26 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.40 2014/12/10 15:43:31 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -310,7 +310,10 @@ dtls1_connect(SSL *s)
 			s->shutdown = 0;
 
 			/* every DTLS ClientHello resets Finished MAC */
-			ssl3_init_finished_mac(s);
+			if (!ssl3_init_finished_mac(s)) {
+				ret = -1;
+				goto end;
+			}
 
 			dtls1_start_timer(s);
 			ret = dtls1_client_hello(s);

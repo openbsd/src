@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.98 2014/12/10 15:36:46 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.99 2014/12/10 15:43:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -288,7 +288,10 @@ ssl3_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			ssl3_init_finished_mac(s);
+			if (!ssl3_init_finished_mac(s)) {
+				ret = -1;
+				goto end;
+			}
 
 			s->state = SSL3_ST_CW_CLNT_HELLO_A;
 			s->ctx->stats.sess_connect++;

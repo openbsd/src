@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.42 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.43 2014/12/10 15:43:31 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -272,7 +272,11 @@ dtls1_accept(SSL *s)
 					goto end;
 				}
 
-				ssl3_init_finished_mac(s);
+				if (!ssl3_init_finished_mac(s)) {
+					ret = -1;
+					goto end;
+				}
+
 				s->state = SSL3_ST_SR_CLNT_HELLO_A;
 				s->ctx->stats.sess_accept++;
 			} else {
@@ -297,7 +301,10 @@ dtls1_accept(SSL *s)
 			s->state = SSL3_ST_SW_FLUSH;
 			s->init_num = 0;
 
-			ssl3_init_finished_mac(s);
+			if (!ssl3_init_finished_mac(s)) {
+				ret = -1;
+				goto end;
+			}
 			break;
 
 		case SSL3_ST_SW_HELLO_REQ_C:
@@ -351,8 +358,12 @@ dtls1_accept(SSL *s)
 			s->s3->tmp.next_state = SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC */
-			if (s->version != DTLS1_BAD_VER)
-				ssl3_init_finished_mac(s);
+			if (s->version != DTLS1_BAD_VER) {
+				if (!ssl3_init_finished_mac(s)) {
+					ret = -1;
+					goto end;
+				}
+			}
 			break;
 
 #ifndef OPENSSL_NO_SCTP

@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.36 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.37 2014/12/10 15:43:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -219,7 +219,10 @@ ssl23_accept(SSL *s)
 				s->init_buf = buf;
 			}
 
-			ssl3_init_finished_mac(s);
+			if (!ssl3_init_finished_mac(s)) {
+				ret = -1;
+				goto end;
+			}
 
 			s->state = SSL23_ST_SR_CLNT_HELLO_A;
 			s->ctx->stats.sess_accept++;

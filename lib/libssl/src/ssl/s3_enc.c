@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.56 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.57 2014/12/10 15:43:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -469,14 +469,19 @@ ssl3_enc(SSL *s, int send)
 	return (1);
 }
 
-void
+int
 ssl3_init_finished_mac(SSL *s)
 {
 	BIO_free(s->s3->handshake_buffer);
 	ssl3_free_digest_list(s);
+
 	s->s3->handshake_buffer = BIO_new(BIO_s_mem());
+	if (s->s3->handshake_buffer == NULL)
+		return (0);
 
 	(void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
+
+	return (1);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.33 2014/12/10 15:36:46 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.34 2014/12/10 15:43:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -464,7 +464,11 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			 * start a new handshake?). We need to restart the mac.
 			 * Don't increment {num,total}_renegotiations because
 			 * we have not completed the handshake. */
-			ssl3_init_finished_mac(s);
+			if (!ssl3_init_finished_mac(s)) {
+				SSLerr(SSL_F_SSL3_GET_MESSAGE,
+				    ERR_R_MALLOC_FAILURE);
+				goto err;
+			}
 		}
 
 		s->s3->tmp.message_type= *(p++);
