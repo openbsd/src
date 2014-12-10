@@ -6215,7 +6215,6 @@
 ./usr/share/man/man9/dohooks.9
 ./usr/share/man/man9/domountroothooks.9
 ./usr/share/man/man9/dopowerhooks.9
-./usr/share/man/man9/doshutdownhooks.9
 ./usr/share/man/man9/dostartuphooks.9
 ./usr/share/man/man9/evcount.9
 ./usr/share/man/man9/evcount_attach.9
@@ -6568,8 +6567,6 @@
 ./usr/share/man/man9/sensordev_get.9
 ./usr/share/man/man9/sensordev_install.9
 ./usr/share/man/man9/setdisklabel.9
-./usr/share/man/man9/shutdownhook_disestablish.9
-./usr/share/man/man9/shutdownhook_establish.9
 ./usr/share/man/man9/skpc.9
 ./usr/share/man/man9/snprintf.9
 ./usr/share/man/man9/sobind.9
