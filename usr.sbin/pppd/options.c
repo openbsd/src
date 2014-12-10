@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.26 2013/10/27 18:49:25 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.27 2014/12/10 03:39:54 jsg Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -889,9 +889,10 @@ getword(f, word, newlinep, filename)
 	    /*
 	     * Store the resulting character for the escape sequence.
 	     */
-	    if (len < MAXWORDLEN-1)
+	    if (len < MAXWORDLEN) {
 		word[len] = value;
-	    ++len;
+		++len;
+	    }
 
 	    if (!got)
 		c = getc(f);
@@ -924,9 +925,10 @@ getword(f, word, newlinep, filename)
 	/*
 	 * An ordinary character: store it in the word and get another.
 	 */
-	if (len < MAXWORDLEN-1)
+	if (len < MAXWORDLEN) {
 	    word[len] = c;
-	++len;
+	    ++len;
+	}
 
 	c = getc(f);
     }
