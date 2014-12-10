@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.135 2014/12/10 19:40:21 tobias Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.136 2014/12/10 19:42:14 tobias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -349,11 +349,11 @@ main(int argc, char *argv[])
 	if (Debug)
 		setvbuf(stdout, NULL, _IOLBF, 0);
 
-	if ((fd = nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
 		logerror("Couldn't open /dev/null");
 		die(0);
 	}
-	while (fd++ <= 2) {
+	for (fd = nullfd + 1; fd <= 2; fd++) {
 		if (fcntl(fd, F_GETFL, 0) == -1)
 			if (dup2(nullfd, fd) == -1)
 				logerror("dup2");
