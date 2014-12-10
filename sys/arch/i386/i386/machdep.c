@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.559 2014/12/03 20:09:32 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.560 2014/12/10 15:29:53 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2590,7 +2590,6 @@ boot(int howto)
 		dumpsys();
 
 haltsys:
-	doshutdownhooks();
 	config_suspend_all(DVACT_POWERDOWN);
 
 #ifdef MULTIPROCESSOR

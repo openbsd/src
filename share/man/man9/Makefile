@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.223 2014/11/24 12:43:54 mpi Exp $
+#	$OpenBSD: Makefile,v 1.224 2014/12/10 15:29:52 mikeb Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -11,7 +11,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	bus_space.9 \
 	copy.9 config_attach.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 dopowerhooks.9 \
-	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
+	domountroothooks.9 dostartuphooks.9 \
 	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 \
 	getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 idgen32.9 \
@@ -28,7 +28,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
 	rtlabel_id2name.9 rtrequest1.9 rwlock.9 SipHash24.9 sensor_attach.9 \
-	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
+	tsleep.9 spl.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
 	task_add.9 tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
 	usbd_transfer.9 \
@@ -354,7 +354,6 @@ MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensor_find.9 \
 	sensor_attach.9 sensor_task_register.9 \
 	sensor_attach.9 sensor_task_unregister.9
-MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=socreate.9 sobind.9 socreate.9 soclose.9 socreate.9 soconnect.9 \
 	socreate.9 sogetopt.9 socreate.9 soreceive.9 socreate.9 sosetopt.9 \
 	socreate.9 sosend.9 socreate.9 soshutdown.9

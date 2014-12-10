@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2014/10/25 17:31:26 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2014/12/10 15:29:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -569,7 +569,6 @@ boot(int howto)
 		dumpsys();
 
 haltsys:
-	doshutdownhooks();
 	config_suspend_all(DVACT_POWERDOWN);
 
 	/* in case we came on powerfail interrupt */

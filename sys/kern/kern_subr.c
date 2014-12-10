@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.41 2014/11/01 23:58:28 tedu Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.42 2014/12/10 15:29:53 mikeb Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -176,13 +176,11 @@ hashinit(int elements, int type, int flags, u_long *hashmask)
 }
 
 /*
- * "Shutdown/startup hook" types, functions, and variables.
+ * "Mountroot/startup hook" types, functions, and variables.
  */
 
 struct hook_desc_head startuphook_list =
     TAILQ_HEAD_INITIALIZER(startuphook_list);
-struct hook_desc_head shutdownhook_list =
-    TAILQ_HEAD_INITIALIZER(shutdownhook_list);
 struct hook_desc_head mountroothook_list =
     TAILQ_HEAD_INITIALIZER(mountroothook_list);
 

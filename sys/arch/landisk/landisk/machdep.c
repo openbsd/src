@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2014/09/20 09:28:24 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2014/12/10 15:29:53 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -219,7 +219,6 @@ boot(int howto)
 		dumpsys();
 
 haltsys:
-	doshutdownhooks();
 	config_suspend_all(DVACT_POWERDOWN);
 
 	if ((howto & RB_POWERDOWN) != 0) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: startuphook_establish.9,v 1.7 2013/11/05 20:20:14 jmc Exp $
+.\"	$OpenBSD: startuphook_establish.9,v 1.8 2014/12/10 15:29:52 mikeb Exp $
 .\"
 .\" Copyright (c) 1995 Niklas Hallqvist.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 5 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt STARTUPHOOK_ESTABLISH 9
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ Startup hooks should be used to perform one-time activities
 that must happen immediately before the root and swap devices
 are configured, but after normal device autoconfiguration.
 .Pp
-Startup hooks are, like shutdown hooks, implemented via the more general
+Startup hooks are implemented via the more general
 .Xr dohooks 9
 API.
 .Sh RETURN VALUES
@@ -80,7 +80,6 @@ Otherwise, it returns
 .Dv NULL .
 .Sh SEE ALSO
 .Xr dohooks 9 ,
-.Xr doshutdownhooks 9 ,
 .Xr dostartuphooks 9
 .Sh BUGS
 The names are clumsy, at best.

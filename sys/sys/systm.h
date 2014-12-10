@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.105 2014/12/10 12:27:57 mikeb Exp $	*/
+/*	$OpenBSD: systm.h,v 1.106 2014/12/10 15:29:53 mikeb Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -263,11 +263,8 @@ void	wdog_register(int (*)(void *, int), void *);
 void	wdog_shutdown(void *);
 
 /*
- * Startup/shutdown hooks.  Startup hooks are functions running after
- * the scheduler has started but before any threads have been created
- * or root has been mounted. The shutdown hooks are functions to be run
- * with all interrupts disabled immediately before the system is
- * halted or rebooted.
+ * Startup hooks are functions running after the scheduler has started
+ * but before any threads have been created or root has been mounted.
  */
 
 struct hook_desc {
@@ -277,8 +274,7 @@ struct hook_desc {
 };
 TAILQ_HEAD(hook_desc_head, hook_desc);
 
-extern struct hook_desc_head shutdownhook_list, startuphook_list,
-    mountroothook_list;
+extern struct hook_desc_head startuphook_list, mountroothook_list;
 
 void	*hook_establish(struct hook_desc_head *, int, void (*)(void *), void *);
 void	hook_disestablish(struct hook_desc_head *, void *);
@@ -292,12 +288,6 @@ void	dohooks(struct hook_desc_head *, int);
 #define startuphook_disestablish(vhook) \
 	hook_disestablish(&startuphook_list, (vhook))
 #define dostartuphooks() dohooks(&startuphook_list, HOOK_REMOVE|HOOK_FREE)
-
-#define shutdownhook_establish(fn, arg) \
-	hook_establish(&shutdownhook_list, 0, (fn), (arg))
-#define shutdownhook_disestablish(vhook) \
-	hook_disestablish(&shutdownhook_list, (vhook))
-#define doshutdownhooks() dohooks(&shutdownhook_list, HOOK_REMOVE)
 
 #define mountroothook_establish(fn, arg) \
 	hook_establish(&mountroothook_list, 1, (fn), (arg))

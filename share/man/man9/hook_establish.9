@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hook_establish.9,v 1.10 2013/06/04 19:27:07 schwarze Exp $
+.\"	$OpenBSD: hook_establish.9,v 1.11 2014/12/10 15:29:52 mikeb Exp $
 .\"
 .\" Copyright (c) 2001 Niklas Hallqvist.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: December 10 2014 $
 .Dt HOOK_ESTABLISH 9
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ is invalid, the result of
 .Fn hook_disestablish
 is undefined.
 .Pp
-The startup-, mountroot, and shutdownhooks systems use this API for their
+The startup and mountroot systems use this API for their
 implementation.
 .Sh RETURN VALUES
 If successful,
@@ -85,8 +85,7 @@ Otherwise, it returns
 .Dv NULL .
 .Sh SEE ALSO
 .Xr dohooks 9 ,
-.Xr doshutdownhooks 9 ,
+.Xr domountroothooks 9 ,
 .Xr dostartuphooks 9 ,
 .Xr mountroothook_establish 9 ,
-.Xr shutdownhook_establish 9 ,
 .Xr startuphook_establish 9

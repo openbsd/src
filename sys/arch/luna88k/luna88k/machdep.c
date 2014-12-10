@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2014/10/05 02:12:19 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.114 2014/12/10 15:29:53 mikeb Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -480,7 +480,6 @@ boot(int howto)
 		dumpsys();
 
 haltsys:
-	doshutdownhooks();
 	config_suspend_all(DVACT_POWERDOWN);
 
 	/* LUNA-88K supports automatic powerdown */

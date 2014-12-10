@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.239 2014/10/25 17:31:26 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.240 2014/12/10 15:29:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -920,7 +920,6 @@ boot(int howto)
 		dumpsys();
 
 haltsys:
-	doshutdownhooks();
 	config_suspend_all(DVACT_POWERDOWN);
 
 #ifdef MULTIPROCESSOR

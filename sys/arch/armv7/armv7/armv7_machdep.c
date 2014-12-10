@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.16 2014/11/16 12:30:56 deraadt Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.17 2014/12/10 15:29:53 mikeb Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -251,7 +251,6 @@ boot(int howto)
 #endif
 
 	if (cold) {
-		doshutdownhooks();
 		config_suspend_all(DVACT_POWERDOWN);
 		if ((howto & (RB_HALT | RB_USERREQ)) != RB_USERREQ) {
 			printf("The operating system has halted.\n");
@@ -288,7 +287,6 @@ boot(int howto)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
-	doshutdownhooks();
 	config_suspend_all(DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
