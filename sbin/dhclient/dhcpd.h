@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.145 2014/12/05 15:47:05 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.146 2014/12/10 02:34:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -163,6 +163,7 @@ struct client_state {
 	u_int32_t		 xid;
 	u_int16_t		 secs;
 	time_t			 first_sending;
+	time_t			 startup_time;
 	time_t			 interval;
 	struct dhcp_packet	 packet;
 	struct dhcp_packet	 bootrequest_packet;
@@ -184,9 +185,10 @@ struct interface_info {
 	int		 linkstat;
 	int		 rdomain;
 	int		 flags;
-#define IFI_NEW_LLADDR	0x00000001
-#define IFI_HUP		0x00000002
-#define IFI_NOMEDIA	0x00000004
+#define	IFI_VALID_LLADDR	0x00000001
+#define IFI_NEW_LLADDR		0x00000002
+#define IFI_NOMEDIA		0x00000004
+#define IFI_HUP			0x00000008
 };
 
 struct dhcp_timeout {

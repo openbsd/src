@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.345 2014/12/10 01:05:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.346 2014/12/10 02:34:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -327,7 +327,7 @@ routehandler(void)
 			goto die;
 		}
 
-		if (ifi->linkstat) {
+		if (ifi->flags & IFI_VALID_LLADDR) {
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
 			get_hw_address();
 			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
@@ -599,6 +599,7 @@ main(int argc, char *argv[])
 	endpwent();
 
 	setproctitle("%s", ifi->name);
+	time(&client->startup_time);
 
 	if (ifi->linkstat) {
 		client->state = S_REBOOTING;
@@ -634,10 +635,7 @@ state_preboot(void)
 
 	time(&cur_time);
 
-	if (client->first_sending == 0)
-		client->first_sending = cur_time;
-
-	interval = (int)(cur_time - client->first_sending);
+	interval = (int)(cur_time - client->startup_time);
 
 	ifi->linkstat = interface_status(ifi->name);
 
