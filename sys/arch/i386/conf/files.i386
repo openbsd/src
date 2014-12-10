@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.219 2014/12/04 21:03:51 tedu Exp $
+#	$OpenBSD: files.i386,v 1.220 2014/12/10 05:42:25 jsg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -209,6 +209,11 @@ include	"dev/pckbc/files.pckbc"
 # device declaration in sys/conf/files
 attach	ahc at isa with ahc_isa
 file	arch/i386/isa/ahc_isa.c		ahc_isa
+
+# Soekris GPIO & LEDs driver
+device	skgpio: gpiobus
+attach	skgpio at isa
+file	dev/isa/skgpio.c		skgpio
 
 # Pentium performance counters
 pseudo-device	pctr

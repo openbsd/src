@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.75 2014/12/04 21:03:50 tedu Exp $
+#	$OpenBSD: files.amd64,v 1.76 2014/12/10 05:42:25 jsg Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -182,6 +182,11 @@ include	"dev/wscons/files.wscons"
 include	"dev/pckbc/files.pckbc"
 
 file	arch/amd64/amd64/wscons_machdep.c	wsdisplay
+
+# Soekris GPIO & LEDs driver
+device	skgpio: gpiobus
+attach	skgpio at isa
+file	dev/isa/skgpio.c			skgpio
 
 pseudo-device	pctr
 file	arch/amd64/amd64/pctr.c		pctr needs-flag
