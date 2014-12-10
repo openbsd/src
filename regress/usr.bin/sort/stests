@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.5 2013/10/28 08:41:20 jsg Exp $
+#	$OpenBSD: stests,v 1.6 2014/12/10 03:15:59 daniel Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -79,7 +79,7 @@ cat <<'!' >xsort; chmod +x xsort
 			cmp xx out >/dev/null && exit 0
 			echo $TEST$X comparison failed
 		else
-			test "`cksum -o2 <in`" = "`cksum -o2 <xx`" && exit 0
+			test "`cksum <in`" = "`cksum <xx`" && exit 0
 			echo $TEST$X checksum failed
 		fi
 	else
@@ -109,7 +109,7 @@ rm -f out -o
 
 sort -c in 2>/dev/null && echo ${TEST}A failed
 
-xsort B || '"cksum"' is probably unsuitable - see comments
+xsort B || echo '"cksum"' is probably unsuitable - see comments
 
 $o sort +0 in -o in || echo ${TEST}c failed
 
