@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.224 2014/12/10 15:29:52 mikeb Exp $
+#	$OpenBSD: Makefile,v 1.225 2014/12/11 14:29:42 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -70,7 +70,7 @@ MLINKS+=buffercache.9 bread.9 buffercache.9 breadn.9 \
 	buffercache.9 bwrite.9 buffercache.9 bawrite.9 \
 	buffercache.9 bdwrite.9 buffercache.9 getblk.9 \
 	buffercache.9 geteblk.9 buffercache.9 incore.9 \
-	buffercache.9 allocbuf.9 buffercache.9 brelse.9 \
+	buffercache.9 brelse.9 \
 	buffercache.9 biodone.9 buffercache.9 biowait.9
 MLINKS+=bufq_init.9 bufq_switch.9 bufq_init.9 bufq_destroy.9 \
 	bufq_init.9 bufq_queue.9 bufq_init.9 bufq_dequeue.9 \

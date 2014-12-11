@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.9 2013/06/11 16:42:05 deraadt Exp $
+.\"	$OpenBSD: buffercache.9,v 1.10 2014/12/11 14:29:42 jmc Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -102,7 +102,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd $Mdocdate: June 11 2013 $
+.Dd $Mdocdate: December 11 2014 $
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -115,7 +115,6 @@
 .Nm getblk ,
 .Nm geteblk ,
 .Nm incore ,
-.Nm allocbuf ,
 .Nm brelse ,
 .Nm biodone ,
 .Nm biowait
@@ -143,8 +142,6 @@
 .Fn geteblk "int size"
 .Ft struct buf *
 .Fn incore "struct vnode *vp" "daddr_t blkno"
-.Ft void
-.Fn allocbuf "struct buf *bp" "int size"
 .Ft void
 .Fn brelse "struct buf *bp"
 .Ft void
@@ -296,16 +293,6 @@ Note that
 .Fn incore
 doesn't mark the buffer as busy unlike
 .Fn getblk .
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn allocbuf "bp" "size"
-Expand or contract the actual memory allocated to a buffer.
-If the buffer shrinks, the truncated part of the data
-is lost, so it is up to the caller to have written
-it out
-.Em first
-if needed; this routine will not start a write.
-If the buffer grows, it is the caller's responsibility to fill out
-the buffer's additional contents.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn brelse "bp"
 Unlock a buffer by clearing the
