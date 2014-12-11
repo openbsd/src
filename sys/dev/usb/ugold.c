@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.6 2014/04/29 12:53:33 mpi Exp $   */
+/*	$OpenBSD: ugold.c,v 1.7 2014/12/11 18:39:27 mpi Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <sasano@openbsd.org>
@@ -260,6 +260,9 @@ ugold_refresh(void *arg)
 int
 ugold_issue_cmd(struct ugold_softc *sc, uint8_t *cmd, int len)
 {
-	return uhidev_set_report_async(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    sc->sc_hdev.sc_report_id, cmd, len);
+	int actlen;
+
+	actlen = uhidev_set_report_async(sc->sc_hdev.sc_parent,
+	    UHID_OUTPUT_REPORT, sc->sc_hdev.sc_report_id, cmd, len);
+	return (actlen != len);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.68 2014/08/21 14:52:55 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.69 2014/12/11 18:39:27 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -363,8 +363,8 @@ ukbd_set_leds(void *v, int leds)
 		return;
 
 	if (sc->sc_ledsize && hidkbd_set_leds(kbd, leds, &res) != 0)
-		uhidev_set_report_async(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-		    sc->sc_hdev.sc_report_id, &res, 1);
+		uhidev_set_report_async(sc->sc_hdev.sc_parent,
+		    UHID_OUTPUT_REPORT, sc->sc_hdev.sc_report_id, &res, 1);
 }
 
 int

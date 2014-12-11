@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.29 2014/07/12 20:26:33 mpi Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.30 2014/12/11 18:39:27 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -453,13 +453,9 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	report[2] = (baud >> 16) & 0xff;
 	report[3] = (baud >> 24) & 0xff;
 	report[4] = cfg;
-	err = uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    sc->sc_hdev.sc_report_id, report, sc->sc_flen);
-	if (err != 0) {
-		DPRINTF(("ucycom_param: uhidev_set_report %d %s\n",
-		    err, usbd_errstr(err)));
+	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
+	    sc->sc_hdev.sc_report_id, report, sc->sc_flen) != sc->sc_flen)
 		return EIO;
-	}
 	sc->sc_baud = baud;
 	return (err);
 }
@@ -553,10 +549,10 @@ ucycom_set(void *addr, int portno, int reg, int onoff)
 void
 ucycom_get_cfg(struct ucycom_softc *sc)
 {
-	int err, cfg, baud;
+	int cfg, baud;
 	uint8_t report[5];
 
-	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
+	uhidev_get_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
 	    sc->sc_hdev.sc_report_id, report, sc->sc_flen);
 	cfg = report[4];
 	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) + report[0];

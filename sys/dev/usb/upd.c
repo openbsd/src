@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.10 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: upd.c,v 1.11 2014/12/11 18:39:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -263,7 +263,7 @@ upd_refresh(void *arg)
 	struct upd_softc	*sc = (struct upd_softc *)arg;
 	struct upd_report	*report;
 	uint8_t			buf[256];
-	int			repid, err;
+	int			repid, actlen;
 
 	for (repid = 0; repid < sc->sc_max_repid; repid++) {
 		report = &sc->sc_reports[repid];
@@ -271,15 +271,11 @@ upd_refresh(void *arg)
 			continue;
 
 		memset(buf, 0x0, sizeof(buf));
-		/*
-		 * XXX uhidev_get_report() is not clever enough to handle
-		 * non-NUl reportID, so add an extra byte for it.
-		 */
-		err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-		    repid, buf, report->size + 1);
-		if (err) {
-			DPRINTF(("read failure: reportid=%02x err=%d\n", repid,
-			    err));
+		actlen = uhidev_get_report(sc->sc_hdev.sc_parent,
+		    UHID_FEATURE_REPORT, repid, buf, report->size);
+
+		if (actlen != report->size) {
+			DPRINTF(("upd: failed to get report id=%02x\n", repid));
 			continue;
 		}
 
@@ -358,13 +354,12 @@ upd_update_sensors(struct upd_softc *sc, uint8_t *buf, unsigned int len,
 			break;
 		}
 
-		/* XXX first byte which is the report id */
-		hdata = hid_get_data(buf + 1, len, &sensor->hitem.loc);
+		hdata = hid_get_data(buf, len, &sensor->hitem.loc);
 
 		sensor->ksensor.value = hdata * adjust;
 		sensor->ksensor.status = SENSOR_S_OK;
 		sensor->ksensor.flags &= ~SENSOR_FINVALID;
-		DPRINTF(("%s: hidget data: %d\n",
+		DPRINTF(("%s: hidget data: %lu\n",
 		    sc->sc_sensordev.xname, hdata));
 	}
 }

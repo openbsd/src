@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.64 2014/12/08 22:00:11 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.65 2014/12/11 18:39:27 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -270,11 +270,6 @@ uhidev_use_rdesc(struct uhidev_softc *sc, int vendor, int product,
 	int size;
 
 	if (vendor == USB_VENDOR_WACOM) {
-		struct uhidev wacom;
-
-		/* XXX until we pass the parent directly. */
-		wacom.sc_parent = sc;
-
 		/* The report descriptor for the Wacom Graphire is broken. */
 		switch (product) {
 		case USB_PRODUCT_WACOM_GRAPHIRE:
@@ -283,7 +278,7 @@ uhidev_use_rdesc(struct uhidev_softc *sc, int vendor, int product,
 			break;
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
 		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
-			uhidev_set_report(&wacom, UHID_FEATURE_REPORT,
+			uhidev_set_report(sc, UHID_FEATURE_REPORT,
 			    2, &reportbuf, sizeof(reportbuf));
 			size = sizeof(uhid_graphire3_4x5_report_descr);
 			descptr = uhid_graphire3_4x5_report_descr;
@@ -628,13 +623,13 @@ uhidev_close(struct uhidev *scd)
 	}
 }
 
-usbd_status
-uhidev_set_report(struct uhidev *scd, int type, int id, void *data, int len)
+int
+uhidev_set_report(struct uhidev_softc *sc, int type, int id, void *data,
+    int len)
 {
-	struct uhidev_softc *sc = scd->sc_parent;
 	usb_device_request_t req;
-	usbd_status err;
 	char *buf = data;
+	int actlen = len;
 
 	/* Prepend the reportID. */
 	if (id > 0) {
@@ -650,22 +645,22 @@ uhidev_set_report(struct uhidev *scd, int type, int id, void *data, int len)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	err = usbd_do_request(sc->sc_udev, &req, buf);
+	if (usbd_do_request(sc->sc_udev, &req, buf))
+		actlen = -1;
 
 	if (id > 0)
 		free(buf, M_TEMP, len);
 
-	return (err);
+	return (actlen);
 }
 
-usbd_status
-uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
+int
+uhidev_set_report_async(struct uhidev_softc *sc, int type, int id, void *data,
     int len)
 {
-	struct uhidev_softc *sc = scd->sc_parent;
 	usb_device_request_t req;
-	usbd_status err;
 	char *buf = data;
+	int actlen = len;
 
 	/* Prepend the reportID. */
 	if (id > 0) {
@@ -683,7 +678,8 @@ uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	err = usbd_do_request_async(sc->sc_udev, &req, buf);
+	if (usbd_do_request_async(sc->sc_udev, &req, buf))
+		actlen = -1;
 
 	/*
 	 * Since report requests are write-only it is safe to free
@@ -693,14 +689,22 @@ uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
 	if (id > 0)
 		free(buf, M_TEMP, len);
 
-	return (err);
+	return (actlen);
 }
 
-usbd_status
-uhidev_get_report(struct uhidev *scd, int type, int id, void *data, int len)
+int
+uhidev_get_report(struct uhidev_softc *sc, int type, int id, void *data,
+    int len)
 {
-	struct uhidev_softc *sc = scd->sc_parent;
 	usb_device_request_t req;
+	char *buf = data;
+	usbd_status err;
+	int actlen;
+
+	if (id > 0) {
+		len++;
+		buf = malloc(len, M_TEMP, M_WAITOK|M_ZERO);
+	}
 
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_GET_REPORT;
@@ -708,7 +712,18 @@ uhidev_get_report(struct uhidev *scd, int type, int id, void *data, int len)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	return (usbd_do_request(sc->sc_udev, &req, data));
+	err = usbd_do_request_flags(sc->sc_udev, &req, buf, 0, &actlen,
+	    USBD_DEFAULT_TIMEOUT);
+	if (err != USBD_NORMAL_COMPLETION && err != USBD_SHORT_XFER)
+		actlen = -1;
+
+	/* Skip the reportID. */
+	if (id > 0) {
+		memcpy(data, buf + 1, len - 1);
+		free(buf, M_TEMP, len);
+	}
+
+	return (actlen);
 }
 
 usbd_status
@@ -748,8 +763,7 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
-	int size, extra;
-	usbd_status err;
+	int size;
 	void *desc;
 
 	switch (cmd) {
@@ -775,12 +789,8 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 		default:
 			return EINVAL;
 		}
-		extra = sc->sc_report_id != 0;
-		err = uhidev_get_report(sc, re->ucr_report, sc->sc_report_id,
-		    re->ucr_data, size + extra);
-		if (extra)
-			memcpy(re->ucr_data, re->ucr_data + 1, size);
-		if (err)
+		if (uhidev_get_report(sc->sc_parent, re->ucr_report,
+		    sc->sc_report_id, re->ucr_data, size) != size)
 			return EIO;
 		break;
 	case USB_SET_REPORT:
@@ -798,9 +808,8 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 		default:
 			return EINVAL;
 		}
-		err = uhidev_set_report(sc, re->ucr_report,
-		    sc->sc_report_id, re->ucr_data, size);
-		if (err)
+		if (uhidev_set_report(sc->sc_parent, re->ucr_report,
+		    sc->sc_report_id, re->ucr_data, size) != size)
 			return EIO;
 		break;
 	case USB_GET_REPORT_ID:

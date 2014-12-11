@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.58 2014/07/12 18:48:52 tedu Exp $ */
+/*	$OpenBSD: uhid.c,v 1.59 2014/12/11 18:39:27 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -259,21 +259,17 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int s;
 	int error = 0;
-	int extra;
 	size_t length;
 	u_char buffer[UHID_CHUNK];
-	usbd_status err;
 
 	DPRINTFN(1, ("uhidread\n"));
 	if (sc->sc_state & UHID_IMMED) {
 		DPRINTFN(1, ("uhidread immed\n"));
-		extra = sc->sc_hdev.sc_report_id != 0;
-		err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
-		    sc->sc_hdev.sc_report_id, buffer,
-		    sc->sc_hdev.sc_isize + extra);
-		if (err)
+		if (uhidev_get_report(sc->sc_hdev.sc_parent,
+		    UHID_INPUT_REPORT, sc->sc_hdev.sc_report_id, buffer,
+		    sc->sc_hdev.sc_isize) != sc->sc_hdev.sc_isize)
 			return (EIO);
-		return (uiomove(buffer+extra, sc->sc_hdev.sc_isize, uio));
+		return (uiomove(buffer, sc->sc_hdev.sc_isize, uio));
 	}
 
 	s = splusb();
@@ -333,7 +329,6 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error;
 	int size;
-	usbd_status err;
 
 	DPRINTFN(1, ("uhidwrite\n"));
 
@@ -346,9 +341,9 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 		return (EINVAL);
 	error = uiomove(sc->sc_obuf, size, uio);
 	if (!error) {
-		err = uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-		    sc->sc_hdev.sc_report_id, sc->sc_obuf, size);
-		if (err)
+		if (uhidev_set_report(sc->sc_hdev.sc_parent,
+		    UHID_OUTPUT_REPORT, sc->sc_hdev.sc_report_id, sc->sc_obuf,
+		    size) != size)
 			error = EIO;
 	}
 
@@ -375,9 +370,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 	      int flag, struct proc *p)
 {
 	u_char buffer[UHID_CHUNK];
-	int size, extra;
 	usbd_status err;
-	int rc;
+	int rc, size;
 
 	DPRINTFN(2, ("uhidioctl: cmd=%lx\n", cmd));
 
@@ -409,11 +403,9 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 
 	case USB_SET_IMMED:
 		if (*(int *)addr) {
-			extra = sc->sc_hdev.sc_report_id != 0;
-			err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
-			    sc->sc_hdev.sc_report_id, buffer,
-			    sc->sc_hdev.sc_isize + extra);
-			if (err)
+			if (uhidev_get_report(sc->sc_hdev.sc_parent,
+			    UHID_INPUT_REPORT, sc->sc_hdev.sc_report_id, buffer,
+			    sc->sc_hdev.sc_isize) != sc->sc_hdev.sc_isize)
 				return (EOPNOTSUPP);
 
 			sc->sc_state |=  UHID_IMMED;

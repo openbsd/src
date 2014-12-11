@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.16 2014/07/12 18:48:53 tedu Exp $   */
+/*	$OpenBSD: utrh.c,v 1.17 2014/12/11 18:39:28 mpi Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -211,14 +211,14 @@ utrh_refresh(void *arg)
 	bzero(ledbuf, sizeof(ledbuf));
 	ledbuf[0] = 0x3;
 	ledbuf[1] = 0x1;
-	if (uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    sc->sc_hdev.sc_report_id, ledbuf, sc->sc_flen))
+	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
+	    sc->sc_hdev.sc_report_id, ledbuf, sc->sc_flen) != sc->sc_flen)
 		printf("LED request failed\n");
 
 	/* issue query */
 	uint8_t cmdbuf[] = {0x31, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00};
-	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    sc->sc_hdev.sc_report_id, cmdbuf, sc->sc_olen))
+	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_OUTPUT_REPORT,
+	    sc->sc_hdev.sc_report_id, cmdbuf, sc->sc_olen) != sc->sc_flen)
 		return;
 
 	/* wait till sensor data are updated, 1s will be enough */
@@ -226,8 +226,8 @@ utrh_refresh(void *arg)
 
 	/* turn off LED 1 */
 	ledbuf[1] = 0x0;
-	if (uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    sc->sc_hdev.sc_report_id, ledbuf, sc->sc_flen))
+	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
+	    sc->sc_hdev.sc_report_id, ledbuf, sc->sc_flen) != sc->sc_flen)
 		printf("LED request failed\n");
 
 	temp_tick = (sc->sc_ibuf[2] * 256 + sc->sc_ibuf[3]) & 0x3fff;
