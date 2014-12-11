@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.27 2014/12/04 02:44:42 tedu Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.28 2014/12/11 17:06:55 schwarze Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1116,11 +1116,13 @@ media_find(struct mediatypes *types, char *file)
 	struct media_type	*match, media;
 	char			*p;
 
-	if ((p = strrchr(file, '.')) == NULL) {
-		p = file;
-	} else if (*p++ == '\0') {
+	/* Last component of the file name */
+	p = strchr(file, '\0');
+	while (p > file && p[-1] != '.' && p[-1] != '/')
+		p--;
+	if (*p == '\0')
 		return (NULL);
-	}
+
 	if (strlcpy(media.media_name, p,
 	    sizeof(media.media_name)) >=
 	    sizeof(media.media_name)) {
