@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.163 2014/10/08 07:33:14 blambert Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.164 2014/12/11 14:33:48 jmc Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ long lodirtypages;      /* dirty page count low water mark */
 long hidirtypages;      /* dirty page count high water mark */
 long targetpages;   	/* target number of pages for cache size */
 long buflowpages;	/* smallest size cache allowed */
-long bufhighpages; 	/* largerst size cache allowed */
+long bufhighpages; 	/* largest size cache allowed */
 long bufbackpages; 	/* minimum number of pages we shrink when asked to */
 
 vsize_t bufkvm;
@@ -959,7 +959,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 * We insert the buffer into the hash with B_BUSY set
 		 * while we allocate pages for it. This way any getblk
 		 * that happens while we allocate pages will wait for
-		 * this buffer instead of starting its own guf_get.
+		 * this buffer instead of starting its own buf_get.
 		 *
 		 * But first, we check if someone beat us to it.
 		 */
