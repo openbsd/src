@@ -1,4 +1,4 @@
-/*	$OpenBSD: skgpio.c,v 1.1 2014/12/10 05:42:25 jsg Exp $ */
+/*	$OpenBSD: skgpio.c,v 1.2 2014/12/11 20:24:48 miod Exp $ */
 
 /*
  * Copyright (c) 2014 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -89,8 +89,9 @@ skgpio_match(struct device *parent, void *match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
 
-	if (strcmp(hw_vendor, "Soekris Engineering") ||
-	    strcmp(hw_prod, "net6501"))
+	if (hw_vendor == NULL || hw_prod == NULL ||
+	    strcmp(hw_vendor, "Soekris Engineering") != 0 ||
+	    strcmp(hw_prod, "net6501") != 0)
 		return (0);
 
 	if (ia->ia_iobase != SKGPIO_BASE || bus_space_map(ia->ia_iot,
