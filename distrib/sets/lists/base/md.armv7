@@ -1307,7 +1307,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/umidivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uoak.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uowreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/usb_mem.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/usb_quirks.ph

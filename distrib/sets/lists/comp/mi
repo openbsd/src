@@ -787,7 +787,6 @@
 ./usr/include/dev/usb/umidivar.h
 ./usr/include/dev/usb/uoak.h
 ./usr/include/dev/usb/uowreg.h
-./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h
 ./usr/include/dev/usb/usb_mem.h
 ./usr/include/dev/usb/usb_quirks.h
@@ -6022,7 +6021,6 @@
 ./usr/share/man/man9/add_true_randomness.9
 ./usr/share/man/man9/add_tty_randomness.9
 ./usr/share/man/man9/addlog.9
-./usr/share/man/man9/allocbuf.9
 ./usr/share/man/man9/aml_evalname.9
 ./usr/share/man/man9/aml_evalnode.9
 ./usr/share/man/man9/aml_find_node.9
