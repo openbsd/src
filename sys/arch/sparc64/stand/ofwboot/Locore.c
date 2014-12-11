@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.12 2014/11/26 20:30:41 stsp Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.13 2014/12/11 10:52:07 stsp Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -47,26 +47,6 @@ static int OF_free_phys(paddr_t paddr, int len);
 extern int openfirmware(void *);
 
 void setup(void);
-
-#if 0
-#ifdef XCOFF_GLUE
-asm (".text; .globl _entry; _entry: .long _start,0,0");
-#endif
-
-__dead void
-_start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
-{
-	extern char etext[];
-
-#ifdef	FIRMWORKSBUGS
-	syncicache((void *)RELOC, etext - (char *)RELOC);
-#endif
-	openfirmware = openfirm;	/* Save entry to Open Firmware */
-	setup();
-	main(arg, argl);
-	exit();
-}
-#endif
 
 __dead void
 _rtt(void)
@@ -168,34 +148,6 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 		return -1;
 	return args.size;
 }
-
-#ifdef	__notyet__	/* Has a bug on FirePower */
-int
-OF_setprop(u_int handle, char *prop, void *buf, int len)
-{
-	struct {
-		cell_t name;
-		cell_t nargs;
-		cell_t nreturns;
-		cell_t phandle;
-		cell_t prop;
-		cell_t buf;
-		cell_t len;
-		cell_t size;
-	} args;
-
-	args.name = ADR2CELL("setprop");
-	args.nargs = 4;
-	args.nreturns = 1;
-	args.phandle = HDL2CELL(handle);
-	args.prop = ADR2CELL(prop);
-	args.buf = ADR2CELL(buf);
-	args.len = len;
-	if (openfirmware(&args) == -1)
-		return -1;
-	return args.size;
-}
-#endif
 
 int
 OF_open(char *dname)
@@ -349,36 +301,7 @@ void
 OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 {
 	extern int64_t romp;
-#ifdef __notyet
-	extern int debug;
-	struct {
-		cell_t name;
-		cell_t nargs;
-		cell_t nreturns;
-		cell_t virt;
-		cell_t size;
-		cell_t entry;
-		cell_t arg;
-		cell_t len;
-	} args;
 
-	args.name = ADR2CELL("chain");
-	args.nargs = 5;
-	args.nreturns = 0;
-	args.virt = ADR2CELL(virt);
-	args.size = size;
-	args.entry = ADR2CELL(entry);
-	args.arg = ADR2CELL(arg);
-	args.len = len;
-	openfirmware(&args);
-	if (debug) {
-		printf("OF_chain: prom returned!\n");
-
-	/* OK, firmware failed us.  Try calling prog directly */
-		printf("Calling entry(0, %p, %x, %lx, %lx)\n", arg, len,
-			(unsigned long)romp, (unsigned long)romp);
-	}
-#endif
 	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);
 	panic("OF_chain: kernel returned!");
 	__asm("ta 2" : :);
@@ -428,12 +351,6 @@ OF_claim_virt(vaddr_t vaddr, int len)
 		cell_t retaddr;
 	} args;
 
-#ifdef	__notyet
-	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		printf("OF_claim_virt: cannot get mmuh\r\n");
-		return -1LL;
-	}
-#endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 5;
 	args.nreturns = 2;
@@ -468,12 +385,6 @@ OF_alloc_virt(int len, int align)
 		cell_t retaddr;
 	} args;
 
-#ifdef	__notyet
-	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		printf("OF_alloc_virt: cannot get mmuh\r\n");
-		return -1LL;
-	}
-#endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 2;
@@ -505,12 +416,6 @@ OF_free_virt(vaddr_t vaddr, int len)
 		cell_t vaddr;
 	} args;
 
-#ifdef	__notyet
-	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		printf("OF_free_virt: cannot get mmuh\r\n");
-		return -1;
-	}
-#endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 0;
@@ -545,12 +450,6 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 		cell_t retaddr;
 	} args;
 
-#ifdef	__notyet
-	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		printf("OF_map_phys: cannot get mmuh\r\n");
-		return 0LL;
-	}
-#endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 7;
 	args.nreturns = 1;
@@ -591,12 +490,6 @@ OF_alloc_phys(int len, int align)
 		cell_t phys_lo;
 	} args;
 
-#ifdef	__notyet
-	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		printf("OF_alloc_phys: cannot get memh\r\n");
-		return -1LL;
-	}
-#endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 4;
 	args.nreturns = 3;
@@ -629,12 +522,6 @@ OF_free_phys(paddr_t phys, int len)
 		cell_t phys_lo;
 	} args;
 
-#ifdef	__notyet
-	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		printf("OF_free_phys: cannot get memh\r\n");
-		return -1;
-	}
-#endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 5;
 	args.nreturns = 0;
@@ -654,35 +541,11 @@ OF_free_phys(paddr_t phys, int len)
 void *
 OF_claim(void *virt, u_int size, u_int align)
 {
-#define SUNVMOF
-#ifndef SUNVMOF
-	struct {
-		cell_t name;
-		cell_t nargs;
-		cell_t nreturns;
-		cell_t virt;
-		cell_t size;
-		cell_t align;
-		cell_t baseaddr;
-	} args;
-
-
-	args.name = ADR2CELL("claim");
-	args.nargs = 3;
-	args.nreturns = 1;
-	args.virt = virt;
-	args.size = size;
-	args.align = align;
-	if (openfirmware(&args) == -1)
-		return (void *)-1;
-	return (void *)args.baseaddr;
-#else
-/*
- * Sun Ultra machines run the firmware with VM enabled,
- * so you need to handle allocating and mapping both
- * virtual and physical memory.  Ugh.
- */
-
+	/*
+	 * Sun Ultra machines run the firmware with VM enabled,
+	 * so you need to handle allocating and mapping both
+	 * virtual and physical memory.  Ugh.
+	 */
 	paddr_t paddr;
 	void * newvirt = NULL;
 
@@ -715,7 +578,6 @@ OF_claim(void *virt, u_int size, u_int align)
 		return (void *)-1LL;
 	}
 	return virt;
-#endif
 }
 
 int

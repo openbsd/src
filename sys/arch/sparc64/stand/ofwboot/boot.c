@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.22 2014/12/09 18:05:16 stsp Exp $	*/
+/*	$OpenBSD: boot.c,v 1.23 2014/12/11 10:52:07 stsp Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -96,23 +96,6 @@ char rnddata[BOOTRANDOM_MAX];
 
 int	elf64_exec(int, Elf64_Ehdr *, u_int64_t *, void **, void **);
 
-#if 0
-static void
-prom2boot(char *dev)
-{
-	char *cp, *lp = 0;
-	int handle;
-	char devtype[16];
-	
-	for (cp = dev; *cp; cp++)
-		if (*cp == ':')
-			lp = cp;
-	if (!lp)
-		lp = cp;
-	*lp = 0;
-}
-#endif
-
 /*
  *	parse:
  *		[kernel-name] [-options]
@@ -175,7 +158,6 @@ chain(u_int64_t pentry, char *args, void *ssym, void *esym)
 
 	entry = (void *)(long)pentry;
 
-	freeall();
 	/*
 	 * When we come in args consists of a pointer to the boot
 	 * string.  We need to fix it so it takes into account
@@ -451,10 +433,6 @@ main()
 			printf("open %s: %s\n", opened_name, strerror(errno));
 			continue;
 		}
-#ifdef	__notyet__
-		OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
-		cp = bootline;
-#else
 		len = snprintf(bootline, sizeof bootline, "%s%s%s%s",
 		    opened_name,
 		    (boothowto & RB_ASKNAME) ? " -a" : "",
@@ -464,10 +442,6 @@ main()
 			printf("bootargs too long: %s\n", bootline);
 			_rtt();
 		}
-#endif
-#ifdef	__notyet__
-		OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
-#endif
 		/* XXX void, for now */
 #ifdef DEBUG
 		if (debug)

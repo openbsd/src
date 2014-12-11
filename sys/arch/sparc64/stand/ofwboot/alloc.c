@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.6 2013/03/21 21:51:01 deraadt Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.7 2014/12/11 10:52:07 stsp Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 2000/08/20 14:58:37 mrg Exp $	*/
 
 /*
@@ -187,24 +187,4 @@ free(void *ptr, unsigned size)
 	/* Remove from allocated list, place on freelist. */
 	LIST_REMOVE(a, list);
 	LIST_INSERT_HEAD(&freelist, a, list);
-}
-
-void
-freeall(void)
-{
-#ifdef __notyet__		/* Firmware bug ?! */
-	struct ml *m;
-
-	/* Release chunks on freelist... */
-	while ((m = TAILQ_FIRST(&freelist)) != NULL)) {
-		LIST_REMOVE(m, list);
-		OF_release(m, m->size);
-	}
-
-	/* ...and allocated list. */
-	while ((m = TAILQ_FIRST(&allocatedlist)) != NULL)) {
-		LIST_REMOVE(m, list);
-		OF_release(m, m->size);
-	}
-#endif /* __notyet__ */
 }
