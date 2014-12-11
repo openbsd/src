@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.896 2014/11/20 13:54:24 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.897 2014/12/11 08:45:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2952,42 +2952,36 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 {
 #ifdef INET
 	struct sockaddr_in	*dst;
-	struct route		 ro;
 #endif /* INET */
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro6;
 #endif /* INET6 */
 	struct rtentry		*rt = NULL;
+	struct sockaddr_storage	 ss;
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
+
+	memset(&ss, 0, sizeof(ss));
 
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		bzero(&ro, sizeof(ro));
-		dst = (struct sockaddr_in *)&ro.ro_dst;
+		dst = (struct sockaddr_in *)&ss;
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
-		ro.ro_tableid = rtableid;
-		ro.ro_rt = rtalloc(&ro.ro_dst, RT_REPORT, ro.ro_tableid);
-		rt = ro.ro_rt;
+		rt = rtalloc(sintosa(dst), RT_REPORT, rtableid);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		bzero(&ro6, sizeof(ro6));
-		dst6 = (struct sockaddr_in6 *)&ro6.ro_dst;
+		dst6 = (struct sockaddr_in6 *)&ss;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
-		ro6.ro_tableid = rtableid;
-		ro6.ro_rt = rtalloc(sin6tosa(&ro6.ro_dst), RT_REPORT,
-		    ro6.ro_tableid);
-		rt = ro6.ro_rt;
+		rt = rtalloc(sin6tosa(dst6), RT_REPORT, rtableid);
 		break;
 #endif /* INET6 */
 	}
@@ -5396,25 +5390,22 @@ int
 pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
     int rtableid)
 {
+	struct sockaddr_storage	 ss;
 	struct sockaddr_in	*dst;
 	int			 ret = 1;
 	int			 check_mpath;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro;
-#else
-	struct route		 ro;
 #endif
-	struct rtentry		*rt;
+	struct rtentry		*rt, *rt0 = NULL;
 	struct ifnet		*ifp;
 
 	check_mpath = 0;
-	bzero(&ro, sizeof(ro));
-	ro.ro_tableid = rtableid;
+	memset(&ss, 0, sizeof(ss));
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		dst = (struct sockaddr_in *)&ro.ro_dst;
+		dst = (struct sockaddr_in *)&ss;
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
@@ -5430,7 +5421,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		 */
 		if (IN6_IS_SCOPE_EMBED(&addr->v6))
 			goto out;
-		dst6 = &ro.ro_dst;
+		dst6 = (struct sockaddr_in6 *)&ss;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
@@ -5444,10 +5435,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
 		goto out;
 
-	ro.ro_rt = rtalloc((struct sockaddr *)&ro.ro_dst, RT_REPORT,
-	    ro.ro_tableid);
-
-	if (ro.ro_rt != NULL) {
+	rt0 = rtalloc((struct sockaddr *)&ss, RT_REPORT, rtableid);
+	if (rt0 != NULL) {
 		/* No interface given, this is a no-route check */
 		if (kif == NULL)
 			goto out;
@@ -5459,7 +5448,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 		/* Perform uRPF check if passed input interface */
 		ret = 0;
-		rt = ro.ro_rt;
+		rt = rt0;
 		do {
 			if (rt->rt_ifp->if_type == IFT_CARP)
 				ifp = rt->rt_ifp->if_carpdev;
@@ -5473,8 +5462,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	} else
 		ret = 0;
 out:
-	if (ro.ro_rt != NULL)
-		rtfree(ro.ro_rt);
+	if (rt0 != NULL)
+		rtfree(rt0);
 	return (ret);
 }
 
@@ -5482,21 +5471,19 @@ int
 pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
     int rtableid)
 {
+	struct sockaddr_storage	 ss;
 	struct sockaddr_in	*dst;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro;
-#else
-	struct route		 ro;
 #endif
+	struct rtentry		*rt;
 	int			 ret = 0;
 
-	bzero(&ro, sizeof(ro));
-	ro.ro_tableid = rtableid;
+	memset(&ss, 0, sizeof(ss));
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		dst = (struct sockaddr_in *)(&ro.ro_dst);
+		dst = (struct sockaddr_in *)&ss;
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
@@ -5504,7 +5491,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		dst6 = &ro.ro_dst;
+		dst6 = (struct sockaddr_in6 *)&ss;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
@@ -5512,13 +5499,11 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 #endif /* INET6 */
 	}
 
-	ro.ro_rt = rtalloc((struct sockaddr *)&ro.ro_dst, RT_REPORT,
-	    ro.ro_tableid);
-
-	if (ro.ro_rt != NULL) {
-		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
+	rt = rtalloc((struct sockaddr *)&ss, RT_REPORT|RT_RESOLVE, rtableid);
+	if (rt != NULL) {
+		if (rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
-		rtfree(ro.ro_rt);
+		rtfree(rt);
 	}
 
 	return (ret);
@@ -5530,14 +5515,14 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
     struct pf_state *s)
 {
 	struct mbuf		*m0, *m1;
-	struct route		 iproute;
-	struct route		*ro = NULL;
-	struct sockaddr_in	*dst;
+	struct sockaddr_in	*dst, sin;
+	struct rtentry		*rt = NULL;
 	struct ip		*ip;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sns[PF_SN_MAX];
 	int			 error = 0;
+	unsigned int		 rtableid;
 #ifdef IPSEC
 	struct m_tag		*mtag;
 #endif /* IPSEC */
@@ -5569,27 +5554,25 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 
 	ip = mtod(m0, struct ip *);
 
-	ro = &iproute;
-	bzero((caddr_t)ro, sizeof(*ro));
-	dst = satosin(&ro->ro_dst);
+	memset(&sin, 0, sizeof(sin));
+	dst = &sin;
 	dst->sin_family = AF_INET;
 	dst->sin_len = sizeof(*dst);
 	dst->sin_addr = ip->ip_dst;
-	ro->ro_tableid = m0->m_pkthdr.ph_rtableid;
+	rtableid = m0->m_pkthdr.ph_rtableid;
 
 	if (!r->rt) {
-		ro->ro_rt = rtalloc(&ro->ro_dst, RT_REPORT|RT_RESOLVE,
-		    ro->ro_tableid);
-		if (ro->ro_rt == 0) {
+		rt = rtalloc(sintosa(dst), RT_REPORT|RT_RESOLVE, rtableid);
+		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			goto bad;
 		}
 
-		ifp = ro->ro_rt->rt_ifp;
-		ro->ro_rt->rt_use++;
+		ifp = rt->rt_ifp;
+		rt->rt_use++;
 
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = satosin(ro->ro_rt->rt_gateway);
+		if (rt->rt_flags & RTF_GATEWAY)
+			dst = satosin(rt->rt_gateway);
 
 		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	} else {
@@ -5695,8 +5678,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 done:
 	if (r->rt != PF_DUPTO)
 		*m = NULL;
-	if (ro == &iproute && ro->ro_rt)
-		rtfree(ro->ro_rt);
+	if (rt != NULL)
+		rtfree(rt);
 	return;
 
 bad:
@@ -5711,9 +5694,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
     struct pf_state *s)
 {
 	struct mbuf		*m0;
-	struct route_in6	 ip6route;
-	struct route_in6	*ro;
-	struct sockaddr_in6	*dst;
+	struct sockaddr_in6	*dst, sin6;
 	struct ip6_hdr		*ip6;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
@@ -5745,13 +5726,11 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 	ip6 = mtod(m0, struct ip6_hdr *);
 
-	ro = &ip6route;
-	bzero((caddr_t)ro, sizeof(*ro));
-	dst = (struct sockaddr_in6 *)&ro->ro_dst;
+	memset(&sin6, 0, sizeof(sin6));
+	dst = &sin6;
 	dst->sin6_family = AF_INET6;
 	dst->sin6_len = sizeof(*dst);
 	dst->sin6_addr = ip6->ip6_dst;
-	ro->ro_tableid = m0->m_pkthdr.ph_rtableid;
 
 	if (!r->rt) {
 		m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
