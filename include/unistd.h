@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.95 2014/12/08 20:39:56 tedu Exp $ */
+/*	$OpenBSD: unistd.h,v 1.96 2014/12/11 23:05:38 tedu Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -424,7 +424,7 @@ char	*mktemp(char *);
 int	 nice(int);
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
-void	 swab(const void *, void *, size_t);
+void	 swab(const void *__restrict, void *__restrict, ssize_t);
 void	 sync(void);
 int	 truncate(const char *, off_t);
 useconds_t	 ualarm(useconds_t, useconds_t);
