@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.30 2014/12/11 18:39:27 mpi Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.31 2014/12/11 18:55:15 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -143,8 +143,6 @@ struct ucom_methods ucycom_methods = {
 };
 
 void ucycom_intr(struct uhidev *, void *, u_int);
-
-void ucycom_get_cfg(struct ucycom_softc *);
 
 const struct usb_devno ucycom_devs[] = {
 	{ USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_USBRS232 },
@@ -372,9 +370,6 @@ ucycom_write(void *addr, int portno, u_char *to, u_char *data, u_int32_t *cnt)
 #endif
 	*cnt = len;
 
-#if 0
-	ucycom_get_cfg(sc);
-#endif
 	DPRINTFN(4,("ucycomstart: req %d chars did %d chars\n", want, len));
 }
 
@@ -544,23 +539,6 @@ ucycom_set(void *addr, int portno, int reg, int onoff)
 	err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf, sc->sc_olen);
 	if (err)
 		DPRINTF(("ucycom_set_status: err=%d\n", err));
-}
-
-void
-ucycom_get_cfg(struct ucycom_softc *sc)
-{
-	int cfg, baud;
-	uint8_t report[5];
-
-	uhidev_get_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
-	    sc->sc_hdev.sc_report_id, report, sc->sc_flen);
-	cfg = report[4];
-	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) + report[0];
-	DPRINTF(("ucycom_configure: device reports %d baud, %d-%c-%d (%d)\n", baud,
-	    5 + (cfg & UCYCOM_DATA_MASK),
-	    (cfg & UCYCOM_PARITY_MASK) ?
-		((cfg & UCYCOM_PARITY_TYPE_MASK) ? 'O' : 'E') : 'N',
-	    (cfg & UCYCOM_STOP_MASK) ? 2 : 1, cfg));
 }
 
 int
