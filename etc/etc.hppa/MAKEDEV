@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.54 2014/10/09 04:37:43 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.55 2014/12/11 19:48:03 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -60,7 +60,6 @@
 #	uhid*	Generic HID devices
 #	ugen*	Generic USB devices
 #	ulpt*	Printer devices
-#	urio*	Diamond Multimedia Rio 500
 #	ttyU*	USB serial ports
 # Special purpose devices:
 #	audio*	Audio devices
@@ -312,10 +311,6 @@ ttyU[0-9a-zA-Z])
 	M cuaU$U c 45 $(($o+128)) 660 dialer uucp
 	;;
 
-urio*)
-	M urio$U c 44 $U 660
-	;;
-
 ulpt*)
 	M ulpt$U c 43 $U 660
 	;;
@@ -339,8 +334,8 @@ usb*)
 
 uall)
 	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ugen2 ugen3 ugen4 ugen5
-	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 urio0 usb0
-	R usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 usb0 usb1
+	R usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 lpt*|lpa*)

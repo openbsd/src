@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.20 2014/10/09 04:37:43 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
+#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.21 2014/12/11 19:48:03 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -57,7 +57,6 @@
 #	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
-#	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
 #	apm	Power management device
@@ -306,10 +305,6 @@ usb*)
 	M usb$u c 61 $U 660
 	;;
 
-urio*)
-	M urio$U c 65 $U 660
-	;;
-
 ulpt*)
 	M ulpt$U c 64 $U 660
 	;;
@@ -328,8 +323,8 @@ ugen*)
 
 uall)
 	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ugen2 ugen3 ugen4 ugen5
-	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 urio0 usb0
-	R usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 usb0 usb1
+	R usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 ttyU[0-9a-zA-Z])
