@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.11 2014/12/11 18:39:27 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.12 2014/12/11 18:50:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -274,10 +274,14 @@ upd_refresh(void *arg)
 		actlen = uhidev_get_report(sc->sc_hdev.sc_parent,
 		    UHID_FEATURE_REPORT, repid, buf, report->size);
 
-		if (actlen != report->size) {
+		if (actlen == -1) {
 			DPRINTF(("upd: failed to get report id=%02x\n", repid));
 			continue;
 		}
+
+		/* Deal with buggy firmwares. */
+		if (actlen < report->size)
+			report->size = actlen;
 
 		upd_update_sensors(sc, buf, report->size, repid);
 	}
