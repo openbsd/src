@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.110 2014/12/05 21:55:02 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.111 2014/12/11 19:50:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -101,18 +101,18 @@ main(int argc, char *argv[])
 	struct curparse	 curp;
 	struct mansearch search;
 	struct manpaths	 paths;
-	char		*conf_file, *defpaths, *auxpaths;
+	char		*auxpaths;
 	char		*defos;
 	struct manpage	*res, *resp;
+	char		*conf_file, *defpaths;
 	size_t		 isec, i, sz;
-	int		 prio, best_prio;
+	int		 prio, best_prio, synopsis_only;
 	char		 sec;
 	enum mandoclevel rc;
 	enum outmode	 outmode;
 	int		 fd;
 	int		 show_usage;
 	int		 use_pager;
-	int		 synopsis_only;
 	int		 options;
 	int		 c;
 
@@ -129,7 +129,8 @@ main(int argc, char *argv[])
 	/* Search options. */
 
 	memset(&paths, 0, sizeof(struct manpaths));
-	conf_file = defpaths = auxpaths = NULL;
+	conf_file = defpaths = NULL;
+	auxpaths = NULL;
 
 	memset(&search, 0, sizeof(struct mansearch));
 	search.outkey = "Nd";
