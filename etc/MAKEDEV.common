@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -176,7 +176,6 @@ dnl XXX some arches use ramd, others ramdisk - needs to be fixed eventually
 __devitem(ramdisk, ramdisk, Ramdisk kernel devices,nothing)dnl
 dnl
 target(usb, usb, 0, 1, 2, 3, 4, 5, 6, 7)dnl
-target(usb, urio, 0)dnl
 target(usb, uhid, 0, 1, 2, 3)dnl
 target(usb, ulpt, 0, 1)dnl
 target(usb, ugen, 0, 1, 2, 3, 4, 5, 6, 7)dnl
@@ -366,8 +365,6 @@ _mkdev({-ttyU-}, {-ttyU[0-9a-zA-Z]-}, {-U=${i#ttyU*}
 	o=$(alph2d $U)
 	M ttyU$U c major_ttyU_c $o 660 dialer uucp
 	M cuaU$U c major_ttyU_c Add($o, 128) 660 dialer uucp-})dnl
-__devitem(urio, urio*, Diamond Multimedia Rio 500)dnl
-_mcdev({-urio-}, urio*, {-urio-}, {-major_urio_c-}, 660)dnl
 __devitem(ugen, ugen*, Generic USB devices)dnl
 _mkdev(ugen, ugen*, {-n=Mult($U, 16)
 	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
