@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.293 2014/12/05 16:48:09 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.294 2014/12/11 19:44:17 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -232,7 +232,6 @@ athn*	at uhub?		# Atheros AR9002U
 zyd*	at uhub?		# Zydas ZD1211
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
-urio*	at uhub?		# Diamond Multimedia Rio 500
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver

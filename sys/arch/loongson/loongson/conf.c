@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2014/08/20 06:14:42 mikeb Exp $ */
+/*	$OpenBSD: conf.c,v 1.19 2014/12/11 19:44:17 tedu Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,7 +121,6 @@ cdev_decl(pci);
 #include "uhid.h"
 #include "ugen.h"
 #include "ulpt.h"
-#include "urio.h"
 #include "ucom.h"
 
 #include "vscsi.h"
@@ -199,7 +198,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
-	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_notdef(),			/* 65: */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
 	cdev_notdef(),

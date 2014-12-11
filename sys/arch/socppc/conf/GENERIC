@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: GENERIC,v 1.30 2014/12/11 19:44:17 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -82,7 +82,6 @@ run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 zyd*	at uhub?		# Zydas ZD1211
-urio*	at uhub?		# Diamond Multimedia Rio 500
 ugen*	at uhub?		# USB Generic driver
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor

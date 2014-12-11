@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2014/12/04 11:19:17 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.47 2014/12/11 19:44:17 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -125,7 +125,6 @@ uchcom*		at uhub?	# WinChipHead CH341/340 serial
 ucom*		at uchcom?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
-urio*		at uhub?	# Diamond Multimedia Rio 500
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0

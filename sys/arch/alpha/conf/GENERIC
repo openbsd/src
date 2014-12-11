@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.249 2014/11/24 02:03:36 brad Exp $
+#	$OpenBSD: GENERIC,v 1.250 2014/12/11 19:44:16 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -114,7 +114,6 @@ upl*	at uhub?			# Prolific PL2301/PL2302 host-to-host `network'
 ugl*	at uhub?			# Genesys Logic GL620USB-A host-to-host `network'
 url*	at uhub?			# Realtek RTL8150L based adapters
 wi*	at uhub?			# WaveLAN IEEE 802.11DS
-urio*	at uhub?			# Diamond Multimedia Rio 500
 udsbr*	at uhub?			# D-Link DSB-R100 radio
 radio*	at udsbr?			# USB radio
 ugen*	at uhub?			# USB Generic driver

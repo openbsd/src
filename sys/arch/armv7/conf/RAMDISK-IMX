@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IMX,v 1.12 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK-IMX,v 1.13 2014/12/11 19:44:17 tedu Exp $
 
 machine		armv7 arm
 maxusers	4
@@ -94,7 +94,6 @@ ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
-urio*		at uhub?		# Diamond Multimedia Rio 500
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
 ugen*		at uhub?		# USB Generic driver

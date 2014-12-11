@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.50 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.51 2014/12/11 19:44:17 tedu Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -107,7 +107,6 @@ uaudio*		at uhub?	# USB Audio
 audio*		at uaudio?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
-urio*		at uhub?	# Diamond Multimedia Rio 500
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0

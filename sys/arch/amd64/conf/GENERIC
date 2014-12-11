@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.381 2014/12/10 05:50:58 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.382 2014/12/11 19:44:17 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -240,7 +240,6 @@ udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
-urio*	at uhub?		# Diamond Multimedia Rio 500
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 uberry*	at uhub?		# Research In Motion Blackberry

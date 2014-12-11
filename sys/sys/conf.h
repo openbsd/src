@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.130 2014/10/09 04:10:36 tedu Exp $	*/
+/*	$OpenBSD: conf.h,v 1.131 2014/12/11 19:44:16 tedu Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -373,12 +373,6 @@ extern struct cdevsw cdevsw[];
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, selfalse, \
 	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, ioctl, poll, nokqfilter */
-#define	cdev_urio_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl, poll, kqfilter */
 #define	cdev_usbdev_init(c,n) { \

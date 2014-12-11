@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.10 2014/11/24 02:03:37 brad Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.11 2014/12/11 19:44:17 tedu Exp $
 #
 # GENERIC machine description file
 #
@@ -124,7 +124,6 @@ ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
-urio*		at uhub?		# Diamond Multimedia Rio 500
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
 ugen*		at uhub?		# USB Generic driver
