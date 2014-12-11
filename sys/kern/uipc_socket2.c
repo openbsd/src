@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.58 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.59 2014/12/11 19:21:57 tedu Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -705,7 +705,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	if (m == NULL)
 		return (0);
 	m->m_len = asa->sa_len;
-	bcopy(asa, mtod(m, caddr_t), asa->sa_len);
+	memcpy(mtod(m, caddr_t), asa, asa->sa_len);
 	if (n)
 		n->m_next = m0;		/* concatenate data to control */
 	else
@@ -791,7 +791,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		    m->m_len <= MCLBYTES / 4 && /* XXX Don't copy too much */
 		    m->m_len <= M_TRAILINGSPACE(n) &&
 		    n->m_type == m->m_type) {
-			bcopy(mtod(m, caddr_t), mtod(n, caddr_t) + n->m_len,
+			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    m->m_len);
 			n->m_len += m->m_len;
 			sb->sb_cc += m->m_len;
@@ -939,7 +939,7 @@ sbcreatecontrol(caddr_t p, int size, int type, int level)
 		}
 	}
 	cp = mtod(m, struct cmsghdr *);
-	bcopy(p, CMSG_DATA(cp), size);
+	memcpy(CMSG_DATA(cp), p, size);
 	m->m_len = CMSG_SPACE(size);
 	cp->cmsg_len = CMSG_LEN(size);
 	cp->cmsg_level = level;

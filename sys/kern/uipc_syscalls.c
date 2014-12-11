@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.95 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.96 2014/12/11 19:21:57 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
 
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		bcopy(auio.uio_iov, ktriov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
 	len = auio.uio_resid;
@@ -709,7 +709,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
 
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		bcopy(auio.uio_iov, ktriov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
 	len = auio.uio_resid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.198 2014/11/05 00:28:15 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.199 2014/12/11 19:21:57 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 		if (m == NULL)
 			panic("m_copydata: null mbuf");
 		count = min(m->m_len - off, len);
-		bcopy(mtod(m, caddr_t) + off, cp, count);
+		memmove(cp, mtod(m, caddr_t) + off, count);
 		len -= count;
 		cp += count;
 		off = 0;
@@ -659,7 +659,7 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp, int wait)
 			m->m_len += min(len - (m->m_len - off),
 			    M_TRAILINGSPACE(m));
 		mlen = min(m->m_len - off, len);
-		bcopy(cp, mtod(m, caddr_t) + off, (size_t)mlen);
+		memmove(mtod(m, caddr_t) + off, cp, mlen);
 		cp += mlen;
 		len -= mlen;
 		totlen += mlen + off;
@@ -712,8 +712,8 @@ m_cat(struct mbuf *m, struct mbuf *n)
 			return;
 		}
 		/* splat the data from one into the other */
-		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
-		    (u_int)n->m_len);
+		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t),
+		    n->m_len);
 		m->m_len += n->m_len;
 		n = m_free(n);
 	}
@@ -841,8 +841,8 @@ m_pullup(struct mbuf *n, int len)
 
 	do {
 		count = min(len, n->m_len);
-		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
-		    (unsigned)count);
+		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t),
+		    count);
 		len -= count;
 		m->m_len += count;
 		n->m_len -= count;
@@ -1012,7 +1012,7 @@ extpacket:
 		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
 	} else {
-		bcopy(mtod(m, caddr_t) + len, mtod(n, caddr_t), remain);
+		memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + len, remain);
 	}
 	n->m_len = remain;
 	m->m_len = len;
