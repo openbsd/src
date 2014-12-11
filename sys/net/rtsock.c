@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.153 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.154 2014/12/11 08:55:10 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -741,13 +741,6 @@ report:
 			break;
 
 		case RTM_CHANGE:
-			/*
-			 * new gateway could require new ifaddr, ifp;
-			 * flags may also be different; ifp may be specified
-			 * by ll sockaddr when protocol address is ambiguous
-			 */
-			if ((error = rt_getifa(&info, tableid)) != 0)
-				goto flush;
 			newgate = 0;
 			if (info.rti_info[RTAX_GATEWAY] != NULL)
 				if (rt->rt_gateway == NULL ||
@@ -762,7 +755,17 @@ report:
 				error = EDQUOT;
 				goto flush;
 			}
-			ifa = info.rti_ifa;
+			/*
+			 * new gateway could require new ifaddr, ifp;
+			 * flags may also be different; ifp may be specified
+			 * by ll sockaddr when protocol address is ambiguous
+			 */
+			if (newgate || info.rti_info[RTAX_IFP] != NULL ||
+			    info.rti_info[RTAX_IFA] != NULL) {
+				if ((error = rt_getifa(&info, tableid)) != 0)
+					goto flush;
+				ifa = info.rti_ifa;
+			}
 			if (ifa) {
 				if (rt->rt_ifa != ifa) {
 					if (rt->rt_ifa->ifa_rtrequest)
