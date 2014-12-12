@@ -77,7 +77,7 @@ $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 echo "Testing ciphersuites"
 for protocol in SSLv3 TLSv1.2; do
   echo "Testing ciphersuites for $protocol"
-  for cipher in `$openssl ciphers "RSA+$protocol" | tr ':' ' '`; do
+  for cipher in `$openssl ciphers "$protocol+aRSA" | tr ':' ' '`; do
     echo "Testing $cipher"
     prot=""
     if [ $protocol = "SSLv3" ] ; then
@@ -85,8 +85,8 @@ for protocol in SSLv3 TLSv1.2; do
     fi
     $ssltest -cipher $cipher $prot
     if [ $? -ne 0 ] ; then
-	  echo "Failed $cipher"
-	  exit 1
+      echo "Failed $cipher"
+      exit 1
     fi
   done
 done
@@ -138,8 +138,8 @@ for protocol in SSLv3; do
     echo "Testing $cipher"
     $ssltest -cipher $cipher -dtls1
     if [ $? -ne 0 ] ; then
-	  echo "Failed $cipher"
-	  exit 1
+      echo "Failed $cipher"
+      exit 1
     fi
   done
 done
