@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.25 2014/07/10 12:50:05 jsg Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.26 2014/12/12 10:05:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -51,13 +51,13 @@ ssl_read(int s, short event, void *arg)
 	char			 rbuf[SMALL_READ_BUF_SIZE];
 	struct ctl_tcp_event	*cte = arg;
 	int			 retry_flag = EV_READ;
-	int			 ssl_err = 0;
+	int			 tls_err = 0;
 	int			 ret;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host, HCE_SSL_READ_TIMEOUT);
+		hce_notify_done(cte->host, HCE_TLS_READ_TIMEOUT);
 		return;
 	}
 
@@ -65,8 +65,8 @@ ssl_read(int s, short event, void *arg)
 
 	ret = SSL_read(cte->ssl, rbuf, sizeof(rbuf));
 	if (ret <= 0) {
-		ssl_err = SSL_get_error(cte->ssl, ret);
-		switch (ssl_err) {
+		tls_err = SSL_get_error(cte->ssl, ret);
+		switch (tls_err) {
 		case SSL_ERROR_WANT_READ:
 			retry_flag = EV_READ;
 			goto retry;
@@ -87,7 +87,7 @@ ssl_read(int s, short event, void *arg)
 			cte->host->up = HOST_DOWN;
 			ssl_error(cte->host->conf.name, "cannot read");
 			ssl_cleanup(cte);
-			hce_notify_done(cte->host, HCE_SSL_READ_ERROR);
+			hce_notify_done(cte->host, HCE_TLS_READ_ERROR);
 			break;
 		}
 		return;
@@ -114,14 +114,14 @@ ssl_write(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
 	int			 retry_flag = EV_WRITE;
-	int			 ssl_err = 0;
+	int			 tls_err = 0;
 	int			 len;
 	int			 ret;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host, HCE_SSL_WRITE_TIMEOUT);
+		hce_notify_done(cte->host, HCE_TLS_WRITE_TIMEOUT);
 		return;
 	}
 
@@ -129,8 +129,8 @@ ssl_write(int s, short event, void *arg)
 
 	ret = SSL_write(cte->ssl, cte->table->sendbuf, len);
 	if (ret <= 0) {
-		ssl_err = SSL_get_error(cte->ssl, ret);
-		switch (ssl_err) {
+		tls_err = SSL_get_error(cte->ssl, ret);
+		switch (tls_err) {
 		case SSL_ERROR_WANT_READ:
 			retry_flag = EV_READ;
 			goto retry;
@@ -141,7 +141,7 @@ ssl_write(int s, short event, void *arg)
 			cte->host->up = HOST_DOWN;
 			ssl_error(cte->host->conf.name, "cannot write");
 			ssl_cleanup(cte);
-			hce_notify_done(cte->host, HCE_SSL_WRITE_ERROR);
+			hce_notify_done(cte->host, HCE_TLS_WRITE_ERROR);
 			return;
 		}
 	}
@@ -161,20 +161,20 @@ ssl_connect(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
 	int			 retry_flag = 0;
-	int			 ssl_err = 0;
+	int			 tls_err = 0;
 	int			 ret;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
-		hce_notify_done(cte->host, HCE_SSL_CONNECT_TIMEOUT);
+		hce_notify_done(cte->host, HCE_TLS_CONNECT_TIMEOUT);
 		ssl_cleanup(cte);
 		return;
 	}
 
 	ret = SSL_connect(cte->ssl);
 	if (ret <= 0) {
-		ssl_err = SSL_get_error(cte->ssl, ret);
-		switch (ssl_err) {
+		tls_err = SSL_get_error(cte->ssl, ret);
+		switch (tls_err) {
 		case SSL_ERROR_WANT_READ:
 			retry_flag = EV_READ;
 			goto retry;
@@ -184,7 +184,7 @@ ssl_connect(int s, short event, void *arg)
 		default:
 			cte->host->up = HOST_DOWN;
 			ssl_error(cte->host->conf.name, "cannot connect");
-			hce_notify_done(cte->host, HCE_SSL_CONNECT_FAIL);
+			hce_notify_done(cte->host, HCE_TLS_CONNECT_FAIL);
 			ssl_cleanup(cte);
 			return;
 		}
@@ -192,7 +192,7 @@ ssl_connect(int s, short event, void *arg)
 
 	if (cte->table->conf.check == CHECK_TCP) {
 		cte->host->up = HOST_UP;
-		hce_notify_done(cte->host, HCE_SSL_CONNECT_OK);
+		hce_notify_done(cte->host, HCE_TLS_CONNECT_OK);
 		ssl_cleanup(cte);
 		return;
 	}
@@ -275,7 +275,7 @@ ssl_transaction(struct ctl_tcp_event *cte)
 		cte->host->up = HOST_UNKNOWN;
 		ssl_error(cte->host->conf.name, "cannot set fd");
 		ssl_cleanup(cte);
-		hce_notify_done(cte->host, HCE_SSL_CONNECT_ERROR);
+		hce_notify_done(cte->host, HCE_TLS_CONNECT_ERROR);
 		return;
 	}
 	SSL_set_connect_state(cte->ssl);
@@ -367,7 +367,7 @@ X509 *
 ssl_update_certificate(X509 *oldcert, EVP_PKEY *pkey, EVP_PKEY *capkey,
     X509 *cacert)
 {
-	char		 name[2][SSL_NAME_SIZE];
+	char		 name[2][TLS_NAME_SIZE];
 	X509		*cert = NULL;
 
 	name[0][0] = name[1][0] = '\0';

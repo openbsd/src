@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.66 2014/11/19 10:24:40 blambert Exp $	*/
+/*	$OpenBSD: hce.c,v 1.67 2014/12/12 10:05:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -95,9 +95,9 @@ hce_setup_events(void)
 		evtimer_add(&env->sc_ev, &tv);
 	}
 
-	if (env->sc_flags & F_SSL) {
+	if (env->sc_flags & F_TLS) {
 		TAILQ_FOREACH(table, env->sc_tables, entry) {
-			if (!(table->conf.flags & F_SSL) ||
+			if (!(table->conf.flags & F_TLS) ||
 			    table->ssl_ctx != NULL)
 				continue;
 			table->ssl_ctx = ssl_ctx_create(env);
@@ -220,7 +220,7 @@ hce_notify_done(struct host *host, enum host_error he)
 			log_info("host %s, check %s%s (ignoring result, "
 			    "host disabled)",
 			    host->conf.name, table_check(table->conf.check),
-			    (table->conf.flags & F_SSL) ? " use ssl" : "");
+			    (table->conf.flags & F_TLS) ? " use tls" : "");
 		}
 		host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
 		return;
@@ -269,7 +269,7 @@ hce_notify_done(struct host *host, enum host_error he)
 		log_info("host %s, check %s%s (%lums), state %s -> %s, "
 		    "availability %s",
 		    host->conf.name, table_check(table->conf.check),
-		    (table->conf.flags & F_SSL) ? " use ssl" : "", duration,
+		    (table->conf.flags & F_TLS) ? " use tls" : "", duration,
 		    host_status(host->last_up), host_status(host->up),
 		    print_availability(host->check_cnt, host->up_cnt));
 	}

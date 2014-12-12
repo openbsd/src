@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.181 2014/11/19 10:24:40 blambert Exp $	*/
+/*	$OpenBSD: relay.c,v 1.182 2014/12/12 10:05:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -74,18 +74,18 @@ void		 relay_input(struct rsession *);
 
 u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
 
-DH *		 relay_ssl_get_dhparams(int);
-void		 relay_ssl_callback_info(const SSL *, int, int);
-DH		*relay_ssl_callback_dh(SSL *, int, int);
-SSL_CTX		*relay_ssl_ctx_create(struct relay *);
-void		 relay_ssl_transaction(struct rsession *,
+DH *		 relay_tls_get_dhparams(int);
+void		 relay_tls_callback_info(const SSL *, int, int);
+DH		*relay_tls_callback_dh(SSL *, int, int);
+SSL_CTX		*relay_tls_ctx_create(struct relay *);
+void		 relay_tls_transaction(struct rsession *,
 		    struct ctl_relay_event *);
-void		 relay_ssl_accept(int, short, void *);
+void		 relay_tls_accept(int, short, void *);
 void		 relay_connect_retry(int, short, void *);
-void		 relay_ssl_connect(int, short, void *);
-void		 relay_ssl_connected(struct ctl_relay_event *);
-void		 relay_ssl_readcb(int, short, void *);
-void		 relay_ssl_writecb(int, short, void *);
+void		 relay_tls_connect(int, short, void *);
+void		 relay_tls_connected(struct ctl_relay_event *);
+void		 relay_tls_readcb(int, short, void *);
+void		 relay_tls_writecb(int, short, void *);
 
 char		*relay_load_file(const char *, off_t *);
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
@@ -259,11 +259,11 @@ relay_protodebug(struct relay *rlay)
 	if (proto->tcpflags)
 		fprintf(stderr, "\ttcp flags: %s\n",
 		    printb_flags(proto->tcpflags, TCPFLAG_BITS));
-	if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) && proto->sslflags)
-		fprintf(stderr, "\tssl flags: %s\n",
-		    printb_flags(proto->sslflags, SSLFLAG_BITS));
+	if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) && proto->tlsflags)
+		fprintf(stderr, "\ttls flags: %s\n",
+		    printb_flags(proto->tlsflags, TLSFLAG_BITS));
 	if (proto->cache != -1)
-		fprintf(stderr, "\tssl session cache: %d\n", proto->cache);
+		fprintf(stderr, "\ttls session cache: %d\n", proto->cache);
 	fprintf(stderr, "\ttype: ");
 	switch (proto->type) {
 	case RELAY_PROTO_TCP:
@@ -426,9 +426,9 @@ relay_launch(void)
 	struct relay_table	*rlt;
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) &&
-		    (rlay->rl_ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
-			fatal("relay_init: failed to create SSL context");
+		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) &&
+		    (rlay->rl_ssl_ctx = relay_tls_ctx_create(rlay)) == NULL)
+			fatal("relay_init: failed to create TLS context");
 
 		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
 			/*
@@ -684,8 +684,8 @@ relay_connected(int fd, short sig, void *arg)
 		return;
 	}
 
-	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (out->ssl == NULL)) {
-		relay_ssl_transaction(con, out);
+	if ((rlay->rl_conf.flags & F_TLSCLIENT) && (out->ssl == NULL)) {
+		relay_tls_transaction(con, out);
 		return;
 	}
 
@@ -723,9 +723,9 @@ relay_connected(int fd, short sig, void *arg)
 		fatal("relay_connected: invalid output buffer");
 	con->se_out.bev = bev;
 
-	/* Initialize the SSL wrapper */
-	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (out->ssl != NULL))
-		relay_ssl_connected(out);
+	/* Initialize the TLS wrapper */
+	if ((rlay->rl_conf.flags & F_TLSCLIENT) && (out->ssl != NULL))
+		relay_tls_connected(out);
 
 	bufferevent_settimeout(bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
@@ -769,9 +769,9 @@ relay_input(struct rsession *con)
 		return;
 	}
 
-	/* Initialize the SSL wrapper */
-	if ((rlay->rl_conf.flags & F_SSL) && con->se_in.ssl != NULL)
-		relay_ssl_connected(&con->se_in);
+	/* Initialize the TLS wrapper */
+	if ((rlay->rl_conf.flags & F_TLS) && con->se_in.ssl != NULL)
+		relay_tls_connected(&con->se_in);
 
 	bufferevent_settimeout(con->se_in.bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
@@ -853,7 +853,7 @@ relay_splice(struct ctl_relay_event *cre)
 	struct protocol		*proto = rlay->rl_proto;
 	struct splice		 sp;
 
-	if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) ||
+	if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) ||
 	    (proto->tcpflags & TCPFLAG_NSPLICE))
 		return (0);
 
@@ -1158,7 +1158,7 @@ relay_accept(int fd, short event, void *arg)
 		return;
 	}
 
-	if (rlay->rl_conf.flags & F_SSLINSPECT) {
+	if (rlay->rl_conf.flags & F_TLSINSPECT) {
 		relay_preconnect(con);
 		return;
 	}
@@ -1347,8 +1347,8 @@ relay_session(struct rsession *con)
 		return;
 	}
 
-	if ((rlay->rl_conf.flags & F_SSL) && (in->ssl == NULL)) {
-		relay_ssl_transaction(con, in);
+	if ((rlay->rl_conf.flags & F_TLS) && (in->ssl == NULL)) {
+		relay_tls_transaction(con, in);
 		return;
 	}
 
@@ -1496,9 +1496,9 @@ relay_connect(struct rsession *con)
 	int		 bnds = -1, ret;
 
 	/* Connection is already established but session not active */
-	if ((rlay->rl_conf.flags & F_SSLINSPECT) && con->se_out.s != -1) {
+	if ((rlay->rl_conf.flags & F_TLSINSPECT) && con->se_out.s != -1) {
 		if (con->se_out.ssl == NULL) {
-			log_debug("%s: ssl connect failed", __func__);
+			log_debug("%s: tls connect failed", __func__);
 			return (-1);
 		}
 		relay_connected(con->se_out.s, EV_WRITE, con);
@@ -1634,8 +1634,8 @@ relay_close(struct rsession *con, const char *msg)
 			SSL_shutdown(con->se_in.ssl);
 		SSL_free(con->se_in.ssl);
 	}
-	if (con->se_in.sslcert != NULL)
-		X509_free(con->se_in.sslcert);
+	if (con->se_in.tlscert != NULL)
+		X509_free(con->se_in.tlscert);
 	if (con->se_in.s != -1) {
 		close(con->se_in.s);
 		if (con->se_out.s == -1) {
@@ -1661,8 +1661,8 @@ relay_close(struct rsession *con, const char *msg)
 			SSL_shutdown(con->se_out.ssl);
 		SSL_free(con->se_out.ssl);
 	}
-	if (con->se_out.sslcert != NULL)
-		X509_free(con->se_out.sslcert);
+	if (con->se_out.tlscert != NULL)
+		X509_free(con->se_out.tlscert);
 	if (con->se_out.s != -1) {
 		close(con->se_out.s);
 
@@ -1876,41 +1876,41 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 void
-relay_ssl_callback_info(const SSL *ssl, int where, int rc)
+relay_tls_callback_info(const SSL *ssl, int where, int rc)
 {
 	struct ctl_relay_event *cre;
-	int ssl_state;
+	int tls_state;
 
 	cre = (struct ctl_relay_event *)SSL_get_app_data(ssl);
 
-	if (cre == NULL || cre->sslreneg_state == SSLRENEG_ALLOW)
+	if (cre == NULL || cre->tlsreneg_state == TLSRENEG_ALLOW)
 		return;
 
-	ssl_state = SSL_get_state(ssl);
+	tls_state = SSL_get_state(ssl);
 
 	/* Check renegotiations */
 	if ((where & SSL_CB_ACCEPT_LOOP) &&
-	    (cre->sslreneg_state == SSLRENEG_DENY)) {
-		if ((ssl_state == SSL3_ST_SR_CLNT_HELLO_A) ||
-		    (ssl_state == SSL23_ST_SR_CLNT_HELLO_A)) {
+	    (cre->tlsreneg_state == TLSRENEG_DENY)) {
+		if ((tls_state == SSL3_ST_SR_CLNT_HELLO_A) ||
+		    (tls_state == SSL23_ST_SR_CLNT_HELLO_A)) {
 			/*
 			 * This is a client initiated renegotiation
 			 * that we do not allow
 			 */
-			cre->sslreneg_state = SSLRENEG_ABORT;
+			cre->tlsreneg_state = TLSRENEG_ABORT;
 		}
 	} else if ((where & SSL_CB_HANDSHAKE_DONE) &&
-	    (cre->sslreneg_state == SSLRENEG_INIT)) {
+	    (cre->tlsreneg_state == TLSRENEG_INIT)) {
 		/*
 		 * This is right after the first handshake,
 		 * disallow any further negotiations.
 		 */
-		cre->sslreneg_state = SSLRENEG_DENY;
+		cre->tlsreneg_state = TLSRENEG_DENY;
 	}
 }
 
 DH *
-relay_ssl_get_dhparams(int keylen)
+relay_tls_get_dhparams(int keylen)
 {
 	DH		*dh;
 	BIGNUM		*(*prime)(BIGNUM *);
@@ -1945,7 +1945,7 @@ relay_ssl_get_dhparams(int keylen)
 }
 
 DH *
-relay_ssl_callback_dh(SSL *ssl, int export, int keylen)
+relay_tls_callback_dh(SSL *ssl, int export, int keylen)
 {
 	struct ctl_relay_event	*cre;
 	EVP_PKEY		*pkey;
@@ -1955,7 +1955,7 @@ relay_ssl_callback_dh(SSL *ssl, int export, int keylen)
 	/* Get maximum key length from config */
 	if ((cre = (struct ctl_relay_event *)SSL_get_app_data(ssl)) == NULL)
 		return (NULL);
-	maxlen = cre->con->se_relay->rl_proto->ssldhparams;
+	maxlen = cre->con->se_relay->rl_proto->tlsdhparams;
 
 	/* Get the private key length from the cert */
 	if ((pkey = SSL_get_privatekey(ssl))) {
@@ -1967,7 +1967,7 @@ relay_ssl_callback_dh(SSL *ssl, int export, int keylen)
 	}
 
 	/* get built-in params based on the shorter key length */
-	dh = relay_ssl_get_dhparams(MIN(keylen, maxlen));
+	dh = relay_tls_get_dhparams(MIN(keylen, maxlen));
 
 	return (dh);
 }
@@ -1984,7 +1984,7 @@ relay_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 SSL_CTX *
-relay_ssl_ctx_create(struct relay *rlay)
+relay_tls_ctx_create(struct relay *rlay)
 {
 	struct protocol	*proto = rlay->rl_proto;
 	SSL_CTX		*ctx;
@@ -2009,78 +2009,78 @@ relay_ssl_ctx_create(struct relay *rlay)
 	SSL_CTX_set_options(ctx, SSL_OP_ALL);
 	SSL_CTX_set_options(ctx,
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
-	if (proto->sslflags & SSLFLAG_CIPHER_SERVER_PREF)
+	if (proto->tlsflags & TLSFLAG_CIPHER_SERVER_PREF)
 		SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/* Set the allowed SSL protocols */
 	SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
 	SSL_CTX_clear_options(ctx, SSL_OP_NO_SSLv3);
-	if ((proto->sslflags & SSLFLAG_SSLV3) == 0)
+	if ((proto->tlsflags & TLSFLAG_SSLV3) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1);
-	if ((proto->sslflags & SSLFLAG_TLSV1_0) == 0)
+	if ((proto->tlsflags & TLSFLAG_TLSV1_0) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
 	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_1);
-	if ((proto->sslflags & SSLFLAG_TLSV1_1) == 0)
+	if ((proto->tlsflags & TLSFLAG_TLSV1_1) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
 	SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
-	if ((proto->sslflags & SSLFLAG_TLSV1_2) == 0)
+	if ((proto->tlsflags & TLSFLAG_TLSV1_2) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
 
 	/* add the SSL info callback */
-	SSL_CTX_set_info_callback(ctx, relay_ssl_callback_info);
+	SSL_CTX_set_info_callback(ctx, relay_tls_callback_info);
 
-	if (proto->sslecdhcurve > 0) {
+	if (proto->tlsecdhcurve > 0) {
 		/* Enable ECDHE support for TLS perfect forward secrecy */
 		if ((ecdhkey =
-		    EC_KEY_new_by_curve_name(proto->sslecdhcurve)) == NULL)
+		    EC_KEY_new_by_curve_name(proto->tlsecdhcurve)) == NULL)
 			goto err;
 		SSL_CTX_set_tmp_ecdh(ctx, ecdhkey);
 		SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
 		EC_KEY_free(ecdhkey);
 	}
 
-	if (proto->ssldhparams > 0) {
+	if (proto->tlsdhparams > 0) {
 		/* Enable EDH params (forward secrecy for older clients) */
-		SSL_CTX_set_tmp_dh_callback(ctx, relay_ssl_callback_dh);
+		SSL_CTX_set_tmp_dh_callback(ctx, relay_tls_callback_dh);
 	}
 
-	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
+	if (!SSL_CTX_set_cipher_list(ctx, proto->tlsciphers))
 		goto err;
 
 	/* Verify the server certificate if we have a CA chain */
-	if ((rlay->rl_conf.flags & F_SSLCLIENT) &&
-	    (rlay->rl_ssl_ca != NULL)) {
+	if ((rlay->rl_conf.flags & F_TLSCLIENT) &&
+	    (rlay->rl_tls_ca != NULL)) {
 		if (!ssl_ctx_load_verify_memory(ctx,
-		    rlay->rl_ssl_ca, rlay->rl_conf.ssl_ca_len))
+		    rlay->rl_tls_ca, rlay->rl_conf.tls_ca_len))
 			goto err;
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 	}
 
-	if ((rlay->rl_conf.flags & F_SSL) == 0)
+	if ((rlay->rl_conf.flags & F_TLS) == 0)
 		return (ctx);
 
 	log_debug("%s: loading certificate", __func__);
 	if (!ssl_ctx_use_certificate_chain(ctx,
-	    rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len))
+	    rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len))
 		goto err;
 
 	log_debug("%s: loading private key", __func__);
 	if (!ssl_ctx_fake_private_key(ctx,
-	    &rlay->rl_conf.ssl_keyid, sizeof(rlay->rl_conf.ssl_keyid),
-	    rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len,
-	    &rlay->rl_ssl_x509, &rlay->rl_ssl_pkey))
+	    &rlay->rl_conf.tls_keyid, sizeof(rlay->rl_conf.tls_keyid),
+	    rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len,
+	    &rlay->rl_tls_x509, &rlay->rl_tls_pkey))
 		goto err;
 
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
 
-	if (rlay->rl_conf.ssl_cacert_len) {
+	if (rlay->rl_conf.tls_cacert_len) {
 		log_debug("%s: loading CA private key", __func__);
-		if (!ssl_load_pkey(&rlay->rl_conf.ssl_cakeyid,
-		    sizeof(rlay->rl_conf.ssl_cakeyid),
-		    rlay->rl_ssl_cacert, rlay->rl_conf.ssl_cacert_len,
-		    &rlay->rl_ssl_cacertx509, &rlay->rl_ssl_capkey))
+		if (!ssl_load_pkey(&rlay->rl_conf.tls_cakeyid,
+		    sizeof(rlay->rl_conf.tls_cakeyid),
+		    rlay->rl_tls_cacert, rlay->rl_conf.tls_cacert_len,
+		    &rlay->rl_tls_cacertx509, &rlay->rl_tls_capkey))
 			goto err;
 	}
 
@@ -2090,20 +2090,20 @@ relay_ssl_ctx_create(struct relay *rlay)
 		goto err;
 
 	/* The text versions of the keys/certs are not needed anymore */
-	purge_key(&rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len);
-	purge_key(&rlay->rl_ssl_cacert, rlay->rl_conf.ssl_cacert_len);
+	purge_key(&rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len);
+	purge_key(&rlay->rl_tls_cacert, rlay->rl_conf.tls_cacert_len);
 
 	return (ctx);
 
  err:
 	if (ctx != NULL)
 		SSL_CTX_free(ctx);
-	ssl_error(rlay->rl_conf.name, "relay_ssl_ctx_create");
+	ssl_error(rlay->rl_conf.name, "relay_tls_ctx_create");
 	return (NULL);
 }
 
 void
-relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
+relay_tls_transaction(struct rsession *con, struct ctl_relay_event *cre)
 {
 	struct relay		*rlay = con->se_relay;
 	struct protocol	*proto = rlay->rl_proto;
@@ -2117,15 +2117,15 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 		goto err;
 
 	if (cre->dir == RELAY_DIR_REQUEST) {
-		cb = relay_ssl_accept;
+		cb = relay_tls_accept;
 		method = SSLv23_server_method();
 		flag = EV_READ;
 
-		/* Use session-specific certificate for SSL inspection. */
-		if (cre->sslcert != NULL)
-			SSL_use_certificate(ssl, cre->sslcert);
+		/* Use session-specific certificate for TLS inspection. */
+		if (cre->tlscert != NULL)
+			SSL_use_certificate(ssl, cre->tlscert);
 	} else {
-		cb = relay_ssl_connect;
+		cb = relay_tls_connect;
 		method = SSLv23_client_method();
 		flag = EV_WRITE;
 	}
@@ -2136,16 +2136,16 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
 		goto err;
 
 	if (cre->dir == RELAY_DIR_REQUEST) {
-		if ((proto->sslflags & SSLFLAG_CLIENT_RENEG) == 0)
+		if ((proto->tlsflags & TLSFLAG_CLIENT_RENEG) == 0)
 			/* Only allow negotiation during the first handshake */
-			cre->sslreneg_state = SSLRENEG_INIT;
+			cre->tlsreneg_state = TLSRENEG_INIT;
 		else
 			/* Allow client initiated renegotiations */
-			cre->sslreneg_state = SSLRENEG_ALLOW;
+			cre->tlsreneg_state = TLSRENEG_ALLOW;
 		SSL_set_accept_state(ssl);
 	} else {
 		/* Always allow renegotiations if we're the client */
-		cre->sslreneg_state = SSLRENEG_ALLOW;
+		cre->tlsreneg_state = TLSRENEG_ALLOW;
 		SSL_set_connect_state(ssl);
 	}
 
@@ -2161,29 +2161,29 @@ relay_ssl_transaction(struct rsession *con, struct ctl_relay_event *cre)
  err:
 	if (ssl != NULL)
 		SSL_free(ssl);
-	ssl_error(rlay->rl_conf.name, "relay_ssl_transaction");
-	relay_close(con, "session ssl failed");
+	ssl_error(rlay->rl_conf.name, "relay_tls_transaction");
+	relay_close(con, "session tls failed");
 }
 
 void
-relay_ssl_accept(int fd, short event, void *arg)
+relay_tls_accept(int fd, short event, void *arg)
 {
 	struct rsession	*con = arg;
 	struct relay	*rlay = con->se_relay;
 	int		 retry_flag = 0;
-	int		 ssl_err = 0;
+	int		 tls_err = 0;
 	int		 ret;
 
 	if (event == EV_TIMEOUT) {
-		relay_close(con, "SSL accept timeout");
+		relay_close(con, "TLS accept timeout");
 		return;
 	}
 
 	ret = SSL_accept(con->se_in.ssl);
 	if (ret <= 0) {
-		ssl_err = SSL_get_error(con->se_in.ssl, ret);
+		tls_err = SSL_get_error(con->se_in.ssl, ret);
 
-		switch (ssl_err) {
+		switch (tls_err) {
 		case SSL_ERROR_WANT_READ:
 			retry_flag = EV_READ;
 			goto retry;
@@ -2198,8 +2198,8 @@ relay_ssl_accept(int fd, short event, void *arg)
 			}
 			/* FALLTHROUGH */
 		default:
-			ssl_error(rlay->rl_conf.name, "relay_ssl_accept");
-			relay_close(con, "SSL accept error");
+			ssl_error(rlay->rl_conf.name, "relay_tls_accept");
+			relay_close(con, "TLS accept error");
 			return;
 		}
 	}
@@ -2219,30 +2219,30 @@ relay_ssl_accept(int fd, short event, void *arg)
 retry:
 	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
-	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_accept,
+	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_tls_accept,
 	    &con->se_tv_start, &rlay->rl_conf.timeout, con);
 }
 
 void
-relay_ssl_connect(int fd, short event, void *arg)
+relay_tls_connect(int fd, short event, void *arg)
 {
 	struct rsession	*con = arg;
 	struct relay	*rlay = con->se_relay;
 	int		 retry_flag = 0;
-	int		 ssl_err = 0;
+	int		 tls_err = 0;
 	int		 ret;
 	X509		*servercert = NULL;
 
 	if (event == EV_TIMEOUT) {
-		relay_close(con, "SSL connect timeout");
+		relay_close(con, "TLS connect timeout");
 		return;
 	}
 
 	ret = SSL_connect(con->se_out.ssl);
 	if (ret <= 0) {
-		ssl_err = SSL_get_error(con->se_out.ssl, ret);
+		tls_err = SSL_get_error(con->se_out.ssl, ret);
 
-		switch (ssl_err) {
+		switch (tls_err) {
 		case SSL_ERROR_WANT_READ:
 			retry_flag = EV_READ;
 			goto retry;
@@ -2257,8 +2257,8 @@ relay_ssl_connect(int fd, short event, void *arg)
 			}
 			/* FALLTHROUGH */
 		default:
-			ssl_error(rlay->rl_conf.name, "relay_ssl_connect");
-			relay_close(con, "SSL connect error");
+			ssl_error(rlay->rl_conf.name, "relay_tls_connect");
+			relay_close(con, "TLS connect error");
 			return;
 		}
 	}
@@ -2268,21 +2268,21 @@ relay_ssl_connect(int fd, short event, void *arg)
 #else
 	log_debug(
 #endif
-	    "relay %s, ssl session %d connected (%d active)",
+	    "relay %s, tls session %d connected (%d active)",
 	    rlay->rl_conf.name, con->se_id, relay_sessions);
 
-	if (rlay->rl_conf.flags & F_SSLINSPECT) {
+	if (rlay->rl_conf.flags & F_TLSINSPECT) {
 		if ((servercert =
 		    SSL_get_peer_certificate(con->se_out.ssl)) != NULL) {
-			con->se_in.sslcert =
+			con->se_in.tlscert =
 			    ssl_update_certificate(servercert,
-			    rlay->rl_ssl_pkey, rlay->rl_ssl_capkey,
-			    rlay->rl_ssl_cacertx509);
+			    rlay->rl_tls_pkey, rlay->rl_tls_capkey,
+			    rlay->rl_tls_cacertx509);
 		} else
-			con->se_in.sslcert = NULL;
+			con->se_in.tlscert = NULL;
 		if (servercert != NULL)
 			X509_free(servercert);
-		if (con->se_in.sslcert == NULL)
+		if (con->se_in.tlscert == NULL)
 			relay_close(con, "could not create certificate");
 		else
 			relay_session(con);
@@ -2295,32 +2295,32 @@ relay_ssl_connect(int fd, short event, void *arg)
 retry:
 	DPRINTF("%s: session %d: scheduling on %s", __func__, con->se_id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
-	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_connect,
+	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_tls_connect,
 	    &con->se_tv_start, &rlay->rl_conf.timeout, con);
 }
 
 void
-relay_ssl_connected(struct ctl_relay_event *cre)
+relay_tls_connected(struct ctl_relay_event *cre)
 {
 	/*
 	 * Hack libevent - we overwrite the internal bufferevent I/O
-	 * functions to handle the SSL abstraction.
+	 * functions to handle the TLS abstraction.
 	 */
 	event_set(&cre->bev->ev_read, cre->s, EV_READ,
-	    relay_ssl_readcb, cre->bev);
+	    relay_tls_readcb, cre->bev);
 	event_set(&cre->bev->ev_write, cre->s, EV_WRITE,
-	    relay_ssl_writecb, cre->bev);
+	    relay_tls_writecb, cre->bev);
 }
 
 void
-relay_ssl_readcb(int fd, short event, void *arg)
+relay_tls_readcb(int fd, short event, void *arg)
 {
 	char			 rbuf[IBUF_READ_SIZE];
 	struct bufferevent	*bufev = arg;
 	struct ctl_relay_event	*cre = bufev->cbarg;
 	struct rsession		*con = cre->con;
 	struct relay		*rlay = con->se_relay;
-	int			 ret = 0, ssl_err = 0;
+	int			 ret = 0, tls_err = 0;
 	short			 what = EVBUFFER_READ;
 	int			 howmuch = IBUF_READ_SIZE;
 	size_t			 len;
@@ -2330,7 +2330,7 @@ relay_ssl_readcb(int fd, short event, void *arg)
 		goto err;
 	}
 
-	if (cre->sslreneg_state == SSLRENEG_ABORT) {
+	if (cre->tlsreneg_state == TLSRENEG_ABORT) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}
@@ -2340,9 +2340,9 @@ relay_ssl_readcb(int fd, short event, void *arg)
 
 	ret = SSL_read(cre->ssl, rbuf, howmuch);
 	if (ret <= 0) {
-		ssl_err = SSL_get_error(cre->ssl, ret);
+		tls_err = SSL_get_error(cre->ssl, ret);
 
-		switch (ssl_err) {
+		switch (tls_err) {
 		case SSL_ERROR_WANT_READ:
 			DPRINTF("%s: session %d: want read",
 			    __func__, con->se_id);
@@ -2356,7 +2356,7 @@ relay_ssl_readcb(int fd, short event, void *arg)
 				what |= EVBUFFER_EOF;
 			else {
 				ssl_error(rlay->rl_conf.name,
-				    "relay_ssl_readcb");
+				    "relay_tls_readcb");
 				what |= EVBUFFER_ERROR;
 			}
 			goto err;
@@ -2393,13 +2393,13 @@ relay_ssl_readcb(int fd, short event, void *arg)
 }
 
 void
-relay_ssl_writecb(int fd, short event, void *arg)
+relay_tls_writecb(int fd, short event, void *arg)
 {
 	struct bufferevent	*bufev = arg;
 	struct ctl_relay_event	*cre = bufev->cbarg;
 	struct rsession		*con = cre->con;
 	struct relay		*rlay = con->se_relay;
-	int			 ret = 0, ssl_err;
+	int			 ret = 0, tls_err;
 	short			 what = EVBUFFER_WRITE;
 
 	if (event == EV_TIMEOUT) {
@@ -2407,7 +2407,7 @@ relay_ssl_writecb(int fd, short event, void *arg)
 		goto err;
 	}
 
-        if (cre->sslreneg_state == SSLRENEG_ABORT) {
+        if (cre->tlsreneg_state == TLSRENEG_ABORT) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}
@@ -2425,9 +2425,9 @@ relay_ssl_writecb(int fd, short event, void *arg)
 
 		ret = SSL_write(cre->ssl, cre->buf, cre->buflen);
 		if (ret <= 0) {
-			ssl_err = SSL_get_error(cre->ssl, ret);
+			tls_err = SSL_get_error(cre->ssl, ret);
 
-			switch (ssl_err) {
+			switch (tls_err) {
 			case SSL_ERROR_WANT_READ:
 				DPRINTF("%s: session %d: want read",
 				    __func__, con->se_id);
@@ -2441,7 +2441,7 @@ relay_ssl_writecb(int fd, short event, void *arg)
 					what |= EVBUFFER_EOF;
 				else {
 					ssl_error(rlay->rl_conf.name,
-					    "relay_ssl_writecb");
+					    "relay_tls_writecb");
 					what |= EVBUFFER_ERROR;
 				}
 				goto err;
@@ -2620,34 +2620,34 @@ relay_load_certfiles(struct relay *rlay)
 	struct protocol *proto = rlay->rl_proto;
 	int	 useport = htons(rlay->rl_conf.port);
 
-	if (rlay->rl_conf.flags & F_SSLCLIENT) {
-		if (strlen(proto->sslca)) {
-			if ((rlay->rl_ssl_ca =
-			    relay_load_file(proto->sslca,
-			    &rlay->rl_conf.ssl_ca_len)) == NULL)
+	if (rlay->rl_conf.flags & F_TLSCLIENT) {
+		if (strlen(proto->tlsca)) {
+			if ((rlay->rl_tls_ca =
+			    relay_load_file(proto->tlsca,
+			    &rlay->rl_conf.tls_ca_len)) == NULL)
 				return (-1);
-			log_debug("%s: using ca %s", __func__, proto->sslca);
+			log_debug("%s: using ca %s", __func__, proto->tlsca);
 		}
-		if (strlen(proto->sslcacert)) {
-			if ((rlay->rl_ssl_cacert =
-			    relay_load_file(proto->sslcacert,
-			    &rlay->rl_conf.ssl_cacert_len)) == NULL)
+		if (strlen(proto->tlscacert)) {
+			if ((rlay->rl_tls_cacert =
+			    relay_load_file(proto->tlscacert,
+			    &rlay->rl_conf.tls_cacert_len)) == NULL)
 				return (-1);
 			log_debug("%s: using ca certificate %s", __func__,
-			    proto->sslcacert);
+			    proto->tlscacert);
 		}
-		if (strlen(proto->sslcakey) && proto->sslcapass != NULL) {
-			if ((rlay->rl_ssl_cakey =
-			    ssl_load_key(env, proto->sslcakey,
-			    &rlay->rl_conf.ssl_cakey_len,
-			    proto->sslcapass)) == NULL)
+		if (strlen(proto->tlscakey) && proto->tlscapass != NULL) {
+			if ((rlay->rl_tls_cakey =
+			    ssl_load_key(env, proto->tlscakey,
+			    &rlay->rl_conf.tls_cakey_len,
+			    proto->tlscapass)) == NULL)
 				return (-1);
 			log_debug("%s: using ca key %s", __func__,
-			    proto->sslcakey);
+			    proto->tlscakey);
 		}
 	}
 
-	if ((rlay->rl_conf.flags & F_SSL) == 0)
+	if ((rlay->rl_conf.flags & F_TLS) == 0)
 		return (0);
 
 	if (print_host(&rlay->rl_conf.ss, hbuf, sizeof(hbuf)) == NULL)
@@ -2656,13 +2656,13 @@ relay_load_certfiles(struct relay *rlay)
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/%s:%u.crt", hbuf, useport) == -1)
 		return (-1);
-	if ((rlay->rl_ssl_cert = relay_load_file(certfile,
-	    &rlay->rl_conf.ssl_cert_len)) == NULL) {
+	if ((rlay->rl_tls_cert = relay_load_file(certfile,
+	    &rlay->rl_conf.tls_cert_len)) == NULL) {
 		if (snprintf(certfile, sizeof(certfile),
 		    "/etc/ssl/%s.crt", hbuf) == -1)
 			return (-1);
-		if ((rlay->rl_ssl_cert = relay_load_file(certfile,
-		    &rlay->rl_conf.ssl_cert_len)) == NULL)
+		if ((rlay->rl_tls_cert = relay_load_file(certfile,
+		    &rlay->rl_conf.tls_cert_len)) == NULL)
 			return (-1);
 		useport = 0;
 	}
@@ -2677,8 +2677,8 @@ relay_load_certfiles(struct relay *rlay)
 		    "/etc/ssl/private/%s.key", hbuf) == -1)
 			return -1;
 	}
-	if ((rlay->rl_ssl_key = ssl_load_key(env, certfile,
-	    &rlay->rl_conf.ssl_key_len, NULL)) == NULL)
+	if ((rlay->rl_tls_key = ssl_load_key(env, certfile,
+	    &rlay->rl_conf.tls_key_len, NULL)) == NULL)
 		return (-1);
 	log_debug("%s: using private key %s", __func__, certfile);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.20 2014/11/22 00:24:22 tedu Exp $	*/
+/*	$OpenBSD: config.c,v 1.21 2014/12/12 10:05:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -113,12 +113,12 @@ config_init(struct relayd *env)
 		env->sc_proto_default.cache = RELAY_CACHESIZE;
 		env->sc_proto_default.tcpflags = TCPFLAG_DEFAULT;
 		env->sc_proto_default.tcpbacklog = RELAY_BACKLOG;
-		env->sc_proto_default.sslflags = SSLFLAG_DEFAULT;
-		(void)strlcpy(env->sc_proto_default.sslciphers,
-		    SSLCIPHERS_DEFAULT,
-		    sizeof(env->sc_proto_default.sslciphers));
-		env->sc_proto_default.sslecdhcurve = SSLECDHCURVE_DEFAULT;
-		env->sc_proto_default.ssldhparams = SSLDHPARAMS_DEFAULT;
+		env->sc_proto_default.tlsflags = TLSFLAG_DEFAULT;
+		(void)strlcpy(env->sc_proto_default.tlsciphers,
+		    TLSCIPHERS_DEFAULT,
+		    sizeof(env->sc_proto_default.tlsciphers));
+		env->sc_proto_default.tlsecdhcurve = TLSECDHCURVE_DEFAULT;
+		env->sc_proto_default.tlsdhparams = TLSDHPARAMS_DEFAULT;
 		env->sc_proto_default.type = RELAY_PROTO_TCP;
 		(void)strlcpy(env->sc_proto_default.name, "default",
 		    sizeof(env->sc_proto_default.name));
@@ -196,8 +196,8 @@ config_purge(struct relayd *env, u_int reset)
 			TAILQ_REMOVE(env->sc_protos, proto, entry);
 			if (proto->style != NULL)
 				free(proto->style);
-			if (proto->sslcapass != NULL)
-				free(proto->sslcapass);
+			if (proto->tlscapass != NULL)
+				free(proto->tlscapass);
 			free(proto);
 		}
 		env->sc_protocount = 0;
@@ -288,7 +288,7 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 		}
 	}
 
-	if (env->sc_flags & (F_SSL|F_SSLCLIENT)) {
+	if (env->sc_flags & (F_TLS|F_TLSCLIENT)) {
 		ssl_init(env);
 		if (what & CONFIG_CA_ENGINE)
 			ca_engine_init(env);
@@ -707,7 +707,7 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 	}
 
 	TAILQ_INIT(&proto->rules);
-	proto->sslcapass = NULL;
+	proto->tlscapass = NULL;
 
 	TAILQ_INSERT_TAIL(env->sc_protos, proto, entry);
 
@@ -820,30 +820,30 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 		c = 0;
 		iov[c].iov_base = &rl;
 		iov[c++].iov_len = sizeof(rl);
-		if (rl.ssl_cert_len) {
-			iov[c].iov_base = rlay->rl_ssl_cert;
-			iov[c++].iov_len = rl.ssl_cert_len;
+		if (rl.tls_cert_len) {
+			iov[c].iov_base = rlay->rl_tls_cert;
+			iov[c++].iov_len = rl.tls_cert_len;
 		}
 		if ((what & CONFIG_CA_ENGINE) == 0 &&
-		    rl.ssl_key_len) {
-			iov[c].iov_base = rlay->rl_ssl_key;
-			iov[c++].iov_len = rl.ssl_key_len;
+		    rl.tls_key_len) {
+			iov[c].iov_base = rlay->rl_tls_key;
+			iov[c++].iov_len = rl.tls_key_len;
 		} else
-			rl.ssl_key_len = 0;
-		if (rl.ssl_ca_len) {
-			iov[c].iov_base = rlay->rl_ssl_ca;
-			iov[c++].iov_len = rl.ssl_ca_len;
+			rl.tls_key_len = 0;
+		if (rl.tls_ca_len) {
+			iov[c].iov_base = rlay->rl_tls_ca;
+			iov[c++].iov_len = rl.tls_ca_len;
 		}
-		if (rl.ssl_cacert_len) {
-			iov[c].iov_base = rlay->rl_ssl_cacert;
-			iov[c++].iov_len = rl.ssl_cacert_len;
+		if (rl.tls_cacert_len) {
+			iov[c].iov_base = rlay->rl_tls_cacert;
+			iov[c++].iov_len = rl.tls_cacert_len;
 		}
 		if ((what & CONFIG_CA_ENGINE) == 0 &&
-		    rl.ssl_cakey_len) {
-			iov[c].iov_base = rlay->rl_ssl_cakey;
-			iov[c++].iov_len = rl.ssl_cakey_len;
+		    rl.tls_cakey_len) {
+			iov[c].iov_base = rlay->rl_tls_cakey;
+			iov[c++].iov_len = rl.tls_cakey_len;
 		} else
-			rl.ssl_cakey_len = 0;
+			rl.tls_cakey_len = 0;
 
 		if (id == PROC_RELAY) {
 			/* XXX imsg code will close the fd after 1st call */
@@ -913,44 +913,44 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	}
 
 	if ((off_t)(IMSG_DATA_SIZE(imsg) - s) <
-	    (rlay->rl_conf.ssl_cert_len +
-	    rlay->rl_conf.ssl_key_len +
-	    rlay->rl_conf.ssl_ca_len +
-	    rlay->rl_conf.ssl_cacert_len +
-	    rlay->rl_conf.ssl_cakey_len)) {
+	    (rlay->rl_conf.tls_cert_len +
+	    rlay->rl_conf.tls_key_len +
+	    rlay->rl_conf.tls_ca_len +
+	    rlay->rl_conf.tls_cacert_len +
+	    rlay->rl_conf.tls_cakey_len)) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
 
-	if (rlay->rl_conf.ssl_cert_len) {
-		if ((rlay->rl_ssl_cert = get_data(p + s,
-		    rlay->rl_conf.ssl_cert_len)) == NULL)
+	if (rlay->rl_conf.tls_cert_len) {
+		if ((rlay->rl_tls_cert = get_data(p + s,
+		    rlay->rl_conf.tls_cert_len)) == NULL)
 			goto fail;
-		s += rlay->rl_conf.ssl_cert_len;
+		s += rlay->rl_conf.tls_cert_len;
 	}
-	if (rlay->rl_conf.ssl_key_len) {
-		if ((rlay->rl_ssl_key = get_data(p + s,
-		    rlay->rl_conf.ssl_key_len)) == NULL)
+	if (rlay->rl_conf.tls_key_len) {
+		if ((rlay->rl_tls_key = get_data(p + s,
+		    rlay->rl_conf.tls_key_len)) == NULL)
 			goto fail;
-		s += rlay->rl_conf.ssl_key_len;
+		s += rlay->rl_conf.tls_key_len;
 	}
-	if (rlay->rl_conf.ssl_ca_len) {
-		if ((rlay->rl_ssl_ca = get_data(p + s,
-		    rlay->rl_conf.ssl_ca_len)) == NULL)
+	if (rlay->rl_conf.tls_ca_len) {
+		if ((rlay->rl_tls_ca = get_data(p + s,
+		    rlay->rl_conf.tls_ca_len)) == NULL)
 			goto fail;
-		s += rlay->rl_conf.ssl_ca_len;
+		s += rlay->rl_conf.tls_ca_len;
 	}
-	if (rlay->rl_conf.ssl_cacert_len) {
-		if ((rlay->rl_ssl_cacert = get_data(p + s,
-		    rlay->rl_conf.ssl_cacert_len)) == NULL)
+	if (rlay->rl_conf.tls_cacert_len) {
+		if ((rlay->rl_tls_cacert = get_data(p + s,
+		    rlay->rl_conf.tls_cacert_len)) == NULL)
 			goto fail;
-		s += rlay->rl_conf.ssl_cacert_len;
+		s += rlay->rl_conf.tls_cacert_len;
 	}
-	if (rlay->rl_conf.ssl_cakey_len) {
-		if ((rlay->rl_ssl_cakey = get_data(p + s,
-		    rlay->rl_conf.ssl_cakey_len)) == NULL)
+	if (rlay->rl_conf.tls_cakey_len) {
+		if ((rlay->rl_tls_cakey = get_data(p + s,
+		    rlay->rl_conf.tls_cakey_len)) == NULL)
 			goto fail;
-		s += rlay->rl_conf.ssl_cakey_len;
+		s += rlay->rl_conf.tls_cakey_len;
 	}
 
 	TAILQ_INIT(&rlay->rl_tables);
@@ -965,12 +965,12 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	return (0);
 
  fail:
-	if (rlay->rl_ssl_cert)
-		free(rlay->rl_ssl_cert);
-	if (rlay->rl_ssl_key)
-		free(rlay->rl_ssl_key);
-	if (rlay->rl_ssl_ca)
-		free(rlay->rl_ssl_ca);
+	if (rlay->rl_tls_cert)
+		free(rlay->rl_tls_cert);
+	if (rlay->rl_tls_key)
+		free(rlay->rl_tls_key);
+	if (rlay->rl_tls_ca)
+		free(rlay->rl_tls_ca);
 	close(rlay->rl_s);
 	free(rlay);
 	return (-1);

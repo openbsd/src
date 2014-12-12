@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.133 2014/11/22 00:24:22 tedu Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.134 2014/12/12 10:05:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (env->sc_flags & (F_SSL|F_SSLCLIENT))
+	if (env->sc_flags & (F_TLS|F_TLSCLIENT))
 		ssl_init(env);
 
 	if (parent_configure(env) == -1)
@@ -305,12 +305,12 @@ parent_configure(struct relayd *env)
 	TAILQ_FOREACH(proto, env->sc_protos, entry)
 		config_setrule(env, proto);
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		/* Check for SSL Inspection */
-		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) ==
-		    (F_SSL|F_SSLCLIENT) &&
-		    rlay->rl_conf.ssl_cacert_len &&
-		    rlay->rl_conf.ssl_cakey_len)
-			rlay->rl_conf.flags |= F_SSLINSPECT;
+		/* Check for TLS Inspection */
+		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) ==
+		    (F_TLS|F_TLSCLIENT) &&
+		    rlay->rl_conf.tls_cacert_len &&
+		    rlay->rl_conf.tls_cakey_len)
+			rlay->rl_conf.flags |= F_TLSINSPECT;
 
 		config_setrelay(env, rlay);
 	}
@@ -563,7 +563,7 @@ purge_table(struct tablelist *head, struct table *table)
 	}
 	if (table->sendbuf != NULL)
 		free(table->sendbuf);
-	if (table->conf.flags & F_SSL)
+	if (table->conf.flags & F_TLS)
 		SSL_CTX_free(table->ssl_ctx);
 
 	if (head != NULL)
@@ -608,26 +608,26 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	if (rlay->rl_dstbev != NULL)
 		bufferevent_free(rlay->rl_dstbev);
 
-	purge_key(&rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len);
-	purge_key(&rlay->rl_ssl_key, rlay->rl_conf.ssl_key_len);
-	purge_key(&rlay->rl_ssl_ca, rlay->rl_conf.ssl_ca_len);
-	purge_key(&rlay->rl_ssl_cakey, rlay->rl_conf.ssl_cakey_len);
+	purge_key(&rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len);
+	purge_key(&rlay->rl_tls_key, rlay->rl_conf.tls_key_len);
+	purge_key(&rlay->rl_tls_ca, rlay->rl_conf.tls_ca_len);
+	purge_key(&rlay->rl_tls_cakey, rlay->rl_conf.tls_cakey_len);
 
-	if (rlay->rl_ssl_x509 != NULL) {
-		X509_free(rlay->rl_ssl_x509);
-		rlay->rl_ssl_x509 = NULL;
+	if (rlay->rl_tls_x509 != NULL) {
+		X509_free(rlay->rl_tls_x509);
+		rlay->rl_tls_x509 = NULL;
 	}
-	if (rlay->rl_ssl_pkey != NULL) {
-		EVP_PKEY_free(rlay->rl_ssl_pkey);
-		rlay->rl_ssl_pkey = NULL;
+	if (rlay->rl_tls_pkey != NULL) {
+		EVP_PKEY_free(rlay->rl_tls_pkey);
+		rlay->rl_tls_pkey = NULL;
 	}
-	if (rlay->rl_ssl_cacertx509 != NULL) {
-		X509_free(rlay->rl_ssl_cacertx509);
-		rlay->rl_ssl_cacertx509 = NULL;
+	if (rlay->rl_tls_cacertx509 != NULL) {
+		X509_free(rlay->rl_tls_cacertx509);
+		rlay->rl_tls_cacertx509 = NULL;
 	}
-	if (rlay->rl_ssl_capkey != NULL) {
-		EVP_PKEY_free(rlay->rl_ssl_capkey);
-		rlay->rl_ssl_capkey = NULL;
+	if (rlay->rl_tls_capkey != NULL) {
+		EVP_PKEY_free(rlay->rl_tls_capkey);
+		rlay->rl_tls_capkey = NULL;
 	}
 
 	if (rlay->rl_ssl_ctx != NULL)

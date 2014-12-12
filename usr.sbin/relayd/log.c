@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.24 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: log.c,v 1.25 2014/12/12 10:05:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -234,29 +234,29 @@ host_error(enum host_error he)
 	case HCE_SCRIPT_FAIL:
 		return ("script failed");
 		break;
-	case HCE_SSL_CONNECT_OK:
-		return ("ssl connect ok");
+	case HCE_TLS_CONNECT_OK:
+		return ("tls connect ok");
 		break;
-	case HCE_SSL_CONNECT_FAIL:
-		return ("ssl connect failed");
+	case HCE_TLS_CONNECT_FAIL:
+		return ("tls connect failed");
 		break;
-	case HCE_SSL_CONNECT_TIMEOUT:
-		return ("ssl connect timeout");
+	case HCE_TLS_CONNECT_TIMEOUT:
+		return ("tls connect timeout");
 		break;
-	case HCE_SSL_CONNECT_ERROR:
-		return ("ssl connect error");
+	case HCE_TLS_CONNECT_ERROR:
+		return ("tls connect error");
 		break;
-	case HCE_SSL_READ_TIMEOUT:
-		return ("ssl read timeout");
+	case HCE_TLS_READ_TIMEOUT:
+		return ("tls read timeout");
 		break;
-	case HCE_SSL_WRITE_TIMEOUT:
-		return ("ssl write timeout");
+	case HCE_TLS_WRITE_TIMEOUT:
+		return ("tls write timeout");
 		break;
-	case HCE_SSL_READ_ERROR:
-		return ("ssl read error");
+	case HCE_TLS_READ_ERROR:
+		return ("tls read error");
 		break;
-	case HCE_SSL_WRITE_ERROR:
-		return ("ssl write error");
+	case HCE_TLS_WRITE_ERROR:
+		return ("tls write error");
 		break;
 	case HCE_SEND_EXPECT_FAIL:
 		return ("send/expect failed");

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.152 2014/11/07 13:48:06 jsing Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.153 2014/12/12 10:05:09 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2014 $
+.Dd $Mdocdate: December 12 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ Redirections are translated to
 rdr-to rules for stateful forwarding to a target host from a
 health-checked table on layer 3.
 .It Sy Relays
-Relays allow application layer load balancing, SSL acceleration, and
+Relays allow application layer load balancing, TLS acceleration, and
 general purpose TCP proxying on layer 7.
 .It Sy Protocols
 Protocols are predefined settings and filter rules for relays.
@@ -277,7 +277,7 @@ HTTP/1.1 200 OK
 .Op Ic host Ar hostname
 .Ic code Ar number
 .Xc
-This has the same effect as above but wraps the HTTP request in SSL.
+This has the same effect as above but wraps the HTTP request in TLS.
 .It Xo
 .Ic check http Ar path
 .Op Ic host Ar hostname
@@ -313,7 +313,7 @@ a9993e36476816aba3e25717850c26c9cd0d89d
 .Op Ic host Ar hostname
 .Ic digest Ar string
 .Xc
-This has the same effect as above but wraps the HTTP request in SSL.
+This has the same effect as above but wraps the HTTP request in TLS.
 .It Ic check icmp
 Ping hosts in this table to determine whether they are up or not.
 This method will automatically use ICMP or ICMPV6 depending on the
@@ -338,7 +338,7 @@ milliseconds.
 .Ar data
 .Ic expect
 .Ar pattern
-.Op Ic ssl
+.Op Ic tls
 .Xc
 For each host in the table, a TCP connection is established on the
 port specified, then
@@ -356,13 +356,13 @@ read.
 This can be useful with protocols that output a banner like
 SMTP, NNTP, and FTP.
 If the
-.Ic ssl
+.Ic tls
 keyword is present,
-the transaction will occur in an SSL tunnel.
-.It Ic check ssl
-Perform a complete SSL handshake with each host to check their availability.
+the transaction will occur in an TLS tunnel.
 .It Ic check tcp
 Use a simple TCP connect to check that hosts are up.
+.It Ic check tls
+Perform a complete TLS handshake with each host to check their availability.
 .El
 .Pp
 The following general table options are available:
@@ -544,7 +544,7 @@ A relay is also called an application layer gateway or layer 7 proxy.
 .Pp
 The main purpose of a relay is to provide advanced load balancing
 functionality based on specified protocol characteristics, such as
-HTTP headers, to provide SSL acceleration and to allow
+HTTP headers, to provide TLS acceleration and to allow
 basic handling of the underlying application protocol.
 .Pp
 The
@@ -556,7 +556,7 @@ Start the relay but immediately close any accepted connections.
 .It Xo
 .Op Ic transparent
 .Ic forward
-.Op Ic with ssl
+.Op Ic with tls
 .Ic to
 .Ar address
 .Op Ic port Ar port
@@ -574,8 +574,8 @@ keyword to enable fully-transparent mode; the source address of the
 client will be retained in this case.
 .Pp
 The
-.Ic with ssl
-directive enables client-side SSL mode to connect to the remote host.
+.Ic with tls
+directive enables client-side TLS mode to connect to the remote host.
 Verification of server certificates can be enabled by setting the
 .Ic ca file
 option in the protocol section.
@@ -646,7 +646,7 @@ Like the previous directive, but for redirections with rdr-to in
 .It Xo
 .Ic listen on Ar address
 .Op Ic port Ar port
-.Op Ic ssl
+.Op Ic tls
 .Xc
 Specify the address and port for the relay to listen on.
 The relay will accept incoming connections to the specified address.
@@ -657,9 +657,9 @@ option is not specified, the port from the
 directive will be used.
 .Pp
 If the
-.Ic ssl
+.Ic tls
 keyword is present, the relay will accept connections using the
-encrypted SSL protocol.
+encrypted TLS protocol.
 The relay will attempt to look up a private key in
 .Pa /etc/ssl/private/address:port.key
 and a public certificate in
@@ -675,7 +675,7 @@ and
 .Pa /etc/ssl/address.crt .
 See
 .Xr ssl 8
-for details about SSL server certificates.
+for details about SSL/TLS server certificates.
 .It Ic protocol Ar name
 Use the specified protocol definition for the relay.
 The generic TCP protocol options will be used by default;
@@ -687,54 +687,53 @@ Specify the inactivity timeout in seconds for accepted sessions.
 The default timeout is 600 seconds (10 minutes).
 The maximum is 2147483647 seconds (68 years).
 .El
-.Sh SSL RELAYS
+.Sh TLS RELAYS
 In addition to plain TCP,
 .Xr relayd 8
-supports the Secure Sockets Layer (SSL) and Transport Layer Security
-(TLS) cryptographic protocols for authenticated and encrypted relays.
-TLS is the successor of the original SSL protocol but the term SSL can
-refer to either of the protocols in
-.Nm .
+supports the Transport Layer Security (TLS) cryptographic protocol for
+authenticated and encrypted relays.
+TLS is the successor of the original Secure Sockets Layer (SSL) protocol,
+but the term SSL is sometimes still used in modern TLS-based applications.
 .Xr relayd 8
-can operate as an SSL client or server to offer a variety of options
-for different use cases related to SSL.
+can operate as an TLS client or server to offer a variety of options
+for different use cases related to TLS.
 .Bl -tag -width Ds
-.It Ic SSL client
+.It Ic TLS client
 When configuring the relay
 .Ic forward
 statements with the
-.Ic with ssl
+.Ic with tls
 directive,
 .Xr relayd 8
-will enable client-side SSL to connect to the remote host.
-This is commonly used for SSL tunneling and transparent encapsulation
+will enable client-side TLS to connect to the remote host.
+This is commonly used for TLS tunneling and transparent encapsulation
 of plain TCP connections.
 See the
 .Ic forward to
 description in the
 .Sx RELAYS
 section for more details.
-.It Ic SSL server
+.It Ic TLS server
 When specifying the
-.Ic ssl
+.Ic tls
 keyword in the relay
 .Ic listen
 statements,
 .Xr relayd 8
-will accept connections from clients as an SSL server.
+will accept connections from clients as an TLS server.
 This mode is also known as
-.Dq SSL acceleration .
+.Dq SSL/TLS acceleration .
 See the
 .Ic listen on
 description in the
 .Sx RELAYS
 section for more details.
-.It Ic SSL client and server
-When combining both modes, SSL server and client,
+.It Ic TLS client and server
+When combining both modes, TLS server and client,
 .Xr relayd 8
-can filter SSL connections as a man-in-the-middle.
+can filter TLS connections as a man-in-the-middle.
 This combined mode is also called
-.Dq SSL inspection .
+.Dq TLS inspection .
 The configuration requires additional X.509 certificate settings;
 see the
 .Ic ca key
@@ -744,16 +743,16 @@ section for more details.
 .El
 .Pp
 When configured for
-.Dq SSL inspection
+.Dq TLS inspection
 mode,
 .Xr relayd 8
 will listen for incoming connections which have been diverted to the
 local socket by PF.
-Before accepting and negotiating the incoming SSL connection as a
+Before accepting and negotiating the incoming TLS connection as a
 server, it will look up the original destination address on the
-diverted socket, and pre-connect to the target server as an SSL client
-to obtain the remote SSL certificate.
-It will update or patch the obtained SSL certificate by replacing the
+diverted socket, and pre-connect to the target server as an TLS client
+to obtain the remote TLS certificate.
+It will update or patch the obtained TLS certificate by replacing the
 included public key with its local server key because it doesn't have
 the private key of the remote server certificate.
 It also updates the X.509 issuer name to the local CA subject name and
@@ -761,12 +760,12 @@ signs the certificate with its local CA key.
 This way it keeps all the other X.509 attributes that are already
 present in the server certificate, including the "green bar" extended
 validation attributes.
-Now it finally accepts the SSL connection from the diverted client
+Now it finally accepts the TLS connection from the diverted client
 using the updated certificate and continues to handle the connection
 and to connect to the remote server.
 .Sh PROTOCOLS
 Protocols are templates defining settings and rules for relays.
-They allow setting generic TCP options, SSL settings, and rules
+They allow setting generic TCP options, TLS settings, and rules
 for the selected application layer protocol.
 .Pp
 The protocol directive is available for a number of different
@@ -784,7 +783,7 @@ replaces these IDs with random values to compensate for
 predictable values generated by some hosts.
 .It Ic http protocol
 Handle the HyperText Transfer Protocol
-(HTTP, or "HTTPS" if encapsulated in an SSL tunnel).
+(HTTP, or "HTTPS" if encapsulated in an TLS tunnel).
 .It Xo
 .Op Ic tcp
 .Ic protocol
@@ -818,143 +817,6 @@ HTTP error pages, for example:
 .Bd -literal -offset indent
 body { background: #a00000; color: white; }
 .Ed
-.El
-.It Ic ssl Ar option
-Set the SSL options and session settings.
-This is only used if SSL is enabled in the relay.
-Valid options are:
-.Bl -tag -width Ds
-.It Ic ca cert Ar path
-Specify a CA certificate for SSL inspection.
-For more information, see the
-.Ic ca key
-option below.
-.It Ic ca file Ar path
-This option enables CA verification in SSL client mode.
-The daemon will load the CA (Certificate Authority) certificates from
-the specified path to verify the server certificates.
-.Ox
-provides a default CA bundle in
-.Pa /etc/ssl/cert.pem .
-.It Ic ca key Ar path Ic password Ar password
-Specify a CA key for SSL inspection.
-The
-.Ar password
-argument will specify the password to decrypt the CA key
-(typically an RSA key).
-This option will enable SSL inspection if the following conditions
-are true:
-.Pp
-.Bl -bullet -compact -offset indent
-.It
-SSL client mode is enabled by the
-.Ic listen
-directive:
-.Ic listen on ... ssl .
-.It
-SSL server mode and divert lookups are enabled by the
-.Ic forward
-directive:
-.Ic forward with ssl to destination .
-.It
-The
-.Ic ca cert
-option is specified.
-.It
-The
-.Ic ca key
-option is specified.
-.El
-.It Ic ciphers Ar string
-Set the string defining the SSL cipher suite.
-If not specified, the default value
-.Ar HIGH:!aNULL
-will be used (strong crypto cipher suites without anonymous DH).
-See the CIPHERS section of
-.Xr openssl 1
-for information about SSL cipher suites and preference lists.
-.It Oo Ic no Oc Ic cipher-server-preference
-Prefer the server's cipher list over the client's preferences when
-choosing a cipher for the connection;
-disabled by default.
-.It Oo Ic no Oc Ic client-renegotiation
-Allow client-initiated renegotiation;
-enabled by default.
-Disable to mitigate a potential DoS risk.
-.It Ic ecdh Op Ic curve Ar name
-Set a named curve to use when generating EC keys for ECDHE-based
-cipher suites with Perfect Forward Security (PFS).
-If the curve
-.Ar name
-is not specified, the default curve
-.Ar prime256v1
-will be used.
-ECDHE is enabled by default.
-.It Ic no ecdh
-Disable ECDHE support.
-.It Ic edh Op Ic params Ar maximum
-Enable EDH-based cipher suites with Perfect Forward Security (PFS) for
-older clients that do not support ECDHE.
-If the
-.Ar maximum
-length of the DH params for EDH is not specified, the default value of
-.Ar 1024
-bits will be used.
-Other possible values are numbers between 1024 and 8192, including
-.Ar 1024 ,
-.Ar 1536 ,
-.Ar 2048 ,
-.Ar 4096 ,
-or
-.Ar 8192 .
-Values higher than 1024 bits can cause incompatibilities with older
-SSL clients.
-.It Ic no edh
-Disable EDH support.
-This is the default.
-.It Ic session cache Ar value
-Set the maximum size of the SSL session cache.
-If the
-.Ar value
-is zero, the default size defined by the SSL library will be used.
-A positive number will set the maximum size in bytes and the keyword
-.Ic disable
-will disable the SSL session cache.
-.It Xo
-.Op Ic no
-.Ic sslv3
-.Xc
-Enable the SSLv3 protocol;
-disabled by default.
-.It Xo
-.Op Ic no
-.Ic tlsv1
-.Xc
-Disable the TLSv1 protocols;
-enabled by default.
-This is an alias that includes
-.Ic tlsv1.0 ,
-.Ic tlsv1.1 ,
-and
-.Ic tlsv1.2 .
-.It Xo
-.Op Ic no
-.Ic tlsv1.0
-.Xc
-Disable the TLSv1.0 protocol;
-enabled by default.
-.It Xo
-.Op Ic no
-.Ic tlsv1.1
-.Xc
-Disable the TLSv1.1 protocol;
-enabled by default.
-.It Xo
-.Op Ic no
-.Ic tlsv1.2
-.Xc
-Disable the TLSv1.2 protocol;
-enabled by default.
 .El
 .It Ic tcp Ar option
 Enable or disable the specified TCP/IP options; see
@@ -1000,6 +862,143 @@ This will affect the TCP window size.
 .Xc
 Use socket splicing for zero-copy data transfer.
 This option is enabled by default.
+.El
+.It Ic tls Ar option
+Set the TLS options and session settings.
+This is only used if TLS is enabled in the relay.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic ca cert Ar path
+Specify a CA certificate for TLS inspection.
+For more information, see the
+.Ic ca key
+option below.
+.It Ic ca file Ar path
+This option enables CA verification in TLS client mode.
+The daemon will load the CA (Certificate Authority) certificates from
+the specified path to verify the server certificates.
+.Ox
+provides a default CA bundle in
+.Pa /etc/ssl/cert.pem .
+.It Ic ca key Ar path Ic password Ar password
+Specify a CA key for TLS inspection.
+The
+.Ar password
+argument will specify the password to decrypt the CA key
+(typically an RSA key).
+This option will enable TLS inspection if the following conditions
+are true:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+TLS client mode is enabled by the
+.Ic listen
+directive:
+.Ic listen on ... tls .
+.It
+TLS server mode and divert lookups are enabled by the
+.Ic forward
+directive:
+.Ic forward with tls to destination .
+.It
+The
+.Ic ca cert
+option is specified.
+.It
+The
+.Ic ca key
+option is specified.
+.El
+.It Ic ciphers Ar string
+Set the string defining the TLS cipher suite.
+If not specified, the default value
+.Ar HIGH:!aNULL
+will be used (strong crypto cipher suites without anonymous DH).
+See the CIPHERS section of
+.Xr openssl 1
+for information about SSL/TLS cipher suites and preference lists.
+.It Oo Ic no Oc Ic cipher-server-preference
+Prefer the server's cipher list over the client's preferences when
+choosing a cipher for the connection;
+disabled by default.
+.It Oo Ic no Oc Ic client-renegotiation
+Allow client-initiated renegotiation;
+enabled by default.
+Disable to mitigate a potential DoS risk.
+.It Ic ecdh Op Ic curve Ar name
+Set a named curve to use when generating EC keys for ECDHE-based
+cipher suites with Perfect Forward Security (PFS).
+If the curve
+.Ar name
+is not specified, the default curve
+.Ar prime256v1
+will be used.
+ECDHE is enabled by default.
+.It Ic no ecdh
+Disable ECDHE support.
+.It Ic edh Op Ic params Ar maximum
+Enable EDH-based cipher suites with Perfect Forward Security (PFS) for
+older clients that do not support ECDHE.
+If the
+.Ar maximum
+length of the DH params for EDH is not specified, the default value of
+.Ar 1024
+bits will be used.
+Other possible values are numbers between 1024 and 8192, including
+.Ar 1024 ,
+.Ar 1536 ,
+.Ar 2048 ,
+.Ar 4096 ,
+or
+.Ar 8192 .
+Values higher than 1024 bits can cause incompatibilities with older
+TLS clients.
+.It Ic no edh
+Disable EDH support.
+This is the default.
+.It Ic session cache Ar value
+Set the maximum size of the TLS session cache.
+If the
+.Ar value
+is zero, the default size defined by the TLS library will be used.
+A positive number will set the maximum size in bytes and the keyword
+.Ic disable
+will disable the TLS session cache.
+.It Xo
+.Op Ic no
+.Ic sslv3
+.Xc
+Enable the SSLv3 protocol;
+disabled by default.
+.It Xo
+.Op Ic no
+.Ic tlsv1
+.Xc
+Disable the TLSv1 protocols;
+enabled by default.
+This is an alias that includes
+.Ic tlsv1.0 ,
+.Ic tlsv1.1 ,
+and
+.Ic tlsv1.2 .
+.It Xo
+.Op Ic no
+.Ic tlsv1.0
+.Xc
+Disable the TLSv1.0 protocol;
+enabled by default.
+.It Xo
+.Op Ic no
+.Ic tlsv1.1
+.Xc
+Disable the TLSv1.1 protocol;
+enabled by default.
+.It Xo
+.Op Ic no
+.Ic tlsv1.2
+.Xc
+Disable the TLSv1.2 protocol;
+enabled by default.
 .El
 .El
 .Sh FILTER RULES
@@ -1389,7 +1388,7 @@ Service name database.
 .It Pa /etc/ssl/address:port.crt
 .It Pa /etc/ssl/private/address.key
 .It Pa /etc/ssl/private/address:port.key
-Location of the relay SSL server certificates, where
+Location of the relay TLS server certificates, where
 .Ar address
 is the configured IP address
 and
@@ -1444,7 +1443,7 @@ The following configuration would add a relay to forward
 secure HTTPS connections to a pool of HTTP webservers
 using the
 .Ic loadbalance
-mode (SSL acceleration and layer 7 load balancing).
+mode (TLS acceleration and layer 7 load balancing).
 The HTTP protocol definition will add two HTTP headers containing
 address information of the client and the server, set the
 .Dq Keep-Alive
@@ -1453,7 +1452,7 @@ and include the
 .Dq sessid
 variable in the hash to calculate the target host:
 .Bd -literal -offset indent
-http protocol "http_ssl" {
+http protocol "https" {
 	match header append "X-Forwarded-For" \e
 		value "$REMOTE_ADDR"
 	match header append "X-Forwarded-By" \e
@@ -1466,12 +1465,12 @@ http protocol "http_ssl" {
 	pass
 	block path "/cgi-bin/index.cgi" value "*command=*"
 
-	ssl { no tlsv1.0, ciphers "HIGH" }
+	tls { no tlsv1.0, ciphers "HIGH" }
 }
 
-relay "sslaccel" {
-	listen on www.example.com port 443 ssl
-	protocol "http_ssl"
+relay "tlsaccel" {
+	listen on www.example.com port 443 tls
+	protocol "https"
 	forward to \*(Ltphphosts\*(Gt port 8080 mode loadbalance check tcp
 }
 .Ed
@@ -1497,9 +1496,9 @@ relay "sshforward" {
 .Ed
 .Pp
 The following relay example will configure
-.Dq SSL inspection
+.Dq TLS inspection
 as described in the
-.Sx SSL RELAYS
+.Sx TLS RELAYS
 section.
 To start, first generate a new local CA key and certificate:
 .Bd -literal -offset indent
@@ -1507,7 +1506,7 @@ To start, first generate a new local CA key and certificate:
 	-keyout /etc/ssl/private/ca.key -out /etc/ssl/ca.crt
 .Ed
 .Pp
-An SSL server key and self-signed cert for 127.0.0.1 are also required;
+An TLS server key and self-signed cert for 127.0.0.1 are also required;
 see
 .Ic listen on
 in the
@@ -1521,7 +1520,7 @@ pass in on vlan1 inet proto tcp to port 443 \e
 	divert-to localhost port 8443
 .Ed
 .Pp
-And finally configure the SSL inspection in
+And finally configure the TLS inspection in
 .Nm :
 .Bd -literal -offset indent
 http protocol httpfilter {
@@ -1531,15 +1530,15 @@ http protocol httpfilter {
 	match label "Prohibited!"
 	block url "social.network.example.com/"
 
-	# New configuration directives for SSL Interception
-	ssl ca key "/etc/ssl/private/ca.key" password "password123"
-	ssl ca cert "/etc/ssl/ca.crt"
+	# New configuration directives for SSL/TLS Interception
+	tls ca key "/etc/ssl/private/ca.key" password "password123"
+	tls ca cert "/etc/ssl/ca.crt"
 }
 
-relay sslinspect {
-	listen on 127.0.0.1 port 8443 ssl
+relay tlsinspect {
+	listen on 127.0.0.1 port 8443 tls
 	protocol httpfilter
-	forward with ssl to destination
+	forward with tls to destination
 }
 .Ed
 .Pp
@@ -1578,7 +1577,7 @@ and
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh CAVEATS
 .Xr relayd 8
-Verification of SSL server certificates is based on a static CA bundle
+Verification of TLS server certificates is based on a static CA bundle
 and
 .Xr relayd 8
 currently does not support CRLs (Certificate Revocation Lists).
