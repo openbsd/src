@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.139 2014/10/08 16:15:37 deraadt Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.140 2014/12/12 18:15:51 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <siphash.h>
 
 #include "bgpd.h"
 #include "rde.h"
@@ -357,9 +358,11 @@ static void	path_link(struct rde_aspath *, struct rde_peer *);
 
 struct path_table pathtable;
 
+SIPHASH_KEY pathtablekey;
+
 /* XXX the hash should also include communities and the other attrs */
 #define PATH_HASH(x)				\
-	&pathtable.path_hashtbl[hash32_buf((x)->data, (x)->len, HASHINIT) & \
+	&pathtable.path_hashtbl[SipHash24(&pathtablekey, (x)->data, (x)->len) & \
 	    pathtable.path_hashmask]
 
 void
@@ -377,6 +380,7 @@ path_init(u_int32_t hashsize)
 		LIST_INIT(&pathtable.path_hashtbl[i]);
 
 	pathtable.path_hashmask = hs - 1;
+	arc4random_buf(&pathtablekey, sizeof(pathtablekey));
 }
 
 void
