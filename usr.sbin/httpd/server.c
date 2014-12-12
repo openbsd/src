@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.47 2014/12/04 02:44:42 tedu Exp $	*/
+/*	$OpenBSD: server.c,v 1.48 2014/12/12 14:45:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -59,12 +59,12 @@ int		 server_socket(struct sockaddr_storage *, in_port_t,
 int		 server_socket_listen(struct sockaddr_storage *, in_port_t,
 		    struct server_config *);
 
-int		 server_ssl_init(struct server *);
-void		 server_ssl_readcb(int, short, void *);
-void		 server_ssl_writecb(int, short, void *);
+int		 server_tls_init(struct server *);
+void		 server_tls_readcb(int, short, void *);
+void		 server_tls_writecb(int, short, void *);
 
 void		 server_accept(int, short, void *);
-void		 server_accept_ssl(int, short, void *);
+void		 server_accept_tls(int, short, void *);
 void		 server_input(struct client *);
 
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
@@ -145,33 +145,33 @@ server_load_file(const char *filename, off_t *len)
 }
 
 int
-server_ssl_load_keypair(struct server *srv)
+server_tls_load_keypair(struct server *srv)
 {
-	if ((srv->srv_conf.flags & SRVFLAG_SSL) == 0)
+	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
 		return (0);
 
-	if ((srv->srv_conf.ssl_cert = server_load_file(
-	    srv->srv_conf.ssl_cert_file, &srv->srv_conf.ssl_cert_len)) == NULL)
+	if ((srv->srv_conf.tls_cert = server_load_file(
+	    srv->srv_conf.tls_cert_file, &srv->srv_conf.tls_cert_len)) == NULL)
 		return (-1);
 	log_debug("%s: using certificate %s", __func__,
-	    srv->srv_conf.ssl_cert_file);
+	    srv->srv_conf.tls_cert_file);
 
-	if ((srv->srv_conf.ssl_key = server_load_file(
-	    srv->srv_conf.ssl_key_file, &srv->srv_conf.ssl_key_len)) == NULL)
+	if ((srv->srv_conf.tls_key = server_load_file(
+	    srv->srv_conf.tls_key_file, &srv->srv_conf.tls_key_len)) == NULL)
 		return (-1);
 	log_debug("%s: using private key %s", __func__,
-	    srv->srv_conf.ssl_key_file);
+	    srv->srv_conf.tls_key_file);
 
 	return (0);
 }
 
 int
-server_ssl_init(struct server *srv)
+server_tls_init(struct server *srv)
 {
-	if ((srv->srv_conf.flags & SRVFLAG_SSL) == 0)
+	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
 		return (0);
 
-	log_debug("%s: setting up SSL for %s", __func__, srv->srv_conf.name);
+	log_debug("%s: setting up TLS for %s", __func__, srv->srv_conf.name);
 
 	if (tls_init() != 0) {
 		log_warn("%s: failed to initialise tls", __func__);
@@ -187,37 +187,37 @@ server_ssl_init(struct server *srv)
 	}
 
 	if (tls_config_set_ciphers(srv->srv_tls_config,
-	    srv->srv_conf.ssl_ciphers) != 0) {
+	    srv->srv_conf.tls_ciphers) != 0) {
 		log_warn("%s: failed to set tls ciphers", __func__);
 		return (-1);
 	}
 	if (tls_config_set_cert_mem(srv->srv_tls_config,
-	    srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len) != 0) {
+	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len) != 0) {
 		log_warn("%s: failed to set tls cert", __func__);
 		return (-1);
 	}
 	if (tls_config_set_key_mem(srv->srv_tls_config,
-	    srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len) != 0) {
+	    srv->srv_conf.tls_key, srv->srv_conf.tls_key_len) != 0) {
 		log_warn("%s: failed to set tls key", __func__);
 		return (-1);
 	}
 
 	if (tls_configure(srv->srv_tls_ctx, srv->srv_tls_config) != 0) {
-		log_warn("%s: failed to configure SSL - %s", __func__,
+		log_warn("%s: failed to configure TLS - %s", __func__,
 		    tls_error(srv->srv_tls_ctx));
 		return (-1);
 	}
 
 	/* We're now done with the public/private key... */
 	tls_config_clear_keys(srv->srv_tls_config);
-	explicit_bzero(srv->srv_conf.ssl_cert, srv->srv_conf.ssl_cert_len);
-	explicit_bzero(srv->srv_conf.ssl_key, srv->srv_conf.ssl_key_len);
-	free(srv->srv_conf.ssl_cert);
-	free(srv->srv_conf.ssl_key);
-	srv->srv_conf.ssl_cert = NULL;
-	srv->srv_conf.ssl_key = NULL;
-	srv->srv_conf.ssl_cert_len = 0;
-	srv->srv_conf.ssl_key_len = 0;
+	explicit_bzero(srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len);
+	explicit_bzero(srv->srv_conf.tls_key, srv->srv_conf.tls_key_len);
+	free(srv->srv_conf.tls_cert);
+	free(srv->srv_conf.tls_key);
+	srv->srv_conf.tls_cert = NULL;
+	srv->srv_conf.tls_key = NULL;
+	srv->srv_conf.tls_cert_len = 0;
+	srv->srv_conf.tls_key_len = 0;
 
 	return (0);
 }
@@ -253,7 +253,7 @@ server_launch(void)
 	struct server		*srv;
 
 	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
-		server_ssl_init(srv);
+		server_tls_init(srv);
 		server_http_init(srv);
 
 		log_debug("%s: running server %s", __func__,
@@ -307,17 +307,17 @@ server_purge(struct server *srv)
 void
 serverconfig_free(struct server_config *srv_conf)
 {
-	free(srv_conf->ssl_cert_file);
-	free(srv_conf->ssl_cert);
-	free(srv_conf->ssl_key_file);
-	free(srv_conf->ssl_key);
+	free(srv_conf->tls_cert_file);
+	free(srv_conf->tls_cert);
+	free(srv_conf->tls_key_file);
+	free(srv_conf->tls_key);
 }
 
 void
 serverconfig_reset(struct server_config *srv_conf)
 {
-	srv_conf->ssl_cert_file = srv_conf->ssl_cert =
-	    srv_conf->ssl_key_file = srv_conf->ssl_key = NULL;
+	srv_conf->tls_cert_file = srv_conf->tls_cert =
+	    srv_conf->tls_key_file = srv_conf->tls_key = NULL;
 }
 
 struct server *
@@ -537,7 +537,7 @@ server_socket_connect(struct sockaddr_storage *ss, in_port_t port,
 }
 
 void
-server_ssl_readcb(int fd, short event, void *arg)
+server_tls_readcb(int fd, short event, void *arg)
 {
 	struct bufferevent	*bufev = arg;
 	struct client		*clt = bufev->cbarg;
@@ -593,7 +593,7 @@ server_ssl_readcb(int fd, short event, void *arg)
 }
 
 void
-server_ssl_writecb(int fd, short event, void *arg)
+server_tls_writecb(int fd, short event, void *arg)
 {
 	struct bufferevent	*bufev = arg;
 	struct client		*clt = bufev->cbarg;
@@ -687,11 +687,11 @@ server_input(struct client *clt)
 		return;
 	}
 
-	if (srv_conf->flags & SRVFLAG_SSL) {
+	if (srv_conf->flags & SRVFLAG_TLS) {
 		event_set(&clt->clt_bev->ev_read, clt->clt_s, EV_READ,
-		    server_ssl_readcb, clt->clt_bev);
+		    server_tls_readcb, clt->clt_bev);
 		event_set(&clt->clt_bev->ev_write, clt->clt_s, EV_WRITE,
-		    server_ssl_writecb, clt->clt_bev);
+		    server_tls_writecb, clt->clt_bev);
 	}
 
 	/* Adjust write watermark to the socket buffer output size */
@@ -898,9 +898,9 @@ server_accept(int fd, short event, void *arg)
 		return;
 	}
 
-	if (srv->srv_conf.flags & SRVFLAG_SSL) {
+	if (srv->srv_conf.flags & SRVFLAG_TLS) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
-		    server_accept_ssl, &clt->clt_tv_start,
+		    server_accept_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 		return;
 	}
@@ -922,14 +922,14 @@ server_accept(int fd, short event, void *arg)
 }
 
 void
-server_accept_ssl(int fd, short event, void *arg)
+server_accept_tls(int fd, short event, void *arg)
 {
 	struct client *clt = (struct client *)arg;
 	struct server *srv = (struct server *)clt->clt_srv;
 	int ret;
 
 	if (event == EV_TIMEOUT) {
-		server_close(clt, "SSL accept timeout");
+		server_close(clt, "TLS accept timeout");
 		return;
 	}
 
@@ -940,14 +940,14 @@ server_accept_ssl(int fd, short event, void *arg)
 	    clt->clt_s);
 	if (ret == TLS_READ_AGAIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
-		    server_accept_ssl, &clt->clt_tv_start,
+		    server_accept_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else if (ret == TLS_WRITE_AGAIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_WRITE,
-		    server_accept_ssl, &clt->clt_tv_start,
+		    server_accept_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else if (ret != 0) {
-		log_warnx("%s: SSL accept failed - %s", __func__,
+		log_warnx("%s: TLS accept failed - %s", __func__,
 		    tls_error(srv->srv_tls_ctx));
 		return;
 	}

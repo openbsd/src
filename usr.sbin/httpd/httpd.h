@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.63 2014/11/11 15:54:45 beck Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.64 2014/12/12 14:45:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,9 +38,9 @@
 #define HTTPD_LOGROOT		"/logs"
 #define HTTPD_ACCESS_LOG	"access.log"
 #define HTTPD_ERROR_LOG		"error.log"
-#define HTTPD_SSL_CERT		"/etc/ssl/server.crt"
-#define HTTPD_SSL_KEY		"/etc/ssl/private/server.key"
-#define HTTPD_SSL_CIPHERS	"HIGH:!aNULL"
+#define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
+#define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
+#define HTTPD_TLS_CIPHERS	"HIGH:!aNULL"
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -322,14 +322,14 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_SOCKET		0x0400
 #define SRVFLAG_SYSLOG		0x0800
 #define SRVFLAG_NO_SYSLOG	0x1000
-#define SRVFLAG_SSL		0x2000
+#define SRVFLAG_TLS		0x2000
 #define SRVFLAG_ACCESS_LOG	0x4000
 #define SRVFLAG_ERROR_LOG	0x8000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
-	"\14SYSLOG\15NO_SYSLOG\16SSL\17ACCESS_LOG\20ERROR_LOG"
+	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -376,13 +376,13 @@ struct server_config {
 	u_int32_t		 maxrequests;
 	size_t			 maxrequestbody;
 
-	char			*ssl_cert;
-	off_t			 ssl_cert_len;
-	char			*ssl_cert_file;
-	char			 ssl_ciphers[NAME_MAX];
-	char			*ssl_key;
-	off_t			 ssl_key_len;
-	char			*ssl_key_file;
+	char			*tls_cert;
+	off_t			 tls_cert_len;
+	char			*tls_cert_file;
+	char			 tls_ciphers[NAME_MAX];
+	char			*tls_key;
+	off_t			 tls_key_len;
+	char			*tls_key_file;
 
 	u_int16_t		 flags;
 	u_int8_t		 tcpflags;
@@ -464,7 +464,7 @@ int	 cmdline_symset(char *);
 
 /* server.c */
 pid_t	 server(struct privsep *, struct privsep_proc *);
-int	 server_ssl_load_keypair(struct server *);
+int	 server_tls_load_keypair(struct server *);
 int	 server_privinit(struct server *);
 void	 server_purge(struct server *);
 void	 serverconfig_free(struct server_config *);
