@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.36 2014/10/08 04:19:08 deraadt Exp $	*/
+/*	$OpenBSD: compile.c,v 1.37 2014/12/12 03:32:55 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -538,7 +538,7 @@ compile_flags(char *p, struct s_subst *s)
 {
 	int gn;			/* True if we have seen g or n */
 	long l;
-	char wfile[PATH_MAX], *q;
+	char wfile[PATH_MAX], *q, *eq;
 
 	s->n = 1;				/* Default */
 	s->p = 0;
@@ -584,9 +584,12 @@ compile_flags(char *p, struct s_subst *s)
 #endif
 			EATSPACE();
 			q = wfile;
+			eq = wfile + sizeof(wfile) - 1;
 			while (*p) {
 				if (*p == '\n')
 					break;
+				if (q >= eq)
+					err(COMPILE, "wfile too long");
 				*q++ = *p++;
 			}
 			*q = '\0';
