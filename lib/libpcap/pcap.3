@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.35 2013/06/25 16:49:39 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.36 2014/12/12 14:23:17 schwarze Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,14 +19,14 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 25 2013 $
+.Dd $Mdocdate: December 12 2014 $
 .Dt PCAP 3
 .Os
 .Sh NAME
 .Nm pcap
 .Nd Packet Capture library
 .Sh SYNOPSIS
-.Fd #include <pcap.h>
+.In pcap.h
 .Ft "pcap_t *"
 .Fn pcap_open_live "char *device" "int snaplen" "int promisc" "int to_ms" "char *errbuf"
 .Ft "pcap_t *"
@@ -46,9 +46,9 @@
 .Ft void
 .Fn pcap_dump "u_char *user" "struct pcap_pkthdr *h" "u_char *sp"
 .Ft int
-.Fn pcap_inject "pcap_t *p" "void *, size_t"
+.Fn pcap_inject "pcap_t *p" "const void *buf" "size_t len"
 .Ft int
-.Fn pcap_sendpacket "pcap_t *p" "void *, int"
+.Fn pcap_sendpacket "pcap_t *p" "const u_char *buf" "int size"
 .Ft int
 .Fn pcap_compile "pcap_t *p" "struct bpf_program *fp" "char *str" "int optimize" "bpf_u_int32 netmask"
 .Ft int
@@ -562,7 +562,10 @@ routine to an error string.
 .Xr tcpdump 8
 .\" , tcpslice(1)
 .Sh AUTHORS
-Van Jacobson,
-Craig Leres and
-Steven McCanne, all of the
+.An -nosplit
+.An Van Jacobson ,
+.An Craig Leres ,
+and
+.An Steven McCanne ,
+all of the
 Lawrence Berkeley National Laboratory, University of California, Berkeley, CA.
