@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.34 2014/05/19 08:58:34 nicm Exp $
+.\"	$OpenBSD: editline.3,v 1.35 2014/12/12 17:04:22 schwarze Exp $
 .\"	$NetBSD: editline.3,v 1.73 2010/01/03 19:05:26 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2014 $
+.Dd $Mdocdate: December 12 2014 $
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@
 .Nm tok_wstr
 .Nd line editor, history and tokenization functions
 .Sh SYNOPSIS
-.Fd #include <histedit.h>
+.In histedit.h
 .Ft EditLine *
 .Fn el_init "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr"
 .Ft void
@@ -860,17 +860,22 @@ and the readline emulation appeared in
 appeared in
 .Nx 1.5 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-library was written by Christos Zoulas.
-Luke Mewburn wrote this manual and implemented
+library was written by
+.An Christos Zoulas .
+.An Luke Mewburn
+wrote this manual and implemented
 .Dv CC_REDISPLAY ,
 .Dv CC_REFRESH_BEEP ,
 .Dv EL_EDITMODE ,
 and
 .Dv EL_RPROMPT .
-Jaromir Dolecek implemented the readline emulation.
-Johny Mattsson implemented wide-character support.
+.An Jaromir Dolecek
+implemented the readline emulation.
+.An Johny Mattsson
+implemented wide-character support.
 .Sh BUGS
 At this time, it is the responsibility of the caller to
 check the result of the
