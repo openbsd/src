@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.276 2014/12/12 03:04:11 uebayasi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.277 2014/12/12 07:45:46 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -592,6 +592,13 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			pool_reclaim_all();
 		return (error);
 	}
+#ifdef PTRACE
+	case KERN_GLOBAL_PTRACE: {
+		extern int global_ptrace;
+
+		return sysctl_int(oldp, oldlenp, newp, newlen, &global_ptrace);
+	}
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

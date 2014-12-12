@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.65 2014/09/08 01:47:06 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.66 2014/12/12 07:45:46 tedu Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@
 int	process_auxv_offset(struct proc *, struct proc *, struct uio *);
 
 #ifdef PTRACE
+int	global_ptrace;	/* permit tracing of not children */
 /*
  * Process debugging system call.
  */
@@ -207,6 +208,13 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 */
 		if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
+		    (error = suser(p, 0)) != 0)
+			return (error);
+
+		/*
+		 * 	(4.5) it's not a child of the tracing process.
+		 */
+		if (global_ptrace == 0 && !inferior(tr, p->p_p) &&
 		    (error = suser(p, 0)) != 0)
 			return (error);
 
