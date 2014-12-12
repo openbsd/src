@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.144 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.145 2014/12/12 19:02:07 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ ffs_mountroot(void)
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, 0);
+		free(mp, M_MOUNT, sizeof(*mp));
 		vrele(swapdev_vp);
 		vrele(rootvp);
 		return (error);
@@ -905,8 +905,8 @@ out:
 	VOP_UNLOCK(devvp, 0, p);
 
 	if (ump) {
-		free(ump->um_fs, M_UFSMNT, 0);
-		free(ump, M_UFSMNT, 0);
+		free(ump->um_fs, M_UFSMNT, sizeof(*ump->um_fs));
+		free(ump, M_UFSMNT, sizeof(*ump));
 		mp->mnt_data = NULL;
 	}
 	return (error);
@@ -1025,8 +1025,8 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		NOCRED, p);
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT, 0);
-	free(fs, M_UFSMNT, 0);
-	free(ump, M_UFSMNT, 0);
+	free(fs, M_UFSMNT, sizeof(*fs));
+	free(ump, M_UFSMNT, sizeof(*ump));
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
