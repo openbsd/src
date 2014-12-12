@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.244 2014/12/05 04:12:48 uebayasi Exp $
+.\"	$OpenBSD: sysctl.3,v 1.245 2014/12/12 07:46:24 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2014 $
+.Dd $Mdocdate: December 12 2014 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -411,6 +411,7 @@ information.
 .It Dv KERN_FORKSTAT Ta "struct forkstat" Ta "no"
 .It Dv KERN_FSCALE Ta "integer" Ta "no"
 .It Dv KERN_FSYNC Ta "integer" Ta "no"
+.It Dv KERN_GLOBAL_PTRACE Ta "integer" Ta "yes"
 .It Dv KERN_HOSTID Ta "integer" Ta "yes"
 .It Dv KERN_HOSTNAME Ta "string" Ta "yes"
 .It Dv KERN_INTRCNT Ta "node" Ta "not applicable"
@@ -570,6 +571,11 @@ The kernel fixed-point scale factor.
 .It Dv KERN_FSYNC
 Return 1 if the File Synchronisation Option is available on this system,
 otherwise 0.
+.It Dv KERN_GLOBAL_PTRACE
+When set to 1, permit
+.Xr ptrace 2
+to attach to any process with the appropriate privileges.
+When set to 0, processes may only attach to their own descendants.
 .It Dv KERN_HOSTID
 Get or set the host ID.
 .It Dv KERN_HOSTNAME
