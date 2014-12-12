@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.275 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.276 2014/12/12 03:04:11 uebayasi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1876,12 +1876,10 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 
 	pid = name[0];
-	if (pid > 0) {
-#if 1
-		/* XXX Allow only root for now */
-		if ((error = suser(cp, 0)) != 0)
-			return (error);
-#endif
+	if (pid == cp->p_pid) {
+		/* Self process mapping. */
+		findpr = cp->p_p;
+	} else if (pid > 0) {
 		if ((findpr = prfind(pid)) == NULL)
 			return (ESRCH);
 
@@ -1889,10 +1887,16 @@ sysctl_proc_vmmap(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (findpr->ps_flags & (PS_SYSTEM | PS_EXITING))
 			return (EINVAL);
 
+#if 1
+		/* XXX Allow only root for now */
+		if ((error = suser(cp, 0)) != 0)
+			return (error);
+#else
 		/* Only owner or root can get vmmap */
 		if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
 		    (error = suser(cp, 0)) != 0)
 			return (error);
+#endif
 	} else {
 		/* Only root can get kernel_map */
 		if ((error = suser(cp, 0)) != 0)
