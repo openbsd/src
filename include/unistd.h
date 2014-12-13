@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.96 2014/12/11 23:05:38 tedu Exp $ */
+/*	$OpenBSD: unistd.h,v 1.97 2014/12/13 20:42:41 tedu Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@
 #define _XOPEN_UNIX				(-1)
 
 /* Define the POSIX.2 version we target for compliance. */
-#define _POSIX2_VERSION				199212L
+#define _POSIX2_VERSION				200809L
 
 /* the sysconf(3) variable values are part of the ABI */
 

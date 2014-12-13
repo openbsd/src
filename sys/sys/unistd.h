@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.29 2013/08/14 05:26:14 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.30 2014/12/13 20:42:41 tedu Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #define	_POSIX_SYNC_IO		(-1)
 
 /* Define the POSIX.1 version we target for compliance. */
-#define	_POSIX_VERSION		199009L
+#define	_POSIX_VERSION		200809L
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
