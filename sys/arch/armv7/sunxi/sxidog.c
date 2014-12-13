@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.5 2014/12/10 12:27:56 mikeb Exp $ */
+/* $OpenBSD: sxidog.c,v 1.6 2014/12/13 00:49:20 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -108,6 +108,20 @@ sxidog_attach(struct device *parent, struct device *self, void *args)
 #endif
 
 	printf("\n");
+}
+
+int
+sxidog_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+#ifndef SMALL_KERNEL
+		wdog_shutdown(self);
+#endif
+		break;
+	}
+
+	return (0);
 }
 
 int
