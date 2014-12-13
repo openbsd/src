@@ -1,4 +1,4 @@
-.Dd December 24, 2009
+.Dd December 13, 2014
 .Dt BL-COLUMN 1
 .Os OpenBSD
 .Sh NAME
@@ -14,6 +14,10 @@
 .\" avoid "c" which means "cm"
 .Bl -column "a" "b" "cc"
 .It a Ta b Ta cc
+.It a	b	cc
+.It "a"	b	cc
+.It "a	b"	cc
+.It "a	b	cc"
 .El
 .Bl -column "a" "b" "cc" "d"
 .It a Ta b Ta cc Ta d
