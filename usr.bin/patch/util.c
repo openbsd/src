@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.37 2014/11/22 15:49:28 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.38 2014/12/13 10:31:07 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -188,6 +188,22 @@ savestr(const char *s)
 		else
 			fatal("out of memory\n");
 	}
+	return rv;
+}
+
+/*
+ * Allocate a unique area for a string.  Call fatal if out of memory.
+ */
+char *
+xstrdup(const char *s)
+{
+	char	*rv;
+
+	if (!s)
+		s = "Oops";
+	rv = strdup(s);
+	if (rv == NULL)
+		fatal("out of memory\n");
 	return rv;
 }
 

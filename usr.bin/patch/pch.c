@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.48 2014/12/08 21:59:36 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.49 2014/12/13 10:31:07 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -215,14 +215,14 @@ there_is_another_patch(void)
 	while (filearg[0] == NULL) {
 		if (force || batch) {
 			say("No file to patch.  Skipping...\n");
-			filearg[0] = savestr(bestguess);
+			filearg[0] = xstrdup(bestguess);
 			skip_rest_of_patch = true;
 			return true;
 		}
 		ask("File to patch: ");
 		if (*buf != '\n') {
 			free(bestguess);
-			bestguess = savestr(buf);
+			bestguess = xstrdup(buf);
 			filearg[0] = fetchname(buf, &exists, 0);
 		}
 		if (!exists) {
@@ -310,7 +310,7 @@ intuit_diff_type(void)
 		else if (strnEQ(s, "Prereq:", 7)) {
 			for (t = s + 7; isspace((unsigned char)*t); t++)
 				;
-			revision = savestr(t);
+			revision = xstrdup(t);
 			for (t = revision;
 			    *t && !isspace((unsigned char)*t); t++)
 				;
@@ -389,7 +389,7 @@ scan_exit:
 	free(bestguess);
 	bestguess = NULL;
 	if (filearg[0] != NULL)
-		bestguess = savestr(filearg[0]);
+		bestguess = xstrdup(filearg[0]);
 	else if (!ok_to_create_file) {
 		/*
 		 * We don't want to create a new file but we need a
@@ -1473,7 +1473,7 @@ posix_name(const struct file_name *names, bool assume_exists)
 			path = names[NEW_FILE].path;
 	}
 
-	return path ? savestr(path) : NULL;
+	return path ? xstrdup(path) : NULL;
 }
 
 static char *
@@ -1538,7 +1538,7 @@ best_name(const struct file_name *names, bool assume_exists)
 		    names[NEW_FILE].path != NULL)
 			best = names[NEW_FILE].path;
 	}
-	return best ? savestr(best) : NULL;
+	return best ? xstrdup(best) : NULL;
 }
 
 static size_t
