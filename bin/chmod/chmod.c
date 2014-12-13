@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.32 2014/12/13 10:26:48 tobias Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.33 2014/12/13 20:59:24 guenther Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fts.h>
 #include <grp.h>
 #include <limits.h>
@@ -61,7 +62,7 @@ main(int argc, char *argv[])
 	unsigned long val;
 	int oct;
 	mode_t omode;
-	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
+	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval, atflags;
 	uid_t uid;
 	gid_t gid;
 	u_int32_t fclear, fset;
@@ -99,13 +100,6 @@ main(int argc, char *argv[])
 			fflag = 1;
 			break;
 		case 'h':
-			/*
-			 * In System V (and probably POSIX.2) the -h option
-			 * causes chmod to change the mode of the symbolic
-			 * link.  4.4BSD's symbolic links don't have modes,
-			 * so it's an undocumented noop.  Do syntax checking,
-			 * though.
-			 */
 			hflag = 1;
 			break;
 		/*
@@ -137,6 +131,12 @@ done:
 	if (argc < 2)
 		usage();
 
+	/*
+	 * We alter the symlink itself if doing -h or -RP, or
+	 * if doing -RH and the symlink wasn't a command line arg.
+	 */
+	atflags = AT_SYMLINK_NOFOLLOW;
+
 	fts_options = FTS_PHYSICAL;
 	if (Rflag) {
 		if (hflag)
@@ -147,8 +147,10 @@ done:
 		if (Lflag) {
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
+			atflags = 0;
 		}
-	}
+	} else if (!hflag)
+		atflags = 0;
 
 	if (ischflags) {
 		flags = *argv;
@@ -235,37 +237,44 @@ done:
 		case FTS_SLNONE:
 			/*
 			 * The only symlinks that end up here are ones that
-			 * don't point to anything and ones that we found
-			 * doing a physical walk.
+			 * don't point to anything or that loop and ones
+			 * that we found doing a physical walk.
 			 */
-			if (ischflags || ischmod || !hflag)
+			if (!hflag && (fts_options & FTS_LOGICAL))
 				continue;
 			break;
 		default:
 			break;
 		}
-		if (ischflags) {
-			if (oct) {
-				if (!chflags(p->fts_accpath, fset))
-					continue;
-			} else {
-				p->fts_statp->st_flags |= fset;
-				p->fts_statp->st_flags &= fclear;
-				if (!chflags(p->fts_accpath, p->fts_statp->st_flags))
-					continue;
-			}
-			warn("%s", p->fts_path);
-			rval = 1;
-		} else if (ischmod && chmod(p->fts_accpath, oct ? omode :
-		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
-			warn("%s", p->fts_path);
-			rval = 1;
-		} else if (!ischmod && !ischflags &&
-		    (hflag ? lchown(p->fts_accpath, uid, gid) :
-		    chown(p->fts_accpath, uid, gid)) && !fflag) {
-			warn("%s", p->fts_path);
-			rval = 1;
+
+		/*
+		 * For -RH, the decision of how to handle symlinks depends
+		 * on the level: follow it iff it's a command line arg.
+		 */
+		if (fts_options & FTS_COMFOLLOW) {
+			atflags = p->fts_level == FTS_ROOTLEVEL ? 0 : 
+			    AT_SYMLINK_NOFOLLOW;
 		}
+
+		if (ischmod) {
+			if (!fchmodat(AT_FDCWD, p->fts_accpath, oct ? omode :
+			    getmode(set, p->fts_statp->st_mode), atflags)
+			    || fflag)
+				continue;
+		}
+		else if (!ischflags) {
+			if (!fchownat(AT_FDCWD, p->fts_accpath, uid, gid,
+			    atflags) || fflag)
+				continue;
+		} else {
+			if (!chflagsat(AT_FDCWD, p->fts_accpath, oct ? fset :
+			    (p->fts_statp->st_flags | fset) & fclear, atflags))
+				continue;
+		}
+
+		/* error case */
+		warn("%s", p->fts_path);
+		rval = 1;
 	}
 	if (errno)
 		err(1, "fts_read");

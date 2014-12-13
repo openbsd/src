@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.14 2014/01/28 14:15:03 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.15 2014/12/13 20:59:24 guenther Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: January 28 2014 $
+.Dd $Mdocdate: December 13 2014 $
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -138,13 +138,6 @@ For example:
 .Pp
 .Dl nouchg	the immutable bit should be cleared
 .Pp
-Symbolic links do not have flags, so unless the
-.Fl H
-or
-.Fl L
-option is set,
-.Nm
-on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
 .Fl L ,

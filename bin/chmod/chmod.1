@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.38 2014/01/25 15:43:40 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.39 2014/12/13 20:59:24 guenther Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: January 25 2014 $
+.Dd $Mdocdate: December 13 2014 $
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -80,13 +80,8 @@ change the mode of the directory and all the files and directories
 in the file hierarchy below it.
 .El
 .Pp
-Symbolic links do not have modes, so unless the
-.Fl H
-or
-.Fl L
-option is set,
-.Nm
-on a symbolic link always succeeds and has no effect.
+Symbolic links have modes,
+but those modes have no effect on the kernel's access checks.
 The
 .Fl H ,
 .Fl L ,
