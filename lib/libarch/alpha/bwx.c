@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.7 2014/04/18 15:09:52 guenther Exp $ */
+/* $OpenBSD: bwx.c,v 1.8 2014/12/13 16:26:13 miod Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -25,7 +25,6 @@
  * SUCH DAMAGE.
  */
 
-#define vm_page_size (sysconf(_SC_PAGESIZE)) /* XXX  */
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/fcntl.h>
@@ -39,6 +38,9 @@
 #include <unistd.h>
 
 #include "io.h"
+
+#define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
+#define	trunc_page(x)	((x) & ~PAGE_MASK)
 
 #define PATH_APERTURE "/dev/xf86"
 
