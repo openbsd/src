@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.11 2013/07/05 21:02:07 miod Exp $ */
+/*	$OpenBSD: file.h,v 1.12 2014/12/13 14:44:59 miod Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.11 2013/07/05 21:02:07 miod Exp $
+ *	$OpenBSD: file.h,v 1.12 2014/12/13 14:44:59 miod Exp $
  *
  */
 
@@ -38,6 +38,8 @@ void		mopFilePutLX(u_char *, int, u_int32_t, int);
 void		mopFilePutBX(u_char *, int, u_int32_t, int);
 u_int32_t	mopFileGetLX(u_char *, int, int);
 u_int32_t	mopFileGetBX(u_char *, int, int);
+u_int64_t	mopFileGetLXX(u_char *, int, int);
+u_int64_t	mopFileGetBXX(u_char *, int, int);
 ssize_t		mopFileRead(struct dllist *, u_char *);
 void		mopFileSwapX(u_char *, int, int);
 
@@ -45,7 +47,8 @@ int		CheckMopFile(int);
 int		GetMopFileInfo(struct dllist *, int);
 
 int		CheckElfFile(int);
-int		GetElfFileInfo(struct dllist *, int);
+int		GetElf32FileInfo(struct dllist *, int);
+int		GetElf64FileInfo(struct dllist *, int);
 
 int		CheckAOutFile(int);
 int		GetAOutFileInfo(struct dllist *, int);

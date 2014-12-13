@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.8 2013/07/05 21:02:07 miod Exp $	*/
+/*	$OpenBSD: common.h,v 1.9 2014/12/13 14:44:59 miod Exp $	*/
 /*	$NetBSD: common.h,v 1.9 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ struct if_info {
 typedef enum {
 	IMAGE_TYPE_MOP,			/* MOP image */
 	IMAGE_TYPE_AOUT,		/* a.out image */
-	IMAGE_TYPE_ELF32		/* Elf32 image */
+	IMAGE_TYPE_ELF32,		/* Elf32 image */
+	IMAGE_TYPE_ELF64		/* Elf64 image */
 } mopd_imagetype;
 
 struct dllist {
@@ -85,7 +86,7 @@ struct dllist {
 	off_t		lseek;		/* Seek before last read	*/
 	mopd_imagetype	image_type;	/* what type of image is it?	*/
 
-	/* For Elf32 files */
+	/* For ELF files */
 	int		e_machine;	/* Machine ID			*/
 	int		e_nsec;		/* number of program sections	*/
 #define	SEC_MAX	4

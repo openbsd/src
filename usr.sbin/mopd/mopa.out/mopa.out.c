@@ -1,6 +1,7 @@
-/*	$OpenBSD: mopa.out.c,v 1.13 2013/10/17 08:02:21 deraadt Exp $ */
+/*	$OpenBSD: mopa.out.c,v 1.14 2014/12/13 14:44:59 miod Exp $ */
 
-/* mopa.out - Convert a Unix format kernel into something that
+/*
+ * mopa.out - Convert a Unix format kernel into something that
  * can be transferred via MOP.
  *
  * This code was written while referring to the NetBSD/vax boot
@@ -71,12 +72,15 @@
 #else
 #define NOELF
 #endif
-#if !defined(EM_VAX)
-#define EM_VAX 75
+#endif
+
+#ifndef NOELF
+#if !defined(_LP64)
+#define NOELF64
 #endif
 #endif
 
-u_char header[512];		/* The VAX header we generate is 1 block. */
+u_char header[512];		/* The MOP header we generate is 1 block. */
 #if !defined(NOAOUT)
 struct exec ex, ex_swap;
 #endif
@@ -87,6 +91,7 @@ main (int argc, char **argv)
 	FILE   *out;		/* A FILE because that is easier. */
 	int	i, j;
 	struct dllist dl;
+	short image_type;
 	
 #ifdef NOAOUT
 	fprintf(stderr, "%s: has no function in OS/BSD\n", argv[0]);
@@ -117,6 +122,18 @@ main (int argc, char **argv)
 			    "(machine=%d)\n", argv[1], dl.e_machine);
 		for (i = 0, j = 0; j < dl.e_nsec; j++)
 			i += dl.e_sections[j].s_fsize + dl.e_sections[j].s_pad;
+		image_type = IHD_C_NATIVE;
+		break;
+#endif
+
+#if !defined(NOELF) && !defined(NOELF64)
+	case IMAGE_TYPE_ELF64:
+		if (dl.e_machine != EM_ALPHA && dl.e_machine != EM_ALPHA_EXP)
+			printf("WARNING: `%s' is not an ALPHA image "
+			    "(machine=%d)\n", argv[1], dl.e_machine);
+		for (i = 0, j = 0; j < dl.e_nsec; j++)
+			i += dl.e_sections[j].s_fsize + dl.e_sections[j].s_pad;
+		image_type = IHD_C_ALPHA;
 		break;
 #endif
 
@@ -127,6 +144,7 @@ main (int argc, char **argv)
 			    argv[1], dl.a_mid);
 		i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
 		    dl.a_bss  + dl.a_bss_fill;
+		image_type = IHD_C_NATIVE;
 		break;
 #endif
 
@@ -135,27 +153,51 @@ main (int argc, char **argv)
 		    FileTypeName(dl.image_type));
 	}
 
-	i = (i+1) / 512;
-
 	dl.nloadaddr = dl.loadaddr;
 	dl.lseek     = lseek(dl.ldfd,0L,SEEK_CUR);
 	dl.a_lseek   = 0;
 	dl.count     = 0;
 	dl.dl_bsz    = 512;
 
-	mopFilePutLX(header,IHD_W_SIZE,0xd4,2);   /* Offset to ISD section. */
-	mopFilePutLX(header,IHD_W_ACTIVOFF,0x30,2);/* Offset to 1st section.*/
-	mopFilePutLX(header,IHD_W_ALIAS,IHD_C_NATIVE,2);/* It's a VAX image.*/
-	mopFilePutLX(header,IHD_B_HDRBLKCNT,1,1); /* Only one header block. */
-	mopFilePutLX(header,0xd4+ISD_V_VPN,dl.loadaddr/512,2);/* load Addr */
-	mopFilePutLX(header,0x30+IHA_L_TFRADR1,dl.xferaddr,4); /* Xfer Addr */
-	mopFilePutLX(header,0xd4+ISD_W_PAGCNT,i,2);/* Imagesize in blks.*/
+	switch (image_type) {
+	default:
+	case IHD_C_NATIVE:
+		/* Offset to ISD section. */
+		mopFilePutLX(header, IHD_W_SIZE, 0xd4, 2);
+		/* Offset to 1st section.*/
+		mopFilePutLX(header, IHD_W_ACTIVOFF, 0x30, 2);
+		/* It's a VAX image.*/
+		mopFilePutLX(header, IHD_W_ALIAS, IHD_C_NATIVE, 2);
+		/* Only one header block. */
+		mopFilePutLX(header, IHD_B_HDRBLKCNT, 1, 1);
+
+		/* Xfer Addr */
+		mopFilePutLX(header, 0x30 + IHA_L_TFRADR1, dl.xferaddr, 4);
+
+		/* load Addr */
+		mopFilePutLX(header, 0xd4 + ISD_V_VPN, dl.loadaddr / 512, 2);
+		/* Imagesize in blks.*/
+		i = (i + 1) / 512;
+		mopFilePutLX(header, 0xd4 + ISD_W_PAGCNT, i, 2);
+		break;
+	case IHD_C_ALPHA:
+		/* Offset to ISD section. */
+		mopFilePutLX(header, EIHD_L_ISDOFF, 0xd4, 4);
+		/* It's an alpha image.*/
+		mopFilePutLX(header, IHD_W_ALIAS, IHD_C_ALPHA, 2);
+		/* Only one header block. */
+		mopFilePutLX(header, EIHD_L_HDRBLKCNT, 1, 4);
+
+		/* Imagesize in bytes.*/
+		mopFilePutLX(header, 0xd4 + EISD_L_SECSIZE, i, 4);
+		break;
+	}
 	
 	out = fopen (argv[2], "w");
 	if (!out)
 		err(2, "writing `%s'", argv[2]);
 	
-	/* Now we do the actual work. Write VAX MOP-image header */
+	/* Now we do the actual work. Write MOP-image header */
 	
 	fwrite (header, sizeof (header), 1, out);
 

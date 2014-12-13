@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.16 2013/07/05 21:02:07 miod Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.17 2014/12/13 14:44:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -122,8 +122,9 @@ main(argc, argv)
 			printf("Unknown file.\n");
 		} else {
 			if ((error = CheckElfFile(dl.ldfd)) == 0) {
-				if (GetElfFileInfo(&dl, INFO_PRINT) < 0) {
-					printf("Some failure in GetElfFileInfo\n");
+				if (GetElf32FileInfo(&dl, INFO_PRINT) < 0 &&
+				    GetElf64FileInfo(&dl, INFO_PRINT) < 0) {
+					printf("Some failure in GetElfXXFileInfo\n");
 				}
 			} else if ((error = CheckAOutFile(dl.ldfd)) == 0) {
 				if (GetAOutFileInfo(&dl, INFO_PRINT) < 0) {

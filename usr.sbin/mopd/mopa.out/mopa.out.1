@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopa.out.1,v 1.14 2013/10/20 07:40:43 jmc Exp $
+.\"	$OpenBSD: mopa.out.1,v 1.15 2014/12/13 14:44:59 miod Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -22,9 +22,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopa.out.1,v 1.14 2013/10/20 07:40:43 jmc Exp $
+.\" @(#) $OpenBSD: mopa.out.1,v 1.15 2014/12/13 14:44:59 miod Exp $
 .\"
-.Dd $Mdocdate: October 20 2013 $
+.Dd $Mdocdate: December 13 2014 $
 .Dt MOPA.OUT 1
 .Os
 .Sh NAME
@@ -38,8 +38,8 @@
 .Nm
 is used to convert a file from another executable format to a MOP-image.
 .Pp
-Elf32 and a.out VAX images are the only currently supported input
-formats.
+Elf64 alpha images, as well as Elf32 and a.out VAX images,
+are the only currently supported input formats.
 .Sh SEE ALSO
 .Xr mopchk 1 ,
 .Xr mopprobe 1 ,
