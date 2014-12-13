@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.122 2014/11/19 04:05:44 schwarze Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.123 2014/12/13 13:36:03 millert Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 19 2014 $
+.Dd $Mdocdate: December 13 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -967,6 +967,22 @@ accept for local alias <aliases> deliver to mda "/path/to/mda \-f \-"
 accept from any for domain example.org \e
 	deliver to mda "/path/to/mda \-f \-"
 accept for any relay
+.Ed
+.Pp
+For sites that wish to sign messages using DKIM, the
+.Em dkimproxy
+package may be used as a filter.
+The following example is the same as the default configuration,
+but all outgoing mail is passed to dkimproxy_out on port 10027
+for signing.
+The signed messages are received on port 10028 and tagged for relaying.
+.Bd -literal -offset indent
+listen on lo0
+listen on lo0 port 10028 tag DKIM
+table aliases db:/etc/mail/aliases.db
+accept for local alias <aliases> deliver to mbox
+accept tagged DKIM for any relay
+accept from local for any relay via smtp://127.0.0.1:10027
 .Ed
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,
