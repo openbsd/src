@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.58 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.59 2014/12/13 15:45:53 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -42,10 +42,19 @@ OpenBSDinstalliso
 
 OpenBSDcd
 
+	bootxx, boot	The OpenBSD/MACHINE first and second-level boot
+			loader; useful to update your boot loader if you want
+			to reinstall from an old OpenBSD setup but the existing
+			boot loader is too old to load bsd.rd correctly.
+
+	netboot		The OpenBSD/MACHINE network boot loader, for bootp
+			or dhcpd protocols.
+
+	netboot.mop	The OpenBSD/MACHINE network boot loader, for MOP
+			protocol.
+
 OpenBSDfloppydesc(three,Each,s)
 
-dnl boot, bootxx, netboot
-dnl
 DistributionDescription(ten)
 
 OpenBSDbase(67412475,206465200)
