@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.114 2014/12/09 07:05:06 doug Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.115 2014/12/13 21:05:33 doug Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -894,7 +894,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = dev->cdesc->bConfigurationValue;
-		ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT);
+		ifaces = mallocarray(nifaces, sizeof(*ifaces), M_USB, M_NOWAIT);
 		if (ifaces == NULL) {
 			err = USBD_NOMEM;
 			goto fail;
@@ -905,13 +905,14 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 		uaa.nifaces = nifaces;
 
 		/* add 1 for possible ugen and 1 for NULL terminator */
-		len = (nifaces + 2) * sizeof dv;
-		dev->subdevs = malloc(len, M_USB, M_NOWAIT | M_ZERO);
+		dev->subdevs = mallocarray(nifaces + 2, sizeof(dv), M_USB,
+		    M_NOWAIT | M_ZERO);
 		if (dev->subdevs == NULL) {
 			free(ifaces, M_USB, 0);
 			err = USBD_NOMEM;
 			goto fail;
 		}
+		len = (nifaces + 2) * sizeof(dv);
 
 		for (i = 0; i < nifaces; i++) {
 			if (usbd_iface_claimed(dev, i))

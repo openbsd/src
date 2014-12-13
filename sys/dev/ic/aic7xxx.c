@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.88 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.89 2014/12/13 21:05:33 doug Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.88 2014/07/13 23:10:23 deraadt Exp $
+ * $Id: aic7xxx.c,v 1.89 2014/12/13 21:05:33 doug Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -6232,11 +6232,12 @@ ahc_loadseq(struct ahc_softc *ahc)
 
 	ahc->num_critical_sections = cs_count;
 	if (cs_count != 0) {
-
-		cs_count *= sizeof(struct cs);
-		ahc->critical_sections = malloc(cs_count, M_DEVBUF, M_NOWAIT);
+		ahc->critical_sections = mallocarray(cs_count,
+		    sizeof(struct cs), M_DEVBUF, M_NOWAIT);
 		if (ahc->critical_sections == NULL)
 			panic("ahc_loadseq: Could not malloc");
+		cs_count *= sizeof(struct cs);
+
 		memcpy(ahc->critical_sections, cs_table, cs_count);
 	}
 	ahc_outb(ahc, SEQCTL, PERRORDIS|FAILDIS|FASTMODE);

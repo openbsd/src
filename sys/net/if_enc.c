@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.58 2014/12/08 10:46:14 mpi Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.59 2014/12/13 21:05:33 doug Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -119,10 +119,11 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	}
 
 	if (unit == 0 || unit > enc_max_unit) {
+		if ((new = mallocarray(unit + 1, sizeof(struct ifnet *),
+		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+			return (ENOBUFS);
 		newlen = sizeof(struct ifnet *) * (unit + 1);
 
-		if ((new = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-			return (ENOBUFS);
 		if (enc_allifps != NULL) {
 			memcpy(new, enc_allifps,
 			    sizeof(struct ifnet *) * (enc_max_unit + 1));
@@ -264,10 +265,11 @@ enc_setif(struct ifnet *ifp, u_int id)
 		return (EINVAL);
 
 	if (id == 0 || id > enc_max_id) {
+		if ((new = mallocarray(id + 1, sizeof(struct ifnet *),
+		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+			return (ENOBUFS);
 		newlen = sizeof(struct ifnet *) * (id + 1);
 
-		if ((new = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-			return (ENOBUFS);
 		if (enc_ifps != NULL) {
 			memcpy(new, enc_ifps,
 			    sizeof(struct ifnet *) * (enc_max_id + 1));

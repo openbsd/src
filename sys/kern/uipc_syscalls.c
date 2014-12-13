@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.96 2014/12/11 19:21:57 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.97 2014/12/13 21:05:33 doug Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -562,9 +562,10 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		control = 0;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
+		ktriov = mallocarray(auio.uio_iovcnt, sizeof(struct iovec),
+		    M_TEMP, M_WAITOK);
 		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
 
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
@@ -706,9 +707,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
+		ktriov = mallocarray(auio.uio_iovcnt, sizeof(struct iovec),
+		    M_TEMP, M_WAITOK);
 		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
 
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif

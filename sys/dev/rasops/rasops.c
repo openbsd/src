@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.34 2014/11/20 10:37:21 landry Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.35 2014/12/13 21:05:33 doug Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1377,12 +1377,14 @@ rasops_alloc_screen(void *v, void **cookiep,
 	if (scr == NULL)
 		return (ENOMEM);
 
-	size = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
-	scr->rs_bs = malloc(size, M_DEVBUF, M_NOWAIT);
+	scr->rs_bs = mallocarray(ri->ri_rows,
+	    ri->ri_cols * sizeof(struct wsdisplay_charcell), M_DEVBUF,
+	    M_NOWAIT);
 	if (scr->rs_bs == NULL) {
 		free(scr, M_DEVBUF, 0);
 		return (ENOMEM);
 	}
+	size = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
 
 	*cookiep = scr;
 	*curxp = 0;

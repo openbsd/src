@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.107 2014/12/09 07:05:06 doug Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.108 2014/12/13 21:05:33 doug Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -649,12 +649,14 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 	} else {
 		DPRINTF(("%s: adding %s\n", __func__, mc->ctlname));
 	}
-	len = sizeof(*mc) * (sc->sc_nctls + 1);
-	nmc = malloc(len, M_USBDEV, M_NOWAIT);
+
+	nmc = mallocarray(sc->sc_nctls + 1, sizeof(*mc), M_USBDEV, M_NOWAIT);
 	if (nmc == NULL) {
 		printf("uaudio_mixer_add_ctl: no memory\n");
 		return;
 	}
+	len = sizeof(*mc) * (sc->sc_nctls + 1);
+
 	/* Copy old data, if there was any */
 	if (sc->sc_nctls != 0) {
 		bcopy(sc->sc_ctls, nmc, sizeof(*mc) * (sc->sc_nctls));
@@ -1524,12 +1526,13 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	size_t len;
 	struct as_info *nai;
 
-	len = sizeof(*ai) * (sc->sc_nalts + 1);
-	nai = malloc(len, M_USBDEV, M_NOWAIT);
+	nai = mallocarray(sc->sc_nalts + 1, sizeof(*ai), M_USBDEV, M_NOWAIT);
 	if (nai == NULL) {
 		printf("uaudio_add_alt: no memory\n");
 		return;
 	}
+	len = sizeof(*ai) * (sc->sc_nalts + 1);
+
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
 		bcopy(sc->sc_alts, nai, sizeof(*ai) * (sc->sc_nalts));

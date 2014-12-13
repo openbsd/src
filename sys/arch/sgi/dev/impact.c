@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.6 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: impact.c,v 1.7 2014/12/13 21:05:32 doug Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -192,7 +192,6 @@ int
 impact_init_screen(struct impact_screen *scr)
 {
 	struct rasops_info *ri = &scr->ri;
-	size_t bssize;
 	int i;
 	uint32_t c, r, g, b;
 
@@ -211,9 +210,9 @@ impact_init_screen(struct impact_screen *scr)
 	 * be able to fulfill scrolling requests.
 	 */
 	if (scr->bs == NULL) {
-		bssize = ri->ri_rows * ri->ri_cols *
-		    sizeof(struct wsdisplay_charcell);
-		scr->bs = malloc(bssize, M_DEVBUF, M_NOWAIT | M_ZERO);
+		scr->bs = mallocarray(ri->ri_rows,
+		    ri->ri_cols * sizeof(struct wsdisplay_charcell), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (scr->bs == NULL)
 			return ENOMEM;
 	}

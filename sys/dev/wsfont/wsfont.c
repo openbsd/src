@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.37 2014/12/07 13:07:18 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.38 2014/12/13 21:05:33 doug Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -303,7 +303,7 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 
 	/* Allocate a buffer big enough for the rotated font. */
 	newstride = (font->fontheight + 7) / 8;
-	newbits = malloc(newstride * font->fontwidth * font->numchars,
+	newbits = mallocarray(font->numchars, newstride * font->fontwidth,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Rotate the font a bit at a time. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.28 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.29 2014/12/13 21:05:33 doug Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -501,13 +501,14 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	 * Allocate backing store to remember non-visible screen contents in
 	 * emulation mode.
 	 */
-	scrsize = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
-	scr->scr_mem = malloc(scrsize, M_DEVBUF,
+	scr->scr_mem = mallocarray(ri->ri_rows,
+	    ri->ri_cols * sizeof(struct wsdisplay_charcell), M_DEVBUF,
 	    (cold ? M_NOWAIT : M_WAITOK) | M_ZERO);
 	if (scr->scr_mem == NULL) {
 		free(scr, M_DEVBUF, 0);
 		return (ENOMEM);
 	}
+	scrsize = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
 
 	ri->ri_ops.copycols = cfxga_copycols;
 	ri->ri_ops.copyrows = cfxga_copyrows;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma_3000_500.c,v 1.5 2009/02/01 14:34:02 miod Exp $ */
+/* $OpenBSD: tc_dma_3000_500.c,v 1.6 2014/12/13 21:05:32 doug Exp $ */
 /* $NetBSD: tc_dma_3000_500.c,v 1.13 2001/07/19 06:40:03 thorpej Exp $ */
 
 /*-
@@ -81,12 +81,11 @@ tc_dma_init_3000_500(nslots)
 	int nslots;
 {
 	extern struct alpha_bus_dma_tag tc_dmat_direct;
-	size_t sisize;
 	int i;
 
 	/* Allocate per-slot DMA info. */
-	sisize = nslots * sizeof(struct tc_dma_slot_info);
-	tc_dma_slot_info = malloc(sisize, M_DEVBUF, M_NOWAIT | M_ZERO);
+	tc_dma_slot_info = mallocarray(nslots, sizeof(struct tc_dma_slot_info),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (tc_dma_slot_info == NULL)
 		panic("tc_dma_init: can't allocate per-slot DMA info");
 

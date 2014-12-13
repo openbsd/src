@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.61 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.62 2014/12/13 21:05:33 doug Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -1075,20 +1075,23 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	if (isp->isp_rquest_dma)	/* been here before? */
 		return (0);
 
-	len = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
+	isp->isp_xflist = mallocarray(isp->isp_maxcmds, sizeof(XS_T *),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
 		return (1);
 	}
-	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
-	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_NOWAIT);
+	len = isp->isp_maxcmds * sizeof(XS_T *);
+
+	pcs->pci_xfer_dmap = mallocarray(isp->isp_maxcmds, sizeof(bus_dmamap_t),
+	    M_DEVBUF, M_NOWAIT);
 	if (pcs->pci_xfer_dmap == NULL) {
 		free(isp->isp_xflist, M_DEVBUF, 0);
 		isp->isp_xflist = NULL;
 		isp_prt(isp, ISP_LOGERR, "cannot malloc dma map array");
 		return (1);
 	}
+	len = isp->isp_maxcmds * sizeof(bus_dmamap_t);
 
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		if (bus_dmamap_create(dmat, MAXPHYS, (MAXPHYS / NBPG) + 1,

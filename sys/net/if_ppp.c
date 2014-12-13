@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.78 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.79 2014/12/13 21:05:33 doug Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -562,8 +562,9 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	if ((unsigned) nbp->bf_len > BPF_MAXINSNS)
 	    return EINVAL;
 	newcodelen = nbp->bf_len * sizeof(struct bpf_insn);
-	if (newcodelen != 0) {
-	    newcode = malloc(newcodelen, M_DEVBUF, M_WAITOK);
+	if (nbp->bf_len != 0) {
+	    newcode = mallocarray(nbp->bf_len, sizeof(struct bpf_insn),
+		M_DEVBUF, M_WAITOK);
 	    if ((error = copyin((caddr_t)nbp->bf_insns, (caddr_t)newcode,
 			       newcodelen)) != 0) {
 		free(newcode, M_DEVBUF, 0);

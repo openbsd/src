@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.24 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.25 2014/12/13 21:05:33 doug Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -369,9 +369,10 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 	auio.uio_resid = aiov.iov_len;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
+		ktriov = mallocarray(auio.uio_iovcnt, sizeof(struct iovec),
+		    M_TEMP, M_WAITOK);
 		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
 
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif

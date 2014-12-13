@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.111 2014/11/27 15:49:13 brad Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.112 2014/12/13 21:05:33 doug Exp $	*/
 
 /******************************************************************************
 
@@ -490,7 +490,7 @@ ixgbe_rxrinfo(struct ix_softc *sc, struct if_rxrinfo *ifri)
 	u_int n = 0;
 
 	if (sc->num_queues > 1) {
-		if ((ifr = malloc(sc->num_queues * sizeof(*ifr), M_DEVBUF,
+		if ((ifr = mallocarray(sc->num_queues, sizeof(*ifr), M_DEVBUF,
 		    M_WAITOK | M_ZERO)) == NULL)
 			return (ENOMEM);
 	} else
