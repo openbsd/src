@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2012/09/01 15:10:06 pascal Exp $
+#	$OpenBSD: Makefile,v 1.13 2014/12/13 14:45:34 miod Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -36,8 +36,17 @@ ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
 	strip ${PROG}.nosym
 
-${PROG}: ${PROG}.nosym
+${PROG} ${PROG}.mop: ${PROG}.nosym
 	objcopy --output-target=binary ${PROG}.nosym ${PROG}
+	mopa.out ${PROG}.nosym ${PROG}.mop
+
+realinstall:
+	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	    -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}/${PROG}
+	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	    -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} ${PROG}.mop ${DESTDIR}${BINDIR}/${PROG}.mop
 
 # no lint here (yet?)
 lint:
