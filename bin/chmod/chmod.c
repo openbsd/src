@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.31 2014/10/06 17:37:34 schwarze Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.32 2014/12/13 10:26:48 tobias Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 	FTS *ftsp;
 	FTSENT *p;
 	void *set;
-	long val;
+	unsigned long val;
 	int oct;
 	mode_t omode;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
@@ -69,10 +69,12 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	ischown = __progname[2] == 'o';
-	ischgrp = __progname[2] == 'g';
-	ischmod = __progname[2] == 'm';
-	ischflags = __progname[2] == 'f';
+	if (strlen(__progname) > 2) {
+		ischown = __progname[2] == 'o';
+		ischgrp = __progname[2] == 'g';
+		ischmod = __progname[2] == 'm';
+		ischflags = __progname[2] == 'f';
+	}
 
 	uid = (uid_t)-1;
 	gid = (gid_t)-1;
@@ -171,8 +173,8 @@ done:
 		mode = *argv;
 		if (*mode >= '0' && *mode <= '7') {
 			errno = 0;
-			val = strtol(mode, &ep, 8);
-			if (val > INT_MAX || val < 0)
+			val = strtoul(mode, &ep, 8);
+			if (val > INT_MAX)
 				errno = ERANGE;
 			if (errno)
 				err(1, "invalid file mode: %s", mode);
