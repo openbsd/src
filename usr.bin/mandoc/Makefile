@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.87 2014/11/28 18:35:37 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.88 2014/12/13 15:30:52 schwarze Exp $
 
 .include <bsd.own.mk>
 
-CFLAGS  += -DVERSION=\"1.13.1\"
+CFLAGS  += -DVERSION=\"1.13.2\"
 CFLAGS  += -W -Wall -Wstrict-prototypes -Wno-unused-parameter
 DPADD += ${LIBUTIL}
 LDADD	+= -lsqlite3 -lutil
