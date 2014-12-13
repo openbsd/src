@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.7,v 1.18 2011/07/26 20:41:46 matthew Exp $
+.\"	$OpenBSD: symlink.7,v 1.19 2014/12/13 21:00:19 guenther Exp $
 .\"	$NetBSD: symlink.7,v 1.4 1996/04/25 15:44:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)symlink.7	8.3 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: July 26 2011 $
+.Dd $Mdocdate: December 13 2014 $
 .Dt SYMLINK 7
 .Os
 .Sh NAME
@@ -122,6 +122,7 @@ it also does not follow symbolic links.
 Additionally, the following system calls accept a
 .Fa flag
 argument to control whether or not to follow symbolic links:
+.Xr chflagsat 2 ,
 .Xr fchmodat 2 ,
 .Xr fchownat 2 ,
 .Xr fstatat 2 ,
