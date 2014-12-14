@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.53 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.54 2014/12/14 21:49:29 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,7 @@ int
 ssl3_read_n(SSL *s, int n, int max, int extend)
 {
 	int i, len, left;
-	long align = 0;
+	size_t align;
 	unsigned char *pkt;
 	SSL3_BUFFER *rb;
 
@@ -145,10 +145,8 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 			return -1;
 
 	left = rb->left;
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-	align = (long)rb->buf + SSL3_RT_HEADER_LENGTH;
-	align = (-align)&(SSL3_ALIGN_PAYLOAD - 1);
-#endif
+	align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
+	align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
 
 	if (!extend) {
 		/* start with empty packet ... */
@@ -572,7 +570,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	int i, mac_size, clear = 0;
 	int prefix_len = 0;
 	int eivlen;
-	long align = 0;
+	size_t align;
 	SSL3_RECORD *wr;
 	SSL3_BUFFER *wb = &(s->s3->wbuf);
 	SSL_SESSION *sess;
@@ -646,23 +644,21 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	}
 
 	if (create_empty_fragment) {
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
 		/* extra fragment would be couple of cipher blocks,
 		 * which would be multiple of SSL3_ALIGN_PAYLOAD, so
 		 * if we want to align the real payload, then we can
 		 * just pretent we simply have two headers. */
-		align = (long)wb->buf + 2*SSL3_RT_HEADER_LENGTH;
-		align = (-align)&(SSL3_ALIGN_PAYLOAD - 1);
-#endif
+		align = (size_t)wb->buf + 2 * SSL3_RT_HEADER_LENGTH;
+		align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
+
 		p = wb->buf + align;
 		wb->offset = align;
 	} else if (prefix_len) {
 		p = wb->buf + wb->offset + prefix_len;
 	} else {
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-		align = (long)wb->buf + SSL3_RT_HEADER_LENGTH;
-		align = (-align)&(SSL3_ALIGN_PAYLOAD - 1);
-#endif
+		align = (size_t)wb->buf + SSL3_RT_HEADER_LENGTH;
+		align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
+
 		p = wb->buf + align;
 		wb->offset = align;
 	}

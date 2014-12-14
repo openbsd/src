@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.36 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.37 2014/12/14 21:49:29 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -610,16 +610,14 @@ int
 ssl3_setup_read_buffer(SSL *s)
 {
 	unsigned char *p;
-	size_t len, align = 0, headerlen;
+	size_t len, align, headerlen;
 
 	if (SSL_IS_DTLS(s))
 		headerlen = DTLS1_RT_HEADER_LENGTH;
 	else
 		headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-	align = (-SSL3_RT_HEADER_LENGTH)&(SSL3_ALIGN_PAYLOAD - 1);
-#endif
+	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
 	if (s->s3->rbuf.buf == NULL) {
 		len = SSL3_RT_MAX_PLAIN_LENGTH +
@@ -646,16 +644,14 @@ int
 ssl3_setup_write_buffer(SSL *s)
 {
 	unsigned char *p;
-	size_t len, align = 0, headerlen;
+	size_t len, align, headerlen;
 
 	if (SSL_IS_DTLS(s))
 		headerlen = DTLS1_RT_HEADER_LENGTH + 1;
 	else
 		headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-	align = (-SSL3_RT_HEADER_LENGTH)&(SSL3_ALIGN_PAYLOAD - 1);
-#endif
+	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
 	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
