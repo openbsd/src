@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.76 2014/10/15 08:09:02 gilles Exp $
+#	$OpenBSD: Makefile,v 1.77 2014/12/14 15:26:56 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -15,7 +15,6 @@ SRCS=		aliases.c bounce.c ca.c compress_backend.c config.c		\
 		waitq.c
 
 # RFC parsers
-SRCS+=		rfc822.c
 SRCS+=		rfc2822.c
 
 # backends

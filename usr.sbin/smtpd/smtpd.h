@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.470 2014/11/16 19:07:50 bluhm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.471 2014/12/14 15:26:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -28,7 +28,6 @@
 #include "iobuf.h"
 
 #include "rfc2822.h"
-#include "rfc822.h"
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAILNAME_FILE		 "/etc/mail/mailname"
