@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.13 2014/12/03 22:16:02 bcook Exp $ */
+/* $OpenBSD: apps.c,v 1.14 2014/12/14 14:42:06 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2163,7 +2163,6 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 		BIO_free(out);
 }
 
-#if !defined(OPENSSL_NO_NEXTPROTONEG)
 /* next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
@@ -2202,8 +2201,6 @@ next_protos_parse(unsigned short *outlen, const char *in)
 	*outlen = len + 1;
 	return out;
 }
-#endif
-/* !OPENSSL_NO_NEXTPROTONEG */
 
 int
 app_isdir(const char *name)

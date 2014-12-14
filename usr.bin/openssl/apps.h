@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.8 2014/11/07 14:16:48 jsing Exp $ */
+/* $OpenBSD: apps.h,v 1.9 2014/12/14 14:42:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -245,9 +245,7 @@ int do_X509_REQ_sign(BIO *err, X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
 int do_X509_CRL_sign(BIO *err, X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     STACK_OF(OPENSSL_STRING) *sigopts);
 
-#if !defined(OPENSSL_NO_NEXTPROTONEG)
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
-#endif  /* !OPENSSL_NO_NEXTPROTONEG */
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
