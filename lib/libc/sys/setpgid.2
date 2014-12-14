@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setpgid.2,v 1.16 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: setpgid.2,v 1.17 2014/12/14 07:42:50 schwarze Exp $
 .\"	$NetBSD: setpgid.2,v 1.8 1995/02/27 12:36:55 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)setpgid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 14 2014 $
 .Dt SETPGID 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm setpgrp
 .Nd set process group
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn setpgid "pid_t pid" "pid_t pgrp"
 .Ft int
@@ -46,14 +46,14 @@
 .Sh DESCRIPTION
 .Fn setpgid
 sets the process group of the specified process
-.Ar pid
+.Fa pid
 to the specified
-.Ar pgrp .
+.Fa pgrp .
 If
-.Ar pid
+.Fa pid
 is zero, then the call applies to the current process.
 If
-.Ar pgrp
+.Fa pgrp
 is zero, the process ID of the specified process is used.
 .Sh RETURN VALUES
 .Rv -std

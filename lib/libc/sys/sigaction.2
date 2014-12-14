@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.67 2014/11/17 00:11:05 guenther Exp $
+.\"	$OpenBSD: sigaction.2,v 1.68 2014/12/14 07:42:50 schwarze Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: November 17 2014 $
+.Dd $Mdocdate: December 14 2014 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -197,7 +197,7 @@ the
 flag (described below) is implied.
 .Pp
 Options may be specified by setting
-.Em sa_flags .
+.Fa sa_flags .
 The meaning of the various bits is as follows:
 .Bl -tag -offset indent -width SA_RESETHANDXX
 .It Dv SA_NOCLDSTOP
@@ -261,7 +261,7 @@ Restarting of pending calls is requested
 by setting the
 .Dv SA_RESTART
 bit in
-.Ar sa_flags .
+.Fa sa_flags .
 The affected system calls include
 .Xr read 2 ,
 .Xr write 2 ,

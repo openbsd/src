@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.23 2014/02/13 07:30:39 guenther Exp $
+.\"	$OpenBSD: access.2,v 1.24 2014/12/14 07:42:50 schwarze Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: December 14 2014 $
 .Dt ACCESS 2
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .Nm faccessat
 .Nd check access permissions of a file or pathname
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn access "const char *path" "int amode"
-.Fd #include <fcntl.h>
-.Fd #include <unistd.h>
+.In fcntl.h
+.In unistd.h
 .Ft int
 .Fn faccessat "int fd" "const char *path" "int amode" "int flag"
 .Sh DESCRIPTION
@@ -170,7 +170,7 @@ points outside the process's allocated address space.
 An I/O error occurred while reading from or writing to the file system.
 .It Bq Er EINVAL
 An invalid value was specified for
-.Ar amode .
+.Fa amode .
 .El
 .Pp
 Additionally,

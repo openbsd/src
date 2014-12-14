@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlockall.2,v 1.8 2014/07/02 22:22:35 matthew Exp $
+.\"	$OpenBSD: mlockall.2,v 1.9 2014/12/14 07:42:50 schwarze Exp $
 .\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: December 14 2014 $
 .Dt MLOCKALL 2
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The
-.Ar flags
+.Fa flags
 argument is zero or includes unimplemented flags.
 .It Bq Er ENOMEM
 Locking all of the pages currently mapped would exceed either

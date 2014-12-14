@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.25 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: ktrace.2,v 1.26 2014/12/14 07:42:50 schwarze Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,17 +30,17 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 14 2014 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
 .Nm ktrace
 .Nd process tracing
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/param.h>
-.Fd #include <sys/uio.h>
-.Fd #include <sys/ktrace.h>
+.In sys/types.h
+.In sys/param.h
+.In sys/uio.h
+.In sys/ktrace.h
 .Ft int
 .Fn ktrace "const char *tracefile" "int ops" "int trpoints" "pid_t pid"
 .Sh DESCRIPTION
@@ -64,7 +64,7 @@ previous trace data.
 If tracing points are being disabled (see
 .Dv KTROP_CLEAR
 below),
-.Ar tracefile
+.Fa tracefile
 may be
 .Dv NULL .
 .Pp
@@ -76,10 +76,10 @@ The defined operations are:
 .Bl -tag -width KTRFLAG_DESCEND -offset indent -compact
 .It Dv KTROP_SET
 Enable trace points specified in
-.Ar trpoints .
+.Fa trpoints .
 .It Dv KTROP_CLEAR
 Disable trace points specified in
-.Ar trpoints .
+.Fa trpoints .
 .It Dv KTROP_CLEARFILE
 Stop all tracing.
 .It Dv KTRFLAG_DESCEND

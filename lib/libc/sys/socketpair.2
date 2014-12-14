@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.17 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: socketpair.2,v 1.18 2014/12/14 07:42:50 schwarze Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 14 2014 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -109,11 +109,9 @@ The
 function call appeared in
 .Bx 4.2 .
 .Sh BUGS
-This call is currently implemented only for the
-.Tn LOCAL
-domain.
+This call is currently implemented only for the LOCAL domain.
 Many operating systems only accept a
-.Ar protocol
+.Fa protocol
 of
 .Dv PF_UNSPEC ,
 so that should be used instead of
