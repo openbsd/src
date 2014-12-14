@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.43 2014/12/10 15:43:31 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.44 2014/12/14 13:45:47 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -513,23 +513,12 @@ dtls1_accept(SSL *s)
 				ret = dtls1_send_certificate_request(s);
 				if (ret <= 0)
 					goto end;
-#ifndef NETSCAPE_HANG_BUG
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
 #ifndef OPENSSL_NO_SCTP
 				if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
 					s->d1->next_state = SSL3_ST_SW_SRVR_DONE_A;
 					s->state = DTLS1_SCTP_ST_SW_WRITE_SOCK;
 				}
-#endif
-#else
-				s->state = SSL3_ST_SW_FLUSH;
-				s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
-#ifndef OPENSSL_NO_SCTP
-				if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-					s->d1->next_state = s->s3->tmp.next_state;
-					s->s3->tmp.next_state = DTLS1_SCTP_ST_SW_WRITE_SOCK;
-				}
-#endif
 #endif
 				s->init_num = 0;
 			}
@@ -1375,17 +1364,6 @@ dtls1_send_certificate_request(SSL *s)
 
 		s->init_num = n + DTLS1_HM_HEADER_LENGTH;
 		s->init_off = 0;
-#ifdef NETSCAPE_HANG_BUG
-/* XXX: what to do about this? */
-		p = (unsigned char *)s->init_buf->data + s->init_num;
-
-		/* do the header */
-		*(p++) = SSL3_MT_SERVER_DONE;
-		*(p++) = 0;
-		*(p++) = 0;
-		*(p++) = 0;
-		s->init_num += 4;
-#endif
 
 		/* XDTLS:  set message header ? */
 		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
