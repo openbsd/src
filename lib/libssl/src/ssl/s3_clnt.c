@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.99 2014/12/10 15:43:31 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.100 2014/12/14 14:34:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -465,14 +465,10 @@ ssl3_connect(SSL *s)
 			if (ret <= 0)
 				goto end;
 
-#ifdef OPENSSL_NO_NEXTPROTONEG
-			s->state = SSL3_ST_CW_FINISHED_A;
-#else
 			if (s->s3->next_proto_neg_seen)
 				s->state = SSL3_ST_CW_NEXT_PROTO_A;
 			else
 				s->state = SSL3_ST_CW_FINISHED_A;
-#endif
 			s->init_num = 0;
 
 			s->session->cipher = s->s3->tmp.new_cipher;
@@ -489,7 +485,6 @@ ssl3_connect(SSL *s)
 
 			break;
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 		case SSL3_ST_CW_NEXT_PROTO_A:
 		case SSL3_ST_CW_NEXT_PROTO_B:
 			ret = ssl3_send_next_proto(s);
@@ -497,7 +492,6 @@ ssl3_connect(SSL *s)
 				goto end;
 			s->state = SSL3_ST_CW_FINISHED_A;
 			break;
-#endif
 
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
@@ -2634,7 +2628,6 @@ err:
 	return (0);
 }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 int
 ssl3_send_next_proto(SSL *s)
 {
@@ -2658,7 +2651,6 @@ ssl3_send_next_proto(SSL *s)
 
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
 }
-#endif /* !OPENSSL_NO_NEXTPROTONEG */
 
 /*
  * Check to see if handshake is full or resumed. Usually this is just a

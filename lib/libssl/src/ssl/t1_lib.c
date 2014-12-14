@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.73 2014/12/10 15:36:47 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.74 2014/12/14 14:34:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -867,7 +867,6 @@ skip_ext:
 			i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
 	}
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	if (s->ctx->next_proto_select_cb && !s->s3->tmp.finish_md_len) {
 		/* The client advertises an emtpy extension to indicate its
 		 * support for Next Protocol Negotiation */
@@ -876,7 +875,6 @@ skip_ext:
 		s2n(TLSEXT_TYPE_next_proto_neg, ret);
 		s2n(0, ret);
 	}
-#endif
 
 	if (s->alpn_client_proto_list != NULL &&
 	    s->s3->tmp.finish_md_len == 0) {
@@ -958,9 +956,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	int using_ecc, extdatalen = 0;
 	unsigned long alg_a, alg_k;
 	unsigned char *ret = p;
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	int next_proto_neg_seen;
-#endif
 
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
@@ -1097,7 +1093,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		ret += sizeof(cryptopro_ext);
 	}
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	next_proto_neg_seen = s->s3->next_proto_neg_seen;
 	s->s3->next_proto_neg_seen = 0;
 	if (next_proto_neg_seen && s->ctx->next_protos_advertised_cb) {
@@ -1117,7 +1112,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			s->s3->next_proto_neg_seen = 1;
 		}
 	}
-#endif
 
 	if (s->s3->alpn_selected != NULL) {
 		const unsigned char *selected = s->s3->alpn_selected;
@@ -1304,9 +1298,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	s->s3->next_proto_neg_seen = 0;
-#endif
 	free(s->s3->alpn_selected);
 	s->s3->alpn_selected = NULL;
 
@@ -1616,7 +1608,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				s->tlsext_status_type = -1;
 			}
 		}
-#ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (type == TLSEXT_TYPE_next_proto_neg &&
 		    s->s3->tmp.finish_md_len == 0 &&
 		    s->s3->alpn_selected == NULL) {
@@ -1637,7 +1628,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			 * Finished message could have been computed.) */
 			s->s3->next_proto_neg_seen = 1;
 		}
-#endif
 		else if (type ==
 		    TLSEXT_TYPE_application_layer_protocol_negotiation &&
 		    s->ctx->alpn_select_cb != NULL &&
@@ -1676,7 +1666,6 @@ ri_check:
 	return 1;
 }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 /* ssl_next_proto_validate validates a Next Protocol Negotiation block. No
  * elements of zero length are allowed and the set of elements must exactly fill
  * the length of the block. */
@@ -1694,7 +1683,6 @@ ssl_next_proto_validate(unsigned char *d, unsigned len)
 
 	return off == len;
 }
-#endif
 
 int
 ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
@@ -1707,9 +1695,7 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	s->s3->next_proto_neg_seen = 0;
-#endif
 	free(s->s3->alpn_selected);
 	s->s3->alpn_selected = NULL;
 
@@ -1797,7 +1783,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			/* Set flag to expect CertificateStatus message */
 			s->tlsext_status_expected = 1;
 		}
-#ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (type == TLSEXT_TYPE_next_proto_neg &&
 		    s->s3->tmp.finish_md_len == 0) {
 			unsigned char *selected;
@@ -1826,7 +1811,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			s->next_proto_negotiated_len = selected_len;
 			s->s3->next_proto_neg_seen = 1;
 		}
-#endif
 		else if (type ==
 		    TLSEXT_TYPE_application_layer_protocol_negotiation) {
 			unsigned int len;

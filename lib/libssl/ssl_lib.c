@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.92 2014/12/10 15:36:47 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.93 2014/12/14 14:34:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -333,9 +333,7 @@ SSL_new(SSL_CTX *ctx)
 	s->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx = ctx;
-# ifndef OPENSSL_NO_NEXTPROTONEG
 	s->next_proto_negotiated = NULL;
-# endif
 
 	if (s->ctx->alpn_client_proto_list != NULL) {
 		s->alpn_client_proto_list =
@@ -560,9 +558,7 @@ SSL_free(SSL *s)
 	SSL_CTX_free(s->ctx);
 
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	free(s->next_proto_negotiated);
-#endif
 	free(s->alpn_client_proto_list);
 
 #ifndef OPENSSL_NO_SRTP
@@ -1509,7 +1505,6 @@ SSL_get_servername_type(const SSL *s)
 	return (-1);
 }
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * SSL_select_next_proto implements the standard protocol selection. It is
  * expected that this function is called from the callback set by
@@ -1640,7 +1635,6 @@ SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s,
 	ctx->next_proto_select_cb = cb;
 	ctx->next_proto_select_cb_arg = arg;
 }
-# endif
 
 /*
  * SSL_CTX_set_alpn_protos sets the ALPN protocol list to the specified
@@ -1879,10 +1873,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
 	ret->next_protos_advertised_cb = 0;
 	ret->next_proto_select_cb = 0;
-# endif
 #ifndef OPENSSL_NO_ENGINE
 	ret->client_cert_engine = NULL;
 #ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
