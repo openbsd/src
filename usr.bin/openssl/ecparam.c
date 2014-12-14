@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.5 2014/12/07 14:58:50 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.6 2014/12/14 14:45:33 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -583,25 +583,20 @@ ecparam_main(int argc, char **argv)
 		EC_KEY_free(eckey);
 	}
 	ret = 0;
+
 end:
-	if (ec_p)
-		BN_free(ec_p);
-	if (ec_a)
-		BN_free(ec_a);
-	if (ec_b)
-		BN_free(ec_b);
-	if (ec_gen)
-		BN_free(ec_gen);
-	if (ec_order)
-		BN_free(ec_order);
-	if (ec_cofactor)
-		BN_free(ec_cofactor);
+	BN_free(ec_p);
+	BN_free(ec_a);
+	BN_free(ec_b);
+	BN_free(ec_gen);
+	BN_free(ec_order);
+	BN_free(ec_cofactor);
+
 	free(buffer);
+
 	BIO_free(in);
-	if (out != NULL)
-		BIO_free_all(out);
-	if (group != NULL)
-		EC_GROUP_free(group);
+	BIO_free_all(out);
+	EC_GROUP_free(group);
 
 	return (ret);
 }
