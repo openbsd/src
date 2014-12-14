@@ -16,7 +16,7 @@ our %args = (
 	    'block request path "/2"',
 	],
 	loggrep => [
-	    qr/ssl, ssl client/ => 1,
+	    qr/tls, tls client/ => 1,
 	    qr/Forbidden/ => 1,
 	],
 	forwardssl => 1,
