@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.49 2014/12/13 10:31:07 tobias Exp $	*/
+/*	$OpenBSD: pch.c,v 1.50 2014/12/14 09:12:59 tobias Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -1398,10 +1398,10 @@ do_ed_script(void)
 			;
 		/* POSIX defines allowed commands as {a,c,d,i,s} */
 		if (isdigit((unsigned char)*buf) &&
-		    (*t == 'a' || *t == 'c' || *t == 'd' || *t == 'i' || *t == 's')) {
+		    *t != '\0' && strchr("acdis", *t) != NULL) {
 			if (pipefp != NULL)
 				fputs(buf, pipefp);
-			if (*t != 'd') {
+			if (*t != 'd' && *t != 's') {
 				while (pgets(buf, sizeof buf, pfp) != NULL) {
 					p_input_line++;
 					if (pipefp != NULL)
