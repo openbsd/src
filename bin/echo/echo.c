@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.7 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.8 2014/12/14 16:55:59 bcallah Exp $	*/
 /*	$NetBSD: echo.c,v 1.6 1995/03/21 09:04:27 cgd Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 /* ARGSUSED */
