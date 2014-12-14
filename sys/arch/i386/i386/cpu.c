@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.57 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.58 2014/12/14 05:04:49 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -833,6 +833,8 @@ cpu_init_mwait(struct device *dv)
 	else
 		mwait_size = largest;
 	printf("\n");
+	/* XXX disable mwait: ACPI says not to use it on too many systems */
+	mwait_size = 0;
 }
 
 void
