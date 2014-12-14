@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.89 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.90 2014/12/14 16:07:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1835,6 +1835,58 @@ ssl3_pending(const SSL *s)
 
 	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ?
 	    s->s3->rrec.length : 0;
+}
+
+unsigned char *
+ssl3_handshake_msg_start(SSL *s, uint8_t msg_type)
+{
+	unsigned char *d, *p;
+	int hdr_len;
+
+	d = p = (unsigned char *)s->init_buf->data;
+
+	hdr_len = SSL_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH :
+	    SSL3_HM_HEADER_LENGTH;
+
+	/* Handshake message type and length. */
+	*(p++) = msg_type;
+	l2n3(0, p);
+
+	return (d + hdr_len);
+}
+
+void
+ssl3_handshake_msg_finish(SSL *s, unsigned int len)
+{
+	unsigned char *d, *p;
+	uint8_t msg_type;
+	int hdr_len;
+
+	d = p = (unsigned char *)s->init_buf->data;
+
+	hdr_len = SSL_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH :
+	    SSL3_HM_HEADER_LENGTH;
+
+	/* Handshake message length. */
+	msg_type = *(p++);
+	l2n3(len, p);
+
+	s->init_num = hdr_len + (int)len;
+	s->init_off = 0;
+
+	if (SSL_IS_DTLS(s)) {
+		dtls1_set_message_header(s, d, msg_type, len, 0, len);
+		dtls1_buffer_message(s, 0);
+	}
+}
+
+int
+ssl3_handshake_write(SSL *s)
+{
+	if (SSL_IS_DTLS(s))
+		return dtls1_do_write(s, SSL3_RT_HANDSHAKE);
+
+	return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.30 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.31 2014/12/14 16:07:26 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1139,6 +1139,8 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	pitem *item;
 	hm_fragment *frag;
 	unsigned char seq64be[8];
+
+	/* Buffer the messsage in order to handle DTLS retransmissions. */
 
 	/*
 	 * This function is called immediately after a message has
