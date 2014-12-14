@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.25 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.26 2014/12/14 15:30:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,7 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		goto err;
 	if (BIO_puts(bp, "SSL-Session:\n") <= 0)
 		goto err;
-	
+
 	s = ssl_version_string(x->ssl_version);
 	if (BIO_printf(bp, "    Protocol  : %s\n", s) <= 0)
 		goto err;

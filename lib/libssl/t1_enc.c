@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.73 2014/11/18 05:33:43 miod Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.74 2014/12/14 15:30:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -605,7 +605,7 @@ tls1_setup_key_block(SSL *s)
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
 
-		/* If GCM mode only part of IV comes from PRF. */ 
+		/* If GCM mode only part of IV comes from PRF. */
 		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
 			iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
 	}
@@ -823,7 +823,7 @@ tls1_enc(SSL *s, int send)
 					fprintf(stderr,
 					    "%s:%d: rec->data != rec->input\n",
 					    __FILE__, __LINE__);
-				else 
+				else
 					arc4random_buf(rec->input, ivlen);
 			}
 		}

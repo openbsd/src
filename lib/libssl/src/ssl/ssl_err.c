@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.27 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.28 2014/12/14 15:30:50 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.100 2014/12/14 14:34:43 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.101 2014/12/14 15:30:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1196,7 +1196,7 @@ ssl3_get_key_exchange(SSL *s)
 	} else {
 		s->session->sess_cert = ssl_sess_cert_new();
 		if (s->session->sess_cert == NULL)
-			goto err; 
+			goto err;
 	}
 
 	param_len = 0;
