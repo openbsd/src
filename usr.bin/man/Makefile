@@ -1,9 +1,5 @@
-#	$OpenBSD: Makefile,v 1.5 1999/10/18 01:46:36 aaron Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/12/14 17:55:36 schwarze Exp $
 
-PROG=	man
-SRCS=	config.c man.c
-MAN=	man.1 man.conf.5 help.1
-
-LINKS=	${BINDIR}/man ${BINDIR}/help
+MAN=	man.conf.5 help.1
 
 .include <bsd.prog.mk>
