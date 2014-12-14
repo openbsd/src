@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2014/11/25 20:26:13 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.11 2014/12/14 19:55:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -68,7 +68,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf32_Rela  *relas;
 	Elf32_Addr prev_value = 0, prev_ooff = 0;
 	const Elf32_Sym *prev_sym = NULL;
-	int prev_type = RELOC_NONE;
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
@@ -150,51 +149,19 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
-		    (sym != prev_sym || type != prev_type)) {
+		    sym != prev_sym) {
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			    ELF32_ST_TYPE(sym->st_info) == STT_SECTION) {
 				prev_sym = sym;
 				prev_value = 0;
 				prev_ooff = object->obj_base;
-				prev_type = type;
 			} else {
 				this = NULL;
-
-				/*
-				 * Resolving a symbol in a library which is
-				 * also referenced by the main program will
-				 * return the address of the plt trampoline
-				 * in the main program, so that the address
-				 * of the symbol (&sym) always has the same
-				 * value.
-				 *
-				 * However, in the relative branch case
-				 * (DISP26), this could create an out-of-reach
-				 * branch, depending where the library happens
-				 * to get loaded in the 4GB address space.
-				 *
-				 * Since DISP26 relocations are only used for
-				 * code (branches) and will never appear when
-				 * attempting to take the address of a symbol,
-				 * it is safe to try and search for the
-				 * actual address in the current object
-				 * first.
-				 */
-				if (type == RELOC_DISP26) {
-					ooff = _dl_find_symbol_bysym(object,
-					    ELF32_R_SYM(relas->r_info), &this,
-					    SYM_SEARCH_SELF |
-					    SYM_NOWARNNOTFOUND |
-					    SYM_NOTPLT, sym, NULL);
-				} else
-					ooff = 0;	/* XXX gcc -Wall */
-
-				if (this == NULL)
-					ooff = _dl_find_symbol_bysym(object,
-					    ELF32_R_SYM(relas->r_info), &this,
-					    SYM_SEARCH_ALL | SYM_WARNNOTFOUND |
-					    ((type == RELOC_GOTP_ENT) ?
-					    SYM_PLT : SYM_NOTPLT), sym, NULL);
+				ooff = _dl_find_symbol_bysym(object,
+				    ELF32_R_SYM(relas->r_info), &this,
+				    SYM_SEARCH_ALL | SYM_WARNNOTFOUND |
+				    ((type == RELOC_GOTP_ENT) ?
+				    SYM_PLT : SYM_NOTPLT), sym, NULL);
 
 				if (this == NULL) {
 					if (ELF_ST_BIND(sym->st_info) !=
@@ -205,7 +172,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				prev_sym = sym;
 				prev_value = this->st_value;
 				prev_ooff = ooff;
-				prev_type = type;
 			}
 		}
 
