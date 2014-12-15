@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.41 2014/03/17 21:48:51 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.42 2014/12/15 20:31:40 tedu Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2014 $
+.Dd $Mdocdate: December 15 2014 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -752,6 +752,7 @@ Print an error message to standard error:
 { print "error!" > "/dev/stderr" }
 .Ed
 .Sh SEE ALSO
+.Xr cut 1 ,
 .Xr lex 1 ,
 .Xr printf 1 ,
 .Xr sed 1 ,
