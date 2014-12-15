@@ -22,3 +22,5 @@ void sigset(int);
 
 /* ktrstruct.c */
 void ktrstruct(char *, size_t);
+void uidname(int);
+void gidname(int);

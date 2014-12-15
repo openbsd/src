@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.93 2014/12/09 00:46:43 jsg Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.94 2014/12/15 01:48:54 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -70,7 +70,7 @@
 #include "extern.h"
 
 int timestamp, decimal, iohex, fancy = 1, maxdata = INT_MAX;
-int needtid, resolv, tail;
+int needtid, tail;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid_opt = -1;
@@ -143,7 +143,7 @@ static void ktrgenio(struct ktr_genio *, size_t);
 static void ktrnamei(const char *, size_t);
 static void ktrpsig(struct ktr_psig *);
 static void ktrsyscall(struct ktr_syscall *, size_t);
-static const char *kresolvsysctl(int, int *, int);
+static const char *kresolvsysctl(int, const int *);
 static void ktrsysret(struct ktr_sysret *);
 static void ktruser(struct ktr_user *, size_t);
 static void setemul(const char *);
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 
 	def_emul = current = &emulations[0];	/* native */
 
-	while ((ch = getopt(argc, argv, "e:f:dHlm:nrRp:Tt:xX")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dHlm:nRp:Tt:xX")) != -1)
 		switch (ch) {
 		case 'e':
 			setemul(optarg);
@@ -198,9 +198,6 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			pid_opt = atoi(optarg);
-			break;
-		case 'r':
-			resolv = 1;
 			break;
 		case 'R':
 			timestamp = 2;	/* relative timestamp */
@@ -582,6 +579,8 @@ static void (*formatters[])(int) = {
 	ktracefacname,
 	itimername,
 	sigset,
+	uidname,
+	gidname,
 };
 
 enum {
@@ -663,6 +662,8 @@ enum {
 	Ktracefacname,
 	Itimername,
 	Sigset,
+	Uidname,
+	Gidname,
 };
 
 #define Pptr		Phexlong
@@ -680,8 +681,6 @@ enum {
 #define Psemid		Pdecint
 #define Pkey_t		Pdecint
 #define Pucount		Pdecuint
-#define Puid_t		Pdecuint
-#define Pgid_t		Pdecuint
 #define Chflagsname	Phexlong	/* to be added */
 #define Sockprotoname	Phexlong	/* to be added */
 #define Swapctlname	Phexlong	/* to be added */
@@ -704,12 +703,12 @@ static const formatter scargs[][8] = {
     [SYS_fchdir]	= { Pfd },
     [SYS_mknod]		= { Ppath, Modename, Pdev_t },
     [SYS_chmod]		= { Ppath, Modename },
-    [SYS_chown]		= { Ppath, Puid_t, Pgid_t },
+    [SYS_chown]		= { Ppath, Uidname, Gidname },
     [SYS_break]		= { Pptr },
     [SYS_getrusage]	= { Rusagewho, Pptr },
     [SYS_mount]		= { Pptr, Ppath, Mountflagsname, Pptr },
     [SYS_unmount]	= { Ppath, Mountflagsname },
-    [SYS_setuid]	= { Puid_t },
+    [SYS_setuid]	= { Uidname },
     [SYS_ptrace]	= { Ptracedecode, Ppid_t, Pptr, Pdecint },
     [SYS_recvmsg]	= { Pfd, Pptr, Sendrecvflagsname },
     [SYS_sendmsg]	= { Pfd, Pptr, Sendrecvflagsname },
@@ -790,10 +789,10 @@ static const formatter scargs[][8] = {
     [SYS_getsockopt]	= { Pfd, PASS_TWO, Sockoptlevelname, Pptr, Pptr },
     [SYS_readv]		= { Pfd, Pptr, Pcount },
     [SYS_writev]	= { Pfd, Pptr, Pcount },
-    [SYS_fchown]	= { Pfd, Puid_t, Pgid_t },
+    [SYS_fchown]	= { Pfd, Uidname, Gidname },
     [SYS_fchmod]	= { Pfd, Modename },
-    [SYS_setreuid]	= { Puid_t, Puid_t },
-    [SYS_setregid]	= { Pgid_t, Pgid_t },
+    [SYS_setreuid]	= { Uidname, Uidname },
+    [SYS_setregid]	= { Gidname, Gidname },
     [SYS_rename]	= { Ppath, Ppath },
     [SYS_flock]		= { Pfd, Flockname },
     [SYS_mkfifo]	= { Ppath, Modename },
@@ -803,15 +802,15 @@ static const formatter scargs[][8] = {
     [SYS_mkdir]		= { Ppath, Modename },
     [SYS_rmdir]		= { Ppath },
     [SYS_adjtime]	= { Pptr, Pptr },
-    [SYS_quotactl]	= { Ppath, Quotactlname, Puid_t, Pptr },
+    [SYS_quotactl]	= { Ppath, Quotactlname, Uidname, Pptr },
     [SYS_nfssvc]	= { Phexint, Pptr },
     [SYS_getfh]		= { Ppath, Pptr },
     [SYS_sysarch]	= { Pdecint, Pptr },
     [SYS_pread]		= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
     [SYS_pwrite]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
-    [SYS_setgid]	= { Pgid_t },
-    [SYS_setegid]	= { Pgid_t },
-    [SYS_seteuid]	= { Puid_t },
+    [SYS_setgid]	= { Gidname },
+    [SYS_setegid]	= { Gidname },
+    [SYS_seteuid]	= { Uidname },
     [SYS_pathconf]	= { Ppath, Pathconfname },
     [SYS_fpathconf]	= { Pfd, Pathconfname },
     [SYS_swapctl]	= { Swapctlname, Pptr, Pdecint },
@@ -834,7 +833,7 @@ static const formatter scargs[][8] = {
     [SYS_shmdt]		= { Pptr },
     [SYS_minherit]	= { Pptr, Pbigsize, Minheritname },
     [SYS_poll]		= { Pptr, Pucount, Polltimeout },
-    [SYS_lchown]	= { Ppath, Puid_t, Pgid_t },
+    [SYS_lchown]	= { Ppath, Uidname, Gidname },
     [SYS_getsid]	= { Ppid_t },
     [SYS_msync]		= { Pptr, Pbigsize, Msyncflagsname },
     [SYS_pipe]		= { Pptr },
@@ -843,9 +842,9 @@ static const formatter scargs[][8] = {
     [SYS_pwritev]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
     [SYS_mlockall]	= { Mlockallname },
     [SYS_getresuid]	= { Pptr, Pptr, Pptr },
-    [SYS_setresuid]	= { Puid_t, Puid_t, Puid_t },
+    [SYS_setresuid]	= { Uidname, Uidname, Uidname },
     [SYS_getresgid]	= { Pptr, Pptr, Pptr },
-    [SYS_setresgid]	= { Pgid_t, Pgid_t, Pgid_t },
+    [SYS_setresgid]	= { Gidname, Gidname, Gidname },
     [SYS_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
     [SYS_closefrom]	= { Pfd },
     [SYS_sigaltstack]	= { Pptr, Pptr },
@@ -863,7 +862,7 @@ static const formatter scargs[][8] = {
     [SYS_setrtable]	= { Pdecint },
     [SYS_faccessat]	= { Atfd, Ppath, Accessmodename, Atflagsname },
     [SYS_fchmodat]	= { Atfd, Ppath, Modename, Atflagsname },
-    [SYS_fchownat]	= { Atfd, Ppath, Puid_t, Pgid_t, Atflagsname },
+    [SYS_fchownat]	= { Atfd, Ppath, Uidname, Gidname, Atflagsname },
     [SYS_linkat]	= { Atfd, Ppath, Atfd, Ppath, Atflagsname },
     [SYS_mkdirat]	= { Atfd, Ppath, Modename },
     [SYS_mkfifoat]	= { Atfd, Ppath, Modename },
@@ -903,7 +902,7 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 
 	if (ktr->ktr_code == SYS___sysctl) {
 		const char *s;
-		int *np, n, i, *top;
+		int n, i, *top;
 
 		if (!fancy)
 			goto nonnative;
@@ -912,15 +911,21 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 			n = CTL_MAXNAME;
 		if (n < 0)
 			errx(1, "invalid sysctl length %d", n);
-		np = top = (int *)(ap + 6);
-		for (i = 0; n--; np++, i++) {
-			if (sep)
-				putchar(sep);
-			if (resolv && (s = kresolvsysctl(i, top, *np)) != NULL)
-				printf("%s", s);
-			else
-				printf("%d", *np);
-			sep = '.';
+		if (n > 0) {
+			top = (int *)(ap + 6);
+			printf("%d", top[0]);
+			for (i = 1; i < n; i++)
+				printf(".%d", top[i]);
+			if ((s = kresolvsysctl(0, top)) != NULL) {
+				printf("<%s", s);
+				for (i = 1; i < n; i++) {
+					if ((s = kresolvsysctl(i, top)) != NULL)
+						printf(".%s", s);
+					else
+						printf(".%d", top[i]);
+				}
+				putchar('>');
+			}
 		}
 
 		sep = ',';
@@ -999,10 +1004,11 @@ static struct ctlname ddbname[] = CTL_DDB_NAMES;
 #define SETNAME(name) do { names = (name); limit = nitems(name); } while (0)
 
 static const char *
-kresolvsysctl(int depth, int *top, int idx)
+kresolvsysctl(int depth, const int *top)
 {
 	struct ctlname *names;
 	size_t		limit;
+	int		idx = top[depth];
 
 	names = NULL;
 
@@ -1108,6 +1114,14 @@ ktrsysret(struct ktr_sysret *ktr)
 				break;
 			case SYS___thrsigdivert:
 				signame(ret);
+				break;
+			case SYS_getuid:
+			case SYS_geteuid:
+				uidname(ret);
+				break;
+			case SYS_getgid:
+			case SYS_getegid:
+				gidname(ret);
 				break;
 			case -1:	/* non-default emulation */
 			default:
