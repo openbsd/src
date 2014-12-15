@@ -1,4 +1,4 @@
-/*	$OpenBSD: gost2814789t.c,v 1.1 2014/11/09 19:45:26 miod Exp $	*/
+/*	$OpenBSD: gost2814789t.c,v 1.2 2014/12/15 06:03:15 miod Exp $	*/
 /* vim: set fileencoding=ascii : Charset: ASCII */
 /* test/gostr2814789t.c */
 /* ====================================================================
@@ -1243,6 +1243,9 @@ const g89_tc tcs[] = {
     }
 };
 
+/* const */ unsigned char bZB[40*1024*1024];
+unsigned char bTS[40*1024*1024];
+
 int main(int argc, char *argv[])
 {
     unsigned int t;
@@ -1255,8 +1258,6 @@ int main(int argc, char *argv[])
     unsigned char bTest[G89_MAX_TC_LEN];
     unsigned char bTest1[G89_MAX_TC_LEN];
     uint64_t ullLeft;
-    static const unsigned char bZB[40*1024*1024] = { 0 };
-    static unsigned char bTS[40*1024*1024] = { 0 };
     unsigned int mdl = 0;
     int enlu = 0;
     int enlf = 0;
@@ -1287,6 +1288,9 @@ int main(int argc, char *argv[])
     ENGINE_load_builtin_engines();
     OPENSSL_load_builtin_modules();
     OpenSSL_add_all_algorithms();
+
+	memset(bZB, 0, sizeof bZB);
+	memset(bTS, 0, sizeof bTS);
 
 	/* Test load engine */
     if(NULL == (md_gost94 = EVP_get_digestbyname(SN_id_GostR3411_94))) {
