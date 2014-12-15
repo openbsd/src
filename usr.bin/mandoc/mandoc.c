@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.56 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.57 2014/12/15 17:29:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -475,6 +475,8 @@ time2a(time_t t)
 	int		 isz;
 
 	tm = localtime(&t);
+	if (tm == NULL)
+		return(NULL);
 
 	/*
 	 * Reserve space:
