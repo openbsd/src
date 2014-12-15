@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.50 2014/12/15 04:54:44 tedu Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.51 2014/12/15 05:05:24 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -525,8 +525,8 @@ kvtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-#define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
-#define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)
+#define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + (pa))
+#define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - PMAP_DIRECT_BASE)
 #define pmap_map_direct(pg)	PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(pg))
 #define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))
 
