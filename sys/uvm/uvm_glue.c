@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.68 2014/12/05 04:12:48 uebayasi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.69 2014/12/15 20:38:22 tedu Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -467,8 +467,12 @@ uvm_atopg(vaddr_t kva)
 void
 uvm_pause(void)
 {
-	KERNEL_UNLOCK();
-	KERNEL_LOCK();
+	static unsigned int toggle;
+	if (toggle++ > 128) {
+		toggle = 0;
+		KERNEL_UNLOCK();
+		KERNEL_LOCK();
+	}
 	if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
 		preempt(NULL);
 }
