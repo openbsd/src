@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.9 2014/12/09 06:58:28 doug Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.10 2014/12/15 01:53:45 tedu Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -410,7 +410,7 @@ mrsetlow(struct mem_range_softc *sc, struct mem_range_desc *mrd, int *arg)
 	/* set flags, clear set-by-firmware flag */
 	for (curr_md = first_md; curr_md <= last_md; curr_md++) {
 		curr_md->mr_flags = mrcopyflags(curr_md->mr_flags & ~MDF_FIRMWARE, mrd->mr_flags);
-		bcopy(mrd->mr_owner, curr_md->mr_owner, sizeof(mrd->mr_owner));
+		memcpy(curr_md->mr_owner, mrd->mr_owner, sizeof(mrd->mr_owner));
 	}
 	
 	return(0);
@@ -469,7 +469,7 @@ mrsetvariable(struct mem_range_softc *sc, struct mem_range_desc *mrd, int *arg)
 	free_md->mr_base = mrd->mr_base;
 	free_md->mr_len = mrd->mr_len;
 	free_md->mr_flags = mrcopyflags(MDF_ACTIVE, mrd->mr_flags);
-	bcopy(mrd->mr_owner, free_md->mr_owner, sizeof(mrd->mr_owner));
+	memcpy(free_md->mr_owner, mrd->mr_owner, sizeof(mrd->mr_owner));
 	return(0);
 }
 

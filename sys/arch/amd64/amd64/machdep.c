@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.201 2014/12/10 15:29:52 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.202 2014/12/15 01:53:45 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -537,7 +537,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 
-	bcopy(tf, &ksc, sizeof(*tf));
+	memcpy(&ksc, tf, sizeof(*tf));
 	bzero((char *)&ksc + sizeof(*tf), sizeof(ksc) - sizeof(*tf));
 	ksc.sc_mask = mask;
 
@@ -649,7 +649,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	ksc.sc_trapno = tf->tf_trapno;
 	ksc.sc_err = tf->tf_err;
-	bcopy(&ksc, tf, sizeof(*tf));
+	memcpy(tf, &ksc, sizeof(*tf));
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
@@ -845,7 +845,7 @@ cpu_dump(void)
 	 * memory and bounce
 	 */
 	if (dumpmem_vaddr != 0) {
-		bcopy(buf, (char *)dumpmem_vaddr, sizeof(buf));
+		memcpy((char *)dumpmem_vaddr, buf, sizeof(buf));
 		va = (caddr_t)dumpmem_vaddr;
 	} else {
 		va = (caddr_t)buf;
@@ -960,7 +960,7 @@ dumpsys(void)
 				va = (void *)dumpmem_vaddr;
 				if (n > dumpmem_sz)
 					n = dumpmem_sz;
-				bcopy((void *)PMAP_DIRECT_MAP(maddr), va, n);
+				memcpy(va, (void *)PMAP_DIRECT_MAP(maddr), n);
 			} else {
 				va = (void *)PMAP_DIRECT_MAP(maddr);
 			}
@@ -1850,15 +1850,15 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 
 		case BOOTARG_BOOTDUID:
 			bios_bootduid = (bios_bootduid_t *)q->ba_arg;
-			bcopy(bios_bootduid, bootduid, sizeof(bootduid));
+			memcpy(bootduid, bios_bootduid, sizeof(bootduid));
 			break;
 
 		case BOOTARG_BOOTSR:
 			bios_bootsr = (bios_bootsr_t *)q->ba_arg;
 #if NSOFTRAID > 0
-			bcopy(&bios_bootsr->uuid, &sr_bootuuid,
+			memcpy(&sr_bootuuid, &bios_bootsr->uuid,
 			    sizeof(sr_bootuuid));
-			bcopy(&bios_bootsr->maskkey, &sr_bootkey,
+			memcpy(&sr_bootkey, &bios_bootsr->maskkey,
 			    sizeof(sr_bootkey));
 #endif
 			explicit_bzero(bios_bootsr, sizeof(bios_bootsr_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.73 2014/12/14 05:04:49 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.74 2014/12/15 01:53:45 tedu Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -175,7 +175,7 @@ replacesmap(void)
 		pmap_update(pmap_kernel());
 
 		/* replace 3 byte nops with stac/clac instructions */
-		bcopy(ireplace[i].saddr, (void *)(nva + po), 3);
+		memcpy((void *)(nva + po), ireplace[i].saddr, 3);
 	}
 
 	km_free((void *)nva, 2 * PAGE_SIZE, &kv_any, &kp_none);

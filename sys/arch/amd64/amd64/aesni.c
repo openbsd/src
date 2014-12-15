@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.30 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.31 2014/12/15 01:53:45 tedu Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -206,7 +206,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_AES_GCM_16:
 		case CRYPTO_AES_GMAC:
 			ses->ses_klen = c->cri_klen / 8 - AESCTR_NONCESIZE;
-			bcopy(c->cri_key + ses->ses_klen, ses->ses_nonce,
+			memcpy(ses->ses_nonce, c->cri_key + ses->ses_klen,
 			    AESCTR_NONCESIZE);
 			fpu_kernel_enter();
 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
@@ -429,7 +429,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	/* Initialize the IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			bcopy(crd->crd_iv, iv, ivlen);
+			memcpy(iv, crd->crd_iv, ivlen);
 		else
 			arc4random_buf(iv, ivlen);
 
@@ -447,7 +447,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		}
 	} else {
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			bcopy(crd->crd_iv, iv, ivlen);
+			memcpy(iv, crd->crd_iv, ivlen);
 		else {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
@@ -472,7 +472,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				    crda->crd_skip, 4, buf);
 			iskip = 4; /* additional input offset */
 			/* ESN */
-			bcopy(crda->crd_esn, buf + 4, 4);
+			memcpy(buf + 4, crda->crd_esn, 4);
 			oskip = iskip + 4; /* offset output buffer by 8 */
 		}
 		rlen = roundup(aadlen, GMAC_BLOCK_LEN);
@@ -502,8 +502,8 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	    crd->crd_alg == CRYPTO_AES_GCM_16 ||
 	    crd->crd_alg == CRYPTO_AES_GMAC) {
 		bzero(icb, AESCTR_BLOCKSIZE);
-		bcopy(ses->ses_nonce, icb, AESCTR_NONCESIZE);
-		bcopy(iv, icb + AESCTR_NONCESIZE, AESCTR_IVSIZE);
+		memcpy(icb, ses->ses_nonce, AESCTR_NONCESIZE);
+		memcpy(icb + AESCTR_NONCESIZE, iv, AESCTR_IVSIZE);
 		/* rlen is for gcm and gmac only */
 		rlen = roundup(crd->crd_len, AESCTR_BLOCKSIZE);
 	}
@@ -580,7 +580,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				goto out;
 			}
 		} else
-			bcopy(tag, crp->crp_mac, GMAC_BLOCK_LEN);
+			memcpy(crp->crp_mac, tag, GMAC_BLOCK_LEN);
 
 		/* clean up GHASH state */
 		bzero(ses->ses_ghash->S, GMAC_BLOCK_LEN);

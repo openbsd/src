@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.19 2014/10/09 04:18:09 tedu Exp $ */
+/*	$OpenBSD: mem.c,v 1.20 2014/12/15 01:53:45 tedu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -314,7 +314,7 @@ mem_range_attr_get(struct mem_range_desc *mrd, int *arg)
 	if (*arg == 0) {
 		*arg = mem_range_softc.mr_ndesc;
 	} else {
-		bcopy(mem_range_softc.mr_desc, mrd, (*arg) * sizeof(struct mem_range_desc));
+		memcpy(mrd, mem_range_softc.mr_desc, (*arg) * sizeof(struct mem_range_desc));
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.29 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.30 2014/12/15 01:53:45 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -299,7 +299,7 @@ smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
 	if (i == indx) {
 		if (va + len < end) {
 			ret = dest;
-			bcopy(va, ret, len);
+			memcpy(ret, va, len);
 			ret[len-1] = '\0';
 		}
 	}
@@ -330,7 +330,7 @@ fixstring(char *s)
 	for (e = s + strlen(s) - 1; e > s && *e == ' '; e--)
 		;
 	if (p > s || e < s + strlen(s) - 1) {
-		bcopy(p, s, e-p + 1);
+		memmove(s, p, e - p + 1);
 		s[e - p + 1] = '\0';
 	}
 
