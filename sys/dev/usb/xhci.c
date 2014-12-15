@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.45 2014/12/08 13:32:34 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.46 2014/12/15 17:10:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -52,7 +52,7 @@ int xhcidebug = 3;
 #define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
 
 #define TRBOFF(r, trb)	((char *)(trb) - (char *)((r).trbs))
-#define DEQPTR(r)	(DMAADDR(&(r).dma, sizeof(struct xhci_trb) * (r).index))
+#define DEQPTR(r)	((r).dma.paddr + (sizeof(struct xhci_trb) * (r).index))
 
 struct pool *xhcixfer;
 
@@ -67,7 +67,7 @@ struct xhci_pipe {
 	 * XXX used to pass the xfer pointer back to the
 	 * interrupt routine, better way?
 	 */
-	struct usbd_xfer	*pending_xfers[XHCI_MAX_TRANSFERS];
+	struct usbd_xfer	*pending_xfers[XHCI_MAX_XFER];
 	int			 halted;
 	size_t			 free_trbs;
 };
@@ -85,7 +85,8 @@ int	xhci_scratchpad_alloc(struct xhci_softc *, int);
 void	xhci_scratchpad_free(struct xhci_softc *);
 int	xhci_softdev_alloc(struct xhci_softc *, uint8_t);
 void	xhci_softdev_free(struct xhci_softc *, uint8_t);
-int	xhci_ring_alloc(struct xhci_softc *, struct xhci_ring *, size_t);
+int	xhci_ring_alloc(struct xhci_softc *, struct xhci_ring *, size_t,
+	    size_t);
 void	xhci_ring_free(struct xhci_softc *, struct xhci_ring *);
 void	xhci_ring_reset(struct xhci_softc *, struct xhci_ring *);
 struct	xhci_trb *xhci_ring_dequeue(struct xhci_softc *, struct xhci_ring *,
@@ -206,6 +207,68 @@ xhci_dump_trb(struct xhci_trb *trb)
 }
 #endif
 
+int	usbd_dma_contig_alloc(struct usbd_bus *, struct usbd_dma_info *,
+	    void **, bus_size_t, bus_size_t, bus_size_t);
+void	usbd_dma_contig_free(struct usbd_bus *, struct usbd_dma_info *);
+
+int
+usbd_dma_contig_alloc(struct usbd_bus *bus, struct usbd_dma_info *dma,
+    void **kvap, bus_size_t size, bus_size_t alignment, bus_size_t boundary)
+{
+	int error;
+
+	dma->tag = bus->dmatag;
+	dma->size = size;
+
+	error = bus_dmamap_create(dma->tag, size, 1, size, boundary,
+	    BUS_DMA_NOWAIT, &dma->map);
+	if (error != 0)
+		goto fail;
+
+	error = bus_dmamem_alloc(dma->tag, size, alignment, boundary, &dma->seg,
+	    1, &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
+	if (error != 0)
+		goto fail;
+
+	error = bus_dmamem_map(dma->tag, &dma->seg, 1, size, &dma->vaddr,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	if (error != 0)
+		goto fail;
+
+	error = bus_dmamap_load_raw(dma->tag, dma->map, &dma->seg, 1, size,
+	    BUS_DMA_NOWAIT);
+	if (error != 0)
+		goto fail;
+
+	bus_dmamap_sync(dma->tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
+
+	dma->paddr = dma->map->dm_segs[0].ds_addr;
+	if (kvap != NULL)
+		*kvap = dma->vaddr;
+
+	return (0);
+
+fail:	usbd_dma_contig_free(bus, dma);
+	return (error);
+}
+
+void
+usbd_dma_contig_free(struct usbd_bus *bus, struct usbd_dma_info *dma)
+{
+	if (dma->map != NULL) {
+		if (dma->vaddr != NULL) {
+			bus_dmamap_sync(bus->dmatag, dma->map, 0, dma->size,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(bus->dmatag, dma->map);
+			bus_dmamem_unmap(bus->dmatag, dma->vaddr, dma->size);
+			bus_dmamem_free(bus->dmatag, &dma->seg, 1);
+			dma->vaddr = NULL;
+		}
+		bus_dmamap_destroy(bus->dmatag, dma->map);
+		dma->map = NULL;
+	}
+}
+
 int
 xhci_init(struct xhci_softc *sc)
 {
@@ -266,56 +329,50 @@ xhci_init(struct xhci_softc *sc)
 	DPRINTF(("%s: %d ports and %d slots\n", DEVNAME(sc), sc->sc_noport,
 	    sc->sc_noslot));
 
-	/*
-	 * Section 6.1 - Device Context Base Address Array
-	 * shall be aligned to a 64 byte boundary.
-	 */
-	sc->sc_dcbaa.size = (sc->sc_noslot + 1) * sizeof(uint64_t);
-	error = usb_allocmem(&sc->sc_bus, sc->sc_dcbaa.size, 64,
-	    &sc->sc_dcbaa.dma);
+	/* Setup Device Context Base Address Array. */
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &sc->sc_dcbaa.dma,
+	    (void **)&sc->sc_dcbaa.segs, (sc->sc_noslot + 1) * sizeof(uint64_t),
+	    XHCI_DCBAA_ALIGN, sc->sc_pagesize);
 	if (error)
 		return (ENOMEM);
-	sc->sc_dcbaa.segs = KERNADDR(&sc->sc_dcbaa.dma, 0);
-	memset(sc->sc_dcbaa.segs, 0, sc->sc_dcbaa.size);
-	usb_syncmem(&sc->sc_dcbaa.dma, 0, sc->sc_dcbaa.size,
-	    BUS_DMASYNC_PREWRITE);
 
 	/* Setup command ring. */
-	error = xhci_ring_alloc(sc, &sc->sc_cmd_ring, XHCI_MAX_COMMANDS);
+	error = xhci_ring_alloc(sc, &sc->sc_cmd_ring, XHCI_MAX_CMDS,
+	    XHCI_CMDS_RING_ALIGN);
 	if (error) {
 		printf("%s: could not allocate command ring.\n", DEVNAME(sc));
-		usb_freemem(&sc->sc_bus, &sc->sc_dcbaa.dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sc->sc_dcbaa.dma);
 		return (error);
 	}
 
 	/* Setup one event ring and its segment table (ERST). */
-	error = xhci_ring_alloc(sc, &sc->sc_evt_ring, XHCI_MAX_EVENTS);
+	error = xhci_ring_alloc(sc, &sc->sc_evt_ring, XHCI_MAX_EVTS,
+	    XHCI_EVTS_RING_ALIGN);
 	if (error) {
 		printf("%s: could not allocate event ring.\n", DEVNAME(sc));
 		xhci_ring_free(sc, &sc->sc_cmd_ring);
-		usb_freemem(&sc->sc_bus, &sc->sc_dcbaa.dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sc->sc_dcbaa.dma);
 		return (error);
 	}
 
 	/* Allocate the required entry for the segment table. */
-	sc->sc_erst.size = 1 * sizeof(struct xhci_erseg);
-	error = usb_allocmem(&sc->sc_bus, sc->sc_erst.size, 64,
-	    &sc->sc_erst.dma);
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &sc->sc_erst.dma,
+	    (void **)&sc->sc_erst.segs, sizeof(struct xhci_erseg),
+	    XHCI_ERST_ALIGN, XHCI_ERST_BOUNDARY);
 	if (error) {
 		printf("%s: could not allocate segment table.\n", DEVNAME(sc));
 		xhci_ring_free(sc, &sc->sc_evt_ring);
 		xhci_ring_free(sc, &sc->sc_cmd_ring);
-		usb_freemem(&sc->sc_bus, &sc->sc_dcbaa.dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sc->sc_dcbaa.dma);
 		return (ENOMEM);
 	}
-	sc->sc_erst.segs = KERNADDR(&sc->sc_erst.dma, 0);
 
 	/* Set our ring address and size in its corresponding segment. */
-	sc->sc_erst.segs[0].er_addr = htole64(DMAADDR(&sc->sc_evt_ring.dma, 0));
-	sc->sc_erst.segs[0].er_size = htole32(XHCI_MAX_EVENTS);
+	sc->sc_erst.segs[0].er_addr = htole64(sc->sc_evt_ring.dma.paddr);
+	sc->sc_erst.segs[0].er_size = htole32(XHCI_MAX_EVTS);
 	sc->sc_erst.segs[0].er_rsvd = 0;
-	usb_syncmem(&sc->sc_erst.dma, 0, sc->sc_erst.size,
-	   BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_erst.dma.tag, sc->sc_erst.dma.map, 0,
+	    sc->sc_erst.dma.size, BUS_DMASYNC_PREWRITE);
 
 	/* Get the number of scratch pages and configure them if necessary. */
 	hcr = XREAD4(sc, XHCI_HCSPARAMS2);
@@ -324,10 +381,10 @@ xhci_init(struct xhci_softc *sc)
 
 	if (npage > 0 && xhci_scratchpad_alloc(sc, npage)) {
 		printf("%s: could not allocate scratchpad.\n", DEVNAME(sc));
-		usb_freemem(&sc->sc_bus, &sc->sc_erst.dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sc->sc_erst.dma);
 		xhci_ring_free(sc, &sc->sc_evt_ring);
 		xhci_ring_free(sc, &sc->sc_cmd_ring);
-		usb_freemem(&sc->sc_bus, &sc->sc_dcbaa.dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sc->sc_dcbaa.dma);
 		return (ENOMEM);
 	}
 
@@ -348,7 +405,7 @@ xhci_config(struct xhci_softc *sc)
 	XOWRITE4(sc, XHCI_CONFIG, hcr | sc->sc_noslot);
 
 	/* Set the device context base array address. */
-	paddr = (uint64_t)DMAADDR(&sc->sc_dcbaa.dma, 0);
+	paddr = (uint64_t)sc->sc_dcbaa.dma.paddr;
 	XOWRITE4(sc, XHCI_DCBAAP_LO, (uint32_t)paddr);
 	XOWRITE4(sc, XHCI_DCBAAP_HI, (uint32_t)(paddr >> 32));
 
@@ -356,7 +413,7 @@ xhci_config(struct xhci_softc *sc)
 	    XOREAD4(sc, XHCI_DCBAAP_HI), XOREAD4(sc, XHCI_DCBAAP_LO)));
 
 	/* Set the command ring address. */
-	paddr = (uint64_t)DMAADDR(&sc->sc_cmd_ring.dma, 0);
+	paddr = (uint64_t)sc->sc_cmd_ring.dma.paddr;
 	XOWRITE4(sc, XHCI_CRCR_LO, ((uint32_t)paddr) | XHCI_CRCR_LO_RCS);
 	XOWRITE4(sc, XHCI_CRCR_HI, (uint32_t)(paddr >> 32));
 
@@ -367,7 +424,7 @@ xhci_config(struct xhci_softc *sc)
 	XRWRITE4(sc, XHCI_ERSTSZ(0), XHCI_ERSTS_SET(1));
 
 	/* Set the segment table address. */
-	paddr = (uint64_t)DMAADDR(&sc->sc_erst.dma, 0);
+	paddr = (uint64_t)sc->sc_erst.dma.paddr;
 	XRWRITE4(sc, XHCI_ERSTBA_LO(0), (uint32_t)paddr);
 	XRWRITE4(sc, XHCI_ERSTBA_HI(0), (uint32_t)(paddr >> 32));
 
@@ -375,7 +432,7 @@ xhci_config(struct xhci_softc *sc)
 	    XRREAD4(sc, XHCI_ERSTBA_HI(0)), XRREAD4(sc, XHCI_ERSTBA_LO(0))));
 
 	/* Set the ring dequeue address. */
-	paddr = (uint64_t)DMAADDR(&sc->sc_evt_ring.dma, 0);
+	paddr = (uint64_t)sc->sc_evt_ring.dma.paddr;
 	XRWRITE4(sc, XHCI_ERDP_LO(0), (uint32_t)paddr);
 	XRWRITE4(sc, XHCI_ERDP_HI(0), (uint32_t)(paddr >> 32));
 
@@ -436,10 +493,10 @@ xhci_detach(struct device *self, int flags)
 	if (sc->sc_spad.npage > 0)
 		xhci_scratchpad_free(sc);
 
-	usb_freemem(&sc->sc_bus, &sc->sc_erst.dma);
+	usbd_dma_contig_free(&sc->sc_bus, &sc->sc_erst.dma);
 	xhci_ring_free(sc, &sc->sc_evt_ring);
 	xhci_ring_free(sc, &sc->sc_cmd_ring);
-	usb_freemem(&sc->sc_bus, &sc->sc_dcbaa.dma);
+	usbd_dma_contig_free(&sc->sc_bus, &sc->sc_dcbaa.dma);
 
 	return (0);
 }
@@ -665,7 +722,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	code = XHCI_TRB_GET_CODE(status);
 	remain = XHCI_TRB_REMAIN(status);
 
-	trb_idx = (paddr - DMAADDR(&xp->ring.dma, 0)) / sizeof(struct xhci_trb);
+	trb_idx = (paddr - xp->ring.dma.paddr) / sizeof(struct xhci_trb);
 	if (trb_idx < 0 || trb_idx >= xp->ring.ntrb) {
 		printf("%s: wrong trb index (%d) max is %zu\n", DEVNAME(sc),
 		    trb_idx, xp->ring.ntrb - 1);
@@ -753,7 +810,7 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 	uint8_t dci, slot;
 	int i, trb_idx;
 
-	trb_idx = (paddr - DMAADDR(&sc->sc_cmd_ring.dma, 0)) / sizeof(*trb);
+	trb_idx = (paddr - sc->sc_cmd_ring.dma.paddr) / sizeof(*trb);
 	if (trb_idx < 0 || trb_idx >= sc->sc_cmd_ring.ntrb) {
 		printf("%s: wrong trb index (%d) max is %zu\n", DEVNAME(sc),
 		    trb_idx, sc->sc_cmd_ring.ntrb - 1);
@@ -785,7 +842,7 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 		xp->halted = 0;
 
 		/* Complete all pending transfers. */
-		for (i = 0; i < XHCI_MAX_TRANSFERS; i++) {
+		for (i = 0; i < XHCI_MAX_XFER; i++) {
 			xfer = xp->pending_xfers[i];
 			if (xfer != NULL && xfer->done == 0) {
 				if (xfer->status != USBD_STALLED)
@@ -1135,7 +1192,8 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	/* Unmask the slot context */
 	sdev->input_ctx->add_flags |= htole32(XHCI_INCTX_MASK_DCI(0));
 
-	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sdev->ictx_dma.tag, sdev->ictx_dma.map, 0,
+	    sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 }
 
 int
@@ -1153,7 +1211,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	    pipe->endpoint->edesc->bEndpointAddress);
 #endif
 
-	if (xhci_ring_alloc(sc, &xp->ring, XHCI_MAX_TRANSFERS))
+	if (xhci_ring_alloc(sc, &xp->ring, XHCI_MAX_XFER, XHCI_XFER_RING_ALIGN))
 		return (ENOMEM);
 
 	xp->free_trbs = xp->ring.ntrb;
@@ -1174,10 +1232,10 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 		 * descriptor.
 		 */
 		error = xhci_cmd_set_address(sc, xp->slot,
-		    DMAADDR(&sdev->ictx_dma, 0), XHCI_TRB_BSR);
+		    sdev->ictx_dma.paddr, XHCI_TRB_BSR);
 	} else {
 		error = xhci_cmd_configure_ep(sc, xp->slot,
-		    DMAADDR(&sdev->ictx_dma, 0));
+		    sdev->ictx_dma.paddr);
 	}
 
 	if (error) {
@@ -1218,9 +1276,10 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 	/* Clear the Endpoint Context */
 	memset(sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
 
-	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sdev->ictx_dma.tag, sdev->ictx_dma.map, 0,
+	    sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 
-	if (xhci_cmd_configure_ep(sc, xp->slot, DMAADDR(&sdev->ictx_dma, 0)))
+	if (xhci_cmd_configure_ep(sc, xp->slot, sdev->ictx_dma.paddr))
 		DPRINTF(("%s: error clearing ep (%d)\n", DEVNAME(sc), xp->dci));
 
 	xhci_ring_free(sc, &xp->ring);
@@ -1258,19 +1317,18 @@ xhci_setaddr(struct usbd_device *dev, int addr)
 
 	xhci_context_setup(sc, dev->default_pipe);
 
-	error = xhci_cmd_set_address(sc, xp->slot,
-	    DMAADDR(&sdev->ictx_dma, 0), 0);
+	error = xhci_cmd_set_address(sc, xp->slot, sdev->ictx_dma.paddr, 0);
 
 #ifdef XHCI_DEBUG
 	if (error == 0) {
 		struct xhci_sctx *sctx;
 		uint8_t addr;
 
-		usb_syncmem(&sdev->octx_dma, 0, sc->sc_pagesize,
-		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sdev->octx_dma.tag, sdev->octx_dma.map, 0,
+		    sc->sc_pagesize, BUS_DMASYNC_POSTREAD);
 
 		/* Get output slot context. */
-		sctx = KERNADDR(&sdev->octx_dma, 0);
+		sctx = (struct xhci_sctx *)sdev->octx_dma.vaddr;
 		addr = XHCI_SCTX_DEV_ADDR(letoh32(sctx->state));
 		error = (addr == 0);
 
@@ -1300,35 +1358,33 @@ xhci_scratchpad_alloc(struct xhci_softc *sc, int npage)
 	int error, i;
 
 	/* Allocate the required entry for the table. */
-	error = usb_allocmem(&sc->sc_bus, npage * sizeof(uint64_t), 64,
-	    &sc->sc_spad.table_dma);
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &sc->sc_spad.table_dma,
+	    (void **)&pte, npage * sizeof(uint64_t), XHCI_SPAD_TABLE_ALIGN,
+	    sc->sc_pagesize);
 	if (error)
 		return (ENOMEM);
-	pte = KERNADDR(&sc->sc_spad.table_dma, 0);
 
-	/* Alloccate space for the pages. */
-	error = usb_allocmem(&sc->sc_bus, npage * sc->sc_pagesize,
-	    sc->sc_pagesize, &sc->sc_spad.pages_dma);
+	/* Allocate pages. XXX does not need to be contiguous. */
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &sc->sc_spad.pages_dma,
+	    NULL, npage * sc->sc_pagesize, sc->sc_pagesize, 0);
 	if (error) {
-		usb_freemem(&sc->sc_bus, &sc->sc_spad.table_dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sc->sc_spad.table_dma);
 		return (ENOMEM);
 	}
-	memset(KERNADDR(&sc->sc_spad.pages_dma, 0), 0, npage * sc->sc_pagesize);
-	usb_syncmem(&sc->sc_spad.pages_dma, 0, npage * sc->sc_pagesize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < npage; i++) {
 		pte[i] = htole64(
-		    DMAADDR(&sc->sc_spad.pages_dma, i * sc->sc_pagesize)
+		    sc->sc_spad.pages_dma.paddr + (i * sc->sc_pagesize)
 		);
 	}
-	usb_syncmem(&sc->sc_spad.table_dma, 0, npage * sizeof(uint64_t),
-	    BUS_DMASYNC_PREWRITE);
+
+	bus_dmamap_sync(sc->sc_spad.table_dma.tag, sc->sc_spad.table_dma.map, 0,
+	    npage * sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
 
 	/*  Entry 0 points to the table of scratchpad pointers. */
-	sc->sc_dcbaa.segs[0] = htole64(DMAADDR(&sc->sc_spad.table_dma, 0));
-	usb_syncmem(&sc->sc_dcbaa.dma, 0, sizeof(uint64_t),
-	    BUS_DMASYNC_PREWRITE);
+	sc->sc_dcbaa.segs[0] = htole64(sc->sc_spad.table_dma.paddr);
+	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map, 0,
+	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
 
 	sc->sc_spad.npage = npage;
 
@@ -1339,25 +1395,27 @@ void
 xhci_scratchpad_free(struct xhci_softc *sc)
 {
 	sc->sc_dcbaa.segs[0] = 0;
-	usb_syncmem(&sc->sc_dcbaa.dma, 0, sizeof(uint64_t),
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map, 0,
+	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
 
-	usb_freemem(&sc->sc_bus, &sc->sc_spad.pages_dma);
-	usb_freemem(&sc->sc_bus, &sc->sc_spad.table_dma);
+	usbd_dma_contig_free(&sc->sc_bus, &sc->sc_spad.pages_dma);
+	usbd_dma_contig_free(&sc->sc_bus, &sc->sc_spad.table_dma);
 }
 
-
 int
-xhci_ring_alloc(struct xhci_softc *sc, struct xhci_ring *ring, size_t ntrb)
+xhci_ring_alloc(struct xhci_softc *sc, struct xhci_ring *ring, size_t ntrb,
+    size_t alignment)
 {
 	size_t size;
+	int error;
 
 	size = ntrb * sizeof(struct xhci_trb);
 
-	if (usb_allocmem(&sc->sc_bus, size, 16, &ring->dma) != 0)
-		return (ENOMEM);
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &ring->dma,
+	    (void **)&ring->trbs, size, alignment, XHCI_RING_BOUNDARY);
+	if (error)
+		return (error);
 
-	ring->trbs = KERNADDR(&ring->dma, 0);
 	ring->ntrb = ntrb;
 
 	xhci_ring_reset(sc, ring);
@@ -1368,7 +1426,7 @@ xhci_ring_alloc(struct xhci_softc *sc, struct xhci_ring *ring, size_t ntrb)
 void
 xhci_ring_free(struct xhci_softc *sc, struct xhci_ring *ring)
 {
-	usb_freemem(&sc->sc_bus, &ring->dma);
+	usbd_dma_contig_free(&sc->sc_bus, &ring->dma);
 }
 
 void
@@ -1390,10 +1448,11 @@ xhci_ring_reset(struct xhci_softc *sc, struct xhci_ring *ring)
 	if (ring != &sc->sc_evt_ring) {
 		struct xhci_trb *trb = &ring->trbs[ring->ntrb - 1];
 
-		trb->trb_paddr = htole64(DMAADDR(&ring->dma, 0));
+		trb->trb_paddr = htole64(ring->dma.paddr);
 		trb->trb_flags = htole32(XHCI_TRB_TYPE_LINK | XHCI_TRB_LINKSEG);
 	}
-	usb_syncmem(&ring->dma, 0, size, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0, size,
+	    BUS_DMASYNC_PREWRITE);
 }
 
 struct xhci_trb*
@@ -1404,8 +1463,8 @@ xhci_ring_dequeue(struct xhci_softc *sc, struct xhci_ring *ring, int cons)
 
 	KASSERT(idx < ring->ntrb);
 
-	usb_syncmem(&ring->dma, idx * sizeof(struct xhci_trb),
-	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(ring->dma.tag, ring->dma.map, idx * sizeof(*trb),
+	    sizeof(*trb), BUS_DMASYNC_POSTREAD);
 
 	trb = &ring->trbs[idx];
 
@@ -1422,8 +1481,9 @@ xhci_ring_dequeue(struct xhci_softc *sc, struct xhci_ring *ring, int cons)
 		else
 			ring->trbs[idx].trb_flags &= ~htole32(XHCI_TRB_CYCLE);
 
-		usb_syncmem(&ring->dma, sizeof(struct xhci_trb) * idx,
-		    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(ring->dma.tag, ring->dma.map,
+		    sizeof(struct xhci_trb) * idx, sizeof(struct xhci_trb),
+		    BUS_DMASYNC_PREWRITE);
 
 		ring->index = 0;
 		ring->toggle ^= 1;
@@ -1466,8 +1526,10 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	if (trb == NULL)
 		return (EAGAIN);
 	memcpy(trb, trb0, sizeof(struct xhci_trb));
-	usb_syncmem(&sc->sc_cmd_ring.dma, TRBOFF(sc->sc_cmd_ring, trb),
-	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_cmd_ring.dma.tag, sc->sc_cmd_ring.dma.map,
+	    TRBOFF(sc->sc_cmd_ring, trb), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
+
 
 	if (timeout == 0) {
 		XDWRITE4(sc, XHCI_DOORBELL(0), 0);
@@ -1683,43 +1745,42 @@ xhci_softdev_alloc(struct xhci_softc *sc, uint8_t slot)
 {
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[slot];
 	int i, error;
+	uint8_t *kva;
 
 	/*
 	 * Setup input context.  Even with 64 byte context size, it
 	 * fits into the smallest supported page size, so use that.
 	 */
-	error = usb_allocmem(&sc->sc_bus, sc->sc_pagesize, sc->sc_pagesize,
-	    &sdev->ictx_dma);
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &sdev->ictx_dma,
+	    (void **)&kva, sc->sc_pagesize, XHCI_ICTX_ALIGN, sc->sc_pagesize);
 	if (error)
 		return (ENOMEM);
-	memset(KERNADDR(&sdev->ictx_dma, 0), 0, sc->sc_pagesize);
 
-	sdev->input_ctx = KERNADDR(&sdev->ictx_dma, 0);
-	sdev->slot_ctx = KERNADDR(&sdev->ictx_dma, sc->sc_ctxsize);
+	sdev->input_ctx = (struct xhci_inctx *)kva;
+	sdev->slot_ctx = (struct xhci_sctx *)(kva + sc->sc_ctxsize);
 	for (i = 0; i < 31; i++)
 		sdev->ep_ctx[i] =
-		   KERNADDR(&sdev->ictx_dma, (i + 2) * sc->sc_ctxsize);
+		    (struct xhci_epctx *)(kva + (i + 2) * sc->sc_ctxsize);
 
 	DPRINTF(("%s: dev %d, input=%p slot=%p ep0=%p\n", DEVNAME(sc),
 	 slot, sdev->input_ctx, sdev->slot_ctx, sdev->ep_ctx[0]));
 
 	/* Setup output context */
-	error = usb_allocmem(&sc->sc_bus, sc->sc_pagesize, sc->sc_pagesize,
-	    &sdev->octx_dma);
+	error = usbd_dma_contig_alloc(&sc->sc_bus, &sdev->octx_dma, NULL,
+	    sc->sc_pagesize, XHCI_OCTX_ALIGN, sc->sc_pagesize);
 	if (error) {
-		usb_freemem(&sc->sc_bus, &sdev->ictx_dma);
+		usbd_dma_contig_free(&sc->sc_bus, &sdev->ictx_dma);
 		return (ENOMEM);
 	}
-	memset(KERNADDR(&sdev->octx_dma, 0), 0, sc->sc_pagesize);
 
 	memset(&sdev->pipes, 0, sizeof(sdev->pipes));
 
 	DPRINTF(("%s: dev %d, setting DCBAA to 0x%016llx\n", DEVNAME(sc),
-	    slot, (long long)DMAADDR(&sdev->octx_dma, 0)));
+	    slot, (long long)sdev->octx_dma.paddr));
 
-	sc->sc_dcbaa.segs[slot] = htole64(DMAADDR(&sdev->octx_dma, 0));
-	usb_syncmem(&sc->sc_dcbaa.dma, slot * sizeof(uint64_t),
-	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	sc->sc_dcbaa.segs[slot] = htole64(sdev->octx_dma.paddr);
+	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map,
+	    slot * sizeof(uint64_t), sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -1730,11 +1791,11 @@ xhci_softdev_free(struct xhci_softc *sc, uint8_t slot)
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[slot];
 
 	sc->sc_dcbaa.segs[slot] = 0;
-	usb_syncmem(&sc->sc_dcbaa.dma, slot * sizeof(uint64_t),
-	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dcbaa.dma.tag, sc->sc_dcbaa.dma.map,
+	    slot * sizeof(uint64_t), sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
 
-	usb_freemem(&sc->sc_bus, &sdev->octx_dma);
-	usb_freemem(&sc->sc_bus, &sdev->ictx_dma);
+	usbd_dma_contig_free(&sc->sc_bus, &sdev->octx_dma);
+	usbd_dma_contig_free(&sc->sc_bus, &sdev->ictx_dma);
 
 	memset(sdev, 0, sizeof(struct xhci_soft_dev));
 }
@@ -2306,8 +2367,9 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	trb0->trb_flags |= htole32(toggle0);
 
-	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb0),
-	    3 * sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+	    TRBOFF(xp->ring, trb0), 3 * sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
@@ -2371,8 +2433,9 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	if (usbd_xfer_isread(xfer))
 		trb->trb_flags |= htole32(XHCI_TRB_ISP);
 
-	usb_syncmem(&xp->ring.dma, TRBOFF(xp->ring, trb),
-	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+	    TRBOFF(xp->ring, trb), sizeof(struct xhci_trb),
+	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);

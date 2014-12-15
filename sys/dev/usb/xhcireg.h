@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.6 2014/12/08 13:32:34 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.7 2014/12/15 17:10:44 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -26,11 +26,24 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_XHCIREG_H_
+#ifndef _XHCIREG_H_
 #define _XHCIREG_H_
 
 /* Default command execution time (implementation defined). */
 #define XHCI_COMMAND_TIMEOUT	500	/* ms */
+
+/* Data Structure Boundary and Alignment Requirement. */
+#define XHCI_DCBAA_ALIGN	64
+#define XHCI_ICTX_ALIGN		64
+#define XHCI_SCTX_ALIGN		32
+#define XHCI_OCTX_ALIGN		32
+#define XHCI_XFER_RING_ALIGN	16
+#define XHCI_CMDS_RING_ALIGN	64
+#define XHCI_EVTS_RING_ALIGN	64
+#define XHCI_RING_BOUNDARY	(64 * 1024)
+#define XHCI_ERST_ALIGN		64
+#define XHCI_ERST_BOUNDARY	0
+#define XHCI_SPAD_TABLE_ALIGN	64
 
 /* XHCI PCI config registers */
 #define PCI_CBMEM		0x10	/* configuration base MEM */
