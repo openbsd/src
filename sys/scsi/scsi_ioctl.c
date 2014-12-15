@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.48 2011/06/21 22:36:42 matthew Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.49 2014/12/15 02:11:57 tedu Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 #endif
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
-		bcopy(&xs->sense, screq->sense, screq->senselen_used);
+		memcpy(screq->sense, &xs->sense, screq->senselen_used);
 		screq->retsts = SCCMD_SENSE;
 		break;
 	case XS_SHORTSENSE:
@@ -166,7 +166,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 		printf("XS_SHORTSENSE\n");
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
-		bcopy(&xs->sense, screq->sense, screq->senselen_used);
+		memcpy(screq->sense, &xs->sense, screq->senselen_used);
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	case XS_DRIVER_STUFFUP:

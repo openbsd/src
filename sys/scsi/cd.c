@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.215 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.216 2014/12/15 02:11:57 tedu Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -790,8 +790,8 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		cdgetdisklabel(dev, sc, lp, 0);
-		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
-		free(lp, M_TEMP, 0);
+		memcpy(sc->sc_dk.dk_label, lp, sizeof(*lp));
+		free(lp, M_TEMP, sizeof(*lp));
 		break;
 
 	case DIOCGPDINFO:
@@ -889,7 +889,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		else
 			th->len = betoh16(th->len);
 		if (th->len > 0)
-			bcopy(th, addr, sizeof(*th));
+			memcpy(addr, th, sizeof(*th));
 		else
 			error = EIO;
 		dma_free(th, sizeof(*th));
@@ -1644,8 +1644,8 @@ cddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	return ENXIO;
 }
 
-#define	dvd_copy_key(dst, src)		bcopy((src), (dst), DVD_KEY_SIZE)
-#define	dvd_copy_challenge(dst, src)	bcopy((src), (dst), DVD_CHALLENGE_SIZE)
+#define	dvd_copy_key(dst, src)		memcpy((dst), (src), DVD_KEY_SIZE)
+#define	dvd_copy_challenge(dst, src)	memcpy((dst), (src), DVD_CHALLENGE_SIZE)
 
 #define DVD_AUTH_BUFSIZE		20
 
@@ -1964,7 +1964,7 @@ dvd_read_disckey(struct cd_softc *sc, union dvd_struct *s)
 	scsi_xs_put(xs);
 
 	if (error == 0)
-		bcopy(buf->data, s->disckey.value, sizeof(s->disckey.value));
+		memcpy(s->disckey.value, buf->data, sizeof(s->disckey.value));
 done:
 	dma_free(buf, sizeof(*buf));
 	return (error);
@@ -2006,7 +2006,7 @@ dvd_read_bca(struct cd_softc *sc, union dvd_struct *s)
 		s->bca.len = _2btol(&buf[0]);
 		if (s->bca.len < 12 || s->bca.len > 188)
 			return (EIO);
-		bcopy(&buf[4], s->bca.value, s->bca.len);
+		memcpy(s->bca.value, &buf[4], s->bca.len);
 	}
 done:
 	dma_free(buf, DVD_READ_BCA_BUFLEN);
@@ -2046,7 +2046,7 @@ dvd_read_manufact(struct cd_softc *sc, union dvd_struct *s)
 	if (error == 0) {
 		s->manufact.len = _2btol(buf->len);
 		if (s->manufact.len >= 0 && s->manufact.len <= 2048)
-			bcopy(buf->data, s->manufact.value, s->manufact.len);
+			memcpy(s->manufact.value, buf->data, s->manufact.len);
 		else
 			error = EIO;
 	}

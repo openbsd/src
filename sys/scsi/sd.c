@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.257 2014/09/18 18:47:29 kettenis Exp $	*/
+/*	$OpenBSD: sd.c,v 1.258 2014/12/15 02:11:57 tedu Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -862,8 +862,8 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		sdgetdisklabel(dev, sc, lp, 0);
-		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
-		free(lp, M_TEMP, 0);
+		memcpy(sc->sc_dk.dk_label, lp, sizeof(*lp));
+		free(lp, M_TEMP, sizeof(*lp));
 		goto exit;
 
 	case DIOCGPDINFO:
@@ -1095,7 +1095,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	 * always null terminated and len does not count the terminating null.
 	 * d_packname is not a null terminated string.
 	 */
-	bcopy(packname, lp->d_packname, len);
+	memcpy(lp->d_packname, packname, len);
 
 	DL_SETDSIZE(lp, sc->params.disksize);
 	lp->d_version = 1;
