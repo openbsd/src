@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.83 2014/12/14 16:19:38 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.84 2014/12/15 00:46:53 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -865,7 +865,7 @@ int ssl3_cbc_remove_padding(const SSL *s, SSL3_RECORD *rec,
 int tls1_cbc_remove_padding(const SSL *s, SSL3_RECORD *rec,
     unsigned block_size, unsigned mac_size);
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
+int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     size_t *md_out_size, const unsigned char header[13],
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,

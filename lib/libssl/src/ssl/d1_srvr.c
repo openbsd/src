@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.45 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.46 2014/12/15 00:46:53 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1213,8 +1213,9 @@ dtls1_send_server_key_exchange(SSL *s)
 				q = md_buf;
 				j = 0;
 				for (num = 2; num > 0; num--) {
-					EVP_DigestInit_ex(&md_ctx, (num == 2)
-					    ? s->ctx->md5 : s->ctx->sha1, NULL);
+					if (!EVP_DigestInit_ex(&md_ctx, (num == 2)
+					    ? s->ctx->md5 : s->ctx->sha1, NULL))
+						goto err;
 					EVP_DigestUpdate(&md_ctx,
 					    &(s->s3->client_random[0]),
 					    SSL3_RANDOM_SIZE);

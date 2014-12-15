@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.74 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.75 2014/12/15 00:46:53 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1054,12 +1054,13 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		 * timing-side channel information about how many blocks of
 		 * data we are hashing because that gives an attacker a
 		 * timing-oracle. */
-		ssl3_cbc_digest_record(mac_ctx,
+		if (!ssl3_cbc_digest_record(mac_ctx,
 		    md, &md_size, header, rec->input,
 		    rec->length + md_size, orig_len,
 		    ssl->s3->read_mac_secret,
 		    ssl->s3->read_mac_secret_size,
-		    0 /* not SSLv3 */);
+		    0 /* not SSLv3 */))
+			return -1;
 	} else {
 		EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));
 		EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length);

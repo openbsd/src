@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.93 2014/12/14 14:34:43 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.94 2014/12/15 00:46:53 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3033,8 +3033,12 @@ ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
 {
 	ssl_clear_hash_ctx(hash);
 	*hash = EVP_MD_CTX_create();
-	if (*hash != NULL && md != NULL)
-		EVP_DigestInit_ex(*hash, md, NULL);
+	if (*hash != NULL && md != NULL) {
+		if (!EVP_DigestInit_ex(*hash, md, NULL)) {
+			ssl_clear_hash_ctx(hash);
+			return (NULL);
+		}
+	}
 	return (*hash);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.102 2014/12/14 16:19:38 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.103 2014/12/15 00:46:53 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1439,9 +1439,12 @@ ssl3_get_key_exchange(SSL *s)
 			j = 0;
 			q = md_buf;
 			for (num = 2; num > 0; num--) {
-				EVP_DigestInit_ex(&md_ctx,
+				if (!EVP_DigestInit_ex(&md_ctx,
 				    (num == 2) ?  s->ctx->md5 : s->ctx->sha1,
-				    NULL);
+				    NULL)) {
+					al = SSL_AD_INTERNAL_ERROR;
+					goto f_err;
+				}
 				EVP_DigestUpdate(&md_ctx,
 				    s->s3->client_random,
 				    SSL3_RANDOM_SIZE);
@@ -2245,7 +2248,8 @@ ssl3_send_client_key_exchange(SSL *s)
 				nid = NID_id_GostR3411_94;
 			else
 				nid = NID_id_tc26_gost3411_2012_256;
-			EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid));
+			if (!EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid)))
+				goto err;
 			EVP_DigestUpdate(ukm_hash,
 			    s->s3->client_random, SSL3_RANDOM_SIZE);
 			EVP_DigestUpdate(ukm_hash,

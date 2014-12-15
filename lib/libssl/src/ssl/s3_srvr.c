@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.94 2014/12/14 14:34:43 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.95 2014/12/15 00:46:53 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1612,9 +1612,10 @@ ssl3_send_server_key_exchange(SSL *s)
 				q = md_buf;
 				j = 0;
 				for (num = 2; num > 0; num--) {
-					EVP_DigestInit_ex(&md_ctx,
+					if (!EVP_DigestInit_ex(&md_ctx,
 					    (num == 2) ? s->ctx->md5 :
-					    s->ctx->sha1, NULL);
+					    s->ctx->sha1, NULL))
+						goto err;
 					EVP_DigestUpdate(&md_ctx,
 					    s->s3->client_random,
 					    SSL3_RANDOM_SIZE);

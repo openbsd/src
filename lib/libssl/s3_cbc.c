@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.8 2014/07/10 08:51:14 tedu Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.9 2014/12/15 00:46:53 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -416,7 +416,8 @@ ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * functions, above, we know that data_plus_mac_size is large enough to contain
  * a padding byte and MAC. (If the padding was invalid, it might contain the
  * padding too. ) */
-void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
+int
+ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
     size_t* md_out_size, const unsigned char header[13],
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
@@ -497,8 +498,8 @@ void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 		 * supported. */
 		OPENSSL_assert(0);
 		if (md_out_size)
-			*md_out_size = -1;
-		return;
+			*md_out_size = 0;
+		return 0;
 	}
 
 	OPENSSL_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES);
@@ -675,7 +676,10 @@ void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 	}
 
 	EVP_MD_CTX_init(&md_ctx);
-	EVP_DigestInit_ex(&md_ctx, ctx->digest, NULL /* engine */);
+	if (!EVP_DigestInit_ex(&md_ctx, ctx->digest, NULL /* engine */)) {
+		EVP_MD_CTX_cleanup(&md_ctx);
+		return 0;
+	}
 	if (is_sslv3) {
 		/* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */
 		memset(hmac_pad, 0x5c, sslv3_pad_length);
@@ -695,4 +699,6 @@ void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 	if (md_out_size)
 		*md_out_size = md_out_size_u;
 	EVP_MD_CTX_cleanup(&md_ctx);
+
+	return 1;
 }
