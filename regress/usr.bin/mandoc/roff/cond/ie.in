@@ -1,4 +1,4 @@
-.TH IE 1 "July 1, 2014" OpenBSD
+.TH IE 1 "December 16, 2014" OpenBSD
 .SH NAME
 if \- the roff conditional instruction with else-clause
 .SH DESCRIPTION
@@ -16,6 +16,14 @@ Text following the false condition.
 after false.\}
 .br
 .el Another else after false.
+.br
+.ie
+Text following an empty condition.
+.el Else after empty condition.
+.br
+.ie !
+Text following negated empty condition.
+.el Else after negated empty condition.
 .br
 .ie n If \&.el\e{ works, nothing follows here:
 .el\{dummy

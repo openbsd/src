@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.111 2014/11/19 01:20:18 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.112 2014/12/15 23:42:31 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1256,6 +1256,8 @@ roff_evalcond(struct roff *r, int ln, const char *v, int *pos)
 		wanttrue = 1;
 
 	switch (v[*pos]) {
+	case '\0':
+		return(0);
 	case 'n':
 		/* FALLTHROUGH */
 	case 'o':
