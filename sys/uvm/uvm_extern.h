@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.125 2014/12/05 04:12:48 uebayasi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.126 2014/12/15 02:24:23 guenther Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -80,24 +80,29 @@ typedef struct vm_map *vm_map_t;
 struct vm_page;
 typedef struct vm_page  *vm_page_t;
 
+/*
+ * Bit assignments assigned by UVM_MAPFLAG() and extracted by
+ * UVM_{PROTECTION,INHERIT,MAXPROTECTION,ADVICE}():
+ * bits 0-2	protection
+ *  bit 3	 unused
+ * bits 4-5	inheritance
+ *  bits 6-7	 unused
+ * bits 8-10	max protection
+ *  bit 11	 unused
+ * bits 12-14	advice
+ *  bit 15	 unused
+ * bits 16-N	flags
+ */
+
 /* protections bits */
 #define PROT_MASK	(PROT_READ | PROT_WRITE | PROT_EXEC)
-/* 0x08: not used */
 
 /* inherit codes */
-#define UVM_INH_MASK	0x30	/* inherit mask */
-#define UVM_INH_SHARE	0x00	/* "share" */
-#define UVM_INH_COPY	0x10	/* "copy" */
-#define UVM_INH_NONE	0x20	/* "none" */
-#define UVM_INH_ZERO	0x30	/* "zero" */
-
-/* 0x40, 0x80: not used */
-/* bits 0x700: max protection, 0x800: not used */
-/* bits 0x7000: advice, 0x8000: not used */
+#define MAP_INHERIT_MASK	0x3	/* inherit mask */
 
 typedef int		vm_prot_t;
 
-#define UVM_ADV_MASK	0x7	/* mask */
+#define MADV_MASK	0x7	/* mask */
 
 /* mapping flags */
 #define UVM_FLAG_FIXED   0x0010000 /* find space */
@@ -112,12 +117,12 @@ typedef int		vm_prot_t;
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & PROT_MASK)
-#define UVM_INHERIT(X)		(((X) & UVM_INH_MASK) >> 4)
+#define UVM_INHERIT(X)		(((X) >> 4) & MAP_INHERIT_MASK)
 #define UVM_MAXPROTECTION(X)	(((X) >> 8) & PROT_MASK)
-#define UVM_ADVICE(X)		(((X) >> 12) & UVM_ADV_MASK)
+#define UVM_ADVICE(X)		(((X) >> 12) & MADV_MASK)
 
 #define UVM_MAPFLAG(prot, maxprot, inh, advice, flags) \
-	(((maxprot) << 8) | (prot) | (inh) | ((advice) << 12) | (flags))
+	((prot) | ((maxprot) << 8) | ((inh) << 4) | ((advice) << 12) | (flags))
 
 /* magic offset value */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)

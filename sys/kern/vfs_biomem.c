@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.31 2014/11/16 12:31:00 deraadt Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.32 2014/12/15 02:24:23 guenther Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -54,7 +54,7 @@ buf_mem_init(vsize_t size)
 	buf_kva_start = vm_map_min(kernel_map);
 	if (uvm_map(kernel_map, &buf_kva_start, size, NULL,
 	    UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(PROT_NONE,
-	    PROT_NONE, UVM_INH_NONE, POSIX_MADV_NORMAL, 0)))
+	    PROT_NONE, MAP_INHERIT_NONE, POSIX_MADV_NORMAL, 0)))
 		panic("bufinit: can't reserve VM for buffers");
 	buf_kva_end = buf_kva_start + size;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.21 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.22 2014/12/15 02:24:23 guenther Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -476,7 +476,7 @@ init_pipe_control(struct intel_ring_buffer *ring)
 	obj->base.uao->pgops->pgo_reference(obj->base.uao);
 	ret = uvm_map(kernel_map, (vaddr_t *)&pc->cpu_page,
 	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
-	    PROT_READ | PROT_WRITE, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
+	    PROT_READ | PROT_WRITE, MAP_INHERIT_SHARE, POSIX_MADV_RANDOM, 0));
 	if (ret != 0) {
 		DRM_ERROR("Failed to map status page.\n");
 		obj->base.uao->pgops->pgo_detach(obj->base.uao);
@@ -1123,7 +1123,7 @@ static int init_status_page(struct intel_ring_buffer *ring)
 	obj->base.uao->pgops->pgo_reference(obj->base.uao);
 	ret = uvm_map(kernel_map, (vaddr_t *)&ring->status_page.page_addr,
 	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
-	    PROT_READ | PROT_WRITE, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
+	    PROT_READ | PROT_WRITE, MAP_INHERIT_SHARE, POSIX_MADV_RANDOM, 0));
 	if (ret != 0) {
 		obj->base.uao->pgops->pgo_detach(obj->base.uao);
 		ret = -ENOMEM;

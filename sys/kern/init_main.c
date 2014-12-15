@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.226 2014/12/10 02:44:46 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.227 2014/12/15 02:24:23 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -635,7 +635,7 @@ start_init(void *arg)
 #endif
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_MASK, UVM_INH_COPY,
+	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_MASK, MAP_INHERIT_COPY,
 	    POSIX_MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)))
 		panic("init: couldn't allocate argument space");
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;

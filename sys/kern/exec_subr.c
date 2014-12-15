@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.43 2014/12/10 02:44:46 tedu Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.44 2014/12/15 02:24:23 guenther Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    uobj, cmd->ev_offset, 0,
-	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, UVM_INH_COPY,
+	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
 	    POSIX_MADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 
 	/*
@@ -232,7 +232,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(prot | PROT_WRITE, PROT_MASK, UVM_INH_COPY,
+	    UVM_MAPFLAG(prot | PROT_WRITE, PROT_MASK, MAP_INHERIT_COPY,
 	    POSIX_MADV_NORMAL,
 	    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
@@ -274,7 +274,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	return (uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, UVM_INH_COPY,
+	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
 	    POSIX_MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW)));
 }
 

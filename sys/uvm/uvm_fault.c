@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.79 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.80 2014/12/15 02:24:23 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ struct uvm_advice {
 /*
  * page range array: set up in uvmfault_init().
  */
-static struct uvm_advice uvmadvice[UVM_ADV_MASK + 1];
+static struct uvm_advice uvmadvice[MADV_MASK + 1];
 
 #define UVM_MAXRANGE 16	/* must be max() of nback+nforw+1 */
 

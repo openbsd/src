@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.76 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.77 2014/12/15 02:24:23 guenther Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1451,7 +1451,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	addr = 0;
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, size,
 	    obj->uao, args->offset, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
-	    PROT_READ | PROT_WRITE, UVM_INH_SHARE, POSIX_MADV_RANDOM, 0));
+	    PROT_READ | PROT_WRITE, MAP_INHERIT_SHARE, POSIX_MADV_RANDOM, 0));
 	if (ret == 0)
 		uao_reference(obj->uao);
 	drm_gem_object_unreference_unlocked(obj);

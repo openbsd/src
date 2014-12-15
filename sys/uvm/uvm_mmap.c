@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.101 2014/12/09 07:16:41 doug Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.102 2014/12/15 02:24:23 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -892,8 +892,7 @@ sys_munlockall(struct proc *p, void *v, register_t *retval)
  * uvm_mmap: internal version of mmap
  *
  * - used by sys_mmap, exec, and sysv shm
- * - handle is a vnode pointer or NULL for MAP_ANON (XXX: not true,
- *	sysv shm uses "named anonymous memory")
+ * - handle is a vnode pointer or ignored for MAP_ANON
  * - caller must page-align the file offset
  */
 int
@@ -1010,8 +1009,8 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot, 
-			(flags & MAP_SHARED) ? UVM_INH_SHARE : UVM_INH_COPY,
-			advice, uvmflag);
+	    (flags & MAP_SHARED) ? MAP_INHERIT_SHARE : MAP_INHERIT_COPY,
+	    advice, uvmflag);
 
 	error = uvm_map(map, addr, size, uobj, foff, align, uvmflag);
 

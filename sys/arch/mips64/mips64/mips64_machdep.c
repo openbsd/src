@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.18 2014/12/13 23:29:14 guenther Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.19 2014/12/15 02:24:22 guenther Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -184,7 +184,7 @@ exec_md_map(struct proc *p, struct exec_package *pack)
 	va = 0;
 	rc = uvm_map(&p->p_vmspace->vm_map, &va, PAGE_SIZE, NULL,
 	    UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(PROT_NONE, PROT_MASK, UVM_INH_COPY,
+	    UVM_MAPFLAG(PROT_NONE, PROT_MASK, MAP_INHERIT_COPY,
 	      MADV_NORMAL, UVM_FLAG_COPYONW));
 	if (rc != 0)
 		return rc;
