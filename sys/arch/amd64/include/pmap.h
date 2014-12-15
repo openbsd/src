@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.49 2014/12/02 18:13:10 tedu Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.50 2014/12/15 04:54:44 tedu Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -524,12 +524,6 @@ kvtopte(vaddr_t va)
 
 	return (PTE_BASE + pl1_i(va));
 }
-
-#define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
-#define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
-#define pmap_cpu_has_pg_n()		(1)
-#define pmap_cpu_has_invlpg		(1)
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)

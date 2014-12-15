@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.81 2014/11/21 06:41:17 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.82 2014/12/15 04:54:44 tedu Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -215,6 +215,11 @@ pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
 
 #define COUNT(x)	/* nothing */
+
+#define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
+#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
+#define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
+
 
 /*
  * global data structures
