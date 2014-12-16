@@ -55,7 +55,7 @@ rand(void)
 
 #if defined(APIWARN)
 __warn_references(rand,
-    "warning: rand() may return determinstic values, is that what you want?");
+    "warning: rand() may return deterministic values, is that what you want?");
 #endif
 
 void
