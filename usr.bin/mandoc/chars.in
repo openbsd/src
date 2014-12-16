@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.in,v 1.26 2014/12/15 19:41:24 schwarze Exp $ */
+/*	$OpenBSD: chars.in,v 1.27 2014/12/16 19:48:49 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -281,10 +281,10 @@ CHAR("!=",			"!=",		8800)
 CHAR("==",			"==",		8801)
 CHAR("ne",			"!==",		8802)
 CHAR("=~",			"=~",		8773)
-CHAR("-~",			"-~",		8771)
+CHAR("|=",			"-~",		8771)
 CHAR("ap",			"~",		8764)
 CHAR("~~",			"~~",		8776)
-CHAR("~=",			"~=",		8780)
+CHAR("~=",			"~=",		8776)
 CHAR("pt",			"oc",		8733)
 CHAR("es",			"{}",		8709)
 CHAR("mo",			"E",		8712)
