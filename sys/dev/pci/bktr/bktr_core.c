@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.33 2014/05/04 20:09:15 sf Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.34 2014/12/16 18:30:03 tedu Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -101,6 +101,8 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/stdint.h>		/* uintptr_t */
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/rndvar.h>
 #include <dev/ic/bt8xx.h>

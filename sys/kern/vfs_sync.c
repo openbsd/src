@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.52 2014/09/09 07:07:39 blambert Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.53 2014/12/16 18:30:04 tedu Exp $  */
 
 /*
  *  Portions of this code are:
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.79 2014/11/03 21:28:35 tedu Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.80 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/lock.h>
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>

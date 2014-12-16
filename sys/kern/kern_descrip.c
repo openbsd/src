@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.113 2014/08/31 01:42:36 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.114 2014/12/16 18:30:03 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/ucred.h>

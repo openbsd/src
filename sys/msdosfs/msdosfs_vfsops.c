@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.69 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.70 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/mount.h>
 #include <sys/buf.h>

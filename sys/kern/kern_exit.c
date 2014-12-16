@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.147 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.148 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -70,6 +70,8 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 /*
  * exit --

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.43 2014/11/18 10:42:15 dlg Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.44 2014/12/16 18:30:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -64,6 +64,7 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/endian.h>
 #include <sys/specdev.h>
 

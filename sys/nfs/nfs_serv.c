@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.100 2014/11/18 02:22:33 tedu Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.101 2014/12/16 18:30:04 tedu Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/file.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>

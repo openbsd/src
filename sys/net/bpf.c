@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.112 2014/12/02 18:11:56 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.113 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>

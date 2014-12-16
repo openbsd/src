@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.127 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: st.c,v 1.128 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ st_mount_tape(dev_t dev, int flags)
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
 	} else {
-		if ((error = st_decide_mode(st, FALSE)) != 0)
+		if ((error = st_decide_mode(st, 0)) != 0)
 			goto done;
 	}
 	if ((error = st_mode_select(st, 0)) != 0) {
@@ -692,7 +692,7 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 	if (!(st->flags & ST_MOUNTED))
 		return;
 	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
-	st_check_eod(st, FALSE, &nmarks, SCSI_IGNORE_NOT_READY);
+	st_check_eod(st, 0, &nmarks, SCSI_IGNORE_NOT_READY);
 	if (rewind)
 		st_rewind(st, 0, SCSI_IGNORE_NOT_READY);
 	scsi_prevent(sc_link, PR_ALLOW,
@@ -1215,7 +1215,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		case MTBSF:	/* backward space file */
 			number = -number;
 		case MTFSF:	/* forward space file */
-			error = st_check_eod(st, FALSE, &nmarks, flags);
+			error = st_check_eod(st, 0, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number - nmarks,
 				    SP_FILEMARKS, flags);
@@ -1223,7 +1223,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		case MTBSR:	/* backward space record */
 			number = -number;
 		case MTFSR:	/* forward space record */
-			error = st_check_eod(st, TRUE, &nmarks, flags);
+			error = st_check_eod(st, 1, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
@@ -1241,7 +1241,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 				error = st_load(st, LD_LOAD, flags);
 			break;
 		case MTEOM:	/* forward space to end of media */
-			error = st_check_eod(st, FALSE, &nmarks, flags);
+			error = st_check_eod(st, 0, &nmarks, flags);
 			if (!error)
 				error = st_space(st, 1, SP_EOM, flags);
 			break;
@@ -1876,7 +1876,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 	st->media_eom = -1;
 
 	if (type != LD_LOAD) {
-		error = st_check_eod(st, FALSE, &nmarks, flags);
+		error = st_check_eod(st, 0, &nmarks, flags);
 		if (error)
 			return (error);
 	}
@@ -1918,7 +1918,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	struct scsi_xfer *xs;
 	int error, nmarks;
 
-	error = st_check_eod(st, FALSE, &nmarks, flags);
+	error = st_check_eod(st, 0, &nmarks, flags);
 	if (error)
 		return (error);
 	st->flags &= ~ST_PER_ACTION;

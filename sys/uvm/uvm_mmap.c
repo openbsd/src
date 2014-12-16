@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.102 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.103 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	if (fd >= 0) {
 		if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
 			return (error);
-		uobj = &((struct vnode *)fp->f_data)->v_uvm.u_obj;
+		uobj = &((struct vnode *)fp->f_data)->v_uvm->u_obj;
 		uoff = SCARG(uap, pos);
 	} else {
 		fp = NULL;

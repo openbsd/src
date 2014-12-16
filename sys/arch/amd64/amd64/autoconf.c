@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2013/11/19 09:00:43 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.41 2014/12/16 18:30:03 tedu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/biosvar.h>
 
 #include <dev/cons.h>

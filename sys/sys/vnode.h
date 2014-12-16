@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.127 2014/11/19 18:04:54 tedu Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.128 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -40,9 +40,6 @@
 #include <sys/queue.h>
 #include <sys/selinfo.h>
 #include <sys/tree.h>
-
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_vnode.h>
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -86,8 +83,9 @@ LIST_HEAD(buflists, buf);
 RB_HEAD(buf_rb_bufs, buf);
 RB_HEAD(namecache_rb_cache, namecache);
 
+struct uvm_vnode;
 struct vnode {
-	struct uvm_vnode v_uvm;			/* uvm data */
+	struct uvm_vnode *v_uvm;		/* uvm data */
 	struct vops *v_op;			/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
 	enum	vtagtype v_tag;			/* type of underlying data */
@@ -653,6 +651,13 @@ void	vn_syncer_add_to_worklist(struct vnode *, int);
 int	vn_isdisk(struct vnode *, int *);
 int	softdep_fsync(struct vnode *);
 int 	getvnode(struct filedesc *, int, struct file **);
+
+/* uvm */
+void	uvm_vnp_setsize(struct vnode *, off_t);
+void	uvm_vnp_sync(struct mount *);
+void	uvm_vnp_terminate(struct vnode *);
+int	uvm_vnp_uncache(struct vnode *);
+
 
 #endif /* _KERNEL */
 #endif /* _SYS_VNODE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.85 2014/11/16 12:31:01 deraadt Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.86 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ uvn_init(void)
 struct uvm_object *
 uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 {
-	struct uvm_vnode *uvn = &vp->v_uvm;
+	struct uvm_vnode *uvn = vp->v_uvm;
 	struct vattr vattr;
 	int oldflags, result;
 	struct partinfo pi;
@@ -306,7 +306,7 @@ uvn_detach(struct uvm_object *uobj)
 
 	/* get other pointers ... */
 	uvn = (struct uvm_vnode *) uobj;
-	vp = (struct vnode *) uobj;
+	vp = uvn->u_vnode;
 
 	/*
 	 * clear VTEXT flag now that there are no mappings left (VTEXT is used
@@ -406,7 +406,7 @@ uvn_detach(struct uvm_object *uobj)
 void
 uvm_vnp_terminate(struct vnode *vp)
 {
-	struct uvm_vnode *uvn = &vp->v_uvm;
+	struct uvm_vnode *uvn = vp->v_uvm;
 	int oldflags;
 
 	/* check if it is valid */
@@ -1110,7 +1110,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 
 	/* init values */
 	waitf = (flags & PGO_SYNCIO) ? M_WAITOK : M_NOWAIT;
-	vn = (struct vnode *) uvn;
+	vn = uvn->u_vnode;
 	file_offset = pps[0]->offset;
 
 	/* check for sync'ing I/O. */
@@ -1260,10 +1260,10 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
  * vn_writechk: if VTEXT vnode and can't uncache return "text busy"
  */
 
-boolean_t
+int
 uvm_vnp_uncache(struct vnode *vp)
 {
-	struct uvm_vnode *uvn = &vp->v_uvm;
+	struct uvm_vnode *uvn = vp->v_uvm;
 
 	/* lock uvn part of the vnode and check if we need to do anything */
 
@@ -1333,9 +1333,9 @@ uvm_vnp_uncache(struct vnode *vp)
  */
 
 void
-uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
+uvm_vnp_setsize(struct vnode *vp, off_t newsize)
 {
-	struct uvm_vnode *uvn = &vp->v_uvm;
+	struct uvm_vnode *uvn = vp->v_uvm;
 
 	/* lock uvn and check for valid object, and if valid: do it! */
 	if (uvn->u_flags & UVM_VNODE_VALID) {
@@ -1381,7 +1381,7 @@ uvm_vnp_sync(struct mount *mp)
 	 */
 	SIMPLEQ_INIT(&uvn_sync_q);
 	LIST_FOREACH(uvn, &uvn_wlist, u_wlist) {
-		vp = (struct vnode *)uvn;
+		vp = uvn->u_vnode;
 		if (mp && vp->v_mount != mp)
 			continue;
 

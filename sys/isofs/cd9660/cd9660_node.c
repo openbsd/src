@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.26 2014/11/18 10:42:15 dlg Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.27 2014/12/16 18:30:03 tedu Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

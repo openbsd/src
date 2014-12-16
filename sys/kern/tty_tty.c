@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.12 2011/10/06 09:14:35 mikeb Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.13 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/file.h>
 #include <sys/conf.h>
 

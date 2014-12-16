@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.71 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.72 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/file.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/ktrace.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>

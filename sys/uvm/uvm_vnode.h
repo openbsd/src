@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.13 2014/06/29 22:56:31 deraadt Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.14 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -45,13 +45,14 @@
  */
 
 /*
- * the uvm_vnode structure.   put at the top of the vnode data structure.
- * this allows:
- *   (struct vnode *) == (struct uvm_vnode *) == (struct uvm_object *)
+ * the uvm_vnode structure.
  */
+
+struct vnode;
 
 struct uvm_vnode {
 	struct uvm_object u_obj;	/* the actual VM object */
+	struct vnode *u_vnode;		/* pointer back to vnode */
 	int u_flags;			/* flags */
 	int u_nio;			/* number of running I/O requests */
 	voff_t u_size;			/* size of object */

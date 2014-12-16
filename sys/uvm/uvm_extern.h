@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.126 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.127 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -472,10 +472,6 @@ int			uvm_coredump_walkmap(struct proc *,
 			    struct uvm_coredump_state *), void *);
 void			uvm_grow(struct proc *, vaddr_t);
 void			uvm_deallocate(vm_map_t, vaddr_t, vsize_t);
-void			uvm_vnp_setsize(struct vnode *, voff_t);
-void			uvm_vnp_sync(struct mount *);
-void 			uvm_vnp_terminate(struct vnode *);
-boolean_t		uvm_vnp_uncache(struct vnode *);
 struct uvm_object	*uvn_attach(struct vnode *, vm_prot_t);
 void			uvm_pagezero_thread(void *);
 void			kmeminit_nkmempages(void);

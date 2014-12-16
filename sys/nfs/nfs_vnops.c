@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.157 2014/12/03 04:16:58 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.158 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/conf.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>

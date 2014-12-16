@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.25 2014/06/18 17:24:46 tobias Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.26 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <sys/namei.h>
 #include <sys/mount.h>		/* to define statfs structure */
 #include <sys/vnode.h>		/* to define vattr structure */
+#include <sys/lock.h>
 #include <sys/errno.h>
 #include <sys/dirent.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.33 2014/11/19 21:19:15 tedu Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.34 2014/12/16 18:30:03 tedu Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>

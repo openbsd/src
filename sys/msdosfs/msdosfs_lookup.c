@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.26 2013/06/11 16:42:16 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.27 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 #include <sys/namei.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/mount.h>
 #include <sys/dirent.h>
 

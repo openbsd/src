@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.49 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.50 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/time.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/mount.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>

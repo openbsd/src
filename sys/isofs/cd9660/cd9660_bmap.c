@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_bmap.c,v 1.7 2013/06/11 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_bmap.c,v 1.8 2014/12/16 18:30:03 tedu Exp $	*/
 /*	$NetBSD: cd9660_bmap.c,v 1.7 1997/01/24 00:27:29 cgd Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/mount.h>
 
 #include <isofs/cd9660/iso.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.12 2014/10/03 18:53:13 tedu Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.13 2014/12/16 18:30:04 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/malloc.h>

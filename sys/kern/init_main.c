@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.227 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.228 2014/12/16 18:30:03 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -79,6 +79,8 @@
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/rndvar.h>
 

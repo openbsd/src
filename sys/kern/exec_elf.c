@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.106 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.107 2014/12/16 18:30:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -85,6 +85,8 @@
 #include <sys/stat.h>
 
 #include <sys/mman.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
 #include <machine/exec.h>

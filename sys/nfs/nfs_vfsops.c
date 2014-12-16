@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.103 2014/11/15 00:03:12 tedu Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.104 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/swap.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.27 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.28 2014/12/16 18:30:04 tedu Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/errno.h>
 #include <sys/namei.h>
 #include <sys/buf.h>
