@@ -10,8 +10,9 @@ DDEESSCCRRIIPPTTIIOONN
 
        text in section with empty name
 
-       text in subsection with empty name
+       text in subsection with empty name text in section with empty name text
+       in subsection with empty name
 
 
 
-OpenBSD                          July 30, 2014                     SH-NOARG(1)
+OpenBSD                        December 16, 2014                   SH-NOARG(1)

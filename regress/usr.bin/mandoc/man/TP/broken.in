@@ -1,0 +1,13 @@
+.TH TP-BROKEN 1 "December 16, 2014" OpenBSD
+.SH NAME
+TP-broken \- broken tagged paragraph
+.SH DESCRIPTION
+regular
+text
+.RS 4n
+indented
+text
+.TP
+.RE
+regular
+text

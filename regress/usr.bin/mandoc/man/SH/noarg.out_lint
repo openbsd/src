@@ -1,2 +1,6 @@
 mandoc: noarg.in:6:2: WARNING: line scope broken: PP breaks SH
 mandoc: noarg.in:9:2: WARNING: line scope broken: PP breaks SS
+mandoc: noarg.in:12:2: WARNING: line scope broken: RE breaks SH
+mandoc: noarg.in:13:2: ERROR: skipping end of block that is not open: RE
+mandoc: noarg.in:15:2: WARNING: line scope broken: RE breaks SS
+mandoc: noarg.in:16:2: ERROR: skipping end of block that is not open: RE
