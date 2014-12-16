@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.52 2014/02/07 23:06:21 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.53 2014/12/16 03:35:49 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -152,8 +152,7 @@ printjob(void)
 		}
 		(void)close(fd);
 	}
-	pid = getpid();				/* for use with lprm */
-	setpgrp(0, pid);
+	setpgid(0, 0);
 
 	/* we add SIGINT to the mask so abortpr() doesn't kill itself */
 	memset(&sa, 0, sizeof(sa));
@@ -187,6 +186,7 @@ printjob(void)
 	/*
 	 * write process id for others to know
 	 */
+	pid = getpid();
 	if ((pidoff = i = snprintf(line, sizeof(line), "%d\n", pid)) >=
 	    sizeof(line) || pidoff == -1) {
 		syslog(LOG_ERR, "impossibly large pid: %u", pid);
