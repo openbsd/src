@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_cd9660.c,v 1.5 2013/11/16 00:37:11 guenther Exp $	*/
+/*	$OpenBSD: kvm_cd9660.c,v 1.6 2014/12/16 03:21:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,6 +21,7 @@
 #define _KERNEL
 #include <sys/mount.h>
 #undef _KERNEL
+#include <sys/lock.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 
