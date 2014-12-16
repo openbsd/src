@@ -1,4 +1,5 @@
 ./etc/examples/wsconsctl.conf
+./sbin/ld.so
 ./usr/lib/libc.so.78.0
 ./usr/lib/libcrypto.so.30.3
 ./usr/lib/libcurses.so.14.0

@@ -59,6 +59,7 @@
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
 ./sbin/kbd
+./sbin/ld.so
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
 ./usr/lib/libc.so.78.0
