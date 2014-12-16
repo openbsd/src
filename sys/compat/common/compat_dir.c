@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_dir.c,v 1.10 2014/09/14 14:17:23 jsg Exp $	*/
+/* 	$OpenBSD: compat_dir.c,v 1.11 2014/12/16 21:25:28 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000 Constantine Sapuntzakis
@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/dirent.h>
 
 #include <compat/common/compat_dir.h>
