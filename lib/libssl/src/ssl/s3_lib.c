@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.90 2014/12/14 16:07:26 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.91 2014/12/16 05:47:28 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -995,6 +995,138 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
+
+#ifndef OPENSSL_NO_CAMELLIA
+	/* TLS 1.2 Camellia SHA-256 ciphersuites from RFC5932 */
+
+	/* Cipher BA */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+		.id = TLS1_CK_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+		.algorithm_mkey = SSL_kRSA,
+		.algorithm_auth = SSL_aRSA,
+		.algorithm_enc = SSL_CAMELLIA128,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 128,
+		.alg_bits = 128,
+	},
+
+	/* Cipher BD */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA256,
+		.id = TLS1_CK_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA256,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = SSL_aDSS,
+		.algorithm_enc = SSL_CAMELLIA128,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 128,
+		.alg_bits = 128,
+	},
+
+	/* Cipher BE */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+		.id = TLS1_CK_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = SSL_aRSA,
+		.algorithm_enc = SSL_CAMELLIA128,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 128,
+		.alg_bits = 128,
+	},
+
+	/* Cipher BF */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_ADH_WITH_CAMELLIA_128_CBC_SHA256,
+		.id = TLS1_CK_ADH_WITH_CAMELLIA_128_CBC_SHA256,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = SSL_aNULL,
+		.algorithm_enc = SSL_CAMELLIA128,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 128,
+		.alg_bits = 128,
+	},
+
+	/* Cipher C0 */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_RSA_WITH_CAMELLIA_256_CBC_SHA256,
+		.id = TLS1_CK_RSA_WITH_CAMELLIA_256_CBC_SHA256,
+		.algorithm_mkey = SSL_kRSA,
+		.algorithm_auth = SSL_aRSA,
+		.algorithm_enc = SSL_CAMELLIA256,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 256,
+		.alg_bits = 256,
+	},
+
+	/* Cipher C3 */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256,
+		.id = TLS1_CK_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = SSL_aDSS,
+		.algorithm_enc = SSL_CAMELLIA256,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 256,
+		.alg_bits = 256,
+	},
+
+	/* Cipher C4 */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256,
+		.id = TLS1_CK_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = SSL_aRSA,
+		.algorithm_enc = SSL_CAMELLIA256,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 256,
+		.alg_bits = 256,
+	},
+
+	/* Cipher C5 */
+	{
+		.valid = 1,
+		.name = TLS1_TXT_ADH_WITH_CAMELLIA_256_CBC_SHA256,
+		.id = TLS1_CK_ADH_WITH_CAMELLIA_256_CBC_SHA256,
+		.algorithm_mkey = SSL_kDHE,
+		.algorithm_auth = SSL_aNULL,
+		.algorithm_enc = SSL_CAMELLIA256,
+		.algorithm_mac = SSL_SHA256,
+		.algorithm_ssl = SSL_TLSV1_2,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+		.strength_bits = 256,
+		.alg_bits = 256,
+	},
+#endif /* OPENSSL_NO_CAMELLIA */
 
 	/* Cipher C001 */
 	{
