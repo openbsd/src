@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2014/11/24 20:03:33 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2014/12/16 18:37:17 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -171,10 +171,8 @@ main(int argc, char **argv)
 			    errx(1, "Cannot give -f and people to send to");
 		}
 	} else {
-		for (i = optind; (argv[i]) && (*argv[i] != '-'); i++)
+		for (i = optind; argv[i]; i++)
 			to = cat(to, nalloc(argv[i], GTO));
-		for (; argv[i]; i++)
-			smopts = cat(smopts, nalloc(argv[i], 0));
 	}
 	/*
 	 * Check for inconsistent arguments.
@@ -275,8 +273,6 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-dEIinv] [-b list] [-c list] "
 	    "[-s subject] to-addr ...\n", __progname);
-	fprintf(stderr, "       %*s [-sendmail-options ...]\n",
-	    (int)strlen(__progname), "");
 	fprintf(stderr, "       %s [-dEIiNnv] -f [file]\n", __progname);
 	fprintf(stderr, "       %s [-dEIiNnv] [-u user]\n", __progname);
 	exit(1);
