@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.113 2014/12/16 01:21:37 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.114 2014/12/16 03:52:31 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1234,7 +1234,7 @@ roff_evalstrcond(const char *v, int *pos)
 out:
 	if (NULL == s3)
 		s3 = strchr(s2, '\0');
-	else
+	else if (*s3 != '\0')
 		s3++;
 	*pos = s3 - v;
 	return(match);
