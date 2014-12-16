@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.8 2014/12/15 01:48:54 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.9 2014/12/16 03:19:23 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -146,8 +146,11 @@ print_time(time_t t, int relative, int have_subsec)
 
 	if (!relative) {
 		tm = localtime(&t);
-		(void)strftime(timestr, sizeof(timestr), TIME_FORMAT, tm);
-		printf("<\"%s\">", timestr);
+		if (tm != NULL) {
+			(void)strftime(timestr, sizeof(timestr), TIME_FORMAT,
+			    tm);
+			printf("<\"%s\">", timestr);
+		}
 	}
 }
 
