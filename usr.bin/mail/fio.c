@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.33 2014/01/17 18:42:30 okan Exp $	*/
+/*	$OpenBSD: fio.c,v 1.34 2014/12/16 18:31:06 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <paths.h>
 #include <errno.h>
+#include <glob.h>
 #include "extern.h"
 
 /*
@@ -412,14 +413,11 @@ fsize(FILE *iob)
 char *
 expand(char *name)
 {
+	const int flags = GLOB_BRACE|GLOB_TILDE|GLOB_NOSORT;
 	char xname[PATHSIZE];
 	char cmdbuf[PATHSIZE];		/* also used for file names */
-	pid_t pid;
-	int l;
-	char *cp, *shell;
-	int pivec[2];
-	struct stat sbuf;
-	extern int wait_status;
+	char *match = NULL;
+	glob_t names;
 
 	/*
 	 * The order of evaluation is "%" and "#" expand into constants.
@@ -453,50 +451,29 @@ expand(char *name)
 		(void)snprintf(xname, sizeof(xname), "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
-	if (strpbrk(name, "~{[*?$`'\"\\") == NULL)
-		return(name);
-	/* XXX - just use glob(3) and env expansion instead? */
-	if (pipe(pivec) < 0) {
-		warn("pipe");
-		return(name);
-	}
-	(void)snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
-	shell = value("SHELL");
-	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NULL);
-	if (pid < 0) {
-		(void)close(pivec[0]);
-		(void)close(pivec[1]);
-		return(NULL);
-	}
-	(void)close(pivec[1]);
-	l = myread(pivec[0], xname, PATHSIZE);
-	if (l < 0)
-		warn("read"); /* report error before errno changes */
-	(void)close(pivec[0]);
-	if (wait_child(pid) < 0 && WIFSIGNALED(wait_status) &&
-	    WTERMSIG(wait_status) != SIGPIPE) {
-		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
-		return(NULL);
-	}
-	if (l < 0)
-		return(NULL);
-	if (l == 0) {
+	if (strpbrk(name, "~{[*?\\") == NULL)
+		return(savestr(name));
+
+	/* XXX - does not expand enviroment variables. */
+	switch (glob(name, flags, NULL, &names)) {
+	case 0:
+		if (names.gl_pathc == 1)
+			match = savestr(names.gl_pathv[0]);
+		else
+			fprintf(stderr, "\"%s\": Ambiguous.\n", name);
+		break;
+	case GLOB_NOSPACE:
+		fprintf(stderr, "\"%s\": Out of memory.\n", name);
+		break;
+	case GLOB_NOMATCH:
 		fprintf(stderr, "\"%s\": No match.\n", name);
-		return(NULL);
+		break;
+	default:
+		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
+		break;
 	}
-	if (l == PATHSIZE) {
-		fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
-		return(NULL);
-	}
-	xname[l] = '\0';
-	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
-		;
-	cp[1] = '\0';
-	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
-		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
-		return(NULL);
-	}
-	return(savestr(xname));
+	globfree(&names);
+	return(match);
 }
 
 /*
