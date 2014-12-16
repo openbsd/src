@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.79 2014/11/30 05:28:00 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.80 2014/12/16 23:44:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -183,6 +183,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"ignore data in cell",
 	"data block still open",
 	"ignoring extra data cells",
+	"ignoring macro in table",
 
 	/* related to document structure and macros */
 	"input stack limit exceeded, infinite loop?",

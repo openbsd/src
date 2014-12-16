@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.118 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.119 2014/12/16 23:44:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -144,6 +144,7 @@ enum	mandocerr {
 	MANDOCERR_TBLIGNDATA, /* ignore data in cell */
 	MANDOCERR_TBLBLOCK, /* data block still open */
 	MANDOCERR_TBLEXTRADAT, /* ignoring extra data cells */
+	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 
 	/* related to document structure and macros */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */

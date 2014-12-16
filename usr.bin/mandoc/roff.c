@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.114 2014/12/16 03:52:31 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.115 2014/12/16 23:44:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -728,6 +728,7 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	enum rofft	 t;
 	enum rofferr	 e;
 	int		 pos;	/* parse point */
+	int		 spos;	/* saved parse point for messages */
 	int		 ppos;	/* original offset in buf->buf */
 	int		 ctl;	/* macro line (boolean) */
 
@@ -798,14 +799,28 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 		return((*roffs[t].sub)(r, t, buf, ln, ppos, pos, offs));
 	}
 
+	/* No scope is open.  This is a new request or macro. */
+
+	spos = pos;
+	t = roff_parse(r, buf->buf, &pos, ln, ppos);
+
+	/* Tables ignore most macros. */
+
+	if (r->tbl != NULL && (t == ROFF_MAX || t == ROFF_TS)) {
+		mandoc_msg(MANDOCERR_TBLMACRO, r->parse,
+		    ln, pos, buf->buf + spos);
+		return(ROFF_IGN);
+	}
+
 	/*
-	 * Lastly, as we've no scope open, try to look up and execute
-	 * the new macro.  If no macro is found, simply return and let
-	 * the compilers handle it.
+	 * This is neither a roff request nor a user-defined macro.
+	 * Let the standard macro set parsers handle it.
 	 */
 
-	if ((t = roff_parse(r, buf->buf, &pos, ln, ppos)) == ROFF_MAX)
+	if (t == ROFF_MAX)
 		return(ROFF_CONT);
+
+	/* Execute a roff request or a user defined macro. */
 
 	assert(roffs[t].proc);
 	return((*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs));
