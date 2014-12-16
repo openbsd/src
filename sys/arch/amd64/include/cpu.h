@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.87 2014/12/02 18:13:10 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.88 2014/12/16 21:20:23 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
 #endif /* _KERNEL */
 
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/sched.h>
 #include <sys/sensors.h>
 
