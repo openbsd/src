@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.110 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.111 2014/12/16 18:03:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -909,7 +909,7 @@ bwi_detach(void *arg)
 {
 	struct bwi_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int i;
+	int s, i;
 
 	bwi_stop(sc, 1);
 	ieee80211_ifdetach(ifp);
@@ -918,7 +918,9 @@ bwi_detach(void *arg)
 	for (i = 0; i < sc->sc_nmac; ++i)
 		bwi_mac_detach(&sc->sc_mac[i]);
 
+	s = splvm();
 	bwi_dma_free(sc);
+	splx(s);
 	bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 1);
 
 	return (0);
@@ -7533,6 +7535,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	int error, i, has_txstats;
 	bus_size_t tx_ring_sz, rx_ring_sz, desc_sz = 0;
 	uint32_t txrx_ctrl_step = 0;
+	int s;
 
 	has_txstats = 0;
 	for (i = 0; i < sc->sc_nmac; ++i) {
@@ -7604,6 +7607,8 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	tx_ring_sz = roundup(desc_sz * BWI_TX_NDESC, BWI_RING_ALIGN);
 	rx_ring_sz = roundup(desc_sz * BWI_RX_NDESC, BWI_RING_ALIGN);
 
+	s = splvm();
+
 #define TXRX_CTRL(idx)	(BWI_TXRX_CTRL_BASE + (idx) * txrx_ctrl_step)
 	/*
 	 * Create TX ring DMA stuffs
@@ -7615,6 +7620,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 			printf("%s: %dth TX ring DMA alloc failed\n",
 			    sc->sc_dev.dv_xname, i);
 			bwi_dma_free(sc);
+			splx(s);
 			return (error);
 		}
 	}
@@ -7627,6 +7633,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	if (error) {
 		printf("%s: RX ring DMA alloc failed\n", sc->sc_dev.dv_xname);
 		bwi_dma_free(sc);
+		splx(s);
 		return (error);
 	}
 
@@ -7636,6 +7643,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 			printf("%s: TX stats DMA alloc failed\n",
 			    sc->sc_dev.dv_xname);
 			bwi_dma_free(sc);
+			splx(s);
 			return (error);
 		}
 	}
@@ -7647,6 +7655,8 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		error = bwi_dma_mbuf_create(sc);
 	if (error)
 		bwi_dma_free(sc);
+
+	splx(s);
 
 	return (error);
 }
