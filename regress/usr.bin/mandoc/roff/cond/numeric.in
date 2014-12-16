@@ -1,4 +1,4 @@
-.TH COND-NUMERIC 1 "April 7, 2014" OpenBSD
+.TH COND-NUMERIC 1 "December 16, 2014" OpenBSD
 .SH NAME
 cond-numeric \- roff conditions involving numbers
 .SH DESCRIPTION
@@ -125,4 +125,20 @@ operator ":":
 .el (f)
 11
 .ie 1:1 (t)
+.el (f)
+.PP
+unmatched parenthesis:
+.ie (
+(t)
+.el (f)
+one
+.ie (1 (t)
+.el (f)
+.PP
+negated unmatched parenthesis:
+.ie !(
+(t)
+.el (f)
+zero
+.ie !(0 (t)
 .el (f)

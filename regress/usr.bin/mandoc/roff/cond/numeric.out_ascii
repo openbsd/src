@@ -30,6 +30,10 @@ DDEESSCCRRIIPPTTIIOONN
 
        operator ":": 00 (f) 01 (t) 10 (t) 11 (t)
 
+       unmatched parenthesis: (f) one (t)
+
+       negated unmatched parenthesis: (f) zero (t)
 
 
-OpenBSD                          April 7, 2014                 COND-NUMERIC(1)
+
+OpenBSD                        December 16, 2014               COND-NUMERIC(1)
