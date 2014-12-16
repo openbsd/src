@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.20 2014/08/15 03:51:40 guenther Exp $	*/
+/*	$OpenBSD: names.c,v 1.21 2014/12/16 18:36:46 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -208,6 +208,9 @@ outof(struct name *names, FILE *fo, struct header *hp)
 	time_t now;
 	char *date, *fname;
 	FILE *fout, *fin;
+
+	if (value("expandaddr") == NULL)
+		return(names);
 
 	top = names;
 	np = names;

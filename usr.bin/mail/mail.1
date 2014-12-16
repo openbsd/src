@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.68 2014/11/24 22:30:16 millert Exp $
+.\"	$OpenBSD: mail.1,v 1.69 2014/12/16 18:36:46 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: November 24 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -303,6 +303,47 @@ System wide aliases
 are not expanded when the mail is sent,
 but any reply returned to the machine will have the system wide
 alias expanded as all mail goes through an MTA.
+.Ss Recipient address specifications
+Recipient addresses (any of the
+.Dq To ,
+.Dq Cc
+or
+.Dq Bcc
+header fields) are subject to expansion when the
+.Ic expandaddr
+option is set.
+.Pp
+An address may be expanded as follows:
+.Bl -bullet -width Ds
+.It
+An address that starts with a pipe
+.Pq Ql |
+character is treated as a command to run.
+The command immediately following the
+.Ql |
+is executed with the message as its standard input.
+.It
+An address that starts with a
+.Ql +
+character is treated as a folder.
+.It
+An address that contains a
+.Ql /
+character but no
+.Ql \&! ,
+.Ql % ,
+or
+.Ql @
+characters is also treated as a folder.
+.It
+If none of the above apply, the recipient is treated as
+a local or network mail address.
+.El
+.Pp
+If the
+.Ic expandaddr
+option is not set (the default), no expansion is performed and
+the recipient is treated as a local or network mail address.
 .Ss Network mail (ARPA, UUCP, Berknet)
 See
 .Xr mailaddr 7
@@ -920,6 +961,11 @@ causes
 .Nm mail
 to interpret a period alone on a line as the terminator
 of a message you are sending.
+.It Ar expandaddr
+Causes
+.Nm mail
+to expand message recipient addresses, as explained in the section
+.Sx Recipient address specifications .
 .It Ar hold
 This option is used to hold messages in the system mailbox
 by default.
