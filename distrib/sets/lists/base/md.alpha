@@ -2175,6 +2175,7 @@
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/mdec/netboot
+./usr/mdec/netboot.mop
 ./usr/mdec/setnetbootinfo
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
