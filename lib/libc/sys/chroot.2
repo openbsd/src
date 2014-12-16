@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.19 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: chroot.2,v 1.20 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,21 +30,19 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
 .Nm chroot
 .Nd change root directory
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn chroot "const char *dirname"
 .Sh DESCRIPTION
 .Fa dirname
-is the address of the pathname of a directory, terminated by an
-.Tn ASCII
-NUL.
+is the address of the pathname of a directory, terminated by an ASCII NUL.
 .Fn chroot
 causes
 .Fa dirname

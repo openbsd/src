@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.47 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.48 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm setsockopt
 .Nd get and set options on sockets
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft int
 .Fn getsockopt "int s" "int level" "int optname" "void *optval" "socklen_t *optlen"
 .Ft int
@@ -64,12 +64,9 @@ is specified as
 To manipulate options at any other level the protocol number of the
 appropriate protocol controlling the option is supplied.
 For example, to indicate that an option is to be interpreted by the
-.Tn TCP
-protocol,
+TCP protocol,
 .Fa level
-should be set to the protocol number of
-.Tn TCP ;
-see
+should be set to the protocol number of TCP; see
 .Xr getprotoent 3 .
 .Pp
 The parameters

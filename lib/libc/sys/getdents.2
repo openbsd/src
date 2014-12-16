@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdents.2,v 1.2 2013/12/01 04:07:18 guenther Exp $
+.\"	$OpenBSD: getdents.2,v 1.3 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 1 2013 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt GETDENTS 2
 .Os
 .Sh NAME
 .Nm getdents
 .Nd get directory entries in a filesystem independent format
 .Sh SYNOPSIS
-.Fd #include <dirent.h>
+.In dirent.h
 .Ft int
 .Fn getdents "int fd" "void *buf" "size_t nbytes"
 .Sh DESCRIPTION
@@ -163,9 +163,7 @@ is not a directory, or
 is too small for returning a directory entry or block of entries,
 or the current position pointer is invalid.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr lseek 2 ,

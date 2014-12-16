@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.27 2014/11/30 21:58:22 schwarze Exp $
+.\"	$OpenBSD: poll.2,v 1.28 2014/12/16 00:06:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nm ppoll
 .Nd synchronous I/O multiplexing
 .Sh SYNOPSIS
-.Fd #include <poll.h>
+.In poll.h
 .Ft int
 .Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
 .Ft int
@@ -339,8 +339,7 @@ flag is accepted but ignored by the kernel.
 .Pp
 Because
 .Ox
-does not implement
-.Tn STREAMS ,
+does not implement STREAMS,
 there is no distinction between some of the fields in the
 .Fa events
 and

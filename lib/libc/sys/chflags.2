@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.25 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: chflags.2,v 1.26 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)chflags.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt CHFLAGS 2
 .Os
 .Sh NAME
@@ -169,9 +169,7 @@ The named file resides on a read-only file system.
 .Fa path
 points outside the process's allocated address space.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .It Bq Er EINVAL
 The
 .Fa flags
@@ -207,9 +205,7 @@ flags.
 .It Bq Er EROFS
 The file resides on a read-only file system.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr chflags 1 ,

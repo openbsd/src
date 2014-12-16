@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.16 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: getfh.2,v 1.17 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,15 +30,15 @@
 .\"
 .\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt GETFH 2
 .Os
 .Sh NAME
 .Nm getfh
 .Nd get file handle
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/mount.h>
+.In sys/param.h
+.In sys/mount.h
 .Ft int
 .Fn getfh "const char *path" "fhandle_t *fhp"
 .Sh DESCRIPTION
@@ -86,9 +86,7 @@ or
 .Fa path
 points to an invalid address.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .It Bq Er EINVAL
 A portion of
 .Fa path

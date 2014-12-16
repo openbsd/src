@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.13 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: quotactl.2,v 1.14 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -33,15 +33,15 @@
 .\"
 .\"	@(#)quotactl.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt QUOTACTL 2
 .Os
 .Sh NAME
 .Nm quotactl
 .Nd manipulate filesystem quotas
 .Sh SYNOPSIS
-.Fd #include <ufs/ufs/quota.h> /* for ufs quotas */
-.Fd #include <unistd.h>
+.In ufs/ufs/quota.h
+.In unistd.h
 .Ft int
 .Fn quotactl "const char *path" "int cmd" "int id" "char *addr"
 .Sh DESCRIPTION
@@ -178,9 +178,7 @@ In
 .Dv Q_QUOTAON ,
 the quota file resides on a read-only filesystem.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing
+An I/O error occurred while reading from or writing
 to a file containing quotas.
 .It Bq Er EFAULT
 An invalid

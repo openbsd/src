@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.21 2014/03/24 01:54:58 guenther Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.22 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,15 +30,15 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 24 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt NFSSVC 2
 .Os
 .Sh NAME
 .Nm nfssvc
 .Nd NFS services
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
-.Fd #include <nfs/nfs.h>
+.In unistd.h
+.In nfs/nfs.h
 .Ft int
 .Fn nfssvc "int flags" "void *argstructp"
 .Sh DESCRIPTION
@@ -120,8 +120,7 @@ function first appeared in
 .Sh BUGS
 The
 .Nm nfssvc
-system call is designed specifically for the
-.Tn NFS
+system call is designed specifically for the NFS
 support daemons and as such is specific to their requirements.
 Several fields of the argument structures are assumed to be valid and
 sometimes to be unchanged from a previous call, such that

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.23 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: statfs.2,v 1.24 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -38,8 +38,8 @@
 .Nm fstatfs
 .Nd get file system statistics
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/mount.h>
+.In sys/param.h
+.In sys/mount.h
 .Ft int
 .Fn statfs "const char *path" "struct statfs *buf"
 .Ft int
@@ -134,9 +134,7 @@ or
 .Fa path
 points to an invalid address.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
 .Fn fstatfs
@@ -149,9 +147,7 @@ is not a valid open file descriptor.
 .Fa buf
 points to an invalid address.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.30 2013/03/31 08:35:46 guenther Exp $
+.\"	$OpenBSD: fcntl.2,v 1.31 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
 .Nm fcntl
 .Nd file control
 .Sh SYNOPSIS
-.Fd #include <fcntl.h>
+.In fcntl.h
 .Ft int
 .Fn fcntl "int fd" "int cmd" "..."
 .Sh DESCRIPTION
@@ -167,9 +167,7 @@ and
 commands are as follows:
 .Bl -tag -width O_NONBLOCKX
 .It Dv O_NONBLOCK
-Non-blocking
-.Tn I/O ;
-if no data is available to a
+Non-blocking I/O; if no data is available to a
 .Xr read 2
 call, or if a
 .Xr write 2
@@ -185,10 +183,7 @@ flag of
 .It Dv O_ASYNC
 Enable the
 .Dv SIGIO
-signal to be sent to the process group
-when
-.Tn I/O
-is possible, e.g.,
+signal to be sent to the process group when I/O is possible, e.g.,
 upon availability of data to be read.
 .It Dv O_SYNC
 Cause writes to be synchronous.

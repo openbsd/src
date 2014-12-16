@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.19 2013/07/20 19:33:34 naddy Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.20 2014/12/16 00:06:49 schwarze Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,15 +30,15 @@
 .\"
 .\"	@(#)getfsstat.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 20 2013 $
+.Dd $Mdocdate: December 16 2014 $
 .Dt GETFSSTAT 2
 .Os
 .Sh NAME
 .Nm getfsstat
 .Nd get list of all mounted file systems
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/mount.h>
+.In sys/param.h
+.In sys/mount.h
 .Ft int
 .Fn getfsstat "struct statfs *buf" "size_t bufsize" "int flags"
 .Sh DESCRIPTION
@@ -136,9 +136,7 @@ fails if one or more of the following are true:
 .Fa buf
 points to an invalid address.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr statfs 2 ,
