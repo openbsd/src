@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcsetpgrp.c,v 1.7 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: tcsetpgrp.c,v 1.8 2014/12/16 03:32:21 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <unistd.h>
 
 int
