@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.56 2014/10/17 18:15:48 kettenis Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.57 2014/12/16 21:02:58 sf Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ const struct {
 	{ CPUIDECX_AVX,		"AVX" },
 	{ CPUIDECX_F16C,	"F16C" },
 	{ CPUIDECX_RDRAND,	"RDRAND" },
+	{ CPUIDECX_HV,		"HV" },
 }, cpu_ecpuid_ecxfeatures[] = {
 	{ CPUIDECX_LAHF,	"LAHF" },
 	{ CPUIDECX_CMPLEG,	"CMPLEG" },
