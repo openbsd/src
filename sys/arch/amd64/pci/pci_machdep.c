@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.59 2014/04/19 11:53:42 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.60 2014/12/16 23:13:20 jmatthew Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -622,13 +622,17 @@ pci_init_extents(void)
 		 * here.  As long as vendors continue to support
 		 * 32-bit operating systems, we should never see BARs
 		 * outside that region.
+		 *
+		 * Dell 13G servers have important devices outside the
+		 * 36-bit address space.  Until we can extract the address
+		 * ranges from ACPI, expand the allowed range to suit.
 		 */
 		pcimem_ex = extent_create("pcimem", 0, 0xffffffffffffffffUL,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 		if (pcimem_ex == NULL)
 			return;
-		extent_alloc_region(pcimem_ex, 0x1000000000UL,
-		    0xfffffff000000000UL, EX_NOWAIT);
+		extent_alloc_region(pcimem_ex, 0x40000000000UL,
+		    0xfffffc0000000000UL, EX_NOWAIT);
 
 		for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
 			/*
