@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.33 2014/12/09 06:58:29 doug Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.34 2014/12/17 19:39:01 tedu Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -24,6 +24,7 @@
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/systm.h>
 #include <sys/task.h>
