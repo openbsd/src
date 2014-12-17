@@ -119,7 +119,6 @@ struct pmap {
 	 */
 	paddr_t pm_physaddr;	/* physical address of pm_segs */
 	int64_t *pm_segs;
-	struct simplelock pm_lock;
 
 	struct pmap_statistics pm_stats;
 };
