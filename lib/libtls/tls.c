@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.3 2014/12/07 15:48:02 bcook Exp $ */
+/* $OpenBSD: tls.c,v 1.4 2014/12/17 17:51:33 doug Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -110,6 +111,11 @@ tls_configure_keypair(struct tls *ctx)
 	BIO *bio = NULL;
 
 	if (ctx->config->cert_mem != NULL) {
+		if (ctx->config->cert_len > INT_MAX) {
+			tls_set_error(ctx, "certificate too long");
+			goto err;
+		}
+
 		if (SSL_CTX_use_certificate_chain(ctx->ssl_ctx,
 		    ctx->config->cert_mem, ctx->config->cert_len) != 1) {
 			tls_set_error(ctx, "failed to load certificate");
@@ -118,6 +124,11 @@ tls_configure_keypair(struct tls *ctx)
 		cert = NULL;
 	}
 	if (ctx->config->key_mem != NULL) {
+		if (ctx->config->key_len > INT_MAX) {
+			tls_set_error(ctx, "key too long");
+			goto err;
+		}
+
 		if ((bio = BIO_new_mem_buf(ctx->config->key_mem,
 		    ctx->config->key_len)) == NULL) {
 			tls_set_error(ctx, "failed to create buffer");
@@ -229,6 +240,11 @@ tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 {
 	int ret, ssl_err;
 
+	if (buflen > INT_MAX) {
+		tls_set_error(ctx, "buflen too long");
+		return (-1);
+	}
+
 	ret = SSL_read(ctx->ssl_conn, buf, buflen);
 	if (ret > 0) {
 		*outlen = (size_t)ret;
@@ -251,6 +267,11 @@ int
 tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 {
 	int ret, ssl_err;
+
+	if (buflen > INT_MAX) {
+		tls_set_error(ctx, "buflen too long");
+		return (-1);
+	}
 
 	ret = SSL_write(ctx->ssl_conn, buf, buflen);
 	if (ret > 0) {

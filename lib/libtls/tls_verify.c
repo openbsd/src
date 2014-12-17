@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.5 2014/12/07 16:56:17 bcook Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.6 2014/12/17 17:51:33 doug Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -115,14 +115,14 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
 
 		if (type == GEN_DNS) {
 			unsigned char	*data;
-			int		 format;
+			int		 format, len;
 
 			format = ASN1_STRING_type(altname->d.dNSName);
 			if (format == V_ASN1_IA5STRING) {
 				data = ASN1_STRING_data(altname->d.dNSName);
+				len = ASN1_STRING_length(altname->d.dNSName);
 
-				if (ASN1_STRING_length(altname->d.dNSName) !=
-				    (int)strlen(data)) {
+				if (len < 0 || len != strlen(data)) {
 					tls_set_error(ctx,
 					    "error verifying host '%s': "
 					    "NUL byte in subjectAltName, "
@@ -150,6 +150,14 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
 
 			datalen = ASN1_STRING_length(altname->d.iPAddress);
 			data = ASN1_STRING_data(altname->d.iPAddress);
+
+			if (datalen < 0) {
+				tls_set_error(ctx,
+				    "Unexpected negative length for an "
+				    "IP address: %d", datalen);
+				rv = -2;
+				break;
+			}
 
 			if (datalen == addrlen &&
 			    memcmp(data, &addrbuf, addrlen) == 0) {
@@ -189,7 +197,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *host)
 	    common_name_len + 1);
 
 	/* NUL bytes in CN? */
-	if (common_name_len != (int)strlen(common_name)) {
+	if (common_name_len != strlen(common_name)) {
 		tls_set_error(ctx, "error verifying host '%s': "
 		    "NUL byte in Common Name field, "
 		    "probably a malicious certificate.", host);
