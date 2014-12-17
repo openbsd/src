@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.103 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.104 2014/12/17 06:58:11 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -903,7 +903,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	struct uvm_object *uobj;
 	struct vnode *vp;
 	int error;
-	int advice = POSIX_MADV_NORMAL;
+	int advice = MADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
 	vsize_t align = 0;	/* userland page size */
 
@@ -995,7 +995,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 				    (flags & MAP_SHARED) ? maxprot :
 				    (maxprot & ~PROT_WRITE), foff, size);
 			}
-			advice = POSIX_MADV_RANDOM;
+			advice = MADV_RANDOM;
 		}
 		
 		if (uobj == NULL)

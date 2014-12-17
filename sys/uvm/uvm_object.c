@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.10 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.11 2014/12/17 06:58:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ uvm_objwire(struct uvm_object *uobj, voff_t start, voff_t end,
 		/* Get the pages */
 		memset(pgs, 0, sizeof(pgs));
 		error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, 0,
-			PROT_READ | PROT_WRITE, POSIX_MADV_SEQUENTIAL,
+			PROT_READ | PROT_WRITE, MADV_SEQUENTIAL,
 			PGO_ALLPAGES | PGO_SYNCIO);
 
 		if (error)

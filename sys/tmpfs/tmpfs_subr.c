@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.10 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.11 2014/12/17 06:58:11 guenther Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -1230,10 +1230,10 @@ tmpfs_uiomove(tmpfs_node_t *node, struct uio *uio, vsize_t len)
 
 	if (len >= TMPFS_UIO_MAXBYTES) {
 		sz = TMPFS_UIO_MAXBYTES;
-		adv = POSIX_MADV_NORMAL;
+		adv = MADV_NORMAL;
 	} else {
 		sz = len;
-		adv = POSIX_MADV_SEQUENTIAL;
+		adv = MADV_SEQUENTIAL;
 	}
 
 	if (tmpfs_uio_cached(node))
@@ -1270,7 +1270,7 @@ tmpfs_zeropg(tmpfs_node_t *node, voff_t pgnum, vaddr_t pgoff)
 
 	error = uvm_map(kernel_map, &va, PAGE_SIZE, node->tn_uobj, pgnum, 0,
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
-	    MAP_INHERIT_NONE, POSIX_MADV_NORMAL, 0));
+	    MAP_INHERIT_NONE, MADV_NORMAL, 0));
 	if (error) {
 		uao_detach(node->tn_uobj); /* Drop reference. */
 		return error;

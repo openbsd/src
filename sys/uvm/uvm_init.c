@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.36 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.37 2014/12/17 06:58:11 guenther Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -148,14 +148,14 @@ uvm_init(void)
 	kvm_start = trunc_page(DEADBEEF0) - PAGE_SIZE;
 	if (uvm_map(kernel_map, &kvm_start, 3 * PAGE_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(PROT_NONE,
-	    PROT_NONE, MAP_INHERIT_NONE, POSIX_MADV_RANDOM, UVM_FLAG_FIXED)))
+	    PROT_NONE, MAP_INHERIT_NONE, MADV_RANDOM, UVM_FLAG_FIXED)))
 		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF0);
 #endif
 #ifdef DEADBEEF1
 	kvm_start = trunc_page(DEADBEEF1) - PAGE_SIZE;
 	if (uvm_map(kernel_map, &kvm_start, 3 * PAGE_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(PROT_NONE,
-	    PROT_NONE, MAP_INHERIT_NONE, POSIX_MADV_RANDOM, UVM_FLAG_FIXED)))
+	    PROT_NONE, MAP_INHERIT_NONE, MADV_RANDOM, UVM_FLAG_FIXED)))
 		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF1);
 #endif
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.53 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.54 2014/12/17 06:58:11 guenther Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ sys_obreak(struct proc *p, void *v, register_t *retval)
 		    UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(PROT_READ | PROT_WRITE,
 		    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_INHERIT_COPY,
-		    POSIX_MADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
+		    MADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 			uprintf("sbrk: grow %ld failed, error = %d\n",

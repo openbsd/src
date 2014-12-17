@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.80 2014/12/15 02:24:23 guenther Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.81 2014/12/17 06:58:11 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -206,15 +206,15 @@ uvmfault_init()
 	npages = atop(16384);
 	if (npages > 0) {
 		KASSERT(npages <= UVM_MAXRANGE / 2);
-		uvmadvice[POSIX_MADV_NORMAL].nforw = npages;
-		uvmadvice[POSIX_MADV_NORMAL].nback = npages - 1;
+		uvmadvice[MADV_NORMAL].nforw = npages;
+		uvmadvice[MADV_NORMAL].nback = npages - 1;
 	}
 
 	npages = atop(32768);
 	if (npages > 0) {
 		KASSERT(npages <= UVM_MAXRANGE / 2);
-		uvmadvice[POSIX_MADV_SEQUENTIAL].nforw = npages - 1;
-		uvmadvice[POSIX_MADV_SEQUENTIAL].nback = npages;
+		uvmadvice[MADV_SEQUENTIAL].nforw = npages - 1;
+		uvmadvice[MADV_SEQUENTIAL].nback = npages;
 	}
 }
 
