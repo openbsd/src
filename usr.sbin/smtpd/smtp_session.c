@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.220 2014/11/02 21:46:03 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.221 2014/12/17 15:49:23 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1810,7 +1810,7 @@ smtp_message_write(struct smtp_session *s, const char *line)
 			s->rcvcount++;
 		if (s->rcvcount == MAX_HOPS_COUNT) {
 			s->msgflags |= MF_ERROR_LOOP;
-			log_warn("warn: loop detected");
+			log_warnx("warn: loop detected");
 			return;
 		}
 	}
