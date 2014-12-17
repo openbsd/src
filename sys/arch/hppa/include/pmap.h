@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.46 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.47 2014/12/17 15:01:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -163,13 +163,11 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 struct pv_entry;
 struct vm_page_md {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
 };
 
 #define	VM_MDPAGE_INIT(pg) do {				\
-	simple_lock_init(&(pg)->mdpage.pvh_lock);	\
 	(pg)->mdpage.pvh_list = NULL;			\
 	(pg)->mdpage.pvh_attrs = 0;			\
 } while (0)
