@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.119 2014/12/08 10:58:45 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.120 2014/12/17 03:50:53 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -334,12 +334,16 @@ sis_read_cmos(struct sis_softc *sc, struct pci_attach_args *pa,
 void
 sis_read_mac(struct sis_softc *sc, struct pci_attach_args *pa)
 {
+	uint32_t rxfilt, csrsave;
 	u_int16_t *enaddr = (u_int16_t *) &sc->arpcom.ac_enaddr;
 
-	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RELOAD);
-	SIS_CLRBIT(sc, SIS_CSR, SIS_CSR_RELOAD);
+	rxfilt = CSR_READ_4(sc, SIS_RXFILT_CTL);
+	csrsave = CSR_READ_4(sc, SIS_CSR);
 
-	SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
+	CSR_WRITE_4(sc, SIS_CSR, SIS_CSR_RELOAD | csrsave);
+	CSR_WRITE_4(sc, SIS_CSR, 0);
+
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt & ~SIS_RXFILTCTL_ENABLE);
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, SIS_FILTADDR_PAR0);
 	enaddr[0] = letoh16(CSR_READ_4(sc, SIS_RXFILT_DATA) & 0xffff);
@@ -348,7 +352,8 @@ sis_read_mac(struct sis_softc *sc, struct pci_attach_args *pa)
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, SIS_FILTADDR_PAR2);
 	enaddr[2] = letoh16(CSR_READ_4(sc, SIS_RXFILT_DATA) & 0xffff);
 
-	SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
+	CSR_WRITE_4(sc, SIS_CSR, csrsave);
 }
 
 void
@@ -790,6 +795,13 @@ sis_iff_ns(struct sis_softc *sc)
 	int			bit, index;
 
 	rxfilt = CSR_READ_4(sc, SIS_RXFILT_CTL);
+	if (rxfilt & SIS_RXFILTCTL_ENABLE) {
+		/*
+		 * Filter should be disabled to program other bits.
+		 */
+		CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt & ~SIS_RXFILTCTL_ENABLE);
+		CSR_READ_4(sc, SIS_RXFILT_CTL);
+	}
 	rxfilt &= ~(SIS_RXFILTCTL_ALLMULTI | SIS_RXFILTCTL_ALLPHYS |
 	    NS_RXFILTCTL_ARP | SIS_RXFILTCTL_BROAD | NS_RXFILTCTL_MCHASH |
 	    NS_RXFILTCTL_PERFECT);
@@ -817,7 +829,7 @@ sis_iff_ns(struct sis_softc *sc)
 
 		/* first, zot all the existing hash bits */
 		for (i = 0; i < 32; i++) {
-			CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + (i*2));
+			CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + (i * 2));
 			CSR_WRITE_4(sc, SIS_RXFILT_DATA, 0);
 		}
 
@@ -840,6 +852,7 @@ sis_iff_ns(struct sis_softc *sc)
 	}
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
+	CSR_READ_4(sc, SIS_RXFILT_CTL);
 }
 
 void
@@ -860,6 +873,13 @@ sis_iff_sis(struct sis_softc *sc)
 		maxmulti = 8;
 
 	rxfilt = CSR_READ_4(sc, SIS_RXFILT_CTL);
+	if (rxfilt & SIS_RXFILTCTL_ENABLE) {
+		/*
+		 * Filter should be disabled to program other bits.
+		 */
+		CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt & ~SIS_RXFILTCTL_ENABLE);
+		CSR_READ_4(sc, SIS_RXFILT_CTL);
+	}
 	rxfilt &= ~(SIS_RXFILTCTL_ALLMULTI | SIS_RXFILTCTL_ALLPHYS |
 	    SIS_RXFILTCTL_BROAD);
 	ifp->if_flags &= ~IFF_ALLMULTI;
@@ -898,6 +918,7 @@ sis_iff_sis(struct sis_softc *sc)
 	}
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
+	CSR_READ_4(sc, SIS_RXFILT_CTL);
 }
 
 void
