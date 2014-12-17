@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.134 2014/11/25 10:45:07 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.135 2014/12/17 14:40:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -133,15 +133,6 @@ void tlbia(void);
 void pmap_attr_save(paddr_t pa, u_int32_t bits);
 void pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot);
 void pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot);
-
-/*
- * LOCKING structures.
- * This may not be correct, and doesn't do anything yet.
- */
-#define pmap_simplelock_pm(pm)
-#define pmap_simpleunlock_pm(pm)
-#define pmap_simplelock_pv(pm)
-#define pmap_simpleunlock_pv(pm)
 
 /*
  * Some functions are called in real mode and cannot be profiled.
@@ -361,8 +352,6 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
 
-	pmap_simplelock_pm(pm);
-
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
 		vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
@@ -386,8 +375,6 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	}
 
 	vp2->vp[VP_IDX2(va)] = pted;
-
-	pmap_simpleunlock_pm(pm);
 
 	return 0;
 }
@@ -672,7 +659,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 		vp1 = pm->pm_vp[i_sr];
 		if (vp1 == NULL)
 			continue;
-		
+
 		if (i_sr == s_sr)
 			s_vp1 = VP_IDX1(va);
 		else
@@ -1311,9 +1298,7 @@ pmap_create()
 void
 pmap_reference(pmap_t pm)
 {
-	/* simple_lock(&pmap->pm_obj.vmobjlock); */
 	pm->pm_refs++;
-	/* simple_unlock(&pmap->pm_obj.vmobjlock); */
 }
 
 /*
@@ -1325,9 +1310,9 @@ pmap_destroy(pmap_t pm)
 {
 	int refs;
 
-	/* simple_lock(&pmap->pm_obj.vmobjlock); */
 	refs = --pm->pm_refs;
-	/* simple_unlock(&pmap->pm_obj.vmobjlock); */
+	if (refs == -1)
+		panic("re-entering pmap_destroy");
 	if (refs > 0)
 		return;
 
