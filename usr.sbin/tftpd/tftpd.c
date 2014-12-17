@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.24 2014/11/25 23:52:09 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.25 2014/12/17 22:23:33 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -645,7 +645,7 @@ tftpd_recv(int fd, short events, void *arg)
 
 	client = client_alloc();
 	if (client == NULL) {
-		char *buf = alloca(SEGSIZE_MAX + 4);
+		char buf[SEGSIZE_MAX + 4];
 		/* no memory! flush this request... */
 		recv(fd, buf, SEGSIZE_MAX + 4, 0);
 		/* dont care if it fails */
