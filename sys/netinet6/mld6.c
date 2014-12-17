@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.39 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.40 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -438,7 +438,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 
 	/* construct multicast option */
 	bzero(&im6o, sizeof(im6o));
-	im6o.im6o_multicast_ifp = ifp;
+	im6o.im6o_ifidx = ifp->if_index;
 	im6o.im6o_multicast_hlim = 1;
 
 	/*

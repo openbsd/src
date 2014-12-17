@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.49 2014/07/11 16:39:06 henning Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.50 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -92,10 +92,10 @@ struct	ip6asfrag {
 #define IP6_REASS_MBUF(ip6af) ((ip6af)->ip6af_m)
 
 struct	ip6_moptions {
-	struct	ifnet *im6o_multicast_ifp; /* ifp for outgoing multicasts */
+	LIST_HEAD(, in6_multi_mship) im6o_memberships;
+	unsigned short im6o_ifidx;	/* ifp index for outgoing multicasts */
 	u_char	im6o_multicast_hlim;	/* hoplimit for outgoing multicasts */
 	u_char	im6o_multicast_loop;	/* 1 >= hear sends if a member */
-	LIST_HEAD(, in6_multi_mship) im6o_memberships;
 };
 
 /*

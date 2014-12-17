@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.49 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.50 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * choose a loopback interface as the outgoing interface.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst)) {
-		ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
+		ifp = mopts ? if_get(mopts->im6o_ifidx) : NULL;
 
 		if (!ifp && dstsock->sin6_scope_id)
 			ifp = if_get(htons(dstsock->sin6_scope_id));
@@ -345,7 +345,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * interface for the address is specified by the caller, use it.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst) &&
-	    mopts != NULL && (ifp = mopts->im6o_multicast_ifp) != NULL) {
+	    mopts != NULL && (ifp = if_get(mopts->im6o_ifidx)) != NULL) {
 		goto done; /* we do not need a route for multicast. */
 	}
 
@@ -617,8 +617,7 @@ in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
 			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
 		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
 			   in6p->inp_moptions6 &&
-			   in6p->inp_moptions6->im6o_multicast_ifp) {
-			ifp = in6p->inp_moptions6->im6o_multicast_ifp;
+			   (ifp = if_get(in6p->inp_moptions6->im6o_ifidx))) {
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
 			ifp = if_get(scopeid);

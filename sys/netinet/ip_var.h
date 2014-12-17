@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.57 2014/11/05 14:03:02 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.58 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -101,12 +101,12 @@ struct ipoption {
  * passed to ip_output when IP multicast options are in use.
  */
 struct ip_moptions {
-	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
+	struct in_multi **imo_membership; /* group memberships */
+	unsigned short imo_ifidx;	/* ifp index for outgoing multicasts */
 	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
 	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
 	u_int16_t imo_num_memberships;	/* no. memberships this socket */
 	u_int16_t imo_max_memberships;	/* max memberships this socket */
-	struct	  in_multi **imo_membership; /* group memberships */
 };
 
 #include <sys/queue.h>

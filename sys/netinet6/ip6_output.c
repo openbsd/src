@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.163 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.164 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2329,7 +2329,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		if (im6o == NULL)
 			return (ENOBUFS);
 		*im6op = im6o;
-		im6o->im6o_multicast_ifp = NULL;
+		im6o->im6o_ifidx = 0;
 		im6o->im6o_multicast_hlim = ip6_defmcasthlim;
 		im6o->im6o_multicast_loop = IPV6_DEFAULT_MULTICAST_LOOP;
 		LIST_INIT(&im6o->im6o_memberships);
@@ -2359,7 +2359,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 				break;
 			}
 		}
-		im6o->im6o_multicast_ifp = ifp;
+		im6o->im6o_ifidx = ifindex;
 		break;
 
 	case IPV6_MULTICAST_HOPS:
@@ -2572,7 +2572,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 	 * If all options have default values, no need to keep the option
 	 * structure.
 	 */
-	if (im6o->im6o_multicast_ifp == NULL &&
+	if (im6o->im6o_ifidx == 0 &&
 	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_multicast_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
 	    LIST_EMPTY(&im6o->im6o_memberships)) {
@@ -2598,10 +2598,10 @@ ip6_getmoptions(int optname, struct ip6_moptions *im6o, struct mbuf **mp)
 	case IPV6_MULTICAST_IF:
 		ifindex = mtod(*mp, u_int *);
 		(*mp)->m_len = sizeof(u_int);
-		if (im6o == NULL || im6o->im6o_multicast_ifp == NULL)
+		if (im6o == NULL || im6o->im6o_ifidx == 0)
 			*ifindex = 0;
 		else
-			*ifindex = im6o->im6o_multicast_ifp->if_index;
+			*ifindex = im6o->im6o_ifidx;
 		return (0);
 
 	case IPV6_MULTICAST_HOPS:

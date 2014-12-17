@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.212 2014/11/23 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.213 2014/12/17 09:45:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1354,7 +1354,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[
 				    --imo->imo_num_memberships]);
-				imo->imo_multicast_ifp = NULL;
+				imo->imo_ifidx = 0;
 			}
 			splx(s);
 			break;
@@ -1379,7 +1379,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (imo->imo_num_memberships > 0) {
 			in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-			imo->imo_multicast_ifp = NULL;
+			imo->imo_ifidx = 0;
 		}
 
 		if (sc->sc_sync_if &&
@@ -1401,7 +1401,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				return (ENOBUFS);
 			}
 			imo->imo_num_memberships++;
-			imo->imo_multicast_ifp = sc->sc_sync_if;
+			imo->imo_ifidx = sc->sc_sync_if->if_index;
 			imo->imo_multicast_ttl = PFSYNC_DFLTTL;
 			imo->imo_multicast_loop = 0;
 		}

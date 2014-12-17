@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.86 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.87 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 	if (daddr6 == NULL || IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
-		im6o.im6o_multicast_ifp = ifp;
+		im6o.im6o_ifidx = ifp->if_index;
 		im6o.im6o_multicast_hlim = 255;
 		im6o.im6o_multicast_loop = 0;
 	}
@@ -949,7 +949,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 	if (IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
-		im6o.im6o_multicast_ifp = ifp;
+		im6o.im6o_ifidx = ifp->if_index;
 		im6o.im6o_multicast_hlim = 255;
 		im6o.im6o_multicast_loop = 0;
 	}

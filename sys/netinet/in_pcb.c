@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.164 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.165 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -871,7 +871,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
 		struct ifnet *ifp;
 
-		ifp = mopts->imo_multicast_ifp;
+		ifp = if_get(mopts->imo_ifidx);
 		if (ifp != NULL) {
 			if (ifp->if_rdomain == rtable_l2(rtableid))
 				IFP_TO_IA(ifp, ia);

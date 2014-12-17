@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.306 2014/12/08 10:46:14 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.307 2014/12/17 09:45:59 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -532,11 +532,6 @@ do { \
 	IF_DETACH_QUEUES(ip6intrq);
 #endif
 #undef IF_DETACH_QUEUES
-
-	/*
-	 * XXX transient ifp refs?  inpcb.ip_moptions.imo_multicast_ifp?
-	 * Other network stacks than INET?
-	 */
 
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);

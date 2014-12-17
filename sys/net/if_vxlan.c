@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.17 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.18 2014/12/17 09:45:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -179,8 +179,9 @@ vxlan_multicast_cleanup(struct ifnet *ifp)
 {
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip_moptions	*imo = &sc->sc_imo;
-	struct ifnet		*mifp = imo->imo_multicast_ifp;
+	struct ifnet		*mifp;
 
+	mifp = if_get(imo->imo_ifidx);
 	if (mifp != NULL) {
 		if (sc->sc_ahcookie != NULL) {
 			hook_disestablish(mifp->if_addrhooks, sc->sc_ahcookie);
@@ -200,7 +201,7 @@ vxlan_multicast_cleanup(struct ifnet *ifp)
 
 	if (imo->imo_num_memberships > 0) {
 		in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-		imo->imo_multicast_ifp = NULL;
+		imo->imo_ifidx = 0;
 	}
 }
 
@@ -229,7 +230,7 @@ vxlan_multicast_join(struct ifnet *ifp, struct sockaddr_in *src,
 		return (ENOBUFS);
 
 	imo->imo_num_memberships++;
-	imo->imo_multicast_ifp = mifp;
+	imo->imo_ifidx = mifp->if_index;
 	if (sc->sc_ttl > 0)
 		imo->imo_multicast_ttl = sc->sc_ttl;
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.240 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.241 2014/12/17 09:45:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1643,7 +1643,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 		}
 	}
 	imo->imo_num_memberships = 0;
-	imo->imo_multicast_ifp = NULL;
+	imo->imo_ifidx = 0;
 
 #ifdef INET6
 	while (!LIST_EMPTY(&im6o->im6o_memberships)) {
@@ -1653,7 +1653,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
-	im6o->im6o_multicast_ifp = NULL;
+	im6o->im6o_ifidx = 0;
 #endif
 
 	/* And any other multicast memberships */
@@ -1930,7 +1930,7 @@ carp_join_multicast(struct carp_softc *sc)
 
 	imo->imo_membership[0] = imm;
 	imo->imo_num_memberships = 1;
-	imo->imo_multicast_ifp = &sc->sc_if;
+	imo->imo_ifidx = sc->sc_if.if_index;
 	imo->imo_multicast_ttl = CARP_DFLTTL;
 	imo->imo_multicast_loop = 0;
 	return (0);
@@ -2039,7 +2039,7 @@ carp_join_multicast6(struct carp_softc *sc)
 	}
 
 	/* apply v6 multicast membership */
-	im6o->im6o_multicast_ifp = &sc->sc_if;
+	im6o->im6o_ifidx = sc->sc_if.if_index;
 	if (imm)
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm,
 		    i6mm_chain);
