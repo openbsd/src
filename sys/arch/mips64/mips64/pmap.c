@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2014/12/17 15:05:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -377,7 +377,6 @@ pmap_bootstrap(void)
 	pool_init(&pmap_pg_pool, PMAP_L2SIZE, PMAP_L2SIZE, 0, 0, "pmappgpl",
 	    &pmap_pg_allocator);
 
-	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
 
 #ifndef CPU_R8000
@@ -511,7 +510,6 @@ extern struct user *proc0paddr;
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK | PR_ZERO);
 	splx(s);
 
-	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_count = 1;
 
 	pmap->pm_segtab = (struct segtab *)pool_get(&pmap_pg_pool,
@@ -550,9 +548,7 @@ pmap_destroy(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_destroy(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_lock);
 	count = --pmap->pm_count;
-	simple_unlock(&pmap->pm_lock);
 	if (count > 0)
 		return;
 
@@ -599,11 +595,8 @@ pmap_reference(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
-	if (pmap) {
-		simple_lock(&pmap->pm_lock);
+	if (pmap)
 		pmap->pm_count++;
-		simple_unlock(&pmap->pm_lock);
-	}
 }
 
 /*

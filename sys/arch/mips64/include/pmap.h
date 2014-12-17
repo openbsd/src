@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.36 2014/04/03 18:29:37 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.37 2014/12/17 15:05:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -111,7 +111,6 @@ struct pmap_asid_info {
  */
 typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
-	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 	struct pmap_asid_info	pm_asid[1];	/* ASID information */
