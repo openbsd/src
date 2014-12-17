@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2014/12/17 15:27:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -259,7 +259,6 @@ pmap_bootstrap(size_t promdata)
 	/*
 	 * Initialize kernel pmap.
 	 */
-	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_refcount = 1;
 
 	/*
@@ -505,7 +504,6 @@ pmap_create()
 	pmap = pool_get(&pmappool, PR_WAITOK | PR_ZERO);
 
 	pmap->pm_refcount = 1;
-	simple_lock_init(&pmap->pm_lock);
 
 	/*
 	 * Allocate the page directory.
@@ -543,9 +541,7 @@ pmap_destroy(struct pmap *pmap)
 
 	DPRINTF(PDB_DESTROY, ("pmap_destroy(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_lock);
 	count = --pmap->pm_refcount;
-	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
 		pool_put(&pmappool, pmap);
@@ -636,9 +632,7 @@ pmap_reference(struct pmap *pmap)
 {
 	DPRINTF(PDB_REFERENCE, ("pmap_reference(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_lock);
 	pmap->pm_refcount++;
-	simple_unlock(&pmap->pm_lock);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.8 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.9 2014/12/17 15:27:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -38,7 +38,6 @@ struct pmap {
 	paddr_t			pm_psegtab;	/* pa of above */
 
 	int			pm_refcount;	/* reference count */
-	struct simplelock	pm_lock;
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
