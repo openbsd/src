@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.170 2014/12/15 02:24:22 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.171 2014/12/17 06:05:52 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1393,14 +1393,12 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	} while (--i > 0);
 
 	/* update segment tables */
-	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
 	if (CTX_USABLE(pm,rp))
 		setsegmap(VSTOVA(me->me_vreg,me->me_vseg), seginval);
 	sp->sg_pmeg = seginval;
 
 	/* off old pmap chain */
 	TAILQ_REMOVE(&pm->pm_seglist, me, me_pmchain);
-	simple_unlock(&pm->pm_lock);
 	setcontext4(ctx);	/* done with old context */
 
 	/* onto new pmap chain; new pmap is already locked, if needed */
@@ -1569,14 +1567,12 @@ region_alloc(mh, newpm, newvr)
 	}
 
 	/* update region tables */
-	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
 	if (pm->pm_ctx)
 		setregmap(VRTOVA(me->me_vreg), reginval);
 	rp->rg_smeg = reginval;
 
 	/* off old pmap chain */
 	TAILQ_REMOVE(&pm->pm_reglist, me, me_pmchain);
-	simple_unlock(&pm->pm_lock);
 	setcontext4(ctx);	/* done with old context */
 
 	/* onto new pmap chain; new pmap is already locked, if needed */
@@ -2777,7 +2773,6 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	 * Initialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 #if defined(SUN4_MMU3L)
 	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
@@ -3121,7 +3116,6 @@ pmap_bootstrap4m(void *top)
 	 * Initialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 
 	/*
@@ -3565,7 +3559,6 @@ pmap_create()
 	pm->pm_regstore = urp = malloc(size, M_VMPMAP, M_WAITOK);
 	qzero((caddr_t)urp, size);
 	/* pm->pm_ctx = NULL; */
-	simple_lock_init(&pm->pm_lock);
 	pm->pm_refcount = 1;
 	pm->pm_regmap = urp;
 
@@ -3631,9 +3624,7 @@ pmap_destroy(pm)
 	if (pmapdebug & PDB_DESTROY)
 		printf("pmap_destroy(%p)\n", pm);
 #endif
-	simple_lock(&pm->pm_lock);
 	count = --pm->pm_refcount;
-	simple_unlock(&pm->pm_lock);
 	if (count == 0) {
 		pmap_release(pm);
 		free(pm, M_VMPMAP, 0);
@@ -3721,12 +3712,8 @@ void
 pmap_reference(pm)
 	struct pmap *pm;
 {
-
-	if (pm != NULL) {
-		simple_lock(&pm->pm_lock);
+	if (pm != NULL)
 		pm->pm_refcount++;
-		simple_unlock(&pm->pm_lock);
-	}
 }
 
 /*
@@ -3767,7 +3754,6 @@ pmap_remove(pm, va, endva)
 
 	ctx = getcontext();
 	s = splvm();		/* XXX conservative */
-	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
 		vr = VA_VREG(va);
@@ -3778,7 +3764,6 @@ pmap_remove(pm, va, endva)
 		if (pm->pm_regmap[vr].rg_nsegmap != 0)
 			(*rm)(pm, va, nva, vr, vs);
 	}
-	simple_unlock(&pm->pm_lock);
 	splx(s);
 	setcontext(ctx);
 }
@@ -3799,7 +3784,6 @@ pmap_kremove(va, len)
 
 	ctx = getcontext();
 	s = splvm();		/* XXX conservative */
-	simple_lock(pm->pm_lock);
 
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
@@ -3812,7 +3796,6 @@ pmap_kremove(va, len)
 			pmap_rmk(pm, va, nva, vr, vs);
 	}
 
-	simple_unlock(pm->pm_lock);
 	splx(s);
 	setcontext(ctx);
 }
@@ -4528,7 +4511,6 @@ pmap_protect4_4c(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	write_user_windows();
 	ctx = getcontext4();
 	s = splvm();
-	simple_lock(&pm->pm_lock);
 
 	for (va = sva; va < eva;) {
 		vr = VA_VREG(va);
@@ -4600,7 +4582,6 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 			}
 		}
 	}
-	simple_unlock(&pm->pm_lock);
 	splx(s);
 	setcontext4(ctx);
 }
@@ -4859,7 +4840,6 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	write_user_windows();
 	ctx = getcontext4m();
 	s = splvm();
-	simple_lock(&pm->pm_lock);
 
 	for (va = sva; va < eva;) {
 		vr = VA_VREG(va);
@@ -4916,7 +4896,6 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], npte);
 		}
 	}
-	simple_unlock(&pm->pm_lock);
 	splx(s);
 	setcontext4m(ctx);
 }
