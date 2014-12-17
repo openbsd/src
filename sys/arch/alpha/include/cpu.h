@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.53 2014/07/11 10:53:07 uebayasi Exp $ */
+/* $OpenBSD: cpu.h,v 1.54 2014/12/17 15:23:42 deraadt Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -185,7 +185,6 @@ struct cpu_info {
 #ifdef DIAGNOSTIC
 	int	ci_mutex_level;
 #endif
-	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	struct cpu_info *ci_next;
 	u_int32_t ci_randseed;
