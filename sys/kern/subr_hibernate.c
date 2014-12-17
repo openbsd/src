@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.109 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.110 2014/12/17 19:42:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -28,8 +28,11 @@
 #include <sys/buf.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <sys/atomic.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
+
 #include <machine/hibernate.h>
 
 /*

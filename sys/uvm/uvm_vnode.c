@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.86 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.87 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>

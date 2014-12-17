@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.56 2014/12/09 07:16:41 doug Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.57 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>

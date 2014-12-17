@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.74 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.75 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -71,8 +71,8 @@
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/atomic.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>

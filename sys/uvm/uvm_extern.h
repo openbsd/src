@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.127 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.128 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -165,7 +165,6 @@ typedef int		vm_prot_t;
 
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/lock.h>
 #include <sys/mman.h>
 
 #ifdef _KERNEL

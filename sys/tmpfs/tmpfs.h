@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.6 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.7 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/queue.h>
 #include <sys/stdint.h>
 #include <sys/rwlock.h>
+#include <sys/lock.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.118 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.119 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>

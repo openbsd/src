@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.41 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.42 2014/12/17 19:42:15 tedu Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
