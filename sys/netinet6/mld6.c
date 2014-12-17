@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.40 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.41 2014/12/17 09:57:13 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -418,7 +418,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	ip6->ip6_vfc |= IPV6_VERSION;
 	/* ip6_plen will be set later */
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
-	/* ip6_hlim will be set by im6o.im6o_multicast_hlim */
+	/* ip6_hlim will be set by im6o.im6o_hlim */
 	ip6->ip6_src = ia6 ? ia6->ia_addr.sin6_addr : in6addr_any;
 	ip6->ip6_dst = dst ? *dst : in6m->in6m_addr;
 
@@ -439,14 +439,14 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	/* construct multicast option */
 	bzero(&im6o, sizeof(im6o));
 	im6o.im6o_ifidx = ifp->if_index;
-	im6o.im6o_multicast_hlim = 1;
+	im6o.im6o_hlim = 1;
 
 	/*
 	 * Request loopback of the report if we are acting as a multicast
 	 * router, so that the process-level routing daemon can hear it.
 	 */
 #ifdef MROUTING
-	im6o.im6o_multicast_loop = (ip6_mrouter != NULL);
+	im6o.im6o_loop = (ip6_mrouter != NULL);
 #endif
 
 	/* increment output statictics */

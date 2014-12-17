@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.73 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.74 2014/12/17 09:57:13 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1654,8 +1654,8 @@ send_packet(struct vif *vifp, struct mbuf *m)
 		struct ip_moptions imo;
 
 		imo.imo_ifidx = vifp->v_ifp->if_index;
-		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
-		imo.imo_multicast_loop = 1;
+		imo.imo_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
+		imo.imo_loop = 1;
 
 		error = ip_output(m, NULL, NULL,
 		    IP_FORWARDING | IP_MULTICASTOPTS, &imo, NULL, 0);

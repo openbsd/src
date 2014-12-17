@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.164 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.165 2014/12/17 09:57:13 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -482,7 +482,7 @@ reroute:
 		ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
 	else if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		if (im6o != NULL)
-			ip6->ip6_hlim = im6o->im6o_multicast_hlim;
+			ip6->ip6_hlim = im6o->im6o_hlim;
 		else
 			ip6->ip6_hlim = ip6_defmcasthlim;
 	}
@@ -615,7 +615,7 @@ reroute:
 		}
 		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
 		if (in6m != NULL &&
-		    (im6o == NULL || im6o->im6o_multicast_loop)) {
+		    (im6o == NULL || im6o->im6o_loop)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
@@ -2330,8 +2330,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			return (ENOBUFS);
 		*im6op = im6o;
 		im6o->im6o_ifidx = 0;
-		im6o->im6o_multicast_hlim = ip6_defmcasthlim;
-		im6o->im6o_multicast_loop = IPV6_DEFAULT_MULTICAST_LOOP;
+		im6o->im6o_hlim = ip6_defmcasthlim;
+		im6o->im6o_loop = IPV6_DEFAULT_MULTICAST_LOOP;
 		LIST_INIT(&im6o->im6o_memberships);
 	}
 
@@ -2376,9 +2376,9 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		if (optval < -1 || optval >= 256)
 			error = EINVAL;
 		else if (optval == -1)
-			im6o->im6o_multicast_hlim = ip6_defmcasthlim;
+			im6o->im6o_hlim = ip6_defmcasthlim;
 		else
-			im6o->im6o_multicast_hlim = optval;
+			im6o->im6o_hlim = optval;
 		break;
 	    }
 
@@ -2396,7 +2396,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			error = EINVAL;
 			break;
 		}
-		im6o->im6o_multicast_loop = loop;
+		im6o->im6o_loop = loop;
 		break;
 
 	case IPV6_JOIN_GROUP:
@@ -2573,8 +2573,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 	 * structure.
 	 */
 	if (im6o->im6o_ifidx == 0 &&
-	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
-	    im6o->im6o_multicast_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
+	    im6o->im6o_hlim == ip6_defmcasthlim &&
+	    im6o->im6o_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
 	    LIST_EMPTY(&im6o->im6o_memberships)) {
 		free(*im6op, M_IPMOPTS, 0);
 		*im6op = NULL;
@@ -2610,7 +2610,7 @@ ip6_getmoptions(int optname, struct ip6_moptions *im6o, struct mbuf **mp)
 		if (im6o == NULL)
 			*hlim = ip6_defmcasthlim;
 		else
-			*hlim = im6o->im6o_multicast_hlim;
+			*hlim = im6o->im6o_hlim;
 		return (0);
 
 	case IPV6_MULTICAST_LOOP:
@@ -2619,7 +2619,7 @@ ip6_getmoptions(int optname, struct ip6_moptions *im6o, struct mbuf **mp)
 		if (im6o == NULL)
 			*loop = ip6_defmcasthlim;
 		else
-			*loop = im6o->im6o_multicast_loop;
+			*loop = im6o->im6o_loop;
 		return (0);
 
 	default:

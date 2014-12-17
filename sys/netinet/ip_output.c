@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.275 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.276 2014/12/17 09:57:13 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ reroute:
 		 * See if the caller provided any multicast options
 		 */
 		if (imo != NULL)
-			ip->ip_ttl = imo->imo_multicast_ttl;
+			ip->ip_ttl = imo->imo_ttl;
 		else
 			ip->ip_ttl = IP_DEFAULT_MULTICAST_TTL;
 
@@ -428,7 +428,7 @@ reroute:
 
 		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
 		if (inm != NULL &&
-		   (imo == NULL || imo->imo_multicast_loop)) {
+		   (imo == NULL || imo->imo_loop)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
@@ -1678,8 +1678,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		    M_WAITOK|M_ZERO);
 		*imop = imo;
 		imo->imo_ifidx = 0;
-		imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
-		imo->imo_multicast_loop = IP_DEFAULT_MULTICAST_LOOP;
+		imo->imo_ttl = IP_DEFAULT_MULTICAST_TTL;
+		imo->imo_loop = IP_DEFAULT_MULTICAST_LOOP;
 		imo->imo_num_memberships = 0;
 		imo->imo_max_memberships = IP_MIN_MEMBERSHIPS;
 		imo->imo_membership = immp;
@@ -1732,7 +1732,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			error = EINVAL;
 			break;
 		}
-		imo->imo_multicast_ttl = *(mtod(m, u_char *));
+		imo->imo_ttl = *(mtod(m, u_char *));
 		break;
 
 	case IP_MULTICAST_LOOP:
@@ -1745,7 +1745,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			error = EINVAL;
 			break;
 		}
-		imo->imo_multicast_loop = loop;
+		imo->imo_loop = loop;
 		break;
 
 	case IP_ADD_MEMBERSHIP:
@@ -1922,8 +1922,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	 * If all options have default values, no need to keep the data.
 	 */
 	if (imo->imo_ifidx == 0 &&
-	    imo->imo_multicast_ttl == IP_DEFAULT_MULTICAST_TTL &&
-	    imo->imo_multicast_loop == IP_DEFAULT_MULTICAST_LOOP &&
+	    imo->imo_ttl == IP_DEFAULT_MULTICAST_TTL &&
+	    imo->imo_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
 		free(imo->imo_membership , M_IPMOPTS, 0);
 		free(*imop, M_IPMOPTS, sizeof(**imop));
@@ -1965,14 +1965,14 @@ ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf **mp)
 		ttl = mtod(*mp, u_char *);
 		(*mp)->m_len = 1;
 		*ttl = (imo == NULL) ? IP_DEFAULT_MULTICAST_TTL
-				     : imo->imo_multicast_ttl;
+				     : imo->imo_ttl;
 		return (0);
 
 	case IP_MULTICAST_LOOP:
 		loop = mtod(*mp, u_char *);
 		(*mp)->m_len = 1;
 		*loop = (imo == NULL) ? IP_DEFAULT_MULTICAST_LOOP
-				      : imo->imo_multicast_loop;
+				      : imo->imo_loop;
 		return (0);
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.18 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.19 2014/12/17 09:57:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -232,10 +232,10 @@ vxlan_multicast_join(struct ifnet *ifp, struct sockaddr_in *src,
 	imo->imo_num_memberships++;
 	imo->imo_ifidx = mifp->if_index;
 	if (sc->sc_ttl > 0)
-		imo->imo_multicast_ttl = sc->sc_ttl;
+		imo->imo_ttl = sc->sc_ttl;
 	else
-		imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
-	imo->imo_multicast_loop = 0;
+		imo->imo_ttl = IP_DEFAULT_MULTICAST_TTL;
+	imo->imo_loop = 0;
 
 	/*
 	 * Use interface hooks to track any changes on the interface

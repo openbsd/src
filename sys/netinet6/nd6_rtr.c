@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.93 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.94 2014/12/17 09:57:13 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -203,8 +203,8 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	im6o.im6o_ifidx = ifp->if_index;
-	im6o.im6o_multicast_hlim = 255;
-	im6o.im6o_multicast_loop = 0;
+	im6o.im6o_hlim = 255;
+	im6o.im6o_loop = 0;
 
 	icmp6len = sizeof(*rs);
 	m->m_pkthdr.len = m->m_len = sizeof(*ip6) + icmp6len;

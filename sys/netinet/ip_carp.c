@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.241 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.242 2014/12/17 09:57:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -735,7 +735,7 @@ carp_clone_create(ifc, unit)
 	sc->sc_advbase = CARP_DFLTINTV;
 	sc->sc_naddrs = sc->sc_naddrs6 = 0;
 #ifdef INET6
-	sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
+	sc->sc_im6o.im6o_hlim = CARP_DFLTTL;
 #endif /* INET6 */
 	sc->sc_imo.imo_membership = (struct in_multi **)malloc(
 	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
@@ -1931,8 +1931,8 @@ carp_join_multicast(struct carp_softc *sc)
 	imo->imo_membership[0] = imm;
 	imo->imo_num_memberships = 1;
 	imo->imo_ifidx = sc->sc_if.if_index;
-	imo->imo_multicast_ttl = CARP_DFLTTL;
-	imo->imo_multicast_loop = 0;
+	imo->imo_ttl = CARP_DFLTTL;
+	imo->imo_loop = 0;
 	return (0);
 }
 

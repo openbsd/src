@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.47 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.48 2014/12/17 09:57:13 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -642,16 +642,16 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 	m->m_len += sizeof(struct ip);
 
 	imo.imo_ifidx = inm->inm_ifidx;
-	imo.imo_multicast_ttl = 1;
+	imo.imo_ttl = 1;
 
 	/*
 	 * Request loopback of the report if we are acting as a multicast
 	 * router, so that the process-level routing daemon can hear it.
 	 */
 #ifdef MROUTING
-	imo.imo_multicast_loop = (ip_mrouter != NULL);
+	imo.imo_loop = (ip_mrouter != NULL);
 #else
-	imo.imo_multicast_loop = 0;
+	imo.imo_loop = 0;
 #endif /* MROUTING */
 
 	ip_output(m, router_alert, NULL, IP_MULTICASTOPTS, &imo, NULL, 0);

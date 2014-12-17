@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.213 2014/12/17 09:45:59 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.214 2014/12/17 09:57:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1402,8 +1402,8 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 			imo->imo_num_memberships++;
 			imo->imo_ifidx = sc->sc_sync_if->if_index;
-			imo->imo_multicast_ttl = PFSYNC_DFLTTL;
-			imo->imo_multicast_loop = 0;
+			imo->imo_ttl = PFSYNC_DFLTTL;
+			imo->imo_loop = 0;
 		}
 
 		ip = &sc->sc_template;
