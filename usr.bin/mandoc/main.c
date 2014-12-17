@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.112 2014/12/15 18:04:32 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.113 2014/12/17 18:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,6 +103,7 @@ main(int argc, char *argv[])
 	struct manpaths	 paths;
 	char		*auxpaths;
 	char		*defos;
+	unsigned char	*uc;
 	struct manpage	*res, *resp;
 	char		*conf_file, *defpaths;
 	size_t		 isec, i, sz;
@@ -283,11 +284,11 @@ main(int argc, char *argv[])
 				argv = help_argv;
 				argc = 1;
 			}
-		} else if (argv[0] != NULL && (
-		    (isdigit((unsigned char)argv[0][0]) &&
-		     (argv[0][1] == '\0' || !strcmp(argv[0], "3p"))) ||
-		    (argv[0][0] == 'n' && argv[0][1] == '\0'))) {
-			search.sec = argv[0];
+		} else if (((uc = argv[0]) != NULL) &&
+		    ((isdigit(uc[0]) && (uc[1] == '\0' ||
+		      (isalpha(uc[1]) && uc[2] == '\0'))) ||
+		     (uc[0] == 'n' && uc[1] == '\0'))) {
+			search.sec = uc;
 			argv++;
 			argc--;
 		}
