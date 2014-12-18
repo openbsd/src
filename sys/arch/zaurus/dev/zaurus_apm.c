@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.28 2014/09/20 09:28:24 kettenis Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.29 2014/12/18 20:01:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -657,6 +657,8 @@ zapm_poweroff(void)
 	s = splhigh();
 	config_suspend_all(DVACT_SUSPEND);
 
+	suspend_randomness();
+
 	/* XXX
 	 * Flag to disk drivers that they should "power down" the disk
 	 * when we get to DVACT_POWERDOWN.
@@ -687,6 +689,7 @@ zapm_poweroff(void)
 	config_suspend_all(DVACT_RESUME);
 	splx(s);
 
+	resume_randomness();		/* force RNG upper level reseed */
 	bufq_restart();
 
 	config_suspend_all(DVACT_WAKEUP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.25 2014/10/31 07:59:27 jsg Exp $	*/
+/*	$OpenBSD: apm.c,v 1.26 2014/12/18 20:01:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -383,6 +383,8 @@ apm_suspend(int state)
 
 	rv = config_suspend_all(DVACT_SUSPEND);
 
+	suspend_randomness();
+
 #ifdef HIBERNATE
 	if (state == APM_IOC_HIBERNATE) {
 		uvm_pmr_zero_everything();
@@ -415,6 +417,7 @@ apm_suspend(int state)
 	(void)enableintr();
 	splx(s);
 
+	resume_randomness();		/* force RNG upper level reseed */
 	bufq_restart();
 
 	config_suspend_all(DVACT_WAKEUP);
