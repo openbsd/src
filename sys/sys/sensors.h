@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.33 2013/11/04 02:41:49 jsg Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.34 2014/12/18 20:30:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -31,27 +31,27 @@
 
 /* Sensor types */
 enum sensor_type {
-	SENSOR_TEMP,			/* temperature (muK) */
+	SENSOR_TEMP,			/* temperature (uK) */
 	SENSOR_FANRPM,			/* fan revolution speed */
-	SENSOR_VOLTS_DC,		/* voltage (muV DC) */
-	SENSOR_VOLTS_AC,		/* voltage (muV AC) */
+	SENSOR_VOLTS_DC,		/* voltage (uV DC) */
+	SENSOR_VOLTS_AC,		/* voltage (uV AC) */
 	SENSOR_OHMS,			/* resistance */
-	SENSOR_WATTS,			/* power (muW) */
-	SENSOR_AMPS,			/* current (muA) */
-	SENSOR_WATTHOUR,		/* power capacity */
-	SENSOR_AMPHOUR,			/* power capacity */
+	SENSOR_WATTS,			/* power (uW) */
+	SENSOR_AMPS,			/* current (uA) */
+	SENSOR_WATTHOUR,		/* power capacity (uWh) */
+	SENSOR_AMPHOUR,			/* power capacity (uAh) */
 	SENSOR_INDICATOR,		/* boolean indicator */
 	SENSOR_INTEGER,			/* generic integer value */
-	SENSOR_PERCENT,			/* percent */
-	SENSOR_LUX,			/* illuminance (mulx) */
+	SENSOR_PERCENT,			/* percent (m%) */
+	SENSOR_LUX,			/* illuminance (ulx) */
 	SENSOR_DRIVE,			/* disk */
 	SENSOR_TIMEDELTA,		/* system time error (nSec) */
 	SENSOR_HUMIDITY,		/* humidity (m%RH) */
-	SENSOR_FREQ,			/* frequency (muHz) */
-	SENSOR_ANGLE,			/* angle (mudegrees) */
-	SENSOR_DISTANCE,		/* distance (muMeter) */
+	SENSOR_FREQ,			/* frequency (uHz) */
+	SENSOR_ANGLE,			/* angle (uDegrees) */
+	SENSOR_DISTANCE,		/* distance (uMeter) */
 	SENSOR_PRESSURE,		/* pressure (mPa) */
-	SENSOR_ACCEL,			/* acceleration (mu m/s^2) */
+	SENSOR_ACCEL,			/* acceleration (u m/s^2) */
 	SENSOR_MAX_TYPES
 };
 
