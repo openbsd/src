@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.113 2014/12/17 18:45:00 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.114 2014/12/18 20:45:50 jmc Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -451,8 +451,10 @@ usage(enum argmode argmode)
 		    "\t      [-Toutput] [-Wlevel] [file ...]\n", stderr);
 		break;
 	case ARG_NAME:
-		fputs("usage: man [-acfhklVw] [-C file] "
-		    "[-M path] [-m path] [-S arch] [-s section]\n"
+		fputs("usage: man [-acfhklVw] [-C file] [-I os=name] "
+		    "[-K encoding] [-M path] [-m path]\n"
+		    "\t   [-O option=value] [-S subsection] [-s section] "
+		    "[-T output] [-W level]\n"
 		    "\t   [section] name ...\n", stderr);
 		break;
 	case ARG_WORD:
