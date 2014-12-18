@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.41 2013/01/17 09:06:35 markus Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.42 2014/12/18 19:26:46 tedu Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -18,13 +18,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/hash.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <stdlib.h>
 #include <string.h>
+#include <siphash.h>
 
 #include "ospf.h"
 #include "ospfd.h"
@@ -528,6 +528,8 @@ struct lsa_cache {
 	u_int32_t		 hashmask;
 } lsacache;
 
+SIPHASH_KEY lsacachekey;
+
 struct lsa_ref		*lsa_cache_look(struct lsa_hdr *);
 
 void
@@ -543,8 +545,15 @@ lsa_cache_init(u_int32_t hashsize)
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&lsacache.hashtbl[i]);
+	arc4random_buf(&lsacachekey, sizeof(lsacachekey));
 
 	lsacache.hashmask = hs - 1;
+}
+
+uint32_t
+lsa_hash_hdr(const struct lsa_hdr *hdr)
+{
+	return SipHash24(&lsacachekey, hdr, sizeof(*hdr));
 }
 
 struct lsa_ref *
@@ -573,8 +582,7 @@ lsa_cache_add(void *data, u_int16_t len)
 	ref->len = len;
 	ref->refcnt = 1;
 
-	head = &lsacache.hashtbl[hash32_buf(&ref->hdr, sizeof(ref->hdr),
-	    HASHINIT) & lsacache.hashmask];
+	head = &lsacache.hashtbl[lsa_hash_hdr(&ref->hdr) & lsacache.hashmask];
 	LIST_INSERT_HEAD(head, ref, entry);
 	return (ref);
 }
@@ -612,8 +620,7 @@ lsa_cache_look(struct lsa_hdr *lsa_hdr)
 	struct lsa_cache_head	*head;
 	struct lsa_ref		*ref;
 
-	head = &lsacache.hashtbl[hash32_buf(lsa_hdr, sizeof(*lsa_hdr),
-	    HASHINIT) & lsacache.hashmask];
+	head = &lsacache.hashtbl[lsa_hash_hdr(lsa_hdr) & lsacache.hashmask];
 
 	LIST_FOREACH(ref, head, entry) {
 		if (memcmp(&ref->hdr, lsa_hdr, sizeof(*lsa_hdr)) == 0)
