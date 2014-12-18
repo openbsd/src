@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.23 2014/12/18 19:22:21 deraadt Exp $ */
+/*	$OpenBSD: vmt.c,v 1.24 2014/12/18 19:31:37 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -286,7 +286,8 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* don't know if this is important at all yet */
-	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 1") != 0) {
+	if (vm_rpc_send_rpci_tx(sc,
+	    "tools.capability.hgfs_server toolbox 1") != 0) {
 		printf(": failed to set HGFS server capability\n");
 		goto free;
 	}
@@ -376,21 +377,25 @@ vmt_update_guest_info(struct vmt_softc *sc)
 	}
 
 	/*
-	 * we're supposed to pass the full network address information back here,
-	 * but that involves xdr (sunrpc) data encoding, which seems a bit unreasonable.
+	 * We're supposed to pass the full network address information back
+	 * here, but that involves xdr (sunrpc) data encoding, which seems a
+	 * bit unreasonable.
 	 */
 
 	if (sc->sc_set_guest_os == 0) {
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s %s %s",
-		    VM_GUEST_INFO_OS_NAME_FULL, ostype, osrelease, osversion) != 0) {
+		    VM_GUEST_INFO_OS_NAME_FULL,
+		    ostype, osrelease, osversion) != 0) {
 			printf("%s: unable to set full guest OS", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 
 		/*
-		 * host doesn't like it if we send an OS name it doesn't recognise,
-		 * so use the closest match, which happens to be FreeBSD.
+		 * Host doesn't like it if we send an OS name it doesn't
+		 * recognise, so use the closest match, which happens
+		 * to be FreeBSD.
 		 */
+
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s",
 		    VM_GUEST_INFO_OS_NAME, "FreeBSD") != 0) {
 			printf("%s: unable to set guest OS", DEVNAME(sc));
@@ -477,7 +482,8 @@ vmt_shutdown(void *arg)
 {
 	struct vmt_softc *sc = arg;
 
-	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 0") != 0) {
+	if (vm_rpc_send_rpci_tx(sc,
+	    "tools.capability.hgfs_server toolbox 0") != 0) {
 		printf("%s: failed to disable hgfs server capability\n",
 		    DEVNAME(sc));
 	}
@@ -505,12 +511,14 @@ vmt_tclo_tick(void *xarg)
 	    sc->sc_tclo_rpc.cookie1 == 0 &&
 	    sc->sc_tclo_rpc.cookie2 == 0) {
 		if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
-			printf("%s: unable to reopen TCLO channel\n", DEVNAME(sc));
+			printf("%s: unable to reopen TCLO channel\n",
+			    DEVNAME(sc));
 			timeout_add_sec(&sc->sc_tclo_tick, 15);
 			return;
 		}
 
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_RESET_REPLY) != 0) {
 			printf("%s: failed to send reset reply\n", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 			goto out;
@@ -562,7 +570,8 @@ vmt_tclo_tick(void *xarg)
 			goto out;
 		}
 
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_RESET_REPLY) != 0) {
 			printf("%s: failed to send reset reply\n", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
@@ -571,7 +580,8 @@ vmt_tclo_tick(void *xarg)
 
 		vmt_update_guest_info(sc);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			printf("%s: error sending ping response\n", DEVNAME(sc));
+			printf("%s: error sending ping response\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 
@@ -582,7 +592,8 @@ vmt_tclo_tick(void *xarg)
 	} else if (strcmp(sc->sc_rpc_buf, "OS_PowerOn") == 0) {
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			printf("%s: error sending poweron response\n", DEVNAME(sc));
+			printf("%s: error sending poweron response\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
@@ -593,7 +604,8 @@ vmt_tclo_tick(void *xarg)
 
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			printf("%s: error sending suspend response\n", DEVNAME(sc));
+			printf("%s: error sending suspend response\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
@@ -626,7 +638,8 @@ vmt_tclo_tick(void *xarg)
 		}
 
 		/* the trailing space is apparently important here */
-		if (vm_rpc_send_rpci_tx(sc, "tools.capability.statechange ") != 0) {
+		if (vm_rpc_send_rpci_tx(sc,
+		    "tools.capability.statechange ") != 0) {
 			printf("%s: unable to send statechange capability\n",
 			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
@@ -638,15 +651,16 @@ vmt_tclo_tick(void *xarg)
 
 		if (vm_rpc_send_rpci_tx(sc, "tools.set.version %u",
 		    VM_VERSION_UNMANAGED) != 0) {
-			printf("%s: unable to set tools version\n", DEVNAME(sc));
+			printf("%s: unable to set tools version\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 
 		vmt_update_guest_uptime(sc);
 
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			printf("%s: error sending capabilities_register response\n",
-			    DEVNAME(sc));
+			printf("%s: error sending capabilities_register"
+			    " response\n", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
@@ -660,14 +674,15 @@ vmt_tclo_tick(void *xarg)
 
 			/* skip loopback */
 			if (strncmp(iface->if_xname, "lo", 2) == 0 &&
-			    iface->if_xname[2] >= '0' && iface->if_xname[2] <= '9') {
+			    iface->if_xname[2] >= '0' &&
+			    iface->if_xname[2] <= '9') {
 				continue;
 			}
 
-			TAILQ_FOREACH(iface_addr, &iface->if_addrlist, ifa_list) {
-				if (iface_addr->ifa_addr->sa_family != AF_INET) {
+			TAILQ_FOREACH(iface_addr, &iface->if_addrlist,
+			    ifa_list) {
+				if (iface_addr->ifa_addr->sa_family != AF_INET)
 					continue;
-				}
 
 				guest_ip = satosin(iface_addr->ifa_addr);
 				break;
@@ -685,21 +700,23 @@ vmt_tclo_tick(void *xarg)
 				sc->sc_rpc_error = 1;
 			}
 
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-				printf("%s: error sending broadcastIP response\n",
-				    DEVNAME(sc));
+			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			    VM_RPC_REPLY_OK) != 0) {
+				printf("%s: error sending broadcastIP"
+				    " response\n", DEVNAME(sc));
 				sc->sc_rpc_error = 1;
 			}
 		} else {
 			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
 			    VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
-				printf("%s: error sending broadcastIP error response\n",
-				    DEVNAME(sc));
+				printf("%s: error sending broadcastIP"
+				    " error response\n", DEVNAME(sc));
 				sc->sc_rpc_error = 1;
 			}
 		}
 	} else {
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR) != 0) {
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_REPLY_ERROR) != 0) {
 			printf("%s: error sending unknown command reply\n",
 			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
@@ -1002,7 +1019,8 @@ vm_rpci_response_successful(struct vmt_softc *sc)
 }
 
 int
-vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t length)
+vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf,
+    uint32_t length)
 {
 	struct vm_rpc rpci;
 	u_int32_t rlen;
