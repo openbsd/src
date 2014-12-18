@@ -18,4 +18,9 @@ middle text
 .It Ta ignored arguments
 indented text
 .El
+middle text
+.Bl -column "a" "b" -offset indent
+.It a Ta b
+.El
+.It ignored arguments
 final text

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.114 2014/12/18 03:09:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.115 2014/12/18 20:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1557,7 +1557,8 @@ phrase_ta(MACRO_PROT_ARGS)
 	/* Make sure we are in a column list or ignore this macro. */
 
 	n = mdoc->last;
-	while (n != NULL && n->tok != MDOC_Bl)
+	while (n != NULL &&
+	    (n->tok != MDOC_Bl || n->flags & (MDOC_VALID | MDOC_BREAK)))
 		n = n->parent;
 	if (n == NULL || n->norm->Bl.type != LIST_column) {
 		mandoc_msg(MANDOCERR_TA_STRAY, mdoc->parse,
