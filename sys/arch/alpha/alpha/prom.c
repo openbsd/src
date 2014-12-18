@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.14 2014/12/18 10:45:29 dlg Exp $ */
+/* $OpenBSD: prom.c,v 1.15 2014/12/18 10:46:45 dlg Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -82,8 +82,8 @@ init_prom_interface(rpb)
 
 	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
 
-        prom_dispatch_v.routine_arg = c->crb_v_dispatch;
-        prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
+	prom_dispatch_v.routine_arg = c->crb_v_dispatch;
+	prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 }
 
 void
@@ -177,7 +177,7 @@ promcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-        prom_return_t ret;
+	prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
 
 	prom_enter();	/* lock and map prom */
@@ -199,15 +199,15 @@ int
 promcngetc(dev)
 	dev_t dev;
 {
-        prom_return_t ret;
+	prom_return_t ret;
 
-        for (;;) {
+	for (;;) {
 		prom_enter();
-                ret.bits = prom_getc(alpha_console);
+		ret.bits = prom_getc(alpha_console);
 		prom_leave();
-                if (ret.u.status == 0 || ret.u.status == 1)
-                        return (ret.u.retval);
-        }
+		if (ret.u.status == 0 || ret.u.status == 1)
+			return (ret.u.retval);
+	}
 }
 
 /*
@@ -220,7 +220,7 @@ promcnlookc(dev, cp)
 	dev_t dev;
 	char *cp;
 {
-        prom_return_t ret;
+	prom_return_t ret;
 
 	prom_enter();
 	ret.bits = prom_getc(alpha_console);
