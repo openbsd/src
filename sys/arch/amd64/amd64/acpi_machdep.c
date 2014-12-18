@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.66 2014/12/08 07:12:37 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.67 2014/12/18 05:33:48 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -225,19 +225,22 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	 */
 	KASSERT(acpi_resume_end - acpi_real_mode_resume < PAGE_SIZE);
 
-	memcpy((caddr_t)ACPI_TRAMPOLINE, acpi_real_mode_resume,
-	    acpi_resume_end - acpi_real_mode_resume);
-
+	/* Map ACPI tramp code and data pages RW for copy */
+	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE,
+	    PROT_READ | PROT_WRITE);
 	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
 	    PROT_READ | PROT_WRITE);
+
+	memcpy((caddr_t)ACPI_TRAMPOLINE, acpi_real_mode_resume,
+	    acpi_resume_end - acpi_real_mode_resume);
 	memcpy((caddr_t)ACPI_TRAMP_DATA, acpi_tramp_data_start,
 	    acpi_tramp_data_end - acpi_tramp_data_start);
 
-	/* Remap trampoline code page RX */
-	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE,
-	    PROT_READ | PROT_EXEC);
-
 	acpi_pdirpa = tramp_pdirpa;
+
+	/* Unmap, will be remapped in acpi_sleep_cpu */
+	pmap_kremove(ACPI_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(ACPI_TRAMP_DATA, PAGE_SIZE);
 }
 
 void
@@ -300,6 +303,11 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
+	/* Map trampoline and data page */
+	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE, PROT_READ | PROT_EXEC);
+	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
+		PROT_READ | PROT_WRITE);
+
 	/*
 	 * Copy the current cpu registers into a safe place for resume.
 	 * acpi_savecpu actually returns twice - once in the suspend
@@ -340,6 +348,9 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	sc->sc_facs->wakeup_vector = 0;
 	if (sc->sc_facs->length > 32 && sc->sc_facs->version >= 1)
 		sc->sc_facs->x_wakeup_vector = 0;
+
+	pmap_kremove(ACPI_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(ACPI_TRAMP_DATA, PAGE_SIZE);
 
 	return (0);
 }

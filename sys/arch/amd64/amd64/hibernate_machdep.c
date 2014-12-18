@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.33 2014/12/08 07:12:37 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.34 2014/12/18 05:33:48 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -435,6 +435,10 @@ hibernate_quiesce_cpus(void)
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
+	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE, PROT_READ | PROT_EXEC);
+	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
+		PROT_READ | PROT_WRITE);
+
 	for (i = 0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
@@ -450,5 +454,8 @@ hibernate_quiesce_cpus(void)
 
 	/* Wait a bit for the APs to park themselves */
 	delay(500000);
+
+	pmap_kremove(ACPI_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(ACPI_TRAMP_DATA, PAGE_SIZE);
 }
 #endif /* MULTIPROCESSOR */

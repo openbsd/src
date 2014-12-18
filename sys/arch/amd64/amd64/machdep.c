@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.202 2014/12/15 01:53:45 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.203 2014/12/18 05:33:48 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1176,6 +1176,14 @@ void
 map_tramps(void)
 {
 	struct pmap *kmp = pmap_kernel();
+	extern paddr_t tramp_pdirpa;
+#ifdef MULTIPROCESSOR
+	extern u_char cpu_spinup_trampoline[];
+	extern u_char cpu_spinup_trampoline_end[];
+	extern u_char mp_tramp_data_start[];
+	extern u_char mp_tramp_data_end[];
+	extern u_int32_t mp_pdirpa;
+#endif
 
 	pmap_kenter_pa(lo32_vaddr, lo32_paddr, PROT_READ | PROT_WRITE);
 
@@ -1193,16 +1201,31 @@ map_tramps(void)
 	pmap_kremove(lo32_vaddr, PAGE_SIZE);
 
 #ifdef MULTIPROCESSOR
-	/* Map trampoline code page RW (to copy code) */
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
-	    (paddr_t)MP_TRAMPOLINE,	/* physical */
-	    PROT_READ | PROT_WRITE);	/* protection */
-#endif /* MULTIPROCESSOR */
+	/* Map MP tramp code and data pages RW for copy */
+	pmap_kenter_pa(MP_TRAMPOLINE, MP_TRAMPOLINE,
+	    PROT_READ | PROT_WRITE);
 
-	/* Map trampoline code page RW (to copy code) */
-	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE, /* virtual */
-	    (paddr_t)ACPI_TRAMPOLINE,	/* physical */
-	    PROT_READ | PROT_WRITE);	/* protection */
+	pmap_kenter_pa(MP_TRAMP_DATA, MP_TRAMP_DATA,
+	    PROT_READ | PROT_WRITE);
+
+	memcpy((caddr_t)MP_TRAMPOLINE,
+	    cpu_spinup_trampoline,
+	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
+
+	memcpy((caddr_t)MP_TRAMP_DATA,
+		mp_tramp_data_start,
+		mp_tramp_data_end - mp_tramp_data_start);
+
+	/*
+	 * We need to patch this after we copy the tramp data,
+	 * the symbol points into the copied tramp data page.
+	 */
+	mp_pdirpa = tramp_pdirpa;
+
+	/* Unmap, will be remapped in cpu_start_secondary */
+	pmap_kremove(MP_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(MP_TRAMP_DATA, PAGE_SIZE);
+#endif /* MULTIPROCESSOR */
 }
 #endif
 

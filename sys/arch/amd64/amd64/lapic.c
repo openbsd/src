@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.35 2014/11/20 06:51:41 mlarkin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.36 2014/12/18 05:33:48 mlarkin Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -111,10 +111,6 @@ lapic_map(paddr_t lapic_base)
 	pte = kvtopte(va);
 	*pte = lapic_base | PG_RW | PG_V | PG_N | PG_G | pg_nx;
 	invlpg(va);
-
-#ifdef MULTIPROCESSOR
-	cpu_init_first();
-#endif
 
 	lapic_tpr = s;
 	enable_intr();

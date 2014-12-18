@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.74 2014/12/15 01:53:45 tedu Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.75 2014/12/18 05:33:48 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -219,18 +219,6 @@ void    	cpu_hatch(void *);
 void    	cpu_boot_secondary(struct cpu_info *ci);
 void    	cpu_start_secondary(struct cpu_info *ci);
 void		cpu_copy_trampoline(void);
-
-/*
- * Runs once per boot once multiprocessor goo has been detected and
- * the local APIC on the boot processor has been mapped.
- *
- * Called from lapic_boot_init() (from mpbios_scan()).
- */
-void
-cpu_init_first(void)
-{
-	cpu_copy_trampoline();
-}
 #endif
 
 int
@@ -625,6 +613,9 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	ci->ci_flags |= CPUF_AP;
 
+        pmap_kenter_pa(MP_TRAMPOLINE, MP_TRAMPOLINE, PROT_READ | PROT_EXEC);
+        pmap_kenter_pa(MP_TRAMP_DATA, MP_TRAMP_DATA, PROT_READ | PROT_WRITE);
+
 	CPU_STARTUP(ci);
 
 	/*
@@ -654,6 +645,9 @@ cpu_start_secondary(struct cpu_info *ci)
 	}
 
 	CPU_START_CLEANUP(ci);
+
+	pmap_kremove(MP_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(MP_TRAMP_DATA, PAGE_SIZE);
 }
 
 void
@@ -813,9 +807,9 @@ cpu_copy_trampoline(void)
 	 */
 	mp_pdirpa = tramp_pdirpa;
 
-	/* Remap the trampoline RX */
-	pmap_kenter_pa(MP_TRAMPOLINE, MP_TRAMPOLINE,
-		PROT_READ | PROT_EXEC);
+	/* Unmap, will be remapped in cpu_start_secondary */
+	pmap_kremove(MP_TRAMPOLINE, PAGE_SIZE);
+	pmap_kremove(MP_TRAMP_DATA, PAGE_SIZE);
 }
 
 
