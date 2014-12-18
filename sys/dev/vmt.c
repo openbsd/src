@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.21 2014/12/18 16:30:29 deraadt Exp $ */
+/*	$OpenBSD: vmt.c,v 1.22 2014/12/18 19:18:22 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -492,6 +492,10 @@ vmt_tclo_tick(void *xarg)
 	struct vmt_softc *sc = xarg;
 	u_int32_t rlen;
 	u_int16_t ack;
+	int delay;
+
+	/* By default, poll every second for new messages */
+	delay = 1;
 
 	/* reopen tclo channel if it's currently closed */
 	if (sc->sc_tclo_rpc.channel == 0 &&
@@ -540,6 +544,9 @@ vmt_tclo_tick(void *xarg)
 		goto out;
 	}
 	sc->sc_tclo_ping = 0;
+
+	/* The VM host can queue multiple messages; continue without delay */
+	delay = 0;
 
 	if (strcmp(sc->sc_rpc_buf, "reset") == 0) {
 
@@ -681,8 +688,13 @@ vmt_tclo_tick(void *xarg)
 		}
 	}
 
+	if (sc->sc_rpc_error == 1) {
+		/* On error, give time to recover and wait a second */
+		delay = 1;
+	}
+
 out:
-	timeout_add_sec(&sc->sc_tclo_tick, 1);
+	timeout_add_sec(&sc->sc_tclo_tick, delay);
 }
 
 #define BACKDOOR_OP_I386(op, frame)		\
