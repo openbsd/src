@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.120 2014/12/18 20:59:21 tedu Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.121 2014/12/18 21:00:12 tedu Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -663,7 +663,7 @@ nfsm_mbuftouio(struct mbuf **mrep, struct uio *uiop, int siz, caddr_t *dpos)
 			}
 			xfer = (left > len) ? len : left;
 			if (uiop->uio_segflg == UIO_SYSSPACE)
-				bcopy(mbufcp, uiocp, xfer);
+				memcpy(uiocp, mbufcp, xfer);
 			else
 				copyout(mbufcp, uiocp, xfer);
 			left -= xfer;
