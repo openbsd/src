@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.15 2014/12/08 10:46:14 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.16 2014/12/18 15:29:30 krw Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ struct arpcom;
 struct rt_addrinfo;
 struct ifnet;
 struct hfsc_if;
+struct task;
 
 /*
  * Structure describing a `cloning' interface.
@@ -149,6 +150,7 @@ struct ifnet {				/* and the entries */
 	u_short	if_rtlabelid;		/* next route label */
 	u_int8_t if_priority;
 	struct	timeout *if_slowtimo;	/* watchdog timeout */
+	struct	task *if_linkstatetask; /* task to do route updates */
 
 	/* procedure handles */
 					/* output routine (enqueue) */
