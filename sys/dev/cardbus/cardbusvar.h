@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.19 2010/03/27 23:36:36 jsg Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.20 2014/12/18 10:51:35 mpi Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -136,8 +136,7 @@ struct cardbus_softc {
 #define PCCARD_XXV  0x04
 #define PCCARD_YYV  0x08
 	int sc_poweron_func;
-	struct cardbus_devfunc *sc_funcs;
-					/* list of cardbus device functions */
+	struct cardbus_devfunc *sc_funcs[8];	/* cardbus device functions */
 };
 
 

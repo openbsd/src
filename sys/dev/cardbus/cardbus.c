@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.48 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.49 2014/12/18 10:51:35 mpi Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -129,8 +129,6 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cf = cba->cba_cf;
 	sc->sc_rbus_iot = cba->cba_rbus_iot;
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
-
-	sc->sc_funcs = NULL;
 
 	cdstatus = 0;
 }
@@ -378,7 +376,6 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	pcireg_t bhlc;
 	u_int8_t *tuple;
 	int function, nfunction;
-	struct cardbus_devfunc **previous_next = &(sc->sc_funcs);
 	struct device *csc;
 	int no_work_funcs = 0;
 	cardbus_devfunc_t ct;
@@ -496,8 +493,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		ct->ct_dev = sc->sc_device;
 		ct->ct_func = function;
 		ct->ct_sc = sc;
-		ct->ct_next = NULL;
-		*previous_next = ct;
+		sc->sc_funcs[function] = ct;
 
 		memset(&ca, 0, sizeof(ca));
 
@@ -536,11 +532,10 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		    cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
+			sc->sc_funcs[function] = NULL;
 			free(ct, M_DEVBUF, 0);
-			*previous_next = NULL;
 		} else {
 			/* found */
-			previous_next = &(ct->ct_next);
 			ct->ct_device = csc;
 			++no_work_funcs;
 		}
@@ -605,25 +600,24 @@ cardbusprint(void *aux, const char *pnp)
 void
 cardbus_detach_card(struct cardbus_softc *sc)
 {
-	struct cardbus_devfunc *ct, *ct_next, **prev_next;
+	struct cardbus_devfunc *ct;
+	int f;
 
-	prev_next = &(sc->sc_funcs->ct_next);
-
-	for (ct = sc->sc_funcs; ct != NULL; ct = ct_next) {
-		struct device *fndev = ct->ct_device;
-		ct_next = ct->ct_next;
+	for (f = 0; f < 8; f++) {
+		ct = sc->sc_funcs[f];
+		if (ct == NULL)
+			continue;
 
 		DPRINTF(("%s: detaching %s\n", sc->sc_dev.dv_xname,
-		    fndev->dv_xname));
-		/* call device detach function */
+		    ct->ct_device->dv_xname));
 
-		if (config_detach(fndev, 0) != 0) {
+		if (config_detach(ct->ct_device, 0) != 0) {
 			printf("%s: cannot detach dev %s, function %d\n",
-			    sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
-			prev_next = &(ct->ct_next);
+			    sc->sc_dev.dv_xname, ct->ct_device->dv_xname,
+			    ct->ct_func);
 		} else {
 			sc->sc_poweron_func &= ~(1 << ct->ct_func);
-			*prev_next = ct->ct_next;
+			sc->sc_funcs[ct->ct_func] = NULL;
 			free(ct, M_DEVBUF, 0);
 		}
 	}
