@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.38 2014/12/18 09:00:19 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.39 2014/12/18 10:18:25 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -49,6 +49,15 @@ If the address is an interface name,
 .Xr httpd 8
 will look up the first IPv4 address and any other IPv4 and IPv6
 addresses of the specified network interface.
+If
+.Sq *
+is given as an address,
+it will be used as an alias for
+.Ar 0.0.0.0
+to listen on all IPv4 addresses.
+Likewise,
+.Sq ::
+can be used to listen on all IPv6 addresses.
 A
 .Ar port
 can be specified by number or name.
