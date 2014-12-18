@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.134 2014/12/12 10:05:09 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.135 2014/12/18 20:55:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
-#include <sys/hash.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

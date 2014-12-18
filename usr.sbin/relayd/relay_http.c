@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.35 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.36 2014/12/18 20:55:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/tree.h>
-#include <sys/hash.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -1487,12 +1486,8 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 				value = match->kv_value;
 				break;
 			}
-			if (!con->se_hashkeyset)
-				con->se_hashkey = HASHINIT;
-			con->se_hashkey = hash32_str(value, con->se_hashkey);
-			con->se_hashkeyset = 1;
-			log_debug("%s: hashkey 0x%04x", __func__,
-			    con->se_hashkey);
+			SipHash24_Update(&con->se_siphashctx,
+			    value, strlen(value));
 			break;
 		case KEY_OPTION_LOG:
 			/* perform this later */

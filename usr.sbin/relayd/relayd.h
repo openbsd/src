@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.199 2014/12/17 13:54:27 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.200 2014/12/18 20:55:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/param.h>		/* MAXHOSTNAMELEN */
 #include <limits.h>
 #include <imsg.h>
+#include <siphash.h>
 
 #ifndef nitems
 #define	nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
@@ -332,6 +333,12 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
+union hashkey {
+	/* Simplified version of pf_poolhashkey */
+	u_int32_t		 data[4];
+	SIPHASH_KEY		 siphashkey;
+};
+
 #define F_DISABLE		0x00000001
 #define F_BACKUP		0x00000002
 #define F_USED			0x00000004
@@ -359,13 +366,14 @@ TAILQ_HEAD(addresslist, address);
 #define F_DIVERT		0x01000000
 #define F_SCRIPT		0x02000000
 #define F_TLSINSPECT		0x04000000
+#define F_HASHKEY		0x08000000
 
 #define F_BITS								\
 	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\
 	"\10STICKY-ADDRESS\11CHECK_DONE\12ACTIVE_RULESET\13CHECK_SENT"	\
 	"\14TLS\15NAT_LOOKUP\16DEMOTE\17LOOKUP_PATH\20DEMOTED\21UDP"	\
 	"\22RETURN\23TRAP\24NEEDPF\25PORT\26TLS_CLIENT\27NEEDRT"	\
-	"\30MATCH\31DIVERT\32SCRIPT\33TLS_INSPECT"
+	"\30MATCH\31DIVERT\32SCRIPT\33TLS_INSPECT\34HASHKEY"
 
 enum forwardmode {
 	FWD_NORMAL		= 0,
@@ -495,6 +503,7 @@ struct rdr_config {
 	objid_t			 table_id;
 	objid_t			 backup_id;
 	int			 mode;
+	union hashkey		 key;
 	char			 name[SRV_NAME_SIZE];
 	char			 tag[RD_TAG_NAME_SIZE];
 	struct timeval		 timeout;
@@ -517,8 +526,7 @@ struct rsession {
 	struct ctl_relay_event		 se_in;
 	struct ctl_relay_event		 se_out;
 	void				*se_priv;
-	u_int32_t			 se_hashkey;
-	int				 se_hashkeyset;
+	SIPHASH_CTX			 se_siphashctx;
 	struct relay_table		*se_table;
 	struct event			 se_ev;
 	struct timeval			 se_timeout;
@@ -701,7 +709,7 @@ struct relay_table {
 	struct table		*rlt_table;
 	u_int32_t		 rlt_flags;
 	int			 rlt_mode;
-	u_int32_t		 rlt_key;
+	u_int32_t		 rlt_index;
 	struct host		*rlt_host[RELAY_MAXHOSTS];
 	int			 rlt_nhosts;
 	TAILQ_ENTRY(relay_table) rlt_entry;
@@ -728,6 +736,7 @@ struct relay_config {
 	struct sockaddr_storage	 dstaf;
 	struct timeval		 timeout;
 	enum forwardmode	 fwdmode;
+	union hashkey		 hashkey;
 	off_t			 tls_cert_len;
 	off_t			 tls_key_len;
 	objid_t			 tls_keyid;
