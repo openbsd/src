@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.74 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.75 2014/12/18 23:59:28 tedu Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -901,9 +901,6 @@ uao_detach_locked(struct uvm_object *uobj)
  *	XXXJRT currently never happens, as we never directly initiate
  *	XXXJRT I/O
  */
-
-#define	UAO_HASH_PENALTY 4	/* XXX: a guess */
-
 boolean_t
 uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {

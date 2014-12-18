@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.87 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.88 2014/12/18 23:59:28 tedu Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -577,8 +577,6 @@ uvm_vnp_terminate(struct vnode *vp)
  *	off (i.e. we need to do an iosync).   also note that once a
  *	page is PG_BUSY it must stay in its object until it is un-busyed.
  */
-#define UVN_HASH_PENALTY 4	/* XXX: a guess */
-
 boolean_t
 uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
