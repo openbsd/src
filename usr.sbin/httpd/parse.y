@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2014/12/12 14:45:59 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.45 2014/12/18 10:10:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1123,7 +1123,7 @@ nodigits:
 	x != '!' && x != '=' && x != '#' && \
 	x != ',' && x != ';' && x != '/'))
 
-	if (isalnum(c) || c == ':' || c == '_') {
+	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
@@ -1604,6 +1604,9 @@ host(const char *s, struct addresslist *al, int max,
     struct portrange *port, const char *ifname, int ipproto)
 {
 	struct address *h;
+
+	if (strcmp("*", s) == 0)
+		s = "0.0.0.0";
 
 	h = host_v4(s);
 
