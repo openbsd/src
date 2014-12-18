@@ -15,7 +15,6 @@ our %args = (
 	relay => 'forward to <table-$test> port $connectport',
 	loggrep => {
 		qr/ (?:done|last write \(done\)), \[\/query: foobar\]/ => 1,
-		qr/hashkey 0x7dc0306a/ => 1,
 	},
     },
     server => {
