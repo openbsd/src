@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.180 2014/12/18 19:22:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.181 2014/12/18 20:15:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1475,7 +1475,10 @@ post_bl(POST_ARGS)
 
 	nchild = nbody->child;
 	while (NULL != nchild) {
-		if (MDOC_It == nchild->tok || MDOC_Sm == nchild->tok) {
+		if (nchild->tok == MDOC_It ||
+		    (nchild->tok == MDOC_Sm &&
+		     nchild->next != NULL &&
+		     nchild->next->tok == MDOC_It)) {
 			nchild = nchild->next;
 			continue;
 		}

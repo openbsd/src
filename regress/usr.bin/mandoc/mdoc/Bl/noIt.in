@@ -13,7 +13,9 @@ Tagged text.
 .El
 .Bl -bullet
 Stray text.
-.Em More stray text.
+.Sm off
+.Em More Sy stray Em text.
+.Sm on
 .It
 Bullet point.
 .El
