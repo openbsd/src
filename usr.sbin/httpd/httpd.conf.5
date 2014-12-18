@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.37 2014/12/12 14:45:59 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.38 2014/12/18 09:00:19 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2014 $
+.Dd $Mdocdate: December 18 2014 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -270,8 +270,7 @@ according to RFC 5082.
 Change the default time-to-live value in the IP headers.
 .It Oo Ic no Oc Ic nodelay
 Enable the TCP NODELAY option for this connection.
-This is recommended to avoid delays in the relayed data stream,
-e.g. for SSH connections.
+This is recommended to avoid delays in the data stream.
 .It Oo Ic no Oc Ic sack
 Use selective acknowledgements for this connection.
 .It Ic socket buffer Ar number
