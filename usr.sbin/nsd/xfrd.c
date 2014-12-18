@@ -76,8 +76,6 @@ static void xfrd_handle_reload(int fd, short event, void* arg);
 /* handle child timeout */
 static void xfrd_handle_child_timer(int fd, short event, void* arg);
 
-/* send expiry notifications to nsd */
-static void xfrd_send_expire_notification(xfrd_zone_t* zone);
 /* send ixfr request, returns fd of connection to read on */
 static int xfrd_send_ixfr_request_udp(xfrd_zone_t* zone);
 /* obtain udp socket slot */
@@ -1147,7 +1145,7 @@ xfrd_handle_incoming_soa(xfrd_zone_t* zone,
 	xfrd_send_notify(xfrd->notify_zones, zone->apex, &zone->soa_nsd);
 }
 
-static void
+void
 xfrd_send_expire_notification(xfrd_zone_t* zone)
 {
 	task_new_expire(xfrd->nsd->task[xfrd->nsd->mytask], xfrd->last_task,
@@ -2087,6 +2085,11 @@ xfrd_handle_notify_and_start_xfr(xfrd_zone_t* zone, xfrd_soa_t* soa)
 			!zone->tcp_waiting && !zone->udp_waiting) {
 			xfrd_set_refresh_now(zone);
 		}
+		/* zones with no content start expbackoff again; this is also
+		 * for nsd-control started transfer commands, and also when
+		 * the master apparantly sends notifies (is back up) */
+		if(zone->soa_disk_acquired == 0)
+			zone->fresh_xfr_timeout = XFRD_TRANSFER_TIMEOUT_START;
 	}
 }
 

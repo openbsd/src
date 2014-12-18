@@ -250,6 +250,7 @@ int domain_is_glue(domain_type* domain, zone_type* zone);
 rrset_type* domain_find_non_cname_rrset(domain_type* domain, zone_type* zone);
 
 domain_type* domain_wildcard_child(domain_type* domain);
+domain_type *domain_previous_existing_child(domain_type* domain);
 
 int zone_is_secure(zone_type* zone);
 

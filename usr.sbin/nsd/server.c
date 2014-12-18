@@ -2522,10 +2522,18 @@ handle_tcp_accept(int fd, short event, void* arg)
 
 	event_set(&tcp_data->event, s, EV_PERSIST | EV_READ | EV_TIMEOUT,
 		handle_tcp_reading, tcp_data);
-	if(event_base_set(data->event.ev_base, &tcp_data->event) != 0)
+	if(event_base_set(data->event.ev_base, &tcp_data->event) != 0) {
 		log_msg(LOG_ERR, "cannot set tcp event base");
-	if(event_add(&tcp_data->event, &timeout) != 0)
-		log_msg(LOG_ERR, "cannot set tcp event base");
+		close(s);
+		region_destroy(tcp_region);
+		return;
+	}
+	if(event_add(&tcp_data->event, &timeout) != 0) {
+		log_msg(LOG_ERR, "cannot add tcp to event base");
+		close(s);
+		region_destroy(tcp_region);
+		return;
+	}
 
 	/*
 	 * Keep track of the total number of TCP handlers installed so

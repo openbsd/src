@@ -567,10 +567,16 @@ remote_accept_callback(int fd, short event, void* arg)
 
 	event_set(&n->c, newfd, EV_PERSIST|EV_TIMEOUT|EV_READ,
 		remote_control_callback, n);
-	if(event_base_set(xfrd->event_base, &n->c) != 0)
+	if(event_base_set(xfrd->event_base, &n->c) != 0) {
 		log_msg(LOG_ERR, "remote_accept: cannot set event_base");
-	if(event_add(&n->c, &n->tval) != 0)
+		free(n);
+		goto close_exit;
+	}
+	if(event_add(&n->c, &n->tval) != 0) {
 		log_msg(LOG_ERR, "remote_accept: cannot add event");
+		free(n);
+		goto close_exit;
+	}
 	n->event_added = 1;
 
 	if(2 <= verbosity) {

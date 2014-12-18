@@ -236,8 +236,8 @@ has_data_below(domain_type* top)
 }
 
 /** check if domain with 0 rrsets has become empty (nonexist) */
-static void
-rrset_zero_nonexist_check(domain_type* domain)
+static domain_type*
+rrset_zero_nonexist_check(domain_type* domain, domain_type* ce)
 {
 	/* is the node now an empty node (completely deleted) */
 	if(domain->rrsets == 0) {
@@ -248,13 +248,18 @@ rrset_zero_nonexist_check(domain_type* domain)
 			/* nonexist this domain and all parent empty nonterminals */
 			domain_type* p = domain;
 			while(p != NULL && p->rrsets == 0) {
-				if(has_data_below(p))
-					break;
+				if(p == ce || has_data_below(p))
+					return p;
 				p->is_existing = 0;
+				/* fixup wildcard child of parent */
+				if(p->parent &&
+					p->parent->wildcard_child_closest_match == p)
+					p->parent->wildcard_child_closest_match = domain_previous_existing_child(p);
 				p = p->parent;
 			}
 		}
 	}
+	return NULL;
 }
 
 /** remove rrset.  Adjusts zone params.  Does not remove domain */
@@ -682,7 +687,7 @@ delete_RR(namedb_type* db, const dname_type* dname,
 			/* delete entire rrset */
 			rrset_delete(db, domain, rrset);
 			/* check if domain is now nonexisting (or parents) */
-			rrset_zero_nonexist_check(domain);
+			rrset_zero_nonexist_check(domain, NULL);
 #ifdef NSEC3
 			/* cleanup nsec3 */
 			nsec3_delete_rrset_trigger(db, domain, zone, type);
@@ -914,9 +919,10 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 		domain = next;
 	}
 
-	/* check if data deleteions have created nonexisting domain entries,
+	/* check if data deletions have created nonexisting domain entries,
 	 * but after deleting domains so the checks are faster */
 	if(nonexist_check) {
+		domain_type* ce = NULL; /* for speeding up has_data_below */
 		DEBUG(DEBUG_XFRD, 1, (LOG_INFO, "axfrdel: zero rrset check"));
 		domain = zone->apex;
 		while(domain && domain_is_subdomain(domain, zone->apex))
@@ -926,7 +932,7 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 			 * sub-zones, since we only spuriously check empty
 			 * nonterminals */
 			if(domain->is_existing)
-				rrset_zero_nonexist_check(domain);
+				ce = rrset_zero_nonexist_check(domain, ce);
 			domain = domain_next(domain);
 		}
 	}

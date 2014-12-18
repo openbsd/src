@@ -249,7 +249,7 @@ do_deldomain(namedb_type* db, domain_type* domain)
 	 * one-smaller than this domain as closest-match. */
 	if(domain->parent->wildcard_child_closest_match == domain)
 		domain->parent->wildcard_child_closest_match =
-			domain_previous(domain);
+			domain_previous_existing_child(domain);
 
 	/* actual removal */
 	radix_delete(db->domains->nametree, domain->rnode);
@@ -456,6 +456,17 @@ domain_table_iterate(domain_table_type* table,
 	return error;
 }
 
+domain_type *domain_previous_existing_child(domain_type* domain)
+{
+	domain_type* parent = domain->parent;
+	domain = domain_previous(domain);
+	while(domain && !domain->is_existing) {
+		if(domain == parent) /* do not walk back above parent */
+			return parent;
+		domain = domain_previous(domain);
+	}
+	return domain;
+}
 
 void
 domain_add_rrset(domain_type* domain, rrset_type* rrset)
@@ -474,6 +485,15 @@ domain_add_rrset(domain_type* domain, rrset_type* rrset)
 
 	while (domain && !domain->is_existing) {
 		domain->is_existing = 1;
+		/* does this name in existance update the parent's
+		 * wildcard closest match? */
+		if(domain->parent
+		   && label_compare(dname_name(domain_dname(domain)),
+			(const uint8_t *) "\001*") <= 0
+		   && dname_compare(domain_dname(domain),
+		   	domain_dname(domain->parent->wildcard_child_closest_match)) > 0) {
+			domain->parent->wildcard_child_closest_match = domain;
+		}
 		domain = domain->parent;
 	}
 }

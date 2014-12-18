@@ -528,6 +528,8 @@ answer_chaos(struct nsd *nsd, query_type *q)
 			} else {
 				RCODE_SET(q->packet, RCODE_REFUSE);
 			}
+		} else {
+			RCODE_SET(q->packet, RCODE_REFUSE);
 		}
 		break;
 	default:

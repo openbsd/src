@@ -136,6 +136,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_NSEC3	50	/* NSEC3, secure denial, prevents zonewalking */
 #define TYPE_NSEC3PARAM 51	/* NSEC3PARAM at zone apex nsec3 parameters */
 #define TYPE_TLSA	52	/* RFC 6698 */
+#define TYPE_CDS	59	/* RFC 7344 */
+#define TYPE_CDNSKEY	60	/* RFC 7344 */
 
 #define TYPE_SPF        99      /* RFC 4408 */
 
