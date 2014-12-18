@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.22 2014/12/18 19:18:22 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.23 2014/12/18 19:22:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -454,7 +454,8 @@ vmt_do_shutdown(struct vmt_softc *sc)
 
 	suspend_randomness();
 
-	log(LOG_KERN | LOG_NOTICE, "Shutting down in response to request from VMware host\n");
+	log(LOG_KERN | LOG_NOTICE,
+	    "Shutting down in response to request from VMware host\n");
 	prsignal(initprocess, SIGUSR2);
 }
 
@@ -466,7 +467,8 @@ vmt_do_reboot(struct vmt_softc *sc)
 
 	suspend_randomness();
 
-	log(LOG_KERN | LOG_NOTICE, "Rebooting in response to request from VMware host\n");
+	log(LOG_KERN | LOG_NOTICE,
+	    "Rebooting in response to request from VMware host\n");
 	prsignal(initprocess, SIGINT);
 }
 
@@ -476,7 +478,8 @@ vmt_shutdown(void *arg)
 	struct vmt_softc *sc = arg;
 
 	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 0") != 0) {
-		printf("%s: failed to disable hgfs server capability\n", DEVNAME(sc));
+		printf("%s: failed to disable hgfs server capability\n",
+		    DEVNAME(sc));
 	}
 
 	if (vm_rpc_send(&sc->sc_tclo_rpc, NULL, 0) != 0) {
@@ -518,14 +521,16 @@ vmt_tclo_tick(void *xarg)
 
 	if (sc->sc_tclo_ping) {
 		if (vm_rpc_send(&sc->sc_tclo_rpc, NULL, 0) != 0) {
-			printf("%s: failed to send TCLO outgoing ping\n", DEVNAME(sc));
+			printf("%s: failed to send TCLO outgoing ping\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 			goto out;
 		}
 	}
 
 	if (vm_rpc_get_length(&sc->sc_tclo_rpc, &rlen, &ack) != 0) {
-		printf("%s: failed to get length of incoming TCLO data\n", DEVNAME(sc));
+		printf("%s: failed to get length of incoming TCLO data\n",
+		    DEVNAME(sc));
 		sc->sc_rpc_error = 1;
 		goto out;
 	}
@@ -581,7 +586,8 @@ vmt_tclo_tick(void *xarg)
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
-		log(LOG_KERN | LOG_NOTICE, "VMware guest entering suspended state\n");
+		log(LOG_KERN | LOG_NOTICE,
+		    "VMware guest entering suspended state\n");
 
 		suspend_randomness();
 
@@ -591,7 +597,8 @@ vmt_tclo_tick(void *xarg)
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
-		log(LOG_KERN | LOG_NOTICE, "VMware guest resuming from suspended state\n");
+		log(LOG_KERN | LOG_NOTICE,
+		    "VMware guest resuming from suspended state\n");
 
 		/* force guest info update */
 		sc->sc_hostname[0] = '\0';
@@ -601,30 +608,36 @@ vmt_tclo_tick(void *xarg)
 
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_RESUME);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			printf("%s: error sending resume response\n", DEVNAME(sc));
+			printf("%s: error sending resume response\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "Capabilities_Register") == 0) {
 
 		/* don't know if this is important at all */
-		if (vm_rpc_send_rpci_tx(sc, "vmx.capability.unified_loop toolbox") != 0) {
+		if (vm_rpc_send_rpci_tx(sc,
+		    "vmx.capability.unified_loop toolbox") != 0) {
 			printf("%s: unable to set unified loop\n", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 		if (vm_rpci_response_successful(sc) == 0) {
-			printf("%s: host rejected unified loop setting\n", DEVNAME(sc));
+			printf("%s: host rejected unified loop setting\n",
+			    DEVNAME(sc));
 		}
 
 		/* the trailing space is apparently important here */
 		if (vm_rpc_send_rpci_tx(sc, "tools.capability.statechange ") != 0) {
-			printf("%s: unable to send statechange capability\n", DEVNAME(sc));
+			printf("%s: unable to send statechange capability\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 		if (vm_rpci_response_successful(sc) == 0) {
-			printf("%s: host rejected statechange capability\n", DEVNAME(sc));
+			printf("%s: host rejected statechange capability\n",
+			    DEVNAME(sc));
 		}
 
-		if (vm_rpc_send_rpci_tx(sc, "tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
+		if (vm_rpc_send_rpci_tx(sc, "tools.set.version %u",
+		    VM_VERSION_UNMANAGED) != 0) {
 			printf("%s: unable to set tools version\n", DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
@@ -632,7 +645,8 @@ vmt_tclo_tick(void *xarg)
 		vmt_update_guest_uptime(sc);
 
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			printf("%s: error sending capabilities_register response\n", DEVNAME(sc));
+			printf("%s: error sending capabilities_register response\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
@@ -666,16 +680,19 @@ vmt_tclo_tick(void *xarg)
 			inet_ntop(AF_INET, &guest_ip->sin_addr, ip, sizeof(ip));
 			if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
 			    ip) != 0) {
-				printf("%s: unable to send guest IP address\n", DEVNAME(sc));
+				printf("%s: unable to send guest IP address\n",
+				    DEVNAME(sc));
 				sc->sc_rpc_error = 1;
 			}
 
 			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-				printf("%s: error sending broadcastIP response\n", DEVNAME(sc));
+				printf("%s: error sending broadcastIP response\n",
+				    DEVNAME(sc));
 				sc->sc_rpc_error = 1;
 			}
 		} else {
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
+			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			    VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
 				printf("%s: error sending broadcastIP error response\n",
 				    DEVNAME(sc));
 				sc->sc_rpc_error = 1;
@@ -683,7 +700,8 @@ vmt_tclo_tick(void *xarg)
 		}
 	} else {
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR) != 0) {
-			printf("%s: error sending unknown command reply\n", DEVNAME(sc));
+			printf("%s: error sending unknown command reply\n",
+			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 		}
 	}
@@ -790,7 +808,7 @@ vm_rpc_open(struct vm_rpc *rpc, uint32_t proto)
 	if (frame.ecx.part.high != 1 || frame.edx.part.low != 0) {
 		/* open-vm-tools retries without VM_RPC_FLAG_COOKIE here.. */
 		printf("vmware: open failed, eax=%08x, ecx=%08x, edx=%08x\n",
-			frame.eax.word, frame.ecx.word, frame.edx.word);
+		    frame.eax.word, frame.ecx.word, frame.edx.word);
 		return EIO;
 	}
 
@@ -820,7 +838,7 @@ vm_rpc_close(struct vm_rpc *rpc)
 
 	if (frame.ecx.part.high == 0 || frame.ecx.part.low != 0) {
 		printf("vmware: close failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+		    frame.eax.word, frame.ecx.word);
 		return EIO;
 	}
 
@@ -851,7 +869,7 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 
 	if ((frame.ecx.part.high & VM_RPC_REPLY_SUCCESS) == 0) {
 		printf("vmware: sending length failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+		    frame.eax.word, frame.ecx.word);
 		return EIO;
 	}
 
@@ -918,7 +936,7 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 
 	if (frame.ebx.word != VM_RPC_ENH_DATA) {
 		printf("vmware: get data failed, ebx=%08x\n",
-				frame.ebx.word);
+		    frame.ebx.word);
 		return EIO;
 	}
 
@@ -937,7 +955,7 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 
 	if (frame.ecx.part.high == 0) {
 		printf("vmware: ack data failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+		    frame.eax.word, frame.ecx.word);
 		return EIO;
 	}
 
@@ -963,7 +981,7 @@ vm_rpc_get_length(const struct vm_rpc *rpc, uint32_t *length, uint16_t *dataid)
 
 	if ((frame.ecx.part.high & VM_RPC_REPLY_SUCCESS) == 0) {
 		printf("vmware: get length failed, eax=%08x, ecx=%08x\n",
-				frame.eax.word, frame.ecx.word);
+		    frame.eax.word, frame.ecx.word);
 		return EIO;
 	}
 	if ((frame.ecx.part.high & VM_RPC_REPLY_DORECV) == 0) {
@@ -1003,7 +1021,8 @@ vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t lengt
 	}
 
 	if (vm_rpc_get_length(&rpci, &rlen, &ack) != 0) {
-		printf("%s: failed to get length of rpci response data\n", DEVNAME(sc));
+		printf("%s: failed to get length of rpci response data\n",
+		    DEVNAME(sc));
 		result = EIO;
 		goto out;
 	}
@@ -1014,7 +1033,8 @@ vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t lengt
 		}
 
 		if (vm_rpc_get_data(&rpci, sc->sc_rpc_buf, rlen, ack) != 0) {
-			printf("%s: failed to get rpci response data\n", DEVNAME(sc));
+			printf("%s: failed to get rpci response data\n",
+			    DEVNAME(sc));
 			result = EIO;
 			goto out;
 		}
