@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.163 2014/10/24 20:02:07 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.164 2014/12/18 16:27:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -547,6 +547,33 @@ static chacha_ctx rs;		/* chacha context for random keystream */
 static u_char rs_buf[RSBUFSZ] __attribute__((section(".openbsd.randomdata")));
 static size_t rs_have;		/* valid bytes at end of rs_buf */
 static size_t rs_count;		/* bytes till reseed */
+
+void
+suspend_randomness(void)
+{
+	struct timespec ts;
+
+	getnanotime(&ts);
+	add_true_randomness(ts.tv_sec);
+	add_true_randomness(ts.tv_nsec);
+
+	dequeue_randomness(NULL);
+	rs_count = 0;
+	arc4random_buf(entropy_pool, sizeof(entropy_pool));
+}
+
+void
+resume_randomness(void)
+{
+	struct timespec ts;
+
+	getnanotime(&ts);
+	add_true_randomness(ts.tv_sec);
+	add_true_randomness(ts.tv_nsec);
+
+	dequeue_randomness(NULL);
+	rs_count = 0;
+}
 
 static inline void _rs_rekey(u_char *dat, size_t datlen);
 
