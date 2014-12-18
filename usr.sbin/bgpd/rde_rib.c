@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.140 2014/12/12 18:15:51 tedu Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.141 2014/12/18 19:28:44 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/hash.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -1065,6 +1064,8 @@ struct nexthop_table {
 	u_int32_t				 nexthop_hashmask;
 } nexthoptable;
 
+SIPHASH_KEY nexthoptablekey;
+
 void
 nexthop_init(u_int32_t hashsize)
 {
@@ -1078,6 +1079,7 @@ nexthop_init(u_int32_t hashsize)
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&nexthoptable.nexthop_hashtbl[i]);
+	arc4random_buf(&nexthoptablekey, sizeof(nexthoptablekey));
 
 	nexthoptable.nexthop_hashmask = hs - 1;
 }
@@ -1308,17 +1310,16 @@ nexthop_hash(struct bgpd_addr *nexthop)
 
 	switch (nexthop->aid) {
 	case AID_INET:
-		h = (AF_INET ^ ntohl(nexthop->v4.s_addr) ^
-		    ntohl(nexthop->v4.s_addr) >> 13) &
-		    nexthoptable.nexthop_hashmask;
+		h = SipHash24(&nexthoptablekey, &nexthop->v4.s_addr,
+		    sizeof(nexthop->v4.s_addr));
 		break;
 	case AID_INET6:
-		h = hash32_buf(&nexthop->v6, sizeof(struct in6_addr),
-		    HASHINIT) & nexthoptable.nexthop_hashmask;
+		h = SipHash24(&nexthoptablekey, &nexthop->v6,
+		    sizeof(struct in6_addr));
 		break;
 	default:
 		fatalx("nexthop_hash: unsupported AF");
 	}
-	return (&nexthoptable.nexthop_hashtbl[h]);
+	return (&nexthoptable.nexthop_hashtbl[h & nexthoptable.nexthop_hashmask]);
 }
 

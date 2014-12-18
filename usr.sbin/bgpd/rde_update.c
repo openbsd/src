@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.81 2013/08/14 20:34:27 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.82 2014/12/18 19:28:44 tedu Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,11 +17,11 @@
  */
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/hash.h>
 
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <siphash.h>
 
 #include "bgpd.h"
 #include "rde.h"
@@ -63,6 +63,8 @@ RB_GENERATE(uptree_prefix, update_prefix, entry, up_prefix_cmp)
 RB_PROTOTYPE(uptree_attr, update_attr, entry, up_attr_cmp)
 RB_GENERATE(uptree_attr, update_attr, entry, up_attr_cmp)
 
+SIPHASH_KEY uptree_key;
+
 void
 up_init(struct rde_peer *peer)
 {
@@ -78,6 +80,7 @@ up_init(struct rde_peer *peer)
 	peer->up_acnt = 0;
 	peer->up_nlricnt = 0;
 	peer->up_wcnt = 0;
+	arc4random_buf(&uptree_key, sizeof(uptree_key));
 }
 
 void
@@ -363,6 +366,7 @@ up_generate(struct rde_peer *peer, struct rde_aspath *asp,
 {
 	struct update_attr		*ua = NULL;
 	struct update_prefix		*up;
+	SIPHASH_CTX			ctx;
 
 	if (asp) {
 		ua = calloc(1, sizeof(struct update_attr));
@@ -378,10 +382,11 @@ up_generate(struct rde_peer *peer, struct rde_aspath *asp,
 		 * use aspath_hash as attr_hash, this may be unoptimal
 		 * but currently I don't care.
 		 */
-		ua->attr_hash = hash32_buf(ua->attr, ua->attr_len, HASHINIT);
+		SipHash24_Init(&ctx, &uptree_key);
+		SipHash24_Update(&ctx, ua->attr, ua->attr_len);
 		if (ua->mpattr)
-			ua->attr_hash = hash32_buf(ua->mpattr, ua->mpattr_len,
-			    ua->attr_hash);
+			SipHash24_Update(&ctx, ua->mpattr, ua->mpattr_len);
+		ua->attr_hash = SipHash24_End(&ctx);
 	}
 
 	up = calloc(1, sizeof(struct update_prefix));
