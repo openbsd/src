@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.8 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: rd.c,v 1.9 2014/12/18 21:06:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -264,7 +264,7 @@ rdioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		rdgetdisklabel(dev, sc, lp, 0);
-		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
+		memcpy(sc->sc_dk.dk_label, lp, sizeof(*lp));
 		free(lp, M_TEMP, 0);
 		goto done;
 
