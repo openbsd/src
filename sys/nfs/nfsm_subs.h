@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.43 2009/08/10 09:18:31 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.44 2014/12/18 20:59:21 tedu Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct nfsm_info {
 	tl = nfsm_build(&info.nmi_mb, 2 * NFSX_UNSIGNED + NFSX_V3FH);	\
 	*tl++ = nfs_true;						\
 	*tl++ = txdr_unsigned(NFSX_V3FH);				\
-	bcopy((caddr_t)(f), (caddr_t)tl, NFSX_V3FH);			\
+	bcopy((f), tl, NFSX_V3FH);			\
 }
 
 #define nfsm_mtofh(d, v, v3, f)	{					\
@@ -258,7 +258,7 @@ struct nfsm_info {
 		}							\
 	}								\
 	nfsm_dissect(tl, u_int32_t *, NFSX_V3FH);			\
-	bcopy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH);			\
+	bcopy(tl, (f), NFSX_V3FH);			\
 	if ((nfsd->nd_flag & ND_NFSV3) == 0)				\
 	nfsm_adv(NFSX_V2FH - NFSX_V3FH);				\
 }

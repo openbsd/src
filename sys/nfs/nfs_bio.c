@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.77 2014/11/14 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.78 2014/12/18 20:59:21 tedu Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
 	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
 		    return (nfs_readlinkrpc(vp, uio, cred));
 	    }
-	    baddr = (caddr_t)0;
+	    baddr = NULL;
 	    switch (vp->v_type) {
 	    case VREG:
 		nfsstats.biocache_reads++;

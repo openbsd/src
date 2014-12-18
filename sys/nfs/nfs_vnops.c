@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.158 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.159 2014/12/18 20:59:21 tedu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1174,13 +1174,13 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 				commit == NFSV3WRITE_UNSTABLE)
 				committed = commit;
 			if ((nmp->nm_flag & NFSMNT_HASWRITEVERF) == 0) {
-				bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+				bcopy(tl, nmp->nm_verf,
 				    NFSX_V3WRITEVERF);
 				nmp->nm_flag |= NFSMNT_HASWRITEVERF;
-			} else if (bcmp((caddr_t)tl,
-			    (caddr_t)nmp->nm_verf, NFSX_V3WRITEVERF)) {
+			} else if (bcmp(tl,
+			    nmp->nm_verf, NFSX_V3WRITEVERF)) {
 				*must_commit = 1;
-				bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+				bcopy(tl, nmp->nm_verf,
 				    NFSX_V3WRITEVERF);
 			}
 		} else {
@@ -2581,7 +2581,7 @@ nfs_lookitup(struct vnode *dvp, char *name, int len, struct ucred *cred,
 		if (*npp) {
 			np = *npp;
 			np->n_fhp = &np->n_fh;
-			bcopy((caddr_t)nfhp, (caddr_t)np->n_fhp, fhlen);
+			bcopy(nfhp, np->n_fhp, fhlen);
 			np->n_fhsize = fhlen;
 			newvp = NFSTOV(np);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
@@ -2649,9 +2649,9 @@ nfs_commit(struct vnode *vp, u_quad_t offset, int cnt, struct proc *procp)
 
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		if (bcmp((caddr_t)nmp->nm_verf, (caddr_t)tl,
+		if (bcmp(nmp->nm_verf, tl,
 			NFSX_V3WRITEVERF)) {
-			bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+			bcopy(tl, nmp->nm_verf,
 				NFSX_V3WRITEVERF);
 			error = NFSERR_STALEWRITEVERF;
 		}
@@ -2840,7 +2840,7 @@ loop:
 			if (waitfor != MNT_WAIT || passone)
 				continue;
 			bp->b_flags |= B_WANTED;
-			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
+			error = tsleep(bp, slpflag | (PRIBIO + 1),
 				"nfsfsync", slptimeo);
 			splx(s);
 			if (error) {
