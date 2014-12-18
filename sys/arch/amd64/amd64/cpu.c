@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.75 2014/12/18 05:33:48 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.76 2014/12/18 16:23:26 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -110,6 +110,7 @@
 
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
+int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
 
 struct cpu_softc {
@@ -192,7 +193,7 @@ struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 #endif /* MULTIPROCESSOR */
 
 struct cfattach cpu_ca = {
-	sizeof(struct cpu_softc), cpu_match, cpu_attach
+	sizeof(struct cpu_softc), cpu_match, cpu_attach, NULL, cpu_activate
 };
 
 struct cfdriver cpu_cd = {
@@ -938,6 +939,7 @@ void
 rdrand(void *v)
 {
 	struct timeout *tmo = v;
+	extern int	has_rdrand;
 	union {
 		uint64_t u64;
 		uint32_t u32[2];
@@ -945,6 +947,8 @@ rdrand(void *v)
 	uint64_t valid;
 	int i;
 
+	if (has_rdrand == 0)
+		return;
 	for (i = 0; i < 2; i++) {
 		__asm volatile(
 		    "xor	%1, %1\n\t"
@@ -958,5 +962,21 @@ rdrand(void *v)
 		}
 	}
 
-	timeout_add_msec(tmo, 10);
+	if (tmo)
+		timeout_add_msec(tmo, 10);
+}
+
+int
+cpu_activate(struct device *self, int act)
+{
+	struct cpu_softc *sc = (struct cpu_softc *)self;
+
+	switch (act) {
+	case DVACT_RESUME:
+		if (sc->sc_info->ci_cpuid == 0)
+			rdrand(NULL);
+		break;
+	}
+
+	return (0);
 }

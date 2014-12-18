@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.58 2014/12/14 05:04:49 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.59 2014/12/18 16:23:25 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -107,6 +107,7 @@
 
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
+int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
 void	cpu_idle_mwait_cycle(void);
 void	cpu_init_mwait(struct device *);
@@ -155,7 +156,7 @@ cpu_init_first()
 #endif
 
 struct cfattach cpu_ca = {
-	sizeof(struct cpu_info), cpu_match, cpu_attach
+	sizeof(struct cpu_info), cpu_match, cpu_attach, NULL, cpu_activate
 };
 
 struct cfdriver cpu_cd = {
@@ -483,9 +484,12 @@ void
 rdrand(void *v)
 {
 	struct timeout *tmo = v;
+	extern int      has_rdrand;
 	uint32_t r, valid;
 	int i;
 
+	if (has_rdrand == 0)
+		return;
 	for (i = 0; i < 4; i++) {
 		__asm volatile(
 		    "xor        %1, %1\n\t"
@@ -496,7 +500,23 @@ rdrand(void *v)
 			add_true_randomness(r);
 	}
 
-	timeout_add_msec(tmo, 10);
+	if (tmo)
+		timeout_add_msec(tmo, 10);
+}
+
+int
+cpu_activate(struct device *self, int act)
+{
+	struct cpu_info *sc = (struct cpu_info *)self;
+
+	switch (act) {
+	case DVACT_RESUME:
+		if (sc->ci_cpuid == 0)
+			rdrand(NULL);
+		break;
+	}
+
+	return (0);
 }
 
 #ifdef MULTIPROCESSOR
