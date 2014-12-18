@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.113 2014/12/13 13:13:26 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.114 2014/12/18 03:09:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -476,12 +476,16 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 	for (breaker = broken->parent; breaker; breaker = breaker->parent) {
 
 		/*
-		 * If the *broken block had already been broken before
-		 * and we encounter its breaker, make the tok block
-		 * pending on the inner breaker.
-		 * Graphically, "[A breaker=[B broken=[C->B B] tok=A] C]"
-		 * becomes "[A broken=[B [C->B B] tok=A] C]"
-		 * and finally "[A [B->A [C->B B] A] C]".
+		 * If the *broken block (Z) is already broken and we
+		 * encounter its breaker (B), make the tok block (A)
+		 * pending on that inner breaker (B).
+		 * Graphically, [A breaker=[B! broken=[Z->B B] tok=A] Z]
+		 * becomes breaker=[A broken=[B! [Z->B B] tok=A] Z]
+		 * and finally [A! [B!->A [Z->B B] A] Z].
+		 * In these graphics, "->" indicates the "pending"
+		 * pointer and "!" indicates the MDOC_BREAK flag.
+		 * Each of the cases gets one additional pointer (B->A)
+		 * and one additional flag (A!).
 		 */
 		if (breaker == broken->pending) {
 			broken = breaker;
@@ -495,31 +499,38 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 
 		/*
 		 * Found the breaker.
-		 * If another, outer breaker is already pending on
-		 * the *broken block, we must not clobber the link
+		 * If another, outer breaker (X) is already pending on
+		 * the *broken block (B), we must not clobber the link
 		 * to the outer breaker, but make it pending on the
-		 * new, now inner breaker.
-		 * Graphically, "[A breaker=[B broken=[C->A A] tok=B] C]"
-		 * becomes "[A breaker=[B->A broken=[C A] tok=B] C]"
-		 * and finally "[A [B->A [C->B A] B] C]".
+		 * new, now inner breaker (A).
+		 * Graphically, [X! breaker=[A broken=[B->X X] tok=A] B]
+		 * becomes [X! breaker=[A->X broken=[B X] tok=A] B]
+		 * and finally [X! [A!->X [B->A X] A] B].
 		 */
 		if (broken->pending) {
 			struct mdoc_node *taker;
 
 			/*
-			 * If the breaker had also been broken before,
-			 * it cannot take on the outer breaker itself,
-			 * but must hand it on to its own breakers.
-			 * Graphically, this is the following situation:
-			 * "[A [B breaker=[C->B B] broken=[D->A A] tok=C] D]"
-			 * "[A taker=[B->A breaker=[C->B B] [D->C A] C] D]"
+			 * If the inner breaker (A) is already broken,
+			 * too, it cannot take on the outer breaker (X)
+			 * but must hand it on to its own breakers (Y):
+			 * [X! [Y! breaker=[A->Y Y] broken=[B->X X] tok=A] B]
+			 * [X! take=[Y!->X brea=[A->Y Y] brok=[B X] tok=A] B]
+			 * and finally [X! [Y!->X [A!->Y Y] [B->A X] A] B].
 			 */
 			taker = breaker;
 			while (taker->pending)
 				taker = taker->pending;
 			taker->pending = broken->pending;
 		}
+
+		/*
+		 * Now we have reduced the situation to the simplest
+		 * case, which is just breaker=[A broken=[B tok=A] B]
+		 * and becomes [A! [B->A A] B].
+		 */
 		broken->pending = breaker;
+		breaker->flags |= MDOC_BREAK;
 		mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse, line, ppos,
 		    "%s breaks %s", mdoc_macronames[tok],
 		    mdoc_macronames[broken->tok]);
@@ -1065,8 +1076,8 @@ blk_full(MACRO_PROT_ARGS)
 
 	if (tok == MDOC_It) {
 		for (n = mdoc->last; n; n = n->parent)
-			if (n->tok == MDOC_Bl &&
-			    ! (n->flags & MDOC_VALID))
+			if (n->tok == MDOC_Bl && n->type == MDOC_BLOCK &&
+			    ! (n->flags & (MDOC_VALID | MDOC_BREAK)))
 				break;
 		if (n == NULL) {
 			mandoc_vmsg(MANDOCERR_IT_STRAY, mdoc->parse,

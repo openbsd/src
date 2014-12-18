@@ -1,4 +1,4 @@
-.Dd November 16, 2012
+.Dd December 18, 2014
 .Dt BL-BREAK 1
 .Os OpenBSD
 .Sh NAME
@@ -13,6 +13,15 @@ before bracket
 .El
 after list
 .Bc
+in between
+.Bl -enum -offset indent
+.It
+before bracket
+.Bo inside both
+.El
+.It
+stray item
+.Bc
 after both
 .Sh EXAMPLES
 .Bl -enum -offset indent
@@ -22,6 +31,16 @@ before display
 inside both
 .El
 after display
+.Ed
+in between
+.Bl -enum -offset indent
+.It
+before display
+.Bd -ragged -offset indent
+inside both
+.El
+.It
+stray item
 .Ed
 after both
 .Sh CAVEATS

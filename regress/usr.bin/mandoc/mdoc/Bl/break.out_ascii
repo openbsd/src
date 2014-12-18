@@ -7,15 +7,25 @@ DDEESSCCRRIIPPTTIIOONN
      before both
 
            1.   before bracket [inside both after list]
+     in between
+
+           1.   before bracket [inside both
+                stray item]
      after both
 
 EEXXAAMMPPLLEESS
            1.   before display
 
                       inside both after display
+     in between
+
+           1.   before display
+
+                      inside both
+                      stray item
      after both
 
 CCAAVVEEAATTSS
      before broken block [inside both after list]
 
-OpenBSD                        November 16, 2012                       OpenBSD
+OpenBSD                        December 18, 2014                       OpenBSD

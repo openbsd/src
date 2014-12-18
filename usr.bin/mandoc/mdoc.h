@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.h,v 1.57 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.58 2014/12/18 03:09:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -356,6 +356,7 @@ struct	mdoc_node {
 	enum mdoct	  tok; /* tok or MDOC__MAX if none */
 	int		  flags;
 #define	MDOC_VALID	 (1 << 0) /* has been validated */
+#define	MDOC_BREAK	 (1 << 1) /* has broken another block */
 #define	MDOC_EOS	 (1 << 2) /* at sentence boundary */
 #define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
 #define	MDOC_SYNPRETTY	 (1 << 4) /* SYNOPSIS-style formatting */
