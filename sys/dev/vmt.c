@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.20 2014/12/05 15:50:03 mpi Exp $ */
+/*	$OpenBSD: vmt.c,v 1.21 2014/12/18 16:30:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -41,6 +41,7 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <netinet/in.h>
+#include <dev/rndvar.h>
 
 /* "The" magic number, always occupies the EAX register. */
 #define VM_MAGIC			0x564D5868
@@ -221,6 +222,7 @@ void vmt_update_guest_uptime(struct vmt_softc *);
 
 void vmt_tick(void *);
 void vmt_tclo_tick(void *);
+void vmt_resume(void);
 
 extern char hostname[MAXHOSTNAMELEN];
 
@@ -312,6 +314,26 @@ free:
 	free(sc->sc_rpc_buf, M_DEVBUF, 0);
 }
 
+void
+vmt_resume(void)
+{
+	struct vm_backdoor frame;
+	extern void rdrand(void *);
+
+	bzero(&frame, sizeof(frame));
+	frame.eax.word = VM_MAGIC;
+	frame.ecx.part.low = VM_CMD_GET_TIME_FULL;
+	frame.edx.part.low  = VM_PORT_CMD;
+	vm_cmd(&frame);
+
+	rdrand(NULL);
+	add_true_randomness(frame.eax.word);
+	add_true_randomness(frame.esi.word);
+	add_true_randomness(frame.edx.word);
+	add_true_randomness(frame.ebx.word);
+	resume_randomness();
+}
+
 int
 vmt_activate(struct device *self, int act)
 {
@@ -320,6 +342,9 @@ vmt_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_POWERDOWN:
 		vmt_shutdown(self);
+		break;
+	case DVACT_RESUME:
+		vmt_resume();
 		break;
 	}
 	return (rv);
@@ -427,6 +452,8 @@ vmt_do_shutdown(struct vmt_softc *sc)
 	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_HALT);
 	vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK);
 
+	suspend_randomness();
+
 	log(LOG_KERN | LOG_NOTICE, "Shutting down in response to request from VMware host\n");
 	prsignal(initprocess, SIGUSR2);
 }
@@ -436,6 +463,8 @@ vmt_do_reboot(struct vmt_softc *sc)
 {
 	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_REBOOT);
 	vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK);
+
+	suspend_randomness();
 
 	log(LOG_KERN | LOG_NOTICE, "Rebooting in response to request from VMware host\n");
 	prsignal(initprocess, SIGINT);
@@ -547,6 +576,8 @@ vmt_tclo_tick(void *xarg)
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
 		log(LOG_KERN | LOG_NOTICE, "VMware guest entering suspended state\n");
 
+		suspend_randomness();
+
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
 			printf("%s: error sending suspend response\n", DEVNAME(sc));
@@ -559,6 +590,7 @@ vmt_tclo_tick(void *xarg)
 		sc->sc_hostname[0] = '\0';
 		sc->sc_set_guest_os = 0;
 		vmt_update_guest_info(sc);
+		vmt_resume();
 
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_RESUME);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
