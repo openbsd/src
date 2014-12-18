@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.277 2014/12/09 06:58:29 doug Exp $ */
+/* $OpenBSD: acpi.c,v 1.278 2014/12/18 16:31:50 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -39,6 +39,7 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
+#include <dev/rndvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -2174,6 +2175,8 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 		goto fail_suspend;
 	acpi_sleep_clocks(sc, state);
 
+	suspend_randomness();
+
 	/* 2nd suspend AML step: _PTS(tostate) */
 	if (aml_node_setval(sc, sc->sc_pts, state) != 0)
 		goto fail_pts;
@@ -2226,6 +2229,7 @@ fail_suspend:
 	acpi_resume_mp();
 #endif
 
+	resume_randomness();		/* force RNG upper level reseed */
 	bufq_restart();
 
 fail_quiesce:
