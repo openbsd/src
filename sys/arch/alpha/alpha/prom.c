@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.15 2014/12/18 10:46:45 dlg Exp $ */
+/* $OpenBSD: prom.c,v 1.16 2014/12/18 10:50:02 dlg Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -75,8 +75,7 @@ prom_lev1map()
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 void
-init_prom_interface(rpb)
-	struct rpb *rpb;
+init_prom_interface(struct rpb *rpb)
 {
 	struct crb *c;
 
@@ -173,9 +172,7 @@ prom_cache_sync(void)
  * of the console area.
  */
 void
-promcnputc(dev, c)
-	dev_t dev;
-	int c;
+promcnputc(dev_t dev, int c)
 {
 	prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
@@ -196,8 +193,7 @@ promcnputc(dev, c)
  * Wait for the prom to get a real char and pass it back.
  */
 int
-promcngetc(dev)
-	dev_t dev;
+promcngetc(dev_t dev)
 {
 	prom_return_t ret;
 
@@ -216,9 +212,7 @@ promcngetc(dev)
  * See if prom has a real char and pass it back.
  */
 int
-promcnlookc(dev, cp)
-	dev_t dev;
-	char *cp;
+promcnlookc(dev_t dev, char *cp)
 {
 	prom_return_t ret;
 
@@ -233,9 +227,7 @@ promcnlookc(dev, cp)
 }
 
 int
-prom_getenv(id, buf, len)
-	int id, len;
-	char *buf;
+prom_getenv(int id, char *buf, int len)
 {
 	unsigned char *to = (unsigned char *)0x20000000;
 	prom_return_t ret;
@@ -253,8 +245,7 @@ prom_getenv(id, buf, len)
 }
 
 void
-prom_halt(halt)
-	int halt;
+prom_halt(int halt)
 {
 	struct pcs *p;
 
@@ -328,8 +319,7 @@ hwrpb_restart_setup()
 }
 
 u_int64_t
-console_restart(framep)
-	struct trapframe *framep;
+console_restart(struct trapframe *framep)
 {
 	struct pcs *p;
 
