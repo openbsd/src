@@ -48,3 +48,8 @@ after both
 .It before broken block Bo inside both
 .El
 after list
+.Sh BUGS
+.Bl -enum
+.It before broken block Bo inside both
+.El
+after list
