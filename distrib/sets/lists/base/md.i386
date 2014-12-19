@@ -2042,7 +2042,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/fusebuf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/gpio.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioccom.ph

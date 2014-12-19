@@ -1557,7 +1557,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/fusebuf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/gpio.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ioccom.ph

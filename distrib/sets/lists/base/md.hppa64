@@ -1936,7 +1936,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/fusebuf.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/gpio.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/ioccom.ph

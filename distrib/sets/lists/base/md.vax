@@ -1384,7 +1384,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/fusebuf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/gpio.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/hibernate.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioccom.ph
