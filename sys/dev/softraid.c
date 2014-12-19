@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.346 2014/12/16 19:51:33 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.347 2014/12/19 17:15:16 tedu Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -425,7 +425,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 
 		bufsize = (size > MAXPHYS) ? MAXPHYS : size;
 		if (flags == B_WRITE)
-			bcopy(buf, dma_buf, bufsize);
+			memcpy(dma_buf, buf, bufsize);
 
 		bzero(&b, sizeof(b));
 		b.b_flags = flags | B_PHYS;
@@ -454,7 +454,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 		}
 
 		if (flags == B_READ)
-			bcopy(dma_buf, buf, bufsize);
+			memcpy(buf, dma_buf, bufsize);
 
 		size -= bufsize;
 		buf += bufsize;
@@ -567,7 +567,7 @@ sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 		scm->scmi.scm_volid = 0;
 		strlcpy(scm->scmi.scm_devname, chunk->src_devname,
 		    sizeof(scm->scmi.scm_devname));
-		bcopy(&sm->ssdi.ssd_uuid, &scm->scmi.scm_uuid,
+		memcpy(&scm->scmi.scm_uuid, &sm->ssdi.ssd_uuid,
 		    sizeof(scm->scmi.scm_uuid));
 		sr_checksum(sc, scm, &scm->scm_checksum,
 		    sizeof(scm->scm_checksum));
@@ -660,13 +660,13 @@ sr_meta_save(struct sr_discipline *sd, u_int32_t flags)
 restart:
 	sm->ssd_ondisk++;
 	sm->ssd_meta_flags = flags;
-	bcopy(sm, m, sizeof(*m));
+	memcpy(m, sm, sizeof(*m));
 
 	/* Chunk metadata. */
 	cm = (struct sr_meta_chunk *)(m + 1);
 	for (i = 0; i < sm->ssdi.ssd_chunk_no; i++) {
 		src = sd->sd_vol.sv_chunks[i];
-		bcopy(&src->src_meta, cm, sizeof(*cm));
+		memcpy(cm, &src->src_meta, sizeof(*cm));
 		cm++;
 	}
 
@@ -679,7 +679,7 @@ restart:
 		bzero(&omi->omi_som->som_checksum, MD5_DIGEST_LENGTH);
 		sr_checksum(sc, omi->omi_som, &omi->omi_som->som_checksum,
 		    omi->omi_som->som_length);
-		bcopy(omi->omi_som, omh, omi->omi_som->som_length);
+		memcpy(omh, omi->omi_som, omi->omi_som->som_length);
 		omh = (struct sr_meta_opt_hdr *)((u_int8_t *)omh +
 		    omi->omi_som->som_length);
 	}
@@ -787,11 +787,11 @@ sr_meta_read(struct sr_discipline *sd)
 		/* assume first chunk contains metadata */
 		if (got_meta == 0) {
 			sr_meta_opt_load(sc, sm, &sd->sd_meta_opt);
-			bcopy(sm, sd->sd_meta, sizeof(*sd->sd_meta));
+			memcpy(sd->sd_meta, sm, sizeof(*sd->sd_meta));
 			got_meta = 1;
 		}
 
-		bcopy(cp, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
+		memcpy(&ch_entry->src_meta, cp, sizeof(ch_entry->src_meta));
 
 		no_disk++;
 		cp++;
@@ -857,8 +857,8 @@ sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
 
 			omi->omi_som = malloc(omh->som_length, M_DEVBUF,
 			    M_WAITOK | M_ZERO);
-			bcopy((u_int8_t *)omh + SR_OLD_META_OPT_OFFSET,
-			    (u_int8_t *)omi->omi_som + sizeof(*omi->omi_som),
+			memcpy((u_int8_t *)omi->omi_som + sizeof(*omi->omi_som),
+			    (u_int8_t *)omh + SR_OLD_META_OPT_OFFSET,
 			    omh->som_length - sizeof(*omi->omi_som));
 			omi->omi_som->som_type = omh->som_type;
 			omi->omi_som->som_length = omh->som_length;
@@ -873,10 +873,10 @@ sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
 			    omh->som_length);
 			omi->omi_som = malloc(omh->som_length, M_DEVBUF,
 			    M_WAITOK | M_ZERO);
-			bcopy(omh, omi->omi_som, omh->som_length);
+			memcpy(omi->omi_som, omh, omh->som_length);
 
 			/* Validate checksum. */
-			bcopy(&omi->omi_som->som_checksum, &checksum,
+			memcpy(&checksum, &omi->omi_som->som_checksum,
 			    MD5_DIGEST_LENGTH);
 			bzero(&omi->omi_som->som_checksum, MD5_DIGEST_LENGTH);
 			sr_checksum(sc, omi->omi_som,
@@ -1115,7 +1115,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 			    M_DEVBUF, M_WAITOK | M_ZERO);
 			bc->sbc_metadata = malloc(sizeof(struct sr_metadata),
 			    M_DEVBUF, M_WAITOK | M_ZERO);
-			bcopy(md, bc->sbc_metadata, sizeof(struct sr_metadata));
+			memcpy(bc->sbc_metadata, md, sizeof(struct sr_metadata));
 			bc->sbc_mm = rawdev;
 			SLIST_INSERT_HEAD(bch, bc, sbc_link);
 			rv = SR_META_CLAIMED;
@@ -1235,7 +1235,7 @@ sr_boot_assembly(struct sr_softc *sc)
 			bv->sbv_volid = bc->sbc_metadata->ssdi.ssd_volid;
 			bv->sbv_chunk_no = bc->sbc_metadata->ssdi.ssd_chunk_no;
 			bv->sbv_flags = bc->sbc_metadata->ssdi.ssd_vol_flags;
-			bcopy(&bc->sbc_metadata->ssdi.ssd_uuid, &bv->sbv_uuid,
+			memcpy(&bv->sbv_uuid, &bc->sbc_metadata->ssdi.ssd_uuid,
 			    sizeof(bc->sbc_metadata->ssdi.ssd_uuid));
 			SLIST_INIT(&bv->sbv_chunks);
 
@@ -1336,7 +1336,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		hm->scmi.scm_coerced_size = bc->sbc_metadata->ssdi.ssd_size;
 		strlcpy(hm->scmi.scm_devname, devname,
 		    sizeof(hm->scmi.scm_devname));
-		bcopy(&bc->sbc_metadata->ssdi.ssd_uuid, &hm->scmi.scm_uuid,
+		memcpy(&hm->scmi.scm_uuid, &bc->sbc_metadata->ssdi.ssd_uuid,
 		    sizeof(struct sr_uuid));
 
 		sr_checksum(sc, hm, &hm->scm_checksum,
@@ -1525,7 +1525,7 @@ sr_map_root(void)
 			for (i = 0; i < SR_MAX_BOOT_DISKS; i++) {
 				if (bcmp(rootduid, sbm->sbm_boot_duid[i],
 				    sizeof(rootduid)) == 0) {
-					bcopy(sbm->sbm_root_duid, rootduid,
+					memcpy(rootduid, sbm->sbm_root_duid,
 					    sizeof(rootduid));
 					DNPRINTF(SR_D_MISC, "%s: root duid "
 					    "mapped to %02hx%02hx%02hx%02hx"
@@ -1564,7 +1564,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		    DEVNAME(sc), devname);
 		goto unwind;
 	}
-	bcopy(label.d_uid, ch_entry->src_duid, sizeof(ch_entry->src_duid));
+	memcpy(ch_entry->src_duid, label.d_uid, sizeof(ch_entry->src_duid));
 
 	/* Make sure this is a 512-byte/sector device. */
 	if (label.d_secsize != DEV_BSIZE) {
@@ -1637,7 +1637,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 			ch_entry->src_meta.scmi.scm_chunk_id =
 			    md->ssdi.ssd_chunk_id;
 			if (d == 0) {
-				bcopy(&md->ssdi.ssd_uuid, &uuid, sizeof uuid);
+				memcpy(&uuid, &md->ssdi.ssd_uuid, sizeof uuid);
 				expected = md->ssdi.ssd_chunk_no;
 				version = md->ssd_ondisk;
 				d++;
@@ -1910,7 +1910,7 @@ sr_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
 
 	if (xs->datalen) {
 		copy_cnt = MIN(size, xs->datalen);
-		bcopy(v, xs->data, copy_cnt);
+		memcpy(xs->data, v, copy_cnt);
 	}
 }
 
@@ -2434,7 +2434,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 stuffup:
 	if (sd && sd->sd_scsi_sense.error_code) {
 		xs->error = XS_SENSE;
-		bcopy(&sd->sd_scsi_sense, &xs->sense, sizeof(xs->sense));
+		memcpy(&xs->sense, &sd->sd_scsi_sense, sizeof(xs->sense));
 		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
 	} else {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -2555,7 +2555,7 @@ sr_bio_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	sc->sc_status.bs_status = (rv ? BIO_STATUS_ERROR : BIO_STATUS_SUCCESS);
 
-	bcopy(&sc->sc_status, &bio->bio_status, sizeof(struct bio_status));
+	memcpy(&bio->bio_status, &sc->sc_status, sizeof(struct bio_status));
 
 	rw_exit_write(&sc->sc_lock);
 
@@ -2889,7 +2889,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	hm->scmi.scm_size = size;
 	hm->scmi.scm_coerced_size = size;
 	strlcpy(hm->scmi.scm_devname, devname, sizeof(hm->scmi.scm_devname));
-	bcopy(&uuid, &hm->scmi.scm_uuid, sizeof(struct sr_uuid));
+	memcpy(&hm->scmi.scm_uuid, &uuid, sizeof(struct sr_uuid));
 
 	sr_checksum(sc, hm, &hm->scm_checksum,
 	    sizeof(struct sr_meta_chunk_invariant));
@@ -2905,7 +2905,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	sm->ssdi.ssd_version = SR_META_VERSION;
 	sm->ssd_ondisk = 0;
 	sm->ssdi.ssd_vol_flags = 0;
-	bcopy(&uuid, &sm->ssdi.ssd_uuid, sizeof(struct sr_uuid));
+	memcpy(&sm->ssdi.ssd_uuid, &uuid, sizeof(struct sr_uuid));
 	sm->ssdi.ssd_chunk_no = 1;
 	sm->ssdi.ssd_volid = SR_HOTSPARE_VOLID;
 	sm->ssdi.ssd_level = SR_HOTSPARE_LEVEL;
@@ -3194,7 +3194,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	open = 0; /* leave dev open from here on out */
 
 	/* Fix up chunk. */
-	bcopy(label.d_uid, chunk->src_duid, sizeof(chunk->src_duid));
+	memcpy(chunk->src_duid, label.d_uid, sizeof(chunk->src_duid));
 	chunk->src_dev_mm = dev;
 	chunk->src_vn = vn;
 
@@ -3206,7 +3206,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	    sizeof(meta->scmi.scm_devname));
 	meta->scmi.scm_size = size;
 	meta->scmi.scm_coerced_size = csize;
-	bcopy(&sd->sd_meta->ssdi.ssd_uuid, &meta->scmi.scm_uuid,
+	memcpy(&meta->scmi.scm_uuid, &sd->sd_meta->ssdi.ssd_uuid,
 	    sizeof(meta->scmi.scm_uuid));
 	sr_checksum(sc, meta, &meta->scm_checksum,
 	    sizeof(struct sr_meta_chunk_invariant));
@@ -3290,7 +3290,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		if (copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len) != 0)
 			goto unwind;
 	} else
-		bcopy(bc->bc_dev_list, dt, bc->bc_dev_list_len);
+		memcpy(dt, bc->bc_dev_list, bc->bc_dev_list_len);
 
 	/* Initialise discipline. */
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -3649,7 +3649,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 		sr_error(sc, "failed to get DUID for softraid volume");
 		goto done;
 	}
-	bcopy(dk->dk_label->d_uid, duid, sizeof(duid));
+	memcpy(duid, dk->dk_label->d_uid, sizeof(duid));
 
 	/* Ensure that boot storage area is large enough. */
 	if (sd->sd_meta->ssd_data_offset < (SR_BOOT_OFFSET + SR_BOOT_SIZE)) {
@@ -3691,7 +3691,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	}
 	sbm = (struct sr_meta_boot *)omi->omi_som;
 
-	bcopy(duid, sbm->sbm_root_duid, sizeof(sbm->sbm_root_duid));
+	memcpy(sbm->sbm_root_duid, duid, sizeof(sbm->sbm_root_duid));
 	bzero(&sbm->sbm_boot_duid, sizeof(sbm->sbm_boot_duid));
 	sbm->sbm_bootblk_size = bbs;
 	sbm->sbm_bootldr_size = bls;
@@ -3712,7 +3712,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 			continue;
 
 		if (i < SR_MAX_BOOT_DISKS)
-			bcopy(chunk->src_duid, &sbm->sbm_boot_duid[i],
+			memcpy(&sbm->sbm_boot_duid[i], chunk->src_duid,
 			    sizeof(sbm->sbm_boot_duid[i]));
 
 		/* Save boot blocks. */
@@ -4057,7 +4057,7 @@ sr_raid_request_sense(struct sr_workunit *wu)
 	    DEVNAME(sd->sd_sc));
 
 	/* use latest sense data */
-	bcopy(&sd->sd_scsi_sense, &xs->sense, sizeof(xs->sense));
+	memcpy(&xs->sense, &sd->sd_scsi_sense, sizeof(xs->sense));
 
 	/* clear sense data */
 	bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
@@ -5083,10 +5083,10 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		 */
 		aes_xts_setkey(&ctx, my->srd->mds.mdd_crypto.scr_key[0], 64);
 		/* We encrypt DEV_BSIZE bytes at a time in my->buf */
-		bcopy(((char *)addr) + i, my->buf, DEV_BSIZE);
+		memcpy(my->buf, ((char *)addr) + i, DEV_BSIZE);
 
 		/* Block number is the IV */
-		bcopy(&key_blkno, &iv, sizeof(key_blkno));
+		memcpy(&iv, &key_blkno, sizeof(key_blkno));
 		aes_xts_reinit(&ctx, iv);
 
 		/* Encrypt DEV_BSIZE bytes, AES_XTS_BLOCKSIZE bytes at a time */
