@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.90 2014/11/07 09:23:20 sthen Exp $
+# $OpenBSD: services,v 1.91 2014/12/19 14:23:41 ajacoutot Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -233,6 +233,7 @@ iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
 svn		3690/tcp			# Subversion
+rdp		3389/tcp			# Microsoft Remote Desktop Protocol
 sieve		4190/tcp			# ManageSieve Protocol
 sieve		4190/udp			# ManageSieve Protocol
 krb524		4444/tcp			# Kerberos 5->4
@@ -248,6 +249,7 @@ sip		5060/tcp			# SIP
 sip		5060/udp			# SIP
 postgresql	5432/tcp			# PostgreSQL
 postgresql	5432/udp			# PostgreSQL
+rfb		5900/tcp	vnc		# Remote Framebuffer
 afs3-fileserver	7000/tcp			# AFS fileserver
 afs3-fileserver	7000/udp			# AFS fileserver
 afs3-callback	7001/tcp			# AFS callback server
