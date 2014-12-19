@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.171 2014/12/19 02:46:47 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.172 2014/12/19 02:49:07 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -82,6 +82,7 @@ struct pool_item_header {
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
 	u_long			ph_magic;
+	int			ph_tick;
 };
 #define POOL_MAGICBIT (1 << 3) /* keep away from perturbed low bits */
 #define POOL_PHPOISON(ph) ISSET((ph)->ph_magic, POOL_MAGICBIT)
@@ -620,6 +621,7 @@ pool_put(struct pool *pp, void *v)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph, *freeph = NULL;
+	extern int ticks;
 
 #ifdef DIAGNOSTIC
 	if (v == NULL)
@@ -664,6 +666,7 @@ pool_put(struct pool *pp, void *v)
 	 	 */
 		pp->pr_nidle++;
 
+		ph->ph_tick = ticks;
 		TAILQ_REMOVE(&pp->pr_partpages, ph, ph_pagelist);
 		TAILQ_INSERT_TAIL(&pp->pr_emptypages, ph, ph_pagelist);
 		pool_update_curpage(pp);
@@ -674,8 +677,11 @@ pool_put(struct pool *pp, void *v)
 
 	/* is it time to free a page? */
 	if (pp->pr_nidle > pp->pr_maxpages &&
-	    (freeph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL)
+	    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
+	    (ticks - ph->ph_tick) > hz) {
+		freeph = ph;
 		pool_p_remove(pp, freeph);
+	}
 	mtx_leave(&pp->pr_mtx);
 
 	if (freeph != NULL)
