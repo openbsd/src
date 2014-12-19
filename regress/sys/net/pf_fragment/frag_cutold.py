@@ -35,7 +35,7 @@ if os.fork() == 0:
 ans=sniff(iface=SRC_IF, timeout=3, filter=
     "ip and src "+dstaddr+" and dst "+SRC_OUT+" and icmp")
 a=ans[0]
-if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv4 and \
+if a and a.type == ETH_P_IP and \
     a.payload.proto == 1 and \
     a.payload.frag == 0 and a.payload.flags == 0 and \
     icmptypes[a.payload.payload.type] == 'echo-reply':

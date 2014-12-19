@@ -27,7 +27,7 @@ if os.fork() == 0:
 ans=sniff(iface=SRC_IF, timeout=3, filter=
     "ip6 and src "+DST_IN6+" and dst "+SRC_OUT6+" and udp")
 for a in ans:
-	if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
+	if a and a.type == ETH_P_IPV6 and \
 	    ipv6nh[a.payload.nh] == 'UDP' and \
 	    a.payload.payload.sport == 7:
 		port=a.payload.payload.dport

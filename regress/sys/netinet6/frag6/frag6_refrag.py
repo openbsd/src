@@ -39,7 +39,7 @@ if os.fork() == 0:
 ans=sniff(iface=SRC_IF, timeout=3, filter=
     "ip6 and src "+DST_IN6+" and dst "+SRC_OUT6+" and proto ipv6-frag")
 for a in ans:
-	if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
+	if a and a.type == ETH_P_IPV6 and \
 	    ipv6nh[a.payload.nh] == 'Fragment Header' and \
 	    a.payload.payload.offset == 0 and \
 	    ipv6nh[a.payload.payload.nh] == 'ICMPv6' and \

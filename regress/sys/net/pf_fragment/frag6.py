@@ -25,7 +25,7 @@ if os.fork() == 0:
 ans=sniff(iface=SRC_IF, timeout=3, filter=
     "ip6 and src "+dstaddr+" and dst "+SRC_OUT6+" and icmp6")
 a=ans[0]
-if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
+if a and a.type == ETH_P_IPV6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
     icmp6types[a.payload.payload.type] == 'Echo Reply':
 	id=a.payload.payload.id

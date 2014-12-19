@@ -15,7 +15,7 @@ print "ipcksum=%#04x" % (ipcksum)
 echocksum=IP(str(p.payload)).payload.chksum
 print "echocksum=%#04x" % (echocksum)
 a=srp1(p, iface=SRC_IF, timeout=2)
-if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv4 and \
+if a and a.type == ETH_P_IP and \
     a.payload.proto == 1 and \
     icmptypes[a.payload.payload.type] == 'dest-unreach' and \
     icmpcodes[a.payload.payload.type][a.payload.payload.code] == \
