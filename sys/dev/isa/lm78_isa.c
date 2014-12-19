@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_isa.c,v 1.7 2011/12/06 16:06:07 mpf Exp $	*/
+/*	$OpenBSD: lm78_isa.c,v 1.8 2014/12/19 13:53:08 krw Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -20,7 +20,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -42,6 +42,7 @@ extern struct cfdriver lm_cd;
 
 struct lm_isa_softc {
 	struct lm_softc sc_lmsc;
+	struct task sc_remove_alias_task;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -231,9 +232,13 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 		if (lmsc == &sc->sc_lmsc)
 			continue;
 		if (lmsc && lmsc->sbusaddr == sbusaddr &&
-		    lmsc->chipid == sc->sc_lmsc.chipid)
-			workq_add_task(NULL, 0, lm_isa_remove_alias, lmsc,
+		    lmsc->chipid == sc->sc_lmsc.chipid) {
+			task_set(&sc->sc_remove_alias_task,
+			    lm_isa_remove_alias, lmsc,
 			    sc->sc_lmsc.sc_dev.dv_xname);
+			task_add(systq, &sc->sc_remove_alias_task);
+			break;
+		}
 	}
 }
 
