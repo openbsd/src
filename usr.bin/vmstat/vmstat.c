@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.134 2014/11/23 04:34:48 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.135 2014/12/19 20:18:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1016,7 +1016,6 @@ dopool_kvm(void)
 {
 	SIMPLEQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
-	struct pool_allocator palloc;
 	struct kinfo_pool pi;
 	long total = 0, inuse = 0;
 	u_long addr;
@@ -1039,19 +1038,11 @@ dopool_kvm(void)
 			    kvm_geterr(kd));
 			exit(1);
 		}
-		if (kvm_read(kd, (u_long)pp->pr_alloc,
-		    &palloc, sizeof(palloc)) < 0) {
-			(void)fprintf(stderr,
-			    "vmstat: pool allocator trashed: %s\n",
-			    kvm_geterr(kd));
-			exit(1);
-		}
-
 		name[31] = '\0';
 
 		memset(&pi, 0, sizeof(pi));
 		pi.pr_size = pp->pr_size;
-		pi.pr_pgsize = palloc.pa_pagesz;
+		pi.pr_pgsize = pp->pr_pgsize;
 		pi.pr_itemsperpage = pp->pr_itemsperpage;
 		pi.pr_npages = pp->pr_npages;
 		pi.pr_minpages = pp->pr_minpages;
