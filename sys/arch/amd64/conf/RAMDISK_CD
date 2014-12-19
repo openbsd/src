@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.148 2014/11/24 02:03:36 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.149 2014/12/19 17:25:14 tedu Exp $
 
 machine		amd64
 maxusers	4
@@ -224,7 +224,6 @@ bwi*		at cardbus?		# Broadcom AirForce (802.11b/g)
 wi*		at pci?			# WaveLAN IEEE 802.11DS
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 an*		at pcmcia?		# Aironet IEEE 802.11DS
-ipw*		at pci?			# Intel PRO/Wireless 2100
 iwi*		at pci?			# Intel PRO/Wireless 2200BG/2915ABG
 wpi*		at pci?			# Intel PRO/Wireless 3945ABG
 iwn*		at pci?			# Intel Wireless WiFi Link 4965AGN
