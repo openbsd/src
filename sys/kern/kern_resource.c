@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.52 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.53 2014/12/19 05:59:21 tedu Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -505,8 +505,8 @@ limcopy(struct plimit *lim)
 	static int initialized;
 
 	if (!initialized) {
-		pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0,
-		    "plimitpl", &pool_allocator_nointr);
+		pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, PR_WAITOK,
+		    "plimitpl", NULL);
 		initialized = 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.34 2014/09/08 01:47:06 guenther Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.35 2014/12/19 05:59:21 tedu Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -149,8 +149,7 @@ vfsinit(void)
 	struct vfsconf *vfsconflist;
 	int vfsconflistlen;
 
-	pool_init(&namei_pool, MAXPATHLEN, 0, 0, 0, "namei",
-	    &pool_allocator_nointr);
+	pool_init(&namei_pool, MAXPATHLEN, 0, 0, PR_WAITOK, "namei", NULL);
 
 	/* Initialize the vnode table. */
 	vntblinit();

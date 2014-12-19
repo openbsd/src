@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.51 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.52 2014/12/19 05:59:21 tedu Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -62,10 +62,9 @@ void
 seminit(void)
 {
 
-	pool_init(&sema_pool, sizeof(struct semid_ds), 0, 0, 0, "semapl",
-	    &pool_allocator_nointr);
-	pool_init(&semu_pool, SEMUSZ, 0, 0, 0, "semupl",
-	    &pool_allocator_nointr);
+	pool_init(&sema_pool, sizeof(struct semid_ds), 0, 0, PR_WAITOK,
+	    "semapl", NULL);
+	pool_init(&semu_pool, SEMUSZ, 0, 0, PR_WAITOK, "semupl", NULL);
 	sema = mallocarray(seminfo.semmni, sizeof(struct semid_ds *),
 	    M_SEM, M_WAITOK|M_ZERO);
 	semseqs = mallocarray(seminfo.semmni, sizeof(unsigned short),

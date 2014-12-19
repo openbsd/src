@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.67 2014/09/28 18:52:04 kettenis Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.68 2014/12/19 05:59:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -876,7 +876,7 @@ filt_pipewrite(struct knote *kn, long hint)
 void
 pipe_init(void)
 {
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
-	    &pool_allocator_nointr);
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, PR_WAITOK, "pipepl",
+	    NULL);
 }
 

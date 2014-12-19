@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.62 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.63 2014/12/19 05:59:21 tedu Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -93,18 +93,18 @@ procinit(void)
 	if (!pidhashtbl || !pgrphashtbl || !uihashtbl)
 		panic("procinit: malloc");
 
-	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-	    &pool_allocator_nointr);
-	pool_init(&process_pool, sizeof(struct process), 0, 0, 0, "processpl",
-	    &pool_allocator_nointr);
-	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "zombiepl",
-	    &pool_allocator_nointr);
-	pool_init(&ucred_pool, sizeof(struct ucred), 0, 0, 0, "ucredpl",
-	    &pool_allocator_nointr);
-	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-	    &pool_allocator_nointr);
-	pool_init(&session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
-	    &pool_allocator_nointr);
+	pool_init(&proc_pool, sizeof(struct proc), 0, 0, PR_WAITOK,
+	    "procpl", NULL);
+	pool_init(&process_pool, sizeof(struct process), 0, 0, PR_WAITOK,
+	    "processpl", NULL);
+	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, PR_WAITOK,
+	    "zombiepl", NULL);
+	pool_init(&ucred_pool, sizeof(struct ucred), 0, 0, PR_WAITOK,
+	    "ucredpl", NULL);
+	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, PR_WAITOK,
+	    "pgrppl", NULL);
+	pool_init(&session_pool, sizeof(struct session), 0, 0, PR_WAITOK,
+	    "sessionpl", NULL);
 }
 
 struct uidinfo *
