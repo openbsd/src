@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.102 2014/12/19 15:19:47 krw Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.103 2014/12/19 15:46:22 krw Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -682,7 +682,6 @@ int
 ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ipw_softc *sc = ic->ic_softc;
-	int error;
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
