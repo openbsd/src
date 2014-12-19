@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.13 2014/11/01 21:45:54 mpi Exp $
+.\"     $OpenBSD: route.9,v 1.14 2014/12/19 18:57:17 bluhm Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2014 $
+.Dd $Mdocdate: December 19 2014 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -81,7 +81,12 @@ sockets.
 .El
 .Sh RETURN VALUES
 .Fn rt_setgate
-returns non-0 if it cannot allocate memory.
+may fail with:
+.Pp
+.Bl -tag -width Er -compact
+.It Bq Er ENOBUFS
+Memory could not be allocated for the gateway.
+.El
 .Pp
 .Fn rtdeletemsg
 may fail with:
