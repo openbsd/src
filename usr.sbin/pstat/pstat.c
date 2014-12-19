@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.95 2014/12/19 14:08:20 tedu Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.96 2014/12/19 14:12:00 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -341,6 +341,8 @@ vnodemode(void)
 		(void)printf("%7d vnodes\n", numvnodes);
 		return;
 	}
+	if (!e_vnodebase)
+		return;
 	endvnode = e_vnodebase + numvnodes;
 	(void)printf("%d active vnodes\n", numvnodes);
 
