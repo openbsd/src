@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.24 2014/12/18 19:31:37 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.25 2014/12/19 15:07:33 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -21,8 +21,6 @@
 #error vmt(4) is only supported on i386 and amd64
 #endif
 
-#include <dev/vmtvar.h>
-
 /*
  * Protocol reverse engineered by Ken Kato:
  * http://chitchat.at.infoseek.co.jp/vmware/backdoor.html
@@ -31,17 +29,19 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <net/if_var.h>
 #include <netinet/in.h>
+
 #include <dev/rndvar.h>
+#include <dev/vmtvar.h>
 
 /* "The" magic number, always occupies the EAX register. */
 #define VM_MAGIC			0x564D5868
