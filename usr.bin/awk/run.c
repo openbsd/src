@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.37 2014/12/08 21:50:09 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.38 2014/12/19 19:28:55 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -270,8 +270,8 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 	fp++;	/* now ok to up frame */
 	if (fp >= frame + nframe) {
 		int dfp = fp - frame;	/* old index */
-		frame = (struct Frame *)
-			realloc((char *) frame, (nframe += 100) * sizeof(struct Frame));
+		frame = reallocarray(frame, (nframe += 100),
+		    sizeof(struct Frame));
 		if (frame == NULL)
 			FATAL("out of space for stack frames in %s", s);
 		fp = frame + dfp;

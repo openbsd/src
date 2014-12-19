@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.17 2011/09/28 19:27:18 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.18 2014/12/19 19:28:55 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -348,11 +348,13 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 		f->re[info(v)].ltype = type(v);
 		f->re[info(v)].lval.np = right(v);
 		while (f->accept >= maxsetvec) {	/* guessing here! */
-			maxsetvec *= 4;
-			setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
-			tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
+			setvec = reallocarray(setvec, maxsetvec,
+			    4 * sizeof(int));
+			tmpset = reallocarray(tmpset, maxsetvec,
+			    4 * sizeof(int));
 			if (setvec == 0 || tmpset == 0)
 				overflo("out of space in cfoll()");
+			maxsetvec *= 4;
 		}
 		for (i = 0; i <= f->accept; i++)
 			setvec[i] = 0;
@@ -389,11 +391,13 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 	LEAF
 		lp = info(p);	/* look for high-water mark of subscripts */
 		while (setcnt >= maxsetvec || lp >= maxsetvec) {	/* guessing here! */
-			maxsetvec *= 4;
-			setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
-			tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
+			setvec = reallocarray(setvec, maxsetvec,
+			    4 * sizeof(int));
+			tmpset = reallocarray(tmpset, maxsetvec,
+			    4 * sizeof(int));
 			if (setvec == 0 || tmpset == 0)
 				overflo("out of space in first()");
+			maxsetvec *= 4;
 		}
 		if (type(p) == EMPTYRE) {
 			setvec[lp] = 0;
@@ -857,11 +861,11 @@ int cgoto(fa *f, int s, int c)
 
 	assert(c == HAT || c < NCHARS);
 	while (f->accept >= maxsetvec) {	/* guessing here! */
-		maxsetvec *= 4;
-		setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
-		tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
+		setvec = reallocarray(setvec, maxsetvec, 4 * sizeof(int));
+		tmpset = reallocarray(tmpset, maxsetvec, 4 * sizeof(int));
 		if (setvec == 0 || tmpset == 0)
 			overflo("out of space in cgoto()");
+		maxsetvec *= 4;
 	}
 	for (i = 0; i <= f->accept; i++)
 		setvec[i] = 0;
@@ -879,11 +883,13 @@ int cgoto(fa *f, int s, int c)
 				q = f->re[p[i]].lfollow;
 				for (j = 1; j <= *q; j++) {
 					if (q[j] >= maxsetvec) {
-						maxsetvec *= 4;
-						setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
-						tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
+						setvec = reallocarray(setvec,
+						    maxsetvec, 4 * sizeof(int));
+						tmpset = reallocarray(tmpset,
+						    maxsetvec, 4 * sizeof(int));
 						if (setvec == 0 || tmpset == 0)
 							overflo("cgoto overflow");
+						maxsetvec *= 4;
 					}
 					if (setvec[q[j]] == 0) {
 						setcnt++;
