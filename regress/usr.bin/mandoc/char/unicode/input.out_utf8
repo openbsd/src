@@ -1,0 +1,67 @@
+CHAR-UNICODE-INPUT(1)       General Commands Manual      CHAR-UNICODE-INPUT(1)
+
+
+
+NNAAMMEE
+       char-unicode-input - Unicode characters in the input file
+
+DDEESSCCRRIIPPTTIIOONN
+       lowest valid: �
+
+   OOnnee--bbyyttee rraannggee
+
+       U+0000   0x00   �?   lowest ASCII
+       U+001f   0x1f   �?   highest ASCII control character
+       U+007f   0x7f   �?   highest ASCII
+                0x80   ?    leading lowest continuation
+                0xbf   ?    leading highest continuation
+
+   TTwwoo--bbyyttee rraannggee
+
+       U+0000   0xc080     ??   lowest obfuscated ASCII
+       U+007f   0xc1bf     ??   highest obfuscated ASCII
+                0xc278     ?x   ASCII continuation
+       U+0080   0xc280     ��   lowest two-byte
+                0xc2c380   ?À   high continuation
+       U+07FF   0xdfbf     ߿߿     highest two-byte
+
+   TThhrreeee--bbyyttee rraannggee
+
+       U+0000   0xe08080   ???    lowest obfuscated ASCII
+       U+007f   0xe081bf   ???    highest obfuscated ASCII
+       U+0080   0xe08280   ???    lowest obfuscated two-byte
+       U+07FF   0xe09fbf   ???    highest obfuscated two-byte
+       U+0800   0xe0a080   ࠀࠀ       lowest three-byte
+       U+0FFF   0xe0bfbf   ࿿࿿       end of first middle byte
+       U+1000   0xe18080   ကက     begin of second middle byte
+       U+CFFF   0xecbfbf   쿿쿿   end of last normal middle byte
+       U+D000   0xed8080   퀀퀀   begin of strange middle byte
+       U+D7FF   0xed9fbf   ퟿퟿       highest public three-byte
+       U+D800   0xeda080   ���???   lowest surrogate
+       U+DFFF   0xedbfbf   ���???   highest surrogate
+       U+E000   0xee8080        lowest private use
+       U+FFFF   0xefbfbf   ￿￿       highest three-byte
+
+   FFoouurr--bbyyttee rraannggee
+
+       U+0000     0xf0808080     ????    lowest obfuscated ASCII
+       U+007f     0xf08081bf     ????    highest obfuscated ASCII
+       U+0080     0xf0808280     ????    lowest obfuscated two-byte
+       U+07FF     0xf0809fbf     ????    highest obfuscated two-byte
+       U+0800     0xf080a080     ????    lowest obfuscated three-byte
+       U+FFFF     0xf08fbfbf     ????    highest obfuscated three-byte
+       U+10000    0xf0908080     𐀀𐀀        lowest four-byte
+       U+3FFFF    0xf0bfbfbf     𿿿𿿿        end of first middle byte
+       U+40000    0xf1808080     񀀀񀀀        second middle byte
+       U+FFFFF    0xf3bfbfbf     󿿿󿿿        last normal middle byte
+       U+100000   0xf4808080     􀀀􀀀      strange middle byte
+       U+10FFFF   0xf48fbfbf     􏿿􏿿        last valid four-byte
+       U+110000   0xf4908080     ????    lowest beyond Unicode
+       U+13FFFF   0xf4bfbfbf     ????    end of strange middle byte
+       U+140000   0xf5808080     ????    lowest invalid middle byte
+       U+1FFFFF   0xf7bfbfbf     ????    highest four-byte
+       U+200000   0xf888808080   ?????   lowest five-byte
+
+
+
+OpenBSD                        December 19, 2014         CHAR-UNICODE-INPUT(1)
