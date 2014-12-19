@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyzfirm2h.c,v 1.2 2002/01/23 01:14:26 ericj Exp $	*/
+/*	$OpenBSD: cyzfirm2h.c,v 1.3 2014/12/19 17:44:29 tedu Exp $	*/
 /*	$NetBSD: cyzfirm2h.c,v 1.1 2000/05/17 17:58:10 thorpej Exp $	*/
 
 /*-
@@ -98,13 +98,13 @@ main(int argc, char *argv[])
 	(void) close(i);
 
 	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.1 2000/05/17 17:58:10 thorpej Exp $\t*/\n\n");
-	fprintf(out_file, "\
-/*
- * Firmware for Cyclades Z series multiport serial boards.
- * Automatically generated from:
- *
- *	%s
- */\n\n", argv[1]);
+	fprintf(out_file,
+"/*\n"
+" * Firmware for Cyclades Z series multiport serial boards.\n"
+" * Automatically generated from:\n"
+" *\n"
+" *	%s\n"
+" */\n\n", argv[1]);
 	fprintf(out_file, "#ifndef _%s_\n", include_name);
 	fprintf(out_file, "#define\t_%s_\n\n", include_name);
 
