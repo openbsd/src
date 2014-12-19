@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.94 2014/11/23 04:34:48 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.95 2014/12/19 14:08:20 tedu Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 	if ((dformat == 0 && argc > 0) || (dformat && argc == 0))
 		usage();
 
-	need_nlist = vnodeflag || dformat;
+	need_nlist = vnodeflag || totalflag || dformat;
 
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
@@ -800,6 +800,7 @@ kinfo_vnodes(int *avnodes)
 			err(1, "sysctl(KERN_NUMVNODES) failed");
 	} else
 		KGET(V_NUMV, numvnodes);
+	*avnodes = numvnodes;
 	if ((vbuf = calloc(numvnodes + 20,
 	    sizeof(struct vnode *) + sizeof(struct vnode))) == NULL)
 		err(1, "malloc: vnode buffer");
@@ -810,10 +811,10 @@ kinfo_vnodes(int *avnodes)
 	num = 0;
 	for (mp = TAILQ_FIRST(&kvm_mountlist); mp != NULL;
 	    mp = TAILQ_NEXT(&mount, mnt_list)) {
-		KGET2(mp, &mount, sizeof(mount), "mount entry");
+		KGETRET(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = LIST_FIRST(&mount.mnt_vnodelist);
 		    vp != NULL; vp = LIST_NEXT(&vnode, v_mntvnodes)) {
-			KGET2(vp, &vnode, sizeof(vnode), "vnode");
+			KGETRET(vp, &vnode, sizeof(vnode), "vnode");
 			if ((bp + sizeof(struct vnode *) +
 			    sizeof(struct vnode)) > evbuf)
 				/* XXX - should realloc */
