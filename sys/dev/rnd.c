@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.164 2014/12/18 16:27:30 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.165 2014/12/19 02:29:40 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -215,6 +215,12 @@ struct timer_rand_state {	/* There is one of these per entropy source */
 #define QEVSLOW (QEVLEN * 3 / 4) /* yet another 0.75 for 60-minutes hour /-; */
 #define QEVSBITS 10
 
+#define KEYSZ	32
+#define IVSZ	8
+#define BLOCKSZ	64
+#define RSBUFSZ	(16*BLOCKSZ)
+#define EBUFSIZE KEYSZ + IVSZ
+
 struct rand_event {
 	struct timer_rand_state *re_state;
 	u_int re_nbits;
@@ -233,7 +239,8 @@ u_char	entropy_input_rotate;
 
 void	dequeue_randomness(void *);
 void	add_entropy_words(const u_int32_t *, u_int);
-void	extract_entropy(u_int8_t *, int);
+void	extract_entropy(u_int8_t *)
+    __attribute__((__bounded__(__minbytes__,1,EBUFSIZE)));
 
 int	filt_randomread(struct knote *, long);
 void	filt_randomdetach(struct knote *);
@@ -487,40 +494,36 @@ dequeue_randomness(void *v)
  * requested.
  */
 void
-extract_entropy(u_int8_t *buf, int nbytes)
+extract_entropy(u_int8_t *buf)
 {
 	static u_int32_t extract_pool[POOLWORDS];
 	u_char buffer[SHA512_DIGEST_LENGTH];
 	SHA2_CTX tmp;
-	u_int i;
 
-	add_timer_randomness(nbytes);
+#if SHA512_DIGEST_LENGTH < EBUFSIZE
+#error "need more bigger hash output"
+#endif
 
-	while (nbytes) {
-		i = MIN(nbytes, sizeof(buffer));
+	/*
+	 * INTENTIONALLY not protected by entropylock.  Races during
+	 * memcpy() result in acceptable input data; races during
+	 * SHA512Update() would create nasty data dependencies.  We
+	 * do not rely on this as a benefit, but if it happens, cool.
+	 */
+	memcpy(extract_pool, entropy_pool,
+	    sizeof(extract_pool));
 
-		/*
-		 * INTENTIONALLY not protected by entropylock.  Races
-		 * during bcopy() result in acceptable input data; races
-		 * during SHA512Update() would create nasty data dependencies.
-		 */
-		bcopy(entropy_pool, extract_pool,
-		    sizeof(extract_pool));
+	/* Hash the pool to get the output */
+	SHA512Init(&tmp);
+	SHA512Update(&tmp, (u_int8_t *)extract_pool, sizeof(extract_pool));
+	SHA512Final(buffer, &tmp);
 
-		/* Hash the pool to get the output */
-		SHA512Init(&tmp);
-		SHA512Update(&tmp, (u_int8_t *)extract_pool, sizeof(extract_pool));
-		SHA512Final(buffer, &tmp);
+	/* Copy data to destination buffer */
+	memcpy(buf, buffer, EBUFSIZE);
 
-		/* Copy data to destination buffer */
-		bcopy(buffer, buf, i);
-		nbytes -= i;
-		buf += i;
-
-		/* Modify pool so next hash will produce different results */
-		add_timer_randomness(nbytes);
-		dequeue_randomness(NULL);
-	}
+	/* Modify pool so next hash will produce different results */
+	add_timer_randomness(EBUFSIZE);
+	dequeue_randomness(NULL);
 
 	/* Wipe data from memory */
 	explicit_bzero(extract_pool, sizeof(extract_pool));
@@ -537,10 +540,6 @@ struct task arc4_task;
 void arc4_reinit(void *v);		/* timeout to start reinit */
 void arc4_init(void *, void *);		/* actually do the reinit */
 
-#define KEYSZ	32
-#define IVSZ	8
-#define BLOCKSZ	64
-#define RSBUFSZ	(16*BLOCKSZ)
 static int rs_initialized;
 static chacha_ctx rs;		/* chacha context for random keystream */
 /* keystream blocks (also chacha seed from boot) */
@@ -601,7 +600,7 @@ static void
 _rs_stir(int do_lock)
 {
 	struct timespec ts;
-	u_int8_t buf[KEYSZ + IVSZ], *p;
+	u_int8_t buf[EBUFSIZE], *p;
 	int i;
 
 	/*
@@ -610,7 +609,7 @@ _rs_stir(int do_lock)
 	 * not collect entropy very well during this time, but may have
 	 * clock information which is better than nothing.
 	 */
-	extract_entropy((u_int8_t *)buf, sizeof buf);
+	extract_entropy(buf);
 
 	nanotime(&ts);
 	for (p = (u_int8_t *)&ts, i = 0; i < sizeof(ts); i++)
