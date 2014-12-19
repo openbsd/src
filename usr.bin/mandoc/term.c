@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.97 2014/12/02 10:07:17 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.98 2014/12/19 17:10:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -41,6 +41,7 @@ term_free(struct termp *p)
 {
 
 	free(p->buf);
+	free(p->fontq);
 	free(p);
 }
 
@@ -327,6 +328,7 @@ term_vspace(struct termp *p)
 		(*p->endline)(p);
 }
 
+/* Swap current and previous font; for \fP and .ft P */
 void
 term_fontlast(struct termp *p)
 {
@@ -337,6 +339,7 @@ term_fontlast(struct termp *p)
 	p->fontq[p->fonti] = f;
 }
 
+/* Set font, save current, discard previous; for \f, .ft, .B etc. */
 void
 term_fontrepl(struct termp *p, enum termfont f)
 {
@@ -345,38 +348,39 @@ term_fontrepl(struct termp *p, enum termfont f)
 	p->fontq[p->fonti] = f;
 }
 
+/* Set font, save previous. */
 void
 term_fontpush(struct termp *p, enum termfont f)
 {
 
-	assert(p->fonti + 1 < 10);
 	p->fontl = p->fontq[p->fonti];
-	p->fontq[++p->fonti] = f;
+	if (++p->fonti == p->fontsz) {
+		p->fontsz += 8;
+		p->fontq = mandoc_reallocarray(p->fontq,
+		    p->fontsz, sizeof(enum termfont *));
+	}
+	p->fontq[p->fonti] = f;
 }
 
-const void *
+/* Retrieve pointer to current font. */
+const enum termfont *
 term_fontq(struct termp *p)
 {
 
 	return(&p->fontq[p->fonti]);
 }
 
-enum termfont
-term_fonttop(struct termp *p)
-{
-
-	return(p->fontq[p->fonti]);
-}
-
+/* Flush to make the saved pointer current again. */
 void
-term_fontpopq(struct termp *p, const void *key)
+term_fontpopq(struct termp *p, const enum termfont *key)
 {
 
-	while (p->fonti >= 0 && key < (void *)(p->fontq + p->fonti))
+	while (p->fonti >= 0 && key < p->fontq + p->fonti)
 		p->fonti--;
 	assert(p->fonti >= 0);
 }
 
+/* Pop one font off the stack. */
 void
 term_fontpop(struct termp *p)
 {
@@ -552,7 +556,7 @@ encode1(struct termp *p, int c)
 	if (p->col + 6 >= p->maxcols)
 		adjbuf(p, p->col + 6);
 
-	f = term_fonttop(p);
+	f = *term_fontq(p);
 
 	if (TERMFONT_UNDER == f || TERMFONT_BI == f) {
 		p->buf[p->col++] = '_';
@@ -584,7 +588,7 @@ encode(struct termp *p, const char *word, size_t sz)
 	 * character by character.
 	 */
 
-	if (TERMFONT_NONE == term_fonttop(p)) {
+	if (*term_fontq(p) == TERMFONT_NONE) {
 		if (p->col + sz >= p->maxcols)
 			adjbuf(p, p->col + sz);
 		for (i = 0; i < sz; i++)

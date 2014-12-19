@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.52 2014/12/02 10:07:17 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.53 2014/12/19 17:10:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -84,7 +84,8 @@ struct	termp {
 	enum termenc	  enc;		/* Type of encoding. */
 	const struct mchars *symtab;	/* Character table. */
 	enum termfont	  fontl;	/* Last font set. */
-	enum termfont	  fontq[10];	/* Symmetric fonts. */
+	enum termfont	 *fontq;	/* Symmetric fonts. */
+	int		  fontsz;	/* Allocated size of font stack */
 	int		  fonti;	/* Index of font stack. */
 	term_margin	  headf;	/* invoked to print head */
 	term_margin	  footf;	/* invoked to print foot */
@@ -127,11 +128,10 @@ size_t		  term_vspan(const struct termp *,
 size_t		  term_strlen(const struct termp *, const char *);
 size_t		  term_len(const struct termp *, size_t);
 
-enum termfont	  term_fonttop(struct termp *);
-const void	 *term_fontq(struct termp *);
+const enum termfont *term_fontq(struct termp *);
 void		  term_fontpush(struct termp *, enum termfont);
 void		  term_fontpop(struct termp *);
-void		  term_fontpopq(struct termp *, const void *);
+void		  term_fontpopq(struct termp *, const enum termfont *);
 void		  term_fontrepl(struct termp *, enum termfont);
 void		  term_fontlast(struct termp *);
 
