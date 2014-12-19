@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.37 2014/12/18 19:02:56 tedu Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.38 2014/12/19 12:31:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,9 +104,6 @@ int			 pf_map_addr_sticky(sa_family_t, struct pf_rule *,
 			    struct pf_src_node **, struct pf_pool *,
 			    enum pf_sn_types);
 
-/*
- * hash function based on bridge_hash in if_bridge.c
- */
 void
 pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
     struct pf_poolhashkey *key, sa_family_t af)
