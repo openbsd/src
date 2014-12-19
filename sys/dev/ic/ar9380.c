@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.19 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.20 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -34,9 +34,9 @@
 #include <sys/queue.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

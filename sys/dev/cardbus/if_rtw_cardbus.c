@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.22 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.23 2014/12/19 22:44:58 guenther Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -78,8 +78,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/endian.h>
+#include <sys/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>

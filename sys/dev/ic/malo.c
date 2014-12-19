@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.102 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: malo.c,v 1.103 2014/12/19 22:44:58 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -29,9 +29,9 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <net/if.h>

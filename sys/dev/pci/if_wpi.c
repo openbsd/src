@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.120 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.121 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -33,9 +33,9 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/task.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>

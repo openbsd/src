@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.24 2009/04/06 15:18:45 kettenis Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.25 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -46,9 +46,9 @@
 #include <sys/queue.h>
 #include <sys/selinfo.h>
 #include <sys/rwlock.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <scsi/scsi_all.h>

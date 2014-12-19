@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.119 2014/11/18 02:37:30 tedu Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.120 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -32,9 +32,9 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/task.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>

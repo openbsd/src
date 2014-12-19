@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.35 2012/02/24 06:19:00 guenther Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.36 2014/12/19 22:44:58 guenther Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/scsiio.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.17 2012/12/05 23:20:20 deraadt Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.18 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -48,8 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/endian.h>
+#include <sys/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>

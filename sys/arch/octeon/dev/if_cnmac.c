@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.19 2014/08/11 19:00:50 miod Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.20 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -49,6 +49,7 @@
 #include <sys/stdint.h> /* uintptr_t */
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/endian.h>
 #ifdef MBUF_TIMESTAMP
 #include <sys/time.h>
 #endif
@@ -65,7 +66,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/endian.h>
 #include <machine/octeonvar.h>
 #include <machine/octeon_model.h>
 

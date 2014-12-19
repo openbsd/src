@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.87 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.88 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -46,8 +46,8 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bus.h>
 #include <machine/intr.h>	/* splnet */
 

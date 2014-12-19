@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.349 2014/10/16 19:30:59 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.350 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -89,9 +89,9 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ata/satareg.h>

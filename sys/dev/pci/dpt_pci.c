@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt_pci.c,v 1.8 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: dpt_pci.c,v 1.9 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
 
 /*
@@ -38,8 +38,8 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bus.h>
 
 #ifdef __NetBSD__

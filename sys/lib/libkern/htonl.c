@@ -3,8 +3,7 @@
  * Public domain.
  */
 
-#include <sys/types.h>
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 #undef htonl
 

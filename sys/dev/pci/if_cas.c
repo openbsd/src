@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.35 2014/11/18 01:56:32 brad Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.36 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  *
@@ -55,8 +55,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

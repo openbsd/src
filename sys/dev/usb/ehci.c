@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.172 2014/12/17 15:27:49 kettenis Exp $ */
+/*	$OpenBSD: ehci.c,v 1.173 2014/12/19 22:44:59 guenther Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -49,9 +49,9 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

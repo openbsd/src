@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.31 2014/12/08 16:21:38 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.32 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -95,7 +96,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

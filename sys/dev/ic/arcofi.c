@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.10 2014/08/20 07:19:42 ratchov Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.11 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -34,6 +34,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/endian.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -42,7 +43,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <dev/ic/arcofivar.h>

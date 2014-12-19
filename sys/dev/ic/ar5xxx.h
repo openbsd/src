@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.51 2013/11/21 16:16:08 mpi Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.52 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -40,8 +40,8 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bus.h>
 
 #include <net/if.h>

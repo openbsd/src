@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.45 2005/09/06 18:27:54 jolan Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.46 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -41,7 +41,7 @@
 #ifndef __HIFN_H__
 #define	__HIFN_H__
 
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 /*
  * Some PCI configuration space offset defines.  The names were made

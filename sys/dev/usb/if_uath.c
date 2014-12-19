@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.63 2014/11/18 02:37:30 tedu Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.64 2014/12/19 22:44:59 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -37,9 +37,9 @@
 #include <sys/timeout.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #if NBPFILTER > 0

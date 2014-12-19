@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpb.h,v 1.5 2006/12/15 03:04:24 krw Exp $	*/
+/*	$OpenBSD: bpb.h,v 1.6 2014/12/19 22:44:59 guenther Exp $	*/
 /*	$NetBSD: bpb.h,v 1.6 1997/10/17 11:23:35 ws Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct bpb710 {
  * 16-bit and 32-bit quantities on byte boundaries.  If this is not true,
  * use the macros for the big-endian case.
  */
-#include <machine/endian.h>
+#include <sys/endian.h>
 #if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__STRICT_ALIGNMENT)
 #define	getushort(x)	*((u_int16_t *)(x))
 #define	getulong(x)	*((u_int32_t *)(x))

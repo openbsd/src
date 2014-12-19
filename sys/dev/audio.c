@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.124 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.125 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -49,12 +49,11 @@
 #include <sys/audioio.h>
 #include <sys/device.h>
 #include <sys/task.h>
+#include <sys/endian.h>
 
 #include <dev/audio_if.h>
 
 #include <dev/rndvar.h>
-
-#include <machine/endian.h>
 
 #include "wskbd.h"	/* NWSKBD (mixer tuning using keyboard) */
 

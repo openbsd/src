@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.134 2014/12/17 15:27:50 kettenis Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.135 2014/12/19 22:44:59 guenther Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -40,9 +40,9 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

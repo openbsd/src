@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.57 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.58 2014/12/19 22:44:58 guenther Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -71,7 +72,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

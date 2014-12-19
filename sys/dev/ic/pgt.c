@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.75 2014/07/22 13:12:12 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.76 2014/12/19 22:44:58 guenther Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -60,7 +60,6 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <net/if.h>

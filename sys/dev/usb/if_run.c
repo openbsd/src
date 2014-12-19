@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.104 2014/09/26 12:04:07 mlarkin Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.105 2014/12/19 22:44:59 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -33,9 +33,9 @@
 #include <sys/timeout.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_masks.h,v 1.4 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: rasops_masks.h,v 1.5 2014/12/19 22:44:59 guenther Exp $ */
 /* 	$NetBSD: rasops_masks.h,v 1.5 2000/06/13 13:37:01 ad Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #define _RASOPS_MASKS_H_ 1
 
 #include <sys/types.h>
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 /*
  * Convenience macros. To get around the problem of dealing with properly

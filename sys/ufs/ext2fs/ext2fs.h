@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.21 2014/07/14 08:54:13 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.22 2014/12/19 22:44:59 guenther Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  *  Modified for ext2fs by Manuel Bouyer.
  */
 
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 /*
  * Each disk drive contains some number of file systems.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.23 2014/05/04 20:09:15 sf Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.24 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -35,9 +35,9 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <scsi/scsi_all.h>

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.101 2014/07/12 18:48:17 tedu Exp $  */
+/*      $OpenBSD: ath.c,v 1.102 2014/12/19 22:44:58 guenther Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -55,8 +55,8 @@
 #include <sys/errno.h>
 #include <sys/timeout.h>
 #include <sys/gpio.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bus.h>
 
 #include <net/if.h>
@@ -2134,7 +2134,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		 * NB: Preserve byte order of IV for packet
 		 *     sniffers; it doesn't matter otherwise.
 		 */
-#if _BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 		ivp[0] = iv >> 0;
 		ivp[1] = iv >> 8;
 		ivp[2] = iv >> 16;

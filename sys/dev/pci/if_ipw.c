@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.103 2014/12/19 15:46:22 krw Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.104 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -32,9 +32,9 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>

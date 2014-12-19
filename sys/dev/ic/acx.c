@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.107 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.108 2014/12/19 22:44:58 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -98,9 +98,9 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #include <net/if.h>

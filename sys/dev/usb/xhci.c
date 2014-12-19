@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.46 2014/12/15 17:10:44 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.47 2014/12/19 22:44:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -24,9 +24,9 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

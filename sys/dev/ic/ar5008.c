@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.26 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.27 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -36,9 +36,9 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stdint.h>	/* uintptr_t */
+#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/endian.h>
 #include <machine/intr.h>
 
 #if NBPFILTER > 0
