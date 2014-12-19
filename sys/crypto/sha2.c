@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.12 2014/12/19 02:50:27 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.13 2014/12/19 17:16:57 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -165,8 +165,8 @@
  * only.
  */
 void SHA512Last(SHA2_CTX *);
-void SHA256Transform(SHA2_CTX *, const u_int8_t *);
-void SHA512Transform(SHA2_CTX *, const u_int8_t *);
+void SHA256Transform(u_int32_t *, const u_int8_t *);
+void SHA512Transform(u_int64_t *, const u_int8_t *);
 
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
@@ -310,23 +310,21 @@ SHA256Init(SHA2_CTX *context)
 } while(0)
 
 void
-SHA256Transform(SHA2_CTX *context, const u_int8_t *data)
+SHA256Transform(u_int32_t *state, const u_int8_t *data)
 {
 	u_int32_t	a, b, c, d, e, f, g, h, s0, s1;
-	u_int32_t	T1, *W256;
+	u_int32_t	T1, W256[16];
 	int		j;
 
-	W256 = (u_int32_t *)context->buffer;
-
 	/* Initialize registers with the prev. intermediate value */
-	a = context->state.st32[0];
-	b = context->state.st32[1];
-	c = context->state.st32[2];
-	d = context->state.st32[3];
-	e = context->state.st32[4];
-	f = context->state.st32[5];
-	g = context->state.st32[6];
-	h = context->state.st32[7];
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+	e = state[4];
+	f = state[5];
+	g = state[6];
+	h = state[7];
 
 	j = 0;
 	do {
@@ -354,14 +352,14 @@ SHA256Transform(SHA2_CTX *context, const u_int8_t *data)
 	} while (j < 64);
 
 	/* Compute the current intermediate hash value */
-	context->state.st32[0] += a;
-	context->state.st32[1] += b;
-	context->state.st32[2] += c;
-	context->state.st32[3] += d;
-	context->state.st32[4] += e;
-	context->state.st32[5] += f;
-	context->state.st32[6] += g;
-	context->state.st32[7] += h;
+	state[0] += a;
+	state[1] += b;
+	state[2] += c;
+	state[3] += d;
+	state[4] += e;
+	state[5] += f;
+	state[6] += g;
+	state[7] += h;
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = 0;
@@ -370,23 +368,21 @@ SHA256Transform(SHA2_CTX *context, const u_int8_t *data)
 #else /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA256Transform(SHA2_CTX *context, const u_int8_t *data)
+SHA256Transform(u_int32_t *state, const u_int8_t *data)
 {
 	u_int32_t	a, b, c, d, e, f, g, h, s0, s1;
-	u_int32_t	T1, T2, *W256;
+	u_int32_t	T1, T2, W256[16];
 	int		j;
 
-	W256 = (u_int32_t *)context->buffer;
-
 	/* Initialize registers with the prev. intermediate value */
-	a = context->state.st32[0];
-	b = context->state.st32[1];
-	c = context->state.st32[2];
-	d = context->state.st32[3];
-	e = context->state.st32[4];
-	f = context->state.st32[5];
-	g = context->state.st32[6];
-	h = context->state.st32[7];
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+	e = state[4];
+	f = state[5];
+	g = state[6];
+	h = state[7];
 
 	j = 0;
 	do {
@@ -432,14 +428,14 @@ SHA256Transform(SHA2_CTX *context, const u_int8_t *data)
 	} while (j < 64);
 
 	/* Compute the current intermediate hash value */
-	context->state.st32[0] += a;
-	context->state.st32[1] += b;
-	context->state.st32[2] += c;
-	context->state.st32[3] += d;
-	context->state.st32[4] += e;
-	context->state.st32[5] += f;
-	context->state.st32[6] += g;
-	context->state.st32[7] += h;
+	state[0] += a;
+	state[1] += b;
+	state[2] += c;
+	state[3] += d;
+	state[4] += e;
+	state[5] += f;
+	state[6] += g;
+	state[7] += h;
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = 0;
@@ -468,7 +464,7 @@ SHA256Update(SHA2_CTX *context, const void *dataptr, size_t len)
 			context->bitcount[0] += freespace << 3;
 			len -= freespace;
 			data += freespace;
-			SHA256Transform(context, context->buffer);
+			SHA256Transform(context->state.st32, context->buffer);
 		} else {
 			/* The buffer is not yet full */
 			memcpy(&context->buffer[usedspace], data, len);
@@ -480,7 +476,7 @@ SHA256Update(SHA2_CTX *context, const void *dataptr, size_t len)
 	}
 	while (len >= SHA256_BLOCK_LENGTH) {
 		/* Process as many complete blocks as we can */
-		SHA256Transform(context, data);
+		SHA256Transform(context->state.st32, data);
 		context->bitcount[0] += SHA256_BLOCK_LENGTH << 3;
 		len -= SHA256_BLOCK_LENGTH;
 		data += SHA256_BLOCK_LENGTH;
@@ -521,7 +517,7 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 					    SHA256_BLOCK_LENGTH - usedspace);
 				}
 				/* Do second-to-last transform: */
-				SHA256Transform(context, context->buffer);
+				SHA256Transform(context->state.st32, context->buffer);
 
 				/* And set-up for the last transform: */
 				memset(context->buffer, 0,
@@ -538,7 +534,7 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 		*(u_int64_t *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount[0];
 
 		/* Final transform: */
-		SHA256Transform(context, context->buffer);
+		SHA256Transform(context->state.st32, context->buffer);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		{
@@ -603,21 +599,21 @@ SHA512Init(SHA2_CTX *context)
 } while(0)
 
 void
-SHA512Transform(SHA2_CTX *context, const u_int8_t *data)
+SHA512Transform(u_int64_t *state, const u_int8_t *data)
 {
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
-	u_int64_t	T1, *W512 = (u_int64_t *)context->buffer;
+	u_int64_t	T1, W512[16];
 	int		j;
 
 	/* Initialize registers with the prev. intermediate value */
-	a = context->state.st64[0];
-	b = context->state.st64[1];
-	c = context->state.st64[2];
-	d = context->state.st64[3];
-	e = context->state.st64[4];
-	f = context->state.st64[5];
-	g = context->state.st64[6];
-	h = context->state.st64[7];
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+	e = state[4];
+	f = state[5];
+	g = state[6];
+	h = state[7];
 
 	j = 0;
 	do {
@@ -644,14 +640,14 @@ SHA512Transform(SHA2_CTX *context, const u_int8_t *data)
 	} while (j < 80);
 
 	/* Compute the current intermediate hash value */
-	context->state.st64[0] += a;
-	context->state.st64[1] += b;
-	context->state.st64[2] += c;
-	context->state.st64[3] += d;
-	context->state.st64[4] += e;
-	context->state.st64[5] += f;
-	context->state.st64[6] += g;
-	context->state.st64[7] += h;
+	state[0] += a;
+	state[1] += b;
+	state[2] += c;
+	state[3] += d;
+	state[4] += e;
+	state[5] += f;
+	state[6] += g;
+	state[7] += h;
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = 0;
@@ -660,21 +656,21 @@ SHA512Transform(SHA2_CTX *context, const u_int8_t *data)
 #else /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA512Transform(SHA2_CTX *context, const u_int8_t *data)
+SHA512Transform(u_int64_t *state, const u_int8_t *data)
 {
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
-	u_int64_t	T1, T2, *W512 = (u_int64_t *)context->buffer;
+	u_int64_t	T1, T2, W512[16];
 	int		j;
 
 	/* Initialize registers with the prev. intermediate value */
-	a = context->state.st64[0];
-	b = context->state.st64[1];
-	c = context->state.st64[2];
-	d = context->state.st64[3];
-	e = context->state.st64[4];
-	f = context->state.st64[5];
-	g = context->state.st64[6];
-	h = context->state.st64[7];
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+	e = state[4];
+	f = state[5];
+	g = state[6];
+	h = state[7];
 
 	j = 0;
 	do {
@@ -722,14 +718,14 @@ SHA512Transform(SHA2_CTX *context, const u_int8_t *data)
 	} while (j < 80);
 
 	/* Compute the current intermediate hash value */
-	context->state.st64[0] += a;
-	context->state.st64[1] += b;
-	context->state.st64[2] += c;
-	context->state.st64[3] += d;
-	context->state.st64[4] += e;
-	context->state.st64[5] += f;
-	context->state.st64[6] += g;
-	context->state.st64[7] += h;
+	state[0] += a;
+	state[1] += b;
+	state[2] += c;
+	state[3] += d;
+	state[4] += e;
+	state[5] += f;
+	state[6] += g;
+	state[7] += h;
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = 0;
@@ -758,7 +754,7 @@ SHA512Update(SHA2_CTX *context, const void *dataptr, size_t len)
 			ADDINC128(context->bitcount, freespace << 3);
 			len -= freespace;
 			data += freespace;
-			SHA512Transform(context, context->buffer);
+			SHA512Transform(context->state.st64, context->buffer);
 		} else {
 			/* The buffer is not yet full */
 			memcpy(&context->buffer[usedspace], data, len);
@@ -770,7 +766,7 @@ SHA512Update(SHA2_CTX *context, const void *dataptr, size_t len)
 	}
 	while (len >= SHA512_BLOCK_LENGTH) {
 		/* Process as many complete blocks as we can */
-		SHA512Transform(context, data);
+		SHA512Transform(context->state.st64, data);
 		ADDINC128(context->bitcount, SHA512_BLOCK_LENGTH << 3);
 		len -= SHA512_BLOCK_LENGTH;
 		data += SHA512_BLOCK_LENGTH;
@@ -809,7 +805,7 @@ SHA512Last(SHA2_CTX *context)
 				    SHA512_BLOCK_LENGTH - usedspace);
 			}
 			/* Do second-to-last transform: */
-			SHA512Transform(context, context->buffer);
+			SHA512Transform(context->state.st64, context->buffer);
 
 			/* And set-up for the last transform: */
 			memset(context->buffer, 0, SHA512_BLOCK_LENGTH - 2);
@@ -826,7 +822,7 @@ SHA512Last(SHA2_CTX *context)
 	*(u_int64_t *)&context->buffer[SHA512_SHORT_BLOCK_LENGTH+8] = context->bitcount[0];
 
 	/* Final transform: */
-	SHA512Transform(context, context->buffer);
+	SHA512Transform(context->state.st64, context->buffer);
 }
 
 void
