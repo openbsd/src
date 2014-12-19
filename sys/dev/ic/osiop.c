@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.49 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.50 2014/12/19 07:23:57 deraadt Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ osiop_scsicmd(xs)
 	acb->status = ACB_S_READY;
 	acb->xs = xs;
 	acb->xsflags = xs->flags;
-	bcopy(xs->cmd, &acb->ds->scsi_cmd, xs->cmdlen);
+	memcpy(&acb->ds->scsi_cmd, xs->cmd, xs->cmdlen);
 	acb->ds->cmd.count = xs->cmdlen;
 	acb->datalen = 0;
 #ifdef OSIOP_DEBUG

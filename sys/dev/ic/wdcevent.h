@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdcevent.h,v 1.6 2008/07/02 03:00:55 fgsch Exp $	*/
+/*	$OpenBSD: wdcevent.h,v 1.7 2014/12/19 07:23:57 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Constantine Sapuntzakis
  *
@@ -67,7 +67,7 @@ static __inline void WDC_LOG_ATAPI_CMD(struct channel_softc *chp, int drive,
 
 	record[0] = (flags >> 8);
 	record[1] = flags & 0xff;
-	bcopy(cmd, &record[2], len);
+	memcpy(&record[2], cmd, len);
 
 	wdc_log(chp, WDCEVENT_ATAPI_CMD, len + 2, record);
 }

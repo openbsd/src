@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.157 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: mfi.c,v 1.158 2014/12/19 07:23:57 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1378,7 +1378,7 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 
 	if (dir != MFI_DATA_NONE) {
 		if (dir == MFI_DATA_OUT)
-			bcopy(buf, dma_buf, len);
+			memcpy(dma_buf, buf, len);
 		dcmd->mdf_header.mfh_data_len = len;
 		ccb->ccb_data = dma_buf;
 		ccb->ccb_len = len;
@@ -1402,7 +1402,7 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 	}
 
 	if (dir == MFI_DATA_IN)
-		bcopy(dma_buf, buf, len);
+		memcpy(buf, dma_buf, len);
 
 	rv = 0;
 done:
@@ -2481,7 +2481,7 @@ mfi_pd_scsi_probe(struct scsi_link *link)
 		return (ENXIO);
 
 	bzero(mbox, sizeof(mbox));
-	bcopy(&pl->pd_id, &mbox[0], sizeof(pl->pd_id));
+	memcpy(&mbox[0], &pl->pd_id, sizeof(pl->pd_id));
 
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
 	    sizeof(pl->pd_info), &pl->pd_info, mbox))

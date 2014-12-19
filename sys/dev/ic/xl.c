@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.119 2014/12/08 10:58:45 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.120 2014/12/19 07:23:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -678,10 +678,10 @@ xl_testpacket(struct xl_softc *sc)
 	if (m == NULL)
 		return;
 
-	bcopy(&sc->sc_arpcom.ac_enaddr,
-		mtod(m, struct ether_header *)->ether_dhost, ETHER_ADDR_LEN);
-	bcopy(&sc->sc_arpcom.ac_enaddr,
-		mtod(m, struct ether_header *)->ether_shost, ETHER_ADDR_LEN);
+	memcpy(mtod(m, struct ether_header *)->ether_dhost,
+	    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	memcpy(mtod(m, struct ether_header *)->ether_shost,
+	    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	mtod(m, struct ether_header *)->ether_type = htons(3);
 	mtod(m, unsigned char *)[14] = 0;
 	mtod(m, unsigned char *)[15] = 0;
@@ -2408,7 +2408,7 @@ xl_attach(struct xl_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	bcopy(enaddr, &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	memcpy(&sc->sc_arpcom.ac_enaddr, enaddr, ETHER_ADDR_LEN);
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct xl_list_data),
 	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
@@ -2513,7 +2513,7 @@ xl_attach(struct xl_softc *sc)
 	ifp->if_baudrate = 10000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, XL_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
