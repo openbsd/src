@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.539 2014/10/23 20:38:37 kspillner Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.540 2014/12/19 13:04:08 reyk Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 23 2014 $
+.Dd $Mdocdate: December 19 2014 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1034,10 +1034,8 @@ from modifying the source port on TCP and UDP packets.
 .El
 .Pp
 When more than one redirection address or a table is specified,
-.Ar round-robin
-and
-.Ar least-states
-are the only permitted pool types.
+.Ar bitmask
+is not permitted as a pool type.
 .Ss Routing
 If a packet matches a rule with one of the following route options set,
 the packet filter will route the packet according to the type of route option.
@@ -1566,10 +1564,8 @@ They can also be used for the redirect address of
 .Ar nat-to
 and
 .Ar rdr-to
-and in the routing options of filter rules, but only for
-.Ar least-states
-and
-.Ar round-robin
+and in the routing options of filter rules, but not for
+.Ar bitmask
 pools.
 .Pp
 Tables can be defined with any of the following

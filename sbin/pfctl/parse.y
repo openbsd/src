@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.642 2014/11/20 05:51:20 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.643 2014/12/19 13:04:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1805,13 +1805,9 @@ pfrule		: action dir logquick interface af proto fromto
 				    DYNIF_MULTIADDR($8.route.host->addr)))
 					r.route.opts |= PF_POOL_ROUNDROBIN;
 				if ($8.route.host->next != NULL) {
-					if (((r.route.opts & PF_POOL_TYPEMASK) !=
-					    PF_POOL_ROUNDROBIN) &&
-					    ((r.route.opts & PF_POOL_TYPEMASK) !=
-					    PF_POOL_LEASTSTATES)) {
-						yyerror("r.route.opts must "
-						    "be PF_POOL_ROUNDROBIN "
-						    "or PF_POOL_LEASTSTATES");
+					if (!PF_POOL_DYNTYPE(r.route.opts)) {
+						yyerror("address pool option "
+						    "not supported by type");
 						YYERROR;
 					}
 				}
@@ -4387,10 +4383,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			hprev = h; /* in case we need to conver to a table */
 		} else {		/* multiple hosts */
 			if (rs->pool_opts.type &&
-			    (rs->pool_opts.type != PF_POOL_ROUNDROBIN) &&
-			    (rs->pool_opts.type != PF_POOL_LEASTSTATES)) {
-				yyerror("only round-robin or "
-				    "least-states valid for multiple "
+			    !PF_POOL_DYNTYPE(rs->pool_opts.type)) {
+				yyerror("pool type is not valid for multiple "
 				    "translation or routing addresses");
 				return (1);
 			}
@@ -4488,16 +4482,16 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	}
 
 	rpool->opts = rs->pool_opts.type;
-	if (rpool->addr.type == PF_ADDR_TABLE ||
-	    DYNIF_MULTIADDR(rpool->addr))
+	if ((rpool->opts & PF_POOL_TYPEMASK) == PF_POOL_NONE &&
+	    (rpool->addr.type == PF_ADDR_TABLE ||
+	    DYNIF_MULTIADDR(rpool->addr)))
 		rpool->opts |= PF_POOL_ROUNDROBIN;
 
-	if (((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN) &&
-	    ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES) &&
-	    (disallow_table(rs->rdr->host, "tables are only supported "
-	    "in round-robin or least-states address pools") ||
-	    disallow_alias(rs->rdr->host, "interface (%s) is only supported "
-	    "in round-robin or least-states address pools")))
+	if (!PF_POOL_DYNTYPE(rpool->opts) &&
+	    (disallow_table(rs->rdr->host,
+	    "tables are not supported by pool type") ||
+	    disallow_alias(rs->rdr->host,
+	    "interface (%s) is not supported by pool type")))
 		return (1);
 
 	if (rs->pool_opts.key != NULL)

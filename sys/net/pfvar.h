@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.404 2014/12/19 05:36:28 tedu Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.405 2014/12/19 13:04:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -117,6 +117,12 @@ enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 #define PF_POOL_STICKYADDR	0x20
 #define	PF_WSCALE_FLAG		0x80
 #define	PF_WSCALE_MASK		0x0f
+
+#define PF_POOL_DYNTYPE(_o)						\
+	((((_o) & PF_POOL_TYPEMASK) == PF_POOL_ROUNDROBIN) ||		\
+	(((_o) & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES) ||		\
+	(((_o) & PF_POOL_TYPEMASK) == PF_POOL_RANDOM) ||		\
+	(((_o) & PF_POOL_TYPEMASK) == PF_POOL_SRCHASH))
 
 #define	PF_LOG			0x01
 #define	PF_LOG_ALL		0x02
