@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.20 2014/12/18 20:29:08 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.21 2014/12/19 14:30:44 deraadt Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -52,7 +52,7 @@
  *   #define SHA2_UNROLL_TRANSFORM
  *
  */
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__amd64__)
 #define SHA2_UNROLL_TRANSFORM
 #endif
 
