@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.21 2014/11/23 07:39:02 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.22 2014/12/19 17:14:40 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -27,10 +27,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 void	vetherattach(int);
 int	vetherioctl(struct ifnet *, u_long, caddr_t);
@@ -139,19 +137,15 @@ int
 vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vether_softc	*sc = (struct vether_softc *)ifp->if_softc;
-#ifdef INET
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-#endif
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			 error = 0, link_state;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

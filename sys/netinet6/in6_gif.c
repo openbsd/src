@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.34 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.35 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -51,9 +51,7 @@
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 
-#ifdef INET
 #include <netinet/ip.h>
-#endif
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -102,10 +100,8 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	xfs.xf_type = -1;	/* not XF_IP4 */
 
 	switch (family) {
-#ifdef INET
 	case AF_INET:
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		break;

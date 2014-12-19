@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.26 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.27 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -386,10 +386,8 @@ struct rtentry *
 rtalloc_mpath(struct sockaddr *dst, u_int32_t *srcaddrp, u_int rtableid)
 {
 	struct rtentry *rt;
-#if defined(INET) || defined(INET6)
 	struct radix_node *rn;
 	int hash, npaths, threshold;
-#endif
 
 	rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rtableid);
 
@@ -399,16 +397,13 @@ rtalloc_mpath(struct sockaddr *dst, u_int32_t *srcaddrp, u_int rtableid)
 
 	/* check if multipath routing is enabled for the specified protocol */
 	if (!(0
-#ifdef INET
 	    || (ipmultipath && dst->sa_family == AF_INET)
-#endif
 #ifdef INET6
 	    || (ip6_multipath && dst->sa_family == AF_INET6)
 #endif
 	    ))
 		return (rt);
 
-#if defined(INET) || defined(INET6)
 	/* gw selection by Hash-Threshold (RFC 2992) */
 	rn = (struct radix_node *)rt;
 	npaths = rn_mpath_active_count(rn);
@@ -426,7 +421,6 @@ rtalloc_mpath(struct sockaddr *dst, u_int32_t *srcaddrp, u_int rtableid)
 		rt = (struct rtentry *)rn;
 		rt->rt_refcnt++;
 	}
-#endif
 
 	return (rt);
 }
@@ -471,7 +465,6 @@ rn_mpath_hash(struct sockaddr *dst, u_int32_t *srcaddrp)
 	c = hashjitter;
 
 	switch (dst->sa_family) {
-#ifdef INET
 	case AF_INET:
 	    {
 		struct sockaddr_in *sin_dst;
@@ -482,7 +475,6 @@ rn_mpath_hash(struct sockaddr *dst, u_int32_t *srcaddrp)
 		mix(a, b, c);
 		break;
 	    }
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 	    {

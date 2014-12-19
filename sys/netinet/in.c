@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.112 2014/11/25 15:35:10 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.113 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -86,7 +86,6 @@
 
 #include "ether.h"
 
-#ifdef INET
 
 void in_socktrim(struct sockaddr_in *);
 void in_len2mask(struct in_addr *, int);
@@ -1004,7 +1003,6 @@ in_delmulti(struct in_multi *inm)
 	}
 }
 
-#endif
 
 void
 in_ifdetach(struct ifnet *ifp)

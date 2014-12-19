@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.138 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.139 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -207,11 +207,9 @@ tcp_template(tp)
 
 		switch (tp->pf) {
 		case 0:	/*default to PF_INET*/
-#ifdef INET
 		case AF_INET:
 			m->m_len = sizeof(struct ip);
 			break;
-#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			m->m_len = sizeof(struct ip6_hdr);
@@ -235,7 +233,6 @@ tcp_template(tp)
 	}
 
 	switch(tp->pf) {
-#ifdef INET
 	case AF_INET:
 		{
 			struct ipovly *ipovly;
@@ -252,7 +249,6 @@ tcp_template(tp)
 				sizeof(struct ip));
 		}
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		{
@@ -1061,7 +1057,6 @@ tcp_signature(struct tdb *tdb, int af, struct mbuf *m, struct tcphdr *th,
 
 	switch(af) {
 	case 0:
-#ifdef INET
 	case AF_INET: {
 		struct ippseudo ippseudo;
 		struct ip *ip;
@@ -1078,7 +1073,6 @@ tcp_signature(struct tdb *tdb, int af, struct mbuf *m, struct tcphdr *th,
 		    sizeof(struct ippseudo));
 		break;
 		}
-#endif
 #ifdef INET6
 	case AF_INET6: {
 		struct ip6_hdr_pseudo ip6pseudo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.39 2014/12/19 13:04:08 reyk Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.40 2014/12/19 17:14:40 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -117,13 +117,11 @@ pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
 #endif
 
 	switch (af) {
-#ifdef INET
 	case AF_INET:
 		res = SipHash24((SIPHASH_KEY *)key,
 		    &inaddr->addr32[0], sizeof(inaddr->addr32[0]));
 		hash->addr32[0] = res;
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		res = SipHash24((SIPHASH_KEY *)key, &inaddr->addr32[0],
@@ -353,7 +351,6 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		return (1);
 	if (rpool->addr.type == PF_ADDR_DYNIFTL) {
 		switch (af) {
-#ifdef INET
 		case AF_INET:
 			if (rpool->addr.p.dyn->pfid_acnt4 < 1 &&
 			    !PF_POOL_DYNTYPE(rpool->opts))
@@ -361,7 +358,6 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			raddr = &rpool->addr.p.dyn->pfid_addr4;
 			rmask = &rpool->addr.p.dyn->pfid_mask4;
 			break;
-#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			if (rpool->addr.p.dyn->pfid_acnt6 < 1 &&
@@ -404,11 +400,9 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			PF_ACPY(naddr, &rpool->counter, af);
 		} else if (init_addr != NULL && PF_AZERO(init_addr, af)) {
 			switch (af) {
-#ifdef INET
 			case AF_INET:
 				rpool->counter.addr32[0] = htonl(arc4random());
 				break;
-#endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				if (rmask->addr32[3] != 0xffffffff)

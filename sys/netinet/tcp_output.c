@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.107 2014/07/22 11:06:10 mpi Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.108 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -525,11 +525,9 @@ send:
 
 	switch (tp->pf) {
 	case 0:	/*default to PF_INET*/
-#ifdef INET
 	case PF_INET:
 		hdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
 		break;
-#endif /* INET */
 #ifdef INET6
 	case PF_INET6:
 		hdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
@@ -906,7 +904,6 @@ send:
 
 		switch (tp->pf) {
 		case 0:	/*default to PF_INET*/
-#ifdef INET
 		case AF_INET:
 			iphlen = sizeof(struct ip);
 			src.sa.sa_len = sizeof(struct sockaddr_in);
@@ -916,7 +913,6 @@ send:
 			dst.sa.sa_family = AF_INET;
 			dst.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
 			break;
-#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			iphlen = sizeof(struct ip6_hdr);
@@ -1058,7 +1054,6 @@ send:
 
 	switch (tp->pf) {
 	case 0:	/*default to PF_INET*/
-#ifdef INET
 	case AF_INET:
 		{
 			struct ip *ip;
@@ -1077,7 +1072,6 @@ send:
 			&tp->t_inpcb->inp_route,
 			(ip_mtudisc ? IP_MTUDISC : 0), NULL, tp->t_inpcb, 0);
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		{

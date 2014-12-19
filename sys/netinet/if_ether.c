@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.138 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.139 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  *	add "inuse/lock" bit (or ref. count) along with valid bit
  */
 
-#ifdef INET
 #include "carp.h"
 
 #include "bridge.h"
@@ -1149,4 +1148,3 @@ db_show_arptab(void)
 	return (0);
 }
 #endif
-#endif /* INET */

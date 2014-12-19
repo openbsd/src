@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.128 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.129 2014/12/19 17:14:39 tedu Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -56,13 +56,11 @@
 
 #include <sys/stdarg.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/if_ether.h>
-#endif
 
 #ifdef INET6
 #include <netinet6/in6_ifattach.h>
@@ -375,11 +373,7 @@ static const struct cp lcp = {
 
 static const struct cp ipcp = {
 	PPP_IPCP, IDX_IPCP,
-#ifdef INET	/* don't run IPCP if there's no IPv4 support */
 	CP_NCP,
-#else
-	0,
-#endif
 	"ipcp",
 	sppp_ipcp_up, sppp_ipcp_down, sppp_ipcp_open, sppp_ipcp_close,
 	sppp_ipcp_TO, sppp_ipcp_RCR, sppp_ipcp_RCN_rej, sppp_ipcp_RCN_nak,
@@ -537,7 +531,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				sppp_chap_input(sp, m);
 			m_freem (m);
 			return;
-#ifdef INET
 		case PPP_IPCP:
 			if (sp->pp_phase == PHASE_NETWORK)
 				sppp_cp_input(&ipcp, sp, m);
@@ -550,7 +543,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				sp->pp_last_activity = tv.tv_sec;
 			}
 			break;
-#endif
 #ifdef INET6
 		case PPP_IPV6CP:
 			if (sp->pp_phase == PHASE_NETWORK)
@@ -587,12 +579,10 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			sppp_cisco_input ((struct sppp*) ifp, m);
 			m_freem (m);
 			return;
-#ifdef INET
 		case ETHERTYPE_IP:
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
 			break;
-#endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 			schednetisr (NETISR_IPV6);
@@ -677,7 +667,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		s = splnet();
 	}
 
-#ifdef INET
 	/*
 	 * Put low delay, telnet, rlogin and ftp control packets
 	 * in front of the queue.
@@ -717,7 +706,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				return (0);
 		}
 	}
-#endif
 
 	if (sp->pp_flags & PP_NOFRAMING)
 		goto skip_header;
@@ -748,7 +736,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
  skip_header:
 	switch (dst->sa_family) {
-#ifdef INET
 	case AF_INET:   /* Internet Protocol */
 		if (sp->pp_flags & PP_CISCO)
 			protocol = htons (ETHERTYPE_IP);
@@ -767,7 +754,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				rv = ENETDOWN;
 		}
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:   /* Internet Protocol v6 */
 		if (sp->pp_flags & PP_CISCO)

@@ -39,14 +39,12 @@ netintr(void *unused) /* ARGSUSED */
 	while ((n = netisr) != 0) {
 		atomic_clearbits_int(&netisr, n);
 
-#ifdef INET
 #if NETHER > 0
 		if (n & (1 << NETISR_ARP))
 			arpintr();
 #endif
 		if (n & (1 << NETISR_IP))
 			ipintr();
-#endif
 #ifdef INET6
 		if (n & (1 << NETISR_IPV6))
 			ip6intr();

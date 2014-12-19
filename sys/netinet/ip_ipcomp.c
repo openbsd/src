@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.38 2014/12/05 15:50:04 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.39 2014/12/19 17:14:40 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -38,16 +38,11 @@
 #include <net/if_var.h>
 #include <net/bpf.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#endif				/* INET */
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #endif				/* INET6 */
 
@@ -409,7 +404,6 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	ipcompstat.ipcomps_output++;
 
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		/* Check for IPv4 maximum packet size violations */
 		/*
@@ -424,7 +418,6 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 			return EMSGSIZE;
 		}
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -556,9 +549,7 @@ ipcomp_output_cb(cp)
 	struct mbuf *m, *mo;
 	int error, s, skip, rlen;
 	u_int16_t cpi;
-#ifdef INET
 	struct ip *ip;
-#endif
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif
@@ -636,13 +627,11 @@ ipcomp_output_cb(cp)
 
 	/* m_pullup before ? */
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		ip = mtod(m, struct ip *);
 		ipcomp->ipcomp_nh = ip->ip_p;
 		ip->ip_p = IPPROTO_IPCOMP;
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);

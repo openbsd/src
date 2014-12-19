@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.183 2014/12/08 10:46:14 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.184 2014/12/19 17:14:39 tedu Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -312,7 +312,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	}
 	switch (dst->sa_family) {
 
-#ifdef INET
 	case AF_INET:
 		if (!arpresolve(ac, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
@@ -322,7 +321,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		etype = htons(ETHERTYPE_IP);
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
@@ -625,7 +623,6 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 decapsulate:
 
 	switch (etype) {
-#ifdef INET
 	case ETHERTYPE_IP:
 		schednetisr(NETISR_IP);
 		inq = &ipintrq;
@@ -644,7 +641,6 @@ decapsulate:
 		revarpinput(m);	/* XXX queue? */
 		goto done;
 
-#endif
 #ifdef INET6
 	/*
 	 * Schedule IPv6 software interrupt for incoming IPv6 packet.
@@ -918,12 +914,10 @@ ether_crc32_be(const u_int8_t *buf, size_t len)
 	return ether_crc32_be_update(0xffffffff, buf, len);
 }
 
-#ifdef INET
 u_char	ether_ipmulticast_min[ETHER_ADDR_LEN] =
     { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
 u_char	ether_ipmulticast_max[ETHER_ADDR_LEN] =
     { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
-#endif
 
 #ifdef INET6
 u_char	ether_ip6multicast_min[ETHER_ADDR_LEN] =
@@ -940,9 +934,7 @@ int
 ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
     u_int8_t addrhi[ETHER_ADDR_LEN])
 {
-#ifdef INET
 	struct sockaddr_in *sin;
-#endif /* INET */
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif /* INET6 */
@@ -954,7 +946,6 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 		memcpy(addrhi, addrlo, ETHER_ADDR_LEN);
 		break;
 
-#ifdef INET
 	case AF_INET:
 		sin = satosin(sa);
 		if (sin->sin_addr.s_addr == INADDR_ANY) {
@@ -971,7 +962,6 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 			memcpy(addrhi, addrlo, ETHER_ADDR_LEN);
 		}
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		sin6 = satosin6(sa);

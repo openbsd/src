@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.61 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.62 2014/12/19 17:14:39 tedu Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -123,15 +123,10 @@
 #include <net/netisr.h>
 #include <net/route.h>
 
-#ifdef	INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#endif
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #endif
 
@@ -235,12 +230,10 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	ifp->if_obytes += m->m_pkthdr.len;
 	switch (dst->sa_family) {
 
-#ifdef INET
 	case AF_INET:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;

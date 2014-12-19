@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.93 2014/12/04 00:01:53 tedu Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.94 2014/12/19 17:14:39 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -40,11 +40,9 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -729,10 +727,8 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&tr->tr_ac, ifa);
-#endif /* INET */
 		error = ENETRESET;
 		break;
 	case SIOCSIFFLAGS:
@@ -977,9 +973,7 @@ trunk_hashmbuf(struct mbuf *m, SIPHASH_KEY *key)
 	u_int16_t *vlan, vlanbuf[2];
 	int off;
 	struct ether_header *eh;
-#ifdef INET
 	struct ip *ip, ipbuf;
-#endif
 #ifdef INET6
 	u_int32_t flow;
 	struct ip6_hdr *ip6, ip6buf;
@@ -1010,7 +1004,6 @@ trunk_hashmbuf(struct mbuf *m, SIPHASH_KEY *key)
 	}
 
 	switch (etype) {
-#ifdef INET
 	case ETHERTYPE_IP:
 		if ((ip = (struct ip *)
 		    trunk_gethdr(m, off, sizeof(*ip), &ipbuf)) == NULL)
@@ -1018,7 +1011,6 @@ trunk_hashmbuf(struct mbuf *m, SIPHASH_KEY *key)
 		SipHash24_Update(&ctx, &ip->ip_src, sizeof(struct in_addr));
 		SipHash24_Update(&ctx, &ip->ip_dst, sizeof(struct in_addr));
 		break;
-#endif
 #ifdef INET6
 	case ETHERTYPE_IPV6:
 		if ((ip6 = (struct ip6_hdr *)

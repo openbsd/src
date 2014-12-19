@@ -147,10 +147,8 @@ void expire_upcalls(void *);
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 
-#ifdef INET
 #ifdef MROUTING
 extern struct socket *ip_mrouter;
-#endif
 #endif
 
 /*
@@ -450,7 +448,6 @@ ip6_mrouter_done(void)
 	 * For each phyint in use, disable promiscuous reception of all IPv6
 	 * multicasts.
 	 */
-#ifdef INET
 #ifdef MROUTING
 	/*
 	 * If there is still IPv4 multicast routing daemon,
@@ -459,7 +456,6 @@ ip6_mrouter_done(void)
 	 * daemon is not interested...
 	 */
 	if (!ip_mrouter)
-#endif
 #endif
 	{
 		for (mifi = 0; mifi < nummifs; mifi++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.242 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.243 2014/12/19 17:14:40 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -56,7 +56,6 @@
 
 #include <crypto/sha1.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
@@ -66,7 +65,6 @@
 
 #include <net/if_enc.h>
 #include <net/if_dl.h>
-#endif
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -306,7 +304,6 @@ carp_hmac_prepare_ctx(struct carp_vhost_entry *vhe, u_int8_t ctx)
 	SHA1Update(&vhe->vhe_sha1[ctx], (void *)&vhid, sizeof(vhid));
 
 	/* Hash the addresses from smallest to largest, not interface order */
-#ifdef INET
 	cur.s_addr = 0;
 	do {
 		found = 0;
@@ -326,7 +323,6 @@ carp_hmac_prepare_ctx(struct carp_vhost_entry *vhe, u_int8_t ctx)
 			SHA1Update(&vhe->vhe_sha1[ctx],
 			    (void *)&cur, sizeof(cur));
 	} while (found);
-#endif /* INET */
 #ifdef INET6
 	memset(&cur6, 0x00, sizeof(cur6));
 	do {
@@ -1000,7 +996,6 @@ carp_send_ad(void *v)
 
 	sc->cur_vhe = vhe; /* we need the vhe later on the output path */
 
-#ifdef INET
 	if (sc->sc_naddrs) {
 		struct ip *ip;
 
@@ -1090,7 +1085,6 @@ carp_send_ad(void *v)
 			}
 		}
 	}
-#endif /* INET */
 #ifdef INET6
 	if (sc->sc_naddrs6) {
 		struct ip6_hdr *ip6;
@@ -1597,11 +1591,9 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 		if (vhe->vhe_leader)
 			sc->sc_delayed_arp = -1;
 		switch (af) {
-#ifdef INET
 		case AF_INET:
 			timeout_add(&vhe->md_tmo, tvtohz(&tv));
 			break;
-#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			timeout_add(&vhe->md6_tmo, tvtohz(&tv));
@@ -2068,7 +2060,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFADDR:
 		s = splnet();
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			sc->sc_if.if_flags |= IFF_UP;
 			/*
@@ -2079,7 +2070,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 			error = carp_set_addr(sc, satosin(ifa->ifa_addr));
 			break;
-#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			sc->sc_if.if_flags |= IFF_UP;

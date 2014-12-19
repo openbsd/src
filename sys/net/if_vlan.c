@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.110 2014/11/23 07:39:02 deraadt Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.111 2014/12/19 17:14:40 tedu Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -67,10 +67,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_vlan_var.h>
 
@@ -540,10 +538,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		if (ifv->ifv_p != NULL) {
 			ifp->if_flags |= IFF_UP;
-#ifdef INET
 			if (ifa->ifa_addr->sa_family == AF_INET)
 				arp_ifinit(&ifv->ifv_ac, ifa);
-#endif
 		} else
 			error = EINVAL;
 		break;

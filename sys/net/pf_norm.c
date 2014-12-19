@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.171 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.172 2014/12/19 17:14:40 tedu Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -905,13 +905,11 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src,
 	bzero(src->scrub, sizeof(*src->scrub));
 
 	switch (pd->af) {
-#ifdef INET
 	case AF_INET: {
 		struct ip *h = mtod(pd->m, struct ip *);
 		src->scrub->pfss_ttl = h->ip_ttl;
 		break;
 	}
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6: {
 		struct ip6_hdr *h = mtod(pd->m, struct ip6_hdr *);
@@ -1006,7 +1004,6 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 	 * firewall state code.
 	 */
 	switch (pd->af) {
-#ifdef INET
 	case AF_INET: {
 		if (src->scrub) {
 			struct ip *h = mtod(pd->m, struct ip *);
@@ -1016,7 +1013,6 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 		}
 		break;
 	}
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6: {
 		if (src->scrub) {

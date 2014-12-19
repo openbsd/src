@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.69 2014/09/14 14:17:26 jsg Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.70 2014/12/19 17:14:40 tedu Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -40,12 +40,10 @@
 #include <net/netisr.h>
 #include <net/route.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
-#endif /* INET */
 
 #include <netinet/ip_ether.h>
 #include <netinet/if_ether.h>
@@ -86,7 +84,6 @@ int etherip_allow = 0;
 
 struct etheripstat etheripstat;
 
-#ifdef INET
 /*
  * etherip_input gets called when we receive an encapsulated packet.
  * Only a wrapper for the IPv4 case.
@@ -129,7 +126,6 @@ etherip_input(struct mbuf *m, ...)
 		return;
 	}
 }
-#endif
 
 #ifdef INET6
 int
@@ -366,7 +362,6 @@ etherip_getgif(struct mbuf *m)
 
 	v = *mtod(m, u_int8_t *);
 	switch (v >> 4) {
-#ifdef INET
 	case 4:
 		ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in);
 		ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET;
@@ -377,7 +372,6 @@ etherip_getgif(struct mbuf *m)
 		    sizeof(struct in_addr),
 		    (caddr_t) &sdst.sin.sin_addr);
 		break;
-#endif /* INET */
 #ifdef INET6
 	case 6:
 		ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in6);
@@ -423,9 +417,7 @@ etherip_getgif(struct mbuf *m)
 int
 etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 {
-#ifdef INET
 	struct ip *ipo;
-#endif /* INET */
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
@@ -462,11 +454,9 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	}
 
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		hlen = sizeof(struct ip);
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
@@ -508,7 +498,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	etheripstat.etherip_obytes += m->m_pkthdr.len - hlen;
 
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		ipo = mtod(m, struct ip *);
 
@@ -530,7 +519,6 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		ipo->ip_src = tdb->tdb_src.sin.sin_addr;
 		ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);

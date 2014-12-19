@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.308 2014/12/18 15:29:30 krw Exp $	*/
+/*	$OpenBSD: if.c,v 1.309 2014/12/19 17:14:39 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -88,19 +88,14 @@
 #include <net/route.h>
 #include <net/netisr.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/igmp.h>
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
-#endif
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet6/in6_var.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
@@ -501,7 +496,6 @@ if_detach(struct ifnet *ifp)
 	bpfdetach(ifp);
 #endif
 	rt_if_remove(ifp);
-#ifdef INET
 	rti_delete(ifp);
 #if NETHER > 0 && defined(NFSCLIENT) 
 	if (ifp == revarp_ifp)
@@ -510,10 +504,7 @@ if_detach(struct ifnet *ifp)
 #ifdef MROUTING
 	vif_delete(ifp);
 #endif
-#endif
-#ifdef INET
 	in_ifdetach(ifp);
-#endif
 #ifdef INET6
 	in6_ifdetach(ifp);
 #endif
@@ -532,10 +523,8 @@ do { \
 	extern struct ifqueue x; \
 	if_detach_queues(ifp, & x); \
 } while (0)
-#ifdef INET
 	IF_DETACH_QUEUES(arpintrq);
 	IF_DETACH_QUEUES(ipintrq);
-#endif
 #ifdef INET6
 	IF_DETACH_QUEUES(ip6intrq);
 #endif
@@ -1526,18 +1515,14 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			if (up)
 				if_down(ifp);
 			rt_if_remove(ifp);
-#ifdef INET
 			rti_delete(ifp);
 #ifdef MROUTING
 			vif_delete(ifp);
 #endif
-#endif
 #ifdef INET6
 			in6_ifdetach(ifp);
 #endif
-#ifdef INET
 			in_ifdetach(ifp);
-#endif
 			splx(s);
 		}
 

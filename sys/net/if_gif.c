@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.71 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.72 2014/12/19 17:14:39 tedu Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -44,19 +44,14 @@
 #include <net/route.h>
 #include <net/bpf.h>
 
-#ifdef	INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/in_gif.h>
 #include <netinet/ip.h>
 #include <netinet/ip_ether.h>
 #include <netinet/ip_var.h>
-#endif	/* INET */
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -181,11 +176,9 @@ gif_start(struct ifnet *ifp)
 			 */
 			m->m_flags &= ~(M_BCAST|M_MCAST);
 			switch (sc->gif_psrc->sa_family) {
-#ifdef INET
 			case AF_INET:
 				error = in_gif_output(ifp, AF_LINK, &m);
 				break;
-#endif
 #ifdef INET6
 			case AF_INET6:
 				error = in6_gif_output(ifp, AF_LINK, &m);
@@ -210,12 +203,10 @@ gif_start(struct ifnet *ifp)
 
 			/* must decapsulate outer header for bpf */
 			switch (sc->gif_psrc->sa_family) {
-#ifdef INET
 			case AF_INET:
 				offset = sizeof(struct ip);
 				proto = mtod(m, struct ip *)->ip_p;
 				break;
-#endif
 #ifdef INET6
 			case AF_INET6:
 				offset = sizeof(struct ip6_hdr);
@@ -259,11 +250,9 @@ gif_start(struct ifnet *ifp)
 		/* XXX we should cache the outgoing route */
 
 		switch (sc->gif_psrc->sa_family) {
-#ifdef INET
 		case AF_INET:
 			ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
 			break;
-#endif
 #ifdef INET6
 		case AF_INET6:
 			/*
@@ -308,11 +297,9 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	 * Encapsulate packet. Add IP or IP6 header depending on tunnel AF.
 	 */
 	switch (sc->gif_psrc->sa_family) {
-#ifdef INET
 	case AF_INET:
 		error = in_gif_output(ifp, dst->sa_family, &m);
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		error = in6_gif_output(ifp, dst->sa_family, &m);
@@ -380,14 +367,12 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif /* INET6 */
 	case SIOCSLIFPHYADDR:
 		switch (cmd) {
-#ifdef INET
 		case SIOCSIFPHYADDR:
 			src = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_dstaddr);
 			break;
-#endif
 #ifdef INET6
 		case SIOCSIFPHYADDR_IN6:
 			src = (struct sockaddr *)
@@ -412,12 +397,10 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		/* validate sa_len */
 		switch (src->sa_family) {
-#ifdef INET
 		case AF_INET:
 			if (src->sa_len != sizeof(struct sockaddr_in))
 				return (EINVAL);
 			break;
-#endif
 #ifdef INET6
 		case AF_INET6:
 			if (src->sa_len != sizeof(struct sockaddr_in6))
@@ -428,12 +411,10 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EAFNOSUPPORT);
 		}
 		switch (dst->sa_family) {
-#ifdef INET
 		case AF_INET:
 			if (dst->sa_len != sizeof(struct sockaddr_in))
 				return (EINVAL);
 			break;
-#endif
 #ifdef INET6
 		case AF_INET6:
 			if (dst->sa_len != sizeof(struct sockaddr_in6))
@@ -543,12 +524,10 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		src = sc->gif_psrc;
 		switch (cmd) {
-#ifdef INET
 		case SIOCGIFPSRCADDR:
 			dst = &ifr->ifr_addr;
 			size = sizeof(ifr->ifr_addr);
 			break;
-#endif /* INET */
 #ifdef INET6
 		case SIOCGIFPSRCADDR_IN6:
 			dst = (struct sockaddr *)
@@ -575,12 +554,10 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		src = sc->gif_pdst;
 		switch (cmd) {
-#ifdef INET
 		case SIOCGIFPDSTADDR:
 			dst = &ifr->ifr_addr;
 			size = sizeof(ifr->ifr_addr);
 			break;
-#endif /* INET */
 #ifdef INET6
 		case SIOCGIFPDSTADDR_IN6:
 			dst = (struct sockaddr *)

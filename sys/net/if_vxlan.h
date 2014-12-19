@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.h,v 1.5 2014/04/11 08:44:37 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.h,v 1.6 2014/12/19 17:14:40 tedu Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -33,13 +33,11 @@ struct vxlan_header {
 #define VXLAN_RESERVED2		0x000000ff
 } __packed;
 
-#ifdef INET
 struct vxlanudpiphdr {
 	struct ipovly		ui_i;
 	struct udphdr		ui_u;
 	struct vxlan_header	ui_v;
 } __packed;
-#endif
 
 #ifdef _KERNEL
 struct vxlan_softc {

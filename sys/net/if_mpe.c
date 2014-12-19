@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.39 2014/12/05 15:50:04 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.40 2014/12/19 17:14:39 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -30,16 +30,11 @@
 #include <net/netisr.h>
 #include <net/route.h>
 
-#ifdef	INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #endif /* INET6 */
 
 #include "bpfilter.h"
@@ -214,7 +209,6 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	error = 0;
 	switch (dst->sa_family) {
-#ifdef INET
 	case AF_INET:
 		if (rt && rt->rt_flags & RTF_MPLS) {
 			shim.shim_label =
@@ -243,7 +237,6 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m_copyback(m, sizeof(sa_family_t), sizeof(in_addr_t),
 		    (caddr_t)&((satosin(dst)->sin_addr)), M_NOWAIT);
 		break;
-#endif
 	default:
 		m_freem(m);
 		error = EPFNOSUPPORT;

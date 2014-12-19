@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.54 2014/09/08 06:24:13 jsg Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.55 2014/12/19 17:14:40 tedu Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -35,17 +35,12 @@
 #include <net/pfvar.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
-#endif /* INET */
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #endif /* INET6 */
 
 #include <netinet/udp.h>
@@ -81,10 +76,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	int dstopt = 0;
 #endif
 
-#ifdef INET
 	int setdf = 0;
 	struct ip *ip;
-#endif /* INET */
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
@@ -117,10 +110,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Check that the network protocol is supported */
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -166,10 +157,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		 * doing tunneling.
 		 */
 		if (af == tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 			if (af == AF_INET)
 				i = sizeof(struct ip);
-#endif /* INET */
 
 #ifdef INET6
 			if (af == AF_INET6)
@@ -182,7 +171,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 					return ENOBUFS;
 			}
 
-#ifdef INET
 			if (af == AF_INET) {
 				ip = mtod(m, struct ip *);
 
@@ -192,7 +180,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 				 */
 				setdf = ip->ip_off & htons(IP_DF);
 			}
-#endif /* INET */
 
 #ifdef INET6
 			if (af == AF_INET6)
@@ -204,11 +191,9 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		if ((tdb->tdb_dst.sa.sa_family != af) || /* PF mismatch */
 		    (tdb->tdb_flags & TDBF_TUNNELING) || /* Tunneling needed */
 		    (tdb->tdb_xform->xf_type == XF_IP4) || /* ditto */
-#ifdef INET
 		    ((tdb->tdb_dst.sa.sa_family == AF_INET) &&
 			(tdb->tdb_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
 			(tdb->tdb_dst.sin.sin_addr.s_addr != ip->ip_dst.s_addr)) ||
-#endif /* INET */
 #ifdef INET6
 		    ((tdb->tdb_dst.sa.sa_family == AF_INET6) &&
 			(!IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr)) &&
@@ -216,7 +201,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			    &ip6->ip6_dst))) ||
 #endif /* INET6 */
 		    0) {
-#ifdef INET
 			/* Fix IPv4 header checksum and length. */
 			if (af == AF_INET) {
 				if (m->m_len < sizeof(struct ip))
@@ -229,7 +213,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 				ip->ip_sum = 0;
 				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 			}
-#endif /* INET */
 
 #ifdef INET6
 			/* Fix IPv6 header payload length. */
@@ -266,7 +249,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			m = mp;
 			mp = NULL;
 
-#ifdef INET
 			if (tdb->tdb_dst.sa.sa_family == AF_INET && setdf) {
 				if (m->m_len < sizeof(struct ip))
 					if ((m = m_pullup(m,
@@ -276,7 +258,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 				ip = mtod(m, struct ip *);
 				ip->ip_off |= htons(IP_DF);
 			}
-#endif
 
 			/* Remember that we appended a tunnel header. */
 			tdb->tdb_flags |= TDBF_USEDTUNNEL;
@@ -296,13 +277,11 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Extract some information off the headers. */
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		ip = mtod(m, struct ip *);
 		i = ip->ip_hl << 2;
 		off = offsetof(struct ip, ip_p);
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -389,9 +368,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 int
 ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 {
-#ifdef INET
 	struct ip *ip;
-#endif /* INET */
 
 #ifdef INET6
 	struct ip6_hdr *ip6;
@@ -427,7 +404,6 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	}
 
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		/* Fix the header length, for AH processing. */
 		ip = mtod(m, struct ip *);
@@ -435,7 +411,6 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0)
 			ip->ip_p = IPPROTO_UDP;
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -507,10 +482,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	 * performed again there.
 	 */
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		return (ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL, 0));
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -566,11 +539,9 @@ ipsec_hdrsz(struct tdb *tdbp)
 		return (adjust);
 
 	switch (tdbp->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		adjust += sizeof(struct ip);
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		adjust += sizeof(struct ip6_hdr);

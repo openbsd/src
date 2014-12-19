@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.34 2014/09/08 06:24:13 jsg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.35 2014/12/19 17:14:39 tedu Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -69,11 +69,9 @@
 #include <netinet/if_ether.h>
 #include <net/if_dl.h>
 
-#ifdef INET
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#endif
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -381,12 +379,10 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	m_adj(top, sizeof(struct pppx_hdr));
 
 	switch (ntohl(th->pppx_proto)) {
-#ifdef INET
 	case AF_INET:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;

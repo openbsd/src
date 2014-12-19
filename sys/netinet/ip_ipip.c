@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.55 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.56 2014/12/19 17:14:40 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -106,7 +106,6 @@ ip4_input6(struct mbuf **m, int *offp, int proto)
 }
 #endif /* INET6 */
 
-#ifdef INET
 /*
  * Really only a wrapper for ipip_input(), for use with IPv4.
  */
@@ -133,7 +132,6 @@ ip4_input(struct mbuf *m, ...)
 
 	ipip_input(m, iphlen, NULL, ip->ip_p);
 }
-#endif /* INET */
 
 /*
  * ipip_input gets called when we receive an IP{46} encapsulated packet,
@@ -166,11 +164,9 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 	m_copydata(m, 0, 1, &v);
 
 	switch (v >> 4) {
-#ifdef INET
 	case 4:
 		hlen = sizeof(struct ip);
 		break;
-#endif /* INET */
 #ifdef INET6
 	case 6:
 		hlen = sizeof(struct ip6_hdr);
@@ -194,12 +190,10 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 
 	/* Keep outer ecn field. */
 	switch (v >> 4) {
-#ifdef INET
 	case 4:
 		ipo = mtod(m, struct ip *);
 		otos = ipo->ip_tos;
 		break;
-#endif /* INET */
 #ifdef INET6
 	case 6:
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -221,11 +215,9 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 	}
 
 	switch (proto) {
-#ifdef INET
 	case IPPROTO_IPV4:
 		hlen = sizeof(struct ip);
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case IPPROTO_IPV6:
@@ -257,7 +249,6 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 
 	/* Some sanity checks in the inner IP header */
 	switch (proto) {
-#ifdef INET
     	case IPPROTO_IPV4:
 		ipo = mtod(m, struct ip *);
 #ifdef INET6
@@ -281,12 +272,9 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 			}
 		}
 		break;
-#endif /* INET */
 #ifdef INET6
     	case IPPROTO_IPV6:
-#ifdef INET
 		ipo = NULL;
-#endif
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
@@ -300,9 +288,7 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 		break;
 #endif
 	default:
-#ifdef INET
 		ipo = NULL;
-#endif
 #ifdef INET6
 		ip6 = NULL;
 #endif
@@ -317,7 +303,6 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 			if (ifp->if_rdomain != rdomain)
 				continue;
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-#ifdef INET
 				if (ipo) {
 					if (ifa->ifa_addr->sa_family !=
 					    AF_INET)
@@ -332,7 +317,6 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 						return;
 					}
 				}
-#endif /* INET */
 #ifdef INET6
 				if (ip6) {
 					if (ifa->ifa_addr->sa_family !=
@@ -366,13 +350,11 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 	 */
 
 	switch (proto) {
-#ifdef INET
 	case IPPROTO_IPV4:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		af = AF_INET;
 		break;
-#endif
 #ifdef INET6
 	case IPPROTO_IPV6:
 		ifq = &ip6intrq;
@@ -417,10 +399,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 {
 	u_int8_t tp, otos;
 
-#ifdef INET
 	u_int8_t itos;
 	struct ip *ipo;
-#endif /* INET */
 
 #ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
@@ -432,7 +412,6 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 	tp = (tp >> 4) & 0xff;  /* Get the IP version number. */
 
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		if (tdb->tdb_src.sa.sa_family != AF_INET ||
 		    tdb->tdb_src.sin.sin_addr.s_addr == INADDR_ANY ||
@@ -516,7 +495,6 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 		ipo->ip_tos = otos;
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -562,7 +540,6 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		in6_embedscope(&ip6o->ip6_src, &tdb->tdb_src.sin6, NULL, NULL);
 		in6_embedscope(&ip6o->ip6_dst, &tdb->tdb_dst.sin6, NULL, NULL);
 
-#ifdef INET
 		if (tp == IPVERSION) {
 			/* Save ECN notification */
 			m_copydata(m, sizeof(struct ip6_hdr) +
@@ -573,7 +550,6 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			ip6o->ip6_nxt = IPPROTO_IPIP;
 		}
 		else
-#endif /* INET */
 			if (tp == (IPV6_VERSION >> 4)) {
 				u_int32_t itos32;
 
@@ -609,7 +585,6 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 	ipipstat.ipips_opackets++;
 	*mp = m;
 
-#ifdef INET
 	if (tdb->tdb_dst.sa.sa_family == AF_INET) {
 		if (tdb->tdb_xform->xf_type == XF_IP4)
 			tdb->tdb_cur_bytes +=
@@ -617,7 +592,6 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 
 		ipipstat.ipips_obytes += m->m_pkthdr.len - sizeof(struct ip);
 	}
-#endif /* INET */
 
 #ifdef INET6
 	if (tdb->tdb_dst.sa.sa_family == AF_INET6) {

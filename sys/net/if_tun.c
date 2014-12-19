@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.129 2014/10/21 10:52:53 yasuoka Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.130 2014/12/19 17:14:40 tedu Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -61,11 +61,9 @@
 #include <net/if_types.h>
 #include <net/netisr.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #ifdef PIPEX
 #include <net/pipex.h>
@@ -414,7 +412,6 @@ tuninit(struct tun_softc *tp)
 
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin;
 
@@ -436,7 +433,6 @@ tuninit(struct tun_softc *tp)
 			} else
 				tp->tun_flags &= ~TUN_BRDADDR;
 		}
-#endif
 #ifdef INET6
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			struct sockaddr_in6 *sin;
@@ -478,11 +474,9 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		TUNDEBUG(("%s: address set\n", ifp->if_xname));
 		if (tp->tun_flags & TUN_LAYER2) {
 			switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 			case AF_INET:
 				arp_ifinit(&tp->arpcom, ifa);
 				break;
-#endif
 			default:
 				break;
 			}
@@ -893,12 +887,10 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	switch (ntohl(*th)) {
-#ifdef INET
 	case AF_INET:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		break;
-#endif
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;

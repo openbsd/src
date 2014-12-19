@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.279 2014/12/09 07:05:06 doug Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.280 2014/12/19 17:14:40 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1081,10 +1081,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		switch (rule->af) {
 		case 0:
 			break;
-#ifdef INET
 		case AF_INET:
 			break;
-#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			break;
@@ -1257,10 +1255,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			switch (newrule->af) {
 			case 0:
 				break;
-#ifdef INET
 			case AF_INET:
 				break;
-#endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.112 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.113 2014/12/19 17:14:40 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -47,16 +47,11 @@
 #include <net/if_var.h>
 #include <net/bpf.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#endif /* INET */
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif /* INET */
 #include <netinet/ip6.h>
 #endif /* INET6 */
 
@@ -210,9 +205,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 	unsigned char *ptr;
 	int off, count;
 
-#ifdef INET
 	struct ip *ip;
-#endif /* INET */
 
 #ifdef INET6
 	struct ip6_ext *ip6e;
@@ -221,7 +214,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #endif /* INET6 */
 
 	switch (proto) {
-#ifdef INET
 	case AF_INET:
 		/*
 		 * This is the least painful way of dealing with IPv4 header
@@ -353,7 +345,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		}
 
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:  /* Ugly... */
@@ -1038,7 +1029,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
 	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 	case AF_INET:
 		/* Check for IP maximum packet size violations. */
 		if (rplen + ahx->authsize + m->m_pkthdr.len > IP_MAXPACKET) {
@@ -1050,7 +1040,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			return EMSGSIZE;
 		}
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -1209,7 +1198,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		 * header length as it will be fixed by our caller.
 		 */
 		switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
 		case AF_INET:
 			bcopy(((caddr_t)(tc + 1)) +
 			    offsetof(struct ip, ip_len),
@@ -1218,7 +1206,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			m_copyback(m, offsetof(struct ip, ip_len),
 			    sizeof(u_int16_t), &iplen, M_NOWAIT);
 			break;
-#endif /* INET */
 
 #ifdef INET6
 		case AF_INET6:

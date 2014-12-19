@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.43 2014/07/12 18:44:22 tedu Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.44 2014/12/19 17:14:40 tedu Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -475,7 +475,6 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 
 	switch (src->sa.sa_family)
 	{
-#ifdef INET
 	case AF_INET:
 		/* netmask handling */
 		rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
@@ -498,7 +497,6 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 		if (transproto)
 			flowmask->sen_proto = 0xff;
 		break;
-#endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
@@ -617,11 +615,9 @@ export_flow(void **p, u_int8_t ftype, struct sockaddr_encap *flow,
 	}
 	
 	switch (flow->sen_type) {
-#ifdef INET
 	case SENT_IP4:
 		sab->sadb_protocol_direction = flow->sen_direction;
 		break;
-#endif /* INET */
 #ifdef INET6
 	case SENT_IP6:
 		sab->sadb_protocol_direction = flow->sen_ip6_direction;
@@ -635,11 +631,9 @@ export_flow(void **p, u_int8_t ftype, struct sockaddr_encap *flow,
 	sab->sadb_protocol_len = sizeof(struct sadb_protocol) /
 	    sizeof(uint64_t);
 	switch (flow->sen_type) {
-#ifdef INET
 	case SENT_IP4:
 		sab->sadb_protocol_proto = flow->sen_proto;
 		break;
-#endif /* INET */
 #ifdef INET6
 	case SENT_IP6:
 		sab->sadb_protocol_proto = flow->sen_ip6_proto;
@@ -678,11 +672,9 @@ import_address(struct sockaddr *sa, struct sadb_address *sadb_address)
 		salen = ssa->sa_len;
 	else
 		switch (ssa->sa_family) {
-#ifdef INET
 		case AF_INET:
 			salen = sizeof(struct sockaddr_in);
 			break;
-#endif /* INET */
 
 #ifdef INET6
 		case AF_INET6:

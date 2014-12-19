@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.72 2014/11/23 07:39:02 deraadt Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.73 2014/12/19 17:14:39 tedu Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -57,14 +57,10 @@
 #include <net/netisr.h>
 #include <net/route.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
-#else
-#error "if_gre used without inet"
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

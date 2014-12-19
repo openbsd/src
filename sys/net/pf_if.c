@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.76 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.77 2014/12/19 17:14:40 tedu Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -320,7 +320,6 @@ int
 pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 {
 	switch (af) {
-#ifdef INET
 	case AF_INET:
 		switch (dyn->pfid_acnt4) {
 		case 0:
@@ -332,7 +331,6 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET));
 		}
 		break;
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		switch (dyn->pfid_acnt6) {

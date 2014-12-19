@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.64 2014/12/01 06:55:05 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.65 2014/12/19 17:14:40 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -62,7 +62,6 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #ifdef INET6
@@ -72,7 +71,6 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#endif
 #include <crypto/arc4.h>
 
 /* drop static for ddb debuggability */
