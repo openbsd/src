@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.5 2014/12/19 22:30:47 deraadt Exp $	*/
 /*	$NetBSD: strlen.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
 
 /*
@@ -42,8 +42,7 @@ ENTRY(strlen)
 	add	%o0, 1, %o1	! save starting point + 1
 1:
 	ldsb	[%o0], %o2	! fetch byte
-	tst	%o2		! null?
-	bne	1b		! no, keep going
-	inc	%o0		! always increment pointer
+	brnz,pt	%o2, 1b		! no, keep going
+	 inc	%o0		! always increment pointer
 	retl
-	sub	%o0, %o1, %o0	! return length (ptr - (origptr+1))
+	 sub	%o0, %o1, %o0	! return length (ptr - (origptr+1))
