@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.25 2014/12/19 15:07:33 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.26 2014/12/19 15:14:48 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -158,10 +158,6 @@ struct vm_rpc {
 	uint32_t cookie2;
 };
 
-int	vmt_match(struct device *, void *, void *);
-void	vmt_attach(struct device *, struct device *, void *);
-int	vmt_activate(struct device *, int);
-
 struct vmt_softc {
 	struct device		sc_dev;
 
@@ -181,6 +177,39 @@ struct vmt_softc {
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
+void	 vm_cmd(struct vm_backdoor *);
+void	 vm_ins(struct vm_backdoor *);
+void	 vm_outs(struct vm_backdoor *);
+
+/* Functions for communicating with the VM Host. */
+int	 vm_rpc_open(struct vm_rpc *, uint32_t);
+int	 vm_rpc_close(struct vm_rpc *);
+int	 vm_rpc_send(const struct vm_rpc *, const uint8_t *, uint32_t);
+int	 vm_rpc_send_str(const struct vm_rpc *, const uint8_t *);
+int	 vm_rpc_get_length(const struct vm_rpc *, uint32_t *, uint16_t *);
+int	 vm_rpc_get_data(const struct vm_rpc *, char *, uint32_t, uint16_t);
+int	 vm_rpc_send_rpci_tx_buf(struct vmt_softc *, const uint8_t *, uint32_t);
+int	 vm_rpc_send_rpci_tx(struct vmt_softc *, const char *, ...)
+	    __attribute__((__format__(__kprintf__,2,3)));
+int	 vm_rpci_response_successful(struct vmt_softc *);
+
+void	 vmt_probe_cmd(struct vm_backdoor *, uint16_t);
+void	 vmt_tclo_state_change_success(struct vmt_softc *, int, char);
+void	 vmt_do_reboot(struct vmt_softc *);
+void	 vmt_do_shutdown(struct vmt_softc *);
+void	 vmt_shutdown(void *);
+
+void	 vmt_update_guest_info(struct vmt_softc *);
+void	 vmt_update_guest_uptime(struct vmt_softc *);
+
+void	 vmt_tick(void *);
+void	 vmt_tclo_tick(void *);
+void	 vmt_resume(void);
+
+int	 vmt_match(struct device *, void *, void *);
+void	 vmt_attach(struct device *, struct device *, void *);
+int	 vmt_activate(struct device *, int);
+
 struct cfattach vmt_ca = {
 	sizeof(struct vmt_softc),
 	vmt_match,
@@ -194,35 +223,6 @@ struct cfdriver vmt_cd = {
 	"vmt",
 	DV_DULL
 };
-
-void vm_cmd(struct vm_backdoor *);
-void vm_ins(struct vm_backdoor *);
-void vm_outs(struct vm_backdoor *);
-
-/* Functions for communicating with the VM Host. */
-int vm_rpc_open(struct vm_rpc *, uint32_t);
-int vm_rpc_close(struct vm_rpc *);
-int vm_rpc_send(const struct vm_rpc *, const uint8_t *, uint32_t);
-int vm_rpc_send_str(const struct vm_rpc *, const uint8_t *);
-int vm_rpc_get_length(const struct vm_rpc *, uint32_t *, uint16_t *);
-int vm_rpc_get_data(const struct vm_rpc *, char *, uint32_t, uint16_t);
-int vm_rpc_send_rpci_tx_buf(struct vmt_softc *, const uint8_t *, uint32_t);
-int vm_rpc_send_rpci_tx(struct vmt_softc *, const char *, ...)
-	__attribute__((__format__(__kprintf__,2,3)));
-int vm_rpci_response_successful(struct vmt_softc *);
-
-void vmt_probe_cmd(struct vm_backdoor *, uint16_t);
-void vmt_tclo_state_change_success(struct vmt_softc *, int, char);
-void vmt_do_reboot(struct vmt_softc *);
-void vmt_do_shutdown(struct vmt_softc *);
-void vmt_shutdown(void *);
-
-void vmt_update_guest_info(struct vmt_softc *);
-void vmt_update_guest_uptime(struct vmt_softc *);
-
-void vmt_tick(void *);
-void vmt_tclo_tick(void *);
-void vmt_resume(void);
 
 extern char hostname[MAXHOSTNAMELEN];
 
