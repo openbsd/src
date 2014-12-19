@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.22 2014/12/08 13:24:04 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.23 2014/12/19 13:17:35 aoyama Exp $
 #
 maxpartitions 16
 
@@ -67,11 +67,11 @@ file arch/luna88k/dev/mb89352.c				spc
 
 device cbus {}
 attach	cbus at mainbus
-file	arch/luna88k/dev/cbus.c
+file	arch/luna88k/cbus/cbus.c
 
 device pcex
 attach	pcex at cbus
-file	arch/luna88k/dev/pcex.c				pcex needs-flag
+file	arch/luna88k/cbus/pcex.c				pcex needs-flag
 
 # list of standard files
 file	arch/luna88k/luna88k/clock.c

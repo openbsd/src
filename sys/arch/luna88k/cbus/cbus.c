@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.1 2014/12/08 13:24:04 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.1 2014/12/19 13:17:35 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -29,7 +29,7 @@
 #include <machine/autoconf.h>
 #include <machine/board.h>	/* PC_BASE */
 
-#include <luna88k/dev/cbusvar.h>
+#include <luna88k/cbus/cbusvar.h>
 #include <luna88k/luna88k/isr.h>	/* isrlink_autovec() */
 
 #if 0

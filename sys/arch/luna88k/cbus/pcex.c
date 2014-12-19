@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcex.c,v 1.4 2014/12/08 13:24:04 aoyama Exp $	*/
+/*	$OpenBSD: pcex.c,v 1.1 2014/12/19 13:17:35 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -30,7 +30,7 @@
 #include <machine/conf.h>
 #include <machine/pcex.h>
 
-#include <luna88k/dev/cbusvar.h>
+#include <luna88k/cbus/cbusvar.h>
 
 extern int hz;
 
