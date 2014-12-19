@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.26 2014/12/18 20:01:33 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.27 2014/12/19 14:15:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/event.h>
 #include <sys/reboot.h>
 #include <sys/hibernate.h>
+#include <dev/rndvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
