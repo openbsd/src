@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.403 2014/09/08 18:10:01 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.404 2014/12/19 05:36:28 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,7 +54,7 @@ struct ip6_hdr;
 #define	PF_MD5_DIGEST_LENGTH	16
 #ifdef MD5_DIGEST_LENGTH
 #if PF_MD5_DIGEST_LENGTH != MD5_DIGEST_LENGTH
-#error
+#error md5 digest length mismatch
 #endif
 #endif
 
