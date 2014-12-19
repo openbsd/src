@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.20 2014/08/26 23:55:28 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.21 2014/12/19 02:32:57 brad Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -164,7 +164,7 @@ void vmxnet3_iff(struct vmxnet3_softc *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
 int vmxnet3_getbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
 void vmxnet3_stop(struct ifnet *);
-void vmxnet3_reset(struct ifnet *);
+void vmxnet3_reset(struct vmxnet3_softc *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
 void vmxnet3_start(struct ifnet *);
@@ -630,7 +630,7 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 		rs = sc->sc_rxq[0].rs;
 		if (rs->stopped)
 			printf("%s: RX error 0x%x\n", ifp->if_xname, rs->error);
-		vmxnet3_reset(ifp);
+		vmxnet3_init(sc);
 	}
 
 	if (event & VMXNET3_EVENT_DIC)
@@ -908,9 +908,10 @@ vmxnet3_stop(struct ifnet *ifp)
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	int queue;
 
-	vmxnet3_disable_all_intrs(sc);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	vmxnet3_disable_all_intrs(sc);
 
 	WRITE_CMD(sc, VMXNET3_CMD_DISABLE);
 
@@ -921,13 +922,9 @@ vmxnet3_stop(struct ifnet *ifp)
 }
 
 void
-vmxnet3_reset(struct ifnet *ifp)
+vmxnet3_reset(struct vmxnet3_softc *sc)
 {
-	struct vmxnet3_softc *sc = ifp->if_softc;
-
-	vmxnet3_stop(ifp);
 	WRITE_CMD(sc, VMXNET3_CMD_RESET);
-	vmxnet3_init(sc);
 }
 
 int
@@ -936,8 +933,15 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int queue;
 
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	/*
+	 * Cancel pending I/O and free all RX/TX buffers.
+	 */
+	vmxnet3_stop(ifp);
+
+#if 0
+	/* Put controller into known state. */
+	vmxnet3_reset(sc);
+#endif
 
 	for (queue = 0; queue < NTXQUEUE; queue++)
 		vmxnet3_txinit(sc, &sc->sc_txq[queue]);
@@ -956,9 +960,16 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 		WRITE_BAR0(sc, VMXNET3_BAR0_RXH2(queue), 0);
 	}
 
+	/* Program promiscuous mode and multicast filters. */
 	vmxnet3_iff(sc);
+
 	vmxnet3_enable_all_intrs(sc);
+
 	vmxnet3_link_state(sc);
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	return 0;
 }
 
@@ -1157,7 +1168,6 @@ vmxnet3_watchdog(struct ifnet *ifp)
 
 	printf("%s: device timeout\n", ifp->if_xname);
 	s = splnet();
-	vmxnet3_stop(ifp);
 	vmxnet3_init(sc);
 	splx(s);
 }
