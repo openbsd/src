@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.170 2014/12/19 02:15:25 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.171 2014/12/19 02:46:47 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -851,9 +851,9 @@ pool_p_remove(struct pool *pp, struct pool_item_header *ph)
 void
 pool_update_curpage(struct pool *pp)
 {
-	pp->pr_curpage = TAILQ_FIRST(&pp->pr_partpages);
+	pp->pr_curpage = TAILQ_LAST(&pp->pr_partpages, pool_pagelist);
 	if (pp->pr_curpage == NULL) {
-		pp->pr_curpage = TAILQ_FIRST(&pp->pr_emptypages);
+		pp->pr_curpage = TAILQ_LAST(&pp->pr_emptypages, pool_pagelist);
 	}
 }
 
