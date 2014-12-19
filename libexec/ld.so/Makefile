@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2014/12/16 23:59:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.53 2014/12/19 14:19:41 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -24,6 +24,9 @@ SRCS+=	library_mquery.c
 SRCS+=	library.c
 .endif
 
+afterinstall:
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${.OBJDIR}/ld.so ${DESTDIR}/sbin/ld.so
 
 .include "${.CURDIR}/${MACHINE_CPU}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_CPU}
@@ -51,10 +54,6 @@ $(PROG): $(test_prog)
 	ulimit -c 0; [ "`${.OBJDIR}/$(test_prog) ok`" = ok ]
 	cp $(candidate) $@
 .endif
-
-afterinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.OBJDIR}/ld.so ${DESTDIR}/sbin/ld.so
 
 .include <bsd.prog.mk>
 
