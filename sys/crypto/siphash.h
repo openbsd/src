@@ -1,3 +1,4 @@
+/* $OpenBSD: siphash.h,v 1.2 2014/12/20 06:04:39 tedu Exp $ */
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
  * All rights reserved.
