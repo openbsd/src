@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.68 2014/10/25 14:20:09 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.69 2014/12/20 16:34:27 krw Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -714,8 +714,8 @@ inteldrm_show_screen(void *v, void *cookie, int waitok,
 	dev_priv->switchcb = cb;
 	dev_priv->switchcbarg = cbarg;
 	if (cb) {
-		workq_queue_task(NULL, &dev_priv->switchwqt, 0,
-		    inteldrm_doswitch, v, cookie);
+		dev_priv->switchcookie = cookie;
+		task_add(systq, &dev_priv->switchtask);
 		return (EAGAIN);
 	}
 
@@ -725,13 +725,13 @@ inteldrm_show_screen(void *v, void *cookie, int waitok,
 }
 
 void
-inteldrm_doswitch(void *v, void *cookie)
+inteldrm_doswitch(void *v, void *dummy)
 {
 	struct inteldrm_softc *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 
-	rasops_show_screen(ri, cookie, 0, NULL, NULL);
+	rasops_show_screen(ri, dev_priv->switchcookie, 0, NULL, NULL);
 	intel_fb_restore_mode(dev);
 
 	if (dev_priv->switchcb)
@@ -894,6 +894,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&mchdev_lock, IPL_TTY);
 	mtx_init(&dev_priv->error_completion_lock, IPL_NONE);
 	rw_init(&dev_priv->rps.hw_lock, "rpshw");
+
+	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv, NULL);
 
 	/* we need to use this api for now due to sharing with intagp */
 	bar = vga_pci_bar_info(vga_sc, (IS_I9XX(dev) ? 0 : 1));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.8 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.9 2014/12/20 16:34:27 krw Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1567,7 +1567,8 @@ struct radeon_device {
 
 	void				(*switchcb)(void *, int, int);
 	void				*switchcbarg;
-	struct workq_task		switchwqt;
+	void				*switchcookie;
+	struct task			switchtask;
 	struct rasops_info		ro;
 	int				console;
 

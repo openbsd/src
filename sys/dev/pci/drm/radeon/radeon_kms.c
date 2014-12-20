@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.30 2014/10/25 14:20:09 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.31 2014/12/20 16:34:27 krw Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -379,9 +379,9 @@ radeondrm_show_screen(void *v, void *cookie, int waitok,
 
 	rdev->switchcb = cb;
 	rdev->switchcbarg = cbarg;
+	rdev->switchcookie = cookie;
 	if (cb) {
-		workq_queue_task(NULL, &rdev->switchwqt, 0,
-		    radeondrm_doswitch, v, cookie);
+		task_add(systq, &rdev->switchtask);
 		return (EAGAIN);
 	}
 
@@ -391,14 +391,14 @@ radeondrm_show_screen(void *v, void *cookie, int waitok,
 }
 
 void
-radeondrm_doswitch(void *v, void *cookie)
+radeondrm_doswitch(void *v, void *dummy)
 {
 	struct rasops_info *ri = v;
 	struct radeon_device *rdev = ri->ri_hw;
 	struct radeon_crtc *radeon_crtc;
 	int i, crtc;
 
-	rasops_show_screen(ri, cookie, 0, NULL, NULL);
+	rasops_show_screen(ri, rdev->switchcookie, 0, NULL, NULL);
 	for (crtc = 0; crtc < rdev->num_crtc; crtc++) {
 		for (i = 0; i < 256; i++) {
 			radeon_crtc = rdev->mode_info.crtcs[crtc];
@@ -697,6 +697,8 @@ radeondrm_attachhook(void *xsc)
 {
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &rdev->ro;
+
+	task_set(&rdev->switchtask, radeondrm_doswitch, ri, NULL);
 
 	if (ri->ri_bits == NULL)
 		return;
