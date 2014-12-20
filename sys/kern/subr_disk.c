@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.175 2014/12/20 13:37:32 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.176 2014/12/20 13:45:15 kettenis Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		uint32_t ghsize;
 		uint32_t ghpartsize;
 		uint32_t ghpartnum;
-		size_t gpsz;
 
 		/* read header record */
 		bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) * DL_BLKSPERSEC(lp);
