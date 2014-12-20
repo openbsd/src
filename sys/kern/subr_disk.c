@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.174 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.175 2014/12/20 13:37:32 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ notfat:
 	if (biowait(bp))
 		return (bp->b_error);
 
-	
+
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
@@ -614,7 +614,7 @@ get_fstype(struct uuid *uuid_part)
  * If gpt partition table requested, attempt to load it and
  * find disklabel inside a GPT partition. Return buffer
  * for use in signalling errors if requested.
- * 
+ *
  * XXX: readgptlabel() is based on readdoslabel(), so they should be merged
  */
 int
@@ -641,11 +641,11 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	if (lp->d_secsize == 0)
 		return (ENOSPC);	/* disk too small */
 
-	/* 
-	 * XXX: We should not trust the primary header and instead 
+	/*
+	 * XXX: We should not trust the primary header and instead
 	 * use the last LBA of the disk, as defined in the standard.
 	 */
-	for (part_blkno = GPTSECTOR; ; part_blkno = gh.gh_lba_alt, 
+	for (part_blkno = GPTSECTOR; ; part_blkno = gh.gh_lba_alt,
 	    altheader = 1) {
 		uint32_t ghsize;
 		uint32_t ghpartsize;
@@ -688,11 +688,11 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 				DPRINTF("alternate header also broken\n");
 				return (EINVAL);
 			}
-			
+
 			if (gh.gh_lba_alt >= DL_GETDSIZE(lp)) {
 				DPRINTF("alternate header's position is "
 				    "bogous\n");
-				return (EINVAL); 
+				return (EINVAL);
 			}
 
 			continue;
@@ -720,7 +720,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 			DPRINTF("invalid partition size\n");
 			return (EINVAL);
 		}
-		
+
 		/* XXX: we don't support multiples of GPTMINPARTSIZE yet */
 		if (letoh32(gh.gh_part_size) != GPTMINPARTSIZE) {
 			DPRINTF("partition sizes larger than %d bytes are not "
@@ -993,7 +993,7 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
     struct disklabel *lp)
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-    	int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2)));
+	int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2)));
 	char partname = 'a' + part;
 	daddr_t sn;
 
