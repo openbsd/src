@@ -1,0 +1,12 @@
+mandoc: breakingIt.in:13:2: ERROR: inserting missing end of block: It breaks Ao
+mandoc: breakingIt.in:10:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:11:2: WARNING: moving content out of list: Ao
+mandoc: breakingIt.in:20:2: ERROR: inserting missing end of block: It breaks Ao
+mandoc: breakingIt.in:17:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:18:2: WARNING: moving content out of list: Ao
+mandoc: breakingIt.in:28:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:25:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:26:2: WARNING: moving content out of list: Bd
+mandoc: breakingIt.in:35:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:32:1: WARNING: moving content out of list: text
+mandoc: breakingIt.in:33:2: WARNING: moving content out of list: Bd

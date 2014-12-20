@@ -1,0 +1,37 @@
+.Dd December 19, 2014
+.Dt BL-BREAKINGIT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-breakingIt
+.Nd items breaking other blocks
+.Sh DESCRIPTION
+.Ss Breaking partial explicit macros
+.Bl -tag -width Ds
+Stray text.
+.Ao
+More stray text.
+.It tag
+Tagged text.
+.El
+.Bl -bullet
+Stray text.
+.Ao
+More stray text.
+.It
+Bullet point.
+.El
+.Ss Breaking full explicit macros
+.Bl -tag -width Ds
+Stray text.
+.Bd -ragged -offset indent
+More stray text.
+.It tag
+Tagged text.
+.El
+.Bl -bullet
+Stray text.
+.Bd -ragged -offset indent
+More stray text.
+.It
+Bullet point.
+.El

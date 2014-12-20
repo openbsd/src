@@ -1,0 +1,27 @@
+BL-BREAKINGIT(1)            General Commands Manual           BL-BREAKINGIT(1)
+
+NNAAMMEE
+     BBll--bbrreeaakkiinnggIItt - items breaking other blocks
+
+DDEESSCCRRIIPPTTIIOONN
+   BBrreeaakkiinngg ppaarrttiiaall eexxpplliicciitt mmaaccrrooss
+     Stray text.  <More stray text.>
+
+     tag     Tagged text.
+     Stray text.  <More stray text.>
+
+     ++oo   Bullet point.
+
+   BBrreeaakkiinngg ffuullll eexxpplliicciitt mmaaccrrooss
+     Stray text.
+
+           More stray text.
+
+     tag     Tagged text.
+     Stray text.
+
+           More stray text.
+
+     ++oo   Bullet point.
+
+OpenBSD                        December 19, 2014                       OpenBSD

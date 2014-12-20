@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.115 2014/12/18 20:58:00 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.116 2014/12/20 02:26:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -548,13 +548,17 @@ static void
 rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 		enum mdoct tok, int line, int ppos)
 {
-	struct mdoc_node *n;
+	struct mdoc_node *n, *to;
 
+	to = NULL;
 	n = mdoc->last;
 	while (n) {
 		switch (rew_dohalt(tok, t, n)) {
 		case REWIND_NONE:
-			return;
+			if (to == NULL)
+				return;
+			n = to;
+			break;
 		case REWIND_THIS:
 			n->lastline = line -
 			    (mdoc->flags & MDOC_NEWLINE &&
@@ -569,6 +573,7 @@ rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 		case REWIND_MORE:
 			n->lastline = line -
 			    (mdoc->flags & MDOC_NEWLINE ? 1 : 0);
+			to = n;
 			n = n->parent;
 			continue;
 		case REWIND_LATER:
@@ -711,7 +716,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	struct mdoc_node *later;	/* A sub-block starting later. */
 	struct mdoc_node *n;		/* For searching backwards. */
 
-	int		 j, lastarg, maxargs, flushed, nl;
+	int		 flushed, have_it, j, lastarg, maxargs, nl;
 	enum margserr	 ac;
 	enum mdoct	 atok, ntok;
 	char		*p;
@@ -735,6 +740,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	 * both of our own and of pending sub-blocks.
 	 */
 
+	have_it = 0;
 	atok = rew_alt(tok);
 	body = endbody = later = NULL;
 	for (n = mdoc->last; n; n = n->parent) {
@@ -751,6 +757,12 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 		if (n->type != MDOC_BLOCK || n->tok == MDOC_Nm)
 			continue;
+
+		if (n->tok == MDOC_It) {
+			have_it = 1;
+			continue;
+		}
+
 		if (atok == n->tok) {
 			assert(body);
 
@@ -760,7 +772,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 			 * just proceed to closing out.
 			 */
 
-			if (later == NULL)
+			if (later == NULL ||
+			    (tok == MDOC_El && !have_it))
 				break;
 
 			/*
@@ -799,10 +812,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 		 * implicit ones, the first open implicit block.
 		 */
 
-		if (later &&
-		    mdoc_macros[later->tok].flags & MDOC_EXPLICIT)
-			continue;
-		if (n->tok != MDOC_It)
+		if (later == NULL ||
+		    ! (mdoc_macros[later->tok].flags & MDOC_EXPLICIT))
 			later = n;
 	}
 	rew_sub(MDOC_BODY, mdoc, tok, line, ppos);
