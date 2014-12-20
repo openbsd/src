@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $OpenBSD: siphash.h,v 1.2 2014/12/20 05:43:26 guenther Exp $
  */
 
 /*
