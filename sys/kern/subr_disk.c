@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.176 2014/12/20 13:45:15 kettenis Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.177 2014/12/20 15:54:48 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 			continue;
 		}
 
-		/* 
+		/*
 		 * Header size must be greater than or equal to 92 and less
 		 * than or equal to the logical block size.
 		 */
