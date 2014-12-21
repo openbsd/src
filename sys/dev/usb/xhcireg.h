@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.7 2014/12/15 17:10:44 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.8 2014/12/21 11:20:24 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -362,6 +362,9 @@ struct xhci_trb {
 #define XHCI_TRB_GET_SLOT(x)	(((x) >> 24) & 0xff)
 #define XHCI_TRB_SET_SLOT(x)	(((x) & 0xff) << 24)
 } __packed;
+
+#define XHCI_TRB_FLAGS_BITMASK						\
+    "\20\007IDT\006IOC\005CHAIN\004NOSNOOP\003ISP\002LINKSEG\001CYCLE"
 
 #define XHCI_TRB_TYPE_MASK	0xfc00
 #define XHCI_TRB_TYPE(x)	(((x) & XHCI_TRB_TYPE_MASK) >> 10)

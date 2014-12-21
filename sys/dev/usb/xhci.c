@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.47 2014/12/19 22:44:59 guenther Exp $ */
+/* $OpenBSD: xhci.c,v 1.48 2014/12/21 11:20:24 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -202,8 +202,9 @@ struct usbd_pipe_methods xhci_device_generic_methods = {
 static void
 xhci_dump_trb(struct xhci_trb *trb)
 {
-	printf("trb=%p (0x%016llx 0x%08x 0x%08x)\n", trb,
-	   (long long)trb->trb_paddr, trb->trb_status, trb->trb_flags);
+	printf("trb=%p (0x%016llx 0x%08x 0x%b)\n", trb,
+	    (long long)letoh64(trb->trb_paddr), letoh32(trb->trb_status),
+	    (int)letoh32(trb->trb_flags), XHCI_TRB_FLAGS_BITMASK);
 }
 #endif
 
