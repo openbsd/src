@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.48 2014/12/21 11:20:24 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.49 2014/12/21 11:46:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -2316,7 +2316,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
 	struct xhci_pipe *xp = (struct xhci_pipe *)xfer->pipe;
 	struct xhci_trb *trb0, *trb;
-	uint32_t len = UGETW(xfer->request.wLength);
+	uint32_t flags, len = UGETW(xfer->request.wLength);
 	uint8_t toggle0, toggle;
 	int s;
 
@@ -2334,39 +2334,42 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	/* Data TRB */
 	if (len != 0) {
 		trb = xhci_xfer_get_trb(sc, xfer, &toggle, 0);
+
+		flags = XHCI_TRB_TYPE_DATA | toggle;
+		if (usbd_xfer_isread(xfer))
+			flags |= XHCI_TRB_DIR_IN | XHCI_TRB_ISP;
+
 		trb->trb_paddr = htole64(DMAADDR(&xfer->dmabuf, 0));
 		trb->trb_status = htole32(
 		    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(1) | XHCI_TRB_LEN(len)
 		);
-		trb->trb_flags = htole32(XHCI_TRB_TYPE_DATA | toggle);
-
-		if (usbd_xfer_isread(xfer))
-			trb->trb_flags |= htole32(XHCI_TRB_DIR_IN|XHCI_TRB_ISP);
+		trb->trb_flags = htole32(flags);
 
 	}
 
 	/* Status TRB */
 	trb = xhci_xfer_get_trb(sc, xfer, &toggle, 1);
+
+	flags = XHCI_TRB_TYPE_STATUS | XHCI_TRB_IOC | toggle;
+	if (len == 0 || !usbd_xfer_isread(xfer))
+		flags |= XHCI_TRB_DIR_IN;
+
 	trb->trb_paddr = 0;
 	trb->trb_status = htole32(XHCI_TRB_INTR(0));
-	trb->trb_flags = htole32(XHCI_TRB_TYPE_STATUS | XHCI_TRB_IOC | toggle);
-
-	if (len == 0 || !usbd_xfer_isread(xfer))
-		trb->trb_flags |= htole32(XHCI_TRB_DIR_IN);
+	trb->trb_flags = htole32(flags);
 
 	/* Setup TRB */
-	trb0->trb_paddr = (uint64_t)*((uint64_t *)&xfer->request);
-	trb0->trb_status = htole32(XHCI_TRB_INTR(0) | XHCI_TRB_LEN(8));
-	trb0->trb_flags = htole32(XHCI_TRB_TYPE_SETUP | XHCI_TRB_IDT);
-
+	flags = XHCI_TRB_TYPE_SETUP | XHCI_TRB_IDT | toggle0;
 	if (len != 0) {
 		if (usbd_xfer_isread(xfer))
-			trb0->trb_flags |= htole32(XHCI_TRB_TRT_IN);
+			flags |= XHCI_TRB_TRT_IN;
 		else
-			trb0->trb_flags |= htole32(XHCI_TRB_TRT_OUT);
+			flags |= XHCI_TRB_TRT_OUT;
 	}
 
-	trb0->trb_flags |= htole32(toggle0);
+	trb0->trb_paddr = (uint64_t)*((uint64_t *)&xfer->request);
+	trb0->trb_status = htole32(XHCI_TRB_INTR(0) | XHCI_TRB_LEN(8));
+	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
 	    TRBOFF(xp->ring, trb0), 3 * sizeof(struct xhci_trb),
@@ -2412,30 +2415,73 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 {
 	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
 	struct xhci_pipe *xp = (struct xhci_pipe *)xfer->pipe;
-	struct xhci_trb *trb;
-	uint8_t toggle;
-	int s;
+	struct xhci_trb *trb0, *trb;
+	uint32_t len, remain, flags;
+	uint32_t len0, mps;
+	uint64_t paddr;
+	uint8_t toggle0, toggle;
+	int s, i, ntrb;
 
 	KASSERT(!(xfer->rqflags & URQ_REQUEST));
 
 	if (sc->sc_bus.dying || xp->halted)
 		return (USBD_IOERROR);
 
-	if (xp->free_trbs < 1)
+	/* How many TRBs do we need for this transfer? */
+	mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
+	ntrb = (xfer->length + mps - 1) / mps;
+
+	/* If we need to append a zero length packet, we need one more. */
+	if ((xfer->flags & USBD_FORCE_SHORT_XFER || xfer->length == 0) &&
+	    (xfer->length % mps == 0))
+		ntrb++;
+
+	if (xp->free_trbs < ntrb)
 		return (USBD_NOMEM);
 
-	trb = xhci_xfer_get_trb(sc, xfer, &toggle, 1);
-	trb->trb_paddr = htole64(DMAADDR(&xfer->dmabuf, 0));
-	trb->trb_status = htole32(
-	    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(1) | XHCI_TRB_LEN(xfer->length)
-	);
-	trb->trb_flags = htole32(XHCI_TRB_TYPE_NORMAL | XHCI_TRB_IOC | toggle);
+	/* We'll do the first TRB once we're finished with the chain. */
+	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle0, (ntrb == 1));
+	len0 = min(xfer->length, mps);
 
+	remain = xfer->length - len0;
+	paddr = DMAADDR(&xfer->dmabuf, 0) + len0;
+	len = min(remain, mps);
+
+	/* Chain more TRBs if needed. */
+	for (i = ntrb - 1; i > 0; i--) {
+		/* Next (or Last) TRB. */
+		trb = xhci_xfer_get_trb(sc, xfer, &toggle, (i == 1));
+		flags = XHCI_TRB_TYPE_NORMAL | toggle;
+		if (usbd_xfer_isread(xfer))
+			flags |= XHCI_TRB_ISP;
+		flags |= (i == 1) ? XHCI_TRB_IOC : XHCI_TRB_CHAIN;
+
+		trb->trb_paddr = htole64(paddr);
+		trb->trb_status = htole32(
+		    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(i) |
+		    XHCI_TRB_LEN(len)
+		);
+		trb->trb_flags = htole32(flags);
+
+		remain -= len;
+		paddr += len;
+		len = min(remain, mps);
+	}
+
+	/* First TRB. */
+	flags = XHCI_TRB_TYPE_NORMAL | toggle0;
 	if (usbd_xfer_isread(xfer))
-		trb->trb_flags |= htole32(XHCI_TRB_ISP);
+		flags |= XHCI_TRB_ISP;
+	flags |= (ntrb == 1) ? XHCI_TRB_IOC : XHCI_TRB_CHAIN;
+
+	trb0->trb_paddr = htole64(DMAADDR(&xfer->dmabuf, 0));
+	trb0->trb_status = htole32(
+	    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(ntrb) | XHCI_TRB_LEN(len0)
+ 	);
+	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
-	    TRBOFF(xp->ring, trb), sizeof(struct xhci_trb),
+	    TRBOFF(xp->ring, trb0), sizeof(struct xhci_trb) * ntrb,
 	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
