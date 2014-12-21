@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.114 2014/12/18 20:45:50 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.115 2014/12/21 14:49:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -184,13 +184,13 @@ main(int argc, char *argv[])
 		case 'I':
 			if (strncmp(optarg, "os=", 3)) {
 				fprintf(stderr,
-				    "%s: -I%s: Bad argument\n",
+				    "%s: -I %s: Bad argument\n",
 				    progname, optarg);
 				return((int)MANDOCLEVEL_BADARG);
 			}
 			if (defos) {
 				fprintf(stderr,
-				    "%s: -I%s: Duplicate argument\n",
+				    "%s: -I %s: Duplicate argument\n",
 				    progname, optarg);
 				return((int)MANDOCLEVEL_BADARG);
 			}
@@ -369,7 +369,7 @@ main(int argc, char *argv[])
 
 	/* mandoc(1) */
 
-	if ( ! moptions(&options, auxpaths))
+	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return((int)MANDOCLEVEL_BADARG);
 
 	if (use_pager && isatty(STDOUT_FILENO))
@@ -661,7 +661,7 @@ koptions(int *options, char *arg)
 	} else if ( ! strcmp(arg, "us-ascii")) {
 		*options &= ~(MPARSE_UTF8 | MPARSE_LATIN1);
 	} else {
-		fprintf(stderr, "%s: -K%s: Bad argument\n",
+		fprintf(stderr, "%s: -K %s: Bad argument\n",
 		    progname, arg);
 		return(0);
 	}
@@ -681,7 +681,7 @@ moptions(int *options, char *arg)
 	else if (0 == strcmp(arg, "an"))
 		*options |= MPARSE_MAN;
 	else {
-		fprintf(stderr, "%s: -m%s: Bad argument\n",
+		fprintf(stderr, "%s: -m %s: Bad argument\n",
 		    progname, arg);
 		return(0);
 	}
@@ -715,7 +715,7 @@ toptions(struct curparse *curp, char *arg)
 	else if (0 == strcmp(arg, "pdf"))
 		curp->outtype = OUTT_PDF;
 	else {
-		fprintf(stderr, "%s: -T%s: Bad argument\n",
+		fprintf(stderr, "%s: -T %s: Bad argument\n",
 		    progname, arg);
 		return(0);
 	}
@@ -754,7 +754,7 @@ woptions(struct curparse *curp, char *arg)
 			curp->wlevel = MANDOCLEVEL_FATAL;
 			break;
 		default:
-			fprintf(stderr, "%s: -W%s: Bad argument\n",
+			fprintf(stderr, "%s: -W %s: Bad argument\n",
 			    progname, o);
 			return(0);
 		}
