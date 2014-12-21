@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.69 2013/11/17 13:41:26 kettenis Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.70 2014/12/21 18:25:07 shadchin Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -87,9 +87,6 @@ struct wscons_event {
  */
 #define WSCONS_EVENT_WSMOUSED_ON	12	/* wsmoused(8) active */
 #define WSCONS_EVENT_WSMOUSED_OFF	13	/* wsmoused(8) inactive */
-#define WSCONS_EVENT_WSMOUSED_SLEEP	14	/* wsmoused(8) sleeping */
-#define WSCONS_EVENT_WSMOUSED_CLOSE	15	/* notify wsmoused(8) to close 
-						   mouse device */
 
 #define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
 			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
@@ -98,8 +95,7 @@ struct wscons_event {
 #define IS_BUTTON_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_UP) || \
 			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
 #define IS_CTRL_EVENT(type) ((type == WSCONS_EVENT_WSMOUSED_ON) || \
-			     (type == WSCONS_EVENT_WSMOUSED_OFF)|| \
-			     (type == WSCONS_EVENT_WSMOUSED_SLEEP))
+			     (type == WSCONS_EVENT_WSMOUSED_OFF))
 
 /*
  * Keyboard ioctls (0 - 31)
