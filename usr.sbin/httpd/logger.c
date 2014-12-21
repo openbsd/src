@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.7 2014/11/11 15:54:45 beck Exp $	*/
+/*	$OpenBSD: logger.c,v 1.8 2014/12/21 00:54:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/uio.h>
 
 #include <net/if.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>

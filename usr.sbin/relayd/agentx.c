@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.8 2014/11/19 10:24:40 blambert Exp $    */
+/*      $OpenBSD: agentx.c,v 1.9 2014/12/21 00:54:49 guenther Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -20,8 +20,6 @@
 #include <sys/socketvar.h>
 #include <sys/uio.h>
 #include <sys/un.h>
-
-#include <arpa/inet.h>
 
 #include <err.h>
 #include <errno.h>

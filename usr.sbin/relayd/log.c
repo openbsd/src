@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.25 2014/12/12 10:05:09 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.26 2014/12/21 00:54:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,7 +24,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <arpa/inet.h>
 
 #include <errno.h>
 #include <stdarg.h>

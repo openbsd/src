@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.6 2014/06/25 11:05:15 reyk Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.7 2014/12/21 00:54:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <net/route.h>
 
 #include <stdio.h>

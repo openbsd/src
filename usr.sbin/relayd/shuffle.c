@@ -1,4 +1,4 @@
-/*	$OpenBSD: shuffle.c,v 1.2 2009/06/09 16:26:03 deraadt Exp $	*/
+/*	$OpenBSD: shuffle.c,v 1.3 2014/12/21 00:54:49 guenther Exp $	*/
 
 /*
  * Portions Copyright (C) 2008 Theo de Raadt
@@ -24,7 +24,6 @@
 
 #include <netinet/in.h>
 #include <net/if.h>
-#include <arpa/inet.h>
 
 #include <stdlib.h>
 #include <string.h>

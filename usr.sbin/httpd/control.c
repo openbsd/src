@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2014/08/04 15:49:28 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2014/12/21 00:54:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/un.h>
 
 #include <net/if.h>
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <event.h>

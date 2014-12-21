@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.21 2014/12/12 10:05:09 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.22 2014/12/21 00:54:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -25,8 +25,6 @@
 #include <net/if.h>
 #include <net/pfvar.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
 #include <net/route.h>
 
 #include <ctype.h>
