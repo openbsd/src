@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.35 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.36 2014/12/21 16:27:08 mlarkin Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -121,13 +121,13 @@ ddb_init(void)
 	const db_symformat_t **symf;
 	const char *name = "bsd";
 	extern char *esym;
-#if defined(__sparc64__) || defined(__mips__)
+#if defined(__sparc64__) || defined(__mips__) || defined(__amd64__)
 	extern char *ssym;
 #endif
 	char *xssym, *xesym;
 
 	xesym = esym;
-#if defined(__sparc64__) || defined(__mips__)
+#if defined(__sparc64__) || defined(__mips__) || defined(__amd64__)
 	xssym = ssym;
 #else
 	xssym = (char *)&end;

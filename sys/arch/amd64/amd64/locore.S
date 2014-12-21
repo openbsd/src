@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.60 2014/11/27 17:35:12 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.61 2014/12/21 16:27:07 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpu_perf_ebx)
 	.globl	_C_LABEL(cpu_perf_edx)
 	.globl	_C_LABEL(cpu_apmi_edx)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
+	.globl	_C_LABEL(ssym),_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
@@ -196,6 +196,7 @@ _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
 					#   instruction
 _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
+_C_LABEL(ssym):		.quad	0	# ptr to start of syms
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(bootapiver):	.long	0	# /boot API version
@@ -474,14 +475,46 @@ cont:
 	orl	$(PG_V|PG_KR), %eax
 	fillkpt_nx
 
-	/* Reload %edx for data_start */
-	movl	$RELOC(__data_start), %edx
+	/* Map the data and BSS sections RW, NX */
+	movl	$RELOC(__data_start), %eax
+	movl	$RELOC(__kernel_bss_end),%ecx
+	addl	$PGOFSET, %ecx
+	andl	$~PGOFSET, %ecx
+	subl	%eax, %ecx
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW), %eax
+	fillkpt_nx
 
-	/* Map the data, BSS, and bootstrap tables RW, NX */
+	/* Map "hole" at end of BSS RO, NX */
+	movl	$RELOC(__kernel_bss_end), %eax
+	movl	$RELOC(end), %ecx
+	addl	$PGOFSET, %ecx
+	andl	$~PGOFSET, %ecx
+	cmpl	%eax, %ecx
+	je	map_syms
+	subl	%eax, %ecx
+	shrl	$PGSHIFT, %ecx
+	orl	$(PG_V|PG_KR), %eax
+	fillkpt_nx
+
+map_syms:
+	/* Map symbol space RO, NX */
+	movl	$RELOC(end), %eax
+	movl	%esi, %ecx
+	addl	$PGOFSET, %ecx
+	andl	$~PGOFSET, %ecx
+	cmpl	%eax, %ecx
+	je	map_tables
+	subl	%eax, %ecx
+	shrl	$PGSHIFT, %ecx
+	orl	$(PG_V|PG_KR), %eax
+	fillkpt_nx
+
+map_tables:
+	/* Map the bootstrap tables RW, NX */
+	movl	%esi, %edx
 	leal	(PG_V|PG_KW)(%edx),%eax
 	movl	$TABLESIZE,%ecx
-	addl	%esi,%ecx		/* %ecx = end + TABLESIZE */
-	subl	%edx,%ecx		/* %ecx = %ecx - data_start */
 	shrl	$PGSHIFT,%ecx
 	fillkpt_nx
 
@@ -539,13 +572,22 @@ cont:
 	/*
 	 * Map the first 4 GB with the direct map. We'll map the rest
 	 * in pmap_bootstrap. But we always need the first 4GB during
-	 * bootstrap. The direct map is mapped RW, NX.
+	 * bootstrap. The direct map is mapped RW, NX. We also change
+	 * the permissions on the 2MB pages corresponding to the kernel
+	 * PAs to RO to prevent someone writing to the kernel area
+	 * via the direct map.
 	 */
 	leal	(PROC0_DMP2_OFF)(%esi), %ebx
 	xorl	%eax, %eax
-	orl	$(PG_V|PG_KW|PG_PS|PG_G), %eax
 	movl	$(NDML2_ENTRIES * NPDPG), %ecx
-1:	movl	%eax, (%ebx)
+1:	orl	$(PG_V|PG_KW|PG_PS|PG_G), %eax
+	cmpl	$__kernel_base_phys, %eax
+	jl	store_pte
+	cmpl	$__kernel_end_phys, %eax
+	jg	store_pte
+	andl	$(~PG_KW), %eax
+store_pte:
+	movl	%eax, (%ebx)
 	pushl	%ebp
 	movl	RELOC((pg_nx + 4)), %ebp
 	movl	%ebp, 4(%ebx)
@@ -680,6 +722,9 @@ longmode_hi:
 	movq	$(TABLESIZE+KERNBASE),%rdx
 	addq	%rsi,%rdx
 	movq	%rdx,_C_LABEL(atdevbase)(%rip)
+
+	/* Record start of symbols */
+	movq	$__kernel_bss_end, _C_LABEL(ssym)(%rip)
 
 	/* Set up bootstrap stack. */
 	leaq	(PROC0_STK_OFF)(%rsi),%rax

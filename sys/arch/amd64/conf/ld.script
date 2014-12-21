@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2014/11/18 01:11:13 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2014/12/21 16:27:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -104,16 +104,16 @@ SECTIONS
 		__bss_load = LOADADDR(.bss);
 		*(.bss .bss.*)
 		*(COMMON)
-		/* Align here to ensure that the .bss section occupies space
-		 * up to _end.  Align after .bss to ensure correct alignment
-		 * even if the .bss section disappears because there are no
-		 * input sections.
+		/* Align after .bss to ensure correct alignment even if the
+		 * .bss section disappears because there are no input sections.
 		 */
-		. = ALIGN(64 / 8);
+		. = ALIGN(0x1000);
 	} :bss
-	. = ALIGN(64 / 8);
+	__kernel_bss_end = .;
+	. = ALIGN(0x200000);
 	_end = .;
 	PROVIDE (end = .);
+	__kernel_end_phys = . & 0x7fffffff;
 
 	/* XXX - hack alert, since we are not C++, nuke these */
 	/DISCARD/ :
