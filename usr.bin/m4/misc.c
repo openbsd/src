@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.44 2014/05/12 19:11:19 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.45 2014/12/21 09:33:12 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ enlarge_strspace()
 		errx(1, "string space overflow");
 	memcpy(newstrspace, strspace, strsize/2);
 	for (i = 0; i <= sp; i++)
-		if (sstack[i])
+		if (sstack[i] == STORAGE_STRSPACE)
 			mstack[i].sstr = (mstack[i].sstr - strspace)
 			    + newstrspace;
 	ep = (ep-strspace) + newstrspace;

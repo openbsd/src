@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2014/05/12 19:11:19 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.84 2014/12/21 09:33:12 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -397,7 +397,7 @@ macro(void)
 		/*
 		 * now push the string arguments:
 		 */
-				pushs1(macro_getdef(p)->defn);	/* defn string */
+				pushdef(p);			/* defn string */
 				pushs1((char *)macro_name(p));	/* macro name  */
 				pushs(ep);			/* start next..*/
 
