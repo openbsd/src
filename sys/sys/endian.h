@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.24 2014/07/20 21:41:54 guenther Exp $	*/
+/*	$OpenBSD: endian.h,v 1.25 2014/12/21 04:49:00 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,7 @@
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
 
+#include <sys/cdefs.h>
 #include <sys/_endian.h>
 
 /* Public names */
