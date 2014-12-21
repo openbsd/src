@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.115 2014/12/13 21:05:33 doug Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.116 2014/12/21 12:04:01 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -370,41 +370,40 @@ usbd_port_disown_to_1_1(struct usbd_device *dev, int port)
 	return (err);
 }
 
-usbd_status
+int
 usbd_reset_port(struct usbd_device *dev, int port)
 {
 	usb_port_status_t ps;
-	usbd_status err;
 	int n;
 
-	err = usbd_set_port_feature(dev, port, UHF_PORT_RESET);
+	if (usbd_set_port_feature(dev, port, UHF_PORT_RESET))
+		return (EIO);
 	DPRINTF(("%s: port %d reset done\n", __func__, port));
-	if (err)
-		return (err);
 	n = 10;
 	do {
 		/* Wait for device to recover from reset. */
 		usbd_delay_ms(dev, USB_PORT_RESET_DELAY);
-		err = usbd_get_port_status(dev, port, &ps);
-		if (err) {
-			DPRINTF(("%s: get status failed %d\n", __func__, err));
-			return (err);
+		if (usbd_get_port_status(dev, port, &ps)) {
+			DPRINTF(("%s: get status failed\n", __func__));
+			return (EIO);
 		}
 		/* If the device disappeared, just give up. */
 		if (!(UGETW(ps.wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
-			return (USBD_NORMAL_COMPLETION);
+			return (0);
 	} while ((UGETW(ps.wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
+
+	/* Clear port reset even if a timeout occured. */
+	if (usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET)) {
+		DPRINTF(("%s: clear port feature failed\n", __func__));
+		return (EIO);
+	}
+
 	if (n == 0)
-		return (USBD_TIMEOUT);
-	err = usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET);
-#ifdef USB_DEBUG
-	if (err)
-		DPRINTF(("%s: clear port feature failed %d\n", __func__, err));
-#endif
+		return (ETIMEDOUT);
 
 	/* Wait for the device to recover from reset. */
 	usbd_delay_ms(dev, USB_PORT_RESET_RECOVERY);
-	return (err);
+	return (0);
 }
 
 usb_interface_descriptor_t *
