@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.37 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.38 2014/12/21 00:17:24 daniel Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,7 +37,6 @@ __BEGIN_DECLS
 
 struct	mparse;
 struct	mchars;
-enum	mandocerr;
 struct	tbl_span;
 struct	eqn;
 struct	roff;
