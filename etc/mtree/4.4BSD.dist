@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.268 2014/11/17 18:19:08 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.269 2014/12/22 15:39:28 tedu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -745,8 +745,6 @@ var
     quotas			gname=operator mode=0750
     ..
     run
-    ..
-    rwho
     ..
 
     # ./var/spool
