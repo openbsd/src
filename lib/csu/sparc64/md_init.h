@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2014/12/22 13:53:01 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -72,6 +72,49 @@
 	"	ba,pt	%icc, ___start		\n" \
 	"	 mov	%g1, %o1		\n" \
 	"	.previous")
+
+
+#define	MD_RCRT0_START				\
+	__asm__(				\
+	".text					\n" \
+	"	.align	4			\n" \
+	"	.global	_start			\n" \
+	"	.global	__start			\n" \
+	"_start:				\n" \
+	"__start:				\n" \
+	"	clr	%fp			\n" \
+	"	sub	%sp, 48 + 16*8, %sp	\n" \
+	"	add	%sp, 2223, %l3 		\n" \
+	"	add	%l3, 16*8, %o0		\n" \
+	"	mov	%o0, %l0		\n" \
+	"	call	0f			\n" \
+	"	 nop				\n" \
+	"	call	_DYNAMIC+8		\n" \
+	"0:	ld	[%o7+8], %o2		\n" \
+	"	sll	%o2, 2, %o2		\n" \
+	"	sra	%o2, 0, %o2		\n" \
+	"	add	%o2, %o7, %o2		\n" \
+	"	call	_dl_boot_bind		\n" \
+	"	 mov	%l3, %o1		\n" \
+	"	add	%sp, 48 + 16*8, %sp	\n" \
+	"	add	%sp, 2175, %o0	/* stack */\n" \
+	"	ba,pt	%icc, ___start		\n" \
+	"	 clr	%o1			\n" \
+	"					\n" \
+	"	.global	_dl_printf		\n" \
+	"_dl_printf:				\n" \
+	"	retl				\n" \
+	"	 nop				\n" \
+	"					\n" \
+	"	.global	_dl_exit		\n" \
+	"_dl_exit:				\n" \
+	"	mov	0x401, %g1		\n" \
+	"	add	%o7, 8, %g2		\n" \
+	"	t	0			\n" \
+	"	retl				\n" \
+	"	 sub %g0, %o0, %o0		\n" \
+	"	.previous")
+
 
 #define	MD_START_ARGS		char **sp, void (*cleanup)(void)
 #define	MD_START_SETUP				\
