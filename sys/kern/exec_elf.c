@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.107 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.108 2014/12/22 15:05:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -173,7 +173,7 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 	 * Push space for extra arguments on the stack needed by
 	 * dynamically linked binaries.
 	 */
-	if (pack->ep_interp != NULL) {
+	if (pack->ep_emul_arg != NULL) {
 		pack->ep_emul_argp = stack;
 		stack = (char *)stack + ELF_AUX_ENTRIES * sizeof (AuxInfo);
 	}
@@ -567,8 +567,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	}
 
 	if (eh->e_type == ET_DYN) {
-		/* need an interpreter and load sections for PIE */
-		if (interp == NULL || base_ph == NULL)
+		/* need load sections for PIE */
+		if (base_ph == NULL)
 			goto bad;
 		/* randomize exe_base for PIE */
 		exe_base = uvm_map_pie(base_ph->p_align);
@@ -738,7 +738,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * Check if we found a dynamically linked binary and arrange to load
 	 * its interpreter when the exec file is released.
 	 */
-	if (interp) {
+	if (interp || eh->e_type == ET_DYN) {
 		struct elf_args *ap;
 
 		ap = malloc(sizeof(*ap), M_TEMP, M_WAITOK);
@@ -747,6 +747,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		ap->arg_phentsize = eh->e_phentsize;
 		ap->arg_phnum = eh->e_phnum;
 		ap->arg_entry = eh->e_entry + exe_base;
+		ap->arg_interp = exe_base;
 
 		epp->ep_emul_arg = ap;
 		epp->ep_interp_pos = pos;
@@ -772,19 +773,20 @@ int
 ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 {
 	char	*interp;
-	int	error;
+	int	error = 0;
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	Elf_Addr	pos = epp->ep_interp_pos;
 
-	if (epp->ep_interp == NULL) {
+	if (epp->ep_emul_arg == NULL) {
 		return (0);
 	}
 
 	interp = epp->ep_interp;
 	ap = epp->ep_emul_arg;
 
-	if ((error = ELFNAME(load_file)(p, interp, epp, ap, &pos)) != 0) {
+	if (interp &&
+	    (error = ELFNAME(load_file)(p, interp, epp, ap, &pos)) != 0) {
 		free(ap, M_TEMP, 0);
 		pool_put(&namei_pool, interp);
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -837,7 +839,8 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
 	}
 	free(ap, M_TEMP, 0);
-	pool_put(&namei_pool, interp);
+	if (interp)
+		pool_put(&namei_pool, interp);
 	return (error);
 }
 
