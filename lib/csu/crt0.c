@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2013/12/12 08:12:08 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2014/12/22 03:51:08 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -35,6 +35,7 @@
 #include <limits.h>
 
 #include "md_init.h"
+#include "boot.h"
 
 /* some defaults */
 #ifndef	MD_START_ARGS
@@ -64,8 +65,14 @@ extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
+#ifdef RCRT0
+#ifdef MD_RCRT0_START
+MD_RCRT0_START;
+#endif
+#else
 #ifdef MD_CRT0_START
 MD_CRT0_START;
+#endif
 #endif
 
 void

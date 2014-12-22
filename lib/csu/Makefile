@@ -1,11 +1,14 @@
-#	$OpenBSD: Makefile,v 1.20 2014/11/15 21:59:29 guenther Exp $
+#	$OpenBSD: Makefile,v 1.21 2014/12/22 03:51:08 kurt Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
 OBJS+=		crtbeginS.o crtendS.o
+OBJS+=		rcrt0.o
 SRCS=		crt0.c crtbegin.c crtbeginS.c crtend.c crtendS.c
 
 CFLAGS+=	-I${.CURDIR}/${MACHINE_CPU}
+CFLAGS+=	-I${.CURDIR}/../../libexec/ld.so
+CFLAGS+=	-I${.CURDIR}/../../libexec/ld.so/${MACHINE_CPU}
 
 # XXX "use -fno-omit-frame-pointer; the reason is almost crazy; pr#287"
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
@@ -50,6 +53,12 @@ gcrt0.o: crt0.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
+rcrt0.o: crt0.c
+	@echo ${COMPILE.c} -DRCRT0 -fno-stack-protector ${.CURDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DRCRT0 -fno-stack-protector ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
 crtbegin.o: crtbegin.c
 	@echo ${COMPILE.c} ${.CURDIR}/crtbegin.c -o ${.TARGET}
 	@${COMPILE.c} ${.CURDIR}/crtbegin.c -o ${.TARGET}.o
@@ -80,7 +89,7 @@ realinstall:
 
 afterdepend: .depend
 	@(TMP=/tmp/_depend$$$$; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o:/' \
+	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o r\1.o:/' \
 	    < .depend > $$TMP; \
 	mv $$TMP .depend)
 
