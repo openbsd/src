@@ -44,7 +44,8 @@ Boston, MA 02111-1307, USA.  */
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "\
-	%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} \
+	%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} \
+	%{!p:%{!static:crt0%O%s} %{static:%{pie:rcrt0%O%s} %{!pie:crt0%O%s}}}} \
 	crtbegin%O%s} %{shared:crtbeginS%O%s}"
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
