@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.77 2014/07/13 21:51:12 kettenis Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.78 2014/12/22 03:14:59 deraadt Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -904,9 +904,8 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * caller's buffer to the bounce buffer.
 		 */
 		if (cookie->id_flags & ID_IS_BOUNCING)
-			bcopy((char *)cookie->id_origbuf + offset,
-			    cookie->id_bouncebuf + offset,
-			    len);
+			memcpy(cookie->id_bouncebuf + offset,
+			    (char *)cookie->id_origbuf + offset, len);
 	}
 
 	_bus_dmamap_sync(t, map, offset, len, op);
@@ -917,9 +916,8 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * bounce buffer to the caller's buffer.
 		 */
 		if (cookie->id_flags & ID_IS_BOUNCING)
-			bcopy((char *)cookie->id_bouncebuf + offset,
-			    cookie->id_origbuf + offset,
-			    len);
+			memcpy(cookie->id_origbuf + offset,
+			    (char *)cookie->id_bouncebuf + offset, len);
 	}
 }
 
