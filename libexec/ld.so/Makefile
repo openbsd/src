@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2014/12/19 14:19:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.54 2014/12/22 19:14:59 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -23,10 +23,6 @@ SRCS+=	library_mquery.c
 .else
 SRCS+=	library.c
 .endif
-
-afterinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.OBJDIR}/ld.so ${DESTDIR}/sbin/ld.so
 
 .include "${.CURDIR}/${MACHINE_CPU}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_CPU}
