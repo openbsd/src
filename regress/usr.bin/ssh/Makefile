@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.71 2014/12/22 02:15:52 djm Exp $
+#	$OpenBSD: Makefile,v 1.72 2014/12/22 08:06:03 djm Exp $
 
 REGRESS_FAIL_EARLY= yes
 REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
@@ -58,7 +58,8 @@ LTESTS= 	connect \
 		keys-command \
 		forward-control \
 		integrity \
-		krl
+		krl \
+		multipubkey
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
