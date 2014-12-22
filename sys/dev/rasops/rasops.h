@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.15 2013/10/20 21:24:00 miod Exp $ */
+/*	$OpenBSD: rasops.h,v 1.16 2014/12/22 20:08:05 krw Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
 
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #ifdef	SMALL_KERNEL
 #define	RASOPS_SMALL
@@ -125,7 +125,8 @@ struct rasops_info {
 
 	void	(*ri_switchcb)(void *, int, int);
 	void	*ri_switchcbarg;
-	struct workq_task ri_switchwqt;
+	void	*ri_switchcookie;
+	struct task ri_switchtask;
 
 	int	(*ri_putchar)(void *, int, int, u_int, long);
 	int	(*ri_copycols)(void *, int, int, int, int);

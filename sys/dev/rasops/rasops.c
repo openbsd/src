@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.36 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.37 2014/12/22 20:08:05 krw Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <sys/endian.h>
 
 #include <dev/wscons/wsdisplayvar.h>
@@ -273,6 +273,8 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_ops.alloc_attr = rasops_vcons_alloc_attr;
 		ri->ri_ops.unpack_attr = rasops_vcons_unpack_attr;
 	}
+
+	task_set(&ri->ri_switchtask, rasops_doswitch, ri, NULL);
 
 	rasops_init_devcmap(ri);
 	return (0);
@@ -1425,23 +1427,23 @@ rasops_show_screen(void *v, void *cookie, int waitok,
 {
 	struct rasops_info *ri = v;
 
+	ri->ri_switchcookie = cookie;
 	if (cb) {
 		ri->ri_switchcb = cb;
 		ri->ri_switchcbarg = cbarg;
-		workq_queue_task(NULL, &ri->ri_switchwqt, 0,
-		    rasops_doswitch, v, cookie);
+		task_add(systq, &ri->ri_switchtask);
 		return (EAGAIN);
 	}
 
-	rasops_doswitch(v, cookie);
+	rasops_doswitch(ri, NULL);
 	return (0);
 }
 
 void
-rasops_doswitch(void *v, void *cookie)
+rasops_doswitch(void *v, void *dummy)
 {
 	struct rasops_info *ri = v;
-	struct rasops_screen *scr = cookie;
+	struct rasops_screen *scr = ri->ri_switchcookie;
 	int row, col;
 	long attr;
 
