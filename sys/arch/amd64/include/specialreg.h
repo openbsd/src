@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.30 2014/12/16 21:02:58 sf Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.31 2014/12/22 22:33:51 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -373,24 +373,24 @@
  */
 #define	MSR_SYSCFG	0xc0000010
 
-#define MSR_EFER	0xc0000080		/* Extended feature enable */
-#define 	EFER_SCE		0x00000001	/* SYSCALL extension */
-#define 	EFER_LME		0x00000100	/* Long Mode Enabled */
-#define		EFER_LMA		0x00000400	/* Long Mode Active */
-#define 	EFER_NXE		0x00000800	/* No-Execute Enabled */
+#define MSR_EFER	0xc0000080	/* Extended feature enable */
+#define EFER_SCE	0x00000001	/* SYSCALL extension */
+#define EFER_LME	0x00000100	/* Long Mode Enabled */
+#define	EFER_LMA	0x00000400	/* Long Mode Active */
+#define EFER_NXE	0x00000800	/* No-Execute Enabled */
 
-#define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
-#define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
-#define MSR_CSTAR	0xc0000083		/* compat syscall gate addr */
-#define MSR_SFMASK	0xc0000084		/* flags to clear on syscall */
+#define MSR_STAR	0xc0000081	/* 32 bit syscall gate addr */
+#define MSR_LSTAR	0xc0000082	/* 64 bit syscall gate addr */
+#define MSR_CSTAR	0xc0000083	/* compat syscall gate addr */
+#define MSR_SFMASK	0xc0000084	/* flags to clear on syscall */
 
-#define MSR_FSBASE	0xc0000100		/* 64bit offset for fs: */
-#define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
-#define MSR_KERNELGSBASE 0xc0000102		/* storage for swapgs ins */
-#define MSR_INT_PEN_MSG	0xc0010055		/* Interrupt pending message */
+#define MSR_FSBASE	0xc0000100	/* 64bit offset for fs: */
+#define MSR_GSBASE	0xc0000101	/* 64bit offset for gs: */
+#define MSR_KERNELGSBASE 0xc0000102	/* storage for swapgs ins */
+#define MSR_INT_PEN_MSG	0xc0010055	/* Interrupt pending message */
 
-#define MSR_DE_CFG	0xc0011029		/* Decode Configuration */
-#define		DE_CFG_721		0x00000001	/* errata 721 */
+#define MSR_DE_CFG	0xc0011029	/* Decode Configuration */
+#define	DE_CFG_721	0x00000001	/* errata 721 */
 
 #define IPM_C1E_CMP_HLT	0x10000000
 #define IPM_SMI_CMP_HLT	0x08000000
