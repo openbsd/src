@@ -1593,6 +1593,7 @@
 ./usr/lib/liby_p.a
 ./usr/lib/libz.a
 ./usr/lib/libz_p.a
+./usr/lib/rcrt0.o
 ./usr/libexec/cpp
 ./usr/sbin/kgmon
 ./usr/share/man/man1/addr2line.1
@@ -5974,6 +5975,7 @@
 ./usr/share/man/man9/SipHash24_Init.9
 ./usr/share/man/man9/SipHash24_Update.9
 ./usr/share/man/man9/TASK_INITIALIZER.9
+./usr/share/man/man9/TIMEOUT_INITIALIZER.9
 ./usr/share/man/man9/UVM_MAPFLAG.9
 ./usr/share/man/man9/VOP_ABORTOP.9
 ./usr/share/man/man9/VOP_ACCESS.9
