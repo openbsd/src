@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.41 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.42 2014/12/22 23:59:43 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -193,7 +193,7 @@ hibernate_enter_resume_4m_pde(vaddr_t va, paddr_t pa)
 	pt_entry_t *pde, npde;
 
 	pde = s4pde_4m(va);
-	npde = (pa & PD_MASK) | PG_RW | PG_V | PG_M | PG_PS;
+	npde = (pa & HIB_PD_MASK) | PG_RW | PG_V | PG_M | PG_PS;
 	*pde = npde;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.12 2014/12/08 07:12:37 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.13 2014/12/22 23:59:43 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define PIGLET_PAGE_MASK (PD_MASK)
+#define HIB_PD_MASK		0xffc00000
+#define PIGLET_PAGE_MASK 	(HIB_PD_MASK)
 
 #define HIBERNATE_PD_PAGE	(PAGE_SIZE * 21)
 #define HIBERNATE_PT_PAGE	(PAGE_SIZE * 22)
