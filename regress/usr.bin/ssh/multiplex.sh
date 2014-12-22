@@ -1,4 +1,4 @@
-#	$OpenBSD: multiplex.sh,v 1.25 2014/07/22 01:32:12 djm Exp $
+#	$OpenBSD: multiplex.sh,v 1.26 2014/12/22 01:14:49 djm Exp $
 #	Placed in the Public Domain.
 
 CTL=$OBJ/ctl-sock
@@ -69,20 +69,20 @@ cmp ${DATA} ${COPY}		|| fail "scp: corrupted copy of ${DATA}"
 rm -f ${COPY}
 verbose "test $tid: forward"
 trace "forward over TCP/IP and check result"
-nc -N -l 127.0.0.1 $((${PORT} + 1)) < ${DATA} &
+nc -N -l 127.0.0.1 $((${PORT} + 1)) < ${DATA} > /dev/null &
 netcat_pid=$!
 ${SSH} -F $OBJ/ssh_config -S $CTL -Oforward -L127.0.0.1:$((${PORT} + 2)):127.0.0.1:$((${PORT} + 1)) otherhost >>$TEST_SSH_LOGFILE 2>&1
-nc 127.0.0.1 $((${PORT} + 2)) > ${COPY}
+nc 127.0.0.1 $((${PORT} + 2)) < /dev/null > ${COPY}
 cmp ${DATA} ${COPY}		|| fail "ssh: corrupted copy of ${DATA}"
 kill $netcat_pid 2>/dev/null
 rm -f ${COPY} $OBJ/unix-[123].fwd
 
 trace "forward over UNIX and check result"
-nc -N -Ul $OBJ/unix-1.fwd < ${DATA} &
+nc -N -Ul $OBJ/unix-1.fwd < ${DATA} > /dev/null &
 netcat_pid=$!
 ${SSH} -F $OBJ/ssh_config -S $CTL -Oforward -L$OBJ/unix-2.fwd:$OBJ/unix-1.fwd otherhost >>$TEST_SSH_LOGFILE 2>&1
 ${SSH} -F $OBJ/ssh_config -S $CTL -Oforward -R$OBJ/unix-3.fwd:$OBJ/unix-2.fwd otherhost >>$TEST_SSH_LOGFILE 2>&1
-nc -U $OBJ/unix-3.fwd > ${COPY}
+nc -U $OBJ/unix-3.fwd < /dev/null > ${COPY}
 cmp ${DATA} ${COPY}		|| fail "ssh: corrupted copy of ${DATA}"
 kill $netcat_pid 2>/dev/null
 rm -f ${COPY} $OBJ/unix-[123].fwd
