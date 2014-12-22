@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.10 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.11 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -36,10 +36,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.80 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.81 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1442,12 +1442,10 @@ epioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			epinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		default:
 			epinit(sc);
 			break;

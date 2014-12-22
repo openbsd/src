@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.84 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: atw.c,v 1.85 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -56,10 +56,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
@@ -4022,11 +4020,9 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
         case SIOCSIFADDR:
                 ifp->if_flags |= IFF_UP;
-#ifdef INET
                 if (ifa->ifa_addr->sa_family == AF_INET) {
                         arp_ifinit(&ic->ic_ac, ifa);
                 }
-#endif  /* INET */
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

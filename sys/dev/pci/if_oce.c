@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.80 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.81 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -73,10 +73,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -863,10 +861,8 @@ oce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			oce_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -1338,9 +1334,7 @@ struct mbuf *
 oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 {
 	struct mbuf *m;
-#ifdef INET
 	struct ip *ip;
-#endif
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif
@@ -1369,7 +1363,6 @@ oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 	}
 
 	switch (etype) {
-#ifdef INET
 	case ETHERTYPE_IP:
 		ip = (struct ip *)(m->m_data + ehdrlen);
 		if (ip->ip_p != IPPROTO_TCP)
@@ -1378,7 +1371,6 @@ oce_tso(struct oce_softc *sc, struct mbuf **mpp)
 
 		total_len = ehdrlen + (ip->ip_hl << 2) + (th->th_off << 2);
 		break;
-#endif
 #ifdef INET6
 	case ETHERTYPE_IPV6:
 		ip6 = (struct ip6_hdr *)(m->m_data + ehdrlen);

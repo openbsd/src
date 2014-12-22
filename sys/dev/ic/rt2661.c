@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.77 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.78 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2023,10 +2023,8 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

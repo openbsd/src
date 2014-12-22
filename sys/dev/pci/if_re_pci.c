@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.43 2014/10/24 23:30:05 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.44 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -35,10 +35,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

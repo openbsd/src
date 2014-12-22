@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.19 2010/09/06 19:20:21 deraadt Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.20 2014/12/22 02:28:51 tedu Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -41,10 +41,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>

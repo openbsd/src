@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.107 2014/07/18 07:11:04 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.108 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -5092,10 +5092,8 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			bnx_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif /* INET */
 		break;
 
 	case SIOCSIFFLAGS:

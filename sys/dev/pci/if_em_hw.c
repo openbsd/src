@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.81 2014/11/05 15:30:17 claudio Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.82 2014/12/22 02:28:52 tedu Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -49,10 +49,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 

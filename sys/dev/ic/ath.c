@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.102 2014/12/19 22:44:58 guenther Exp $  */
+/*      $OpenBSD: ath.c,v 1.103 2014/12/22 02:28:51 tedu Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -66,10 +66,8 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_rssadapt.h>
@@ -987,11 +985,9 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			arp_ifinit(&ic->ic_ac, ifa);
 		}
-#endif  /* INET */
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

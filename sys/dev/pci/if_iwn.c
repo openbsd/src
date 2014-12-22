@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.136 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.137 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3144,10 +3144,8 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

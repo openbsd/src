@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.47 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.48 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -817,10 +817,8 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			dp8390_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

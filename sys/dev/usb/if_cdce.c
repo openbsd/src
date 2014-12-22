@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.61 2014/07/13 15:52:49 mpi Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.62 2014/12/22 02:28:52 tedu Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -523,10 +523,8 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			cdce_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->cdce_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.23 2014/12/08 10:58:45 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.24 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -44,10 +44,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -585,11 +583,9 @@ mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		mtd_init(ifp);
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif /* INET */
 		}
 		break;
 

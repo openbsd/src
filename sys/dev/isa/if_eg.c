@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.35 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.36 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -759,12 +759,10 @@ egioctl(register struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			eginit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		default:
 			eginit(sc);
 			break;

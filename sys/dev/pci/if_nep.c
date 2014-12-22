@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.1 2014/02/15 15:19:46 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.2 2014/12/22 02:28:52 tedu Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -25,10 +25,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -296,10 +294,8 @@ nep_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

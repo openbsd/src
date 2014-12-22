@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.18 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.19 2014/12/22 02:28:52 tedu Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -53,10 +53,8 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>

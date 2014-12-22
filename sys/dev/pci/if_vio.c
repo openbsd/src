@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.21 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.22 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -48,10 +48,8 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -835,10 +833,8 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			vio_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

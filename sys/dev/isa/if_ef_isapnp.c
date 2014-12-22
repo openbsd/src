@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.26 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.27 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -345,12 +345,10 @@ efioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			efinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		default:
 			efinit(sc);
 			break;

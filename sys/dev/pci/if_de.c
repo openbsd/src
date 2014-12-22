@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.116 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.117 2014/12/22 02:28:52 tedu Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4173,12 +4173,10 @@ tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 	ifp->if_flags |= IFF_UP;
 	tulip_init(sc);
 	switch(ifa->ifa_addr->sa_family) {
-#ifdef INET
 	case AF_INET: {
 	    arp_ifinit(&sc->tulip_ac, ifa);
 	    break;
 	}
-#endif /* INET */
 
 	default: {
 	    break;

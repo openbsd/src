@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.30 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.31 2014/12/22 02:28:52 tedu Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -49,10 +49,8 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
  
 #if NBPFILTER > 0
 #include <net/bpf.h>

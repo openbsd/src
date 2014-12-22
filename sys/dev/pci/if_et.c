@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.24 2014/08/30 09:52:13 brad Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.25 2014/12/22 02:28:52 tedu Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -56,10 +56,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1021,10 +1019,8 @@ et_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			et_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

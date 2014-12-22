@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.69 2014/11/27 14:53:42 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.70 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -54,10 +54,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1170,10 +1168,8 @@ hme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			hme_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.50 2014/11/30 21:45:04 kettenis Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.51 2014/12/22 02:28:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -990,10 +990,8 @@ urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			urndis_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

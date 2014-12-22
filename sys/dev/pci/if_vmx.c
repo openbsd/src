@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.21 2014/12/19 02:32:57 brad Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.22 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -988,10 +988,8 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			error = vmxnet3_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

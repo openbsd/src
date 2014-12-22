@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.112 2014/12/06 23:20:17 krw Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.113 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -48,10 +48,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 
@@ -1182,12 +1180,10 @@ txp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			txp_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif /* INET */
 		default:
 			txp_init(sc);
 			break;

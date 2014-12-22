@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.109 2014/07/13 15:52:49 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.110 2014/12/22 02:28:52 tedu Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2127,11 +2127,9 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		atu_init(ifp);
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
 			break;
-#endif /* INET */
 		}
 		break;
 

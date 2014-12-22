@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.36 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.37 2014/12/22 02:28:52 tedu Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -50,10 +50,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_types.h>
 #include <net/if_vlan_var.h>
@@ -1329,10 +1327,8 @@ jme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			jme_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.25 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.26 2014/12/22 02:28:52 tedu Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -781,11 +781,9 @@ cnw_ioctl(ifp, cmd, data)
 			break;
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		}
 		break;
 

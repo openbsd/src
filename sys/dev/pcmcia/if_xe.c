@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.45 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.46 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -1177,10 +1177,8 @@ xe_ioctl(ifp, command, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		xe_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif  /* INET */
 		break;
 
 	case SIOCSIFFLAGS:

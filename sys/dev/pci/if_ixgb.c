@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.62 2014/07/13 23:10:23 deraadt Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.63 2014/12/22 02:28:52 tedu Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -344,10 +344,8 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			ixgb_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->interface_data, ifa);
-#endif /* INET */
 		break;
 
 	case SIOCSIFFLAGS:

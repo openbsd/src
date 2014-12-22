@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.127 2014/11/24 02:03:37 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.128 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1395,10 +1395,8 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			axe_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

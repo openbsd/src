@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.71 2014/10/28 00:36:06 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.72 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -47,10 +47,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -924,10 +922,8 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

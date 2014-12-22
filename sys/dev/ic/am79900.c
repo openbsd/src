@@ -1,4 +1,4 @@
-/*	$OpenBSD: am79900.c,v 1.2 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: am79900.c,v 1.3 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: am79900.c,v 1.23 2012/02/02 19:43:02 tls Exp $	*/
 
 /*-
@@ -118,10 +118,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.128 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.129 2014/12/22 02:28:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -54,10 +54,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #ifdef THT_DEBUG
 #define THT_D_FIFO		(1<<0)
@@ -879,10 +877,8 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.136 2014/11/27 03:49:07 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.137 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -74,10 +74,8 @@
 
 #include <net/if.h>
 #include <sys/device.h>
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif	/* INET */
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
@@ -1555,10 +1553,8 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			vr_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

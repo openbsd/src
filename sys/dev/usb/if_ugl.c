@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.7 2014/07/13 15:52:49 mpi Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.8 2014/12/22 02:28:52 tedu Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -815,10 +815,8 @@ ugl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			ugl_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

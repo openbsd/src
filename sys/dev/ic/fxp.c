@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.117 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.118 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -53,10 +53,8 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1649,10 +1647,8 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			fxp_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.63 2014/08/20 01:00:15 dlg Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.64 2014/12/22 02:28:52 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -89,10 +89,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1176,10 +1174,8 @@ lge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			lge_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif /* INET */
 		break;
 
 	case SIOCSIFFLAGS:

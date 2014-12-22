@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.94 2014/07/13 15:52:49 mpi Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.95 2014/12/22 02:28:52 tedu Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1481,10 +1481,8 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			aue_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

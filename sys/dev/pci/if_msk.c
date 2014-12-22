@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.111 2014/11/24 23:28:50 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.112 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -103,10 +103,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 #include <net/if_vlan_var.h>
@@ -593,10 +591,8 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			msk_init(sc_if);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc_if->arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

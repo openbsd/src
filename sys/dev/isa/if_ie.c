@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.39 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.40 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -2125,12 +2125,10 @@ ieioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			ieinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		default:
 			ieinit(sc);
 			break;

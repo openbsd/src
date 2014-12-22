@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.29 2014/11/24 02:03:37 brad Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.30 2014/12/22 02:28:52 tedu Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -48,10 +48,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 

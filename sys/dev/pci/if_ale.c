@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.34 2014/11/27 14:52:04 brad Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.35 2014/12/22 02:28:51 tedu Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -52,11 +52,9 @@
 #include <net/if_llc.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_types.h>
 #include <net/if_vlan_var.h>
@@ -1084,10 +1082,8 @@ ale_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			ale_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.19 2014/11/24 02:03:37 brad Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.20 2014/12/22 02:28:52 tedu Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -43,10 +43,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

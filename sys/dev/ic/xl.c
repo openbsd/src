@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.120 2014/12/19 07:23:57 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.121 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -118,10 +118,8 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -2215,10 +2213,8 @@ xl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			xl_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

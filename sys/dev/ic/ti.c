@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.11 2014/12/06 23:20:17 krw Exp $	*/
+/*	$OpenBSD: ti.c,v 1.12 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -88,10 +88,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 
@@ -2245,10 +2243,8 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			ti_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.67 2014/07/13 15:52:49 mpi Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.68 2014/12/22 02:28:52 tedu Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1176,10 +1176,8 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (!(ifp->if_flags & IFF_RUNNING))
 			udav_init(ifp);
 
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

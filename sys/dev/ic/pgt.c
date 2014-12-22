@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.76 2014/12/19 22:44:58 guenther Exp $  */
+/*	$OpenBSD: pgt.c,v 1.77 2014/12/22 02:28:51 tedu Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -73,10 +73,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
@@ -2353,10 +2351,8 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 	case SIOCSIFADDR:
 		ifa = (struct ifaddr *)req;
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			 arp_ifinit(&sc->sc_ic.ic_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

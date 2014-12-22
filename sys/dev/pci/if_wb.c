@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.57 2014/12/03 09:10:17 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.58 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -102,10 +102,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 
@@ -1538,12 +1536,10 @@ int wb_ioctl(ifp, command, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			wb_init(sc);
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
-#endif /* INET */
 		default:
 			wb_init(sc);
 		}

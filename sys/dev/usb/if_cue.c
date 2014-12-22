@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.66 2014/07/13 15:52:49 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.67 2014/12/22 02:28:52 tedu Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1073,11 +1073,9 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		cue_init(sc);
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
-#endif /* INET */
 		}
 		break;
 

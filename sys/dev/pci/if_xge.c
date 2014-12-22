@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.58 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.59 2014/12/22 02:28:52 tedu Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -56,10 +56,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NVLAN > 0
 #include <net/if_types.h>
@@ -960,10 +958,8 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			xge_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif /* INET */
 		break;
 
 	case SIOCSIFFLAGS:

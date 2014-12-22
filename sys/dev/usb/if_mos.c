@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.26 2014/07/13 15:52:49 mpi Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.27 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -1279,10 +1279,8 @@ mos_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			mos_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

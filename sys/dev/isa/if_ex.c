@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.36 2010/07/02 02:29:45 tedu Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.37 2014/12/22 02:28:51 tedu Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -48,10 +48,8 @@
 #include <net/if.h>
 #include <net/if_media.h> 
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -751,10 +749,8 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			ex_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 		break;
 	case SIOCSIFFLAGS:
 		DODEBUG(Start_End, printf("SIOCSIFFLAGS"););

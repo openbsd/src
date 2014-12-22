@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.58 2014/07/13 15:52:49 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.59 2014/12/22 02:28:52 tedu Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -784,10 +784,8 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		upl_init(sc);
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			break;
-#endif /* INET */
 		}
 		break;
 

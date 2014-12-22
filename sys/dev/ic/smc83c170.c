@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.17 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.18 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -52,10 +52,8 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 
@@ -536,12 +534,10 @@ epic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			epic_init(ifp);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		default:
 			epic_init(ifp);
 			break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.39 2014/12/08 16:21:38 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.40 2014/12/22 02:28:51 tedu Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -51,10 +51,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
@@ -473,12 +471,10 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			bce_init(ifp);
 			arp_ifinit(&sc->bce_ac, ifa);
 			break;
-#endif /* INET */
 		default:
 			bce_init(ifp);
 			break;

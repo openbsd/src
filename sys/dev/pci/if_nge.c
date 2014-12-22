@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.80 2014/08/20 00:59:56 dlg Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.81 2014/12/22 02:28:52 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -104,10 +104,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NVLAN > 0
 #include <net/if_types.h>
@@ -1796,12 +1794,10 @@ nge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			nge_init(sc);
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
-#endif /* INET */
 		default:
 			nge_init(sc);
 			break;

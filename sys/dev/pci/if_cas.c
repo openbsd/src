@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.36 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.37 2014/12/22 02:28:52 tedu Exp $	*/
 
 /*
  *
@@ -61,10 +61,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1683,10 +1681,8 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			cas_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

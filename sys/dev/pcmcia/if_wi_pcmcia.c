@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.72 2013/12/06 21:03:04 deraadt Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.73 2014/12/22 02:28:52 tedu Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -54,10 +54,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>

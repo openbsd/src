@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.39 2014/07/22 13:12:12 mpi Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.40 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -154,10 +154,8 @@ Mode of operation:
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -1877,12 +1875,10 @@ i82596_ioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 
 		switch(ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			i82596_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
 		default:
 			i82596_init(sc);
 			break;

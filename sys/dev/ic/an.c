@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.62 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: an.c,v 1.63 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -99,10 +99,8 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
@@ -889,12 +887,10 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			error = an_init(ifp);
 			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
 			break;
-#endif
 		default:
 			error = an_init(ifp);
 			break;

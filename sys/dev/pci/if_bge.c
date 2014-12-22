@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.361 2014/09/02 10:14:55 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.362 2014/12/22 02:28:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -89,10 +89,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NVLAN > 0
 #include <net/if_types.h>
@@ -4456,10 +4454,8 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			bge_init(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif /* INET */
 		break;
 
 	case SIOCSIFFLAGS:

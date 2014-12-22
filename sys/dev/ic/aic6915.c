@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.13 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.14 2014/12/22 02:28:51 tedu Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -52,10 +52,8 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 
@@ -520,10 +518,8 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			sf_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:
