@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.110 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.111 2014/12/22 22:22:35 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -468,7 +468,8 @@ uvm_pmr_alloc_piglet(vaddr_t *va, paddr_t *pa, vsize_t sz, paddr_t align)
 	 * pmemrange uses internally.
 	 */
 	if (align < PAGE_SIZE)
-		align = PAGE_SIZE;
+		kp_piglet.kp_align = PAGE_SIZE;
+		
 	sz = round_page(sz);
 
 	*va = (vaddr_t)km_alloc(sz, &kv_any, &kp_piglet, &kd_nowait);
