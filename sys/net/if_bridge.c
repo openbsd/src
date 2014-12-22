@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.230 2014/12/19 17:14:39 tedu Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.231 2014/12/22 03:38:01 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -45,6 +45,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+
+#include <crypto/siphash.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -197,7 +199,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	TAILQ_INIT(&sc->sc_spanlist);
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++)
 		LIST_INIT(&sc->sc_rts[i]);
-	sc->sc_hashkey = arc4random();
+	arc4random_buf(&sc->sc_hashkey, sizeof(sc->sc_hashkey));
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
 	    unit);
@@ -1805,39 +1807,11 @@ fail:
 	return (NULL);
 }
 
-/*
- * The following hash function is adapted from 'Hash Functions' by Bob Jenkins
- * ("Algorithm Alley", Dr. Dobbs Journal, September 1997).
- * "You may use this code any way you wish, private, educational, or
- *  commercial.  It's free."
- */
-#define	mix(a,b,c) \
-	do {						\
-		a -= b; a -= c; a ^= (c >> 13);		\
-		b -= c; b -= a; b ^= (a << 8);		\
-		c -= a; c -= b; c ^= (b >> 13);		\
-		a -= b; a -= c; a ^= (c >> 12);		\
-		b -= c; b -= a; b ^= (a << 16);		\
-		c -= a; c -= b; c ^= (b >> 5);		\
-		a -= b; a -= c; a ^= (c >> 3);		\
-		b -= c; b -= a; b ^= (a << 10);		\
-		c -= a; c -= b; c ^= (b >> 15);		\
-	} while (0)
-
 u_int32_t
 bridge_hash(struct bridge_softc *sc, struct ether_addr *addr)
 {
-	u_int32_t a = 0x9e3779b9, b = 0x9e3779b9, c = sc->sc_hashkey;
-
-	b += addr->ether_addr_octet[5] << 8;
-	b += addr->ether_addr_octet[4];
-	a += addr->ether_addr_octet[3] << 24;
-	a += addr->ether_addr_octet[2] << 16;
-	a += addr->ether_addr_octet[1] << 8;
-	a += addr->ether_addr_octet[0];
-
-	mix(a, b, c);
-	return (c & BRIDGE_RTABLE_MASK);
+	return SipHash24((SIPHASH_KEY *)sc->sc_hashkey, addr, ETHER_ADDR_LEN) &
+	    BRIDGE_RTABLE_MASK;
 }
 
 void
