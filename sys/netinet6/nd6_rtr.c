@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.95 2014/12/22 11:05:53 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.96 2014/12/22 11:17:20 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1050,7 +1050,6 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 	s = splsoftnet();
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
-	splx(s);
 
 	/* ND_OPT_PI_FLAG_ONLINK processing */
 	if (new->ndpr_raf_onlink) {
@@ -1069,6 +1068,7 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 
 	if (dr)
 		pfxrtr_add(new, dr);
+	splx(s);
 
 	ext->nprefixes++;
 
