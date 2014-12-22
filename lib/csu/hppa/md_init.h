@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.4 2013/12/03 06:21:40 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.5 2014/12/22 19:02:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -91,6 +91,78 @@
 	"	copy    %r27, %r19				\n" \
 	"	.exit						\n" \
 	"	.procend")
+
+
+#define	MD_RCRT0_START						\
+	__asm(							\
+	".import $global$, data					\n" \
+	"	.import ___start, code				\n" \
+	"	.text						\n" \
+	"	.align	4					\n" \
+	"	.export __start, entry				\n" \
+	"	.type	__start,@function			\n" \
+	"	.label __start					\n" \
+	"	.proc						\n" \
+	"	.callinfo frame=0, calls			\n" \
+	"	.entry						\n" \
+	"	copy	%r3, %r1				\n" \
+	"	copy	%sp, %r3				\n" \
+	"	stwm	%r1, 64+16*4(%sp)			\n" \
+	"	stw	%arg0, -36(%r3)				\n" \
+	"	bl	1f, %arg2				\n" \
+	"	depi 0, 31, 2, %arg2				\n" \
+	"1:	addil	L'_DYNAMIC - ($PIC_pcrel$0 - 8), %arg2	\n" \
+	"	ldo	R'_DYNAMIC - ($PIC_pcrel$0 - 12)(%r1), %arg2 \n" \
+	"	stw	%arg2, -40(%r3)				\n" \
+	"	ldi	-1, %dp					\n" \
+	"	ldw	0(%arg0), %arg0				\n" \
+	"	ldo	4(%r3), %arg1				\n" \
+	"	bl	_dl_boot_bind, %rp			\n" \
+	"	ldo	-4(%arg0), %arg0			\n" \
+	"	ldw	-36(%r3), %arg0				\n" \
+	"	copy	%r0, %arg1				\n" \
+	"	ldo	64(%r3), %sp				\n" \
+	"	ldwm	-64(%sp), %r3				\n" \
+	"	bl L$lpc, %r27					\n" \
+	"	depi 0, 31, 2, %r27				\n" \
+	"L$lpc:  addil L'$global$ - ($PIC_pcrel$0 - 8), %r27	\n" \
+	"	ldo R'$global$ - ($PIC_pcrel$0 - 12)(%r1),%r27	\n" \
+	"	.call						\n" \
+	"	b	___start				\n" \
+	"	copy    %r27, %r19				\n" \
+	"	.exit						\n" \
+	"	.procend					\n" \
+	"	.export _dl_exit, entry				\n" \
+	"	.type	_dl_exit,@function			\n" \
+	"	.label _dl_exit					\n" \
+	"	.proc						\n" \
+	"	.callinfo frame=0, calls			\n" \
+	"	.entry						\n" \
+	"_dl_exit:						\n" \
+	"	stw	%rp, -24(%sp)				\n" \
+	"	ldil	L%0xc0000000, %r1			\n" \
+	"	ble	4(%sr7, %r1)				\n" \
+	"	ldi	1, %t1					\n" \
+	"	comb,<>	%r0, %t1, 1f				\n" \
+	"	ldw	-24(%sp), %rp				\n" \
+	"	bv	%r0(%rp)				\n" \
+	"	nop						\n" \
+	"1:	bv	%r0(%rp)				\n" \
+	"	sub	%r0, %ret0, %ret0			\n" \
+	"	.exit						\n" \
+	"	.procend					\n" \
+	"	.export _dl_printf, entry			\n" \
+	"	.type	_dl_printf,@function			\n" \
+	"	.label _dl_printf				\n" \
+	"	.proc						\n" \
+	"	.callinfo frame=0, calls			\n" \
+	"	.entry						\n" \
+	"_dl_printf:						\n" \
+	"	bv	%r0(%rp)				\n" \
+	"	nop						\n" \
+	"	.exit						\n" \
+	"	.procend")
+
 
 #define	MD_START_ARGS	struct ps_strings *arginfo, void (*cleanup)(void)
 #define	MD_START_SETUP				\
