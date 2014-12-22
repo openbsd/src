@@ -2894,7 +2894,7 @@ elfNN_ia64_size_dynamic_sections (output_bfd, info)
 
   /* Set the contents of the .interp section to the interpreter.  */
   if (ia64_info->root.dynamic_sections_created
-      && info->executable)
+      && info->executable && !info->static_link)
     {
       sec = bfd_get_section_by_name (dynobj, ".interp");
       BFD_ASSERT (sec != NULL);
