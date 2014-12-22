@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.3 2011/11/08 17:06:51 deraadt Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.4 2014/12/22 02:26:53 tedu Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -88,7 +88,6 @@ ENTRY(in_cksum)
 	eor	r0, r0, r1
 	ldmfd	sp!, {r4-r11,pc}
 
-#ifdef INET
 /*
  * int in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
  *
@@ -202,7 +201,6 @@ ENTRY(in4_cksum)
 .Lin4_cksum_whoops_str:
 	.asciz	"in4_cksum: out of mbufs\n"
 	.align	5
-#endif	/* INET */
 
 /*
  * The main in*_cksum() workhorse...

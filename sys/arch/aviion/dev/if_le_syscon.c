@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.16 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.17 2014/12/22 02:26:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,10 +40,8 @@
 
 #include <net/if.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.25 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.26 2014/12/22 02:26:54 tedu Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -59,11 +59,9 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
@@ -579,11 +577,9 @@ deioctl(ifp, cmd, data)
 		deinit(ds);
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			arp_ifinit(&ds->ds_ac, ifa);
 			break;
-#endif
 		}
 		break;
 

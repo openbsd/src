@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.146 2014/12/10 15:29:53 mikeb Exp $ */
+/* $OpenBSD: machdep.c,v 1.147 2014/12/22 02:26:54 tedu Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -77,10 +77,8 @@
 #include <net/if.h>
 #include <uvm/uvm.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
-#endif
 #include "ppp.h"	/* For NPPP */
 #include "bridge.h"	/* For NBRIDGE */
 #if NPPP > 0

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.35 2014/07/22 10:35:34 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.36 2014/12/22 02:26:53 tedu Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,13 +35,11 @@ include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
-ifdef INET
 include <sys/mbuf.h>
 include <sys/socketvar.h>
 include <netinet/in.h>
 include <netinet/ip.h>
 include <netinet/ip_var.h>
-endif
 
 include <uvm/uvm_extern.h>
 
@@ -130,12 +128,10 @@ member	SC		sf_sc
 struct	sigcontext
 
 # mbuf fields
-ifdef INET
 struct	mbuf
 member	m_next
 member	m_data
 member	m_len
-endif
 
 # Linux frame offsets
 ifdef COMPAT_LINUX

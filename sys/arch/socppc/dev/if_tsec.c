@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.33 2014/11/30 01:24:15 brad Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.34 2014/12/22 02:26:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -49,10 +49,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 extern void myetheraddr(u_char *);
 
@@ -565,10 +563,8 @@ tsec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

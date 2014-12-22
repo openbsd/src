@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.20 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.21 2014/12/22 02:26:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -758,10 +758,8 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			octeon_eth_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

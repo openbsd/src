@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.6 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.7 2014/12/22 02:26:53 tedu Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -641,10 +641,8 @@ sxie_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags |= IFF_UP;
 			sxie_init(sc);
 		}
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

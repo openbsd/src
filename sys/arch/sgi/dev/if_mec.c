@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.27 2014/07/22 10:35:35 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.28 2014/12/22 02:26:53 tedu Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1036,10 +1036,8 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			mec_init(ifp);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vme.c,v 1.4 2013/09/24 20:14:34 miod Exp $	*/
+/*	$OpenBSD: if_le_vme.c,v 1.5 2014/12/22 02:26:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -41,10 +41,8 @@
 
 #include <net/if.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net/if_media.h>
 

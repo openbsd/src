@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.66 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.67 2014/12/22 02:26:54 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -406,10 +406,8 @@ hmeioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			hmeinit(sc);
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 		break;
 
 	case SIOCSIFFLAGS:

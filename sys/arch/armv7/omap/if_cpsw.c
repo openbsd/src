@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.23 2014/08/18 17:56:45 miod Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.24 2014/12/22 02:26:53 tedu Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -575,10 +575,8 @@ cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

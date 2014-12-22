@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.28 2013/10/23 10:31:19 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.29 2014/12/22 02:26:53 tedu Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -757,12 +757,10 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
 		case AF_INET:
 			bmac_init(sc);
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
-#endif
 		default:
 			bmac_init(sc);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_fwio.c,v 1.3 2013/09/24 20:10:52 miod Exp $	*/
+/*	$OpenBSD: if_le_fwio.c,v 1.4 2014/12/22 02:26:54 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -93,9 +93,7 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#endif
 #include <netinet/if_ether.h>
 
 #include <vax/mbus/mbusreg.h>

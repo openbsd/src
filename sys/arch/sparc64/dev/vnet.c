@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.35 2014/09/15 08:16:21 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.36 2014/12/22 02:26:54 tedu Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -1223,10 +1223,8 @@ vnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-#endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
