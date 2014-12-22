@@ -371,6 +371,9 @@ main (int argc, char **argv)
   if (! link_info.shared || link_info.pie)
     link_info.executable = TRUE;
 
+  if (! config.dynamic_link && link_info.pie)
+    link_info.static_link = TRUE;
+
   /* Treat ld -r -s as ld -r -S -x (i.e., strip all local symbols).  I
      don't see how else this can be handled, since in this case we
      must preserve all externally visible symbols.  */
