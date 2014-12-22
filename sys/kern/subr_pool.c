@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.173 2014/12/22 00:33:40 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.174 2014/12/22 02:59:53 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -272,14 +272,11 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_minitems = 0;
 	pp->pr_minpages = 0;
 	pp->pr_maxpages = 8;
-	pp->pr_roflags = flags;
-	pp->pr_flags = 0;
 	pp->pr_size = size;
 	pp->pr_pgsize = pgsize;
 	pp->pr_pgmask = ~0UL ^ (pgsize - 1);
 	pp->pr_phoffset = off;
 	pp->pr_itemsperpage = items;
-	pp->pr_align = align;
 	pp->pr_wchan = wchan;
 	pp->pr_alloc = palloc;
 	pp->pr_nitems = 0;
@@ -1022,9 +1019,7 @@ pool_print1(struct pool *pp, const char *modif,
 		modif++;
 	}
 
-	(*pr)("POOL %s: size %u, align %u, roflags 0x%08x\n",
-	    pp->pr_wchan, pp->pr_size, pp->pr_align,
-	    pp->pr_roflags);
+	(*pr)("POOL %s: size %u\n", pp->pr_wchan, pp->pr_size);
 	(*pr)("\talloc %p\n", pp->pr_alloc);
 	(*pr)("\tminitems %u, minpages %u, maxpages %u, npages %u\n",
 	    pp->pr_minitems, pp->pr_minpages, pp->pr_maxpages, pp->pr_npages);

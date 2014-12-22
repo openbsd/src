@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.55 2014/12/19 02:15:25 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.56 2014/12/22 02:59:54 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@ struct pool {
 	struct pool_item_header	*
 			pr_curpage;
 	unsigned int	pr_size;	/* Size of item */
-	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
 	unsigned int	pr_minitems;	/* minimum # of items to keep */
 	unsigned int	pr_minpages;	/* same in page units */
 	unsigned int	pr_maxpages;	/* maximum # of idle pages to keep */
@@ -114,8 +113,6 @@ struct pool {
 	struct pool_allocator *
 			pr_alloc;	/* backend allocator */
 	const char *	pr_wchan;	/* tsleep(9) identifier */
-	unsigned int	pr_flags;	/* r/w flags */
-	unsigned int	pr_roflags;	/* r/o flags */
 #define PR_WAITOK	0x0001 /* M_WAITOK */
 #define PR_NOWAIT	0x0002 /* M_NOWAIT */
 #define PR_LIMITFAIL	0x0004 /* M_CANFAIL */
