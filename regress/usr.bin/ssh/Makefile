@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.70 2014/06/24 01:14:17 djm Exp $
+#	$OpenBSD: Makefile,v 1.71 2014/12/22 02:15:52 djm Exp $
 
 REGRESS_FAIL_EARLY= yes
-REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9
+REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
 
 CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2 \
 		t8.out t8.out.pub t9.out t9.out.pub
@@ -108,7 +108,7 @@ t3:
 		diff - ${.CURDIR}/rsa_openssh.pub
 
 t4:
-	ssh-keygen -lf ${.CURDIR}/rsa_openssh.pub |\
+	ssh-keygen -E md5 -lf ${.CURDIR}/rsa_openssh.pub |\
 		awk '{print $$2}' | diff - ${.CURDIR}/t4.ok
 
 t5:
@@ -148,6 +148,10 @@ t10.out:
 t10: t10.out
 	ssh-keygen -lf t10.out > /dev/null
 	ssh-keygen -Bf t10.out > /dev/null
+
+t11:
+	ssh-keygen -E sha256 -lf ${.CURDIR}/rsa_openssh.pub |\
+		awk '{print $$2}' | diff - ${.CURDIR}/t11.ok
 
 modpipe: modpipe.c
 

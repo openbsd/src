@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_file.c,v 1.1 2014/06/24 01:14:18 djm Exp $ */
+/* 	$OpenBSD: test_file.c,v 1.2 2014/12/22 02:15:52 djm Exp $ */
 /*
  * Regress test for sshkey.h key management API
  *
@@ -27,6 +27,7 @@
 #include "authfile.h"
 #include "sshkey.h"
 #include "sshbuf.h"
+#include "digest.h"
 
 #include "common.h"
 
@@ -75,7 +76,7 @@ sshkey_file_tests(void)
 
 	TEST_START("RSA1 key hex fingerprint");
 	buf = load_text_file("rsa1_1.fp");
-	cp = sshkey_fingerprint(k1, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -84,7 +85,7 @@ sshkey_file_tests(void)
 
 	TEST_START("RSA1 key bubblebabble fingerprint");
 	buf = load_text_file("rsa1_1.fp.bb");
-	cp = sshkey_fingerprint(k1, SSH_FP_SHA1, SSH_FP_BUBBLEBABBLE);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_SHA1, SSH_FP_BUBBLEBABBLE);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -158,7 +159,7 @@ sshkey_file_tests(void)
 
 	TEST_START("RSA key hex fingerprint");
 	buf = load_text_file("rsa_1.fp");
-	cp = sshkey_fingerprint(k1, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -167,7 +168,7 @@ sshkey_file_tests(void)
 
 	TEST_START("RSA cert hex fingerprint");
 	buf = load_text_file("rsa_1-cert.fp");
-	cp = sshkey_fingerprint(k2, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k2, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -177,7 +178,7 @@ sshkey_file_tests(void)
 
 	TEST_START("RSA key bubblebabble fingerprint");
 	buf = load_text_file("rsa_1.fp.bb");
-	cp = sshkey_fingerprint(k1, SSH_FP_SHA1, SSH_FP_BUBBLEBABBLE);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_SHA1, SSH_FP_BUBBLEBABBLE);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -251,7 +252,7 @@ sshkey_file_tests(void)
 
 	TEST_START("DSA key hex fingerprint");
 	buf = load_text_file("dsa_1.fp");
-	cp = sshkey_fingerprint(k1, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -260,7 +261,7 @@ sshkey_file_tests(void)
 
 	TEST_START("DSA cert hex fingerprint");
 	buf = load_text_file("dsa_1-cert.fp");
-	cp = sshkey_fingerprint(k2, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k2, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -270,7 +271,7 @@ sshkey_file_tests(void)
 
 	TEST_START("DSA key bubblebabble fingerprint");
 	buf = load_text_file("dsa_1.fp.bb");
-	cp = sshkey_fingerprint(k1, SSH_FP_SHA1, SSH_FP_BUBBLEBABBLE);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_SHA1, SSH_FP_BUBBLEBABBLE);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -350,7 +351,7 @@ sshkey_file_tests(void)
 
 	TEST_START("ECDSA key hex fingerprint");
 	buf = load_text_file("ecdsa_1.fp");
-	cp = sshkey_fingerprint(k1, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -359,7 +360,7 @@ sshkey_file_tests(void)
 
 	TEST_START("ECDSA cert hex fingerprint");
 	buf = load_text_file("ecdsa_1-cert.fp");
-	cp = sshkey_fingerprint(k2, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k2, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -369,7 +370,7 @@ sshkey_file_tests(void)
 
 	TEST_START("ECDSA key bubblebabble fingerprint");
 	buf = load_text_file("ecdsa_1.fp.bb");
-	cp = sshkey_fingerprint(k1, SSH_FP_SHA1, SSH_FP_BUBBLEBABBLE);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_SHA1, SSH_FP_BUBBLEBABBLE);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -416,7 +417,7 @@ sshkey_file_tests(void)
 
 	TEST_START("Ed25519 key hex fingerprint");
 	buf = load_text_file("ed25519_1.fp");
-	cp = sshkey_fingerprint(k1, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -425,7 +426,7 @@ sshkey_file_tests(void)
 
 	TEST_START("Ed25519 cert hex fingerprint");
 	buf = load_text_file("ed25519_1-cert.fp");
-	cp = sshkey_fingerprint(k2, SSH_FP_MD5, SSH_FP_HEX);
+	cp = sshkey_fingerprint(k2, SSH_DIGEST_MD5, SSH_FP_HEX);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
@@ -435,7 +436,7 @@ sshkey_file_tests(void)
 
 	TEST_START("Ed25519 key bubblebabble fingerprint");
 	buf = load_text_file("ed25519_1.fp.bb");
-	cp = sshkey_fingerprint(k1, SSH_FP_SHA1, SSH_FP_BUBBLEBABBLE);
+	cp = sshkey_fingerprint(k1, SSH_DIGEST_SHA1, SSH_FP_BUBBLEBABBLE);
 	ASSERT_PTR_NE(cp, NULL);
 	ASSERT_STRING_EQ(cp, (const char *)sshbuf_ptr(buf));
 	sshbuf_free(buf);
