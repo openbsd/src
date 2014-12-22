@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.113 2014/09/21 07:53:19 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.114 2014/12/22 14:24:56 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -47,6 +47,7 @@ sub error
 	my $self = shift;
 	my $msg = shift;
 	$self->{bad}++;
+	$self->progress->disable;
 	$self->errsay("Error: $msg", @_);
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.44 2014/11/30 15:56:15 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.45 2014/12/22 14:24:56 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -52,6 +52,8 @@ sub setup
 	}
 }
 
+sub disable {}
+
 sub new_sizer
 {
 	my ($progress, $plist, $state) = @_;
@@ -83,6 +85,7 @@ package OpenBSD::ProgressMeter::Stub;
 our @ISA = qw(OpenBSD::ProgressMeter);
 
 sub clear {}
+
 
 sub show {}
 

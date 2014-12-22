@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.28 2014/07/08 17:02:56 espie Exp $
+# $OpenBSD: Term.pm,v 1.29 2014/12/22 14:24:56 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -271,6 +271,14 @@ sub clear
 	}
 	$self->{lastdisplay} = '';
 	delete $self->{stars};
+}
+
+sub disable
+{
+	my $self = shift;
+	print "\n" if length($self->{lastdisplay}) > 0;
+
+	bless $self, "OpenBSD::ProgressMeter::Stub";
 }
 
 sub next
