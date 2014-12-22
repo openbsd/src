@@ -1,0 +1,2 @@
+mandoc: twice.in:10:2: WARNING: blocks badly nested: Pc breaks Ao
+mandoc: twice.in:13:2: WARNING: blocks badly nested: Ac breaks Bo

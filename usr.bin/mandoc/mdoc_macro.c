@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.116 2014/12/20 02:26:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.117 2014/12/22 23:26:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -361,7 +361,7 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 * When starting to rewind, skip plain text
 	 * and nodes that have already been rewound.
 	 */
-	if (MDOC_TEXT == p->type || MDOC_VALID & p->flags)
+	if (p->type == MDOC_TEXT || p->flags & (MDOC_VALID | MDOC_BREAK))
 		return(REWIND_MORE);
 
 	/*
@@ -744,7 +744,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	atok = rew_alt(tok);
 	body = endbody = later = NULL;
 	for (n = mdoc->last; n; n = n->parent) {
-		if (n->flags & MDOC_VALID)
+		if (n->flags & (MDOC_VALID | MDOC_BREAK))
 			continue;
 
 		/* Remember the start of our own body. */
