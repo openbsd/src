@@ -6,7 +6,6 @@
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
 ./sbin/kbd
-./sbin/ld.so
 ./sbin/wsconsctl
 ./usr/lib/libc.so.78.0
 ./usr/lib/libcrypto.so.30.3

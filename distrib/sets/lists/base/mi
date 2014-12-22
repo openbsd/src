@@ -4520,7 +4520,6 @@
 ./var/nsd/zones
 ./var/quotas
 ./var/run
-./var/rwho
 ./var/spool
 ./var/spool/ftp
 ./var/spool/ftp/bin
