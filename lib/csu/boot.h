@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.1 2014/12/22 03:51:08 kurt Exp $ */
+/*	$OpenBSD: boot.h,v 1.2 2014/12/22 13:32:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -172,7 +172,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 		rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
 		rs = dynld.dyn.relsz;
 
-		for (i = 0; i < rs; i += sizeof (Elf_Rel)) {
+		for (i = 0; i < rs; i += sizeof (Elf_Rel), rp++) {
 			Elf_Addr *ra;
 			const Elf_Sym *sp;
 
@@ -187,12 +187,15 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 				_dl_wrstderr((char *)dynld.dyn.strtab +
 				    sp->st_name);
 #endif
+#ifdef RCRT0
+				continue;
+#else
 				_dl_exit(5);
+#endif
 			}
 
 			ra = (Elf_Addr *)(rp->r_offset + loff);
 			RELOC_REL(rp, sp, ra, loff);
-			rp++;
 		}
 	}
 
@@ -214,7 +217,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 			rp = NULL;
 			rs = 0;
 		}
-		for (i = 0; i < rs; i += sizeof (Elf_RelA)) {
+		for (i = 0; i < rs; i += sizeof (Elf_RelA), rp++) {
 			Elf_Addr *ra;
 			const Elf_Sym *sp;
 
@@ -236,7 +239,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 
 			ra = (Elf_Addr *)(rp->r_offset + loff);
 			RELOC_RELA(rp, sp, ra, loff, dynld.dyn.pltgot);
-			rp++;
 		}
 	}
 
