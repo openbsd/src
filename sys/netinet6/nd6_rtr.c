@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.94 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.95 2014/12/22 11:05:53 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1121,11 +1121,11 @@ prelist_remove(struct nd_prefix *pr)
 		log(LOG_WARNING, "prelist_remove: negative count on %s\n",
 		    pr->ndpr_ifp->if_xname);
 	}
-	splx(s);
 
 	free(pr, M_IP6NDP, 0);
 
 	pfxlist_onlink_check();
+	splx(s);
 }
 
 /*

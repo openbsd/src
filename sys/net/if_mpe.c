@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.40 2014/12/19 17:14:39 tedu Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.41 2014/12/22 11:05:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -265,13 +265,12 @@ out:
 int
 mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	int			 error;
 	struct mpe_softc	*ifm;
 	struct ifreq		*ifr;
 	struct shim_hdr		 shim;
+	int			 s, error = 0;
 
 	ifr = (struct ifreq *)data;
-	error = 0;
 	switch (cmd) {
 	case SIOCSIFADDR:
 		if (!ISSET(ifp->if_flags, IFF_UP))
@@ -319,12 +318,14 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error)
 			break;
 		ifm = ifp->if_softc;
+		s = splsoftnet();
 		if (ifm->sc_shim.shim_label) {
 			/* remove old MPLS route */
 			mpe_newlabel(ifp, RTM_DELETE, &ifm->sc_shim);
 		}
 		/* add new MPLS route */
 		error = mpe_newlabel(ifp, RTM_ADD, &shim);
+		splx(s);
 		if (error)
 			break;
 		ifm->sc_shim.shim_label = shim.shim_label;
@@ -335,7 +336,9 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			if (ifm->sc_shim.shim_label) {
 				shim.shim_label = ifm->sc_shim.shim_label;
+				s = splsoftnet();
 				error = mpe_newlabel(ifp, RTM_ADD, &shim);
+				splx(s);
 			}
 		}
 		/* return with ENOTTY so that the parent handler finishes */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.128 2014/12/08 10:51:00 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.129 2014/12/22 11:05:53 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1026,11 +1026,13 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp_mtudisc_timeout:  bad route to timeout");
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 		struct sockaddr_in sa;
 		struct rt_addrinfo info;
+		int s;
 
 		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = rt_key(rt);
@@ -1039,6 +1041,8 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_flags = rt->rt_flags;   
 
 		sa = *(struct sockaddr_in *)rt_key(rt);
+
+		s = splsoftnet();
 		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
 		    r->rtt_tableid);
 
@@ -1047,6 +1051,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		if (ctlfunc)
 			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa,
 			    r->rtt_tableid, NULL);
+		splx(s);
 	} else
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 			rt->rt_rmx.rmx_mtu = 0;
@@ -1075,9 +1080,11 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp_redirect_timeout:  bad route to timeout");
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		struct rt_addrinfo info;
+		int s;
 
 		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = rt_key(rt);
@@ -1085,8 +1092,10 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = rt->rt_flags;   
 
+		s = splsoftnet();
 		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 
 		    r->rtt_tableid);
+		splx(s);
 	}
 }
 

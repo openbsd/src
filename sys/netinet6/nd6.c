@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.127 2014/11/20 13:54:24 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.128 2014/12/22 11:05:53 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -803,15 +803,15 @@ nd6_free(struct rtentry *rt, int gc)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
+	int s;
 
 	/*
 	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
 	 * even though it is not harmful, it was not really necessary.
 	 */
 
+	s = splsoftnet();
 	if (!ip6_forwarding) {
-		int s;
-		s = splsoftnet();
 		dr = defrouter_lookup(&satosin6(rt_key(rt))->sin6_addr,
 		    rt->rt_ifp);
 
@@ -876,7 +876,6 @@ nd6_free(struct rtentry *rt, int gc)
 			 */
 			defrouter_select();
 		}
-		splx(s);
 	}
 
 	/*
@@ -897,6 +896,7 @@ nd6_free(struct rtentry *rt, int gc)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
 	    rt->rt_ifp->if_rdomain);
+	splx(s);
 
 	return (next);
 }
