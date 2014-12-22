@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.33 2014/12/21 18:23:37 shadchin Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.34 2014/12/22 11:21:49 shadchin Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -401,24 +401,9 @@ wsmoused(void)
 	struct pollfd pfd[1];
 	int res;
 	u_char b;
-	struct stat mdev_stat;
-
-	/* initialization */
-
-	event.type = WSCONS_EVENT_WSMOUSED_ON;
-	if (mouse.proto == P_WSCONS) {
-		/* get major and minor of mouse device */
-		res = stat(mouse.portname, &mdev_stat);
-		if (res != -1)
-			event.value = mdev_stat.st_rdev;
-		else
-			event.value = 0;
-	} else {
-		/* X11 won't start when using wsmoused(8) with a serial mouse */
-		event.value = 0;
-	}
 
 	/* notify kernel the start of wsmoused */
+	event.type = WSCONS_EVENT_WSMOUSED_ON;
 	res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
 	if (res != 0) {
 		/* the display driver has no getchar() method */
