@@ -1,0 +1,27 @@
+.TH SP-SCALING-MAN 1 "December 23, 2014" OpenBSD
+.SH NAME
+sp-scaling-man \- scaled arguments to .sp requests in man(7)
+.SH DESCRIPTION
+20 basic units:
+.sp 20u
+21 basic units:
+.sp 21u
+one centimeter:
+.sp 1c
+quarter of an inch:
+.sp 0.25i
+half a pica:
+.sp 0.5P
+one pica:
+.sp 1P
+6 points:
+.sp 6p
+7 points:
+.sp 7p
+one en:
+.sp 1n
+three en:
+.sp 3n
+two em:
+.sp 2m
+end of test document

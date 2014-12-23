@@ -1,0 +1,30 @@
+SP-SCALING-MDOC(1)          General Commands Manual         SP-SCALING-MDOC(1)
+
+NNAAMMEE
+     sspp--ssccaalliinngg--mmddoocc - scaled arguments to .sp requests in mdoc(7)
+
+DDEESSCCRRIIPPTTIIOONN
+     20 basic units:
+     21 basic units:
+
+     one centimeter:
+
+
+     quarter of an inch:
+
+     half a pica:
+     one pica:
+
+     6 points:
+     7 points:
+
+     one en:
+
+     three en:
+
+
+     two em:
+
+     end of test document
+
+OpenBSD                        December 23, 2014                       OpenBSD
