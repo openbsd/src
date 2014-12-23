@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.135 2014/12/17 14:40:03 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.136 2014/12/23 01:12:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -2209,7 +2209,8 @@ pmap_init()
 {
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmap", NULL);
 	pool_setlowat(&pmap_pmap_pool, 2);
-	pool_init(&pmap_vp_pool, sizeof(struct pmapvp), 0, 0, 0, "vp", NULL);
+	pool_init(&pmap_vp_pool, sizeof(struct pmapvp), 0, 0, 0, "vp",
+	    &pool_allocator_nointr);
 	pool_setlowat(&pmap_vp_pool, 10);
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, 0, 0, "pted",
 	    NULL);
