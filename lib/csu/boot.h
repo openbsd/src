@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.2 2014/12/22 13:32:51 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.3 2014/12/23 16:45:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -59,6 +59,11 @@
  */
 void _dl_boot_bind(const long, long *, Elf_Dyn *);
 
+extern char __plt_start[];
+extern char __plt_end[];
+extern char __got_start[];
+extern char __got_end[];
+
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 {
@@ -66,6 +71,8 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	AuxInfo		*auxstack;
 	long		*stack;
 	Elf_Dyn		*dynp;
+	Elf_Addr	start;
+	size_t		size;
 	int		n, argc;
 	char **argv, **envp;
 	long loff;
@@ -248,5 +255,20 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 * we have been fully relocated here, so most things no longer
 	 * need the loff adjustment
 	 */
+
+	/*
+	 * No further changes to the PLT and/or GOT are needed so make
+	 * them read-only.
+	 */
+
+#if defined(__sparc64__)
+	start = ELF_TRUNC((Elf_Addr)__plt_start, PAGE_SIZE);
+	size = ELF_ROUND((Elf_Addr)__plt_end - start, PAGE_SIZE);
+	mprotect((void *)start, size, PROT_READ);
+#endif
+
+	start = ELF_TRUNC((Elf_Addr)__got_start, PAGE_SIZE);
+	size = ELF_ROUND((Elf_Addr)__got_end - start, PAGE_SIZE);
+	mprotect((void *)start, size, PROT_READ);
 }
 #endif /* RCRT0 */
