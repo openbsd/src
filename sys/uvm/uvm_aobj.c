@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.75 2014/12/18 23:59:28 tedu Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.76 2014/12/23 04:56:47 tedu Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -798,10 +798,10 @@ uao_init(void)
 	 * kernel map!
 	 */
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
-	    0, 0, 0, "uaoeltpl", &pool_allocator_nointr);
+	    0, 0, PR_WAITOK, "uaoeltpl", NULL);
 
-	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0,
-	    "aobjpl", &pool_allocator_nointr);
+	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, PR_WAITOK,
+	    "aobjpl", NULL);
 }
 
 /*

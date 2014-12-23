@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.57 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.58 2014/12/23 04:56:47 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ void
 amap_init(void)
 {
 	/* Initialize the vm_amap pool. */
-	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0,
-	    "amappl", &pool_allocator_nointr);
+	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, PR_WAITOK,
+	    "amappl", NULL);
 	pool_sethiwat(&uvm_amap_pool, 4096);
 }
 
