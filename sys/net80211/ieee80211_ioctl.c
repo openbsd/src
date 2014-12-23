@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.37 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.38 2014/12/23 03:24:08 tedu Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -45,10 +45,8 @@
 #include <net/if_arp.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_crypto.h>

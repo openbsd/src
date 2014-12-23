@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.49 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.50 2014/12/23 03:24:08 tedu Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -56,10 +56,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>

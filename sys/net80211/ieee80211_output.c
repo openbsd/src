@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.92 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.93 2014/12/23 03:24:08 tedu Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -50,13 +50,11 @@
 #include <net/if_llc.h>
 #include <net/bpf.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #ifdef INET6
 #include <netinet/ip6.h>
-#endif
 #endif
 
 #if NVLAN > 0
@@ -423,15 +421,12 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 int
 ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 {
-#ifdef INET
 	struct ether_header *eh;
 	u_int8_t ds_field;
-#endif
 #if NVLAN > 0
 	if (m->m_flags & M_VLANTAG)	/* use VLAN 802.1D user-priority */
 		return EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
 #endif
-#ifdef INET
 	eh = mtod(m, struct ether_header *);
 	if (eh->ether_type == htons(ETHERTYPE_IP)) {
 		struct ip *ip = (struct ip *)&eh[1];
@@ -473,7 +468,6 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 	case IPTOS_PREC_NETCONTROL:
 		return 7;
 	}
-#endif	/* INET */
 	return 0;	/* default to Best-Effort */
 }
 

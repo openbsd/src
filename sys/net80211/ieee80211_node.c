@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.85 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.86 2014/12/23 03:24:08 tedu Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -54,10 +54,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NBRIDGE > 0
 #include <net/if_bridge.h>

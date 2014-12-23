@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.19 2014/12/05 15:50:04 mpi Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.20 2014/12/23 03:24:08 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -28,10 +28,8 @@
 
 #include <netmpls/mpls.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -169,7 +167,6 @@ bad:
 void
 mpls_do_cksum(struct mbuf *m)
 {
-#ifdef INET
 	struct ip *ip;
 	u_int16_t hlen;
 
@@ -181,7 +178,6 @@ mpls_do_cksum(struct mbuf *m)
 		ip->ip_sum = in_cksum(m, hlen);
 		m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_OUT;
 	}
-#endif
 }
 
 u_int8_t

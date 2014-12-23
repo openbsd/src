@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.127 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.128 2014/12/23 03:24:08 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -53,10 +53,8 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>

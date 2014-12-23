@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.10 2011/03/02 08:48:59 fgsch Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.11 2014/12/23 03:24:08 tedu Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -36,10 +36,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_rssadapt.h>

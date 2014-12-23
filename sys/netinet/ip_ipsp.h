@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.157 2014/11/25 13:10:03 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.158 2014/12/23 03:24:08 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -523,9 +523,7 @@ void	ipe4_input(struct mbuf *, ...);
 void	ipip_input(struct mbuf *, int, struct ifnet *, int);
 int	ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 
-#ifdef INET
 void	ip4_input(struct mbuf *, ...);
-#endif /* INET */
 
 #ifdef INET6
 int	ip4_input6(struct mbuf **, int *, int);
@@ -539,11 +537,9 @@ int	ah_input(struct mbuf *, struct tdb *, int, int);
 int	ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-#ifdef INET
 void	ah4_input(struct mbuf *, ...);
 void	*ah4_ctlinput(int, struct sockaddr *, u_int, void *);
 void	*udpencap_ctlinput(int, struct sockaddr *, u_int, void *);
-#endif /* INET */
 
 #ifdef INET6
 int	ah6_input(struct mbuf **, int *, int);
@@ -557,10 +553,8 @@ int	esp_input(struct mbuf *, struct tdb *, int, int);
 int	esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-#ifdef INET
 void	esp4_input(struct mbuf *, ...);
 void	*esp4_ctlinput(int, struct sockaddr *, u_int, void *);
-#endif /* INET */
 
 #ifdef INET6
 int 	esp6_input(struct mbuf **, int *, int);
@@ -574,9 +568,7 @@ int	ipcomp_input(struct mbuf *, struct tdb *, int, int);
 int	ipcomp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-#ifdef INET
 void	ipcomp4_input(struct mbuf *, ...);
-#endif /* INET */
 
 #ifdef INET6
 int	ipcomp6_input(struct mbuf **, int *, int);
