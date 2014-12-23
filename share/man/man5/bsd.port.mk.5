@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.411 2014/11/09 01:12:59 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.412 2014/12/23 14:05:16 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 9 2014 $
+.Dd $Mdocdate: December 23 2014 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -84,9 +84,11 @@ run it, or to run regression tests.
 The output is formatted as package specification pairs, in a form suitable
 for
 .Xr tsort 1 .
-.It Ar full-{build,run,all}-depends
+.It Ar full-{all,build,run,test}-depends
 Print all dependencies a package depends upon for building, running,
-or both, as a list of package names.
+or both, as a list of package names, sorted by dependency order with
+.Xr tsort 1 ,
+most dependent port first.
 .It Ar {build,lib,test,run}-depends-list
 Print a list of first level package specifications a port depends as
 build dependencies, library dependencies, test dependencies or
