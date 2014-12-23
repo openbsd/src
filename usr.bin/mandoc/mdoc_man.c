@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.75 2014/11/30 05:28:00 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.76 2014/12/23 09:31:17 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -432,7 +432,7 @@ print_offs(const char *v, int keywords)
 		sz = 6;
 	else if (keywords && !strcmp(v, "indent-two"))
 		sz = 12;
-	else if (a2roffsu(v, &su, SCALE_MAX)) {
+	else if (a2roffsu(v, &su, SCALE_EN) < 2) {
 		if (SCALE_EN == su.unit)
 			sz = su.scale;
 		else {
@@ -479,7 +479,7 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 	/* Convert v into a number (of characters). */
 	if (NULL == v)
 		sz = defsz;
-	else if (a2roffsu(v, &su, SCALE_MAX)) {
+	else if (a2roffsu(v, &su, SCALE_MAX) < 2) {
 		if (SCALE_EN == su.unit)
 			sz = su.scale;
 		else {

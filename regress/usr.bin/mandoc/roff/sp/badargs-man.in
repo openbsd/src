@@ -1,4 +1,4 @@
-.TH SP-BADARGS-MAN 1 "December 4, 2014" OpenBSD
+.TH SP-BADARGS-MAN 1 "December 23, 2014" OpenBSD
 .SH NAME
 sp-badargs-man \- bad arguments to .sp macros in man(7)
 .SH DESCRIPTION
@@ -10,4 +10,8 @@ two arguments:
 .sp 3v 2i
 no scaling unit specified:
 .sp 1
+trailing garbage:
+.sp 2vx
+garbage only:
+.sp xxx
 end of test document

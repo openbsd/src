@@ -17,8 +17,13 @@ DDEESSCCRRIIPPTTIIOONN
 
        no scaling unit specified:
 
+       trailing garbage:
+
+
+       garbage only:
+
        end of test document
 
 
 
-OpenBSD                        December 4, 2014              SP-BADARGS-MAN(1)
+OpenBSD                        December 23, 2014             SP-BADARGS-MAN(1)

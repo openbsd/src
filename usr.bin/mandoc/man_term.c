@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.114 2014/12/23 08:15:37 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.115 2014/12/23 09:31:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -55,7 +55,6 @@ struct	termact {
 };
 
 static	int		  a2width(const struct termp *, const char *);
-static	size_t		  a2height(const struct termp *, const char *);
 
 static	void		  print_man_nodelist(DECL_ARGS);
 static	void		  print_man_node(DECL_ARGS);
@@ -180,18 +179,6 @@ terminal_man(void *arg, const struct man *man)
 			print_man_nodelist(p, &mt, n, meta);
 		term_end(p);
 	}
-}
-
-
-static size_t
-a2height(const struct termp *p, const char *cp)
-{
-	struct roffsu	 su;
-
-	if ( ! a2roffsu(cp, &su, SCALE_VS))
-		SCALE_VS_INIT(&su, atoi(cp));
-
-	return(term_vspan(p, &su));
 }
 
 static int
@@ -462,6 +449,7 @@ pre_in(DECL_ARGS)
 static int
 pre_sp(DECL_ARGS)
 {
+	struct roffsu	 su;
 	char		*s;
 	size_t		 i, len;
 	int		 neg;
@@ -499,7 +487,9 @@ pre_sp(DECL_ARGS)
 			neg = 1;
 			s++;
 		}
-		len = a2height(p, s);
+		if ( ! a2roffsu(s, &su, SCALE_VS))
+			su.scale = 1.0;
+		len = term_vspan(p, &su);
 		break;
 	}
 

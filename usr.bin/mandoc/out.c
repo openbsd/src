@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.27 2014/12/23 03:27:36 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.28 2014/12/23 09:31:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,65 +38,64 @@ static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
  * Parse the *src string and store a scaling unit into *dst.
  * If the string doesn't specify the unit, use the default.
  * If no default is specified, fail.
- * Return 1 on success and 0 on failure.
+ * Return 2 on complete success, 1 when a conversion was done,
+ * but there was trailing garbage, and 0 on total failure.
  */
 int
 a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 {
 	char		*endptr;
-	double		 scale;
-	enum roffscale	 unit;
 
-	scale = strtod(src, &endptr);
-	if (endptr == src || (endptr[0] != '\0' && endptr[1] != '\0'))
+	dst->unit = def == SCALE_MAX ? SCALE_BU : def;
+	dst->scale = strtod(src, &endptr);
+	if (endptr == src)
 		return(0);
 
-	switch (*endptr) {
+	switch (*endptr++) {
 	case 'c':
-		unit = SCALE_CM;
+		dst->unit = SCALE_CM;
 		break;
 	case 'i':
-		unit = SCALE_IN;
-		break;
-	case 'P':
-		unit = SCALE_PC;
-		break;
-	case 'p':
-		unit = SCALE_PT;
+		dst->unit = SCALE_IN;
 		break;
 	case 'f':
-		unit = SCALE_FS;
-		break;
-	case 'v':
-		unit = SCALE_VS;
-		break;
-	case 'm':
-		unit = SCALE_EM;
-		break;
-	case '\0':
-		if (SCALE_MAX == def)
-			return(0);
-		unit = def;
-		break;
-	case 'u':
-		unit = SCALE_BU;
+		dst->unit = SCALE_FS;
 		break;
 	case 'M':
-		unit = SCALE_MM;
+		dst->unit = SCALE_MM;
+		break;
+	case 'm':
+		dst->unit = SCALE_EM;
 		break;
 	case 'n':
-		unit = SCALE_EN;
+		dst->unit = SCALE_EN;
 		break;
+	case 'P':
+		dst->unit = SCALE_PC;
+		break;
+	case 'p':
+		dst->unit = SCALE_PT;
+		break;
+	case 'u':
+		dst->unit = SCALE_BU;
+		break;
+	case 'v':
+		dst->unit = SCALE_VS;
+		break;
+	case '\0':
+		endptr--;
+		/* FALLTHROUGH */
 	default:
-		return(0);
+		if (SCALE_MAX == def)
+			return(0);
+		dst->unit = def;
+		break;
 	}
 
 	/* FIXME: do this in the caller. */
-	if (scale < 0.0)
-		scale = 0.0;
-	dst->scale = scale;
-	dst->unit = unit;
-	return(1);
+	if (dst->scale < 0.0)
+		dst->scale = 0.0;
+	return(*endptr == '\0' ? 2 : 1);
 }
 
 /*

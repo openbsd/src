@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.198 2014/12/02 10:07:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.199 2014/12/23 09:31:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,7 +48,6 @@ struct	termact {
 };
 
 static	size_t	  a2width(const struct termp *, const char *);
-static	size_t	  a2height(const struct termp *, const char *);
 
 static	void	  print_bvspace(struct termp *,
 			const struct mdoc_node *,
@@ -525,25 +524,11 @@ print_mdoc_head(struct termp *p, const void *arg)
 }
 
 static size_t
-a2height(const struct termp *p, const char *v)
-{
-	struct roffsu	 su;
-
-
-	assert(v);
-	if ( ! a2roffsu(v, &su, SCALE_VS))
-		SCALE_VS_INIT(&su, atoi(v));
-
-	return(term_vspan(p, &su));
-}
-
-static size_t
 a2width(const struct termp *p, const char *v)
 {
 	struct roffsu	 su;
 
-	assert(v);
-	if ( ! a2roffsu(v, &su, SCALE_MAX)) {
+	if (a2roffsu(v, &su, SCALE_MAX) < 2) {
 		SCALE_HS_INIT(&su, term_strlen(p, v));
 		su.scale /= term_strlen(p, "0");
 	}
@@ -1814,11 +1799,17 @@ termp_in_post(DECL_ARGS)
 static int
 termp_sp_pre(DECL_ARGS)
 {
+	struct roffsu	 su;
 	size_t		 i, len;
 
 	switch (n->tok) {
 	case MDOC_sp:
-		len = n->child ? a2height(p, n->child->string) : 1;
+		if (n->child) {
+			if ( ! a2roffsu(n->child->string, &su, SCALE_VS))
+				su.scale = 1.0;
+			len = term_vspan(p, &su);
+		} else
+			len = 1;
 		break;
 	case MDOC_br:
 		len = 0;

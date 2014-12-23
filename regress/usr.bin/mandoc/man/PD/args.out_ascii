@@ -20,7 +20,7 @@ DDEESSCCRRIIPPTTIIOONN
        argument(2p)
 
 
-       argument(1c)
+       argument(1cx)
 
 
        argument(xxx)
@@ -28,4 +28,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                          July 29, 2012                      PD-ARGS(1)
+OpenBSD                        December 23, 2014                    PD-ARGS(1)

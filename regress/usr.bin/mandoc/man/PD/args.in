@@ -1,4 +1,4 @@
-.TH PD-ARGS 1 "July 29, 2012" OpenBSD
+.TH PD-ARGS 1 "December 23, 2014" OpenBSD
 .SH NAME
 PD-args \- unusual arguments to the PD macro
 .SH DESCRIPTION
@@ -17,9 +17,9 @@ argument(2v)
 .PD 2p
 .PP
 argument(2p)
-.PD 1c
+.PD 1cx
 .PP
-argument(1c)
+argument(1cx)
 .PD xxx
 .PP
 argument(xxx)

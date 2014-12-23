@@ -1,4 +1,4 @@
-.Dd December 4, 2014
+.Dd December 23, 2014
 .Dt SP-BADARGS-MDOC 1
 .Os OpenBSD
 .Sh NAME
@@ -13,4 +13,8 @@ two arguments:
 .sp 3v 2i
 no scaling unit specified:
 .sp 1
+trailing garbage:
+.sp 2vx
+garbage only:
+.sp xxx
 end of test document
