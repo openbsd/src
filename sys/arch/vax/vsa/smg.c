@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.27 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: smg.c,v 1.28 2014/12/23 21:39:12 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -294,7 +294,7 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 		    (caddr_t)vax_map_physmem(SMADDR, SMSIZE / VAX_NBPG);
 		if (scr->ss_addr == NULL) {
 			printf(": can not map frame buffer\n");
-			free(scr, M_DEVBUF, 0);
+			free(scr, M_DEVBUF, sizeof(*scr));
 			return;
 		}
 
@@ -304,7 +304,7 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 			printf(": can not map cursor chip\n");
 			vax_unmap_physmem((vaddr_t)scr->ss_addr,
 			    SMSIZE / VAX_NBPG);
-			free(scr, M_DEVBUF, 0);
+			free(scr, M_DEVBUF, sizeof(*scr));
 			return;
 		}
 
@@ -313,7 +313,7 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 			vax_unmap_physmem((vaddr_t)scr->ss_cursor, 1);
 			vax_unmap_physmem((vaddr_t)scr->ss_addr,
 			    SMSIZE / VAX_NBPG);
-			free(scr, M_DEVBUF, 0);
+			free(scr, M_DEVBUF, sizeof(*scr));
 			return;
 		}
 	}

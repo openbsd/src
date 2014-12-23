@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.24 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.25 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -385,7 +385,7 @@ bad3:
 bad2:
 	vax_unmap_physmem((vaddr_t)scr->ss_adder, 1);
 bad1:
-	free(scr, M_DEVBUF, 0);
+	free(scr, M_DEVBUF, sizeof(struct gpx_screen));
 }
 
 /*

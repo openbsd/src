@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.31 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.32 2014/12/23 21:39:12 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -129,6 +129,7 @@ _bus_dmamap_destroy(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
+	size_t mapsize;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_destroy: t=%p map=%p\n", t, map);
@@ -137,7 +138,9 @@ _bus_dmamap_destroy(t, map)
 	if (map->dm_nsegs > 0)
 		printf("bus_dmamap_destroy() called for map with valid mappings\n");
 #endif	/* DIAGNOSTIC */
-	free(map, M_DEVBUF, 0);
+	mapsize = sizeof(struct vax_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
+	free(map, M_DEVBUF, mapsize);
 }
 
 /*
