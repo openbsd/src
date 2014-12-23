@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.14 2014/12/23 19:21:58 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.15 2014/12/23 20:34:41 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -257,8 +257,6 @@ const static u_int64_t sha512_initial_hash_value[8] = {
 void
 SHA256Init(SHA2_CTX *context)
 {
-	if (context == NULL)
-		return;
 	memcpy(context->state.st32, sha256_initial_hash_value,
 	    SHA256_DIGEST_LENGTH);
 	memset(context->buffer, 0, SHA256_BLOCK_LENGTH);
@@ -541,8 +539,6 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 void
 SHA512Init(SHA2_CTX *context)
 {
-	if (context == NULL)
-		return;
 	memcpy(context->state.st64, sha512_initial_hash_value,
 	    SHA512_DIGEST_LENGTH);
 	memset(context->buffer, 0, SHA512_BLOCK_LENGTH);
@@ -837,8 +833,6 @@ SHA512Final(u_int8_t digest[], SHA2_CTX *context)
 void
 SHA384Init(SHA2_CTX *context)
 {
-	if (context == NULL)
-		return;
 	memcpy(context->state.st64, sha384_initial_hash_value,
 	    SHA512_DIGEST_LENGTH);
 	memset(context->buffer, 0, SHA384_BLOCK_LENGTH);
