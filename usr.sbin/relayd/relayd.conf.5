@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.155 2014/12/18 21:26:09 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.156 2014/12/23 13:18:23 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2014 $
+.Dd $Mdocdate: December 23 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -413,7 +413,7 @@ the source IP address of the client, and the IP address and port of the relay.
 This mode is only supported by relays.
 .It Ic mode random
 Distributes the outgoing connections randomly through all active hosts.
-This mode is only supported by relays.
+This mode is supported by redirections and relays.
 .It Ic mode roundrobin
 Distributes the outgoing connections using a round-robin scheduler
 through all active hosts.
@@ -423,7 +423,7 @@ This mode is supported by redirections and relays.
 Balances the outgoing connections across the active hosts based on the
 .Ar key
 and the source IP address of the client.
-This mode is only supported by relays.
+This mode is supported by redirections and relays.
 .El
 .Pp
 The optional

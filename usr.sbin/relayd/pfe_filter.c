@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.53 2013/04/27 16:39:30 benno Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.54 2014/12/23 13:18:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -485,8 +485,14 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		}
 
 		switch (rdr->conf.mode) {
+		case RELAY_DSTMODE_RANDOM:
+			rio.rule.rdr.opts = PF_POOL_RANDOM;
+			break;
 		case RELAY_DSTMODE_ROUNDROBIN:
 			rio.rule.rdr.opts = PF_POOL_ROUNDROBIN;
+			break;
+		case RELAY_DSTMODE_SRCHASH:
+			rio.rule.rdr.opts = PF_POOL_SRCHASH;
 			break;
 		case RELAY_DSTMODE_LEASTSTATES:
 			rio.rule.rdr.opts = PF_POOL_LEASTSTATES;
@@ -497,6 +503,9 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		}
 		if (rdr->conf.flags & F_STICKY)
 			rio.rule.rdr.opts |= PF_POOL_STICKYADDR;
+		if (rdr->conf.flags & F_HASHKEY)
+			memcpy(rio.rule.rdr.key.key32, rdr->conf.key.data,
+			    sizeof(rio.rule.rdr.key.key32));
 
 		if (rio.rule.rt == PF_ROUTETO) {
 			memcpy(&rio.rule.route, &rio.rule.rdr,
