@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.26 2014/12/04 02:05:16 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.27 2014/12/23 03:27:36 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,8 +18,6 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -37,53 +35,23 @@ static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
 
 
 /*
- * Convert a `scaling unit' to a consistent form, or fail.  Scaling
- * units are documented in groff.7, mdoc.7, man.7.
+ * Parse the *src string and store a scaling unit into *dst.
+ * If the string doesn't specify the unit, use the default.
+ * If no default is specified, fail.
+ * Return 1 on success and 0 on failure.
  */
 int
 a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 {
-	char		 buf[BUFSIZ], hasd;
-	int		 i;
+	char		*endptr;
+	double		 scale;
 	enum roffscale	 unit;
 
-	if ('\0' == *src)
+	scale = strtod(src, &endptr);
+	if (endptr == src || (endptr[0] != '\0' && endptr[1] != '\0'))
 		return(0);
 
-	i = hasd = 0;
-
-	switch (*src) {
-	case '+':
-		src++;
-		break;
-	case '-':
-		buf[i++] = *src++;
-		break;
-	default:
-		break;
-	}
-
-	if ('\0' == *src)
-		return(0);
-
-	while (i < BUFSIZ) {
-		if ( ! isdigit((unsigned char)*src)) {
-			if ('.' != *src)
-				break;
-			else if (hasd)
-				break;
-			else
-				hasd = 1;
-		}
-		buf[i++] = *src++;
-	}
-
-	if (BUFSIZ == i || (*src && *(src + 1)))
-		return(0);
-
-	buf[i] = '\0';
-
-	switch (*src) {
+	switch (*endptr) {
 	case 'c':
 		unit = SCALE_CM;
 		break;
@@ -124,8 +92,9 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 	}
 
 	/* FIXME: do this in the caller. */
-	if ((dst->scale = atof(buf)) < 0.0)
-		dst->scale = 0.0;
+	if (scale < 0.0)
+		scale = 0.0;
+	dst->scale = scale;
 	dst->unit = unit;
 	return(1);
 }
