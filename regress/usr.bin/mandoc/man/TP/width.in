@@ -1,8 +1,23 @@
-.TH TP-WIDTH 1 "February 16, 2014" OpenBSD
+.TH TP-WIDTH 1 "December 23, 2014" OpenBSD
 .SH NAME
 TP-width \- indentation width of indented paragraphs
 .SH DESCRIPTION
 Regular mode:
+.TP -10n
+tag
+indented
+.br
+text
+.TP -4n
+tag
+indented
+.br
+text
+.TP 0n
+tag
+indented
+.br
+text
 .TP 1n
 tag
 indented
@@ -36,6 +51,18 @@ text
 .PP
 Literal mode:
 .nf
+.TP -10n
+tag
+indented
+text
+.TP -4n
+tag
+indented
+text
+.TP 0n
+tag
+indented
+text
 .TP 1n
 tag
 indented

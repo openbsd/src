@@ -25,5 +25,7 @@ initial text
 79n
 .in 1.5ix
 1.5ix
+.in -6n
+-6n
 .PP
 final text

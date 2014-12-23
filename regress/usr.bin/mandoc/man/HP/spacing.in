@@ -1,28 +1,37 @@
-.TH HP-SPACING 1 "November 20, 2014" OpenBSD
+.TH HP-SPACING 1 "December 23, 2014" OpenBSD
 .SH NAME
 HP-spacing \- spacing in hanged lists
 .SH DESCRIPTION
 Normal text.
 .HP
-tag
-Indented text.
-.HP
-four
-Indented text.
-.HP
-ffive
-Indented text.
-.HP
-sixsix
-Indented text.
-.HP
-seseven
-Indented text.
-.HP
-a much longer tag
-Indented text.
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP -10n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP -4n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP 0n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP 1n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP 2n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP 4n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP 8n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP 16n
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
 .HP 78n
-Testing a hanged paragraph with a large indentation width,
-in this case 78n, requires more text.
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
 .LP
 Normal text.

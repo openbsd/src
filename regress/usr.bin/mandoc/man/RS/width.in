@@ -1,7 +1,19 @@
-.TH RS-WIDTH 1 "February 16, 2014" OpenBSD
+.TH RS-WIDTH 1 "December 23, 2014" OpenBSD
 .SH NAME
-RS-width \- excessive indentation
+RS-width \- negative and excessive indentation
 .SH DESCRIPTION
+regular
+text
+.RS -4n
+indented
+text
+.RE
+regular
+text
+.RS 4n
+indented
+text
+.RE
 regular
 text
 .RS 100n

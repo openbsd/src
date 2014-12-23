@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.92 2014/12/23 09:31:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.93 2014/12/23 13:48:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -280,7 +280,8 @@ a2width(const char *p, struct roffsu *su)
 	if (a2roffsu(p, su, SCALE_MAX) < 2) {
 		su->unit = SCALE_EN;
 		su->scale = html_strlen(p);
-	}
+	} else if (su->scale < 0.0)
+		su->scale = 0.0;
 }
 
 /*
@@ -1564,9 +1565,12 @@ mdoc_sp_pre(MDOC_ARGS)
 	SCALE_VS_INIT(&su, 1);
 
 	if (MDOC_sp == n->tok) {
-		if (NULL != (n = n->child))
+		if (NULL != (n = n->child)) {
 			if ( ! a2roffsu(n->string, &su, SCALE_VS))
 				su.scale = 1.0;
+			else if (su.scale < 0.0)
+				su.scale = 0.0;
+		}
 	} else
 		su.scale = 0.0;
 

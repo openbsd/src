@@ -9,6 +9,18 @@ DDEESSCCRRIIPPTTIIOONN
        Regular mode:
 
        tag
+indented
+text
+
+       tag
+   indented
+   text
+
+       tag
+       indented
+       text
+
+       tag
         indented
         text
 
@@ -33,6 +45,18 @@ DDEESSCCRRIIPPTTIIOONN
                                                                                                            text
 
        Literal mode:
+
+       tag
+indented
+text
+
+       tag
+   indented
+   text
+
+       tag
+       indented
+       text
 
        tag
         indented
