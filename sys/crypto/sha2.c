@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.13 2014/12/19 17:16:57 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.14 2014/12/23 19:21:58 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -96,24 +96,6 @@
 #define SHA256_SHORT_BLOCK_LENGTH	(SHA256_BLOCK_LENGTH - 8)
 #define SHA384_SHORT_BLOCK_LENGTH	(SHA384_BLOCK_LENGTH - 16)
 #define SHA512_SHORT_BLOCK_LENGTH	(SHA512_BLOCK_LENGTH - 16)
-
-
-/*** ENDIAN REVERSAL MACROS *******************************************/
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define REVERSE32(w,x)	{ \
-	u_int32_t tmp = (w); \
-	tmp = (tmp >> 16) | (tmp << 16); \
-	(x) = ((tmp & 0xff00ff00UL) >> 8) | ((tmp & 0x00ff00ffUL) << 8); \
-}
-#define REVERSE64(w,x)	{ \
-	u_int64_t tmp = (w); \
-	tmp = (tmp >> 32) | (tmp << 32); \
-	tmp = ((tmp & 0xff00ff00ff00ff00ULL) >> 8) | \
-	      ((tmp & 0x00ff00ff00ff00ffULL) << 8); \
-	(x) = ((tmp & 0xffff0000ffff0000ULL) >> 16) | \
-	      ((tmp & 0x0000ffff0000ffffULL) << 16); \
-}
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
 
 /*
  * Macro for incrementally adding the unsigned 64-bit integer n to the
@@ -501,7 +483,7 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 		usedspace = (context->bitcount[0] >> 3) % SHA256_BLOCK_LENGTH;
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert FROM host byte order */
-		REVERSE64(context->bitcount[0], context->bitcount[0]);
+		context->bitcount[0] = swap64(context->bitcount[0]);
 #endif
 		if (usedspace > 0) {
 			/* Begin padding with a 1 bit: */
@@ -541,9 +523,7 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 			/* Convert TO host byte order */
 			int	j;
 			for (j = 0; j < 8; j++) {
-				REVERSE32(context->state.st32[j],
-				    context->state.st32[j]);
-				*d++ = context->state.st32[j];
+				*d++ = swap32(context->state.st32[j]);
 			}
 		}
 #else
@@ -788,8 +768,8 @@ SHA512Last(SHA2_CTX *context)
 	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/* Convert FROM host byte order */
-	REVERSE64(context->bitcount[0],context->bitcount[0]);
-	REVERSE64(context->bitcount[1],context->bitcount[1]);
+	context->bitcount[0] = swap64(context->bitcount[0]);
+	context->bitcount[1] = swap64(context->bitcount[1]);
 #endif
 	if (usedspace > 0) {
 		/* Begin padding with a 1 bit: */
@@ -840,9 +820,7 @@ SHA512Final(u_int8_t digest[], SHA2_CTX *context)
 			/* Convert TO host byte order */
 			int	j;
 			for (j = 0; j < 8; j++) {
-				REVERSE64(context->state.st64[j],
-				    context->state.st64[j]);
-				*d++ = context->state.st64[j];
+				*d++ = swap64(context->state.st64[j]);
 			}
 		}
 #else
@@ -888,9 +866,7 @@ SHA384Final(u_int8_t digest[], SHA2_CTX *context)
 			/* Convert TO host byte order */
 			int	j;
 			for (j = 0; j < 6; j++) {
-				REVERSE64(context->state.st64[j],
-				    context->state.st64[j]);
-				*d++ = context->state.st64[j];
+				*d++ = swap64(context->state.st64[j]);
 			}
 		}
 #else
