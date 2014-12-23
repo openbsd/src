@@ -1,4 +1,4 @@
-.TH IP-WIDTH 1 "February 16, 2014" OpenBSD
+.TH IP-WIDTH 1 "December 23, 2014" OpenBSD
 .SH NAME
 IP-width \- indentation width of indented paragraphs
 .SH DESCRIPTION
@@ -23,6 +23,10 @@ text
 indented
 .br
 text
+.IP tag xxx
+indented
+.br
+text
 .IP tag 100n
 indented
 .br
@@ -43,6 +47,9 @@ text
 indented
 text
 .IP tag 5n
+indented
+text
+.IP tag xxx
 indented
 text
 .IP tag 100n
