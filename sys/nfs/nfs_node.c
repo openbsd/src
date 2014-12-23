@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.59 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.60 2014/12/23 04:48:47 tedu Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -118,23 +118,27 @@ loop:
 	 */
 	rw_exit_write(&nfs_hashlock);
 	error = getnewvnode(VT_NFS, mnt, &nfs_vops, &nvp);
-	/* note that we don't have this vnode set up completely yet */
-	rw_enter_write(&nfs_hashlock);
 	if (error) {
 		*npp = NULL;
-		rw_exit_write(&nfs_hashlock);
 		return (error);
 	}
+	/* grab one of these too while we're outside the lock */
+	np2 = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
+
+	/* note that we don't have this vnode set up completely yet */
+	rw_enter_write(&nfs_hashlock);
 	nvp->v_flag |= VLARVAL;
 	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
+	/* lost race. undo and repeat */
 	if (np != NULL) {
+		pool_put(&nfs_node_pool, np2);
 		vgone(nvp);
 		rw_exit_write(&nfs_hashlock);
 		goto loop;
 	}
 
 	vp = nvp;
-	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
+	np = np2;
 	vp->v_data = np;
 	/* we now have an nfsnode on this vnode */
 	vp->v_flag &= ~VLARVAL;
