@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.14 2014/12/23 04:53:20 tedu Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.15 2014/12/23 04:54:45 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -187,13 +187,15 @@ fusefs_root(struct mount *mp, struct vnode **vpp)
 	return (0);
 }
 
-int fusefs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
+int
+fusefs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
     struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
 
-int fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
+int
+fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
@@ -232,13 +234,15 @@ int fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	return (0);
 }
 
-int fusefs_sync(struct mount *mp, int waitfor, struct ucred *cred,
+int
+fusefs_sync(struct mount *mp, int waitfor, struct ucred *cred,
     struct proc *p)
 {
 	return (0);
 }
 
-int fusefs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+int
+fusefs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct fusefs_mnt *fmp;
 	struct fusefs_node *ip;
@@ -293,17 +297,20 @@ retry:
 	return (0);
 }
 
-int fusefs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+int
+fusefs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	return (0);
 }
 
-int fusefs_vptofh(struct vnode *vp, struct fid *fhp)
+int
+fusefs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	return (0);
 }
 
-int fusefs_init(struct vfsconf *vfc)
+int
+fusefs_init(struct vfsconf *vfc)
 {
 	pool_init(&fusefs_fbuf_pool, sizeof(struct fusebuf), 0, 0, PR_WAITOK,
 	    "fmsg", NULL);
@@ -311,7 +318,8 @@ int fusefs_init(struct vfsconf *vfc)
 	return (0);
 }
 
-int fusefs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+int
+fusefs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 	extern int stat_fbufs_in, stat_fbufs_wait, stat_opened_fusedev;
@@ -336,7 +344,8 @@ int fusefs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 }
 
-int fusefs_checkexp(struct mount *mp, struct mbuf *nam, int *extflagsp,
+int
+fusefs_checkexp(struct mount *mp, struct mbuf *nam, int *extflagsp,
     struct ucred **credanonp)
 {
 	return (0);
