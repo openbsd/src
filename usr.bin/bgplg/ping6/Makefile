@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2010/04/02 21:20:49 sthen Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/12/23 19:32:16 pascal Exp $
 
 PROGDIR=	${.CURDIR}/../../../sbin/ping6
 
-LDSTATIC=	-static
+LDSTATIC=	${STATIC}
 CFLAGS+=	-I${PROGDIR}
 NOMAN=		yes
 

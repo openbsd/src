@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2006/12/11 23:10:10 reyk Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/12/23 19:32:16 pascal Exp $
 
 PROGDIR=	${.CURDIR}/../../../usr.sbin/bgpctl
 
-LDSTATIC=	-static
+LDSTATIC=	${STATIC}
 CFLAGS+=	-I${PROGDIR} -I${PROGDIR}/../bgpd
 NOMAN=		yes
 

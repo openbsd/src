@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/12/11 23:10:11 reyk Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/12/23 19:32:16 pascal Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ CLFAGS+=	-Wmissing-declarations -Wredundant-decls
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 CFLAGS+= 	-I${.CURDIR}
-LDSTATIC=	-static
+LDSTATIC=	${STATIC}
 MAN=		bgplg.8
 
 BINDIR=		/var/www/cgi-bin
