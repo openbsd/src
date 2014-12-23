@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.3 2014/12/23 16:45:04 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.4 2014/12/23 20:38:20 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -73,6 +73,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	Elf_Dyn		*dynp;
 	Elf_Addr	start;
 	size_t		size;
+	int		pagesize;
 	int		n, argc;
 	char **argv, **envp;
 	long loff;
@@ -261,14 +262,19 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 * them read-only.
 	 */
 
+	if (dl_data[AUX_pagesz] == 0)
+		pagesize = dl_data[AUX_pagesz];
+	else
+		pagesize = 4096;
+
 #if defined(__sparc64__)
-	start = ELF_TRUNC((Elf_Addr)__plt_start, PAGE_SIZE);
-	size = ELF_ROUND((Elf_Addr)__plt_end - start, PAGE_SIZE);
+	start = ELF_TRUNC((Elf_Addr)__plt_start, pagesize);
+	size = ELF_ROUND((Elf_Addr)__plt_end - start, pagesize);
 	mprotect((void *)start, size, PROT_READ);
 #endif
 
-	start = ELF_TRUNC((Elf_Addr)__got_start, PAGE_SIZE);
-	size = ELF_ROUND((Elf_Addr)__got_end - start, PAGE_SIZE);
+	start = ELF_TRUNC((Elf_Addr)__got_start, pagesize);
+	size = ELF_ROUND((Elf_Addr)__got_end - start, pagesize);
 	mprotect((void *)start, size, PROT_READ);
 }
 #endif /* RCRT0 */
