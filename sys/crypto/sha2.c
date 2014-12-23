@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.15 2014/12/23 20:34:41 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.16 2014/12/23 20:40:06 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -476,59 +476,55 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 	u_int32_t	*d = (u_int32_t *)digest;
 	unsigned int	usedspace;
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
-		usedspace = (context->bitcount[0] >> 3) % SHA256_BLOCK_LENGTH;
+	usedspace = (context->bitcount[0] >> 3) % SHA256_BLOCK_LENGTH;
 #if BYTE_ORDER == LITTLE_ENDIAN
-		/* Convert FROM host byte order */
-		context->bitcount[0] = swap64(context->bitcount[0]);
+	/* Convert FROM host byte order */
+	context->bitcount[0] = swap64(context->bitcount[0]);
 #endif
-		if (usedspace > 0) {
-			/* Begin padding with a 1 bit: */
-			context->buffer[usedspace++] = 0x80;
+	if (usedspace > 0) {
+		/* Begin padding with a 1 bit: */
+		context->buffer[usedspace++] = 0x80;
 
-			if (usedspace <= SHA256_SHORT_BLOCK_LENGTH) {
-				/* Set-up for the last transform: */
-				memset(&context->buffer[usedspace], 0,
-				    SHA256_SHORT_BLOCK_LENGTH - usedspace);
-			} else {
-				if (usedspace < SHA256_BLOCK_LENGTH) {
-					memset(&context->buffer[usedspace], 0,
-					    SHA256_BLOCK_LENGTH - usedspace);
-				}
-				/* Do second-to-last transform: */
-				SHA256Transform(context->state.st32, context->buffer);
-
-				/* And set-up for the last transform: */
-				memset(context->buffer, 0,
-				    SHA256_SHORT_BLOCK_LENGTH);
-			}
-		} else {
+		if (usedspace <= SHA256_SHORT_BLOCK_LENGTH) {
 			/* Set-up for the last transform: */
-			memset(context->buffer, 0, SHA256_SHORT_BLOCK_LENGTH);
+			memset(&context->buffer[usedspace], 0,
+			    SHA256_SHORT_BLOCK_LENGTH - usedspace);
+		} else {
+			if (usedspace < SHA256_BLOCK_LENGTH) {
+				memset(&context->buffer[usedspace], 0,
+				    SHA256_BLOCK_LENGTH - usedspace);
+			}
+			/* Do second-to-last transform: */
+			SHA256Transform(context->state.st32, context->buffer);
 
-			/* Begin padding with a 1 bit: */
-			*context->buffer = 0x80;
+			/* And set-up for the last transform: */
+			memset(context->buffer, 0,
+			    SHA256_SHORT_BLOCK_LENGTH);
 		}
-		/* Set the bit count: */
-		*(u_int64_t *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount[0];
+	} else {
+		/* Set-up for the last transform: */
+		memset(context->buffer, 0, SHA256_SHORT_BLOCK_LENGTH);
 
-		/* Final transform: */
-		SHA256Transform(context->state.st32, context->buffer);
+		/* Begin padding with a 1 bit: */
+		*context->buffer = 0x80;
+	}
+	/* Set the bit count: */
+	*(u_int64_t *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount[0];
+
+	/* Final transform: */
+	SHA256Transform(context->state.st32, context->buffer);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 8; j++) {
-				*d++ = swap32(context->state.st32[j]);
-			}
+	{
+		/* Convert TO host byte order */
+		int	j;
+		for (j = 0; j < 8; j++) {
+			*d++ = swap32(context->state.st32[j]);
 		}
-#else
-		memcpy(d, context->state.st32, SHA256_DIGEST_LENGTH);
-#endif
 	}
-
+#else
+	memcpy(d, context->state.st32, SHA256_DIGEST_LENGTH);
+#endif
 	/* Clean up state data: */
 	explicit_bzero(context, sizeof(*context));
 	usedspace = 0;
@@ -806,23 +802,20 @@ SHA512Final(u_int8_t digest[], SHA2_CTX *context)
 {
 	u_int64_t	*d = (u_int64_t *)digest;
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
-		SHA512Last(context);
+	SHA512Last(context);
 
-		/* Save the hash data for output: */
+	/* Save the hash data for output: */
 #if BYTE_ORDER == LITTLE_ENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 8; j++) {
-				*d++ = swap64(context->state.st64[j]);
-			}
+	{
+		/* Convert TO host byte order */
+		int	j;
+		for (j = 0; j < 8; j++) {
+			*d++ = swap64(context->state.st64[j]);
 		}
-#else
-		memcpy(d, context->state.st64, SHA512_DIGEST_LENGTH);
-#endif
 	}
+#else
+	memcpy(d, context->state.st64, SHA512_DIGEST_LENGTH);
+#endif
 
 	/* Zero out state data */
 	explicit_bzero(context, sizeof(*context));
@@ -850,24 +843,20 @@ SHA384Final(u_int8_t digest[], SHA2_CTX *context)
 {
 	u_int64_t	*d = (u_int64_t *)digest;
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
-		SHA512Last((SHA2_CTX *)context);
+	SHA512Last(context);
 
-		/* Save the hash data for output: */
+	/* Save the hash data for output: */
 #if BYTE_ORDER == LITTLE_ENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 6; j++) {
-				*d++ = swap64(context->state.st64[j]);
-			}
+	{
+		/* Convert TO host byte order */
+		int	j;
+		for (j = 0; j < 6; j++) {
+			*d++ = swap64(context->state.st64[j]);
 		}
-#else
-		memcpy(d, context->state.st64, SHA384_DIGEST_LENGTH);
-#endif
 	}
-
+#else
+	memcpy(d, context->state.st64, SHA384_DIGEST_LENGTH);
+#endif
 	/* Zero out state data */
 	explicit_bzero(context, sizeof(*context));
 }
