@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.38 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.39 2014/12/23 03:26:24 tedu Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -76,9 +76,7 @@ domaininit(void)
 	 * it will be initialized as the *first* element.  confusing!
 	 */
 	ADDDOMAIN(unix);
-#ifdef INET
 	ADDDOMAIN(inet);
-#endif
 #ifdef INET6
 	ADDDOMAIN(inet6);
 #endif /* INET6 */
