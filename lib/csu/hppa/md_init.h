@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.5 2014/12/22 19:02:58 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.6 2014/12/23 12:25:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -109,27 +109,27 @@
 	"	copy	%sp, %r3				\n" \
 	"	stwm	%r1, 64+16*4(%sp)			\n" \
 	"	stw	%arg0, -36(%r3)				\n" \
+	"	bl	1f, %dp					\n" \
+	"	depi	0, 31, 2, %dp				\n" \
+	"1:	addil	L'$global$ - ($PIC_pcrel$0 - 8), %dp	\n" \
+	"	ldo	R'$global$ - ($PIC_pcrel$0 - 12)(%r1), %dp \n" \
 	"	bl	1f, %arg2				\n" \
-	"	depi 0, 31, 2, %arg2				\n" \
+	"	depi	0, 31, 2, %arg2				\n" \
 	"1:	addil	L'_DYNAMIC - ($PIC_pcrel$0 - 8), %arg2	\n" \
 	"	ldo	R'_DYNAMIC - ($PIC_pcrel$0 - 12)(%r1), %arg2 \n" \
 	"	stw	%arg2, -40(%r3)				\n" \
-	"	ldi	-1, %dp					\n" \
 	"	ldw	0(%arg0), %arg0				\n" \
 	"	ldo	4(%r3), %arg1				\n" \
-	"	bl	_dl_boot_bind, %rp			\n" \
 	"	ldo	-4(%arg0), %arg0			\n" \
+	"	bl	_dl_boot_bind, %rp			\n" \
+	"	copy	%dp, %r19				\n" \
 	"	ldw	-36(%r3), %arg0				\n" \
 	"	copy	%r0, %arg1				\n" \
 	"	ldo	64(%r3), %sp				\n" \
 	"	ldwm	-64(%sp), %r3				\n" \
-	"	bl L$lpc, %r27					\n" \
-	"	depi 0, 31, 2, %r27				\n" \
-	"L$lpc:  addil L'$global$ - ($PIC_pcrel$0 - 8), %r27	\n" \
-	"	ldo R'$global$ - ($PIC_pcrel$0 - 12)(%r1),%r27	\n" \
 	"	.call						\n" \
 	"	b	___start				\n" \
-	"	copy    %r27, %r19				\n" \
+	"	copy	%dp, %r19				\n" \
 	"	.exit						\n" \
 	"	.procend					\n" \
 	"	.export _dl_exit, entry				\n" \
