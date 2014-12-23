@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.166 2014/12/19 04:00:00 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.167 2014/12/23 20:29:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -498,7 +498,7 @@ extract_entropy(u_int8_t *buf)
 {
 	static u_int32_t extract_pool[POOLWORDS];
 	u_char digest[SHA512_DIGEST_LENGTH];
-	SHA2_CTX tmp;
+	SHA2_CTX shactx;
 
 #if SHA512_DIGEST_LENGTH < EBUFSIZE
 #error "need more bigger hash output"
@@ -513,9 +513,9 @@ extract_entropy(u_int8_t *buf)
 	memcpy(extract_pool, entropy_pool, sizeof(extract_pool));
 
 	/* Hash the pool to get the output */
-	SHA512Init(&tmp);
-	SHA512Update(&tmp, (u_int8_t *)extract_pool, sizeof(extract_pool));
-	SHA512Final(digest, &tmp);
+	SHA512Init(&shactx);
+	SHA512Update(&shactx, (u_int8_t *)extract_pool, sizeof(extract_pool));
+	SHA512Final(digest, &shactx);
 
 	/* Copy data to destination buffer */
 	memcpy(buf, digest, EBUFSIZE);
@@ -526,7 +526,7 @@ extract_entropy(u_int8_t *buf)
 
 	/* Wipe data from memory */
 	explicit_bzero(extract_pool, sizeof(extract_pool));
-	explicit_bzero(&tmp, sizeof(tmp));
+	explicit_bzero(&shactx, sizeof(shactx));
 	explicit_bzero(digest, sizeof(digest));
 }
 
