@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.131 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.132 2014/12/23 04:47:30 tedu Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -201,25 +201,6 @@ struct vndbuf {
 struct pool vndxfer_pool;
 struct pool vndbuf_pool;
 
-#define	getvndxfer(vnx)	do {						\
-	int s = splbio();						\
-	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
-	splx(s);							\
-} while (0)
-
-#define putvndxfer(vnx) {						\
-	pool_put(&vndxfer_pool, (void *)(vnx));				\
-}
-
-#define	getvndbuf(vbp)	do {						\
-	int s = splbio();						\
-	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
-	splx(s);							\
-} while (0)
-
-#define putvndbuf(vbp) {						\
-	pool_put(&vndbuf_pool, (void *)(vbp));				\
-}
 
 /*
  * local variables
@@ -298,8 +279,10 @@ uvm_swap_init(void)
 	/* allocate pools for structures used for swapping to files. */
 	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
 	    NULL);
+	pool_setipl(&vndxfer_pool, IPL_BIO);
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
 	    NULL);
+	pool_setipl(&vndbuf_pool, IPL_BIO);
 
 	/* Setup the initial swap partition */
 	swapmount();
@@ -1135,7 +1118,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	 * allocate a vndxfer head for this transfer and point it to
 	 * our buffer.
 	 */
-	getvndxfer(vnx);
+	vnx = pool_get(&vndxfer_pool, PR_WAITOK);
 	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
@@ -1205,7 +1188,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 * at the front of the nbp structure so that you can
 		 * cast pointers between the two structure easily.
 		 */
-		getvndbuf(nbp);
+		nbp = pool_get(&vndbuf_pool, PR_WAITOK);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = sz;
@@ -1250,7 +1233,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 
 		s = splbio();
 		if (vnx->vx_error != 0) {
-			putvndbuf(nbp);
+			pool_put(&vndbuf_pool, nbp);
 			goto out;
 		}
 		vnx->vx_pending++;
@@ -1279,7 +1262,7 @@ out: /* Arrive here at splbio */
 			bp->b_error = vnx->vx_error;
 			bp->b_flags |= B_ERROR;
 		}
-		putvndxfer(vnx);
+		pool_put(&vndxfer_pool, vnx);
 		biodone(bp);
 	}
 	splx(s);
@@ -1354,7 +1337,7 @@ sw_reg_iodone_internal(void *xvbp, void *xvnx)
 	}
 
 	/* kill vbp structure */
-	putvndbuf(vbp);
+	pool_put(&vndbuf_pool, vbp);
 
 	/*
 	 * wrap up this transaction if it has run to completion or, in
@@ -1365,13 +1348,13 @@ sw_reg_iodone_internal(void *xvbp, void *xvnx)
 		pbp->b_flags |= B_ERROR;
 		pbp->b_error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
-			putvndxfer(vnx);
+			pool_put(&vndxfer_pool, vnx);
 			biodone(pbp);
 		}
 	} else if (pbp->b_resid == 0) {
 		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
-			putvndxfer(vnx);
+			pool_put(&vndxfer_pool, vnx);
 			biodone(pbp);
 		}
 	}
@@ -1723,11 +1706,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now allocate a buf for the i/o.
 	 * [make sure we don't put the pagedaemon to sleep...]
 	 */
-	s = splbio();
 	pflag = (async || curproc == uvm.pagedaemon_proc) ? PR_NOWAIT :
 	    PR_WAITOK;
-	bp = pool_get(&bufpool, pflag);
-	splx(s);
+	bp = pool_get(&bufpool, pflag | PR_ZERO);
 
 	/*
 	 * if we failed to get a swapbuf, return "try again"
