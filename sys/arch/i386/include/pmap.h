@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.68 2014/12/22 23:59:43 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.69 2014/12/23 01:24:51 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -194,6 +194,12 @@
 #define	ptetoav(PT)	(ptoa(PT - APTE_BASE))
 #define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
 			 ((unsigned)(VA) & ~PG_FRAME))
+
+/*
+ * pdei/ptei: generate index into PDP/PTP from a VA
+ */
+#define	pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
+#define	ptei(VA)	(((VA) & PT_MASK) >> PAGE_SHIFT)
 
 /*
  * PTP macros:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.17 2014/12/22 23:59:43 mlarkin Exp $	*/
+/*	$OpenBSD: pte.h,v 1.18 2014/12/23 01:24:51 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -144,6 +144,8 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #else
 #define	PTES_PER_PTP	(NBPD / PAGE_SIZE)	/* # of PTEs in a PTP */
 #endif
+#define	PD_MASK		0xffc00000	/* page directory address bits */
+#define	PT_MASK		0x003ff000	/* page table address bits */
 
 #define PAGE_MASK_L2	(NBPD - 1)
 
