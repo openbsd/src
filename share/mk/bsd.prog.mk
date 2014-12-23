@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.65 2014/10/31 13:46:17 jsing Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.66 2014/12/23 16:35:53 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -10,7 +10,7 @@
 
 .SUFFIXES: .out .o .c .cc .cpp .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
-.if defined(LDSTATIC) || defined(NOPIE)
+.if (defined(LDSTATIC) && !defined(STATICPIE)) || defined(NOPIE)
 CFLAGS+=       ${NOPIE_FLAGS}
 AFLAGS+=       ${NOPIE_FLAGS}
 LDFLAGS+=      ${NOPIE_LDFLAGS}

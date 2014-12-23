@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.150 2014/04/22 14:42:53 reyk Exp $
+#	$OpenBSD: bsd.own.mk,v 1.151 2014/12/23 16:35:53 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -25,6 +25,7 @@ BINUTILS217_ARCH=hppa64 ia64
 # m88k unknown
 # hppa64 unknown
 PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc64
+STATICPIE_ARCH=amd64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC3_ARCH:M${_arch})
@@ -37,6 +38,10 @@ COMPILER_VERSION?=gcc4
 BINUTILS_VERSION=binutils-2.17
 .else
 BINUTILS_VERSION=binutils
+.endif
+
+.if !empty(STATICPIE_ARCH:M${_arch})
+STATICPIE?=-pie -Wl,-Bsymbolic
 .endif
 
 .if !empty(PIE_ARCH:M${_arch})
@@ -118,7 +123,7 @@ INSTALL_STRIP?=	-s
 
 # This may be changed for _single filesystem_ configurations (such as
 # routers and other embedded systems); normal systems should leave it alone!
-STATIC?=	-static
+STATIC?=	-static ${STATICPIE}
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
