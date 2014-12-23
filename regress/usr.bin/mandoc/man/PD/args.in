@@ -14,10 +14,15 @@ no argument at all
 .PD 2v
 .PP
 argument(2v)
-.\" also test (2cm)
-.\" .PD xxx
-.\" .PP
-.\" argument(xxx)
+.PD 2p
+.PP
+argument(2p)
+.PD 1c
+.PP
+argument(1c)
+.PD xxx
+.PP
+argument(xxx)
 .PD 0 zzz
 .PP
 excessive argument

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.112 2014/12/04 02:05:16 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.113 2014/12/23 01:57:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -286,14 +286,16 @@ pre_literal(DECL_ARGS)
 static int
 pre_PD(DECL_ARGS)
 {
+	struct roffsu	 su;
 
 	n = n->child;
-	if (0 == n) {
+	if (n == NULL) {
 		mt->pardist = 1;
 		return(0);
 	}
 	assert(MAN_TEXT == n->type);
-	mt->pardist = atoi(n->string);
+	if (a2roffsu(n->string, &su, SCALE_VS))
+		mt->pardist = term_vspan(p, &su);
 	return(0);
 }
 
