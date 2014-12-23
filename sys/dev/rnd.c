@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.167 2014/12/23 20:29:23 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.168 2014/12/23 20:32:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -526,7 +526,6 @@ extract_entropy(u_int8_t *buf)
 
 	/* Wipe data from memory */
 	explicit_bzero(extract_pool, sizeof(extract_pool));
-	explicit_bzero(&shactx, sizeof(shactx));
 	explicit_bzero(digest, sizeof(digest));
 }
 
