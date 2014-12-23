@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.34 2014/12/22 11:21:49 shadchin Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.35 2014/12/23 10:24:22 shadchin Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -218,14 +218,6 @@ mouse_installmap(char *arg)
 	return TRUE;
 }
 
-/* mouse_map : converts physical buttons to logical buttons */
-static void
-mouse_map(struct wscons_event *orig, struct wscons_event *mapped)
-{
-	mapped->type = orig->type;
-	mapped->value = p2l[orig->value];
-}
-
 /* terminate signals handler */
 static void
 terminate(int sig)
@@ -262,7 +254,9 @@ mouse_click(struct wscons_event *event)
 	struct timeval max_date;
 	struct timeval now;
 	struct timeval delay;
-	int i = event->value; /* button number */
+	int i; /* button number */
+	
+	i = event->value = p2l[event->value];
 
 	gettimeofday(&now, NULL);
 	delay.tv_sec = mouse.clickthreshold / 1000;
@@ -332,14 +326,11 @@ normalize_event(struct wscons_event *event)
 static void
 treat_event(struct wscons_event *event)
 {
-	struct wscons_event mapped_event;
-
 	if (IS_MOTION_EVENT(event->type)) {
 		ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
 	} else if (IS_BUTTON_EVENT(event->type) &&
 	    (uint)event->value < MOUSE_MAXBUTTON) {
-		mouse_map(event, &mapped_event);
-		mouse_click(&mapped_event);
+		mouse_click(event);
 	}
 }
 
