@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.237 2014/10/13 12:44:16 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.238 2014/12/23 08:46:31 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -162,6 +162,7 @@ sub stringize
 
 sub IsFile() { 0 }
 
+sub is_a_library() { 0 }
 sub NoDuplicateNames() { 0 }
 
 
@@ -691,6 +692,8 @@ sub parse
 		return undef;
 	}
 }
+
+sub is_a_library() { 1 }
 
 package OpenBSD::PackingElement::PkgConfig;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);

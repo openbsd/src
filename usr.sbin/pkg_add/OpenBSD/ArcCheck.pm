@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.30 2014/11/30 16:44:04 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.31 2014/12/23 08:46:31 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -53,14 +53,14 @@ sub verify_modes
 	my ($o, $item) = @_;
 	my $result = 1;
 
-	if (!defined $item->{owner} && !$o->isSymLink) {
-	    if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
+	if (!defined $item->{owner}) {
+	    if ($o->{uname} ne 'root') {
 		    $o->errsay("Error: no \@owner for #1 (#2)",
 			$item->fullname, $o->{uname});
 	    		$result = 0;
 	    }
 	}
-	if (!defined $item->{group} && !$o->isSymLink) {
+	if (!defined $item->{group}) {
 	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
 		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWGRP)) != 0) {
 		    $o->errsay("Error: no \@group for #1 (#2), which has mode #3",
@@ -73,7 +73,7 @@ sub verify_modes
 	    	}
 	    }
 	}
-	if (!defined $item->{mode} && $o->isFile) {
+	if (!defined $item->{mode}) {
 	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0 ||
 	    	($o->{mode} & S_IROTH) == 0 || ($o->{mode} & S_IRGRP) == 0) {
 		    $o->errsay("Error: weird mode for #1: #2",
@@ -152,6 +152,10 @@ sub prepare_long
 	# disallow writable files/dirs without explicit annotation
 	if (!defined $item->{mode}) {
 		$entry->{mode} &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+		# and make libraries non-executable
+		if ($item->is_a_library) {
+			$entry->{mode} &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
+		}
 	}
 	# if we're going to set the group or owner, sguid bits won't
 	# survive the extraction
