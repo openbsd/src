@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.76 2014/11/16 12:30:52 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.77 2014/12/24 21:15:30 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -132,10 +132,9 @@ struct device fpevent_use;
 struct device fpevent_reuse;
 #endif
 
-#ifdef DEBUG
-static void printtrap(const unsigned long, const unsigned long,
-      const unsigned long, const unsigned long, struct trapframe *, int, int);
-#endif /* DEBUG */
+void	printtrap(const unsigned long, const unsigned long, const unsigned long,
+	    const unsigned long, struct trapframe *, int, int);
+
 /*
  * Initialize the trap vectors for the current processor.
  */
@@ -161,12 +160,10 @@ trap_init()
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 }
 
-#ifdef DEBUG
-static void
-printtrap(a0, a1, a2, entry, framep, isfatal, user)
-	const unsigned long a0, a1, a2, entry;
-	struct trapframe *framep;
-	int isfatal, user;
+void
+printtrap(const unsigned long a0, const unsigned long a1,
+    const unsigned long a2, const unsigned long entry, struct trapframe *framep,
+    int isfatal, int user)
 {
 	char ubuf[64];
 	const char *entryname;
@@ -212,7 +209,6 @@ printtrap(a0, a1, a2, entry, framep, isfatal, user)
 		       curproc->p_comm);
 	printf("\n");
 }
-#endif /* DEBUG */
 
 /*
  * Trap is called from locore to handle most types of processor traps.
@@ -504,9 +500,7 @@ out:
 	return;
 
 dopanic:
-#ifdef DEBUG
 	printtrap(a0, a1, a2, entry, framep, 1, user);
-#endif
 	/* XXX dump registers */
 
 #if defined(DDB)
