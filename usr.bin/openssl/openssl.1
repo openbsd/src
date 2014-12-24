@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.8 2014/12/19 03:58:02 lteo Exp $
+.\" $OpenBSD: openssl.1,v 1.9 2014/12/24 03:22:17 lteo Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: December 19 2014 $
+.Dd $Mdocdate: December 24 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1444,9 +1444,7 @@ Verbose option.
 List ciphers with a complete description of protocol version
 .Pq SSLv3, which includes TLS ,
 key exchange, authentication, encryption and mac algorithms used along with
-any key size restrictions and whether the algorithm is classed as an
-.Em export
-cipher.
+any key size restrictions.
 Note that without the
 .Fl v
 option, ciphers may seem to appear twice in a cipher list;
@@ -1562,12 +1560,7 @@ encryption cipher suites, currently those using 128-bit encryption.
 .It Ar LOW
 .Qq Low
 encryption cipher suites, currently those using 64- or 56-bit encryption
-algorithms, but excluding export cipher suites.
-.It Ar EXP , EXPORT
-Export encryption algorithms.
-Including 40- and 56-bit algorithms.
-.It Ar EXPORT40
-40-bit export encryption algorithms.
+algorithms.
 .It Ar eNULL , NULL
 The
 .Qq NULL
@@ -1603,138 +1596,17 @@ Cipher suites using DES
 .Pq not triple DES .
 .It Ar RC4
 Cipher suites using RC4.
-.It Ar RC2
-Cipher suites using RC2.
+.It Ar CAMELLIA
+Cipher suites using Camellia.
+.It Ar CHACHA20
+Cipher suites using ChaCha20.
+.It Ar IDEA
+Cipher suites using IDEA.
 .It Ar MD5
 Cipher suites using MD5.
 .It Ar SHA1 , SHA
 Cipher suites using SHA1.
 .El
-.Sh CIPHERS SUITE NAMES
-The following lists give the SSL or TLS cipher suites names from the
-relevant specification and their
-.Nm OpenSSL
-equivalents.
-It should be noted that several cipher suite names do not include the
-authentication used, e.g. DES-CBC3-SHA.
-In these cases, RSA authentication is used.
-.Ss SSL v3.0 cipher suites
-.Bd -unfilled -offset indent
-SSL_RSA_WITH_NULL_MD5                   NULL-MD5
-SSL_RSA_WITH_NULL_SHA                   NULL-SHA
-SSL_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
-SSL_RSA_WITH_RC4_128_MD5                RC4-MD5
-SSL_RSA_WITH_RC4_128_SHA                RC4-SHA
-SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
-SSL_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
-SSL_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
-SSL_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
-SSL_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
-
-SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-SSL_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
-SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
-SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-SSL_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
-SSL_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
-SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
-SSL_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
-SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
-SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
-SSL_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
-SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
-
-SSL_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
-SSL_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
-SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
-SSL_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
-SSL_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
-
-SSL_FORTEZZA_KEA_WITH_NULL_SHA          Not implemented.
-SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA  Not implemented.
-SSL_FORTEZZA_KEA_WITH_RC4_128_SHA       Not implemented.
-.Ed
-.Ss TLS v1.0 cipher suites
-.Bd -unfilled -offset indent
-TLS_RSA_WITH_NULL_MD5                   NULL-MD5
-TLS_RSA_WITH_NULL_SHA                   NULL-SHA
-TLS_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
-TLS_RSA_WITH_RC4_128_MD5                RC4-MD5
-TLS_RSA_WITH_RC4_128_SHA                RC4-SHA
-TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
-TLS_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
-TLS_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
-TLS_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
-TLS_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
-
-TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-TLS_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
-TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
-TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-TLS_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
-TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
-TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
-TLS_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
-TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
-TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
-TLS_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
-TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
-
-TLS_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
-TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
-TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
-TLS_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
-TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
-.Ed
-.Ss AES ciphersuites from RFC 3268, extending TLS v1.0
-.Bd -unfilled -offset indent
-TLS_RSA_WITH_AES_128_CBC_SHA            AES128-SHA
-TLS_RSA_WITH_AES_256_CBC_SHA            AES256-SHA
-
-TLS_DH_DSS_WITH_AES_128_CBC_SHA         Not implemented.
-TLS_DH_DSS_WITH_AES_256_CBC_SHA         Not implemented.
-TLS_DH_RSA_WITH_AES_128_CBC_SHA         Not implemented.
-TLS_DH_RSA_WITH_AES_256_CBC_SHA         Not implemented.
-
-TLS_DHE_DSS_WITH_AES_128_CBC_SHA        DHE-DSS-AES128-SHA
-TLS_DHE_DSS_WITH_AES_256_CBC_SHA        DHE-DSS-AES256-SHA
-TLS_DHE_RSA_WITH_AES_128_CBC_SHA        DHE-RSA-AES128-SHA
-TLS_DHE_RSA_WITH_AES_256_CBC_SHA        DHE-RSA-AES256-SHA
-
-TLS_DH_anon_WITH_AES_128_CBC_SHA        ADH-AES128-SHA
-TLS_DH_anon_WITH_AES_256_CBC_SHA        ADH-AES256-SHA
-.Ed
-.Ss GOST ciphersuites from draft-chudov-cryptopro-cptls, extending TLS v1.0
-.Sy Note :
-These ciphers require an engine which includes GOST cryptographic
-algorithms, such as the
-.Dq ccgost
-engine, included in the OpenSSL distribution.
-.Bd -unfilled -offset indent
-TLS_GOSTR341094_WITH_28147_CNT_IMIT	GOST94-GOST89-GOST89
-TLS_GOSTR341001_WITH_28147_CNT_IMIT	GOST2001-GOST89-GOST89
-TLS_GOSTR341094_WITH_NULL_GOSTR3411	GOST94-NULL-GOST94
-TLS_GOSTR341001_WITH_NULL_GOSTR3411	GOST2001-NULL-GOST94
-.Ed
-.Ss Additional Export 1024 and other cipher suites
-.Sy Note :
-These ciphers can also be used in SSL v3.
-.Bd -unfilled -offset indent
-TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA     EXP1024-DES-CBC-SHA
-TLS_RSA_EXPORT1024_WITH_RC4_56_SHA      EXP1024-RC4-SHA
-TLS_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA EXP1024-DHE-DSS-DES-CBC-SHA
-TLS_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA  EXP1024-DHE-DSS-RC4-SHA
-TLS_DHE_DSS_WITH_RC4_128_SHA            DHE-DSS-RC4-SHA
-.Ed
-.Sh CIPHERS NOTES
-The non-ephemeral DH modes are currently unimplemented in
-.Nm OpenSSL
-because there is no support for DH certificates.
-.Pp
-Some compiled versions of
-.Nm OpenSSL
-may not include all the ciphers
-listed here because some ciphers were excluded at compile time.
 .Sh CIPHERS EXAMPLES
 Verbose listing of all
 .Nm OpenSSL
@@ -1759,22 +1631,6 @@ Include all ciphers with RSA authentication but leave out ciphers without
 encryption:
 .Pp
 .Dl $ openssl ciphers -v 'RSA:!COMPLEMENTOFALL'
-.Sh CIPHERS HISTORY
-The
-.Ar COMPLEMENTOFALL
-and
-.Ar COMPLEMENTOFDEFAULT
-selection options were added in
-.Nm OpenSSL
-0.9.7.
-.Pp
-The
-.Fl V
-option of the
-.Nm ciphers
-command was added in
-.Nm OpenSSL
-1.0.0.
 .\"
 .\" CRL
 .\"
