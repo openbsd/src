@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.33 2014/11/03 16:47:55 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.34 2014/12/24 22:04:26 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -42,23 +42,20 @@
  * line.  Useful for scripts and such.
  */
 
-#define DO_MAKEKEY 0
-#define DO_DES     1
-#define DO_BLF     2
-
 extern char *__progname;
-char buffer[_PASSWORD_LEN];
 
 void	usage(void);
 int	ideal_rounds(void);
 void	print_passwd(char *, int, void *);
+
+#define DO_BLF		0
 
 void
 usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-k] [-b rounds] [-c class] [-p | string] [-s salt]\n",
+	    "usage: %s [-b rounds] [-c class] [-p | string]\n",
 	    __progname);
 	exit(1);
 }
@@ -100,49 +97,27 @@ ideal_rounds(void)
 void
 print_passwd(char *string, int operation, void *extra)
 {
-	char msalt[3], *salt, *cryptstr;
-	login_cap_t *lc;
-	int pwd_gensalt(char *, int, login_cap_t *, char);
-	void to64(char *, u_int32_t, int n);
+	char buffer[_PASSWORD_LEN];
 
 	if (operation == DO_BLF) {
-		if (bcrypt_newhash(string, *(int *)extra, buffer,
-		    sizeof(buffer)) != 0)
+		int rounds = *(int *)extra;
+		if (bcrypt_newhash(string, rounds, buffer, sizeof(buffer)) != 0)
 			errx(1, "bcrypt newhash failed");
 		fputs(buffer, stdout);
 		return;
-	}
+	} else {
+		login_cap_t *lc;
+		const char *pref;
 
-	switch(operation) {
-	case DO_MAKEKEY:
-		/*
-		 * makekey mode: parse string into separate DES key and salt.
-		 */
-		if (strlen(string) != 10) {
-			/* To be compatible... */
-			errx(1, "%s", strerror(EFTYPE));
-		}
-		strlcpy(msalt, &string[8], sizeof msalt);
-		salt = msalt;
-		break;
-
-	case DO_DES:
-		salt = extra;
-		break;
-
-	default:
 		if ((lc = login_getclass(extra)) == NULL)
 			errx(1, "unable to get login class `%s'",
 			    extra ? (char *)extra : "default");
-		if (!pwd_gensalt(buffer, _PASSWORD_LEN, lc, 'l'))
-			errx(1, "can't generate salt");
-		salt = buffer;
-		break;
+		pref = login_getcapstr(lc, "localcipher", NULL, NULL);
+		if (crypt_newhash(string, pref, buffer, sizeof(buffer)) != 0)
+			errx(1, "can't generate hash");
 	}
 
-	if ((cryptstr = crypt(string, salt)) == NULL)
-		errx(1, "crypt failed");
-	fputs(cryptstr, stdout);
+	fputs(buffer, stdout);
 }
 
 int
@@ -155,30 +130,11 @@ main(int argc, char **argv)
 	void *extra = NULL;		/* Store salt or number of rounds */
 	const char *errstr;
 
-	if (strcmp(__progname, "makekey") == 0)
-		operation = DO_MAKEKEY;
-
-	while ((opt = getopt(argc, argv, "kps:b:c:")) != -1) {
+	while ((opt = getopt(argc, argv, "pb:c:")) != -1) {
 		switch (opt) {
-		case 'k':                       /* Stdin/Stdout Unix crypt */
-			if (operation != -1 || prompt)
-				usage();
-			operation = DO_MAKEKEY;
-			break;
-
 		case 'p':
-			if (operation == DO_MAKEKEY)
-				usage();
 			prompt = 1;
 			break;
-
-		case 's':                       /* Unix crypt (DES) */
-			if (operation != -1 || optarg[0] == '$')
-				usage();
-			operation = DO_DES;
-			extra = optarg;
-			break;
-
 		case 'b':                       /* Blowfish password hash */
 			if (operation != -1)
 				usage();
@@ -191,18 +147,16 @@ main(int argc, char **argv)
 				errx(1, "%s: %s", errstr, optarg);
 			extra = &rounds;
 			break;
-
 		case 'c':                       /* user login class */
 			extra = optarg;
 			operation = -1;
 			break;
-
 		default:
 			usage();
 		}
 	}
 
-	if (((argc - optind) < 1) || operation == DO_MAKEKEY) {
+	if (((argc - optind) < 1)) {
 		char line[BUFSIZ], *string;
 
 		if (prompt) {
@@ -223,10 +177,6 @@ main(int argc, char **argv)
 
 				print_passwd(line, operation, extra);
 
-				if (operation == DO_MAKEKEY) {
-					fflush(stdout);
-					break;
-				}
 				(void)fputc('\n', stdout);
 			}
 		}
