@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.19 2014/07/08 07:59:31 sobrado Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.20 2014/12/24 13:51:31 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -770,7 +770,7 @@ io_dispatch_connect_ssl(int fd, short event, void *humppa)
 	default:
 		io->error = io_ssl_error();
 		ssl_error("io_dispatch_connect_ssl:SSL_connect");
-		io_callback(io, IO_ERROR);
+		io_callback(io, IO_TLSERROR);
 		break;
 	}
 
