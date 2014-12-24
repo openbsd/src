@@ -751,6 +751,19 @@ sub installlib {
 	return unless $do_installprivlib;
     }
 
+    if ($name eq 'Config_heavy.pl') {
+        open my $ifh, '<', $_ or die $!;
+        $_ = "$_.local";
+        open my $ofh, '>', $_ or die $!;
+        while (my $l = <$ifh>) {
+            $l =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,;
+            $l =~ s,^(ldflags|lddlflags)[^=]*='[^']+,$& -L/usr/local/lib,;
+            print $ofh $l;
+        }
+        close $ifh;
+        close $ofh;
+    }
+
     if ($Is_NetWare && !$opts{netware} && /\.(?:nlp|nlm|bs)$/) {
         # Don't copy .nlp,.nlm files, doesn't make sense on Windows and also
         # if copied will give problems when building new extensions.

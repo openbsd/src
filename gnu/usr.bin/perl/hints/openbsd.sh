@@ -147,8 +147,8 @@ case "$openbsd_distribution" in
 	siteprefix='/usr/local'
 	siteprefixexp='/usr/local'
 	# Ports installs non-std libs in /usr/local/lib so look there too
-	locincpth='/usr/local/include'
-	loclibpth='/usr/local/lib'
+	locincpth=''
+	loclibpth=''
 	# Link perl with shared libperl
 	if [ "$usedl" = "$define" -a -r $src/shlib_version ]; then
 		useshrplib=true
