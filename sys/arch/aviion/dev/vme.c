@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.15 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: vme.c,v 1.16 2014/12/24 22:48:27 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -836,7 +836,7 @@ vmebus_get_bst(struct device *vsc, u_int aspace, u_int dspace,
 void
 vmebus_release_bst(struct device *vsc, bus_space_tag_t b)
 {
-	free((void *)b, M_DEVBUF, 0);
+	free((void *)b, M_DEVBUF, sizeof(struct aviion_bus_space_tag));
 }
 
 /*

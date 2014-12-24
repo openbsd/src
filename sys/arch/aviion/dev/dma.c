@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.2 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: dma.c,v 1.3 2014/12/24 22:48:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -139,7 +139,7 @@ dma_intr(void *v)
 		if (req->cbdone != NULL)
 			(*req->cbdone)(req->cbarg);
 
-		free(req, M_DEVBUF, 0);
+		free(req, M_DEVBUF, sizeof *req);
 	} else {
 		req->mem += req->lastcnt;
 	}

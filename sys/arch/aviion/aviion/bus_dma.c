@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.9 2014/11/16 12:30:56 deraadt Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.10 2014/12/24 22:48:27 miod Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -112,8 +112,11 @@ bus_dmamap_destroy(t, map)
         bus_dma_tag_t t;
         bus_dmamap_t map;
 {
+        size_t mapsize;
 
-        free(map, M_DEVBUF, 0);
+        mapsize = sizeof(struct m88k_bus_dmamap) +
+            (sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
+        free(map, M_DEVBUF, mapsize);
 }
 
 /*
