@@ -1,0 +1,16 @@
+.TH TBL-MISALIGN 1 "December 24, 2014" OpenBSD
+.SH NAME
+tbl-misalign \- failing alignment in tables
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+n, nz.
+12.34
+_
+100.0
+0.001
+_
+1000.0
+0.0001
+.TE

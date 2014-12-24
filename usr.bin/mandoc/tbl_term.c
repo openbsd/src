@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.19 2014/10/14 18:16:57 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.20 2014/12/24 15:37:23 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -415,9 +415,13 @@ tbl_number(struct termp *tp, const struct tbl_opts *opts,
 	} else
 		d = sz + psz;
 
-	padl = col->decimal - d;
-
-	tbl_char(tp, ASCII_NBRSP, padl);
+	if (col->decimal > d && col->width > sz) {
+		padl = col->decimal - d;
+		if (padl + sz > col->width)
+			padl = col->width - sz;
+		tbl_char(tp, ASCII_NBRSP, padl);
+	} else
+		padl = 0;
 	tbl_word(tp, dp);
 	if (col->width > sz + padl)
 		tbl_char(tp, ASCII_NBRSP, col->width - sz - padl);
