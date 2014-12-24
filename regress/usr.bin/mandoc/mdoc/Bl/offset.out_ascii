@@ -23,6 +23,8 @@ DDEESSCCRRIIPPTTIIOONN
                                                                                    offset
                                                                                    78n
 
+  Bl item offset -3n
+
      tag     Bl tag width Ds offset empty
 
          tag     Bl tag width Ds offset left
@@ -44,4 +46,6 @@ DDEESSCCRRIIPPTTIIOONN
                                                                                            offset
                                                                                            78n
 
-OpenBSD                        November 20, 2014                       OpenBSD
+  tag     Bl tag width Ds offset -3n
+
+OpenBSD                        December 25, 2014                       OpenBSD

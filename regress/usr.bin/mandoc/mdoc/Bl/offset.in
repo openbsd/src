@@ -1,4 +1,4 @@
-.Dd November 20, 2014
+.Dd December 25, 2014
 .Dt BL-OFFSET 1
 .Os OpenBSD
 .Sh NAME
@@ -37,6 +37,10 @@ Bl item offset Ds
 .It
 Bl item offset 78n
 .El
+.Bl -item -offset -3n
+.It
+Bl item offset -3n
+.El
 .Bl -tag -width Ds -offset
 .It tag
 Bl tag width Ds offset empty
@@ -68,4 +72,8 @@ Bl tag width Ds offset Ds
 .Bl -tag -width Ds -offset 78n
 .It tag
 Bl tag width Ds offset 78n
+.El
+.Bl -tag -width Ds -offset -3n
+.It tag
+Bl tag width Ds offset -3n
 .El

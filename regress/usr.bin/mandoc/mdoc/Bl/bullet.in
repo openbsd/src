@@ -1,10 +1,26 @@
-.Dd June 17, 2009
+.Dd December 25, 2014
 .Dt BL-BULLET 1
 .Os OpenBSD
 .Sh NAME
 .Nm Bl-bullet
 .Nd bullet lists
 .Sh DESCRIPTION
+.Bl -bullet -width -4n
+.It
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -bullet -width -3n
+.It
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -bullet -width -2n
+.It
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -bullet -width -1n
+.It
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
 .Bl -bullet -width 0n
 .It
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x

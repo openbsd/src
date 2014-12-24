@@ -1,10 +1,46 @@
-.Dd November 16, 2014
+.Dd December 25, 2014
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
 .Nm Bl-tag
 .Nd tagged lists
 .Sh DESCRIPTION
+.Bl -tag -width -4n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width -3n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width -2n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width -1n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 0n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 1n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 2n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 3n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 4n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
 .Bl -tag -width 5n
 .It tag
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x

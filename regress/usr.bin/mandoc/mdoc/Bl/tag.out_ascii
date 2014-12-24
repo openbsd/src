@@ -4,6 +4,40 @@ NNAAMMEE
      BBll--ttaagg - tagged lists
 
 DDEESSCCRRIIPPTTIIOONN
+     tag
+   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+   x x
+
+     tag
+    x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+    x x x
+
+     tag
+     x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+     x x x
+
+     tag
+      x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+      x x x x
+
+     tag
+       x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+       x x x x
+
+     tag
+        x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+        x x x x x
+
+     tag
+         x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+         x x x x x
+
+     tag  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+          x x x x x x
+
+     tag   x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+           x x x x x x
+
      tag    x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x
 
@@ -77,4 +111,4 @@ DDEESSCCRRIIPPTTIIOONN
 
              second paragraph
 
-OpenBSD                        November 16, 2014                       OpenBSD
+OpenBSD                        December 25, 2014                       OpenBSD

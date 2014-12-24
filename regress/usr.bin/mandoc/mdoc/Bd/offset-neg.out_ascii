@@ -1,0 +1,21 @@
+BD-INDENT(1)                General Commands Manual               BD-INDENT(1)
+
+NNAAMMEE
+     BBdd--iinnddeenntt - indenting display blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     regular text
+
+             outer display
+
+        inner display
+             outer display
+     regular text
+
+  outer display
+
+          inner display
+  outer display
+     regular text
+
+OpenBSD                        December 24, 2014                       OpenBSD

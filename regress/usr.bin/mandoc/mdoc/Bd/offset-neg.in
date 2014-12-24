@@ -1,0 +1,24 @@
+.Dd December 24, 2014
+.Dt BD-INDENT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bd-indent
+.Nd indenting display blocks
+.Sh DESCRIPTION
+regular text
+.Bd -ragged -offset 8n
+outer display
+.Bd -ragged -offset -5n
+inner display
+.Ed
+outer display
+.Ed
+regular text
+.Bd -ragged -offset -3n
+outer display
+.Bd -ragged -offset 8n
+inner display
+.Ed
+outer display
+.Ed
+regular text

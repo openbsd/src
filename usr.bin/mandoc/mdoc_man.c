@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.78 2014/12/23 13:48:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.79 2014/12/24 23:31:59 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -114,8 +114,8 @@ static	void	  print_word(const char *);
 static	void	  print_line(const char *, int);
 static	void	  print_block(const char *, int);
 static	void	  print_offs(const char *, int);
-static	void	  print_width(const char *,
-				const struct mdoc_node *, size_t);
+static	void	  print_width(const struct mdoc_bl *,
+			const struct mdoc_node *);
 static	void	  print_count(int *);
 static	void	  print_node(DECL_ARGS);
 
@@ -263,7 +263,7 @@ static	int		outflags;
 
 #define	BL_STACK_MAX	32
 
-static	size_t		Bl_stack[BL_STACK_MAX];  /* offsets [chars] */
+static	int		Bl_stack[BL_STACK_MAX];  /* offsets [chars] */
 static	int		Bl_stack_post[BL_STACK_MAX];  /* add final .RE */
 static	int		Bl_stack_len;  /* number of nested Bl blocks */
 static	int		TPremain;  /* characters before tag is full */
@@ -421,7 +421,7 @@ print_offs(const char *v, int keywords)
 {
 	char		  buf[24];
 	struct roffsu	  su;
-	size_t		  sz;
+	int		  sz;
 
 	print_line(".RS", MMAN_Bk_susp);
 
@@ -433,8 +433,6 @@ print_offs(const char *v, int keywords)
 	else if (keywords && !strcmp(v, "indent-two"))
 		sz = 12;
 	else if (a2roffsu(v, &su, SCALE_EN) > 1) {
-		if (su.scale < 0.0)
-			su.scale = 0.0;
 		if (SCALE_EN == su.unit)
 			sz = su.scale;
 		else {
@@ -459,7 +457,7 @@ print_offs(const char *v, int keywords)
 	if (Bl_stack_len)
 		sz += Bl_stack[Bl_stack_len - 1];
 
-	(void)snprintf(buf, sizeof(buf), "%zun", sz);
+	(void)snprintf(buf, sizeof(buf), "%dn", sz);
 	print_word(buf);
 	outflags |= MMAN_nl;
 }
@@ -468,22 +466,19 @@ print_offs(const char *v, int keywords)
  * Set up the indentation for a list item; used from pre_it().
  */
 static void
-print_width(const char *v, const struct mdoc_node *child, size_t defsz)
+print_width(const struct mdoc_bl *bl, const struct mdoc_node *child)
 {
 	char		  buf[24];
 	struct roffsu	  su;
-	size_t		  sz, chsz;
-	int		  numeric, remain;
+	int		  numeric, remain, sz, chsz;
 
 	numeric = 1;
 	remain = 0;
 
-	/* Convert v into a number (of characters). */
-	if (NULL == v)
-		sz = defsz;
-	else if (a2roffsu(v, &su, SCALE_MAX) > 1) {
-		if (su.scale < 0.0)
-			su.scale = 0.0;
+	/* Convert the width into a number (of characters). */
+	if (bl->width == NULL)
+		sz = (bl->type == LIST_hang) ? 6 : 0;
+	else if (a2roffsu(bl->width, &su, SCALE_MAX) > 1) {
 		if (SCALE_EN == su.unit)
 			sz = su.scale;
 		else {
@@ -491,11 +486,15 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 			numeric = 0;
 		}
 	} else
-		sz = strlen(v);
+		sz = strlen(bl->width);
 
 	/* XXX Rough estimation, might have multiple parts. */
-	chsz = (NULL != child && MDOC_TEXT == child->type) ?
-	    strlen(child->string) : 0;
+	if (bl->type == LIST_enum)
+		chsz = (bl->count > 8) + 1;
+	else if (child != NULL && child->type == MDOC_TEXT)
+		chsz = strlen(child->string);
+	else
+		chsz = 0;
 
 	/* Maybe we are inside an enclosing list? */
 	mid_it();
@@ -507,17 +506,17 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 	Bl_stack[Bl_stack_len++] = sz + 2;
 
 	/* Set up the current list. */
-	if (defsz && chsz > sz)
+	if (chsz > sz && bl->type != LIST_tag)
 		print_block(".HP", 0);
 	else {
 		print_block(".TP", 0);
 		remain = sz + 2;
 	}
 	if (numeric) {
-		(void)snprintf(buf, sizeof(buf), "%zun", sz + 2);
+		(void)snprintf(buf, sizeof(buf), "%dn", sz + 2);
 		print_word(buf);
 	} else
-		print_word(v);
+		print_word(bl->width);
 	TPremain = remain;
 }
 
@@ -526,7 +525,7 @@ print_count(int *count)
 {
 	char		  buf[24];
 
-	(void)snprintf(buf, sizeof(buf), "%d.", ++*count);
+	(void)snprintf(buf, sizeof(buf), "%d.\\&", ++*count);
 	print_word(buf);
 }
 
@@ -1364,7 +1363,7 @@ pre_it(DECL_ARGS)
 		case LIST_dash:
 			/* FALLTHROUGH */
 		case LIST_hyphen:
-			print_width(bln->norm->Bl.width, NULL, 0);
+			print_width(&bln->norm->Bl, NULL);
 			TPremain = 0;
 			outflags |= MMAN_nl;
 			font_push('B');
@@ -1376,19 +1375,19 @@ pre_it(DECL_ARGS)
 			outflags |= MMAN_nl;
 			return(0);
 		case LIST_enum:
-			print_width(bln->norm->Bl.width, NULL, 0);
+			print_width(&bln->norm->Bl, NULL);
 			TPremain = 0;
 			outflags |= MMAN_nl;
 			print_count(&bln->norm->Bl.count);
 			outflags |= MMAN_nl;
 			return(0);
 		case LIST_hang:
-			print_width(bln->norm->Bl.width, n->child, 6);
+			print_width(&bln->norm->Bl, n->child);
 			TPremain = 0;
 			outflags |= MMAN_nl;
 			return(1);
 		case LIST_tag:
-			print_width(bln->norm->Bl.width, n->child, 0);
+			print_width(&bln->norm->Bl, n->child);
 			putchar('\n');
 			outflags &= ~MMAN_spc;
 			return(1);
@@ -1420,7 +1419,7 @@ mid_it(void)
 
 	/* Restore the indentation of the enclosing list. */
 	print_line(".RS", MMAN_Bk_susp);
-	(void)snprintf(buf, sizeof(buf), "%zun",
+	(void)snprintf(buf, sizeof(buf), "%dn",
 	    Bl_stack[Bl_stack_len - 1]);
 	print_word(buf);
 

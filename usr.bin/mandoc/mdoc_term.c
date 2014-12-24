@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.200 2014/12/23 13:48:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.201 2014/12/24 23:31:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +48,7 @@ struct	termact {
 	void	(*post)(DECL_ARGS);
 };
 
-static	size_t	  a2width(const struct termp *, const char *);
+static	int	  a2width(const struct termp *, const char *);
 
 static	void	  print_bvspace(struct termp *,
 			const struct mdoc_node *,
@@ -523,7 +524,7 @@ print_mdoc_head(struct termp *p, const void *arg)
 	free(volume);
 }
 
-static size_t
+static int
 a2width(const struct termp *p, const char *v)
 {
 	struct roffsu	 su;
@@ -531,9 +532,7 @@ a2width(const struct termp *p, const char *v)
 	if (a2roffsu(v, &su, SCALE_MAX) < 2) {
 		SCALE_HS_INIT(&su, term_strlen(p, v));
 		su.scale /= term_strlen(p, "0");
-	} else if (su.scale < 0.0)
-		su.scale = 0.0;
-
+	}
 	return(term_hspan(p, &su));
 }
 
@@ -604,10 +603,10 @@ termp_ll_pre(DECL_ARGS)
 static int
 termp_it_pre(DECL_ARGS)
 {
-	const struct mdoc_node *bl, *nn;
 	char			buf[24];
-	int			i;
-	size_t			width, offset, ncols, dcol;
+	const struct mdoc_node *bl, *nn;
+	size_t			ncols, dcol;
+	int			i, offset, width;
 	enum mdoc_list		type;
 
 	if (MDOC_BLOCK == n->type) {
@@ -619,15 +618,46 @@ termp_it_pre(DECL_ARGS)
 	type = bl->norm->Bl.type;
 
 	/*
+	 * Defaults for specific list types.
+	 */
+
+	switch (type) {
+	case LIST_bullet:
+		/* FALLTHROUGH */
+	case LIST_dash:
+		/* FALLTHROUGH */
+	case LIST_hyphen:
+		/* FALLTHROUGH */
+	case LIST_enum:
+		width = term_len(p, 2);
+		break;
+	case LIST_hang:
+		width = term_len(p, 8);
+		break;
+	case LIST_column:
+		/* FALLTHROUGH */
+	case LIST_tag:
+		width = term_len(p, 10);
+		break;
+	default:
+		width = 0;
+		break;
+	}
+	offset = 0;
+
+	/*
 	 * First calculate width and offset.  This is pretty easy unless
 	 * we're a -column list, in which case all prior columns must
 	 * be accounted for.
 	 */
 
-	width = offset = 0;
-
-	if (bl->norm->Bl.offs)
+	if (bl->norm->Bl.offs != NULL) {
 		offset = a2width(p, bl->norm->Bl.offs);
+		if (offset < 0 && (size_t)(-offset) > p->offset)
+			offset = -p->offset;
+		else if (offset > SHRT_MAX)
+			offset = 0;
+	}
 
 	switch (type) {
 	case LIST_column:
@@ -682,39 +712,11 @@ termp_it_pre(DECL_ARGS)
 		 * number for buffering single arguments.  See the above
 		 * handling for column for how this changes.
 		 */
-		assert(bl->norm->Bl.width);
 		width = a2width(p, bl->norm->Bl.width) + term_len(p, 2);
-		break;
-	}
-
-	/*
-	 * List-type can override the width in the case of fixed-head
-	 * values (bullet, dash/hyphen, enum).  Tags need a non-zero
-	 * offset.
-	 */
-
-	switch (type) {
-	case LIST_bullet:
-		/* FALLTHROUGH */
-	case LIST_dash:
-		/* FALLTHROUGH */
-	case LIST_hyphen:
-		/* FALLTHROUGH */
-	case LIST_enum:
-		if (width < term_len(p, 2))
-			width = term_len(p, 2);
-		break;
-	case LIST_hang:
-		if (0 == width)
-			width = term_len(p, 8);
-		break;
-	case LIST_column:
-		/* FALLTHROUGH */
-	case LIST_tag:
-		if (0 == width)
-			width = term_len(p, 10);
-		break;
-	default:
+		if (width < 0 && (size_t)(-width) > p->offset)
+			width = -p->offset;
+		else if (width > SHRT_MAX)
+			width = 0;
 		break;
 	}
 
@@ -760,16 +762,16 @@ termp_it_pre(DECL_ARGS)
 	case LIST_enum:
 		/*
 		 * Weird special case.
-		 * Very narrow enum lists actually hang.
+		 * Some very narrow lists actually hang.
 		 */
-		if (width == term_len(p, 2))
-			p->flags |= TERMP_HANG;
 		/* FALLTHROUGH */
 	case LIST_bullet:
 		/* FALLTHROUGH */
 	case LIST_dash:
 		/* FALLTHROUGH */
 	case LIST_hyphen:
+		if (width <= (int)term_len(p, 2))
+			p->flags |= TERMP_HANG;
 		if (MDOC_HEAD != n->type)
 			break;
 		p->flags |= TERMP_NOBREAK;
@@ -858,7 +860,6 @@ termp_it_pre(DECL_ARGS)
 	case LIST_hyphen:
 		/* FALLTHROUGH */
 	case LIST_tag:
-		assert(width);
 		if (MDOC_HEAD == n->type)
 			p->rmargin = p->offset + width;
 		else
@@ -1538,6 +1539,7 @@ termp_bd_pre(DECL_ARGS)
 {
 	size_t			 tabwidth, lm, len, rm, rmax;
 	struct mdoc_node	*nn;
+	int			 offset;
 
 	if (MDOC_BLOCK == n->type) {
 		print_bvspace(p, n, n);
@@ -1554,8 +1556,13 @@ termp_bd_pre(DECL_ARGS)
 		p->offset += term_len(p, p->defindent + 1);
 	else if ( ! strcmp(n->norm->Bd.offs, "indent-two"))
 		p->offset += term_len(p, (p->defindent + 1) * 2);
-	else
-		p->offset += a2width(p, n->norm->Bd.offs);
+	else {
+		offset = a2width(p, n->norm->Bd.offs);
+		if (offset < 0 && (size_t)(-offset) > p->offset)
+			p->offset = 0;
+		else if (offset < SHRT_MAX)
+			p->offset += offset;
+	}
 
 	/*
 	 * If -ragged or -filled are specified, the block does nothing

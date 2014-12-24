@@ -1,10 +1,55 @@
-.Dd April 8, 2014
+.Dd December 25, 2014
 .Dt BL-HANG 1
 .Os OpenBSD
 .Sh NAME
 .Nm Bl-hang
 .Nd hanged lists
 .Sh DESCRIPTION
+.Bl -hang -width -4n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width -3n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width -2n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width -1n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width 0n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width 1n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width 2n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width 3n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width 4n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
 .Bl -hang -width 5n
 .It tag
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
