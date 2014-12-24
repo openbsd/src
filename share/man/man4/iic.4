@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.82 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: iic.4,v 1.83 2014/12/24 18:46:12 miod Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: December 24 2014 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Cd "iic* at viapm?                 # amd64 i386"
 .Cd "iic* at gpioiic?               # i386"
 .Cd "iic* at gdiumiic?              # loongson"
+.Cd "iic* at tsciic?                # alpha"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting

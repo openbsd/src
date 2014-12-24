@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.100 2014/12/04 21:03:50 tedu Exp $
+#	$OpenBSD: files.alpha,v 1.101 2014/12/24 18:46:14 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -211,6 +211,10 @@ file	arch/alpha/pci/irongate_pci.c		irongate
 device	tsc {}
 attach	tsc at mainbus
 file	arch/alpha/pci/tsc.c			tsc
+
+device	tsciic: i2cbus, i2c_bitbang
+attach	tsciic at tsc
+file	arch/alpha/pci/tsciic.c			tsciic
 
 device	tsp: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	tsp at tsc

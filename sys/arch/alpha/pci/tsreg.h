@@ -1,4 +1,4 @@
-/* $OpenBSD: tsreg.h,v 1.5 2009/10/02 18:01:47 miod Exp $ */
+/* $OpenBSD: tsreg.h,v 1.6 2014/12/24 18:46:14 miod Exp $ */
 /* $NetBSD: tsreg.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -93,6 +93,11 @@
 #	define	MISC_REV(r)	TSFIELD((r), 39, 8)
 
 #define TS_C_MPD	0x101##a000##00c0UL
+
+#	define	MPD_DR	0x08	/* RO: Data receive */
+#	define	MPD_CKR	0x04	/* RO: Clock receive */
+#	define	MPD_DS	0x02	/* WO: Data send - Must be a 1 to receive */
+#	define	MPD_CKS	0x01	/* WO: Clock send */
 
 #define TS_C_AAR0	0x101##a000##0100UL
 #define TS_C_AAR1	0x101##a000##0140UL
