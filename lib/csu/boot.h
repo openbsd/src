@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.5 2014/12/24 08:58:46 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.6 2014/12/24 14:04:09 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -159,27 +159,40 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 		table[i++] = DT_FINI;
 		table[i++] = DT_REL;
 		table[i++] = DT_JMPREL;
+		table[i++] = DT_PLTREL;
 		/* other processors insert their extras here */
 		table[i++] = DT_NULL;
 		for (i = 0; table[i] != DT_NULL; i++) {
 			val = table[i];
 			if (val >= DT_LOPROC && val < DT_LOPROC + DT_PROCNUM)
 				val = val - DT_LOPROC + DT_NUM;
-			else if (val >= DT_NUM)
+			else if (val >= DT_NUM || val == DT_PLTREL)
 				continue;
 			if (dynld.Dyn.info[val] != 0)
 				dynld.Dyn.info[val] += loff;
 		}
 	}
 
-	{
+	for (n = 0; n < 2; n++) {
 		u_int32_t rs;
 		Elf_Rel *rp;
 		int	i;
 
-		rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
-		rs = dynld.dyn.relsz;
-
+		switch (n) {
+		case 0:
+			if (dynld.Dyn.info[DT_PLTREL] != DT_REL)
+				continue;
+			rp = (Elf_Rel *)(dynld.Dyn.info[DT_JMPREL]);
+			rs = dynld.dyn.pltrelsz;
+			break;
+		case 1:
+			rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
+			rs = dynld.dyn.relsz;
+			break;
+		default:
+			rp = NULL;
+			rs = 0;
+		}
 		for (i = 0; i < rs; i += sizeof (Elf_Rel), rp++) {
 			Elf_Addr *ra;
 			const Elf_Sym *sp;
@@ -214,6 +227,8 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 
 		switch (n) {
 		case 0:
+			if (dynld.Dyn.info[DT_PLTREL] != DT_RELA)
+				continue;
 			rp = (Elf_RelA *)(dynld.Dyn.info[DT_JMPREL]);
 			rs = dynld.dyn.pltrelsz;
 			break;

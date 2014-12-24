@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.12 2014/12/22 21:58:25 kurt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.13 2014/12/24 14:04:09 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -79,17 +79,6 @@ static inline void
 RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
     Elf_Addr *pltgot)
 {
-	/* does i386 use RELA type relocations? - XXX */
-
-	if (ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
-		*p = v + r->r_addend;
-	} else if (ELF32_R_TYPE(r->r_info) == RELOC_GLOB_DAT) {
-		*p = v + s->st_value + r->r_addend;
-	} else if (ELF32_R_TYPE(r->r_info) == RELOC_NONE) {
-	} else {
-		_dl_printf("unknown bootstrap relocation\n");
-		_dl_exit(6);
-	}
 }
 
 #define RELOC_GOT(obj, offs)
