@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.36 2014/12/12 14:23:17 schwarze Exp $
+.\"	$OpenBSD: pcap.3,v 1.37 2014/12/24 03:25:42 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: December 12 2014 $
+.Dd $Mdocdate: December 24 2014 $
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Sh SYNOPSIS
 .In pcap.h
 .Ft "pcap_t *"
-.Fn pcap_open_live "char *device" "int snaplen" "int promisc" "int to_ms" "char *errbuf"
+.Fn pcap_open_live "const char *source" "int snaplen" "int promisc" "int to_ms" "char *errbuf"
 .Ft "pcap_t *"
 .Fn pcap_open_offline "char *fname" "char *errbuf"
 .Ft "pcap_dumper_t *"
@@ -44,23 +44,23 @@
 .Ft int
 .Fn pcap_loop "pcap_t *p" "int cnt" "pcap_handler callback" "u_char *user"
 .Ft void
-.Fn pcap_dump "u_char *user" "struct pcap_pkthdr *h" "u_char *sp"
+.Fn pcap_dump "u_char *user" "const struct pcap_pkthdr *h" "const u_char *sp"
 .Ft int
 .Fn pcap_inject "pcap_t *p" "const void *buf" "size_t len"
 .Ft int
 .Fn pcap_sendpacket "pcap_t *p" "const u_char *buf" "int size"
 .Ft int
-.Fn pcap_compile "pcap_t *p" "struct bpf_program *fp" "char *str" "int optimize" "bpf_u_int32 netmask"
+.Fn pcap_compile "pcap_t *p" "struct bpf_program *program" "char *buf" "int optimize" "bpf_u_int32 netmask"
 .Ft int
 .Fn pcap_setfilter "pcap_t *p" "struct bpf_program *fp"
 .Ft void
-.Fn pcap_freecode "struct bpf_program *fp"
+.Fn pcap_freecode "struct bpf_program *program"
 .Ft "u_char *"
 .Fn pcap_next "pcap_t *p" "struct pcap_pkthdr *h"
 .Ft int
-.Fn pcap_next_ex "pcap_t *p" "struct pcap_pkthdr **hp" "const u_char **pktp"
+.Fn pcap_next_ex "pcap_t *p" "struct pcap_pkthdr **pkt_header" "const u_char **pkt_data"
 .Ft int
-.Fn pcap_setdirection "pcap_t *p" "pcap_direction_t dir"
+.Fn pcap_setdirection "pcap_t *p" "pcap_direction_t d"
 .Ft int
 .Fn pcap_datalink "pcap_t *p"
 .Ft int
@@ -78,13 +78,13 @@
 .Ft int
 .Fn pcap_fileno "pcap_t *p"
 .Ft int
-.Fn pcap_get_selectable_fd "pcap_t *"
+.Fn pcap_get_selectable_fd "pcap_t *p"
 .Ft void
 .Fn pcap_perror "pcap_t *p" "char *prefix"
 .Ft "char *"
 .Fn pcap_geterr "pcap_t *p"
 .Ft "char *"
-.Fn pcap_strerror "int error"
+.Fn pcap_strerror "int errnum"
 .Ft void
 .Fn pcap_close "pcap_t *p"
 .Ft "FILE *"
@@ -108,7 +108,7 @@
 .Ft int
 .Fn pcap_set_datalink "pcap_t *" "int dlt"
 .Ft int
-.Fn pcap_list_datalinks "pcap_t *p" "int **dlts"
+.Fn pcap_list_datalinks "pcap_t *p" "int **dlt_buffer"
 .Ft pcap_t
 .Fn pcap_open_dead "int linktype" "int snaplen"
 .Ft pcap_t
@@ -116,13 +116,13 @@
 .Ft const char *
 .Fn pcap_lib_version "void"
 .Ft const char *
-.Fn pcap_datalink_val_to_name "int"
+.Fn pcap_datalink_val_to_name "int dlt"
 .Ft const char *
-.Fn pcap_datalink_val_to_description "int"
+.Fn pcap_datalink_val_to_description "int dlt"
 .Ft int
 .Fn pcap_datalink_name_to_val "const char *"
 .Ft "pcap_t *"
-.Fn pcap_create "const char *source" "char *errbuf"
+.Fn pcap_create "const char *device" "char *ebuf"
 .Ft int
 .Fn pcap_set_snaplen "pcap_t *p" "int snaplen"
 .Ft int
@@ -132,13 +132,13 @@
 .Ft int
 .Fn pcap_set_rfmon "pcap_t *p" "int rfmon"
 .Ft int
-.Fn pcap_set_timeout "pcap_t *p" "int timeout"
+.Fn pcap_set_timeout "pcap_t *p" "int timeout_ms"
 .Ft int
 .Fn pcap_set_buffer_size "pcap_t *p" "int buffer_size"
 .Ft int
 .Fn pcap_activate "pcap_t *p"
 .Ft const char *
-.Fn pcap_statustostr "int"
+.Fn pcap_statustostr "int errnum"
 .Sh DESCRIPTION
 .Nm
 provides a high level interface to packet capture systems.
@@ -162,7 +162,7 @@ chars.
 .Fn pcap_open_live
 is used to obtain a packet capture descriptor to look
 at packets on the network.
-.Fa device
+.Fa source
 is a string that specifies the network device to open.
 .Fa snaplen
 specifies the maximum number of bytes to capture.
@@ -305,9 +305,9 @@ It returns 0 on success or \-1 on failure.
 .Pp
 .Fn pcap_compile
 is used to compile the string
-.Fa str
+.Fa buf
 into a filter program.
-.Fa fp
+.Fa program
 is a pointer to a
 .Fa bpf_program
 struct and is filled in by
