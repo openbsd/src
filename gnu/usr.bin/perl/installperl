@@ -753,7 +753,7 @@ sub installlib {
 
     if ($name eq 'Config_heavy.pl') {
         open my $ifh, '<', $_ or die $!;
-        $_ = "$_.local";
+        $_ = "$_.orig";
         open my $ofh, '>', $_ or die $!;
         while (my $l = <$ifh>) {
             $l =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,;
