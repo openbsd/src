@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.4 2014/12/23 20:38:20 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.5 2014/12/24 08:58:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -262,7 +262,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	 * them read-only.
 	 */
 
-	if (dl_data[AUX_pagesz] == 0)
+	if (dl_data[AUX_pagesz] != 0)
 		pagesize = dl_data[AUX_pagesz];
 	else
 		pagesize = 4096;
