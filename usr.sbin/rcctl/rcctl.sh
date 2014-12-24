@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.50 2014/12/23 10:07:44 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.51 2014/12/24 13:04:43 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,8 +27,8 @@ _rc_parse_conf
 
 usage()
 {
-	_rc_err "usage: ${0##*/} [-df] enable|disable|status|default|action
-             [service | daemon [flags [arguments]]]"
+	_rc_err "usage: ${0##*/} [-df] enable|disable|status|default|order|action
+             [service | daemon [flags [arguments]] | daemons]"
 }
 
 needs_root()
@@ -202,6 +202,28 @@ append_to_pkg_scripts()
 	rcconf_edit_end
 }
 
+order_pkg_scripts()
+{
+	local _svcs="$*"
+	[ -n "${_svcs}" ] || return
+
+	needs_root ${action}
+	local _pkg_scripts _svc
+	for _svc in ${_svcs}; do
+		if svc_is_base ${_svc} || svc_is_special ${_svc}; then
+			_rc_err "${0##*/}: ${_svc} is not a pkg script"
+		elif ! svc_is_enabled ${_svc}; then
+			_rc_err "${0##*/}: ${_svc} is not enabled"
+		fi
+	done
+	_pkg_scripts=$(echo "${_svcs} ${pkg_scripts}" | tr "[:blank:]" "\n" | \
+		     awk -v ORS=' ' '!x[$0]++')
+	rcconf_edit_begin
+	grep -v "^pkg_scripts.*=" /etc/rc.conf.local >${_TMP_RCCONF}
+	echo pkg_scripts=${_pkg_scripts} >>${_TMP_RCCONF}
+	rcconf_edit_end
+}
+
 rm_from_pkg_scripts()
 {
 	local _svc=$1
@@ -292,16 +314,21 @@ shift $((OPTIND-1))
 [ $# -gt 0 ] || usage
 
 action=$1
-svc=$2
-flag=$3
-[ $# -ge 3 ] && shift 3 || shift $#
-flags="$*"
+if [ "${action}" = "order" ]; then
+	shift 1
+	svcs="$*"
+else
+	svc=$2
+	flag=$3
+	[ $# -ge 3 ] && shift 3 || shift $#
+	flags="$*"
+fi
 
 if [ -n "${svc}" ]; then
 	if ! svc_is_avail ${svc}; then
 		_rc_err "${0##*/}: service ${svc} does not exist" 2
 	fi
-elif [ "${action}" != "default" -a "${action}" != "status" ] ; then
+elif [[ ${action} != @(default|order|status) ]] ; then
 	usage
 fi
 
@@ -337,6 +364,14 @@ case ${action} in
 		add_flags ${action} ${svc} "${flag}" "${flags}"
 		if ! svc_is_base ${svc} && ! svc_is_special ${svc}; then
 			append_to_pkg_scripts ${svc}
+		fi
+		;;
+	order)
+		if [ -n "${svcs}" ]; then
+			needs_root ${action}
+			order_pkg_scripts ${svcs}
+		else
+			echo ${pkg_scripts}
 		fi
 		;;
 	status)

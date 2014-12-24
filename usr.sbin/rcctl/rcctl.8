@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.10 2014/10/13 14:12:57 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.11 2014/12/24 13:04:43 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2014 $
+.Dd $Mdocdate: December 24 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm rcctl
 .Op Fl df
 .Sm off
-.Cm enable | disable | status | default | Ar action
+.Cm enable | disable | status | default | order | Ar action
 .Sm on
-.Op Ar service | daemon Op Cm flags Op Ar arguments
+.Op Ar service | daemon Oo Cm flags Oo Ar arguments Oc Oc | Ar daemons
 .Sh DESCRIPTION
 The
 .Nm
@@ -81,6 +81,16 @@ For a daemon, display the flags that will be used if
 is called without
 .Ar arguments .
 For a base system service, display whether it is enabled by default.
+.It Cm order Op Ar daemons
+Order
+.Sy enabled
+.Xr packages 7
+daemons startup by prepending
+.Ar daemons
+to the pkg_scripts line.
+If
+.Ar daemons
+is empty, display the current order.
 .It Oo Fl df Oc Ar action daemon
 Run the
 .Xr rc.d 8
@@ -107,17 +117,6 @@ utility exits 0 on success, and >0 if an error occurs
 .Ar service
 .Pc .
 .Sh EXAMPLES
-Disable
-.Xr ntpd 8
-and check its status:
-.Bd -literal -offset indent
-# rcctl disable ntpd
-# rcctl status ntpd
-NO
-# echo $?
-1
-.Ed
-.Pp
 Enable and set
 .Xr ntpd 8
 flags:
@@ -125,18 +124,6 @@ flags:
 # rcctl enable ntpd flags -s
 # rcctl status ntpd
 -s
-# echo $?
-0
-.Ed
-.Pp
-Start
-.Xr ntpd 8
-and check that it is running:
-.Bd -literal -offset indent
-# rcctl start ntpd
-ntpd(ok)
-# rcctl check ntpd
-ntpd(ok)
 # echo $?
 0
 .Ed
