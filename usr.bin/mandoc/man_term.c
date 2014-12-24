@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.117 2014/12/24 09:57:41 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.118 2014/12/24 18:03:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,7 +45,7 @@ struct	mtermp {
 
 #define	DECL_ARGS	  struct termp *p, \
 			  struct mtermp *mt, \
-			  const struct man_node *n, \
+			  struct man_node *n, \
 			  const struct man_meta *meta
 
 struct	termact {
@@ -278,7 +278,7 @@ static int
 pre_alternate(DECL_ARGS)
 {
 	enum termfont		 font[2];
-	const struct man_node	*nn;
+	struct man_node		*nn;
 	int			 savelit, i;
 
 	switch (n->tok) {
@@ -641,7 +641,7 @@ static int
 pre_TP(DECL_ARGS)
 {
 	struct roffsu		 su;
-	const struct man_node	*nn;
+	struct man_node		*nn;
 	int			 len, savelit;
 
 	switch (n->type) {
@@ -838,7 +838,6 @@ static int
 pre_RS(DECL_ARGS)
 {
 	struct roffsu	 su;
-	int		 len;
 
 	switch (n->type) {
 	case MAN_BLOCK:
@@ -850,17 +849,16 @@ pre_RS(DECL_ARGS)
 		break;
 	}
 
-	len = SHRT_MAX + 1;
-	if ((n = n->parent->head->child) != NULL &&
-	    a2roffsu(n->string, &su, SCALE_EN))
-		len = term_hspan(p, &su);
-	if (len > SHRT_MAX)
-		len = term_len(p, p->defindent);
+	n = n->parent->head;
+	n->aux = SHRT_MAX + 1;
+	if (n->child != NULL && a2roffsu(n->child->string, &su, SCALE_EN))
+		n->aux = term_hspan(p, &su);
+	if (n->aux < 0 && (size_t)(-n->aux) > mt->offset)
+		n->aux = -mt->offset;
+	else if (n->aux > SHRT_MAX)
+		n->aux = term_len(p, p->defindent);
 
-	if (len > 0 || (size_t)(-len) < mt->offset)
-		mt->offset += len;
-	else
-		mt->offset = 0;
+	mt->offset += n->aux;
 	p->offset = mt->offset;
 	p->rmargin = p->maxrmargin;
 
@@ -874,8 +872,6 @@ pre_RS(DECL_ARGS)
 static void
 post_RS(DECL_ARGS)
 {
-	struct roffsu	 su;
-	int		 len;
 
 	switch (n->type) {
 	case MAN_BLOCK:
@@ -887,17 +883,7 @@ post_RS(DECL_ARGS)
 		break;
 	}
 
-	len = SHRT_MAX + 1;
-	if ((n = n->parent->head->child) != NULL &&
-	    a2roffsu(n->string, &su, SCALE_EN))
-		len = term_hspan(p, &su);
-	if (len > SHRT_MAX)
-		len = term_len(p, p->defindent);
-
-	if (len < 0 || (size_t)len < mt->offset)
-		mt->offset -= len;
-	else
-		mt->offset = 0;
+	mt->offset -= n->parent->head->aux;
 	p->offset = mt->offset;
 
 	if (--mt->lmarginsz < MAXMARGINS)

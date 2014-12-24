@@ -4,6 +4,12 @@ RS-width \- negative and excessive indentation
 .SH DESCRIPTION
 regular
 text
+.RS -14n
+indented
+text
+.RE
+regular
+text
 .RS -4n
 indented
 text

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.h,v 1.47 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: man.h,v 1.48 2014/12/24 18:03:34 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,6 +99,7 @@ struct	man_node {
 	struct man_node	*body; /* BLOCK node BODY ptr */
 	const struct tbl_span *span; /* TBL */
 	const struct eqn *eqn; /* EQN */
+	int		 aux; /* decoded node data, type-dependent */
 };
 
 /* Names of macros.  Index is enum mant. */
