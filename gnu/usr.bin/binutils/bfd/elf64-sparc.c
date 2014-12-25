@@ -2222,7 +2222,8 @@ sparc64_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		/* h->dynindx may be -1 if the symbol was marked to
 		   become local.  */
 		else if (h != NULL && ! is_plt
-			 && ((! info->symbolic && h->dynindx != -1)
+			 && ((!info->symbolic && !info->static_link
+			      && h->dynindx != -1)
 			     || (h->elf_link_hash_flags
 				 & ELF_LINK_HASH_DEF_REGULAR) == 0))
 		  {
@@ -2776,7 +2777,7 @@ sparc64_elf_finish_dynamic_symbol (output_bfd, info, h, sym)
 	 The entry in the global offset table will already have been
 	 initialized in the relocate_section function.  */
       if (info->shared
-	  && (info->symbolic || h->dynindx == -1)
+	  && (info->symbolic || info->static_link || h->dynindx == -1)
 	  && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))
 	{
 	  asection *sec = h->root.u.def.section;
