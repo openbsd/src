@@ -30,6 +30,8 @@ xfrd_pipe_cmp(const void* a, const void* b)
 	const struct xfrd_tcp_pipeline* x = (struct xfrd_tcp_pipeline*)a;
 	const struct xfrd_tcp_pipeline* y = (struct xfrd_tcp_pipeline*)b;
 	int r;
+	if(x == y)
+		return 0;
 	if(y->ip_len != x->ip_len)
 		return (int)y->ip_len - (int)x->ip_len;
 	r = memcmp(&x->ip, &y->ip, x->ip_len);
@@ -40,7 +42,7 @@ xfrd_pipe_cmp(const void* a, const void* b)
 	if(x->num_unused != y->num_unused)
 		return x->num_unused - y->num_unused;
 	/* different pipelines are different still, even with same numunused*/
-	return (int)(a - b);
+	return (uintptr_t)x < (uintptr_t)y ? -1 : 1;
 }
 
 xfrd_tcp_set_t* xfrd_tcp_set_create(struct region* region)
