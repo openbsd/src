@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.6 2014/12/24 14:04:09 kurt Exp $ */
+/*	$OpenBSD: boot.h,v 1.7 2014/12/25 21:38:45 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -290,6 +290,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 
 	start = ELF_TRUNC((Elf_Addr)__got_start, pagesize);
 	size = ELF_ROUND((Elf_Addr)__got_end - start, pagesize);
-	mprotect((void *)start, size, PROT_READ);
+	mprotect((void *)start, size, GOT_PERMS);
 }
 #endif /* RCRT0 */
