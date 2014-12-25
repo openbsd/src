@@ -2842,7 +2842,8 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      /* h->dynindx may be -1 if the symbol was marked to
 		 become local.  */
 	      else if (h != NULL && ! is_plt
-		       && ((! info->symbolic && h->dynindx != -1)
+		       && ((!info->symbolic && !info->static_link
+			    && h->dynindx != -1)
 			   || !h->def_regular))
 		{
 		  BFD_ASSERT (h->dynindx != -1);
@@ -3731,7 +3732,7 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
 	 The entry in the global offset table will already have been
 	 initialized in the relocate_section function.  */
       if (info->shared
-	  && (info->symbolic || h->dynindx == -1)
+	  && (info->symbolic || info->static_link || h->dynindx == -1)
 	  && h->def_regular)
 	{
 	  asection *sec = h->root.u.def.section;

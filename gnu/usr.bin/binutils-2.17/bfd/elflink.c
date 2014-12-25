@@ -2327,7 +2327,7 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
   if (h->needs_plt
       && eif->info->shared
       && is_elf_hash_table (eif->info->hash)
-      && (eif->info->symbolic
+      && (eif->info->symbolic || eif->info->static_link
 	  || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
       && h->def_regular)
     {
