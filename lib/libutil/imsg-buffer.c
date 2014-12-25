@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.4 2014/06/30 00:25:17 deraadt Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.5 2014/12/25 22:20:52 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,7 @@ ibuf_realloc(struct ibuf *buf, size_t len)
 
 	/* on static buffers max is eq size and so the following fails */
 	if (buf->wpos + len > buf->max) {
-		errno = ENOMEM;
+		errno = ERANGE;
 		return (-1);
 	}
 
