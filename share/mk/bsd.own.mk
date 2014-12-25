@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.152 2014/12/23 17:20:11 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.153 2014/12/25 18:58:34 pascal Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -121,8 +121,6 @@ INSTALL_COPY?=	-c
 INSTALL_STRIP?=	-s
 .endif
 
-# This may be changed for _single filesystem_ configurations (such as
-# routers and other embedded systems); normal systems should leave it alone!
 STATIC?=	-static ${STATICPIE}
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
