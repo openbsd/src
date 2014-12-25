@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.39 2014/12/02 10:07:17 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.40 2014/12/25 17:18:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2014 $
+.Dd $Mdocdate: December 25 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -541,8 +541,10 @@ one explicit newline character.
 In order to prevent endless recursion, both groff and
 .Xr mandoc 1
 limit the stack depth for expanding macros and strings
-to a large, but finite number.
-Do not rely on the exact value of this limit.
+to a large, but finite number, and
+.Xr mandoc 1
+also limits the length of the expanded input line.
+Do not rely on the exact values of these limits.
 .Ss \&dei
 Define a
 .Nm
