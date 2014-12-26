@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.52 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.53 2014/12/26 05:46:32 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -49,10 +49,8 @@
 #include <net/if_media.h>
 #include <net/if_arp.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>

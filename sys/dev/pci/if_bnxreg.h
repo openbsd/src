@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.44 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.45 2014/12/26 05:46:32 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -55,10 +55,8 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #if NVLAN > 0
 #include <net/if_types.h>

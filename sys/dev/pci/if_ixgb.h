@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.h,v 1.16 2014/07/22 13:12:11 mpi Exp $ */
+/* $OpenBSD: if_ixgb.h,v 1.17 2014/12/26 05:46:32 tedu Exp $ */
 
 #ifndef _IXGB_H_DEFINED_
 #define _IXGB_H_DEFINED_
@@ -53,13 +53,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#endif
 
 #if NVLAN > 0
 #include <net/if_types.h>
