@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.800 2014/12/03 19:55:49 florian Exp $
+#	$OpenBSD: install.sub,v 1.801 2014/12/26 17:54:54 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1914,14 +1914,6 @@ questions() {
 	fi
 }
 
-# Rebuild or wipe time_t size dependant stuff.
-# XXX To be removed after 5.6 is released.
-upgrade_to64time_t() {
-	/mnt/usr/sbin/pwd_mkdb -d /mnt/etc master.passwd
-	>/mnt/var/log/lastlog
-	>/mnt/var/run/utmp
-}
-
 # Feed the random pool some entropy before we read from it
 feed_random() {
 	(dmesg; cat $CGI_INFO /*.conf; sysctl; route -n show; df;
@@ -1991,9 +1983,6 @@ finish_up() {
 	fi
 
 	update_firmware
-
-	# XXX To be removed after 5.6 is released.
-	upgrade_to64time_t
 
 	store_random
 
