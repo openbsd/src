@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.111 2014/09/19 06:18:45 ajacoutot Exp $
+#	$OpenBSD: special,v 1.112 2014/12/26 21:17:32 tedu Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -173,7 +173,7 @@ tabs		type=dir mode=01730 uname=root gname=crontab ignore
 ..	#var/cron
 db		type=dir mode=0755 uname=root gname=wheel
 host.random	type=file mode=0600 uname=root gname=wheel optional
-kvm_bsd.db	type=file mode=0644 uname=root gname=wheel
+kvm_bsd.db	type=file mode=0640 uname=root gname=kmem
 ..	#var/db
 log		type=dir mode=0755 uname=root gname=wheel
 authlog		type=file mode=0640 uname=root gname=wheel
