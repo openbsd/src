@@ -973,8 +973,9 @@ ncrtn.o%s"
 
 #ifndef	STARTFILE_OPENBSD_SPEC
 #define	STARTFILE_OPENBSD_SPEC "\
-%{!shared: %{pg:gcrt0.o%s} %{!pg:%{p:gcrt0.o%s} %{!p:crt0.o%s}}} \
-%{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
+%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} \
+%{!p:%{!static:crt0%O%s} %{static:%{pie:rcrt0%O%s} %{!pie:crt0%O%s}}}} \
+crtbegin%O%s} %{shared:crtbeginS%O%s}"
 #endif
 
 #ifndef	ENDFILE_OPENBSD_SPEC
