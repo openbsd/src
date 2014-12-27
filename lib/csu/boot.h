@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.7 2014/12/25 21:38:45 kurt Exp $ */
+/*	$OpenBSD: boot.h,v 1.8 2014/12/27 13:17:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,6 +54,7 @@
 #include "../../lib/csu/os-note-elf.h"
 
 #ifdef RCRT0
+
 /*
  * Local decls.
  */
@@ -282,7 +283,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	else
 		pagesize = 4096;
 
-#if defined(__sparc64__)
+#if defined(__alpha__) || defined(__sparc64__)
 	start = ELF_TRUNC((Elf_Addr)__plt_start, pagesize);
 	size = ELF_ROUND((Elf_Addr)__plt_end - start, pagesize);
 	mprotect((void *)start, size, PROT_READ);
@@ -292,4 +293,37 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	size = ELF_ROUND((Elf_Addr)__got_end - start, pagesize);
 	mprotect((void *)start, size, GOT_PERMS);
 }
+
+#ifdef __alpha__
+
+void	_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase);
+
+void
+_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase)
+{
+	const Elf_RelA *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_RelA *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_RelA *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		if (ELF64_R_TYPE(rela->r_info) != RELOC_RELATIVE)
+			continue;
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where += (Elf_Addr)relocbase;
+	}
+}
+
+#endif
+
 #endif /* RCRT0 */

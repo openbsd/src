@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:40 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2014/12/27 13:17:52 kettenis Exp $ */
 /*-
  * Copyright (c) 2001 Ross Harvey
  * All rights reserved.
@@ -62,14 +62,52 @@
 	"	ret				\n" \
 	"	.previous")
 
-/* XXX this should not be necessary: ld should use __start */
+
 #define	MD_CRT0_START				\
 	__asm (					\
-	".globl _start				\n" \
-	".type _start@function			\n" \
-	"_start = __start")
+	"	.globl __start			\n" \
+	"	.type __start@function		\n" \
+	"__start = ___start")
 
-#define	MD_START		__start
+#define	MD_RCRT0_START				\
+	__asm (					\
+	"	.globl __start			\n" \
+	"	.type __start@function		\n" \
+	"__start:				\n" \
+	"	.set	noreorder		\n" \
+	"	br	$27, L1			\n" \
+	"L1:					\n" \
+	"	ldgp	$gp, 0($27)		\n" \
+	"	mov	$16, $9			\n" \
+	"	br	$11, L2			\n" \
+	"L2:	ldiq	$12, L2			\n" \
+	"	subq	$11, $12, $11		\n" \
+	"	mov	$11, $17		\n" \
+	"	lda	$6, _DYNAMIC		\n" \
+	"	addq	$11, $6, $16		\n" \
+	"	bsr	$26, _reloc_alpha_got	\n" \
+	"	lda	$sp, -80($sp)		\n" \
+	"	mov	$9, $16			\n" \
+	"	lda	$11, 0($sp)		\n" \
+	"	mov	$11, $17		\n" \
+	"	mov	0, $18			\n" \
+	"	jsr	$26, _dl_boot_bind	\n" \
+	"	ldgp	$gp, 0($26)		\n" \
+	"	mov	$9, $16			\n" \
+	"	mov	0, $17			\n" \
+	"	jsr	$26, ___start		\n" \
+	".globl _dl_exit			\n" \
+	".type _dl_exit@function		\n" \
+	"_dl_exit:				\n" \
+	"	lda	$0, 1			\n" \
+	"	callsys				\n" \
+	"	ret				\n" \
+	".globl _dl_printf			\n" \
+	".type _dl_printf@function		\n" \
+	"_dl_printf:				\n" \
+	"	ret")
+
+#define	MD_START		___start
 #define	MD_START_ARGS		char **sp, void (*cleanup)(void)
 #define	MD_START_SETUP				\
 	char **argv, **envp;			\
