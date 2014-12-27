@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.482 2014/01/23 11:45:22 espie Exp $
+# $OpenBSD: pkg_add,v 1.483 2014/12/27 23:59:44 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -21,21 +21,32 @@ use warnings;
 
 sub run
 {
-	my ($cmd, $name) = @_;
-	my $module = "OpenBSD::Pkg\u$cmd";
-	eval "require $module;";
+	my ($cmd, $m) = @_;
+	my $module = "OpenBSD::$m";
+	eval "require $module";
 	if ($@) {
 		die $@;
 	}
-	exit($module->parse_and_run($name));
+	exit($module->parse_and_run($cmd));
 }
+
+my $choices = {
+	pkg_add => 'PkgAdd',
+	pkg_check => 'PkgCheck',
+	pkg_create => 'PkgCreate',
+	pkg_delete => 'PkgDelete',
+	pkg_info => 'PkgInfo',
+	pkg_sign => 'PkgSign',
+	fw_update => 'FwUpdate',
+};
+
 my @l = qw(add check create delete info sign);
 
-for my $i (@l) {
-	if ($0 =~ m/\/?pkg_$i$/) {
-		run($i, "pkg_$i");
+while (my ($cmd, $module) = each %$choices) {
+	if ($0 =~ m/\/?\Q$cmd\E$/) {
+		run($cmd, $module);
 	}
 }
 
 # defaults to pkg_info personality but keeps the command name
-run('info', $0);
+run($0, 'PkgInfo');
