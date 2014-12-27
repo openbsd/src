@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.51 2014/04/16 10:52:58 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.52 2014/12/27 13:13:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -375,8 +375,9 @@ _reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase)
 	}
 	relalim = (const Elf_RelA *)((caddr_t)rela + relasz);
 	for (; rela < relalim; rela++) {
+		if (ELF64_R_TYPE(rela->r_info) != RELOC_RELATIVE)
+			continue;
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
-		/* XXX For some reason I see a few GLOB_DAT relocs here. */
 		*where += (Elf_Addr)relocbase;
 	}
 }

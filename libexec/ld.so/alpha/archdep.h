@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.15 2014/11/03 17:50:56 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.16 2014/12/27 13:13:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,6 +54,8 @@ RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v,
 {
 	if (ELF64_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		/* handled by _reloc_alpha_got */
+	} else if (ELF64_R_TYPE(r->r_info) == RELOC_NONE) {
+		/* nothing to do */
 	} else if (ELF64_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
 		Elf64_Addr val = v + s->st_value + r->r_addend -
 			(Elf64_Addr)(p);
