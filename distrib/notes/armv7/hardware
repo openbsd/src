@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.3 2014/05/01 11:48:47 jasper Exp $
+dnl	$OpenBSD: hardware,v 1.4 2014/12/27 23:37:09 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
     BeagleBoard, BeagleBoard xM
@@ -30,7 +30,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 	 AHCI controller (ahci)
 	 GPIO controller (sxipio)
 
-    SABRE Lite, Nitrogen6X
+    SABRE Lite, Nitrogen6X, Wandboard
         Supported on-board devices:
 	 standard serial port (com)
 	 USB controller (ehci)
