@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.1 2014/12/27 16:05:42 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.2 2014/12/27 23:58:52 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -57,10 +57,12 @@ sub handle_options
 	$state->{destdir} = '';
 	$state->{wantntogo} = 0;
 	$state->{subst}->add('repair', 1);
+	$state->finish_init;
 }
 
 sub finish_init
 {
+	my $state = shift;
 	$ENV{PKG_PATH} = $state->{path};
 	if ($state->verbose && !$state->opt('d')) {
 		$state->say("PKG_PATH=#1", $state->{path});
@@ -162,8 +164,8 @@ sub mark_set_for_deletion
 sub do_quirks
 {
 	my ($self, $state) = @_;
-	$self->SUPER::do_quirks($state);
-	$state->finish_init;
+#	$self->SUPER::do_quirks($state);
+#	$state->finish_init;
 }
 
 sub process_parameters
