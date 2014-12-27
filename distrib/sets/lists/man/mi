@@ -1186,6 +1186,7 @@
 ./usr/share/man/man4/alpha/tcasic.4
 ./usr/share/man/man4/alpha/tga.4
 ./usr/share/man/man4/alpha/tsc.4
+./usr/share/man/man4/alpha/tsciic.4
 ./usr/share/man/man4/alpha/tsp.4
 ./usr/share/man/man4/amas.4
 ./usr/share/man/man4/amd64
@@ -2477,7 +2478,6 @@
 ./usr/share/man/man8/mailq.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
-./usr/share/man/man8/makekey.8
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8

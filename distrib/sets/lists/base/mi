@@ -2112,7 +2112,6 @@
 ./usr/libexec/lpr
 ./usr/libexec/lpr/lpf
 ./usr/libexec/mail.local
-./usr/libexec/makekey
 ./usr/libexec/makewhatis
 ./usr/libexec/ntalkd
 ./usr/libexec/rpc.rquotad
