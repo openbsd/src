@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.5 2014/12/07 16:56:17 bcook Exp $ */
+/* $OpenBSD: tls_client.c,v 1.6 2014/12/27 19:35:28 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <netdb.h>
 #include <stdlib.h>
