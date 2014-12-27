@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.7 2014/07/04 18:07:54 miod Exp $ */
+/*	$OpenBSD: archdep.h,v 1.8 2014/12/27 20:33:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -84,7 +84,8 @@ do {									\
 	while (n--) {							\
 		if (sp->st_shndx == SHN_UNDEF ||			\
 		    sp->st_shndx == SHN_COMMON) {			\
-			_dl_exit(6);					\
+			if (ELF64_ST_BIND(sp->st_info) != STB_WEAK)	\
+				_dl_exit(6);				\
 		} else if (ELF64_ST_TYPE(sp->st_info) == STT_FUNC) {	\
 			*gotp += __loff;				\
 		} else {						\

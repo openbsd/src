@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.7 2014/12/23 16:27:18 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.8 2014/12/27 20:33:47 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -103,6 +103,49 @@
 	"	dla	$t9, ___start		\n" \
 	"	jr	$t9			\n" \
 	"	.end	__start			\n" \
+	"	.previous")
+
+#define MD_RCRT0_START				\
+	__asm(					\
+	".text					\n" \
+	"	.align	3			\n" \
+	"	.globl	__start			\n" \
+	"	.ent	__start			\n" \
+	"	.type	__start, @function	\n" \
+	"__start:				\n" \
+	"	dsubu	$sp, $sp, 160		\n" \
+	"	.cpsetup $t9, 144, __start	\n" \
+	"	dla	$s1, 1f			\n" \
+	"	bgezal	$zero, 1f		\n" \
+	"1:					\n" \
+	"	dsubu	$s0, $ra, $s1		\n" \
+	"	daddu	$a0, $sp, 160		\n" \
+	"	daddu	$a1, $sp, 0		\n" \
+	"	dla	$t9, _dl_boot_bind	\n" \
+	"	daddu	$t9, $s0		\n" \
+	"	jalr	$t9			\n" \
+	"	daddu	$sp, $sp, 160		\n" \
+	"	move	$a0, $sp		\n" \
+	"	dsrl	$a1, $sp, 4		\n" /* align stack on a */ \
+	"	dsll	$sp, $a1, 4		\n" /* 16 byte boundary */ \
+	"	move	$a1, $zero		\n" \
+	"	dla	$t9, ___start		\n" \
+	"	jr	$t9			\n" \
+	"	.end	__start			\n" \
+	"	.globl	_dl_exit		\n" \
+	"	.ent	_dl_exit		\n" \
+	"	.type	_dl_exit, @function	\n" \
+	"_dl_exit:				\n" \
+	"	li	$v0, 1			\n" \
+	"	syscall				\n" \
+	"	j	$ra			\n" \
+	"	.end	_dl_exit		\n" \
+	"	.globl	_dl_printf		\n" \
+	"	.ent	_dl_printf		\n" \
+	"	.type	_dl_printf, @function	\n" \
+	"_dl_printf:				\n" \
+	"	j	$ra			\n" \
+	"	.end	_dl_printf		\n" \
 	"	.previous")
 
 struct kframe {
