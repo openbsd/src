@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.64 2013/10/24 18:50:16 deraadt Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.65 2014/12/28 10:02:37 tedu Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -300,9 +300,7 @@ struct sadb_x_tap {
 #define SADB_X_AALG_AES128GMAC       9
 #define SADB_X_AALG_AES192GMAC       10
 #define SADB_X_AALG_AES256GMAC       11
-#define SADB_X_AALG_MD5              249
-#define SADB_X_AALG_SHA1             250
-#define SADB_AALG_MAX                250
+#define SADB_AALG_MAX                11
 
 #define SADB_EALG_NONE        0
 #define SADB_X_EALG_DES_IV64  1

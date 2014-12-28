@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.113 2014/12/19 17:14:40 tedu Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.114 2014/12/28 10:02:37 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -129,14 +129,6 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		thash = &auth_hash_hmac_sha2_512_256;
 		break;
 
-	case SADB_X_AALG_MD5:
-		thash = &auth_hash_key_md5;
-		break;
-
-	case SADB_X_AALG_SHA1:
-		thash = &auth_hash_key_sha1;
-		break;
-
 	default:
 		DPRINTF(("ah_init(): unsupported authentication algorithm %d specified\n", ii->ii_authalg));
 		return EINVAL;
@@ -232,15 +224,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		ip->ip_tos = 0;
 		ip->ip_ttl = 0;
 		ip->ip_sum = 0;
-
-		/*
-		 * On input, fix ip_len which has been byte-swapped
-		 * at ip_input().
-		 */
-		if (alg == CRYPTO_MD5_KPDK || alg == CRYPTO_SHA1_KPDK)
-			ip->ip_off &= htons(IP_DF);
-		else
-			ip->ip_off = 0;
+		ip->ip_off = 0;
 
 		ptr = mtod(m, unsigned char *) + sizeof(struct ip);
 

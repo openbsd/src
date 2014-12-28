@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.59 2014/08/20 06:23:03 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.60 2014/12/28 10:02:37 tedu Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -89,8 +89,6 @@
 #define CRYPTO_MD5_HMAC		6
 #define CRYPTO_SHA1_HMAC	7
 #define CRYPTO_RIPEMD160_HMAC	8
-#define CRYPTO_MD5_KPDK		9
-#define CRYPTO_SHA1_KPDK	10
 #define CRYPTO_RIJNDAEL128_CBC	11 /* 128 bit blocksize */
 #define CRYPTO_AES_CBC		11 /* 128 bit blocksize -- the same as above */
 #define CRYPTO_ARC4		12

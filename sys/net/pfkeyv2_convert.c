@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.44 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.45 2014/12/28 10:02:37 tedu Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -213,14 +213,6 @@ export_sa(void **p, struct tdb *tdb)
 
 		case CRYPTO_AES_256_GMAC:
 			sadb_sa->sadb_sa_auth = SADB_X_AALG_AES256GMAC;
-			break;
-
-		case CRYPTO_MD5_KPDK:
-			sadb_sa->sadb_sa_auth = SADB_X_AALG_MD5;
-			break;
-
-		case CRYPTO_SHA1_KPDK:
-			sadb_sa->sadb_sa_auth = SADB_X_AALG_SHA1;
 			break;
 		}
 	}

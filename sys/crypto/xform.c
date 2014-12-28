@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.44 2013/08/25 14:26:56 jsing Exp $	*/
+/*	$OpenBSD: xform.c,v 1.45 2014/12/28 10:02:37 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -312,22 +312,6 @@ struct auth_hash auth_hash_gmac_aes_256 = {
 	(void (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Reinit,
 	(int  (*)(void *, const u_int8_t *, u_int16_t)) AES_GMAC_Update,
 	(void (*)(u_int8_t *, void *)) AES_GMAC_Final
-};
-
-struct auth_hash auth_hash_key_md5 = {
-	CRYPTO_MD5_KPDK, "Keyed MD5",
-	0, 16, 16, sizeof(MD5_CTX), 0,
-	(void (*)(void *)) MD5Init, NULL, NULL,
-	MD5Update_int,
-	(void (*)(u_int8_t *, void *)) MD5Final
-};
-
-struct auth_hash auth_hash_key_sha1 = {
-	CRYPTO_SHA1_KPDK, "Keyed SHA1",
-	0, 20, 20, sizeof(SHA1_CTX), 0,
-	(void (*)(void *)) SHA1Init, NULL, NULL,
-	SHA1Update_int,
-	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
 struct auth_hash auth_hash_md5 = {
