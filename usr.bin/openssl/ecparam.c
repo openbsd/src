@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.6 2014/12/14 14:45:33 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.7 2014/12/28 14:21:42 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -111,7 +111,7 @@ static struct {
 } ecparam_config;
 
 static int
-ecparam_opt_form(struct option *opt, char *arg)
+ecparam_opt_form(char *arg)
 {
 	if (strcmp(arg, "compressed") == 0)
 		ecparam_config.form = POINT_CONVERSION_COMPRESSED;
@@ -127,7 +127,7 @@ ecparam_opt_form(struct option *opt, char *arg)
 }
 
 static int
-ecparam_opt_enctype(struct option *opt, char *arg)
+ecparam_opt_enctype(char *arg)
 {
 	if (strcmp(arg, "explicit") == 0)
 		ecparam_config.asn1_flag = 0;
@@ -159,7 +159,7 @@ struct option ecparam_options[] = {
 		.desc = "Specify point conversion form:\n"
 		    "  compressed, uncompressed (default), hybrid",
 		.type = OPTION_ARG_FUNC,
-		.func = ecparam_opt_form,
+		.opt.argfunc = ecparam_opt_form,
 	},
 #ifndef OPENSSL_NO_ENGINE
 	{
@@ -237,7 +237,7 @@ struct option ecparam_options[] = {
 		.desc = "Specify EC parameter ASN.1 encoding type:\n"
 		    "  explicit, named_curve (default)",
 		.type = OPTION_ARG_FUNC,
-		.func = ecparam_opt_enctype,
+		.opt.argfunc = ecparam_opt_enctype,
 	},
 	{
 		.name = "text",

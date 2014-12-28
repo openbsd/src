@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.3 2014/10/13 02:46:14 bcook Exp $ */
+/* $OpenBSD: version.c,v 1.4 2014/12/28 14:21:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,7 +145,7 @@ static struct {
 } version_config;
 
 static int
-version_all_opts(struct option *opt, char *arg)
+version_all_opts(void)
 {
 	version_config.cflags = 1;
 	version_config.date = 1;
@@ -162,7 +162,7 @@ static struct option version_options[] = {
 		.name = "a",
 		.desc = "All information (same as setting all other flags)",
 		.type = OPTION_FUNC,
-		.func = version_all_opts,
+		.opt.func = version_all_opts,
 	},
 	{
 		.name = "b",

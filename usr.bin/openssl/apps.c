@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.14 2014/12/14 14:42:06 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.15 2014/12/28 14:21:42 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2298,7 +2298,7 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 				break;
 
 			case OPTION_ARG_FUNC:
-				if (opt->func(opt, argv[i]) != 0)
+				if (opt->opt.argfunc(argv[i]) != 0)
 					return (1);
 				break;
 
@@ -2314,7 +2314,7 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 				break;
 
 			case OPTION_FUNC:
-				if (opt->func(opt, NULL) != 0)
+				if (opt->opt.func() != 0)
 					return (1);
 				break;
 

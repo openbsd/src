@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.9 2014/12/14 14:42:06 jsing Exp $ */
+/* $OpenBSD: apps.h,v 1.10 2014/12/28 14:21:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -296,10 +296,11 @@ struct option {
 	} type;
 	union {
 		char **arg;
+		int (*argfunc)(char *arg);
 		int *flag;
+		int (*func)(void);
 		int *value;
 	} opt;
-	int (*func)(struct option *opt, char *arg);
 	const int value;
 };
 
