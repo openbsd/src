@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.155 2014/12/27 07:23:09 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.156 2014/12/28 05:17:21 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -25,7 +25,7 @@ BINUTILS217_ARCH=hppa64 ia64
 # m88k unknown
 # hppa64 unknown
 PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc64
-STATICPIE_ARCH=amd64 hppa i386 powerpc sparc64
+STATICPIE_ARCH=alpha amd64 hppa i386 powerpc sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC3_ARCH:M${_arch})
