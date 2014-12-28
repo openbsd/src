@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.3 2014/12/26 23:06:22 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.4 2014/12/28 20:46:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -23,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
@@ -54,10 +55,17 @@ extern void myetheraddr(u_char *);
  * port, using port numbers as logical device numbers.
  */
 
+#define PIO		0x000000
 #define FZC_PIO		0x080000
 #define FZC_MAC		0x180000
+#define FZC_IPP		0x280000
+#define FFLP		0x300000
+#define FZC_FFLP	0x380000
+#define ZCP		0x500000
+#define FZC_ZCP		0x580000
 #define DMC		0x600000
 #define FZC_DMC		0x680000
+#define TXC		0x700000
 #define FZC_TXC		0x780000
 #define PIO_LDSV	0x800000
 #define PIO_IMASK0	0xa00000
@@ -88,6 +96,13 @@ extern void myetheraddr(u_char *);
 #define SID(ldg)		(FZC_PIO + 0x10200 + (ldg) * 0x00008)
 #define LDG_NUM(ldn)		(FZC_PIO + 0x20000 + (ldn) * 0x00008)
 
+#define IPP_CFIG(port)		(FZC_IPP + 0x00000 + (port) * 0x04000)
+#define  IPP_CFIG_SOFT_RST		(1ULL << 31)
+#define  IPP_CFIG_IPP_ENABLE		(1ULL << 0)
+
+#define ZCP_CFIG		(FZC_ZCP + 0x00000)
+#define ZCP_INT_STAT		(FZC_ZCP + 0x00008)
+
 #define TXC_DMA_MAX(chan)	(FZC_TXC + 0x00000 + (chan) * 0x01000)
 #define TXC_CONTROL		(FZC_TXC + 0x20000)
 #define  TXC_CONTROL_TXC_ENABLED	(1ULL << 4)
@@ -102,8 +117,13 @@ extern void myetheraddr(u_char *);
 #define XTXMAC_SW_RST(port)	(FZC_MAC + 0x00000 + (port) * 0x06000)
 #define  XTXMAC_SW_RST_REG_RST		(1ULL << 1)
 #define  XTXMAC_SW_RST_SOFT_RST		(1ULL << 0)
+#define XRXMAC_SW_RST(port)	(FZC_MAC + 0x00008 + (port) * 0x06000)
+#define  XRXMAC_SW_RST_REG_RST		(1ULL << 1)
+#define  XRXMAC_SW_RST_SOFT_RST		(1ULL << 0)
 #define XTXMAC_STATUS(port)	(FZC_MAC + 0x00020 + (port) * 0x06000)
+#define XRXMAC_STATUS(port)	(FZC_MAC + 0x00028 + (port) * 0x06000)
 #define XTXMAC_STAT_MSK(port)	(FZC_MAC + 0x00040 + (port) * 0x06000)
+#define XRXMAC_STAT_MSK(port)	(FZC_MAC + 0x00048 + (port) * 0x06000)
 #define XMAC_CONFIG(port)	(FZC_MAC + 0x00060 + (port) * 0x06000)
 #define  XMAC_CONFIG_SEL_CLK_25MHZ	(1ULL << 31)
 #define  XMAC_CONFIG_1G_PCS_BYPASS	(1ULL << 30)
@@ -115,6 +135,7 @@ extern void myetheraddr(u_char *);
 #define  XMAC_CONFIG_LOOPBACK		(1ULL << 25)
 #define  XMAC_CONFIG_TX_OUTPUT_EN	(1ULL << 24)
 #define  XMAC_CONFIG_SEL_POR_CLK_SRC	(1ULL << 23)
+#define  XMAC_CONFIG_RX_MAC_ENABLE	(1ULL << 8)
 #define  XMAC_CONFIG_ALWAYS_NO_CRC	(1ULL << 3)
 #define  XMAC_CONFIG_VAR_MIN_IPG_EN	(1ULL << 2)
 #define  XMAC_CONFIG_STRETCH_MODE	(1ULL << 1)
@@ -136,6 +157,22 @@ extern void myetheraddr(u_char *);
 #define XMAC_ADDR0(port)	(FZC_MAC + 0x000a0 + (port) * 0x06000)
 #define XMAC_ADDR1(port)	(FZC_MAC + 0x000a8 + (port) * 0x06000)
 #define XMAC_ADDR2(port)	(FZC_MAC + 0x000b0 + (port) * 0x06000)
+
+#define XMAC_ADDR_CMPEN(port)	(FZC_MAC + 0x00208 + (port) * 0x06000)
+
+#define XMAC_ADD_FILT0(port)	(FZC_MAC + 0x00818 + (port) * 0x06000)
+#define XMAC_ADD_FILT1(port)	(FZC_MAC + 0x00820 + (port) * 0x06000)
+#define XMAC_ADD_FILT2(port)	(FZC_MAC + 0x00828 + (port) * 0x06000)
+#define XMAC_ADD_FILT12_MASK(port) (FZC_MAC + 0x00830 + (port) * 0x06000)
+#define XMAC_ADD_FILT00_MASK(port) (FZC_MAC + 0x00838 + (port) * 0x06000)
+
+#define XMAC_HASH_TBL0(port)	(FZC_MAC + 0x00840 + (port) * 0x06000)
+#define XMAC_HASH_TBL(port, i)	(XMAC_HASH_TBL0(port) + (i) * 0x00008)
+
+#define XMAC_HOST_INFO0(port)	(FZC_MAC + 0x00900 + (port) * 0x06000)
+#define XMAC_HOST_INFO(port, i)	(XMAC_HOST_INFO0(port) + (i) * 0x00008)
+
+#define RXMAC_BT_CNT(port)	(FZC_MAC + 0x00100 + (port) * 0x06000)
 
 #define TXMAC_FRM_CNT(port)	(FZC_MAC + 0x00170 + (port) * 0x06000)
 #define TXMAC_BYTE_CNT(port)	(FZC_MAC + 0x00178 + (port) * 0x06000)
@@ -163,6 +200,77 @@ extern void myetheraddr(u_char *);
 #define MIF_CONFIG		(FZC_MAC + 0x16020)
 #define  MIF_CONFIG_INDIRECT_MODE	(1ULL << 15)
 
+#define DEF_PT0_RDC		(FZC_DMC + 0x00008)
+#define DEF_PT_RDC(port)	(DEF_PT0_RDC + (port) * 0x00008)
+#define RDC_TBL(grp, i)		(FZC_ZCP + 0x10000 + (grp * 8 + i) * 0x00008)
+
+#define RX_LOG_PAGE_VLD(chan)	(FZC_DMC + 0x20000 + (chan) * 0x00040)
+#define  RX_LOG_PAGE_VLD_PAGE0		(1ULL << 0)
+#define  RX_LOG_PAGE_VLD_PAGE1		(1ULL << 1)
+#define  RX_LOG_PAGE_VLD_FUNC_SHIFT	2
+#define RX_LOG_MASK1(chan)	(FZC_DMC + 0x20008 + (chan) * 0x00040)
+#define RX_LOG_VALUE1(chan)	(FZC_DMC + 0x20010 + (chan) * 0x00040)
+#define RX_LOG_MASK2(chan)	(FZC_DMC + 0x20018 + (chan) * 0x00040)
+#define RX_LOG_VALUE2(chan)	(FZC_DMC + 0x20020 + (chan) * 0x00040)
+#define RX_LOG_PAGE_RELO1(chan)	(FZC_DMC + 0x20028 + (chan) * 0x00040)
+#define RX_LOG_PAGE_RELO2(chan)	(FZC_DMC + 0x20030 + (chan) * 0x00040)
+#define RX_LOG_PAGE_HDL(chan)	(FZC_DMC + 0x20038 + (chan) * 0x00040)
+
+#define RXDMA_CFIG1(chan)	(DMC + 0x00000 + (chan) * 0x00200)
+#define  RXDMA_CFIG1_EN			(1ULL << 31)
+#define  RXDMA_CFIG1_RST		(1ULL << 30)
+#define  RXDMA_CFIG1_QST		(1ULL << 29)
+#define RXDMA_CFIG2(chan)	(DMC + 0x00008 + (chan) * 0x00200)
+#define  RXDMA_CFIG2_OFFSET_MASK	(3ULL << 2)
+#define  RXDMA_CFIG2_OFFSET_0		(0ULL << 2)
+#define  RXDMA_CFIG2_OFFSET_64		(1ULL << 2)
+#define  RXDMA_CFIG2_OFFSET_128		(2ULL << 2)
+#define  RXDMA_CFIG2_FULL_HDR		(1ULL << 0)
+
+#define RBR_CFIG_A(chan)	(DMC + 0x00010 + (chan) * 0x00200)
+#define  RBR_CFIG_A_LEN_SHIFT		48
+#define RBR_CFIG_B(chan)	(DMC + 0x00018 + (chan) * 0x00200)
+#define  RBR_CFIG_B_BLKSIZE_MASK	(3ULL << 24)
+#define  RBR_CFIG_B_BLKSIZE_4K		(0ULL << 24)
+#define  RBR_CFIG_B_BLKSIZE_8K		(1ULL << 24)
+#define  RBR_CFIG_B_BLKSIZE_16K		(2ULL << 24)
+#define  RBR_CFIG_B_BLKSIZE_32K		(3ULL << 24)
+#define  RBR_CFIG_B_VLD2		(1ULL << 23)
+#define  RBR_CFIG_B_BUFSZ2_MASK		(3ULL << 16)
+#define  RBR_CFIG_B_BUFSZ2_2K		(0ULL << 16)
+#define  RBR_CFIG_B_BUFSZ2_4K		(1ULL << 16)
+#define  RBR_CFIG_B_BUFSZ2_8K		(2ULL << 16)
+#define  RBR_CFIG_B_BUFSZ2_16K		(3ULL << 16)
+#define  RBR_CFIG_B_VLD1		(1ULL << 15)
+#define  RBR_CFIG_B_BUFSZ1_MASK		(3ULL << 8)
+#define  RBR_CFIG_B_BUFSZ1_1K		(0ULL << 8)
+#define  RBR_CFIG_B_BUFSZ1_2K		(1ULL << 8)
+#define  RBR_CFIG_B_BUFSZ1_4K		(2ULL << 8)
+#define  RBR_CFIG_B_BUFSZ1_8K		(3ULL << 8)
+#define  RBR_CFIG_B_VLD0		(1ULL << 7)
+#define  RBR_CFIG_B_BUFSZ0_MASK		(3ULL << 0)
+#define  RBR_CFIG_B_BUFSZ0_256		(0ULL << 0)
+#define  RBR_CFIG_B_BUFSZ0_512		(1ULL << 0)
+#define  RBR_CFIG_B_BUFSZ0_1K		(2ULL << 0)
+#define  RBR_CFIG_B_BUFSZ0_2K		(3ULL << 0)
+#define RBR_KICK(chan)		(DMC + 0x00020 + (chan) * 0x00200)
+#define RBR_STAT(chan)		(DMC + 0x00028 + (chan) * 0x00200)
+#define RBR_HDH(chan)		(DMC + 0x00030 + (chan) * 0x00200)
+#define RBR_HDL(chan)		(DMC + 0x00038 + (chan) * 0x00200)
+#define RCRCFIG_A(chan)		(DMC + 0x00040 + (chan) * 0x00200)
+#define RCRCFIG_B(chan)		(DMC + 0x00048 + (chan) * 0x00200)
+#define  RCRCFIG_B_PTHRES_SHIFT		16
+#define  RCRCFIG_B_ENTOUT		(1ULL << 15)
+#define RCRSTAT_A(chan)		(DMC + 0x00050 + (chan) * 0x00200)
+#define RCRSTAT_B(chan)		(DMC + 0x00058 + (chan) * 0x00200)
+#define RCRSTAT_C(chan)		(DMC + 0x00060 + (chan) * 0x00200)
+
+#define RX_DMA_ENT_MSK(chan)	(DMC + 0x00068 + (chan) * 0x00200)
+#define  RX_DMA_ENT_MSK_RBR_EMPTY	(1ULL << 3)
+#define RX_DMA_CTL_STAT(chan)	(DMC + 0x00070 + (chan) * 0x00200)
+#define  RX_DMA_CTL_STAT_RBR_EMPTY	(1ULL << 35)
+#define RX_DMA_CTL_STAT_DBG(chan) (DMC + 0x00098 + (chan) * 0x00200)
+
 #define TX_LOG_PAGE_VLD(chan)	(FZC_DMC + 0x40000 + (chan) * 0x00200)
 #define  TX_LOG_PAGE_VLD_PAGE0		(1ULL << 0)
 #define  TX_LOG_PAGE_VLD_PAGE1		(1ULL << 1)
@@ -187,6 +295,14 @@ extern void myetheraddr(u_char *);
 #define TXDMA_MBL(chan)		(DMC + 0x40038 + (chan) * 0x00200)
 #define TX_RNG_ERR_LOGH(chan)	(DMC + 0x40048 + (chan) * 0x00200)
 #define TX_RNG_ERR_LOGL(chan)	(DMC + 0x40050 + (chan) * 0x00200)
+
+struct nep_block {
+	bus_dmamap_t	nb_map;
+	void		*nb_block;
+};
+
+#define NEP_NRBDESC	256
+#define NEP_NRCDESC	512
 
 #define TXD_SOP			(1ULL << 63)
 #define TXD_MARK		(1ULL << 62)
@@ -217,6 +333,8 @@ struct nep_dmamem {
 #define NEP_DMA_DVA(_ndm)	((_ndm)->ndm_map->dm_segs[0].ds_addr)
 #define NEP_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva);
 
+struct pool *nep_block_pool;
+
 struct nep_softc {
 	struct device		sc_dev;
 	struct arpcom		sc_ac;
@@ -232,13 +350,20 @@ struct nep_softc {
 
 	int			sc_port;
 
-	struct nep_dmamem	*sc_txmbox;
 	struct nep_dmamem	*sc_txring;
 	struct nep_buf		*sc_txbuf;
 	uint64_t		*sc_txdesc;
 	int			sc_tx_prod;
 	int			sc_tx_cnt;
 	int			sc_tx_cons;
+
+	struct nep_dmamem	*sc_rbring;
+	struct nep_block	*sc_rb;
+	uint32_t		*sc_rbdesc;
+	struct if_rxring	sc_rx_ring;
+	int			sc_rx_prod;
+	struct nep_dmamem	*sc_rcring;
+	uint64_t		*sc_rcdesc;
 
 	struct timeout		sc_tick;
 };
@@ -265,6 +390,13 @@ int	nep_media_change(struct ifnet *);
 void	nep_media_status(struct ifnet *, struct ifmediareq *);
 int	nep_intr(void *);
 
+void	nep_init_rx_mac(struct nep_softc *);
+void	nep_init_rx_channel(struct nep_softc *, int);
+void	nep_init_tx_mac(struct nep_softc *);
+void	nep_init_tx_channel(struct nep_softc *, int);
+
+void	nep_fill_rx_ring(struct nep_softc *);
+
 void	nep_up(struct nep_softc *);
 void	nep_down(struct nep_softc *);
 void	nep_iff(struct nep_softc *);
@@ -277,6 +409,13 @@ int	nep_ioctl(struct ifnet *, u_long, caddr_t);
 struct nep_dmamem *nep_dmamem_alloc(struct nep_softc *, size_t);
 void	nep_dmamem_free(struct nep_softc *, struct nep_dmamem *);
 
+/*
+ * SUNW,pcie-neptune: 4x1G onboard on T5140/T5240
+ * SUNW,pcie-qgc: 4x1G, "Sun Quad GbE UTP x8 PCI Express Card"
+ * SUNW,pcie-qgc-pem: 4x1G, "Sun Quad GbE UTP x8 PCIe ExpressModule"
+ * SUNW,pcie-2xgf: 2x10G, "Sun Dual 10GbE XFP PCI Express Card"
+ * SUNW,pcie-2xgf-pem: 2x10G, "Sun Dual 10GbE XFP PCIe ExpressModule"
+ */
 int
 nep_match(struct device *parent, void *match, void *aux)
 {
@@ -349,6 +488,18 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	printf(", address %s\n", ether_sprintf(sc->sc_lladdr));
+
+	if (nep_block_pool == NULL) {
+		nep_block_pool = malloc(sizeof(*nep_block_pool),
+		    M_DEVBUF, M_WAITOK);
+		if (nep_block_pool == NULL) {
+			printf("%s: unable to allocate block pool\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		pool_init(nep_block_pool, PAGE_SIZE, 0, 0, 0,
+		    "nepblk", NULL);
+	}
 
 	val = nep_read(sc, MIF_CONFIG);
 	val &= ~MIF_CONFIG_INDIRECT_MODE;
@@ -543,19 +694,242 @@ nep_intr(void *arg)
 }
 
 void
-nep_up(struct nep_softc *sc)
+nep_init_rx_mac(struct nep_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct nep_buf *txb;
 	uint64_t addr0, addr1, addr2;
+	uint64_t val;
+	int n, i;
+
+	nep_write(sc, XRXMAC_SW_RST(sc->sc_port),
+	    XRXMAC_SW_RST_REG_RST | XRXMAC_SW_RST_SOFT_RST);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, XRXMAC_SW_RST(sc->sc_port));
+		if ((val & (XRXMAC_SW_RST_REG_RST |
+		    XRXMAC_SW_RST_SOFT_RST)) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting Tx MAC\n");
+
+	addr0 = (sc->sc_lladdr[4] << 8) | sc->sc_lladdr[5];
+	addr1 = (sc->sc_lladdr[2] << 8) | sc->sc_lladdr[3];
+	addr2 = (sc->sc_lladdr[0] << 8) | sc->sc_lladdr[1];
+
+	if (sc->sc_port < 2) {
+		nep_write(sc, XMAC_ADDR0(sc->sc_port), addr0);
+		nep_write(sc, XMAC_ADDR1(sc->sc_port), addr1);
+		nep_write(sc, XMAC_ADDR2(sc->sc_port), addr2);
+	} else {
+		nep_write(sc, BMAC_ADDR0(sc->sc_port), addr0);
+		nep_write(sc, BMAC_ADDR1(sc->sc_port), addr1);
+		nep_write(sc, BMAC_ADDR2(sc->sc_port), addr2);
+	}
+
+	nep_write(sc, XMAC_ADDR_CMPEN(sc->sc_port), 0);
+
+	nep_write(sc, XMAC_ADD_FILT0(sc->sc_port), 0);
+	nep_write(sc, XMAC_ADD_FILT1(sc->sc_port), 0);
+	nep_write(sc, XMAC_ADD_FILT2(sc->sc_port), 0);
+	nep_write(sc, XMAC_ADD_FILT12_MASK(sc->sc_port), 0);
+	nep_write(sc, XMAC_ADD_FILT00_MASK(sc->sc_port), 0);
+
+	for (i = 0; i < 16; i++)
+		nep_write(sc, XMAC_HASH_TBL(sc->sc_port, i), 0);
+
+	for (i = 0; i < 20; i++)
+		nep_write(sc, XMAC_HOST_INFO(sc->sc_port, i), 0);
+}
+
+void
+nep_init_rx_channel(struct nep_softc *sc, int chan)
+{
 	uint64_t val;
 	int i, n;
 
-	/* Allocate Tx mail box. */
-	sc->sc_txmbox = nep_dmamem_alloc(sc, PAGE_SIZE);
+	val = nep_read(sc, RXDMA_CFIG1(chan));
+	val &= ~RXDMA_CFIG1_EN;
+	val |= RXDMA_CFIG1_RST;
+	nep_write(sc, RXDMA_CFIG1(chan), RXDMA_CFIG1_RST);
+
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, RXDMA_CFIG1(chan));
+		if ((val & RXDMA_CFIG1_RST) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting Rx DMA\n");
+
+	nep_write(sc, RX_LOG_MASK1(chan), 0);
+	nep_write(sc, RX_LOG_VALUE1(chan), 0);
+	nep_write(sc, RX_LOG_MASK2(chan), 0);
+	nep_write(sc, RX_LOG_VALUE2(chan), 0);
+	nep_write(sc, RX_LOG_PAGE_RELO1(chan), 0);
+	nep_write(sc, RX_LOG_PAGE_RELO2(chan), 0);
+	nep_write(sc, RX_LOG_PAGE_HDL(chan), 0);
+	nep_write(sc, RX_LOG_PAGE_VLD(chan),
+	    (sc->sc_port << RX_LOG_PAGE_VLD_FUNC_SHIFT) |
+	    RX_LOG_PAGE_VLD_PAGE0 | RX_LOG_PAGE_VLD_PAGE1);
+
+	nep_write(sc, RX_DMA_ENT_MSK(chan), RX_DMA_ENT_MSK_RBR_EMPTY);
+
+	val = NEP_DMA_DVA(sc->sc_rbring);
+	val |= (uint64_t)NEP_NRBDESC << RBR_CFIG_A_LEN_SHIFT;
+	nep_write(sc, RBR_CFIG_A(chan), val);
+
+	val = RBR_CFIG_B_BLKSIZE_8K;
+	val |= RBR_CFIG_B_BUFSZ0_2K | RBR_CFIG_B_VLD0;
+	nep_write(sc, RBR_CFIG_B(chan), val);
+
+	val = NEP_DMA_DVA(sc->sc_rcring);
+	val |= (uint64_t)NEP_NRCDESC << RBR_CFIG_A_LEN_SHIFT;
+	nep_write(sc, RCRCFIG_A(chan), val);
+
+	val = 8 | RCRCFIG_B_ENTOUT;
+	val |= (16 << RCRCFIG_B_PTHRES_SHIFT);
+	nep_write(sc, RCRCFIG_B(chan), val);
+
+	nep_write(sc, DEF_PT_RDC(sc->sc_port), chan);
+	for (i = 0; i < 8; i++)
+		nep_write(sc, RDC_TBL(sc->sc_port, i), chan);
+
+}
+
+void
+nep_init_tx_mac(struct nep_softc *sc)
+{
+	uint64_t val;
+	int n;
+
+	nep_write(sc, XTXMAC_SW_RST(sc->sc_port),
+	    XTXMAC_SW_RST_REG_RST | XTXMAC_SW_RST_SOFT_RST);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, XTXMAC_SW_RST(sc->sc_port));
+		if ((val & (XTXMAC_SW_RST_REG_RST |
+		    XTXMAC_SW_RST_SOFT_RST)) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting Tx MAC\n");
+
+	val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
+	val &= ~XMAC_CONFIG_ALWAYS_NO_CRC;
+	val &= ~XMAC_CONFIG_VAR_MIN_IPG_EN;
+	val &= ~XMAC_CONFIG_STRETCH_MODE;
+	val &= ~XMAC_CONFIG_TX_ENABLE;
+	nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
+
+	val = nep_read(sc, XMAC_IPG(sc->sc_port));
+	val &= ~XMAC_IPG_IPG_VALUE1_MASK;	/* MII/GMII mode */
+	val |= XMAC_IPG_IPG_VALUE1_12;
+	val &= ~XMAC_IPG_IPG_VALUE_MASK;	/* XGMII mode */
+	val |= XMAC_IPG_IPG_VALUE_12_15;
+	nep_write(sc, XMAC_IPG(sc->sc_port), val);
+
+	val = nep_read(sc, XMAC_MIN(sc->sc_port));
+	val &= ~XMAC_MIN_RX_MIN_PKT_SIZE_MASK;
+	val &= ~XMAC_MIN_TX_MIN_PKT_SIZE_MASK;
+	val |= (64 << XMAC_MIN_RX_MIN_PKT_SIZE_SHIFT);
+	val |= (64 << XMAC_MIN_TX_MIN_PKT_SIZE_SHIFT);
+	nep_write(sc, XMAC_MIN(sc->sc_port), val);
+	nep_write(sc, XMAC_MAX(sc->sc_port), ETHER_MAX_LEN);
+
+	nep_write(sc, TXMAC_FRM_CNT(sc->sc_port), 0);
+	nep_write(sc, TXMAC_BYTE_CNT(sc->sc_port), 0);
+}
+
+void
+nep_init_tx_channel(struct nep_softc *sc, int chan)
+{
+	uint64_t val;
+	int n;
+
+	val = nep_read(sc, TXC_CONTROL);
+	val |= TXC_CONTROL_TXC_ENABLED;
+	val |= (1ULL << sc->sc_port);
+	nep_write(sc, TXC_CONTROL, val);
+
+	nep_write(sc, TXC_PORT_DMA(sc->sc_port), 1ULL << chan);
+
+	val = nep_read(sc, TXC_INT_MASK);
+	val &= ~TXC_INT_MASK_PORT_INT_MASK(sc->sc_port);
+	nep_write(sc, TXC_INT_MASK, val);
+
+	val = nep_read(sc, TX_CS(chan));
+	val |= TX_CS_RST;
+	nep_write(sc, TX_CS(chan), val);
+
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, TX_CS(chan));
+		if ((val & TX_CS_RST) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting Tx dma\n");
+
+	nep_write(sc, TX_LOG_MASK1(chan), 0);
+	nep_write(sc, TX_LOG_VALUE1(chan), 0);
+	nep_write(sc, TX_LOG_MASK2(chan), 0);
+	nep_write(sc, TX_LOG_VALUE2(chan), 0);
+	nep_write(sc, TX_LOG_PAGE_RELO1(chan), 0);
+	nep_write(sc, TX_LOG_PAGE_RELO2(chan), 0);
+	nep_write(sc, TX_LOG_PAGE_HDL(chan), 0);
+	nep_write(sc, TX_LOG_PAGE_VLD(chan),
+	    (sc->sc_port << TX_LOG_PAGE_VLD_FUNC_SHIFT) |
+	    TX_LOG_PAGE_VLD_PAGE0 | TX_LOG_PAGE_VLD_PAGE1);
+
+	nep_write(sc, TX_RING_KICK(chan), 0);
+
+	nep_write(sc, TXC_DMA_MAX(chan), ETHER_MAX_LEN + 64);
+	nep_write(sc, TX_ENT_MSK(chan), 0);
+
+	val = NEP_DMA_DVA(sc->sc_txring);
+	val |= (NEP_DMA_LEN(sc->sc_txring) / 64) << TX_RNG_CFIG_LEN_SHIFT;
+	nep_write(sc, TX_RNG_CFIG(chan), val);
+
+	nep_write(sc, TX_CS(chan), 0);
+}
+
+void
+nep_up(struct nep_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct nep_block *rb;
+	struct nep_buf *txb;
+	uint64_t val;
+	int i, n;
+
+	/* Allocate Rx block descriptor ring. */
+	sc->sc_rbring = nep_dmamem_alloc(sc, NEP_NRBDESC * sizeof(uint32_t));
+	if (sc->sc_rbring == NULL)
+		return;
+	sc->sc_rbdesc = NEP_DMA_KVA(sc->sc_rbring);
+
+	sc->sc_rb = malloc(sizeof(struct nep_block) * NEP_NRBDESC,
+	    M_DEVBUF, M_WAITOK);
+	for (i = 0; i < NEP_NRBDESC; i++) {
+		rb = &sc->sc_rb[i];
+		bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+		    BUS_DMA_WAITOK, &rb->nb_map);
+		rb->nb_block = NULL;
+	}
+
+	sc->sc_rx_prod = 0;
+	if_rxr_init(&sc->sc_rx_ring, 16, NEP_NRBDESC);
+	
+	/* Allocate Rx completion descriptor ring. */
+	sc->sc_rcring = nep_dmamem_alloc(sc, NEP_NRCDESC * sizeof(uint64_t));
+	if (sc->sc_rcring == NULL)
+		goto free_rbring;
+	sc->sc_rcdesc = NEP_DMA_KVA(sc->sc_rcring);
 
 	/* Allocate Tx descriptor ring. */
 	sc->sc_txring = nep_dmamem_alloc(sc, NEP_NTXDESC * sizeof(uint64_t));
+	if (sc->sc_txring == NULL)
+		goto free_rcring;
 	sc->sc_txdesc = NEP_DMA_KVA(sc->sc_txring);
 
 	sc->sc_txbuf = malloc(sizeof(struct nep_buf) * NEP_NTXDESC,
@@ -574,74 +948,7 @@ nep_up(struct nep_softc *sc)
 		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
 		val &= ~XMAC_CONFIG_SEL_POR_CLK_SRC;
 		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
-	}
 
-	addr0 = (sc->sc_lladdr[4] << 8) | sc->sc_lladdr[5];
-	addr1 = (sc->sc_lladdr[2] << 8) | sc->sc_lladdr[3];
-	addr2 = (sc->sc_lladdr[0] << 8) | sc->sc_lladdr[1];
-
-	if (sc->sc_port < 2) {
-		nep_write(sc, XMAC_ADDR0(sc->sc_port), addr0);
-		nep_write(sc, XMAC_ADDR1(sc->sc_port), addr1);
-		nep_write(sc, XMAC_ADDR2(sc->sc_port), addr2);
-	} else {
-		nep_write(sc, BMAC_ADDR0(sc->sc_port), addr0);
-		nep_write(sc, BMAC_ADDR1(sc->sc_port), addr1);
-		nep_write(sc, BMAC_ADDR2(sc->sc_port), addr2);
-	}		
-
-	val = nep_read(sc, TXC_CONTROL);
-	val |= TXC_CONTROL_TXC_ENABLED;
-	val |= (1ULL << sc->sc_port);
-	nep_write(sc, TXC_CONTROL, val);
-
-	nep_write(sc, TXC_PORT_DMA(sc->sc_port), 1ULL << sc->sc_port);
-
-	val = nep_read(sc, TXC_INT_MASK);
-	val &= ~TXC_INT_MASK_PORT_INT_MASK(sc->sc_port);
-	nep_write(sc, TXC_INT_MASK, val);
-
-	val = nep_read(sc, TX_CS(sc->sc_port));
-	val |= TX_CS_RST;
-	nep_write(sc, TX_CS(sc->sc_port), val);
-
-	n = 1000;
-	while (--n) {
-		val = nep_read(sc, TX_CS(sc->sc_port));
-		if ((val & TX_CS_RST) == 0)
-			break;
-	}
-	if (n == 0)
-		printf("timeout resetting transmit ring\n");
-	printf("TX_CS %llx\n", val);
-
-	nep_write(sc, TX_LOG_MASK1(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_VALUE1(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_MASK2(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_VALUE2(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_PAGE_RELO1(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_PAGE_RELO2(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_PAGE_HDL(sc->sc_port), 0);
-	nep_write(sc, TX_LOG_PAGE_VLD(sc->sc_port), 0x3);
-
-	nep_write(sc, TX_RING_KICK(sc->sc_port), 0);
-
-	nep_write(sc, TXC_DMA_MAX(sc->sc_port), ETHER_MAX_LEN + 64);
-	nep_write(sc, TX_ENT_MSK(sc->sc_port), 0);
-
-	val = NEP_DMA_DVA(sc->sc_txring);
-	val |= (NEP_DMA_LEN(sc->sc_txring) / 64) << TX_RNG_CFIG_LEN_SHIFT;
-	nep_write(sc, TX_RNG_CFIG(sc->sc_port), val);
-
-	nep_write(sc, TXDMA_MBH(sc->sc_port),
-	    NEP_DMA_DVA(sc->sc_txmbox) >> 32);
-	nep_write(sc, TXDMA_MBL(sc->sc_port),
-	    NEP_DMA_DVA(sc->sc_txmbox) & 0xffffffff);
-
-	nep_write(sc, TX_CS(sc->sc_port), 0);
-	printf("TX_CS: %llx\n", nep_read(sc, TX_CS(sc->sc_port)));
-
-	if (sc->sc_port < 2) {
 		nep_write(sc, PCS_DPATH_MODE(sc->sc_port), PCS_DPATH_MODE_MII);
 		val = nep_read(sc, PCS_MII_CTL(sc->sc_port));
 		val |= PCS_MII_CTL_RESET;
@@ -654,59 +961,64 @@ nep_up(struct nep_softc *sc)
 		}
 		if (n == 0)
 			printf("timeout resetting PCS\n");
+	}
 
-		nep_write(sc, XTXMAC_SW_RST(sc->sc_port),
-		    XTXMAC_SW_RST_REG_RST | XTXMAC_SW_RST_SOFT_RST);
-		n = 1000;
-		while (--n) {
-			val = nep_read(sc, XTXMAC_SW_RST(sc->sc_port));
-			if ((val & (XTXMAC_SW_RST_REG_RST |
-			    XTXMAC_SW_RST_SOFT_RST)) == 0)
-				break;
-		}
-		if (n == 0)
-			printf("timeout resetting Tx MAC\n");
+	nep_init_rx_mac(sc);
+	nep_init_rx_channel(sc, sc->sc_port);
 
+	val = nep_read(sc, IPP_CFIG(sc->sc_port));
+	val |= IPP_CFIG_SOFT_RST;
+	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, IPP_CFIG(sc->sc_port));
+		if ((val & IPP_CFIG_SOFT_RST) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting IPP\n");
+
+	val = nep_read(sc, IPP_CFIG(sc->sc_port));
+	val |= IPP_CFIG_IPP_ENABLE;
+	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+
+	nep_init_tx_mac(sc);
+	nep_init_tx_channel(sc, sc->sc_port);
+
+	nep_fill_rx_ring(sc);
+
+	if (sc->sc_port < 2) {
 		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
-		val &= ~XMAC_CONFIG_ALWAYS_NO_CRC;
-		val &= ~XMAC_CONFIG_VAR_MIN_IPG_EN;
-		val &= ~XMAC_CONFIG_STRETCH_MODE;
-		val &= ~XMAC_CONFIG_TX_ENABLE;
+		val |= XMAC_CONFIG_RX_MAC_ENABLE;
 		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
-
-		val = nep_read(sc, XMAC_IPG(sc->sc_port));
-		val &= ~XMAC_IPG_IPG_VALUE1_MASK;	/* MII/GMII mode */
-		val |= XMAC_IPG_IPG_VALUE1_12;
-		val &= ~XMAC_IPG_IPG_VALUE_MASK;	/* XGMII mode */
-		val |= XMAC_IPG_IPG_VALUE_12_15;
-		nep_write(sc, XMAC_IPG(sc->sc_port), val);
-
-		val = nep_read(sc, XMAC_MIN(sc->sc_port));
-		val &= ~XMAC_MIN_RX_MIN_PKT_SIZE_MASK;
-		val &= ~XMAC_MIN_TX_MIN_PKT_SIZE_MASK;
-		val |= (64 << XMAC_MIN_RX_MIN_PKT_SIZE_SHIFT);
-		val |= (64 << XMAC_MIN_TX_MIN_PKT_SIZE_SHIFT);
-		nep_write(sc, XMAC_MIN(sc->sc_port), val);
-		nep_write(sc, XMAC_MAX(sc->sc_port), ETHER_MAX_LEN);
-
-		nep_write(sc, TXMAC_FRM_CNT(sc->sc_port), 0);
-		nep_write(sc, TXMAC_BYTE_CNT(sc->sc_port), 0);
 
 		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
 		val |= XMAC_CONFIG_TX_ENABLE;
 		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
 	}
 
+	val = nep_read(sc, RXDMA_CFIG1(sc->sc_port));
+	val |= RXDMA_CFIG1_EN;
+	nep_write(sc, RXDMA_CFIG1(sc->sc_port), val);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 
-	/* Enable Tx interrupts. */
+	/* Enable interrupts. */
 	nep_write(sc, LD_IM1(LDN_MAC(sc->sc_port)), 0);
+	nep_write(sc, LD_IM0(LDN_RXDMA(sc->sc_port)), 0);
 	nep_write(sc, LD_IM0(LDN_TXDMA(sc->sc_port)), 0);
 	nep_write(sc, LDGIMGN(sc->sc_port), LDGIMGN_ARM | 2);
 
 	timeout_add_sec(&sc->sc_tick, 1);
+
+	return;
+
+free_rcring:
+	nep_dmamem_free(sc, sc->sc_rcring);
+free_rbring:
+	nep_dmamem_free(sc, sc->sc_rbring);
 }
 
 void
@@ -738,9 +1050,10 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 //	printf("TX_RNG_ERR_LOGL: %llx\n",
 //	       nep_read(sc, TX_RNG_ERR_LOGL(sc->sc_port)));
 	printf("SYS_ERR_STAT %llx\n", nep_read(sc, SYS_ERR_STAT));
-	printf("TXC_INT_STAT_DBG %llx\n", nep_read(sc, TXC_INT_STAT_DBG));
-	printf("TXC_PKT_STUFFED: %llx\n",
-	       nep_read(sc, TXC_PKT_STUFFED(sc->sc_port)));
+	printf("ZCP_INT_STAT %llx\n", nep_read(sc, ZCP_INT_STAT));
+//	printf("TXC_INT_STAT_DBG %llx\n", nep_read(sc, TXC_INT_STAT_DBG));
+//	printf("TXC_PKT_STUFFED: %llx\n",
+//	       nep_read(sc, TXC_PKT_STUFFED(sc->sc_port)));
 	printf("TXC_PKT_XMIT: %llx\n",
 	       nep_read(sc, TXC_PKT_XMIT(sc->sc_port)));
 //	printf("TX_RING_HDL: %llx\n",
@@ -749,10 +1062,24 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 	       nep_read(sc, XMAC_CONFIG(sc->sc_port)));
 	printf("XTXMAC_STATUS: %llx\n",
 	       nep_read(sc, XTXMAC_STATUS(sc->sc_port)));
+	printf("XRXMAC_STATUS: %llx\n",
+	       nep_read(sc, XRXMAC_STATUS(sc->sc_port)));
+	printf("RXMAC_BT_CNT: %llx\n",
+	       nep_read(sc, RXMAC_BT_CNT(sc->sc_port)));
 	printf("TXMAC_FRM_CNT: %llx\n",
 	       nep_read(sc, TXMAC_FRM_CNT(sc->sc_port)));
 	printf("TXMAC_BYTE_CNT: %llx\n",
 	       nep_read(sc, TXMAC_BYTE_CNT(sc->sc_port)));
+	printf("RBR_STAT: %llx\n",
+	       nep_read(sc, RBR_STAT(sc->sc_port)));
+	printf("RBR_HDL: %llx\n",
+	       nep_read(sc, RBR_HDL(sc->sc_port)));
+	printf("RCRSTAT_A: %llx\n",
+	       nep_read(sc, RCRSTAT_A(sc->sc_port)));
+	printf("RCRSTAT_C: %llx\n",
+	       nep_read(sc, RCRSTAT_C(sc->sc_port)));
+	printf("RX_DMA_CTL_STAT: %llx\n",
+	       nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port)));
 
 	/*
 	 * MAC does not support padding of transmit packets that are
@@ -937,6 +1264,44 @@ nep_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 	return (error);
+}
+
+void
+nep_fill_rx_ring(struct nep_softc *sc)
+{
+	struct nep_block *rb;
+	void *block;
+	uint64_t val;
+	u_int slots;
+	int desc, err;
+	int count = 0;
+
+	desc = sc->sc_rx_prod;
+	slots = if_rxr_get(&sc->sc_rx_ring, NEP_NRBDESC);
+	while (slots > 0) {
+		rb = &sc->sc_rb[desc];
+
+		block = pool_get(nep_block_pool, PR_NOWAIT);
+		if (block == NULL)
+			break;
+		rb->nb_block = block;
+		err = bus_dmamap_load(sc->sc_dmat, rb->nb_map, block,
+		     PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
+		if (err)
+			break;
+		sc->sc_rbdesc[desc++] = 
+		    htole32(rb->nb_map->dm_segs[0].ds_addr >> 12);
+		count++;
+		slots--;
+	}
+	if_rxr_put(&sc->sc_rx_ring, slots);
+	if (count > 0) {
+		nep_write(sc, RBR_KICK(sc->sc_port), count);
+		val = nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port));
+		val |= RX_DMA_CTL_STAT_RBR_EMPTY;
+		nep_write(sc, RX_DMA_CTL_STAT(sc->sc_port), val);
+		sc->sc_rx_prod = desc;
+	}
 }
 
 struct nep_dmamem *
