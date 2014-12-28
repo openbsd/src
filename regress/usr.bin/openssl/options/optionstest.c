@@ -1,4 +1,4 @@
-/*	$OpenBSD: optionstest.c,v 1.1 2014/12/28 14:01:33 jsing Exp $	*/
+/*	$OpenBSD: optionstest.c,v 1.2 2014/12/28 14:22:46 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -28,7 +28,7 @@
 BIO *bio_err;
 CONF *config;
 
-static int argfunc(struct option *opt, char *arg);
+static int argfunc(char *arg);
 
 static struct {
 	char *arg;
@@ -44,7 +44,7 @@ static struct option test_options[] = {
 	{
 		.name = "argfunc",
 		.type = OPTION_ARG_FUNC,
-		.func = argfunc,
+		.opt.argfunc = argfunc,
 	},
 	{
 		.name = "flag",
@@ -156,7 +156,7 @@ struct options_test options_tests[] = {
     (sizeof(options_tests) / sizeof(*options_tests))
 
 int
-argfunc(struct option *opt, char *arg)
+argfunc(char *arg)
 {
 	test_config.arg = arg;
 	return (0);
