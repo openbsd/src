@@ -1,4 +1,4 @@
-/*	$OpenBSD: optionstest.c,v 1.5 2014/12/28 16:11:54 jsing Exp $	*/
+/*	$OpenBSD: optionstest.c,v 1.6 2014/12/28 16:24:48 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,6 +29,7 @@ BIO *bio_err;
 CONF *config;
 
 static int argfunc(char *arg);
+static int multiarg(int argc, char **argv, int *argsused);
 
 static struct {
 	char *arg;
@@ -53,6 +54,11 @@ static struct option test_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &test_config.flag,
 	},
+	{
+		.name = "multiarg",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = multiarg,
+	},
 	{ NULL },
 };
 
@@ -67,6 +73,7 @@ char *args8[] = { "opts", "-arg", "arg", "-flag", "file1", "file2", "file3" };
 char *args9[] = { "opts", "-arg", "arg", "-flag", "file1", "-file2", "file3" };
 char *args10[] = { "opts", "-arg", "arg", "-flag", "-", "file1", "file2" };
 char *args11[] = { "opts", "-arg", "arg", "-flag", "-", "-file1", "-file2" };
+char *args12[] = { "opts", "-multiarg", "arg1", "arg2", "-flag", "unnamed" };
 
 struct options_test {
 	int argc;
@@ -215,6 +222,26 @@ struct options_test options_tests[] = {
 		.wantarg = "arg",
 		.wantflag = 1,
 	},
+	{
+		/* Test 15 - Multiple argument callback. */
+		.argc = 6,
+		.argv = args12,
+		.unnamed = "unnamed",
+		.type = OPTIONS_TEST_UNNAMED,
+		.want = 0,
+		.wantarg = NULL,
+		.wantflag = 1,
+	},
+	{
+		/* Test 16 - Multiple argument callback. */
+		.argc = 6,
+		.argv = args12,
+		.used = 5,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = NULL,
+		.wantflag = 1,
+	},
 };
 
 #define N_OPTIONS_TESTS \
@@ -224,6 +251,16 @@ static int
 argfunc(char *arg)
 {
 	test_config.arg = arg;
+	return (0);
+}
+
+static int
+multiarg(int argc, char **argv, int *argsused)
+{
+	if (argc < 3)
+		return (1);
+
+	*argsused = 3;
 	return (0);
 }
 
