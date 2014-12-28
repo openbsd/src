@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.20 2014/12/28 16:22:37 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.21 2014/12/28 16:33:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2288,11 +2288,11 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 
 		/* See if there is a matching option... */
 		for (j = 0; opts[j].name != NULL; j++) {
-			opt = &opts[j];
-			if (strcmp(p, opt->name) == 0)
+			if (strcmp(p, opts[j].name) == 0)
 				break;
 		}
-		if (opts[j].name == NULL)
+		opt = &opts[j];
+		if (opts->name == NULL && opts->type == 0)
 			goto unknown;
 
 		if (opt->type == OPTION_ARG ||
