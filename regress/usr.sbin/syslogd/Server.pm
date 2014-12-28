@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.2 2014/08/25 17:55:27 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.3 2014/12/28 14:08:01 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -33,13 +33,13 @@ sub new {
 	$args{logfile} ||= "server.log";
 	$args{up} ||= "Accepted";
 	my $self = Proc::new($class, %args);
-	$self->{listenprotocol} ||= "udp";
+	$self->{listenproto} ||= "udp";
 	defined($self->{listendomain})
 	    or croak "$class listen domain not given";
 	$SSL_ERROR = "";
-	my $iosocket = $self->{listenprotocol} eq "tls" ?
+	my $iosocket = $self->{listenproto} eq "tls" ?
 	    "IO::Socket::SSL" : "IO::Socket::INET6";
-	my $proto = $self->{listenprotocol};
+	my $proto = $self->{listenproto};
 	$proto = "tcp" if $proto eq "tls";
 	my $ls = $iosocket->new(
 	    Proto		=> $proto,
@@ -51,7 +51,7 @@ sub new {
 	    SSL_cert_file	=> "server-cert.pem",
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
 	) or die ref($self), " $iosocket socket listen failed: $!,$SSL_ERROR";
-	if ($self->{listenprotocol} eq "tcp") {
+	if ($self->{listenproto} eq "tcp") {
 		listen($ls, 1)
 		    or die ref($self), " socket failed: $!";
 	}
@@ -68,7 +68,7 @@ sub child {
 
 	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
 	my $as = $self->{ls};
-	if ($self->{listenprotocol} ne "udp") {
+	if ($self->{listenproto} ne "udp") {
 		$as = $self->{ls}->accept()
 		    or die ref($self), " $iosocket socket accept failed: $!";
 		print STDERR "accept sock: ",$as->sockhost()," ",

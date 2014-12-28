@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.6 2014/10/29 16:42:57 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.7 2014/12/28 14:08:01 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -48,9 +48,9 @@ sub new {
 	_make_abspath(\$self->{$_}) foreach (qw(conffile outfile outpipe));
 
 	# substitute variables in config file
-	my $connectprotocol = $self->{connectprotocol};
 	my $connectdomain = $self->{connectdomain};
 	my $connectaddr = $self->{connectaddr};
+	my $connectproto = $self->{connectproto};
 	my $connectport = $self->{connectport};
 
 	open(my $fh, '>', $self->{conffile})

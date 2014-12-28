@@ -14,6 +14,9 @@ When invoked with "make libevent", all tests are executed three
 times.  They pass the EVENT_NO...  environment variables over sudo
 into syslogd.  This way the select(2) and poll(2) and kqueue(2)
 backend is tested.
+If the rsyslog package is installed, messages are sent to the
+rsyslogd to test interoperability.  This is especially useful for
+TCP and TLS.
 
 SUDO=sudo
 As syslogd needs root privileges either run the tests as root or

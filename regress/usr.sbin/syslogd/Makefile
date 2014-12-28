@@ -1,9 +1,12 @@
-#	$OpenBSD: Makefile,v 1.5 2014/09/13 23:38:24 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/12/28 14:08:01 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
 # p5-IO-Socket-SSL	perl interface to SSL sockets
+#
+# This package enables additional interoperability tests
+# rsyslog		syslog daemon supporting databases, TCP, SSL, RELP
 #
 # Check wether all required perl packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
@@ -22,10 +25,14 @@ regress:
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
+.if exists (/usr/local/sbin/rsyslogd)
 TARGETS ?=		${ARGS}
+.else
+TARGETS ?=		${ARGS:Nargs-rsyslog*}
+.endif
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log *.log.? *.pem *.crt *.key syslogd.conf stamp-*
-CLEANFILES +=		*.sock ktrace.out *.ktrace *.fstat
+CLEANFILES +=		*.log *.log.? *.pem *.crt *.key *.conf stamp-*
+CLEANFILES +=		*.out *.sock ktrace.out *.ktrace *.fstat
 
 .MAIN: all
 

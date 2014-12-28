@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.7 2014/09/13 23:38:24 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.8 2014/12/28 14:08:01 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -27,6 +27,26 @@ use IO::Socket::INET6;
 my $firstlog = "syslogd regress test first message";
 my $testlog = "syslogd regress test log message";
 my $downlog = "syslogd regress client shutdown";
+
+sub find_ports {
+	my %args = @_;
+	my $num    = delete $args{num}    // 1;
+	my $domain = delete $args{domain} // AF_INET;
+	my $addr   = delete $args{addr}   // "127.0.0.1";
+	my $proto  = delete $args{proto}  // "udp";
+
+	my @sockets = (1..$num);
+	foreach my $s (@sockets) {
+		$s = IO::Socket::INET6->new(
+		    Domain    => $domain,
+		    LocalAddr => $addr,
+		    Proto     => $proto,
+		) or die "find_ports: create and bind socket failed: $!";
+	}
+	my @ports = map { $_->sockport() } @sockets;
+
+	return wantarray ? @ports : $ports[0];
+}
 
 ########################################################################
 # Client funcs
@@ -144,6 +164,10 @@ sub check_logs {
 	check_out($r, %args);
 	check_stat($r, %args);
 	check_kdump($c, $r, $s);
+	if (my $file = $s->{"outfile"}) {
+		my $pattern = $s->{filegrep} || $testlog;
+		check_pattern(ref $s, $file, $pattern, \&filegrep);
+	}
 }
 
 sub compare($$) {

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: syslogd.pl,v 1.3 2014/09/13 23:38:24 bluhm Exp $
+#	$OpenBSD: syslogd.pl,v 1.4 2014/12/28 14:08:01 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -24,6 +24,7 @@ use Client;
 use Syslogd;
 use Server;
 use Syslogc;
+use RSyslogd;
 require 'funcs.pl';
 
 sub usage {
@@ -39,16 +40,27 @@ if (@ARGV and -f $ARGV[-1]) {
 }
 @ARGV == 0 or usage();
 
-foreach my $name (qw(client syslogd server)) {
+if ($args{rsyslogd}) {
+	$args{rsyslogd}{listen}{domain} ||= AF_INET;
+	$args{rsyslogd}{listen}{addr}   ||= "127.0.0.1";
+	$args{rsyslogd}{listen}{proto}  ||= "udp";
+}
+foreach my $name (qw(client syslogd server rsyslogd)) {
+	$args{$name} or next;
 	foreach my $action (qw(connect listen)) {
 		my $h = $args{$name}{$action} or next;
-		foreach my $k (qw(protocol domain addr port)) {
+		foreach my $k (qw(domain addr proto port)) {
 			$args{$name}{"$action$k"} = $h->{$k};
 		}
 	}
 }
 my($s, $c, $r, @m);
-$s = Server->new(
+$s = RSyslogd->new(
+    %{$args{rsyslogd}},
+    listenport          => scalar find_ports(%{$args{rsyslogd}{listen}}),
+    testfile            => $testfile,
+) if $args{rsyslogd};
+$s ||= Server->new(
     func                => \&read_log,
     listendomain        => AF_INET,
     listenaddr          => "127.0.0.1",
@@ -82,8 +94,9 @@ $c = Client->new(
     server              => \$s,
 ) unless $args{client}{noclient};
 
-$r->run;
+$r->run unless $r->{late};
 $s->run->up unless $args{server}{noserver};
+$r->run if $r->{late};
 $r->up;
 my $control = 0;
 foreach (@m) {
