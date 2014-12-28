@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.226 2014/12/22 04:43:38 dlg Exp $
+#	$OpenBSD: Makefile,v 1.227 2014/12/28 21:32:44 krw Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -36,7 +36,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
 	VOP_GETATTR.9 VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 \
-	vwaitforio.9 vwakeup.9 wdog_register.9 workq_add_task.9
+	vwaitforio.9 vwakeup.9 wdog_register.9
 
 MLINKS+=aml_evalnode.9 aml_evalname.9 aml_evalnode.9 aml_find_node.9 \
 	aml_evalnode.9 aml_freevalue.9 aml_evalnode.9 aml_val2int.9
@@ -439,9 +439,6 @@ MLINKS+=VOP_LOOKUP.9 VOP_ABORTOP.9 VOP_LOOKUP.9 VOP_ACCESS.9 \
 	VOP_LOOKUP.9 VOP_REVOKE.9 VOP_LOOKUP.9 VOP_RMDIR.9 \
 	VOP_LOOKUP.9 VOP_STRATEGY.9 VOP_LOOKUP.9 VOP_SYMLINK.9 \
 	VOP_LOOKUP.9 VOP_UNLOCK.9 VOP_LOOKUP.9 VOP_WRITE.9
-MLINKS+=workq_add_task.9 workq_create.9 \
-	workq_add_task.9 workq_queue_task.9 \
-	workq_add_task.9 workq_destroy.9
 MLINKS+=vhold.9 vdrop.9
 
 .include <bsd.prog.mk>

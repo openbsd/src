@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.229 2014/12/17 06:58:11 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.230 2014/12/28 21:32:45 krw Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/pipe.h>
-#include <sys/workq.h>
 #include <sys/task.h>
 
 #include <sys/syscall.h>
@@ -147,7 +146,6 @@ void	start_reaper(void *);
 void	crypto_init(void);
 void	init_exec(void);
 void	kqueue_init(void);
-void	workq_init(void);
 void	taskq_init(void);
 
 extern char sigcode[], esigcode[];
@@ -343,8 +341,7 @@ main(void *framep)
 	sched_init_cpu(curcpu());
 	p->p_cpu->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
-	/* Initialize work queues */
-	workq_init();
+	/* Initialize task queues */
 	taskq_init();
 
 	/* Initialize the interface/address trees */
