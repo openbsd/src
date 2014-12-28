@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.39 2014/06/22 16:39:07 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.40 2014/12/28 15:22:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 22 2014 $
+.Dd $Mdocdate: December 28 2014 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -607,7 +607,8 @@ The scope of a sub-section is closed by a subsequent sub-section,
 section, or end of file.
 The paragraph left-margin width is reset to the default.
 .Ss \&TH
-Sets the title of the manual page with the following syntax:
+Sets the title of the manual page for use in the page header
+and footer with the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&TH
 .Ar title section date
@@ -629,6 +630,11 @@ is empty or not specified, the current date is used.
 The optional
 .Ar source
 string specifies the organisation providing the utility.
+When unspecified,
+.Xr mandoc 1
+uses its
+.Fl Ios
+argument.
 The
 .Ar volume
 string replaces the default rendered volume, which is dictated by the

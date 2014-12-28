@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.126 2014/11/30 21:54:53 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.127 2014/12/28 15:22:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: December 28 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1314,38 +1314,26 @@ it should by convention be all caps.
 The manual section.
 This may be one of
 .Cm 1
-.Pq utilities ,
+.Pq General Commands ,
 .Cm 2
-.Pq system calls ,
+.Pq System Calls ,
 .Cm 3
-.Pq libraries ,
+.Pq Library Functions ,
 .Cm 3p
-.Pq Perl libraries ,
+.Pq Perl Library ,
 .Cm 4
-.Pq devices ,
+.Pq Device Drivers ,
 .Cm 5
-.Pq file formats ,
+.Pq File Formats ,
 .Cm 6
-.Pq games ,
+.Pq Games ,
 .Cm 7
-.Pq miscellaneous ,
+.Pq Miscellaneous Information ,
 .Cm 8
-.Pq system utilities ,
-.Cm 9
-.Pq kernel functions ,
-.Cm X11
-.Pq X Window System ,
-.Cm X11R6
-.Pq X Window System ,
-.Cm unass
-.Pq unassociated ,
-.Cm local
-.Pq local system ,
-.Cm draft
-.Pq draft manual ,
+.Pq System Manager's Manual ,
 or
-.Cm paper
-.Pq paper .
+.Cm 9
+.Pq Kernel Developer's Manual .
 It should correspond to the manual's filename suffix and defaults to
 the empty string if unspecified.
 .It Ar arch
@@ -2120,8 +2108,16 @@ Its syntax is as follows:
 The optional
 .Ar system
 parameter specifies the relevant operating system or environment.
-Left unspecified, it defaults to the local operating system version.
-This is the suggested form.
+It is suggested to leave it unspecified, in which case
+.Xr mandoc 1
+uses its
+.Fl Ios
+argument, or, if that isn't specified either,
+.Fa sysname
+and
+.Fa release
+as returned by
+.Xr uname 3 .
 .Pp
 Examples:
 .Dl \&.Os
