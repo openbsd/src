@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.41 2014/12/27 06:02:00 deraadt Exp $
+#	$OpenBSD: list,v 1.42 2014/12/28 04:40:18 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -39,6 +39,7 @@ LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
+LINK	instbin					usr/bin/encrypt
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
