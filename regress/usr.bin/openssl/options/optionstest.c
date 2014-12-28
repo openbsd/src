@@ -1,4 +1,4 @@
-/*	$OpenBSD: optionstest.c,v 1.6 2014/12/28 16:24:48 jsing Exp $	*/
+/*	$OpenBSD: optionstest.c,v 1.7 2014/12/28 16:34:23 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,6 +29,7 @@ BIO *bio_err;
 CONF *config;
 
 static int argfunc(char *arg);
+static int defaultarg(int argc, char **argv, int *argsused);
 static int multiarg(int argc, char **argv, int *argsused);
 
 static struct {
@@ -59,6 +60,11 @@ static struct option test_options[] = {
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = multiarg,
 	},
+	{
+		.name = NULL,
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = defaultarg,
+	},
 	{ NULL },
 };
 
@@ -74,6 +80,7 @@ char *args9[] = { "opts", "-arg", "arg", "-flag", "file1", "-file2", "file3" };
 char *args10[] = { "opts", "-arg", "arg", "-flag", "-", "file1", "file2" };
 char *args11[] = { "opts", "-arg", "arg", "-flag", "-", "-file1", "-file2" };
 char *args12[] = { "opts", "-multiarg", "arg1", "arg2", "-flag", "unnamed" };
+char *args13[] = { "opts", "-multiargz", "arg1", "arg2", "-flagz", "unnamed" };
 
 struct options_test {
 	int argc;
@@ -242,6 +249,26 @@ struct options_test options_tests[] = {
 		.wantarg = NULL,
 		.wantflag = 1,
 	},
+	{
+		/* Test 17 - Default callback. */
+		.argc = 6,
+		.argv = args13,
+		.unnamed = "unnamed",
+		.type = OPTIONS_TEST_UNNAMED,
+		.want = 0,
+		.wantarg = NULL,
+		.wantflag = 1,
+	},
+	{
+		/* Test 18 - Default callback. */
+		.argc = 6,
+		.argv = args13,
+		.used = 5,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = NULL,
+		.wantflag = 1,
+	},
 };
 
 #define N_OPTIONS_TESTS \
@@ -252,6 +279,26 @@ argfunc(char *arg)
 {
 	test_config.arg = arg;
 	return (0);
+}
+
+static int
+defaultarg(int argc, char **argv, int *argsused)
+{
+	if (argc < 1)
+		return (1);
+
+	if (strcmp(argv[0], "-multiargz") == 0) {
+		if (argc < 3)
+			return (1);
+		*argsused = 3;
+		return (0);
+	} else if (strcmp(argv[0], "-flagz") == 0) {
+		test_config.flag = 1;
+		*argsused = 1;
+		return (0);
+	}
+
+	return (1);
 }
 
 static int
