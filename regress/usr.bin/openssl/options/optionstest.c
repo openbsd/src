@@ -1,4 +1,4 @@
-/*	$OpenBSD: optionstest.c,v 1.4 2014/12/28 15:49:36 jsing Exp $	*/
+/*	$OpenBSD: optionstest.c,v 1.5 2014/12/28 16:11:54 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -62,8 +62,11 @@ char *args3[] = { "opts", "-arg", "arg", "-flag", "unnamed" };
 char *args4[] = { "opts", "-arg", "arg", "unnamed", "-flag" };
 char *args5[] = { "opts", "unnamed1", "-arg", "arg", "-flag", "unnamed2" };
 char *args6[] = { "opts", "-argfunc", "arg", "-flag" };
-char *args7[] = { "opts", "-arg", "arg", "-flag", "file1", "file2", "file3" };
-char *args8[] = { "opts", "-arg", "arg", "-flag", "file1", "-file2", "file3" };
+char *args7[] = { "opts", "-arg", "arg", "-flag", "-", "-unnamed" };
+char *args8[] = { "opts", "-arg", "arg", "-flag", "file1", "file2", "file3" };
+char *args9[] = { "opts", "-arg", "arg", "-flag", "file1", "-file2", "file3" };
+char *args10[] = { "opts", "-arg", "arg", "-flag", "-", "file1", "file2" };
+char *args11[] = { "opts", "-arg", "arg", "-flag", "-", "-file1", "-file2" };
 
 struct options_test {
 	int argc;
@@ -82,7 +85,7 @@ struct options_test {
 
 struct options_test options_tests[] = {
 	{
-		/* No arguments (only program name). */
+		/* Test 1 - No arguments (only program name). */
 		.argc = 1,
 		.argv = args1,
 		.type = OPTIONS_TEST_NONE,
@@ -91,7 +94,7 @@ struct options_test options_tests[] = {
 		.wantflag = 0,
 	},
 	{
-		/* Named arguments (unnamed not permitted). */
+		/* Test 2 - Named arguments (unnamed not permitted). */
 		.argc = 4,
 		.argv = args2,
 		.type = OPTIONS_TEST_NONE,
@@ -100,7 +103,7 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Named arguments (unnamed permitted). */
+		/* Test 3 - Named arguments (unnamed permitted). */
 		.argc = 4,
 		.argv = args2,
 		.type = OPTIONS_TEST_UNNAMED,
@@ -110,14 +113,14 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Named and single unnamed (unnamed not permitted). */
+		/* Test 4 - Named and single unnamed (unnamed not permitted). */
 		.argc = 5,
 		.argv = args3,
 		.type = OPTIONS_TEST_NONE,
 		.want = 1,
 	},
 	{
-		/* Named and single unnamed (unnamed permitted). */
+		/* Test 5 - Named and single unnamed (unnamed permitted). */
 		.argc = 5,
 		.argv = args3,
 		.type = OPTIONS_TEST_UNNAMED,
@@ -127,7 +130,7 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Named and single unnamed (different sequence). */
+		/* Test 6 - Named and single unnamed (different sequence). */
 		.argc = 5,
 		.argv = args4,
 		.type = OPTIONS_TEST_UNNAMED,
@@ -137,14 +140,14 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Multiple unnamed arguments (should fail). */
+		/* Test 7 - Multiple unnamed arguments (should fail). */
 		.argc = 6,
 		.argv = args5,
 		.type = OPTIONS_TEST_UNNAMED,
 		.want = 1,
 	},
 	{
-		/* Function. */
+		/* Test 8 - Function. */
 		.argc = 4,
 		.argv = args6,
 		.type = OPTIONS_TEST_NONE,
@@ -153,17 +156,17 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Named and multiple unnamed. */
-		.argc = 7,
+		/* Test 9 - Named and single unnamed (hyphen separated). */
+		.argc = 6,
 		.argv = args7,
-		.used = 4,
-		.type = OPTIONS_TEST_ARGSUSED,
+		.type = OPTIONS_TEST_UNNAMED,
+		.unnamed = "-unnamed",
 		.want = 0,
 		.wantarg = "arg",
 		.wantflag = 1,
 	},
 	{
-		/* Named and multiple unnamed. */
+		/* Test 10 - Named and multiple unnamed. */
 		.argc = 7,
 		.argv = args8,
 		.used = 4,
@@ -173,7 +176,37 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Named only. */
+		/* Test 11 - Named and multiple unnamed. */
+		.argc = 7,
+		.argv = args9,
+		.used = 4,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = "arg",
+		.wantflag = 1,
+	},
+	{
+		/* Test 12 - Named and multiple unnamed. */
+		.argc = 7,
+		.argv = args10,
+		.used = 5,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = "arg",
+		.wantflag = 1,
+	},
+	{
+		/* Test 13 - Named and multiple unnamed. */
+		.argc = 7,
+		.argv = args11,
+		.used = 5,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = "arg",
+		.wantflag = 1,
+	},
+	{
+		/* Test 14 - Named only. */
 		.argc = 4,
 		.argv = args2,
 		.used = 4,
@@ -254,7 +287,7 @@ main(int argc, char **argv)
 	size_t i;
 
 	for (i = 0; i < N_OPTIONS_TESTS; i++)
-		failed += do_options_test(i, &options_tests[i]);
+		failed += do_options_test(i + 1, &options_tests[i]);
 
 	return (failed);
 }
