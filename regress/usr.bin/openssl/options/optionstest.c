@@ -1,4 +1,4 @@
-/*	$OpenBSD: optionstest.c,v 1.3 2014/12/28 15:07:52 jsing Exp $	*/
+/*	$OpenBSD: optionstest.c,v 1.4 2014/12/28 15:49:36 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -62,6 +62,8 @@ char *args3[] = { "opts", "-arg", "arg", "-flag", "unnamed" };
 char *args4[] = { "opts", "-arg", "arg", "unnamed", "-flag" };
 char *args5[] = { "opts", "unnamed1", "-arg", "arg", "-flag", "unnamed2" };
 char *args6[] = { "opts", "-argfunc", "arg", "-flag" };
+char *args7[] = { "opts", "-arg", "arg", "-flag", "file1", "file2", "file3" };
+char *args8[] = { "opts", "-arg", "arg", "-flag", "file1", "-file2", "file3" };
 
 struct options_test {
 	int argc;
@@ -69,6 +71,7 @@ struct options_test {
 	enum {
 		OPTIONS_TEST_NONE,
 		OPTIONS_TEST_UNNAMED,
+		OPTIONS_TEST_ARGSUSED,
 	} type;
 	char *unnamed;
 	int used;
@@ -149,12 +152,42 @@ struct options_test options_tests[] = {
 		.wantarg = "arg",
 		.wantflag = 1,
 	},
+	{
+		/* Named and multiple unnamed. */
+		.argc = 7,
+		.argv = args7,
+		.used = 4,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = "arg",
+		.wantflag = 1,
+	},
+	{
+		/* Named and multiple unnamed. */
+		.argc = 7,
+		.argv = args8,
+		.used = 4,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = "arg",
+		.wantflag = 1,
+	},
+	{
+		/* Named only. */
+		.argc = 4,
+		.argv = args2,
+		.used = 4,
+		.type = OPTIONS_TEST_ARGSUSED,
+		.want = 0,
+		.wantarg = "arg",
+		.wantflag = 1,
+	},
 };
 
 #define N_OPTIONS_TESTS \
     (sizeof(options_tests) / sizeof(*options_tests))
 
-int
+static int
 argfunc(char *arg)
 {
 	test_config.arg = arg;
@@ -164,15 +197,19 @@ argfunc(char *arg)
 static int
 do_options_test(int test_no, struct options_test *ot)
 {
+	int *argsused = NULL;
 	char *unnamed = NULL;
 	char **arg = NULL;
+	int used = 0;
 	int ret;
 
 	if (ot->type == OPTIONS_TEST_UNNAMED)
 		arg = &unnamed;
+	else if (ot->type == OPTIONS_TEST_ARGSUSED)
+		argsused = &used;
 
 	memset(&test_config, 0, sizeof(test_config));
-	ret = options_parse(ot->argc, ot->argv, test_options, arg);
+	ret = options_parse(ot->argc, ot->argv, test_options, arg, argsused);
 	if (ret != ot->want) {
 		fprintf(stderr, "FAIL: test %i options_parse() returned %i, "
 		    "want %i\n", test_no, ret, ot->want);
@@ -199,6 +236,11 @@ do_options_test(int test_no, struct options_test *ot)
 	     strcmp(unnamed, ot->unnamed) != 0)) {
 		fprintf(stderr, "FAIL: test %i got unnamed '%s', want '%s'\n",
 		    test_no, unnamed, ot->unnamed);
+		return (1);
+	}
+	if (ot->type == OPTIONS_TEST_ARGSUSED && used != ot->used) {
+		fprintf(stderr, "FAIL: test %i got used %i, want %i\n",
+		    test_no, used, ot->used);
 		return (1);
 	}
 
