@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.10 2011/04/03 15:36:02 jasper Exp $ */
+/*	$OpenBSD: if_che.c,v 1.11 2014/12/28 13:55:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -82,7 +82,7 @@
 #define CHE_T3DBG_F_GPIO1_OUT_VAL	0x00000002
 #define CHE_T3DBG_F_GPIO0_OUT_VAL	0x00000001
 #define CHE_REG_I2C_CFG		0x6a0
-#define CHE_I2C_CLKDIV(_x)	((_x) && 0xfff)
+#define CHE_I2C_CLKDIV(_x)	((_x) & 0xfff)
 #define CHE_REG_MI1_CFG		0x6b0
 #define CHE_REG_MI1_ADDR	0x6b4
 #define CHE_REG_MI1_DATA	0x6b8
