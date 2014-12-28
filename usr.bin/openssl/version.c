@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.4 2014/12/28 14:21:42 jsing Exp $ */
+/* $OpenBSD: version.c,v 1.5 2014/12/28 15:48:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -217,7 +217,7 @@ version_main(int argc, char **argv)
 {
 	memset(&version_config, 0, sizeof(version_config));
 
-	if (options_parse(argc, argv, version_options, NULL) != 0) {
+	if (options_parse(argc, argv, version_options, NULL, NULL) != 0) {
 		version_usage();
 		return (1);
 	}

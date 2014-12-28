@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.7 2014/12/28 14:21:42 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.8 2014/12/28 15:48:52 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -277,7 +277,7 @@ ecparam_main(int argc, char **argv)
 	ecparam_config.informat = FORMAT_PEM;
 	ecparam_config.outformat = FORMAT_PEM;
 
-	if (options_parse(argc, argv, ecparam_options, NULL) != 0) {
+	if (options_parse(argc, argv, ecparam_options, NULL, NULL) != 0) {
 		ecparam_usage();
 		goto end;
 	}

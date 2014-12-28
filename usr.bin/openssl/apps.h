@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.10 2014/12/28 14:21:42 jsing Exp $ */
+/* $OpenBSD: apps.h,v 1.11 2014/12/28 15:48:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -305,6 +305,7 @@ struct option {
 };
 
 void options_usage(struct option *opts);
-int options_parse(int argc, char **argv, struct option *opts, char **unnamed);
+int options_parse(int argc, char **argv, struct option *opts, char **unnamed,
+    int *argsused);
 
 #endif

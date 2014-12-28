@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.17 2014/12/28 15:05:38 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.18 2014/12/28 15:48:52 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2242,7 +2242,8 @@ options_usage(struct option *opts)
 }
 
 int
-options_parse(int argc, char **argv, struct option *opts, char **unnamed)
+options_parse(int argc, char **argv, struct option *opts, char **unnamed,
+    int *argsused)
 {
 	const char *errstr;
 	struct option *opt;
@@ -2260,6 +2261,8 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 
 		/* Single unnamed argument (without leading hyphen). */
 		if (*p++ != '-') {
+			if (argsused != NULL)
+				goto done;
 			if (unnamed == NULL)
 				goto unknown;
 			if (*unnamed != NULL)
@@ -2343,6 +2346,10 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 			return (1);
 		}
 	}
+
+done:
+	if (argsused != NULL)
+		*argsused = i;
 
 	return (0);
 

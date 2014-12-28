@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.3 2014/10/13 02:46:14 bcook Exp $ */
+/* $OpenBSD: prime.c,v 1.4 2014/12/28 15:48:52 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -123,7 +123,7 @@ prime_main(int argc, char **argv)
 	/* Default iterations for Miller-Rabin probabilistic primality test. */
 	prime_config.checks = 20;
 
-	if (options_parse(argc, argv, prime_options, &prime) != 0) {
+	if (options_parse(argc, argv, prime_options, &prime, NULL) != 0) {
 		prime_usage();
 		return (1);
 	}

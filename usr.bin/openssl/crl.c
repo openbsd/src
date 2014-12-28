@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.5 2014/10/13 02:46:14 bcook Exp $ */
+/* $OpenBSD: crl.c,v 1.6 2014/12/28 15:48:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,7 +244,7 @@ crl_main(int argc, char **argv)
 	crl_config.informat = FORMAT_PEM;
 	crl_config.outformat = FORMAT_PEM;
 
-	if (options_parse(argc, argv, crl_options, &digest_name) != 0) {
+	if (options_parse(argc, argv, crl_options, &digest_name, NULL) != 0) {
 		crl_usage();
 		goto end;
 	}
