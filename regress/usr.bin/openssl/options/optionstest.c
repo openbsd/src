@@ -1,4 +1,4 @@
-/*	$OpenBSD: optionstest.c,v 1.2 2014/12/28 14:22:46 jsing Exp $	*/
+/*	$OpenBSD: optionstest.c,v 1.3 2014/12/28 15:07:52 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -38,11 +38,13 @@ static struct {
 static struct option test_options[] = {
 	{
 		.name = "arg",
+		.argname = "argname",
 		.type = OPTION_ARG,
 		.opt.arg = &test_config.arg,
 	},
 	{
 		.name = "argfunc",
+		.argname = "argname",
 		.type = OPTION_ARG_FUNC,
 		.opt.argfunc = argfunc,
 	},
@@ -132,14 +134,11 @@ struct options_test options_tests[] = {
 		.wantflag = 1,
 	},
 	{
-		/* Multiple unnamed arguments (retain last). */
+		/* Multiple unnamed arguments (should fail). */
 		.argc = 6,
 		.argv = args5,
 		.type = OPTIONS_TEST_UNNAMED,
-		.unnamed = "unnamed2",
-		.want = 0,
-		.wantarg = "arg",
-		.wantflag = 1,
+		.want = 1,
 	},
 	{
 		/* Function. */
