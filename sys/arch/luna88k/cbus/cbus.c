@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.1 2014/12/19 13:17:35 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.2 2014/12/28 13:03:18 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -35,6 +35,15 @@
 #if 0
 #define CBUS_DEBUG
 #endif
+
+#include "necsb.h"
+
+static struct cbus_attach_args cbus_devs[] = {
+#if NNECSB > 0
+	{ "necsb",	-1 },	/* PC-9801-86 sound board */
+#endif
+	{ "pcex",	-1 }	/* C-bus "generic" driver */
+};
 
 /*
  * C-bus interrupt status register
@@ -86,7 +95,6 @@ cbus_attach(struct device *parent, struct device *self, void *args)
 {
 	struct cbus_softc *sc = (struct cbus_softc *)self;
 	struct mainbus_attach_args *ma = args;
-	struct cbus_attach_args caa;
 	int i;
 
 	for (i = 0; i < NCBUSISR; i++) {
@@ -101,8 +109,9 @@ cbus_attach(struct device *parent, struct device *self, void *args)
 
 	printf("\n");
 
-	caa.intlevel = -1;	/* not specified */
-	config_found(self, &caa, cbus_print);
+	for (i = 0; i < sizeof(cbus_devs)/sizeof(cbus_devs[0]); i++)
+		config_found(self, &cbus_devs[i], cbus_print);
+
 	return;
 }
 
@@ -110,12 +119,11 @@ int
 cbus_print(void *aux, const char *pnp)
 {
 	struct cbus_attach_args *caa = aux;
-#if 0	/* not yet */
+
 	if (pnp)
-		printf("%s at %s", caa->name, pnp);	/* not configured */
-#endif
-	if (caa->intlevel != -1)
-		printf(" INT %d", caa->intlevel);
+		printf("%s at %s", caa->ca_name, pnp);	/* not configured */
+	if (caa->ca_intlevel != -1)
+		printf(" int %d", caa->ca_intlevel);
 
 	return UNCONF;
 }

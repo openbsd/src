@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cbus.4,v 1.3 2014/12/28 13:03:18 aoyama Exp $
+.\"	$OpenBSD: necsb.4,v 1.1 2014/12/28 13:03:18 aoyama Exp $
 .\"
 .\" Copyright (c) 2014 Kenji Aoyama.
 .\"
@@ -14,33 +14,28 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .Dd $Mdocdate: December 28 2014 $
-.Dt CBUS 4 luna88k
+.Dt NECSB 4 luna88k
 .Os
 .Sh NAME
-.Nm cbus
-.Nd NEC PC-9801 extension board slot bus
+.Nm necsb
+.Nd NEC PC-9801-86 sound board
 .Sh SYNOPSIS
-.Cd "cbus0 at mainbus0"
+.Cd "necsb0 at cbus?"
+.Cd "audio* at necsb?"
 .Sh DESCRIPTION
+The
 .Nm
-is a bus interface of "NEC PC-9801 extension board slot" (so-called
-"C-bus" in Japan) on LUNA-88K2.
-The original LUNA-88K does not have this slot.
-.Sh LIST OF DEVICES
-The devices currently supported on
-.Nm
-are:
-.Pp
-.Bl -tag -width 10n -offset 3n -compact
-.It Xr necsb 4
-NEC PC-9801-86 sound board
-.It Xr pcexmem 4
-NEC PC-9801 extension board slot
-.El
+driver supports NEC PC-9801-86 sound board on
+.Xr cbus 4 .
+This board is a half-duplex device.
 .Sh SEE ALSO
+.Xr audio 4 ,
+.Xr cbus 4 ,
 .Xr intro 4
 .Sh HISTORY
 The
 .Nm
-bus interface first appeared in
+driver first appeared in
 .Ox 5.7 .
+.Sh BUGS
+The FM synthesizer is not supported.

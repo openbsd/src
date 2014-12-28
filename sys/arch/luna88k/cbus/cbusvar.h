@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbusvar.h,v 1.1 2014/12/19 13:17:35 aoyama Exp $	*/
+/*	$OpenBSD: cbusvar.h,v 1.2 2014/12/28 13:03:18 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -42,5 +42,6 @@ int	cbus_isrunlink(int (*)(void *), int);
 void	cbus_isrdispatch(int);
 
 struct cbus_attach_args {
-	int	intlevel;
+	char	*ca_name;
+	int	ca_intlevel;
 };

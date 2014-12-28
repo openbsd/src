@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.23 2014/12/19 13:17:35 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.24 2014/12/28 13:03:18 aoyama Exp $
 #
 maxpartitions 16
 
@@ -58,13 +58,6 @@ attach spc at mainbus
 file arch/luna88k/dev/spc.c				spc
 file arch/luna88k/dev/mb89352.c				spc
 
-# XXX: now testing
-#device pcm: audio, auconv, mulaw
-#attach pcm at mainbus
-#file arch/luna88k/dev/nec86.c				pcm needs-flag
-#file arch/luna88k/dev/nec86hw.c			pcm needs-flag
-#file arch/luna88k/dev/nec86_luna88k.c			pcm needs-flag
-
 device cbus {}
 attach	cbus at mainbus
 file	arch/luna88k/cbus/cbus.c
@@ -72,6 +65,13 @@ file	arch/luna88k/cbus/cbus.c
 device pcex
 attach	pcex at cbus
 file	arch/luna88k/cbus/pcex.c				pcex needs-flag
+
+# NEC PC-9801-86 sound board
+device necsb: audio, auconv, mulaw
+attach necsb at cbus
+file arch/luna88k/cbus/necsb.c				necsb needs-flag
+file arch/luna88k/cbus/nec86.c				necsb needs-flag
+file arch/luna88k/cbus/nec86hw.c			necsb needs-flag
 
 # list of standard files
 file	arch/luna88k/luna88k/clock.c

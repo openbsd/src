@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2014/11/20 13:48:56 aoyama Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2014/12/28 13:03:18 aoyama Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,6 +54,7 @@
 
 #include "ksyms.h"
 
+#include "audio.h"
 #include "lcd.h"
 #include "pcex.h"
 #include "siotty.h"
@@ -123,7 +124,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_notdef(),			/* 24 was LKM */
 	cdev_pcex_init(NPCEX, pcex),	/* 25: PC-9801 extension board slot */
-	cdev_notdef(),			/* 26 */
+	cdev_audio_init(NAUDIO, audio),	/* 26: generic audio I/O */
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 */
 	cdev_notdef(),			/* 29 */
