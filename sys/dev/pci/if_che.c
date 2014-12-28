@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.11 2014/12/28 13:55:30 jsg Exp $ */
+/*	$OpenBSD: if_che.c,v 1.12 2014/12/28 14:20:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -555,8 +555,7 @@ che_read_eeprom(struct cheg_softc *sc, struct pci_attach_args *pa,
 
 	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, CHE_PCI_CAP_ID_VPD,
 	    &base, NULL)) {
-		printf("%s: VPD EEPROM not found\n", 
-		    DEVNAME(sc), addr);
+		printf("%s: VPD EEPROM not found\n", DEVNAME(sc));
 		return EIO;
 	}
 
