@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.41 2014/11/28 05:51:29 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.42 2014/12/28 14:39:08 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,6 +23,7 @@ enum	man_next {
 
 struct	man {
 	struct mparse	*parse; /* parse pointer */
+	const char	*defos; /* default OS argument for .TH */
 	int		 quick; /* abort parse early */
 	int		 flags; /* parse flags */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */

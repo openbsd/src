@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.80 2014/12/16 23:44:16 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.81 2014/12/28 14:39:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -293,7 +293,8 @@ choose_parser(struct mparse *curp)
 	/* Fall back to man(7) as a last resort. */
 
 	if (NULL == curp->pman)
-		curp->pman = man_alloc(curp->roff, curp,
+		curp->pman = man_alloc(
+		    curp->roff, curp, curp->defos,
 		    MPARSE_QUICK & curp->options ? 1 : 0);
 	assert(curp->pman);
 	curp->man = curp->pman;
@@ -689,7 +690,8 @@ mparse_end(struct mparse *curp)
 			curp->mdoc = curp->pmdoc;
 		else {
 			if (curp->pman == NULL)
-				curp->pman = man_alloc(curp->roff, curp,
+				curp->pman = man_alloc(
+				    curp->roff, curp, curp->defos,
 				    curp->options & MPARSE_QUICK ? 1 : 0);
 			curp->man = curp->pman;
 		}
@@ -918,7 +920,8 @@ mparse_alloc(int options, enum mandoclevel wlevel, mandocmsg mmsg,
 		    curp->roff, curp, curp->defos,
 		    curp->options & MPARSE_QUICK ? 1 : 0);
 	if (curp->options & MPARSE_MAN)
-		curp->pman = man_alloc(curp->roff, curp,
+		curp->pman = man_alloc(
+		    curp->roff, curp, curp->defos,
 		    curp->options & MPARSE_QUICK ? 1 : 0);
 
 	return(curp);
