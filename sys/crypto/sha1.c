@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.10 2014/11/16 17:39:09 tedu Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.11 2014/12/28 10:04:35 tedu Exp $	*/
 
 /*
  * SHA-1 in C
@@ -59,7 +59,7 @@ SHA1Transform(u_int32_t state[5], const unsigned char buffer[SHA1_BLOCK_LENGTH])
     unsigned char workspace[SHA1_BLOCK_LENGTH];
 
     block = (CHAR64LONG16 *)workspace;
-    bcopy(buffer, block, SHA1_BLOCK_LENGTH);
+    memcpy(block, buffer, SHA1_BLOCK_LENGTH);
 #else
     block = (CHAR64LONG16 *)buffer;
 #endif
@@ -130,7 +130,7 @@ SHA1Update(SHA1_CTX *context, const void *dataptr, unsigned int len)
     j = (u_int32_t)((context->count >> 3) & 63);
     context->count += (len << 3);
     if ((j + len) > 63) {
-        bcopy(data, &context->buffer[j], (i = 64 - j));
+        memcpy(&context->buffer[j], data, (i = 64 - j));
         SHA1Transform(context->state, context->buffer);
         for ( ; i + 63 < len; i += 64) {
             SHA1Transform(context->state, &data[i]);
@@ -138,7 +138,7 @@ SHA1Update(SHA1_CTX *context, const void *dataptr, unsigned int len)
         j = 0;
     }
     else i = 0;
-    bcopy(&data[i], &context->buffer[j], len - i);
+    memcpy(&context->buffer[j], &data[i], len - i);
 }
 
 
@@ -160,20 +160,10 @@ SHA1Final(unsigned char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
-    if (digest)
-        for (i = 0; i < SHA1_DIGEST_LENGTH; i++) {
-            digest[i] = (unsigned char)((context->state[i >> 2] >>
-                ((3 - (i & 3)) * 8)) & 255);
-      }
-    explicit_bzero(&finalcount, 8);
-#if 0	/* We want to use this for "keyfill" */
-    /* Wipe variables */
-    i = 0;
-    bzero(context->buffer, 64);
-    bzero(context->state, 20);
-    bzero(context->count, 8);
-#ifdef SHA1HANDSOFF  /* make SHA1Transform overwrite its own static vars */
-    SHA1Transform(context->state, context->buffer);
-#endif
-#endif
+    for (i = 0; i < SHA1_DIGEST_LENGTH; i++) {
+        digest[i] = (unsigned char)((context->state[i >> 2] >>
+            ((3 - (i & 3)) * 8)) & 255);
+    }
+    explicit_bzero(&finalcount, sizeof(finalcount));
+    explicit_bzero(context, sizeof(*context));
 }

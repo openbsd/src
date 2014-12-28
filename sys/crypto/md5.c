@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.3 2014/11/16 17:39:09 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.4 2014/12/28 10:04:35 tedu Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -76,7 +76,7 @@ MD5Update(MD5_CTX *ctx, const void *inputptr, size_t len)
 
 	if (len >= need) {
 		if (have != 0) {
-			bcopy(input, ctx->buffer + have, need);
+			memcpy(ctx->buffer + have, input, need);
 			MD5Transform(ctx->state, ctx->buffer);
 			input += need;
 			len -= need;
@@ -93,7 +93,7 @@ MD5Update(MD5_CTX *ctx, const void *inputptr, size_t len)
 
 	/* Handle any remaining bytes of data. */
 	if (len != 0)
-		bcopy(input, ctx->buffer + have, len);
+		memcpy(ctx->buffer + have, input, len);
 }
 
 /*
@@ -118,10 +118,8 @@ MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 	MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	MD5Update(ctx, count, 8);
 
-	if (digest != NULL) {
-		for (i = 0; i < 4; i++)
-			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
-	}
+	for (i = 0; i < 4; i++)
+		PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
 	explicit_bzero(ctx, sizeof(*ctx));	/* in case it's sensitive */
 }
 
@@ -149,7 +147,7 @@ MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 	u_int32_t a, b, c, d, in[MD5_BLOCK_LENGTH / 4];
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	bcopy(block, in, sizeof(in));
+	memcpy(in, block, sizeof(in));
 #else
 	for (a = 0; a < MD5_BLOCK_LENGTH / 4; a++) {
 		in[a] = (u_int32_t)(
