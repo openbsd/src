@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.177 2014/12/20 15:54:48 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.178 2014/12/28 18:32:12 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/reboot.h>
 #include <sys/dkio.h>
 #include <sys/vnode.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -88,6 +88,8 @@ int	disk_change;		/* set if a disk has been attached/detached
 
 u_char	bootduid[8];		/* DUID of boot disk. */
 u_char	rootduid[8];		/* DUID of root disk. */
+
+struct task disktask;
 
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
@@ -1034,6 +1036,7 @@ disk_init(void)
 
 	TAILQ_INIT(&disklist);
 	disk_count = disk_change = 0;
+	task_set(&disktask, disk_attach_callback, NULL, NULL);
 }
 
 int
@@ -1092,8 +1095,7 @@ disk_attach(struct device *dv, struct disk *diskp)
 			    MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
 	}
 	if (diskp->dk_devno != NODEV)
-		workq_add_task(NULL, 0, disk_attach_callback,
-		    (void *)(long)(diskp->dk_devno), NULL);
+		task_add(systq, &disktask);
 
 	if (softraid_disk_attach)
 		softraid_disk_attach(diskp, 1);
@@ -1105,32 +1107,32 @@ disk_attach_callback(void *arg1, void *arg2)
 	char errbuf[100];
 	struct disklabel dl;
 	struct disk *dk;
-	dev_t dev = (dev_t)(long)arg1;
+	dev_t dev;
 
-	/* Locate disk associated with device no. */
+	/* Read disklabel(s) for newly-attached disk(s) */
 	TAILQ_FOREACH(dk, &disklist, dk_link) {
-		if (dk->dk_devno == dev)
-			break;
-	}
-	if (dk == NULL)
-		return;
 
-	/* XXX: Assumes dk is part of the device softc. */
-	device_ref(dk->dk_device);
+		if (dk->dk_devno == NODEV)
+			continue;
 
-	if (dk->dk_flags & (DKF_OPENED | DKF_NOLABELREAD))
-		goto done;
+		/* XXX: Assumes dk is part of the device softc. */
+		device_ref(dk->dk_device);
 
-	/* Read disklabel. */
-	if (disk_readlabel(&dl, dev, errbuf, sizeof(errbuf)) == NULL) {
-		add_timer_randomness(dl.d_checksum);
-		dk->dk_flags |= DKF_LABELVALID;
-	}
+		if (dk->dk_flags & (DKF_OPENED | DKF_NOLABELREAD))
+			goto done;
+
+		/* Read disklabel. */
+		dev = dk->dk_devno;
+		if (disk_readlabel(&dl, dev, errbuf, sizeof(errbuf)) == NULL) {
+			add_timer_randomness(dl.d_checksum);
+			dk->dk_flags |= DKF_LABELVALID;
+		}
 
 done:
-	dk->dk_flags |= DKF_OPENED;
-	device_unref(dk->dk_device);
-	wakeup(dk);
+		dk->dk_flags |= DKF_OPENED;
+		device_unref(dk->dk_device);
+		wakeup(dk);
+	}
 }
 
 /*
