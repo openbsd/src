@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.16 2014/12/28 14:50:15 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.17 2014/12/28 15:05:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2252,15 +2252,22 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 	int i, j;
 	int fmt;
 
+	if (unnamed != NULL)
+		*unnamed = NULL;
+
 	for (i = 1; i < argc; i++) {
 		p = arg = argv[i];
 
+		/* Single unnamed argument (without leading hyphen). */
 		if (*p++ != '-') {
 			if (unnamed == NULL)
 				goto unknown;
+			if (*unnamed != NULL)
+				goto toomany;
 			*unnamed = arg;
 			continue;
 		}
+
 		if (*p == '\0') /* XXX - end of named options. */
 			goto unknown;
 
@@ -2338,6 +2345,10 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed)
 	}
 
 	return (0);
+
+toomany:
+	fprintf(stderr, "too many arguments\n");
+	return (1);
 
 unknown:
 	fprintf(stderr, "unknown option '%s'\n", arg);
