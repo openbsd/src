@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.94 2014/12/29 14:23:17 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.95 2014/12/29 14:35:04 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -235,7 +235,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	    COMMENTHDR, comment)) == -1 || nr >= sizeof(header))
 		errx(1, "comment too long");
 	writeall(fd, header, strlen(header), filename);
-	if ((rv = b64_ntop(buf, buflen, b64, sizeof(b64)-1)) == -1)
+	if ((rv = b64_ntop(buf, buflen, b64, sizeof(b64))) == -1)
 		errx(1, "base64 encode failed");
 	b64[rv++] = '\n';
 	writeall(fd, b64, rv, filename);
