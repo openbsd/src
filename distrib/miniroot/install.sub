@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.801 2014/12/26 17:54:54 rpe Exp $
+#	$OpenBSD: install.sub,v 1.802 2014/12/29 16:55:44 tedu Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -366,7 +366,7 @@ encr_pwd() {
 		$_p == '*************' ]]; then
 		echo "$_p"
 	else
-		/mnt/usr/bin/encrypt -b 8 -- "$_p"
+		/mnt/usr/bin/encrypt -b a -- "$_p"
 	fi
 }
 
