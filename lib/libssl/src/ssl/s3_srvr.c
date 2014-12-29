@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.95 2014/12/15 00:46:53 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.96 2014/12/29 16:12:59 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1822,6 +1822,12 @@ ssl3_get_client_key_exchange(SSL *s)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 	if (alg_k & SSL_kRSA) {
+		char fakekey[SSL_MAX_MASTER_KEY_LENGTH];
+
+		arc4random_buf(fakekey, sizeof(fakekey));
+		fakekey[0] = s->client_version >> 8;
+		fakekey[1] = s->client_version & 0xff;
+
 		pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
 		if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA) ||
 		    (pkey->pkey.rsa == NULL)) {
@@ -1850,6 +1856,8 @@ ssl3_get_client_key_exchange(SSL *s)
 		}
 
 		i = RSA_private_decrypt((int)n, p, p, rsa, RSA_PKCS1_PADDING);
+
+		ERR_clear_error();
 
 		al = -1;
 
@@ -1902,11 +1910,8 @@ ssl3_get_client_key_exchange(SSL *s)
 			 * on PKCS #1 v1.5 RSA padding (see RFC 2246,
 			 * section 7.4.7.1).
 			 */
-			ERR_clear_error();
 			i = SSL_MAX_MASTER_KEY_LENGTH;
-			p[0] = s->client_version >> 8;
-			p[1] = s->client_version & 0xff;
-			arc4random_buf(p + 2, i - 2);
+			p = fakekey;
 		}
 
 		s->session->master_key_length =
