@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.59 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.60 2014/12/29 00:46:01 brad Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -263,6 +263,7 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
 	ifp->if_mtu = UPL_BUFSZ;
+	ifp->if_hardmtu = UPL_BUFSZ;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_NOARP | IFF_SIMPLEX;
 	ifp->if_ioctl = upl_ioctl;
 	ifp->if_start = upl_start;
@@ -641,9 +642,6 @@ upl_init(void *xsc)
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
-
 	s = splnet();
 
 	/* Init TX ring. */
@@ -766,7 +764,6 @@ int
 upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct upl_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
@@ -781,35 +778,34 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		upl_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			break;
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > UPL_BUFSZ)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
+		if (!(ifp->if_flags & IFF_RUNNING))
+			upl_init(sc);
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				upl_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				upl_stop(sc);
 		}
-		error = 0;
 		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+
 	default:
 		error = ENOTTY;
 		break;
 	}
+
+	if (error == ENETRESET)
+		error = 0;
 
 	splx(s);
 	return (error);
