@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.34 2014/12/24 22:04:26 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.35 2014/12/29 17:07:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -80,12 +80,12 @@ ideal_rounds(void)
 	duration = after - before;
 
 	/* too quick? slow it down. */
-	while (duration <= CLOCKS_PER_SEC / 4) {
+	while (r < 16 && duration <= CLOCKS_PER_SEC / 4) {
 		r += 1;
 		duration *= 2;
 	}
 	/* too slow? speed it up. */
-	while (duration > CLOCKS_PER_SEC / 2) {
+	while (r > 4 && duration > CLOCKS_PER_SEC / 2) {
 		r -= 1;
 		duration /= 2;
 	}
