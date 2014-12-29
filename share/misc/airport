@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.44 2014/12/07 22:54:05 daniel Exp $
+#	$OpenBSD: airport,v 1.45 2014/12/29 20:16:58 naddy Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -328,6 +328,7 @@ CIX:Cornel Ruiz, Chiclayo, Peru
 CJB:Peelamedu, Coimbatore, India
 CJS:International Abraham Gonzalez, Ciudad Juarez, Chihuahua, Mexico
 CJU:Cheju, Cheju, South Korea
+CKC:Cherkasy International, Cherkasy, Ukraine
 CKB:North Central West Virginia, Bridgeport, West Virginia, USA
 CKS:International / Brasilia Brazil, Carajas, Para, Brazil
 CKY:Conakry, Conakry, Guinea
@@ -389,7 +390,7 @@ CVG:Cincinnati International, Ohio, USA
 CVN:Clovis, New Mexico, USA
 CWA:Central Wisconsin, Wausau, Wisconsin, USA
 CWB:Afonso Pena, Curitiba, Parana, Brazil
-CWC:Chernovtsy, Ukraine
+CWC:Chernivtsi International, Chernivtsi, Ukraine
 CWT:Cowra, Cowra, New South Wales, Australia
 CXH:Vancouver Harbour, British Columbia, Canada
 CYB:Cayman Brac Island, Cayman Islands
@@ -433,11 +434,11 @@ DME:Domodedovo, Moscow, Russia
 DMK:Don Mueang International, Bangkok, Thailand
 DMR:Dhamar, Yemen
 DND:Dundee, Scotland, United Kingdom
-DNK:Dnepropetrovsk, Ukraine
+DNK:Dnipropetrovs'k International, Dnipropetrovs'k, Ukraine
 DNM:Denham, Western Australia, Australia
 DNV:Vermilion County, Danville, Illinois, USA
 DOH:Doha, Qatar
-DOK:Donetsk, Ukraine
+DOK:Donets'k Sergey Prokofiev International, Donets'k, Ukraine
 DOL:Saint Gatien, Deauville, France
 DOM:Melville Hall, Dominica
 DPL:Dipolog, Dipolog, Philippines
@@ -694,7 +695,7 @@ HPV:Princeville, Kauai Island, Hawaii, USA
 HRB:Harbin, China
 HRE:Harare, Zimbabwe
 HRG:Hurghada, Egypt
-HRK:Krarkov, Ukraine
+HRK:Kharkiv International, Kharkiv, Ukraine
 HRL:Harlingen, Texas, USA
 HRO:Boone County, Harrison, Arkansas, USA
 HSI:Hastings, Nebraska, USA
@@ -721,7 +722,8 @@ IAS:Iasi, Romania
 IBZ:Ibiza, Spain
 ICT:Wichita Mid-Continent, Kansas, USA
 IDA:Idaho Falls, Idaho, USA
-IEV:Zhulhany, Kiev, Ukraine
+IEV:Kyiv Zhulyany International, Kyiv, Ukraine
+IFO:Ivano-Frankivs'k International, Ivano-Frankivs'k, Ukraine
 IFP:Bullhead City, Arizona, USA
 IGA:Inagua, Bahamas
 IGM:Mohave County, Kingman, Arizona, USA
@@ -825,7 +827,7 @@ KAE:Kake, Alaska, USA
 KAL:Kaltag, Alaska, USA
 KAN:Aminu Kano International, Nigeria
 KAT:Kaitaia, New Zealand
-KBP:Borispol, Kiev, Ukraine
+KBP:Kyiv Borispil International, Kyiv, Ukraine
 KBR:Sultan Ismail Petra, Kota Bharu, Malaysia
 KCG:Fisheries, Chignik, Alaska, USA
 KCH:Kuching, Sarawak, Malaysia
@@ -842,6 +844,7 @@ KEP:Nepalganj, Nepal
 KER:Kerman, Iran
 KGC:Kingscote, South Australia, Australia
 KGD:Kaliningrad, Russia
+KHE:Kherson International, Kherson, Ukraine
 KHH:Kaohsiung, Taiwan
 KHI:Karachi, Pakistan
 KHV:Novy, Khabarovsk, Russia
@@ -900,6 +903,7 @@ KVA:Kavala, Greece
 KVB:Skovde, Sweden
 KWA:Kwajalein, Marshall Islands
 KWI:Kuwait International
+KWG:Kryvyi Rih International, Dnipropetrovs'k, Ukraine
 KWL:Guilin, China
 KZI:Kozani, Greece
 KZN:Kazan, Russia
@@ -1000,7 +1004,7 @@ LVI:Livingstone, Zambia
 LVK:Livermore, California, USA
 LWB:Greenbrier Valley, West Virginia, USA
 LWK:Tingwall, Shetland Islands /Shetland Isd, Scotland, United Kingdom
-LWO:Snilow, Lvov, Ukraine
+LWO:Lviv Danylo Halytskyi International, Lviv, Ukraine
 LWT:Lewistown Municipal, Montana, USA
 LWY:Lawas, Sarawak, Malaysia
 LXR:Luxor, Egypt
@@ -1105,6 +1109,7 @@ MPA:Mpacha, Namibia
 MPB:Miami Public Seaplane Base, Florida, USA
 MPL:Frejorgues, Montpellier, France
 MPM:Maputo International, Mozambique
+MPW:Mariupol International, Donets'k, Ukraine
 MQL:Mildura, Victoria, Australia
 MQN:Rossvoll, Mo I Rana, Norway
 MQP:Kruger Mpumalanga International, Nelspruit, South Africa
@@ -1167,6 +1172,7 @@ NKC:Nouakchott, Mauritania
 NKG:Nanjing, China
 NLA:Ndola, Zambia
 NLD:Nuevo Laredo, Tamaulipas, Mexico
+NLV:Mykolayiv International, Mykolayiv, Ukraine
 NNG:Nanning, China
 NOC:Rep Of Ireland, Connaught, Ireland
 NOU:Tontouta, Noumea, New Caledonia
@@ -1191,7 +1197,7 @@ OAK:Oakland International, California, USA
 OAX:Xoxocotlan, Oaxaca, Oaxaca, Mexico
 OBO:Obihiro, Japan
 ODE:Odense, Denmark
-ODS:Odessa Central, Ukraine
+ODS:Odessa International, Odessa, Ukraine
 ODW:Oak Harbor, Washington, USA
 OER:Ornskoldsvik, Sweden
 OFK:Norfolk Karl Stefan Memorial, Nebraska, USA
@@ -1238,6 +1244,7 @@ OVD:Asturias, Spain
 OWB:Owensboro, Kentucky, USA
 OWD:Memorial Code: Owd, Norwood, Massachusetts, USA
 OXR:Oxnard / Ventura, California, USA
+OZH:Zaporizhya International, Zaporizhya, Ukraine
 OZZ:Ouarzazate, Morocco
 PAD:Paderborn, Germany
 PAH:Paducah, Kentucky, USA
@@ -1436,6 +1443,7 @@ RUI:Ruidoso, New Mexico, USA
 RUN:Roland Garros Airport, Reunion Island, France
 RUT:Rutland, Vermont, USA
 RWI:Wilson, Rocky Mount, North Carolina, USA
+RWN:Rivne International, Rivne, Ukraine
 SAB:Saba Island, Netherlands Antilles
 SAF:Santa Fe, New Mexico, USA
 SAH:Sanaa International, Yemen
@@ -1492,7 +1500,7 @@ SHR:Sheridan, Wyoming, USA
 SHV:Shreveport, Louisiana, USA
 SID:Amilcar Cabral International, Sal, Cape Verde
 SIN:Changi International, Singapore
-SIP:Simferopol, Ukraine
+SIP:Simferopol International, Crimea, Ukraine
 SIR:Sion, Switzerland
 SIT:Sitka, Alaska, USA
 SJC:San Jose International, California, USA
@@ -1647,9 +1655,11 @@ TLH:Tallahassee, Florida, USA
 TLL:Ulemiste, Tallinn, Estonia
 TLS:Blagnac, Toulouse, France
 TLV:Ben-Gurion, Tel Aviv, Israel
+TMP:Tampere-Pirkkala Airport, Tampere, Finland
 TMS:Sao Tome International, Sao Tome and Principe
 TMW:Tamworth, New South Wales, Australia
 TNG:Boukhalef Souahel, Tangier, Morocco
+TNL:Ternopil International, Ternopil, Ukraine
 TNR:Ivato, Antananarivo, Madagascar
 TOL:Toledo Express, Ohio, USA
 TOS:Tromso/Langes, Tromso, Norway
@@ -1704,7 +1714,7 @@ UAK:Narssarssuaq, Greenland
 UAQ:San Juan, Argentina
 UBJ:Ube, Japan
 UCA:Utica/Oneida County, New York, USA
-UDJ:Uzhgorod, Ukraine
+UDJ:Uzhgorod International, Zakarpattia, Ukraine
 UDR:Udaipur, India
 UEL:Quelimane, Mozambique
 UET:Quetta, Pakistan
@@ -1749,6 +1759,7 @@ VGT:North Air Terminal, Las Vegas, Nevada, USA
 VHM:Vilhelmina, Sweden
 VIE:Schwechat, Wien, Austria
 VIJ:Virgin Gorda, Virgin Islands (British)
+VIN:Vinnytsia Havryshivka International, Vinnytsia, Ukraine
 VIS:Visalia, California, USA
 VIT:Vitoria, Spain
 VIX:Eureco Sales, Vitoria, Espirito Santo, Brazil
@@ -1768,7 +1779,7 @@ VRB:Vero Beach Municipal, Florida, USA
 VRK:Varkaus, Finland
 VRN:Verona, Italy
 VSA:Carlos R Perez, Villahermosa, Tabasco, Mexico
-VSG:Lugansk, Ukraine
+VSG:Luhans'k International, Luhans'k, Ukraine
 VST:Vasteras/Hasslo, Sweden
 VTE:Wattay, Vientiane, Laos
 VTZ:Vishakhapatnam, India
