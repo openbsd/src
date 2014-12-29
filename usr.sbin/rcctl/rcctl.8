@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.11 2014/12/24 13:04:43 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.12 2014/12/29 15:09:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2014 $
+.Dd $Mdocdate: December 29 2014 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -47,6 +47,9 @@ The following commands are available:
 .It Cm enable Ar service | daemon Op Cm flags Op Ar arguments
 Enable the service or daemon in
 .Xr rc.conf.local 8 .
+When a disabled package daemon is enabled, it is appended to the end of
+.Va pkg_scripts .
+.Pp
 For a daemon, optionally set the variable
 .Ar daemon Ns _flags
 to the specified
@@ -66,6 +69,8 @@ is reset to the optionally provided
 .It Cm disable Ar service | daemon
 Disable the service or daemon in
 .Xr rc.conf.local 8 .
+A package daemon is removed from
+.Va pkg_scripts .
 .It Cm status Op Ar service | daemon
 Display the value of
 .Ar service
@@ -82,15 +87,21 @@ is called without
 .Ar arguments .
 For a base system service, display whether it is enabled by default.
 .It Cm order Op Ar daemons
-Order
-.Sy enabled
-.Xr packages 7
-daemons startup by prepending
+Move the specified package
 .Ar daemons
-to the pkg_scripts line.
+to the beginning of
+.Va pkg_scripts .
+They need to be already enabled.
 If
 .Ar daemons
 is empty, display the current order.
+.Pp
+The
+.Cm order
+command is only needed after enabling a new daemon
+that needs to run before one or more already enabled daemons.
+Specify the new daemon preceded by all that need to run before it,
+but not the ones depending on it.
 .It Oo Fl df Oc Ar action daemon
 Run the
 .Xr rc.d 8
