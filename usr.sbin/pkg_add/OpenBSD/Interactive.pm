@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.18 2014/11/29 10:42:51 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.19 2014/12/29 07:37:27 jasper Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -79,7 +79,7 @@ sub confirm
 		return 1;
 	}
 LOOP2:
-	$self->{state}->errprint("#1 ?[#2/a] ", 
+	$self->{state}->errprint("#1 ? [#2/a] ", 
 	    $prompt, $yesno ? "Y/n" : "y/N");
 
 	my $result = <STDIN>;
