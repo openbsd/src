@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: nsd,v 1.8 2014/06/25 12:33:33 sthen Exp $
+# $OpenBSD: nsd,v 1.9 2014/12/29 11:17:05 ajacoutot Exp $
 
 daemon="/usr/sbin/nsd-control"
 daemon_flags="-c /var/nsd/etc/nsd.conf"
 
 . /etc/rc.d/rc.subr
 
-pexp="nsd${daemon_flags:+ ${daemon_flags}}"
 rc_usercheck=NO
 
 rc_pre() {
