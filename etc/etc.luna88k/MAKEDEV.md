@@ -1,6 +1,6 @@
 define(MACHINE,luna88k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.23 2014/10/09 04:33:51 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.24 2014/12/29 21:55:10 aoyama Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -53,6 +53,7 @@ target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 twrget(all, sio, tty, a)dnl
 twrget(all, lcd, lcd)dnl
+twrget(all, au, audio, 0)dnl
 twrget(all, pcex, pcex)dnl
 _DEV(all)
 dnl
@@ -90,6 +91,7 @@ _DEV(wsmux, 16)
 _TITLE(point)
 _DEV(wsmouse, 15)
 _TITLE(spec)
+_DEV(au, 26)
 _DEV(bio, 49)
 _DEV(bpf, 22)
 _DEV(diskmap, 54)
