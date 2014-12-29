@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.5 2014/12/29 00:30:31 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.6 2014/12/29 19:33:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -292,6 +292,7 @@ extern void myetheraddr(u_char *);
 #define  TX_RNG_CFIG_LEN_SHIFT		48
 #define TX_RING_HDL(chan)	(DMC + 0x40010 + (chan) * 0x00200)
 #define TX_RING_KICK(chan)	(DMC + 0x40018 + (chan) * 0x00200)
+#define  TX_RING_KICK_WRAP		(1ULL << 19)
 #define TX_ENT_MSK(chan)	(DMC + 0x40020 + (chan) * 0x00200)
 #define TX_CS(chan)		(DMC + 0x40028 + (chan) * 0x00200)
 #define  TX_CS_PKT_CNT_MASK		(0xfffULL << 48)
@@ -370,6 +371,7 @@ struct nep_softc {
 	int			sc_tx_cnt;
 	int			sc_tx_cons;
 
+	uint64_t		sc_wrap;
 	uint16_t		sc_pkt_cnt;
 
 	struct nep_dmamem	*sc_rbring;
@@ -1110,6 +1112,8 @@ nep_up(struct nep_softc *sc)
 
 	sc->sc_tx_prod = sc->sc_tx_cons = 0;
 	sc->sc_tx_cnt = 0;
+	sc->sc_wrap = 0;
+	sc->sc_pkt_cnt = 0;
 
 	if (sc->sc_port < 2) {
 		/* Disable the POR loopback clock source. */
@@ -1318,11 +1322,12 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 	sc->sc_txbuf[cur].nb_map = map;
 	sc->sc_txbuf[cur].nb_m = m;
 
+	if (frag < *idx)
+		sc->sc_wrap ^= TX_RING_KICK_WRAP;
+	nep_write(sc, TX_RING_KICK(sc->sc_port), sc->sc_wrap | (frag << 3));
+
 	sc->sc_tx_cnt += map->dm_nsegs;
 	*idx = frag;
-
-	/* XXX toggle TX_RING_KICK_WRAP */
-	nep_write(sc, TX_RING_KICK(sc->sc_port), frag << 3);
 
 //	printf("TX_CS: %llx\n", nep_read(sc, TX_CS(sc->sc_port)));
 //	printf("TX_RNG_ERR_LOGH: %llx\n",
