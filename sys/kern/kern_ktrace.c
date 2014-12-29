@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.72 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.73 2014/12/29 05:29:27 miod Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -48,6 +48,8 @@
 #include <sys/mount.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 void	ktrinitheaderraw(struct ktr_header *, uint, pid_t, pid_t);
 void	ktrinitheader(struct ktr_header *, struct proc *, int);

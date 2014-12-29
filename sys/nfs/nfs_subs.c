@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.122 2014/12/23 01:55:03 tedu Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.123 2014/12/29 05:29:28 miod Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <nfs/nfsmount.h>
 #include <nfs/nfs_var.h>
 
+#include <uvm/uvm_extern.h>
 
 #include <netinet/in.h>
 

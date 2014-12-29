@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.159 2014/12/18 20:59:21 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.160 2014/12/29 05:29:28 miod Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -72,6 +72,8 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfs_var.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

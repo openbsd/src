@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.81 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.82 2014/12/29 05:29:27 miod Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -53,6 +53,8 @@
 #include <sys/malloc.h>
 #include <sys/specdev.h>
 #include <sys/unistd.h>
+
+#include <uvm/uvm_extern.h>
 
 #define v_lastr v_specinfo->si_lastr
 
