@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.116 2014/11/23 21:19:47 guenther Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.117 2014/12/29 20:39:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -88,7 +88,6 @@ int      parse_configline(char *);
 void     parse_configs(void);
 void     do_config(void);
 int      append_error_string (struct con *, size_t, char *, int, void *);
-void     build_reply(struct  con *);
 void     doreply(struct con *);
 void     setlog(char *, size_t, char *);
 void     initcon(struct con *, int, struct sockaddr *);
@@ -481,7 +480,7 @@ loglists(struct con *cp)
 }
 
 void
-build_reply(struct con *cp)
+doreply(struct con *cp)
 {
 	struct sdlist **matches;
 	int off = 0;
@@ -491,7 +490,6 @@ build_reply(struct con *cp)
 		goto nomatch;
 	for (; *matches; matches++) {
 		int used = 0;
-		char *c = cp->obuf + off;
 		int left = cp->osize - off;
 
 		used = append_error_string(cp, off, matches[0]->string,
@@ -502,8 +500,7 @@ build_reply(struct con *cp)
 		left -= used;
 		if (cp->obuf[off - 1] != '\n') {
 			if (left < 1) {
-				c = grow_obuf(cp, off);
-				if (c == NULL)
+				if (grow_obuf(cp, off) == NULL)
 					goto bad;
 			}
 			cp->obuf[off++] = '\n';
@@ -515,21 +512,17 @@ nomatch:
 	/* No match. give generic reply */
 	free(cp->obuf);
 	cp->obuf = NULL;
-	cp->osize = 0;
 	if (cp->blacklists != NULL)
-		asprintf(&cp->obuf,
+		cp->osize = asprintf(&cp->obuf,
 		    "%s-Sorry %s\n"
 		    "%s-You are trying to send mail from an address "
 		    "listed by one\n"
 		    "%s or more IP-based registries as being a SPAM source.\n",
 		    nreply, cp->addr, nreply, nreply);
 	else
-		asprintf(&cp->obuf,
+		cp->osize = asprintf(&cp->obuf,
 		    "451 Temporary failure, please try again later.\r\n");
-	if (cp->obuf != NULL)
-		cp->osize = strlen(cp->obuf) + 1;
-	else
-		cp->osize = 0;
+	cp->osize++; /* size includes the NUL (also changes -1 to 0) */
 	return;
 bad:
 	if (cp->obuf != NULL) {
@@ -537,12 +530,6 @@ bad:
 		cp->obuf = NULL;
 		cp->osize = 0;
 	}
-}
-
-void
-doreply(struct con *cp)
-{
-	build_reply(cp);
 }
 
 void
@@ -619,7 +606,7 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
 	socklen_t len = sa->sa_len;
 	time_t tt;
-	char *tmp;
+	char ctimebuf[26];
 	int error;
 
 	time(&tt);
@@ -650,13 +637,10 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	if (error)
 		errx(1, "%s", gai_strerror(error));
 #endif
-	tmp = strdup(ctime(&t));
-	if (tmp == NULL)
-		err(1, "malloc");
-	tmp[strlen(tmp) - 1] = '\0'; /* nuke newline */
+	ctime_r(&t, ctimebuf);
+	ctimebuf[sizeof(ctimebuf) - 2] = '\0'; /* nuke newline */
 	snprintf(cp->obuf, cp->osize, "220 %s ESMTP %s; %s\r\n",
-	    hostname, spamd, tmp);
-	free(tmp);
+	    hostname, spamd, ctimebuf);
 	cp->op = cp->obuf;
 	cp->ol = strlen(cp->op);
 	cp->w = tt + cp->stutter;
