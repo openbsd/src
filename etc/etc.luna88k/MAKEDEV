@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.22 2014/04/24 14:52:09 aoyama Exp 
-#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.24 2014/12/29 21:55:10 aoyama Exp 
+#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -51,6 +51,7 @@
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Special purpose devices:
+#	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	diskmap	Disk mapper
@@ -269,6 +270,17 @@ bio)
 	M bio c 49 0 600
 	;;
 
+audio*)
+	M sound$U	c 26 $U
+	M mixer$U	c 26 $(($U+16))
+	M audio$U	c 26 $(($U+128))
+	M audioctl$U	c 26 $(($U+192))
+	MKlist[${#MKlist[*]}]=";[ -e audio ] || ln -s audio$U audio"
+	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
+	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
+	;;
+
 wsmouse[0-9]*)
 	M wsmouse$U c 15 $U 600
 	;;
@@ -374,10 +386,10 @@ ramdisk)
 	;;
 
 all)
-	R pcex lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
-	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx
-	R ptm local wscons uk0 random pf systrace std st0 st1 fd
+	R pcex audio0 lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
+	R sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3
+	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse
+	R pppx ptm local wscons uk0 random pf systrace std st0 st1 fd
 	;;
 
 sd*)
