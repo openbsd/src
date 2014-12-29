@@ -1522,6 +1522,7 @@
 ./usr/share/man/man4/luna88k/lcd.4
 ./usr/share/man/man4/luna88k/le.4
 ./usr/share/man/man4/luna88k/mem.4
+./usr/share/man/man4/luna88k/necsb.4
 ./usr/share/man/man4/luna88k/pcexio.4
 ./usr/share/man/man4/luna88k/pcexmem.4
 ./usr/share/man/man4/luna88k/spc.4

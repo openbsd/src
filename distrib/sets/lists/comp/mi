@@ -6751,10 +6751,6 @@
 ./usr/share/man/man9/wakeup_n.9
 ./usr/share/man/man9/wakeup_one.9
 ./usr/share/man/man9/wdog_register.9
-./usr/share/man/man9/workq_add_task.9
-./usr/share/man/man9/workq_create.9
-./usr/share/man/man9/workq_destroy.9
-./usr/share/man/man9/workq_queue_task.9
 ./usr/share/man/man9/writedisklabel.9
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg
