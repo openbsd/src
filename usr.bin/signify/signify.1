@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.27 2014/08/07 19:03:38 lteo Exp $
+.\" $OpenBSD: signify.1,v 1.28 2014/12/29 14:16:04 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: August 7 2014 $
+.Dd $Mdocdate: December 29 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -33,11 +33,6 @@
 .Op Fl c Ar comment
 .Fl p Ar pubkey
 .Fl s Ar seckey
-.Nm signify
-.Fl I
-.Op Fl p Ar pubkey
-.Op Fl s Ar seckey
-.Op Fl x Ar sigfile
 .Nm signify
 .Fl S
 .Op Fl e
@@ -67,8 +62,6 @@ should be the signed output of
 .Xr sha256 1 .
 .It Fl G
 Generate a new key pair.
-.It Fl I
-Inspect the specified keys or signature and print their fingerprint.
 .It Fl S
 Sign the specified message file and create a signature.
 .It Fl V

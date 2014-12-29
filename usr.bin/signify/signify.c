@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.92 2014/11/20 14:51:42 krw Exp $ */
+/* $OpenBSD: signify.c,v 1.93 2014/12/29 14:16:04 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -82,7 +82,6 @@ usage(const char *error)
 #ifndef VERIFYONLY
 	    "\t%1$s -C [-q] -p pubkey -x sigfile [file ...]\n"
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
-	    "\t%1$s -I [-p pubkey] [-s seckey] [-x sigfile]\n"
 	    "\t%1$s -S [-e] [-x sigfile] -s seckey -m message\n"
 #endif
 	    "\t%1$s -V [-eq] [-x sigfile] -p pubkey -m message\n",
@@ -398,31 +397,6 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 
 	free(msg);
 }
-
-static void
-inspect(const char *seckeyfile, const char *pubkeyfile, const char *sigfile)
-{
-	struct sig sig;
-	struct enckey enckey;
-	struct pubkey pubkey;
-	char fp[(FPLEN + 2) / 3 * 4 + 1];
-
-	if (seckeyfile) {
-		readb64file(seckeyfile, &enckey, sizeof(enckey), NULL);
-		b64_ntop(enckey.fingerprint, FPLEN, fp, sizeof(fp));
-		printf("sec fp: %s\n", fp);
-	}
-	if (pubkeyfile) {
-		readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
-		b64_ntop(pubkey.fingerprint, FPLEN, fp, sizeof(fp));
-		printf("pub fp: %s\n", fp);
-	}
-	if (sigfile) {
-		readb64file(sigfile, &sig, sizeof(sig), NULL);
-		b64_ntop(sig.fingerprint, FPLEN, fp, sizeof(fp));
-		printf("sig fp: %s\n", fp);
-	}
-}
 #endif
 
 static void
@@ -684,7 +658,6 @@ main(int argc, char **argv)
 		NONE,
 		CHECK,
 		GENERATE,
-		INSPECT,
 		SIGN,
 		VERIFY
 	} verb = NONE;
@@ -692,7 +665,7 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "CGISVc:em:np:qs:x:")) != -1) {
+	while ((ch = getopt(argc, argv, "CGSVc:em:np:qs:x:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
 		case 'C':
@@ -704,11 +677,6 @@ main(int argc, char **argv)
 			if (verb)
 				usage(NULL);
 			verb = GENERATE;
-			break;
-		case 'I':
-			if (verb)
-				usage(NULL);
-			verb = INSPECT;
 			break;
 		case 'S':
 			if (verb)
@@ -781,9 +749,6 @@ main(int argc, char **argv)
 		if (!pubkeyfile || !seckeyfile)
 			usage("must specify pubkey and seckey");
 		generate(pubkeyfile, seckeyfile, rounds, comment);
-		break;
-	case INSPECT:
-		inspect(seckeyfile, pubkeyfile, sigfile);
 		break;
 	case SIGN:
 		if (!msgfile || !seckeyfile)
