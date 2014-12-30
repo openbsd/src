@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.91 2014/12/19 14:23:41 ajacoutot Exp $
+# $OpenBSD: services,v 1.92 2014/12/30 20:50:49 bluhm Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -250,6 +250,7 @@ sip		5060/udp			# SIP
 postgresql	5432/tcp			# PostgreSQL
 postgresql	5432/udp			# PostgreSQL
 rfb		5900/tcp	vnc		# Remote Framebuffer
+syslog-tls	6514/tcp			# syslog over TLS
 afs3-fileserver	7000/tcp			# AFS fileserver
 afs3-fileserver	7000/udp			# AFS fileserver
 afs3-callback	7001/tcp			# AFS callback server
