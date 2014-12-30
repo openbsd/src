@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.53 2014/12/30 15:31:33 robert Exp $
+# $OpenBSD: rcctl.sh,v 1.54 2014/12/30 15:33:53 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -66,27 +66,77 @@ rcconf_edit_end()
 	fi
 }
 
-svc_default_enabled()
+svc_avail()
+{
+	local _svc=$1
+	[ -n "${_svc}" ] || return 1
+
+	[ "${_svc}" = "rc.subr" ] && return 1
+	[ -x "/etc/rc.d/${_svc}" ] && return 0
+	svc_special ${_svc}
+}
+
+svc_base()
+{
+	local _svc=$1
+	[ -n "${_svc}" ] || return
+
+	grep "^start_daemon " /etc/rc | cut -d ' ' -f2- | grep -qw -- ${_svc}
+}
+
+svc_enabled()
+{
+	local _svc=$1
+	[ -n "${_svc}" ] || return
+
+	[ "$(svc_flags ${_svc})" != "NO" ]
+}
+
+svc_enabled_default()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 	local _ret=1
 
 	_rc_parse_conf /etc/rc.conf
-	svc_is_enabled ${_svc} && _ret=0
+	svc_enabled ${_svc} && _ret=0
 	_rc_parse_conf
 
 	return ${_ret}
 }
 
+svc_flags()
+{
+	local _svc=$1
+	[ -n "${_svc}" ] || return
+	local daemon_flags
+
+	if svc_special ${_svc}; then
+		echo "$(eval echo \${${_svc}})"
+	else
+		# set pkg daemon_flags to "NO" to match base svc
+		if ! svc_base ${_svc}; then
+			if ! echo ${pkg_scripts} | grep -qw -- ${_svc}; then
+				echo "NO" && return
+			fi
+		fi
+		[ -z "${daemon_flags}" ] && \
+			daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
+		[ -z "${daemon_flags}" ] && \
+			daemon_flags="$(svc_flags_default ${_svc})"
+
+		[ -n "${daemon_flags}" ] && print -r -- "${daemon_flags}"
+	fi
+}
+
 # to prevent namespace pollution, only call in a subshell
-svc_default_enabled_flags()
+svc_flags_default()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	if svc_is_special ${_svc}; then
-		svc_default_enabled ${_svc} && echo "YES" || echo "NO"
+	if svc_special ${_svc}; then
+		svc_enabled_default ${_svc} && echo "YES" || echo "NO"
 	else
 		FUNCS_ONLY=1
 		rc_cmd() { }
@@ -95,91 +145,7 @@ svc_default_enabled_flags()
 	fi
 }
 
-svc_get_defaults()
-{
-	local _i _svc=$1
-
-	if [ -n "${_svc}" ]; then
-		( svc_default_enabled_flags ${_svc} )
-		svc_default_enabled ${_svc}
-	else
-		for _i in $(ls_rcscripts); do
-			echo "${_i}_flags=$(svc_default_enabled_flags ${_i})"
-		done
-		for _i in ${_special_services}; do
-			echo "${_i}=$(svc_default_enabled_flags ${_i})"
-		done
-	fi
-}
-
-svc_get_flags()
-{
-	local _svc=$1
-	[ -n "${_svc}" ] || return
-	local daemon_flags
-
-	if svc_is_special ${_svc}; then
-		echo "$(eval echo \${${_svc}})"
-	else
-		# set pkg daemon_flags to "NO" to match base svc
-		if ! svc_is_base ${_svc}; then
-			if ! echo ${pkg_scripts} | grep -qw -- ${_svc}; then
-				echo "NO" && return
-			fi
-		fi
-		[ -z "${daemon_flags}" ] && \
-			daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
-		[ -z "${daemon_flags}" ] && \
-			daemon_flags="$(svc_default_enabled_flags ${_svc})"
-
-		[ -n "${daemon_flags}" ] && print -r -- "${daemon_flags}"
-	fi
-}
-
-svc_get_status()
-{
-	local _i _svc=$1
-
-	if [ -n "${_svc}" ]; then
-		svc_get_flags ${_svc}
-		svc_is_enabled ${_svc}
-	else
-		for _i in $(ls_rcscripts); do
-			echo "${_i}_flags=$(svc_get_flags ${_i})"
-		done
-		for _i in ${_special_services}; do
-			echo "${_i}=$(svc_get_flags ${_i})"
-		done
-	fi
-}
-
-svc_is_avail()
-{
-	local _svc=$1
-	[ -n "${_svc}" ] || return 1
-
-	[ "${_svc}" = "rc.subr" ] && return 1
-	[ -x "/etc/rc.d/${_svc}" ] && return 0
-	svc_is_special ${_svc}
-}
-
-svc_is_base()
-{
-	local _svc=$1
-	[ -n "${_svc}" ] || return
-
-	grep "^start_daemon " /etc/rc | cut -d ' ' -f2- | grep -qw -- ${_svc}
-}
-
-svc_is_enabled()
-{
-	local _svc=$1
-	[ -n "${_svc}" ] || return
-
-	[ "$(svc_get_flags ${_svc})" != "NO" ]
-}
-
-svc_is_special()
+svc_special()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
@@ -187,7 +153,41 @@ svc_is_special()
 	echo ${_special_services} | grep -qw -- ${_svc}
 }
 
-append_to_pkg_scripts()
+svc_status()
+{
+	local _i _svc=$1
+
+	if [ -n "${_svc}" ]; then
+		svc_flags ${_svc}
+		svc_enabled ${_svc}
+	else
+		for _i in $(ls_rcscripts); do
+			echo "${_i}_flags=$(svc_flags ${_i})"
+		done
+		for _i in ${_special_services}; do
+			echo "${_i}=$(svc_flags ${_i})"
+		done
+	fi
+}
+
+svc_status_default()
+{
+	local _i _svc=$1
+
+	if [ -n "${_svc}" ]; then
+		( svc_flags_default ${_svc} )
+		svc_enabled_default ${_svc}
+	else
+		for _i in $(ls_rcscripts); do
+			echo "${_i}_flags=$(svc_flags_default ${_i})"
+		done
+		for _i in ${_special_services}; do
+			echo "${_i}=$(svc_flags_default ${_i})"
+		done
+	fi
+}
+
+pkg_scripts_append()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
@@ -202,7 +202,7 @@ append_to_pkg_scripts()
 	rcconf_edit_end
 }
 
-order_pkg_scripts()
+pkg_scripts_order()
 {
 	local _svcs="$*"
 	[ -n "${_svcs}" ] || return
@@ -210,9 +210,9 @@ order_pkg_scripts()
 	needs_root ${action}
 	local _pkg_scripts _svc
 	for _svc in ${_svcs}; do
-		if svc_is_base ${_svc} || svc_is_special ${_svc}; then
+		if svc_base ${_svc} || svc_special ${_svc}; then
 			_rc_err "${0##*/}: ${_svc} is not a pkg script"
-		elif ! svc_is_enabled ${_svc}; then
+		elif ! svc_enabled ${_svc}; then
 			_rc_err "${0##*/}: ${_svc} is not enabled"
 		fi
 	done
@@ -224,7 +224,7 @@ order_pkg_scripts()
 	rcconf_edit_end
 }
 
-rm_from_pkg_scripts()
+pkg_scripts_rm()
 {
 	local _svc=$1
 	[ -n "${_svc}" ] || return
@@ -243,10 +243,10 @@ add_flags()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	if svc_is_special ${_svc}; then
+	if svc_special ${_svc}; then
 		rcconf_edit_begin
 		grep -v "^${_svc}.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if ! svc_default_enabled ${_svc}; then
+		if ! svc_enabled_default ${_svc}; then
 			echo "${_svc}=YES" >>${_TMP_RCCONF}
 		fi
 		rcconf_edit_end
@@ -266,7 +266,7 @@ add_flags()
 
 	# unset flags if they match the default enabled ones
 	if [ -n "${_flags}" ]; then
-		[ "${_flags}" = "$(svc_default_enabled_flags ${_svc})" ] && \
+		[ "${_flags}" = "$(svc_flags_default ${_svc})" ] && \
 			unset _flags
 	fi
 
@@ -276,7 +276,7 @@ add_flags()
 	rcconf_edit_begin
 	grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
 	if [ -n "${_flags}" ] || \
-	   ( svc_is_base ${_svc} && ! svc_default_enabled ${_svc} ); then
+	   ( svc_base ${_svc} && ! svc_enabled_default ${_svc} ); then
 		echo "${_svc}_flags=${_flags}" >>${_TMP_RCCONF}
 	fi
 	rcconf_edit_end
@@ -288,14 +288,14 @@ rm_flags()
 	[ -n "${_svc}" ] || return
 
 	rcconf_edit_begin
-	if svc_is_special ${_svc}; then
+	if svc_special ${_svc}; then
 		grep -v "^${_svc}.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if svc_default_enabled ${_svc}; then
+		if svc_enabled_default ${_svc}; then
 			echo "${_svc}=NO" >>${_TMP_RCCONF}
 		fi
 	else
 		grep -v "^${_svc}_flags.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-		if svc_default_enabled ${_svc}; then
+		if svc_enabled_default ${_svc}; then
 			echo "${_svc}_flags=NO" >>${_TMP_RCCONF}
 		fi
 	fi
@@ -325,7 +325,7 @@ else
 fi
 
 if [ -n "${svc}" ]; then
-	if ! svc_is_avail ${svc}; then
+	if ! svc_avail ${svc}; then
 		_rc_err "${0##*/}: service ${svc} does not exist" 2
 	fi
 elif [[ ${action} != @(default|order|status) ]] ; then
@@ -337,7 +337,7 @@ if [ -n "${flag}" ]; then
 		if [ "${action}" != "enable" ]; then
 			_rc_err "${0##*/}: \"${flag}\" can only be set with \"enable\""
 		fi
-		if svc_is_special ${svc} && [ -n "${flags}" ]; then
+		if svc_special ${svc} && [ -n "${flags}" ]; then
 			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot set \"${flag}\""
 		fi
 		if [ "${flag}" = "flags" -a "${flags}" = "NO" ]; then
@@ -350,35 +350,35 @@ fi
 
 case ${action} in
 	default)
-		svc_get_defaults ${svc}
+		svc_status_default ${svc}
 		;;
 	disable)
 		needs_root ${action}
-		if ! svc_is_base ${svc} && ! svc_is_special ${svc}; then
-			rm_from_pkg_scripts ${svc}
+		if ! svc_base ${svc} && ! svc_special ${svc}; then
+			pkg_scripts_rm ${svc}
 		fi
 		rm_flags ${svc}
 		;;
 	enable)
 		needs_root ${action}
 		add_flags ${svc} "${flag}" "${flags}"
-		if ! svc_is_base ${svc} && ! svc_is_special ${svc}; then
-			append_to_pkg_scripts ${svc}
+		if ! svc_base ${svc} && ! svc_special ${svc}; then
+			pkg_scripts_append ${svc}
 		fi
 		;;
 	order)
 		if [ -n "${svcs}" ]; then
 			needs_root ${action}
-			order_pkg_scripts ${svcs}
+			pkg_scripts_order ${svcs}
 		else
 			[[ -z ${pkg_scripts} ]] || echo ${pkg_scripts}
 		fi
 		;;
 	status)
-		svc_get_status ${svc}
+		svc_status ${svc}
 		;;
 	start|stop|restart|reload|check)
-		if svc_is_special ${svc}; then
+		if svc_special ${svc}; then
 			_rc_err "${0##*/}: \"${svc}\" is a special variable, no rc.d(8) script"
 		fi
 		/etc/rc.d/${svc} ${_RC_DEBUG} ${_RC_FORCE} ${action}
