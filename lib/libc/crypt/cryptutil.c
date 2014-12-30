@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptutil.c,v 1.6 2014/12/24 22:10:34 tedu Exp $ */
+/* $OpenBSD: cryptutil.c,v 1.7 2014/12/30 10:27:24 tedu Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -20,6 +20,8 @@
 #include <pwd.h>
 #include <login_cap.h>
 #include <errno.h>
+
+int bcrypt_autorounds(void);
 
 int
 crypt_checkpass(const char *pass, const char *goodhash)
@@ -64,9 +66,13 @@ crypt_newhash(const char *pass, const char *pref, char *hash, size_t hashlen)
 		errno = EINVAL;
 		goto err;
 	}
-	rounds = strtonum(pref + 9, 4, 31, &errstr);
-	if (errstr)
-		goto err;
+	if (strcmp(pref + 9, "a") == 0) {
+		rounds = bcrypt_autorounds();
+	} else {
+		rounds = strtonum(pref + 9, 4, 31, &errstr);
+		if (errstr)
+			goto err;
+	}
 	rv = bcrypt_newhash(pass, rounds, hash, hashlen);
 
 err:

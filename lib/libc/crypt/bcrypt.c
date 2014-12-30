@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.46 2014/11/24 22:47:01 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.47 2014/12/30 10:27:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -222,6 +222,38 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 
 	explicit_bzero(hash, sizeof(hash));
 	return 0;
+}
+
+/*
+ * Measure this system's performance by measuring the time for 8 rounds.
+ * We are aiming for something that takes between 0.25 and 0.5 seconds.
+ */
+int
+bcrypt_autorounds(void)
+{
+	clock_t before, after;
+	int r = 8;
+	char buf[_PASSWORD_LEN];
+	int duration;
+
+	before = clock();
+	bcrypt_newhash("testpassword", r, buf, sizeof(buf));
+	after = clock();
+
+	duration = after - before;
+
+	/* too quick? slow it down. */
+	while (r < 16 && duration <= CLOCKS_PER_SEC / 4) {
+		r += 1;
+		duration *= 2;
+	}
+	/* too slow? speed it up. */
+	while (r > 4 && duration > CLOCKS_PER_SEC / 2) {
+		r -= 1;
+		duration /= 2;
+	}
+
+	return r;
 }
 
 /*
