@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.133 2014/12/05 16:17:56 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.134 2014/12/30 20:40:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -842,6 +842,7 @@ filescan(const char *file)
 	if (strlcpy(mlink->file, start, sizeof(mlink->file)) >=
 	    sizeof(mlink->file)) {
 		say(start, "Filename too long");
+		free(mlink);
 		return;
 	}
 
