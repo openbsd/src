@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.26 2014/10/09 04:20:18 deraadt Exp $
+#	$OpenBSD: files.arm,v 1.27 2014/12/30 11:45:31 jsg Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -98,8 +98,6 @@ file	arch/arm/arm/bcopy_page.S
 
 # machine-dependent libkern components
 file	lib/libkern/arch/arm/divsi3.S
-file	lib/libkern/arch/arm/memcpy.S
-file	lib/libkern/arch/arm/memmove.S
 
 # quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c
