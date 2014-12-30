@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.8 2014/12/27 20:33:47 kettenis Exp $ */
+/*	$OpenBSD: archdep.h,v 1.9 2014/12/30 11:26:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -42,8 +42,8 @@
 #define RELOC_REL(relp, symp, adrp, val)				\
 do {									\
 	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
-		if (ELF64_R_SYM(rp->r_info) != 0)			\
-			*adrp = symp->st_value + val;			\
+		if (ELF64_R_SYM(relp->r_info) != 0)			\
+			*adrp += symp->st_value + val;			\
 		else							\
 			*adrp += val;					\
 	} else if (ELF64_R_TYPE(relp->r_info) != R_MIPS_NONE) {		\
