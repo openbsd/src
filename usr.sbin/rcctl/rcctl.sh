@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.51 2014/12/24 13:04:43 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.52 2014/12/30 14:46:33 ajacoutot Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -240,7 +240,7 @@ rm_from_pkg_scripts()
 
 add_flags()
 {
-	local _svc=$2
+	local _svc=$1
 	[ -n "${_svc}" ] || return
 
 	if svc_is_special ${_svc}; then
@@ -255,8 +255,8 @@ add_flags()
 
 	local _flags
 
-	if [ -n "$3" ]; then
-		shift 3
+	if [ -n "$2" ]; then
+		shift 2
 		_flags="$*"
 	else
 		# keep our flags since none were given
@@ -335,13 +335,13 @@ fi
 if [ -n "${flag}" ]; then
 	if [ "${flag}" = "flags" ]; then
 		if [ "${action}" != "enable" ]; then
-			_rc_err "${0##*/}: \"flags\" can only be set with \"enable\""
+			_rc_err "${0##*/}: \"${flag}\" can only be set with \"enable\""
 		fi
 		if svc_is_special ${svc} && [ -n "${flags}" ]; then
-			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot set \"flags\""
+			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot set \"${flag}\""
 		fi
-		if [ "${flags}" = "NO" ]; then
-			_rc_err "${0##*/}: \"flags NO\" contradicts \"enable\""
+		if [ "${flag}" = "flags" -a "${flags}" = "NO" ]; then
+			_rc_err "${0##*/}: \"flags ${flags}\" contradicts \"enable\""
 		fi
 	else
 		usage
@@ -361,7 +361,7 @@ case ${action} in
 		;;
 	enable)
 		needs_root ${action}
-		add_flags ${action} ${svc} "${flag}" "${flags}"
+		add_flags ${svc} "${flag}" "${flags}"
 		if ! svc_is_base ${svc} && ! svc_is_special ${svc}; then
 			append_to_pkg_scripts ${svc}
 		fi
