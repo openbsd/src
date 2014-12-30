@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.17 2014/07/14 03:54:51 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.18 2014/12/30 18:31:21 miod Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -32,59 +32,45 @@
 #include <SYS.h>
 
 ENTRY(_dl_start)
-	mov	r15, r12			// save for later 
-	sts	pr, r11
-	mov	r15, r4			// boot_bind(sp, dl_data) (sp)
-	mov.l	.L_datasize, r0
-	sub	r0, r15
-	mov	r15, r5
-	mov	r5, r13
-	// not trusting register to store the data, push it on the stack.
-	// callee/caller save questions
-
-	mov	r15, r14
-
+	mov	r15, r12		// save for later 
+	mov	r15, r4			// sp
+	add	#-(4+4+DL_DATA_SIZE), r15
+	mov	r15, r5			// dl_data
 	bsr	1f
 	 nop
 1:
 .L_offbase:
 	sts	pr, r0
 	mov.l	.L_dynamic, r6
-	add	r0, r6
-	mov	 r14, r15
-	mov	r15, r14
+	add	r0, r6			// DYNAMIC
 	mov.l	.L_boot_bind, r0
-	bsrf	r0
+	bsrf	r0			// boot_bind(sp, dl_data, DYNAMIC)
 	 nop
 .L_call_boot_bind:
 	mov	r12, r4
-	add	#4, r4
-	mov.l	@r12, r5		//loads argc
+	add	#4, r4			// argv
+	mov.l	@r12, r5
 	add	#2, r5
 	shll2	r5
-	add	r12, r5			// calc argv 
-
-	mov	r13, r7
+	add	r12, r5			// envp 
+	mov	r15, r7			// dl_data
 	mov	r7, r6
-	mov.l	.L_loff, r0
-	add	r0, r6
-	mov.l	@r6, r6
+	add	#(7*4), r6
+	mov.l	@r6, r6			// dl_data[AUX_base] == loff
 
 	mov.l	.L_boot, r0
-	bsrf	r0
+	bsrf	r0			// _dl_boot(argv, envp, loff, dl_data)
 	 nop
 .L_call_boot:
-
 	mov	r12, r15
-	lds	r11, pr
-	mov.l	@r15, r4
+	mov.l	@r15, r4		// argc
 	mov	r15, r5
-	add	#4, r5
+	add	#4, r5			// argv
 
 	mov	r4, r6
 	add	#1, r6
 	shll2	r6
-	add	r5, r6			// calc envp
+	add	r5, r6			// envp
 
 	mov	r0, r12
 	mova	.L_GOT, r0
@@ -99,12 +85,8 @@ ENTRY(_dl_start)
 	.long _dl_boot_bind-.L_call_boot_bind
 .L_boot:
 	.long _dl_boot-.L_call_boot
-.L_datasize:
-	.long 4+4+DL_DATA_SIZE
 .L_dynamic:
 	.long _DYNAMIC-.L_offbase
-.L_loff:
-	.long 7*4
 .L_GOT:
 	.long _GLOBAL_OFFSET_TABLE_
 .L_dl_dtors:
