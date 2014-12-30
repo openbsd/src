@@ -1,0 +1,15 @@
+DE-STARTDE(1)               General Commands Manual              DE-STARTDE(1)
+
+NNAAMMEE
+     ddee--ssttaarrttddee - macro starting a macro definition, but not ending it
+
+DDEESSCCRRIIPPTTIIOONN
+     define outer macro: outer scope ended; outer macro now defined.
+
+     call outer macro: outer macro called; define inner macro: inner scope
+     ended; inner macro now defined.
+
+     call inner macro: inner macro called; end outer scope.  returned from
+     call of outer macro; end inner scope.  returned from call of inner macro.
+
+OpenBSD                        December 30, 2014                       OpenBSD
