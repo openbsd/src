@@ -2785,9 +2785,12 @@ PP(pp_srand)
         }
     }
     else {
-        anum = seed();
+        anum = 0;
     }
 
+    if (anum)
+        (void)srand48_deterministic((Rand_seed_t)anum);
+    else
     (void)seedDrand01((Rand_seed_t)anum);
     PL_srand_called = TRUE;
     if (anum)

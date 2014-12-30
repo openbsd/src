@@ -19620,9 +19620,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=Perl_drand48
-drand01="Perl_drand48()"
-seedfunc="Perl_drand48_init"
+randfunc=drand48
+drand01="drand48()"
+seedfunc="srand48"
 randbits=48
 randseedtype=U32
 
