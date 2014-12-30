@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.2 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: htons.S,v 1.3 2014/12/30 08:12:52 jsg Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.1.20.1 2002/07/02 06:50:59 lukem Exp $	*/
 
 /*-
@@ -39,8 +39,4 @@ _PROF_PROLOGUE
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8
 	orr		r0, r0, r1, lsl #8
-#ifdef __APCS_26__
-	movs		pc, lr
-#else
 	mov		pc, lr  
-#endif

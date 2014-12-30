@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.2 2004/02/01 05:47:10 drahn Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.3 2014/12/30 08:12:52 jsg Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.2 2001/11/13 20:06:40 chris Exp $	*/
 
 /*
@@ -28,11 +28,7 @@ ENTRY(__umodsi3)
 	bl	L_udivide
 	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
-#ifdef __APCS_26__
-	ldmfd	sp!, {pc}^
-#else /* APCS-32 */
 	ldmfd	sp!, {pc}
-#endif
 
 ENTRY(__modsi3)
 	stmfd	sp!, {lr}
@@ -40,11 +36,7 @@ ENTRY(__modsi3)
 	bl	L_divide
 	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
-#ifdef __APCS_26__
-	ldmfd	sp!, {pc}^
-#else
 	ldmfd	sp!, {pc}
-#endif
 
 L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -55,11 +47,7 @@ L_overflow:
 	/* XXX should cause a fatal error */
 	mvn	r0, #0
 #endif
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 ENTRY(__udivsi3)
 L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
@@ -81,11 +69,7 @@ L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 L_divide_l0:				/* r0 == 1 */
 	mov	r0, r1
 	mov	r1, #0
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 ENTRY(__divsi3)
 L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
@@ -389,11 +373,7 @@ L_divide_b0:
 	movs	ip, ip, lsl #1
 	bicmi	r0, r0, #0x80000000	/* Fix incase we divided 0x80000000 */
 	rsbmi	r0, r0, #0
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 L_udivide_l1:
 	tst	ip, #0x10000000
@@ -404,8 +384,4 @@ L_udivide_l1:
 	subhs	r1, r1, r0
 	addhs	r3, r3, r2
 	mov	r0, r3
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.2 2004/02/01 05:47:10 drahn Exp $	*/
+/*	$OpenBSD: memset.S,v 1.3 2014/12/30 08:12:52 jsg Exp $	*/
 /*	$NetBSD: memset.S,v 1.1 2000/12/29 20:51:57 bjh21 Exp $	*/
 
 /*
@@ -116,11 +116,7 @@ Lmemset_loop4:
 Lmemset_lessthanfour:
 	cmp	r2, #0x00000000
 	ldmeqfd	sp!, {r0}
-#ifdef __APCS_26__
-	moveqs	pc, lr			/* Zero length so exit */
-#else
 	moveq	pc, lr			/* Zero length so exit */
-#endif
 
 	cmp	r2, #0x00000002
 	strb	r1, [r0], #0x0001	/* Set 1 byte */
@@ -128,8 +124,4 @@ Lmemset_lessthanfour:
 	strgtb	r1, [r0], #0x0001	/* and a third */
 
 	ldmfd	sp!, {r0}
-#ifdef __APCS_26__
-	movs	pc, lr			/* Exit */
-#else
 	mov	pc, lr			/* Exit */
-#endif
