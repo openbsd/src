@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.52 2014/12/30 14:46:33 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.53 2014/12/30 15:31:33 robert Exp $
 #
 # Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -371,7 +371,7 @@ case ${action} in
 			needs_root ${action}
 			order_pkg_scripts ${svcs}
 		else
-			echo ${pkg_scripts}
+			[[ -z ${pkg_scripts} ]] || echo ${pkg_scripts}
 		fi
 		;;
 	status)
