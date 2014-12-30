@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.3 2014/07/05 12:22:41 miod Exp $ */
+/*	$OpenBSD: archdep.h,v 1.4 2014/12/30 19:26:38 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -74,6 +74,8 @@ RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
 {
 	if (ELF_R_TYPE(r->r_info) == R_SH_RELATIVE) {
 		*p = v + r->r_addend;
+	} else if (ELF_R_TYPE(r->r_info) == R_SH_DIR32) {
+		*p = s->st_value + v + r->r_addend;
 	} else {
 		/* XXX - printf might not work here, but we give it a shot. */
 		_dl_printf("Unknown bootstrap relocation.\n");

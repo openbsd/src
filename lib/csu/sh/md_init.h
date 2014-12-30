@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.3 2014/04/18 15:09:52 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.4 2014/12/30 19:26:38 miod Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -68,15 +68,12 @@ __asm(".section " #section "\n"		\
 "2:  .previous");
 
 
-/* no ASM stub for __start; the C routine can be called directly */
-#define	MD_START	__start
-
 #if defined(__SH4__) && !defined(__SH4_NOFPU__)
 #include <machine/fpu.h>
 
-#define	MD_CRT0_START				\
+#define	MD_FPU_START				\
 	void __set_fpscr(unsigned int);		\
-	unsigned int __fpscr_values[2]
+	unsigned int __fpscr_values[2];
 
 #define	MD_START_SETUP				\
 	__set_fpscr(0);				\
@@ -84,5 +81,69 @@ __asm(".section " #section "\n"		\
 	__fpscr_values[1] |= FPSCR_DN;		\
 	__asm volatile ("lds %0, fpscr"		\
 	    : : "r" (__fpscr_values[1]));
+#else
+#define	MD_FPU_START
 #endif /* defined(__SH4__) && !defined(__SH4_NOFPU__) */
 
+#define	MD_CRT0_START							\
+	MD_FPU_START							\
+	__asm (".globl __start; __start = ___start")
+
+#define	MD_RCRT0_START							\
+	MD_FPU_START							\
+	__asm (								\
+	".text								\n" \
+	"	.align	2						\n" \
+	"	.globl	__start						\n" \
+	"	.type	__start,@function				\n" \
+	"__start:							\n" \
+	"	mov	r15, r12					\n" \
+	"	mov	r15, r4						\n" \
+	"	add	#-72, r15					\n" \
+	"	mov	r15, r5						\n" \
+	"	bsr	1f						\n" \
+	"	 nop							\n" \
+	"1:								\n" \
+	".L_offbase:							\n" \
+	"	sts	pr, r0						\n" \
+	"	mov.l	.L_dynamic, r6					\n" \
+	"	add	r0, r6						\n" \
+	"	mov.l	.L_boot_bind, r0				\n" \
+	"	bsrf	r0						\n" \
+	"	 nop							\n" \
+	".L_call_boot_bind:						\n" \
+	"	mov	r12, r15					\n" \
+	"	mov.l	@r15, r4	/* argc */			\n" \
+	"	mov	r15, r5						\n" \
+	"	add	#4, r5		/* argv */			\n" \
+	"	mov	r4, r6						\n" \
+	"	add	#1, r6						\n" \
+	"	shll2	r6						\n" \
+	"	add	r5, r6		/* envp */			\n" \
+	"	bra	___start					\n" \
+	"	 mov	#0, r7		/* cleanup */			\n" \
+	"	.align	2						\n" \
+	".L_boot_bind:							\n" \
+	"	.long	_dl_boot_bind - .L_call_boot_bind		\n" \
+	".L_datasize:							\n" \
+	"	.long	4 + 4 + (16 * 4)				\n" \
+	".L_dynamic:							\n" \
+	"	.long	_DYNAMIC - .L_offbase				\n" \
+									\
+	"	.align	2						\n" \
+	"	.globl	_dl_printf					\n" \
+	"	.type	_dl_printf,@function				\n" \
+	"_dl_printf:							\n" \
+	"	rts							\n" \
+	"	 nop							\n" \
+									\
+	"	.align	2						\n" \
+	"	.globl	_dl_exit					\n" \
+	"	.type	_dl_exit,@function				\n" \
+	"_dl_exit:							\n" \
+	"	mov	#1, r0						\n" \
+	"	.word	0xc380	/* trapa #0x80 */			\n" \
+	".previous")
+
+/* no ASM stub for __start; the C routine can be called directly */
+#define	MD_START	___start
