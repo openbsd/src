@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.11 2014/12/08 21:56:27 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.12 2014/12/31 15:45:57 tedu Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -77,6 +77,8 @@ main(int argc, char *argv[])
 	printf("\n\nchar data_file[] =\n{");
 	count = 0;
 	linestart = YES;
+
+	srandom_deterministic(1);
 
 	while ((c = getc(infile)) != EOF) {
 		if (count++ % LINE == 0)
