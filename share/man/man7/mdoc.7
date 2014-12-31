@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.127 2014/12/28 15:22:42 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.128 2014/12/31 20:41:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2014 $
+.Dd $Mdocdate: December 31 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2221,9 +2221,12 @@ See also
 Close quoted context opened by
 .Sx \&Qo .
 .Ss \&Ql
-Format a single-quoted literal.
+Request a literal font and enclose in single quotes.
+For arguments of three or more characters, formatters other than
+.Xr mandoc 1
+usually omit the quotes on non-terminal output devices.
 See also
-.Sx \&Qq
+.Sx \&Li
 and
 .Sx \&Sq .
 .Ss \&Qo
