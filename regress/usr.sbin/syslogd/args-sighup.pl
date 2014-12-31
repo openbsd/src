@@ -30,7 +30,7 @@ our %args = (
 	    qr/config file modified: restarting/ => 0,
 	    qr/syslogd: restarted/ => 1,
 	    get_between2loggrep(),
-	}
+	},
     },
     server => {
 	func => sub {

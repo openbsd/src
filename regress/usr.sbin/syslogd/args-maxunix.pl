@@ -36,7 +36,7 @@ our %args = (
 	    (map { (get_testlog()." unix-$_.sock unix socket" => 1) }
 		(1..(MAXUNIX-1))),
 	    get_testlog()." unix-".MAXUNIX.".sock unix socket" => 0,
-	}
+	},
     },
 );
 

@@ -28,7 +28,7 @@ our %args = (
 	loggrep => {
 	    qr/syslogd: restarted/ => 1,
 	    get_between2loggrep(),
-	}
+	},
     },
     server => {
 	func => sub {
