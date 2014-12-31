@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/12/28 14:08:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2014/12/31 01:25:07 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -31,8 +31,9 @@ TARGETS ?=		${ARGS}
 TARGETS ?=		${ARGS:Nargs-rsyslog*}
 .endif
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log *.log.? *.pem *.crt *.key *.conf stamp-*
-CLEANFILES +=		*.out *.sock ktrace.out *.ktrace *.fstat
+CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-*
+CLEANFILES +=		*.out *.sock *.ktrace *.fstat
+CLEANFILES +=		*.pem *.req *.crt *.key *.srl
 
 .MAIN: all
 
@@ -65,18 +66,18 @@ run-regress-$a: $a
 	time SUDO=${SUDO} KTRACE=${KTRACE} SYSLOGD=${SYSLOGD} perl ${PERLINC} ${PERLPATH}syslogd.pl ${PERLPATH}$a
 .endfor
 
-# create the certificates for SSL
+# create certificates for TLS
 
-127.0.0.1.crt:
-	openssl req -batch -new -nodes -newkey rsa -keyout 127.0.0.1.key -subj /CN=127.0.0.1/ -x509 -out $@
-	${SUDO} cp 127.0.0.1.crt /etc/ssl/
-	${SUDO} cp 127.0.0.1.key /etc/ssl/private/
+ca.crt:
+	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=ca/CN=root/ -nodes -newkey rsa -keyout ca.key -x509 -out ca.crt
 
-server-cert.pem:
-	openssl req -batch -new -nodes -newkey rsa -keyout server-key.pem -subj /CN=localhost/ -x509 -out $@
+server.req:
+	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=server/CN=localhost/ -nodes -newkey rsa -keyout server.key -out server.req
 
-${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server-cert.pem
-${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: 127.0.0.1.crt
+server.crt: ca.crt server.req
+	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in server.req -out server.crt
+
+${REGRESS_TARGETS:M*tls*}: server.crt
 
 # make perl syntax check for all args files
 

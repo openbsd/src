@@ -1,6 +1,6 @@
-#	$OpenBSD: Server.pm,v 1.6 2014/07/10 10:19:06 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.7 2014/12/31 01:25:07 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@ use warnings;
 package Server;
 use parent 'Proc';
 use Carp;
-use Socket qw(IPPROTO_TCP TCP_NODELAY);
+use Socket;
 use Socket6;
 use IO::Socket;
 use IO::Socket::INET6;
@@ -43,8 +43,8 @@ sub new {
 	    Listen		=> 1,
 	    $self->{listenaddr} ? (LocalAddr => $self->{listenaddr}) : (),
 	    $self->{listenport} ? (LocalPort => $self->{listenport}) : (),
-	    SSL_key_file	=> "server-key.pem",
-	    SSL_cert_file	=> "server-cert.pem",
+	    SSL_key_file	=> "server.key",
+	    SSL_cert_file	=> "server.crt",
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
 	) or die ref($self), " $iosocket socket listen failed: $!,$SSL_ERROR";
 	my $log = $self->{log};
@@ -62,9 +62,9 @@ sub child {
 	shutdown(\*STDOUT, SHUT_WR);
 	delete $self->{as};
 
-	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
 	my $as = $self->{ls}->accept()
-	    or die ref($self), " $iosocket socket accept failed: $!";
+	    or die ref($self)," ",ref($self->{ls}),
+	    " socket accept failed: $!,$SSL_ERROR";
 	print STDERR "accept sock: ",$as->sockhost()," ",$as->sockport(),"\n";
 	print STDERR "accept peer: ",$as->peerhost()," ",$as->peerport(),"\n";
 

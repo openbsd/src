@@ -1,6 +1,6 @@
-#	$OpenBSD: Client.pm,v 1.8 2014/07/11 15:38:44 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.9 2014/12/31 01:25:07 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@ use warnings;
 package Client;
 use parent 'Proc';
 use Carp;
-use Socket qw(IPPROTO_TCP TCP_NODELAY);
+use Socket;
 use Socket6;
 use IO::Socket;
 use IO::Socket::INET6;

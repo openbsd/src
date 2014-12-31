@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2014/07/11 20:41:20 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/12/31 01:25:07 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -34,7 +34,8 @@ REMOTE_SSH ?=
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log *.pem *.crt *.key relayd.conf ktrace.out stamp-*
+CLEANFILES +=		*.log relayd.conf ktrace.out stamp-*
+CLEANFILES +=		*.pem *.req *.crt *.key *.srl
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -63,11 +64,11 @@ run-regress-$a: $a
 .endif
 .endfor
 
-# create the certificates for SSL
+# create certificates for TLS
 
 .for ip in ${REMOTE_ADDR} 127.0.0.1
 ${ip}.crt:
-	openssl req -batch -new -nodes -newkey rsa -keyout ${ip}.key -subj /CN=${ip}/ -x509 -out $@
+	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=relay/CN=${ip}/ -nodes -newkey rsa -keyout ${ip}.key -x509 -out $@
 .if empty (REMOTE_SSH)
 	${SUDO} cp 127.0.0.1.crt /etc/ssl/
 	${SUDO} cp 127.0.0.1.key /etc/ssl/private/
@@ -77,10 +78,16 @@ ${ip}.crt:
 .endif
 .endfor
 
-server-cert.pem:
-	openssl req -batch -new -nodes -newkey rsa -keyout server-key.pem -subj /CN=localhost/ -x509 -out $@
+ca.crt:
+	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=ca/CN=root/ -nodes -newkey rsa -keyout ca.key -x509 -out ca.crt
 
-${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server-cert.pem
+server.req:
+	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=server/CN=localhost/ -nodes -newkey rsa -keyout server.key -out server.req
+
+server.crt: ca.crt server.req
+	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in server.req -out server.crt
+
+${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server.crt
 .if empty (REMOTE_SSH)
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: 127.0.0.1.crt
 .else

@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.3 2014/12/28 14:08:01 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.4 2014/12/31 01:25:07 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -47,11 +47,11 @@ sub new {
 	    Domain		=> $self->{listendomain},
 	    $self->{listenaddr} ? (LocalAddr => $self->{listenaddr}) : (),
 	    $self->{listenport} ? (LocalPort => $self->{listenport}) : (),
-	    SSL_key_file	=> "server-key.pem",
-	    SSL_cert_file	=> "server-cert.pem",
+	    SSL_key_file	=> "server.key",
+	    SSL_cert_file	=> "server.crt",
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
 	) or die ref($self), " $iosocket socket listen failed: $!,$SSL_ERROR";
-	if ($self->{listenproto} eq "tcp") {
+	if ($self->{listenproto} ne "udp") {
 		listen($ls, 1)
 		    or die ref($self), " socket failed: $!";
 	}
@@ -66,11 +66,11 @@ sub new {
 sub child {
 	my $self = shift;
 
-	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
 	my $as = $self->{ls};
 	if ($self->{listenproto} ne "udp") {
 		$as = $self->{ls}->accept()
-		    or die ref($self), " $iosocket socket accept failed: $!";
+		    or die ref($self)," ",ref($self->{ls}),
+		    " socket accept failed: $!,$SSL_ERROR";
 		print STDERR "accept sock: ",$as->sockhost()," ",
 		    $as->sockport(),"\n";
 		print STDERR "accept peer: ",$as->peerhost()," ",
