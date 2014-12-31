@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.48 2014/10/05 18:14:01 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.49 2014/12/31 13:55:57 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -317,17 +317,34 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			servname[servname_len - 1] = '\0';
 
 			memset(&hints, 0, sizeof(hints));
-			if (strcmp(protoname, "udp") == 0) {
+			switch (strlen(protoname)) {
+			case 3:
 				hints.ai_family = AF_UNSPEC;
-			} else if (strcmp(protoname, "udp4") == 0) {
-				hints.ai_family = AF_INET;
-			} else if (strcmp(protoname, "udp6") == 0) {
-				hints.ai_family = AF_INET6;
+				break;
+			case 4:
+				switch (protoname[3]) {
+				case '4':
+					hints.ai_family = AF_INET;
+					break;
+				case '6':
+					hints.ai_family = AF_INET6;
+					break;
+				default:
+					errx(1, "bad ip version %s", protoname);
+				}
+				break;
+			default:
+				errx(1, "bad protocol length %s", protoname);
+			}
+			if (strncmp(protoname, "udp", 3) == 0) {
+				hints.ai_socktype = SOCK_DGRAM;
+				hints.ai_protocol = IPPROTO_UDP;
+			} else if (strncmp(protoname, "tcp", 3) == 0) {
+				hints.ai_socktype = SOCK_STREAM;
+				hints.ai_protocol = IPPROTO_TCP;
 			} else {
 				errx(1, "unknown protocol %s", protoname);
 			}
-			hints.ai_socktype = SOCK_DGRAM;
-			hints.ai_protocol = IPPROTO_UDP;
 			i = getaddrinfo(hostname, servname, &hints, &res0);
 			if (i != 0 || res0 == NULL) {
 				addr_len = 0;
