@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.16 2014/12/23 20:40:06 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.17 2014/12/31 16:56:55 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -473,7 +473,6 @@ SHA256Update(SHA2_CTX *context, const void *dataptr, size_t len)
 void
 SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 {
-	u_int32_t	*d = (u_int32_t *)digest;
 	unsigned int	usedspace;
 
 	usedspace = (context->bitcount[0] >> 3) % SHA256_BLOCK_LENGTH;
@@ -519,12 +518,11 @@ SHA256Final(u_int8_t digest[], SHA2_CTX *context)
 		/* Convert TO host byte order */
 		int	j;
 		for (j = 0; j < 8; j++) {
-			*d++ = swap32(context->state.st32[j]);
+			context->state.st32[j] = swap32(context->state.st32[j]);
 		}
 	}
-#else
-	memcpy(d, context->state.st32, SHA256_DIGEST_LENGTH);
 #endif
+	memcpy(digest, context->state.st32, SHA256_DIGEST_LENGTH);
 	/* Clean up state data: */
 	explicit_bzero(context, sizeof(*context));
 	usedspace = 0;
@@ -800,7 +798,6 @@ SHA512Last(SHA2_CTX *context)
 void
 SHA512Final(u_int8_t digest[], SHA2_CTX *context)
 {
-	u_int64_t	*d = (u_int64_t *)digest;
 
 	SHA512Last(context);
 
@@ -810,12 +807,11 @@ SHA512Final(u_int8_t digest[], SHA2_CTX *context)
 		/* Convert TO host byte order */
 		int	j;
 		for (j = 0; j < 8; j++) {
-			*d++ = swap64(context->state.st64[j]);
+			context->state.st64[j] = swap64(context->state.st64[j]);
 		}
 	}
-#else
-	memcpy(d, context->state.st64, SHA512_DIGEST_LENGTH);
 #endif
+	memcpy(digest, context->state.st64, SHA512_DIGEST_LENGTH);
 
 	/* Zero out state data */
 	explicit_bzero(context, sizeof(*context));
@@ -841,7 +837,6 @@ SHA384Update(SHA2_CTX *context, const void *data, size_t len)
 void
 SHA384Final(u_int8_t digest[], SHA2_CTX *context)
 {
-	u_int64_t	*d = (u_int64_t *)digest;
 
 	SHA512Last(context);
 
@@ -851,12 +846,11 @@ SHA384Final(u_int8_t digest[], SHA2_CTX *context)
 		/* Convert TO host byte order */
 		int	j;
 		for (j = 0; j < 6; j++) {
-			*d++ = swap64(context->state.st64[j]);
+			context->state.st64[j] = swap64(context->state.st64[j]);
 		}
 	}
-#else
-	memcpy(d, context->state.st64, SHA384_DIGEST_LENGTH);
 #endif
+	memcpy(digest, context->state.st64, SHA384_DIGEST_LENGTH);
 	/* Zero out state data */
 	explicit_bzero(context, sizeof(*context));
 }
