@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.2 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.3 2014/12/31 11:38:27 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -98,7 +98,10 @@ cbus_attach(struct device *parent, struct device *self, void *args)
 	int i;
 
 	for (i = 0; i < NCBUSISR; i++) {
-		sc->cbus_isr[i].isr_func = NULL;
+		struct cbus_isr_t *ci = &sc->cbus_isr[i];
+		ci->isr_func = NULL;
+		ci->isr_arg = NULL;
+		ci->isr_intlevel = -1;
 		/* clearing interrupt flags (INT0-INT6) */
 		*cbus_isreg = (u_int8_t)i;
 	}
@@ -135,6 +138,7 @@ int
 cbus_isrlink(int (*func)(void *), void *arg, int ipl, const char *name)
 {
 	struct cbus_softc *sc = NULL;
+	struct cbus_isr_t *ci;
 
 	if (cbus_cd.cd_ndevs != 0)
 		sc = cbus_cd.cd_devs[0];
@@ -148,15 +152,18 @@ cbus_isrlink(int (*func)(void *), void *arg, int ipl, const char *name)
 	}
 #endif
 
-	if (sc->cbus_isr[ipl].isr_func != NULL) {
+	ci = &sc->cbus_isr[ipl];
+
+	if (ci->isr_func != NULL) {
 		printf("cbus_isrlink: isr already assigned on INT%d\n", ipl);
 		return -1;
 	}
 
 	/* set the entry */
-	sc->cbus_isr[ipl].isr_func = func;
-	sc->cbus_isr[ipl].isr_arg = arg;
-	evcount_attach(&(sc->cbus_isr[ipl].isr_count), name, &ipl);
+	ci->isr_func = func;
+	ci->isr_arg = arg;
+	ci->isr_intlevel = ipl;
+	evcount_attach(&ci->isr_count, name, &ci->isr_intlevel);
 	sc->registered |= (1 << (6 - ipl));
 #ifdef CBUS_DEBUG
 	printf("cbus_isrlink: sc->registered = 0x%02x\n", sc->registered);
@@ -172,6 +179,7 @@ int
 cbus_isrunlink(int (*func)(void *), int ipl)
 {
 	struct cbus_softc *sc = NULL;
+	struct cbus_isr_t *ci;
 
 	if (cbus_cd.cd_ndevs != 0)
 		sc = cbus_cd.cd_devs[0];
@@ -185,15 +193,18 @@ cbus_isrunlink(int (*func)(void *), int ipl)
 	}
 #endif
 
-	if (sc->cbus_isr[ipl].isr_func == NULL) {
+	ci = &sc->cbus_isr[ipl];
+
+	if (ci->isr_func == NULL) {
 		printf("cbus_isrunlink: isr not assigned on INT%d\n", ipl);
 		return -1;
 	}
 
 	/* reset the entry */
-	sc->cbus_isr[ipl].isr_func = NULL;
-	sc->cbus_isr[ipl].isr_arg = NULL;
-	evcount_detach(&(sc->cbus_isr[ipl].isr_count));
+	ci->isr_func = NULL;
+	ci->isr_arg = NULL;
+	ci->isr_intlevel = -1;
+	evcount_detach(&ci->isr_count);
 	sc->registered &= ~(1 << (6 - ipl));
 #ifdef CBUS_DEBUG
 	printf("cbus_isrunlink: sc->registered = 0x%02x\n", sc->registered);
@@ -211,6 +222,7 @@ cbus_isrdispatch(int ipl)
 	int rc;
 	static int straycount, unexpected;
 	struct cbus_softc *sc = NULL;
+	struct cbus_isr_t *ci;
 
 	if (cbus_cd.cd_ndevs != 0)
 		sc = cbus_cd.cd_devs[0];
@@ -222,16 +234,18 @@ cbus_isrdispatch(int ipl)
 		panic("cbus_isrdispatch: bad ipl 0x%d", ipl);
 #endif
 
-	if (sc->cbus_isr[ipl].isr_func == NULL) {
+	ci = &sc->cbus_isr[ipl];
+
+	if (ci->isr_func == NULL) {
 		printf("cbus_isrdispatch: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
 		return;
 	}
 
-	rc = sc->cbus_isr[ipl].isr_func(sc->cbus_isr[ipl].isr_arg);
+	rc = ci->isr_func(ci->isr_arg);
 	if (rc != 0)
-		sc->cbus_isr[ipl].isr_count.ec_count++;
+		ci->isr_count.ec_count++;
 
 	if (rc)
 		straycount = 0;
