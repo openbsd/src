@@ -1,4 +1,4 @@
-.\"	$OpenBSD: myname.5,v 1.6 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: myname.5,v 1.7 2014/12/31 13:56:37 lum Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 31 2014 $
 .Dt MYNAME 5
 .Os
 .Sh NAME
@@ -64,9 +64,9 @@ If
 does not exist, no default gateway is added to the routing tables.
 The file may contain gateway addresses for both IPv4 and IPv6 networks:
 in dotted quad notation for v4
-.Pq e.g. 192.0.2.0
+.Pq e.g. 192.0.2.1
 or in colon notation for v6
-.Pq e.g. 2001:1234:5678::1 .
+.Pq e.g. 2001:db8::1 .
 Each address must be specified on a separate line.
 If more than one address of a specific family is found,
 only the first is used \- all other addresses of that family are ignored.
