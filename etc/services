@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.92 2014/12/30 20:50:49 bluhm Exp $
+# $OpenBSD: services,v 1.93 2014/12/31 11:52:22 jasper Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -247,6 +247,15 @@ rfe		5002/tcp			# Radio Free Ethernet
 rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
 sip		5060/udp			# SIP
+xmpp-client	5222/tcp			# XMPP Client Connection
+xmpp-server	5269/tcp			# XMPP Server Connection
+xmpp-bosh	5280/tcp			# BOSH
+presence	5298/tcp			# XMPP Link-Local Messaging
+presence	5298/udp			# XMPP Link-Local Messaging
+mdns		5353/tcp			# Multicast DNS
+mdns		5353/udp			# Multicast DNS
+mdnsresponder	5354/tcp			# Multicast DNS Responder IPC
+mdnsresponder	5354/udp			# Multicast DNS Responder IPC
 postgresql	5432/tcp			# PostgreSQL
 postgresql	5432/udp			# PostgreSQL
 rfb		5900/tcp	vnc		# Remote Framebuffer
@@ -271,6 +280,7 @@ afs3-update	7008/tcp			# AFS server to server update
 afs3-update	7008/udp			# AFS server to server update
 afs3-rmtsys	7009/tcp			# AFS remote cache manager service
 afs3-rmtsys	7009/udp			# AFS remote cache manager service
+puppet		8140/tcp			# Puppet master service
 ub-dns-control	8953/tcp			# unbound dns nameserver control
 git		9418/tcp			# git pack transfer service
 git		9418/udp			# git pack transfer service
