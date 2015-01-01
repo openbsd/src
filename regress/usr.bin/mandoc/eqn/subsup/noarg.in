@@ -1,0 +1,12 @@
+.Dd January 1, 2015
+.Dt SUBSUP-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm subsup-noarg
+.Nd empty subscripts and superscripts
+.Sh DESCRIPTION
+initial text
+.EQ
+x sub 1 sup sup
+.EN
+final text

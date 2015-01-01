@@ -1,0 +1,12 @@
+.Dd January 1, 2015
+.Dt OVER-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm over-noarg
+.Nd fraction operator without arguments
+.Sh DESCRIPTION
+initial text
+.EQ
+over over
+.EN
+final text

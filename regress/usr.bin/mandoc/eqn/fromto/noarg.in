@@ -1,0 +1,12 @@
+.Dd January 1, 2015
+.Dt FROMTO-NOARG 1
+.Os OpenBSD
+.Sh NAME
+.Nm fromto-noarg
+.Nd vertical stacking lacks final argument
+.Sh DESCRIPTION
+initial text
+.EQ
+x from a to to
+.EN
+final text

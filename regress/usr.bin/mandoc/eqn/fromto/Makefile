@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2015/01/01 12:53:46 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2015/01/01 15:34:43 schwarze Exp $
 
-REGRESS_TARGETS	 = basic
-HTML_TARGETS	 = basic
+REGRESS_TARGETS	 = basic noarg
+HTML_TARGETS	 = basic noarg
 
 .include <bsd.regress.mk>

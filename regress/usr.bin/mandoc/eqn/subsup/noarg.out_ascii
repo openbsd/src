@@ -1,0 +1,9 @@
+SUBSUP-NOARG(1)             General Commands Manual            SUBSUP-NOARG(1)
+
+NNAAMMEE
+     ssuubbssuupp--nnooaarrgg - empty subscripts and superscripts
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text x_1^^ final text
+
+OpenBSD                         January 1, 2015                        OpenBSD
