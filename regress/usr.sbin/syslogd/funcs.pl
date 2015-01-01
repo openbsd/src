@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.8 2014/12/28 14:08:01 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.9 2015/01/01 19:58:48 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -115,10 +115,14 @@ sub read_between2logs {
 	my $self = shift;
 	my $func = shift;
 
-	read_message($self, $firstlog, @_);
+	unless ($self->{redo}) {
+		read_message($self, $firstlog, @_);
+	}
 	$func->($self, @_);
-	read_message($self, $testlog, @_);
-	read_message($self, $downlog, @_);
+	unless ($self->{redo}) {
+		read_message($self, $testlog, @_);
+		read_message($self, $downlog, @_);
+	}
 }
 
 sub read_message {
@@ -128,8 +132,9 @@ sub read_message {
 	local $_;
 	for (;;) {
 		# reading udp packets works only with sysread()
-		defined(sysread(STDIN, $_, 8194))
+		defined(my $n = sysread(STDIN, $_, 8194))
 		    or die ref($self), " read log line failed: $!";
+		last if $n == 0;
 		chomp;
 		print STDERR ">>> $_\n";
 		last if /$regex/;

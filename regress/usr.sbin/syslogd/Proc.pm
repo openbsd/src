@@ -1,6 +1,6 @@
-#	$OpenBSD: Proc.pm,v 1.3 2014/09/13 23:38:24 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.4 2015/01/01 19:58:48 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -112,9 +112,11 @@ sub run {
 		system(@cmd)
 		    and die ref($self), " system '@cmd' failed: $?";
 	}
-	$self->child();
-	print STDERR $self->{up}, "\n";
-	$self->{func}->($self);
+	do {
+		$self->child();
+		print STDERR $self->{up}, "\n";
+		$self->{func}->($self);
+	} while ($self->{redo});
 	print STDERR "Shutdown", "\n";
 
 	IO::Handle::flush(\*STDOUT);

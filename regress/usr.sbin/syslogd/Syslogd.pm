@@ -1,6 +1,6 @@
-#	$OpenBSD: Syslogd.pm,v 1.7 2014/12/28 14:08:01 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.8 2015/01/01 19:58:48 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -126,19 +126,25 @@ sub up {
 	my $self = Proc::up(shift, @_);
 
 	if ($self->{fstat}) {
-		open(my $fh, '>', $self->{fstatfile}) or die ref($self),
-		    " open $self->{fstatfile} for writing failed: $!";
-		my @cmd = ("fstat");
-		open(my $fs, '-|', @cmd)
-		    or die ref($self), " open pipe from '@cmd' failed: $!";
-		print $fh grep { /^\w+ *syslogd *\d+/ } <$fs>;
-		close($fs) or die ref($self), $! ?
-		    " close pipe from '@cmd' failed: $!" :
-		    " command '@cmd' failed: $?";
-		close($fh)
-		    or die ref($self), " close $self->{fstatfile} failed: $!";
+		$self->fstat;
 	}
 	return $self;
+}
+
+sub fstat {
+	my $self = shift;
+
+	open(my $fh, '>', $self->{fstatfile}) or die ref($self),
+	    " open $self->{fstatfile} for writing failed: $!";
+	my @cmd = ("fstat");
+	open(my $fs, '-|', @cmd)
+	    or die ref($self), " open pipe from '@cmd' failed: $!";
+	print $fh grep { /^\w+ *syslogd *\d+/ } <$fs>;
+	close($fs) or die ref($self), $! ?
+	    " close pipe from '@cmd' failed: $!" :
+	    " command '@cmd' failed: $?";
+	close($fh)
+	    or die ref($self), " close $self->{fstatfile} failed: $!";
 }
 
 sub _make_abspath {
