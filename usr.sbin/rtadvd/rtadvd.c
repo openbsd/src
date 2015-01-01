@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.50 2014/11/18 20:54:29 krw Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.51 2015/01/01 16:31:59 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -1215,14 +1215,14 @@ sock_open()
 
 	/* specify to tell receiving interface */
 	on = 1;
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
-		       sizeof(on)) < 0)
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof(on))
+	    < 0)
 		fatal("IPV6_RECVPKTINFO");
 
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
-		       sizeof(on)) < 0)
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on, sizeof(on))
+	    < 0)
 		fatal("IPV6_RECVHOPLIMIT");
 
 	ICMP6_FILTER_SETBLOCKALL(&filt);
@@ -1230,21 +1230,20 @@ sock_open()
 	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);
 	if (accept_rr)
 		ICMP6_FILTER_SETPASS(ICMP6_ROUTER_RENUMBERING, &filt);
-	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
-		       sizeof(filt)) < 0)
+	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt, sizeof(filt))
+	    < 0)
 		fatal("IICMP6_FILTER");
 
 	/*
 	 * join all routers multicast address on each advertising interface.
 	 */
-	if (inet_pton(AF_INET6, ALLROUTERS_LINK,
-		      &mreq.ipv6mr_multiaddr.s6_addr)
+	if (inet_pton(AF_INET6, ALLROUTERS_LINK, &mreq.ipv6mr_multiaddr.s6_addr)
 	    != 1)
 		fatal("inet_pton failed(library bug?)");
 	SLIST_FOREACH(ra, &ralist, entry) {
 		mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
-			       sizeof(mreq)) < 0) {
+		    sizeof(mreq)) < 0) {
 			log_warn("IPV6_JOIN_GROUP(link) on %s", ra->ifname);
 			exit(1);
 		}
@@ -1258,7 +1257,7 @@ sock_open()
 	 */
 	if (accept_rr) {
 		if (inet_pton(AF_INET6, ALLROUTERS_SITE,
-			      &in6a_site_allrouters) != 1)
+		    &in6a_site_allrouters) != 1)
 			fatal("inet_pton failed(library bug?)");
 		mreq.ipv6mr_multiaddr = in6a_site_allrouters;
 		if (mcastif) {
@@ -1269,10 +1268,10 @@ sock_open()
 			}
 		} else
 			mreq.ipv6mr_interface = ra->ifindex;
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-			       &mreq, sizeof(mreq)) < 0) {
-			log_warn("IPV6_JOIN_GROUP(site) on %s",
-			    mcastif ? mcastif : ra->ifname);
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
+		    sizeof(mreq)) < 0) {
+			log_warn("IPV6_JOIN_GROUP(site) on %s", mcastif ?
+			    mcastif : ra->ifname);
 			exit(1);
 		}
 	}
@@ -1293,7 +1292,7 @@ sock_open()
 	sndmhdr.msg_iovlen = 1;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
 	sndmhdr.msg_controllen = sndcmsgbuflen;
-	
+
 	return;
 }
 
