@@ -7,5 +7,6 @@ DDEESSCCRRIIPPTTIIOONN
      multiform: abcd
      quoted: abc
      sizes: abcdef
+     signed sizes: abcdef
 
-OpenBSD                          May 28, 2012                          OpenBSD
+OpenBSD                         January 1, 2015                        OpenBSD

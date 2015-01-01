@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.c,v 1.57 2014/12/15 17:29:58 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.58 2015/01/01 18:10:09 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -223,7 +223,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 		/* See +/- counts as a sign. */
 		if ('+' == **end || '-' == **end || ASCII_HYPH == **end)
-			(*end)++;
+			*start = ++*end;
 
 		switch (**end) {
 		case '(':

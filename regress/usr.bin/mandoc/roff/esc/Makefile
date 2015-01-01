@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.8 2014/12/03 01:06:22 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2015/01/01 18:10:09 schwarze Exp $
 
 REGRESS_TARGETS = one two multi B c c_man e f h w z ignore
-LINT_TARGETS	= B h w
+LINT_TARGETS	= B h w ignore
 
 # Postprocessing to remove "character backspace" sequences
 # unless they are followed by the same character again.

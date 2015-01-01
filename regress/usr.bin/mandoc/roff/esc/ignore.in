@@ -1,4 +1,4 @@
-.Dd May 28, 2012
+.Dd January 1, 2015
 .Dt ESC-IGNORE 1
 .Os OpenBSD
 .Sh NAME
@@ -10,3 +10,5 @@ multiform: a\kxb\k(xyc\k[xyz]d
 quoted: a\R'myreg 0'b\R'myreg \A'y'0'c
 .br
 sizes: a\s0b\s(12c\s[123]d\s'123'e\s'1\w'xy'2'f
+.br
+signed sizes: a\s-0b\s-(12c\s-[123]d\s-'123'e\s-'1\w'xy'2'f\s-
