@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.28 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.29 2015/01/01 03:26:13 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -328,9 +328,9 @@ extern int pmap_needs_pte_sync;
 
 #define	PTE_SYNC(pte)							\
 do {									\
+	cpu_drain_writebuf();						\
 	if (PMAP_NEEDS_PTE_SYNC) {					\
 		paddr_t pa;						\
-		cpu_drain_writebuf();					\
 		cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t));\
 		if (cpu_sdcache_enabled()) { 				\
 		(void)pmap_extract(pmap_kernel(), (vaddr_t)(pte), &pa);	\
@@ -343,9 +343,9 @@ do {									\
 
 #define	PTE_SYNC_RANGE(pte, cnt)					\
 do {									\
+	cpu_drain_writebuf();						\
 	if (PMAP_NEEDS_PTE_SYNC) {					\
 		paddr_t pa;						\
-		cpu_drain_writebuf();					\
 		cpu_dcache_wb_range((vaddr_t)(pte),			\
 		    (cnt) << 2); /* * sizeof(pt_entry_t) */		\
 		if (cpu_sdcache_enabled()) { 				\
