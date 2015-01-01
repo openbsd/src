@@ -1,0 +1,31 @@
+.Dd December 30, 2014
+.Dt FACTORIAL 1
+.Os OpenBSD
+.Sh NAME
+.Nm factorial
+.Nd factorial sequence
+.Sh DESCRIPTION
+.\" recursively calculate a single factorial
+.de rfac
+.  ie \\$1>1 \{\
+.    No \\$1 *
+.    nr i \\$1-1
+.    rfac \\ni
+.    nr acc \\n[acc]*\\$1
+.  \}
+.  el .nr acc 1
+..
+.\" recursively print a sequence of factorials
+.de fac
+.  No \\$1! =
+.  rfac \\$1
+.  if \\$1>1 1 =
+.  No \\n[acc]
+.  if \\$1 \{\
+.    br
+.    nr i \\$1-1
+.    fac \\ni
+.  \}
+..
+.\" main program
+.fac 9

@@ -1,0 +1,18 @@
+FACTORIAL(1)                General Commands Manual               FACTORIAL(1)
+
+NNAAMMEE
+     ffaaccttoorriiaall - factorial sequence
+
+DDEESSCCRRIIPPTTIIOONN
+     9! = 9 * 8 * 7 * 6 * 5 * 4 * 3 * 2 * 1 = 362880
+     8! = 8 * 7 * 6 * 5 * 4 * 3 * 2 * 1 = 40320
+     7! = 7 * 6 * 5 * 4 * 3 * 2 * 1 = 5040
+     6! = 6 * 5 * 4 * 3 * 2 * 1 = 720
+     5! = 5 * 4 * 3 * 2 * 1 = 120
+     4! = 4 * 3 * 2 * 1 = 24
+     3! = 3 * 2 * 1 = 6
+     2! = 2 * 1 = 2
+     1! = 1
+     0! = 1
+
+OpenBSD                        December 30, 2014                       OpenBSD
