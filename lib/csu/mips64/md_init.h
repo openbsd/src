@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.8 2014/12/27 20:33:47 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.9 2015/01/01 19:43:10 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -114,7 +114,9 @@
 	"	.type	__start, @function	\n" \
 	"__start:				\n" \
 	"	dsubu	$sp, $sp, 160		\n" \
-	"	.cpsetup $t9, 144, __start	\n" \
+	"	lui	$gp, %hi(%neg(%gp_rel(__start)))	\n" \
+	"	addiu	$gp, $gp, %lo(%neg(%gp_rel(__start)))	\n" \
+	"	daddu	$gp, $gp, $t9		\n" \
 	"	dla	$s1, 1f			\n" \
 	"	bgezal	$zero, 1f		\n" \
 	"1:					\n" \
