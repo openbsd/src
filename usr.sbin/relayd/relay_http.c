@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.37 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.38 2015/01/01 14:21:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -928,8 +928,7 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
 	    "Connection: close\r\n"
 	    "Content-Type: text/html\r\n"
 	    "\r\n"
-	    "<!DOCTYPE HTML PUBLIC "
-	    "\"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
+	    "<!DOCTYPE html>\n"
 	    "<html>\n"
 	    "<head>\n"
 	    "<title>%03d %s</title>\n"
