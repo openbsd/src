@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.803 2014/12/29 17:04:19 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.804 2015/01/01 22:53:39 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -161,9 +161,12 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	ifconfig "$@" 2>/dev/null |
-		egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|tun)[[:digit:]]+:' |
-		sed -n 's/^\(.*\):.*/\1/p'
+	local _if _iflist=$(ifconfig -C)
+
+	for _if in $(ifconfig "$@" 2>/dev/null |
+		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
+		isin ${_if%%[0-9]*} $_iflist || echo $_if
+	done
 }
 
 get_drive() {
@@ -1125,28 +1128,19 @@ enable_network() {
 	for hn in /mnt/etc/hostname.*; do
 		# Strip off prefix to get interface name.
 		if=${hn#/mnt/etc/hostname.}
-		# Check for ifconfig'able interface.
-		(ifconfig $if||ifconfig $if create) >/dev/null 2>&1 || continue
-		# Don't immediately do interfaces constructed from others.
-		# Skip uninteresting devices.
-		case ${if%%[0-9]*} in
-		trunk)	_trunks="$_trunks $hn"
-			continue
-		       ;;
-		svlan)	_svlans="$_svlans $hn"
-			continue
-			;;
-		vlan)	_vlans="$_vlans $hn"
-			continue
-			;;
-		bridge|carp|enc|gif|gre|lo|pflog|pfsync|ppp|tun)
-			continue
-			;;
-		esac
-		# Now parse the hostname.* file
-		ifstart $hn
+		if isin ${if%%[0-9]*} $(ifconfig -C); then
+			# Dynamic interfaces must be done later.
+			case ${if%%[0-9]*} in
+			trunk)	_trunks="$_trunks $hn"	;;
+			svlan)	_svlans="$_svlans $hn"	;;
+			vlan)	_vlans="$_vlans $hn"	;;
+			esac
+		else
+			# 'real' interfaces (if available) are done now.
+			ifconfig $if >/dev/null 2>&1 && ifstart $hn
+		fi
 	done
-	# Configure any constructed interfaces now that 'real' ones are up.
+	# Configure any dynamic interfaces now that 'real' ones are up.
 	# ORDER IS IMPORTANT! (see /etc/netstart)
 	for hn in $_trunks $_svlans $_vlans; do
 		ifstart $hn

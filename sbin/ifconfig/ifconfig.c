@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.289 2014/11/14 15:09:29 tedu Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.290 2015/01/01 22:53:39 krw Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -581,9 +581,7 @@ main(int argc, char *argv[])
 {
 	const struct afswtch *rafp = NULL;
 	int create = 0;
-#ifndef SMALL
 	int Cflag = 0;
-#endif
 	int gflag = 0;
 	int i;
 	int noprint = 0;
@@ -612,12 +610,10 @@ main(int argc, char *argv[])
 			case 'g':
 				gflag = 1;
 				break;
-#ifndef SMALL
 			case 'C':
 				Cflag = 1;
 				nomore = 1;
 				break;
-#endif
 			default:
 				usage(1);
 				break;
@@ -644,14 +640,12 @@ main(int argc, char *argv[])
 		rafp = afp;
 		af = ifr.ifr_addr.sa_family = rafp->af_af;
 	}
-#ifndef SMALL
 	if (Cflag) {
 		if (argc > 0 || aflag)
 			usage(1);
 		list_cloners();
 		exit(0);
 	}
-#endif
 	if (gflag) {
 		if (argc == 0)
 			printgroupattribs(name);
@@ -1052,7 +1046,6 @@ clone_destroy(const char *addr, int param)
 		err(1, "SIOCIFDESTROY");
 }
 
-#ifndef SMALL
 void
 list_cloners(void)
 {
@@ -1095,7 +1088,6 @@ list_cloners(void)
 	putchar('\n');
 	free(buf);
 }
-#endif
 
 #define RIDADDR 0
 #define ADDR	1
