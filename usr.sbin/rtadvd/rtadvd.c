@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.51 2015/01/01 16:31:59 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.52 2015/01/01 20:28:27 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -810,13 +810,9 @@ ra_input(int len, struct nd_router_advert *ra,
 	/*
 	 * RA consistency check according to RFC-2461 6.2.7
 	 */
-	if ((rai = if_indextorainfo(pi->ipi6_ifindex)) == 0) {
-		log_info("received RA from %s on non-advertising interface(%s)",
-		    inet_ntop(AF_INET6, &from->sin6_addr, ntopbuf,
-			INET6_ADDRSTRLEN),
-		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
-		goto done;
-	}
+	if ((rai = if_indextorainfo(pi->ipi6_ifindex)) == NULL)
+		goto done;	/* not our interface */
+
 	rai->rainput++;		/* increment statistics */
 	
 	/* Cur Hop Limit value */
