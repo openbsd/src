@@ -1,0 +1,9 @@
+SUBSUP-COMBINE(1)           General Commands Manual          SUBSUP-COMBINE(1)
+
+NNAAMMEE
+     ssuubbssuupp--ccoommbbiinnee - combination of subscripts and superscripts
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text x_1^2 + e^x_2 final text
+
+OpenBSD                        October 10, 2014                        OpenBSD

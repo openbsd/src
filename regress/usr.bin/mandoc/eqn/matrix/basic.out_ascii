@@ -1,0 +1,9 @@
+MATRIX-BASIC(1)             General Commands Manual            MATRIX-BASIC(1)
+
+NNAAMMEE
+     mmaattrriixx--bbaassiicc - matrixes in equations
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text ((a_11 a_21) (a_12 a_22)) (b_1 b_2) final text
+
+OpenBSD                        October 10, 2014                        OpenBSD

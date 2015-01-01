@@ -1,0 +1,17 @@
+.Dd October 10, 2014
+.Dt MATRIX-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm matrix-basic
+.Nd matrixes in equations
+.Sh DESCRIPTION
+initial text
+.EQ
+left (
+matrix { ccol { a sub 11 above a sub 21 } ccol { a sub 12 above a sub 22 } }
+right )
+left (
+pile { b sub 1 above b sub 2 }
+right )
+.EN
+final text

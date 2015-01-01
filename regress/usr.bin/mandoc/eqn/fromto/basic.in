@@ -1,0 +1,12 @@
+.Dd January 1, 2015
+.Dt FROMTO-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm fromto-basic
+.Nd vertical stacking
+.Sh DESCRIPTION
+initial text
+.EQ
+sum from { i = 1 } to inf 1 over i sup 2
+.EN
+final text

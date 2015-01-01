@@ -1,0 +1,12 @@
+.Dd October 10, 2014
+.Dt OVER-PRECEDENCE 1
+.Os OpenBSD
+.Sh NAME
+.Nm over-precedence
+.Nd precedence of the fraction operator
+.Sh DESCRIPTION
+initial text
+.EQ
+1 + x + x sup 2 over 2 + x sup 3 over { 2 * 3 }
+.EN
+final text

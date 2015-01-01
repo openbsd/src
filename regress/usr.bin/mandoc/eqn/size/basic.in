@@ -1,0 +1,12 @@
+.Dd October 10, 2014
+.Dt SIZE-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm size-basic
+.Nd font sizes
+.Sh DESCRIPTION
+initial text
+.EQ
+x size 12 x size 14 x size 16 x
+.EN
+final text

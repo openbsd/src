@@ -1,0 +1,13 @@
+.Dd October 10, 2014
+.Dt UNARY-DIACRIT 1
+.Os OpenBSD
+.Sh NAME
+.Nm unary-diacrit
+.Nd diacritical marks in equations
+.Sh DESCRIPTION
+initial text
+.EQ
+x dot x dotdot x hat x tilde x vec x dyad
+{ x + y } bar { x + y } under
+.EN
+final text

@@ -1,0 +1,12 @@
+.Dd October 10, 2014
+.Dt UNARY-SQRT 1
+.Os OpenBSD
+.Sh NAME
+.Nm unary-sqrt
+.Nd square root
+.Sh DESCRIPTION
+initial text
+.EQ
+r = sqrt { x sup 2 + y sup 2 }
+.EN
+final text

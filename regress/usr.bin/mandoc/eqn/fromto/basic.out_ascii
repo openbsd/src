@@ -1,0 +1,9 @@
+FROMTO-BASIC(1)             General Commands Manual            FROMTO-BASIC(1)
+
+NNAAMMEE
+     ffrroommttoo--bbaassiicc - vertical stacking
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text E_(i = 1)^oo 1/i^2 final text
+
+OpenBSD                         January 1, 2015                        OpenBSD

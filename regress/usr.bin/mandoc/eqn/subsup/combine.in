@@ -1,0 +1,12 @@
+.Dd October 10, 2014
+.Dt SUBSUP-COMBINE 1
+.Os OpenBSD
+.Sh NAME
+.Nm subsup-combine
+.Nd combination of subscripts and superscripts
+.Sh DESCRIPTION
+initial text
+.EQ
+x sub 1 sup 2 + e sup x sub 2
+.EN
+final text

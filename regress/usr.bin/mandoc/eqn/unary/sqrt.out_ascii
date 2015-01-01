@@ -1,0 +1,9 @@
+UNARY-SQRT(1)               General Commands Manual              UNARY-SQRT(1)
+
+NNAAMMEE
+     uunnaarryy--ssqqrrtt - square root
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text r = sqrt(x^2 + y^2) final text
+
+OpenBSD                        October 10, 2014                        OpenBSD

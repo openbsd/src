@@ -1,0 +1,10 @@
+NULLARY-ROMAN(1)            General Commands Manual           NULLARY-ROMAN(1)
+
+NNAAMMEE
+     nnuullllaarryy--rroommaann - equation tokens set in roman font
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text sin cos tan sinh cosh tanh arc max min lim log ln exp Re Im
+     and if for det final text
+
+OpenBSD                        October 12, 2014                        OpenBSD

@@ -1,0 +1,9 @@
+OVER-PRECEDENCE(1)          General Commands Manual         OVER-PRECEDENCE(1)
+
+NNAAMMEE
+     oovveerr--pprreecceeddeennccee - precedence of the fraction operator
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text 1 + x + x^2/2 + x^3/(2 * 3) final text
+
+OpenBSD                        October 10, 2014                        OpenBSD

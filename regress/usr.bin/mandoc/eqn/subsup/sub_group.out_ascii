@@ -1,0 +1,9 @@
+SUBSUP-SUB_GROUP(1)         General Commands Manual        SUBSUP-SUB_GROUP(1)
+
+NNAAMMEE
+     ssuubbssuupp--ssuubb__ggrroouupp - grouping of subscripts
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text x_i + x_j_1 + (M_i)_j final text
+
+OpenBSD                        October 10, 2014                        OpenBSD

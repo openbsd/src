@@ -1,0 +1,9 @@
+UNARY-DIACRIT(1)            General Commands Manual           UNARY-DIACRIT(1)
+
+NNAAMMEE
+     uunnaarryy--ddiiaaccrriitt - diacritical marks in equations
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text x. x" x^ x~ x-> x<-> (x + y) (x + y)_ final text
+
+OpenBSD                        October 10, 2014                        OpenBSD

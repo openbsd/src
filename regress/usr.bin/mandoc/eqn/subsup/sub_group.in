@@ -1,0 +1,12 @@
+.Dd October 10, 2014
+.Dt SUBSUP-SUB_GROUP 1
+.Os OpenBSD
+.Sh NAME
+.Nm subsup-sub_group
+.Nd grouping of subscripts
+.Sh DESCRIPTION
+initial text
+.EQ
+x sub i + x sub j sub 1 + { M sub i } sub j
+.EN
+final text

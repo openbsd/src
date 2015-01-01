@@ -1,0 +1,14 @@
+.Dd October 12, 2014
+.Dt NULLARY-ROMAN 1
+.Os OpenBSD
+.Sh NAME
+.Nm nullary-roman
+.Nd equation tokens set in roman font
+.Sh DESCRIPTION
+initial text
+.EQ
+sin cos tan sinh cosh tanh arc
+max min lim log ln exp
+Re Im and if for det
+.EN
+final text
