@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.42 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.43 2015/01/01 14:15:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -311,8 +311,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	    "sans-serif; }\nhr { border: 0; border-bottom: 1px dashed; }\n";
 	/* Generate simple HTML index document */
 	if (evbuffer_add_printf(evb,
-	    "<!DOCTYPE HTML PUBLIC "
-	    "\"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
+	    "<!DOCTYPE html>\n"
 	    "<html>\n"
 	    "<head>\n"
 	    "<title>Index of %s</title>\n"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.57 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.58 2015/01/01 14:15:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -712,8 +712,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 
 	/* Generate simple HTML error document */
 	if ((bodylen = asprintf(&body,
-	    "<!DOCTYPE HTML PUBLIC "
-	    "\"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
+	    "<!DOCTYPE html>\n"
 	    "<html>\n"
 	    "<head>\n"
 	    "<title>%03d %s</title>\n"
