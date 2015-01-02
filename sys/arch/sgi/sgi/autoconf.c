@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2014/11/24 16:40:29 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.40 2015/01/02 22:38:46 sebastia Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -174,10 +174,10 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask)
 	extern int console_ok;
 
 	if (console_ok)
-		printf("%s: memory from %p to %p\n",
+		printf("%s: memory from 0x%lx to 0x%lx\n",
 		    __func__, ptoa(startpfn), ptoa(endpfn));
 	else
-		bios_printf("%s: memory from %p to %p\n",
+		bios_printf("%s: memory from 0x%lx to 0x%lx\n",
 		     __func__, ptoa(startpfn), ptoa(endpfn));
 }
 #endif

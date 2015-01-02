@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.22 2014/03/26 05:23:42 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.23 2015/01/02 22:38:46 sebastia Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@ sendsig(catcher, sig, mask, code, type, val)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
 		       p->p_pid, sig, &ksc, fp, &fp->sf_sc);
 #endif
 	/*
@@ -229,7 +229,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	regs = p->p_md.md_regs;
 	/*
@@ -240,10 +240,10 @@ sys_sigreturn(p, v, retval)
 	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
 #ifdef DEBUG
 		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
-		printf("  old sp %x ra %x pc %x\n",
+			printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+		printf("  old sp %lx ra %lx pc %lx\n",
 			regs->sp, regs->ra, regs->pc);
-		printf("  new sp %x ra %x pc %x err %d z %x\n",
+		printf("  new sp %lx ra %lx pc %lx err %d z %lx\n",
 			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
 			error, ksc.sc_regs[ZERO]);
 #endif
