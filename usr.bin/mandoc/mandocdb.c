@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.134 2014/12/30 20:40:05 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.135 2015/01/02 17:01:31 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -340,7 +340,8 @@ mandocdb(int argc, char *argv[])
 
 	mpages_info.alloc  = mlinks_info.alloc  = hash_alloc;
 	mpages_info.calloc = mlinks_info.calloc = hash_calloc;
-	mpages_info.free  = mlinks_info.free  = hash_free;
+	mpages_info.free   = mlinks_info.free   = hash_free;
+	mpages_info.data   = mlinks_info.data   = NULL;
 
 	mpages_info.key_offset = offsetof(struct mpage, inodev);
 	mlinks_info.key_offset = offsetof(struct mlink, file);
@@ -1096,6 +1097,7 @@ mpages_merge(struct mparse *mp)
 	str_info.alloc = hash_alloc;
 	str_info.calloc = hash_calloc;
 	str_info.free = hash_free;
+	str_info.data = NULL;
 	str_info.key_offset = offsetof(struct str, key);
 
 	if ( ! nodb)
