@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.81 2014/12/09 07:05:06 doug Exp $ */
+/*	$OpenBSD: uhub.c,v 1.82 2015/01/02 11:58:32 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -167,6 +167,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		err = usbd_get_hub_descriptor(dev, &hd.hs, 1);
 		nports = hd.hs.bNbrPorts;
 		powerdelay = (hd.hs.bPwrOn2PwrGood * UHD_PWRON_FACTOR);
+		ttthink = UGETW(hd.hs.wHubCharacteristics) & UHD_TT_THINK;
 		if (!err && nports > 7)
 			usbd_get_hub_descriptor(dev, &hd.hs, nports);
 	}
@@ -220,7 +221,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	hub->explore = uhub_explore;
 	hub->nports = nports;
 	hub->powerdelay = powerdelay;
-	hub->ttthink = ttthink;
+	hub->ttthink = ttthink >> 5;
 
 	if (!dev->self_powered && dev->powersrc->parent != NULL &&
 	    !dev->powersrc->parent->self_powered) {
