@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.4 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.5 2015/01/02 01:57:33 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -435,6 +435,12 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 
 	switch (board_id)
 	{
+	case BOARD_ID_IMX6_CUBOXI:
+	case BOARD_ID_IMX6_HUMMINGBOARD:
+		gpio = 0*32 + 4;
+		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
+		return imxgpio_get_bit(gpio) ? 0 : 1;
+		break;
 	case BOARD_ID_IMX6_PHYFLEX:
 		switch (sc->unit) {
 			case 1:
@@ -458,6 +464,33 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			default:
 				return 0;
 		}
+		return imxgpio_get_bit(gpio) ? 0 : 1;
+	case BOARD_ID_IMX6_UDOO:
+		switch (sc->unit) {
+			/*
+			 * One of these is the SD card, another the wifi
+			 * the third is not connected (?)
+			 */
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+				gpio = 3*32 + 9;
+				break;
+				return 1;
+			default:
+				return 0;
+		}
+		return 1;
+	case BOARD_ID_IMX6_UTILITE:
+		switch (sc->unit) {
+			case 2:
+				gpio = 6*32 + 1;
+				break;
+			default:
+				return 0;
+		}
+		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	case BOARD_ID_IMX6_WANDBOARD:
 		switch (sc->unit) {

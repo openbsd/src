@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.3 2014/03/18 07:34:17 syl Exp $ */
+/* $OpenBSD: armv7.c,v 1.4 2015/01/02 01:57:33 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -47,6 +47,27 @@ struct armv7_dev *armv7_devs = NULL;
 
 #define DEVNAME(sc)	(sc)->sc_dv.dv_xname
 
+struct board_dev hummingboard_devs[] = {
+	{ "imxocotp",	0 },
+	{ "imxccm",	0 },
+	{ "imxiomuxc",	0 },
+	{ "imxdog",	0 },
+	{ "imxuart",	0 },
+	{ "imxgpio",	0 },
+	{ "imxgpio",	1 },
+	{ "imxgpio",	2 },
+	{ "imxgpio",	3 },
+	{ "imxgpio",	4 },
+	{ "imxgpio",	5 },
+	{ "imxgpio",	6 },
+	{ "imxesdhc",	1 },
+	{ "ehci",	0 },
+	{ "ehci",	1 },
+	{ "imxenet",	0 },
+	{ "ahci",	0 },
+	{ NULL,		0 }
+};
+
 struct board_dev phyflex_imx6_devs[] = {
 	{ "imxccm",	0 },
 	{ "imxiomuxc",	0 },
@@ -83,6 +104,48 @@ struct board_dev sabrelite_devs[] = {
 	{ "imxgpio",	6 },
 	{ "imxesdhc",	2 },
 	{ "imxesdhc",	3 },
+	{ "ehci",	0 },
+	{ "imxenet",	0 },
+	{ "ahci",	0 },
+	{ NULL,		0 }
+};
+
+struct board_dev udoo_devs[] = {
+	{ "imxocotp",	0 },
+	{ "imxccm",	0 },
+	{ "imxiomuxc",	0 },
+	{ "imxdog",	0 },
+	{ "imxuart",	1 },
+	{ "imxgpio",	0 },
+	{ "imxgpio",	1 },
+	{ "imxgpio",	2 },
+	{ "imxgpio",	3 },
+	{ "imxgpio",	4 },
+	{ "imxgpio",	5 },
+	{ "imxgpio",	6 },
+	{ "imxesdhc",	2 },
+	{ "imxesdhc",	3 },
+	{ "ehci",	0 },
+	{ "imxenet",	0 },
+	{ "ahci",	0 },
+	{ NULL,		0 }
+};
+
+struct board_dev utilite_devs[] = {
+	{ "imxocotp",	0 },
+	{ "imxccm",	0 },
+	{ "imxiomuxc",	0 },
+	{ "imxdog",	0 },
+	{ "imxuart",	3 },
+	{ "imxgpio",	0 },
+	{ "imxgpio",	1 },
+	{ "imxgpio",	2 },
+	{ "imxgpio",	3 },
+	{ "imxgpio",	4 },
+	{ "imxgpio",	5 },
+	{ "imxgpio",	6 },
+	{ "imxiic",	2 },
+	{ "imxesdhc",	2 },
 	{ "ehci",	0 },
 	{ "imxenet",	0 },
 	{ "ahci",	0 },
@@ -291,6 +354,16 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 
 	switch (board_id) {
+	case BOARD_ID_IMX6_CUBOXI:
+		printf(": i.MX6 SolidRun CuBox-i\n");
+		imx6_init();
+		sc->sc_board_devs = hummingboard_devs;
+		break;
+	case BOARD_ID_IMX6_HUMMINGBOARD:
+		printf(": i.MX6 SolidRun HummingBoard\n");
+		imx6_init();
+		sc->sc_board_devs = hummingboard_devs;
+		break;
 	case BOARD_ID_IMX6_PHYFLEX:
 		printf(": PhyFLEX-i.MX6\n");
 		imx6_init();
@@ -300,6 +373,16 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 		printf(": i.MX6 SABRE Lite\n");
 		imx6_init();
 		sc->sc_board_devs = sabrelite_devs;
+		break;
+	case BOARD_ID_IMX6_UDOO:
+		printf(": i.MX6 UDOO\n");
+		imx6_init();
+		sc->sc_board_devs = udoo_devs;
+		break;
+	case BOARD_ID_IMX6_UTILITE:
+		printf(": i.MX6 Utilite\n");
+		imx6_init();
+		sc->sc_board_devs = utilite_devs;
 		break;
 	case BOARD_ID_IMX6_WANDBOARD:
 		printf(": i.MX6 Wandboard\n");

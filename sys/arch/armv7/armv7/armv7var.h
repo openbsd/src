@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.1 2013/11/06 19:08:06 syl Exp $ */
+/* $OpenBSD: armv7var.h,v 1.2 2015/01/02 01:57:33 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -73,10 +73,14 @@ int	armv7_submatch(struct device *, void *, void *);
 #define BOARD_ID_OMAP4_PANDA 2791
 #define BOARD_ID_IMX6_PHYFLEX 3529
 #define BOARD_ID_AM335X_BEAGLEBONE 3589
-#define BOARD_ID_SUN4I_A10 4104
 #define BOARD_ID_IMX6_SABRELITE 3769
+#define BOARD_ID_SUN4I_A10 4104
+#define BOARD_ID_IMX6_UTILITE 4273
 #define BOARD_ID_SUN7I_A20 4283
 #define BOARD_ID_IMX6_WANDBOARD 4412
+#define BOARD_ID_IMX6_HUMMINGBOARD 4773
+#define BOARD_ID_IMX6_UDOO 4800
+#define BOARD_ID_IMX6_CUBOXI 4821
 extern uint32_t board_id;
 
 /* different arch init */

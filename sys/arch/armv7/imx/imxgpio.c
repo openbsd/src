@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.3 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.4 2015/01/02 01:57:33 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -101,8 +101,12 @@ int
 imxgpio_match(struct device *parent, void *v, void *aux)
 {
 	switch (board_id) {
+	case BOARD_ID_IMX6_CUBOXI:
+	case BOARD_ID_IMX6_HUMMINGBOARD:
 	case BOARD_ID_IMX6_PHYFLEX:
 	case BOARD_ID_IMX6_SABRELITE:
+	case BOARD_ID_IMX6_UDOO:
+	case BOARD_ID_IMX6_UTILITE:
 	case BOARD_ID_IMX6_WANDBOARD:
 		break; /* continue trying */
 	default:
@@ -124,8 +128,12 @@ imxgpio_attach(struct device *parent, struct device *self, void *args)
 
 
 	switch (board_id) {
+		case BOARD_ID_IMX6_CUBOXI:
+		case BOARD_ID_IMX6_HUMMINGBOARD:
 		case BOARD_ID_IMX6_PHYFLEX:
 		case BOARD_ID_IMX6_SABRELITE:
+		case BOARD_ID_IMX6_UDOO:
+		case BOARD_ID_IMX6_UTILITE:
 		case BOARD_ID_IMX6_WANDBOARD:
 			sc->sc_get_bit  = imxgpio_v6_get_bit;
 			sc->sc_set_bit = imxgpio_v6_set_bit;

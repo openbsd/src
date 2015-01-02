@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.4 2014/05/19 13:11:31 mpi Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.5 2015/01/02 01:57:33 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -62,8 +62,12 @@
 #define USBNC_USB_UH1_CTRL_OVER_CUR_DIS	(1 << 7)
 
 /* board specific */
+#define EHCI_HUMMINGBOARD_USB_H1_PWR	0
+#define EHCI_HUMMINGBOARD_USB_OTG_PWR	(2*32+22)
+#define EHCI_NITROGEN6X_USB_HUB_RST	(6*32+12)
 #define EHCI_PHYFLEX_USB_H1_PWR		0
 #define EHCI_PHYFLEX_USB_OTG_PWR	111
+#define EHCI_UTILITE_USB_HUB_RST	(6*32+8)
 
 void	imxehci_attach(struct device *, struct device *, void *);
 int	imxehci_detach(struct device *, int);
@@ -128,6 +132,19 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 		delay(10);
 		imxgpio_set_bit(EHCI_PHYFLEX_USB_H1_PWR);
 		delay(10);
+		break;
+	case BOARD_ID_IMX6_CUBOXI:
+	case BOARD_ID_IMX6_HUMMINGBOARD:
+		imxgpio_set_bit(EHCI_HUMMINGBOARD_USB_H1_PWR);
+		imxgpio_set_dir(EHCI_HUMMINGBOARD_USB_H1_PWR, IMXGPIO_DIR_OUT);
+		delay(10);
+		break;
+	case BOARD_ID_IMX6_UTILITE:
+		imxgpio_clear_bit(EHCI_UTILITE_USB_HUB_RST);
+		imxgpio_set_dir(EHCI_UTILITE_USB_HUB_RST, IMXGPIO_DIR_OUT);
+		delay(10);
+		imxgpio_set_bit(EHCI_UTILITE_USB_HUB_RST);
+		delay(1000);
 		break;
 	}
 
