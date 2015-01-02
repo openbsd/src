@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.158 2014/12/27 16:09:51 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.159 2015/01/02 18:28:23 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2014 $
+.Dd $Mdocdate: January 2 2015 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -941,7 +941,7 @@ enabled by default.
 Disable to mitigate a potential DoS risk.
 .It Ic ecdh Op Ic curve Ar name
 Set a named curve to use when generating EC keys for ECDHE-based
-cipher suites with Perfect Forward Security (PFS).
+cipher suites with Perfect Forward Secrecy (PFS).
 If the curve
 .Ar name
 is not specified, the default curve
@@ -951,7 +951,7 @@ ECDHE is enabled by default.
 .It Ic no ecdh
 Disable ECDHE support.
 .It Ic edh Op Ic params Ar maximum
-Enable EDH-based cipher suites with Perfect Forward Security (PFS) for
+Enable EDH-based cipher suites with Perfect Forward Secrecy (PFS) for
 older clients that do not support ECDHE.
 If the
 .Ar maximum
