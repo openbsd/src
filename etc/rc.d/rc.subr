@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.90 2014/11/17 13:52:44 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.91 2015/01/02 08:03:28 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,9 +15,6 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-
-# Default functions and variables used by rc.d(8) scripts.
 
 _rc_err() {
 	echo "$1" 1>&2
@@ -143,6 +140,7 @@ _rc_parse_conf() {
 	_rc_do _rc_quirks
 }
 
+# return if we only want internal functions
 [ -n "${FUNCS_ONLY}" ] && return
 
 rc_start() {
@@ -267,6 +265,7 @@ eval _rctimeout=\${${_name}_timeout}
 getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 	daemon_class=${_name}
 
+# set default values; duplicated in rcctl(8)
 [ -z "${daemon_class}" ] && daemon_class=daemon
 [ -z "${daemon_user}" ] && daemon_user=root
 [ -z "${daemon_timeout}" ] && daemon_timeout=30
