@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.6 2014/12/27 19:35:28 bcook Exp $ */
+/* $OpenBSD: tls_client.c,v 1.7 2015/01/02 16:38:07 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -122,11 +122,11 @@ err:
 }
 
 int
-tls_connect_socket(struct tls *ctx, int socket, const char *hostname)
+tls_connect_socket(struct tls *ctx, int s, const char *hostname)
 {
-	ctx->socket = socket;
+	ctx->socket = s;
 
-	return tls_connect_fds(ctx, socket, socket, hostname);
+	return tls_connect_fds(ctx, s, s, hostname);
 }
 
 int
