@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.138 2015/01/02 12:30:45 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.139 2015/01/02 12:41:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -70,6 +70,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/msgbuf.h>
+#include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/sysctl.h>
 #include <sys/un.h>
@@ -121,7 +122,7 @@ const char ctty[] = _PATH_CONSOLE;
  */
 
 struct filed {
-	struct	filed *f_next;		/* next in linked list */
+	SIMPLEQ_ENTRY(filed) f_next;	/* next in linked list */
 	int	f_type;			/* entry type, see below */
 	int	f_file;			/* file descriptor */
 	time_t	f_time;			/* time this was last written */
@@ -186,7 +187,7 @@ char	*TypeNames[] = {
 	"PIPE",		"FORWTCP",
 };
 
-struct	filed *Files;
+SIMPLEQ_HEAD(filed_list, filed) Files;
 struct	filed consfile;
 
 int	nunix = 1;		/* Number of Unix domain sockets requested */
@@ -897,7 +898,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 		}
 		return;
 	}
-	for (f = Files; f; f = f->f_next) {
+	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		/* skip messages that are incorrect priority */
 		if (f->f_pmask[fac] < prilev ||
 		    f->f_pmask[fac] == INTERNAL_NOPRI)
@@ -1289,7 +1290,7 @@ die(int signo)
 	char buf[100];
 
 	Initialized = 0;		/* Don't log SIGCHLDs */
-	for (f = Files; f != NULL; f = f->f_next) {
+	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		/* flush any pending output */
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
@@ -1312,7 +1313,8 @@ void
 init(void)
 {
 	char cline[LINE_MAX], prog[NAME_MAX+1], *p;
-	struct filed *f, *next, **nextp, *mb, *m;
+	struct filed_list mb;
+	struct filed *f, *m;
 	FILE *cf;
 	int i;
 
@@ -1328,8 +1330,10 @@ init(void)
 	 *  Close all open log files.
 	 */
 	Initialized = 0;
-	mb = NULL;
-	for (f = Files; f != NULL; f = next) {
+	SIMPLEQ_INIT(&mb);
+	while (!SIMPLEQ_EMPTY(&Files)) {
+		f = SIMPLEQ_FIRST(&Files);
+		SIMPLEQ_REMOVE_HEAD(&Files, f_next);
 		/* flush any pending output */
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
@@ -1349,25 +1353,23 @@ init(void)
 			close(f->f_un.f_forw.f_fd);
 			break;
 		}
-		next = f->f_next;
 		if (f->f_program)
 			free(f->f_program);
 		if (f->f_type == F_MEMBUF) {
-			f->f_next = mb;
 			f->f_program = NULL;
-			dprintf("add %p to mb: %p\n", f, mb);
-			mb = f;
+			dprintf("add %p to mb\n", f);
+			SIMPLEQ_INSERT_HEAD(&mb, f, f_next);
 		} else
-			free((char *)f);
+			free(f);
 	}
-	Files = NULL;
-	nextp = &Files;
+	SIMPLEQ_INIT(&Files);
 
 	/* open the configuration file */
 	if ((cf = priv_open_config()) == NULL) {
 		dprintf("cannot open %s\n", ConfFile);
-		*nextp = cfline("*.ERR\t/dev/console", "*");
-		(*nextp)->f_next = cfline("*.PANIC\t*", "*");
+		SIMPLEQ_INSERT_TAIL(&Files, cfline("*.ERR\t/dev/console", "*"),
+		    f_next);
+		SIMPLEQ_INSERT_TAIL(&Files, cfline("*.PANIC\t*", "*"), f_next);
 		Initialized = 1;
 		return;
 	}
@@ -1413,19 +1415,17 @@ init(void)
 			}
 		*p = '\0';
 		f = cfline(cline, prog);
-		if (f != NULL) {
-			*nextp = f;
-			nextp = &f->f_next;
-		}
+		if (f != NULL)
+			SIMPLEQ_INSERT_TAIL(&Files, f, f_next);
 	}
 
 	/* Match and initialize the memory buffers */
-	for (f = Files; f != NULL; f = f->f_next) {
+	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		if (f->f_type != F_MEMBUF)
 			continue;
 		dprintf("Initialize membuf %s at %p\n", f->f_un.f_mb.f_mname, f);
 
-		for (m = mb; m != NULL; m = m->f_next) {
+		SIMPLEQ_FOREACH(m, &mb, f_next) {
 			if (m->f_un.f_mb.f_rb == NULL)
 				continue;
 			if (strcmp(m->f_un.f_mb.f_mname,
@@ -1447,15 +1447,15 @@ init(void)
 	}
 
 	/* make sure remaining buffers are freed */
-	while (mb != NULL) {
-		m = mb;
+	while (!SIMPLEQ_EMPTY(&mb)) {
+		m = SIMPLEQ_FIRST(&mb);
+		SIMPLEQ_REMOVE_HEAD(&mb, f_next);
 		if (m->f_un.f_mb.f_rb != NULL) {
 			logerror("Mismatched membuf");
 			ringbuf_free(m->f_un.f_mb.f_rb);
 		}
 		dprintf("Freeing membuf %p\n", m);
 
-		mb = m->f_next;
 		free(m);
 	}
 
@@ -1465,7 +1465,7 @@ init(void)
 	Initialized = 1;
 
 	if (Debug) {
-		for (f = Files; f; f = f->f_next) {
+		SIMPLEQ_FOREACH(f, &Files, f_next) {
 			for (i = 0; i <= LOG_NFACILITIES; i++)
 				if (f->f_pmask[i] == INTERNAL_NOPRI)
 					printf("X ");
@@ -1513,7 +1513,7 @@ find_dup(struct filed *f)
 {
 	struct filed *list;
 
-	for (list = Files; list; list = list->f_next) {
+	SIMPLEQ_FOREACH(list, &Files, f_next) {
 		if (list->f_quick || f->f_quick)
 			continue;
 		switch (list->f_type) {
@@ -1920,7 +1920,7 @@ markit(void)
 		MarkSeq = 0;
 	}
 
-	for (f = Files; f; f = f->f_next) {
+	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		if (f->f_prevcount && now >= REPEATTIME(f)) {
 			dprintf("flush %s: repeated %d times, %d sec.\n",
 			    TypeNames[f->f_type], f->f_prevcount,
@@ -2013,7 +2013,7 @@ ctlconn_cleanup(void)
 	event_add(&ev_ctlaccept, NULL);
 
 	if (ctl_state == CTL_WRITING_CONT_REPLY)
-		for (f = Files; f != NULL; f = f->f_next)
+		SIMPLEQ_FOREACH(f, &Files, f_next)
 			if (f->f_type == F_MEMBUF)
 				f->f_un.f_mb.f_attached = 0;
 
@@ -2064,7 +2064,7 @@ static struct filed
 {
 	struct filed *f;
 
-	for (f = Files; f != NULL; f = f->f_next) {
+	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		if (f->f_type == F_MEMBUF &&
 		    strcmp(f->f_un.f_mb.f_mname, name) == 0)
 			break;
@@ -2167,7 +2167,7 @@ ctlconn_readcb(int fd, short event, void *arg)
 		}
 		break;
 	case CMD_LIST:
-		for (f = Files; f != NULL; f = f->f_next) {
+		SIMPLEQ_FOREACH(f, &Files, f_next) {
 			if (f->f_type == F_MEMBUF) {
 				strlcat(reply_text, f->f_un.f_mb.f_mname,
 				    MAX_MEMBUF);
