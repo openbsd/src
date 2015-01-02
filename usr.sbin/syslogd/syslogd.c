@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.137 2014/12/31 13:55:57 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.138 2015/01/02 12:30:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1342,7 +1342,11 @@ init(void)
 			(void)close(f->f_file);
 			break;
 		case F_FORWUDP:
-		case F_FORWTCP:  /* XXX close and reconnect? */
+			break;
+		case F_FORWTCP:
+			/* XXX save messages in output buffer for reconnect */
+			bufferevent_free(f->f_un.f_forw.f_bufev);
+			close(f->f_un.f_forw.f_fd);
 			break;
 		}
 		next = f->f_next;
