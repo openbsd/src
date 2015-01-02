@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbsio.c,v 1.8 2012/07/01 02:15:09 lteo Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.9 2015/01/02 23:02:54 chris Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -112,6 +112,7 @@ wbsio_probe(struct device *parent, void *match, void *aux)
 	case WBSIO_ID_W83637HF:
 	case WBSIO_ID_W83697HF:
 	case WBSIO_ID_NCT6776F:
+	case WBSIO_ID_NCT5104D:
 		ia->ipa_nio = 1;
 		ia->ipa_io[0].length = WBSIO_IOSIZE;
 		ia->ipa_nmem = 0;
@@ -172,6 +173,9 @@ wbsio_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case WBSIO_ID_NCT6776F:
 		printf(": NCT6776F");
+		break;
+	case WBSIO_ID_NCT5104D:
+		printf(": NCT5104D");
 		break;
 	}
 

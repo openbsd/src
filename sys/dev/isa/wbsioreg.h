@@ -1,4 +1,4 @@
-/* $OpenBSD: wbsioreg.h,v 1.3 2012/07/01 02:15:09 lteo Exp $ */
+/* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,6 +43,7 @@
 #define WBSIO_ID_W83637HF	0x70
 #define WBSIO_ID_W83697HF	0x60
 #define WBSIO_ID_NCT6776F	0xc3
+#define WBSIO_ID_NCT5104D	0xc4
 
 /* Logical Device Number (LDN) Assignments */
 #define WBSIO_LDN_HM		0x0b
