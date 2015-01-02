@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.49 2014/12/21 11:46:53 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.50 2015/01/02 18:06:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -2298,6 +2298,22 @@ xhci_root_intr_done(struct usbd_xfer *xfer)
 {
 }
 
+/* Number of packets remaining in the TD after the corresponding TRB. */
+static inline uint32_t
+xhci_xfer_tdsize(struct usbd_xfer *xfer, uint32_t remain, uint32_t len)
+{
+	uint32_t npkt, mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
+
+	if (len == 0)
+		return XHCI_TRB_TDREM(0);
+
+	npkt = (remain - len) / mps;
+	if (npkt > 31)
+		npkt = 31;
+
+	return XHCI_TRB_TDREM(npkt);
+}
+
 usbd_status
 xhci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
@@ -2341,7 +2357,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 		trb->trb_paddr = htole64(DMAADDR(&xfer->dmabuf, 0));
 		trb->trb_status = htole32(
-		    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(1) | XHCI_TRB_LEN(len)
+		    XHCI_TRB_INTR(0) | XHCI_TRB_LEN(len) |
+		    xhci_xfer_tdsize(xfer, len, len)
 		);
 		trb->trb_flags = htole32(flags);
 
@@ -2418,7 +2435,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	struct xhci_trb *trb0, *trb;
 	uint32_t len, remain, flags;
 	uint32_t len0, mps;
-	uint64_t paddr;
+	uint64_t paddr = DMAADDR(&xfer->dmabuf, 0);
 	uint8_t toggle0, toggle;
 	int s, i, ntrb;
 
@@ -2428,10 +2445,17 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 		return (USBD_IOERROR);
 
 	/* How many TRBs do we need for this transfer? */
-	mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
-	ntrb = (xfer->length + mps - 1) / mps;
+	ntrb = (xfer->length + XHCI_TRB_MAXSIZE - 1) / XHCI_TRB_MAXSIZE;
+
+	/* If the buffer crosses a 64k boundary, we need one more. */
+	len0 = XHCI_TRB_MAXSIZE - (paddr & (XHCI_TRB_MAXSIZE - 1));
+	if (len0 < xfer->length)
+		ntrb++;
+	else
+		len0 = xfer->length;
 
 	/* If we need to append a zero length packet, we need one more. */
+	mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	if ((xfer->flags & USBD_FORCE_SHORT_XFER || xfer->length == 0) &&
 	    (xfer->length % mps == 0))
 		ntrb++;
@@ -2441,11 +2465,10 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	/* We'll do the first TRB once we're finished with the chain. */
 	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle0, (ntrb == 1));
-	len0 = min(xfer->length, mps);
 
 	remain = xfer->length - len0;
-	paddr = DMAADDR(&xfer->dmabuf, 0) + len0;
-	len = min(remain, mps);
+	paddr += len0;
+	len = min(remain, XHCI_TRB_MAXSIZE);
 
 	/* Chain more TRBs if needed. */
 	for (i = ntrb - 1; i > 0; i--) {
@@ -2458,14 +2481,14 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 		trb->trb_paddr = htole64(paddr);
 		trb->trb_status = htole32(
-		    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(i) |
-		    XHCI_TRB_LEN(len)
+		    XHCI_TRB_INTR(0) | XHCI_TRB_LEN(len) |
+		    xhci_xfer_tdsize(xfer, remain, len)
 		);
 		trb->trb_flags = htole32(flags);
 
 		remain -= len;
 		paddr += len;
-		len = min(remain, mps);
+		len = min(remain, XHCI_TRB_MAXSIZE);
 	}
 
 	/* First TRB. */
@@ -2476,7 +2499,8 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	trb0->trb_paddr = htole64(DMAADDR(&xfer->dmabuf, 0));
 	trb0->trb_status = htole32(
-	    XHCI_TRB_INTR(0) | XHCI_TRB_TDREM(ntrb) | XHCI_TRB_LEN(len0)
+	    XHCI_TRB_INTR(0) | XHCI_TRB_LEN(len0) |
+	    xhci_xfer_tdsize(xfer, xfer->length, len0)
  	);
 	trb0->trb_flags = htole32(flags);
 
