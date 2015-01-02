@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.64 2014/12/12 14:45:59 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.65 2015/01/02 19:09:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -309,22 +309,22 @@ struct client {
 };
 SPLAY_HEAD(client_tree, client);
 
-#define SRVFLAG_INDEX		0x0001
-#define SRVFLAG_NO_INDEX	0x0002
-#define SRVFLAG_AUTO_INDEX	0x0004
-#define SRVFLAG_NO_AUTO_INDEX	0x0008
-#define SRVFLAG_ROOT		0x0010
-#define SRVFLAG_LOCATION	0x0020
-#define SRVFLAG_FCGI		0x0040
-#define SRVFLAG_NO_FCGI		0x0080
-#define SRVFLAG_LOG		0x0100
-#define SRVFLAG_NO_LOG		0x0200
-#define SRVFLAG_SOCKET		0x0400
-#define SRVFLAG_SYSLOG		0x0800
-#define SRVFLAG_NO_SYSLOG	0x1000
-#define SRVFLAG_TLS		0x2000
-#define SRVFLAG_ACCESS_LOG	0x4000
-#define SRVFLAG_ERROR_LOG	0x8000
+#define SRVFLAG_INDEX		0x00000001
+#define SRVFLAG_NO_INDEX	0x00000002
+#define SRVFLAG_AUTO_INDEX	0x00000004
+#define SRVFLAG_NO_AUTO_INDEX	0x00000008
+#define SRVFLAG_ROOT		0x00000010
+#define SRVFLAG_LOCATION	0x00000020
+#define SRVFLAG_FCGI		0x00000040
+#define SRVFLAG_NO_FCGI		0x00000080
+#define SRVFLAG_LOG		0x00000100
+#define SRVFLAG_NO_LOG		0x00000200
+#define SRVFLAG_SOCKET		0x00000400
+#define SRVFLAG_SYSLOG		0x00000800
+#define SRVFLAG_NO_SYSLOG	0x00001000
+#define SRVFLAG_TLS		0x00002000
+#define SRVFLAG_ACCESS_LOG	0x00004000
+#define SRVFLAG_ERROR_LOG	0x00008000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
@@ -384,7 +384,7 @@ struct server_config {
 	off_t			 tls_key_len;
 	char			*tls_key_file;
 
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;
