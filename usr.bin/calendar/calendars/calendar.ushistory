@@ -1,7 +1,7 @@
 /*
  * USA history
  *
- * $OpenBSD: calendar.ushistory,v 1.4 2010/01/12 08:11:46 jmc Exp $
+ * $OpenBSD: calendar.ushistory,v 1.5 2015/01/02 08:02:20 jmc Exp $
  */
 
 #ifndef _calendar_ushistory_
@@ -9,7 +9,7 @@
 
 01/01	First Rose Bowl; Michigan 49 - Stanford 0, 1902
 01/02	First military deployment of helicopters (VS-300 by Igor Sikorsky),
-	with a brittish american convoy, 1944
+	with a British American convoy, 1944
 01/03	After 218 years since discovery by europeans and 92 years after
 	it was purchased from Russian Empire, Alaska becomes 49th state, 1959
 01/05	-50 degrees F, Strawberry UT, 1913
