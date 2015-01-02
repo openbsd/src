@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.6 2014/12/29 19:33:34 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.7 2015/01/02 16:20:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -424,9 +424,10 @@ void	nep_fill_rx_ring(struct nep_softc *);
 void	nep_up(struct nep_softc *);
 void	nep_down(struct nep_softc *);
 void	nep_iff(struct nep_softc *);
-int	nep_encap(struct nep_softc *, struct mbuf *, int *);
+int	nep_encap(struct nep_softc *, struct mbuf **, int *);
 
 void	nep_start(struct ifnet *);
+void	nep_watchdog(struct ifnet *);
 void	nep_tick(void *);
 int	nep_ioctl(struct ifnet *, u_long, caddr_t);
 
@@ -534,6 +535,7 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	ifp->if_ioctl = nep_ioctl;
 	ifp->if_start = nep_start;
+	ifp->if_watchdog = nep_watchdog;
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = nep_mii_readreg;
@@ -710,9 +712,6 @@ nep_intr(void *arg)
 	if ((sv0 | sv1 | sv2) == 0)
 		return (0);
 
-	printf("%s: %s %llx %llx %llx\n", sc->sc_dev.dv_xname,
-	    __func__, sv0, sv1, sv2);
-
 	if (sv0 & (1ULL << LDN_TXDMA(sc->sc_port))) {
 		nep_tx_proc(sc);
 		rearm = 1;
@@ -725,6 +724,9 @@ nep_intr(void *arg)
 
 	if (rearm)
 		nep_write(sc, LDGIMGN(sc->sc_port), LDGIMGN_ARM | 2);
+	else
+		printf("%s: %s %llx %llx %llx\n", sc->sc_dev.dv_xname,
+		    __func__, sv0, sv1, sv2);
 
 	return (1);
 }
@@ -745,7 +747,7 @@ nep_rx_proc(struct nep_softc *sc)
 	int idx, len, i;
 
 	val = nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port));
-	printf("RX_DMA_CTL_STAT: %llx\n", val);
+//	printf("RX_DMA_CTL_STAT: %llx\n", val);
 	nep_write(sc, RX_DMA_CTL_STAT(sc->sc_port),
 	    RX_DMA_CTL_STAT_RCRTHRES | RX_DMA_CTL_STAT_RCRTO);
 
@@ -758,44 +760,62 @@ nep_rx_proc(struct nep_softc *sc)
 		KASSERT(idx < NEP_NRCDESC);
 
 		rxd = letoh64(sc->sc_rcdesc[idx]);
-		printf("XXX 0x%016llx\n", rxd);
+//		printf("XXX 0x%016llx\n", rxd);
 
 		addr = (rxd & RXD_PKT_BUF_ADDR_MASK) << RXD_PKT_BUF_ADDR_SHIFT;
 		len = (rxd & RXD_L2_LEN_MASK) >> RXD_L2_LEN_SHIFT;
 		page = addr & ~PAGE_MASK;
 		off = addr & PAGE_MASK;
-		for (i = 0; i < sc->sc_rx_prod; i++) {
-			if (sc->sc_rb[i].nb_map->dm_segs[0].ds_addr == page) {
-				printf("bingo!\n");
+		block = NULL;
+		for (i = 0; i < NEP_NRBDESC; i++) {
+			if (sc->sc_rb[i].nb_block &&
+			    sc->sc_rb[i].nb_map->dm_segs[0].ds_addr == page) {
 				block = sc->sc_rb[i].nb_block;
-				MGETHDR(m, M_DONTWAIT, MT_DATA);
-				if (m == NULL)
-					break;
-				MEXTADD(m, block + off, 2048, M_EXTWR,
-				    nep_extfree, sc);
-				m->m_pkthdr.rcvif = ifp;
-				m->m_pkthdr.len = m->m_len = len;
-				m->m_data += ETHER_ALIGN;
-
-				ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-				ether_input_mbuf(ifp, m);
 				break;
 			}
 		}
+		if (block == NULL) {
+			panic("oops!\n");
+			break;
+		}
+
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_rb[i].nb_map);
+		sc->sc_rb[i].nb_block = NULL;
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			printf("oops2!\n");
+			break;
+		}
+		MEXTADD(m, block + off, PAGE_SIZE, M_EXTWR, nep_extfree, block);
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = len;
+		m->m_data += ETHER_ALIGN;
+
+		ifp->if_ipackets++;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
+
+		ether_input_mbuf(ifp, m);
+
+		if_rxr_put(&sc->sc_rx_ring, 1);
 		if ((rxd & RXD_MULTI) == 0) {
 			count--;
 			pktread++;
 		}
 		ptrread++;
 		sc->sc_rx_cons++;
-		sc->sc_rx_cons %= NEP_NRCDESC;
+		if (sc->sc_rx_cons >= NEP_NRCDESC)
+			sc->sc_rx_cons = 0;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, NEP_DMA_MAP(sc->sc_rcring), 0,
+	    NEP_DMA_LEN(sc->sc_rcring), BUS_DMASYNC_PREREAD);
+
+	nep_fill_rx_ring(sc);
 
 	val = pktread | (ptrread << RX_DMA_CTL_STAT_PTRREAD_SHIFT);
 	val |= RX_DMA_CTL_STAT_MEX;
@@ -805,6 +825,7 @@ nep_rx_proc(struct nep_softc *sc)
 void
 nep_extfree(caddr_t buf, u_int size, void *arg)
 {
+	pool_put(nep_block_pool, arg);
 }
 
 void
@@ -817,7 +838,7 @@ nep_tx_proc(struct nep_softc *sc)
 	int idx;
 
 	val = nep_read(sc, TX_CS(sc->sc_port));
-	printf("TX_CS: %llx\n", val);
+//	printf("TX_CS: %llx\n", val);
 	pkt_cnt = (val & TX_CS_PKT_CNT_MASK) >> TX_CS_PKT_CNT_SHIFT;
 	count = (pkt_cnt - sc->sc_pkt_cnt);
 	count &= (TX_CS_PKT_CNT_MASK >> TX_CS_PKT_CNT_SHIFT);
@@ -843,7 +864,8 @@ nep_tx_proc(struct nep_softc *sc)
 
 		sc->sc_tx_cnt--;
 		sc->sc_tx_cons++;
-		sc->sc_tx_cons &= (NEP_NTXDESC - 1);
+		if (sc->sc_tx_cons >= NEP_NTXDESC)
+			sc->sc_tx_cons = 0;
 	}
 
 	if (sc->sc_tx_cnt == 0)
@@ -943,7 +965,7 @@ nep_init_rx_channel(struct nep_softc *sc, int chan)
 	nep_write(sc, RBR_CFIG_A(chan), val);
 
 	val = RBR_CFIG_B_BLKSIZE_8K;
-	val |= RBR_CFIG_B_BUFSZ0_2K | RBR_CFIG_B_VLD0;
+	val |= RBR_CFIG_B_BUFSZ1_8K | RBR_CFIG_B_VLD1;
 	nep_write(sc, RBR_CFIG_B(chan), val);
 
 	val = NEP_DMA_DVA(sc->sc_rcring);
@@ -1208,8 +1230,9 @@ nep_iff(struct nep_softc *sc)
 }
 
 int
-nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
+nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 {
+	struct mbuf *m = *m0;
 	struct nep_txbuf_hdr *nh;
 	uint64_t txd;
 	bus_dmamap_t map;
@@ -1217,13 +1240,13 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 	int len, pad;
 	int err;
 
-	printf("%s: %s\n", sc->sc_dev.dv_xname, __func__);
+//	printf("%s: %s\n", sc->sc_dev.dv_xname, __func__);
 //	printf("TX_CS: %llx\n", nep_read(sc, TX_CS(sc->sc_port)));
 //	printf("TX_RNG_ERR_LOGH: %llx\n",
 //	       nep_read(sc, TX_RNG_ERR_LOGH(sc->sc_port)));
 //	printf("TX_RNG_ERR_LOGL: %llx\n",
 //	       nep_read(sc, TX_RNG_ERR_LOGL(sc->sc_port)));
-	printf("SYS_ERR_STAT %llx\n", nep_read(sc, SYS_ERR_STAT));
+//	printf("SYS_ERR_STAT %llx\n", nep_read(sc, SYS_ERR_STAT));
 //	printf("ZCP_INT_STAT %llx\n", nep_read(sc, ZCP_INT_STAT));
 //	printf("TXC_INT_STAT_DBG %llx\n", nep_read(sc, TXC_INT_STAT_DBG));
 //	printf("TXC_PKT_STUFFED: %llx\n",
@@ -1238,22 +1261,24 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 //	       nep_read(sc, XTXMAC_STATUS(sc->sc_port)));
 //	printf("XRXMAC_STATUS: %llx\n",
 //	       nep_read(sc, XRXMAC_STATUS(sc->sc_port)));
-	printf("RXMAC_BT_CNT: %llx\n",
-	       nep_read(sc, RXMAC_BT_CNT(sc->sc_port)));
-	printf("TXMAC_FRM_CNT: %llx\n",
-	       nep_read(sc, TXMAC_FRM_CNT(sc->sc_port)));
-	printf("TXMAC_BYTE_CNT: %llx\n",
-	       nep_read(sc, TXMAC_BYTE_CNT(sc->sc_port)));
+//	printf("RXMAC_BT_CNT: %llx\n",
+//	       nep_read(sc, RXMAC_BT_CNT(sc->sc_port)));
+//	printf("TXMAC_FRM_CNT: %llx\n",
+//	       nep_read(sc, TXMAC_FRM_CNT(sc->sc_port)));
+//	printf("TXMAC_BYTE_CNT: %llx\n",
+//	       nep_read(sc, TXMAC_BYTE_CNT(sc->sc_port)));
 //	printf("RBR_STAT: %llx\n",
 //	       nep_read(sc, RBR_STAT(sc->sc_port)));
-	printf("RBR_HDL: %llx\n",
-	       nep_read(sc, RBR_HDL(sc->sc_port)));
+//	printf("RBR_HDL: %llx\n",
+//	       nep_read(sc, RBR_HDL(sc->sc_port)));
 //	printf("RCRSTAT_A: %llx\n",
 //	       nep_read(sc, RCRSTAT_A(sc->sc_port)));
 //	printf("RCRSTAT_C: %llx\n",
 //	       nep_read(sc, RCRSTAT_C(sc->sc_port)));
-	printf("RX_DMA_CTL_STAT: %llx\n",
-	       nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port)));
+//	printf("RX_DMA_CTL_STAT: %llx\n",
+//	       nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port)));
+
+//	printf("mbuf %d %d %d\n", M_LEADINGSPACE(m), M_TRAILINGSPACE(m), m->m_len);
 
 	/*
 	 * MAC does not support padding of transmit packets that are
@@ -1265,15 +1290,20 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 
 		padlen = (ETHER_MIN_LEN - ETHER_CRC_LEN) - m->m_pkthdr.len;
 		MGET(n, M_DONTWAIT, MT_DATA);
-		if (n == NULL)
+		if (n == NULL) {
+			m_freem(m);
 			return (ENOBUFS);
+		}
 		memset(mtod(n, caddr_t), 0, padlen);
 		n->m_len = padlen;
 		m_cat(m, n);
 		m->m_pkthdr.len += padlen;
 	}
 
-	pad = mtod(m, u_long) % 16;
+	if (M_LEADINGSPACE(m) < 16)
+		pad = 0;
+	else
+		pad = mtod(m, u_long) % 16;
 	len = m->m_pkthdr.len + pad;
 	M_PREPEND(m, sizeof(*nh) + pad, M_DONTWAIT);
 	if (m == NULL)
@@ -1286,12 +1316,9 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 	map = sc->sc_txbuf[cur].nb_map;
 
 	err = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
-	m_adj(m, sizeof(*nh) + pad);
-	if (err)
-		return (ENOBUFS);
-
-	if (map->dm_nsegs > (NEP_NTXDESC - sc->sc_tx_cnt - 2)) {
-		bus_dmamap_unload(sc->sc_dmat, map);
+	if (err) {
+		/* XXX defrag */
+		m_freem(m);
 		return (ENOBUFS);
 	}
 
@@ -1302,7 +1329,7 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 	txd = TXD_SOP | TXD_MARK;
 	txd |= ((uint64_t)map->dm_nsegs << TXD_NUM_PTR_SHIFT);
 	for (i = 0; i < map->dm_nsegs; i++) {
-		
+//		printf("frag %d 0x%08lx %ld\n", i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
 		txd |= ((uint64_t)map->dm_segs[i].ds_len << TXD_TR_LEN_SHIFT);
 		txd |= map->dm_segs[i].ds_addr;
 		sc->sc_txdesc[frag] = htole64(txd);
@@ -1334,6 +1361,10 @@ nep_encap(struct nep_softc *sc, struct mbuf *m, int *idx)
 //	       nep_read(sc, TX_RNG_ERR_LOGH(sc->sc_port)));
 //	printf("TX_RNG_ERR_LOGL: %llx\n",
 //	       nep_read(sc, TX_RNG_ERR_LOGL(sc->sc_port)));
+
+	m_adj(m, sizeof(*nh) + pad);
+	*m0 = m;
+
 	return (0);
 }
 
@@ -1352,18 +1383,21 @@ nep_start(struct ifnet *ifp)
 		return;
 
 	idx = sc->sc_tx_prod;
-	while (sc->sc_tx_cnt < NEP_NTXDESC) {
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		if (nep_encap(sc, m, &idx)) {
+		if (sc->sc_tx_cnt >= (NEP_NTXDESC - NEP_NTXSEGS)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 		/* Now we are committed to transmit the packet. */
 		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		if (nep_encap(sc, &m, &idx))
+			break;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1377,6 +1411,12 @@ nep_start(struct ifnet *ifp)
 		/* Set a timeout in case the chip goes out to lunch. */
 		ifp->if_timer = 5;
 	}
+}
+
+void
+nep_watchdog(struct ifnet *ifp)
+{
+	printf("%s\n", __func__);
 }
 
 void
@@ -1457,17 +1497,24 @@ nep_fill_rx_ring(struct nep_softc *sc)
 		rb = &sc->sc_rb[desc];
 
 		block = pool_get(nep_block_pool, PR_NOWAIT);
-		if (block == NULL)
+		if (block == NULL) {
+			printf("oops3\n");
 			break;
-		rb->nb_block = block;
+		}
 		err = bus_dmamap_load(sc->sc_dmat, rb->nb_map, block,
 		     PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
-		if (err)
+		if (err) {
+			printf("oops4\n");
+			pool_put(nep_block_pool, block);
 			break;
+		}
+		rb->nb_block = block;
 		sc->sc_rbdesc[desc++] = 
 		    htole32(rb->nb_map->dm_segs[0].ds_addr >> 12);
 		count++;
 		slots--;
+		if (desc >= NEP_NRBDESC)
+			desc = 0;
 	}
 	if_rxr_put(&sc->sc_rx_ring, slots);
 	if (count > 0) {
