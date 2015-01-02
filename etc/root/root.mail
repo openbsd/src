@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Sun May  1 07:56:56 MST 2015
+From deraadt@do-not-reply.openbsd.org Fri May  1 07:57:57 MST 2015
 Return-Path: root
-Date: May 1 07:56:56 MST 2015
+Date: May 1 07:57:57 MST 2015
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 5.7!
