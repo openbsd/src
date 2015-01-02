@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.34 2014/10/17 02:05:06 tedu Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.35 2015/01/02 10:32:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -472,6 +472,7 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 }
 
 struct vscsi_devevent_task {
+	struct vscsi_softc *sc;
 	struct task t;
 	struct vscsi_ioc_devevent de;
 	u_long cmd;
@@ -487,7 +488,8 @@ vscsi_devevent(struct vscsi_softc *sc, u_long cmd,
 	if (dt == NULL)
 		return (ENOMEM);
 
-	task_set(&dt->t, vscsi_devevent_task, sc, dt);
+	task_set(&dt->t, vscsi_devevent_task, dt, NULL);
+	dt->sc = sc;
 	dt->de = *de;
 	dt->cmd = cmd;
 
@@ -498,10 +500,10 @@ vscsi_devevent(struct vscsi_softc *sc, u_long cmd,
 }
 
 void
-vscsi_devevent_task(void *xsc, void *xdt)
+vscsi_devevent_task(void *xdt, void *null)
 {
-	struct vscsi_softc *sc = xsc;
 	struct vscsi_devevent_task *dt = xdt;
+	struct vscsi_softc *sc = dt->sc;
 	int state;
 
 	mtx_enter(&sc->sc_state_mtx);
