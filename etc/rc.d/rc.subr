@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.91 2015/01/02 08:03:28 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.92 2015/01/02 14:44:05 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,7 +106,9 @@ _rc_quirks() {
 	fi
 
 	# in case domainname is set and /var/yp/binding exists enable ypbind
-	[ X"`domainname`" != X"" -a -d /var/yp/binding ] && ypbind_flags=
+	if [ X"`domainname`" != X"" -a -d /var/yp/binding ]; then
+		ypbind_flags=
+	fi
 }
 
 _rc_parse_conf() {
