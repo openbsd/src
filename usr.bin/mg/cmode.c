@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.10 2014/11/16 01:08:36 guenther Exp $ */
+/* $OpenBSD: cmode.c,v 1.11 2015/01/02 11:43:15 lum Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -217,7 +217,6 @@ getindent(const struct line *lp, int *curi)
 {
 	int lo, co;		/* leading space,  current offset*/
 	int nicol = 0;		/* position count */
-	int ccol = 0;		/* current column */
 	int c = '\0';		/* current char */
 	int newind = 0;		/* new index value */
 	int stringp = FALSE;	/* in string? */
@@ -256,7 +255,6 @@ getindent(const struct line *lp, int *curi)
 		nicol = 0;
 
 	newind = 0;
-	ccol = nicol;			/* current column */
 	/* Compute modifiers */
 	for (co = lo; co < llength(lp); co++) {
 		c = lgetc(lp, co);
