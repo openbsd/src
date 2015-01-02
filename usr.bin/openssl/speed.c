@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
+/* $OpenBSD: speed.c,v 1.3 2015/01/02 04:00:21 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -480,9 +480,7 @@ speed_main(int argc, char **argv)
 	int multi = 0;
 	const char *errstr = NULL;
 
-#ifndef TIMES
 	usertime = -1;
-#endif
 
 	memset(results, 0, sizeof(results));
 	memset(dsa_key, 0, sizeof(dsa_key));
@@ -958,9 +956,7 @@ speed_main(int argc, char **argv)
 
 			BIO_printf(bio_err, "\n");
 			BIO_printf(bio_err, "Available options:\n");
-#if defined(TIMES) || defined(USE_TOD)
 			BIO_printf(bio_err, "-elapsed        measure time in real time instead of CPU user time.\n");
-#endif
 #ifndef OPENSSL_NO_ENGINE
 			BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
 #endif
