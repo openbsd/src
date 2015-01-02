@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.35 2015/01/02 10:32:21 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.36 2015/01/02 10:38:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -585,7 +585,8 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	mtx_leave(&sc->sc_sel_mtx);
 
-	device_unref(&sc->sc_dev);
+	/* device ref is given to the knote in the klist */
+
 	return (0);
 }
 
@@ -598,6 +599,8 @@ filt_vscsidetach(struct knote *kn)
 	mtx_enter(&sc->sc_sel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
 	mtx_leave(&sc->sc_sel_mtx);
+
+	device_unref(&sc->sc_dev);
 }
 
 int
