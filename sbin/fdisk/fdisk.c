@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.63 2014/03/20 13:18:21 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.64 2015/01/03 15:50:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,6 +47,7 @@ static unsigned char builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
+int	g_flag;
 int	y_flag;
 
 static void
@@ -55,7 +56,8 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-eiuy] [-c cylinders -h heads -s sectors] [-f mbrfile] [-l blocks] disk\n"
+	    "[-egiuy] [-c cylinders -h heads -s sectors] [-f mbrfile] "
+	    "[-l blocks] disk\n"
 	    "\t-i: initialize disk with virgin MBR\n"
 	    "\t-u: update MBR code, preserve partition table\n"
 	    "\t-e: edit MBRs on disk interactively\n"
@@ -63,6 +65,7 @@ usage(void)
 	    "\t-chs: specify disk geometry\n"
 	    "\t-l: specify LBA block count\n"
 	    "\t-y: do not ask questions\n"
+	    "\t-g: initialize disk with EFI/GPT partition, requires -i\n"
 	    "`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
 	    __progname);
 	exit(1);
@@ -85,7 +88,7 @@ main(int argc, char *argv[])
 	struct mbr mbr;
 	struct dos_mbr dos_mbr;
 
-	while ((ch = getopt(argc, argv, "ieuf:c:h:s:l:y")) != -1) {
+	while ((ch = getopt(argc, argv, "ieguf:c:h:s:l:y")) != -1) {
 		const char *errstr;
 
 		switch(ch) {
@@ -117,6 +120,9 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "Sector argument %s [1..63].", errstr);
 			break;
+		case 'g':
+			g_flag = 1;
+			break;
 		case 'l':
 			l_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
 			if (errstr)
@@ -140,6 +146,11 @@ main(int argc, char *argv[])
 		usage();
 	else
 		disk.name = argv[0];
+
+	if (g_flag != 0 && i_flag == 0) {
+		warnx("-g specified without -i");
+		usage();
+	}
 
 	/* Start with the disklabel geometry and get the sector size. */
 	DISK_getlabelgeometry(&disk);
