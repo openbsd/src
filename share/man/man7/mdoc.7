@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.128 2014/12/31 20:41:53 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.129 2015/01/03 00:56:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 31 2014 $
+.Dd $Mdocdate: January 3 2015 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -454,6 +454,7 @@ in the alphabetical
 .Op Fl compact
 .It Sx \&D1 Ta indented display (one line)
 .It Sx \&Dl Ta indented literal display (one line)
+.It Sx \&Ql Ta in-line literal display: Ql text
 .It Sx \&Bl , \&El Ta list block:
 .Fl Ar type
 .Op Fl width Ar val
@@ -528,7 +529,6 @@ in the alphabetical
 .It Sx \&Dq , \&Do , \&Dc Ta enclose in typographic double quotes: Dq text
 .It Sx \&Qq , \&Qo , \&Qc Ta enclose in typewriter double quotes: Qq text
 .It Sx \&Sq , \&So , \&Sc Ta enclose in single quotes: Sq text
-.It Sx \&Ql Ta single-quoted literal text: Ql text
 .It Sx \&Pq , \&Po , \&Pc Ta enclose in parentheses: Pq text
 .It Sx \&Bq , \&Bo , \&Bc Ta enclose in square brackets: Bq text
 .It Sx \&Brq , \&Bro , \&Brc Ta enclose in curly braces: Brq text
@@ -1256,7 +1256,9 @@ Examples:
 .Dl \&.Dl % mandoc mdoc.7 \e(ba less
 .Pp
 See also
+.Sx \&Ql ,
 .Sx \&Bd
+.Fl literal ,
 and
 .Sx \&D1 .
 .Ss \&Do
@@ -2221,14 +2223,21 @@ See also
 Close quoted context opened by
 .Sx \&Qo .
 .Ss \&Ql
-Request a literal font and enclose in single quotes.
-For arguments of three or more characters, formatters other than
+In-line literal display.
+This can for example be used for complete command invocations and
+for multi-word code fragments when more specific markup is not
+appropriate and an indented display is not desired.
+While
 .Xr mandoc 1
-usually omit the quotes on non-terminal output devices.
+always encloses the arguments in single quotes, other formatters
+usually omit the quotes on non-terminal output devices when the
+arguments have three or more characters.
+.Pp
 See also
-.Sx \&Li
+.Sx \&Dl
 and
-.Sx \&Sq .
+.Sx \&Bd
+.Fl literal .
 .Ss \&Qo
 Multi-line version of
 .Sx \&Qq .
