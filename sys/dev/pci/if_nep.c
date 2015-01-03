@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.9 2015/01/03 19:08:40 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.10 2015/01/03 23:14:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -201,13 +201,55 @@ extern void myetheraddr(u_char *);
 #define LINK_FAULT_CNT(port)	(FZC_MAC + 0x00180 + (port) * 0x06000)
 #define XMAC_SM_REG(port)	(FZC_MAC + 0x001a8 + (port) * 0x06000)
 
-#define BMAC_ADDR0(port)	(FZC_MAC + 0x00100 + ((port) - 2) * 0x04000)
-#define BMAC_ADDR1(port)	(FZC_MAC + 0x00108 + ((port) - 2) * 0x04000)
-#define BMAC_ADDR2(port)	(FZC_MAC + 0x00110 + ((port) - 2) * 0x04000)
+#define TXMAC_SW_RST(port)	(FZC_MAC + 0x0c000 + ((port) - 2) * 0x04000)
+#define  TXMAC_SW_RST_SW_RST		(1ULL << 0)
+#define RXMAC_SW_RST(port)	(FZC_MAC + 0x0c008 + ((port) - 2) * 0x04000)
+#define  RXMAC_SW_RST_SW_RST		(1ULL << 0)
+#define TXMAC_CONFIG(port)	(FZC_MAC + 0x0c060 + ((port) - 2) * 0x04000)
+#define  TXMAC_CONFIG_TX_ENABLE		(1ULL << 0)
+#define RXMAC_CONFIG(port)	(FZC_MAC + 0x0c068 + ((port) - 2) * 0x04000)
+#define  RXMAC_CONFIG_ERROR_CHK_DIS	(1ULL << 7)
+#define  RXMAC_CONFIG_ADDR_FILTER_EN	(1ULL << 6)
+#define  RXMAC_CONFIG_HASH_FILTER_EN	(1ULL << 5)
+#define  RXMAC_CONFIG_PROMISCUOUS_GROUP	(1ULL << 4)
+#define  RXMAC_CONFIG_PROMISCUOUS	(1ULL << 3)
+#define  RXMAC_CONFIG_STRIP_FCS		(1ULL << 2)
+#define  RXMAC_CONFIG_STRIP_PAD		(1ULL << 1)
+#define  RXMAC_CONFIG_RX_ENABLE		(1ULL << 0)
+#define MAC_XIF_CONFIG(port)	(FZC_MAC + 0x0c078 + ((port) - 2) * 0x04000)
+#define  MAC_XIF_CONFIG_SEL_CLK_25MHZ	(1ULL << 7)
+#define  MAC_XIF_CONFIG_GMII_MODE	(1ULL << 3)
+#define  MAC_XIF_CONFIG_LOOPBACK	(1ULL << 1)
+#define  MAC_XIF_CONFIG_TX_OUTPUT_EN	(1ULL << 0)
+#define BMAC_MIN(port)		(FZC_MAC + 0x0c0a0 + ((port) - 2) * 0x04000)
+#define BMAC_MAX(port)		(FZC_MAC + 0x0c0a8 + ((port) - 2) * 0x04000)
+#define  BMAC_MAX_BURST_SHIFT		16
+#define MAC_PA_SIZE(port)	(FZC_MAC + 0x0c0b0 + ((port) - 2) * 0x04000)
+#define MAC_CTRL_TYPE(port)	(FZC_MAC + 0x0c0b8 + ((port) - 2) * 0x04000)
+#define BMAC_ADDR0(port)	(FZC_MAC + 0x0c100 + ((port) - 2) * 0x04000)
+#define BMAC_ADDR1(port)	(FZC_MAC + 0x0c108 + ((port) - 2) * 0x04000)
+#define BMAC_ADDR2(port)	(FZC_MAC + 0x0c110 + ((port) - 2) * 0x04000)
 
-#define PCS_MII_CTL(port)	(FZC_MAC + 0x04000 + (port) * 0x06000)
+#define MAC_ADDR_FILT0(port)	(FZC_MAC + 0x0c298 + ((port) - 2) * 0x04000)
+#define MAC_ADDR_FILT1(port)	(FZC_MAC + 0x0c2a0 + ((port) - 2) * 0x04000)
+#define MAC_ADDR_FILT2(port)	(FZC_MAC + 0x0c2a8 + ((port) - 2) * 0x04000)
+#define MAC_ADDR_FILT12_MASK(port) (FZC_MAC + 0x0c2b0 + ((port) - 2) * 0x04000)
+#define MAC_ADDR_FILT00_MASK(port) (FZC_MAC + 0x0c2b8 + ((port) - 2) * 0x04000)
+
+#define MAC_HASH_TBL0(port)	(FZC_MAC + 0x0c2c0 + ((port) - 2) * 0x04000)
+#define MAC_HASH_TBL(port, i)	(MAC_HASH_TBL0(port) + (i) * 0x00008)
+
+#define RXMAC_FRM_CNT(port)	(FZC_MAC + 0x0c370 + ((port) - 2) * 0x04000)
+#define BMAC_ALTAD_CMPEN(port)	(FZC_MAC + 0x0c3f8 + ((port) - 2) * 0x04000)
+
+#define BMAC_HOST_INFO0(port)	(FZC_MAC + 0x0c400 + ((port) - 2) * 0x04000)
+#define BMAC_HOST_INFO(port, i)	(BMAC_HOST_INFO0(port) + (i) * 0x00008)
+
+#define PCS_PORT_OFFSET(port)	((port < 2) ? ((port) * 0x06000) : \
+					(0x02000 + (port) * 0x4000))
+#define PCS_MII_CTL(port)	(FZC_MAC + 0x04000 + PCS_PORT_OFFSET(port))
 #define  PCS_MII_CTL_RESET		(1ULL << 15)
-#define PCS_DPATH_MODE(port)	(FZC_MAC + 0x040a0 + (port) * 0x06000)
+#define PCS_DPATH_MODE(port)	(FZC_MAC + 0x040a0 + PCS_PORT_OFFSET(port))
 #define  PCS_DPATH_MODE_MII		(1ULL << 1)
 
 #define MIF_FRAME_OUTPUT	(FZC_MAC + 0x16018)
@@ -701,7 +743,30 @@ nep_xmac_mii_statchg(struct nep_softc *sc)
 void
 nep_bmac_mii_statchg(struct nep_softc *sc)
 {
-	printf("%s\n", __func__);
+	struct mii_data *mii = &sc->sc_mii;
+	uint64_t val;
+
+	val = nep_read(sc, MAC_XIF_CONFIG(sc->sc_port));
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX)
+		val |= MAC_XIF_CONFIG_SEL_CLK_25MHZ;
+	else
+		val &= MAC_XIF_CONFIG_SEL_CLK_25MHZ;
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_SX)
+		val |= MAC_XIF_CONFIG_GMII_MODE;
+	else
+		val &= ~MAC_XIF_CONFIG_GMII_MODE;
+
+	if (mii->mii_media_active & IFM_LOOP)
+		val |= MAC_XIF_CONFIG_LOOPBACK;
+	else
+		val &= ~MAC_XIF_CONFIG_LOOPBACK;
+
+	val |= MAC_XIF_CONFIG_TX_OUTPUT_EN;
+
+	nep_write(sc, MAC_XIF_CONFIG(sc->sc_port), val);
 }
 
 int
@@ -991,7 +1056,7 @@ nep_init_rx_xmac(struct nep_softc *sc)
 			break;
 	}
 	if (n == 0)
-		printf("timeout resetting Tx MAC\n");
+		printf("timeout resetting Rx MAC\n");
 
 	addr0 = (sc->sc_lladdr[4] << 8) | sc->sc_lladdr[5];
 	addr1 = (sc->sc_lladdr[2] << 8) | sc->sc_lladdr[3];
@@ -1019,6 +1084,29 @@ void
 nep_init_rx_bmac(struct nep_softc *sc)
 {
 	uint64_t addr0, addr1, addr2;
+	uint64_t val;
+	int n, i;
+
+	nep_write(sc, RXMAC_SW_RST(sc->sc_port), RXMAC_SW_RST_SW_RST);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, RXMAC_SW_RST(sc->sc_port));
+		if ((val & RXMAC_SW_RST_SW_RST) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting Rx MAC\n");
+
+	val = nep_read(sc, RXMAC_CONFIG(sc->sc_port));
+	val &= ~RXMAC_CONFIG_ERROR_CHK_DIS;
+	val &= ~RXMAC_CONFIG_PROMISCUOUS;
+	val &= ~RXMAC_CONFIG_PROMISCUOUS_GROUP;
+	val &= ~RXMAC_CONFIG_ADDR_FILTER_EN;
+	val &= ~RXMAC_CONFIG_HASH_FILTER_EN;
+	val &= ~RXMAC_CONFIG_STRIP_FCS;
+	val &= ~RXMAC_CONFIG_STRIP_PAD;
+	val &= ~RXMAC_CONFIG_RX_ENABLE;
+	nep_write(sc, RXMAC_CONFIG(sc->sc_port), val);
 
 	addr0 = (sc->sc_lladdr[4] << 8) | sc->sc_lladdr[5];
 	addr1 = (sc->sc_lladdr[2] << 8) | sc->sc_lladdr[3];
@@ -1026,6 +1114,20 @@ nep_init_rx_bmac(struct nep_softc *sc)
 	nep_write(sc, BMAC_ADDR0(sc->sc_port), addr0);
 	nep_write(sc, BMAC_ADDR1(sc->sc_port), addr1);
 	nep_write(sc, BMAC_ADDR2(sc->sc_port), addr2);
+
+	nep_write(sc, BMAC_ALTAD_CMPEN(sc->sc_port), 1);
+
+	nep_write(sc, MAC_ADDR_FILT0(sc->sc_port), 0);
+	nep_write(sc, MAC_ADDR_FILT1(sc->sc_port), 0);
+	nep_write(sc, MAC_ADDR_FILT2(sc->sc_port), 0);
+	nep_write(sc, MAC_ADDR_FILT12_MASK(sc->sc_port), 0);
+	nep_write(sc, MAC_ADDR_FILT00_MASK(sc->sc_port), 0);
+
+	for (i = 0; i < 16; i++)
+		nep_write(sc, MAC_HASH_TBL(sc->sc_port, i), 0);
+
+	for (i = 0; i < 9; i++)
+		nep_write(sc, BMAC_HOST_INFO(sc->sc_port, i), sc->sc_port);
 }
 
 void
@@ -1145,6 +1247,24 @@ nep_init_tx_xmac(struct nep_softc *sc)
 void
 nep_init_tx_bmac(struct nep_softc *sc)
 {
+	uint64_t val;
+	int n;
+
+	nep_write(sc, TXMAC_SW_RST(sc->sc_port), TXMAC_SW_RST_SW_RST);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, TXMAC_SW_RST(sc->sc_port));
+		if ((val & TXMAC_SW_RST_SW_RST) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting Tx MAC\n");
+
+	nep_write(sc, BMAC_MIN(sc->sc_port), 0x40);
+	nep_write(sc, BMAC_MAX(sc->sc_port), ETHER_MAX_LEN |
+	    (ETHER_MAX_LEN << BMAC_MAX_BURST_SHIFT));
+	nep_write(sc, MAC_CTRL_TYPE(sc->sc_port), 0x8808);
+	nep_write(sc, MAC_PA_SIZE(sc->sc_port), 0x7);
 }
 
 void
@@ -1175,7 +1295,7 @@ nep_init_tx_channel(struct nep_softc *sc, int chan)
 			break;
 	}
 	if (n == 0)
-		printf("timeout resetting Tx dma\n");
+		printf("timeout resetting Tx DMA\n");
 
 	nep_write(sc, TX_LOG_MASK1(chan), 0);
 	nep_write(sc, TX_LOG_VALUE1(chan), 0);
@@ -1263,20 +1383,20 @@ nep_up(struct nep_softc *sc)
 		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
 		val &= ~XMAC_CONFIG_SEL_POR_CLK_SRC;
 		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
-
-		nep_write(sc, PCS_DPATH_MODE(sc->sc_port), PCS_DPATH_MODE_MII);
-		val = nep_read(sc, PCS_MII_CTL(sc->sc_port));
-		val |= PCS_MII_CTL_RESET;
-		nep_write(sc, PCS_MII_CTL(sc->sc_port), val);
-		n = 1000;
-		while (--n) {
-			val = nep_read(sc, PCS_MII_CTL(sc->sc_port));
-			if ((val & PCS_MII_CTL_RESET) == 0)
-				break;
-		}
-		if (n == 0)
-			printf("timeout resetting PCS\n");
 	}
+
+	nep_write(sc, PCS_DPATH_MODE(sc->sc_port), PCS_DPATH_MODE_MII);
+	val = nep_read(sc, PCS_MII_CTL(sc->sc_port));
+	val |= PCS_MII_CTL_RESET;
+	nep_write(sc, PCS_MII_CTL(sc->sc_port), val);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, PCS_MII_CTL(sc->sc_port));
+		if ((val & PCS_MII_CTL_RESET) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting PCS\n");
 
 	nep_init_rx_mac(sc);
 	nep_init_rx_channel(sc, sc->sc_port);
@@ -1295,6 +1415,14 @@ nep_up(struct nep_softc *sc)
 		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
 		val |= XMAC_CONFIG_TX_ENABLE;
 		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
+	} else {
+		val = nep_read(sc, RXMAC_CONFIG(sc->sc_port));
+		val |= RXMAC_CONFIG_RX_ENABLE;
+		nep_write(sc, RXMAC_CONFIG(sc->sc_port), val);
+
+		val = nep_read(sc, TXMAC_CONFIG(sc->sc_port));
+		val |= TXMAC_CONFIG_TX_ENABLE;
+		nep_write(sc, TXMAC_CONFIG(sc->sc_port), val);
 	}
 
 	val = nep_read(sc, RXDMA_CFIG1(sc->sc_port));
@@ -1370,6 +1498,8 @@ nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 //	       nep_read(sc, XRXMAC_STATUS(sc->sc_port)));
 //	printf("RXMAC_BT_CNT: %llx\n",
 //	       nep_read(sc, RXMAC_BT_CNT(sc->sc_port)));
+//	printf("RXMAC_FRM_CNT: %llx\n",
+//	       nep_read(sc, RXMAC_FRM_CNT(sc->sc_port)));
 //	printf("TXMAC_FRM_CNT: %llx\n",
 //	       nep_read(sc, TXMAC_FRM_CNT(sc->sc_port)));
 //	printf("TXMAC_BYTE_CNT: %llx\n",
