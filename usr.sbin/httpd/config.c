@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: config.c,v 1.27 2015/01/03 15:49:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -174,7 +174,9 @@ config_setserver(struct httpd *env, struct server *srv)
 		if ((what & CONFIG_SERVERS) == 0 || id == privsep_process)
 			continue;
 
-		DPRINTF("%s: sending server \"%s[%u]\" to %s fd %d", __func__,
+		DPRINTF("%s: sending %s \"%s[%u]\" to %s fd %d", __func__,
+		    (srv->srv_conf.flags & SRVFLAG_LOCATION) ?
+		    "location" : "server",
 		    srv->srv_conf.name, srv->srv_conf.id,
 		    ps->ps_title[id], srv->srv_s);
 

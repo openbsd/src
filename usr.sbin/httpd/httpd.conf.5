@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.40 2014/12/28 13:53:23 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.41 2015/01/03 15:49:18 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2014 $
+.Dd $Mdocdate: January 3 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -135,6 +135,10 @@ must have a
 .Ar name
 and include one or more lines of the following syntax:
 .Bl -tag -width Ds
+.It Ic alias Ar name
+Specify an additional alias
+.Ar name
+for this server.
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
 Valid options are:
@@ -180,6 +184,7 @@ and defaults to
 .Pa /run/slowcgi.sock .
 .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
 Set the listen address and port.
+This statement can be specified multiple times.
 .It Ic location Ar path Brq ...
 Specify server configuration rules for a specific location.
 The
@@ -391,6 +396,13 @@ If the same address is repeated multiple times in the
 statement,
 the server will be matched based on the requested host name.
 .Bd -literal -offset indent
+server "www.example.com" {
+	alias "example.com"
+	listen on * port 80
+	listen on * tls port 443
+	root "/htdocs/www.example.com"
+}
+
 server "www.a.example.com" {
 	listen on 203.0.113.1 port 80
 	root "/htdocs/www.a.example.com"

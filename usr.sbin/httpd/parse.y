@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2015/01/03 15:49:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -106,6 +106,8 @@ int		 host_if(const char *, struct addresslist *,
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 void		 host_free(struct addresslist *);
+struct server	*server_inherit(struct server *, const char *,
+		    struct server_config *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
 
@@ -125,10 +127,10 @@ typedef struct {
 
 %}
 
-%token	ACCESS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
+%token	ACCESS ALIAS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
 %token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
 %token	LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT
-%token	SACK SERVER SOCKET STYLE SYSLOG TCP TIMEOUT TLS TYPES 
+%token	SACK SERVER SOCKET STYLE SYSLOG TCP TIMEOUT TLS TYPES
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -247,8 +249,14 @@ server		: SERVER STRING		{
 			srv_conf = &srv->srv_conf;
 
 			SPLAY_INIT(&srv->srv_clients);
+			TAILQ_INIT(&srv->srv_hosts);
+
+			TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 		} '{' optnl serveropts_l '}'	{
-			struct server	*s = NULL;
+			struct server		*s = NULL, *sn;
+			struct server_config	*a, *b;
+
+			srv_conf = &srv->srv_conf;
 
 			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
 				if ((s->srv_conf.flags &
@@ -290,6 +298,44 @@ server		: SERVER STRING		{
 
 			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
 
+			/*
+			 * Add aliases and additional listen addresses as
+			 * individual servers.
+			 */
+			TAILQ_FOREACH(a, &srv->srv_hosts, entry) {
+				/* listen address */
+				if (a->ss.ss_family == AF_UNSPEC)
+					continue;
+				TAILQ_FOREACH(b, &srv->srv_hosts, entry) {
+					/* alias name */
+					if (*b->name == '\0' ||
+					    (b == &srv->srv_conf && b == a))
+						continue;
+
+					if ((sn = server_inherit(srv,
+					    b->name, a)) == NULL) {
+						serverconfig_free(srv_conf);
+						free(srv);
+						YYABORT;
+					}
+
+					DPRINTF("adding server \"%s[%u]\"",
+					    sn->srv_conf.name, sn->srv_conf.id);
+
+					TAILQ_INSERT_TAIL(conf->sc_servers,
+					    sn, srv_entry);
+				}
+			}
+
+			/* Remove temporary aliases */
+			TAILQ_FOREACH_SAFE(a, &srv->srv_hosts, entry, b) {
+				TAILQ_REMOVE(&srv->srv_hosts, a, entry);
+				if (a == &srv->srv_conf)
+					continue;
+				serverconfig_free(a);
+				free(a);
+			}
+
 			srv = NULL;
 			srv_conf = NULL;
 		}
@@ -302,7 +348,7 @@ serveropts_l	: serveropts_l serveroptsl nl
 serveroptsl	: LISTEN ON STRING opttls port {
 			struct addresslist	 al;
 			struct address		*h;
-			struct server		*s;
+			struct server_config	*s_conf, *alias = NULL;
 
 			if (parentsrv != NULL) {
 				yyerror("listen %s inside location", $3);
@@ -311,11 +357,14 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			}
 
 			if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
-				yyerror("listen address already specified");
-				free($3);
-				YYERROR;
+				if ((alias = calloc(1,
+				    sizeof(*alias))) == NULL)
+					fatal("out of memory");
+
+				/* Add as an alias */
+				s_conf = alias;
 			} else
-				s = srv;
+				s_conf = &srv->srv_conf;
 			if ($5.op != PF_OP_EQ) {
 				yyerror("invalid port");
 				free($3);
@@ -330,15 +379,42 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			}
 			free($3);
 			h = TAILQ_FIRST(&al);
-			memcpy(&srv->srv_conf.ss, &h->ss,
-			    sizeof(s->srv_conf.ss));
-			s->srv_conf.port = h->port.val[0];
-			s->srv_conf.prefixlen = h->prefixlen;
+			memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
+			s_conf->port = h->port.val[0];
+			s_conf->prefixlen = h->prefixlen;
 			host_free(&al);
 
 			if ($4) {
-				s->srv_conf.flags |= SRVFLAG_TLS;
+				s_conf->flags |= SRVFLAG_TLS;
 			}
+
+			if (alias != NULL) {
+				TAILQ_INSERT_TAIL(&srv->srv_hosts,
+				    alias, entry);
+			}
+		}
+		| ALIAS STRING		{
+			struct server_config	*alias;
+
+			if (parentsrv != NULL) {
+				yyerror("alias inside location");
+				free($2);
+				YYERROR;
+			}
+
+			if ((alias = calloc(1, sizeof(*alias))) == NULL)
+				fatal("out of memory");
+
+			if (strlcpy(alias->name, $2, sizeof(alias->name)) >=
+			    sizeof(alias->name)) {
+				yyerror("server alias truncated");
+				free($2);
+				free(alias);
+				YYERROR;
+			}
+			free($2);
+
+			TAILQ_INSERT_TAIL(&srv->srv_hosts, alias, entry);
 		}
 		| TCP			{
 			if (parentsrv != NULL) {
@@ -852,6 +928,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "access",		ACCESS },
+		{ "alias",		ALIAS },
 		{ "auto",		AUTO },
 		{ "backlog",		BACKLOG },
 		{ "body",		BODY },
@@ -1644,6 +1721,99 @@ host_free(struct addresslist *al)
 		TAILQ_REMOVE(al, h, entry);
 		free(h);
 	}
+}
+
+struct server *
+server_inherit(struct server *src, const char *name,
+    struct server_config *addr)
+{
+	struct server	*dst, *s, *dstl;
+
+	if ((dst = calloc(1, sizeof(*dst))) == NULL)
+		fatal("out of memory");
+
+	/* Copy the source server and assign a new Id */
+	memcpy(&dst->srv_conf, &src->srv_conf, sizeof(dst->srv_conf));
+	if ((dst->srv_conf.tls_cert_file =
+	    strdup(src->srv_conf.tls_cert_file)) == NULL)
+		fatal("out of memory");
+	if ((dst->srv_conf.tls_key_file =
+	    strdup(src->srv_conf.tls_key_file)) == NULL)
+		fatal("out of memory");
+
+	dst->srv_conf.id = ++last_server_id;
+	if (last_server_id == INT_MAX) {
+		yyerror("too many servers defined");
+		free(dst);
+		return (NULL);
+	}
+
+	/* Now set alias and listen address */
+	strlcpy(dst->srv_conf.name, name, sizeof(dst->srv_conf.name));
+	memcpy(&dst->srv_conf.ss, &addr->ss, sizeof(dst->srv_conf.ss));
+	dst->srv_conf.port = addr->port;
+	dst->srv_conf.prefixlen = addr->prefixlen;
+	if (addr->flags & SRVFLAG_TLS)
+		dst->srv_conf.flags |= SRVFLAG_TLS;
+	else
+		dst->srv_conf.flags &= ~SRVFLAG_TLS;
+
+	if (server_tls_load_keypair(dst) == -1) {
+		yyerror("failed to load public/private keys "
+		    "for server %s", dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		free(dst);
+		return (NULL);
+	}
+
+	/* Check if the new server already exists */
+	TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+		if ((s->srv_conf.flags &
+		    SRVFLAG_LOCATION) == 0 &&
+		    strcmp(s->srv_conf.name,
+		    dst->srv_conf.name) == 0 &&
+		    s->srv_conf.port == dst->srv_conf.port &&
+		    sockaddr_cmp(
+		    (struct sockaddr *)&s->srv_conf.ss,
+		    (struct sockaddr *)&dst->srv_conf.ss,
+		    s->srv_conf.prefixlen) == 0)
+			break;
+	}
+	if (s != NULL) {
+		yyerror("server \"%s\" defined twice",
+		    dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		free(dst);
+		return (NULL);
+	}
+
+	/* Copy all the locations of the source server */
+	TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+		if (!(s->srv_conf.flags & SRVFLAG_LOCATION &&
+		    s->srv_conf.id == src->srv_conf.id))
+			continue;
+
+		if ((dstl = calloc(1, sizeof(*dstl))) == NULL)
+			fatal("out of memory");
+
+		memcpy(&dstl->srv_conf, &s->srv_conf, sizeof(dstl->srv_conf));
+		strlcpy(dstl->srv_conf.name, name, sizeof(dstl->srv_conf.name));
+
+		/* Copy the new Id and listen address */
+		dstl->srv_conf.id = dst->srv_conf.id;
+		memcpy(&dstl->srv_conf.ss, &addr->ss,
+		    sizeof(dstl->srv_conf.ss));
+		dstl->srv_conf.port = addr->port;
+		dstl->srv_conf.prefixlen = addr->prefixlen;
+
+		DPRINTF("adding location \"%s\" for \"%s[%u]\"",
+		    dstl->srv_conf.location,
+		    dstl->srv_conf.name, dstl->srv_conf.id);
+
+		TAILQ_INSERT_TAIL(conf->sc_servers, dstl, srv_entry);
+	}
+
+	return (dst);
 }
 
 int
