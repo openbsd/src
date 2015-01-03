@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.135 2015/01/02 17:01:31 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.136 2015/01/03 12:54:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1106,7 +1106,7 @@ mpages_merge(struct mparse *mp)
 	mpage = ohash_first(&mpages, &pslot);
 	while (mpage != NULL) {
 		mlinks_undupe(mpage);
-		if (mpage->mlinks == NULL) {
+		if ((mlink = mpage->mlinks) == NULL) {
 			mpage = ohash_next(&mpages, &pslot);
 			continue;
 		}
@@ -1119,9 +1119,9 @@ mpages_merge(struct mparse *mp)
 		man = NULL;
 		sodest = NULL;
 
-		mparse_open(mp, &fd, mpage->mlinks->file);
+		mparse_open(mp, &fd, mlink->file);
 		if (fd == -1) {
-			say(mpage->mlinks->file, "&open");
+			say(mlink->file, "&open");
 			goto nextpage;
 		}
 
@@ -1130,9 +1130,8 @@ mpages_merge(struct mparse *mp)
 		 * source code, unless it is already known to be
 		 * formatted.  Fall back to formatted mode.
 		 */
-		if (mpage->mlinks->dform != FORM_CAT ||
-		    mpage->mlinks->fform != FORM_CAT) {
-			lvl = mparse_readfd(mp, fd, mpage->mlinks->file);
+		if (mlink->dform != FORM_CAT || mlink->fform != FORM_CAT) {
+			lvl = mparse_readfd(mp, fd, mlink->file);
 			if (lvl < MANDOCLEVEL_FATAL)
 				mparse_result(mp, &mdoc, &man, &sodest);
 		}
@@ -1151,7 +1150,6 @@ mpages_merge(struct mparse *mp)
 				/* The .so target exists. */
 
 				mpage_dest = mlink_dest->mpage;
-				mlink = mpage->mlinks;
 				while (1) {
 					mlink->mpage = mpage_dest;
 
@@ -1191,26 +1189,20 @@ mpages_merge(struct mparse *mp)
 			    mandoc_strdup(mdoc_meta(mdoc)->title);
 		} else if (man != NULL) {
 			mpage->form = FORM_SRC;
-			mpage->sec =
-			    mandoc_strdup(man_meta(man)->msec);
-			mpage->arch =
-			    mandoc_strdup(mpage->mlinks->arch);
-			mpage->title =
-			    mandoc_strdup(man_meta(man)->title);
+			mpage->sec = mandoc_strdup(man_meta(man)->msec);
+			mpage->arch = mandoc_strdup(mlink->arch);
+			mpage->title = mandoc_strdup(man_meta(man)->title);
 		} else {
 			mpage->form = FORM_CAT;
-			mpage->sec =
-			    mandoc_strdup(mpage->mlinks->dsec);
-			mpage->arch =
-			    mandoc_strdup(mpage->mlinks->arch);
-			mpage->title =
-			    mandoc_strdup(mpage->mlinks->name);
+			mpage->sec = mandoc_strdup(mlink->dsec);
+			mpage->arch = mandoc_strdup(mlink->arch);
+			mpage->title = mandoc_strdup(mlink->name);
 		}
 		putkey(mpage, mpage->sec, TYPE_sec);
 		if (*mpage->arch != '\0')
 			putkey(mpage, mpage->arch, TYPE_arch);
 
-		for (mlink = mpage->mlinks; mlink; mlink = mlink->next) {
+		for ( ; mlink != NULL; mlink = mlink->next) {
 			if ('\0' != *mlink->dsec)
 				putkey(mpage, mlink->dsec, TYPE_sec);
 			if ('\0' != *mlink->fsec)
@@ -1236,11 +1228,12 @@ mpages_merge(struct mparse *mp)
 				mlink_check(mpage, mlink);
 
 		dbadd(mpage);
+		mlink = mpage->mlinks;
 
 nextpage:
 		if (mparse_wait(mp) != MANDOCLEVEL_OK) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
-			say(mpage->mlinks->file, "&wait gunzip");
+			say(mlink->file, "&wait gunzip");
 		}
 		ohash_delete(&strings);
 		ohash_delete(&names);
