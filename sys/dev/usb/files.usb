@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.120 2014/12/11 19:44:17 tedu Exp $
+#	$OpenBSD: files.usb,v 1.121 2015/01/03 20:22:56 uaa Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -109,6 +109,11 @@ file	dev/usb/ubcmtp.c		ubcmtp
 device	ucycom: hid, ucombus
 attach	ucycom at uhidbus
 file	dev/usb/ucycom.c		ucycom			needs-flag
+
+# Silicon Labs USB HID based UART controller
+device	uslhcom: hid, ucombus
+attach	uslhcom at uhidbus
+file	dev/usb/uslhcom.c		uslhcom			needs-flag
 
 # Printers
 device	ulpt: firmload
