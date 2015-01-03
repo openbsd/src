@@ -1,6 +1,6 @@
-/*	$OpenBSD: if_nep.c,v 1.8 2015/01/02 17:32:59 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.9 2015/01/03 19:08:40 kettenis Exp $	*/
 /*
- * Copyright (c) 2014 Mark Kettenis
+ * Copyright (c) 2014, 2015 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -84,7 +84,7 @@ extern void myetheraddr(u_char *);
 #define LDSV0(ldg)		(PIO_LDSV + 0x00000 + (ldg) * 0x02000)
 #define LDSV1(ldg)		(PIO_LDSV + 0x00008 + (ldg) * 0x02000)
 #define LDSV2(ldg)		(PIO_LDSV + 0x00010 + (ldg) * 0x02000)
-#define LDGIMGN(ldg)		(PIO_LDSV + 0x00018 + (ldg) * 0x20000)
+#define LDGIMGN(ldg)		(PIO_LDSV + 0x00018 + (ldg) * 0x02000)
 #define  LDGIMGN_ARM		(1ULL << 31)
 #define  LDGIMGN_TIMER		(63ULL << 0)
 
@@ -96,12 +96,33 @@ extern void myetheraddr(u_char *);
 #define SID(ldg)		(FZC_PIO + 0x10200 + (ldg) * 0x00008)
 #define LDG_NUM(ldn)		(FZC_PIO + 0x20000 + (ldn) * 0x00008)
 
-#define IPP_CFIG(port)		(FZC_IPP + 0x00000 + (port) * 0x04000)
+#define ipp_port(port)		(((port & 0x1) << 1) | (port & 0x2) >> 1)
+#define IPP_CFIG(port)		(FZC_IPP + 0x00000 + ipp_port(port) * 0x04000)
 #define  IPP_CFIG_SOFT_RST		(1ULL << 31)
+#define  IPP_CFIG_DFIFO_PIO_W		(1ULL << 5)
 #define  IPP_CFIG_IPP_ENABLE		(1ULL << 0)
+#define IPP_INT_STAT(port)	(FZC_IPP + 0x00040 + ipp_port(port) * 0x04000)
+#define IPP_MSK(port)		(FZC_IPP + 0x00048 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_RD1(port)	(FZC_IPP + 0x000c0 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_RD2(port)	(FZC_IPP + 0x000c8 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_RD3(port)	(FZC_IPP + 0x000d0 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_RD4(port)	(FZC_IPP + 0x000d8 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_RD5(port)	(FZC_IPP + 0x000e0 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_WR1(port)	(FZC_IPP + 0x000e8 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_WR2(port)	(FZC_IPP + 0x000f0 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_WR3(port)	(FZC_IPP + 0x000f8 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_WR4(port)	(FZC_IPP + 0x00100 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_WR5(port)	(FZC_IPP + 0x00108 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_RD_PTR(port)	(FZC_IPP + 0x00110 + ipp_port(port) * 0x04000)
+#define IPP_DFIFO_WR_PTR(port)	(FZC_IPP + 0x00118 + ipp_port(port) * 0x04000)
+
+#define IPP_NIU_DFIFO_ENTRIES		1024
+#define	IPP_P0_P1_DFIFO_ENTRIES		2048
+#define IPP_P2_P3_DFIFO_ENTRIES		1024
 
 #define ZCP_CFIG		(FZC_ZCP + 0x00000)
 #define ZCP_INT_STAT		(FZC_ZCP + 0x00008)
+#define ZCP_INT_MASK		(FZC_ZCP + 0x00010)
 
 #define TXC_DMA_MAX(chan)	(FZC_TXC + 0x00000 + (chan) * 0x01000)
 #define TXC_CONTROL		(FZC_TXC + 0x20000)
@@ -202,7 +223,7 @@ extern void myetheraddr(u_char *);
 
 #define DEF_PT0_RDC		(FZC_DMC + 0x00008)
 #define DEF_PT_RDC(port)	(DEF_PT0_RDC + (port) * 0x00008)
-#define RDC_TBL(grp, i)		(FZC_ZCP + 0x10000 + (grp * 8 + i) * 0x00008)
+#define RDC_TBL(tbl, i)		(FZC_ZCP + 0x10000 + (tbl * 16 + i) * 0x00008)
 
 #define RX_LOG_PAGE_VLD(chan)	(FZC_DMC + 0x20000 + (chan) * 0x00040)
 #define  RX_LOG_PAGE_VLD_PAGE0		(1ULL << 0)
@@ -414,9 +435,15 @@ void	nep_rx_proc(struct nep_softc *);
 void	nep_extfree(caddr_t, u_int, void *);
 void	nep_tx_proc(struct nep_softc *);
 
+void	nep_init_ipp(struct nep_softc *);
+void	nep_ipp_clear_dfifo(struct nep_softc *, uint64_t);
 void	nep_init_rx_mac(struct nep_softc *);
+void	nep_init_rx_xmac(struct nep_softc *);
+void	nep_init_rx_bmac(struct nep_softc *);
 void	nep_init_rx_channel(struct nep_softc *, int);
 void	nep_init_tx_mac(struct nep_softc *);
+void	nep_init_tx_xmac(struct nep_softc *);
+void	nep_init_tx_bmac(struct nep_softc *);
 void	nep_init_tx_channel(struct nep_softc *, int);
 
 void	nep_fill_rx_ring(struct nep_softc *);
@@ -504,6 +531,7 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_port == 0) {
 		nep_write(sc, LDG_NUM(LDN_MIF), sc->sc_port);
 		nep_write(sc, LDG_NUM(LDN_SYSERR), sc->sc_port);
+		nep_write(sc, ZCP_INT_MASK, 0);
 	}
 
 #ifdef __sparc64__
@@ -874,7 +902,80 @@ nep_tx_proc(struct nep_softc *sc)
 }
 
 void
+nep_init_ipp(struct nep_softc *sc)
+{
+	uint64_t val;
+	int num_entries;
+	int n, i;
+
+	if (sc->sc_port < 2)
+		num_entries = IPP_P0_P1_DFIFO_ENTRIES;
+	else
+		num_entries = IPP_P2_P3_DFIFO_ENTRIES;
+
+	for (i = 0; i < num_entries; i++)
+		nep_ipp_clear_dfifo(sc, i);
+
+	(void)nep_read(sc, IPP_INT_STAT(sc->sc_port));
+	(void)nep_read(sc, IPP_INT_STAT(sc->sc_port));
+
+	val = nep_read(sc, IPP_CFIG(sc->sc_port));
+	val |= IPP_CFIG_SOFT_RST;
+	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+	n = 1000;
+	while (--n) {
+		val = nep_read(sc, IPP_CFIG(sc->sc_port));
+		if ((val & IPP_CFIG_SOFT_RST) == 0)
+			break;
+	}
+	if (n == 0)
+		printf("timeout resetting IPP\n");
+
+	val = nep_read(sc, IPP_CFIG(sc->sc_port));
+	val |= IPP_CFIG_IPP_ENABLE;
+	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+
+	nep_write(sc, IPP_MSK(sc->sc_port), 0);
+}
+
+void
+nep_ipp_clear_dfifo(struct nep_softc *sc, uint64_t addr)
+{
+	uint64_t val;
+
+	val = nep_read(sc, IPP_CFIG(sc->sc_port));
+	val |= IPP_CFIG_DFIFO_PIO_W;
+	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+
+	nep_write(sc, IPP_DFIFO_WR_PTR(sc->sc_port), addr);
+	nep_write(sc, IPP_DFIFO_WR1(sc->sc_port), 0);
+	nep_write(sc, IPP_DFIFO_WR2(sc->sc_port), 0);
+	nep_write(sc, IPP_DFIFO_WR3(sc->sc_port), 0);
+	nep_write(sc, IPP_DFIFO_WR4(sc->sc_port), 0);
+	nep_write(sc, IPP_DFIFO_WR5(sc->sc_port), 0);
+
+	val &= ~IPP_CFIG_DFIFO_PIO_W;
+	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+
+	nep_write(sc, IPP_DFIFO_RD_PTR(sc->sc_port), addr);
+	(void)nep_read(sc, IPP_DFIFO_RD1(sc->sc_port));
+	(void)nep_read(sc, IPP_DFIFO_RD2(sc->sc_port));
+	(void)nep_read(sc, IPP_DFIFO_RD3(sc->sc_port));
+	(void)nep_read(sc, IPP_DFIFO_RD4(sc->sc_port));
+	(void)nep_read(sc, IPP_DFIFO_RD5(sc->sc_port));
+}
+
+void
 nep_init_rx_mac(struct nep_softc *sc)
+{
+	if (sc->sc_port < 2)
+		nep_init_rx_xmac(sc);
+	else
+		nep_init_rx_bmac(sc);
+}
+
+void
+nep_init_rx_xmac(struct nep_softc *sc)
 {
 	uint64_t addr0, addr1, addr2;
 	uint64_t val;
@@ -895,16 +996,9 @@ nep_init_rx_mac(struct nep_softc *sc)
 	addr0 = (sc->sc_lladdr[4] << 8) | sc->sc_lladdr[5];
 	addr1 = (sc->sc_lladdr[2] << 8) | sc->sc_lladdr[3];
 	addr2 = (sc->sc_lladdr[0] << 8) | sc->sc_lladdr[1];
-
-	if (sc->sc_port < 2) {
-		nep_write(sc, XMAC_ADDR0(sc->sc_port), addr0);
-		nep_write(sc, XMAC_ADDR1(sc->sc_port), addr1);
-		nep_write(sc, XMAC_ADDR2(sc->sc_port), addr2);
-	} else {
-		nep_write(sc, BMAC_ADDR0(sc->sc_port), addr0);
-		nep_write(sc, BMAC_ADDR1(sc->sc_port), addr1);
-		nep_write(sc, BMAC_ADDR2(sc->sc_port), addr2);
-	}
+	nep_write(sc, XMAC_ADDR0(sc->sc_port), addr0);
+	nep_write(sc, XMAC_ADDR1(sc->sc_port), addr1);
+	nep_write(sc, XMAC_ADDR2(sc->sc_port), addr2);
 
 	nep_write(sc, XMAC_ADDR_CMPEN(sc->sc_port), 0);
 
@@ -918,7 +1012,20 @@ nep_init_rx_mac(struct nep_softc *sc)
 		nep_write(sc, XMAC_HASH_TBL(sc->sc_port, i), 0);
 
 	for (i = 0; i < 20; i++)
-		nep_write(sc, XMAC_HOST_INFO(sc->sc_port, i), 0);
+		nep_write(sc, XMAC_HOST_INFO(sc->sc_port, i), sc->sc_port);
+}
+
+void
+nep_init_rx_bmac(struct nep_softc *sc)
+{
+	uint64_t addr0, addr1, addr2;
+
+	addr0 = (sc->sc_lladdr[4] << 8) | sc->sc_lladdr[5];
+	addr1 = (sc->sc_lladdr[2] << 8) | sc->sc_lladdr[3];
+	addr2 = (sc->sc_lladdr[0] << 8) | sc->sc_lladdr[1];
+	nep_write(sc, BMAC_ADDR0(sc->sc_port), addr0);
+	nep_write(sc, BMAC_ADDR1(sc->sc_port), addr1);
+	nep_write(sc, BMAC_ADDR2(sc->sc_port), addr2);
 }
 
 void
@@ -978,13 +1085,21 @@ nep_init_rx_channel(struct nep_softc *sc, int chan)
 	nep_write(sc, RCRCFIG_B(chan), val);
 
 	nep_write(sc, DEF_PT_RDC(sc->sc_port), chan);
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 16; i++)
 		nep_write(sc, RDC_TBL(sc->sc_port, i), chan);
-
 }
 
 void
 nep_init_tx_mac(struct nep_softc *sc)
+{
+	if (sc->sc_port < 2)
+		nep_init_tx_xmac(sc);
+	else
+		nep_init_tx_bmac(sc);
+}
+
+void
+nep_init_tx_xmac(struct nep_softc *sc)
 {
 	uint64_t val;
 	int n;
@@ -1025,6 +1140,11 @@ nep_init_tx_mac(struct nep_softc *sc)
 
 	nep_write(sc, TXMAC_FRM_CNT(sc->sc_port), 0);
 	nep_write(sc, TXMAC_BYTE_CNT(sc->sc_port), 0);
+}
+
+void
+nep_init_tx_bmac(struct nep_softc *sc)
+{
 }
 
 void
@@ -1160,22 +1280,7 @@ nep_up(struct nep_softc *sc)
 
 	nep_init_rx_mac(sc);
 	nep_init_rx_channel(sc, sc->sc_port);
-
-	val = nep_read(sc, IPP_CFIG(sc->sc_port));
-	val |= IPP_CFIG_SOFT_RST;
-	nep_write(sc, IPP_CFIG(sc->sc_port), val);
-	n = 1000;
-	while (--n) {
-		val = nep_read(sc, IPP_CFIG(sc->sc_port));
-		if ((val & IPP_CFIG_SOFT_RST) == 0)
-			break;
-	}
-	if (n == 0)
-		printf("timeout resetting IPP\n");
-
-	val = nep_read(sc, IPP_CFIG(sc->sc_port));
-	val |= IPP_CFIG_IPP_ENABLE;
-	nep_write(sc, IPP_CFIG(sc->sc_port), val);
+	nep_init_ipp(sc);
 
 	nep_init_tx_mac(sc);
 	nep_init_tx_channel(sc, sc->sc_port);
@@ -1249,6 +1354,7 @@ nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 //	       nep_read(sc, TX_RNG_ERR_LOGL(sc->sc_port)));
 //	printf("SYS_ERR_STAT %llx\n", nep_read(sc, SYS_ERR_STAT));
 //	printf("ZCP_INT_STAT %llx\n", nep_read(sc, ZCP_INT_STAT));
+//	printf("IPP_INT_STAT %llx\n", nep_read(sc, IPP_INT_STAT(sc->sc_port)));
 //	printf("TXC_INT_STAT_DBG %llx\n", nep_read(sc, TXC_INT_STAT_DBG));
 //	printf("TXC_PKT_STUFFED: %llx\n",
 //	       nep_read(sc, TXC_PKT_STUFFED(sc->sc_port)));
