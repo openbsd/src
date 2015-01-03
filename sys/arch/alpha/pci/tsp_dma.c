@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_dma.c,v 1.11 2014/06/14 23:11:20 jmatthew Exp $ */
+/* $OpenBSD: tsp_dma.c,v 1.12 2015/01/03 20:44:23 miod Exp $ */
 /* $NetBSD: tsp_dma.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -112,8 +112,7 @@ tsp_dma_init(struct device *tsp, struct tsp_config *pcp)
 		{ 0x00800000, 0x00700000, 0x00000000, WSBA_ENA | WSBA_SG },
 		/* 0-1GB at 2GB direct */
 		{ 0x80000000, 0x3ff00000, 0x00000000, WSBA_ENA           },
-		/* 1-2GB at 3GB direct */
-		{ 0xC0000000, 0x3ff00000, 0x40000000, WSBA_ENA           },
+		{ 0, 0, 0 },
 		{ 0, 0, 0 }
 	};
 
@@ -144,11 +143,7 @@ tsp_dma_init(struct device *tsp, struct tsp_config *pcp)
 	t = &pcp->pc_dmat_direct;
 	t->_cookie = pcp;
 	t->_wbase = dwbase = WSBA_ADDR(pccsr->tsp_wsba[1].tsg_r);
-	t->_wsize = dwlen = WSM_LEN(pccsr->tsp_wsm[1].tsg_r) +
-	    WSM_LEN(pccsr->tsp_wsm[2].tsg_r);
-	KDASSERT(WSBA_ADDR(pccsr->tsp_wsba[2].tsg_r) ==
-	    WSBA_ADDR(pccsr->tsp_wsba[1].tsg_r) +
-	    WSM_LEN(pccsr->tsp_wsm[1].tsg_r));
+	t->_wsize = dwlen = WSM_LEN(pccsr->tsp_wsm[1].tsg_r);
 	t->_next_window = &pcp->pc_dmat_sgmap;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
