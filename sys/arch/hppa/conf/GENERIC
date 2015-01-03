@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.167 2014/12/11 19:44:17 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.168 2015/01/03 21:24:19 uaa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -137,6 +137,8 @@ umsm*	at uhub?		# Qualcomm MSM EVDO
 ucom*	at umsm?
 ucycom*	at uhidev?		# Cypress serial
 ucom*	at ucycom?
+uslhcom* at uhidev?		# Silicon Labs CP2110 USB HID UART
+ucom*	at uslhcom?
 uchcom*	at uhub?		# WinChipHead CH341/340 serial
 ucom*	at uchcom?
 uaudio* at uhub?		# USB Audio
