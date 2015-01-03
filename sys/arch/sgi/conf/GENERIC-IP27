@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.58 2014/12/11 19:44:17 tedu Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.59 2015/01/03 21:43:42 uaa Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -121,6 +121,8 @@ ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0
 ukbd*		at uhidev?	# USB keyboard
 wskbd*		at ukbd? mux 1
+uslhcom*	at uhidev?	# Silicon Labs CP2110 USB HID UART
+ucom*		at uslhcom?
 uhid*		at uhidev?	# USB generic HID support
 atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
