@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2015/01/03 15:49:18 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.48 2015/01/03 16:20:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1744,6 +1744,7 @@ server_inherit(struct server *src, const char *name,
 	dst->srv_conf.id = ++last_server_id;
 	if (last_server_id == INT_MAX) {
 		yyerror("too many servers defined");
+		serverconfig_free(&dst->srv_conf);
 		free(dst);
 		return (NULL);
 	}
