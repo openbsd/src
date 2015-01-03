@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.3 2014/08/28 14:25:48 jsing Exp $ */
+/* $OpenBSD: rsautl.c,v 1.4 2015/01/03 03:03:39 lteo Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -248,7 +248,15 @@ rsautl_main(int argc, char **argv)
 	keysize = RSA_size(rsa);
 
 	rsa_in = reallocarray(NULL, keysize, 2);
+	if (rsa_in == NULL) {
+		BIO_printf(bio_err, "Error allocating memory for input data\n");
+		exit(1);
+	}
 	rsa_out = malloc(keysize);
+	if (rsa_out == NULL) {
+		BIO_printf(bio_err, "Error allocating memory for output data\n");
+		exit(1);
+	}
 
 	/* Read the input data */
 	rsa_inlen = BIO_read(in, rsa_in, keysize * 2);

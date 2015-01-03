@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.23 2015/01/01 14:28:00 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.24 2015/01/03 03:03:39 lteo Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -229,6 +229,8 @@ chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	if (arg->count == 0) {
 		arg->count = 20;
 		arg->data = reallocarray(NULL, arg->count, sizeof(char *));
+		if (arg->data == NULL)
+			return 0;
 	}
 	for (i = 0; i < arg->count; i++)
 		arg->data[i] = NULL;
