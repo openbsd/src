@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.290 2015/01/01 22:53:39 krw Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.291 2015/01/03 06:09:36 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -209,6 +209,7 @@ void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
 void	trunk_status(void);
+void	list_cloners(void);
 
 #ifndef SMALL
 void	carp_status(void);
@@ -254,7 +255,6 @@ void	unsetpflow_sender(const char *, int);
 void	setpflow_receiver(const char *, int);
 void	unsetpflow_receiver(const char *, int);
 void	setpflowproto(const char *, int);
-void	list_cloners(void);
 void	setifipdst(const char *, int);
 void	setifdesc(const char *, int);
 void	unsetifdesc(const char *, int);
