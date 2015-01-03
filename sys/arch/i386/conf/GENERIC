@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.792 2014/12/11 19:44:17 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.793 2015/01/03 20:39:11 uaa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -274,6 +274,8 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 ucycom*	at uhidev?		# Cypress serial
 ucom*	at ucycom?
+uslhcom* at uhidev?		# Silicon Labs CP2110 USB HID UART
+ucom*	at uslhcom?
 uticom* at uhub?		# TI serial
 ucom*	at uticom?
 uhid*	at uhidev?		# USB generic HID support
