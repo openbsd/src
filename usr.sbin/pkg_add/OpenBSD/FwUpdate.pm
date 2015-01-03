@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.2 2014/12/27 23:58:52 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.3 2015/01/03 17:32:43 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,7 @@
 use strict;
 use warnings;
 use OpenBSD::PkgAdd;
+use OpenBSD::PackageRepository;
 
 package OpenBSD::FwUpdate::State;
 our @ISA = qw(OpenBSD::PkgAdd::State);
@@ -57,16 +58,23 @@ sub handle_options
 	$state->{destdir} = '';
 	$state->{wantntogo} = 0;
 	$state->{subst}->add('repair', 1);
-	$state->finish_init;
+	if ($state->opt('a') && @ARGV != 0) {
+		$state->usage;
+	}
+	if ($state->opt('d') && @ARGV == 0) {
+		$state->usage("Driver specification required for delete opration");
+	}
+	$state->{fw_repository} = 
+	    OpenBSD::PackageRepository->new($state->{path});
+	if ($state->verbose && !$state->opt('d')) {
+		$state->say("PKG_PATH=#1", $state->{path});
+	}
 }
 
 sub finish_init
 {
 	my $state = shift;
-	$ENV{PKG_PATH} = $state->{path};
-	if ($state->verbose && !$state->opt('d')) {
-		$state->say("PKG_PATH=#1", $state->{path});
-	}
+	delete $state->{signer_list}; # XXX uncache value
 	$state->{subst}->add('FW_UPDATE', 1);
 }
 
@@ -122,11 +130,12 @@ sub find_machine_drivers
 sub find_installed_drivers
 {
 	my ($self, $state, $h) = @_;
-	require OpenBSD::PackageInfo;
-	my $list = OpenBSD::PackageInfo->installed_stems;
+	my $inst = $state->repo->installed;
 	for my $driver (keys %possible_drivers) {	
-		if ($list->find("$driver-firmware")) {
-			$h->{$driver} = 1;
+		my $search = OpenBSD::Search::Stem->new("$driver-firmware");
+		my $l = $inst->match_locations($search);
+		if (@$l > 0) {
+			$h->{$driver} = OpenBSD::Handle->from_location($l->[0]);
 		}
 	}
 }
@@ -142,12 +151,14 @@ sub find_handle
 {
 	my ($self, $state, $done, $inst, $driver) = @_;
 	my $pkgname = "$driver-firmware";
+	my $set;
 	if ($done->{$driver}) {
-		my $l = $state->updater->stem2location($inst, $pkgname, $state);
-		return $state->updateset->add_older(OpenBSD::Handle->from_location($l));
+		$set = $state->updateset->add_older($done->{$driver});
 	} else {
-		return $state->updateset->add_hints($pkgname);
+		$set = $state->updateset->add_hints($pkgname);
 	}
+	$set->add_repositories($state->{fw_repository});
+	return $set;
 }
 
 sub mark_set_for_deletion
@@ -164,8 +175,8 @@ sub mark_set_for_deletion
 sub do_quirks
 {
 	my ($self, $state) = @_;
-#	$self->SUPER::do_quirks($state);
-#	$state->finish_init;
+	$self->SUPER::do_quirks($state);
+	$state->finish_init;
 }
 
 sub process_parameters
