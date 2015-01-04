@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.291 2015/01/03 06:09:36 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.292 2015/01/04 12:30:39 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2221,6 +2221,17 @@ ieee80211_listchans(void)
 	}
 }
 
+/*
+ * Returns an integer less than, equal to, or greater than zero if nr1's
+ * RSSI is respectively greater than, equal to, or less than nr2's RSSI.
+ */
+static int
+rssicmp(const void *nr1, const void *nr2)
+{
+	const struct ieee80211_nodereq *x = nr1, *y = nr2;
+	return y->nr_rssi < x->nr_rssi ? -1 : y->nr_rssi > x->nr_rssi;
+}
+
 void
 ieee80211_listnodes(void)
 {
@@ -2256,6 +2267,8 @@ ieee80211_listnodes(void)
 
 	if (!na.na_nodes)
 		printf("\t\tnone\n");
+	else
+		qsort(nr, na.na_nodes, sizeof(*nr), rssicmp);
 
 	for (i = 0; i < na.na_nodes; i++) {
 		printf("\t\t");
