@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.35 2014/12/29 17:07:17 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.36 2015/01/04 02:28:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -141,10 +141,11 @@ main(int argc, char **argv)
 			operation = DO_BLF;
 			if (strcmp(optarg, "a") == 0)
 				rounds = ideal_rounds();
-			else
+			else {
 				rounds = strtonum(optarg, 1, INT_MAX, &errstr);
-			if (errstr != NULL)
-				errx(1, "%s: %s", errstr, optarg);
+				if (errstr != NULL)
+					errx(1, "%s: %s", errstr, optarg);
+			}
 			extra = &rounds;
 			break;
 		case 'c':                       /* user login class */
