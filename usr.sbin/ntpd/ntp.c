@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.121 2014/10/08 04:57:29 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.122 2015/01/04 01:16:10 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
 	u_int			 ctl_cnt;
-	pid_t			 pid, dns_pid;
+	pid_t			 pid;
 	struct pollfd		*pfd = NULL;
 	struct servent		*se;
 	struct listen_addr	*la;
@@ -118,7 +118,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	close(pipe_prnt[0]);
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_dns) == -1)
 		fatal("socketpair");
-	dns_pid = ntp_dns(pipe_dns, nconf, pw);
+	ntp_dns(pipe_dns, nconf, pw);
 	close(pipe_dns[1]);
 
 	if (stat(pw->pw_dir, &stb) == -1)
