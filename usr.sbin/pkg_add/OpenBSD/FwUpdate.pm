@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.5 2015/01/04 14:54:12 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.6 2015/01/04 14:55:47 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -63,9 +63,6 @@ sub handle_options
 	}
 	$state->{fw_repository} = 
 	    OpenBSD::PackageRepository->new($state->{path});
-	if ($state->verbose && !$state->opt('d')) {
-		$state->say("PKG_PATH=#1", $state->{path});
-	}
 }
 
 sub finish_init
