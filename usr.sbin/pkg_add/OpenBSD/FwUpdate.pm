@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.4 2015/01/04 14:48:19 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.5 2015/01/04 14:54:12 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -227,12 +227,12 @@ sub process_parameters
 	if (@ARGV == 0) {
 		if ($state->opt('d')) {
 			for my $driver ($state->installed_drivers) {
-				if (!$state->is_needed($driver)) {
+				if ($state->opt('a') || 
+				    !$state->is_needed($driver)) {
 					$self->to_remove($state, $driver);
 				}
 			}
-		}
-		if ($state->opt('a') || !$state->opt('d')) {
+		} else {
 			for my $driver ($state->machine_drivers) {
 				$self->to_add_or_update($state, $driver);
 			}
