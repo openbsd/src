@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.50 2015/01/02 18:06:25 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.51 2015/01/04 20:10:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -744,29 +744,28 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	switch (code) {
 	case XHCI_CODE_SUCCESS:
 		/*
-		 * This might be the ``Event Status TRB'' of a control
-		 * request for which the ``Event Data TRB'' triggered
-		 * a Short Transfer condition, see below.
+		 * This might be the last TRB of a TD that ended up
+		 * with a Short Transfer condition, see below.
 		 */
-		if (xfer->actlen)
-			break;
+		if (xfer->actlen == 0)
+			xfer->actlen = xfer->length - remain;
 
-		/* FALLTHROUGH */
+		xfer->status = USBD_NORMAL_COMPLETION;
+		break;
 	case XHCI_CODE_SHORT_XFER:
 		xfer->actlen = xfer->length - remain;
-		xfer->status = USBD_NORMAL_COMPLETION;
 
 		/*
 		 * If this is not the last TRB of a transfer, we should
-		 * not assume the USB packet is finished.  In the case
-		 * of a Sort Transfer condition we should theoretically
-		 * clear the IOC flags on the ``Event Status TRB'' but
-		 * the HC might have already processed it since before
-		 * we start processing the softinterrupt.
+		 * theoretically clear the IOC at the end of the chain
+		 * but the HC might have already processed it before we
+		 * had a change to schedule the softinterrupt.
 		 */
 		xx = (struct xhci_xfer *)xfer;
 		if (xx->index != trb_idx)
 			return;
+
+		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
 	case XHCI_CODE_TXERR:
 	case XHCI_CODE_SPLITERR:
