@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.112 2015/01/04 01:13:10 bcook Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.113 2015/01/04 01:48:49 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,8 @@
 
 #include "ntp.h"
 #include <imsg.h>
+
+#define MAXIMUM(a, b)	((a) > (b) ? (a) : (b))
 
 #define	NTPD_USER	"_ntp"
 #define	CONFFILE	"/etc/ntpd.conf"

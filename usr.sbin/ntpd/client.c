@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.94 2015/01/04 01:19:46 bcook Exp $ */
+/*	$OpenBSD: client.c,v 1.95 2015/01/04 01:48:49 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,15 +121,13 @@ client_nextaddr(struct ntp_peer *p)
 	return (0);
 }
 
-#define SCALE_MAX(a, b) ((a) > (b) ? (a) : (b))
-
 int
 client_query(struct ntp_peer *p)
 {
 	int	val;
 
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
-		set_next(p, SCALE_MAX(SETTIME_TIMEOUT,
+		set_next(p, MAXIMUM(SETTIME_TIMEOUT,
 		    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
 		return (0);
 	}
@@ -152,7 +150,7 @@ client_query(struct ntp_peer *p)
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
 				client_nextaddr(p);
-				set_next(p, SCALE_MAX(SETTIME_TIMEOUT,
+				set_next(p, MAXIMUM(SETTIME_TIMEOUT,
 				    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
 				return (-1);
 			} else

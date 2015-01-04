@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.123 2015/01/04 01:19:46 bcook Exp $ */
+/*	$OpenBSD: ntp.c,v 1.124 2015/01/04 01:48:49 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -734,15 +734,13 @@ update_scale(double offset)
 		conf->scale = QSCALE_OFF_MAX / offset;
 }
 
-#define SCALE_MAX(a, b) ((a) > (b) ? (a) : (b))
-
 time_t
 scale_interval(time_t requested)
 {
 	time_t interval, r;
 
 	interval = requested * conf->scale;
-	r = arc4random_uniform(SCALE_MAX(5, interval / 10));
+	r = arc4random_uniform(MAXIMUM(5, interval / 10));
 	return (interval + r);
 }
 
