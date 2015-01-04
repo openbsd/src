@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.13 2014/12/11 19:44:17 tedu Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.14 2015/01/04 20:55:38 uaa Exp $
 #
 # GENERIC machine description file
 #
@@ -122,6 +122,8 @@ ums*		at uhidev?		# USB mouse
 wsmouse*	at ums? mux 0
 ukbd*		at uhidev?		# USB keyboard
 wskbd*		at ukbd? mux 1
+uslhcom*	at uhidev?		# Silicon Labs CP2110 USB HID UART
+ucom*		at uslhcom?
 uhid*		at uhidev?		# USB generic HID support
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?		# Atmel AT76c50x based 802.11b

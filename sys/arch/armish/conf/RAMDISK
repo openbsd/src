@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.32 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.33 2015/01/04 20:55:38 uaa Exp $
 
 machine		armish arm
 maxusers	4
@@ -96,6 +96,8 @@ umass*		at uhub?
 uhidev*		at uhub?		# Human Interface Devices
 ukbd*		at uhidev?		# USB keyboard
 wskbd*		at ukbd? mux 1
+uslhcom*	at uhidev?		# Silicon Labs CP2110 USB HID UART
+ucom*		at uslhcom?
 uhid*		at uhidev?		# USB generic HID support
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?		# Atmel AT76c50x based 802.11b
