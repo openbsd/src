@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.69 2014/12/03 22:41:11 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.70 2015/01/04 14:10:20 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -220,7 +220,7 @@ sub syslog
 	Sys::Syslog::syslog('info', $self->f(@_));
 }
 
-sub todo
+sub ntodo
 {
 	my ($state, $offset) = @_;
 	return $state->tracker->sets_todo($offset);

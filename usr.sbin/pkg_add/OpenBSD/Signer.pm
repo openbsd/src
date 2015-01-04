@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.5 2014/09/20 09:04:31 espie Exp $
+# $OpenBSD: Signer.pm,v 1.6 2015/01/04 14:10:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -174,7 +174,7 @@ sub add_signature
 	$sig->{b64sig} = $state->{signer}->compute_signature($state, $plist);
 }
 
-sub todo
+sub ntodo
 {
 	my ($self, $offset) = @_;
 	return sprintf("%u/%u", $self->{done}-$offset, $self->{total});

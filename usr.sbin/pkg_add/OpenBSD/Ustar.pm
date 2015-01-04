@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.85 2014/11/20 11:39:29 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.86 2015/01/04 14:10:20 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -512,7 +512,7 @@ sub errsay
 	my ($self, @args) = @_;
 	$self->{archive}{state}->errsay(@args);
 }
-sub todo
+sub left_todo
 {
 	my ($self, $toread) = @_;
 	return if $toread == 0;
@@ -840,7 +840,7 @@ sub create
 		}
 
 		$toread -= $actual;
-		$self->todo($toread);
+		$self->left_todo($toread);
 	}
 	$out->close or $self->fatal("Error closing #1#2: #3",
 	    $self->{destdir}, $self->name, $!);
@@ -907,7 +907,7 @@ sub write_contents
 		}
 
 		$toread -= $actual;
-		$self->todo($toread);
+		$self->left_todo($toread);
 	}
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512) or
