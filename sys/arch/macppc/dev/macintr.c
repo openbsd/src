@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.49 2014/09/06 10:45:29 mpi Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.50 2015/01/04 13:01:42 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -64,7 +64,6 @@ struct intrq macintr_handler[ICU_LEN];
 void macintr_calc_mask(void);
 void macintr_eoi(int irq);
 int macintr_read_irq(void);
-static void macintr_do_pending_int(void);
 
 extern u_int32_t *heathrow_FCR;
 
@@ -83,7 +82,6 @@ struct macintr_softc {
 
 int	macintr_match(struct device *parent, void *cf, void *aux);
 void	macintr_attach(struct device *, struct device *, void *);
-void	mac_do_pending_int(void);
 void	mac_ext_intr(void);
 void	macintr_collect_preconf_intr(void);
 void	macintr_setipl(int ipl);
@@ -125,7 +123,6 @@ macintr_match(struct device *parent, void *cf, void *aux)
 
 u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
-extern void_f *pending_int_f;
 int macintr_prog_button (void *arg);
 
 intr_establish_t macintr_establish;
@@ -142,12 +139,16 @@ int
 macintr_splraise(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
-	newcpl = macintr_pri_share[newcpl];
 	int ocpl = ci->ci_cpl;
+	int s;
+
+	newcpl = macintr_pri_share[newcpl];
 	if (ocpl > newcpl)
 		newcpl = ocpl;
 
+	s = ppc_intr_disable();
 	macintr_setipl(newcpl);
+	ppc_intr_enable(s);
 
 	return ocpl;
 }
@@ -167,10 +168,16 @@ void
 macintr_splx(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
-	 
+	int intr, s;
+
+	intr = ppc_intr_disable();
 	macintr_setipl(newcpl);
-	if (ci->ci_ipending & ppc_smask[newcpl])
-		macintr_do_pending_int();
+	if ((newcpl < IPL_SOFTTTY && ci->ci_ipending & ppc_smask[newcpl])) {
+		s = splsofttty();
+		dosoftint(newcpl);
+		macintr_setipl(s); /* no-overhead splx */
+	}
+	ppc_intr_enable(intr);
 }
 
 void
@@ -192,7 +199,6 @@ macintr_attach(struct device *parent, struct device *self, void *aux)
 	ppc_smask_init();
 
 	install_extint(mac_ext_intr);
-	pending_int_f = macintr_do_pending_int;
 	intr_establish_func  = macintr_establish;
 	intr_disestablish_func  = macintr_disestablish;
 	mac_intr_establish_func  = macintr_establish;
@@ -254,19 +260,18 @@ macintr_prog_button (void *arg)
 	return 1;
 }
 
+/* Must be called with interrupt disable. */
 void
 macintr_setipl(int ipl)
 {
 	struct cpu_info *ci = curcpu();
-	int s;
-	s = ppc_intr_disable();
+
 	ci->ci_cpl = ipl;
 	if (heathrow_FCR)
 		out32rb(INT_ENABLE_REG1,
 		    macintr_ienable_h[macintr_pri_share[ipl]]);
 
 	out32rb(INT_ENABLE_REG0, macintr_ienable_l[macintr_pri_share[ipl]]);
-	ppc_intr_enable(s);
 }
 
 /*
@@ -469,45 +474,7 @@ mac_ext_intr()
 		irq = macintr_read_irq();
 	}
 
-	ppc_intr_enable(1);
-	splx(pcpl);	/* Process pendings. */
-}
-
-void
-macintr_do_pending_int()
-{
-	struct cpu_info *ci = curcpu();
-	int pcpl = ci->ci_cpl; /* XXX */
-	int s;
-	s = ppc_intr_disable();
-	if (ci->ci_flags & CI_FLAGS_PROCESSING_SOFT) {
-		ppc_intr_enable(s);
-		return;
-	}
-	atomic_setbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
-
-	do {
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
-		    (pcpl < IPL_SOFTCLOCK)) {
- 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
-			softintr_dispatch(SI_SOFTCLOCK);
- 		}
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
-		    (pcpl < IPL_SOFTNET)) {
-			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
-			softintr_dispatch(SI_SOFTNET);
-		}
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
-		    (pcpl < IPL_SOFTTTY)) {
-			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTTTY);
-			softintr_dispatch(SI_SOFTTTY);
-		}
-
-	} while (ci->ci_ipending & ppc_smask[pcpl]);
-	macintr_setipl(pcpl);
-	ppc_intr_enable(s);
-
-	atomic_clearbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
+	macintr_splx(pcpl);	/* Process pendings. */
 }
 
 void

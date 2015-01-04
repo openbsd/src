@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.58 2014/10/10 04:08:11 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.59 2015/01/04 13:01:42 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -57,7 +57,6 @@ struct cpu_info {
 	volatile int ci_ipending;
 
 	volatile int	ci_flags;
-#define	CI_FLAGS_PROCESSING_SOFT	1
 #define	CI_FLAGS_SLEEPING		2
 
 	int ci_intrdepth;

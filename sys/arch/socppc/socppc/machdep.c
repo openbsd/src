@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2015/01/04 13:01:42 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1082,43 +1082,6 @@ haltsys:
 	printf("boot failed, spinning\n");
 	for (;;) ;
 	/* NOTREACHED */
-}
-
-void
-do_pending_int(void)
-{
-	struct cpu_info *ci = curcpu();
-	int pcpl = ci->ci_cpl; /* XXX */
-	int s;
-	s = ppc_intr_disable();
-	if (ci->ci_flags & CI_FLAGS_PROCESSING_SOFT) {
-		ppc_intr_enable(s);
-		return;
-	}
-	atomic_setbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
-
-	do {
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
-		    (pcpl < IPL_SOFTCLOCK)) {
- 			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
-			softintr_dispatch(SI_SOFTCLOCK);
- 		}
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
-		    (pcpl < IPL_SOFTNET)) {
-			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
-			softintr_dispatch(SI_SOFTNET);
-		}
-		if((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTTTY)) &&
-		    (pcpl < IPL_SOFTTTY)) {
-			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTTTY);
-			softintr_dispatch(SI_SOFTTTY);
-		}
-
-	} while (ci->ci_ipending & ppc_smask[pcpl]);
-	splx(pcpl);
-	ppc_intr_enable(s);
-
-	atomic_clearbits_int(&ci->ci_flags, CI_FLAGS_PROCESSING_SOFT);
 }
 
 /*

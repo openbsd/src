@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.49 2013/05/17 19:38:52 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.50 2015/01/04 13:01:42 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -88,8 +88,24 @@ char *ppc_intr_typename(int type);
 void do_pending_int(void);
 
 /* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
-#define	splsoftassert(wantipl)	/* nothing */
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (splassert_ctl > 0) {			\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#define splsoftassert(wantipl) splassert(wantipl)
+#else
+#define splassert(wantipl)	do { /* nada */ } while (0)
+#define splsoftassert(wantipl)	do { /* nada */ } while (0)
+#endif
 
 #define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
 
@@ -138,6 +154,7 @@ void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_init(void);
 
 void	softintr_schedule(void *);
+void	dosoftint(int);
 
 #define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
 

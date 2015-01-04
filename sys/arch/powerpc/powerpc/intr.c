@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2015/01/04 13:01:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -121,7 +121,7 @@ ppc_dflt_splx(int newcpl)
         ci->ci_cpl = newcpl;
 
         if (ci->ci_ipending & ppc_smask[newcpl])
-		do_pending_int();
+		dosoftint(newcpl);
 }
 
 struct ppc_intr_func ppc_intr_func =
@@ -147,3 +147,17 @@ ppc_intr_typename(int type)
 		return ("unknown");
 	}
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_cpl < wantipl)
+		splassert_fail(wantipl, ci->ci_cpl, func);
+
+	if (wantipl == IPL_NONE && ci->ci_intrdepth != -1)
+		splassert_fail(-1, ci->ci_intrdepth, func);
+}
+#endif

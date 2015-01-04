@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.6 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.7 2015/01/04 13:01:42 mpi Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -92,9 +92,7 @@ softintr_dispatch(int si)
 
 		mtx_leave(&siq->siq_mtx);
 
-		KERNEL_LOCK();
 		(*sih->sih_func)(sih->sih_arg);
-		KERNEL_UNLOCK();
 	}
 }
 
@@ -176,21 +174,25 @@ softintr_schedule(void *arg)
 	mtx_leave(&siq->siq_mtx);
 }
 
-#if 0
 void
-dosoftint(int xcpl)
+dosoftint(int pcpl)
 {
 	struct cpu_info *ci = curcpu();
 	int sir, q, mask;
 
-	while ((sir = (ci->ci_ipending & SINT_ALLMASK & ~xcpl)) != 0) {
+	ppc_intr_enable(1);
+	KERNEL_LOCK();
+
+	while ((sir = (ci->ci_ipending & ppc_smask[pcpl])) != 0) {
 		atomic_clearbits_int(&ci->ci_ipending, sir);
 
 		for (q = SI_NQUEUES - 1; q >= 0; q--) {
-			mask = SINTMASK(q);
+			mask = SI_TO_IRQBIT(q);
 			if (sir & mask)
 				softintr_dispatch(q);
 		}
 	}
+
+	KERNEL_UNLOCK();
+	(void)ppc_intr_disable();
 }
-#endif

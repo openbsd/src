@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.16 2014/02/08 10:58:17 kettenis Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.17 2015/01/04 13:01:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -298,11 +298,11 @@ intr_establish(int ivec, int type, int level,
 	 */
 	s = ppc_intr_disable();
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
-	ppc_intr_enable(s);
 
 	/* Unmask the interrupt. */
 	if (sc)
 		ipic_setipl(curcpu()->ci_cpl);
+	ppc_intr_enable(s);
 
 	return (ih);
 }
@@ -347,11 +347,14 @@ ipic_splraise(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
 	int ocpl = ci->ci_cpl;
+	int s;
 
 	if (ocpl > newcpl)
 		newcpl = ocpl;
 
+	s = ppc_intr_disable();
 	ipic_setipl(newcpl);
+	ppc_intr_enable(s);
 
 	return (ocpl);
 }
@@ -371,21 +374,26 @@ void
 ipic_splx(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
+	int intr, s;
 
+	intr = ppc_intr_disable();
 	ipic_setipl(newcpl);
-	if (ci->ci_ipending & ppc_smask[newcpl])
-		do_pending_int();
+	if (newcpl < IPL_SOFTTTY && (ci->ci_ipending & ppc_smask[newcpl])) {
+		s = splsofttty();
+		dosoftint(newcpl);
+		ipic_setipl(s); /* no-overhead splx */
+	}
+	ppc_intr_enable(intr);
 }
 
+/* Must be called with interrupt disable. */
 void
 ipic_setipl(int ipl)
 {
 	struct cpu_info *ci = curcpu();
 	struct ipic_softc *sc = ipic_sc;
 	uint32_t mask;
-	int s;
 
-	s = ppc_intr_disable();
 	ci->ci_cpl = ipl;
 	mask = sc->sc_simsr_h[IPL_HIGH] & ~sc->sc_simsr_h[ipl];
 	ipic_write(sc, IPIC_SIMSR_H, mask);
@@ -393,5 +401,4 @@ ipic_setipl(int ipl)
 	ipic_write(sc, IPIC_SIMSR_L, mask);
 	mask = sc->sc_semsr[IPL_HIGH] & ~sc->sc_semsr[ipl];
 	ipic_write(sc, IPIC_SEMSR, mask);
-	ppc_intr_enable(s);
 }
