@@ -1,4 +1,4 @@
-/* $OpenBSD: siphash.h,v 1.3 2014/12/30 11:08:59 dlg Exp $ */
+/* $OpenBSD: siphash.h,v 1.4 2015/01/04 09:07:44 miod Exp $ */
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
  * All rights reserved.
@@ -65,12 +65,12 @@ typedef struct {
 
 void		SipHash_Init(SIPHASH_CTX *, const SIPHASH_KEY *);
 void		SipHash_Update(SIPHASH_CTX *, int, int, const void *, size_t)
-		    __bounded((__string__, 4, 5));
+		    __bounded((__buffer__, 4, 5));
 u_int64_t	SipHash_End(SIPHASH_CTX *, int, int);
 void		SipHash_Final(void *, SIPHASH_CTX *, int, int)
 		    __bounded((__minbytes__, 1, SIPHASH_DIGEST_LENGTH));
 u_int64_t	SipHash(const SIPHASH_KEY *, int, int, const void *, size_t)
-		    __bounded((__string__, 4, 5));
+		    __bounded((__buffer__, 4, 5));
 
 #define SipHash24_Init(_c, _k)		SipHash_Init((_c), (_k))
 #define SipHash24_Update(_c, _p, _l)	SipHash_Update((_c), 2, 4, (_p), (_l))
