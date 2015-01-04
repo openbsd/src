@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.31 2014/12/11 18:55:15 mpi Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.32 2015/01/04 08:42:04 jsg Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -380,7 +380,6 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	uint8_t report[5];
 	uint32_t baud = 0;
 	uint8_t cfg;
-	int err;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
@@ -452,7 +451,7 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	    sc->sc_hdev.sc_report_id, report, sc->sc_flen) != sc->sc_flen)
 		return EIO;
 	sc->sc_baud = baud;
-	return (err);
+	return (0);
 }
 
 void
