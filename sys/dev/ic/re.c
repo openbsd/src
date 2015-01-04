@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.165 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: re.c,v 1.166 2015/01/04 07:14:41 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1584,7 +1584,7 @@ re_intr(void *arg)
 		}
 	}
 
-	if (tx && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (tx)
 		re_start(ifp);
 
 	CSR_WRITE_2(sc, RL_IMR, sc->rl_intrs);
@@ -1641,14 +1641,14 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		break;
 
 	case EFBIG:
-		if ((error = m_defrag(m, M_DONTWAIT)) == 0 &&
-		    (error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) == 0)
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) == 0)
 			break;
 
 		/* FALLTHROUGH */
 	default:
-		return (error);
+		return (ENOBUFS);
 	}
 
 	nsegs = map->dm_nsegs;
@@ -1713,7 +1713,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 				RL_TXDESCSYNC(sc, uidx,
 				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			}
-			error = ENOBUFS;
+			error = EBUSY;
 			goto fail_unload;
 		}
 
@@ -1782,21 +1782,20 @@ fail_unload:
 void
 re_start(struct ifnet *ifp)
 {
-	struct rl_softc	*sc;
-	int		idx, queued = 0;
+	struct rl_softc	*sc = ifp->if_softc;
+	struct mbuf	*m;
+	int		idx, queued = 0, error;
 
-	sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_OACTIVE)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 	if ((sc->rl_flags & RL_FLAG_LINK) == 0)
 		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
 	idx = sc->rl_ldata.rl_txq_prodidx;
-	for (;;) {
-		struct mbuf *m;
-		int error;
 
+	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
@@ -1808,18 +1807,17 @@ re_start(struct ifnet *ifp)
 		}
 
 		error = re_encap(sc, m, &idx);
-		if (error == EFBIG &&
-		    sc->rl_ldata.rl_tx_free == RL_TX_DESC_CNT(sc)) {
+		if (error != 0 && error != ENOBUFS) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		} else if (error != 0) {
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
 		}
-		if (error) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
 
+		/* now we are committed to transmit the packet */
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		queued++;
 
