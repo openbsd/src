@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.3 2013/11/12 06:05:17 deraadt Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.4 2015/01/04 16:12:42 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,14 +42,8 @@ double
 ldexp(double value, int exp)
 {
 	double temp;
-#if __GNUC__ >= 2
 	__asm ("fscale"
 		: "=t" (temp)
 		: "0" (value), "u" ((double)exp));
-#else
-	__asm ("fscale; fstp %%st(1)"
-		: "=f" (temp)
-		: "f" (value), "0" ((double)exp));
-#endif
 	return (temp);
 }
