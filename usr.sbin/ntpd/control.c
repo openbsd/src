@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2013/11/13 20:44:39 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.3 2015/01/04 01:24:43 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@
 int
 control_init(char *path)
 {
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa;
 	int			 fd;
 	mode_t			 old_umask;
 
@@ -45,10 +45,10 @@ control_init(char *path)
 		return (-1);
 	}
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
-	    sizeof(sun.sun_path))
+	bzero(&sa, sizeof(sa));
+	sa.sun_family = AF_UNIX;
+	if (strlcpy(sa.sun_path, path, sizeof(sa.sun_path)) >=
+	    sizeof(sa.sun_path))
 		errx(1, "ctl socket name too long");
 
 	if (unlink(path) == -1)
@@ -59,7 +59,7 @@ control_init(char *path)
 		}
 
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
-	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
 		log_warn("control_init: bind: %s", path);
 		close(fd);
 		umask(old_umask);
@@ -108,12 +108,12 @@ control_accept(int listenfd)
 {
 	int			 connfd;
 	socklen_t		 len;
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa;
 	struct ctl_conn		*ctl_conn;
 
-	len = sizeof(sun);
+	len = sizeof(sa);
 	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
+	    (struct sockaddr *)&sa, &len)) == -1) {
 		if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("control_accept: accept");
 		return (0);

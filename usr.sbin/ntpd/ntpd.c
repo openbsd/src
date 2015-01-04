@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.80 2015/01/04 01:11:24 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.81 2015/01/04 01:24:43 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -527,7 +527,7 @@ writefreq(double d)
 void
 ctl_main(int argc, char *argv[])
 {
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa;
 	struct imsg		 imsg;
 	struct imsgbuf		*ibuf_ctl;
 	int			 fd, n, done, ch, action;
@@ -580,12 +580,12 @@ ctl_main(int argc, char *argv[])
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "ntpctl: socket");
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path)) >=
-	    sizeof(sun.sun_path))
+	bzero(&sa, sizeof(sa));
+	sa.sun_family = AF_UNIX;
+	if (strlcpy(sa.sun_path, sockname, sizeof(sa.sun_path)) >=
+	    sizeof(sa.sun_path))
 		errx(1, "ctl socket name too long");
-	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		err(1, "connect: %s", sockname);
 
 	if ((ibuf_ctl = malloc(sizeof(struct imsgbuf))) == NULL)
