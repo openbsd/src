@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.3 2015/01/03 17:32:43 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.4 2015/01/04 14:48:19 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -61,9 +61,6 @@ sub handle_options
 	if ($state->opt('a') && @ARGV != 0) {
 		$state->usage;
 	}
-	if ($state->opt('d') && @ARGV == 0) {
-		$state->usage("Driver specification required for delete opration");
-	}
 	$state->{fw_repository} = 
 	    OpenBSD::PackageRepository->new($state->{path});
 	if ($state->verbose && !$state->opt('d')) {
@@ -76,6 +73,30 @@ sub finish_init
 	my $state = shift;
 	delete $state->{signer_list}; # XXX uncache value
 	$state->{subst}->add('FW_UPDATE', 1);
+}
+
+sub installed_drivers
+{
+	my $self = shift;
+	return keys %{$self->{installed_drivers}};
+}
+
+sub is_installed
+{
+	my ($self, $driver) = @_;
+	return $self->{installed_drivers}{$driver};
+}
+
+sub machine_drivers
+{
+	my $self = shift;
+	return keys %{$self->{machine_drivers}};
+}
+
+sub is_needed
+{
+	my ($self, $driver) = @_;
+	return $self->{machine_drivers}{$driver};
 }
 
 package OpenBSD::FwUpdate::Update;
@@ -111,16 +132,17 @@ sub parse_dmesg
 
 sub find_machine_drivers
 {
-	my ($self, $state, $h) = @_;
+	my ($self, $state) = @_;
+	$state->{machine_drivers} = {};
 	my %search = %possible_drivers;
 	if (open(my $f, '<', '/var/run/dmesg.boot')) {
-		$self->parse_dmesg($f, \%search, $h);
+		$self->parse_dmesg($f, \%search, $state->{machine_drivers});
 		close($f);
 	} else {
 		$state->errsay("Can't open dmesg.boot: #1", $!);
 	}
 	if (open(my $cmd, '-|', 'dmesg')) {
-		$self->parse_dmesg($cmd, \%search, $h);
+		$self->parse_dmesg($cmd, \%search, $state->{machine_drivers});
 		close($cmd);
 	} else {
 		$state->errsay("Can't run dmesg: #1", $!);
@@ -129,13 +151,14 @@ sub find_machine_drivers
 
 sub find_installed_drivers
 {
-	my ($self, $state, $h) = @_;
+	my ($self, $state) = @_;
 	my $inst = $state->repo->installed;
 	for my $driver (keys %possible_drivers) {	
 		my $search = OpenBSD::Search::Stem->new("$driver-firmware");
 		my $l = $inst->match_locations($search);
 		if (@$l > 0) {
-			$h->{$driver} = OpenBSD::Handle->from_location($l->[0]);
+			$state->{installed_drivers}{$driver} = 
+			    OpenBSD::Handle->from_location($l->[0]);
 		}
 	}
 }
@@ -149,11 +172,12 @@ sub new_state
 
 sub find_handle
 {
-	my ($self, $state, $done, $inst, $driver) = @_;
+	my ($self, $state, $driver) = @_;
 	my $pkgname = "$driver-firmware";
 	my $set;
-	if ($done->{$driver}) {
-		$set = $state->updateset->add_older($done->{$driver});
+	my $h = $state->is_installed($driver);
+	if ($h) {
+		$set = $state->updateset->add_older($h);
 	} else {
 		$set = $state->updateset->add_hints($pkgname);
 	}
@@ -179,33 +203,50 @@ sub do_quirks
 	$state->finish_init;
 }
 
+sub to_remove
+{
+	my ($self, $state, $driver) = @_;
+	$self->mark_set_for_deletion($self->to_add_or_update($state, $driver));
+}
+
+sub to_add_or_update
+{
+	my ($self, $state, $driver) = @_;
+	my $set = $self->find_handle($state, $driver);
+	push(@{$state->{setlist}}, $set);
+	return $set;
+}
+
 sub process_parameters
 {
 	my ($self, $state) = @_;
 
-	my $todo = {};
-	my $done = {};
-	$self->find_machine_drivers($state, $todo);
-	$self->find_installed_drivers($state, $done);
-	my $inst = $state->repo->installed;
+	$self->find_machine_drivers($state);
+	$self->find_installed_drivers($state);
 
 	if (@ARGV == 0) {
-		for my $driver (keys %$todo) {
-			push(@{$state->{setlist}}, 
-			    $self->find_handle($state, $done, $inst, $driver));
+		if ($state->opt('d')) {
+			for my $driver ($state->installed_drivers) {
+				if (!$state->is_needed($driver)) {
+					$self->to_remove($state, $driver);
+				}
+			}
+		}
+		if ($state->opt('a') || !$state->opt('d')) {
+			for my $driver ($state->machine_drivers) {
+				$self->to_add_or_update($state, $driver);
+			}
 		}
 	} else {
 		for my $driver (@ARGV) {
-			my $set = $self->find_handle($state, $done, $inst, 
-			    $driver);
+			my $set = $self->to_add_or_update($state, $driver);
 			if ($state->opt('d')) {
-				if (!$done->{$driver}) {
+				if (!$state->is_installed($driver)) {
 					$state->errsay("Can't delete uninstalled driver: #1", $driver);
 					next;
 				}
 				$self->mark_set_for_deletion($set);
 			} 
-			push(@{$state->{setlist}}, $set);
 		}
 	}
 }
