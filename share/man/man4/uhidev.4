@@ -1,4 +1,4 @@
-.\" $OpenBSD: uhidev.4,v 1.6 2008/06/26 05:42:07 ray Exp $
+.\" $OpenBSD: uhidev.4,v 1.7 2015/01/04 21:11:16 uaa Exp $
 .\" $NetBSD: uhidev.4,v 1.2 2001/12/29 03:06:41 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,17 +28,29 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: January 4 2015 $
 .Dt UHIDEV 4
 .Os
 .Sh NAME
 .Nm uhidev
 .Nd USB Human Interface Device support
 .Sh SYNOPSIS
-.Cd "uhidev* at uhub?"
-.Cd "uhid*   at uhidev?"
-.Cd "ukbd*   at uhidev?"
-.Cd "ums*    at uhidev?"
+.Cd "uhidev*  at uhub?"
+.Cd "ubcmtp*  at uhidev?"
+.Cd "ucycom*  at uhidev?"
+.Cd "ugold*   at uhidev?"
+.Cd "uhid*    at uhidev?"
+.Cd "ukbd*    at uhidev?"
+.Cd "ums*     at uhidev?"
+.Cd "uoaklux* at uhidev?"
+.Cd "uoakrh*  at uhidev?"
+.Cd "uoakv*   at uhidev?"
+.Cd "upd*     at uhidev?"
+.Cd "uslhcom* at uhidev?"
+.Cd "uthum*   at uhidev?"
+.Cd "utpms*   at uhidev?"
+.Cd "utrh*    at uhidev?"
+.Cd "utwitch* at uhidev?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,10 +66,22 @@ kinds of devices and
 only dispatches data to them based on the report id.
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr ubcmtp 4 ,
+.Xr ucycom 4 ,
+.Xr ugold 4 ,
 .Xr uhid 4 ,
 .Xr ukbd 4 ,
 .Xr ums 4 ,
+.Xr uoaklux 4 ,
+.Xr uoakrh 4 ,
+.Xr uoakv 4 ,
+.Xr upd 4 ,
 .Xr usb 4
+.Xr uslhcom 4 ,
+.Xr uthum 4 ,
+.Xr utpms 4, 
+.Xr utrh 4 ,
+.Xr utwitch 4 ,
 .Sh HISTORY
 The
 .Nm
