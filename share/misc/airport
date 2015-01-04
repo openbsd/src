@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.45 2014/12/29 20:16:58 naddy Exp $
+#	$OpenBSD: airport,v 1.46 2015/01/04 13:19:50 reyk Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1339,7 +1339,7 @@ PPT:Pape'ete, Tahiti, French Polynesia
 PQI:Presque Isle, Maine, USA
 PQQ:Port Macquarie, New South Wales, Australia
 PRC:Prescott, Arizona, USA
-PRG:Ruzyne, Prague, Czech Republic
+PRG:Vaclav Havel Airport, Prague, Czech Republic
 PRI:Praslin Island, Seychelles
 PSA:G Galilei, Pisa, Italy
 PSE:Mercedita, Ponce, Puerto Rico, USA
