@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.43 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.44 2015/01/04 22:23:58 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -101,8 +101,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 	size_t				 scriptlen;
 	int				 pathlen;
 	int				 fd = -1, ret;
-	const char			*errstr = NULL;
-	char				*str, *p, *script = NULL;
+	const char			*stripped, *p, *alias, *errstr = NULL;
+	char				*str, *script = NULL;
 
 	if (srv_conf->socket[0] == ':') {
 		struct sockaddr_storage	 ss;
@@ -190,9 +190,13 @@ server_fcgi(struct httpd *env, struct client *clt)
 	h->type = FCGI_PARAMS;
 	h->content_len = param.total_len = 0;
 
-	if ((pathlen = asprintf(&script, "%s%s", srv_conf->root,
-	    desc->http_path_alias != NULL ?
-	    desc->http_path_alias : desc->http_path)) == -1) {
+	alias = desc->http_path_alias != NULL
+	    ? desc->http_path_alias
+	    : desc->http_path;
+
+	stripped = server_root_strip(alias, srv_conf->strip);
+	if ((pathlen = asprintf(&script, "%s%s", srv_conf->root, stripped))
+	    == -1) {
 		errstr = "failed to get script name";
 		goto fail;
 	}
@@ -213,8 +217,17 @@ server_fcgi(struct httpd *env, struct client *clt)
 		script[scriptlen] = '\0';
 	}
 
-	if (fcgi_add_param(&param, "SCRIPT_NAME",
-	    script + strlen(srv_conf->root), clt) == -1) {
+	/*
+	 * calculate length of http SCRIPT_NAME:
+	 * add length of stripped prefix,
+	 * subtract length of prepended local root
+	 */
+	scriptlen += (stripped - alias) - strlen(srv_conf->root);
+	if ((str = strndup(alias, scriptlen)) == NULL)
+		goto fail;
+	ret = fcgi_add_param(&param, "SCRIPT_NAME", str, clt);
+	free(str);
+	if (ret == -1) {
 		errstr = "failed to encode param";
 		goto fail;
 	}

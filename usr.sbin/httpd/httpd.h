@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.65 2015/01/02 19:09:52 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.66 2015/01/04 22:23:58 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -385,6 +385,7 @@ struct server_config {
 	char			*tls_key_file;
 
 	u_int32_t		 flags;
+	int			 strip;
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;
@@ -524,6 +525,8 @@ int	 server_response_http(struct client *, u_int, struct media_type *,
 void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
 int	 server_response(struct httpd *, struct client *);
+const char *
+	 server_root_strip(const char *, int);
 struct server_config *
 	 server_getlocation(struct client *, const char *);
 const char *

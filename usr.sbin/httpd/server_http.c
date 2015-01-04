@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.58 2015/01/01 14:15:02 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.59 2015/01/04 22:23:58 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -885,6 +885,21 @@ server_response(struct httpd *httpd, struct client *clt)
  fail:
 	server_abort_http(clt, 400, "bad request");
 	return (-1);
+}
+
+const char *
+server_root_strip(const char *path, int n)
+{
+	const char *p;
+
+	/* Strip strip leading directories. Leading '/' is ignored. */
+	for (; n > 0 && *path != '\0'; n--)
+		if ((p = strchr(++path, '/')) == NULL)
+			path = strchr(path, '\0');
+		else
+			path = p;
+
+	return (path);
 }
 
 struct server_config *

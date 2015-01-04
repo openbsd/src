@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.43 2015/01/01 14:15:02 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.44 2015/01/04 22:23:58 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -150,17 +150,19 @@ server_file(struct httpd *env, struct client *clt)
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			 path[MAXPATHLEN];
-	const char		*errstr = NULL;
+	const char		*stripped, *errstr = NULL;
 	int			 ret = 500;
 
 	if (srv_conf->flags & SRVFLAG_FCGI)
 		return (server_fcgi(env, clt));
 
 	/* Request path is already canonicalized */
-	if ((size_t)snprintf(path, sizeof(path), "%s%s",
-	    srv_conf->root,
+	stripped = server_root_strip(
 	    desc->http_path_alias != NULL ?
-	    desc->http_path_alias : desc->http_path) >= sizeof(path)) {
+	    desc->http_path_alias : desc->http_path,
+	    srv_conf->strip);
+	if ((size_t)snprintf(path, sizeof(path), "%s%s",
+	    srv_conf->root, stripped) >= sizeof(path)) {
 		errstr = desc->http_path;
 		goto abort;
 	}
@@ -276,7 +278,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	int			  code = 500;
 	struct evbuffer		 *evb = NULL;
 	struct media_type	 *media;
-	const char		 *style;
+	const char		 *stripped, *style;
 	struct tm		  tm;
 	time_t			  t, dir_mtime;
 
@@ -286,8 +288,9 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	}
 
 	/* Request path is already canonicalized */
+	stripped = server_root_strip(desc->http_path, srv_conf->strip);
 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
-	    srv_conf->root, desc->http_path) >= sizeof(path))
+	    srv_conf->root, stripped) >= sizeof(path))
 		goto abort;
 
 	/* Now open the file, should be readable or we have another problem */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2015/01/03 23:54:25 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.50 2015/01/04 22:23:58 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -130,7 +130,7 @@ typedef struct {
 %token	ACCESS ALIAS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
 %token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
 %token	LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT
-%token	SACK SERVER SOCKET STYLE SYSLOG TCP TIMEOUT TLS TYPES
+%token	SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT TLS TYPES 
 %token	ERROR INCLUDE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -434,17 +434,8 @@ serveroptsl	: LISTEN ON STRING opttls port {
 				YYERROR;
 			}
 		} tls
-		| ROOT STRING		{
-			if (strlcpy(srv->srv_conf.root, $2,
-			    sizeof(srv->srv_conf.root)) >=
-			    sizeof(srv->srv_conf.root)) {
-				yyerror("document root too long");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			srv->srv_conf.flags |= SRVFLAG_ROOT;
-		}
+		| ROOT rootflags
+		| ROOT '{' rootflags_l '}'
 		| DIRECTORY dirflags
 		| DIRECTORY '{' dirflags_l '}'
 		| logformat
@@ -622,6 +613,30 @@ tlsopts		: CERTIFICATE STRING		{
 				YYERROR;
 			}
 			free($2);
+		}
+		;
+
+rootflags_l	: rootflags comma rootflags_l
+		| rootflags
+		;
+
+rootflags	: STRING		{
+			if (strlcpy(srv->srv_conf.root, $1,
+			    sizeof(srv->srv_conf.root)) >=
+			    sizeof(srv->srv_conf.root)) {
+				yyerror("document root too long");
+				free($1);
+				YYERROR;
+			}
+			free($1);
+			srv->srv_conf.flags |= SRVFLAG_ROOT;
+		}
+		| STRIP NUMBER		{
+			if ($2 < 0 || $2 > INT_MAX) {
+				yyerror("invalid strip number");
+				YYERROR;
+			}
+			srv->srv_conf.strip = $2;
 		}
 		;
 
@@ -962,6 +977,7 @@ lookup(char *s)
 		{ "sack",		SACK },
 		{ "server",		SERVER },
 		{ "socket",		SOCKET },
+		{ "strip",		STRIP },
 		{ "style",		STYLE },
 		{ "syslog",		SYSLOG },
 		{ "tcp",		TCP },
