@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.161 2014/02/02 15:22:36 espie Exp $
+# $OpenBSD: Update.pm,v 1.162 2015/01/04 14:20:04 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -72,9 +72,7 @@ sub progress_message
 {
 	my ($self, $state, @r) = @_;
 	my $msg = $state->f(@r);
-	if ($state->{wantntogo}) {
-		$msg .= " (".$state->ntogo.")";
-	}
+	$msg .= $state->ntogo_string;
 	$state->progress->message($msg);
 	$state->say($msg) if $state->verbose >= 2;
 }
@@ -209,8 +207,9 @@ sub process_handle
 		}
 		return undef;
 	}
-	$state->say("Update candidates: #1 -> #2 (#3)", $pkgname,
-	    join(' ', map {$_->name} @$l), $state->ntogo) if $state->verbose;
+	$state->say("Update candidates: #1 -> #2#3", $pkgname,
+	    join(' ', map {$_->name} @$l), $state->ntogo_string) 
+		if $state->verbose;
 
 	my $r = $state->choose_location($pkgname, $l);
 	if (defined $r) {

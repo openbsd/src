@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.28 2015/01/04 14:10:20 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.29 2015/01/04 14:20:04 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -142,7 +142,9 @@ sub ntogo_string
 {
 	my ($self, $offset) = @_;
 
-	return $self->ntodo($offset // 0);
+	return $self->{wantntogo} ?
+	    $self->f(" (#1)", $self->ntodo($offset // 0)) :
+	    $self->f("");
 }
 
 OpenBSD::Auto::cache(signer_list,
