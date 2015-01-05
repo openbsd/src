@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.12 2014/05/06 20:50:42 tedu Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.13 2015/01/05 13:14:24 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,29 +41,22 @@
 void
 fmt_puts(const char *s, int *leftp)
 {
-	static char *v = NULL, *nv;
-	static int maxlen = 0;
-	int len;
+	static char *v = NULL;
+	static size_t maxlen = 0;
+	size_t len;
 
 	if (*leftp == 0)
 		return;
 	len = strlen(s) * 4 + 1;
 	if (len > maxlen) {
-		size_t newmaxlen = maxlen;
-
-		if (newmaxlen == 0)
-			newmaxlen = getpagesize();
-		while (len > newmaxlen)
-			newmaxlen *= 2;
-		nv = realloc(v, newmaxlen);
-		if (nv == NULL) {
-			free(v);
-			v = NULL;
-			maxlen = 0;
+		free(v);
+		maxlen = 0;
+		if (len < getpagesize())
+			len = getpagesize();
+		v = malloc(len);
+		if (v == NULL)
 			return;
-		}
-		maxlen = newmaxlen;
-		v = nv;
+		maxlen = len;
 	}
 	strvis(v, s, VIS_TAB | VIS_NL | VIS_CSTYLE);
 	if (*leftp != -1) {
