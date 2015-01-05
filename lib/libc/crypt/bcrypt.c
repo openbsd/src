@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.47 2014/12/30 10:27:24 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.48 2015/01/05 13:10:10 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -231,24 +231,26 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 int
 bcrypt_autorounds(void)
 {
-	clock_t before, after;
+	struct timespec before, after;
 	int r = 8;
 	char buf[_PASSWORD_LEN];
 	int duration;
 
-	before = clock();
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &before);
 	bcrypt_newhash("testpassword", r, buf, sizeof(buf));
-	after = clock();
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &after);
 
-	duration = after - before;
+	duration = after.tv_sec - before.tv_sec;
+	duration *= 1000000;
+	duration += (after.tv_nsec - before.tv_nsec) / 1000;
 
 	/* too quick? slow it down. */
-	while (r < 16 && duration <= CLOCKS_PER_SEC / 4) {
+	while (r < 16 && duration <= 1000000 / 4) {
 		r += 1;
 		duration *= 2;
 	}
 	/* too slow? speed it up. */
-	while (r > 4 && duration > CLOCKS_PER_SEC / 2) {
+	while (r > 4 && duration > 1000000 / 2) {
 		r -= 1;
 		duration /= 2;
 	}
