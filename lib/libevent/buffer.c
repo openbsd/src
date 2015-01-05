@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.27 2014/11/21 07:44:25 dlg Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.28 2015/01/05 23:14:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -33,6 +33,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -120,7 +121,8 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 	va_list aq;
 
 	/* make sure that at least some space is available */
-	evbuffer_expand(buf, 64);
+	if (evbuffer_expand(buf, 64) < 0)
+		return (-1);
 	for (;;) {
 		size_t used = buf->misalign + buf->off;
 		buffer = (char *)buf->buffer + buf->off;
@@ -323,26 +325,38 @@ evbuffer_align(struct evbuffer *buf)
 int
 evbuffer_expand(struct evbuffer *buf, size_t datlen)
 {
-	size_t need = buf->misalign + buf->off + datlen;
+	size_t used = buf->misalign + buf->off;
+
+	assert(buf->totallen >= used);
 
 	/* If we can fit all the data, then we don't have to do anything */
-	if (buf->totallen >= need)
+	if (buf->totallen - used >= datlen)
 		return (0);
+	/* If we would need to overflow to fit this much data, we can't
+	 * do anything. */
+	if (datlen > SIZE_MAX - buf->off)
+		return (-1);
 
 	/*
 	 * If the misalignment fulfills our data needs, we just force an
 	 * alignment to happen.  Afterwards, we have enough space.
 	 */
-	if (buf->misalign >= datlen) {
+	if (buf->totallen - buf->off >= datlen) {
 		evbuffer_align(buf);
 	} else {
 		void *newbuf;
 		size_t length = buf->totallen;
+		size_t need = buf->off + datlen;
 
 		if (length < 256)
 			length = 256;
-		while (length < need)
-			length <<= 1;
+		if (need < SIZE_MAX / 2) {
+			while (length < need) {
+				length <<= 1;
+			}
+		} else {
+			length = need;
+		}
 
 		if (buf->orig_buffer != buf->buffer)
 			evbuffer_align(buf);
@@ -359,10 +373,10 @@ evbuffer_expand(struct evbuffer *buf, size_t datlen)
 int
 evbuffer_add(struct evbuffer *buf, const void *data, size_t datlen)
 {
-	size_t need = buf->misalign + buf->off + datlen;
+	size_t used = buf->misalign + buf->off;
 	size_t oldoff = buf->off;
 
-	if (buf->totallen < need) {
+	if (buf->totallen - used < datlen) {
 		if (evbuffer_expand(buf, datlen) == -1)
 			return (-1);
 	}
