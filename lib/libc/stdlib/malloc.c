@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.171 2014/08/18 14:34:58 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.172 2015/01/05 21:04:04 tedu Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -93,11 +93,11 @@
 #define MQUERY(a, sz)	mquery((a), (size_t)(sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t)0)
 
-#define KERNENTER() if (__isthreaded) do { \
+#define _MALLOC_LEAVE() if (__isthreaded) do { \
 	malloc_active--; \
 	_MALLOC_UNLOCK(); \
 } while (0)
-#define KERNEXIT() if (__isthreaded) do { \
+#define _MALLOC_ENTER() if (__isthreaded) do { \
 	_MALLOC_LOCK(); \
 	malloc_active++; \
 } while (0)
@@ -406,9 +406,9 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		return MAP_FAILED;
 	}
 	if (psz > d->free_regions_size) {
-		KERNENTER();
+		_MALLOC_LEAVE();
 		p = MMAP(sz);
-		KERNEXIT();
+		_MALLOC_ENTER();
 		if (p != MAP_FAILED)
 			STATS_ADD(d->malloc_used, sz);
 		/* zero fill not needed */
@@ -454,9 +454,9 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 	}
 	if (d->free_regions_size > mopts.malloc_cache)
 		wrterror("malloc cache", NULL);
-	KERNENTER();
+	_MALLOC_LEAVE();
 	p = MMAP(sz);
-	KERNEXIT();
+	_MALLOC_ENTER();
 	if (p != MAP_FAILED)
 		STATS_ADD(d->malloc_used, sz);
 	/* zero fill not needed */
