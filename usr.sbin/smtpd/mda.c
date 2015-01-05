@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.107 2014/07/08 07:59:31 sobrado Exp $	*/
+/*	$OpenBSD: mda.c,v 1.108 2015/01/05 21:00:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -119,6 +119,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	const void		*data;
 	const char		*error, *parent_error;
 	uint64_t		 reqid;
+	time_t			 now;
 	size_t			 sz;
 	char			 out[256], buf[SMTPD_MAXLINESIZE];
 	int			 n;
@@ -237,16 +238,29 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 
-			/* start queueing delivery headers */
-			if (e->sender[0])
-				/* XXX: remove existing Return-Path, if any */
-				n = iobuf_fqueue(&s->iobuf,
-				    "Return-Path: %s\nDelivered-To: %s\n",
-				    e->sender, e->rcpt ? e->rcpt : e->dest);
-			else
-				n = iobuf_fqueue(&s->iobuf,
-				    "Delivered-To: %s\n",
-				    e->rcpt ? e->rcpt : e->dest);
+			n = 0;
+			/* prepend "From " separator ... for A_MDA and A_FILENAME backends only */
+			if (e->method == A_MDA || e->method == A_FILENAME) {
+				time(&now);
+				if (e->sender[0])
+					n = iobuf_fqueue(&s->iobuf,
+					    "From %s %s", e->sender, ctime(&now));
+				else
+					n = iobuf_fqueue(&s->iobuf,
+					    "From MAILER-DAEMON@%s %s", env->sc_hostname, ctime(&now));
+			}
+			if (n != -1) {
+				/* start queueing delivery headers */
+				if (e->sender[0])
+					/* XXX: remove existing Return-Path, if any */
+					n = iobuf_fqueue(&s->iobuf,
+					    "Return-Path: %s\nDelivered-To: %s\n",
+					    e->sender, e->rcpt ? e->rcpt : e->dest);
+				else
+					n = iobuf_fqueue(&s->iobuf,
+					    "Delivered-To: %s\n",
+					    e->rcpt ? e->rcpt : e->dest);
+			}
 			if (n == -1) {
 				log_warn("warn: mda: "
 				    "fail to write delivery info");

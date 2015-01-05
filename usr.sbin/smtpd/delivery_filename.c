@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_filename.c,v 1.9 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: delivery_filename.c,v 1.10 2015/01/05 21:00:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -52,7 +52,6 @@ static void
 delivery_filename_open(struct deliver *deliver)
 {
 	struct stat	 sb;
-	time_t		 now;
 	size_t		 len;
 	int		 fd;
 	FILE		*fp;
@@ -74,9 +73,6 @@ delivery_filename_open(struct deliver *deliver)
 	fp = fdopen(fd, "a");
 	if (fp == NULL)
 		error("fdopen");
-	time(&now);
-	fprintf(fp, "From %s@%s %s", SMTPD_USER, env->sc_hostname,
-	    ctime(&now));
 	while ((ln = fgetln(stdin, &len)) != NULL) {
 		if (ln[len - 1] == '\n')
 			len--;
