@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
+/* $OpenBSD: passwd.c,v 1.3 2015/01/05 15:25:39 jsing Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -40,140 +40,166 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     char *passwd, BIO * out, int quiet, int table, int reverse,
     size_t pw_maxlen, int usecrypt, int use1, int useapr1);
 
-/* -crypt        - standard Unix password algorithm (default)
- * -1            - MD5-based password algorithm
- * -apr1         - MD5-based password algorithm, Apache variant
- * -salt string  - salt
- * -in file      - read passwords from file
- * -stdin        - read passwords from stdin
- * -noverify     - never verify when reading password from terminal
- * -quiet        - no warnings
- * -table        - format output as table
- * -reverse      - switch table columns
- */
+static struct {
+	char *infile;
+	int in_stdin;
+	int noverify;
+	int quiet;
+	int reverse;
+	char *salt;
+	int table;
+	int use1;
+	int useapr1;
+	int usecrypt;
+} passwd_config;
+
+static struct option passwd_options[] = {
+#ifndef NO_MD5CRYPT_1
+	{
+		.name = "1",
+		.desc = "Use MD5 based BSD password algorithm 1",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.use1,
+	},
+	{
+		.name = "apr1",
+		.desc = "Use apr1 algorithm (Apache variant of BSD algorithm)",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.useapr1,
+	},
+#endif
+#ifndef OPENSSL_NO_DES
+	{
+		.name = "crypt",
+		.desc = "Use crypt algorithm (default)",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.usecrypt,
+	},
+#endif
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Read passwords from specified file",
+		.type = OPTION_ARG,
+		.opt.arg = &passwd_config.infile,
+	},
+	{
+		.name = "noverify",
+		.desc = "Do not verify password",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.noverify,
+	},
+	{
+		.name = "quiet",
+		.desc = "Do not output warnings",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.quiet,
+	},
+	{
+		.name = "reverse",
+		.desc = "Reverse table columns (requires -table)",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.reverse,
+	},
+	{
+		.name = "salt",
+		.argname = "string",
+		.desc = "Use specified salt",
+		.type = OPTION_ARG,
+		.opt.arg = &passwd_config.salt,
+	},
+	{
+		.name = "stdin",
+		.desc = "Read passwords from stdin",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.in_stdin,
+	},
+	{
+		.name = "table",
+		.desc = "Output cleartext and hashed passwords (tab separated)",
+		.type = OPTION_FLAG,
+		.opt.flag = &passwd_config.table,
+	},
+	{ NULL },
+};
+
+static void
+passwd_usage(void)
+{
+        fprintf(stderr, "usage: passwd [-1 | -apr1 | -crypt] [-in file] "
+	    "[-noverify] [-quiet]\n"
+	    "    [-reverse] [-salt string] [-stdin] [-table] [password]\n\n");
+        options_usage(passwd_options);
+}
 
 int passwd_main(int, char **);
 
 int
 passwd_main(int argc, char **argv)
 {
-	int ret = 1;
-	char *infile = NULL;
-	int in_stdin = 0;
-	int in_noverify = 0;
-	char *salt = NULL, *passwd = NULL, **passwds = NULL;
+	char *passwd = NULL, **passwds = NULL;
 	char *salt_malloc = NULL, *passwd_malloc = NULL;
 	size_t passwd_malloc_size = 0;
-	int pw_source_defined = 0;
 	BIO *in = NULL, *out = NULL;
-	int i, badopt, opt_done;
-	int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
-	int usecrypt = 0, use1 = 0, useapr1 = 0;
+	int badopt = 0;
+	int passed_salt = 0;
 	size_t pw_maxlen = 0;
+	int argsused;
+	int ret = 1;
 
-	out = BIO_new(BIO_s_file());
-	if (out == NULL)
+	memset(&passwd_config, 0, sizeof(passwd_config));
+
+	if (options_parse(argc, argv, passwd_options, NULL, &argsused) != 0) {
+		passwd_usage();
 		goto err;
-	BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
-
-	badopt = 0, opt_done = 0;
-	i = 0;
-	while (!badopt && !opt_done && argv[++i] != NULL) {
-		if (strcmp(argv[i], "-crypt") == 0)
-			usecrypt = 1;
-		else if (strcmp(argv[i], "-1") == 0)
-			use1 = 1;
-		else if (strcmp(argv[i], "-apr1") == 0)
-			useapr1 = 1;
-		else if (strcmp(argv[i], "-salt") == 0) {
-			if ((argv[i + 1] != NULL) && (salt == NULL)) {
-				passed_salt = 1;
-				salt = argv[++i];
-			} else
-				badopt = 1;
-		} else if (strcmp(argv[i], "-in") == 0) {
-			if ((argv[i + 1] != NULL) && !pw_source_defined) {
-				pw_source_defined = 1;
-				infile = argv[++i];
-			} else
-				badopt = 1;
-		} else if (strcmp(argv[i], "-stdin") == 0) {
-			if (!pw_source_defined) {
-				pw_source_defined = 1;
-				in_stdin = 1;
-			} else
-				badopt = 1;
-		} else if (strcmp(argv[i], "-noverify") == 0)
-			in_noverify = 1;
-		else if (strcmp(argv[i], "-quiet") == 0)
-			quiet = 1;
-		else if (strcmp(argv[i], "-table") == 0)
-			table = 1;
-		else if (strcmp(argv[i], "-reverse") == 0)
-			reverse = 1;
-		else if (argv[i][0] == '-')
-			badopt = 1;
-		else if (!pw_source_defined)
-			/* non-option arguments, use as passwords */
-		{
-			pw_source_defined = 1;
-			passwds = &argv[i];
-			opt_done = 1;
-		} else
-			badopt = 1;
 	}
 
-	if (!usecrypt && !use1 && !useapr1)	/* use default */
-		usecrypt = 1;
-	if (usecrypt + use1 + useapr1 > 1)	/* conflict */
-		badopt = 1;
+	if (argsused < argc)
+		passwds = &argv[argsused];
+	if (passwd_config.salt != NULL)
+		passed_salt = 1;
 
-	/* reject unsupported algorithms */
+	if (!passwd_config.usecrypt && !passwd_config.use1 &&
+	    !passwd_config.useapr1)
+		passwd_config.usecrypt = 1;	/* use default */
+	if (passwd_config.usecrypt + passwd_config.use1 +
+	    passwd_config.useapr1 > 1)
+		badopt = 1;	/* conflicting options */
+
+	/* Reject unsupported algorithms */
 #ifdef OPENSSL_NO_DES
-	if (usecrypt)
+	if (passwd_config.usecrypt)
 		badopt = 1;
 #endif
 #ifdef NO_MD5CRYPT_1
-	if (use1 || useapr1)
+	if (passwd_config.use1 || passwd_config.useapr1)
 		badopt = 1;
 #endif
 
 	if (badopt) {
-		BIO_printf(bio_err, "Usage: passwd [options] [passwords]\n");
-		BIO_printf(bio_err, "where options are\n");
-#ifndef OPENSSL_NO_DES
-		BIO_printf(bio_err, "-crypt             standard Unix password algorithm (default)\n");
-#endif
-#ifndef NO_MD5CRYPT_1
-		BIO_printf(bio_err, "-1                 MD5-based password algorithm\n");
-		BIO_printf(bio_err, "-apr1              MD5-based password algorithm, Apache variant\n");
-#endif
-		BIO_printf(bio_err, "-salt string       use provided salt\n");
-		BIO_printf(bio_err, "-in file           read passwords from file\n");
-		BIO_printf(bio_err, "-stdin             read passwords from stdin\n");
-		BIO_printf(bio_err, "-noverify          never verify when reading password from terminal\n");
-		BIO_printf(bio_err, "-quiet             no warnings\n");
-		BIO_printf(bio_err, "-table             format output as table\n");
-		BIO_printf(bio_err, "-reverse           switch table columns\n");
-
+		passwd_usage();
 		goto err;
 	}
-	if ((infile != NULL) || in_stdin) {
-		in = BIO_new(BIO_s_file());
-		if (in == NULL)
+
+	if ((out = BIO_new(BIO_s_file())) == NULL)
+		goto err;
+	BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
+
+	if (passwd_config.infile != NULL || passwd_config.in_stdin) {
+		if ((in = BIO_new(BIO_s_file())) == NULL)
 			goto err;
-		if (infile != NULL) {
-			assert(in_stdin == 0);
-			if (BIO_read_filename(in, infile) <= 0)
+		if (passwd_config.infile != NULL) {
+			assert(passwd_config.in_stdin == 0);
+			if (BIO_read_filename(in, passwd_config.infile) <= 0)
 				goto err;
 		} else {
-			assert(in_stdin);
+			assert(passwd_config.in_stdin);
 			BIO_set_fp(in, stdin, BIO_NOCLOSE);
 		}
 	}
-	if (usecrypt)
+	if (passwd_config.usecrypt)
 		pw_maxlen = 8;
-	else if (use1 || useapr1)
+	else if (passwd_config.use1 || passwd_config.useapr1)
 		pw_maxlen = 256;/* arbitrary limit, should be enough for most
 				 * passwords */
 
@@ -186,13 +212,15 @@ passwd_main(int argc, char **argv)
 		if (passwd_malloc == NULL)
 			goto err;
 	}
-	if ((in == NULL) && (passwds == NULL)) {
+	if (in == NULL && passwds == NULL) {
 		/* build a null-terminated list */
 		static char *passwds_static[2] = {NULL, NULL};
 
 		passwds = passwds_static;
 		if (in == NULL)
-			if (EVP_read_pw_string(passwd_malloc, passwd_malloc_size, "Password: ", !(passed_salt || in_noverify)) != 0)
+			if (EVP_read_pw_string(passwd_malloc,
+			    passwd_malloc_size, "Password: ",
+			    !(passed_salt || passwd_config.noverify)) != 0)
 				goto err;
 		passwds[0] = passwd_malloc;
 	}
@@ -200,16 +228,16 @@ passwd_main(int argc, char **argv)
 		assert(passwds != NULL);
 		assert(*passwds != NULL);
 
-		do {		/* loop over list of passwords */
+		do {	/* loop over list of passwords */
 			passwd = *passwds++;
-			if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, out,
-				quiet, table, reverse, pw_maxlen, usecrypt, use1, useapr1))
+			if (!do_passwd(passed_salt, &passwd_config.salt,
+			    &salt_malloc, passwd, out, passwd_config.quiet,
+			    passwd_config.table, passwd_config.reverse,
+			    pw_maxlen, passwd_config.usecrypt,
+			    passwd_config.use1, passwd_config.useapr1))
 				goto err;
-		}
-		while (*passwds != NULL);
-	} else
-		/* in != NULL */
-	{
+		} while (*passwds != NULL);
+	} else {
 		int done;
 
 		assert(passwd != NULL);
@@ -227,23 +255,27 @@ passwd_main(int argc, char **argv)
 					while ((r > 0) && (!strchr(trash, '\n')));
 				}
 
-				if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, out,
-					quiet, table, reverse, pw_maxlen, usecrypt, use1, useapr1))
+				if (!do_passwd(passed_salt, &passwd_config.salt,
+				    &salt_malloc, passwd, out,
+				    passwd_config.quiet, passwd_config.table,
+				    passwd_config.reverse, pw_maxlen,
+				    passwd_config.usecrypt, passwd_config.use1,
+				    passwd_config.useapr1))
 					goto err;
 			}
 			done = (r <= 0);
-		}
-		while (!done);
+		} while (!done);
 	}
 	ret = 0;
 
 err:
 	ERR_print_errors(bio_err);
+
 	free(salt_malloc);
 	free(passwd_malloc);
+
 	BIO_free(in);
-	if (out)
-		BIO_free_all(out);
+	BIO_free_all(out);
 
 	return (ret);
 }
