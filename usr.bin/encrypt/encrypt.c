@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.36 2015/01/04 02:28:26 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.37 2015/01/05 14:07:12 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -45,8 +45,6 @@
 extern char *__progname;
 
 void	usage(void);
-int	ideal_rounds(void);
-void	print_passwd(char *, int, void *);
 
 #define DO_BLF		0
 
@@ -60,62 +58,26 @@ usage(void)
 	exit(1);
 }
 
-/*
- * Time how long 8 rounds takes to measure this system's performance.
- * We are aiming for something that takes between 0.25 and 0.5 seconds.
- */
-int
-ideal_rounds(void)
-{
-	clock_t before, after;
-	int r = 8;
-	char buf[_PASSWORD_LEN];
-	int duration;
-
-	strlcpy(buf, bcrypt_gensalt(r), _PASSWORD_LEN);
-	before = clock();
-	crypt("testpassword", buf);
-	after = clock();
-
-	duration = after - before;
-
-	/* too quick? slow it down. */
-	while (r < 16 && duration <= CLOCKS_PER_SEC / 4) {
-		r += 1;
-		duration *= 2;
-	}
-	/* too slow? speed it up. */
-	while (r > 4 && duration > CLOCKS_PER_SEC / 2) {
-		r -= 1;
-		duration /= 2;
-	}
-
-	return r;
-}
-
-
-void
-print_passwd(char *string, int operation, void *extra)
+static void
+print_passwd(char *string, int operation, char *extra)
 {
 	char buffer[_PASSWORD_LEN];
+	const char *pref;
+	char prefbuf[16];
 
 	if (operation == DO_BLF) {
-		int rounds = *(int *)extra;
-		if (bcrypt_newhash(string, rounds, buffer, sizeof(buffer)) != 0)
-			errx(1, "bcrypt newhash failed");
-		fputs(buffer, stdout);
-		return;
+		snprintf(prefbuf, sizeof(prefbuf), "blowfish,%s", extra);
+		pref = prefbuf;
 	} else {
 		login_cap_t *lc;
-		const char *pref;
 
 		if ((lc = login_getclass(extra)) == NULL)
 			errx(1, "unable to get login class `%s'",
 			    extra ? (char *)extra : "default");
 		pref = login_getcapstr(lc, "localcipher", NULL, NULL);
-		if (crypt_newhash(string, pref, buffer, sizeof(buffer)) != 0)
-			errx(1, "can't generate hash");
 	}
+	if (crypt_newhash(string, pref, buffer, sizeof(buffer)) != 0)
+		errx(1, "can't generate hash");
 
 	fputs(buffer, stdout);
 }
@@ -127,7 +89,7 @@ main(int argc, char **argv)
 	int operation = -1;
 	int prompt = 0;
 	int rounds;
-	void *extra = NULL;		/* Store salt or number of rounds */
+	char *extra = NULL;		/* Store salt or number of rounds */
 	const char *errstr;
 
 	while ((opt = getopt(argc, argv, "pb:c:")) != -1) {
@@ -139,14 +101,12 @@ main(int argc, char **argv)
 			if (operation != -1)
 				usage();
 			operation = DO_BLF;
-			if (strcmp(optarg, "a") == 0)
-				rounds = ideal_rounds();
-			else {
-				rounds = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (strcmp(optarg, "a") != 0) {
+				(void)strtonum(optarg, 4, 31, &errstr);
 				if (errstr != NULL)
-					errx(1, "%s: %s", errstr, optarg);
+					errx(1, "rounds is %s: %s", errstr, optarg);
 			}
-			extra = &rounds;
+			extra = optarg;
 			break;
 		case 'c':                       /* user login class */
 			extra = optarg;
