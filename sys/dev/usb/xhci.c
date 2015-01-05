@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.51 2015/01/04 20:10:08 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.52 2015/01/05 12:38:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -515,6 +515,10 @@ xhci_activate(struct device *self, int act)
 		xhci_reset(sc);
 		xhci_ring_reset(sc, &sc->sc_cmd_ring);
 		xhci_ring_reset(sc, &sc->sc_evt_ring);
+
+		/* Renesas controllers, at least, need more time to resume. */
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+
 		xhci_config(sc);
 
 		sc->sc_bus.use_polling--;
