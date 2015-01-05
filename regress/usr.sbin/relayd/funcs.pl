@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.17 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.18 2015/01/05 22:41:37 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -175,8 +175,12 @@ sub http_request {
 			print STDERR "<<< $_\n";
 			last if /^$/;
 			if (/^Content-Length: (.*)/) {
-				$1 == $len or die ref($self),
-				    " bad content length $1";
+				if ($self->{httpnok}) {
+					$len = $1;
+				} else {
+					$1 == $len or die ref($self),
+					    " bad content length $1";
+				}
 			}
 			if (/^Transfer-Encoding: chunked$/) {
 				$chunked = 1;
