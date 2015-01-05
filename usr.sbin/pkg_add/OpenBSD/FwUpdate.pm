@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.6 2015/01/04 14:55:47 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.7 2015/01/05 13:18:31 sthen Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -33,7 +33,7 @@ sub find_path
 	close($cmd);
 	if ($line =~ m/^OpenBSD (\d\.\d)(\S*)\s/) {
 		my ($version, $tag) = ($1, $2);
-		if ($tag ne '-stable') {
+		if ($tag eq '-current') {
 			$version = 'snapshots';
 		}
 		$state->{path} = "http://firmware.openbsd.org/firmware/$version/";
