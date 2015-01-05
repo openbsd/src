@@ -16,7 +16,7 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    ${$self->{syslogd}}->loggrep("loghost .* did send .* back", 2)
+	    ${$self->{syslogd}}->loggrep("loghost .* did send .* back", 5)
 		or die "no send back in syslogd.log";
 	    write_log($self, @_);
 	},

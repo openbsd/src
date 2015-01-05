@@ -33,8 +33,8 @@ our %args = (
 	    read_between2logs($self, sub {
 		${$self->{syslogd}}->kill_syslogd('TERM');
 		my $pattern = "syslogd: exiting on signal 15";
-		${$self->{syslogd}}->loggrep("syslogd: exiting on signal 15",
-		    5) or die ref($self),
+		${$self->{syslogd}}->loggrep("syslogd: exiting on signal 15", 5)
+		    or die ref($self),
 		    " no 'syslogd: exiting on signal 15' between logs";
 		print STDERR "Signal\n";
 	    });

@@ -9,13 +9,17 @@
 use strict;
 use warnings;
 use Socket;
+use Errno ':POSIX';
+
+my @errors = (EPIPE,ECONNRESET);
+my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 2)
-		or die "connection error in syslogd.log";
+	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
+		or die "no connection error in syslogd.log";
 	    write_log($self, @_);
 	},
     },
@@ -38,7 +42,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: Connection reset by peer/
+	    qr/syslogd: loghost .* connection error: $errors/
 		=> 1,
 	},
     },
