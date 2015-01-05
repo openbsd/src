@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.113 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: in.c,v 1.114 2015/01/05 10:21:58 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -175,9 +175,7 @@ in_len2mask(struct in_addr *mask, int len)
 
 /*
  * Generic internet control operations (ioctl's).
- * Ifp is 0 if not an interface-specific ioctl.
  */
-/* ARGSUSED */
 int
 in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
@@ -191,26 +189,31 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	int s;
 
 	switch (cmd) {
+#ifdef MROUTING
+	case SIOCGETVIFCNT:
+	case SIOCGETSGCNT:
+		return (mrt_ioctl(so, cmd, data));
+#endif /* MROUTING */
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		if ((so->so_state & SS_PRIV) == 0)
 			return (EPERM);
 		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
-		if (!ifp)
-			return EINVAL;
+		if (ifp == NULL)
+			return (EINVAL);
 		return in_lifaddr_ioctl(so, cmd, data, ifp);
+	default:
+		if (ifp == NULL)
+			return (EOPNOTSUPP);
 	}
 
-	/*
-	 * Find address for this interface, if it exists.
-	 */
-	if (ifp)
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
-			if (ifa->ifa_addr->sa_family == AF_INET) {
-				ia = ifatoia(ifa);
-				break;
-			}
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			ia = ifatoia(ifa);
+			break;
+		}
+	}
 
 	switch (cmd) {
 
@@ -232,8 +235,6 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		if ((so->so_state & SS_PRIV) == 0)
 			return (EPERM);
 
-		if (ifp == 0)
-			panic("in_control");
 		if (ia == NULL) {
 			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
 			ia->ia_addr.sin_family = AF_INET;
@@ -391,14 +392,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		splx(s);
 		break;
 
-#ifdef MROUTING
-	case SIOCGETVIFCNT:
-	case SIOCGETSGCNT:
-		return (mrt_ioctl(so, cmd, data));
-#endif /* MROUTING */
-
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
+		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}
