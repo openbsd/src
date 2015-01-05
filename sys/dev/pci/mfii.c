@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.19 2014/10/08 14:44:39 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.20 2015/01/05 23:18:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -200,8 +200,14 @@ struct mfii_pd_softc {
 	uint8_t			pd_timeout;
 };
 
+struct mfii_iop {
+	u_int8_t sge_flag_chain;
+	u_int8_t sge_flag_eol;
+};
+
 struct mfii_softc {
 	struct device		sc_dev;
+	const struct mfii_iop	*sc_iop;
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
@@ -325,16 +331,54 @@ int			mfii_pd_scsi_cmd_cdb(struct mfii_softc *,
 
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
-static const struct pci_matchid mfii_devices[] = {
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3008 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3108 }
+const struct mfii_iop mfii_iop_thunderbolt = {
+	MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA,
+	0
 };
+
+const struct mfii_iop mfii_iop_25 = {
+	MFII_SGE_CHAIN_ELEMENT,
+	MFII_SGE_END_OF_LIST
+};
+
+struct mfii_device {
+	pcireg_t		mpd_vendor;
+	pcireg_t		mpd_product;
+	const struct mfii_iop	*mpd_iop;
+};
+
+const struct mfii_device mfii_devices[] = {
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208,
+	    &mfii_iop_thunderbolt },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3008,
+	    &mfii_iop_25 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3108,
+	    &mfii_iop_25 }
+};
+
+const struct mfii_iop *mfii_find_iop(struct pci_attach_args *);
+
+const struct mfii_iop *
+mfii_find_iop(struct pci_attach_args *pa)
+{
+	const struct mfii_device *mpd;
+	int i;
+
+	for (i = 0; i < nitems(mfii_devices); i++) {
+		mpd = &mfii_devices[i];
+
+		if (mpd->mpd_vendor == PCI_VENDOR(pa->pa_id) &&
+		    mpd->mpd_product == PCI_PRODUCT(pa->pa_id))
+			return (mpd->mpd_iop);
+	}
+
+	return (NULL);
+}
 
 int
 mfii_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid(aux, mfii_devices, nitems(mfii_devices)));
+	return ((mfii_find_iop(aux) != NULL) ? 1 : 0);
 }
 
 void
@@ -348,6 +392,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t status;
 
 	/* init sc */
+	sc->sc_iop = mfii_find_iop(aux);
 	sc->sc_dmat = pa->pa_dmat;
 	SIMPLEQ_INIT(&sc->sc_ccb_freeq);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
@@ -1560,8 +1605,7 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 		ce = nsge + space;
 		ce->sg_addr = htole64(ccb->ccb_sgl_dva);
 		ce->sg_len = htole32(ccb->ccb_sgl_len);
-		ce->sg_flags = MFII_SGE_CHAIN_ELEMENT |
-		    MFII_SGE_ADDR_IOCPLBNTA;
+		ce->sg_flags = sc->sc_iop->sge_flag_chain;
 
 		req->chain_offset = ((u_int8_t *)ce - (u_int8_t *)req) / 16;
 	}
@@ -1578,6 +1622,7 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 
 		nsge = sge + 1;
 	}
+	sge->sg_flags |= sc->sc_iop->sge_flag_eol;
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    ccb->ccb_direction == MFII_DATA_OUT ?
