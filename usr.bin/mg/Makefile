@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2013/05/31 18:03:43 lum Exp $
+# $OpenBSD: Makefile,v 1.29 2015/01/05 21:45:10 lum Exp $
 
 PROG=	mg
 
@@ -9,7 +9,7 @@ DPADD+=	${LIBCURSES} ${LIBUTIL}
 #
 #	FKEYS		-- add support for function key sequences.
 #	REGEX		-- create regular expression functions.
-#	STARTUP		-- look for and handle initialization file.
+#	STARTUPFILE		-- look for and handle initialization file.
 #	XKEYS		-- use termcap function key definitions.
 #				note: XKEYS and bsmap mode do _not_ get along.
 #
