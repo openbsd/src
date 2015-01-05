@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.176 2015/01/04 08:54:01 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.177 2015/01/05 23:54:18 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -536,6 +536,9 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 
 	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
 
+	if (pp->pr_ipl != -1)
+		splassert(pp->pr_ipl);
+
 	/*
 	 * Account for this item now to avoid races if we need to give up
 	 * pr_mtx to allocate a page.
@@ -626,6 +629,9 @@ pool_put(struct pool *pp, void *v)
 #endif
 
 	mtx_enter(&pp->pr_mtx);
+
+	if (pp->pr_ipl != -1)
+		splassert(pp->pr_ipl);
 
 	ph = pr_find_pagehead(pp, v);
 
