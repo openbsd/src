@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.6 2014/12/10 03:15:59 daniel Exp $
+#	$OpenBSD: stests,v 1.7 2015/01/05 20:09:25 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -14,6 +14,7 @@
 #On 25H, your answer is as defensible as mine.  (Our suggestion
 #*1 backs mine.)
 
+SORTPROG=sort
 
 # Tests for the Unix sort utility
 # Test Posix features except for locale.
@@ -29,27 +30,25 @@ o=:	# officially obsolescent features: +1 -2, misplaced -o (o=)
 g=:	# -g numeric sort including e-format numbers (g=)
 M=:	# -M sort by month names (M=)
 s=:	# -s stable, do not compare raw bytes on equal keys (s=)
-y=	# -y user-specified memory size (y=-y10000)
+S=:	# -S user-specified memory size (S=-S10000)
 
 # Detect what features are supported, assuming bad options cause
 # errors.  Set switches accordingly.
 
 echo obsolescent and nonstandard features recognized, if any:
-if sort +0 </dev/null 2>/dev/null; then o=
+if $SORTPROG +0 </dev/null 2>/dev/null; then o=
 				echo '	+1 -2'; fi
-if sort /dev/null -o xx 2>/dev/null; then o=
+if $SORTPROG /dev/null -o xx 2>/dev/null; then o=
 				echo '	displaced -o'; fi
-if sort -g </dev/null 2>/dev/null; then g=
+if $SORTPROG -g </dev/null 2>/dev/null; then g=
 				echo '	-g g-format numbers'; fi
-if sort -M </dev/null 2>/dev/null; then M=
+if $SORTPROG -M </dev/null 2>/dev/null; then M=
 				echo '	-M months'; fi
-if sort -s </dev/null 2>/dev/null; then s=
+if $SORTPROG -s </dev/null 2>/dev/null; then s=
 				echo '	-s stable'; fi
-if sort -y10000 </dev/null 2>/dev/null; then y=-y10000
-				echo '	-y space'; fi
-if sort -z10000 </dev/null 2>/dev/null; then
-				echo '	-z size (not exercised)'; fi
-if sort -T. </dev/null 2>/dev/null; then
+if $SORTPROG -S10000 </dev/null 2>/dev/null; then S=-S10000
+				echo '	-S space'; fi
+if $SORTPROG -T. </dev/null 2>/dev/null; then
 				echo '	-T tempdir (not exercised)'; fi
 
 
@@ -72,7 +71,7 @@ cat <<'!' >xsort; chmod +x xsort
 
 	X=$1; shift
 
-	if sort "$@" in >xx  &&  sort -c "$@" xx 
+	if $SORTPROG "$@" in >xx  &&  $SORTPROG -c "$@" xx 
 	then 
 		if test -f out
 		then
@@ -107,11 +106,11 @@ a
 !
 rm -f out -o
 
-sort -c in 2>/dev/null && echo ${TEST}A failed
+$SORTPROG -c in 2>/dev/null && echo ${TEST}A failed
 
 xsort B || echo '"cksum"' is probably unsuitable - see comments
 
-$o sort +0 in -o in || echo ${TEST}c failed
+$o $SORTPROG +0 in -o in || echo ${TEST}c failed
 
 #---------------------------------------------------------------
 TEST=02; echo $TEST	# output from -c
@@ -120,7 +119,7 @@ x
 y
 !
 
-sort -cr in >out 2>xx && echo ${TEST}A failed
+$SORTPROG -cr in >out 2>xx && echo ${TEST}A failed
 test -s out && echo ${TEST}B failed
 test -s xx && echo option -c is noisy "(probably legal)"
 test -s xx || echo option -c is quiet "(legal, not classical)"
@@ -162,10 +161,10 @@ cp in out
 
 xsort A -b
 
-cat in | sort | cat >xx
+cat in | $SORTPROG | cat >xx
 cmp xx out >/dev/null || echo ${TEST}B failed
 
-sort in | sort -cr 2>/dev/null && echo ${TEST}C failed
+$SORTPROG in | $SORTPROG -cr 2>/dev/null && echo ${TEST}C failed
 
 #---------------------------------------------------------------
 TEST=05; echo $TEST	# fields, reverse fields, -c status return
@@ -192,7 +191,7 @@ xsort E -k 2,2.0
 
 xsort F -k 2,2 -k 1,1 -k 3
 
-sort -c -k 2 in 2>/dev/null && echo ${TEST}G failed
+$SORTPROG -c -k 2 in 2>/dev/null && echo ${TEST}G failed
 
 #---------------------------------------------------------------
 TEST=06; echo $TEST	# -t
@@ -309,7 +308,7 @@ c
 ca
 !
 
-sort -m in in1 >xx
+$SORTPROG -m in in1 >xx
 cmp xx out >/dev/null || echo $TEST failed
 
 #---------------------------------------------------------------
@@ -321,11 +320,11 @@ c
 d
 !
 
-sort -o xx     in in in in in in in in in in in in in in in in in
+$SORTPROG -o xx     in in in in in in in in in in in in in in in in in
 linecount A xx 68
-sort -o in -mu in in in in in in in in in in in in in in in in in
+$SORTPROG -o in -mu in in in in in in in in in in in in in in in in in
 linecount B in 4
-sort -o in -m  in in in in in in in in in in in in in in in in in
+$SORTPROG -o in -m  in in in in in in in in in in in in in in in in in
 
 cmp in xx >/dev/null || echo ${TEST}C failed
 
@@ -402,10 +401,10 @@ xsort B -u -r $y
 TEST=16; echo $TEST	# -nr, -nm, file name -
 awk 'BEGIN { for(i=-100; i<=100; i+=2) printf "%.10d\n", i }' >in
 
-awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | sort -nr in - >xx
+awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | $SORTPROG -nr in - >xx
 awk '$0+0 != 101-NR { print "'${TEST}A' failed"; exit }' xx
 
-awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | sort -mn in - >xx
+awk 'BEGIN { for(i=-99; i<=100; i+=2) print i }' | $SORTPROG -mn in - >xx
 awk '$0+0 != -101+NR { print "'${TEST}B' failed"; exit }' xx
 
 #---------------------------------------------------------------
@@ -627,21 +626,21 @@ cat <<! >in
 24:17:05:07:05:11:05:20    ba
 !
 sort -k2b -k2 in >xx && 
-	sort -c -t: -k2n xx 2>/dev/null || echo ${TEST}A failed
+	$SORTPROG -c -t: -k2n xx 2>/dev/null || echo ${TEST}A failed
 sort -k2,2.1b -k2 in >xx && 
-	sort -c -t: -k3n xx 2>/dev/null || echo ${TEST}B failed
+	$SORTPROG -c -t: -k3n xx 2>/dev/null || echo ${TEST}B failed
 sort -k2.3 -k2 in >xx && 
-	sort -c -t: -k4n xx 2>/dev/null || echo ${TEST}C failed
+	$SORTPROG -c -t: -k4n xx 2>/dev/null || echo ${TEST}C failed
 sort -k2b,2.3 -k2 in >xx && 
-	sort -c -t: -k5n xx 2>/dev/null || echo ${TEST}D failed
+	$SORTPROG -c -t: -k5n xx 2>/dev/null || echo ${TEST}D failed
 sort -k2.3,2.1b -k2 in >xx && 
-	sort -c -t: -k6n xx 2>/dev/null || echo ${TEST}E failed
+	$SORTPROG -c -t: -k6n xx 2>/dev/null || echo ${TEST}E failed
 sort -k2,2.1b -k2r in >xx && 
-	sort -c -t: -k7n xx 2>/dev/null || echo ${TEST}F failed
+	$SORTPROG -c -t: -k7n xx 2>/dev/null || echo ${TEST}F failed
 sort -b -k2,2 -k2 in >xx && 
-	sort -c -t: -k8n xx 2>/dev/null || echo ${TEST}G failed
+	$SORTPROG -c -t: -k8n xx 2>/dev/null || echo ${TEST}G failed
 sort -b -k2,2b -k2 in >xx &&			# perhaps same as G
-	sort -c -t: -k3n xx 2>/dev/null || echo ${TEST}H failed\
+	$SORTPROG -c -t: -k3n xx 2>/dev/null || echo ${TEST}H failed\
  "(standard is not clear on this)"
 
 #---------------------------------------------------------------
@@ -662,7 +661,7 @@ xsort "" -k2.2,2.1 -k2.3,2.4
 TEST=27; echo $TEST	# displaced -o
 rm -f out
 
-$o sort /dev/null -o out || $o echo ${TEST}B failed
+$o $SORTPROG /dev/null -o out || $o echo ${TEST}B failed
 $o test -f out || $o echo ${TEST}C failed
 
 #---------------------------------------------------------------
@@ -693,7 +692,7 @@ rm -- -k
 
 #---------------------------------------------------------------
 TEST=30; echo $TEST	# missing newline
-awk 'BEGIN{ printf "%s", "x"}' | sort >xx
+awk 'BEGIN{ printf "%s", "x"}' | $SORTPROG >xx
 wc -c <xx | awk '$1!=2{ print "'${TEST}' failed" }'
 
 #---------------------------------------------------------------
@@ -834,7 +833,7 @@ x
 
 $g xsort A -g
 
-$g sort -gu in >xx && $g sort -c -gu xx || echo ${TEST}B failed
+$g $SORTPROG -gu in >xx && $g $SORTPROG -c -gu xx || echo ${TEST}B failed
 $g linecount C xx 3
 
 #---------------------------------------------------------------
@@ -875,7 +874,7 @@ b 1
 a 2
 !
 
-$s sort -smru -k1,1 in in in1 in1 >xx
+$s $SORTPROG -smru -k1,1 in in in1 in1 >xx
 $s cmp xx out >/dev/null || echo $TEST failed
 
 #---------------------------------------------------------------
@@ -889,7 +888,7 @@ $s awk '
 			}
 	}'
 
-$s sort -m -s -k1,1n in in1 >out
+$s $SORTPROG -m -s -k1,1n in in1 >out
 
 $s awk '
 	func stop()	{ print "'$TEST' failed"; exit }
@@ -907,7 +906,7 @@ dict=/usr/share/dict/words
 
 sort -f $dict > out
 
-cmp -s out $dict || echo $TEST failed - sort -f $dict
+cmp -s out $dict || echo $TEST failed - $SORTPROG -f $dict
 
 #---------------------------------------------------------------
 TEST=40; echo "$TEST (long)"    # long lines test
