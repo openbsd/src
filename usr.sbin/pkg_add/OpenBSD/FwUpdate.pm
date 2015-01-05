@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.7 2015/01/05 13:18:31 sthen Exp $
+# $OpenBSD: FwUpdate.pm,v 1.8 2015/01/05 16:32:28 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -54,6 +54,7 @@ sub handle_options
 		$state->find_path;
 	}
 	$main::not = $state->{not};
+	$state->progress->setup(0, 0, $state);
 	$state->{localbase} = OpenBSD::Paths->localbase;
 	$state->{destdir} = '';
 	$state->{wantntogo} = 0;
@@ -63,6 +64,9 @@ sub handle_options
 	}
 	$state->{fw_repository} = 
 	    OpenBSD::PackageRepository->new($state->{path});
+	if ($state->verbose) {
+		$state->say("Path to firmware: #1", $state->{path});
+	}
 }
 
 sub finish_init
@@ -233,9 +237,23 @@ sub process_parameters
 			for my $driver ($state->machine_drivers) {
 				$self->to_add_or_update($state, $driver);
 			}
+			for my $driver ($state->installed_drivers) {
+				next if $state->is_needed($driver);
+				$self->to_add_or_update($state, $driver);
+			}
+		}
+		if (!(defined $state->{setlist}) && $state->verbose) {
+			$state->say($state->opt('d') ?
+			    "No firmware to delete." :
+			    "No devices found which need firmware files to be downloaded.");
+			exit(0);
 		}
 	} else {
 		for my $driver (@ARGV) {
+			if (!$possible_drivers{$driver}) {
+				$state->errsay("#1: unknown driver", $driver);
+				exit(1);
+			}
 			my $set = $self->to_add_or_update($state, $driver);
 			if ($state->opt('d')) {
 				if (!$state->is_installed($driver)) {
