@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.89 2014/03/19 22:56:44 jmc Exp $
+.\"	$OpenBSD: umsm.4,v 1.90 2015/01/06 21:34:27 sthen Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2014 $
+.Dd $Mdocdate: January 6 2015 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@ driver:
 .It Li "IIJMobile 120FU (ZTE OEM)" Ta "USB"
 .It Li "Kyocera KPC650" Ta "CardBus"
 .It Li "Medion Mobile S4012 (Huawei E1550 OEM)" Ta "USB"
+.It Li "Medion Mobile S4222 (MediaTek OEM)" Ta "USB"
 .It Li "Novatel Wireless ES620" Ta "USB"
 .It Li "Novatel Wireless Ovation U727" Ta "USB"
 .It Li "Novatel Wireless U760" Ta "USB"
@@ -158,6 +159,8 @@ but only the first port can be used to make connections;
 the second one is for management.
 The Option GlobeTrotter HSDPA/HSUPA modems have three serial ports,
 but only the last port can be used to make PPP connections.
+The Medion Mobile S4222 has four serial ports, but only the first
+port can be used to make connections.
 .Pp
 Some modems require multi-link PPP operation.
 For example, the Huawei E1550 has four serial ports.
