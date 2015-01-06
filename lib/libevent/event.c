@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.36 2014/10/30 16:45:37 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.37 2015/01/06 11:27:35 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -348,9 +348,12 @@ event_process_active(struct event_base *base)
 			ncalls--;
 			ev->ev_ncalls = ncalls;
 			(*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-			if (event_gotsig || base->event_break)
+			if (event_gotsig || base->event_break) {
+				ev->ev_pncalls = NULL;
 				return;
+			}
 		}
+		ev->ev_pncalls = NULL;
 	}
 }
 
