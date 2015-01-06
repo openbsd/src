@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.100 2014/07/12 21:24:33 mpi Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.101 2015/01/06 10:42:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -109,8 +109,9 @@ struct umsm_type {
 #define	DEV_UMASS5	0x0100
 #define	DEV_UMASS6	0x0200
 #define	DEV_UMASS7	0x0400
+#define	DEV_UMASS8	0x1000
 #define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3 | DEV_UMASS4 | \
-    DEV_UMASS5 | DEV_UMASS6 | DEV_UMASS7)
+    DEV_UMASS5 | DEV_UMASS6 | DEV_UMASS7 | DEV_UMASS8)
 };
 
 static const struct umsm_type umsm_devs[] = {
@@ -153,6 +154,9 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_510FU }, 0},
 
 	{{ USB_VENDOR_KYOCERA2,	USB_PRODUCT_KYOCERA2_KPC650 }, 0},
+
+	{{ USB_VENDOR_MEDIATEK, USB_PRODUCT_MEDIATEK_UMASS }, DEV_UMASS8},
+	{{ USB_VENDOR_MEDIATEK, USB_PRODUCT_MEDIATEK_DC_4COM }, 0},
 
 	/* XXX Some qualcomm devices are missing */
 	{{ USB_VENDOR_QUALCOMM,	USB_PRODUCT_QUALCOMM_MSM_DRIVER }, DEV_UMASS1},
@@ -303,6 +307,19 @@ umsm_match(struct device *parent, void *match, void *aux)
 				return UMATCH_VENDOR_IFACESUBCLASS;
 			} else
 				return UMATCH_NONE;
+		/*
+		 * Some devices have interfaces which fail to attach but in
+		 * addition seem to make the remaining interfaces unusable. Only
+		 * attach whitelisted interfaces in this case.
+		 */
+		} else if ((uaa->vendor == USB_VENDOR_MEDIATEK &&
+			    uaa->product == USB_PRODUCT_MEDIATEK_DC_4COM) &&
+			   !(id->bInterfaceClass == UICLASS_VENDOR &&
+			    ((id->bInterfaceSubClass == 0x02 &&
+			      id->bInterfaceProtocol == 0x01) ||
+			     (id->bInterfaceSubClass == 0x00 &&
+			      id->bInterfaceProtocol == 0x00)))) {
+			return UMATCH_NONE;
 		} else
 			return UMATCH_VENDOR_IFACESUBCLASS;
 	}
@@ -703,6 +720,13 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		cbw.bCBWFlags = CBWFLAGS_IN;
 		cbw.CBWCDB[0] = UMASS_SERVICE_ACTION_OUT;
 		cbw.CBWCDB[1] = 0x03;
+		break;
+	case DEV_UMASS8:
+		USETDW(cbw.dCBWDataTransferLength, 0x0);
+		cbw.bCBWFlags = CBWFLAGS_OUT;
+		cbw.CBWCDB[0] = 0xf0;
+		cbw.CBWCDB[1] = 0x01;
+		cbw.CBWCDB[2] = 0x03;
 		break;
 	default:
 		DPRINTF(("%s: unknown device type.\n", sc->sc_dev.dv_xname));
