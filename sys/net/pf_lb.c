@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.40 2014/12/19 17:14:40 tedu Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.41 2015/01/06 01:49:45 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -818,7 +818,7 @@ pf_postprocess_addr(struct pf_state *cur)
 	struct pf_state_key	*sks;
 	struct pf_pool		 rpool;
 	struct pf_addr		 lookup_addr;
-	int			 slbcount;
+	int			 slbcount = -1;
 
 	nr = cur->natrule.ptr;
 
