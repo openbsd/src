@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.77 2014/10/20 23:27:14 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.78 2015/01/06 09:12:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -270,6 +270,7 @@ server_kill_window(struct window *w)
 
 		if (session_has(s, w) == NULL)
 			continue;
+		server_unzoom_window(w);
 		while ((wl = winlink_find_by_window(&s->windows, w)) != NULL) {
 			if (session_detach(s, wl)) {
 				server_destroy_session_group(s);
