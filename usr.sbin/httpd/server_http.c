@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.59 2015/01/04 22:23:58 chrisz Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.60 2015/01/06 13:38:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -214,8 +214,10 @@ server_read_http(struct bufferevent *bev, void *arg)
 		 */
 		if (clt->clt_line == 1) {
 			if ((desc->http_method = server_httpmethod_byname(key))
-			    == HTTP_METHOD_NONE)
-				goto fail;
+			    == HTTP_METHOD_NONE) {
+				server_abort_http(clt, 400, "malformed");
+				goto abort;
+			}
 
 			/*
 			 * Decode request path and query
