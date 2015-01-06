@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.24 2014/10/30 16:45:37 bluhm Exp $	*/
+/*	$OpenBSD: signal.c,v 1.25 2015/01/06 11:42:37 bluhm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -58,30 +58,28 @@ evsignal_cb(int fd, short what, void *arg)
 	ssize_t n;
 
 	n = recv(fd, signals, sizeof(signals), 0);
-	if (n == -1)
-		event_err(1, "%s: read", __func__);
+	if (n == -1) {
+		if (errno != EAGAIN)
+			event_err(1, "%s: read", __func__);
+	}
 }
 
 int
 evsignal_init(struct event_base *base)
 {
-	int i, flags;
+	int i;
 
 	/*
 	 * Our signal handler is going to write to one end of the socket
 	 * pair to wake up our event loop.  The event loop then scans for
 	 * signals that got delivered.
 	 */
-	if (socketpair(
-		    AF_UNIX, SOCK_STREAM, 0, base->sig.ev_signal_pair) == -1) {
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    0, base->sig.ev_signal_pair) == -1) {
 		event_err(1, "%s: socketpair", __func__);
 		return -1;
 	}
 
-	if (fcntl(base->sig.ev_signal_pair[0], F_SETFD, FD_CLOEXEC) == -1)
-		event_warn("fcntl(signal_pair[0], FD_CLOEXEC)");
-	if (fcntl(base->sig.ev_signal_pair[1], F_SETFD, FD_CLOEXEC) == -1)
-		event_warn("fcntl(signal_pair[1], FD_CLOEXEC)");
 	base->sig.sh_old = NULL;
 	base->sig.sh_old_max = 0;
 	base->sig.evsignal_caught = 0;
@@ -89,10 +87,6 @@ evsignal_init(struct event_base *base)
 	/* initialize the queues for all events */
 	for (i = 0; i < NSIG; ++i)
 		TAILQ_INIT(&base->sig.evsigevents[i]);
-
-	if ((flags = fcntl(base->sig.ev_signal_pair[0], F_GETFL, NULL)) == -1 ||
-	    fcntl(base->sig.ev_signal_pair[0], F_SETFL, flags|O_NONBLOCK) == -1)
-		event_warn("fcntl(signal_pair[0], O_NONBLOCK)");
 
 	event_set(&base->sig.ev_signal, base->sig.ev_signal_pair[1],
 		EV_READ | EV_PERSIST, evsignal_cb, &base->sig.ev_signal);
