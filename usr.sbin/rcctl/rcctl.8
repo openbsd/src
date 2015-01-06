@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.12 2014/12/29 15:09:00 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.13 2015/01/06 12:28:56 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 29 2014 $
+.Dd $Mdocdate: January 6 2015 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm rcctl
 .Op Fl df
 .Sm off
-.Cm enable | disable | status | default | order | Ar action
+.Cm enable | disable | get | set | getdef | getall | order | Ar action
 .Sm on
-.Op Ar service | daemon Oo Cm flags Oo Ar arguments Oc Oc | Ar daemons
+.Op Ar service | daemon Oo Ar variable Oo Ar arguments Oc Oc | Ar daemons
 .Sh DESCRIPTION
 The
 .Nm
@@ -36,56 +36,74 @@ or a base system or package
 .Ar daemon
 in
 .Xr rc.conf.local 8
-or display its status.
+or display its configuration and status.
 For a daemon, it can also change the command line arguments or call its
 .Xr rc.d 8
 .Ar daemon
 control script.
 .Pp
+.Ar variable
+can be one of
+.Ar flags ,
+.Ar status ,
+.Ar timeout
+or
+.Ar user .
 The following commands are available:
 .Bl -tag -width Ds
-.It Cm enable Ar service | daemon Op Cm flags Op Ar arguments
-Enable the service or daemon in
-.Xr rc.conf.local 8 .
-When a disabled package daemon is enabled, it is appended to the end of
-.Va pkg_scripts .
-.Pp
-For a daemon, optionally set the variable
-.Ar daemon Ns _flags
-to the specified
-.Ar arguments .
-If
-.Cm flags
-is appended without any
-.Ar arguments ,
-.Ar daemon Ns _flags
-is reset to its default value.
-If
-.Ar daemon
-is already enabled,
-.Ar daemon Ns _flags
-is reset to the optionally provided
-.Cm flags .
+.It Cm enable Ar service | daemon
+Alias for
+.Dq Cm set Ar service|daemon Cm status Ar on .
 .It Cm disable Ar service | daemon
-Disable the service or daemon in
-.Xr rc.conf.local 8 .
-A package daemon is removed from
-.Va pkg_scripts .
-.It Cm status Op Ar service | daemon
+Alias for
+.Dq Cm set Ar service|daemon Cm status Ar off .
+.It Cm get Ar daemon Op variable
 Display the value of
 .Ar service
 or
-.Ar daemon Ns _flags .
-Without an argument, display all services and
-.Ar daemon Ns _flags
-with their values in a format compatible with
+.Ar daemon
+variable.
+Without a variable, display all variables with their values in a format
+compatible with
 .Xr rc.conf 8 .
-.It Cm default Op Ar service | daemon
-For a daemon, display the flags that will be used if
-.Dq Cm enable Ar daemon Cm flags
-is called without
+.It Cm set Ar daemon Cm variable Op arguments
+For a daemon, set the variable
+.Ar daemon Ns _variable
+to the specified
 .Ar arguments .
-For a base system service, display whether it is enabled by default.
+If
+.Cm variable
+is already set,
+.Ar daemon Ns _variable
+is reset to the optionally provided
+.Cm variable .
+If
+.Cm variable
+is appended without any
+.Ar arguments ,
+.Ar daemon Ns _variable
+is reset to its default value.
+.Pp
+The
+.Ar status Cm variable
+only takes the
+.Ar on
+or
+.Ar off
+argument.
+It is used to enable or disable a service or daemon in
+.Xr rc.conf.local 8 .
+When a disabled package daemon is enabled, it is appended to the end of
+.Va pkg_scripts .
+When a package daemon is disabled, it is removed from
+.Va pkg_scripts .
+.It Cm getdef Ar daemon Op variable
+Like
+.Cm get
+but returns the default values.
+.It Cm getall
+Display all services and daemon values in a format compatible with
+.Xr rc.conf 8 .
 .It Cm order Op Ar daemons
 Move the specified package
 .Ar daemons
@@ -116,25 +134,28 @@ returns with the exit status of the
 .Xr rc.d 8
 .Ar daemon
 script.
-.Nm Cm status
+.Nm Cm get Ar daemon|service Op status
 exits with 0 if the daemon or service is enabled and 1 if it is not.
-.Nm Cm default
+.Nm Cm getdef Ar daemon|service Op status
 exits with 0 if the daemon or service is enabled by default
 and 1 if it is not.
 Otherwise, the
 .Nm
 utility exits 0 on success, and >0 if an error occurs
 .Po 2 indicates a non-existent
-.Ar service
+.Ar daemon|service
 .Pc .
 .Sh EXAMPLES
 Enable and set
 .Xr ntpd 8
 flags:
 .Bd -literal -offset indent
-# rcctl enable ntpd flags -s
-# rcctl status ntpd
--s
+# rcctl set ntpd status on
+# rcctl set ntpd flags -s
+# rcctl get ntpd
+ntpd_flags=-s
+ntpd_timeout=30
+ntpd_user=root
 # echo $?
 0
 .Ed
