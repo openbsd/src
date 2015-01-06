@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.121 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.122 2015/01/06 04:05:43 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -850,6 +850,8 @@ sis_iff_ns(struct sis_softc *sc)
 	}
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
+	/* Turn the receive filter on. */
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt | SIS_RXFILTCTL_ENABLE);
 	CSR_READ_4(sc, SIS_RXFILT_CTL);
 }
 
@@ -916,6 +918,8 @@ sis_iff_sis(struct sis_softc *sc)
 	}
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
+	/* Turn the receive filter on. */
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt | SIS_RXFILTCTL_ENABLE);
 	CSR_READ_4(sc, SIS_RXFILT_CTL);
 }
 
@@ -1784,9 +1788,6 @@ sis_init(void *xsc)
 	 * Program promiscuous mode and multicast filters.
 	 */
 	sis_iff(sc);
-
-	/* Turn the receive filter on */
-	SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
 
 	/*
 	 * Load the address of the RX and TX lists.
