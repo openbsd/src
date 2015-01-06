@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.57 2015/01/06 12:27:42 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.58 2015/01/06 12:49:55 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -424,7 +424,7 @@ case ${action} in
 			svc_get ${svc} status
 		else
 			for i in $(ls_rcscripts) ${_special_services}; do
-				svc_get ${i}
+				svc_get ${i} | grep -Ev '_(timeout|user)'
 			done
 			return 0 # we do not want the "status"
 		fi
