@@ -1250,6 +1250,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/usbf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/uslhcomreg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/uvideo.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/xhcireg.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/dev/usb/xhcivar.ph

@@ -1274,6 +1274,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uslhcomreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uvideo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/xhcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/xhcivar.ph

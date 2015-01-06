@@ -799,6 +799,7 @@
 ./usr/include/dev/usb/usbf.h
 ./usr/include/dev/usb/usbfvar.h
 ./usr/include/dev/usb/usbhid.h
+./usr/include/dev/usb/uslhcomreg.h
 ./usr/include/dev/usb/uvideo.h
 ./usr/include/dev/usb/xhcireg.h
 ./usr/include/dev/usb/xhcivar.h
