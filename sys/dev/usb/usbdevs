@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.641 2014/12/04 10:41:42 mpi Exp $
+$OpenBSD: usbdevs,v 1.642 2015/01/06 10:38:36 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -452,6 +452,7 @@ vendor CTC		0x0e5e	CONWISE Technology
 vendor HAWKING		0x0e66	Hawking
 vendor FOSSIL		0x0e67	Fossil
 vendor GMATE		0x0e7e	G.Mate
+vendor MEDIATEK		0x0e8d	MediaTek Inc.
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor NOVATECH		0x0eb0	Nova Tech
@@ -2824,6 +2825,10 @@ product MCT ML_4500		0x0302	ML-4500
 
 /* MDS products */
 product MDS ISDBT		0x0001	MDS ISDB-T tuner
+
+/* MediaTek Inc. products */
+product MEDIATEK UMASS		0x0002	USB MSM installer
+product MEDIATEK DC_4COM	0x00a5	UMTS USB modem
 
 /* MEI products */
 product MEI CASHFLOW_SC		0x1100	Cashflow-SC
