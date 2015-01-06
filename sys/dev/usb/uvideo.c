@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.178 2014/11/18 23:55:01 krw Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.179 2015/01/06 17:27:58 armani Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3091,8 +3091,14 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	DPRINTF(1, "%s: %s: count=%d\n", DEVNAME(sc), __func__, rb->count);
 
-	if (sc->sc_mmap_count > 0 || sc->sc_mmap_buffer != NULL)
-		panic("%s: mmap buffers already allocated", __func__);
+	/* We do not support freeing buffers via reqbufs(0) */
+	if (rb->count == 0)
+		return (EINVAL);
+
+	if (sc->sc_mmap_count > 0 || sc->sc_mmap_buffer != NULL) {
+		printf("%s: mmap buffers already allocated\n", __func__);
+		return (EINVAL);
+	}
 
 	/* limit the buffers */
 	if (rb->count > UVIDEO_MAX_BUFFERS)
