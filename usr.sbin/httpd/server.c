@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.49 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.50 2015/01/06 14:07:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -101,11 +101,27 @@ server_shutdown(void)
 int
 server_privinit(struct server *srv)
 {
+	struct server	*s;
+
 	if (srv->srv_conf.flags & SRVFLAG_LOCATION)
 		return (0);
 
 	log_debug("%s: adding server %s", __func__, srv->srv_conf.name);
 
+	/*
+	 * There's no need to open a new socket if a server with the
+	 * same address already exists.
+	 */
+	TAILQ_FOREACH(s, env->sc_servers, srv_entry) {
+		if (s != srv && s->srv_s != -1 &&
+		    s->srv_conf.port == srv->srv_conf.port &&
+		    sockaddr_cmp((struct sockaddr *)&s->srv_conf.ss,
+		    (struct sockaddr *)&srv->srv_conf.ss,
+		    s->srv_conf.prefixlen) == 0)
+			return (0);
+	}
+
+	/* Open listening socket in the privileged process */
 	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
 	    srv->srv_conf.port, &srv->srv_conf)) == -1)
 		return (-1);
@@ -277,7 +293,8 @@ server_purge(struct server *srv)
 	if (evtimer_initialized(&srv->srv_evt))
 		evtimer_del(&srv->srv_evt);
 
-	close(srv->srv_s);
+	if (srv->srv_s != -1)
+		close(srv->srv_s);
 	TAILQ_REMOVE(env->sc_servers, srv, srv_entry);
 
 	/* cleanup sessions */

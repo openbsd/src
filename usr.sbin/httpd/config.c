@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.27 2015/01/03 15:49:18 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.28 2015/01/06 14:07:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -200,7 +200,9 @@ config_setserver(struct httpd *env, struct server *srv)
 			n = -1;
 			proc_range(ps, id, &n, &m);
 			for (n = 0; n < m; n++) {
-				if ((fd = dup(srv->srv_s)) == -1)
+				if (srv->srv_s == -1)
+					fd = -1;
+				else if ((fd = dup(srv->srv_s)) == -1)
 					return (-1);
 				proc_composev_imsg(ps, id, n,
 				    IMSG_CFG_SERVER, fd, iov, c);
@@ -210,9 +212,6 @@ config_setserver(struct httpd *env, struct server *srv)
 			    iov, c);
 		}
 	}
-
-	close(srv->srv_s);
-	srv->srv_s = -1;
 
 	return (0);
 }
@@ -356,8 +355,12 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	if ((srv = server_byaddr((struct sockaddr *)
 	    &srv_conf.ss, srv_conf.port)) != NULL) {
 		/* Add "host" to existing listening server */
-		if (imsg->fd != -1)
-			close(imsg->fd);
+		if (imsg->fd != -1) {
+			if (srv->srv_s == -1)
+				srv->srv_s = imsg->fd;
+			else
+				close(imsg->fd);
+		}
 		return (config_getserver_config(env, srv, imsg));
 	}
 
