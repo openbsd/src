@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.36 2014/12/18 05:33:48 mlarkin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.37 2015/01/06 12:50:47 dlg Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -272,8 +272,13 @@ u_int32_t lapic_delaytab[26];
 void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
+	struct cpu_info *ci = curcpu();
+	int floor;
 
+	floor = ci->ci_handled_intr_level;
+	ci->ci_handled_intr_level = ci->ci_ilevel;
 	hardclock((struct clockframe *)&frame);
+	ci->ci_handled_intr_level = floor;
 
 	clk_count.ec_count++;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.12 2015/01/06 00:38:32 dlg Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.13 2015/01/06 12:50:47 dlg Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -102,9 +102,12 @@ x86_ipi_handler(void)
 	struct cpu_info *ci = curcpu();
 	u_int32_t pending;
 	int bit;
+	int floor;
+
+	floor = ci->ci_handled_intr_level;
+	ci->ci_handled_intr_level = ci->ci_ilevel;
 
 	pending = atomic_swap_uint(&ci->ci_ipis, 0);
-
 	for (bit = 0; bit < X86_NIPI && pending; bit++) {
 		if (pending & (1<<bit)) {
 			pending &= ~(1<<bit);
@@ -112,4 +115,6 @@ x86_ipi_handler(void)
 			ipi_count.ec_count++;
 		}
 	}
+
+	ci->ci_handled_intr_level = floor;
 }

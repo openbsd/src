@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.39 2014/12/02 18:13:10 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.40 2015/01/06 12:50:47 dlg Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -514,6 +514,8 @@ intr_disestablish(struct intrhand *ih)
 int
 intr_handler(struct intrframe *frame, struct intrhand *ih)
 {
+	struct cpu_info *ci = curcpu();
+	int floor;
 	int rc;
 #ifdef MULTIPROCESSOR
 	int need_lock;
@@ -526,7 +528,10 @@ intr_handler(struct intrframe *frame, struct intrhand *ih)
 	if (need_lock)
 		__mp_lock(&kernel_lock);
 #endif
+	floor = ci->ci_handled_intr_level;
+	ci->ci_handled_intr_level = ih->ih_level;
 	rc = (*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : frame);
+	ci->ci_handled_intr_level = floor;
 #ifdef MULTIPROCESSOR
 	if (need_lock)
 		__mp_unlock(&kernel_lock);

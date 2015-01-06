@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.88 2014/12/16 21:20:23 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.89 2015/01/06 12:50:48 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ struct cpu_info {
 	u_int64_t	ci_ipending;
 	int		ci_ilevel;
 	int		ci_idepth;
+	int		ci_handled_intr_level;
 	u_int64_t	ci_imask[NIPL];
 	u_int64_t	ci_iunmask[NIPL];
 #ifdef DIAGNOSTIC
