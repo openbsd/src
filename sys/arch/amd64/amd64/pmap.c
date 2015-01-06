@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.83 2014/12/23 07:42:46 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.84 2015/01/06 00:38:32 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 
 #define COUNT(x)	/* nothing */
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
+#define pmap_pte_set(p, n)		atomic_swap_64(p, n)
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
 #define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
 

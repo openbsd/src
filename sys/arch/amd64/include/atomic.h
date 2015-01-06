@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.16 2014/10/08 19:40:28 sf Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.17 2015/01/06 00:38:32 dlg Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -87,6 +87,51 @@ _atomic_cas_ptr(volatile void *p, void *e, void *n)
 	return (n);
 }
 #define atomic_cas_ptr(_p, _e, _n) _atomic_cas_ptr((_p), (_e), (_n))
+
+static inline unsigned int
+_atomic_swap_uint(volatile unsigned int *p, unsigned int n)
+{
+	__asm volatile("xchgl %0, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "0" (n), "m" (*p));
+
+	return (n);
+}
+#define atomic_swap_uint(_p, _n) _atomic_swap_uint((_p), (_n))
+#define atomic_swap_32(_p, _n) _atomic_swap_uint((_p), (_n))
+
+static inline unsigned long
+_atomic_swap_ulong(volatile unsigned long *p, unsigned long n)
+{
+	__asm volatile("xchgq %0, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "0" (n), "m" (*p));
+
+	return (n);
+}
+#define atomic_swap_ulong(_p, _n) _atomic_swap_ulong((_p), (_n))
+
+static inline uint64_t
+_atomic_swap_64(volatile uint64_t *p, uint64_t n)
+{
+	__asm volatile("xchgq %0, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "0" (n), "m" (*p));
+
+	return (n);
+}
+#define atomic_swap_64(_p, _n) _atomic_swap_64((_p), (_n))
+
+static inline void *
+_atomic_swap_ptr(volatile void *p, void *n)
+{
+	__asm volatile("xchgq %0, %1"
+	    : "=a" (n), "=m" (*(unsigned long *)p)
+	    : "0" (n), "m" (*(unsigned long *)p));
+
+	return (n);
+}
+#define atomic_swap_ptr(_p, _n) _atomic_swap_ptr((_p), (_n))
 
 static inline void
 _atomic_inc_int(volatile unsigned int *p)
@@ -235,21 +280,6 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 #define virtio_membar_producer()	__membar("")
 #define virtio_membar_consumer()	__membar("")
 #define virtio_membar_sync()		__membar("mfence")
-
-static __inline u_int64_t
-x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val)
-{
-	__asm__ volatile ("xchgq %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
-	return val;
-}
-
-static __inline u_int32_t
-x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val)
-{
-	__asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
-	return val;
-}
-
 
 static __inline void
 x86_atomic_setbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
