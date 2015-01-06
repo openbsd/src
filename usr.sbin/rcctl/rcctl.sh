@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.58 2015/01/06 12:49:55 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.59 2015/01/06 14:48:59 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -365,9 +365,8 @@ if [ -n "${var}" ]; then
 	[[ ${action} == @(enable|set) && ${var} = flags && ${args} = NO ]] && \
 		_rc_err "${0##*/}: \"flags NO\" contradicts \"${action}\""
 	if svc_is_special ${svc}; then
-		if [[ ${var} != @(flags|status) || \
-			${action} != @(set|get|getdef|enable) ]] || \
-			[[ ${action} == @(enable|set) && -n ${args} ]]; then
+		if [[ ${action} == @(enable|set) && ${var} != status ]] || \
+			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]] ; then
 			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
 		fi
 	fi
