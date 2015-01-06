@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.60 2015/01/06 13:38:59 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.61 2015/01/06 13:48:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -184,17 +184,14 @@ server_read_http(struct bufferevent *bev, void *arg)
 			value = strchr(key, ':');
 		if (value == NULL) {
 			if (clt->clt_line == 1) {
-				free(line);
 				server_abort_http(clt, 400, "malformed");
-				return;
+				goto abort;
 			}
 
 			/* Append line to the last header, if present */
 			if (kv_extend(&desc->http_headers,
-			    desc->http_lastheader, line) == NULL) {
-				free(line);
+			    desc->http_lastheader, line) == NULL)
 				goto fail;
-			}
 
 			free(line);
 			continue;
@@ -223,15 +220,13 @@ server_read_http(struct bufferevent *bev, void *arg)
 			 * Decode request path and query
 			 */
 			desc->http_path = strdup(value);
-			if (desc->http_path == NULL) {
-				free(line);
+			if (desc->http_path == NULL)
 				goto fail;
-			}
+
 			desc->http_version = strchr(desc->http_path, ' ');
-			if (desc->http_version == NULL) {
-				free(line);
+			if (desc->http_version == NULL)
 				goto fail;
-			}
+
 			*desc->http_version++ = '\0';
 			desc->http_query = strchr(desc->http_path, '?');
 			if (desc->http_query != NULL)
@@ -242,16 +237,14 @@ server_read_http(struct bufferevent *bev, void *arg)
 			 * be changed independently by the filters later.
 			 */
 			if ((desc->http_version =
-			    strdup(desc->http_version)) == NULL) {
-				free(line);
+			    strdup(desc->http_version)) == NULL)
 				goto fail;
-			}
+
 			if (desc->http_query != NULL &&
 			    (desc->http_query =
-			    strdup(desc->http_query)) == NULL) {
-				free(line);
+			    strdup(desc->http_query)) == NULL)
 				goto fail;
-			}
+
 		} else if (desc->http_method != HTTP_METHOD_NONE &&
 		    strcasecmp("Content-Length", key) == 0) {
 			if (desc->http_method == HTTP_METHOD_TRACE ||
@@ -290,10 +283,9 @@ server_read_http(struct bufferevent *bev, void *arg)
 
 		if (clt->clt_line != 1) {
 			if ((hdr = kv_add(&desc->http_headers, key,
-			    value)) == NULL) {
-				free(line);
+			    value)) == NULL)
 				goto fail;
-			}
+
 			desc->http_lastheader = hdr;
 		}
 
@@ -381,7 +373,6 @@ server_read_http(struct bufferevent *bev, void *arg)
 	return;
  fail:
 	server_abort_http(clt, 500, strerror(errno));
-	return;
  abort:
 	free(line);
 }
