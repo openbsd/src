@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.309 2014/12/19 17:14:39 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.310 2015/01/06 21:26:46 stsp Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -383,10 +383,6 @@ if_attach(struct ifnet *ifp)
 #else
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 #endif
-#ifdef INET6
-	ifp->if_xflags |= IFXF_NOINET6;
-#endif
-
 	if_attachsetup(ifp);
 }
 
@@ -1100,10 +1096,9 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	if (!(ifp->if_xflags & IFXF_NOINET6))
+	if (ifp == lo0ifp)	/* lo0 is special - needs ::1 */
 		in6_if_up(ifp);
 #endif
-
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
 #endif
@@ -1195,6 +1190,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	struct ifreq *ifr;
 	struct sockaddr_dl *sdl;
 	struct ifgroupreq *ifgr;
+	struct if_afreq *ifar;
 	char ifdescrbuf[IFDESCRSIZE];
 	char ifrtlabelbuf[RTLABEL_LEN];
 	int s, error = 0;
@@ -1229,6 +1225,28 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		return (if_setgroupattribs(data));
+	case SIOCIFAFATTACH:
+	case SIOCIFAFDETACH:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		ifar = (struct if_afreq *)data;
+		if ((ifp = ifunit(ifar->ifar_name)) == NULL)
+			return (ENXIO);
+		switch (ifar->ifar_af) {
+#ifdef INET6
+		case AF_INET6:
+			s = splsoftnet();
+			if (cmd == SIOCIFAFATTACH) {
+				if (in6ifa_ifpforlinklocal(ifp, 0) == NULL)
+					in6_if_up(ifp);
+			} else
+				in6_ifdetach(ifp);
+			splx(s);
+			return (0);
+#endif /* INET6 */
+		default:
+			return (EAFNOSUPPORT);
+		}
 	}
 
 	ifp = ifunit(ifr->ifr_name);
@@ -1286,17 +1304,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			return (error);
 
 #ifdef INET6
-		if (ifr->ifr_flags & IFXF_NOINET6 &&
-		    !(ifp->if_xflags & IFXF_NOINET6)) {
-			s = splnet();
-			in6_ifdetach(ifp);
-			splx(s);
-		}
-		if (ifp->if_xflags & IFXF_NOINET6 &&
-		    !(ifr->ifr_flags & IFXF_NOINET6)) {
-			ifp->if_xflags &= ~IFXF_NOINET6;
-			if (ifp->if_flags & IFF_UP) {
-				/* configure link-local address */
+		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
+			if (in6ifa_ifpforlinklocal(ifp, 0) == NULL) {
 				s = splnet();
 				in6_if_up(ifp);
 				splx(s);
@@ -1314,6 +1323,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			if (!timeout_pending(&nd6_rs_output_timer))
 				nd6_rs_output_set_timo(nd6_rs_output_timeout);
 		}
+
 		if ((ifp->if_xflags & IFXF_AUTOCONF6) &&
 		    !(ifr->ifr_flags & IFXF_AUTOCONF6)) {
 			hook_disestablish(ifp->if_linkstatehooks,
@@ -1322,7 +1332,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			if (nd6_rs_timeout_count == 0)
 				timeout_del(&nd6_rs_output_timer);
 		}
-#endif
+#endif	/* INET6 */
 
 #ifdef MPLS
 		if (ISSET(ifr->ifr_flags, IFXF_MPLS) &&
@@ -1341,7 +1351,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			ifp->if_ll_output = NULL;
 			splx(s);
 		}
-#endif
+#endif	/* MPLS */
 
 #ifndef SMALL_KERNEL
 		if (ifp->if_capabilities & IFCAP_WOL) {
@@ -1650,17 +1660,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		break;
 	}
 
-	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
+	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0)
 		microtime(&ifp->if_lastchange);
-#ifdef INET6
-		if (!(ifp->if_xflags & IFXF_NOINET6) &&
-		    (ifp->if_flags & IFF_UP) != 0) {
-			s = splnet();
-			in6_if_up(ifp);
-			splx(s);
-		}
-#endif
-	}
+
 	/* If we took down the IF, bring it back */
 	if (up) {
 		s = splnet();
@@ -2250,7 +2252,7 @@ ifnewlladdr(struct ifnet *ifp)
 #ifdef INET6
 	/* Update the link-local address. Don't do it if we're
 	 * a router to avoid confusing hosts on the network. */
-	if (!(ifp->if_xflags & IFXF_NOINET6) && !ip6_forwarding) {
+	if (!ip6_forwarding) {
 		ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa;
 		if (ifa) {
 			in6_purgeaddr(ifa);

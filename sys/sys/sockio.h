@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.55 2014/07/13 13:41:46 henning Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.56 2015/01/06 21:26:46 stsp Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -200,5 +200,7 @@
 #define	SIOCGETPFLOW	_IOWR('i', 254, struct ifreq)
 
 #define	SIOCGIFRXR	_IOW('i', 170, struct ifreq)
+#define	SIOCIFAFATTACH	_IOW('i', 171, struct if_afreq)	/* attach given af */
+#define	SIOCIFAFDETACH	_IOW('i', 172, struct if_afreq)	/* detach given af */
 
 #endif /* !_SYS_SOCKIO_H_ */

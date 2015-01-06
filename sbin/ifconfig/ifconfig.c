@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.292 2015/01/04 12:30:39 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.293 2015/01/06 21:26:46 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ void	setiflladdr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
 void	setifxflags(const char *, int);
+void	addaf(const char *, int);
 void	removeaf(const char *, int);
 void	setifbroadaddr(const char *, int);
 void	setifmtu(const char *, int);
@@ -676,7 +677,7 @@ main(int argc, char *argv[])
 	}
 #ifdef INET6
 	if (argc != 0 && af == AF_INET6)
-		setifxflags("inet6", -IFXF_NOINET6);
+		addaf(name, AF_INET6);
 #endif
 	while (argc > 0) {
 		const struct cmd *p;
@@ -1253,18 +1254,25 @@ setifxflags(const char *vname, int value)
 }
 
 void
+addaf(const char *vname, int value)
+{
+	struct if_afreq	ifar;
+
+	strlcpy(ifar.ifar_name, name, sizeof(ifar.ifar_name));
+	ifar.ifar_af = value;
+	if (ioctl(s, SIOCIFAFATTACH, (caddr_t)&ifar) < 0)
+		warn("SIOCIFAFATTACH");
+}
+
+void
 removeaf(const char *vname, int value)
 {
-	switch (value) {
-#ifdef INET6
-	case AF_INET6:
-		setifxflags(vname, IFXF_NOINET6);
-		setifxflags(vname, -IFXF_AUTOCONF6);
-		break;
-#endif
-	default:
-		errx(1, "removeaf not implemented for this AF");
-	}
+	struct if_afreq	ifar;
+
+	strlcpy(ifar.ifar_name, name, sizeof(ifar.ifar_name));
+	ifar.ifar_af = value;
+	if (ioctl(s, SIOCIFAFDETACH, (caddr_t)&ifar) < 0)
+		warn("SIOCIFAFDETACH");
 }
 
 #ifdef INET6
@@ -1326,7 +1334,9 @@ setia6eui64(const char *cmd, int val)
 
 	if (afp->af_af != AF_INET6)
 		errx(1, "%s not allowed for the AF", cmd);
-	setifxflags("inet6", -IFXF_NOINET6);
+#ifdef INET6
+	addaf(name, AF_INET6);
+#endif
 	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
 	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
 		errx(1, "interface index is already filled");

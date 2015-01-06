@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.147 2014/12/08 10:38:48 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.148 2015/01/06 21:26:46 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -473,9 +473,12 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 		/*
 		 * first, make or update the interface address structure,
-		 * and link it to the list.
+		 * and link it to the list. try to enable inet6 if there
+		 * is no link-local yet.
 		 */
  		s = splsoftnet();
+		if (in6ifa_ifpforlinklocal(ifp, 0) == NULL)
+			in6_if_up(ifp);
 		error = in6_update_ifa(ifp, ifra, ia6);
 		splx(s);
 		if (error != 0)
@@ -604,10 +607,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
 	    ifra->ifra_dstaddr.sin6_family != AF_INET6 &&
 	    ifra->ifra_dstaddr.sin6_family != AF_UNSPEC)
-		return (EAFNOSUPPORT);
-
-	/* must have link-local */
-	if (ifp->if_xflags & IFXF_NOINET6)
 		return (EAFNOSUPPORT);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.78 2014/12/04 00:02:15 tedu Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.79 2015/01/06 21:26:46 stsp Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -616,6 +616,8 @@ in6_ifdetach(struct ifnet *ifp)
 	struct ifaddr *ifa, *next;
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
+
+	ifp->if_xflags &= ~IFXF_AUTOCONF6;
 
 #ifdef MROUTING
 	/* remove ip6_mrouter stuff */

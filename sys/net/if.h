@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.158 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.159 2015/01/06 21:26:46 stsp Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ struct if_status_description {
 	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
 
 #define IFXF_TXREADY		0x1		/* interface is ready to tx */
-#define	IFXF_NOINET6		0x2		/* don't do inet6 */
 #define	IFXF_INET6_NOPRIVACY	0x4		/* don't autoconf privacy */
 #define	IFXF_MPLS		0x8		/* supports MPLS */
 #define	IFXF_WOL		0x10		/* wake on lan enabled */
@@ -427,6 +426,12 @@ struct if_laddrreq {
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
+};
+
+/* SIOCIFAFDETACH */
+struct if_afreq {
+	char		ifar_name[IFNAMSIZ];
+	sa_family_t	ifar_af;
 };
 
 #include <net/if_arp.h>
