@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.56 2015/01/06 11:47:50 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.57 2015/01/06 12:27:42 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -254,7 +254,7 @@ svc_rm()
 		( svc_getdef ${_svc} status ) && \
 			echo "${_svc}=NO" >>${_TMP_RCCONF}
 	else
-		grep -Ev "^${_svc}_(flags|user|timeout).*=" \
+		grep -Ev "^${_svc}_(flags|timeout|user).*=" \
 			/etc/rc.conf.local >${_TMP_RCCONF}
 		( svc_getdef ${_svc} status ) && \
 			echo "${_svc}_flags=NO" >>${_TMP_RCCONF}
@@ -268,25 +268,25 @@ svc_set()
 	[ -n "${_svc}" -a -n "${_var}" ] || return
 
 	shift 2
-	local _flags="$*"
+	local _args="$*"
 
 	if [ "${_var}" = "status" ]; then
-		if [ "${_flags}" = "on" ]; then
+		if [ "${_args}" = "on" ]; then
 			_var="flags"
 			# keep our flags if we're already enabled
-			eval "_flags=\"\${${_svc}_${_var}}\""
-			[ "${_flags}" = "NO" ] && unset _flags
+			eval "_args=\"\${${_svc}_${_var}}\""
+			[ "${_args}" = "NO" ] && unset _args
 			if ! svc_is_base ${_svc} && ! svc_is_special ${_svc}; then
 				pkg_scripts_append ${_svc}
 			fi
-		elif [ "${_flags}" = "off" ]; then
+		elif [ "${_args}" = "off" ]; then
 			if ! svc_is_base ${_svc} && ! svc_is_special ${_svc}; then
 				pkg_scripts_rm ${_svc}
 			fi
 			svc_rm ${_svc}
 			return
 		else
-			_rc_err "${0##*/}: invalid status \"${_flags}\""
+			_rc_err "${0##*/}: invalid status \"${_args}\""
 		fi
 	else
 		svc_get ${_svc} status || \
@@ -304,27 +304,27 @@ svc_set()
 	fi
 
 	if [ "${_var}" = "timeout" ]; then
-		[[ ${_flags} != +([[:digit:]]) || ${_flags} -le 0 ]] && \
-			_rc_err "${0##*/}: \"${_flags}\" is not an integer"
+		[[ ${_args} != +([[:digit:]]) || ${_args} -le 0 ]] && \
+			_rc_err "${0##*/}: \"${_args}\" is not an integer"
 	fi
 
 	# unset flags if they match the default enabled ones
-	if [ -n "${_flags}" ]; then
-		[ "${_flags}" = "$(svc_getdef ${_svc} ${_var})" ] && \
-			unset _flags
+	if [ -n "${_args}" ]; then
+		[ "${_args}" = "$(svc_getdef ${_svc} ${_var})" ] && \
+			unset _args
 	fi
 
 	# protect leading whitespace
-	[ "${_flags}" = "${_flags# }" ] || _flags="\"${_flags}\""
+	[ "${_args}" = "${_args# }" ] || _args="\"${_args}\""
 
 	# reset: value may have changed
 	unset ${_svc}_${_var}
 
 	rcconf_edit_begin
 	grep -v "^${_svc}_${_var}.*=" /etc/rc.conf.local >${_TMP_RCCONF}
-	if [ -n "${_flags}" ] || \
+	if [ -n "${_args}" ] || \
 	   ( svc_is_base ${_svc} && ! svc_getdef ${_svc} status && [ "${_var}" == "flags" ] ); then
-		echo "${_svc}_${_var}=${_flags}" >>${_TMP_RCCONF}
+		echo "${_svc}_${_var}=${_args}" >>${_TMP_RCCONF}
 	fi
 	rcconf_edit_end
 }
@@ -346,9 +346,9 @@ if [ "${action}" = "order" ]; then
 	svcs="$*"
 else
 	svc=$2
-	flag=$3
+	var=$3
 	[ $# -ge 3 ] && shift 3 || shift $#
-	flags="$*"
+	args="$*"
 fi
 
 if [ -n "${svc}" ]; then
@@ -359,20 +359,20 @@ elif [[ ${action} != @(getall|order|status) ]] ; then
 	usage
 fi
 
-if [ -n "${flag}" ]; then
-	[[ ${flag} != @(flags|status|timeout|user) ]] && usage
+if [ -n "${var}" ]; then
+	[[ ${var} != @(flags|status|timeout|user) ]] && usage
 	[[ ${action} != @(enable|get|getdef|set) ]] && usage
-	[[ ${action} == @(enable|set) && ${flag} = flags && ${flags} = NO ]] && \
+	[[ ${action} == @(enable|set) && ${var} = flags && ${args} = NO ]] && \
 		_rc_err "${0##*/}: \"flags NO\" contradicts \"${action}\""
 	if svc_is_special ${svc}; then
-		if [[ ${flag} != @(flags|status) || \
+		if [[ ${var} != @(flags|status) || \
 			${action} != @(set|get|getdef|enable) ]] || \
-			[[ ${action} == @(enable|set) && -n ${flags} ]]; then
-			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot \"${action} ${svc} ${flag}\""
+			[[ ${action} == @(enable|set) && -n ${args} ]]; then
+			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
 		fi
 	fi
-	[[ ${action} == enable && ${flag} != flags ]] && \
-		_rc_err "${0##*/}: invalid action \"${action} ${svc} ${flag}\""
+	[[ ${action} == enable && ${var} != flags ]] && \
+		_rc_err "${0##*/}: invalid action \"${action} ${svc} ${var}\""
 elif [ ${action} = "set" ]; then
 	usage
 fi
@@ -390,12 +390,12 @@ case ${action} in
 		needs_root ${action}
 		svc_set ${svc} status on
 		# XXX backward compat
-		if [ -n "${flag}" ]; then
-			svc_set ${svc} "${flag}" "${flags}"
+		if [ -n "${var}" ]; then
+			svc_set ${svc} "${var}" "${args}"
 		fi
 		;;
 	get)
-		svc_get ${svc} "${flag}"
+		svc_get ${svc} "${var}"
 		;;
 	getall)
 		for i in $(ls_rcscripts) ${_special_services}; do
@@ -404,7 +404,7 @@ case ${action} in
 		return 0 # we do not want the "status"
 		;;
 	getdef)
-		( svc_getdef ${svc} "${flag}" )
+		( svc_getdef ${svc} "${var}" )
 		;;
 	order)
 		if [ -n "${svcs}" ]; then
@@ -416,7 +416,7 @@ case ${action} in
 		;;
 	set)
 		needs_root ${action}
-		svc_set ${svc} "${flag}" "${flags}"
+		svc_set ${svc} "${var}" "${args}"
 		;;
 	status) # XXX backward compat
 		if [ -n "${svc}" ]; then
