@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.95 2014/12/29 14:35:04 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.96 2015/01/07 19:53:34 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <ohash.h>
 #include <err.h>
 #include <unistd.h>
 #include <readpassphrase.h>
@@ -31,10 +33,6 @@
 #include <sha2.h>
 
 #include "crypto_api.h"
-#ifndef VERIFY_ONLY
-#include <stddef.h>
-#include <ohash.h>
-#endif
 
 #define SIGBYTES crypto_sign_ed25519_BYTES
 #define SECRETBYTES crypto_sign_ed25519_SECRETKEYBYTES
