@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_hpux.c,v 1.1 2015/01/06 21:08:11 bcook Exp $	*/
+/*	$OpenBSD: getentropy_hpux.c,v 1.2 2015/01/07 01:15:57 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -225,6 +225,7 @@ getentropy_fallback(void *buf, size_t len)
 	static int cnt;
 	struct timespec ts;
 	struct timeval tv;
+	struct pst_vminfo pvi;
 	struct pst_vm_status pvs;
 	struct pst_dynamic pdy;
 	struct rusage ru;
@@ -255,7 +256,8 @@ getentropy_fallback(void *buf, size_t len)
 				cnt += (int)tv.tv_usec;
 			}
 
-			HX(pstat_getprocvm(&pvs, sizeof(pvs), 0, 0) != 1, pvs.pst_space);
+			HX(pstat_getvminfo(&pvi, sizeof(pvi), 1, 0) != 1, pvi);
+			HX(pstat_getprocvm(&pvs, sizeof(pvs), 0, 0) != 1, pvs);
 
 			for (ii = 0; ii < sizeof(cl)/sizeof(cl[0]); ii++)
 				HX(clock_gettime(cl[ii], &ts) == -1, ts);
