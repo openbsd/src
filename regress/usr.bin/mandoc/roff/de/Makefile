@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.7 2015/01/01 09:06:39 schwarze Exp $
+# $OpenBSD: Makefile,v 1.8 2015/01/07 12:19:17 schwarze Exp $
 
-REGRESS_TARGETS = append escname factorial indir startde TH Dd
+REGRESS_TARGETS = append cond escname factorial indir startde TH Dd
 LINT_TARGETS	= escname indir
 
 .include <bsd.regress.mk>

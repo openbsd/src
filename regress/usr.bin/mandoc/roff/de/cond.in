@@ -1,0 +1,13 @@
+.Dd January 7, 2015
+.Dt DE-COND 1
+.Os OpenBSD
+.Sh NAME
+.Nm de-cond
+.Nd conditional execution of a user-defined macro
+.Sh DESCRIPTION
+.de mym
+This is the text printed by the macro.
+..
+preceding text
+.if n .mym
+following text

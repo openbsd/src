@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.119 2015/01/01 19:28:29 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.120 2015/01/07 12:19:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -2167,6 +2167,7 @@ roff_userdef(ROFF_ARGS)
 	buf->buf = n1;
 	if (buf->sz == 0)
 		buf->sz = strlen(buf->buf) + 1;
+	*offs = 0;
 
 	return(buf->sz > 1 && buf->buf[buf->sz - 2] == '\n' ?
 	   ROFF_REPARSE : ROFF_APPEND);
