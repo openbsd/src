@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.22 2015/01/07 04:56:56 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.23 2015/01/07 10:26:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1123,16 +1123,25 @@ mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
 void
 mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
-	u_int32_t *r = (u_int32_t *)&ccb->ccb_req;
+	u_long *r = (u_long *)&ccb->ccb_req;
 
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_requests),
 	    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+#if defined(__LP64__)
+        bus_space_write_raw_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, *r);
+#else
 	mtx_enter(&sc->sc_post_mtx);
-	mfii_write(sc, MFI_IQPL, r[0]);
-	mfii_write(sc, MFI_IQPH, r[1]);
+	bus_space_write_raw_4(sc->sc_iot, sc->sc_ioh, MFI_IQPL, r[0]);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+	    MFI_IQPL, 8, BUS_SPACE_BARRIER_WRITE);
+
+	bus_space_write_raw_4(sc->sc_iot, sc->sc_ioh, MFI_IQPH, r[1]);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+	    MFI_IQPH, 8, BUS_SPACE_BARRIER_WRITE);
 	mtx_leave(&sc->sc_post_mtx);
+#endif
 }
 
 void
