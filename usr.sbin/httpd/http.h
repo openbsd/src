@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.9 2014/09/29 19:30:47 deraadt Exp $	*/
+/*	$OpenBSD: http.h,v 1.10 2015/01/07 16:57:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -218,6 +218,7 @@ struct http_mediatype {
 	{ "jpeg",	"image",	"jpeg" },	\
 	{ "jpg",	"image",	"jpeg" },	\
 	{ "png",	"image",	"png" },	\
+	{ "svg",	"image",	"svg+xml" },	\
 	{ "js",		"application",	"javascript" },	\
 	{ NULL }					\
 }
