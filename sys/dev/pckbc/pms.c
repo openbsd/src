@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.54 2014/08/29 20:09:09 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.55 2015/01/07 10:32:13 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -614,14 +614,10 @@ pms_proc_mouse(struct pms_softc *sc)
 	dy = (sc->packet[0] & PMS_PS2_YNEG) ?
 	    (int)sc->packet[2] - 256 : sc->packet[2];
 
-	switch (sc->protocol->type) {
-	case PMS_STANDARD:
-		dz = 0;
-		break;
-	case PMS_INTELLI:
+	if (sc->protocol->type == PMS_INTELLI)
 		dz = (signed char)sc->packet[3];
-		break;
-	}
+	else
+		dz = 0;
 
 	wsmouse_input(sc->sc_wsmousedev,
 	    buttons, dx, dy, dz, 0, WSMOUSE_INPUT_DELTA);
