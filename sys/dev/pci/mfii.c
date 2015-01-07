@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.21 2015/01/07 04:46:18 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.22 2015/01/07 04:56:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1047,7 +1047,7 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	case SCSI_DATA_OUT:
 		ccb->ccb_direction = MFII_DATA_OUT;
 		hdr->mfh_flags = htole16(MFI_FRAME_DIR_WRITE);
-		bcopy(buf, dma_buf, len);
+		memcpy(dma_buf, buf, len);
 		break;
 	}
 
@@ -1079,7 +1079,7 @@ mfii_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb,
 		rv = 0;
 
 		if (ccb->ccb_direction == MFII_DATA_IN)
-			bcopy(dma_buf, buf, len);
+			memcpy(buf, dma_buf, len);
 	}
 
 done:
@@ -1440,7 +1440,7 @@ mfii_scsi_cmd_cdb(struct mfii_softc *sc, struct scsi_xfer *xs)
 		io->direction = MPII_SCSIIO_DIR_NONE;
 		break;
 	}
-	bcopy(xs->cmd, io->cdb, xs->cmdlen);
+	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
 	ctx->virtual_disk_target_id = htole16(link->target);
 
@@ -1551,7 +1551,7 @@ mfii_pd_scsi_cmd_cdb(struct mfii_softc *sc, struct scsi_xfer *xs)
 		io->direction = MPII_SCSIIO_DIR_NONE;
 		break;
 	}
-	bcopy(xs->cmd, io->cdb, xs->cmdlen);
+	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
 	ctx->virtual_disk_target_id = htole16(link->target);
 	ctx->raid_flags = MFII_RAID_CTX_IO_TYPE_SYSPD;
