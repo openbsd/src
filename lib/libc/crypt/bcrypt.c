@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.48 2015/01/05 13:10:10 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.49 2015/01/07 15:46:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -65,8 +65,10 @@ bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 {
 	uint8_t csalt[BCRYPT_MAXSALT];
 
-	if (saltbuflen < BCRYPT_SALTSPACE)
+	if (saltbuflen < BCRYPT_SALTSPACE) {
+		errno = EINVAL;
 		return -1;
+	}
 
 	arc4random_buf(csalt, sizeof(csalt));
 
@@ -98,15 +100,15 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	u_int32_t cdata[BCRYPT_BLOCKS];
 
 	if (encryptedlen < BCRYPT_HASHSPACE)
-		return -1;
+		goto inval;
 
 	/* Check and discard "$" identifier */
 	if (salt[0] != '$')
-		return -1;
+		goto inval;
 	salt += 1;
 
 	if (salt[0] != BCRYPT_VERSION)
-		return -1;
+		goto inval;
 
 	/* Check for minor versions */
 	switch ((minor = salt[1])) {
@@ -124,20 +126,20 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 		key_len++; /* include the NUL */
 		break;
 	default:
-		 return -1;
+		 goto inval;
 	}
 	if (salt[2] != '$')
-		return -1;
+		goto inval;
 	/* Discard version + "$" identifier */
 	salt += 3;
 
 	/* Check and parse num rounds */
 	if (!isdigit((unsigned char)salt[0]) ||
 	    !isdigit((unsigned char)salt[1]) || salt[2] != '$')
-		return -1;
+		goto inval;
 	logr = atoi(salt);
 	if (logr < BCRYPT_MINLOGROUNDS || logr > 31)
-		return -1;
+		goto inval;
 	/* Computer power doesn't increase linearly, 2^x should be fine */
 	rounds = 1U << logr;
 
@@ -145,11 +147,11 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	salt += 3;
 
 	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
-		return -1;
+		goto inval;
 
 	/* We dont want the base64 salt but the raw data */
 	if (decode_base64(csalt, BCRYPT_MAXSALT, salt))
-		return -1;
+		goto inval;
 	salt_len = BCRYPT_MAXSALT;
 
 	/* Setting up S-Boxes and Subkeys */
@@ -189,6 +191,10 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	explicit_bzero(csalt, sizeof(csalt));
 	explicit_bzero(cdata, sizeof(cdata));
 	return 0;
+
+inval:
+	errno = EINVAL;
+	return -1;
 }
 
 /*
@@ -217,8 +223,10 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 	if (bcrypt_hashpass(pass, goodhash, hash, sizeof(hash)) != 0)
 		return -1;
 	if (strlen(hash) != strlen(goodhash) ||
-	    timingsafe_bcmp(hash, goodhash, strlen(goodhash)) != 0)
+	    timingsafe_bcmp(hash, goodhash, strlen(goodhash)) != 0) {
+		errno = EACCES;
 		return -1;
+	}
 
 	explicit_bzero(hash, sizeof(hash));
 	return 0;
