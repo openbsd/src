@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2015/01/06 14:07:48 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.52 2015/01/07 11:04:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -417,28 +417,26 @@ serveroptsl	: LISTEN ON STRING opttls port {
 
 			TAILQ_INSERT_TAIL(&srv->srv_hosts, alias, entry);
 		}
-		| TCP			{
+		| tcpip			{
 			if (parentsrv != NULL) {
 				yyerror("tcp flags inside location");
 				YYERROR;
 			}
-		} tcpip
-		| CONNECTION		{
+		}
+		| connection		{
 			if (parentsrv != NULL) {
 				yyerror("connection options inside location");
 				YYERROR;
 			}
-		} connection
-		| TLS			{
+		}
+		| tls			{
 			if (parentsrv != NULL) {
 				yyerror("tls configuration inside location");
 				YYERROR;
 			}
-		} tls
-		| ROOT rootflags
-		| ROOT '{' rootflags_l '}'
-		| DIRECTORY dirflags
-		| DIRECTORY '{' dirflags_l '}'
+		}
+		| root
+		| directory
 		| logformat
 		| fastcgi
 		| LOCATION STRING		{
@@ -542,15 +540,15 @@ fastcgi		: NO FCGI		{
 		| FCGI			{
 			srv_conf->flags &= ~SRVFLAG_NO_FCGI;
 			srv_conf->flags |= SRVFLAG_FCGI;
-		} '{' fcgiflags_l '}'
+		} '{' optnl fcgiflags_l '}'
 		| FCGI			{
 			srv_conf->flags &= ~SRVFLAG_NO_FCGI;
 			srv_conf->flags |= SRVFLAG_FCGI;
 		} fcgiflags
 		;
 
-fcgiflags_l	: fcgiflags comma fcgiflags_l
-		| fcgiflags
+fcgiflags_l	: fcgiflags optcommanl fcgiflags_l
+		| fcgiflags optnl
 		;
 
 fcgiflags	: SOCKET STRING		{
@@ -566,12 +564,12 @@ fcgiflags	: SOCKET STRING		{
 		}
 		;
 
-connection	: '{' conflags_l '}'
-		| conflags
+connection	: CONNECTION '{' optnl conflags_l '}'
+		| CONNECTION conflags
 		;
 
-conflags_l	: conflags comma conflags_l
-		| conflags
+conflags_l	: conflags optcommanl conflags_l
+		| conflags optnl
 		;
 
 conflags	: TIMEOUT timeout		{
@@ -586,12 +584,12 @@ conflags	: TIMEOUT timeout		{
 		}
 		;
 
-tls		: '{' tlsopts_l '}'
-		| tlsopts
+tls		: TLS '{' optnl tlsopts_l '}'
+		| TLS tlsopts
 		;
 
-tlsopts_l	: tlsopts comma tlsopts_l
-		| tlsopts
+tlsopts_l	: tlsopts optcommanl tlsopts_l
+		| tlsopts optnl
 		;
 
 tlsopts		: CERTIFICATE STRING		{
@@ -618,8 +616,12 @@ tlsopts		: CERTIFICATE STRING		{
 		}
 		;
 
-rootflags_l	: rootflags comma rootflags_l
-		| rootflags
+root		: ROOT rootflags
+		| ROOT '{' optnl rootflags_l '}'
+		;
+
+rootflags_l	: rootflags optcommanl rootflags_l
+		| rootflags optnl
 		;
 
 rootflags	: STRING		{
@@ -642,8 +644,12 @@ rootflags	: STRING		{
 		}
 		;
 
-dirflags_l	: dirflags comma dirflags_l
-		| dirflags
+directory	: DIRECTORY dirflags
+		| DIRECTORY '{' optnl dirflags_l '}'
+		;
+
+dirflags_l	: dirflags optcommanl dirflags_l
+		| dirflags optnl
 		;
 
 dirflags	: INDEX STRING		{
@@ -674,17 +680,16 @@ dirflags	: INDEX STRING		{
 
 
 logformat	: LOG logflags
-		| LOG '{' logflags_l '}'
+		| LOG '{' optnl logflags_l '}'
 		| NO LOG		{
 			srv_conf->flags &= ~SRVFLAG_LOG;
 			srv_conf->flags |= SRVFLAG_NO_LOG;
 		}
 		;
 
-logflags_l	: logflags comma logflags_l
-		| logflags
+logflags_l	: logflags optcommanl logflags_l
+		| logflags optnl
 		;
-
 
 logflags	: STYLE logstyle
 		| SYSLOG		{
@@ -736,12 +741,12 @@ logstyle	: COMMON		{
 		}
 		;
 
-tcpip		: '{' tcpflags_l '}'
-		| tcpflags
+tcpip		: TCP '{' optnl tcpflags_l '}'
+		| TCP tcpflags
 		;
 
-tcpflags_l	: tcpflags comma tcpflags_l
-		| tcpflags
+tcpflags_l	: tcpflags optcommanl tcpflags_l
+		| tcpflags optnl
 		;
 
 tcpflags	: SACK			{ srv_conf->tcpflags |= TCPFLAG_SACK; }
@@ -894,17 +899,16 @@ numberstring	: NUMBER		{
 		| STRING
 		;
 
-comma		: ','
-		| nl
-		| /* empty */
-		;
-
 optsemicolon	: ';'
 		|
 		;
 
 optnl		: '\n' optnl
 		|
+		;
+
+optcommanl	: ',' optnl
+		| nl
 		;
 
 nl		: '\n' optnl
