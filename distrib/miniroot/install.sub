@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.807 2015/01/07 19:20:53 rpe Exp $
+#	$OpenBSD: install.sub,v 1.808 2015/01/07 19:31:51 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -2087,6 +2087,7 @@ done
 # Fetch response file for autoinstall.
 get_responsefile() {
 	local _rf _ifdev _mac _mode _server _lf
+	action=
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
 	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
@@ -2120,8 +2121,11 @@ get_responsefile() {
 		for _rf in {$_mac-,}$_mode; do
 			_url=http://$_server/$_rf.conf
 			echo "Fetching $_url"
-			ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null &&
-				action=$_mode && return
+			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
+				action=$_mode
+				ifconfig $_ifdev delete down 2>/dev/null
+				return 0
+			fi
 		done
 	else
 		[[ -z $_server ]] && echo "Could not determine next-server."
@@ -2147,6 +2151,8 @@ get_responsefile() {
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
 	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && action=$_mode
+	ifconfig $_ifdev delete down 2>/dev/null
+	[[ -n $action ]]
 }
 
 # Interactive or automatic installation?
