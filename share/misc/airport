@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.46 2015/01/04 13:19:50 reyk Exp $
+#	$OpenBSD: airport,v 1.47 2015/01/07 16:08:50 naddy Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -146,6 +146,7 @@ BDO:Husein Sastranegara, Bandung, Indonesia
 BDQ:Vadodara, Vadodara, India
 BDR:Igor I. Sikorsky Memorial, Bridgeport, Connecticut, USA
 BED:Laurence G. Hanscom, Bedford, Massachusetts, USA
+BEG:Nikola Tesla, Belgrade, Serbia
 BEH:Southwest Michigan Regional, Benton Harbor, Michigan, USA
 BEI:Beica, Ethiopia
 BEL:Val De Caes International, Belem, Para, Brazil
@@ -744,6 +745,7 @@ IMF:Imphal Municipal, India
 IMP:Imperatriz, Maranhao, Brazil
 IMT:Ford, Iron Mountain, Michigan, USA
 IND:Indianapolis International, Indiana, USA
+INI:Constantine the Great, Nis, Serbia
 INL:Falls International, International Falls, Minnesota, USA
 INN:Kranebitten, Innsbruck, Austria
 INT:Winston-Salem Smith Reynolds, North Carolina, USA
@@ -1629,7 +1631,7 @@ TEX:Telluride, Colorado, USA
 TEZ:Salonbari, Tezpur, India
 TFN:Tenerife Norte Los Rodeos, Canary Islands, Spain
 TFS:Reina Sofia, Tenerife, Canary Islands, Spain
-TGD:Golubovci, Podgorica, Yugoslavia
+TGD:Podgorica, Montenegro
 TGG:Sultan Mahmood, Kuala Terengganu, Malaysia
 TGM:Tirgu Mures, Romania
 TGU:Toncontin, Tegucigalpa, Honduras
@@ -1643,7 +1645,7 @@ TIA:Rinas, Tirana, Albania
 TIJ:General Abelardo L Rodriguez, Tijuana, Baja California, Mexico
 TIQ:Tinian, Northern Mariana Islands
 TIS:Horn Island, Thursday Island, Queensland, Australia
-TIV:Tivat, Yugoslavia
+TIV:Tivat, Montenegro
 TIZ:Tari, Papua New Guinea
 TJA:Tarija, Bolivia
 TJM:Tyumen, Russia
