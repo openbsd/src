@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.13 2015/01/06 12:28:56 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.14 2015/01/07 10:44:14 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2015 $
+.Dd $Mdocdate: January 7 2015 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -37,19 +37,25 @@ or a base system or package
 in
 .Xr rc.conf.local 8
 or display its configuration and status.
-For a daemon, it can also change the command line arguments or call its
+For a daemon, it can also change the command line arguments, the running
+user, the
+.Xr rc.d 8
+script timeout or call its
 .Xr rc.d 8
 .Ar daemon
 control script.
 .Pp
+The following commands are available:
+.D1
+.Po
 .Ar variable
 can be one of
 .Ar flags ,
 .Ar status ,
 .Ar timeout
 or
-.Ar user .
-The following commands are available:
+.Ar user
+.Pc
 .Bl -tag -width Ds
 .It Cm enable Ar service | daemon
 Alias for
@@ -63,7 +69,9 @@ Display the value of
 or
 .Ar daemon
 variable.
-Without a variable, display all variables with their values in a format
+Without a variable, display all
+.Ar daemon
+variables with their values in a format
 compatible with
 .Xr rc.conf 8 .
 .It Cm set Ar daemon Cm variable Op arguments
