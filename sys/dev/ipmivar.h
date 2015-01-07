@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.18 2007/03/22 16:55:31 deraadt Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.19 2015/01/07 07:49:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -105,6 +105,8 @@ struct ipmi_softc {
 
 	struct ipmi_sensor	*current_sensor;
 	struct ksensordev	sc_sensordev;
+
+	int			sc_poll;
 };
 
 struct ipmi_thread {
@@ -123,13 +125,23 @@ struct ipmi_thread {
 #define IPMI_WDOG_PRE_NMI	0x02
 #define IPMI_WDOG_PRE_INTERRUPT	0x03
 
-struct ipmi_watchdog {
-	u_int8_t		wdog_timer;
-	u_int8_t		wdog_action;
-	u_int8_t		wdog_pretimeout;
-	u_int8_t		wdog_flags;
-	u_int16_t		wdog_timeout;
-} __packed;
+#define	IPMI_SET_WDOG_TIMER	0
+#define	IPMI_SET_WDOG_ACTION	1
+#define	IPMI_SET_WDOG_PRETIMO	2
+#define	IPMI_SET_WDOG_FLAGS	3
+#define	IPMI_SET_WDOG_TIMOL	4
+#define	IPMI_SET_WDOG_TIMOM	5
+#define	IPMI_SET_WDOG_MAX	6
+
+#define	IPMI_GET_WDOG_TIMER	IPMI_SET_WDOG_TIMER
+#define	IPMI_GET_WDOG_ACTION	IPMI_SET_WDOG_ACTION
+#define	IPMI_GET_WDOG_PRETIMO	IPMI_SET_WDOG_PRETIMO
+#define	IPMI_GET_WDOG_FLAGS	IPMI_SET_WDOG_FLAGS
+#define	IPMI_GET_WDOG_TIMOL	IPMI_SET_WDOG_TIMOL
+#define	IPMI_GET_WDOG_TIMOM	IPMI_SET_WDOG_TIMOM
+#define	IPMI_GET_WDOG_PRECDL	6
+#define	IPMI_GET_WDOG_PRECDM	7
+#define	IPMI_GET_WDOG_MAX	8
 
 void	ipmi_create_thread(void *);
 void	ipmi_poll_thread(void *);
