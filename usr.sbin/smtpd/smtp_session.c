@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.222 2015/01/06 10:31:09 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.223 2015/01/07 18:28:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -317,7 +317,7 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 			has_group = 1;
 
 		/* update insert point if not in comment and not on a whitespace */
-		if (!comment && buffer[i] != ')' && !isspace((int)buffer[i]))
+		if (!comment && buffer[i] != ')' && !isspace((unsigned char)buffer[i]))
 			pos_component = i;
 	}
 
@@ -336,7 +336,7 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 	/* there's an address between brackets, just append domain */
 	if (has_bracket) {
 		pos_bracket--;
-		while (isspace(buffer[pos_bracket]))
+		while (isspace((unsigned char)buffer[pos_bracket]))
 			pos_bracket--;
 		if (buffer[pos_bracket] == '<')
 			return;
@@ -347,7 +347,8 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 		pos_insert = pos_component + 1;
 
 		/* empty address */
-                if (buffer[pos_component] == '\0' || isspace(buffer[pos_component]))
+                if (buffer[pos_component] == '\0' ||
+		    isspace((unsigned char)buffer[pos_component]))
                         return;
 	}
 
