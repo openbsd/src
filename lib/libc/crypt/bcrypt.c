@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.49 2015/01/07 15:46:23 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.50 2015/01/07 16:05:28 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <blf.h>
 #include <ctype.h>
+#include <errno.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
