@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.806 2015/01/04 18:44:12 tedu Exp $
+#	$OpenBSD: install.sub,v 1.807 2015/01/07 19:20:53 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -161,7 +161,7 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	local _if _iflist=$(ifconfig -C)
+	local _if _iflist=$(rmel vlan $(ifconfig -C))
 
 	for _if in $(ifconfig "$@" 2>/dev/null |
 		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
