@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.79 2015/01/06 21:26:46 stsp Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.80 2015/01/08 17:21:01 florian Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -617,8 +617,6 @@ in6_ifdetach(struct ifnet *ifp)
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
 
-	ifp->if_xflags &= ~IFXF_AUTOCONF6;
-
 #ifdef MROUTING
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
@@ -692,5 +690,6 @@ in6_ifdetach(struct ifnet *ifp)
 		if (RS_LHCOOKIE(ifp) != NULL)
 			hook_disestablish(ifp->if_linkstatehooks,
 			    RS_LHCOOKIE(ifp));
+		ifp->if_xflags &= ~IFXF_AUTOCONF6;
 	}
 }
