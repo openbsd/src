@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.59 2015/01/06 14:48:59 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.60 2015/01/08 13:29:34 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -377,10 +377,6 @@ elif [ ${action} = "set" ]; then
 fi
 
 case ${action} in
-	default) # XXX backward compat
-		( svc_getdef ${svc} flags )
-		( svc_getdef ${svc} status )
-		;;
 	disable)
 		needs_root ${action}
 		svc_set ${svc} status off
