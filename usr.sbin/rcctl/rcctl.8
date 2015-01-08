@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.15 2015/01/07 17:15:47 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.16 2015/01/08 09:03:26 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 7 2015 $
+.Dd $Mdocdate: January 8 2015 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -37,10 +37,11 @@ or a base system or package
 in
 .Xr rc.conf.local 8
 or display its configuration and status.
-For a daemon, it can also change the command line arguments, the running
-user, the
+For a
+.Ar daemon ,
+it can also change the command line arguments, the user to run as, the
 .Xr rc.d 8
-script timeout or call its
+action timeout or call its
 .Xr rc.d 8
 .Ar daemon
 control script.
@@ -58,22 +59,25 @@ or
 .Bl -tag -width Ds
 .It Cm enable Ar service | daemon
 Alias for
-.Dq Cm set Ar service|daemon Cm status Ar on .
+.Dq Cm set Ar service | daemon Cm status Ar on .
 .It Cm disable Ar service | daemon
 Alias for
-.Dq Cm set Ar service|daemon Cm status Ar off .
-.It Cm get Ar daemon Op variable
+.Dq Cm set Ar service | daemon Cm status Ar off .
+.It Cm get Ar service | daemon Op Ar variable
 Display the value of
 .Ar service
 or
+.Ar daemon_variable .
+If
+.Ar variable
+is empty, display all
+.Ar service
+or
 .Ar daemon
-variable.
-Without a variable, display all
-.Ar daemon
-variables with their values in a format
+variables and values in a format
 compatible with
 .Xr rc.conf 8 .
-.It Cm set Ar daemon Cm variable Op arguments
+.It Cm set Ar service | daemon Cm variable Op Ar arguments
 For a daemon, set the variable
 .Ar daemon Ns _variable
 to the specified
@@ -83,33 +87,34 @@ If
 is already set,
 .Ar daemon Ns _variable
 is reset to the optionally provided
-.Cm variable .
-If
-.Cm variable
-is appended without any
-.Ar arguments ,
-.Ar daemon Ns _variable
-is reset to its default value.
+.Ar arguments
+or to its default value.
 .Pp
 The
 .Ar status Cm variable
-only takes the
+must be provided with
+the
 .Ar on
 or
 .Ar off
-argument.
-It is used to enable or disable a service or daemon in
+.Ar arguments .
+It is used to enable or disable
+.Ar service
+or
+.Ar daemon
+in
 .Xr rc.conf.local 8 .
 When a disabled package daemon is enabled, it is appended to the end of
 .Va pkg_scripts .
 When a package daemon is disabled, it is removed from
 .Va pkg_scripts .
-.It Cm getdef Ar daemon Op variable
+.It Cm getdef Ar service | daemon Op Ar variable
 Like
 .Cm get
 but returns the default values.
 .It Cm getall
-Display all services and daemon values in a format compatible with
+Display all services and daemon variables with their values in a format
+compatible with
 .Xr rc.conf 8 .
 .It Cm order Op Ar daemons
 Move the specified package
@@ -141,16 +146,16 @@ returns with the exit status of the
 .Xr rc.d 8
 .Ar daemon
 script.
-.Nm Cm get Ar daemon|service Op status
+.Nm Cm get Ar daemon | service Op status
 exits with 0 if the daemon or service is enabled and 1 if it is not.
-.Nm Cm getdef Ar daemon|service Op status
+.Nm Cm getdef Ar daemon | service Op status
 exits with 0 if the daemon or service is enabled by default
 and 1 if it is not.
 Otherwise, the
 .Nm
-utility exits 0 on success, and >0 if an error occurs
+utility exits with 0 on success, and >0 if an error occurs
 .Po 2 indicates a non-existent
-.Ar daemon|service
+.Ar daemon | service
 .Pc .
 .Sh EXAMPLES
 Enable and set
