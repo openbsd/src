@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.10 2015/01/08 00:30:08 bcook Exp $	*/
+/*	$OpenBSD: log.c,v 1.11 2015/01/08 05:34:21 bcook Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,7 @@ log_init(int n_foreground)
 
 	foreground = n_foreground;
 	if (! foreground)
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_MAIL);
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	tzset();
 }
