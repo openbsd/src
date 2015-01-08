@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.139 2015/01/02 12:41:08 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.140 2015/01/08 20:22:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -135,7 +135,6 @@ struct filed {
 				/* @proto46://[hostname]:servname\0 */
 			struct sockaddr_storage	f_addr;
 			struct bufferevent	*f_bufev;
-			int	f_fd;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
 		struct {
@@ -732,14 +731,14 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		    f->f_un.f_forw.f_loghost, strerror(errno));
 	dprintf("%s\n", ebuf);
 
-	close(f->f_un.f_forw.f_fd);
-	if ((f->f_un.f_forw.f_fd = tcp_socket(f)) == -1) {
+	close(f->f_file);
+	if ((f->f_file = tcp_socket(f)) == -1) {
 		/* XXX reconnect later */
 		bufferevent_free(bufev);
 		f->f_type = F_UNUSED;
 	} else {
 		/* XXX The messages in the output buffer may be out of sync. */
-		bufferevent_setfd(bufev, f->f_un.f_forw.f_fd);
+		bufferevent_setfd(bufev, f->f_file);
 		bufferevent_enable(f->f_un.f_forw.f_bufev, EV_READ);
 	}
 	logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
@@ -1031,7 +1030,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    (char *)iov[4].iov_base);
 		if (l < 0 || (size_t)l >= sizeof(line))
 			l = strlen(line);
-		if (sendto(f->f_un.f_forw.f_fd, line, l, 0,
+		if (sendto(f->f_file, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    f->f_un.f_forw.f_addr.ss_len) != l) {
 			switch (errno) {
@@ -1339,18 +1338,15 @@ init(void)
 			fprintlog(f, 0, (char *)NULL);
 
 		switch (f->f_type) {
+		case F_FORWTCP:
+			/* XXX Save messages in output buffer for reconnect. */
+			bufferevent_free(f->f_un.f_forw.f_bufev);
+			/* FALLTHROUGH */
 		case F_FILE:
 		case F_TTY:
 		case F_CONSOLE:
 		case F_PIPE:
 			(void)close(f->f_file);
-			break;
-		case F_FORWUDP:
-			break;
-		case F_FORWTCP:
-			/* XXX save messages in output buffer for reconnect */
-			bufferevent_free(f->f_un.f_forw.f_bufev);
-			close(f->f_un.f_forw.f_fd);
 			break;
 		}
 		if (f->f_program)
@@ -1704,14 +1700,14 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		f->f_un.f_forw.f_fd = -1;
+		f->f_file = -1;
 		if (strncmp(proto, "udp", 3) == 0) {
 			switch (f->f_un.f_forw.f_addr.ss_family) {
 			case AF_INET:
-				f->f_un.f_forw.f_fd = fd_udp;
+				f->f_file = fd_udp;
 				break;
 			case AF_INET6:
-				f->f_un.f_forw.f_fd = fd_udp6;
+				f->f_file = fd_udp6;
 				break;
 			}
 			f->f_type = F_FORWUDP;
@@ -1730,7 +1726,7 @@ cfline(char *line, char *prog)
 				break;
 			}
 			bufferevent_enable(f->f_un.f_forw.f_bufev, EV_READ);
-			f->f_un.f_forw.f_fd = s;
+			f->f_file = s;
 			f->f_type = F_FORWTCP;
 		}
 		break;
