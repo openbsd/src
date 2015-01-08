@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.12 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.13 2015/01/08 01:44:29 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -262,6 +262,7 @@ dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	dplen = i2d_ASN1_INTEGER(prkey, &dp);
 
 	ASN1_INTEGER_free(prkey);
+	prkey = NULL;
 
 	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_dhKeyAgreement), 0,
 	    V_ASN1_SEQUENCE, params, dp, dplen))
