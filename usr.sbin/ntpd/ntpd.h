@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.113 2015/01/04 01:48:49 bcook Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.114 2015/01/08 00:30:08 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <poll.h>
 
+#include "log.h"
 #include "ntp.h"
 #include <imsg.h>
 
@@ -261,17 +262,6 @@ enum ctl_actions {
 };
 
 /* prototypes */
-/* log.c */
-void		 log_init(int);
-void		 logit(int, const char *, ...);
-void		 vlog(int, const char *, va_list);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 fatal(const char *);
-void		 fatalx(const char *);
-const char	*log_sockaddr(struct sockaddr *);
 
 /* ntp.c */
 pid_t	 ntp_main(int[2], int, struct ntpd_conf *, struct passwd *);

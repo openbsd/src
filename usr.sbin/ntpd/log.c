@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2014/11/03 20:15:30 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2015/01/08 00:30:08 bcook Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/socket.h>
+
 #include <errno.h>
+#include <netdb.h>
+#include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,22 +28,34 @@
 #include <syslog.h>
 #include <time.h>
 
-#include "ntpd.h"
+#include "log.h"
 
-int	 debug;
-extern int debugsyslog;
+#define	TRACE_DEBUG	0x1
+
+static int	 foreground;
+static int	 verbose;
+
+void	 vlog(int, const char *, va_list);
+void	 logit(int, const char *, ...)
+    __attribute__((format (printf, 2, 3)));
+
 
 void
-log_init(int n_debug)
+log_init(int n_foreground)
 {
 	extern char	*__progname;
 
-	debug = n_debug;
-
-	if (!debug)
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	foreground = n_foreground;
+	if (! foreground)
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_MAIL);
 
 	tzset();
+}
+
+void
+log_verbose(int v)
+{
+	verbose = v;
 }
 
 void
@@ -57,7 +73,7 @@ vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
 
-	if (debug) {
+	if (foreground) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
 			vfprintf(stderr, fmt, ap);
@@ -121,7 +137,7 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug || debugsyslog) {
+	if (verbose & TRACE_DEBUG) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
@@ -129,25 +145,58 @@ log_debug(const char *emsg, ...)
 }
 
 void
-fatal(const char *emsg)
+log_trace(int mask, const char *emsg, ...)
 {
-	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal: %s", strerror(errno));
-	else
-		if (errno)
-			logit(LOG_CRIT, "fatal: %s: %s",
-			    emsg, strerror(errno));
-		else
-			logit(LOG_CRIT, "fatal: %s", emsg);
+	va_list	 ap;
 
+	if (verbose & mask) {
+		va_start(ap, emsg);
+		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+static void
+fatal_arg(const char *emsg, va_list ap)
+{
+#define	FATALBUFSIZE	1024
+	static char	ebuffer[FATALBUFSIZE];
+
+	if (emsg == NULL)
+		(void)strlcpy(ebuffer, strerror(errno), sizeof ebuffer);
+	else {
+		if (errno) {
+			(void)vsnprintf(ebuffer, sizeof ebuffer, emsg, ap);
+			(void)strlcat(ebuffer, ": ", sizeof ebuffer);
+			(void)strlcat(ebuffer, strerror(errno), sizeof ebuffer);
+		}
+		else
+			(void)vsnprintf(ebuffer, sizeof ebuffer, emsg, ap);
+	}
+	logit(LOG_CRIT, "fatal: %s", ebuffer);
+}
+
+void
+fatal(const char *emsg, ...)
+{
+	va_list	ap;
+
+	va_start(ap, emsg);
+	fatal_arg(emsg, ap);
+	va_end(ap);
 	exit(1);
 }
 
 void
-fatalx(const char *emsg)
+fatalx(const char *emsg, ...)
 {
+	va_list	ap;
+
 	errno = 0;
-	fatal(emsg);
+	va_start(ap, emsg);
+	fatal_arg(emsg, ap);
+	va_end(ap);
+	exit(1);
 }
 
 const char *

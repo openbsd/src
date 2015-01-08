@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.81 2015/01/04 01:24:43 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.82 2015/01/08 00:30:08 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,6 @@ volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
 volatile sig_atomic_t	 sigchld = 0;
 struct imsgbuf		*ibuf;
-int			 debugsyslog = 0;
 int			 timeout = INFTIM;
 
 const char		*showopt;
@@ -127,6 +126,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'd':
 			lconf.debug = 1;
+			log_verbose(1);
 			break;
 		case 'f':
 			conffile = optarg;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 			lconf.settime = 0;
 			break;
 		case 'v':
-			debugsyslog = 1;
+			log_verbose(1);
 			break;
 		default:
 			usage();

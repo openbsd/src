@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2014/11/20 05:51:20 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.56 2015/01/08 00:30:08 bcook Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -348,7 +348,7 @@ yyerror(const char *fmt, ...)
 	if (vasprintf(&msg, fmt, ap) == -1)
 		fatalx("yyerror vasprintf");
 	va_end(ap);
-	logit(LOG_CRIT, "%s:%d: %s", file->name, yylval.lineno, msg);
+	log_warnx("%s:%d: %s", file->name, yylval.lineno, msg);
 	free(msg);
 	return (0);
 }
