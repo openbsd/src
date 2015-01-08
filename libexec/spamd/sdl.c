@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.19 2014/10/11 03:25:16 doug Exp $ */
+/*	$OpenBSD: sdl.c,v 1.20 2015/01/08 22:10:08 millert Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -73,18 +73,18 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	} else {
 		if (debug > 0)
 			printf("adding list %s; %d entries\n", sdname, addrc);
-		idx = blu;
-	}
-	if (idx == blu && blu == blc) {
-		struct sdlist *tmp;
+		if (blu == blc) {
+			struct sdlist *tmp;
 
-		tmp = reallocarray(blacklists, blc + 128,
-		    sizeof(struct sdlist));
-		if (tmp == NULL)
-			return (-1);
-		blacklists = tmp;
-		blc += 128;
-		sdl_clear(&blacklists[idx]);
+			tmp = reallocarray(blacklists, blc + 128,
+			    sizeof(struct sdlist));
+			if (tmp == NULL)
+				return (-1);
+			blacklists = tmp;
+			blc += 128;
+			sdl_clear(&blacklists[blu]);
+		}
+		idx = blu;
 	}
 
 	if ((blacklists[idx].tag = strdup(sdname)) == NULL)
@@ -151,7 +151,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	}
 	if (idx == blu) {
 		blu++;
-		blacklists[blu].tag = NULL;
+		sdl_clear(&blacklists[blu]);
 	}
 	return (0);
  parse_error:
@@ -159,6 +159,11 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 		printf("sdl_add: parse error, \"%s\"\n", addrs[i]);
  misc_error:
 	sdl_free(&blacklists[idx]);
+	if (idx != blu) {
+		memmove(&blacklists[idx], &blacklists[idx + 1],
+		    (blu - idx) * sizeof(*blacklists));
+		blu--;
+	}
 	return (-1);
 }
 
