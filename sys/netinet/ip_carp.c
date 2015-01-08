@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.243 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.244 2015/01/08 10:55:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1785,7 +1785,8 @@ carp_set_enaddr(struct carp_softc *sc)
 		 * (re)attach a link-local address which matches
 		 * our new MAC address.
 		 */
-		in6_ifattach_linklocal(&sc->sc_if, NULL);
+		if (sc->sc_naddrs6)
+			in6_ifattach_linklocal(&sc->sc_if, NULL);
 #endif
 		carp_set_state_all(sc, INIT);
 		carp_setrun_all(sc, 0);
