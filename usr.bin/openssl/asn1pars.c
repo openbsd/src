@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.3 2015/01/08 11:00:12 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,126 +72,191 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-/* -inform arg	- input format - default PEM (DER or PEM)
- * -in arg	- input file - default stdin
- * -i		- indent the details by depth
- * -offset	- where in the file to start
- * -length	- how many bytes to use
- * -oid file	- extra oid description file
- */
+static struct {
+	char *derfile;
+	int dump;
+	char *genconf;
+	char *genstr;
+	int indent;
+	char *infile;
+	int informat;
+	unsigned int length;
+	int noout;
+	int offset;
+	char *oidfile;
+	STACK_OF(OPENSSL_STRING) *osk;
+} asn1pars_config;
 
-int asn1parse_main(int, char **);
+static int
+asn1pars_opt_dlimit(char *arg)
+{
+	const char *errstr;
 
-static int do_generate(BIO * bio, char *genstr, char *genconf, BUF_MEM * buf);
+	asn1pars_config.dump = strtonum(arg, 1, INT_MAX, &errstr);
+	if (errstr) {
+		fprintf(stderr, "-dlimit must be from 1 to INT_MAX: %s\n",
+		    errstr);
+		return (-1);
+	}
+	return (0);
+}
+
+static int
+asn1pars_opt_length(char *arg)
+{
+	const char *errstr;
+
+	asn1pars_config.length = strtonum(arg, 1, UINT_MAX, &errstr);
+	if (errstr) {
+		fprintf(stderr, "-length must be from 1 to UINT_MAX: %s\n",
+		    errstr);
+		return (-1);
+	}
+	return (0);
+}
+
+static int
+asn1pars_opt_strparse(char *arg)
+{
+	if (sk_OPENSSL_STRING_push(asn1pars_config.osk, arg) == 0) {
+		fprintf(stderr, "-strparse cannot add argument\n");
+		return (-1);
+	}
+	return (0);
+}
+
+static struct option asn1pars_options[] = {
+	{
+		.name = "dump",
+		.desc = "Dump unknown data in hex form",
+		.type = OPTION_VALUE,
+		.value = -1,
+		.opt.value = &asn1pars_config.dump,
+	},
+	{
+		.name = "dlimit",
+		.argname = "num",
+		.desc = "Dump the first num bytes of unknown data in hex form",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = asn1pars_opt_dlimit,
+	},
+	{
+		.name = "genconf",
+		.argname = "file",
+		.desc = "File to generate ASN.1 structure from",
+		.type = OPTION_ARG,
+		.opt.arg = &asn1pars_config.genconf,
+	},
+	{
+		.name = "genstr",
+		.argname = "string",
+		.desc = "String to generate ASN.1 structure from",
+		.type = OPTION_ARG,
+		.opt.arg = &asn1pars_config.genstr,
+	},
+	{
+		.name = "i",
+		.desc = "Indent output according to depth of structures",
+		.type = OPTION_FLAG,
+		.opt.flag = &asn1pars_config.indent,
+	},
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "The input file (default stdin)",
+		.type = OPTION_ARG,
+		.opt.arg = &asn1pars_config.infile,
+	},
+	{
+		.name = "inform",
+		.argname = "fmt",
+		.desc = "Input format (DER, TXT or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &asn1pars_config.informat,
+	},
+	{
+		.name = "length",
+		.argname = "num",
+		.desc = "Number of bytes to parse (default until EOF)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = asn1pars_opt_length,
+	},
+	{
+		.name = "noout",
+		.desc = "Do not produce any output",
+		.type = OPTION_FLAG,
+		.opt.flag = &asn1pars_config.noout,
+	},
+	{
+		.name = "offset",
+		.argname = "num",
+		.desc = "Offset to begin parsing",
+		.type = OPTION_ARG_INT,
+		.opt.value = &asn1pars_config.offset,
+	},
+	{
+		.name = "oid",
+		.argname = "file",
+		.desc = "File containing additional object identifiers (OIDs)",
+		.type = OPTION_ARG,
+		.opt.arg = &asn1pars_config.oidfile,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file in DER format",
+		.type = OPTION_ARG,
+		.opt.arg = &asn1pars_config.derfile,
+	},
+	{
+		.name = "strparse",
+		.argname = "offset",
+		.desc = "Parse the content octets of ASN.1 object starting at"
+		" offset",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = asn1pars_opt_strparse,
+	},
+	{ NULL },
+};
+
+static void
+asn1pars_usage()
+{
+	fprintf(stderr,
+	    "usage: asn1parse [-i] [-dlimit num] [-dump] [-genconf file] "
+	    "[-genstr string]\n"
+	    "    [-in file] [-inform fmt] [-length num] [-noout] [-offset num] "
+	    "[-oid file]\n"
+	    "    [-out file] [-strparse offset]\n\n");
+	options_usage(asn1pars_options);
+}
+
+static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf);
 
 int
 asn1parse_main(int argc, char **argv)
 {
-	int i, badops = 0, offset = 0, ret = 1, j;
-	unsigned int length = 0;
+	int i, j, ret = 1;
 	long num, tmplen;
 	BIO *in = NULL, *out = NULL, *b64 = NULL, *derout = NULL;
-	int informat, indent = 0, noout = 0, dump = 0;
-	char *infile = NULL, *str = NULL, *prog, *oidfile = NULL, *derfile = NULL;
-	char *genstr = NULL, *genconf = NULL;
+	char *str = NULL;
 	const char *errstr = NULL;
 	unsigned char *tmpbuf;
 	const unsigned char *ctmpbuf;
 	BUF_MEM *buf = NULL;
-	STACK_OF(OPENSSL_STRING) * osk = NULL;
 	ASN1_TYPE *at = NULL;
 
-	informat = FORMAT_PEM;
+	memset(&asn1pars_config, 0, sizeof(asn1pars_config));
 
-	prog = argv[0];
-	argc--;
-	argv++;
-	if ((osk = sk_OPENSSL_STRING_new_null()) == NULL) {
+	asn1pars_config.informat = FORMAT_PEM;
+	if ((asn1pars_config.osk = sk_OPENSSL_STRING_new_null()) == NULL) {
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto end;
 	}
-	while (argc >= 1) {
-		if (strcmp(*argv, "-inform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			informat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-in") == 0) {
-			if (--argc < 1)
-				goto bad;
-			infile = *(++argv);
-		} else if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			derfile = *(++argv);
-		} else if (strcmp(*argv, "-i") == 0) {
-			indent = 1;
-		} else if (strcmp(*argv, "-noout") == 0)
-			noout = 1;
-		else if (strcmp(*argv, "-oid") == 0) {
-			if (--argc < 1)
-				goto bad;
-			oidfile = *(++argv);
-		} else if (strcmp(*argv, "-offset") == 0) {
-			if (--argc < 1)
-				goto bad;
-			offset = strtonum(*(++argv), 0, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		} else if (strcmp(*argv, "-length") == 0) {
-			if (--argc < 1)
-				goto bad;
-			length = strtonum(*(++argv), 1, UINT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		} else if (strcmp(*argv, "-dump") == 0) {
-			dump = -1;
-		} else if (strcmp(*argv, "-dlimit") == 0) {
-			if (--argc < 1)
-				goto bad;
-			dump = strtonum(*(++argv), 1, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		} else if (strcmp(*argv, "-strparse") == 0) {
-			if (--argc < 1)
-				goto bad;
-			sk_OPENSSL_STRING_push(osk, *(++argv));
-		} else if (strcmp(*argv, "-genstr") == 0) {
-			if (--argc < 1)
-				goto bad;
-			genstr = *(++argv);
-		} else if (strcmp(*argv, "-genconf") == 0) {
-			if (--argc < 1)
-				goto bad;
-			genconf = *(++argv);
-		} else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badops = 1;
-			break;
-		}
-		argc--;
-		argv++;
-	}
 
-	if (badops) {
-bad:
-		BIO_printf(bio_err, "%s [options] <infile\n", prog);
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, " -inform arg   input format - one of DER PEM\n");
-		BIO_printf(bio_err, " -in arg       input file\n");
-		BIO_printf(bio_err, " -out arg      output file (output format is always DER\n");
-		BIO_printf(bio_err, " -noout arg    don't produce any output\n");
-		BIO_printf(bio_err, " -offset arg   offset into file\n");
-		BIO_printf(bio_err, " -length arg   length of section in file\n");
-		BIO_printf(bio_err, " -i            indent entries\n");
-		BIO_printf(bio_err, " -dump         dump unknown data in hex form\n");
-		BIO_printf(bio_err, " -dlimit arg   dump the first arg bytes of unknown data in hex form\n");
-		BIO_printf(bio_err, " -oid file     file of extra oid definitions\n");
-		BIO_printf(bio_err, " -strparse offset\n");
-		BIO_printf(bio_err, "               a series of these can be used to 'dig' into multiple\n");
-		BIO_printf(bio_err, "               ASN1 blob wrappings\n");
-		BIO_printf(bio_err, " -genstr str   string to generate ASN1 structure from\n");
-		BIO_printf(bio_err, " -genconf file file to generate ASN1 structure from\n");
-		goto end;
+	if (options_parse(argc, argv, asn1pars_options, NULL, NULL) != 0) {
+		asn1pars_usage();
+		return (1);
 	}
 
 	in = BIO_new(BIO_s_file());
@@ -202,26 +267,28 @@ bad:
 	}
 	BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
-	if (oidfile != NULL) {
-		if (BIO_read_filename(in, oidfile) <= 0) {
-			BIO_printf(bio_err, "problems opening %s\n", oidfile);
+	if (asn1pars_config.oidfile != NULL) {
+		if (BIO_read_filename(in, asn1pars_config.oidfile) <= 0) {
+			BIO_printf(bio_err, "problems opening %s\n",
+			    asn1pars_config.oidfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 		OBJ_create_objects(in);
 	}
-	if (infile == NULL)
+	if (asn1pars_config.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, infile) <= 0) {
-			perror(infile);
+		if (BIO_read_filename(in, asn1pars_config.infile) <= 0) {
+			perror(asn1pars_config.infile);
 			goto end;
 		}
 	}
 
-	if (derfile) {
-		if (!(derout = BIO_new_file(derfile, "wb"))) {
-			BIO_printf(bio_err, "problems opening %s\n", derfile);
+	if (asn1pars_config.derfile) {
+		if (!(derout = BIO_new_file(asn1pars_config.derfile, "wb"))) {
+			BIO_printf(bio_err, "problems opening %s\n",
+			    asn1pars_config.derfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -231,15 +298,16 @@ bad:
 	if (!BUF_MEM_grow(buf, BUFSIZ * 8))
 		goto end;	/* Pre-allocate :-) */
 
-	if (genstr || genconf) {
-		num = do_generate(bio_err, genstr, genconf, buf);
+	if (asn1pars_config.genstr || asn1pars_config.genconf) {
+		num = do_generate(bio_err, asn1pars_config.genstr,
+		    asn1pars_config.genconf, buf);
 		if (num < 0) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	} else {
 
-		if (informat == FORMAT_PEM) {
+		if (asn1pars_config.informat == FORMAT_PEM) {
 			BIO *tmp;
 
 			if ((b64 = BIO_new(BIO_f_base64())) == NULL)
@@ -263,18 +331,21 @@ bad:
 
 	/* If any structs to parse go through in sequence */
 
-	if (sk_OPENSSL_STRING_num(osk)) {
+	if (sk_OPENSSL_STRING_num(asn1pars_config.osk)) {
 		tmpbuf = (unsigned char *) str;
 		tmplen = num;
-		for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
+		for (i = 0; i < sk_OPENSSL_STRING_num(asn1pars_config.osk);
+		     i++) {
 			ASN1_TYPE *atmp;
 			int typ;
-			j = strtonum(sk_OPENSSL_STRING_value(osk, i),
+			j = strtonum(
+			    sk_OPENSSL_STRING_value(asn1pars_config.osk, i),
 			    1, INT_MAX, &errstr);
 			if (errstr) {
 				BIO_printf(bio_err,
 				    "'%s' is an invalid number: %s\n",
-				    sk_OPENSSL_STRING_value(osk, i), errstr);
+				    sk_OPENSSL_STRING_value(asn1pars_config.osk,
+				    i), errstr);
 				continue;
 			}
 			tmpbuf += j;
@@ -303,44 +374,43 @@ bad:
 		str = (char *) tmpbuf;
 		num = tmplen;
 	}
-	if (offset >= num) {
+	if (asn1pars_config.offset >= num) {
 		BIO_printf(bio_err, "Error: offset too large\n");
 		goto end;
 	}
-	num -= offset;
+	num -= asn1pars_config.offset;
 
-	if ((length == 0) || ((long) length > num))
-		length = (unsigned int) num;
+	if ((asn1pars_config.length == 0) ||
+	    ((long)asn1pars_config.length > num))
+		asn1pars_config.length = (unsigned int) num;
 	if (derout) {
-		if (BIO_write(derout, str + offset, length) != (int) length) {
+		if (BIO_write(derout, str + asn1pars_config.offset,
+		    asn1pars_config.length) != (int)asn1pars_config.length) {
 			BIO_printf(bio_err, "Error writing output\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
-	if (!noout &&
-	    !ASN1_parse_dump(out, (unsigned char *) &(str[offset]), length,
-		indent, dump)) {
+	if (!asn1pars_config.noout &&
+	    !ASN1_parse_dump(out,
+	    (unsigned char *)&(str[asn1pars_config.offset]),
+	    asn1pars_config.length, asn1pars_config.indent,
+	    asn1pars_config.dump)) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
 	ret = 0;
 end:
 	BIO_free(derout);
-	if (in != NULL)
-		BIO_free(in);
-	if (out != NULL)
-		BIO_free_all(out);
-	if (b64 != NULL)
-		BIO_free(b64);
+	BIO_free(in);
+	BIO_free_all(out);
+	BIO_free(b64);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
-	if (buf != NULL)
-		BUF_MEM_free(buf);
+	BUF_MEM_free(buf);
 	if (at != NULL)
 		ASN1_TYPE_free(at);
-	if (osk != NULL)
-		sk_OPENSSL_STRING_free(osk);
+	sk_OPENSSL_STRING_free(asn1pars_config.osk);
 	OBJ_cleanup();
 
 	return (ret);
@@ -374,7 +444,6 @@ do_generate(BIO * bio, char *genstr, char *genconf, BUF_MEM * buf)
 		return -1;
 
 	len = i2d_ASN1_TYPE(atyp, NULL);
-
 	if (len <= 0)
 		goto err;
 
