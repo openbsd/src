@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.47 2013/10/04 14:28:16 phessler Exp $ */
+/*	$OpenBSD: sensors.c,v 1.48 2015/01/08 00:25:47 bcook Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -148,9 +148,9 @@ sensor_add(int sensordev, char *dxname)
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
-	log_debug("sensor %s added (weight %d, correction %.6f, refstr %.4s, "
+	log_debug("sensor %s added (weight %d, correction %.6f, refstr %.4u, "
 	     "stratum %d)", s->device, s->weight, s->correction / 1e6,
-	     &s->refid, s->stratum);
+	     s->refid, s->stratum);
 }
 
 void
