@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.196 2014/12/29 11:53:58 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.197 2015/01/08 14:29:18 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1029,6 +1029,45 @@ rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
 			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
 		}
 	}
+	return (0);
+}
+
+int
+rt_checkgate(struct ifnet *ifp, struct rtentry *rt, struct sockaddr *dst,
+    unsigned int rtableid, struct rtentry **rtp)
+{
+	struct rtentry *rt0;
+
+	KASSERT(rt != NULL);
+
+	if ((rt->rt_flags & RTF_UP) == 0) {
+		rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rtableid);
+		rt->rt_refcnt--;
+		if (rt == NULL || rt->rt_ifp != ifp)
+			return (EHOSTUNREACH);
+	}
+
+	rt0 = rt;
+
+	if (rt->rt_flags & RTF_GATEWAY) {
+		if (rt->rt_gwroute && !(rt->rt_gwroute->rt_flags & RTF_UP)) {
+			rtfree(rt->rt_gwroute);
+			rt->rt_gwroute = NULL;
+		}
+		if (rt->rt_gwroute == NULL) {
+			rt->rt_gwroute = rtalloc(rt->rt_gateway,
+			    RT_REPORT|RT_RESOLVE, rtableid);
+			if (rt->rt_gwroute == NULL)
+				return (EHOSTUNREACH);
+		}
+		rt = rt->rt_gwroute;
+	}
+
+	if (rt->rt_flags & RTF_REJECT)
+		if (rt->rt_expire == 0 || time_second < rt->rt_expire)
+			return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
+
+	*rtp = rt;
 	return (0);
 }
 

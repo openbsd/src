@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.139 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.140 2015/01/08 14:29:18 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -81,7 +81,6 @@
 int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
 int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
-#define	rt_expire rt_rmx.rmx_expire
 
 void arptfree(struct llinfo_arp *);
 void arptimer(void *);
@@ -337,29 +336,40 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
  * desten is filled in.  If there is no entry in arptab,
  * set one up and broadcast a request for the IP address.
  * Hold onto this mbuf and resend it once the address
- * is finally resolved.  A return value of 1 indicates
+ * is finally resolved.  A return value of 0 indicates
  * that desten has been filled in and the packet should be sent
- * normally; a 0 return indicates that the packet has been
- * taken over here, either now or for later transmission.
+ * normally; A return value of EAGAIN indicates that the packet
+ * has been taken over here, either now or for later transmission.
+ * Any other return value indicates an error.
  */
 int
-arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
+arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
     struct sockaddr *dst, u_char *desten)
 {
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
+	struct rtentry *rt;
 	struct mbuf *mh;
 	char addr[INET_ADDRSTRLEN];
+	int error;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		memcpy(desten, etherbroadcastaddr, sizeof(etherbroadcastaddr));
-		return (1);
+		return (0);
 	}
 	if (m->m_flags & M_MCAST) {	/* multicast */
 		ETHER_MAP_IP_MULTICAST(&satosin(dst)->sin_addr, desten);
-		return (1);
+		return (0);
 	}
-	if (rt) {
+
+	if (rt0 != NULL) {
+		error = rt_checkgate(&ac->ac_if, rt0, dst,
+		    m->m_pkthdr.ph_rtableid, &rt);
+		if (error) {
+			m_freem(m);
+			return (error);
+		}
+
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (la == NULL)
 			log(LOG_DEBUG, "arpresolve: %s: route without link "
@@ -377,7 +387,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 	}
 	if (la == 0 || rt == 0) {
 		m_freem(m);
-		return (0);
+		return (EINVAL);
 	}
 	sdl = SDL(rt->rt_gateway);
 	/*
@@ -387,11 +397,11 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
-		return 1;
+		return (0);
 	}
 	if (((struct ifnet *)ac)->if_flags & IFF_NOARP) {
 		m_freem(m);
-		return 0;
+		return (EINVAL);
 	}
 
 	/*
@@ -468,7 +478,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 			}
 		}
 	}
-	return (0);
+	return (EAGAIN);
 }
 
 /*

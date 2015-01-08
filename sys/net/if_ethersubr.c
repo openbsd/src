@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.184 2014/12/19 17:14:39 tedu Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.185 2015/01/08 14:29:18 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -238,14 +238,13 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
  */
 int
 ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
-    struct rtentry *rt0)
+    struct rtentry *rt)
 {
 	u_int16_t etype;
 	int s, len, error = 0;
 	u_char edst[ETHER_ADDR_LEN];
 	u_char *esrc;
 	struct mbuf *m = m0;
-	struct rtentry *rt;
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp0;
@@ -283,38 +282,12 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	if ((rt = rt0) != NULL) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc(dst, RT_REPORT|RT_RESOLVE,
-			    m->m_pkthdr.ph_rtableid)) != NULL)
-				rt->rt_refcnt--;
-			else
-				senderr(EHOSTUNREACH);
-		}
 
-		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == NULL)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt);
-				rt = rt0;
-			lookup:
-				rt->rt_gwroute = rtalloc(rt->rt_gateway,
-				    RT_REPORT|RT_RESOLVE, ifp->if_rdomain);
-				if ((rt = rt->rt_gwroute) == NULL)
-					senderr(EHOSTUNREACH);
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
 	switch (dst->sa_family) {
-
 	case AF_INET:
-		if (!arpresolve(ac, rt, m, dst, edst))
-			return (0);	/* if not yet resolved */
+		error = arpresolve(ac, rt, m, dst, edst);
+		if (error)
+			return (error == EAGAIN ? 0 : error);
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
 		    !m->m_pkthdr.pf.routed)
@@ -323,8 +296,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
-			return (0); /* it must be impossible, but... */
+		error = nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst);
+		if (error)
+			return (error);
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
@@ -347,8 +321,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 				    sizeof(edst));
 				break;
 			case AF_INET:
-				if (!arpresolve(ac, rt, m, dst, edst))
-					return (0); /* if not yet resolved */
+				error = arpresolve(ac, rt, m, dst, edst);
+				if (error)
+					return (error == EAGAIN ? 0 : error);
 				break;
 			default:
 				senderr(EHOSTUNREACH);

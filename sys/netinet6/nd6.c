@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.128 2014/12/22 11:05:53 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.129 2015/01/08 14:29:18 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1651,7 +1651,6 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 {
 	struct mbuf *m = m0;
 	struct rtentry *rt = rt0;
-	struct sockaddr_in6 *gw6 = NULL;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
 #ifdef IPSEC
@@ -1665,57 +1664,28 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 		goto sendpkt;
 
 	/*
-	 * next hop determination.  This routine is derived from ether_output.
+	 * next hop determination.
 	 */
-	if (rt) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc(sin6tosa(dst),
-			    RT_REPORT|RT_RESOLVE,
-			    m->m_pkthdr.ph_rtableid)) != NULL)
-			{
-				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp)
-					senderr(EHOSTUNREACH);
-			} else
-				senderr(EHOSTUNREACH);
+	if (rt0 != NULL) {
+		error = rt_checkgate(ifp, rt0, sin6tosa(dst),
+		    m->m_pkthdr.ph_rtableid, &rt);
+		if (error) {
+			m_freem(m);
+			return (error);
 		}
 
-		if (rt->rt_flags & RTF_GATEWAY) {
-			gw6 = satosin6(rt->rt_gateway);
-
-			/*
-			 * We skip link-layer address resolution and NUD
-			 * if the gateway is not a neighbor from ND point
-			 * of view, regardless of the value of nd_ifinfo.flags.
-			 * The second condition is a bit tricky; we skip
-			 * if the gateway is our own address, which is
-			 * sometimes used to install a route to a p2p link.
-			 */
-			if (!nd6_is_addr_neighbor(gw6, ifp) ||
-			    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
-				/*
-				 * We allow this kind of tricky route only
-				 * when the outgoing interface is p2p.
-				 * XXX: we may need a more generic rule here.
-				 */
-				if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-					senderr(EHOSTUNREACH);
-
-				goto sendpkt;
-			}
-
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup:
-				rt->rt_gwroute = rtalloc(rt->rt_gateway,
-				    RT_REPORT|RT_RESOLVE,
-				    m->m_pkthdr.ph_rtableid);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-			}
-		}
+		/*
+		 * We skip link-layer address resolution and NUD
+		 * if the gateway is not a neighbor from ND point
+		 * of view, regardless of the value of nd_ifinfo.flags.
+		 * The second condition is a bit tricky; we skip
+		 * if the gateway is our own address, which is
+		 * sometimes used to install a route to a p2p link.
+		 */
+		if ((ifp->if_flags & IFF_POINTOPOINT) &&
+		    ((nd6_is_addr_neighbor(satosin6(rt_key(rt)), ifp) == 0) ||
+		    in6ifa_ifpwithaddr(ifp, &satosin6(rt_key(rt))->sin6_addr)))
+			goto sendpkt;
 	}
 
 	/*
@@ -1860,33 +1830,42 @@ nd6_need_cache(struct ifnet *ifp)
 }
 
 int
-nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m, 
+nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
     struct sockaddr *dst, u_char *desten)
 {
 	struct sockaddr_dl *sdl;
+	struct rtentry *rt;
+	int error;
 
 	if (m->m_flags & M_MCAST) {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
 			ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr,
 						 desten);
-			return (1);
+			return (0);
 			break;
 		default:
 			m_freem(m);
-			return (0);
+			return (EINVAL);
 		}
 	}
 
-	if (rt == NULL) {
+	if (rt0 == NULL) {
 		/* this could happen, if we could not allocate memory */
 		m_freem(m);
-		return (0);
+		return (ENOMEM);
 	}
+
+	error = rt_checkgate(ifp, rt0, dst, m->m_pkthdr.ph_rtableid, &rt);
+	if (error) {
+		m_freem(m);
+		return (error);
+	}
+
 	if (rt->rt_gateway->sa_family != AF_LINK) {
 		printf("nd6_storelladdr: something odd happens\n");
 		m_freem(m);
-		return (0);
+		return (EINVAL);
 	}
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
@@ -1897,11 +1876,11 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 			addr, sizeof(addr)),
 		    ifp->if_xname);
 		m_freem(m);
-		return (0);
+		return (EINVAL);
 	}
 
 	bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-	return (1);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.101 2014/11/24 12:43:54 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.102 2015/01/08 14:29:18 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -113,7 +113,8 @@ struct rtentry {
 	u_int16_t rt_labelid;		/* route label ID */
 	u_int8_t rt_priority;		/* routing priority to use */
 };
-#define	rt_use	rt_rmx.rmx_pksent
+#define	rt_use		rt_rmx.rmx_pksent
+#define	rt_expire	rt_rmx.rmx_expire
 
 #endif /* _KERNEL */
 
@@ -360,6 +361,8 @@ void	 rt_missmsg(int, struct rt_addrinfo *, int, struct ifnet *, int,
 void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 int	 rt_setgate(struct rtentry *, struct sockaddr *,
 	    struct sockaddr *, u_int);
+int	 rt_checkgate(struct ifnet *, struct rtentry *, struct sockaddr *,
+	    unsigned int, struct rtentry **);
 void	 rt_setmetrics(u_long, struct rt_metrics *, struct rt_kmetrics *);
 void	 rt_getmetrics(struct rt_kmetrics *, struct rt_metrics *);
 
