@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.38 2014/11/13 04:03:53 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.39 2015/01/08 07:34:05 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.38 2014/11/13 04:03:53 yasuoka Exp $
+ * $Id: npppd.c,v 1.39 2015/01/08 07:34:05 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -2131,13 +2131,14 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 		return 1;
 
 	if (_this->conf.max_session > 0 &&
-	    _this->nsession++ >= _this->conf.max_session) {
+	    _this->nsession >= _this->conf.max_session) {
 		ppp_log(ppp, LOG_WARNING,
 		    "Number of sessions reaches out of the limit=%d",
 		    _this->conf.max_session);
 		return 1;
 	}
 	ppp->ifidx = ifidx;
+	_this->nsession++;
 
 	return 0;
 }
@@ -2146,7 +2147,8 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 void
 npppd_ppp_unbind_iface(npppd *_this, npppd_ppp *ppp)
 {
-	_this->nsession--;
+	if (ppp->ifidx >= 0)
+		_this->nsession--;
 	ppp->ifidx = -1;
 }
 
