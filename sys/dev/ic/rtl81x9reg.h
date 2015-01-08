@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.88 2014/11/24 02:03:37 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.89 2015/01/08 00:49:18 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -76,6 +76,14 @@
 #define RL_TIMERCNT	0x0048		/* timer count register */
 #define RL_MISSEDPKT	0x004C		/* missed packet counter */
 #define RL_EECMD	0x0050		/* EEPROM command register */
+
+/* RTL8139/RTL8139C+ only */
+#define RL_8139_CFG0	0x0051		/* config register #0 */
+#define RL_8139_CFG1	0x0052		/* config register #1 */
+#define RL_8139_CFG3	0x0059		/* config register #3 */
+#define RL_8139_CFG4	0x005A		/* config register #4 */
+#define RL_8139_CFG5	0x00D8		/* config register #5 */
+
 #define RL_CFG0		0x0051		/* config register #0 */
 #define RL_CFG1		0x0052		/* config register #1 */
 #define RL_CFG2		0x0053		/* config register #2 */
@@ -838,6 +846,12 @@ struct rl_softc {
 	int			rl_eewidth;
 	int			rl_bus_speed;
 	int			rl_txthresh;
+	bus_size_t		rl_cfg0;
+	bus_size_t		rl_cfg1;
+	bus_size_t		rl_cfg2;
+	bus_size_t		rl_cfg3;
+	bus_size_t		rl_cfg4;
+	bus_size_t		rl_cfg5;
 	struct rl_chain_data	rl_cdata;
 	struct timeout		sc_tick_tmo;
 

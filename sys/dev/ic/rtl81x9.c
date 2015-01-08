@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.86 2014/12/22 02:28:51 tedu Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.87 2015/01/08 00:49:18 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -974,7 +974,7 @@ rl_init(void *xsc)
 
 	mii_mediachg(&sc->sc_mii);
 
-	CSR_WRITE_1(sc, RL_CFG1, RL_CFG1_DRVLOAD|RL_CFG1_FULLDUPLEX);
+	CSR_WRITE_1(sc, sc->rl_cfg1, RL_CFG1_DRVLOAD|RL_CFG1_FULLDUPLEX);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1117,6 +1117,13 @@ rl_attach(struct rl_softc *sc)
 	u_int16_t	rl_id;
 	caddr_t		kva;
 	int		addr_len;
+
+	sc->rl_cfg0 = RL_8139_CFG0;
+	sc->rl_cfg1 = RL_8139_CFG1;
+	sc->rl_cfg2 = 0;
+	sc->rl_cfg3 = RL_8139_CFG3;
+	sc->rl_cfg4 = RL_8139_CFG4;
+	sc->rl_cfg5 = RL_8139_CFG5;
 
 	rl_reset(sc);
 

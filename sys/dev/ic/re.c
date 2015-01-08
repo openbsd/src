@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.166 2015/01/04 07:14:41 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.167 2015/01/08 00:49:18 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -799,6 +799,22 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	}
 
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS) {
+		sc->rl_cfg0 = RL_8139_CFG0;
+		sc->rl_cfg1 = RL_8139_CFG1;
+		sc->rl_cfg2 = 0;
+		sc->rl_cfg3 = RL_8139_CFG3;
+		sc->rl_cfg4 = RL_8139_CFG4;
+		sc->rl_cfg5 = RL_8139_CFG5;
+	} else {
+		sc->rl_cfg0 = RL_CFG0;
+		sc->rl_cfg1 = RL_CFG1;
+		sc->rl_cfg2 = RL_CFG2;
+		sc->rl_cfg3 = RL_CFG3;
+		sc->rl_cfg4 = RL_CFG4;
+		sc->rl_cfg5 = RL_CFG5;
+	}
+
 	/* Reset the adapter. */
 	re_reset(sc);
 
@@ -817,7 +833,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	else {
 		u_int8_t cfg2;
 
-		cfg2 = CSR_READ_1(sc, RL_CFG2);
+		cfg2 = CSR_READ_1(sc, sc->rl_cfg2);
 		switch (cfg2 & RL_CFG2_PCI_MASK) {
 		case RL_CFG2_PCI_33MHZ:
  			sc->rl_bus_speed = 33;
@@ -1968,7 +1984,8 @@ re_init(struct ifnet *ifp)
 
 	mii_mediachg(&sc->sc_mii);
 
-	CSR_WRITE_1(sc, RL_CFG1, CSR_READ_1(sc, RL_CFG1) | RL_CFG1_DRVLOAD);
+	CSR_WRITE_1(sc, sc->rl_cfg1, CSR_READ_1(sc, sc->rl_cfg1) |
+	    RL_CFG1_DRVLOAD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -2303,28 +2320,15 @@ int
 re_wol(struct ifnet *ifp, int enable)
 {
 	struct rl_softc *sc = ifp->if_softc;
-	int i;
 	u_int8_t val;
-	struct re_wolcfg {
-		u_int8_t	enable;
-		u_int8_t	reg;
-		u_int8_t	bit;
-	} re_wolcfg[] = {
-		/* Always disable all wake events expect magic packet. */
-		{ 0,	RL_CFG5,	RL_CFG5_WOL_UCAST },
-		{ 0,	RL_CFG5,	RL_CFG5_WOL_MCAST },
-		{ 0,	RL_CFG5,	RL_CFG5_WOL_BCAST },
-		{ 1,	RL_CFG3,	RL_CFG3_WOL_MAGIC },
-		{ 0,	RL_CFG3,	RL_CFG3_WOL_LINK }
-	};
 
 	if (enable) {
-		if ((CSR_READ_1(sc, RL_CFG1) & RL_CFG1_PME) == 0) {
+		if ((CSR_READ_1(sc, sc->rl_cfg1) & RL_CFG1_PME) == 0) {
 			printf("%s: power management is disabled, "
 			    "cannot do WOL\n", sc->sc_dev.dv_xname);
 			return (ENOTSUP);
 		}
-		if ((CSR_READ_1(sc, RL_CFG2) & RL_CFG2_AUXPWR) == 0)
+		if ((CSR_READ_1(sc, sc->rl_cfg2) & RL_CFG2_AUXPWR) == 0)
 			printf("%s: no auxiliary power, cannot do WOL from D3 "
 			    "(power-off) state\n", sc->sc_dev.dv_xname);
 	}
@@ -2334,13 +2338,26 @@ re_wol(struct ifnet *ifp, int enable)
 	/* Temporarily enable write to configuration registers. */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
 
-	for (i = 0; i < nitems(re_wolcfg); i++) {
-		val = CSR_READ_1(sc, re_wolcfg[i].reg);
-		if (enable && re_wolcfg[i].enable)
-			val |= re_wolcfg[i].bit;
-		else
-			val &= ~re_wolcfg[i].bit;
-		CSR_WRITE_1(sc, re_wolcfg[i].reg, val);
+	/* Always disable all wake events except magic packet. */
+	if (enable) {
+		val = CSR_READ_1(sc, sc->rl_cfg5);
+		val &= ~(RL_CFG5_WOL_UCAST | RL_CFG5_WOL_MCAST |
+		    RL_CFG5_WOL_BCAST);
+		CSR_WRITE_1(sc, sc->rl_cfg5, val);
+
+		val = CSR_READ_1(sc, sc->rl_cfg3);
+		val |= RL_CFG3_WOL_MAGIC;
+		val &= ~RL_CFG3_WOL_LINK;
+		CSR_WRITE_1(sc, sc->rl_cfg3, val);
+	} else {
+		val = CSR_READ_1(sc, sc->rl_cfg5);
+		val &= ~(RL_CFG5_WOL_UCAST | RL_CFG5_WOL_MCAST |
+		    RL_CFG5_WOL_BCAST);
+		CSR_WRITE_1(sc, sc->rl_cfg5, val);
+
+		val = CSR_READ_1(sc, sc->rl_cfg3);
+		val &= ~(RL_CFG3_WOL_MAGIC | RL_CFG3_WOL_LINK);
+		CSR_WRITE_1(sc, sc->rl_cfg3, val);
 	}
 
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
