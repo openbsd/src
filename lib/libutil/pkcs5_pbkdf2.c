@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.7 2015/01/07 21:34:23 deraadt Exp $	*/
+/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.8 2015/01/08 01:28:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,6 +24,8 @@
 #include <util.h>
 
 #include <sha1.h>
+
+#define	MINIMUM(a,b) (((a) < (b)) ? (a) : (b))
 
 /*
  * HMAC-SHA-1 (from RFC 2202).
@@ -105,7 +107,7 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const uint8_t *salt,
 				obuf[j] ^= d1[j];
 		}
 
-		r = MIN(key_len, SHA1_DIGEST_LENGTH);
+		r = MINIMUM(key_len, SHA1_DIGEST_LENGTH);
 		memcpy(key, obuf, r);
 		key += r;
 		key_len -= r;
