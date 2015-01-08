@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.102 2015/01/08 14:29:18 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.103 2015/01/08 15:05:44 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -99,19 +99,20 @@ struct rtentry {
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
 #define	rt_key(r)	((struct sockaddr *)((r)->rt_nodes->rn_key))
 #define	rt_mask(r)	((struct sockaddr *)((r)->rt_nodes->rn_mask))
-	struct	sockaddr *rt_gateway;	/* value */
-	u_int	rt_flags;		/* up/down?, host/net */
-	int	rt_refcnt;		/* # held references */
-	struct	ifnet *rt_ifp;		/* the answer: interface to use */
-	struct	ifaddr *rt_ifa;		/* the answer: interface addr to use */
-	caddr_t	rt_llinfo;		/* pointer to link level info cache or
+	struct sockaddr	*rt_gateway;	/* value */
+	struct ifnet	*rt_ifp;	/* the answer: interface to use */
+	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
+	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
 					   to an MPLS structure */ 
-	struct	rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
-	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
-	struct	rtentry *rt_parent;	/* If cloned, parent of this route. */
+	struct rtentry	*rt_gwroute;	/* implied entry for gatewayed routes */
+	struct rtentry	*rt_parent;	/* If cloned, parent of this route. */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
-	u_int16_t rt_labelid;		/* route label ID */
-	u_int8_t rt_priority;		/* routing priority to use */
+	struct rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
+	unsigned int	 rt_flags;	/* up/down?, host/net */
+	unsigned int	 rt_tableid;	/* routing table ID  */
+	int		 rt_refcnt;	/* # held references */
+	uint16_t	 rt_labelid;	/* route label ID */
+	uint8_t		 rt_priority;	/* routing priority to use */
 };
 #define	rt_use		rt_rmx.rmx_pksent
 #define	rt_expire	rt_rmx.rmx_expire
