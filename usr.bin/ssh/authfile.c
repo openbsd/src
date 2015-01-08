@@ -1,4 +1,4 @@
-/* $OpenBSD: authfile.c,v 1.108 2014/12/04 02:24:32 djm Exp $ */
+/* $OpenBSD: authfile.c,v 1.109 2015/01/08 10:14:08 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -93,7 +93,7 @@ sshkey_save_private(struct sshkey *key, const char *filename,
 
 /* Load a key from a fd into a buffer */
 int
-sshkey_load_file(int fd, const char *filename, struct sshbuf *blob)
+sshkey_load_file(int fd, struct sshbuf *blob)
 {
 	u_char buf[1024];
 	size_t len;
@@ -140,8 +140,7 @@ sshkey_load_file(int fd, const char *filename, struct sshbuf *blob)
  * otherwise.
  */
 static int
-sshkey_load_public_rsa1(int fd, const char *filename,
-    struct sshkey **keyp, char **commentp)
+sshkey_load_public_rsa1(int fd, struct sshkey **keyp, char **commentp)
 {
 	struct sshbuf *b = NULL;
 	int r;
@@ -152,7 +151,7 @@ sshkey_load_public_rsa1(int fd, const char *filename,
 
 	if ((b = sshbuf_new()) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
-	if ((r = sshkey_load_file(fd, filename, b)) != 0)
+	if ((r = sshkey_load_file(fd, b)) != 0)
 		goto out;
 	if ((r = sshkey_parse_public_rsa1_fileblob(b, keyp, commentp)) != 0)
 		goto out;
@@ -162,33 +161,6 @@ sshkey_load_public_rsa1(int fd, const char *filename,
 	return r;
 }
 #endif /* WITH_SSH1 */
-
-#ifdef WITH_OPENSSL
-/* XXX Deprecate? */
-int
-sshkey_load_private_pem(int fd, int type, const char *passphrase,
-    struct sshkey **keyp, char **commentp)
-{
-	struct sshbuf *buffer = NULL;
-	int r;
-
-	*keyp = NULL;
-	if (commentp != NULL)
-		*commentp = NULL;
-
-	if ((buffer = sshbuf_new()) == NULL)
-		return SSH_ERR_ALLOC_FAIL;
-	if ((r = sshkey_load_file(fd, NULL, buffer)) != 0)
-		goto out;
-	if ((r = sshkey_parse_private_pem_fileblob(buffer, type, passphrase,
-	    keyp, commentp)) != 0)
-		goto out;
-	r = 0;
- out:
-	sshbuf_free(buffer);
-	return r;
-}
-#endif /* WITH_OPENSSL */
 
 /* XXX remove error() calls from here? */
 int
@@ -222,7 +194,6 @@ sshkey_load_private_type(int type, const char *filename, const char *passphrase,
     struct sshkey **keyp, char **commentp, int *perm_ok)
 {
 	int fd, r;
-	struct sshbuf *buffer = NULL;
 
 	*keyp = NULL;
 	if (commentp != NULL)
@@ -242,18 +213,31 @@ sshkey_load_private_type(int type, const char *filename, const char *passphrase,
 	if (perm_ok != NULL)
 		*perm_ok = 1;
 
+	r = sshkey_load_private_type_fd(fd, type, passphrase, keyp, commentp);
+ out:
+	close(fd);
+	return r;
+}
+
+int
+sshkey_load_private_type_fd(int fd, int type, const char *passphrase,
+    struct sshkey **keyp, char **commentp)
+{
+	struct sshbuf *buffer = NULL;
+	int r;
+
 	if ((buffer = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_load_file(fd, filename, buffer)) != 0)
+	if ((r = sshkey_load_file(fd, buffer)) != 0 ||
+	    (r = sshkey_parse_private_fileblob_type(buffer, type,
+	    passphrase, keyp, commentp)) != 0)
 		goto out;
-	if ((r = sshkey_parse_private_fileblob_type(buffer, type, passphrase,
-	    keyp, commentp)) != 0)
-		goto out;
+
+	/* success */
 	r = 0;
  out:
-	close(fd);
 	if (buffer != NULL)
 		sshbuf_free(buffer);
 	return r;
@@ -282,7 +266,7 @@ sshkey_load_private(const char *filename, const char *passphrase,
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_load_file(fd, filename, buffer)) != 0 ||
+	if ((r = sshkey_load_file(fd, buffer)) != 0 ||
 	    (r = sshkey_parse_private_fileblob(buffer, passphrase, filename,
 	    keyp, commentp)) != 0)
 		goto out;
@@ -358,7 +342,7 @@ sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 		goto skip;
 #ifdef WITH_SSH1
 	/* try rsa1 private key */
-	r = sshkey_load_public_rsa1(fd, filename, keyp, commentp);
+	r = sshkey_load_public_rsa1(fd, keyp, commentp);
 	close(fd);
 	switch (r) {
 	case SSH_ERR_INTERNAL_ERROR:
