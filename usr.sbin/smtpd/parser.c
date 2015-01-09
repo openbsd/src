@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.39 2014/02/04 15:22:39 eric Exp $	*/
+/*	$OpenBSD: parser.c,v 1.40 2015/01/09 08:28:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -278,8 +278,8 @@ text_to_sockaddr(struct sockaddr *sa, int family, const char *str)
 {
 	struct in_addr		 ina;
 	struct in6_addr		 in6a;
-	struct sockaddr_in	*sin;
-	struct sockaddr_in6	*sin6;
+	struct sockaddr_in	*in;
+	struct sockaddr_in6	*in6;
 	char			*cp, *str2;
 	const char		*errstr;
 
@@ -293,11 +293,11 @@ text_to_sockaddr(struct sockaddr *sa, int family, const char *str)
 		if (inet_pton(PF_INET, str, &ina) != 1)
 			return (-1);
 
-		sin = (struct sockaddr_in *)sa;
-		memset(sin, 0, sizeof *sin);
-		sin->sin_len = sizeof(struct sockaddr_in);
-		sin->sin_family = PF_INET;
-		sin->sin_addr.s_addr = ina.s_addr;
+		in = (struct sockaddr_in *)sa;
+		memset(in, 0, sizeof *in);
+		in->sin_len = sizeof(struct sockaddr_in);
+		in->sin_family = PF_INET;
+		in->sin_addr.s_addr = ina.s_addr;
 		return (0);
 
 	case PF_INET6:
@@ -316,11 +316,11 @@ text_to_sockaddr(struct sockaddr *sa, int family, const char *str)
 		} else if (inet_pton(PF_INET6, str, &in6a) != 1)
 			return (-1);
 
-		sin6 = (struct sockaddr_in6 *)sa;
-		memset(sin6, 0, sizeof *sin6);
-		sin6->sin6_len = sizeof(struct sockaddr_in6);
-		sin6->sin6_family = PF_INET6;
-		sin6->sin6_addr = in6a;
+		in6 = (struct sockaddr_in6 *)sa;
+		memset(in6, 0, sizeof *in6);
+		in6->sin6_len = sizeof(struct sockaddr_in6);
+		in6->sin6_family = PF_INET6;
+		in6->sin6_addr = in6a;
 
 		if (cp == NULL)
 			return (0);
@@ -328,10 +328,10 @@ text_to_sockaddr(struct sockaddr *sa, int family, const char *str)
 		if (IN6_IS_ADDR_LINKLOCAL(&in6a) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(&in6a) ||
 		    IN6_IS_ADDR_MC_INTFACELOCAL(&in6a))
-			if ((sin6->sin6_scope_id = if_nametoindex(cp)))
+			if ((in6->sin6_scope_id = if_nametoindex(cp)))
 				return (0);
 
-		sin6->sin6_scope_id = strtonum(cp, 0, UINT32_MAX, &errstr);
+		in6->sin6_scope_id = strtonum(cp, 0, UINT32_MAX, &errstr);
 		if (errstr)
 			return (-1);
 		return (0);
