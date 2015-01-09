@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.19 2012/06/25 11:49:19 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.20 2015/01/09 11:19:12 stsp Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 25 2012 $
+.Dd $Mdocdate: January 9 2015 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -80,6 +80,9 @@ pass in from $client to $orig_server port $proxy_port \e
     rdr-to $server port $port
 pass out from $client to $server port $port nat-to $proxy
 .Ed
+.Pp
+.Nm
+chroots to "/var/empty" and changes to user "proxy" to drop privileges.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -193,5 +196,6 @@ The negotiated IP address for active modes is ignored for security
 reasons.
 This makes third party file transfers impossible.
 .Pp
+Since
 .Nm
-chroots to "/var/empty" and changes to user "proxy" to drop privileges.
+acts as a man-in-the-middle it breaks explicit FTP TLS connections (RFC 4217).
