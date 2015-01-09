@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.67 2015/01/09 12:07:50 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.68 2015/01/09 12:09:51 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ uhidev_set_report_async(struct uhidev_softc *sc, int type, int id, void *data,
 		len++;
 		buf = malloc(len, M_TEMP, M_NOWAIT);
 		if (buf == NULL)
-			return (USBD_NOMEM);
+			return (-1);
 		buf[0] = id;
 		memcpy(buf + 1, data, len - 1);
 	}
