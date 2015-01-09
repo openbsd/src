@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.28 2014/07/12 18:43:32 tedu Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.29 2015/01/09 05:04:22 tedu Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -239,7 +239,7 @@ bufq_drain(struct bufq *bq)
 }
 
 void
-bufq_wait(struct bufq *bq, struct buf *bp)
+bufq_wait(struct bufq *bq)
 {
 	if (bq->bufq_hi) {
 		assertwaitok();

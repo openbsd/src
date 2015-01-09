@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.96 2014/11/17 16:48:33 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.97 2015/01/09 05:04:22 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ void		 bufq_requeue(struct bufq *, struct buf *);
 int		 bufq_peek(struct bufq *);
 void		 bufq_drain(struct bufq *);
 
-void		 bufq_wait(struct bufq *, struct buf *);
+void		 bufq_wait(struct bufq *);
 void		 bufq_done(struct bufq *, struct buf *);
 void		 bufq_quiesce(void);
 void		 bufq_restart(void);
