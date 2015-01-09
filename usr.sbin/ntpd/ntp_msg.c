@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.19 2013/04/30 11:42:56 mglocker Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.20 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,7 +17,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

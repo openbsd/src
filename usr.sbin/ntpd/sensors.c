@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.48 2015/01/08 00:25:47 bcook Exp $ */
+/*	$OpenBSD: sensors.c,v 1.49 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
 #include <sys/sysctl.h>

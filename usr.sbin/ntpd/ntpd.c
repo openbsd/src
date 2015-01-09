@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.82 2015/01/08 00:30:08 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.83 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 	int			 fd_ctl, ch, nfds;
 	int			 pipe_chld[2];
 	struct passwd		*pw;
-	extern char 		*__progname;
+	extern char		*__progname;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
 		ctl_main (argc, argv);

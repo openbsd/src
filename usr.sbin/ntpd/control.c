@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2015/01/04 01:24:43 bcook Exp $ */
+/*	$OpenBSD: control.c,v 1.4 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -170,8 +170,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 {
 	struct imsg		 imsg;
 	struct ctl_conn		*c;
-	struct ntp_peer 	*p;
-	struct ntp_sensor 	*s;
+	struct ntp_peer		*p;
+	struct ntp_sensor	*s;
 	struct ctl_show_status	 c_status;
 	struct ctl_show_peer	 c_peer;
 	struct ctl_show_sensor	 c_sensor;
@@ -289,8 +289,8 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 void
 build_show_status(struct ctl_show_status *cs)
 {
-	struct ntp_peer 	*p;
-	struct ntp_sensor 	*s;
+	struct ntp_peer		*p;
+	struct ntp_sensor	*s;
 
 	cs->peercnt = cs->valid_peers = 0;
 	cs->sensorcnt = cs->valid_sensors = 0;
@@ -314,9 +314,9 @@ build_show_status(struct ctl_show_status *cs)
 void
 build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 {
-	const char 	*a = "not resolved";
-	const char 	*pool = "", *addr_head_name = "";
-	u_int8_t 	 shift, best, validdelaycnt, jittercnt;
+	const char	*a = "not resolved";
+	const char	*pool = "", *addr_head_name = "";
+	u_int8_t	 shift, best, validdelaycnt, jittercnt;
 	time_t		 now;
 
 	now = getmonotime();
@@ -395,7 +395,7 @@ void
 build_show_sensor(struct ctl_show_sensor *cs, struct ntp_sensor *s)
 {
 	time_t		 now;
-	u_int8_t 	 shift;
+	u_int8_t	 shift;
 	u_int32_t	 refid;
 
 	now = getmonotime();

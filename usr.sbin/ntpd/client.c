@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.95 2015/01/04 01:48:49 bcook Exp $ */
+/*	$OpenBSD: client.c,v 1.96 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,7 +17,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <errno.h>
 #include <md5.h>
 #include <stdio.h>

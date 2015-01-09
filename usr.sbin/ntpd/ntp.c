@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.124 2015/01/04 01:48:49 bcook Exp $ */
+/*	$OpenBSD: ntp.c,v 1.125 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,7 +17,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <errno.h>

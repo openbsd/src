@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.114 2015/01/08 00:30:08 bcook Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.115 2015/01/09 07:35:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@
 #define	MAX_FREQUENCY_ADJUST	128e-5	/* max correction per iteration */
 #define REPORT_INTERVAL		(24*60*60) /* interval between status reports */
 #define MAX_SEND_ERRORS		3	/* max send errors before reconnect */
-#define	MAX_DISPLAY_WIDTH	80 	/* max chars in ctl_show report line */
+#define	MAX_DISPLAY_WIDTH	80	/* max chars in ctl_show report line */
 
 #define FILTER_ADJFREQ		0x01	/* set after doing adjfreq */
 
@@ -203,7 +203,7 @@ struct ctl_show_status {
 };
 
 struct ctl_show_peer {
-	char 		 peer_desc[MAX_DISPLAY_WIDTH];
+	char		 peer_desc[MAX_DISPLAY_WIDTH];
 	u_int8_t	 syncedto;
 	u_int8_t	 weight;
 	u_int8_t	 trustlevel;
@@ -330,7 +330,7 @@ int			 control_listen(int);
 void			 control_shutdown(int);
 void			 control_cleanup(const char *);
 int			 control_accept(int);
-struct ctl_conn 	*control_connbyfd(int);
+struct ctl_conn		*control_connbyfd(int);
 int			 control_close(int);
 int			 control_dispatch_msg(struct pollfd *, u_int *);
 void			 session_socket_blockmode(int, enum blockmodes);
