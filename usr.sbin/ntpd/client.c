@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.96 2015/01/09 07:35:37 deraadt Exp $ */
+/*	$OpenBSD: client.c,v 1.97 2015/01/09 23:44:07 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ client_nextaddr(struct ntp_peer *p)
 		return (-1);
 	}
 
-	if ((p->addr = p->addr->next) == NULL)
+	if (p->addr == NULL || (p->addr = p->addr->next) == NULL)
 		p->addr = p->addr_head.a;
 
 	p->shift = 0;
