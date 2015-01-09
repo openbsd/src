@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.5 2014/10/08 16:15:37 deraadt Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.6 2015/01/09 08:09:39 henning Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -170,10 +170,6 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			}
 			break;
 		case MSG_PROTOCOL_BGP4MP_ET:
-			/* currently just ignore the microsec field */
-			msg = (char *)msg + sizeof(u_int32_t);
-			h.length -= sizeof(u_int32_t);
-			/* FALLTHROUGH */
 		case MSG_PROTOCOL_BGP4MP:
 			switch (ntohs(h.subtype)) {
 			case BGP4MP_STATE_CHANGE:
@@ -545,6 +541,12 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	u_int16_t		 asnum, alen, afi;
 	u_int8_t		 safi, nhlen;
 	sa_family_t		 af;
+
+	/* just ignore the microsec field for _ET header for now */
+	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
+		b = (char *)b + sizeof(u_int32_t);
+		len -= sizeof(u_int32_t);
+	}
 
 	if (*pp == NULL) {
 		*pp = calloc(1, sizeof(struct mrt_peer));
