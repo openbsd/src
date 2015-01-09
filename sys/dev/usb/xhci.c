@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.52 2015/01/05 12:38:16 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.53 2015/01/09 20:17:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -224,22 +224,22 @@ usbd_dma_contig_alloc(struct usbd_bus *bus, struct usbd_dma_info *dma,
 	error = bus_dmamap_create(dma->tag, size, 1, size, boundary,
 	    BUS_DMA_NOWAIT, &dma->map);
 	if (error != 0)
-		goto fail;
+		return (error);;
 
 	error = bus_dmamem_alloc(dma->tag, size, alignment, boundary, &dma->seg,
 	    1, &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0)
-		goto fail;
+		goto destroy;
 
 	error = bus_dmamem_map(dma->tag, &dma->seg, 1, size, &dma->vaddr,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error != 0)
-		goto fail;
+		goto free;
 
 	error = bus_dmamap_load_raw(dma->tag, dma->map, &dma->seg, 1, size,
 	    BUS_DMA_NOWAIT);
 	if (error != 0)
-		goto fail;
+		goto unmap;
 
 	bus_dmamap_sync(dma->tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
 
@@ -249,7 +249,12 @@ usbd_dma_contig_alloc(struct usbd_bus *bus, struct usbd_dma_info *dma,
 
 	return (0);
 
-fail:	usbd_dma_contig_free(bus, dma);
+unmap:
+	bus_dmamem_unmap(dma->tag, dma->vaddr, size);
+free:
+	bus_dmamem_free(dma->tag, &dma->seg, 1);
+destroy:
+	bus_dmamap_destroy(dma->tag, dma->map);
 	return (error);
 }
 
@@ -257,14 +262,11 @@ void
 usbd_dma_contig_free(struct usbd_bus *bus, struct usbd_dma_info *dma)
 {
 	if (dma->map != NULL) {
-		if (dma->vaddr != NULL) {
-			bus_dmamap_sync(bus->dmatag, dma->map, 0, dma->size,
-			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(bus->dmatag, dma->map);
-			bus_dmamem_unmap(bus->dmatag, dma->vaddr, dma->size);
-			bus_dmamem_free(bus->dmatag, &dma->seg, 1);
-			dma->vaddr = NULL;
-		}
+		bus_dmamap_sync(bus->dmatag, dma->map, 0, dma->size,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(bus->dmatag, dma->map);
+		bus_dmamem_unmap(bus->dmatag, dma->vaddr, dma->size);
+		bus_dmamem_free(bus->dmatag, &dma->seg, 1);
 		bus_dmamap_destroy(bus->dmatag, dma->map);
 		dma->map = NULL;
 	}
