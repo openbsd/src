@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.642 2015/01/06 10:38:36 mpi Exp $
+$OpenBSD: usbdevs,v 1.643 2015/01/09 09:34:07 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2259,8 +2259,10 @@ product INTEL AP310		0x0200	AP310 AnyPoint II
 product INTEL I2011B		0x1111	Wireless 2011B
 product INTEL2 RMH_3		0x8000	Rate Matching Hub
 product INTEL2 RMH_5		0x8001	Rate Matching Hub
+product INTEL2 RMH_7		0x8002	Rate Matching Hub
 product INTEL2 RMH_4		0x8008	Rate Matching Hub
 product INTEL2 RMH_6		0x8009	Rate Matching Hub
+product INTEL2 RMH_8		0x800a	Rate Matching Hub
 product INTEL TESTBOARD		0x9890	82930 test board
 
 /* InterBiometrics products */
