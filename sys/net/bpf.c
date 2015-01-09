@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.113 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.114 2015/01/09 04:59:54 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -430,10 +430,13 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 		if (d->bd_rtout == -1) {
 			/* User requested non-blocking I/O */
 			error = EWOULDBLOCK;
+		} else if (d->bd_rtout == 0) {
+			error = tsleep(d, PRINET|PCATCH, "bpf", 0);
 		} else {
-			if ((d->bd_rdStart + d->bd_rtout) < ticks) {
-				error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
-				    d->bd_rtout);
+			int elapsed = ticks - d->bd_rdStart;
+			if (elapsed < d->bd_rtout) {
+				error = tsleep(d, PRINET|PCATCH, "bpf",
+				    d->bd_rtout - elapsed);
 			} else
 				error = EWOULDBLOCK;
 		}
