@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.24 2013/11/01 15:57:56 deraadt Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.25 2015/01/09 03:43:52 mlarkin Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -57,6 +57,15 @@
 #include "kvm_private.h"
 
 #include <machine/pte.h>
+
+/*
+ * These must match the values in pmap.c/pmapae.c
+ */
+#define PD_MASK		0xffc00000	/* page directory address bits */
+#define PT_MASK		0x003ff000	/* page table address bits */
+#define pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
+#define ptei(VA)	(((VA) & PT_MASK) >> PAGE_SHIFT)
+
 
 struct vmstate {
 	pd_entry_t *PTD;
