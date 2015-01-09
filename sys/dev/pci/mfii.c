@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.23 2015/01/07 10:26:48 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.24 2015/01/09 03:34:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -64,6 +64,7 @@ struct mfii_request_descr {
 } __packed;
 
 #define MFII_RAID_CTX_IO_TYPE_SYSPD	(0x1 << 4)
+#define MFII_RAID_CTX_TYPE_CUDA		(0x2 << 4)
 
 struct mfii_raid_context {
 	u_int8_t	type_nseg;
@@ -71,6 +72,10 @@ struct mfii_raid_context {
 	u_int16_t	timeout_value;
 
 	u_int8_t	reg_lock_flags;
+#define MFII_RAID_CTX_RL_FLAGS_SEQNO_EN	(0x08)
+#define MFII_RAID_CTX_RL_FLAGS_CPU0	(0x00)
+#define MFII_RAID_CTX_RL_FLAGS_CPU1	(0x10)
+#define MFII_RAID_CTX_RL_FLAGS_CUDA	(0x80)
 	u_int8_t	_reserved2;
 	u_int16_t	virtual_disk_target_id;
 
@@ -201,6 +206,9 @@ struct mfii_pd_softc {
 };
 
 struct mfii_iop {
+	u_int8_t ldio_req_type;
+	u_int8_t ldio_ctx_type_nseg;
+	u_int8_t ldio_ctx_reg_lock_flags;
 	u_int8_t sge_flag_chain;
 	u_int8_t sge_flag_eol;
 };
@@ -332,11 +340,20 @@ int			mfii_pd_scsi_cmd_cdb(struct mfii_softc *,
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
 const struct mfii_iop mfii_iop_thunderbolt = {
+	MFII_REQ_TYPE_LDIO,
+	0,
+	0,
 	MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA,
 	0
 };
 
+/*
+ * a lot of these values depend on us not implementing fastpath yet.
+ */
 const struct mfii_iop mfii_iop_25 = {
+	MFII_REQ_TYPE_NO_LOCK,
+	MFII_RAID_CTX_TYPE_CUDA | 0x1,
+	MFII_RAID_CTX_RL_FLAGS_CPU0, /* | MFII_RAID_CTX_RL_FLAGS_SEQNO_EN */
 	MFII_SGE_CHAIN_ELEMENT,
 	MFII_SGE_END_OF_LIST
 };
@@ -1332,7 +1349,6 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_data = xs->data;
 	ccb->ccb_len = xs->datalen;
 
-#if 0
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
 	case READ_BIG:
@@ -1348,13 +1364,10 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 		break;
 
 	default:
-#endif
 		if (mfii_scsi_cmd_cdb(sc, xs) != 0)
 			goto stuffup;
-#if 0
 		break;
 	}
-#endif
 
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
@@ -1406,16 +1419,50 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 int
 mfii_scsi_cmd_io(struct mfii_softc *sc, struct scsi_xfer *xs)
 {
+	struct scsi_link *link = xs->sc_link;
 	struct mfii_ccb *ccb = xs->io;
-	u_int64_t blkno;
-	u_int32_t nblks;
+	struct mpii_msg_scsi_io *io = ccb->ccb_request;
+	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
 
-	ccb->ccb_req.flags = MFII_REQ_TYPE_LDIO;
+	io->dev_handle = htole16(link->target);
+	io->function = MFII_FUNCTION_LDIO_REQUEST;
+	io->sense_buffer_low_address = htole32(ccb->ccb_sense_dva);
+	io->sgl_flags = htole16(0x02); /* XXX */
+	io->sense_buffer_length = sizeof(xs->sense);
+	io->sgl_offset0 = (sizeof(*io) + sizeof(*ctx)) / 4;
+	io->data_length = htole32(xs->datalen);
+	io->io_flags = htole16(xs->cmdlen);
+	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+	case SCSI_DATA_IN:
+		ccb->ccb_direction = MFII_DATA_IN;
+		io->direction = MPII_SCSIIO_DIR_READ;
+		break;
+	case SCSI_DATA_OUT:
+		ccb->ccb_direction = MFII_DATA_OUT;
+		io->direction = MPII_SCSIIO_DIR_WRITE;
+		break;
+	default:
+		ccb->ccb_direction = MFII_DATA_NONE;
+		io->direction = MPII_SCSIIO_DIR_NONE;
+		break;
+	}
+	memcpy(io->cdb, xs->cmd, xs->cmdlen);
+
+	ctx->type_nseg = sc->sc_iop->ldio_ctx_type_nseg;
+	ctx->timeout_value = htole16(0x14); /* XXX */
+	ctx->reg_lock_flags = sc->sc_iop->ldio_ctx_reg_lock_flags;
+	ctx->virtual_disk_target_id = htole16(link->target);
+
+	if (mfii_load_ccb(sc, ccb, ctx + 1,
+	    ISSET(xs->flags, SCSI_NOSLEEP)) != 0)
+		return (1);
+
+	ctx->num_sge = (ccb->ccb_len == 0) ? 0 : ccb->ccb_dmamap->dm_nsegs;
+
+	ccb->ccb_req.flags = sc->sc_iop->ldio_req_type;
 	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
 
-	scsi_cmd_rw_decode(xs->cmd, &blkno, &nblks);
-
-	return (1);
+	return (0);
 }
 
 int
