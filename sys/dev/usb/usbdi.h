@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.63 2014/08/10 11:18:57 mpi Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.64 2015/01/09 12:07:50 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -122,7 +122,7 @@ usbd_status usbd_open_pipe_intr(struct usbd_interface *iface, u_int8_t address,
 usbd_status usbd_do_request(struct usbd_device *pipe, usb_device_request_t *req,
     void *data);
 usbd_status usbd_do_request_async(struct usbd_device *pipe,
-    usb_device_request_t *req, void *data);
+    usb_device_request_t *req, void *data, void *priv, usbd_callback callback);
 usbd_status usbd_do_request_flags(struct usbd_device *pipe,
     usb_device_request_t *req, void *data, u_int16_t flags, int*, u_int32_t);
 usb_interface_descriptor_t *usbd_get_interface_descriptor(

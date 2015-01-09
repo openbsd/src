@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.66 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.67 2015/01/09 12:07:50 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -44,12 +44,15 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 
+#include <machine/bus.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/hid.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -72,6 +75,13 @@ int	uhidevdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
+struct uhidev_async_info {
+	void (*callback)(void *priv, int id, void *data, int len);
+	void *priv;
+	void *data;
+	int id;
+};
+
 void uhidev_intr(struct usbd_xfer *, void *, usbd_status);
 
 int uhidev_maxrepid(void *buf, int len);
@@ -82,6 +92,9 @@ int uhidev_match(struct device *, void *, void *);
 void uhidev_attach(struct device *, struct device *, void *);
 int uhidev_detach(struct device *, int);
 int uhidev_activate(struct device *, int);
+
+void uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv,
+    usbd_status status);
 
 struct cfdriver uhidev_cd = {
 	NULL, "uhidev", DV_DULL
@@ -678,7 +691,7 @@ uhidev_set_report_async(struct uhidev_softc *sc, int type, int id, void *data,
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	if (usbd_do_request_async(sc->sc_udev, &req, buf))
+	if (usbd_do_request_async(sc->sc_udev, &req, buf, NULL, NULL))
 		actlen = -1;
 
 	/*
@@ -723,6 +736,69 @@ uhidev_get_report(struct uhidev_softc *sc, int type, int id, void *data,
 		free(buf, M_TEMP, len);
 	}
 
+	return (actlen);
+}
+
+void
+uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
+{
+	struct uhidev_async_info *info = priv;
+	int len = -1;
+
+	if (err == USBD_NORMAL_COMPLETION || err == USBD_SHORT_XFER) {
+		len = xfer->actlen;
+		if (info->id > 0) {
+			len--;
+			memcpy(info->data, xfer->buffer + 1, len);
+		}
+	}
+	info->callback(info->priv, info->id, info->data, len);
+	if (info->id > 0)
+		free(xfer->buffer, M_TEMP, xfer->length);
+	free(info, M_TEMP, sizeof(*info));
+	usbd_free_xfer(xfer);
+}
+
+int
+uhidev_get_report_async(struct uhidev_softc *sc, int type, int id, void *data,
+    int len, void *priv, void (*callback)(void *, int, void *, int))
+{
+	usb_device_request_t req;
+	struct uhidev_async_info *info;
+	char *buf = data;
+	int actlen = len;
+
+	info = malloc(sizeof(*info), M_TEMP, M_NOWAIT);
+	if (info == NULL)
+		return (-1);
+
+	info->callback = callback;
+	info->priv = priv;
+	info->data = data;
+	info->id = id;
+
+	if (id > 0) {
+		len++;
+		buf = malloc(len, M_TEMP, M_NOWAIT|M_ZERO);
+		if (buf == NULL) {
+			free(info, M_TEMP, sizeof(*info));
+			return (-1);
+		}
+	}
+
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = UR_GET_REPORT;
+	USETW2(req.wValue, type, id);
+	USETW(req.wIndex, sc->sc_ifaceno);
+	USETW(req.wLength, len);
+
+	if (usbd_do_request_async(sc->sc_udev, &req, buf, priv,
+	    uhidev_get_report_async_cb)) {
+		free(info, M_TEMP, sizeof(*info));
+		if (id > 0)
+			free(buf, M_TEMP, len);
+		actlen = -1;
+	}
 	return (actlen);
 }
 
