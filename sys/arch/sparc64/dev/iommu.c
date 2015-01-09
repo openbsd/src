@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.71 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.72 2015/01/09 14:23:25 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1252,8 +1252,8 @@ iommu_dvmamap_load_mlist(bus_dma_tag_t t, struct iommu_state *is,
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
-		err = iommu_dvmamap_append_range(t, map, pa, PAGE_SIZE,
-		    flags, boundary);
+		err = iommu_dvmamap_append_range(t, map, pa,
+		    MIN(PAGE_SIZE, size), flags, boundary);
 		if (err == EFBIG)
 			return (err);
 		if (err) {
@@ -1262,6 +1262,9 @@ iommu_dvmamap_load_mlist(bus_dma_tag_t t, struct iommu_state *is,
 			    pa + PAGE_SIZE, PAGE_SIZE, PAGE_SIZE);
 			return (err);
 		}
+		if (size < PAGE_SIZE)
+			break;
+		size -= PAGE_SIZE;
 	}
 
 	return (0);
