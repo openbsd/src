@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.20 2014/08/24 18:01:27 zhuk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.21 2015/01/09 20:34:21 sthen Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -295,8 +295,8 @@ struct ieee80211_nodereq {
 	u_int8_t	nr_rates[IEEE80211_RATE_MAXSIZE];	/* rate set */
 
 	/* Node status information */
-	u_int8_t	nr_rssi;	/* received signal strength */
-	u_int8_t	nr_max_rssi;	/* maximum rssi */
+	int8_t		nr_rssi;	/* received signal strength */
+	int8_t		nr_max_rssi;	/* maximum rssi */
 	u_int8_t	nr_tstamp[8];	/* from last received beacon */
 	u_int16_t	nr_intval;	/* beacon interval */
 	u_int16_t	nr_capinfo;	/* capabilities */

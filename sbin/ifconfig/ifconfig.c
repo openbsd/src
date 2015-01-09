@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.293 2015/01/06 21:26:46 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.294 2015/01/09 20:34:21 sthen Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2087,7 +2087,7 @@ ieee80211_status(void)
 			if (nr.nr_max_rssi)
 				printf(" %u%%", IEEE80211_NODEREQ_RSSI(&nr));
 			else
-				printf(" %udB", nr.nr_rssi);
+				printf(" %ddBm", nr.nr_rssi);
 		}
 	}
 
@@ -2318,7 +2318,7 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 	if (nr->nr_max_rssi)
 		printf("%u%% ", IEEE80211_NODEREQ_RSSI(nr));
 	else
-		printf("%udB ", nr->nr_rssi);
+		printf("%ddBm ", nr->nr_rssi);
 
 	if (nr->nr_pwrsave)
 		printf("powersave ");
