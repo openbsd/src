@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.76 2015/01/09 12:07:50 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.77 2015/01/09 12:15:48 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -731,15 +731,15 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	if (polling)
 		pipe->running = 0;
 
+#ifdef DIAGNOSTIC
+	if (xfer->actlen > xfer->length) {
+		printf("%s: actlen > len %u > %u\n", __func__, xfer->actlen,
+		    xfer->length);
+		xfer->actlen = xfer->length;
+	}
+#endif
 	if (!(xfer->flags & USBD_NO_COPY) && xfer->actlen != 0 &&
 	    usbd_xfer_isread(xfer)) {
-#ifdef DIAGNOSTIC
-		if (xfer->actlen > xfer->length) {
-			printf("usb_transfer_complete: actlen > len %u > %u\n",
-			    xfer->actlen, xfer->length);
-			xfer->actlen = xfer->length;
-		}
-#endif
 		memcpy(xfer->buffer, KERNADDR(&xfer->dmabuf, 0), xfer->actlen);
 	}
 
@@ -904,15 +904,6 @@ usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req, data,
 	    UGETW(req->wLength), flags | USBD_SYNCHRONOUS, 0);
 	err = usbd_transfer(xfer);
-#if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length)
-		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
-		    "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
-		    dev->address, xfer->request.bmRequestType,
-		    xfer->request.bRequest, UGETW(xfer->request.wValue),
-		    UGETW(xfer->request.wIndex), UGETW(xfer->request.wLength),
-		    xfer->length, xfer->actlen));
-#endif
 	if (actlen != NULL)
 		*actlen = xfer->actlen;
 	if (err == USBD_STALLED) {
@@ -961,15 +952,6 @@ void
 usbd_do_request_async_cb(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
-#if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length)
-		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
-		    "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
-		    xfer->pipe->device->address, xfer->request.bmRequestType,
-		    xfer->request.bRequest, UGETW(xfer->request.wValue),
-		    UGETW(xfer->request.wIndex), UGETW(xfer->request.wLength),
-		    xfer->length, xfer->actlen));
-#endif
 	usbd_free_xfer(xfer);
 }
 
