@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.36 2014/11/18 10:42:15 dlg Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.37 2015/01/09 05:01:57 tedu Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -824,7 +824,7 @@ long numdquot, desireddquot = DQUOTINC;
 void
 ufs_quota_init(void)
 {
-	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, M_WAITOK, &dqhash);
+	dqhashtbl = hashinit(initialvnodes, M_DQUOT, M_WAITOK, &dqhash);
 	arc4random_buf(&dqhashkey, sizeof(dqhashkey));
 	TAILQ_INIT(&dqfreelist);
 }
@@ -877,7 +877,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	 * Not in cache, allocate a new one.
 	 */
 	if (TAILQ_FIRST(&dqfreelist) == NODQUOT &&
-	    numdquot < MAXQUOTAS * desiredvnodes)
+	    numdquot < MAXQUOTAS * initialvnodes)
 		desireddquot += DQUOTINC;
 	if (numdquot < desireddquot) {
 		dq = malloc(sizeof *dq, M_DQUOT, M_WAITOK | M_ZERO);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.130 2014/12/23 01:53:34 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.131 2015/01/09 05:01:57 tedu Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1160,16 +1160,16 @@ softdep_initialize(void)
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
 #ifdef KMEMSTATS
-	max_softdeps = min (desiredvnodes * 8,
+	max_softdeps = min (initialvnodes * 8,
 	    kmemstats[M_INODEDEP].ks_limit / (2 * sizeof(struct inodedep)));
 #else
-	max_softdeps = desiredvnodes * 4;
+	max_softdeps = initialvnodes * 4;
 #endif
 	arc4random_buf(&softdep_hashkey, sizeof(softdep_hashkey));
-	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP, M_WAITOK,
+	pagedep_hashtbl = hashinit(initialvnodes / 5, M_PAGEDEP, M_WAITOK,
 	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
-	inodedep_hashtbl = hashinit(desiredvnodes, M_INODEDEP, M_WAITOK,
+	inodedep_hashtbl = hashinit(initialvnodes, M_INODEDEP, M_WAITOK,
 	    &inodedep_hash);
 	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
 	newblk_hashtbl = hashinit(64, M_NEWBLK, M_WAITOK, &newblk_hash);

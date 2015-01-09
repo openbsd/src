@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.41 2015/01/08 18:07:35 tedu Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.42 2015/01/09 05:01:56 tedu Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		TAILQ_INSERT_TAIL(&nclruneghead, ncp, nc_neg);
 		numneg++;
 	}
-	if (numneg  > desiredvnodes) {
+	if (numneg  > initialvnodes) {
 		if ((ncp = TAILQ_FIRST(&nclruneghead))
 		    != NULL)
 			cache_zap(ncp);

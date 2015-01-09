@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.20 2014/11/17 00:59:31 dlg Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.21 2015/01/09 05:01:57 tedu Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ ufs_ihash(dev_t dev, ufsino_t inum)
 void
 ufs_ihashinit(void)
 {
-	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
+	ihashtbl = hashinit(initialvnodes, M_UFSMNT, M_WAITOK, &ihash);
 	arc4random_buf(&ihashkey, sizeof(ihashkey));
 }
 

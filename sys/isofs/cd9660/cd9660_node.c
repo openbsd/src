@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.27 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.28 2015/01/09 05:01:56 tedu Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ cd9660_init(vfsp)
 	struct vfsconf *vfsp;
 {
 
-	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
+	isohashtbl = hashinit(initialvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
 	arc4random_buf(&isohashkey, sizeof(isohashkey));
 	return (0);
 }

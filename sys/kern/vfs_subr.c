@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.227 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.228 2015/01/09 05:01:56 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ void
 vntblinit(void)
 {
 	/* buffer cache may need a vnode for each buffer */
-	maxvnodes = 2 * desiredvnodes;
+	maxvnodes = 2 * initialvnodes;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, PR_WAITOK,
 	    "vnodes", NULL);
 	pool_init(&uvm_vnode_pool, sizeof(struct uvm_vnode), 0, 0, PR_WAITOK,

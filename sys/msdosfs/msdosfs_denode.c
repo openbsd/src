@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.52 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.53 2015/01/09 05:01:57 tedu Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ static void msdosfs_hashrem(struct denode *);
 int
 msdosfs_init(struct vfsconf *vfsp)
 {
-	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
+	dehashtbl = hashinit(initialvnodes / 2, M_MSDOSFSMNT, M_WAITOK, &dehash);
 	arc4random_buf(&dehashkey, sizeof(dehashkey));
 	return (0);
 }
