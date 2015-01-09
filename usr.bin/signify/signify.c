@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.96 2015/01/07 19:53:34 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.97 2015/01/09 21:49:59 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -179,7 +179,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 			errx(1, "msg too large in %s", filename);
 		space = sb.st_size + 1;
 	} else {
-		space = 64 * 1024;
+		space = 64 * 1024 - 1;
 	}
 
 	msg = xmalloc(space + 1);
