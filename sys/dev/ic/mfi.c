@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.158 2014/12/19 07:23:57 deraadt Exp $ */
+/* $OpenBSD: mfi.c,v 1.159 2015/01/09 11:17:29 yasuoka Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -27,6 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
+#include <sys/dkio.h>
 #include <sys/pool.h>
 
 #include <machine/bus.h>
@@ -58,6 +59,7 @@ struct cfdriver mfi_cd = {
 
 void	mfi_scsi_cmd(struct scsi_xfer *);
 int	mfi_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
+int	mfi_ioctl_cache(struct scsi_link *, u_long,  struct dk_cache *);
 void	mfiminphys(struct buf *bp, struct scsi_link *sl);
 
 void	mfi_pd_scsi_cmd(struct scsi_xfer *);
@@ -1419,10 +1421,98 @@ mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_scsi_ioctl\n", DEVNAME(sc));
 
-	if (sc->sc_ioctl)
-		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
-	else
-		return (ENOTTY);
+	switch (cmd) {
+	case DIOCGCACHE:
+	case DIOCSCACHE:
+		return (mfi_ioctl_cache(link, cmd, (struct dk_cache *)addr));
+		break;
+
+	default:
+		if (sc->sc_ioctl)
+			return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+		break;
+	}
+
+	return (ENOTTY);
+}
+
+int
+mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
+{
+	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
+	int			 rv, wrenable, rdenable;
+	struct mfi_ld_prop	 ldp;
+	uint8_t			 mbox[MFI_MBOX_SIZE];
+
+	if (mfi_get_info(sc)) {
+		rv = EIO;
+		goto done;
+	}
+
+	if (!sc->sc_ld[link->target].ld_present) {
+		rv = EIO;
+		goto done;
+	}
+
+	mbox[0] = link->target;
+	if ((rv = mfi_mgmt(sc, MR_DCMD_LD_GET_PROPERTIES, MFI_DATA_IN,
+	    sizeof(ldp), &ldp, mbox)) != 0)
+		goto done;
+
+	if (sc->sc_info.mci_memory_size > 0) {
+		wrenable = ISSET(ldp.mlp_cur_cache_policy,
+		    MR_LD_CACHE_ALLOW_WRITE_CACHE)? 1 : 0;
+		rdenable = ISSET(ldp.mlp_cur_cache_policy,
+		    MR_LD_CACHE_ALLOW_READ_CACHE)? 1 : 0;
+	} else {
+		wrenable = ISSET(ldp.mlp_diskcache_policy,
+		    MR_LD_DISK_CACHE_ENABLE)? 1 : 0;
+		rdenable = 0;
+	}
+
+	if (cmd == DIOCGCACHE) {
+		dc->wrcache = wrenable;
+		dc->rdcache = rdenable;
+		goto done;
+	} /* else DIOCSCACHE */
+
+	if (((dc->wrcache) ? 1 : 0) == wrenable &&
+	    ((dc->rdcache) ? 1 : 0) == rdenable)
+		goto done;
+
+	mbox[0] = ldp.mlp_ld.mld_target;
+	mbox[1] = ldp.mlp_ld.mld_res;
+	*(uint16_t *)&mbox[2] = ldp.mlp_ld.mld_seq;
+
+	if (sc->sc_info.mci_memory_size > 0) {
+		if (dc->rdcache)
+			SET(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_READ_CACHE);
+		else
+			CLR(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_READ_CACHE);
+		if (dc->wrcache)
+			SET(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_WRITE_CACHE);
+		else
+			CLR(ldp.mlp_cur_cache_policy,
+			    MR_LD_CACHE_ALLOW_WRITE_CACHE);
+	} else {
+		if (dc->rdcache) {
+			rv = EOPNOTSUPP;
+			goto done;
+		}
+		if (dc->wrcache)
+			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_ENABLE;
+		else
+			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_DISABLE;
+	}
+
+	if ((rv = mfi_mgmt(sc, MR_DCMD_LD_SET_PROPERTIES, MFI_DATA_OUT,
+	    sizeof(ldp), &ldp, mbox)) != 0)
+		goto done;
+done:
+	return (rv);
 }
 
 #if NBIO > 0
