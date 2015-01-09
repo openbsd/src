@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.643 2015/01/09 09:34:07 jsg Exp $
+$OpenBSD: usbdevs,v 1.644 2015/01/09 20:41:48 kettenis Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1962,6 +1962,7 @@ product FUJITSUCOMP KEYBOARD7	0x00a2	Type 7 Keyboard
 product FUJITSUCOMP MOUSE	0x0100	Type 6 Mouse
 product FUJITSUCOMP FX5204PS	0x0423	Smart Power Strip FX-5204PS
 product FUJITSUCOMP FX5251WB	0x042a	Base Station FX-5251WB
+product FUJITSUCOMP VIRTETH	0xa4a2	Virtual Eth Device
 
 /* Fujitsu Siemens Computers products */
 product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
