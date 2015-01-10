@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.15 2014/07/05 10:21:24 guenther Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.16 2015/01/10 07:56:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -216,7 +216,7 @@ makemntinfo(struct mntinfo *mi)
 	mntent_t *mnt;
 	int timeo = 310;
 
-	if (setmountent()) {
+	if (!setmountent()) {
 		message(MT_NERROR, "setmntent failed: %s", SYSERR);
 		return(NULL);
 	}
