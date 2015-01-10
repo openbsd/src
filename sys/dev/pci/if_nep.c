@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.13 2015/01/10 16:41:04 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.14 2015/01/10 17:02:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -875,31 +875,32 @@ nep_rx_proc(struct nep_softc *sc)
 			}
 		}
 		if (block == NULL) {
-			panic("oops!\n");
-			break;
+			m = NULL;
+		} else {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_rb[i].nb_map);
+			sc->sc_rb[i].nb_block = NULL;
+
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
 		}
 
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_rb[i].nb_map);
-		sc->sc_rb[i].nb_block = NULL;
-
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
-			printf("oops2!\n");
-			break;
-		}
-		MEXTADD(m, block + off, PAGE_SIZE, M_EXTWR, nep_extfree, block);
-		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = len;
-		m->m_data += ETHER_ALIGN;
+			ifp->if_ierrors++;
+		} else {
+			MEXTADD(m, block + off, PAGE_SIZE, M_EXTWR,
+			    nep_extfree, block);
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = len;
+			m->m_data += ETHER_ALIGN;
 
-		ifp->if_ipackets++;
+			ifp->if_ipackets++;
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-		ether_input_mbuf(ifp, m);
+			ether_input_mbuf(ifp, m);
+		}
 
 		if_rxr_put(&sc->sc_rx_ring, 1);
 		if ((rxd & RXD_MULTI) == 0) {
@@ -1852,14 +1853,11 @@ nep_fill_rx_ring(struct nep_softc *sc)
 		rb = &sc->sc_rb[desc];
 
 		block = pool_get(nep_block_pool, PR_NOWAIT);
-		if (block == NULL) {
-			printf("oops3\n");
+		if (block == NULL)
 			break;
-		}
 		err = bus_dmamap_load(sc->sc_dmat, rb->nb_map, block,
 		     PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 		if (err) {
-			printf("oops4\n");
 			pool_put(nep_block_pool, block);
 			break;
 		}
