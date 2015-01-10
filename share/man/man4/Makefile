@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.587 2015/01/03 21:20:26 uaa Exp $
+#	$OpenBSD: Makefile,v 1.588 2015/01/10 17:17:48 kettenis Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -36,7 +36,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	maestro.4 mainbus.4 malo.4 maxds.4 maxtmp.4 mbg.4 midi.4 mii.4 mfi.4 \
 	mfii.4 mlphy.4 moscom.4 mos.4 mpe.4 mpath.4 mpi.4 mpii.4 mpu.4 msk.4 \
 	msts.4 mtd.4 mtdphy.4 multicast.4 mtio.4 myx.4 \
-	ne.4 neo.4 netintro.4 nfe.4 nge.4 nmea.4 \
+	ne.4 neo.4 nep.4 netintro.4 nfe.4 nge.4 nmea.4 \
 	nsclpcsio.4 nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 nvt.4 \
 	oce.4 ohci.4 options.4 onewire.4 oosiop.4 osiop.4 otus.4 \
 	owid.4 owctr.4 owsbm.4 \
