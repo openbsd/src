@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.11 2015/01/10 14:55:29 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.12 2015/01/10 16:25:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -156,6 +156,9 @@ extern void myetheraddr(u_char *);
 #define  XMAC_CONFIG_LOOPBACK		(1ULL << 25)
 #define  XMAC_CONFIG_TX_OUTPUT_EN	(1ULL << 24)
 #define  XMAC_CONFIG_SEL_POR_CLK_SRC	(1ULL << 23)
+#define  XMAC_CONFIG_HASH_FILTER_EN	(1ULL << 15)
+#define  XMAC_CONFIG_PROMISCUOUS_GROUP	(1ULL << 10)
+#define  XMAC_CONFIG_PROMISCUOUS	(1ULL << 9)
 #define  XMAC_CONFIG_RX_MAC_ENABLE	(1ULL << 8)
 #define  XMAC_CONFIG_ALWAYS_NO_CRC	(1ULL << 3)
 #define  XMAC_CONFIG_VAR_MIN_IPG_EN	(1ULL << 2)
@@ -489,6 +492,8 @@ void	nep_init_tx_mac(struct nep_softc *);
 void	nep_init_tx_xmac(struct nep_softc *);
 void	nep_init_tx_bmac(struct nep_softc *);
 void	nep_init_tx_channel(struct nep_softc *, int);
+void	nep_enable_rx_mac(struct nep_softc *);
+void	nep_disable_rx_mac(struct nep_softc *);
 void	nep_stop_dma(struct nep_softc *);
 
 void	nep_fill_rx_ring(struct nep_softc *);
@@ -606,7 +611,7 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = nep_ioctl;
 	ifp->if_start = nep_start;
 	ifp->if_watchdog = nep_watchdog;
@@ -1326,6 +1331,57 @@ nep_init_tx_channel(struct nep_softc *sc, int chan)
 }
 
 void
+nep_enable_rx_mac(struct nep_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	uint64_t val;
+
+	if (sc->sc_port < 2) {
+		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
+		val &= ~XMAC_CONFIG_PROMISCUOUS;
+		val &= ~XMAC_CONFIG_PROMISCUOUS_GROUP;
+		val &= ~XMAC_CONFIG_HASH_FILTER_EN;
+		if (ifp->if_flags & IFF_PROMISC)
+			val |= XMAC_CONFIG_PROMISCUOUS;
+		if (ifp->if_flags & IFF_ALLMULTI)
+			val |= XMAC_CONFIG_PROMISCUOUS_GROUP;
+		else
+			val |= XMAC_CONFIG_HASH_FILTER_EN;
+		val |= XMAC_CONFIG_RX_MAC_ENABLE;
+		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
+	} else {
+		val = nep_read(sc, RXMAC_CONFIG(sc->sc_port));
+		val &= ~RXMAC_CONFIG_PROMISCUOUS;
+		val &= ~RXMAC_CONFIG_PROMISCUOUS_GROUP;
+		val &= ~RXMAC_CONFIG_HASH_FILTER_EN;
+		if (ifp->if_flags & IFF_PROMISC)
+			val |= RXMAC_CONFIG_PROMISCUOUS;
+		if (ifp->if_flags & IFF_ALLMULTI)
+			val |= RXMAC_CONFIG_PROMISCUOUS_GROUP;
+		else
+			val |= RXMAC_CONFIG_HASH_FILTER_EN;
+		val |= RXMAC_CONFIG_RX_ENABLE;
+		nep_write(sc, RXMAC_CONFIG(sc->sc_port), val);
+	}
+}
+
+void
+nep_disable_rx_mac(struct nep_softc *sc)
+{
+	uint64_t val;
+
+	if (sc->sc_port < 2) {
+		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
+		val &= ~XMAC_CONFIG_RX_MAC_ENABLE;
+		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
+	} else {
+		val = nep_read(sc, RXMAC_CONFIG(sc->sc_port));
+		val &= ~RXMAC_CONFIG_RX_ENABLE;
+		nep_write(sc, RXMAC_CONFIG(sc->sc_port), val);
+	}
+}
+
+void
 nep_stop_dma(struct nep_softc *sc)
 {
 	uint64_t val;
@@ -1447,19 +1503,12 @@ nep_up(struct nep_softc *sc)
 
 	nep_fill_rx_ring(sc);
 
+	nep_enable_rx_mac(sc);
 	if (sc->sc_port < 2) {
-		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
-		val |= XMAC_CONFIG_RX_MAC_ENABLE;
-		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
-
 		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
 		val |= XMAC_CONFIG_TX_ENABLE;
 		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
 	} else {
-		val = nep_read(sc, RXMAC_CONFIG(sc->sc_port));
-		val |= RXMAC_CONFIG_RX_ENABLE;
-		nep_write(sc, RXMAC_CONFIG(sc->sc_port), val);
-
 		val = nep_read(sc, TXMAC_CONFIG(sc->sc_port));
 		val |= TXMAC_CONFIG_TX_ENABLE;
 		nep_write(sc, TXMAC_CONFIG(sc->sc_port), val);
@@ -1505,15 +1554,7 @@ nep_down(struct nep_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
-	if (sc->sc_port < 2) {
-		val = nep_read(sc, XMAC_CONFIG(sc->sc_port));
-		val &= ~XMAC_CONFIG_RX_MAC_ENABLE;
-		nep_write(sc, XMAC_CONFIG(sc->sc_port), val);
-	} else {
-		val = nep_read(sc, RXMAC_CONFIG(sc->sc_port));
-		val &= ~RXMAC_CONFIG_RX_ENABLE;
-		nep_write(sc, RXMAC_CONFIG(sc->sc_port), val);
-	}
+	nep_disable_rx_mac(sc);
 
 	val = nep_read(sc, IPP_CFIG(sc->sc_port));
 	val &= ~IPP_CFIG_IPP_ENABLE;
@@ -1556,7 +1597,41 @@ nep_down(struct nep_softc *sc)
 void
 nep_iff(struct nep_softc *sc)
 {
-	printf("%s\n", __func__);
+	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t crc, hash[16];
+	int i;
+
+	nep_disable_rx_mac(sc);
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	memset(hash, 0, sizeof(hash));
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+                        crc = ether_crc32_le(enm->enm_addrlo,
+                            ETHER_ADDR_LEN);
+
+                        crc >>= 24;
+                        hash[crc >> 4] |= 1 << (15 - (crc & 15));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	for (i = 0; i < nitems(hash); i++) {
+		if (sc->sc_port < 2)
+			nep_write(sc, XMAC_HASH_TBL(sc->sc_port, i), hash[i]);
+		else
+			nep_write(sc, MAC_HASH_TBL(sc->sc_port, i), hash[i]);
+	}
+
+	nep_enable_rx_mac(sc);
 }
 
 int
