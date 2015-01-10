@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.15 2015/01/10 18:56:55 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.16 2015/01/10 22:14:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -46,7 +46,6 @@
 
 #ifdef __sparc64__
 #include <dev/ofw/openfirm.h>
-extern void myetheraddr(u_char *);
 #endif
 
 /*
@@ -467,6 +466,8 @@ struct cfdriver nep_cd = {
 	NULL, "nep", DV_DULL
 };
 
+int	nep_pci_enaddr(struct nep_softc *, struct pci_attach_args *);
+
 uint64_t nep_read(struct nep_softc *, uint32_t);
 void	nep_write(struct nep_softc *, uint32_t, uint64_t);
 int	nep_mii_readreg(struct device *, int, int);
@@ -587,7 +588,8 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 #ifdef __sparc64__
 	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
 	    sc->sc_lladdr, ETHER_ADDR_LEN) <= 0)
-		myetheraddr(sc->sc_lladdr);
+#else
+		nep_pci_enaddr(sc, pa);
 #endif
 
 	printf(", address %s\n", ether_sprintf(sc->sc_lladdr));
@@ -646,6 +648,142 @@ nep_attach(struct device *parent, struct device *self, void *aux)
 		nep_write(sc, LD_IM0(LDN_MIF), 0);
 		nep_write(sc, LD_IM1(LDN_SYSERR), 0);
 	}
+}
+
+#define PROMHDR_PTR_DATA	0x18
+#define PROMDATA_PTR_VPD	0x08
+#define PROMDATA_LEN		0x10
+#define PROMDATA_TYPE		0x14
+
+static const uint8_t nep_promhdr[] = { 0x55, 0xaa };
+static const uint8_t nep_promdat[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
+	PCI_PRODUCT_SUN_NEPTUNE & 0xff, PCI_PRODUCT_SUN_NEPTUNE >> 8
+};
+
+int
+nep_pci_enaddr(struct nep_softc *sc, struct pci_attach_args *pa)
+{
+	struct pci_vpd_largeres *res;
+	struct pci_vpd *vpd;
+	bus_space_handle_t romh;
+	bus_space_tag_t romt;
+	bus_size_t romsize = 0;
+	u_int8_t buf[32], *desc;
+	pcireg_t address;
+	int dataoff, vpdoff, len;
+	int off = 0;
+	int rv = -1;
+
+	if (pci_mapreg_map(pa, PCI_ROM_REG, PCI_MAPREG_TYPE_MEM, 0,
+	    &romt, &romh, 0, &romsize, 0))
+		return (-1);
+
+	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	address |= PCI_ROM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, address);
+
+	while (off < romsize) {
+		bus_space_read_region_1(romt, romh, off, buf, sizeof(buf));
+		if (memcmp(buf, nep_promhdr, sizeof(nep_promhdr)))
+			goto fail;
+
+		dataoff =
+		    buf[PROMHDR_PTR_DATA] | (buf[PROMHDR_PTR_DATA + 1] << 8);
+		if (dataoff < 0x1c)
+			goto fail;
+		dataoff += off;
+
+		bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
+		if (memcmp(buf, nep_promdat, sizeof(nep_promdat)))
+			goto fail;
+
+		if (buf[PROMDATA_TYPE] == 1)
+		    break;
+
+		len = buf[PROMDATA_LEN] | (buf[PROMDATA_LEN + 1] << 8);
+		off += len * 512;
+	}
+
+	vpdoff = buf[PROMDATA_PTR_VPD] | (buf[PROMDATA_PTR_VPD + 1] << 8);
+	if (vpdoff < 0x1c)
+		goto fail;
+	vpdoff += off;
+
+next:
+	bus_space_read_region_1(romt, romh, vpdoff, buf, sizeof(buf));
+	if (!PCI_VPDRES_ISLARGE(buf[0]))
+		goto fail;
+
+	res = (struct pci_vpd_largeres *)buf;
+	vpdoff += sizeof(*res);
+
+	len = ((res->vpdres_len_msb << 8) + res->vpdres_len_lsb);
+	switch(PCI_VPDRES_LARGE_NAME(res->vpdres_byte0)) {
+	case PCI_VPDRES_TYPE_IDENTIFIER_STRING:
+		/* Skip identifier string. */
+		vpdoff += len;
+		goto next;
+
+	case PCI_VPDRES_TYPE_VPD:
+		while (len > 0) {
+			bus_space_read_region_1(romt, romh, vpdoff,
+			     buf, sizeof(buf));
+
+			vpd = (struct pci_vpd *)buf;
+			vpdoff += sizeof(*vpd) + vpd->vpd_len;
+			len -= sizeof(*vpd) + vpd->vpd_len;
+
+			/*
+			 * We're looking for an "Enhanced" VPD...
+			 */
+			if (vpd->vpd_key0 != 'Z')
+				continue;
+
+			desc = buf + sizeof(*vpd);
+
+			/* 
+			 * ...which is an instance property...
+			 */
+			if (desc[0] != 'I')
+				continue;
+			desc += 3;
+
+			/* 
+			 * ...that's a byte array with the proper
+			 * length for a MAC address...
+			 */
+			if (desc[0] != 'B' || desc[1] != ETHER_ADDR_LEN)
+				continue;
+			desc += 2;
+
+			/*
+			 * ...named "local-mac-address".
+			 */
+			if (strcmp(desc, "local-mac-address") != 0)
+				continue;
+			desc += strlen("local-mac-address") + 1;
+					
+			memcpy(sc->sc_ac.ac_enaddr, desc, ETHER_ADDR_LEN);
+			sc->sc_ac.ac_enaddr[5] += pa->pa_function;
+			rv = 0;
+		}
+		break;
+
+	default:
+		goto fail;
+	}
+
+ fail:
+	if (romsize != 0)
+		bus_space_unmap(romt, romh, romsize);
+
+	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	address &= ~PCI_ROM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, address);
+
+	return (rv);
 }
 
 uint64_t
