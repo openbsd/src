@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.146 2015/01/02 18:28:23 sobrado Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.147 2015/01/10 15:03:50 sobrado Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 2 2015 $
+.Dd $Mdocdate: January 10 2015 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -645,8 +645,8 @@ keyword:
 .It Li null Ta "(none)" Ta "[phase 2 only]"
 .El
 .Pp
-Use of DES as an encryption algorithm is not recommended
-(except for backwards compatibility) due to its short key length.
+Use of DES as an encryption algorithm is considered to be insecure
+since brute force attacks are practical due its short key length.
 .Pp
 DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key.
