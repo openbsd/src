@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.21 2015/01/10 01:56:52 bcook Exp $ */
+/*	$OpenBSD: config.c,v 1.22 2015/01/10 13:47:05 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@ struct ntp_addr	*host_v6(const char *);
 
 static u_int32_t		 maxid = 0;
 
-int
+void
 host(const char *s, struct ntp_addr **hn)
 {
 	struct ntp_addr	*h = NULL;
@@ -54,11 +54,9 @@ host(const char *s, struct ntp_addr **hn)
 		h = host_v6(s);
 
 	if (h == NULL)
-		return (0);
+		return;
 
 	*hn = h;
-
-	return (1);
 }
 
 struct ntp_addr	*

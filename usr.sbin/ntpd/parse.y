@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2015/01/08 00:30:08 bcook Exp $ */
+/*	$OpenBSD: parse.y,v 1.57 2015/01/10 13:47:05 tedu Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -225,13 +225,7 @@ address		: STRING		{
 			if (($$ = calloc(1, sizeof(struct ntp_addr_wrap))) ==
 			    NULL)
 				fatal(NULL);
-			if (host($1, &$$->a) == -1) {
-				yyerror("could not parse address spec \"%s\"",
-				    $1);
-				free($1);
-				free($$);
-				YYERROR;
-			}
+			host($1, &$$->a);
 			$$->name = $1;
 		}
 		;
