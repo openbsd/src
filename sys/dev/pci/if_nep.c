@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.14 2015/01/10 17:02:17 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.15 2015/01/10 18:56:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1548,6 +1548,11 @@ nep_down(struct nep_softc *sc)
 	int i;
 
 	timeout_del(&sc->sc_tick);
+
+	/* Disable interrupts. */
+	nep_write(sc, LD_IM1(LDN_MAC(sc->sc_port)), 1);
+	nep_write(sc, LD_IM0(LDN_RXDMA(sc->sc_port)), 1);
+	nep_write(sc, LD_IM0(LDN_TXDMA(sc->sc_port)), 1);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
