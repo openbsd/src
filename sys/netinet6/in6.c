@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.148 2015/01/06 21:26:46 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.149 2015/01/10 11:43:37 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		 */
  		s = splsoftnet();
 		if (in6ifa_ifpforlinklocal(ifp, 0) == NULL)
-			in6_if_up(ifp);
+			in6_ifattach(ifp);
 		error = in6_update_ifa(ifp, ifra, ia6);
 		splx(s);
 		if (error != 0)
@@ -2082,34 +2082,6 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 	}
 
 	return (ia6_best);
-}
-
-/*
- * perform DAD when interface becomes IFF_UP.
- */
-void
-in6_if_up(struct ifnet *ifp)
-{
-	struct ifaddr *ifa;
-	struct in6_ifaddr *ia6;
-	int dad_delay;		/* delay ticks before DAD output */
-
-	/*
-	 * special cases, like 6to4, are handled in in6_ifattach
-	 */
-	in6_ifattach(ifp);
-
-	dad_delay = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		ia6 = ifatoia6(ifa);
-		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
-			nd6_dad_start(ifa, &dad_delay);
-	}
-
-	if (ifp->if_xflags & IFXF_AUTOCONF6)
-		nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
 }
 
 int

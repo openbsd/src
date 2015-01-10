@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.77 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.78 2015/01/10 11:43:37 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -430,7 +430,6 @@ void	in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 int	in6_localaddr(struct in6_addr *);
 int	in6_addrscope(struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);
-void	in6_if_up(struct ifnet *);
 void 	in6_get_rand_ifid(struct ifnet *, struct in6_addr *);
 int	in6_mask2len(struct in6_addr *, u_char *);
 

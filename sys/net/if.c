@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.310 2015/01/06 21:26:46 stsp Exp $	*/
+/*	$OpenBSD: if.c,v 1.311 2015/01/10 11:43:37 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1096,8 +1096,9 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	if (ifp == lo0ifp)	/* lo0 is special - needs ::1 */
-		in6_if_up(ifp);
+	/* Userland expects the kernel to set ::1 on lo0. */
+	if (ifp == lo0ifp)
+		in6_ifattach(ifp);
 #endif
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
@@ -1238,7 +1239,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			s = splsoftnet();
 			if (cmd == SIOCIFAFATTACH) {
 				if (in6ifa_ifpforlinklocal(ifp, 0) == NULL)
-					in6_if_up(ifp);
+					in6_ifattach(ifp);
 			} else
 				in6_ifdetach(ifp);
 			splx(s);
@@ -1307,7 +1308,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
 			if (in6ifa_ifpforlinklocal(ifp, 0) == NULL) {
 				s = splnet();
-				in6_if_up(ifp);
+				in6_ifattach(ifp);
 				splx(s);
 			}
 		}

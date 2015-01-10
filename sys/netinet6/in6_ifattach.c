@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.80 2015/01/08 17:21:01 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.81 2015/01/10 11:43:37 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -344,7 +344,6 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	/*
 	 * Do not let in6_update_ifa() do DAD, since we need a random delay
 	 * before sending an NS at the first time the interface becomes up.
-	 * Instead, in6_if_up() will start DAD with a proper random delay.
 	 */
 	ifra.ifra_flags |= IN6_IFF_NODAD;
 
@@ -374,7 +373,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	}
 
 	/*
-	 * Adjust ia6_flags so that in6_if_up will perform DAD.
+	 * Adjust ia6_flags so that in6_ifattach() will perform DAD.
 	 * XXX: Some P2P interfaces seem not to send packets just after
 	 * becoming up, so we skip p2p interfaces for safety.
 	 */
@@ -546,8 +545,9 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 void
 in6_ifattach(struct ifnet *ifp)
 {
+	struct ifaddr *ifa;
 	struct in6_ifaddr *ia6;
-	struct in6_addr in6;
+	int dad_delay;		/* delay ticks before DAD output */
 
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
@@ -585,7 +585,7 @@ in6_ifattach(struct ifnet *ifp)
 	 * XXX multiple loopback interface case.
 	 */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
-		in6 = in6addr_loopback;
+		struct in6_addr in6 = in6addr_loopback;
 		if (in6ifa_ifpwithaddr(ifp, &in6) == NULL) {
 			if (in6_ifattach_loopback(ifp) != 0)
 				return;
@@ -605,6 +605,21 @@ in6_ifattach(struct ifnet *ifp)
 			}
 		}
 	}
+
+	/*
+	 * perform DAD.
+	 */
+	dad_delay = 0;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		ia6 = ifatoia6(ifa);
+		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
+			nd6_dad_start(ifa, &dad_delay);
+	}
+
+	if (ifp->if_xflags & IFXF_AUTOCONF6)
+		nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
 }
 
 /*
