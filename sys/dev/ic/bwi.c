@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.114 2015/01/10 10:38:12 stsp Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.115 2015/01/10 10:45:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -319,12 +319,6 @@ int		 bwi_init_txstats32(struct bwi_softc *);
 void		 bwi_setup_rx_desc32(struct bwi_softc *, int, bus_addr_t, int);
 void		 bwi_setup_tx_desc32(struct bwi_softc *, struct bwi_ring_data *,
 		     int, bus_addr_t, int);
-int		 bwi_init_tx_ring64(struct bwi_softc *, int);
-int		 bwi_init_rx_ring64(struct bwi_softc *);
-int		 bwi_init_txstats64(struct bwi_softc *);
-void		 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int);
-void		 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
-		     int, bus_addr_t, int);
 int		 bwi_newbuf30(struct bwi_softc *, int, int);
 int		 bwi_newbuf(struct bwi_softc *, int, int);
 void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
@@ -333,14 +327,10 @@ int		 bwi_set_chan(struct bwi_softc *, uint8_t);
 void		 bwi_next_scan(void *);
 int		 bwi_rxeof(struct bwi_softc *, int);
 int		 bwi_rxeof32(struct bwi_softc *);
-int		 bwi_rxeof64(struct bwi_softc *);
 void		 bwi_reset_rx_ring32(struct bwi_softc *, uint32_t);
 void		 bwi_free_txstats32(struct bwi_softc *);
 void		 bwi_free_rx_ring32(struct bwi_softc *);
 void		 bwi_free_tx_ring32(struct bwi_softc *, int);
-void		 bwi_free_txstats64(struct bwi_softc *);
-void		 bwi_free_rx_ring64(struct bwi_softc *);
-void		 bwi_free_tx_ring64(struct bwi_softc *, int);
 uint8_t		 bwi_plcp2rate(uint32_t, enum ieee80211_phymode);
 void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
 void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
@@ -349,9 +339,7 @@ void		 bwi_plcp_header(void *, int, uint8_t);
 int		 bwi_encap(struct bwi_softc *, int, struct mbuf *,
 		     struct ieee80211_node *);
 void		 bwi_start_tx32(struct bwi_softc *, uint32_t, int);
-void		 bwi_start_tx64(struct bwi_softc *, uint32_t, int);
 void		 bwi_txeof_status32(struct bwi_softc *);
-void		 bwi_txeof_status64(struct bwi_softc *);
 void		 _bwi_txeof(struct bwi_softc *, uint16_t);
 void		 bwi_txeof_status(struct bwi_softc *, int);
 void		 bwi_txeof(struct bwi_softc *);
@@ -2427,7 +2415,8 @@ bwi_mac_get_property(struct bwi_mac *mac)
 	    BWI_STATE_HI_FLAG_64BIT) {
 		/* 64bit address */
 		sc->sc_bus_space = BWI_BUS_SPACE_64BIT;
-		DPRINTF(1, "%s: 64bit bus space\n", sc->sc_dev.dv_xname);
+		printf(": 64bit bus space not supported\n");
+		return (ENODEV);
 	} else {
 		uint32_t txrx_reg = BWI_TXRX_CTRL_BASE + BWI_TX32_CTRL;
 
@@ -7579,25 +7568,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		}
 		break;
 
-	case BWI_BUS_SPACE_64BIT:
-		desc_sz = sizeof(struct bwi_desc64);
-		txrx_ctrl_step = 0x40;
-
-		sc->sc_init_tx_ring = bwi_init_tx_ring64;
-		sc->sc_free_tx_ring = bwi_free_tx_ring64;
-		sc->sc_init_rx_ring = bwi_init_rx_ring64;
-		sc->sc_free_rx_ring = bwi_free_rx_ring64;
-		sc->sc_newbuf = bwi_newbuf;
-		sc->sc_setup_rxdesc = bwi_setup_rx_desc64;
-		sc->sc_setup_txdesc = bwi_setup_tx_desc64;
-		sc->sc_rxeof = bwi_rxeof64;
-		sc->sc_start_tx = bwi_start_tx64;
-		if (has_txstats) {
-			sc->sc_init_txstats = bwi_init_txstats64;
-			sc->sc_free_txstats = bwi_free_txstats64;
-			sc->sc_txeof_status = bwi_txeof_status64;
-		}
-		break;
 	default:
 		panic("unsupported bus space type %d", sc->sc_bus_space);
 	}
@@ -8228,41 +8198,6 @@ bwi_setup_tx_desc32(struct bwi_softc *sc, struct bwi_ring_data *rd,
 }
 
 int
-bwi_init_tx_ring64(struct bwi_softc *sc, int ring_idx)
-{
-	/* TODO: 64 */
-	return (EOPNOTSUPP);
-}
-
-int
-bwi_init_rx_ring64(struct bwi_softc *sc)
-{
-	/* TODO: 64 */
-	return (EOPNOTSUPP);
-}
-
-int
-bwi_init_txstats64(struct bwi_softc *sc)
-{
-	/* TODO: 64 */
-	return (EOPNOTSUPP);
-}
-
-void
-bwi_setup_rx_desc64(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
-    int buf_len)
-{
-	/* TODO: 64 */
-}
-
-void
-bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
-    int buf_idx, bus_addr_t paddr, int buf_len)
-{
-	/* TODO: 64 */
-}
-
-int
 bwi_newbuf30(struct bwi_softc *sc, int buf_idx, int init)
 {
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
@@ -8583,13 +8518,6 @@ bwi_rxeof32(struct bwi_softc *sc)
 	return (rx_data);
 }
 
-int
-bwi_rxeof64(struct bwi_softc *sc)
-{
-	/* TODO: 64 */
-	return (0);
-}
-
 void
 bwi_reset_rx_ring32(struct bwi_softc *sc, uint32_t rx_ctrl)
 {
@@ -8701,24 +8629,6 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 			tb->tb_ni = NULL;
 		}
 	}
-}
-
-void
-bwi_free_txstats64(struct bwi_softc *sc)
-{
-	/* TODO: 64 */
-}
-
-void
-bwi_free_rx_ring64(struct bwi_softc *sc)
-{
-	/* TODO: 64 */
-}
-
-void
-bwi_free_tx_ring64(struct bwi_softc *sc, int ring_idx)
-{
-	/* TODO: 64 */
 }
 
 uint8_t
@@ -9149,12 +9059,6 @@ bwi_start_tx32(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
 }
 
 void
-bwi_start_tx64(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
-{
-	/* TODO: 64 */
-}
-
-void
 bwi_txeof_status32(struct bwi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -9174,12 +9078,6 @@ bwi_txeof_status32(struct bwi_softc *sc)
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		ifp->if_start(ifp);
-}
-
-void
-bwi_txeof_status64(struct bwi_softc *sc)
-{
-	/* TODO: 64 */
 }
 
 void
