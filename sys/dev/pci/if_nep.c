@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.12 2015/01/10 16:25:33 kettenis Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.13 2015/01/10 16:41:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -849,7 +849,6 @@ nep_rx_proc(struct nep_softc *sc)
 	int idx, len, i;
 
 	val = nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port));
-//	printf("RX_DMA_CTL_STAT: %llx\n", val);
 	nep_write(sc, RX_DMA_CTL_STAT(sc->sc_port),
 	    RX_DMA_CTL_STAT_RCRTHRES | RX_DMA_CTL_STAT_RCRTO);
 
@@ -862,7 +861,6 @@ nep_rx_proc(struct nep_softc *sc)
 		KASSERT(idx < NEP_NRCDESC);
 
 		rxd = letoh64(sc->sc_rcdesc[idx]);
-//		printf("XXX 0x%016llx\n", rxd);
 
 		addr = (rxd & RXD_PKT_BUF_ADDR_MASK) << RXD_PKT_BUF_ADDR_SHIFT;
 		len = (rxd & RXD_L2_LEN_MASK) >> RXD_L2_LEN_SHIFT;
@@ -940,7 +938,6 @@ nep_tx_proc(struct nep_softc *sc)
 	int idx;
 
 	val = nep_read(sc, TX_CS(sc->sc_port));
-//	printf("TX_CS: %llx\n", val);
 	pkt_cnt = (val & TX_CS_PKT_CNT_MASK) >> TX_CS_PKT_CNT_SHIFT;
 	count = (pkt_cnt - sc->sc_pkt_cnt);
 	count &= (TX_CS_PKT_CNT_MASK >> TX_CS_PKT_CNT_SHIFT);
@@ -1645,49 +1642,6 @@ nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 	int len, pad;
 	int err;
 
-//	printf("%s: %s\n", sc->sc_dev.dv_xname, __func__);
-//	printf("TX_CS: %llx\n", nep_read(sc, TX_CS(sc->sc_port)));
-//	printf("TX_RNG_ERR_LOGH: %llx\n",
-//	       nep_read(sc, TX_RNG_ERR_LOGH(sc->sc_port)));
-//	printf("TX_RNG_ERR_LOGL: %llx\n",
-//	       nep_read(sc, TX_RNG_ERR_LOGL(sc->sc_port)));
-//	printf("SYS_ERR_STAT %llx\n", nep_read(sc, SYS_ERR_STAT));
-//	printf("ZCP_INT_STAT %llx\n", nep_read(sc, ZCP_INT_STAT));
-//	printf("IPP_INT_STAT %llx\n", nep_read(sc, IPP_INT_STAT(sc->sc_port)));
-//	printf("TXC_INT_STAT_DBG %llx\n", nep_read(sc, TXC_INT_STAT_DBG));
-//	printf("TXC_PKT_STUFFED: %llx\n",
-//	       nep_read(sc, TXC_PKT_STUFFED(sc->sc_port)));
-//	printf("TXC_PKT_XMIT: %llx\n",
-//	       nep_read(sc, TXC_PKT_XMIT(sc->sc_port)));
-//	printf("TX_RING_HDL: %llx\n",
-//	       nep_read(sc, TX_RING_HDL(sc->sc_port)));
-//	printf("XMAC_CONFIG: %llx\n",
-//	       nep_read(sc, XMAC_CONFIG(sc->sc_port)));
-//	printf("XTXMAC_STATUS: %llx\n",
-//	       nep_read(sc, XTXMAC_STATUS(sc->sc_port)));
-//	printf("XRXMAC_STATUS: %llx\n",
-//	       nep_read(sc, XRXMAC_STATUS(sc->sc_port)));
-//	printf("RXMAC_BT_CNT: %llx\n",
-//	       nep_read(sc, RXMAC_BT_CNT(sc->sc_port)));
-//	printf("RXMAC_FRM_CNT: %llx\n",
-//	       nep_read(sc, RXMAC_FRM_CNT(sc->sc_port)));
-//	printf("TXMAC_FRM_CNT: %llx\n",
-//	       nep_read(sc, TXMAC_FRM_CNT(sc->sc_port)));
-//	printf("TXMAC_BYTE_CNT: %llx\n",
-//	       nep_read(sc, TXMAC_BYTE_CNT(sc->sc_port)));
-//	printf("RBR_STAT: %llx\n",
-//	       nep_read(sc, RBR_STAT(sc->sc_port)));
-//	printf("RBR_HDL: %llx\n",
-//	       nep_read(sc, RBR_HDL(sc->sc_port)));
-//	printf("RCRSTAT_A: %llx\n",
-//	       nep_read(sc, RCRSTAT_A(sc->sc_port)));
-//	printf("RCRSTAT_C: %llx\n",
-//	       nep_read(sc, RCRSTAT_C(sc->sc_port)));
-//	printf("RX_DMA_CTL_STAT: %llx\n",
-//	       nep_read(sc, RX_DMA_CTL_STAT(sc->sc_port)));
-
-//	printf("mbuf %d %d %d\n", M_LEADINGSPACE(m), M_TRAILINGSPACE(m), m->m_len);
-
 	/*
 	 * MAC does not support padding of transmit packets that are
 	 * fewer than 60 bytes.
@@ -1737,7 +1691,6 @@ nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 	txd = TXD_SOP | TXD_MARK;
 	txd |= ((uint64_t)map->dm_nsegs << TXD_NUM_PTR_SHIFT);
 	for (i = 0; i < map->dm_nsegs; i++) {
-//		printf("frag %d 0x%08lx %ld\n", i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
 		txd |= ((uint64_t)map->dm_segs[i].ds_len << TXD_TR_LEN_SHIFT);
 		txd |= map->dm_segs[i].ds_addr;
 		sc->sc_txdesc[frag] = htole64(txd);
@@ -1763,12 +1716,6 @@ nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 
 	sc->sc_tx_cnt += map->dm_nsegs;
 	*idx = frag;
-
-//	printf("TX_CS: %llx\n", nep_read(sc, TX_CS(sc->sc_port)));
-//	printf("TX_RNG_ERR_LOGH: %llx\n",
-//	       nep_read(sc, TX_RNG_ERR_LOGH(sc->sc_port)));
-//	printf("TX_RNG_ERR_LOGL: %llx\n",
-//	       nep_read(sc, TX_RNG_ERR_LOGL(sc->sc_port)));
 
 	m_adj(m, sizeof(*nh) + pad);
 	*m0 = m;
