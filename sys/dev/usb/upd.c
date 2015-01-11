@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.12 2014/12/11 18:50:32 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.13 2015/01/11 03:08:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -171,10 +171,11 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(("\nupd: devname=%s sc_max_repid=%d\n",
 	    sc->sc_hdev.sc_dev.dv_xname, sc->sc_max_repid));
 
-	sc->sc_reports = malloc(sc->sc_max_repid * sizeof(struct upd_report),
-	    M_USBDEV, M_WAITOK | M_ZERO);
+	sc->sc_reports = mallocarray(sc->sc_max_repid,
+	    sizeof(struct upd_report), M_USBDEV, M_WAITOK | M_ZERO);
+	sc->sc_sensors = mallocarray(sc->sc_max_sensors,
+	    sizeof(struct upd_sensor), M_USBDEV, M_WAITOK | M_ZERO);
 	size = sc->sc_max_sensors * sizeof(struct upd_sensor);
-	sc->sc_sensors = malloc(size, M_USBDEV, M_WAITOK | M_ZERO);
 	sc->sc_num_sensors = 0;
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	for (hdata = hid_start_parse(desc, size, hid_feature);
