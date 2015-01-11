@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.90 2014/10/04 18:10:14 brad Exp $
+#	$OpenBSD: Makefile.i386,v 1.91 2015/01/11 19:25:13 tedu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -23,7 +23,7 @@ _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-main -Wno-uninitialized \
 		-Wframe-larger-than=2047
 

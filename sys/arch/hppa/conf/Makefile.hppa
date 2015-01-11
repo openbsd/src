@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.78 2014/11/18 01:17:36 deraadt Exp $
+#	$OpenBSD: Makefile.hppa,v 1.79 2015/01/11 19:25:13 tedu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -23,7 +23,7 @@ _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-main -Wno-uninitialized \
 		-Wframe-larger-than=2047
 
