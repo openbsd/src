@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.47 2015/01/07 16:08:50 naddy Exp $
+#	$OpenBSD: airport,v 1.48 2015/01/11 12:17:44 kirby Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -11,7 +11,9 @@
 AAA:Anaa, Anaa, French Polynesia
 AAE:Rabah Bitat, Annaba, Algeria
 AAL:Aalborg, Denmark
+AAQ:Vityazevo, Anapa, Russia
 AAR:Aarhus, Aarhus, Denmark
+ABA:Abakan, Russia
 ABE:Lehigh Valley International, Pennsylvania, USA
 ABI:Abilene Regional, Abilene, Texas, USA
 ABJ:Port Bouet, Abidjan, Cote d'ivoire
@@ -39,6 +41,7 @@ ADL:Adelaide, Adelaide, South Australia, Australia
 ADQ:Kodiak, Alaska, USA
 ADZ:Gustavo Rojas Pinilla International, San Andres Island, Colombia
 AEP:Jorge Newberry, Buenos Aires, Argentina
+AER:Sochi, Russia
 AES:Vigra, Aalesund, Norway
 AET:Allakaket, Alaska, USA
 AEX:Alexandria International, Louisiana, USA
@@ -553,7 +556,7 @@ FRD:Friday Harbor, Washington, USA
 FRM:Fairmont Municipal, Minnesota, USA
 FRO:Floro, Norway
 FRS:Flores, Guatemala
-FRU:Bishkek, Kyrgyzstan
+FRU:Manas, Bishkek, Kyrgyzstan
 FSC:Figari, Corsica, France
 FSD:Joe Foss Field, Sioux Falls, South Dakota, USA
 FSM:Fort Smith Municipal, Arkansas, USA
@@ -701,6 +704,7 @@ HRL:Harlingen, Texas, USA
 HRO:Boone County, Harrison, Arkansas, USA
 HSI:Hastings, Nebraska, USA
 HSV:Huntsville International, Alabama, USA
+HTA:Chita, Russia
 HTI:Hamilton Island, Queensland, Australia
 HUF:Terre Haute Hulman Regional, Indiana, USA
 HUI:Hue, Vietnam
@@ -845,7 +849,8 @@ KEN:Kenema, Sierra Leone
 KEP:Nepalganj, Nepal
 KER:Kerman, Iran
 KGC:Kingscote, South Australia, Australia
-KGD:Kaliningrad, Russia
+KGD:Khrabrovo, Kaliningrad, Russia
+KGP:Kogalym, Russia
 KHE:Kherson International, Kherson, Ukraine
 KHH:Kaohsiung, Taiwan
 KHI:Karachi, Pakistan
@@ -856,7 +861,7 @@ KIR:Kerry County, Ireland
 KIT:Kithira, Greece
 KIV:Kishinev, Moldova
 KIX:Kansai International, Osaka, Japan
-KJA:Krasnojarsk, Russia
+KJA:Yemelyanovo, Krasnoyarsk, Russia
 KKN:Hoeyburtmoen, Kirkenes, Norway
 KLO:Kalibo, Philippines
 KLR:Kalmar, Sweden
@@ -894,7 +899,7 @@ KTN:Ketchikan International, Alaska, USA
 KTR:Tindal, Katherine, Northern Territory, Australia
 KTW:Pyrzowice, Katowice, Poland
 KUA:Padang Geroda, Kuantan, Malaysia
-KUF:Samara, Russia
+KUF:Kurumoch, Samara, Russia
 KUL:Subang Kuala Lumpur International, Malaysia
 KUM:Yakushima, Japan
 KUN:Kaunas, Lithuania
@@ -907,6 +912,7 @@ KWA:Kwajalein, Marshall Islands
 KWI:Kuwait International
 KWG:Kryvyi Rih International, Dnipropetrovs'k, Ukraine
 KWL:Guilin, China
+KXK:Khurba, Komsomolsk-on-Amur, Russia
 KZI:Kozani, Greece
 KZN:Kazan, Russia
 KZS:Kastelorizo, Greece
@@ -1043,6 +1049,7 @@ MCO:Orlando International, Florida, USA
 MCP:Macapa, Amapa, Brazil
 MCT:Seeb, Muscat, Oman
 MCW:Mason City, Iowa, USA
+MCX:Uytash, Makhachkala, Dagestan, Russia
 MCY:Maroochydore, Sunshine Coast, Queensland, Australia
 MDC:Samratulang, Manado, Indonesia
 MDE:La Playas, Medellin, Colombia
@@ -1120,6 +1127,7 @@ MRD:Alberto Carnevalli, Merida, Venezuela
 MRK:Marco Island, Florida, USA
 MRS:Marseille, France
 MRU:Sir Seewoosagur Ramgoolam Airport, Mauritius
+MRV:Mineralnye Vody, Russia
 MRY:Monterey, California, USA
 MSJ:Misawa, Japan
 MSL:Muscle Shoals, Muscle Shoals / Florence / Sheffield, Alabama, USA
@@ -1166,6 +1174,7 @@ NCE:Cote D'azur, Nice, France
 NCL:Newcastle International, England, United Kingdom
 NDJ:N'djamena, N Djamena, Chad
 NEC:Necochea, Buenos Aires, Argentina
+NER:Chulman, Neryungri, Russia
 NEV:Nevis, Leeward Islands, Saint Kitts And Nevis
 NGO:Komaki, Nagoya, Japan
 NGS:Nagasaki, Japan
@@ -1429,7 +1438,7 @@ ROP:Rota, Northern Mariana Islands
 ROR:Airai, Koror, Palau
 ROS:Fisherton, Rosario, Santa Fe, Argentina
 ROU:Rousse, Bulgaria
-ROV:Rostov, Russia
+ROV:Rostov-on-Don, Russia
 ROW:Industrial Air Center, Roswell, New Mexico, USA
 RPR:Raipur, India
 RRG:Rodrigues Island, Mauritius
@@ -1575,6 +1584,7 @@ STP:St Paul Downtown, Minnesota, USA
 STR:Echterdingen, Stuttgart, Germany
 STS:Sonoma County, Santa Rosa, California, USA
 STT:Cyril E King, St Thomas Island, US Virgin Islands, USA
+STW:Stavropol, Russia
 STX:St Croix Island, US Virgin Islands, USA
 SUB:Juanda, Surabaya, Indonesia
 SUE:Sturgeon Bay, Wisconsin, USA
@@ -1587,7 +1597,7 @@ SVL:Savonlinna, Finland
 SVO:Sheremetyevo, Moscow, Russia
 SVQ:Sevilla, Spain
 SVU:Savusavu, Savusavu, Fiji
-SVX:Ekaterinburg, Russia
+SVX:Koltsovo, Ekaterinburg, Russia
 SVZ:San Antonio, Venezuela
 SWA:Shantou, China
 SWF:Stewart, Newburgh/Poughkeepsie, New York, USA
@@ -1648,7 +1658,7 @@ TIS:Horn Island, Thursday Island, Queensland, Australia
 TIV:Tivat, Montenegro
 TIZ:Tari, Papua New Guinea
 TJA:Tarija, Bolivia
-TJM:Tyumen, Russia
+TJM:Roshchino, Tyumen, Russia
 TKK:Truk, Caroline Islands, Micronesia
 TKQ:Kigoma, Tanzania
 TKS:Tokushima, Japan
@@ -1683,6 +1693,7 @@ TRU:Trujillo, Peru
 TRV:Trivandrum, India
 TRZ:Civil, Tiruchirapally, India
 TSA:Sung Shan, Taipei, Taiwan
+TSE:Astana, Kazakhstan
 TSR:Timisoara, Romania
 TSS:East 34Th Street Heliport, New York, New York, USA
 TSV:Townsville, Queensland, Australia
@@ -1716,6 +1727,7 @@ UAK:Narssarssuaq, Greenland
 UAQ:San Juan, Argentina
 UBJ:Ube, Japan
 UCA:Utica/Oneida County, New York, USA
+UCT:Ukhta, Russia
 UDJ:Uzhgorod International, Zakarpattia, Ukraine
 UDR:Udaipur, India
 UEL:Quelimane, Mozambique
@@ -1787,7 +1799,7 @@ VTE:Wattay, Vientiane, Laos
 VTZ:Vishakhapatnam, India
 VUP:Valledupar, Colombia
 VVI:Viru Viru International, Santa Cruz, Bolivia
-VVO:Vladivostok, Russia
+VVO:Knevichi, Vladivostok, Russia
 VXO:Vaxjo, Smaland, Sweden
 WAS:All Airports around Washington, District of Columbia, USA
 WAT:Waterford, Ireland
