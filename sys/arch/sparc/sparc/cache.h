@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.11 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.12 2015/01/11 21:24:32 miod Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -112,11 +112,6 @@ enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
 #define	CACHE_ALIAS_BITS_SUN4	0x1e000
 #define	CACHE_ALIAS_BITS_SUN4C	0xf000
-
-#define CACHE_ALIAS_DIST_HS128k		0x20000
-#define CACHE_ALIAS_BITS_HS128k		0x1f000
-#define CACHE_ALIAS_DIST_HS256k		0x40000
-#define CACHE_ALIAS_BITS_HS256k		0x3f000
 
 extern int cache_alias_dist;
 extern int cache_alias_bits;
