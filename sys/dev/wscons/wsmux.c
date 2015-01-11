@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.27 2014/07/12 18:48:53 tedu Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.28 2015/01/11 03:04:53 deraadt Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -133,8 +133,8 @@ wsmux_getmux(int n)
 	/* Make sure there is room for mux n in the table */
 	if (n >= nwsmux) {
 		old = wsmuxdevs;
-		new = (struct wsmux_softc **)
-		    malloc((n + 1) * sizeof (*wsmuxdevs), M_DEVBUF, M_NOWAIT);
+		new = mallocarray(n + 1, sizeof (*wsmuxdevs),
+		    M_DEVBUF, M_NOWAIT);
 		if (new == NULL) {
 			printf("wsmux_getmux: no memory for mux %d\n", n);
 			return (NULL);
