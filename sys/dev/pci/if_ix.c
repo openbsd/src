@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.113 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.114 2015/01/11 03:06:19 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -230,7 +230,7 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 		goto err_out;
 
 	/* Allocate multicast array memory. */
-	sc->mta = malloc(sizeof(uint8_t) * IXGBE_ETH_LENGTH_OF_ADDRESS *
+	sc->mta = mallocarray(IXGBE_ETH_LENGTH_OF_ADDRESS,
 	    MAX_NUM_MULTICAST_ADDRESSES, M_DEVBUF, M_NOWAIT);
 	if (sc->mta == NULL) {
 		printf(": Can not allocate multicast setup array\n");
@@ -2475,13 +2475,14 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 	int			i, bsize, error;
 
 	bsize = sizeof(struct ixgbe_rx_buf) * sc->num_rx_desc;
-	if (!(rxr->rx_buffers = (struct ixgbe_rx_buf *) malloc(bsize,
-	    M_DEVBUF, M_NOWAIT | M_ZERO))) {
+	if (!(rxr->rx_buffers = mallocarray(sc->num_rx_desc,
+	    sizeof(struct ixgbe_rx_buf), M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate rx_buffer memory\n",
 		    ifp->if_xname);
 		error = ENOMEM;
 		goto fail;
 	}
+	bsize = sizeof(struct ixgbe_rx_buf) * sc->num_rx_desc;
 
 	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
