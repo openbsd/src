@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.79 2014/07/12 20:26:33 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.80 2015/01/11 03:07:44 deraadt Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -347,7 +347,7 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 			isize = UGETW(edesc->wMaxPacketSize);
 			if (isize == 0)	/* shouldn't happen */
 				return (EINVAL);
-			sce->ibuf = malloc(isize * UGEN_NISOFRAMES,
+			sce->ibuf = mallocarray(isize, UGEN_NISOFRAMES,
 				M_USBDEV, M_WAITOK);
 			sce->cur = sce->fill = sce->ibuf;
 			sce->limit = sce->ibuf + isize * UGEN_NISOFRAMES;
