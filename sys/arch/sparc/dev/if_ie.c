@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.49 2014/12/22 02:26:54 tedu Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.50 2015/01/11 15:35:38 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -1421,7 +1421,7 @@ iestart(ifp)
 
 		for (m0 = m; m && (len +m->m_len) < IE_TBUF_SIZE;
 		                                           m = m->m_next) {
-			bcopy(mtod(m, caddr_t), buffer, m->m_len);
+			(sc->memcopy)(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
 		}
@@ -1431,7 +1431,7 @@ iestart(ifp)
 		m_freem(m0);
 
 		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
-			bzero(buffer, ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			(sc->memzero)(buffer, ETHER_MIN_LEN - ETHER_CRC_LEN - len);
 			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
 			buffer += ETHER_MIN_LEN - ETHER_CRC_LEN;
 		}
