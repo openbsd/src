@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_filename.c,v 1.10 2015/01/05 21:00:36 gilles Exp $	*/
+/*	$OpenBSD: delivery_filename.c,v 1.11 2015/01/11 11:49:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -58,6 +58,7 @@ delivery_filename_open(struct deliver *deliver)
 	char		*ln;
 	char		*msg;
 	int		 n;
+	int		 escape_from;
 
 #define error(m)	{ msg = m; goto err; }
 #define error2(m)	{ msg = m; goto err2; }
@@ -73,11 +74,17 @@ delivery_filename_open(struct deliver *deliver)
 	fp = fdopen(fd, "a");
 	if (fp == NULL)
 		error("fdopen");
+
+	escape_from = 0;
 	while ((ln = fgetln(stdin, &len)) != NULL) {
 		if (ln[len - 1] == '\n')
 			len--;
-		if (len >= 5 && memcmp(ln, "From ", 5) == 0)
-			putc('>', fp);
+		if (len >= 5 && memcmp(ln, "From ", 5) == 0) {
+			if (escape_from == 0)
+				escape_from = 1;
+			else
+				putc('>', fp);
+		}
 		fprintf(fp, "%.*s\n", (int)len, ln);
 		if (ferror(fp))
 			break;
