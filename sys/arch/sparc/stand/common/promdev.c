@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.15 2013/03/21 21:51:00 deraadt Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.16 2015/01/11 15:29:03 miod Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -711,6 +711,11 @@ prom_init()
 	if (cputyp == CPU_SUN4) {
 		prom0_fake();
 		dvma_init();
+#ifdef BOOTXX
+		pgshift = SUN4_PGSHIFT;
+		nbpg = 1 << pgshift;
+		pgofset = nbpg - 1;
+#endif
 	}
 
 	if (promvec->pv_romvec_vers >= 2) {
@@ -789,17 +794,6 @@ prom_init()
 		 * page size.
 		 */
 
-#ifdef BOOTXX
-		char tmpstr[24];
-
-		snprintf(tmpstr, sizeof tmpstr, "pagesize %x l!",
-		    (u_long)&nbpg);
-		prom_interpret(tmpstr);
-		if (nbpg == 1 << SUN4_PGSHIFT)
-			pgshift = SUN4_PGSHIFT;
-		else
-			pgshift = SUN4CM_PGSHIFT;
-#else
 		node = prom_findroot();
 		cp = prom_getpropstring(node, "compatible");
 		if (*cp == '\0' || strcmp(cp, "sun4c") == 0) {
@@ -826,7 +820,6 @@ prom_init()
 #endif
 		} else
 			panic("Unknown CPU type (compatible=`%s')", cp);
-#endif	/* BOOTXX */
 	}
 
 	nbpg = 1 << pgshift;
