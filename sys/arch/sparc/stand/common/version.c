@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.9 2014/03/30 19:48:04 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.10 2015/01/11 18:10:33 miod Exp $	*/
 /*	$NetBSD: version.c,v 1.4 1995/09/16 23:20:39 pk Exp $ */
 
 /*
@@ -49,6 +49,7 @@
  *		stomping on PROM data below 4MB on sun4c
  *	2.7	/etc/random.seed support
  *	2.8	Fix network boot broken on some PROM by the 2.7 changes
+ *	2.9	Cope with DMA transfer size limits of old sun4 PROMs
  */
 
-char *version = "2.8";
+char *version = "2.9";

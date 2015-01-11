@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.16 2015/01/11 15:29:03 miod Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.17 2015/01/11 18:10:33 miod Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -221,12 +221,15 @@ prom0_strategy(devdata, flag, dblk, size, buf, rsize)
 	struct promdata	*pd = devdata;
 	struct saioreq	*si;
 	struct om_boottable *ops;
-	char	*dmabuf;
-	int	si_flag;
-	size_t	xcnt;
+	struct devinfo *dip;
+	char *dmabuf;
+	int si_flag;
+	size_t	xcnt, total, chunk;
+	int rc = 0;
 
 	si = pd->si;
 	ops = si->si_boottab;
+	dip = ops->b_devinfo;
 
 #ifdef DEBUG_PROM
 	printf("prom_strategy: size=%d dblk=%d\n", size, dblk);
@@ -234,23 +237,51 @@ prom0_strategy(devdata, flag, dblk, size, buf, rsize)
 
 	dmabuf = dvma_mapin(buf, size);
 
-	si->si_bn = dblk;
-	si->si_ma = dmabuf;
-	si->si_cc = size;
+	/*
+	 * Clamp I/O to the maximum DMA transfer size supported by the PROM,
+	 * if necessary. Note that we need to round down to a block boundary
+	 * as the value is not necessarily a power of two (8216 has been
+	 * seen with PROM rev 1.3.)
+	 */
+	if (dip->d_dmabytes != 0)
+		chunk = dbtob(btodb(dip->d_dmabytes));
+	else
+		chunk = size;
 
-	si_flag = (flag == F_READ) ? SAIO_F_READ : SAIO_F_WRITE;
-	xcnt = (*ops->b_strategy)(si, si_flag);
-	dvma_mapout(dmabuf, size);
+	total = 0;
+	while (size != 0) {
+		if (size < chunk)
+			chunk = size;
+
+		si->si_bn = dblk;
+		si->si_ma = dmabuf;
+		si->si_cc = chunk;
+
+		si_flag = (flag == F_READ) ? SAIO_F_READ : SAIO_F_WRITE;
+		xcnt = (*ops->b_strategy)(si, si_flag);
 
 #ifdef DEBUG_PROM
-	printf("disk_strategy: xcnt = %x\n", xcnt);
+		printf("disk_strategy: xcnt = %x\n", xcnt);
 #endif
 
-	if (xcnt <= 0)
-		return (EIO);
+		if (xcnt <= 0) {
+			rc = EIO;
+			break;
+		}
 
-	*rsize = xcnt;
-	return (0);
+		total += xcnt;
+		if (xcnt != chunk)
+			break;
+
+		size -= chunk;
+		dmabuf += chunk;
+		dblk += btodb(chunk);
+	}
+
+	dvma_mapout(dmabuf, size);
+
+	*rsize = total;
+	return rc;
 }
 
 int
