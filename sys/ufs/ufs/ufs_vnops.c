@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.117 2014/12/29 05:29:28 miod Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.118 2015/01/11 03:05:03 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	 * the caller must be superuser or the call fails.
 	 */
 	if ((cred->cr_uid != DIP(ip, uid) || uid != DIP(ip, uid) ||
-	    (gid != DIP(ip, gid) && !groupmember((gid_t)gid, cred))) &&
+	    (gid != DIP(ip, gid) && !groupmember(gid, cred))) &&
 	    (error = suser_ucred(cred)))
 		return (error);
 	ogid = DIP(ip, gid);

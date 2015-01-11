@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.69 2014/12/29 05:29:28 miod Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.70 2015/01/11 03:05:03 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred, struct 
 	 * the caller must be superuser or the call fails.
 	 */
 	if ((cred->cr_uid != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
-		(gid != ip->i_e2fs_gid && !groupmember((gid_t)gid, cred))) &&
+		(gid != ip->i_e2fs_gid && !groupmember(gid, cred))) &&
 		(error = suser_ucred(cred)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
