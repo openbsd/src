@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.37 2014/10/17 01:51:39 tedu Exp $	*/
+/*	$OpenBSD: sched.h,v 1.38 2015/01/11 19:34:52 guenther Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -183,7 +183,7 @@ void remrunqueue(struct proc *);
 		yield();						\
 } while (0)
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR)
 #include <sys/lock.h>
 
 /*
@@ -215,7 +215,7 @@ do {									\
 	splx(s);							\
 } while (/* CONSTCOND */ 0)
 
-#else /* ! MULTIPROCESSOR || LOCKDEBUG */
+#else /* ! MULTIPROCESSOR */
 
 #define	SCHED_ASSERT_LOCKED()		splassert(IPL_SCHED);
 #define	SCHED_ASSERT_UNLOCKED()		/* nothing */
@@ -225,7 +225,7 @@ do {									\
 #define	SCHED_LOCK(s)			s = splsched()
 #define	SCHED_UNLOCK(s)			splx(s)
 
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+#endif /* MULTIPROCESSOR */
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

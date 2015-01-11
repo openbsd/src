@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.22 2014/07/09 14:16:10 guenther Exp $
+.\"     $OpenBSD: lock.9,v 1.23 2015/01/11 19:34:52 guenther Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2014 $
+.Dd $Mdocdate: January 11 2015 $
 .Dt LOCK 9
 .Os
 .Sh NAME
@@ -57,10 +57,6 @@ single process.
 It also allows upgrading a shared-access lock to an
 exclusive-access lock, as well as downgrading an exclusive-access lock
 to a shared-access lock.
-.Pp
-If the kernel option LOCKDEBUG is enabled, additional facilities
-are provided to record additional lock information.
-These facilities are provided to assist in determining deadlock occurrences.
 .Sh FUNCTIONS
 The functions which operate on locks are:
 .Bl -tag -width Ds
