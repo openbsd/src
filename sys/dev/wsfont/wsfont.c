@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.38 2014/12/13 21:05:33 doug Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.39 2015/01/11 13:00:05 deraadt Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ struct font {
 	u_short	cookie;
 	u_short	flg;
 };
-TAILQ_HEAD(, font) list;
+TAILQ_HEAD(, font) fontlist;
 
 /* Our list of built-in fonts */
 static struct font builtin_fonts[] = {
@@ -277,7 +277,7 @@ wsfont_enum(int (*cb)(void *, struct wsdisplay_font *), void *cbarg)
 
 	s = splhigh();
 
-	TAILQ_FOREACH(ent, &list, chain)
+	TAILQ_FOREACH(ent, &fontlist, chain)
 		if (cb(cbarg, ent->font) != 0)
 			break;
 
@@ -383,10 +383,10 @@ wsfont_init(void)
 		return;
 	again = 1;
 
-	TAILQ_INIT(&list);
+	TAILQ_INIT(&fontlist);
 
 	for (i = 0; i < nitems(builtin_fonts); i++) {
-		TAILQ_INSERT_TAIL(&list, &builtin_fonts[i], chain);
+		TAILQ_INSERT_TAIL(&fontlist, &builtin_fonts[i], chain);
 	}
 }
 
@@ -398,7 +398,7 @@ wsfont_find0(int cookie)
 {
 	struct font *ent;
 
-	TAILQ_FOREACH(ent, &list, chain)
+	TAILQ_FOREACH(ent, &fontlist, chain)
 		if (ent->cookie == cookie)
 			return (ent);
 
@@ -416,7 +416,7 @@ wsfont_find(const char *name, int width, int height, int stride)
 
 	s = splhigh();
 
-	TAILQ_FOREACH(ent, &list, chain) {
+	TAILQ_FOREACH(ent, &fontlist, chain) {
 		if (height != 0 && ent->font->fontheight != height)
 			continue;
 
@@ -477,7 +477,7 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 	}
 
 	/* Now link into the list and return */
-	TAILQ_INSERT_TAIL(&list, ent, chain);
+	TAILQ_INSERT_TAIL(&fontlist, ent, chain);
 	splx(s);
 	return (0);
 }
