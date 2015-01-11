@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.75 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.76 2015/01/11 02:59:59 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -463,7 +463,7 @@ kue_attachhook(void *xsc)
 		return;
 	}
 
-	sc->kue_mcfilters = malloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
+	sc->kue_mcfilters = mallocarray(KUE_MCFILTCNT(sc), ETHER_ADDR_LEN,
 	    M_USBDEV, M_NOWAIT);
 	if (sc->kue_mcfilters == NULL) {
 		printf("%s: no memory for multicast filter buffer\n",
