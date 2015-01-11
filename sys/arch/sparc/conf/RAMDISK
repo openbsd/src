@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.77 2014/11/22 22:48:38 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.78 2015/01/11 14:56:23 miod Exp $
 
 machine		sparc
 maxusers	4
@@ -66,7 +66,7 @@ zs0		at obio0			# sun4m
 zs0		at obio0 addr 0xf1000000 level 12 # sun4
 zs1		at mainbus0			# sun4c and sun4e
 zs1		at obio0			# sun4m
-zs1		at obio0 addr 0xf0000000 level 1 # sun4
+zs1		at obio0 addr 0xf0000000 level 12 # sun4
 zs2		at obio0 addr 0xe0000000 level 12 # sun4/300
 
 zstty*		at zs?
