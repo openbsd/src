@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.81 2014/02/27 18:48:15 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.82 2015/01/11 21:02:55 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -74,10 +74,9 @@ For sun4m machines, the following mbus CPU modules are supported:
 	- Ross HyperSPARC RT620/625 at 166 MHz, with 512KB of primary cache
 	- Ross HyperSPARC RT620/625 at 180 MHz, with 512KB of primary cache
 
-8MB of RAM should be sufficient to boot and a minimal system can probably
-be squeezed onto a 250MB disk by installing only the `base' and `etc' sets.
-However, a minimum of 16MB is necessary for the system not to be swap-bound,
-with 32MB or more being recommended for serious usage of the system.
+24MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 250MB disk by installing only the `base' set.
+However, a minimum of 32MB is recommended for serious usage of the system.
 Note that until you have at least 32MB of RAM, getting more RAM is more
 important than getting a faster CPU board.
 

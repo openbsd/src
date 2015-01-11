@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.289 2014/02/27 19:06:38 tedu Exp $
+dnl	$OpenBSD: hardware,v 1.290 2015/01/11 21:02:55 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -11,11 +11,10 @@ systems.  To support SMP operation, a separate SMP kernel (bsd.mp)
 is included with the installation file sets.
 
 The minimal configuration to install the system is 32MB of RAM and
-at least 200MB of disk space to accomodate the `base' and `etc' sets.
+at least 250MB of disk space to accomodate the `base' set.
 To install the entire system, at least 600MB of disk are required,
 and to run X or compile the system, more RAM is recommended.
 
-Please refer to the website for a full list of support hardware.
-
-http://www.openbsd.org/i386.html
+Please refer to the website for a full list of supported hardware:
+    http://www.openbsd.org/i386.html
 

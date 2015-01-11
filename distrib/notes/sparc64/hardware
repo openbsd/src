@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.159 2014/02/27 18:48:15 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.160 2015/01/11 21:02:55 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E
 	Ultra 2
@@ -92,6 +92,6 @@ OpenBSD/MACHINE OSREV supports SMP (Symmetrical MultiProcessor)
 systems.  To support SMP operation, a separate SMP kernel (bsd.mp) is
 included with the installation file sets.
 
-16MB of RAM should be sufficient to boot and a minimal system can probably
-be squeezed onto a 250MB disk by installing only the `base' and `etc' sets.
+24MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 250MB disk by installing only the `base' set.
 However, a minimum of 32MB is recommended for serious usage of the system.

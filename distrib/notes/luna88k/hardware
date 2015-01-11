@@ -1,8 +1,8 @@
-dnl	$OpenBSD: hardware,v 1.6 2014/04/22 22:58:02 aoyama Exp $
+dnl	$OpenBSD: hardware,v 1.7 2015/01/11 21:02:55 miod Exp $
 OpenBSD/MACHINE OSREV runs on the OMRON LUNA-88K workstations family.
 
 16MB of RAM should be sufficient to boot and a minimal system can probably
-be squeezed onto a 250MB disk by installing only the `base' and `etc' sets.
+be squeezed onto a 250MB disk by installing only the `base' set.
 However, a minimum of 32MB is recommended for serious usage of the system.
 
 Supported devices:
