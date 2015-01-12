@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.35 2010/06/28 18:31:01 krw Exp $	*/
+/*	$OpenBSD: si.c,v 1.36 2015/01/12 21:34:15 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -122,7 +122,7 @@
 #define	MIN_DMA_LEN 128
 
 /*
- * Transfers lager than 65535 bytes need to be split-up.
+ * Transfers larger than 65535 bytes need to be split-up.
  * (Some of the FIFO logic has only 16 bits counters.)
  * Make the size an integer multiple of the page size
  * to avoid buf/cluster remap problems.  (paranoid?)
