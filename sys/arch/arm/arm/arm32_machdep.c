@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.46 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.47 2015/01/12 16:33:31 deraadt Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ int allowaperture = 0;
 #endif
 
 #if defined(__zaurus__)
-int lid_suspend;
+int lid_suspend = 1;
 extern int xscale_maxspeed;
 #endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.808 2015/01/07 19:31:51 rpe Exp $
+#	$OpenBSD: install.sub,v 1.809 2015/01/12 16:33:31 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1842,10 +1842,6 @@ apply()
 		echo "machdep.allowaperture=$aperture # See xf86(4)" \
 			>>/mnt/etc/sysctl.conf
 
-	[[ -n $lidsuspend ]] &&
-		echo "machdep.lidsuspend=1 # Try to suspend on lid close" \
-			>>/mnt/etc/sysctl.conf
-
 	[[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]] &&
 		echo "xdm_flags=" >>/mnt/etc/rc.conf.local
 
@@ -1876,7 +1872,6 @@ questions() {
 
 	aperture=
 	xdm=
-	lidsuspend=
 	if [[ -n $DISPLAY ]]; then
 		if [[ -n $(scan_dmesg '/^[a-z]*[01]: aperture needed/p') ]]; then
 			ask_yn "Do you expect to run the X Window System?" yes &&
@@ -1885,10 +1880,6 @@ questions() {
 		if [[ -n $MDXDM ]]; then
 			ask_yn "Do you want the X Window System to be started by xdm(1)?"
 			xdm=$resp
-		fi
-		if [[ -n $MDLID ]]; then
-			ask_yn "Do you want to suspend on lid close?" yes && \
-				lidsuspend=$resp
 		fi
 	fi
 

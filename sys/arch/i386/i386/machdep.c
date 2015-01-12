@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.560 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.561 2015/01/12 16:33:31 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ void (*update_cpuspeed)(void) = NULL;
 void	via_update_sensor(void *args);
 #endif
 int kbd_reset;
-int lid_suspend;
+int lid_suspend = 1;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
