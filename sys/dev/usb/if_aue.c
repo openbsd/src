@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.95 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.96 2015/01/12 04:49:41 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -585,7 +585,8 @@ aue_iff(struct aue_softc *sc)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
 
-	AUE_CLRBIT(sc, AUE_CTL0, (AUE_CTL0_ALLMULTI | AUE_CTL2_RX_PROMISC));
+	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
+	AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
@@ -1329,12 +1330,6 @@ aue_init(void *xsc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		aue_csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
 
-	 /* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
-	else
-		AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
-
 	/* Init TX ring. */
 	if (aue_tx_list_init(sc) == ENOBUFS) {
 		printf("%s: tx list init failed\n", sc->aue_dev.dv_xname);
@@ -1353,8 +1348,8 @@ aue_init(void *xsc)
 	aue_iff(sc);
 
 	/* Enable RX and TX */
-	aue_csr_write_1(sc, AUE_CTL0, AUE_CTL0_RXSTAT_APPEND | AUE_CTL0_RX_ENB);
-	AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_TX_ENB);
+	AUE_SETBIT(sc, AUE_CTL0,
+	    AUE_CTL0_RXSTAT_APPEND | AUE_CTL0_RX_ENB | AUE_CTL0_TX_ENB);
 	AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_EP3_CLR);
 
 	mii_mediachg(mii);
