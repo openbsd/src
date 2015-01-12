@@ -553,7 +553,7 @@ hex_pton(const char* src, uint8_t* target, size_t targsize)
 		return -1;
 	}
 	while(*src) {
-		if(!isxdigit((int)src[0]) || !isxdigit((int)src[1]))
+		if(!isxdigit((unsigned char)src[0]) || !isxdigit((unsigned char)src[1]))
 			return -1;
 		*t++ = hexdigit_to_int(src[0]) * 16 +
 			hexdigit_to_int(src[1]) ;
@@ -658,7 +658,7 @@ b32_pton(const char *src, uint8_t *target, size_t tsize)
 		if(p+5 >= tsize*8)
 		       return -1;
 
-		if(isspace(ch))
+		if(isspace((unsigned char)ch))
 			continue;
 
 		if(ch >= '0' && ch <= '9')
@@ -690,13 +690,13 @@ strip_string(char *str)
 	char *start = str;
 	char *end = str + strlen(str) - 1;
 
-	while (isspace(*start))
+	while (isspace((unsigned char)*start))
 		++start;
 	if (start > end) {
 		/* Completely blank. */
 		str[0] = '\0';
 	} else {
-		while (isspace(*end))
+		while (isspace((unsigned char)*end))
 			--end;
 		*++end = '\0';
 

@@ -731,7 +731,7 @@ static char*
 skipwhite(char* str)
 {
 	/* EOS \0 is not a space */
-	while( isspace(*str) ) 
+	while( isspace((unsigned char)*str) ) 
 		str++;
 	return str;
 }
@@ -1036,7 +1036,7 @@ find_arg2(SSL* ssl, char* arg, char** arg2)
 	if(as) {
 		as[0]=0;
 		*arg2 = as+1;
-		while(isspace(*as) && as > arg)
+		while(isspace((unsigned char)*as) && as > arg)
 			as--;
 		as[0]=0;
 		return 1;

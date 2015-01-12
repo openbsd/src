@@ -144,18 +144,16 @@ static void
 b64_initialize_rmap ()
 {
 	int i;
-	char ch;
 
 	/* Null: end of string, stop parsing */
 	b64rmap[0] = b64rmap_end;
 
 	for (i = 1; i < 256; ++i) {
-		ch = (char)i;
 		/* Whitespaces */
-		if (isspace(ch))
+		if (isspace(i))
 			b64rmap[i] = b64rmap_space;
 		/* Padding: stop parsing */
-		else if (ch == Pad64)
+		else if (i == Pad64)
 			b64rmap[i] = b64rmap_end;
 		/* Non-base64 char */
 		else

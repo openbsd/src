@@ -891,7 +891,7 @@ rrtype_from_string(const char *name)
 	if (strncasecmp(name, "TYPE", 4) != 0)
 		return 0;
 
-	if (!isdigit((int)name[4]))
+	if (!isdigit((unsigned char)name[4]))
 		return 0;
 
 	/* The rest from the string must be a number.  */
@@ -936,7 +936,7 @@ rrclass_from_string(const char *name)
 	if (strncasecmp(name, "CLASS", 5) != 0)
 		return 0;
 
-	if (!isdigit((int)name[5]))
+	if (!isdigit((unsigned char)name[5]))
 		return 0;
 
 	/* The rest from the string must be a number.  */

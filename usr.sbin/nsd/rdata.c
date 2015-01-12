@@ -98,9 +98,9 @@ rdata_dns_name_to_string(buffer_type *output, rdata_atom_type rdata,
 
 			if (ch=='.' || ch==';' || ch=='(' || ch==')' || ch=='\\') {
 				buffer_printf(output, "\\%c", (char) ch);
-			} else if (!isgraph((int)(unsigned char) ch)) {
+			} else if (!isgraph((unsigned char) ch)) {
 				buffer_printf(output, "\\%03u", (unsigned int) ch);
-			} else if (isprint((int)(unsigned char) ch)) {
+			} else if (isprint((unsigned char) ch)) {
 				buffer_printf(output, "%c", (char) ch);
 			} else {
 				buffer_printf(output, "\\%03u", (unsigned int) ch);
@@ -127,7 +127,7 @@ rdata_text_to_string(buffer_type *output, rdata_atom_type rdata,
 	buffer_printf(output, "\"");
 	for (i = 1; i <= length; ++i) {
 		char ch = (char) data[i];
-		if (isprint((int)(unsigned char)ch)) {
+		if (isprint((unsigned char)ch)) {
 			if (ch == '"' || ch == '\\') {
 				buffer_printf(output, "\\");
 			}
@@ -153,7 +153,7 @@ rdata_texts_to_string(buffer_type *output, rdata_atom_type rdata,
 		buffer_printf(output, "\"");
 		for (i = 1; i <= data[pos]; ++i) {
 			char ch = (char) data[pos + i];
-			if (isprint((int)(unsigned char)ch)) {
+			if (isprint((unsigned char)ch)) {
 				if (ch == '"' || ch == '\\') {
 					buffer_printf(output, "\\");
 				}
@@ -179,7 +179,7 @@ rdata_long_text_to_string(buffer_type *output, rdata_atom_type rdata,
 	buffer_printf(output, "\"");
 	for (i = 0; i < length; ++i) {
 		char ch = (char) data[i];
-		if (isprint((int)(unsigned char)ch)) {
+		if (isprint((unsigned char)ch)) {
 			if (ch == '"' || ch == '\\') {
 				buffer_printf(output, "\\");
 			}
@@ -201,7 +201,7 @@ rdata_tag_to_string(buffer_type *output, rdata_atom_type rdata,
 	size_t i;
 	for (i = 1; i <= length; ++i) {
 		char ch = (char) data[i];
-		if (isdigit((int)ch) || islower((int)ch))
+		if (isdigit((unsigned char)ch) || islower((unsigned char)ch))
 			buffer_printf(output, "%c", ch);
 		else	return 0;
 	}

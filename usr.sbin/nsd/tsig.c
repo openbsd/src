@@ -154,8 +154,8 @@ int
 tsig_strlowercmp(const char* str1, const char* str2)
 {
 	while (str1 && str2 && *str1 != '\0' && *str2 != '\0') {
-		if(tolower((int)*str1) != tolower((int)*str2)) {
-			if(tolower((int)*str1) < tolower((int)*str2))
+		if(tolower((unsigned char)*str1) != tolower((unsigned char)*str2)) {
+			if(tolower((unsigned char)*str1) < tolower((unsigned char)*str2))
 				return -1;
 			return 1;
 		}

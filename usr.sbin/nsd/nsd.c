@@ -829,11 +829,11 @@ main(int argc, char *argv[])
 #ifdef HAVE_GETPWNAM
 	/* Parse the username into uid and gid */
 	if (*nsd.username) {
-		if (isdigit((int)*nsd.username)) {
+		if (isdigit((unsigned char)*nsd.username)) {
 			char *t;
 			nsd.uid = strtol(nsd.username, &t, 10);
 			if (*t != 0) {
-				if (*t != '.' || !isdigit((int)*++t)) {
+				if (*t != '.' || !isdigit((unsigned char)*++t)) {
 					error("-u user or -u uid or -u uid.gid");
 				}
 				nsd.gid = strtol(t, &t, 10);
