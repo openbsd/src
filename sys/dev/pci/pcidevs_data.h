@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1753 2015/01/09 07:27:25 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1754 2015/01/12 12:40:41 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9764,36 +9764,68 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E5 v2 Unicast",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_HB,
+	    "Bay Trail Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_HDA,
+	    "Bay Trail HD Audio",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_SMB,
-	    "Baytrail SMBus",
+	    "Bay Trail SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_TXE,
+	    "Bay Trail TXE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_LPC,
+	    "Bay Trail LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_SATA_1,
-	    "Baytrail SATA",
+	    "Bay Trail SATA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_SATA_2,
-	    "Baytrail SATA",
+	    "Bay Trail SATA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_AHCI,
-	    "Baytrail AHCI",
+	    "Bay Trail AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_IGD_1,
+	    "Bay Trail Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_IGD_2,
+	    "Bay Trail Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_IGD_3,
+	    "Bay Trail Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_XHCI,
-	    "Baytrail xHCI",
+	    "Bay Trail xHCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_1,
-	    "Baytrail PCIE",
+	    "Bay Trail PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_2,
-	    "Baytrail PCIE",
+	    "Bay Trail PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_3,
-	    "Baytrail PCIE",
+	    "Bay Trail PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_4,
+	    "Bay Trail PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,
@@ -13153,6 +13185,14 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V3_PCIE_9,
+	    "E5 v3 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V3_PCIE_10,
+	    "E5 v3 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V3_PCIE_11,
 	    "E5 v3 PCIE",
 	},
 	{
