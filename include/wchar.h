@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.26 2014/07/12 02:48:33 guenther Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.27 2015/01/12 20:58:07 millert Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -201,6 +201,7 @@ unsigned long long int wcstoull(const wchar_t * __restrict,
 
 wint_t ungetwc(wint_t, FILE *);
 wint_t fgetwc(FILE *);
+wchar_t *fgetwln(FILE * __restrict, size_t * __restrict);
 wchar_t *fgetws(wchar_t * __restrict, int, FILE * __restrict)
 		__attribute__ ((__bounded__(__wcstring__,1,2)));
 wint_t getwc(FILE *);
