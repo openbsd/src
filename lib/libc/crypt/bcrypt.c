@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.50 2015/01/07 16:05:28 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.51 2015/01/12 03:20:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -47,7 +47,7 @@
 
 #define BCRYPT_VERSION '2'
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
-#define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
+#define BCRYPT_WORDS 6		/* Ciphertext words */
 #define BCRYPT_MINLOGROUNDS 4	/* we have log2(rounds) in salt */
 
 #define	BCRYPT_SALTSPACE	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
@@ -96,9 +96,9 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	u_int16_t j;
 	size_t key_len;
 	u_int8_t salt_len, logr, minor;
-	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
+	u_int8_t ciphertext[4 * BCRYPT_WORDS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
-	u_int32_t cdata[BCRYPT_BLOCKS];
+	u_int32_t cdata[BCRYPT_WORDS];
 
 	if (encryptedlen < BCRYPT_HASHSPACE)
 		goto inval;
@@ -166,14 +166,14 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 
 	/* This can be precomputed later */
 	j = 0;
-	for (i = 0; i < BCRYPT_BLOCKS; i++)
-		cdata[i] = Blowfish_stream2word(ciphertext, 4 * BCRYPT_BLOCKS, &j);
+	for (i = 0; i < BCRYPT_WORDS; i++)
+		cdata[i] = Blowfish_stream2word(ciphertext, 4 * BCRYPT_WORDS, &j);
 
 	/* Now do the encryption */
 	for (k = 0; k < 64; k++)
-		blf_enc(&state, cdata, BCRYPT_BLOCKS / 2);
+		blf_enc(&state, cdata, BCRYPT_WORDS / 2);
 
-	for (i = 0; i < BCRYPT_BLOCKS; i++) {
+	for (i = 0; i < BCRYPT_WORDS; i++) {
 		ciphertext[4 * i + 3] = cdata[i] & 0xff;
 		cdata[i] = cdata[i] >> 8;
 		ciphertext[4 * i + 2] = cdata[i] & 0xff;
@@ -186,7 +186,7 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 
 	snprintf(encrypted, 8, "$2%c$%2.2u$", minor, logr);
 	encode_base64(encrypted + 7, csalt, BCRYPT_MAXSALT);
-	encode_base64(encrypted + 7 + 22, ciphertext, 4 * BCRYPT_BLOCKS - 1);
+	encode_base64(encrypted + 7 + 22, ciphertext, 4 * BCRYPT_WORDS - 1);
 	explicit_bzero(&state, sizeof(state));
 	explicit_bzero(ciphertext, sizeof(ciphertext));
 	explicit_bzero(csalt, sizeof(csalt));
