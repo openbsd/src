@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.60 2015/01/08 13:29:34 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.61 2015/01/12 13:40:12 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -305,7 +305,7 @@ svc_set()
 
 	if [ "${_var}" = "timeout" ]; then
 		[[ ${_args} != +([[:digit:]]) || ${_args} -le 0 ]] && \
-			_rc_err "${0##*/}: \"${_args}\" is not an integer"
+			_rc_err "${0##*/}: \"${_args}\" is not a positive integer"
 	fi
 
 	# unset flags if they match the default enabled ones
