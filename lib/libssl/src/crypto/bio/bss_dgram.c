@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.38 2015/01/03 18:07:29 doug Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.39 2015/01/12 02:15:23 doug Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -826,7 +826,11 @@ dgram_sctp_free(BIO *a)
 		return 0;
 
 	data = (bio_dgram_sctp_data *)a->ptr;
-	free(data);
+	if (data != NULL) {
+		free(data->saved_message.data);
+		free(data);
+		a->ptr = NULL;
+	}
 
 	return (1);
 }
@@ -934,6 +938,7 @@ dgram_sctp_read(BIO *b, char *out, int outl)
 						dgram_sctp_write(data->saved_message.bio, data->saved_message.data,
 						data->saved_message.length);
 						free(data->saved_message.data);
+						data->saved_message.data = NULL;
 						data->saved_message.length = 0;
 					}
 
@@ -1101,9 +1106,14 @@ dgram_sctp_write(BIO *b, const char *in, int inl)
 	 */
 	if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
 		data->saved_message.bio = b;
-		data->saved_message.length = inl;
+		free(data->saved_message.data);
 		data->saved_message.data = malloc(inl);
+		if (data->saved_message.data == NULL) {
+			data->_errno = ENOMEM;
+			return -1;
+		}
 		memcpy(data->saved_message.data, in, inl);
+		data->saved_message.length = inl;
 		return inl;
 	}
 
