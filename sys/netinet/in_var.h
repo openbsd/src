@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.34 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.35 2015/01/12 13:51:45 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -77,9 +77,6 @@ struct	in_aliasreq {
 
 
 #ifdef	_KERNEL
-TAILQ_HEAD(in_ifaddrhead, in_ifaddr);
-extern	struct	in_ifaddrhead in_ifaddr;
-
 /*
  * Macro for finding the internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.243 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.244 2015/01/12 13:51:45 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -114,7 +114,6 @@ int	ip_frags = 0;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
-struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
 
 struct pool ipqent_pool;
@@ -172,7 +171,6 @@ ip_init(void)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
 	IFQ_SET_MAXLEN(&ipintrq, IFQ_MAXLEN);
-	TAILQ_INIT(&in_ifaddr);
 	if (ip_mtudisc != 0)
 		ip_mtudisc_timeout_q =
 		    rt_timer_queue_create(ip_mtudisc_timeout);
