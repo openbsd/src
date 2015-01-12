@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.188 2015/01/12 17:10:38 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.189 2015/01/12 17:25:03 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -31,8 +31,8 @@ acpi0		at bios?
 #acpibtn*	at acpi?
 #acpicpu*	at acpi?
 #acpiec*	at acpi?
-acpimadt0	at acpi?
 acpiprt*	at acpi?
+acpimadt0	at acpi?
 #acpitz*	at acpi?
 
 cpu0		at mainbus?
@@ -121,7 +121,6 @@ em*		at pci?			# Intel Pro/1000 ethernet
 re*		at pci?			# Realtek 8169/8169S/8110S
 #bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
 
-exphy*		at mii?			# 3Com internal PHYs
 inphy*		at mii?			# Intel 82555 PHYs
 iophy*		at mii?			# Intel 82553 PHYs
 icsphy*		at mii?			# ICS 1890 PHYs
@@ -134,7 +133,6 @@ amphy*		at mii?			# AMD 79C873 PHYs
 tqphy*		at mii?			# TDK 78Q212x PHYs
 bmtphy*		at mii?			# Broadcom 10/100 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
-ciphy*		at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?			# "unknown" PHYs
 
 pseudo-device	loop 1
