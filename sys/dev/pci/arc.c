@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.104 2014/09/09 20:27:48 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.105 2015/01/12 00:07:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -669,6 +669,10 @@ int			arc_bio_getvol(struct arc_softc *, int,
 			    struct arc_fw_volinfo *);
 
 #ifndef SMALL_KERNEL
+struct arc_task {
+	struct task t;
+	struct arc_softc *sc;
+};
 /* sensors */
 void			arc_create_sensors(void *, void *);
 void			arc_refresh_sensors(void *);
@@ -826,11 +830,12 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	 * to do the work.
 	 */
 	{
-		struct task *t;
-		t = malloc(sizeof(*t), M_TEMP, M_WAITOK);
+		struct arc_task *at;
+		at = malloc(sizeof(*at), M_TEMP, M_WAITOK);
 
-		task_set(t, arc_create_sensors, sc, t);
-		task_add(systq, t);
+		at->sc = sc;
+		task_set(&at->t, arc_create_sensors, at, NULL);
+		task_add(systq, &at->t);
 	}
 #endif
 #endif
@@ -2601,15 +2606,15 @@ arc_wait(struct arc_softc *sc)
 
 #ifndef SMALL_KERNEL
 void
-arc_create_sensors(void *xsc, void *xt)
+arc_create_sensors(void *xat, void *null)
 {
-	struct arc_softc	*sc = xsc;
-	struct task		*t = xt;
+	struct arc_task		*at = xat;
+	struct arc_softc	*sc = at->sc;
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
 	int			i;
 
-	free(t, M_TEMP, sizeof(*t));
+	free(at, M_TEMP, sizeof(*at));
 
 	DPRINTF("%s: arc_create_sensors\n", DEVNAME(sc));
 	/*
