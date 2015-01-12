@@ -143,7 +143,7 @@ inf_ptrace_create_inferior (char *exec_file, char *allargs, char **env,
   observer_notify_inferior_created (&current_target, from_tty);
 
   /* Pedal to the metal...  */
-  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
+  proceed (read_pc (), TARGET_SIGNAL_0, 0);
 }
 
 #ifdef PT_GET_PROCESS_STATE
