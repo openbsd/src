@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.108 2014/12/13 21:05:33 doug Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.109 2015/01/12 07:12:58 deraadt Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1372,7 +1372,7 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 			if (it->output->terminals[i] == outtype)
 				return uaudio_merge_terminal_list(it);
 		tml = malloc(TERMINAL_LIST_SIZE(it->output->size + 1),
-			     M_TEMP, M_NOWAIT);
+		    M_TEMP, M_NOWAIT);
 		if (tml == NULL) {
 			printf("uaudio_io_terminaltype: no memory\n");
 			return uaudio_merge_terminal_list(it);
@@ -1941,7 +1941,8 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	ibufend = ibuf + aclen;
 	dp = (const usb_descriptor_t *)ibuf;
 	ndps = 0;
-	iot = malloc(sizeof(struct io_terminal) * 256, M_TEMP, M_NOWAIT | M_ZERO);
+	iot = malloc(256 * sizeof(struct io_terminal),
+	    M_TEMP, M_NOWAIT | M_ZERO);
 	if (iot == NULL) {
 		printf("%s: no memory\n", __func__);
 		return USBD_NOMEM;
