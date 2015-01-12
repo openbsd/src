@@ -1,19 +1,10 @@
-dnl	$OpenBSD: contents,v 1.76 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.77 2015/01/12 17:10:38 deraadt Exp $
 TopPart
 
 OpenBSDminiroot
 			It can be copied to a small USB key to start the install.
 
 OpenBSDfloppy
-
-	floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy; this one
-			features all the drivers not available in floppy{:--:}OSrev.fs,
-			such as SCSI, RAID, Gigabit Ethernet, and such; see
-			below.
-
-	floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy; this one
-			features most of the cardbus and PCMCIA drivers; see
-			below.
 
 	pxeboot		MACHINE-specific second-stage PXE bootstrap (for
 			network installs); see below.
@@ -43,7 +34,7 @@ OpenBSDcd
 			This file is included in the cd{:--:}OSrev.iso image, and is
 			provided as a convenience, but will rarely be needed.
 
-OpenBSDfloppydesc(three,Each,s)
+OpenBSDfloppydesc(single,The)
 
 DistributionDescription(ten)
 
