@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.72 2014/12/22 08:06:03 djm Exp $
+#	$OpenBSD: Makefile,v 1.73 2015/01/12 20:13:27 markus Exp $
 
 REGRESS_FAIL_EARLY= yes
-REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
+REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
 
 CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2 \
-		t8.out t8.out.pub t9.out t9.out.pub
+		t8.out t8.out.pub t9.out t9.out.pub t10.out t10.out.pub \
+		t12.out t12.out.pub
 
 LTESTS= 	connect \
 		proxy-connect \
@@ -153,6 +154,12 @@ t10: t10.out
 t11:
 	ssh-keygen -E sha256 -lf ${.CURDIR}/rsa_openssh.pub |\
 		awk '{print $$2}' | diff - ${.CURDIR}/t11.ok
+
+t12.out:
+	ssh-keygen -q -t ed25519 -N '' -C 'test-comment-1234' -f $@
+
+t12: t12.out
+	ssh-keygen -lf t12.out.pub | grep -q test-comment-1234
 
 modpipe: modpipe.c
 
