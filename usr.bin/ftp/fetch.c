@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.135 2014/11/25 08:22:09 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.136 2015/01/12 15:46:55 bluhm Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -187,6 +187,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	off_t hashbytes;
 	const char *errstr;
 	ssize_t len, wlen;
+	char *proxyhost = NULL;
 #ifndef SMALL
 	char *sslpath = NULL, *sslhost = NULL;
 	char *locbase, *full_host = NULL;
@@ -300,6 +301,9 @@ noslash:
 				errx(1, "Can't allocate memory for https path/host.");
 		}
 #endif /* !SMALL */
+		proxyhost = strdup(host);
+		if (proxyhost == NULL)
+			errx(1, "Can't allocate memory for proxy host.");
 		proxyurl = strdup(proxyenv);
 		if (proxyurl == NULL)
 			errx(1, "Can't allocate memory for proxy URL.");
@@ -640,17 +644,18 @@ again:
 			fprintf(ttyout, " (via %s)\n", proxyurl);
 		/*
 		 * Host: directive must use the destination host address for
-		 * the original URI (path).  We do not attach it at this moment.
+		 * the original URI (path).
 		 */
 		if (credentials)
 			ftp_printf(fin, tls, "GET %s HTTP/1.0\r\n"
-			    "Proxy-Authorization: Basic %s%s\r\n%s\r\n\r\n",
-			    epath, credentials, buf ? buf : "",
-			    httpuseragent);
+			    "Proxy-Authorization: Basic %s\r\n"
+			    "Host: %s\r\n%s%s\r\n\r\n",
+			    epath, credentials,
+			    proxyhost, buf ? buf : "", httpuseragent);
 		else
-			ftp_printf(fin, tls, "GET %s HTTP/1.0\r\n%s%s\r\n\r\n",
-			    epath, buf ? buf : "", httpuseragent);
-
+			ftp_printf(fin, tls, "GET %s HTTP/1.0\r\n"
+			    "Host: %s\r\n%s%s\r\n\r\n",
+			    epath, proxyhost, buf ? buf : "", httpuseragent);
 	} else {
 #ifndef SMALL
 		if (resume) {
@@ -676,7 +681,10 @@ again:
 			    restart_point ? "HTTP/1.1\r\nConnection: close" :
 #endif /* !SMALL */
 			    "HTTP/1.0");
-		if (strchr(host, ':')) {
+		if (proxyhost) {
+			ftp_printf(fin, tls, "%s", proxyhost);
+			port = NULL;
+		} else if (strchr(host, ':')) {
 			/*
 			 * strip off scoped address portion, since it's
 			 * local to node
@@ -991,6 +999,7 @@ cleanup_url_get:
 	else if (s != -1)
 		close(s);
 	free(buf);
+	free(proxyhost);
 	free(proxyurl);
 	free(newline);
 	free(credentials);
@@ -1486,6 +1495,13 @@ ftp_printf(FILE *fp, struct tls *tls, const char *fmt, ...)
 		ret = 0;
 
 	va_end(ap);
+#ifndef SMALL
+	if (debug) {
+		va_start(ap, fmt);
+		ret = vfprintf(ttyout, fmt, ap);
+		va_end(ap);
+	}
+#endif /* !SMALL */
 	return (ret);
 }
 
