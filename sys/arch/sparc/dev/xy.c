@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.59 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: xy.c,v 1.60 2015/01/12 21:31:06 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1750,11 +1750,11 @@ xyc_remove_iorq(xycsc)
 				iopb->head =
 					(iorq->blockno / iorq->xy->nhead) %
 						iorq->xy->nhead;
-				iopb->sect = iorq->blockno % XYFM_BPS;
+				iopb->sect = iorq->blockno % iorq->xy->nsect;
 				addr = (u_long) iorq->dbuf - DVMA_BASE;
 				iopb->dataa = (addr & 0xffff);
 				iopb->datar = ((addr & 0xff0000) >> 16);
-				/* will resubit at end */
+				/* will resubmit at end */
 				continue;
 			}
 		}
@@ -1871,8 +1871,8 @@ xyc_error(xycsc, iorq, iopb, comm)
 			/* second to last acyl */
 			i = iorq->xy->sectpercyl - 1 - i;	/* follow bad144
 								 * standard */
-			iopb->head = i / iorq->xy->nhead;
-			iopb->sect = i % iorq->xy->nhead;
+			iopb->head = i % iorq->xy->nhead;
+			iopb->sect = i / iorq->xy->nhead;
 			/* will resubmit when we come out of remove_iorq */
 			return (XY_ERR_AOK);	/* recovered! */
 		}

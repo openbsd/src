@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.62 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: xd.c,v 1.63 2015/01/12 21:31:06 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1879,7 +1879,7 @@ xdc_remove_iorq(xdcsc)
 				iopb->headno =
 					(iorq->blockno / iorq->xd->nhead) %
 						iorq->xd->nhead;
-				iopb->sectno = iorq->blockno % XDFM_BPS;
+				iopb->sectno = iorq->blockno % iorq->xd->nsect;
 				iopb->daddr = (u_long) iorq->dbuf - DVMA_BASE;
 				XDC_HWAIT(xdcsc, rqno);
 				xdc_start(xdcsc, 1);	/* resubmit */
@@ -2003,8 +2003,8 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 			/* second to last acyl */
 			i = iorq->xd->sectpercyl - 1 - i;	/* follow bad144
 								 * standard */
-			iopb->headno = i / iorq->xd->nhead;
-			iopb->sectno = i % iorq->xd->nhead;
+			iopb->headno = i % iorq->xd->nhead;
+			iopb->sectno = i / iorq->xd->nhead;
 			XDC_HWAIT(xdcsc, rqno);
 			xdc_start(xdcsc, 1);	/* resubmit */
 			return (XD_ERR_AOK);	/* recovered! */
