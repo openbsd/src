@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.111 2014/12/22 22:22:35 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.112 2015/01/12 07:11:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1806,19 +1806,19 @@ hibernate_suspend(void)
 	DPRINTF("hibernate: writing chunks\n");
 	if (hibernate_write_chunks(&hib)) {
 		DPRINTF("hibernate_write_chunks failed\n");
-		goto fail;
+		return (1);
 	}
 
 	DPRINTF("hibernate: writing chunktable\n");
 	if (hibernate_write_chunktable(&hib)) {
 		DPRINTF("hibernate_write_chunktable failed\n");
-		goto fail;
+		return (1);
 	}
 
 	DPRINTF("hibernate: writing signature\n");
 	if (hibernate_write_signature(&hib)) {
 		DPRINTF("hibernate_write_signature failed\n");
-		goto fail;
+		return (1);
 	}
 
 	/* Allow the disk to settle */
@@ -1829,12 +1829,7 @@ hibernate_suspend(void)
 	 * done, and that it can clean up or shutdown as needed.
 	 */
 	hib.io_func(hib.dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib.io_page);
-
 	return (0);
-fail:
-	pmap_kremove(HIBERNATE_HIBALLOC_PAGE, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	return (1);
 }
 
 int
