@@ -1,7 +1,7 @@
 ./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/lib/libc.so.78.0
+./usr/lib/libc.so.78.1
 ./usr/lib/libcrypto.so.30.3
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.1
