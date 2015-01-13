@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.c,v 1.28 2015/01/06 14:07:48 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.29 2015/01/13 09:21:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

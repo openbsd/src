@@ -1,7 +1,7 @@
-/*	$OpenBSD: http.h,v 1.10 2015/01/07 16:57:17 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.11 2015/01/13 09:21:15 reyk Exp $	*/
 
 /*
- * Copyright (c) 2012 - 2014 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
