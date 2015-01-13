@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.198 2015/01/08 15:05:44 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.199 2015/01/13 12:14:00 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -382,11 +382,13 @@ void
 rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 {
 	struct rt_addrinfo info;
+	struct sockaddr_rtlabel sa_rl;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 	if (rt->rt_ifp != NULL) {
 		info.rti_info[RTAX_IFP] =(struct sockaddr *)rt->rt_ifp->if_sadl;
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
@@ -1138,7 +1140,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		 * userland that a new address has been added.
 		 */
 		if (flags & RTF_LOCAL)
-			rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
+			rt_sendaddrmsg(nrt, RTM_NEWADDR);
+		rt_sendmsg(nrt, RTM_ADD, rtableid);
 	}
 	return (error);
 }
@@ -1192,8 +1195,9 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
 	if (error == 0 && (rt = nrt) != NULL) {
+		rt_sendmsg(nrt, RTM_DELETE, rtableid);
 		if (flags & RTF_LOCAL)
-			rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
+			rt_sendaddrmsg(nrt, RTM_DELADDR);
 		if (rt->rt_refcnt <= 0) {
 			rt->rt_refcnt++;
 			rtfree(rt);
