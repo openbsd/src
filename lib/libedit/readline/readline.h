@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.h,v 1.5 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: readline.h,v 1.6 2015/01/13 08:33:12 reyk Exp $	*/
 /*	$NetBSD: readline.h,v 1.31 2010/08/04 20:29:18 christos Exp $	*/
 
 /*-
@@ -215,6 +215,7 @@ int		 rl_generic_bind(int, const char *, const char *, Keymap);
 int		 rl_bind_key_in_map(int, rl_command_func_t *, Keymap);
 void		 rl_cleanup_after_signal(void);
 void		 rl_free_line_state(void);
+int		 rl_set_keyboard_input_timeout(int);
 #ifdef __cplusplus
 }
 #endif
