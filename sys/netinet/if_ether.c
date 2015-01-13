@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.140 2015/01/08 14:29:18 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.141 2015/01/13 12:16:18 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ in_arpinput(struct mbuf *m)
 	u_int8_t *ether_shost = NULL;
 #endif
 	char addr[INET_ADDRSTRLEN];
-	int op;
+	int op, changed = 0;
 
 	ea = mtod(m, struct ether_arp *);
 	op = ntohs(ea->arp_op);
@@ -684,6 +684,7 @@ in_arpinput(struct mbuf *m)
 				   ac->ac_if.if_xname);
 				rt->rt_expire = 1; /* no longer static */
 			}
+			changed = 1;
 		    }
 		} else if (rt->rt_ifp != &ac->ac_if &&
 #if NBRIDGE > 0
@@ -711,8 +712,10 @@ in_arpinput(struct mbuf *m)
 		if (rt->rt_expire)
 			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
+		/* Notify userland that an ARP resolution has been done. */
+		if (la->la_asked || changed)
+			rt_sendmsg(rt, RTM_RESOLVE, rt->rt_ifp->if_rdomain);
 		la->la_asked = 0;
-		rt_sendmsg(rt, RTM_RESOLVE, rt->rt_ifp->if_rdomain);
 		while ((mh = la->la_hold_head) != NULL) {
 			if ((la->la_hold_head = mh->m_nextpkt) == NULL)
 				la->la_hold_tail = NULL;
