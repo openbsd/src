@@ -66,7 +66,7 @@
 ./usr/lib/libc.so.78.1
 ./usr/lib/libcrypto.so.30.3
 ./usr/lib/libcurses.so.14.0
-./usr/lib/libedit.so.5.1
+./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
 ./usr/lib/libexpat.so.11.0
 ./usr/lib/libform.so.6.0
