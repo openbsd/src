@@ -58,6 +58,7 @@ platform_init_cons(void)
 		paddr = 0x02020000;
 		break;
 	case BOARD_ID_IMX6_PHYFLEX:
+	case BOARD_ID_IMX6_UTILITE:
 		paddr = 0x021f0000;
 		break;
 	case BOARD_ID_IMX6_SABRELITE:
