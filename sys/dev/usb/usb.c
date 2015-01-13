@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.103 2014/12/18 10:44:17 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.104 2015/01/13 16:03:18 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -298,8 +298,13 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task)
 {
 	int s;
 
-	/* Don't add task if the device's root hub is dying. */
-	if (usbd_is_dying(dev))
+	/*
+	 * If the thread detaching ``dev'' is sleeping, waiting
+	 * for all submitted transfers to finish, we must be able
+	 * to enqueue abort tasks.  Otherwise timeouts can't give
+	 * back submitted transfers to the stack.
+	 */
+	if (usbd_is_dying(dev) && (task->type != USB_TASK_TYPE_ABORT))
 		return;
 
 	DPRINTFN(2,("%s: task=%p state=%d type=%d\n", __func__, task,
@@ -455,12 +460,9 @@ usb_abort_task_thread(void *arg)
 		 */
 		task->state |= USB_TASK_STATE_RUN;
 		task->state &= ~USB_TASK_STATE_ONQ;
-		/* Don't actually execute the task if dying. */
-		if (!usbd_is_dying(task->dev)) {
-			splx(s);
-			task->fun(task->arg);
-			s = splusb();
-		}
+		splx(s);
+		task->fun(task->arg);
+		s = splusb();
 		task->state &= ~USB_TASK_STATE_RUN;
 		if (task->state == USB_TASK_STATE_NONE)
 			wakeup(task);
