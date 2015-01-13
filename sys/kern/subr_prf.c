@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.83 2014/07/13 23:49:40 uebayasi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.84 2015/01/13 10:07:58 mpf Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -349,7 +349,7 @@ kputchar(int c, int flags, struct tty *tp)
 		constty = NULL;
 	if ((flags & TOLOG) &&
 	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped)
-		msgbuf_putchar(c);
+		msgbuf_putchar(msgbufp, c);
 	if ((flags & TOCONS) && (constty == NULL || ddb_active) && c != '\0')
 		(*v_putc)(c);
 #ifdef DDB

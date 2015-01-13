@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.25 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.26 2015/01/13 10:07:58 mpf Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ struct logsoftc {
 
 int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
-int	msgbufenabled;			/* is logging to the buffer enabled */
 struct	msgbuf *msgbufp;		/* the mapped buffer, itself. */
+struct	msgbuf *consbufp;		/* console message buffer. */
 struct file *syslogf;
 
 void filt_logrdetach(struct knote *kn);
@@ -113,17 +113,23 @@ initmsgbuf(caddr_t buf, size_t bufsize)
 	
 	/* Always start new buffer data on a new line. */
 	if (mbp->msg_bufx > 0 && mbp->msg_bufc[mbp->msg_bufx - 1] != '\n')
-		msgbuf_putchar('\n');
+		msgbuf_putchar(msgbufp, '\n');
 
 	/* mark it as ready for use. */
-	msgbufmapped = msgbufenabled = 1;
+	msgbufmapped = 1;
+
+	/* Set up a buffer to collect /dev/console output */
+	consbufp = malloc(CONSBUFSIZE, M_TEMP, M_NOWAIT|M_ZERO);
+	if (consbufp) {
+		new_bufs = CONSBUFSIZE - offsetof(struct msgbuf, msg_bufc);
+		consbufp->msg_magic = MSG_MAGIC;
+		consbufp->msg_bufs = new_bufs;
+	}
 }
 
 void
-msgbuf_putchar(const char c) 
+msgbuf_putchar(struct msgbuf *mbp, const char c) 
 {
-	struct msgbuf *mbp = msgbufp;
-
 	if (mbp->msg_magic != MSG_MAGIC)
 		/* Nothing we can do */
 		return;

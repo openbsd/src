@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.119 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.120 2015/01/13 10:07:58 mpf Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #include <sys/lock.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/msgbuf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
@@ -63,6 +64,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/cons.h>
 #include <dev/rndvar.h>
 
 #include "pty.h"
@@ -1786,6 +1788,17 @@ loop:
 			}
 			if (cc > obufcc)
 				obufcc = cc;
+
+			/* duplicate /dev/console output into console buffer */
+			if (consbufp && cn_tab &&
+			    cn_tab->cn_dev == tp->t_dev && tp->t_gen == 0) {
+				int i;
+				for (i = 0; i < cc; i++) {
+					char c = cp[i];
+					if (c != '\0' && c != '\r' && c != 0177)
+						msgbuf_putchar(consbufp, c);
+				}
+			}
 		}
 		/*
 		 * If nothing fancy need be done, grab those characters we

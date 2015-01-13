@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.277 2014/12/12 07:45:46 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.278 2015/01/13 10:07:58 mpf Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -444,19 +444,30 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 	case KERN_MSGBUFSIZE:
+	case KERN_CONSBUFSIZE: {
+		struct msgbuf *mp;
+		mp = (name[0] == KERN_MSGBUFSIZE) ? msgbufp : consbufp;
 		/*
 		 * deal with cases where the message buffer has
 		 * become corrupted.
 		 */
-		if (!msgbufp || msgbufp->msg_magic != MSG_MAGIC)
+		if (!mp || mp->msg_magic != MSG_MAGIC)
 			return (ENXIO);
-		return (sysctl_rdint(oldp, oldlenp, newp, msgbufp->msg_bufs));
-	case KERN_MSGBUF:
+		return (sysctl_rdint(oldp, oldlenp, newp, mp->msg_bufs));
+	}
+	case KERN_CONSBUF:
+		if ((error = suser(p, 0)))
+			return (error);
+		/* FALLTHROUGH */
+	case KERN_MSGBUF: {
+		struct msgbuf *mp;
+		mp = (name[0] == KERN_MSGBUF) ? msgbufp : consbufp;
 		/* see note above */
-		if (!msgbufp || msgbufp->msg_magic != MSG_MAGIC)
+		if (!mp || mp->msg_magic != MSG_MAGIC)
 			return (ENXIO);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, msgbufp,
-		    msgbufp->msg_bufs + offsetof(struct msgbuf, msg_bufc)));
+		return (sysctl_rdstruct(oldp, oldlenp, newp, mp,
+		    mp->msg_bufs + offsetof(struct msgbuf, msg_bufc)));
+	}
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, p));

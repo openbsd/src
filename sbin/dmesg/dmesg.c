@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.23 2014/04/22 20:43:12 tedu Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.24 2015/01/13 10:07:58 mpf Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -66,11 +66,15 @@ main(int argc, char *argv[])
 	char *p;
 	struct msgbuf cur;
 	char *memf, *nlistf, *bufdata = NULL;
+	int startupmsgs = 0;
 	char buf[5];
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:")) != -1)
+	while ((ch = getopt(argc, argv, "sM:N:")) != -1)
 		switch(ch) {
+		case 's':
+			startupmsgs = 1;
+			break;
 		case 'M':
 			memf = optarg;
 			break;
@@ -89,7 +93,7 @@ main(int argc, char *argv[])
 		size_t len;
 
 		mib[0] = CTL_KERN;
-		mib[1] = KERN_MSGBUFSIZE;
+		mib[1] = startupmsgs ? KERN_CONSBUFSIZE : KERN_MSGBUFSIZE;
 		len = sizeof(msgbufsize);
 		if (sysctl(mib, 2, &msgbufsize, &len, NULL, 0))
 			err(1, "sysctl: KERN_MSGBUFSIZE");
@@ -99,7 +103,7 @@ main(int argc, char *argv[])
 		if (bufdata == NULL)
 			errx(1, "couldn't allocate space for buffer data");
 
-		mib[1] = KERN_MSGBUF;
+		mib[1] = startupmsgs ? KERN_CONSBUF : KERN_MSGBUF;
 		len = msgbufsize;
 		if (sysctl(mib, 2, bufdata, &len, NULL, 0))
 			err(1, "sysctl: KERN_MSGBUF");
@@ -179,6 +183,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-M core] [-N system]\n", __progname);
+	fprintf(stderr, "usage: %s [-s] [-M core] [-N system]\n", __progname);
 	exit(1);
 }
