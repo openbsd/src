@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.125 2015/01/09 07:35:37 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.126 2015/01/13 02:23:33 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -200,7 +200,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	while (ntp_quit == 0) {
 		if (peer_cnt > idx2peer_elms) {
 			if ((newp = reallocarray(idx2peer, peer_cnt,
-			    sizeof(void *))) == NULL) {
+			    sizeof(*idx2peer))) == NULL) {
 				/* panic for now */
 				log_warn("could not resize idx2peer from %u -> "
 				    "%u entries", idx2peer_elms, peer_cnt);
@@ -213,7 +213,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		new_cnt = PFD_MAX + peer_cnt + listener_cnt + ctl_cnt;
 		if (new_cnt > pfd_elms) {
 			if ((newp = reallocarray(pfd, new_cnt,
-			    sizeof(struct pollfd))) == NULL) {
+			    sizeof(*pfd))) == NULL) {
 				/* panic for now */
 				log_warn("could not resize pfd from %u -> "
 				    "%u entries", pfd_elms, new_cnt);
@@ -223,8 +223,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 			pfd_elms = new_cnt;
 		}
 
-		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
-		bzero(idx2peer, sizeof(void *) * idx2peer_elms);
+		bzero(pfd, sizeof(*pfd) * pfd_elms);
+		bzero(idx2peer, sizeof(*idx2peer) * idx2peer_elms);
 		nextaction = getmonotime() + 3600;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
