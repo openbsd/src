@@ -3234,11 +3234,13 @@ map_sections_to_segments (bfd *abfd)
   mfirst = NULL;
   pm = &mfirst;
 
-  /* If we have a .interp section, then create a PT_PHDR segment for
-     the program headers and a PT_INTERP segment for the .interp
-     section.  */
+  /* If we have a .interp section, or are creating an executable and
+     have a .dynamic section, then create a PT_PHDR segment for the
+     program headers.  */
   s = bfd_get_section_by_name (abfd, ".interp");
-  if (s != NULL && (s->flags & SEC_LOAD) != 0)
+  if ((s != NULL && (s->flags & SEC_LOAD) != 0) ||
+      (bfd_get_section_by_name (abfd, ".dynamic") &&
+       elf_tdata (abfd)->executable))
     {
       amt = sizeof (struct elf_segment_map);
       m = bfd_zalloc (abfd, amt);
@@ -3253,7 +3255,12 @@ map_sections_to_segments (bfd *abfd)
 
       *pm = m;
       pm = &m->next;
+    }      
 
+  /* If we have a .interp section, then create a PT_INTERP segment for
+     the .interp section.  */
+  if (s != NULL && (s->flags & SEC_LOAD) != 0)
+    {
       amt = sizeof (struct elf_segment_map);
       m = bfd_zalloc (abfd, amt);
       if (m == NULL)
@@ -4134,13 +4141,20 @@ get_program_header_size (bfd *abfd)
   segs = 7;
 
   s = bfd_get_section_by_name (abfd, ".interp");
+  s = bfd_get_section_by_name (abfd, ".interp");
+  if ((s != NULL && (s->flags & SEC_LOAD) != 0) ||
+      (bfd_get_section_by_name (abfd, ".dynamic") &&
+       elf_tdata (abfd)->executable))
+    {
+      /* We need a PT_PHDR segment.  */
+      ++segs;
+    }
+
   if (s != NULL && (s->flags & SEC_LOAD) != 0)
     {
       /* If we have a loadable interpreter section, we need a
-	 PT_INTERP segment.  In this case, assume we also need a
-	 PT_PHDR segment, although that may not be true for all
-	 targets.  */
-      segs += 2;
+	 PT_INTERP segment.  */
+      ++segs;
     }
 
   if (bfd_get_section_by_name (abfd, ".dynamic") != NULL)

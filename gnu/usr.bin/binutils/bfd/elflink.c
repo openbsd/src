@@ -4626,6 +4626,7 @@ bfd_elf_size_dynamic_sections (bfd *output_bfd,
   if (!is_elf_hash_table (info->hash))
     return TRUE;
 
+  elf_tdata (output_bfd)->executable = info->executable;
   if (info->execstack)
     elf_tdata (output_bfd)->stack_flags = PF_R | PF_W | PF_X;
   else if (info->noexecstack)
