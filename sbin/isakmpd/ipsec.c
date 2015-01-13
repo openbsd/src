@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.141 2014/10/09 02:38:56 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.142 2015/01/13 04:19:00 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -74,11 +74,6 @@
 #include "x509.h"
 
 extern int acquire_only;
-
-/* Backwards compatibility.  */
-#ifndef NI_MAXHOST
-#define NI_MAXHOST 1025
-#endif
 
 /* The replay window size used for all IPsec protocols if not overridden.  */
 #define DEFAULT_REPLAY_WINDOW 16
