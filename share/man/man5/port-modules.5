@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.184 2015/01/12 20:56:20 zhuk Exp $
+.\"	$OpenBSD: port-modules.5,v 1.185 2015/01/13 07:03:23 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2015 $
+.Dd $Mdocdate: January 13 2015 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -458,7 +458,7 @@ Any local user will be able to connect without password.
 .Pp
 If the
 .Ev MODPOSTGRESQL_TEST_DBNAME
-variable is set, the database with such name will be set up before 
+variable is set, the database with such name will be set up before
 running actual test command.
 Otherwise (default), the test is responsible to call
 .Xr initdb 1
@@ -1437,7 +1437,7 @@ and
 .Ev SUBST_VARS
 variables.
 Defaults to
-.Sq No .
+.Sq \&No .
 .It Ev MODKDE4_INCLUDE_DIR
 Path where KDE4 headers to be placed/searched for, relative to
 .Ev PREFIX .
@@ -1494,7 +1494,7 @@ to
 will be created.
 Used to distinguish libraries from different KDE versions (3, 4...).
 Defaults to
-.Sq No .
+.Sq \&No .
 .It KDE4_ONLY
 If set to
 .Sq Yes ,
@@ -1503,7 +1503,7 @@ sets the
 tag to
 .Sq kde4 .
 Defaults to
-.Sq No
+.Sq \&No
 when
 .Ev MODKDE4_USE
 is empty, and to
