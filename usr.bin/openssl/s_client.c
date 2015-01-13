@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.11 2014/12/14 14:42:06 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.12 2015/01/13 10:48:24 bluhm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,6 +204,7 @@ sc_usage(void)
 	BIO_printf(bio_err, " -host host     - use -connect instead\n");
 	BIO_printf(bio_err, " -port port     - use -connect instead\n");
 	BIO_printf(bio_err, " -connect host:port - who to connect to (default is %s:%s)\n", SSL_HOST_NAME, PORT_STR);
+	BIO_printf(bio_err, " -proxy host:port - connect to http proxy\n");
 
 	BIO_printf(bio_err, " -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err, " -cert arg     - certificate file to use, PEM format assumed\n");
@@ -338,6 +339,7 @@ s_client_main(int argc, char **argv)
 	char *port = PORT_STR;
 	int full_log = 1;
 	char *host = SSL_HOST_NAME;
+	char *proxy = NULL, *connect = NULL;
 	char *cert_file = NULL, *key_file = NULL;
 	int cert_format = FORMAT_PEM, key_format = FORMAT_PEM;
 	char *passarg = NULL, *pass = NULL;
@@ -412,8 +414,11 @@ s_client_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-connect") == 0) {
 			if (--argc < 1)
 				goto bad;
-			if (!extract_host_port(*(++argv), &host, NULL, &port))
+			connect = *(++argv);
+		} else if (strcmp(*argv, "-proxy") == 0) {
+			if (--argc < 1)
 				goto bad;
+			proxy = *(++argv);
 		} else if (strcmp(*argv, "-verify") == 0) {
 			verify = SSL_VERIFY_PEER;
 			if (--argc < 1)
@@ -623,6 +628,15 @@ s_client_main(int argc, char **argv)
 		}
 		argc--;
 		argv++;
+	}
+	if (proxy != NULL) {
+		if (!extract_host_port(proxy, &host, NULL, &port))
+			goto bad;
+		if (connect == NULL)
+			connect = SSL_HOST_NAME;
+	} else if (connect != NULL) {
+		if (!extract_host_port(connect, &host, NULL, &port))
+			goto bad;
 	}
 	if (badop) {
 bad:
@@ -971,8 +985,7 @@ re_start:
 		BIO_free(fbio);
 		BIO_printf(sbio, "AUTH TLS\r\n");
 		BIO_read(sbio, sbuf, BUFSIZZ);
-	}
-	if (starttls_proto == PROTO_XMPP) {
+	} else if (starttls_proto == PROTO_XMPP) {
 		int seen = 0;
 		BIO_printf(sbio, "<stream:stream "
 		    "xmlns:stream='http://etherx.jabber.org/streams' "
@@ -991,6 +1004,13 @@ re_start:
 		if (!strstr(sbuf, "<proceed"))
 			goto shut;
 		mbuf[0] = 0;
+	} else if (proxy != NULL) {
+		BIO_printf(sbio, "CONNECT %s HTTP/1.0\r\n\r\n", connect);
+		mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+		if (mbuf_len == -1) {
+			BIO_printf(bio_err, "BIO_read failed\n");
+			goto end;
+		}
 	}
 	for (;;) {
 		struct pollfd pfd[3];	/* stdin, stdout, socket */
