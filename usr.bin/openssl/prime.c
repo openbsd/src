@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.4 2014/12/28 15:48:52 jsing Exp $ */
+/* $OpenBSD: prime.c,v 1.5 2015/01/13 03:42:36 lteo Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -117,6 +117,7 @@ prime_main(int argc, char **argv)
 	char *prime = NULL;
 	BIO *bio_out;
 	char *s;
+	int ret = 1;
 
 	memset(&prime_config, 0, sizeof(prime_config));
 
@@ -134,26 +135,48 @@ prime_main(int argc, char **argv)
 		return (1);
 	}
 
-	if ((bio_out = BIO_new(BIO_s_file())) != NULL) {
-		BIO_set_fp(bio_out, stdout, BIO_NOCLOSE);
+	if ((bio_out = BIO_new(BIO_s_file())) == NULL) {
+		ERR_print_errors(bio_err);
+		return (1);
 	}
+	BIO_set_fp(bio_out, stdout, BIO_NOCLOSE);
 
 	if (prime_config.generate != 0) {
 		if (prime_config.bits == 0) {
 			BIO_printf(bio_err, "Specify the number of bits.\n");
-			return 1;
+			goto end;
 		}
-		bn = BN_new();	/* XXX - unchecked malloc. */
-		BN_generate_prime_ex(bn, prime_config.bits, prime_config.safe,
-		    NULL, NULL, NULL);
+		bn = BN_new();
+		if (!bn) {
+			BIO_printf(bio_err, "Out of memory.\n");
+			goto end;
+		}
+		if (!BN_generate_prime_ex(bn, prime_config.bits,
+		    prime_config.safe, NULL, NULL, NULL)) {
+			BIO_printf(bio_err, "Prime generation error.\n");
+			goto end;
+		}
 		s = prime_config.hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
+		if (s == NULL) {
+			BIO_printf(bio_err, "Out of memory.\n");
+			goto end;
+		}
 		BIO_printf(bio_out, "%s\n", s);
 		free(s);
 	} else {
-		if (prime_config.hex)
-			BN_hex2bn(&bn, prime);
-		else
-			BN_dec2bn(&bn, prime);
+		if (prime_config.hex) {
+			if (!BN_hex2bn(&bn, prime)) {
+				BIO_printf(bio_err, "%s is an invalid hex "
+				    "value.\n", prime);
+				goto end;
+			}
+		} else {
+			if (!BN_dec2bn(&bn, prime)) {
+				BIO_printf(bio_err, "%s is an invalid decimal "
+				    "value.\n", prime);
+				goto end;
+			}
+		}
 
 		BN_print(bio_out, bn);
 		BIO_printf(bio_out, " is %sprime\n",
@@ -161,8 +184,11 @@ prime_main(int argc, char **argv)
 			NULL, NULL) ? "" : "not ");
 	}
 
+	ret = 0;
+
+end:
 	BN_free(bn);
 	BIO_free_all(bio_out);
 
-	return 0;
+	return (ret);
 }
