@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.128 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.129 2015/01/13 23:16:59 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1633,18 +1633,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
 
-	/*
-	 * When scanning we record results (nodes) with a zero
-	 * refcnt.  Otherwise we want to hold the reference for
-	 * ibss neighbors so the nodes don't get released prematurely.
-	 * Anything else can be discarded (XXX and should be handled
-	 * above so we don't do so much work).
-	 */
-	if (
 #ifndef IEEE80211_STA_ONLY
-	    ic->ic_opmode == IEEE80211_M_IBSS ||
-#endif
-	    (is_new && isprobe)) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS && is_new && isprobe) {
 		/*
 		 * Fake an association so the driver can setup it's
 		 * private state.  The rate set has been setup above;
@@ -1653,6 +1643,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		if (ic->ic_newassoc)
 			(*ic->ic_newassoc)(ic, ni, 1);
 	}
+#endif
 }
 
 #ifndef IEEE80211_STA_ONLY
