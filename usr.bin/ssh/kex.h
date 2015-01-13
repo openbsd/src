@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.h,v 1.64 2014/05/02 03:27:54 djm Exp $ */
+/* $OpenBSD: kex.h,v 1.65 2015/01/13 19:31:40 markus Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,9 +26,7 @@
 #ifndef KEX_H
 #define KEX_H
 
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/ec.h>
+#include "mac.h"
 
 #define KEX_COOKIE_LEN	16
 
@@ -79,8 +77,8 @@ enum kex_exchange {
 #define KEX_INIT_SENT	0x0001
 
 typedef struct Kex Kex;
-typedef struct Mac Mac;
 typedef struct Comp Comp;
+typedef struct sshmac Mac;
 typedef struct Enc Enc;
 typedef struct Newkeys Newkeys;
 
@@ -93,17 +91,6 @@ struct Enc {
 	u_int	block_size;
 	u_char	*key;
 	u_char	*iv;
-};
-struct Mac {
-	char	*name;
-	int	enabled;
-	u_int	mac_len;
-	u_char	*key;
-	u_int	key_len;
-	int	type;
-	int	etm;		/* Encrypt-then-MAC */
-	struct ssh_hmac_ctx	*hmac_ctx;
-	struct umac_ctx		*umac_ctx;
 };
 struct Comp {
 	int	type;
