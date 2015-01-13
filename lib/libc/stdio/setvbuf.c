@@ -1,4 +1,4 @@
-/*	$OpenBSD: setvbuf.c,v 1.11 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: setvbuf.c,v 1.12 2015/01/13 07:18:21 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -115,6 +115,13 @@ nbf:
 	}
 
 	/*
+	 * We're committed to buffering from here, so make sure we've
+	 * registered to flush buffers on exit.
+	 */
+	if (!__sdidinit)
+		__sinit();
+
+	/*
 	 * Kill any seek optimization if the buffer is not the
 	 * right size.
 	 *
@@ -148,7 +155,6 @@ nbf:
 		fp->_w = 0;
 	}
 	FUNLOCKFILE(fp);
-	__atexit_register_cleanup(_cleanup);
 
 	return (ret);
 }
