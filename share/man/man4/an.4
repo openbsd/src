@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.40 2013/07/16 16:05:48 schwarze Exp $
+.\"	$OpenBSD: an.4,v 1.41 2015/01/13 03:43:57 lteo Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/an.4,v 1.5 2000/03/02 14:53:45 sheldonh Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 13 2015 $
 .Dt AN 4
 .Os
 .Sh NAME
@@ -123,11 +123,11 @@ or on boot with
 .Sh EXAMPLES
 The following example scans for available networks:
 .Pp
-.Dl # ifconfig wi0 scan
+.Dl # ifconfig an0 scan
 .Pp
 The following
 .Xr hostname.if 5
-example configures wi0 to join network
+example configures an0 to join network
 .Dq mynwid ,
 using WEP key
 .Dq mywepkey ,
