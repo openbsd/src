@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.7 2015/01/02 16:38:07 bluhm Exp $ */
+/* $OpenBSD: tls_client.c,v 1.8 2015/01/13 17:35:35 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -135,7 +135,10 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 {
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 	X509 *cert = NULL;
-	int ret;
+	int ret, ssl_err;
+
+	if (ctx->flags & TLS_CONNECTING)
+		goto connecting;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
 		tls_set_error(ctx, "not a client context");
@@ -198,11 +201,22 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		}
 	}
 
+ connecting:
 	if ((ret = SSL_connect(ctx->ssl_conn)) != 1) {
-		tls_set_error(ctx, "SSL connect failed: %i",
-		    SSL_get_error(ctx->ssl_conn, ret));
-		goto err;
+		ssl_err = SSL_get_error(ctx->ssl_conn, ret);
+		switch (ssl_err) {
+		case SSL_ERROR_WANT_READ:
+			ctx->flags |= TLS_CONNECTING;
+			return (TLS_READ_AGAIN);
+		case SSL_ERROR_WANT_WRITE:
+			ctx->flags |= TLS_CONNECTING;
+			return (TLS_WRITE_AGAIN);
+		default:
+			tls_set_error(ctx, "SSL connect failed: %i", ssl_err);
+			goto err;
+		}
 	}
+	ctx->flags &= ~TLS_CONNECTING;
 
 	if (ctx->config->verify_host) {
 		cert = SSL_get_peer_certificate(ctx->ssl_conn);
