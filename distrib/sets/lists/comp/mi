@@ -3958,6 +3958,7 @@
 ./usr/share/man/man3/fgetpos.3
 ./usr/share/man/man3/fgets.3
 ./usr/share/man/man3/fgetwc.3
+./usr/share/man/man3/fgetwln.3
 ./usr/share/man/man3/fgetws.3
 ./usr/share/man/man3/field_arg.3
 ./usr/share/man/man3/field_back.3
