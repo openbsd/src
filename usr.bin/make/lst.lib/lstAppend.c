@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.20 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.21 2015/01/13 18:30:15 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -61,29 +61,18 @@ Lst_Append(Lst l, LstNode after, void *d)
 {
 	LstNode	nLNode;
 
-	if (after == NULL && !Lst_IsEmpty(l))
-		return;
-
-	if (after != NULL && Lst_IsEmpty(l))
-		return;
-
 	PAlloc(nLNode, LstNode);
 	nLNode->datum = d;
 
-	if (after == NULL) {
-		nLNode->nextPtr = nLNode->prevPtr = NULL;
-		l->firstPtr = l->lastPtr = nLNode;
-	} else {
-		nLNode->prevPtr = after;
-		nLNode->nextPtr = after->nextPtr;
+	nLNode->prevPtr = after;
+	nLNode->nextPtr = after->nextPtr;
 
-		after->nextPtr = nLNode;
-		if (nLNode->nextPtr != NULL)
-			nLNode->nextPtr->prevPtr = nLNode;
+	after->nextPtr = nLNode;
+	if (nLNode->nextPtr != NULL)
+		nLNode->nextPtr->prevPtr = nLNode;
 
-		if (after == l->lastPtr)
-			l->lastPtr = nLNode;
-	}
+	if (after == l->lastPtr)
+		l->lastPtr = nLNode;
 }
 
 void
