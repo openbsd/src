@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.15 2015/01/01 03:27:56 lteo Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.16 2015/01/13 03:43:18 lteo Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -33,7 +33,21 @@
 #include <stdlib.h>
 #include <netdb.h>
 
-extern char *__progname;
+__dead void	 usage(void);
+
+__dead void
+usage(void)
+{
+	extern char	*__progname;
+
+	fprintf(stderr,
+	    "usage: %s local-addr local-port remote-addr remote-port\n",
+	    __progname);
+	fprintf(stderr,
+	    "       %s local-addr:local-port remote-addr:remote-port\n",
+	    __progname);
+	exit(1);
+}
 
 /*
  * Drop a tcp connection.
@@ -61,7 +75,7 @@ main(int argc, char **argv)
 		if (port1)
 			*port1++ = '\0';
 		else
-			goto fail;
+			usage();
 
 		faddr2 = addr2 = strdup(argv[2]);
 		if (!addr2)
@@ -70,22 +84,14 @@ main(int argc, char **argv)
 		if (port2)
 			*port2++ = '\0';
 		else
-			goto fail;
+			usage();
 	} else if (argc == 5) {
 		laddr1 = addr1 = argv[1];
 		port1 = argv[2];
 		faddr2 = addr2 = argv[3];
 		port2 = argv[4];
-	} else {
-fail:
-		fprintf(stderr,
-		    "usage: %s local-addr local-port remote-addr remote-port\n",
-		    __progname);
-		fprintf(stderr,
-		    "       %s local-addr:local-port remote-addr:remote-port\n",
-		    __progname);
-		exit(1);
-	}
+	} else
+		usage();
 
 	if (addr1[0] == '[' && addr1[strlen(addr1) - 1] == ']') {
 		laddr1 = strdup(addr1);
