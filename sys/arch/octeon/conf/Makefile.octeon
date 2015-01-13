@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.20 2015/01/11 19:25:14 tedu Exp $
+#	$OpenBSD: Makefile.octeon,v 1.21 2015/01/13 01:12:50 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -160,8 +160,7 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
-	rm -f /obsd
-	ln /bsd /obsd
+	cmp -s bsd /bsd || ln -f /bsd /obsd
 	cp bsd /nbsd
 	mv /nbsd /bsd
 .endif

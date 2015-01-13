@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa64,v 1.51 2015/01/11 19:25:13 tedu Exp $
+#	$OpenBSD: Makefile.hppa64,v 1.52 2015/01/13 01:12:49 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -148,8 +148,7 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
-	rm -f /obsd
-	ln /bsd /obsd
+	cmp -s bsd /bsd || ln -f /bsd /obsd
 	cp bsd /nbsd
 	mv /nbsd /bsd
 .endif
