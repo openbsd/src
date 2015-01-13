@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.70 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: printf.3,v 1.71 2015/01/13 14:02:30 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: January 13 2015 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -609,16 +609,12 @@ The
 argument is expected to be a pointer to an array of character type (pointer
 to a string).
 Characters from the array are written up to (but not including)
-a terminating
-.Tn NUL
-character;
+a terminating NUL character;
 if a precision is specified, no more than the number specified are
 written.
-If a precision is given, no NUL character
-need be present; if the precision is not specified, or is greater than
-the size of the array, the array must contain a terminating
-.Tn NUL
-character.
+If a precision is given, no NUL character need be present;
+if the precision is not specified, or is greater than the size
+of the array, the array must contain a terminating NUL character.
 .It Cm p
 The
 .Li void *
