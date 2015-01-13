@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.84 2015/01/13 02:28:56 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.85 2015/01/13 14:52:47 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 			lconf.settime = 0;
 			timeout = INFTIM;
 			log_init(lconf.debug);
-			log_debug("no reply received in time, skipping initial "
+			log_warnx("no reply received in time, skipping initial "
 			    "time setting");
 			if (!lconf.debug)
 				if (daemon(1, 0))
