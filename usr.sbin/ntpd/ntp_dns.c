@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.6 2015/01/09 07:35:37 deraadt Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.7 2015/01/13 02:28:56 bcook Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -159,13 +159,20 @@ dns_dispatch_imsg(void)
 			buf = imsg_create(ibuf_dns, IMSG_HOST_DNS,
 			    imsg.hdr.peerid, 0,
 			    cnt * sizeof(struct sockaddr_storage));
-			if (buf == NULL)
-				break;
-			if (cnt > 0)
-				for (h = hn; h != NULL; h = h->next)
-					imsg_add(buf, &h->ss, sizeof(h->ss));
-
-			imsg_close(ibuf_dns, buf);
+			if (cnt > 0) {
+				if (buf) {
+					for (h = hn; h != NULL; h = h->next)
+						if (imsg_add(buf, &h->ss,
+						    sizeof(h->ss)) == -1) {
+							buf = NULL;
+							break;
+						}
+					if (buf)
+						imsg_close(ibuf_dns, buf);
+				}
+				host_dns_free(hn);
+				hn = NULL;
+			}
 			break;
 		default:
 			break;

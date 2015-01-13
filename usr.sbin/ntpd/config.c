@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.22 2015/01/10 13:47:05 tedu Exp $ */
+/*	$OpenBSD: config.c,v 1.23 2015/01/13 02:28:56 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,6 +107,17 @@ host_v6(const char *s)
 	}
 
 	return (h);
+}
+
+void
+host_dns_free(struct ntp_addr *hn)
+{
+	struct ntp_addr	*h = hn, *tmp;
+	while (h) {
+		tmp = h;
+		h = h->next;
+		free(tmp);
+	}
 }
 
 int
