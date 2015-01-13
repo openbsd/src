@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.119 2015/01/13 21:42:59 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.120 2015/01/13 21:49:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -28,7 +28,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <getopt.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
