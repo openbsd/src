@@ -1368,6 +1368,9 @@ struct elf_obj_tdata
 
   /* Used to determine if the e_flags field has been initialized */
   bfd_boolean flags_init;
+
+  /* Used to determine if we are creating an executable.  */
+  bfd_boolean executable;
 };
 
 #define elf_tdata(bfd)		((bfd) -> tdata.elf_obj_data)
