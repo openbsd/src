@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.44 2015/01/04 22:23:58 chrisz Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.45 2015/01/13 08:54:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -674,16 +674,15 @@ server_fcgi_writechunk(struct client *clt)
 	} else
 		len = EVBUFFER_LENGTH(evb);
 
-	/* If len is 0, make sure to write the end marker only once */
-	if (len == 0 && clt->clt_fcgi_end++)
-		return (0);
-
 	if (clt->clt_fcgi_chunked) {
+		/* If len is 0, make sure to write the end marker only once */
+		if (len == 0 && clt->clt_fcgi_end++)
+			return (0);
 		if (server_bufferevent_printf(clt, "%zx\r\n", len) == -1 ||
 		    server_bufferevent_write_chunk(clt, evb, len) == -1 ||
 		    server_bufferevent_print(clt, "\r\n") == -1)
 			return (-1);
-	} else
+	} else if (len)
 		return (server_bufferevent_write_buffer(clt, evb));
 
 	return (0);
