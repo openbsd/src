@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.60 2015/01/12 21:31:06 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.61 2015/01/13 20:40:11 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ xygetdisklabel(xy, b)
 	} else {
 		lp->d_secpercyl = 1;
 	}
+	lp->d_type = DTYPE_SMD;
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xy_labeldata = b;
