@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.231 2014/12/31 15:32:05 jsing Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.232 2015/01/13 18:51:27 kettenis Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/msg.h>
 #endif
 #include <sys/domain.h>
+#include <sys/msgbuf.h>
 #include <sys/mbuf.h>
 #include <sys/pipe.h>
 #include <sys/task.h>
@@ -404,6 +405,8 @@ main(void *framep)
 	domaininit();
 	if_attachdomain();
 	splx(s);
+
+	initconsbuf();
 
 #ifdef GPROF
 	/* Initialize kernel profiling. */

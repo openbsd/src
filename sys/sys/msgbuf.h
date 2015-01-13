@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgbuf.h,v 1.9 2015/01/13 10:07:58 mpf Exp $	*/
+/*	$OpenBSD: msgbuf.h,v 1.10 2015/01/13 18:51:27 kettenis Exp $	*/
 /*	$NetBSD: msgbuf.h,v 1.8 1995/03/26 20:24:27 jtc Exp $	*/
 
 /*
@@ -47,5 +47,6 @@ extern struct msgbuf *msgbufp;
 extern struct msgbuf *consbufp;
 
 void	initmsgbuf(caddr_t buf, size_t bufsize);
+void	initconsbuf(void);
 void	msgbuf_putchar(struct msgbuf *, const char c);
 #endif

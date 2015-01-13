@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.26 2015/01/13 10:07:58 mpf Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.27 2015/01/13 18:51:27 kettenis Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -117,6 +117,12 @@ initmsgbuf(caddr_t buf, size_t bufsize)
 
 	/* mark it as ready for use. */
 	msgbufmapped = 1;
+}
+
+void
+initconsbuf(void)
+{
+	long new_bufs;
 
 	/* Set up a buffer to collect /dev/console output */
 	consbufp = malloc(CONSBUFSIZE, M_TEMP, M_NOWAIT|M_ZERO);
