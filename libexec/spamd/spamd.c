@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.118 2014/12/30 23:27:23 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.119 2015/01/13 21:42:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,11 +185,12 @@ grow_obuf(struct con *cp, int off)
 int
 parse_configline(char *line)
 {
-	char *cp, prev, *name, *msg;
-	static char **av = NULL;
-	static size_t ac = 0;
-	size_t au = 0;
+	char *cp, prev, *name, *msg, *tmp;
+	char **v4 = NULL, **v6 = NULL;
+	const char *errstr;
+	u_int nv4 = 0, nv6 = 0;
 	int mdone = 0;
+	sa_family_t af;
 
 	name = line;
 
@@ -219,11 +221,16 @@ parse_configline(char *line)
 				if (*cp == ';') {
 					mdone = 1;
 					*cp = '\0';
-				} else
+				} else {
+					if (debug > 0)
+						printf("bad message: %s\n", msg);
 					goto parse_error;
+				}
 			}
 			break;
 		case '\0':
+			if (debug > 0)
+				printf("bad message: %s\n", msg);
 			goto parse_error;
 		default:
 			prev = '\0';
@@ -231,35 +238,89 @@ parse_configline(char *line)
 		}
 	}
 
-	do {
-		if (ac == au) {
-			char **tmp;
+	while ((tmp = strsep(&cp, ";")) != NULL) {
+		char **av;
+		u_int au, ac;
 
-			tmp = reallocarray(av, ac + 2048, sizeof(char *));
-			if (tmp == NULL) {
-				free(av);
-				av = NULL;
-				ac = 0;
-				return (-1);
+		if (*tmp == '\0')
+			continue;
+
+		if (strncmp(tmp, "inet", 4) != 0)
+			goto parse_error;
+		switch (tmp[4]) {
+		case '\0':
+			af = AF_INET;
+			break;
+		case '6':
+			if (tmp[5] == '\0') {
+				af = AF_INET6;
+				break;
 			}
-			av = tmp;
-			ac += 2048;
+			/* FALLTHROUGH */
+		default:
+			if (debug > 0)
+				printf("unsupported address family: %s\n", tmp);
+			goto parse_error;
 		}
-	} while ((av[au++] = strsep(&cp, ";")) != NULL);
 
-	/* toss empty last entry to allow for trailing ; */
-	while (au > 0 && (av[au - 1] == NULL || av[au - 1][0] == '\0'))
-		au--;
+		tmp = strsep(&cp, ";");
+		if (tmp == NULL) {
+			if (debug > 0)
+				printf("missing address count\n");
+			goto parse_error;
+		}
+		ac = strtonum(tmp, 0, UINT_MAX, &errstr);
+		if (errstr != NULL) {
+			if (debug > 0)
+				printf("count \"%s\" is %s\n", tmp, errstr);
+			goto parse_error;
+		}
 
-	if (au < 1)
+		av = reallocarray(NULL, ac, sizeof(char *));
+		for (au = 0; au < ac; au++) {
+			tmp = strsep(&cp, ";");
+			if (tmp == NULL) {
+				if (debug > 0)
+					printf("expected %u addrs, got %u\n",
+					    ac, au + 1);
+				free(av);
+				goto parse_error;
+			}
+			if (*tmp == '\0')
+				continue;
+			av[au] = tmp;
+		}
+		if (af == AF_INET) {
+			if (debug > 0)
+				printf("duplicate inet\n");
+			if (v4 != NULL)
+				goto parse_error;
+			v4 = av;
+			nv4 = ac;
+		} else {
+			if (debug > 0)
+				printf("duplicate inet6\n");
+			if (v6 != NULL)
+				goto parse_error;
+			v6 = av;
+			nv6 = ac;
+		}
+	}
+	if (nv4 == 0 && nv6 == 0) {
+		if (debug > 0)
+			printf("no addresses\n");
 		goto parse_error;
-	else
-		sdl_add(name, msg, av, au);
+	}
+	sdl_add(name, msg, v4, nv4, v6, nv6);
+	free(v4);
+	free(v6);
 	return (0);
 
 parse_error:
 	if (debug > 0)
-		printf("bogus config line - need 'tag;message;a/m;a/m;a/m...'\n");
+		printf("bogus config line - need 'tag;message;af;count;a/m;a/m;a/m...'\n");
+	free(v4);
+	free(v6);
 	return (-1);
 }
 

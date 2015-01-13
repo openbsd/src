@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.57 2014/11/23 21:19:47 guenther Exp $	*/
+/*	$OpenBSD: grey.c,v 1.58 2015/01/13 21:42:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -58,7 +58,7 @@ int server_lookup4(struct sockaddr_in *, struct sockaddr_in *,
 int server_lookup6(struct sockaddr_in6 *, struct sockaddr_in6 *,
     struct sockaddr_in6 *);
 
-void	configure_spamd(char **, size_t, FILE *);
+void	configure_spamd(char **, u_int, FILE *);
 int	server_lookup(struct sockaddr *, struct sockaddr *,
 	    struct sockaddr *);
 int	configure_pf(char **, int);
@@ -76,8 +76,8 @@ int	greyreader(void);
 void	greyscanner(void);
 
 
-size_t whitecount, whitealloc;
-size_t trapcount, trapalloc;
+u_int whitecount, whitealloc;
+u_int trapcount, trapalloc;
 char **whitelist;
 char **traplist;
 
@@ -137,17 +137,18 @@ sig_term_chld(int sig)
  * host hits.
  */
 void
-configure_spamd(char **addrs, size_t count, FILE *sdc)
+configure_spamd(char **addrs, u_int count, FILE *sdc)
 {
-	size_t i;
+	u_int i;
 
+	/* XXX - doesn't support IPV6 yet */
 	fprintf(sdc, "%s;", traplist_name);
 	if (count != 0) {
-		fprintf(sdc, "%s;", traplist_msg);
+		fprintf(sdc, "%s;inet;%u", traplist_msg, count);
 		for (i = 0; i < count; i++)
-			fprintf(sdc, "%s/32;", addrs[i]);
+			fprintf(sdc, ";%s/32", addrs[i]);
 	}
-	fprintf(sdc, "\n");
+	fputc('\n', sdc);
 	if (fflush(sdc) == EOF)
 		syslog_r(LOG_DEBUG, &sdata, "configure_spamd: fflush failed (%m)");
 }

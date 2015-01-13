@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.39 2014/10/09 02:43:43 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.40 2015/01/13 21:42:59 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -60,13 +60,12 @@ struct blacklist {
 	struct bl *bl;
 	size_t blc, bls;
 	u_int8_t black;
-	int count;
 };
 
 u_int32_t	 imask(u_int8_t);
 u_int8_t	 maxblock(u_int32_t, u_int8_t);
 u_int8_t	 maxdiff(u_int32_t, u_int32_t);
-struct cidr	*range2cidrlist(struct cidr *, int *, int *, u_int32_t,
+struct cidr	*range2cidrlist(struct cidr *, u_int *, u_int *, u_int32_t,
 		     u_int32_t);
 void		 cidr2range(struct cidr, u_int32_t *, u_int32_t *);
 char		*atop(u_int32_t);
@@ -78,8 +77,8 @@ char		*fix_quoted_colons(char *);
 void		 do_message(FILE *, char *);
 struct bl	*add_blacklist(struct bl *, size_t *, size_t *, gzFile, int);
 int		 cmpbl(const void *, const void *);
-struct cidr	*collapse_blacklist(struct bl *, size_t);
-int		 configure_spamd(u_short, char *, char *, struct cidr *);
+struct cidr	*collapse_blacklist(struct bl *, size_t, u_int *);
+int		 configure_spamd(u_short, char *, char *, struct cidr *, u_int);
 int		 configure_pf(struct cidr *);
 int		 getlist(char **, char *, struct blacklist *, struct blacklist *);
 __dead void	 usage(void);
@@ -95,7 +94,7 @@ imask(u_int8_t b)
 {
 	if (b == 0)
 		return (0);
-	return (0xffffffff << (32 - b));
+	return (0xffffffffU << (32 - b));
 }
 
 u_int8_t
@@ -131,7 +130,7 @@ maxdiff(u_int32_t a, u_int32_t b)
 }
 
 struct cidr *
-range2cidrlist(struct cidr *list, int *cli, int *cls, u_int32_t start,
+range2cidrlist(struct cidr *list, u_int *cli, u_int *cls, u_int32_t start,
     u_int32_t end)
 {
 	u_int8_t maxsize, diff;
@@ -536,9 +535,10 @@ cmpbl(const void *a, const void *b)
  * printable form to pfctl or spamd.
  */
 struct cidr *
-collapse_blacklist(struct bl *bl, size_t blc)
+collapse_blacklist(struct bl *bl, size_t blc, u_int *clc)
 {
-	int bs = 0, ws = 0, state=0, cli, cls, i;
+	int bs = 0, ws = 0, state=0;
+	u_int cli, cls, i;
 	u_int32_t bstart = 0;
 	struct cidr *cl;
 	int laststate;
@@ -579,12 +579,13 @@ collapse_blacklist(struct bl *bl, size_t blc)
 		laststate = state;
 	}
 	cl[cli].addr = 0;
+	*clc = cli;
 	return (cl);
 }
 
 int
 configure_spamd(u_short dport, char *name, char *message,
-    struct cidr *blacklists)
+    struct cidr *blacklists, u_int count)
 {
 	int lport = IPPORT_RESERVED - 1, s;
 	struct sockaddr_in sin;
@@ -605,8 +606,9 @@ configure_spamd(u_short dport, char *name, char *message,
 		close(s);
 		return (-1);
 	}
-	fprintf(sdc, "%s", name);
+	fputs(name, sdc);
 	do_message(sdc, message);
+	fprintf(sdc, ";inet;%u", count);
 	while (blacklists->addr != 0) {
 		fprintf(sdc, ";%s/%u", atop(blacklists->addr),
 		    blacklists->bits);
@@ -757,14 +759,15 @@ void
 send_blacklist(struct blacklist *blist, in_port_t port)
 {
 	struct cidr *cidrs;
+	u_int clc;
 
 	if (blist->blc > 0) {
-		cidrs = collapse_blacklist(blist->bl, blist->blc);
+		cidrs = collapse_blacklist(blist->bl, blist->blc, &clc);
 		if (cidrs == NULL)
 			errx(1, "malloc failed");
 		if (!dryrun) {
 			if (configure_spamd(port, blist->name,
-			    blist->message, cidrs) == -1)
+			    blist->message, cidrs, clc) == -1)
 				err(1, "Can't connect to spamd on port %d",
 				    port);
 			if (!greyonly && configure_pf(cidrs) == -1)
