@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.11 2015/01/02 11:43:15 lum Exp $ */
+/* $OpenBSD: cmode.c,v 1.12 2015/01/13 17:02:28 bcallah Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -225,7 +225,6 @@ getindent(const struct line *lp, int *curi)
 	int nparen = 0;		/* paren count */
 	int obrace = 0;		/* open brace count */
 	int cbrace = 0;		/* close brace count */
-	int contp = FALSE;	/* Continue? */
 	int firstnwsp = FALSE;	/* First nonspace encountered? */
 	int colonp = FALSE;	/* Did we see a colon? */
 	int questionp = FALSE;	/* Did we see a question mark? */
@@ -260,7 +259,6 @@ getindent(const struct line *lp, int *curi)
 		c = lgetc(lp, co);
 		/* We have a non-whitespace char */
 		if (!firstnwsp && !isspace(c)) {
-			contp = TRUE;
 			if (c == '#')
 				cppp = TRUE;
 			firstnwsp = TRUE; 
@@ -283,7 +281,6 @@ getindent(const struct line *lp, int *curi)
 		} else if (c == '{') {
 			obrace++;
 			firstnwsp = FALSE;
-			contp = FALSE;
 		} else if (c == '}') {
 			cbrace++;
 		} else if (c == '?') {
@@ -292,9 +289,6 @@ getindent(const struct line *lp, int *curi)
 			/* ignore (foo ? bar : baz) construct */
 			if (!questionp)
 				colonp = TRUE;
-		} else if (c == ';') {
-			if (nparen > 0)
-				contp = FALSE;
 		} else if (c == '/') {
 			/* first nonwhitespace? -> indent */
 			if (firstnwsp) {
