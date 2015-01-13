@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.10 2015/01/05 03:54:55 lteo Exp $
+.\" $OpenBSD: openssl.1,v 1.11 2015/01/13 14:09:54 bluhm Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: January 5 2015 $
+.Dd $Mdocdate: January 13 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6485,6 +6485,7 @@ which it can be seen agrees with the recovered value above.
 .Op Fl pause
 .Op Fl policy_check
 .Op Fl prexit
+.Op Fl proxy Ar host : Ns Ar port
 .Op Fl psk Ar key
 .Op Fl psk_identity Ar identity
 .Op Fl quiet
@@ -6628,6 +6629,17 @@ requested only after an attempt is made to access a certain URL.
 .Sy Note :
 the output produced by this option is not always accurate because a
 connection might never have been established.
+.It Fl proxy Ar host : Ns Ar port
+Use the HTTP proxy at
+.Ar host
+and
+.Ar port .
+The connection to the proxy is done in cleartext and the
+.Fl connect
+argument is given to the proxy.
+If not specified, localhost is used as final destination.
+After that, switch the connection through the proxy to the destination
+to TLS.
 .It Fl psk Ar key
 Use the PSK key
 .Ar key
