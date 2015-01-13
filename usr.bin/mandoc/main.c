@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.117 2015/01/01 13:18:23 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.118 2015/01/13 13:22:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -373,9 +373,6 @@ main(int argc, char *argv[])
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return((int)MANDOCLEVEL_BADARG);
 
-	if (use_pager && isatty(STDOUT_FILENO))
-		spawn_pager();
-
 	curp.mchars = mchars_alloc();
 	curp.mp = mparse_alloc(options, curp.wlevel, mmsg,
 	    curp.mchars, defos);
@@ -386,14 +383,23 @@ main(int argc, char *argv[])
 	if (OUTT_MAN == curp.outtype)
 		mparse_keep(curp.mp);
 
-	if (argc == 0)
+	if (argc == 0) {
+		if (use_pager && isatty(STDOUT_FILENO))
+			spawn_pager();
 		parse(&curp, STDIN_FILENO, "<stdin>", &rc);
+	}
 
 	while (argc) {
-		if (resp != NULL) {
-			rc = mparse_open(curp.mp, &fd, resp->file);
-			if (fd == -1)
-				/* nothing */;
+		rc = mparse_open(curp.mp, &fd,
+		    resp != NULL ? resp->file : *argv);
+
+		if (fd != -1) {
+			if (use_pager && isatty(STDOUT_FILENO))
+				spawn_pager();
+			use_pager = 0;
+
+			if (resp == NULL)
+				parse(&curp, fd, *argv, &rc);
 			else if (resp->form & FORM_SRC) {
 				/* For .so only; ignore failure. */
 				chdir(paths.paths[resp->ipath]);
@@ -401,21 +407,23 @@ main(int argc, char *argv[])
 			} else
 				rc = passthrough(resp->file, fd,
 				    synopsis_only);
-			resp++;
-		} else {
-			rc = mparse_open(curp.mp, &fd, *argv++);
-			if (fd != -1)
-				parse(&curp, fd, argv[-1], &rc);
-		}
 
-		if (mparse_wait(curp.mp) != MANDOCLEVEL_OK)
-			rc = MANDOCLEVEL_SYSERR;
+			if (mparse_wait(curp.mp) != MANDOCLEVEL_OK)
+				rc = MANDOCLEVEL_SYSERR;
+
+			if (argc > 1 && curp.outtype <= OUTT_UTF8)
+				ascii_sepline(curp.outdata);
+		}
 
 		if (MANDOCLEVEL_OK != rc && curp.wstop)
 			break;
 
-		if (--argc && curp.outtype <= OUTT_UTF8)
-			ascii_sepline(curp.outdata);
+		if (resp != NULL)
+			resp++;
+		else
+			argv++;
+		if (--argc)
+			mparse_reset(curp.mp);
 	}
 
 	if (curp.outfree)
@@ -579,10 +587,7 @@ parse(struct curparse *curp, int fd, const char *file,
 	if (mdoc && curp->outmdoc)
 		(*curp->outmdoc)(curp->outdata, mdoc);
 
- cleanup:
-
-	mparse_reset(curp->mp);
-
+cleanup:
 	if (*level < rc)
 		*level = rc;
 }
