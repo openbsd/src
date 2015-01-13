@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.120 2015/01/13 21:49:36 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.121 2015/01/13 23:22:33 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -290,17 +290,19 @@ parse_configline(char *line)
 			av[au] = tmp;
 		}
 		if (af == AF_INET) {
-			if (debug > 0)
-				printf("duplicate inet\n");
-			if (v4 != NULL)
+			if (v4 != NULL) {
+				if (debug > 0)
+					printf("duplicate inet\n");
 				goto parse_error;
+			}
 			v4 = av;
 			nv4 = ac;
 		} else {
-			if (debug > 0)
-				printf("duplicate inet6\n");
-			if (v6 != NULL)
+			if (v6 != NULL) {
+				if (debug > 0)
+					printf("duplicate inet6\n");
 				goto parse_error;
+			}
 			v6 = av;
 			nv6 = ac;
 		}
