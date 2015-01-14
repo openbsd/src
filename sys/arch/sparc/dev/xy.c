@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.62 2015/01/14 19:01:00 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.63 2015/01/14 19:02:59 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ extern int pil_to_vme[];	/* from obio.c */
 /* internals */
 struct xy_iopb *xyc_chain(struct xyc_softc *, struct xy_iorq *);
 int	xyc_cmd(struct xyc_softc *, int, int, int, int, int, char *, int);
-char   *xyc_e2str(int);
+const char *xyc_e2str(int);
 int	xyc_entoact(int);
 int	xyc_error(struct xyc_softc *, struct xy_iorq *,
 		   struct xy_iopb *, int);
@@ -742,19 +742,6 @@ xydump(dev, blkno, va, size)
 	    'a' + part);
 
 	return ENXIO;
-
-	/* outline: globals: "dumplo" == sector number of partition to start
-	 * dump at (convert to physical sector with partition table)
-	 * "dumpsize" == size of dump in clicks "physmem" == size of physical
-	 * memory (clicks, ptoa() to get bytes) (normal case: dumpsize ==
-	 * physmem)
-	 *
-	 * dump a copy of physical memory to the dump device starting at sector
-	 * "dumplo" in the swap partition (make sure > 0).   map in pages as
-	 * we go.   use polled I/O.
-	 *
-	 * XXX how to handle NON_CONTIG? */
-
 }
 
 /*
@@ -1926,7 +1913,7 @@ xyc_tick(arg)
 /*
  * xyc_e2str: convert error code number into an error string
  */
-char *
+const char *
 xyc_e2str(no)
 	int     no;
 {

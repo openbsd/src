@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.65 2015/01/14 19:01:00 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.66 2015/01/14 19:02:59 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ extern int pil_to_vme[];	/* from obio.c */
 
 /* internals */
 int	xdc_cmd(struct xdc_softc *, int, int, int, int, int, char *, int);
-char   *xdc_e2str(int);
+const char *xdc_e2str(int);
 int	xdc_error(struct xdc_softc *, struct xd_iorq *,
 		   struct xd_iopb *, int, int);
 void	xdc_perror(struct xd_iorq *, struct xd_iopb *, int);
@@ -785,19 +785,6 @@ xddump(dev, blkno, va, size)
 	    'a' + part);
 
 	return ENXIO;
-
-	/* outline: globals: "dumplo" == sector number of partition to start
-	 * dump at (convert to physical sector with partition table)
-	 * "dumpsize" == size of dump in clicks "physmem" == size of physical
-	 * memory (clicks, ptoa() to get bytes) (normal case: dumpsize ==
-	 * physmem)
-	 *
-	 * dump a copy of physical memory to the dump device starting at sector
-	 * "dumplo" in the swap partition (make sure > 0).   map in pages as
-	 * we go.   use polled I/O.
-	 *
-	 * XXX how to handle NON_CONTIG? */
-
 }
 
 /*
@@ -2117,7 +2104,7 @@ xdc_tick(arg)
 /*
  * xdc_e2str: convert error code number into an error string
  */
-char *
+const char *
 xdc_e2str(no)
 	int     no;
 {
