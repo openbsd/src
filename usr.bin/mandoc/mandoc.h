@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.119 2014/12/16 23:44:16 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.120 2015/01/14 17:45:25 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -177,16 +177,9 @@ enum	mandocerr {
 
 	/* ===== system errors ===== */
 
-	MANDOCERR_SYSDUP, /* cannot dup file descriptor */
-	MANDOCERR_SYSEXEC, /* cannot exec */
 	MANDOCERR_SYSEXIT, /* gunzip failed with code */
-	MANDOCERR_SYSFORK, /* cannot fork */
 	MANDOCERR_SYSOPEN, /* cannot open file */
-	MANDOCERR_SYSPIPE, /* cannot open pipe */
-	MANDOCERR_SYSREAD, /* cannot read file */
 	MANDOCERR_SYSSIG, /* gunzip died from signal */
-	MANDOCERR_SYSSTAT, /* cannot stat file */
-	MANDOCERR_SYSWAIT, /* wait failed */
 
 	MANDOCERR_MAX
 };
