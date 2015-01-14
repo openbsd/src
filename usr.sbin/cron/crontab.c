@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.66 2015/01/14 17:27:13 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.67 2015/01/14 17:27:29 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -43,7 +43,7 @@ static char	*getoptargs = "u:lerx:";
 static char	*getoptargs = "u:ler";
 #endif
 
-static	PID_T		Pid;
+static	pid_t		Pid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
 static	char		Filename[MAX_FNAME], TempFilename[MAX_FNAME];
 static	FILE		*NewCrontab;

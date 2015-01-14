@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.13 2015/01/14 17:27:13 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.14 2015/01/14 17:27:30 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -61,11 +61,6 @@
 #if defined(BSD_AUTH)
 # include <bsd_auth.h>
 #endif /*BSD_AUTH*/
-
-#define DIR_T	struct dirent
-#define WAIT_T	int
-#define SIG_T	sig_t
-#define PID_T	pid_t
 
 #ifndef TZNAME_ALREADY_DEFINED
 extern char *tzname[2];

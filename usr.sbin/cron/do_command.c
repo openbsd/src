@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.38 2013/11/23 18:23:00 deraadt Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.39 2015/01/14 17:27:30 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -484,8 +484,8 @@ child_process(entry *e, user *u) {
 	/* wait for children to die.
 	 */
 	for (; children > 0; children--) {
-		WAIT_T waiter;
-		PID_T pid;
+		int waiter;
+		pid_t pid;
 
 		Debug(DPROC, ("[%ld] waiting for grandchild #%d to finish\n",
 			      (long)getpid(), children))

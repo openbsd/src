@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.20 2013/11/23 19:18:52 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.21 2015/01/14 17:27:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -233,7 +233,7 @@ run_job(atjob *job, char *atfile)
 	pid_t pid;
 	long nuid, ngid;
 	FILE *fp;
-	WAIT_T waiter;
+	int waiter;
 	size_t nread;
 	char *cp, *ep, mailto[MAX_UNAME], buf[BUFSIZ];
 	int fd, always_mail;
