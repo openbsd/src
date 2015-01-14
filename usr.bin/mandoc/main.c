@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.119 2015/01/13 23:16:12 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.120 2015/01/14 21:27:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 	size_t		 isec, i, sz;
 	int		 prio, best_prio, synopsis_only;
 	char		 sec;
-	enum mandoclevel rc;
+	enum mandoclevel rc, rctmp;
 	enum outmode	 outmode;
 	int		 fd;
 	int		 show_usage;
@@ -397,8 +397,10 @@ main(int argc, char *argv[])
 	}
 
 	while (argc) {
-		rc = mparse_open(curp.mp, &fd,
+		rctmp = mparse_open(curp.mp, &fd,
 		    resp != NULL ? resp->file : *argv);
+		if (rc < rctmp)
+			rc = rctmp;
 
 		if (fd != -1) {
 			if (use_pager && isatty(STDOUT_FILENO))
@@ -411,12 +413,16 @@ main(int argc, char *argv[])
 				/* For .so only; ignore failure. */
 				chdir(paths.paths[resp->ipath]);
 				parse(&curp, fd, resp->file, &rc);
-			} else
-				rc = passthrough(resp->file, fd,
+			} else {
+				rctmp = passthrough(resp->file, fd,
 				    synopsis_only);
+				if (rc < rctmp)
+					rc = rctmp;
+			}
 
-			if (mparse_wait(curp.mp) != MANDOCLEVEL_OK)
-				rc = MANDOCLEVEL_SYSERR;
+			rctmp = mparse_wait(curp.mp);
+			if (rc < rctmp)
+				rc = rctmp;
 
 			if (argc > 1 && curp.outtype <= OUTT_UTF8)
 				ascii_sepline(curp.outdata);
