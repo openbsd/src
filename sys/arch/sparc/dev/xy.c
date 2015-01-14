@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.64 2015/01/14 21:13:46 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.65 2015/01/14 21:14:49 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1897,8 +1897,10 @@ xyc_tick(arg)
 		    XY_STATE(xycsc->reqs[lcv].mode) == XY_SUB_DONE)
 			continue;
 		xycsc->reqs[lcv].ttl--;
-		if (xycsc->reqs[lcv].ttl == 0)
+		if (xycsc->reqs[lcv].ttl == 0) {
 			reset = 1;
+			break;	/* we're going to fail all requests anyway */
+		}
 	}
 	if (reset) {
 		printf("%s: watchdog timeout\n", xycsc->sc_dev.dv_xname);

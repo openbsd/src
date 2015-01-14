@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.67 2015/01/14 21:13:46 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.68 2015/01/14 21:14:49 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -2088,8 +2088,10 @@ xdc_tick(arg)
 		    XD_STATE(xdcsc->reqs[lcv].mode) == XD_SUB_DONE)
 			continue;
 		xdcsc->reqs[lcv].ttl--;
-		if (xdcsc->reqs[lcv].ttl == 0)
+		if (xdcsc->reqs[lcv].ttl == 0) {
 			reset = 1;
+			break;	/* we're going to fail all requests anyway */
+		}
 	}
 	if (reset) {
 		printf("%s: watchdog timeout\n", xdcsc->sc_dev.dv_xname);
