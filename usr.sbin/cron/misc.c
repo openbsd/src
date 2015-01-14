@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.48 2014/10/26 22:16:16 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.49 2015/01/14 17:27:13 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -125,17 +125,10 @@ set_debug_flags(const char *flags) {
 
 void
 set_cron_uid(void) {
-#if defined(BSD) || defined(POSIX)
 	if (seteuid(ROOT_UID) < OK) {
 		perror("seteuid");
 		exit(EXIT_FAILURE);
 	}
-#else
-	if (setuid(ROOT_UID) < OK) {
-		perror("setuid");
-		exit(EXIT_FAILURE);
-	}
-#endif
 }
 
 void
@@ -493,11 +486,7 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 
 #if defined(SYSLOG)
 	if (!syslog_open) {
-# ifdef LOG_DAEMON
 		openlog(ProgramName, LOG_PID, FACILITY);
-# else
-		openlog(ProgramName, LOG_PID);
-# endif
 		syslog_open = TRUE;		/* assume openlog success */
 	}
 
@@ -650,14 +639,9 @@ arpadate(clock)
 }
 #endif /*MAIL_DATE*/
 
-#ifdef HAVE_SAVED_UIDS
 static gid_t save_egid;
 int swap_gids() { save_egid = getegid(); return (setegid(getgid())); }
 int swap_gids_back() { return (setegid(save_egid)); }
-#else /*HAVE_SAVED_UIDS*/
-int swap_gids() { return (setregid(getegid(), getgid())); }
-int swap_gids_back() { return (swap_gids()); }
-#endif /*HAVE_SAVED_UIDS*/
 
 /* Return the offset from GMT in seconds (algorithm taken from sendmail).
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.65 2014/11/26 18:34:52 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.66 2015/01/14 17:27:13 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -143,7 +143,7 @@ parse_args(int argc, char *argv[]) {
 			break;
 #endif
 		case 'u':
-			if (MY_UID(pw) != ROOT_UID) {
+			if (getuid() != ROOT_UID) {
 				fprintf(stderr,
 					"must be privileged to use -u\n");
 				exit(EXIT_FAILURE);
@@ -553,21 +553,12 @@ replace_cmd(void) {
 		goto done;
 	}
 
-#ifdef HAVE_FCHOWN
 	if (fchown(fileno(tmp), pw->pw_uid, -1) < OK) {
 		perror("fchown");
 		fclose(tmp);
 		error = -2;
 		goto done;
 	}
-#else
-	if (chown(TempFilename, pw->pw_uid, -1) < OK) {
-		perror("chown");
-		fclose(tmp);
-		error = -2;
-		goto done;
-	}
-#endif
 
 	if (fclose(tmp) == EOF) {
 		perror("fclose");
