@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.40 2015/01/14 17:27:51 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.41 2015/01/14 17:30:53 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -400,7 +400,7 @@ child_process(entry *e, user *u) {
 			if (mailto) {
 				char	**env;
 				char	mailcmd[MAX_COMMAND];
-				char	hostname[MAXHOSTNAMELEN];
+				char	hostname[HOST_NAME_MAX + 1];
 
 				gethostname(hostname, sizeof(hostname));
 				if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,

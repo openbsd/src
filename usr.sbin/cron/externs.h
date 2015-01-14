@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.14 2015/01/14 17:27:30 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.15 2015/01/14 17:30:53 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -23,7 +23,6 @@
 
 /* reorder these #include's at your peril */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -38,6 +37,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>

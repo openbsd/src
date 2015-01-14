@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.20 2015/01/14 17:27:29 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.21 2015/01/14 17:30:53 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -92,7 +92,7 @@ load_database(cron_db *old_db) {
 	}
 
 	while (NULL != (dp = readdir(dir))) {
-		char fname[MAXNAMLEN+1], tabname[MAXNAMLEN];
+		char fname[NAME_MAX+1], tabname[MAX_FNAME];
 
 		/* avoid file names beginning with ".".  this is good
 		 * because we would otherwise waste two guaranteed calls

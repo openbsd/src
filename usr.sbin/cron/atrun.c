@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.22 2015/01/14 17:27:51 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.23 2015/01/14 17:30:53 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -526,7 +526,7 @@ run_job(atjob *job, char *atfile)
 		size_t	bytes = 0;
 		int	status = 0;
 		char	mailcmd[MAX_COMMAND];
-		char	hostname[MAXHOSTNAMELEN];
+		char	hostname[HOST_NAME_MAX + 1];
 
 		Debug(DPROC|DEXT, ("[%ld] got data from grandchild\n",
 		    (long)getpid()))

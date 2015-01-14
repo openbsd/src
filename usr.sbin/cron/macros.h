@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.8 2013/11/23 18:06:49 deraadt Exp $	*/
+/*	$OpenBSD: macros.h,v 1.9 2015/01/14 17:30:53 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -57,10 +57,6 @@
 #define	DTEST		0x0040	/* test mode: don't execute any commands */
 
 #define	PPC_NULL	((const char **)NULL)
-
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 64
-#endif
 
 #define	Skip_Blanks(c, f) \
 			while (c == '\t' || c == ' ') \
