@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.66 2015/01/14 19:02:59 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.67 2015/01/14 21:13:46 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -266,15 +266,16 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
  * start: disk label fix code (XXX)
  */
 
-static void *xd_labeldata;
-
 static void
 xddummystrat(bp)
 	struct buf *bp;
 {
+	struct xd_softc *xd;
+
+	xd = (struct xd_softc *)xd_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
-	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
+	bcopy(xd->xd_labeldata, bp->b_data, XDFM_BPS);
 	bp->b_flags |= B_DONE;
 }
 
@@ -299,7 +300,7 @@ xdgetdisklabel(xd, b)
 	lp->d_type = DTYPE_SMD;
 
 	/* We already have the label data in `b'; setup for dummy strategy */
-	xd_labeldata = b;
+	xd->xd_labeldata = b;
 
 	error = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
 	    xddummystrat, lp, 0);

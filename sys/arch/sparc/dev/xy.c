@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.63 2015/01/14 19:02:59 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.64 2015/01/14 21:13:46 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -204,15 +204,16 @@ struct xyc_attach_args {	/* this is the "aux" args to xyattach */
  * start: disk label fix code (XXX)
  */
 
-static void *xy_labeldata;
-
 static void
 xydummystrat(bp)
 	struct buf *bp;
 {
+	struct xy_softc *xy;
+       
+	xy = (struct xy_softc *)xy_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
-	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
+	bcopy(xy->xy_labeldata, bp->b_data, XYFM_BPS);
 	bp->b_flags |= B_DONE;
 }
 
@@ -237,7 +238,7 @@ xygetdisklabel(xy, b)
 	lp->d_type = DTYPE_SMD;
 
 	/* We already have the label data in `b'; setup for dummy strategy */
-	xy_labeldata = b;
+	xy->xy_labeldata = b;
 
 	error = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
 	    xydummystrat, lp, 0);

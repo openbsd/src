@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdvar.h,v 1.8 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: xdvar.h,v 1.9 2015/01/14 21:13:46 miod Exp $	*/
 /*	$NetBSD: xdvar.h,v 1.5 1996/03/31 22:38:56 pk Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ struct xd_softc {
   u_char nhead;                    /* number of heads */
   u_char nsect;                    /* number of sectors per track */
   u_char hw_spt;                   /* as above, but includes spare sectors */
+  void *xd_labeldata;              /* temporary sector buffer */
   struct dkbad dkb;                /* bad144 sectors */
 };
 
