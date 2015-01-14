@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.61 2015/01/13 20:40:11 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.62 2015/01/14 19:01:00 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 
 #include <sparc/dev/xyreg.h>
 #include <sparc/dev/xyvar.h>
-#include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
 
 /*
@@ -145,7 +144,6 @@ char   *xyc_e2str(int);
 int	xyc_entoact(int);
 int	xyc_error(struct xyc_softc *, struct xy_iorq *,
 		   struct xy_iopb *, int);
-int	xyc_ioctlcmd(struct xy_softc *, dev_t dev, struct xd_iocmd *);
 void	xyc_perror(struct xy_iorq *, struct xy_iopb *, int);
 int	xyc_piodriver(struct xyc_softc *, struct xy_iorq *);
 int	xyc_remove_iorq(struct xyc_softc *);
@@ -772,7 +770,6 @@ xyioctl(dev, command, addr, flag, p)
 
 {
 	struct xy_softc *xy;
-	struct xd_iocmd *xio;
 	int     error, s, unit;
 
 	unit = DISKUNIT(dev);
@@ -825,12 +822,6 @@ xyioctl(dev, command, addr, flag, p)
 			}
 		}
 		return error;
-
-	case DIOSXDCMD:
-		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p, 0)) != 0)
-			return (error);
-		return (xyc_ioctlcmd(xy, dev, xio));
 
 	default:
 		return ENOTTY;
@@ -1930,87 +1921,6 @@ xyc_tick(arg)
 	/* until next time */
 
 	timeout_add(&xycsc->xyc_tick_tmo, XYC_TICKCNT);
-}
-
-/*
- * xyc_ioctlcmd: this function provides a user level interface to the
- * controller via ioctl.   this allows "format" programs to be written
- * in user code, and is also useful for some debugging.   we return
- * an error code.   called at user priority.
- *
- * XXX missing a few commands (see the 7053 driver for ideas)
- */
-int
-xyc_ioctlcmd(xy, dev, xio)
-	struct xy_softc *xy;
-	dev_t   dev;
-	struct xd_iocmd *xio;
-
-{
-	int     s, err, rqno, dummy = 0;
-	caddr_t dvmabuf = NULL, buf = NULL;
-	struct xyc_softc *xycsc;
-
-	/* check sanity of requested command */
-
-	switch (xio->cmd) {
-
-	case XYCMD_NOP:	/* no op: everything should be zero */
-		if (xio->subfn || xio->dptr || xio->dlen ||
-		    xio->block || xio->sectcnt)
-			return (EINVAL);
-		break;
-
-	case XYCMD_RD:		/* read / write sectors (up to XD_IOCMD_MAXS) */
-	case XYCMD_WR:
-		if (xio->subfn || xio->sectcnt > XD_IOCMD_MAXS ||
-		    xio->sectcnt * XYFM_BPS != xio->dlen || xio->dptr == NULL)
-			return (EINVAL);
-		break;
-
-	case XYCMD_SK:		/* seek: doesn't seem useful to export this */
-		return (EINVAL);
-
-		break;
-
-	default:
-		return (EINVAL);/* ??? */
-	}
-
-	/* create DVMA buffer for request if needed */
-
-	if (xio->dlen) {
-		dvmabuf = dvma_malloc(xio->dlen, &buf, M_WAITOK);
-		if (xio->cmd == XYCMD_WR) {
-			if ((err = copyin(xio->dptr, buf, xio->dlen)) != 0) {
-				dvma_free(dvmabuf, xio->dlen, &buf);
-				return (err);
-			}
-		}
-	}
-	/* do it! */
-
-	err = 0;
-	xycsc = xy->parent;
-	s = splbio();
-	rqno = xyc_cmd(xycsc, xio->cmd, xio->subfn, xy->xy_drive, xio->block,
-	    xio->sectcnt, dvmabuf, XY_SUB_WAIT);
-	if (rqno == XY_ERR_FAIL) {
-		err = EIO;
-		goto done;
-	}
-	xio->errno = xycsc->ciorq->errno;
-	xio->tries = xycsc->ciorq->tries;
-	XYC_DONE(xycsc, dummy);
-
-	if (xio->cmd == XYCMD_RD)
-		err = copyout(buf, xio->dptr, xio->dlen);
-
-done:
-	splx(s);
-	if (dvmabuf)
-		dvma_free(dvmabuf, xio->dlen, &buf);
-	return (err);
 }
 
 /*

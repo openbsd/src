@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.64 2015/01/13 20:40:11 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.65 2015/01/14 19:01:00 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -81,7 +81,6 @@
 
 #include <sparc/dev/xdreg.h>
 #include <sparc/dev/xdvar.h>
-#include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 
@@ -208,7 +207,6 @@ int	xdc_cmd(struct xdc_softc *, int, int, int, int, int, char *, int);
 char   *xdc_e2str(int);
 int	xdc_error(struct xdc_softc *, struct xd_iorq *,
 		   struct xd_iopb *, int, int);
-int	xdc_ioctlcmd(struct xd_softc *, dev_t dev, struct xd_iocmd *);
 void	xdc_perror(struct xd_iorq *, struct xd_iopb *, int);
 int	xdc_piodriver(struct xdc_softc *, int, int);
 int	xdc_remove_iorq(struct xdc_softc *);
@@ -815,7 +813,6 @@ xdioctl(dev, command, addr, flag, p)
 
 {
 	struct xd_softc *xd;
-	struct xd_iocmd *xio;
 	int     error, s, unit;
 
 	unit = DISKUNIT(dev);
@@ -868,12 +865,6 @@ xdioctl(dev, command, addr, flag, p)
 			}
 		}
 		return error;
-
-	case DIOSXDCMD:
-		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p, 0)) != 0)
-			return (error);
-		return (xdc_ioctlcmd(xd, dev, xio));
 
 	default:
 		return ENOTTY;
@@ -2121,137 +2112,6 @@ xdc_tick(arg)
 	/* until next time */
 
 	timeout_add(&xdcsc->xdc_tick_tmo, XDC_TICKCNT);
-}
-
-/*
- * xdc_ioctlcmd: this function provides a user level interface to the
- * controller via ioctl.   this allows "format" programs to be written
- * in user code, and is also useful for some debugging.   we return
- * an error code.   called at user priority.
- */
-int
-xdc_ioctlcmd(xd, dev, xio)
-	struct xd_softc *xd;
-	dev_t   dev;
-	struct xd_iocmd *xio;
-
-{
-	int     s, err, rqno, dummy;
-	caddr_t dvmabuf = NULL, buf = NULL;
-	struct xdc_softc *xdcsc;
-
-	/* check sanity of requested command */
-
-	switch (xio->cmd) {
-
-	case XDCMD_NOP:	/* no op: everything should be zero */
-		if (xio->subfn || xio->dptr || xio->dlen ||
-		    xio->block || xio->sectcnt)
-			return (EINVAL);
-		break;
-
-	case XDCMD_RD:		/* read / write sectors (up to XD_IOCMD_MAXS) */
-	case XDCMD_WR:
-		if (xio->subfn || xio->sectcnt > XD_IOCMD_MAXS ||
-		    xio->sectcnt * XDFM_BPS != xio->dlen || xio->dptr == NULL)
-			return (EINVAL);
-		break;
-
-	case XDCMD_SK:		/* seek: doesn't seem useful to export this */
-		return (EINVAL);
-
-	case XDCMD_WRP:	/* write parameters */
-		return (EINVAL);/* not useful, except maybe drive
-				 * parameters... but drive parameters should
-				 * go via disklabel changes */
-
-	case XDCMD_RDP:	/* read parameters */
-		if (xio->subfn != XDFUN_DRV ||
-		    xio->dlen || xio->block || xio->dptr)
-			return (EINVAL);	/* allow read drive params to
-						 * get hw_spt */
-		xio->sectcnt = xd->hw_spt;	/* we already know the answer */
-		return (0);
-		break;
-
-	case XDCMD_XRD:	/* extended read/write */
-	case XDCMD_XWR:
-
-		switch (xio->subfn) {
-
-		case XDFUN_THD:/* track headers */
-			if (xio->sectcnt != xd->hw_spt ||
-			    (xio->block % xd->nsect) != 0 ||
-			    xio->dlen != XD_IOCMD_HSZ * xd->hw_spt ||
-			    xio->dptr == NULL)
-				return (EINVAL);
-			xio->sectcnt = 0;
-			break;
-
-		case XDFUN_FMT:/* NOTE: also XDFUN_VFY */
-			if (xio->cmd == XDCMD_XRD)
-				return (EINVAL);	/* no XDFUN_VFY */
-			if (xio->sectcnt || xio->dlen ||
-			    (xio->block % xd->nsect) != 0 || xio->dptr)
-				return (EINVAL);
-			break;
-
-		case XDFUN_HDR:/* header, header verify, data, data ECC */
-			return (EINVAL);	/* not yet */
-
-		case XDFUN_DM:	/* defect map */
-		case XDFUN_DMX:/* defect map (alternate location) */
-			if (xio->sectcnt || xio->dlen != XD_IOCMD_DMSZ ||
-			    (xio->block % xd->nsect) != 0 || xio->dptr == NULL)
-				return (EINVAL);
-			break;
-
-		default:
-			return (EINVAL);
-		}
-		break;
-
-	case XDCMD_TST:	/* diagnostics */
-		return (EINVAL);
-
-	default:
-		return (EINVAL);/* ??? */
-	}
-
-	/* create DVMA buffer for request if needed */
-
-	if (xio->dlen) {
-		dvmabuf = dvma_malloc(xio->dlen, &buf, M_WAITOK);
-		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
-			if ((err = copyin(xio->dptr, buf, xio->dlen)) != 0) {
-				dvma_free(dvmabuf, xio->dlen, &buf);
-				return (err);
-			}
-		}
-	}
-	/* do it! */
-
-	err = 0;
-	xdcsc = xd->parent;
-	s = splbio();
-	rqno = xdc_cmd(xdcsc, xio->cmd, xio->subfn, xd->xd_drive, xio->block,
-	    xio->sectcnt, dvmabuf, XD_SUB_WAIT);
-	if (rqno == XD_ERR_FAIL) {
-		err = EIO;
-		goto done;
-	}
-	xio->errno = xdcsc->reqs[rqno].errno;
-	xio->tries = xdcsc->reqs[rqno].tries;
-	XDC_DONE(xdcsc, rqno, dummy);
-
-	if (xio->cmd == XDCMD_RD || xio->cmd == XDCMD_XRD)
-		err = copyout(buf, xio->dptr, xio->dlen);
-
-done:
-	splx(s);
-	if (dvmabuf)
-		dvma_free(dvmabuf, xio->dlen, &buf);
-	return (err);
 }
 
 /*
