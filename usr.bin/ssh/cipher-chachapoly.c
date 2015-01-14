@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: cipher-chachapoly.c,v 1.6 2014/07/03 12:42:16 jsing Exp $ */
+/* $OpenBSD: cipher-chachapoly.c,v 1.7 2015/01/14 10:24:42 markus Exp $ */
 
 #include <sys/types.h>
 #include <stdarg.h> /* needed for log.h */
@@ -114,4 +114,3 @@ chachapoly_get_length(struct chachapoly_ctx *ctx,
 	*plenp = PEEK_U32(buf);
 	return 0;
 }
-
