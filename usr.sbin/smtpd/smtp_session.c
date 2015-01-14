@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.224 2015/01/11 18:25:54 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.225 2015/01/14 08:50:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -315,7 +315,9 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 			has_domain = 1;
 		if (buffer[i] == ':' && !escape && !comment && !quote)
 			has_group = 1;
-		if (! isspace(buffer[i]))
+
+		/* update insert point if not in comment and not on a whitespace */
+		if (!comment && buffer[i] != ')' && !isspace((unsigned char)buffer[i]))
 			pos_component = i;
 	}
 
@@ -334,7 +336,7 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 	/* there's an address between brackets, just append domain */
 	if (has_bracket) {
 		pos_bracket--;
-		while (isspace(buffer[pos_bracket]))
+		while (isspace((unsigned char)buffer[pos_bracket]))
 			pos_bracket--;
 		if (buffer[pos_bracket] == '<')
 			return;
@@ -345,7 +347,8 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 		pos_insert = pos_component + 1;
 
 		/* empty address */
-                if (buffer[pos_component] == '\0' || isspace(buffer[pos_component]))
+                if (buffer[pos_component] == '\0' ||
+		    isspace((unsigned char)buffer[pos_component]))
                         return;
 	}
 
@@ -507,6 +510,21 @@ smtp_session(struct listener *listener, int sock,
 
 	(void)strlcpy(s->smtpname, listener->hostname, sizeof(s->smtpname));
 
+	/* Setup parser and callbacks before smtp_connected() can be called */
+	rfc2822_parser_init(&s->rfc2822_parser);
+	rfc2822_header_default_callback(&s->rfc2822_parser,
+	    header_default_callback, s);
+	rfc2822_header_callback(&s->rfc2822_parser, "bcc",
+	    header_bcc_callback, s);
+	rfc2822_header_callback(&s->rfc2822_parser, "from",
+	    header_masquerade_callback, s);
+	rfc2822_header_callback(&s->rfc2822_parser, "to",
+	    header_masquerade_callback, s);
+	rfc2822_header_callback(&s->rfc2822_parser, "cc",
+	    header_masquerade_callback, s);
+	rfc2822_body_callback(&s->rfc2822_parser,
+	    dataline_callback, s);
+
 	/* For local enqueueing, the hostname is already set */
 	if (hostname) {
 		s->flags |= SF_AUTHENTICATED;
@@ -524,19 +542,7 @@ smtp_session(struct listener *listener, int sock,
 		tree_xset(&wait_lka_ptr, s->id, s);
 	}
 
-	rfc2822_parser_init(&s->rfc2822_parser);
-	rfc2822_header_default_callback(&s->rfc2822_parser,
-	    header_default_callback, s);
-	rfc2822_header_callback(&s->rfc2822_parser, "bcc",
-	    header_bcc_callback, s);
-	rfc2822_header_callback(&s->rfc2822_parser, "from",
-	    header_masquerade_callback, s);
-	rfc2822_header_callback(&s->rfc2822_parser, "to",
-	    header_masquerade_callback, s);
-	rfc2822_header_callback(&s->rfc2822_parser, "cc",
-	    header_masquerade_callback, s);
-	rfc2822_body_callback(&s->rfc2822_parser,
-	    dataline_callback, s);
+	/* session may have been freed by now */
 
 	return (0);
 }
