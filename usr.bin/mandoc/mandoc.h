@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.120 2015/01/14 17:45:25 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.121 2015/01/14 22:02:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -147,6 +147,7 @@ enum	mandocerr {
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 
 	/* related to document structure and macros */
+	MANDOCERR_FILE, /* cannot open file */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character: number */
 	MANDOCERR_MACRO, /* skipping unknown macro: macro */
@@ -174,12 +175,6 @@ enum	mandocerr {
 	MANDOCERR_TOOLARGE, /* input too large */
 	MANDOCERR_SO_PATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
 	MANDOCERR_SO_FAIL, /* .so request failed */
-
-	/* ===== system errors ===== */
-
-	MANDOCERR_SYSEXIT, /* gunzip failed with code */
-	MANDOCERR_SYSOPEN, /* cannot open file */
-	MANDOCERR_SYSSIG, /* gunzip died from signal */
 
 	MANDOCERR_MAX
 };

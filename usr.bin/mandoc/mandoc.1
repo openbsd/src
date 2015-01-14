@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mandoc.1,v 1.70 2014/12/28 14:39:08 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.71 2015/01/14 22:02:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2014 $
+.Dd $Mdocdate: January 14 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -543,8 +543,8 @@ A fatal parsing error occurred.
 Invalid command line arguments were specified.
 No input files have been read.
 .It 6
-An operating system error occurred, for example memory exhaustion or an
-error accessing input files.
+An operating system error occurred, for example exhaustion
+of memory, file descriptors, or process table entries.
 Such errors cause
 .Nm
 to exit at once, possibly in the middle of parsing or formatting a file.
@@ -603,9 +603,6 @@ fields.
 .Pp
 Message levels have the following meanings:
 .Bl -tag -width "warning"
-.It Cm syserr
-Opening or reading an input file failed, so the parser cannot
-even be started and no output is produced from that input file.
 .It Cm fatal
 The parser is unable to parse a given input file at all.
 No formatted output is produced from that input file.
@@ -619,6 +616,12 @@ the parser is able to continue, and the error does not prevent
 generation of formatted output, but typically, preparing that
 output involves information loss, broken document structure
 or unintended formatting.
+.Pp
+Non-existent or unreadable input files are also reported on the
+.Cm error
+level.
+In that case, the parser cannot even be started and no output
+is produced from those input files.
 .It Cm warning
 An input file uses obsolete, discouraged or non-portable syntax.
 All the same, the meaning of the input is unambiguous and a correct
@@ -632,7 +635,8 @@ Messages of the
 .Cm warning
 and
 .Cm error
-levels are hidden unless their level, or a lower level, is requested using a
+levels except those about non-existent or unreadable input files
+are hidden unless their level, or a lower level, is requested using a
 .Fl W
 option or
 .Fl T Ns Cm lint
