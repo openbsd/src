@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.24 2014/10/08 04:20:57 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.25 2015/01/14 18:28:15 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 
 char **
 env_init(void) {
-	char **p = (char **) malloc(sizeof(char **));
+	char **p = malloc(sizeof(char **));
 
 	if (p != NULL)
 		p[0] = NULL;
@@ -48,7 +48,7 @@ env_copy(char **envp) {
 
 	for (count = 0; envp[count] != NULL; count++)
 		continue;
-	p = (char **) calloc(count+1, sizeof(char *));  /* 1 for the NULL */
+	p = reallocarray(NULL, count+1, sizeof(char *));  /* 1 for the NULL */
 	if (p != NULL) {
 		for (i = 0; i < count; i++)
 			if ((p[i] = strdup(envp[i])) == NULL) {
