@@ -1,4 +1,4 @@
-/* $OpenBSD: radioio.h,v 1.4 2006/02/05 23:52:57 jakemsr Exp $ */
+/* $OpenBSD: radioio.h,v 1.5 2015/01/14 21:15:36 deraadt Exp $ */
 /* $RuOBSD: radioio.h,v 1.4 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -30,7 +30,7 @@
 #ifndef _SYS_RADIOIO_H_
 #define _SYS_RADIOIO_H_
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #define MIN_FM_FREQ	87500
 #define MAX_FM_FREQ	108000
