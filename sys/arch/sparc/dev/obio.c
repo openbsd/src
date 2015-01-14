@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.22 2010/09/05 18:10:10 kettenis Exp $	*/
+/*	$OpenBSD: obio.c,v 1.23 2015/01/14 21:35:43 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -629,6 +629,11 @@ vmeintr_establish(vec, level, ih, ipl_block, name)
 		for (ihs = vmeints[vec]; ihs->ih_next; ihs = ihs->ih_next)
 			;
 		ihs->ih_next = ih;
+	}
+
+	if (name != NULL) {
+		ih->ih_vec = vec;
+		evcount_attach(&ih->ih_count, name, &ih->ih_vec);
 	}
 
 	/* ensure the interrupt subsystem will call us at this level */
