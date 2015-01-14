@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.25 2015/01/13 19:04:35 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.26 2015/01/14 15:02:39 djm Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,6 +35,7 @@
 #include "misc.h"
 #include "log.h"
 #include "digest.h"
+#include "bitmap.h"
 
 #include "krl.h"
 
@@ -517,6 +518,25 @@ choose_next_state(int current_state, u_int64_t contig, int final,
 	return new_state;
 }
 
+static int
+put_bitmap(struct sshbuf *buf, struct bitmap *bitmap)
+{
+	size_t len;
+	u_char *blob;
+	int r;
+
+	len = bitmap_nbytes(bitmap);
+	if ((blob = malloc(len)) == NULL)
+		return SSH_ERR_ALLOC_FAIL;
+	if (bitmap_to_string(bitmap, blob, len) != 0) {
+		free(blob);
+		return SSH_ERR_INTERNAL_ERROR;
+	}
+	r = sshbuf_put_bignum2_bytes(buf, blob, len);
+	free(blob);
+	return r;
+}
+
 /* Generate a KRL_SECTION_CERTIFICATES KRL section */
 static int
 revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
@@ -527,7 +547,7 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 	struct revoked_key_id *rki;
 	int next_state, state = 0;
 	struct sshbuf *sect;
-	BIGNUM *bitmap = NULL;
+	struct bitmap *bitmap = NULL;
 
 	if ((sect = sshbuf_new()) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
@@ -570,9 +590,9 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 			case KRL_SECTION_CERT_SERIAL_RANGE:
 				break;
 			case KRL_SECTION_CERT_SERIAL_BITMAP:
-				if ((r = sshbuf_put_bignum2(sect, bitmap)) != 0)
+				if ((r = put_bitmap(sect, bitmap)) != 0)
 					goto out;
-				BN_free(bitmap);
+				bitmap_free(bitmap);
 				bitmap = NULL;
 				break;
 			}
@@ -593,7 +613,7 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 			case KRL_SECTION_CERT_SERIAL_RANGE:
 				break;
 			case KRL_SECTION_CERT_SERIAL_BITMAP:
-				if ((bitmap = BN_new()) == NULL) {
+				if ((bitmap = bitmap_new()) == NULL) {
 					r = SSH_ERR_ALLOC_FAIL;
 					goto out;
 				}
@@ -624,8 +644,8 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 				goto out;
 			}
 			for (i = 0; i < contig; i++) {
-				if (BN_set_bit(bitmap,
-				    rs->lo + i - bitmap_start) != 1) {
+				if (bitmap_set_bit(bitmap,
+				    rs->lo + i - bitmap_start) != 0) {
 					r = SSH_ERR_ALLOC_FAIL;
 					goto out;
 				}
@@ -643,9 +663,9 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 		case KRL_SECTION_CERT_SERIAL_RANGE:
 			break;
 		case KRL_SECTION_CERT_SERIAL_BITMAP:
-			if ((r = sshbuf_put_bignum2(sect, bitmap)) != 0)
+			if ((r = put_bitmap(sect, bitmap)) != 0)
 				goto out;
-			BN_free(bitmap);
+			bitmap_free(bitmap);
 			bitmap = NULL;
 			break;
 		}
@@ -669,8 +689,7 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 	}
 	r = 0;
  out:
-	if (bitmap != NULL)
-		BN_free(bitmap);
+	bitmap_free(bitmap);
 	sshbuf_free(sect);
 	return r;
 }
@@ -782,13 +801,13 @@ format_timestamp(u_int64_t timestamp, char *ts, size_t nts)
 static int
 parse_revoked_certs(struct sshbuf *buf, struct ssh_krl *krl)
 {
-	int r = SSH_ERR_INTERNAL_ERROR, nbits;
+	int r = SSH_ERR_INTERNAL_ERROR;
 	u_char type;
 	const u_char *blob;
-	size_t blen;
+	size_t blen, nbits;
 	struct sshbuf *subsect = NULL;
 	u_int64_t serial, serial_lo, serial_hi;
-	BIGNUM *bitmap = NULL;
+	struct bitmap *bitmap = NULL;
 	char *key_id = NULL;
 	struct sshkey *ca_key = NULL;
 
@@ -832,31 +851,32 @@ parse_revoked_certs(struct sshbuf *buf, struct ssh_krl *krl)
 				goto out;
 			break;
 		case KRL_SECTION_CERT_SERIAL_BITMAP:
-			if ((bitmap = BN_new()) == NULL) {
+			if ((bitmap = bitmap_new()) == NULL) {
 				r = SSH_ERR_ALLOC_FAIL;
 				goto out;
 			}
 			if ((r = sshbuf_get_u64(subsect, &serial_lo)) != 0 ||
-			    (r = sshbuf_get_bignum2(subsect, bitmap)) != 0)
+			    (r = sshbuf_get_bignum2_bytes_direct(subsect,
+			    &blob, &blen)) != 0)
 				goto out;
-			if ((nbits = BN_num_bits(bitmap)) < 0) {
-				error("%s: bitmap bits < 0", __func__);
+			if (bitmap_from_string(bitmap, blob, blen) != 0) {
 				r = SSH_ERR_INVALID_FORMAT;
 				goto out;
 			}
+			nbits = bitmap_nbits(bitmap);
 			for (serial = 0; serial < (u_int64_t)nbits; serial++) {
 				if (serial > 0 && serial_lo + serial == 0) {
 					error("%s: bitmap wraps u64", __func__);
 					r = SSH_ERR_INVALID_FORMAT;
 					goto out;
 				}
-				if (!BN_is_bit_set(bitmap, serial))
+				if (!bitmap_test_bit(bitmap, serial))
 					continue;
 				if ((r = ssh_krl_revoke_cert_by_serial(krl,
 				    ca_key, serial_lo + serial)) != 0)
 					goto out;
 			}
-			BN_free(bitmap);
+			bitmap_free(bitmap);
 			bitmap = NULL;
 			break;
 		case KRL_SECTION_CERT_KEY_ID:
@@ -886,7 +906,7 @@ parse_revoked_certs(struct sshbuf *buf, struct ssh_krl *krl)
 	r = 0;
  out:
 	if (bitmap != NULL)
-		BN_free(bitmap);
+		bitmap_free(bitmap);
 	free(key_id);
 	sshkey_free(ca_key);
 	sshbuf_free(subsect);

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.79 2014/06/24 01:13:22 djm Exp $
+#	$OpenBSD: Makefile,v 1.80 2015/01/14 15:02:39 djm Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -11,7 +11,9 @@ LIB_SRCS= \
 	sshbuf.c \
 	sshbuf-getput-basic.c \
 	sshbuf-misc.c \
-	sshkey.c
+	sshkey.c \
+	bitmap.c \
+	krl.c
 
 .if (${OPENSSL:L} == "yes")
 LIB_SRCS+=	sshbuf-getput-crypto.c digest-openssl.c
@@ -34,8 +36,7 @@ SRCS=	${LIB_SRCS} \
 .if (${OPENSSL:L} == "yes")
 SRCS+=	bufec.c bufbn.c cipher-3des1.c cipher-bf1.c rsa.c \
 	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c kexdh.c kexgex.c kexecdh.c \
-	kexdhc.c kexgexc.c kexecdhc.c ssh-pkcs11.c \
-	krl.c
+	kexdhc.c kexgexc.c kexecdhc.c ssh-pkcs11.c
 .else
 SRCS+=	rijndael.c cipher-aesctr.c
 .endif
