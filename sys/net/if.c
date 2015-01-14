@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.311 2015/01/10 11:43:37 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.312 2015/01/14 00:37:19 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1307,7 +1307,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #ifdef INET6
 		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
 			if (in6ifa_ifpforlinklocal(ifp, 0) == NULL) {
-				s = splnet();
+				s = splsoftnet();
 				in6_ifattach(ifp);
 				splx(s);
 			}
