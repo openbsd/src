@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.65 2015/01/14 21:14:49 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.66 2015/01/14 21:17:09 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1825,6 +1825,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 	int     errno = iorq->errno;
 	int     erract = xyc_entoact(errno);
 	int     oldmode, advance, i;
+	u_long  addr;
 
 	if (erract == XY_ERA_RSET) {	/* some errors require a reset */
 		oldmode = iorq->mode;
@@ -1853,6 +1854,11 @@ xyc_error(xycsc, iorq, iopb, comm)
 								 * standard */
 			iopb->head = i % iorq->xy->nhead;
 			iopb->sect = i / iorq->xy->nhead;
+
+			addr = (u_long) iorq->dbuf - DVMA_BASE;
+			iopb->dataa = (addr & 0xffff);
+			iopb->datar = ((addr & 0xff0000) >> 16);
+
 			/* will resubmit when we come out of remove_iorq */
 			return (XY_ERR_AOK);	/* recovered! */
 		}

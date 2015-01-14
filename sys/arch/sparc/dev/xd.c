@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.68 2015/01/14 21:14:49 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.69 2015/01/14 21:17:09 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1985,6 +1985,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 								 * standard */
 			iopb->headno = i % iorq->xd->nhead;
 			iopb->sectno = i / iorq->xd->nhead;
+			iopb->daddr = (u_long) iorq->dbuf - DVMA_BASE;
 			XDC_HWAIT(xdcsc, rqno);
 			xdc_start(xdcsc, 1);	/* resubmit */
 			return (XD_ERR_AOK);	/* recovered! */
