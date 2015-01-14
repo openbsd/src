@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.12 2007/02/13 18:39:34 mglocker Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.13 2015/01/14 17:27:51 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -24,9 +24,9 @@
 #ifndef _PATHNAMES_H_
 #define _PATHNAMES_H_
 
-#if (defined(BSD)) && (BSD >= 199103) || defined(__linux) || defined(AIX)
+#ifdef HAVE_PATHS_H
 # include <paths.h>
-#endif /*BSD*/
+#endif /*HAVE_PATHS_H*/
 
 #ifndef CRONDIR
 			/* CRONDIR is where cron(8) and crontab(1) both chdir

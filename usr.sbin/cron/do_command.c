@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.39 2015/01/14 17:27:30 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.40 2015/01/14 17:27:51 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -234,9 +234,9 @@ child_process(entry *e, user *u) {
 			    "unable to set groups for %s\n", e->pwd->pw_name);
 			_exit(EXIT_FAILURE);
 		}
-#if (defined(BSD)) && (BSD >= 199103)
+#ifdef HAVE_SETLOGIN
 		setlogin(usernm);
-#endif /* BSD */
+#endif
 		if (setuid(e->pwd->pw_uid)) {
 			fprintf(stderr,
 			    "unable to set uid to %lu\n",

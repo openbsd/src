@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.23 2015/01/14 17:27:30 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.24 2015/01/14 17:27:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -99,9 +99,9 @@ cron_popen(char *program, char *type, struct passwd *pw) {
 				    pw->pw_name);
 				_exit(1);
 			}
-#if (defined(BSD)) && (BSD >= 199103)
+#ifdef HAVE_SETLOGIN
 			setlogin(pw->pw_name);
-#endif /* BSD */
+#endif
 			if (setuid(pw->pw_uid)) {
 				fprintf(stderr,
 				    "unable to set uid for %s\n",

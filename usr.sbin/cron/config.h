@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.17 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.18 2015/01/14 17:27:51 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -85,6 +85,9 @@
 			 */
 #define HAVE_TM_GMTOFF		 	/*-*/
 
+			/* if your OS has the paths.h header */
+#define HAVE_PATHS_H			/*-*/
+
 			/* if your OS supports a BSD-style login.conf file */
 #define LOGIN_CAP			/*-*/
 
@@ -93,6 +96,12 @@
 
 			/* if your OS has a getloadavg() function */
 #define HAVE_GETLOADAVG			/*-*/
+
+			/* if your OS has a setlogin() function */
+#define HAVE_SETLOGIN			/*-*/
+
+			/* if your OS has a pw_expire field in struct passwd */
+#define HAVE_PW_EXPIRE			/*-*/
 
 			/* maximum load at which batch jobs will still run */
 #define BATCH_MAXLOAD	1.5		/*-*/

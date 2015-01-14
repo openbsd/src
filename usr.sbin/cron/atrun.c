@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.21 2015/01/14 17:27:29 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.22 2015/01/14 17:27:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -284,7 +284,7 @@ run_job(atjob *job, char *atfile)
 		log_it("CRON", getpid(), "ORPHANED JOB", atfile);
 		_exit(EXIT_FAILURE);
 	}
-#if (defined(BSD)) && (BSD >= 199103)
+#ifdef HAVE_PW_EXPIRE
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		log_it(pw->pw_name, getpid(), "ACCOUNT EXPIRED, JOB ABORTED",
 		    atfile);
@@ -459,7 +459,7 @@ run_job(atjob *job, char *atfile)
 			    "unable to set groups for %s\n", pw->pw_name);
 			_exit(EXIT_FAILURE);
 		}
-#if (defined(BSD)) && (BSD >= 199103)
+#ifdef HAVE_SETLOGIN
 		setlogin(pw->pw_name);
 #endif
 		if (setuid(pw->pw_uid)) {

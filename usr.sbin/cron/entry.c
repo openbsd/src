@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.34 2014/08/25 07:50:26 doug Exp $	*/
+/*	$OpenBSD: entry.c,v 1.35 2015/01/14 17:27:51 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -329,7 +329,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		}
 		e->envp = tenvp;
 	}
-#if defined(BSD) || defined(__linux)
 	if (snprintf(envstr, sizeof envstr, "USER=%s", pw->pw_name) >=
 		sizeof(envstr))
 		log_it("CRON", getpid(), "error", "can't set USER");
@@ -340,7 +339,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		}
 		e->envp = tenvp;
 	}
-#endif
 
 	Debug(DPARS, ("load_entry()...about to parse command\n"))
 
