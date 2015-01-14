@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.85 2015/01/13 14:52:47 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.86 2015/01/14 21:14:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -494,9 +494,10 @@ readfreq(void)
 	if (adjfreq(NULL, &current) == -1)
 		log_warn("adjfreq failed");
 	else if (current == 0) {
-		if (fscanf(fp, "%le", &d) == 1)
+		if (fscanf(fp, "%lf", &d) == 1) {
+			d /= 1e6;	/* scale from ppm */
 			ntpd_adjfreq(d, 0);
-		else
+		} else
 			log_warnx("can't read %s", DRIFTFILE);
 	}
 	fclose(fp);
@@ -518,7 +519,7 @@ writefreq(double d)
 		return 0;
 	}
 
-	fprintf(fp, "%e\n", d);
+	fprintf(fp, "%.3f\n", d * 1e6);		/* scale to ppm */
 	r = ferror(fp);
 	if (fclose(fp) != 0 || r != 0) {
 		if (warnonce) {
