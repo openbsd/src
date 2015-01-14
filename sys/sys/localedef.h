@@ -1,4 +1,4 @@
-/*	$OpenBSD: localedef.h,v 1.4 2014/07/14 07:22:07 pelikan Exp $	*/
+/*	$OpenBSD: localedef.h,v 1.5 2015/01/14 21:17:52 deraadt Exp $	*/
 /*	$NetBSD: localedef.h,v 1.4 1996/04/09 20:55:31 cgd Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 #ifndef _SYS_LOCALEDEF_H_
 #define _SYS_LOCALEDEF_H_
 
-#include <sys/param.h>
 #include <sys/types.h>
 
 typedef struct
