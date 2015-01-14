@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.17 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.18 2015/01/14 09:07:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -347,6 +347,12 @@ table_update(struct table *t)
 	return (t->t_backend->update(t));
 }
 
+
+/*
+ * quick reminder:
+ * in *_match() s1 comes from session, s2 comes from table
+ */
+
 int
 table_domain_match(const char *s1, const char *s2)
 {
@@ -358,6 +364,7 @@ table_mailaddr_match(const char *s1, const char *s2)
 {
 	struct mailaddr m1;
 	struct mailaddr m2;
+	char	       *p;
 
 	if (! text_to_mailaddr(&m1, s1))
 		return 0;
@@ -367,9 +374,17 @@ table_mailaddr_match(const char *s1, const char *s2)
 	if (! table_domain_match(m1.domain, m2.domain))
 		return 0;
 
-	if (m2.user[0])
+	if (m2.user[0]) {
+		/* if address from table has a tag, we must respect it */
+		if (strchr(m2.user, '+') == NULL) {
+			/* otherwise, strip tag from session address if any */
+			p = strchr(m1.user, '+');
+			if (p)
+				*p = '\0';
+		}
 		if (strcasecmp(m1.user, m2.user))
 			return 0;
+	}
 	return 1;
 }
 
