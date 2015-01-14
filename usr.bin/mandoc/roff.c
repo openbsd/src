@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.120 2015/01/07 12:19:17 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.121 2015/01/14 22:57:57 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -2101,7 +2101,7 @@ roff_tr(ROFF_ARGS)
 static enum rofferr
 roff_so(ROFF_ARGS)
 {
-	char *name;
+	char *name, *cp;
 
 	name = buf->buf + pos;
 	mandoc_vmsg(MANDOCERR_SO, r->parse, ln, ppos, "so %s", name);
@@ -2116,7 +2116,12 @@ roff_so(ROFF_ARGS)
 	if (*name == '/' || strstr(name, "../") || strstr(name, "/..")) {
 		mandoc_vmsg(MANDOCERR_SO_PATH, r->parse, ln, ppos,
 		    ".so %s", name);
-		return(ROFF_ERR);
+		buf->sz = mandoc_asprintf(&cp,
+		    ".sp\nSee the file %s.\n.sp", name) + 1;
+		free(buf->buf);
+		buf->buf = cp;
+		*offs = 0;
+		return(ROFF_REPARSE);
 	}
 
 	*offs = pos;
