@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.41 2015/01/13 21:45:53 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.42 2015/01/14 11:59:10 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -145,7 +145,7 @@ range2cidrlist(struct cidr *list, u_int *cli, u_int *cls, u_int32_t start,
 			tmp = reallocarray(list, *cls + 32,
 			    sizeof(struct cidr));
 			if (tmp == NULL)
-				errx(1, "malloc failed");
+				err(1, NULL);
 			list = tmp;
 			*cls += 32;
 		}
@@ -307,7 +307,7 @@ open_file(char *method, char *file)
 		len = strlen(file);
 		argv = calloc(len, sizeof(char *));
 		if (argv == NULL)
-			errx(1, "malloc failed");
+			err(1, NULL);
 		for (ap = argv; ap < &argv[len - 1] &&
 		    (*ap = strsep(&file, " \t")) != NULL;) {
 			if (**ap != '\0')
@@ -399,7 +399,7 @@ do_message(FILE *sdc, char *msg)
 			if (bu == bs) {
 				tmp = realloc(buf, bs + 8192);
 				if (tmp == NULL)
-					errx(1, "malloc failed");
+					err(1, NULL);
 				bs += 8192;
 				buf = tmp;
 			}
@@ -698,7 +698,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 			errx(1, "No msg for blacklist \"%s\"", name);
 		break;
 	case -2:
-		errx(1, "malloc failed");
+		err(1, NULL);
 	}
 
 	switch (cgetstr(buf, "method", &method)) {
@@ -706,7 +706,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		method = NULL;
 		break;
 	case -2:
-		errx(1, "malloc failed");
+		err(1, NULL);
 	}
 
 	switch (cgetstr(buf, "file", &file)) {
@@ -714,7 +714,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		errx(1, "No file given for %slist %s",
 		    black ? "black" : "white", name);
 	case -2:
-		errx(1, "malloc failed");
+		err(1, NULL);
 	default:
 		fd = open_file(method, file);
 		if (fd == -1)
@@ -767,7 +767,7 @@ send_blacklist(struct blacklist *blist, in_port_t port)
 	if (blist->blc > 0) {
 		cidrs = collapse_blacklist(blist->bl, blist->blc, &clc);
 		if (cidrs == NULL)
-			errx(1, "malloc failed");
+			err(1, NULL);
 		if (!dryrun) {
 			if (configure_spamd(port, blist->name,
 			    blist->message, cidrs, clc) == -1)
@@ -847,7 +847,7 @@ main(int argc, char *argv[])
 				tmp = reallocarray(blists, bls,
 				    sizeof(struct blacklist));
 				if (tmp == NULL)
-					errx(1, "malloc failed");
+					err(1, NULL);
 				blists = tmp;
 			}
 			if (blc == 0)
