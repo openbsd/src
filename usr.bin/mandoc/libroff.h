@@ -1,4 +1,4 @@
-/*	$OpenBSD: libroff.h,v 1.11 2014/12/01 08:05:02 schwarze Exp $ */
+/*	$OpenBSD: libroff.h,v 1.12 2015/01/14 22:44:51 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -69,8 +69,8 @@ void		 tbl_restart(int, int, struct tbl_node *);
 void		 tbl_free(struct tbl_node *);
 void		 tbl_reset(struct tbl_node *);
 enum rofferr	 tbl_read(struct tbl_node *, int, const char *, int);
-int		 tbl_option(struct tbl_node *, int, const char *);
-int		 tbl_layout(struct tbl_node *, int, const char *);
+void		 tbl_option(struct tbl_node *, int, const char *);
+void		 tbl_layout(struct tbl_node *, int, const char *);
 int		 tbl_data(struct tbl_node *, int, const char *);
 int		 tbl_cdata(struct tbl_node *, int, const char *);
 const struct tbl_span	*tbl_span(struct tbl_node *);

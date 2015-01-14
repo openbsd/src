@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_opts.c,v 1.7 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.8 2015/01/14 22:44:51 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -250,7 +250,7 @@ again:	/*
 	/* NOTREACHED */
 }
 
-int
+void
 tbl_option(struct tbl_node *tbl, int ln, const char *p)
 {
 	int		 pos;
@@ -263,7 +263,4 @@ tbl_option(struct tbl_node *tbl, int ln, const char *p)
 
 	pos = 0;
 	opt(tbl, ln, p, &pos);
-
-	/* Always succeed. */
-	return(1);
 }
