@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.31 2014/01/18 07:36:35 dlg Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.32 2015/01/15 17:54:14 miod Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ void ncr5380_show_state(void);
 
 #endif	/* NCR5380_DEBUG */
 
-static char *
+const char *
 phase_names[8] = {
 	"DATA_OUT",
 	"DATA_IN",
@@ -641,7 +641,7 @@ ncr5380_scsi_cmd(xs)
 {
 	struct	ncr5380_softc *sc;
 	struct sci_req	*sr;
-	int s, i, flags;
+	int s, flags;
 
 	sc = xs->sc_link->adapter_softc;
 	flags = xs->flags;
@@ -681,7 +681,7 @@ ncr5380_scsi_cmd(xs)
 
 	if (flags & SCSI_POLL) {
 		/* Force this new command to be next. */
-		sc->sc_rr = i;
+		sc->sc_rr = sr - sc->sc_ring;
 	}
 
 	/*
