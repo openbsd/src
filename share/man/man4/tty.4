@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.43 2015/01/15 00:32:36 deraadt Exp $
+.\"	$OpenBSD: tty.4,v 1.44 2015/01/15 00:45:20 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -199,9 +199,7 @@ file descriptor zero by the following code fragment:
 .It Dv TIOCSETD Fa int *ldisc
 Change to the new line discipline pointed to by
 .Fa ldisc .
-The available line disciplines are listed in
-.In sys/ttycom.h
-and currently are:
+The available line disciplines currently available are:
 .Pp
 .Bl -tag -width TIOCGWINSZ -compact
 .It TTYDISC
