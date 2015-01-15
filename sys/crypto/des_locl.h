@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_locl.h,v 1.4 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: des_locl.h,v 1.5 2015/01/15 23:20:33 tedu Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -53,31 +53,26 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include "des.h"
+typedef unsigned char des_cblock[8];
+typedef struct des_ks_struct
+	{
+	union	{
+		des_cblock _;
+		/* make sure things are correct size on machines with
+		 * 8 byte longs */
+		int32_t pad[2];
+		} ks;
+#undef _
+#define _	ks._
+	} des_key_schedule[16];
 
-/* the following is tweaked from a config script, that is why it is a
- * protected undef/define */
-#ifndef DES_USE_PTR
-#undef DES_USE_PTR
-#endif
+#define DES_KEY_SZ 	(sizeof(des_cblock))
+#define DES_SCHEDULE_SZ (sizeof(des_key_schedule))
 
-#ifndef RAND
-#define RAND
-#endif
 
-#if defined(NOCONST)
-#define const
-#endif
+void des_encrypt(u_int32_t *data,des_key_schedule ks, int enc);
+void des_encrypt2(u_int32_t *data,des_key_schedule ks, int enc);
 
-#ifdef __STDC__
-#undef PROTO
-#define PROTO
-#endif
-
-#ifdef RAND
-#define srandom(s) srand(s)
-#define random rand
-#endif
 
 #define ITERATIONS 16
 #define HALF_ITERATIONS 8
@@ -141,25 +136,6 @@
 				} \
 			}
 
-/* The changes to this macro may help or hinder, depending on the
- * compiler and the achitecture.  gcc2 always seems to do well :-).
- * Inspired by Dana How <how@isl.stanford.edu>
- * DO NOT use the alternative version on machines with 8 byte longs. */
-#ifdef DES_USR_PTR
-#define D_ENCRYPT(L,R,S) { \
-	u=((R^s[S  ])<<2);	\
-	t= R^s[S+1]; \
-	t=((t>>2)+(t<<30)); \
-	L^= \
-	*(u_int32_t *)(des_SP+0x0100+((t    )&0xfc))+ \
-	*(u_int32_t *)(des_SP+0x0300+((t>> 8)&0xfc))+ \
-	*(u_int32_t *)(des_SP+0x0500+((t>>16)&0xfc))+ \
-	*(u_int32_t *)(des_SP+0x0700+((t>>24)&0xfc))+ \
-	*(u_int32_t *)(des_SP+       ((u    )&0xfc))+ \
-	*(u_int32_t *)(des_SP+0x0200+((u>> 8)&0xfc))+ \
-	*(u_int32_t *)(des_SP+0x0400+((u>>16)&0xfc))+ \
-	*(u_int32_t *)(des_SP+0x0600+((u>>24)&0xfc)); }
-#else /* original version */
 #define D_ENCRYPT(Q,R,S) {\
 	u=(R^s[S  ]); \
 	t=R^s[S+1]; \
@@ -172,7 +148,6 @@
 		des_SPtrans[2][(u>> 8L)&0x3f]| \
 		des_SPtrans[4][(u>>16L)&0x3f]| \
 		des_SPtrans[6][(u>>24L)&0x3f]; }
-#endif
 
 	/* IP and FP
 	 * The problem is more of a geometric problem that random bit fiddling.
