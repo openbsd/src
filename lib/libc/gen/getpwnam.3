@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwnam.3,v 1.6 2014/03/12 11:36:06 schwarze Exp $
+.\"	$OpenBSD: getpwnam.3,v 1.7 2015/01/15 03:19:43 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 12 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt GETPWNAM 3
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Nm setpassent
 .Nd password database operations
 .Sh SYNOPSIS
-.In sys/types.h
 .In pwd.h
 .Ft struct passwd *
 .Fn getpwnam "const char *login"
