@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.36 2015/01/02 18:28:23 sobrado Exp $
+.\" $OpenBSD: iked.conf.5,v 1.37 2015/01/15 11:54:31 sobrado Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2015 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -778,8 +778,8 @@ not encryption:
 .It Li null Ta "" Ta "[ESP only]"
 .El
 .Pp
-Use of DES as an encryption algorithm is not recommended (except for
-backwards compatibility) due to the short key length.
+Use of DES as an encryption algorithm is considered to be insecure
+since brute force attacks are practical due its short key length.
 .Pp
 DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key.
