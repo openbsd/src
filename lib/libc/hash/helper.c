@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.11 2014/04/03 17:55:27 beck Exp $ */
+/*	$OpenBSD: helper.c,v 1.12 2015/01/15 13:05:59 millert Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -50,7 +50,7 @@ HASHEnd(HASH_CTX *ctx, char *buf)
 		buf[i + i + 1] = hex[digest[i] & 0x0f];
 	}
 	buf[i + i] = '\0';
-	memset(digest, 0, sizeof(digest));
+	explicit_bzero(digest, sizeof(digest));
 	return (buf);
 }
 
