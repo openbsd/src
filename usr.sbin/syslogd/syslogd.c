@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.140 2015/01/08 20:22:47 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.141 2015/01/15 11:49:59 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -135,6 +135,7 @@ struct filed {
 				/* @proto46://[hostname]:servname\0 */
 			struct sockaddr_storage	f_addr;
 			struct bufferevent	*f_bufev;
+			int	f_reconnectwait;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
 		struct {
@@ -265,7 +266,9 @@ void	 udp_readcb(int, short, void *);
 void	 unix_readcb(int, short, void *);
 int	 tcp_socket(struct filed *);
 void	 tcp_readcb(struct bufferevent *, void *);
+void	 tcp_writecb(struct bufferevent *, void *);
 void	 tcp_errorcb(struct bufferevent *, short, void *);
+void	 tcp_connectcb(int, short, void *);
 void	 die_signalcb(int, short, void *);
 void	 mark_timercb(int, short, void *);
 void	 init_signalcb(int, short, void *);
@@ -716,6 +719,18 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 }
 
 void
+tcp_writecb(struct bufferevent *bufev, void *arg)
+{
+	struct filed	*f = arg;
+
+	/*
+	 * Successful write, connection to server is good, reset wait time.
+	 */
+	dprintf("loghost \"%s\" successful write\n", f->f_un.f_forw.f_loghost);
+	f->f_un.f_forw.f_reconnectwait = 0;
+}
+
+void
 tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 {
 	struct filed	*f = arg;
@@ -731,17 +746,64 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		    f->f_un.f_forw.f_loghost, strerror(errno));
 	dprintf("%s\n", ebuf);
 
+	/* The SIGHUP handler may also close the socket, so invalidate it. */
 	close(f->f_file);
-	if ((f->f_file = tcp_socket(f)) == -1) {
-		/* XXX reconnect later */
-		bufferevent_free(bufev);
-		f->f_type = F_UNUSED;
-	} else {
-		/* XXX The messages in the output buffer may be out of sync. */
-		bufferevent_setfd(bufev, f->f_file);
-		bufferevent_enable(f->f_un.f_forw.f_bufev, EV_READ);
-	}
+	f->f_file = -1;
+
+	/*
+	 * XXX The messages in the output buffer may be out of sync.
+	 * Here we should clear the buffer or at least remove partial
+	 * messages from the beginning.
+	 */
+	tcp_connectcb(-1, 0, f);
+
+	/* Log the connection error to the fresh buffer after reconnecting. */
 	logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
+}
+
+void
+tcp_connectcb(int fd, short event, void *arg)
+{
+	struct filed		*f = arg;
+	struct bufferevent	*bufev = f->f_un.f_forw.f_bufev;
+	struct timeval		 to;
+	int			 s;
+
+	if ((event & EV_TIMEOUT) == 0 && f->f_un.f_forw.f_reconnectwait > 0)
+		goto retry;
+
+	/* Avoid busy reconnect loop, delay until successful write. */
+	if (f->f_un.f_forw.f_reconnectwait == 0)
+		f->f_un.f_forw.f_reconnectwait = 1;
+
+	if ((s = tcp_socket(f)) == -1)
+		goto retry;
+
+	dprintf("tcp connect callback: success, event %#x\n", event);
+	bufferevent_setfd(bufev, s);
+	bufferevent_setcb(bufev, tcp_readcb, tcp_writecb, tcp_errorcb, f);
+	/*
+	 * Although syslog is a write only protocol, enable reading from
+	 * the socket to detect connection close and errors.
+	 */
+	bufferevent_enable(bufev, EV_READ|EV_WRITE);
+	f->f_file = s;
+
+	return;
+
+ retry:
+	f->f_un.f_forw.f_reconnectwait <<= 1;
+	if (f->f_un.f_forw.f_reconnectwait > 600)
+		f->f_un.f_forw.f_reconnectwait = 600;
+	to.tv_sec = f->f_un.f_forw.f_reconnectwait;
+	to.tv_usec = 0;
+
+	dprintf("tcp connect callback: retry, event %#x, wait %d\n",
+	    event, f->f_un.f_forw.f_reconnectwait);
+	bufferevent_setfd(bufev, -1);
+	/* We can reuse the write event as bufferevent is disabled. */
+	evtimer_set(&bufev->ev_write, tcp_connectcb, f);
+	evtimer_add(&bufev->ev_write, &to);
 }
 
 void
@@ -1712,22 +1774,16 @@ cfline(char *line, char *prog)
 			}
 			f->f_type = F_FORWUDP;
 		} else if (strncmp(proto, "tcp", 3) == 0) {
-			int s;
-
-			if ((s = tcp_socket(f)) == -1)
-				break;
-			if ((f->f_un.f_forw.f_bufev = bufferevent_new(s,
-			    tcp_readcb, NULL, tcp_errorcb, f)) == NULL) {
+			if ((f->f_un.f_forw.f_bufev = bufferevent_new(-1,
+			    tcp_readcb, tcp_writecb, tcp_errorcb, f)) == NULL) {
 				snprintf(ebuf, sizeof(ebuf),
 				    "bufferevent \"%s\"",
 				    f->f_un.f_forw.f_loghost);
 				logerror(ebuf);
-				close(s);
 				break;
 			}
-			bufferevent_enable(f->f_un.f_forw.f_bufev, EV_READ);
-			f->f_file = s;
 			f->f_type = F_FORWTCP;
+			tcp_connectcb(-1, 0, f);
 		}
 		break;
 
