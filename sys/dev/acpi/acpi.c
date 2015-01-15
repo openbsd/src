@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.279 2015/01/11 19:59:56 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.280 2015/01/15 01:19:28 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -169,6 +169,55 @@ struct acpi_softc *acpi_softc;
 
 #define acpi_bus_space_map	_bus_space_map
 #define acpi_bus_space_unmap	_bus_space_unmap
+
+#ifndef SMALL_KERNEL
+/*
+ * This is a list of Synaptics devices with a 'top button area'
+ * based on the list in Linux supplied by Synaptics
+ * Synaptics clickpads with the following pnp ids will get a unique
+ * wscons mouse type that is used to define trackpad regions that will
+ * emulate mouse buttons
+ */
+static const char *sbtn_pnp[] = {
+	"LEN0017",
+	"LEN0018",
+	"LEN0019",
+	"LEN0023",
+	"LEN002A",
+	"LEN002B",
+	"LEN002C",
+	"LEN002D",
+	"LEN002E",
+	"LEN0033",
+	"LEN0034",
+	"LEN0035",
+	"LEN0036",
+	"LEN0037",
+	"LEN0038",
+	"LEN0039",
+	"LEN0041",
+	"LEN0042",
+	"LEN0045",
+	"LEN0046",
+	"LEN0047",
+	"LEN0048",
+	"LEN0049",
+	"LEN2000",
+	"LEN2001",
+	"LEN2002",
+	"LEN2003",
+	"LEN2004",
+	"LEN2005",
+	"LEN2006",
+	"LEN2007",
+	"LEN2008",
+	"LEN2009",
+	"LEN200A",
+	"LEN200B",
+};
+
+int	mouse_has_softbtn;
+#endif
 
 int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
@@ -2458,8 +2507,31 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
+	char			 cdev[16];
 	struct aml_value	 res;
-	struct acpi_attach_args	aaa;
+	struct acpi_attach_args	 aaa;
+	int			 i;
+
+	/* NB aml_eisaid returns a static buffer, this must come first */
+	if (aml_evalname(acpi_softc, node->parent, "_CID", 0, NULL, &res) == 0) {
+		switch (res.type) {
+		case AML_OBJTYPE_STRING:
+			dev = res.v_string;
+			break;
+		case AML_OBJTYPE_INTEGER:
+			dev = aml_eisaid(aml_val2int(&res));
+			break;
+		default:
+			dev = "unknown";
+			break;
+		}
+		strlcpy(cdev, dev, sizeof(cdev));
+		aml_freevalue(&res);
+		
+		dnprintf(10, "compatible with device: %s\n", cdev);
+	} else {
+		cdev[0] = '\0';
+	}
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
 	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
@@ -2508,6 +2580,14 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		acpi_toshiba_enabled = 1;
 	}
 
+	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
+		for (i = 0; i < nitems(sbtn_pnp); i++) {
+			if (!strcmp(dev, sbtn_pnp[i])) {
+				mouse_has_softbtn = 1;
+				break;
+			}
+		}
+	}
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.29 2013/11/06 10:40:36 mpi Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.30 2015/01/15 01:19:28 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -729,6 +729,7 @@ struct acpi_ivrs {
 #define ACPI_DEV_SBD	"PNP0C0E"	/* Sleep Button Device */
 #define ACPI_DEV_PILD	"PNP0C0F"	/* PCI Interrupt Link Device */
 #define ACPI_DEV_MEMD	"PNP0C80"	/* Memory Device */
+#define ACPI_DEV_MOUSE	"PNP0F13"	/* PS/2 Mouse */
 #define ACPI_DEV_SHC	"ACPI0001"	/* SMBus 1.0 Host Controller */
 #define ACPI_DEV_SMS1	"ACPI0002"	/* Smart Battery Subsystem */
 #define ACPI_DEV_AC	"ACPI0003"	/* AC Device */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.55 2015/01/07 10:32:13 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.56 2015/01/15 01:19:28 jsg Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -39,6 +39,16 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+
+#if defined(__i386__) || defined(__amd64__)
+#include "acpi.h"
+#endif
+
+#if !defined(SMALL_KERNEL) && NACPI > 0
+extern int mouse_has_softbtn;
+#else
+int mouse_has_softbtn;
+#endif
 
 #ifdef DEBUG
 #define DPRINTF(x...)	do { printf(x); } while (0);
@@ -1073,7 +1083,11 @@ pms_ioctl_synaptics(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_SYNAPTICS;
+		if ((syn->ext_capabilities & SYNAPTICS_EXT_CAP_CLICKPAD) &&
+		    mouse_has_softbtn)
+			*(u_int *)data = WSMOUSE_TYPE_SYNAP_SBTN;
+		else
+			*(u_int *)data = WSMOUSE_TYPE_SYNAPTICS;
 		break;
 	case WSMOUSEIO_GCALIBCOORDS:
 		wsmc->minx = syn->min_x;
