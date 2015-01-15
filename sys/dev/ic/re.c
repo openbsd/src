@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.167 2015/01/08 00:49:18 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.168 2015/01/15 23:06:08 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1504,10 +1504,8 @@ re_tick(void *xsc)
 {
 	struct rl_softc	*sc = xsc;
 	struct mii_data	*mii;
-	struct ifnet	*ifp;
 	int s;
 
-	ifp = &sc->sc_arpcom.ac_if;
 	mii = &sc->sc_mii;
 
 	s = splnet();
