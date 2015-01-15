@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atan2.3,v 1.16 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: atan2.3,v 1.17 2015/01/15 19:06:31 schwarze Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)atan2.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt ATAN2 3
 .Os
 .Sh NAME
@@ -81,8 +81,7 @@ are zero, the global variable
 .Va errno
 is set to
 .Er EDOM .
-On the
-.Tn VAX :
+On the VAX:
 .Bl -column atan_(y,x)_:=____  sign(y)_(Pi_atan2(Xy_xX))___
 .It Fn atan2 y x No := Ta
 .Fn atan y/x Ta
@@ -114,9 +113,7 @@ The function
 .Fn atan2
 defines "if x > 0,"
 .Fn atan2 0 0
-= 0 on a
-.Tn VAX
-despite that previously
+= 0 on a VAX despite that previously
 .Fn atan2 0 0
 may have generated an error message.
 The reasons for assigning a value to
@@ -170,8 +167,7 @@ r	:= hypot(x,y);  ... := \(sr(x\u\s82\s10\d+y\u\s82\s10\d)
 .It
 The foregoing formulas need not be altered to cope in a
 reasonable way with signed zeros and infinities
-on a machine that conforms to
-.Tn IEEE 754 ;
+on a machine that conforms to IEEE 754 ;
 the versions of
 .Xr hypot 3
 and

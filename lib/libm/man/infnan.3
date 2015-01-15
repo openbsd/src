@@ -1,4 +1,4 @@
-.\"	$OpenBSD: infnan.3,v 1.16 2013/11/03 18:28:27 martynas Exp $
+.\"	$OpenBSD: infnan.3,v 1.17 2015/01/15 19:06:31 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,41 +29,27 @@
 .\"
 .\"     @(#)infnan.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 3 2013 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt INFNAN 3 vax
 .Os
 .Sh NAME
 .Nm infnan
-.Nd signals invalid floating\-point operations on a
-.Tn VAX
-(temporary)
+.Nd signals invalid floating\-point operations on a VAX (temporary)
 .Sh SYNOPSIS
 .In math.h
 .Ft double
 .Fn infnan "int iarg"
 .Sh DESCRIPTION
 At some time in the future, some of the useful properties of
-the Infinities and \*(Nas in the
-.Tn IEEE
-standard 754 for Binary
-Floating\-Point Arithmetic will be simulated in
-.Tn UNIX
-on the
-.Tn DEC VAX
-by using its Reserved Operands.
+the Infinities and \*(Nas in the IEEE standard 754
+for Binary Floating\-Point Arithmetic will be simulated in UNIX
+on the DEC VAX by using its Reserved Operands.
 Meanwhile, the Invalid, Overflow and Divide\-by\-Zero exceptions of the
-.Tn IEEE
-standard are being approximated on a
-.Tn VAX
-by calls to a
-procedure
+IEEE standard are being approximated on a VAX by calls to a procedure
 .Fn infnan
 in appropriate places in
 .Em libm .
-When
-better exception\-handling is implemented in
-.Tn UNIX ,
-only
+When better exception\-handling is implemented in UNIX, only
 .Fn infnan
 among the codes in
 .Em libm
@@ -78,9 +64,7 @@ insulate themselves from future changes.
 Whenever an elementary function code in
 .Em libm
 has to
-simulate one of the aforementioned
-.Tn IEEE
-exceptions, it calls
+simulate one of the aforementioned IEEE exceptions, it calls
 .Fn infnan iarg
 with an appropriate value of
 .Fa iarg .
@@ -98,11 +82,8 @@ Alternatively, the Reserved Operand Fault Handler could be
 changed to respond by returning that plausible value, etc.,
 instead of aborting.
 .Pp
-In the table below, the first two columns show various
-exceptions signaled by the
-.Tn IEEE
-standard, and the default
-result it prescribes.
+In the table below, the first two columns show various exceptions
+signaled by the IEEE standard, and the default result it prescribes.
 The third column shows what value is given to
 .Fa iarg
 by functions in
@@ -110,8 +91,7 @@ by functions in
 when they
 invoke
 .Fn infnan iarg
-under analogous circumstances on a
-.Tn VAX .
+under analogous circumstances on a VAX.
 Currently
 .Fn infnan
 stops computation under all those

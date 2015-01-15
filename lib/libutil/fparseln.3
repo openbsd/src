@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fparseln.3,v 1.8 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: fparseln.3,v 1.9 2015/01/15 19:06:32 schwarze Exp $
 .\"	$NetBSD: fparseln.3,v 1.7 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt FPARSELN 3
 .Os
 .Sh NAME
@@ -75,9 +75,7 @@ the value of the memory location to which
 references is incremented by the number of lines actually read from the file.
 .It Fa delim
 Contains the escape, continuation, and comment characters.
-If a character is
-.Tn NUL
-then processing for that character is disabled.
+If a character is NUL then processing for that character is disabled.
 If
 .Dv NULL ,
 all characters default to values specified below.
@@ -104,9 +102,7 @@ end of the current line.
 .It Fa flags
 If non-zero, alter the operation of
 .Fn fparseln .
-The various flags, which may be
-.Tn OR Ns 'ed
-together, are:
+The various flags, which may be OR'ed together, are:
 .Bl -tag -width "FPARSELN_UNESCCOMM"
 .It Dv FPARSELN_UNESCCOMM
 Remove escape preceding an escaped comment.

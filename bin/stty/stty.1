@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.44 2014/05/29 12:59:13 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.45 2015/01/15 19:06:31 schwarze Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stty.1	8.5 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 29 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt STTY 1
 .Os
 .Sh NAME
@@ -265,15 +265,10 @@ Discard (do not discard) EOFs on output.
 Local mode flags (lflags) affect various and sundry characteristics of terminal
 processing.
 Historically the term "local" pertained to new job control features
-implemented by Jim Kulp on a
-.Tn Pdp 11/70
-at
-.Tn IIASA .
-Later the driver ran on the first
-.Tn VAX
-at Evans Hall, UC Berkeley, where the job control details
-were greatly modified but the structure definitions and names
-remained essentially unchanged.
+implemented by Jim Kulp on a PDP 11/70 at IIASA.
+Later the driver ran on the first VAX at Evans Hall, UC Berkeley,
+where the job control details were greatly modified
+but the structure definitions and names remained essentially unchanged.
 The second interpretation of the
 .Sq l
 in lflag is

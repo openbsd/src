@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.31 2014/03/27 15:32:13 tedu Exp $
+.\"	$OpenBSD: dd.1,v 1.32 2015/01/15 19:06:31 schwarze Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: March 27 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -123,9 +123,7 @@ using the tape
 .Xr ioctl 2
 function calls.
 If the seek operation is past the end of file, space from the current
-end of file to the specified offset is filled with blocks of
-.Tn NUL
-bytes.
+end of file to the specified offset is filled with blocks of NUL bytes.
 .It Cm skip= Ns Ar n
 Skip
 .Ar n
@@ -165,12 +163,8 @@ is one of the symbols from the following list.
 .It Cm ascii
 The same as the
 .Cm unblock
-value except that characters are translated from
-.Tn EBCDIC
-to
-.Tn ASCII
-before the
-records are converted.
+value except that characters are translated from EBCDIC to ASCII
+before the records are converted.
 (These values imply
 .Cm unblock
 if the operand
@@ -191,19 +185,14 @@ error output at the completion of the copy.
 .It Cm ebcdic , ibm
 The same as the
 .Cm block
-value except that characters are translated from
-.Tn ASCII
-to
-.Tn EBCDIC
-after the
-records are converted.
+value except that characters are translated from ASCII to EBCDIC
+after the records are converted.
 (These values imply
 .Cm block
 if the operand
 .Cm cbs
 is also specified.)
-There are two conversion maps for
-.Tn EBCDIC .
+There are two conversion maps for EBCDIC.
 The value
 .Cm ebcdic
 specifies the recommended one which is compatible with
@@ -224,9 +213,7 @@ in the same format as the standard completion message.
 If the
 .Cm sync
 conversion is also specified, any missing input data will be replaced
-with
-.Tn NUL
-bytes (or with spaces if a block oriented conversion value was
+with NUL bytes (or with spaces if a block oriented conversion value was
 specified) and processed as a normal input buffer.
 If the
 .Cm sync
@@ -258,9 +245,7 @@ ignored during swapping.
 .It Cm sync
 Pad every input block to the input buffer size.
 Spaces are used for pad bytes if a block oriented conversion value is
-specified, otherwise
-.Tn NUL
-bytes are used.
+specified, otherwise NUL bytes are used.
 .It Cm ucase
 Transform lowercase characters into uppercase characters.
 .It Cm unblock

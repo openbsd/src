@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.28 2013/11/03 18:28:27 martynas Exp $
+.\"	$OpenBSD: exp.3,v 1.29 2015/01/15 19:06:31 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: November 3 2013 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -232,10 +232,7 @@ set the global variable
 .Va errno
 to
 .Er ERANGE
-and cause a reserved operand fault on a
-.Tn VAX
-or
-.Tn Tahoe .
+and cause a reserved operand fault on a VAX or Tahoe.
 The function
 .Fn pow x y
 checks to see if
@@ -247,15 +244,8 @@ the global variable
 .Va errno
 is set to
 .Er EDOM
-and on the
-.Tn VAX
-and
-.Tn Tahoe
-generate a reserved operand fault.
-On a
-.Tn VAX
-and
-.Tn Tahoe ,
+and on the VAX and Tahoe generate a reserved operand fault.
+On a VAX and Tahoe,
 .Va errno
 is set to
 .Er EDOM
@@ -291,43 +281,27 @@ approaches
 the over/underflow thresholds until almost as many bits could be
 lost as are occupied by the floating\-point format's exponent
 field; that is 8 bits for
-.Tn "VAX D"
+.Dq VAX D
 and 11 bits for IEEE 754 Double.
 No such drastic loss has been exposed by testing; the worst
 errors observed have been below 20
 .Em ulps
 for
-.Tn "VAX D" ,
+.Dq VAX D ,
 300
 .Em ulps
-for
-.Tn IEEE
-754 Double.
+for IEEE 754 Double.
 Moderate values of
 .Fn pow
 are accurate enough that
 .Fn pow integer integer
-is exact until it is bigger than 2**56 on a
-.Tn VAX ,
-2**53 for
-.Tn IEEE
-754.
+is exact until it is bigger than 2**56 on a VAX,
+2**53 for IEEE 754.
 .Sh NOTES
 The functions exp(x)\-1 and log(1+x) are called
-expm1 and logp1 in
-.Tn BASIC
-on the Hewlett\-Packard
-.Tn HP Ns \-71B
-and
-.Tn APPLE
-Macintosh,
-.Tn EXP1
-and
-.Tn LN1
-in Pascal, exp1 and log1 in C
-on
-.Tn APPLE
-Macintoshes, where they have been provided to make
+expm1 and logp1 in BASIC on the Hewlett\-Packard HP-71B
+and APPLE Macintosh, EXP1 and LN1 in Pascal, exp1 and log1 in C
+on APPLE Macintoshes, where they have been provided to make
 sure financial calculations of ((1+x)**n\-1)/x, namely
 expm1(n\(**log1p(x))/x, will be accurate when x is tiny.
 They also provide accurate inverse hyperbolic functions.
@@ -339,15 +313,13 @@ returns x**0 = 1 for all x including x = 0,
 \*(If
 .if t \
 \(if
-(not found on a
-.Tn VAX ) ,
+(not found on a VAX),
 and
 .Em \*(Na
-(the reserved
-operand on a
-.Tn VAX ) .
-Previous implementations of pow may
-have defined x**0 to be undefined in some or all of these cases.
+(the reserved operand on a VAX).
+Previous implementations of
+.Fn pow
+may have defined x**0 to be undefined in some or all of these cases.
 Here are reasons for returning x**0 = 1 always:
 .Bl -enum -width indent
 .It

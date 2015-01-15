@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.72 2014/03/17 22:13:46 jmc Exp $
+.\"	$OpenBSD: ftpd.8,v 1.73 2015/01/15 19:06:32 schwarze Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 17 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -46,9 +46,7 @@
 .Sh DESCRIPTION
 .Nm
 is the Internet File Transfer Protocol server process.
-The server uses the
-.Tn TCP
-protocol
+The server uses the TCP protocol
 and listens at the port specified in the
 .Dq ftp
 service specification; see
@@ -247,11 +245,8 @@ The case of the requests is ignored.
 .It XRMD Ta "remove a directory (deprecated)"
 .El
 .Pp
-The following non-standard or
-.Tn UNIX
-specific commands are supported
-by the
-SITE request:
+The following non-standard or UNIX specific commands
+are supported by the SITE request:
 .Bl -column Request -offset indent
 .It Sy Request Ta Sy Description
 .It CHMOD Ta "change mode of a file, e.g., SITE CHMOD 755 filename"

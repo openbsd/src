@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.37 2014/12/24 03:25:42 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.38 2015/01/15 19:06:31 schwarze Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: December 24 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -262,9 +262,8 @@ A
 of \-1 processes all the packets received in one buffer.
 A
 .Fa cnt
-of 0 processes all packets until an error occurs,
-.Tn EOF
-is reached, or the read times out (when doing live reads and a non-zero
+of 0 processes all packets until an error occurs, EOF is reached,
+or the read times out (when doing live reads and a non-zero
 read timeout is specified).
 .Fa callback
 specifies a routine to be called with three arguments: a
@@ -278,9 +277,7 @@ and a
 .Fa u_char
 pointer to the packet data.
 The number of packets read is returned.
-Zero is returned when
-.Tn EOF
-is reached in a savefile.
+Zero is returned when EOF is reached in a savefile.
 A return of \-1 indicates an error in which case
 .Fn pcap_perror
 or
@@ -378,8 +375,7 @@ the packet and \-2 is returned when there are no more packets to read in a
 savefile.
 .Pp
 .Fn pcap_datalink
-returns the link layer type, e.g.,
-.Tn DLT_EN10MB .
+returns the link layer type, e.g., DLT_EN10MB.
 .Pp
 .Fn pcap_snapshot
 returns the snapshot length specified when

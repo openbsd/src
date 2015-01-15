@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_tis.8,v 1.4 2012/02/01 17:32:59 sobrado Exp $
+.\" $OpenBSD: login_tis.8,v 1.5 2015/01/15 19:06:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2012 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt LOGIN_TIS 8
 .Os
 .Sh NAME
@@ -35,14 +35,11 @@ utility is called by
 .Xr ftpd 8 ,
 and others to authenticate the
 .Ar user
-via the
-.Tn TIS
+via the TIS
 .Dq Firewall Toolkit
 authentication server
 .Pq Em authsrv ,
-optionally using
-.Tn DES
-encryption.
+optionally using DES encryption.
 .Pp
 The
 .Ar service
@@ -114,9 +111,8 @@ utility uses the following TIS-specific
 variables:
 .Bl -tag -width tis-server-alt
 .It tis-keyfile
-Path to a file containing a
-.Tn DES
-key string to be used for encrypting communications end to end with
+Path to a file containing a DES key string
+to be used for encrypting communications end to end with
 .Em authsrv .
 This file must not be readable or writable by users other than root.
 If no
@@ -132,8 +128,7 @@ or port number on which
 listens.
 Defaults to port 7777.
 .It tis-server
-Hostname or IP address of the
-.Tn TIS
+Hostname or IP address of the TIS
 .Em authsrv
 daemon to connect to.
 Defaults to

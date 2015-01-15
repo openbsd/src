@@ -1,4 +1,4 @@
-.\"	$OpenBSD: talkd.8,v 1.7 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: talkd.8,v 1.8 2015/01/15 19:06:32 schwarze Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)talkd.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: talkd.8,v 1.7 2014/01/21 03:15:45 schwarze Exp $
+.\"	$Id: talkd.8,v 1.8 2015/01/15 19:06:32 schwarze Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt TALKD 8
 .Os
 .Sh NAME
@@ -45,11 +45,9 @@ initiate a conversation.
 It acts as a repository of invitations, responding to requests
 by clients wishing to rendezvous to hold a conversation.
 In normal operation, a client, the caller,
-initiates a rendezvous by sending a
-.Tn CTL_MSG
-to the server of
-type
-.Tn LOOK_UP
+initiates a rendezvous by sending a CTL_MSG to the server
+of type
+.Dv LOOK_UP
 (see
 .In protocols/talkd.h ) .
 This causes the server to search its invitation
@@ -57,7 +55,7 @@ tables to check if an invitation currently exists for the caller
 (to speak to the callee specified in the message).
 If the lookup fails,
 the caller then sends an
-.Tn ANNOUNCE
+.Dv ANNOUNCE
 message causing the server to
 broadcast an announcement on the callee's login ports requesting contact.
 When the callee responds, the local server uses the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lgamma.3,v 1.21 2013/08/07 22:20:25 millert Exp $
+.\"	$OpenBSD: lgamma.3,v 1.22 2015/01/15 19:06:31 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
 .\"
-.Dd $Mdocdate: August 7 2013 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt LGAMMA 3
 .Os
 .Sh NAME
@@ -137,10 +137,7 @@ non-positive integers.
 For large non-integer negative values,
 .Fn tgamma
 will underflow.
-On the
-.Tn VAX ,
-the reserved operator is returned,
-and
+On the VAX, the reserved operator is returned, and
 .Va errno
 is set to
 .Er ERANGE .
