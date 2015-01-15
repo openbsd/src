@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.69 2015/01/14 21:17:09 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.70 2015/01/15 21:17:54 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ int	xdmatch(struct device *, void *, void *);
 void	xdattach(struct device *, struct device *, void *);
 
 static	void xddummystrat(struct buf *);
-int	xdgetdisklabel(struct xd_softc *, void *);
+int	xdgetdisklabel(dev_t, struct xd_softc *, struct disklabel *, int);
 
 /*
  * cfdrivers: device driver interface to autoconfig
@@ -262,75 +262,89 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	booting;	/* are we booting or not? */
 };
 
-/*
- * start: disk label fix code (XXX)
- */
-
 static void
 xddummystrat(bp)
 	struct buf *bp;
 {
 	struct xd_softc *xd;
+	size_t sz;
 
 	xd = (struct xd_softc *)xd_cd.cd_devs[DISKUNIT(bp->b_dev)];
-	if (bp->b_bcount != XDFM_BPS)
-		panic("xddummystrat");
-	bcopy(xd->xd_labeldata, bp->b_data, XDFM_BPS);
+	sz = MIN(bp->b_bcount, XDFM_BPS);
+	bcopy(xd->xd_labeldata, bp->b_data, sz);
+	bp->b_resid = bp->b_bcount - sz;
+	if (bp->b_resid != 0) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
+	}
 	bp->b_flags |= B_DONE;
 }
 
 int
-xdgetdisklabel(xd, b)
+xdgetdisklabel(dev, xd, lp, spoofonly)
+	dev_t dev;
 	struct xd_softc *xd;
-	void *b;
+	struct disklabel *lp;
+	int spoofonly;
 {
-	struct disklabel *lp = xd->sc_dk.dk_label;
-	struct sun_disklabel *sl = b;
 	int error;
 
 	bzero(lp, sizeof(struct disklabel));
 	/* Required parameters for readdisklabel() */
 	lp->d_secsize = XDFM_BPS;
-	if (sl->sl_magic == SUN_DKMAGIC) {
-		lp->d_secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-		DL_SETDSIZE(lp, (u_int64_t)lp->d_secpercyl * sl->sl_ncylinders);
-	} else {
+	if (xd->state == XD_DRIVE_ATTACHING || xd->state == XD_DRIVE_NOLABEL) {
+		/* needs to be nonzero */
 		lp->d_secpercyl = 1;
+		/* prevent initdisklabel() from putting MAXDISKSIZE */
+		DL_SETDSIZE(lp, 1ULL);
+	} else {
+		/*
+		 * Disk geometry is known from a previously found label.
+		 * Use it.
+		 */
+		lp->d_ntracks = xd->nhead;
+		lp->d_nsectors = xd->nsect;
+		lp->d_ncylinders = xd->ncyl;
+		lp->d_acylinders = xd->acyl;
+		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+		DL_SETDSIZE(lp, (u_int64_t)lp->d_secpercyl * lp->d_ncylinders);
 	}
 	lp->d_type = DTYPE_SMD;
+	lp->d_version = 1;
 
-	/* We already have the label data in `b'; setup for dummy strategy */
-	xd->xd_labeldata = b;
+	/* These are as defined in <ufs/ffs/fs.h> */
+	lp->d_bbsize = 8192; /* BBSIZE */
+	lp->d_sbsize = 8192; /* SBSIZE */
 
-	error = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
-	    xddummystrat, lp, 0);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+
+	error = readdisklabel(DISKLABELDEV(dev),
+	    xd->state == XD_DRIVE_ATTACHING ? xddummystrat : xdstrategy,
+	    lp, spoofonly);
 	if (error)
-		return (error);
+		return error;
 
-	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
-	sl = b;
-	if (sl->sl_magic == SUN_DKMAGIC)
-		xd->pcyl = sl->sl_pcylinders;
-	else {
-		printf("%s: WARNING: no `pcyl' in disk label.\n",
-			xd->sc_dev.dv_xname);
-		xd->pcyl = lp->d_ncylinders +
-			lp->d_acylinders;
-		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
-		xd->sc_dev.dv_xname, xd->pcyl);
+	/*
+	 * If a label was found, get our geometry from it.
+	 */
+	if (xd->state == XD_DRIVE_ATTACHING || xd->state == XD_DRIVE_NOLABEL) {
+		/*
+		 * Note that this relies upon pcyl == cyl + acyl, and will
+		 * ignore the explicit pcyl value from the converted SunOS
+		 * label.
+		 */
+		xd->pcyl = lp->d_ncylinders + lp->d_acylinders;
+		xd->ncyl = lp->d_ncylinders;
+		xd->acyl = lp->d_acylinders;
+		xd->nhead = lp->d_ntracks;
+		xd->nsect = lp->d_nsectors;
+		xd->sectpercyl = lp->d_secpercyl;
 	}
 
-	xd->ncyl = lp->d_ncylinders;
-	xd->acyl = lp->d_acylinders;
-	xd->nhead = lp->d_ntracks;
-	xd->nsect = lp->d_nsectors;
-	xd->sectpercyl = lp->d_secpercyl;
-	return (0);
+	return 0;
 }
-
-/*
- * end: disk label fix code (XXX)
- */
 
 /*
  * a u t o c o n f i g   f u n c t i o n s
@@ -653,8 +667,12 @@ xdattach(parent, self, aux)
 	/* Attach the disk: must be before getdisklabel to malloc label */
 	disk_attach(&xd->sc_dev, &xd->sc_dk);
 
-	if (xdgetdisklabel(xd, xa->buf) != XD_ERR_AOK)
+	xd->xd_labeldata = xa->buf;
+	if (xdgetdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, 0), xd,
+	    xd->sc_dk.dk_label, 0) != 0) {
+		printf("%s: no label, unknown geometry\n", xd->sc_dev.dv_xname);
 		goto done;
+	}
 
 	/* inform the user of what is up */
 	printf("%s: <%s>, pcyl %d, hw_spt %d\n", xd->sc_dev.dv_xname,
@@ -819,14 +837,17 @@ xdioctl(dev, command, addr, flag, p)
 		splx(s);
 		return 0;
 
+	case DIOCGPDINFO:
+		xdgetdisklabel(dev, xd, (struct disklabel *)addr, 1);
+		return 0;
+
 	case DIOCGDINFO:	/* get disk label */
-	case DIOCGPDINFO:	/* no separate 'physical' info available. */
 		bcopy(xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
 		return 0;
 
 	case DIOCGPART:	/* get partition info */
-		((struct partinfo *) addr)->disklab = xd->sc_dk.dk_label;
-		((struct partinfo *) addr)->part =
+		((struct partinfo *)addr)->disklab = xd->sc_dk.dk_label;
+		((struct partinfo *)addr)->part =
 		    &xd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
 
@@ -835,7 +856,7 @@ xdioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xd->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0);
+		    (struct disklabel *)addr, /* xd->sc_dk.dk_openmask : */ 0);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
 				xd->state = XD_DRIVE_ONLINE;
