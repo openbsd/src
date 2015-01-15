@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.62 2014/12/08 21:45:19 deraadt Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.63 2015/01/15 19:55:58 tedu Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ int	mkostemp(char *, int);
 #endif
 
 #if __BSD_VISIBLE
-void	*alloca(size_t); 
+#define alloca(n) __builtin_alloca(n)
 
 char	*getbsize(int *, long *);
 char	*cgetcap(char *, const char *, int);
