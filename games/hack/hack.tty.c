@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.tty.c,v 1.11 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.tty.c,v 1.12 2015/01/15 17:13:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -99,14 +99,6 @@
 #include	<stdarg.h>
 #include	<stdlib.h>
 #include	<termios.h>
-
-/*
- * Some systems may have getchar() return EOF for various reasons, and
- * we should not quit before seeing at least NR_OF_EOFS consecutive EOFs.
- */
-#ifndef BSD
-#define	NR_OF_EOFS	20
-#endif /* BSD */
 
 static char erase_char, kill_char;
 static boolean settty_needed = FALSE;
@@ -330,23 +322,7 @@ readchar()
 
 	(void) fflush(stdout);
 	if((sym = getchar()) == EOF)
-#ifdef NR_OF_EOFS
-	{ /*
-	   * Some SYSV systems seem to return EOFs for various reasons
-	   * (?like when one hits break or for interrupted systemcalls?),
-	   * and we must see several before we quit.
-	   */
-		int cnt = NR_OF_EOFS;
-		while (cnt--) {
-		    clearerr(stdin);	/* omit if clearerr is undefined */
-		    if((sym = getchar()) != EOF) goto noteof;
-		}
 		end_of_input();
-	     noteof:	;
-	}
-#else
-		end_of_input();
-#endif /* NR_OF_EOFS */
 	if(flags.toplin == 1)
 		flags.toplin = 2;
 	return((char) sym);
