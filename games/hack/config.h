@@ -1,4 +1,4 @@
-/* *	$OpenBSD: config.h,v 1.10 2014/03/11 08:02:36 guenther Exp $*/
+/* *	$OpenBSD: config.h,v 1.11 2015/01/15 17:14:04 deraadt Exp $*/
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*
@@ -109,9 +109,7 @@
 
 #define SHELL		/* do not delete the '!' command */
 
-#ifdef BSD
 #define	SUSPEND		/* let ^Z suspend the game */
-#endif /* BSD */
 #endif /* UNIX */
 
 #ifdef CHDIR
