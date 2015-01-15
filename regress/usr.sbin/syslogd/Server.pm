@@ -1,6 +1,6 @@
-#	$OpenBSD: Server.pm,v 1.4 2014/12/31 01:25:07 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.5 2015/01/15 13:15:17 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,11 @@ sub new {
 	$self->{listenproto} ||= "udp";
 	defined($self->{listendomain})
 	    or croak "$class listen domain not given";
+	return $self->listen();
+}
+
+sub listen {
+	my $self = shift;
 	$SSL_ERROR = "";
 	my $iosocket = $self->{listenproto} eq "tls" ?
 	    "IO::Socket::SSL" : "IO::Socket::INET6";
@@ -61,6 +66,21 @@ sub new {
 	$self->{listenport} = $ls->sockport() unless $self->{listenport};
 	$self->{ls} = $ls;
 	return $self;
+}
+
+sub close {
+	my $self = shift;
+	$self->{ls}->close()
+	    or die ref($self)," ",ref($self->{ls}),
+	    " socket close failed: $!,$SSL_ERROR";
+	delete $self->{ls};
+	return $self;
+}
+
+sub run {
+	my $self = shift;
+	Proc::run($self, @_);
+	return $self->close();
 }
 
 sub child {

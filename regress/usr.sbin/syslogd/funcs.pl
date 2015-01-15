@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.9 2015/01/01 19:58:48 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.10 2015/01/15 13:15:17 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -131,10 +131,15 @@ sub read_message {
 
 	local $_;
 	for (;;) {
-		# reading udp packets works only with sysread()
-		defined(my $n = sysread(STDIN, $_, 8194))
-		    or die ref($self), " read log line failed: $!";
-		last if $n == 0;
+		if ($self->{listenproto} eq "udp") {
+			# reading udp packets works only with sysread()
+			defined(my $n = sysread(STDIN, $_, 8194))
+			    or die ref($self), " read log line failed: $!";
+			last if $n == 0;
+		} else {
+			defined($_ = <STDIN>)
+			    or last;
+		}
 		chomp;
 		print STDERR ">>> $_\n";
 		last if /$regex/;
