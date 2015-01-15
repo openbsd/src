@@ -29,10 +29,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: akbd.4,v 1.4 2011/01/30 07:53:57 jmc Exp $
+.\"	$OpenBSD: akbd.4,v 1.5 2015/01/15 20:37:36 schwarze Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
-.Dd $Mdocdate: January 30 2011 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt AKBD 4
 .Os
 .Sh NAME
@@ -157,12 +157,13 @@ interface first appeared in
 .Nx 0.9 .
 It has been under development ever since.
 .Sh AUTHORS
-Bradley A. Grantham wrote the original
+.An -nosplit
+.An Bradley A. Grantham
+wrote the original
 .Nm
-driver, including the
-.Tn MRG
-support.
-The hardware direct interface was written by John P. Wittkowski.
+driver, including the MRG support.
+The hardware direct interface was written by
+.An John P. Wittkowski .
 .Sh BUGS
 The list of built-in mappings doesn't follow any logic.
 It grew as people submitted what they needed.

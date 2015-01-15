@@ -1,4 +1,4 @@
-.\" $OpenBSD: lmc.4,v 1.26 2013/06/02 20:23:33 tedu Exp $
+.\" $OpenBSD: lmc.4,v 1.27 2015/01/15 20:37:36 schwarze Exp $
 .\"
 .\" Copyright (c) 1999 Chris Cappuccio
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt LMC 4
 .Os
 .Sh NAME
@@ -94,14 +94,18 @@ Only available if compiled with LMC_DEBUG.
 .Xr ifconfig 8 ,
 .Xr lmccontrol 8
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-device driver was written by Michael Graff, and was derived in part from
-Matt Thomas'
+device driver was written by
+.An Michael Graff ,
+and was derived in part from
+.An Matt Thomas Ns '
 .Xr de 4
 driver.
 The
 .Ox
-port and manual page are from Chris Cappuccio.
+port and manual page are from
+.An Chris Cappuccio .
 Later enhancements to support the LMC1200 card are based on LMC's
 Linux driver.
