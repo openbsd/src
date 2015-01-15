@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.41 2014/12/01 21:59:06 nicm Exp $
+.\"	$OpenBSD: tty.4,v 1.42 2015/01/15 00:25:00 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 1 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -365,10 +365,6 @@ The window size structure contains the number of rows and columns (and pixels
 if appropriate) of the devices attached to the terminal.
 It is set by user software and is the means by which most full\&-screen
 oriented programs determine the screen size.
-The
-.Va winsize
-structure is defined in
-.In sys/ioctl.h .
 .It Dv TIOCSWINSZ Fa struct winsize *ws
 Set the window size associated with the terminal to be the value in
 the
