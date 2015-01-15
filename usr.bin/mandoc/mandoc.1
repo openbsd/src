@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.71 2015/01/14 22:02:00 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.72 2015/01/15 04:26:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 14 2015 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -159,15 +159,15 @@ to be reported on the standard error output and to affect the exit status.
 The
 .Ar level
 can be
-.Cm warning ,
-.Cm error ,
+.Cm warning
 or
-.Cm fatal .
-The default is
-.Fl W Ns Cm fatal ;
-.Fl W Ns Cm all
+.Cm error ;
+.Cm all
 is an alias for
-.Fl W Ns Cm warning .
+.Cm warning .
+By default,
+.Nm
+is silent.
 See
 .Sx EXIT STATUS
 and
@@ -532,13 +532,11 @@ At least one warning occurred, but no error, and
 .Fl W Ns Cm warning
 was specified.
 .It 3
-At least one parsing error occurred, but no fatal error, and
+At least one parsing error occurred, and
 .Fl W Ns Cm error
 or
 .Fl W Ns Cm warning
 was specified.
-.It 4
-A fatal parsing error occurred.
 .It 5
 Invalid command line arguments were specified.
 No input files have been read.
@@ -603,9 +601,6 @@ fields.
 .Pp
 Message levels have the following meanings:
 .Bl -tag -width "warning"
-.It Cm fatal
-The parser is unable to parse a given input file at all.
-No formatted output is produced from that input file.
 .It Cm error
 An input file contains syntax that cannot be safely interpreted,
 either because it is invalid or because

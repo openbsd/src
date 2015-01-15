@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.41 2014/11/26 00:57:32 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.42 2015/01/15 04:26:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
@@ -820,7 +820,6 @@ format(const struct req *req, const char *file)
 	struct man	*man;
 	void		*vp;
 	char		*opts;
-	enum mandoclevel rc;
 	int		 fd;
 	int		 usepath;
 
@@ -830,17 +829,10 @@ format(const struct req *req, const char *file)
 	}
 
 	mchars = mchars_alloc();
-	mp = mparse_alloc(MPARSE_SO, MANDOCLEVEL_FATAL, NULL,
+	mp = mparse_alloc(MPARSE_SO, MANDOCLEVEL_BADARG, NULL,
 	    mchars, req->q.manpath);
-	rc = mparse_readfd(mp, fd, file);
+	mparse_readfd(mp, fd, file);
 	close(fd);
-
-	if (rc >= MANDOCLEVEL_FATAL) {
-		fprintf(stderr, "fatal mandoc error: %s/%s\n",
-		    req->q.manpath, file);
-		pg_error_internal();
-		return;
-	}
 
 	usepath = strcmp(req->q.manpath, req->p[0]);
 	mandoc_asprintf(&opts,

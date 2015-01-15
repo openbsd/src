@@ -1,9 +1,9 @@
-.\"	$OpenBSD: man.1,v 1.8 2014/12/28 14:39:08 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.9 2015/01/15 04:26:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\" Copyright (c) 2003, 2007, 2008, 2014 Jason McIntyre <jmc@openbsd.org>
-.\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: December 28 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -300,15 +300,15 @@ to be reported on the standard error output and to affect the exit status.
 The
 .Ar level
 can be
-.Cm warning ,
-.Cm error ,
+.Cm warning
 or
-.Cm fatal .
-The default is
-.Cm fatal ;
+.Cm error ;
 .Cm all
 is an alias for
 .Cm warning .
+By default,
+.Nm
+is silent.
 See the
 .Xr mandoc 1
 manual for details.

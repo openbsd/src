@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.120 2015/01/14 21:27:01 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.121 2015/01/15 04:26:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 
 	memset(&curp, 0, sizeof(struct curparse));
 	curp.outtype = OUTT_LOCALE;
-	curp.wlevel  = MANDOCLEVEL_FATAL;
+	curp.wlevel  = MANDOCLEVEL_BADARG;
 	options = MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1;
 	defos = NULL;
 
@@ -600,11 +600,6 @@ parse(struct curparse *curp, int fd, const char *file,
 
 	rc = mparse_readfd(curp->mp, fd, file);
 
-	/* Stop immediately if the parse has failed. */
-
-	if (MANDOCLEVEL_FATAL <= rc)
-		goto cleanup;
-
 	/*
 	 * With -Wstop and warnings or errors of at least the requested
 	 * level, do not produce output.
@@ -864,7 +859,7 @@ woptions(struct curparse *curp, char *arg)
 			curp->wlevel = MANDOCLEVEL_ERROR;
 			break;
 		case 4:
-			curp->wlevel = MANDOCLEVEL_FATAL;
+			curp->wlevel = MANDOCLEVEL_BADARG;
 			break;
 		default:
 			fprintf(stderr, "%s: -W %s: Bad argument\n",
