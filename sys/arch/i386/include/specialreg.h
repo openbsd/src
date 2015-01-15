@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.47 2014/07/03 21:15:28 matthew Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.48 2015/01/15 13:58:55 sf Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@
 #define	CPUIDECX_AVX	0x10000000	/* Advanced Vector Extensions */
 #define	CPUIDECX_F16C	0x20000000	/* 16bit fp conversion  */
 #define	CPUIDECX_RDRAND	0x40000000	/* RDRAND instruction  */
+#define	CPUIDECX_HV	0x80000000	/* Running on hypervisor */
 
 /*
  * "Structured Extended Feature Flags Parameters" (CPUID function 0x7, leaf 0)
