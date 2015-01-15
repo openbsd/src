@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.83 2014/05/12 19:11:19 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.84 2015/01/15 22:08:41 deraadt Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -95,14 +95,6 @@
 #include "gnode.h"
 #include "timestamp.h"
 #include "lst.h"
-
-#ifndef PATH_MAX
-# ifdef MAXPATHLEN
-#  define PATH_MAX (MAXPATHLEN+1)
-# else
-#  define PATH_MAX	1024
-# endif
-#endif
 
 #ifdef TARGET_MACHINE
 #undef MACHINE
