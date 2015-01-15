@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.64 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.65 2015/01/15 20:36:17 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
-	int error, i, flags;
+	int error, i, flags = 0;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
 	struct shmmap_head *shmmap_h;
@@ -251,9 +251,8 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	prot = PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= PROT_WRITE;
-	flags = MAP_ANON | MAP_SHARED;
 	if (SCARG(uap, shmaddr)) {
-		flags |= MAP_FIXED;
+		flags |= UVM_FLAG_FIXED;
 		if (SCARG(uap, shmflg) & SHM_RND) 
 			attach_va =
 			    (vaddr_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
@@ -267,7 +266,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	uao_reference(shm_handle->shm_object);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
-	    MAP_INHERIT_SHARE, MADV_RANDOM, 0));
+	    MAP_INHERIT_SHARE, MADV_RANDOM, flags));
 	if (error) {
 		uao_detach(shm_handle->shm_object);
 		return (error);
