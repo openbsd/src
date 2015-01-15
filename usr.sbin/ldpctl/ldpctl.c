@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.16 2013/11/14 20:48:52 deraadt Exp $
+/*	$OpenBSD: ldpctl.c,v 1.17 2015/01/15 23:51:04 deraadt Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "ldp.h"
 #include "ldpd.h"
