@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.19 2014/11/18 20:54:28 krw Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.20 2015/01/15 20:48:51 miod Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ ee_hwupdate(struct keytabent *ktent, char *arg)
 	if ((cp2 = strrchr(cp, '\n')) != NULL)
 		*cp2 = '\0';
 
-	printf("%s=%d (%s)\n", ktent->kt_keyword, t, cp);
+	printf("%s=%lld (%s)\n", ktent->kt_keyword, (long long)t, cp);
 }
 #endif
 
