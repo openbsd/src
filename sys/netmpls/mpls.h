@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.28 2013/04/24 10:20:15 mpi Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.29 2015/01/15 23:50:31 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -32,13 +32,6 @@
 
 #ifndef _NETMPLS_MPLS_H_
 #define _NETMPLS_MPLS_H_
-
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/queue.h>
-
-#include <net/if.h>
-#include <net/if_dl.h>
 
 /*
  * Structure of a SHIM header.
