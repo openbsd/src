@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-ed25519.c,v 1.5 2014/10/14 03:09:59 daniel Exp $ */
+/* $OpenBSD: ssh-ed25519.c,v 1.6 2015/01/15 21:38:50 markus Exp $ */
 /*
  * Copyright (c) 2013 Markus Friedl <markus@openbsd.org>
  *
@@ -23,9 +23,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "xmalloc.h"
 #include "log.h"
-#include "buffer.h"
+#include "sshbuf.h"
 #include "sshkey.h"
 #include "ssherr.h"
 #include "ssh.h"
@@ -131,7 +130,7 @@ ssh_ed25519_verify(const struct sshkey *key,
 	}
 	smlen = len + datalen;
 	mlen = smlen;
-	if ((sm = malloc(smlen)) == NULL || (m = xmalloc(mlen)) == NULL) {
+	if ((sm = malloc(smlen)) == NULL || (m = malloc(mlen)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -162,4 +161,3 @@ ssh_ed25519_verify(const struct sshkey *key,
 	free(ktype);
 	return r;
 }
-
