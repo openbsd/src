@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/ipc.h>
+#include <sys/mman.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
 
@@ -288,6 +289,7 @@ receiver()
 {
 	int shmid;
 	void *shm_buf;
+	void *block;
 
 	if ((shmid = shmget(shmkey, pgsize, 0)) == -1)
 		err(1, "receiver: shmget");
@@ -296,9 +298,38 @@ receiver()
 		err(1, "receiver: shmat");
 
 	if (verbose)
-		printf("%s\n", (const char *)shm_buf);
+		printf("%.*s\n", (int)pgsize, (const char *)shm_buf);
 	if (strcmp((const char *)shm_buf, m_str) != 0)
-		err(1, "receiver: data isn't correct");
+		errx(1, "receiver: data isn't correct");
+
+	/* mmap() a page to get a distinct, freeable address */
+	block = mmap(NULL, pgsize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON,
+	    -1, 0);
+	if (block == MAP_FAILED)
+		err(1, "receiver: mmap");
+
+	/* detach, then try to attach, conflicting with the mmap() */
+	if (shmdt(shm_buf) == -1)
+		err(1, "receiver: shmdt");
+	if ((shm_buf = shmat(shmid, block, 0)) != (void *) -1)
+		errx(1, "receiver: shmat(conflict) succeeded!");
+	if (errno != ENOMEM)
+		err(1, "receiver: shmat(conflict) wrong error");
+
+	/* free up that address and try again */
+	if (munmap(block, pgsize) == -1)
+		err(1, "receiver: munmap");
+	if ((shm_buf = shmat(shmid, block, 0)) == (void *) -1)
+		err(1, "receiver: shmat(fixed)");
+
+	if (shm_buf != block)
+		errx(1, "receiver: shmat not at expected address: %p != %p",
+		    shm_buf, block);
+
+	if (verbose)
+		printf("%.*s\n", (int)pgsize, (const char *)shm_buf);
+	if (strcmp((const char *)shm_buf, m_str) != 0)
+		errx(1, "receiver: data isn't correct second time");
 
 	exit(0);
 }
