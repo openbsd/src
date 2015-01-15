@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.37 2015/01/05 14:07:12 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.38 2015/01/15 17:34:15 chl Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -88,7 +88,6 @@ main(int argc, char **argv)
 	int opt;
 	int operation = -1;
 	int prompt = 0;
-	int rounds;
 	char *extra = NULL;		/* Store salt or number of rounds */
 	const char *errstr;
 
