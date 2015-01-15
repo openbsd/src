@@ -1,8 +1,7 @@
-/*	$OpenBSD: wcslcpy.c,v 1.5 2011/07/24 15:21:28 millert Exp $	*/
-/*	$NetBSD: wcslcpy.c,v 1.2 2001/01/03 14:33:02 lukem Exp $	*/
+/*	$OpenBSD: wcslcpy.c,v 1.6 2015/01/15 03:54:12 millert Exp $	*/
 
 /*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,32 +20,31 @@
 #include <wchar.h>
 
 /*
- * Copy src to string dst of size siz.  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz == 0).
- * Returns wcslen(src); if retval >= siz, truncation occurred.
+ * Copy string src to buffer dst of size dsize.  At most dsize-1
+ * chars will be copied.  Always NUL terminates (unless dsize == 0).
+ * Returns wcslen(src); if retval >= dsize, truncation occurred.
  */
 size_t
-wcslcpy(wchar_t *dst, const wchar_t *src, size_t siz)
+wcslcpy(wchar_t *dst, const wchar_t *src, size_t dsize)
 {
-	wchar_t *d = dst;
-	const wchar_t *s = src;
-	size_t n = siz;
+	const wchar_t *osrc = src;
+	size_t nleft = dsize;
 
-	/* Copy as many bytes as will fit */
-	if (n != 0) {
-		while (--n != 0) {
-			if ((*d++ = *s++) == '\0')
+	/* Copy as many bytes as will fit. */
+	if (nleft != 0) {
+		while (--nleft != 0) {
+			if ((*dst++ = *src++) == L'\0')
 				break;
 		}
 	}
 
-	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0) {
-		if (siz != 0)
-			*d = '\0';		/* NUL-terminate dst */
-		while (*s++)
+	/* Not enough room in dst, add NUL and traverse rest of src. */
+	if (nleft == 0) {
+		if (dsize != 0)
+			*dst = L'\0';		/* NUL-terminate dst */
+		while (*src++)
 			;
 	}
 
-	return(s - src - 1);	/* count does not include NUL */
+	return(src - osrc - 1);	/* count does not include NUL */
 }

@@ -1,8 +1,7 @@
-/*	$OpenBSD: wcslcat.c,v 1.4 2011/07/24 15:21:28 millert Exp $	*/
-/*	$NetBSD: wcslcat.c,v 1.2 2001/01/03 14:33:02 lukem Exp $	*/
+/*	$OpenBSD: wcslcat.c,v 1.5 2015/01/15 03:54:12 millert Exp $	*/
 
 /*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,36 +20,36 @@
 #include <wchar.h>
 
 /*
- * Appends src to string dst of size siz (unlike wcsncat, siz is the
- * full size of dst, not space left).  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz <= wcslen(dst)).
- * Returns wcslen(src) + MIN(siz, wcslen(initial dst)).
+ * Appends src to string dst of size dsize (unlike strncat, dsize is the
+ * full size of dst, not space left).  At most dsize-1 characters
+ * will be copied.  Always NUL terminates (unless dsize <= wcslen(dst)).
+ * Returns wcslen(src) + MIN(dsize, wcslen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
 size_t
-wcslcat(wchar_t *dst, const wchar_t *src, size_t siz)
+wcslcat(wchar_t *dst, const wchar_t *src, size_t dsize)
 {
-	wchar_t *d = dst;
-	const wchar_t *s = src;
-	size_t n = siz;
+	const wchar_t *odst = dst;
+	const wchar_t *osrc = src;
+	size_t n = dsize;
 	size_t dlen;
 
-	/* Find the end of dst and adjust bytes left but don't go past end */
-	while (n-- != 0 && *d != '\0')
-		d++;
-	dlen = d - dst;
-	n = siz - dlen;
+	/* Find the end of dst and adjust bytes left but don't go past end. */
+	while (n-- != 0 && *dst != L'\0')
+		dst++;
+	dlen = dst - odst;
+	n = dsize - dlen;
 
-	if (n == 0)
-		return(dlen + wcslen(s));
-	while (*s != '\0') {
-		if (n != 1) {
-			*d++ = *s;
+	if (n-- == 0)
+		return(dlen + wcslen(src));
+	while (*src != L'\0') {
+		if (n != 0) {
+			*dst++ = *src;
 			n--;
 		}
-		s++;
+		src++;
 	}
-	*d = '\0';
+	*dst = L'\0';
 
-	return(dlen + (s - src));	/* count does not include NUL */
+	return(dlen + (src - osrc));	/* count does not include NUL */
 }
