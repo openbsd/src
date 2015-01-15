@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecb_enc.c,v 1.4 2013/11/18 18:49:53 brad Exp $	*/
+/*	$OpenBSD: ecb_enc.c,v 1.5 2015/01/15 23:26:40 tedu Exp $	*/
 
 /* lib/des/ecb_enc.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -49,8 +49,6 @@
 
 #include "des_locl.h"
 #include "spr.h"
-
-const char *DES_version="libdes v 3.21 - 95/11/21 - eay";
 
 void
 des_ecb_encrypt(des_cblock (*input), des_cblock (*output), des_key_schedule ks,
