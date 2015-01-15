@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptutil.c,v 1.7 2014/12/30 10:27:24 tedu Exp $ */
+/* $OpenBSD: cryptutil.c,v 1.8 2015/01/15 17:32:43 chl Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -27,7 +27,6 @@ int
 crypt_checkpass(const char *pass, const char *goodhash)
 {
 	char dummy[_PASSWORD_LEN];
-	char *res;
 
 	if (goodhash == NULL) {
 		/* fake it */
