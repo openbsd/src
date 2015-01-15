@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.97 2015/01/09 21:49:59 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.98 2015/01/15 22:21:01 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 #include <resolv.h>
 
+#include <limits.h>
 #include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
@@ -507,7 +508,7 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 #ifndef VERIFYONLY
 #define HASHBUFSIZE 224
 struct checksum {
-	char file[1024];
+	char file[PATH_MAX];
 	char hash[HASHBUFSIZE];
 	char algo[32];
 };
@@ -647,7 +648,7 @@ main(int argc, char **argv)
 {
 	const char *pubkeyfile = NULL, *seckeyfile = NULL, *msgfile = NULL,
 	    *sigfile = NULL;
-	char sigfilebuf[1024];
+	char sigfilebuf[PATH_MAX];
 	const char *comment = "signify";
 	int ch, rounds;
 	int embedded = 0;
