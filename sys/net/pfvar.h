@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.406 2014/12/23 03:24:08 tedu Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.407 2015/01/15 23:56:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -34,11 +34,10 @@
 #ifndef _NET_PFVAR_H_
 #define _NET_PFVAR_H_
 
-#include <sys/param.h>
-#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/rwlock.h>
+#include <sys/syslimits.h>
 
 #include <net/radix.h>
 #include <net/route.h>
@@ -1002,7 +1001,7 @@ struct pf_anchor {
 	struct pf_anchor	*parent;
 	struct pf_anchor_node	 children;
 	char			 name[PF_ANCHOR_NAME_SIZE];
-	char			 path[MAXPATHLEN];
+	char			 path[PATH_MAX];
 	struct pf_ruleset	 ruleset;
 	int			 refcnt;	/* anchor rules */
 	int			 match;
@@ -1025,7 +1024,7 @@ RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 #define PFR_TFLAG_ALLMASK	0x0000007F
 
 struct pfr_table {
-	char			 pfrt_anchor[MAXPATHLEN];
+	char			 pfrt_anchor[PATH_MAX];
 	char			 pfrt_name[PF_TABLE_NAME_SIZE];
 	u_int32_t		 pfrt_flags;
 	u_int8_t		 pfrt_fback;
@@ -1512,8 +1511,8 @@ struct pfioc_rule {
 	u_int32_t	 action;
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
-	char		 anchor[MAXPATHLEN];
-	char		 anchor_call[MAXPATHLEN];
+	char		 anchor[PATH_MAX];
+	char		 anchor_call[PATH_MAX];
 	struct pf_rule	 rule;
 };
 
@@ -1588,7 +1587,7 @@ struct pfioc_limit {
 
 struct pfioc_ruleset {
 	u_int32_t	 nr;
-	char		 path[MAXPATHLEN];
+	char		 path[PATH_MAX];
 	char		 name[PF_ANCHOR_NAME_SIZE];
 };
 
@@ -1597,7 +1596,7 @@ struct pfioc_trans {
 	int		 esize; /* size of each element in bytes */
 	struct pfioc_trans_e {
 		int		type;
-		char		anchor[MAXPATHLEN];
+		char		anchor[PATH_MAX];
 		u_int32_t	ticket;
 	}		*array;
 };
