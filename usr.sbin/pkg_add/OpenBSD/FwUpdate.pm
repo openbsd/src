@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.8 2015/01/05 16:32:28 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.9 2015/01/15 19:16:17 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,7 @@ sub handle_options
 		$state->usage;
 	}
 	$state->{fw_repository} = 
-	    OpenBSD::PackageRepository->new($state->{path});
+	    OpenBSD::PackageRepository->new($state->{path}, $state);
 	if ($state->verbose) {
 		$state->say("Path to firmware: #1", $state->{path});
 	}
