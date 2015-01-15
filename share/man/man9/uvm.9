@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.59 2014/11/16 12:31:01 deraadt Exp $
+.\"	$OpenBSD: uvm.9,v 1.60 2015/01/15 21:19:22 guenther Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: November 16 2014 $
+.Dd $Mdocdate: January 15 2015 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -226,21 +226,21 @@ The values that
 .Fa inh
 can take are:
 .Bd -literal
-#define UVM_INH_MASK    0x30    /* inherit mask */
-#define UVM_INH_SHARE   0x00    /* "share" */
-#define UVM_INH_COPY    0x10    /* "copy" */
-#define UVM_INH_NONE    0x20    /* "none" */
-#define UVM_INH_ZERO    0x30    /* "zero" */
+#define MAP_INHERIT_MASK    0x30    /* inherit mask */
+#define MAP_INHERIT_SHARE   0x00    /* "share" */
+#define MAP_INHERIT_COPY    0x10    /* "copy" */
+#define MAP_INHERIT_NONE    0x20    /* "none" */
+#define MAP_INHERIT_ZERO    0x30    /* "zero" */
 .Ed
 .Pp
 The values that
 .Fa advice
 can take are:
 .Bd -literal
-#define UVM_ADV_NORMAL  0x0     /* 'normal' */
-#define UVM_ADV_RANDOM  0x1     /* 'random' */
-#define UVM_ADV_SEQUENTIAL 0x2  /* 'sequential' */
-#define UVM_ADV_MASK    0x7     /* mask */
+#define MADV_NORMAL  0x0     /* 'normal' */
+#define MADV_RANDOM  0x1     /* 'random' */
+#define MADV_SEQUENTIAL 0x2  /* 'sequential' */
+#define MADV_MASK    0x7     /* mask */
 .Ed
 .Pp
 The values that
