@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.10 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.11 2015/01/15 23:19:48 tedu Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -1312,11 +1312,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		    break;
 		}
 		GETCHAR(cichar, p);	/* get digest type*/
-		if (cichar != CHAP_DIGEST_MD5
-#ifdef CHAPMS
-		    && cichar != CHAP_MICROSOFT
-#endif
-		    ) {
+		if (cichar != CHAP_DIGEST_MD5) {
 		    orc = CONFNAK;
 		    PUTCHAR(CI_AUTHTYPE, nakp);
 		    PUTCHAR(CILEN_CHAP, nakp);
