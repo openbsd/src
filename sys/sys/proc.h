@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.191 2014/11/16 05:42:21 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.192 2015/01/15 23:59:09 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/selinfo.h>		/* For struct selinfo */
+#include <sys/syslimits.h>		/* For LOGIN_NAME_MAX */
 #include <sys/queue.h>
 #include <sys/timeout.h>		/* For struct timeout */
 #include <sys/event.h>			/* For struct klist */
@@ -62,7 +63,7 @@ struct	session {
 	struct	process *s_leader;	/* Session leader. */
 	struct	vnode *s_ttyvp;		/* Vnode of controlling terminal. */
 	struct	tty *s_ttyp;		/* Controlling terminal. */
-	char	s_login[MAXLOGNAME];	/* Setlogin() name. */
+	char	s_login[LOGIN_NAME_MAX];	/* Setlogin() name. */
 };
 
 /*
@@ -89,7 +90,7 @@ struct	emul {
 	char	e_name[8];		/* Symbolic name */
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
-	void	(*e_sendsig)(sig_t, int, int, u_long, int, union sigval);
+	void	(*e_sendsig)(void (*)(int), int, int, u_long, int, union sigval);
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 	struct sysent *e_sysent;	/* System call array */
