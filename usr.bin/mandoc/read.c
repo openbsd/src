@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.84 2015/01/14 22:57:57 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.85 2015/01/15 02:29:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -206,6 +206,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown standard specifier",
 	"skipping request without numeric argument",
 	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
+	".so request failed",
 	"skipping all arguments",
 	"skipping excess arguments",
 	"divide by zero",
@@ -213,7 +214,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"generic fatal error",
 
 	"input too large",
-	".so request failed",
 };
 
 static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
@@ -301,10 +301,13 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 {
 	const struct tbl_span	*span;
 	struct buf	 ln;
+	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
 	enum rofferr	 rr;
 	int		 of;
 	int		 lnn; /* line number in the real file */
+	int		 fd;
+	pid_t		 save_child;
 	unsigned char	 c;
 
 	memset(&ln, 0, sizeof(ln));
@@ -513,13 +516,23 @@ rerun:
 			 */
 			if (curp->secondary)
 				curp->secondary->sz -= pos + 1;
-			mparse_readfd(curp, -1, ln.buf + of);
-			if (MANDOCLEVEL_FATAL <= curp->file_status) {
+			save_child = curp->child;
+			if (mparse_open(curp, &fd, ln.buf + of) ==
+			    MANDOCLEVEL_OK)
+				mparse_readfd(curp, fd, ln.buf + of);
+			else {
 				mandoc_vmsg(MANDOCERR_SO_FAIL,
 				    curp, curp->line, pos,
 				    ".so %s", ln.buf + of);
-				break;
+				ln.sz = mandoc_asprintf(&cp,
+				    ".sp\nSee the file %s.\n.sp",
+				    ln.buf + of);
+				free(ln.buf);
+				ln.buf = cp;
+				of = 0;
+				mparse_buf_r(curp, ln, of, 0);
 			}
+			curp->child = save_child;
 			pos = 0;
 			continue;
 		default:
@@ -730,8 +743,6 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 }
 
 /*
- * If a file descriptor is given, use it and assume it points
- * to the named file.  Otherwise, open the named file.
  * Read the whole file into memory and call the parsers.
  * Called recursively when an .so request is encountered.
  */
@@ -741,13 +752,6 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 	struct buf	 blk;
 	int		 with_mmap;
 	int		 save_filenc;
-	pid_t		 save_child;
-
-	save_child = curp->child;
-	if (fd != -1)
-		curp->child = 0;
-	else if (mparse_open(curp, &fd, file) != MANDOCLEVEL_OK)
-		goto out;
 
 	if (read_whole_file(curp, file, fd, &blk, &with_mmap)) {
 		save_filenc = curp->filenc;
@@ -765,8 +769,6 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 		perror(file);
 
 	mparse_wait(curp);
-out:
-	curp->child = save_child;
 	return(curp->file_status);
 }
 
