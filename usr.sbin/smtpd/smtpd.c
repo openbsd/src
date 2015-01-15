@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.235 2014/08/25 07:50:26 doug Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.236 2015/01/15 09:05:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1116,6 +1116,7 @@ offline_enqueue(char *name)
 		p[len - 1] = '\0';
 
 		addargs(&args, "%s", "sendmail");
+		addargs(&args, "%s", "-S");
 
 		while ((tmp = strsep(&p, "|")) != NULL)
 			addargs(&args, "%s", tmp);

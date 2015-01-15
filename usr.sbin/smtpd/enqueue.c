@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.88 2014/11/12 10:28:07 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.89 2015/01/15 09:05:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -176,6 +176,7 @@ enqueue(int argc, char *argv[])
 	int			 inheaders = 0;
 	int			 save_argc;
 	char			**save_argv;
+	int			 no_getlogin = 0;
 
 	memset(&msg, 0, sizeof(msg));
 	time(&timestamp);
@@ -184,7 +185,7 @@ enqueue(int argc, char *argv[])
 	save_argv = argv;
 
 	while ((ch = getopt(argc, argv,
-	    "A:B:b:E::e:F:f:iJ::L:mN:o:p:qR:tvV:x")) != -1) {
+	    "A:B:b:E::e:F:f:iJ::L:mN:o:p:qRS:tvV:x")) != -1) {
 		switch (ch) {
 		case 'f':
 			fake_from = optarg;
@@ -197,6 +198,9 @@ enqueue(int argc, char *argv[])
 			break;
 		case 'R':
 			msg.dsn_ret = optarg;
+			break;
+		case 'S':
+			no_getlogin = 1;
 			break;
 		case 't':
 			tflag = 1;
@@ -233,11 +237,19 @@ enqueue(int argc, char *argv[])
 
 	if (getmailname(host, sizeof(host)) == -1)
 		err(EX_NOHOST, "getmailname");
-	if ((user = getlogin()) != NULL && *user != '\0')
-		pw = getpwnam(user);
-	else if ((pw = getpwuid(getuid())) == NULL)
-		user = "anonymous";
-	user = xstrdup(pw ? pw->pw_name : user, "enqueue");
+	if (no_getlogin) {
+		if ((pw = getpwuid(getuid())) == NULL)
+			user = "anonymous";
+		if (pw != NULL)
+			user = xstrdup(pw->pw_name, "enqueue");
+	}
+	else {
+		if ((user = getlogin()) != NULL && *user != '\0')
+			pw = getpwnam(user);
+		else if ((pw = getpwuid(getuid())) == NULL)
+			user = "anonymous";
+		user = xstrdup(pw ? pw->pw_name : user, "enqueue");
+	}
 
 	build_from(fake_from, pw);
 
