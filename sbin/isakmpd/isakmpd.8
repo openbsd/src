@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.114 2014/03/11 15:25:34 sthen Exp $
+.\" $OpenBSD: isakmpd.8,v 1.115 2015/01/16 09:08:41 bentley Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: March 11 2014 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -333,45 +333,45 @@ Available commands are:
 .It Xo
 .Ic C add
 .Sm off
-.Op Ic section
-.No :
-.Ic tag No = Ic value
+.Op Ar section
+:
+.Ar tag No = Ar value
 .Sm on
 .Xc
 .It Xo
 .Ic C rmv
 .Sm off
-.Op Ic section
-.No :
-.Ic tag No = Ic value
+.Op Ar section
+:
+.Ar tag No = Ar value
 .Sm on
 .Xc
 .It Xo
 .Ic C rm
 .Sm off
-.Op Ic section
-.No :
-.Ic tag
+.Op Ar section
+:
+.Ar tag
 .Sm on
 .Xc
 .It Xo
 .Ic C rms
-.Op Ic section
+.Op Ar section
 .Xc
 .It Xo
 .Ic C set
 .Sm off
-.Op Ic section
-.No :
-.Ic tag No = Ic value
+.Op Ar section
+:
+.Ar tag No = Ar value
 .Sm on
 .Xc
 .It Xo
 .Ic C set
 .Sm off
-.Op Ic section
-.No :
-.Ic tag No = Ic value\ \&force
+.Op Ar section
+:
+.Ar tag No = Ar value " " Ic force
 .Sm on
 .Xc
 Update the running
@@ -405,34 +405,34 @@ or an "R" through the FIFO will void any updates done to the configuration.
 .It Xo
 .Ic C get
 .Sm off
-.Op Ic section
-.No :
-.Ic tag
+.Op Ar section
+:
+.Ar tag
 .Sm on
 .Xc
 Get the configuration value of the specified section and tag.
 The result is stored in
 .Pa /var/run/isakmpd.result .
 .Pp
-.It Ic c Aq Ic name
+.It Ic c Ar name
 Start the named connection, if stopped or inactive.
 .Pp
 .It Xo
 .Ic D
-.Aq Ic class
-.Aq Ic level
+.Ar class
+.Ar level
 .Xc
 .It Xo
 .Ic D A
-.Aq Ic level
+.Ar level
 .Xc
 .It Ic D T
 Set debug class
-.Aq Ic class
+.Ar class
 to level
-.Aq Ic level .
+.Ar level .
 If
-.Aq Ic class
+.Ar class
 is specified as
 .Sq A ,
 the level applies to all debug classes.
@@ -444,12 +444,12 @@ command will toggle them back to the earlier levels.
 .Pp
 .It Xo
 .Ic d
-.Aq Ic cookies
-.Aq Ic msgid
+.Ar cookies
+.Ar msgid
 .Xc
 Delete the specified SA from the system.
 Specify
-.Aq Ic msgid
+.Ar msgid
 as
 .Sq -
 to match a Phase 1 SA.
@@ -465,7 +465,7 @@ In passive mode no packets are sent to peers.
 .Ic p
 .Sm off
 .Ic on
-.Op No = Aq Ic path
+.Op No = Ar path
 .Sm on
 .Xc
 .It Ic p off
@@ -513,8 +513,8 @@ Tear down all active quick mode connections.
 .Pp
 .It Xo
 .Ic t
-.Op Aq Ic phase
-.Aq Ic name
+.Op Ar phase
+.Ar name
 .Xc
 Tear down the named connection, if active.
 For
@@ -593,13 +593,13 @@ and named and stored after this easy formula:
 .Pp
 .Bl -tag -width "for_ufqdn_identitiesXX" -offset 3n -compact
 .It For IPv4 identities:
-/etc/isakmpd/pubkeys/ipv4/A.B.C.D
+.Pa /etc/isakmpd/pubkeys/ipv4/A.B.C.D
 .It For IPv6 identities:
-/etc/isakmpd/pubkeys/ipv6/abcd:abcd::ab:bc
+.Pa /etc/isakmpd/pubkeys/ipv6/abcd:abcd::ab:bc
 .It For FQDN identities:
-/etc/isakmpd/pubkeys/fqdn/foo.bar.org
+.Pa /etc/isakmpd/pubkeys/fqdn/foo.bar.org
 .It For UFQDN identities:
-/etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
+.Pa /etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
 .El
 .Pp
 Depending on the
@@ -747,26 +747,26 @@ See
 for further information.
 .Sh FILES
 .Bl -tag -width Ds
-.It /etc/isakmpd/ca/
+.It Pa /etc/isakmpd/ca/
 The directory where CA certificates are kept.
-.It /etc/isakmpd/certs/
+.It Pa /etc/isakmpd/certs/
 The directory where IKE certificates are kept, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
-.It /etc/isakmpd/crls/
+.It Pa /etc/isakmpd/crls/
 The directory where CRLs are kept.
-.It /etc/isakmpd/isakmpd.conf
+.It Pa /etc/isakmpd/isakmpd.conf
 The configuration file.
 As this file can contain sensitive information
 it must not be readable by anyone but the user running
 .Nm .
-.It /etc/isakmpd/isakmpd.policy
+.It Pa /etc/isakmpd/isakmpd.policy
 The keynote policy configuration file.
 The same mode requirements as
 .Pa isakmpd.conf .
-.It /etc/isakmpd/keynote/
+.It Pa /etc/isakmpd/keynote/
 The directory where KeyNote credentials are kept.
-.It /etc/isakmpd/private/
+.It Pa /etc/isakmpd/private/
 The directory where local private keys used for public key authentication
 are kept.
 By default, the system startup script
@@ -784,21 +784,21 @@ in the certificate directory,
 .Pa local.key
 has the same mode requirements as
 .Pa isakmpd.conf .
-.It /etc/isakmpd/pubkeys/
+.It Pa /etc/isakmpd/pubkeys/
 The directory in which trusted public keys are kept.
 The keys must be named in the fashion described above.
-.It /var/run/isakmpd.fifo
+.It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
 .Nm isakmpd .
-.It /var/run/isakmpd.pcap
+.It Pa /var/run/isakmpd.pcap
 The default IKE packet capture file.
-.It /var/run/isakmpd.pid
+.It Pa /var/run/isakmpd.pid
 The PID of the current daemon.
-.It /var/run/isakmpd.report
+.It Pa /var/run/isakmpd.report
 The report file written when
 .Dv SIGUSR1
 is received.
-.It /var/run/isakmpd.result
+.It Pa /var/run/isakmpd.result
 The report file written when the
 .Sq S
 or
