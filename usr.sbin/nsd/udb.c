@@ -1309,7 +1309,7 @@ udb_void udb_alloc_space(udb_alloc* alloc, size_t sz)
 		return ret + sizeof(udb_chunk_d); /* ptr to data */
 	}
 	/* see if we can subdivide a larger chunk */
-	for(e2 = exp+1; e2 < UDB_ALLOC_CHUNKS_MAX; e2++)
+	for(e2 = exp+1; e2 <= UDB_ALLOC_CHUNKS_MAX; e2++)
 		if(alloc->disk->free[e2-UDB_ALLOC_CHUNK_MINEXP]) {
 			udb_void big, ret; /* udb_chunk_d */
 			alloc->udb->glob_data->dirty_alloc = udb_dirty_fl;
@@ -1344,7 +1344,7 @@ have_free_for(udb_alloc* alloc, int exp)
 	int e2;
 	if(alloc->disk->free[exp-UDB_ALLOC_CHUNK_MINEXP])
 		return exp;
-	for(e2 = exp+1; e2 < UDB_ALLOC_CHUNKS_MAX; e2++)
+	for(e2 = exp+1; e2 <= UDB_ALLOC_CHUNKS_MAX; e2++)
 		if(alloc->disk->free[e2-UDB_ALLOC_CHUNK_MINEXP]) {
 			return e2;
 		}
