@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.10 2014/04/18 13:55:26 reyk Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.11 2015/01/16 15:08:52 reyk Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -76,7 +76,6 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 int	 ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
 
@@ -94,68 +93,6 @@ X509_LOOKUP_METHOD x509_mem_lookup = {
 };
 
 #define X509_L_ADD_MEM	3
-
-int
-ssl_ctx_use_certificate_chain(SSL_CTX *ctx, char *buf, off_t len)
-{
-	int		 ret;
-	BIO		*in;
-	X509		*x;
-	X509		*ca;
-	unsigned long	 err;
-
-	ret = 0;
-	x = ca = NULL;
-
-	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
-		goto end;
-	}
-
-	if ((x = PEM_read_bio_X509(in, NULL,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_PEM_LIB);
-		goto end;
-	}
-
-	if (!SSL_CTX_use_certificate(ctx, x) || ERR_peek_error() != 0)
-		goto end;
-
-	/* If we could set up our certificate, now proceed to
-	 * the CA certificates.
-	 */
-
-	if (ctx->extra_certs != NULL) {
-		sk_X509_pop_free(ctx->extra_certs, X509_free);
-		ctx->extra_certs = NULL;
-	}
-
-	while ((ca = PEM_read_bio_X509(in, NULL,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata)) != NULL) {
-
-		if (!SSL_CTX_add_extra_chain_cert(ctx, ca))
-			goto end;
-	}
-
-	err = ERR_peek_last_error();
-	if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
-	    ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
-		ERR_clear_error();
-	else
-		goto end;
-
-	ret = 1;
-end:
-	if (ca != NULL)
-		X509_free(ca);
-	if (x != NULL)
-		X509_free(x);
-	if (in != NULL)
-		BIO_free(in);
-	return (ret);
-}
 
 int
 ssl_ctx_load_verify_memory(SSL_CTX *ctx, char *buf, off_t len)

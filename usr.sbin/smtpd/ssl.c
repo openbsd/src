@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.73 2015/01/16 14:34:51 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.74 2015/01/16 15:08:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -280,7 +280,7 @@ ssl_ctx_create(const char *pkiname, char *cert, off_t cert_len)
 	if (cert != NULL) {
 		if (pkiname != NULL)
 			pkinamelen = strlen(pkiname) + 1;
-		if (!ssl_ctx_use_certificate_chain(ctx, cert, cert_len)) {
+		if (!SSL_CTX_use_certificate_chain(ctx, cert, cert_len)) {
 			ssl_error("ssl_ctx_create");
 			fatal("ssl_ctx_create: invalid certificate chain");
 		} else if (!ssl_ctx_fake_private_key(ctx,

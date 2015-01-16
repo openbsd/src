@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.204 2015/01/16 15:06:41 deraadt Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.205 2015/01/16 15:08:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1221,7 +1221,6 @@ int	 ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
 	    char *, off_t, X509 **, EVP_PKEY **);
 
 /* ssl_privsep.c */
-int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 
 /* ca.c */
