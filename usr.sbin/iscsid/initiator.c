@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.14 2014/11/23 13:08:21 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.15 2015/01/16 15:57:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -29,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "iscsid.h"
 #include "log.h"
@@ -542,7 +542,7 @@ initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
 char *
 default_initiator_name(void)
 {
-	char *s, hostname[MAXHOSTNAMELEN];
+	char *s, hostname[HOST_NAME_MAX+1];
 
 	if (gethostname(hostname, sizeof(hostname)))
 		strlcpy(hostname, "initiator", sizeof(hostname));

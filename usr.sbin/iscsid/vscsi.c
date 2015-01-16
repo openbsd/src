@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.14 2014/05/10 11:28:02 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.15 2015/01/16 15:57:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>	/* for nitems */
 #include <sys/ioctl.h>
 #include <sys/queue.h>
