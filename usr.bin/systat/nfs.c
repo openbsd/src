@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.6 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.7 2015/01/16 00:03:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -17,8 +17,9 @@
  *
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <nfs/rpcv2.h>

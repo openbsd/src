@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.2 2011/03/02 06:48:17 jasper Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.3 2015/01/16 00:03:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -16,12 +16,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "systat.h"
 

@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.60 2013/09/07 11:43:50 reyk Exp $	 */
+/* $Id: main.c,v 1.61 2015/01/16 00:03:37 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -31,7 +31,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
 
 
@@ -65,7 +64,7 @@ double	naptime = 5.0;
 int	verbose = 1;		/* to report kvm read errs */
 int	nflag = 1;
 int	ut, hz, stathz;
-char    hostname[MAXHOSTNAMELEN];
+char    hostname[HOST_NAME_MAX+1];
 WINDOW  *wnd;
 int	CMDLINE;
 char	timebuf[26];

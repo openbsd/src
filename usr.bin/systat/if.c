@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.22 2014/10/08 04:10:04 doug Exp $ */
+/*	$OpenBSD: if.c,v 1.23 2015/01/16 00:03:37 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
-#include <sys/types.h>
+#include <sys/param.h>	/* roundup */
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <net/if.h>

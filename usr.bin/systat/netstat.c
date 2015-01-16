@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.42 2014/10/24 10:18:49 schwarze Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.43 2015/01/16 00:03:37 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,9 @@
 /*
  * netstat
  */
-#include <sys/param.h>
+
+#include <sys/param.h>	/* MSIZE */
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>

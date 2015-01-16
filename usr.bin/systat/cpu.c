@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2015/01/16 00:03:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.44 2014/11/23 04:34:48 guenther Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.45 2015/01/16 00:03:37 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -30,8 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/signal.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>

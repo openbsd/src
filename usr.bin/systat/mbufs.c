@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.37 2014/11/06 12:50:55 dlg Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.38 2015/01/16 00:03:37 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -14,8 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
-#include <sys/types.h>
+
+#include <sys/param.h>	/* MSIZE */
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>

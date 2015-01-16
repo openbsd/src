@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.29 2014/10/11 04:30:56 doug Exp $	 */
+/* $OpenBSD: pftop.c,v 1.30 2015/01/16 00:03:37 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdarg.h>
 
 #include "systat.h"
@@ -997,7 +998,7 @@ read_anchor_rules(char *anchor)
 }
 
 struct anchor_name {
-	char name[MAXPATHLEN];
+	char name[PATH_MAX];
 	struct anchor_name *next;
 	u_int32_t ref;
 };

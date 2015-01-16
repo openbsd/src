@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.9 2014/10/08 04:10:04 doug Exp $	*/
+/*	$OpenBSD: pool.c,v 1.10 2015/01/16 00:03:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -16,12 +16,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "systat.h"
 

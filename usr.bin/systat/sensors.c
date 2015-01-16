@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.29 2014/10/08 04:10:04 doug Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.30 2015/01/16 00:03:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -19,7 +19,8 @@
  *
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/sensors.h>
 
