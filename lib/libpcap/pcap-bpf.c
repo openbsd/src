@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.25 2015/01/16 03:04:19 lteo Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.26 2015/01/16 03:19:57 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -288,7 +288,7 @@ get_dlt_list(int fd, int v, struct bpf_dltlist *bdlp, char *ebuf)
 {
 	memset(bdlp, 0, sizeof(*bdlp));
 	if (ioctl(fd, BIOCGDLTLIST, (caddr_t)bdlp) == 0) {
-		bdlp->bfl_list = (u_int *) calloc(bdlp->bfl_len + 1, sizeof(u_int));
+		bdlp->bfl_list = calloc(bdlp->bfl_len + 1, sizeof(u_int));
 		if (bdlp->bfl_list == NULL) {
 			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 			    pcap_strerror(errno));
@@ -651,7 +651,7 @@ pcap_activate(pcap_t *p)
 		goto bad;
 	}
 	p->bufsize = v;
-	p->buffer = (u_char *)malloc(p->bufsize);
+	p->buffer = malloc(p->bufsize);
 	if (p->buffer == NULL) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));
@@ -744,7 +744,7 @@ monitor_mode(pcap_t *p, int set)
 	 * Allocate a buffer to hold all the media types, and
 	 * get the media types.
 	 */
-	media_list = (int *) calloc(req.ifm_count, sizeof(int));
+	media_list = calloc(req.ifm_count, sizeof(int));
 	if (media_list == NULL) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));

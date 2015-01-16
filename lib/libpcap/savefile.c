@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.12 2014/03/14 03:45:41 lteo Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.13 2015/01/16 03:19:57 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -184,7 +184,7 @@ pcap_fopen_offline(FILE *fp, char *errbuf)
 
 	if (p->bufsize < 0)
 		p->bufsize = BPF_MAXBUFSIZE;
-	p->sf.base = (u_char *)malloc(p->bufsize + BPF_ALIGNMENT);
+	p->sf.base = malloc(p->bufsize + BPF_ALIGNMENT);
 	if (p->sf.base == NULL) {
 		strlcpy(errbuf, "out of swap", PCAP_ERRBUF_SIZE);
 		goto bad;
@@ -258,8 +258,8 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 		if (tsize < hdr->caplen) {
 			tsize = ((hdr->caplen + 1023) / 1024) * 1024;
 			if (tp != NULL)
-				free((u_char *)tp);
-			tp = (u_char *)malloc(tsize);
+				free(tp);
+			tp = malloc(tsize);
 			if (tp == NULL) {
 				tsize = 0;
 				snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
