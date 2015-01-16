@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.99 2015/01/16 06:00:39 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.100 2015/01/16 06:16:12 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -595,11 +595,10 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 #if PATH_MAX < 1024 || HASHBUFSIZE < 224
 #error sizes are wrong
 #endif
-		rv = sscanf(line, "%31s (%1023s = %223s",
+		rv = sscanf(line, "%31s (%1023[^)]) = %223s",
 		    c.algo, c.file, c.hash);
-		if (rv != 3 || c.file[0] == 0 || c.file[strlen(c.file)-1] != ')')
+		if (rv != 3)
 			errx(1, "unable to parse checksum line %s", line);
-		c.file[strlen(c.file) - 1] = '\0';
 		line = endline;
 		if (argc) {
 			slot = ohash_qlookup(&myh, c.file);
