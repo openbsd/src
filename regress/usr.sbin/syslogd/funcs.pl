@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.10 2015/01/15 13:15:17 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.11 2015/01/16 11:51:59 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -34,6 +34,7 @@ sub find_ports {
 	my $domain = delete $args{domain} // AF_INET;
 	my $addr   = delete $args{addr}   // "127.0.0.1";
 	my $proto  = delete $args{proto}  // "udp";
+	$proto = "tcp" if $proto eq "tls";
 
 	my @sockets = (1..$num);
 	foreach my $s (@sockets) {

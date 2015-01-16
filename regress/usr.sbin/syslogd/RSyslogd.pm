@@ -1,4 +1,4 @@
-#	$OpenBSD: RSyslogd.pm,v 1.1 2014/12/28 14:08:01 bluhm Exp $
+#	$OpenBSD: RSyslogd.pm,v 1.2 2015/01/16 11:51:59 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -54,6 +54,22 @@ sub new {
 	}
 	if ($listenproto eq "tcp") {
 		print $fh "\$ModLoad imtcp\n";
+		print $fh "\$InputTCPServerRun $listenport\n";
+	}
+	if ($listenproto eq "tls") {
+		print $fh "\$DefaultNetstreamDriver gtls\n";
+		my %cert = (
+		    CA   => "ca.crt",
+		    Cert => "server.crt",
+		    Key  => "server.key",
+		);
+		while(my ($k, $v) = each %cert) {
+			_make_abspath(\$v);
+			print $fh "\$DefaultNetstreamDriver${k}File $v\n";
+		}
+		print $fh "\$ModLoad imtcp\n";
+		print $fh "\$InputTCPServerStreamDriverMode 1\n";
+		print $fh "\$InputTCPServerStreamDriverAuthMode anon\n";
 		print $fh "\$InputTCPServerRun $listenport\n";
 	}
 	print $fh "*.*	$self->{outfile}\n";
