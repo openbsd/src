@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.540 2014/12/19 13:04:08 reyk Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.541 2015/01/16 17:20:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 19 2014 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -487,7 +487,7 @@ on the socket will return the original destination address of the packet.
 .Pp
 .It Xo Ar flags Aq Ar a
 .Pf / Ns Aq Ar b
-.No \*(Ba Ar any
+.No \&| Ar any
 .Xc
 This rule only applies to TCP packets that have the flags
 .Aq Ar a
@@ -639,8 +639,10 @@ Used to select an alternate routing table for the routing lookup.
 Only effective before the route lookup happened, i.e. when filtering inbound.
 .Pp
 .It Xo Ar set prio Aq Ar priority
-.No \*(Ba ( Aq Ar priority ,
-.Aq Ar priority )
+.No \&| Po
+.Aq Ar priority ,
+.Aq Ar priority
+.Pc
 .Xc
 Packets matching this rule will be assigned a specific queueing priority.
 Priorities are assigned as integers 0 through 7,
@@ -670,8 +672,10 @@ configuration, unlike the queues described below and in the
 section.
 .Pp
 .It Xo Ar set queue Aq Ar queue
-.No \*(Ba ( Aq Ar queue ,
-.Aq Ar queue )
+.No \&| Po
+.Aq Ar queue ,
+.Aq Ar queue
+.Pc
 .Xc
 Packets matching this rule will be assigned to the specified queue.
 If two queues are given, packets which have a TOS of
@@ -688,7 +692,7 @@ pass in proto tcp to port 22 set queue(ssh_bulk, ssh_prio)
 .Ed
 .Pp
 .It Xo Ar set tos Aq Ar string
-.No \*(Ba Aq Ar number
+.No \&| Aq Ar number
 .Xc
 Enforces a TOS for matching packets.
 .Ar string
@@ -735,7 +739,7 @@ operator before the
 keyword.
 .Pp
 .It Xo Ar tos Aq Ar string
-.No \*(Ba Aq Ar number
+.No \&| Aq Ar number
 .Xc
 This rule applies to packets with the specified TOS bits set.
 .Ar string
