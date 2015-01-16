@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.105 2015/01/16 15:17:34 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.106 2015/01/16 15:36:30 deraadt Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MACHINE MACHINE_ARCH */
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef MAKE_BOOTSTRAP

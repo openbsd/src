@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.64 2014/05/12 19:11:19 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.65 2015/01/16 15:36:29 deraadt Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <limits.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.6 2014/12/07 13:52:17 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.7 2015/01/16 15:36:30 deraadt Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -30,13 +30,13 @@
  * make.
  */
 
-#include <sys/param.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
+#include <limits.h>
 #include "config.h"
 #include "defines.h"
 #include "memory.h"
@@ -190,7 +190,7 @@ attach_node(GNode *gn, GNode *extra)
 }
 
 static char *buffer = NULL;
-static size_t bufsize = MAXPATHLEN;
+static size_t bufsize = PATH_MAX;
 
 static size_t
 parse_reduce(size_t i, const char *src)
