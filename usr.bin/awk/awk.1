@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.42 2014/12/15 20:31:40 tedu Exp $
+.\"	$OpenBSD: awk.1,v 1.43 2015/01/16 15:53:24 schwarze Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2014 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -199,19 +199,11 @@ An action is a sequence of statements.
 A statement can be one of the following:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Xo Ic if ( Ar expression ) Ar statement
-.Op Ic else Ar statement
-.Xc
-.It Ic while ( Ar expression ) Ar statement
-.It Xo Ic for
-.No ( Ar expression ; expression ; expression ) statement
-.Xc
-.It Xo Ic for
-.No ( Ar var Ic in Ar array ) statement
-.Xc
-.It Xo Ic do
-.Ar statement Ic while ( Ar expression )
-.Xc
+.It Ic if Ar ( expression ) Ar statement Op Ic else Ar statement
+.It Ic while Ar ( expression ) Ar statement
+.It Ic for Ar ( expression ; expression ; expression ) statement
+.It Ic for Ar ( var Ic in Ar array ) statement
+.It Ic do Ar statement Ic while Ar ( expression )
 .It Ic break
 .It Ic continue
 .It Xo Ic {
