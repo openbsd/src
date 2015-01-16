@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_locl.h,v 1.5 2015/01/15 23:20:33 tedu Exp $	*/
+/*	$OpenBSD: des_locl.h,v 1.6 2015/01/16 15:29:45 tedu Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -57,13 +57,11 @@ typedef unsigned char des_cblock[8];
 typedef struct des_ks_struct
 	{
 	union	{
-		des_cblock _;
+		des_cblock cblock;
 		/* make sure things are correct size on machines with
 		 * 8 byte longs */
 		int32_t pad[2];
 		} ks;
-#undef _
-#define _	ks._
 	} des_key_schedule[16];
 
 #define DES_KEY_SZ 	(sizeof(des_cblock))
@@ -77,64 +75,16 @@ void des_encrypt2(u_int32_t *data,des_key_schedule ks, int enc);
 #define ITERATIONS 16
 #define HALF_ITERATIONS 8
 
-/* used in des_read and des_write */
-#define MAXWRITE	(1024*16)
-#define BSIZE		(MAXWRITE+4)
 
 #define c2l(c,l)	(l =((u_int32_t)(*((c)++)))    , \
 			 l|=((u_int32_t)(*((c)++)))<< 8L, \
 			 l|=((u_int32_t)(*((c)++)))<<16L, \
 			 l|=((u_int32_t)(*((c)++)))<<24L)
 
-/* NOTE - c is not incremented as per c2l */
-#define c2ln(c,l1,l2,n)	{ \
-			c+=n; \
-			l1=l2=0; \
-			switch (n) { \
-			case 8: l2 =((u_int32_t)(*(--(c))))<<24L; \
-			case 7: l2|=((u_int32_t)(*(--(c))))<<16L; \
-			case 6: l2|=((u_int32_t)(*(--(c))))<< 8L; \
-			case 5: l2|=((u_int32_t)(*(--(c))));     \
-			case 4: l1 =((u_int32_t)(*(--(c))))<<24L; \
-			case 3: l1|=((u_int32_t)(*(--(c))))<<16L; \
-			case 2: l1|=((u_int32_t)(*(--(c))))<< 8L; \
-			case 1: l1|=((u_int32_t)(*(--(c))));     \
-				} \
-			}
-
 #define l2c(l,c)	(*((c)++)=(unsigned char)(((l)     )&0xff), \
 			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>24L)&0xff))
-
-/* replacements for htonl and ntohl since I have no idea what to do
- * when faced with machines with 8 byte longs. */
-#define HDRSIZE 4
-
-#define n2l(c,l)	(l =((u_int32_t)(*((c)++)))<<24L, \
-			 l|=((u_int32_t)(*((c)++)))<<16L, \
-			 l|=((u_int32_t)(*((c)++)))<< 8L, \
-			 l|=((u_int32_t)(*((c)++))))
-
-#define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
-			 *((c)++)=(unsigned char)(((l)     )&0xff))
-
-/* NOTE - c is not incremented as per l2c */
-#define l2cn(l1,l2,c,n)	{ \
-			c+=n; \
-			switch (n) { \
-			case 8: *(--(c))=(unsigned char)(((l2)>>24L)&0xff); \
-			case 7: *(--(c))=(unsigned char)(((l2)>>16L)&0xff); \
-			case 6: *(--(c))=(unsigned char)(((l2)>> 8L)&0xff); \
-			case 5: *(--(c))=(unsigned char)(((l2)     )&0xff); \
-			case 4: *(--(c))=(unsigned char)(((l1)>>24L)&0xff); \
-			case 3: *(--(c))=(unsigned char)(((l1)>>16L)&0xff); \
-			case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); \
-			case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); \
-				} \
-			}
 
 #define D_ENCRYPT(Q,R,S) {\
 	u=(R^s[S  ]); \
