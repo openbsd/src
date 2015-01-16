@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.42 2014/12/09 17:03:19 mikeb Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.43 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

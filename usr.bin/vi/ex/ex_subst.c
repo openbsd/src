@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.21 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.22 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 
@@ -26,6 +25,8 @@
 
 #include "../common/common.h"
 #include "../vi/vi.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #define	SUB_FIRST	0x01		/* The 'r' flag isn't reasonable. */
 #define	SUB_MUSTSETR	0x02		/* The 'r' flag is required. */
@@ -312,7 +313,7 @@ ex_subtilde(SCR *sp, EXCMD *cmdp)
 
 #define	BUILD(sp, l, len) {						\
 	if (lbclen + (len) > lblen) {					\
-		lblen += MAX(lbclen + (len), 256);			\
+		lblen += MAXIMUM(lbclen + (len), 256);			\
 		REALLOC((sp), lb, char *, lblen);			\
 		if (lb == NULL) {					\
 			lbclen = 0;					\
@@ -325,7 +326,7 @@ ex_subtilde(SCR *sp, EXCMD *cmdp)
 
 #define	NEEDSP(sp, len, pnt) {						\
 	if (lbclen + (len) > lblen) {					\
-		lblen += MAX(lbclen + (len), 256);			\
+		lblen += MAXIMUM(lbclen + (len), 256);			\
 		REALLOC((sp), lb, char *, lblen);			\
 		if (lb == NULL) {					\
 			lbclen = 0;					\

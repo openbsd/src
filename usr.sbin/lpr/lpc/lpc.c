@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.18 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.19 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <dirent.h>
 #include <signal.h>
 #include <syslog.h>
@@ -41,6 +39,7 @@
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <ctype.h>
 #include <string.h>
 #include <grp.h>
@@ -278,7 +277,7 @@ static int
 ingroup(char *grname)
 {
 	static struct group *gptr = NULL;
-	static gid_t groups[NGROUPS];
+	static gid_t groups[NGROUPS_MAX];
 	static int ngroups;
 	gid_t gid;
 	int i;
@@ -288,7 +287,7 @@ ingroup(char *grname)
 			warnx("Warning: unknown group `%s'", grname);
 			return(0);
 		}
-		if ((ngroups = getgroups(NGROUPS, groups)) < 0)
+		if ((ngroups = getgroups(NGROUPS_MAX, groups)) < 0)
 			err(1, "getgroups");
 	}
 	gid = gptr->gr_gid;

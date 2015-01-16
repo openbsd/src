@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.62 2014/09/07 22:40:30 bluhm Exp $ */
+/*	$OpenBSD: arp.c,v 1.63 2015/01/16 06:40:15 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -37,7 +37,6 @@
  * arp - display, set, delete arp table entries and wake up hosts.
  */
 
-#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -59,6 +58,7 @@
 #include <string.h>
 #include <paths.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ifaddrs.h>
 
 void dump(void);
@@ -841,7 +841,7 @@ do_wakeup(const char *eaddr, const char *iface, int bpf)
 int
 get_bpf(void)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	int i, fd;
 
 	for (i = 0; ; i++) {

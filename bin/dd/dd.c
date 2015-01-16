@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.20 2015/01/05 13:52:47 tedu Exp $	*/
+/*	$OpenBSD: dd.c,v 1.21 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -56,6 +56,8 @@ static void dd_close(void);
 static void dd_in(void);
 static void getfdtype(IO *);
 static void setup(void);
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 IO	in, out;		/* input/output state */
 STAT	st;			/* statistics */
@@ -135,7 +137,7 @@ setup(void)
 			err(1, "input buffer");
 		out.db = in.db;
 	} else if ((in.db =
-	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
+	    malloc((u_int)(MAXIMUM(in.dbsz, cbsz) + cbsz))) == NULL ||
 	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
 		err(1, "output buffer");
 	in.dbp = in.db;

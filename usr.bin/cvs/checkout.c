@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.168 2011/12/27 13:59:01 nicm Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.169 2015/01/16 06:40:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -239,7 +239,7 @@ checkout_check_repository(int argc, char **argv)
 	struct module_checkout *mc;
 	struct cvs_ignpat *ip;
 	struct cvs_filelist *fl, *nxt;
-	char repo[MAXPATHLEN], fpath[MAXPATHLEN], *f[1];
+	char repo[PATH_MAX], fpath[PATH_MAX], *f[1];
 
 	build_dirs = print_stdout ? 0 : 1;
 
@@ -388,7 +388,7 @@ checkout_check_repository(int argc, char **argv)
 static int
 checkout_classify(const char *repo, const char *arg)
 {
-	char *d, *f, fpath[MAXPATHLEN];
+	char *d, *f, fpath[PATH_MAX];
 	struct stat sb;
 
 	if (stat(repo, &sb) == 0) {
@@ -477,7 +477,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 	char *entry, *tosend;
 	char kbuf[8], sticky[CVS_REV_BUFSZ], rev[CVS_REV_BUFSZ];
 	char timebuf[CVS_TIME_BUFSZ], tbuf[CVS_TIME_BUFSZ];
-	static char lastwd[MAXPATHLEN];
+	static char lastwd[PATH_MAX];
 
 	exists = 0;
 	tosend = NULL;
@@ -606,7 +606,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		 */
 		if (tag != NULL && strcmp(cf->file_wd, lastwd) &&
 		    !(cf->file_flags & FILE_USER_SUPPLIED)) {
-			strlcpy(lastwd, cf->file_wd, MAXPATHLEN);
+			strlcpy(lastwd, cf->file_wd, PATH_MAX);
 			cvs_server_set_sticky(cf->file_wd, sticky);
 		}
 

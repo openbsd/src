@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.22 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.23 2015/01/16 06:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,6 @@
  * disconnect all descriptors and ttys, and then endless
  * loop on waiting for and processing requests
  */
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
@@ -44,6 +43,7 @@
 #include <time.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +54,7 @@ int	debug = 0;
 void	timeout(int);
 long	lastmsgtime;
 
-char	hostname[MAXHOSTNAMELEN];
+char	hostname[HOST_NAME_MAX+1];
 
 #define TIMEOUT 30
 #define MAXIDLE 120

@@ -31,7 +31,6 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>

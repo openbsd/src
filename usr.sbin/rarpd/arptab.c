@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.22 2013/11/12 19:49:42 deraadt Exp $ */
+/*	$OpenBSD: arptab.c,v 1.23 2015/01/16 06:40:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -37,7 +37,6 @@
  */
 
 
-#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>

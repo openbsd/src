@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tftp.c,v 1.10 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: print-tftp.c,v 1.11 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,6 @@
  * Format and print trivial file transfer protocol packets.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>

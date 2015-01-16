@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.22 2013/04/17 17:40:53 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.23 2015/01/16 06:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -39,6 +38,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +55,7 @@ static void	print_mesg(FILE *,CTL_MSG *,char *);
 int
 announce(CTL_MSG *request, char *remote_machine)
 {
-	char full_tty[MAXPATHLEN];
+	char full_tty[PATH_MAX];
 	FILE *tf;
 	struct stat stbuf;
 

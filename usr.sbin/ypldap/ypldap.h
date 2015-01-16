@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.15 2014/11/03 20:15:31 bluhm Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.16 2015/01/16 06:40:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -81,7 +81,7 @@ enum client_state {
 struct idm {
 	TAILQ_ENTRY(idm)		 idm_entry;
 	u_int32_t                        idm_id;
-	char				 idm_name[MAXHOSTNAMELEN];
+	char				 idm_name[HOST_NAME_MAX+1];
 #define F_SSL				 0x00100000
 #define F_CONFIGURING			 0x00200000
 #define F_NEEDAUTH			 0x00400000
@@ -155,7 +155,7 @@ struct env {
 
 	u_int32_t			 sc_maxid;
 
-	char				 sc_domainname[MAXHOSTNAMELEN];
+	char				 sc_domainname[HOST_NAME_MAX+1];
 	struct timeval			 sc_conf_tv;
 	struct event			 sc_conf_ev;
 	TAILQ_HEAD(idm_list, idm)	 sc_idms;

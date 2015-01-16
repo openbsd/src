@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.20 2013/12/04 02:18:05 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.21 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -36,6 +35,7 @@
 #include <grp.h>
 #include <err.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include <rpcsvc/ypclnt.h>
 
@@ -44,7 +44,7 @@ struct user {
 	int	usr_uid;		/* user uid */
 	int	usr_gid;		/* user gid */
 	int	gid_count;		/* number of gids */
-	int	gid[NGROUPS];		/* additional gids */
+	int	gid[NGROUPS_MAX];	/* additional gids */
 	struct user *prev, *next;	/* links in read order */
 	struct user *hprev, *hnext;	/* links in hash order */
 };
@@ -155,7 +155,7 @@ add_group(char *username, char *gid)
 		if (strcmp(username, u->usr_name) == 0) {
 			if (g != u->usr_gid) {
 				u->gid_count++;
-				if (u->gid_count < NGROUPS)
+				if (u->gid_count < NGROUPS_MAX)
 					u->gid[u->gid_count] = atoi(gid);
 			}
 			u = htail[idx];

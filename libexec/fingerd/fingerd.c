@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.36 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.37 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 #include "pathnames.h"
 
 __dead void logerr(const char *, ...);
@@ -65,7 +66,7 @@ main(int argc, char *argv[])
 #define	ENTRIES	50
 	char **comp, *prog;
 	char **ap, *av[ENTRIES + 1], line[8192], *lp, *hname;
-	char hostbuf[MAXHOSTNAMELEN];
+	char hostbuf[HOST_NAME_MAX+1];
 
 	prog = _PATH_FINGER;
 	logging = secure = user_required = short_list = 0;

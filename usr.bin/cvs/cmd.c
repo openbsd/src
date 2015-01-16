@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.68 2008/02/03 18:18:44 tobias Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.69 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -23,7 +23,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/dirent.h>
 
 #include <string.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.12 2015/01/14 10:46:28 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.13 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <netinet/in.h>
 
@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <util.h>
+#include <limits.h>
 #include <resolv.h>
 
 #include "ssh2.h"

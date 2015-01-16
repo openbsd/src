@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.44 2014/09/07 19:43:35 guenther Exp $	*/
+/*	$OpenBSD: tape.c,v 1.45 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/stat.h>
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -72,7 +73,7 @@ static char	*host = NULL;
 
 static int	ofile;
 static char	*map;
-static char	lnkbuf[MAXPATHLEN + 1];
+static char	lnkbuf[PATH_MAX + 1];
 static size_t	pathlen;
 
 int		oldinofmt;	/* old inode format conversion required */
@@ -755,7 +756,7 @@ xtrlnkfile(char *buf, size_t size)
 {
 
 	pathlen += size;
-	if (pathlen > MAXPATHLEN)
+	if (pathlen > PATH_MAX)
 		errx(1, "symbolic link name: %s->%s%s; too long %lu",
 		    curfile.name, lnkbuf, buf, (u_long)pathlen);
 	(void)strlcat(lnkbuf, buf, sizeof(lnkbuf));

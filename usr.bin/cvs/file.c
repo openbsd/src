@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.263 2013/12/13 15:19:41 zhuk Exp $	*/
+/*	$OpenBSD: file.c,v 1.264 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -89,7 +89,7 @@ cvs_file_init(void)
 {
 	int i;
 	FILE *ifp;
-	char path[MAXPATHLEN], buf[MAXNAMLEN];
+	char path[PATH_MAX], buf[MAXNAMLEN];
 
 	TAILQ_INIT(&cvs_ign_pats);
 	TAILQ_INIT(&dir_ign_pats);
@@ -103,7 +103,7 @@ cvs_file_init(void)
 		return;
 
 	/* read the cvsignore file in the user's home directory, if any */
-	(void)xsnprintf(path, MAXPATHLEN, "%s/.cvsignore", cvs_homedir);
+	(void)xsnprintf(path, PATH_MAX, "%s/.cvsignore", cvs_homedir);
 
 	ifp = fopen(path, "r");
 	if (ifp == NULL) {
@@ -264,7 +264,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 	struct stat st;
 	struct cvs_file *cf;
 	struct cvs_filelist *l, *nxt;
-	char *d, *f, repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char *d, *f, repo[PATH_MAX], fpath[PATH_MAX];
 
 	for (l = RB_MIN(cvs_flisthead, fl); l != NULL; l = nxt) {
 		if (cvs_quit)
@@ -311,12 +311,12 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 					goto next;
 				}
 
-			cvs_get_repository_path(d, repo, MAXPATHLEN);
-			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+			cvs_get_repository_path(d, repo, PATH_MAX);
+			(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 			    repo, f);
 
 			if ((fd = open(fpath, O_RDONLY)) == -1) {
-				strlcat(fpath, RCS_FILE_EXT, MAXPATHLEN);
+				strlcat(fpath, RCS_FILE_EXT, PATH_MAX);
 				fd = open(fpath, O_RDONLY);
 			}
 
@@ -362,7 +362,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				if (current_cvsroot->cr_method ==
 				    CVS_METHOD_LOCAL) {
 					cvs_get_repository_path(cf->file_wd,
-					    repo, MAXPATHLEN);
+					    repo, PATH_MAX);
 					cvs_repository_lock(repo,
 					    (cmdp->cmd_flags & CVS_LOCK_REPO));
 				}
@@ -402,7 +402,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	struct cvs_ent_line *line;
 	struct cvs_flisthead fl, dl;
 	CVSENTRIES *entlist;
-	char *buf, *ebuf, *cp, repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char *buf, *ebuf, *cp, repo[PATH_MAX], fpath[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_file_walkdir(%s)", cf->file_path);
 
@@ -429,7 +429,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	 * If we do not have an admin directory inside here, dont bother,
 	 * unless we are running export or import.
 	 */
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", cf->file_path,
 	    CVS_PATH_CVSDIR);
 
 	l = stat(fpath, &st);
@@ -443,10 +443,10 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	/*
 	 * check for a local .cvsignore file
 	 */
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/.cvsignore", cf->file_path);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/.cvsignore", cf->file_path);
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
-		while (fgets(fpath, MAXPATHLEN, fp) != NULL) {
+		while (fgets(fpath, PATH_MAX, fp) != NULL) {
 			fpath[strcspn(fpath, "\n")] = '\0';
 			if (fpath[0] == '\0')
 				continue;
@@ -493,7 +493,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+			(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 			    cf->file_path, dp->d_name);
 
 			/*
@@ -572,7 +572,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	TAILQ_FOREACH(line, &(entlist->cef_ent), entries_list) {
 		ent = cvs_ent_parse(line->buf);
 
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
+		(void)xsnprintf(fpath, PATH_MAX, "%s/%s", cf->file_path,
 		    ent->ce_name);
 
 		if (!(cr->flags & CR_RECURSE_DIRS) &&
@@ -588,7 +588,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 walkrepo:
 	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
-		cvs_get_repository_path(cf->file_path, repo, MAXPATHLEN);
+		cvs_get_repository_path(cf->file_path, repo, PATH_MAX);
 		cvs_repository_lock(repo, (cmdp->cmd_flags & CVS_LOCK_REPO));
 	}
 
@@ -646,7 +646,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	int rflags, ismodified, rcsdead;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
-	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
+	char repo[PATH_MAX], rcsfile[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_file_classify(%s, %s)", cf->file_path,
 	    (tag != NULL) ? tag : "none");
@@ -656,13 +656,13 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		return;
 	}
 
-	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
-	(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s",
+	cvs_get_repository_path(cf->file_wd, repo, PATH_MAX);
+	(void)xsnprintf(rcsfile, PATH_MAX, "%s/%s",
 	    repo, cf->file_name);
 
 	if (cf->file_type == CVS_FILE) {
-		len = strlcat(rcsfile, RCS_FILE_EXT, MAXPATHLEN);
-		if (len >= MAXPATHLEN)
+		len = strlcat(rcsfile, RCS_FILE_EXT, PATH_MAX);
+		if (len >= PATH_MAX)
 			fatal("cvs_file_classify: truncation");
 	}
 
@@ -748,7 +748,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		if (cf->file_rcs == NULL)
 			fatal("cvs_file_classify: failed to parse RCS");
 	} else {
-		(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s/%s%s",
+		(void)xsnprintf(rcsfile, PATH_MAX, "%s/%s/%s%s",
 		     repo, CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
 
 		cf->repo_fd = open(rcsfile, O_RDONLY);

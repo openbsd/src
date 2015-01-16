@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.20 2014/10/25 03:18:13 lteo Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.21 2015/01/16 06:40:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -36,13 +36,7 @@
 #include "pfctl_parser.h"
 #include "pfctl.h"
 
-#ifndef MIN
-# define MIN(a,b)	(((a) < (b)) ? (a) : (b))
-#endif /* MIN */
-#ifndef MAX
-# define MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif /* MAX */
-
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #if 0
 # define DEBUG(fp, str, v...) \
@@ -665,7 +659,7 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 	nm_class = fingerprint_name_entry(&classes, fp->fp_os.fp_class_nm);
 	if (nm_class->nm_num == 0) {
 		nm_class->nm_num = class;
-		class_count = MAX(class_count, class);
+		class_count = MAXIMUM(class_count, class);
 	}
 
 	nm_version = fingerprint_name_entry(&nm_class->nm_sublist,
@@ -673,7 +667,7 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 	if (nm_version) {
 		if (nm_version->nm_num == 0) {
 			nm_version->nm_num = version;
-			nm_class->nm_sublist_num = MAX(nm_class->nm_sublist_num,
+			nm_class->nm_sublist_num = MAXIMUM(nm_class->nm_sublist_num,
 			    version);
 		}
 		nm_subtype = fingerprint_name_entry(&nm_version->nm_sublist,
@@ -682,7 +676,7 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 			if (nm_subtype->nm_num == 0) {
 				nm_subtype->nm_num = subtype;
 				nm_version->nm_sublist_num =
-				    MAX(nm_version->nm_sublist_num, subtype);
+				    MAXIMUM(nm_version->nm_sublist_num, subtype);
 			}
 		}
 	}

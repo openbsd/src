@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.14 2014/07/20 01:38:40 guenther Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.15 2015/01/16 06:40:17 deraadt Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -39,6 +38,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 #include <string.h>
 #include <signal.h>
 

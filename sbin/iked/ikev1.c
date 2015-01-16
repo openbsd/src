@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.15 2014/04/22 12:00:03 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.16 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
  * XXX or remove this file and ikev1 from the iked tree.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>

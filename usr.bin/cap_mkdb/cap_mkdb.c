@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.18 2011/07/04 21:34:54 nicm Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.19 2015/01/16 06:40:06 deraadt Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <db.h>
@@ -43,6 +42,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 void	 db_build(char **);
 void	 dounlink(void);
@@ -162,7 +164,7 @@ db_build(char **ifiles)
 		 */
 		len = strlen(bp);
 		if (bplen <= 4 * len + 2) {
-			int newbplen = bplen + MAX(256, 4 * len + 2);
+			int newbplen = bplen + MAXIMUM(256, 4 * len + 2);
 			void *newdata;
 
 			if ((newdata = realloc(data.data, newbplen)) == NULL)
@@ -173,7 +175,7 @@ db_build(char **ifiles)
 
 		/* Find the end of the name field. */
 		if ((p = strchr(bp, info ? ',' : ':')) == NULL) {
-			warnx("no name field: %.*s", (int)MIN(len, 20), bp);
+			warnx("no name field: %.*s", (int)MINIMUM(len, 20), bp);
 			continue;
 		}
 
@@ -221,7 +223,7 @@ db_build(char **ifiles)
 			}
 			*out++ = '\0';
 			if (memchr((char *)data.data + 1, '\0', data.size - 2)) {
-				warnx("NUL in entry: %.*s", (int)MIN(len, 20), bp);
+				warnx("NUL in entry: %.*s", (int)MINIMUM(len, 20), bp);
 				continue;
 			}
 		} else {

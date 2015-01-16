@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.14 2011/03/22 10:16:23 okan Exp $	*/
+/*	$OpenBSD: procs.c,v 1.15 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -33,7 +33,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <rpc/rpc.h>
@@ -46,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include "lockd.h"
 #include "lockd_lock.h"
@@ -65,7 +65,7 @@ log_from_addr(char *fun_name, struct svc_req *req)
 {
 	struct	sockaddr_in *addr;
 	struct	hostent *host;
-	char	hostname_buf[MAXHOSTNAMELEN];
+	char	hostname_buf[HOST_NAME_MAX+1];
 
 	addr = svc_getcaller(req->rq_xprt);
 	host = gethostbyaddr((char *) &(addr->sin_addr), addr->sin_len, AF_INET);

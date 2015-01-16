@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.69 2014/12/24 13:51:31 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.70 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,6 +35,7 @@
 #include <openssl/ssl.h>
 #include <pwd.h>
 #include <resolv.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

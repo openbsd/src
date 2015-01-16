@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.21 2013/12/30 22:01:23 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.22 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
  * are needed, by calling "myname".
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ufs/ufs/dinode.h>
@@ -50,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -138,7 +138,7 @@ lookupname(char *name)
 {
 	struct entry *ep;
 	char *np, *cp;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	cp = name;
 	for (ep = lookupino(ROOTINO); ep != NULL; ep = ep->e_entries) {
@@ -188,9 +188,9 @@ char *
 myname(struct entry *ep)
 {
 	char *cp;
-	static char namebuf[MAXPATHLEN];
+	static char namebuf[PATH_MAX];
 
-	for (cp = &namebuf[MAXPATHLEN - 2]; cp > &namebuf[ep->e_namlen]; ) {
+	for (cp = &namebuf[PATH_MAX - 2]; cp > &namebuf[ep->e_namlen]; ) {
 		cp -= ep->e_namlen;
 		memcpy(cp, ep->e_name, ep->e_namlen);
 		if (ep == lookupino(ROOTINO))

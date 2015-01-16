@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.28 2013/04/25 06:43:20 otto Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.29 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG */
 #include <sys/time.h>
 #include <sys/stat.h>
 
@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -94,8 +95,8 @@ runcmdshell(void)
 	struct entry *np;
 	ino_t ino;
 	struct arglist arglist;
-	char curdir[MAXPATHLEN];
-	char name[MAXPATHLEN];
+	char curdir[PATH_MAX];
+	char name[PATH_MAX];
 	char cmd[BUFSIZ];
 
 	arglist.freeglob = 0;
@@ -337,7 +338,7 @@ getcmd(char *curdir, char *cmd, size_t cmdlen, char *name, size_t namelen,
 	 * If no argument, use curdir as the default.
 	 */
 	if (*cp == '\0') {
-		(void)strlcpy(name, curdir, MAXPATHLEN);
+		(void)strlcpy(name, curdir, PATH_MAX);
 		return;
 	}
 	nextarg = cp;
@@ -389,7 +390,7 @@ getnext:
 
 retnext:
 	strlcpy(name, ap->glob.gl_pathv[ap->glob.gl_pathc - ap->argcnt],
-	    MAXPATHLEN);
+	    PATH_MAX);
 	if (--ap->argcnt == 0) {
 		ap->freeglob = 0;
 		globfree(&ap->glob);
@@ -507,7 +508,7 @@ printlist(char *name, char *basename)
 	RST_DIR *dirp;
 	size_t namelen;
 	int entries, len;
-	char locname[MAXPATHLEN];
+	char locname[PATH_MAX];
 
 	dp = pathsearch(name);
 	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0))
@@ -551,9 +552,9 @@ printlist(char *name, char *basename)
 			     strcmp(dp->d_name, "..") == 0))
 				continue;
 			locname[namelen] = '\0';
-			if (namelen + dp->d_namlen >= MAXPATHLEN) {
+			if (namelen + dp->d_namlen >= PATH_MAX) {
 				fprintf(stderr, "%s%s: name exceeds %d char\n",
-					locname, dp->d_name, MAXPATHLEN);
+					locname, dp->d_name, PATH_MAX);
 			} else {
 				(void)strncat(locname, dp->d_name,
 				    (int)dp->d_namlen);

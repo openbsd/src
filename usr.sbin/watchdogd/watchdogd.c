@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.14 2012/12/18 21:28:45 millert Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.15 2015/01/16 06:40:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
@@ -16,8 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/resource.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/mman.h>
 

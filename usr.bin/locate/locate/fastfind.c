@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.11 2010/10/25 19:16:45 millert Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.12 2015/01/16 06:40:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.11 2010/10/25 19:16:45 millert Exp $
+ * $Id: fastfind.c,v 1.12 2015/01/16 06:40:09 deraadt Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -47,7 +47,7 @@ statistic (fp, path_fcodes)
 	u_char *p, *s;
 	int c;
 	int count, umlaut;
-	u_char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
+	u_char bigram1[NBG], bigram2[NBG], path[PATH_MAX];
 
 	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++) {
 		p[c] = check_bigram_char(getc(fp));
@@ -140,7 +140,7 @@ fastfind
 	int c, cc;
 	int count, found, globflag;
 	u_char *cutoff;
-	u_char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
+	u_char bigram1[NBG], bigram2[NBG], path[PATH_MAX];
 
 #ifdef FF_ICASE
 	/* use a lookup table for case insensitive search */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.57 2014/11/16 12:31:01 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.58 2015/01/16 06:40:19 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
 #include <sys/proc.h>

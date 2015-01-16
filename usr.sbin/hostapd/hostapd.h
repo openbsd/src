@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.20 2006/12/31 03:25:58 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.21 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -19,7 +19,6 @@
 #ifndef _HOSTAPD_H
 #define _HOSTAPD_H
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/tree.h>
@@ -344,7 +343,7 @@ struct hostapd_config {
 
 	struct event			c_priv_ev;
 
-	char				c_config[MAXPATHLEN];
+	char				c_config[PATH_MAX];
 
 	u_int				c_verbose;
 	u_int				c_debug;

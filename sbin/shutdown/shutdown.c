@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.37 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.38 2015/01/16 06:40:01 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <err.h>
 
@@ -273,8 +274,8 @@ static char *restricted_environ[] = {
 void
 timewarn(int timeleft)
 {
-	static char hostname[MAXHOSTNAMELEN];
-	char wcmd[MAXPATHLEN + 4];
+	static char hostname[HOST_NAME_MAX+1];
+	char wcmd[PATH_MAX + 4];
 	extern char **environ;
 	static int first;
 	FILE *pf;

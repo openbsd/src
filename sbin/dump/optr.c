@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.34 2013/11/12 04:59:02 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.35 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/wait.h>
 #include <sys/time.h>
 
@@ -46,6 +46,7 @@
 #include <stdarg.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 
 #include "dump.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.41 2015/01/03 15:50:50 jsing Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.42 2015/01/16 06:39:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -25,11 +25,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <err.h>

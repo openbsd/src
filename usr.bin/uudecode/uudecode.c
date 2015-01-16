@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.19 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.20 2015/01/16 06:40:13 deraadt Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  * Used with uuencode.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -51,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 static const char *infile, *outfile;
 static FILE *infp, *outfp;
@@ -182,7 +182,7 @@ decode2(void)
 	void *handle;
 	struct passwd *pw;
 	struct stat st;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	base64 = 0;
 	/* search for header line */
@@ -334,7 +334,7 @@ uu_decode(void)
 {
 	int i, ch;
 	char *p;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	/* for each input line */
 	for (;;) {
@@ -412,8 +412,8 @@ static int
 base64_decode(void)
 {
 	int n;
-	char inbuf[MAXPATHLEN];
-	unsigned char outbuf[MAXPATHLEN * 4];
+	char inbuf[PATH_MAX];
+	unsigned char outbuf[PATH_MAX * 4];
 
 	for (;;) {
 		switch (get_line(inbuf, sizeof(inbuf))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.40 2014/10/29 06:26:39 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.41 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -19,7 +19,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.36 2012/01/28 13:47:55 sthen Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.37 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -27,7 +27,6 @@
  *         in co-operation with SSH Communications Security, Espoo, Finland
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

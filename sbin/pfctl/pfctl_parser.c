@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.300 2014/10/27 21:51:32 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.301 2015/01/16 06:40:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,6 +54,7 @@
 #include <err.h>
 #include <ifaddrs.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define SYSLOG_NAMES
 #include <syslog.h>

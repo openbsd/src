@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.23 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.24 2015/01/16 06:39:58 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -67,7 +67,7 @@ dns_get_key(int type, struct message *msg, int *keylen)
 	struct exchange *exchange = msg->exchange;
 	struct rrsetinfo *rr;
 	struct dns_rdata_key key_rr;
-	char            name[MAXHOSTNAMELEN];
+	char            name[HOST_NAME_MAX+1];
 	in_addr_t       ip4;
 	u_int8_t        algorithm, *id, *umark;
 	size_t          id_len;

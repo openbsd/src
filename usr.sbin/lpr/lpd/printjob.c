@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.53 2014/12/16 03:35:49 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.54 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  *	it does not need to be removed because file locks are dynamic.
  */
 
-#include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -54,6 +53,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -91,12 +91,12 @@ static char	 title[80];	/* ``pr'' title */
 static int	 tof;		/* true if at top of form */
 
 static char	class[32];		/* classification field */
-static char	fromhost[MAXHOSTNAMELEN]; /* user's host machine */
+static char	fromhost[HOST_NAME_MAX+1]; /* user's host machine */
 				/* indentation size in static characters */
 static char	indent[10] = "-i0";
 static char	jobname[NAME_MAX];	/* job or file name */
 static char	length[10] = "-l";	/* page length in lines */
-static char	logname[MAXLOGNAME];	/* user's login name */
+static char	logname[LOGIN_NAME_MAX];/* user's login name */
 static char	pxlength[10] = "-y";	/* page length in pixels */
 static char	pxwidth[10] = "-x";	/* page width in pixels */
 static char	tempfile[] = "errsXXXXXXXXXX"; /* file name for filter output */

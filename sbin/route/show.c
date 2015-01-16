@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.96 2014/05/08 09:28:08 mpi Exp $	*/
+/*	$OpenBSD: show.c,v 1.97 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 
@@ -53,6 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "show.h"
 
@@ -567,8 +567,8 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	}
 }
 
-static char line[MAXHOSTNAMELEN];
-static char domain[MAXHOSTNAMELEN];
+static char line[HOST_NAME_MAX+1];
+static char domain[HOST_NAME_MAX+1];
 
 void
 p_sockaddr_mpls(struct sockaddr *in, struct sockaddr *out, int flags, int width)

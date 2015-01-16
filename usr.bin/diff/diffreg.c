@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.83 2014/08/27 15:22:40 kspillner Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.84 2015/01/16 06:40:07 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -64,7 +64,6 @@
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -77,10 +76,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "diff.h"
 #include "pathnames.h"
 #include "xmalloc.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /*
  * diff - compare two files.
@@ -495,7 +498,7 @@ files_differ(FILE *f1, FILE *f2, int flags)
 static FILE *
 opentemp(const char *file)
 {
-	char buf[BUFSIZ], *tempdir, tempfile[MAXPATHLEN];
+	char buf[BUFSIZ], *tempdir, tempfile[PATH_MAX];
 	ssize_t nread;
 	int ifd, ofd;
 
@@ -653,7 +656,7 @@ stone(int *a, int n, int *b, int *c, int flags)
 		bound = UINT_MAX;
 	else {
 		sq = isqrt(n);
-		bound = MAX(256, sq);
+		bound = MAXIMUM(256, sq);
 	}
 
 	k = 0;
@@ -1360,10 +1363,10 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = MAX(1, cvp->a - diff_context);
-	upb = MIN(len[0], context_vec_ptr->b + diff_context);
-	lowc = MAX(1, cvp->c - diff_context);
-	upd = MIN(len[1], context_vec_ptr->d + diff_context);
+	lowa = MAXIMUM(1, cvp->a - diff_context);
+	upb = MINIMUM(len[0], context_vec_ptr->b + diff_context);
+	lowc = MAXIMUM(1, cvp->c - diff_context);
+	upd = MINIMUM(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("***************");
 	if ((flags & D_PROTOTYPE)) {
@@ -1463,10 +1466,10 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = MAX(1, cvp->a - diff_context);
-	upb = MIN(len[0], context_vec_ptr->b + diff_context);
-	lowc = MAX(1, cvp->c - diff_context);
-	upd = MIN(len[1], context_vec_ptr->d + diff_context);
+	lowa = MAXIMUM(1, cvp->a - diff_context);
+	upb = MINIMUM(len[0], context_vec_ptr->b + diff_context);
+	lowc = MAXIMUM(1, cvp->c - diff_context);
+	upd = MINIMUM(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("@@ -");
 	uni_range(lowa, upb);

@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.10 2013/11/15 22:20:04 millert Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.11 2015/01/16 06:39:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -38,6 +38,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,14 +51,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-
-#include <net/if.h>
-#include <netinet/in.h>
+#include <limits.h>
 
 typedef struct lmc___ctl lmc_ctl_t;
 #include <dev/pci/if_lmcioctl.h>

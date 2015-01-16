@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.26 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.27 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <pwd.h>
@@ -41,6 +40,7 @@
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vis.h>
 #include <stdarg.h>
 
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
      */
     set(STRstatus, Strsave(STR0));
 
-    if ((tcp = getenv("HOME")) != NULL && strlen(tcp) < MAXPATHLEN)
+    if ((tcp = getenv("HOME")) != NULL && strlen(tcp) < PATH_MAX)
 	cp = SAVE(tcp);
     else
 	cp = NULL;

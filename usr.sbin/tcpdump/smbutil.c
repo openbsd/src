@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbutil.c,v 1.8 2013/04/16 18:10:24 deraadt Exp $	*/
+/*	$OpenBSD: smbutil.c,v 1.9 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -11,7 +11,6 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>

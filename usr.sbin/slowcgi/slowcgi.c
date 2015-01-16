@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.41 2014/12/08 12:12:46 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.42 2015/01/16 06:40:20 deraadt Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <event.h>
 #include <netdb.h>
+#include <limits.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -118,7 +119,7 @@ struct request {
 	struct fcgi_response_head	response_head;
 	struct fcgi_stdin_head		stdin_head;
 	uint16_t			id;
-	char				script_name[MAXPATHLEN];
+	char				script_name[PATH_MAX];
 	struct env_head			env;
 	int				env_count;
 	pid_t				script_pid;
@@ -745,11 +746,11 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 		n -= name_len;
 
 		env_entry->val[name_len] = '\0';
-		if (val_len < MAXPATHLEN && strcmp(env_entry->val,
+		if (val_len < PATH_MAX && strcmp(env_entry->val,
 		    "SCRIPT_NAME") == 0 && c->script_name[0] == '\0') {
 			bcopy(buf, c->script_name, val_len);
 			c->script_name[val_len] = '\0';
-		} else if (val_len < MAXPATHLEN && strcmp(env_entry->val,
+		} else if (val_len < PATH_MAX && strcmp(env_entry->val,
 		    "SCRIPT_FILENAME") == 0) {
 			bcopy(buf, c->script_name, val_len);
 			c->script_name[val_len] = '\0';

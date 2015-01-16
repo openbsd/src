@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.26 2014/06/29 00:58:45 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.27 2015/01/16 06:40:20 deraadt Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/queue.h>

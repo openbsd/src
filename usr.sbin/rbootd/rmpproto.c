@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmpproto.c,v 1.10 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: rmpproto.c,v 1.11 2015/01/16 06:40:19 deraadt Exp $	*/
 /*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <errno.h>

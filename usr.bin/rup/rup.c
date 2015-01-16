@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.28 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: rup.c,v 1.29 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -32,7 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <rpc/rpc.h>

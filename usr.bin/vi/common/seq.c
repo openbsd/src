@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: seq.c,v 1.10 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 
 #include <bitstring.h>
@@ -23,6 +22,8 @@
 #include <string.h>
 
 #include "common.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /*
  * seq_set --
@@ -195,7 +196,7 @@ seq_find(SCR *sp, SEQ **lastqp, EVENT *e_input, CHAR_T *c_input, size_t ilen,
 			if (qp->input[0] < c_input[0] ||
 			    qp->stype != stype || F_ISSET(qp, SEQ_FUNCMAP))
 				continue;
-			diff = memcmp(qp->input, c_input, MIN(qp->ilen, ilen));
+			diff = memcmp(qp->input, c_input, MINIMUM(qp->ilen, ilen));
 		} else {
 			if (qp->input[0] > e_input->e_c)
 				break;
@@ -203,7 +204,7 @@ seq_find(SCR *sp, SEQ **lastqp, EVENT *e_input, CHAR_T *c_input, size_t ilen,
 			    qp->stype != stype || F_ISSET(qp, SEQ_FUNCMAP))
 				continue;
 			diff =
-			    e_memcmp(qp->input, e_input, MIN(qp->ilen, ilen));
+			    e_memcmp(qp->input, e_input, MINIMUM(qp->ilen, ilen));
 		}
 		if (diff > 0)
 			break;

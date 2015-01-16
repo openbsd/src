@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.45 2014/08/25 07:50:26 doug Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.46 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/stat.h>
 
 #include <db.h>
@@ -46,7 +46,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define	INSECURE	1
 #define	SECURE		2
@@ -97,7 +100,7 @@ main(int argc, char **argv)
 	uid_t olduid;
 	gid_t shadow;
 	int ch, tfd, makeold, secureonly, flags, checkonly;
-	char *username, buf[MAX(MAXPATHLEN, LINE_MAX * 2)];
+	char *username, buf[MAX(PATH_MAX, LINE_MAX * 2)];
 
 	flags = checkonly = makeold = secureonly = 0;
 	username = NULL;
@@ -108,7 +111,7 @@ main(int argc, char **argv)
 			break;
 		case 'd':
 			basedir = optarg;
-			if (strlen(basedir) > MAXPATHLEN - 40)
+			if (strlen(basedir) > PATH_MAX - 40)
 				errx(1, "basedir too long");
 			break;
 		case 'p':			/* create V7 "file.orig" */
@@ -178,7 +181,7 @@ main(int argc, char **argv)
 
 	/* Tweak openinfo values for large passwd files. */
 	if (st.st_size > (off_t)100*1024)
-		openinfo.cachesize = MIN(st.st_size * 20, (off_t)12*1024*1024);
+		openinfo.cachesize = MINIMUM(st.st_size * 20, (off_t)12*1024*1024);
 	if (st.st_size / 128 > openinfo.nelem)
 		openinfo.nelem = st.st_size / 128;
 
@@ -399,7 +402,7 @@ cp(char *from, char *to, mode_t mode)
 void
 mv(char *from, char *to)
 {
-	char buf[MAXPATHLEN * 2];
+	char buf[PATH_MAX * 2];
 
 	if (rename(from, to)) {
 		int sverrno = errno;
@@ -439,7 +442,7 @@ errorx(char *name)
 void
 cleanup(void)
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	if (clean & FILE_ORIG) {
 		(void)snprintf(buf, sizeof(buf), "%s.orig", pname);
@@ -468,7 +471,7 @@ usage(void)
 char *
 changedir(char *path, char *dir)
 {
-	static char fixed[MAXPATHLEN];
+	static char fixed[PATH_MAX];
 	char *p;
 
 	if (!dir)

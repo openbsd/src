@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.80 2010/10/28 12:30:27 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.81 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -65,7 +65,7 @@ int
 cvs_tag(int argc, char **argv)
 {
 	int ch, flags, i;
-	char repo[MAXPATHLEN];
+	char repo[PATH_MAX];
 	char *arg = ".";
 	struct cvs_recursion cr;
 	struct trigger_list *line_list;
@@ -186,7 +186,7 @@ cvs_tag(int argc, char **argv)
 
 	cr.flags = flags;
 
-	cvs_get_repository_name(".", repo, MAXPATHLEN);
+	cvs_get_repository_name(".", repo, PATH_MAX);
 	line_list = cvs_trigger_getlines(CVS_PATH_TAGINFO, repo);
 	if (line_list != NULL) {
 		TAILQ_INIT(&files_info);

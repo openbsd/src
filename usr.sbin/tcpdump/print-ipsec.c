@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.19 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.20 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -26,7 +26,6 @@
  *         in co-operation with SSH Communications Security, Espoo, Finland    
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

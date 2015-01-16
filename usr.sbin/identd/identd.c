@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.26 2014/07/13 17:53:41 claudio Exp $ */
+/*	$OpenBSD: identd.c,v 1.27 2015/01/16 06:40:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -436,7 +437,7 @@ parent_token(struct ident_resolver *r, struct passwd *pw)
 void
 parent_noident(struct ident_resolver *r, struct passwd *pw)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	struct stat st;
 	int rv;
 

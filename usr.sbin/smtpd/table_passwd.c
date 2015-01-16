@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.8 2014/09/29 08:41:55 gilles Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.9 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -22,6 +22,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.32 2014/10/17 06:33:35 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.33 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/resource.h>
@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "pathnames.h"
@@ -243,7 +244,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 	const char **argv, **edir;
 	pid_t pid;
 	int argc, i, status, maxargc;
-	char *optbuf = NULL, fsname[MAXPATHLEN], execname[MAXPATHLEN];
+	char *optbuf = NULL, fsname[PATH_MAX], execname[PATH_MAX];
 	const char *extra = getoptions(vfstype);
 
 	if (strcmp(vfstype, "ufs") == 0)

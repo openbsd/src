@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.51 2014/05/20 21:11:16 krw Exp $	*/
+/*	$OpenBSD: df.c,v 1.52 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 

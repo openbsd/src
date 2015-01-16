@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.12 2009/10/27 23:59:39 deraadt Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.12 2009/10/27 23:59:39 deraadt Exp $
+ * 	$Id: locate.bigram.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
  */
 
 /*
@@ -45,11 +45,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/param.h>			/* for MAXPATHLEN */
+#include <limits.h>
 #include "locate.h"
 
-u_char buf1[MAXPATHLEN] = " ";
-u_char buf2[MAXPATHLEN];
+u_char buf1[PATH_MAX] = " ";
+u_char buf2[PATH_MAX];
 u_int bigram[UCHAR_MAX + 1][UCHAR_MAX + 1];
 
 int

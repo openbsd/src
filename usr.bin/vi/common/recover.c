@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.19 2014/11/14 20:27:03 tedu Exp $	*/
+/*	$OpenBSD: recover.c,v 1.20 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 
@@ -123,7 +122,7 @@ rcv_tmp(SCR *sp, EXF *ep, char *name)
 {
 	struct stat sb;
 	int fd;
-	char *dp, *p, path[MAXPATHLEN];
+	char *dp, *p, path[PATH_MAX];
 
 	/*
 	 * !!!
@@ -327,9 +326,9 @@ rcv_mailfile(SCR *sp, int issync, char *cp_path)
 	time_t now;
 	uid_t uid;
 	int fd;
-	char *dp, *p, *t, buf[4096], mpath[MAXPATHLEN];
+	char *dp, *p, *t, buf[4096], mpath[PATH_MAX];
 	char *t1, *t2, *t3;
-	char host[MAXHOSTNAMELEN];
+	char host[HOST_NAME_MAX+1];
 
 	gp = sp->gp;
 	if ((pw = getpwuid(uid = getuid())) == NULL) {
@@ -475,7 +474,7 @@ rcv_list(SCR *sp)
 	DIR *dirp;
 	FILE *fp;
 	int found;
-	char *p, *t, file[MAXPATHLEN], path[MAXPATHLEN];
+	char *p, *t, file[PATH_MAX], path[PATH_MAX];
 
 	/* Open the recovery directory for reading. */
 	if (opts_empty(sp, O_RECDIR, 0))
@@ -579,7 +578,7 @@ rcv_read(SCR *sp, FREF *frp)
 	time_t rec_mtime;
 	int fd, found, locked, requested, sv_fd;
 	char *name, *p, *t, *rp, *recp, *pathp;
-	char file[MAXPATHLEN], path[MAXPATHLEN], recpath[MAXPATHLEN];
+	char file[PATH_MAX], path[PATH_MAX], recpath[PATH_MAX];
 
 	if (opts_empty(sp, O_RECDIR, 0))
 		return (1);
@@ -828,7 +827,7 @@ static void
 rcv_email(SCR *sp, char *fname)
 {
 	struct stat sb;
-	char buf[MAXPATHLEN * 2 + 20];
+	char buf[PATH_MAX * 2 + 20];
 
 	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb))
 		msgq_str(sp, M_SYSERR,

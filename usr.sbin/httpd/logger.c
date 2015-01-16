@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.8 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: logger.c,v 1.9 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* nitems */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -152,7 +153,7 @@ logger_open_fd(struct imsg *imsg)
 int
 logger_open_priv(struct imsg *imsg)
 {
-	char			 path[MAXPATHLEN];
+	char			 path[PATH_MAX];
 	char			 name[NAME_MAX], *p;
 	u_int32_t		 id;
 	size_t			 len;

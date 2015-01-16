@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.14 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.15 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <sqlite3.h>
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

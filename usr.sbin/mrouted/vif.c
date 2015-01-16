@@ -699,9 +699,7 @@ accept_neighbor_request(u_int32_t src, u_int32_t dst)
 
 	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
-#if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
-#endif
 	addr.sin_addr.s_addr = dst;
 	addr.sin_port = htons(2000); /* any port over 1024 will do... */
 	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
@@ -786,9 +784,7 @@ accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 
 	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
-#if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
-#endif
 	addr.sin_addr.s_addr = dst;
 	addr.sin_port = htons(2000); /* any port over 1024 will do... */
 	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0

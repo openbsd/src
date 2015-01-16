@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.10 2012/06/01 01:43:19 dlg Exp $	*/
+/*	$OpenBSD: login.c,v 1.11 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -45,7 +45,7 @@ main(int argc, char **argv)
 	char *username, *password = NULL;
 	char response[1024];
 	int arg_login = 0, arg_notickets = 0;
-	char invokinguser[MAXLOGNAME];
+	char invokinguser[LOGIN_NAME_MAX];
 	char *wheel = NULL, *class = NULL;
 
 	invokinguser[0] = '\0';

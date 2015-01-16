@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.13 2013/11/26 13:18:55 deraadt Exp $	*/
+/*	$OpenBSD: field.c,v 1.14 2015/01/16 06:40:06 deraadt Exp $	*/
 /*	$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -42,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "chpass.h"
 

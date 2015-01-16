@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2015/01/16 06:40:19 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.5 1995/10/06 05:12:13 thorpej Exp $	*/
 
 /*
@@ -43,10 +43,10 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <stdio.h>
+#include <limits.h>
 #include "defs.h"
 #include "pathnames.h"
 
@@ -60,7 +60,7 @@
 **	simplify the boot file search code.
 */
 
-char	MyHost[MAXHOSTNAMELEN];			/* host name */
+char	MyHost[HOST_NAME_MAX+1];			/* host name */
 int	DebugFlg = 0;				/* set true if debugging */
 int	BootAny = 0;				/* set true if we boot anyone */
 

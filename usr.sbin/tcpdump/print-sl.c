@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.17 2014/11/20 04:01:01 jsg Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.18 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -22,11 +22,9 @@
  */
 
 #ifdef HAVE_NET_SLIP_H
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/mbuf.h>
 #include <sys/socket.h>
 
 struct rtentry;
@@ -45,6 +43,7 @@ struct rtentry;
 #include <netdb.h>
 #include <pcap.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "interface.h"
 #include "addrtoname.h"

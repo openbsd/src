@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.28 2014/12/11 17:06:55 schwarze Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.29 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,12 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* nitems */
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+#include <sys/signal.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -41,6 +43,8 @@
 #include <pwd.h>
 
 #include "httpd.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 __dead void	 usage(void);
 
@@ -678,7 +682,7 @@ socket_rlimit(int maxfd)
 	if (maxfd == -1)
 		rl.rlim_cur = rl.rlim_max;
 	else
-		rl.rlim_cur = MAX(rl.rlim_max, (rlim_t)maxfd);
+		rl.rlim_cur = MAXIMUM(rl.rlim_max, (rlim_t)maxfd);
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("socket_rlimit: failed to set resource limit");
 }

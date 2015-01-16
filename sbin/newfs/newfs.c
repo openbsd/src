@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.97 2014/07/20 01:38:40 guenther Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.98 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG DEV_BSIZE MAXBSIZE */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -65,11 +65,15 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 #include <signal.h>
 #include <util.h>
 
 #include "mntopts.h"
 #include "pathnames.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -158,7 +162,7 @@ main(int argc, char *argv[])
 	char *cp = NULL, *s1, *s2, *special, *opstring, *realdev;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
-	char *pop = NULL, node[MAXPATHLEN];
+	char *pop = NULL, node[PATH_MAX];
 	pid_t pid, res;
 	struct statfs sf;
 	struct stat mountpoint;
@@ -314,7 +318,7 @@ main(int argc, char *argv[])
 	special = argv[0];
 
 	if (!mfs) {
-		char execname[MAXPATHLEN], name[MAXPATHLEN];
+		char execname[PATH_MAX], name[PATH_MAX];
 
 		if (fstype == NULL)
 			fstype = readlabelfs(special, 0);
@@ -450,12 +454,12 @@ havelabel:
 	if (fsize == 0) {
 		fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (fsize <= 0)
-			fsize = MAX(DFL_FRAGSIZE, lp->d_secsize);
+			fsize = MAXIMUM(DFL_FRAGSIZE, lp->d_secsize);
 	}
 	if (bsize == 0) {
 		bsize = DISKLABELV1_FFS_BSIZE(pp->p_fragblock);
 		if (bsize <= 0)
-			bsize = MIN(DFL_BLKSIZE, 8 * fsize);
+			bsize = MINIMUM(DFL_BLKSIZE, 8 * fsize);
 	}
 	if (density == 0)
 		density = NFPI * fsize;

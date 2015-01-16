@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.141 2015/01/15 11:49:59 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.142 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -64,7 +64,6 @@
 #define TIMERINTVL	30		/* interval for checking flush, mark */
 #define TTYMSGTIME	1		/* timeout passed to ttymsg */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -93,8 +92,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 #include <vis.h>
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
@@ -131,13 +133,13 @@ struct filed {
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
-			char	f_loghost[1+4+3+1+MAXHOSTNAMELEN+1+NI_MAXSERV];
+			char	f_loghost[1+4+3+1+HOST_NAME_MAX+1+1+NI_MAXSERV];
 				/* @proto46://[hostname]:servname\0 */
 			struct sockaddr_storage	f_addr;
 			struct bufferevent	*f_bufev;
 			int	f_reconnectwait;
 		} f_forw;		/* forwarding address */
-		char	f_fname[MAXPATHLEN];
+		char	f_fname[PATH_MAX];
 		struct {
 			char	f_mname[MAX_MEMBUF_NAME];
 			struct ringbuf *f_rb;
@@ -148,7 +150,7 @@ struct filed {
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
 	char	f_lasttime[16];			/* time of last occurrence */
-	char	f_prevhost[MAXHOSTNAMELEN];	/* host from which recd. */
+	char	f_prevhost[HOST_NAME_MAX+1];	/* host from which recd. */
 	int	f_prevpri;			/* pri of f_prevline */
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
@@ -194,7 +196,7 @@ int	nunix = 1;		/* Number of Unix domain sockets requested */
 char	*path_unix[MAXUNIX] = { _PATH_LOG }; /* Paths to Unix domain sockets */
 int	Debug;			/* debug flag */
 int	Startup = 1;		/* startup flag */
-char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
+char	LocalHostName[HOST_NAME_MAX+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 
@@ -645,7 +647,7 @@ udp_readcb(int fd, short event, void *arg)
 	salen = sizeof(sa);
 	n = recvfrom(fd, linebuf, MAXLINE, 0, (struct sockaddr *)&sa, &salen);
 	if (n > 0) {
-		char	 resolve[MAXHOSTNAMELEN];
+		char	 resolve[HOST_NAME_MAX+1];
 
 		linebuf[n] = '\0';
 		cvthname((struct sockaddr *)&sa, resolve, sizeof(resolve));
@@ -1740,7 +1742,7 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		if (strlen(host) >= MAXHOSTNAMELEN) {
+		if (strlen(host) >= HOST_NAME_MAX+1) {
 			snprintf(ebuf, sizeof(ebuf), "host too long \"%s\"",
 			    f->f_un.f_forw.f_loghost);
 			logerror(ebuf);
@@ -1864,7 +1866,7 @@ cfline(char *line, char *prog)
 		}
 
 		/* Set buffer length */
-		rb_len = MAX(rb_len, MIN_MEMBUF);
+		rb_len = MAXIMUM(rb_len, MIN_MEMBUF);
 		f->f_un.f_mb.f_len = rb_len;
 		f->f_un.f_mb.f_overflow = 0;
 		f->f_un.f_mb.f_attached = 0;

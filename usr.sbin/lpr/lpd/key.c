@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.7 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.8 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.3 1997/10/20 08:08:28 scottr Exp $	*/
 
 /*-
@@ -30,15 +30,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 
 #include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
 #include <dirent.h>
+#include <limits.h>
 #include <termios.h>
 
 #include "lp.h"

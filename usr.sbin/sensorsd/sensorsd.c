@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.53 2014/06/29 00:58:45 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.54 2015/01/16 06:40:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
@@ -32,6 +32,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define	RFBUFSIZ	28	/* buffer size for print_sensor */
 #define	RFBUFCNT	4	/* ring buffers */

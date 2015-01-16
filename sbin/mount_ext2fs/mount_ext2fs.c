@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ext2fs.c,v 1.16 2012/07/09 12:58:01 krw Exp $	*/
+/*	$OpenBSD: mount_ext2fs.c,v 1.17 2015/01/16 06:39:59 deraadt Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 
 #include <err.h>
@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "mntopts.h"
 
@@ -55,7 +56,7 @@ main(int argc, char *argv[])
 {
 	struct ufs_args args;		/* XXX ffs_args */
 	int ch, mntflags;
-	char fs_name[MAXPATHLEN], *errcause;
+	char fs_name[PATH_MAX], *errcause;
 
 	mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */

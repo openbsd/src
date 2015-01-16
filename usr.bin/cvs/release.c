@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.41 2009/03/21 11:18:45 joris Exp $	*/
+/*	$OpenBSD: release.c,v 1.42 2015/01/16 06:40:07 deraadt Exp $	*/
 /*-
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -96,7 +96,7 @@ cvs_release_local(struct cvs_file *cf)
 {
 	struct stat st;
 	struct cvs_recursion cr;
-	char *wdir, cwd[MAXPATHLEN];
+	char *wdir, cwd[PATH_MAX];
 	char *arg = ".";
 	int saved_noexec;
 

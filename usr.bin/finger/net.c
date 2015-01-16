@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.13 2015/01/16 06:40:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,7 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

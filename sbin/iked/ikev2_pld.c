@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.46 2014/11/07 14:05:58 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.47 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>

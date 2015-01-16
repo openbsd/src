@@ -1,4 +1,4 @@
-/* $OpenBSD: procname.c,v 1.13 2014/07/04 05:58:31 guenther Exp $ */
+/* $OpenBSD: procname.c,v 1.14 2015/01/16 06:40:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -16,7 +16,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.19 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: which.c,v 1.20 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
@@ -28,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define PROG_WHICH	1
 #define PROG_WHEREIS	2
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 int
 findprog(char *prog, char *path, int progmode, int allmatches)
 {
-	char *p, filename[MAXPATHLEN];
+	char *p, filename[PATH_MAX];
 	int proglen, plen, rval = 0;
 	struct stat sbuf;
 	char *pathcpy;

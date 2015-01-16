@@ -1,4 +1,4 @@
-/* $OpenBSD: progs.priv.h,v 1.9 2010/01/12 23:22:14 nicm Exp $ */
+/* $OpenBSD: progs.priv.h,v 1.10 2015/01/16 06:40:13 deraadt Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -32,7 +32,7 @@
  *  Author: Thomas E. Dickey                    1997-on                     *
  ****************************************************************************/
 /*
- * $Id: progs.priv.h,v 1.9 2010/01/12 23:22:14 nicm Exp $
+ * $Id: progs.priv.h,v 1.10 2015/01/16 06:40:13 deraadt Exp $
  *
  *	progs.priv.h
  *
@@ -63,7 +63,7 @@
 #if HAVE_LIMITS_H
 # include <limits.h>
 #elif HAVE_SYS_PARAM_H
-# include <sys/param.h>
+# include <sys/param.h>		/* only if no limits.h */
 #endif
 
 #if HAVE_DIRENT_H

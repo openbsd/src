@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.62 2014/07/08 23:31:22 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.63 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN NODEV */
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -203,7 +204,7 @@ main(int argc, char *argv[])
 			/* FALLTHROUGH */
 		case 't': {
 			struct stat sb;
-			char *ttypath, pathbuf[MAXPATHLEN];
+			char *ttypath, pathbuf[PATH_MAX];
 
 			if (strcmp(optarg, "co") == 0)
 				ttypath = _PATH_CONSOLE;

@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.13 2014/01/11 04:44:15 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.14 2015/01/16 06:40:16 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -32,15 +32,16 @@
  * Generates a Makefile and main C file for a crunched executable,
  * from specs given in a .conf file.
  */
+#include <sys/param.h>	/* MACHINE */
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/param.h>
+#include <limits.h>
 
 #define CRUNCH_VERSION	"1.3"
 
@@ -82,15 +83,15 @@ typedef struct prog {
 strlst_t       *srcdirs = NULL;
 strlst_t       *libs = NULL;
 strlst_t       *libdirs = NULL;
-char		objdir[MAXPATHLEN] = "obj";
+char		objdir[PATH_MAX] = "obj";
 prog_t         *progs = NULL;
 
 char            line[MAXLINELEN];
 
-char            confname[MAXPATHLEN], infilename[MAXPATHLEN];
-char            outmkname[MAXPATHLEN], outcfname[MAXPATHLEN];
-char            cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
-char            topdir[MAXPATHLEN], execfname[MAXPATHLEN];
+char            confname[PATH_MAX], infilename[PATH_MAX];
+char            outmkname[PATH_MAX], outcfname[PATH_MAX];
+char            cachename[PATH_MAX], curfilename[PATH_MAX];
+char            topdir[PATH_MAX], execfname[PATH_MAX];
 int             linenum = -1;
 int             goterror = 0;
 
@@ -154,7 +155,7 @@ main(int argc, char *argv[])
 			elf_names = 1;
 			break;
 		case 'L':
-			if (strlen(optarg) >= MAXPATHLEN)
+			if (strlen(optarg) >= PATH_MAX)
 				usage();
 			add_string(&libdirs, optarg);
 			break;
@@ -334,7 +335,7 @@ void
 add_srcdirs(int argc, char **argv)
 {
 	int             i;
-	char            tmppath[MAXPATHLEN];
+	char            tmppath[PATH_MAX];
 	int             overflow;
 
 	for (i = 1; i < argc; i++) {
@@ -372,8 +373,8 @@ void
 add_libdirs(int argc, char **argv)
 {
 	int             i;
-	char            tmppath[MAXPATHLEN];
-	char            tmppath2[MAXPATHLEN];
+	char            tmppath[PATH_MAX];
+	char            tmppath2[PATH_MAX];
 	int             overflow;
 
 	for (i = 1; i < argc; i++) {
@@ -581,7 +582,7 @@ gen_outputs(void)
 void 
 fillin_program(prog_t * p)
 {
-	char            path[MAXPATHLEN];
+	char            path[PATH_MAX];
 	char           *srcparent;
 	strlst_t       *s;
 	int             i;
@@ -651,7 +652,7 @@ fillin_program(prog_t * p)
 void 
 fillin_program_objs(prog_t * p, char *path)
 {
-	char           *cp, *obj, tempfname[MAXPATHLEN];
+	char           *cp, *obj, tempfname[PATH_MAX];
 	int             fd, rc;
 	FILE           *f;
 
@@ -850,7 +851,7 @@ genident(char *str)
 char           *
 dir_search(char *progname)
 {
-	char            path[MAXPATHLEN];
+	char            path[PATH_MAX];
 	strlst_t       *dir;
 
 	for (dir = srcdirs; dir != NULL; dir = dir->next) {

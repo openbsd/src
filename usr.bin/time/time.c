@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.19 2013/04/16 23:43:00 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.20 2015/01/16 06:40:13 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>

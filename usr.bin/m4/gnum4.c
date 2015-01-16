@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.46 2014/07/10 14:12:31 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.47 2015/01/16 06:40:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -29,7 +29,6 @@
  * functions needed to support gnu-m4 extensions, including a fake freezing
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
@@ -42,6 +41,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -124,7 +124,7 @@ static
 struct input_file *
 dopath(struct input_file *i, const char *filename)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	struct path_entry *pe;
 	FILE *f;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_fdpass.c,v 1.8 2012/04/04 17:24:50 deraadt Exp $	*/
+/*	$OpenBSD: privsep_fdpass.c,v 1.9 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/param.h>
+
 #include <sys/uio.h>
 #include <sys/types.h>
 #include <sys/socket.h>

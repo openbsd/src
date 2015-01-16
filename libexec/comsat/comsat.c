@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.37 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.38 2015/01/16 06:39:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,6 +40,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <limits.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -57,7 +58,7 @@ int	debug = 0;
 
 #define MAXIDLE	120
 
-char	hostname[MAXHOSTNAMELEN];
+char	hostname[HOST_NAME_MAX+1];
 struct	utmp *utmp = NULL;
 time_t	lastmsgtime;
 int	nutmp, uf;
@@ -222,7 +223,7 @@ notify(struct utmp *utp, off_t offset)
 	FILE *tp;
 	struct stat stb;
 	struct termios ttybuf;
-	char tty[MAXPATHLEN], name[UT_NAMESIZE + 1];
+	char tty[PATH_MAX], name[UT_NAMESIZE + 1];
 
 	(void)snprintf(tty, sizeof(tty), "%s%.*s",
 	    _PATH_DEV, (int)sizeof(utp->ut_line), utp->ut_line);

@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.24 2013/04/02 06:04:50 guenther Exp $	 */
+/* $OpenBSD: utils.c,v 1.25 2015/01/16 06:40:13 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -32,13 +32,14 @@
  *  This file contains various handy utilities used by top.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "top.h"
 #include "machine.h"

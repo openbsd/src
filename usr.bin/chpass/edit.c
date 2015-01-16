@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.34 2013/11/26 13:18:55 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.35 2015/01/16 06:40:06 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -43,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "chpass.h"

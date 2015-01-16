@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.19 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: verify.c,v 1.20 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fts.h>
@@ -38,16 +37,17 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <limits.h>
 #include "mtree.h"
 #include "extern.h"
 
 extern u_int32_t crc_total;
 extern int ftsoptions;
 extern int dflag, eflag, qflag, rflag, sflag, uflag;
-extern char fullpath[MAXPATHLEN];
+extern char fullpath[PATH_MAX];
 
 static NODE *root;
-static char path[MAXPATHLEN];
+static char path[PATH_MAX];
 
 static void	miss(NODE *, char *, size_t);
 static int	vwalk(void);

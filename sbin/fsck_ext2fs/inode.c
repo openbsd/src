@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.24 2014/10/29 06:31:58 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.25 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* btodb */
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #include "fsck.h"
 #include "fsutil.h"
@@ -118,7 +119,7 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 	struct ext2fs_dinode dino;
 	u_int64_t remsize, sizepb;
 	mode_t mode;
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
@@ -204,7 +205,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	int i, n, (*func)(struct inodesc *), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 	struct ext2fs_dinode *dp;
 
 	if (idesc->id_type == ADDR) {

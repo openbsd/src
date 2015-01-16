@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.37 2014/11/02 13:56:55 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.38 2015/01/16 06:40:17 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -48,6 +47,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

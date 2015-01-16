@@ -1,4 +1,4 @@
-/*	$OpenBSD: roaming.c,v 1.5 2010/05/26 19:18:10 millert Exp $	*/
+/*	$OpenBSD: roaming.c,v 1.6 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/tree.h>
@@ -39,6 +38,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "hostapd.h"
 

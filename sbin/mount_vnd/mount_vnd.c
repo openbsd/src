@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.16 2014/10/29 21:30:10 tedu Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.17 2015/01/16 06:39:59 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
  *	@(#)vnconfig.c	8.1 (Berkeley) 12/15/93
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #define DEFAULT_VND	"vnd0"

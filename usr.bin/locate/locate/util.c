@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2014/11/16 00:04:53 tedu Exp $
+/*	$OpenBSD: util.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,15 +31,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.12 2014/11/16 00:04:53 tedu Exp $
+ * $Id: util.c,v 1.13 2015/01/16 06:40:09 deraadt Exp $
  */
 
 
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
-#include <sys/param.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "locate.h"
 
@@ -242,12 +242,12 @@ getwm(p)
 
 	i = u.i;
 
-	if (i > MAXPATHLEN || i < -(MAXPATHLEN)) {
+	if (i > PATH_MAX || i < -(PATH_MAX)) {
 		i = ntohl(i);
-		if (i > MAXPATHLEN || i < -(MAXPATHLEN)) {
+		if (i > PATH_MAX || i < -(PATH_MAX)) {
 			(void)fprintf(stderr,
-			    "integer out of +-MAXPATHLEN (%d): %d\n",
-			    MAXPATHLEN, i);
+			    "integer out of +-PATH_MAX (%d): %d\n",
+			    PATH_MAX, i);
 			exit(1);
 		}
 	}
@@ -270,12 +270,12 @@ getwf(fp)
 
 	word = getw(fp);
 
-	if (word > MAXPATHLEN || word < -(MAXPATHLEN)) {
+	if (word > PATH_MAX || word < -(PATH_MAX)) {
 		word = ntohl(word);
-		if (word > MAXPATHLEN || word < -(MAXPATHLEN)) {
+		if (word > PATH_MAX || word < -(PATH_MAX)) {
 			(void)fprintf(stderr,
-			    "integer out of +-MAXPATHLEN (%d): %d\n",
-			    MAXPATHLEN, word);
+			    "integer out of +-PATH_MAX (%d): %d\n",
+			    PATH_MAX, word);
 			exit(1);
 		}
 	}

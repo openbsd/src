@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostname.c,v 1.8 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: hostname.c,v 1.9 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: hostname.c,v 1.10 1995/09/07 06:28:40 jtc Exp $	*/
 
 /*
@@ -30,13 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 extern	char *__progname;
 
@@ -46,7 +45,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, sflag;
-	char *p, hostname[MAXHOSTNAMELEN];
+	char *p, hostname[HOST_NAME_MAX+1];
 
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "s")) != -1)

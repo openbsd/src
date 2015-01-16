@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.34 2014/07/22 18:28:40 jca Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.35 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 /*
  * Fix up / report on disk quotas & usage
  */
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG DEV_BSIZE MAXBSIZE */
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -50,6 +50,7 @@
 #include <grp.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,8 +85,8 @@ union dinode {
 
 struct quotaname {
 	long	flags;
-	char	grpqfname[MAXPATHLEN + 1];
-	char	usrqfname[MAXPATHLEN + 1];
+	char	grpqfname[PATH_MAX + 1];
+	char	usrqfname[PATH_MAX + 1];
 };
 #define	HASUSR	1
 #define	HASGRP	2

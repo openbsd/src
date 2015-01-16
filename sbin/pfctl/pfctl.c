@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.328 2014/12/10 13:59:29 bluhm Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.329 2015/01/16 06:40:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -749,14 +749,14 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 
 	memset(&pr, 0, sizeof(pr));
 	if (anchorname[0] == '/') {
-		if ((npath = calloc(1, MAXPATHLEN)) == NULL)
+		if ((npath = calloc(1, PATH_MAX)) == NULL)
 			errx(1, "pfctl_rules: calloc");
-		strlcpy(npath, anchorname, MAXPATHLEN);
+		strlcpy(npath, anchorname, PATH_MAX);
 	} else {
 		if (path[0])
-			snprintf(&path[len], MAXPATHLEN - len, "/%s", anchorname);
+			snprintf(&path[len], PATH_MAX - len, "/%s", anchorname);
 		else
-			snprintf(&path[len], MAXPATHLEN - len, "%s", anchorname);
+			snprintf(&path[len], PATH_MAX - len, "%s", anchorname);
 		npath = path;
 	}
 
@@ -1330,9 +1330,9 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 	pf->anchor = rs->anchor;
 
 	if (path[0])
-		snprintf(&path[len], MAXPATHLEN - len, "/%s", pf->anchor->name);
+		snprintf(&path[len], PATH_MAX - len, "/%s", pf->anchor->name);
 	else
-		snprintf(&path[len], MAXPATHLEN - len, "%s", pf->anchor->name);
+		snprintf(&path[len], PATH_MAX - len, "%s", pf->anchor->name);
 
 	if (depth) {
 		if (TAILQ_FIRST(rs->rules.active.ptr) != NULL) {
@@ -1396,10 +1396,10 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 	if (r->anchor) {
 		if (r->anchor->match) {
 			if (path[0])
-				snprintf(&path[len], MAXPATHLEN - len,
+				snprintf(&path[len], PATH_MAX - len,
 				    "/%s", r->anchor->name);
 			else
-				snprintf(&path[len], MAXPATHLEN - len,
+				snprintf(&path[len], PATH_MAX - len,
 				    "%s", r->anchor->name);
 			name = r->anchor->name;
 		} else
@@ -1455,7 +1455,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	memset(&pf, 0, sizeof(pf));
 	memset(&trs, 0, sizeof(trs));
-	if ((path = calloc(1, MAXPATHLEN)) == NULL)
+	if ((path = calloc(1, PATH_MAX)) == NULL)
 		ERRX("pfctl_rules: calloc");
 	if (strlcpy(trs.pfrt_anchor, anchorname,
 	    sizeof(trs.pfrt_anchor)) >= sizeof(trs.pfrt_anchor))
@@ -1980,7 +1980,7 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
-		char sub[MAXPATHLEN];
+		char sub[PATH_MAX];
 
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULESET, &pr))
@@ -2097,7 +2097,7 @@ main(int argc, char *argv[])
 	int	 opts = 0;
 	int	 optimize = PF_OPTIMIZE_BASIC;
 	int	 level;
-	char	 anchorname[MAXPATHLEN];
+	char	 anchorname[PATH_MAX];
 	int	 anchor_wildcard = 0;
 	char	*path;
 	char	*lfile = NULL, *sfile = NULL;
@@ -2252,7 +2252,7 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	if ((path = calloc(1, MAXPATHLEN)) == NULL)
+	if ((path = calloc(1, PATH_MAX)) == NULL)
 		errx(1, "pfctl: calloc");
 	memset(anchorname, 0, sizeof(anchorname));
 	if (anchoropt != NULL) {

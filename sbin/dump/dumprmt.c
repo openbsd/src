@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.28 2013/11/22 04:12:47 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.29 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/mtio.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -52,6 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "pathnames.h"
 #include "dump.h"

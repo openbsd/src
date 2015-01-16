@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.52 2015/01/01 20:28:27 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.53 2015/01/16 06:40:20 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -30,8 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/signal.h>
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/queue.h>

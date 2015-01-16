@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.27 2014/04/23 11:47:04 jca Exp $	*/
+/*	$OpenBSD: complete.c,v 1.28 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ comparstr(const void *a, const void *b)
 static unsigned char
 complete_ambiguous(char *word, int list, StringList *words)
 {
-	char insertstr[MAXPATHLEN * 2];
+	char insertstr[PATH_MAX * 2];
 	char *lastmatch;
 	int i, j;
 	size_t matchlen, wordlen;
@@ -151,7 +151,7 @@ static unsigned char
 complete_local(char *word, int list)
 {
 	StringList *words;
-	char dir[MAXPATHLEN];
+	char dir[PATH_MAX];
 	char *file;
 	DIR *dd;
 	struct dirent *dp;
@@ -204,9 +204,9 @@ static unsigned char
 complete_remote(char *word, int list)
 {
 	static StringList *dirlist;
-	static char	 lastdir[MAXPATHLEN];
+	static char	 lastdir[PATH_MAX];
 	StringList	*words;
-	char		 dir[MAXPATHLEN];
+	char		 dir[PATH_MAX];
 	char		*file, *cp;
 	int		 i;
 	unsigned char	 rv;

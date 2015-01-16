@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.17 2013/11/17 20:19:36 okan Exp $
+ *	$OpenBSD: locate.code.c,v 1.18 2015/01/16 06:40:09 deraadt Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.17 2013/11/17 20:19:36 okan Exp $
+ * 	$Id: locate.code.c,v 1.18 2015/01/16 06:40:09 deraadt Exp $
  */
 
 /*
@@ -78,21 +78,20 @@
  *              	Wolfram Schneider, Berlin September 1996
  */
 
-#include <sys/param.h>
-
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "locate.h"
 
 #define	BGBUFSIZE	(NBG * 2)	/* size of bigram buffer */
 
-u_char buf1[MAXPATHLEN] = " ";
-u_char buf2[MAXPATHLEN];
+u_char buf1[PATH_MAX] = " ";
+u_char buf2[PATH_MAX];
 u_char bigrams[BGBUFSIZE + 1] = { 0 };
 
 #define LOOKUP 1 /* use a lookup array instead a function, 3x faster */

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.25 2007/04/15 19:37:46 hshoexer Exp $	 */
+/* $OpenBSD: message.h,v 1.26 2015/01/16 06:39:59 deraadt Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -34,7 +34,6 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>

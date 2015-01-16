@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.81 2014/07/12 20:16:38 krw Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.82 2015/01/16 06:40:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
 
 #include <netinet/in.h>

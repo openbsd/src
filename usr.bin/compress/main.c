@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.82 2014/10/08 03:59:11 doug Exp $	*/
+/*	$OpenBSD: main.c,v 1.83 2015/01/16 06:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,7 +30,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 
@@ -44,6 +43,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <paths.h>
 #include "compress.h"
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 	const struct compressor *method;
 	const char *optstr, *s;
 	char *p, *infile;
-	char outfile[MAXPATHLEN], _infile[MAXPATHLEN], suffix[16];
+	char outfile[PATH_MAX], _infile[PATH_MAX], suffix[16];
 	int bits, ch, error, rc, cflag, oflag;
 
 	bits = cflag = oflag = 0;
@@ -613,7 +613,7 @@ dodecompress(const char *in, char *out, const struct compressor *method,
     int bits, struct stat *sb)
 {
 	u_char buf[Z_BUFSIZE];
-	char oldname[MAXPATHLEN];
+	char oldname[PATH_MAX];
 	int error, oreg, ifd, ofd;
 	void *cookie;
 	ssize_t nr;
@@ -661,9 +661,9 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 		char *cp = strrchr(out, '/');
 		if (cp != NULL) {
 			*(cp + 1) = '\0';
-			strlcat(out, oldname, MAXPATHLEN);
+			strlcat(out, oldname, PATH_MAX);
 		} else
-			strlcpy(out, oldname, MAXPATHLEN);
+			strlcpy(out, oldname, PATH_MAX);
 		cat = 0;			/* XXX should -c override? */
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.8 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.9 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -31,7 +31,6 @@
  * RFC1701 (GRE), RFC1702 (GRE IPv4), and RFC2637 (Enhanced GRE)
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/socket.h>

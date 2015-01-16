@@ -1,10 +1,10 @@
-/*	$OpenBSD: rquotad.c,v 1.21 2014/10/08 04:29:16 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.22 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.20 2009/10/27 23:59:19 deraadt Exp $	*/
+/*	$OpenBSD: cat.c,v 1.21 2015/01/16 06:39:28 deraadt Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -45,6 +45,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 extern char *__progname;
 
@@ -227,7 +229,7 @@ raw_cat(int rfd)
 	if (buf == NULL) {
 		if (fstat(wfd, &sbuf))
 			err(1, "stdout");
-		bsize = MAX(sbuf.st_blksize, BUFSIZ);
+		bsize = MAXIMUM(sbuf.st_blksize, BUFSIZ);
 		if ((buf = malloc(bsize)) == NULL)
 			err(1, "malloc");
 	}

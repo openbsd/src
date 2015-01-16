@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.79 2014/08/20 11:23:42 mikeb Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.80 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -45,7 +45,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -83,6 +83,8 @@
 #include <err.h>
 
 #include "fstat.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 struct fileargs fileargs = SLIST_HEAD_INITIALIZER(fileargs);
 
@@ -480,7 +482,7 @@ pipetrans(struct kinfo_file *kf)
 	 * same visible addr. (it's the higher address because when the other
 	 * end closes, it becomes 0)
 	 */
-	maxaddr = (void *)(uintptr_t)MAX(kf->f_data, kf->pipe_peer);
+	maxaddr = (void *)(uintptr_t)MAXIMUM(kf->f_data, kf->pipe_peer);
 
 	printf("pipe ");
 	hide(maxaddr);

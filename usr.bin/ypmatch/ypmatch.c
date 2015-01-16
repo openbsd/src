@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.14 2009/10/27 23:59:50 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.15 2015/01/16 06:40:15 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>

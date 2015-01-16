@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.12 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.13 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -39,11 +39,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <limits.h>
 #include <paths.h>
 #include <err.h>
 
@@ -109,7 +109,7 @@ makemsg(char *fname)
 	time_t now;
 	FILE *fp;
 	int fd;
-	char *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[MAXPATHLEN];
+	char *whom, hostname[HOST_NAME_MAX+1], lbuf[100], tmpname[PATH_MAX];
 
 	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+")))

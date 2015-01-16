@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.29 2014/11/26 18:34:52 millert Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.30 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #define PRUREQUESTS

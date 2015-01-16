@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.643 2014/12/19 13:04:07 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.644 2015/01/16 06:40:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -903,23 +903,23 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			struct loadanchors	*loadanchor;
 
 			if (strlen(pf->anchor->name) + 1 +
-			    strlen($3) >= MAXPATHLEN) {
+			    strlen($3) >= PATH_MAX) {
 				yyerror("anchorname %s too long, max %u\n",
-				    $3, MAXPATHLEN - 1);
+				    $3, PATH_MAX - 1);
 				free($3);
 				YYERROR;
 			}
 			loadanchor = calloc(1, sizeof(struct loadanchors));
 			if (loadanchor == NULL)
 				err(1, "loadrule: calloc");
-			if ((loadanchor->anchorname = malloc(MAXPATHLEN)) ==
+			if ((loadanchor->anchorname = malloc(PATH_MAX)) ==
 			    NULL)
 				err(1, "loadrule: malloc");
 			if (pf->anchor->name[0])
-				snprintf(loadanchor->anchorname, MAXPATHLEN,
+				snprintf(loadanchor->anchorname, PATH_MAX,
 				    "%s/%s", pf->anchor->name, $3);
 			else
-				strlcpy(loadanchor->anchorname, $3, MAXPATHLEN);
+				strlcpy(loadanchor->anchorname, $3, PATH_MAX);
 			if ((loadanchor->filename = strdup($5)) == NULL)
 				err(1, "loadrule: strdup");
 

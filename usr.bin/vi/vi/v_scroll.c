@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_scroll.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_scroll.c,v 1.10 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 
@@ -22,6 +21,8 @@
 
 #include "../common/common.h"
 #include "vi.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static void goto_adjust(VICMD *);
 
@@ -345,7 +346,7 @@ v_pagedown(SCR *sp, VICMD *vp)
 	 * least one line.
 	 */
 	offset = (F_ISSET(vp, VC_C1SET) ? vp->count : 1) * (IS_SPLIT(sp) ?
-	    MIN(sp->t_maxrows, O_VAL(sp, O_WINDOW)) : O_VAL(sp, O_WINDOW));
+	    MINIMUM(sp->t_maxrows, O_VAL(sp, O_WINDOW)) : O_VAL(sp, O_WINDOW));
 	offset = offset <= 2 ? 1 : offset - 2;
 	if (vs_sm_scroll(sp, &vp->m_stop, offset, CNTRL_F))
 		return (1);
@@ -396,7 +397,7 @@ v_pageup(SCR *sp, VICMD *vp)
 	 * least one line.
 	 */
 	offset = (F_ISSET(vp, VC_C1SET) ? vp->count : 1) * (IS_SPLIT(sp) ?
-	    MIN(sp->t_maxrows, O_VAL(sp, O_WINDOW)) : O_VAL(sp, O_WINDOW));
+	    MINIMUM(sp->t_maxrows, O_VAL(sp, O_WINDOW)) : O_VAL(sp, O_WINDOW));
 	offset = offset <= 2 ? 1 : offset - 2;
 	if (vs_sm_scroll(sp, &vp->m_stop, offset, CNTRL_B))
 		return (1);

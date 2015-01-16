@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.47 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.48 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -30,9 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG DEV_BSIZE isset setbit clrbit */
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/uio.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -43,6 +42,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -473,7 +473,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
 	idesc.id_fix = IGNORE;
-	cp = &namebuf[MAXPATHLEN - 1];
+	cp = &namebuf[PATH_MAX - 1];
 	*cp = '\0';
 	if (curdir != ino) {
 		idesc.id_parent = curdir;
@@ -503,7 +503,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	busy = 0;
 	if (ino != ROOTINO)
 		*--cp = '?';
-	memcpy(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
+	memcpy(namebuf, cp, (size_t)(&namebuf[PATH_MAX] - cp));
 }
 
 /*ARGSUSED*/

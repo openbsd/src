@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.70 2014/11/28 15:09:50 otto Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.71 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -75,7 +75,7 @@ rlog_main(int argc, char **argv)
 	RCSFILE *file;
 	int Rflag;
 	int i, ch, fd, status;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 
 	rcsnum_flags |= RCSNUM_NO_MAGIC;
 	hflag = Rflag = rflag = status = 0;

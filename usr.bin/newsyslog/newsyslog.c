@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.92 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.93 2015/01/16 06:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -90,7 +90,7 @@
 #define SENDMAIL "/usr/lib/sendmail"
 #endif
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -153,7 +153,7 @@ int	monitormode = 0;	/* Don't do monitoring by default */
 int	force = 0;		/* Force the logs to be rotated */
 char	*conf = CONF;		/* Configuration file to use */
 time_t	timenow;
-char	hostname[MAXHOSTNAMELEN]; /* Hostname */
+char	hostname[HOST_NAME_MAX+1]; /* Hostname */
 char	*daytime;		/* timenow in human readable form */
 char	*arcdir;		/* Dir to put archives in (if it exists) */
 
@@ -648,7 +648,7 @@ parse_file(int *nentries)
 				break;
 			if (*q == '/') {
 				*(parse = son(parse)) = '\0';
-				if (strlen(q) >= MAXPATHLEN)
+				if (strlen(q) >= PATH_MAX)
 					errx(1, "%s:%d: pathname too long: %s",
 					    conf, lineno, q);
 				working->pidfile = strdup(q);
@@ -714,17 +714,17 @@ parse_file(int *nentries)
 		} else
 			working->backdir = NULL;
 
-		/* Make sure we can't oflow MAXPATHLEN */
+		/* Make sure we can't oflow PATH_MAX */
 		if (working->backdir != NULL) {
 			if (snprintf(line, sizeof(line), "%s/%s.%d%s",
 			    working->backdir, working->logbase,
-			    working->numlogs, COMPRESS_POSTFIX) >= MAXPATHLEN)
+			    working->numlogs, COMPRESS_POSTFIX) >= PATH_MAX)
 				errx(1, "%s:%d: pathname too long: %s",
 				    conf, lineno, q);
 		} else {
 			if (snprintf(line, sizeof(line), "%s.%d%s",
 			    working->log, working->numlogs, COMPRESS_POSTFIX)
-			    >= MAXPATHLEN)
+			    >= PATH_MAX)
 				errx(1, "%s:%d: pathname too long: %s",
 				    conf, lineno, working->log);
 		}
@@ -749,7 +749,7 @@ missing_field(char *p, char *errline, int lineno)
 void
 rotate(struct conf_entry *ent, const char *oldlog)
 {
-	char file1[MAXPATHLEN], file2[MAXPATHLEN], *suffix;
+	char file1[PATH_MAX], file2[PATH_MAX], *suffix;
 	int numdays = ent->numlogs - 1;
 	int done = 0;
 
@@ -798,7 +798,7 @@ rotate(struct conf_entry *ent, const char *oldlog)
 void
 dotrim(struct conf_entry *ent)
 {
-	char file1[MAXPATHLEN], file2[MAXPATHLEN], oldlog[MAXPATHLEN];
+	char file1[PATH_MAX], file2[PATH_MAX], oldlog[PATH_MAX];
 	int fd;
 
 	/* Is there a separate backup dir? */
@@ -871,7 +871,7 @@ log_trim(char *log)
 void
 compress_log(struct conf_entry *ent)
 {
-	char *base, tmp[MAXPATHLEN];
+	char *base, tmp[PATH_MAX];
 	pid_t pid;
 
 	if (ent->backdir != NULL)
@@ -913,7 +913,7 @@ sizefile(struct stat *sb)
 int
 age_old_log(struct conf_entry *ent)
 {
-	char file[MAXPATHLEN];
+	char file[PATH_MAX];
 	struct stat sb;
 
 	if (ent->backdir != NULL)
@@ -967,7 +967,7 @@ isnumberstr(char *string)
 int
 domonitor(struct conf_entry *ent)
 {
-	char fname[MAXPATHLEN], *flog, *p, *rb = NULL;
+	char fname[PATH_MAX], *flog, *p, *rb = NULL;
 	struct stat sb, tsb;
 	off_t osize;
 	FILE *fp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.8 2014/05/03 00:27:19 chl Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.9 2015/01/16 06:39:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -16,7 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
+
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 

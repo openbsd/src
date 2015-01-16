@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_smtpd.c,v 1.7 2014/04/29 19:13:14 reyk Exp $	*/
+/*	$OpenBSD: ssl_smtpd.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <event.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <imsg.h>
 #include <pwd.h>
 #include <stdio.h>

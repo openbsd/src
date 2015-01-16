@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2014/05/21 17:52:26 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>

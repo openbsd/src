@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.154 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.155 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -184,7 +184,7 @@ main(int argc, char **argv)
 	int i, ret, cmd_argc;
 	struct passwd *pw;
 	struct stat st;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 
 	tzset();
 
@@ -426,7 +426,7 @@ cvs_getopt(int argc, char **argv)
 static void
 cvs_read_rcfile(void)
 {
-	char rcpath[MAXPATHLEN], *buf, *lbuf, *lp, *p;
+	char rcpath[PATH_MAX], *buf, *lbuf, *lp, *p;
 	int cmd_parsed, cvs_parsed, i, linenum;
 	size_t len, pos;
 	struct cvs_cmd *tcmdp;
@@ -434,8 +434,8 @@ cvs_read_rcfile(void)
 
 	linenum = 0;
 
-	i = snprintf(rcpath, MAXPATHLEN, "%s/%s", cvs_homedir, CVS_PATH_RC);
-	if (i < 0 || i >= MAXPATHLEN) {
+	i = snprintf(rcpath, PATH_MAX, "%s/%s", cvs_homedir, CVS_PATH_RC);
+	if (i < 0 || i >= PATH_MAX) {
 		cvs_log(LP_ERRNO, "%s", rcpath);
 		return;
 	}

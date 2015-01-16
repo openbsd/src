@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_udf.c,v 1.6 2013/11/12 04:59:02 deraadt Exp $	*/
+/*	$OpenBSD: mount_udf.c,v 1.7 2015/01/16 06:39:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
 #include <sys/cdio.h>
@@ -25,6 +25,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -74,7 +75,7 @@ int
 main(int argc, char **argv)
 {
 	struct udf_args args;
-	char node[MAXPATHLEN];
+	char node[PATH_MAX];
 	int ch, flags = 0;
 
 	while ((ch = getopt(argc, argv, "o:")) != -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.27 2013/04/25 06:43:20 otto Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.28 2015/01/16 06:39:58 deraadt Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -30,9 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>	/* MAXFRAG */
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <ctype.h>

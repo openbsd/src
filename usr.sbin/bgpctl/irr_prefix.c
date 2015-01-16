@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.19 2014/10/08 16:15:37 deraadt Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.20 2015/01/16 06:40:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <err.h>
 #include <errno.h>

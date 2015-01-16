@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.13 2010/05/10 02:00:50 krw Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.14 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -46,15 +46,14 @@
  * TODO:
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <netdb.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #include "pppd.h"
 #include "fsm.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.7 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -31,7 +31,6 @@
 
 #ifdef INET6
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

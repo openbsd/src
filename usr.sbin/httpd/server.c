@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.51 2015/01/13 09:21:15 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.52 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* nitems */
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/time.h>
@@ -44,6 +45,8 @@
 #include <tls.h>
 
 #include "httpd.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 int		 server_dispatch_parent(int, struct privsep_proc *,
 		    struct imsg *);
@@ -569,7 +572,7 @@ server_tls_readcb(int fd, short event, void *arg)
 	}
 
 	if (bufev->wm_read.high != 0)
-		howmuch = MIN(sizeof(rbuf), bufev->wm_read.high);
+		howmuch = MINIMUM(sizeof(rbuf), bufev->wm_read.high);
 
 	ret = tls_read(clt->clt_tls_ctx, rbuf, howmuch, &len);
 	if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
@@ -1025,7 +1028,7 @@ server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 void
 server_log(struct client *clt, const char *msg)
 {
-	char			 ibuf[MAXHOSTNAMELEN], obuf[MAXHOSTNAMELEN];
+	char			 ibuf[HOST_NAME_MAX+1], obuf[HOST_NAME_MAX+1];
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			*ptr = NULL;
 	int			 debug_cmd = -1;

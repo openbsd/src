@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.117 2014/05/01 07:35:57 jsg Exp $	 */
+/* $OpenBSD: x509.c,v 1.118 2015/01/16 06:39:59 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -31,8 +31,6 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -42,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <regex.h>
 #include <keynote.h>

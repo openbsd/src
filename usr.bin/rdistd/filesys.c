@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.16 2015/01/10 07:56:16 guenther Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.17 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 
 #include "defs.h"
@@ -49,8 +49,8 @@ jmp_buf env;
 char *
 find_file(char *pathname, struct stat *statbuf, int *isvalid)
 {
-	static char last_pathname[MAXPATHLEN];
-	static char file[MAXPATHLEN + 3];
+	static char last_pathname[PATH_MAX];
+	static char file[PATH_MAX + 3];
 	static struct stat filestat;
 	char *p;
 

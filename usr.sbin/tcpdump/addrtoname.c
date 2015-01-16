@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.32 2014/10/08 04:58:50 deraadt Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.33 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,6 @@
  *  and address to string conversion routines
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -55,6 +54,7 @@ struct rtentry;
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -159,7 +159,7 @@ static u_int32_t netmask;
 char *
 getname(const u_char *ap)
 {
-	char host[MAXHOSTNAMELEN];
+	char host[HOST_NAME_MAX+1];
 	u_int32_t addr;
 	struct hnamemem *p;
 
@@ -245,7 +245,7 @@ getname(const u_char *ap)
 char *
 getname6(const u_char *ap)
 {
-	char host[MAXHOSTNAMELEN];
+	char host[HOST_NAME_MAX+1];
 	struct in6_addr addr;
 	struct h6namemem *p;
 	register char *cp;
@@ -460,7 +460,7 @@ etheraddr_string(register const u_char *ep)
 		return (tp->e_name);
 #ifdef HAVE_ETHER_NTOHOST
 	if (!nflag) {
-		char buf[MAXHOSTNAMELEN + 1];
+		char buf[HOST_NAME_MAX+1 + 1];
 		if (priv_ether_ntohost(buf, sizeof(buf),
 		    (struct ether_addr *)ep) > 0) {
 			tp->e_name = savestr(buf);
@@ -770,7 +770,7 @@ init_etherarray(void)
 	register struct etherlist *el;
 	register struct enamemem *tp;
 #ifdef HAVE_ETHER_NTOHOST
-	char name[MAXHOSTNAMELEN + 1];
+	char name[HOST_NAME_MAX+1 + 1];
 #else
 	register struct pcap_etherent *ep;
 	register FILE *fp;

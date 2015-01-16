@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.55 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: setup.c,v 1.56 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE roundup */
 #define DKTYPENAMES
-#include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -47,11 +47,14 @@
 #include <string.h>
 #include <util.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ctype.h>
 
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #define altsblock (*asblk.b_un.b_fs)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
@@ -61,7 +64,7 @@ int calcsb(char *, int, struct fs *);
 static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
 static int cmpsb(struct fs *, struct fs *);
-static char rdevname[MAXPATHLEN];
+static char rdevname[PATH_MAX];
 
 long numdirs, listmax, inplast;
 
@@ -395,7 +398,7 @@ found:
 		    (unsigned)sblock.fs_ncg * sizeof(struct inostatlist));
 		goto badsblabel;
 	}
-	numdirs = MAX(sblock.fs_cstotal.cs_ndir, 128);
+	numdirs = MAXIMUM(sblock.fs_cstotal.cs_ndir, 128);
 	inplast = 0;
 	listmax = numdirs + 10;
 	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));

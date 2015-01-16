@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.37 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.38 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -77,7 +77,7 @@ ypxfr_foreach(u_long status, char *keystr, int keylen, char *valstr, int vallen,
 static int
 get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 {
-	char map_path[MAXPATHLEN], order[MAX_LAST_LEN+1];
+	char map_path[PATH_MAX], order[MAX_LAST_LEN+1];
 	char order_key[] = YP_LAST_KEY;
 	struct stat finfo;
 	datum k, v;
@@ -173,7 +173,7 @@ create_db(char *domain, char *map, char *temp_map)
 static int
 install_db(char *domain, char *map, char *temp_map)
 {
-	char	db_name[MAXPATHLEN];
+	char	db_name[PATH_MAX];
 
 	snprintf(db_name, sizeof db_name, "%s/%s/%s%s",
 	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
@@ -454,7 +454,7 @@ main(int argc, char *argv[])
 	}
 
 	if (status == YPPUSH_SUCC) {
-		char	tmpmapname[MAXPATHLEN];
+		char	tmpmapname[PATH_MAX];
 		int	fd;
 
 		/* Create temporary db */

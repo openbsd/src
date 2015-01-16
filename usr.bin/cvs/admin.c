@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.64 2008/09/12 13:20:36 tobias Exp $	*/
+/*	$OpenBSD: admin.c,v 1.65 2015/01/16 06:40:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/dirent.h>
 
 #include <errno.h>
@@ -245,7 +245,7 @@ cvs_admin_local(struct cvs_file *cf)
 		struct cvs_file *ocf;
 		struct rcs_access *acp;
 		int ofd;
-		char *d, *f, fpath[MAXPATHLEN], repo[MAXPATHLEN];
+		char *d, *f, fpath[PATH_MAX], repo[PATH_MAX];
 
 
 		if ((f = basename(oldfilename)) == NULL)
@@ -253,11 +253,11 @@ cvs_admin_local(struct cvs_file *cf)
 		if ((d = dirname(oldfilename)) == NULL)
 			fatal("cvs_admin_local: dirname failed");
 
-		cvs_get_repository_path(d, repo, MAXPATHLEN);
+		cvs_get_repository_path(d, repo, PATH_MAX);
 
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", repo, f);
+		(void)xsnprintf(fpath, PATH_MAX, "%s/%s", repo, f);
 
-		if (strlcat(fpath, RCS_FILE_EXT, MAXPATHLEN) >= MAXPATHLEN)
+		if (strlcat(fpath, RCS_FILE_EXT, PATH_MAX) >= PATH_MAX)
 			fatal("cvs_admin_local: truncation");
 
 		if ((ofd = open(fpath, O_RDONLY)) == -1)

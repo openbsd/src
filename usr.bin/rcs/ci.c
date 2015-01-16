@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.218 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: ci.c,v 1.219 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -70,7 +70,7 @@ struct checkin_params {
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	const char *description, *symbol;
-	char fpath[MAXPATHLEN], *rcs_msg, *username, *filename;
+	char fpath[PATH_MAX], *rcs_msg, *username, *filename;
 	char *author, *state;
 	BUF *deltatext;
 };

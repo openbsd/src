@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rip.c,v 1.13 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-rip.c,v 1.14 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

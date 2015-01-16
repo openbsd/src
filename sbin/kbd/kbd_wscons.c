@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.27 2014/03/26 05:22:26 miod Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.28 2015/01/16 06:39:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -24,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
@@ -179,7 +178,7 @@ kbd_list(void)
 {
 	int	kbds[SA_MAX];
 	int	fd, i, kbtype;
-	char	device[MAXPATHLEN];
+	char	device[PATH_MAX];
 	kvm_t	*kd = NULL;
 #ifndef NOKVM
 	char	errbuf[LINE_MAX];

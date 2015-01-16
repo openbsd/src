@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.6 2014/07/08 15:45:32 eric Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.7 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -17,12 +17,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/param.h>
-#include <sys/mount.h>
 
 #include <ctype.h>
 #include <err.h>

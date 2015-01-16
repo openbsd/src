@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.33 2014/06/23 03:46:17 guenther Exp $ */
+/*	$OpenBSD: kroute.c,v 1.34 2015/01/16 06:40:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -18,7 +18,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -38,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "ldpd.h"
 #include "log.h"

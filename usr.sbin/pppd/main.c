@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2014/10/08 04:51:29 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -42,19 +42,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <syslog.h>
-#include <netdb.h>
-#include <utmp.h>
-#include <pwd.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -62,6 +49,19 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <limits.h>
+#include <signal.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <syslog.h>
+#include <netdb.h>
+#include <utmp.h>
+#include <pwd.h>
 
 #include "pppd.h"
 #include "magic.h"
@@ -91,9 +91,9 @@ char ifname[IFNAMSIZ];		/* Interface name */
 int ifunit;			/* Interface unit number */
 
 char *progname;			/* Name of this program */
-char hostname[MAXHOSTNAMELEN];	/* Our hostname */
-static char pidfilename[MAXPATHLEN];	/* name of pid file */
-static char default_devnam[MAXPATHLEN];	/* name of default device */
+char hostname[HOST_NAME_MAX+1];	/* Our hostname */
+static char pidfilename[PATH_MAX];	/* name of pid file */
+static char default_devnam[PATH_MAX];	/* name of default device */
 static pid_t pid;		/* Our pid */
 static uid_t uid;		/* Our real user-id */
 static int conn_running;	/* we have a [dis]connector running */
@@ -194,7 +194,7 @@ main(argc, argv)
     phase = PHASE_INITIALIZE;
     p = ttyname(0);
     if (p)
-	strlcpy(devnam, p, MAXPATHLEN);
+	strlcpy(devnam, p, PATH_MAX);
     strlcpy(default_devnam, devnam, sizeof default_devnam);
 
     script_env = NULL;
@@ -1217,11 +1217,9 @@ run_program(prog, args, must_exist)
 	    dup2 (0, 2); /* stderr -> /dev/null */
 	}
 
-#ifdef BSD
 	/* Force the priority back to zero if pppd is running higher. */
 	if (setpriority (PRIO_PROCESS, 0, 0) < 0)
 	    syslog (LOG_WARNING, "can't reset priority to 0: %m");
-#endif
 
 	/* SysV recommends a second fork at this point. */
 

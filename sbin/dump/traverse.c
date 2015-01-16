@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.36 2014/07/10 09:33:43 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.37 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE dbtob */
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/disklabel.h>
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "dump.h"
 
@@ -209,7 +210,7 @@ mapfiles(ino_t maxino, int64_t *tapesize, char *disk, char * const *dirv)
 	int anydirskipped = 0;
 
 	if (dirv != NULL) {
-		char	 curdir[MAXPATHLEN];
+		char	 curdir[PATH_MAX];
 		FTS	*dirh;
 		FTSENT	*entry;
 		int	 d;
@@ -247,7 +248,7 @@ mapfiles(ino_t maxino, int64_t *tapesize, char *disk, char * const *dirv)
 		 * Add any parent directories
 		 */
 		for (d = 0 ; dirv[d] != NULL ; d++) {
-			char path[MAXPATHLEN];
+			char path[PATH_MAX];
 
 			if (dirv[d][0] != '/')
 				(void)snprintf(path, sizeof(path), "%s/%s",

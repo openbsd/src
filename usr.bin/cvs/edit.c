@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.49 2010/07/09 18:42:14 zinovik Exp $	*/
+/*	$OpenBSD: edit.c,v 1.50 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -260,8 +260,8 @@ cvs_edit_local(struct cvs_file *cf)
 	FILE *fp;
 	struct tm t;
 	time_t now;
-	char timebuf[CVS_TIME_BUFSZ], thishost[MAXHOSTNAMELEN];
-	char bfpath[MAXPATHLEN], wdir[MAXPATHLEN];
+	char timebuf[CVS_TIME_BUFSZ], thishost[HOST_NAME_MAX+1];
+	char bfpath[PATH_MAX], wdir[PATH_MAX];
 
 	if (cvs_noexec == 1)
 		return;
@@ -302,7 +302,7 @@ cvs_edit_local(struct cvs_file *cf)
 	if (fchmod(cf->fd, 0644) == -1)
 		fatal("cvs_edit_local: fchmod %s", strerror(errno));
 
-	(void)xsnprintf(bfpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(bfpath, PATH_MAX, "%s/%s",
 	    CVS_PATH_BASEDIR, cf->file_name);
 
 	if (mkdir(CVS_PATH_BASEDIR, 0755) == -1 && errno != EEXIST)
@@ -327,8 +327,8 @@ cvs_unedit_local(struct cvs_file *cf)
 	struct stat st;
 	struct tm t;
 	time_t now;
-	char bfpath[MAXPATHLEN], timebuf[64], thishost[MAXHOSTNAMELEN];
-	char wdir[MAXPATHLEN], sticky[CVS_ENT_MAXLINELEN];
+	char bfpath[PATH_MAX], timebuf[64], thishost[HOST_NAME_MAX+1];
+	char wdir[PATH_MAX], sticky[CVS_ENT_MAXLINELEN];
 	RCSNUM *ba_rev;
 
 	cvs_log(LP_TRACE, "cvs_unedit_local(%s)", cf->file_path);
@@ -338,7 +338,7 @@ cvs_unedit_local(struct cvs_file *cf)
 
 	cvs_file_classify(cf, cvs_directory_tag);
 
-	(void)xsnprintf(bfpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(bfpath, PATH_MAX, "%s/%s",
 	    CVS_PATH_BASEDIR, cf->file_name);
 
 	if (stat(bfpath, &st) == -1)
@@ -427,7 +427,7 @@ cvs_base_handle(struct cvs_file *cf, int flags)
 	RCSNUM *ba_rev;
 	int i;
 	char *dp, *sp;
-	char buf[MAXPATHLEN], *fields[2], rbuf[CVS_REV_BUFSZ];
+	char buf[PATH_MAX], *fields[2], rbuf[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_base_handle(%s)", cf->file_path);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-netbios.c,v 1.9 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-netbios.c,v 1.10 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -24,7 +24,6 @@
  * Contributed by Brad Parker (brad@fcr.com).
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>

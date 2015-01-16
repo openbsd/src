@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2014/07/11 16:01:41 halex Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE roundup */
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -54,6 +54,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "dump.h"
@@ -652,7 +653,7 @@ sig(int signo)
 char *
 rawname(char *cp)
 {
-	static char rawbuf[MAXPATHLEN];
+	static char rawbuf[PATH_MAX];
 	char *dp = strrchr(cp, '/');
 
 	if (dp == NULL)

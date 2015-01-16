@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.346 2014/12/10 02:34:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.347 2015/01/16 06:39:56 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;
 
-char path_option_db[MAXPATHLEN];
+char path_option_db[PATH_MAX];
 
 int log_perror = 1;
 int nullfd = -1;
@@ -441,7 +441,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'L':
-			strlcat(path_option_db, optarg, MAXPATHLEN);
+			strlcat(path_option_db, optarg, PATH_MAX);
 			if (lstat(path_option_db, &sb) != -1) {
 				if (!S_ISREG(sb.st_mode))
 					error("'%s' is not a regular file",

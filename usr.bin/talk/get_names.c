@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.19 2010/08/12 23:31:29 tedu Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.20 2015/01/16 06:40:13 deraadt Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -31,10 +31,10 @@
  */
 
 #include "talk.h"
-#include <sys/param.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 
 extern	CTL_MSG msg;
 
@@ -44,7 +44,7 @@ extern	CTL_MSG msg;
 void
 get_names(int argc, char *argv[])
 {
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[HOST_NAME_MAX+1];
 	char *his_name, *my_name;
 	char *my_machine_name, *his_machine_name;
 	char *his_tty;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.288 2014/10/11 03:08:26 doug Exp $	*/
+/*	$OpenBSD: editor.c,v 1.289 2015/01/16 06:39:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -16,8 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE MAXFRAG */
 #include <sys/types.h>
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
@@ -35,9 +36,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "extern.h"
 #include "pathnames.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /* flags for getuint64() */
 #define	DO_CONVERSIONS	0x00000001
@@ -1465,7 +1469,7 @@ edit_parms(struct disklabel *lp)
 
 	/* total sectors */
 	for (;;) {
-		u_int64_t nsec = MAX(DL_GETDSIZE(lp),
+		u_int64_t nsec = MAXIMUM(DL_GETDSIZE(lp),
 		    (u_int64_t)lp->d_ncylinders * lp->d_secpercyl);
 		ui = getuint64(lp, "total sectors",
 		    "The total number of sectors on the disk.",
@@ -1832,7 +1836,7 @@ void
 mpsave(struct disklabel *lp)
 {
 	int i, j;
-	char bdev[MAXPATHLEN], *p;
+	char bdev[PATH_MAX], *p;
 	struct mountinfo mi[MAXPARTITIONS];
 	FILE *fp;
 	u_int8_t fstype;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.11 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: conv.c,v 1.12 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 
 #include <err.h>
@@ -42,6 +42,8 @@
 
 #include "dd.h"
 #include "extern.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /*
  * def --
@@ -137,7 +139,7 @@ block(void)
 	 * translation is done as we copy into the output buffer.
 	 */
 	for (inp = in.dbp - in.dbcnt, outp = out.dbp; in.dbcnt;) {
-		maxlen = MIN(cbsz, in.dbcnt);
+		maxlen = MINIMUM(cbsz, in.dbcnt);
 		if ((t = ctab) != NULL)
 			for (cnt = 0;
 			    cnt < maxlen && (ch = *inp++) != '\n'; ++cnt)

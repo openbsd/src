@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.46 2014/05/20 01:25:24 guenther Exp $ */
+/*	$OpenBSD: lpr.c,v 1.47 2015/01/16 06:40:18 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  * using information from a printer data base.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 
@@ -55,6 +54,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -109,7 +109,7 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	struct group *gptr;
 	char *arg, *cp;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	int i, f, ch;
 	struct stat stb;
 
@@ -439,7 +439,7 @@ static char *
 linked(char *file)
 {
 	char *cp;
-	static char buf[MAXPATHLEN];
+	static char buf[PATH_MAX];
 	int ret;
 
 	if (*file != '/') {

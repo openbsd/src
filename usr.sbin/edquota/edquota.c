@@ -33,7 +33,7 @@
 /*
  * Disk quota editor.
  */
-#include <sys/param.h>
+#include <sys/param.h>	/* btodb dbtob */
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/wait.h>
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;
@@ -61,7 +62,7 @@ struct quotause {
 	struct	quotause *next;
 	long	flags;
 	struct	dqblk dqblk;
-	char	fsname[MAXPATHLEN];
+	char	fsname[PATH_MAX];
 	char	qfname[1];	/* actually longer */
 } *getprivs(u_int, int);
 #define	FOUND	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.41 2014/05/18 08:10:00 espie Exp $	*/
+/*	$OpenBSD: function.c,v 1.42 2015/01/16 06:40:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,8 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/ucred.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/mount.h>
@@ -575,8 +573,8 @@ c_exec(char *unused, char ***argvp, int isok)
 			for (p = *argv; *p; ++p)
 				if (p[0] == '{' && p[1] == '}') {
 					new->e_argv[cnt] =
-						emalloc((u_int)MAXPATHLEN);
-					new->e_len[cnt] = MAXPATHLEN;
+						emalloc((u_int)PATH_MAX);
+					new->e_len[cnt] = PATH_MAX;
 					break;
 				}
 			if (!*p) {
@@ -607,7 +605,7 @@ f_execdir(PLAN *plan, FTSENT *entry)
 	int cnt;
 	pid_t pid;
 	int status, fd;
-	char base[MAXPATHLEN];
+	char base[PATH_MAX];
 
 	/* fts(3) does not chdir for the root level so we do it ourselves. */
 	if (entry->fts_level == FTS_ROOTLEVEL) {
@@ -693,8 +691,8 @@ c_execdir(char *ignored, char ***argvp, int unused)
 		new->e_orig[cnt] = *argv;
 		for (p = *argv; *p; ++p)
 			if (p[0] == '{' && p[1] == '}') {
-				new->e_argv[cnt] = emalloc((u_int)MAXPATHLEN);
-				new->e_len[cnt] = MAXPATHLEN;
+				new->e_argv[cnt] = emalloc((u_int)PATH_MAX);
+				new->e_len[cnt] = PATH_MAX;
 				break;
 			}
 		if (!*p) {

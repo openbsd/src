@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.23 2014/11/14 20:27:03 tedu Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.24 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -190,7 +189,7 @@ cscope_add(SCR *sp, EXCMD *cmdp, char *dname)
 	CSC *csc;
 	size_t len;
 	int cur_argc;
-	char *dbname, path[MAXPATHLEN];
+	char *dbname, path[PATH_MAX];
 
 	exp = EXP(sp);
 
@@ -283,7 +282,7 @@ get_paths(SCR *sp, CSC *csc)
 	struct stat sb;
 	int fd, nentries;
 	size_t len;
-	char *p, **pathp, buf[MAXPATHLEN * 2];
+	char *p, **pathp, buf[PATH_MAX * 2];
 
 	/*
 	 * EXTENSION #2:
@@ -354,7 +353,7 @@ static int
 run_cscope(SCR *sp, CSC *csc, char *dbname)
 {
 	int to_cs[2], from_cs[2];
-	char cmd[MAXPATHLEN * 2];
+	char cmd[PATH_MAX * 2];
 
 	/*
 	 * Cscope reads from to_cs[0] and writes to from_cs[1]; vi reads from
@@ -752,7 +751,7 @@ csc_file(SCR *sp, CSC *csc, char *name, char **dirp, size_t *dlenp,
     int *isolderp)
 {
 	struct stat sb;
-	char **pp, buf[MAXPATHLEN];
+	char **pp, buf[PATH_MAX];
 
 	/*
 	 * Check for the file in all of the listed paths.  If we don't

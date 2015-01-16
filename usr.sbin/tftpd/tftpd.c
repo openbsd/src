@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.25 2014/12/17 22:23:33 tedu Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.26 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -58,8 +58,6 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/param.h>
-#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -84,6 +82,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vis.h>
 
 #define TIMEOUT		5		/* packet rexmt timeout */
@@ -475,7 +474,7 @@ rewrite_res(int fd, short events, void *arg)
 	char *filename;
 	size_t len;
 
-	switch (evbuffer_read(rwmap->rdbuf, fd, MAXPATHLEN)) {
+	switch (evbuffer_read(rwmap->rdbuf, fd, PATH_MAX)) {
 	case -1:
 		switch (errno) {
 		case EINTR:
@@ -794,7 +793,7 @@ tftp(struct tftp_client *client, struct tftphdr *tp, size_t size)
 	int		 i, first = 1, ecode, to;
 	struct formats	*pf;
 	char		*mode = NULL;
-	char		 filename[MAXPATHLEN];
+	char		 filename[PATH_MAX];
 	const char	*errstr;
 
 	if (size < 5) {
@@ -873,9 +872,9 @@ again:
 	}
 
 	if (verbose) {
-		char nicebuf[MAXPATHLEN];
+		char nicebuf[PATH_MAX];
 
-		(void)strnvis(nicebuf, filename, MAXPATHLEN,
+		(void)strnvis(nicebuf, filename, PATH_MAX,
 		    VIS_SAFE|VIS_OCTAL);
 
 		linfo("%s: %s request for '%s'", getip(&client->ss),

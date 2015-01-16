@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.19 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.20 2015/01/16 06:40:23 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <err.h>

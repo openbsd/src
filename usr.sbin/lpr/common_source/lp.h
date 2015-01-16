@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.18 2013/12/10 16:38:04 naddy Exp $	*/
+/*	$OpenBSD: lp.h,v 1.19 2015/01/16 06:40:17 deraadt Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ extern char	line[BUFSIZ];
 extern char	*bp;		/* pointer into printcap buffer */
 extern char	*printer;	/* printer name */
 				/* host machine name */
-extern char	host[MAXHOSTNAMELEN];
+extern char	host[HOST_NAME_MAX+1];
 extern char	*from;		/* client's machine name */
 extern int	remote;		/* true if sending files to a remote host */
 extern char	*printcapdb[];	/* printcap database array */

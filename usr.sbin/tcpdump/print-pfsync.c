@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.39 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.40 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -26,12 +26,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/mbuf.h>
 
 #ifdef __STDC__
 struct rtentry;

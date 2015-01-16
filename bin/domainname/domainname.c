@@ -1,4 +1,4 @@
-/*	$OpenBSD: domainname.c,v 1.8 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: domainname.c,v 1.9 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: domainname.c,v 1.7 1995/03/21 09:04:22 cgd Exp $	*/
 
 /*
@@ -30,13 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 extern	char *__progname;
 
@@ -46,7 +45,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	char domainname[MAXHOSTNAMELEN];
+	char domainname[HOST_NAME_MAX+1];
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.154 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.155 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -181,7 +181,7 @@ rcs_main(int argc, char **argv)
 	int fd;
 	int i, j, ch, flags, kflag, lkmode;
 	const char *nflag, *oldfilename, *orange;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 	char *logstr, *logmsg, *descfile;
 	char *alist, *comment, *elist, *lrev, *urev;
 	mode_t fmode;
@@ -371,7 +371,7 @@ rcs_main(int argc, char **argv)
 		if (rcsflags & CO_ACLAPPEND) {
 			RCSFILE *oldfile;
 			int ofd;
-			char ofpath[MAXPATHLEN];
+			char ofpath[PATH_MAX];
 
 			ofd = rcs_choosefile(oldfilename, ofpath, sizeof(ofpath));
 			if (ofd < 0) {

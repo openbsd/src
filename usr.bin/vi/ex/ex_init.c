@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.13 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.14 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 
@@ -135,7 +134,7 @@ int
 ex_exrc(SCR *sp)
 {
 	struct stat hsb, lsb;
-	char *p, path[MAXPATHLEN];
+	char *p, path[PATH_MAX];
 	int fd;
 
 	/*
@@ -344,7 +343,7 @@ exrc_isok(SCR *sp, struct stat *sbp, int *fdp, char *path, int rootown,
 	enum { ROOTOWN, OWN, WRITER } etype;
 	uid_t euid;
 	int nf1, nf2;
-	char *a, *b, buf[MAXPATHLEN];
+	char *a, *b, buf[PATH_MAX];
 
 	if ((*fdp = open(path, O_RDONLY, 0)) < 0) {
 		if (errno == ENOENT)

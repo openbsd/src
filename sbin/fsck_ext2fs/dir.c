@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.19 2014/07/13 16:08:53 pelikan Exp $	*/
+/*	$OpenBSD: dir.c,v 1.20 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE roundup */
 #include <sys/time.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "fsck.h"
 #include "fsutil.h"
@@ -256,7 +257,7 @@ void
 fileerror(ino_t cwd, ino_t ino, char *errmesg)
 {
 	struct ext2fs_dinode *dp;
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	pwarn("%s ", errmesg);
 	pinode(ino);
@@ -480,7 +481,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
 {
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	if ((parent < EXT2_FIRSTINO && parent != EXT2_ROOTINO)
 		|| parent >= maxino ||

@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.100 2014/08/27 06:51:35 sebastia Exp $ */
+/* $OpenBSD: user.c,v 1.101 2015/01/16 06:40:22 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -51,6 +51,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "defs.h"
@@ -159,7 +160,7 @@ enum {
 /* some useful constants */
 enum {
 	MaxShellNameLen = 256,
-	MaxFileNameLen = MAXPATHLEN,
+	MaxFileNameLen = PATH_MAX,
 	MaxUserNameLen = _PW_NAME_LEN,
 	MaxCommandLen = 2048,
 	PasswordLength = _PASSWORD_LEN,

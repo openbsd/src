@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.28 2013/12/05 17:36:12 jca Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.29 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -37,7 +37,6 @@
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -197,7 +196,7 @@ DBM *
 ypdb_open_db(domainname domain, mapname map, ypstat *status,
     struct opt_map **map_info)
 {
-	char map_path[MAXPATHLEN];
+	char map_path[PATH_MAX];
 	static char   *domain_key = YP_INTERDOMAIN_KEY;
 	static char   *secure_key = YP_SECURE_KEY;
 	DBM	*db;
@@ -369,8 +368,8 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	struct in_addr *addr_name;
 	struct in_addr addr_addr;
 	static char val[BUFSIZ+1]; /* match libc */
-	static char hostname[MAXHOSTNAMELEN];
-	char tmpbuf[MAXHOSTNAMELEN + 20], *v, *ptr;
+	static char hostname[HOST_NAME_MAX+1];
+	char tmpbuf[HOST_NAME_MAX+1 + 20], *v, *ptr;
 	size_t len;
 	int l;
 

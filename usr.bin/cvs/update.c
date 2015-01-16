@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.168 2013/12/13 15:19:41 zhuk Exp $	*/
+/*	$OpenBSD: update.c,v 1.169 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -192,7 +192,7 @@ void
 cvs_update_enterdir(struct cvs_file *cf)
 {
 	CVSENTRIES *entlist;
-	char *dirtag, *entry, fpath[MAXPATHLEN];
+	char *dirtag, *entry, fpath[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_update_enterdir(%s)", cf->file_path);
 
@@ -223,7 +223,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 		    cf->file_status == FILE_UNKNOWN) {
 		cf->file_status = FILE_SKIP;
 	} else if (reset_tag) {
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+		(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 		    cf->file_path, CVS_PATH_TAG);
 		(void)unlink(fpath);
 	} else {
@@ -725,7 +725,7 @@ out:
 void
 cvs_backup_file(struct cvs_file *cf)
 {
-	char	 backup_name[MAXPATHLEN];
+	char	 backup_name[PATH_MAX];
 	char	 revstr[RCSNUM_MAXSTR];
 
 	if (cf->file_status == FILE_ADDED)
@@ -733,12 +733,12 @@ cvs_backup_file(struct cvs_file *cf)
 	else
 		rcsnum_tostr(cf->file_ent->ce_rev, revstr, sizeof(revstr));
 
-	(void)xsnprintf(backup_name, MAXPATHLEN, "%s/.#%s.%s",
+	(void)xsnprintf(backup_name, PATH_MAX, "%s/.#%s.%s",
 	    cf->file_wd, cf->file_name, revstr);
 
 	cvs_file_copy(cf->file_path, backup_name);
 
-	(void)xsnprintf(backup_name, MAXPATHLEN, ".#%s.%s",
+	(void)xsnprintf(backup_name, PATH_MAX, ".#%s.%s",
 	    cf->file_name, revstr);
 	cvs_printf("(Locally modified %s moved to %s)\n",
 		   cf->file_name, backup_name);

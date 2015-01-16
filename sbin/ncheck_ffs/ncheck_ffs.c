@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.47 2014/10/09 02:41:22 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.48 2015/01/16 06:39:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -54,7 +54,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE */
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -70,6 +70,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <limits.h>
 #include <fstab.h>
 #include <errno.h>
 #include <err.h>
@@ -475,7 +476,7 @@ searchdir(ufsino_t ino, daddr_t blkno, long size, off_t filesize,
 char *
 rawname(char *name)
 {
-	static char newname[MAXPATHLEN];
+	static char newname[PATH_MAX];
 	char *p;
 
 	if ((p = strrchr(name, '/')) == NULL)

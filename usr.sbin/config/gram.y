@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.23 2012/09/17 17:36:13 espie Exp $	*/
+/*	$OpenBSD: gram.y,v 1.24 2015/01/16 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,12 @@
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
  */
 
+#include <sys/param.h>	/* NODEV */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <errno.h>
 #include "config.h"
@@ -447,7 +448,7 @@ cleanup(void)
 static void
 setmachine(const char *mch, const char *mcharch)
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	machine = mch;
 	machinearch = mcharch;

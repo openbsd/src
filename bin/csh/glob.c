@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.14 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: glob.c,v 1.15 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -30,12 +30,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <glob.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdarg.h>
 
 #include "csh.h"
@@ -87,12 +88,12 @@ static void	backeval(Char *, bool);
 static Char *
 globtilde(Char **nv, Char *s)
 {
-    Char    gbuf[MAXPATHLEN], *gstart, *b, *u, *e;
+    Char    gbuf[PATH_MAX], *gstart, *b, *u, *e;
 
     gstart = gbuf;
     *gstart++ = *s++;
     u = s;
-    for (b = gstart, e = &gbuf[MAXPATHLEN - 1];
+    for (b = gstart, e = &gbuf[PATH_MAX - 1];
 	 *s && *s != '/' && *s != ':' && b < e;
 	 *b++ = *s++)
 	 continue;
@@ -119,7 +120,7 @@ globbrace(Char *s, Char *p, Char ***bl)
     int     i, len;
     Char   *pm, *pe, *lm, *pl;
     Char  **nv, **vl;
-    Char    gbuf[MAXPATHLEN];
+    Char    gbuf[PATH_MAX];
     int     size = GLOBSPACE;
 
     nv = vl = xreallocarray(NULL, size, sizeof(Char *));
@@ -182,7 +183,7 @@ globbrace(Char *s, Char *p, Char ***bl)
 
 		*pm = EOS;
 		(void) Strlcpy(lm, pl, &gbuf[sizeof(gbuf)/sizeof(Char)] - lm);
-		(void) Strlcat(gbuf, pe + 1, MAXPATHLEN);
+		(void) Strlcat(gbuf, pe + 1, PATH_MAX);
 		*pm = savec;
 		*vl++ = Strsave(gbuf);
 		len++;
@@ -575,7 +576,7 @@ Char  **
 dobackp(Char *cp, bool literal)
 {
     Char *lp, *rp;
-    Char   *ep, word[MAXPATHLEN];
+    Char   *ep, word[PATH_MAX];
 
     if (pargv) {
 #ifdef notdef
@@ -588,7 +589,7 @@ dobackp(Char *cp, bool literal)
     pargv[0] = NULL;
     pargcp = pargs = word;
     pargc = 0;
-    pnleft = MAXPATHLEN - 4;
+    pnleft = PATH_MAX - 4;
     for (;;) {
 	for (lp = cp; *lp != '`'; lp++) {
 	    if (*lp == 0) {
@@ -769,7 +770,7 @@ pword(void)
     pargv[pargc++] = Strsave(pargs);
     pargv[pargc] = NULL;
     pargcp = pargs;
-    pnleft = MAXPATHLEN - 4;
+    pnleft = PATH_MAX - 4;
 }
 
 int

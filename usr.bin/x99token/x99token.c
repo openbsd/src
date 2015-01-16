@@ -1,4 +1,4 @@
-/*	$OpenBSD: x99token.c,v 1.9 2013/11/27 00:13:22 deraadt Exp $	*/
+/*	$OpenBSD: x99token.c,v 1.10 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*
  * X9.9 calculator
@@ -7,7 +7,7 @@
  *
  * Donated to the Public Domain by Paul Borman
  */
-#include <sys/param.h>
+
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <openssl/des.h>
 
 #define	KEYFILE		".keyfile.des"
@@ -36,7 +37,7 @@ main(int argc, char **argv)
 	char buf[256];
 	DES_key_schedule ks;
 	DES_cblock key;
-	char _keyfile[MAXPATHLEN];
+	char _keyfile[PATH_MAX];
 	char *keyfile = 0;
 	FILE *fp;
 	int init = 0;

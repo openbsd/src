@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.14 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.15 2015/01/16 06:40:10 deraadt Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -40,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <err.h>
 
 static void dofile(void);
@@ -100,7 +100,7 @@ dofile(void)
 {
 	int fd;
 	const char *p;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	p = FILENAME;
 	if ((fd = open(p, O_RDWR|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR)) >= 0)

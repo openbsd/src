@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.28 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.29 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.44 2014/12/09 15:40:23 tedu Exp $	*/
+/*	$OpenBSD: last.c,v 1.45 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -45,6 +44,7 @@
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 
 #define	NO	0				/* false/no */
@@ -494,7 +494,7 @@ addtty(char *ttyname)
 void
 hostconv(char *arg)
 {
-	static char *hostdot, name[MAXHOSTNAMELEN];
+	static char *hostdot, name[HOST_NAME_MAX+1];
 	static int first = 1;
 	char *argdot;
 

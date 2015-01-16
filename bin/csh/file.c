@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.17 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.18 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #ifdef FILEC
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <termios.h>
@@ -40,6 +40,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #ifndef SHORT_STRINGS
 #include <string.h>
 #endif /* SHORT_STRINGS */
@@ -200,7 +201,7 @@ copyn(Char *des, Char *src, int count)
 static  Char
 filetype(Char *dir, Char *file)
 {
-    Char    path[MAXPATHLEN];
+    Char    path[PATH_MAX];
     struct stat statb;
 
     Strlcpy(path, dir, sizeof path/sizeof(Char));
@@ -281,7 +282,7 @@ tilde(Char *new, Char *old)
     static Char person[40];
 
     if (old[0] != '~') {
-	Strlcpy(new, old, MAXPATHLEN);
+	Strlcpy(new, old, PATH_MAX);
 	return new;
     }
 
@@ -289,14 +290,14 @@ tilde(Char *new, Char *old)
 	continue;
     *p = '\0';
     if (person[0] == '\0')
-	(void) Strlcpy(new, value(STRhome), MAXPATHLEN);
+	(void) Strlcpy(new, value(STRhome), PATH_MAX);
     else {
 	pw = getpwnam(short2str(person));
 	if (pw == NULL)
 	    return (NULL);
-	(void) Strlcpy(new, str2short(pw->pw_dir), MAXPATHLEN);
+	(void) Strlcpy(new, str2short(pw->pw_dir), PATH_MAX);
     }
-    (void) Strlcat(new, o, MAXPATHLEN);
+    (void) Strlcat(new, o, PATH_MAX);
     return (new);
 }
 
@@ -417,7 +418,7 @@ tsearch(Char *word, COMMAND command, int max_word_length)
     DIR *dir_fd;
     int numitems = 0, ignoring = TRUE, nignored = 0;
     int name_length, looking_for_lognames;
-    Char    tilded_dir[MAXPATHLEN], dir[MAXPATHLEN];
+    Char    tilded_dir[PATH_MAX], dir[PATH_MAX];
     Char    name[MAXNAMLEN + 1], extended_name[MAXNAMLEN + 1];
     Char   *entry;
     Char   **items = NULL;

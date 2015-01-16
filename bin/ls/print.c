@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.32 2014/05/06 20:55:10 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.33 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <err.h>
@@ -47,6 +47,7 @@
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "ls.h"
@@ -346,7 +347,7 @@ static void
 printlink(FTSENT *p)
 {
 	int lnklen;
-	char name[MAXPATHLEN], path[MAXPATHLEN];
+	char name[PATH_MAX], path[PATH_MAX];
 
 	if (p->fts_level == FTS_ROOTLEVEL)
 		(void)snprintf(name, sizeof(name), "%s", p->fts_name);

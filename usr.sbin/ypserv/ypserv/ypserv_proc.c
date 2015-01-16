@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.28 2014/02/24 06:45:56 jsg Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.29 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,6 @@
 #include <rpcsvc/ypclnt.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "ypdb.h"
@@ -82,7 +81,7 @@ ypproc_domain_2_svc(domainname *argp, struct svc_req *rqstp)
 {
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
-	static char domain_path[MAXPATHLEN];
+	static char domain_path[PATH_MAX];
 	static bool_t result;
 	struct stat finfo;
 
@@ -110,7 +109,7 @@ ypproc_domain_nonack_2_svc(domainname *argp, struct svc_req *rqstp)
 	static bool_t result; /* is domain served? */
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
-	static char domain_path[MAXPATHLEN];
+	static char domain_path[PATH_MAX];
 	struct stat finfo;
 
 	if (strchr(*argp, '/'))
@@ -440,7 +439,7 @@ ypproc_maplist_2_svc(domainname *argp, struct svc_req *rqstp)
 	static ypresp_maplist res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
-	static char domain_path[MAXPATHLEN];
+	static char domain_path[PATH_MAX];
 	struct stat finfo;
 	DIR   *dirp = NULL;
 	struct dirent *dp;
@@ -539,7 +538,7 @@ ypoldproc_domain_1_svc(domainname *argp, struct svc_req *rqstp)
 	static bool_t result; /* is domain_served? */
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
-	static char domain_path[MAXPATHLEN];
+	static char domain_path[PATH_MAX];
 	struct stat finfo;
 
 	if (strchr(*argp, '/'))
@@ -567,7 +566,7 @@ ypoldproc_domain_nonack_1_svc(domainname *argp, struct svc_req *rqstp)
 	static bool_t result; /* is domain served? */
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
-	static char domain_path[MAXPATHLEN];
+	static char domain_path[PATH_MAX];
 	struct stat finfo;
 
 	if (strchr(*argp, '/'))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.62 2014/07/12 20:16:38 krw Exp $ */
+/*	$OpenBSD: rde.c,v 1.63 2015/01/16 06:40:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -18,7 +18,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>			/* for MIN() */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -39,6 +38,8 @@
 #include "ospfe.h"
 #include "log.h"
 #include "rde.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 void		 rde_sig_handler(int sig, short, void *);
 void		 rde_shutdown(void);
@@ -1315,7 +1316,7 @@ prefix_compare(struct prefix_node *a, struct prefix_node *b)
 	p = a->prefix;
 	q = b->prefix;
 
-	len = MIN(LSA_PREFIXSIZE(p->prefixlen), LSA_PREFIXSIZE(q->prefixlen));
+	len = MINIMUM(LSA_PREFIXSIZE(p->prefixlen), LSA_PREFIXSIZE(q->prefixlen));
 
 	i = memcmp(p + 1, q + 1, len);
 	if (i)

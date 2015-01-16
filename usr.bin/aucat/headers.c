@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.23 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.24 2015/01/16 06:40:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/param.h>
 
 #include <err.h>
 #include <stdio.h>

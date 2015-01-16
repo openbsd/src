@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.21 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.22 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <poll.h>
+#include <limits.h>
 #include <err.h>
 
 #define DEFAULT_TIMEOUT	2	/* How long to wait before retrying requests */
@@ -689,7 +690,7 @@ void graph_edges(Node *node)
 {
     Interface *ifc;
     Neighbor *nb;
-    char name[MAXHOSTNAMELEN];
+    char name[HOST_NAME_MAX+1];
 
     if (node) {
 	graph_edges(node->left);
@@ -872,9 +873,7 @@ int main(int argc, char *argv[])
 
 	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
-#if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
-#endif
 	addr.sin_addr.s_addr = dvmrp_group;
 	addr.sin_port = htons(2000); /* any port over 1024 will do... */
 	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0

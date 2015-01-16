@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.20 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.21 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,7 +14,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -1124,7 +1123,7 @@ static void
 ctag_file(SCR *sp, TAGF *tfp, char *name, char **dirp, size_t *dlenp)
 {
 	struct stat sb;
-	char *p, buf[MAXPATHLEN];
+	char *p, buf[PATH_MAX];
 
 	/*
 	 * !!!

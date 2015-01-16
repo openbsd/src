@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.20 2014/01/22 19:31:00 tobias Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.21 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -42,9 +42,9 @@
  * entries, otherwise one can only remove their own.
  */
 
-#include <sys/param.h>
 
 #include <ctype.h>
+#include <signal.h>
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
@@ -54,6 +54,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "lp.h"
 #include "lp.local.h"
@@ -67,7 +68,7 @@ int	 requests;		/* # of spool requests */
 char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 volatile sig_atomic_t gotintr;	/* set when we receive SIGINT */
-static char luser[MAXLOGNAME];	/* buffer for person */
+static char luser[LOGIN_NAME_MAX];	/* buffer for person */
 
 static __dead void usage(void);
 

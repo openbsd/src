@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.19 2014/04/12 12:47:43 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.20 2015/01/16 06:40:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -16,7 +16,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 
 #include <ctype.h>
@@ -32,6 +31,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "cu.h"
 
@@ -391,7 +391,7 @@ tilde_expand(const char *filename1)
 
 	if ((rv = asprintf(&out, "%s%s%s", pw->pw_dir, sep, filename)) == -1)
 		cu_err(1, "asprintf");
-	if (rv >= MAXPATHLEN) {
+	if (rv >= PATH_MAX) {
 		free(out);
 		goto no_change;
 	}

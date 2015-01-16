@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.8 2009/10/27 23:59:57 deraadt Exp $ */
+/*	$OpenBSD: db.c,v 1.9 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -30,7 +30,6 @@
 #include <db.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <sys/param.h>
 #include "db.h"
 #include "ypdb.h"
 
@@ -45,7 +44,7 @@ db_hash_list_database(char *database)
 	DB *db;
 	int  status;
 	DBT key, val;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	snprintf(path, sizeof(path), "%s%s", database, ".db");
 

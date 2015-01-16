@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.81 2011/12/27 13:59:01 nicm Exp $	*/
+/*	$OpenBSD: remove.c,v 1.82 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -137,7 +137,7 @@ void
 cvs_remove_local(struct cvs_file *cf)
 {
 	CVSENTRIES *entlist;
-	char *entry, buf[MAXPATHLEN], tbuf[CVS_TIME_BUFSZ], rbuf[CVS_REV_BUFSZ];
+	char *entry, buf[PATH_MAX], tbuf[CVS_TIME_BUFSZ], rbuf[CVS_REV_BUFSZ];
 	char sticky[CVS_ENT_MAXLINELEN];
 
 	cvs_log(LP_TRACE, "cvs_remove_local(%s)", cf->file_path);

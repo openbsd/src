@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.3 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.4 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -30,7 +30,6 @@
  */
 
 #ifdef INET6
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-igrp.c,v 1.6 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-igrp.c,v 1.7 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -23,7 +23,6 @@
  * Initial contribution from Francis Dupont (francis.dupont@inria.fr)
  */
 
-#include <sys/param.h>
 #include <sys/types.h>			/* concession to AIX */
 #include <sys/socket.h>
 

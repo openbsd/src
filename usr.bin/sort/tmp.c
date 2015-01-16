@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp.c,v 1.9 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: tmp.c,v 1.10 2015/01/16 06:40:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,8 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/param.h>
 
 #include <err.h>
 #include <errno.h>

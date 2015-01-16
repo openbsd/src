@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.5 2014/08/25 18:05:30 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.6 2015/01/16 06:40:21 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* nitems */
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>

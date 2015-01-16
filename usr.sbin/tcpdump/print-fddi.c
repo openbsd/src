@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-fddi.c,v 1.15 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-fddi.c,v 1.16 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,6 @@
  */
 
 #ifdef HAVE_FDDI
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/file.h>

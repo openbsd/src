@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.152 2011/12/27 13:59:01 nicm Exp $	*/
+/*	$OpenBSD: commit.c,v 1.153 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -68,7 +68,7 @@ cvs_commit(int argc, char **argv)
 	struct cvs_recursion cr;
 	struct cvs_filelist *l;
 	struct file_info *fi;
-	char *arg = ".", repo[MAXPATHLEN];
+	char *arg = ".", repo[PATH_MAX];
 
 	flags = CR_RECURSE_DIRS;
 	Fflag = mflag = 0;
@@ -160,7 +160,7 @@ cvs_commit(int argc, char **argv)
 		cvs_client_send_request("ci");
 		cvs_client_get_responses();
 	} else {
-		cvs_get_repository_name(".", repo, MAXPATHLEN);
+		cvs_get_repository_name(".", repo, PATH_MAX);
 
 		line_list = cvs_trigger_getlines(CVS_PATH_COMMITINFO, repo);
 		if (line_list != NULL) {
@@ -232,7 +232,7 @@ void
 cvs_commit_loginfo(char *repo)
 {
 	BUF *buf;
-	char pwd[MAXPATHLEN];
+	char pwd[PATH_MAX];
 	struct cvs_filelist *cf;
 
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
@@ -291,7 +291,7 @@ cvs_commit_loginfo(char *repo)
 void
 cvs_commit_lock_dirs(struct cvs_file *cf)
 {
-	char repo[MAXPATHLEN];
+	char repo[PATH_MAX];
 
 	cvs_get_repository_path(cf->file_wd, repo, sizeof(repo));
 	cvs_log(LP_TRACE, "cvs_commit_lock_dirs: %s", repo);
@@ -446,7 +446,7 @@ cvs_commit_local(struct cvs_file *cf)
 	int openflags, rcsflags;
 	char rbuf[CVS_REV_BUFSZ], nbuf[CVS_REV_BUFSZ];
 	CVSENTRIES *entlist;
-	char attic[MAXPATHLEN], repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
+	char attic[PATH_MAX], repo[PATH_MAX], rcsfile[PATH_MAX];
 	struct file_info *fi;
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
@@ -559,8 +559,8 @@ cvs_commit_local(struct cvs_file *cf)
 					    "to be dead", cf->file_path);
 
 				cvs_get_repository_path(cf->file_wd, repo,
-				    MAXPATHLEN);
-				(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s%s",
+				    PATH_MAX);
+				(void)xsnprintf(rcsfile, PATH_MAX, "%s/%s%s",
 				    repo, cf->file_name, RCS_FILE_EXT);
 
 				if (rename(cf->file_rpath, rcsfile) == -1)
@@ -666,15 +666,15 @@ cvs_commit_local(struct cvs_file *cf)
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);
 
-		cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
+		cvs_get_repository_path(cf->file_wd, repo, PATH_MAX);
 
-		(void)xsnprintf(attic, MAXPATHLEN, "%s/%s",
+		(void)xsnprintf(attic, PATH_MAX, "%s/%s",
 		    repo, CVS_PATH_ATTIC);
 
 		if (mkdir(attic, 0755) == -1 && errno != EEXIST)
 			fatal("cvs_commit_local: failed to create Attic");
 
-		(void)xsnprintf(attic, MAXPATHLEN, "%s/%s/%s%s", repo,
+		(void)xsnprintf(attic, PATH_MAX, "%s/%s/%s%s", repo,
 		    CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
 
 		if (rename(cf->file_rpath, attic) == -1)
@@ -772,9 +772,9 @@ commit_desc_set(struct cvs_file *cf)
 {
 	BUF *bp;
 	int fd;
-	char desc_path[MAXPATHLEN], *desc;
+	char desc_path[PATH_MAX], *desc;
 
-	(void)xsnprintf(desc_path, MAXPATHLEN, "%s/%s/%s%s",
+	(void)xsnprintf(desc_path, PATH_MAX, "%s/%s/%s%s",
 	    cf->file_wd, CVS_PATH_CVSDIR, cf->file_name, CVS_DESCR_FILE_EXT);
 
 	if ((fd = open(desc_path, O_RDONLY)) == -1)

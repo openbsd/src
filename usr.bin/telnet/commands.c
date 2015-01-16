@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.70 2014/09/09 03:41:08 guenther Exp $	*/
+/*	$OpenBSD: commands.c,v 1.71 2015/01/16 06:40:13 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef SKEY
 #include <sys/wait.h>
@@ -1544,7 +1545,7 @@ env_init(void)
 	if ((ep = env_find("DISPLAY"))
 	    && ((*ep->value == ':')
 		|| (strncmp(ep->value, "unix:", 5) == 0))) {
-		char hbuf[MAXHOSTNAMELEN];
+		char hbuf[HOST_NAME_MAX+1];
 		char *cp2 = strchr(ep->value, ':');
 
 		gethostname(hbuf, sizeof hbuf);
@@ -1774,7 +1775,7 @@ cmdrc(char *m1, char *m2)
     int gotmachine = 0;
     int l1 = strlen(m1);
     int l2 = strlen(m2);
-    char m1save[MAXHOSTNAMELEN];
+    char m1save[HOST_NAME_MAX+1];
 
     if (skiprc)
 	return;

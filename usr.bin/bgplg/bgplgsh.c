@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgsh.c,v 1.6 2013/11/25 18:02:50 deraadt Exp $	*/
+/*	$OpenBSD: bgplgsh.c,v 1.7 2015/01/16 06:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -16,15 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/param.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -215,7 +215,7 @@ int
 main(void)
 {
 	struct cmd *cmd = NULL;
-	char prompt[MAXHOSTNAMELEN], *line, **argp = NULL;
+	char prompt[HOST_NAME_MAX+1], *line, **argp = NULL;
 	int ncmd, ret, v = -1;
 	u_int i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2014/12/04 08:34:04 daniel Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -80,7 +80,7 @@ int interactive = 0;		/* if set, we are in interactive mode */
 /* if set, signal handlers are enabled */
 volatile sig_atomic_t sigactive = 0;
 
-char old_filename[MAXPATHLEN] = "";	/* default filename */
+char old_filename[PATH_MAX] = "";	/* default filename */
 int current_addr;		/* current address in editor buffer */
 int addr_last;			/* last address in editor buffer */
 int lineno;			/* script line number */
@@ -962,7 +962,7 @@ get_filename(void)
 				return NULL;
 			if (n) printf("%s\n", shcmd + 1);
 			return shcmd;
-		} else if (n >= MAXPATHLEN) {
+		} else if (n >= PATH_MAX) {
 			seterrmsg("filename too long");
 			return  NULL;
 		}
@@ -973,7 +973,7 @@ get_filename(void)
 		return  NULL;
 	}
 #endif
-	REALLOC(file, filesz, MAXPATHLEN, NULL);
+	REALLOC(file, filesz, PATH_MAX, NULL);
 	for (n = 0; *ibufp != '\n';)
 		file[n++] = *ibufp++;
 	file[n] = '\0';
@@ -1331,7 +1331,7 @@ has_trailing_escape(char *s, char *t)
 }
 
 
-/* strip_escapes: return copy of escaped string of at most length MAXPATHLEN */
+/* strip_escapes: return copy of escaped string of at most length PATH_MAX */
 char *
 strip_escapes(char *s)
 {
@@ -1340,12 +1340,12 @@ strip_escapes(char *s)
 
 	int i = 0;
 
-	REALLOC(file, filesz, MAXPATHLEN, NULL);
+	REALLOC(file, filesz, PATH_MAX, NULL);
 	/* assert: no trailing escape */
 	while ((file[i++] = (*s == '\\') ? *++s : *s) != '\0' &&
-	       i < MAXPATHLEN-1)
+	       i < PATH_MAX-1)
 		s++;
-	file[MAXPATHLEN-1] = '\0';
+	file[PATH_MAX-1] = '\0';
 	return file;
 }
 
@@ -1379,7 +1379,7 @@ signal_int(int signo)
 void
 handle_hup(int signo)
 {
-	char hup[MAXPATHLEN];
+	char hup[PATH_MAX];
 
 	if (!sigactive)
 		quit(1);

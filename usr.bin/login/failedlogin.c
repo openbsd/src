@@ -1,4 +1,4 @@
-/*	$OpenBSD: failedlogin.c,v 1.16 2013/06/01 21:06:39 deraadt Exp $	*/
+/*	$OpenBSD: failedlogin.c,v 1.17 2015/01/16 06:40:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,7 +23,6 @@
  *	the last failed login was.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 

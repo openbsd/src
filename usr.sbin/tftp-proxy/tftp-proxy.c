@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.10 2013/12/23 13:08:25 florian Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.11 2015/01/16 06:40:22 deraadt Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -27,9 +27,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 

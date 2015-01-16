@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.81 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.82 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -51,7 +51,7 @@ rcsdiff_main(int argc, char **argv)
 	int fd, i, ch, dflags, status;
 	RCSNUM *rev1, *rev2;
 	RCSFILE *file;
-	char fpath[MAXPATHLEN], *rev_str1, *rev_str2;
+	char fpath[PATH_MAX], *rev_str1, *rev_str2;
 	const char *errstr;
 
 	rev1 = rev2 = NULL;

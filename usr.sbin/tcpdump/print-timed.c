@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-timed.c,v 1.5 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: print-timed.c,v 1.6 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -29,7 +29,6 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>

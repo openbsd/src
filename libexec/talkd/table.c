@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.15 2014/10/08 02:10:05 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.16 2015/01/16 06:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,6 @@
  *
  * Consider this a mis-guided attempt at modularity
  */
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

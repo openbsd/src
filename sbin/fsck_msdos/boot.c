@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.22 2014/07/10 17:12:05 tobias Exp $	*/
+/*	$OpenBSD: boot.c,v 1.23 2015/01/16 06:39:58 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE powerof2 */
 #include <sys/disklabel.h>
 
 #include <stdlib.h>

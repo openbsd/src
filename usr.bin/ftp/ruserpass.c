@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.29 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.30 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -75,8 +75,8 @@ static struct toktab {
 int
 ruserpass(const char *host, char **aname, char **apass, char **aacct)
 {
-	char *hdir, buf[MAXPATHLEN], *tmp;
-	char myname[MAXHOSTNAMELEN], *mydomain;
+	char *hdir, buf[PATH_MAX], *tmp;
+	char myname[HOST_NAME_MAX+1], *mydomain;
 	int t, i, c, usedefault = 0;
 	struct stat stb;
 

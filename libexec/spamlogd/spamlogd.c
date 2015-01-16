@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.23 2014/10/25 03:19:22 lteo Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.24 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/signal.h>
 
 #include <net/if.h>
 #include <net/if_pflog.h>

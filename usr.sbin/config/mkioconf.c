@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.32 2014/05/18 09:29:54 espie Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.33 2015/01/16 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
  *
  *	from: @(#)mkioconf.c	8.1 (Berkeley) 6/6/93
  */
-
-#include <sys/param.h>
 
 #include <errno.h>
 #include <stdio.h>

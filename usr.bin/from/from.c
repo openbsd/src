@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.16 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: from.c,v 1.17 2015/01/16 06:40:07 deraadt Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -48,8 +48,8 @@ main(int argc, char *argv[])
 	struct passwd *pwd;
 	int ch, newline;
 	char *file, *sender, *p;
-#if MAXPATHLEN > BUFSIZ
-	char buf[MAXPATHLEN];
+#if PATH_MAX > BUFSIZ
+	char buf[PATH_MAX];
 #else
 	char buf[BUFSIZ];
 #endif

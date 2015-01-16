@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.10 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.11 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -32,6 +32,7 @@
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 

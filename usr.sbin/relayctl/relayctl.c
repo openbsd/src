@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.51 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.52 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -332,7 +332,7 @@ show_summary_msg(struct imsg *imsg, int type)
 	struct router		*rt;
 	struct netroute		*nr;
 	struct ctl_stats	 stats[RELAY_MAXPROC];
-	char			 name[MAXHOSTNAMELEN];
+	char			 name[HOST_NAME_MAX+1];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RDR:

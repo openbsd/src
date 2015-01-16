@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.27 2011/09/22 10:41:04 deraadt Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.28 2015/01/16 06:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,7 +58,6 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <stdio.h>
@@ -66,6 +65,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <zlib.h>
 #include "compress.h"
 
@@ -348,7 +348,7 @@ get_header(gz_stream *s, char *name, int gotmagic)
 
 	if ((flags & ORIG_NAME) != 0) { /* read/save the original file name */
 		if ((ep = name) != NULL)
-			ep += MAXPATHLEN - 1;
+			ep += PATH_MAX - 1;
 		while ((c = get_byte(s)) != EOF) {
 			s->z_hlen++;
 			if (c == '\0')

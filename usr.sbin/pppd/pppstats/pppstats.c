@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.10 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.11 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * print PPP statistics:
@@ -47,6 +47,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/ppp_defs.h>
+#include <net/if.h>
+#include <net/if_ppp.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -57,13 +63,6 @@
 #include <fcntl.h>
 #include <err.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <net/ppp_defs.h>
-#include <net/if.h>
-#include <net/if_ppp.h>
 
 int	vflag, rflag, zflag;	/* select type of display */
 int	aflag;			/* print absolute values, not deltas */

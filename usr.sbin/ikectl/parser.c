@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.12 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.13 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -18,7 +18,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

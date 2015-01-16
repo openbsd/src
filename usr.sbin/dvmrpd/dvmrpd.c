@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.16 2014/07/12 19:22:32 krw Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.17 2015/01/16 06:40:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 

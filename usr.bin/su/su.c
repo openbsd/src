@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.65 2011/01/11 10:07:56 robert Exp $	*/
+/*	$OpenBSD: su.c,v 1.66 2015/01/16 06:40:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -44,6 +43,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 #include <stdarg.h>
 #include <bsd_auth.h>
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	char *user, *shell = NULL, *avshell, *username, **np;
 	char *class = NULL, *style = NULL, *p;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char avshellbuf[MAXPATHLEN];
+	char avshellbuf[PATH_MAX];
 	extern char **environ;
 	auth_session_t *as;
 	struct passwd *pwd;
@@ -395,7 +395,7 @@ chshell(const char *sh)
 char *
 ontty(void)
 {
-	static char buf[MAXPATHLEN + 4];
+	static char buf[PATH_MAX + 4];
 	char *p;
 
 	buf[0] = 0;

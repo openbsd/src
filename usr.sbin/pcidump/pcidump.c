@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.36 2014/05/20 01:25:24 guenther Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.37 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/pciio.h>
 
 #include <dev/pci/pcireg.h>
@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define PCIDEV	"/dev/pci"
 
@@ -104,7 +105,7 @@ main(int argc, char *argv[])
 {
 	int nfuncs;
 	int bus, dev, func;
-	char pcidev[MAXPATHLEN] = PCIDEV;
+	char pcidev[PATH_MAX] = PCIDEV;
 	char *romfile = NULL;
 	const char *errstr;
 	int c, error = 0, dumpall = 1, domid = 0;

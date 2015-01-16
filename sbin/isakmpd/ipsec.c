@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.142 2015/01/13 04:19:00 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.143 2015/01/16 06:39:58 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -74,6 +74,9 @@
 #include "x509.h"
 
 extern int acquire_only;
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /* The replay window size used for all IPsec protocols if not overridden.  */
 #define DEFAULT_REPLAY_WINDOW 16
@@ -2128,7 +2131,7 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 		case IPSEC_ID_USER_FQDN:
 			/* String is not NUL terminated, be careful */
 			id_len -= ISAKMP_ID_DATA_OFF;
-			id_len = MIN(id_len, size - 1);
+			id_len = MINIMUM(id_len, size - 1);
 			memcpy(buf, id + ISAKMP_ID_DATA_OFF, id_len);
 			buf[id_len] = '\0';
 			break;
@@ -2300,7 +2303,7 @@ static int
 addr_cmp(const void *a, const void *b)
 {
 	const struct contact *x = a, *y = b;
-	int             minlen = MIN(x->len, y->len);
+	int             minlen = MINIMUM(x->len, y->len);
 	int             rv = memcmp(x->addr, y->addr, minlen);
 
 	return rv ? rv : (x->len - y->len);
@@ -2529,7 +2532,7 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 	 * XXX I think the ASN1 DN case can be thought through to give a better
 	 * estimate.
          */
-	size = MAX(sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+	size = MAXIMUM(sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 	    sizeof "asn1_dn/" + id_len);
 	buf = malloc(size);
 	if (!buf)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.15 2014/11/08 22:13:47 brad Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.16 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 

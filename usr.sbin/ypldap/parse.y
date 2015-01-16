@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2014/11/20 05:51:21 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -28,7 +28,6 @@
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 

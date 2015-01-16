@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-add.c,v 1.116 2015/01/14 20:05:27 djm Exp $ */
+/* $OpenBSD: ssh-add.c,v 1.117 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 
 #include <openssl/evp.h>
 
@@ -48,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -560,7 +560,7 @@ main(int argc, char **argv)
 		goto done;
 	}
 	if (argc == 0) {
-		char buf[MAXPATHLEN];
+		char buf[PATH_MAX];
 		struct passwd *pw;
 		struct stat st;
 		int count = 0;

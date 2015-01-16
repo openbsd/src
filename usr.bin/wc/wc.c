@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.16 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: wc.c,v 1.17 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -29,15 +29,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>	/* MAXBSIZE */
+#include <sys/stat.h>
+#include <sys/file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
 #include <ctype.h>
 #include <err.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 #include <unistd.h>
 #include <util.h>
 

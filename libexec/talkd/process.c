@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.20 2013/11/27 21:25:24 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.21 2015/01/16 06:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,6 @@
  *		  in the table for the local user
  *	DELETE - delete invitation
  */
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -49,6 +48,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <paths.h>
+#include <limits.h>
 #include "talkd.h"
 
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
@@ -192,7 +192,7 @@ find_user(char *name, char *tty, size_t ttyl)
 	int status;
 	FILE *fp;
 	char line[UT_LINESIZE+1];
-	char ftty[MAXPATHLEN];
+	char ftty[PATH_MAX];
 	time_t	idle, now;
 
 	time(&now);

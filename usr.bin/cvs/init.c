@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.38 2010/10/31 15:37:34 nicm Exp $	*/
+/*	$OpenBSD: init.c,v 1.39 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -100,7 +100,7 @@ void
 cvs_init_local(void)
 {
 	u_int i;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_init_local()");
 
@@ -108,14 +108,14 @@ cvs_init_local(void)
 	init_mkdir(current_cvsroot->cr_dir, 0777);
 
 	for (i = 0; i < INIT_NDIRS; i++) {
-		(void)xsnprintf(path, MAXPATHLEN, "%s/%s",
+		(void)xsnprintf(path, PATH_MAX, "%s/%s",
 		    current_cvsroot->cr_dir, cvsroot_dirs[i]);
 
 		init_mkdir(path, 0777);
 	}
 
 	for (i = 0; i < INIT_NFILES; i++) {
-		(void)xsnprintf(path, MAXPATHLEN, "%s/%s",
+		(void)xsnprintf(path, PATH_MAX, "%s/%s",
 		    current_cvsroot->cr_dir, cvsroot_files[i].cf_path);
 
 		init_mkfile(path, cvsroot_files[i].cf_content);
@@ -143,7 +143,7 @@ init_mkfile(char *path, const char **content)
 	BUF *b;
 	size_t len;
 	int fd, openflags, rcsflags;
-	char rpath[MAXPATHLEN];
+	char rpath[PATH_MAX];
 	const char **p;
 	RCSFILE *file;
 
@@ -172,7 +172,7 @@ init_mkfile(char *path, const char **content)
 		return;
 	}
 
-	(void)xsnprintf(rpath, MAXPATHLEN, "%s%s", path, RCS_FILE_EXT);
+	(void)xsnprintf(rpath, PATH_MAX, "%s%s", path, RCS_FILE_EXT);
 
 	if ((file = rcs_open(rpath, -1, rcsflags, 0444)) == NULL)
 		fatal("failed to create RCS file for `%s'", path);

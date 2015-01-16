@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.51 2014/12/06 00:20:22 bluhm Exp $	*/
+/*	$OpenBSD: init.c,v 1.52 2015/01/16 06:39:58 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/reboot.h>
@@ -488,8 +488,8 @@ single_user(void)
 	pid_t pid, wpid;
 	int status;
 	sigset_t mask;
-	char shell[MAXPATHLEN];		/* Allocate space here */
-	char name[MAXPATHLEN];		/* Name (argv[0]) of shell */
+	char shell[PATH_MAX];		/* Allocate space here */
+	char name[PATH_MAX];		/* Name (argv[0]) of shell */
 	char *argv[2];
 #ifdef SECURE
 	struct ttyent *typ;

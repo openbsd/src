@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.67 2015/01/13 09:21:15 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.68 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,6 @@
 
 #include <sys/tree.h>
 
-#include <sys/param.h>		/* MAXHOSTNAMELEN */
 #include <limits.h>
 #include <imsg.h>
 #include <tls.h>
@@ -361,11 +360,11 @@ TAILQ_HEAD(log_files, log_file) log_files;
 
 struct server_config {
 	u_int32_t		 id;
-	char			 name[MAXHOSTNAMELEN];
+	char			 name[HOST_NAME_MAX+1];
 	char			 location[NAME_MAX];
 	char			 index[NAME_MAX];
-	char			 root[MAXPATHLEN];
-	char			 socket[MAXPATHLEN];
+	char			 root[PATH_MAX];
+	char			 socket[PATH_MAX];
 	char			 accesslog[NAME_MAX];
 	char			 errorlog[NAME_MAX];
 

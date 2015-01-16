@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.23 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: elf.c,v 1.24 2015/01/16 06:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -26,7 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <a.out.h>
@@ -36,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <ctype.h>
 #include "elfuncs.h"
 #include "util.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.33 2014/07/12 03:10:03 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.34 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@
 
 char	tempname[sizeof _RDIST_TMP + 1]; /* Tmp file name */
 char	buf[BUFSIZ];		/* general purpose buffer */
-char	target[MAXPATHLEN];	/* target/source directory name */
+char	target[PATH_MAX];	/* target/source directory name */
 char	*ptarget;		/* pointer to end of target name */
 int	catname = 0;		/* cat name to target name */
 char	*sptarget[32];		/* stack of saved ptarget's for directories */
@@ -324,7 +324,7 @@ removefile(struct stat *statb, int silent)
 		    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 			continue;
 
-		if (len + 1 + (int)strlen(dp->d_name) >= MAXPATHLEN - 1) {
+		if (len + 1 + (int)strlen(dp->d_name) >= PATH_MAX - 1) {
 			if (!silent)
 				message(MT_REMOTE|MT_WARNING, 
 					"%s/%s: Name too long", 
@@ -387,7 +387,7 @@ doclean(char *cp)
 	char *optarget, *ep;
 	int len;
 	opt_t opts;
-	char targ[MAXPATHLEN*4];
+	char targ[PATH_MAX*4];
 
 	opts = strtol(cp, &ep, 8);
 	if (*ep != CNULL) {
@@ -407,7 +407,7 @@ doclean(char *cp)
 		    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 			continue;
 
-		if (len + 1 + (int)strlen(dp->d_name) >= MAXPATHLEN - 1) {
+		if (len + 1 + (int)strlen(dp->d_name) >= PATH_MAX - 1) {
 			message(MT_REMOTE|MT_WARNING, "%s/%s: Name too long", 
 				target, dp->d_name);
 			continue;
@@ -553,7 +553,7 @@ query(char *xname)
 {
 	static struct stat stb;
 	int s = -1, stbvalid = 0;
-	char name[MAXPATHLEN];
+	char name[PATH_MAX];
 
 	if (DECODE(name, xname) == -1) {
 		error("query: Cannot decode filename");
@@ -677,9 +677,9 @@ chkparent(char *name, opt_t opts)
 static char *
 savetarget(char *file, opt_t opts)
 {
-	static char savefile[MAXPATHLEN];
+	static char savefile[PATH_MAX];
 
-	if (strlen(file) + sizeof(SAVE_SUFFIX) + 1 > MAXPATHLEN) {
+	if (strlen(file) + sizeof(SAVE_SUFFIX) + 1 > PATH_MAX) {
 		error("%s: Cannot save: Save name too long", file);
 		return(NULL);
 	}
@@ -1110,7 +1110,7 @@ recvdir(opt_t opts, int mode, char *owner, char *group)
 static void
 recvlink(char *new, opt_t opts, int mode, off_t size)
 {
-	char tbuf[MAXPATHLEN], dbuf[BUFSIZ];
+	char tbuf[PATH_MAX], dbuf[BUFSIZ];
 	struct stat stb;
 	char *optarget;
 	int uptodate;
@@ -1355,8 +1355,8 @@ recvit(char *cmd, int type)
 	off_t size;
 	time_t mtime, atime;
 	char *owner, *group, *file;
-	char new[MAXPATHLEN];
-	char fileb[MAXPATHLEN];
+	char new[PATH_MAX];
+	char fileb[PATH_MAX];
 	int64_t freespace = -1, freefiles = -1;
 	char *cp = cmd;
 
@@ -1541,7 +1541,7 @@ dochmog(char *cmd)
 	opt_t opts;
 	char *owner, *group, *file;
 	char *cp = cmd;
-	char fileb[MAXPATHLEN];
+	char fileb[PATH_MAX];
 
 	/*
 	 * Get rdist option flags

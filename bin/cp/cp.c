@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.36 2014/05/21 06:23:02 guenther Exp $	*/
+/*	$OpenBSD: cp.c,v 1.37 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  * in "to") to form the final target path.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -63,6 +63,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "extern.h"
 
@@ -318,7 +319,7 @@ copy(char *argv[], enum op type, int fts_options)
 			if (*p != '/' && target_mid[-1] != '/')
 				*target_mid++ = '/';
 			*target_mid = '\0';
-			if (target_mid - to.p_path + nlen >= MAXPATHLEN) {
+			if (target_mid - to.p_path + nlen >= PATH_MAX) {
 				warnx("%s%s: name too long (not copied)",
 				    to.p_path, p);
 				rval = 1;

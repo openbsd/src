@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.8 2014/10/24 10:23:32 schwarze Exp $	*/
+/*	$OpenBSD: getent.c,v 1.9 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ printfmtstrings(char *strings[], const char *prefix, const char *sep,
 static int
 ethers(int argc, char *argv[])
 {
-	char		hostname[MAXHOSTNAMELEN], *hp;
+	char		hostname[HOST_NAME_MAX+1], *hp;
 	int		i, rv = RV_OK;
 	struct ether_addr ea, *eap;
 

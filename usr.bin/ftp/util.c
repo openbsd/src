@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.67 2014/08/16 07:49:27 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.68 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@
 /*
  * FTP User Program -- Misc support routines
  */
+#include <sys/param.h>	/* BSD */
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <arpa/ftp.h>
@@ -75,7 +76,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <limits.h>
 #include <glob.h>
 #include <pwd.h>
 #include <signal.h>
@@ -88,6 +88,9 @@
 
 #include "ftp_var.h"
 #include "pathnames.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 static void updateprogressmeter(int);
 
@@ -223,8 +226,8 @@ setpeer(int argc, char *argv[])
 int
 ftp_login(const char *host, char *user, char *pass)
 {
-	char tmp[80], *acctname = NULL, host_name[MAXHOSTNAMELEN];
-	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
+	char tmp[80], *acctname = NULL, host_name[HOST_NAME_MAX+1];
+	char anonpass[LOGIN_NAME_MAX + 1 + HOST_NAME_MAX+1];	/* "user@hostname" */
 	int n, aflag = 0, retry = 0;
 	struct passwd *pw;
 
@@ -375,8 +378,8 @@ another(int *pargc, char ***pargv, const char *prompt)
 char *
 remglob2(char *argv[], int doswitch, char **errbuf, FILE **ftemp, char *type)
 {
-	char temp[MAXPATHLEN], *bufp, *cp, *lmode;
-	static char buf[MAXPATHLEN], **args;
+	char temp[PATH_MAX], *bufp, *cp, *lmode;
+	static char buf[PATH_MAX], **args;
 	int oldverbose, oldhash, fd;
 
 	if (!mflag) {
@@ -687,8 +690,8 @@ remotemodtime(const char *file, int noisy)
 int
 fileindir(const char *file, const char *dir)
 {
-	char	parentdirbuf[MAXPATHLEN], *parentdir;
-	char	realdir[MAXPATHLEN];
+	char	parentdirbuf[PATH_MAX], *parentdir;
+	char	realdir[PATH_MAX];
 	size_t	dirlen;
 
 		 			/* determine parent directory of file */
@@ -787,8 +790,8 @@ progressmeter(int flag, const char *filename)
 		ratio = cursize * 100 / filesize;
 	else
 		ratio = 100;
-	ratio = MAX(ratio, 0);
-	ratio = MIN(ratio, 100);
+	ratio = MAXIMUM(ratio, 0);
+	ratio = MINIMUM(ratio, 100);
 	if (!verbose && flag == -1) {
 		filename = basename(filename);
 		if (filename != NULL)

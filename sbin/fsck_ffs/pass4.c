@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.22 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.23 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG isset clrbit */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>

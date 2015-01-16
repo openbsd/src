@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.26 2014/01/17 18:42:30 okan Exp $	*/
+/*	$OpenBSD: aux.c,v 1.27 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ struct sstack {
 	FILE	*s_file;		/* File we were in. */
 	int	s_cond;			/* Saved state of conditionals */
 	int	s_loading;		/* Loading .mailrc, etc. */
-} sstack[NOFILE];
+} sstack[OPEN_MAX];
 
 /*
  * Pushdown current input file and switch to a new one.
@@ -280,7 +280,7 @@ source(void *v)
 		warn("%s", cp);
 		return(1);
 	}
-	if (ssp >= NOFILE - 1) {
+	if (ssp >= OPEN_MAX - 1) {
 		puts("Too much \"sourcing\" going on.");
 		(void)Fclose(fi);
 		return(1);

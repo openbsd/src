@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.22 2014/08/18 09:43:02 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.23 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -124,8 +123,8 @@ main(int argc, char *argv[])
 	    (IKED_OPT_NONATT|IKED_OPT_NATT))
 		errx(1, "conflicting NAT-T options");
 
-	if (strlcpy(env->sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
-		errx(1, "config file exceeds MAXPATHLEN");
+	if (strlcpy(env->sc_conffile, conffile, PATH_MAX) >= PATH_MAX)
+		errx(1, "config file exceeds PATH_MAX");
 
 	ca_sslinit();
 	policy_init(env);

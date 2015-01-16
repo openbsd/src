@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.42 2015/01/14 11:59:10 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.43 2015/01/16 06:39:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -89,6 +89,8 @@ int		  greyonly = 1;
 
 extern char 	 *__progname;
 
+#define MAXIMUM(a,b) (((a)>(b))?(a):(b))
+
 u_int32_t
 imask(u_int8_t b)
 {
@@ -140,7 +142,7 @@ range2cidrlist(struct cidr *list, u_int *cli, u_int *cls, u_int32_t start,
 		maxsize = maxblock(start, 32);
 		diff = maxdiff(start, end);
 
-		maxsize = MAX(maxsize, diff);
+		maxsize = MAXIMUM(maxsize, diff);
 		if (*cls <= *cli + 1) {		/* one extra for terminator */
 			tmp = reallocarray(list, *cls + 32,
 			    sizeof(struct cidr));

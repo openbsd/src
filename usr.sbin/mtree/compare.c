@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.23 2012/07/08 21:19:42 naddy Exp $	*/
+/*	$OpenBSD: compare.c,v 1.24 2015/01/16 06:40:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <fts.h>
@@ -38,6 +37,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <md5.h>
 #include <rmd160.h>
 #include <sha1.h>
@@ -399,7 +399,7 @@ ftype(u_int type)
 char *
 rlink(char *name)
 {
-	static char lbuf[MAXPATHLEN];
+	static char lbuf[PATH_MAX];
 	int len;
 
 	if ((len = readlink(name, lbuf, sizeof(lbuf)-1)) == -1)

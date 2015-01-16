@@ -23,7 +23,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MACHINE MACHINE_ARCH */
 
 #include <err.h>
 #include <locale.h>

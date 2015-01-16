@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.136 2015/01/12 15:46:55 bluhm Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.137 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -47,7 +46,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <libgen.h>
-#include <limits.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -1058,7 +1056,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 	int rval, xargc;
 	volatile int argpos;
 	int dirhasglob, filehasglob, oautologin;
-	char rempath[MAXPATHLEN];
+	char rempath[PATH_MAX];
 
 	argpos = 0;
 

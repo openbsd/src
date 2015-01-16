@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd_lock.c,v 1.8 2013/04/23 18:17:22 deraadt Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.9 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -26,6 +26,10 @@
  *
  */
 
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,11 +40,6 @@
 #include <string.h>
 #include <signal.h>
 #include <rpc/rpc.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/wait.h>
 #include <rpcsvc/sm_inter.h>
 #include <rpcsvc/nlm_prot.h>
 #include "lockd_lock.h"

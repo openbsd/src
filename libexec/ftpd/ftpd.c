@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.205 2014/10/25 03:19:22 lteo Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.206 2015/01/16 06:39:50 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -151,9 +151,9 @@ off_t	byte_count;
 mode_t	defumask = CMASK;		/* default umask value */
 int	umaskchange = 1;		/* allow user to change umask value. */
 char	tmpline[7];
-char	hostname[MAXHOSTNAMELEN];
-char	remotehost[MAXHOSTNAMELEN];
-char	dhostname[MAXHOSTNAMELEN];
+char	hostname[HOST_NAME_MAX+1];
+char	remotehost[HOST_NAME_MAX+1];
+char	dhostname[HOST_NAME_MAX+1];
 char	*guestpw;
 char	ttyline[20];
 #if 0
@@ -227,7 +227,7 @@ void	 set_slave_signals(void);
 static char *
 curdir(void)
 {
-	static char path[MAXPATHLEN+1];	/* path + '/' */
+	static char path[PATH_MAX+1];	/* path + '/' */
 
 	if (getcwd(path, sizeof(path)-1) == NULL)
 		return ("");
@@ -702,7 +702,7 @@ sgetpwnam(char *name, struct passwd *pw)
 
 static int login_attempts;	/* number of failed login attempts */
 static int askpasswd;		/* had user command, ask for passwd */
-static char curname[MAXLOGNAME];	/* current USER name */
+static char curname[LOGIN_NAME_MAX];	/* current USER name */
 
 /*
  * USER command.
@@ -906,8 +906,8 @@ pass(char *passwd)
 	int authok;
 	unsigned int flags;
 	FILE *fp;
-	static char homedir[MAXPATHLEN];
-	char *motd, *dir, rootdir[MAXPATHLEN];
+	static char homedir[PATH_MAX];
+	char *motd, *dir, rootdir[PATH_MAX];
 	size_t sz_pw_dir;
 
 	if (logged_in || askpasswd == 0) {
@@ -1101,7 +1101,7 @@ pass(char *passwd)
 	/*
 	 * Set home directory so that use of ~ (tilde) works correctly.
 	 */
-	if (getcwd(homedir, MAXPATHLEN) != NULL) {
+	if (getcwd(homedir, PATH_MAX) != NULL) {
 		if (setenv("HOME", homedir, 1) == -1) {
 			reply(550, "Can't setup environment.");
 			goto bad;
@@ -1469,7 +1469,7 @@ dataconn(char *name, off_t size, char *mode)
 			(void) fclose(file);
 		file = getdatasock(mode);
 		if (file == NULL) {
-			char hbuf[MAXHOSTNAMELEN], pbuf[10];
+			char hbuf[HOST_NAME_MAX+1], pbuf[10];
 
 			error = getnameinfo((struct sockaddr *)&data_source,
 			    data_source.su_len, hbuf, sizeof(hbuf), pbuf,
@@ -1814,7 +1814,7 @@ statcmd(void)
 {
 	union sockunion *su;
 	u_char *a, *p;
-	char hbuf[MAXHOSTNAMELEN];
+	char hbuf[HOST_NAME_MAX+1];
 	int ispassive;
 	int error;
 
@@ -2092,7 +2092,7 @@ void
 replydirname(const char *name, const char *message)
 {
 	char *p, *ep;
-	char npath[MAXPATHLEN * 2];
+	char npath[PATH_MAX * 2];
 
 	p = npath;
 	ep = &npath[sizeof(npath) - 1];
@@ -2137,7 +2137,7 @@ removedir(char *name)
 void
 pwd(void)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	if (getcwd(path, sizeof(path)) == NULL)
 		perror_reply(550, "Can't get current directory");
@@ -2596,7 +2596,7 @@ epsv_protounsupp(const char *message)
 static int
 guniquefd(char *local, char **nam)
 {
-	static char new[MAXPATHLEN];
+	static char new[PATH_MAX];
 	struct stat st;
 	int count, len, fd;
 	char *cp;
@@ -2715,7 +2715,7 @@ send_file_list(char *whichf)
 			continue;
 
 		while ((dir = readdir(dirp)) != NULL) {
-			char nbuf[MAXPATHLEN];
+			char nbuf[PATH_MAX];
 
 			if (recvurg) {
 				myoob();
@@ -2797,9 +2797,9 @@ reapchild(int signo)
 void
 logxfer(char *name, off_t size, time_t start)
 {
-	char buf[400 + MAXHOSTNAMELEN*4 + MAXPATHLEN*4];
-	char dir[MAXPATHLEN], path[MAXPATHLEN], rpath[MAXPATHLEN];
-	char vremotehost[MAXHOSTNAMELEN*4], vpath[MAXPATHLEN*4];
+	char buf[400 + (HOST_NAME_MAX+1)*4 + PATH_MAX*4];
+	char dir[PATH_MAX], path[PATH_MAX], rpath[PATH_MAX];
+	char vremotehost[(HOST_NAME_MAX+1)*4], vpath[PATH_MAX*4];
 	char *vpw;
 	time_t now;
 	int len;

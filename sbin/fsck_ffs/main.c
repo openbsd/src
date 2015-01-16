@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2013/11/01 17:36:18 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -30,8 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG */
 #include <sys/time.h>
+#include <sys/signal.h>
 #include <sys/mount.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>

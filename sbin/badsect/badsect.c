@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.24 2014/05/22 14:38:48 krw Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.25 2015/01/16 06:39:56 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * this program can be used if the driver for the file system in question
  * does not support bad block forwarding.
  */
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE isclr */
 #include <sys/stat.h>
 
 #include <ufs/ffs/fs.h>
@@ -53,6 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <err.h>
 
 static int chkuse(daddr_t, int);

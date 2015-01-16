@@ -328,9 +328,7 @@ send_igmp(u_int32_t src, u_int32_t dst, int type, int code,
 
     bzero(&sdst, sizeof(sdst));
     sdst.sin_family = AF_INET;
-#if (defined(BSD) && (BSD >= 199103))
     sdst.sin_len = sizeof(sdst);
-#endif
     sdst.sin_addr.s_addr = dst;
     if (sendto(igmp_socket, send_buf, ntohs(ip->ip_len), 0,
 			(struct sockaddr *)&sdst, sizeof(sdst)) < 0) {

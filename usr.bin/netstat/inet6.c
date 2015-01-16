@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.46 2014/08/14 12:55:50 mpi Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.47 2015/01/16 06:40:10 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
@@ -60,6 +60,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include "netstat.h"
 
 struct	socket sockb;
@@ -1113,7 +1114,7 @@ inet6name(struct in6_addr *in6p)
 	char *cp;
 	static char line[NI_MAXHOST];
 	struct hostent *hp;
-	static char domain[MAXHOSTNAMELEN];
+	static char domain[HOST_NAME_MAX+1];
 	static int first = 1;
 	char hbuf[NI_MAXHOST];
 	struct sockaddr_in6 sin6;

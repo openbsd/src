@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.63 2015/01/13 09:21:15 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.64 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <err.h>
 #include <pwd.h>
@@ -571,7 +572,7 @@ server_http_time(time_t t, char *tmbuf, size_t len)
 const char *
 server_http_host(struct sockaddr_storage *ss, char *buf, size_t len)
 {
-	char		hbuf[MAXHOSTNAMELEN];
+	char		hbuf[HOST_NAME_MAX+1];
 	in_port_t	port;
 
 	if (print_host(ss, buf, len) == NULL)
@@ -768,8 +769,8 @@ server_close_http(struct client *clt)
 int
 server_response(struct httpd *httpd, struct client *clt)
 {
-	char			 path[MAXPATHLEN];
-	char			 hostname[MAXHOSTNAMELEN];
+	char			 path[PATH_MAX];
+	char			 hostname[HOST_NAME_MAX+1];
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct http_descriptor	*resp = clt->clt_descresp;
 	struct server		*srv = clt->clt_srv;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.13 2014/07/13 16:08:53 pelikan Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.14 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* roundup */
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "fsck.h"
 #include "fsutil.h"
@@ -60,7 +61,7 @@ pass2(void)
 	struct inoinfo **inpend;
 	struct inodesc curino;
 	struct ext2fs_dinode dino;
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	switch (statemap[EXT2_ROOTINO]) {
 
@@ -196,8 +197,8 @@ pass2check(struct inodesc *idesc)
 	struct ext2fs_dinode *dp;
 	char *errmsg;
 	struct ext2fs_direct proto;
-	char namebuf[MAXPATHLEN + 1];
-	char pathbuf[MAXPATHLEN + 1];
+	char namebuf[PATH_MAX + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	/*
 	 * check for "."

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.27 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.28 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,6 @@
  * Format and print AppleTalk packets.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
@@ -43,6 +42,7 @@ struct rtentry;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -556,7 +556,7 @@ static void
 init_atalk(void)
 {
 	struct hnamemem *tp;
-	char nambuf[MAXHOSTNAMELEN + 20];
+	char nambuf[HOST_NAME_MAX+1 + 20];
 	char line[BUFSIZ];
 	int i1, i2, i3;
 
@@ -587,7 +587,7 @@ ataddr_string(u_short atnet, u_char athost)
 {
 	register struct hnamemem *tp, *tp2;
 	register int i = (atnet << 8) | athost;
-	char nambuf[MAXHOSTNAMELEN + 20];
+	char nambuf[HOST_NAME_MAX+1 + 20];
 	static int first = 1;
 
 	if (first) {

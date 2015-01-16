@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.62 2014/01/21 23:05:09 jsg Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.63 2015/01/16 06:40:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -36,6 +36,7 @@
 #include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <errno.h>
 #include <ctype.h>
 #include <netdb.h>
@@ -70,7 +71,7 @@ struct _dom_binding {
 	int dom_lockfd;
 	int dom_alive;
 	u_int32_t dom_xid;
-	char dom_servlist[MAXPATHLEN];
+	char dom_servlist[PATH_MAX];
 	FILE *dom_servlistfp;
 };
 
@@ -132,7 +133,7 @@ ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 {
 	static struct ypbind_resp res;
 	struct _dom_binding *ypdb;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	time_t now;
 	int count = 0;
 
@@ -333,7 +334,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	struct sockaddr_in sin;
 	struct timeval tv;
 	fd_set *fdsrp = NULL;
@@ -679,7 +680,7 @@ pings(struct _dom_binding *ypdb)
 	struct rpc_msg msg;
 	struct sockaddr_in bindsin;
 	char buf[1400];
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	enum clnt_stat st;
 	int outlen;
 	AUTH *rpcua;
@@ -969,7 +970,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	struct _dom_binding *ypdb;
 	struct iovec iov[2];
 	struct ypbind_resp ybr;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	int fd;
 
 	if (strchr(dom, '/'))

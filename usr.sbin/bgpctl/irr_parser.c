@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.11 2013/11/22 15:15:16 deraadt Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.12 2015/01/16 06:40:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -17,13 +17,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "irrfilter.h"
 

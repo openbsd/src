@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.101 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.102 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -244,9 +244,9 @@ void
 cvs_server_static_directory(char *data)
 {
 	FILE *fp;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 	    server_currentdir, CVS_PATH_STATICENTRIES);
 
 	if ((fp = fopen(fpath, "w+")) == NULL) {
@@ -260,12 +260,12 @@ void
 cvs_server_sticky(char *data)
 {
 	FILE *fp;
-	char tagpath[MAXPATHLEN];
+	char tagpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Sticky");
 
-	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(tagpath, PATH_MAX, "%s/%s",
 	    server_currentdir, CVS_PATH_TAG);
 
 	if ((fp = fopen(tagpath, "w+")) == NULL) {
@@ -392,7 +392,7 @@ cvs_server_modified(char *data)
 	size_t flen;
 	mode_t fmode;
 	const char *errstr;
-	char *mode, *len, fpath[MAXPATHLEN];
+	char *mode, *len, fpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Modified");
@@ -411,7 +411,7 @@ cvs_server_modified(char *data)
 		fatal("cvs_server_modified: %s", errstr);
 	xfree(len);
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", server_currentdir, data);
 
 	if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
 		fatal("cvs_server_modified: %s: %s", fpath, strerror(errno));
@@ -432,7 +432,7 @@ cvs_server_useunchanged(char *data)
 void
 cvs_server_unchanged(char *data)
 {
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent;
 	char sticky[CVS_ENT_MAXLINELEN];
@@ -444,7 +444,7 @@ cvs_server_unchanged(char *data)
 	/* sorry, we have to use TMP_DIR */
 	disable_fast_checkout = 1;
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", server_currentdir, data);
 
 	entlist = cvs_ent_open(server_currentdir);
 	ent = cvs_ent_get(entlist, data);
@@ -771,13 +771,13 @@ void
 cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 {
 	char *p;
-	char repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char repo[PATH_MAX], fpath[PATH_MAX];
 
 	if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 		*p = '\0';
 
-	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", repo, cf->file_name);
+	cvs_get_repository_path(cf->file_wd, repo, PATH_MAX);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", repo, cf->file_name);
 
 	cvs_server_send_response("%s %s/", resp, cf->file_wd);
 	cvs_remote_output(fpath);
@@ -789,11 +789,11 @@ cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 void
 cvs_server_set_sticky(const char *dir, const char *tag)
 {
-	char fpath[MAXPATHLEN];
-	char repo[MAXPATHLEN];
+	char fpath[PATH_MAX];
+	char repo[PATH_MAX];
 
-	cvs_get_repository_path(dir, repo, MAXPATHLEN);
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/", repo);
+	cvs_get_repository_path(dir, repo, PATH_MAX);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/", repo);
 
 	cvs_server_send_response("Set-sticky %s/", dir);
 	cvs_remote_output(fpath);
@@ -803,11 +803,11 @@ cvs_server_set_sticky(const char *dir, const char *tag)
 void
 cvs_server_clear_sticky(char *dir)
 {
-	char fpath[MAXPATHLEN];
-	char repo[MAXPATHLEN];
+	char fpath[PATH_MAX];
+	char repo[PATH_MAX];
 
-	cvs_get_repository_path(dir, repo, MAXPATHLEN);
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/", repo);
+	cvs_get_repository_path(dir, repo, PATH_MAX);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/", repo);
 
 	cvs_server_send_response("Clear-sticky %s//", dir);
 	cvs_remote_output(fpath);

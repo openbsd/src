@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.17 2014/05/18 09:29:54 espie Exp $	*/
+/*	$OpenBSD: pack.c,v 1.18 2015/01/16 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
  *
  *	from: @(#)pack.c	8.1 (Berkeley) 6/6/93
  */
-
-#include <sys/param.h>
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2014/12/16 18:37:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ main(int argc, char **argv)
 			/*
 			 * Next argument is person to pretend to be.
 			 */
-			if (strlen(optarg) >= MAXLOGNAME)
+			if (strlen(optarg) >= LOGIN_NAME_MAX)
 				errx(1, "username `%s' too long", optarg);
 			unsetenv("MAIL");
 			myname = optarg;

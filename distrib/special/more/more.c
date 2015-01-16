@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.34 2013/11/27 20:25:47 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.35 2015/01/16 06:39:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -62,7 +62,7 @@
  *  o POSIX compliance
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -81,6 +81,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <limits.h>
 #include <paths.h>
 
 #define Fopen(s, m)	(Currline = 0, file_pos = 0, fopen(s,m))

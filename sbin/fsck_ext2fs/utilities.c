@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.23 2014/07/13 16:08:53 pelikan Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.24 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE isset setbit */
 #include <sys/time.h>
+#include <sys/signal.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>

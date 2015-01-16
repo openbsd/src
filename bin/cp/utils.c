@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.34 2014/04/24 01:34:35 tedu Exp $	*/
+/*	$OpenBSD: utils.c,v 1.35 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>		/* for MAXBSIZE */
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "extern.h"
 
@@ -201,7 +202,7 @@ int
 copy_link(FTSENT *p, int exists)
 {
 	int len;
-	char link[MAXPATHLEN];
+	char link[PATH_MAX];
 
 	if ((len = readlink(p->fts_path, link, sizeof(link)-1)) == -1) {
 		warn("readlink: %s", p->fts_path);

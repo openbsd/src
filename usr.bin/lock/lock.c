@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.27 2013/08/22 04:43:40 guenther Exp $	*/
+/*	$OpenBSD: lock.c,v 1.28 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  * an argument of the form -time where time is in minutes
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <signal.h>
@@ -55,6 +54,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <login_cap.h>
 #include <bsd_auth.h>
@@ -75,7 +75,7 @@ extern	char *__progname;
 int
 main(int argc, char *argv[])
 {
-	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ], date[256];
+	char hostname[HOST_NAME_MAX+1], s[BUFSIZ], s1[BUFSIZ], date[256];
 	char *p, *style, *nstyle, *ttynam;
 	struct itimerval ntimer, otimer;
 	int ch, sectimeout, usemine, cnt, tries = 10, backoff = 3;

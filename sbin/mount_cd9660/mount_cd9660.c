@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.20 2011/06/27 19:48:27 tedu Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.21 2015/01/16 06:39:59 deraadt Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #define CD9660
 #include <sys/mount.h>
 
@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "mntopts.h"
 
@@ -62,7 +63,7 @@ main(int argc, char *argv[])
 {
 	struct iso_args args;
 	int ch, mntflags, opts, sess = 0;
-	char *dev, dir[MAXPATHLEN];
+	char *dev, dir[PATH_MAX];
 	const char *errstr;
 
 	mntflags = opts = 0;

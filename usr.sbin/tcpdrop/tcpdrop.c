@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.16 2015/01/13 03:43:18 lteo Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.17 2015/01/16 06:40:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/queue.h>

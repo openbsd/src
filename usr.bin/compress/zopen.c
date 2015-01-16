@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.18 2011/09/22 10:41:04 deraadt Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.19 2015/01/16 06:40:06 deraadt Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@
  *	Any file produced by compress(1) can be read.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -70,6 +69,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "compress.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define	BITS		16		/* Default bits. */
 #define	HSIZE		69001		/* 95% occupancy */
@@ -636,7 +637,7 @@ getcode(struct s_zstate *zs)
 			zs->zs_ebp = bp + bits;
 		}
 		zs->zs_offset = 0;
-		zs->zs_size = MIN(zs->zs_n_bits, zs->zs_ebp - zs->zs_bp);
+		zs->zs_size = MINIMUM(zs->zs_n_bits, zs->zs_ebp - zs->zs_bp);
 		if (zs->zs_size == 0)
 			return -1;
 		/* Round size down to integral number of codes. */

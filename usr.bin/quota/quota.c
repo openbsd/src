@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.32 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.33 2015/01/16 06:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -35,7 +35,7 @@
 /*
  * Disk quota reporting program.
  */
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -67,7 +67,7 @@ struct quotause {
 	struct	quotause *next;
 	long	flags;
 	struct	dqblk dqblk;
-	char	fsname[MAXPATHLEN + 1];
+	char	fsname[PATH_MAX + 1];
 };
 #define	FOUND	0x01
 

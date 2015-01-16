@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.29 2013/08/22 04:43:41 guenther Exp $	*/
+/*	$OpenBSD: create.c,v 1.30 2015/01/16 06:40:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <fcntl.h>
@@ -40,6 +39,7 @@
 #include <pwd.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <vis.h>
@@ -57,7 +57,7 @@ extern u_int32_t crc_total;
 extern int ftsoptions;
 extern int dflag, iflag, nflag, sflag;
 extern u_int keys;
-extern char fullpath[MAXPATHLEN];
+extern char fullpath[PATH_MAX];
 
 static gid_t gid;
 static uid_t uid;
@@ -74,7 +74,7 @@ cwalk(void)
 	FTS *t;
 	FTSENT *p;
 	time_t clock;
-	char *argv[2], host[MAXHOSTNAMELEN];
+	char *argv[2], host[HOST_NAME_MAX+1];
 	int indent = 0;
 
 	(void)time(&clock);

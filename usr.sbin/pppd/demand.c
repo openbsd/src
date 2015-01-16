@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.10 2011/04/30 18:49:38 nicm Exp $	*/
+/*	$OpenBSD: demand.c,v 1.11 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -35,14 +35,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <syslog.h>
-#include <netdb.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -54,6 +46,12 @@
 #include <net/bpf.h>
 #include <pcap.h>
 #endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <syslog.h>
 
 #include "pppd.h"
 #include "fsm.h"

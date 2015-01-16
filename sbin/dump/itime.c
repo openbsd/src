@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.18 2014/07/11 16:01:41 halex Exp $	*/
+/*	$OpenBSD: itime.c,v 1.19 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "dump.h"
 

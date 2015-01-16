@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.82 2014/08/18 09:43:02 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.83 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 #include <sys/queue.h>
+#include <limits.h>
 #include <imsg.h>
 
 #include "types.h"
@@ -499,7 +500,7 @@ struct iked_message {
 };
 
 struct iked_user {
-	char			 usr_name[MAXLOGNAME];
+	char			 usr_name[LOGIN_NAME_MAX];
 	char			 usr_pass[IKED_PASSWORD_SIZE];
 	RB_ENTRY(iked_user)	 usr_entry;
 };
@@ -562,7 +563,7 @@ TAILQ_HEAD(iked_ocsp_requests, iked_ocsp_entry);
  */
 
 struct iked {
-	char				 sc_conffile[MAXPATHLEN];
+	char				 sc_conffile[PATH_MAX];
 
 	u_int32_t			 sc_opts;
 	u_int8_t			 sc_passive;

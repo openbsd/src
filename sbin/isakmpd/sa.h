@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.50 2013/11/21 22:25:02 yasuoka Exp $	 */
+/* $OpenBSD: sa.h,v 1.51 2015/01/16 06:39:59 deraadt Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -34,7 +34,6 @@
 #ifndef _SA_H_
 #define _SA_H_
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>

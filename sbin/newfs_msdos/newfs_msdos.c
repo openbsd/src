@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.24 2014/07/10 20:09:53 tobias Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.25 2015/01/16 06:40:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* powerof2 */
 #include <sys/stat.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -43,7 +43,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #define MAXU16	  0xffff	/* maximum unsigned 16-bit quantity */
 #define BPN	  4		/* bits per nibble */
@@ -229,7 +233,7 @@ main(int argc, char *argv[])
     static u_int opt_s, opt_u;
     static int opt_N;
     static int Iflag, mflag, oflag;
-    char buf[MAXPATHLEN];
+    char buf[PATH_MAX];
     struct stat sb;
     struct timeval tv;
     struct bpb bpb;
@@ -479,7 +483,7 @@ main(int argc, char *argv[])
 	    x = bpb.bkbs + 1;
     }
     if (!bpb.res)
-	bpb.res = fat == 32 ? MAX(x, MAX(16384 / bpb.bps, 4)) : x;
+	bpb.res = fat == 32 ? MAXIMUM(x, MAXIMUM(16384 / bpb.bps, 4)) : x;
     else if (bpb.res < x)
 	errx(1, "too few reserved sectors");
     if (fat != 32 && !bpb.rde)
@@ -503,7 +507,7 @@ main(int argc, char *argv[])
     x1 += x * bpb.nft;
     x = (u_int64_t)(bpb.bsec - x1) * bpb.bps * NPB /
 	(bpb.spc * bpb.bps * NPB + fat / BPN * bpb.nft);
-    x2 = howmany((RESFTE + MIN(x, maxcls(fat))) * (fat / BPN),
+    x2 = howmany((RESFTE + MINIMUM(x, maxcls(fat))) * (fat / BPN),
 		 bpb.bps * NPB);
     if (!bpb.bspf) {
 	bpb.bspf = x2;

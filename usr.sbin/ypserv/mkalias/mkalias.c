@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.26 2013/12/05 14:18:54 jca Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.27 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -146,10 +145,10 @@ main(int argc, char *argv[])
 	datum	key, val;
 	DBM	*new_db = NULL;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN];
-	char	db_tempname[MAXPATHLEN];
+	char	db_mapname[PATH_MAX], db_outfile[PATH_MAX];
+	char	db_tempname[PATH_MAX];
 	char	user[4096], host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
-	char	myname[MAXHOSTNAMELEN], datestr[11], *slash;
+	char	myname[HOST_NAME_MAX+1], datestr[11], *slash;
 
 	while ((ch = getopt(argc, argv, "Edensuv")) != -1)
 		switch (ch) {
@@ -196,7 +195,7 @@ main(int argc, char *argv[])
 	}
 
 	if (output != NULL) {
-		if (strlen(output) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+		if (strlen(output) + strlen(YPDB_SUFFIX) > PATH_MAX) {
 			errx(1, "%s: file name too long", output);
 			/* NOTREACHED */
 		}
@@ -213,7 +212,7 @@ main(int argc, char *argv[])
 		/* note: output is now directory where map goes ! */
 
 		if (strlen(output) + strlen(mapname) +
-		    strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+		    strlen(YPDB_SUFFIX) > PATH_MAX) {
 			errx(1, "%s: directory name too long", output);
 			/* NOTREACHED */
 		}

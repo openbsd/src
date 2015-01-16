@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.16 2011/09/22 09:09:42 stsp Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.17 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
@@ -30,12 +30,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "hexdump.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 FS *fshead;				/* head of format strings */
 int blocksize;				/* data block size */
@@ -64,7 +65,7 @@ main(int argc, char *argv[])
 			blocksize = tfs->bcnt;
 	}
 	if (length != -1) {
-		iobufsiz = MIN(length, blocksize);
+		iobufsiz = MINIMUM(length, blocksize);
 		if ((iobuf = malloc(iobufsiz)) == NULL)
 			err(1, NULL);
 	}

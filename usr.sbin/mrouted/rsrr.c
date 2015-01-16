@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsrr.c,v 1.12 2013/04/21 06:42:43 tedu Exp $	*/
+/*	$OpenBSD: rsrr.c,v 1.13 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -40,10 +40,7 @@
 #ifdef RSRR
 
 #include "defs.h"
-#include <sys/param.h>
-#if (defined(BSD) && (BSD >= 199103))
 #include <stddef.h>
-#endif
 
 /* Taken from prune.c */
 /*
@@ -96,13 +93,9 @@ rsrr_init(void)
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sun_family = AF_UNIX;
     strlcpy(serv_addr.sun_path, RSRR_SERV_PATH, sizeof serv_addr.sun_path);
-#if (defined(BSD) && (BSD >= 199103))
     servlen = offsetof(struct sockaddr_un, sun_path) +
 		strlen(serv_addr.sun_path);
     serv_addr.sun_len = servlen;
-#else
-    servlen = sizeof(serv_addr.sun_family) + strlen(serv_addr.sun_path);
-#endif
 
     if (bind(rsrr_socket, (struct sockaddr *) &serv_addr, servlen) < 0)
 	logit(LOG_ERR, errno, "Can't bind RSRR socket");

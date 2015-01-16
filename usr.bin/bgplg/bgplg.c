@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.12 2013/11/25 18:02:50 deraadt Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.13 2015/01/16 06:40:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -16,15 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/param.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -247,7 +247,7 @@ main(void)
 {
 	char *query, *self, *cmd = NULL, *req;
 	char **argv = NULL;
-	char myname[MAXHOSTNAMELEN];
+	char myname[HOST_NAME_MAX+1];
 	int ret = 1, argc = 0, query_length = 0;
 	struct stat st;
 	u_int i;

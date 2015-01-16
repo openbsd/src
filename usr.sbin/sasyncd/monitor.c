@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.18 2014/06/29 00:58:45 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.19 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -43,6 +42,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <imsg.h>
 
 #include "types.h"	/* iked imsg types */
@@ -70,7 +70,7 @@ monitor_init(void)
 {
 	struct passwd	*pw = getpwnam(SASYNCD_USER);
 	extern char	*__progname;
-	char		root[MAXPATHLEN];
+	char		root[PATH_MAX];
 	int		p[2];
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, p) != 0) {

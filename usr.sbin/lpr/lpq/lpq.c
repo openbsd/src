@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.20 2013/11/24 21:32:32 deraadt Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.21 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -41,15 +41,16 @@
  * -P used to identify printer as per lpr/lprm
  */
 
-#include <sys/param.h>
 
 #include <ctype.h>
+#include <signal.h>
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <syslog.h>
 
 #include "lp.h"

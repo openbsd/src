@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.17 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.18 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ufs/ufs/dinode.h>
@@ -42,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -80,7 +80,7 @@ pathcheck(char *name)
 void
 mktempname(struct entry *ep)
 {
-	char oldname[MAXPATHLEN];
+	char oldname[PATH_MAX];
 
 	if (ep->e_flags & TMPNAME)
 		badentry(ep, "mktempname: called with TMPNAME");
@@ -98,7 +98,7 @@ mktempname(struct entry *ep)
 char *
 gentempname(struct entry *ep)
 {
-	static char name[MAXPATHLEN];
+	static char name[PATH_MAX];
 	struct entry *np;
 	long i = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.15 2013/10/18 15:19:40 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.16 2015/01/16 06:40:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/stdint.h>
 #include <sys/file.h>
 #include <sys/wait.h>

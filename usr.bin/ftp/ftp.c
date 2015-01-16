@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.88 2014/10/24 02:01:20 lteo Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.89 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ char *
 hookup(char *host, char *port)
 {
 	int s, tos, error;
-	static char hostnamebuf[MAXHOSTNAMELEN];
+	static char hostnamebuf[HOST_NAME_MAX+1];
 	struct addrinfo hints, *res, *res0, *ares;
 	char hbuf[NI_MAXHOST];
 	char *cause = "unknown";
@@ -1755,7 +1755,7 @@ pswitch(int flag)
 	sig_t oldintr;
 	static struct comvars {
 		int connect;
-		char name[MAXHOSTNAMELEN];
+		char name[HOST_NAME_MAX+1];
 		union sockunion mctl;
 		union sockunion hctl;
 		FILE *in;
@@ -1770,8 +1770,8 @@ pswitch(int flag)
 		char nti[17];
 		char nto[17];
 		int mapflg;
-		char mi[MAXPATHLEN];
-		char mo[MAXPATHLEN];
+		char mi[PATH_MAX];
+		char mo[PATH_MAX];
 	} proxstruct, tmpstruct;
 	struct comvars *ip, *op;
 
@@ -1996,7 +1996,7 @@ reset(int argc, char *argv[])
 char *
 gunique(const char *local)
 {
-	static char new[MAXPATHLEN];
+	static char new[PATH_MAX];
 	char *cp = strrchr(local, '/');
 	int d, count=0;
 	char ext = '1';

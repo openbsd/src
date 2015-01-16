@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.25 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.26 2015/01/16 06:40:14 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  * is entitled "Mechanisms for Broadcast and Selective Broadcast".
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -47,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 #include <vis.h>
 #include <err.h>
@@ -148,7 +148,7 @@ makemsg(char *fname)
 	time_t now;
 	FILE *fp;
 	int fd;
-	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[MAXPATHLEN];
+	char *p, *whom, hostname[HOST_NAME_MAX+1], lbuf[100], tmpname[PATH_MAX];
 	char tmpbuf[5];
 	char *ttynam;
 

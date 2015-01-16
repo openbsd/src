@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.45 2014/05/20 01:25:24 guenther Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.46 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #include <a.out.h>
 #include <db.h>

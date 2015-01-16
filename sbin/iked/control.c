@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2014/06/03 06:25:47 yasuoka Exp $	*/
+/*	$OpenBSD: control.c,v 1.16 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -18,7 +18,6 @@
  */
 
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>

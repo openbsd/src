@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.33 2014/11/13 06:19:51 schwarze Exp $	*/
+/*	$OpenBSD: auth.c,v 1.34 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -77,6 +77,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <syslog.h>
 #include <pwd.h>
 #include <string.h>
@@ -552,7 +553,7 @@ auth_check_options()
 
     /* Default our_name to hostname, and user to our_name */
     if (our_name[0] == 0 || usehostname)
-	strlcpy(our_name, hostname, MAXHOSTNAMELEN);
+	strlcpy(our_name, hostname, HOST_NAME_MAX+1);
     if (user[0] == 0)
 	strlcpy(user, our_name, MAXNAMELEN);
 

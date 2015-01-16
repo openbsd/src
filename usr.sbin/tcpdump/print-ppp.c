@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.27 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.28 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,6 @@
  */
 
 #ifdef PPP
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/file.h>

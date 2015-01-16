@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.119 2014/10/10 08:15:25 otto Exp $	*/
+/*	$OpenBSD: co.c,v 1.120 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,7 @@ checkout_main(int argc, char **argv)
 	RCSNUM *rev;
 	RCSFILE *file;
 	const char *author, *date, *state;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 	char *rev_str, *username;
 	time_t rcs_mtime = -1;
 

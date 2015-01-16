@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.142 2014/10/29 03:33:14 dlg Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.143 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -121,7 +121,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -145,6 +144,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <string.h>
 #include <login_cap.h>
 #include <ifaddrs.h>
@@ -153,6 +153,8 @@
 #include <rpcsvc/nfs_prot.h>
 #include <event.h>
 #include "pathnames.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define	TOOMANY		256		/* don't start more than TOOMANY */
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
@@ -1428,8 +1430,8 @@ bump_nofile(void)
 		syslog(LOG_ERR, "getrlimit: %m");
 		return -1;
 	}
-	rl.rlim_cur = MIN(rl.rlim_max, rl.rlim_cur + FD_CHUNK);
-	rl.rlim_cur = MIN(FD_SETSIZE, rl.rlim_cur + FD_CHUNK);
+	rl.rlim_cur = MINIMUM(rl.rlim_max, rl.rlim_cur + FD_CHUNK);
+	rl.rlim_cur = MINIMUM(FD_SETSIZE, rl.rlim_cur + FD_CHUNK);
 	if (rl.rlim_cur <= rlim_nofile_cur) {
 		syslog(LOG_ERR,
 		    "bump_nofile: cannot extend file limit, max = %d",

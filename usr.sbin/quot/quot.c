@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.24 2013/11/12 22:27:12 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.25 2015/01/16 06:40:19 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG DEV_BSIZE MAXBSIZE */
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>

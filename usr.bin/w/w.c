@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.56 2014/07/08 23:24:28 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.57 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -35,10 +35,11 @@
  * This program is similar to the systat command on Tenex/Tops 10/20
  *
  */
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -77,7 +78,7 @@ int		header = 1;	/* true if -h flag: don't print heading */
 int		nflag = 1;	/* true if -n flag: don't convert addrs */
 int		sortidle;	/* sort by idle time */
 char	       *sel_user;	/* login of particular user selected */
-char		domain[MAXHOSTNAMELEN];
+char		domain[HOST_NAME_MAX+1];
 
 #define	NAME_WIDTH	8
 #define HOST_WIDTH	16
@@ -110,7 +111,7 @@ main(int argc, char *argv[])
 	struct in_addr addr;
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
-	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
+	char buf[HOST_NAME_MAX+1], errbuf[_POSIX2_LINE_MAX];
 
 	/* Are we w(1) or uptime(1)? */
 	p = __progname;

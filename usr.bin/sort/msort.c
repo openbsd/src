@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.24 2013/11/13 15:07:27 deraadt Exp $	*/
+/*	$OpenBSD: msort.c,v 1.25 2015/01/16 06:40:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,6 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/param.h>	/* ALIGN */
 
 #include "sort.h"
 #include "fsort.h"

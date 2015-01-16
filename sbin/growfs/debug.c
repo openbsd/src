@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.10 2014/05/24 17:56:17 krw Exp $	*/
+/*	$OpenBSD: debug.c,v 1.11 2015/01/16 06:39:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -42,7 +42,6 @@
  */
 
 /* ********************************************************** INCLUDES ***** */
-#include <sys/param.h>
 
 #include <limits.h>
 #include <stdio.h>
@@ -50,6 +49,9 @@
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #include "debug.h"
 
@@ -721,7 +723,7 @@ dbg_dump_ino(struct fs *sb, const char *comment, struct ufs1_dinode *ino)
 	    ino->di_ctimensec);
 
 	remaining_blocks = howmany(ino->di_size, sb->fs_bsize); /* XXX ts - +1? */
-	for (ictr = 0; ictr < MIN(NDADDR, remaining_blocks); ictr++) {
+	for (ictr = 0; ictr < MINIMUM(NDADDR, remaining_blocks); ictr++) {
 		fprintf(dbg_log, "db         int32_t[%x] 0x%08x\n", ictr,
 		    ino->di_db[ictr]);
 	}
@@ -799,7 +801,7 @@ dbg_dump_ufs2_ino(struct fs *sb, const char *comment, struct ufs2_dinode *ino)
 	/* XXX: What do we do with di_extb[NXADDR]? */
 
 	remaining_blocks = howmany(ino->di_size, sb->fs_bsize); /* XXX ts - +1? */
-	for (ictr = 0; ictr < MIN(NDADDR, remaining_blocks); ictr++) {
+	for (ictr = 0; ictr < MINIMUM(NDADDR, remaining_blocks); ictr++) {
 		fprintf(dbg_log, "db         daddr_t[%x] 0x%16jx\n", ictr,
 		    ino->di_db[ictr]);
 	}
@@ -851,7 +853,7 @@ dbg_dump_iblk(struct fs *sb, const char *comment, char *block, size_t length)
 		size = sizeof(int64_t);
 
 	mem = (unsigned int *)block;
-	for (i = 0; (size_t)i < MIN(howmany(sb->fs_bsize, size), length); i += 8) {
+	for (i = 0; (size_t)i < MINIMUM(howmany(sb->fs_bsize, size), length); i += 8) {
 		fprintf(dbg_log, "%04x: ", i);
 		for (j = 0; j < 8; j++) {
 			if ((size_t)(i + j) < length) {

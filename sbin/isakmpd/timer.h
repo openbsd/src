@@ -1,4 +1,4 @@
-/* $OpenBSD: timer.h,v 1.7 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: timer.h,v 1.8 2015/01/16 06:39:59 deraadt Exp $	 */
 /* $EOM: timer.h,v 1.6 1999/04/11 22:35:55 ho Exp $	 */
 
 /*
@@ -32,7 +32,6 @@
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 

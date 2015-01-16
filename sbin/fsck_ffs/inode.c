@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.44 2014/10/08 16:28:38 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.45 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG setbit btodb */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -42,10 +42,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "fsck.h"
 #include "fsutil.h"
 #include "extern.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 static ino_t startinum;
 
@@ -59,7 +63,7 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 	off_t sizepb, remsize;
 	mode_t mode;
 	int i;
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
@@ -151,7 +155,7 @@ iblock(struct inodesc *idesc, long ilevel, off_t isize)
 	int i, n, (*func)(struct inodesc *), nif;
 	off_t sizepb;
 	char buf[BUFSIZ];
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 	union dinode *dp;
 
 	if (idesc->id_type == ADDR) {
@@ -598,8 +602,8 @@ allocino(ino_t request, int type)
 	/* If necessary, extend the inoinfo array. grow exponentially */
 	if ((ino % sblock.fs_ipg) >= (uint64_t)inostathead[cg].il_numalloced) {
 		unsigned long newalloced, i;
-		newalloced = MIN(sblock.fs_ipg,
-			MAX(2 * inostathead[cg].il_numalloced, 10));
+		newalloced = MINIMUM(sblock.fs_ipg,
+			MAXIMUM(2 * inostathead[cg].il_numalloced, 10));
 		info = calloc(newalloced, sizeof(struct inostat));
 		if (info == NULL) {
 			pwarn("cannot alloc %zu bytes to extend inoinfo\n",

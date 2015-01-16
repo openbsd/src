@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.49 2014/12/31 13:55:57 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.50 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -15,8 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/types.h>
@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
+#include <limits.h>
 #include "syslogd.h"
 
 /*
@@ -74,14 +75,14 @@ enum cmd_types {
 
 static int priv_fd = -1;
 static volatile pid_t child_pid = -1;
-static char config_file[MAXPATHLEN];
+static char config_file[PATH_MAX];
 static struct stat cf_info;
 static int allow_getnameinfo = 0;
 static volatile sig_atomic_t cur_state = STATE_INIT;
 
 /* Queue for the allowed logfiles */
 struct logname {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	TAILQ_ENTRY(logname) next;
 };
 static TAILQ_HEAD(, logname) lognames;
@@ -102,7 +103,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 {
 	int i, fd, socks[2], cmd, addr_len, result, restart;
 	size_t path_len, protoname_len, hostname_len, servname_len;
-	char path[MAXPATHLEN], protoname[5], hostname[MAXHOSTNAMELEN];
+	char path[PATH_MAX], protoname[5], hostname[HOST_NAME_MAX+1];
 	char servname[NI_MAXSERV];
 	struct sockaddr_storage addr;
 	struct stat cf_stat;
@@ -527,7 +528,7 @@ check_log_name(char *lognam, size_t logsize)
 		lg = malloc(sizeof(struct logname));
 		if (!lg)
 			err(1, "check_log_name() malloc");
-		strlcpy(lg->path, lognam, MAXPATHLEN);
+		strlcpy(lg->path, lognam, PATH_MAX);
 		TAILQ_INSERT_TAIL(&lognames, lg, next);
 		break;
 	case STATE_RUNNING:
@@ -564,7 +565,7 @@ increase_state(int state)
 int
 priv_open_tty(const char *tty)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	int cmd, fd;
 	size_t path_len;
 
@@ -587,7 +588,7 @@ priv_open_tty(const char *tty)
 int
 priv_open_log(const char *lognam)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	int cmd, fd;
 	size_t path_len;
 
@@ -698,7 +699,7 @@ int
 priv_getaddrinfo(char *proto, char *host, char *serv, struct sockaddr *addr,
     size_t addr_len)
 {
-	char protocpy[5], hostcpy[MAXHOSTNAMELEN], servcpy[NI_MAXSERV];
+	char protocpy[5], hostcpy[HOST_NAME_MAX+1], servcpy[NI_MAXSERV];
 	int cmd, ret_len;
 	size_t protoname_len, hostname_len, servname_len;
 

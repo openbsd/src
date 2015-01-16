@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.149 2014/11/20 05:51:21 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.150 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -41,6 +41,7 @@
 #include <imsg.h>
 #include <inttypes.h>
 #include <netdb.h>
+#include <limits.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -772,7 +773,7 @@ main		: BOUNCEWARN {
 			}
 		} filter_args;
 		| PKI STRING	{
-			char buf[MAXHOSTNAMELEN];
+			char buf[HOST_NAME_MAX+1];
 			xlowercase(buf, $2, sizeof(buf));
 			free($2);
 			pki = dict_get(conf->sc_pki_dict, buf);

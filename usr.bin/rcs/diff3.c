@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.34 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.35 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -126,7 +126,7 @@ static int last[4];
 static int eflag = 3;	/* default -E for compatibility with former RCS */
 static int oflag = 1;	/* default -E for compatibility with former RCS */
 static int debug  = 0;
-static char f1mark[MAXPATHLEN], f3mark[MAXPATHLEN];	/* markers for -E and -X */
+static char f1mark[PATH_MAX], f3mark[PATH_MAX];	/* markers for -E and -X */
 
 static int duplicate(struct range *, struct range *);
 static int edit(struct diff *, int, int);

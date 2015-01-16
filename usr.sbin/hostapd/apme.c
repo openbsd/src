@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.15 2007/02/08 11:15:55 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.16 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -16,9 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* roundup isclr */
 #include <sys/ioctl.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -41,6 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "hostapd.h"
 #include "iapp.h"

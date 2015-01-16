@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.25 2012/02/05 18:27:03 guenther Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.26 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #define _KERNEL			/* XXX */
 #include <sys/ipc.h>

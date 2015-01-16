@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2014/05/18 09:29:54 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2015/01/16 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -52,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "config.h"
 
@@ -313,7 +313,7 @@ static int
 mksymlinks(void)
 {
 	int ret;
-	char *p, buf[MAXPATHLEN];
+	char *p, buf[PATH_MAX];
 	const char *q;
 
 	snprintf(buf, sizeof buf, "arch/%s/include", machine);

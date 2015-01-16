@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.173 2014/09/03 07:42:47 giovanni Exp $	*/
+/*	$OpenBSD: lka.c,v 1.174 2015/01/16 06:40:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -36,6 +36,7 @@
 #include <openssl/ssl.h>
 #include <pwd.h>
 #include <resolv.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

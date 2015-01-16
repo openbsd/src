@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.42 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.43 2015/01/16 06:40:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,7 +20,6 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <dirent.h>
@@ -33,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "diff.h"
 #include "xmalloc.h"
@@ -51,7 +51,7 @@ diffdir(char *p1, char *p2, int flags)
 	struct dirent *dent1, **dp1, **edp1, **dirp1 = NULL;
 	struct dirent *dent2, **dp2, **edp2, **dirp2 = NULL;
 	size_t dirlen1, dirlen2;
-	char path1[MAXPATHLEN], path2[MAXPATHLEN];
+	char path1[PATH_MAX], path2[PATH_MAX];
 	int pos;
 
 	dirlen1 = strlcpy(path1, *p1 ? p1 : ".", sizeof(path1));
@@ -184,7 +184,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
     int flags)
 {
 	flags |= D_HEADER;
-	strlcpy(path1 + plen1, dp->d_name, MAXPATHLEN - plen1);
+	strlcpy(path1 + plen1, dp->d_name, PATH_MAX - plen1);
 	if (stat(path1, &stb1) != 0) {
 		if (!(Nflag || Pflag) || errno != ENOENT) {
 			warn("%s", path1);
@@ -194,7 +194,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
 		memset(&stb1, 0, sizeof(stb1));
 	}
 
-	strlcpy(path2 + plen2, dp->d_name, MAXPATHLEN - plen2);
+	strlcpy(path2 + plen2, dp->d_name, PATH_MAX - plen2);
 	if (stat(path2, &stb2) != 0) {
 		if (!Nflag || errno != ENOENT) {
 			warn("%s", path2);

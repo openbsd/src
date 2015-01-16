@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.12 2014/09/27 06:28:45 doug Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.13 2015/01/16 06:40:00 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -97,7 +97,8 @@
  *		    in the Linux kernel distribution
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE powerof2 roundup setbit isset MIN */
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.17 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.18 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -30,12 +30,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdarg.h>
 
 #include "csh.h"
@@ -66,11 +66,11 @@ dinit(Char *hp)
     char *tcp;
     Char *cp;
     struct directory *dp;
-    char    path[MAXPATHLEN];
+    char    path[PATH_MAX];
     static const char emsg[] = "csh: Trying to start from \"%s\"\n";
 
     /* Don't believe the login shell home, because it may be a symlink */
-    tcp = getcwd(path, MAXPATHLEN);
+    tcp = getcwd(path, PATH_MAX);
     if (tcp == NULL || *tcp == '\0') {
 	(void) fprintf(csherr, "csh: %s\n", strerror(errno));
 	if (hp && *hp) {
@@ -405,7 +405,7 @@ dfollow(Char *cp)
 {
     Char *dp;
     struct varent *c;
-    char    ebuf[MAXPATHLEN];
+    char    ebuf[PATH_MAX];
     int serrno;
 
     cp = globone(cp, G_ERROR);
@@ -428,7 +428,7 @@ dfollow(Char *cp)
 	&& (c = adrof(STRcdpath))) {
 	Char  **cdp;
 	Char *p;
-	Char    buf[MAXPATHLEN];
+	Char    buf[PATH_MAX];
 
 	for (cdp = c->vec; *cdp; cdp++) {
 	    for (dp = buf, p = *cdp; (*dp++ = *p++) != '\0';)
@@ -610,8 +610,8 @@ dcanon(Char *cp, Char *p)
     Char *p1, *p2;	/* general purpose */
     bool    slash;
 
-    Char    link[MAXPATHLEN];
-    char    tlink[MAXPATHLEN];
+    Char    link[PATH_MAX];
+    char    tlink[PATH_MAX];
     int     cc;
     Char   *newcp;
 
@@ -620,12 +620,12 @@ dcanon(Char *cp, Char *p)
      * cwd does not start with a path or the result would be too long abort().
      */
     if (*cp != '/') {
-	Char    tmpdir[MAXPATHLEN];
+	Char    tmpdir[PATH_MAX];
 
 	p1 = value(STRcwd);
 	if (p1 == NULL || *p1 != '/')
 	    abort();
-	if (Strlen(p1) + Strlen(cp) + 1 >= MAXPATHLEN)
+	if (Strlen(p1) + Strlen(cp) + 1 >= PATH_MAX)
 	    abort();
 	(void) Strlcpy(tmpdir, p1, sizeof tmpdir/sizeof(Char));
 	(void) Strlcat(tmpdir, STRslash, sizeof tmpdir/sizeof(Char));

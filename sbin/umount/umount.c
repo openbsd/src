@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.25 2014/02/21 19:00:01 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.26 2015/01/16 06:40:01 deraadt Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/time.h>
@@ -48,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 typedef enum { MNTON, MNTFROM } mntwhat;
@@ -151,7 +151,7 @@ umountfs(char *oname)
 	CLIENT *clp;
 	int so;
 	char *delimp, *hostp, *mntpt;
-	char *name, *newname, rname[MAXPATHLEN], type[MFSNAMELEN];
+	char *name, *newname, rname[PATH_MAX], type[MFSNAMELEN];
 
 	if (isduid(oname, 0) || realpath(oname, rname) == NULL)
 		mntpt = name = oname;

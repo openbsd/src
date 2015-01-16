@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.12 2011/10/21 14:48:02 ajacoutot Exp $	*/
+/*	$OpenBSD: uname.c,v 1.13 2015/01/16 06:40:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MACHINE_ARCH */
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>

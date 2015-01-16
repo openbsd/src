@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.72 2014/08/16 07:49:27 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.73 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ usage:
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	if (proxy) {
-		char *cp, *tp2, tmpbuf[MAXPATHLEN];
+		char *cp, *tp2, tmpbuf[PATH_MAX];
 
 		while ((cp = remglob(argv, 0, NULL)) != NULL) {
 			if (*cp == '\0') {
@@ -696,7 +696,7 @@ setprompt(int argc, char *argv[])
 void
 setgate(int argc, char *argv[])
 {
-	static char gsbuf[MAXHOSTNAMELEN];
+	static char gsbuf[HOST_NAME_MAX+1];
 
 	if (argc > 3) {
 		fprintf(ttyout, "usage: %s [on | off | host [port]]\n",
@@ -800,7 +800,7 @@ setdebug(int argc, char *argv[])
 void
 lcd(int argc, char *argv[])
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	char *oldargv1;
 
 	if (argc < 2)
@@ -993,7 +993,7 @@ shell(int argc, char *argv[])
 {
 	pid_t pid;
 	sig_t old1, old2;
-	char shellnam[MAXPATHLEN], *shellp, *namep;
+	char shellnam[PATH_MAX], *shellp, *namep;
 	int wait_status;
 
 	old1 = signal (SIGINT, SIG_IGN);
@@ -1120,7 +1120,7 @@ pwd(int argc, char *argv[])
 void
 lpwd(int argc, char *argv[])
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	if (getcwd(buf, sizeof(buf)) != NULL)
 		fprintf(ttyout, "Local directory %s\n", buf);
@@ -1462,10 +1462,10 @@ setnmap(int argc, char *argv[])
 		cp = strchr(altarg, ' ');
 	}
 	*cp = '\0';
-	(void)strncpy(mapin, altarg, MAXPATHLEN - 1);
+	(void)strncpy(mapin, altarg, PATH_MAX - 1);
 	while (*++cp == ' ')
 		continue;
-	(void)strncpy(mapout, cp, MAXPATHLEN - 1);
+	(void)strncpy(mapout, cp, PATH_MAX - 1);
 }
 
 void

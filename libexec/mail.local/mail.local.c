@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.32 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.33 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -41,6 +41,7 @@
 #include <pwd.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,7 +172,7 @@ deliver(int fd, char *name, int lockfile)
 	struct stat sb, fsb;
 	struct passwd *pw;
 	int mbfd=-1, rval=1, lfd=-1;
-	char biffmsg[100], buf[8*1024], path[MAXPATHLEN];
+	char biffmsg[100], buf[8*1024], path[PATH_MAX];
 	off_t curoff;
 	size_t off;
 	ssize_t nr, nw;

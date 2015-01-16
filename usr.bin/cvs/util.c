@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.156 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.157 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -366,7 +366,7 @@ cvs_rmdir(const char *path)
 	DIR *dirp;
 	struct dirent *ent;
 	struct stat st;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 
 	if (cvs_server_active == 0)
 		cvs_log(LP_TRACE, "cvs_rmdir(%s)", path);
@@ -444,7 +444,7 @@ done:
 void
 cvs_get_repository_path(const char *dir, char *dst, size_t len)
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	cvs_get_repository_name(dir, buf, sizeof(buf));
 	(void)xsnprintf(dst, len, "%s/%s", current_cvsroot->cr_dir, buf);
@@ -455,7 +455,7 @@ void
 cvs_get_repository_name(const char *dir, char *dst, size_t len)
 {
 	FILE *fp;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 
 	dst[0] = '\0';
 
@@ -501,7 +501,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 {
 	FILE *fp;
 	int fd;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	struct hash_data *hdata, hd;
 
 	hdata = hash_table_find(&created_cvs_directories, path, strlen(path));
@@ -565,7 +565,7 @@ cvs_mkpath(const char *path, char *tag)
 	FILE *fp;
 	size_t len;
 	struct hash_data *hdata, hd;
-	char *entry, *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
+	char *entry, *sp, *dp, *dir, *p, rpath[PATH_MAX], repo[PATH_MAX];
 
 	hdata = hash_table_find(&created_directories, path, strlen(path));
 	if (hdata != NULL)
@@ -662,7 +662,7 @@ void
 cvs_mkdir(const char *path, mode_t mode)
 {
 	size_t len;
-	char *sp, *dp, *dir, rpath[MAXPATHLEN];
+	char *sp, *dp, *dir, rpath[PATH_MAX];
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
 	    cvs_server_active == 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.29 2014/05/21 06:23:02 guenther Exp $	*/
+/*	$OpenBSD: rm.c,v 1.30 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/mount.h>
 
 #include <locale.h>
@@ -44,8 +43,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <pwd.h>
 #include <grp.h>
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 extern char *__progname;
 
@@ -304,7 +306,7 @@ rm_overwrite(char *file, struct stat *sbp)
 	}
 	if (fstatfs(fd, &fsb) == -1)
 		goto err;
-	bsize = MAX(fsb.f_iosize, 1024U);
+	bsize = MAXIMUM(fsb.f_iosize, 1024U);
 	if ((buf = malloc(bsize)) == NULL)
 		err(1, "%s: malloc", file);
 

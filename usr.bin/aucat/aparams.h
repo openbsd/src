@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.h,v 1.12 2012/04/11 06:05:43 ratchov Exp $	*/
+/*	$OpenBSD: aparams.h,v 1.13 2015/01/16 06:40:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,8 +16,6 @@
  */
 #ifndef APARAMS_H
 #define APARAMS_H
-
-#include <sys/param.h>
 
 #define NCHAN_MAX	16		/* max channel in a stream */
 #define RATE_MIN	4000		/* min sample rate */

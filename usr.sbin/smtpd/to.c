@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.17 2014/04/19 14:27:29 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.18 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <fts.h>
 #include <imsg.h>
+#include <limits.h>
 #include <inttypes.h>
 #include <libgen.h>
 #include <netdb.h>

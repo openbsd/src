@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.21 2014/07/14 05:41:00 guenther Exp $	*/
+/*	$OpenBSD: id.c,v 1.22 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -29,8 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <err.h>
 #include <errno.h>
 #include <grp.h>
@@ -39,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 void	current(void);
 void	pretty(struct passwd *);
@@ -200,7 +199,7 @@ current(void)
 	struct passwd *pw;
 	int cnt, ngroups;
 	uid_t uid, euid;
-	gid_t groups[NGROUPS], gid, egid, lastgid;
+	gid_t groups[NGROUPS_MAX], gid, egid, lastgid;
 	char *prefix;
 
 	uid = getuid();
@@ -221,7 +220,7 @@ current(void)
 		if ((gr = getgrgid(egid)))
 			(void)printf("(%s)", gr->gr_name);
 	}
-	if ((ngroups = getgroups(NGROUPS, groups))) {
+	if ((ngroups = getgroups(NGROUPS_MAX, groups))) {
 		for (prefix = " groups=", lastgid = (gid_t)-1, cnt = 0;
 		    cnt < ngroups; prefix = ", ", lastgid = gid) {
 			gid = groups[cnt++];
@@ -238,7 +237,7 @@ current(void)
 void
 user(struct passwd *pw)
 {
-	gid_t gid, groups[NGROUPS + 1];
+	gid_t gid, groups[NGROUPS_MAX + 1];
 	int cnt, ngroups;
 	uid_t uid;
 	struct group *gr;
@@ -249,7 +248,7 @@ user(struct passwd *pw)
 	(void)printf(" gid=%u", pw->pw_gid);
 	if ((gr = getgrgid(pw->pw_gid)))
 		(void)printf("(%s)", gr->gr_name);
-	ngroups = NGROUPS + 1;
+	ngroups = NGROUPS_MAX + 1;
 	(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
 	prefix = " groups=";
 	for (cnt = 0; cnt < ngroups;) {
@@ -268,16 +267,16 @@ void
 group(struct passwd *pw, int nflag)
 {
 	int cnt, ngroups;
-	gid_t gid, groups[NGROUPS + 1];
+	gid_t gid, groups[NGROUPS_MAX + 1];
 	struct group *gr;
 	char *prefix;
 
 	if (pw) {
-		ngroups = NGROUPS + 1;
+		ngroups = NGROUPS_MAX + 1;
 		(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
 	} else {
 		groups[0] = getgid();
-		ngroups = getgroups(NGROUPS, groups + 1) + 1;
+		ngroups = getgroups(NGROUPS_MAX, groups + 1) + 1;
 	}
 	prefix = "";
 	for (cnt = 0; cnt < ngroups;) {

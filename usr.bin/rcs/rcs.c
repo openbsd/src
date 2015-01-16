@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.81 2014/10/10 08:15:25 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.82 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,6 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -43,6 +44,8 @@
 #include "rcsprog.h"
 #include "rcsutil.h"
 #include "xmalloc.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /* invalid characters in RCS states */
 static const char rcs_state_invch[] = RCS_STATE_INVALCHAR;
@@ -981,7 +984,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 				/* XXX rcsnum_cmp() is totally broken for
 				 * this purpose.
 				 */
-				numlen = MIN(brev->rn_len,
+				numlen = MINIMUM(brev->rn_len,
 				    rb->rb_num->rn_len - 1);
 				for (i = 0; i < numlen; i++) {
 					if (rb->rb_num->rn_id[i] !=
@@ -1477,7 +1480,7 @@ rcs_expand_keywords(char *rcsfile_in, struct rcs_delta *rdp, BUF *bp, int mode)
 {
 	BUF *newbuf;
 	u_char *c, *kw, *fin;
-	char buf[256], *tmpf, resolved[MAXPATHLEN], *rcsfile;
+	char buf[256], *tmpf, resolved[PATH_MAX], *rcsfile;
 	u_char *line, *line2;
 	u_int i, j;
 	int kwtype;

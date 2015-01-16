@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.11 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.12 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <syslog.h>
 #include <unistd.h>
 

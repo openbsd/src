@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.73 2013/11/20 20:54:34 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.74 2015/01/16 06:40:06 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -52,7 +52,7 @@
  * $FreeBSD: cdcontrol.c,v 1.13 1996/06/25 21:01:27 ache Exp $
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* isset */
 #include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
@@ -67,6 +67,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <histedit.h>
 #include <util.h>
 #include <vis.h>
@@ -319,7 +320,7 @@ int
 run(int cmd, char *arg)
 {
 	int l, r, rc;
-	static char newcdname[MAXPATHLEN];
+	static char newcdname[PATH_MAX];
 
 	switch (cmd) {
 

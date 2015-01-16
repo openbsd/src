@@ -33,7 +33,7 @@
 /*
  * Quota report
  */
-#include <sys/param.h>
+#include <sys/param.h>	/* dbtob */
 #include <sys/stat.h>
 #include <ufs/ufs/quota.h>
 #include <fstab.h>

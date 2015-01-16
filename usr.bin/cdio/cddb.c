@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.19 2014/01/06 12:38:10 espie Exp $ */
+/* $OpenBSD: cddb.c,v 1.20 2015/01/16 06:40:06 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -24,7 +24,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/cdio.h>
@@ -34,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vis.h>
 #include "extern.h"
 
@@ -76,7 +76,7 @@ cddb_discid(int n, struct cd_toc_entry *e)
 void
 send_hello(FILE *cout)
 {
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[HOST_NAME_MAX+1];
 
 	if (gethostname(hostname, sizeof(hostname)) == -1)
 		strlcpy(hostname, "unknown", sizeof hostname);

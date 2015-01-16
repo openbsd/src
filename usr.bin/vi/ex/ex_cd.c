@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cd.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_cd.c,v 1.11 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 
 #include <bitstring.h>
@@ -38,7 +37,7 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 	ARGS *ap;
 	CHAR_T savech;
 	char *dir, *p, *t;	/* XXX: END OF THE STACK, DON'T TRUST GETCWD. */
-	char buf[MAXPATHLEN * 2];
+	char buf[PATH_MAX * 2];
 
 	/*
 	 * !!!

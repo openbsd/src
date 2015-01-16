@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.19 2013/11/22 04:14:00 deraadt Exp $	*/
+/*	$OpenBSD: preen.c,v 1.20 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/queue.h>

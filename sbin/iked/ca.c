@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.32 2014/12/05 07:24:45 mikeb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.33 2015/01/16 06:39:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1024,7 +1023,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 	int		 ret = -1;
 	FILE		*fp = NULL;
 	char		 idstr[IKED_ID_SIZE];
-	char		 file[MAXPATHLEN];
+	char		 file[PATH_MAX];
 	struct iked_id	 idp;
 
 	if (len == 0 && data == NULL)

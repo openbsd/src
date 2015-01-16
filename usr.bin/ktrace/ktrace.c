@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.30 2014/05/24 17:04:16 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.31 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>

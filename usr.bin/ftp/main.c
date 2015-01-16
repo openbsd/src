@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.95 2014/10/31 13:48:21 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.96 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 
 #include <ctype.h>
 #include <err.h>
-#include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -109,7 +108,7 @@ main(volatile int argc, char *argv[])
 {
 	int ch, top, rval;
 	struct passwd *pw = NULL;
-	char *cp, homedir[MAXPATHLEN];
+	char *cp, homedir[PATH_MAX];
 	char *outfile = NULL;
 	const char *errstr;
 	int dumb_terminal = 0;

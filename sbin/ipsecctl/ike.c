@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.78 2013/08/25 23:15:20 mikeb Exp $	*/
+/*	$OpenBSD: ike.c,v 1.79 2015/01/16 06:39:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "ipsecctl.h"
 
@@ -93,7 +94,7 @@ ike_section_peer(struct ipsec_rule *r, FILE *fd)
 static void
 ike_section_ids(struct ipsec_rule *r, FILE *fd)
 {
-	char myname[MAXHOSTNAMELEN];
+	char myname[HOST_NAME_MAX+1];
 
 	if (r->auth == NULL)
 		return;

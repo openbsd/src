@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.16 2014/01/12 11:26:48 deraadt Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.17 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -40,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -409,7 +409,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 	int advance;
 	int tlen, asn_bytes;
 	const u_char *p;
-	char buf[MAXHOSTNAMELEN + 100];
+	char buf[HOST_NAME_MAX+1 + 100];
 
 	p = dat;
 	tlen = len;
@@ -868,7 +868,7 @@ bgp_update_print(const u_char *dat, int length)
 #ifdef INET6
 		printf(" (Withdrawn routes: %d bytes)", len);
 #else	
-		char buf[MAXHOSTNAMELEN + 100];
+		char buf[HOST_NAME_MAX+1 + 100];
 		int wpfx;
 
 		TCHECK2(p[2], len);
@@ -949,7 +949,7 @@ bgp_update_print(const u_char *dat, int length)
 	if (dat + length > p) {
 		printf("(NLRI:");	/* ) */
 		while (dat + length > p) {
-			char buf[MAXHOSTNAMELEN + 100];
+			char buf[HOST_NAME_MAX+1 + 100];
 			i = decode_prefix4(p, buf, sizeof(buf));
 			if (i == -1) {
 				printf(" (illegal prefix length)");

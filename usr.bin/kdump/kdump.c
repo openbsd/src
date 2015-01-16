@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.96 2014/12/28 11:11:01 bluhm Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.97 2015/01/16 06:40:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -29,8 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN nitems */
 #include <sys/time.h>
+#include <sys/signal.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: key.c,v 1.14 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 
@@ -27,6 +26,8 @@
 
 #include "common.h"
 #include "../vi/vi.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 static int	v_event_append(SCR *, EVENT *);
 static int	v_event_grow(SCR *, int);
@@ -344,7 +345,7 @@ v_event_push(SCR *sp, EVENT *p_evp, CHAR_T *p_s, size_t nitems, u_int flags)
 	 */
 #define	TERM_PUSH_SHIFT	30
 	total = gp->i_cnt + gp->i_next + nitems + TERM_PUSH_SHIFT;
-	if (total >= gp->i_nelem && v_event_grow(sp, MAX(total, 64)))
+	if (total >= gp->i_nelem && v_event_grow(sp, MAXIMUM(total, 64)))
 		return (1);
 	if (gp->i_cnt)
 		MEMMOVE(gp->i_event + TERM_PUSH_SHIFT + nitems,
@@ -383,7 +384,7 @@ v_event_append(SCR *sp, EVENT *argp)
 	gp = sp->gp;
 	if (gp->i_event == NULL ||
 	    nevents > gp->i_nelem - (gp->i_next + gp->i_cnt))
-		v_event_grow(sp, MAX(nevents, 64));
+		v_event_grow(sp, MAXIMUM(nevents, 64));
 	evp = gp->i_event + gp->i_next + gp->i_cnt;
 	gp->i_cnt += nevents;
 

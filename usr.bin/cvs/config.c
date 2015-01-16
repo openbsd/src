@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.15 2008/03/02 11:58:45 joris Exp $	*/
+/*	$OpenBSD: config.c,v 1.16 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/dirent.h>
 #include <sys/resource.h>
 
@@ -83,7 +83,7 @@ cvs_read_config(char *name, int (*cb)(char *, int))
 	FILE *fp;
 	size_t len;
 	int lineno;
-	char *p, *buf, *lbuf, fpath[MAXPATHLEN];
+	char *p, *buf, *lbuf, fpath[PATH_MAX];
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
 	    current_cvsroot->cr_dir, name);

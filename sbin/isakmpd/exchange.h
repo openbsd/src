@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.33 2007/08/05 09:43:09 tom Exp $	 */
+/* $OpenBSD: exchange.h,v 1.34 2015/01/16 06:39:58 deraadt Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -32,7 +32,6 @@
 #ifndef _EXCHANGE_H_
 #define _EXCHANGE_H_
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 

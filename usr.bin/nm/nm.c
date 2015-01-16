@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.41 2014/04/28 18:49:28 miod Exp $	*/
+/*	$OpenBSD: nm.c,v 1.42 2015/01/16 06:40:10 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <a.out.h>
 #include <elf_abi.h>

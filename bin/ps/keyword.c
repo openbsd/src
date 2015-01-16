@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.41 2014/10/13 17:30:21 schwarze Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.42 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/proc.h>
@@ -114,7 +114,7 @@ VAR var[] = {
 	/* XXX */
 	{"ktracep", "KTRACEP", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_tracep), UINT64, "llx"},
 	{"lim", "LIM", NULL, 0, maxrss, 5},
-	{"login", "LOGIN", NULL, LJUST, logname, MAXLOGNAME},
+	{"login", "LOGIN", NULL, LJUST, logname, LOGIN_NAME_MAX},
 	{"logname", "", "login"},
 	{"lstart", "STARTED", NULL, LJUST|USER, lstarted, 28},
 	{"majflt", "MAJFLT", NULL, USER, pvar, 4, 0, POFF(p_uru_majflt), UINT64, "lld"},

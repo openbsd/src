@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.6 2014/08/14 12:44:44 mpi Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.7 2015/01/16 06:40:21 deraadt Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -40,7 +40,6 @@
  *     3GPP TS 32.295 - Charging Data Record (CDR) transfer (GTPv1')
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>

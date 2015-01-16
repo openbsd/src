@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.36 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: popen.c,v 1.37 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ handle_spool_locks(int action)
 		lockfp = NULL;
 	} else if (action == 1) {
 		char *cmd;
-		char buf[sizeof(_PATH_LOCKSPOOL) + MAXLOGNAME + 1];
+		char buf[sizeof(_PATH_LOCKSPOOL) + LOGIN_NAME_MAX + 1];
 
 		/* XXX - lockspool requires root for user arg, we do not */
 		if (uflag) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.20 2014/11/02 02:44:50 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.21 2015/01/16 06:40:19 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 

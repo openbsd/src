@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.294 2015/01/09 20:34:21 sthen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.295 2015/01/16 06:39:58 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -101,10 +101,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 #include <ifaddrs.h>
 
 #include "brconfig.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #define HWFEATURESBITS							\
 	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4"			\
@@ -968,14 +972,14 @@ printif(char *ifname, int ifaliases)
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			memset(&ifr6, 0, sizeof(ifr6));
 			memcpy(&ifr6.ifr_addr, ifa->ifa_addr,
-			    MIN(sizeof(ifr6.ifr_addr), ifa->ifa_addr->sa_len));
+			    MINIMUM(sizeof(ifr6.ifr_addr), ifa->ifa_addr->sa_len));
 			ifrp = (struct ifreq *)&ifr6;
 		} else
 #endif
 		{
 			memset(&ifr, 0, sizeof(ifr));
 			memcpy(&ifr.ifr_addr, ifa->ifa_addr,
-			    MIN(sizeof(ifr.ifr_addr), ifa->ifa_addr->sa_len));
+			    MINIMUM(sizeof(ifr.ifr_addr), ifa->ifa_addr->sa_len));
 			ifrp = &ifr;
 		}
 		strlcpy(name, ifa->ifa_name, sizeof(name));
@@ -3261,7 +3265,7 @@ in6_status(int force)
 void
 settunnel(const char *src, const char *dst)
 {
-	char buf[MAXHOSTNAMELEN+sizeof (":65535")], *dstport;
+	char buf[HOST_NAME_MAX+1 + sizeof (":65535")], *dstport;
 	const char *dstip;
 	struct addrinfo *srcres, *dstres;
 	int ecode;
@@ -4155,7 +4159,7 @@ setpflow_receiver(const char *val, int d)
 	struct pflowreq preq;
 	struct addrinfo hints, *receiver;
 	int ecode;
-	char *ip, *port, buf[MAXHOSTNAMELEN+sizeof (":65535")];
+	char *ip, *port, buf[HOST_NAME_MAX+1 + sizeof (":65535")];
 
 	if (strchr (val, ':') == NULL)
 		errx(1, "%s bad value", val);
@@ -4721,7 +4725,7 @@ in6_getaddr(const char *s, int which)
 {
 	struct sockaddr_in6 *sin6 = sin6tab[which];
 	struct addrinfo hints, *res;
-	char buf[MAXHOSTNAMELEN+sizeof("/128")], *pfxlen;
+	char buf[HOST_NAME_MAX+1 + sizeof("/128")], *pfxlen;
 	int error;
 
 	memset(&hints, 0, sizeof(hints));

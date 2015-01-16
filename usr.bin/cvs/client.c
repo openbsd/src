@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.123 2010/09/29 18:14:52 nicm Exp $	*/
+/*	$OpenBSD: client.c,v 1.124 2015/01/16 06:40:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -399,19 +399,19 @@ cvs_client_senddir(const char *dir)
 {
 	struct stat st;
 	int nb;
-	char *d, *date, fpath[MAXPATHLEN], repo[MAXPATHLEN], *tag;
+	char *d, *date, fpath[PATH_MAX], repo[PATH_MAX], *tag;
 
 	d = NULL;
 
 	if (lastdir != NULL && !strcmp(dir, lastdir))
 		return;
 
-	cvs_get_repository_path(dir, repo, MAXPATHLEN);
+	cvs_get_repository_path(dir, repo, PATH_MAX);
 
 	if (cvs_cmdop != CVS_OP_RLOG)
 		cvs_client_send_request("Directory %s\n%s", dir, repo);
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 	    dir, CVS_PATH_STATICENTRIES);
 
 	if (stat(fpath, &st) == 0 && (st.st_mode & (S_IRUSR|S_IRGRP|S_IROTH)))
@@ -700,10 +700,10 @@ cvs_client_updated(char *data)
 	const char *errstr;
 	struct tm datetm;
 	struct timeval tv[2];
-	char repo[MAXPATHLEN], *entry;
+	char repo[PATH_MAX], *entry;
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
 	char *en, *mode, *len, *rpath, *p;
-	char sticky[CVS_ENT_MAXLINELEN], fpath[MAXPATHLEN];
+	char sticky[CVS_ENT_MAXLINELEN], fpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Updated");
@@ -714,7 +714,7 @@ cvs_client_updated(char *data)
 	len = cvs_remote_input();
 
 	client_check_directory(data, rpath);
-	cvs_get_repository_path(".", repo, MAXPATHLEN);
+	cvs_get_repository_path(".", repo, PATH_MAX);
 
 	STRIP_SLASH(repo);
 
@@ -815,8 +815,8 @@ cvs_client_merged(char *data)
 
 	client_check_directory(data, rpath);
 
-	repo = xmalloc(MAXPATHLEN);
-	cvs_get_repository_path(".", repo, MAXPATHLEN);
+	repo = xmalloc(PATH_MAX);
+	cvs_get_repository_path(".", repo, PATH_MAX);
 
 	STRIP_SLASH(repo);
 
@@ -872,7 +872,7 @@ void
 cvs_client_removed(char *data)
 {
 	CVSENTRIES *entlist;
-	char *rpath, *filename, fpath[MAXPATHLEN];
+	char *rpath, *filename, fpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Removed");
@@ -885,7 +885,7 @@ cvs_client_removed(char *data)
 	entlist = cvs_ent_open(data);
 	cvs_ent_remove(entlist, filename);
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", data, filename);
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", data, filename);
 	(void)unlink(fpath);
 
 	xfree(rpath);
@@ -915,7 +915,7 @@ void
 cvs_client_set_static_directory(char *data)
 {
 	FILE *fp;
-	char *dir, fpath[MAXPATHLEN];
+	char *dir, fpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Set-static-directory");
@@ -928,7 +928,7 @@ cvs_client_set_static_directory(char *data)
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 	    data, CVS_PATH_STATICENTRIES);
 
 	if ((fp = fopen(fpath, "w+")) == NULL) {
@@ -941,7 +941,7 @@ cvs_client_set_static_directory(char *data)
 void
 cvs_client_clear_static_directory(char *data)
 {
-	char *dir, fpath[MAXPATHLEN];
+	char *dir, fpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Clear-static-directory");
@@ -954,7 +954,7 @@ cvs_client_clear_static_directory(char *data)
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
 	    data, CVS_PATH_STATICENTRIES);
 
 	(void)cvs_unlink(fpath);
@@ -964,7 +964,7 @@ void
 cvs_client_set_sticky(char *data)
 {
 	FILE *fp;
-	char *dir, *tag, tagpath[MAXPATHLEN];
+	char *dir, *tag, tagpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Set-sticky");
@@ -979,7 +979,7 @@ cvs_client_set_sticky(char *data)
 
 	client_check_directory(data, dir);
 
-	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
+	(void)xsnprintf(tagpath, PATH_MAX, "%s/%s", data, CVS_PATH_TAG);
 
 	if ((fp = fopen(tagpath, "w+")) == NULL) {
 		cvs_log(LP_ERRNO, "%s", tagpath);
@@ -996,7 +996,7 @@ out:
 void
 cvs_client_clear_sticky(char *data)
 {
-	char *dir, tagpath[MAXPATHLEN];
+	char *dir, tagpath[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Clear-sticky");
@@ -1012,7 +1012,7 @@ cvs_client_clear_sticky(char *data)
 
 	client_check_directory(data, dir);
 
-	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
+	(void)xsnprintf(tagpath, PATH_MAX, "%s/%s", data, CVS_PATH_TAG);
 	(void)unlink(tagpath);
 
 	xfree(dir);
@@ -1031,8 +1031,8 @@ static void
 cvs_client_initlog(void)
 {
 	u_int i;
-	char *env, *envdup, buf[MAXPATHLEN], fpath[MAXPATHLEN];
-	char rpath[MAXPATHLEN], timebuf[CVS_TIME_BUFSZ], *s;
+	char *env, *envdup, buf[PATH_MAX], fpath[PATH_MAX];
+	char rpath[PATH_MAX], timebuf[CVS_TIME_BUFSZ], *s;
 	struct stat st;
 	time_t now;
 	struct passwd *pwd;

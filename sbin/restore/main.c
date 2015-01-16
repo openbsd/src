@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG */
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -73,7 +74,7 @@ main(int argc, char *argv[])
 	ino_t ino;
 	char *inputdev;
 	char *symtbl = "./restoresymtable";
-	char *p, name[MAXPATHLEN];
+	char *p, name[PATH_MAX];
 
 	/* Temp files should *not* be readable.  We set permissions later. */
 	(void)umask(077);

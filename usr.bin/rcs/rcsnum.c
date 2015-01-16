@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.15 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.16 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,14 +24,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <ctype.h>
 #include <err.h>
 #include <string.h>
+#include <limits.h>
 
 #include "rcs.h"
 #include "xmalloc.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static void	 rcsnum_setsize(RCSNUM *, u_int);
 static char	*rcsnum_itoa(u_int16_t, char *, size_t);
@@ -199,7 +200,7 @@ rcsnum_cmp(const RCSNUM *n1, const RCSNUM *n2, u_int depth)
 	u_int i;
 	size_t slen;
 
-	slen = MIN(n1->rn_len, n2->rn_len);
+	slen = MINIMUM(n1->rn_len, n2->rn_len);
 	if (depth != 0 && slen > depth)
 		slen = depth;
 

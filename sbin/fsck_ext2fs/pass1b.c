@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.8 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.9 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.2 1997/09/14 14:27:26 lukem Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>

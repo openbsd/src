@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.36 2014/05/15 19:18:23 chl Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.37 2015/01/16 06:39:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -42,7 +42,8 @@
  */
 
 /* ********************************************************** INCLUDES ***** */
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE MAXFRAG MAXBSIZE setbit isset isclr clrbit */
+#include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
@@ -63,6 +64,9 @@
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #include "debug.h"
 
@@ -190,7 +194,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 		errx(1, "calloc failed");
 	for (i = 0; i < osblock.fs_cssize; i += osblock.fs_bsize) {
 		rdfs(fsbtodb(&osblock, osblock.fs_csaddr +
-		    numfrags(&osblock, i)), (size_t)MIN(osblock.fs_cssize - i,
+		    numfrags(&osblock, i)), (size_t)MINIMUM(osblock.fs_cssize - i,
 		    osblock.fs_bsize), (void *)(((char *)fscs)+i), fsi);
 	}
 
@@ -273,7 +277,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 */
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize) {
 		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
-		    (size_t)MIN(sblock.fs_cssize - i, sblock.fs_bsize),
+		    (size_t)MINIMUM(sblock.fs_cssize - i, sblock.fs_bsize),
 		    (void *)(((char *)fscs) + i), fso, Nflag);
 	}
 	DBG_PRINT0("fscs written\n");
@@ -411,7 +415,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	acg.cg_magic = CG_MAGIC;
 	acg.cg_cgx = cylno;
 	acg.cg_ffs2_niblk = sblock.fs_ipg;
-	acg.cg_initediblk = MIN(sblock.fs_ipg, 2 * INOPB(&sblock));
+	acg.cg_initediblk = MINIMUM(sblock.fs_ipg, 2 * INOPB(&sblock));
 	acg.cg_ndblk = dmax - cbase;
 	if (sblock.fs_contigsumsize > 0)
 		acg.cg_nclusterblks = acg.cg_ndblk / sblock.fs_frag;
@@ -541,7 +545,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	start += sblock.fs_bsize;
 	dp1 = (struct ufs1_dinode *)&iobuf[start];
 	dp2 = (struct ufs2_dinode *)&iobuf[start];
-	for (i = MIN(sblock.fs_ipg, 2 * INOPB(&sblock)); i != 0; i--) {
+	for (i = MINIMUM(sblock.fs_ipg, 2 * INOPB(&sblock)); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
 			dp1->di_gen = arc4random();
 			dp1++;
@@ -1669,7 +1673,7 @@ alloc(void)
 		/*
 		 * Now update all counters.
 		 */
-		cg_clustersum(&acg)[MIN(lcs1 + lcs2 + 1, sblock.fs_contigsumsize)]--;
+		cg_clustersum(&acg)[MINIMUM(lcs1 + lcs2 + 1, sblock.fs_contigsumsize)]--;
 		if (lcs1)
 			cg_clustersum(&acg)[lcs1]++;
 		if (lcs2)

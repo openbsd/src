@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.20 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.21 2015/01/16 06:40:09 deraadt Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /*
@@ -47,7 +47,6 @@ in this Software without prior written authorization from the X Consortium.
 	%  lndir ../X
 */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <dirent.h>
@@ -58,6 +57,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 extern char *__progname;
 
@@ -179,8 +179,8 @@ addexcept(char *name)
 int
 dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 {
-	char buf[MAXPATHLEN + 1], symbuf[MAXPATHLEN + 1];
-	char basesym[MAXPATHLEN + 1];
+	char buf[PATH_MAX + 1], symbuf[PATH_MAX + 1];
+	char basesym[PATH_MAX + 1];
 	int n_dirs, symlen, basesymlen = -1;
 	struct stat sb, sc;
 	struct except *cur;

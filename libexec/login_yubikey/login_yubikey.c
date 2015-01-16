@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.9 2014/05/28 12:59:03 otto Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.10 2015/01/16 06:39:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -30,7 +30,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -43,6 +42,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 
 #include "yubikey.h"
@@ -178,7 +178,7 @@ clean_string(const char *s)
 static int
 yubikey_login(const char *username, const char *password)
 {
-	char fn[MAXPATHLEN];
+	char fn[PATH_MAX];
 	char hexkey[33], key[YUBIKEY_KEY_SIZE];
 	char hexuid[13], uid[YUBIKEY_UID_SIZE];
 	FILE *f;

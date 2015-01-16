@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.69 2014/11/21 17:49:00 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.70 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* roundup() */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/protosw.h>

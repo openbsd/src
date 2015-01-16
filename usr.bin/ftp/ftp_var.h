@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.36 2014/10/31 13:48:21 jsing Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.37 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -65,7 +65,8 @@
  * FTP global variables.
  */
 
-#include <sys/param.h>
+#include <sys/signal.h>
+#include <limits.h>
 #include <setjmp.h>
 
 #ifndef SMALL
@@ -84,7 +85,7 @@ int fclose(FILE *);
 #include "small.h"
 
 #define HASHBYTES	1024
-#define FTPBUFLEN	MAXPATHLEN + 200
+#define FTPBUFLEN	PATH_MAX + 200
 
 #define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
 
@@ -138,8 +139,8 @@ int	passivemode;		/* passive mode enabled */
 int	activefallback;		/* fall back to active mode if passive fails */
 char	ntin[17];		/* input translation table */
 char	ntout[17];		/* output translation table */
-char	mapin[MAXPATHLEN];	/* input map template */
-char	mapout[MAXPATHLEN];	/* output map template */
+char	mapin[PATH_MAX];	/* input map template */
+char	mapout[PATH_MAX];	/* output map template */
 char	typename[32];		/* name of file transfer type */
 int	type;			/* requested file transfer type */
 int	curtype;		/* current file transfer type */

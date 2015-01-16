@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.19 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.20 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>

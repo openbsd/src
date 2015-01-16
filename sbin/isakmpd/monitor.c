@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.72 2010/05/10 02:00:50 krw Exp $	 */
+/* $OpenBSD: monitor.c,v 1.73 2015/01/16 06:39:59 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -24,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -40,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <regex.h>
 #include <keynote.h>
@@ -55,7 +55,7 @@
 struct monitor_state {
 	pid_t           pid;
 	int             s;
-	char            root[MAXPATHLEN];
+	char            root[PATH_MAX];
 } m_state;
 
 extern char *pid_file;
@@ -194,7 +194,7 @@ monitor_open(const char *path, int flags, mode_t mode)
 {
 	size_t	len;
 	int	fd, err, cmd;
-	char	pathreal[MAXPATHLEN];
+	char	pathreal[PATH_MAX];
 
 	if (path[0] == '/')
 		strlcpy(pathreal, path, sizeof pathreal);
@@ -498,7 +498,7 @@ m_priv_pfkey_open(void)
 static void
 m_priv_getfd(void)
 {
-	char	path[MAXPATHLEN];
+	char	path[PATH_MAX];
 	size_t	len;
 	int	v, flags, ret;
 	int	err = 0;
@@ -804,7 +804,7 @@ static void
 m_priv_req_readdir()
 {
 	size_t len;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	DIR *dp;
 	struct dirent *file;
 	struct stat sb;

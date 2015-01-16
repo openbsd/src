@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.14 2011/06/27 23:40:07 tedu Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.15 2015/01/16 06:39:59 deraadt Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  * Id: mount_ntfs.c,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 
@@ -44,6 +44,7 @@
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <mntopts.h>
 
@@ -61,7 +62,7 @@ main(int argc, char *argv[])
 	struct ntfs_args args;
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
-	char *dev, dir[MAXPATHLEN];
+	char *dev, dir[PATH_MAX];
 
 	mntflags = set_gid = set_uid = set_mask = 0;
 	memset(&args, 0, sizeof(args));

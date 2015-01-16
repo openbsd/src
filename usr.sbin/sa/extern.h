@@ -27,11 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: extern.h,v 1.3 2002/02/16 21:28:09 millert Exp $
+ *	$Id: extern.h,v 1.4 2015/01/16 06:40:20 deraadt Exp $
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN */
 #include <db.h>
 
 /* structures */

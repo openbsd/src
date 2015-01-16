@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.55 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.56 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -12,7 +12,6 @@
  * S/Key initialization and seed update
  */
 
-#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -29,6 +28,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 
 #include <skey.h>
@@ -48,7 +48,7 @@ int
 main(int argc, char **argv)
 {
 	int     rval, i, l, n, defaultsetup, rmkey, hexmode, enable, convert;
-	char	hostname[MAXHOSTNAMELEN];
+	char	hostname[HOST_NAME_MAX+1];
 	char	seed[SKEY_MAX_SEED_LEN + 1];
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
 	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;

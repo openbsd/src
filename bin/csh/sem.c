@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.17 2010/08/12 02:00:27 kevlo Exp $	*/
+/*	$OpenBSD: sem.c,v 1.18 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdarg.h>
 
 #include "csh.h"
@@ -518,7 +519,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	return;
     if ((flags & F_READ) == 0) {/* F_READ already done */
 	if (t->t_dlef) {
-	    char    tmp[MAXPATHLEN];
+	    char    tmp[PATH_MAX];
 
 	    /*
 	     * so < /dev/std{in,out,err} work
@@ -550,7 +551,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	}
     }
     if (t->t_drit) {
-	char    tmp[MAXPATHLEN];
+	char    tmp[PATH_MAX];
 
 	cp = splicepipe(t, t->t_drit);
 	strlcpy(tmp, short2str(cp), sizeof tmp);

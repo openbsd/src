@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.32 2014/11/14 20:23:56 tedu Exp $	*/
+/*	$OpenBSD: exf.c,v 1.33 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 
@@ -123,7 +122,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	struct stat sb;
 	size_t psize;
 	int fd, exists, open_err, readonly;
-	char *oname, tname[MAXPATHLEN];
+	char *oname, tname[PATH_MAX];
 
 	open_err = readonly = 0;
 
@@ -450,7 +449,7 @@ file_spath(SCR *sp, FREF *frp, struct stat *sbp, int *existsp)
 	CHAR_T savech;
 	size_t len;
 	int found;
-	char *name, *p, *t, path[MAXPATHLEN];
+	char *name, *p, *t, path[PATH_MAX];
 
 	/*
 	 * If the name is NULL or an explicit reference (i.e., the first
@@ -738,7 +737,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	size_t len;
 	u_long nlno, nch;
 	int fd, nf, noname, oflags, rval;
-	char *p, *s, *t, buf[MAXPATHLEN + 64];
+	char *p, *s, *t, buf[PATH_MAX + 64];
 	const char *msgstr;
 
 	ep = sp->ep;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.14 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: leave.c,v 1.15 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <ctype.h>
 #include <err.h>

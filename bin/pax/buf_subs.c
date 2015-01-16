@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.25 2014/07/14 05:58:19 guenther Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.26 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -398,7 +398,7 @@ rd_skip(off_t skcnt)
 	 */
 	if (skcnt == 0)
 		return(0);
-	res = MIN((bufend - bufpt), skcnt);
+	res = MINIMUM((bufend - bufpt), skcnt);
 	bufpt += res;
 	skcnt -= res;
 
@@ -437,7 +437,7 @@ rd_skip(off_t skcnt)
 			return(-1);
 		if (cnt == 0)
 			return(1);
-		cnt = MIN(cnt, res);
+		cnt = MINIMUM(cnt, res);
 		bufpt += cnt;
 		res -= cnt;
 	}
@@ -489,7 +489,7 @@ wr_rdbuf(char *out, int outcnt)
 		/*
 		 * only move what we have space for
 		 */
-		cnt = MIN(cnt, outcnt);
+		cnt = MINIMUM(cnt, outcnt);
 		memcpy(bufpt, out, cnt);
 		bufpt += cnt;
 		out += cnt;
@@ -537,7 +537,7 @@ rd_wrbuf(char *in, int cpcnt)
 		 * calculate how much data to copy based on whats left and
 		 * state of buffer
 		 */
-		cnt = MIN(cnt, incnt);
+		cnt = MINIMUM(cnt, incnt);
 		memcpy(in, bufpt, cnt);
 		bufpt += cnt;
 		incnt -= cnt;
@@ -569,7 +569,7 @@ wr_skip(off_t skcnt)
 		cnt = bufend - bufpt;
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0))
 			return(-1);
-		cnt = MIN(cnt, skcnt);
+		cnt = MINIMUM(cnt, skcnt);
 		memset(bufpt, 0, cnt);
 		bufpt += cnt;
 		skcnt -= cnt;
@@ -612,7 +612,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 			*left = size;
 			return(-1);
 		}
-		cnt = MIN(cnt, size);
+		cnt = MINIMUM(cnt, size);
 		if ((res = read(ifd, bufpt, cnt)) <= 0)
 			break;
 		size -= res;
@@ -697,7 +697,7 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 		 */
 		if ((cnt <= 0) && ((cnt = buf_fill()) <= 0))
 			break;
-		cnt = MIN(cnt, size);
+		cnt = MINIMUM(cnt, size);
 		if ((res = file_write(ofd,bufpt,cnt,&rem,&isem,sz,fnm)) <= 0) {
 			*left = size;
 			break;

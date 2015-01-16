@@ -1,4 +1,4 @@
-/*	$OpenBSD: fuser.c,v 1.5 2014/10/26 06:03:24 guenther Exp $	*/
+/*	$OpenBSD: fuser.c,v 1.6 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -41,7 +41,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>

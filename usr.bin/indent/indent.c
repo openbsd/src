@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.25 2014/07/20 01:38:40 guenther Exp $	*/
+/*	$OpenBSD: indent.c,v 1.26 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,9 +32,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +48,7 @@ char       *in_name = "Standard Input";	/* will always point to name of input
 					 * file */
 char       *out_name = "Standard Output";	/* will always point to name
 						 * of output file */
-char        bakfile[MAXPATHLEN] = "";
+char        bakfile[PATH_MAX] = "";
 
 void bakcopy(void);
 
@@ -1178,7 +1178,7 @@ bakcopy(void)
 	p--;
     if (*p == '/')
 	p++;
-    if (snprintf(bakfile, MAXPATHLEN, "%s.BAK", p) >= MAXPATHLEN)
+    if (snprintf(bakfile, PATH_MAX, "%s.BAK", p) >= PATH_MAX)
 	    errc(1, ENAMETOOLONG, "%s.BAK", p);
 
     /* copy in_name to backup file */

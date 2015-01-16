@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shell.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_shell.c,v 1.14 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
 
@@ -26,6 +25,8 @@
 
 #include "../common/common.h"
 
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+
 /*
  * ex_shell -- :sh[ell]
  *	Invoke the program named in the SHELL environment variable
@@ -37,7 +38,7 @@ int
 ex_shell(SCR *sp, EXCMD *cmdp)
 {
 	int rval;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	/* We'll need a shell. */
 	if (opts_empty(sp, O_SHELL, 0))
@@ -166,7 +167,7 @@ proc_wait(SCR *sp, pid_t pid, const char *cmd, int silent, int okpipe)
 		p = msg_print(sp, cmd, &nf);
 		len = strlen(p);
 		msgq(sp, M_ERR, "%.*s%s: received signal: %s%s",
-		    MIN(len, 20), p, len > 20 ? " ..." : "",
+		    MINIMUM(len, 20), p, len > 20 ? " ..." : "",
 		    strsignal(WTERMSIG(pstat)),
 		    WCOREDUMP(pstat) ? "; core dumped" : "");
 		if (nf)
@@ -188,7 +189,7 @@ proc_wait(SCR *sp, pid_t pid, const char *cmd, int silent, int okpipe)
 			p = msg_print(sp, cmd, &nf);
 			len = strlen(p);
 			msgq(sp, M_ERR, "%.*s%s: exited with status %d",
-			    MIN(len, 20), p, len > 20 ? " ..." : "",
+			    MINIMUM(len, 20), p, len > 20 ? " ..." : "",
 			    WEXITSTATUS(pstat));
 			if (nf)
 				FREE_SPACE(sp, p, 0);

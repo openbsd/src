@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-mobile.c,v 1.4 2014/08/14 12:44:44 mpi Exp $ */
+/*	$OpenBSD: print-mobile.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $ */
 /*	$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $ */
 
 /*
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/socket.h>

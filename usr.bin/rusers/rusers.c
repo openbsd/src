@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.33 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.34 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,9 +46,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/signal.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_rmt.h>
@@ -65,6 +65,10 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <limits.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /* Preferred formatting */
 #define HOST_WIDTH 17
@@ -535,7 +539,7 @@ allhosts(void)
 	outlen[1] = xdr_getpos(&xdr);
 	xdr_destroy(&xdr);
 
-	maxfd = MAX(sock[0], sock[1]) + 1;
+	maxfd = MAXIMUM(sock[0], sock[1]) + 1;
 	fds = (fd_set *)calloc(howmany(maxfd, NFDBITS), sizeof(fd_mask));
 	if (fds == NULL)
 		err(1, NULL);
@@ -653,16 +657,16 @@ print_entry(struct host_info *entry, int longfmt)
 			date[sizeof(date) - 1] = '\0';
 			fmt_idle(ut->ut_idle, idle_time, sizeof(idle_time));
 			len = termwidth -
-			    (MAX(strlen(ut->ut_user), NAME_WIDTH) + 1 +
+			    (MAXIMUM(strlen(ut->ut_user), NAME_WIDTH) + 1 +
 			    HOST_WIDTH + 1 + LINE_WIDTH + 1 + strlen(date) +
-			    1 + MAX(8, strlen(idle_time)) + 1 + 2);
+			    1 + MAXIMUM(8, strlen(idle_time)) + 1 + 2);
 			if (len > 0 && ut->ut_host[0] != '\0')
 				snprintf(remote, sizeof(remote), "(%.*s)",
-				    MIN(len, RUSERS_MAXHOSTLEN), ut->ut_host);
+				    MINIMUM(len, RUSERS_MAXHOSTLEN), ut->ut_host);
 			else
 				remote[0] = '\0';
-			len = HOST_WIDTH - MIN(HOST_WIDTH, strlen(entry->host)) +
-			    LINE_WIDTH - MIN(LINE_WIDTH, strlen(ut->ut_line));
+			len = HOST_WIDTH - MINIMUM(HOST_WIDTH, strlen(entry->host)) +
+			    LINE_WIDTH - MINIMUM(LINE_WIDTH, strlen(ut->ut_line));
 			printf("%-*s %.*s:%.*s%-*s %-12s %8s %s\n",
 			    NAME_WIDTH, ut->ut_user, HOST_WIDTH, entry->host,
 			    LINE_WIDTH, ut->ut_line, len, "", date,

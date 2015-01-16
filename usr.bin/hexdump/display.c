@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.20 2010/10/22 14:04:24 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.21 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -42,6 +41,8 @@
 #include <unistd.h>
 
 #include "hexdump.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 enum _vflag vflag = FIRST;
 
@@ -253,7 +254,7 @@ get(void)
 			return(curp);
 		}
 		n = fread((char *)curp + nread, sizeof(u_char),
-		    length == -1 ? need : MIN(length, need), stdin);
+		    length == -1 ? need : MINIMUM(length, need), stdin);
 		if (!n) {
 			if (ferror(stdin))
 				warn("%s", _argv[-1]);

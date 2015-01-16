@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cdp.c,v 1.4 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-cdp.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,6 @@
  *    http://www.cisco.com/univercd/cc/td/doc/product/lan/trsrb/frames.htm
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>

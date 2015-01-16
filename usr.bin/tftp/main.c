@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2013/11/26 21:08:12 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2015/01/16 06:40:13 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  * This version includes many modifications by Jim Guyton <guyton@rand-unix>
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 
@@ -54,6 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "extern.h"
 
@@ -100,7 +100,7 @@ char			*prompt = "tftp";
 void			 intr(int);
 int	 		 rexmtval = TIMEOUT;
 int	 		 maxtimeout = 5 * TIMEOUT;
-char	 		 hostname[MAXHOSTNAMELEN];
+char	 		 hostname[HOST_NAME_MAX+1];
 FILE			*file = NULL;
 volatile sig_atomic_t	 intrflag = 0;
 char			*ackbuf;

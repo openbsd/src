@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.35 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.36 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG DEV_BSIZE roundup */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "fsck.h"
 #include "fsutil.h"
@@ -76,7 +77,7 @@ pass2(void)
 	struct inoinfo **inpend;
 	struct inodesc curino;
 	union dinode dino;
-	char pathbuf[MAXPATHLEN + 1];
+	char pathbuf[PATH_MAX + 1];
 	int i;
 
 	switch (GET_ISTATE(ROOTINO)) {
@@ -254,8 +255,8 @@ pass2check(struct inodesc *idesc)
 	union dinode *dp;
 	char *errmsg;
 	struct direct proto;
-	char namebuf[MAXPATHLEN + 1];
-	char pathbuf[MAXPATHLEN + 1];
+	char namebuf[PATH_MAX + 1];
+	char pathbuf[PATH_MAX + 1];
 
 	/*
 	 * check for "."

@@ -1,4 +1,4 @@
-/* $OpenBSD: common.h,v 1.4 2012/06/01 01:43:19 dlg Exp $ */
+/* $OpenBSD: common.h,v 1.5 2015/01/16 06:39:50 deraadt Exp $ */
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
  * All rights reserved.
@@ -30,7 +30,6 @@
 
 #include <sys/types.h>
 #include <sys/resource.h>
-#include <sys/param.h>
 
 #include <signal.h>
 #include <syslog.h>
@@ -43,6 +42,7 @@
 #include <pwd.h>
 #include <err.h>
 #include <util.h>
+#include <limits.h>
 
 
 #define MODE_LOGIN 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.32 2013/11/24 00:54:12 deraadt Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.33 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -1277,9 +1277,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
      */
     memset(&addr, 0, sizeof addr);
     addr.sin_family = AF_INET;
-#if (defined(BSD) && (BSD >= 199103))
     addr.sin_len = sizeof(addr);
-#endif
     addr.sin_addr.s_addr = qgrp;
     addr.sin_port = htons(2000);	/* Any port above 1024 will do */
 
@@ -1299,7 +1297,7 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
      * mtrace -i [if_addr] will have to be used.
      */
     if (addr.sin_addr.s_addr == 0) {
-	char myhostname[MAXHOSTNAMELEN];
+	char myhostname[HOST_NAME_MAX+1];
 	struct hostent *hp;
 	int error;
     

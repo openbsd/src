@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.121 2015/01/13 23:22:33 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.122 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -17,10 +17,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
+#include <sys/signal.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -35,6 +36,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <netdb.h>
 
@@ -101,7 +103,7 @@ void     getcaddr(struct con *);
 void     gethelo(char *, size_t, char *);
 int      read_configline(FILE *);
 
-char hostname[MAXHOSTNAMELEN];
+char hostname[HOST_NAME_MAX+1];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
@@ -146,6 +148,8 @@ int window;
 int syncrecv;
 int syncsend;
 #define MAXTIME 400
+
+#define MAXIMUM(a,b) (((a)>(b))?(a):(b))
 
 void
 usage(void)
@@ -1382,16 +1386,16 @@ jail:
 		int max, n;
 		int writers;
 
-		max = MAX(s, conflisten);
+		max = MAXIMUM(s, conflisten);
 		if (syncrecv)
-			max = MAX(max, syncfd);
-		max = MAX(max, conffd);
-		max = MAX(max, trapfd);
+			max = MAXIMUM(max, syncfd);
+		max = MAXIMUM(max, conffd);
+		max = MAXIMUM(max, trapfd);
 
 		time(&t);
 		for (i = 0; i < maxcon; i++)
 			if (con[i].fd != -1)
-				max = MAX(max, con[i].fd);
+				max = MAXIMUM(max, con[i].fd);
 
 		if (max > omax) {
 			free(fdsr);

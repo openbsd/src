@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.37 2014/07/21 19:55:33 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.38 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -46,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <pwd.h>
 #include <grp.h>
 
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 	char *p, *endp;
 	struct stat sb;
 	int ch;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	while ((ch = getopt(argc, argv, "if")) != -1)
 		switch (ch) {
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 			p++;
 		}
 
-		if ((baselen + (len = strlen(p))) >= MAXPATHLEN) {
+		if ((baselen + (len = strlen(p))) >= PATH_MAX) {
 			warnx("%s: destination pathname too long", *argv);
 			rval = 1;
 		} else {
@@ -218,7 +218,7 @@ do_move(char *from, char *to)
 	/* Disallow moving a mount point. */
 	if (S_ISDIR(fsb.st_mode)) {
 		struct statfs sfs;
-		char path[MAXPATHLEN];
+		char path[PATH_MAX];
 
 		if (realpath(from, path) == NULL) {
 			warnx("cannot resolve %s", from);

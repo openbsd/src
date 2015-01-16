@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.9 2013/11/12 22:27:13 deraadt Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.10 2015/01/16 06:40:20 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
  *	midnight January 1st 1900.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>

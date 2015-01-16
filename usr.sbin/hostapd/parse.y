@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2014/11/20 05:51:20 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.49 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -21,7 +21,6 @@
  */
 
 %{
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -52,6 +51,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdint.h>
 #include <err.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ringbuf.c,v 1.7 2005/09/21 23:25:32 djm Exp $ */
+/* $OpenBSD: ringbuf.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -21,12 +21,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "syslogd.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /* Initialise a ring buffer */
 struct ringbuf *
@@ -141,7 +142,7 @@ ringbuf_to_string(char *buf, size_t len, struct ringbuf *rb)
 	if (buf == NULL || rb == NULL || len == 0)
 		return (-1);
 
-	copy_len = MIN(len - 1, ringbuf_used(rb));
+	copy_len = MINIMUM(len - 1, ringbuf_used(rb));
 
 	if (copy_len == 0)
 		return (copy_len);
@@ -151,9 +152,9 @@ ringbuf_to_string(char *buf, size_t len, struct ringbuf *rb)
 	else {
 		/* If the buffer is wrapped, copy each hunk separately */
 		n = rb->len - rb->start;
-		memcpy(buf, rb->buf + rb->start, MIN(n, copy_len));
+		memcpy(buf, rb->buf + rb->start, MINIMUM(n, copy_len));
 		if (copy_len > n)
-			memcpy(buf + n, rb->buf, MIN(rb->end, copy_len - n));
+			memcpy(buf + n, rb->buf, MINIMUM(rb->end, copy_len - n));
 	}
 	buf[copy_len] = '\0';
 

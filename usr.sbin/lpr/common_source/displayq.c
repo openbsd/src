@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.35 2014/05/21 18:38:42 pascal Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.36 2015/01/16 06:40:17 deraadt Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -39,6 +38,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

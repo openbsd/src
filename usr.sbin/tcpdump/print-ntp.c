@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ntp.c,v 1.15 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ntp.c,v 1.16 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,6 @@
  *	loosely based on print-bootp.c
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

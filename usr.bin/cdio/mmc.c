@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.29 2013/11/12 17:57:34 deraadt Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.30 2015/01/16 06:40:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include <sys/limits.h>
 #include <sys/types.h>
 #include <sys/scsiio.h>
-#include <sys/param.h>
+#include <sys/param.h>	/* setbit, isset */
 #include <scsi/cd.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

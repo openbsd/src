@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.28 2014/10/17 07:43:33 jmc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.29 2015/01/16 06:40:15 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -29,7 +29,7 @@
  * 
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/un.h>

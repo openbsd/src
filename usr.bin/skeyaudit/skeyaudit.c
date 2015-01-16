@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.24 2008/11/12 16:13:46 sobrado Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.25 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,7 +20,6 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include <sys/param.h>
 #include <sys/wait.h>
 
 #include <err.h>
@@ -138,7 +137,7 @@ main(int argc, char **argv)
 void
 notify(struct passwd *pw, int seq, int interactive)
 {
-	static char hostname[MAXHOSTNAMELEN];
+	static char hostname[HOST_NAME_MAX+1];
 	pid_t pid;
 	FILE *out;
 

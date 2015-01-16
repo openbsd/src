@@ -18,7 +18,6 @@
 #include <syslog.h>
 #include <signal.h>
 #include <string.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -126,12 +125,6 @@ extern char		s1[];
 extern char		s2[];
 extern char		s3[];
 extern char		s4[];
-
-#if !(defined(BSD) && (BSD >= 199103))
-extern int		errno;
-extern int		sys_nerr;
-extern char *		sys_errlist[];
-#endif
 
 #ifdef OLD_KERNEL
 #define	MRT_INIT	DVMRP_INIT

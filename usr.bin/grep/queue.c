@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.6 2011/07/08 01:20:24 tedu Exp $	*/
+/*	$OpenBSD: queue.c,v 1.7 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -30,8 +30,6 @@
  * A really poor man's queue.  It does only what it has to and gets out of
  * Dodge.
  */
-
-#include <sys/param.h>
 
 #include <stdlib.h>
 #include <string.h>

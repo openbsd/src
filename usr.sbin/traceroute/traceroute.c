@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.134 2014/12/09 17:46:24 millert Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.135 2015/01/16 06:40:22 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -233,7 +233,6 @@
  *     Tue Dec 20 03:50:13 PST 1988
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -265,6 +264,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define MAX_LSRR		((MAX_IPOPTLEN - 4) / 4)
 
@@ -1703,7 +1703,7 @@ in_cksum(u_short *addr, int len)
 const char *
 inetname(struct sockaddr *sa)
 {
-	static char line[NI_MAXHOST], domain[MAXHOSTNAMELEN + 1];
+	static char line[NI_MAXHOST], domain[HOST_NAME_MAX+1 + 1];
 	static int first = 1;
 	char *cp;
 

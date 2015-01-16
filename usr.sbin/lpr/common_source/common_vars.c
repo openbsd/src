@@ -1,4 +1,4 @@
-/*	$OpenBSD: common_vars.c,v 1.4 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: common_vars.c,v 1.5 2015/01/16 06:40:17 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.15 1999/09/26 10:32:27 mrg Exp $	*/
 
 /*
@@ -35,13 +35,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <limits.h>
 
 #include "pathnames.h"
 
 char	*name;			/* program name */
 char	*printer;		/* printer name */
-char	host[MAXHOSTNAMELEN+1];	/* host machine name */
+char	host[HOST_NAME_MAX+1 + 1];	/* host machine name */
 char	*from = host;		/* client's machine name */
 char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
 char	*bp;			/* pointer into printcap buffer. */

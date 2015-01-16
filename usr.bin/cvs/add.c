@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.110 2010/11/11 21:00:59 nicm Exp $	*/
+/*	$OpenBSD: add.c,v 1.111 2015/01/16 06:40:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -180,14 +180,14 @@ cvs_add_local(struct cvs_file *cf)
 void
 cvs_add_remote(struct cvs_file *cf)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_add_remote(%s)", cf->file_path);
 
 	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_type == CVS_DIR) {
-		cvs_get_repository_path(cf->file_wd, path, MAXPATHLEN);
+		cvs_get_repository_path(cf->file_wd, path, PATH_MAX);
 		if (strlcat(path, "/", sizeof(path)) >= sizeof(path))
 			fatal("cvs_add_remote: truncation");
 		if (strlcat(path, cf->file_path, sizeof(path)) >= sizeof(path))
@@ -205,7 +205,7 @@ void
 cvs_add_loginfo(char *repo)
 {
 	BUF *buf;
-	char pwd[MAXPATHLEN];
+	char pwd[PATH_MAX];
 
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		fatal("Can't get working directory");
@@ -229,7 +229,7 @@ void
 cvs_add_tobranch(struct cvs_file *cf, char *tag)
 {
 	BUF *bp;
-	char attic[MAXPATHLEN], repo[MAXPATHLEN];
+	char attic[PATH_MAX], repo[PATH_MAX];
 	char *msg;
 	struct stat st;
 	RCSNUM *branch;
@@ -242,14 +242,14 @@ cvs_add_tobranch(struct cvs_file *cf, char *tag)
 	if (fstat(cf->fd, &st) == -1)
 		fatal("cvs_add_tobranch: %s", strerror(errno));
 
-	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
-	(void)xsnprintf(attic, MAXPATHLEN, "%s/%s",
+	cvs_get_repository_path(cf->file_wd, repo, PATH_MAX);
+	(void)xsnprintf(attic, PATH_MAX, "%s/%s",
 	    repo, CVS_PATH_ATTIC);
 
 	if (mkdir(attic, 0755) == -1 && errno != EEXIST)
 		fatal("cvs_add_tobranch: failed to create Attic");
 
-	(void)xsnprintf(attic, MAXPATHLEN, "%s/%s/%s%s", repo,
+	(void)xsnprintf(attic, PATH_MAX, "%s/%s/%s%s", repo,
 	    CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
 
 	xfree(cf->file_rpath);
@@ -301,14 +301,14 @@ add_directory(struct cvs_file *cf)
 	int added, nb;
 	struct stat st;
 	CVSENTRIES *entlist;
-	char *date, entry[MAXPATHLEN], msg[1024], repo[MAXPATHLEN], *tag, *p;
+	char *date, entry[PATH_MAX], msg[1024], repo[PATH_MAX], *tag, *p;
 	struct file_info_list files_info;
 	struct file_info *fi;
 	struct trigger_list *line_list;
 
 	cvs_log(LP_TRACE, "add_directory(%s)", cf->file_path);
 
-	(void)xsnprintf(entry, MAXPATHLEN, "%s%s",
+	(void)xsnprintf(entry, PATH_MAX, "%s%s",
 	    cf->file_rpath, RCS_FILE_EXT);
 
 	added = 1;
@@ -321,7 +321,7 @@ add_directory(struct cvs_file *cf)
 		/* Let's see if we have any per-directory tags first. */
 		cvs_parse_tagfile(cf->file_wd, &tag, &date, &nb);
 
-		(void)xsnprintf(entry, MAXPATHLEN, "%s/%s",
+		(void)xsnprintf(entry, PATH_MAX, "%s/%s",
 		    cf->file_path, CVS_PATH_CVSDIR);
 
 		if (cvs_server_active) {
@@ -345,9 +345,9 @@ add_directory(struct cvs_file *cf)
 				    strerror(errno));
 
 			cvs_get_repository_name(cf->file_wd, repo,
-			    MAXPATHLEN);
+			    PATH_MAX);
 
-			(void)xsnprintf(entry, MAXPATHLEN, "%s/%s",
+			(void)xsnprintf(entry, PATH_MAX, "%s/%s",
 			    repo, cf->file_name);
 
 			cvs_mkadmin(cf->file_path, current_cvsroot->cr_dir,
@@ -386,7 +386,7 @@ add_directory(struct cvs_file *cf)
 		if (date != NULL)
 			xfree(date);
 
-		cvs_get_repository_name(cf->file_path, repo, MAXPATHLEN);
+		cvs_get_repository_name(cf->file_path, repo, PATH_MAX);
 		line_list = cvs_trigger_getlines(CVS_PATH_LOGINFO, repo);
 		if (line_list != NULL) {
 			TAILQ_INIT(&files_info);
@@ -500,7 +500,7 @@ static void
 add_entry(struct cvs_file *cf)
 {
 	FILE *fp;
-	char *entry, path[MAXPATHLEN];
+	char *entry, path[PATH_MAX];
 	char revbuf[CVS_REV_BUFSZ], tbuf[CVS_TIME_BUFSZ];
 	char sticky[CVS_ENT_MAXLINELEN];
 	CVSENTRIES *entlist;
@@ -527,7 +527,7 @@ add_entry(struct cvs_file *cf)
 		    0, 0, entry, CVS_ENT_MAXLINELEN);
 	} else {
 		if (logmsg != NULL) {
-			(void)xsnprintf(path, MAXPATHLEN, "%s/%s/%s%s",
+			(void)xsnprintf(path, PATH_MAX, "%s/%s/%s%s",
 			    cf->file_wd, CVS_PATH_CVSDIR, cf->file_name,
 			    CVS_DESCR_FILE_EXT);
 

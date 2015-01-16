@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.86 2014/06/30 19:19:17 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.87 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -39,7 +39,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE roundup btodb setbit */
+#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -56,12 +57,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifndef STANDALONE
 #include <a.out.h>
 #include <stdio.h>
 #include <errno.h>
 #endif
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /*
  * Default directory umask.
@@ -330,7 +335,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 */
 	origdensity = density;
 	for (;;) {
-		fragsperinode = MAX(numfrags(&sblock, density), 1);
+		fragsperinode = MAXIMUM(numfrags(&sblock, density), 1);
 
 		minfpg = fragsperinode * INOPB(&sblock);
 		if (minfpg > sblock.fs_size)
@@ -642,7 +647,7 @@ initcg(int cylno, time_t utime)
 	acg.cg_magic = CG_MAGIC;
 	acg.cg_cgx = cylno;
 	acg.cg_ffs2_niblk = sblock.fs_ipg;
-	acg.cg_initediblk = MIN(sblock.fs_ipg, 2 * INOPB(&sblock));
+	acg.cg_initediblk = MINIMUM(sblock.fs_ipg, 2 * INOPB(&sblock));
 	acg.cg_ndblk = dmax - cbase;
 
 	start = sizeof(struct cg);
@@ -729,7 +734,7 @@ initcg(int cylno, time_t utime)
 	start += sblock.fs_bsize;
 	dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 	dp2 = (struct ufs2_dinode *)(&iobuf[start]);
-	for (i = MIN(sblock.fs_ipg, 2 * INOPB(&sblock)); i != 0; i--) {
+	for (i = MINIMUM(sblock.fs_ipg, 2 * INOPB(&sblock)); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
 			dp1->di_gen = (u_int32_t)arc4random();
 			dp1++;
@@ -1190,7 +1195,7 @@ checksz(void)
 		err(1, "can't get physmem");
 	if (getrlimit(RLIMIT_DATA, &datasz) != 0)
 		err(1, "can't get rlimit");
-	bound = MIN(datasz.rlim_max, bound);
+	bound = MINIMUM(datasz.rlim_max, bound);
 
 	allocate = 0;
 	maxino = sblock.fs_ncg * (unsigned long long)sblock.fs_ipg;
@@ -1200,8 +1205,8 @@ checksz(void)
 	allocate += roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
 	allocate += (maxino + 1) * 3;
 	allocate += sblock.fs_ncg * sizeof(long);
-	allocate += (MAX(ndir, 128) + 10) * sizeof(struct inoinfo);
-	allocate += MAX(ndir, 128) * sizeof(struct inoinfo);
+	allocate += (MAXIMUM(ndir, 128) + 10) * sizeof(struct inoinfo);
+	allocate += MAXIMUM(ndir, 128) * sizeof(struct inoinfo);
 
 	if (allocate > bound)
 		warnx("warning: fsck_ffs will need %lluMB; "

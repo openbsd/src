@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.73 2014/10/28 06:04:19 dcoppa Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.74 2015/01/16 06:40:15 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -29,7 +29,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -48,7 +47,9 @@
 #include <signal.h>
 #include <errno.h>
 #include <err.h>
+#include <limits.h>
 #include <machine/apmvar.h>
+
 #include "pathnames.h"
 #include "apm-proto.h"
 
@@ -190,7 +191,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	return acon;
 }
 
-char socketname[MAXPATHLEN];
+char socketname[PATH_MAX];
 
 void
 sockunlink(void)

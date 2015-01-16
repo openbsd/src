@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.36 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.37 2015/01/16 06:40:11 deraadt Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -64,20 +64,24 @@
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "buf.h"
 #include "diff.h"
 #include "xmalloc.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /*
  * diff - compare two files.
@@ -527,7 +531,7 @@ stone(int *a, int n, int *b, int *c, int flags)
 		bound = UINT_MAX;
 	else {
 		sq = isqrt(n);
-		bound = MAX(256, sq);
+		bound = MAXIMUM(256, sq);
 	}
 
 	k = 0;
@@ -1200,10 +1204,10 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = MAX(1, cvp->a - diff_context);
-	upb = MIN(len[0], context_vec_ptr->b + diff_context);
-	lowc = MAX(1, cvp->c - diff_context);
-	upd = MIN(len[1], context_vec_ptr->d + diff_context);
+	lowa = MAXIMUM(1, cvp->a - diff_context);
+	upb = MINIMUM(len[0], context_vec_ptr->b + diff_context);
+	lowc = MAXIMUM(1, cvp->c - diff_context);
+	upd = MINIMUM(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("***************");
 	if ((flags & D_PROTOTYPE)) {
@@ -1303,10 +1307,10 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 		return;
 
 	d = 0; /* gcc */
-	lowa = MAX(1, cvp->a - diff_context);
-	upb = MIN(len[0], context_vec_ptr->b + diff_context);
-	lowc = MAX(1, cvp->c - diff_context);
-	upd = MIN(len[1], context_vec_ptr->d + diff_context);
+	lowa = MAXIMUM(1, cvp->a - diff_context);
+	upb = MINIMUM(len[0], context_vec_ptr->b + diff_context);
+	lowc = MAXIMUM(1, cvp->c - diff_context);
+	upd = MINIMUM(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("@@ -");
 	uni_range(lowa, upb);

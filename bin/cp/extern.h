@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2012/12/04 02:26:59 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/21 09:02:16 cgd Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 typedef struct {
 	char *p_end;			/* pointer to NULL at end of path */
 	char *target_end;		/* pointer to end of target base */
-	char p_path[MAXPATHLEN];	/* pointer to the start of a path */
+	char p_path[PATH_MAX];		/* pointer to the start of a path */
 } PATH_T;
 
 extern PATH_T to;

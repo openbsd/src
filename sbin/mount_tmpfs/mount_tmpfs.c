@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tmpfs.c,v 1.4 2014/01/21 21:58:27 jsg Exp $	*/
+/*	$OpenBSD: mount_tmpfs.c,v 1.5 2015/01/16 06:39:59 deraadt Exp $	*/
 /*	$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
@@ -31,12 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if 0
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $");
-#endif
-
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 
@@ -50,6 +45,7 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "mount_tmpfs.h"
@@ -146,7 +142,7 @@ mount_tmpfs_parseargs(int argc, char *argv[],
 	if (argc != 2)
 		usage();
 
-	strlcpy(canon_dev, argv[0], MAXPATHLEN);
+	strlcpy(canon_dev, argv[0], PATH_MAX);
 	pathadj(argv[1], canon_dir);
 
 	if (stat(canon_dir, &sb) == -1)
@@ -175,7 +171,7 @@ int
 mount_tmpfs(int argc, char *argv[])
 {
 	struct tmpfs_args args;
-	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	char canon_dev[PATH_MAX], canon_dir[PATH_MAX];
 	int mntflags;
 
 	mount_tmpfs_parseargs(argc, argv, &args, &mntflags,
@@ -245,7 +241,7 @@ pathadj(const char *input, char *adjusted)
 
 	if (realpath(input, adjusted) == NULL)
 		warn("Warning: realpath %s", input);
-	if (strncmp(input, adjusted, MAXPATHLEN)) {
+	if (strncmp(input, adjusted, PATH_MAX)) {
 		warnx("\"%s\" is a non-resolved or relative path.", input);
 		warnx("using \"%s\" instead.", adjusted);
 	}

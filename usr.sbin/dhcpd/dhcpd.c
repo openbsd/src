@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.45 2014/07/11 09:42:27 yasuoka Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.46 2015/01/16 06:40:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -320,6 +320,8 @@ lease_ping_timeout(void *vlp)
 /* from memory.c - needed to be able to walk the lease table */
 extern struct subnet *subnets;
 
+#define MINIMUM(a,b) (((a)<(b))?(a):(b))
+
 void
 periodic_scan(void *p)
 {
@@ -330,10 +332,10 @@ periodic_scan(void *p)
 	struct lease		*l;
 
 	/* find the shortest lease this server gives out */
-	x = MIN(root_group.default_lease_time, root_group.max_lease_time);
+	x = MINIMUM(root_group.default_lease_time, root_group.max_lease_time);
 	for (n = subnets; n; n = n->next_subnet)
 		for (g = n->group; g; g = g->next)
-			x = MIN(x, g->default_lease_time);
+			x = MINIMUM(x, g->default_lease_time);
 
 	/* use half of the shortest lease as the scan interval */
 	y = x / 2;

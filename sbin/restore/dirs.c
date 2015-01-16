@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.38 2014/09/07 19:43:35 guenther Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.39 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG */
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -53,6 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -101,8 +102,8 @@ struct rstdirdesc {
 static long	seekpt;
 static FILE	*df, *mf;
 static RST_DIR	*dirp;
-static char	dirfile[MAXPATHLEN] = "#";	/* No file */
-static char	modefile[MAXPATHLEN] = "#";	/* No file */
+static char	dirfile[PATH_MAX] = "#";	/* No file */
+static char	modefile[PATH_MAX] = "#";	/* No file */
 static char	dot[2] = ".";			/* So it can be modified */
 
 /*
@@ -222,7 +223,7 @@ treescan(char *pname, ino_t ino, long (*todo)(char *, ino_t, int))
 	struct direct *dp;
 	size_t namelen;
 	long bpt;
-	char locname[MAXPATHLEN + 1];
+	char locname[PATH_MAX + 1];
 
 	itp = inotablookup(ino);
 	if (itp == NULL) {
@@ -285,7 +286,7 @@ pathsearch(const char *pathname)
 {
 	ino_t ino;
 	struct direct *dp;
-	char *path, *name, buffer[MAXPATHLEN];
+	char *path, *name, buffer[PATH_MAX];
 
 	strlcpy(buffer, pathname, sizeof buffer);
 	path = buffer;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.146 2014/12/10 02:34:03 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.147 2015/01/16 06:39:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.16 2013/11/20 21:22:17 deraadt Exp $	*/
+/*	$OpenBSD: lam.c,v 1.17 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  *	Author:  John Kunze, UCB
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* NOFILE_MAX */
 
 #include <ctype.h>
 #include <err.h>

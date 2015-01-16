@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.25 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.26 2015/01/16 06:40:18 deraadt Exp $	*/
 /*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  * Receive printer jobs from the network, queue them and
  * start the printer daemon.
  */
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 
@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 #include "lp.h"
 #include "lp.local.h"
 #include "extern.h"

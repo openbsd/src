@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.103 2010/09/23 18:10:16 nicm Exp $	*/
+/*	$OpenBSD: import.c,v 1.104 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -67,7 +67,7 @@ int
 cvs_import(int argc, char **argv)
 {
 	int i, ch;
-	char repo[MAXPATHLEN], *arg = ".";
+	char repo[PATH_MAX], *arg = ".";
 	struct cvs_recursion cr;
 	struct trigger_list *line_list;
 
@@ -217,7 +217,7 @@ cvs_import_local(struct cvs_file *cf)
 {
 	int isnew;
 	struct stat st;
-	char repo[MAXPATHLEN];
+	char repo[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_import_local(%s)", cf->file_path);
 
@@ -258,7 +258,7 @@ static void
 import_loginfo(char *repo)
 {
 	int i;
-	char pwd[MAXPATHLEN];
+	char pwd[PATH_MAX];
 
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		fatal("Can't get working directory");

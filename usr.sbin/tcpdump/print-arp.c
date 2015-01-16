@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-arp.c,v 1.12 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-arp.c,v 1.13 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

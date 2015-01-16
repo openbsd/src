@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.57 2014/12/16 03:35:49 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.58 2015/01/16 06:40:19 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -26,23 +26,24 @@
  * rarpd - Reverse ARP Daemon
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <syslog.h>
-#include <string.h>
-#include <stdarg.h>
-#include <sys/param.h>
-#include <unistd.h>
 #include <sys/time.h>
-#include <net/bpf.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <sys/file.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include <string.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
@@ -518,7 +519,7 @@ choose_ipaddr(u_int32_t **alist, u_int32_t net, u_int32_t netmask)
 void
 rarp_process(struct if_info *ii, u_char *pkt)
 {
-	char    ename[MAXHOSTNAMELEN];
+	char    ename[HOST_NAME_MAX+1];
 	u_int32_t  target_ipaddr;
 	struct ether_header *ep;
 	struct ether_addr *ea;

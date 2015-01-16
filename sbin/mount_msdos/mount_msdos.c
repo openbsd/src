@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.28 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.29 2015/01/16 06:39:59 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 
 #include "mntopts.h"
@@ -64,7 +65,7 @@ main(int argc, char **argv)
 	struct msdosfs_args args;
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
-	char *dev, dir[MAXPATHLEN];
+	char *dev, dir[PATH_MAX];
 	char *errcause;
 
 	mntflags = set_gid = set_uid = set_mask = 0;

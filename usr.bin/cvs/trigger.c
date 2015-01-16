@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.21 2014/01/08 13:23:55 okan Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.22 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -382,7 +382,7 @@ cvs_trigger_getlines(char * file, char * repo)
 	regex_t preg;
 	struct trigger_list *list;
 	struct trigger_line *tline;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 	char *currentline, *defaultline = NULL, *nline, *p, *q, *regex;
 
 	if (strcmp(file, CVS_PATH_EDITINFO) == 0 ||
@@ -391,7 +391,7 @@ cvs_trigger_getlines(char * file, char * repo)
 	else
 		allow_all = 1;
 
-	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", current_cvsroot->cr_dir,
+	(void)xsnprintf(fpath, PATH_MAX, "%s/%s", current_cvsroot->cr_dir,
 	    file);
 
 	if ((fp = fopen(fpath, "r")) == NULL) {
@@ -535,8 +535,8 @@ cvs_trigger_freeinfo(struct file_info_list * list)
 void
 cvs_trigger_loginfo_header(BUF *buf, char *repo)
 {
-	char *dir, pwd[MAXPATHLEN];
-	char hostname[MAXHOSTNAMELEN];
+	char *dir, pwd[PATH_MAX];
+	char hostname[HOST_NAME_MAX+1];
 
 	if (gethostname(hostname, sizeof(hostname)) == -1) {
 		fatal("cvs_trigger_loginfo_header: gethostname failed %s",

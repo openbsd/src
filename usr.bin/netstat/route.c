@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.94 2014/12/26 05:47:23 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.95 2015/01/16 06:40:10 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 

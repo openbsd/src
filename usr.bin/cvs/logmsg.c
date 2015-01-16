@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.54 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.55 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -99,7 +99,7 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 	int c, fd, rd, saved_errno;
 	struct cvs_filelist *cf;
 	struct stat st1, st2;
-	char *fpath, *logmsg, repo[MAXPATHLEN];
+	char *fpath, *logmsg, repo[PATH_MAX];
 	struct stat st;
 	struct trigger_list *line_list;
 	struct trigger_line *line;

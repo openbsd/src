@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.21 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.22 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -519,7 +518,7 @@ msg_open(SCR *sp, char *file)
 	DB *db;
 	DBT data, key;
 	recno_t msgno;
-	char *p, *t, buf[MAXPATHLEN];
+	char *p, *t, buf[PATH_MAX];
 
 	if ((p = strrchr(file, '/')) != NULL && p[1] == '\0' &&
 	    (((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0') ||

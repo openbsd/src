@@ -33,7 +33,6 @@
 /*
  * Turn quota on/off for a filesystem.
  */
-#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <ufs/ufs/quota.h>

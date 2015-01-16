@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.102 2009/03/19 09:53:16 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.103 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,7 +35,7 @@ cvs_ent_open(const char *dir)
 {
 	FILE *fp;
 	CVSENTRIES *ep;
-	char *p, buf[MAXPATHLEN];
+	char *p, buf[PATH_MAX];
 	struct cvs_ent *ent;
 	struct cvs_ent_line *line;
 
@@ -422,7 +422,7 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	int i, linenum;
 	size_t len;
 	struct tm datetm;
-	char linebuf[128], tagpath[MAXPATHLEN];
+	char linebuf[128], tagpath[PATH_MAX];
 
 	cvs_directory_date = -1;
 
@@ -435,8 +435,8 @@ cvs_parse_tagfile(char *dir, char **tagp, char **datep, int *nbp)
 	if (nbp != NULL)
 		*nbp = 0;
 
-	i = snprintf(tagpath, MAXPATHLEN, "%s/%s", dir, CVS_PATH_TAG);
-	if (i < 0 || i >= MAXPATHLEN)
+	i = snprintf(tagpath, PATH_MAX, "%s/%s", dir, CVS_PATH_TAG);
+	if (i < 0 || i >= PATH_MAX)
 		return;
 
 	if ((fp = fopen(tagpath, "r")) == NULL) {
@@ -499,7 +499,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 {
 	FILE *fp;
 	RCSNUM *rev;
-	char tagpath[MAXPATHLEN];
+	char tagpath[PATH_MAX];
 	char sticky[CVS_REV_BUFSZ];
 	struct tm datetm;
 	int i;
@@ -510,8 +510,8 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 	if (cvs_noexec == 1)
 		return;
 
-	i = snprintf(tagpath, MAXPATHLEN, "%s/%s", dir, CVS_PATH_TAG);
-	if (i < 0 || i >= MAXPATHLEN)
+	i = snprintf(tagpath, PATH_MAX, "%s/%s", dir, CVS_PATH_TAG);
+	if (i < 0 || i >= PATH_MAX)
 		return;
 
 	if (tag != NULL || cvs_specified_date != -1 ||

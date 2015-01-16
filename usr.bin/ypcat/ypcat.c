@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.14 2009/10/27 23:59:50 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.15 2015/01/16 06:40:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.21 2014/05/23 04:38:57 guenther Exp $	*/
+/*	$OpenBSD: ln.c,v 1.22 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <err.h>
@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
@@ -112,7 +113,7 @@ int
 linkit(char *target, char *source, int isdir)
 {
 	struct stat sb;
-	char *p, path[MAXPATHLEN];
+	char *p, path[PATH_MAX];
 	int (*statf)(const char *, struct stat *);
 	int exists, n;
 

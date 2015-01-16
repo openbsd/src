@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.28 2014/11/18 20:54:28 krw Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.29 2015/01/16 06:40:11 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -39,12 +39,12 @@
 #define RPCGEN_VERSION	"199506"/* This program's version (year & month) */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ctype.h>
 #include <sys/stat.h>
 #include "rpc_parse.h"
@@ -77,7 +77,7 @@ static char    *cmdname;
 static char    *svcclosetime = "120";
 static char    *CPP = "/usr/bin/cpp";
 static char     CPPFLAGS[] = "-C";
-static char     pathbuf[MAXPATHLEN];
+static char     pathbuf[PATH_MAX];
 static char    *allv[] = {
 	"rpcgen", "-s", "udp", "-s", "tcp",
 };

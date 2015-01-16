@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: genmap.sh,v 1.6 2013/01/08 10:38:19 reyk Exp $
+# $OpenBSD: genmap.sh,v 1.7 2015/01/16 06:39:58 deraadt Exp $
 
 # Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 #
@@ -28,7 +28,6 @@ EOF
 sed -n '1,/^ \*\//p' $1
 cat <<EOF
 
-#include <sys/param.h>
 #include <sys/types.h>
 
 #include "types.h"

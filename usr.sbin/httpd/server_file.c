@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.46 2015/01/13 09:21:15 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.47 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,9 @@
 
 #include "httpd.h"
 #include "http.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 int	 server_file_access(struct httpd *, struct client *, char *, size_t);
 int	 server_file_request(struct httpd *, struct client *, char *,
@@ -150,7 +153,7 @@ server_file(struct httpd *env, struct client *clt)
 {
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
-	char			 path[MAXPATHLEN];
+	char			 path[PATH_MAX];
 	const char		*stripped, *errstr = NULL;
 	int			 ret = 500;
 
@@ -221,7 +224,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 
 	media = media_find(env->sc_mediatypes, path);
 	ret = server_response_http(clt, 200, media, st->st_size,
-	    MIN(time(NULL), st->st_mtim.tv_sec));
+	    MINIMUM(time(NULL), st->st_mtim.tv_sec));
 	switch (ret) {
 	case -1:
 		goto fail;
@@ -270,7 +273,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 int
 server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 {
-	char			  path[MAXPATHLEN];
+	char			  path[PATH_MAX];
 	char			  tmstr[21];
 	struct http_descriptor	 *desc = clt->clt_descreq;
 	struct server_config	 *srv_conf = clt->clt_srv_conf;
@@ -299,7 +302,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 		goto abort;
 
 	/* Save last modification time */
-	dir_mtime = MIN(time(NULL), st->st_mtim.tv_sec);
+	dir_mtime = MINIMUM(time(NULL), st->st_mtim.tv_sec);
 
 	if ((evb = evbuffer_new()) == NULL)
 		goto abort;
@@ -349,13 +352,13 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s/</a>%*s%s%20s\n",
 			    dp->d_name, dp->d_name,
-			    MAX(namewidth, 0), " ", tmstr, "-") == -1)
+			    MAXIMUM(namewidth, 0), " ", tmstr, "-") == -1)
 				skip = 1;
 		} else if (S_ISREG(st->st_mode)) {
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
 			    dp->d_name, dp->d_name,
-			    MAX(namewidth, 0), " ", tmstr, st->st_size) == -1)
+			    MAXIMUM(namewidth, 0), " ", tmstr, st->st_size) == -1)
 				skip = 1;
 		}
 		free(dp);

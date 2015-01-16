@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.20 2014/12/09 17:03:19 mikeb Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.21 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -23,7 +23,6 @@
 
 #ifdef INET6
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>

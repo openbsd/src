@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.96 2014/12/19 14:12:00 tedu Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.97 2015/01/16 06:40:19 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN DEV_BSIZE */
+#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/vnode.h>

@@ -11,12 +11,6 @@
 
 #define _PATH_MROUTED_CONF	"/etc/mrouted.conf"
 
-#if (defined(BSD) && (BSD >= 199103))
 #define _PATH_MROUTED_GENID	"/var/run/mrouted.genid"
 #define _PATH_MROUTED_DUMP	"/var/tmp/mrouted.dump"
 #define _PATH_MROUTED_CACHE	"/var/tmp/mrouted.cache"
-#else
-#define _PATH_MROUTED_GENID	"/etc/mrouted.genid"
-#define _PATH_MROUTED_DUMP	"/usr/tmp/mrouted.dump"
-#define _PATH_MROUTED_CACHE	"/usr/tmp/mrouted.cache"
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.11 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.12 2015/01/16 06:39:59 deraadt Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 
 #include <err.h>
@@ -38,6 +38,7 @@
 #include <fstab.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "mntopts.h"
 

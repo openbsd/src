@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.19 2014/12/23 03:29:52 tedu Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.20 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -67,7 +66,7 @@ main(int argc, char *argv[])
 	struct rlimit rl;
 	int fd, rval, ch, verbose = 0;
 	char *nlistpath, *nlistname;
-	char dbdir[MAXPATHLEN];
+	char dbdir[PATH_MAX];
 
 	/* Increase our data size to the max if we can. */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
@@ -129,7 +128,7 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
     int verbose)
 {
 	DB *db;
-	char dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	char dbtemp[PATH_MAX], dbname[PATH_MAX];
 	int r;
 	struct group *gr;
 

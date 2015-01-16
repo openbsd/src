@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.31 2013/12/04 02:18:05 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.32 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -162,13 +161,13 @@ create_database(char *infile, char *database, char *yp_input_file,
 {
 	FILE	*data_file;
 	char	data_line[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
-	char	myname[MAXHOSTNAMELEN];
+	char	myname[HOST_NAME_MAX+1];
 	int	line_no = 0, len;
 	char	*p, *k, *v, *slash;
 	DBM	*new_db;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN];
-	char	db_tempname[MAXPATHLEN], empty_str[] = "";
+	char	db_mapname[PATH_MAX], db_outfile[PATH_MAX];
+	char	db_tempname[PATH_MAX], empty_str[] = "";
 
 	if (strcmp(infile,"-") == 0) {
 		data_file = stdin;
@@ -181,7 +180,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 		}
 	}
 
-	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+	if (strlen(database) + strlen(YPDB_SUFFIX) > PATH_MAX) {
 		fprintf(stderr,"%s: %s: file name too long\n",
 		    __progname, database);
 		exit(1);
@@ -197,7 +196,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 	/* note: database is now directory where map goes ! */
 
 	if (strlen(database) + strlen(mapname) +
-	    strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+	    strlen(YPDB_SUFFIX) > PATH_MAX) {
 		fprintf(stderr,"%s: %s: directory name too long\n",
 		    __progname, database);
 		exit(1);

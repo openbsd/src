@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.78 2014/11/20 15:22:39 tedu Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.79 2015/01/16 06:39:59 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include "pathnames.h"
 
 #include <stdarg.h>
@@ -177,7 +178,7 @@ void	mountd_svc_run(void);
 struct exportlist *exphead;
 struct mountlist *mlhead;
 struct grouplist *grphead;
-char exname[MAXPATHLEN];
+char exname[PATH_MAX];
 struct xucred def_anon = {
 	.cr_uid		= (uid_t) -2,
 	.cr_gid		= (gid_t) -2,
@@ -339,7 +340,7 @@ mountd_svc_run(void)
 void
 mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 {
-	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
+	char rpcpath[RPCMNT_PATHLEN+1], dirpath[PATH_MAX];
 	struct hostent *hp = NULL;
 	struct exportlist *ep;
 	sigset_t sighup_mask;
@@ -1798,7 +1799,7 @@ get_line(void)
 void
 parsecred(char *namelist, struct xucred *cr)
 {
-	gid_t groups[NGROUPS + 1];
+	gid_t groups[NGROUPS_MAX + 1];
 	char *name, *names;
 	struct passwd *pw;
 	struct group *gr;
@@ -1827,7 +1828,7 @@ parsecred(char *namelist, struct xucred *cr)
 			return;
 		}
 		cr->cr_uid = pw->pw_uid;
-		ngroups = NGROUPS + 1;
+		ngroups = NGROUPS_MAX + 1;
 		if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups))
 			syslog(LOG_ERR, "Too many groups for %s: %m", pw->pw_name);
 		/*
@@ -1852,7 +1853,7 @@ parsecred(char *namelist, struct xucred *cr)
 		return;
 	}
 	cr->cr_ngroups = 0;
-	while (names != NULL && *names != '\0' && cr->cr_ngroups < NGROUPS) {
+	while (names != NULL && *names != '\0' && cr->cr_ngroups < NGROUPS_MAX) {
 		name = strsep(&names, ":");
 		if (isdigit((unsigned char)*name) || *name == '-') {
 			cr->cr_groups[cr->cr_ngroups++] = atoi(name);
@@ -1864,7 +1865,7 @@ parsecred(char *namelist, struct xucred *cr)
 			cr->cr_groups[cr->cr_ngroups++] = gr->gr_gid;
 		}
 	}
-	if (names != NULL && *names != '\0' && cr->cr_ngroups == NGROUPS)
+	if (names != NULL && *names != '\0' && cr->cr_ngroups == NGROUPS_MAX)
 		syslog(LOG_ERR, "Too many groups");
 }
 

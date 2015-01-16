@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-skip.c,v 1.4 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-skip.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Sun Microsystems, Inc.
@@ -24,7 +24,6 @@
  * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
-#include <sys/param.h> 
 #include <sys/time.h> 
 #include <sys/types.h>
  

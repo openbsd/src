@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.56 2014/10/17 06:11:27 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.57 2015/01/16 06:40:18 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
  * Users can't touch the spool w/o the help of one of the lp* programs.
  */
 
-#include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -86,6 +85,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "lp.h"
 #include "lp.local.h"

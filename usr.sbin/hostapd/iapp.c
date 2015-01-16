@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.18 2009/04/16 20:13:13 sobrado Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.19 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "hostapd.h"
 #include "iapp.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.55 2014/01/08 13:23:55 okan Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.56 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,6 +28,8 @@
 #include <string.h>
 
 #include "cvs.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static void	 rcsnum_setsize(RCSNUM *, u_int);
 static char	*rcsnum_itoa(u_int16_t, char *, size_t);
@@ -188,7 +190,7 @@ rcsnum_cmp(RCSNUM *n1, RCSNUM *n2, u_int depth)
 	if (!rcsnum_differ(n1, n2))
 		return (0);
 
-	slen = MIN(n1->rn_len, n2->rn_len);
+	slen = MINIMUM(n1->rn_len, n2->rn_len);
 	if (depth != 0 && slen > depth)
 		slen = depth;
 
@@ -435,7 +437,7 @@ rcsnum_differ(RCSNUM *r1, RCSNUM *r2)
 	if (r1->rn_len != r2->rn_len)
 		return (1);
 
-	len = MIN(r1->rn_len, r2->rn_len);
+	len = MINIMUM(r1->rn_len, r2->rn_len);
 	for (i = 0; i < len; i++) {
 		if (r1->rn_id[i] != r2->rn_id[i])
 			return (1);

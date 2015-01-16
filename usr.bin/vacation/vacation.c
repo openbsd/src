@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.34 2013/11/26 19:25:39 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.35 2015/01/16 06:40:13 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 **  Berkeley, California
 */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pwd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.27 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.28 2015/01/16 06:40:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -11,7 +11,6 @@
 
 #include "config.h"
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -27,6 +26,8 @@
 
 #include "../common/common.h"
 #include "vi.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int	 txt_abbrev(SCR *, TEXT *, CHAR_T *, int, int *, int *);
 static void	 txt_ai_resolve(SCR *, TEXT *, int *);
@@ -2862,7 +2863,7 @@ txt_Rresolve(SCR *sp, TEXTH *tiqh, TEXT *tp, const size_t orig_len)
 	 * okay, the user just extended the file.
 	 */
 	if (input_len < orig_len) {
-		retain = MIN(tp->owrite, orig_len - input_len);
+		retain = MINIMUM(tp->owrite, orig_len - input_len);
 		if (db_get(sp,
 		    TAILQ_FIRST(tiqh)->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
 			return;

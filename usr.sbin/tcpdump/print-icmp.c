@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.24 2014/08/14 12:44:44 mpi Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.25 2015/01/16 06:40:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
@@ -40,6 +39,7 @@ struct rtentry;
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -171,8 +171,8 @@ icmp_print(const u_char *bp, u_int length, const u_char *bp2)
 	const struct ip *oip;
 	const struct udphdr *ouh;
 	u_int hlen, dport, mtu;
-	char buf[MAXHOSTNAMELEN+256];
-	char buf2[MAXHOSTNAMELEN+256];
+	char buf[HOST_NAME_MAX+1+256];
+	char buf2[HOST_NAME_MAX+1+256];
 
 	dp = (struct icmp *)bp;
 	ip = (struct ip *)bp2;

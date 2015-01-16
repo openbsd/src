@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.122 2014/10/08 10:08:03 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.123 2015/01/16 06:39:56 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -27,7 +27,7 @@
  *
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* NODEV */
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/stat.h>
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vis.h>
 #include <readpassphrase.h>
 
@@ -931,7 +932,7 @@ bio_parse_devlist(char *lst, dev_t *dt)
 	u_int32_t		sz = 0;
 	int			no_dev = 0, i, x;
 	struct stat		sb;
-	char			dev[MAXPATHLEN];
+	char			dev[PATH_MAX];
 	int			fd;
 
 	if (!lst)

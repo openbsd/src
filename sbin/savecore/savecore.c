@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.49 2013/06/03 02:49:42 tedu Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.50 2015/01/16 06:40:00 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* NODEV DEV_BSIZE */
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/syslog.h>
@@ -52,6 +52,8 @@
 #include <zlib.h>
 #include <kvm.h>
 #include <vis.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 extern FILE *zopen(const char *fname, const char *mode, int bits);
 
@@ -373,7 +375,7 @@ save_core(void)
 {
 	FILE *fp;
 	int bounds, ifd, nr, nw, ofd = -1;
-	char *rawp, path[MAXPATHLEN];
+	char *rawp, path[PATH_MAX];
 	mode_t um;
 
 	um = umask(S_IRWXG|S_IRWXO);
@@ -439,7 +441,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	for (; dumpsize != 0; dumpsize -= nr) {
 		(void)printf("%8luK\r", dumpsize / 1024);
 		(void)fflush(stdout);
-		nr = read(ifd, buf, MIN(dumpsize, sizeof(buf)));
+		nr = read(ifd, buf, MINIMUM(dumpsize, sizeof(buf)));
 		if (nr <= 0) {
 			if (nr == 0)
 				syslog(LOG_WARNING,
@@ -507,7 +509,7 @@ find_dev(dev_t dev, int type)
 	DIR *dfd;
 	struct dirent *dir;
 	struct stat sb;
-	char *dp, devname[MAXPATHLEN];
+	char *dp, devname[PATH_MAX];
 
 	if ((dfd = opendir(_PATH_DEV)) == NULL) {
 		syslog(LOG_ERR, "%s: %s", _PATH_DEV, strerror(errno));
@@ -540,7 +542,7 @@ find_dev(dev_t dev, int type)
 char *
 rawname(char *s)
 {
-	char *sl, name[MAXPATHLEN];
+	char *sl, name[PATH_MAX];
 
 	if ((sl = strrchr(s, '/')) == NULL || sl[1] == '0') {
 		syslog(LOG_ERR,
@@ -583,7 +585,7 @@ check_space(void)
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
 	struct statfs fsbuf;
-	char buf[100], path[MAXPATHLEN];
+	char buf[100], path[PATH_MAX];
 	int fd;
 
 	tkernel = kernel ? kernel : _PATH_UNIX;

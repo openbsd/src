@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.29 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: remote.c,v 1.30 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -26,6 +27,8 @@
 #include "atomicio.h"
 #include "cvs.h"
 #include "remote.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct cvs_resp *
 cvs_remote_get_response_info(const char *response)
@@ -136,7 +139,7 @@ cvs_remote_receive_file(int fd, size_t len)
 	nleft = len;
 
 	while (nleft > 0) {
-		toread = MIN(nleft, MAXBSIZE);
+		toread = MINIMUM(nleft, MAXBSIZE);
 
 		nread = fread(data, sizeof(char), toread, in);
 		if (nread == 0)

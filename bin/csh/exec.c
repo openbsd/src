@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.15 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.16 2015/01/16 06:39:31 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -31,7 +31,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -39,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdarg.h>
 
 #include "csh.h"
@@ -554,17 +554,17 @@ static int
 executable(Char *dir, Char *name, bool dir_ok)
 {
     struct stat stbuf;
-    Char    path[MAXPATHLEN], *dp, *sp;
+    Char    path[PATH_MAX], *dp, *sp;
     char   *strname;
 
     if (dir && *dir) {
 	for (dp = path, sp = dir; *sp; *dp++ = *sp++)
-	    if (dp == &path[MAXPATHLEN]) {
+	    if (dp == &path[PATH_MAX]) {
 		*--dp = '\0';
 		break;
 	    }
 	for (sp = name; *sp; *dp++ = *sp++)
-	    if (dp == &path[MAXPATHLEN]) {
+	    if (dp == &path[PATH_MAX]) {
 		*--dp = '\0';
 		break;
 	    }

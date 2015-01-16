@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.14 2014/12/02 20:34:14 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.15 2015/01/16 06:39:32 deraadt Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -31,7 +31,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>		/* for MAXPATHLEN */
 #include <errno.h>
 #include <limits.h>
 #include <regex.h>
@@ -230,7 +229,7 @@ extern int sigflags;
 /* global vars */
 extern int addr_last;
 extern int current_addr;
-extern char errmsg[MAXPATHLEN + 40];
+extern char errmsg[PATH_MAX + 40];
 extern int first_addr;
 extern int lineno;
 extern int second_addr;

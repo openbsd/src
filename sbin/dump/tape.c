@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.40 2014/06/13 20:43:06 naddy Exp $	*/
+/*	$OpenBSD: tape.c,v 1.41 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -30,8 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE */
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -49,9 +48,12 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "dump.h"
 #include "pathnames.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 int	writesize;		/* size of malloc()ed buffer for tape */
 int64_t	lastspclrec = -1;	/* tape block number of last written header */
@@ -175,7 +177,7 @@ dumpblock(daddr_t blkno, int size)
 
 	dblkno = fsbtodb(sblock, blkno);
 	tpblks = size >> tp_bshift;
-	while ((avail = MIN(tpblks, ntrec - trecno)) > 0) {
+	while ((avail = MINIMUM(tpblks, ntrec - trecno)) > 0) {
 		slp->req[trecno].dblk = dblkno;
 		slp->req[trecno].count = avail;
 		trecno += avail;

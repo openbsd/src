@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.14 2014/07/13 15:38:09 krw Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.15 2015/01/16 06:40:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -17,9 +17,9 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/signal.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
 
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "ypldap.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
+/*	$OpenBSD: file.c,v 1.12 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -26,16 +26,15 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <zlib.h>
 
 #include "grep.h"
 
-static char	 fname[MAXPATHLEN];
+static char	 fname[PATH_MAX];
 #ifndef NOZ
 static char	*lnbuf;
 static size_t	 lnbuflen;

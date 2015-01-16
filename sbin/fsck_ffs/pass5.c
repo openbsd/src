@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.46 2014/09/06 04:05:40 guenther Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.47 2015/01/16 06:39:57 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXFRAG MAXBSIZE roundup setbit */
 #include <sys/time.h>
 #include <sys/lock.h>
 #include <sys/ucred.h>
@@ -40,10 +40,13 @@
 #include <ufs/ffs/ffs_extern.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int info_cg;
 static int info_maxcg;
@@ -95,7 +98,7 @@ pass5(void)
 			if (doit) {
 				i = fs->fs_contigsumsize;
 				fs->fs_contigsumsize =
-				    MIN(fs->fs_maxcontig, FS_MAXCONTIG);
+				    MINIMUM(fs->fs_maxcontig, FS_MAXCONTIG);
 				if (CGSIZE(fs) > fs->fs_bsize) {
 					pwarn("CANNOT %s CLUSTER MAPS\n", doit);
 					fs->fs_contigsumsize = i;

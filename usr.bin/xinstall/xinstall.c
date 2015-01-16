@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.57 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.58 2015/01/16 06:40:15 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -46,10 +46,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sysexits.h>
 #include <utime.h>
 
 #include "pathnames.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
@@ -60,7 +63,7 @@ struct passwd *pp;
 struct group *gp;
 int dobackup, docompare, dodir, dopreserve, dostrip, safecopy;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-char pathbuf[MAXPATHLEN], tempfile[MAXPATHLEN];
+char pathbuf[PATH_MAX], tempfile[PATH_MAX];
 char *suffix = BACKUP_SUFFIX;
 uid_t uid;
 gid_t gid;
@@ -372,8 +375,8 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 		if (to_sb.st_flags & (NOCHANGEBITS))
 			(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
 		if (dobackup) {
-			char backup[MAXPATHLEN];
-			(void)snprintf(backup, MAXPATHLEN, "%s%s", to_name,
+			char backup[PATH_MAX];
+			(void)snprintf(backup, PATH_MAX, "%s%s", to_name,
 			    suffix);
 			/* It is ok for the target file not to exist. */
 			if (rename(to_name, backup) < 0 && errno != ENOENT) {
@@ -498,7 +501,7 @@ compare(int from_fd, const char *from_name, size_t from_len, int to_fd,
 	from_off = to_off = (off_t)0;
 	remainder = from_len;
 	do {
-		length = MIN(remainder, 8 * 1048576);
+		length = MINIMUM(remainder, 8 * 1048576);
 		remainder -= length;
 
 		if ((p1 = mmap(NULL, length, PROT_READ, MAP_PRIVATE,
@@ -632,7 +635,7 @@ create_tempfile(char *path, char *temp, size_t tsize)
 int
 create_newfile(char *path, struct stat *sbp)
 {
-	char backup[MAXPATHLEN];
+	char backup[PATH_MAX];
 
 	/*
 	 * Unlink now... avoid ETXTBSY errors later.  Try and turn
@@ -643,7 +646,7 @@ create_newfile(char *path, struct stat *sbp)
 		(void)chflags(path, sbp->st_flags & ~(NOCHANGEBITS));
 
 	if (dobackup) {
-		(void)snprintf(backup, MAXPATHLEN, "%s%s", path, suffix);
+		(void)snprintf(backup, PATH_MAX, "%s%s", path, suffix);
 		/* It is ok for the target file not to exist. */
 		if (rename(path, backup) < 0 && errno != ENOENT)
 			err(EX_OSERR, "rename: %s to %s (errno %d)", path, backup, errno);
@@ -729,7 +732,7 @@ file_write(int fd, char *str, size_t cnt, int *rem, int *isempt, int sz)
 		 * only examine up to the end of the current file block or
 		 * remaining characters to write, whatever is smaller
 		 */
-		wcnt = MIN(cnt, *rem);
+		wcnt = MINIMUM(cnt, *rem);
 		cnt -= wcnt;
 		*rem -= wcnt;
 		if (*isempt) {

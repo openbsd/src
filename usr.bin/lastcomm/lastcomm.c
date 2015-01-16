@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.19 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.20 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* NODEV */
 #include <sys/stat.h>
 #include <sys/acct.h>
 

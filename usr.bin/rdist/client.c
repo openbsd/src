@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.31 2014/07/12 03:48:04 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.32 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -347,9 +347,9 @@ linkinfo(struct stat *statp)
 static int
 sendhardlink(opt_t opts, struct linkbuf *lp, char *rname, int destdir)
 {
-	static char buff[MAXPATHLEN];
+	static char buff[PATH_MAX];
 	char *lname;	/* name of file to link to */
-	char ername[MAXPATHLEN*4], elname[MAXPATHLEN*4];
+	char ername[PATH_MAX*4], elname[PATH_MAX*4];
 
 	debugmsg(DM_MISC, 
 	       "sendhardlink: rname='%s' pathname='%s' src='%s' target='%s'\n",
@@ -382,7 +382,7 @@ sendfile(char *rname, opt_t opts, struct stat *stb, char *user,
 {
 	int goterr, f;
 	off_t i;
-	char ername[MAXPATHLEN*4];
+	char ername[PATH_MAX*4];
 
 	if (stb->st_nlink > 1) {
 		struct linkbuf *lp;
@@ -492,7 +492,7 @@ rmchk(opt_t opts)
 	struct stat stb;
 	int didupdate = 0;
 	int n;
-	char targ[MAXPATHLEN*4];
+	char targ[PATH_MAX*4];
 
 	debugmsg(DM_CALL, "rmchk()\n");
 
@@ -584,7 +584,7 @@ senddir(char *rname, opt_t opts, struct stat *stb, char *user,
 	char *optarget, *cp;
 	int len;
 	int didupdate = 0;
-	char ername[MAXPATHLEN*4];
+	char ername[PATH_MAX*4];
 
 	/*
 	 * Send recvdir command in recvit() format.
@@ -620,7 +620,7 @@ senddir(char *rname, opt_t opts, struct stat *stb, char *user,
 		if (!strcmp(dp->d_name, ".") ||
 		    !strcmp(dp->d_name, ".."))
 			continue;
-		if (len + 1 + (int) strlen(dp->d_name) >= MAXPATHLEN - 1) {
+		if (len + 1 + (int) strlen(dp->d_name) >= PATH_MAX - 1) {
 			error("%s/%s: Name too long", target,
 			      dp->d_name);
 			continue;
@@ -656,9 +656,9 @@ sendlink(char *rname, opt_t opts, struct stat *stb, char *user,
 {
 	int f, n;
 	static char tbuf[BUFSIZ];
-	char lbuf[MAXPATHLEN];
+	char lbuf[PATH_MAX];
 	u_char *s;
-	char ername[MAXPATHLEN*4];
+	char ername[PATH_MAX*4];
 
 	debugmsg(DM_CALL, "sendlink(%s, %lx, stb, %d)\n", rname, opts, destdir);
 
@@ -777,7 +777,7 @@ update(char *rname, opt_t opts, struct stat *statp)
 	char *owner = NULL, *group = NULL;
 	int done, n;
 	u_char *cp;
-	char ername[MAXPATHLEN*4];
+	char ername[PATH_MAX*4];
 
 	debugmsg(DM_CALL, "update(%s, 0x%lx, %p)\n", rname, opts, statp);
 
@@ -1041,7 +1041,7 @@ statupdate(int u, char *starget, opt_t opts, char *rname, int destdir,
 	   struct stat *st, char *user, char *group)
 {
 	int rv = 0;
-	char ername[MAXPATHLEN*4];
+	char ername[PATH_MAX*4];
 	int lmode = st->st_mode & 07777;
 
 	if (u == US_CHMOG) {
@@ -1214,10 +1214,10 @@ cleanup(int dummy)
 int
 install(char *src, char *dest, int ddir, int destdir, opt_t opts)
 {
-	static char destcopy[MAXPATHLEN];
+	static char destcopy[PATH_MAX];
 	char *rname;
 	int didupdate = 0;
-	char ername[MAXPATHLEN*4];
+	char ername[PATH_MAX*4];
 
 	debugmsg(DM_CALL,
 		"install(src=%s,dest=%s,ddir=%d,destdir=%d,opts=%ld) start\n",

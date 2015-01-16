@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenadm.c,v 1.9 2007/03/15 22:31:14 jmc Exp $	*/
+/*	$OpenBSD: tokenadm.c,v 1.10 2015/01/16 06:40:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -34,7 +34,7 @@
  *	BSDI $From: tokenadm.c,v 1.2 1996/10/17 00:54:28 prb Exp $
  */
 
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 
@@ -44,6 +44,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <string.h>
 
 #include "token.h"

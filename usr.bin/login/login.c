@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.62 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: login.c,v 1.63 2015/01/16 06:40:09 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -70,7 +70,6 @@
  * login -p		(preserve existing environment; for getty)
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -93,6 +92,7 @@
 #include <ttyent.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 #include <util.h>
 #include <bsd_auth.h>
@@ -138,8 +138,8 @@ main(int argc, char *argv[])
 {
 	char *domain, *p, *ttyn, *shell, *fullname, *instance;
 	char *lipaddr, *script, *ripaddr, *style, *type, *fqdn;
-	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
-	char localhost[MAXHOSTNAMELEN], *copyright;
+	char tbuf[PATH_MAX + 2], tname[sizeof(_PATH_TTY) + 10];
+	char localhost[HOST_NAME_MAX+1], *copyright;
 	char mail[sizeof(_PATH_MAILDIR) + 1 + NAME_MAX];
 	int ask, ch, cnt, fflag, pflag, quietlog, rootlogin, lastchance;
 	int error, homeless, needto, authok, tries, backoff;
@@ -565,7 +565,7 @@ failed:
 	shell = login_getcapstr(lc, "shell", pwd->pw_shell, pwd->pw_shell);
 	if (*shell == '\0')
 		shell = _PATH_BSHELL;
-	else if (strlen(shell) >= MAXPATHLEN) {
+	else if (strlen(shell) >= PATH_MAX) {
 		syslog(LOG_ERR, "shell path too long: %s", shell);
 		warnx("invalid shell");
 		quickexit(1);

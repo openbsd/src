@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.17 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: split.c,v 1.18 2015/01/16 06:40:12 deraadt Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -51,7 +51,7 @@ long	 numlines;			/* Line count to split on. */
 int	 file_open;			/* If a file open. */
 int	 ifd = -1, ofd = -1;		/* Input/output file descriptors. */
 char	 bfr[MAXBSIZE];			/* I/O buffer. */
-char	 fname[MAXPATHLEN];		/* File name prefix. */
+char	 fname[PATH_MAX];		/* File name prefix. */
 regex_t	 rgx;
 int	 pflag;
 int	 sufflen = 2;			/* File name suffix length. */

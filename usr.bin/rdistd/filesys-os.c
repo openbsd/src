@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys-os.c,v 1.11 2014/07/05 10:21:24 guenther Exp $	*/
+/*	$OpenBSD: filesys-os.c,v 1.12 2015/01/16 06:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 
 #include "defs.h"
@@ -71,7 +71,7 @@ mntent_t *
 getmountent(void)
 {
 	static mntent_t mntstruct;
-	static char remote_dev[MAXHOSTNAMELEN+MAXPATHLEN+1];
+	static char remote_dev[HOST_NAME_MAX+1 + PATH_MAX + 1];
 
 	if (!entries_left)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.27 2013/04/16 19:24:55 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.28 2015/01/16 06:40:14 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -45,6 +44,7 @@
 #include <paths.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 #include <err.h>
 #include <vis.h>
@@ -59,7 +59,7 @@ int utmp_chk(char *, char *);
 int
 main(int argc, char *argv[])
 {
-	char tty[MAXPATHLEN], *mytty, *cp;
+	char tty[PATH_MAX], *mytty, *cp;
 	int msgsok, myttyfd;
 	time_t atime;
 	uid_t myuid;
@@ -204,7 +204,7 @@ int
 term_chk(char *tty, int *msgsokP, time_t *atimeP, int showerror)
 {
 	struct stat s;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
 	if (stat(path, &s) < 0) {
@@ -226,7 +226,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	char *login, *nows;
 	struct passwd *pwd;
 	time_t now;
-	char path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
+	char path[PATH_MAX], host[HOST_NAME_MAX+1], line[512];
 	gid_t gid;
 
 	/* Determine our login name before the we reopen() stdout */

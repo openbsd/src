@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.17 2014/07/12 20:16:38 krw Exp $ */
+/*	$OpenBSD: rde.c,v 1.18 2015/01/16 06:40:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -19,7 +19,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>		/* for MIN() */
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
@@ -38,6 +37,8 @@
 #include "ripe.h"
 #include "log.h"
 #include "rde.h"
+
+#define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct ripd_conf	*rdeconf = NULL;
 struct imsgev		*iev_ripe;
@@ -401,7 +402,7 @@ rde_check_route(struct rip_route *e)
 	if ((iface = if_find_index(e->ifindex)) == NULL)
 		return (-1);
 
-	metric = MIN(INFINITY, e->metric + iface->cost);
+	metric = MINIMUM(INFINITY, e->metric + iface->cost);
 
 	if ((rn = rt_find(e->address.s_addr, e->mask.s_addr)) == NULL) {
 		if (metric >= INFINITY)

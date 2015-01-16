@@ -1,4 +1,4 @@
-/* $OpenBSD: cert.h,v 1.15 2007/08/05 09:43:09 tom Exp $	 */
+/* $OpenBSD: cert.h,v 1.16 2015/01/16 06:39:58 deraadt Exp $	 */
 /* $EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -33,7 +33,6 @@
 #ifndef _CERT_H_
 #define _CERT_H_
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 

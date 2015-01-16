@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.195 2015/01/14 19:33:41 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.196 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,6 +34,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -41,7 +42,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
-#include <sys/param.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/evp.h>
@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -120,8 +121,8 @@ time_t parent_alive_interval = 0;
 pid_t cleanup_pid = 0;
 
 /* pathname and directory for AUTH_SOCKET */
-char socket_name[MAXPATHLEN];
-char socket_dir[MAXPATHLEN];
+char socket_name[PATH_MAX];
+char socket_dir[PATH_MAX];
 
 /* locking */
 int locked = 0;

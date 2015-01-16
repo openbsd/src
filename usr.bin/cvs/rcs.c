@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.311 2014/01/08 13:23:55 okan Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.312 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,6 +39,8 @@
 #include "diff.h"
 #include "rcs.h"
 #include "rcsparse.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define RCS_KWEXP_SIZE  1024
 
@@ -284,7 +286,7 @@ void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char   numbuf[CVS_REV_BUFSZ], *fn, tmpdir[MAXPATHLEN];
+	char   numbuf[CVS_REV_BUFSZ], *fn, tmpdir[PATH_MAX];
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
@@ -1704,7 +1706,7 @@ rcs_get_revision(const char *revstr, RCSFILE *rfp)
 		 * instead of just 2.
 		 */
 		if (rfp->rf_head == NULL || rcsnum_cmp(rev, rfp->rf_head,
-		    MIN(rfp->rf_head->rn_len, rev->rn_len)) < 0) {
+		    MINIMUM(rfp->rf_head->rn_len, rev->rn_len)) < 0) {
 			rcsnum_free(rev);
 			return (NULL);
 		}

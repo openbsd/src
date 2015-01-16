@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.30 2014/11/04 16:16:03 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.31 2015/01/16 06:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -52,7 +52,7 @@
 #include "ypdb.h"
 
 int  Verbose = 0;
-char Domain[MAXHOSTNAMELEN], Map[255];
+char Domain[HOST_NAME_MAX+1], Map[255];
 u_int32_t OrderNum;
 char *master;
 
@@ -141,7 +141,7 @@ req_xfr(pid_t pid, u_int prog, SVCXPRT *transp, char *host, CLIENT *client)
 static void
 push(int inlen, char *indata)
 {
-	char host[MAXHOSTNAMELEN];
+	char host[HOST_NAME_MAX+1];
 	CLIENT *client;
 	SVCXPRT *transp;
 	int sock = RPC_ANYSOCK, status;
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 	int c, r, i;
 	char *ypmap = "ypservers";
 	CLIENT *client;
-	static char map_path[MAXPATHLEN];
+	static char map_path[PATH_MAX];
 	struct stat finfo;
 	DBM *yp_databas;
 	char order_key[YP_LAST_LEN] = YP_LAST_KEY;

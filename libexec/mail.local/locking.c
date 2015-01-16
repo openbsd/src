@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.11 2014/01/17 21:42:47 tobias Exp $	*/
+/*	$OpenBSD: locking.c,v 1.12 2015/01/16 06:39:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -28,13 +28,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@
 #include "pathnames.h"
 #include "mail.local.h"
 
-static char lpath[MAXPATHLEN];
+static char lpath[PATH_MAX];
 
 void
 rellock(void)
@@ -141,7 +142,7 @@ again:
 void
 baditem(char *path)
 {
-	char npath[MAXPATHLEN];
+	char npath[PATH_MAX];
 	int fd;
 
 	if (unlink(path) == 0)

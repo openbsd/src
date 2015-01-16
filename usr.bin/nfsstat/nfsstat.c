@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.33 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.34 2015/01/16 06:40:10 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <nfs/rpcv2.h>

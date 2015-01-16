@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.12 2013/08/22 04:43:41 guenther Exp $	*/
+/*	$OpenBSD: utils.c,v 1.13 2015/01/16 06:40:19 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -42,8 +42,6 @@
  * From: Utah Hdr: utils.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
-
-#include <sys/param.h>
 
 #include <fcntl.h>
 #include <signal.h>

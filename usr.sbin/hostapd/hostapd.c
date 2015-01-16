@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.34 2008/05/12 23:49:28 millert Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.35 2015/01/16 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -17,9 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -44,6 +44,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <err.h>
 
 #include "hostapd.h"

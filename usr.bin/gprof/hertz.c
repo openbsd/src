@@ -1,4 +1,4 @@
-/*	$OpenBSD: hertz.c,v 1.6 2006/03/25 19:06:36 espie Exp $	*/
+/*	$OpenBSD: hertz.c,v 1.7 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Artur Grabowski <art@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
 

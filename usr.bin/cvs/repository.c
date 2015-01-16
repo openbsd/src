@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.23 2010/07/23 08:31:19 ray Exp $	*/
+/*	$OpenBSD: repository.c,v 1.24 2015/01/16 06:40:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -30,7 +30,7 @@ struct wklhead repo_locks;
 void
 cvs_repository_unlock(const char *repo)
 {
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 
 	cvs_log(LP_TRACE, "cvs_repository_unlock(%s)", repo);
 
@@ -46,7 +46,7 @@ cvs_repository_lock(const char *repo, int wantlock)
 	int i;
 	uid_t myuid;
 	struct stat st;
-	char fpath[MAXPATHLEN];
+	char fpath[PATH_MAX];
 	struct passwd *pw;
 
 	if (cvs_noexec == 1 || cvs_readonlyfs == 1)
@@ -102,7 +102,7 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 	DIR *dirp;
 	struct stat st;
 	struct dirent *dp;
-	char *s, fpath[MAXPATHLEN], rpath[MAXPATHLEN];
+	char *s, fpath[PATH_MAX], rpath[PATH_MAX];
 
 	if ((dirp = opendir(dir)) == NULL)
 		fatal("cvs_repository_getdir: failed to open '%s'", dir);
@@ -113,8 +113,8 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 		    !strcmp(dp->d_name, CVS_LOCK))
 			continue;
 
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", wdir, dp->d_name);
-		(void)xsnprintf(rpath, MAXPATHLEN, "%s/%s", dir, dp->d_name);
+		(void)xsnprintf(fpath, PATH_MAX, "%s/%s", wdir, dp->d_name);
+		(void)xsnprintf(rpath, PATH_MAX, "%s/%s", dir, dp->d_name);
 
 		if (!TAILQ_EMPTY(&checkout_ign_pats)) {
 			if ((s = strrchr(fpath, ',')) != NULL)

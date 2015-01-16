@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.2 2014/08/16 07:49:27 deraadt Exp $	*/
+/*	$OpenBSD: small.c,v 1.3 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ usage:
 	}
 	globargv2 = argv[2];
 	if (loc && mcase) {
-		char *tp = argv[1], *tp2, tmpbuf[MAXPATHLEN];
+		char *tp = argv[1], *tp2, tmpbuf[PATH_MAX];
 
 		while (*tp && !islower(*tp)) {
 			tp++;
@@ -329,7 +329,7 @@ mget(int argc, char *argv[])
 	extern int optind, optreset;
 	sig_t oldintr;
 	int ch, xargc = 2;
-	char *cp, localcwd[MAXPATHLEN], *xargv[] = { argv[0], NULL, NULL };
+	char *cp, localcwd[PATH_MAX], *xargv[] = { argv[0], NULL, NULL };
 	static int restartit = 0;
 #ifndef SMALL
 	extern char *optarg;
@@ -532,7 +532,7 @@ disconnect(int argc, char *argv[])
 char *
 dotrans(char *name)
 {
-	static char new[MAXPATHLEN];
+	static char new[PATH_MAX];
 	char *cp1, *cp2 = new;
 	int i, ostop, found;
 
@@ -560,7 +560,7 @@ dotrans(char *name)
 char *
 domap(char *name)
 {
-	static char new[MAXPATHLEN];
+	static char new[PATH_MAX];
 	char *cp1 = name, *cp2 = mapin;
 	char *tp[9], *te[9];
 	int i, toks[9], toknum = 0, match = 1;
