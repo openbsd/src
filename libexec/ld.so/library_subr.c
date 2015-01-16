@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.41 2014/07/10 09:03:01 otto Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.42 2015/01/16 16:18:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -30,7 +30,6 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <limits.h>
 #include <dirent.h>
@@ -121,7 +120,7 @@ _dl_cmp_sod(struct sod *sodp, const struct sod *lsod)
 	return match;
 }
 
-char _dl_hint_store[MAXPATHLEN];
+char _dl_hint_store[PATH_MAX];
 
 char *
 _dl_find_shlib(struct sod *sodp, char **searchpath, int nohints)
@@ -194,7 +193,7 @@ nohints:
 						match = 1;
 						len = _dl_strlcpy(
 						    _dl_hint_store, *pp,
-						    MAXPATHLEN);
+						    PATH_MAX);
 						if (pp[0][len-1] != '/') {
 							_dl_hint_store[len] =
 							    '/';
@@ -203,7 +202,7 @@ nohints:
 						_dl_strlcpy(
 						    &_dl_hint_store[len],
 						    dp->d_name,
-						    MAXPATHLEN-len);
+						    PATH_MAX-len);
 						if (tsod.sod_major == -1)
 							break;
 					}

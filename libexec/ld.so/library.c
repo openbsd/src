@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.70 2014/07/10 09:03:01 otto Exp $ */
+/*	$OpenBSD: library.c,v 1.71 2015/01/16 16:18:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -30,7 +30,6 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include "dl_prebind.h"

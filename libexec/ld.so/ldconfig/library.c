@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.6 2013/12/03 01:47:06 deraadt Exp $ */
+/* $OpenBSD: library.c,v 1.7 2015/01/16 16:18:07 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -27,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <dirent.h>
 #include "link.h"
 #include "sod.h"
@@ -151,7 +151,7 @@ elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
 	return object;
 }
 
-char elf_hint_store[MAXPATHLEN];
+char elf_hint_store[PATH_MAX];
 
 char *
 elf_find_shlib(struct sod *sodp, char **searchpath, int nohints)
@@ -223,7 +223,7 @@ nohints:
 						match = 1;
 						len = strlcpy(
 						    elf_hint_store, *pp,
-						    MAXPATHLEN);
+						    PATH_MAX);
 						if (pp[0][len-1] != '/') {
 							elf_hint_store[len] =
 							    '/';
@@ -232,7 +232,7 @@ nohints:
 						strlcpy(
 						    &elf_hint_store[len],
 						    dp->d_name,
-						    MAXPATHLEN-len);
+						    PATH_MAX-len);
 						if (tsod.sod_major == -1)
 							break;
 					}

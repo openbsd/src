@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_dirname.c,v 1.1 2013/04/05 12:58:03 kurt Exp $	*/
+/*	$OpenBSD: dl_dirname.c,v 1.2 2015/01/16 16:18:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
-
+#include <sys/types.h>
+#include <limits.h>
 #include "archdep.h"
 
 /*
@@ -28,7 +28,7 @@
 char *
 _dl_dirname(const char *path)
 {
-	static char dname[MAXPATHLEN];
+	static char dname[PATH_MAX];
 	size_t len;
 	const char *endp;
 

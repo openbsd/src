@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.9 2006/05/13 16:33:40 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.10 2015/01/16 16:18:07 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>

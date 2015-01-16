@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.5 2014/11/03 06:08:56 guenther Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.6 2015/01/16 16:18:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -23,9 +23,7 @@
  * can buy me a beer in return. Poul-Henning Kamp
  */
 
-
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/param.h>	/* PAGE_SHIFT ALIGN */
 #include <sys/queue.h>
 #include <sys/mman.h>
 #include <sys/uio.h>

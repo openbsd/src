@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.c,v 1.5 2013/12/03 01:47:06 deraadt Exp $ */
+/* $OpenBSD: debug.c,v 1.6 2015/01/16 16:18:07 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include <fcntl.h>

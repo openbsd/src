@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_uname.c,v 1.1 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: dl_uname.c,v 1.2 2015/01/16 16:18:07 deraadt Exp $ */
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.3 2014/07/10 09:03:01 otto Exp $	*/
+/*	$OpenBSD: path.c,v 1.4 2015/01/16 16:18:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include "path.h"
 #include "util.h"
 

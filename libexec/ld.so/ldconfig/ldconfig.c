@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.32 2013/12/30 21:58:07 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.33 2015/01/16 16:18:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -49,6 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "prebind.h"
 
@@ -202,7 +202,7 @@ dodir(char *dir, int silent)
 {
 	DIR		*dd;
 	struct dirent	*dp;
-	char		name[MAXPATHLEN];
+	char		name[PATH_MAX];
 	int		dewey[MAXDEWEY], ndewey;
 
 	if ((dd = opendir(dir)) == NULL) {

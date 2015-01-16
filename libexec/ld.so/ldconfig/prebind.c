@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.27 2014/10/18 03:19:04 doug Exp $ */
+/* $OpenBSD: prebind.c,v 1.28 2015/01/16 16:18:07 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include <errno.h>

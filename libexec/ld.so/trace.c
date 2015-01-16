@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.2 2014/07/06 17:33:10 otto Exp $	*/
+/*	$OpenBSD: trace.c,v 1.3 2015/01/16 16:18:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include "syscall.h"
 #include "resolve.h"
