@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.99 2014/12/09 15:37:13 schwarze Exp $
+.\"	$OpenBSD: sh.1,v 1.100 2015/01/16 15:32:32 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: December 9 2014 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -446,9 +446,9 @@ and
 are reserved words, not meta-characters.
 .It Xo case Ar word No in
 .Oo Op \&(
-.Ar \ pattern
-.Op \*(Ba Ar pattern
-.No ... No )
+.Ar pattern
+.Op | Ar pattern
+.No ... )
 .Ar list No ;;\ \& Oc ... esac
 .Xc
 The
@@ -3384,7 +3384,7 @@ A command that exits with a zero value.
 .Op Fl R Ns Op Ar n
 .Op Fl Z Ns Op Ar n
 .Op Fl i Ns Op Ar n
-.No \*(Ba Fl f Op Fl tux
+.No \&| Fl f Op Fl tux
 .Oc
 .Oo
 .Ar name
