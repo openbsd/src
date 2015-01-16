@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.39 2015/01/16 03:37:10 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.40 2015/01/16 04:03:04 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -122,7 +122,7 @@
 .Ft int
 .Fn pcap_datalink_name_to_val "const char *name"
 .Ft "pcap_t *"
-.Fn pcap_create "const char *device" "char *ebuf"
+.Fn pcap_create "const char *device" "char *errbuf"
 .Ft int
 .Fn pcap_set_snaplen "pcap_t *p" "int snaplen"
 .Ft int

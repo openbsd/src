@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.26 2015/01/16 03:19:57 lteo Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.27 2015/01/16 04:03:04 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -890,13 +890,13 @@ find_802_11(struct bpf_dltlist *bdlp)
 }
 
 pcap_t *
-pcap_create(const char *device, char *ebuf)
+pcap_create(const char *device, char *errbuf)
 {
 	pcap_t *p;
 
 	p = calloc(1, sizeof(*p));
 	if (p == NULL) {
-		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+		snprintf(errbuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));
 		return (NULL);
 	}
@@ -904,7 +904,7 @@ pcap_create(const char *device, char *ebuf)
 
 	p->opt.source = strdup(device);
 	if (p->opt.source == NULL) {
-		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+		snprintf(errbuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));
 		free(p);
 		return (NULL);
