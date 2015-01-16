@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.16 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.17 2015/01/16 15:40:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -95,7 +94,7 @@ static char    *dbname = _PATH_NETGROUP_DB;
 int
 main(int argc, char *argv[])
 {
-	char		  buf[MAXPATHLEN], *fname = _PATH_NETGROUP;
+	char		  buf[PATH_MAX], *fname = _PATH_NETGROUP;
 	DB		 *db, *ndb, *hdb, *udb;
 	int               ch;
 
@@ -181,7 +180,7 @@ main(int argc, char *argv[])
 static void
 cleanup(void)
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 
 	(void) snprintf(buf, sizeof(buf), "%s.tmp", dbname);
 	(void) unlink(buf);
