@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.12 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.13 2015/01/16 00:01:28 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -81,7 +81,7 @@
 #ifndef _NAMESER_H_
 #define _NAMESER_H_
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 /*
  * revision information.  this is the release date in YYYYMMDD format.
