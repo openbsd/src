@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.104 2014/07/15 23:07:19 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.105 2015/01/16 15:17:34 deraadt Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -67,15 +67,6 @@
 #include "memory.h"
 #include "make.h"
 #include "dump.h"
-
-#ifndef PATH_MAX
-# ifdef MAXPATHLEN
-#  define PATH_MAX (MAXPATHLEN+1)
-# else
-#  define PATH_MAX	1024
-# endif
-#endif
-
 
 #define MAKEFLAGS	".MAKEFLAGS"
 
