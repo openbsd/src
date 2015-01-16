@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.35 2015/01/15 20:37:36 schwarze Exp $
+.\"	$OpenBSD: bpf.4,v 1.36 2015/01/16 03:07:03 lteo Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -1029,7 +1029,9 @@ struct bpf_insn insns[] = {
 .Rs
 .%A McCanne, S.
 .%A Jacobson, V.
-.%J "An efficient, extensible, and portable network monitor"
+.%D January 1993
+.%J 1993 Winter USENIX Conference
+.%T The BSD Packet Filter: A New Architecture for User-level Packet Capture
 .Re
 .Sh HISTORY
 The Enet packet filter was created in 1980 by Mike Accetta and Rick Rashid
