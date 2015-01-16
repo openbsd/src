@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.23 2011/04/15 16:05:34 stsp Exp $ */
+/*	$OpenBSD: file.c,v 1.24 2015/01/16 05:46:44 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -82,7 +82,7 @@ int getopt_long(int argc, char * const *argv, const char *optstring, const struc
 		"       %s -C -m magicfiles\n"
 
 #ifndef MAXPATHLEN
-#define	MAXPATHLEN	512
+#define	MAXPATHLEN	1024
 #endif
 
 private int 		/* Global command-line options 		*/
