@@ -245,7 +245,7 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 		auser = *user ? user : luser;
 		ahost = buf;
 
-		if (strlen(ahost) >= HOST_NAME_MAX+1)
+		if (strlen(ahost) > HOST_NAME_MAX)
 			continue;
 
 		/*
