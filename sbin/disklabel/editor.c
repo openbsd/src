@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.289 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.290 2015/01/16 20:21:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -130,7 +130,7 @@ void	editor_delete(struct disklabel *, char *);
 void	editor_help(void);
 void	editor_modify(struct disklabel *, char *);
 void	editor_name(struct disklabel *, char *);
-char	*getstring(char *, char *, char *);
+char	*getstring(const char *, const char *, const char *);
 u_int64_t getuint64(struct disklabel *, char *, char *, u_int64_t, u_int64_t,
 	    u_int64_t, int);
 int	has_overlap(struct disklabel *);
@@ -1116,7 +1116,7 @@ partition_cmp(const void *e1, const void *e2)
 }
 
 char *
-getstring(char *prompt, char *helpstring, char *oval)
+getstring(const char *prompt, const char *helpstring, const char *oval)
 {
 	static char buf[BUFSIZ];
 	int n;
@@ -1541,19 +1541,18 @@ void
 getdisktype(struct disklabel *lp, char *banner, char *dev)
 {
 	int i;
-	char *s, *def = "SCSI";
-	struct dtypes {
-		char *dev;
-		char *type;
+	char *s;
+	const char *def = "SCSI";
+	const struct dtypes {
+		const char *dev;
+		const char *type;
 	} dtypes[] = {
 		{ "sd",   "SCSI" },
-		{ "rz",   "SCSI" },
 		{ "wd",   "IDE" },
 		{ "fd",   "FLOPPY" },
 		{ "xd",   "SMD" },
 		{ "xy",   "SMD" },
 		{ "hd",   "HP-IB" },
-		{ "ccd",  "CCD" },		/* deprecated */
 		{ "vnd",  "VND" },
 		{ "svnd", "VND" },
 		{ NULL,   NULL }
