@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.h,v 1.3 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: timed.h,v 1.4 2015/01/16 00:27:00 deraadt Exp $	*/
 /*	$NetBSD: timed.h,v 1.5 1996/04/09 20:40:32 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ struct tsp {
 		} tspu_time;
 		char tspu_hopcnt;
 	} tsp_u;
-	char tsp_name[MAXHOSTNAMELEN];
+	char tsp_name[256];
 };
 
 #define	tsp_time	tsp_u.tspu_time
