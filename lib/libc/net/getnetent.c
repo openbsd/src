@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetent.c,v 1.15 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: getnetent.c,v 1.16 2015/01/16 18:18:58 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -86,8 +86,8 @@ again:
 	if ((cp = strchr(p, '#')) != NULL)
 		*cp = '\0';
 	net.n_name = p;
-	if (strlen(net.n_name) >= HOST_NAME_MAX+1-1)
-		net.n_name[HOST_NAME_MAX+1-1] = '\0';
+	if (strlen(net.n_name) >= HOST_NAME_MAX)
+		net.n_name[HOST_NAME_MAX] = '\0';
 	cp = strpbrk(p, " \t");
 	if (cp == NULL)
 		goto again;
@@ -108,8 +108,8 @@ again:
 		}
 		if (q < &net_aliases[MAXALIASES - 1]) {
 			*q++ = cp;
-			if (strlen(cp) >= HOST_NAME_MAX+1-1)
-				cp[HOST_NAME_MAX+1-1] = '\0';
+			if (strlen(cp) >= HOST_NAME_MAX)
+				cp[HOST_NAME_MAX] = '\0';
 		}
 		cp = strpbrk(cp, " \t");
 		if (cp != NULL)

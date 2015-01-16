@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.15 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.16 2015/01/16 18:18:58 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -84,8 +84,8 @@ dn_expand(const u_char *msg, const u_char *eomorig, const u_char *comp_dn,
 
 	dn = exp_dn;
 	cp = comp_dn;
-	if (length > HOST_NAME_MAX+1-1)
-		length = HOST_NAME_MAX+1-1;
+	if (length > HOST_NAME_MAX)
+		length = HOST_NAME_MAX;
 	eom = exp_dn + length;
 	/*
 	 * fetch next label in domain name
