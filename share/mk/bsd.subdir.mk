@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.subdir.mk,v 1.19 2012/10/15 11:14:38 espie Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.20 2015/01/16 01:58:17 schwarze Exp $
 #	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
@@ -76,7 +76,7 @@ realinstall: beforeinstall _SUBDIRUSE
 .endif
 
 
-.for t in all clean cleandir includes depend obj tags regress
+.for t in all clean cleandir includes depend obj tags regress manlint
 .  if !target($t)
 $t: _SUBDIRUSE
 .  endif

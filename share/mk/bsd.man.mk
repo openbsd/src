@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.40 2014/03/08 17:08:11 schwarze Exp $
+#	$OpenBSD: bsd.man.mk,v 1.41 2015/01/16 01:58:17 schwarze Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -11,8 +11,6 @@
 .endif
 
 BEFOREMAN?=
-MANLINT=${MAN:S/$/.manlint/}
-CLEANFILES+=.man-linted ${MANLINT}
 
 # Add / so that we don't have to specify it.
 .if defined(MANSUBDIR) && !empty(MANSUBDIR)
@@ -22,32 +20,11 @@ MANSUBDIR=/
 .endif
 
 # Files contained in ${BEFOREMAN} must be built before generating any
-# manual page source code.  However, static manual page files contained
-# in the source tree must not appear as targets, or the ${.IMPSRC} in
-# the .man.manlint suffix rule below will not find them in the .PATH.
+# manual page source code.
 .for page in ${MAN}
 .  if target(${page})
 ${page}: ${BEFOREMAN}
 .  endif
-.endfor
-
-# In any case, ${BEFOREMAN} must be finished before linting any manuals.
-.if !empty(MANLINT)
-${MANLINT}: ${BEFOREMAN}
-.endif
-
-# Set up the suffix rules for checking manuals.
-_MAN_SUFFIXES=1 2 3 3p 4 5 6 7 8 9
-.for s in ${_MAN_SUFFIXES}
-.SUFFIXES: .${s} .${s}.manlint
-.${s}.${s}.manlint:
-.if ${WARNINGS:L} == "yes"
-	@echo "mandoc -Tlint ${.IMPSRC}"
-	@mandoc -Tlint ${.IMPSRC} || [ $$? -lt 4 ]
-.else
-	mandoc -Tlint -Wfatal ${.IMPSRC}
-.endif
-	@touch ${.TARGET}
 .endfor
 
 # Install the real manuals.
@@ -78,4 +55,11 @@ maninstall:
 .endif
 
 # Explicitly list ${BEFOREMAN} to get it done even if ${MAN} is empty.
-all: ${BEFOREMAN} ${MAN} ${MANLINT}
+all: ${BEFOREMAN} ${MAN}
+
+manlint: ${MAN}
+.if defined(MAN) && !empty(MAN)
+	mandoc -Tlint ${.ALLSRC}
+.endif
+
+.PHONY: manlint
