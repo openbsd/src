@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.76 2014/11/19 10:24:40 blambert Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.77 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>

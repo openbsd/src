@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.54 2014/12/23 13:18:23 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.55 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -37,6 +37,8 @@
 #include <errno.h>
 
 #include <openssl/ssl.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #include "relayd.h"
 
@@ -443,7 +445,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 
 		if (rio.rule.proto == IPPROTO_TCP)
 			rio.rule.timeout[PFTM_TCP_ESTABLISHED] =
-			    (u_int32_t)MIN(rdr->conf.timeout.tv_sec, INT_MAX);
+			    (u_int32_t)MINIMUM(rdr->conf.timeout.tv_sec, INT_MAX);
 
 		if (strlen(rdr->conf.tag))
 			(void)strlcpy(rio.rule.tagname, rdr->conf.tag,

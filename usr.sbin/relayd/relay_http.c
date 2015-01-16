@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.40 2015/01/13 09:24:20 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.41 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -693,7 +693,7 @@ relay_lookup_url(struct ctl_relay_event *cre, const char *host, struct kv *kv)
 	struct http_descriptor	*desc = (struct http_descriptor *)cre->desc;
 	int			 i, j, dots;
 	char			*hi[RELAY_MAXLOOKUPLEVELS], *p, *pp, *c, ch;
-	char			 ph[MAXHOSTNAMELEN];
+	char			 ph[HOST_NAME_MAX+1];
 	int			 ret;
 
 	if (desc->http_path == NULL)

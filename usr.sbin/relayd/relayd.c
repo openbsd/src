@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.135 2014/12/18 20:55:01 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.136 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,8 @@
 #include <openssl/ssl.h>
 
 #include "relayd.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 __dead void	 usage(void);
 
@@ -1483,7 +1486,7 @@ socket_rlimit(int maxfd)
 	if (maxfd == -1)
 		rl.rlim_cur = rl.rlim_max;
 	else
-		rl.rlim_cur = MAX(rl.rlim_max, (rlim_t)maxfd);
+		rl.rlim_cur = MAXIMUM(rl.rlim_max, (rlim_t)maxfd);
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("socket_rlimit: failed to set resource limit");
 }

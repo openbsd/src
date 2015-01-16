@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.67 2014/12/12 10:05:09 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.68 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/stat.h>

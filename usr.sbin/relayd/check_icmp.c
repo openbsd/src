@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.38 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.39 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.203 2015/01/13 09:24:21 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.204 2015/01/16 15:06:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,6 @@
 
 #include <sys/tree.h>
 
-#include <sys/param.h>		/* MAXHOSTNAMELEN */
 #include <netinet/in.h>
 #include <limits.h>
 #include <imsg.h>
@@ -126,8 +125,8 @@ struct ctl_script {
 	objid_t		 host;
 	int		 retval;
 	struct timeval	 timeout;
-	char		 name[MAXHOSTNAMELEN];
-	char		 path[MAXPATHLEN];
+	char		 name[HOST_NAME_MAX+1];
+	char		 path[PATH_MAX];
 };
 
 struct ctl_demote {
@@ -387,7 +386,7 @@ struct host_config {
 	objid_t			 parentid;
 	objid_t			 tableid;
 	int			 retry;
-	char			 name[MAXHOSTNAMELEN];
+	char			 name[HOST_NAME_MAX+1];
 	struct sockaddr_storage	 ss;
 	int			 ttl;
 	int			 priority;
@@ -469,7 +468,7 @@ struct table_config {
 	int			 skip_cnt;
 	char			 name[TABLE_NAME_SIZE];
 	size_t			 name_len;
-	char			 path[MAXPATHLEN];
+	char			 path[PATH_MAX];
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
 	u_int8_t		 digest_type;
@@ -683,9 +682,9 @@ struct protocol {
 	char			 tlsciphers[768];
 	int			 tlsdhparams;
 	int			 tlsecdhcurve;
-	char			 tlsca[MAXPATHLEN];
-	char			 tlscacert[MAXPATHLEN];
-	char			 tlscakey[MAXPATHLEN];
+	char			 tlsca[PATH_MAX];
+	char			 tlscacert[PATH_MAX];
+	char			 tlscakey[PATH_MAX];
 	char			*tlscapass;
 	char			 name[MAX_NAME_SIZE];
 	int			 cache;
@@ -728,7 +727,7 @@ struct relay_config {
 	objid_t			 id;
 	u_int32_t		 flags;
 	objid_t			 proto;
-	char			 name[MAXHOSTNAMELEN];
+	char			 name[HOST_NAME_MAX+1];
 	in_port_t		 port;
 	in_port_t		 dstport;
 	int			 dstretry;
@@ -813,7 +812,7 @@ TAILQ_HEAD(netroutelist, netroute);
 struct router_config {
 	objid_t			 id;
 	u_int32_t		 flags;
-	char			 name[MAXHOSTNAMELEN];
+	char			 name[HOST_NAME_MAX+1];
 	char			 label[RT_LABEL_SIZE];
 	int			 nroutes;
 	objid_t			 gwtable;

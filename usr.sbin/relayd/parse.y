@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.199 2014/12/23 13:18:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.200 2015/01/16 15:06:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -150,7 +150,7 @@ typedef struct {
 		enum direction		 dir;
 		struct {
 			struct sockaddr_storage	 ss;
-			char			 name[MAXHOSTNAMELEN];
+			char			 name[HOST_NAME_MAX+1];
 		}			 addr;
 		struct {
 			enum digest_type type;
