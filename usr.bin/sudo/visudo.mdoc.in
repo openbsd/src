@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: February 15 2014 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt VISUDO @mansectsu@
 .Os
 .Sh NAME
@@ -189,7 +189,8 @@ letters, digits, and the underscore
 character.
 .It Fl V
 The
-.Fl V ( Em version Ns No )
+.Fl V
+.Pq Em version
 option causes
 .Nm visudo
 to print its version number
@@ -275,7 +276,7 @@ Many people have worked on
 .Nm sudo
 over the years; this version consists of code written primarily by:
 .Bd -ragged -offset indent
-Todd C. Miller
+.An Todd C. Miller
 .Ed
 .Pp
 See the CONTRIBUTORS file in the

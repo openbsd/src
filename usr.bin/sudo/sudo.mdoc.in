@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: February 16 2014 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt SUDO @mansectsu@
 .Os
 .Sh NAME
@@ -1384,7 +1384,7 @@ Many people have worked on
 .Nm sudo
 over the years; this version consists of code written primarily by:
 .Bd -ragged -offset indent
-Todd C. Miller
+.An Todd C. Miller
 .Ed
 .Pp
 See the CONTRIBUTORS file in the
