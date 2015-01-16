@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.98 2015/01/15 22:21:01 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.99 2015/01/16 06:00:39 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -592,6 +592,9 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 	while (line && *line) {
 		if ((endline = strchr(line, '\n')))
 			*endline++ = '\0';
+#if PATH_MAX < 1024 || HASHBUFSIZE < 224
+#error sizes are wrong
+#endif
 		rv = sscanf(line, "%31s (%1023s = %223s",
 		    c.algo, c.file, c.hash);
 		if (rv != 3 || c.file[0] == 0 || c.file[strlen(c.file)-1] != ')')
