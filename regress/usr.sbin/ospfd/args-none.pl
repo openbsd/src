@@ -3,7 +3,6 @@
 
 use strict;
 use warnings;
-use Client;
 use Default qw($ospfd_ip);
 
 our %tst_args = (

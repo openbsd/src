@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2014/11/25 23:13:54 daniel Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/01/16 17:06:43 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
 # p5-Hash-Merge		merge associative arrays
-# p5-YAML               YAML ain't a markup language
+# p5-YAML		YAML ain't a markup language
 #
 # Check wether all required perl packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.

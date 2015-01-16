@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use Client;
 use Default qw($ospfd_ip $ospfd_rtrid);
 
 our %tst_args = (
