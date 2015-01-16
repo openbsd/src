@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.33 2015/01/16 08:24:04 doug Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.34 2015/01/16 18:08:15 millert Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -71,10 +71,6 @@
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
-#endif
-
-#ifndef PATH_MAX
-#define PATH_MAX	1024
 #endif
 
 struct magic_entry {

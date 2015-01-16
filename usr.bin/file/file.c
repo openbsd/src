@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.25 2015/01/16 08:24:04 doug Exp $ */
+/*	$OpenBSD: file.c,v 1.26 2015/01/16 18:08:15 millert Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <string.h>
 #ifdef RESTORE_TIME
 # if (__COHERENT__ >= 0x420)
@@ -79,10 +80,6 @@ int getopt_long(int argc, char * const *argv, const char *optstring, const struc
 
 # define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNprsvz0] [-e test] [-f namefile] [-F separator] [-m magicfiles] file...\n" \
 		"       %s -C -m magicfiles\n"
-
-#ifndef PATH_MAX
-#define	PATH_MAX	1024
-#endif
 
 private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
