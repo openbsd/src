@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.73 2014/11/18 20:54:29 krw Exp $	*/
+/*	$OpenBSD: mib.c,v 1.74 2015/01/16 00:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -17,10 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>

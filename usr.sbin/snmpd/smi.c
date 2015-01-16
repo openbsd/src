@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.16 2014/11/19 10:19:00 blambert Exp $	*/
+
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -41,11 +40,14 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <pwd.h>
 #include <vis.h>
 
 #include "snmpd.h"
 #include "mib.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 extern struct snmpd *env;
 
@@ -565,7 +567,7 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 {
 	size_t	 i;
 
-	for (i = 0; i < MIN(a->o_oidlen, b->o_oidlen); i++)
+	for (i = 0; i < MINIMUM(a->o_oidlen, b->o_oidlen); i++)
 		if (a->o_oid[i] != b->o_oid[i])
 			return (a->o_oid[i] - b->o_oid[i]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2014/06/09 15:50:08 jsing Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2015/01/16 00:05:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <fcntl.h>
@@ -24,8 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "installboot.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define BUFSIZE 512
 
@@ -56,7 +58,7 @@ filecopy(const char *srcfile, const char *dstfile)
 		err(1, "chmod");
 
 	while (sz > 0) {
-		n = MIN(sz, BUFSIZE);
+		n = MINIMUM(sz, BUFSIZE);
 		if ((n = read(sfd, buf, n)) == -1)
 			err(1, "read");
 		sz -= n;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.3 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: timer.c,v 1.4 2015/01/16 00:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sched.h>
 #include <sys/socket.h>

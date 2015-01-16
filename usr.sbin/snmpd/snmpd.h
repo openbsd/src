@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.58 2014/11/19 10:19:00 blambert Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.59 2015/01/16 00:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -384,7 +384,7 @@ struct pfr_buffer {
 struct snmp_message {
 	struct sockaddr_storage	 sm_ss;
 	socklen_t		 sm_slen;
-	char			 sm_host[MAXHOSTNAMELEN];
+	char			 sm_host[HOST_NAME_MAX+1];
 
 	struct ber		 sm_ber;
 	struct ber_element	*sm_req;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.2 2015/01/16 00:05:12 deraadt Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,6 @@
 
 #define ELFSIZE 32
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -41,6 +40,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int	__elf_fdnlist(int, struct nlist *);
 static int	__elf_is_okay__(Elf_Ehdr *ehdr);
@@ -193,7 +194,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 		goto elf_done;
 
 	while (symsize > 0) {
-		cc = MIN(symsize, sizeof(sbuf));
+		cc = MINIMUM(symsize, sizeof(sbuf));
 		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
 			break;
 		symsize -= cc;

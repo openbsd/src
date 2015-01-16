@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.7 2014/10/08 05:24:42 deraadt Exp $	*/
+/*	$OpenBSD: pf.c,v 1.8 2015/01/16 00:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -31,7 +31,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -47,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <event.h>
 
 #include "snmpd.h"

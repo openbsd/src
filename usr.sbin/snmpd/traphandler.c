@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.1 2014/04/25 06:57:11 blambert Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.2 2015/01/16 00:05:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 #include <sys/queue.h>
-#include <sys/param.h>
+#include <sys/param.h>	/* nitems */
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.6 2014/10/08 04:26:54 deraadt Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.7 2015/01/16 00:05:12 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -37,7 +37,8 @@
 
 #define ELFSIZE 32
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE MAXFRAG */
+#include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>

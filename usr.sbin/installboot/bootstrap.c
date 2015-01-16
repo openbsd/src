@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.5 2014/06/25 18:23:02 tobias Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.6 2015/01/16 00:05:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>

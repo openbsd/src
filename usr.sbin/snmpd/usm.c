@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.8 2014/11/19 11:14:06 blambert Exp $	*/
+/*	$OpenBSD: usm.c,v 1.9 2015/01/16 00:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -17,7 +17,6 @@
  */
 
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>

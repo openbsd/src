@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.2 2013/12/28 11:26:57 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.3 2015/01/16 00:05:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
 

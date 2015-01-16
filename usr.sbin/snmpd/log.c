@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 2015/01/16 00:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/tree.h>

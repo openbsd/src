@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.2 2014/06/09 13:13:48 jsing Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.3 2015/01/16 00:05:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/stat.h>
 
 #include <err.h>

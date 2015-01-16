@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.2 2015/01/16 00:05:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
