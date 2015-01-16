@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.184 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: relay.c,v 1.185 2015/01/16 14:34:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1986,6 +1986,7 @@ relay_tls_ctx_create(struct relay *rlay)
 	struct protocol	*proto = rlay->rl_proto;
 	SSL_CTX		*ctx;
 	EC_KEY		*ecdhkey;
+	u_int8_t	 sid[SSL_MAX_SID_CTX_LENGTH];
 
 	ctx = SSL_CTX_new(SSLv23_method());
 	if (ctx == NULL)
@@ -2081,9 +2082,13 @@ relay_tls_ctx_create(struct relay *rlay)
 			goto err;
 	}
 
-	/* Set session context to the local relay name */
-	if (!SSL_CTX_set_session_id_context(ctx, rlay->rl_conf.name,
-	    strlen(rlay->rl_conf.name)))
+	/*
+	 * Set session ID context to a random value.  We don't support
+	 * persistent caching of sessions so it is OK to set a temporary
+	 * session ID context that is valid during run time.
+	 */
+	arc4random_buf(sid, sizeof(sid));
+	if (!SSL_CTX_set_session_id_context(ctx, sid, sizeof(sid)))
 		goto err;
 
 	/* The text versions of the keys/certs are not needed anymore */

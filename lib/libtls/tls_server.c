@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.2 2015/01/16 14:34:51 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -51,6 +51,7 @@ int
 tls_configure_server(struct tls *ctx)
 {
 	EC_KEY *ecdh_key;
+	unsigned char sid[SSL_MAX_SSL_SESSION_ID_LENGTH];
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
 		tls_set_error(ctx, "ssl context failure");
@@ -73,6 +74,17 @@ tls_configure_server(struct tls *ctx)
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
 		SSL_CTX_set_tmp_ecdh(ctx->ssl_ctx, ecdh_key);
 		EC_KEY_free(ecdh_key);
+	}
+
+	/*
+	 * Set session ID context to a random value.  We don't support
+	 * persistent caching of sessions so it is OK to set a temporary
+	 * session ID context that is valid during run time.
+	 */
+	arc4random_buf(sid, sizeof(sid));
+	if (!SSL_CTX_set_session_id_context(ctx->ssl_ctx, sid, sizeof(sid))) {
+		tls_set_error(ctx, "failed to set session id context");
+		goto err;
 	}
 
 	return (0);
