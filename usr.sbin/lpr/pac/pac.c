@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.22 2014/11/18 20:54:28 krw Exp $ */
+/*	$OpenBSD: pac.c,v 1.23 2015/01/16 14:36:44 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -38,14 +38,14 @@
  * to print the usage information for the named people.
  */
 
-#include <sys/param.h>
-
 #include <ctype.h>
+#include <signal.h>
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
