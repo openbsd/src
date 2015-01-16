@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.121 2015/01/15 04:26:06 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.122 2015/01/16 21:12:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>	/* MACHINE */
 
 #include <assert.h>
 #include <ctype.h>
@@ -300,6 +301,10 @@ main(int argc, char *argv[])
 			argv++;
 			argc--;
 		}
+		if (search.arch == NULL)
+			search.arch = getenv("MACHINE");
+		if (search.arch == NULL)
+			search.arch = MACHINE;
 	}
 
 	rc = MANDOCLEVEL_OK;
