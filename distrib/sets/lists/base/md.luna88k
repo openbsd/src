@@ -463,7 +463,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cryptosoft.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/hmac.ph

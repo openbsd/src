@@ -27,7 +27,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/cryptosoft.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/hmac.ph

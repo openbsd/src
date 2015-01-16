@@ -45,7 +45,6 @@
 ./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
-./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/gmac.h
 ./usr/include/crypto/hmac.h

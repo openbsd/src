@@ -525,7 +525,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/cryptosoft.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/crypto/hmac.ph

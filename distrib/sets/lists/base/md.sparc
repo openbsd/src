@@ -71,7 +71,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/cryptosoft.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/hmac.ph

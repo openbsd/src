@@ -591,7 +591,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/cryptosoft.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/gmac.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/hmac.ph
