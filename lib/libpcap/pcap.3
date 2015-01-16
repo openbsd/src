@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.40 2015/01/16 04:03:04 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.41 2015/01/16 04:12:45 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,8 +153,12 @@ in
 .Fn pcap_open_offline ,
 .Fn pcap_findalldevs ,
 .Fn pcap_lookupdev ,
+.Fn pcap_lookupnet ,
+.Fn pcap_getnonblock ,
+.Fn pcap_setnonblock ,
+.Fn pcap_fopen_offline ,
 and
-.Fn pcap_lookupnet
+.Fn pcap_create
 is assumed to be able to hold at least
 .Dv PCAP_ERRBUF_SIZE
 chars.
