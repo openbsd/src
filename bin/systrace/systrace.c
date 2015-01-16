@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.61 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.62 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -70,11 +70,11 @@ int iamroot = 0;		/* Set if we are running as root */
 int cradle = 0;			/* Set if we are running in cradle mode */
 int logtofile = 0;		/* Log to file instead of syslog */
 FILE *logfile;			/* default logfile to send to if enabled */
-char cwd[MAXPATHLEN];		/* Current working directory */
-char home[MAXPATHLEN];		/* Home directory of user */
+char cwd[PATH_MAX];		/* Current working directory */
+char home[PATH_MAX];		/* Home directory of user */
 char username[LOGIN_NAME_MAX];	/* Username: predicate match and expansion */
 char *guipath = _PATH_XSYSTRACE; /* Path to GUI executable */
-char dirpath[MAXPATHLEN];
+char dirpath[PATH_MAX];
 
 static struct event ev_read;
 static struct event ev_timeout;
@@ -537,7 +537,7 @@ static void
 cradle_setup(char *pathtogui)
 {
 	struct stat sb;
-	char cradlepath[MAXPATHLEN], cradleuipath[MAXPATHLEN];
+	char cradlepath[PATH_MAX], cradleuipath[PATH_MAX];
 
 	snprintf(dirpath, sizeof(dirpath), "/tmp/systrace-%d", getuid());
 

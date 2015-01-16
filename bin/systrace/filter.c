@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.34 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.35 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -502,8 +502,8 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
     int policynr, const char *emulation, const char *name,
     char *output, short *pfuture, struct intercept_pid *icpid)
 {
-	char line[2*MAXPATHLEN], *p;
-	char compose[2*MAXPATHLEN];
+	char line[2*PATH_MAX], *p;
+	char compose[2*PATH_MAX];
 	struct filter *filter;
 	struct policy *policy;
 	short action;
@@ -707,7 +707,7 @@ filter_replace(char *buf, size_t buflen, char *match, char *repl)
 char *
 filter_expand(char *data)
 {
-	static char expand[2*MAXPATHLEN];
+	static char expand[2*PATH_MAX];
 
 	strlcpy(expand, data, sizeof(expand));
 
@@ -722,7 +722,7 @@ char *
 filter_dynamicexpand(struct intercept_pid *icpid, char *data)
 {
 	extern char cwd[];
-	static char expand[2*MAXPATHLEN];
+	static char expand[2*PATH_MAX];
 
 	strlcpy(expand, data, sizeof(expand));
 

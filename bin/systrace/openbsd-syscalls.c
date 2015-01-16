@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.44 2013/10/17 10:21:58 deraadt Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.45 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,7 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include <sys/syscall.h>
 
@@ -52,6 +51,8 @@
 #undef SYSVSEM
 #undef SYSVMSG
 #undef SYSVSHM
+
+#include <limits.h>
 
 #include <sys/ioctl.h>
 #include <sys/tree.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.24 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: register.c,v 1.25 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/tree.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <err.h>
 

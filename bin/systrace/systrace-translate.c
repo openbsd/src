@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.24 2014/08/10 04:57:33 guenther Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.25 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/signal.h>
 #include <stdint.h>
 #include <limits.h>
 #include <stdlib.h>

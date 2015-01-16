@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-error.c,v 1.3 2014/08/10 00:20:55 guenther Exp $	*/
+/*	$OpenBSD: systrace-error.c,v 1.4 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/tree.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 

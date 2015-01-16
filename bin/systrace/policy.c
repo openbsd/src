@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.34 2013/11/21 15:54:46 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.35 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -100,7 +100,7 @@ SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare)
 
 extern int userpolicy;
 
-static char policydir[MAXPATHLEN];
+static char policydir[PATH_MAX];
 
 struct tmplqueue templates;
 
@@ -163,7 +163,7 @@ struct policy *
 systrace_findpolicy_wildcard(const char *name)
 {
 	struct policy tmp, *res;
-	static char path[MAXPATHLEN], lookup[MAXPATHLEN];
+	static char path[PATH_MAX], lookup[PATH_MAX];
 
 	if (strlcpy(path, name, sizeof(path)) >= sizeof(path))
 		errx(1, "%s: path name overflow", __func__);
@@ -348,7 +348,7 @@ systrace_modifypolicy(int fd, int policynr, const char *name, short action)
 char *
 systrace_policyfilename(char *dirname, const char *name)
 {
-	static char file[2*MAXPATHLEN];
+	static char file[2*PATH_MAX];
 	const char *p;
 	int i, plen;
 
@@ -419,7 +419,7 @@ systrace_addpolicy(const char *name)
 int
 systrace_templatedir(void)
 {
-	char filename[MAXPATHLEN];
+	char filename[PATH_MAX];
 	DIR *dir = NULL;
 	struct stat sb;
 	struct dirent *dp;
@@ -818,8 +818,8 @@ systrace_writepolicy(struct policy *policy)
 	FILE *fp;
 	int fd;
 	char *p;
-	char tmpname[2*MAXPATHLEN];
-	char finalname[2*MAXPATHLEN];
+	char tmpname[2*PATH_MAX];
+	char finalname[2*PATH_MAX];
 	struct filter *filter;
 	struct timeval now;
 

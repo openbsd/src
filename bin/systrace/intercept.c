@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.62 2014/07/20 01:38:40 guenther Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.63 2015/01/16 00:19:12 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <err.h>
 #include <libgen.h>
@@ -611,7 +612,7 @@ intercept_filenameat(int fd, pid_t pid, int atfd, void *addr, int userp, char *b
 		goto abort;
 
 	if (before != NULL)
-		strlcpy(before, name, MAXPATHLEN);
+		strlcpy(before, name, PATH_MAX);
 
 	if ((name = normalize_filenameat(fd, pid, atfd, name, userp)) == NULL)
 		goto abort;
@@ -637,7 +638,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 char *
 normalize_filenameat(int fd, pid_t pid, int atfd, char *name, int userp)
 {
-	static char cwd[2*MAXPATHLEN];
+	static char cwd[2*PATH_MAX];
 	int havecwd = 0;
 
 	/*
@@ -674,7 +675,7 @@ normalize_filenameat(int fd, pid_t pid, int atfd, char *name, int userp)
 	}
 
 	if (userp != ICLINK_NONE) {
-		static char rcwd[2*MAXPATHLEN];
+		static char rcwd[2*PATH_MAX];
 		char *base = basename(cwd);
 		int failed = 0;
 
@@ -780,7 +781,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	/* Special handling for the exec call */
 	if (!strcmp(name, "execve")) {
 		void *addr;
-		char *argname, before[MAXPATHLEN];
+		char *argname, before[PATH_MAX];
 
 		icpid->execve_code = code;
 		icpid->policynr = policynr;
@@ -1044,7 +1045,7 @@ intercept_realpath(const char *path, char *resolved)
 	struct stat sb;
 	int idx = 0, n, nlnk = 0, serrno = errno;
 	const char *q;
-	char *p, wbuf[2][MAXPATHLEN];
+	char *p, wbuf[2][PATH_MAX];
 	size_t len;
 
 	/*
@@ -1066,7 +1067,7 @@ intercept_realpath(const char *path, char *resolved)
 
 	/* If relative path, start from current working directory. */
 	if (*path != '/') {
-		if (getcwd(resolved, MAXPATHLEN) == NULL) {
+		if (getcwd(resolved, PATH_MAX) == NULL) {
 			p[0] = '.';
 			p[1] = 0;
 			return (NULL);
@@ -1111,7 +1112,7 @@ loop:
 	}
 
 	/* Append this component. */
-	if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
+	if (p - resolved + 1 + q - path + 1 > PATH_MAX) {
 		errno = ENAMETOOLONG;
 		if (p == resolved)
 			*p++ = '/';
@@ -1141,7 +1142,7 @@ loop:
 		return (NULL);
 	}
 	if (S_ISLNK(sb.st_mode)) {
-		if (nlnk++ >= MAXSYMLINKS) {
+		if (nlnk++ >= SYMLOOP_MAX) {
 			errno = ELOOP;
 			return (NULL);
 		}

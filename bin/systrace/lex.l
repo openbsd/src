@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.18 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: lex.l,v 1.19 2015/01/16 00:19:12 deraadt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <err.h>
 #include <stdarg.h>
 #include <string.h>
