@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.115 2015/01/16 09:08:41 bentley Exp $
+.\" $OpenBSD: isakmpd.8,v 1.116 2015/01/16 14:19:07 schwarze Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -333,24 +333,21 @@ Available commands are:
 .It Xo
 .Ic C add
 .Sm off
-.Op Ar section
-:
+.Op Ar section :
 .Ar tag No = Ar value
 .Sm on
 .Xc
 .It Xo
 .Ic C rmv
 .Sm off
-.Op Ar section
-:
+.Op Ar section :
 .Ar tag No = Ar value
 .Sm on
 .Xc
 .It Xo
 .Ic C rm
 .Sm off
-.Op Ar section
-:
+.Op Ar section :
 .Ar tag
 .Sm on
 .Xc
@@ -361,18 +358,17 @@ Available commands are:
 .It Xo
 .Ic C set
 .Sm off
-.Op Ar section
-:
+.Op Ar section :
 .Ar tag No = Ar value
 .Sm on
 .Xc
 .It Xo
 .Ic C set
 .Sm off
-.Op Ar section
-:
-.Ar tag No = Ar value " " Ic force
+.Op Ar section :
+.Ar tag No = Ar value
 .Sm on
+.Ic force
 .Xc
 Update the running
 .Nm
@@ -405,8 +401,7 @@ or an "R" through the FIFO will void any updates done to the configuration.
 .It Xo
 .Ic C get
 .Sm off
-.Op Ar section
-:
+.Op Ar section :
 .Ar tag
 .Sm on
 .Xc
