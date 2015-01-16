@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.92 2013/10/20 10:11:16 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.93 2015/01/16 20:17:05 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -262,7 +262,8 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	lp->d_secpercyl = secpercyl;
-	if (DL_GETDSIZE(lp) == 0)
+	/* If unset or initialized as full disk, permit refinement */
+	if (DL_GETDSIZE(lp) == 0 || DL_GETDSIZE(lp) == MAXDISKSIZE)
 		DL_SETDSIZE(lp, (u_int64_t)secpercyl * sl->sl_ncylinders);
 	lp->d_version = 1;
 
