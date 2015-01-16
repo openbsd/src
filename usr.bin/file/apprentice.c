@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.32 2014/10/26 04:10:26 brad Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.33 2015/01/16 08:24:04 doug Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -30,7 +30,7 @@
  * apprentice - make one pass through /etc/magic, learning its secrets.
  */
 
-#include <sys/param.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -73,8 +73,8 @@
 #define MAP_FILE 0
 #endif
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN	1024
+#ifndef PATH_MAX
+#define PATH_MAX	1024
 #endif
 
 struct magic_entry {
@@ -620,7 +620,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 	int errs = 0;
 	struct magic_entry *marray;
 	uint32_t marraycount, i, mentrycount = 0, starttest;
-	char subfn[MAXPATHLEN];
+	char subfn[PATH_MAX];
 	struct stat st;
 	DIR *dir;
 	struct dirent *d;
@@ -2034,7 +2034,7 @@ mkdbname(const char *fn, char **buf, int strip)
 	}
 
 	(void)asprintf(buf, "%s%s", fn, ext);
-	if (*buf && strlen(*buf) > MAXPATHLEN) {
+	if (*buf && strlen(*buf) > PATH_MAX) {
 		free(*buf);
 		*buf = NULL;
 	}
