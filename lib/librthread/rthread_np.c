@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.15 2014/12/08 18:15:46 tedu Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.16 2015/01/16 16:48:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/lock.h>
 #include <sys/resource.h>

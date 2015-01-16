@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_overflow.c,v 1.10 2007/08/08 23:57:19 ray Exp $	*/
+/*	$OpenBSD: bt_overflow.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -32,14 +32,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <db.h>
 #include "btree.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /*
  * Big key/data code.
@@ -105,7 +105,7 @@ __ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return (RET_ERROR);
 
-		nb = MIN(sz, plen);
+		nb = MINIMUM(sz, plen);
 		memmove(p, (char *)h + BTDATAOFF, nb);
 		mpool_put(t->bt_mp, h, 0);
 
@@ -150,7 +150,7 @@ __ovfl_put(BTREE *t, const DBT *dbt, pgno_t *pg)
 		h->flags = P_OVERFLOW;
 		h->lower = h->upper = 0;
 
-		nb = MIN(sz, plen);
+		nb = MINIMUM(sz, plen);
 		memmove((char *)h + BTDATAOFF, p, nb);
 
 		if (last) {

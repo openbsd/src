@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.22 2014/09/15 06:15:48 guenther Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.23 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -27,13 +27,13 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <sys/param.h>
 #include <paths.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #ifdef YP
 #include <rpcsvc/ypclnt.h>
 #endif
@@ -159,7 +159,7 @@ ether_hostton(const char *hostname, struct ether_addr *e)
 {
 	FILE *f;
 	char buf[BUFSIZ+1], *p;
-	char try[MAXHOSTNAMELEN];
+	char try[HOST_NAME_MAX+1];
 	size_t len;
 #ifdef YP
 	int hostlen = strlen(hostname);
@@ -223,7 +223,7 @@ ether_line(const char *line, struct ether_addr *e, char *hostname)
 	if (*p == '\0')
 		goto bad;
 	n = strcspn(p, " \t\n");
-	if (n >= MAXHOSTNAMELEN)
+	if (n >= HOST_NAME_MAX+1)
 		goto bad;
 	strlcpy(hostname, p, n + 1);
 	return (0);

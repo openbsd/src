@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.8 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

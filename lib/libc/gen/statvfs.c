@@ -1,4 +1,4 @@
-/*	$OpenBSD: statvfs.c,v 1.1 2008/03/22 19:18:42 otto Exp $	*/
+/*	$OpenBSD: statvfs.c,v 1.2 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/statvfs.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_maplist.c,v 1.8 2005/08/05 13:02:16 espie Exp $ */
+/*	$OpenBSD: yp_maplist.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -25,9 +25,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <string.h>
+#include <limits.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>

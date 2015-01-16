@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: clock.c,v 1.6 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 

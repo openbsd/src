@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_utils.c,v 1.8 2007/08/07 05:40:34 ray Exp $ */
+/*	$OpenBSD: rec_utils.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -27,8 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/param.h>
 
 #include <stdio.h>
 #include <stdlib.h>

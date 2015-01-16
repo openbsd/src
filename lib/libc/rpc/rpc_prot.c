@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_prot.c,v 1.11 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: rpc_prot.c,v 1.12 2015/01/16 16:48:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,8 +41,6 @@
  * Because authentication stuff is easy and is part of rpc, the opaque
  * routines are also in this program.
  */
-
-#include <sys/param.h>
 
 #include <rpc/rpc.h>
 

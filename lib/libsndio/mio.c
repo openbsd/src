@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.18 2013/11/13 22:38:22 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.19 2015/01/16 16:48:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>

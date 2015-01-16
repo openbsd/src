@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.57 2014/01/19 20:48:57 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.58 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -39,11 +38,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <a.out.h>		/* pulls in nlist.h */
 
 #ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
 #endif
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 int	__fdnlist(int, struct nlist *);
 #ifdef _NLIST_DO_ELF
@@ -200,7 +202,7 @@ __fdnlist(int fd, struct nlist *list)
 		goto elf_done;
 
 	while (symsize > 0) {
-		cc = MIN(symsize, sizeof(sbuf));
+		cc = MINIMUM(symsize, sizeof(sbuf));
 		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
 			break;
 		symsize -= cc;

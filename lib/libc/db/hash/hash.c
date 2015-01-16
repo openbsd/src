@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.25 2014/08/15 03:51:40 guenther Exp $	*/
+/*	$OpenBSD: hash.c,v 1.26 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -32,7 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -49,6 +48,8 @@
 #include "hash.h"
 #include "page.h"
 #include "extern.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 static int   alloc_segs(HTAB *, int);
 static int   flush_meta(HTAB *);
@@ -338,7 +339,7 @@ init_htab(HTAB *hashp, int nelem)
 	 */
 	nelem = (nelem - 1) / hashp->FFACTOR + 1;
 
-	l2 = __log2(MAX(nelem, 2));
+	l2 = __log2(MAXIMUM(nelem, 2));
 	nbuckets = 1 << l2;
 
 	hashp->SPARES[l2] = l2 + 1;
@@ -352,7 +353,7 @@ init_htab(HTAB *hashp, int nelem)
 
 	hashp->MAX_BUCKET = hashp->LOW_MASK = nbuckets - 1;
 	hashp->HIGH_MASK = (nbuckets << 1) - 1;
-	hashp->HDRPAGES = ((MAX(sizeof(HASHHDR), MINHDRSIZE) - 1) >>
+	hashp->HDRPAGES = ((MAXIMUM(sizeof(HASHHDR), MINHDRSIZE) - 1) >>
 	    hashp->BSHIFT) + 1;
 
 	nsegs = (nbuckets - 1) / hashp->SGSIZE + 1;

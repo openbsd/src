@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hash.c,v 1.8 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: elf_hash.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -27,7 +27,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>

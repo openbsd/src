@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_makeaddr.c,v 1.6 2005/08/06 20:30:03 espie Exp $ */
+/*	$OpenBSD: inet_makeaddr.c,v 1.7 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 

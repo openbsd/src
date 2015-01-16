@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_float.c,v 1.21 2014/07/21 01:51:11 guenther Exp $ */
+/*	$OpenBSD: xdr_float.c,v 1.22 2015/01/16 16:48:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,6 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/param.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 

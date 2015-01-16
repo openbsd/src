@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.14 2008/04/16 22:35:23 deraadt Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.15 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -52,7 +52,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 
@@ -61,6 +60,7 @@
 #include <ctype.h>
 
 #include <unistd.h>
+#include <limits.h>
 #include <string.h>
 
 static int dn_find(u_char *, u_char *, u_char **, u_char **);
@@ -84,8 +84,8 @@ dn_expand(const u_char *msg, const u_char *eomorig, const u_char *comp_dn,
 
 	dn = exp_dn;
 	cp = comp_dn;
-	if (length > MAXHOSTNAMELEN-1)
-		length = MAXHOSTNAMELEN-1;
+	if (length > HOST_NAME_MAX+1-1)
+		length = HOST_NAME_MAX+1-1;
 	eom = exp_dn + length;
 	/*
 	 * fetch next label in domain name

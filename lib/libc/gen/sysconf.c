@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.20 2014/07/08 17:19:21 deraadt Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.21 2015/01/16 16:48:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sem.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
@@ -203,7 +203,7 @@ sysconf(int name)
 
 /* Unsorted */
 	case _SC_HOST_NAME_MAX:
-		return (MAXHOSTNAMELEN - 1); /* does not include \0 */
+		return (HOST_NAME_MAX+1 - 1); /* does not include \0 */
 	case _SC_MONOTONIC_CLOCK:
 		return (_POSIX_MONOTONIC_CLOCK);
 	case _SC_2_PBS:

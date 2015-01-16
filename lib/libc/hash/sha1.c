@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.24 2015/01/15 13:05:59 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.25 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * SHA-1 in C
@@ -14,7 +14,7 @@
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <string.h>
 #include <sha1.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.11 2013/03/20 14:15:56 deraadt Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.12 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -25,11 +25,11 @@
  *	BSDI getifaddrs.c,v 2.12 2000/02/23 14:51:59 dab Exp
  */
 
+#include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <sys/param.h>
 #include <net/route.h>
 #include <sys/sysctl.h>
 #include <net/if_dl.h>

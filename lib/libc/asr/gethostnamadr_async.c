@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.33 2015/01/14 23:36:15 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.34 2015/01/16 16:48:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -656,7 +656,7 @@ _yp_gethostnamadr(int type, const void *data)
 	static char		*domain = NULL;
 	struct hostent_ext	*h = NULL;
 	const char		*name;
-	char			 buf[MAXHOSTNAMELEN];
+	char			 buf[HOST_NAME_MAX+1];
 	char			*res = NULL;
 	int			 r, len;
 

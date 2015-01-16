@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.40 2014/11/19 13:35:36 krw Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.41 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -110,6 +110,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "kvm_private.h"
 #include "kvm_file.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.9 2005/08/14 17:15:19 espie Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -33,12 +33,12 @@
 #define	PBUFSIZ		512	/* max length of filename path */
 #define	PVECSIZ		32	/* max number of names in path */
 
-#include <sys/param.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <curses.h>
 #include "pathnames.h"
 
@@ -71,7 +71,7 @@ tgetent(bp, name)
 	char **fname;
 	char  *home;
 	int    i;
-	char   pathbuf[MAXPATHLEN];	/* holds raw path of filenames */
+	char   pathbuf[PATH_MAX];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char **pvec;			/* holds usable tail of path vector */
 	char  *termpath;

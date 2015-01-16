@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.53 2014/08/15 03:51:40 guenther Exp $ */
+/*	$OpenBSD: kvm.c,v 1.54 2015/01/16 16:48:51 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN MID_MACHINE */
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -194,7 +194,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 		return (kd);
 	}
 
-	if (uf && strlen(uf) >= MAXPATHLEN) {
+	if (uf && strlen(uf) >= PATH_MAX) {
 		_kvm_err(kd, kd->program, "exec file name too long");
 		goto failed;
 	}
@@ -672,7 +672,7 @@ static int
 kvm_dbopen(kvm_t *kd, const char *uf)
 {
 	char dbversion[_POSIX2_LINE_MAX], kversion[_POSIX2_LINE_MAX];
-	char dbname[MAXPATHLEN];
+	char dbname[PATH_MAX];
 	struct nlist nitem;
 	size_t dbversionlen;
 	DBT rec;

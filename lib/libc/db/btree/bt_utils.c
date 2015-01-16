@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_utils.c,v 1.10 2007/08/08 23:57:19 ray Exp $	*/
+/*	$OpenBSD: bt_utils.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -32,14 +32,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <db.h>
 #include "btree.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /*
  * __bt_ret --
@@ -208,7 +208,7 @@ __bt_defcmp(const DBT *a, const DBT *b)
 	 * What we need is a integral type which is guaranteed to be
 	 * larger than a size_t, and there is no such thing.
 	 */
-	len = MIN(a->size, b->size);
+	len = MINIMUM(a->size, b->size);
 	for (p1 = a->data, p2 = b->data; len--; ++p1, ++p2)
 		if (*p1 != *p2)
 			return ((int)*p1 - (int)*p2);
@@ -233,7 +233,7 @@ __bt_defpfx(a, b)
 	size_t cnt, len;
 
 	cnt = 1;
-	len = MIN(a->size, b->size);
+	len = MINIMUM(a->size, b->size);
 	for (p1 = a->data, p2 = b->data; len--; ++p1, ++p2, ++cnt)
 		if (*p1 != *p2)
 			return (cnt);

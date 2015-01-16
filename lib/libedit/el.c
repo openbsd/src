@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.19 2014/10/17 06:07:50 deraadt Exp $	*/
+/*	$OpenBSD: el.c,v 1.20 2015/01/16 16:48:51 deraadt Exp $	*/
 /*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -39,12 +39,12 @@
  * el.c: EditLine interface functions
  */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <locale.h>
+#include <limits.h>
 #include <langinfo.h>
 #include "el.h"
 
@@ -501,7 +501,7 @@ el_source(EditLine *el, const char *fname)
 	size_t len;
 	char *ptr, *lptr = NULL;
 #ifdef HAVE_ISSETUGID
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 #endif
 	const Char *dptr;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setproctitle.c,v 1.12 2011/05/30 18:48:33 martynas Exp $ */
+/*	$OpenBSD: setproctitle.c,v 1.13 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>

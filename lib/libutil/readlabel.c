@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.12 2014/06/30 00:25:37 deraadt Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.13 2015/01/16 16:48:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #define DKTYPENAMES
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <string.h>
@@ -49,7 +50,7 @@
 char *
 readlabelfs(char *device, int verbose)
 {
-	char rpath[MAXPATHLEN];
+	char rpath[PATH_MAX];
 	struct dk_diskmap dm;
 	struct disklabel dk;
 	char part, *type;

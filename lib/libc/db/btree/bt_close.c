@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_close.c,v 1.9 2005/08/05 13:02:59 espie Exp $	*/
+/*	$OpenBSD: bt_close.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -31,8 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/param.h>
 
 #include <errno.h>
 #include <stdio.h>

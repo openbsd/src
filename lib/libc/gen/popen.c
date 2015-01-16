@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.19 2014/08/31 02:21:18 guenther Exp $ */
+/*	$OpenBSD: popen.c,v 1.20 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/wait.h>
 
 #include <signal.h>

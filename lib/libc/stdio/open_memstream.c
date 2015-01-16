@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstream.c,v 1.3 2013/04/03 03:11:53 guenther Exp $	*/
+/*	$OpenBSD: open_memstream.c,v 1.4 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -16,8 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
-
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -25,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+
+#define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct state {
 	char		 *string;	/* actual stream */
@@ -95,7 +95,7 @@ memstream_seek(void *v, fpos_t off, int whence)
 	}
 
 	st->pos = base + off;
-	*st->psize = MIN(st->pos, st->len);
+	*st->psize = MINIMUM(st->pos, st->len);
 
 	return (st->pos);
 }

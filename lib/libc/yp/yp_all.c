@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.10 2010/04/02 17:35:03 schwarze Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -25,11 +25,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>

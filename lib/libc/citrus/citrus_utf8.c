@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.7 2014/05/03 14:10:20 stsp Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.8 2015/01/16 16:48:51 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -27,7 +27,6 @@
  */
 
 #include <sys/errno.h>
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/limits.h>
 
@@ -40,6 +39,8 @@
 
 #include "citrus_ctype.h"
 #include "citrus_utf8.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 _CITRUS_CTYPE_DEF_OPS(utf8);
 
@@ -135,7 +136,7 @@ _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
 		wch = (unsigned char)*s++ & mask;
 	else
 		wch = us->ch;
-	for (i = (us->want == 0) ? 1 : 0; i < MIN(want, n); i++) {
+	for (i = (us->want == 0) ? 1 : 0; i < MINIMUM(want, n); i++) {
 		if ((*s & 0xc0) != 0x80) {
 			/*
 			 * Malformed input; bad characters in the middle

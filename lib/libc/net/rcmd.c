@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -39,6 +38,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <limits.h>
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
@@ -59,7 +59,7 @@ int
 rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
     const char *cmd, int *fd2p, int af)
 {
-	static char hbuf[MAXHOSTNAMELEN];
+	static char hbuf[HOST_NAME_MAX+1];
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *res, *r;
 	int error;

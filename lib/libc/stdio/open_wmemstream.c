@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_wmemstream.c,v 1.4 2014/10/08 05:28:19 deraadt Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.5 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -16,8 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
-
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -26,6 +24,8 @@
 #include <string.h>
 #include <wchar.h>
 #include "local.h"
+
+#define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct state {
 	wchar_t		 *string;	/* actual stream */
@@ -105,7 +105,7 @@ wmemstream_seek(void *v, fpos_t off, int whence)
 	bzero(&st->mbs, sizeof(st->mbs));
 
 	st->pos = base + off;
-	*st->psize = MIN(st->pos, st->len);
+	*st->psize = MINIMUM(st->pos, st->len);
 
 	return (st->pos);
 }

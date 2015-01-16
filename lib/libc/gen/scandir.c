@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.17 2014/10/08 05:34:59 deraadt Exp $ */
+/*	$OpenBSD: scandir.c,v 1.18 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * struct dirent (through namelist). Returns -1 if there were any errors.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "telldir.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /*
  * The DIRSIZ macro is the minimum record length which will hold the directory
@@ -75,7 +77,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 	 * estimate the array size by taking the size of the directory file
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
-	arraysz = MAX(stb.st_size / 24, 16);
+	arraysz = MAXIMUM(stb.st_size / 24, 16);
 	if (arraysz > SIZE_MAX / sizeof(struct dirent *)) {
 		errno = ENOMEM;
 		goto fail;

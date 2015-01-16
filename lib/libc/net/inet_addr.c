@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_addr.c,v 1.10 2013/11/24 23:51:28 deraadt Exp $	*/
+/*	$OpenBSD: inet_addr.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -52,7 +52,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>

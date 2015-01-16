@@ -204,7 +204,7 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 	const char *auser, *ahost;
 	int hostok, userok;
 	char *rhost = (char *)-1;
-	char domain[MAXHOSTNAMELEN];
+	char domain[HOST_NAME_MAX+1];
 	size_t buflen;
 
 	getdomainname(domain, sizeof(domain));
@@ -245,7 +245,7 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 		auser = *user ? user : luser;
 		ahost = buf;
 
-		if (strlen(ahost) >= MAXHOSTNAMELEN)
+		if (strlen(ahost) >= HOST_NAME_MAX+1)
 			continue;
 
 		/*

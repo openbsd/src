@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.19 2013/12/02 02:28:21 krw Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.20 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 

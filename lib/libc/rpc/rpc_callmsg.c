@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_callmsg.c,v 1.10 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: rpc_callmsg.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -33,7 +33,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
 
 #include <rpc/rpc.h>
 

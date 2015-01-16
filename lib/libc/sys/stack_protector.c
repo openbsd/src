@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.15 2013/12/28 18:42:42 deraadt Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.16 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -27,7 +27,6 @@
  *
  */
 
-#include <sys/param.h>
 #include <signal.h>
 #include <string.h>
 #include <syslog.h>

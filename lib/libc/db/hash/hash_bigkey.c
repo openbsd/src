@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.17 2006/04/03 19:56:47 deraadt Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.18 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -50,8 +50,6 @@
  *	collect_data
  */
 
-#include <sys/param.h>
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,6 +63,8 @@
 #include "hash.h"
 #include "page.h"
 #include "extern.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int collect_key(HTAB *, BUFHEAD *, int, DBT *, int);
 static int collect_data(HTAB *, BUFHEAD *, int, int);
@@ -97,7 +97,7 @@ __big_insert(HTAB *hashp, BUFHEAD *bufp, const DBT *key, const DBT *val)
 	/* First move the Key */
 	for (space = FREESPACE(p) - BIGOVERHEAD; key_size;
 	    space = FREESPACE(p) - BIGOVERHEAD) {
-		move_bytes = MIN(space, key_size);
+		move_bytes = MINIMUM(space, key_size);
 		off = OFFSET(p) - move_bytes;
 		memmove(cp + off, key_data, move_bytes);
 		key_size -= move_bytes;
@@ -115,7 +115,7 @@ __big_insert(HTAB *hashp, BUFHEAD *bufp, const DBT *key, const DBT *val)
 		if (!key_size) {
 			space = FREESPACE(p);
 			if (space) {
-				move_bytes = MIN(space, val_size);
+				move_bytes = MINIMUM(space, val_size);
 				/*
 				 * If the data would fit exactly in the
 				 * remaining space, we must overflow it to the
@@ -146,7 +146,7 @@ __big_insert(HTAB *hashp, BUFHEAD *bufp, const DBT *key, const DBT *val)
 	/* Now move the data */
 	for (space = FREESPACE(p) - BIGOVERHEAD; val_size;
 	    space = FREESPACE(p) - BIGOVERHEAD) {
-		move_bytes = MIN(space, val_size);
+		move_bytes = MINIMUM(space, val_size);
 		/*
 		 * Here's the hack to make sure that if the data ends on the
 		 * same page as the key ends, FREESPACE is at least one.

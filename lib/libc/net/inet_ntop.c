@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.10 2014/05/17 18:16:14 tedu Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -16,7 +16,6 @@
  * SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

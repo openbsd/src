@@ -1,4 +1,4 @@
-/*	$OpenBSD: setdomainname.c,v 1.8 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: setdomainname.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
 

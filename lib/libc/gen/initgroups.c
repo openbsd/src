@@ -1,4 +1,4 @@
-/*	$OpenBSD: initgroups.c,v 1.8 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: initgroups.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,19 +28,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <err.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 
 int
 initgroups(const char *uname, gid_t agroup)
 {
-	gid_t groups[NGROUPS];
+	gid_t groups[NGROUPS_MAX];
 	int ngroups;
 
-	ngroups = NGROUPS;
+	ngroups = NGROUPS_MAX;
 	(void) getgrouplist(uname, agroup, groups, &ngroups);
 	if (setgroups(ngroups, groups) < 0)
 		return (-1);

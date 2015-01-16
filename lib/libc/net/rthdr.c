@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthdr.c,v 1.9 2014/06/13 15:41:06 chrisz Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $	*/
 /*	$KAME: rthdr.c,v 1.22 2006/02/09 08:18:58 keiichi Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 

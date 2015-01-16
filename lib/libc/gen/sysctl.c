@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.9 2013/06/09 13:10:17 miod Exp $ */
+/*	$OpenBSD: sysctl.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 
 int __sysctl(const int *, u_int, void *, size_t *, void *, size_t);

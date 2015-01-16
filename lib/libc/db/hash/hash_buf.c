@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_buf.c,v 1.18 2008/10/01 20:22:47 millert Exp $	*/
+/*	$OpenBSD: hash_buf.c,v 1.19 2015/01/16 16:48:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -48,8 +48,6 @@
  *	newbuf
  */
 
-#include <sys/param.h>
-
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -64,6 +62,8 @@
 #include "hash.h"
 #include "page.h"
 #include "extern.h"
+
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 static BUFHEAD *newbuf(HTAB *, u_int32_t, BUFHEAD *);
 
@@ -300,7 +300,7 @@ __buf_init(HTAB *hashp, int nbytes)
 
 	bfp = &(hashp->bufhead);
 	npages = (nbytes + hashp->BSIZE - 1) >> hashp->BSHIFT;
-	npages = MAX(npages, MIN_BUFFERS);
+	npages = MAXIMUM(npages, MIN_BUFFERS);
 
 	hashp->nbufs = npages;
 	bfp->next = bfp;
