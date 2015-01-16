@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.77 2015/01/06 12:50:47 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.78 2015/01/16 10:17:51 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -77,6 +77,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/codepatch.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -121,65 +122,23 @@ struct cpu_softc {
 #ifndef SMALL_KERNEL
 void	replacesmap(void);
 
-extern long _copyout_stac;
-extern long _copyout_clac;
-extern long _copyin_stac;
-extern long _copyin_clac;
-extern long _copy_fault_clac;
-extern long _copyoutstr_stac;
-extern long _copyinstr_stac;
-extern long _copystr_fault_clac;
 extern long _stac;
 extern long _clac;
-
-static const struct {
-	void *daddr;
-	void *saddr;
-} ireplace[] = {
-	{ &_copyout_stac, &_stac },
-	{ &_copyout_clac, &_clac },
-	{ &_copyin_stac, &_stac },
-	{ &_copyin_clac, &_clac },
-	{ &_copy_fault_clac, &_clac },
-	{ &_copyoutstr_stac, &_stac },
-	{ &_copyinstr_stac, &_stac },
-	{ &_copystr_fault_clac, &_clac },
-};
 
 void
 replacesmap(void)
 {
 	static int replacedone = 0;
-	int i, s;
-	vaddr_t nva;
+	int s;
 
 	if (replacedone)
 		return;
 	replacedone = 1;
 
 	s = splhigh();
-	/*
-	 * Create writeable aliases of memory we need
-	 * to write to as kernel is mapped read-only
-	 */
-	nva = (vaddr_t)km_alloc(2 * PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
 
-	for (i = 0; i < nitems(ireplace); i++) {
-		paddr_t kva = trunc_page((paddr_t)ireplace[i].daddr);
-		paddr_t po = (paddr_t)ireplace[i].daddr & PAGE_MASK;
-		paddr_t pa1, pa2;
-
-		pmap_extract(pmap_kernel(), kva, &pa1);
-		pmap_extract(pmap_kernel(), kva + PAGE_SIZE, &pa2);
-		pmap_kenter_pa(nva, pa1, PROT_READ | PROT_WRITE);
-		pmap_kenter_pa(nva + PAGE_SIZE, pa2, PROT_READ | PROT_WRITE);
-		pmap_update(pmap_kernel());
-
-		/* replace 3 byte nops with stac/clac instructions */
-		memcpy((void *)(nva + po), ireplace[i].saddr, 3);
-	}
-
-	km_free((void *)nva, 2 * PAGE_SIZE, &kv_any, &kp_none);
+	codepatch_replace(CPTAG_STAC, &_stac, 3);
+	codepatch_replace(CPTAG_CLAC, &_clac, 3);
 	
 	splx(s);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.76 2014/12/10 05:42:25 jsg Exp $
+#	$OpenBSD: files.amd64,v 1.77 2015/01/16 10:17:51 sf Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -79,6 +79,8 @@ define	mainbus {[apid = -1]}
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
+
+file	arch/amd64/amd64/codepatch.c
 
 device	bios {}
 attach	bios at mainbus
