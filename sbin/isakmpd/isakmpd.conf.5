@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.130 2012/08/12 17:01:35 schwarze Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.131 2015/01/16 15:37:20 schwarze Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: August 12 2012 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -82,71 +82,52 @@ to fully specify the Main Mode transforms and Quick Mode suites, protocols,
 and transforms.
 .Pp
 For Main Mode:
-.\"{cipher}-{hash}[-{group}][-RSA_SIG]
+.\" cipher-hash[-group][-RSA_SIG]
 .Bl -inset -compact
 .It Xo
 .Sm off
-.No {
-.Ar cipher
-.No }-{
-.Ar hash
-.No }[{-
-.Ar group
-.No }]
-.No [-
-.Ar RSA_SIG
-.No ]
+.Ar cipher No - Ar hash
+.Op - Ar group
+.Op -RSA_SIG
 .Sm on
 .Xc
 .El
 .Pp
 where:
-.Bl -tag -width "{cipher}" -offset indent -compact
-.It Ns { Ns Ar cipher Ns }
+.Bl -tag -width "cipher" -offset indent -compact
+.It Ar cipher
 is either DES, BLF, 3DES, CAST, AES, AES-128, AES-192 or AES-256
-.It Ns { Ns Ar hash Ns }
+.It Ar hash
 is either MD5, SHA, or SHA2-{256,384,512}
-.It Ns { Ns Ar group Ns }
+.It Ar group
 is either GRP1, GRP2, GRP5, GRP14, or GRP15
 .El
 .Pp
 For Quick Mode:
-.\" .Ar QM-{proto}[-TRP]-{cipher}[-{hash}][-PFS[-{group}]]-SUITE
+.\" QM-proto[-TRP]-cipher[-hash][-PFS[-group]]-SUITE
 .Bl -inset -compact
 .It Xo
 .Sm off
-.Ar QM
-.No -{
-.Ar proto
-.No }[-
-.Ar TRP
-.No ]-{
-.Ar cipher
-.No }[-{
-.Ar hash
-.No }]
-.No [-
-.Ar PFS
-.No [-{
-.Ar group
-.No }]]-
-.Ar SUITE
+.No QM- Ar proto Op -TRP
+.No - Ar cipher Op - Ar hash
+.Op -PFS Op - Ar group
+.No -SUITE
 .Sm on
 .Xc
 .El
 .Pp
 where:
-.Bl -tag -width "{cipher}" -offset indent -compact
-.It Ns { Ns Ar proto Ns }
+.Bl -tag -width "cipher" -offset indent -compact
+.It Ar proto
 is either ESP or AH
-.It Ns { Ns Ar cipher Ns }
+.It Ar cipher
 is either DES, 3DES, CAST, BLF, AES, AES-128, AES-192, AES-256, AESCTR,
 AESCTR-128, AESCTR-192, AESCTR-256,
 AESGCM-128, AESGCM-192, AESGCM-256, AESGMAC-128, AESGMAC-192, AESGMAC-256
 or NULL
-.It Ns { Ns Ar hash Ns }
+.It Ar hash
 is either MD5, SHA, RIPEMD, or SHA2-{256,384,512}
-.It Ns { Ns Ar group Ns }
+.It Ar group
 is either GRP1, GRP2, GRP5, GRP14, or GRP15
 .El
 .Pp
