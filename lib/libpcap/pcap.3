@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.38 2015/01/15 19:06:31 schwarze Exp $
+.\"	$OpenBSD: pcap.3,v 1.39 2015/01/16 03:37:10 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: January 16 2015 $
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@
 .Ft int
 .Fn pcap_setnonblock "pcap_t *p" "int nonblock" "char *errbuf"
 .Ft int
-.Fn pcap_set_datalink "pcap_t *" "int dlt"
+.Fn pcap_set_datalink "pcap_t *p" "int dlt"
 .Ft int
 .Fn pcap_list_datalinks "pcap_t *p" "int **dlt_buffer"
 .Ft pcap_t
@@ -120,7 +120,7 @@
 .Ft const char *
 .Fn pcap_datalink_val_to_description "int dlt"
 .Ft int
-.Fn pcap_datalink_name_to_val "const char *"
+.Fn pcap_datalink_name_to_val "const char *name"
 .Ft "pcap_t *"
 .Fn pcap_create "const char *device" "char *ebuf"
 .Ft int
