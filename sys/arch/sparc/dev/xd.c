@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.70 2015/01/15 21:17:54 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.71 2015/01/16 20:18:24 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -295,8 +295,6 @@ xdgetdisklabel(dev, xd, lp, spoofonly)
 	if (xd->state == XD_DRIVE_ATTACHING || xd->state == XD_DRIVE_NOLABEL) {
 		/* needs to be nonzero */
 		lp->d_secpercyl = 1;
-		/* prevent initdisklabel() from putting MAXDISKSIZE */
-		DL_SETDSIZE(lp, 1ULL);
 	} else {
 		/*
 		 * Disk geometry is known from a previously found label.
