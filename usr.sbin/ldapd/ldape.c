@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.18 2013/11/02 13:31:51 deraadt Exp $ */
+/*	$OpenBSD: ldape.c,v 1.19 2015/01/16 16:04:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -530,7 +530,7 @@ ldape_open_result(struct imsg *imsg)
 		fatal("invalid size of open result");
 
 	/* make sure path is null-terminated */
-	oreq->path[MAXPATHLEN] = '\0';
+	oreq->path[PATH_MAX] = '\0';
 
 	log_debug("open(%s) returned fd %d", oreq->path, imsg->fd);
 

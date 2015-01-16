@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.31 2013/11/02 13:31:51 deraadt Exp $ */
+/*	$OpenBSD: btree.c,v 1.32 2015/01/16 16:04:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -20,7 +20,6 @@
 #include <sys/tree.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/uio.h>
 
 #include <assert.h>

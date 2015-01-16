@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.6 2011/01/08 19:42:45 martinh Exp $ */
+/*	$OpenBSD: ber.c,v 1.7 2015/01/16 16:04:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -19,7 +19,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include <errno.h>
 #include <limits.h>
@@ -32,6 +31,7 @@
 
 #include "ber.h"
 
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define BER_TYPE_CONSTRUCTED	0x20	/* otherwise primitive */
 #define BER_TYPE_SINGLE_MAX	30
@@ -1170,7 +1170,7 @@ ber_readbuf(struct ber *b, void *buf, size_t nbytes)
 		return -1;
 
 	sz = b->br_rend - b->br_rptr;
-	len = MIN(nbytes, sz);
+	len = MINIMUM(nbytes, sz);
 	if (len == 0) {
 		errno = ECANCELED;
 		return (-1);	/* end of buffer and parser wants more data */
