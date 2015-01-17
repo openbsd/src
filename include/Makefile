@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.197 2014/12/08 20:39:56 tedu Exp $
+#	$OpenBSD: Makefile,v 1.198 2015/01/17 20:37:04 tedu Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -10,7 +10,7 @@
 .include <bsd.own.mk>
 
 FILES=	a.out.h ar.h asr.h assert.h bitstring.h blf.h bsd_auth.h \
-	complex.h cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
+	complex.h cpio.h ctype.h curses.h db.h dbm.h dirent.h disktab.h \
 	dlfcn.h elf_abi.h err.h errno.h fenv.h float.h fnmatch.h fstab.h fts.h \
 	ftw.h getopt.h glob.h grp.h ifaddrs.h inttypes.h iso646.h kvm.h \
 	langinfo.h libgen.h limits.h locale.h login_cap.h malloc.h math.h \
