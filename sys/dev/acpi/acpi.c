@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.280 2015/01/15 01:19:28 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.281 2015/01/17 04:18:49 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2274,11 +2274,12 @@ fail_suspend:
 	/* 3rd resume AML step: _TTS(runstate) */
 	aml_node_setval(sc, sc->sc_tts, sc->sc_state);
 
+	resume_randomness();		/* force RNG upper level reseed */
+
 #ifdef MULTIPROCESSOR
 	acpi_resume_mp();
 #endif
 
-	resume_randomness();		/* force RNG upper level reseed */
 	bufq_restart();
 
 fail_quiesce:
