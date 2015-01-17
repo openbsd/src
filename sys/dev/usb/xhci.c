@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.53 2015/01/09 20:17:05 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.54 2015/01/17 18:37:12 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -51,7 +51,7 @@ int xhcidebug = 3;
 
 #define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
 
-#define TRBOFF(r, trb)	((char *)(trb) - (char *)((r).trbs))
+#define TRBOFF(r, trb)	((char *)(trb) - (char *)((r)->trbs))
 #define DEQPTR(r)	((r).dma.paddr + (sizeof(struct xhci_trb) * (r).index))
 
 struct pool *xhcixfer;
@@ -89,8 +89,8 @@ int	xhci_ring_alloc(struct xhci_softc *, struct xhci_ring *, size_t,
 	    size_t);
 void	xhci_ring_free(struct xhci_softc *, struct xhci_ring *);
 void	xhci_ring_reset(struct xhci_softc *, struct xhci_ring *);
-struct	xhci_trb *xhci_ring_dequeue(struct xhci_softc *, struct xhci_ring *,
-	    int);
+struct	xhci_trb *xhci_ring_consume(struct xhci_softc *, struct xhci_ring *);
+struct	xhci_trb *xhci_ring_produce(struct xhci_softc *, struct xhci_ring *);
 
 struct	xhci_trb *xhci_xfer_get_trb(struct xhci_softc *, struct usbd_xfer*,
 	    uint8_t *, int);
@@ -674,7 +674,7 @@ xhci_event_dequeue(struct xhci_softc *sc)
 	uint64_t paddr;
 	uint32_t status, flags;
 
-	while ((trb = xhci_ring_dequeue(sc, &sc->sc_evt_ring, 1)) != NULL) {
+	while ((trb = xhci_ring_consume(sc, &sc->sc_evt_ring)) != NULL) {
 		paddr = letoh64(trb->trb_paddr);
 		status = letoh32(trb->trb_status);
 		flags = letoh32(trb->trb_flags);
@@ -1462,34 +1462,52 @@ xhci_ring_reset(struct xhci_softc *sc, struct xhci_ring *ring)
 }
 
 struct xhci_trb*
-xhci_ring_dequeue(struct xhci_softc *sc, struct xhci_ring *ring, int cons)
+xhci_ring_consume(struct xhci_softc *sc, struct xhci_ring *ring)
 {
-	struct xhci_trb *trb;
-	uint32_t idx = ring->index;
+	struct xhci_trb *trb = &ring->trbs[ring->index];
 
-	KASSERT(idx < ring->ntrb);
+	KASSERT(ring->index < ring->ntrb);
 
-	bus_dmamap_sync(ring->dma.tag, ring->dma.map, idx * sizeof(*trb),
-	    sizeof(*trb), BUS_DMASYNC_POSTREAD);
-
-	trb = &ring->trbs[idx];
+	bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, trb),
+	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD);
 
 	/* Make sure this TRB can be consumed. */
-	if (cons && ring->toggle != (letoh32(trb->trb_flags) & XHCI_TRB_CYCLE))
+	if (ring->toggle != (letoh32(trb->trb_flags) & XHCI_TRB_CYCLE))
 		return (NULL);
-	idx++;
 
-	if (idx < (ring->ntrb - 1)) {
-		ring->index = idx;
-	} else {
-		if (ring->toggle)
-			ring->trbs[idx].trb_flags |= htole32(XHCI_TRB_CYCLE);
-		else
-			ring->trbs[idx].trb_flags &= ~htole32(XHCI_TRB_CYCLE);
+	ring->index++;
 
-		bus_dmamap_sync(ring->dma.tag, ring->dma.map,
-		    sizeof(struct xhci_trb) * idx, sizeof(struct xhci_trb),
-		    BUS_DMASYNC_PREWRITE);
+	if (ring->index == ring->ntrb) {
+		ring->index = 0;
+		ring->toggle ^= 1;
+	}
+
+	return (trb);
+}
+
+struct xhci_trb*
+xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
+{
+	struct xhci_trb *trb = &ring->trbs[ring->index];
+
+	KASSERT(ring->index < ring->ntrb);
+
+	bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, trb),
+	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD);
+
+	ring->index++;
+
+	/* Toggle cycle state of the link TRB and skip it. */
+	if (ring->index == (ring->ntrb - 1)) {
+		struct xhci_trb *lnk = &ring->trbs[ring->index];
+
+		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
+		    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD);
+
+		lnk->trb_flags ^= htole32(XHCI_TRB_CYCLE);
+
+		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
+		    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 
 		ring->index = 0;
 		ring->toggle ^= 1;
@@ -1515,7 +1533,7 @@ xhci_xfer_get_trb(struct xhci_softc *sc, struct usbd_xfer* xfer,
 	xx->ntrb += 1;
 
 	*togglep = xp->ring.toggle;
-	return (xhci_ring_dequeue(sc, &xp->ring, 0));
+	return (xhci_ring_produce(sc, &xp->ring));
 }
 
 int
@@ -1528,12 +1546,12 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 
 	trb0->trb_flags |= htole32(sc->sc_cmd_ring.toggle);
 
-	trb = xhci_ring_dequeue(sc, &sc->sc_cmd_ring, 0);
+	trb = xhci_ring_produce(sc, &sc->sc_cmd_ring);
 	if (trb == NULL)
 		return (EAGAIN);
 	memcpy(trb, trb0, sizeof(struct xhci_trb));
 	bus_dmamap_sync(sc->sc_cmd_ring.dma.tag, sc->sc_cmd_ring.dma.map,
-	    TRBOFF(sc->sc_cmd_ring, trb), sizeof(struct xhci_trb),
+	    TRBOFF(&sc->sc_cmd_ring, trb), sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
 
 
@@ -2394,7 +2412,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
-	    TRBOFF(xp->ring, trb0), 3 * sizeof(struct xhci_trb),
+	    TRBOFF(&xp->ring, trb0), 3 * sizeof(struct xhci_trb),
 	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
@@ -2510,7 +2528,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	trb0->trb_flags = htole32(flags);
 
 	bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
-	    TRBOFF(xp->ring, trb0), sizeof(struct xhci_trb) * ntrb,
+	    TRBOFF(&xp->ring, trb0), sizeof(struct xhci_trb) * ntrb,
 	    BUS_DMASYNC_PREWRITE);
 
 	s = splusb();
