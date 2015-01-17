@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.9 2015/01/02 01:57:33 jsg Exp $ */
+/* $OpenBSD: imxenet.c,v 1.10 2015/01/17 02:57:16 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -246,10 +246,14 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	case BOARD_ID_IMX6_PHYFLEX:
 	case BOARD_ID_IMX6_SABRELITE:
 		/* phyFLEX i.MX6 and SABRE Lite PHY reset */
-		imxgpio_set_dir(ENET_PHYFLEX_PHY_RST, IMXGPIO_DIR_OUT);
-		delay(10);
-		imxgpio_set_bit(ENET_PHYFLEX_PHY_RST);
-		delay(10);
+		imxgpio_clear_bit(ENET_SABRELITE_PHY_RST);
+		imxgpio_set_dir(ENET_SABRELITE_PHY_RST, IMXGPIO_DIR_OUT);
+		imxgpio_clear_bit(ENET_NITROGEN6X_PHY_RST);
+		imxgpio_set_dir(ENET_NITROGEN6X_PHY_RST, IMXGPIO_DIR_OUT);
+		delay(1000 * 10);
+		imxgpio_set_bit(ENET_SABRELITE_PHY_RST);
+		imxgpio_set_bit(ENET_NITROGEN6X_PHY_RST);
+		delay(100);
 		break;
 	case BOARD_ID_IMX6_UDOO:
 		imxgpio_set_bit(ENET_UDOO_PWR);

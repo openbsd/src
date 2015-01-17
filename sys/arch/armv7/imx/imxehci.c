@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.5 2015/01/02 01:57:33 jsg Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.6 2015/01/17 02:57:16 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -137,6 +137,13 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	case BOARD_ID_IMX6_HUMMINGBOARD:
 		imxgpio_set_bit(EHCI_HUMMINGBOARD_USB_H1_PWR);
 		imxgpio_set_dir(EHCI_HUMMINGBOARD_USB_H1_PWR, IMXGPIO_DIR_OUT);
+		delay(10);
+		break;
+	case BOARD_ID_IMX6_SABRELITE:
+		imxgpio_clear_bit(EHCI_NITROGEN6X_USB_HUB_RST);
+		imxgpio_set_dir(EHCI_NITROGEN6X_USB_HUB_RST, IMXGPIO_DIR_OUT);
+		delay(1000 * 2);
+		imxgpio_set_bit(EHCI_NITROGEN6X_USB_HUB_RST);
 		delay(10);
 		break;
 	case BOARD_ID_IMX6_UTILITE:
