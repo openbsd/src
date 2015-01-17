@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.55 2015/01/01 07:27:34 schwarze Exp $
+.\"	$OpenBSD: intro.2,v 1.56 2015/01/17 13:37:59 millert Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 1 2015 $
+.Dd $Mdocdate: January 17 2015 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -46,18 +46,20 @@ their error returns, and other common definitions and concepts.
 .\".Pp
 .\"<more later...>
 .Sh DIAGNOSTICS
-Nearly all of the system calls provide an error number in the external
-variable
-.Va errno ,
-which is currently defined as:
-.Pp
-.Dl extern int errno;
-.Pp
-Portable applications must not depend on this definition, and should only
-use
+Nearly all of the system calls provide an error number via the identifier
+.Dv errno ,
+which expands to an addressable location of type
+.Vt int .
+The address of
+.Va errno
+in each thread is guaranteed to be unique for the lifetime of thread
+thread.
+Applications must use
 .Va errno
 as defined in
-.In errno.h .
+.In errno.h
+and not attempt to use a custom definition.
+.Pp
 When a system call detects an error, it returns an integer value
 indicating failure (usually \-1) and sets the variable
 .Va errno
@@ -76,7 +78,7 @@ The following is a complete list of the errors and their
 names as given in
 .In sys/errno.h .
 .Bl -hang -width Ds
-.It Er 0 Em "Error 0" .
+.It Er 0 Em "Undefined error: 0" .
 Not used.
 .It Er 1 EPERM Em "Operation not permitted" .
 An attempt was made to perform an operation limited to processes
@@ -331,11 +333,12 @@ A path name lookup involved more than 32
 .Pq Dv SYMLOOP_MAX
 symbolic links.
 .It Er 63 ENAMETOOLONG Em "File name too long" .
-A component of a path name exceeded 255
+A component of a pathname exceeded 255
 .Pq Dv NAME_MAX
-characters, or an entire path name exceeded 1023
-.Pq Dv PATH_MAX Ns -1
-characters.
+characters, or an entire pathname (including the terminating NUL)
+exceeded 1024
+.Pq Dv PATH_MAX
+bytes.
 .It Er 64 EHOSTDOWN Em "Host is down" .
 A socket operation failed because the destination host was down.
 .It Er 65 EHOSTUNREACH Em "\&No route to host" .
