@@ -517,6 +517,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/bus.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/cacheinfo.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/cdefs.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/codepatch.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/conf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/cpu.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/cpufunc.ph

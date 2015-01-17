@@ -22,6 +22,7 @@
 ./usr/bin/strip
 ./usr/bin/yacc
 ./usr/include/a.out.h
+./usr/include/amd64/codepatch.h
 ./usr/include/ar.h
 ./usr/include/arpa
 ./usr/include/arpa/ftp.h
