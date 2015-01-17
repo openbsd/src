@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.105 2014/12/18 20:59:21 tedu Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.106 2015/01/17 17:49:27 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -292,8 +292,8 @@ nfs_mountroot(void)
 	proc0.p_ucred->cr_uid = ntohl(nfs_diskless.swap_ucred.cr_uid);
 	proc0.p_ucred->cr_gid = ntohl(nfs_diskless.swap_ucred.cr_gid);
 	if ((proc0.p_ucred->cr_ngroups = ntohs(nfs_diskless.swap_ucred.cr_ngroups)) >
-		NGROUPS)
-		proc0.p_ucred->cr_ngroups = NGROUPS;
+		NGROUPS_MAX)
+		proc0.p_ucred->cr_ngroups = NGROUPS_MAX;
 	for (i = 0; i < proc0.p_ucred->cr_ngroups; i++)
 	    proc0.p_ucred->cr_groups[i] = ntohl(nfs_diskless.swap_ucred.cr_groups[i]);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.106 2014/11/14 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.107 2015/01/17 17:49:27 deraadt Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1514,11 +1514,11 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
 		for (i = 0; i < len; i++)
-		    if (i < NGROUPS)
+		    if (i < NGROUPS_MAX)
 			nd->nd_cr.cr_groups[i] = fxdr_unsigned(gid_t, *tl++);
 		    else
 			tl++;
-		nd->nd_cr.cr_ngroups = (len > NGROUPS) ? NGROUPS : len;
+		nd->nd_cr.cr_ngroups = (len > NGROUPS_MAX) ? NGROUPS_MAX : len;
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
 			m_freem(info.nmi_mrep);

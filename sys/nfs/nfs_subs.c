@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.123 2014/12/29 05:29:28 miod Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.124 2015/01/17 17:49:27 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1462,7 +1462,7 @@ nfsrv_fhtovp(fhandle_t *fhp, int lockflag, struct vnode **vpp,
 	if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
 		cred->cr_uid = credanon->cr_uid;
 		cred->cr_gid = credanon->cr_gid;
-		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
+		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS_MAX; i++)
 			cred->cr_groups[i] = credanon->cr_groups[i];
 		cred->cr_ngroups = i;
 	}
