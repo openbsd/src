@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.14 2013/11/26 20:33:11 deraadt Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.15 2015/01/17 08:00:41 jsg Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -43,13 +43,23 @@
 /*
  * ARM Process Status Register
  *
- * The picture in the ARM manuals looks like this:
+ * The picture in early ARM manuals looks like this:
  *       3 3 2 2 2 2                            
  *       1 0 9 8 7 6                                   8 7 6 5 4       0
  *      +-+-+-+-+-+-------------------------------------+-+-+-+---------+
  *      |N|Z|C|V|Q|                reserved             |I|F|T|M M M M M|
  *      | | | | | |                                     | | | |4 3 2 1 0|
  *      +-+-+-+-+-+-------------------------------------+-+-+-+---------+
+ *
+ * The picture in the ARMv7-A manuals looks like this:
+ *       3 3 2 2 2 2 2 2 2     2 1     1 1         1
+ *       1 0 9 8 7 6 5 4 3     0 9     6 5         0 9 8 7 6 5 4       0
+ *      +-+-+-+-+-+---+-+-------+-------+-----------+-+-+-+-+-+---------+
+ *      |N|Z|C|V|Q|I I|J|reserv-|G G G G|I I I I I I|E|A|I|F|T|M M M M M|
+ *      | | | | | |T T| |ed     |E E E E|T T T T T T| | | | | |         |
+ *      | | | | | |1 0| |       |3 2 1 0|7 6 5 4 3 2| | | | | |4 3 2 1 0|
+ *      +-+-+-+-+-+---+-+-------+-------+-----------+-+-+-+-+-+---------+
+ *      | flags 'f'     | status 's'    | extension 'x' | control 'c'   |
  */
 
 #define PSR_FLAGS 0xf0000000	/* flags */
