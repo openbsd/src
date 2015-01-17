@@ -779,10 +779,10 @@ expand_substitute(struct place *p, struct expstate *es)
 	for (i=0; i<num; i++) {
 		ei = expansionitemarray_get(&es->curmacro->expansion, i);
 		if (ei->isstring) {
-			strcat(ret, ei->string);
+			strlcat(ret, ei->string, len+1);
 		} else {
 			arg = stringarray_get(&es->args, ei->param);
-			strcat(ret, arg);
+			strlcat(ret, arg, len+1);
 		}
 	}
 

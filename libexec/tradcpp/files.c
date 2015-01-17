@@ -313,11 +313,7 @@ mkfilename(struct place *place, const char *dir, const char *file)
 
 	rlen = dlen + (needslash ? 1 : 0) + flen;
 	ret = domalloc(rlen + 1);
-	strcpy(ret, dir);
-	if (needslash) {
-		strcat(ret, "/");
-	}
-	strcat(ret, file);
+	snprintf(ret, rlen+1, "%s%s%s", dir, needslash ? "/" : "", file);
 	return ret;
 }
 

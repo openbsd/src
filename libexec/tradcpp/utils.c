@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "utils.h"
@@ -170,7 +171,7 @@ dostrdup(const char *s)
 
 	len = strlen(s);
 	ret = domalloc(len+1);
-	strcpy(ret, s);
+	strlcpy(ret, s, len+1);
 	return ret;
 }
 
@@ -182,8 +183,7 @@ dostrdup2(const char *s, const char *t)
 
 	len = strlen(s) + strlen(t);
 	ret = domalloc(len+1);
-	strcpy(ret, s);
-	strcat(ret, t);
+	snprintf(ret, len+1, "%s%s", s, t);
 	return ret;
 }
 
@@ -195,9 +195,7 @@ dostrdup3(const char *s, const char *t, const char *u)
 
 	len = strlen(s) + strlen(t) + strlen(u);
 	ret = domalloc(len+1);
-	strcpy(ret, s);
-	strcat(ret, t);
-	strcat(ret, u);
+	snprintf(ret, len+1, "%s%s%s", s, t, u);
 	return ret;
 }
 
