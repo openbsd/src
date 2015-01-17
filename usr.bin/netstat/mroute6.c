@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.15 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.16 2015/01/17 07:09:50 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -75,7 +75,7 @@
 
 #include <netinet/in.h>
 
-#define _KERNEL 1
+#define _KERNEL
 #include <netinet6/ip6_mroute.h>
 #undef _KERNEL
 
