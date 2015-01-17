@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.809 2015/01/12 16:33:31 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.810 2015/01/17 10:09:06 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -59,12 +59,12 @@ usage() {
 }
 
 # Parse parameters
-auto=false
-respfile=
+AUTO=false
+RESPFILE=
 while getopts "af:" opt; do
 	case $opt in
-	a)	auto=true;;
-	f)	respfile=$OPTARG;;
+	a)	AUTO=true;;
+	f)	RESPFILE=$OPTARG;;
 	*)	usage;;
 	esac
 done
@@ -243,7 +243,7 @@ retrap() {
 # of that file
 rm -f /tmp/update
 
-if ! $auto; then
+if ! $AUTO; then
 	# Start listener process looking for dmesg changes
 	(
 		while :; do
@@ -301,7 +301,7 @@ _ask() {
 	return $_redo
 }
 
-# Search question in $respfile, return answer in $resp
+# Search question in $RESPFILE, return answer in $resp
 #
 # - split question and answer at leftmost =
 # - strip leading/trailing blanks
@@ -316,7 +316,7 @@ _ask() {
 _autorespond() {
 	typeset -l _q=$1 _key
 	local _def=$2 _l _val
-	[[ -f $respfile ]] || return
+	[[ -f $RESPFILE ]] || return
 	# Find a suitable response in /ai.conf and remove it if found.
 	mv /ai.conf /ai.conf.tmp
 	while IFS=' 	' read -r _l; do
@@ -342,7 +342,7 @@ ask() {
 # Ask for a password twice, saving the input in $_password
 askpassword() {
 	local _q=$1
-	if $auto; then
+	if $AUTO; then
 		echo -n "$_q "
 		_autorespond "$_q"
 		echo '<provided>'
@@ -406,7 +406,7 @@ user_setup() {
 	userpass=$_password
 
 	userkey=
-	$auto && ask "Public ssh key for user $user" none &&
+	$AUTO && ask "Public ssh key for user $user" none &&
 		[[ $resp != none ]] && userkey=$resp
 
 	if [[ $sshd == y ]]; then
@@ -428,7 +428,7 @@ function ask_until {
 		ask "$1" "$2"
 		[[ -n $resp ]] && break
 		echo "A response is required."
-		$auto && exit 1
+		$AUTO && exit 1
 	done
 }
 
@@ -451,7 +451,7 @@ ask_yn() {
 		n|no)	resp=n; return 1;;
 		esac
 		echo "'$resp' is not a valid choice."
-		$auto && exit 1
+		$AUTO && exit 1
 	done
 }
 
@@ -494,7 +494,7 @@ ask_which() {
 		# entering something like 'a a'.
 		isin "$resp" $_dynlist done && break
 		echo "'$resp' is not a valid choice."
-		$auto && [[ -n $respfile ]] && exit 1
+		$AUTO && [[ -n $RESPFILE ]] && exit 1
 	done
 }
 
@@ -741,7 +741,7 @@ configure_ifs() {
 			chmod 640 $_hn
 			: ${_first:=$_ifs}
 		fi
-		
+
 		NIFS=$(ls -1 /tmp/hostname.* 2>/dev/null | grep -c ^)
 		_p=done
 	done
@@ -998,7 +998,7 @@ v6_defroute() {
 
 	_prompt="IPv6 default router?"
 
-	if $auto; then
+	if $AUTO; then
 		_autorespond "$_prompt" && _resp=$resp && echo "$_prompt $_resp"
 	else
 		local PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
@@ -1197,7 +1197,7 @@ install_files() {
 		for _n in $THESETS; do echo $_n; done | showcols | sed 's/^/    /'
 		COLUMNS=$_col
 
-		$auto && exit 1
+		$AUTO && exit 1
 		echo
 		return
 	fi
@@ -1278,7 +1278,7 @@ install_files() {
 				rm -f "$_tmpsrc/$_f"
 				if ! ask_yn "Fetching of $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-					$auto && exit 1
+					$AUTO && exit 1
 					return
 				fi
 				continue
@@ -1290,7 +1290,7 @@ install_files() {
 			else
 				if ! ask_yn "Checksum test for $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-					$auto && exit 1
+					$AUTO && exit 1
 					return
 				fi
 			fi
@@ -1301,7 +1301,7 @@ install_files() {
 	if [[ -n $_issue ]] &&
 		! ask_yn "$_issue. Continue without verification?"; then
 		[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-		$auto && exit 1
+		$AUTO && exit 1
 		return
 	fi
 
@@ -1324,7 +1324,7 @@ install_files() {
 		if (($?)); then
 			if ! ask_yn "Installation of $_f failed. Continue anyway?"; then
 				[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-				$auto && exit 1
+				$AUTO && exit 1
 				return
 			fi
 		else
@@ -1480,7 +1480,7 @@ install_mounted_fs() {
 		# Accept a valid absolute path.
 		[[ -d /$resp ]] && { _dir=/$resp; break; }
 		echo "The directory '$resp' does not exist."
-		$auto && exit 1
+		$AUTO && exit 1
 	done
 
 	install_files "file://$_dir" "$(ls $_dir/)"
@@ -1589,7 +1589,7 @@ sane_install() {
 		[[ -n $_q ]] && return 1
 		# If sane_install has no argument, harass the user.
 		if ! ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"; then
-			$auto && exit 1 || return 1
+			$AUTO && exit 1 || return 1
 		fi
 	done
 }
@@ -1626,11 +1626,11 @@ install_sets() {
 		d*|D*)	install_disk && METHOD=disk;;
 		h*|H*)	isin http $_locs && install_http && METHOD=http;;
 		n*|N*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
-		*)	$auto && echo "'$resp' is not a valid choice." && exit 1;;
+		*)	$AUTO && echo "'$resp' is not a valid choice." && exit 1;;
 		esac
 
 		[[ -n $METHOD ]] && _d=$METHOD
-		sane_install quiet || $auto && _d=done
+		sane_install quiet || $AUTO && _d=done
 	done
 }
 
@@ -1985,7 +1985,7 @@ __EOT
 	md_congrats
 	[[ "$MODE" == upgrade ]] && \
 		echo "After rebooting, run sysmerge(8) to update your system configuration."
-	$auto && >/ai.done
+	$AUTO && >/ai.done
 }
 
 # #######################################################################
@@ -2147,7 +2147,7 @@ get_responsefile() {
 }
 
 # Interactive or automatic installation?
-if ! $auto; then
+if ! $AUTO; then
 	cat <<__EOT
 At any prompt except password prompts you can escape to a shell by
 typing '!'. Default answers are shown in []'s and are selected by
@@ -2155,7 +2155,7 @@ pressing RETURN.  You can exit this program at any time by pressing
 Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
-elif [[ -z $respfile ]]; then
+elif [[ -z $RESPFILE ]]; then
 	if ! get_responsefile; then
 		echo "No response file found; non-interactive mode aborted."
 		exit 1
@@ -2180,7 +2180,7 @@ __EOT
 		exit 1
 	fi
 else
-	cp $respfile /ai.conf || exit
+	cp $RESPFILE /ai.conf || exit
 fi
 
 # Configure the terminal and keyboard.
@@ -2205,7 +2205,7 @@ if [[ $MODE == install ]]; then
 	done
 
 	rootkey=
-	$auto && ask "Public ssh key for root account?" none &&
+	$AUTO && ask "Public ssh key for root account?" none &&
 		[[ $resp != none ]] && rootkey=$resp
 
 	questions
