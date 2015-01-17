@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.109 2015/01/01 15:50:27 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.110 2015/01/17 15:03:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -74,7 +74,7 @@
 #define	NOFILE		OPEN_MAX	/* max open files per process (soft) */
 #define	NOFILE_MAX	1024		/* max open files per process (hard) */
 #define	NOGROUP		65535		/* marker for empty group set member */
-#define MAXHOSTNAMELEN	256		/* max hostname size */
+#define MAXHOSTNAMELEN	(HOST_NAME_MAX+1)	/* max hostname size */
 
 /* More types and definitions used throughout the kernel. */
 #ifdef _KERNEL
