@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.33 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.34 2015/01/17 17:22:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -35,7 +35,7 @@
 /*
  * Disk quota reporting program.
  */
-#include <sys/param.h>	/* DEV_BSIZE */
+#include <sys/param.h>	/* DEV_BSIZE dbtob */
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -96,7 +96,7 @@ int
 main(int argc, char *argv[])
 {
 	int ngroups; 
-	gid_t mygid, gidset[NGROUPS];
+	gid_t mygid, gidset[NGROUPS_MAX];
 	int i, gflag = 0, uflag = 0;
 	int ch;
 	extern char *optarg;
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 			showuid(getuid());
 		if (gflag) {
 			mygid = getgid();
-			ngroups = getgroups(NGROUPS, gidset);
+			ngroups = getgroups(NGROUPS_MAX, gidset);
 			if (ngroups < 0)
 				err(1, "getgroups");
 			showgid(mygid);
@@ -226,7 +226,7 @@ showgid(gid_t gid)
 {
 	struct group *grp = getgrgid(gid);
 	int ngroups;
-	gid_t mygid, gidset[NGROUPS];
+	gid_t mygid, gidset[NGROUPS_MAX];
 	int i;
 	const char *name;
 
@@ -235,7 +235,7 @@ showgid(gid_t gid)
 	else
 		name = grp->gr_name;
 	mygid = getgid();
-	ngroups = getgroups(NGROUPS, gidset);
+	ngroups = getgroups(NGROUPS_MAX, gidset);
 	if (ngroups < 0) {
 		warn("getgroups");
 		return;
@@ -260,7 +260,7 @@ showgrpname(const char *name)
 {
 	struct group *grp = getgrnam(name);
 	int ngroups;
-	gid_t mygid, gidset[NGROUPS];
+	gid_t mygid, gidset[NGROUPS_MAX];
 	int i;
 
 	if (grp == NULL) {
@@ -268,7 +268,7 @@ showgrpname(const char *name)
 		return;
 	}
 	mygid = getgid();
-	ngroups = getgroups(NGROUPS, gidset);
+	ngroups = getgroups(NGROUPS_MAX, gidset);
 	if (ngroups < 0) {
 		warn("getgroups");
 		return;
