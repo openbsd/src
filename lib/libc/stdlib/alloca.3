@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: alloca.3,v 1.13 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: alloca.3,v 1.14 2015/01/17 18:01:43 tedu Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 17 2015 $
 .Dt ALLOCA 3
 .Os
 .Sh NAME
@@ -51,9 +51,7 @@ function returns a pointer to the beginning of the allocated space.
 .Sh SEE ALSO
 .Xr pagesize 1 ,
 .Xr brk 2 ,
-.Xr calloc 3 ,
-.Xr malloc 3 ,
-.Xr realloc 3
+.Xr malloc 3
 .\" .Sh HISTORY
 .\" The
 .\" .Fn alloca
@@ -62,10 +60,10 @@ function returns a pointer to the beginning of the allocated space.
 .\" The function appeared in 32v, pwb and pwb.2 and in 3bsd 4bsd
 .\" The first man page (or link to a man page that I can find at the
 .\" moment is 4.3...
-.Sh BUGS
+.Sh CAVEATS
 The
 .Fn alloca
-function is slightly unsafe because it cannot ensure that the pointer
+function is unsafe because it cannot ensure that the pointer
 returned points to a valid and usable block of memory.
 The allocation made may exceed the bounds of the stack, or even go
 further into other objects in memory, and
