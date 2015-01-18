@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.8 2014/03/16 20:45:47 guenther Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.9 2015/01/18 05:30:58 guenther Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -51,27 +51,27 @@
  *	  that the final crunched binary BSS size is the max of all the
  *	  component programs' BSS sizes, rather than their sum.
  */
-#include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/exec_elf.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <a.out.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+#include <unistd.h>
+
 #include "mangle.h"
 
-void            usage(void);
+void	usage(void);
 
-void            add_to_keep_list(char *);
-void            add_file_to_keep_list(char *);
+void	add_to_keep_list(char *);
+void	add_file_to_keep_list(char *);
 
-void            hide_syms(char *);
-#ifdef _NLIST_DO_ELF
-void            elf_hide(int, char *);
-#endif
+void	hide_syms(char *);
+void	elf_hide(int, char *);
 int	in_keep_list(char *symbol);
 int	crunchide_main(int argc, char *argv[]);
 
@@ -206,7 +206,7 @@ hide_syms(char *filename)
 		close(inf);
 		return;
 	}
-	if (infstat.st_size < sizeof(struct exec)) {
+	if (infstat.st_size < sizeof(Elf_Ehdr)) {
 		fprintf(stderr, "%s: short file\n", filename);
 		close(inf);
 		return;
@@ -218,11 +218,11 @@ hide_syms(char *filename)
 		return;
 	}
 
-#ifdef _NLIST_DO_ELF
-	if (buf[0] == 0x7f && (buf[1] == 'E' || buf[1] == 'O') &&
-	    buf[2] == 'L' && buf[3] == 'F') {
+	if (buf[0] == ELFMAG0 && buf[1] == ELFMAG1 &&
+	    buf[2] == ELFMAG2 && buf[3] == ELFMAG3) {
 		elf_hide(inf, buf);
 		return;
 	}
-#endif				/* _NLIST_DO_ELF */
+
+	close(inf);
 }

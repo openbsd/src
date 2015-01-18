@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.8 2014/05/20 01:25:24 guenther Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.9 2015/01/18 05:30:58 guenther Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -29,6 +29,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/exec_elf.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -36,11 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/exec.h>
 #include "mangle.h"
-
-#ifdef _NLIST_DO_ELF
-#include <sys/exec_elf.h>
 
 extern	int elf_mangle;
 
@@ -445,4 +443,3 @@ renum_reloc_syms(Elf_Ehdr * ehdr, Symmap * symmap, int symtabsecnum)
 	}
 
 }
-#endif				/* _NLIST_DO_ELF */
