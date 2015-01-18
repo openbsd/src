@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.17 2014/12/10 15:29:53 mikeb Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.18 2015/01/18 10:17:42 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -157,11 +157,7 @@
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -740,12 +736,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
 	/*
 	 * Restore proper bus_space operation, now that pmap is initialized.
 	 */

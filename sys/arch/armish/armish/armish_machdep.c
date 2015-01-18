@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.35 2014/12/10 15:29:53 mikeb Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.36 2015/01/18 10:17:42 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -144,11 +144,7 @@ u_int cpu_reset_address = 0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
