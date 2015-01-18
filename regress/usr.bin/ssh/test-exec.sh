@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.49 2015/01/17 18:54:30 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.50 2015/01/18 19:50:15 djm Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -130,19 +130,6 @@ echo "exec ${SSH} -E${TEST_SSH_LOGFILE} "'"$@"' >>$SSHLOGWRAP
 chmod a+rx $OBJ/ssh-log-wrapper.sh
 SSH="$SSHLOGWRAP"
 
-# Colourise output if we are attached to a tty
-if tty >/dev/null 2>&1 ; then
-	_R=`tput setaf 8 2>/dev/null`
-	_G=`tput setaf 2 2>/dev/null`
-	_B=`tput bold 2>/dev/null`
-	_N=`tput sgr0 2>/dev/null`
-else
-	_R=""
-	_G=""
-	_B=""
-	_N=""
-fi
-
 # Some test data.  We make a copy because some tests will overwrite it.
 # The tests may assume that $DATA exists and is writable and $COPY does
 # not exist.  Tests requiring larger data files can call increase_datafile_size
@@ -229,19 +216,19 @@ verbose ()
 	fi
 }
 
+
 fail ()
 {
 	save_debug_log "FAIL: $@"
 	RESULT=1
-	echo "${_B}$@${_N}"
-	cleanup
-	exit $RESULT
+	echo "$@"
+
 }
 
 fatal ()
 {
 	save_debug_log "FATAL: $@"
-	printf "${_B}FATAL: $@${_N}"
+	printf "FATAL: "
 	fail "$@"
 	cleanup
 	exit $RESULT
@@ -256,7 +243,6 @@ trap fatal 3 2
 cat << EOF > $OBJ/sshd_config
 	Port			$PORT
 	Protocol		2,1
-	LoginGraceTime		15m
 	AddressFamily		inet
 	ListenAddress		127.0.0.1
 	#ListenAddress		::1
@@ -266,7 +252,6 @@ cat << EOF > $OBJ/sshd_config
 	AcceptEnv		_XXX_TEST_*
 	AcceptEnv		_XXX_TEST
 	Subsystem	sftp	$SFTPSERVER
-	StrictModes		no
 EOF
 
 if [ ! -z "$TEST_SSH_SSHD_CONFOPTS" ]; then
@@ -410,8 +395,8 @@ start_sshd ()
 # kill sshd
 cleanup
 if [ $RESULT -eq 0 ]; then
-	verbose ${_G}ok $tid${_N}
+	verbose ok $tid
 else
-	echo ${_R}failed $tid${_N}
+	echo failed $tid
 fi
 exit $RESULT
