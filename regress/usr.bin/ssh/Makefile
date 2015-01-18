@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.75 2015/01/18 19:47:55 djm Exp $
+#	$OpenBSD: Makefile,v 1.76 2015/01/18 22:00:18 djm Exp $
 
 REGRESS_FAIL_EARLY= yes
 REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
@@ -62,7 +62,8 @@ LTESTS= 	connect \
 		krl \
 		multipubkey \
 		limit-keytype \
-		hostkey-agent
+		hostkey-agent \
+		keygen-knownhosts
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
@@ -82,7 +83,7 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		sshd_proxy.* authorized_keys_${USER}.* revoked-* krl-* \
 		ssh.log failed-ssh.log sshd.log failed-sshd.log \
 		regress.log failed-regress.log ssh-log-wrapper.sh \
-		sftp-server.sh sftp-server.log sftp.log
+		sftp-server.sh sftp-server.log sftp.log kh.*
 
 SUDO_CLEAN+=	/var/run/testdata_${USER} /var/run/keycommand_${USER}
 
