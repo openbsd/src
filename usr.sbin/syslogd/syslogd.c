@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.142 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.143 2015/01/18 19:37:59 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -50,7 +50,7 @@
  * extensive changes by Ralph Campbell
  * more extensive changes by Eric Allman (again)
  * memory buffer logging by Damien Miller
- * IPv6, libevent, sending via TCP by Alexander Bluhm
+ * IPv6, libevent, sending over TCP and TLS by Alexander Bluhm
  */
 
 #define	MAXLINE		1024		/* maximum line length */
@@ -91,6 +91,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tls.h>
 #include <unistd.h>
 #include <limits.h>
 #include <utmp.h>
@@ -102,6 +103,7 @@
 #include <sys/syslog.h>
 
 #include "syslogd.h"
+#include "evbuffer_tls.h"
 
 char *ConfFile = _PATH_LOGCONF;
 const char ctty[] = _PATH_CONSOLE;
@@ -135,9 +137,11 @@ struct filed {
 		struct {
 			char	f_loghost[1+4+3+1+HOST_NAME_MAX+1+1+NI_MAXSERV];
 				/* @proto46://[hostname]:servname\0 */
-			struct sockaddr_storage	f_addr;
+			struct sockaddr_storage	 f_addr;
+			struct buffertls	 f_buftls;
 			struct bufferevent	*f_bufev;
-			int	f_reconnectwait;
+			struct tls		*f_ctx;
+			int			 f_reconnectwait;
 		} f_forw;		/* forwarding address */
 		char	f_fname[PATH_MAX];
 		struct {
@@ -182,11 +186,12 @@ int	repeatinterval[] = { 30, 120, 600 };	/* # of secs before flush */
 #define F_MEMBUF	7		/* memory buffer */
 #define F_PIPE		8		/* pipe to external program */
 #define F_FORWTCP	9		/* remote machine via TCP */
+#define F_FORWTLS	10		/* remote machine via TLS */
 
 char	*TypeNames[] = {
 	"UNUSED",	"FILE",		"TTY",		"CONSOLE",
 	"FORWUDP",	"USERS",	"WALL",		"MEMBUF",
-	"PIPE",		"FORWTCP",
+	"PIPE",		"FORWTCP",	"FORWTLS",
 };
 
 SIMPLEQ_HEAD(filed_list, filed) Files;
@@ -271,6 +276,7 @@ void	 tcp_readcb(struct bufferevent *, void *);
 void	 tcp_writecb(struct bufferevent *, void *);
 void	 tcp_errorcb(struct bufferevent *, short, void *);
 void	 tcp_connectcb(int, short, void *);
+struct tls *tls_socket(struct filed *);
 void	 die_signalcb(int, short, void *);
 void	 mark_timercb(int, short, void *);
 void	 init_signalcb(int, short, void *);
@@ -715,8 +721,7 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 	 * Drop data received from the forward log server.
 	 */
 	dprintf("loghost \"%s\" did send %zu bytes back\n",
-	    f->f_un.f_forw.f_loghost,
-	    EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->input));
+	    f->f_un.f_forw.f_loghost, EVBUFFER_LENGTH(bufev->input));
 	evbuffer_drain(bufev->input, -1);
 }
 
@@ -745,10 +750,16 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 	else
 		snprintf(ebuf, sizeof(ebuf),
 		    "syslogd: loghost \"%s\" connection error: %s",
-		    f->f_un.f_forw.f_loghost, strerror(errno));
+		    f->f_un.f_forw.f_loghost, f->f_un.f_forw.f_ctx ?
+		    tls_error(f->f_un.f_forw.f_ctx) : strerror(errno));
 	dprintf("%s\n", ebuf);
 
 	/* The SIGHUP handler may also close the socket, so invalidate it. */
+	if (f->f_un.f_forw.f_ctx) {
+		tls_close(f->f_un.f_forw.f_ctx);
+		tls_free(f->f_un.f_forw.f_ctx);
+		f->f_un.f_forw.f_ctx = NULL;
+	}
 	close(f->f_file);
 	f->f_file = -1;
 
@@ -768,6 +779,7 @@ tcp_connectcb(int fd, short event, void *arg)
 {
 	struct filed		*f = arg;
 	struct bufferevent	*bufev = f->f_un.f_forw.f_bufev;
+	struct tls		*ctx;
 	struct timeval		 to;
 	int			 s;
 
@@ -780,8 +792,9 @@ tcp_connectcb(int fd, short event, void *arg)
 
 	if ((s = tcp_socket(f)) == -1)
 		goto retry;
+	dprintf("tcp connect callback: socket success, event %#x\n", event);
+	f->f_file = s;
 
-	dprintf("tcp connect callback: success, event %#x\n", event);
 	bufferevent_setfd(bufev, s);
 	bufferevent_setcb(bufev, tcp_readcb, tcp_writecb, tcp_errorcb, f);
 	/*
@@ -789,7 +802,20 @@ tcp_connectcb(int fd, short event, void *arg)
 	 * the socket to detect connection close and errors.
 	 */
 	bufferevent_enable(bufev, EV_READ|EV_WRITE);
-	f->f_file = s;
+
+	if (f->f_type == F_FORWTLS) {
+		if ((ctx = tls_socket(f)) == NULL) {
+			close(f->f_file);
+			f->f_file = -1;
+			goto retry;
+		}
+		dprintf("tcp connect callback: TLS context success\n");
+		f->f_un.f_forw.f_ctx = ctx;
+
+		buffertls_set(&f->f_un.f_forw.f_buftls, bufev, ctx, s);
+		/* XXX no host given */
+		buffertls_connect(&f->f_un.f_forw.f_buftls, s, NULL);
+	}
 
 	return;
 
@@ -806,6 +832,46 @@ tcp_connectcb(int fd, short event, void *arg)
 	/* We can reuse the write event as bufferevent is disabled. */
 	evtimer_set(&bufev->ev_write, tcp_connectcb, f);
 	evtimer_add(&bufev->ev_write, &to);
+}
+
+struct tls *
+tls_socket(struct filed *f)
+{
+	static struct tls_config *config;
+	struct tls	*ctx;
+	char		 ebuf[100];
+
+	if (config == NULL) {
+		if (tls_init() < 0) {
+			snprintf(ebuf, sizeof(ebuf), "tls_init \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			logerror(ebuf);
+			return (NULL);
+		}
+		if ((config = tls_config_new()) == NULL) {
+			snprintf(ebuf, sizeof(ebuf), "tls_config_new \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			logerror(ebuf);
+			return (NULL);
+		}
+		/* XXX No verify for now, ca certs are outside of privsep. */
+		tls_config_insecure_noverifyhost(config);
+		tls_config_insecure_noverifycert(config);
+	}
+	if ((ctx = tls_client()) == NULL) {
+		snprintf(ebuf, sizeof(ebuf), "tls_client \"%s\"",
+		    f->f_un.f_forw.f_loghost);
+		logerror(ebuf);
+		return (NULL);
+	}
+	if (tls_configure(ctx, config) < 0) {
+		snprintf(ebuf, sizeof(ebuf), "tls_configure \"%s\": %s",
+		    f->f_un.f_forw.f_loghost, tls_error(ctx));
+		logerror(ebuf);
+		tls_free(ctx);
+		return (NULL);
+	}
+	return (ctx);
 }
 
 void
@@ -1114,6 +1180,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		break;
 
 	case F_FORWTCP:
+	case F_FORWTLS:
 		dprintf(" %s\n", f->f_un.f_forw.f_loghost);
 		if (EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) >=
 		    MAX_TCPBUF)
@@ -1402,6 +1469,12 @@ init(void)
 			fprintlog(f, 0, (char *)NULL);
 
 		switch (f->f_type) {
+		case F_FORWTLS:
+			if (f->f_un.f_forw.f_ctx) {
+				tls_close(f->f_un.f_forw.f_ctx);
+				tls_free(f->f_un.f_forw.f_ctx);
+			}
+			/* FALLTHROUGH */
 		case F_FORWTCP:
 			/* XXX Save messages in output buffer for reconnect. */
 			bufferevent_free(f->f_un.f_forw.f_bufev);
@@ -1542,6 +1615,7 @@ init(void)
 
 			case F_FORWUDP:
 			case F_FORWTCP:
+			case F_FORWTLS:
 				printf("%s", f->f_un.f_forw.f_loghost);
 				break;
 
@@ -1604,9 +1678,10 @@ cfline(char *line, char *prog)
 {
 	int i, pri;
 	size_t rb_len;
-	char *bp, *p, *q, *proto, *host, *port;
+	char *bp, *p, *q, *proto, *host, *port, *ipproto;
 	char buf[MAXLINE], ebuf[100];
 	struct filed *xf, *f, *d;
+	struct timeval to;
 
 	dprintf("cfline(\"%s\", f, \"%s\")\n", line, prog);
 
@@ -1714,11 +1789,13 @@ cfline(char *line, char *prog)
 		}
 		if (proto == NULL)
 			proto = "udp";
+		ipproto = proto;
 		if (strcmp(proto, "udp") == 0) {
 			if (fd_udp == -1)
 				proto = "udp6";
 			if (fd_udp6 == -1)
 				proto = "udp4";
+			ipproto = proto;
 		} else if (strcmp(proto, "udp4") == 0) {
 			if (fd_udp == -1) {
 				snprintf(ebuf, sizeof(ebuf), "no udp4 \"%s\"",
@@ -1736,6 +1813,12 @@ cfline(char *line, char *prog)
 		} else if (strcmp(proto, "tcp") == 0 ||
 		    strcmp(proto, "tcp4") == 0 || strcmp(proto, "tcp6") == 0) {
 			;
+		} else if (strcmp(proto, "tls") == 0) {
+			ipproto = "tcp";
+		} else if (strcmp(proto, "tls4") == 0) {
+			ipproto = "tcp4";
+		} else if (strcmp(proto, "tls6") == 0) {
+			ipproto = "tcp6";
 		} else {
 			snprintf(ebuf, sizeof(ebuf), "bad protocol \"%s\"",
 			    f->f_un.f_forw.f_loghost);
@@ -1749,14 +1832,15 @@ cfline(char *line, char *prog)
 			break;
 		}
 		if (port == NULL)
-			port = "syslog";
+			port = strncmp(proto, "tls", 3) == 0 ?
+			    "syslog-tls" : "syslog";
 		if (strlen(port) >= NI_MAXSERV) {
 			snprintf(ebuf, sizeof(ebuf), "port too long \"%s\"",
 			    f->f_un.f_forw.f_loghost);
 			logerror(ebuf);
 			break;
 		}
-		if (priv_getaddrinfo(proto, host, port,
+		if (priv_getaddrinfo(ipproto, host, port,
 		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != 0) {
 			snprintf(ebuf, sizeof(ebuf), "bad hostname \"%s\"",
@@ -1775,7 +1859,7 @@ cfline(char *line, char *prog)
 				break;
 			}
 			f->f_type = F_FORWUDP;
-		} else if (strncmp(proto, "tcp", 3) == 0) {
+		} else if (strncmp(ipproto, "tcp", 3) == 0) {
 			if ((f->f_un.f_forw.f_bufev = bufferevent_new(-1,
 			    tcp_readcb, tcp_writecb, tcp_errorcb, f)) == NULL) {
 				snprintf(ebuf, sizeof(ebuf),
@@ -1784,8 +1868,23 @@ cfline(char *line, char *prog)
 				logerror(ebuf);
 				break;
 			}
-			f->f_type = F_FORWTCP;
-			tcp_connectcb(-1, 0, f);
+			if (strncmp(proto, "tls", 3) == 0) {
+				f->f_type = F_FORWTLS;
+			} else {
+				f->f_type = F_FORWTCP;
+			}
+			/*
+			 * If we try to connect to a TLS server immediately
+			 * syslogd gets an SIGPIPE as the signal handlers have
+			 * not been set up.  Delay the connection until the
+			 * event loop is started.  We can reuse the write event
+			 * for that as bufferevent is still disabled.
+			 */
+			to.tv_sec = 0;
+			to.tv_usec = 1;
+			evtimer_set(&f->f_un.f_forw.f_bufev->ev_write,
+			    tcp_connectcb, f);
+			evtimer_add(&f->f_un.f_forw.f_bufev->ev_write, &to);
 		}
 		break;
 
