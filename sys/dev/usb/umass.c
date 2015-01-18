@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.67 2014/08/21 14:52:56 mpi Exp $ */
+/*	$OpenBSD: umass.c,v 1.68 2015/01/18 14:40:05 mpi Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -671,18 +671,22 @@ umass_disco(struct umass_softc *sc)
 
 	DPRINTF(UDMASS_GEN, ("umass_disco\n"));
 
-	/* Free the xfers. */
-	for (i = 0; i < XFER_NR; i++)
-		if (sc->transfer_xfer[i] != NULL) {
-			usbd_free_xfer(sc->transfer_xfer[i]);
-			sc->transfer_xfer[i] = NULL;
-		}
-
 	/* Remove all the pipes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
 		if (sc->sc_pipe[i] != NULL) {
 			usbd_close_pipe(sc->sc_pipe[i]);
 			sc->sc_pipe[i] = NULL;
+		}
+	}
+
+	/* Make sure there is no stuck control transfer left. */
+	usbd_abort_pipe(sc->sc_udev->default_pipe);
+
+	/* Free the xfers. */
+	for (i = 0; i < XFER_NR; i++) {
+		if (sc->transfer_xfer[i] != NULL) {
+			usbd_free_xfer(sc->transfer_xfer[i]);
+			sc->transfer_xfer[i] = NULL;
 		}
 	}
 }
