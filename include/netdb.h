@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.32 2014/04/28 21:38:59 sperreault Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.33 2015/01/18 20:29:31 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -87,11 +87,6 @@
 #ifndef _NETDB_H_
 #define _NETDB_H_
 
-#include <sys/cdefs.h>
-
-#if __BSD_VISIBLE
-#include <sys/param.h>
-#endif
 #include <netinet/in.h>
 
 #ifndef	_SOCKLEN_T_DEFINED_
@@ -181,7 +176,7 @@ extern int h_errno;
 /* #define NI_NUMERICSCOPE	32	 return the scope number, not the name */
 
 #if __BSD_VISIBLE
-#define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name returned by getnameinfo */
+#define NI_MAXHOST	256	/* max host name from getnameinfo (MAXHOSTNAMELEN) */
 #define NI_MAXSERV	32	/* max serv. name length returned by getnameinfo */
 
 /*
