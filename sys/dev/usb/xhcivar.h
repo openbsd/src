@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.6 2014/12/15 17:10:44 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.7 2015/01/18 11:54:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -35,7 +35,7 @@ struct usbd_dma_info {
 
 struct xhci_xfer {
 	struct usbd_xfer	 xfer;
-	int			 index;		/* Index of the first TRB */
+	int			 index;		/* Index of the last TRB */
 	size_t			 ntrb;		/* Number of associated TRBs */
 };
 
