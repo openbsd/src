@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.46 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.47 2015/01/18 14:01:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -257,6 +257,14 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    clt) == -1) {
 		errstr = "failed to encode param";
 		goto fail;
+	}
+
+	if (srv_conf->flags & SRVFLAG_AUTH_BASIC) {
+		if (fcgi_add_param(&param, "REMOTE_USER",
+		    clt->clt_fcgi_remote_user, clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
 	}
 
 	/* Add HTTP_* headers */

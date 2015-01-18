@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.44 2015/01/13 09:21:15 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.45 2015/01/18 14:01:17 florian Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2015 $
+.Dd $Mdocdate: January 18 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -139,6 +139,15 @@ and include one or more lines of the following syntax:
 Specify an additional alias
 .Ar name
 for this server.
+.It Ic authenticate Oo Ar realm Oc Ic with Pa htpasswd
+Authenticate a remote user for
+.Ar realm
+by checking the credentials against the user authentication file
+.Pa htpasswd .
+This file needs to be readable by the user
+.Xr httpd 8
+drops to
+.Pq www by default Pc .
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
 Valid options are:
@@ -437,6 +446,7 @@ file directly:
 include "/etc/nginx/mime.types"
 .Ed
 .Sh SEE ALSO
+.Xr htpasswd 1 ,
 .Xr httpd 8
 .Sh AUTHORS
 .An -nosplit

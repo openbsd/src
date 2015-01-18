@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.64 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.65 2015/01/18 14:01:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <err.h>
 #include <pwd.h>
+#include <resolv.h>
 #include <syslog.h>
 #include <event.h>
 #include <fnmatch.h>
@@ -48,6 +49,8 @@
 static int	 server_httpmethod_cmp(const void *, const void *);
 static int	 server_httperror_cmp(const void *, const void *);
 void		 server_httpdesc_free(struct http_descriptor *);
+int		 server_http_authenticate(struct server_config *,
+    struct client *);
 
 static struct httpd	*env = NULL;
 
@@ -126,6 +129,82 @@ server_httpdesc_free(struct http_descriptor *desc)
 	desc->http_lastheader = NULL;
 	desc->http_method = 0;
 	desc->http_chunked = 0;
+}
+
+int
+server_http_authenticate(struct server_config *srv_conf, struct client *clt)
+{
+	FILE *fp = NULL;
+	struct http_descriptor *desc = clt->clt_descreq;
+	struct kv *ba, key;
+	size_t linesize = 0;
+	ssize_t linelen;
+	int ret = -1;
+	char *line = NULL, decoded[1024];
+	char *clt_user = NULL, *clt_pass = NULL, *user = NULL, *pass = NULL;
+
+	memset(decoded, 0, sizeof(decoded));
+	key.kv_key = "Authorization";
+
+	if ((ba = kv_find(&desc->http_headers, &key)) == NULL ||
+	    ba->kv_value == NULL)
+		goto done;
+
+	if (strncmp(ba->kv_value, "Basic ", strlen("Basic ")) != 0)
+		goto done;
+
+	if (b64_pton(strchr(ba->kv_value, ' ') + 1, decoded,
+	    sizeof(decoded)) <= 0)
+		goto done;
+
+	if ((clt_pass = strchr(decoded, ':')) == NULL)
+		goto done;
+
+	clt_user = decoded;
+	*clt_pass++ = '\0';
+
+	if (clt_pass == NULL)
+		goto done;
+
+	if ((fp = fopen(srv_conf->auth_htpasswd, "r")) == NULL)
+		goto done;
+
+	while ((linelen = getline(&line, &linesize, fp)) != -1) {
+		if (line[linelen - 1] == '\n')
+			line[linelen - 1] = '\0';
+		user = line;
+		pass = strchr(line, ':');
+
+		if (pass == NULL) {
+			explicit_bzero(line, linelen);
+			continue;
+		}
+
+		*pass++ = '\0';
+
+		if (strcmp(clt_user, user) != 0) {
+			explicit_bzero(line, linelen);
+			continue;
+		}
+
+		if (crypt_checkpass(clt_pass, pass) == 0) {
+			explicit_bzero(line, linelen);
+			clt->clt_fcgi_remote_user = strdup(clt_user);
+			if (clt->clt_fcgi_remote_user != NULL)
+				ret = 0;
+			break;
+		}
+	}
+done:
+	if (fp != NULL)
+		fclose(fp);
+
+	if (ba != NULL && ba->kv_value != NULL) {
+		explicit_bzero(ba->kv_value, strlen(ba->kv_value));
+		explicit_bzero(decoded, sizeof(decoded));
+	}
+
+	return (ret);
 }
 
 void
@@ -551,6 +630,8 @@ server_reset_http(struct client *clt)
 	clt->clt_line = 0;
 	clt->clt_done = 0;
 	clt->clt_chunk = 0;
+	free(clt->clt_fcgi_remote_user);
+	clt->clt_fcgi_remote_user = NULL;
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
 
@@ -687,6 +768,13 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 			extraheader = NULL;
 		}
 		break;
+	case 401:
+		if (asprintf(&extraheader,
+		    "WWW-Authenticate: Basic realm=\"%s\"\r\n", msg) == -1) {
+			code = 500;
+			extraheader = NULL;
+		}
+		break;
 	default:
 		/*
 		 * Do not send details of the error.  Traditionally,
@@ -764,6 +852,8 @@ server_close_http(struct client *clt)
 	server_httpdesc_free(desc);
 	free(desc);
 	clt->clt_descresp = NULL;
+	free(clt->clt_fcgi_remote_user);
+	clt->clt_fcgi_remote_user = NULL;
 }
 
 int
@@ -874,7 +964,12 @@ server_response(struct httpd *httpd, struct client *clt)
 	/* Now search for the location */
 	srv_conf = server_getlocation(clt, desc->http_path);
 
-	return (server_file(httpd, clt));
+	if (srv_conf->flags & SRVFLAG_AUTH_BASIC &&
+	    server_http_authenticate(srv_conf, clt) == -1) {
+		server_abort_http(clt, 401, srv_conf->auth_realm);
+		return (-1);
+	} else
+		return (server_file(httpd, clt));
  fail:
 	server_abort_http(clt, 400, "bad request");
 	return (-1);

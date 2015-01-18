@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.54 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.55 2015/01/18 14:01:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -131,7 +131,7 @@ typedef struct {
 %token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
 %token	LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT
 %token	SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT TLS TYPES 
-%token	ERROR INCLUDE
+%token	ERROR INCLUDE AUTHENTICATE WITH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -439,6 +439,7 @@ serveroptsl	: LISTEN ON STRING opttls port {
 		| directory
 		| logformat
 		| fastcgi
+		| authenticate
 		| LOCATION STRING		{
 			struct server	*s;
 
@@ -643,6 +644,37 @@ rootflags	: STRING		{
 			srv->srv_conf.strip = $2;
 		}
 		;
+
+authenticate	: AUTHENTICATE STRING WITH STRING		{
+			if (strlcpy(srv->srv_conf.auth_realm, $2,
+			    sizeof(srv->srv_conf.auth_realm)) >=
+			    sizeof(srv->srv_conf.auth_realm)) {
+				yyerror("basic auth realm name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (strlcpy(srv->srv_conf.auth_htpasswd, $4,
+			    sizeof(srv->srv_conf.auth_htpasswd)) >=
+			    sizeof(srv->srv_conf.auth_htpasswd)) {
+				yyerror("password file name too long");
+				free($4);
+				YYERROR;
+			}
+			free($4);
+			srv->srv_conf.flags |= SRVFLAG_AUTH_BASIC;
+		}
+		| AUTHENTICATE WITH STRING		{
+			if (strlcpy(srv->srv_conf.auth_htpasswd, $3,
+			    sizeof(srv->srv_conf.auth_htpasswd)) >=
+			    sizeof(srv->srv_conf.auth_htpasswd)) {
+				yyerror("password file name too long");
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			srv->srv_conf.flags |= SRVFLAG_AUTH_BASIC;
+		};
 
 directory	: DIRECTORY dirflags
 		| DIRECTORY '{' optnl dirflags_l '}'
@@ -950,6 +982,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "access",		ACCESS },
 		{ "alias",		ALIAS },
+		{ "authenticate",	AUTHENTICATE},
 		{ "auto",		AUTO },
 		{ "backlog",		BACKLOG },
 		{ "body",		BODY },
@@ -989,7 +1022,8 @@ lookup(char *s)
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
 		{ "tls",		TLS },
-		{ "types",		TYPES }
+		{ "types",		TYPES },
+		{ "with",		WITH }
 	};
 	const struct keywords	*p;
 

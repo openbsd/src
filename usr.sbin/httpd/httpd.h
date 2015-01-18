@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.68 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.69 2015/01/18 14:01:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -296,6 +296,7 @@ struct client {
 	int			 clt_fcgi_type;
 	int			 clt_fcgi_chunked;
 	int			 clt_fcgi_end;
+	char			*clt_fcgi_remote_user;
 	struct evbuffer		*clt_srvevb;
 
 	struct evbuffer		*clt_log;
@@ -324,11 +325,13 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_TLS		0x00002000
 #define SRVFLAG_ACCESS_LOG	0x00004000
 #define SRVFLAG_ERROR_LOG	0x00008000
+#define SRVFLAG_AUTH_BASIC	0x00010000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
-	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"
+	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
+	"\21AUTH_BASIC"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -367,6 +370,8 @@ struct server_config {
 	char			 socket[PATH_MAX];
 	char			 accesslog[NAME_MAX];
 	char			 errorlog[NAME_MAX];
+	char			 auth_realm[NAME_MAX];
+	char			 auth_htpasswd[PATH_MAX];
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
