@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.7 2015/01/18 11:54:02 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.8 2015/01/18 20:35:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -18,6 +18,9 @@
 
 #ifndef	_XHCIVAR_H_
 #define	_XHCIVAR_H_
+
+/* Default command execution time (implementation defined). */
+#define	XHCI_CMD_TIMEOUT	500	/* ms */
 
 #define	XHCI_MAX_CMDS		(16 * 1)
 #define	XHCI_MAX_EVTS		(16 * 13)

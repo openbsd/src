@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.10 2015/01/18 14:49:04 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.11 2015/01/18 20:35:11 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -28,9 +28,6 @@
 
 #ifndef _XHCIREG_H_
 #define _XHCIREG_H_
-
-/* Default command execution time (implementation defined). */
-#define XHCI_COMMAND_TIMEOUT	500	/* ms */
 
 /* Data Structure Boundary and Alignment Requirement. */
 #define XHCI_DCBAA_ALIGN	64

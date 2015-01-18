@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.56 2015/01/18 14:49:04 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.57 2015/01/18 20:35:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -857,12 +857,20 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 			wakeup(xp);
 		}
 		break;
-	default:
-		/* All other commands are synchronous. */
+	case XHCI_CMD_CONFIG_EP:
+	case XHCI_CMD_STOP_EP:
+	case XHCI_CMD_DISABLE_SLOT:
+	case XHCI_CMD_ENABLE_SLOT:
+	case XHCI_CMD_ADDRESS_DEVICE:
+	case XHCI_CMD_EVAL_CTX:
+	case XHCI_CMD_NOOP:
+		/* All these commands are synchronous. */
 		KASSERT(sc->sc_cmd_trb == trb);
 		sc->sc_cmd_trb = NULL;
 		wakeup(&sc->sc_cmd_trb);
 		break;
+	default:
+		DPRINTF(("%s: unexpected command %x\n", DEVNAME(sc), flags));
 	}
 }
 
@@ -1638,7 +1646,7 @@ xhci_cmd_configure_ep(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_CONFIG_EP
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
 }
 
 int
@@ -1654,7 +1662,7 @@ xhci_cmd_stop_ep(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_TRB_SET_EP(dci) | XHCI_CMD_STOP_EP
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
 }
 
 void
@@ -1706,7 +1714,7 @@ xhci_cmd_slot_control(struct xhci_softc *sc, uint8_t *slotp, int enable)
 			XHCI_TRB_SET_SLOT(*slotp) | XHCI_CMD_DISABLE_SLOT
 		);
 
-	if (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT))
+	if (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT))
 		return (EIO);
 
 	if (enable)
@@ -1729,7 +1737,7 @@ xhci_cmd_set_address(struct xhci_softc *sc, uint8_t slot, uint64_t addr,
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_ADDRESS_DEVICE | bsr
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
 }
 
 int
@@ -1745,7 +1753,7 @@ xhci_cmd_evaluate_ctx(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_EVAL_CTX
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
 }
 
 #ifdef XHCI_DEBUG
@@ -1760,7 +1768,7 @@ xhci_cmd_noop(struct xhci_softc *sc)
 	trb.trb_status = 0;
 	trb.trb_flags = htole32(XHCI_CMD_NOOP);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
 }
 #endif
 
@@ -1949,7 +1957,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
 	    DEQPTR(xp->ring) | xp->ring.toggle);
-	error = tsleep(xp, PZERO, "xhciab", (XHCI_COMMAND_TIMEOUT*hz+999)/1000 + 1);
+	error = tsleep(xp, PZERO, "xhciab", (XHCI_CMD_TIMEOUT*hz+999)/1000 + 1);
 	if (error)
 		printf("%s: timeout aborting transfer\n", DEVNAME(sc));
 }
