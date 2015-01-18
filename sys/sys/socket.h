@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.85 2014/08/31 02:27:37 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.86 2015/01/18 04:52:03 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -35,12 +35,11 @@
 #ifndef _SYS_SOCKET_H_
 #define	_SYS_SOCKET_H_
 
-#include <sys/cdefs.h>
+/* get the definitions for struct iovec, size_t, ssize_t, and <sys/cdefs.h> */
+#include <sys/uio.h>
 
 #if __BSD_VISIBLE
 #include <sys/types.h>			/* for off_t, uid_t, and gid_t */
-#else
-#include <sys/_types.h>
 #endif
 
 #ifndef	_SOCKLEN_T_DEFINED_
@@ -51,16 +50,6 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 #ifndef	_SA_FAMILY_T_DEFINED_
 #define	_SA_FAMILY_T_DEFINED_
 typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
-#endif
-
-#ifndef	_SIZE_T_DEFINED_
-#define	_SIZE_T_DEFINED_
-typedef	__size_t	size_t;
-#endif
-
-#ifndef	_SSIZE_T_DEFINED_
-#define	_SSIZE_T_DEFINED_
-typedef	__ssize_t	ssize_t;
 #endif
 
 
