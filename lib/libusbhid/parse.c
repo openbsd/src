@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2014/05/12 17:03:28 mpi Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 2015/01/18 17:16:06 mpi Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -541,8 +541,8 @@ hid_report_size(report_desc_t r, enum hid_kind k, int id)
 	else
 		temp = hpos - lpos;
 
-	/* return length in bytes rounded up */
-	return ((temp + 7) / 8 + report_id);
+	/* No extra byte for the reportID because the kernel skips it. */
+	return ((temp + 7) / 8);
 }
 
 int
