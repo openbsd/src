@@ -105,7 +105,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ddb/db_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ddb/db_variables.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ddb/db_watch.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpidebug.ph

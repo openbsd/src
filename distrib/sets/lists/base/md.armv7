@@ -599,7 +599,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_variables.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ddb/db_watch.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpidebug.ph

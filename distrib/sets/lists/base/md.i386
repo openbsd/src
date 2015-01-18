@@ -566,7 +566,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/ddb/db_var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ddb/db_variables.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ddb/db_watch.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/acpi/acpidebug.ph

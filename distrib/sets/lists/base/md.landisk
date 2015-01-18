@@ -525,7 +525,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/ddb/db_var.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ddb/db_variables.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ddb/db_watch.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/acpi/acpidebug.ph

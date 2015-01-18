@@ -549,7 +549,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_variables.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ddb/db_watch.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi/acpidebug.ph

@@ -80,7 +80,6 @@
 ./usr/include/ddb/db_var.h
 ./usr/include/ddb/db_variables.h
 ./usr/include/ddb/db_watch.h
-./usr/include/des.h
 ./usr/include/dev
 ./usr/include/dev/acpi
 ./usr/include/dev/acpi/acpidebug.h

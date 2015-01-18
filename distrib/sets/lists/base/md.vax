@@ -61,7 +61,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_variables.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_watch.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/acpi/acpidebug.ph
