@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.4 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: frame.h,v 1.5 2015/01/18 12:03:11 jsg Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ struct frame {
 	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r14}^;		/* Push the user mode registers */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
+	mrs	r0, spsr;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
 
 /*
@@ -249,7 +249,7 @@ struct frame {
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r14}^;		/* Push the user mode registers */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
+	mrs	r0, spsr;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
 
 /*

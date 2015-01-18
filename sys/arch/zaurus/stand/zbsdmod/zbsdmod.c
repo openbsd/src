@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.9 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.10 2015/01/18 12:03:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -131,7 +131,7 @@ elf32bsdboot(void)
 			esymp = (vaddr_t *)phdr[i].p_vaddr;
 	}
 
-	__asm__ volatile ("mrs %0, cpsr_all" : "=r" (cpsr));
+	__asm__ volatile ("mrs %0, cpsr" : "=r" (cpsr));
 	cpsr |= 0xc0;  /* set FI */
 	__asm__ volatile ("msr cpsr_all, %0" :: "r" (cpsr));
 

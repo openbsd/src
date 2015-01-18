@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.3 2011/09/20 22:11:40 miod Exp $	*/
+/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.4 2015/01/18 12:03:11 jsg Exp $	*/
 /*	$NetBSD: cpufunc_asm_sa1.S,v 1.8 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  * addresses that are about to change.
  */
 ENTRY(sa1_setttb)
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r1
 
@@ -131,7 +131,7 @@ _C_LABEL(sa1_cache_clean_size):
 	.word	_C_LABEL(sa1_cache_clean_size)
 
 #define	SA1_CACHE_CLEAN_BLOCK						\
-	mrs	r3, cpsr_all					;	\
+	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
 	msr	cpsr_all, r0
 
