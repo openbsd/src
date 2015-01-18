@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.10 2015/01/18 12:03:11 jsg Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.11 2015/01/18 14:55:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -133,7 +133,7 @@ elf32bsdboot(void)
 
 	__asm__ volatile ("mrs %0, cpsr" : "=r" (cpsr));
 	cpsr |= 0xc0;  /* set FI */
-	__asm__ volatile ("msr cpsr_all, %0" :: "r" (cpsr));
+	__asm__ volatile ("msr cpsr_c, %0" :: "r" (cpsr));
 
 	/*
 	 * Copy the boot arguments.

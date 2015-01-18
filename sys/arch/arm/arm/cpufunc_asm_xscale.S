@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.5 2015/01/18 12:03:11 jsg Exp $ */
+/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.6 2015/01/18 14:55:02 jsg Exp $ */
 /*	$NetBSD: cpufunc_asm_xscale.S,v 1.16 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ ENTRY(xscale_control)
 ENTRY(xscale_setttb)
 	mrs	r3, cpsr
 	orr	r1, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r1
+	msr	cpsr_c, r1
 
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(xscale_cache_cleanID)
@@ -152,7 +152,7 @@ ENTRY(xscale_setttb)
 
 	CPWAIT(r0)
 
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 	mov	pc, lr
 
 /*
@@ -246,10 +246,10 @@ _C_LABEL(xscale_cache_clean_size):
 #define	XSCALE_CACHE_CLEAN_BLOCK					\
 	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
-	msr	cpsr_all, r0
+	msr	cpsr_c, r0
 
 #define	XSCALE_CACHE_CLEAN_UNBLOCK					\
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 
 #define	XSCALE_CACHE_CLEAN_PROLOGUE					\
 	XSCALE_CACHE_CLEAN_BLOCK				;	\

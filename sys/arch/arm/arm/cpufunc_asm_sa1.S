@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.4 2015/01/18 12:03:11 jsg Exp $	*/
+/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.5 2015/01/18 14:55:02 jsg Exp $	*/
 /*	$NetBSD: cpufunc_asm_sa1.S,v 1.8 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 ENTRY(sa1_setttb)
 	mrs	r3, cpsr
 	orr	r1, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r1
+	msr	cpsr_c, r1
 
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(sa1_cache_cleanID)
@@ -69,7 +69,7 @@ ENTRY(sa1_setttb)
 	mov	r0, r0
 	mov	r0, r0
 
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 	mov	pc, lr
 
 /*
@@ -133,10 +133,10 @@ _C_LABEL(sa1_cache_clean_size):
 #define	SA1_CACHE_CLEAN_BLOCK						\
 	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
-	msr	cpsr_all, r0
+	msr	cpsr_c, r0
 
 #define	SA1_CACHE_CLEAN_UNBLOCK						\
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 
 #ifdef DOUBLE_CACHE_CLEAN_BANK
 #define	SA1_DOUBLE_CACHE_CLEAN_BANK					\
