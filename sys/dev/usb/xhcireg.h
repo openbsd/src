@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.9 2015/01/02 18:06:25 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.10 2015/01/18 14:49:04 mpi Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -435,7 +435,7 @@ struct xhci_trb {
 #define XHCI_CODE_CMD_RING_STOP	24 	/* Command Stop (CS) requested */
 #define XHCI_CODE_CMD_ABORTED	25 	/* Command Abort (CA) operation */
 #define XHCI_CODE_XFER_STOPPED	26 	/* xfer terminated by a stop endpoint */
-#define XHCI_CODE_XFER_INVLEN	27 	/* TRB transfer length invalid */
+#define XHCI_CODE_XFER_STOPINV	27 	/* TRB transfer length invalid */
 #define XHCI_CODE_XFER_SHORTPKT	28 	/* Stopped before reaching end of TD */
 #define XHCI_CODE_MELAT		29	/* Max Exit Latency too large */
 #define XHCI_CODE_RESERVED	30

@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.55 2015/01/18 11:54:02 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.56 2015/01/18 14:49:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -49,7 +49,7 @@ int xhcidebug = 3;
 #define DPRINTFN(n,x)
 #endif
 
-#define DEVNAME(sc)		((sc)->sc_bus.bdev.dv_xname)
+#define DEVNAME(sc)	((sc)->sc_bus.bdev.dv_xname)
 
 #define TRBOFF(r, trb)	((char *)(trb) - (char *)((r)->trbs))
 #define DEQPTR(r)	((r).dma.paddr + (sizeof(struct xhci_trb) * (r).index))
@@ -117,6 +117,7 @@ void	xhci_pipe_close(struct usbd_pipe *);
 void	xhci_noop(struct usbd_xfer *);
 
 void 	xhci_timeout(void *);
+void	xhci_timeout_task(void *);
 
 /* USBD Bus Interface. */
 usbd_status	  xhci_pipe_open(struct usbd_pipe *);
@@ -777,6 +778,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	case XHCI_CODE_BABBLE:
 		/* Prevent any timeout to kick in. */
 		timeout_del(&xfer->timeout_handle);
+		usb_rem_task(xfer->device, &xfer->abort_task);
 
 		/* We need to report this condition for umass(4). */
 		if (code == XHCI_CODE_STALL)
@@ -792,6 +794,15 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		xp->aborted_xfer = xfer;
 		xhci_cmd_reset_ep_async(sc, slot, dci);
 		return;
+	case XHCI_CODE_XFER_STOPPED:
+	case XHCI_CODE_XFER_STOPINV:
+		/* Endpoint stopped while processing a TD. */
+		if (xfer == xp->aborted_xfer) {
+			DPRINTF(("%s: stopped xfer=%p\n", __func__, xfer));
+		    	return;
+		}
+
+		/* FALLTHROUGH */
 	default:
 		DPRINTF(("%s: unhandled code %d\n", DEVNAME(sc), code));
 		xfer->status = USBD_IOERROR;
@@ -841,9 +852,9 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 			break;
 
 		xp->halted = 0;
-
 		if (xp->aborted_xfer != NULL) {
 			xhci_xfer_done(xp->aborted_xfer);
+			wakeup(xp);
 		}
 		break;
 	default:
@@ -911,6 +922,7 @@ xhci_xfer_done(struct usbd_xfer *xfer)
 	xx->ntrb = 0;
 
 	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->device, &xfer->abort_task);
 	usb_transfer_complete(xfer);
 }
 
@@ -1257,8 +1269,6 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 	/* Root Hub */
 	if (pipe->device->depth == 0)
 		return;
-	if (!xp->halted || xhci_cmd_stop_ep(sc, xp->slot, xp->dci))
-		DPRINTF(("%s: error stopping ep (%d)\n", DEVNAME(sc), xp->dci));
 
 	/* Mask the endpoint */
 	sdev->input_ctx->drop_flags = htole32(XHCI_INCTX_MASK_DCI(xp->dci));
@@ -1883,18 +1893,85 @@ const usb_hub_descriptor_t xhci_hubd = {
 void
 xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
+	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
+	struct xhci_pipe *xp = (struct xhci_pipe *)xfer->pipe;
+	int error;
+
 	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTF(("%s: xfer=%p status=%s err=%s actlen=%d len=%d idx=%d\n",
 	    __func__, xfer, usbd_errstr(xfer->status), usbd_errstr(status),
 	    xfer->actlen, xfer->length, ((struct xhci_xfer *)xfer)->index));
 
+	/* XXX The stack should not call abort() in this case. */
+	if (xfer->status == USBD_NOT_STARTED) {
+		xfer->status = status;
+		usb_transfer_complete(xfer);
+		return;
+	}
+
+	/* Transfer is already done. */
+	if (xfer->status != USBD_IN_PROGRESS) {
+		DPRINTF(("%s: already done \n", __func__));
+		return;
+	}
+
+	/* Prevent any timeout to kick in. */
+	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->device, &xfer->abort_task);
+
+	/* Indicate that we are aborting this transfer. */
 	xfer->status = status;
-	xhci_xfer_done(xfer);
+	xp->halted = 1;
+	xp->aborted_xfer = xfer;
+
+	/* Stop the endpoint and wait until the hardware says so. */
+	if (xhci_cmd_stop_ep(sc, xp->slot, xp->dci))
+		DPRINTF(("%s: error stopping endpoint\n", DEVNAME(sc)));
+
+	/*
+	 * The transfer was already completed when we stopped the
+	 * endpoint, no need to move the dequeue pointer past its
+	 * TRBs.
+	 */
+	if (xp->aborted_xfer == NULL) {
+		DPRINTF(("%s: done before stopping the endpoint\n", __func__));
+		xp->halted = 0;
+		return;
+	}
+
+	/*
+	 * At this stage the endpoint has been stopped, so update its
+	 * dequeue pointer past the last TRB of the transfer.
+	 *
+	 * Note: This assume that only one transfer per endpoint has
+	 *	 pending TRBs on the ring.
+	 */
+	xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
+	    DEQPTR(xp->ring) | xp->ring.toggle);
+	error = tsleep(xp, PZERO, "xhciab", (XHCI_COMMAND_TIMEOUT*hz+999)/1000 + 1);
+	if (error)
+		printf("%s: timeout aborting transfer\n", DEVNAME(sc));
 }
 
 void
 xhci_timeout(void *addr)
+{
+	struct usbd_xfer *xfer = addr;
+	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
+
+	if (sc->sc_bus.dying) {
+		xhci_timeout_task(addr);
+		return;
+	}
+
+	usb_init_task(&xfer->abort_task, xhci_timeout_task, addr,
+	    USB_TASK_TYPE_ABORT);
+	usb_add_task(xfer->device, &xfer->abort_task);
+}
+
+void
+xhci_timeout_task(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
 	int s;
