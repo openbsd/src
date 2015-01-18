@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.63 2015/01/12 14:40:35 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.64 2015/01/18 10:29:53 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-_special_services="accounting check_quotas ipsec multicast_host multicast_router pf spamd_black"
+_special_services="accounting check_quotas ipsec multicast_host
+                   multicast_router pf spamd_black"
 readonly _special_services
 
 # get local functions from rc.subr(8)
@@ -358,23 +359,21 @@ if [ -n "${svc}" ]; then
 	[[ ${action} = getall ]] && usage
 	svc_is_avail ${svc} || \
 		_rc_err "${0##*/}: service ${svc} does not exist" 2
-elif [[ ${action} != @(getall|order|status) ]] ; then
+elif [[ ${action} != @(getall|order) ]] ; then
 	usage
 fi
 
 if [ -n "${var}" ]; then
 	[[ ${var} != @(flags|status|timeout|user) ]] && usage
-	[[ ${action} != @(enable|get|getdef|set) ]] && usage
-	[[ ${action} == @(enable|set) && ${var} = flags && ${args} = NO ]] && \
+	[[ ${action} != @(get|getdef|set) ]] && usage
+	[[ ${action} == set && ${var} = flags && ${args} = NO ]] && \
 		_rc_err "${0##*/}: \"flags NO\" contradicts \"${action}\""
 	if svc_is_special ${svc}; then
-		if [[ ${action} == @(enable|set) && ${var} != status ]] || \
+		if [[ ${action} == set && ${var} != status ]] || \
 			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]] ; then
 			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
 		fi
 	fi
-	[[ ${action} == enable && ${var} != flags ]] && \
-		_rc_err "${0##*/}: invalid action \"${action} ${svc} ${var}\""
 elif [ ${action} = "set" ]; then
 	usage
 fi
@@ -387,10 +386,6 @@ case ${action} in
 	enable)
 		needs_root ${action}
 		svc_set ${svc} status on
-		# XXX backward compat
-		if [ -n "${var}" ]; then
-			svc_set ${svc} "${var}" "${args}"
-		fi
 		;;
 	get)
 		svc_get ${svc} "${var}"
@@ -415,17 +410,6 @@ case ${action} in
 	set)
 		needs_root ${action}
 		svc_set ${svc} "${var}" "${args}"
-		;;
-	status) # XXX backward compat
-		if [ -n "${svc}" ]; then
-			svc_get ${svc} flags
-			svc_get ${svc} status
-		else
-			for i in $(ls_rcscripts) ${_special_services}; do
-				svc_get ${i} | grep -Ev '_(timeout|user)'
-			done
-			return 0 # we do not want the "status"
-		fi
 		;;
 	start|stop|restart|reload|check)
 		if svc_is_special ${svc}; then
