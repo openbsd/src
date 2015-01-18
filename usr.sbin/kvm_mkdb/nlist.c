@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.46 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.47 2015/01/18 04:48:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,7 +31,6 @@
 
 #include <sys/types.h>
 
-#include <a.out.h>
 #include <db.h>
 #include <err.h>
 #include <errno.h>
