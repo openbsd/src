@@ -12,6 +12,7 @@
 ./usr/include/amd64/bus.h
 ./usr/include/amd64/cacheinfo.h
 ./usr/include/amd64/cdefs.h
+./usr/include/amd64/codepatch.h
 ./usr/include/amd64/conf.h
 ./usr/include/amd64/cpu.h
 ./usr/include/amd64/cpufunc.h
