@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.18 2014/08/15 03:51:40 guenther Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.19 2015/01/18 17:18:08 mpi Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -180,11 +180,9 @@ main(int argc, char **argv)
 			else
 				exit(1);
 		}
-#if 0
 		if (n != sz) {
 			err(2, "read size");
 		}
-#endif
 		for (cmd = commands; cmd; cmd = cmd->next) {
 			val = hid_get_data(buf, &cmd->item);
 			if (cmd->value == val || cmd->anyvalue)
