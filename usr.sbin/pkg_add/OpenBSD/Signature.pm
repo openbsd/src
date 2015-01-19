@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.15 2014/02/09 19:22:19 espie Exp $
+# $OpenBSD: Signature.pm,v 1.16 2015/01/19 09:42:06 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -25,11 +25,20 @@ sub long_string
 	return '@'.$self->to_string;
 }
 
+sub always
+{
+	return 0;
+}
 package OpenBSD::LibObject;
 sub long_string
 {
 	my $self = shift;
 	return $self->to_string;
+}
+
+sub always
+{
+	return 1;
 }
 
 package OpenBSD::PackingElement;
@@ -87,13 +96,13 @@ sub string
 
 sub compare
 {
-	my ($a, $b) = @_;
-	return $b->revert_compare($a);
+	my ($a, $b, $shortened) = @_;
+	return $b->revert_compare($a, $shortened);
 }
 
 sub revert_compare
 {
-	my ($b, $a) = @_;
+	my ($b, $a, $shortened) = @_;
 
 	if ($a->{name} eq $b->{name}) {
 		my $awins = 0;
@@ -107,6 +116,7 @@ sub revert_compare
 				next;
 			}
 			$done->{$k} = 1;
+			next if $shortened && !$v->always;
 			my $r = $v->compare($b->{extra}{$k});
 			if ($r > 0) {
 				$awins++;
