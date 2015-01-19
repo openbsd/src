@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.152 2014/12/22 11:05:53 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.153 2015/01/19 13:53:55 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 #include <netinet6/mld6_var.h>
 #include <netinet/in_pcb.h>
 #include <netinet6/nd6.h>
-#include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
 
 #if NCARP > 0

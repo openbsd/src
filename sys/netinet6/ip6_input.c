@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.134 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.135 2015/01/19 13:53:55 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -94,7 +94,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 
 #include <netinet6/ip6protosw.h>
