@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.31 2014/12/22 22:33:51 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.32 2015/01/19 16:01:43 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -279,9 +279,19 @@
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */   
-/* not documented anywhere, see intelcore_update_sensor() */
-#define MSR_TEMPERATURE_TARGET	0x0ee
-#define MSR_TEMPERATURE_TARGET_LOW_BIT	0x40000000
+/*
+ * for Core i Series and newer Xeons, see
+ * http://www.intel.com/content/dam/www/public/us/en/
+ * documents/white-papers/cpu-monitoring-dts-peci-paper.pdf
+ */
+#define MSR_TEMPERATURE_TARGET	0x1a2	/* Core i Series, Newer Xeons */
+#define MSR_TEMPERATURE_TARGET_TJMAX(msr) (((msr) >> 16) & 0xff)
+/*
+ * not documented anywhere, see intelcore_update_sensor()
+ * only available Core Duo and Core Solo Processors
+ */
+#define MSR_TEMPERATURE_TARGET_UNDOCUMENTED	0x0ee
+#define MSR_TEMPERATURE_TARGET_LOW_BIT_UNDOCUMENTED	0x40000000
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.57 2014/12/16 21:02:58 sf Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.58 2015/01/19 16:01:43 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -180,12 +180,16 @@ void	intelcore_update_sensor(void *args);
 /*
  * Temperature read on the CPU is relative to the maximum
  * temperature supported by the CPU, Tj(Max).
- * Poorly documented, refer to:
- * http://softwarecommunity.intel.com/isn/Community/
- * en-US/forums/thread/30228638.aspx
- * Basically, depending on a bit in one msr, the max is either 85 or 100.
- * Then we subtract the temperature portion of thermal status from
- * max to get current temperature.
+ * Refer to:
+ * 64-ia-32-architectures-software-developer-vol-3c-part-3-manual.pdf
+ * Section 35 and
+ * http://www.intel.com/content/dam/www/public/us/en/documents/
+ * white-papers/cpu-monitoring-dts-peci-paper.pdf
+ *
+ * The temperature on Intel CPUs can be between 70 and 105 degC, since
+ * Westmere we can read the TJmax from the die. For older CPUs we have
+ * to guess or use undocumented MSRs. Then we subtract the temperature
+ * portion of thermal status from max to get current temperature.
  */
 void
 intelcore_update_sensor(void *args)
@@ -195,9 +199,21 @@ intelcore_update_sensor(void *args)
 	int max = 100;
 
 	/* Only some Core family chips have MSR_TEMPERATURE_TARGET. */
-	if (ci->ci_model == 0xe &&
-	    (rdmsr(MSR_TEMPERATURE_TARGET) & MSR_TEMPERATURE_TARGET_LOW_BIT))
+	if (ci->ci_model == 0x0e &&
+	    (rdmsr(MSR_TEMPERATURE_TARGET_UNDOCUMENTED) &
+	     MSR_TEMPERATURE_TARGET_LOW_BIT_UNDOCUMENTED))
 		max = 85;
+
+	/*
+	 * Newer CPUs can tell you what their max temperature is.
+	 * See: '64-ia-32-architectures-software-developer-
+	 * vol-3c-part-3-manual.pdf'
+	 */
+	if (ci->ci_model > 0x17 && ci->ci_model != 0x1c &&
+	    ci->ci_model != 0x26 && ci->ci_model != 0x27 &&
+	    ci->ci_model != 0x35 && ci->ci_model != 0x36)
+		max = MSR_TEMPERATURE_TARGET_TJMAX(
+		    rdmsr(MSR_TEMPERATURE_TARGET));
 
 	msr = rdmsr(MSR_THERM_STATUS);
 	if (msr & MSR_THERM_STATUS_VALID_BIT) {
