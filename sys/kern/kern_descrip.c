@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.115 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.116 2015/01/19 01:19:17 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -894,14 +894,13 @@ struct filedesc *
 fdinit(void)
 {
 	struct filedesc0 *newfdp;
-	extern int cmask;
 
 	newfdp = pool_get(&fdesc_pool, PR_WAITOK|PR_ZERO);
 	rw_init(&newfdp->fd_fd.fd_lock, "fdlock");
 
 	/* Create the file descriptor table. */
 	newfdp->fd_fd.fd_refcnt = 1;
-	newfdp->fd_fd.fd_cmask = cmask;
+	newfdp->fd_fd.fd_cmask = S_IWGRP|S_IWOTH;
 	newfdp->fd_fd.fd_ofiles = newfdp->fd_dfiles;
 	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
 	newfdp->fd_fd.fd_nfiles = NDFILE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.232 2015/01/13 18:51:27 kettenis Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.233 2015/01/19 01:19:17 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ extern struct timeout setperf_to;
 void setperf_auto(void *);
 #endif
 
-int	cmask = CMASK;
 extern	struct user *proc0paddr;
 
 struct	vnode *rootvp, *swapdev_vp;
