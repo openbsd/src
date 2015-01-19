@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.7 2015/01/16 16:18:07 deraadt Exp $ */
+/* $OpenBSD: library.c,v 1.8 2015/01/19 02:44:53 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -199,6 +199,7 @@ nohints:
 		else
 			searchpath = _dl_default_path;
 	}
+	memset(&bsod, 0, sizeof(bsod));
 	for (pp = searchpath; *pp != NULL; pp++) {
 		if ((dd = opendir(*pp)) != NULL) {
 			match = 0;
