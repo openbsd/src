@@ -1,4 +1,4 @@
-/* * $OpenBSD: netgroup.h,v 1.6 2007/03/05 20:29:14 millert Exp $*/
+/*	$OpenBSD: netgroup.h,v 1.7 2015/01/19 15:30:52 krw Exp $ */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.

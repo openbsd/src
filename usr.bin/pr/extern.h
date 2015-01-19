@@ -1,4 +1,4 @@
-/* *	$OpenBSD: extern.h,v 1.5 2003/06/03 02:56:14 millert Exp $*/
+/*	$OpenBSD: extern.h,v 1.6 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: indent_codes.h,v 1.4 2003/06/12 01:07:27 deraadt Exp $*/
+/*	$OpenBSD: indent_codes.h,v 1.5 2015/01/19 15:30:52 krw Exp $ */
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993

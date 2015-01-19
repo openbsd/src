@@ -1,4 +1,4 @@
-/* *	$OpenBSD: config.h,v 1.11 2015/01/15 17:14:04 deraadt Exp $*/
+/*	$OpenBSD: config.h,v 1.12 2015/01/19 15:30:52 krw Exp $ */
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*

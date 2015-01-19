@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.15 2012/01/02 23:19:45 pascal Exp $*/
+/*	$OpenBSD: find.h,v 1.16 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

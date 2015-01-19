@@ -1,4 +1,4 @@
-/* *	$OpenBSD: SYS.h,v 1.1 2004/08/11 10:29:59 pefo Exp $*/
+/*	$OpenBSD: SYS.h,v 1.2 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.

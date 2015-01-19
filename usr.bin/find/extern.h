@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.19 2014/05/18 08:10:00 espie Exp $*/
+/*	$OpenBSD: extern.h,v 1.20 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

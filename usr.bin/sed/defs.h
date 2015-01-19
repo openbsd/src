@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.4 2008/10/16 16:34:32 millert Exp $*/
+/*	$OpenBSD: defs.h,v 1.5 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993

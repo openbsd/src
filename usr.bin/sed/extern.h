@@ -1,4 +1,4 @@
-/* *	$OpenBSD: extern.h,v 1.7 2014/10/08 04:19:08 deraadt Exp $*/
+/*	$OpenBSD: extern.h,v 1.8 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: ktrace.h,v 1.5 2013/06/01 09:51:28 miod Exp $*/
+/*	$OpenBSD: ktrace.h,v 1.6 2015/01/19 15:30:52 krw Exp $ */
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
