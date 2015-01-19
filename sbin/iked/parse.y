@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.45 2015/01/19 14:42:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
