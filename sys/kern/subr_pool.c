@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.177 2015/01/05 23:54:18 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.178 2015/01/19 03:57:22 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -733,7 +733,7 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 	struct pool_item_header *ph;
 	struct pool_item *pi;
 	caddr_t addr;
-	int n; 
+	int n;
 
 	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
 	KASSERT(pp->pr_size >= sizeof(*pi));
@@ -786,8 +786,8 @@ pool_p_free(struct pool *pp, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
 
-        MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
-        KASSERT(ph->ph_nmissing == 0);
+	MUTEX_ASSERT_UNLOCKED(&pp->pr_mtx);
+	KASSERT(ph->ph_nmissing == 0);
 
 	XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 		if (__predict_false(pi->pi_magic != POOL_IMAGIC(ph, pi))) {
@@ -811,9 +811,9 @@ pool_p_free(struct pool *pp, struct pool_item_header *ph)
 			}
 		}
 #endif
-        }
+	}
 
-        pool_allocator_free(pp, ph->ph_page);
+	pool_allocator_free(pp, ph->ph_page);
 
 	if (!POOL_INPGHDR(pp))
 		pool_put(&phpool, ph);
@@ -822,7 +822,7 @@ pool_p_free(struct pool *pp, struct pool_item_header *ph)
 void
 pool_p_insert(struct pool *pp, struct pool_item_header *ph)
 {
-        MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
+	MUTEX_ASSERT_LOCKED(&pp->pr_mtx);
 
 	/* If the pool was depleted, point at the new page */
 	if (pp->pr_curpage == NULL)
