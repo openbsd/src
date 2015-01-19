@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socketcall.h,v 1.5 2011/04/05 22:54:31 pirofti Exp $	*/
+/*	$OpenBSD: linux_socketcall.h,v 1.6 2015/01/19 23:30:20 guenther Exp $	*/
 /*	$NetBSD: linux_socketcall.h,v 1.1 1995/02/28 23:26:05 fvdl Exp $	*/
 
 /*
@@ -69,13 +69,13 @@ struct linux_socket_args {
 
 struct linux_bind_args {
 	int s;
-	struct osockaddr *name;
+	struct linux_sockaddr *name;
 	int namelen;
 };
 
 struct linux_connect_args {
 	int s;
-	struct osockaddr *name;
+	struct linux_sockaddr *name;
 	int namelen;
 };
 
@@ -92,7 +92,7 @@ struct linux_accept_args {
 
 struct linux_getsockname_args {
 	int s;
-	struct osockaddr *addr;
+	struct sockaddr *addr;
 	int *namelen;
 };
 
@@ -128,7 +128,7 @@ struct linux_sendto_args {
 	void *msg;
 	int len;
 	int flags;
-	struct osockaddr *to;
+	struct linux_sockaddr *to;
 	int tolen;
 };
 
@@ -137,7 +137,7 @@ struct linux_recvfrom_args {
 	void *buf;
 	int len;
 	int flags;
-	struct osockaddr *from;	
+	struct sockaddr *from;	
 	int *fromlen;
 };
 

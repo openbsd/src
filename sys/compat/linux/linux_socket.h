@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.h,v 1.11 2012/06/26 10:18:08 pirofti Exp $	*/
+/*	$OpenBSD: linux_socket.h,v 1.12 2015/01/19 23:30:20 guenther Exp $	*/
 /*	$NetBSD: linux_socket.h,v 1.3 1995/05/28 10:16:34 mycroft Exp $	*/
 
 /*
@@ -39,8 +39,8 @@
  * Various Linux socket defines. Everything that is not re-defined here
  * is the same as in OpenBSD.
  *
- * COMPAT_43 is assumed, and the osockaddr struct is used (it is what
- * Linux uses)
+ * Linux uses the old-style sockaddr, called linux_sockaddr here,
+ * without sa_len member.  linux_sa_{get,put}() handle mapping from/to that.
  */
 
 /*
@@ -89,7 +89,7 @@
 #define LINUX_SO_LINGER		13
 
 /*
- * Options vor [gs]etsockopt(2), IP level.
+ * Options for [gs]etsockopt(2), IP level.
  */
 
 #define	LINUX_IP_TOS		1
