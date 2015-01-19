@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.23 2015/01/13 02:28:56 bcook Exp $ */
+/*	$OpenBSD: config.c,v 1.24 2015/01/19 11:44:08 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,10 +21,8 @@
 #include <sys/stat.h>
 
 #include <netinet/in.h>
-#include <arpa/nameser.h>
 
 #include <errno.h>
-#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
