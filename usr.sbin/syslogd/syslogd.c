@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.143 2015/01/18 19:37:59 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.144 2015/01/19 16:40:49 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -81,10 +81,11 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <paths.h>
 #include <poll.h>
 #include <signal.h>
@@ -93,7 +94,6 @@
 #include <string.h>
 #include <tls.h>
 #include <unistd.h>
-#include <limits.h>
 #include <utmp.h>
 #include <vis.h>
 
@@ -135,7 +135,7 @@ struct filed {
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
-			char	f_loghost[1+4+3+1+HOST_NAME_MAX+1+1+NI_MAXSERV];
+			char	f_loghost[1+4+3+1+NI_MAXHOST+1+NI_MAXSERV];
 				/* @proto46://[hostname]:servname\0 */
 			struct sockaddr_storage	 f_addr;
 			struct buffertls	 f_buftls;
@@ -653,7 +653,7 @@ udp_readcb(int fd, short event, void *arg)
 	salen = sizeof(sa);
 	n = recvfrom(fd, linebuf, MAXLINE, 0, (struct sockaddr *)&sa, &salen);
 	if (n > 0) {
-		char	 resolve[HOST_NAME_MAX+1];
+		char	 resolve[NI_MAXHOST];
 
 		linebuf[n] = '\0';
 		cvthname((struct sockaddr *)&sa, resolve, sizeof(resolve));
@@ -1825,7 +1825,7 @@ cfline(char *line, char *prog)
 			logerror(ebuf);
 			break;
 		}
-		if (strlen(host) >= HOST_NAME_MAX+1) {
+		if (strlen(host) >= NI_MAXHOST) {
 			snprintf(ebuf, sizeof(ebuf), "host too long \"%s\"",
 			    f->f_un.f_forw.f_loghost);
 			logerror(ebuf);
