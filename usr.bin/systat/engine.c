@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.17 2013/12/02 02:33:41 krw Exp $	 */
+/* $Id: engine.c,v 1.18 2015/01/19 07:39:24 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -40,9 +40,7 @@
 
 #include "engine.h"
 
-#ifndef MIN
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#endif
+#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
 
 /* circular linked list of views */
 TAILQ_HEAD(view_list, view_ent) view_head =
@@ -215,7 +213,7 @@ print_str(int len, const char *str)
 		return;
 
 	if (rawmode) {
-		int length = MIN(len, MAX_LINE_BUF - linepos);
+		int length = MINIMUM(len, MAX_LINE_BUF - linepos);
 		if (length <= 0)
 			return;
 		bcopy(str, &linebuf[linepos], length);
