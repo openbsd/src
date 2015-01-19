@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.43 2015/01/16 06:39:50 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.44 2015/01/19 19:25:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-#include <netinet/ip_ipsp.h>
 #include <netdb.h>
 #include <zlib.h>
 
