@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.82 2015/01/19 01:53:18 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.83 2015/01/19 18:01:13 millert Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -53,7 +53,6 @@
 #include "display.h"
 #include "machine.h"
 #include "utils.h"
-#include "loadavg.h"
 
 static int	swapmode(int *, int *);
 static char	*state_abbr(struct kinfo_proc *);
@@ -506,7 +505,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 	cputime = pp->p_rtime_sec + ((pp->p_rtime_usec + 500000) / 1000000);
 
 	/* calculate the base for cpu percentages */
-	pct = pctdouble(pp->p_pctcpu);
+	pct = (double)pp->p_pctcpu / fscale;
 
 	if (pp->p_wmesg[0])
 		p_wait = pp->p_wmesg;
@@ -551,8 +550,7 @@ static unsigned char sorted_state[] =
  */
 
 #define ORDERKEY_PCTCPU \
-	if (lresult = (pctcpu)p2->p_pctcpu - (pctcpu)p1->p_pctcpu, \
-	    (result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
+	if ((result = (int)(p2->p_pctcpu - p1->p_pctcpu)) == 0)
 #define ORDERKEY_CPUTIME \
 	if ((result = p2->p_rtime_sec - p1->p_rtime_sec) == 0) \
 		if ((result = p2->p_rtime_usec - p1->p_rtime_usec) == 0)
@@ -577,7 +575,6 @@ compare_cpu(const void *v1, const void *v2)
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
@@ -601,7 +598,6 @@ compare_size(const void *v1, const void *v2)
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
@@ -625,7 +621,6 @@ compare_res(const void *v1, const void *v2)
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
@@ -649,7 +644,6 @@ compare_time(const void *v1, const void *v2)
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
@@ -673,7 +667,6 @@ compare_prio(const void *v1, const void *v2)
 	struct proc   **pp1 = (struct proc **) v1;
 	struct proc   **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
@@ -696,7 +689,6 @@ compare_pid(const void *v1, const void *v2)
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
@@ -720,7 +712,6 @@ compare_cmd(const void *v1, const void *v2)
 	struct proc **pp1 = (struct proc **) v1;
 	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
 	int result;
 
 	/* remove one level of indirection */
