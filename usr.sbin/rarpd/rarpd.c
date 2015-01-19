@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.58 2015/01/16 06:40:19 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.59 2015/01/19 23:51:54 guenther Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ void   usage(void);
 void   rarp_process(struct if_info *, u_char *);
 void   rarp_reply(struct if_info *, struct if_addr *,
 	    struct ether_header *, u_int32_t, struct hostent *);
-void   update_arptab(u_char *, u_int32_t);
+int    arptab_set(u_char *, u_int32_t);
 void   error(int, const char *,...);
 void   debug(const char *,...);
 u_int32_t ipaddrtonetmask(u_int32_t);
@@ -629,48 +629,6 @@ lookup_addrs(char *ifname, struct if_info *p)
 		error(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
 }
 
-int arptab_set(u_char *eaddr, u_int32_t host);
-
-/*
- * Poke the kernel arp tables with the ethernet/ip address combinataion
- * given.  When processing a reply, we must do this so that the booting
- * host (i.e. the guy running rarpd), won't try to ARP for the hardware
- * address of the guy being booted (he cannot answer the ARP).
- */
-void
-update_arptab(u_char *ep, u_int32_t ipaddr)
-{
-#ifdef SIOCSARP
-	struct sockaddr_in *sin;
-	struct arpreq request;
-	u_int32_t host;
-	u_char *eaddr;
-	int s;
-
-	request.arp_flags = 0;
-	sin = (struct sockaddr_in *)&request.arp_pa;
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = ipaddr;
-	request.arp_ha.sa_family = AF_UNSPEC;
-	/* This is needed #if defined(COMPAT_43) && BYTE_ORDER != BIG_ENDIAN,
-	   because AF_UNSPEC is zero and the kernel assumes that a zero
-	   sa_family means that the real sa_family value is in sa_len.  */
-	request.arp_ha.sa_len = 16; /* XXX */
-	memcpy((char *) request.arp_ha.sa_data, (char *) ep, 6);
-
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s < 0) {
-		error(NONFATAL, "socket: %s", strerror(errno));
-	} else {
-		if (ioctl(s, SIOCSARP, (caddr_t)&request) < 0)
-		    error(NONFATAL, "SIOCSARP: %s", strerror(errno));
-		(void) close(s);
-	}
-#else
-	if (arptab_set(ep, ipaddr) > 0)
-		syslog(LOG_ERR, "couldn't update arp table");
-#endif
-}
 /*
  * Build a reverse ARP packet and sent it out on the interface.
  * 'ep' points to a valid ARPOP_REVREQUEST.  The ARPOP_REVREPLY is built
@@ -711,7 +669,15 @@ rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
 	struct ether_arp *ap = (struct ether_arp *) (ep + 1);
 	int len, n;
 
-	update_arptab((u_char *)&ap->arp_sha, ipaddr);
+	/*
+	 * Poke the kernel arp tables with the ethernet/ip address
+	 * combinataion given.  When processing a reply, we must
+	 * do this so that the booting host (i.e. the guy running
+	 * rarpd), won't try to ARP for the hardware address of the
+	 * guy being booted (he cannot answer the ARP).
+	 */
+	if (arptab_set((u_char *)&ap->arp_sha, ipaddr) > 0)
+		syslog(LOG_ERR, "couldn't update arp table");
 
 	/* Build the rarp reply by modifying the rarp request in place. */
 	ep->ether_type = htons(ETHERTYPE_REVARP);
