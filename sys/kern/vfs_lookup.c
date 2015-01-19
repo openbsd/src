@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.50 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.51 2015/01/19 18:05:41 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ namei(struct nameidata *ndp)
 		}
 		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
 			VOP_UNLOCK(ndp->ni_dvp, 0, p);
-		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
+		if (ndp->ni_loopcnt++ >= SYMLOOP_MAX) {
 			error = ELOOP;
 			break;
 		}
