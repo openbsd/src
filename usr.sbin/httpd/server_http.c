@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.67 2015/01/19 20:00:07 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.68 2015/01/19 20:01:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -163,6 +163,8 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 
 	clt_user = decoded;
 	*clt_pass++ = '\0';
+	if ((clt->clt_remote_user = strdup(clt_user)) == NULL)
+		goto done;
 
 	if (clt_pass == NULL)
 		goto done;
@@ -190,9 +192,7 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 
 		if (crypt_checkpass(clt_pass, pass) == 0) {
 			explicit_bzero(line, linelen);
-			clt->clt_remote_user = strdup(clt_user);
-			if (clt->clt_remote_user != NULL)
-				ret = 0;
+			ret = 0;
 			break;
 		}
 	}
@@ -1266,8 +1266,9 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_COMMON:
 		if (evbuffer_add_printf(clt->clt_log,
-		    "%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu\n",
-		    srv_conf->name, ip, tstamp,
+		    "%s %s - %s [%s] \"%s %s%s%s%s%s\" %03d %zu\n",
+		    srv_conf->name, ip, clt->clt_remote_user == NULL ? "-" :
+		    clt->clt_remote_user, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : desc->http_path,
 		    desc->http_query == NULL ? "" : "?",
@@ -1290,8 +1291,9 @@ server_log_http(struct client *clt, u_int code, size_t len)
 			agent = NULL;
 
 		if (evbuffer_add_printf(clt->clt_log,
-		    "%s %s - - [%s] \"%s %s%s%s%s%s\" %03d %zu \"%s\" \"%s\"\n",
-		    srv_conf->name, ip, tstamp,
+		    "%s %s - %s [%s] \"%s %s%s%s%s%s\" %03d %zu \"%s\" \"%s\"\n",
+		    srv_conf->name, ip, clt->clt_remote_user == NULL ? "-" :
+		    clt->clt_remote_user, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : desc->http_path,
 		    desc->http_query == NULL ? "" : "?",
