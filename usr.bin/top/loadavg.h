@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadavg.h,v 1.3 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: loadavg.h,v 1.4 2015/01/19 01:53:18 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -54,6 +54,11 @@
 # if defined(FBITS) && !defined(FSCALE)
 #  define FSCALE (1 << FBITS)	/* mips */
 # endif
+#endif
+
+#ifdef __OpenBSD__
+#undef FSCALE
+#define FSCALE fscale		/* fetched via sysctl(3) */
 #endif
 
 #ifdef FSCALE

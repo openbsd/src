@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.81 2015/01/16 06:40:13 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.82 2015/01/19 01:53:18 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -138,8 +138,21 @@ static int      pageshift;	/* log base 2 of the pagesize */
 #define pagetok(size) ((size) << pageshift)
 
 int		ncpu;
+int		fscale;
 
 unsigned int	maxslp;
+
+int
+getfscale(void)
+{
+	int mib[] = { CTL_KERN, KERN_FSCALE };
+	size_t size = sizeof(fscale);
+
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &fscale, &size, NULL, 0) < 0)
+		return (-1);
+	return fscale;
+}
 
 int
 getncpu(void)
@@ -162,6 +175,8 @@ machine_init(struct statics *statics)
 
 	ncpu = getncpu();
 	if (ncpu == -1)
+		return (-1);
+	if (getfscale() == -1)
 		return (-1);
 	cpu_states = calloc(ncpu, CPUSTATES * sizeof(int64_t));
 	if (cpu_states == NULL)
