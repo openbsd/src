@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: comp.c,v 1.8 2015/01/19 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-# include	"mille.h"
+#include	"mille.h"
 
 /*
  * @(#)comp.c	1.1 (Berkeley) 4/1/82
@@ -45,7 +45,7 @@ calcmove()
 	int		*value;
 	PLAY		*pp, *op;
 	bool		foundend, cango, canstop, foundlow;
-	unsgn int	i, count200, badcount, nummin, nummax, diff;
+	unsigned int	i, count200, badcount, nummin, nummax, diff;
 	int		curmin, curmax;
 	CARD		safe, oppos;
 	int		valbuf[HAND_SZ], count[NUM_CARDS];

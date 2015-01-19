@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.19 2013/08/29 20:22:15 naddy Exp $	*/
+/*	$OpenBSD: mille.c,v 1.20 2015/01/19 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
-# include	"mille.h"
-# include	<signal.h>
+#include	"mille.h"
+#include	<signal.h>
 
 /*
  * @(#)mille.c	1.3 (Berkeley) 5/10/83

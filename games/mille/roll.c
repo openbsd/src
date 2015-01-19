@@ -1,4 +1,4 @@
-/*	$OpenBSD: roll.c,v 1.6 2013/08/29 20:22:16 naddy Exp $	*/
+/*	$OpenBSD: roll.c,v 1.7 2015/01/19 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: roll.c,v 1.4 1995/03/24 05:02:07 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-# include	"mille.h"
+#include	"mille.h"
 
 /*
  *	This routine rolls ndie nside-sided dice.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: extern.c,v 1.7 2015/01/19 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: extern.c,v 1.4 1995/03/24 05:01:36 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-# include	"mille.h"
+#include	"mille.h"
 
 /*
  * @(#)extern.c	1.1 (Berkeley) 4/1/82
