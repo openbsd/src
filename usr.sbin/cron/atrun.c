@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.23 2015/01/14 17:30:53 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.24 2015/01/19 01:05:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -26,13 +26,6 @@
 
 static void unlink_job(at_db *, atjob *);
 static void run_job(atjob *, char *);
-
-#ifndef	UID_MAX
-#define	UID_MAX	INT_MAX
-#endif
-#ifndef	GID_MAX
-#define	GID_MAX	INT_MAX
-#endif
 
 /*
  * Scan the at jobs dir and build up a list of jobs found.
