@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.26 2014/08/15 06:05:18 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.27 2015/01/19 18:07:47 tedu Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -32,7 +32,6 @@
 01/19	Nameday of Archbishop Makarios in Cyprus
 01/20	Army Day in Mali
 01/20	National Heroes Day in Guinea-Bissau
-01/SunThird	Martin Luther King Day in New York (3rd Sunday)
 01/MonThird	Robert E. Lee's Birthday in Alabama & Mississippi (3rd Monday)
 01/MonThird	Lee-Jackson Day in Virginia (3rd Monday)
 01/21	Our Lady of Altagracia in Dominican Republic

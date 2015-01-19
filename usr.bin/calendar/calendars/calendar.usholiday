@@ -1,13 +1,14 @@
 /*
  * USA holiday
  *
- * $OpenBSD: calendar.usholiday,v 1.8 2013/03/16 07:52:29 jmc Exp $
+ * $OpenBSD: calendar.usholiday,v 1.9 2015/01/19 18:07:47 tedu Exp $
  */
 
 #ifndef _calendar_usholiday_
 #define _calendar_usholiday_
 
 01/01	New Year's Day
+01/MonThird	Martin Luther King Jr. Day (3rd Monday of January)
 02/02	Groundhog Day
 02/14	St. Valentine's Day
 02/MonThird	President's Day (3rd Monday of February)
