@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.11 2014/05/22 14:04:41 krw Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.12 2015/01/19 18:20:47 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.1 1997/06/11 11:21:47 bouyer Exp $	*/
 
 /*
@@ -37,10 +37,6 @@
 #define	MAXBAD		10	/* limit on bad blks (per inode) */
 #define	MAXBUFSPACE	80*1024	/* maximum space to allocate to buffers */
 #define	INOBUFSIZE	128*1024	/* size of buffer to read inodes in pass1 */
-
-#ifndef BUFSIZ
-#define BUFSIZ 1024
-#endif
 
 #define	USTATE	01		/* inode not allocated */
 #define	FSTATE	02		/* inode is file */

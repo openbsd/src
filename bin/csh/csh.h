@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.19 2014/10/17 06:17:37 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.20 2015/01/19 18:20:47 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -38,9 +38,6 @@
  *	BUFSIZ		The i/o buffering size; also limits word size
  *	MAILINTVL	How often to mailcheck; more often is more expensive
  */
-#ifndef BUFSIZ
-#define	BUFSIZ	1024		/* default buffer size */
-#endif				/* BUFSIZ */
 
 #define FORKSLEEP	10	/* delay loop on non-interactive fork failure */
 #define	MAILINTVL	600	/* 10 minutes */
