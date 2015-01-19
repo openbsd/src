@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.2,v 1.19 2014/10/26 05:45:43 guenther Exp $
+.\"	$OpenBSD: mknod.2,v 1.20 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: mknod.2,v 1.6 1995/02/27 12:34:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mknod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 26 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt MKNOD 2
 .Os
 .Sh NAME
@@ -120,10 +120,11 @@ is an invalid value for that file type.
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 A component of the path prefix does not exist.
 .It Bq Er EACCES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.14 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: quotactl.2,v 1.15 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)quotactl.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt QUOTACTL 2
 .Os
 .Sh NAME
@@ -165,10 +165,11 @@ Search permission is denied for a component of a path prefix.
 A component of a path prefix was not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 A filename does not exist.
 .It Bq Er ELOOP

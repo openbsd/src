@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.26 2014/12/14 07:42:50 schwarze Exp $
+.\"	$OpenBSD: ktrace.2,v 1.27 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 14 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -172,8 +172,12 @@ A component of the path prefix is not a directory.
 .It Bq Er EINVAL
 No trace points were selected.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The named tracefile does not exist.
 .It Bq Er EACCES

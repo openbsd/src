@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.2,v 1.20 2014/12/13 10:27:50 schwarze Exp $
+.\"	$OpenBSD: swapctl.2,v 1.21 2015/01/19 15:54:12 millert Exp $
 .\"	$NetBSD: swapctl.2,v 1.10 1998/08/29 17:11:09 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 13 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt SWAPCTL 2
 .Os
 .Sh NAME
@@ -175,9 +175,10 @@ A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
 .Dv NAME_MAX
-characters, or an entire path name exceeded
+characters, or an entire pathname (including the terminating NUL)
+exceeded
 .Dv PATH_MAX
-characters.
+bytes.
 .It Bq Er ENOENT
 The named device does not exist.
 For the

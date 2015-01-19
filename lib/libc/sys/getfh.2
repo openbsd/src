@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.17 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: getfh.2,v 1.18 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt GETFH 2
 .Os
 .Sh NAME
@@ -59,15 +59,12 @@ A component of the path prefix of
 .Fa path
 is not a directory.
 .It Bq Er ENAMETOOLONG
-The length of a component of
-.Fa path
-exceeds
-.Dv {NAME_MAX}
-characters, or the length of
-.Fa path
-exceeds
-.Dv {PATH_MAX}
-characters.
+A component of a pathname exceeded
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The file referred to by
 .Fa path

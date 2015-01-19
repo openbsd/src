@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statvfs.3,v 1.6 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: statvfs.3,v 1.7 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt STATVFS 3
 .Os
 .Sh NAME
@@ -93,15 +93,12 @@ A component of the path prefix of
 .Fa path
 is not a directory.
 .It Bq Er ENAMETOOLONG
-The length of a component of
-.Fa path
-exceeds
-.Dv {NAME_MAX}
-characters, or the length of
-.Fa path
-exceeds
-.Dv {PATH_MAX}
-characters.
+A component of a pathname exceeded
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The file referred to by
 .Fa path

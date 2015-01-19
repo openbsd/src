@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.20 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: rename.2,v 1.21 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -118,10 +118,11 @@ affected if:
 .Bl -tag -width Er
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 A component of the
 .Fa from

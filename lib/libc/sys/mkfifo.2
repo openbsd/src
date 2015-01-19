@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.2,v 1.13 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: mkfifo.2,v 1.14 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: mkfifo.2,v 1.8 1995/02/27 12:34:27 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mkfifo.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt MKFIFO 2
 .Os
 .Sh NAME
@@ -97,10 +97,11 @@ The kernel has not been configured to support FIFOs.
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 A component of the path prefix does not exist.
 .It Bq Er EACCES

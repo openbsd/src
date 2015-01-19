@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmdir.2,v 1.12 2014/09/09 07:36:42 guenther Exp $
+.\"	$OpenBSD: rmdir.2,v 1.13 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: rmdir.2,v 1.7 1995/02/27 12:36:30 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rmdir.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 9 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt RMDIR 2
 .Os
 .Sh NAME
@@ -69,10 +69,11 @@ The named file is removed unless:
 A component of the path is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The named directory does not exist.
 .It Bq Er ELOOP

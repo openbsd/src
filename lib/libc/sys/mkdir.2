@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.15 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: mkdir.2,v 1.16 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -93,10 +93,11 @@ will fail and no directory will be created if:
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 A component of the path prefix does not exist.
 .It Bq Er EACCES

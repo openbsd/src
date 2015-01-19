@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.24 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: connect.2,v 1.25 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
@@ -142,10 +142,11 @@ IPC domain.
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The named socket does not exist.
 .It Bq Er EACCES

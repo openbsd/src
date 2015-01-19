@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.2,v 1.17 2014/09/01 05:09:52 doug Exp $
+.\"	$OpenBSD: readlink.2,v 1.18 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: readlink.2,v 1.7 1995/02/27 12:35:54 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)readlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 1 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt READLINK 2
 .Os
 .Sh NAME
@@ -98,10 +98,11 @@ will fail if:
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The named file does not exist.
 .It Bq Er EACCES

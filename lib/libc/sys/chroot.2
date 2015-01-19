@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.20 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: chroot.2,v 1.21 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -88,10 +88,11 @@ will fail and the root directory will be unchanged if:
 A component of the path name is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
-characters, or an entire path name exceeded
-.Dv {PATH_MAX}
-characters.
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The named directory does not exist.
 .It Bq Er EACCES

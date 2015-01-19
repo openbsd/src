@@ -1,4 +1,4 @@
-.\"	$OpenBSD: revoke.2,v 1.10 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: revoke.2,v 1.11 2015/01/19 15:54:11 millert Exp $
 .\"	$NetBSD: revoke.2,v 1.3 1995/10/12 15:41:11 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)revoke.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt REVOKE 2
 .Os
 .Sh NAME
@@ -74,8 +74,12 @@ Access to the named file is revoked unless one of the following:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1024 characters.
+A component of a pathname exceeded
+.Dv NAME_MAX
+characters, or an entire pathname (including the terminating NUL)
+exceeded
+.Dv PATH_MAX
+bytes.
 .It Bq Er ENOENT
 The named file or a component of the path name does not exist.
 .It Bq Er EACCES
