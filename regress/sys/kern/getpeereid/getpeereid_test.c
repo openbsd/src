@@ -1,4 +1,4 @@
-/* $OpenBSD: getpeereid_test.c,v 1.2 2014/07/20 01:38:40 guenther Exp $ */
+/* $OpenBSD: getpeereid_test.c,v 1.3 2015/01/19 00:22:30 guenther Exp $ */
 /* Written by Marc Espie in 2006 */
 /* Public domain */
 #include <sys/types.h>
@@ -125,7 +125,6 @@ main()
 	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
 	    sizeof(sun.sun_path))
 		errx(1, "Memory error");
-	sun.sun_len = sizeof(sun);
 	sun.sun_family = AF_UNIX;
 
 	/* let's make those two rendez-vous, a bit artificial */
