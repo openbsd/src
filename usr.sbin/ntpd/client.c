@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.97 2015/01/09 23:44:07 bcook Exp $ */
+/*	$OpenBSD: client.c,v 1.98 2015/01/19 20:47:03 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,7 +85,7 @@ client_addr_init(struct ntp_peer *p)
 			break;
 		default:
 			fatalx("king bula sez: wrong AF in client_addr_init");
-			/* not reached */
+			/* NOTREACHED */
 		}
 	}
 
