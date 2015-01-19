@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.97 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.98 2015/01/19 19:47:29 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1013,10 +1013,6 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 	*mp = m;
 	if (type == MT_SONAME) {
 		sa = mtod(m, struct sockaddr *);
-#if BYTE_ORDER != BIG_ENDIAN
-		if (sa->sa_family == 0 && sa->sa_len < AF_MAX)
-			sa->sa_family = sa->sa_len;
-#endif
 		sa->sa_len = buflen;
 	}
 	return (0);
