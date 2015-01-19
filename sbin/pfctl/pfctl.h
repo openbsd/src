@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.52 2014/04/19 14:22:32 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.53 2015/01/19 23:52:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -82,14 +82,6 @@ int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 void	 warn_namespace_collision(const char *);
 int	 pfctl_show_ifaces(const char *, int);
 FILE	*pfctl_fopen(const char *, const char *);
-
-#ifndef DEFAULT_PRIORITY
-#define DEFAULT_PRIORITY	1
-#endif
-
-#ifndef DEFAULT_QLIMIT
-#define DEFAULT_QLIMIT		50
-#endif
 
 /*
  * generalized service curve used for admission control
