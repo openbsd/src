@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.29 2015/01/13 09:21:15 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.30 2015/01/19 19:37:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -45,6 +45,7 @@
 
 int	 config_getserver_config(struct httpd *, struct server *,
 	    struct imsg *);
+int	 config_getserver_auth(struct httpd *, struct server_config *);
 
 int
 config_init(struct httpd *env)
@@ -57,7 +58,8 @@ config_init(struct httpd *env)
 		env->sc_prefork_server = SERVER_NUMPROC;
 
 		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
-		ps->ps_what[PROC_SERVER] = CONFIG_SERVERS|CONFIG_MEDIA;
+		ps->ps_what[PROC_SERVER] =
+		    CONFIG_SERVERS|CONFIG_MEDIA|CONFIG_AUTH;
 		ps->ps_what[PROC_LOGGER] = CONFIG_SERVERS;
 	}
 
@@ -78,6 +80,13 @@ config_init(struct httpd *env)
 		RB_INIT(env->sc_mediatypes);
 	}
 
+	if (what & CONFIG_AUTH) {
+		if ((env->sc_auth =
+		    calloc(1, sizeof(*env->sc_auth))) == NULL)
+			return (-1);
+		TAILQ_INIT(env->sc_auth);
+	}
+
 	return (0);
 }
 
@@ -86,6 +95,7 @@ config_purge(struct httpd *env, u_int reset)
 {
 	struct privsep		*ps = env->sc_ps;
 	struct server		*srv;
+	struct auth		*auth;
 	u_int			 what;
 
 	what = ps->ps_what[privsep_process] & reset;
@@ -97,6 +107,13 @@ config_purge(struct httpd *env, u_int reset)
 
 	if (what & CONFIG_MEDIA && env->sc_mediatypes != NULL)
 		media_purge(env->sc_mediatypes);
+
+	if (what & CONFIG_AUTH && env->sc_auth != NULL) {
+		while ((auth = TAILQ_FIRST(env->sc_auth)) != NULL) {
+			auth_free(env->sc_auth, auth);
+			free(auth);
+		}
+	}
 }
 
 int
@@ -217,6 +234,22 @@ config_setserver(struct httpd *env, struct server *srv)
 }
 
 int
+config_getserver_auth(struct httpd *env, struct server_config *srv_conf)
+{
+	struct privsep		*ps = env->sc_ps;
+
+	if ((ps->ps_what[privsep_process] & CONFIG_AUTH) == 0 ||
+	    (srv_conf->flags & SRVFLAG_AUTH) == 0)
+		return (0);
+
+	if ((srv_conf->auth = auth_byid(env->sc_auth,
+	    srv_conf->auth_id)) == NULL)
+		return (-1);
+
+	return (0);
+}
+
+int
 config_getserver_config(struct httpd *env, struct server *srv,
     struct imsg *imsg)
 {
@@ -242,6 +275,9 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	}
 	if (parent == NULL)
 		parent = &srv->srv_conf;
+
+	if (config_getserver_auth(env, srv_conf) != 0)
+		return (-1);
 
 	if (srv_conf->flags & SRVFLAG_LOCATION) {
 		/* Inherit configuration from the parent */
@@ -283,6 +319,16 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		f = SRVFLAG_SYSLOG|SRVFLAG_NO_SYSLOG;
 		if ((srv_conf->flags & f) == 0)
 			srv_conf->flags |= parent->flags & f;
+
+		f = SRVFLAG_AUTH|SRVFLAG_NO_AUTH;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= parent->flags & f;
+			srv_conf->auth = parent->auth;
+			srv_conf->auth_id = parent->auth_id;
+			(void)strlcpy(srv_conf->auth_realm,
+			    parent->auth_realm,
+			    sizeof(srv_conf->auth_realm));
+		}
 
 		f = SRVFLAG_TLS;
 		srv_conf->flags |= parent->flags & f;
@@ -368,13 +414,14 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 		fatalx("invalid location");
 
 	/* Otherwise create a new server */
-	if ((srv = calloc(1, sizeof(*srv))) == NULL) {
-		close(imsg->fd);
-		return (-1);
-	}
+	if ((srv = calloc(1, sizeof(*srv))) == NULL)
+		goto fail;
 
 	memcpy(&srv->srv_conf, &srv_conf, sizeof(srv->srv_conf));
 	srv->srv_s = imsg->fd;
+
+	if (config_getserver_auth(env, &srv->srv_conf) != 0)
+		goto fail;
 
 	SPLAY_INIT(&srv->srv_clients);
 	TAILQ_INIT(&srv->srv_hosts);
@@ -403,6 +450,8 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	return (0);
 
  fail:
+	if (imsg->fd != -1)
+		close(imsg->fd);
 	if (srv != NULL) {
 		free(srv->srv_conf.tls_cert);
 		free(srv->srv_conf.tls_key);
@@ -456,6 +505,54 @@ config_getmedia(struct httpd *env, struct imsg *imsg)
 	DPRINTF("%s: %s %d received media \"%s\"", __func__,
 	    ps->ps_title[privsep_process], ps->ps_instance,
 	    media.media_name);
+
+	return (0);
+}
+
+int
+config_setauth(struct httpd *env, struct auth *auth)
+{
+	struct privsep		*ps = env->sc_ps;
+	int			 id;
+	u_int			 what;
+
+	for (id = 0; id < PROC_MAX; id++) {
+		what = ps->ps_what[id];
+
+		if ((what & CONFIG_AUTH) == 0 || id == privsep_process)
+			continue;
+
+		DPRINTF("%s: sending auth \"%s[%u]\" to %s", __func__,
+		    auth->auth_htpasswd, auth->auth_id, ps->ps_title[id]);
+
+		proc_compose_imsg(ps, id, -1, IMSG_CFG_AUTH, -1,
+		    auth, sizeof(*auth));
+	}
+
+	return (0);
+}
+
+int
+config_getauth(struct httpd *env, struct imsg *imsg)
+{
+#ifdef DEBUG
+	struct privsep		*ps = env->sc_ps;
+#endif
+	struct auth		 auth;
+	u_int8_t		*p = imsg->data;
+
+	IMSG_SIZE_CHECK(imsg, &auth);
+	memcpy(&auth, p, sizeof(auth));
+
+	if (auth_add(env->sc_auth, &auth) == NULL) {
+		log_debug("%s: failed to add auth \"%s[%u]\"",
+		    __func__, auth.auth_htpasswd, auth.auth_id);
+		return (-1);
+	}
+
+	DPRINTF("%s: %s %d received auth \"%s[%u]\"", __func__,
+	    ps->ps_title[privsep_process], ps->ps_instance,
+	    auth.auth_htpasswd, auth.auth_id);
 
 	return (0);
 }

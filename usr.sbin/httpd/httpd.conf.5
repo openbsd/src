@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.46 2015/01/18 18:39:46 florian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.47 2015/01/19 19:37:50 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2015 $
+.Dd $Mdocdate: January 19 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -139,7 +139,7 @@ and include one or more lines of the following syntax:
 Specify an additional alias
 .Ar name
 for this server.
-.It Ic authenticate Oo Ar realm Oc Ic with Pa htpasswd
+.It Oo Ic no Oc Ic authenticate Oo Ar realm Oc Ic with Pa htpasswd
 Authenticate a remote user for
 .Ar realm
 by checking the credentials against the user authentication file
@@ -147,6 +147,9 @@ by checking the credentials against the user authentication file
 The file name is relative to the
 .Ic chroot
 and must be readable by the www user.
+Use the
+.Ic no authenticate
+directive to disable authentication in a location.
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
 Valid options are:

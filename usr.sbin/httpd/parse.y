@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2015/01/18 14:01:17 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.56 2015/01/19 19:37:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -91,6 +91,7 @@ struct httpd		*conf = NULL;
 static int		 errors = 0;
 static int		 loadcfg = 0;
 uint32_t		 last_server_id = 0;
+uint32_t		 last_auth_id = 0;
 
 static struct server	*srv = NULL, *parentsrv = NULL;
 static struct server_config *srv_conf = NULL;
@@ -117,6 +118,7 @@ typedef struct {
 		char			*string;
 		struct timeval		 tv;
 		struct portrange	 port;
+		struct auth		 auth;
 		struct {
 			struct sockaddr_storage	 ss;
 			char			 name[HOST_NAME_MAX+1];
@@ -138,6 +140,7 @@ typedef struct {
 %type	<v.number>	opttls
 %type	<v.tv>		timeout
 %type	<v.string>	numberstring
+%type	<v.auth>	authopts
 
 %%
 
@@ -645,35 +648,60 @@ rootflags	: STRING		{
 		}
 		;
 
-authenticate	: AUTHENTICATE STRING WITH STRING		{
-			if (strlcpy(srv->srv_conf.auth_realm, $2,
+authenticate	: NO AUTHENTICATE		{
+			srv->srv_conf.flags |= SRVFLAG_NO_AUTH;
+		}
+		| AUTHENTICATE authopts		{
+			struct auth	*auth;
+
+			if ((auth = auth_add(conf->sc_auth, &$2)) == NULL) {
+				yyerror("failed to add auth");
+				YYERROR;
+			}
+
+			if (auth->auth_id == 0) {
+				/* New htpasswd, get new Id */
+				auth->auth_id = ++last_auth_id;
+				if (last_auth_id == INT_MAX) {
+					yyerror("too many auth ids defined");
+					auth_free(conf->sc_auth, auth);
+					YYERROR;
+				}
+			}
+
+			srv->srv_conf.auth_id = auth->auth_id;
+			srv->srv_conf.flags |= SRVFLAG_AUTH;
+		}
+		;
+
+authopts	: STRING WITH STRING	{
+			if (strlcpy(srv->srv_conf.auth_realm, $1,
 			    sizeof(srv->srv_conf.auth_realm)) >=
 			    sizeof(srv->srv_conf.auth_realm)) {
 				yyerror("basic auth realm name too long");
-				free($2);
+				free($1);
 				YYERROR;
 			}
-			free($2);
-			if (strlcpy(srv->srv_conf.auth_htpasswd, $4,
-			    sizeof(srv->srv_conf.auth_htpasswd)) >=
-			    sizeof(srv->srv_conf.auth_htpasswd)) {
-				yyerror("password file name too long");
-				free($4);
-				YYERROR;
-			}
-			free($4);
-			srv->srv_conf.flags |= SRVFLAG_AUTH_BASIC;
-		}
-		| AUTHENTICATE WITH STRING		{
-			if (strlcpy(srv->srv_conf.auth_htpasswd, $3,
-			    sizeof(srv->srv_conf.auth_htpasswd)) >=
-			    sizeof(srv->srv_conf.auth_htpasswd)) {
+			free($1);
+			if (strlcpy($$.auth_htpasswd, $3,
+			    sizeof($$.auth_htpasswd)) >=
+			    sizeof($$.auth_htpasswd)) {
 				yyerror("password file name too long");
 				free($3);
 				YYERROR;
 			}
 			free($3);
-			srv->srv_conf.flags |= SRVFLAG_AUTH_BASIC;
+
+		}
+		| WITH STRING		{
+			if (strlcpy($$.auth_htpasswd, $2,
+			    sizeof($$.auth_htpasswd)) >=
+			    sizeof($$.auth_htpasswd)) {
+				yyerror("password file name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		};
 
 directory	: DIRECTORY dirflags
@@ -1400,6 +1428,7 @@ load_config(const char *filename, struct httpd *x_conf)
 	loadcfg = 1;
 	errors = 0;
 	last_server_id = 0;
+	last_auth_id = 0;
 
 	srv = NULL;
 

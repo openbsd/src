@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.52 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.53 2015/01/19 19:37:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -337,6 +337,7 @@ serverconfig_reset(struct server_config *srv_conf)
 {
 	srv_conf->tls_cert_file = srv_conf->tls_cert =
 	    srv_conf->tls_key_file = srv_conf->tls_key = NULL;
+	srv_conf->auth = NULL;
 }
 
 struct server *
@@ -1121,6 +1122,9 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_MEDIA:
 		config_getmedia(env, imsg);
+		break;
+	case IMSG_CFG_AUTH:
+		config_getauth(env, imsg);
 		break;
 	case IMSG_CFG_SERVER:
 		config_getserver(env, imsg);

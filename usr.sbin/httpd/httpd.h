@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.69 2015/01/18 14:01:17 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.70 2015/01/19 19:37:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +59,7 @@
 #define CONFIG_RELOAD		0x00
 #define CONFIG_MEDIA		0x01
 #define CONFIG_SERVERS		0x02
+#define CONFIG_AUTH		0x04
 #define CONFIG_ALL		0xff
 
 #define FCGI_CONTENT_SIZE	65535
@@ -189,6 +190,7 @@ enum imsg_type {
 	IMSG_CTL_REOPEN,
 	IMSG_CFG_SERVER,
 	IMSG_CFG_MEDIA,
+	IMSG_CFG_AUTH,
 	IMSG_CFG_DONE,
 	IMSG_LOG_ACCESS,
 	IMSG_LOG_ERROR,
@@ -325,13 +327,14 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_TLS		0x00002000
 #define SRVFLAG_ACCESS_LOG	0x00004000
 #define SRVFLAG_ERROR_LOG	0x00008000
-#define SRVFLAG_AUTH_BASIC	0x00010000
+#define SRVFLAG_AUTH		0x00010000
+#define SRVFLAG_NO_AUTH		0x00020000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
-	"\21AUTH_BASIC"
+	"\21AUTH\22NO_AUTH"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -361,6 +364,13 @@ struct log_file {
 };
 TAILQ_HEAD(log_files, log_file) log_files;
 
+struct auth {
+	char			 auth_htpasswd[PATH_MAX];
+	u_int32_t		 auth_id;
+	TAILQ_ENTRY(auth)	 auth_entry;
+};
+TAILQ_HEAD(serverauth, auth);
+
 struct server_config {
 	u_int32_t		 id;
 	char			 name[HOST_NAME_MAX+1];
@@ -370,8 +380,6 @@ struct server_config {
 	char			 socket[PATH_MAX];
 	char			 accesslog[NAME_MAX];
 	char			 errorlog[NAME_MAX];
-	char			 auth_realm[NAME_MAX];
-	char			 auth_htpasswd[PATH_MAX];
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
@@ -399,6 +407,10 @@ struct server_config {
 	enum log_format		 logformat;
 	struct log_file		*logaccess;
 	struct log_file		*logerror;
+
+	char			 auth_realm[NAME_MAX];
+	u_int32_t		 auth_id;
+	struct auth		*auth;
 
 	TAILQ_ENTRY(server_config) entry;
 };
@@ -442,6 +454,7 @@ struct httpd {
 
 	struct serverlist	*sc_servers;
 	struct mediatypes	*sc_mediatypes;
+	struct serverauth	*sc_auth;
 
 	struct privsep		*sc_ps;
 	int			 sc_reload;
@@ -587,6 +600,9 @@ struct media_type *
 int		 media_cmp(struct media_type *, struct media_type *);
 RB_PROTOTYPE(kvtree, kv, kv_node, kv_cmp);
 RB_PROTOTYPE(mediatypes, media_type, media_entry, media_cmp);
+struct auth	*auth_add(struct serverauth *, struct auth *);
+struct auth	*auth_byid(struct serverauth *, u_int32_t);
+void		 auth_free(struct serverauth *, struct auth *);
 
 /* log.c */
 void	log_init(int);
@@ -639,6 +655,8 @@ int	 config_setserver(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
 int	 config_setmedia(struct httpd *, struct media_type *);
 int	 config_getmedia(struct httpd *, struct imsg *);
+int	 config_setauth(struct httpd *, struct auth *);
+int	 config_getauth(struct httpd *, struct imsg *);
 
 /* logger.c */
 pid_t	 logger(struct privsep *, struct privsep_proc *);

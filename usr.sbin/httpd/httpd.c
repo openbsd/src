@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.29 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.30 2015/01/19 19:37:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -290,10 +290,16 @@ parent_configure(struct httpd *env)
 	int			 ret = -1;
 	struct server		*srv;
 	struct media_type	*media;
+	struct auth		*auth;
 
 	RB_FOREACH(media, mediatypes, env->sc_mediatypes) {
 		if (config_setmedia(env, media) == -1)
 			fatal("send media");
+	}
+
+	TAILQ_FOREACH(auth, env->sc_auth, auth_entry) {
+		if (config_setauth(env, auth) == -1)
+			fatal("send auth");
 	}
 
 	/* First send the servers... */
@@ -1146,3 +1152,42 @@ media_cmp(struct media_type *a, struct media_type *b)
 }
 
 RB_GENERATE(mediatypes, media_type, media_entry, media_cmp);
+
+struct auth *
+auth_add(struct serverauth *serverauth, struct auth *auth)
+{
+	struct auth		*entry;
+
+	TAILQ_FOREACH(entry, serverauth, auth_entry) {
+		if (strcmp(entry->auth_htpasswd, auth->auth_htpasswd) == 0)
+			return (entry);
+	}
+
+	if ((entry = calloc(1, sizeof(*entry))) == NULL)
+		return (NULL);
+
+	memcpy(entry, auth, sizeof(*entry));
+
+	TAILQ_INSERT_TAIL(serverauth, entry, auth_entry);
+
+	return (entry);
+}
+
+struct auth *
+auth_byid(struct serverauth *serverauth, u_int32_t id)
+{
+	struct auth	*auth;
+
+	TAILQ_FOREACH(auth, serverauth, auth_entry) {
+		if (auth->auth_id == id)
+			return (auth);
+	}
+
+	return (NULL);
+}
+
+void
+auth_free(struct serverauth *serverauth, struct auth *auth)
+{
+	TAILQ_REMOVE(serverauth, auth, auth_entry);
+}
