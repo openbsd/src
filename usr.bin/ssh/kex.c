@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.c,v 1.100 2015/01/19 19:52:16 markus Exp $ */
+/* $OpenBSD: kex.c,v 1.101 2015/01/19 20:07:45 markus Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -190,10 +190,11 @@ kex_prop_free(char **proposal)
 }
 
 /* ARGSUSED */
-static void
+static int
 kex_protocol_error(int type, u_int32_t seq, void *ctxt)
 {
 	error("Hm, kex protocol error: type %d seq %u", type, seq);
+	return 0;
 }
 
 static void
@@ -262,7 +263,7 @@ kex_send_kexinit(Kex *kex)
 }
 
 /* ARGSUSED */
-void
+int
 kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
 {
 	const char *ptr;
@@ -297,6 +298,7 @@ kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
 	packet_check_eom();
 
 	kex_kexinit_finish(kex);
+	return 0;
 }
 
 void

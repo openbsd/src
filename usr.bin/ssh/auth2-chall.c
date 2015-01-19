@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-chall.c,v 1.41 2014/02/02 03:44:31 djm Exp $ */
+/* $OpenBSD: auth2-chall.c,v 1.42 2015/01/19 20:07:45 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -41,7 +41,7 @@
 
 static int auth2_challenge_start(Authctxt *);
 static int send_userauth_info_request(Authctxt *);
-static void input_userauth_info_response(int, u_int32_t, void *);
+static int input_userauth_info_response(int, u_int32_t, void *);
 
 extern KbdintDevice bsdauth_device;
 
@@ -233,7 +233,7 @@ send_userauth_info_request(Authctxt *authctxt)
 	return 1;
 }
 
-static void
+static int
 input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -298,6 +298,7 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 	}
 	userauth_finish(authctxt, authenticated, "keyboard-interactive",
 	    devicename);
+	return 0;
 }
 
 void

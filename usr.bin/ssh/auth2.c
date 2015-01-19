@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2.c,v 1.134 2014/12/22 07:55:51 djm Exp $ */
+/* $OpenBSD: auth2.c,v 1.135 2015/01/19 20:07:45 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -83,8 +83,8 @@ Authmethod *authmethods[] = {
 
 /* protocol */
 
-static void input_service_request(int, u_int32_t, void *);
-static void input_userauth_request(int, u_int32_t, void *);
+static int input_service_request(int, u_int32_t, void *);
+static int input_userauth_request(int, u_int32_t, void *);
 
 /* helper */
 static Authmethod *authmethod_lookup(Authctxt *, const char *);
@@ -161,7 +161,7 @@ do_authentication2(Authctxt *authctxt)
 }
 
 /*ARGSUSED*/
-static void
+static int
 input_service_request(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -192,10 +192,11 @@ input_service_request(int type, u_int32_t seq, void *ctxt)
 		packet_disconnect("bad service request %s", service);
 	}
 	free(service);
+	return 0;
 }
 
 /*ARGSUSED*/
-static void
+static int
 input_userauth_request(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -264,6 +265,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 	free(service);
 	free(user);
 	free(method);
+	return 0;
 }
 
 void
