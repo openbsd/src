@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.132 2014/10/20 23:27:14 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.133 2015/01/19 09:53:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -146,8 +146,7 @@ makesocketpath(const char *label)
 		errno = ENOTDIR;
 		return (NULL);
 	}
-	if (sb.st_uid != uid || (!S_ISDIR(sb.st_mode) &&
-		sb.st_mode & (S_IRWXG|S_IRWXO)) != 0) {
+	if (sb.st_uid != uid || (sb.st_mode & (S_IRWXG|S_IRWXO)) != 0) {
 		errno = EACCES;
 		return (NULL);
 	}
