@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.58 2015/01/16 06:40:19 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.59 2015/01/19 19:25:28 kettenis Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -601,7 +601,9 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		printf("%s = {", "vm_map_entry");
 		printf(" start = %lx,", vme->start);
 		printf(" end = %lx,", vme->end);
-		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
+		printf(" fspace = %lx,\n", vme->fspace);
+		printf("    object.uvm_obj/sub_map = %p,\n",
+		    vme->object.uvm_obj);
 		printf("    offset = %lx,", (unsigned long)vme->offset);
 		printf(" etype = %x <%s%s%s%s%s >,", vme->etype,
 		    vme->etype & UVM_ET_OBJ ? " OBJ" : "",
