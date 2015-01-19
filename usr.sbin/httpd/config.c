@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2015/01/19 19:37:50 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.31 2015/01/19 21:07:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/uio.h>
 
 #include <net/if.h>
-#include <net/pfvar.h>
 #include <netinet/in.h>
 #include <net/route.h>
 
