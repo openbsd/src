@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.15 2014/08/22 04:36:16 jsg Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.15 2014/08/22 04:36:16 jsg Exp $ */
+/* $Id: npppd_auth.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -456,7 +456,7 @@ npppd_auth_username_for_auth(npppd_auth_base *base, const char *username,
 		u0 = username;
 	u1 = username_buffer;
 	if (username_buffer != u0)
-		memmove(username_buffer, u0, MIN(strlen(u0) + 1,
+		memmove(username_buffer, u0, MINIMUM(strlen(u0) + 1,
 		    MAX_USERNAME_LENGTH));
 	if (base->strip_atmark_realm != 0) {
 		if ((atmark = strrchr(u1, '@')) != NULL)

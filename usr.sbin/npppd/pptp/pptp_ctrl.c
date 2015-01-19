@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.8 2013/04/20 23:32:32 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.9 2015/01/19 01:48:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,9 +29,8 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.8 2013/04/20 23:32:32 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.9 2015/01/19 01:48:59 deraadt Exp $ */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -57,6 +56,9 @@
 #include "pptp.h"
 #include "pptp_local.h"
 #include "pptp_subr.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 /* periods of pptp_ctrl_timeout */
 #define PPTP_CTRL_TIMEOUT_IVAL_SEC	2
@@ -236,7 +238,7 @@ pptp_ctrl_timeout(int fd, short event, void *ctx)
 		}
 		break;
 	case PPTP_CTRL_STATE_ESTABLISHED:
-		last = MAX(_this->last_rcv_ctrl, _this->last_snd_ctrl);
+		last = MAXIMUM(_this->last_rcv_ctrl, _this->last_snd_ctrl);
 
 		if (curr_time - _this->last_rcv_ctrl
 			    >= _this->echo_interval + _this->echo_timeout) {

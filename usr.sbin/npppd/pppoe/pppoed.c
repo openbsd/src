@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.16 2014/11/27 10:22:38 tobias Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.17 2015/01/19 01:48:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,10 +28,10 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.16 2014/11/27 10:22:38 tobias Exp $
+ * $Id: pppoed.c,v 1.17 2015/01/19 01:48:59 deraadt Exp $
  */
+#include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -68,6 +68,8 @@
 
 #include "pppoe.h"
 #include "pppoe_local.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int pppoed_seqno = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.13 2014/03/22 04:30:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -33,7 +33,6 @@
 #define	NPPPD_BUFSZ			BUFSZ
 #endif
 
-#include <sys/param.h>
 #include <net/if.h>
 
 #include "npppd_defs.h"
@@ -131,10 +130,10 @@ struct _npppd {
 	int auth_finalizer_itvl;
 
 	/** name of configuration file */
-	char 	config_file[MAXPATHLEN];
+	char 	config_file[PATH_MAX];
 
 	/** name of pid file */
-	char 	pidpath[MAXPATHLEN];
+	char 	pidpath[PATH_MAX];
 
 	/** process id */
 	pid_t	pid;

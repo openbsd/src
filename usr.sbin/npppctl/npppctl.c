@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.4 2014/07/22 02:02:59 yasuoka Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.5 2015/01/19 01:48:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -15,7 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -39,6 +38,8 @@
 
 #include "parser.h"
 #include "npppd_ctl.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #ifndef nitems
 #define nitems(_x)	(sizeof(_x) / sizeof(_x[0]))
@@ -196,7 +197,7 @@ show_clear_session(struct parse_result *result, FILE *out)
 			    "but cannot disconnect only %d sessions because of "
 			    "the implementation limit.",
 			    ppp_id_idx, (int)nitems(ppp_id));
-		clear_session(ppp_id, MIN(ppp_id_idx, nitems(ppp_id)),
+		clear_session(ppp_id, MINIMUM(ppp_id_idx, nitems(ppp_id)),
 			ppp_id_idx, out);
 	}
 }
@@ -343,7 +344,7 @@ clear_session(u_int ppp_id[], int ppp_id_count, int total, FILE *out)
 		    offsetof(struct npppd_disconnect_request, ppp_id[0])) /
 		    sizeof(u_int);
 		for (i = 0; i < ppp_id_count; i += n) {
-			n = MIN(nmax, ppp_id_count - i);
+			n = MINIMUM(nmax, ppp_id_count - i);
 			req.count = n;
 			iov[0].iov_base = &req;
 			iov[0].iov_len = offsetof(

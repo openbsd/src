@@ -1,4 +1,4 @@
-/*	$OpenBSD: pap.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: pap.c,v 1.8 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,13 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: pap.c,v 1.8 2015/01/19 01:48:59 deraadt Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
  */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <net/if_dl.h>
@@ -292,7 +291,7 @@ pap_response(pap *_this, int authok, const char *mes)
 		lmes = 0;
 	else
 		lmes = strlen(mes);
-	lmes = MIN(lmes, lpktp - 1);
+	lmes = MINIMUM(lmes, lpktp - 1);
 
 	PUTCHAR(lmes, pktp1);
 	if (lmes > 0)
@@ -426,7 +425,7 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 	s_len = strlen(s);
 
 	memset(pass, 0, sizeof(pass)); /* null padding */
-	passlen = MIN(strlen(password), sizeof(pass));
+	passlen = MINIMUM(strlen(password), sizeof(pass));
 	memcpy(pass, password, passlen);
 	if ((passlen % 16) != 0)
 		passlen += 16 - (passlen % 16);

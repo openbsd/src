@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_config.c,v 1.13 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: npppd_config.c,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,11 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.13 2014/10/25 03:23:49 lteo Exp $ */
+/* $Id: npppd_config.c,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2014/03/22 04:30:31 yasuoka Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2015/01/19 01:48:57 deraadt Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.c 1.9 */
 /*
@@ -19,7 +19,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

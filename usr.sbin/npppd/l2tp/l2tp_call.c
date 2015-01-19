@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.15 2013/09/20 07:26:23 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,10 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.15 2013/09/20 07:26:23 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -331,7 +330,7 @@ l2tp_call_recv_ICRQ(l2tp_call *_this, u_char *pkt, int pktlen)
 			 */
 			break;
 		case L2TP_AVP_TYPE_CALLING_NUMBER:
-			slen = MIN(sizeof(_this->calling_number) - 1,
+			slen = MINIMUM(sizeof(_this->calling_number) - 1,
 			    avp_attr_length(avp));
 			memcpy(_this->calling_number, avp->attr_value, slen);
 			_this->calling_number[slen] = '\0';
@@ -671,7 +670,7 @@ l2tp_recv_CDN(l2tp_call *_this, u_char *pkt, int pktlen)
 				    avp->attr_value[3];
 				len = avp->length - 12;
 				if (len > 0) {
-					len = MIN(len, sizeof(pmes) - 1);
+					len = MINIMUM(len, sizeof(pmes) - 1);
 					memcpy(pmes, &avp->attr_value[4], len);
 					pmes[len] = '\0';
 				}
@@ -777,7 +776,7 @@ l2tp_call_send_CDN(l2tp_call *_this, int result_code, int error_code, const
 #endif
 
 	if (errmes != NULL) {
-		len = MIN(strlen(errmes), L2TP_AVP_MAXSIZ - 128);
+		len = MINIMUM(strlen(errmes), L2TP_AVP_MAXSIZ - 128);
 		memcpy(&avp->attr_value[avplen], errmes, len);
 		avplen += len;
 	}
@@ -1011,7 +1010,7 @@ l2tp_call_bind_ppp(l2tp_call *_this, dialin_proxy_info *dpi)
 	    sizeof(ppp->phy_label));
 	L2TP_CALL_ASSERT(sizeof(ppp->phy_info) >= _this->ctrl->peer.ss_len);
 	memcpy(&ppp->phy_info, &_this->ctrl->peer,
-	    MIN(sizeof(ppp->phy_info), _this->ctrl->peer.ss_len));
+	    MINIMUM(sizeof(ppp->phy_info), _this->ctrl->peer.ss_len));
 	strlcpy(ppp->calling_number, _this->calling_number,
 	    sizeof(ppp->calling_number));
 	if (ppp_init(npppd_get_npppd(), ppp) != 0) {

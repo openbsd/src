@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -34,6 +33,9 @@
 #include <time.h>
 
 #include "debugutil.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 int debuglevel = 0;
 FILE *debugfp = NULL;
@@ -137,8 +139,8 @@ vlog_printf(uint32_t prio, const char *format, va_list ap)
 	if (use_syslog && DL(prio) == 0) {
 		level = LOG_PRI(prio) + syslog_level_adjust;
 		if (!no_debuglog || level < LOG_DEBUG) {
-			level = MIN(LOG_DEBUG, level);
-			level = MAX(LOG_EMERG, level);
+			level = MINIMUM(LOG_DEBUG, level);
+			level = MAXIMUM(LOG_EMERG, level);
 			level |= (prio & LOG_FACMASK);
 			vsyslog(level, format, ap);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.18 2014/07/21 01:51:11 guenther Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.19 2015/01/19 01:48:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,9 +26,8 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.18 2014/07/21 01:51:11 guenther Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.19 2015/01/19 01:48:59 deraadt Exp $ */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -47,6 +46,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef USE_LIBSOCKUTIL
 #include <seil/sockfromto.h>
@@ -64,6 +64,8 @@
 #include "net_utils.h"
 #include "version.h"
 #include "recvfromto.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int                l2tp_ctrl_init (l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
 static void               l2tp_ctrl_reload (l2tp_ctrl *);
@@ -1256,13 +1258,13 @@ l2tp_ctrl_recv_SCCRQ(l2tp_ctrl *_this, u_char *pkt, int pktlen, l2tpd *_l2tpd,
 			continue;
 		case L2TP_AVP_TYPE_HOST_NAME:
 			AVP_SIZE_CHECK(avp, >, 4);
-			len = MIN(sizeof(hostname) - 1, avp->length - 6);
+			len = MINIMUM(sizeof(hostname) - 1, avp->length - 6);
 			memcpy(hostname, avp->attr_value, len);
 			hostname[len] = '\0';
 			continue;
 		case L2TP_AVP_TYPE_VENDOR_NAME:
 			AVP_SIZE_CHECK(avp, >, 4);
-			len = MIN(sizeof(vendorname) - 1, avp->length - 6);
+			len = MINIMUM(sizeof(vendorname) - 1, avp->length - 6);
 			memcpy(vendorname, avp->attr_value, len);
 			vendorname[len] = '\0';
 			continue;
@@ -1410,7 +1412,7 @@ l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 				    avp->attr_value[3];
 				len = avp->length - 12;
 				if (len > 0) {
-					len = MIN(len, sizeof(pmes) - 1);
+					len = MINIMUM(len, sizeof(pmes) - 1);
 					memcpy(pmes, &avp->attr_value[4], len);
 					pmes[len] = '\0';
 				}
@@ -1473,7 +1475,7 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 {
 	int len;
 	struct l2tp_avp *avp;
-	char buf[L2TP_AVP_MAXSIZ], hbuf[MAXHOSTNAMELEN];
+	char buf[L2TP_AVP_MAXSIZ], hbuf[HOST_NAME_MAX+1];
 	const char *val;
 	bytebuffer *bytebuf;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.39 2015/01/08 07:34:05 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.40 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,12 +29,12 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.39 2015/01/08 07:34:05 yasuoka Exp $
+ * $Id: npppd.c,v 1.40 2015/01/19 01:48:59 deraadt Exp $
  */
 #include "version.h"
+#include <sys/param.h>	/* ALIGNED_POINTER */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
@@ -839,7 +839,7 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 		ppp_log(ppp, LOG_DEBUG, "Received IP packet is too small");
 		return;
 	}
-	lbuf = MIN(lpktp, sizeof(buf));
+	lbuf = MINIMUM(lpktp, sizeof(buf));
 	if (!ALIGNED_POINTER(pktp, struct ip)) {
 		memcpy(buf, pktp, lbuf);
 		pip = (struct ip *)buf;

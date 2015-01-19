@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.24 2014/10/25 03:23:49 lteo Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.25 2015/01/19 01:48:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,15 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.24 2014/10/25 03:23:49 lteo Exp $ */
+/* $Id: pptpd.c,v 1.25 2015/01/19 01:48:59 deraadt Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.24 2014/10/25 03:23:49 lteo Exp $
+ * $Id: pptpd.c,v 1.25 2015/01/19 01:48:59 deraadt Exp $
  */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
@@ -69,6 +68,8 @@
 #include "pptp_local.h"
 #include "privsep.h"
 #include "accept.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static int pptpd_seqno = 0;
 
@@ -127,7 +128,7 @@ pptpd_init(pptpd *_this)
 		call[i - 1] = call0;
 	}
 
-	for (i = 0; i < MIN(PPTP_MAX_CALL, countof(call)); i++)
+	for (i = 0; i < MINIMUM(PPTP_MAX_CALL, countof(call)); i++)
 		slist_add(&_this->call_free_list, (void *)(uintptr_t)call[i]);
 	slist_add(&_this->call_free_list, (void *)PPTPD_SHUFFLE_MARK);
 

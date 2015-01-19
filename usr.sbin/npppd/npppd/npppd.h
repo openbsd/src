@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.15 2014/03/22 04:30:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd.h,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,6 @@
 #define	NPPPD_H 1
 
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <stdbool.h>
@@ -37,12 +36,16 @@
 #include <net/if_dl.h>
 #include <netinet/in.h>
 #include <event.h>
+#include <limits.h>
 
 #include "addr_range.h"
 
 #include "l2tp_conf.h"
 #include "pptp_conf.h"
 #include "pppoe_conf.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #define	NPPPD_USER			"_ppp"
 #define	NPPPD_GENERIC_NAME_LEN		32
@@ -152,7 +155,7 @@ struct authconf {
 	bool                               eap_capable;
 	bool                               strip_nt_domain;
 	bool                               strip_atmark_realm;
-	char                               users_file_path[MAXPATHLEN];
+	char                               users_file_path[PATH_MAX];
 	union {
 		struct {
 			struct radconf     auth;

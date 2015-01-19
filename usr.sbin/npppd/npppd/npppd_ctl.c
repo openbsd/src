@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.c,v 1.13 2014/10/18 04:12:57 deraadt Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -280,7 +279,7 @@ npppd_who_init(struct npppd_who *_this, npppd_ppp *ppp)
 	_this->tunnel_peer.peer_in4.sin_family = AF_UNSPEC;
 	if (((struct sockaddr *)&ppp->phy_info)->sa_len > 0) {
 		memcpy(&_this->tunnel_peer, &ppp->phy_info,
-		    MIN(sizeof(_this->tunnel_peer),
+		    MINIMUM(sizeof(_this->tunnel_peer),
 			((struct sockaddr *)&ppp->phy_info)->sa_len));
 	}
 

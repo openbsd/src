@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.15 2014/11/13 04:18:27 yasuoka Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,6 @@
 /**@file
  * This file provides helper functions for npppd.
  */
-#include <sys/param.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -57,6 +56,8 @@
 #include "npppd_defs.h"
 #include "npppd_subr.h"
 #include "privsep.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static u_int16_t route_seq = 0;
 static int  in_route0(int, struct in_addr *, struct in_addr *, struct in_addr *, int, const char *, uint32_t);
@@ -507,7 +508,7 @@ adjust_tcp_mss(u_char *pktp, int lpktp, int mtu)
 	if ((th->th_flags & TH_SYN) == 0)
 		return 0;
 
-	lpktp = MIN(th->th_off << 4, lpktp);
+	lpktp = MINIMUM(th->th_off << 4, lpktp);
 
 	pktp += sizeof(struct tcphdr);
 	lpktp -= sizeof(struct tcphdr);

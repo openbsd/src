@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.15 2014/08/23 15:29:55 doug Exp $ */
+/*	$OpenBSD: privsep.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -15,7 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/socket.h>

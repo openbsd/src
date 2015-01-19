@@ -23,13 +23,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ipsec_util.c,v 1.6 2014/11/18 20:54:28 krw Exp $ */
+/* $Id: ipsec_util.c,v 1.7 2015/01/19 01:48:59 deraadt Exp $ */
 /*@file IPsec related utility functions */
 /*
  * RFC 2367 PF_KEY Key Management API, Version 2
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <net/pfkeyv2.h>
@@ -353,9 +352,9 @@ sadb_del_args_init(struct sadb_del_args *args, uint32_t spi,
 		    args->dst.sadb_address_prefixlen = 0;
 #define	SADB2SA(_base) ((struct sockaddr *)((_base) + 1))
 		memcpy(&args->src_sa, SADB2SA(src),
-		    MIN(sizeof(args->src_sa), SADB2SA(src)->sa_len));
+		    MINIMUM(sizeof(args->src_sa), SADB2SA(src)->sa_len));
 		memcpy(&args->dst_sa, SADB2SA(dst),
-		    MIN(sizeof(args->src_sa), SADB2SA(dst)->sa_len));
+		    MINIMUM(sizeof(args->src_sa), SADB2SA(dst)->sa_len));
 #undef SADB2SA
 		if (proto != 0) {
 			args->src.sadb_address_proto = proto;

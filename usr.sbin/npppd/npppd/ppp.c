@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.23 2014/11/20 14:51:42 krw Exp $ */
+/*	$OpenBSD: ppp.c,v 1.24 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,14 +25,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.23 2014/11/20 14:51:42 krw Exp $ */
+/* $Id: ppp.c,v 1.24 2015/01/19 01:48:59 deraadt Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
  */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <netinet/in.h>
 #include <net/if_dl.h>
 #include <arpa/inet.h>
@@ -953,7 +952,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 		 * comply with the peer's established MRU.
 		 */
 		lcp_send_protrej(&_this->lcp, inp_proto,
-		    MIN(lpkt - (inp_proto - pkt), NPPPD_MIN_MRU - 32));
+		    MINIMUM(lpkt - (inp_proto - pkt), NPPPD_MIN_MRU - 32));
 	}
 
 	return 1;

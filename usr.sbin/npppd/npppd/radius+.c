@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius+.c,v 1.7 2013/08/26 14:15:08 naddy Exp $ */
+/*	$OpenBSD: radius+.c,v 1.8 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -33,7 +33,6 @@
 #include <mpatrol.h>
 #endif
 
-#include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +41,8 @@
 #include "radiusconst.h"
 
 #include "radius+_local.h"
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 u_int8_t radius_id_counter = 0;
 
@@ -351,7 +352,7 @@ int radius_put_raw_attr_all(RADIUS_PACKET* packet, u_int8_t type,
 
 	off = 0;
 	while (off < length) {
-		len0 = MIN(length - off, 255-2);
+		len0 = MINIMUM(length - off, 255-2);
 
 		if(radius_ensure_add_capacity(packet, len0+2) != 0)
 			return 1;
@@ -514,7 +515,7 @@ int radius_put_vs_raw_attr_all(RADIUS_PACKET* packet, u_int32_t vendor,
 
 	off = 0;
 	while (off < length) {
-		len0 = MIN(length - off, 255-8);
+		len0 = MINIMUM(length - off, 255-8);
 
 		if(radius_ensure_add_capacity(packet, len0+8) != 0)
 			return 1;

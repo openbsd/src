@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_tun.c,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: npppd_tun.c,v 1.5 2015/01/19 01:48:59 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,6 @@
  */
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/ioctl.h>
@@ -81,7 +80,7 @@ int
 npppd_tundev_start(npppd *_this)
 {
 	int x, sock;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	struct ifaliasreq ifra;
 	struct sockaddr_in *sin0;
 
