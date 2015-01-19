@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.159 2015/01/19 16:49:05 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.160 2015/01/19 18:36:51 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -186,8 +186,6 @@ struct ipsec_acquire {
 	TAILQ_ENTRY(ipsec_acquire)      ipa_inp_next;
 };
 
-#endif /* _KERNEL */
-
 struct ipsec_policy {
 	struct sockaddr_encap	ipo_addr;
 	struct sockaddr_encap	ipo_mask;
@@ -224,8 +222,6 @@ struct ipsec_policy {
 	TAILQ_ENTRY(ipsec_policy)	ipo_tdb_next;	/* List TDB policies */
 	TAILQ_ENTRY(ipsec_policy)	ipo_list;	/* List of all policies */
 };
-
-#ifdef _KERNEL
 
 #define	IPSP_POLICY_NONE	0x0000	/* No flags set */
 #define	IPSP_POLICY_SOCKET	0x0001	/* Socket-attached policy */
