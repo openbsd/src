@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.70 2015/01/19 19:37:50 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.71 2015/01/19 20:00:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -298,7 +298,7 @@ struct client {
 	int			 clt_fcgi_type;
 	int			 clt_fcgi_chunked;
 	int			 clt_fcgi_end;
-	char			*clt_fcgi_remote_user;
+	char			*clt_remote_user;
 	struct evbuffer		*clt_srvevb;
 
 	struct evbuffer		*clt_log;

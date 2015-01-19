@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.66 2015/01/19 19:37:50 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.67 2015/01/19 20:00:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -190,8 +190,8 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 
 		if (crypt_checkpass(clt_pass, pass) == 0) {
 			explicit_bzero(line, linelen);
-			clt->clt_fcgi_remote_user = strdup(clt_user);
-			if (clt->clt_fcgi_remote_user != NULL)
+			clt->clt_remote_user = strdup(clt_user);
+			if (clt->clt_remote_user != NULL)
 				ret = 0;
 			break;
 		}
@@ -631,8 +631,8 @@ server_reset_http(struct client *clt)
 	clt->clt_line = 0;
 	clt->clt_done = 0;
 	clt->clt_chunk = 0;
-	free(clt->clt_fcgi_remote_user);
-	clt->clt_fcgi_remote_user = NULL;
+	free(clt->clt_remote_user);
+	clt->clt_remote_user = NULL;
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
 
@@ -853,8 +853,8 @@ server_close_http(struct client *clt)
 	server_httpdesc_free(desc);
 	free(desc);
 	clt->clt_descresp = NULL;
-	free(clt->clt_fcgi_remote_user);
-	clt->clt_fcgi_remote_user = NULL;
+	free(clt->clt_remote_user);
+	clt->clt_remote_user = NULL;
 }
 
 int
