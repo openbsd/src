@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.35 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.36 2015/01/19 00:41:44 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>		/* for MAXBSIZE */
+#include <sys/param.h>		/* MAXBSIZE */
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
