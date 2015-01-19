@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.158 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.159 2015/01/19 16:49:05 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -45,8 +45,10 @@ struct m_tag;
 /* IPSP global definitions. */
 
 #include <sys/types.h>
-#include <sys/queue.h>
+#ifdef _KERNEL
 #include <sys/timeout.h>
+#endif
+#include <sys/queue.h>
 #include <netinet/in.h>
 
 union sockaddr_union {
@@ -133,6 +135,8 @@ struct sockaddr_encap {
 #define	IPSP_DIRECTION_IN	0x1
 #define	IPSP_DIRECTION_OUT	0x2
 
+#ifdef _KERNEL
+
 #define	sen_data		Sen.Data
 #define	sen_ip_src		Sen.Sip4.Src
 #define	sen_ip_dst		Sen.Sip4.Dst
@@ -182,6 +186,8 @@ struct ipsec_acquire {
 	TAILQ_ENTRY(ipsec_acquire)      ipa_inp_next;
 };
 
+#endif /* _KERNEL */
+
 struct ipsec_policy {
 	struct sockaddr_encap	ipo_addr;
 	struct sockaddr_encap	ipo_mask;
@@ -218,6 +224,8 @@ struct ipsec_policy {
 	TAILQ_ENTRY(ipsec_policy)	ipo_tdb_next;	/* List TDB policies */
 	TAILQ_ENTRY(ipsec_policy)	ipo_list;	/* List of all policies */
 };
+
+#ifdef _KERNEL
 
 #define	IPSP_POLICY_NONE	0x0000	/* No flags set */
 #define	IPSP_POLICY_SOCKET	0x0001	/* Socket-attached policy */
@@ -376,6 +384,8 @@ struct tdb {				/* tunnel descriptor block */
 	TAILQ_HEAD(tdb_policy_head, ipsec_policy)	tdb_policy_head;
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
+
+#endif /* _KERNEL */
 
 struct tdb_ident {
 	u_int32_t spi;

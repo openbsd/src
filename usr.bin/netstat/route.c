@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.95 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.96 2015/01/19 16:49:04 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <net/if_types.h>
 #define _KERNEL
 #include <net/route.h>
+#include <netinet/ip_ipsp.h>
 #undef _KERNEL
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -54,7 +55,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <netinet/ip_ipsp.h>
 #include "netstat.h"
 
 /* alignment constraint for routing socket */
