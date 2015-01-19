@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.57 2014/11/03 17:20:46 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.58 2015/01/19 19:57:59 guenther Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -324,6 +324,8 @@ int	sockargs(struct mbuf **, const void *, size_t, int);
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t,
 		    register_t *);
+int	doaccept(struct proc *, int, struct sockaddr *, socklen_t *, int,
+	    register_t *);
 
 #ifdef SOCKBUF_DEBUG
 void	sblastrecordchk(struct sockbuf *, const char *);

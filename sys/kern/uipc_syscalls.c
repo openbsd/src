@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.98 2015/01/19 19:47:29 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.99 2015/01/19 19:57:59 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -64,8 +64,6 @@ extern	struct fileops socketops;
 
 int	copyaddrout(struct proc *, struct mbuf *, struct sockaddr *, socklen_t,
 	    socklen_t *);
-int	doaccept(struct proc *, int, struct sockaddr *, socklen_t *, int,
-	    register_t *);
 
 int
 sys_socket(struct proc *p, void *v, register_t *retval)
