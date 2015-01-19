@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.81 2015/01/19 19:52:17 markus Exp $
+#	$OpenBSD: Makefile,v 1.82 2015/01/19 20:30:24 markus Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -7,6 +7,7 @@ LIB=	ssh
 
 # These are files intended for a standalone libopenssh in the future.
 LIB_SRCS= \
+	ssh_api.c \
 	ssherr.c \
 	sshbuf.c \
 	sshbuf-getput-basic.c \
@@ -30,13 +31,18 @@ SRCS=	${LIB_SRCS} \
 	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
 	msg.c progressmeter.c dns.c \
 	monitor_fdpass.c addrmatch.c \
-	smult_curve25519_ref.c kexc25519.c kexc25519c.c \
+	smult_curve25519_ref.c \
+	kexc25519.c kexc25519c.c kexc25519s.c \
+	roaming_dummy.c \
 	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c hmac.c umac.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS+=	bufec.c bufbn.c cipher-3des1.c cipher-bf1.c rsa.c \
-	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c kexdh.c kexgex.c kexecdh.c \
-	kexdhc.c kexgexc.c kexecdhc.c ssh-pkcs11.c
+	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c \
+	kexdh.c kexgex.c kexecdh.c \
+	kexdhc.c kexgexc.c kexecdhc.c \
+	kexdhs.c kexgexs.c kexecdhs.c \
+	ssh-pkcs11.c
 .else
 SRCS+=	rijndael.c cipher-aesctr.c
 .endif
