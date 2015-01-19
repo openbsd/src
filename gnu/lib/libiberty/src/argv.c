@@ -79,14 +79,12 @@ dupargv (char **argv)
   /* the strings */
   for (argc = 0; argv[argc] != NULL; argc++)
     {
-      int len = strlen (argv[argc]);
-      copy[argc] = (char *) malloc (len + 1);
+      copy[argc] = strdup (argv[argc]);
       if (copy[argc] == NULL)
 	{
 	  freeargv (copy);
 	  return NULL;
 	}
-      strcpy (copy[argc], argv[argc]);
     }
   copy[argc] = NULL;
   return copy;
@@ -330,7 +328,7 @@ expandargv (argcp, argvp)
       FILE *f;
       /* An upper bound on the number of characters in the response
 	 file.  */
-      long pos;
+      off_t pos;
       /* The number of characters in the response file, when actually
 	 read.  */
       size_t len;
@@ -352,7 +350,7 @@ expandargv (argcp, argvp)
 	continue;
       if (fseek (f, 0L, SEEK_END) == -1)
 	goto error;
-      pos = ftell (f);
+      pos = ftello (f);
       if (pos == -1)
 	goto error;
       if (fseek (f, 0L, SEEK_SET) == -1)
