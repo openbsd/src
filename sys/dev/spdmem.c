@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.3 2011/04/19 21:55:25 chl Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.4 2015/01/19 18:38:41 miod Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -593,7 +593,6 @@ spdmem_fbdimm_decode(struct spdmem_softc *sc, struct spdmem *s)
 		    SPDMEM_FBDIMM_RANKS_WIDTH) + 2);
 
 		p_clk = (d_clk * bits) / 8 / cycle_time;
-		d_clk = ((d_clk + cycle_time / 2) ) / cycle_time;
 		p_clk -= p_clk % 100;
 		printf(" PC2-%d", p_clk);
 	}
