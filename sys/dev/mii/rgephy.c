@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.36 2015/01/20 03:54:26 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.37 2015/01/20 03:58:04 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -479,8 +479,6 @@ rgephy_load_dspcode(struct mii_softc *sc)
 void
 rgephy_reset(struct mii_softc *sc)
 {
-	uint16_t reg;
-
 	mii_phy_reset(sc);
 	DELAY(1000);
 	rgephy_load_dspcode(sc);
