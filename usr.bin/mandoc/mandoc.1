@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.72 2015/01/15 04:26:06 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.73 2015/01/20 21:12:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: January 20 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -159,9 +159,10 @@ to be reported on the standard error output and to affect the exit status.
 The
 .Ar level
 can be
-.Cm warning
+.Cm warning ,
+.Cm error ,
 or
-.Cm error ;
+.Cm unsupp ;
 .Cm all
 is an alias for
 .Cm warning .
@@ -532,7 +533,15 @@ At least one warning occurred, but no error, and
 .Fl W Ns Cm warning
 was specified.
 .It 3
-At least one parsing error occurred, and
+At least one parsing error occurred,
+but no unsupported feature was encountered, and
+.Fl W Ns Cm error
+or
+.Fl W Ns Cm warning
+was specified.
+.It 4
+At least on unsupported feature was encountered, and
+.Fl W Ns Cm unsupp ,
 .Fl W Ns Cm error
 or
 .Fl W Ns Cm warning
@@ -601,16 +610,28 @@ fields.
 .Pp
 Message levels have the following meanings:
 .Bl -tag -width "warning"
-.It Cm error
-An input file contains syntax that cannot be safely interpreted,
-either because it is invalid or because
+.It Cm unsupp
+An input file uses unsupported low-level
+.Xr roff 7
+features.
+The output may be incomplete and/or misformatted,
+so using GNU troff instead of
 .Nm
-does not implement it yet.
+to process the file may be preferable.
+.It Cm error
+An input file contains invalid syntax that cannot be safely interpreted.
 By discarding part of the input or inserting missing tokens,
 the parser is able to continue, and the error does not prevent
 generation of formatted output, but typically, preparing that
 output involves information loss, broken document structure
-or unintended formatting.
+or unintended formatting, no matter whether
+.Nm
+or GNU troff is used.
+In many cases, the output of
+.Nm
+and GNU troff is identical, but in some,
+.Nm
+is more resilient than GNU troff with respect to malformed input.
 .Pp
 Non-existent or unreadable input files are also reported on the
 .Cm error
@@ -627,9 +648,10 @@ formatting tools instead of
 .El
 .Pp
 Messages of the
-.Cm warning
+.Cm warning ,
+.Cm error ,
 and
-.Cm error
+.Cm unsupp
 levels except those about non-existent or unreadable input files
 are hidden unless their level, or a lower level, is requested using a
 .Fl W

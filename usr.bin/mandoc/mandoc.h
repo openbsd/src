@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.124 2015/01/15 04:26:06 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.125 2015/01/20 21:12:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,7 @@ enum	mandoclevel {
 	MANDOCLEVEL_RESERVED,
 	MANDOCLEVEL_WARNING, /* warnings: syntax, whitespace, etc. */
 	MANDOCLEVEL_ERROR, /* input has been thrown away */
-	MANDOCLEVEL_FATAL, /* input is borked */
+	MANDOCLEVEL_UNSUPP, /* input needs unimplemented features */
 	MANDOCLEVEL_BADARG, /* bad argument in invocation */
 	MANDOCLEVEL_SYSERR, /* system error */
 	MANDOCLEVEL_MAX
@@ -136,22 +136,18 @@ enum	mandocerr {
 	MANDOCERR_EQNEOF, /* unexpected end of equation */
 
 	/* related to tables */
-	MANDOCERR_TBL, /* bad table syntax */
-	MANDOCERR_TBLOPT, /* bad table option */
-	MANDOCERR_TBLLAYOUT, /* bad table layout */
 	MANDOCERR_TBLNOLAYOUT, /* no table layout cells specified */
 	MANDOCERR_TBLNODATA, /* no table data cells specified */
 	MANDOCERR_TBLIGNDATA, /* ignore data in cell */
 	MANDOCERR_TBLBLOCK, /* data block still open */
 	MANDOCERR_TBLEXTRADAT, /* ignoring extra data cells */
-	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 
 	/* related to document structure and macros */
 	MANDOCERR_FILE, /* cannot open file */
-	MANDOCERR_TOOLARGE, /* input too large */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character: number */
 	MANDOCERR_MACRO, /* skipping unknown macro: macro */
+	MANDOCERR_REQ_INSEC, /* skipping insecure request: request */
 	MANDOCERR_IT_STRAY, /* skipping item outside list: It ... */
 	MANDOCERR_TA_STRAY, /* skipping column outside column list: Ta */
 	MANDOCERR_BLK_NOTOPEN, /* skipping end of block that is not open */
@@ -172,6 +168,15 @@ enum	mandocerr {
 	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */
 	MANDOCERR_ARG_EXCESS, /* skipping excess arguments: macro ... args */
 	MANDOCERR_DIVZERO, /* divide by zero */
+
+	MANDOCERR_UNSUPP, /* ===== start of unsupported features ===== */
+
+	MANDOCERR_TOOLARGE, /* input too large */
+	MANDOCERR_REQ_UNSUPP, /* unsupported roff request: request */
+	MANDOCERR_TBL, /* unsupported table syntax */
+	MANDOCERR_TBLOPT, /* unsupported table option */
+	MANDOCERR_TBLLAYOUT, /* unsupported table layout */
+	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 
 	MANDOCERR_MAX
 };

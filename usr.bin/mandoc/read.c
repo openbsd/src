@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.86 2015/01/15 04:26:06 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.87 2015/01/20 21:12:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -75,7 +75,7 @@ static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
 	MANDOCERR_WARNING,
 	MANDOCERR_WARNING,
 	MANDOCERR_ERROR,
-	MANDOCERR_MAX,
+	MANDOCERR_UNSUPP,
 	MANDOCERR_MAX,
 	MANDOCERR_MAX
 };
@@ -175,22 +175,18 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unexpected end of equation",
 
 	/* related to tables */
-	"bad table syntax",
-	"bad table option",
-	"bad table layout",
 	"no table layout cells specified",
 	"no table data cells specified",
 	"ignore data in cell",
 	"data block still open",
 	"ignoring extra data cells",
-	"ignoring macro in table",
 
 	/* related to document structure and macros */
 	NULL,
-	"input too large",
 	"input stack limit exceeded, infinite loop?",
 	"skipping bad character",
 	"skipping unknown macro",
+	"skipping insecure request",
 	"skipping item outside list",
 	"skipping column outside column list",
 	"skipping end of block that is not open",
@@ -211,6 +207,14 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping all arguments",
 	"skipping excess arguments",
 	"divide by zero",
+
+	"unsupported feature",
+	"input too large",
+	"unsupported roff request",
+	"unsupported table syntax",
+	"unsupported table option",
+	"unsupported table layout",
+	"ignoring macro in table",
 };
 
 static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
@@ -218,7 +222,7 @@ static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
 	"RESERVED",
 	"WARNING",
 	"ERROR",
-	"FATAL",
+	"UNSUPP",
 	"BADARG",
 	"SYSERR"
 };
@@ -936,7 +940,7 @@ mandoc_msg(enum mandocerr er, struct mparse *m,
 {
 	enum mandoclevel level;
 
-	level = MANDOCLEVEL_ERROR;
+	level = MANDOCLEVEL_UNSUPP;
 	while (er < mandoclimits[level])
 		level--;
 
