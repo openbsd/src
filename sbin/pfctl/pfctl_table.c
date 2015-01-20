@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.73 2015/01/16 06:40:00 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.74 2015/01/20 17:19:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -34,9 +34,10 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
-#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -456,20 +457,24 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 		printf("\t nomatch");
 	if (dns && ad->pfra_net == hostnet) {
 		char host[NI_MAXHOST];
-		union sockaddr_union sa;
+		struct sockaddr_storage ss;
 
 		strlcpy(host, "?", sizeof(host));
-		bzero(&sa, sizeof(sa));
-		sa.sa.sa_family = ad->pfra_af;
-		if (sa.sa.sa_family == AF_INET) {
-			sa.sa.sa_len = sizeof(sa.sin);
-			sa.sin.sin_addr = ad->pfra_ip4addr;
+		bzero(&ss, sizeof(ss));
+		ss.ss_family = ad->pfra_af;
+		if (ss.ss_family == AF_INET) {
+			struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
+
+			sin->sin_len = sizeof(*sin);
+			sin->sin_addr = ad->pfra_ip4addr;
 		} else {
-			sa.sa.sa_len = sizeof(sa.sin6);
-			sa.sin6.sin6_addr = ad->pfra_ip6addr;
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
+
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_addr = ad->pfra_ip6addr;
 		}
-		if (getnameinfo(&sa.sa, sa.sa.sa_len, host, sizeof(host),
-		    NULL, 0, NI_NAMEREQD) == 0)
+		if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host,
+		    sizeof(host), NULL, 0, NI_NAMEREQD) == 0)
 			printf("\t(%s)", host);
 	}
 	if (ad->pfra_ifname[0] != '\0')
