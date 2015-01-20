@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.24 2015/01/16 00:18:06 deraadt Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.25 2015/01/20 01:48:13 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #ifndef _SYSTRACE_H_
 #define _SYSTRACE_H_
 
+#include <sys/syslimits.h>
 #include <sys/ioccom.h>
 #include <sys/rwlock.h>
 
