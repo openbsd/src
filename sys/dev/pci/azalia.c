@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.218 2015/01/13 01:54:19 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.219 2015/01/20 09:46:31 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2349,14 +2349,23 @@ azalia_codec_find_defdac(codec_t *this, int index, int depth)
 				if (ret >= 0)
 					return ret;
 			}
-		} else {
-			index = w->connections[w->selected];
-			if (VALID_WIDGET_NID(index, this)) {
-				ret = azalia_codec_find_defdac(this, index,
-				    depth);
-				if (ret >= 0)
-					return ret;
-			}
+		/* 7.3.3.2 Connection Select Control
+		 * If an attempt is made to Set an index value greater than
+		 * the number of list entries (index is equal to or greater
+		 * than the Connection List Length property for the widget)
+		 * the behavior is not predictable.
+		 */
+
+		/* negative index values are wrong too */
+		} else if (w->selected >= 0 &&
+			w->selected < sizeof(w->connections)) {
+				index = w->connections[w->selected];
+				if (VALID_WIDGET_NID(index, this)) {
+					ret = azalia_codec_find_defdac(this,
+						index, depth);
+					if (ret >= 0)
+						return ret;
+				}
 		}
 	}
 
@@ -2394,14 +2403,23 @@ azalia_codec_find_defadc_sub(codec_t *this, nid_t node, int index, int depth)
 				if (ret >= 0)
 					return ret;
 			}
-		} else {
-			index = w->connections[w->selected];
-			if (VALID_WIDGET_NID(index, this)) {
-				ret = azalia_codec_find_defadc_sub(this, node,
-				    index, depth);
-				if (ret >= 0)
-					return ret;
-			}
+		/* 7.3.3.2 Connection Select Control
+		 * If an attempt is made to Set an index value greater than
+		 * the number of list entries (index is equal to or greater
+		 * than the Connection List Length property for the widget)
+		 * the behavior is not predictable.
+		 */
+
+		/* negative index values are wrong too */
+		} else if (w->selected >= 0 &&
+			w->selected < sizeof(w->connections)) {
+				index = w->connections[w->selected];
+				if (VALID_WIDGET_NID(index, this)) {
+					ret = azalia_codec_find_defadc_sub(this,
+						node, index, depth);
+					if (ret >= 0)
+						return ret;
+				}
 		}
 	}
 	return -1;
