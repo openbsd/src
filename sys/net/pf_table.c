@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.104 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.105 2015/01/20 17:25:35 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1896,6 +1896,7 @@ pfr_setflags_ktable(struct pfr_ktable *kt, int newf)
 	struct pfr_kentryworkq	addrq;
 
 	if (!(newf & PFR_TFLAG_REFERENCED) &&
+	    !(newf & PFR_TFLAG_REFDANCHOR) &&
 	    !(newf & PFR_TFLAG_PERSIST))
 		newf &= ~PFR_TFLAG_ACTIVE;
 	if (!(newf & PFR_TFLAG_ACTIVE))
