@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.50 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.51 2015/01/20 17:04:21 mpi Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@ typedef u_int sr_t;
 
 /* functions used by the bus layer for device accesses */
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
-void pmap_kremove_pg(vaddr_t va);
 
 /* cache flags */
 #define PMAP_CACHE_DEFAULT	0 	/* WB cache managed mem, devices not */

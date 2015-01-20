@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.136 2014/12/23 01:12:33 dlg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.137 2015/01/20 17:04:20 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -75,11 +75,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/systm.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -90,8 +90,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
-
-#include <powerpc/lock.h>
 
 struct dumpmem dumpmem[VM_PHYSSEG_MAX];
 u_int ndumpmem;
@@ -164,7 +162,6 @@ void pmap_syncicache_user_virt(pmap_t pm, vaddr_t va);
 void _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
     int cache);
 void pmap_remove_pg(pmap_t pm, vaddr_t va);
-void pmap_kremove_pg(vaddr_t va);
 
 /* setup/initialization functions */
 void pmap_avail_setup(void);
@@ -193,6 +190,7 @@ int pmap_initialized = 0;
 int physmem;
 int physmaxaddr;
 
+#ifdef MULTIPROCESSOR
 void pmap_hash_lock_init(void);
 void pmap_hash_lock(int entry);
 void pmap_hash_unlock(int entry)  __noprof;
@@ -250,6 +248,7 @@ pmap_hash_unlock(int entry)
 {
 	atomic_clearbits_int(&pmap_hash_lock_word,  1 << entry);
 }
+#endif /* MULTIPROCESSOR */
 
 /* virtual to physical helpers */
 static inline int
@@ -775,7 +774,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted))
-		pmap_kremove_pg(va); /* pted is reused */
+		pmap_remove_pg(pm, va); /* pted is reused */
 
 	pm->pm_stats.resident_count++;
 	if (prot & PROT_WRITE) {
@@ -839,57 +838,6 @@ pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable)
 	_pmap_kenter_pa(va, pa, prot, 0, cacheable);
 }
 
-
-/*
- * remove kernel (pmap_kernel()) mapping, one page
- */
-void
-pmap_kremove_pg(vaddr_t va)
-{
-	struct pte_desc *pted;
-	pmap_t pm;
-	int s;
-
-	pm = pmap_kernel();
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL)
-		return;
-
-	if (!PTED_VALID(pted))
-		return; /* not mapped */
-
-	s = splvm();
-
-	pm->pm_stats.resident_count--;
-
-	/*
-	 * HASH needs to be locked here as well as pmap, and pv list.
-	 * so that we know the mapping information is either valid,
-	 * or that the mapping is not present in the hash table.
-	 */
-	pmap_hash_remove(pted);
-
-	if (pted->pted_va & PTED_VA_EXEC_M) {
-		u_int sn = VP_SR(va);
-
-		pted->pted_va &= ~PTED_VA_EXEC_M;
-		pm->pm_exec[sn]--;
-		if (pm->pm_exec[sn] == 0)
-			pm->pm_sr[sn] |= SR_NOEXEC;
-	}
-
-	if (PTED_MANAGED(pted))
-		pmap_remove_pv(pted);
-
-	/* invalidate pted; */
-	if (ppc_proc_is_64b)
-		pted->p.pted_pte64.pte_hi &= ~PTE_VALID_64;
-	else
-		pted->p.pted_pte32.pte_hi &= ~PTE_VALID_32;
-
-	splx(s);
-
-}
 /*
  * remove kernel (pmap_kernel()) mappings
  */
@@ -897,7 +845,7 @@ void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	for (len >>= PAGE_SHIFT; len >0; len--, va += PAGE_SIZE)
-		pmap_kremove_pg(va);
+		pmap_remove_pg(pmap_kernel(), va);
 }
 
 void
@@ -941,7 +889,9 @@ pmap_hash_remove(struct pte_desc *pted)
 	struct pte_64 *ptp64;
 	struct pte_32 *ptp32;
 	int sr, idx;
+#ifdef MULTIPROCESSOR
 	int s;
+#endif
 
 	sr = ptesr(pm->pm_sr, va);
 	idx = pteidx(sr, va);
@@ -953,8 +903,10 @@ pmap_hash_remove(struct pte_desc *pted)
 		int entry = PTED_PTEGIDX(pted); 
 		ptp64 = pmap_ptable64 + (idx * 8);
 		ptp64 += entry; /* increment by entry into pteg */
+#ifdef MULTIPROCESSOR
 		s = ppc_intr_disable();
 		pmap_hash_lock(entry);
+#endif
 		/*
 		 * We now have the pointer to where it will be, if it is
 		 * currently mapped. If the mapping was thrown away in
@@ -965,14 +917,18 @@ pmap_hash_remove(struct pte_desc *pted)
 		    (PTED_HID(pted) ? PTE_HID_64 : 0)) == ptp64->pte_hi) {
 			pte_zap((void*)ptp64, pted);
 		}
+#ifdef MULTIPROCESSOR
 		pmap_hash_unlock(entry);
 		ppc_intr_enable(s);
+#endif
 	} else {
 		int entry = PTED_PTEGIDX(pted); 
 		ptp32 = pmap_ptable32 + (idx * 8);
 		ptp32 += entry; /* increment by entry into pteg */
+#ifdef MULTIPROCESSOR
 		s = ppc_intr_disable();
 		pmap_hash_lock(entry);
+#endif
 		/*
 		 * We now have the pointer to where it will be, if it is
 		 * currently mapped. If the mapping was thrown away in
@@ -983,8 +939,10 @@ pmap_hash_remove(struct pte_desc *pted)
 		    (PTED_HID(pted) ? PTE_HID_32 : 0)) == ptp32->pte_hi) {
 			pte_zap((void*)ptp32, pted);
 		}
+#ifdef MULTIPROCESSOR
 		pmap_hash_unlock(entry);
 		ppc_intr_enable(s);
+#endif
 	}
 }
 
@@ -2388,8 +2346,10 @@ pte_insert64(struct pte_desc *pted)
 	int off;
 	int secondary;
 	struct pte_64 *ptp64;
-	int sr, idx;
-	int i, s;
+	int sr, idx, i;
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
@@ -2416,12 +2376,13 @@ pte_insert64(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
+#ifdef MULTIPROCESSOR
 		s = ppc_intr_disable();
 		if (pmap_hash_lock_try(i) == 0) {
 			ppc_intr_enable(s);
 			continue;
 		}
-
+#endif
 		/* not valid, just load */
 		pted->pted_va |= i;
 		ptp64[i].pte_hi =
@@ -2431,8 +2392,10 @@ pte_insert64(struct pte_desc *pted)
 		ptp64[i].pte_hi |= PTE_VALID_64;
 		__asm volatile ("sync");
 
+#ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
 		ppc_intr_enable(s);
+#endif
 		return;
 	}
 	/* try fill of secondary hash */
@@ -2440,11 +2403,13 @@ pte_insert64(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
+#ifdef MULTIPROCESSOR
 		s = ppc_intr_disable();
 		if (pmap_hash_lock_try(i) == 0) {
 			ppc_intr_enable(s);
 			continue;
 		}
+#endif
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
 		ptp64[i].pte_hi =
@@ -2454,21 +2419,27 @@ pte_insert64(struct pte_desc *pted)
 		ptp64[i].pte_hi |= PTE_VALID_64;
 		__asm volatile ("sync");
 
+#ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
 		ppc_intr_enable(s);
+#endif
 		return;
 	}
 
-	/* need decent replacement algorithm */
+#ifdef MULTIPROCESSOR
 busy:
+#endif
+	/* need decent replacement algorithm */
 	__asm__ volatile ("mftb %0" : "=r"(off));
 	secondary = off & 8;
 
+#ifdef MULTIPROCESSOR
 	s = ppc_intr_disable();
 	if (pmap_hash_lock_try(off & 7) == 0) {
 		ppc_intr_enable(s);
 		goto busy;
 	}
+#endif
 
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
@@ -2510,8 +2481,10 @@ busy:
 	__asm__ volatile ("sync");
 	ptp64->pte_hi |= PTE_VALID_64;
 
+#ifdef MULTIPROCESSOR
 	pmap_hash_unlock(off & 7);
 	ppc_intr_enable(s);
+#endif
 }
 
 void
@@ -2520,8 +2493,10 @@ pte_insert32(struct pte_desc *pted)
 	int off;
 	int secondary;
 	struct pte_32 *ptp32;
-	int sr, idx;
-	int i, s;
+	int sr, idx, i;
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
 	idx = pteidx(sr, pted->pted_va);
@@ -2549,11 +2524,13 @@ pte_insert32(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
+#ifdef MULTIPROCESSOR
 		s = ppc_intr_disable();
 		if (pmap_hash_lock_try(i) == 0) {
 			ppc_intr_enable(s);
 			continue;
 		}
+#endif
 
 		/* not valid, just load */
 		pted->pted_va |= i;
@@ -2563,8 +2540,10 @@ pte_insert32(struct pte_desc *pted)
 		ptp32[i].pte_hi |= PTE_VALID_32;
 		__asm volatile ("sync");
 
+#ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
 		ppc_intr_enable(s);
+#endif
 		return;
 	}
 	/* try fill of secondary hash */
@@ -2572,11 +2551,13 @@ pte_insert32(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
+#ifdef MULTIPROCESSOR
 		s = ppc_intr_disable();
 		if (pmap_hash_lock_try(i) == 0) {
 			ppc_intr_enable(s);
 			continue;
 		}
+#endif
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
 		ptp32[i].pte_hi =
@@ -2586,20 +2567,26 @@ pte_insert32(struct pte_desc *pted)
 		ptp32[i].pte_hi |= PTE_VALID_32;
 		__asm volatile ("sync");
 
+#ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
 		ppc_intr_enable(s);
+#endif
 		return;
 	}
 
-	/* need decent replacement algorithm */
+#ifdef MULTIPROCESSOR
 busy:
+#endif
+	/* need decent replacement algorithm */
 	__asm__ volatile ("mftb %0" : "=r"(off));
 	secondary = off & 8;
+#ifdef MULTIPROCESSOR
 	s = ppc_intr_disable();
 	if (pmap_hash_lock_try(off & 7) == 0) {
 		ppc_intr_enable(s);
 		goto busy;
 	}
+#endif
 
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
@@ -2631,8 +2618,10 @@ busy:
 	__asm__ volatile ("sync");
 	ptp32->pte_hi |= PTE_VALID_32;
 
+#ifdef MULTIPROCESSOR
 	pmap_hash_unlock(off & 7);
 	ppc_intr_enable(s);
+#endif
 }
 
 #ifdef DEBUG_PMAP
