@@ -1,4 +1,3 @@
-/*	$OpenBSD: zero_bytes.c,v 1.6 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * Copyright (c) 2003-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
