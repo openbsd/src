@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.24 2015/01/20 06:02:30 guenther Exp $	*/
+/*	$OpenBSD: message.c,v 1.25 2015/01/20 06:08:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -75,6 +75,14 @@ struct msgfacility {
 	char	       *mf_filename;		/* Name of file */
 	FILE	       *mf_fptr;		/* File pointer to output to */
 };
+
+/*
+ * Message Facilities
+ */
+#define MF_STDOUT	1			/* Standard Output */
+#define MF_NOTIFY	2			/* Notify mail service */
+#define MF_FILE		3			/* A normal file */
+#define MF_SYSLOG	4			/* syslog() */
 
 static void msgsendstdout(struct msgfacility *, int, int, char *);
 static void msgsendsyslog(struct msgfacility *, int, int, char *);
