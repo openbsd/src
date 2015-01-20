@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.23 2014/07/05 07:57:43 guenther Exp $	*/
+/*	$OpenBSD: child.c,v 1.24 2015/01/20 03:55:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -365,8 +365,7 @@ waitup(void)
 	debugmsg(DM_MISC, "waitup() Call select(), activechildren=%d\n", 
 		 activechildren);
 
-	count = select(rchildfdsn+1, (SELECT_FD_TYPE *) rchildfdsp, 
-		       NULL, NULL, NULL);
+	count = select(rchildfdsn+1, rchildfdsp, NULL, NULL, NULL);
 
 	debugmsg(DM_MISC, "waitup() select returned %d activechildren = %d\n", 
 		 count, activechildren);

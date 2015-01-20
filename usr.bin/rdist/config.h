@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.10 2014/07/12 03:32:00 guenther Exp $	*/
+/*	$OpenBSD: config.h,v 1.11 2015/01/20 03:55:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -97,12 +97,5 @@
 #define SL_INFO		LOG_INFO		/* General info */
 #define SL_NOTICE	LOG_NOTICE		/* General notices */
 #define SL_DEBUG	LOG_DEBUG		/* Debugging */
-
-/*
- * Arg types to select(2)
- */
-#ifndef SELECT_FD_TYPE
-#define SELECT_FD_TYPE	fd_set
-#endif
 
 #endif	/* __config_h__ */
