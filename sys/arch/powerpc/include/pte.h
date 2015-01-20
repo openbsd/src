@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2015/01/20 18:14:39 mpi Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*-
@@ -34,8 +34,6 @@
 
 #ifndef	_POWERPC_PTE_H_
 #define	_POWERPC_PTE_H_
-
-#include <sys/queue.h>
 
 /*
  * Page Table Entries
@@ -97,11 +95,6 @@ struct pte_64 {
 #define	PTE_RO_64		0x0000000000000003ULL
 #define	PTE_RW_64		0x0000000000000002ULL
 
-#ifndef	_LOCORE
-typedef	struct pte_32 pte32_t;
-typedef	struct pte_64 pte64_t;
-#endif	/* _LOCORE */
-
 /*
  * Extract bits from address
  */
@@ -111,13 +104,6 @@ typedef	struct pte_64 pte64_t;
 #define	ADDR_API_SHIFT_32	22
 #define	ADDR_API_SHIFT_64	16
 #define	ADDR_POFF		0x00000fff
-
-#ifndef	_LOCORE
-#ifdef	_KERNEL
-extern struct pte *ptable;
-extern int ptab_cnt;
-#endif	/* _KERNEL */
-#endif	/* _LOCORE */
 
 /*
  * Bits in DSISR:
@@ -139,10 +125,4 @@ extern int ptab_cnt;
 #define	ISSRR1_PROTECT	0x08000000
 #define	ISSRR1_SEGMENT	0x00200000
 
-#ifdef	_KERNEL
-#ifndef	_LOCORE
-extern u_int dsisr(void);
-extern vaddr_t dar(void);
-#endif	/* _KERNEL */
-#endif	/* _LOCORE */
 #endif	/* _POWERPC_PTE_H_ */
