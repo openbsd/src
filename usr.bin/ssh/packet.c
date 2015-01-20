@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.202 2015/01/19 20:30:23 markus Exp $ */
+/* $OpenBSD: packet.c,v 1.203 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,12 +37,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/param.h>
-
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
@@ -52,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <signal.h>
 #include <time.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.c,v 1.108 2014/12/21 22:27:56 djm Exp $ */
+/* $OpenBSD: auth.c,v 1.109 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -37,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "match.h"
@@ -285,7 +285,7 @@ auth_root_allowed(const char *method)
 char *
 expand_authorized_keys(const char *filename, struct passwd *pw)
 {
-	char *file, ret[MAXPATHLEN];
+	char *file, ret[PATH_MAX];
 	int i;
 
 	file = percent_expand(filename, "h", pw->pw_dir,
@@ -377,7 +377,7 @@ int
 auth_secure_path(const char *name, struct stat *stp, const char *pw_dir,
     uid_t uid, char *err, size_t errlen)
 {
-	char buf[MAXPATHLEN], homedir[MAXPATHLEN];
+	char buf[PATH_MAX], homedir[PATH_MAX];
 	char *cp;
 	int comparehome = 0;
 	struct stat st;

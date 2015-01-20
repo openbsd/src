@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.437 2015/01/20 20:16:21 markus Exp $ */
+/* $OpenBSD: sshd.c,v 1.438 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
@@ -62,6 +61,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/bn.h>
@@ -210,7 +210,7 @@ u_char *session_id2 = NULL;
 u_int session_id2_len = 0;
 
 /* record remote hostname or ip */
-u_int utmp_len = MAXHOSTNAMELEN;
+u_int utmp_len = HOST_NAME_MAX+1;
 
 /* options.max_startup sized array of fd ints */
 int *startup_pipes = NULL;
@@ -1460,8 +1460,8 @@ main(int ac, char **av)
 				exit(1);
 			break;
 		case 'u':
-			utmp_len = (u_int)strtonum(optarg, 0, MAXHOSTNAMELEN+1, NULL);
-			if (utmp_len > MAXHOSTNAMELEN) {
+			utmp_len = (u_int)strtonum(optarg, 0, HOST_NAME_MAX+1+1, NULL);
+			if (utmp_len > HOST_NAME_MAX+1) {
 				fprintf(stderr, "Invalid utmp length.\n");
 				exit(1);
 			}

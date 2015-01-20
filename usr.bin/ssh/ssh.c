@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.413 2015/01/16 07:19:48 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.414 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,6 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
@@ -62,6 +61,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/evp.h>
@@ -439,7 +439,7 @@ resolve_canonicalize(char **hostp, int port)
 static void
 process_config_files(const char *host_arg, struct passwd *pw, int post_canon)
 {
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	int r;
 
 	if (config != NULL) {
@@ -490,7 +490,7 @@ int
 main(int ac, char **av)
 {
 	int i, r, opt, exit_status, use_syslog, config_test = 0;
-	char *p, *cp, *line, *argv0, buf[MAXPATHLEN], *host_arg, *logfile;
+	char *p, *cp, *line, *argv0, buf[PATH_MAX], *host_arg, *logfile;
 	char thishost[NI_MAXHOST], shorthost[NI_MAXHOST], portstr[NI_MAXSERV];
 	char cname[NI_MAXHOST];
 	struct stat st;

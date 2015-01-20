@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-client.c,v 1.116 2015/01/14 13:54:13 djm Exp $ */
+/* $OpenBSD: sftp-client.c,v 1.117 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -20,12 +20,12 @@
 /* XXX: remove all logging, only return status codes */
 /* XXX: copy between two remote sites */
 
+#include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/param.h>
 #include <sys/statvfs.h>
 #include <sys/uio.h>
 

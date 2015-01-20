@@ -1,4 +1,4 @@
-/* $OpenBSD: sshlogin.c,v 1.30 2015/01/16 06:40:12 deraadt Exp $ */
+/* $OpenBSD: sshlogin.c,v 1.31 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>	/* MAXHOSTNAMELEN */
 #include <sys/socket.h>
 
 #include <errno.h>
@@ -52,6 +51,7 @@
 #include <util.h>
 #include <utmp.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include "sshlogin.h"
 #include "log.h"
@@ -114,7 +114,7 @@ get_last_login_time(uid_t uid, const char *logname,
 static void
 store_lastlog_message(const char *user, uid_t uid)
 {
-	char *time_string, hostname[MAXHOSTNAMELEN] = "", buf[512];
+	char *time_string, hostname[HOST_NAME_MAX+1] = "", buf[512];
 	time_t last_login_time;
 
 	if (!options.print_lastlog)

@@ -1,4 +1,4 @@
-/* $OpenBSD: kexgexs.c,v 1.22 2015/01/20 07:55:33 djm Exp $ */
+/* $OpenBSD: kexgexs.c,v 1.23 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MIN MAX */
 
 #include <stdio.h>
 #include <string.h>

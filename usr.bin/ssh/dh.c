@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.54 2015/01/19 20:16:15 markus Exp $ */
+/* $OpenBSD: dh.c,v 1.55 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MIN */
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "dh.h"
 #include "pathnames.h"

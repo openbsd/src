@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keyscan.c,v 1.95 2015/01/19 20:32:39 markus Exp $ */
+/* $OpenBSD: ssh-keyscan.c,v 1.96 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/time.h>

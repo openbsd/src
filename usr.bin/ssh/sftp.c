@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.169 2015/01/14 13:54:13 djm Exp $ */
+/* $OpenBSD: sftp.c,v 1.170 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -15,12 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <sys/statvfs.h>
 
 #include <ctype.h>
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 #include <stdarg.h>
 
@@ -1380,7 +1381,7 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 	int cmdnum, i;
 	unsigned long n_arg = 0;
 	Attrib a, *aa;
-	char path_buf[MAXPATHLEN];
+	char path_buf[PATH_MAX];
 	int err = 0;
 	glob_t g;
 

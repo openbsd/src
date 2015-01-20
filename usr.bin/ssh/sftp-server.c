@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.104 2015/01/14 13:54:13 djm Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.105 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -15,10 +15,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/statvfs.h>
 
@@ -1031,7 +1031,7 @@ process_readdir(u_int32_t id)
 		send_status(id, SSH2_FX_FAILURE);
 	} else {
 		struct stat st;
-		char pathname[MAXPATHLEN];
+		char pathname[PATH_MAX];
 		Stat *stats;
 		int nstats = 10, count = 0, i;
 
@@ -1126,7 +1126,7 @@ process_rmdir(u_int32_t id)
 static void
 process_realpath(u_int32_t id)
 {
-	char resolvedname[MAXPATHLEN];
+	char resolvedname[PATH_MAX];
 	char *path;
 	int r;
 
@@ -1207,7 +1207,7 @@ static void
 process_readlink(u_int32_t id)
 {
 	int r, len;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	char *path;
 
 	if ((r = sshbuf_get_cstring(iqueue, &path, NULL)) != 0)

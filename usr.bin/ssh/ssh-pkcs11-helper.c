@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.9 2014/12/11 08:20:09 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.10 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 
