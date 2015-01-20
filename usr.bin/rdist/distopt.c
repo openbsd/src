@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.11 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.12 2015/01/20 06:02:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,12 @@
 /*
  * Distfile Option Information
  */
-DISTOPTINFO distoptinfo[] = {
+struct distoptinfo {
+	opt_t		do_value;
+	char	       *do_name;
+	char	       *do_arg;
+	size_t	       arg_size;
+} distoptinfo[] = {
 	{ DO_CHKNFS,		"chknfs", 	NULL,		0},
 	{ DO_CHKREADONLY,	"chkreadonly",	NULL,		0},
 	{ DO_CHKSYM,		"chksym",	NULL,		0},
@@ -70,7 +75,7 @@ DISTOPTINFO distoptinfo[] = {
 /*
  * Get a Distfile Option entry named "name".
  */
-DISTOPTINFO *
+static struct distoptinfo *
 getdistopt(char *name, int *len)
 {
 	int i;
@@ -92,7 +97,7 @@ int
 parsedistopts(char *str, opt_t *optptr, int doerrs)
 {
 	char *string, *optstr;
-	DISTOPTINFO *distopt;
+	struct distoptinfo *distopt;
 	int len;
 
 	/* strtok() is destructive */

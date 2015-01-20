@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.5 2003/05/14 01:34:35 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.6 2015/01/20 06:02:30 guenther Exp $	*/
 
 #ifndef __myTYPES_H__
 #define __myTYPES_H__
@@ -37,17 +37,7 @@
 #define DO_DEFOWNER		0x0800000
 #define DO_SPARSE		0x1000000	/* XXX not implemented */
 
-/*
- * Dist option information
- */
 typedef long		opt_t;
-struct _distoptinfo {
-	opt_t		do_value;
-	char	       *do_name;
-	char	       *do_arg;
-	size_t	       arg_size;
-};
-typedef struct _distoptinfo DISTOPTINFO;
 
 	/* Debug Message types */
 #define DM_CALL		0x01
@@ -55,15 +45,6 @@ typedef struct _distoptinfo DISTOPTINFO;
 #define DM_CHILD	0x04
 #define DM_MISC		0x10
 #define DM_ALL		0x17
-
-/*
- * Description of a message type
- */
-struct _msgtype {
-	int		mt_type;		/* Type (bit) */
-	char	       *mt_name;		/* Name of message type */
-};
-typedef struct _msgtype MSGTYPE;
 
 /*
  * Message Type definitions
@@ -83,23 +64,6 @@ typedef struct _msgtype MSGTYPE;
 			 MT_WARNING|MT_CHANGE|\
 			 MT_INFO|MT_NOTICE|\
 			 MT_SYSLOG|MT_VERBOSE)
-
-/*
- * Description of message facilities
- */
-typedef struct _msgfacility MSGFACILITY;
-
-struct _msgfacility {
-	/* compile time initialized data */
-	int		mf_msgfac;		/* One of MF_* from below */
-	char	       *mf_name;		/* Name of this facility */
-	void	      (*mf_sendfunc)		/* Function to send msg */
-			(MSGFACILITY *, int, int, char *);
-	/* run time initialized data */
-	int		mf_msgtypes;		/* Bitmask of MT_* from above*/
-	char	       *mf_filename;		/* Name of file */
-	FILE	       *mf_fptr;		/* File pointer to output to */
-};
 
 /*
  * Message Facilities
