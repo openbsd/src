@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.34 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.35 2015/01/20 18:26:57 deraadt Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -30,10 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MSIZE */
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
+#include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
 #include <net/if.h>

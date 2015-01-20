@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.31 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.32 2015/01/20 18:26:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -21,11 +21,11 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include <net/bpf.h>
-#include <net/if.h>
-#include <net/pfvar.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <netinet/if_ether.h>
+#include <net/bpf.h>
+#include <net/pfvar.h>
 
 #include <rpc/rpc.h>
 

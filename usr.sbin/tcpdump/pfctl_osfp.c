@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.9 2014/08/14 12:44:44 mpi Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.10 2015/01/20 18:26:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -20,6 +20,9 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <net/if.h>
 #include <net/pfvar.h>
 
@@ -30,8 +33,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
 
 #include "privsep.h"
 #include "pfctl_parser.h"
