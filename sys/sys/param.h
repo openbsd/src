@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.114 2015/01/20 18:12:49 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.115 2015/01/20 18:14:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -219,7 +219,10 @@
  * For the scheduler to maintain a 1:1 mapping of CPU `tick' to `%age',
  * FSHIFT must be at least 11; this gives us a maximum load avg of ~1024.
  */
-#define	FSHIFT	11		/* bits to right of fixed binary point */
-#define FSCALE	(1<<FSHIFT)
+#define	_FSHIFT	11		/* bits to right of fixed binary point */
+#ifdef _KERNEL
+#define	FSHIFT	_FSHIFT	
+#endif
+#define FSCALE	(1<<_FSHIFT)
 
 #endif /* !_SYS_PARAM_H_ */
