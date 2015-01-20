@@ -1,3 +1,4 @@
+/*	$OpenBSD: audit.c,v 1.2 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *

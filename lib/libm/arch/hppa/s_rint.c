@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_rint.c,v 1.11 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * Written by Michael Shalayeff. Public Domain
  */

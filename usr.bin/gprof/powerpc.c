@@ -1,3 +1,4 @@
+/*	$OpenBSD: powerpc.c,v 1.5 2015/01/20 04:41:01 krw Exp $	*/
 #include        "gprof.h"
 
 void

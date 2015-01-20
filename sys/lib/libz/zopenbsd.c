@@ -1,3 +1,4 @@
+/*	$OpenBSD: zopenbsd.c,v 1.4 2015/01/20 04:41:01 krw Exp $	*/
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <lib/libz/zutil.h>

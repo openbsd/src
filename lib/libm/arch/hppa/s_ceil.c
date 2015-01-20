@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_ceil.c,v 1.9 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * Written by Michael Shalayeff. Public Domain
  */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fopen_test.c,v 1.2 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * Copyright (c) 2008 Bret S. Lambert <blambert@openbsd.org>
  *

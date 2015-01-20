@@ -1,3 +1,4 @@
+/*	$OpenBSD: hppa.c,v 1.4 2015/01/20 04:41:01 krw Exp $	*/
 #include        "gprof.h"
 
 void

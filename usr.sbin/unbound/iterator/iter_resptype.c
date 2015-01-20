@@ -1,3 +1,4 @@
+/*	$OpenBSD: iter_resptype.c,v 1.2 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * iterator/iter_resptype.c - response type information and classification.
  *

@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec_elf32.c,v 1.3 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * Public domain. Author: Artur Grabowski <art@openbsd.org>
  */
