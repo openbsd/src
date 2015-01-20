@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE */
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/types.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>

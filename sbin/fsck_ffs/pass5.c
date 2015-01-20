@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.47 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.48 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE roundup setbit */
+#include <sys/param.h>	/* MAXBSIZE roundup setbit */
 #include <sys/time.h>
 #include <sys/lock.h>
 #include <sys/ucred.h>

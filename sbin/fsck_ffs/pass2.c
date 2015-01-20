@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.36 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.37 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE roundup */
+#include <sys/param.h>	/* DEV_BSIZE roundup */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>

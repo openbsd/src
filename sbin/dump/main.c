@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2015/01/20 18:22:20 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE roundup */
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE roundup */
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>

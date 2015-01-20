@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.45 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.46 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG setbit btodb */
+#include <sys/param.h>	/* setbit btodb */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>

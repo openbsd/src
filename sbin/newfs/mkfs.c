@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.88 2015/01/18 04:48:24 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.89 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE roundup btodb setbit */
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE roundup btodb setbit */
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/disklabel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.16 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.17 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG */
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/mount.h>

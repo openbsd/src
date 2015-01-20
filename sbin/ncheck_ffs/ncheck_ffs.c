@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.48 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.49 2015/01/20 18:22:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -54,7 +54,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE */
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE */
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>

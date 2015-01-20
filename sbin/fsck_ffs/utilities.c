@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.48 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.49 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE isset setbit clrbit */
+#include <sys/param.h>	/* DEV_BSIZE isset setbit clrbit */
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <ufs/ufs/dinode.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.98 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.99 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE MAXBSIZE */
+#include <sys/param.h>	/* DEV_BSIZE MAXBSIZE */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>

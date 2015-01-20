@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.18 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.19 2015/01/20 18:22:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG */
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <ufs/ffs/fs.h>

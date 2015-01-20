@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.35 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.36 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 /*
  * Fix up / report on disk quotas & usage
  */
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE MAXBSIZE */
+#include <sys/param.h>	/* DEV_BSIZE MAXBSIZE */
 #include <sys/stat.h>
 #include <sys/wait.h>
 

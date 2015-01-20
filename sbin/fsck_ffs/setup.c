@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.56 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.57 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE roundup */
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE roundup */
 #define DKTYPENAMES
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>

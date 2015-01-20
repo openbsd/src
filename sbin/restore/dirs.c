@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.39 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.40 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG */
 #include <sys/stat.h>
 #include <sys/time.h>
 

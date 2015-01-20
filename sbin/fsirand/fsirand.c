@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.31 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.32 2015/01/20 18:22:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE */
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>

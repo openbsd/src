@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.25 2015/01/16 06:39:56 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.26 2015/01/20 18:22:20 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * this program can be used if the driver for the file system in question
  * does not support bad block forwarding.
  */
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE isclr */
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE isclr */
 #include <sys/stat.h>
 
 #include <ufs/ffs/fs.h>

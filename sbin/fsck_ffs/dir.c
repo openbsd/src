@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.31 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.32 2015/01/20 18:22:21 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG DEV_BSIZE roundup btodb */
+#include <sys/param.h>	/* DEV_BSIZE roundup btodb */
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>

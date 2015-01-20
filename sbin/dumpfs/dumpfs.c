@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.31 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.32 2015/01/20 18:22:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* DEV_BSIZE MAXFRAG MAXBSIZE isset */
+#include <sys/param.h>	/* DEV_BSIZE MAXBSIZE isset */
 #include <sys/time.h>
 
 #include <ufs/ufs/dinode.h>

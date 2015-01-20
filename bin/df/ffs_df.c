@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.15 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.16 2015/01/20 18:22:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG */
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>

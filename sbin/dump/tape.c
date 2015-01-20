@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.41 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.42 2015/01/20 18:22:20 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXFRAG MAXBSIZE DEV_BSIZE */
+#include <sys/param.h>	/* MAXBSIZE DEV_BSIZE */
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/wait.h>
