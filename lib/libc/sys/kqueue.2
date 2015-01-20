@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.29 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: kqueue.2,v 1.30 2015/01/20 11:56:33 reyk Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: January 20 2015 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -302,32 +302,32 @@ For sockets, the low water mark and socket error handling is
 identical to the
 .Dv EVFILT_READ
 case.
-.It Dv EVFILT_AIO
-The sigevent portion of the AIO request is filled in, with
-.Va sigev_notify_kqueue
-containing the descriptor of the kqueue that the event should
-be attached to,
-.Va sigev_value
-containing the udata value, and
-.Va sigev_notify
-set to
-.Dv SIGEV_KEVENT .
-When the aio_* function is called, the event will be registered
-with the specified kqueue, and the
-.Va ident
-argument set to the
-.Li struct aiocb
-returned by the aio_* function.
-The filter returns under the same conditions as aio_error.
-.Pp
-Alternatively, a kevent structure may be initialized, with
-.Va ident
-containing the descriptor of the kqueue, and the
-address of the kevent structure placed in the
-.Va aio_lio_opcode
-field of the AIO request.
-However, this approach will not work on architectures with 64-bit pointers,
-and should be considered deprecated.
+.\".It Dv EVFILT_AIO
+.\"The sigevent portion of the AIO request is filled in, with
+.\".Va sigev_notify_kqueue
+.\"containing the descriptor of the kqueue that the event should
+.\"be attached to,
+.\".Va sigev_value
+.\"containing the udata value, and
+.\".Va sigev_notify
+.\"set to
+.\".Dv SIGEV_KEVENT .
+.\"When the aio_* function is called, the event will be registered
+.\"with the specified kqueue, and the
+.\".Va ident
+.\"argument set to the
+.\".Li struct aiocb
+.\"returned by the aio_* function.
+.\"The filter returns under the same conditions as aio_error.
+.\".Pp
+.\"Alternatively, a kevent structure may be initialized, with
+.\".Va ident
+.\"containing the descriptor of the kqueue, and the
+.\"address of the kevent structure placed in the
+.\".Va aio_lio_opcode
+.\"field of the AIO request.
+.\"However, this approach will not work on architectures with 64-bit pointers,
+.\"and should be considered deprecated.
 .It Dv EVFILT_VNODE
 Takes a file descriptor as the identifier and the events to watch for in
 .Va fflags ,
