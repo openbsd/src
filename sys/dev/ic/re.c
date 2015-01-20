@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.170 2015/01/20 04:33:06 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.171 2015/01/20 04:46:11 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -873,7 +873,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		re_read_eeprom(sc, (caddr_t)as, RL_EE_EADDR, 3);
 		for (i = 0; i < ETHER_ADDR_LEN / 2; i++)
 			as[i] = letoh16(as[i]);
-		bcopy(as, eaddr, sizeof(eaddr));
+		bcopy(as, eaddr, ETHER_ADDR_LEN);
 
 #ifdef __armish__
 		/*
