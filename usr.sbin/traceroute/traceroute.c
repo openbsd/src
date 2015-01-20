@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.135 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.136 2015/01/20 18:44:16 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -1459,7 +1459,7 @@ packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
 			return (ICMP6_DST_UNREACH_NOPORT + 1);
 	}
 	if (verbose) {
-		char sbuf[NI_MAXHOST+1], dbuf[INET6_ADDRSTRLEN];
+		char sbuf[NI_MAXHOST], dbuf[INET6_ADDRSTRLEN];
 		u_int8_t *p;
 		int i;
 
@@ -1703,7 +1703,7 @@ in_cksum(u_short *addr, int len)
 const char *
 inetname(struct sockaddr *sa)
 {
-	static char line[NI_MAXHOST], domain[HOST_NAME_MAX+1 + 1];
+	static char line[NI_MAXHOST], domain[HOST_NAME_MAX + 1];
 	static int first = 1;
 	char *cp;
 
