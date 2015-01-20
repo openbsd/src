@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.111 2015/01/18 21:47:16 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.112 2015/01/20 18:03:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -119,8 +119,6 @@
 #endif /* _KERNEL */
 
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
-
-#define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 
 /*
  * Constants related to network buffer management.
