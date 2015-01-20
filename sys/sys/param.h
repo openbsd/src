@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.113 2015/01/20 18:08:16 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.114 2015/01/20 18:12:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -119,22 +119,6 @@
 #endif /* _KERNEL */
 
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than PAGE_SIZE (the software page size) and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-
-#ifdef _KERNEL
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-					/* 2K cluster can hold Ether frame */
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)
-#endif /* _KERNEL */
 
 #define	ALIGNBYTES		_ALIGNBYTES
 #define	ALIGN(p)		_ALIGN(p)

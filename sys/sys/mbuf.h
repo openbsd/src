@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.183 2014/10/03 01:02:47 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.184 2015/01/20 18:12:49 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -39,6 +39,15 @@
 #include <sys/queue.h>
 
 /*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than PAGE_SIZE (the software page size) and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#define	MSIZE		256		/* size of an mbuf */
+
+/*
  * Mbufs are of a single size, MSIZE (sys/param.h), which
  * includes overhead.  An mbuf may add a single "mbuf cluster" of size
  * MCLBYTES (also in sys/param.h), which has no additional overhead
@@ -52,6 +61,11 @@
 #define	MAXMCLBYTES	(64 * 1024)		/* largest cluster from the stack */
 #define	MINCLSIZE	(MHLEN + MLEN + 1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)		/* max amount to copy for compression */
+
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+#define	MCLOFSET	(MCLBYTES - 1)
 
 /* Packet tags structure */
 struct m_tag {
