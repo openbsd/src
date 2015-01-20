@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.35 2014/07/21 10:25:48 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.36 2015/01/20 08:18:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,6 +54,7 @@ const struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_CUP, TTYCODE_STRING, "cup" },
 	{ TTYC_CUU, TTYCODE_STRING, "cuu" },
 	{ TTYC_CUU1, TTYCODE_STRING, "cuu1" },
+	{ TTYC_CVVIS, TTYCODE_STRING, "cvvis" },
 	{ TTYC_DCH, TTYCODE_STRING, "dch" },
 	{ TTYC_DCH1, TTYCODE_STRING, "dch1" },
 	{ TTYC_DIM, TTYCODE_STRING, "dim" },

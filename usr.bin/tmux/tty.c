@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.170 2014/08/09 07:33:37 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.171 2015/01/20 08:18:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -482,10 +482,14 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 		mode &= ~MODE_CURSOR;
 
 	changed = mode ^ tty->mode;
-	if (changed & MODE_CURSOR) {
-		if (mode & MODE_CURSOR)
-			tty_putcode(tty, TTYC_CNORM);
-		else
+	if (changed & (MODE_CURSOR|MODE_BLINKING)) {
+		if (mode & MODE_CURSOR) {
+			if (mode & MODE_BLINKING &&
+			    tty_term_has(tty->term, TTYC_CVVIS))
+				tty_putcode(tty, TTYC_CVVIS);
+			else
+				tty_putcode(tty, TTYC_CNORM);
+		} else
 			tty_putcode(tty, TTYC_CIVIS);
 	}
 	if (tty->cstyle != s->cstyle) {
