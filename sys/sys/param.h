@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.112 2015/01/20 18:03:17 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.113 2015/01/20 18:08:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -153,7 +153,6 @@
 #define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif /* _KERNEL */
 #define	MAXBSIZE	(64 * 1024)
-#define MAXFRAG 	8
 
 #define	_DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << _DEV_BSHIFT)
