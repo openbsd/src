@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.6 2014/04/19 17:24:59 gilles Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.7 2015/01/20 17:37:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -17,9 +17,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <ctype.h>
@@ -28,10 +28,12 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <paths.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"

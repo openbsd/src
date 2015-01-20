@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.9 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -32,6 +32,7 @@
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "smtpd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-defines.h,v 1.3 2014/04/30 09:17:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd-defines.h,v 1.4 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -22,11 +22,6 @@
 
 #define SMTPD_MAXLOCALPARTSIZE	 (255 + 1)
 #define SMTPD_MAXDOMAINPARTSIZE	 (255 + 1)
-
-#define	SMTPD_MAXLOGNAME	32
-#define	SMTPD_MAXPATHLEN	1024
-#define	SMTPD_MAXHOSTNAMELEN	256
-#define	SMTPD_MAXLINESIZE	2048
 
 #define SMTPD_USER		"_smtpd"
 #define PATH_CHROOT		"/var/empty"

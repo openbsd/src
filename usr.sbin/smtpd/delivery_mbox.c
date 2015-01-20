@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_mbox.c,v 1.10 2014/04/19 11:31:06 gilles Exp $	*/
+/*	$OpenBSD: delivery_mbox.c,v 1.11 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"

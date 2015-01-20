@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.20 2014/07/10 14:45:02 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.21 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -19,13 +19,6 @@
 
 #ifndef	_SMTPD_API_H_
 #define	_SMTPD_API_H_
-
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-#include <netdb.h>
 
 #define	FILTER_API_VERSION	 50
 
@@ -193,7 +186,7 @@ struct scheduler_info {
 
 struct table_open_params {
 	uint32_t	version;
-	char		name[SMTPD_MAXLINESIZE];
+	char		name[LINE_MAX];
 };
 
 enum table_service {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: waitq.c,v 1.4 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: waitq.c,v 1.5 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/uio.h>
@@ -24,6 +25,7 @@
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "smtpd.h"
 

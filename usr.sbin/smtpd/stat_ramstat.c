@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_ramstat.c,v 1.9 2014/04/19 14:11:55 gilles Exp $	*/
+/*	$OpenBSD: stat_ramstat.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"

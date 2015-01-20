@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_backend.c,v 1.9 2014/07/08 10:22:15 eric Exp $	*/
+/*	$OpenBSD: stat_backend.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -25,6 +25,7 @@
 #include <imsg.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "log.h"
 #include "smtpd.h"

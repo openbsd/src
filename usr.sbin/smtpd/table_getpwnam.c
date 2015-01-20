@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_getpwnam.c,v 1.3 2014/07/08 13:49:09 eric Exp $	*/
+/*	$OpenBSD: table_getpwnam.c,v 1.4 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -30,6 +30,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "smtpd.h"

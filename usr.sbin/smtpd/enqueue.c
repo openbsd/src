@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.89 2015/01/15 09:05:37 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.90 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -38,6 +38,7 @@
 #include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd.h"
 
@@ -99,7 +100,7 @@ struct {
 #define WSP(c)			(c == ' ' || c == '\t')
 
 int	  verbose = 0;
-char	  host[SMTPD_MAXHOSTNAMELEN];
+char	  host[HOST_NAME_MAX+1];
 char	 *user = NULL;
 time_t	  timestamp;
 
@@ -798,7 +799,7 @@ open_connection(void)
 static int
 enqueue_offline(int argc, char *argv[], FILE *ifile)
 {
-	char	 path[SMTPD_MAXPATHLEN];
+	char	 path[PATH_MAX];
 	FILE	*fp;
 	int	 i, fd, ch;
 	mode_t	 omode;
@@ -856,7 +857,7 @@ enqueue_offline(int argc, char *argv[], FILE *ifile)
 static int
 savedeadletter(struct passwd *pw, FILE *in)
 {
-	char	buffer[SMTPD_MAXPATHLEN];
+	char	buffer[PATH_MAX];
 	FILE   *fp;
 	char *buf, *lbuf;
 	size_t len;

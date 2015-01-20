@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.c,v 1.15 2014/07/08 14:24:16 eric Exp $	*/
+/*	$OpenBSD: filter_api.c,v 1.16 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -507,8 +507,8 @@ filter_io_in(struct io *io, int evt)
 	case IO_DATAIN:
 	    nextline:
 		line = iobuf_getline(&s->pipe.ibuf, &len);
-		if ((line == NULL && iobuf_len(&s->pipe.ibuf) >= SMTPD_MAXLINESIZE) ||
-		    (line && len >= SMTPD_MAXLINESIZE)) {
+		if ((line == NULL && iobuf_len(&s->pipe.ibuf) >= LINE_MAX) ||
+		    (line && len >= LINE_MAX)) {
 			s->pipe.error = 1;
 			break;
 		}
@@ -987,7 +987,7 @@ filter_api_sockaddr_to_text(const struct sockaddr *sa)
 const char *
 filter_api_mailaddr_to_text(const struct mailaddr *maddr)
 {
-	static char  buffer[SMTPD_MAXLINESIZE];
+	static char  buffer[LINE_MAX];
 
 	strlcpy(buffer, maddr->user, sizeof buffer);
 	strlcat(buffer, "@", sizeof buffer);

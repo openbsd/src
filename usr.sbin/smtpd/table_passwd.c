@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.9 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -17,6 +17,12 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/tree.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <netdb.h>
 
 #include <err.h>
 #include <pwd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.51 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.52 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -91,7 +91,7 @@ int
 main(int argc, char *argv[])
 {
 	struct stat	 sb;
-	char		 dbname[SMTPD_MAXPATHLEN];
+	char		 dbname[PATH_MAX];
 	char		*opts;
 	char		*conf;
 	int		 ch;

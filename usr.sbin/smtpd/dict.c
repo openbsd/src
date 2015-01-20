@@ -1,4 +1,4 @@
-/*	$OpenBSD: dict.c,v 1.4 2013/11/18 11:47:16 eric Exp $	*/
+/*	$OpenBSD: dict.c,v 1.5 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -26,9 +26,9 @@
 #include <imsg.h>	/* for smtpd.h */
 
 #include <err.h>
-//#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "smtpd.h"
 

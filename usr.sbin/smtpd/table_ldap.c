@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.12 2014/07/09 08:38:08 eric Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.13 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -17,11 +17,19 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/tree.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <netdb.h>
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd-defines.h"
 #include "smtpd-api.h"

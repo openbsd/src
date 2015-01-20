@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.6 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.7 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.165 2014/07/10 15:54:55 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.166 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"
@@ -691,7 +692,7 @@ queue_timeout(int fd, short event, void *p)
 static void
 queue_log(const struct envelope *e, const char *prefix, const char *status)
 {
-	char rcpt[SMTPD_MAXLINESIZE];
+	char rcpt[LINE_MAX];
 	
 	(void)strlcpy(rcpt, "-", sizeof rcpt);
 	if (strcmp(e->rcpt.user, e->dest.user) ||

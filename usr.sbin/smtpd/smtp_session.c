@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.226 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.227 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -122,17 +122,17 @@ struct smtp_session {
 	struct listener		*listener;
 	void			*ssl_ctx;
 	struct sockaddr_storage	 ss;
-	char			 hostname[SMTPD_MAXHOSTNAMELEN];
-	char			 smtpname[SMTPD_MAXHOSTNAMELEN];
-	char			 sni[SMTPD_MAXHOSTNAMELEN];
+	char			 hostname[HOST_NAME_MAX+1];
+	char			 smtpname[HOST_NAME_MAX+1];
+	char			 sni[HOST_NAME_MAX+1];
 
 	int			 flags;
 	int			 phase;
 	enum smtp_state		 state;
 
-	char			 helo[SMTPD_MAXLINESIZE];
-	char			 cmd[SMTPD_MAXLINESIZE];
-	char			 username[SMTPD_MAXLOGNAME];
+	char			 helo[LINE_MAX];
+	char			 cmd[LINE_MAX];
+	char			 username[LOGIN_NAME_MAX];
 
 	struct envelope		 evp;
 
@@ -493,7 +493,7 @@ smtp_session(struct listener *listener, int sock,
 
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		return (-1);
-	if (iobuf_init(&s->iobuf, SMTPD_MAXLINESIZE, SMTPD_MAXLINESIZE) == -1) {
+	if (iobuf_init(&s->iobuf, LINE_MAX, LINE_MAX) == -1) {
 		free(s);
 		return (-1);
 	}
@@ -557,7 +557,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	struct smtp_rcpt		*rcpt;
 	void				*ssl;
 	char				*pkiname;
-	char				 user[SMTPD_MAXLOGNAME];
+	char				 user[LOGIN_NAME_MAX];
 	struct msg			 m;
 	const char			*line, *helo;
 	uint64_t			 reqid, evpid;
@@ -1086,8 +1086,8 @@ smtp_io(struct io *io, int evt)
 	case IO_DATAIN:
 	    nextline:
 		line = iobuf_getline(&s->iobuf, &len);
-		if ((line == NULL && iobuf_len(&s->iobuf) >= SMTPD_MAXLINESIZE) ||
-		    (line && len >= SMTPD_MAXLINESIZE)) {
+		if ((line == NULL && iobuf_len(&s->iobuf) >= LINE_MAX) ||
+		    (line && len >= LINE_MAX)) {
 			s->flags |= SF_BADINPUT;
 			smtp_reply(s, "500 %s: Line too long",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
@@ -1586,7 +1586,7 @@ abort:
 static void
 smtp_rfc4954_auth_login(struct smtp_session *s, char *arg)
 {
-	char		buf[SMTPD_MAXLINESIZE];
+	char		buf[LINE_MAX];
 
 	switch (s->state) {
 	case STATE_HELO:
@@ -1916,12 +1916,12 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 {
 	va_list	 ap;
 	int	 n;
-	char	 buf[SMTPD_MAXLINESIZE], tmp[SMTPD_MAXLINESIZE];
+	char	 buf[LINE_MAX], tmp[LINE_MAX];
 
 	va_start(ap, fmt);
 	n = vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
-	if (n == -1 || n >= SMTPD_MAXLINESIZE)
+	if (n == -1 || n >= LINE_MAX)
 		fatalx("smtp_reply: line too long");
 	if (n < 4)
 		fatalx("smtp_reply: response too short");

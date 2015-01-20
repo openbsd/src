@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.13 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: ca.c,v 1.14 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -20,12 +20,14 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/tree.h>
 
 #include <signal.h>
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <imsg.h>
 #include <pwd.h>
 #include <err.h>

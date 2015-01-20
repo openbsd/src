@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.142 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.143 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -215,7 +215,7 @@ static int
 smtp_enqueue(uid_t *euid)
 {
 	static struct listener	 local, *listener = NULL;
-	char			 buf[SMTPD_MAXHOSTNAMELEN], *hostname;
+	char			 buf[HOST_NAME_MAX+1], *hostname;
 	int			 fd[2];
 
 	if (listener == NULL) {

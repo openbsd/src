@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.30 2014/07/08 13:49:09 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.31 2015/01/20 17:37:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -28,6 +28,7 @@
 #include <imsg.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"

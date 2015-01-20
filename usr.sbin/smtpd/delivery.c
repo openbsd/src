@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery.c,v 1.5 2014/04/01 09:00:46 gilles Exp $	*/
+/*	$OpenBSD: delivery.c,v 1.6 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"

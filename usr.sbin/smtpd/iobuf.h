@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.h,v 1.3 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: iobuf.h,v 1.4 2015/01/20 17:37:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -14,10 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/types.h>
-
-#include <stdarg.h>
 
 struct ioqbuf {
 	struct ioqbuf	*next;

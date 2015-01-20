@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.4 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: tree.c,v 1.5 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -27,6 +27,7 @@
 #include <err.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "smtpd.h"
 

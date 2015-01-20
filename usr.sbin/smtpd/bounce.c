@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.65 2014/05/28 10:34:16 daniel Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.66 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -35,6 +35,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"
@@ -122,7 +123,7 @@ bounce_init(void)
 void
 bounce_add(uint64_t evpid)
 {
-	char			 buf[SMTPD_MAXLINESIZE], *line;
+	char			 buf[LINE_MAX], *line;
 	struct envelope		 evp;
 	struct bounce_message	 key, *msg;
 	struct bounce_envelope	*be;
@@ -340,7 +341,7 @@ static int
 bounce_next_message(struct bounce_session *s)
 {
 	struct bounce_message	*msg;
-	char			 buf[SMTPD_MAXLINESIZE];
+	char			 buf[LINE_MAX];
 	int			 fd;
 	time_t			 now;
 
@@ -647,7 +648,7 @@ bounce_io(struct io *io, int evt)
 	case IO_DATAIN:
 	    nextline:
 		line = iobuf_getline(&s->iobuf, &len);
-		if (line == NULL && iobuf_len(&s->iobuf) >= SMTPD_MAXLINESIZE) {
+		if (line == NULL && iobuf_len(&s->iobuf) >= LINE_MAX) {
 			bounce_status(s, "Input too long");
 			bounce_free(s);
 			return;

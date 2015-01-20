@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.174 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: lka.c,v 1.175 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -76,7 +76,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct envelope		 evp;
 	struct msg		 m;
 	union lookup		 lk;
-	char			 buf[SMTPD_MAXLINESIZE];
+	char			 buf[LINE_MAX];
 	const char		*tablename, *username, *password, *label;
 	uint64_t		 reqid;
 	size_t			 i;

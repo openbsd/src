@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.80 2015/01/06 09:32:13 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.81 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"
@@ -48,7 +49,7 @@ struct dns_session {
 	struct mproc		*p;
 	uint64_t		 reqid;
 	int			 type;
-	char			 name[SMTPD_MAXHOSTNAMELEN];
+	char			 name[HOST_NAME_MAX+1];
 	size_t			 mxfound;
 	int			 error;
 	int			 refcount;

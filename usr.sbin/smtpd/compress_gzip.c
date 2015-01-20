@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_gzip.c,v 1.7 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: compress_gzip.c,v 1.8 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <zlib.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.111 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.112 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -187,7 +187,7 @@ mkdirs_component(char *path, mode_t mode)
 int
 mkdirs(char *path, mode_t mode)
 {
-	char	 buf[SMTPD_MAXPATHLEN];
+	char	 buf[PATH_MAX];
 	int	 i = 0;
 	int	 done = 0;
 	char	*p;
@@ -345,7 +345,7 @@ mvpurge(char *from, char *to)
 	size_t		 n;
 	int		 retry;
 	const char	*sep;
-	char		 buf[SMTPD_MAXPATHLEN];
+	char		 buf[PATH_MAX];
 
 	if ((n = strlen(to)) == 0)
 		fatalx("to is empty");
@@ -375,7 +375,7 @@ again:
 int
 mktmpfile(void)
 {
-	char		path[SMTPD_MAXPATHLEN];
+	char		path[PATH_MAX];
 	int		fd;
 	mode_t		omode;
 
@@ -698,7 +698,7 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 {
 	size_t	 i;
 
-	if (len >= SMTPD_MAXLINESIZE)
+	if (len >= LINE_MAX)
 		return "line too long";
 
 	if (len > 3) {

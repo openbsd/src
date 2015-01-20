@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.237 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.238 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -554,9 +554,9 @@ main(int argc, char *argv[])
 	if (parse_config(&smtpd, conffile, opts))
 		exit(1);
 
-	if (strlcpy(env->sc_conffile, conffile, SMTPD_MAXPATHLEN)
-	    >= SMTPD_MAXPATHLEN)
-		errx(1, "config file exceeds SMTPD_MAXPATHLEN");
+	if (strlcpy(env->sc_conffile, conffile, PATH_MAX)
+	    >= PATH_MAX)
+		errx(1, "config file exceeds PATH_MAX");
 
 	if (env->sc_opts & SMTPD_OPT_NOACTION) {
 		load_pki_tree();
@@ -776,8 +776,8 @@ fork_proc_backend(const char *key, const char *conf, const char *procname)
 {
 	pid_t		pid;
 	int		sp[2];
-	char		path[SMTPD_MAXPATHLEN];
-	char		name[SMTPD_MAXPATHLEN];
+	char		path[PATH_MAX];
+	char		name[PATH_MAX];
 	char		*arg;
 
 	if (strlcpy(name, conf, sizeof(name)) >= sizeof(name)) {
@@ -1037,7 +1037,7 @@ offline_scan(int fd, short ev, void *arg)
 static int
 offline_enqueue(char *name)
 {
-	char		 t[SMTPD_MAXPATHLEN], *path;
+	char		 t[PATH_MAX], *path;
 	struct stat	 sb;
 	pid_t		 pid;
 	struct child	*child;
@@ -1178,7 +1178,7 @@ offline_done(void)
 static int
 parent_forward_open(char *username, char *directory, uid_t uid, gid_t gid)
 {
-	char		pathname[SMTPD_MAXPATHLEN];
+	char		pathname[PATH_MAX];
 	int		fd;
 	struct stat	sb;
 
@@ -1492,8 +1492,8 @@ imsg_to_str(int type)
 int
 parent_auth_user(const char *username, const char *password)
 {
-	char	user[SMTPD_MAXLOGNAME];
-	char	pass[SMTPD_MAXLINESIZE];
+	char	user[LOGIN_NAME_MAX];
+	char	pass[LINE_MAX];
 	int	ret;
 
 	(void)strlcpy(user, username, sizeof(user));

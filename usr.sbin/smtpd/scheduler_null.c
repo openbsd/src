@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_null.c,v 1.8 2014/07/10 14:45:02 eric Exp $	*/
+/*	$OpenBSD: scheduler_null.c,v 1.9 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "smtpd.h"
 

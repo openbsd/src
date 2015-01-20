@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.472 2014/12/24 13:53:39 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.473 2015/01/20 17:37:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -96,8 +96,8 @@
 #define MTA_EXT_DSN		0x400
 
 struct userinfo {
-	char username[SMTPD_MAXLOGNAME];
-	char directory[SMTPD_MAXPATHLEN];
+	char username[LOGIN_NAME_MAX];
+	char directory[PATH_MAX];
 	uid_t uid;
 	gid_t gid;
 };
@@ -109,23 +109,23 @@ struct netaddr {
 
 struct relayhost {
 	uint16_t flags;
-	char hostname[SMTPD_MAXHOSTNAMELEN];
+	char hostname[HOST_NAME_MAX+1];
 	uint16_t port;
-	char pki_name[SMTPD_MAXPATHLEN];
-	char authtable[SMTPD_MAXPATHLEN];
-	char authlabel[SMTPD_MAXPATHLEN];
-	char sourcetable[SMTPD_MAXPATHLEN];
-	char heloname[SMTPD_MAXHOSTNAMELEN];
-	char helotable[SMTPD_MAXPATHLEN];
+	char pki_name[PATH_MAX];
+	char authtable[PATH_MAX];
+	char authlabel[PATH_MAX];
+	char sourcetable[PATH_MAX];
+	char heloname[HOST_NAME_MAX+1];
+	char helotable[PATH_MAX];
 };
 
 struct credentials {
-	char username[SMTPD_MAXLINESIZE];
-	char password[SMTPD_MAXLINESIZE];
+	char username[LINE_MAX];
+	char password[LINE_MAX];
 };
 
 struct destination {
-	char	name[SMTPD_MAXHOSTNAMELEN];
+	char	name[HOST_NAME_MAX+1];
 };
 
 struct source {
@@ -134,7 +134,7 @@ struct source {
 
 struct addrname {
 	struct sockaddr_storage	addr;
-	char			name[SMTPD_MAXHOSTNAMELEN];
+	char			name[HOST_NAME_MAX+1];
 };
 
 union lookup {
@@ -319,9 +319,9 @@ enum table_type {
 };
 
 struct table {
-	char				 t_name[SMTPD_MAXLINESIZE];
+	char				 t_name[LINE_MAX];
 	enum table_type			 t_type;
-	char				 t_config[SMTPD_MAXPATHLEN];
+	char				 t_config[PATH_MAX];
 
 	struct dict			 t_dict;
 
@@ -396,8 +396,8 @@ struct rule {
 
 struct delivery_mda {
 	enum action_type	method;
-	char			usertable[SMTPD_MAXPATHLEN];
-	char			username[SMTPD_MAXLOGNAME];
+	char			usertable[PATH_MAX];
+	char			username[LOGIN_NAME_MAX];
 	char			buffer[EXPAND_BUFFER];
 };
 
@@ -482,10 +482,10 @@ struct envelope {
 	uint64_t			id;
 	enum envelope_flags		flags;
 
-	char				smtpname[SMTPD_MAXHOSTNAMELEN];
-	char				helo[SMTPD_MAXHOSTNAMELEN];
-	char				hostname[SMTPD_MAXHOSTNAMELEN];
-	char				errorline[SMTPD_MAXLINESIZE];
+	char				smtpname[HOST_NAME_MAX+1];
+	char				helo[HOST_NAME_MAX+1];
+	char				hostname[HOST_NAME_MAX+1];
+	char				errorline[LINE_MAX];
 	struct sockaddr_storage		ss;
 
 	struct mailaddr			sender;
@@ -522,17 +522,17 @@ struct listener {
 	in_port_t		 port;
 	struct timeval		 timeout;
 	struct event		 ev;
-	char			 pki_name[SMTPD_MAXPATHLEN];
+	char			 pki_name[PATH_MAX];
 	char			 tag[MAX_TAG_SIZE];
-	char			 filter[SMTPD_MAXPATHLEN];
-	char			 authtable[SMTPD_MAXLINESIZE];
-	char			 hostname[SMTPD_MAXHOSTNAMELEN];
-	char			 hostnametable[SMTPD_MAXPATHLEN];
+	char			 filter[PATH_MAX];
+	char			 authtable[LINE_MAX];
+	char			 hostname[HOST_NAME_MAX+1];
+	char			 hostnametable[PATH_MAX];
 	TAILQ_ENTRY(listener)	 entry;
 };
 
 struct smtpd {
-	char				sc_conffile[SMTPD_MAXPATHLEN];
+	char				sc_conffile[PATH_MAX];
 	size_t				sc_maxsize;
 
 #define SMTPD_OPT_VERBOSE		0x00000001
@@ -572,7 +572,7 @@ struct smtpd {
 	int				sc_qexpire;
 #define MAX_BOUNCE_WARN			4
 	time_t				sc_bounce_warn[MAX_BOUNCE_WARN];
-	char				sc_hostname[SMTPD_MAXHOSTNAMELEN];
+	char				sc_hostname[HOST_NAME_MAX+1];
 	struct stat_backend	       *sc_stat;
 	struct compress_backend	       *sc_comp;
 
@@ -618,17 +618,17 @@ struct forward_req {
 	uint64_t			id;
 	uint8_t				status;
 
-	char				user[SMTPD_MAXLOGNAME];
+	char				user[LOGIN_NAME_MAX];
 	uid_t				uid;
 	gid_t				gid;
-	char				directory[SMTPD_MAXPATHLEN];
+	char				directory[PATH_MAX];
 };
 
 struct deliver {
-	char			to[SMTPD_MAXPATHLEN];
-	char			from[SMTPD_MAXPATHLEN];
-	char			dest[SMTPD_MAXLINESIZE];
-	char			user[SMTPD_MAXLOGNAME];
+	char			to[PATH_MAX];
+	char			from[PATH_MAX];
+	char			dest[LINE_MAX];
+	char			user[LOGIN_NAME_MAX];
 	short			mode;
 
 	struct userinfo		userinfo;
@@ -825,7 +825,7 @@ struct mta_envelope {
 	uint8_t				dsn_notify;
 	enum dsn_ret			dsn_ret;
 
-	char				 status[SMTPD_MAXLINESIZE];
+	char				 status[LINE_MAX];
 };
 
 struct mta_task {
@@ -1030,7 +1030,7 @@ enum ca_resp_status {
 
 struct ca_cert_req_msg {
 	uint64_t		reqid;
-	char			name[SMTPD_MAXHOSTNAMELEN];
+	char			name[HOST_NAME_MAX+1];
 };
 
 struct ca_cert_resp_msg {
@@ -1042,7 +1042,7 @@ struct ca_cert_resp_msg {
 
 struct ca_vrfy_req_msg {
 	uint64_t		reqid;
-	char			pkiname[SMTPD_MAXHOSTNAMELEN];
+	char			pkiname[HOST_NAME_MAX+1];
 	unsigned char  	       *cert;
 	off_t			cert_len;
 	size_t			n_chain;
