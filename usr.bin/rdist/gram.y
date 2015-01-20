@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.11 2014/06/07 15:28:21 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.12 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include "defs.h"
+#include "client.h"
 
 static struct namelist *addnl(struct namelist *, struct namelist *);
 static struct namelist *subnl(struct namelist *, struct namelist *);
@@ -408,14 +408,14 @@ int any(int c, char *str)
  */
 void
 insert(char *label, struct namelist *files, struct namelist *hosts,
-    struct subcmd *subcmds)
+    struct subcmd *scmds)
 {
 	struct cmd *c, *prev, *nc;
 	struct namelist *h, *lasth;
 
 	debugmsg(DM_CALL, "insert(%s, %p, %p, %p) start, files = %s", 
 		 label == NULL ? "(null)" : label,
-		 files, hosts, subcmds, getnlstr(files));
+		 files, hosts, scmds, getnlstr(files));
 
 	files = expand(files, E_VARS|E_SHELL);
 	hosts = expand(hosts, E_ALL);
@@ -442,7 +442,7 @@ insert(char *label, struct namelist *files, struct namelist *hosts,
 		nc->c_name = h->n_name;
 		nc->c_label = label;
 		nc->c_files = files;
-		nc->c_cmds = subcmds;
+		nc->c_cmds = scmds;
 		nc->c_flags = 0;
 		nc->c_next = c;
 		if (prev == NULL)
@@ -460,7 +460,7 @@ insert(char *label, struct namelist *files, struct namelist *hosts,
  * executed in the order they appear in the distfile.
  */
 void
-append(char *label, struct namelist *files, char *stamp, struct subcmd *subcmds)
+append(char *label, struct namelist *files, char *stamp, struct subcmd *scmds)
 {
 	struct cmd *c;
 
@@ -469,7 +469,7 @@ append(char *label, struct namelist *files, char *stamp, struct subcmd *subcmds)
 	c->c_name = stamp;
 	c->c_label = label;
 	c->c_files = expand(files, E_ALL);
-	c->c_cmds = subcmds;
+	c->c_cmds = scmds;
 	c->c_next = NULL;
 	if (cmds == NULL)
 		cmds = last_cmd = c;

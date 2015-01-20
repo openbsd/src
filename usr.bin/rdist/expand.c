@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.14 2014/07/05 06:45:00 guenther Exp $	*/
+/*	$OpenBSD: expand.c,v 1.15 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -30,8 +30,13 @@
  */
 
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "defs.h"
+#include "client.h"
 
 #define	MAXEARGS	2048
 #define LC 		'{'
@@ -177,7 +182,6 @@ expstr(u_char *s)
 	u_char ebuf[BUFSIZ];
 	u_char varbuff[BUFSIZ];
 	int savec, oeargc;
-	extern char *homedir;
 
 	if (s == NULL || *s == CNULL)
 		return;

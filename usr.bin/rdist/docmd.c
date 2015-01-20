@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.31 2014/07/12 03:48:04 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.32 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,11 +29,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/socket.h>
+#include <ctype.h>
 #include <dirent.h>
-#include <netdb.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "defs.h"
+#include "client.h"
 #include "y.tab.h"
 
 /*
@@ -43,15 +48,7 @@
 struct subcmd	       *subcmds;		/* list of sub-commands for 
 						   current cmd */
 struct namelist	       *filelist;		/* list of source files */
-extern struct cmd      *cmds;			/* Initialized by yyparse() */
 time_t			lastmod;		/* Last modify time */
-
-extern char 		target[BUFSIZ];
-extern char 	       *ptarget;
-extern int		activechildren;
-extern int		maxchildren;
-extern int		amchild;
-extern char	       *path_rdistd;
 
 static void closeconn(void);
 static void notify(char *, struct namelist *, time_t);
@@ -99,7 +96,6 @@ notify(char *rhost, struct namelist *to, time_t lmod)
 	FILE *pf;
 	struct stat stb;
 	static char buf[BUFSIZ];
-	extern char *locuser;
 	char *file, *user;
 
 	if (IS_ON(options, DO_VERIFY) || to == NULL)
@@ -287,9 +283,6 @@ makeconn(char *rhost)
 {
 	char *ruser, *cp;
 	static char *cur_host = NULL;
-	extern char *locuser;
-	extern int64_t min_freefiles, min_freespace;
-	extern char *remotemsglist;
 	char tuser[BUFSIZ], buf[BUFSIZ];
 	u_char respbuff[BUFSIZ];
 	int n;
@@ -366,7 +359,7 @@ makeconn(char *rhost)
 		/*
 		 * The server sent it's version number to us
 		 */
-		proto_version = atoi(&respbuff[1]);
+		int proto_version = atoi(&respbuff[1]);
 		if (proto_version != VERSION) {
 			fatalerr(
 		  "Server version (%d) is not the same as local version (%d).",

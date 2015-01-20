@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.17 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.18 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,8 +31,11 @@
 
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "defs.h"
+#include "server.h"
 
 /*
  * This file contains functions dealing with getting info
@@ -230,8 +233,7 @@ makemntinfo(struct mntinfo *mi)
 
 	mntinfo = mi;
 	while ((mnt = getmountent()) != NULL) {
-		debugmsg(DM_MISC, "mountent = '%s' (%s)", 
-			 mnt->me_path, mnt->me_type);
+		debugmsg(DM_MISC, "mountent = '%s'", mnt->me_path);
 
 		/*
 		 * Make sure we don't already have it for some reason
@@ -339,14 +341,10 @@ is_nfs_mounted(char *path, struct stat *statbuf, int *isvalid)
 {
 	mntent_t *mnt;
 
-	if ((mnt = (mntent_t *) getmntpt(path, statbuf, isvalid)) == NULL)
+	if ((mnt = getmntpt(path, statbuf, isvalid)) == NULL)
 		return(-1);
 
-	/*
-	 * We treat "cachefs" just like NFS
-	 */
-	if ((strcmp(mnt->me_type, METYPE_NFS) == 0) ||
-	    (strcmp(mnt->me_type, "cachefs") == 0))
+	if (mnt->me_flags & MEFLAG_NFS)
 		return(1);
 
 	return(0);

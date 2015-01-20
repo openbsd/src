@@ -1,5 +1,7 @@
-/*	$OpenBSD: filesys.h,v 1.4 2014/07/05 10:21:24 guenther Exp $	*/
+/*	$OpenBSD: server.h,v 1.1 2015/01/20 09:00:16 guenther Exp $	*/
 
+#ifndef __SERVER_H__
+#define __SERVER_H__
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -30,42 +32,33 @@
  */
 
 /*
- * $From: filesys.h,v 1.2 1999/08/04 15:57:31 christos Exp $
- * @(#)filesys.h
+ * $From: defs.h,v 1.6 2001/03/12 18:16:30 kim Exp $
+ * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
-#ifndef __filesys_h__
-#define __filesys_h__
+#include <sys/stat.h>
 
-/*
- * File System information
- */
+#include "defs.h"
 
 /*
- * Mount Entry definetions
+ * Suffix to use when saving files
  */
-#ifndef METYPE_OTHER
-#define METYPE_OTHER			"other"
+#ifndef SAVE_SUFFIX
+#define SAVE_SUFFIX	".OLD"
 #endif
-#ifndef METYPE_NFS
-#define METYPE_NFS			"nfs"
-#endif
-#ifndef MEFLAG_READONLY
+
+
 #define MEFLAG_READONLY			0x01
-#endif
-#ifndef MEFLAG_IGNORE
 #define MEFLAG_IGNORE			0x02
-#endif
+#define MEFLAG_NFS			0x04
 
 /*
  * Our internal mount entry type
  */
-struct _mntent {
+typedef struct {
 	char			       *me_path;	/* Mounted path */
-	char			       *me_type;	/* Type of mount */
 	int				me_flags;	/* Mount flags */
-};
-typedef struct _mntent mntent_t;
+} mntent_t;
 
 /*
  * Internal mount information type
@@ -76,12 +69,25 @@ struct mntinfo {
 	struct mntinfo			*mi_nxt;
 };
 
-/*
- * Declarations
- */
+/* filesys-os.c */
 int	        setmountent(void);
 mntent_t       *getmountent(void);
 mntent_t       *newmountent(const mntent_t *);
 void		endmountent(void);
 
-#endif	/* __filesys_h__ */
+/* filesys.c */
+char		*find_file(char *, struct stat *, int *);
+mntent_t	*findmnt(struct stat *, struct mntinfo *);
+int		isdupmnt(mntent_t *, struct mntinfo *);
+void		wakeup(int);
+struct mntinfo	*makemntinfo(struct mntinfo *);
+mntent_t	*getmntpt(char *, struct stat *, int *);
+int		is_nfs_mounted(char *, struct stat *, int *);
+int		is_ro_mounted(char *, struct stat *, int *);
+int		is_symlinked(char *, struct stat *, int *);
+int		getfilesysinfo(char *, int64_t *, int64_t *);
+
+/* server.c */
+void		server(void);
+
+#endif	/* __SERVER_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isexec.c,v 1.9 2014/07/05 05:31:35 guenther Exp $	*/
+/*	$OpenBSD: isexec.c,v 1.10 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,9 +29,12 @@
  * SUCH DAMAGE.
  */
 
-#include "defs.h"
-
+#include <sys/types.h>
 #include <elf_abi.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "client.h"
 
 /*
  * Determine whether 'file' is a binary executable or not.

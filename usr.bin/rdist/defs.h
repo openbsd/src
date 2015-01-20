@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.34 2015/01/20 06:02:30 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.35 2015/01/20 09:00:16 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -36,24 +36,9 @@
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <ctype.h>
-#include <errno.h>
-#include <grp.h>
 #include <pwd.h>
-#include <paths.h>
-#include <regex.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <limits.h>
 
 #ifndef __GNUC__
 # ifndef __attribute__
@@ -65,7 +50,6 @@
 #include "config.h"
 #include "pathnames.h"
 #include "types.h"
-#include "filesys.h"
 
 /*
  * Define the read and write values for the file descriptor array
@@ -82,32 +66,11 @@
 #define FALSE		0
 #endif
 
-	/* lexical definitions */
-#define	QUOTECHAR	160	/* quote next character */
-
-	/* table sizes */
-#define HASHSIZE	1021
-#define INMAX		3500
-
-	/* expand type definitions */
-#define E_VARS		0x1
-#define E_SHELL		0x2
-#define E_TILDE		0x4
-#define E_ALL		0x7
-
-	/* actions for lookup() */
-#define LOOKUP		0
-#define INSERT		1
-#define REPLACE		2
-
 	/* Bit flag test macros */
 #define IS_ON(b,f)	(b > 0 && (b & f))
 #define IS_OFF(b,f)	!(IS_ON(b,f))
 #define FLAG_ON(b,f)	b |= f
 #define FLAG_OFF(b,f)	b &= ~(f)
-
-#define ALLOC(x) 	(struct x *) xmalloc(sizeof(struct x))
-#define A(s)		((s) ? s : "<null>")
 
 /*
  * Environment variable names
@@ -118,18 +81,10 @@
 #define E_BASEFILE	"BASEFILE"		/* basename of Remote File */
 
 /*
- * Suffix to use when saving files
- */
-#ifndef SAVE_SUFFIX
-#define SAVE_SUFFIX	".OLD"
-#endif
-
-/*
  * Get system error string
  */
-#define SYSERR 		strerror(errno)
+#define SYSERR		strerror(errno)
 
-#define COMMENT_CHAR	'#'		/* Config file comment char */
 #define CNULL		'\0'		/* NULL character */
 
 /*
@@ -155,8 +110,8 @@
 #define C_CMDSPECIAL	's'		/* Execute cmd special command */
 #define C_CHMOG		'M'		/* Chown,Chgrp,Chmod a file */
 
-#define	ack() 		(void) sendcmd(C_ACK, NULL)
-#define	err() 		(void) sendcmd(C_ERRMSG, NULL)
+#define	ack()		(void) sendcmd(C_ACK, NULL)
+#define	err()		(void) sendcmd(C_ERRMSG, NULL)
 
 /*
  * Session startup commands.
@@ -199,103 +154,28 @@
 #define RC_FILE		'F'		/* Name of a target file */
 #define RC_COMMAND	'C'		/* Command to run */
 
-/*
- * Name list
- */
-struct namelist {		/* for making lists of strings */
-	char	*n_name;
-	regex_t	*n_regex;
-	struct	namelist *n_next;
-};
 
-/*
- * Sub command structure
- */
-struct subcmd {
-	short	sc_type;	/* type - INSTALL,NOTIFY,EXCEPT,SPECIAL */
-	opt_t	sc_options;
-	char	*sc_name;
-	struct	namelist *sc_args;
-	struct	subcmd *sc_next;
-};
-
-/*
- * Cmd flags
- */
-#define CMD_ASSIGNED	0x01	/* This entry has been assigned */
-#define CMD_CONNFAILED	0x02	/* Connection failed */
-#define CMD_NOCHKNFS	0x04	/* Disable NFS checks */
-
-/*
- * General command structure
- */
-struct cmd {
-	int	c_type;		/* type - ARROW,DCOLON */
-	int	c_flags;	/* flags - CMD_USED,CMD_FAILED */
-	char	*c_name;	/* hostname or time stamp file name */
-	char	*c_label;	/* label for partial update */
-	struct	namelist *c_files;
-	struct	subcmd *c_cmds;
-	struct	cmd *c_next;
-};
-
-/*
- * Hard link buffer information
- */
-struct linkbuf {
-	ino_t	inum;
-	dev_t	devnum;
-	int	count;
-	char	*pathname;
-	char	*src;
-	char	*target;
-	struct	linkbuf *nextp;
-};
-
-extern char	       *optarg;		/* Option argument */
-extern char	       *path_remsh;	/* Remote shell command */
-extern char 		host[];		/* Host name of master copy */
-extern char 	       *currenthost;	/* Name of current host */
-extern char 	       *progname;	/* Name of this program */
-extern char 	      **realargv;	/* Real argv */
-extern int		optind;		/* Option index into argv */
-extern int 		debug;		/* Debugging flag */
-extern opt_t 		defoptions;	/* Default install options */
-extern int 		do_fork;	/* Should we do fork()'ing */
-extern int 		isserver;	/* Acting as remote server */
-extern int 		nerrs;		/* Number of errors seen */
-extern int 		nflag;		/* NOP flag, don't execute commands */
-extern opt_t 		options;	/* Global options */
-extern int 		proto_version;	/* Protocol version number */
-extern int 		realargc;	/* Real argc */
+extern char	       *currenthost;	/* Name of current host */
+extern char	       *progname;	/* Name of this program */
+extern char	       *locuser;	/* Local User's name */
+extern int		debug;		/* Debugging flag */
+extern int		isserver;	/* Acting as remote server */
+extern int		nerrs;		/* Number of errors seen */
+extern opt_t		options;	/* Global options */
 extern int		rem_r;		/* Remote file descriptor, reading */
-extern int 		rem_w;		/* Remote file descriptor, writing */
-extern int 		rtimeout;	/* Response time out in seconds */
-extern int		setjmp_ok;	/* setjmp/longjmp flag */
-extern uid_t 		userid;		/* User ID of rdist user */
-extern jmp_buf 		finish_jmpbuf;	/* Setjmp buffer for finish() */
-extern struct linkbuf  *ihead;	/* list of files with more than one link */
+extern int		rem_w;		/* Remote file descriptor, writing */
+extern int		rtimeout;	/* Response time out in seconds */
+extern uid_t		userid;		/* User ID of rdist user */
+extern jmp_buf		finish_jmpbuf;	/* Setjmp buffer for finish() */
 extern struct passwd   *pw;	/* pointer to static area used by getpwent */
 extern char defowner[64];		/* Default owner */
 extern char defgroup[64];		/* Default group */
 extern volatile sig_atomic_t contimedout; /* Connection timed out */
 
+
 /*
- * Our own declarations.
+ * Declarations for files shared between rdist and rdistd
  */
-
-/* child.c */
-void waitup(void);
-int spawn(struct cmd *, struct cmd *);
-
-/* client.c */
-char *remfilename(char *, char *, char *, char *, int);
-int inlist(struct namelist *, char *);
-void runcmdspecial(struct cmd *, opt_t);
-int checkfilename(char *);
-void freelinkinfo(struct linkbuf *);
-void cleanup(int);
-int install(char *, char *, int, int , opt_t);
 
 /* common.c */
 ssize_t xwrite(int, void *, size_t);
@@ -323,56 +203,6 @@ char *xstrdup(const char *);
 char *xbasename(char *);
 char *searchpath(char *);
 
-/* distopt.c */
-int parsedistopts(char *, opt_t *, int);
-char *getdistoptlist(void);
-char *getondistoptlist(opt_t);
-
-/* docmd.c */
-void markassigned(struct cmd *, struct cmd *);
-int okname(char *);
-int except(char *);
-void docmds(struct namelist *, int, char **);
-
-/* expand.c */
-struct namelist *expand(struct namelist *, int);
-u_char *xstrchr(u_char *, int);
-void expstr(u_char *);
-void expsh(u_char *);
-void matchdir(char *);
-int execbrc(u_char *, u_char *);
-int match(char *, char *);
-int amatch(char *, u_char *);
-
-/* filesys.c */
-char *find_file(char *, struct stat *, int *);
-mntent_t *findmnt(struct stat *, struct mntinfo *);
-int isdupmnt(mntent_t *, struct mntinfo *);
-void wakeup(int);
-struct mntinfo *makemntinfo(struct mntinfo *);
-mntent_t *getmntpt(char *, struct stat *, int *);
-int is_nfs_mounted(char *, struct stat *, int *);
-int is_ro_mounted(char *, struct stat *, int *);
-int is_symlinked(char *, struct stat *, int *);
-int getfilesysinfo(char *, int64_t *, int64_t *);
-
-/* gram.c */
-int yylex(void);
-int any(int, char *);
-void insert(char *, struct namelist *, struct namelist *, struct subcmd *);
-void append(char *, struct namelist *, char *, struct subcmd *);
-void yyerror(char *);
-struct namelist *makenl(char *);
-struct subcmd *makesubcmd(int);
-int yyparse(void);
-
-/* isexec.c */
-int isexec(char *, struct stat *);
-
-/* lookup.c */
-void define(char *);
-struct namelist *lookup(char *, int, struct namelist *);
-
 /* message.c */
 void msgprusage(void);
 void msgprconfig(void);
@@ -384,13 +214,8 @@ void error(const char *, ...) __attribute__((format (printf, 1, 2)));
 void fatalerr(const char *, ...) __attribute__((format (printf, 1, 2)));
 char *getnotifyfile(void);
 
-/* rdist.c */
-FILE *opendist(char *);
-void docmdargs(int, char *[]);
-char *getnlstr(struct namelist *);
-
-/* server.c */
-void server(void);
+/* client.c or server.c */
+void cleanup(int);
 
 #include <vis.h>
 #define DECODE(a, b)	strunvis(a, b)

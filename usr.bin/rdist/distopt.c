@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.12 2015/01/20 06:02:30 guenther Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.13 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,7 +29,10 @@
  * SUCH DAMAGE.
  */
 
-#include "defs.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include "client.h"
 
 /*
  * Dist Option functions

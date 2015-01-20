@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.32 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.33 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,9 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "defs.h"
+#include "client.h"
 #include "y.tab.h"
 
 /*
@@ -78,7 +85,6 @@ static int sendit(char *, opt_t, int);
 char *
 remfilename(char *src, char *dest, char *path, char *rname, int destdir)
 {
-	extern struct namelist *filelist;
 	char *lname, *cp;
 	static char buff[BUFSIZ];
 	int srclen, pathlen;
@@ -157,7 +163,6 @@ static void
 runspecial(char *starget, opt_t opts, char *rname, int destdir)
 {
 	struct subcmd *sc;
-	extern struct subcmd *subcmds;
 	char *rfile;
 
  	rfile = remfilename(source, Tdest, target, rname, destdir);
@@ -192,7 +197,6 @@ addcmdspecialfile(char *starget, char *rname, int destdir)
 	char *rfile;
 	struct namelist *new;
 	struct subcmd *sc;
-	extern struct subcmd *subcmds;
 	int isokay = 0;
 
  	rfile = remfilename(source, Tdest, target, rname, destdir);

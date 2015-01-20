@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.34 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.35 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,9 +29,19 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "defs.h"
+#include "server.h"
 
 /*
  * Server routines
@@ -160,7 +170,6 @@ static int
 fchog(int fd, char *file, char *owner, char *group, int mode)
 {
 	static struct group *gr = NULL;
-	extern char *locuser;
 	int i;
 	struct stat st;
 	uid_t uid;
@@ -1666,8 +1675,7 @@ server(void)
 {
 	static char cmdbuf[BUFSIZ];
 	char *cp;
-	int n;
-	extern jmp_buf finish_jmpbuf;
+	int n, proto_version;
 
 	if (setjmp(finish_jmpbuf))
 		return;

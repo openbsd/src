@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys-os.c,v 1.12 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: filesys-os.c,v 1.13 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,8 +31,10 @@
 
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "defs.h"
+#include "server.h"
 
 /*
  * OS specific file system routines
@@ -84,11 +86,9 @@ getmountent(void)
 	if (strcmp(mnt->f_fstypename, "nfs") == 0) {
 		strlcpy(remote_dev, mnt->f_mntfromname, sizeof(remote_dev));
 		mntstruct.me_path = remote_dev;
-		mntstruct.me_type = METYPE_NFS;
-	} else {
+		mntstruct.me_flags |= MEFLAG_NFS;
+	} else
 		mntstruct.me_path = mnt->f_mntonname;
-		mntstruct.me_type = METYPE_OTHER;
-	}
 
 	mnt++;
 	entries_left--;
@@ -116,7 +116,6 @@ newmountent(const mntent_t *old)
 
 	new = xmalloc(sizeof *new);
 	new->me_path = xstrdup(old->me_path);
-	new->me_type = xstrdup(old->me_type);
 	new->me_flags = old->me_flags;
 
 	return (new);

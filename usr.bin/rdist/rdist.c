@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.28 2014/07/12 03:32:00 guenther Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.29 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,11 +29,17 @@
  * SUCH DAMAGE.
  */
 
-#include "defs.h"
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <paths.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "client.h"
 #include "y.tab.h"
 
-#include <netdb.h>
-#include <sys/ioctl.h>
 
 /*
  * Remote distribution program.
@@ -357,7 +363,7 @@ docmdargs(int nargs, char **args)
 	struct namelist *nl, *prev;
 	char *cp;
 	struct namelist *files, *hosts;
-	struct subcmd *cmds;
+	struct subcmd *scmds;
 	char *dest;
 	static struct namelist tnl;
 	int i;
@@ -388,17 +394,17 @@ docmdargs(int nargs, char **args)
 		exit(1);
 
 	if (dest == NULL || *dest == '\0')
-		cmds = NULL;
+		scmds = NULL;
 	else {
-		cmds = makesubcmd(INSTALL);
-		cmds->sc_options = options;
-		cmds->sc_name = dest;
+		scmds = makesubcmd(INSTALL);
+		scmds->sc_options = options;
+		scmds->sc_name = dest;
 	}
 
 	debugmsg(DM_MISC, "docmdargs()\nfiles = %s", getnlstr(files));
 	debugmsg(DM_MISC, "host = %s", getnlstr(hosts));
 
-	insert(NULL, files, hosts, cmds);
+	insert(NULL, files, hosts, scmds);
 	docmds(NULL, 0, NULL);
 }
 
