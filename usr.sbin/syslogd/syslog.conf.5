@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.26 2014/08/25 20:25:46 bluhm Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.27 2015/01/20 22:10:37 bluhm Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: August 25 2014 $
+.Dd $Mdocdate: January 20 2015 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -229,6 +229,8 @@ and
 .Pc .
 A prefix udp4:// or udp6:// in front of the hostname and after the
 at sign will force IPv4 or IPv6 addresses for UDP transport.
+The prefixes tcp[46]:// or tls[46]:// send messages over TCP or
+TLS, respectively, with an optional IP version 4 or 6.
 .It
 A comma separated list of users.
 Selected messages are written to those users

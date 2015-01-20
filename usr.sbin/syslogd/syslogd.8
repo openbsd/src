@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.31 2014/09/08 00:43:42 doug Exp $
+.\"	$OpenBSD: syslogd.8,v 1.32 2015/01/20 22:10:37 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: January 20 2015 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -57,11 +57,11 @@ The options are as follows:
 .It Fl 4
 Forces
 .Nm
-to use IPv4 addresses only.
+to use only IPv4 addresses for UDP.
 .It Fl 6
 Forces
 .Nm
-to use IPv6 addresses only.
+to use only IPv6 addresses for UDP.
 .It Fl a Ar path
 Specify a location where
 .Nm
