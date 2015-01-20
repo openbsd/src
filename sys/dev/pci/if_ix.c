@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.115 2015/01/12 10:40:51 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.116 2015/01/20 12:56:50 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -496,7 +496,7 @@ ixgbe_rxrinfo(struct ix_softc *sc, struct if_rxrinfo *ifri)
 
 	for (i = 0; i < sc->num_queues; i++) {
 		rxr = &sc->rx_rings[i];
-		ifr[n].ifr_size = MCLBYTES;
+		ifr[n].ifr_size = sc->rx_mbuf_sz;
 		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "/%d", i);
 		ifr[n].ifr_info = rxr->rx_ring;
 		n++;
@@ -615,8 +615,13 @@ ixgbe_init(void *arg)
 	ixgbe_init_hw(&sc->hw);
 	ixgbe_initialize_transmit_units(sc);
 
+#ifdef __STRICT_ALIGNMENT
+	/* Use 4k clusters, even for jumbo frames */
+	sc->rx_mbuf_sz = 4096;
+#else
 	/* Use 2k clusters, even for jumbo frames */
 	sc->rx_mbuf_sz = MCLBYTES;
+#endif
 
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(sc)) {
@@ -2044,8 +2049,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 #ifdef notyet
 	struct ip6_hdr *ip6;
 #endif
-	struct mbuf *m;
-	int ipoff;
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0;
 	int 	ehdrlen, ip_hlen = 0;
 	uint16_t etype;
@@ -2091,13 +2094,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	 * Jump over vlan headers if already present,
 	 * helpful for QinQ too.
 	 */
-	if (mp->m_len < sizeof(struct ether_header))
-		return (1);
 #if NVLAN > 0
 	eh = mtod(mp, struct ether_vlan_header *);
 	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) {
-		if (mp->m_len < sizeof(struct ether_vlan_header))
-			return (1);
 		etype = ntohs(eh->evl_proto);
 		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 	} else {
@@ -2115,23 +2114,15 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	switch (etype) {
 	case ETHERTYPE_IP:
-		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip))
-			return (1);
-		m = m_getptr(mp, ehdrlen, &ipoff);
-		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip));
-		ip = (struct ip *)(m->m_data + ipoff);
+		ip = (struct ip *)(mp->m_data + ehdrlen);
 		ip_hlen = ip->ip_hl << 2;
 		ipproto = ip->ip_p;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
 		break;
 #ifdef notyet
 	case ETHERTYPE_IPV6:
-		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip6))
-			return (1);
-		m = m_getptr(mp, ehdrlen, &ipoff);
-		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip6));
-		ip6 = (struct ip6 *)(m->m_data + ipoff);
-		ip_hlen = sizeof(*ip6);
+		ip6 = (struct ip6_hdr *)(mp->m_data + ehdrlen);
+		ip_hlen = sizeof(struct ip6_hdr);
 		/* XXX-BZ this will go badly in case of ext hdrs. */
 		ipproto = ip6->ip6_nxt;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
@@ -2447,8 +2438,9 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 		return (ENOBUFS);
 
 	mp->m_len = mp->m_pkthdr.len = sc->rx_mbuf_sz;
-	if (sc->max_frame_size <= (sc->rx_mbuf_sz - ETHER_ALIGN))
-		m_adj(mp, ETHER_ALIGN);
+#ifdef __STRICT_ALIGNMENT
+	m_adj(mp, ETHER_ALIGN);
+#endif
 
 	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->map,
 	    mp, BUS_DMA_NOWAIT);
@@ -2655,7 +2647,11 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	hlreg |= IXGBE_HLREG0_JUMBOEN;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_HLREG0, hlreg);
 
+#ifdef __STRICT_ALIGNMENT
+	bufsz = (sc->rx_mbuf_sz - ETHER_ALIGN) >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
+#else
 	bufsz = sc->rx_mbuf_sz >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
+#endif
 
 	for (i = 0; i < sc->num_queues; i++, rxr++) {
 		uint64_t rdba = rxr->rxdma.dma_map->dm_segs[0].ds_addr;
@@ -2853,7 +2849,6 @@ ixgbe_rxeof(struct ix_queue *que)
 			    rxr->last_desc_filled);
 		}
 
-		/* XXX ixgbe_realign() STRICT_ALIGN */
 		/* Currently no HW RSC support of 82599 */
 		if (!eop) {
 			/*
