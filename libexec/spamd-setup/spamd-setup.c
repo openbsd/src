@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.44 2015/01/19 19:25:47 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.45 2015/01/20 16:54:06 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -479,12 +479,12 @@ add_blacklist(struct bl *bl, size_t *blc, size_t *bls, gzFile gzf, int white)
 	}
  parse:
 	start = 0;
-	/* we assume that there is an IP for every 16 bytes */
-	if (*blc + bu / 8 >= *bls) {
-		*bls += bu / 8;
+	/* we assume that there is an IP for every 14 bytes */
+	if (*blc + bu / 7 >= *bls) {
+		*bls += bu / 7;
 		blt = reallocarray(bl, *bls, sizeof(struct bl));
 		if (blt == NULL) {
-			*bls -= bu / 8;
+			*bls -= bu / 7;
 			serrno = errno;
 			goto bldone;
 		}
@@ -547,12 +547,16 @@ collapse_blacklist(struct bl *bl, size_t blc, u_int *clc)
 
 	if (blc == 0)
 		return (NULL);
+
+	/*
+	 * Overallocate by 10% to avoid excessive realloc due to white
+	 * entries splitting up CIDR blocks.
+	 */
 	cli = 0;
-	cls = (blc / 2) + 1;
-	cl = calloc(cls, sizeof(struct cidr));
-	if (cl == NULL) {
+	cls = (blc / 2) + (blc / 20) + 1;
+	cl = reallocarray(NULL, cls, sizeof(struct cidr));
+	if (cl == NULL)
 		return (NULL);
-	}
 	qsort(bl, blc, sizeof(struct bl), cmpbl);
 	for (i = 0; i < blc;) {
 		laststate = state;
