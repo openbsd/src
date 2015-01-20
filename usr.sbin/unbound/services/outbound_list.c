@@ -1,4 +1,3 @@
-/*	$OpenBSD: outbound_list.c,v 1.2 2015/01/20 04:41:01 krw Exp $	*/
 /*
  * services/outbound_list.c - keep list of outbound serviced queries.
  *
