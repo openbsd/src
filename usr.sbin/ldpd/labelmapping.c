@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.29 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.30 2015/01/20 18:09:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -212,6 +212,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 	/* Optional Parameters */
 	while (len > 0) {
 		struct tlv 	tlv;
+		u_int32_t reqbuf, labelbuf;
 
 		if (len < sizeof(tlv)) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, lm.msgid,
@@ -235,7 +236,8 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 				}
 
 				flags |= F_MAP_REQ_ID;
-				reqid = ntohl(*(u_int32_t *)buf);
+				memcpy(&reqbuf, buf, sizeof(reqbuf));
+				reqid = ntohl(reqbuf);
 				break;
 			default:
 				/* ignore */
@@ -256,7 +258,8 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 					goto err;
 				}
 
-				label = ntohl(*(u_int32_t *)buf);
+				memcpy(&labelbuf, buf, sizeof(labelbuf));
+				label = ntohl(labelbuf);
 				flags |= F_MAP_OPTLABEL;
 				break;
 			default:
