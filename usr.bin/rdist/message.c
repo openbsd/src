@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.22 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: message.c,v 1.23 2015/01/20 03:14:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#include <syslog.h>
 #include "defs.h"
 
 /*
