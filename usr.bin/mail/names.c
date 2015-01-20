@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.21 2014/12/16 18:36:46 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.22 2015/01/20 16:59:07 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -453,52 +453,6 @@ cat(struct name *n1, struct name *n2)
 	tail->n_flink = n2;
 	n2->n_blink = tail;
 	return(n1);
-}
-
-/*
- * Unpack the name list onto a vector of strings.
- * Return an error if the name list won't fit.
- */
-char **
-unpack(struct name *sm, struct name *np)
-{
-	char **ap, **top;
-	int t, extra, metoo, verbose;
-
-	if ((t = count(np)) == 0)
-		errx(1, "No names to unpack");
-	t += count(sm);
-
-	/*
-	 * Compute the number of extra arguments we will need.
-	 * We need at least four extra -- one for "send-mail", one for the
-	 * "-i" flag, one for the "--" to signal end of command line
-	 * arguments, and one for the terminating 0 pointer.
-	 */
-	extra = 4;
-	metoo = value("metoo") != NULL;
-	if (metoo)
-		extra++;
-	verbose = value("verbose") != NULL;
-	if (verbose)
-		extra++;
-	top = (char **)salloc((t + extra) * sizeof(*top));
-	ap = top;
-	*ap++ = "send-mail";
-	*ap++ = "-i";
-	if (metoo)
-		*ap++ = "-m";
-	if (verbose)
-		*ap++ = "-v";
-	for (; sm != NULL; sm = sm->n_flink)
-		if ((sm->n_type & GDEL) == 0)
-			*ap++ = sm->n_name;
-	*ap++ = "--";
-	for (; np != NULL; np = np->n_flink)
-		if ((np->n_type & GDEL) == 0)
-			*ap++ = np->n_name;
-	*ap = NULL;
-	return(top);
 }
 
 /*

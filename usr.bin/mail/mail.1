@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.72 2015/01/07 17:08:21 millert Exp $
+.\"	$OpenBSD: mail.1,v 1.73 2015/01/20 16:59:07 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 7 2015 $
+.Dd $Mdocdate: January 20 2015 $
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl dEIinv
 .Op Fl b Ar list
 .Op Fl c Ar list
+.Op Fl r Ar from-addr
 .Op Fl s Ar subject
 .Ar to-addr ...
 .Ek
@@ -109,6 +110,13 @@ when reading mail or editing a mail folder.
 Inhibits reading
 .Pa /etc/mail.rc
 upon startup.
+.It Fl r Ar from-addr
+Use
+.Ar from-addr
+as the from address in the message and envelope.
+Overrides any
+.Em from
+options in the startup files.
 .It Fl s Ar subject
 Specify subject on command line
 (only the first argument after the
@@ -969,6 +977,19 @@ Causes
 .Nm mail
 to expand message recipient addresses, as explained in the section
 .Sx Recipient address specifications .
+.It Ar from
+Causes
+.Nm mail
+to use the specified sender address in the
+.Dq From:
+field of the message header.
+A stripped down version of the address is also used in the message envelope.
+If unset, the message will not include an explicit sender address and
+a default value will be added by the MTA, typically
+.Dq user@host .
+This value can be overridden by specifying the
+.Fl r
+flag on the command line.
 .It Ar hold
 This option is used to hold messages in the system mailbox
 by default.

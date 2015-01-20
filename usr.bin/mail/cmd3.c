@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.25 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.26 2015/01/20 16:59:07 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -227,6 +227,7 @@ _respond(msgvec)
 	}
 	np = elide(np);
 	head.h_to = np;
+	head.h_from = NULL;
 	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
 	head.h_subject = reedit(head.h_subject);
@@ -619,6 +620,7 @@ _Respond(int *msgvec)
 	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
 	head.h_subject = reedit(head.h_subject);
+	head.h_from = NULL;
 	head.h_cc = NULL;
 	head.h_bcc = NULL;
 	head.h_smopts = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.27 2009/07/28 16:05:04 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.28 2015/01/20 16:59:07 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.27 2009/07/28 16:05:04 martynas Exp $
+ *	$OpenBSD: extern.h,v 1.28 2015/01/20 16:59:07 millert Exp $
  */
 
 struct name;
@@ -163,8 +163,8 @@ const struct cmd *
 void	 load(char *);
 struct var *
 	 lookup(char *);
-int	 mail (struct name *, struct name *, struct name *, struct name *,
-	       char *);
+int	 mail(struct name *, struct name *, struct name *, struct name *,
+	       char *, char *);
 void	 mail1(struct header *, int);
 void	 makemessage(FILE *, int);
 void	 mark(int);

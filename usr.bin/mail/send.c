@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.23 2014/01/17 18:42:30 okan Exp $	*/
+/*	$OpenBSD: send.c,v 1.24 2015/01/20 16:59:07 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -279,11 +279,12 @@ statusput(struct message *mp, FILE *obuf, char *prefix)
  */
 int
 mail(struct name *to, struct name *cc, struct name *bcc, struct name *smopts,
-     char *subject)
+     char *fromaddr, char *subject)
 {
 	struct header head;
 
 	head.h_to = to;
+	head.h_from = fromaddr;
 	head.h_subject = subject;
 	head.h_cc = cc;
 	head.h_bcc = bcc;
@@ -291,7 +292,6 @@ mail(struct name *to, struct name *cc, struct name *bcc, struct name *smopts,
 	mail1(&head, 0);
 	return(0);
 }
-
 
 /*
  * Send mail to a bunch of user names.  The interface is through
@@ -304,6 +304,7 @@ sendmail(void *v)
 	struct header head;
 
 	head.h_to = extract(str, GTO);
+	head.h_from = NULL;
 	head.h_subject = NULL;
 	head.h_cc = NULL;
 	head.h_bcc = NULL;
@@ -319,9 +320,10 @@ sendmail(void *v)
 void
 mail1(struct header *hp, int printheaders)
 {
-	char *cp;
+	char *cp, *envfrom = NULL;
+	char *argv[8];
+	char **ap = argv;
 	pid_t pid;
-	char **namelist;
 	struct name *to;
 	FILE *mtf;
 
@@ -365,18 +367,33 @@ mail1(struct header *hp, int printheaders)
 		fputs(". . . message lost, sorry.\n", stderr);
 		return;
 	}
-	namelist = unpack(hp->h_smopts, to);
+	if ((cp = value("record")) != NULL)
+		(void)savemail(expand(cp), mtf);
+	
+	/* Setup sendmail arguments. */
+        *ap++ = "send-mail";
+        *ap++ = "-i";
+        *ap++ = "-t";
+	cp = hp->h_from ? hp->h_from : value("from");
+	if (cp != NULL) {
+		envfrom = skin(cp);
+		*ap++ = "-f";
+		*ap++ = envfrom;
+		if (envfrom == cp)
+			envfrom = NULL;
+	}
+	if (value("metoo") != NULL)
+                *ap++ = "-m";
+	if (value("verbose") != NULL)
+                *ap++ = "-v";
+	*ap = NULL;
 	if (debug) {
-		char **t;
-
 		fputs("Sendmail arguments:", stdout);
-		for (t = namelist; *t != NULL; t++)
-			printf(" \"%s\"", *t);
+		for (ap = argv; *ap != NULL; ap++)
+			printf(" \"%s\"", *ap);
 		putchar('\n');
 		goto out;
 	}
-	if ((cp = value("record")) != NULL)
-		(void)savemail(expand(cp), mtf);
 	/*
 	 * Fork, set up the temporary mail file as standard
 	 * input for "mail", and exec with the user list we generated
@@ -403,10 +420,11 @@ mail1(struct header *hp, int printheaders)
 			cp = expand(cp);
 		else
 			cp = _PATH_SENDMAIL;
-		execv(cp, namelist);
+		execv(cp, argv);
 		warn("%s", cp);
 		_exit(1);
 	}
+	free(envfrom);
 	if (value("verbose") != NULL)
 		(void)wait_child(pid);
 	else
@@ -497,8 +515,12 @@ int
 puthead(struct header *hp, FILE *fo, int w)
 {
 	int gotcha;
+	char *from;
 
 	gotcha = 0;
+	from = hp->h_from ? hp->h_from : value("from");
+	if (from != NULL)
+		fprintf(fo, "From: %s\n", from), gotcha++;
 	if (hp->h_to != NULL && w & GTO)
 		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
 	if (hp->h_subject != NULL && w & GSUBJECT)

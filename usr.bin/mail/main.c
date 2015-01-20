@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2015/01/20 16:59:07 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ main(int argc, char **argv)
 {
 	int i;
 	struct name *to, *cc, *bcc, *smopts;
+	char *fromaddr;
 	char *subject;
 	char *ef;
 	char nosrc = 0;
@@ -77,8 +78,9 @@ main(int argc, char **argv)
 	cc = NULL;
 	bcc = NULL;
 	smopts = NULL;
+	fromaddr = NULL;
 	subject = NULL;
-	while ((i = getopt(argc, argv, "EIN:b:c:dfins:u:v")) != -1) {
+	while ((i = getopt(argc, argv, "EIN:b:c:dfinr:s:u:v")) != -1) {
 		switch (i) {
 		case 'u':
 			/*
@@ -99,6 +101,12 @@ main(int argc, char **argv)
 			break;
 		case 'd':
 			debug++;
+			break;
+		case 'r':
+			/*
+			 * Set From: address
+			 */
+			fromaddr = optarg;
 			break;
 		case 's':
 			/*
@@ -203,7 +211,7 @@ main(int argc, char **argv)
 		rc = "~/.mailrc";
 	load(expand(rc));
 	if (!rcvmode) {
-		mail(to, cc, bcc, smopts, subject);
+		mail(to, cc, bcc, smopts, fromaddr, subject);
 		/*
 		 * why wait?
 		 */
@@ -272,7 +280,7 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-dEIinv] [-b list] [-c list] "
-	    "[-s subject] to-addr ...\n", __progname);
+	    "[-r from-addr] [-s subject] to-addr ...\n", __progname);
 	fprintf(stderr, "       %s [-dEIiNnv] -f [file]\n", __progname);
 	fprintf(stderr, "       %s [-dEIiNnv] [-u user]\n", __progname);
 	exit(1);
