@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.219 2015/01/19 20:16:15 markus Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.220 2015/01/20 07:56:44 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -723,7 +723,7 @@ process_gssapi_token(void *ctxt, gss_buffer_t recv_tok)
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_response(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -744,7 +744,7 @@ input_gssapi_response(int type, u_int32_t plen, void *ctxt)
 		free(oidv);
 		debug("Badly encoded mechanism OID received");
 		userauth(authctxt, NULL);
-		return;
+		return 0;
 	}
 
 	if (!ssh_gssapi_check_oid(gssctxt, oidv + 2, oidlen - 2))
@@ -758,12 +758,13 @@ input_gssapi_response(int type, u_int32_t plen, void *ctxt)
 		/* Start again with next method on list */
 		debug("Trying to start again");
 		userauth(authctxt, NULL);
-		return;
+		return 0;
 	}
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -786,12 +787,13 @@ input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 	if (GSS_ERROR(status)) {
 		/* Start again with the next method in the list */
 		userauth(authctxt, NULL);
-		return;
+		return 0;
 	}
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -818,10 +820,11 @@ input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 	gss_release_buffer(&ms, &send_tok);
 
 	/* Server will be returning a failed packet after this one */
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_error(int type, u_int32_t plen, void *ctxt)
 {
 	char *msg;
@@ -837,6 +840,7 @@ input_gssapi_error(int type, u_int32_t plen, void *ctxt)
 	debug("Server GSSAPI Error:\n%s", msg);
 	free(msg);
 	free(lang);
+	return 0;
 }
 #endif /* GSSAPI */
 
