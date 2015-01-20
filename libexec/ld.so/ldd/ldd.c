@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.18 2015/01/16 16:18:07 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.19 2015/01/20 02:16:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -30,9 +30,11 @@
 #include <err.h>
 #include <fcntl.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 #include <limits.h>
 #include <dlfcn.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -96,6 +98,7 @@ doit(char *name)
 	Elf_Phdr *phdr;
 	int fd, i, size, status, interp=0;
 	char buf[PATH_MAX];
+	struct stat st;
 	void * dlhandle; 
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
@@ -103,6 +106,17 @@ doit(char *name)
 		return 1;
 	}
 
+	if (fstat(fd, &st) == -1) {
+		warn("%s", name);	
+		close(fd);
+		return 1;
+	}
+
+	if (!S_ISREG(st.st_mode)) {
+		warnx("%s: not an regular file", name);
+		close(fd);
+		return 1;
+	}
 	if (read(fd, &ehdr, sizeof(ehdr)) < 0) {
 		warn("read(%s)", name);
 		close(fd);
@@ -135,31 +149,34 @@ doit(char *name)
 		}
 	free(phdr);
 
-	if (ehdr.e_type == ET_DYN && !interp) {
-		printf("%s:\n", name);
-		if (realpath(name, buf) == NULL) {
-			warn("realpath(%s)", name);
-			return 1;
-		}
-		dlhandle = dlopen(buf, RTLD_TRACE);
-		if (dlhandle == NULL) {
-			printf("%s\n", dlerror());
-			return 1;
-		}
-		return 0;
-	}
-
-	if (i == ehdr.e_phnum) {
-		warnx("%s: not a dynamic executable", name);
-		return 1;
-	}
-
 	printf("%s:\n", name);
 	fflush(stdout);
 	switch (fork()) {
 	case -1:
 		err(1, "fork");
 	case 0:
+		if (ehdr.e_type == ET_DYN && !interp) {
+			if (realpath(name, buf) == NULL) {
+				printf("realpath(%s): %s", name,
+				    strerror(errno));
+				fflush(stdout);
+				_exit(1);
+			}
+			dlhandle = dlopen(buf, RTLD_TRACE);
+			if (dlhandle == NULL) {
+				printf("%s\n", dlerror());
+				fflush(stdout);
+				_exit(1);
+			}
+			_exit(0);
+		}
+
+		if (i == ehdr.e_phnum) {
+			printf("not a dynamic executable\n");
+			fflush(stdout);
+			_exit(0);
+		}
+
 		execl(name, name, (char *)NULL);
 		perror(name);
 		_exit(1);
@@ -169,6 +186,8 @@ doit(char *name)
 			return 1;
 		}
 		if (WIFSIGNALED(status)) {
+			if (WTERMSIG(status) == SIGINT)
+				return 1;
 			fprintf(stderr, "%s: signal %d\n", name,
 			    WTERMSIG(status));
 			return 1;
