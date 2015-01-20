@@ -1,7 +1,11 @@
-#	$OpenBSD: Makefile,v 1.76 2015/01/18 22:00:18 djm Exp $
+#	$OpenBSD: Makefile,v 1.77 2015/01/20 22:58:57 djm Exp $
 
-REGRESS_FAIL_EARLY= yes
-REGRESS_TARGETS=	unit t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
+.ifndef SKIP_UNIT
+SUBDIR=		unittests
+.endif
+
+REGRESS_FAIL_EARLY=	yes
+REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
 
 CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2 \
 		t8.out t8.out.pub t9.out t9.out.pub t10.out t10.out.pub \
@@ -89,11 +93,6 @@ SUDO_CLEAN+=	/var/run/testdata_${USER} /var/run/keycommand_${USER}
 
 # Enable all malloc(3) randomisations and checks
 TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
-
-unit:
-	if test -z "${SKIP_UNIT}" ; then \
-		(set -e ; cd ${.CURDIR}/unittests ; make) \
-	fi
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
@@ -189,6 +188,5 @@ clean:
 	rm -f ${CLEANFILES}
 	test -z "${SUDO}" || ${SUDO} rm -f ${SUDO_CLEAN}
 	rm -rf .putty
-	(set -e ; cd ${.CURDIR}/unittests ; make clean)
 
 .include <bsd.regress.mk>
