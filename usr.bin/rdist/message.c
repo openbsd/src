@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.25 2015/01/20 06:08:08 guenther Exp $	*/
+/*	$OpenBSD: message.c,v 1.26 2015/01/20 07:03:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -242,13 +242,7 @@ setmsgtypes(struct msgfacility *msgfac, char *str)
 		break;
 
 	case MF_SYSLOG:
-#if defined(LOG_OPTS)
-#if	defined(LOG_FACILITY)
-		openlog(progname, LOG_OPTS, LOG_FACILITY);
-#else
-		openlog(progname, LOG_OPTS);
-#endif	/* LOG_FACILITY */
-#endif	/* LOG_OPTS */
+		openlog(progname, LOG_PID, LOG_DAEMON);
 		break;
 	}
 
