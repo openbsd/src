@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.18 2013/03/01 21:16:34 guenther Exp $	*/
+/*	$OpenBSD: limits.h,v 1.19 2015/01/20 22:09:50 tedu Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 #if __XPG_VISIBLE
 # if __XPG_VISIBLE < 600
 #  define PASS_MAX		128	/* _PASSWORD_LEN from <pwd.h> */
-#  define TMP_MAX		308915776
+#  define TMP_MAX		0x7fffffff /* more, but don't overflow int */
 # endif
 
 # if __XPG_VISIBLE < 700

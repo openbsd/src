@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.49 2014/03/27 15:28:16 tedu Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.50 2015/01/20 22:09:50 tedu Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -191,7 +191,7 @@ __END_DECLS
 #define	P_tmpdir	"/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
-#define	TMP_MAX		308915776
+#define	TMP_MAX		0x7fffffff	/* more, but don't overflow int */
 
 #ifndef SEEK_SET
 #define	SEEK_SET	0	/* set file offset to offset */
