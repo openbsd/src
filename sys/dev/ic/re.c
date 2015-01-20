@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.168 2015/01/15 23:06:08 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.169 2015/01/20 04:23:33 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1598,8 +1598,7 @@ re_intr(void *arg)
 		}
 	}
 
-	if (tx)
-		re_start(ifp);
+	re_start(ifp);
 
 	CSR_WRITE_2(sc, RL_IMR, sc->rl_intrs);
 
@@ -1980,8 +1979,6 @@ re_init(struct ifnet *ifp)
 			CSR_WRITE_2(sc, RL_MAXRXPKTLEN, 16383);
 	}
 
-	mii_mediachg(&sc->sc_mii);
-
 	CSR_WRITE_1(sc, sc->rl_cfg1, CSR_READ_1(sc, sc->rl_cfg1) |
 	    RL_CFG1_DRVLOAD);
 
@@ -1991,6 +1988,7 @@ re_init(struct ifnet *ifp)
 	splx(s);
 
 	sc->rl_flags &= ~RL_FLAG_LINK;
+	mii_mediachg(&sc->sc_mii);
 
 	timeout_add_sec(&sc->timer_handle, 1);
 
