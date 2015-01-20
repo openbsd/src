@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.35 2015/01/20 03:26:24 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.36 2015/01/20 03:54:26 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -480,16 +480,6 @@ void
 rgephy_reset(struct mii_softc *sc)
 {
 	uint16_t reg;
-
-	if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8251) {
-		PHY_WRITE(sc, 31, 0x0a43);
-		reg = PHY_READ(sc, RGEPHY_CR);
-		if ((reg & RGEPHY_CR_ALDPS) != 0) {
-			reg &= ~RGEPHY_CR_ALDPS;
-			PHY_WRITE(sc, RGEPHY_CR, reg);
-		}
-		PHY_WRITE(sc, 31, 0x0000);
-	}
 
 	mii_phy_reset(sc);
 	DELAY(1000);
