@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.34 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.35 2015/01/20 19:43:21 kettenis Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -147,9 +147,9 @@ int
 uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	struct process *pr = p->p_p;
 	struct vmtotal vmtotals;
 	int rv, t;
-	struct _ps_strings _ps = { PS_STRINGS };
 
 	switch (name[0]) {
 	case VM_SWAPENCRYPT:
@@ -184,8 +184,9 @@ uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, nkmempages));
 
 	case VM_PSSTRINGS:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &_ps,
-		    sizeof(_ps)));
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &pr->ps_strings,
+		    sizeof(pr->ps_strings)));
+
 	case VM_ANONMIN:
 		t = uvmexp.anonminpct;
 		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);

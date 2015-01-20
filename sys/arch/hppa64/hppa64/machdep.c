@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 2015/01/20 19:43:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -808,7 +808,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_iioq[1] = 4 +
 	    (tf->tf_iioq[0] = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
-	tf->tf_args[0] = (u_long)PS_STRINGS;
+	tf->tf_args[0] = p->p_p->ps_strings;
 	tf->tf_args[1] = tf->tf_args[2] = 0; /* XXX dynload stuff */
 
 	/* setup terminal stack frame */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.37 2014/05/08 21:43:04 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.38 2015/01/20 19:43:21 kettenis Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = (int)PS_STRINGS;
+	tf->tf_r9 = (int)p->p_p->ps_strings;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.240 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.241 2015/01/20 19:43:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1165,7 +1165,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
 	tf->tf_iisq_head = tf->tf_iisq_tail = pcb->pcb_space;
-	tf->tf_arg0 = (u_long)PS_STRINGS;
+	tf->tf_arg0 = p->p_p->ps_strings;
 
 	/* setup terminal stack frame */
 	setstack(tf, (stack + 0x3f) & ~0x3f, 0);

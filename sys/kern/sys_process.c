@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.66 2014/12/12 07:45:46 tedu Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.67 2015/01/20 19:43:21 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -748,6 +748,7 @@ process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
 int
 process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
 {
+	struct process *pr = p->p_p;
 	struct ps_strings pss;
 	struct iovec iov;
 	struct uio uio;
@@ -757,7 +758,7 @@ process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
 	iov.iov_len = sizeof(pss);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;	
-	uio.uio_offset = (off_t)(vaddr_t)PS_STRINGS;
+	uio.uio_offset = (off_t)pr->ps_strings;
 	uio.uio_resid = sizeof(pss);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
@@ -771,13 +772,13 @@ process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
 
 	uiop->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr + pss.ps_nenvstr + 1);
 #ifdef MACHINE_STACK_GROWS_UP
-	if (uiop->uio_offset < (off_t)(vaddr_t)PS_STRINGS)
+	if (uiop->uio_offset < (off_t)pr->ps_strings)
 		return (EIO);
 #else
-	if (uiop->uio_offset > (off_t)(vaddr_t)PS_STRINGS)
+	if (uiop->uio_offset > (off_t)pr->ps_strings)
 		return (EIO);
-	if ((uiop->uio_offset + uiop->uio_resid) > (off_t)(vaddr_t)PS_STRINGS)
-		uiop->uio_resid = (off_t)(vaddr_t)PS_STRINGS - uiop->uio_offset;
+	if ((uiop->uio_offset + uiop->uio_resid) > (off_t)pr->ps_strings)
+		uiop->uio_resid = (off_t)pr->ps_strings - uiop->uio_offset;
 #endif
 
 	return (0);

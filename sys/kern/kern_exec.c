@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.155 2015/01/15 16:31:19 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.156 2015/01/20 19:43:21 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -466,7 +466,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		goto exec_abort;
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *)PS_STRINGS, sizeof(arginfo)))
+#ifdef MACHINE_STACK_GROWS_UP
+	pr->ps_strings = (vaddr_t)PS_STRINGS + sgap;
+#else
+	pr->ps_strings = (vaddr_t)PS_STRINGS - sgap;
+#endif
+	if (copyout(&arginfo, (char *)pr->ps_strings, sizeof(arginfo)))
 		goto exec_abort;
 
 	stopprofclock(pr);	/* stop profiling */

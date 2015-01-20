@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2014/11/16 12:30:59 deraadt Exp $     */
+/*	$OpenBSD: trap.c,v 1.55 2015/01/20 19:43:21 kettenis Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -309,7 +309,7 @@ setregs(p, pack, stack, retval)
 	exptr->r6 = stack;			/* for ELF */
 	exptr->r7 = 0;				/* for ELF */
 	exptr->r8 = 0;				/* for ELF */
-	exptr->r9 = (u_long) PS_STRINGS;	/* for ELF */
+	exptr->r9 = p->p_p->ps_strings;		/* for ELF */
 
 	retval[1] = 0;
 }
