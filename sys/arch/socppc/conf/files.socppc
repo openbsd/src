@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.12 2014/07/11 21:54:38 tedu Exp $
+#	$OpenBSD: files.socppc,v 1.13 2015/01/20 17:08:35 mpi Exp $
 
 #
 # macppc-specific configuration info
@@ -13,7 +13,6 @@ file	arch/socppc/socppc/conf.c
 file	arch/socppc/socppc/disksubr.c			disk
 file	arch/socppc/socppc/machdep.c
 file	arch/socppc/socppc/mem.c
-file	arch/socppc/socppc/dma.c
 file	dev/cninit.c
 file	arch/socppc/socppc/db_interface.c		ddb
 file	arch/socppc/socppc/fdt.c

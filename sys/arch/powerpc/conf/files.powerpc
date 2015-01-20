@@ -1,4 +1,4 @@
-#	$OpenBSD: files.powerpc,v 1.48 2013/06/13 04:34:32 deraadt Exp $
+#	$OpenBSD: files.powerpc,v 1.49 2015/01/20 17:08:35 mpi Exp $
 #
 
 file	arch/powerpc/powerpc/setjmp.S			ddb
@@ -6,6 +6,7 @@ file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/cpu_subr.c
 file	arch/powerpc/powerpc/fpu.c
 file	arch/powerpc/powerpc/in_cksum.c			inet
+file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/pmap.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sys_machdep.c
