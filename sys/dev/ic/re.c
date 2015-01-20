@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.169 2015/01/20 04:23:33 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.170 2015/01/20 04:33:06 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1560,12 +1560,6 @@ re_intr(void *arg)
 
 		if (status & RL_ISR_SYSTEM_ERR) {
 			re_init(ifp);
-			claimed = 1;
-		}
-
-		if (status & RL_ISR_LINKCHG) {
-			timeout_del(&sc->timer_handle);
-			re_tick(sc);
 			claimed = 1;
 		}
 	}
