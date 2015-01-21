@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.6 2014/12/23 01:53:57 tedu Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.7 2015/01/21 22:26:52 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -41,11 +41,6 @@
  * memory-specific data structures and algorithms to automatically
  * allocate and release resources.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

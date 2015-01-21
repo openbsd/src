@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.18 2014/11/02 03:47:08 tedu Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.19 2015/01/21 22:26:52 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -35,11 +35,6 @@
 /*
  * tmpfs vnode interface.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/dirent.h>

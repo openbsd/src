@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_fifoops.c,v 1.3 2013/10/10 11:00:28 espie Exp $	*/
+/*	$OpenBSD: tmpfs_fifoops.c,v 1.4 2015/01/21 22:26:52 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -35,11 +35,6 @@
 /*
  * tmpfs vnode interface for named pipes.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/vnode.h>

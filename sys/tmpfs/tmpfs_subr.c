@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.11 2014/12/17 06:58:11 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.12 2015/01/21 22:26:52 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -74,11 +74,6 @@
  *		struct vnode::v_vlock ->
  *			struct vnode::v_interlock
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/dirent.h>

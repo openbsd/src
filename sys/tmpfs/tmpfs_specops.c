@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_specops.c,v 1.4 2013/12/23 20:35:19 tedu Exp $	*/
+/*	$OpenBSD: tmpfs_specops.c,v 1.5 2015/01/21 22:26:52 deraadt Exp $	*/
 /*	$NetBSD: tmpfs_specops.c,v 1.10 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -34,11 +34,6 @@
 /*
  * tmpfs vnode interface for special devices.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.10 2011/05/24 20:17:49 rmind Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/vnode.h>
