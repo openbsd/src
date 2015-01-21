@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.58 2015/01/21 02:23:14 guenther Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.59 2015/01/21 13:47:45 mpi Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1492,7 +1492,7 @@ out:
 		error = sys_ioctl(p, &ia, retval);
 
 		if (error == 0) {
-			struct linux_ifreq *ifr = data;
+			struct ifreq *ifr = data;
 
 			switch (com) {
 			case LINUX_SIOCGIFADDR:
