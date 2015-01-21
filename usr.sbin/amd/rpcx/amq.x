@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.x	8.1 (Berkeley) 6/6/93
- *	$Id: amq.x,v 1.5 2003/11/08 19:17:29 jmc Exp $
+ *	$Id: amq.x,v 1.6 2015/01/21 09:49:37 guenther Exp $
  *
  */
 
@@ -49,9 +49,8 @@ typedef string amq_string<AMQ_STRLEN>;
 
 /*
  * The type time_type should correspond to the system time_t
- * XXX int/long time_t garbage; this needs to be a 32-bit integer
  */
-typedef int time_type;
+typedef int64_t time_type;
 
 /*
  * A tree of what is mounted
@@ -167,15 +166,9 @@ program AMQ_PROGRAM {
 		AMQPROC_GETMNTFS(void) = 6;
 
 		/*
-		 * Mount a filesystem
-		 */
-		int
-		AMQPROC_MOUNT(amq_string) = 7;
-
-		/*
 		 * Get version info
 		 */
 		amq_string
-		AMQPROC_GETVERS(void) = 8;
-	} = 1;
+		AMQPROC_GETVERS(void) = 7;
+	} = 57;
 } = 300019;	/* Allocated by Sun, 89/8/29 */
