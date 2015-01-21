@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.116 2014/12/05 16:48:09 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.117 2015/01/21 12:07:36 kettenis Exp $
 
 machine		sparc64
 maxusers	4
@@ -99,6 +99,7 @@ dc*		at cardbus?		# 21143, "tulip" clone ethernet
 ne*		at pci?			# NE2000-compat ethernet cards
 epic*		at pci?			# SMC EPIC/100 ethernet
 em*		at pci?			# Intel Pro/1000 ethernet
+ix*		at pci?			# Intel 82598EB 10Gb ethernet
 bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
 bnx*		at pci?			# Broadcom BCM5706/5708 GigE
 stge*		at pci?			# Sundance TC9021 GigE

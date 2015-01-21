@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.296 2015/01/10 17:19:02 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.297 2015/01/21 12:07:36 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -84,6 +84,7 @@ ne*	at pci?			# NE2000-compat ethernet cards
 epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
 #ixgb*	at pci?			# Intel Pro/10Gb ethernet
+ix*	at pci?			# Intel 82598EB 10Gb ethernet
 myx*	at pci?			# Myricom Myri-10G 10Gb ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 bnx*	at pci?			# Broadcom BCM5706/5708 GigE
