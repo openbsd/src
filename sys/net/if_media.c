@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.24 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.25 2015/01/21 23:06:10 deraadt Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -84,6 +84,7 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 #include <net/netisr.h>
 
