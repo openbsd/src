@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl.h,v 1.15 2013/12/13 22:54:08 naddy Exp $	*/
+/*	$OpenBSD: ioctl.h,v 1.16 2015/01/21 23:06:53 deraadt Exp $	*/
 /*	$NetBSD: ioctl.h,v 1.20 1996/01/30 18:21:47 thorpej Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #define	_SYS_IOCTL_H_
 
 #include <sys/ttycom.h>
-#include <sys/ioccom.h>
 #include <sys/filio.h>
 #include <sys/sockio.h>
 
