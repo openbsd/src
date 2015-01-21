@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.87 2015/01/19 20:47:03 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.88 2015/01/21 03:14:10 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -366,12 +366,12 @@ dispatch_imsg(struct ntpd_conf *lconf)
 							buf = NULL;
 							break;
 						}
-					if (buf)
-						imsg_close(ibuf, buf);
 				}
 				host_dns_free(hn);
 				hn = NULL;
 			}
+			if (buf)
+				imsg_close(ibuf, buf);
 			break;
 		default:
 			break;
