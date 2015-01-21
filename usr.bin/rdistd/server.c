@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.35 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.36 2015/01/21 03:18:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -653,7 +653,7 @@ chkparent(char *name, opt_t opts)
 	struct stat stb;
 	int r = -1;
 
-	debugmsg(DM_CALL, "chkparent(%s, %lo) start\n", name, opts);
+	debugmsg(DM_CALL, "chkparent(%s, %#x) start\n", name, opts);
 
 	cp = strrchr(name, '/');
 	if (cp == NULL || cp == name)
@@ -668,7 +668,7 @@ chkparent(char *name, opt_t opts)
 				r = 0;
 			} else 
 				debugmsg(DM_MISC, 
-					 "chkparent(%s, %lo) mkdir fail: %s\n",
+					 "chkparent(%s, %#04o) mkdir fail: %s\n",
 					 name, opts, SYSERR);
 		}
 	} else	/* It exists */
@@ -996,23 +996,21 @@ recvdir(opt_t opts, int mode, char *owner, char *group)
 			    (stb.st_mode & 07777) != mode) {
 				if (IS_ON(opts, DO_VERIFY))
 					message(MT_NOTICE, 
-						"%s: need to chmod to %o",
+						"%s: need to chmod to %#04o",
 						target, mode);
-				else {
-					if (chmod(target, mode) != 0)
-						message(MT_NOTICE,
-					  "%s: chmod from %o to %o failed: %s",
-							target, 
-							stb.st_mode & 07777, 
-							mode,
-							SYSERR);
-					else
-						message(MT_NOTICE,
-						"%s: chmod from %o to %o",
-							target, 
-							stb.st_mode & 07777, 
-							mode);
-				}
+				else if (chmod(target, mode) != 0)
+					message(MT_NOTICE,
+				  "%s: chmod from %#04o to %#04o failed: %s",
+						target, 
+						stb.st_mode & 07777, 
+						mode,
+						SYSERR);
+				else
+					message(MT_NOTICE,
+						"%s: chmod from %#04o to %#04o",
+						target, 
+						stb.st_mode & 07777, 
+						mode);
 			}
 
 			/*
@@ -1448,7 +1446,7 @@ recvit(char *cmd, int type)
 	file = fileb;
 
 	debugmsg(DM_MISC,
-		 "recvit: opts = %04lo mode = %04o size = %lld mtime = %lld",
+		 "recvit: opts = %#x mode = %#04o size = %lld mtime = %lld",
 		 opts, mode, (long long) size, (long long)mtime);
 	debugmsg(DM_MISC,
        "recvit: owner = '%s' group = '%s' file = '%s' catname = %d isdir = %d",
@@ -1604,7 +1602,7 @@ dochmog(char *cmd)
 	file = fileb;
 
 	debugmsg(DM_MISC,
-		 "dochmog: opts = %04lo mode = %04o", opts, mode);
+		 "dochmog: opts = %#x mode = %#04o", opts, mode);
 	debugmsg(DM_MISC,
 	         "dochmog: owner = '%s' group = '%s' file = '%s' catname = %d",
 		 owner, group, file, catname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.7 2015/01/20 06:08:08 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 2015/01/21 03:18:31 guenther Exp $	*/
 
 #ifndef __myTYPES_H__
 #define __myTYPES_H__
@@ -37,7 +37,7 @@
 #define DO_DEFOWNER		0x0800000
 #define DO_SPARSE		0x1000000	/* XXX not implemented */
 
-typedef long		opt_t;
+typedef int		opt_t;
 
 	/* Debug Message types */
 #define DM_CALL		0x01
