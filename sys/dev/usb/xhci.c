@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.57 2015/01/18 20:35:11 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.58 2015/01/21 14:02:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1912,8 +1912,10 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	    xfer->actlen, xfer->length, ((struct xhci_xfer *)xfer)->index));
 
 	/* XXX The stack should not call abort() in this case. */
-	if (xfer->status == USBD_NOT_STARTED) {
+	if (sc->sc_bus.dying || xfer->status == USBD_NOT_STARTED) {
 		xfer->status = status;
+		timeout_del(&xfer->timeout_handle);
+		usb_rem_task(xfer->device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
 		return;
 	}
