@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.35 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.36 2015/01/21 03:05:03 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -67,7 +67,7 @@
 #endif
 
 	/* Bit flag test macros */
-#define IS_ON(b,f)	(b > 0 && (b & f))
+#define IS_ON(b,f)	(b & f)
 #define IS_OFF(b,f)	!(IS_ON(b,f))
 #define FLAG_ON(b,f)	b |= f
 #define FLAG_OFF(b,f)	b &= ~(f)
