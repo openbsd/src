@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.125 2015/01/20 21:12:46 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.126 2015/01/21 20:20:49 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -399,7 +399,8 @@ enum	mandoc_esc {
 	ESCAPE_NUMBERED, /* a numbered glyph */
 	ESCAPE_UNICODE, /* a unicode codepoint */
 	ESCAPE_NOSPACE, /* suppress space if the last on a line */
-	ESCAPE_SKIPCHAR /* skip the next character */
+	ESCAPE_SKIPCHAR, /* skip the next character */
+	ESCAPE_OVERSTRIKE /* overstrike all chars in the argument */
 };
 
 typedef	void	(*mandocmsg)(enum mandocerr, enum mandoclevel,

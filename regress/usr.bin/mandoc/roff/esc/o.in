@@ -1,0 +1,18 @@
+.Dd January 21, 2015
+.Dt ESC-O 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-o
+.Nd the roff escape o sequence: overstrike
+.Sh DESCRIPTION
+empty: x\o''x
+.br
+one character: x\o'|'x
+.br
+wide/narrow: x\o'O|'x
+.br
+narrow/wide: x\o'|O'x
+.br
+wide/narrow/narrow: x\o'O-|'x
+.br
+narrow/narrow/wide: x\o'|-O'x

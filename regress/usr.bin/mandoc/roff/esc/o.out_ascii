@@ -1,0 +1,14 @@
+ESC-O(1)                    General Commands Manual                   ESC-O(1)
+
+NNAAMMEE
+     eesscc--oo - the roff escape o sequence: overstrike
+
+DDEESSCCRRIIPPTTIIOONN
+     empty: xx
+     one character: x|x
+     wide/narrow: xO|x
+     narrow/wide: x|Ox
+     wide/narrow/narrow: xO-|x
+     narrow/narrow/wide: x|-Ox
+
+OpenBSD                        January 21, 2015                        OpenBSD

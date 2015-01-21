@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.c,v 1.54 2014/12/20 00:19:54 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.55 2015/01/21 20:20:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -305,6 +305,8 @@ html_strlen(const char *cp)
 		case ESCAPE_NUMBERED:
 			/* FALLTHROUGH */
 		case ESCAPE_SPECIAL:
+			/* FALLTHROUGH */
+		case ESCAPE_OVERSTRIKE:
 			if (skip)
 				skip = 0;
 			else
@@ -431,6 +433,11 @@ print_encode(struct html *h, const char *p, int norecurse)
 			if ('\0' == *p)
 				nospace = 1;
 			continue;
+		case ESCAPE_OVERSTRIKE:
+			if (len == 0)
+				continue;
+			c = seq[len - 1];
+			break;
 		default:
 			continue;
 		}

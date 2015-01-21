@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.58 2015/01/01 18:10:09 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.59 2015/01/21 20:20:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -154,16 +154,18 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		/* FALLTHROUGH */
 	case 'D':
 		/* FALLTHROUGH */
-	case 'o':
-		/* FALLTHROUGH */
 	case 'R':
 		/* FALLTHROUGH */
 	case 'X':
 		/* FALLTHROUGH */
 	case 'Z':
-		if ('\0' == **start)
-			return(ESCAPE_ERROR);
 		gly = ESCAPE_IGNORE;
+		/* FALLTHROUGH */
+	case 'o':
+		if (**start == '\0')
+			return(ESCAPE_ERROR);
+		if (gly == ESCAPE_ERROR)
+			gly = ESCAPE_OVERSTRIKE;
 		term = **start;
 		*start = ++*end;
 		break;
