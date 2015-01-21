@@ -1,4 +1,4 @@
-#	$OpenBSD: list.local,v 1.6 2014/07/24 19:23:51 miod Exp $
+#	$OpenBSD: list.local,v 1.7 2015/01/21 20:05:29 miod Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -23,6 +23,4 @@ TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 # and the installation tools
 SCRIPT	${ARCHDIR}/../install.md		install.md
 
-# no NFS support in sparc ramdisk
-REMOVE	sbin/mount_nfs
 #SPECIAL	rm -rf usr/share/zoneinfo/*

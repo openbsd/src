@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.78 2015/01/11 14:56:23 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.79 2015/01/21 20:05:29 miod Exp $
 
 machine		sparc
 maxusers	4
@@ -15,6 +15,8 @@ option		MINIROOTSIZE=4000
 option		FFS
 option		CD9660
 option		INET
+option		INET6
+option		NFSCLIENT
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
@@ -218,3 +220,4 @@ fd*		at fdc0
 pseudo-device	rd 1
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
+pseudo-device	vlan
