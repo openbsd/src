@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.16 2014/10/26 03:03:34 guenther Exp $	*/
+/*	$OpenBSD: am.h,v 1.17 2015/01/21 09:51:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -209,7 +209,7 @@ struct fhstatus;
  */
 extern void	 am_mounted(am_node *);
 extern void	 am_unmounted(am_node *);
-extern void	 amq_program_1(struct svc_req *, SVCXPRT *);
+extern void	 amq_program_57(struct svc_req *, SVCXPRT *);
 extern pid_t	 background(void);
 extern int	 bind_resv_port(int, unsigned short *);
 extern int	 compute_mount_flags(struct mntent *);
