@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.38 2015/01/16 06:40:01 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.39 2015/01/21 19:29:52 naddy Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -158,9 +158,9 @@ main(int argc, char *argv[])
 		    "shutdown: incompatible switches -h and -r.\n");
 		usage();
 	}
-	if (dopower && !dohalt) {
+	if (doreboot && dopower) {
 		(void)fprintf(stderr,
-		    "shutdown: switch -p must be used with -h.\n");
+		    "shutdown: incompatible switches -p and -r.\n");
 		usage();
 	}
 	getoffset(*argv++);
@@ -333,7 +333,8 @@ die_you_gravy_sucking_pig_dog(void)
 {
 
 	syslog(LOG_NOTICE, "%s by %s: %s",
-	    doreboot ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
+	    doreboot ? "reboot" : dopower ? "power-down" : dohalt ? "halt" :
+	    "shutdown", whom, mbuf);
 	(void)sleep(2);
 
 	(void)printf("\r\nSystem shutdown time has arrived\007\007\r\n");
@@ -346,6 +347,8 @@ die_you_gravy_sucking_pig_dog(void)
 #ifdef DEBUG
 	if (doreboot)
 		(void)printf("reboot");
+	else if (dopower)
+		(void)printf("power-down");
 	else if (dohalt)
 		(void)printf("halt");
 	if (nosync)
@@ -363,7 +366,7 @@ die_you_gravy_sucking_pig_dog(void)
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		warn(_PATH_REBOOT);
 	}
-	else if (dohalt) {
+	else if (dohalt || dopower) {
 		execle(_PATH_HALT, "halt", "-l",
 		    (dopower ? "-p" : (nosync ? "-n" : (dodump ? "-d" : NULL))),
 		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
@@ -546,6 +549,7 @@ badtime(void)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: shutdown [-] [-dfhknpr] time [warning-message ...]\n");
+	fprintf(stderr,
+	    "usage: shutdown [-] [-dfhknpr] time [warning-message ...]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.39 2007/11/19 08:51:49 jmc Exp $
+.\"	$OpenBSD: shutdown.8,v 1.40 2015/01/21 19:29:52 naddy Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)shutdown.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 19 2007 $
+.Dd $Mdocdate: January 21 2015 $
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -58,7 +58,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 When used with
-.Fl h
+.Fl h ,
+.Fl p ,
 or
 .Fl r
 causes system to perform a dump.
@@ -93,13 +94,16 @@ does not actually halt the system, but leaves the
 system multi-user with logins disabled (for all but superuser).
 .It Fl n
 When used with
-.Fl h
+.Fl h ,
+.Fl p ,
 or
 .Fl r
 prevents the normal
 .Xr sync 2
 before stopping the system.
 .It Fl p
+The system is powered down at the specified
+.Ar time .
 The
 .Fl p
 flag is passed on to
