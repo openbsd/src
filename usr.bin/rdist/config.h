@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.12 2015/01/20 07:03:21 guenther Exp $	*/
+/*	$OpenBSD: config.h,v 1.13 2015/01/21 04:08:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -41,22 +41,6 @@
 /*
  * Configuration parameters
  */
-
-/*
- * Check to see if file is on a NFS.  If it is, the file is
- * skipped unless the hostname specified in the Distfile has
- * a trailing "+".  e.g. "foobar+".  This feature is enabled by
- * the -N option.  If your system does not support NFS or you don't
- * want the -N option, undefine this.
- */
-#define NFS_CHECK
-
-/*
- * Check to see if file on a Read-Only filesystem.  If it is, no
- * attempt is made to update the file.  This feature is enabled by
- * the -O option.
- */
-#define RO_CHECK
 
 /*
  * Default value for the maximum number of clients to update at once.

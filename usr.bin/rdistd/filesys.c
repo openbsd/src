@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.18 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.19 2015/01/21 04:08:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -108,7 +108,7 @@ find_file(char *pathname, struct stat *statbuf, int *isvalid)
 			 * Normally we want to change /dir1/dir2/file
 			 * into "/dir1/dir2/."
 			 */
-			if ((p = (char *) strrchr(file, '/')) != NULL) {
+			if ((p = strrchr(file, '/')) != NULL) {
 				if (strcmp(p, "/.") == 0) {
 					*p = CNULL;
 				} else {
@@ -131,7 +131,7 @@ find_file(char *pathname, struct stat *statbuf, int *isvalid)
 	}
 
 	if (statbuf)
-		bcopy((char *) &filestat, (char *) statbuf, sizeof(filestat));
+		bcopy(&filestat, statbuf, sizeof(filestat));
 
 	/*
 	 * Trim the "/." that we added.
@@ -147,7 +147,7 @@ find_file(char *pathname, struct stat *statbuf, int *isvalid)
 	 * name in case the symlink points to another filesystem.
 	 */
 	if (S_ISLNK(filestat.st_mode))
-		if ((p = (char *) strrchr(file, '/')) && *p+1) {
+		if ((p = strrchr(file, '/')) && *p+1) {
 			/* Is this / (root)? */
 			if (p == file)
 				file[1] = CNULL;
@@ -161,7 +161,6 @@ find_file(char *pathname, struct stat *statbuf, int *isvalid)
 	return(*file ? file : NULL);
 }
 
-#if defined(NFS_CHECK) || defined(RO_CHECK)
 
 /*
  * Find the device that "filest" is on in the "mntinfo" linked list.
@@ -174,7 +173,7 @@ findmnt(struct stat *filest, struct mntinfo *mntinfo)
 	for (mi = mntinfo; mi; mi = mi->mi_nxt) {
 		if (mi->mi_mnt->me_flags & MEFLAG_IGNORE)
 			continue;
-		if (filest->st_dev == mi->mi_statb->st_dev)
+		if (filest->st_dev == mi->mi_dev)
 			return(mi->mi_mnt);
 	}
 
@@ -253,12 +252,9 @@ makemntinfo(struct mntinfo *mi)
 		/*
 		 * Create new entry
 		 */
-		newmi = (struct mntinfo *) xcalloc(1, sizeof(struct mntinfo));
+		newmi = xcalloc(1, sizeof(*newmi));
 		newmi->mi_mnt = newmountent(mnt);
-		newmi->mi_statb = 
-		    (struct stat *) xcalloc(1, sizeof(struct stat));
-		bcopy((char *) &mntstat, (char *) newmi->mi_statb, 
-		      sizeof(struct stat));
+		newmi->mi_dev = mntstat.st_dev;
 
 		/*
 		 * Add entry to list
@@ -330,9 +326,7 @@ getmntpt(char *pathname, struct stat *statbuf, int *isvalid)
 	return(NULL);
 }
 
-#endif /* NFS_CHECK || RO_CHECK */
 
-#if	defined(NFS_CHECK)
 /*
  * Is "path" NFS mounted?  Return 1 if it is, 0 if not, or -1 on error.
  */
@@ -349,9 +343,7 @@ is_nfs_mounted(char *path, struct stat *statbuf, int *isvalid)
 
 	return(0);
 }
-#endif	/* NFS_CHECK */
 
-#if	defined(RO_CHECK)
 /*
  * Is "path" on a read-only mounted filesystem?  
  * Return 1 if it is, 0 if not, or -1 on error.
@@ -361,7 +353,7 @@ is_ro_mounted(char *path, struct stat *statbuf, int *isvalid)
 {
 	mntent_t *mnt;
 
-	if ((mnt = (mntent_t *) getmntpt(path, statbuf, isvalid)) == NULL)
+	if ((mnt = getmntpt(path, statbuf, isvalid)) == NULL)
 		return(-1);
 
 	if (mnt->me_flags & MEFLAG_READONLY)
@@ -369,7 +361,6 @@ is_ro_mounted(char *path, struct stat *statbuf, int *isvalid)
 
 	return(0);
 }
-#endif	/* RO_CHECK */
 
 /*
  * Is "path" a symlink?

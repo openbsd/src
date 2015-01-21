@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.36 2015/01/21 03:18:31 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.37 2015/01/21 04:08:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -546,12 +546,8 @@ docmdspecial(void)
 /*
  * Query. Check to see if file exists. Return one of the following:
  *
-#ifdef NFS_CHECK
  *  QC_ONNFS		- resides on a NFS
-#endif NFS_CHECK
-#ifdef RO_CHECK
  *  QC_ONRO		- resides on a Read-Only filesystem
-#endif RO_CHECK
  *  QC_NO		- doesn't exist
  *  QC_YESsize mtime 	- exists and its a regular file (size & mtime of file)
  *  QC_YES		- exists and its a directory or symbolic link
@@ -572,7 +568,6 @@ query(char *xname)
 	if (catname && cattarget(name) < 0)
 		return;
 
-#if	defined(NFS_CHECK)
 	if (IS_ON(options, DO_CHKNFS)) {
 		s = is_nfs_mounted(target, &stb, &stbvalid);
 		if (s > 0)
@@ -585,9 +580,7 @@ query(char *xname)
 			return;
 		}
 	}
-#endif 	/* NFS_CHECK */
 
-#if	defined(RO_CHECK)
 	if (IS_ON(options, DO_CHKREADONLY)) {
 		s = is_ro_mounted(target, &stb, &stbvalid);
 		if (s > 0)
@@ -600,7 +593,6 @@ query(char *xname)
 			return;
 		}
 	}
-#endif 	/* RO_CHECK */
 
 	if (IS_ON(options, DO_CHKSYM)) {
 		if (is_symlinked(target, &stb, &stbvalid) > 0) {
@@ -610,10 +602,8 @@ query(char *xname)
 	}
 
 	/*
-	 * If stbvalid is false, "stb" is not valid because:
-	 *	a) RO_CHECK and NFS_CHECK were not defined
-	 *	b) The stat by is_*_mounted() either failed or
-	 *	   does not match "target".
+	 * If stbvalid is false, "stb" is not valid because the stat()
+	 * by is_*_mounted() either failed or does not match "target".
 	 */
 	if (!stbvalid && lstat(target, &stb) < 0) {
 		if (errno == ENOENT)
