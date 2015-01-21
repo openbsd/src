@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.137 2015/01/20 17:04:20 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.138 2015/01/21 19:10:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1713,24 +1713,24 @@ pmap_deactivate(struct proc *p)
 {
 }
 
-/* 
- * Get the physical page address for the given pmap/virtual address.
- */ 
+/*
+ * pmap_extract: extract a PA for the given VA
+ */
+
 boolean_t
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 {
 	struct pte_desc *pted;
 
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL || !PTED_VALID(pted)) {
-		if (pm == pmap_kernel() && va < 0x80000000) {
-			/* XXX - this is not true without BATs */
-			/* if in kernel, va==pa for 0-0x80000000 */
-			*pa = va;
-			return TRUE;
-		}
-		return FALSE;
+	if (pm == pmap_kernel() && va < physmaxaddr) {
+		*pa = va;
+		return TRUE;
 	}
+
+	pted = pmap_vp_lookup(pm, va);
+	if (pted == NULL || !PTED_VALID(pted))
+		return FALSE;
+
 	if (ppc_proc_is_64b)
 		*pa = (pted->p.pted_pte64.pte_lo & PTE_RPGN_64) |
 		    (va & ~PTE_RPGN_64);
@@ -2254,17 +2254,13 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 		/* NOTREACHED */
 	}
 
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL) {
-		return 0;
-	}
-
-	/* if the current mapping is RO and the access was a write
+	/*
+	 * If the current mapping is RO and the access was a write
 	 * we return 0
 	 */
-	if (!PTED_VALID(pted)) {
+	pted = pmap_vp_lookup(pm, va);
+	if (pted == NULL || !PTED_VALID(pted))
 		return 0;
-	} 
 
 	if (ppc_proc_is_64b) {
 		/* check write fault and we have a readonly mapping */
@@ -2298,18 +2294,14 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 {
 	struct pte_desc *pted;
 
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL) {
-		return 0;
-	}
-
 	/*
-	 * if the current mapping is RO and the access was a write
+	 * If the current mapping is RO and the access was a write
 	 * we return 0
 	 */
-	if (!PTED_VALID(pted)) {
+	pted = pmap_vp_lookup(pm, va);
+	if (pted == NULL || !PTED_VALID(pted))
 		return 0;
-	}
+
 	if (ppc_proc_is_64b) {
 		/* check write fault and we have a readonly mapping */
 		if ((dsisr & (1 << (31-6))) &&
