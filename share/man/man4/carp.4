@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.34 2010/03/12 13:36:16 mpf Exp $
+.\"	$OpenBSD: carp.4,v 1.35 2015/01/21 11:21:27 mpi Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 12 2010 $
+.Dd $Mdocdate: January 21 2015 $
 .Dt CARP 4
 .Os
 .Sh NAME
@@ -71,8 +71,6 @@ Finally
 is used to specify which interface the
 .Nm
 device attaches to.
-If unspecified, the kernel attempts to set it by looking for
-another interface with the same subnet.
 These configurations can be done using
 .Xr ifconfig 8 ,
 or through the
