@@ -133,9 +133,9 @@ struct slot *slot_list = NULL;
 unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
-char usagestr[] = "usage: aucat [-d] [-b nframes] "
-    "[-c min:max] [-e enc] [-f device]\n\t"
-    "[-j flag] [-q port] [-r rate] [-v volume]\n";
+char usagestr[] = "usage: aucat [-dn] [-b size] "
+    "[-c min:max] [-e enc] [-f device] [-h fmt]\n\t"
+    "[-i file] [-j flag] [-o file] [-q port] [-r rate] [-v volume]\n";
 
 static void
 slot_log(struct slot *s)
