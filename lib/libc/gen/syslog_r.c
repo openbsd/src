@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.6 2014/10/03 15:41:18 bluhm Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.7 2015/01/21 19:34:24 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdarg.h>
 
 extern char	*__progname;		/* Program name, from crt0. */
@@ -144,7 +145,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	if (data->log_tag == NULL)
 		data->log_tag = __progname;
 	if (data->log_tag != NULL) {
-		prlen = snprintf(p, tbuf_left, "%s", data->log_tag);
+		prlen = snprintf(p, tbuf_left, "%.*s", NAME_MAX, data->log_tag);
 		DEC();
 	}
 	if (data->log_stat & LOG_PID) {
