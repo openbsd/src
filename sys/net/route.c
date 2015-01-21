@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.200 2015/01/18 14:51:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.201 2015/01/21 21:32:42 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 int
 rt_getifa(struct rt_addrinfo *info, u_int rtid)
 {
-	struct ifaddr	*ifa;
 	struct ifnet	*ifp = NULL;
 
 	/*
@@ -701,7 +700,7 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 			    sa, sa, rtid);
 	}
 
-	if ((ifa = info->rti_ifa) == NULL)
+	if (info->rti_ifa == NULL)
 		return (ENETUNREACH);
 
 	return (0);
