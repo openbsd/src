@@ -22,7 +22,7 @@ bool_t xdr_amq_string();
 #endif /* Old Style C */
 
 
-typedef int time_type;
+typedef int64_t time_type;
 #ifdef __cplusplus
 extern "C" bool_t xdr_time_type(XDR *, time_type *);
 #elif defined(__STDC__)
@@ -160,94 +160,85 @@ bool_t xdr_amq_setopt();
 
 
 #define AMQ_PROGRAM ((u_long)300019)
-#define AMQ_VERSION ((u_long)1)
+#define AMQ_VERSION ((u_long)57)
 
 #ifdef __cplusplus
 #define AMQPROC_NULL ((u_long)0)
-extern "C" void * amqproc_null_1(void *, CLIENT *);
-extern "C" void * amqproc_null_1_svc(void *, struct svc_req *);
+extern "C" void * amqproc_null_57(void *, CLIENT *);
+extern "C" void * amqproc_null_57_svc(void *, struct svc_req *);
 #define AMQPROC_MNTTREE ((u_long)1)
-extern "C" amq_mount_tree_p * amqproc_mnttree_1(amq_string *, CLIENT *);
-extern "C" amq_mount_tree_p * amqproc_mnttree_1_svc(amq_string *, struct svc_req *);
+extern "C" amq_mount_tree_p * amqproc_mnttree_57(amq_string *, CLIENT *);
+extern "C" amq_mount_tree_p * amqproc_mnttree_57_svc(amq_string *, struct svc_req *);
 #define AMQPROC_UMNT ((u_long)2)
-extern "C" void * amqproc_umnt_1(amq_string *, CLIENT *);
-extern "C" void * amqproc_umnt_1_svc(amq_string *, struct svc_req *);
+extern "C" void * amqproc_umnt_57(amq_string *, CLIENT *);
+extern "C" void * amqproc_umnt_57_svc(amq_string *, struct svc_req *);
 #define AMQPROC_STATS ((u_long)3)
-extern "C" amq_mount_stats * amqproc_stats_1(void *, CLIENT *);
-extern "C" amq_mount_stats * amqproc_stats_1_svc(void *, struct svc_req *);
+extern "C" amq_mount_stats * amqproc_stats_57(void *, CLIENT *);
+extern "C" amq_mount_stats * amqproc_stats_57_svc(void *, struct svc_req *);
 #define AMQPROC_EXPORT ((u_long)4)
-extern "C" amq_mount_tree_list * amqproc_export_1(void *, CLIENT *);
-extern "C" amq_mount_tree_list * amqproc_export_1_svc(void *, struct svc_req *);
+extern "C" amq_mount_tree_list * amqproc_export_57(void *, CLIENT *);
+extern "C" amq_mount_tree_list * amqproc_export_57_svc(void *, struct svc_req *);
 #define AMQPROC_SETOPT ((u_long)5)
-extern "C" int * amqproc_setopt_1(amq_setopt *, CLIENT *);
-extern "C" int * amqproc_setopt_1_svc(amq_setopt *, struct svc_req *);
+extern "C" int * amqproc_setopt_57(amq_setopt *, CLIENT *);
+extern "C" int * amqproc_setopt_57_svc(amq_setopt *, struct svc_req *);
 #define AMQPROC_GETMNTFS ((u_long)6)
-extern "C" amq_mount_info_list * amqproc_getmntfs_1(void *, CLIENT *);
-extern "C" amq_mount_info_list * amqproc_getmntfs_1_svc(void *, struct svc_req *);
-#define AMQPROC_MOUNT ((u_long)7)
-extern "C" int * amqproc_mount_1(amq_string *, CLIENT *);
-extern "C" int * amqproc_mount_1_svc(amq_string *, struct svc_req *);
-#define AMQPROC_GETVERS ((u_long)8)
-extern "C" amq_string * amqproc_getvers_1(void *, CLIENT *);
-extern "C" amq_string * amqproc_getvers_1_svc(void *, struct svc_req *);
+extern "C" amq_mount_info_list * amqproc_getmntfs_57(void *, CLIENT *);
+extern "C" amq_mount_info_list * amqproc_getmntfs_57_svc(void *, struct svc_req *);
+#define AMQPROC_GETVERS ((u_long)7)
+extern "C" amq_string * amqproc_getvers_57(void *, CLIENT *);
+extern "C" amq_string * amqproc_getvers_57_svc(void *, struct svc_req *);
 
 #elif defined(__STDC__)
 #define AMQPROC_NULL ((u_long)0)
-extern void * amqproc_null_1(void *, CLIENT *);
-extern void * amqproc_null_1_svc(void *, struct svc_req *);
+extern void * amqproc_null_57(void *, CLIENT *);
+extern void * amqproc_null_57_svc(void *, struct svc_req *);
 #define AMQPROC_MNTTREE ((u_long)1)
-extern amq_mount_tree_p * amqproc_mnttree_1(amq_string *, CLIENT *);
-extern amq_mount_tree_p * amqproc_mnttree_1_svc(amq_string *, struct svc_req *);
+extern amq_mount_tree_p * amqproc_mnttree_57(amq_string *, CLIENT *);
+extern amq_mount_tree_p * amqproc_mnttree_57_svc(amq_string *, struct svc_req *);
 #define AMQPROC_UMNT ((u_long)2)
-extern void * amqproc_umnt_1(amq_string *, CLIENT *);
-extern void * amqproc_umnt_1_svc(amq_string *, struct svc_req *);
+extern void * amqproc_umnt_57(amq_string *, CLIENT *);
+extern void * amqproc_umnt_57_svc(amq_string *, struct svc_req *);
 #define AMQPROC_STATS ((u_long)3)
-extern amq_mount_stats * amqproc_stats_1(void *, CLIENT *);
-extern amq_mount_stats * amqproc_stats_1_svc(void *, struct svc_req *);
+extern amq_mount_stats * amqproc_stats_57(void *, CLIENT *);
+extern amq_mount_stats * amqproc_stats_57_svc(void *, struct svc_req *);
 #define AMQPROC_EXPORT ((u_long)4)
-extern amq_mount_tree_list * amqproc_export_1(void *, CLIENT *);
-extern amq_mount_tree_list * amqproc_export_1_svc(void *, struct svc_req *);
+extern amq_mount_tree_list * amqproc_export_57(void *, CLIENT *);
+extern amq_mount_tree_list * amqproc_export_57_svc(void *, struct svc_req *);
 #define AMQPROC_SETOPT ((u_long)5)
-extern int * amqproc_setopt_1(amq_setopt *, CLIENT *);
-extern int * amqproc_setopt_1_svc(amq_setopt *, struct svc_req *);
+extern int * amqproc_setopt_57(amq_setopt *, CLIENT *);
+extern int * amqproc_setopt_57_svc(amq_setopt *, struct svc_req *);
 #define AMQPROC_GETMNTFS ((u_long)6)
-extern amq_mount_info_list * amqproc_getmntfs_1(void *, CLIENT *);
-extern amq_mount_info_list * amqproc_getmntfs_1_svc(void *, struct svc_req *);
-#define AMQPROC_MOUNT ((u_long)7)
-extern int * amqproc_mount_1(amq_string *, CLIENT *);
-extern int * amqproc_mount_1_svc(amq_string *, struct svc_req *);
-#define AMQPROC_GETVERS ((u_long)8)
-extern amq_string * amqproc_getvers_1(void *, CLIENT *);
-extern amq_string * amqproc_getvers_1_svc(void *, struct svc_req *);
+extern amq_mount_info_list * amqproc_getmntfs_57(void *, CLIENT *);
+extern amq_mount_info_list * amqproc_getmntfs_57_svc(void *, struct svc_req *);
+#define AMQPROC_GETVERS ((u_long)7)
+extern amq_string * amqproc_getvers_57(void *, CLIENT *);
+extern amq_string * amqproc_getvers_57_svc(void *, struct svc_req *);
 
 #else /* Old Style C */
 #define AMQPROC_NULL ((u_long)0)
-extern void * amqproc_null_1();
-extern void * amqproc_null_1_svc();
+extern void * amqproc_null_57();
+extern void * amqproc_null_57_svc();
 #define AMQPROC_MNTTREE ((u_long)1)
-extern amq_mount_tree_p * amqproc_mnttree_1();
-extern amq_mount_tree_p * amqproc_mnttree_1_svc();
+extern amq_mount_tree_p * amqproc_mnttree_57();
+extern amq_mount_tree_p * amqproc_mnttree_57_svc();
 #define AMQPROC_UMNT ((u_long)2)
-extern void * amqproc_umnt_1();
-extern void * amqproc_umnt_1_svc();
+extern void * amqproc_umnt_57();
+extern void * amqproc_umnt_57_svc();
 #define AMQPROC_STATS ((u_long)3)
-extern amq_mount_stats * amqproc_stats_1();
-extern amq_mount_stats * amqproc_stats_1_svc();
+extern amq_mount_stats * amqproc_stats_57();
+extern amq_mount_stats * amqproc_stats_57_svc();
 #define AMQPROC_EXPORT ((u_long)4)
-extern amq_mount_tree_list * amqproc_export_1();
-extern amq_mount_tree_list * amqproc_export_1_svc();
+extern amq_mount_tree_list * amqproc_export_57();
+extern amq_mount_tree_list * amqproc_export_57_svc();
 #define AMQPROC_SETOPT ((u_long)5)
-extern int * amqproc_setopt_1();
-extern int * amqproc_setopt_1_svc();
+extern int * amqproc_setopt_57();
+extern int * amqproc_setopt_57_svc();
 #define AMQPROC_GETMNTFS ((u_long)6)
-extern amq_mount_info_list * amqproc_getmntfs_1();
-extern amq_mount_info_list * amqproc_getmntfs_1_svc();
-#define AMQPROC_MOUNT ((u_long)7)
-extern int * amqproc_mount_1();
-extern int * amqproc_mount_1_svc();
-#define AMQPROC_GETVERS ((u_long)8)
-extern amq_string * amqproc_getvers_1();
-extern amq_string * amqproc_getvers_1_svc();
+extern amq_mount_info_list * amqproc_getmntfs_57();
+extern amq_mount_info_list * amqproc_getmntfs_57_svc();
+#define AMQPROC_GETVERS ((u_long)7)
+extern amq_string * amqproc_getvers_57();
+extern amq_string * amqproc_getvers_57_svc();
 #endif /* Old Style C */
 
 #endif /* !_AMQ_H_RPCGEN */

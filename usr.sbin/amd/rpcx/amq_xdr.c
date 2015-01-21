@@ -18,7 +18,7 @@ bool_t
 xdr_time_type(XDR *xdrs, time_type *objp)
 {
 
-	if (!xdr_int(xdrs, objp))
+	if (!xdr_int64_t(xdrs, objp))
 		return (FALSE);
 	return (TRUE);
 }

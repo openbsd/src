@@ -36,16 +36,15 @@ extern int _rpcpmstart;		/* Started by a port monitor ? */
 extern int _rpcfdtype;		/* Whether Stream or Datagram ? */
 
 
-void	amq_program_1(struct svc_req *rqstp, SVCXPRT *transp);
+void	amq_program_57(struct svc_req *rqstp, SVCXPRT *transp);
 
 void
-amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
+amq_program_57(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
-		amq_string amqproc_mnttree_1_arg;
-		amq_string amqproc_umnt_1_arg;
-		amq_setopt amqproc_setopt_1_arg;
-		amq_string amqproc_mount_1_arg;
+		amq_string amqproc_mnttree_57_arg;
+		amq_string amqproc_umnt_57_arg;
+		amq_setopt amqproc_setopt_57_arg;
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
@@ -66,55 +65,49 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 	case AMQPROC_NULL:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_null_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_null_57_svc;
 		break;
 
 	case AMQPROC_MNTTREE:
 		xdr_argument = (xdrproc_t) xdr_amq_string;
 		xdr_result = (xdrproc_t) xdr_amq_mount_tree_p;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_mnttree_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_mnttree_57_svc;
 		break;
 
 	case AMQPROC_UMNT:
 		xdr_argument = (xdrproc_t) xdr_amq_string;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_umnt_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_umnt_57_svc;
 		break;
 
 	case AMQPROC_STATS:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_amq_mount_stats;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_stats_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_stats_57_svc;
 		break;
 
 	case AMQPROC_EXPORT:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_amq_mount_tree_list;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_export_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_export_57_svc;
 		break;
 
 	case AMQPROC_SETOPT:
 		xdr_argument = (xdrproc_t) xdr_amq_setopt;
 		xdr_result = (xdrproc_t) xdr_int;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_setopt_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_setopt_57_svc;
 		break;
 
 	case AMQPROC_GETMNTFS:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_amq_mount_info_list;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_getmntfs_1_svc;
-		break;
-
-	case AMQPROC_MOUNT:
-		xdr_argument = (xdrproc_t) xdr_amq_string;
-		xdr_result = (xdrproc_t) xdr_int;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_mount_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_getmntfs_57_svc;
 		break;
 
 	case AMQPROC_GETVERS:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_amq_string;
-		local = (char *(*)(char *, struct svc_req *)) amqproc_getvers_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) amqproc_getvers_57_svc;
 		break;
 
 	default:

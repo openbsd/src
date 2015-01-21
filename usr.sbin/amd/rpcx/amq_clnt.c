@@ -10,7 +10,7 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 void *
-amqproc_null_1(void *argp, CLIENT *clnt)
+amqproc_null_57(void *argp, CLIENT *clnt)
 {
 	static char clnt_res;
 
@@ -22,7 +22,7 @@ amqproc_null_1(void *argp, CLIENT *clnt)
 }
 
 amq_mount_tree_p *
-amqproc_mnttree_1(amq_string *argp, CLIENT *clnt)
+amqproc_mnttree_57(amq_string *argp, CLIENT *clnt)
 {
 	static amq_mount_tree_p clnt_res;
 
@@ -34,7 +34,7 @@ amqproc_mnttree_1(amq_string *argp, CLIENT *clnt)
 }
 
 void *
-amqproc_umnt_1(amq_string *argp, CLIENT *clnt)
+amqproc_umnt_57(amq_string *argp, CLIENT *clnt)
 {
 	static char clnt_res;
 
@@ -46,7 +46,7 @@ amqproc_umnt_1(amq_string *argp, CLIENT *clnt)
 }
 
 amq_mount_stats *
-amqproc_stats_1(void *argp, CLIENT *clnt)
+amqproc_stats_57(void *argp, CLIENT *clnt)
 {
 	static amq_mount_stats clnt_res;
 
@@ -58,7 +58,7 @@ amqproc_stats_1(void *argp, CLIENT *clnt)
 }
 
 amq_mount_tree_list *
-amqproc_export_1(void *argp, CLIENT *clnt)
+amqproc_export_57(void *argp, CLIENT *clnt)
 {
 	static amq_mount_tree_list clnt_res;
 
@@ -70,7 +70,7 @@ amqproc_export_1(void *argp, CLIENT *clnt)
 }
 
 int *
-amqproc_setopt_1(amq_setopt *argp, CLIENT *clnt)
+amqproc_setopt_57(amq_setopt *argp, CLIENT *clnt)
 {
 	static int clnt_res;
 
@@ -82,7 +82,7 @@ amqproc_setopt_1(amq_setopt *argp, CLIENT *clnt)
 }
 
 amq_mount_info_list *
-amqproc_getmntfs_1(void *argp, CLIENT *clnt)
+amqproc_getmntfs_57(void *argp, CLIENT *clnt)
 {
 	static amq_mount_info_list clnt_res;
 
@@ -93,20 +93,8 @@ amqproc_getmntfs_1(void *argp, CLIENT *clnt)
 	return (&clnt_res);
 }
 
-int *
-amqproc_mount_1(amq_string *argp, CLIENT *clnt)
-{
-	static int clnt_res;
-
-	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	if (clnt_call(clnt, AMQPROC_MOUNT, xdr_amq_string, argp, xdr_int, &clnt_res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
-	}
-	return (&clnt_res);
-}
-
 amq_string *
-amqproc_getvers_1(void *argp, CLIENT *clnt)
+amqproc_getvers_57(void *argp, CLIENT *clnt)
 {
 	static amq_string clnt_res;
 
