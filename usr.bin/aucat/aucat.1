@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.106 2014/02/08 15:18:54 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.107 2015/01/21 08:43:55 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,17 +14,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 8 2014 $
+.Dd $Mdocdate: January 21 2015 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
 .Nm aucat
-.Nd audio/MIDI stream manipulation tool
+.Nd audio files manipulation tool
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl dMn
-.Op Fl C Ar min : Ns Ar max
+.Op Fl dn
+.Op Dl b Ar size
 .Op Fl c Ar min : Ns Ar max
 .Op Fl e Ar enc
 .Op Fl f Ar device
@@ -34,34 +34,32 @@
 .Op Fl o Ar file
 .Op Fl q Ar port
 .Op Fl r Ar rate
-.Op Fl t Ar mode
 .Op Fl v Ar volume
-.Op Fl w Ar flag
-.Op Fl x Ar policy
 .Ek
 .Sh DESCRIPTION
 The
 .Nm
-utility can play, record, mix, and convert audio files.
+utility can play, record, mix, and process audio files
+on the fly.
 During playback,
 .Nm
-reads audio data concurrently from all played files, mixes it and sends
-the result to the device.
-Similarly, during recording it duplicates audio data recorded
-from the device and stores it into corresponding files.
-It can process audio data on the fly:
+reads audio data concurrently from all played files,
+mixes it and plays the result on the device.
+Similarly, it stores audio data recorded
+from the device into corresponding files.
+An
+.Em off-line
+mode could be used to process audio files without
+involving audio hardware.
+Processing includes:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
 Change the sound encoding.
 .It
-Route the sound from one channel to another,
-join stereo or split mono.
+Route the sound from one channel to another.
 .It
 Control the per-file playback volume.
-.It
-Monitor the sound being played, allowing the playback mix
-to be recorded.
 .El
 .Pp
 Finally,
@@ -77,262 +75,132 @@ Start, stop and relocate playback and recording.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl Ar b size
+The buffer size of the audio device in frames.
+Default is 7680.
 .It Xo
-.Fl C Ar min : Ns Ar max ,
 .Fl c Ar min : Ns Ar max
 .Xc
-The range of stream channel numbers for recording and playback directions,
-respectively.
+The range of audio file channel numbers.
 The default is
 .Cm 0:1 ,
 i.e. stereo.
 .It Fl d
 Increase log verbosity.
 .It Fl e Ar enc
-Encoding of the playback or recording stream (see below).
-The default is signed, 16-bit, native byte order.
+Encoding of the audio file.
+The default is
+.Va s16 .
+Encoding names use the follwing scheme: signedness
+.Po
+.Va s
+or
+.Va u
+.Pc
+followed
+by the precision in bits, the byte-order
+.Po
+.Va le
+or
+.Va be
+.Pc ,
+the number of
+bytes per sample, and the alignment
+.Po
+.Va msb
+or
+.Va lsb
+.Pc .
+Only the signedness and the precision are mandatory.
+Examples:
+.Va u8 , s16le , s24le3 , s24le4lsb .
 .It Fl f Ar device
 Use this
 .Xr sndio 7
 audio device.
-Preceding per-device options apply to this device.
-Streams
-.Pq Fl io
-and control MIDI ports
-.Pq Fl q
-that are applied after will be attached to this device.
-Device mode and parameters are determined from streams
-attached to it.
+Device mode and parameters are determined from audio files.
+Default is
+.Pa default .
 .It Fl h Ar fmt
-File format of the playback or record stream (see below).
-The default is
-.Cm auto .
+Audio file type.
+The following file types are supported:
+.Bl -tag -width auto
+.It Ar raw
+Headerless file.
+.It Ar wav
+Microsoft WAV file format.
+.It Ar aiff
+Apple's audio interchange file format.
+.It Ar au
+Sun/NeXT audio file format.
+.It Ar auto
+Try to guess, depending on the file name.
+This is the default.
+.El
 .It Fl i Ar file
-Add this file to the list of streams to play.
+Play this audio file.
 If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl j Ar flag
-Control whether stream channels are joined or expanded if
-the stream number of channels is not equal to the device number of channels.
+Control whether source channels are joined or expanded if
+they don't match the destination number of channels.
 If the flag is
-.Cm off
-then stream channels are routed to the corresponding
-device channel, possibly discarding channels not present in the device.
+.Cm off ,
+then each source channel is routed to a single destination channel,
+possibly discarding channels.
 If the flag is
 .Cm on ,
-then a single stream channel may be sent on multiple device channels,
-or multiple stream channels may be sent to a single device channel.
-For instance, this feature could be used to request mono streams to
-be sent on multiple outputs or to record a stereo input into a mono stream.
+then a single source may be sent to multiple destinations
+and multiple sources may be mixed into a single destination.
+For instance, this feature could be used to convert
+a stereo file into a mono file mixing left and right channels together.
 The default is
-.Cm on .
-.It Fl M
-Create a MIDI thru box
-.Pq i.e. MIDI-only pseudo device .
-It merges any number of MIDI inputs and broadcasts the result
-to any number of MIDI outputs, similarly to a hardware MIDI thru box.
-Only MIDI ports
-.Pq Fl q
-and MIDI files
-can be attached to it.
+.Cm off .
 .It Fl n
-Create a loopback pseudo audio device.
-Send input streams
-to the output, processing them on the fly.
-This pseudo-device is useful to mix, demultiplex, resample or re-encode
-audio files offline.
+Off-line mode.
+Read input files and store the result in the output files,
+processing them on the fly.
+This mode is useful to mix, demultiplex, resample or re-encode
+audio files off-line.
 It requires at least one input
 .Pq Fl i
 and one output
 .Pq Fl o .
 .It Fl o Ar file
-Add this file to the list of recording streams.
+Record into this audio file.
 If the option argument is
 .Sq -
 then standard output will be used.
 .It Fl q Ar port
-Allow audio device properties to be controlled
-through this MIDI port.
+Control audio device properties through this MIDI port.
 This includes per-stream volumes and the ability to
-synchronously start, stop and relocate streams created in
-MIDI Machine
-Control (MMC) slave mode
-.Pq Fl t .
+synchronously start, stop and relocate audio files.
 .It Fl r Ar rate
-Sample rate in Hertz of the stream.
+Sample rate in Hertz of the audio file.
 The default is
 .Cm 48000 .
-.It Fl t Ar mode
-Select the way streams are controlled by MIDI Machine Control (MMC)
-messages.
-If the mode is
-.Cm off
-(the default), then streams are not affected by MMC messages.
-If the mode is
-.Cm slave ,
-then streams are started synchronously by MMC start messages.
 .It Fl v Ar volume
-Software volume attenuation of the playback stream.
+Software volume attenuation of the file to play.
 The value must be between 1 and 127,
 corresponding to \-42dB and \-0dB attenuation in 1/3dB steps.
 The default is 127, i.e. no attenuation.
-.It Fl w Ar flag
-Control
-.Nm
-behaviour when the maximum volume of the hardware is reached
-and a new stream is connected.
-This happens only when stream volumes
-are not properly set using the
-.Fl v
-option.
-If the flag is
-.Cm on ,
-then the master volume (corresponding to the mix of all playback streams)
-is automatically adjusted to avoid clipping.
-Using
-.Cm off
-makes sense when all streams are recorded or produced with properly lowered
-volumes.
-The default is
-.Cm on .
-.It Fl x Ar policy
-Action when the output stream cannot accept
-recorded data fast enough or the input stream
-cannot provide data to play fast enough.
-If the policy is
-.Cm ignore
-(the default) then samples that cannot be written are discarded
-and samples that cannot be read are replaced by silence.
-If the policy is
-.Cm sync
-then recorded samples are discarded,
-but the same amount of silence will be written
-once the stream is unblocked, in order to reach the right position in time.
-Similarly silence is played, but the same amount of samples will be discarded
-once the stream is unblocked.
-If the policy is
-.Cm error
-then the stream is closed permanently.
-.Pp
-If a stream is created with the
-.Fl t
-option,
-the
-.Cm ignore
-action is disabled for any stream connected to it
-to ensure proper synchronization.
 .El
 .Pp
 On the command line,
-per-device parameters must precede the device definition
-.Pq Fl fMn ,
-and per-stream parameters
-.Pq Fl Ccehjmrtvx
-must precede the stream definition
+per-file parameters
+.Pq Fl cehjrv
+must precede the file definition
 .Pq Fl io .
-MIDI ports
-.Pq Fl q
-and stream definitions
-.Pq Fl io
-must follow the definition of the device
-.Pq Fl fMn
-to which they are attached.
-.Pp
-If no audio devices
-.Pq Fl fMn
-are specified,
-settings are applied as if
-the default device is specified.
 .Pp
 If
-.Nm aucat
+.Nm
 is sent
 .Dv SIGHUP ,
 .Dv SIGINT
 or
 .Dv SIGTERM ,
 it terminates recording to files.
-.Pp
-File formats are specified using the
-.Fl h
-option.
-The following file formats are supported:
-.Bl -tag -width s32lexxx -offset indent
-.It raw
-Headerless file.
-This format is recommended since it has no limitations.
-.It wav
-Microsoft WAVE file format.
-There are limitations inherent to the file format itself:
-not all encodings are supported,
-file sizes are limited to 2GB,
-and the file must support the
-.Xr lseek 2
-operation (e.g. pipes do not support it).
-.It auto
-Try to guess, depending on the file name.
-.El
-.Pp
-Encodings are specified using the
-.Fl e
-option.
-The following encodings are supported:
-.Pp
-.Bl -tag -width s32lexxx -offset indent -compact
-.It s8
-signed 8-bit
-.It u8
-unsigned 8-bit
-.It s16le
-signed 16-bit, little endian
-.It u16le
-unsigned 16-bit, little endian
-.It s16be
-signed 16-bit, big endian
-.It u16be
-unsigned 16-bit, big endian
-.It s24le
-signed 24-bit, stored in 4 bytes, little endian
-.It u24le
-unsigned 24-bit, stored in 4 bytes, little endian
-.It s24be
-signed 24-bit, stored in 4 bytes, big endian
-.It u24be
-unsigned 24-bit, stored in 4 bytes, big endian
-.It s32le
-signed 32-bit, little endian
-.It u32le
-unsigned 32-bit, little endian
-.It s32be
-signed 32-bit, big endian
-.It u32be
-unsigned 32-bit, big endian
-.It s24le3
-signed 24-bit, packed in 3 bytes, little endian
-.It u24le3
-unsigned 24-bit, packed in 3 bytes, big endian
-.It s24be3
-signed 24-bit, packed in 3 bytes, little endian
-.It u24be3
-unsigned 24-bit, packed in 3 bytes, big endian
-.It s20le3
-signed 20-bit, packed in 3 bytes, little endian
-.It u20le3
-unsigned 20-bit, packed in 3 bytes, big endian
-.It s20be3
-signed 20-bit, packed in 3 bytes, little endian
-.It u20be3
-unsigned 20-bit, packed in 3 bytes, big endian
-.It s18le3
-signed 18-bit, packed in 3 bytes, little endian
-.It u18le3
-unsigned 18-bit, packed in 3 bytes, big endian
-.It s18be3
-signed 18-bit, packed in 3 bytes, little endian
-.It u18be3
-unsigned 18-bit, packed in 3 bytes, big endian
-.El
 .Sh MIDI CONTROL
 .Nm
 can be controlled through MIDI
@@ -340,27 +208,21 @@ can be controlled through MIDI
 as follows:
 a MIDI channel is assigned to each stream, and the volume
 is changed using the standard volume controller (number 7).
-Similarly, when the audio client changes its volume,
-the same MIDI controller message is sent out; it can be used
-for instance for monitoring or as feedback for motorized
-faders.
 .Pp
 The master volume can be changed using the standard master volume
 system exclusive message.
 .Pp
-Streams created with the
-.Fl t
-option are controlled by the following MMC messages:
-.Bl -tag -width relocateXXX -offset indent
+All audio files are controlled by the following MMC messages:
+.Bl -tag -width relocate -offset indent
 .It relocate
-Files are relocated to the requested time position.
-If the requested position is beyond the end of file,
-playback of the file is temporarly disabled until a valid
-position is requested.
+All files are relocated to the requested time position.
+If it is beyond the end of a file, the file is temporarly
+disabled until a valid position is requested.
 .It start
-Files are started.
+Playback and/or recording is started.
 .It stop
-Files are stopped and rewound back to the starting position.
+Playback and/or recording is stopped and all files are rewound
+back to the starting position.
 .El
 .Pp
 MIDI control is intended to be used together with
@@ -371,7 +233,7 @@ the default
 and a MMC-controlled one
 .Va snd/0.mmc :
 .Bd -literal -offset indent
-$ sndiod -r 48000 -z 400 -s default -t slave -s mmc
+$ sndiod -r 48000 -z 480 -s default -t slave -s mmc
 .Ed
 .Pp
 Programs using
@@ -386,7 +248,7 @@ connected to the
 .Va midithru/0
 MIDI port:
 .Bd -literal -offset indent
-$ aucat -f snd/0.mmc -t slave -q midithru/0 -i file.wav
+$ aucat -f snd/0.mmc -q midithru/0 -i file.wav
 .Ed
 .Pp
 At this stage,
@@ -400,23 +262,22 @@ Furthermore, the MIDI sequencer could be configured to use the
 port as MTC clock source, assured to be synchronous to playback of
 .Pa file.wav .
 .Sh EXAMPLES
-Mix and play two stereo streams,
-the first at 48kHz and the second at 44.1kHz:
+Mix and play two files while recording a third file:
 .Bd -literal -offset indent
-$ aucat -r 48000 -i file1.raw -r 44100 -i file2.raw
+$ aucat -i file1.wav -i file2.wav -o file3.wav
 .Ed
 .Pp
 Record channels 2 and 3 into one stereo file and
-channels 6 and 7 into another stereo file using a 96kHz sampling rate for
-both:
+channels 6 and 7 into another stereo file using a 44.1kHz sampling
+rate for both:
 .Bd -literal -offset indent
-$ aucat -j off -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
+$ aucat -r 44100 -c 2:3 -o file1.wav -c 6:7 -o file2.wav
 .Ed
 .Pp
 Split a stereo file into two mono files:
 .Bd -literal -offset indent
-$ aucat -n -j off -i stereo.wav -C 0:0 -o left.wav -C 1:1 \e
-	-o right.wav
+$ aucat -n -i stereo.wav -c 0:0 -o left.wav \e
+	-c 1:1 -o right.wav
 .Ed
 .Sh SEE ALSO
 .Xr audioctl 1 ,
@@ -426,9 +287,14 @@ $ aucat -n -j off -i stereo.wav -C 0:0 -o left.wav -C 1:1 \e
 .Xr audio 4 ,
 .Xr sndio 7
 .Sh BUGS
-Resampling is low quality; down-sampling especially should be avoided
-when recording.
+Resampling is low quality.
 .Pp
-Processing is done using 16-bit arithmetic,
-thus samples with more than 16 bits are rounded.
-16 bits (i.e. 97dB dynamic) are largely enough for most applications though.
+There are limitations inherent to the
+.Ar wav ,
+.Ar aiff ,
+and
+.Ar au
+file formats: not all encodings are supported,
+file sizes are limited to 2GB, and the files must support the
+.Xr lseek 2
+operation (e.g. pipes do not support it).

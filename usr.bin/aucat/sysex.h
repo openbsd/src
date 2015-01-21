@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysex.h,v 1.3 2012/03/23 11:59:54 ratchov Exp $	*/
+/*	$OpenBSD: sysex.h,v 1.4 2015/01/21 08:43:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,8 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef AUCAT_SYSEX_H
-#define AUCAT_SYSEX_H
+#ifndef SYSEX_H
+#define SYSEX_H
 
 #include <stdint.h>
 
@@ -46,12 +46,9 @@
 #define   SYSEX_MMC_LOC_CMD	0x01
 
 /*
- * aucat-specific messages, in the "edu" namespace
+ * sepcial "any" midi device number
  */
-#define SYSEX_AUCAT		0x23		/* aucat-specific */
-#define   SYSEX_AUCAT_MIXINFO	0x01		/* mixer info */
-#define   SYSEX_AUCAT_DUMPREQ	0x02		/* dump request */
-#define   SYSEX_AUCAT_DUMPEND	0x03		/* end of dump */
+#define SYSEX_DEV_ANY		0x7f
 
 /*
  * minimum size of sysex message we accept
@@ -59,9 +56,7 @@
 #define SYSEX_SIZE(m)	(5 + sizeof(struct sysex_ ## m))
 
 /*
- * all possible system exclusive messages we support. For aucat-specific
- * messages we use the same header as real-time messages to simplify the
- * message parser
+ * all possible system exclusive messages we support.
  */
 struct sysex {
 	uint8_t start;
@@ -87,7 +82,10 @@ struct sysex {
 		struct sysex_loc {
 			uint8_t len;
 			uint8_t cmd;
-			uint8_t hr;
+#define MTC_FPS_24	0
+#define MTC_FPS_25	1
+#define MTC_FPS_30	3
+			uint8_t hr;		/* MSB contain MTC_FPS */
 			uint8_t min;
 			uint8_t sec;
 			uint8_t fr;
@@ -101,20 +99,7 @@ struct sysex {
 			uint8_t fr;
 			uint8_t end;
 		} full;
-		struct sysex_mixinfo {
-			uint8_t chan;			/* channel */
-			uint8_t vol;			/* current volume */
-#define SYSEX_NAMELEN	10				/* \0 included */
-			uint8_t name[SYSEX_NAMELEN];	/* stream name */
-			uint8_t end;
-		} mixinfo;
-		struct sysex_dumpreq {
-			uint8_t end;
-		} dumpreq;
-		struct sysex_dumpend {
-			uint8_t end;
-		} dumpend;
 	} u;
 };
 
-#endif /* !defined(AUCAT_SYSEX_H) */
+#endif /* !defined(SYSEX_H) */
