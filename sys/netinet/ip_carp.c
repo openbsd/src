@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.244 2015/01/08 10:55:45 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.245 2015/01/21 11:20:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1849,58 +1849,19 @@ carp_addr_updated(void *v)
 int
 carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 {
-	struct ifnet *ifp = NULL;
 	struct in_addr *in = &sin->sin_addr;
-	struct ifaddr *ifa;
-	struct in_ifaddr *ia;
-	int error = 0;
+	int error;
+
+	KASSERT(sc->sc_carpdev != NULL);
 
 	/* XXX is this necessary? */
 	if (in->s_addr == INADDR_ANY) {
-		if (!(sc->sc_if.if_flags & IFF_UP))
-			carp_set_state_all(sc, INIT);
-		if (sc->sc_naddrs)
-			sc->sc_if.if_flags |= IFF_UP;
 		carp_setrun_all(sc, 0);
 		return (0);
 	}
 
-	/* we have to do this by hand to ensure we don't match on ourselves */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		/* and, yeah, we need a multicast-capable iface too */
-		if ((ifp->if_type == IFT_CARP) ||
-		    (ifp->if_flags & IFF_MULTICAST) == 0 ||
-		    (ifp->if_rdomain != sc->sc_if.if_rdomain))
-			continue;
-
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-
-			ia = ifatoia(ifa);
-			if ((in->s_addr & ia->ia_netmask) == ia->ia_net)
-				goto found;
-		}
-	}
-
-found:
-	if (ifp == NULL)
-		ifp = sc->sc_carpdev;
-
-	if (sc->sc_carpdev != NULL && ifp != sc->sc_carpdev)
-		return (EADDRNOTAVAIL);
-
-	if ((error = carp_set_ifp(sc, ifp)))
-		return (error);
-
-	if (sc->sc_carpdev == NULL)
-		return (EADDRNOTAVAIL);
-
 	if (sc->sc_naddrs == 0 && (error = carp_join_multicast(sc)) != 0)
 		return (error);
-
-	if (sc->sc_carpdev != NULL)
-		sc->sc_if.if_flags |= IFF_UP;
 
 	carp_set_state_all(sc, INIT);
 
@@ -1934,64 +1895,17 @@ carp_join_multicast(struct carp_softc *sc)
 int
 carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 {
-	struct ifnet *ifp = sc->sc_carpdev;
-	struct ifaddr *ifa;
-	struct in6_ifaddr *ia6;
-	int i, error = 0;
+	int error;
+
+	KASSERT(sc->sc_carpdev != NULL);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-		if (!(sc->sc_if.if_flags & IFF_UP))
-			carp_set_state_all(sc, INIT);
-		if (sc->sc_naddrs6)
-			sc->sc_if.if_flags |= IFF_UP;
 		carp_setrun_all(sc, 0);
 		return (0);
 	}
 
-	/* we have to do this by hand to ensure we don't match on ourselves */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		/* and, yeah, we need a multicast-capable iface too */
-		if ((ifp->if_type == IFT_CARP) ||
-		    (ifp->if_flags & IFF_MULTICAST) == 0 ||
-		    (ifp->if_rdomain != sc->sc_if.if_rdomain))
-			continue;
-
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family != AF_INET6)
-				continue;
-
-			ia6 = ifatoia6(ifa);
-			for (i = 0; i < 4; i++) {
-				if ((sin6->sin6_addr.s6_addr32[i] &
-				    ia6->ia_prefixmask.sin6_addr.s6_addr32[i]) !=
-				    (ia6->ia_addr.sin6_addr.s6_addr32[i] &
-				    ia6->ia_prefixmask.sin6_addr.s6_addr32[i]))
-					break;
-			}
-
-			if (i == 4)
-				goto found;
-		}
-	}
-
-found:
-	if (ifp == NULL)
-		ifp = sc->sc_carpdev;
-
-	if (sc->sc_carpdev != NULL && ifp != sc->sc_carpdev)
-		return (EADDRNOTAVAIL);
-
-	if ((error = carp_set_ifp(sc, ifp)))
-		return (error);
-
-	if (sc->sc_carpdev == NULL)
-		return (EADDRNOTAVAIL);
-
 	if (sc->sc_naddrs6 == 0 && (error = carp_join_multicast6(sc)) != 0)
 		return (error);
-
-	if (sc->sc_carpdev != NULL)
-		sc->sc_if.if_flags |= IFF_UP;
 
 	carp_set_state_all(sc, INIT);
 
@@ -2055,20 +1969,17 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct ifaddr *ifa = (struct ifaddr *)addr;
 	struct ifreq *ifr = (struct ifreq *)addr;
 	struct ifnet *cdev = NULL;
-	int s, i, error = 0;
+	int i, error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		s = splnet();
+		if (sc->sc_carpdev == NULL)
+			return (EINVAL);
+
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET:
 			sc->sc_if.if_flags |= IFF_UP;
-			/*
-			 * emulate arp_ifinit() without doing a gratuitous arp
-			 * request so that the routes are setup correctly.
-			 */
 			ifa->ifa_rtrequest = arp_rtrequest;
-
 			error = carp_set_addr(sc, satosin(ifa->ifa_addr));
 			break;
 #ifdef INET6
@@ -2082,7 +1993,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			break;
 		}
 		break;
-		splx(s);
 
 	case SIOCSIFFLAGS:
 		vhe = LIST_FIRST(&sc->carp_vhosts);
