@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.50 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.51 2015/01/21 22:23:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/cdefs.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.72 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.73 2015/01/21 22:23:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/time.h>
-#include <sys/cdefs.h>
 
 #include <net/if.h>
 
