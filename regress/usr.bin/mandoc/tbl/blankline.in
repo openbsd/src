@@ -1,0 +1,14 @@
+.TH TBL-BLANKLINE 1 "January 21, 2015" OpenBSD
+.SH NAME
+tbl-blankline \- blank line in a table
+.SH DESCRIPTION
+normal text
+.TS
+lb
+li
+lb.
+first
+
+last
+.TE
+normal text

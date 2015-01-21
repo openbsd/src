@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.6 2014/12/24 15:37:23 schwarze Exp $
+# $OpenBSD: Makefile,v 1.7 2015/01/21 00:45:16 schwarze Exp $
 
-REGRESS_TARGETS	 = center fonts macro misalign nested numbers span vert
+REGRESS_TARGETS	 = blankline center fonts macro misalign
+REGRESS_TARGETS	+= nested numbers span vert
 LINT_TARGETS	 = macro nested
 
 # groff-1.22.3 defect:
@@ -13,7 +14,7 @@ LINT_TARGETS	 = macro nested
 # .TS in a table causes a blank table line in GNU tbl(1), but not in mandoc.
 
 SKIP_GROFF	 = misalign nested
-SKIP_TMAN	?= ALL
+SKIP_TMAN	?= ALL SILENT
 
 TBL = /usr/local/bin/tbl
 

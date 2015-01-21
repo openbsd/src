@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.19 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.20 2015/01/21 00:45:16 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,13 +28,13 @@
 #include "libmandoc.h"
 #include "libroff.h"
 
-static	int		 getdata(struct tbl_node *, struct tbl_span *,
+static	void		 getdata(struct tbl_node *, struct tbl_span *,
 				int, const char *, int *);
 static	struct tbl_span	*newspan(struct tbl_node *, int,
 				struct tbl_row *);
 
 
-static int
+static void
 getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		int ln, const char *p, int *pos)
 {
@@ -67,7 +67,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		/* Skip to the end... */
 		while (p[*pos])
 			(*pos)++;
-		return(1);
+		return;
 	}
 
 	dat = mandoc_calloc(1, sizeof(struct tbl_dat));
@@ -102,7 +102,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 
 	if (*pos - sv == 2 && 'T' == p[sv] && '{' == p[sv + 1]) {
 		tbl->part = TBL_PART_CDATA;
-		return(1);
+		return;
 	}
 
 	assert(*pos - sv >= 0);
@@ -132,7 +132,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 			mandoc_msg(MANDOCERR_TBLIGNDATA,
 			    tbl->parse, ln, sv, NULL);
 
-	return(1);
+	return;
 }
 
 int
@@ -151,7 +151,8 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 		if (p[pos] == tbl->opts.tab) {
 			tbl->part = TBL_PART_DATA;
 			pos++;
-			return(getdata(tbl, tbl->last_span, ln, p, &pos));
+			getdata(tbl, tbl->last_span, ln, p, &pos);
+			return(1);
 		} else if ('\0' == p[pos]) {
 			tbl->part = TBL_PART_DATA;
 			return(1);
@@ -200,19 +201,12 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 	return(dp);
 }
 
-int
+void
 tbl_data(struct tbl_node *tbl, int ln, const char *p)
 {
 	struct tbl_span	*dp;
 	struct tbl_row	*rp;
 	int		 pos;
-
-	pos = 0;
-
-	if ('\0' == p[pos]) {
-		mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, pos, NULL);
-		return(0);
-	}
 
 	/*
 	 * Choose a layout row: take the one following the last parsed
@@ -255,19 +249,15 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 
 	if ( ! strcmp(p, "_")) {
 		dp->pos = TBL_SPAN_HORIZ;
-		return(1);
+		return;
 	} else if ( ! strcmp(p, "=")) {
 		dp->pos = TBL_SPAN_DHORIZ;
-		return(1);
+		return;
 	}
 
 	dp->pos = TBL_SPAN_DATA;
 
-	/* This returns 0 when TBL_PART_CDATA is entered. */
-
+	pos = 0;
 	while ('\0' != p[pos])
-		if ( ! getdata(tbl, dp, ln, p, &pos))
-			return(0);
-
-	return(1);
+		getdata(tbl, dp, ln, p, &pos);
 }

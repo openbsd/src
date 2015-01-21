@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.12 2015/01/14 22:44:51 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.13 2015/01/21 00:45:16 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,11 +64,8 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
 		break;
 	}
 
-	/*
-	 * This only returns zero if the line is empty, so we ignore it
-	 * and continue on.
-	 */
-	return(tbl_data(tbl, ln, p) ? ROFF_TBL : ROFF_IGN);
+	tbl_data(tbl, ln, p);
+	return(ROFF_TBL);
 }
 
 struct tbl_node *
