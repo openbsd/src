@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.108 2015/01/17 17:44:15 tedu Exp $	*/
+/*	$OpenBSD: bios.c,v 1.109 2015/01/21 18:39:54 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -177,19 +177,8 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	va = ISA_HOLE_VADDR(0xffff0);
-	switch (va[14]) {
-	default:
-	case 0xff: str = "PC";		break;
-	case 0xfe: str = "PC/XT";	break;
-	case 0xfd: str = "PCjr";	break;
-	case 0xfc: str = "AT/286+";	break;
-	case 0xfb: str = "PC/XT+";	break;
-	case 0xfa: str = "PS/2 25/30";	break;
-	case 0xf9: str = "PC Convertible";break;
-	case 0xf8: str = "PS/2 386+";	break;
-	}
-	printf(": %s BIOS, date %c%c/%c%c/%c%c",
-	    str, va[5], va[6], va[8], va[9], va[11], va[12]);
+	printf(": date %c%c/%c%c/%c%c",
+	    va[5], va[6], va[8], va[9], va[11], va[12]);
 
 	/*
 	 * Determining whether BIOS32 extensions are available is
