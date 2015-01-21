@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.31 2015/01/19 21:07:33 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.32 2015/01/21 22:21:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,28 +17,16 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 
-#include <net/if.h>
-#include <netinet/in.h>
-#include <net/route.h>
-
-#include <ctype.h>
 #include <unistd.h>
-#include <err.h>
-#include <errno.h>
-#include <event.h>
-#include <limits.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <netdb.h>
 #include <string.h>
-#include <ifaddrs.h>
+#include <imsg.h>
 
 #include "httpd.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.30 2015/01/19 19:37:50 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.31 2015/01/21 22:21:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -23,16 +23,15 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
-#include <sys/signal.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
+#include <stdarg.h>
+#include <string.h>
+#include <signal.h>
 #include <getopt.h>
 #include <fnmatch.h>
 #include <err.h>

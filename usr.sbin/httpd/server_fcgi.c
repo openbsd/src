@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.49 2015/01/19 20:00:07 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.50 2015/01/21 22:21:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -17,26 +17,21 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/tree.h>
+#include <sys/cdefs.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
+#include <arpa/inet.h>
 
+#include <limits.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <time.h>
 #include <ctype.h>
-#include <err.h>
 #include <event.h>
 
 #include "httpd.h"

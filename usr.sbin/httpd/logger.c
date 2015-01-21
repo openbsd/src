@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.9 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: logger.c,v 1.10 2015/01/21 22:21:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -18,19 +18,16 @@
 
 #include <sys/param.h>	/* nitems */
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
 
-#include <net/if.h>
-#include <arpa/inet.h>
-
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <event.h>
+#include <imsg.h>
 
 #include "httpd.h"
 

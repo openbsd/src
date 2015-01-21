@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.71 2015/01/19 20:00:07 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.72 2015/01/21 22:21:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,9 +21,18 @@
 #ifndef _HTTPD_H
 #define _HTTPD_H
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/time.h>
+#include <sys/cdefs.h>
 
+#include <net/if.h>
+
+#include <stdarg.h>
 #include <limits.h>
+#include <event.h>
 #include <imsg.h>
 #include <tls.h>
 
