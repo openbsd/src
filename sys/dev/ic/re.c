@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.172 2015/01/21 09:52:55 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.173 2015/01/21 10:00:42 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1660,6 +1660,18 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 
 	nsegs = map->dm_nsegs;
 	pad = 0;
+
+	/*
+	 * With some of the RealTek chips, using the checksum offload
+	 * support in conjunction with the autopadding feature results
+	 * in the transmission of corrupt frames. For example, if we
+	 * need to send a really small IP fragment that's less than 60
+	 * bytes in size, and IP header checksumming is enabled, the
+	 * resulting ethernet frame that appears on the wire will
+	 * have garbled payload. To work around this, if TX IP checksum
+	 * offload is enabled, we always manually pad short frames out
+	 * to the minimum ethernet frame size.
+	 */
 	if ((sc->rl_flags & RL_FLAG_AUTOPAD) == 0 &&
 	    m->m_pkthdr.len < RL_IP4CSUMTX_PADLEN &&
 	    (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) != 0) {
