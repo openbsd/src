@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.16 2014/10/26 03:28:41 guenther Exp $
+ *	$Id: amq.c,v 1.17 2015/01/21 08:24:41 guenther Exp $
  */
 
 /*
@@ -92,7 +92,7 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid,
 	    }
 
 	case Full: {
-		time_t t = *mt->mt_mounttime;
+		time_t t = mt->mt_mounttime;
 
 		struct tm *tp = localtime(&t);
 
@@ -110,7 +110,7 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid,
 	    }
 
 	case Stats: {
-		time_t t = *mt->mt_mounttime;
+		time_t t = mt->mt_mounttime;
 
 		struct tm *tp = localtime(&t);
 

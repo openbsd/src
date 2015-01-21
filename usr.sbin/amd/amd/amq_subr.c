@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.16 2014/10/26 03:28:41 guenther Exp $
+ *	$Id: amq_subr.c,v 1.17 2015/01/21 08:24:41 guenther Exp $
  */
 
 /*
@@ -43,7 +43,7 @@
 #include "amq.h"
 #include <ctype.h>
 
-bool_t	xdr_amq_mount_info_qelem(XDR *, qelem *);
+bool_t	xdr_amq_mount_info_list(XDR *, amq_mount_info_list *);
 
 void *
 amqproc_null_1_svc(void *argp, struct svc_req *rqstp)
@@ -57,11 +57,11 @@ amqproc_null_1_svc(void *argp, struct svc_req *rqstp)
  * Return a sub-tree of mounts
  */
 amq_mount_tree_p *
-amqproc_mnttree_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_mnttree_1_svc(amq_string *argp, struct svc_req *rqstp)
 {
 	static am_node *mp;
 
-	mp = find_ap(*(char **) argp);
+	mp = find_ap(*argp);
 	return (amq_mount_tree_p *) &mp;
 }
 
@@ -69,11 +69,11 @@ amqproc_mnttree_1_svc(void *argp, struct svc_req *rqstp)
  * Unmount a single node
  */
 void *
-amqproc_umnt_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_umnt_1_svc(amq_string *argp, struct svc_req *rqstp)
 {
 	static char res;
 
-	am_node *mp = find_ap(*(char **) argp);
+	am_node *mp = find_ap(*argp);
 	if (mp)
 		forcibly_timeout_mp(mp);
 
@@ -104,17 +104,15 @@ amqproc_export_1_svc(void *argp, struct svc_req *rqstp)
 }
 
 int *
-amqproc_setopt_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_setopt_1_svc(amq_setopt *argp, struct svc_req *rqstp)
 {
 	static int rc;
 
-	amq_setopt *opt = (amq_setopt *) argp;
-
 	rc = 0;
-	switch (opt->as_opt) {
+	switch (argp->as_opt) {
 	case AMOPT_DEBUG:
 #ifdef DEBUG
-		if (debug_option(opt->as_str))
+		if (debug_option(argp->as_str))
 			rc = EINVAL;
 #else
 		rc = EINVAL;
@@ -123,7 +121,7 @@ amqproc_setopt_1_svc(void *argp, struct svc_req *rqstp)
 
 	case AMOPT_LOGFILE:
 #ifdef not_yet
-		if (switch_to_logfile(opt->as_str))
+		if (switch_to_logfile(argp->as_str))
 			rc = EINVAL;
 #else
 		rc = EACCES;
@@ -131,7 +129,7 @@ amqproc_setopt_1_svc(void *argp, struct svc_req *rqstp)
 		break;
 
 	case AMOPT_XLOG:
-		if (switch_option(opt->as_str))
+		if (switch_option(argp->as_str))
 			rc = EINVAL;
 		break;
 
@@ -178,12 +176,10 @@ struct svc_req *rqstp;
 }
 
 int *
-amqproc_mount_1_svc(argp, rqstp)
-void *argp;
-struct svc_req *rqstp;
+amqproc_mount_1_svc(amq_string *argp, struct svc_req *rqstp)
 {
 	static int rc;
-	char *s = *(amq_string *) argp;
+	char *s = *argp;
 	char *cp;
 
 	plog(XLOG_INFO, "amq requested mount of %s", s);
@@ -228,10 +224,10 @@ struct svc_req *rqstp;
  * Disable "amq -M" functionality since it is inherently insecure.
  */
 int *
-amqproc_mount_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_mount_1_svc(amq_string *argp, struct svc_req *rqstp)
 {
 	static int rc;
-	char *s = *(amq_string *) argp;
+	char *s = *argp;
 
 	plog(XLOG_ERROR, "amq requested mount of %s, but code is disabled", s);
 
@@ -395,8 +391,10 @@ xdr_amq_mount_tree_list(XDR *xdrs, amq_mount_tree_list *objp)
 }
 
 bool_t
-xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
+xdr_amq_mount_info_list(XDR *xdrs, amq_mount_info_list *arg)
 {
+	qelem *qhead = (qelem *)arg;
+
 	/*
 	 * Compute length of list
 	 */
