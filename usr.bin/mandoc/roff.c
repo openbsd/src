@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.123 2015/01/20 21:12:46 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.124 2015/01/21 02:16:11 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1164,13 +1164,13 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 
 	/*
 	 * First, if a scope is open and we're not a macro, pass the
-	 * text through the macro's filter.  If a scope isn't open and
-	 * we're not a macro, just let it through.
-	 * Finally, if there's an equation scope open, divert it into it
-	 * no matter our state.
+	 * text through the macro's filter.
+	 * Equations process all content themselves.
+	 * Tables process almost all content themselves, but we want
+	 * to warn about macros before passing it there.
 	 */
 
-	if (r->last && ! ctl) {
+	if (r->last != NULL && ! ctl) {
 		t = r->last->tok;
 		assert(roffs[t].text);
 		e = (*roffs[t].text)(r, t, buf, ln, pos, pos, offs);
@@ -1178,13 +1178,12 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 		if (e != ROFF_CONT)
 			return(e);
 	}
-	if (r->eqn)
+	if (r->eqn != NULL)
 		return(eqn_read(&r->eqn, ln, buf->buf, ppos, offs));
-	if ( ! ctl) {
-		if (r->tbl)
-			return(tbl_read(r->tbl, ln, buf->buf, pos));
+	if (r->tbl != NULL && ( ! ctl || buf->buf[pos] == '\0'))
+		return(tbl_read(r->tbl, ln, buf->buf, pos));
+	if ( ! ctl)
 		return(roff_parsetext(buf, pos, offs));
-	}
 
 	/* Skip empty request lines. */
 
