@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.38 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.39 2015/01/21 00:15:50 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -222,7 +222,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	rdata = malloc(sizeof(DTLS1_RECORD_DATA));
 	item = pitem_new(priority, rdata);
 	if (rdata == NULL || item == NULL)
-		goto err;
+		goto init_err;
 
 	rdata->packet = s->packet;
 	rdata->packet_length = s->packet_length;
@@ -254,10 +254,13 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	return (1);
 
 err:
+	free(rdata->rbuf.buf);
+
+init_err:
 	SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
 	free(rdata);
 	pitem_free(item);
-	return (0);
+	return (-1);
 }
 
 
@@ -308,8 +311,9 @@ dtls1_process_buffered_records(SSL *s)
 			dtls1_get_unprocessed_record(s);
 			if (! dtls1_process_record(s))
 				return (0);
-			dtls1_buffer_record(s, &(s->d1->processed_rcds),
-			s->s3->rrec.seq_num);
+			if (dtls1_buffer_record(s, &(s->d1->processed_rcds),
+			    s->s3->rrec.seq_num) < 0)
+				return (-1);
 		}
 	}
 
@@ -446,7 +450,6 @@ dtls1_process_record(SSL *s)
 
 	/* we have pulled in a full packet so zero things */
 	s->packet_length = 0;
-	dtls1_record_bitmap_update(s, &(s->d1->bitmap));/* Mark receipt of record. */
 	return (1);
 
 f_err:
@@ -480,7 +483,8 @@ dtls1_get_record(SSL *s)
 
 	/* The epoch may have changed.  If so, process all the
 	 * pending records.  This is a non-blocking operation. */
-	dtls1_process_buffered_records(s);
+	if (dtls1_process_buffered_records(s) < 0)
+		return (-1);
 
 	/* if we're renegotiating, then there may be buffered records */
 	if (dtls1_get_processed_record(s))
@@ -611,7 +615,11 @@ again:
 	 */
 	if (is_next_epoch) {
 		if ((SSL_in_init(s) || s->in_handshake) && !s->d1->listen) {
-			dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+			if (dtls1_buffer_record(s, &(s->d1->unprocessed_rcds),
+			    rr->seq_num) < 0)
+				return (-1);
+			/* Mark receipt of record. */
+			dtls1_record_bitmap_update(s, bitmap);
 		}
 		rr->length = 0;
 		s->packet_length = 0;
@@ -625,6 +633,8 @@ again:
 		goto again;
 		/* get another record */
 	}
+	/* Mark receipt of record. */
+	dtls1_record_bitmap_update(s, bitmap);
 
 	return (1);
 
@@ -769,7 +779,11 @@ start:
 		 * buffer the application data for later processing rather
 		 * than dropping the connection.
 		 */
-		dtls1_buffer_record(s, &(s->d1->buffered_app_data), rr->seq_num);
+		if (dtls1_buffer_record(s, &(s->d1->buffered_app_data),
+		    rr->seq_num) < 0) {
+			SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
+			return (-1);
+		}
 		rr->length = 0;
 		goto start;
 	}
