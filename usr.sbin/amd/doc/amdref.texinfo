@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.12 2014/10/24 10:29:56 schwarze Exp $
+@c	$Id: amdref.texinfo,v 1.13 2015/01/21 09:47:15 guenther Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -1892,7 +1892,8 @@ effect visible to the user.@refill
 * Network Filesystem Group::	An atomic group of NFS filesystems.
 * Unix Filesystem::		Native disk filesystem.
 * Program Filesystem::		Generic Program mounts.
-* Symbolic Link Filesystem::	Local link referencing existing filesystem.
+* Symbolic Link Filesystem::	Local link referencing filesystem.
+* Symbolic Link Filesystem II::	Local link referencing existing filesystem.
 * Automount Filesystem::
 * Direct Automount Filesystem::
 * Union Filesystem::
@@ -2436,8 +2437,7 @@ The error filesystem is not directly accessible.
 
 The @dfn{toplvl} filesystems is derived from the @samp{auto} filesystem
 and is used to mount the top-level automount nodes.  Requests of this
-type are automatically generated from the command line arguments and
-can also be passed in by using the ``-M'' option of the @dfn{Amq} command.
+type are automatically generated from the command line arguments.
 
 @node     Root Filesystem, Inheritance Filesystem, Top-level Filesystem, Filesystem Types
 @comment  node-name,  next,  previous,  up
@@ -2607,7 +2607,6 @@ mount point.
 * Amq -f option::     Flushing the map cache.
 * Amq -h option::     Controlling a non-local host.
 * Amq -m option::     Obtaining mount statistics.
-* Amq -M-option::     Mounting a volume.
 * Amq -s option::     Obtaining global statistics.
 * Amq -u option::     Forcing volumes to time out.
 * Amq -v option::     Version information.
@@ -2710,7 +2709,7 @@ is used since that is the only place in the cluster where @i{Amd} will
 be running.  To query @i{Amd} on another host the ``-h'' option should
 be used.
 
-@node     Amq -m option, Amq -M-option, Amq -h option, Controlling Amd
+@node     Amq -m option, Amq -s option, Amq -h option, Controlling Amd
 @comment  node-name,  next,  previous,  up
 @subsection @i{Amq} -m option
 
@@ -2751,35 +2750,7 @@ When the reference count is zero the filesystem is not mounted but
 the mount point and server information is still being maintained
 by @i{Amd}.
 
-@node     Amq -M-option, Amq -s option, Amq -m option, Controlling Amd
-@comment  node-name,  next,  previous,  up
-@subsection @i{Amq} -M option
-
-The ``-M'' option passes a new map entry to @i{Amd} and waits for it to
-be evaluated, possibly causing a mount.  For example, the following
-command would cause @samp{/home/toytown} on host @samp{toytown} to be
-mounted locally on @samp{/mnt/toytown}.
-
-@example
-amq -M '/mnt/toytown type:=nfs;rfs:=/home/toytown;rhost:=toytown;fs:=$@{key@}'
-@end example
-
-@i{Amd} applies some simple security checks before allowing this
-operation.  The check tests whether the incoming request is from a
-privileged UDP port on the local machine.  ``Permission denied'' is
-returned if the check fails.
-
-A future release of @i{Amd} will include code to allow the @b{mount}(8)
-command to mount automount points:
-
-@example
-mount -t amd /vol hesiod.vol
-@end example
-
-This will then allow @i{Amd} to be controlled from the standard system
-filesystem mount list.
-
-@node     Amq -s option, Amq -u option, Amq -M-option, Controlling Amd
+@node     Amq -s option, Amq -u option, Amq -m option, Controlling Amd
 @comment  node-name,  next,  previous,  up
 @subsection @i{Amq} -s option
 @cindex Global statistics
@@ -3415,7 +3386,7 @@ Microsystems, Inc.
 in the USA and other countries.
 @end itemize
 
-@node Index, Intro, Acknowledgements & Trademarks, Top
+@node Index, , Acknowledgements & Trademarks, Top
 @comment  node-name,  next,  previous,  up
 @unnumbered Index
 
