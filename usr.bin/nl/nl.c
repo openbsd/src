@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl.c,v 1.3 2014/05/20 01:25:23 guenther Exp $ */
+/*	$OpenBSD: nl.c,v 1.4 2015/01/21 22:28:09 deraadt Exp $ */
 /*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 #include <err.h>
 #include <errno.h>
