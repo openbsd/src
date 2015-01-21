@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.18 2014/10/26 03:03:34 guenther Exp $
+ *	$Id: nfs_start.c,v 1.19 2015/01/21 09:50:25 guenther Exp $
  */
 
 #include "am.h"
@@ -442,7 +442,7 @@ mount_automounter(pid_t ppid)
 	 */
 	unregister_amq();
 
-	if (!svc_register(amqp, AMQ_PROGRAM, AMQ_VERSION, amq_program_1, IPPROTO_UDP)) {
+	if (!svc_register(amqp, AMQ_PROGRAM, AMQ_VERSION, amq_program_57, IPPROTO_UDP)) {
 		plog(XLOG_FATAL, "unable to register (AMQ_PROGRAM, AMQ_VERSION, udp)");
 		return 3;
 	}

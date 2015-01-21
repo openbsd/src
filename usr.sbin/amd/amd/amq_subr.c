@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.17 2015/01/21 08:24:41 guenther Exp $
+ *	$Id: amq_subr.c,v 1.18 2015/01/21 09:50:25 guenther Exp $
  */
 
 /*
@@ -46,7 +46,7 @@
 bool_t	xdr_amq_mount_info_list(XDR *, amq_mount_info_list *);
 
 void *
-amqproc_null_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_null_57_svc(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
@@ -57,7 +57,7 @@ amqproc_null_1_svc(void *argp, struct svc_req *rqstp)
  * Return a sub-tree of mounts
  */
 amq_mount_tree_p *
-amqproc_mnttree_1_svc(amq_string *argp, struct svc_req *rqstp)
+amqproc_mnttree_57_svc(amq_string *argp, struct svc_req *rqstp)
 {
 	static am_node *mp;
 
@@ -69,7 +69,7 @@ amqproc_mnttree_1_svc(amq_string *argp, struct svc_req *rqstp)
  * Unmount a single node
  */
 void *
-amqproc_umnt_1_svc(amq_string *argp, struct svc_req *rqstp)
+amqproc_umnt_57_svc(amq_string *argp, struct svc_req *rqstp)
 {
 	static char res;
 
@@ -84,7 +84,7 @@ amqproc_umnt_1_svc(amq_string *argp, struct svc_req *rqstp)
  * Return global statistics
  */
 amq_mount_stats *
-amqproc_stats_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_stats_57_svc(void *argp, struct svc_req *rqstp)
 {
 	return (amq_mount_stats *) &amd_stats;
 }
@@ -93,7 +93,7 @@ amqproc_stats_1_svc(void *argp, struct svc_req *rqstp)
  * Return the entire tree of mount nodes
  */
 amq_mount_tree_list *
-amqproc_export_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_export_57_svc(void *argp, struct svc_req *rqstp)
 {
 	static amq_mount_tree_list aml;
 
@@ -104,7 +104,7 @@ amqproc_export_1_svc(void *argp, struct svc_req *rqstp)
 }
 
 int *
-amqproc_setopt_1_svc(amq_setopt *argp, struct svc_req *rqstp)
+amqproc_setopt_57_svc(amq_setopt *argp, struct svc_req *rqstp)
 {
 	static int rc;
 
@@ -146,98 +146,14 @@ amqproc_setopt_1_svc(amq_setopt *argp, struct svc_req *rqstp)
 }
 
 amq_mount_info_list *
-amqproc_getmntfs_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_getmntfs_57_svc(void *argp, struct svc_req *rqstp)
 {
 	extern qelem mfhead;
 	return (amq_mount_info_list *) &mfhead;	/* XXX */
 }
 
-#if 0
-/*
- * amd does not allocate a separate socket to distinguish local
- * connects so this "security" check is useless.
- */
-static int ok_security(rqstp)
-struct svc_req *rqstp;
-{
-	struct sockaddr_in *sin;
-
-	sin = svc_getcaller(rqstp->rq_xprt);
-	if (ntohs(sin->sin_port) >= 1024 ||
-	    !(sin->sin_addr.s_addr == htonl(0x7f000001) ||
-	      sin->sin_addr.s_addr == myipaddr.s_addr)) {
-		char dq[20];
-		plog(XLOG_INFO, "AMQ request from %s.%d DENIED",
-		     inet_dquad(dq, sizeof(dq), sin->sin_addr.s_addr),
-		     ntohs(sin->sin_port));
-		return(0);
-	}
-	return(1);
-}
-
-int *
-amqproc_mount_1_svc(amq_string *argp, struct svc_req *rqstp)
-{
-	static int rc;
-	char *s = *argp;
-	char *cp;
-
-	plog(XLOG_INFO, "amq requested mount of %s", s);
-
-	/*
-	 * Minimalist (read useless) security check.
-	 */
-	if (!ok_security(rqstp)) {
-		rc = EACCES;
-		return &rc;
-	}
-
-	/*
-	 * Find end of key
-	 */
-	for (cp = (char *) s;
-	    *cp&&(!isascii((unsigned char)*cp) || !isspace((unsigned char)*cp));
-	    cp++)
-		;
-
-	if (!*cp) {
-		plog(XLOG_INFO, "amqproc_mount: Invalid arguments");
-		rc = EINVAL;
-		return &rc;
-	}
-	*cp++ = '\0';
-
-	/*
-	 * Find start of value
-	 */
-	while (isascii((unsigned char)*cp) && isspace((unsigned char)*cp))
-		cp++;
-
-	root_newmap(s, cp, (char *) 0);
-	rc = mount_auto_node(s, root_node);
-	if (rc < 0)
-		return 0;
-	return &rc;
-}
-#else
-/*
- * Disable "amq -M" functionality since it is inherently insecure.
- */
-int *
-amqproc_mount_1_svc(amq_string *argp, struct svc_req *rqstp)
-{
-	static int rc;
-	char *s = *argp;
-
-	plog(XLOG_ERROR, "amq requested mount of %s, but code is disabled", s);
-
-	rc = EACCES;
-	return &rc;
-}
-#endif
-
 amq_string *
-amqproc_getvers_1_svc(void *argp, struct svc_req *rqstp)
+amqproc_getvers_57_svc(void *argp, struct svc_req *rqstp)
 {
 	static amq_string res;
 
@@ -276,6 +192,7 @@ static bool_t
 xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp)
 {
 	am_node *mp = (am_node *) objp;
+	long long mounttime = mp->am_stats.s_mtime;
 
 	if (!xdr_amq_string(xdrs, &mp->am_mnt->mf_info)) {
 		return (FALSE);
@@ -289,8 +206,7 @@ xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp)
 	if (!xdr_amq_string(xdrs, &mp->am_mnt->mf_ops->fs_type)) {
 		return (FALSE);
 	}
-	/* XXX really a time_t, but need to transmit a 32-bit integer */
-	if (!xdr_int(xdrs, (int *)&mp->am_stats.s_mtime)) {
+	if (!xdr_int64_t(xdrs, &mounttime)) {
 		return (FALSE);
 	}
 	if (!xdr_u_short(xdrs, &mp->am_stats.s_uid)) {
