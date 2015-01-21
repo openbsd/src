@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.h,v 1.4 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: talkd.h,v 1.5 2015/01/21 02:23:14 guenther Exp $	*/
 /*	$NetBSD: talkd.h,v 1.5 1995/03/04 07:59:30 cgd Exp $	*/
 
 /*
@@ -52,6 +52,11 @@
  * address and the caller and callee client programs establish a
  * stream connection through which the conversation takes place.
  */
+
+struct osockaddr {
+	unsigned short	sa_family;	/* address family */
+	char		sa_data[14];	/* up to 14 bytes of direct address */
+};
 
 /*
  * Client->server request message format.

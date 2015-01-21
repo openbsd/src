@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.86 2015/01/18 04:52:03 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.87 2015/01/21 02:23:14 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -475,17 +475,6 @@ struct cmsghdr {
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #define	SCM_TIMESTAMP	0x04		/* timestamp (struct timeval) */
-
-#if __BSD_VISIBLE
-/*
- * 4.3 compat sockaddr, move to compat file later
- * XXX Needed by protocols/talkd.h
- */
-struct osockaddr {
-	unsigned short	sa_family;	/* address family */
-	char		sa_data[14];	/* up to 14 bytes of direct address */
-};
-#endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.57 2015/01/19 23:30:20 guenther Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.58 2015/01/21 02:23:14 guenther Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1365,6 +1365,7 @@ linux_ioctl_socket(p, v, retval)
 	struct vnode *vp;
 	int (*ioctlf)(struct file *, u_long, caddr_t, struct proc *);
 	struct ioctl_pt pt;
+	void *data = SCARG(uap, data);
 	int error = 0, isdev = 0, dosys = 1;
 
 	fdp = p->p_fd;
@@ -1388,7 +1389,7 @@ linux_ioctl_socket(p, v, retval)
 		dosys = 0;
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
-		pt.data = SCARG(uap, data);
+		pt.data = data;
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
 		/*
 		 * XXX hack: if the function returns EJUSTRETURN,       
@@ -1432,16 +1433,16 @@ linux_ioctl_socket(p, v, retval)
 		SCARG(&ia, com) = SIOCGIFFLAGS;
 		break;
 	case LINUX_SIOCGIFADDR:
-		SCARG(&ia, com) = OSIOCGIFADDR;
+		SCARG(&ia, com) = SIOCGIFADDR;
 		break;
 	case LINUX_SIOCGIFDSTADDR:
-		SCARG(&ia, com) = OSIOCGIFDSTADDR;
+		SCARG(&ia, com) = SIOCGIFDSTADDR;
 		break;
 	case LINUX_SIOCGIFBRDADDR:
-		SCARG(&ia, com) = OSIOCGIFBRDADDR;
+		SCARG(&ia, com) = SIOCGIFBRDADDR;
 		break;
 	case LINUX_SIOCGIFNETMASK:
-		SCARG(&ia, com) = OSIOCGIFNETMASK;
+		SCARG(&ia, com) = SIOCGIFNETMASK;
 		break;
 	case LINUX_SIOCGIFMETRIC:
 		SCARG(&ia, com) = SIOCGIFMETRIC;
@@ -1456,7 +1457,7 @@ linux_ioctl_socket(p, v, retval)
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR: {
-		struct linux_ifreq *ifr = (struct linux_ifreq *)SCARG(uap, data);
+		struct linux_ifreq *ifr = data;
 		struct sockaddr_dl *sdl;
 		struct ifnet *ifp;
 
@@ -1487,8 +1488,21 @@ linux_ioctl_socket(p, v, retval)
 out:
 	if (error == 0 && dosys) {
 		SCARG(&ia, fd) = SCARG(uap, fd);
-		SCARG(&ia, data) = SCARG(uap, data);
+		SCARG(&ia, data) = data;
 		error = sys_ioctl(p, &ia, retval);
+
+		if (error == 0) {
+			struct linux_ifreq *ifr = data;
+
+			switch (com) {
+			case LINUX_SIOCGIFADDR:
+			case LINUX_SIOCGIFDSTADDR:
+			case LINUX_SIOCGIFBRDADDR:
+			case LINUX_SIOCGIFNETMASK:
+				error = linux_sa_put(&ifr->ifr_addr);
+				break;
+			}
+		}
 	}
 
 	FRELE(fp, p);

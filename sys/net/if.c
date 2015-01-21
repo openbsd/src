@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.312 2015/01/14 00:37:19 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.313 2015/01/21 02:23:14 guenther Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1203,7 +1203,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	switch (cmd) {
 
 	case SIOCGIFCONF:
+#ifdef COMPAT_LINUX
 	case OSIOCGIFCONF:
+#endif
 		return (ifconf(cmd, data));
 	}
 	ifr = (struct ifreq *)data;
@@ -1603,61 +1605,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#if !defined(COMPAT_43) && !defined(COMPAT_LINUX)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp, p));
-#else
-	    {
-		u_long ocmd = cmd;
-
-		switch (cmd) {
-
-		case SIOCSIFADDR:
-		case SIOCSIFDSTADDR:
-		case SIOCSIFBRDADDR:
-		case SIOCSIFNETMASK:
-#if BYTE_ORDER != BIG_ENDIAN
-			if (ifr->ifr_addr.sa_family == 0 &&
-			    ifr->ifr_addr.sa_len < 16) {
-				ifr->ifr_addr.sa_family = ifr->ifr_addr.sa_len;
-				ifr->ifr_addr.sa_len = 16;
-			}
-#else
-			if (ifr->ifr_addr.sa_len == 0)
-				ifr->ifr_addr.sa_len = 16;
-#endif
-			break;
-
-		case OSIOCGIFADDR:
-			cmd = SIOCGIFADDR;
-			break;
-
-		case OSIOCGIFDSTADDR:
-			cmd = SIOCGIFDSTADDR;
-			break;
-
-		case OSIOCGIFBRDADDR:
-			cmd = SIOCGIFBRDADDR;
-			break;
-
-		case OSIOCGIFNETMASK:
-			cmd = SIOCGIFNETMASK;
-		}
-		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-		    (struct mbuf *) cmd, (struct mbuf *) data,
-		    (struct mbuf *) ifp, p));
-		switch (ocmd) {
-
-		case OSIOCGIFADDR:
-		case OSIOCGIFDSTADDR:
-		case OSIOCGIFBRDADDR:
-		case OSIOCGIFNETMASK:
-			*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
-		}
-
-	    }
-#endif
 		break;
 	}
 
@@ -1700,7 +1650,7 @@ ifconf(u_long cmd, caddr_t data)
 				TAILQ_FOREACH(ifa,
 				    &ifp->if_addrlist, ifa_list) {
 					sa = ifa->ifa_addr;
-#if defined(COMPAT_43) || defined(COMPAT_LINUX)
+#ifdef COMPAT_LINUX
 					if (cmd != OSIOCGIFCONF)
 #endif
 					if (sa->sa_len > sizeof(*sa))
@@ -1731,12 +1681,11 @@ ifconf(u_long cmd, caddr_t data)
 
 				if (space < sizeof(ifr))
 					break;
-#if defined(COMPAT_43) || defined(COMPAT_LINUX)
+#ifdef COMPAT_LINUX
 				if (cmd == OSIOCGIFCONF) {
-					struct osockaddr *osa =
-					    (struct osockaddr *)&ifr.ifr_addr;
 					ifr.ifr_addr = *sa;
-					osa->sa_family = sa->sa_family;
+					*(u_int16_t *)&ifr.ifr_addr =
+					    sa->sa_family;
 					error = copyout((caddr_t)&ifr,
 					    (caddr_t)ifrp, sizeof (ifr));
 					ifrp++;

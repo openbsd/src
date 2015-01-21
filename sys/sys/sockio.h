@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.56 2015/01/06 21:26:46 stsp Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.57 2015/01/21 02:23:14 guenther Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -47,19 +47,15 @@
 #define	SIOCGPGRP	 _IOR('s',  9, int)		/* get process group */
 
 #define	SIOCSIFADDR	 _IOW('i', 12, struct ifreq)	/* set ifnet address */
-#define	OSIOCGIFADDR	_IOWR('i', 13, struct ifreq)	/* get ifnet address */
 #define	SIOCGIFADDR	_IOWR('i', 33, struct ifreq)	/* get ifnet address */
 #define	SIOCSIFDSTADDR	 _IOW('i', 14, struct ifreq)	/* set p-p address */
-#define	OSIOCGIFDSTADDR	_IOWR('i', 15, struct ifreq)	/* get p-p address */
 #define	SIOCGIFDSTADDR	_IOWR('i', 34, struct ifreq)	/* get p-p address */
 #define	SIOCSIFFLAGS	 _IOW('i', 16, struct ifreq)	/* set ifnet flags */
 #define	SIOCGIFFLAGS	_IOWR('i', 17, struct ifreq)	/* get ifnet flags */
-#define	OSIOCGIFBRDADDR	_IOWR('i', 18, struct ifreq)	/* get broadcast addr */
 #define	SIOCGIFBRDADDR	_IOWR('i', 35, struct ifreq)	/* get broadcast addr */
 #define	SIOCSIFBRDADDR	 _IOW('i', 19, struct ifreq)	/* set broadcast addr */
 #define	OSIOCGIFCONF	_IOWR('i', 20, struct ifconf)	/* get ifnet list */
 #define	SIOCGIFCONF	_IOWR('i', 36, struct ifconf)	/* get ifnet list */
-#define	OSIOCGIFNETMASK	_IOWR('i', 21, struct ifreq)	/* get net addr mask */
 #define	SIOCGIFNETMASK	_IOWR('i', 37, struct ifreq)	/* get net addr mask */
 #define	SIOCSIFNETMASK	 _IOW('i', 22, struct ifreq)	/* set net addr mask */
 #define	SIOCGIFMETRIC	_IOWR('i', 23, struct ifreq)	/* get IF metric */

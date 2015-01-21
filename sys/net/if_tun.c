@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.130 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.131 2015/01/21 02:23:14 guenther Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -673,7 +673,6 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCGPGRP:
 		*(int *)data = tp->tun_pgid;
 		break;
-	case OSIOCGIFADDR:
 	case SIOCGIFADDR:
 		if (!(tp->tun_flags & TUN_LAYER2)) {
 			splx(s);

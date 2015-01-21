@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.238 2014/10/09 04:41:36 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.239 2015/01/21 02:23:14 guenther Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: October 9 2014 $
+.Dd $Mdocdate: January 21 2015 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -54,15 +54,6 @@ options are passed to the compile process as
 flags to the C compiler.
 .Sh COMPATIBILITY OPTIONS
 .Bl -ohang
-.It Cd option COMPAT_43
-This option enables compatibility with
-.Bx 4.3 .
-It provides backwards compatibility with the
-.Dq old
-SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
-binary compatibility for code written before the introduction of the
-.Li sa_len
-field in sockaddrs.
 .It Cd option COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with
