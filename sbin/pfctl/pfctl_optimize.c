@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.34 2014/09/13 16:06:36 doug Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.35 2015/01/21 21:50:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -20,11 +20,10 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
-#include <net/pfvar.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <net/pfvar.h>
 
 #include <assert.h>
 #include <ctype.h>

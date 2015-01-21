@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.8 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: pf.c,v 1.9 2015/01/21 21:50:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -35,9 +35,10 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
-#include <arpa/inet.h>
 
 #include <err.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.122 2015/01/15 23:59:28 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.123 2015/01/21 21:50:32 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -24,9 +24,10 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
-#include <arpa/inet.h>
 
 #include <err.h>
 #include <errno.h>

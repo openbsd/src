@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.11 2015/01/16 06:40:16 deraadt Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.12 2015/01/21 21:50:33 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -20,9 +20,10 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
-#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.63 2012/08/17 20:37:16 mikeb Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.64 2015/01/21 21:50:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -34,9 +34,10 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #define TCPSTATES
+#include <netinet/in.h>
 #include <netinet/tcp_fsm.h>
-#include <net/pfvar.h>
 #include <arpa/inet.h>
+#include <net/pfvar.h>
 #include <netdb.h>
 
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.22 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: config.c,v 1.23 2015/01/21 21:50:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -22,10 +22,9 @@
 #include <sys/queue.h>
 #include <sys/uio.h>
 
+#include <netinet/in.h>
 #include <net/if.h>
 #include <net/pfvar.h>
-#include <netinet/in.h>
-#include <net/route.h>
 
 #include <ctype.h>
 #include <unistd.h>
