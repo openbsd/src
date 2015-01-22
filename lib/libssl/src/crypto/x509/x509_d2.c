@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_d2.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_d2.c,v 1.10 2015/01/22 09:06:39 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <sys/uio.h>
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -104,5 +105,24 @@ X509_STORE_load_locations(X509_STORE *ctx, const char *file, const char *path)
 	}
 	if ((path == NULL) && (file == NULL))
 		return (0);
+	return (1);
+}
+
+int
+X509_STORE_load_mem(X509_STORE *ctx, void *buf, int len)
+{
+	X509_LOOKUP		*lookup;
+	struct iovec		 iov;
+
+	lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_mem());
+	if (lookup == NULL)
+		return (0);
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+
+	if (X509_LOOKUP_add_mem(lookup, &iov, X509_FILETYPE_PEM) != 1)
+		return (0);
+
 	return (1);
 }

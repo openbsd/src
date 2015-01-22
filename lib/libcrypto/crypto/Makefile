@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.51 2014/12/03 22:14:38 bcook Exp $
+# $OpenBSD: Makefile,v 1.52 2015/01/22 09:06:39 reyk Exp $
 
 LIB=	crypto
 
@@ -256,7 +256,7 @@ SRCS+= x509_obj.c x509_req.c x509spki.c x509_vfy.c
 SRCS+= x509_set.c x509cset.c x509rset.c x509_err.c
 SRCS+= x509name.c x509_v3.c x509_ext.c x509_att.c
 SRCS+= x509type.c x509_lu.c x_all.c x509_txt.c
-SRCS+= x509_trs.c by_file.c by_dir.c x509_vpm.c
+SRCS+= x509_trs.c by_file.c by_dir.c by_mem.c x509_vpm.c
 
 # x509v3/
 SRCS+= v3_bcons.c v3_bitst.c v3_conf.c v3_extku.c v3_ia5.c v3_lib.c

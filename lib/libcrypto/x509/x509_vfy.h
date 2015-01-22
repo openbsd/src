@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.13 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.14 2015/01/22 09:06:39 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -286,12 +286,17 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 #define X509_L_FILE_LOAD	1
 #define X509_L_ADD_DIR		2
+#define X509_L_MEM		3
 
 #define X509_LOOKUP_load_file(x,name,type) \
 		X509_LOOKUP_ctrl((x),X509_L_FILE_LOAD,(name),(long)(type),NULL)
 
 #define X509_LOOKUP_add_dir(x,name,type) \
 		X509_LOOKUP_ctrl((x),X509_L_ADD_DIR,(name),(long)(type),NULL)
+
+#define X509_LOOKUP_add_mem(x,iov,type) \
+		X509_LOOKUP_ctrl((x),X509_L_MEM,(const char *)(iov),\
+		(long)(type),NULL)
 
 #define		X509_V_OK					0
 /* illegal error (for uninitialized values, to avoid X509_V_OK): 1 */
@@ -436,6 +441,7 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void);
 X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
+X509_LOOKUP_METHOD *X509_LOOKUP_mem(void);
 
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x);
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
@@ -466,6 +472,7 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
 int	X509_STORE_load_locations (X509_STORE *ctx,
 		const char *file, const char *dir);
+int	X509_STORE_load_mem(X509_STORE *ctx, void *buf, int len);
 int	X509_STORE_set_default_paths(X509_STORE *ctx);
 
 int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

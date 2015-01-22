@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_d2.c,v 1.10 2015/01/22 09:06:39 reyk Exp $ */
+/* $OpenBSD: by_mem.c,v 1.1 2015/01/22 09:06:39 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,73 +56,83 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <sys/uio.h>
+#include <errno.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
 
-#include <openssl/crypto.h>
+#include <openssl/buffer.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/lhash.h>
 #include <openssl/x509.h>
 
-int
-X509_STORE_set_default_paths(X509_STORE *ctx)
+static int by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
+
+X509_LOOKUP_METHOD x509_mem_lookup = {
+	"Load cert from memory",
+	NULL,		/* new */
+	NULL,		/* free */
+	NULL,		/* init */
+	NULL,		/* shutdown */
+	by_mem_ctrl,	/* ctrl */
+	NULL,		/* get_by_subject */
+	NULL,		/* get_by_issuer_serial */
+	NULL,		/* get_by_fingerprint */
+	NULL,		/* get_by_alias */
+};
+
+X509_LOOKUP_METHOD *
+X509_LOOKUP_mem(void)
 {
-	X509_LOOKUP *lookup;
-
-	lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_file());
-	if (lookup == NULL)
-		return (0);
-	X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-	lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_hash_dir());
-	if (lookup == NULL)
-		return (0);
-	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-	/* clear any errors */
-	ERR_clear_error();
-
-	return (1);
+	return (&x509_mem_lookup);
 }
 
-int
-X509_STORE_load_locations(X509_STORE *ctx, const char *file, const char *path)
+static int
+by_mem_ctrl(X509_LOOKUP *lu, int cmd, const char *buf,
+    long type, char **ret)
 {
-	X509_LOOKUP *lookup;
+	STACK_OF(X509_INFO)	*inf = NULL;
+	const struct iovec	*iov;
+	X509_INFO		*itmp;
+	BIO			*in = NULL;
+	int			 i, count = 0, ok = 0;
 
-	if (file != NULL) {
-		lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_file());
-		if (lookup == NULL)
-			return (0);
-		if (X509_LOOKUP_load_file(lookup, file, X509_FILETYPE_PEM) != 1)
-			return (0);
+	iov = (const struct iovec *)buf;
+
+	if (!(cmd == X509_L_MEM && type == X509_FILETYPE_PEM))
+		goto done;
+
+	if ((in = BIO_new_mem_buf(iov->iov_base, iov->iov_len)) == NULL)
+		goto done;
+
+	if ((inf = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL)) == NULL)
+		goto done;
+
+	for (i = 0; i < sk_X509_INFO_num(inf); i++) {
+		itmp = sk_X509_INFO_value(inf, i);
+		if (itmp->x509) {
+			ok = X509_STORE_add_cert(lu->store_ctx, itmp->x509);
+			if (!ok)
+				goto done;
+			count++;
+		}
+		if (itmp->crl) {
+			ok = X509_STORE_add_crl(lu->store_ctx, itmp->crl);
+			if (!ok)
+				goto done;
+			count++;
+		}
 	}
-	if (path != NULL) {
-		lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_hash_dir());
-		if (lookup == NULL)
-			return (0);
-		if (X509_LOOKUP_add_dir(lookup, path, X509_FILETYPE_PEM) != 1)
-			return (0);
-	}
-	if ((path == NULL) && (file == NULL))
-		return (0);
-	return (1);
-}
 
-int
-X509_STORE_load_mem(X509_STORE *ctx, void *buf, int len)
-{
-	X509_LOOKUP		*lookup;
-	struct iovec		 iov;
-
-	lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_mem());
-	if (lookup == NULL)
-		return (0);
-
-	iov.iov_base = buf;
-	iov.iov_len = len;
-
-	if (X509_LOOKUP_add_mem(lookup, &iov, X509_FILETYPE_PEM) != 1)
-		return (0);
-
-	return (1);
+	ok = count != 0;
+ done:
+	if (count == 0)
+		X509err(X509_F_X509_LOAD_CERT_CRL_FILE,ERR_R_PEM_LIB);
+	if (inf != NULL)
+		sk_X509_INFO_pop_free(inf, X509_INFO_free);
+	if (in != NULL)
+		BIO_free(in);
+	return (ok);
 }
