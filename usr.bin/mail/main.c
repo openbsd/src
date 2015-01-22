@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2015/01/20 16:59:07 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2015/01/22 16:25:07 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -185,8 +185,10 @@ main(int argc, char **argv)
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL))
-		errx(1, "You must specify direct recipients with -s, -c, or -b");
+	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL ||
+	    fromaddr != NULL))
+		errx(1, "You must specify direct recipients with -s, -c, -b, "
+		    "or -r");
 	/*
 	 * Block SIGINT except where we install an explicit handler for it.
 	 */
