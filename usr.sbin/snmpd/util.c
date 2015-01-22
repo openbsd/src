@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: util.c,v 1.3 2015/01/22 14:33:01 krw Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *

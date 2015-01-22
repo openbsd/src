@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: imx_machdep.c,v 1.10 2015/01/22 14:33:01 krw Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *

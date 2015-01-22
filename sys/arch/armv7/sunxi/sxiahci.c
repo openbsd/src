@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: sxiahci.c,v 1.8 2015/01/22 14:33:01 krw Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm

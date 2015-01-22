@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: accept.h,v 1.2 2015/01/22 14:33:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>

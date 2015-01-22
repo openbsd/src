@@ -1,4 +1,4 @@
-/*	$OpenBSD: */
+/*	$OpenBSD: uslhcom.c,v 1.2 2015/01/22 14:33:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 SASANO Takayoshi <uaa@openbsd.org>

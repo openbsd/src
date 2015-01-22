@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.5 2015/01/22 14:33:01 krw Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *

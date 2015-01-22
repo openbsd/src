@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: dmtimer.c,v 1.6 2015/01/22 14:33:01 krw Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
