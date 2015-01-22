@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.25 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.26 2015/01/22 15:23:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -129,14 +129,14 @@ static const struct token t_host_id[] = {
 };
 
 static const struct token t_log[] = {
-	{KEYWORD,	"verbose",	LOG_VERBOSE, 	NULL},
-	{KEYWORD,	"brief",	LOG_BRIEF, 	NULL},
-	{ENDTOKEN, 	"",		NONE,		NULL}
+	{KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
+	{KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_load[] = {
 	{PATH,		"",		NONE,		NULL},
-	{ENDTOKEN, 	"",		NONE,		NULL}
+	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token *match_token(const char *, const struct token *,
@@ -208,7 +208,8 @@ match_token(const char *word, const struct token *table,
 				break;
 			res->id.id = strtonum(word, 0, UINT_MAX, &errstr);
 			if (errstr) {
-				strlcpy(res->id.name, word, sizeof(res->id.name));
+				strlcpy(res->id.name, word,
+				    sizeof(res->id.name));
 				res->id.id = EMPTY_ID;
 			}
 			t = &table[i];
@@ -219,7 +220,8 @@ match_token(const char *word, const struct token *table,
 				break;
 			res->id.id = strtonum(word, 0, UINT_MAX, &errstr);
 			if (errstr) {
-				strlcpy(res->id.name, word, sizeof(res->id.name));
+				strlcpy(res->id.name, word,
+				    sizeof(res->id.name));
 				res->id.id = EMPTY_ID;
 			}
 			t = &table[i];
@@ -230,7 +232,8 @@ match_token(const char *word, const struct token *table,
 				break;
 			res->id.id = strtonum(word, 0, UINT_MAX, &errstr);
 			if (errstr) {
-				strlcpy(res->id.name, word, sizeof(res->id.name));
+				strlcpy(res->id.name, word,
+				    sizeof(res->id.name));
 				res->id.id = EMPTY_ID;
 			}
 			t = &table[i];
