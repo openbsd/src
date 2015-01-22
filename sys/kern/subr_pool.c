@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.178 2015/01/19 03:57:22 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.179 2015/01/22 05:09:41 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1152,6 +1152,15 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 	for (pi = XSIMPLEQ_FIRST(&ph->ph_itemlist), n = 0;
 	     pi != NULL;
 	     pi = XSIMPLEQ_NEXT(&ph->ph_itemlist, pi, pi_list), n++) {
+		if ((caddr_t)pi < ph->ph_page ||
+		    (caddr_t)pi >= ph->ph_page + pp->pr_pgsize) {
+			printf("%s: ", label);
+			printf("pool(%p:%s): page inconsistency: page %p;"
+			    " item ordinal %d; addr %p\n", pp,
+			    pp->pr_wchan, ph->ph_page, n, pi);
+			return (1);
+		}
+
 		if (pi->pi_magic != POOL_IMAGIC(ph, pi)) {
 			printf("%s: ", label);
 			printf("pool(%p:%s): free list modified: "
@@ -1176,16 +1185,6 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 			}
 		}
 #endif /* DIAGNOSTIC */
-
-		page = (caddr_t)((u_long)pi & pp->pr_pgmask);
-		if (page == ph->ph_page)
-			continue;
-
-		printf("%s: ", label);
-		printf("pool(%p:%s): page inconsistency: page %p;"
-		    " item ordinal %d; addr %p (p %p)\n", pp,
-		    pp->pr_wchan, ph->ph_page, n, pi, page);
-		return 1;
 	}
 	if (n + ph->ph_nmissing != pp->pr_itemsperpage) {
 		printf("pool(%p:%s): page inconsistency: page %p;"
