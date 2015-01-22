@@ -5598,6 +5598,7 @@
 ./usr/share/man/man3/tls_config_insecure_noverifyhost.3
 ./usr/share/man/man3/tls_config_new.3
 ./usr/share/man/man3/tls_config_set_ca_file.3
+./usr/share/man/man3/tls_config_set_ca_mem.3
 ./usr/share/man/man3/tls_config_set_ca_path.3
 ./usr/share/man/man3/tls_config_set_cert_file.3
 ./usr/share/man/man3/tls_config_set_cert_mem.3
