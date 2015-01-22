@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.43 2015/01/19 21:18:47 guenther Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.44 2015/01/22 18:22:27 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -20,19 +20,19 @@
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <arpa/inet.h>
 #include <err.h>
 #include <fcntl.h>
-#include <ctype.h>
 #include <errno.h>
 #include <event.h>
-#include <netdb.h>
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -510,7 +510,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 
 	switch (sig) {
 	case SIGCHLD:
-		while((pid = waitpid(WAIT_ANY, &status, WNOHANG)) > 0) {
+		while ((pid = waitpid(WAIT_ANY, &status, WNOHANG)) > 0) {
 			c = NULL;
 			SLIST_FOREACH(ncs, &p->requests, entry)
 				if (ncs->request->script_pid == pid) {
