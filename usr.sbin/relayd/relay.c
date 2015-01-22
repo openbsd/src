@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.188 2015/01/22 09:26:05 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.189 2015/01/22 15:21:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2411,7 +2411,7 @@ relay_tls_writecb(int fd, short event, void *arg)
 		goto err;
 	}
 
-        if (cre->tlsreneg_state == TLSRENEG_ABORT) {
+	if (cre->tlsreneg_state == TLSRENEG_ABORT) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}

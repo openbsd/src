@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.136 2015/01/16 15:06:40 deraadt Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.137 2015/01/22 15:21:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -968,7 +968,7 @@ rule_inherit(struct relay_rule *rule)
 			continue;
 		if (kv_inherit(&r->rule_kv[i], kv) == NULL) {
 			free(r);
-			return(NULL);
+			return (NULL);
 		}
 	}
 
@@ -1009,7 +1009,7 @@ void
 rule_settable(struct relay_rules *rules, struct relay_table *rlt)
 {
 	struct relay_rule	*r;
-	char		 	 pname[TABLE_NAME_SIZE];
+	char			 pname[TABLE_NAME_SIZE];
 
 	if (rlt->rlt_table == NULL || strlcpy(pname, rlt->rlt_table->conf.name,
 	    sizeof(pname)) >= sizeof(pname))
