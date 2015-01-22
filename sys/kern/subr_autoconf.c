@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.83 2015/01/19 23:01:07 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.84 2015/01/22 01:19:51 dlg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -935,8 +935,11 @@ device_ref(struct device *dv)
 void
 device_unref(struct device *dv)
 {
+	struct cfattach *ca;
+
 	dv->dv_ref--;
 	if (dv->dv_ref == 0) {
-		free(dv, M_DEVBUF, 0);
+		ca = dv->dv_cfdata->cf_attach;
+		free(dv, M_DEVBUF, ca->ca_devsize);
 	}
 }
