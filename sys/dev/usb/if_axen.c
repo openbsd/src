@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.10 2015/01/12 18:18:42 stsp Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.11 2015/01/22 10:23:47 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -176,7 +176,7 @@ int
 axen_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct axen_softc	*sc = (void *)dev;
-	usbd_status		err;
+	int			err;
 	uWord			val;
 	int			ival;
 
@@ -212,7 +212,7 @@ void
 axen_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct axen_softc	*sc = (void *)dev;
-	usbd_status		err;
+	int			err;
 	uWord			uval;
 
 	if (usbd_is_dying(sc->axen_udev))
@@ -1184,7 +1184,6 @@ axen_tick_task(void *xsc)
 {
 	int			s;
 	struct axen_softc	*sc;
-	struct ifnet		*ifp;
 	struct mii_data		*mii;
 
 	sc = xsc;
@@ -1195,7 +1194,6 @@ axen_tick_task(void *xsc)
 	if (usbd_is_dying(sc->axen_udev))
 		return;
 
-	ifp = GET_IFP(sc);
 	mii = GET_MII(sc);
 	if (mii == NULL)
 		return;
