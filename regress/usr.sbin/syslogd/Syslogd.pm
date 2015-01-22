@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.8 2015/01/01 19:58:48 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.9 2015/01/22 00:34:32 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -56,7 +56,7 @@ sub new {
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " create conf file $self->{conffile} failed: $!";
 	print $fh "*.*\t$self->{outfile}\n";
-	print $fh "*.*\t|dd of=$self->{outpipe} status=none\n";
+	print $fh "*.*\t|dd of=$self->{outpipe}\n";
 	my $memory = $self->{memory};
 	print $fh "*.*\t:$memory->{size}:$memory->{name}\n" if $memory;
 	my $loghost = $self->{loghost};

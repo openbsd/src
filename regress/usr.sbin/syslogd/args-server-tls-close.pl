@@ -24,7 +24,7 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/127.0.0.1:\d+/ => '>=4',
 	    get_testlog() => 1,
-	    qr/syslogd: loghost .* connection error/ => 2,
+	    qr/syslogd: loghost .* connection error/ => '>=2',
 	},
     },
     server => {

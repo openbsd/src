@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.11 2015/01/16 11:51:59 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.12 2015/01/22 00:34:32 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -232,6 +232,10 @@ sub loggrep {
 
 sub check_out {
 	my ($r, %args) = @_;
+
+	unless ($args{pipe}{nocheck}) {
+		$r->loggrep("bytes transferred", 1) or sleep 1;
+	}
 
 	foreach my $name (qw(file pipe)) {
 		next if $args{$name}{nocheck};
