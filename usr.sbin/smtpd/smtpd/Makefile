@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2014/12/14 15:26:56 gilles Exp $
+#	$OpenBSD: Makefile,v 1.78 2015/01/22 09:26:05 reyk Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ SRCS=		aliases.c bounce.c ca.c compress_backend.c config.c		\
 		log.c mda.c mproc.c				\
 		mta.c mta_session.c parse.y pony.c queue.c queue_backend.c	\
 		ruleset.c runq.c scheduler.c scheduler_backend.c		\
-		smtp.c smtp_session.c smtpd.c ssl.c ssl_privsep.c		\
+		smtp.c smtp_session.c smtpd.c ssl.c				\
 		ssl_smtpd.c stat_backend.c table.c to.c tree.c util.c		\
 		waitq.c
 
