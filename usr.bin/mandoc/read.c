@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.87 2015/01/20 21:12:46 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.88 2015/01/22 19:26:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -302,6 +302,7 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 {
 	const struct tbl_span	*span;
 	struct buf	 ln;
+	const char	*save_file;
 	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
 	enum rofferr	 rr;
@@ -517,11 +518,14 @@ rerun:
 			 */
 			if (curp->secondary)
 				curp->secondary->sz -= pos + 1;
+			save_file = curp->file;
 			save_child = curp->child;
 			if (mparse_open(curp, &fd, ln.buf + of) ==
-			    MANDOCLEVEL_OK)
+			    MANDOCLEVEL_OK) {
 				mparse_readfd(curp, fd, ln.buf + of);
-			else {
+				curp->file = save_file;
+			} else {
+				curp->file = save_file;
 				mandoc_vmsg(MANDOCERR_SO_FAIL,
 				    curp, curp->line, pos,
 				    ".so %s", ln.buf + of);
