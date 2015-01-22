@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2014/10/31 13:46:17 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/01/22 09:29:04 reyk Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
@@ -22,6 +22,7 @@ MLINKS+=tls_init.3 tls_config_new.3
 MLINKS+=tls_init.3 tls_config_free.3
 MLINKS+=tls_init.3 tls_config_set_ca_file.3
 MLINKS+=tls_init.3 tls_config_set_ca_path.3
+MLINKS+=tls_init.3 tls_config_set_ca_mem.3
 MLINKS+=tls_init.3 tls_config_set_cert_file.3
 MLINKS+=tls_init.3 tls_config_set_cert_mem.3
 MLINKS+=tls_init.3 tls_config_set_ciphers.3
