@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.33 2014/07/22 02:21:20 beck Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.34 2015/01/22 03:56:27 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -124,6 +124,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/safestack.h>
+#include <openssl/sha.h>
 
 DECLARE_STACK_OF(CRYPTO_dynlock)
 
@@ -425,39 +426,25 @@ CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
 	id->val = val;
 }
 
-static const unsigned char hash_coeffs[] = { 3, 5, 7, 11, 13, 17, 19, 23 };
 void
 CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
 {
-	unsigned char *dest = (void *)&id->val;
-	unsigned int accum = 0;
-	unsigned char dnum = sizeof(id->val);
-
 	memset(id, 0, sizeof(*id));
 	id->ptr = ptr;
-	if (sizeof(id->val) >= sizeof(id->ptr)) {
-		/* 'ptr' can be embedded in 'val' without loss of uniqueness */
-		id->val = (unsigned long)id->ptr;
-		return;
+#if LONG_MAX >= INTPTR_MAX
+	/*s u 'ptr' can be embedded in 'val' without loss of uniqueness */
+	id->val = (unsigned long)id->ptr;
+#else
+	{
+		SHA256_CTX ctx;
+		uint8_t results[SHA256_DIGEST_LENGTH];
+
+		SHA256_Init(&ctx);
+		SHA256_Update(&ctx, (char *)(&id->ptr), sizeof(id->ptr));
+		SHA256_Final(results, &ctx);
+		memcpy(&id->val, results, sizeof(id->val));
 	}
-	/* hash ptr ==> val. Each byte of 'val' gets the mod-256 total of a
-	 * linear function over the bytes in 'ptr', the co-efficients of which
-	 * are a sequence of low-primes (hash_coeffs is an 8-element cycle) -
-	 * the starting prime for the sequence varies for each byte of 'val'
-	 * (unique polynomials unless pointers are >64-bit). For added spice,
-	 * the totals accumulate rather than restarting from zero, and the index
-	 * of the 'val' byte is added each time (position dependence). If I was
-	 * a black-belt, I'd scan big-endian pointers in reverse to give
-	 * low-order bits more play, but this isn't crypto and I'd prefer nobody
-	 * mistake it as such. Plus I'm lazy. */
-	while (dnum--) {
-		const unsigned char *src = (void *)&id->ptr;
-		unsigned char snum = sizeof(id->ptr);
-		while (snum--)
-			accum += *(src++) * hash_coeffs[(snum + dnum) & 7];
-		accum += dnum;
-		*(dest++) = accum & 255;
-	}
+#endif
 }
 
 int
