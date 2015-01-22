@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.16 2014/07/25 06:05:32 doug Exp $ */
+/* $OpenBSD: by_file.c,v 1.17 2015/01/22 11:16:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,16 +71,16 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
     long argl, char **ret);
 
 X509_LOOKUP_METHOD x509_file_lookup = {
-	"Load file into cache",
-	NULL,		/* new */
-	NULL,		/* free */
-	NULL, 		/* init */
-	NULL,		/* shutdown */
-	by_file_ctrl,	/* ctrl */
-	NULL,		/* get_by_subject */
-	NULL,		/* get_by_issuer_serial */
-	NULL,		/* get_by_fingerprint */
-	NULL,		/* get_by_alias */
+	.name = "Load file into cache",
+	.new_item = NULL,
+	.free = NULL,
+	.init = NULL,
+	.shutdown = NULL,
+	.ctrl = by_file_ctrl,
+	.get_by_subject = NULL,
+	.get_by_issuer_serial = NULL,
+	.get_by_fingerprint = NULL,
+	.get_by_alias = NULL,
 };
 
 X509_LOOKUP_METHOD *

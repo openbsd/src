@@ -1,4 +1,4 @@
-/* $OpenBSD: by_mem.c,v 1.1 2015/01/22 09:06:39 reyk Exp $ */
+/* $OpenBSD: by_mem.c,v 1.2 2015/01/22 11:16:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,16 +71,16 @@
 static int by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
 
 X509_LOOKUP_METHOD x509_mem_lookup = {
-	"Load cert from memory",
-	NULL,		/* new */
-	NULL,		/* free */
-	NULL,		/* init */
-	NULL,		/* shutdown */
-	by_mem_ctrl,	/* ctrl */
-	NULL,		/* get_by_subject */
-	NULL,		/* get_by_issuer_serial */
-	NULL,		/* get_by_fingerprint */
-	NULL,		/* get_by_alias */
+	.name = "Load cert from memory",
+	.new_item = NULL,
+	.free = NULL,
+	.init = NULL,
+	.shutdown = NULL,
+	.ctrl = by_mem_ctrl,
+	.get_by_subject = NULL,
+	.get_by_issuer_serial = NULL,
+	.get_by_fingerprint = NULL,
+	.get_by_alias = NULL,
 };
 
 X509_LOOKUP_METHOD *
