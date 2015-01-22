@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.2 2015/01/22 09:16:24 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -102,6 +102,7 @@ tls_config_free(struct tls_config *config)
 void
 tls_config_clear_keys(struct tls_config *config)
 {
+	tls_config_set_ca_mem(config, NULL, 0);
 	tls_config_set_cert_mem(config, NULL, 0);
 	tls_config_set_key_mem(config, NULL, 0);
 }
@@ -116,6 +117,12 @@ int
 tls_config_set_ca_path(struct tls_config *config, const char *ca_path)
 {
 	return set_string(&config->ca_path, ca_path);
+}
+
+int
+tls_config_set_ca_mem(struct tls_config *config, const uint8_t *ca, size_t len)
+{
+	return set_mem(&config->ca_mem, &config->ca_len, ca, len);
 }
 
 int

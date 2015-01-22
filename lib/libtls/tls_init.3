@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.6 2015/01/01 13:30:52 schwarze Exp $
+.\" $OpenBSD: tls_init.3,v 1.7 2015/01/22 09:16:24 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2015 $
+.Dd $Mdocdate: January 22 2015 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm tls_config_free ,
 .Nm tls_config_set_ca_file ,
 .Nm tls_config_set_ca_path ,
+.Nm tls_config_set_ca_mem ,
 .Nm tls_config_set_cert_file ,
 .Nm tls_config_set_cert_mem ,
 .Nm tls_config_set_ciphers ,
@@ -62,6 +63,8 @@
 .Fn tls_config_set_ca_file "struct tls_config *config" "const char *ca_file"
 .Ft "int"
 .Fn tls_config_set_ca_path "struct tls_config *config" "const char *ca_path"
+.Ft "int"
+.Fn tls_config_set_ca_mem "struct tls_config *config" "const uint8_t *cert" "size_t len"
 .Ft "int"
 .Fn tls_config_set_cert_file "struct tls_config *config" "const char *cert_file"
 .Ft "int"
@@ -196,6 +199,10 @@ containing the root certificates.
 .Fn tls_config_set_ca_path
 sets the path (directory) which should be searched for root
 certificates.
+.Em (Client)
+.It
+.Fn tls_config_set_ca_mem
+sets the root certificates directly from memory.
 .Em (Client)
 .It
 .Fn tls_config_set_cert_file

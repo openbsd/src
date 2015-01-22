@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.8 2015/01/13 17:35:35 bluhm Exp $ */
+/* $OpenBSD: tls_client.c,v 1.9 2015/01/22 09:16:24 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -168,7 +169,19 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	if (ctx->config->verify_cert) {
 		SSL_CTX_set_verify(ctx->ssl_ctx, SSL_VERIFY_PEER, NULL);
 
-		if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
+		if (ctx->config->ca_mem != NULL) {
+			if (ctx->config->ca_len > INT_MAX) {
+				tls_set_error(ctx, "ca too long");
+				goto err;
+			}
+
+			if (SSL_CTX_load_verify_mem(ctx->ssl_ctx,
+			    ctx->config->ca_mem, ctx->config->ca_len) != 1) {
+				tls_set_error(ctx,
+				    "ssl verify memory setup failure");
+				goto err;
+			}
+		} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
 		    ctx->config->ca_file, ctx->config->ca_path) != 1) {
 			tls_set_error(ctx, "ssl verify setup failure");
 			goto err;

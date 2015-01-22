@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.2 2014/11/02 14:45:05 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.3 2015/01/22 09:16:24 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -42,6 +42,8 @@ void tls_config_free(struct tls_config *config);
 
 int tls_config_set_ca_file(struct tls_config *config, const char *ca_file);
 int tls_config_set_ca_path(struct tls_config *config, const char *ca_path);
+int tls_config_set_ca_mem(struct tls_config *config, const uint8_t *ca,
+    size_t len);
 int tls_config_set_cert_file(struct tls_config *config, const char *cert_file);
 int tls_config_set_cert_mem(struct tls_config *config, const uint8_t *cert,
     size_t len);
