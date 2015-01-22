@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.446 2014/12/03 20:13:49 florian Exp $
+#	$OpenBSD: rc,v 1.447 2015/01/22 19:00:24 krw Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -318,8 +318,8 @@ wsconsctl_conf
 if [ X"${pf}" != X"NO" ]; then
 	RULES="block all"
 	RULES="$RULES\npass on lo0"
-	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
-	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
+	RULES="$RULES\npass in proto tcp from any to any port ssh keep state"
+	RULES="$RULES\npass out proto { tcp, udp } from any to any port domain keep state"
 	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
 	RULES="$RULES\npass out inet proto udp from any port bootpc to any port bootps"
 	RULES="$RULES\npass in inet proto udp from any port bootps to any port bootpc"
@@ -337,8 +337,8 @@ if [ X"${pf}" != X"NO" ]; then
 	*[1-9]*)
 		# don't kill NFS
 		RULES="set reassemble yes no-df\n$RULES"
-		RULES="$RULES\npass in proto { tcp, udp } from any port { 111, 2049 } to any"
-		RULES="$RULES\npass out proto { tcp, udp } from any to any port { 111, 2049 } !received-on any"
+		RULES="$RULES\npass in proto { tcp, udp } from any port { sunrpc, nfsd } to any"
+		RULES="$RULES\npass out proto { tcp, udp } from any to any port { sunrpc, nfsd } !received-on any"
 		;;
 	esac
 	echo $RULES | pfctl -f -
