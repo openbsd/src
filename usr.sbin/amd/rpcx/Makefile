@@ -1,20 +1,34 @@
 
 RPCGEN = rpcgen -C
 
-AMQ_SVC_EXTRA = amq_svc.extra
+AMQ = amq.h amq_clnt.c amq_svc.c amq_xdr.c
+NFS = nfs_prot.h nfs_prot_svc.c nfs_prot_xdr.c
 
-all: amq.h amq_clnt.c amq_svc.c amq_xdr.c
+NFSX = /usr/include/rpcsvc/nfs_prot.x
 
-amq.h: amq.x
-	${RPCGEN} -o $@ -h amq.x
-amq_xdr.c: amq.x
-	${RPCGEN} -o $@ -c -i 100 amq.x
-amq_clnt.c: amq.x
-	${RPCGEN} -o $@ -l amq.x
-amq_svc.c: amq.x ${AMQ_SVC_EXTRA} Makefile
+all: ${AMQ} ${NFS}
+
+.SUFFIXES:
+.SUFFIXES: .x .h _xdr.c _clnt.c .c
+
+.x.h:
+	${RPCGEN} -o $@ -h $<
+.x_xdr.c:
+	${RPCGEN} -o $@ -c -i 100 $<
+.x_clnt.c:
+	${RPCGEN} -o $@ -l $<
+
+amq_svc.c: amq.x $*.ed
 	${RPCGEN} -o $@.tmp -m amq.x
-	printf '/"amq.h"/a\n#include "am.h"\n#include <arpa/inet.h>\n.\n/_msgout(/-1,/^}/d\n/local/r %s\n/_msgout/\n.,+1c\n\t\tplog(XLOG_FATAL, "unable to free rpc arguments in amqprog");\n\t\tgoing_down(1);\n.\ng/_rpcsvcdirty/d\nwq\n' ${AMQ_SVC_EXTRA} | \
-		ed -s $@.tmp >/dev/null
+	ed -s $@.tmp <$*.ed
 	mv $@.tmp $@
 
+nfs_prot_svc.c: nfs_prot.x $*.ed
+	${RPCGEN} -o $@.tmp -m nfs_prot.x
+	ed -s $@.tmp <$*.ed
+	mv $@.tmp $@
 
+nfs_prot.x: ${NFSX} $*.ed
+	cat ${NFSX} >$@.tmp
+	ed -s $@.tmp <$*.ed
+	mv $@.tmp $@
