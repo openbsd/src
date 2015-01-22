@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.11 2015/01/16 15:06:40 deraadt Exp $	*/
+/*	$OpenBSD: ca.c,v 1.12 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,21 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/uio.h>
 
-#include <net/if.h>
-#include <netinet/in.h>
-
-#include <limits.h>
-#include <event.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <imsg.h>
 
+#include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>

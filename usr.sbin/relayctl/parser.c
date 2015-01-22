@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.26 2015/01/22 15:23:50 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.27 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,25 +19,13 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/queue.h>
 
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <err.h>
-#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <event.h>
-
-#include <openssl/ssl.h>
 
 #include "relayd.h"
-
 #include "parser.h"
 
 enum token_type {

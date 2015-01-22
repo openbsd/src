@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.8 2015/01/16 15:06:40 deraadt Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.9 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -20,18 +20,15 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 #include <net/route.h>
+#include <arpa/inet.h>
 
+#include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <event.h>
 #include <string.h>
 #include <errno.h>
-
-#include <openssl/ssl.h>
 
 #include "relayd.h"
 

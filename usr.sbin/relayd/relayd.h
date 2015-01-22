@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.206 2015/01/22 09:26:05 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.207 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,12 +21,21 @@
 #ifndef _RELAYD_H
 #define _RELAYD_H
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/time.h>
 
-#include <netinet/in.h>
+#include <net/if.h>
+
+#include <stdarg.h>
 #include <limits.h>
-#include <imsg.h>
 #include <siphash.h>
+#include <event.h>
+#include <imsg.h>
+
+#include <openssl/ssl.h>
 
 #ifndef nitems
 #define	nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
@@ -519,7 +528,6 @@ struct rdr {
 };
 TAILQ_HEAD(rdrlist, rdr);
 
-struct relay;
 struct rsession {
 	objid_t				 se_id;
 	objid_t				 se_relayid;
@@ -791,7 +799,6 @@ enum dstmode {
 };
 #define RELAY_DSTMODE_DEFAULT		RELAY_DSTMODE_ROUNDROBIN
 
-struct router;
 struct netroute_config {
 	objid_t			 id;
 	struct sockaddr_storage	 ss;
@@ -860,7 +867,6 @@ enum blockmodes {
 	BM_NORMAL,
 	BM_NONBLOCK
 };
-
 
 struct imsgev {
 	struct imsgbuf		 ibuf;

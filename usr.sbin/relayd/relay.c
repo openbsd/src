@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.189 2015/01/22 15:21:28 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.190 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -21,24 +21,22 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/tree.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <err.h>
-#include <pwd.h>
 #include <event.h>
-#include <fnmatch.h>
+#include <siphash.h>
+#include <imsg.h>
 
 #include <openssl/dh.h>
 #include <openssl/ssl.h>

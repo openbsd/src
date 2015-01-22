@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.14 2011/05/19 08:56:49 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.15 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "relayd.h"
 
 enum actions {
 	NONE,

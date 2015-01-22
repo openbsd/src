@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.3 2014/07/09 16:42:05 reyk Exp $	*/
+/*	$OpenBSD: name2id.c,v 1.4 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -17,17 +17,11 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
 
-#include <net/if.h>
-
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <event.h>
-
-#include <openssl/ssl.h>
+#include <errno.h>
 
 #include "relayd.h"
 

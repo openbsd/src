@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.52 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.53 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -22,25 +22,21 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/un.h>
 
-#include <net/if.h>
-#include <net/if_media.h>
-#include <net/if_types.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <event.h>
-
-#include <openssl/ssl.h>
+#include <time.h>
+#include <imsg.h>
 
 #include "relayd.h"
 #include "parser.h"

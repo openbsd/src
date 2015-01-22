@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.19 2014/12/21 00:54:49 guenther Exp $	*/
+/*	$OpenBSD: proc.c,v 1.20 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -21,11 +21,6 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <sys/tree.h>
-
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,8 +30,7 @@
 #include <signal.h>
 #include <pwd.h>
 #include <event.h>
-
-#include <openssl/ssl.h>
+#include <imsg.h>
 
 #include "relayd.h"
 

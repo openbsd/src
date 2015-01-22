@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.22 2015/01/22 15:21:05 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.23 2015/01/22 17:42:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -18,22 +18,21 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 #include <sys/un.h>
-#include <sys/uio.h>
 
 #include <netinet/in.h>
-#include <net/if.h>
 
-#include <errno.h>
-#include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <err.h>
 #include <event.h>
-
-#include <openssl/ssl.h>
+#include <imsg.h>
 
 #include "relayd.h"
 #include "snmp.h"
