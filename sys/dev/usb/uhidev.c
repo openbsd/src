@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.68 2015/01/09 12:09:51 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.69 2015/01/22 10:27:47 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -671,18 +671,30 @@ int
 uhidev_set_report_async(struct uhidev_softc *sc, int type, int id, void *data,
     int len)
 {
+	struct usbd_xfer *xfer;
 	usb_device_request_t req;
-	char *buf = data;
 	int actlen = len;
+	char *buf;
+
+	xfer = usbd_alloc_xfer(sc->sc_udev);
+	if (xfer == NULL)
+		return (-1);
+
+	if (id > 0)
+		len++;
+
+	buf = usbd_alloc_buffer(xfer, len);
+	if (buf == NULL) {
+		usbd_free_xfer(xfer);
+		return (-1);
+	}
 
 	/* Prepend the reportID. */
 	if (id > 0) {
-		len++;
-		buf = malloc(len, M_TEMP, M_NOWAIT);
-		if (buf == NULL)
-			return (-1);
 		buf[0] = id;
 		memcpy(buf + 1, data, len - 1);
+	} else {
+		memcpy(buf, data, len);
 	}
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
@@ -691,16 +703,8 @@ uhidev_set_report_async(struct uhidev_softc *sc, int type, int id, void *data,
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	if (usbd_do_request_async(sc->sc_udev, &req, buf, NULL, NULL))
+	if (usbd_request_async(xfer, &req, NULL, NULL))
 		actlen = -1;
-
-	/*
-	 * Since report requests are write-only it is safe to free
-	 * the buffer right after submitting the transfer because
-	 * it won't be used afterward.
-	 */
-	if (id > 0)
-		free(buf, M_TEMP, len);
 
 	return (actlen);
 }
@@ -750,11 +754,11 @@ uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
 		if (info->id > 0) {
 			len--;
 			memcpy(info->data, xfer->buffer + 1, len);
+		} else {
+			memcpy(info->data, xfer->buffer, len);
 		}
 	}
 	info->callback(info->priv, info->id, info->data, len);
-	if (info->id > 0)
-		free(xfer->buffer, M_TEMP, xfer->length);
 	free(info, M_TEMP, sizeof(*info));
 	usbd_free_xfer(xfer);
 }
@@ -763,28 +767,35 @@ int
 uhidev_get_report_async(struct uhidev_softc *sc, int type, int id, void *data,
     int len, void *priv, void (*callback)(void *, int, void *, int))
 {
+	struct usbd_xfer *xfer;
 	usb_device_request_t req;
 	struct uhidev_async_info *info;
-	char *buf = data;
 	int actlen = len;
+	char *buf;
+
+	xfer = usbd_alloc_xfer(sc->sc_udev);
+	if (xfer == NULL)
+		return (-1);
+
+	if (id > 0)
+		len++;
+
+	buf = usbd_alloc_buffer(xfer, len);
+	if (buf == NULL) {
+		usbd_free_xfer(xfer);
+		return (-1);
+	}
 
 	info = malloc(sizeof(*info), M_TEMP, M_NOWAIT);
-	if (info == NULL)
+	if (info == NULL) {
+		usbd_free_xfer(xfer);
 		return (-1);
+	}
 
 	info->callback = callback;
 	info->priv = priv;
 	info->data = data;
 	info->id = id;
-
-	if (id > 0) {
-		len++;
-		buf = malloc(len, M_TEMP, M_NOWAIT|M_ZERO);
-		if (buf == NULL) {
-			free(info, M_TEMP, sizeof(*info));
-			return (-1);
-		}
-	}
 
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_GET_REPORT;
@@ -792,13 +803,11 @@ uhidev_get_report_async(struct uhidev_softc *sc, int type, int id, void *data,
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	if (usbd_do_request_async(sc->sc_udev, &req, buf, priv,
-	    uhidev_get_report_async_cb)) {
+	if (usbd_request_async(xfer, &req, priv, uhidev_get_report_async_cb)) {
 		free(info, M_TEMP, sizeof(*info));
-		if (id > 0)
-			free(buf, M_TEMP, len);
 		actlen = -1;
 	}
+
 	return (actlen);
 }
 

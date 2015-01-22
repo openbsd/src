@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.78 2015/01/11 15:41:16 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.79 2015/01/22 10:27:47 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -55,8 +55,7 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-void usbd_do_request_async_cb(struct usbd_xfer *, void *,
-    usbd_status);
+void usbd_request_async_cb(struct usbd_xfer *, void *, usbd_status);
 void usbd_start_next(struct usbd_pipe *pipe);
 usbd_status usbd_open_pipe_ival(struct usbd_interface *, u_int8_t, u_int8_t,
     struct usbd_pipe **, int);
@@ -586,6 +585,7 @@ usbd_status
 usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe)
 {
 	struct usbd_device *dev = pipe->device;
+	struct usbd_xfer *xfer;
 	usb_device_request_t req;
 	usbd_status err;
 
@@ -596,7 +596,12 @@ usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe)
 	USETW(req.wValue, UF_ENDPOINT_HALT);
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
-	err = usbd_do_request_async(dev, &req, 0, 0, 0);
+
+	xfer = usbd_alloc_xfer(dev);
+	if (xfer == NULL)
+		return (USBD_NOMEM);
+
+	err = usbd_request_async(xfer, &req, NULL, NULL);
 	return (err);
 }
 
@@ -949,8 +954,7 @@ usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
 }
 
 void
-usbd_do_request_async_cb(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
+usbd_request_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	usbd_free_xfer(xfer);
 }
@@ -960,19 +964,17 @@ usbd_do_request_async_cb(struct usbd_xfer *xfer, void *priv,
  * Can be used from interrupt context.
  */
 usbd_status
-usbd_do_request_async(struct usbd_device *dev, usb_device_request_t *req,
-    void *data, void *priv, usbd_callback callback)
+usbd_request_async(struct usbd_xfer *xfer, usb_device_request_t *req,
+    void *priv, usbd_callback callback)
 {
-	struct usbd_xfer *xfer;
 	usbd_status err;
 
-	xfer = usbd_alloc_xfer(dev);
-	if (xfer == NULL)
-		return (USBD_NOMEM);
 	if (callback == NULL)
-		callback = usbd_do_request_async_cb;
-	usbd_setup_default_xfer(xfer, dev, priv, USBD_DEFAULT_TIMEOUT, req,
-	    data, UGETW(req->wLength), 0, callback);
+		callback = usbd_request_async_cb;
+
+	usbd_setup_default_xfer(xfer, xfer->device, priv,
+	    USBD_DEFAULT_TIMEOUT, req, NULL, UGETW(req->wLength),
+	    USBD_NO_COPY, callback);
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
 		usbd_free_xfer(xfer);
