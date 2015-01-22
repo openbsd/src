@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.89 2013/11/13 05:41:41 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.90 2015/01/22 05:48:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -149,7 +149,7 @@ dlsym(void *handle, const char *name)
 	elf_object_t	*object;
 	elf_object_t	*dynobj;
 	const elf_object_t	*pobj;
-	char 		*retval;
+	char		*retval;
 	const Elf_Sym	*sym = NULL;
 	int flags;
 
@@ -374,7 +374,7 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 	int i;
 
 	fmt = object->sod.sod_library ? fmt1 : fmt2;
-	
+
 	for (i = 0; fmt[i]; i++) {
 		if (fmt[i] != '%' && fmt[i] != '\\') {
 			_dl_fdprintf(fd, "%c", fmt[i]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.152 2015/01/16 16:18:07 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.153 2015/01/22 05:48:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -139,7 +139,7 @@ _dl_run_all_dtors(void)
 		}
 
 		if (fini_complete && initfirst_skipped)
-                        fini_complete = initfirst_skipped = skip_initfirst = 0;
+			fini_complete = initfirst_skipped = skip_initfirst = 0;
 	}
 }
 
@@ -496,7 +496,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	 */
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
 	ehdr = (Elf_Ehdr *)dl_data[AUX_base];
-        dyn_obj = _dl_finalize_object(us, dynp,
+	dyn_obj = _dl_finalize_object(us, dynp,
 	    (Elf_Phdr *)((char *)dl_data[AUX_base] + ehdr->e_phoff),
 	    ehdr->e_phnum, OBJTYPE_LDR, dl_data[AUX_base], dyn_loff);
 	_dl_add_object(dyn_obj);
