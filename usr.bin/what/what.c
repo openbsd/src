@@ -1,4 +1,4 @@
-/*	$OpenBSD: what.c,v 1.12 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: what.c,v 1.13 2015/01/22 19:10:17 krw Exp $	*/
 /*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
 
 /*
@@ -100,8 +100,11 @@ loop:		if (c == '$') {
 				if ((c = getchar()) != match[i])
 					goto loop;
 			printf("\t$%s", match);
-			while (isprint(c = getchar()))
+			while (isprint(c = getchar())) {
 				putchar(c);
+				if (c == '$')
+					break;
+			}
 			putchar('\n');
 			matches++;
 			if (sflag)
