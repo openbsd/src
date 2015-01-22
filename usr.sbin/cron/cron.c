@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.47 2015/01/14 17:27:29 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.48 2015/01/22 22:38:55 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -137,11 +137,11 @@ main(int argc, char *argv[]) {
 	cronSock = open_socket();
 	database.head = NULL;
 	database.tail = NULL;
-	database.mtime = (time_t) 0;
+	database.mtime = 0;
 	load_database(&database);
 	at_database.head = NULL;
 	at_database.tail = NULL;
-	at_database.mtime = (time_t) 0;
+	at_database.mtime = 0;
 	scan_atjobs(&at_database, NULL);
 	set_time(TRUE);
 	run_reboot_jobs(&database);
@@ -409,7 +409,7 @@ cron_sleep(time_t target) {
 				(void) read(fd, &poke, 1);
 				close(fd);
 				if (poke & RELOAD_CRON) {
-					database.mtime = (time_t)0;
+					database.mtime = 0;
 					load_database(&database);
 				}
 				if (poke & RELOAD_AT) {
@@ -419,7 +419,7 @@ cron_sleep(time_t target) {
 					 * jobs immediately.
 					 */
 					gettimeofday(&t2, NULL);
-					at_database.mtime = (time_t)0;
+					at_database.mtime = 0;
 					if (scan_atjobs(&at_database, &t2))
 						atrun(&at_database,
 						    batch_maxload, t2.tv_sec);

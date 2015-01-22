@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.24 2015/01/19 01:05:32 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.25 2015/01/22 22:38:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -91,7 +91,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 			continue;
 		queue = (unsigned char)ep[1];
 
-		job = (atjob *)malloc(sizeof(*job));
+		job = malloc(sizeof(*job));
 		if (job == NULL) {
 			for (job = new_db.head; job != NULL; ) {
 				tjob = job;
@@ -392,7 +392,7 @@ run_job(atjob *job, char *atfile)
 		log_close();
 
 		/* Connect grandchild's stdin to the at job file. */
-		if (lseek(fd, (off_t) 0, SEEK_SET) < 0) {
+		if (lseek(fd, 0, SEEK_SET) < 0) {
 			perror("lseek");
 			_exit(EXIT_FAILURE);
 		}

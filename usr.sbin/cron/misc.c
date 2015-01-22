@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.50 2015/01/14 17:27:30 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.51 2015/01/22 22:38:55 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -291,9 +291,9 @@ acquire_daemonlock(int closeflag) {
 	}
 
 	snprintf(buf, sizeof(buf), "%ld\n", (long)getpid());
-	(void) lseek(fd, (off_t)0, SEEK_SET);
+	(void) lseek(fd, 0, SEEK_SET);
 	num = write(fd, buf, strlen(buf));
-	(void) ftruncate(fd, (off_t)num);
+	(void) ftruncate(fd, num);
 
 	/* abandon fd even though the file is open. we need to keep
 	 * it open and locked, but we don't need the handles elsewhere.
@@ -333,7 +333,7 @@ get_string(char *string, int size, FILE *file, char *terms) {
 
 	while (EOF != (ch = get_char(file)) && !strchr(terms, ch)) {
 		if (size > 1) {
-			*string++ = (char) ch;
+			*string++ = ch;
 			size--;
 		}
 	}

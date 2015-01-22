@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.8 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: job.c,v 1.9 2015/01/22 22:38:55 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -41,7 +41,7 @@ job_add(entry *e, user *u) {
 			return;
 
 	/* build a job queue element */
-	if ((j = (job *)malloc(sizeof(job))) == NULL)
+	if ((j = malloc(sizeof(job))) == NULL)
 		return;
 	j->next = NULL;
 	j->e = e;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.8 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.9 2015/01/22 22:38:55 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -56,7 +56,7 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name) {
 
 	/* file is open.  build user entry, then read the crontab file.
 	 */
-	if ((u = (user *) malloc(sizeof(user))) == NULL)
+	if ((u = malloc(sizeof(user))) == NULL)
 		return (NULL);
 	if ((u->name = strdup(name)) == NULL) {
 		save_errno = errno;
