@@ -1,4 +1,4 @@
-/*	$OpenBSD: soundcard.h,v 1.14 2013/03/27 20:28:22 tedu Exp $	*/
+/*	$OpenBSD: soundcard.h,v 1.15 2015/01/22 00:07:15 deraadt Exp $	*/
 /*	$NetBSD: soundcard.h,v 1.11 2001/05/09 21:49:58 augustss Exp $	*/
 
 /*-
@@ -309,8 +309,6 @@ typedef struct buffmem_desc {
 } buffmem_desc;
 
 #define ioctl _oss_ioctl
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int _oss_ioctl(int, unsigned long com, ...);
