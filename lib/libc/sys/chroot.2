@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.21 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: chroot.2,v 1.22 2015/01/22 20:44:05 millert Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: January 22 2015 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -116,3 +116,8 @@ system call first appeared in
 .At v7 .
 .Sh CAVEATS
 There are ways for a root process to escape from the chroot jail.
+Changes to the directory hierarchy made from outside the chroot jail
+may allow a restricted process to escape, even if it is unprivileged.
+Passing directory file descriptors via
+.Xr recvmsg 2
+from outside the chroot jail may also allow a process to escape.
