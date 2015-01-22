@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.11 2014/12/18 19:27:04 tedu Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.12 2015/01/22 22:09:39 tedu Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -564,7 +564,7 @@ lsa_cache_init(u_int32_t hashsize)
 	lsacache.hashmask = hs - 1;
 }
 
-uint32_t
+static uint32_t
 lsa_hash_hdr(const struct lsa_hdr *hdr)
 {
 	return SipHash24(&lsacachekey, hdr, sizeof(*hdr));
