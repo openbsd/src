@@ -1,0 +1,26 @@
+.TH NR-INT 1 "January 23, 2015" OpenBSD
+.SH NAME
+nr-scale \- scaling units in numeric expressions
+.SH DESCRIPTION
+.nr Y 1f+1
+\nY
+.nr Y 1i+1
+\nY
+.nr Y 10c+1
+\nY
+.nr Y 1v+1
+\nY
+.nr Y 1P+1
+\nY
+.nr Y 1m+1
+\nY
+.nr Y 1n+1
+\nY
+.nr Y 10p+1
+\nY
+.nr Y 1u+1
+\nY
+.nr Y 100M+1
+\nY
+.nr Y 1X+2
+\nY

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.125 2015/01/22 22:50:31 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.126 2015/01/23 00:38:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1639,8 +1639,46 @@ roff_getnum(const char *v, int *pos, int *res)
 	if (n)
 		*res = -*res;
 
-	*pos = p;
-	return 1;
+	/* Each number may be followed by one optional scaling unit. */
+
+	switch (v[p]) {
+	case 'f':
+		*res *= 65536;
+		break;
+	case 'i':
+		*res *= 240;
+		break;
+	case 'c':
+		*res *= 240;
+		*res /= 2.54;
+		break;
+	case 'v':
+		/* FALLTROUGH */
+	case 'P':
+		*res *= 40;
+		break;
+	case 'm':
+		/* FALLTROUGH */
+	case 'n':
+		*res *= 24;
+		break;
+	case 'p':
+		*res *= 10;
+		*res /= 3;
+		break;
+	case 'u':
+		break;
+	case 'M':
+		*res *= 6;
+		*res /= 25;
+		break;
+	default:
+		p--;
+		break;
+	}
+
+	*pos = p + 1;
+	return(1);
 }
 
 /*
