@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.26 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.27 2015/01/23 02:37:25 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -225,7 +225,7 @@ run_job(atjob *job, char *atfile)
 	char *nargv[2], *nenvp[1];
 
 	/* Open the file and unlink it so we don't try running it again. */
-	if ((fd = open(atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < OK) {
+	if ((fd = open(atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
 		log_it("CRON", getpid(), "CAN'T OPEN", atfile);
 		return;
 	}
@@ -275,7 +275,7 @@ run_job(atjob *job, char *atfile)
 #endif
 
 	/* Sanity checks */
-	if (fstat(fd, &statbuf) < OK) {
+	if (fstat(fd, &statbuf) < 0) {
 		log_it(pw->pw_name, getpid(), "FSTAT FAILED", atfile);
 		_exit(EXIT_FAILURE);
 	}

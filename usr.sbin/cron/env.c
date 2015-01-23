@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.26 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: env.c,v 1.27 2015/01/23 02:37:25 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -121,7 +121,7 @@ enum env_state {
 	ERROR		/* Error */
 };
 
-/* return	ERR = end of file
+/* return	-1 = end of file
  *		FALSE = not an env setting (file was repositioned)
  *		TRUE = was an env setting
  */
@@ -137,7 +137,7 @@ load_env(char *envstr, FILE *f) {
 	fileline = LineNumber;
 	skip_comments(f);
 	if (EOF == get_string(envstr, MAX_ENVSTR, f, "\n"))
-		return (ERR);
+		return (-1);
 
 	bzero(name, sizeof name);
 	bzero(val, sizeof val);

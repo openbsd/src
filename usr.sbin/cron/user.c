@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.10 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: user.c,v 1.11 2015/01/23 02:37:25 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -76,9 +76,9 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name) {
 
 	/* load the crontab
 	 */
-	while ((status = load_env(envstr, file)) >= OK) {
+	while ((status = load_env(envstr, file)) >= 0) {
 		switch (status) {
-		case ERR:
+		case -1:
 			free_user(u);
 			u = NULL;
 			goto done;

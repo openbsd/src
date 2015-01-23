@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.22 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: database.c,v 1.23 2015/01/23 02:37:25 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -44,14 +44,14 @@ load_database(cron_db *old_db) {
 	 * so that if anything changes as of this moment (i.e., before we've
 	 * cached any of the database), we'll see the changes next time.
 	 */
-	if (stat(SPOOL_DIR, &statbuf) < OK) {
+	if (stat(SPOOL_DIR, &statbuf) < 0) {
 		log_it("CRON", getpid(), "STAT FAILED", SPOOL_DIR);
 		return;
 	}
 
 	/* track system crontab file
 	 */
-	if (stat(SYSCRONTAB, &syscron_stat) < OK)
+	if (stat(SYSCRONTAB, &syscron_stat) < 0)
 		syscron_stat.st_mtime = 0;
 
 	/* if spooldir's mtime has not changed, we don't need to fiddle with
@@ -168,7 +168,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		struct stat *statbuf, cron_db *new_db, cron_db *old_db)
 {
 	struct passwd *pw = NULL;
-	int crontab_fd = OK - 1;
+	int crontab_fd = -1;
 	user *u;
 
 	if (fname == NULL) {
@@ -182,14 +182,14 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		goto next_crontab;
 	}
 
-	if ((crontab_fd = open(tabname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < OK) {
+	if ((crontab_fd = open(tabname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
 		/* crontab not accessible?
 		 */
 		log_it(fname, getpid(), "CAN'T OPEN", tabname);
 		goto next_crontab;
 	}
 
-	if (fstat(crontab_fd, statbuf) < OK) {
+	if (fstat(crontab_fd, statbuf) < 0) {
 		log_it(fname, getpid(), "FSTAT FAILED", tabname);
 		goto next_crontab;
 	}
@@ -243,7 +243,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 	}
 
  next_crontab:
-	if (crontab_fd >= OK) {
+	if (crontab_fd >= 0) {
 		close(crontab_fd);
 	}
 }

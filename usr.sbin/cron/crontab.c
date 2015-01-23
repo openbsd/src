@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.68 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.69 2015/01/23 02:37:25 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -196,7 +196,7 @@ parse_args(int argc, char *argv[]) {
 			 * the race.
 			 */
 
-			if (swap_gids() < OK) {
+			if (swap_gids() < 0) {
 				perror("swapping gids");
 				exit(EXIT_FAILURE);
 			}
@@ -204,7 +204,7 @@ parse_args(int argc, char *argv[]) {
 				perror(Filename);
 				exit(EXIT_FAILURE);
 			}
-			if (swap_gids_back() < OK) {
+			if (swap_gids_back() < 0) {
 				perror("swapping gids back");
 				exit(EXIT_FAILURE);
 			}
@@ -312,12 +312,12 @@ edit_cmd(void) {
 		fprintf(stderr, "path too long\n");
 		goto fatal;
 	}
-	if (swap_gids() < OK) {
+	if (swap_gids() < 0) {
 		perror("swapping gids");
 		exit(EXIT_FAILURE);
 	}
 	t = mkstemp(Filename);
-	if (swap_gids_back() < OK) {
+	if (swap_gids_back() < 0) {
 		perror("swapping gids back");
 		exit(EXIT_FAILURE);
 	}
@@ -334,7 +334,7 @@ edit_cmd(void) {
 
 	copy_crontab(f, NewCrontab);
 	fclose(f);
-	if (fflush(NewCrontab) < OK) {
+	if (fflush(NewCrontab) < 0) {
 		perror(Filename);
 		exit(EXIT_FAILURE);
 	}
@@ -345,12 +345,12 @@ edit_cmd(void) {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, Filename);
  fatal:
-		if (swap_gids() < OK) {
+		if (swap_gids() < 0) {
 			perror("swapping gids");
 			exit(EXIT_FAILURE);
 		}
 		unlink(Filename);
-		if (swap_gids_back() < OK) {
+		if (swap_gids_back() < 0) {
 			perror("swapping gids back");
 			exit(EXIT_FAILURE);
 		}
@@ -374,7 +374,7 @@ edit_cmd(void) {
 		goto fatal;
 	}
 	if (timespeccmp(&ts[1], &statbuf.st_mtim, ==)) {
-		if (swap_gids() < OK) {
+		if (swap_gids() < 0) {
 			perror("swapping gids");
 			exit(EXIT_FAILURE);
 		}
@@ -383,7 +383,7 @@ edit_cmd(void) {
 			fprintf(stderr, "%s: crontab temp file moved, editor "
 			   "may create backup files improperly\n", ProgramName);
 		}
-		if (swap_gids_back() < OK) {
+		if (swap_gids_back() < 0) {
 			perror("swapping gids back");
 			exit(EXIT_FAILURE);
 		}
@@ -427,12 +427,12 @@ edit_cmd(void) {
 		goto fatal;
 	}
  remove:
-	if (swap_gids() < OK) {
+	if (swap_gids() < 0) {
 		perror("swapping gids");
 		exit(EXIT_FAILURE);
 	}
 	unlink(Filename);
-	if (swap_gids_back() < OK) {
+	if (swap_gids_back() < 0) {
 		perror("swapping gids back");
 		exit(EXIT_FAILURE);
 	}
@@ -514,7 +514,7 @@ replace_cmd(void) {
 	CheckErrorCount = 0;  eof = FALSE;
 	while (!CheckErrorCount && !eof) {
 		switch (load_env(envstr, tmp)) {
-		case ERR:
+		case -1:
 			/* check for data before the EOF */
 			if (envstr[0] != '\0') {
 				Set_LineNum(LineNumber + 1);
@@ -539,7 +539,7 @@ replace_cmd(void) {
 		goto done;
 	}
 
-	if (fchown(fileno(tmp), pw->pw_uid, -1) < OK) {
+	if (fchown(fileno(tmp), pw->pw_uid, -1) < 0) {
 		perror("fchown");
 		fclose(tmp);
 		error = -2;

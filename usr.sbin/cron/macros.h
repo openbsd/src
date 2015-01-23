@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.10 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: macros.h,v 1.11 2015/01/23 02:37:25 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,17 +17,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-	/* these are really immutable, and are
-	 *   defined for symbolic convenience only
-	 * TRUE, FALSE, and ERR must be distinct
-	 * ERR must be < OK.
-	 */
 #define TRUE		1
 #define FALSE		0
-	/* system calls return this on success */
-#define OK		0
-	/*   or this on error */
-#define ERR		(-1)
 
 #define	INIT_PID	1	/* parent of orphans */
 #define READ_PIPE	0	/* which end of a pipe pair do you read? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.43 2015/01/23 01:03:03 tedu Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.44 2015/01/23 02:37:25 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -448,9 +448,9 @@ child_process(entry *e, user *u) {
 		int waiter;
 		pid_t pid;
 
-		while ((pid = wait(&waiter)) < OK && errno == EINTR)
+		while ((pid = wait(&waiter)) < 0 && errno == EINTR)
 			;
-		if (pid < OK) {
+		if (pid < 0) {
 			break;
 		}
 		/*
