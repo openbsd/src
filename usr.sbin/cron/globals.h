@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.9 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: globals.h,v 1.10 2015/01/23 15:56:04 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -63,5 +63,3 @@ XTRN char	*ProgramName INIT("amnesia");
 XTRN int	LineNumber INIT(0);
 XTRN time_t	StartTime INIT(0);
 XTRN int	NoFork INIT(0);
-
-#define	DebugFlags	0
