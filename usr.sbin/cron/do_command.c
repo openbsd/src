@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.42 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.43 2015/01/23 01:03:03 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -454,7 +454,7 @@ child_process(entry *e, user *u) {
 			break;
 		}
 		/*
-		 * if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
+		if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
 			Debug(DPROC, (", dumped core"))
 		*/
 	}

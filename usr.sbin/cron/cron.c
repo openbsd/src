@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.49 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: cron.c,v 1.50 2015/01/23 01:03:03 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -49,9 +49,7 @@ static	double			batch_maxload = BATCH_MAXLOAD;
 static void
 usage(void) {
 
-	fprintf(stderr, "usage: %s [-n] [-l load_avg] [-x [", ProgramName);
-	fprintf(stderr, "debugging flags (none supported in this build)]");
-	fprintf(stderr, "]\n");
+	fprintf(stderr, "usage: %s [-n] [-l load_avg]\n", ProgramName);
 	exit(EXIT_FAILURE);
 }
 
