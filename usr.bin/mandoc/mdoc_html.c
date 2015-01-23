@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_html.c,v 1.93 2014/12/23 13:48:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.94 2015/01/23 14:19:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2082,8 +2082,8 @@ mdoc_quote_pre(MDOC_ARGS)
 	case MDOC_Ao:
 		/* FALLTHROUGH */
 	case MDOC_Aq:
-		print_text(h, n->parent->prev != NULL &&
-		    n->parent->prev->tok == MDOC_An ?  "<" : "\\(la");
+		print_text(h, n->nchild == 1 &&
+		    n->child->tok == MDOC_Mt ?  "<" : "\\(la");
 		break;
 	case MDOC_Bro:
 		/* FALLTHROUGH */
@@ -2160,8 +2160,8 @@ mdoc_quote_post(MDOC_ARGS)
 	case MDOC_Ao:
 		/* FALLTHROUGH */
 	case MDOC_Aq:
-		print_text(h, n->parent->prev != NULL &&
-		    n->parent->prev->tok == MDOC_An ?  ">" : "\\(ra");
+		print_text(h, n->nchild == 1 &&
+		    n->child->tok == MDOC_Mt ?  ">" : "\\(ra");
 		break;
 	case MDOC_Bro:
 		/* FALLTHROUGH */

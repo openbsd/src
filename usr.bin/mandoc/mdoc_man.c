@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.79 2014/12/24 23:31:59 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.80 2015/01/23 14:19:52 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -877,8 +877,8 @@ static int
 pre_aq(DECL_ARGS)
 {
 
-	print_word(n->parent->prev != NULL &&
-	    n->parent->prev->tok == MDOC_An ?  "<" : "\\(la");
+	print_word(n->nchild == 1 &&
+	    n->child->tok == MDOC_Mt ?  "<" : "\\(la");
 	outflags &= ~MMAN_spc;
 	return(1);
 }
@@ -888,8 +888,8 @@ post_aq(DECL_ARGS)
 {
 
 	outflags &= ~(MMAN_spc | MMAN_nl);
-	print_word(n->parent->prev != NULL &&
-	    n->parent->prev->tok == MDOC_An ?  ">" : "\\(ra");
+	print_word(n->nchild == 1 &&
+	    n->child->tok == MDOC_Mt ?  ">" : "\\(ra");
 }
 
 static int
