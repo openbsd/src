@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.103 2014/12/15 00:46:53 doug Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.104 2015/01/23 14:40:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1165,6 +1165,11 @@ ssl3_get_key_exchange(SSL *s)
 	int		 curve_nid = 0;
 	int		 encoded_pt_len = 0;
 
+	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+
+	EVP_MD_CTX_init(&md_ctx);
+
 	/*
 	 * Use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped.
@@ -1175,11 +1180,21 @@ ssl3_get_key_exchange(SSL *s)
 		return ((int)n);
 
 	if (s->s3->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
+		/*
+		 * Do not skip server key exchange if this cipher suite uses
+		 * ephemeral keys.
+		 */
+		if (alg_k & (SSL_kDHE|SSL_kECDHE)) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_UNEXPECTED_MESSAGE);
+			al = SSL_AD_UNEXPECTED_MESSAGE;
+			goto f_err;
+		}
+
 		s->s3->tmp.reuse_message = 1;
 		return (1);
 	}
 
-	param = p = (unsigned char *)s->init_msg;
 	if (s->session->sess_cert != NULL) {
 		DH_free(s->session->sess_cert->peer_dh_tmp);
 		s->session->sess_cert->peer_dh_tmp = NULL;
@@ -1192,10 +1207,8 @@ ssl3_get_key_exchange(SSL *s)
 			goto err;
 	}
 
+	param = p = (unsigned char *)s->init_msg;
 	param_len = 0;
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-	EVP_MD_CTX_init(&md_ctx);
 
 	if (alg_k & SSL_kDHE) {
 		if ((dh = DH_new()) == NULL) {
