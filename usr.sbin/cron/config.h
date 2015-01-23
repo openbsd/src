@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.18 2015/01/14 17:27:51 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.19 2015/01/23 01:01:06 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -27,10 +27,6 @@
 /*
  * these are site-dependent
  */
-
-#ifndef DEBUGGING
-#define DEBUGGING 1	/* 1 or 0 -- do you want debugging code built in? */
-#endif
 
 			/*
 			 * choose one of these mailer commands.  some use

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.51 2015/01/22 22:38:55 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.52 2015/01/23 01:01:06 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -58,69 +58,6 @@ strcmp_until(const char *left, const char *right, char until) {
 		return (0);
 	}
 	return (*left - *right);
-}
-
-int
-set_debug_flags(const char *flags) {
-	/* debug flags are of the form    flag[,flag ...]
-	 *
-	 * if an error occurs, print a message to stdout and return FALSE.
-	 * otherwise return TRUE after setting ERROR_FLAGS.
-	 */
-
-#if !DEBUGGING
-
-	printf("this program was compiled without debugging enabled\n");
-	return (FALSE);
-
-#else /* DEBUGGING */
-
-	const char *pc = flags;
-
-	DebugFlags = 0;
-
-	while (*pc) {
-		const char	**test;
-		int		mask;
-
-		/* try to find debug flag name in our list.
-		 */
-		for (test = DebugFlagNames, mask = 1;
-		     *test != NULL && strcmp_until(*test, pc, ',');
-		     test++, mask <<= 1)
-			continue;
-
-		if (!*test) {
-			fprintf(stderr,
-				"unrecognized debug flag <%s> <%s>\n",
-				flags, pc);
-			return (FALSE);
-		}
-
-		DebugFlags |= mask;
-
-		/* skip to the next flag
-		 */
-		while (*pc && *pc != ',')
-			pc++;
-		if (*pc == ',')
-			pc++;
-	}
-
-	if (DebugFlags) {
-		int flag;
-
-		fprintf(stderr, "debug flags enabled:");
-
-		for (flag = 0;  DebugFlagNames[flag];  flag++)
-			if (DebugFlags & (1 << flag))
-				fprintf(stderr, " %s", DebugFlagNames[flag]);
-		fprintf(stderr, "\n");
-	}
-
-	return (TRUE);
-
-#endif /* DEBUGGING */
 }
 
 void
@@ -498,12 +435,6 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail) 
 
 #endif /*SYSLOG*/
 
-#if DEBUGGING
-	if (DebugFlags) {
-		fprintf(stderr, "log_it: (%s %ld) %s (%s)\n",
-			username, (long)pid, event, detail);
-	}
-#endif
 }
 
 void

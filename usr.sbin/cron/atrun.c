@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.25 2015/01/22 22:38:55 tedu Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.26 2015/01/23 01:01:06 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -42,16 +42,12 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 	struct dirent *file;
 	struct stat statbuf;
 
-	Debug(DLOAD, ("[%ld] scan_atjobs()\n", (long)getpid()))
-
 	if (stat(AT_DIR, &statbuf) != 0) {
 		log_it("CRON", getpid(), "CAN'T STAT", AT_DIR);
 		return (0);
 	}
 
 	if (old_db->mtime == statbuf.st_mtime) {
-		Debug(DLOAD, ("[%ld] at jobs dir mtime unch, no load needed.\n",
-		    (long)getpid()))
 		return (0);
 	}
 
@@ -120,9 +116,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 	closedir(atdir);
 
 	/* Free up old at db */
-	Debug(DLOAD, ("unlinking old at database:\n"))
 	for (job = old_db->head; job != NULL; ) {
-		Debug(DLOAD, ("\t%lld.%c\n", (long long)job->run_time, job->queue))
 		tjob = job;
 		job = job->next;
 		free(tjob);
@@ -134,7 +128,6 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 
 	/* Install the new database */
 	*old_db = new_db;
-	Debug(DLOAD, ("scan_atjobs is done\n"))
 
 	return (pending);
 }
@@ -149,8 +142,6 @@ atrun(at_db *db, double batch_maxload, time_t now)
 	struct stat statbuf;
 	double la;
 	atjob *job, *batch;
-
-	Debug(DPROC, ("[%ld] atrun()\n", (long)getpid()))
 
 	for (batch = NULL, job = db->head; job; job = job->next) {
 		/* Skip jobs in the future */
@@ -232,8 +223,6 @@ run_job(atjob *job, char *atfile)
 	int fd, always_mail;
 	int output_pipe[2];
 	char *nargv[2], *nenvp[1];
-
-	Debug(DPROC, ("[%ld] run_job('%s')\n", (long)getpid(), atfile))
 
 	/* Open the file and unlink it so we don't try running it again. */
 	if ((fd = open(atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < OK) {
@@ -382,9 +371,6 @@ run_job(atjob *job, char *atfile)
 		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	case 0:
-		Debug(DPROC, ("[%ld] grandchild process fork()'ed\n",
-			      (long)getpid()))
-
 		/* Write log message now that we have our real pid. */
 		log_it(pw->pw_name, getpid(), "ATJOB", atfile);
 
@@ -469,14 +455,6 @@ run_job(atjob *job, char *atfile)
 		if (job->queue > 'b')
 			(void)setpriority(PRIO_PROCESS, 0, job->queue - 'b');
 
-#if DEBUGGING
-		if (DebugFlags & DTEST) {
-			fprintf(stderr,
-			    "debug DTEST is on, not exec'ing at job %s\n",
-			    atfile);
-			_exit(EXIT_SUCCESS);
-		}
-#endif /*DEBUGGING*/
 
 		(void) signal(SIGPIPE, SIG_DFL);
 
@@ -498,17 +476,11 @@ run_job(atjob *job, char *atfile)
 		break;
 	}
 
-	Debug(DPROC, ("[%ld] child continues, closing output pipe\n",
-	    (long)getpid()))
-
 	/* Close the atfile's fd and the end of the pipe we don't use. */
 	close(fd);
 	close(output_pipe[WRITE_PIPE]);
 
 	/* Read piped output (if any) from the at job. */
-	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
-	    (long)getpid()))
-
 	if ((fp = fdopen(output_pipe[READ_PIPE], "r")) == NULL) {
 		perror("fdopen");
 		(void) _exit(EXIT_FAILURE);
@@ -520,9 +492,6 @@ run_job(atjob *job, char *atfile)
 		int	status = 0;
 		char	mailcmd[MAX_COMMAND];
 		char	hostname[HOST_NAME_MAX + 1];
-
-		Debug(DPROC|DEXT, ("[%ld] got data from grandchild\n",
-		    (long)getpid()))
 
 		if (gethostname(hostname, sizeof(hostname)) != 0)
 			strlcpy(hostname, "unknown", sizeof(hostname));
@@ -556,8 +525,6 @@ run_job(atjob *job, char *atfile)
 		 * If the mailer exits with non-zero exit status, log
 		 * this fact so the problem can (hopefully) be debugged.
 		 */
-		Debug(DPROC, ("[%ld] closing pipe to mail\n",
-		    (long)getpid()))
 		if ((status = cron_pclose(mail)) != 0) {
 			snprintf(buf, sizeof(buf), "mailed %lu byte%s of output"
 			    " but got status 0x%04x\n", (unsigned long)bytes,
@@ -565,27 +532,20 @@ run_job(atjob *job, char *atfile)
 			log_it(pw->pw_name, getpid(), "MAIL", buf);
 		}
 	}
-	Debug(DPROC, ("[%ld] got EOF from grandchild\n", (long)getpid()))
 
 	fclose(fp);	/* also closes output_pipe[READ_PIPE] */
 
 	/* Wait for grandchild to die.  */
-	Debug(DPROC, ("[%ld] waiting for grandchild (%ld) to finish\n",
-		      (long)getpid(), (long)pid))
 	for (;;) {
 		if (waitpid(pid, &waiter, 0) == -1) {
 			if (errno == EINTR)
 				continue;
-			Debug(DPROC,
-			    ("[%ld] no grandchild process--mail written?\n",
-			    (long)getpid()))
 			break;
 		} else {
-			Debug(DPROC, ("[%ld] grandchild (%ld) finished, status=%04x",
-			    (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
+			/*
 			if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
 				Debug(DPROC, (", dumped core"))
-			Debug(DPROC, ("\n"))
+			*/
 			break;
 		}
 	}

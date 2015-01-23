@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.67 2015/01/14 17:27:29 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.68 2015/01/23 01:01:06 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -36,12 +36,7 @@
 
 enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
 
-#if DEBUGGING
-static char	*Options[] = { "???", "list", "delete", "edit", "replace" };
-static char	*getoptargs = "u:lerx:";
-#else
 static char	*getoptargs = "u:ler";
-#endif
 
 static	pid_t		Pid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
@@ -136,12 +131,6 @@ parse_args(int argc, char *argv[]) {
 	Option = opt_unknown;
 	while (-1 != (argch = getopt(argc, argv, getoptargs))) {
 		switch (argch) {
-#if DEBUGGING
-		case 'x':
-			if (!set_debug_flags(optarg))
-				usage("bad debug option");
-			break;
-#endif
 		case 'u':
 			if (getuid() != ROOT_UID) {
 				fprintf(stderr,
@@ -221,9 +210,6 @@ parse_args(int argc, char *argv[]) {
 			}
 		}
 	}
-
-	Debug(DMISC, ("user=%s, file=%s, option=%s\n",
-		      User, Filename, Options[(int)Option]))
 }
 
 static void

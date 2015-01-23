@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.48 2015/01/22 22:38:55 tedu Exp $	*/
+/*	$OpenBSD: cron.c,v 1.49 2015/01/23 01:01:06 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -48,17 +48,9 @@ static	double			batch_maxload = BATCH_MAXLOAD;
 
 static void
 usage(void) {
-#if DEBUGGING
-	const char **dflags;
-#endif
 
 	fprintf(stderr, "usage: %s [-n] [-l load_avg] [-x [", ProgramName);
-#if DEBUGGING
-	for (dflags = DebugFlagNames; *dflags; dflags++)
-		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
-#else
 	fprintf(stderr, "debugging flags (none supported in this build)]");
-#endif
 	fprintf(stderr, "]\n");
 	exit(EXIT_FAILURE);
 }
@@ -103,13 +95,7 @@ main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	/* if there are no debug flags turned on, fork as a daemon should.
-	 */
-	if (DebugFlags) {
-#if DEBUGGING
-		(void) fprintf(stderr, "[%ld] cron started\n", (long)getpid());
-#endif
-	} else if (NoFork == 0) {
+	if (NoFork == 0) {
 		switch (fork()) {
 		case -1:
 			log_it("CRON",getpid(),"DEATH","can't fork");
@@ -196,8 +182,6 @@ main(int argc, char *argv[]) {
 				 * (wokeup late) run jobs for each virtual
 				 * minute until caught up.
 				 */
-				Debug(DSCH, ("[%ld], normal case %d minutes to go\n",
-				    (long)getpid(), timeDiff))
 				do {
 					if (job_runqueue())
 						sleep(10);
@@ -219,8 +203,6 @@ main(int argc, char *argv[]) {
 				 * have a chance to run, and we do our
 				 * housekeeping.
 				 */
-				Debug(DSCH, ("[%ld], DST begins %d minutes to go\n",
-				    (long)getpid(), timeDiff))
 				/* run wildcard jobs for current minute */
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 
@@ -245,8 +227,6 @@ main(int argc, char *argv[]) {
 				 * not be repeated.  Virtual time does not
 				 * change until we are caught up.
 				 */
-				Debug(DSCH, ("[%ld], DST ends %d minutes to go\n",
-				    (long)getpid(), timeDiff))
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 				break;
 			default:
@@ -254,8 +234,6 @@ main(int argc, char *argv[]) {
 				 * other: time has changed a *lot*,
 				 * jump virtual time, and run everything
 				 */
-				Debug(DSCH, ("[%ld], clock jumped\n",
-				    (long)getpid()))
 				virtualTime = timeRunning;
 				find_jobs(timeRunning, &database, TRUE, TRUE);
 			}
@@ -312,10 +290,6 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 	month = tm->tm_mon +1 /* 0..11 -> 1..12 */ -FIRST_MONTH;
 	dow = tm->tm_wday -FIRST_DOW;
 
-	Debug(DSCH, ("[%ld] tick(%d,%d,%d,%d,%d) %s %s\n",
-		     (long)getpid(), minute, hour, dom, month, dow,
-		     doWild?" ":"No wildcard",doNonWild?" ":"Wildcard only"))
-
 	/* the dom/dow situation is odd.  '* * 1,15 * Sun' will run on the
 	 * first and fifteenth AND every Sunday;  '* * * * Sun' will run *only*
 	 * on Sundays;  '* * 1,15 * *' will run *only* the 1st and 15th.  this
@@ -324,9 +298,6 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 	 */
 	for (u = db->head; u != NULL; u = u->next) {
 		for (e = u->crontab; e != NULL; e = e->next) {
-			Debug(DSCH|DEXT, ("user [%s:%lu:%lu:...] cmd=\"%s\"\n",
-			    e->pwd->pw_name, (unsigned long)e->pwd->pw_uid,
-			    (unsigned long)e->pwd->pw_gid, e->cmd))
 			if (bit_test(e->minute, minute) &&
 			    bit_test(e->hour, hour) &&
 			    bit_test(e->month, month) &&
@@ -361,8 +332,6 @@ set_time(int initialize) {
 	if (initialize || tm.tm_isdst != isdst) {
 		isdst = tm.tm_isdst;
 		GMToff = get_gmtoff(&StartTime, &tm);
-		Debug(DSCH, ("[%ld] GMToff=%ld\n",
-		    (long)getpid(), (long)GMToff))
 	}
 	clockTime = (StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE;
 }
@@ -388,10 +357,6 @@ cron_sleep(time_t target) {
 	pfd[0].events = POLLIN;
 
 	while (timerisset(&tv) && tv.tv_sec < 65) {
-		Debug(DSCH, ("[%ld] Target time=%lld, sec-to-wait=%lld\n",
-		    (long)getpid(), (long long)target*SECONDS_PER_MINUTE,
-		    (long long)tv.tv_sec))
-
 		poke = RELOAD_CRON | RELOAD_AT;
 
 		/* Sleep until we time out, get a poke, or get a signal. */
@@ -401,8 +366,6 @@ cron_sleep(time_t target) {
 		if (nfds == -1 && errno != EINTR)
 			break;		/* an error occurred */
 		if (nfds > 0) {
-			Debug(DSCH, ("[%ld] Got a poke on the socket\n",
-			    (long)getpid()))
 			sunlen = sizeof(s_un);
 			fd = accept(cronSock, (struct sockaddr *)&s_un, &sunlen);
 			if (fd >= 0 && fcntl(fd, F_SETFL, O_NONBLOCK) == 0) {
@@ -477,19 +440,10 @@ sigchld_reaper(void) {
 		case -1:
 			if (errno == EINTR)
 				continue;
-			Debug(DPROC,
-			      ("[%ld] sigchld...no children\n",
-			       (long)getpid()))
 			break;
 		case 0:
-			Debug(DPROC,
-			      ("[%ld] sigchld...no dead kids\n",
-			       (long)getpid()))
 			break;
 		default:
-			Debug(DPROC,
-			      ("[%ld] sigchld...pid #%ld died, stat=%d\n",
-			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
 			break;
 		}
 	} while (pid > 0);
@@ -500,7 +454,7 @@ parse_args(int argc, char *argv[]) {
 	int argch;
 	char *ep;
 
-	while (-1 != (argch = getopt(argc, argv, "l:nx:"))) {
+	while (-1 != (argch = getopt(argc, argv, "l:n"))) {
 		switch (argch) {
 		case 'l':
 			errno = 0;
@@ -514,10 +468,6 @@ parse_args(int argc, char *argv[]) {
 			break;
 		case 'n':
 			NoFork = 1;
-			break;
-		case 'x':
-			if (!set_debug_flags(optarg))
-				usage();
 			break;
 		default:
 			usage();

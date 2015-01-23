@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.36 2015/01/22 22:38:55 tedu Exp $	*/
+/*	$OpenBSD: entry.c,v 1.37 2015/01/23 01:01:06 tedu Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -90,8 +90,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	char envstr[MAX_ENVSTR];
 	char **tenvp;
 
-	Debug(DPARS, ("load_entry()...about to eat comments\n"))
-
 	skip_comments(file);
 
 	ch = get_char(file);
@@ -172,8 +170,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 			goto eof;
 		}
 	} else {
-		Debug(DPARS, ("load_entry()...about to parse numerics\n"))
-
 		if (ch == '*')
 			e->flags |= MIN_STAR;
 		ch = get_list(e->minute, FIRST_MINUTE, LAST_MINUTE,
@@ -248,10 +244,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	if (!pw) {
 		char		*username = cmd;	/* temp buffer */
 
-		Debug(DPARS, ("load_entry()...about to parse username\n"))
 		ch = get_string(username, MAX_COMMAND, file, " \t\n");
 
-		Debug(DPARS, ("load_entry()...got %s\n",username))
 		if (ch == EOF || ch == '\n' || ch == '*') {
 			ecode = e_cmd;
 			goto eof;
@@ -262,9 +256,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 			ecode = e_username;
 			goto eof;
 		}
-		Debug(DPARS, ("load_entry()...uid %lu, gid %lu\n",
-			      (unsigned long)pw->pw_uid,
-			      (unsigned long)pw->pw_gid))
 	}
 
 	if ((e->pwd = pw_dup(pw)) == NULL) {
@@ -340,8 +331,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		e->envp = tenvp;
 	}
 
-	Debug(DPARS, ("load_entry()...about to parse command\n"))
-
 	/* If the first character of the command is '-' it is a cron option.
 	 */
 	ch = get_char(file);
@@ -383,8 +372,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		goto eof;
 	}
 
-	Debug(DPARS, ("load_entry()...returning successfully\n"))
-
 	/* success, fini, return pointer to the entry we just created...
 	 */
 	return (e);
@@ -411,8 +398,6 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 	 * assume the same thing.
 	 */
 
-	Debug(DPARS|DEXT, ("get_list()...entered\n"))
-
 	/* list = range {"," range}
 	 */
 
@@ -437,8 +422,6 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 	Skip_Nonblanks(ch, file)
 	Skip_Blanks(ch, file)
 
-	Debug(DPARS|DEXT, ("get_list()...exiting w/ %02x\n", ch))
-
 	return (ch);
 }
 
@@ -451,8 +434,6 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 	 */
 
 	int i, num1, num2, num3;
-
-	Debug(DPARS|DEXT, ("get_range()...entering, exit won't show\n"))
 
 	if (ch == '*') {
 		/* '*' means "first-last" but can still be modified by /step
@@ -563,9 +544,6 @@ get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
 		*pc = '\0';
 		if (len != 0 && strchr(terms, ch)) {
 			for (i = 0;  names[i] != NULL;  i++) {
-				Debug(DPARS|DEXT,
-					("get_num, compare(%s,%s)\n", names[i],
-					temp))
 				if (!strcasecmp(names[i], temp)) {
 					*numptr = i+low;
 					return (ch);
@@ -581,7 +559,6 @@ bad:
 
 static int
 set_element(bitstr_t *bits, int low, int high, int number) {
-	Debug(DPARS|DEXT, ("set_element(?,%d,%d,%d)\n", low, high, number))
 
 	if (number < low || number > high)
 		return (EOF);

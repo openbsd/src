@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.8 2013/08/15 20:19:26 millert Exp $	*/
+/*	$OpenBSD: globals.h,v 1.9 2015/01/23 01:01:06 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -64,15 +64,4 @@ XTRN int	LineNumber INIT(0);
 XTRN time_t	StartTime INIT(0);
 XTRN int	NoFork INIT(0);
 
-#if DEBUGGING
-XTRN int	DebugFlags INIT(0);
-XTRN const char *DebugFlagNames[]
-#ifdef MAIN_PROGRAM
-	= {
-		"ext", "sch", "proc", "pars", "load", "misc", "test", NULL
-	}
-#endif
-	;
-#else
 #define	DebugFlags	0
-#endif /* DEBUGGING */

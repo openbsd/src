@@ -17,9 +17,9 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.\" $OpenBSD: cron.8,v 1.31 2013/07/16 11:13:33 schwarze Exp $
+.\" $OpenBSD: cron.8,v 1.32 2015/01/23 01:01:06 tedu Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 23 2015 $
 .Dt CRON 8
 .Os
 .Sh NAME
@@ -29,14 +29,6 @@
 .Nm cron
 .Op Fl n
 .Op Fl l Ar load_avg
-.Oo
-.Fl x
-.Sm off
-.Oo Ar ext , sch , proc ,
-.Ar pars , load , misc , test
-.Oc
-.Sm on
-.Oc
 .Sh DESCRIPTION
 The
 .Nm
@@ -135,41 +127,6 @@ will detach from the current tty and become a daemon.
 The
 .Fl n
 option disables this behavior and causes it to run in the foreground.
-.It Fl x Ar debug_flags
-If
-.Nm
-was compiled with debugging support, a number of debugging flags
-are available to show what
-.Nm
-is doing.
-The following flags may be specified:
-.Bl -tag -width Ds
-.It ext
-show extended information; used in conjunction with other debug flags
-to provide even more information
-.It sch
-print information related to scheduling jobs
-.It proc
-print information related to running processes
-.It pars
-print information related to parsing
-.Xr crontab 5
-files
-.It load
-print when loading the databases
-.It misc
-show misc other debugging information
-.It test
-test mode; don't actually execute commands
-.El
-.Pp
-Multiple flags may be specified, separated by a comma
-.Pq So , Sc .
-Regardless of which flags were specified, the
-.Fl x
-flag will cause
-.Nm
-to stay in the foreground and not become a daemon.
 .El
 .Sh SIGNALS
 .Bl -tag -width Ds
