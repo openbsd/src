@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.123 2014/12/17 06:58:11 guenther Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.124 2015/01/23 17:09:23 kettenis Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -809,11 +809,9 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	struct pglist pgl;
 	int mapflags = 0;
 	vm_prot_t prot;
+	paddr_t pla_align;
 	int pla_flags;
 	int pla_maxseg;
-#ifdef __HAVE_PMAP_DIRECT
-	paddr_t pa;
-#endif
 	vaddr_t va, sva;
 
 	KASSERT(sz == round_page(sz));
@@ -828,46 +826,33 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	if (kp->kp_zero)
 		pla_flags |= UVM_PLA_ZERO;
 
+	pla_align = kp->kp_align;
+#ifdef __HAVE_PMAP_DIRECT
+	if (pla_align < kv->kv_align)
+		pla_align = kv->kv_align;
+#endif
 	pla_maxseg = kp->kp_maxseg;
 	if (pla_maxseg == 0)
 		pla_maxseg = sz / PAGE_SIZE;
 
 	if (uvm_pglistalloc(sz, kp->kp_constraint->ucr_low,
-	    kp->kp_constraint->ucr_high, kp->kp_align, kp->kp_boundary,
+	    kp->kp_constraint->ucr_high, pla_align, kp->kp_boundary,
 	    &pgl, pla_maxseg, pla_flags)) {	
 		return (NULL);
 	}
 
 #ifdef __HAVE_PMAP_DIRECT
-	if (kv->kv_align)
-		goto alloc_va;
-#if 1
 	/*
-	 * For now, only do DIRECT mappings for single page
-	 * allocations, until we figure out a good way to deal
-	 * with contig allocations in km_free.
+	 * Only use direct mappings for single page or single segment
+	 * allocations.
 	 */
-	if (!kv->kv_singlepage)
-		goto alloc_va;
-#endif
-	/*
-	 * Dubious optimization. If we got a contig segment, just map it
-	 * through the direct map.
-	 */
-	TAILQ_FOREACH(pg, &pgl, pageq) {
-		if (pg != TAILQ_FIRST(&pgl) &&
-		    VM_PAGE_TO_PHYS(pg) != pa + PAGE_SIZE)
-			break;
-		pa = VM_PAGE_TO_PHYS(pg);
-	}
-	if (pg == NULL) {
+	if (kv->kv_singlepage || kp->kp_maxseg == 1) {
 		TAILQ_FOREACH(pg, &pgl, pageq) {
-			vaddr_t v;
-			v = pmap_map_direct(pg);
+			va = pmap_map_direct(pg);
 			if (pg == TAILQ_FIRST(&pgl))
-				va = v;
+				sva = va;
 		}
-		return ((void *)va);
+		return ((void *)sva);
 	}
 #endif
 alloc_va:
@@ -947,28 +932,35 @@ km_free(void *v, size_t sz, const struct kmem_va_mode *kv,
 	struct vm_page *pg;
 	struct pglist pgl;
 
-	sva = va = (vaddr_t)v;
-	eva = va + sz;
+	sva = (vaddr_t)v;
+	eva = sva + sz;
 
-	if (kp->kp_nomem) {
+	if (kp->kp_nomem)
 		goto free_va;
-	}
 
-	if (kv->kv_singlepage) {
 #ifdef __HAVE_PMAP_DIRECT
-		pg = pmap_unmap_direct(va);
-		uvm_pagefree(pg);
+	if (kv->kv_singlepage || kp->kp_maxseg == 1) {
+		TAILQ_INIT(&pgl);
+		for (va = sva; va < eva; va += PAGE_SIZE) {
+			pg = pmap_unmap_direct(va);
+			TAILQ_INSERT_TAIL(&pgl, pg, pageq);
+		}
+		uvm_pglistfree(&pgl);
+		return;
+	}
 #else
+	if (kv->kv_singlepage) {
 		struct uvm_km_free_page *fp = v;
+
 		mtx_enter(&uvm_km_pages.mtx);
 		fp->next = uvm_km_pages.freelist;
 		uvm_km_pages.freelist = fp;
 		if (uvm_km_pages.freelistlen++ > 16)
 			wakeup(&uvm_km_pages.km_proc);
 		mtx_leave(&uvm_km_pages.mtx);
-#endif
 		return;
 	}
+#endif
 
 	if (kp->kp_pageable) {
 		pmap_remove(pmap_kernel(), sva, eva);
