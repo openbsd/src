@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.84 2015/01/23 13:18:40 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.85 2015/01/23 13:38:16 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ CompatMake(void *gnp,	/* The node to make */
     void *pgnp)		/* Parent to abort if necessary */
 {
 	GNode *gn = gnp;
-	GNode *pgn = gnp;
+	GNode *pgn = pgnp;
 
 	GNode *sib;
 	bool cmdsOk;
