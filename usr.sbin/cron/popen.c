@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.24 2015/01/14 17:27:51 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.25 2015/01/23 19:07:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -51,7 +51,8 @@ static pid_t *pids;
 static int fds;
 
 FILE *
-cron_popen(char *program, char *type, struct passwd *pw) {
+cron_popen(char *program, char *type, struct passwd *pw)
+{
 	char *cp;
 	FILE *iop;
 	int argc, pdes[2];
@@ -142,7 +143,8 @@ cron_popen(char *program, char *type, struct passwd *pw) {
 }
 
 int
-cron_pclose(FILE *iop) {
+cron_pclose(FILE *iop)
+{
 	int fdes;
 	pid_t pid;
 	int status;

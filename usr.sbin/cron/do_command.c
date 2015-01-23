@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.44 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.45 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -26,7 +26,8 @@
 static void		child_process(entry *, user *);
 
 void
-do_command(entry *e, user *u) {
+do_command(entry *e, user *u)
+{
 
 	/* fork to become asynchronous -- parent process is done immediately,
 	 * and continues to run the normal cron code, which means return to
@@ -52,7 +53,8 @@ do_command(entry *e, user *u) {
 }
 
 static void
-child_process(entry *e, user *u) {
+child_process(entry *e, user *u)
+{
 	FILE *in;
 	int stdin_pipe[2], stdout_pipe[2];
 	char *input_data, *usernm;
@@ -461,7 +463,8 @@ child_process(entry *e, user *u) {
 }
 
 int
-safe_p(const char *usernm, const char *s) {
+safe_p(const char *usernm, const char *s)
+{
 	static const char safe_delim[] = "@!:%+-.,";     /* conservative! */
 	const char *t;
 	int ch, first;

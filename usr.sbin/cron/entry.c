@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.38 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: entry.c,v 1.39 2015/01/23 19:07:27 tedu Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -56,7 +56,8 @@ static int	get_list(bitstr_t *, int, int, const char *[], int, FILE *),
 		set_element(bitstr_t *, int, int, int);
 
 void
-free_entry(entry *e) {
+free_entry(entry *e)
+{
 	free(e->cmd);
 	free(e->pwd);
 	if (e->envp)
@@ -69,7 +70,8 @@ free_entry(entry *e) {
  */
 entry *
 load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
-    char **envp) {
+    char **envp)
+{
 	/* this function reads one crontab entry -- the next -- from a file.
 	 * it skips any leading blank lines, ignores comments, and returns
 	 * NULL if for any reason the entry can't be read and parsed.
@@ -510,7 +512,8 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 
 static int
 get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
-    const char *terms) {
+    const char *terms)
+{
 	char temp[MAX_TEMPSTR], *pc;
 	int len, i;
 
@@ -558,7 +561,8 @@ bad:
 }
 
 static int
-set_element(bitstr_t *bits, int low, int high, int number) {
+set_element(bitstr_t *bits, int low, int high, int number)
+{
 
 	if (number < low || number > high)
 		return (EOF);

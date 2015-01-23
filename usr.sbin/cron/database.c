@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.23 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: database.c,v 1.24 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -33,7 +33,8 @@ static	void		process_crontab(const char *, const char *,
 					cron_db *, cron_db *);
 
 void
-load_database(cron_db *old_db) {
+load_database(cron_db *old_db)
+{
 	struct stat statbuf, syscron_stat;
 	cron_db new_db;
 	struct dirent *dp;
@@ -130,7 +131,8 @@ load_database(cron_db *old_db) {
 }
 
 void
-link_user(cron_db *db, user *u) {
+link_user(cron_db *db, user *u)
+{
 	if (db->head == NULL)
 		db->head = u;
 	if (db->tail)
@@ -141,7 +143,8 @@ link_user(cron_db *db, user *u) {
 }
 
 void
-unlink_user(cron_db *db, user *u) {
+unlink_user(cron_db *db, user *u)
+{
 	if (u->prev == NULL)
 		db->head = u->next;
 	else
@@ -154,7 +157,8 @@ unlink_user(cron_db *db, user *u) {
 }
 
 user *
-find_user(cron_db *db, const char *name) {
+find_user(cron_db *db, const char *name)
+{
 	user *u;
 
 	for (u = db->head;  u != NULL;  u = u->next)

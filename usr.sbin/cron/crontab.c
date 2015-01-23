@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.69 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.70 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -56,7 +56,8 @@ static	void		list_cmd(void),
 static	int		replace_cmd(void);
 
 static void
-usage(const char *msg) {
+usage(const char *msg)
+{
 	fprintf(stderr, "%s: usage error: %s\n", ProgramName, msg);
 	fprintf(stderr, "usage: %s [-u user] file\n", ProgramName);
 	fprintf(stderr, "       %s [-e | -l | -r] [-u user]\n", ProgramName);
@@ -69,7 +70,8 @@ usage(const char *msg) {
 }
 
 int
-main(int argc, char *argv[]) {
+main(int argc, char *argv[])
+{
 	int exitstatus;
 
 	Pid = getpid();
@@ -112,7 +114,8 @@ main(int argc, char *argv[]) {
 }
 
 static void
-parse_args(int argc, char *argv[]) {
+parse_args(int argc, char *argv[])
+{
 	int argch;
 
 	if (!(pw = getpwuid(getuid()))) {
@@ -213,7 +216,8 @@ parse_args(int argc, char *argv[]) {
 }
 
 static void
-list_cmd(void) {
+list_cmd(void)
+{
 	char n[MAX_FNAME];
 	FILE *f;
 
@@ -239,7 +243,8 @@ list_cmd(void) {
 }
 
 static void
-delete_cmd(void) {
+delete_cmd(void)
+{
 	char n[MAX_FNAME];
 
 	log_it(RealUser, Pid, "DELETE", User);
@@ -258,13 +263,15 @@ delete_cmd(void) {
 }
 
 static void
-check_error(const char *msg) {
+check_error(const char *msg)
+{
 	CheckErrorCount++;
 	fprintf(stderr, "\"%s\":%d: %s\n", Filename, LineNumber-1, msg);
 }
 
 static void
-edit_cmd(void) {
+edit_cmd(void)
+{
 	char n[MAX_FNAME], q[MAX_TEMPSTR];
 	const char *tmpdir;
 	FILE *f;
@@ -445,7 +452,8 @@ edit_cmd(void) {
  *		-2	on install error
  */
 static int
-replace_cmd(void) {
+replace_cmd(void)
+{
 	char n[MAX_FNAME], envstr[MAX_ENVSTR];
 	FILE *tmp;
 	int ch, eof, fd;
@@ -635,14 +643,16 @@ editit(const char *pathname)
 }
 
 static void
-die(int x) {
+die(int x)
+{
 	if (TempFilename[0])
 		(void) unlink(TempFilename);
 	_exit(EXIT_FAILURE);
 }
 
 static void
-copy_crontab(FILE *f, FILE *out) {
+copy_crontab(FILE *f, FILE *out)
+{
 	int ch, x;
 
 	/* ignore the top few comments since we probably put them there.

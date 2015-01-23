@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.50 2015/01/23 01:03:03 tedu Exp $	*/
+/*	$OpenBSD: cron.c,v 1.51 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -47,14 +47,16 @@ static	at_db			at_database;
 static	double			batch_maxload = BATCH_MAXLOAD;
 
 static void
-usage(void) {
+usage(void)
+{
 
 	fprintf(stderr, "usage: %s [-n] [-l load_avg]\n", ProgramName);
 	exit(EXIT_FAILURE);
 }
 
 int
-main(int argc, char *argv[]) {
+main(int argc, char *argv[])
+{
 	struct sigaction sact;
 	int fd;
 
@@ -259,7 +261,8 @@ main(int argc, char *argv[]) {
 }
 
 static void
-run_reboot_jobs(cron_db *db) {
+run_reboot_jobs(cron_db *db)
+{
 	user *u;
 	entry *e;
 
@@ -273,7 +276,8 @@ run_reboot_jobs(cron_db *db) {
 }
 
 static void
-find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
+find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild)
+{
 	time_t virtualSecond  = vtime * SECONDS_PER_MINUTE;
 	struct tm *tm = gmtime(&virtualSecond);
 	int minute, hour, dom, month, dow;
@@ -319,7 +323,8 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
  * Note that clockTime is a unix wallclock time converted to minutes.
  */
 static void
-set_time(int initialize) {
+set_time(int initialize)
+{
 	struct tm tm;
 	static int isdst;
 
@@ -338,7 +343,8 @@ set_time(int initialize) {
  * Try to just hit the next minute.
  */
 static void
-cron_sleep(time_t target) {
+cron_sleep(time_t target)
+{
 	int fd, nfds;
 	unsigned char poke;
 	struct timeval t1, t2, tv;
@@ -412,23 +418,27 @@ cron_sleep(time_t target) {
 }
 
 static void
-sighup_handler(int x) {
+sighup_handler(int x)
+{
 	got_sighup = 1;
 }
 
 static void
-sigchld_handler(int x) {
+sigchld_handler(int x)
+{
 	got_sigchld = 1;
 }
 
 static void
-quit(int x) {
+quit(int x)
+{
 	(void) unlink(_PATH_CRON_PID);
 	_exit(0);
 }
 
 static void
-sigchld_reaper(void) {
+sigchld_reaper(void)
+{
 	int waiter;
 	pid_t pid;
 
@@ -448,7 +458,8 @@ sigchld_reaper(void) {
 }
 
 static void
-parse_args(int argc, char *argv[]) {
+parse_args(int argc, char *argv[])
+{
 	int argch;
 	char *ep;
 

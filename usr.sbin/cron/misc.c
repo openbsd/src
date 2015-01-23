@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.53 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.54 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -47,7 +47,8 @@ static int syslog_open = FALSE;
 #endif
 
 int
-strcmp_until(const char *left, const char *right, char until) {
+strcmp_until(const char *left, const char *right, char until)
+{
 	while (*left && *left != until && *left == *right) {
 		left++;
 		right++;
@@ -61,7 +62,8 @@ strcmp_until(const char *left, const char *right, char until) {
 }
 
 void
-set_cron_uid(void) {
+set_cron_uid(void)
+{
 	if (seteuid(ROOT_UID) < 0) {
 		perror("seteuid");
 		exit(EXIT_FAILURE);
@@ -69,7 +71,8 @@ set_cron_uid(void) {
 }
 
 void
-set_cron_cwd(void) {
+set_cron_cwd(void)
+{
 	struct stat sb;
 	struct group *grp = NULL;
 
@@ -159,7 +162,8 @@ set_cron_cwd(void) {
  *	can rewrite our PID into _PATH_CRON_PID after the fork.
  */
 void
-acquire_daemonlock(int closeflag) {
+acquire_daemonlock(int closeflag)
+{
 	static int fd = -1;
 	char buf[3*MAX_FNAME];
 	const char *pidfile;
@@ -240,7 +244,8 @@ acquire_daemonlock(int closeflag) {
 /* get_char(file) : like getc() but increment LineNumber on newlines
  */
 int
-get_char(FILE *file) {
+get_char(FILE *file)
+{
 	int ch;
 
 	ch = getc(file);
@@ -252,7 +257,8 @@ get_char(FILE *file) {
 /* unget_char(ch, file) : like ungetc but do LineNumber processing
  */
 void
-unget_char(int ch, FILE *file) {
+unget_char(int ch, FILE *file)
+{
 	ungetc(ch, file);
 	if (ch == '\n')
 		Set_LineNum(LineNumber - 1)
@@ -265,7 +271,8 @@ unget_char(int ch, FILE *file) {
  *		(4) returns EOF or terminating character, whichever
  */
 int
-get_string(char *string, int size, FILE *file, char *terms) {
+get_string(char *string, int size, FILE *file, char *terms)
+{
 	int ch;
 
 	while (EOF != (ch = get_char(file)) && !strchr(terms, ch)) {
@@ -284,7 +291,8 @@ get_string(char *string, int size, FILE *file, char *terms) {
 /* skip_comments(file) : read past comment (if any)
  */
 void
-skip_comments(FILE *file) {
+skip_comments(FILE *file)
+{
 	int ch;
 
 	while (EOF != (ch = get_char(file))) {
@@ -351,7 +359,8 @@ in_file(const char *string, FILE *file, int error)
  *	root is always allowed.
  */
 int
-allowed(const char *username, const char *allow_file, const char *deny_file) {
+allowed(const char *username, const char *allow_file, const char *deny_file)
+{
 	FILE	*fp;
 	int	isallowed;
 
@@ -369,7 +378,8 @@ allowed(const char *username, const char *allow_file, const char *deny_file) {
 }
 
 void
-log_it(const char *username, pid_t xpid, const char *event, const char *detail) {
+log_it(const char *username, pid_t xpid, const char *event, const char *detail)
+{
 #if defined(LOG_FILE) || DEBUGGING
 	pid_t pid = xpid;
 #endif
@@ -438,7 +448,8 @@ log_it(const char *username, pid_t xpid, const char *event, const char *detail) 
 }
 
 void
-log_close(void) {
+log_close(void)
+{
 	if (LogFD != -1) {
 		close(LogFD);
 		LogFD = -1;
@@ -459,7 +470,8 @@ log_close(void) {
  *	(2) it returns a pointer to static storage
  */
 char *
-first_word(char *s, char *t) {
+first_word(char *s, char *t)
+{
 	static char retbuf[2][MAX_TEMPSTR + 1];	/* sure wish C had GC */
 	static int retsel = 0;
 	char *rb, *rp;
@@ -673,7 +685,8 @@ open_socket(void)
 }
 
 void
-poke_daemon(const char *spool_dir, unsigned char cookie) {
+poke_daemon(const char *spool_dir, unsigned char cookie)
+{
 	int sock = -1;
 	struct sockaddr_un s_un;
 

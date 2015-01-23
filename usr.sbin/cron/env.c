@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.27 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: env.c,v 1.28 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -24,7 +24,8 @@
 #include "cron.h"
 
 char **
-env_init(void) {
+env_init(void)
+{
 	char **p = malloc(sizeof(char **));
 
 	if (p != NULL)
@@ -33,7 +34,8 @@ env_init(void) {
 }
 
 void
-env_free(char **envp) {
+env_free(char **envp)
+{
 	char **p;
 
 	for (p = envp; *p != NULL; p++)
@@ -42,7 +44,8 @@ env_free(char **envp) {
 }
 
 char **
-env_copy(char **envp) {
+env_copy(char **envp)
+{
 	int count, i, save_errno;
 	char **p;
 
@@ -65,7 +68,8 @@ env_copy(char **envp) {
 }
 
 char **
-env_set(char **envp, char *envstr) {
+env_set(char **envp, char *envstr)
+{
 	int count, found;
 	char **p, *envtmp;
 
@@ -126,7 +130,8 @@ enum env_state {
  *		TRUE = was an env setting
  */
 int
-load_env(char *envstr, FILE *f) {
+load_env(char *envstr, FILE *f)
+{
 	long filepos;
 	int fileline;
 	enum env_state state;
@@ -227,7 +232,8 @@ load_env(char *envstr, FILE *f) {
 }
 
 char *
-env_get(char *name, char **envp) {
+env_get(char *name, char **envp)
+{
 	int len = strlen(name);
 	char *p, *q;
 

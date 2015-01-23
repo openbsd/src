@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.9 2015/01/22 22:38:55 tedu Exp $	*/
+/*	$OpenBSD: job.c,v 1.10 2015/01/23 19:07:27 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -32,7 +32,8 @@ typedef	struct _job {
 static job	*jhead = NULL, *jtail = NULL;
 
 void
-job_add(entry *e, user *u) {
+job_add(entry *e, user *u)
+{
 	job *j;
 
 	/* if already on queue, keep going */
@@ -56,7 +57,8 @@ job_add(entry *e, user *u) {
 }
 
 int
-job_runqueue(void) {
+job_runqueue(void)
+{
 	job *j, *jn;
 	int run = 0;
 
