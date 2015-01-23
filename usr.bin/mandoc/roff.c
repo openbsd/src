@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.126 2015/01/23 00:38:42 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.127 2015/01/23 20:17:25 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -606,7 +606,7 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "po", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "ps", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "psbb", roff_unsupp, NULL, NULL, 0, NULL },
-	{ "pshape", roff_line_ignore, NULL, NULL, 0, NULL },
+	{ "pshape", roff_unsupp, NULL, NULL, 0, NULL },
 	{ "pso", roff_insec, NULL, NULL, 0, NULL },
 	{ "ptr", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "pvs", roff_line_ignore, NULL, NULL, 0, NULL },
@@ -638,11 +638,11 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "sv", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "sy", roff_insec, NULL, NULL, 0, NULL },
 	{ "T&", roff_T_, NULL, NULL, 0, NULL },
-	{ "ta", roff_line_ignore, NULL, NULL, 0, NULL },
+	{ "ta", roff_unsupp, NULL, NULL, 0, NULL },
 	{ "tc", roff_unsupp, NULL, NULL, 0, NULL },
 	{ "TE", roff_TE, NULL, NULL, 0, NULL },
 	{ "TH", roff_TH, NULL, NULL, 0, NULL },
-	{ "ti", roff_line_ignore, NULL, NULL, 0, NULL },
+	{ "ti", roff_unsupp, NULL, NULL, 0, NULL },
 	{ "tkf", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "tl", roff_unsupp, NULL, NULL, 0, NULL },
 	{ "tm", roff_line_ignore, NULL, NULL, 0, NULL },
