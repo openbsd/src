@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.39 2014/09/21 13:43:25 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.40 2015/01/23 13:18:40 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ VarNoMatch(struct Name *word, bool addSpace, Buffer buf,
 static bool
 VarUniq(struct Name *word, bool addSpace, Buffer buf, void *lastp)
 {
-	struct Name *last = (struct Name *)lastp;
+	struct Name *last = lastp;
 
 	/* does not match */
 	if (last->s == NULL || last->e - last->s != word->e - word->s ||
@@ -409,7 +409,7 @@ VarUniq(struct Name *word, bool addSpace, Buffer buf, void *lastp)
 static bool
 VarLoop(struct Name *word, bool addSpace, Buffer buf, void *vp)
 {
-	struct LoopStuff *v = (struct LoopStuff *)vp;
+	struct LoopStuff *v = vp;
 
 	if (addSpace)
 		Buf_AddSpace(buf);
@@ -420,7 +420,7 @@ VarLoop(struct Name *word, bool addSpace, Buffer buf, void *vp)
 static char *
 finish_loop(const char *s, const struct Name *n UNUSED , void *p)
 {
-	struct LoopStuff *l = (struct LoopStuff *)p;
+	struct LoopStuff *l = p;
 
 	return Var_Subst(s, NULL,  l->err);
 }
@@ -514,7 +514,7 @@ do_path(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
 static char *
 do_def(const char *s, const struct Name *n UNUSED, void *arg)
 {
-	VarPattern *v = (VarPattern *)arg;
+	VarPattern *v = arg;
 	if (s == NULL) {
 		free_patternarg(v);
 		return NULL;
@@ -525,7 +525,7 @@ do_def(const char *s, const struct Name *n UNUSED, void *arg)
 static char *
 do_undef(const char *s, const struct Name *n UNUSED, void *arg)
 {
-	VarPattern *v = (VarPattern *)arg;
+	VarPattern *v = arg;
 	if (s != NULL) {
 		free_patternarg(v);
 		return NULL;
@@ -536,7 +536,7 @@ do_undef(const char *s, const struct Name *n UNUSED, void *arg)
 static char *
 do_assign(const char *s, const struct Name *n, void *arg)
 {
-	VarPattern *v = (VarPattern *)arg;
+	VarPattern *v = arg;
 	char *msg;
 	char *result;
 
@@ -570,7 +570,7 @@ do_assign(const char *s, const struct Name *n, void *arg)
 static char *
 do_exec(const char *s UNUSED, const struct Name *n UNUSED, void *arg)
 {
-	VarPattern *v = (VarPattern *)arg;
+	VarPattern *v = arg;
 	char *msg;
 	char *result;
 
@@ -592,7 +592,7 @@ VarSYSVMatch(struct Name *word, bool addSpace, Buffer buf, void *patp)
 {
 	size_t	len;
 	const char	*ptr;
-	VarPattern	*pat = (VarPattern *)patp;
+	VarPattern	*pat = patp;
 
 	if (*word->s != '\0') {
 		if (addSpace)
@@ -682,7 +682,7 @@ VarSubstitute(struct Name *word, bool addSpace, Buffer buf,
 {
     size_t	wordLen;    /* Length of word */
     const char	*cp;	    /* General pointer */
-    VarPattern	*pattern = (VarPattern *)patternp;
+    VarPattern	*pattern = patternp;
 
     wordLen = word->e - word->s;
     if ((pattern->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) !=
@@ -1072,7 +1072,8 @@ VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1,
 static char *
 VarQuote(const char *str, const struct Name *n UNUSED, void *islistp)
 {
-	int islist = *((int *)islistp);
+	int *p = islistp;
+	int islist = *p;
 
 	BUFFER	  buf;
 	/* This should cover most shells :-( */
@@ -1224,7 +1225,7 @@ get_spatternarg(const char **p, SymTable *ctxt, bool err, int endc)
 static void
 free_looparg(void *arg)
 {
-	struct LoopStuff *l = (struct LoopStuff *)arg;
+	struct LoopStuff *l = arg;
 
 	Var_DeleteLoopVar(l->var);
 	free(l->expand);
@@ -1388,7 +1389,7 @@ get_cmd(const char **p, SymTable *ctxt, bool err, int endc UNUSED)
 static void
 free_patternarg(void *p)
 {
-	VarPattern *vp = (VarPattern *)p;
+	VarPattern *vp = p;
 
 	free(vp->lbuffer);
 	free(vp->rhs);
@@ -1400,7 +1401,7 @@ static char *
 do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 {
 	VarREPattern p2;
-	VarPattern *p = (VarPattern *)arg;
+	VarPattern *p = arg;
 	int error;
 	char *result;
 

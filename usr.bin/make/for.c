@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.45 2013/11/22 15:47:35 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.46 2015/01/23 13:18:40 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -244,8 +244,8 @@ For_Accumulate(For *arg, const char *line)
 static void
 ForExec(void *valuep, void *argp)
 {
-	char *value = (char *)valuep;
-	For *arg = (For *)argp;
+	char *value = valuep;
+	For *arg = argp;
 	BUFFER buf;
 
 	/* Parse_FromString pushes stuff back, so we need to go over vars in

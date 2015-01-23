@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.65 2015/01/16 15:36:29 deraadt Exp $ */
+/*	$OpenBSD: dir.c,v 1.66 2015/01/23 13:18:40 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -642,14 +642,15 @@ Dir_AddDiri(Lst path, const char *name, const char *ename)
 void *
 Dir_CopyDir(void *p)
 {
-	((struct PathEntry *)p)->refCount++;
+	struct PathEntry *q = p;
+	q->refCount++;
 	return p;
 }
 
 void
 Dir_Destroy(void *pp)
 {
-	struct PathEntry *p = (struct PathEntry *)pp;
+	struct PathEntry *p = pp;
 
 	if (--p->refCount == 0) {
 		ohash_remove(&knownDirectories,
@@ -685,7 +686,8 @@ Dir_Concat(Lst path1, Lst path2)
 static void
 DirPrintDir(void *p)
 {
-	printf("%s ", ((struct PathEntry *)p)->name);
+	struct PathEntry *q = p;
+	printf("%s ", q->name);
 }
 
 void

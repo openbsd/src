@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.88 2014/05/12 19:11:19 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.89 2015/01/23 13:18:40 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -679,8 +679,8 @@ SuffAddSrc(
     void *sp,		/* suffix for which to create a Src structure */
     void *lsp)		/* list and parent for the new Src */
 {
-	Suff *s = (Suff *)sp;
-	LstSrc *ls = (LstSrc *)lsp;
+	Suff *s = sp;
+	LstSrc *ls = lsp;
 	Src *s2;	/* new Src structure */
 	Src *targ;	/* Target structure */
 
@@ -1712,14 +1712,14 @@ Suff_Init(void)
 static void
 SuffPrintName(void *p)
 {
-	Suff *s = (Suff *)p;
+	Suff *s = p;
 	printf("%s ", s == emptySuff ? "<empty>" : s->name);
 }
 
 static void
 SuffPrintSuff(void *sp)
 {
-	Suff    *s = (Suff *)sp;
+	Suff    *s = sp;
 
 	printf("# %-5s ", s->name);
 

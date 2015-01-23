@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.c,v 1.6 2014/05/18 08:08:50 espie Exp $ */
+/* $OpenBSD: dump.c,v 1.7 2015/01/23 13:18:40 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -82,7 +82,7 @@ sort_ohash(struct ohash *h, int (*comparison)(const void *, const void *))
 static void
 TargPrintName(void *gnp)
 {
-	GNode *gn = (GNode *)gnp;
+	GNode *gn = gnp;
 	printf("%s ", gn->name);
 }
 

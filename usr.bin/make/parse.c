@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.110 2013/11/22 15:47:35 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.111 2015/01/23 13:18:40 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ ParseDoSrc(
 static int
 ParseFindMain(void *gnp, void *dummy UNUSED)
 {
-	GNode *gn = (GNode *)gnp;
+	GNode *gn = gnp;
 	if ((gn->type & OP_NOTARGET) == 0 && gn->special == SPECIAL_NONE) {
 		mainNode = gn;
 		return 0;
@@ -496,7 +496,7 @@ ParseFindMain(void *gnp, void *dummy UNUSED)
 static void
 ParseClearPath(void *p)
 {
-	Lst path = (Lst)p;
+	Lst path = p;
 
 	Lst_Destroy(path, Dir_Destroy);
 	Lst_Init(path);
@@ -998,7 +998,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 static void
 ParseAddCmd(void *gnp, void *cmd)
 {
-	GNode *gn = (GNode *)gnp;
+	GNode *gn = gnp;
 
 	if (!(gn->type & OP_HAS_COMMANDS))
 		Lst_AtEnd(&gn->commands, cmd);
@@ -1016,7 +1016,7 @@ ParseAddCmd(void *gnp, void *cmd)
 static void
 ParseHasCommands(void *gnp)
 {
-	GNode *gn = (GNode *)gnp;
+	GNode *gn = gnp;
 	gn->type |= OP_HAS_COMMANDS;
 
 }

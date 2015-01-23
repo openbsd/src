@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.68 2014/01/06 12:21:45 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.69 2015/01/23 13:18:40 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -434,8 +434,9 @@ MakePrintStatus(
 			     * a cycle in the graph, not an error in an
 			     * inferior */
 {
-	GNode	*gn = (GNode *)gnp;
-	bool	cycle = *(bool *)cyclep;
+	GNode	*gn = gnp;
+	bool 	*cp = cyclep;
+	bool	cycle = *cp;
 	if (gn->built_status == UPTODATE) {
 		printf("`%s' is up to date.\n", gn->name);
 	} else if (gn->unmade != 0) {
@@ -471,17 +472,18 @@ MakePrintStatus(
 static void
 MakeAddChild(void *to_addp, void *ap)
 {
-	GNode *gn = (GNode *)to_addp;
+	GNode *gn = to_addp;
+	struct growableArray *a = ap;
 
 	if (!gn->must_make && !(gn->type & OP_USE))
-		Array_Push((struct growableArray *)ap, gn);
+		Array_Push(a, gn);
 }
 
 static void
 MakeHandleUse(void *cgnp, void *pgnp)
 {
-	GNode *cgn = (GNode *)cgnp;
-	GNode *pgn = (GNode *)pgnp;
+	GNode *cgn = cgnp;
+	GNode *pgn = pgnp;
 
 	if (cgn->type & OP_USE)
 		Make_HandleUse(cgn, pgn);
