@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.34 2014/12/17 19:39:01 tedu Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.35 2015/01/23 12:41:23 dlg Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -247,7 +247,10 @@ struct vdsp_softc {
 	struct task	sc_read_task;
 
 	caddr_t		sc_vd;
-	struct task	*sc_vd_task;
+	struct task	sc_vd_task;
+	struct vd_desc	**sc_vd_ring;
+	u_int		sc_vd_prod;
+	u_int		sc_vd_cons;
 
 	uint32_t	sc_vdisk_block_size;
 	uint64_t	sc_vdisk_size;
@@ -299,6 +302,7 @@ int	vdsp_writelabel(struct vdsp_softc *);
 int	vdsp_is_iso(struct vdsp_softc *);
 void	vdsp_read(void *, void *);
 void	vdsp_read_desc(struct vdsp_softc *, struct vdsk_desc_msg *);
+void	vdsp_vd_task(void *, void *);
 void	vdsp_read_dring(void *, void *);
 void	vdsp_write_dring(void *, void *);
 void	vdsp_flush_dring(void *, void *);
@@ -716,7 +720,6 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 {
 	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
 	struct vd_desc *vd;
-	struct task *task;
 	vaddr_t va;
 	paddr_t pa;
 	uint64_t size, off;
@@ -752,48 +755,12 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			size -= nbytes;
 			off += nbytes;
 		}
-		task = &sc->sc_vd_task[dm->start_idx];
 
-		DPRINTF(("%s: start_idx %d, end_idx %d, operation %x\n",
-		    sc->sc_dv.dv_xname, dm->start_idx, dm->end_idx,
-		    vd->operation));
-		switch (vd->operation) {
-		case VD_OP_BREAD:
-			task_set(task, vdsp_read_dring, sc, vd);
-			break;
-		case VD_OP_BWRITE:
-			task_set(task, vdsp_write_dring, sc, vd);
-			break;
-		case VD_OP_FLUSH:
-			task_set(task, vdsp_flush_dring, sc, vd);
-			break;
-		case VD_OP_GET_VTOC:
-			task_set(task, vdsp_get_vtoc, sc, vd);
-			break;
-		case VD_OP_SET_VTOC:
-			task_set(task, vdsp_set_vtoc, sc, vd);
-			break;
-		case VD_OP_GET_DISKGEOM:
-			task_set(task, vdsp_get_diskgeom, sc, vd);
-			break;
-		case VD_OP_GET_WCE:
-		case VD_OP_SET_WCE:
-		case VD_OP_GET_DEVID:
-			/*
-			 * Solaris issues VD_OP_GET_DEVID despite the
-			 * fact that we don't advertise it.  It seems
-			 * to be able to handle failure just fine, so
-			 * we silently ignore it.
-			 */
-			task_set(task, vdsp_unimp, sc, vd);
-			break;
-		default:
-			printf("%s: unsupported operation 0x%02x\n",
-			    sc->sc_dv.dv_xname, vd->operation);
-			task_set(task, vdsp_unimp, sc, vd);
-			break;
-		}
-		task_add(systq, task);
+		sc->sc_vd_ring[sc->sc_vd_prod % sc->sc_num_descriptors] = vd;
+		membar_producer();
+		sc->sc_vd_prod++;
+		task_add(systq, &sc->sc_vd_task);
+
 		break;
 
 	case VIO_SUBTYPE_ACK:
@@ -807,6 +774,57 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 	default:
 		DPRINTF(("DATA/0x%02x/DRING_DATA\n", tag->stype));
 		break;
+	}
+}
+
+void
+vdsp_vd_task(void *xsc, void *null)
+{
+	struct vdsp_softc *sc = xsc;
+	struct vd_desc *vd;
+
+	while (sc->sc_vd_cons != sc->sc_vd_prod) {
+		membar_consumer();
+		vd = sc->sc_vd_ring[sc->sc_vd_cons++ % sc->sc_num_descriptors];
+	
+		DPRINTF(("%s: operation %x\n", sc->sc_dv.dv_xname,
+		    vd->operation));
+		switch (vd->operation) {
+		case VD_OP_BREAD:
+			vdsp_read_dring(sc, vd);
+			break;
+		case VD_OP_BWRITE:
+			vdsp_write_dring(sc, vd);
+			break;
+		case VD_OP_FLUSH:
+			vdsp_flush_dring(sc, vd);
+			break;
+		case VD_OP_GET_VTOC:
+			vdsp_get_vtoc(sc, vd);
+			break;
+		case VD_OP_SET_VTOC:
+			vdsp_set_vtoc(sc, vd);
+			break;
+		case VD_OP_GET_DISKGEOM:
+			vdsp_get_diskgeom(sc, vd);
+			break;
+		case VD_OP_GET_WCE:
+		case VD_OP_SET_WCE:
+		case VD_OP_GET_DEVID:
+			/*
+			 * Solaris issues VD_OP_GET_DEVID despite the
+			 * fact that we don't advertise it.  It seems
+			 * to be able to handle failure just fine, so
+			 * we silently ignore it.
+			 */
+			vdsp_unimp(sc, vd);
+			break;
+		default:
+			printf("%s: unsupported operation 0x%02x\n",
+			    sc->sc_dv.dv_xname, vd->operation);
+			vdsp_unimp(sc, vd);
+			break;
+		}
 	}
 }
 
@@ -885,7 +903,7 @@ vdsp_sendmsg(struct vdsp_softc *sc, void *msg, size_t len, int dowait)
 }
 
 void
-vdsp_open(void *arg1, void *arg2)
+vdsp_open(void *arg1, void *null)
 {
 	struct vdsp_softc *sc = arg1;
 	struct proc *p = curproc;
@@ -953,7 +971,7 @@ vdsp_open(void *arg1, void *arg2)
 }
 
 void
-vdsp_close(void *arg1, void *arg2)
+vdsp_close(void *arg1, void *null)
 {
 	struct vdsp_softc *sc = arg1;
 	struct proc *p = curproc;
@@ -964,9 +982,10 @@ vdsp_close(void *arg1, void *arg2)
 		free(sc->sc_vd, M_DEVBUF, 0);
 		sc->sc_vd = NULL;
 	}
-	if (sc->sc_vd_task) {
-		free(sc->sc_vd_task, M_DEVBUF, 0);
-		sc->sc_vd_task = NULL;
+	if (sc->sc_vd_ring != NULL) {
+		free(sc->sc_vd_ring, M_DEVBUF,
+		    sc->sc_num_descriptors * sizeof(*sc->sc_vd_ring));
+		sc->sc_vd_ring = NULL;
 	}
 	if (sc->sc_label) {
 		free(sc->sc_label, M_DEVBUF, 0);
@@ -1074,17 +1093,18 @@ vdsp_is_iso(struct vdsp_softc *sc)
 }
 
 void
-vdsp_alloc(void *arg1, void *arg2)
+vdsp_alloc(void *arg1, void *null)
 {
 	struct vdsp_softc *sc = arg1;
 	struct vio_dring_reg dr;
 
 	KASSERT(sc->sc_num_descriptors <= VDSK_MAX_DESCRIPTORS);
 	KASSERT(sc->sc_descriptor_size <= VDSK_MAX_DESCRIPTOR_SIZE);
-	sc->sc_vd = mallocarray(sc->sc_num_descriptors, sc->sc_descriptor_size,
-	    M_DEVBUF, M_WAITOK);
-	sc->sc_vd_task = mallocarray(sc->sc_num_descriptors,
-	    sizeof(struct task), M_DEVBUF, M_WAITOK);
+	sc->sc_vd = mallocarray(sc->sc_num_descriptors,
+	    sc->sc_descriptor_size, M_DEVBUF, M_WAITOK);
+	sc->sc_vd_ring = mallocarray(sc->sc_num_descriptors,
+	    sizeof(*sc->sc_vd_ring), M_DEVBUF, M_WAITOK);
+	task_set(&sc->sc_vd_task, vdsp_vd_task, sc, NULL);
 
 	bzero(&dr, sizeof(dr));
 	dr.tag.type = VIO_TYPE_CTRL;
@@ -1096,7 +1116,7 @@ vdsp_alloc(void *arg1, void *arg2)
 }
 
 void
-vdsp_read(void *arg1, void *arg2)
+vdsp_read(void *arg1, void *null)
 {
 	struct vdsp_softc *sc = arg1;
 
