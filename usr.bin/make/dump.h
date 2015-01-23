@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.h,v 1.2 2012/10/02 10:29:30 espie Exp $ */
+/* $OpenBSD: dump.h,v 1.3 2015/01/23 22:35:57 espie Exp $ */
 #ifndef _DUMP_H_
 #define _DUMP_H_
 
@@ -46,6 +46,6 @@ extern void *sort_ohash_by_name(struct ohash *);
  *	function.
  *	free(t) when done with it.
  */
-extern void * sort_ohash(struct ohash *, int (*)(const void *, const void *));
+extern void *sort_ohash(struct ohash *, int (*)(const void *, const void *));
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.66 2015/01/23 13:18:40 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.67 2015/01/23 22:35:57 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -686,7 +686,7 @@ Dir_Concat(Lst path1, Lst path2)
 static void
 DirPrintDir(void *p)
 {
-	struct PathEntry *q = p;
+	const struct PathEntry *q = p;
 	printf("%s ", q->name);
 }
 

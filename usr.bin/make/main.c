@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.107 2015/01/23 13:18:40 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.108 2015/01/23 22:35:57 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -803,7 +803,7 @@ main(int argc, char **argv)
 static bool
 ReadMakefile(void *p, void *q)
 {
-	char *fname = p;	/* makefile to read */
+	const char *fname = p;	/* makefile to read */
 	struct dirs *d = q;
 	FILE *stream;
 	char *name;

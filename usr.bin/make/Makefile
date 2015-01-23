@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.58 2014/05/12 19:11:19 espie Exp $
+#	$OpenBSD: Makefile,v 1.59 2015/01/23 22:35:57 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
 HOSTCFLAGS+= -I${.OBJDIR} -I${.CURDIR}
 CDIAGFLAGS=-Wall -W -Wno-char-subscripts -Wstrict-prototypes -pedantic \
-	-Wmissing-prototypes -Wdeclaration-after-statement
+	-Wmissing-prototypes -Wdeclaration-after-statement -std=c99
 
 CDEFS+=-DHAS_BOOL_H
 CDEFS+=-DHAS_PATHS_H

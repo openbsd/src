@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.40 2015/01/23 13:18:40 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.41 2015/01/23 22:35:58 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ static bool
 VarMatch(struct Name *word, bool addSpace, Buffer buf,
     void *pattern) /* Pattern the word must match */
 {
-	const char *pat = (const char *)pattern;
+	const char *pat = pattern;
 
 	if (Str_Matchi(word->s, word->e, pat, strchr(pat, '\0'))) {
 		if (addSpace)
@@ -377,7 +377,7 @@ static bool
 VarNoMatch(struct Name *word, bool addSpace, Buffer buf,
     void *pattern) /* Pattern the word must not match */
 {
-	const char *pat = (const char *)pattern;
+	const char *pat = pattern;
 
 	if (!Str_Matchi(word->s, word->e, pat, strchr(pat, '\0'))) {
 		if (addSpace)
@@ -428,28 +428,28 @@ finish_loop(const char *s, const struct Name *n UNUSED , void *p)
 static int
 NameCompare(const void *ap, const void *bp)
 {
-	struct Name *a, *b;
+	const struct Name *a, *b;
 	size_t n, m;
 	int c;
 
-	a = (struct Name *)ap;
-	b = (struct Name *)bp;
+	a = ap;
+	b = bp;
 	n = a->e - a->s;
 	m = b->e - b->s;
 	if (n < m) {
 		c = strncmp(a->s, b->s, n);
 		if (c != 0)
-		    return c;
+			return c;
 		else
-		    return -1;
+			return -1;
     	} else if (m < n) {
 		c = strncmp(a->s, b->s, m);
 		if (c != 0)
-		    return c;
+			return c;
 		else
-		    return 1;
+			return 1;
     	} else
-	    return strncmp(a->s, b->s, n);
+		return strncmp(a->s, b->s, n);
 }
 
 static char *

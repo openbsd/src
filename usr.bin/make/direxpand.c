@@ -1,4 +1,4 @@
-/*	$OpenBSD: direxpand.c,v 1.6 2015/01/23 13:18:40 espie Exp $ */
+/*	$OpenBSD: direxpand.c,v 1.7 2015/01/23 22:35:57 espie Exp $ */
 /*
  * Copyright (c) 1999,2007 Marc Espie.
  *
@@ -298,7 +298,7 @@ Dir_Expandi(const char *word, const char *eword, Lst path, Lst expansions)
 static void
 DirPrintWord(void *word)
 {
-	char *s = word;
+	const char *s = word;
 	printf("%s ", s);
 }
 
