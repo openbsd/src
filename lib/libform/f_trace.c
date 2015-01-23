@@ -1,3 +1,4 @@
+/*	$OpenBSD: f_trace.c,v 1.2 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 2004 Free Software Foundation, Inc.                        *
  *                                                                          *
@@ -32,7 +33,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: f_trace.c,v 1.1 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: f_trace.c,v 1.2 2015/01/23 22:48:51 krw Exp $")
 
 NCURSES_EXPORT(FIELD **)
 _nc_retrace_field_ptr(FIELD **code)

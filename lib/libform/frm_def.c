@@ -1,3 +1,4 @@
+/*	$OpenBSD: frm_def.c,v 1.8 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -32,7 +33,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_def.c,v 1.7 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: frm_def.c,v 1.8 2015/01/23 22:48:51 krw Exp $")
 
 /* this can't be readonly */
 static FORM default_form =

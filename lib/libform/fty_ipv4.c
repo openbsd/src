@@ -1,3 +1,4 @@
+/*	$OpenBSD: fty_ipv4.c,v 1.7 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2004,2006 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -34,7 +35,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fty_ipv4.c,v 1.6 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: fty_ipv4.c,v 1.7 2015/01/23 22:48:51 krw Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  

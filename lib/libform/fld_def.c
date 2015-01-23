@@ -1,3 +1,4 @@
+/*	$OpenBSD: fld_def.c,v 1.9 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2005,2007 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -32,7 +33,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_def.c,v 1.8 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: fld_def.c,v 1.9 2015/01/23 22:48:51 krw Exp $")
 
 /* this can't be readonly */
 static FIELD default_field =

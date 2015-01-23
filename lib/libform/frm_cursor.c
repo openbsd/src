@@ -1,3 +1,4 @@
+/*	$OpenBSD: frm_cursor.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -32,7 +33,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_cursor.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: frm_cursor.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  

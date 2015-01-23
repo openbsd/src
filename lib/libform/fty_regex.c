@@ -1,3 +1,4 @@
+/*	$OpenBSD: fty_regex.c,v 1.9 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -34,7 +35,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fty_regex.c,v 1.8 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: fty_regex.c,v 1.9 2015/01/23 22:48:51 krw Exp $")
 
 #if HAVE_REGEX_H_FUNCS		/* We prefer POSIX regex */
 #include <regex.h>

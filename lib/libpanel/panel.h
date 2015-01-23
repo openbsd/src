@@ -1,3 +1,4 @@
+/*	$OpenBSD: panel.h,v 1.8 2015/01/23 22:48:51 krw Exp $	*/
 /****************************************************************************
  * Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -31,7 +32,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $Id: panel.h,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
+/* $Id: panel.h,v 1.8 2015/01/23 22:48:51 krw Exp $ */
 
 /* panel.h -- interface file for panels library */
 
