@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.55 2014/12/19 17:14:40 tedu Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.56 2015/01/24 00:29:06 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -30,18 +30,16 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 
-#ifdef INET6
-#endif /* INET6 */
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <netinet/udp.h>
 #include <netinet/ip_ipsp.h>

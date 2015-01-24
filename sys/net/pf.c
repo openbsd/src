@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.898 2014/12/19 17:14:40 tedu Exp $ */
+/*	$OpenBSD: pf.c,v 1.899 2015/01/24 00:29:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -71,6 +71,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_fsm.h>
 #include <netinet/udp_var.h>
 #include <netinet/icmp_var.h>
 #include <netinet/if_ether.h>

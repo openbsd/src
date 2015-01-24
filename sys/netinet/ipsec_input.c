@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.125 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.126 2015/01/24 00:29:06 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -52,16 +52,16 @@
 #include <net/bpf.h>
 #include <net/route.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
-
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #ifdef INET6
 #include <netinet6/in6_var.h>

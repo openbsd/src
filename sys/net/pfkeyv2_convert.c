@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.45 2014/12/28 10:02:37 tedu Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.46 2015/01/24 00:29:06 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -103,14 +103,15 @@
 #include <net/route.h>
 #include <net/if.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
-
+#include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 /*
  * (Partly) Initialize a TDB based on an SADB_SA payload. Other parts

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.78 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.79 2015/01/24 00:29:06 deraadt Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/route.h>
-#include <net/pfvar.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -87,6 +86,8 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_icmp.h>
+
+#include <net/pfvar.h>
 
 #include "pf.h"
 

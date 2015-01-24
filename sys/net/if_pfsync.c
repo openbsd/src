@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.215 2014/12/19 17:14:39 tedu Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.216 2015/01/24 00:29:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -63,10 +63,15 @@
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
+#include <netinet/tcp_fsm.h>
 
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+#endif /* IPSEC */
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -83,6 +88,7 @@
 
 #define PF_DEBUGNAME	"pfsync: "
 #include <net/pfvar.h>
+#include <netinet/ip_ipsp.h>
 #include <net/if_pfsync.h>
 
 #include "bpfilter.h"
@@ -1203,7 +1209,8 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 		goto bad;
 
 	s = splsoftnet();
-	tdb = gettdb(ntohs(pt->rdomain), pt->spi, &pt->dst, pt->sproto);
+	tdb = gettdb(ntohs(pt->rdomain), pt->spi,
+	    (union sockaddr_union *)&pt->dst, pt->sproto);
 	if (tdb) {
 		pt->rpl = betoh64(pt->rpl);
 		pt->cur_bytes = betoh64(pt->cur_bytes);

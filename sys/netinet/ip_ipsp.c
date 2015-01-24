@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.202 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.203 2015/01/24 00:29:06 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -48,6 +48,12 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
+#include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 
 #if NPF > 0
 #include <net/pfvar.h>
@@ -56,14 +62,6 @@
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
 #endif
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/in_pcb.h>
-#include <netinet/ip_var.h>
-
-#ifdef INET6
-#endif /* INET6 */
 
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>

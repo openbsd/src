@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.71 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.72 2015/01/24 00:29:06 deraadt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -77,9 +77,6 @@
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/if_types.h>
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
@@ -94,6 +91,10 @@
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/raw_ip6.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <sys/stdarg.h>
 

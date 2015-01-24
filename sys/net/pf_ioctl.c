@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.280 2014/12/19 17:14:40 tedu Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.281 2015/01/24 00:29:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -68,13 +68,14 @@
 #include <crypto/md5.h>
 #include <net/pfvar.h>
 
-#if NPFSYNC > 0
-#include <net/if_pfsync.h>
-#endif /* NPFSYNC > 0 */
-
 #if NPFLOG > 0
 #include <net/if_pflog.h>
 #endif /* NPFLOG > 0 */
+
+#if NPFSYNC > 0
+#include <netinet/ip_ipsp.h>
+#include <net/if_pfsync.h>
+#endif /* NPFSYNC > 0 */
 
 #ifdef INET6
 #include <netinet/ip6.h>

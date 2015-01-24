@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.31 2014/12/05 15:50:04 mpi Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.32 2015/01/24 00:29:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -25,9 +25,9 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/route.h>
 #include <net/if_var.h>
 #include <net/netisr.h>
-#include <net/pfvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -38,6 +38,8 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+
+#include <net/pfvar.h>
 
 struct	inpcbtable	divbtable;
 struct	divstat		divstat;

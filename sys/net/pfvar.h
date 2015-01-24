@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.407 2015/01/15 23:56:58 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.408 2015/01/24 00:29:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,8 +41,6 @@
 
 #include <net/radix.h>
 #include <net/route.h>
-#include <netinet/ip_ipsp.h>
-#include <netinet/tcp_fsm.h>
 
 struct ip;
 struct ip6_hdr;
@@ -1084,10 +1082,21 @@ struct pfr_kcounters {
 	u_int64_t		 states;
 };
 
+/*
+ * XXX ip_ipsp.h's sockaddr_union should be converted to sockaddr *
+ * passing with correct sa_len, then a good approach for cleaning this
+ * will become more clear.
+ */
+union pfsockaddr_union {
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
+	struct sockaddr_in6	sin6;
+};
+
 SLIST_HEAD(pfr_kentryworkq, pfr_kentry);
 struct _pfr_kentry {
 	struct radix_node	 _pfrke_node[2];
-	union sockaddr_union	 _pfrke_sa;
+	union pfsockaddr_union	 _pfrke_sa;
 	SLIST_ENTRY(pfr_kentry)	 _pfrke_workq;
 	struct pfr_kcounters	*_pfrke_counters;
 	time_t			 _pfrke_tzero;

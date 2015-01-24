@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.172 2014/12/19 17:14:40 tedu Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.173 2015/01/24 00:29:06 deraadt Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -40,19 +40,20 @@
 #include <sys/pool.h>
 #include <sys/syslog.h>
 
-#include <net/if.h>
-#include <net/if_var.h>
-#include <net/if_types.h>
-#include <net/bpf.h>
-#include <net/if_pflog.h>
-
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
+#include <netinet/tcp_fsm.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+
+#include <net/if.h>
+#include <net/if_var.h>
+#include <net/if_types.h>
+#include <net/bpf.h>
+#include <net/if_pflog.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>

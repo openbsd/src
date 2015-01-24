@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.20 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.21 2015/01/24 00:29:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,10 +39,6 @@
 #include <net/bpf.h>
 #endif
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
-
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
@@ -51,6 +47,10 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/in_pcb.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #if NBRIDGE > 0
 #include <net/if_bridge.h>
