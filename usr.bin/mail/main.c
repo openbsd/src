@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2015/01/22 16:25:07 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2015/01/24 20:32:46 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ main(int argc, char **argv)
 	smopts = NULL;
 	fromaddr = NULL;
 	subject = NULL;
-	while ((i = getopt(argc, argv, "EIN:b:c:dfinr:s:u:v")) != -1) {
+	while ((i = getopt(argc, argv, "EINb:c:dfinr:s:u:v")) != -1) {
 		switch (i) {
 		case 'u':
 			/*
