@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.41 2015/01/24 01:59:40 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.42 2015/01/24 02:14:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -369,11 +369,11 @@ Begin a paragraph whose initial output line is left-justified, but
 subsequent output lines are indented, with the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&HP
-.Op Cm width
+.Op Ar width
 .Ed
 .Pp
 The
-.Cm width
+.Ar width
 argument is a
 .Xr roff 7
 scaling width.
@@ -413,11 +413,11 @@ and
 Begin an indented paragraph with the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&IP
-.Op Cm head Op Cm width
+.Op Ar head Op Ar width
 .Ed
 .Pp
 The
-.Cm width
+.Ar width
 argument is a
 .Xr roff 7
 scaling width defining the left margin.
@@ -425,7 +425,7 @@ It's saved for later paragraph left-margins; if unspecified, the saved or
 default width is used.
 .Pp
 The
-.Cm head
+.Ar head
 argument is used as a leading term, flushed to the left margin.
 This is useful for bulleted paragraphs and so on.
 .Pp
@@ -470,13 +470,13 @@ This is a non-standard GNU extension, included only for compatibility.
 It has the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&OP
-.Cm key Op Cm value
+.Ar key Op Ar value
 .Ed
 .Pp
 The
-.Cm key
+.Ar key
 is usually a command-line flag and
-.Cm value
+.Ar value
 its argument.
 .Ss \&P
 Synonym for
@@ -495,11 +495,11 @@ Specify the vertical space to be inserted before each new paragraph.
 The syntax is as follows:
 .Bd -filled -offset indent
 .Pf \. Sx \&PD
-.Op Cm height
+.Op Ar height
 .Ed
 .Pp
 The
-.Cm height
+.Ar height
 argument is a
 .Xr roff 7
 scaling width.
@@ -598,11 +598,11 @@ Temporarily reset the default left margin.
 This has the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&RS
-.Op Cm width
+.Op Ar width
 .Ed
 .Pp
 The
-.Cm width
+.Ar width
 argument is a
 .Xr roff 7
 scaling width.
@@ -671,11 +671,11 @@ Subsequent output lines are indented.
 The syntax is as follows:
 .Bd -filled -offset indent
 .Pf \. Sx \&TP
-.Op Cm width
+.Op Ar width
 .Ed
 .Pp
 The
-.Cm width
+.Ar width
 argument is a
 .Xr roff 7
 scaling width.
@@ -720,10 +720,10 @@ End literal mode begun by
 .Ss \&in
 Indent relative to the current indentation:
 .Pp
-.D1 Pf \. Sx \&in Op Cm width
+.D1 Pf \. Sx \&in Op Ar width
 .Pp
 If
-.Cm width
+.Ar width
 is signed, the new offset is relative.
 Otherwise, it is absolute.
 This value is reset upon the next paragraph, section, or sub-section.
@@ -742,11 +742,11 @@ or
 Insert vertical spaces into output with the following syntax:
 .Bd -filled -offset indent
 .Pf \. Sx \&sp
-.Op Cm height
+.Op Ar height
 .Ed
 .Pp
 The
-.Cm height
+.Ar height
 argument is a scaling width as described in
 .Xr roff 7 .
 If 0, this is equivalent to the
