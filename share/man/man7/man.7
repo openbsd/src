@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.42 2015/01/24 02:14:33 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.43 2015/01/24 02:41:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -727,8 +727,6 @@ If
 is signed, the new offset is relative.
 Otherwise, it is absolute.
 This value is reset upon the next paragraph, section, or sub-section.
-.Ss \&na
-Don't align to the right margin.
 .Ss \&nf
 Begin literal mode: all subsequent free-form lines have their end of
 line boundaries preserved.
@@ -780,10 +778,9 @@ is equivalent to
 If next-line macros are invoked consecutively, only the last is used.
 If a next-line macro is followed by a non-next-line macro, an error is
 raised, except for
-.Sx \&br ,
-.Sx \&sp ,
+.Sx \&br
 and
-.Sx \&na .
+.Sx \&sp .
 .Pp
 The syntax is as follows:
 .Bd -literal -offset indent
@@ -814,7 +811,6 @@ The syntax is as follows:
 .It Sx \&br  Ta    0         Ta    current   Ta    compat
 .It Sx \&fi  Ta    0         Ta    current   Ta    compat
 .It Sx \&in  Ta    1         Ta    current   Ta    compat
-.It Sx \&na  Ta    0         Ta    current   Ta    compat
 .It Sx \&nf  Ta    0         Ta    current   Ta    compat
 .It Sx \&sp  Ta    1         Ta    current   Ta    compat
 .El

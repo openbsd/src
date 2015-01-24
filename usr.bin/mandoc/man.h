@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.h,v 1.48 2014/12/24 18:03:34 schwarze Exp $ */
+/*	$OpenBSD: man.h,v 1.49 2015/01/24 02:41:32 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,7 +38,6 @@ enum	mant {
 	MAN_I,
 	MAN_IR,
 	MAN_RI,
-	MAN_na,
 	MAN_sp,
 	MAN_nf,
 	MAN_fi,
