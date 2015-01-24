@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 2010/03/25 19:42:55 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 2015/01/24 20:59:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -48,6 +48,7 @@ struct powerpc_bus_dma_tag mainbus_bus_dma_tag = {
 	_dmamap_unload,
 	_dmamap_sync,
 	_dmamem_alloc,
+	_dmamem_alloc_range,
 	_dmamem_free,
 	_dmamem_map,
 	_dmamem_unmap,

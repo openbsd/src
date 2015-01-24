@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_obio.c,v 1.4 2014/05/19 13:11:31 mpi Exp $	*/
+/*	$OpenBSD: ehci_obio.c,v 1.5 2015/01/24 20:59:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -64,6 +64,7 @@ struct powerpc_bus_dma_tag ehci_bus_dma_tag = {
 	_dmamap_unload,
 	_dmamap_sync,
 	_dmamem_alloc,
+	_dmamem_alloc_range,
 	_dmamem_free,
 	_dmamem_map,
 	_dmamem_unmap,

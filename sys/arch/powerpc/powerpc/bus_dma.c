@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.1 2015/01/20 17:08:35 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.2 2015/01/24 20:59:42 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -47,9 +47,6 @@
 
 #include <machine/bus.h>
 
-int _dmamem_alloc_range( bus_dma_tag_t t, bus_size_t size,
-    bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
-    int nsegs, int *rsegs, int flags, vaddr_t low, vaddr_t high);
 int _dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
     struct proc *, int, bus_addr_t *, int *, int);
 /*
@@ -561,7 +558,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 int
 _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, vaddr_t low, vaddr_t high)
+    int flags, bus_addr_t low, bus_addr_t high)
 {
 	vaddr_t curaddr, lastaddr;
 	struct vm_page *m;
