@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.227 2014/12/28 21:32:44 krw Exp $
+#	$OpenBSD: Makefile,v 1.228 2015/01/24 16:20:37 kettenis Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -80,7 +80,8 @@ MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamap_load.9 bus_dma.9 bus_dmamap_load_mbuf.9 \
 	bus_dma.9 bus_dmamap_load_uio.9 bus_dma.9 bus_dmamap_load_raw.9 \
 	bus_dma.9 bus_dmamap_unload.9 bus_dma.9 bus_dmamap_sync.9 \
-	bus_dma.9 bus_dmamem_alloc.9 bus_dma.9 bus_dmamem_free.9 \
+	bus_dma.9 bus_dmamem_alloc.9 bus_dma.9 bus_dmamem_alloc_range.9 \
+	bus_dma.9 bus_dmamem_free.9 \
 	bus_dma.9 bus_dmamem_map.9 bus_dma.9 bus_dmamem_unmap.9 \
 	bus_dma.9 bus_dmamem_mmap.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
