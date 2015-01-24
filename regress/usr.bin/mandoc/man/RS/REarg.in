@@ -1,0 +1,26 @@
+.TH RS-REARG 1 "January 24, 2015" OpenBSD
+.SH NAME
+RS-REarg \- arguments to the RE macro
+.SH DESCRIPTION
+level 1
+.RS 4n
+level 2
+.RS 2n
+level 3
+.RE 2a
+back to 2
+.RE 1b
+back to 1
+.RS 4n
+level 2
+.RS 2n
+level 3
+.RE 1c
+back to 1
+.RS 4n
+level 2
+.RS 2n
+level 3
+.RE 0d
+back to 1
+.RE 1e

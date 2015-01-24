@@ -1,7 +1,7 @@
-.\"	$OpenBSD: man.7,v 1.40 2014/12/28 15:22:42 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.41 2015/01/24 01:59:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2014 $
+.Dd $Mdocdate: January 24 2015 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -555,9 +555,29 @@ and
 .Ss \&RE
 Explicitly close out the scope of a prior
 .Sx \&RS .
-The default left margin is restored to the state of the original
+The default left margin is restored to the state before that
 .Sx \&RS
 invocation.
+.Pp
+The syntax is as follows:
+.Bd -filled -offset indent
+.Pf \. Sx \&RE
+.Op Ar level
+.Ed
+.Pp
+Without an argument, the most recent
+.Sx \&RS
+block is closed out.
+If
+.Ar level
+is 1, all open
+.Sx \&RS
+blocks are closed out.
+Otherwise,
+.Ar level No \(mi 1
+nested
+.Sx \&RS
+blocks remain open.
 .Ss \&RI
 Text is rendered alternately in roman (the default font) and italics.
 Whitespace between arguments is omitted in output.

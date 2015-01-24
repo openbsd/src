@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_macro.c,v 1.54 2014/12/16 17:24:58 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.55 2015/01/24 01:59:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -277,10 +277,30 @@ blk_close(MACRO_PROT_ARGS)
 {
 	enum mant		 ntok;
 	const struct man_node	*nn;
+	char			*p;
+	int			 nrew, target;
 
+	nrew = 1;
 	switch (tok) {
 	case MAN_RE:
 		ntok = MAN_RS;
+		if ( ! man_args(man, line, pos, buf, &p))
+			break;
+		for (nn = man->last->parent; nn; nn = nn->parent)
+			if (nn->tok == ntok && nn->type == MAN_BLOCK)
+				nrew++;
+		target = strtol(p, &p, 10);
+		if (*p != '\0')
+			mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
+			    line, p - buf, "RE ... %s", p);
+		if (target == 0)
+			target = 1;
+		nrew -= target;
+		if (nrew < 1) {
+			mandoc_vmsg(MANDOCERR_RE_NOTOPEN, man->parse,
+			    line, ppos, "RE %d", target);
+			return;
+		}
 		break;
 	case MAN_UE:
 		ntok = MAN_UR;
@@ -291,7 +311,7 @@ blk_close(MACRO_PROT_ARGS)
 	}
 
 	for (nn = man->last->parent; nn; nn = nn->parent)
-		if (nn->tok == ntok && nn->type == MAN_BLOCK)
+		if (nn->tok == ntok && nn->type == MAN_BLOCK && ! --nrew)
 			break;
 
 	if (nn == NULL) {

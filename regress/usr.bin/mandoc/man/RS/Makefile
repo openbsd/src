@@ -1,11 +1,7 @@
-# $OpenBSD: Makefile,v 1.8 2014/08/18 16:26:13 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2015/01/24 01:59:40 schwarze Exp $
 
-REGRESS_TARGETS	 = breaking broken empty literal lonelyRE nested noRE width
-LINT_TARGETS	 = broken lonelyRE noRE
-
-# groff-1.22.2/mandoc difference:
-# RS PP RE gives a blank line in groff, none in mandoc.
-
-SKIP_GROFF	 = broken
+REGRESS_TARGETS	 = breaking broken empty literal lonelyRE
+REGRESS_TARGETS	+= nested noRE REarg width
+LINT_TARGETS	 = lonelyRE noRE REarg
 
 .include <bsd.regress.mk>

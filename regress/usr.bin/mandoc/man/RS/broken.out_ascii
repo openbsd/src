@@ -6,13 +6,33 @@ NNAAMMEE
        RS-broken - indented blocks broken by other blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
+       broken by PP:
          indented
 
          still indented
-       back to normal
+       broken by IP:
+              indented
+
+              tag   first line
+                    second line
+
+              still indented
+       broken by TP:
+              indented
+
+              tag   first line
+                    second line
+
+              still indented
+       broken by HP:
+              indented
+
+              Let's have a longer text here such that we can see the line
+                break.
+
+              still indented
        final text
 
 
 
-OpenBSD                         August 28, 2014                   RS-BROKEN(1)
+OpenBSD                        January 24, 2015                   RS-BROKEN(1)

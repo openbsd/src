@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.89 2015/01/22 21:36:44 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.90 2015/01/24 01:59:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -190,6 +190,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping item outside list",
 	"skipping column outside column list",
 	"skipping end of block that is not open",
+	"fewer RS blocks open, skipping",
 	"inserting missing end of block",
 	"appending missing end of block",
 

@@ -1,15 +1,40 @@
-.TH RS-BROKEN 1 "August 28, 2014" OpenBSD
+.TH RS-BROKEN 1 "January 24, 2015" OpenBSD
 .SH NAME
 RS-broken \- indented blocks broken by other blocks
 .SH DESCRIPTION
-initial text
+broken by PP:
 .RS 2n
 indented
 .PP
 still indented
 .RE
-back to normal
+broken by IP:
 .RS
-.P
+indented
+.IP tag 6n
+first line
+.br
+second line
+.PP
+still indented
+.RE
+broken by TP:
+.RS
+indented
+.TP 6n
+tag
+first line
+.br
+second line
+.PP
+still indented
+.RE
+broken by HP:
+.RS
+indented
+.HP 2n
+Let's have a longer text here such that we can see the line break.
+.PP
+still indented
 .RE
 final text

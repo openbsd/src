@@ -1,2 +1,0 @@
-mandoc: broken.in:13:2: WARNING: skipping paragraph macro: P empty
-mandoc: broken.in:12:2: WARNING: argument count wrong: want children (have none)
