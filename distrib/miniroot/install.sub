@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.811 2015/01/17 14:36:58 rpe Exp $
+#	$OpenBSD: install.sub,v 1.812 2015/01/24 00:20:35 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -165,7 +165,7 @@ get_ifdevs() {
 
 	for _if in $(ifconfig "$@" 2>/dev/null |
 		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
-		isin ${_if%%[0-9]*} $_iflist || echo $_if
+		isin ${_if%%+([0-9])} $_iflist || echo $_if
 	done
 }
 
@@ -671,7 +671,7 @@ configure_ifs() {
 
 		# If the offered vlan is chosen, ask the relevant
 		# questions and bring it up
-		if [[ $_ifs == vlan[0-9]* ]]; then
+		if [[ $_ifs == vlan+([0-9]) ]]; then
 			# Get existing tag for this vlan.
 			_vi=$(ifconfig $_ifs 2>/dev/null |
 				sed -n 's/vlan: \([0-9]*\).*/\1/p')
@@ -688,7 +688,7 @@ configure_ifs() {
 			fi
 			_ifdevs=$(get_ifdevs)
 			set -- $_ifdevs
-			while [[ $1 == vlan[0-9]* ]]; do
+			while [[ $1 == vlan+([0-9]) ]]; do
 				shift
 			done
 			ask "Which interface:tag should $_ifs be on?" "${_vd:=$1}:$_vi"
@@ -696,7 +696,7 @@ configure_ifs() {
 			_vi=${resp##*:}
 
 			# Validate that $_vd is a real interface
-			if ! (isin "$_vd" $_ifdevs && [[ $_vd != vlan[0-9]* ]]); then
+			if ! (isin "$_vd" $_ifdevs && [[ $_vd != vlan+([0-9]) ]]); then
 				echo "Invalid interface choice '$_vd'"
 				_vd=
 				continue
@@ -1128,9 +1128,9 @@ enable_network() {
 	for hn in /mnt/etc/hostname.*; do
 		# Strip off prefix to get interface name.
 		if=${hn#/mnt/etc/hostname.}
-		if isin ${if%%[0-9]*} $(ifconfig -C); then
+		if isin ${if%%+([0-9])} $(ifconfig -C); then
 			# Dynamic interfaces must be done later.
-			case ${if%%[0-9]*} in
+			case ${if%%+([0-9])} in
 			trunk)	_trunks="$_trunks $hn"	;;
 			svlan)	_svlans="$_svlans $hn"	;;
 			vlan)	_vlans="$_vlans $hn"	;;
