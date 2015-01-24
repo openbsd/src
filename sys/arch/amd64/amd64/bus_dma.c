@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.46 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.47 2015/01/24 15:13:55 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -424,7 +424,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * memory under the 4gig boundary.
 	 */
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, (paddr_t)0, (paddr_t)0xffffffff));
+	    segs, nsegs, rsegs, flags, (bus_addr_t)0, (bus_addr_t)0xffffffff));
 }
 
 /*
@@ -662,7 +662,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 int
 _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, paddr_t low, paddr_t high)
+    int flags, bus_addr_t low, bus_addr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
