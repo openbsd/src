@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.362 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.363 2015/01/24 02:36:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1224,12 +1224,6 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i)
 	return (0);
 }
 
-/*
- * The standard receive ring has 512 entries in it. At 2K per mbuf cluster,
- * that's 1MB or memory, which is a lot. For now, we fill only the first
- * 256 ring entries and hope that our CPU is fast enough to keep up with
- * the NIC.
- */
 int
 bge_init_rx_ring_std(struct bge_softc *sc)
 {
