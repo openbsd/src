@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.40 2014/12/22 02:28:51 tedu Exp $ */
+/* $OpenBSD: if_bce.c,v 1.41 2015/01/24 15:15:50 kettenis Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -315,8 +315,9 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX PAGE_SIZE is wasteful; we only need 1KB + 1KB, but
 	 * due to the limition above. ??
 	 */
-	if ((error = bus_dmamem_alloc(sc->bce_dmatag, 2 * PAGE_SIZE,
-	    PAGE_SIZE, 2 * PAGE_SIZE, &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
+	if ((error = bus_dmamem_alloc_range(sc->bce_dmatag, 2 * PAGE_SIZE,
+	    PAGE_SIZE, 2 * PAGE_SIZE, &seg, 1, &rseg, BUS_DMA_NOWAIT,
+	    (bus_addr_t)0, (bus_addr_t)0x3fffffff))) {
 		printf(": unable to alloc space for ring descriptors, "
 		    "error = %d\n", error);
 		uvm_km_free(kernel_map, (vaddr_t)sc->bce_data,
