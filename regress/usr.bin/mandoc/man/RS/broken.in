@@ -37,4 +37,9 @@ Let's have a longer text here such that we can see the line break.
 .PP
 still indented
 .RE
+trailing PP:
+.RS
+indented
+.PP
+.RE
 final text

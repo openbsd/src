@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.56 2015/01/24 02:41:32 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.57 2015/01/24 10:07:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -317,8 +317,19 @@ blk_close(MACRO_PROT_ARGS)
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, man->parse,
 		    line, ppos, man_macronames[tok]);
 		rew_scope(MAN_BLOCK, man, MAN_PP);
-	} else
+	} else {
+		line = man->last->line;
+		ppos = man->last->pos;
+		ntok = man->last->tok;
 		man_unscope(man, nn);
+
+		/* Move a trailing paragraph behind the block. */
+
+		if (ntok == MAN_LP || ntok == MAN_PP || ntok == MAN_P) {
+			*pos = strlen(buf);
+			blk_imp(man, ntok, line, ppos, pos, buf);
+		}
+	}
 }
 
 void
