@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.11 2014/05/10 11:49:31 kettenis Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.12 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -58,10 +58,10 @@ struct vcctty_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
+	uint64_t	sc_tx_ino;
+	uint64_t	sc_rx_ino;
 	void		*sc_tx_ih;
 	void		*sc_rx_ih;
-	uint64_t	sc_tx_sysino;
-	uint64_t	sc_rx_sysino;
 
 	struct ldc_conn	sc_lc;
 
@@ -105,13 +105,10 @@ vcctty_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_tx_ino = ca->ca_tx_ino;
+	sc->sc_rx_ino = ca->ca_rx_ino;
 
-	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sc->sc_tx_sysino) ||
-	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sc->sc_rx_sysino)) {
-		printf(": can't map interrupt\n");
-		return;
-	}
-	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_ino, sc->sc_rx_ino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -120,9 +117,9 @@ vcctty_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
-	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_sysino,
+	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_ino,
 	    IPL_TTY, 0, vcctty_tx_intr, sc, sc->sc_dv.dv_xname);
-	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_sysino,
+	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_ino,
 	    IPL_TTY, 0, vcctty_rx_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
@@ -155,8 +152,8 @@ vcctty_attach(struct device *parent, struct device *self, void *aux)
 	if (err != H_EOK)
 		printf("%s: hv_ldc_rx_qconf %d\n", __func__, err);
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_ENABLED);
 
 	printf(" domain \"%s\"\n", ca->ca_name);
 	return;
@@ -499,14 +496,10 @@ int
 vccttyhwiflow(struct tty *tp, int stop)
 {
 	struct vcctty_softc *sc = vcctty_cd.cd_devs[minor(tp->t_dev)];
+	uint64_t state = stop ? INTR_DISABLED : INTR_ENABLED;
 
-	if (stop) {
-		cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
-		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
-	} else {
-		cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
-		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
-	}
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, state);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, state);
 
 	return (1);
 }

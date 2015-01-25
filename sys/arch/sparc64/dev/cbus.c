@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.13 2014/11/24 12:47:14 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.14 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -28,13 +28,12 @@
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/vbusvar.h>
 
-#define CBUS_HANDLE(x) ((x) & ~0xff)
-#define CBUS_INO(x) ((x) & 0xff)
-
 struct cbus_softc {
 	struct device		sc_dv;
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
+
+	uint64_t		sc_devhandle;
 
 	/* Machine description. */
 	int			sc_idx;
@@ -77,9 +76,14 @@ cbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cbus_softc *sc = (struct cbus_softc *)self;
 	struct vbus_attach_args *va = aux;
 	int node;
+	int reg;
 
 	sc->sc_bustag = cbus_alloc_bus_tag(sc, va->va_bustag);
 	sc->sc_dmatag = va->va_dmatag;
+
+	if (OF_getprop(va->va_node, "reg", &reg, sizeof(reg)) != sizeof(reg))
+		return;
+	sc->sc_devhandle = reg;
 
 	printf("\n");
 
@@ -120,24 +124,10 @@ cbus_print(void *aux, const char *name)
 }
 
 int
-cbus_intr_map(int node, int ino, uint64_t *sysino)
+cbus_intr_setstate(bus_space_tag_t t, uint64_t devino, uint64_t state)
 {
-	int parent;
-	int reg;
-
-	parent = OF_parent(node);
-	if (OF_getprop(parent, "reg", &reg, sizeof(reg)) != sizeof(reg))
-		return (-1);
-
-	*sysino = CBUS_HANDLE(reg) | CBUS_INO(ino);
-	return (0);
-}
-
-int
-cbus_intr_setstate(uint64_t sysino, uint64_t state)
-{
-	uint64_t devhandle = CBUS_HANDLE(sysino);
-	uint64_t devino = CBUS_INO(sysino);
+	struct cbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
 	int err;
 
 	err = hv_vintr_setstate(devhandle, devino, state);
@@ -148,10 +138,10 @@ cbus_intr_setstate(uint64_t sysino, uint64_t state)
 }
 
 int
-cbus_intr_setenabled(uint64_t sysino, uint64_t enabled)
+cbus_intr_setenabled(bus_space_tag_t t, uint64_t devino, uint64_t enabled)
 {
-	uint64_t devhandle = CBUS_HANDLE(sysino);
-	uint64_t devino = CBUS_INO(sysino);
+	struct cbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
 	int err;
 
 	err = hv_vintr_setenabled(devhandle, devino, enabled);
@@ -165,8 +155,9 @@ void *
 cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
-	uint64_t devhandle = CBUS_HANDLE(ihandle);
-	uint64_t devino = CBUS_INO(ihandle);
+	struct cbus_softc *sc = t0->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
+	uint64_t devino = ihandle;
 	struct intrhand *ih;
 	int err;
 
@@ -216,8 +207,10 @@ cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 void
 cbus_intr_ack(struct intrhand *ih)
 {
-	uint64_t devhandle = CBUS_HANDLE(ih->ih_number);
-	uint64_t devino = CBUS_INO(ih->ih_number);
+	bus_space_tag_t t = ih->ih_bus;
+	struct cbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
+	uint64_t devino = ih->ih_number;
 
 	hv_vintr_setstate(devhandle, devino, INTR_IDLE);
 }

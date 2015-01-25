@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.9 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.10 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -57,10 +57,10 @@ struct vldcp_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
+	uint64_t	sc_tx_ino;
+	uint64_t	sc_rx_ino;
 	void		*sc_tx_ih;
 	void		*sc_rx_ih;
-	uint64_t	sc_tx_sysino;
-	uint64_t	sc_rx_sysino;
 
 	struct ldc_conn	sc_lc;
 
@@ -133,13 +133,10 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_tx_ino = ca->ca_tx_ino;
+	sc->sc_rx_ino = ca->ca_rx_ino;
 
-	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sc->sc_tx_sysino) ||
-	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sc->sc_rx_sysino)) {
-		printf(": can't map interrupt\n");
-		return;
-	}
-	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_ino, sc->sc_rx_ino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -148,9 +145,9 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
-	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_sysino,
+	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_ino,
 	    IPL_TTY, 0, vldcp_tx_intr, sc, sc->sc_dv.dv_xname);
-	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_sysino,
+	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_ino,
 	    IPL_TTY, 0, vldcp_rx_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
@@ -227,7 +224,7 @@ vldcp_tx_intr(void *arg)
 		lc->lc_tx_state = tx_state;
 	}
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_DISABLED);
 	selwakeup(&sc->sc_wsel);
 	wakeup(lc->lc_txq);
 	return (1);
@@ -260,7 +257,8 @@ vldcp_rx_intr(void *arg)
 			break;
 		}
 		lc->lc_rx_state = rx_state;
-		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+		cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
+		    INTR_DISABLED);
 		selwakeup(&sc->sc_rsel);
 		wakeup(lc->lc_rxq);
 		return (1);
@@ -269,7 +267,7 @@ vldcp_rx_intr(void *arg)
 	if (rx_head == rx_tail)
 		return (0);
 
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_DISABLED);
 	selwakeup(&sc->sc_rsel);
 	wakeup(lc->lc_rxq);
 	return (1);
@@ -333,8 +331,8 @@ vldcpclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_DISABLED);
 
 	hv_ldc_tx_qconf(sc->sc_lc.lc_id, 0, 0);
 	hv_ldc_rx_qconf(sc->sc_lc.lc_id, 0, 0);
@@ -381,7 +379,8 @@ retry:
 	DPRINTF(("rx head %llx, rx tail %llx\n", rx_head, rx_tail));
 
 	if (rx_head == rx_tail) {
-		cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+		cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
+		    INTR_ENABLED);
 		ret = tsleep(lc->lc_rxq, PWAIT | PCATCH, "hvrd", 0);
 		if (ret) {
 			splx(s);
@@ -446,7 +445,8 @@ retry:
 	next_tx_tail &= ((lc->lc_txq->lq_nentries * 64) - 1);
 
 	if (tx_head == next_tx_tail) {
-		cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+		cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino,
+		    INTR_ENABLED);
 		ret = tsleep(lc->lc_txq, PWAIT | PCATCH, "hvwr", 0);
 		if (ret) {
 			splx(s);
@@ -585,11 +585,13 @@ vldcppoll(dev_t dev, int events, struct proc *p)
 	}
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM)) {
-			cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+			cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
+			    INTR_ENABLED);
 			selrecord(p, &sc->sc_rsel);
 		}
 		if (events & (POLLOUT | POLLWRNORM)) {
-			cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+			cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino,
+			    INTR_ENABLED);
 			selrecord(p, &sc->sc_wsel);
 		}
 	}

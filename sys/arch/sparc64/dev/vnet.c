@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.36 2014/12/22 02:26:54 tedu Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.37 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -133,8 +133,8 @@ struct vnet_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
-	uint64_t	sc_tx_sysino;
-	uint64_t	sc_rx_sysino;
+	uint64_t	sc_tx_ino;
+	uint64_t	sc_rx_ino;
 	void		*sc_tx_ih;
 	void		*sc_rx_ih;
 
@@ -253,13 +253,10 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_tx_ino = ca->ca_tx_ino;
+	sc->sc_rx_ino = ca->ca_rx_ino;
 
-	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sc->sc_tx_sysino) ||
-	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sc->sc_rx_sysino)) {
-		printf(": can't map interrupt\n");
-		return;
-	}
-	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_ino, sc->sc_rx_ino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -268,9 +265,9 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
-	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_sysino,
+	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_ino,
 	    IPL_NET, 0, vnet_tx_intr, sc, sc->sc_dv.dv_xname);
-	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_sysino,
+	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_ino,
 	    IPL_NET, 0, vnet_rx_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
@@ -1383,8 +1380,8 @@ vnet_init(struct ifnet *ifp)
 	if (err != H_EOK)
 		printf("hv_ldc_rx_qconf %d\n", err);
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_ENABLED);
 
 	ldc_send_vers(lc);
 
@@ -1401,8 +1398,8 @@ vnet_stop(struct ifnet *ifp)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_DISABLED);
 
 	hv_ldc_tx_qconf(lc->lc_id, 0, 0);
 	hv_ldc_rx_qconf(lc->lc_id, 0, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.45 2014/09/21 14:52:37 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -233,19 +233,13 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	struct cbus_attach_args *ca = aux;
 	struct scsibus_attach_args saa;
 	struct ldc_conn *lc;
-	uint64_t sysino[2];
 	int err, s;
 	int timeout;
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
 
-	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sysino[0]) ||
-	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sysino[1])) {
-		printf(": can't map interrupt\n");
-		return;
-	}
-	printf(": ivec 0x%llx, 0x%llx", sysino[0], sysino[1]);
+	printf(": ivec 0x%llx, 0x%llx", ca->ca_tx_ino, ca->ca_rx_ino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -254,10 +248,10 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
-	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sysino[0], IPL_BIO,
-	    0, vdsk_tx_intr, sc, sc->sc_dv.dv_xname);
-	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sysino[1], IPL_BIO,
-	    0, vdsk_rx_intr, sc, sc->sc_dv.dv_xname);
+	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, ca->ca_tx_ino,
+	    IPL_BIO, 0, vdsk_tx_intr, sc, sc->sc_dv.dv_xname);
+	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, ca->ca_rx_ino,
+	    IPL_BIO, 0, vdsk_rx_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
 		return;
@@ -323,8 +317,8 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	if (err != H_EOK)
 		printf("hv_ldc_rx_qconf %d\n", err);
 
-	cbus_intr_setenabled(sysino[0], INTR_ENABLED);
-	cbus_intr_setenabled(sysino[1], INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, ca->ca_tx_ino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, ca->ca_rx_ino, INTR_ENABLED);
 
 	ldc_send_vers(lc);
 

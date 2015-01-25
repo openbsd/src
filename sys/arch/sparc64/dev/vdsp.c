@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.35 2015/01/23 12:41:23 dlg Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.36 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -201,8 +201,8 @@ struct vdsp_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
-	uint64_t	sc_tx_sysino;
-	uint64_t	sc_rx_sysino;
+	uint64_t	sc_tx_ino;
+	uint64_t	sc_rx_ino;
 	void		*sc_tx_ih;
 	void		*sc_rx_ih;
 
@@ -334,13 +334,10 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_idx = ca->ca_idx;
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_tx_ino = ca->ca_tx_ino;
+	sc->sc_rx_ino = ca->ca_rx_ino;
 
-	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sc->sc_tx_sysino) ||
-	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sc->sc_rx_sysino)) {
-		printf(": can't map interrupt\n");
-		return;
-	}
-	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_ino, sc->sc_rx_ino);
 
 	mtx_init(&sc->sc_desc_mtx, IPL_BIO);
 
@@ -351,10 +348,10 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
-	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_sysino,
+	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_ino,
 	    IPL_BIO, BUS_INTR_ESTABLISH_MPSAFE, vdsp_tx_intr, sc,
 	    sc->sc_dv.dv_xname);
-	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_sysino,
+	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_ino,
 	    IPL_BIO, BUS_INTR_ESTABLISH_MPSAFE, vdsp_rx_intr, sc,
 	    sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
@@ -1722,8 +1719,8 @@ vdspopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (err != H_EOK)
 		printf("%s: hv_ldc_rx_qconf %d\n", __func__, err);
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_ENABLED);
 
 	return (0);
 }
@@ -1740,8 +1737,8 @@ vdspclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
-	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino, INTR_DISABLED);
 
 	hv_ldc_tx_qconf(sc->sc_lc.lc_id, 0, 0);
 	hv_ldc_rx_qconf(sc->sc_lc.lc_id, 0, 0);
