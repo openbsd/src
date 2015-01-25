@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.28 2014/01/20 00:55:35 schwarze Exp $
+.\"	$OpenBSD: boot_config.8,v 1.29 2015/01/25 15:15:14 naddy Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: January 25 2015 $
 .Dt BOOT_CONFIG 8
 .Os
 .Sh NAME
@@ -42,19 +42,18 @@ The same interface is available from userland, using the
 argument to
 .Xr config 8 .
 .Pp
-The boot time configuration is invoked by the
+The boot time configuration is invoked by passing the
 .Fl c
-option when
-.Ox
+option, either from the firmware prompt or,
+depending on the architecture, when the bootstrap loader
 prompts for a kernel to boot:
 .Bd -literal
->> OpenBSD BOOT 640/31744 k [1.29]
-use ? for file list, or carriage return for defaults
-use hd(1,a)/bsd to boot sd0 when sd0 is also installed
-.No "Boot: [[[wd(0,a)]/bsd][-abcdrs]] :" Ic -c
-Booting...
-avail mem = 28188672
-using 430 buffers containing 1761280 bytes of memory
+>> OpenBSD/i386 BOOT 3.26
+.No "boot>" Ic boot -c
+booting hd0a:/bsd: ...
+\&...
+real mem  = 1073086464 (1023MB)
+avail mem = 1043189760 (994MB)
 User Kernel Config
 UKC>
 .Ed
