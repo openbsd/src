@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.6 2014/04/17 14:45:49 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.7 2015/01/25 16:53:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -168,8 +168,11 @@ environ_push(struct environ *env)
 		var[strcspn(var, "=")] = '\0';
 		ARRAY_ADD(&varlist, var);
 	}
-	for (i = 0; i < ARRAY_LENGTH(&varlist); i++)
-		unsetenv(ARRAY_ITEM(&varlist, i));
+	for (i = 0; i < ARRAY_LENGTH(&varlist); i++) {
+		var = ARRAY_ITEM(&varlist, i);
+		unsetenv(var);
+		free(var);
+	}
 	ARRAY_FREE(&varlist);
 
 	RB_FOREACH(envent, environ, env) {
