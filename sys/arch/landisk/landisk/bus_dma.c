@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.12 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.13 2015/01/25 11:36:41 dlg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -67,6 +67,16 @@ struct _bus_dma_tag landisk_bus_dma = {
 	._dmamem_mmap = _bus_dmamem_mmap,
 };
 
+#define DMAMAP_RESET(_m) do { \
+	(_m)->dm_mapsize = 0; \
+	(_m)->dm_nsegs = 0; \
+} while (0)
+
+int	_bus_dmamap_load_vaddr(bus_dma_tag_t, bus_dmamap_t,
+	    void *, bus_size_t, pmap_t);
+int	_bus_dmamap_load_paddr(bus_dma_tag_t, bus_dmamap_t,
+	    paddr_t, vaddr_t, bus_size_t);
+
 /*
  * Create a DMA map.
  */
@@ -109,8 +119,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 
-	map->dm_mapsize = 0;		/* no valid mappings */
-	map->dm_nsegs = 0;
+	DMAMAP_RESET(map); /* no valid mappings */
 
 	*dmamp = map;
 
@@ -129,29 +138,23 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	free(map, M_DEVBUF, 0);
 }
 
-static inline int
+int
 _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
-    paddr_t paddr, vaddr_t vaddr, int size, int *segp, paddr_t *lastaddrp,
-    int first)
+    paddr_t paddr, vaddr_t vaddr, bus_size_t size)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
 	bus_addr_t bmask = ~(map->_dm_boundary - 1);
-	bus_addr_t lastaddr;
-	int nseg;
-	int sgsize;
 
-	nseg = *segp;
-	lastaddr = *lastaddrp;
+	int first = map->dm_mapsize == 0;
+	int nseg = map->dm_nsegs;
+	paddr_t lastaddr = SH3_P2SEG_TO_PHYS(segs[nseg].ds_addr);
 
-	DPRINTF(("_bus_dmamap_load_paddr: t = %p, map = %p, paddr = 0x%08lx, vaddr = 0x%08lx, size = %d\n", t, map, paddr, vaddr, size));
-        DPRINTF(("_bus_dmamap_load_paddr: nseg = %d, bmask = 0x%08lx, lastaddr = 0x%08lx\n", nseg, bmask, lastaddr));
+	map->dm_mapsize += size;
 
 	do {
-		sgsize = size;
+		bus_size_t sgsize = size;
 
-		/*
-		 * Make sure we don't cross any boundaries.
-		 */
+		/* Make sure we don't cross any boundaries. */
 		if (map->_dm_boundary > 0) {
 			bus_addr_t baddr; /* next boundary address */
 
@@ -160,113 +163,75 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 				sgsize = (baddr - paddr);
 		}
 
-		DPRINTF(("_bus_dmamap_load_paddr: sgsize = %d\n", sgsize));
-
 		/*
 		 * Insert chunk into a segment, coalescing with
 		 * previous segment if possible.
 		 */
 		if (first) {
 			/* first segment */
-			DPRINTF(("_bus_dmamap_load_paddr: first\n"));
 			segs[nseg].ds_addr = SH3_PHYS_TO_P2SEG(paddr);
 			segs[nseg].ds_len = sgsize;
 			segs[nseg]._ds_vaddr = vaddr;
 			first = 0;
+		} else if ((paddr == lastaddr)
+		 && (segs[nseg].ds_len + sgsize <= map->_dm_maxsegsz)
+		 && (map->_dm_boundary == 0 ||
+		     (segs[nseg].ds_addr & bmask) == (paddr & bmask))) {
+			/* coalesce */
+			segs[nseg].ds_len += sgsize;
 		} else {
-			if ((paddr == lastaddr)
-			 && (segs[nseg].ds_len + sgsize <= map->_dm_maxsegsz)
-			 && (map->_dm_boundary == 0 ||
-			     (segs[nseg].ds_addr & bmask) == (paddr & bmask))) {
-				/* coalesce */
-				DPRINTF(("_bus_dmamap_load_paddr: coalesce\n"));
-				segs[nseg].ds_len += sgsize;
-			} else {
-				if (++nseg >= map->_dm_segcnt) {
-					break;
-				}
-				/* new segment */
-				DPRINTF(("_bus_dmamap_load_paddr: new\n"));
-				segs[nseg].ds_addr = SH3_PHYS_TO_P2SEG(paddr);
-				segs[nseg].ds_len = sgsize;
-				segs[nseg]._ds_vaddr = vaddr;
-			}
+			if (++nseg >= map->_dm_segcnt)
+				return (EFBIG);
+
+			/* new segment */
+			segs[nseg].ds_addr = SH3_PHYS_TO_P2SEG(paddr);
+			segs[nseg].ds_len = sgsize;
+			segs[nseg]._ds_vaddr = vaddr;
 		}
 
 		lastaddr = paddr + sgsize;
 		paddr += sgsize;
 		vaddr += sgsize;
 		size -= sgsize;
-		DPRINTF(("_bus_dmamap_load_paddr: lastaddr = 0x%08lx, paddr = 0x%08lx, vaddr = 0x%08lx, size = %d\n", lastaddr, paddr, vaddr, size));
 	} while (size > 0);
 
-	DPRINTF(("_bus_dmamap_load_paddr: nseg = %d\n", nseg));
-
-	*segp = nseg;
-	*lastaddrp = lastaddr;
-
-	/*
-	 * Did we fit?
-	 */
-	if (size != 0) {
-		/*
-		 * If there is a chained window, we will automatically
-		 * fall back to it.
-		 */
-		return (EFBIG);		/* XXX better return value here? */
-	}
+	map->dm_nsegs = nseg;
 
 	return (0);
 }
 
-static inline int
-_bus_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags, int *segp)
+int
+_bus_dmamap_load_vaddr(bus_dma_tag_t t, bus_dmamap_t map,
+    void *buf, bus_size_t size, pmap_t pmap)
 {
-	bus_size_t sgsize;
-	bus_addr_t curaddr;
-	bus_size_t len;
-	paddr_t lastaddr;
-	vaddr_t vaddr = (vaddr_t)buf;
-	pmap_t pmap;
-	int first;
+	vaddr_t vaddr;
+	paddr_t paddr;
+	vaddr_t next, end;
 	int error;
 
-	DPRINTF(("_bus_dmamap_load_buffer: t = %p, map = %p, buf = %p, buflen = %ld, p = %p, flags = %x\n", t, map, buf, buflen, p, flags));
+	vaddr = (vaddr_t)buf;
+	end = vaddr + size;
 
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
+	if (pmap == pmap_kernel() &&
+	    vaddr >= SH3_P1SEG_BASE && end <= SH3_P2SEG_END)
+		paddr = SH3_P1SEG_TO_PHYS(vaddr);
+	else {
+		for (next = (vaddr + PAGE_SIZE) & ~PAGE_MASK;
+		    next < end; next += PAGE_SIZE) {
+			pmap_extract(pmap, vaddr, &paddr);
+			error = _bus_dmamap_load_paddr(t, map,
+			    paddr, vaddr, next - vaddr);
+			if (error != 0)
+				return (error);
 
-	*segp = 0;
-	first = 1;
-	len = buflen;
-	lastaddr = 0;		/* XXX: uwe: gag gcc4, but this is WRONG!!! */
-	while (len > 0) {
-		/*
-		 * Get the physical address for this segment.
-		 */
-		(void)pmap_extract(pmap, vaddr, &curaddr);
+			vaddr = next;
+		}
 
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
-		if (len < sgsize)
-			sgsize = len;
-
-		error = _bus_dmamap_load_paddr(t, map, curaddr, vaddr, sgsize,
-		    segp, &lastaddr, first);
-		if (error)
-			return (error);
-
-		vaddr += sgsize;
-		len -= sgsize;
-		first = 0;
+		pmap_extract(pmap, vaddr, &paddr);
+		size = end - vaddr;
 	}
 
-	return (0);
+	return (_bus_dmamap_load_paddr(t, map, paddr, vaddr, size));
 }
 
 /*
@@ -276,65 +241,25 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	bus_addr_t addr = (bus_addr_t)buf;
-	paddr_t lastaddr;
-	int seg;
-	int first;
 	int error;
 
 	DPRINTF(("bus_dmamap_load: t = %p, map = %p, buf = %p, buflen = %ld, p = %p, flags = %x\n", t, map, buf, buflen, p, flags));
 
-	/*
-	 * Make sure on error condition we return "no valid mappings."
-	 */
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
+	DMAMAP_RESET(map);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	lastaddr = 0;		/* XXX: uwe: gag gcc4, but this is WRONG!!! */
-
-	if ((addr >= SH3_P1SEG_BASE) && (addr + buflen <= SH3_P2SEG_END)) {
-		bus_addr_t curaddr;
-		bus_size_t sgsize;
-		bus_size_t len = buflen;
-
-		DPRINTF(("bus_dmamap_load: P[12]SEG (0x%08lx)\n", addr));
-
-		seg = 0;
-		first = 1;
-		while (len > 0) {
-			curaddr = SH3_P1SEG_TO_PHYS(addr);
-
-			sgsize = PAGE_SIZE - ((u_long)addr & PGOFSET);
-			if (len < sgsize)
-				sgsize = len;
-
-			error = _bus_dmamap_load_paddr(t, map, curaddr, addr,
-			    sgsize, &seg, &lastaddr, first);
-			if (error)
-				return (error);
-
-			addr += sgsize;
-			len -= sgsize;
-			first = 0;
-		}
-
-		map->dm_nsegs = seg + 1;
-		map->dm_mapsize = buflen;
-		return (0);
+	error = _bus_dmamap_load_vaddr(t, map, buf, buflen,
+	    p == NULL ? pmap_kernel() : p->p_vmspace->vm_map.pmap);
+	if (error != 0) {
+		DMAMAP_RESET(map); /* no valid mappings */
+		return (error);
 	}
 
-	error = _bus_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	 &seg);
-	if (error == 0) {
-		map->dm_nsegs = seg + 1;
-		map->dm_mapsize = buflen;
-		return (0);
-	}
+	map->dm_nsegs++;
 
-	return (error);
+	return (0);
 }
 
 /*
@@ -345,18 +270,9 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
 	struct mbuf *m;
-	paddr_t lastaddr;
-	int seg;
-	int first;
 	int error;
 
-	DPRINTF(("bus_dmamap_load_mbuf: t = %p, map = %p, m0 = %p, flags = %x\n", t, map, m0, flags));
-
-	/*
-	 * Make sure on error condition we return "no valid mappings."
-	 */
-	map->dm_nsegs = 0;
-	map->dm_mapsize = 0;
+	DMAMAP_RESET(map);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -366,33 +282,21 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	seg = 0;
-	first = 1;
-	error = 0;
-	lastaddr = 0;		/* XXX: uwe: gag gcc4, but this is WRONG!!! */
-	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		paddr_t paddr;
-		vaddr_t vaddr;
-		int size;
-
+	for (m = m0; m != NULL; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 
-		vaddr = (vaddr_t)(m->m_data);
-		paddr = (paddr_t)(SH3_P1SEG_TO_PHYS(vaddr));
-		size = m->m_len;
-		error = _bus_dmamap_load_paddr(t, map, paddr, vaddr, size,
-		    &seg, &lastaddr, first);
-		first = 0;
+		error = _bus_dmamap_load_vaddr(t, map, m->m_data, m->m_len,
+		    pmap_kernel());
+		if (error != 0) {
+			DMAMAP_RESET(map);
+			return (error);
+		}
 	}
 
-	if (error == 0) {
-		map->dm_nsegs = seg + 1;
-		map->dm_mapsize = m0->m_pkthdr.len;
-		return (0);
-	}
+	map->dm_nsegs++;
 
-	return (error);
+	return (0);
 }
 
 /*
