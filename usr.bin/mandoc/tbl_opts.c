@@ -1,6 +1,7 @@
-/*	$OpenBSD: tbl_opts.c,v 1.8 2015/01/14 22:44:51 schwarze Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.9 2015/01/26 00:54:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -51,12 +52,6 @@ struct	tbl_phrase {
 /* Handle Commonwealth/American spellings. */
 #define	KEY_MAXKEYS	 14
 
-/* Maximum length of key name string. */
-#define	KEY_MAXNAME	 13
-
-/* Maximum length of key number size. */
-#define	KEY_MAXNUMSZ	 10
-
 static	const struct tbl_phrase keys[KEY_MAXKEYS] = {
 	{ "center",	 TBL_OPT_CENTRE,	KEY_CENTRE},
 	{ "centre",	 TBL_OPT_CENTRE,	KEY_CENTRE},
@@ -74,193 +69,119 @@ static	const struct tbl_phrase keys[KEY_MAXKEYS] = {
 	{ "nospaces",	 TBL_OPT_NOSPACE,	KEY_NOSPACE},
 };
 
-static	int		 arg(struct tbl_node *, int,
+static	void		 arg(struct tbl_node *, int,
 				const char *, int *, enum tbl_ident);
-static	void		 opt(struct tbl_node *, int,
-				const char *, int *);
 
 
-static int
+static void
 arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 {
-	int		 i;
-	char		 buf[KEY_MAXNUMSZ];
+	const char	*optname;
+	int		 len, want;
 
 	while (isspace((unsigned char)p[*pos]))
 		(*pos)++;
 
-	/* Arguments always begin with a parenthesis. */
+	/* Arguments are enclosed in parentheses. */
 
-	if ('(' != p[*pos]) {
-		mandoc_msg(MANDOCERR_TBL, tbl->parse,
-		    ln, *pos, NULL);
-		return(0);
+	len = 0;
+	if (p[*pos] == '(') {
+		(*pos)++;
+		while (p[*pos + len] != ')')
+			len++;
 	}
-
-	(*pos)++;
-
-	/*
-	 * The arguments can be ANY value, so we can't just stop at the
-	 * next close parenthesis (the argument can be a closed
-	 * parenthesis itself).
-	 */
 
 	switch (key) {
 	case KEY_DELIM:
-		if ('\0' == p[(*pos)++]) {
-			mandoc_msg(MANDOCERR_TBL, tbl->parse,
-			    ln, *pos - 1, NULL);
-			return(0);
-		}
-
-		if ('\0' == p[(*pos)++]) {
-			mandoc_msg(MANDOCERR_TBL, tbl->parse,
-			    ln, *pos - 1, NULL);
-			return(0);
-		}
+		optname = "delim";
+		want = 2;
 		break;
 	case KEY_TAB:
-		if ('\0' != (tbl->opts.tab = p[(*pos)++]))
-			break;
-
-		mandoc_msg(MANDOCERR_TBL, tbl->parse,
-		    ln, *pos - 1, NULL);
-		return(0);
+		optname = "tab";
+		want = 1;
+		if (len == want)
+			tbl->opts.tab = p[*pos];
+		break;
 	case KEY_LINESIZE:
-		for (i = 0; i < KEY_MAXNUMSZ && p[*pos]; i++, (*pos)++) {
-			buf[i] = p[*pos];
-			if ( ! isdigit((unsigned char)buf[i]))
-				break;
-		}
-
-		if (i < KEY_MAXNUMSZ) {
-			buf[i] = '\0';
-			tbl->opts.linesize = atoi(buf);
-			break;
-		}
-
-		mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, *pos, NULL);
-		return(0);
+		optname = "linesize";
+		want = 0;
+		break;
 	case KEY_DPOINT:
-		if ('\0' != (tbl->opts.decimal = p[(*pos)++]))
-			break;
-
-		mandoc_msg(MANDOCERR_TBL, tbl->parse,
-		    ln, *pos - 1, NULL);
-		return(0);
+		optname = "decimalpoint";
+		want = 1;
+		if (len == want)
+			tbl->opts.decimal = p[*pos];
+		break;
 	default:
 		abort();
 		/* NOTREACHED */
 	}
 
-	/* End with a close parenthesis. */
+	if (len == 0)
+		mandoc_msg(MANDOCERR_TBLOPT_NOARG,
+		    tbl->parse, ln, *pos, optname);
+	else if (want && len != want)
+		mandoc_vmsg(MANDOCERR_TBLOPT_ARGSZ,
+		    tbl->parse, ln, *pos,
+		    "%s want %d have %d", optname, want, len);
 
-	if (')' == p[(*pos)++])
-		return(1);
-
-	mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, *pos - 1, NULL);
-	return(0);
+	*pos += len;
+	if (p[*pos] == ')')
+		(*pos)++;
 }
 
-static void
-opt(struct tbl_node *tbl, int ln, const char *p, int *pos)
-{
-	int		 i, sv;
-	char		 buf[KEY_MAXNAME];
-
-	/*
-	 * Parse individual options from the stream as surrounded by
-	 * this goto.  Each pass through the routine parses out a single
-	 * option and registers it.  Option arguments are processed in
-	 * the arg() function.
-	 */
-
-again:	/*
-	 * EBNF describing this section:
-	 *
-	 * options	::= option_list [:space:]* [;][\n]
-	 * option_list	::= option option_tail
-	 * option_tail	::= [,:space:]+ option_list |
-	 *		::= epsilon
-	 * option	::= [:alpha:]+ args
-	 * args		::= [:space:]* [(] [:alpha:]+ [)]
-	 */
-
-	while (isspace((unsigned char)p[*pos]))
-		(*pos)++;
-
-	/* Safe exit point. */
-
-	if (';' == p[*pos])
-		return;
-
-	/* Copy up to first non-alpha character. */
-
-	for (sv = *pos, i = 0; i < KEY_MAXNAME; i++, (*pos)++) {
-		buf[i] = (char)tolower((unsigned char)p[*pos]);
-		if ( ! isalpha((unsigned char)buf[i]))
-			break;
-	}
-
-	/* Exit if buffer is empty (or overrun). */
-
-	if (KEY_MAXNAME == i || 0 == i) {
-		mandoc_msg(MANDOCERR_TBL, tbl->parse, ln, *pos, NULL);
-		return;
-	}
-
-	buf[i] = '\0';
-
-	while (isspace((unsigned char)p[*pos]) || p[*pos] == ',')
-		(*pos)++;
-
-	/*
-	 * Look through all of the available keys to find one that
-	 * matches the input.  FIXME: hashtable this.
-	 */
-
-	for (i = 0; i < KEY_MAXKEYS; i++) {
-		if (strcmp(buf, keys[i].name))
-			continue;
-
-		/*
-		 * Note: this is more difficult to recover from, as we
-		 * can be anywhere in the option sequence and it's
-		 * harder to jump to the next.  Meanwhile, just bail out
-		 * of the sequence altogether.
-		 */
-
-		if (keys[i].key)
-			tbl->opts.opts |= keys[i].key;
-		else if ( ! arg(tbl, ln, p, pos, keys[i].ident))
-			return;
-
-		break;
-	}
-
-	/*
-	 * Allow us to recover from bad options by continuing to another
-	 * parse sequence.
-	 */
-
-	if (KEY_MAXKEYS == i)
-		mandoc_msg(MANDOCERR_TBLOPT, tbl->parse, ln, sv, NULL);
-
-	goto again;
-	/* NOTREACHED */
-}
-
+/*
+ * Parse one line of options up to the semicolon.
+ * Each option can be preceded by blanks and/or commas,
+ * and some options are followed by arguments.
+ */
 void
 tbl_option(struct tbl_node *tbl, int ln, const char *p)
 {
-	int		 pos;
-
-	/*
-	 * Table options are always on just one line, so automatically
-	 * switch into the next input mode here.
-	 */
-	tbl->part = TBL_PART_LAYOUT;
+	int		 i, pos, len;
 
 	pos = 0;
-	opt(tbl, ln, p, &pos);
+	for (;;) {
+		while (isspace((unsigned char)p[pos]) || p[pos] == ',')
+			pos++;
+
+		if (p[pos] == ';')
+			return;
+
+		/* Parse one option name. */
+
+		len = 0;
+		while (isalpha((unsigned char)p[pos + len]))
+			len++;
+
+		if (len == 0) {
+			mandoc_vmsg(MANDOCERR_TBLOPT_ALPHA,
+			    tbl->parse, ln, pos, "%c", p[pos]);
+			pos++;
+			continue;
+		}
+
+		/* Look up the option name. */
+
+		i = 0;
+		while (i < KEY_MAXKEYS &&
+		    (strncasecmp(p + pos, keys[i].name, len) ||
+		     keys[i].name[len] != '\0'))
+			i++;
+
+		if (i == KEY_MAXKEYS) {
+			mandoc_vmsg(MANDOCERR_TBLOPT_BAD, tbl->parse,
+			    ln, pos, "%.*s", len, p + pos);
+			pos += len;
+			continue;
+		}
+
+		/* Handle the option. */
+
+		pos += len;
+		if (keys[i].key)
+			tbl->opts.opts |= keys[i].key;
+		else
+			arg(tbl, ln, p, &pos, keys[i].ident);
+	}
 }

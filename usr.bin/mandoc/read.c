@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.90 2015/01/24 01:59:40 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.91 2015/01/26 00:54:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -175,6 +175,10 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unexpected end of equation",
 
 	/* related to tables */
+	"non-alphabetic character in tbl options",
+	"skipping unknown tbl option",
+	"missing tbl option argument",
+	"wrong tbl option argument size",
 	"no table layout cells specified",
 	"no table data cells specified",
 	"ignore data in cell",
@@ -213,8 +217,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"input too large",
 	"unsupported control character",
 	"unsupported roff request",
-	"unsupported table syntax",
-	"unsupported table option",
 	"unsupported table layout",
 	"ignoring macro in table",
 };

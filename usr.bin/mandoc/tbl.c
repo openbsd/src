@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl.c,v 1.13 2015/01/21 00:45:16 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.14 2015/01/26 00:54:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,29 +32,45 @@
 enum rofferr
 tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
 {
-	int		 len;
 	const char	*cp;
-
-	cp = &p[offs];
-	len = (int)strlen(cp);
+	int		 active;
 
 	/*
-	 * If we're in the options section and we don't have a
-	 * terminating semicolon, assume we've moved directly into the
-	 * layout section.  No need to report a warning: this is,
-	 * apparently, standard behaviour.
+	 * In the options section, proceed to the layout section
+	 * after a semicolon, or right away if there is no semicolon.
+	 * Ignore semicolons in arguments.
 	 */
 
-	if (TBL_PART_OPTS == tbl->part && len)
-		if (';' != cp[len - 1])
-			tbl->part = TBL_PART_LAYOUT;
+	if (tbl->part == TBL_PART_OPTS) {
+		tbl->part = TBL_PART_LAYOUT;
+		active = 1;
+		for (cp = p; *cp != '\0'; cp++) {
+			switch (*cp) {
+			case '(':
+				active = 0;
+				continue;
+			case ')':
+				active = 1;
+				continue;
+			case ';':
+				if (active)
+					break;
+				continue;
+			default:
+				continue;
+			}
+			break;
+		}
+		if (*cp == ';') {
+			tbl_option(tbl, ln, p);
+			if (*(p = cp + 1) == '\0')
+				return(ROFF_IGN);
+		}
+	}
 
-	/* Now process each logical section of the table.  */
+	/* Process the other section types.  */
 
 	switch (tbl->part) {
-	case TBL_PART_OPTS:
-		tbl_option(tbl, ln, p);
-		return(ROFF_IGN);
 	case TBL_PART_LAYOUT:
 		tbl_layout(tbl, ln, p);
 		return(ROFF_IGN);
@@ -79,7 +95,6 @@ tbl_alloc(int pos, int line, struct mparse *parse)
 	tbl->parse = parse;
 	tbl->part = TBL_PART_OPTS;
 	tbl->opts.tab = '\t';
-	tbl->opts.linesize = 12;
 	tbl->opts.decimal = '.';
 	return(tbl);
 }
