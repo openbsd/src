@@ -1,7 +1,7 @@
-.\"	$OpenBSD: tbl.7,v 1.10 2015/01/20 19:23:32 jmc Exp $
+.\"	$OpenBSD: tbl.7,v 1.11 2015/01/26 13:02:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2015 $
+.Dd $Mdocdate: January 26 2015 $
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -133,58 +133,60 @@ c c c.
 in the case of
 .Xr man 7 .
 .Ss Options
-The first line of a table consists of space-separated option keys and
-modifiers terminated by a semicolon.
-For GNU compatibility, option keys can also be separated by commas.
+The first line of a table may contain options separated by spaces, tabs,
+or commas and terminated by a semicolon.
 If the first line does not have a terminating semicolon, it is assumed
 that no options are specified and instead a
 .Sx Layout
 is processed.
-Some options accept arguments enclosed by parenthesis.
+Some options require arguments enclosed by parentheses.
 The following case-insensitive options are available:
 .Bl -tag -width Ds
-.It Cm center
-This option is not supported by
-.Xr mandoc 1 .
-This may also be invoked with
-.Cm centre .
-.It Cm delim
-Accepts a two-character argument.
-This option is not supported by
-.Xr mandoc 1 .
-.It Cm expand
-This option is not supported by
-.Xr mandoc 1 .
+.It Cm allbox
+Draw a single-line box around each table cell.
+Currently treated as a synonym for
+.Cm box .
 .It Cm box
 Draw a single-line box around the table.
-This may also be invoked with
+For GNU compatibility, this may also be invoked with
 .Cm frame .
-.It Cm doublebox
-Draw a double-line box around the table.
-This may also be invoked with
-.Cm doubleframe .
-.It Cm allbox
-This option is not supported by
-.Xr mandoc 1 .
-.It Cm tab
-Accepts a single-character argument.
-This character is used as a delimiter between data cells, which otherwise
-defaults to the tab character.
-.It Cm linesize
-Accepts a natural number (all digits).
-This option is not supported by
-.Xr mandoc 1 .
-.It Cm nokeep
-This option is not supported by
-.Xr mandoc 1 .
+.It Cm center
+Center the table instead of left-adjusting it.
+Currently ignored.
+For GNU compatibility, this may also be invoked with
+.Cm centre .
 .It Cm decimalpoint
-Accepts a single-character argument.
-This character will be used as the decimal point with the
+Use the single-character argument as the decimal point with the
 .Cm n
 layout key.
+This is a GNU extension.
+.It Cm delim
+Use the two characters of the argument as
+.Xr eqn 7
+delimiters.
+Currently unsupported.
+.It Cm doublebox
+Draw a double-line box around the table.
+For GNU compatibility, this may also be invoked with
+.Cm doubleframe .
+.It Cm expand
+Increase the width of the table to the current line length.
+Currently ignored.
+.It Cm linesize
+Draw lines with the point size given by the unsigned integer argument.
+Currently ignored.
+.It Cm nokeep
+Allow page breaks within the table.
+This is a GNU extension and currently ignored.
 .It Cm nospaces
-This option is not supported by
-.Xr mandoc 1 .
+Ignore leading and trailing spaces in data cells.
+This is a GNU extension and currently ignored.
+.It Cm nowarn
+Suppress warnings about tables exceeding the current line length.
+This is a GNU extension and currently ignored.
+.It Cm tab
+Use the single-character argument as a delimiter between data cells.
+By default, the tab character is used.
 .El
 .Ss Layout
 The table layout follows

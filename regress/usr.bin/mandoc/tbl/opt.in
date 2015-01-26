@@ -12,7 +12,7 @@ n n .
 .PP
 normal text
 .TS
- , box,tab(:); l l .
+ , box,tab(:)	delim($$); l l .
 a:b
 .TE
 .PP

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_opts.c,v 1.9 2015/01/26 00:54:09 schwarze Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.10 2015/01/26 13:02:53 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,60 +26,45 @@
 #include "libmandoc.h"
 #include "libroff.h"
 
-enum	tbl_ident {
-	KEY_CENTRE = 0,
-	KEY_DELIM,
-	KEY_EXPAND,
-	KEY_BOX,
-	KEY_DBOX,
-	KEY_ALLBOX,
-	KEY_TAB,
-	KEY_LINESIZE,
-	KEY_NOKEEP,
-	KEY_DPOINT,
-	KEY_NOSPACE,
-	KEY_FRAME,
-	KEY_DFRAME,
-	KEY_MAX
-};
+#define	KEY_DPOINT	0
+#define	KEY_DELIM	1
+#define	KEY_LINESIZE	2
+#define	KEY_TAB		3
 
 struct	tbl_phrase {
 	const char	*name;
 	int		 key;
-	enum tbl_ident	 ident;
 };
 
-/* Handle Commonwealth/American spellings. */
-#define	KEY_MAXKEYS	 14
-
-static	const struct tbl_phrase keys[KEY_MAXKEYS] = {
-	{ "center",	 TBL_OPT_CENTRE,	KEY_CENTRE},
-	{ "centre",	 TBL_OPT_CENTRE,	KEY_CENTRE},
-	{ "delim",	 0,			KEY_DELIM},
-	{ "expand",	 TBL_OPT_EXPAND,	KEY_EXPAND},
-	{ "box",	 TBL_OPT_BOX,		KEY_BOX},
-	{ "doublebox",	 TBL_OPT_DBOX,		KEY_DBOX},
-	{ "allbox",	 TBL_OPT_ALLBOX,	KEY_ALLBOX},
-	{ "frame",	 TBL_OPT_BOX,		KEY_FRAME},
-	{ "doubleframe", TBL_OPT_DBOX,		KEY_DFRAME},
-	{ "tab",	 0,			KEY_TAB},
-	{ "linesize",	 0,			KEY_LINESIZE},
-	{ "nokeep",	 TBL_OPT_NOKEEP,	KEY_NOKEEP},
-	{ "decimalpoint", 0,			KEY_DPOINT},
-	{ "nospaces",	 TBL_OPT_NOSPACE,	KEY_NOSPACE},
+static	const struct tbl_phrase keys[] = {
+	{"decimalpoint", 0},
+	{"delim",	 0},
+	{"linesize",	 0},
+	{"tab",		 0},
+	{"allbox",	 TBL_OPT_ALLBOX | TBL_OPT_BOX},
+	{"box",		 TBL_OPT_BOX},
+	{"frame",	 TBL_OPT_BOX},
+	{"center",	 TBL_OPT_CENTRE},
+	{"centre",	 TBL_OPT_CENTRE},
+	{"doublebox",	 TBL_OPT_DBOX},
+	{"doubleframe",  TBL_OPT_DBOX},
+	{"expand",	 TBL_OPT_EXPAND},
+	{"nokeep",	 TBL_OPT_NOKEEP},
+	{"nospaces",	 TBL_OPT_NOSPACE},
+	{"nowarn",	 TBL_OPT_NOWARN},
 };
 
-static	void		 arg(struct tbl_node *, int,
-				const char *, int *, enum tbl_ident);
+#define KEY_MAXKEYS ((int)(sizeof(keys)/sizeof(keys[0])))
+
+static	void	 arg(struct tbl_node *, int, const char *, int *, int);
 
 
 static void
-arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
+arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
 {
-	const char	*optname;
 	int		 len, want;
 
-	while (isspace((unsigned char)p[*pos]))
+	while (p[*pos] == ' ' || p[*pos] == '\t')
 		(*pos)++;
 
 	/* Arguments are enclosed in parentheses. */
@@ -93,21 +78,18 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 
 	switch (key) {
 	case KEY_DELIM:
-		optname = "delim";
+		mandoc_msg(MANDOCERR_TBLEQN, tbl->parse, ln, *pos, NULL);
 		want = 2;
 		break;
 	case KEY_TAB:
-		optname = "tab";
 		want = 1;
 		if (len == want)
 			tbl->opts.tab = p[*pos];
 		break;
 	case KEY_LINESIZE:
-		optname = "linesize";
 		want = 0;
 		break;
 	case KEY_DPOINT:
-		optname = "decimalpoint";
 		want = 1;
 		if (len == want)
 			tbl->opts.decimal = p[*pos];
@@ -119,11 +101,11 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, enum tbl_ident key)
 
 	if (len == 0)
 		mandoc_msg(MANDOCERR_TBLOPT_NOARG,
-		    tbl->parse, ln, *pos, optname);
+		    tbl->parse, ln, *pos, keys[key].name);
 	else if (want && len != want)
 		mandoc_vmsg(MANDOCERR_TBLOPT_ARGSZ,
-		    tbl->parse, ln, *pos,
-		    "%s want %d have %d", optname, want, len);
+		    tbl->parse, ln, *pos, "%s want %d have %d",
+		    keys[key].name, want, len);
 
 	*pos += len;
 	if (p[*pos] == ')')
@@ -142,7 +124,7 @@ tbl_option(struct tbl_node *tbl, int ln, const char *p)
 
 	pos = 0;
 	for (;;) {
-		while (isspace((unsigned char)p[pos]) || p[pos] == ',')
+		while (p[pos] == ' ' || p[pos] == '\t' || p[pos] == ',')
 			pos++;
 
 		if (p[pos] == ';')
@@ -182,6 +164,6 @@ tbl_option(struct tbl_node *tbl, int ln, const char *p)
 		if (keys[i].key)
 			tbl->opts.opts |= keys[i].key;
 		else
-			arg(tbl, ln, p, &pos, keys[i].ident);
+			arg(tbl, ln, p, &pos, i);
 	}
 }

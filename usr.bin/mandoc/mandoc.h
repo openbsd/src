@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.129 2015/01/26 00:54:09 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.130 2015/01/26 13:02:53 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -181,6 +181,7 @@ enum	mandocerr {
 	MANDOCERR_REQ_UNSUPP, /* unsupported roff request: request */
 	MANDOCERR_TBLLAYOUT, /* unsupported table layout */
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
+	MANDOCERR_TBLEQN, /* eqn in tbl */
 
 	MANDOCERR_MAX
 };
@@ -196,6 +197,7 @@ struct	tbl_opts {
 #define	TBL_OPT_ALLBOX	 (1 << 4)
 #define	TBL_OPT_NOKEEP	 (1 << 5)
 #define	TBL_OPT_NOSPACE	 (1 << 6)
+#define	TBL_OPT_NOWARN	 (1 << 7)
 	int		  cols; /* number of columns */
 };
 
