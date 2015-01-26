@@ -1,0 +1,5 @@
+mandoc: layout.in:8:14: WARNING: skipping vertical bar in tbl layout
+mandoc: layout.in:8:28: WARNING: skipping vertical bar in tbl layout
+mandoc: layout.in:10:7: ERROR: ignore data in cell
+mandoc: layout.in:16:3: WARNING: tbl column starts with span
+mandoc: layout.in:18:3: ERROR: ignore data in cell

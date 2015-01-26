@@ -1,0 +1,25 @@
+TBL-LAYOUT(1)               General Commands Manual              TBL-LAYOUT(1)
+
+
+
+NNAAMMEE
+       tbl-layout - table layout
+
+DDEESSCCRRIIPPTTIIOONN
+       normal text
+
+       +--+-----------++--+
+       |a | bb       c ||d |
+       |e | _f   gg     ||i |
+       +--+-----------++--+
+       normal text
+
+       +------+
+       |a     |
+       |c   d |
+       +------+
+       normal text
+
+
+
+OpenBSD                        January 26, 2015                  TBL-LAYOUT(1)

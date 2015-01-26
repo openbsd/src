@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tbl.7,v 1.11 2015/01/26 13:02:53 schwarze Exp $
+.\"	$OpenBSD: tbl.7,v 1.12 2015/01/26 18:41:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -251,6 +251,9 @@ The following case-insensitive modifier keys are available:
 .Bl -tag -width 2n
 .It Cm b
 Use a bold font for the contents of this column.
+.It Cm d
+Move cell content down to the last cell of a vertical span.
+Currently ignored.
 .It Cm e
 Make this column wider to match the maximum width
 of any other column also having the
@@ -263,6 +266,27 @@ See the
 manual for supported one-character font names.
 .It Cm i
 Use an italic font for the contents of this column.
+.It Cm m
+Specify a cell start macro.
+This is a GNU extension and currently unsupported.
+.It Cm p
+Set the point size to the following unsigned argument,
+or change it by the following signed argument.
+Currently ignored.
+.It Cm v
+Set the vertical line spacing to the following unsigned argument,
+or change it by the following signed argument.
+Currently ignored.
+.It Cm t
+Do not vertically center cell content in the vertical span,
+leave it at the top.
+Currently ignored.
+.It Cm u
+Move cell content up by half a table line.
+Currently ignored.
+.It Cm w
+Specify minimum column width.
+Currently ignored.
 .It Cm x
 After determining the width of all other columns, distribute the
 rest of the line length among all columns having the
@@ -271,15 +295,6 @@ modifier.
 .It Cm z
 Do not use this cell for determining the width of this column.
 .El
-.Pp
-The modifiers
-.Cm d ,
-.Cm t ,
-.Cm u ,
-and
-.Cm w
-are ignored by
-.Xr mandoc 1 .
 .Pp
 For example, the following layout specifies a center-justified column of
 minimum width 10, followed by vertical bar, followed by a left-justified
