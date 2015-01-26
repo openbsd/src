@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.156 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.157 2015/01/26 22:51:37 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -451,6 +451,22 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto exec_abort;
 
+	/* old "stackgap" is gone now */
+	pr->ps_stackgap = 0;
+
+#ifdef MACHINE_STACK_GROWS_UP
+	pr->ps_strings = (vaddr_t)USRSTACK + sgap;
+        if (uvm_map_protect(&vm->vm_map, (vaddr_t)vm->vm_maxsaddr,
+            trunc_page(pr->ps_strings), PROT_NONE, TRUE))
+                goto exec_abort;
+#else
+	pr->ps_strings = (vaddr_t)USRSTACK - sizeof(arginfo) - sgap;
+        if (uvm_map_protect(&vm->vm_map,
+            round_page(pr->ps_strings + sizeof(arginfo)),
+            (vaddr_t)vm->vm_minsaddr, PROT_NONE, TRUE))
+                goto exec_abort;
+#endif
+
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
@@ -466,11 +482,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		goto exec_abort;
 
 	/* copy out the process's ps_strings structure */
-#ifdef MACHINE_STACK_GROWS_UP
-	pr->ps_strings = (vaddr_t)PS_STRINGS + sgap;
-#else
-	pr->ps_strings = (vaddr_t)PS_STRINGS - sgap;
-#endif
 	if (copyout(&arginfo, (char *)pr->ps_strings, sizeof(arginfo)))
 		goto exec_abort;
 

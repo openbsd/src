@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_util.c,v 1.14 2014/12/16 18:30:03 tedu Exp $	*/
+/* 	$OpenBSD: compat_util.c,v 1.15 2015/01/26 22:51:37 kettenis Exp $	*/
 /* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/signalvar.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
@@ -176,24 +177,29 @@ bad:
 caddr_t  
 stackgap_init(struct proc *p)
 {
-        return STACKGAPBASE;
+	struct process *pr = p->p_p;
+
+	if (pr->ps_stackgap == 0) {
+		if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_stackgap,
+		    round_page(STACKGAPLEN), NULL, 0, 0,
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+		    MAP_INHERIT_COPY, MADV_RANDOM, UVM_FLAG_COPYONW)))
+			sigexit(p, SIGILL);
+	}
+
+        return (caddr_t)pr->ps_stackgap;
 }
- 
+
 void *          
 stackgap_alloc(caddr_t *sgp, size_t sz)
 {
 	void *n = (void *) *sgp;
 	caddr_t nsgp;
-	
+
 	sz = ALIGN(sz);
 	nsgp = *sgp + sz;
-#ifdef MACHINE_STACK_GROWS_UP
-	if (nsgp > ((caddr_t)PS_STRINGS) + STACKGAPLEN)
+	if (nsgp > (caddr_t)trunc_page((vaddr_t)n) + STACKGAPLEN)
 		return NULL;
-#else
-	if (nsgp > ((caddr_t)PS_STRINGS))
-		return NULL;
-#endif
 	*sgp = nsgp;
 	return n;
 }

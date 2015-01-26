@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.193 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.194 2015/01/26 22:51:37 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -200,6 +200,7 @@ struct process {
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 	struct	emul *ps_emul;		/* Emulation information */
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
+	vaddr_t	ps_stackgap;		/* User pointer to the "stackgap" */
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
 	u_int	ps_rtableid;		/* Process routing table/domain. */
 	char	ps_nice;		/* Process "nice" value. */
