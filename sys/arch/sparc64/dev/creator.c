@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.48 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: creator.c,v 1.49 2015/01/26 20:25:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -169,7 +169,7 @@ creator_attach(parent, self, aux)
 	DAC_WRITE(sc, FFB_DAC_TYPE, DAC_TYPE_GETREV);
 	sc->sc_dacrev = DAC_READ(sc, FFB_DAC_VALUE) >> 28;
 
-	printf(", model %s, dac %u\n", model, sc->sc_dacrev);
+	printf(", model %s, dac %u", model, sc->sc_dacrev);
 
 	if (sc->sc_type == FFB_AFB)
 		sc->sc_dacrev = 10;
@@ -178,6 +178,8 @@ creator_attach(parent, self, aux)
 	/* linesize has a fixed value, compensate */
 	sc->sc_sunfb.sf_linebytes = 8192;
 	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height * 8192;
+
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
 	    sc->sc_pixel_h);
