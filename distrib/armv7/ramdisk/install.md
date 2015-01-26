@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2014/02/26 16:01:32 maja Exp $
+#	$OpenBSD: install.md,v 1.6 2015/01/26 01:55:55 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ bootargs=sd0i:/bsd
 mmcboot=mmc rescan ; fatload mmc 0 ${LOADADDR} bsd.umg && bootm ${LOADADDR};
 uenvcmd=run mmcboot;
 __EOT
-		cp /mnt/usr/mdec/sunxi/{sunxi-spl,u-boot}.bin /mnt/mnt/
+		cp /mnt/usr/mdec/cubie/u-boot-sunxi-with-spl.bin /mnt/mnt/
 	fi
 }
 

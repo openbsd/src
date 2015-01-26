@@ -76,8 +76,8 @@ rd_teardown:
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 .if ${PLATFORM} == "SUNXI"
-	dd if=/usr/mdec/sunxi/sunxi-spl.bin of=${VND_CDEV} bs=1024 seek=8
-	dd if=/usr/mdec/sunxi/u-boot.bin of=${VND_CDEV} bs=1024 seek=32
+	dd if=/usr/mdec/${BOARD}/u-boot-sunxi-with-spl.bin \
+	    of=${VND_CDEV} bs=1024 seek=8
 .endif
 	-vnconfig -u ${VND}
 

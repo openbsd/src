@@ -1,9 +1,9 @@
-dnl	$OpenBSD: prep,v 1.5 2014/11/14 06:12:36 jsg Exp $
+dnl	$OpenBSD: prep,v 1.6 2015/01/26 01:55:55 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
-board "miniroot-{am335x,beagle,imx,panda,sunxi}-{:--:}OSrev.fs"
+board "miniroot-{am335x,beagle,imx,panda,cubie}-{:--:}OSrev.fs"
 image to an SD card or by booting the ramdisk kernel over the network
 using a TFTP server.
 

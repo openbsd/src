@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.5 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.6 2015/01/26 01:55:55 jsg Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.fs
@@ -17,9 +17,9 @@ TopPart
 			A miniroot filesystem to be used for
 			installation; PandaBoard (ES) version.
 
-	miniroot-sunxi-{:--:}OSrev.fs
+	miniroot-cubie-{:--:}OSrev.fs
 			A miniroot filesystem to be used for
-			installation; Allwinner A1X/A20 version.
+			installation; Cubieboard1 version.
 
 OpenBSDdistsets
 
