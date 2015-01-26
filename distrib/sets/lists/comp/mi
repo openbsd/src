@@ -6096,6 +6096,7 @@
 ./usr/share/man/man9/bus_dmamap_sync.9
 ./usr/share/man/man9/bus_dmamap_unload.9
 ./usr/share/man/man9/bus_dmamem_alloc.9
+./usr/share/man/man9/bus_dmamem_alloc_range.9
 ./usr/share/man/man9/bus_dmamem_free.9
 ./usr/share/man/man9/bus_dmamem_map.9
 ./usr/share/man/man9/bus_dmamem_mmap.9
