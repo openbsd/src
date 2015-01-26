@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2015/01/20 22:58:57 djm Exp $
+#	$OpenBSD: Makefile,v 1.78 2015/01/26 06:12:18 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -67,7 +67,8 @@ LTESTS= 	connect \
 		multipubkey \
 		limit-keytype \
 		hostkey-agent \
-		keygen-knownhosts
+		keygen-knownhosts \
+		hostkey-rotate
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
