@@ -705,7 +705,7 @@ add_rrset(struct query   *query,
 static size_t
 query_synthesize_cname(struct query* q, struct answer* answer, const dname_type* from_name,
 	const dname_type* to_name, domain_type* src, domain_type* to_closest_encloser,
-	domain_type** to_closest_match)
+	domain_type** to_closest_match, uint32_t ttl)
 {
 	/* add temporary domains for from_name and to_name and all
 	   their (not allocated yet) parents */
@@ -767,7 +767,7 @@ query_synthesize_cname(struct query* q, struct answer* answer, const dname_type*
 	rrset->rrs = (rr_type*) region_alloc(q->region, sizeof(rr_type));
 	memset(rrset->rrs, 0, sizeof(rr_type));
 	rrset->rrs->owner = cname_domain;
-	rrset->rrs->ttl = 0;
+	rrset->rrs->ttl = ttl;
 	rrset->rrs->type = TYPE_CNAME;
 	rrset->rrs->klass = CLASS_IN;
 	rrset->rrs->rdata_count = 1;
@@ -1022,7 +1022,7 @@ answer_authoritative(struct nsd   *nsd,
 			exact = namedb_lookup(nsd->db, newname, &closest_match, &closest_encloser);
 			/* synthesize CNAME record */
 			newnum = query_synthesize_cname(q, answer, name, newname,
-				src, closest_encloser, &closest_match);
+				src, closest_encloser, &closest_match, rrset->rrs[0].ttl);
 			if(!newnum) {
 				/* could not synthesize the CNAME. */
 				/* return previous CNAMEs to make resolver recurse for us */
