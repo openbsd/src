@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.8 2014/12/04 08:26:16 brad Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.9 2015/01/26 04:17:21 brad Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -298,9 +298,10 @@ ahci_samsung_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	/*
 	 * Disable MSI with the Samsung S4LN053X01 SSD controller as found
-	 * in some Apple MacBook Air models such as the 6,1 and 6,2.
+	 * in some Apple MacBook Air models such as the 6,1 and 6,2, as well
+	 * as the XP941 SSD controller.
 	 * https://bugzilla.kernel.org/show_bug.cgi?id=60731
-	 *
+	 * https://bugzilla.kernel.org/show_bug.cgi?id=89171
 	 */
 	sc->sc_flags |= AHCI_F_NO_MSI;
 
