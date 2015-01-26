@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.256 2015/01/20 23:14:00 deraadt Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.257 2015/01/26 03:04:46 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -792,6 +792,7 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 	int len, cancelled_forwarding = 0;
 	int local = sockaddr_is_local(hostaddr);
 	int r, want_cert = key_is_cert(host_key), host_ip_differ = 0;
+	int hostkey_trusted = 0; /* Known or explicitly accepted by user */
 	struct hostkeys *host_hostkeys, *ip_hostkeys;
 	u_int i;
 
@@ -900,6 +901,7 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			free(ra);
 			free(fp);
 		}
+		hostkey_trusted = 1;
 		break;
 	case HOST_NEW:
 		if (options.host_key_alias == NULL && port != 0 &&
@@ -963,6 +965,7 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			free(fp);
 			if (!confirm(msg))
 				goto fail;
+			hostkey_trusted = 1; /* user explicitly confirmed */
 		}
 		/*
 		 * If not in strict mode, add the key automatically to the
@@ -1159,6 +1162,12 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 		} else {
 			logit("%s", msg);
 		}
+	}
+
+	if (!hostkey_trusted && options.update_hostkeys) {
+		debug("%s: hostkey not known or explicitly trusted: "
+		    "disabling UpdateHostkeys", __func__);
+		options.update_hostkeys = 0;
 	}
 
 	free(ip);
