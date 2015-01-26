@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.201 2015/01/21 21:32:42 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.202 2015/01/26 11:36:38 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -544,11 +544,6 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifp, error, tableid);
 
-	/* Adjust the refcount */
-	if (error == 0 && rt->rt_refcnt <= 0) {
-		rt->rt_refcnt++;
-		rtfree(rt);
-	}
 	return (error);
 }
 
@@ -556,11 +551,19 @@ int
 rtflushclone1(struct radix_node *rn, void *arg, u_int id)
 {
 	struct rtentry	*rt, *parent;
+	int error;
 
 	rt = (struct rtentry *)rn;
 	parent = (struct rtentry *)arg;
-	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent)
-		rtdeletemsg(rt, id);
+	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent) {
+		error = rtdeletemsg(rt, id);
+
+		/* Adjust the refcount */
+		if (error == 0 && rt->rt_refcnt <= 0) {
+			rt->rt_refcnt++;
+			rtfree(rt);
+		}
+	}
 	return 0;
 }
 
@@ -1631,8 +1634,17 @@ rt_if_remove_rtdelete(struct radix_node *rn, void *vifp, u_int id)
 	if (rt->rt_ifp == ifp) {
 		int	cloning = (rt->rt_flags & RTF_CLONING);
 
-		if (rtdeletemsg(rt, id) == 0 && cloning)
-			return (EAGAIN);
+		if (rtdeletemsg(rt, id) == 0) {
+
+			/* Adjust the refcount */
+			if (rt->rt_refcnt <= 0) {
+				rt->rt_refcnt++;
+				rtfree(rt);
+			}
+
+			if (cloning)
+				return (EAGAIN);
+		}
 	}
 
 	/*

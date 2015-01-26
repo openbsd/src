@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.141 2015/01/13 12:16:18 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.142 2015/01/26 11:36:38 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -789,6 +789,7 @@ arptfree(struct llinfo_arp *la)
 	struct rtentry *rt = la->la_rt;
 	struct sockaddr_dl *sdl;
 	u_int tid = 0;
+	int error;
 
 	if (rt == NULL)
 		panic("arptfree");
@@ -803,7 +804,13 @@ arptfree(struct llinfo_arp *la)
 	if (rt->rt_ifp)
 		tid = rt->rt_ifp->if_rdomain;
 
-	rtdeletemsg(rt, tid);
+	error = rtdeletemsg(rt, tid);
+
+	/* Adjust the refcount */
+	if (error == 0 && rt->rt_refcnt <= 0) {
+		rt->rt_refcnt++;
+		rtfree(rt);
+	}
 }
 
 /*
