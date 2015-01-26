@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.79 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.80 2015/01/26 13:06:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,6 +418,10 @@ static const SSL_CIPHER cipher_aliases[] = {
 	},
 
 	/* MAC aliases */
+	{
+		.name = SSL_TXT_AEAD,
+		.algorithm_mac = SSL_AEAD,
+	},
 	{
 		.name = SSL_TXT_MD5,
 		.algorithm_mac = SSL_MD5,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.77 2015/01/22 09:12:57 reyk Exp $ */
+/* $OpenBSD: ssl.h,v 1.78 2015/01/26 13:06:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -290,6 +290,7 @@ extern "C" {
 #define SSL_TXT_CAMELLIA	"CAMELLIA"
 #define SSL_TXT_CHACHA20	"CHACHA20"
 
+#define SSL_TXT_AEAD		"AEAD"
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA" /* same as "SHA1" */
