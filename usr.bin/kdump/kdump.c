@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.97 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.98 2015/01/26 04:38:23 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -871,7 +871,7 @@ static const formatter scargs[][8] = {
     [SYS_openat]	= { Atfd, Ppath, PASS_TWO, Flagsandmodename },
     [SYS_readlinkat]	= { Atfd, Ppath, Pptr, Psize },
     [SYS_renameat]	= { Atfd, Ppath, Atfd, Ppath },
-    [SYS_symlinkat]	= { Atfd, Ppath, Ppath },
+    [SYS_symlinkat]	= { Ppath, Atfd, Ppath },
     [SYS_unlinkat]	= { Atfd, Ppath, Atflagsname },
     [SYS___set_tcb]	= { Pptr },
 };
