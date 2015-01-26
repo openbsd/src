@@ -1,0 +1,74 @@
+#	$OpenBSD: files.exynos,v 1.1 2015/01/26 02:48:24 bmercer Exp $
+
+define exynos {}
+device exynos: exynos
+attach exynos at mainbus
+file	arch/armv7/exynos/exynos_machdep.c	exynos	needs-flag
+file	arch/armv7/exynos/exynos.c		exynos
+file	arch/armv7/exynos/exynos5.c		exynos
+
+# serial ports
+device exuart
+attach	exuart at exynos
+attach	exuart at fdt with exuart_fdt
+file	arch/armv7/exynos/exuart.c		exuart | exuart_fdt
+
+device exdisplay: wsemuldisplaydev, rasops16
+attach exdisplay at exynos
+attach exdisplay at fdt with exdisplay_fdt
+file	arch/armv7/exynos/exdisplay.c		exdisplay | exdisplay_fdt
+
+device exclock
+attach exclock at exynos
+attach exclock at fdt with exclock_fdt
+file	arch/armv7/exynos/exclock.c		exclock | exclock_fdt
+
+device expower
+attach expower at exynos
+attach expower at fdt with expower_fdt
+file	arch/armv7/exynos/expower.c		expower | expower_fdt
+
+device exsysreg
+attach exsysreg at exynos
+attach exsysreg at fdt with exsysreg_fdt
+file	arch/armv7/exynos/exsysreg.c		exsysreg | exsysreg_fdt
+
+device exmct
+attach exmct at exynos
+attach exmct at fdt with exmct_fdt
+file	arch/armv7/exynos/exmct.c		exmct | exiomuxc_fdt
+
+device exdog
+attach exdog at exynos
+attach exdog at fdt with exdog_fdt
+file	arch/armv7/exynos/exdog.c		exdog | exdog_fdt
+
+device exgpio
+attach exgpio at exynos
+attach exgpio at fdt with exgpio_fdt
+file	arch/armv7/exynos/exgpio.c		exgpio | exgpio_fdt
+
+device	exiic: i2cbus
+attach	exiic at exynos
+attach	exiic at fdt with exiic_fdt
+file	arch/armv7/exynos/exiic.c		exiic | exiic_fdt
+
+device exehci {}
+attach exehci at exynos with exehci
+attach exehci at fdt with exehci_fdt
+attach ehci at exehci with ehci_ex
+file	arch/armv7/exynos/exehci.c		exehci | exehci_fdt
+
+device exesdhc: sdmmcbus
+attach exesdhc at exynos
+attach exesdhc at fdt with exesdhc_fdt
+file	arch/armv7/exynos/exesdhc.c		exesdhc | exesdhc_fdt
+
+device	crosec: wskbddev
+attach	crosec at i2c
+file	arch/armv7/exynos/crosec.c		crosec
+file	arch/armv7/exynos/crosec_kbd.c		crosec
+
+device	tpspmic
+attach	tpspmic at i2c
+file	arch/armv7/exynos/tps65090.c		tpspmic
