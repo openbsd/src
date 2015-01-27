@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.47 2015/01/24 15:13:55 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.48 2015/01/27 05:10:30 dlg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -95,24 +95,10 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
 #include <uvm/uvm_extern.h>
-
-#include "ioapic.h"
-
-#if NIOAPIC > 0
-#include <machine/i82093var.h>
-#include <machine/mpbiosvar.h>
-#endif
 
 int _bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
     struct proc *, int, paddr_t *, int *, int);
-
-#define	IDTVEC(name)	__CONCAT(X,name)
-typedef void (vector)(void);
-extern vector *IDTVEC(intr)[];
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
