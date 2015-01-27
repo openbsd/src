@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.59 2014/12/18 16:23:25 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.60 2015/01/27 02:15:30 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -315,7 +315,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof (struct trapframe);
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
-	/* pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdir - KERNBASE; XXX ??? */
 
 	cpu_default_ldt(ci);	/* Use the `global' ldt until one alloc'd */
 #endif
