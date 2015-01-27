@@ -20,6 +20,16 @@ DDEESSCCRRIIPPTTIIOONN
        +------+
        normal text
 
+       +--++--+
+       |a ||b |
+       +--++--+
+       |c | d |
+       +--+---+
+        e   f
+       --------
+
+       normal text
+
 
 
 OpenBSD                        January 26, 2015                  TBL-LAYOUT(1)

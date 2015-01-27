@@ -5,7 +5,7 @@ tbl-layout \- table layout
 normal text
 .TS
 box tab(:);
-lp-1|l bsil|||l,l|l	ilb^i|||l.
+l|p-1l bsil|||l,l|l	ilb^|i||l.
 a:b:c:d
 e:f:g:h:i
 .TE
@@ -17,6 +17,21 @@ l ^
 l l.
 a:b
 c:d
+.TE
+.PP
+normal text
+.TS
+tab(:);
+||l||l||
+|l|l|
+ll.
+_
+a:b
+_
+c:d
+_
+e:f
+_
 .TE
 .PP
 normal text

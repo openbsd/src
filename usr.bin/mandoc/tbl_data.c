@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_data.c,v 1.20 2015/01/21 00:45:16 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.21 2015/01/27 05:20:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -188,15 +188,15 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 	dp->opts = &tbl->opts;
 	dp->layout = rp;
 	dp->head = tbl->first_head;
+	dp->prev = tbl->last_span;
 
-	if (tbl->last_span) {
-		tbl->last_span->next = dp;
-		tbl->last_span = dp;
-	} else {
-		tbl->last_span = tbl->first_span = dp;
+	if (dp->prev == NULL) {
+		tbl->first_span = dp;
 		tbl->current_span = NULL;
 		dp->flags |= TBL_SPAN_FIRST;
-	}
+	} else
+		dp->prev->next = dp;
+	tbl->last_span = dp;
 
 	return(dp);
 }

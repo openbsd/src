@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.131 2015/01/26 18:41:45 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.132 2015/01/27 05:20:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -206,6 +206,8 @@ struct	tbl_opts {
 #define	TBL_OPT_NOSPACE	 (1 << 6)
 #define	TBL_OPT_NOWARN	 (1 << 7)
 	int		  cols; /* number of columns */
+	int		  lvert; /* width of left vertical line */
+	int		  rvert; /* width of right vertical line */
 };
 
 /*
@@ -215,7 +217,6 @@ struct	tbl_opts {
  */
 struct	tbl_head {
 	int		  ident; /* 0 <= unique id < cols */
-	int		  vert; /* width of preceding vertical line */
 	struct tbl_head	 *next;
 	struct tbl_head	 *prev;
 };
@@ -238,7 +239,7 @@ enum	tbl_cellt {
  */
 struct	tbl_cell {
 	struct tbl_cell	 *next;
-	int		  vert; /* width of preceding vertical line */
+	int		  vert; /* width of subsequent vertical line */
 	enum tbl_cellt	  pos;
 	size_t		  spacing;
 	int		  flags;
@@ -260,7 +261,7 @@ struct	tbl_row {
 	struct tbl_row	 *next;
 	struct tbl_cell	 *first;
 	struct tbl_cell	 *last;
-	int		  vert; /* trailing vertical line */
+	int		  vert; /* width of left vertical line */
 };
 
 enum	tbl_datt {
@@ -299,12 +300,13 @@ struct	tbl_span {
 	struct tbl_row	 *layout; /* layout row */
 	struct tbl_dat	 *first;
 	struct tbl_dat	 *last;
+	struct tbl_span	 *prev;
+	struct tbl_span	 *next;
 	int		  line; /* parse line */
 	int		  flags;
 #define	TBL_SPAN_FIRST	 (1 << 0)
 #define	TBL_SPAN_LAST	 (1 << 1)
 	enum tbl_spant	  pos;
-	struct tbl_span	 *next;
 };
 
 enum	eqn_boxt {

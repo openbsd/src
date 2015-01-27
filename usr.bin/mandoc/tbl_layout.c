@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.19 2015/01/26 18:41:45 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.20 2015/01/27 05:20:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,7 +52,7 @@ static	void		 mods(struct tbl_node *, struct tbl_cell *,
 static	void		 cell(struct tbl_node *, struct tbl_row *,
 				int, const char *, int *);
 static	struct tbl_cell *cell_alloc(struct tbl_node *, struct tbl_row *,
-				enum tbl_cellt, int vert);
+				enum tbl_cellt);
 
 
 static void
@@ -67,7 +67,7 @@ mod:
 
 	/* Row delimiters and cell specifiers end modifier lists. */
 
-	if (strchr(".,-=^_ACLNRSaclnrs|", p[*pos]) != NULL)
+	if (strchr(".,-=^_ACLNRSaclnrs", p[*pos]) != NULL)
 		return;
 
 	/* Throw away parenthesised expression. */
@@ -135,6 +135,13 @@ mod:
 	case 'z':
 		cp->flags |= TBL_CELL_WIGN;
 		goto mod;
+	case '|':
+		if (cp->vert < 2)
+			cp->vert++;
+		else
+			mandoc_msg(MANDOCERR_TBLLAYOUT_VERT,
+			    tbl->parse, ln, *pos - 1, NULL);
+		goto mod;
 	default:
 		mandoc_vmsg(MANDOCERR_TBLLAYOUT_CHAR, tbl->parse,
 		    ln, *pos - 1, "%c", p[*pos - 1]);
@@ -167,17 +174,15 @@ static void
 cell(struct tbl_node *tbl, struct tbl_row *rp,
 		int ln, const char *p, int *pos)
 {
-	int		 vert, i;
+	int		 i;
 	enum tbl_cellt	 c;
 
-	/* Handle vertical lines. */
+	/* Handle leading vertical lines */
 
-	vert = 0;
-again:
 	while (p[*pos] == ' ' || p[*pos] == '\t' || p[*pos] == '|') {
 		if (p[*pos] == '|') {
-			if (vert < 2)
-				vert++;
+			if (rp->vert < 2)
+				rp->vert++;
 			else
 				mandoc_msg(MANDOCERR_TBLLAYOUT_VERT,
 				    tbl->parse, ln, *pos, NULL);
@@ -185,12 +190,12 @@ again:
 		(*pos)++;
 	}
 
-	/* Handle trailing vertical lines */
+again:
+	while (p[*pos] == ' ' || p[*pos] == '\t')
+		(*pos)++;
 
-	if ('.' == p[*pos] || '\0' == p[*pos]) {
-		rp->vert = vert;
+	if (p[*pos] == '.' || p[*pos] == '\0')
 		return;
-	}
 
 	/* Parse the column position (`c', `l', `r', ...). */
 
@@ -223,7 +228,7 @@ again:
 
 	/* Allocate cell then parse its modifiers. */
 
-	mods(tbl, cell_alloc(tbl, rp, c, vert), ln, p, pos);
+	mods(tbl, cell_alloc(tbl, rp, c), ln, p, pos);
 }
 
 void
@@ -251,13 +256,34 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p)
 		case '.':  /* End of layout. */
 			pos++;
 			tbl->part = TBL_PART_DATA;
-			if (tbl->first_row != NULL)
+
+			/*
+			 * When the layout is completely empty,
+			 * default to one left-justified column.
+			 */
+
+			if (tbl->first_row == NULL) {
+				mandoc_msg(MANDOCERR_TBLLAYOUT_NONE,
+				    tbl->parse, ln, pos, NULL);
+				rp = mandoc_calloc(1, sizeof(*rp));
+				cell_alloc(tbl, rp, TBL_CELL_LEFT);
+				tbl->first_row = tbl->last_row = rp;
 				return;
-			mandoc_msg(MANDOCERR_TBLLAYOUT_NONE,
-			    tbl->parse, ln, pos, NULL);
-			rp = mandoc_calloc(1, sizeof(*rp));
-			cell_alloc(tbl, rp, TBL_CELL_LEFT, 0);
-			tbl->first_row = tbl->last_row = rp;
+			}
+
+			/*
+			 * Search for the widest line
+			 * along the left and right margins.
+			 */
+
+			for (rp = tbl->first_row; rp; rp = rp->next) {
+				if (tbl->opts.lvert < rp->vert)
+					tbl->opts.lvert = rp->vert;
+				if (rp->last != NULL &&
+				    rp->last->head == tbl->last_head &&
+				    tbl->opts.rvert < rp->last->vert)
+					tbl->opts.rvert = rp->last->vert;
+			}
 			return;
 		default:  /* Cell. */
 			break;
@@ -276,8 +302,7 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p)
 }
 
 static struct tbl_cell *
-cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos,
-		int vert)
+cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos)
 {
 	struct tbl_cell	*p, *pp;
 	struct tbl_head	*h, *hp;
@@ -294,7 +319,6 @@ cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos,
 	rp->last = p;
 
 	p->pos = pos;
-	p->vert = vert;
 
 	/* Re-use header. */
 
@@ -305,7 +329,6 @@ cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos,
 
 	hp = mandoc_calloc(1, sizeof(struct tbl_head));
 	hp->ident = tbl->opts.cols++;
-	hp->vert = vert;
 
 	if (tbl->last_head) {
 		hp->prev = tbl->last_head;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_term.c,v 1.20 2014/12/24 15:37:23 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.21 2015/01/27 05:20:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,15 +32,12 @@ static	void	tbl_char(struct termp *, char, size_t);
 static	void	tbl_data(struct termp *, const struct tbl_opts *,
 			const struct tbl_dat *,
 			const struct roffcol *);
-static	size_t	tbl_rulewidth(struct termp *, const struct tbl_head *);
-static	void	tbl_hframe(struct termp *, const struct tbl_span *, int);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *,
 			const struct roffcol *);
 static	void	tbl_number(struct termp *, const struct tbl_opts *,
 			const struct tbl_dat *,
 			const struct roffcol *);
-static	void	tbl_hrule(struct termp *, const struct tbl_span *);
-static	void	tbl_vrule(struct termp *, const struct tbl_head *);
+static	void	tbl_hrule(struct termp *, const struct tbl_span *, int);
 static	void	tbl_word(struct termp *, const struct tbl_dat *);
 
 
@@ -62,9 +59,9 @@ void
 term_tbl(struct termp *tp, const struct tbl_span *sp)
 {
 	const struct tbl_head	*hp;
+	const struct tbl_cell	*cp;
 	const struct tbl_dat	*dp;
-	struct roffcol		*col;
-	int			 spans;
+	int			 horiz, spans, vert;
 	size_t			 rmargin, maxrmargin;
 
 	rmargin = tp->rmargin;
@@ -82,7 +79,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	 * calculate the table widths and decimal positions.
 	 */
 
-	if (TBL_SPAN_FIRST & sp->flags) {
+	if (sp->flags & TBL_SPAN_FIRST) {
 		term_flushln(tp);
 
 		tp->tbl.len = term_tbl_len;
@@ -90,24 +87,25 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.arg = tp;
 
 		tblcalc(&tp->tbl, sp, rmargin - tp->offset);
-	}
 
-	/* Horizontal frame at the start of boxed tables. */
+		/* Horizontal frame at the start of boxed tables. */
 
-	if (TBL_SPAN_FIRST & sp->flags) {
-		if (TBL_OPT_DBOX & sp->opts->opts)
-			tbl_hframe(tp, sp, 1);
-		if (TBL_OPT_DBOX & sp->opts->opts ||
-		    TBL_OPT_BOX  & sp->opts->opts)
-			tbl_hframe(tp, sp, 0);
+		if (sp->opts->opts & TBL_OPT_DBOX)
+			tbl_hrule(tp, sp, 2);
+		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX))
+			tbl_hrule(tp, sp, 1);
 	}
 
 	/* Vertical frame at the start of each row. */
 
-	if ((TBL_OPT_BOX | TBL_OPT_DBOX) & sp->opts->opts ||
-	    (sp->head != NULL && sp->head->vert))
-		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
-		    TBL_SPAN_DHORIZ == sp->pos ? "+" : "|");
+	horiz = sp->pos == TBL_SPAN_HORIZ || sp->pos == TBL_SPAN_DHORIZ;
+
+	if (sp->layout->vert ||
+	    (sp->prev != NULL && sp->prev->layout->vert) ||
+	    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX))
+		term_word(tp, horiz ? "+" : "|");
+	else if (sp->opts->lvert)
+		tbl_char(tp, horiz ? '-' : ASCII_NBRSP, 1);
 
 	/*
 	 * Now print the actual data itself depending on the span type.
@@ -115,54 +113,61 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	 * data printed by matching data to header.
 	 */
 
-	switch (sp->pos) {
-	case TBL_SPAN_HORIZ:
-		/* FALLTHROUGH */
-	case TBL_SPAN_DHORIZ:
-		tbl_hrule(tp, sp);
-		break;
-	case TBL_SPAN_DATA:
+	if (sp->pos == TBL_SPAN_DATA) {
 		/* Iterate over template headers. */
+		cp = sp->layout->first;
 		dp = sp->first;
 		spans = 0;
-		for (hp = sp->head; hp; hp = hp->next) {
+		for (hp = sp->head; hp != NULL; hp = hp->next) {
 
 			/*
-			 * If the current data header is invoked during
-			 * a spanner ("spans" > 0), don't emit anything
-			 * at all.
+			 * Remeber whether we need a vertical bar
+			 * after this cell.
 			 */
 
-			if (--spans >= 0)
+			vert = cp == NULL ? 0 : cp->vert;
+
+			/*
+			 * Print the data and advance to the next cell.
+			 */
+
+			if (spans == 0) {
+				tbl_data(tp, sp->opts, dp,
+				    tp->tbl.cols + hp->ident);
+				if (dp != NULL) {
+					spans = dp->spans;
+					dp = dp->next;
+				}
+			} else
+				spans--;
+			if (cp != NULL)
+				cp = cp->next;
+
+			/*
+			 * Separate columns, except in the middle
+			 * of spans and after the last cell.
+			 */
+
+			if (hp->next == NULL || spans)
 				continue;
 
-			/* Separate columns. */
-
-			if (NULL != hp->prev)
-				tbl_vrule(tp, hp);
-
-			col = &tp->tbl.cols[hp->ident];
-			tbl_data(tp, sp->opts, dp, col);
-
-			/*
-			 * Go to the next data cell and assign the
-			 * number of subsequent spans, if applicable.
-			 */
-
-			if (dp) {
-				spans = dp->spans;
-				dp = dp->next;
-			}
+			tbl_char(tp, ASCII_NBRSP, 1);
+			if (vert > 0)
+				tbl_char(tp, '|', vert);
+			if (vert < 2 && hp->next != NULL)
+				tbl_char(tp, ASCII_NBRSP, 2 - vert);
 		}
-		break;
-	}
+	} else if (horiz)
+		tbl_hrule(tp, sp, 0);
 
 	/* Vertical frame at the end of each row. */
 
-	if ((TBL_OPT_BOX | TBL_OPT_DBOX) & sp->opts->opts ||
-	    sp->layout->vert)
-		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
-		    TBL_SPAN_DHORIZ == sp->pos ? "+" : " |");
+	if (sp->layout->last->vert ||
+	    (sp->prev != NULL && sp->prev->layout->last->vert) ||
+	    (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)))
+		term_word(tp, horiz ? "+" : " |");
+	else if (sp->opts->rvert)
+		tbl_char(tp, horiz ? '-' : ASCII_NBRSP, 1);
 	term_flushln(tp);
 
 	/*
@@ -170,14 +175,13 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	 * existing table configuration and set it to NULL.
 	 */
 
-	if (TBL_SPAN_LAST & sp->flags) {
-		if (TBL_OPT_DBOX & sp->opts->opts ||
-		    TBL_OPT_BOX  & sp->opts->opts) {
-			tbl_hframe(tp, sp, 0);
+	if (sp->flags & TBL_SPAN_LAST) {
+		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX)) {
+			tbl_hrule(tp, sp, 1);
 			tp->skipvsp = 1;
 		}
-		if (TBL_OPT_DBOX & sp->opts->opts) {
-			tbl_hframe(tp, sp, 1);
+		if (sp->opts->opts & TBL_OPT_DBOX) {
+			tbl_hrule(tp, sp, 2);
 			tp->skipvsp = 2;
 		}
 		assert(tp->tbl.cols);
@@ -192,66 +196,46 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 }
 
 /*
- * Horizontal rules extend across the entire table.
- * Calculate the width by iterating over columns.
- */
-static size_t
-tbl_rulewidth(struct termp *tp, const struct tbl_head *hp)
-{
-	size_t		 width;
-
-	width = tp->tbl.cols[hp->ident].width;
-
-	/* Account for leading blanks. */
-	if (hp->prev)
-		width += 2 - hp->vert;
-
-	/* Account for trailing blank. */
-	width++;
-
-	return(width);
-}
-
-/*
- * Rules inside the table can be single or double
- * and have crossings with vertical rules marked with pluses.
+ * Kinds of horizontal rulers:
+ * 0: inside the table (single or double line with crossings)
+ * 1: inner frame (single line with crossings and ends)
+ * 2: outer frame (single line without crossings with ends)
  */
 static void
-tbl_hrule(struct termp *tp, const struct tbl_span *sp)
+tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 {
-	const struct tbl_head *hp;
-	char		 c;
+	const struct tbl_cell *c1, *c2;
+	int	 vert;
+	char	 line, cross;
 
-	c = '-';
-	if (TBL_SPAN_DHORIZ == sp->pos)
-		c = '=';
+	line = (kind == 0 && TBL_SPAN_DHORIZ == sp->pos) ? '=' : '-';
+	cross = (kind < 2) ? '+' : '-';
 
-	for (hp = sp->head; hp; hp = hp->next) {
-		if (hp->prev && hp->vert)
-			tbl_char(tp, '+', hp->vert);
-		tbl_char(tp, c, tbl_rulewidth(tp, hp));
+	if (kind)
+		term_word(tp, "+");
+	c1 = sp->layout->first;
+	c2 = sp->prev == NULL ? NULL : sp->prev->layout->first;
+	if (c2 == c1)
+		c2 = NULL;
+	for (;;) {
+		tbl_char(tp, line, tp->tbl.cols[c1->head->ident].width + 1);
+		vert = c1->vert;
+		if ((c1 = c1->next) == NULL)
+			 break;
+		if (c2 != NULL) {
+			if (vert < c2->vert)
+				vert = c2->vert;
+			c2 = c2->next;
+		}
+		if (vert)
+			tbl_char(tp, cross, vert);
+		if (vert < 2)
+			tbl_char(tp, line, 2 - vert);
 	}
-}
-
-/*
- * Rules above and below the table are always single
- * and have an additional plus at the beginning and end.
- * For double frames, this function is called twice,
- * and the outer one does not have crossings.
- */
-static void
-tbl_hframe(struct termp *tp, const struct tbl_span *sp, int outer)
-{
-	const struct tbl_head *hp;
-
-	term_word(tp, "+");
-	for (hp = sp->head; hp; hp = hp->next) {
-		if (hp->prev && hp->vert)
-			tbl_char(tp, (outer ? '-' : '+'), hp->vert);
-		tbl_char(tp, '-', tbl_rulewidth(tp, hp));
+	if (kind) {
+		term_word(tp, "+");
+		term_flushln(tp);
 	}
-	term_word(tp, "+");
-	term_flushln(tp);
 }
 
 static void
@@ -310,17 +294,6 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 		abort();
 		/* NOTREACHED */
 	}
-}
-
-static void
-tbl_vrule(struct termp *tp, const struct tbl_head *hp)
-{
-
-	tbl_char(tp, ASCII_NBRSP, 1);
-	if (0 < hp->vert)
-		tbl_char(tp, '|', hp->vert);
-	if (2 > hp->vert)
-		tbl_char(tp, ASCII_NBRSP, 2 - hp->vert);
 }
 
 static void

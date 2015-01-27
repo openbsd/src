@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.14 2015/01/26 00:54:09 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.15 2015/01/27 05:20:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -171,11 +171,15 @@ void
 tbl_end(struct tbl_node **tblp)
 {
 	struct tbl_node	*tbl;
+	struct tbl_span *sp;
 
 	tbl = *tblp;
 	*tblp = NULL;
 
-	if (NULL == tbl->first_span || NULL == tbl->first_span->first)
+	sp = tbl->first_span;
+	while (sp != NULL && sp->first == NULL)
+		sp = sp->next;
+	if (sp == NULL)
 		mandoc_msg(MANDOCERR_TBLNODATA, tbl->parse,
 		    tbl->line, tbl->pos, NULL);
 
