@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.158 2014/10/07 20:23:32 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.159 2015/01/27 03:17:36 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -636,7 +636,7 @@ void			sr_hotplug_register(struct sr_discipline *, void *);
 void			sr_hotplug_unregister(struct sr_discipline *, void *);
 
 /* Hotspare and rebuild. */
-void			sr_hotspare_rebuild_callback(void *, void *);
+void			sr_hotspare_rebuild_callback(void *);
 
 /* work units & ccbs */
 int			sr_ccb_alloc(struct sr_discipline *);
@@ -667,7 +667,7 @@ int			sr_meta_native_read(struct sr_discipline *, dev_t,
 			    struct sr_metadata *, void *);
 int			sr_meta_validate(struct sr_discipline *, dev_t,
 			    struct sr_metadata *, void *);
-void			sr_meta_save_callback(void *, void *);
+void			sr_meta_save_callback(void *);
 int			sr_meta_save(struct sr_discipline *, u_int32_t);
 void			sr_meta_getdevname(struct sr_softc *, dev_t, char *,
 			    int);

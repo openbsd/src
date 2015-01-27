@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.69 2014/12/20 16:34:27 krw Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.70 2015/01/27 03:17:36 dlg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -599,7 +599,7 @@ int inteldrm_alloc_screen(void *, const struct wsscreen_descr *,
 void inteldrm_free_screen(void *, void *);
 int inteldrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
-void inteldrm_doswitch(void *, void *);
+void inteldrm_doswitch(void *);
 int inteldrm_load_font(void *, void *, struct wsdisplay_font *);
 int inteldrm_list_font(void *, struct wsdisplay_font *);
 int inteldrm_getchar(void *, int, int, struct wsdisplay_charcell *);
@@ -719,13 +719,13 @@ inteldrm_show_screen(void *v, void *cookie, int waitok,
 		return (EAGAIN);
 	}
 
-	inteldrm_doswitch(v, cookie);
+	inteldrm_doswitch(v);
 
 	return (0);
 }
 
 void
-inteldrm_doswitch(void *v, void *dummy)
+inteldrm_doswitch(void *v)
 {
 	struct inteldrm_softc *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
@@ -895,7 +895,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&dev_priv->error_completion_lock, IPL_NONE);
 	rw_init(&dev_priv->rps.hw_lock, "rpshw");
 
-	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv, NULL);
+	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv);
 
 	/* we need to use this api for now due to sharing with intagp */
 	bar = vga_pci_bar_info(vga_sc, (IS_I9XX(dev) ? 0 : 1));

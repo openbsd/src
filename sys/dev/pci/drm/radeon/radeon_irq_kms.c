@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.4 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.5 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -76,7 +76,7 @@ radeon_driver_irq_handler_kms(void *arg)
  * a drm hotplug event to alert userspace.
  */
 void
-radeon_hotplug_work_func(void *arg1, void *arg2)
+radeon_hotplug_work_func(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
 	struct drm_device *dev = rdev->ddev;
@@ -250,8 +250,8 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 {
 	int r = 0;
 
-	task_set(&rdev->hotplug_task, radeon_hotplug_work_func, rdev, NULL);
-	task_set(&rdev->audio_task, r600_audio_update_hdmi, rdev, NULL);
+	task_set(&rdev->hotplug_task, radeon_hotplug_work_func, rdev);
+	task_set(&rdev->audio_task, r600_audio_update_hdmi, rdev);
 
 	mtx_init(&rdev->irq.lock, IPL_TTY);
 	r = drm_vblank_init(rdev->ddev, rdev->num_crtc);

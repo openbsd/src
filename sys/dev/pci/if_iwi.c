@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.121 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.122 2015/01/27 03:17:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -72,7 +72,7 @@ int		iwi_match(struct device *, void *, void *);
 void		iwi_attach(struct device *, struct device *, void *);
 int		iwi_activate(struct device *, int);
 void		iwi_wakeup(struct iwi_softc *);
-void		iwi_init_task(void *, void *);
+void		iwi_init_task(void *);
 int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
@@ -322,7 +322,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 #endif
 
-	task_set(&sc->init_task, iwi_init_task, sc, NULL);
+	task_set(&sc->init_task, iwi_init_task, sc);
 	return;
 
 fail:	while (--ac >= 0)
@@ -359,11 +359,11 @@ iwi_wakeup(struct iwi_softc *sc)
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
-	iwi_init_task(sc, NULL);
+	iwi_init_task(sc);
 }
 
 void
-iwi_init_task(void *arg1, void *arg2)
+iwi_init_task(void *arg1)
 {
 	struct iwi_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;

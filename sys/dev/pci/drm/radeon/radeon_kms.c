@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.31 2014/12/20 16:34:27 krw Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.32 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -302,7 +302,7 @@ int radeondrm_alloc_screen(void *, const struct wsscreen_descr *,
 void radeondrm_free_screen(void *, void *);
 int radeondrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
-void radeondrm_doswitch(void *, void *);
+void radeondrm_doswitch(void *);
 #ifdef __sparc64__
 void radeondrm_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 #endif
@@ -385,13 +385,13 @@ radeondrm_show_screen(void *v, void *cookie, int waitok,
 		return (EAGAIN);
 	}
 
-	radeondrm_doswitch(v, cookie);
+	radeondrm_doswitch(v);
 
 	return (0);
 }
 
 void
-radeondrm_doswitch(void *v, void *dummy)
+radeondrm_doswitch(void *v)
 {
 	struct rasops_info *ri = v;
 	struct radeon_device *rdev = ri->ri_hw;
@@ -698,7 +698,7 @@ radeondrm_attachhook(void *xsc)
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &rdev->ro;
 
-	task_set(&rdev->switchtask, radeondrm_doswitch, ri, NULL);
+	task_set(&rdev->switchtask, radeondrm_doswitch, ri);
 
 	if (ri->ri_bits == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.46 2014/12/19 07:23:57 deraadt Exp $ */
+/*	$OpenBSD: qla.c,v 1.47 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -89,7 +89,7 @@ void		qla_clear_isr(struct qla_softc *, u_int16_t);
 
 void		qla_update_start(struct qla_softc *, int);
 void		qla_update_done(struct qla_softc *, int);
-void		qla_do_update(void *, void*);
+void		qla_do_update(void *);
 
 void		qla_put_marker(struct qla_softc *, void *);
 void		qla_put_cmd(struct qla_softc *, void *, struct scsi_xfer *,
@@ -649,7 +649,7 @@ qla_attach(struct qla_softc *sc)
 	}
 
 	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO);
-	task_set(&sc->sc_update_task, qla_do_update, sc, NULL);
+	task_set(&sc->sc_update_task, qla_do_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */
 	for (i = 0; i < QLA_WAIT_FOR_LOOP * 10000; i++) {
@@ -667,7 +667,7 @@ qla_attach(struct qla_softc *sc)
 	}
 
 	if (sc->sc_loop_up) {
-		qla_do_update(sc, NULL);
+		qla_do_update(sc);
 	} else {
 		DPRINTF(QLA_D_PORT, "%s: loop still down, giving up\n",
 		    DEVNAME(sc));
@@ -1741,7 +1741,7 @@ qla_clear_port_lists(struct qla_softc *sc)
 }
 
 void
-qla_do_update(void *xsc, void *x)
+qla_do_update(void *xsc)
 {
 	struct qla_softc *sc = xsc;
 	int firstport, lastport;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.137 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.138 2015/01/27 03:17:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,7 @@ void		iwn_radiotap_attach(struct iwn_softc *);
 int		iwn_detach(struct device *, int);
 int		iwn_activate(struct device *, int);
 void		iwn_wakeup(struct iwn_softc *);
-void		iwn_init_task(void *, void *);
+void		iwn_init_task(void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
 int		iwn_init_otprom(struct iwn_softc *);
@@ -533,7 +533,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	iwn_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, iwn_calib_timeout, sc);
-	task_set(&sc->init_task, iwn_init_task, sc, NULL);
+	task_set(&sc->init_task, iwn_init_task, sc);
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -766,11 +766,11 @@ iwn_wakeup(struct iwn_softc *sc)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	if (reg & 0xff00)
 		pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
-	iwn_init_task(sc, NULL);
+	iwn_init_task(sc);
 }
 
 void
-iwn_init_task(void *arg1, void *arg2)
+iwn_init_task(void *arg1)
 {
 	struct iwn_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;

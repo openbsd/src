@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.129 2015/01/08 14:29:18 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.130 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ void nd6_llinfo_timer(void *);
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_timer_ch;
 struct task nd6_timer_task;
-void nd6_timer_work(void *, void *);
+void nd6_timer_work(void *);
 
 struct timeout nd6_rs_output_timer;
 int nd6_rs_output_timeout = ND6_RS_OUTPUT_INTERVAL;
@@ -134,7 +134,7 @@ nd6_init(void)
 	/* initialization of the default router list */
 	TAILQ_INIT(&nd_defrouter);
 
-	task_set(&nd6_timer_task, nd6_timer_work, NULL, NULL);
+	task_set(&nd6_timer_task, nd6_timer_work, NULL);
 
 	nd6_init_done = 1;
 
@@ -493,7 +493,7 @@ nd6_llinfo_timer(void *arg)
  * ND6 timer routine to expire default route list and prefix list
  */
 void
-nd6_timer_work(void *ignored_arg1, void *ignored_arg2)
+nd6_timer_work(void *null)
 {
 	int s;
 	struct nd_defrouter *dr, *ndr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.122 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.123 2015/01/27 03:17:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -74,7 +74,7 @@ void		wpi_radiotap_attach(struct wpi_softc *);
 int		wpi_detach(struct device *, int);
 int		wpi_activate(struct device *, int);
 void		wpi_wakeup(struct wpi_softc *);
-void		wpi_init_task(void *, void *);
+void		wpi_init_task(void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
 int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
@@ -324,7 +324,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	wpi_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
-	task_set(&sc->init_task, wpi_init_task, sc, NULL);
+	task_set(&sc->init_task, wpi_init_task, sc);
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -412,11 +412,11 @@ wpi_wakeup(struct wpi_softc *sc)
 	reg &= ~0xff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 
-	wpi_init_task(sc, NULL);
+	wpi_init_task(sc);
 }
 
 void
-wpi_init_task(void *arg1, void *args2)
+wpi_init_task(void *arg1)
 {
 	struct wpi_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;

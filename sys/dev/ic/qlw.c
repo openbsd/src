@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.26 2014/12/19 07:23:57 deraadt Exp $ */
+/*	$OpenBSD: qlw.c,v 1.27 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -76,7 +76,7 @@ int		qlw_config_bus(struct qlw_softc *, int);
 int		qlw_config_target(struct qlw_softc *, int, int);
 void		qlw_update_bus(struct qlw_softc *, int);
 void		qlw_update_target(struct qlw_softc *, int, int);
-void		qlw_update_task(void *, void *);
+void		qlw_update_task(void *);
 
 void		qlw_handle_intr(struct qlw_softc *, u_int16_t, u_int16_t);
 void		qlw_set_ints(struct qlw_softc *, int);
@@ -173,7 +173,7 @@ qlw_attach(struct qlw_softc *sc)
 	int reset_delay;
 	int bus;
 
-	task_set(&sc->sc_update_task, qlw_update_task, sc, NULL);
+	task_set(&sc->sc_update_task, qlw_update_task, sc);
 
 	switch (sc->sc_isp_gen) {
 	case QLW_GEN_ISP1000:
@@ -538,9 +538,9 @@ qlw_update_target(struct qlw_softc *sc, int bus, int target)
 }
 
 void
-qlw_update_task(void *arg1, void *arg2)
+qlw_update_task(void *xsc)
 {
-	struct qlw_softc *sc = arg1;
+	struct qlw_softc *sc = xsc;
 	int bus;
 
 	for (bus = 0; bus < sc->sc_numbusses; bus++)

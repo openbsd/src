@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.7 2014/03/09 11:07:18 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.8 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -967,7 +967,7 @@ void drm_kms_helper_hotplug_event(struct drm_device *dev)
 EXPORT_SYMBOL(drm_kms_helper_hotplug_event);
 
 #define DRM_OUTPUT_POLL_SECONDS 10
-static void drm_output_poll_execute(void *arg1, void *arg2)
+static void drm_output_poll_execute(void *arg1)
 {
 	struct drm_device *dev = (struct drm_device *)arg1;
 	struct drm_connector *connector;
@@ -1057,8 +1057,7 @@ EXPORT_SYMBOL(drm_kms_helper_poll_enable);
 
 void drm_kms_helper_poll_init(struct drm_device *dev)
 {
-	task_set(&dev->mode_config.poll_task, drm_output_poll_execute, dev,
-	    NULL);
+	task_set(&dev->mode_config.poll_task, drm_output_poll_execute, dev);
 	timeout_set(&dev->mode_config.output_poll_to, drm_output_poll_tick,
 	    dev);
 	dev->mode_config.poll_enabled = true;

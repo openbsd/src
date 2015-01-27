@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.12 2014/11/01 23:58:28 tedu Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.13 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -178,12 +178,10 @@ taskq_create_thread(void *arg)
 }
 
 void
-task_set(struct task *t, void (*fn)(void *, void *), void *arg1, void *arg2)
+task_set(struct task *t, void (*fn)(void *), void *arg)
 {
 	t->t_func = fn;
-	t->t_arg1 = arg1;
-	t->t_arg2 = arg2;
-
+	t->t_arg = arg;
 	t->t_flags = 0;
 }
 
@@ -262,7 +260,7 @@ taskq_thread(void *xtq)
 		KERNEL_UNLOCK();
 
 	while (taskq_next_work(tq, &work)) {
-		(*work.t_func)(work.t_arg1, work.t_arg2);
+		(*work.t_func)(work.t_arg);
 		sched_pause();
 	}
 

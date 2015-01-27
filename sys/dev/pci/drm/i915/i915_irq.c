@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.13 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.14 2015/01/27 03:17:36 dlg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -278,7 +278,7 @@ static int i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 /*
  * Handle hotplug events outside the interrupt handler proper.
  */
-static void i915_hotplug_work_func(void *arg1, void *arg2)
+static void i915_hotplug_work_func(void *arg1)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -358,7 +358,7 @@ static void notify_ring(struct drm_device *dev,
 	}
 }
 
-static void gen6_pm_rps_work(void *arg1, void *arg2)
+static void gen6_pm_rps_work(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -402,7 +402,7 @@ static void gen6_pm_rps_work(void *arg1, void *arg2)
  * this event, userspace should try to remap the bad rows since statistically
  * it is likely the same row is more likely to go bad again.
  */
-static void ivybridge_parity_work(void *arg1, void *arg2)
+static void ivybridge_parity_work(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -832,7 +832,7 @@ done:
  * Fire an error uevent so userspace can see that a hang or error
  * was detected.
  */
-static void i915_error_work_func(void *arg1, void *arg2)
+static void i915_error_work_func(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -2693,14 +2693,11 @@ void intel_irq_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
-	task_set(&dev_priv->hotplug_task, i915_hotplug_work_func,
-	    dev_priv, NULL);
-	task_set(&dev_priv->error_task, i915_error_work_func,
-	    dev_priv, NULL);
-	task_set(&dev_priv->rps.task, gen6_pm_rps_work,
-	    dev_priv, NULL);
+	task_set(&dev_priv->hotplug_task, i915_hotplug_work_func, dev_priv);
+	task_set(&dev_priv->error_task, i915_error_work_func, dev_priv);
+	task_set(&dev_priv->rps.task, gen6_pm_rps_work, dev_priv);
 	task_set(&dev_priv->l3_parity.error_task, ivybridge_parity_work,
-	    dev_priv, NULL);
+	    dev_priv);
 
 	dev->driver->get_vblank_counter = i915_get_vblank_counter;
 	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */

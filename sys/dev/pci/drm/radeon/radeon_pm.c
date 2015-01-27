@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.7 2014/02/15 12:43:38 jsg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.8 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@ ssize_t	 radeon_set_pm_profile(struct device *, struct device_attribute *,
 ssize_t	 radeon_set_pm_method(struct device *, struct device_attribute *,
 	     const char *, size_t);
 void	 radeon_dynpm_idle_tick(void *);
-void	 radeon_dynpm_idle_work_handler(void *, void *);
+void	 radeon_dynpm_idle_work_handler(void *);
 
 extern int ticks;
 
@@ -659,7 +659,7 @@ int radeon_pm_init(struct radeon_device *rdev)
 		return ret;
 
 	task_set(&rdev->pm.dynpm_idle_task, radeon_dynpm_idle_work_handler,
-	    rdev, NULL);
+	    rdev);
 	timeout_set(&rdev->pm.dynpm_idle_to, radeon_dynpm_idle_tick, rdev);
 
 	if (rdev->pm.num_power_states > 1) {
@@ -829,7 +829,7 @@ radeon_dynpm_idle_tick(void *arg)
 }
 
 void
-radeon_dynpm_idle_work_handler(void *arg1, void *arg2)
+radeon_dynpm_idle_work_handler(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
 	int resched;

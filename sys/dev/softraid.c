@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.347 2014/12/19 17:15:16 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.348 2015/01/27 03:17:35 dlg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -142,7 +142,7 @@ void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
 int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
 			    daddr_t, long);
-void			sr_wu_done_callback(void *, void *);
+void			sr_wu_done_callback(void *);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -612,14 +612,14 @@ sr_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt_hdr *om)
 }
 
 void
-sr_meta_save_callback(void *arg1, void *arg2)
+sr_meta_save_callback(void *xsd)
 {
-	struct sr_discipline	*sd = arg1;
+	struct sr_discipline	*sd = xsd;
 	int			s;
 
 	s = splbio();
 
-	if (sr_meta_save(arg1, SR_META_DIRTY))
+	if (sr_meta_save(sd, SR_META_DIRTY))
 		printf("%s: save metadata failed\n", DEVNAME(sd->sd_sc));
 
 	sd->sd_must_flush = 0;
@@ -2113,8 +2113,8 @@ sr_wu_alloc(struct sr_discipline *sd, int wu_size)
 		wu = malloc(wu_size, M_DEVBUF, M_WAITOK | M_ZERO);
 		TAILQ_INSERT_TAIL(&sd->sd_wu, wu, swu_next);
 		TAILQ_INIT(&wu->swu_ccb);
-		task_set(&wu->swu_task, sr_wu_done_callback, sd, wu);
 		wu->swu_dis = sd;
+		task_set(&wu->swu_task, sr_wu_done_callback, wu);
 		sr_wu_put(sd, wu);
 	}
 
@@ -2244,10 +2244,10 @@ sr_wu_done(struct sr_workunit *wu)
 }
 
 void
-sr_wu_done_callback(void *arg1, void *arg2)
+sr_wu_done_callback(void *xwu)
 {
-	struct sr_discipline	*sd = (struct sr_discipline *)arg1;
-	struct sr_workunit	*wu = (struct sr_workunit *)arg2;
+	struct sr_workunit	*wu = xwu;
+	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_workunit	*wup;
 	int			s;
@@ -2975,9 +2975,10 @@ done:
 }
 
 void
-sr_hotspare_rebuild_callback(void *arg1, void *arg2)
+sr_hotspare_rebuild_callback(void *xsd)
 {
-	sr_hotspare_rebuild((struct sr_discipline *)arg1);
+	struct sr_discipline *sd = xsd;
+	sr_hotspare_rebuild(sd);
 }
 
 void
@@ -3920,9 +3921,9 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_set_vol_state = sr_set_vol_state;
 	sd->sd_start_discipline = NULL;
 
-	task_set(&sd->sd_meta_save_task, sr_meta_save_callback, sd, NULL);
+	task_set(&sd->sd_meta_save_task, sr_meta_save_callback, sd);
 	task_set(&sd->sd_hotspare_rebuild_task, sr_hotspare_rebuild_callback,
-	    sd, NULL);
+	    sd);
 
 	switch (level) {
 	case 0:

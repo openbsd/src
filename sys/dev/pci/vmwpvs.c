@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.10 2014/07/13 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.11 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -380,7 +380,7 @@ void		vmwpvs_cmd(struct vmwpvs_softc *, u_int32_t, void *, size_t);
 int		vmwpvs_get_config(struct vmwpvs_softc *);
 void		vmwpvs_setup_rings(struct vmwpvs_softc *);
 void		vmwpvs_setup_msg_ring(struct vmwpvs_softc *);
-void		vmwpvs_msg_task(void *, void *);
+void		vmwpvs_msg_task(void *);
 
 struct vmwpvs_ccb *
 		vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *);
@@ -423,7 +423,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_width = 16;
 	mtx_init(&sc->sc_ring_mtx, IPL_BIO);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
-	task_set(&sc->sc_msg_task, vmwpvs_msg_task, sc, NULL);
+	task_set(&sc->sc_msg_task, vmwpvs_msg_task, sc);
 	SIMPLEQ_INIT(&sc->sc_ccb_list);
 
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
@@ -767,7 +767,7 @@ vmwpvs_intr(void *xsc)
 }
 
 void
-vmwpvs_msg_task(void *xsc, void *xnull)
+vmwpvs_msg_task(void *xsc)
 {
 	struct vmwpvs_softc *sc = xsc;
 	volatile struct vmwpvw_ring_state *s =

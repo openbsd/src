@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.97 2014/09/16 05:12:04 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.98 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -340,7 +340,7 @@ void		mpii_eventack(void *, void *);
 void		mpii_eventack_done(struct mpii_ccb *);
 void		mpii_event_process(struct mpii_softc *, struct mpii_rcb *);
 void		mpii_event_done(struct mpii_softc *, struct mpii_rcb *);
-void		mpii_event_sas(void *, void *);
+void		mpii_event_sas(void *);
 void		mpii_event_raid(struct mpii_softc *,
 		    struct mpii_msg_event_reply *);
 
@@ -1550,7 +1550,7 @@ mpii_eventnotify(struct mpii_softc *sc)
 
 	SIMPLEQ_INIT(&sc->sc_evt_sas_queue);
 	mtx_init(&sc->sc_evt_sas_mtx, IPL_BIO);
-	task_set(&sc->sc_evt_sas_task, mpii_event_sas, sc, NULL);
+	task_set(&sc->sc_evt_sas_task, mpii_event_sas, sc);
 
 	SIMPLEQ_INIT(&sc->sc_evt_ack_queue);
 	mtx_init(&sc->sc_evt_ack_mtx, IPL_BIO);
@@ -1695,7 +1695,7 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 }
 
 void
-mpii_event_sas(void *xsc, void *x)
+mpii_event_sas(void *xsc)
 {
 	struct mpii_softc *sc = xsc;
 	struct mpii_rcb *rcb, *next;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.12 2014/06/11 08:47:53 blambert Exp $
+.\"	$OpenBSD: task_add.9,v 1.13 2015/01/27 03:17:35 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 11 2014 $
+.Dd $Mdocdate: January 27 2015 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -32,14 +32,14 @@
 .Ft void
 .Fn "taskq_destroy" "struct taskq *tq"
 .Ft void
-.Fn "task_set" "struct task *t" "void (*fn)(void *, void *)" "void *arg1" "void *arg2"
+.Fn "task_set" "struct task *t" "void (*fn)(void *)" "void *arg"
 .Ft int
 .Fn "task_add" "struct taskq *tq" "struct task *t"
 .Ft int
 .Fn "task_del" "struct taskq *tq" "struct task *t"
 .Vt extern struct taskq *const systq;
 .Vt extern struct taskq *const systqmp;
-.Fn "TASK_INITIALIZER" "void (*fn)(void *, void *)" "void *arg1" "void *arg2"
+.Fn "TASK_INITIALIZER" "void (*fn)(void *)" "void *arg"
 .Sh DESCRIPTION
 The
 taskq
@@ -90,10 +90,8 @@ and
 .Fa t
 will be prepared to call the function
 .Fa fn
-with the arguments specified by
-.Fa arg1
-and
-.Fa arg2 .
+with the argument specified by
+.Fa arg .
 Once initialised, the
 .Fa t
 structure can be used repeatedly in calls to
@@ -143,10 +141,8 @@ The task will be prepared to call the function specified by the
 .Fa fn
 argument with the
 .Fa void *
-arguments given in
-.Fa arg1
-and
-.Fa arg2 .
+argument given in
+.Fa arg .
 .Sh CONTEXT
 .Fn taskq_create
 and

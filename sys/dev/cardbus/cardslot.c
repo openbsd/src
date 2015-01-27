@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.17 2014/12/19 05:48:36 tedu Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.18 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 STATIC void cardslotattach(struct device *, struct device *, void *);
 
 STATIC int cardslotmatch(struct device *, void *, void *);
-STATIC void cardslot_event(void *arg1, void *arg2);
+STATIC void cardslot_event(void *arg);
 STATIC void cardslot_process_event(struct cardslot_softc *);
 
 STATIC int cardslot_cb_print(void *aux, const char *pcic);
@@ -111,7 +111,7 @@ cardslotattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cb_softc = NULL;
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
-	task_set(&sc->sc_event_task, cardslot_event, sc, NULL);
+	task_set(&sc->sc_event_task, cardslot_event, sc);
 
 	printf(" slot %d flags %x\n", sc->sc_slot,
 	    sc->sc_dev.dv_cfdata->cf_flags);
@@ -225,7 +225,7 @@ cardslot_event_throw(struct cardslot_softc *sc, int ev)
  *
  */
 STATIC void
-cardslot_event(void *arg1, void *arg2)
+cardslot_event(void *arg1)
 {
 	struct cardslot_softc *sc = arg1;
 

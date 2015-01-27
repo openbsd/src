@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.129 2014/12/19 17:14:39 tedu Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.130 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -317,7 +317,7 @@ const char *sppp_ipv6cp_opt_name(u_char opt);
 void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
 			       struct in6_addr *dst, struct in6_addr *srcmask);
 void sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src, const struct in6_addr *dst);
-void sppp_update_ip6_addr(void *arg1, void *arg2);
+void sppp_update_ip6_addr(void *sp);
 void sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest);
 
 void sppp_pap_input(struct sppp *sp, struct mbuf *m);
@@ -358,8 +358,8 @@ void sppp_print_string(const char *p, u_short len);
 void sppp_qflush(struct ifqueue *ifq);
 int sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int);
 void sppp_update_gw(struct ifnet *ifp);
-void sppp_set_ip_addrs(void *, void *);
-void sppp_clear_ip_addrs(void *, void *);
+void sppp_set_ip_addrs(void *);
+void sppp_clear_ip_addrs(void *);
 void sppp_set_phase(struct sppp *sp);
 
 /* our control protocol descriptors */
@@ -2609,8 +2609,8 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPCP] = 0;
-	task_set(&sp->ipcp.set_addr_task, sppp_set_ip_addrs, sp, NULL);
-	task_set(&sp->ipcp.clear_addr_task, sppp_clear_ip_addrs, sp, NULL);
+	task_set(&sp->ipcp.set_addr_task, sppp_set_ip_addrs, sp);
+	task_set(&sp->ipcp.clear_addr_task, sppp_clear_ip_addrs, sp);
 }
 
 void
@@ -3058,8 +3058,7 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->ipv6cp.flags = 0;
 	sp->state[IDX_IPV6CP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPV6CP] = 0;
-	task_set(&sp->ipv6cp.set_addr_task, sppp_update_ip6_addr, sp,
-	    &sp->ipv6cp.req_ifid);
+	task_set(&sp->ipv6cp.set_addr_task, sppp_update_ip6_addr, sp);
 }
 
 void
@@ -4558,7 +4557,7 @@ sppp_update_gw(struct ifnet *ifp)
  * If an address is 0, leave it the way it is.
  */
 void
-sppp_set_ip_addrs(void *arg1, void *arg2)
+sppp_set_ip_addrs(void *arg1)
 {
 	struct sppp *sp = arg1;
 	u_int32_t myaddr;
@@ -4631,7 +4630,7 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
  * Clear IP addresses.
  */
 void
-sppp_clear_ip_addrs(void *arg1, void *arg2)
+sppp_clear_ip_addrs(void *arg1)
 {
 	struct sppp *sp = (struct sppp *)arg1;
 	struct ifnet *ifp = &sp->pp_if;
@@ -4728,11 +4727,11 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 
 /* Task to update my IPv6 address from process context. */
 void
-sppp_update_ip6_addr(void *arg1, void *arg2)
+sppp_update_ip6_addr(void *arg)
 {
-	struct sppp *sp = arg1;
+	struct sppp *sp = arg;
 	struct ifnet *ifp = &sp->pp_if;
-	struct in6_aliasreq *ifra = arg2;
+	struct in6_aliasreq *ifra = &sp->ipv6cp.req_ifid;
 	struct in6_addr mask = in6mask128;
 	struct in6_ifaddr *ia6;
 	int s, error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.198 2014/09/17 10:11:33 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.199 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -146,7 +146,7 @@ void			mpi_eventack_done(struct mpi_ccb *);
 int			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
 void			mpi_evt_sas_detach(void *, void *);
 void			mpi_evt_sas_detach_done(struct mpi_ccb *);
-void			mpi_fc_rescan(void *, void *);
+void			mpi_fc_rescan(void *);
 
 int			mpi_req_cfg_header(struct mpi_softc *, u_int8_t,
 			    u_int8_t, u_int32_t, int, void *);
@@ -222,7 +222,7 @@ mpi_attach(struct mpi_softc *sc)
 	printf("\n");
 
 	rw_init(&sc->sc_lock, "mpi_lock");
-	task_set(&sc->sc_evt_rescan, mpi_fc_rescan, sc, NULL);
+	task_set(&sc->sc_evt_rescan, mpi_fc_rescan, sc);
 
 	/* disable interrupts */
 	mpi_write(sc, MPI_INTR_MASK,
@@ -2473,7 +2473,7 @@ mpi_evt_sas_detach_done(struct mpi_ccb *ccb)
 }
 
 void
-mpi_fc_rescan(void *xsc, void *null)
+mpi_fc_rescan(void *xsc)
 {
 	struct mpi_softc			*sc = xsc;
 	struct mpi_cfg_hdr			hdr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.133 2015/01/13 02:24:26 dlg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.134 2015/01/27 03:17:37 dlg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ int swap_off(struct proc *, struct swapdev *);
 
 void sw_reg_strategy(struct swapdev *, struct buf *, int);
 void sw_reg_iodone(struct buf *);
-void sw_reg_iodone_internal(void *, void *);
+void sw_reg_iodone_internal(void *);
 void sw_reg_start(struct swapdev *);
 
 int uvm_swap_io(struct vm_page **, int, int, int);
@@ -1231,7 +1231,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 
 		/* patch it back to the vnx */
 		nbp->vb_vnx = vnx;
-		task_set(&nbp->vb_task, sw_reg_iodone_internal, nbp, NULL);
+		task_set(&nbp->vb_task, sw_reg_iodone_internal, nbp);
 
 		s = splbio();
 		if (vnx->vx_error != 0) {
@@ -1315,7 +1315,7 @@ sw_reg_iodone(struct buf *bp)
 }
 
 void
-sw_reg_iodone_internal(void *xvbp, void *null)
+sw_reg_iodone_internal(void *xvbp)
 {
 	struct vndbuf *vbp = xvbp;
 	struct vndxfer *vnx = vbp->vb_vnx;

@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.10 2014/07/11 08:48:38 jasper Exp $	 */
+/* $OpenBSD: viomb.c,v 1.11 2015/01/27 03:17:36 dlg Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -106,7 +106,7 @@ struct viomb_softc {
 
 int	viomb_match(struct device *, void *, void *);
 void	viomb_attach(struct device *, struct device *, void *);
-void	viomb_worker(void *, void *);
+void	viomb_worker(void *);
 void	viomb_inflate(struct viomb_softc *);
 void	viomb_deflate(struct viomb_softc *);
 int	viomb_config_change(struct virtio_softc *);
@@ -205,7 +205,7 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_taskq = taskq_create("viomb", 1, IPL_BIO);
 	if (sc->sc_taskq == NULL)
 		goto err_dmamap;
-	task_set(&sc->sc_task, viomb_worker, sc, NULL);
+	task_set(&sc->sc_task, viomb_worker, sc);
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
@@ -251,7 +251,7 @@ viomb_config_change(struct virtio_softc *vsc)
 }
 
 void
-viomb_worker(void *arg1, void *arg2)
+viomb_worker(void *arg1)
 {
 	struct viomb_softc *sc = (struct viomb_softc *)arg1;
 	int s;

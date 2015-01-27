@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.78 2014/12/17 06:58:10 guenther Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.79 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2464,7 +2464,7 @@ i915_gem_retire_requests(struct drm_device *dev)
 }
 
 void
-i915_gem_retire_work_handler(void *arg1, void *unused)
+i915_gem_retire_work_handler(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev;
@@ -4352,7 +4352,7 @@ i915_gem_load(struct drm_device *dev)
 	for (i = 0; i < I915_MAX_NUM_FENCES; i++)
 		INIT_LIST_HEAD(&dev_priv->fence_regs[i].lru_list);
 	task_set(&dev_priv->mm.retire_task, i915_gem_retire_work_handler,
-	    dev_priv, NULL);
+	    dev_priv);
 	timeout_set(&dev_priv->mm.retire_timer, inteldrm_timeout, dev_priv);
 #if 0
 	init_completion(&dev_priv->error_completion);

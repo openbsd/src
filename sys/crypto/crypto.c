@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.72 2014/10/23 00:15:09 dlg Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.73 2015/01/27 03:17:35 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -370,7 +370,7 @@ int
 crypto_dispatch(struct cryptop *crp)
 {
 	if (crypto_taskq && !(crp->crp_flags & CRYPTO_F_NOQUEUE)) {
-		task_set(&crp->crp_task, (void (*))crypto_invoke, crp, NULL);
+		task_set(&crp->crp_task, (void (*))crypto_invoke, crp);
 		task_add(crypto_taskq, &crp->crp_task);
 	} else {
 		crypto_invoke(crp);
@@ -516,8 +516,7 @@ crypto_done(struct cryptop *crp)
 		/* not from the crypto queue, wakeup the userland process */
 		crp->crp_callback(crp);
 	} else {
-		task_set(&crp->crp_task, (void (*))crp->crp_callback,
-		    crp, NULL);
+		task_set(&crp->crp_task, (void (*))crp->crp_callback, crp);
 		task_add(crypto_taskq, &crp->crp_task);
 	}
 }

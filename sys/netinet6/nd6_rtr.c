@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.96 2014/12/22 11:17:20 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.97 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ void in6_init_address_ltimes(struct nd_prefix *, struct in6_addrlifetime *);
 
 int rt6_deleteroute(struct radix_node *, void *, u_int);
 
-void nd6_addr_add(void *, void *);
+void nd6_addr_add(void *);
 
 extern int nd6_recalc_reachtm_interval;
 
@@ -1045,7 +1045,7 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 		new->ndpr_prefix.sin6_addr.s6_addr32[i] &=
 		    new->ndpr_mask.s6_addr32[i];
 
-	task_set(&new->ndpr_task, nd6_addr_add, new, NULL);
+	task_set(&new->ndpr_task, nd6_addr_add, new);
 
 	s = splsoftnet();
 	/* link ndpr_entry to nd_prefix list */
@@ -1396,7 +1396,7 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 }
 
 void
-nd6_addr_add(void *prptr, void *arg2)
+nd6_addr_add(void *prptr)
 {
 	struct nd_prefix *pr = (struct nd_prefix *)prptr;
 	struct in6_ifaddr *ia6;

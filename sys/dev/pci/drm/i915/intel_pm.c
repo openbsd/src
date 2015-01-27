@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.21 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.22 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -275,7 +275,7 @@ bool intel_fbc_enabled(struct drm_device *dev)
 	return dev_priv->display.fbc_enabled(dev);
 }
 
-static void intel_fbc_work_fn(void *arg1, void *arg2)
+static void intel_fbc_work_fn(void *arg1)
 {
 	struct intel_fbc_work *work = arg1;
 	struct drm_device *dev = work->crtc->dev;
@@ -354,7 +354,7 @@ void intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 	work->crtc = crtc;
 	work->fb = crtc->fb;
 	work->interval = interval;
-	task_set(&work->task, intel_fbc_work_fn, work, NULL);
+	task_set(&work->task, intel_fbc_work_fn, work);
 	timeout_set(&work->to, intel_fbc_work_tick, work);
 
 	dev_priv->fbc_work = work;
@@ -3486,7 +3486,7 @@ void intel_disable_gt_powersave(struct drm_device *dev)
 	}
 }
 
-static void intel_gen6_powersave_work(void *arg1, void *arg2)
+static void intel_gen6_powersave_work(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -4519,7 +4519,7 @@ void intel_pm_init(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	task_set(&dev_priv->rps.delayed_resume_task, intel_gen6_powersave_work,
-	    dev_priv, NULL);
+	    dev_priv);
 	timeout_set(&dev_priv->rps.delayed_resume_to, intel_gen6_powersave_tick,
 	    dev_priv);
 }

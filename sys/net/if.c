@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.313 2015/01/21 02:23:14 guenther Exp $	*/
+/*	$OpenBSD: if.c,v 1.314 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 void	if_congestion_clear(void *);
 int	if_group_egress_build(void);
 
-void	if_link_state_change_task(void *, void *);
+void	if_link_state_change_task(void *);
 
 #ifdef DDB
 void	ifa_print_all(void);
@@ -265,8 +265,7 @@ if_attachsetup(struct ifnet *ifp)
 	timeout_set(ifp->if_slowtimo, if_slowtimo, ifp);
 	if_slowtimo(ifp);
 
-	task_set(ifp->if_linkstatetask, if_link_state_change_task,
-	    ifp, NULL);
+	task_set(ifp->if_linkstatetask, if_link_state_change_task, ifp);
 
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
@@ -1119,7 +1118,7 @@ if_link_state_change(struct ifnet *ifp)
  * Process a link state change.
  */
 void
-if_link_state_change_task(void *arg, void *unused)
+if_link_state_change_task(void *arg)
 {
 	struct ifnet *ifp = arg;
 	int s;

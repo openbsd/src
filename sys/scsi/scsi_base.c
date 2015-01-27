@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.217 2014/09/20 16:18:23 kettenis Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.218 2015/01/27 03:17:37 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -73,8 +73,8 @@ struct scsi_plug {
 	int			how;
 };
 
-void	scsi_plug_probe(void *, void *);
-void	scsi_plug_detach(void *, void *);
+void	scsi_plug_probe(void *);
+void	scsi_plug_detach(void *);
 
 struct scsi_xfer *	scsi_xs_io(struct scsi_link *, void *, int);
 
@@ -145,7 +145,7 @@ scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
 	if (p == NULL)
 		return (ENOMEM);
 
-	task_set(&p->task, scsi_plug_probe, p, NULL);
+	task_set(&p->task, scsi_plug_probe, p);
 	p->sc = sc;
 	p->target = target;
 	p->lun = lun;
@@ -164,7 +164,7 @@ scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
 	if (p == NULL)
 		return (ENOMEM);
 
-	task_set(&p->task, scsi_plug_detach, p, NULL);
+	task_set(&p->task, scsi_plug_detach, p);
 	p->sc = sc;
 	p->target = target;
 	p->lun = lun;
@@ -176,7 +176,7 @@ scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
 }
 
 void
-scsi_plug_probe(void *xp, void *null)
+scsi_plug_probe(void *xp)
 {
 	struct scsi_plug *p = xp;
 	struct scsibus_softc *sc = p->sc;
@@ -188,7 +188,7 @@ scsi_plug_probe(void *xp, void *null)
 }
 
 void
-scsi_plug_detach(void *xp, void *null)
+scsi_plug_detach(void *xp)
 {
 	struct scsi_plug *p = xp;
 	struct scsibus_softc *sc = p->sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.9 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.10 2015/01/27 03:17:36 dlg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -43,7 +43,7 @@
 static int ttm_bo_setup_vm(struct ttm_buffer_object *bo);
 static int ttm_bo_swapout(struct ttm_mem_shrink *shrink);
 static void ttm_bo_global_kobj_release(struct ttm_bo_global *glob);
-void	 ttm_bo_delayed_workqueue(void *, void *);
+void	 ttm_bo_delayed_workqueue(void *);
 
 int ttm_bo_move_buffer(struct ttm_buffer_object *, struct ttm_placement *,
     bool, bool);
@@ -713,7 +713,7 @@ static void ttm_bo_delayed_tick(void *arg)
 }
 
 void
-ttm_bo_delayed_workqueue(void *arg1, void *arg2)
+ttm_bo_delayed_workqueue(void *arg1)
 {
 	struct ttm_bo_device *bdev = arg1;
 
@@ -1592,7 +1592,7 @@ int ttm_bo_device_init(struct ttm_bo_device *bdev,
 	if (unlikely(ret != 0))
 		goto out_no_addr_mm;
 
-	task_set(&bdev->task, ttm_bo_delayed_workqueue, bdev, NULL);
+	task_set(&bdev->task, ttm_bo_delayed_workqueue, bdev);
 	timeout_set(&bdev->to, ttm_bo_delayed_tick, bdev);
 	INIT_LIST_HEAD(&bdev->ddestroy);
 	bdev->dev_mapping = NULL;

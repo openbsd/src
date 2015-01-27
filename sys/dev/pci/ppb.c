@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.60 2014/11/24 13:48:49 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.61 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -107,13 +107,13 @@ struct cfdriver ppb_cd = {
 
 void	ppb_alloc_resources(struct ppb_softc *, struct pci_attach_args *);
 int	ppb_intr(void *);
-void	ppb_hotplug_insert(void *, void *);
+void	ppb_hotplug_insert(void *);
 void	ppb_hotplug_insert_finish(void *);
 int	ppb_hotplug_fixup(struct pci_attach_args *);
 int	ppb_hotplug_fixup_type0(pci_chipset_tag_t, pcitag_t, pcitag_t);
 int	ppb_hotplug_fixup_type1(pci_chipset_tag_t, pcitag_t, pcitag_t);
-void	ppb_hotplug_rescan(void *, void *);
-void	ppb_hotplug_remove(void *, void *);
+void	ppb_hotplug_rescan(void *);
+void	ppb_hotplug_remove(void *);
 int	ppbprint(void *, const char *pnp);
 
 int
@@ -177,9 +177,9 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
-		task_set(&sc->sc_insert_task, ppb_hotplug_insert, sc, NULL);
-		task_set(&sc->sc_rescan_task, ppb_hotplug_rescan, sc, NULL);
-		task_set(&sc->sc_remove_task, ppb_hotplug_remove, sc, NULL);
+		task_set(&sc->sc_insert_task, ppb_hotplug_insert, sc);
+		task_set(&sc->sc_rescan_task, ppb_hotplug_rescan, sc);
+		task_set(&sc->sc_remove_task, ppb_hotplug_remove, sc);
 		timeout_set(&sc->sc_to, ppb_hotplug_insert_finish, sc);
 
 #ifdef __i386__
@@ -676,9 +676,9 @@ extern int pci_enumerate_bus(struct pci_softc *,
 #endif
 
 void
-ppb_hotplug_insert(void *arg1, void *arg2)
+ppb_hotplug_insert(void *xsc)
 {
-	struct ppb_softc *sc = arg1;
+	struct ppb_softc *sc = xsc;
 	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
 	if (!LIST_EMPTY(&psc->sc_devs))
@@ -790,9 +790,9 @@ ppb_hotplug_fixup_type1(pci_chipset_tag_t pc, pcitag_t tag, pcitag_t bridgetag)
 }
 
 void
-ppb_hotplug_rescan(void *arg1, void *arg2)
+ppb_hotplug_rescan(void *xsc)
 {
-	struct ppb_softc *sc = arg1;
+	struct ppb_softc *sc = xsc;
 	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
 	if (psc) {
@@ -805,9 +805,9 @@ ppb_hotplug_rescan(void *arg1, void *arg2)
 }
 
 void
-ppb_hotplug_remove(void *arg1, void *arg2)
+ppb_hotplug_remove(void *xsc)
 {
-	struct ppb_softc *sc = arg1;
+	struct ppb_softc *sc = xsc;
 	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
 	if (psc) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.108 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.109 2015/01/27 03:17:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -390,7 +390,7 @@ void	bnx_tick(void *);
 
 struct rwlock bnx_tx_pool_lk = RWLOCK_INITIALIZER("bnxplinit");
 struct pool *bnx_tx_pool = NULL;
-void	bnx_alloc_pkts(void *, void *);
+void	bnx_alloc_pkts(void *);
 
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
@@ -2595,7 +2595,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	TAILQ_INIT(&sc->tx_used_pkts);
 	sc->tx_pkt_count = 0;
 	mtx_init(&sc->tx_pkt_mtx, IPL_NET);
-	task_set(&sc->tx_alloc_task, bnx_alloc_pkts, sc, NULL);
+	task_set(&sc->tx_alloc_task, bnx_alloc_pkts, sc);
 
 	/*
 	 * Allocate DMA memory for the Rx buffer descriptor chain,
@@ -3727,7 +3727,7 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 }
 
 void
-bnx_alloc_pkts(void *xsc, void *arg)
+bnx_alloc_pkts(void *xsc)
 {
 	struct bnx_softc *sc = xsc;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
@@ -3825,7 +3825,7 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
 	/* Force an allocation of some dmamaps for tx up front */
-	bnx_alloc_pkts(sc, NULL);
+	bnx_alloc_pkts(sc);
 
 	/* Set the initial TX producer/consumer indices. */
 	sc->tx_prod = 0;

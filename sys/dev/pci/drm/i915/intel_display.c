@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.37 2014/10/08 05:25:41 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.38 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7184,7 +7184,7 @@ static void intel_crtc_destroy(struct drm_crtc *crtc)
 	kfree(intel_crtc);
 }
 
-static void intel_unpin_work_fn(void *arg1, void *arg2)
+static void intel_unpin_work_fn(void *arg1)
 {
 	struct intel_unpin_work *work = arg1;
 	struct drm_device *dev = work->crtc->dev;
@@ -7576,7 +7576,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 	work->event = event;
 	work->crtc = crtc;
 	work->old_fb_obj = to_intel_framebuffer(old_fb)->obj;
-	task_set(&work->task, intel_unpin_work_fn, work, NULL);
+	task_set(&work->task, intel_unpin_work_fn, work);
 
 	ret = drm_vblank_get(dev, intel_crtc->pipe);
 	if (ret)

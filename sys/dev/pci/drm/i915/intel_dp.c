@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.20 2014/06/19 06:51:05 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.21 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -1109,7 +1109,7 @@ static void ironlake_panel_vdd_off_sync(struct intel_dp *intel_dp)
 	}
 }
 
-static void ironlake_panel_vdd_work(void *arg1, void *arg2)
+static void ironlake_panel_vdd_work(void *arg1)
 {
 	struct intel_dp *intel_dp = arg1;
 	struct drm_device *dev = intel_dp_to_dev(intel_dp);
@@ -2819,8 +2819,7 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	connector->interlace_allowed = true;
 	connector->doublescan_allowed = 0;
 
-	task_set(&intel_dp->panel_vdd_task, ironlake_panel_vdd_work, intel_dp,
-	    NULL);
+	task_set(&intel_dp->panel_vdd_task, ironlake_panel_vdd_work, intel_dp);
 	timeout_set(&intel_dp->panel_vdd_to, ironlake_panel_vdd_tick, intel_dp);
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);

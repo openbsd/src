@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.129 2015/01/13 23:16:59 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.130 2015/01/27 03:17:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -131,7 +131,7 @@ void	ieee80211_bar_tid(struct ieee80211com *, struct ieee80211_node *,
 #endif
 void	ieee80211_input_print(struct ieee80211com *,  struct ifnet *,
 	    struct ieee80211_frame *, struct ieee80211_rxinfo *);
-void	ieee80211_input_print_task(void *, void *);
+void	ieee80211_input_print_task(void *);
 
 struct ieee80211printmsg {
 	struct task	task;
@@ -164,7 +164,7 @@ ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
  * frames are received and the interface is put in debug mode.
  */
 void
-ieee80211_input_print_task(void *arg1, void *arg2)
+ieee80211_input_print_task(void *arg1)
 {
 	struct ieee80211printmsg *msg = arg1;
 
@@ -214,7 +214,7 @@ ieee80211_input_print(struct ieee80211com *ic,  struct ifnet *ifp,
 	    ieee80211_phymode_name[ieee80211_chan2mode(
 	        ic, ic->ic_bss->ni_chan)]);
 
-	task_set(&msg->task, ieee80211_input_print_task, msg, NULL);
+	task_set(&msg->task, ieee80211_input_print_task, msg);
 	task_add(systq, &msg->task);
 }
 

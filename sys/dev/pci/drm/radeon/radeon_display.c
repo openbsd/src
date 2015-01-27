@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_display.c,v 1.7 2014/05/03 05:26:47 jsg Exp $	*/
+/*	$OpenBSD: radeon_display.c,v 1.8 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -33,7 +33,7 @@
 #include <dev/pci/drm/drm_crtc_helper.h>
 #include <dev/pci/drm/drm_edid.h>
 
-void	 radeon_unpin_work_func(void *, void *);
+void	 radeon_unpin_work_func(void *);
 
 static void avivo_crtc_load_lut(struct drm_crtc *crtc)
 {
@@ -249,7 +249,7 @@ static void radeon_crtc_destroy(struct drm_crtc *crtc)
  * Handle unpin events outside the interrupt handler proper.
  */
 void
-radeon_unpin_work_func(void *arg1, void *arg2)
+radeon_unpin_work_func(void *arg1)
 {
 	struct radeon_unpin_work *work = arg1;
 	int r;
@@ -387,7 +387,7 @@ static int radeon_crtc_page_flip(struct drm_crtc *crtc,
 		work->fence = radeon_fence_ref(rbo->tbo.sync_obj);
 	mtx_leave(&rbo->tbo.bdev->fence_lock);
 
-	task_set(&work->task, radeon_unpin_work_func, work, NULL);
+	task_set(&work->task, radeon_unpin_work_func, work);
 
 	/* We borrow the event spin lock for protecting unpin_work */
 	mtx_enter(&dev->event_lock);

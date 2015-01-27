@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.121 2014/12/09 07:05:06 doug Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.122 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -121,7 +121,7 @@ void		atascsi_disk_vpd_thin(struct scsi_xfer *);
 void		atascsi_disk_write_same_16(struct scsi_xfer *);
 void		atascsi_disk_write_same_16_done(struct ata_xfer *);
 void		atascsi_disk_unmap(struct scsi_xfer *);
-void		atascsi_disk_unmap_task(void *, void *);
+void		atascsi_disk_unmap_task(void *);
 void		atascsi_disk_unmap_done(struct ata_xfer *);
 void		atascsi_disk_capacity(struct scsi_xfer *);
 void		atascsi_disk_capacity16(struct scsi_xfer *);
@@ -1090,16 +1090,16 @@ atascsi_disk_unmap(struct scsi_xfer *xs)
 
 	/* let's go */
 	if (ISSET(xs->flags, SCSI_NOSLEEP)) {
-		task_set(&xa->task, atascsi_disk_unmap_task, xs, NULL);
+		task_set(&xa->task, atascsi_disk_unmap_task, xs);
 		task_add(systq, &xa->task);
 	} else {
 		/* we can already sleep for memory */
-		atascsi_disk_unmap_task(xs, NULL);
+		atascsi_disk_unmap_task(xs);
 	}
 }
 
 void
-atascsi_disk_unmap_task(void *xxs, void *a)
+atascsi_disk_unmap_task(void *xxs)
 {
 	struct scsi_xfer	*xs = xxs;
 	struct scsi_link	*link = xs->sc_link;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.37 2014/12/22 20:08:05 krw Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.38 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ struct	rotatedfont {
 };
 #endif
 
-void	rasops_doswitch(void *, void *);
+void	rasops_doswitch(void *);
 int	rasops_vcons_cursor(void *, int, int, int);
 int	rasops_vcons_mapchar(void *, int, u_int *);
 int	rasops_vcons_putchar(void *, int, int, u_int, long);
@@ -274,7 +274,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_ops.unpack_attr = rasops_vcons_unpack_attr;
 	}
 
-	task_set(&ri->ri_switchtask, rasops_doswitch, ri, NULL);
+	task_set(&ri->ri_switchtask, rasops_doswitch, ri);
 
 	rasops_init_devcmap(ri);
 	return (0);
@@ -1435,12 +1435,12 @@ rasops_show_screen(void *v, void *cookie, int waitok,
 		return (EAGAIN);
 	}
 
-	rasops_doswitch(ri, NULL);
+	rasops_doswitch(ri);
 	return (0);
 }
 
 void
-rasops_doswitch(void *v, void *dummy)
+rasops_doswitch(void *v)
 {
 	struct rasops_info *ri = v;
 	struct rasops_screen *scr = ri->ri_switchcookie;

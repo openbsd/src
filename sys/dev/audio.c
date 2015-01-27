@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.126 2015/01/20 04:54:23 dlg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.127 2015/01/27 03:17:35 dlg Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ struct filterops audioread_filtops =
 #if NWSKBD > 0
 /* Mixer manipulation using keyboard */
 int wskbd_set_mixervolume(long, long);
-void wskbd_set_mixervolume_callback(void *, void *);
+void wskbd_set_mixervolume_callback(void *);
 #endif
 
 /*
@@ -3448,7 +3448,7 @@ wskbd_set_mixervolume(long dir, long out)
 	if (ch == NULL)
 		return (ENOMEM);
 
-	task_set(&ch->t, wskbd_set_mixervolume_callback, ch, NULL);
+	task_set(&ch->t, wskbd_set_mixervolume_callback, ch);
 	ch->dir = dir;
 	ch->out = out;
 	task_add(systq, &ch->t);
@@ -3457,7 +3457,7 @@ wskbd_set_mixervolume(long dir, long out)
 }
 
 void
-wskbd_set_mixervolume_callback(void *xch, void *null)
+wskbd_set_mixervolume_callback(void *xch)
 {
 	struct wskbd_vol_change *ch = xch;
 	struct audio_softc *sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.32 2014/09/13 16:06:37 doug Exp $ */
+/*	$OpenBSD: qle.c,v 1.33 2015/01/27 03:17:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -306,7 +306,7 @@ void		qle_fabric_plogo(struct qle_softc *, struct qle_fc_port *);
 
 void		qle_update_start(struct qle_softc *, int);
 void		qle_update_done(struct qle_softc *, int);
-void		qle_do_update(void *, void *);
+void		qle_do_update(void *);
 int		qle_async(struct qle_softc *, u_int16_t);
 
 int		qle_load_fwchunk(struct qle_softc *,
@@ -626,7 +626,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO);
-	task_set(&sc->sc_update_task, qle_do_update, sc, NULL);
+	task_set(&sc->sc_update_task, qle_do_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */
 	for (i = 0; i < QLE_WAIT_FOR_LOOP * 10000; i++) {
@@ -644,7 +644,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_loop_up) {
-		qle_do_update(sc, NULL);
+		qle_do_update(sc);
 	} else {
 		DPRINTF(QLE_D_PORT, "%s: loop still down, giving up\n",
 		    DEVNAME(sc));
@@ -2081,7 +2081,7 @@ qle_fabric_plogo(struct qle_softc *sc, struct qle_fc_port *port)
 }
 
 void
-qle_do_update(void *xsc, void *x)
+qle_do_update(void *xsc)
 {
 	struct qle_softc *sc = xsc;
 	int firstport, lastport;

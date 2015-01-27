@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.33 2014/11/14 23:26:48 tedu Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.34 2015/01/27 03:17:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -180,7 +180,7 @@ struct sensor_task {
 };
 
 void	sensor_task_tick(void *);
-void	sensor_task_work(void *, void *);
+void	sensor_task_work(void *);
 
 struct sensor_task *
 sensor_task_register(void *arg, void (*func)(void *), unsigned int period)
@@ -204,7 +204,7 @@ sensor_task_register(void *arg, void (*func)(void *), unsigned int period)
 	st->arg = arg;
 	st->period = period;
 	timeout_set(&st->timeout, sensor_task_tick, st);
-	task_set(&st->task, sensor_task_work, st, NULL);
+	task_set(&st->task, sensor_task_work, st);
 	rw_init(&st->lock, "sensor");
 
 	sensor_task_tick(st);
@@ -235,7 +235,7 @@ sensor_task_tick(void *arg)
 }
 
 void
-sensor_task_work(void *xst, void *arg)
+sensor_task_work(void *xst)
 {
 	struct sensor_task *st = xst;
 	unsigned int period = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.179 2014/12/30 04:00:33 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.180 2015/01/27 03:17:36 dlg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct disk_attach_task {
 	struct disk *dk;
 };
 
-void disk_attach_callback(void *, void *);
+void disk_attach_callback(void *);
 
 /*
  * Compute checksum for disk label.
@@ -1105,7 +1105,7 @@ disk_attach(struct device *dv, struct disk *diskp)
 			device_ref(dv);
 			dat->dk = diskp;
 
-			task_set(&dat->task, disk_attach_callback, dat, NULL);
+			task_set(&dat->task, disk_attach_callback, dat);
 			task_add(systq, &dat->task);
 		}
 	}
@@ -1115,7 +1115,7 @@ disk_attach(struct device *dv, struct disk *diskp)
 }
 
 void
-disk_attach_callback(void *xdat, void *null)
+disk_attach_callback(void *xdat)
 {
 	struct disk_attach_task *dat = xdat;
 	struct disk *dk = dat->dk;

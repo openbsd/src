@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.4 2014/02/09 10:57:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.5 2015/01/27 03:17:36 dlg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -234,7 +234,7 @@ out:
 	mtx_leave(&glob->lock);
 }
 
-static void ttm_shrink_work(void *arg1, void *arg2)
+static void ttm_shrink_work(void *arg1)
 {
 	struct ttm_mem_global *glob = arg1;
 
@@ -338,7 +338,7 @@ int ttm_mem_global_init(struct ttm_mem_global *glob)
 	mtx_init(&glob->lock, IPL_TTY);
 	glob->swap_queue = taskq_create("ttm_swap", 1, IPL_TTY);
 	glob->task_queued = false;
-	task_set(&glob->task, ttm_shrink_work, glob, NULL);
+	task_set(&glob->task, ttm_shrink_work, glob);
 
 	refcount_init(&glob->kobj_ref, 1);
 

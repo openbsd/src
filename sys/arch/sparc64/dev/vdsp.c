@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.36 2015/01/25 21:42:13 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.37 2015/01/27 03:17:35 dlg Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -294,15 +294,15 @@ void	vdsp_ldc_start(struct ldc_conn *);
 
 void	vdsp_sendmsg(struct vdsp_softc *, void *, size_t, int dowait);
 
-void	vdsp_open(void *, void *);
-void	vdsp_close(void *, void *);
-void	vdsp_alloc(void *, void *);
+void	vdsp_open(void *);
+void	vdsp_close(void *);
+void	vdsp_alloc(void *);
 void	vdsp_readlabel(struct vdsp_softc *);
 int	vdsp_writelabel(struct vdsp_softc *);
 int	vdsp_is_iso(struct vdsp_softc *);
-void	vdsp_read(void *, void *);
+void	vdsp_read(void *);
 void	vdsp_read_desc(struct vdsp_softc *, struct vdsk_desc_msg *);
-void	vdsp_vd_task(void *, void *);
+void	vdsp_vd_task(void *);
 void	vdsp_read_dring(void *, void *);
 void	vdsp_write_dring(void *, void *);
 void	vdsp_flush_dring(void *, void *);
@@ -378,10 +378,10 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 		goto free_txqueue;
 	}
 
-	task_set(&sc->sc_open_task, vdsp_open, sc, NULL);
-	task_set(&sc->sc_alloc_task, vdsp_alloc, sc, NULL);
-	task_set(&sc->sc_close_task, vdsp_close, sc, NULL);
-	task_set(&sc->sc_read_task, vdsp_read, sc, NULL);
+	task_set(&sc->sc_open_task, vdsp_open, sc);
+	task_set(&sc->sc_alloc_task, vdsp_alloc, sc);
+	task_set(&sc->sc_close_task, vdsp_close, sc);
+	task_set(&sc->sc_read_task, vdsp_read, sc);
 
 	printf("\n");
 
@@ -775,7 +775,7 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 }
 
 void
-vdsp_vd_task(void *xsc, void *null)
+vdsp_vd_task(void *xsc)
 {
 	struct vdsp_softc *sc = xsc;
 	struct vd_desc *vd;
@@ -900,7 +900,7 @@ vdsp_sendmsg(struct vdsp_softc *sc, void *msg, size_t len, int dowait)
 }
 
 void
-vdsp_open(void *arg1, void *null)
+vdsp_open(void *arg1)
 {
 	struct vdsp_softc *sc = arg1;
 	struct proc *p = curproc;
@@ -968,7 +968,7 @@ vdsp_open(void *arg1, void *null)
 }
 
 void
-vdsp_close(void *arg1, void *null)
+vdsp_close(void *arg1)
 {
 	struct vdsp_softc *sc = arg1;
 	struct proc *p = curproc;
@@ -1090,7 +1090,7 @@ vdsp_is_iso(struct vdsp_softc *sc)
 }
 
 void
-vdsp_alloc(void *arg1, void *null)
+vdsp_alloc(void *arg1)
 {
 	struct vdsp_softc *sc = arg1;
 	struct vio_dring_reg dr;
@@ -1101,7 +1101,7 @@ vdsp_alloc(void *arg1, void *null)
 	    sc->sc_descriptor_size, M_DEVBUF, M_WAITOK);
 	sc->sc_vd_ring = mallocarray(sc->sc_num_descriptors,
 	    sizeof(*sc->sc_vd_ring), M_DEVBUF, M_WAITOK);
-	task_set(&sc->sc_vd_task, vdsp_vd_task, sc, NULL);
+	task_set(&sc->sc_vd_task, vdsp_vd_task, sc);
 
 	bzero(&dr, sizeof(dr));
 	dr.tag.type = VIO_TYPE_CTRL;
@@ -1113,7 +1113,7 @@ vdsp_alloc(void *arg1, void *null)
 }
 
 void
-vdsp_read(void *arg1, void *null)
+vdsp_read(void *arg1)
 {
 	struct vdsp_softc *sc = arg1;
 

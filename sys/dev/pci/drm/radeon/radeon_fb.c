@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.5 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.6 2015/01/27 03:17:36 dlg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -63,7 +63,7 @@ static struct fb_ops radeonfb_ops = {
 int radeonfb_create_pinned_object(struct radeon_fbdev *,
     struct drm_mode_fb_cmd2 *, struct drm_gem_object **);
 
-void radeondrm_burner_cb(void *, void *);
+void radeondrm_burner_cb(void *);
 
 int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tiled)
 {
@@ -426,7 +426,7 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 		return ret;
 	}
 
-	task_set(&rdev->burner_task, radeondrm_burner_cb, rdev, NULL);
+	task_set(&rdev->burner_task, radeondrm_burner_cb, rdev);
 
 	drm_fb_helper_single_add_all_connectors(&rfbdev->helper);
 #ifdef __sparc64__
@@ -516,7 +516,7 @@ radeondrm_burner(void *v, u_int on, u_int flags)
 }
 
 void
-radeondrm_burner_cb(void *arg1, void *arg2)
+radeondrm_burner_cb(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
 	struct drm_fb_helper *helper = &rdev->mode_info.rfbdev->helper;
