@@ -2132,7 +2132,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/wait.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/tar.ph

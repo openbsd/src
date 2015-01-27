@@ -1436,7 +1436,6 @@
 ./usr/include/sys/vmmeter.h
 ./usr/include/sys/vnode.h
 ./usr/include/sys/wait.h
-./usr/include/sys/workq.h
 ./usr/include/sysexits.h
 ./usr/include/syslog.h
 ./usr/include/tar.h

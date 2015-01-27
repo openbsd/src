@@ -2142,7 +2142,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/wait.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/tar.ph
