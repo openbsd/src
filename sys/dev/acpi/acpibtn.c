@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.40 2014/11/24 03:54:06 deraadt Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.41 2015/01/27 19:40:14 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -55,7 +55,6 @@ struct acpibtn_softc {
 #define ACPIBTN_SLEEP	3
 };
 
-int	acpibtn_getsta(struct acpibtn_softc *);
 int	acpibtn_setpsw(struct acpibtn_softc *, int);
 
 struct acpi_lid {
@@ -157,9 +156,18 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_lid		*lid;
 	int64_t			lid_open;
+	int64_t			st;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
+
+	printf(": %s\n", sc->sc_devnode->name);
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &st))
+		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK;
+	if ((st & (STA_PRESENT | STA_ENABLED | STA_DEV_OK)) !=
+	    (STA_PRESENT | STA_ENABLED | STA_DEV_OK))
+		return;
 
 	if (!strcmp(aa->aaa_dev, ACPI_DEV_LD)) {
 		sc->sc_btn_type = ACPIBTN_LID;
@@ -173,10 +181,6 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_btn_type = ACPIBTN_POWER;
 	else if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
 		sc->sc_btn_type = ACPIBTN_SLEEP;
-
-	acpibtn_getsta(sc);
-
-	printf(": %s\n", sc->sc_devnode->name);
 
 	if (sc->sc_btn_type == ACPIBTN_LID) {
 		strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
@@ -194,17 +198,6 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpibtn_notify,
 	    sc, ACPIDEV_NOPOLL);
-}
-
-int
-acpibtn_getsta(struct acpibtn_softc *sc)
-{
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL) != 0) {
-		dnprintf(20, "%s: no _STA\n", DEVNAME(sc));
-		/* XXX not all buttons have _STA so FALLTROUGH */
-	}
-
-	return (0);
 }
 
 int
