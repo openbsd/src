@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.105 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.106 2015/01/27 04:49:01 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -96,8 +96,8 @@ int		ipw_reset(struct ipw_softc *);
 int		ipw_load_ucode(struct ipw_softc *, u_char *, int);
 int		ipw_load_firmware(struct ipw_softc *, u_char *, int);
 int		ipw_read_firmware(struct ipw_softc *, struct ipw_firmware *);
-void		ipw_scan(void *, void *);
-void		ipw_auth_and_assoc(void *, void *);
+void		ipw_scan(void *);
+void		ipw_auth_and_assoc(void *);
 int		ipw_config(struct ipw_softc *);
 int		ipw_init(struct ifnet *);
 void		ipw_stop(struct ifnet *, int);
@@ -205,8 +205,8 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s", intrstr);
 
-	task_set(&sc->sc_scantask, ipw_scan, sc, NULL);
-	task_set(&sc->sc_authandassoctask, ipw_auth_and_assoc, sc, NULL);
+	task_set(&sc->sc_scantask, ipw_scan, sc);
+	task_set(&sc->sc_authandassoctask, ipw_auth_and_assoc, sc);
 
 	if (ipw_reset(sc) != 0) {
 		printf(": could not reset adapter\n");
@@ -1692,7 +1692,7 @@ fail:	free(fw->data, M_DEVBUF, 0);
 }
 
 void
-ipw_scan(void *arg1, void *arg2)
+ipw_scan(void *arg1)
 {
 	struct ipw_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1739,7 +1739,7 @@ fail:
 }
 
 void
-ipw_auth_and_assoc(void *arg1, void *arg2)
+ipw_auth_and_assoc(void *arg1)
 {
 	struct ipw_softc *sc = arg1;
 	struct ieee80211com *ic = &sc->sc_ic;
