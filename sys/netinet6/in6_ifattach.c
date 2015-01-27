@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.82 2015/01/26 11:38:37 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.83 2015/01/27 10:31:19 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #ifdef MROUTING
 #include <netinet6/ip6_mroute.h>
 #endif
-
-int ip6_auto_linklocal = 1;	/* enable by default */
 
 int get_last_resort_ifid(struct ifnet *, struct in6_addr *);
 int get_hw_ifid(struct ifnet *, struct in6_addr *);
@@ -431,15 +429,12 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	return 0;
 }
 
-/*
- * ifp - must be IFT_LOOP
- */
-
 int
 in6_ifattach_loopback(struct ifnet *ifp)
 {
 	struct in6_aliasreq ifra;
-	int error;
+
+	KASSERT(ifp->if_flags & IFF_LOOPBACK);
 
 	bzero(&ifra, sizeof(ifra));
 
@@ -476,14 +471,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 * We are sure that this is a newly assigned address, so we can set
 	 * NULL to the 3rd arg.
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL)) != 0) {
-		nd6log((LOG_ERR, "in6_ifattach_loopback: failed to configure "
-		    "the loopback address on %s (errno=%d)\n",
-		    ifp->if_xname, error));
-		return (-1);
-	}
-
-	return 0;
+	return (in6_update_ifa(ifp, &ifra, NULL));
 }
 
 /*
@@ -542,12 +530,11 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
  * nodelocal address needs to be configured onto only one of them.
  * XXX multiple link-local address case
  */
-void
+int
 in6_ifattach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
-	struct in6_ifaddr *ia6;
-	int dad_delay;		/* delay ticks before DAD output */
+	int dad_delay = 0;		/* delay ticks before DAD output */
 
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
@@ -555,7 +542,7 @@ in6_ifattach(struct ifnet *ifp)
 	case IFT_ENC:
 	case IFT_PFLOG:
 	case IFT_PFSYNC:
-		return;
+		return (0);
 	}
 
 	/*
@@ -563,63 +550,40 @@ in6_ifattach(struct ifnet *ifp)
 	 * remember there could be some link-layer that has special
 	 * fragmentation logic.
 	 */
-	if (ifp->if_mtu < IPV6_MMTU) {
-		nd6log((LOG_INFO, "in6_ifattach: "
-		    "%s has too small MTU, IPv6 not enabled\n",
-		    ifp->if_xname));
-		return;
+	if (ifp->if_mtu < IPV6_MMTU)
+		return (EINVAL);
+
+	if ((ifp->if_flags & IFF_MULTICAST) == 0)
+		return (EINVAL);
+
+	/* Assign a link-local address, if there's none. */
+	if (in6ifa_ifpforlinklocal(ifp, 0) == NULL) {
+		if (in6_ifattach_linklocal(ifp, NULL) != 0) {
+			/* failed to assign linklocal address. bark? */
+		}
 	}
 
-	/*
-	 * usually, we require multicast capability to the interface
-	 */
-	if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-		nd6log((LOG_INFO, "in6_ifattach: "
-		    "%s is not multicast capable, IPv6 not enabled\n",
-		    ifp->if_xname));
-		return;
-	}
-
-	/*
-	 * assign loopback address for loopback interface.
-	 * XXX multiple loopback interface case.
-	 */
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
+	/* Assign loopback address, if there's none. */
+	if (ifp->if_flags & IFF_LOOPBACK) {
 		struct in6_addr in6 = in6addr_loopback;
-		if (in6ifa_ifpwithaddr(ifp, &in6) == NULL) {
-			if (in6_ifattach_loopback(ifp) != 0)
-				return;
-		}
+		if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
+			return (0);
+
+		return (in6_ifattach_loopback(ifp));
 	}
 
-	/*
-	 * assign a link-local address, if there's none.
-	 */
-	if (ip6_auto_linklocal) {
-		ia6 = in6ifa_ifpforlinklocal(ifp, 0);
-		if (ia6 == NULL) {
-			if (in6_ifattach_linklocal(ifp, NULL) == 0) {
-				/* linklocal address assigned */
-			} else {
-				/* failed to assign linklocal address. bark? */
-			}
-		}
-	}
-
-	/*
-	 * perform DAD.
-	 */
-	dad_delay = 0;
+	/* Perform DAD. */
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
-		ia6 = ifatoia6(ifa);
-		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
+		if (ifatoia6(ifa)->ia6_flags & IN6_IFF_TENTATIVE)
 			nd6_dad_start(ifa, &dad_delay);
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF6)
 		nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
+
+	return (0);
 }
 
 /*
