@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.166 2015/01/09 03:43:52 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.167 2015/01/27 02:09:07 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -314,9 +314,6 @@ struct pool pmap_pmap_pool;
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *flsh_pte;
 static caddr_t csrcp, cdstp, zerop, ptpp, flshp;
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
-
-/* stuff to fix the pentium f00f bug */
-extern vaddr_t pentium_idt_vaddr;
 
 /*
  * local prototypes
