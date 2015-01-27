@@ -1,4 +1,4 @@
-/* $OpenBSD: db_structinfo.c,v 1.11 2014/12/19 09:02:39 reyk Exp $ */
+/* $OpenBSD: db_structinfo.c,v 1.12 2015/01/27 10:12:45 dlg Exp $ */
 /* public domain */
 /*
  * This file is intended to be compiled with debug information,
@@ -86,7 +86,6 @@
 #include <sys/vmmeter.h>
 #include <sys/vnode.h>
 #include <sys/wait.h>
-#include <sys/workq.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>

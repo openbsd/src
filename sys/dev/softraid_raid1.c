@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.59 2014/11/18 02:37:30 tedu Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.60 2015/01/27 10:12:45 dlg Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -33,7 +33,6 @@
 #include <sys/sensors.h>
 #include <sys/stat.h>
 #include <sys/task.h>
-#include <sys/workq.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
 
