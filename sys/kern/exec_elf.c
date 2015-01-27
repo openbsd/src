@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.109 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.110 2015/01/27 00:33:21 kurt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -514,7 +514,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp, *base_ph = NULL;
 	Elf_Addr phdr = 0, exe_base = 0;
-	int error, i;
+	int error, i, has_phdr = 0;
 	char *interp = NULL;
 	u_long pos = 0, phsize;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
@@ -563,13 +563,17 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		} else if (pp->p_type == PT_LOAD) {
 			if (base_ph == NULL)
 				base_ph = pp;
+		} else if (pp->p_type == PT_PHDR) {
+			has_phdr = 1;
 		}
 	}
 
 	if (eh->e_type == ET_DYN) {
-		/* need load sections for PIE */
-		if (base_ph == NULL)
+		/* need phdr and load sections for PIE */
+		if (!has_phdr || base_ph == NULL) {
+			error = EINVAL;
 			goto bad;
+		}
 		/* randomize exe_base for PIE */
 		exe_base = uvm_map_pie(base_ph->p_align);
 	}
@@ -762,7 +766,9 @@ bad:
 		pool_put(&namei_pool, interp);
 	free(ph, M_TEMP, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
-	return (ENOEXEC);
+	if (error == 0)
+		return (ENOEXEC);
+	return (error);
 }
 
 /*
