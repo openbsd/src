@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.68 2015/01/18 14:40:05 mpi Exp $ */
+/*	$OpenBSD: umass.c,v 1.69 2015/01/27 11:04:45 mpi Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -1182,10 +1182,10 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 		 * err == 0 and the following if block is passed.
 		 */
 		if (err) {	/* should not occur */
-			printf("%s: BBB bulk-%s stall clear failed, %s\n",
-			    sc->sc_dev.dv_xname,
+			DPRINTF(UDMASS_BBB, ("%s: BBB bulk-%s stall clear"
+			    " failed, %s\n", sc->sc_dev.dv_xname,
 			    (sc->transfer_dir == DIR_IN? "in":"out"),
-			    usbd_errstr(err));
+			    usbd_errstr(err)));
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 		}
@@ -1327,8 +1327,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 	/***** Bulk Reset *****/
 	case TSTATE_BBB_RESET1:
 		if (err)
-			printf("%s: BBB reset failed, %s\n",
-				sc->sc_dev.dv_xname, usbd_errstr(err));
+			DPRINTF(UDMASS_BBB, ("%s: BBB reset failed, %s\n",
+				sc->sc_dev.dv_xname, usbd_errstr(err)));
 
 		sc->transfer_state = TSTATE_BBB_RESET2;
 		umass_clear_endpoint_stall(sc, UMASS_BULKIN,
@@ -1337,8 +1337,9 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 		return;
 	case TSTATE_BBB_RESET2:
 		if (err)	/* should not occur */
-			printf("%s: BBB bulk-in clear stall failed, %s\n",
-			       sc->sc_dev.dv_xname, usbd_errstr(err));
+			DPRINTF(UDMASS_BBB, ("%s: BBB bulk-in clear stall"
+				" failed, %s\n", sc->sc_dev.dv_xname,
+				usbd_errstr(err)));
 			/* no error recovery, otherwise we end up in a loop */
 
 		sc->transfer_state = TSTATE_BBB_RESET3;
@@ -1348,8 +1349,9 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 		return;
 	case TSTATE_BBB_RESET3:
 		if (err)	/* should not occur */
-			printf("%s: BBB bulk-out clear stall failed, %s\n",
-			       sc->sc_dev.dv_xname, usbd_errstr(err));
+			DPRINTF(UDMASS_BBB,("%s: BBB bulk-out clear stall"
+				" failed, %s\n", sc->sc_dev.dv_xname,
+				usbd_errstr(err)));
 			/* no error recovery, otherwise we end up in a loop */
 
 		sc->transfer_state = TSTATE_IDLE;
