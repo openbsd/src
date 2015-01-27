@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.16 2014/07/12 07:20:00 blambert Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.17 2015/01/27 09:45:51 dlg Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ struct cfdriver abtn_cd = {
 };
 
 struct task eject_task =
-    TASK_INITIALIZER((void (*)(void *, void *))cd_eject, NULL, NULL);
+    TASK_INITIALIZER((void (*)(void *))cd_eject, NULL);
 
 int
 abtn_match(struct device *parent, void *cf, void *aux)
