@@ -12,7 +12,7 @@ utils/h2ph
 utils/h2xs
 utils/instmodsh
 utils/libnetcfg
-utils/perlbug	# link = utils/perlthanks
+utils/perlbug
 utils/perldoc
 utils/perlivp
 utils/piconv
