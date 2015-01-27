@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.10 2015/01/17 13:20:04 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.11 2015/01/27 09:35:35 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -65,7 +65,11 @@ sub handle_options
 	}
 	$state->{fw_repository} = 
 	    OpenBSD::PackageRepository->new($state->{path}, $state);
-	if ($state->verbose) {
+	$state->{fw_verbose} = $state->{v};
+	if ($state->{v}) {
+		$state->{v}--;
+	}
+	if ($state->{fw_verbose}) {
 		$state->say("Path to firmware: #1", $state->{path});
 	}
 }
@@ -99,6 +103,20 @@ sub is_needed
 {
 	my ($self, $driver) = @_;
 	return $self->{machine_drivers}{$driver};
+}
+
+sub display_timestamp
+{
+	my ($state, $pkgname, $timestamp) = @_;
+	return unless $state->verbose;
+	$state->SUPER::display_timestamp($pkgname, $timestamp);
+}
+
+sub fw_status
+{
+	my ($state, $msg, $list) = @_;
+	return if @$list == 0;
+	$state->say("#1: #2", $msg, join(' ', @$list));
 }
 
 package OpenBSD::FwUpdate::Update;
@@ -189,7 +207,7 @@ sub find_handle
 
 sub mark_set_for_deletion
 {
-	my ($self, $set) = @_;
+	my ($self, $set, $state) = @_;
 	# XXX to be simplified. Basically, we pre-do the work of the updater...
 	for my $h ($set->older) {
 		$h->{update_found} = 1;
@@ -243,7 +261,7 @@ sub process_parameters
 				$self->to_add_or_update($state, $driver);
 			}
 		}
-		if (!(defined $state->{setlist}) && $state->verbose) {
+		if (!(defined $state->{setlist}) && $state->{fw_verbose}) {
 			$state->say($state->opt('d') ?
 			    "No firmware to delete." :
 			    "No devices found which need firmware files to be downloaded.");
@@ -264,6 +282,24 @@ sub process_parameters
 				$self->mark_set_for_deletion($set);
 			} 
 		}
+	}
+	if ($state->{fw_verbose}) {
+		my (@deleting, @updating, @installing);
+		for my $set (@{$state->{setlist}}) {
+			for my $h ($set->older) {
+				if ($h->{update_found}) {
+					push(@deleting, $h->pkgname);
+				} else {
+					push(@updating, $h->pkgname);
+				}
+			}
+			for my $h ($set->hints) {
+				push(@installing, $h->pkgname);
+			}
+		}
+		$state->fw_status("Installing", \@installing);
+		$state->fw_status("Deleting", \@deleting);
+		$state->fw_status("Updating", \@updating);
 	}
 }
 

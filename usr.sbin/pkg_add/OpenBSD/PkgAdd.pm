@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.82 2015/01/19 09:42:06 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.83 2015/01/27 09:35:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -176,6 +176,12 @@ sub updateset_from_location
 	    OpenBSD::Handle->from_location($location));
 }
 
+sub display_timestamp
+{
+	my ($state, $pkgname, $timestamp) = @_;
+	$state->say("#1 signed on #2", $pkgname, $timestamp);
+}
+
 OpenBSD::Auto::cache(updater,
     sub {
 	require OpenBSD::Update;
@@ -306,7 +312,7 @@ sub display_timestamp
 	if (!$plist->check_signature($state)) {
 		$state->fatal("#1 is corrupted", $pkgname);
 	}
-	$state->say("#1 signed on #2", $pkgname, 
+	$state->display_timestamp($pkgname,
 	    $plist->get('digital-signature')->iso8601);
 }
 
