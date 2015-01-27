@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.41 2015/01/24 15:15:50 kettenis Exp $ */
+/* $OpenBSD: if_bce.c,v 1.42 2015/01/27 00:59:39 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -142,7 +142,7 @@ void	bce_add_mac(struct bce_softc *, u_int8_t *, unsigned long);
 void	bce_add_rxbuf(struct bce_softc *, int);
 void	bce_stop(struct ifnet *);
 void	bce_reset(struct bce_softc *);
-void	bce_set_filter(struct ifnet *);
+void	bce_iff(struct ifnet *);
 int	bce_mii_read(struct device *, int, int);
 void	bce_mii_write(struct device *, int, int, int);
 void	bce_statchg(struct device *);
@@ -470,26 +470,22 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
+		if (!(ifp->if_flags & IFF_RUNNING))
 			bce_init(ifp);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->bce_ac, ifa);
-			break;
-		default:
-			bce_init(ifp);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP)
+		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				bce_set_filter(ifp);
+				error = ENETRESET;
 			else
 				bce_init(ifp);
-		else if (ifp->if_flags & IFF_RUNNING)
-			bce_stop(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				bce_stop(ifp);
+		}
 		break;
 
 	case SIOCSIFMEDIA:
@@ -503,7 +499,7 @@ bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			bce_set_filter(ifp);
+			bce_iff(ifp);
 		error = 0;
 	}
 
@@ -861,8 +857,8 @@ bce_init(struct ifnet *ifp)
 	/* setup DMA interrupt control */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 1 << 24);	/* MAGIC */
 
-	/* setup packet filter */
-	bce_set_filter(ifp);
+	/* program promiscuous mode and multicast filters */
+	bce_iff(ifp);
 
 	/* set max frame length, account for possible VLAN tag */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_MAX,
@@ -1188,51 +1184,35 @@ bce_reset(struct bce_softc *sc)
 
 /* Set up the receive filter. */
 void
-bce_set_filter(struct ifnet *ifp)
+bce_iff(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
+	struct arpcom *ac = &sc->bce_ac;
+	u_int32_t rxctl;
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	rxctl = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL);
+	rxctl &= ~(ERC_AM | ERC_DB | ERC_PE);
+	ifp->if_flags |= IFF_ALLMULTI;
+
+	/* disable the filter */
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL, 0);
+
+	/* add our own address */
+	bce_add_mac(sc, ac->ac_enaddr, 0);
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multicnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL)
-		    | ERC_PE);
-	} else {
-		ifp->if_flags &= ~IFF_ALLMULTI;
-
-		/* turn off promiscuous */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-		    BCE_RX_CTL) & ~ERC_PE);
-
-		/* enable/disable broadcast */
-		if (ifp->if_flags & IFF_BROADCAST)
-			bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
-			    BCE_RX_CTL, bus_space_read_4(sc->bce_btag,
-			    sc->bce_bhandle, BCE_RX_CTL) & ~ERC_DB);
+		if (ifp->if_flags & IFF_PROMISC)
+			rxctl |= ERC_PE;
 		else
-			bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
-			    BCE_RX_CTL, bus_space_read_4(sc->bce_btag,
-			    sc->bce_bhandle, BCE_RX_CTL) | ERC_DB);
-
-		/* disable the filter */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
-		    0);
-
-		/* add our own address */
-		bce_add_mac(sc, sc->bce_ac.ac_enaddr, 0);
-
-		/* for now accept all multicast */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-		bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL) |
-		    ERC_AM);
-		ifp->if_flags |= IFF_ALLMULTI;
-
-		/* enable the filter */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
-		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-		    BCE_FILT_CTL) | 1);
+			rxctl |= ERC_AM;
 	}
+
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL, rxctl);
+
+	/* enable the filter */
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL) | 1);
 }
 
 /* Read a PHY register on the MII. */
