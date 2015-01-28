@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.3 2010/06/27 18:19:36 martinh Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.4 2015/01/28 15:50:30 reyk Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -78,22 +78,6 @@
 
 int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
-int      ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
-
-X509_LOOKUP_METHOD x509_mem_lookup = {
-	"Load cert from memory",
-       NULL,                   /* new */
-       NULL,                   /* free */
-       NULL,                   /* init */
-       NULL,                   /* shutdown */
-       ssl_by_mem_ctrl,        /* ctrl */
-       NULL,                   /* get_by_subject */
-       NULL,                   /* get_by_issuer_serial */
-       NULL,                   /* get_by_fingerprint */
-       NULL,                   /* get_by_alias */
-};
-
-#define X509_L_ADD_MEM 3
 
 int
 ssl_ctx_use_private_key(SSL_CTX *ctx, char *buf, off_t len)
@@ -123,49 +107,6 @@ end:
 	if (in != NULL)
 		BIO_free(in);
 	return ret;
-}
-
-int
-ssl_by_mem_ctrl(X509_LOOKUP *lu, int cmd, const char *buf,
-    long type, char **ret)
-{
-	STACK_OF(X509_INFO)     *inf;
-	const struct iovec      *iov;
-	X509_INFO               *itmp;
-	BIO                     *in = NULL;
-	int                      i, count = 0;
-
-	iov = (const struct iovec *)buf;
-
-	if (type != X509_FILETYPE_PEM)
-		goto done;
-
-	if ((in = BIO_new_mem_buf(iov->iov_base, iov->iov_len)) == NULL)
-		goto done;
-
-	if ((inf = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL)) == NULL)
-		goto done;
-
-	for(i = 0; i < sk_X509_INFO_num(inf); i++) {
-		itmp = sk_X509_INFO_value(inf, i);
-		if(itmp->x509) {
-			X509_STORE_add_cert(lu->store_ctx, itmp->x509);
-			count++;
-		}
-		if(itmp->crl) {
-			X509_STORE_add_crl(lu->store_ctx, itmp->crl);
-			count++;
-		}
-	}
-	sk_X509_INFO_pop_free(inf, X509_INFO_free);
-
-done:
-	if (!count)
-		X509err(X509_F_X509_LOAD_CERT_CRL_FILE,ERR_R_PEM_LIB);
-
-	if (in != NULL)
-		BIO_free(in);
-	return (count);
 }
 
 int
