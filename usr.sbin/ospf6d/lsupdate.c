@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.12 2015/01/22 22:09:39 tedu Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.13 2015/01/28 22:03:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -332,8 +332,15 @@ ls_retrans_list_del(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 
 	if ((le = ls_retrans_list_get(nbr, lsa_hdr)) == NULL)
 		return (-1);
+	/*
+	 * Compare LSA with the Ack by comparing not only the seq_num and
+	 * checksum but also the age field.  Since we only care about MAX_AGE
+	 * vs. non-MAX_AGE LSA, a simple >= comparison is good enough.  This
+	 * ensures that a LSA withdrawal is not acked by a previous update.
+	 */
 	if (lsa_hdr->seq_num == le->le_ref->hdr.seq_num &&
-	    lsa_hdr->ls_chksum == le->le_ref->hdr.ls_chksum) {
+	    lsa_hdr->ls_chksum == le->le_ref->hdr.ls_chksum &&
+	    ntohs(lsa_hdr->age) >= ntohs(le->le_ref->hdr.age)) {
 		ls_retrans_list_free(nbr, le);
 		return (0);
 	}
