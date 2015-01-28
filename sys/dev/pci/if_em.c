@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.290 2014/12/22 02:28:52 tedu Exp $ */
+/* $OpenBSD: if_em.c,v 1.291 2015/01/28 22:33:02 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -430,8 +430,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_i350:
 		case em_ich9lan:
 		case em_ich10lan:
+		case em_pch2lan:
+		case em_pch_lpt:
 		case em_80003es2lan:
-			/* Limit Jumbo Frame size */
+			/* 9K Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
 			break;
 		case em_pchlan:
@@ -808,14 +810,18 @@ em_init(void *arg)
 		pba = E1000_PBA_12K; /* 12K for Rx, 20K for Tx */
 		break;
 	case em_82574: /* Total Packet Buffer is 40k */
-		pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
+		pba = E1000_PBA_20K; /* 20K for Rx, 20K for Tx */
 		break;
 	case em_ich8lan:
 		pba = E1000_PBA_8K;
 		break;
 	case em_ich9lan:
 	case em_ich10lan:
-		pba = E1000_PBA_10K;
+		/* Boost Receive side for jumbo frames */
+		if (sc->hw.max_frame_size > EM_RXBUFFER_4096)
+			pba = E1000_PBA_14K;
+		else
+			pba = E1000_PBA_10K;
 		break;
 	case em_pchlan:
 	case em_pch2lan:

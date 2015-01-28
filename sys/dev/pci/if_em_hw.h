@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.61 2014/11/05 15:30:17 claudio Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.62 2015/01/28 22:33:02 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2633,7 +2633,9 @@ struct em_host_command_info {
 #define E1000_PBA_8K 0x0008    /* 8KB, default Rx allocation */
 #define E1000_PBA_10K 0x000A
 #define E1000_PBA_12K 0x000C    /* 12KB, default Rx allocation */
+#define E1000_PBA_14K 0x000E    /* 14KB */
 #define E1000_PBA_16K 0x0010    /* 16KB, default TX allocation */
+#define E1000_PBA_20K 0x0014
 #define E1000_PBA_22K 0x0016
 #define E1000_PBA_24K 0x0018
 #define E1000_PBA_26K 0x001A
