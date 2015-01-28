@@ -1,7 +1,7 @@
-/*	$OpenBSD: out.c,v 1.29 2014/12/23 13:48:15 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.30 2015/01/28 02:23:33 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -105,11 +105,12 @@ void
 tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	size_t totalwidth)
 {
+	const struct tbl_opts	*opts;
 	const struct tbl_dat	*dp;
 	struct roffcol		*col;
 	size_t			 ewidth, xwidth;
 	int			 spans;
-	int			 icol, maxcol, necol, nxcol;
+	int			 icol, maxcol, necol, nxcol, quirkcol;
 
 	/*
 	 * Allocate the master column specifiers.  These will hold the
@@ -120,6 +121,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	assert(NULL == tbl->cols);
 	tbl->cols = mandoc_calloc((size_t)sp->opts->cols,
 	    sizeof(struct roffcol));
+	opts = sp->opts;
 
 	for (maxcol = -1; sp; sp = sp->next) {
 		if (TBL_SPAN_DATA != sp->pos)
@@ -143,7 +145,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 			col->flags |= dp->layout->flags;
 			if (dp->layout->flags & TBL_CELL_WIGN)
 				continue;
-			tblcalc_data(tbl, col, sp->opts, dp);
+			tblcalc_data(tbl, col, opts, dp);
 		}
 	}
 
@@ -193,13 +195,35 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	 */
 
 	if (nxcol && totalwidth) {
-		xwidth = totalwidth - 3*maxcol - xwidth;
+		xwidth = totalwidth - xwidth - 3*maxcol -
+		    (opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ?
+		     2 : !!opts->lvert + !!opts->rvert);
+
+		/*
+		 * Emulate a bug in GNU tbl width calculation that
+		 * manifests itself for large numbers of x-columns.
+		 * Emulating it for 5 x-columns gives identical
+		 * behaviour for up to 6 x-columns.
+		 */
+
+		if (nxcol == 5) {
+			quirkcol = xwidth % nxcol + 2;
+			if (quirkcol != 3 && quirkcol != 4)
+				quirkcol = -1;
+		} else
+			quirkcol = -1;
+
+		necol = 0;
+		ewidth = 0;
 		for (icol = 0; icol <= maxcol; icol++) {
 			col = tbl->cols + icol;
 			if ( ! (col->flags & TBL_CELL_WMAX))
 				continue;
-			col->width = xwidth / nxcol--;
-			xwidth -= col->width;
+			col->width = (double)xwidth * ++necol / nxcol
+			    - ewidth + 0.4995;
+			if (necol == quirkcol)
+				col->width--;
+			ewidth += col->width;
 		}
 	}
 }
