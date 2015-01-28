@@ -467,7 +467,6 @@
 ./usr/bin/perlbug
 ./usr/bin/perldoc
 ./usr/bin/perlivp
-./usr/bin/perlthanks
 ./usr/bin/pgrep
 ./usr/bin/piconv
 ./usr/bin/pkg-config
