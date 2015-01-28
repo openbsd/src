@@ -42,7 +42,7 @@ our %args = (
 		print $fh "# modified\n";
 		close($fh);
 		${$self->{syslogd}}->kill_syslogd('HUP');
-		${$self->{syslogd}}->loggrep("syslogd: started", 5)
+		${$self->{syslogd}}->loggrep("syslogd: started", 5, 2)
 		    or die ref($self), " no 'syslogd: started' between logs";
 		print STDERR "Signal\n";
 	    });

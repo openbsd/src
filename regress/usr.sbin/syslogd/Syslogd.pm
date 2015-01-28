@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.9 2015/01/22 00:34:32 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.10 2015/01/28 19:23:22 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -115,6 +115,9 @@ sub child {
 	my $syslogd = $ENV{SYSLOGD} ? $ENV{SYSLOGD} : "syslogd";
 	my @cmd = (@sudo, @libevent, @ktrace, $syslogd, "-d",
 	    "-f", $self->{conffile});
+	push @cmd, "-V", unless $self->{cacrt};
+	push @cmd, "-C", $self->{cacrt}
+	    if $self->{cacrt} && $self->{cacrt} ne "default";
 	push @cmd, "-s", $self->{ctlsock} if $self->{ctlsock};
 	push @cmd, @{$self->{options}} if $self->{options};
 	print STDERR "execute: @cmd\n";

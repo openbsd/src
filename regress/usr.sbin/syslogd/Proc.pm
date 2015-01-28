@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.4 2015/01/01 19:58:48 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.5 2015/01/28 19:23:22 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -148,7 +148,7 @@ sub wait {
 
 sub loggrep {
 	my $self = shift;
-	my($regex, $timeout) = @_;
+	my($regex, $timeout, $count) = @_;
 	my $exit = ($self->{exit} // 0) << 8;
 
 	my $end = time() + $timeout if $timeout;
@@ -162,7 +162,8 @@ sub loggrep {
 		open(my $fh, '<', $self->{logfile})
 		    or die ref($self), " log file open failed: $!";
 		my @match = grep { /$regex/ } <$fh>;
-		return wantarray ? @match : $match[0] if @match;
+		return wantarray ? @match : $match[0]
+		    if !$count && @match or $count && @match >= $count;
 		close($fh);
 		# pattern not found
 		if ($kid == 0) {
