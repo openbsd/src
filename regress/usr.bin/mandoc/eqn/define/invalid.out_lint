@@ -1,0 +1,5 @@
+mandoc: invalid.in:9:1: WARNING: skipping empty request: define
+mandoc: invalid.in:15:1: WARNING: skipping empty request: define bruch
+mandoc: invalid.in:21:1: WARNING: skipping empty request: undef
+mandoc: invalid.in:27:1: WARNING: skipping empty request: tdefine
+mandoc: invalid.in:33:1: WARNING: skipping empty request: tdefine

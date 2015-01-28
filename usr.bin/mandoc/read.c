@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.94 2015/01/28 17:30:37 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.95 2015/01/28 21:10:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -172,12 +172,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping vertical bar in tbl layout",
 
 	"generic error",
-
-	/* related to equations */
-	"unexpected equation scope closure",
-	"equation scope open on exit",
-	"overlapping equation scopes",
-	"unexpected end of equation",
 
 	/* related to tables */
 	"non-alphabetic character in tbl options",

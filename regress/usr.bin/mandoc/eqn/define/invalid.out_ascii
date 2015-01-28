@@ -1,0 +1,17 @@
+DEFINE-INVALID(1)           General Commands Manual          DEFINE-INVALID(1)
+
+NNAAMMEE
+     ddeeffiinnee--iinnvvaalliidd - invalid define and undef statements
+
+DDEESSCCRRIIPPTTIIOONN
+     define without variable name: 1/2 bruch eol
+
+     define without value: 1/2 bruch eol
+
+     define without value: 1/2 bruch eol
+
+     tdefine without variable name: eol
+
+     tdefine without value: eol
+
+OpenBSD                        January 28, 2015                        OpenBSD

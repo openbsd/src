@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2015/01/01 12:53:46 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2015/01/28 21:10:28 schwarze Exp $
 
-SUBDIR  = fromto matrix nullary over size subsup unary
+SUBDIR  = fromto define matrix nullary over size subsup unary
 
 .include "../Makefile.sub"
 .include <bsd.subdir.mk>
