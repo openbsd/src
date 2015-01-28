@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.40 2014/10/17 01:56:48 tedu Exp $
+.\"	$OpenBSD: apm.8,v 1.41 2015/01/28 05:10:44 tedu Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 17 2014 $
+.Dd $Mdocdate: January 28 2015 $
 .Dt APM 8
 .Os
 .Sh NAME
@@ -85,7 +85,8 @@ Display the estimated battery lifetime (in percent).
 Display the estimated battery lifetime (in minutes).
 .It Fl P
 Display the performance adjustment mode.
-0 means manual mode, 1 means automatic mode, and 2 means cool running mode.
+0 means manual mode.
+1 means automatic mode.
 .It Fl S
 Put the system into stand-by (light sleep) state.
 .It Fl v
