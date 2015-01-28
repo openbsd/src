@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.144 2015/01/19 16:40:49 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.145 2015/01/28 19:14:05 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -141,6 +141,7 @@ struct filed {
 			struct buffertls	 f_buftls;
 			struct bufferevent	*f_bufev;
 			struct tls		*f_ctx;
+			char			*f_host;
 			int			 f_reconnectwait;
 		} f_forw;		/* forwarding address */
 		char	f_fname[PATH_MAX];
@@ -214,6 +215,10 @@ int	IPv6Only = 0;		/* when true, disable IPv4 */
 int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 
 char	*path_ctlsock = NULL;	/* Path to control socket */
+
+struct	tls_config *tlsconfig;
+const char *CAfile = "/etc/ssl/cert.pem"; /* file containing CA certificates */
+int	NoVerify = 0;		/* do not verify TLS server x509 certificate */
 
 #define CTL_READING_CMD		1
 #define CTL_WRITING_REPLY	2
@@ -316,7 +321,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46dhnuf:m:p:a:s:")) != -1)
+	while ((ch = getopt(argc, argv, "46C:dhnuf:m:p:a:s:V")) != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			IPv4Only = 1;
@@ -325,6 +330,9 @@ main(int argc, char *argv[])
 		case '6':		/* disable IPv4 */
 			IPv6Only = 1;
 			IPv4Only = 0;
+			break;
+		case 'C':		/* file containing CA certificates */
+			CAfile = optarg;
 			break;
 		case 'd':		/* debug */
 			Debug++;
@@ -357,6 +365,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			path_ctlsock = optarg;
+			break;
+		case 'V':		/* do not verify certificates */
+			NoVerify = 1;
 			break;
 		default:
 			usage();
@@ -494,6 +505,39 @@ main(int argc, char *argv[])
 			dprintf("LIOCSFD errno %d\n", errno);
 	}
 	close(pair[1]);
+
+	if (tls_init() == -1) {
+		logerror("tls_init");
+	} else if ((tlsconfig = tls_config_new()) == NULL) {
+		logerror("tls_config_new");
+	} else if (NoVerify) {
+		tls_config_insecure_noverifyhost(tlsconfig);
+		tls_config_insecure_noverifycert(tlsconfig);
+	} else {
+		struct stat sb;
+
+		fd = -1;
+		p = NULL;
+		errno = 0;
+		if ((fd = open(CAfile, O_RDONLY)) == -1) {
+			logerror("open CAfile");
+		} else if (fstat(fd, &sb) == -1) {
+			logerror("fstat CAfile");
+		} else if (sb.st_size > 1024*1024*1024) {
+			logerror("CAfile larger than 1GB");
+		} else if ((p = calloc(sb.st_size, 1)) == NULL) {
+			logerror("calloc CAfile");
+		} else if (read(fd, p, sb.st_size) != sb.st_size) {
+			logerror("read CAfile");
+		} else if (tls_config_set_ca_mem(tlsconfig, p, sb.st_size)
+		    == -1) {
+			logerror("tls_config_set_ca_mem");
+		} else {
+			dprintf("CAfile %s, size %lld\n", CAfile, sb.st_size);
+		}
+		free(p);
+		close(fd);
+	}
 
 	dprintf("off & running....\n");
 
@@ -813,8 +857,8 @@ tcp_connectcb(int fd, short event, void *arg)
 		f->f_un.f_forw.f_ctx = ctx;
 
 		buffertls_set(&f->f_un.f_forw.f_buftls, bufev, ctx, s);
-		/* XXX no host given */
-		buffertls_connect(&f->f_un.f_forw.f_buftls, s, NULL);
+		buffertls_connect(&f->f_un.f_forw.f_buftls, s,
+		    f->f_un.f_forw.f_host);
 	}
 
 	return;
@@ -837,39 +881,23 @@ tcp_connectcb(int fd, short event, void *arg)
 struct tls *
 tls_socket(struct filed *f)
 {
-	static struct tls_config *config;
 	struct tls	*ctx;
 	char		 ebuf[100];
 
-	if (config == NULL) {
-		if (tls_init() < 0) {
-			snprintf(ebuf, sizeof(ebuf), "tls_init \"%s\"",
-			    f->f_un.f_forw.f_loghost);
-			logerror(ebuf);
-			return (NULL);
-		}
-		if ((config = tls_config_new()) == NULL) {
-			snprintf(ebuf, sizeof(ebuf), "tls_config_new \"%s\"",
-			    f->f_un.f_forw.f_loghost);
-			logerror(ebuf);
-			return (NULL);
-		}
-		/* XXX No verify for now, ca certs are outside of privsep. */
-		tls_config_insecure_noverifyhost(config);
-		tls_config_insecure_noverifycert(config);
-	}
 	if ((ctx = tls_client()) == NULL) {
 		snprintf(ebuf, sizeof(ebuf), "tls_client \"%s\"",
 		    f->f_un.f_forw.f_loghost);
 		logerror(ebuf);
 		return (NULL);
 	}
-	if (tls_configure(ctx, config) < 0) {
-		snprintf(ebuf, sizeof(ebuf), "tls_configure \"%s\": %s",
-		    f->f_un.f_forw.f_loghost, tls_error(ctx));
-		logerror(ebuf);
-		tls_free(ctx);
-		return (NULL);
+	if (tlsconfig) {
+		if (tls_configure(ctx, tlsconfig) < 0) {
+			snprintf(ebuf, sizeof(ebuf), "tls_configure \"%s\": %s",
+			    f->f_un.f_forw.f_loghost, tls_error(ctx));
+			logerror(ebuf);
+			tls_free(ctx);
+			return (NULL);
+		}
 	}
 	return (ctx);
 }
@@ -879,8 +907,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-46dhnu] [-a path] [-f config_file] [-m mark_interval]\n"
-	    "               [-p log_socket] [-s reporting_socket]\n");
+	    "usage: syslogd [-46dhnuV] [-a path] [-C CAfile] [-f config_file]\n"
+	    "               [-m mark_interval] [-p log_socket] [-s reporting_socket]\n");
 	exit(1);
 }
 
@@ -1474,6 +1502,7 @@ init(void)
 				tls_close(f->f_un.f_forw.f_ctx);
 				tls_free(f->f_un.f_forw.f_ctx);
 			}
+			free(f->f_un.f_forw.f_host);
 			/* FALLTHROUGH */
 		case F_FORWTCP:
 			/* XXX Save messages in output buffer for reconnect. */
@@ -1869,6 +1898,7 @@ cfline(char *line, char *prog)
 				break;
 			}
 			if (strncmp(proto, "tls", 3) == 0) {
+				f->f_un.f_forw.f_host = strdup(host);
 				f->f_type = F_FORWTLS;
 			} else {
 				f->f_type = F_FORWTCP;
