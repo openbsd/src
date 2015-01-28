@@ -1,0 +1,28 @@
+.TH TBL-BLOCK_UNCLOSED 1 "January 28, 2015" OpenBSD
+.SH NAME
+tbl-block_unclosed \- unclosed text block
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+lll.
+begin:T{
+middle
+T}:end
+incomplete:T{
+block
+.TE
+normal text
+.TS
+box tab(:);
+lll.
+begin:T{
+middle
+T}:end
+incomplete:T{
+block
+.T&
+rrr.
+reset:still:works
+.TE
+normal text

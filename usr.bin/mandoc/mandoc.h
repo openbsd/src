@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.132 2015/01/27 05:20:30 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.133 2015/01/28 17:30:37 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -143,15 +143,15 @@ enum	mandocerr {
 	/* related to tables */
 	MANDOCERR_TBLOPT_ALPHA, /* non-alphabetic character in tbl options */
 	MANDOCERR_TBLOPT_BAD, /* skipping unknown tbl option: option */
-	MANDOCERR_TBLOPT_NOARG, /* missing tbl option argument */
-	MANDOCERR_TBLOPT_ARGSZ, /* wrong tbl option argument size */
+	MANDOCERR_TBLOPT_NOARG, /* missing tbl option argument: option */
+	MANDOCERR_TBLOPT_ARGSZ, /* wrong tbl option argument size: option */
 	MANDOCERR_TBLLAYOUT_NONE, /* empty tbl layout */
 	MANDOCERR_TBLLAYOUT_CHAR, /* invalid character in tbl layout: char */
 	MANDOCERR_TBLLAYOUT_PAR, /* unmatched parenthesis in tbl layout */
-	MANDOCERR_TBLNODATA, /* no table data cells specified */
-	MANDOCERR_TBLIGNDATA, /* ignore data in cell */
-	MANDOCERR_TBLBLOCK, /* data block still open */
-	MANDOCERR_TBLEXTRADAT, /* ignoring extra data cells */
+	MANDOCERR_TBLDATA_NONE, /* tbl without any data cells */
+	MANDOCERR_TBLDATA_SPAN, /* ignoring data in spanned tbl cell: data */
+	MANDOCERR_TBLDATA_EXTRA, /* ignoring extra tbl data cells: data */
+	MANDOCERR_TBLDATA_BLK, /* data block open at end of tbl: macro */
 
 	/* related to document structure and macros */
 	MANDOCERR_FILE, /* cannot open file */
@@ -186,9 +186,9 @@ enum	mandocerr {
 	MANDOCERR_TOOLARGE, /* input too large */
 	MANDOCERR_CHAR_UNSUPP, /* unsupported control character: number */
 	MANDOCERR_REQ_UNSUPP, /* unsupported roff request: request */
+	MANDOCERR_TBLOPT_EQN, /* eqn delim option in tbl: arg */
 	MANDOCERR_TBLLAYOUT_MOD, /* unsupported tbl layout modifier: m */
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
-	MANDOCERR_TBLEQN, /* eqn in tbl */
 
 	MANDOCERR_MAX
 };

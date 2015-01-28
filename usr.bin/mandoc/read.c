@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.93 2015/01/26 18:41:45 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.94 2015/01/28 17:30:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -187,10 +187,10 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"empty tbl layout",
 	"invalid character in tbl layout",
 	"unmatched parenthesis in tbl layout",
-	"no table data cells specified",
-	"ignore data in cell",
-	"data block still open",
-	"ignoring extra data cells",
+	"tbl without any data cells",
+	"ignoring data in spanned tbl cell",
+	"ignoring extra tbl data cells",
+	"data block open at end of tbl",
 
 	/* related to document structure and macros */
 	NULL,
@@ -224,9 +224,9 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"input too large",
 	"unsupported control character",
 	"unsupported roff request",
+	"eqn delim option in tbl",
 	"unsupported tbl layout modifier",
 	"ignoring macro in table",
-	"eqn in tbl",
 };
 
 static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.80 2015/01/23 14:19:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.81 2015/01/28 17:30:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1004,10 +1004,12 @@ pre_bl(DECL_ARGS)
 		return(1);
 	}
 
-	print_line(".TS", MMAN_nl);
-	for (icol = 0; icol < n->norm->Bl.ncols; icol++)
-		print_word("l");
-	print_word(".");
+	if (n->nchild) {
+		print_line(".TS", MMAN_nl);
+		for (icol = 0; icol < n->norm->Bl.ncols; icol++)
+			print_word("l");
+		print_word(".");
+	}
 	outflags |= MMAN_nl;
 	return(1);
 }
@@ -1018,7 +1020,8 @@ post_bl(DECL_ARGS)
 
 	switch (n->norm->Bl.type) {
 	case LIST_column:
-		print_line(".TE", 0);
+		if (n->nchild)
+			print_line(".TE", 0);
 		break;
 	case LIST_enum:
 		n->norm->Bl.count = 0;

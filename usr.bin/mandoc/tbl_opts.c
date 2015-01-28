@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_opts.c,v 1.11 2015/01/28 15:02:25 schwarze Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.12 2015/01/28 17:30:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -78,7 +78,8 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
 
 	switch (key) {
 	case KEY_DELIM:
-		mandoc_msg(MANDOCERR_TBLEQN, tbl->parse, ln, *pos, NULL);
+		mandoc_vmsg(MANDOCERR_TBLOPT_EQN, tbl->parse,
+		    ln, *pos, "%.*s", len, p + *pos);
 		want = 2;
 		break;
 	case KEY_TAB:
