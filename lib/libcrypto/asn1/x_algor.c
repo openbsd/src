@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.12 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x_algor.c,v 1.13 2015/01/28 04:14:31 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -135,4 +135,18 @@ X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 		param_type = V_ASN1_NULL;
 
 	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
+}
+
+/* Returns 0 if they are equal, != 0 otherwise. */
+int
+X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
+{
+	int rv = OBJ_cmp(a->algorithm, b->algorithm);
+	if (!rv) {
+		if (!a->parameter && !b->parameter)
+			rv = 0;
+		else
+			rv = ASN1_TYPE_cmp(a->parameter, b->parameter);
+	}
+	return(rv);
 }

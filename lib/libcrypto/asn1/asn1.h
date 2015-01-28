@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.28 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1.h,v 1.29 2015/01/28 04:14:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1279,6 +1279,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_ILLEGAL_TIME_VALUE			 184
 #define ASN1_R_INTEGER_NOT_ASCII_FORMAT			 185
 #define ASN1_R_INTEGER_TOO_LARGE_FOR_LONG		 128
+#define ASN1_R_INVALID_BIT_STRING_BITS_LEFT		 220
 #define ASN1_R_INVALID_BMPSTRING_LENGTH			 129
 #define ASN1_R_INVALID_DIGIT				 130
 #define ASN1_R_INVALID_MIME_TYPE			 205

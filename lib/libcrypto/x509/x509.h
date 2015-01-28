@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.20 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: x509.h,v 1.21 2015/01/28 04:14:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -758,6 +758,7 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
 void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 						X509_ALGOR *algor);
 void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
+int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);

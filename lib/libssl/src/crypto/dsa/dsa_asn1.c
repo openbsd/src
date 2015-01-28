@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.13 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.14 2015/01/28 04:14:31 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -181,15 +182,26 @@ DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     const unsigned char *sigbuf, int siglen, DSA *dsa)
 {
 	DSA_SIG *s;
+	unsigned char *der = NULL;
+	const unsigned char *p = sigbuf;
+	int derlen = -1;
 	int ret = -1;
 
 	s = DSA_SIG_new();
 	if (s == NULL)
 		return ret;
-	if (d2i_DSA_SIG(&s, &sigbuf, siglen) == NULL)
+	if (d2i_DSA_SIG(&s, &p, siglen) == NULL)
+		goto err;
+	/* Ensure signature uses DER and doesn't have trailing garbage */
+	derlen = i2d_DSA_SIG(s, &der);
+	if (derlen != siglen || memcmp(sigbuf, der, derlen))
 		goto err;
 	ret = DSA_do_verify(dgst, dgst_len, s, dsa);
 err:
+	if (derlen > 0) {
+		explicit_bzero(der, derlen);
+		free(der);
+	}
 	DSA_SIG_free(s);
 	return ret;
 }
