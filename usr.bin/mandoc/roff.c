@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.128 2015/01/24 02:41:32 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.129 2015/01/28 15:02:25 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1235,7 +1235,13 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	if (r->tbl != NULL && (t == ROFF_MAX || t == ROFF_TS)) {
 		mandoc_msg(MANDOCERR_TBLMACRO, r->parse,
 		    ln, pos, buf->buf + spos);
-		return(ROFF_IGN);
+		if (t == ROFF_TS)
+			return(ROFF_IGN);
+		while (buf->buf[pos] != '\0' && buf->buf[pos] != ' ')
+			pos++;
+		while (buf->buf[pos] != '\0' && buf->buf[pos] == ' ')
+			pos++;
+		return(tbl_read(r->tbl, ln, buf->buf, pos));
 	}
 
 	/*

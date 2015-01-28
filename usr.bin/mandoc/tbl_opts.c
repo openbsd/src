@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_opts.c,v 1.10 2015/01/26 13:02:53 schwarze Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.11 2015/01/28 15:02:25 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -118,17 +118,19 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
  * and some options are followed by arguments.
  */
 void
-tbl_option(struct tbl_node *tbl, int ln, const char *p)
+tbl_option(struct tbl_node *tbl, int ln, const char *p, int *offs)
 {
 	int		 i, pos, len;
 
-	pos = 0;
+	pos = *offs;
 	for (;;) {
 		while (p[pos] == ' ' || p[pos] == '\t' || p[pos] == ',')
 			pos++;
 
-		if (p[pos] == ';')
+		if (p[pos] == ';') {
+			*offs = pos + 1;
 			return;
+		}
 
 		/* Parse one option name. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.21 2015/01/27 05:20:30 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.22 2015/01/28 15:02:25 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -136,13 +136,10 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 }
 
 int
-tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
+tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
 	struct tbl_dat	*dat;
 	size_t		 sz;
-	int		 pos;
-
-	pos = 0;
 
 	dat = tbl->last_span->last;
 
@@ -202,11 +199,10 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 }
 
 void
-tbl_data(struct tbl_node *tbl, int ln, const char *p)
+tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
 	struct tbl_span	*dp;
 	struct tbl_row	*rp;
-	int		 pos;
 
 	/*
 	 * Choose a layout row: take the one following the last parsed
@@ -257,7 +253,6 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 
 	dp->pos = TBL_SPAN_DATA;
 
-	pos = 0;
 	while ('\0' != p[pos])
 		getdata(tbl, dp, ln, p, &pos);
 }

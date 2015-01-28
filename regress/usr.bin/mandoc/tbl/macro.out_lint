@@ -1,1 +1,1 @@
-mandoc: macro.in:11:2: UNSUPP: ignoring macro in table: PD 1
+mandoc: macro.in:11:2: UNSUPP: ignoring macro in table: R c:d

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.15 2015/01/27 05:20:30 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.16 2015/01/28 15:02:25 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,7 +30,7 @@
 
 
 enum rofferr
-tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
+tbl_read(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
 	const char	*cp;
 	int		 active;
@@ -44,7 +44,7 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
 	if (tbl->part == TBL_PART_OPTS) {
 		tbl->part = TBL_PART_LAYOUT;
 		active = 1;
-		for (cp = p; *cp != '\0'; cp++) {
+		for (cp = p + pos; *cp != '\0'; cp++) {
 			switch (*cp) {
 			case '(':
 				active = 0;
@@ -62,8 +62,8 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
 			break;
 		}
 		if (*cp == ';') {
-			tbl_option(tbl, ln, p);
-			if (*(p = cp + 1) == '\0')
+			tbl_option(tbl, ln, p, &pos);
+			if (p[pos] == '\0')
 				return(ROFF_IGN);
 		}
 	}
@@ -72,15 +72,15 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int offs)
 
 	switch (tbl->part) {
 	case TBL_PART_LAYOUT:
-		tbl_layout(tbl, ln, p);
+		tbl_layout(tbl, ln, p, pos);
 		return(ROFF_IGN);
 	case TBL_PART_CDATA:
-		return(tbl_cdata(tbl, ln, p) ? ROFF_TBL : ROFF_IGN);
+		return(tbl_cdata(tbl, ln, p, pos) ? ROFF_TBL : ROFF_IGN);
 	default:
 		break;
 	}
 
-	tbl_data(tbl, ln, p);
+	tbl_data(tbl, ln, p, pos);
 	return(ROFF_TBL);
 }
 

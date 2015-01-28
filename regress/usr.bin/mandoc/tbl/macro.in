@@ -8,8 +8,7 @@ box tab(:);
 l | l .
 a:b
 _
-.PD 1
-c:d
+.R c:d
 .TE
 .PP
 normal text
