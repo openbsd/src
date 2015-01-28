@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.85 2015/01/15 15:30:17 sf Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.86 2015/01/28 02:56:50 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -211,15 +211,11 @@ long nkptpmax[] = NKPTPMAX_INITIALIZER;
 long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 
-/* int nkpde = NKPTP; */
-
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
 
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
-
-#define COUNT(x)	/* nothing */
 
 #define pmap_pte_set(p, n)		atomic_swap_64(p, n)
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
