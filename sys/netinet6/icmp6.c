@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.154 2015/01/26 11:38:37 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.155 2015/01/28 22:10:13 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1983,10 +1983,18 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
+		struct rt_addrinfo info;
 		int s;
 
+		bzero(&info, sizeof(info));
+		info.rti_flags = rt->rt_flags;
+		info.rti_info[RTAX_DST] = rt_key(rt);
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+
 		s = splsoftnet();
-		rtdeletemsg(rt, r->rtt_tableid);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
+		    r->rtt_tableid);
 		splx(s);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
@@ -2001,10 +2009,18 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp6_redirect_timeout: bad route to timeout");
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
+		struct rt_addrinfo info;
 		int s;
 
+		bzero(&info, sizeof(info));
+		info.rti_flags = rt->rt_flags;
+		info.rti_info[RTAX_DST] = rt_key(rt);
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+
 		s = splsoftnet();
-		rtdeletemsg(rt, r->rtt_tableid);
+		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
+		    r->rtt_tableid);
 		splx(s);
 	}
 }
