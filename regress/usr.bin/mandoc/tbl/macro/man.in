@@ -1,0 +1,16 @@
+.TH TBL-MACRO-MAN 1 "December 16, 2014"
+.SH NAME
+tbl-macro-man \- man macro in a table
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+l | l .
+a:b:stray
+_
+c:T{
+.SM d
+T}
+.TE
+.PP
+normal text

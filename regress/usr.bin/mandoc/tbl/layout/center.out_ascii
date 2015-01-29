@@ -1,0 +1,22 @@
+TBL-LAYOUT-CENTER(1)        General Commands Manual       TBL-LAYOUT-CENTER(1)
+
+
+
+NNAAMMEE
+       tbl-layout-center - centering of table cells
+
+DDEESSCCRRIIPPTTIIOONN
+       normal text
+
+           *     *     *
+          **    **     **
+         ***    ***    ***
+            ***        ***
+         ***        ***
+         ***    ***    ***
+        ****   ****    ****
+       *****   *****   *****
+
+
+
+                                                          TBL-LAYOUT-CENTER(1)

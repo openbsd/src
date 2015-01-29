@@ -1,0 +1,39 @@
+.TH TBL-VERT 1
+.SH NAME
+tbl-vert \- vertical lines
+.SH DESCRIPTION
+no boxing:
+.TS
+tab(:);
+l l.
+a:b
+c:d
+.TE
+.sp
+automatic boxing:
+.TS
+tab(:) box;
+l l.
+a:b
+c:d
+.TE
+.sp
+manual boxing:
+.TS
+tab(:);
+||l||l||.
+_
+a:b
+_
+c:d
+_
+.TE
+.sp
+automatic and manual boxing:
+.TS
+tab(:) box;
+||l||l||.
+a:b
+_
+c:d
+.TE

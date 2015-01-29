@@ -1,0 +1,9 @@
+.TH TBL-DATA-EMPTY 1 "January 28, 2015" OpenBSD
+.SH NAME
+tbl-data-empty \- empty table
+.SH DESCRIPTION
+normal text
+.TS
+box; l.
+.TE
+normal text

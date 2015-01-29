@@ -1,0 +1,40 @@
+.TH TBL-LAYOUT-SPAN 1
+.SH NAME
+tbl-layout-span \- alignment of spanned cells
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+L L L L
+L S L L
+L L S L
+L L L S.
+a:b:c:d
+s:c:d
+a:s:d
+a:b:s
+.TE
+.sp
+.TS
+box tab(:);
+C C C C
+C S C C
+C C S C
+C C C S.
+a:b:c:d
+s:c:d
+a:s:d
+a:b:s
+.TE
+.sp
+.TS
+box tab(:);
+R R R R
+R S R R
+R R S R
+R R R S.
+a:b:c:d
+s:c:d
+a:s:d
+a:b:s
+.TE

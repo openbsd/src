@@ -1,0 +1,33 @@
+TBL-LAYOUT-SPAN(1)          General Commands Manual         TBL-LAYOUT-SPAN(1)
+
+
+
+NNAAMMEE
+       tbl-layout-span - alignment of spanned cells
+
+DDEESSCCRRIIPPTTIIOONN
+       normal text
+
+       +--------------+
+       |a   b   c   d |
+       |s       c   d |
+       |a   s       d |
+       |a   b   s     |
+       +--------------+
+
+       +--------------+
+       |a   b   c   d |
+       |  s     c   d |
+       |a     s     d |
+       |a   b     s   |
+       +--------------+
+
+       +--------------+
+       |a   b   c   d |
+       |    s   c   d |
+       |a       s   d |
+       |a   b       s |
+       +--------------+
+
+
+                                                            TBL-LAYOUT-SPAN(1)

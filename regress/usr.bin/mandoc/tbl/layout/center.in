@@ -1,0 +1,22 @@
+.TH TBL-LAYOUT-CENTER 1
+.SH NAME
+tbl-layout-center \- centering of table cells
+.SH DESCRIPTION
+normal text
+.TS
+tab(:);
+r c l
+r c l
+r c l
+c s l
+r c s
+r c l .
+*:*:*
+**:**:**
+***:***:***
+***:***
+***:***
+***:***:***
+****:****:****
+*****:*****:*****
+.TE

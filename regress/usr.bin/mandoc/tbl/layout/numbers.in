@@ -1,0 +1,12 @@
+.TH TBL-LAYOUT-NUMBERS 1
+.SH NAME
+tbl-layout-numbers \- alignment of numbers in tables
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+r || n | n .
+1:1.00:+42.0
+_
+10:-10.0:3.14
+.TE

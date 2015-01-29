@@ -1,0 +1,5 @@
+mandoc: invalid.in:7:5: ERROR: missing tbl option argument: tab
+mandoc: invalid.in:7:19: ERROR: wrong tbl option argument size: decimalpoint want 1 have 2
+mandoc: invalid.in:7:23: ERROR: non-alphabetic character in tbl options: %
+mandoc: invalid.in:7:24: ERROR: skipping unknown tbl option: foo
+mandoc: invalid.in:15:21: UNSUPP: eqn delim option in tbl: $$

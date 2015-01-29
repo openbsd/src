@@ -1,0 +1,5 @@
+mandoc: complex.in:8:14: WARNING: skipping vertical bar in tbl layout
+mandoc: complex.in:8:28: WARNING: skipping vertical bar in tbl layout
+mandoc: complex.in:10:7: ERROR: ignoring data in spanned tbl cell: h
+mandoc: complex.in:16:3: WARNING: tbl column starts with span
+mandoc: complex.in:18:3: ERROR: ignoring data in spanned tbl cell: b

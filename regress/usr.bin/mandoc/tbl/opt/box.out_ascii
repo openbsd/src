@@ -1,0 +1,37 @@
+TBL-VERT(1)                 General Commands Manual                TBL-VERT(1)
+
+
+
+NNAAMMEE
+       tbl-vert - vertical lines
+
+DDEESSCCRRIIPPTTIIOONN
+       no boxing:
+
+       a   b
+       c   d
+
+       automatic boxing:
+
+       +------+
+       |a   b |
+       |c   d |
+       +------+
+       manual boxing:
+
+       +--++--+
+       |a ||b |
+       +--++--+
+       |c ||d |
+       +--++--+
+
+       automatic and manual boxing:
+
+       +--++--+
+       |a ||b |
+       +--++--+
+       |c ||d |
+       +--++--+
+
+
+                                                                   TBL-VERT(1)
