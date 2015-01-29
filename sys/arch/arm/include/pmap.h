@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.29 2015/01/01 03:26:13 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.30 2015/01/29 20:10:52 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -68,8 +68,6 @@
 
 #ifndef	_ARM_PMAP_H_
 #define	_ARM_PMAP_H_
-
-#include <sys/lock.h>		/* struct simplelock */ 
 
 #ifdef _KERNEL
 
@@ -176,7 +174,6 @@ struct pmap {
 	struct l1_ttable	*pm_l1;
 	union pmap_cache_state	pm_cstate;
 	u_int			pm_refs;
-	simple_lock_data_t	pm_lock;
 	struct l2_dtable	*pm_l2[L2_SIZE];
 	struct pmap_statistics	pm_stats;
 };
@@ -782,7 +779,6 @@ extern uint32_t pmap_alias_bits;
  */
 struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 	u_int uro_mappings;
 	u_int urw_mappings;
@@ -798,7 +794,6 @@ struct vm_page_md {
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
-	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 	(pg)->mdpage.pvh_attrs = 0;					\
 	(pg)->mdpage.uro_mappings = 0;					\
 	(pg)->mdpage.urw_mappings = 0;					\
