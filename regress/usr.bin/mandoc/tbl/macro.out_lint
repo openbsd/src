@@ -1,2 +1,0 @@
-mandoc: macro.in:9:5: ERROR: ignoring extra tbl data cells: stray
-mandoc: macro.in:12:2: UNSUPP: ignoring macro in table: SM d
