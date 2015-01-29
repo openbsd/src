@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getifaddrs.3,v 1.19 2014/04/07 17:57:56 schwarze Exp $
+.\"	$OpenBSD: getifaddrs.3,v 1.20 2015/01/29 01:46:30 schwarze Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -21,7 +21,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt GETIFADDRS 3
 .Os
 .Sh NAME
@@ -43,11 +43,11 @@ function stores a reference to a linked list of the network interfaces
 on the local machine in the memory referenced by
 .Fa ifap .
 The list consists of
-.Nm ifaddrs
+.Vt ifaddrs
 structures, as defined in the include file
 .In ifaddrs.h .
 The
-.Nm ifaddrs
+.Vt ifaddrs
 structure contains at least the following entries:
 .Bd -literal
     struct ifaddrs   *ifa_next;         /* Pointer to next struct */
@@ -102,7 +102,7 @@ References address family specific data.
 For
 .Dv AF_LINK
 addresses it contains a pointer to the
-.Li struct if_data
+.Vt struct if_data
 (as defined in include file
 .In net/if.h )
 which contains various interface attributes and statistics.
@@ -118,10 +118,7 @@ is dynamically allocated and should be freed using
 .Fn freeifaddrs
 when no longer needed.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 The
 .Fn getifaddrs

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raise.3,v 1.10 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: raise.3,v 1.11 2015/01/29 01:46:30 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt RAISE 3
 .Os
 .Sh NAME
@@ -48,10 +48,7 @@ function sends the signal
 .Fa sig
 to the current thread.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn raise
 will fail and no signal will be sent if:

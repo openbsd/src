@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statvfs.3,v 1.7 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: statvfs.3,v 1.8 2015/01/29 01:46:30 schwarze Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt STATVFS 3
 .Os
 .Sh NAME
@@ -72,18 +72,15 @@ struct statvfs {
 .Ed
 .Pp
 The fields of type
-.Va fsblkcnt_t
+.Vt fsblkcnt_t
 are reported in units of
-.Va f_frsize .
+.Fa f_frsize .
 .Pp
 .Fn fstatvfs
 returns the same information about an open file referenced by descriptor
 .Fa fd .
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn statvfs
 fails if one or more of the following are true:
@@ -115,9 +112,7 @@ or
 .Fa path
 points to an invalid address.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
 .Fn fstatvfs
@@ -130,9 +125,7 @@ is not a valid open file descriptor.
 .Fa buf
 points to an invalid address.
 .It Bq Er EIO
-An
-.Tn I/O
-error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,

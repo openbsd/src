@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.33 2014/09/08 01:27:54 schwarze Exp $
+.\"	$OpenBSD: strftime.3,v 1.34 2015/01/29 01:46:31 schwarze Exp $
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -64,13 +64,6 @@ and one other character.
 No more than
 .Fa maxsize
 characters will be placed into the array.
-If the total number of resulting characters, including the terminating
-NUL character, is not more than
-.Fa maxsize ,
-.Fn strftime
-returns the number of characters placed in the array, not counting the
-terminating NUL.
-Otherwise, zero is returned.
 .Pp
 Each conversion specification is replaced by the characters as
 follows which are then copied into the buffer.
@@ -127,9 +120,9 @@ is replaced by the month as a decimal number (01\-12).
 is replaced by a newline.
 .It Cm %p
 is replaced by the locale's equivalent of either
-.Dq Tn AM
+.Dq AM
 or
-.Dq Tn PM .
+.Dq PM .
 .It Cm \&%R
 is replaced by the time in the format
 .Dq Li %H:%M .
@@ -196,6 +189,13 @@ is replaced by the date and time in
 .Xr date 1
 format.
 .El
+.Sh RETURN VALUES
+If the total number of resulting characters, including the terminating
+NUL character, is not more than
+.Fa maxsize ,
+.Fn strftime
+returns the number of characters placed in the array, not counting the
+terminating NUL. Otherwise, zero is returned.
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr printf 1 ,

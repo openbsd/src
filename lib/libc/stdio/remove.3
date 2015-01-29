@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remove.3,v 1.12 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: remove.3,v 1.13 2015/01/29 01:46:30 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)remove.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt REMOVE 3
 .Os
 .Sh NAME
@@ -58,12 +58,7 @@ is the equivalent of
 Otherwise, it is the equivalent of
 .Fn unlink "path" .
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn remove
-returns 0.
-Otherwise, \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 The
 .Fn remove

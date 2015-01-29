@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: killpg.3,v 1.12 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: killpg.3,v 1.13 2015/01/29 01:46:30 schwarze Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt KILLPG 3
 .Os
 .Sh NAME
@@ -58,10 +58,7 @@ the sender must be the superuser.
 As a single special case the continue signal SIGCONT may be sent
 to any process with the same session ID as the caller.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn killpg
 will fail and no signal will be sent if:
