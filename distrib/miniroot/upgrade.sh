@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.80 2014/12/10 08:57:41 giovanni Exp $
+#	$OpenBSD: upgrade.sh,v 1.81 2015/01/29 17:47:08 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -86,6 +86,10 @@ feed_random
 
 # Install sets.
 install_sets
+
+# XXX To be removed after 5.8 is released.
+rm -rf /mnt/usr/libexec/sendmail
+rm -f /mnt/usr/sbin/{named,nginx,openssl}
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
