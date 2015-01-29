@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.81 2014/11/16 19:57:24 schwarze Exp $
+.\" $OpenBSD: ipsec.4,v 1.82 2015/01/29 07:48:51 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: November 16 2014 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -148,7 +148,7 @@ The only issue remaining is to ensure that both ends have matching SAs.
 This may be done manually, or automatically using a key management daemon.
 .Pp
 Further information on manual SA establishment is described in
-.Xr ipsecctl 8 .
+.Xr ipsec.conf 5 .
 Information on automated key management for IKEv1 can be found in
 .Xr isakmpd 8
 and for IKEv2 in
