@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.58 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.59 2015/01/29 08:52:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -902,6 +902,18 @@ port		: PORT NUMBER {
 				YYERROR;
 			}
 			$$.val[0] = htons($2);
+		}
+		| PORT STRING {
+			int	 val;
+
+			if ((val = getservice($2)) == -1) {
+				yyerror("invalid port: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			$$.val[0] = val;
 		}
 		;
 
