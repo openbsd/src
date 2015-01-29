@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tbl.7,v 1.13 2015/01/28 04:18:31 schwarze Exp $
+.\"	$OpenBSD: tbl.7,v 1.14 2015/01/29 00:33:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2015 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -328,18 +328,17 @@ It may then be followed by a tab
 .Pq or as designated by Cm tab
 or an end-of-line to terminate the row.
 .Sh COMPATIBILITY
-This section documents compatibility between mandoc and other
-.Nm
-implementations, at this time limited to GNU tbl.
-.Pp
-.Bl -dash -compact
-.It
-In GNU tbl, comments and macros are disallowed prior to the data block
-of a table.
 The
 .Xr mandoc 1
-implementation allows them.
-.El
+implementation of
+.Nm
+doesn't support
+.Xr mdoc 7
+and
+.Xr man 7
+macros and
+.Xr eqn 7
+equations inside tables.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr man 7 ,

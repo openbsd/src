@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.43 2015/01/24 02:41:32 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.44 2015/01/29 00:33:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2015 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -894,53 +894,6 @@ until the end of the macro scope.
 Note that macros like
 .Sx \&BR
 open and close a font scope for each argument.
-.Sh COMPATIBILITY
-This section mentions some areas of questionable portability between
-implementations of the
-.Nm
-language.
-More incompatibilities exist.
-.Pp
-.Bl -dash -compact
-.It
-Do not depend on
-.Sx \&SH
-or
-.Sx \&SS
-to close out a literal context opened with
-.Sx \&nf .
-This behaviour may not be portable.
-.It
-troff suppresses a newline before
-.Sq \(aq
-macro output; in mandoc, it is an alias for the standard
-.Sq \&.
-control character.
-.It
-In page header lines, GNU troff versions up to and including 1.21
-only print
-.Ar volume
-names explicitly specified in the
-.Sx \&TH
-macro; mandoc and newer groff print the default volume name
-corresponding to the
-.Ar section
-number when no
-.Ar volume
-is given, like in
-.Xr mdoc 7 .
-.El
-.Pp
-The
-.Sx EE ,
-.Sx EX ,
-.Sx OP ,
-.Sx UE ,
-and
-.Sx UR
-macros are part of the GNU extended
-.Nm
-macro set, and may not be portable to non-GNU troff implementations.
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr mandoc 1 ,

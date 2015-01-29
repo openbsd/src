@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.48 2015/01/23 20:17:25 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.49 2015/01/29 00:33:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2015 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -2026,50 +2026,66 @@ approximated in
 .Xr mandoc 1
 by simply skipping the next character.
 .Sh COMPATIBILITY
-This section documents compatibility between mandoc and other
+The
+.Xr mandoc 1
+implementation of the
 .Nm
-implementations, at this time limited to GNU troff
-.Pq Qq groff .
-The term
-.Qq historic groff
-refers to groff version 1.15.
+language is intentionally incomplete.
+Unimplemented features include:
 .Pp
 .Bl -dash -compact
+.It
+For security reasons,
+.Xr mandoc 1
+never reads or writes external files except via
+.Sx \&so
+requests with safe relative paths.
+.It
+There is no automatic hyphenation, no adjustment to the right margin,
+and no centering; the output is always set flush-left.
+.It
+Support for setting tabulator positions
+and tabulator and leader characters is missing,
+and support for manually changing indentation is limited.
 .It
 The
 .Sq u
 scaling unit is the default terminal unit.
-In traditional troff systems, this unit would change depending on the
+In traditional troff systems, this unit changes depending on the
 output media.
 .It
-In mandoc, the
-.Sx \&EQ ,
-.Sx \&TE ,
-.Sx \&TS ,
-and
-.Sx \&T& ,
-macros are considered regular macros.
-In all other
-.Nm
-implementations, these are special macros that must be specified without
-spacing between the control character (which must be a period) and the
-macro name.
+Width measurements are implemented in a crude way
+and often yield wrong results.
+Explicit movement requests and escapes are ignored.
+.It
+There is no concept of output pages, no support for floats,
+graphics drawing, and picture inclusion;
+terminal output is always continuous.
+.It
+Requests regarding color, font families, and glyph manipulation
+are ignored.
+Font support is very limited.
+Kerning is not implemented, and no ligatures are produced.
 .It
 The
-.Cm nS
-register is only compatible with OpenBSD's groff-1.15.
+.Qq \(aq
+macro control character does not suppress output line breaks.
 .It
-Historic groff did not accept white-space before a custom
-.Ar end
-macro for the
-.Sx \&ig
-request.
+Diversions are not implemented,
+and support for traps is very incomplete.
 .It
-The
-.Sx \&if
-and family would print funny white-spaces with historic groff when
-using the next-line syntax.
+While recursion is supported,
+.Sx \&while
+loops are not.
 .El
+.Pp
+The special semantics of the
+.Cm nS
+number register is an idiosyncracy of
+.Ox
+manuals and not supported by other
+.Xr mdoc 7
+implementations.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr eqn 7 ,

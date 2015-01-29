@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.74 2015/01/20 22:02:15 jmc Exp $
+.\"	$OpenBSD: mandoc.1,v 1.75 2015/01/29 00:33:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2015 $
+.Dd $Mdocdate: January 29 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -321,9 +321,6 @@ Emboldened characters are rendered as
 The special characters documented in
 .Xr mandoc_char 7
 are rendered best-effort in an ASCII equivalent.
-If no equivalent is found,
-.Sq \&?
-is used instead.
 .Pp
 Output width is limited to 78 visible columns unless literal input lines
 exceed this limit.
@@ -344,7 +341,7 @@ for example overfull lines or ugly line breaks.
 .It Cm width Ns = Ns Ar width
 The output width is set to
 .Ar width ,
-which will normalise to \(>=60.
+which will normalise to \(>=58.
 .El
 .Ss HTML Output
 Output produced by
@@ -658,88 +655,9 @@ are hidden unless their level, or a lower level, is requested using a
 option or
 .Fl T Ns Cm lint
 output mode.
-.Sh COMPATIBILITY
-This section summarises
-.Nm
-compatibility with GNU troff.
-Each input and output format is separately noted.
-.Ss ASCII Compatibility
-.Bl -bullet -compact
-.It
-Unrenderable unicode codepoints specified with
-.Sq \e[uNNNN]
-escapes are printed as
-.Sq \&?
-in mandoc.
-In GNU troff, these raise an error.
-.It
-The
-.Sq \&Bd \-literal
-and
-.Sq \&Bd \-unfilled
-macros of
-.Xr mdoc 7
-in
-.Fl T Ns Cm ascii
-are synonyms, as are \-filled and \-ragged.
-.It
-In historic GNU troff, the
-.Sq \&Pa
-.Xr mdoc 7
-macro does not underline when scoped under an
-.Sq \&It
-in the FILES section.
-This behaves correctly in
-.Nm .
-.It
-A list or display following the
-.Sq \&Ss
-.Xr mdoc 7
-macro in
-.Fl T Ns Cm ascii
-does not assert a prior vertical break, just as it doesn't with
-.Sq \&Sh .
-.It
-The
-.Sq \&na
-.Xr man 7
-macro in
-.Fl T Ns Cm ascii
-has no effect.
-.It
-Words aren't hyphenated.
-.El
-.Ss HTML Compatibility
-.Bl -bullet -compact
-.It
-The
-.Sq \efP
-escape will revert the font to the previous
-.Sq \ef
-escape, not to the last rendered decoration, which is now dictated by
-CSS instead of hard-coded.
-It also will not span past the current scope,
-for the same reason.
-Note that in
-.Sx ASCII Output
-mode, this will work fine.
-.It
-The
-.Xr mdoc 7
-.Sq \&Bl \-hang
-and
-.Sq \&Bl \-tag
-list types render similarly (no break following overreached left-hand
-side) due to the expressive constraints of HTML.
-.It
-The
-.Xr man 7
-.Sq IP
-and
-.Sq TP
-lists render similarly.
-.El
 .Sh SEE ALSO
+.Xr apropos 1 ,
+.Xr man 1 ,
 .Xr eqn 7 ,
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
@@ -750,32 +668,15 @@ lists render similarly.
 The
 .Nm
 utility was written by
-.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
-.Sh CAVEATS
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv
+and is maintained by
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org .
+.Sh BUGS
 In
-.Fl T Ns Cm html
-and
-.Fl T Ns Cm xhtml ,
+.Fl T Ns Cm html ,
 the maximum size of an element attribute is determined by
 .Dv BUFSIZ ,
 which is usually 1024 bytes.
 Be aware of this when setting long link
 formats such as
 .Fl O Ns Cm style Ns = Ns Ar really/long/link .
-.Pp
-Nesting elements within next-line element scopes of
-.Fl m Ns Cm an ,
-such as
-.Sq br
-within an empty
-.Sq B ,
-will confuse
-.Fl T Ns Cm html
-and
-.Fl T Ns Cm xhtml
-and cause them to forget the formatting of the prior next-line scope.
-.Pp
-The
-.Sq \(aq
-control character is an alias for the standard macro control character
-and does not emit a line-break as stipulated in GNU troff.
