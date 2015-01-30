@@ -15,7 +15,7 @@ our %args = (
 	loggrep => {
 	    qr/CAfile \/etc\/ssl\/cert.pem/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
-	    qr/connection error: SSL connect failed: 1/ => 2,
+	    qr/connection error: TLS connect failed \(1\)/ => 2,
 	    get_testlog() => 1,
 	},
 	cacrt => "default",

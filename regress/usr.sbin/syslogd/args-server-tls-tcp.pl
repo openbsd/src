@@ -39,7 +39,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: SSL connect failed: 1/
+	    qr/syslogd: loghost .* connection error: TLS connect failed \(1\)/
 		=> 1,
 	},
     },
