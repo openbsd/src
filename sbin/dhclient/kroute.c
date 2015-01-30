@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.68 2014/10/27 13:36:21 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.69 2015/01/30 14:14:53 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -100,7 +100,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 		}
 		if ((bufp = realloc(buf, needed)) == NULL) {
 			free(buf);
-			errmsg = "routes buf malloc:";
+			errmsg = "routes buf realloc:";
 			break;
 		}
 		buf = bufp;
