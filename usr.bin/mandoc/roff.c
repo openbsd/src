@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.130 2015/01/28 17:30:37 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.131 2015/01/30 00:19:26 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1200,7 +1200,7 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	if (r->eqn != NULL)
 		return(eqn_read(&r->eqn, ln, buf->buf, ppos, offs));
 	if (r->tbl != NULL && ( ! ctl || buf->buf[pos] == '\0'))
-		return(tbl_read(r->tbl, ln, buf->buf, pos));
+		return(tbl_read(r->tbl, ln, buf->buf, ppos));
 	if ( ! ctl)
 		return(roff_parsetext(buf, pos, offs));
 
