@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.19 2014/12/29 07:37:27 jasper Exp $
+# $OpenBSD: Interactive.pm,v 1.20 2015/01/30 11:42:55 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,10 +21,11 @@ package OpenBSD::Interactive;
 
 sub new
 {
-	my ($class, $state) = @_;
+	my ($class, $state, $level) = @_;
 	bless {
 	    state => $state,
 	    always => 0,
+	    level => $level,
 	}, $class;
 }
 
@@ -109,7 +110,7 @@ LOOP2:
 
 sub is_interactive
 {
-	return 1;
+	return shift->{level};
 }
 
 1;
