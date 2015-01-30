@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.171 2015/01/20 08:18:04 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.172 2015/01/30 12:33:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -290,7 +290,7 @@ tty_stop_tty(struct tty *tty)
 	if (tty_term_has(tty->term, TTYC_XT)) {
 		if (tty->flags & TTY_FOCUS) {
 			tty->flags &= ~TTY_FOCUS;
-			tty_puts(tty, "\033[?1004l");
+			tty_raw(tty, "\033[?1004l");
 		}
 	}
 
