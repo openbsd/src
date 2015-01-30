@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_html.c,v 1.62 2015/01/24 02:41:32 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.63 2015/01/30 22:04:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -190,9 +190,10 @@ static void
 print_man_nodelist(MAN_ARGS)
 {
 
-	print_man_node(man, n, mh, h);
-	if (n->next)
-		print_man_nodelist(man, n->next, mh, h);
+	while (n != NULL) {
+		print_man_node(man, n, mh, h);
+		n = n->next;
+	}
 }
 
 static void
