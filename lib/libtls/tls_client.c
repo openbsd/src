@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.9 2015/01/22 09:16:24 reyk Exp $ */
+/* $OpenBSD: tls_client.c,v 1.10 2015/01/30 14:25:37 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -225,7 +225,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 			ctx->flags |= TLS_CONNECTING;
 			return (TLS_WRITE_AGAIN);
 		default:
-			tls_set_error(ctx, "SSL connect failed: %i", ssl_err);
+			tls_set_error(ctx, "TLS connect failed (%i)", ssl_err);
 			goto err;
 		}
 	}
