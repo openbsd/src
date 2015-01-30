@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.25 2015/01/30 04:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.26 2015/01/30 17:31:20 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -171,7 +171,6 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 	if (dp->prev == NULL) {
 		tbl->first_span = dp;
 		tbl->current_span = NULL;
-		dp->flags |= TBL_SPAN_FIRST;
 	} else
 		dp->prev->next = dp;
 	tbl->last_span = dp;

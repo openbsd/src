@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.19 2015/01/30 04:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.20 2015/01/30 17:31:20 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -177,9 +177,5 @@ tbl_end(struct tbl_node **tblp)
 		    tbl->line, tbl->pos, NULL);
 		return(0);
 	}
-
-	if (tbl->last_span != NULL)
-		tbl->last_span->flags |= TBL_SPAN_LAST;
-
 	return(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.10 2015/01/30 04:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.11 2015/01/30 17:31:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,7 +52,7 @@ html_tblopen(struct html *h, const struct tbl_span *sp)
 	struct roffcol	*col;
 	int		 ic;
 
-	if (sp->flags & TBL_SPAN_FIRST) {
+	if (h->tbl.cols == NULL) {
 		h->tbl.len = html_tbl_len;
 		h->tbl.slen = html_tbl_strlen;
 		tblcalc(&h->tbl, sp, 0);
@@ -130,7 +130,7 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 
 	h->flags &= ~HTML_NONOSPACE;
 
-	if (sp->flags & TBL_SPAN_LAST) {
+	if (sp->next == NULL) {
 		assert(h->tbl.cols);
 		free(h->tbl.cols);
 		h->tbl.cols = NULL;
