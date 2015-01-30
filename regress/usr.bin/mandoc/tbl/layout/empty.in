@@ -1,0 +1,15 @@
+.TH TBL-LAYOUT-EMPTY 1 "January 29, 2015" OpenBSD
+.SH NAME
+tbl-layout-empty \- empty table layout
+.SH DESCRIPTION
+completely empty layout:
+.TS
+.
+table text
+.TE
+layout only contains a bar:
+.TS
+|.
+table text
+.TE
+normal text

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.21 2015/01/28 15:02:25 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.22 2015/01/30 00:27:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -260,11 +260,14 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p, int pos)
 			 */
 
 			if (tbl->first_row == NULL) {
+				tbl->first_row = tbl->last_row =
+				    mandoc_calloc(1, sizeof(*rp));
+			}
+			if (tbl->first_row->first == NULL) {
 				mandoc_msg(MANDOCERR_TBLLAYOUT_NONE,
 				    tbl->parse, ln, pos, NULL);
-				rp = mandoc_calloc(1, sizeof(*rp));
-				cell_alloc(tbl, rp, TBL_CELL_LEFT);
-				tbl->first_row = tbl->last_row = rp;
+				cell_alloc(tbl, tbl->first_row,
+				    TBL_CELL_LEFT);
 				return;
 			}
 
@@ -280,19 +283,36 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p, int pos)
 				    rp->last->head == tbl->last_head &&
 				    tbl->opts.rvert < rp->last->vert)
 					tbl->opts.rvert = rp->last->vert;
+
+				/* If the last line is empty, drop it. */
+
+				if (rp->next != NULL &&
+				    rp->next->first == NULL) {
+					free(rp->next);
+					rp->next = NULL;
+				}
 			}
 			return;
 		default:  /* Cell. */
 			break;
 		}
 
-		if (rp == NULL) {  /* First cell on this line. */
-			rp = mandoc_calloc(1, sizeof(*rp));
-			if (tbl->last_row)
-				tbl->last_row->next = rp;
-			else
-				tbl->first_row = rp;
-			tbl->last_row = rp;
+		/*
+		 * If the last line had at least one cell,
+		 * start a new one; otherwise, continue it.
+		 */
+
+		if (rp == NULL) {
+			if (tbl->last_row == NULL ||
+			    tbl->last_row->first != NULL) {
+				rp = mandoc_calloc(1, sizeof(*rp));
+				if (tbl->last_row)
+					tbl->last_row->next = rp;
+				else
+					tbl->first_row = rp;
+				tbl->last_row = rp;
+			} else
+				rp = tbl->last_row;
 		}
 		cell(tbl, rp, ln, p, &pos);
 	}
