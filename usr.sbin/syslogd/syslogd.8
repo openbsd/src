@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.32 2015/01/20 22:10:37 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.33 2015/01/30 14:09:49 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: January 20 2015 $
+.Dd $Mdocdate: January 30 2015 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -39,8 +39,9 @@
 .Sh SYNOPSIS
 .Nm syslogd
 .Bk -words
-.Op Fl 46dhnu
+.Op Fl 46dhnuV
 .Op Fl a Ar path
+.Op Fl C Ar CAfile
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
 .Op Fl p Ar log_socket
@@ -72,6 +73,11 @@ The primary use for this is to place additional log sockets in
 of various chroot filespaces, though the need for these is
 less urgent after the introduction of
 .Xr sendsyslog 2 .
+.It Fl C Ar CAfile
+PEM encoded file containing CA certificates used for certificate
+validation;
+the default is
+.Pa /etc/ssl/cert.pem .
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
@@ -109,6 +115,8 @@ mode, in which syslogd will
 accept input from the UDP port.
 Some software wants this, but you can be subjected to a variety of
 attacks over the network, including attackers remotely filling logs.
+.It Fl V
+Do not perform server certificate and hostname validation.
 .El
 .Pp
 .Nm
