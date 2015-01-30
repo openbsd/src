@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.136 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.137 2015/01/30 19:00:56 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -136,7 +136,9 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "c:fiM:mN:stw:vz")) != -1) {
 		switch (c) {
 		case 'c':
-			reps = atoi(optarg);
+			reps = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-c %s: %s", optarg, errstr);
 			break;
 		case 'f':
 			todo |= FORKSTAT;
@@ -222,10 +224,13 @@ main(int argc, char *argv[])
 	if (*argv) {
 		interval = (u_int)strtonum(*argv, 0, 1000, &errstr);
 		if (errstr)
-			errx(1, "%s: %s", *argv, errstr);
+			errx(1, "interval %s: %s", *argv, errstr);
 
-		if (*++argv)
-			reps = atoi(*argv);
+		if (*++argv) {
+			reps = strtonum(*argv, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "reps %s: %s", *argv, errstr);
+		}
 	}
 #endif
 
@@ -276,6 +281,8 @@ choosedrives(char **argv)
 			++ndrives;
 			break;
 		}
+		if (i == dk_ndrive)
+			errx(1, "invalid interval or drive name: %s", *argv);
 	}
 	for (i = 0; i < dk_ndrive && ndrives < 2; i++) {
 		if (dk_select[i])
