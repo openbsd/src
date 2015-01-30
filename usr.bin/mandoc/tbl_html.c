@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.8 2014/10/14 02:16:02 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.9 2015/01/30 02:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,7 +52,7 @@ html_tblopen(struct html *h, const struct tbl_span *sp)
 	struct roffsu	 su;
 	struct roffcol	*col;
 
-	if (TBL_SPAN_FIRST & sp->flags) {
+	if (sp->flags & TBL_SPAN_FIRST) {
 		h->tbl.len = html_tbl_len;
 		h->tbl.slen = html_tbl_strlen;
 		tblcalc(&h->tbl, sp, 0);
@@ -93,7 +93,7 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 
 	/* Inhibit printing of spaces: we do padding ourselves. */
 
-	if (NULL == h->tblt)
+	if (h->tblt == NULL)
 		html_tblopen(h, sp);
 
 	assert(h->tblt);
@@ -116,10 +116,10 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 			print_stagq(h, tt);
 			print_otag(h, TAG_TD, 0, NULL);
 
-			if (NULL == dp)
+			if (dp == NULL)
 				break;
-			if (TBL_CELL_DOWN != dp->layout->pos)
-				if (dp->string)
+			if (dp->layout->pos != TBL_CELL_DOWN)
+				if (dp->string != NULL)
 					print_text(h, dp->string);
 			dp = dp->next;
 		}
@@ -130,7 +130,7 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 
 	h->flags &= ~HTML_NONOSPACE;
 
-	if (TBL_SPAN_LAST & sp->flags) {
+	if (sp->flags & TBL_SPAN_LAST) {
 		assert(h->tbl.cols);
 		free(h->tbl.cols);
 		h->tbl.cols = NULL;
