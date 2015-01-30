@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.347 2015/01/16 06:39:56 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.348 2015/01/30 14:30:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2297,8 +2297,10 @@ clone_lease(struct client_lease *oldlease)
 	return (newlease);
 
 cleanup:
-	if (newlease)
+	if (newlease) {
+		newlease->is_static = 0;
 		free_client_lease(newlease);
+	}
 
 	return (NULL);
 }
