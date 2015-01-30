@@ -1,0 +1,33 @@
+.TH TBL-BREAK 1 "January 30, 2015" OpenBSD
+.SH NAME
+tbl-break \- tables breaking blocks
+.SH DESCRIPTION
+tagged paragraph:
+.TP 6n
+.TS
+l.
+first line
+second line
+.TE
+section:
+.SH
+.TS
+l.
+first line
+second line
+.TE
+subsection:
+.SS
+.TS
+l.
+first line
+second line
+.TE
+bold:
+.B
+.TS
+l.
+first line
+second line
+.TE
+final text
