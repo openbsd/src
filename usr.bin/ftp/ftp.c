@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.89 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.90 2015/01/30 04:45:45 tedu Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -707,7 +707,6 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			rc = fseeko(fin, restart_point, SEEK_SET);
 			break;
 		case TYPE_I:
-		case TYPE_L:
 			if (lseek(fileno(fin), restart_point, SEEK_SET) != -1)
 				rc = 0;
 			break;
@@ -759,7 +758,6 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	switch (curtype) {
 
 	case TYPE_I:
-	case TYPE_L:
 		d = 0;
 		while ((c = read(fileno(fin), buf, sizeof(buf))) > 0) {
 			may_send_noop_char();
@@ -1075,7 +1073,6 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	switch (curtype) {
 
 	case TYPE_I:
-	case TYPE_L:
 		if (restart_point &&
 		    lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			warn("local: %s", local);

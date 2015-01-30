@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.h,v 1.1 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: cmds.h,v 1.2 2015/01/30 04:45:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 void	setascii(int, char **);
-void	settenex(int, char **);
 void	setftmode(int, char **);
 void	setform(int, char **);
 void	setstruct(int, char **);

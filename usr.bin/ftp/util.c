@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.68 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.69 2015/01/30 04:45:45 tedu Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -209,11 +209,6 @@ setpeer(int argc, char *argv[])
 				unix_proxy = 0;
 			else
 				unix_server = 0;
-			if (overbose &&
-			    !strncmp(reply_string, "215 TOPS20", 10))
-				fputs(
-"Remember to set tenex mode when transferring binary files from this machine.\n",
-				    ttyout);
 		}
 		verbose = overbose;
 #endif /* unix || BSD */

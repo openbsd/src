@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.73 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.74 2015/01/30 04:45:45 tedu Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -94,18 +94,6 @@ setascii(int argc, char *argv[])
 {
 
 	stype[1] = "ascii";
-	settype(2, stype);
-}
-
-/*
- * Set tenex transfer type.
- */
-/*ARGSUSED*/
-void
-settenex(int argc, char *argv[])
-{
-
-	stype[1] = "tenex";
 	settype(2, stype);
 }
 

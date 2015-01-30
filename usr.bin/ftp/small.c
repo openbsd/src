@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.3 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: small.c,v 1.4 2015/01/30 04:45:45 tedu Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -91,13 +91,10 @@ struct	types {
 	char	*t_name;
 	char	*t_mode;
 	int	t_type;
-	char	*t_arg;
 } types[] = {
-	{ "ascii",	"A",	TYPE_A,	0 },
-	{ "binary",	"I",	TYPE_I,	0 },
-	{ "image",	"I",	TYPE_I,	0 },
-	{ "ebcdic",	"E",	TYPE_E,	0 },
-	{ "tenex",	"L",	TYPE_L,	bytename },
+	{ "ascii",	"A",	TYPE_A },
+	{ "binary",	"I",	TYPE_I },
+	{ "image",	"I",	TYPE_I },
 	{ NULL }
 };
 
@@ -136,10 +133,7 @@ settype(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	if ((p->t_arg != NULL) && (*(p->t_arg) != '\0'))
-		comret = command("TYPE %s %s", p->t_mode, p->t_arg);
-	else
-		comret = command("TYPE %s", p->t_mode);
+	comret = command("TYPE %s", p->t_mode);
 	if (comret == COMPLETE) {
 		(void)strlcpy(typename, p->t_name, sizeof typename);
 		curtype = type = p->t_type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.27 2013/01/06 22:12:28 martynas Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.28 2015/01/30 04:45:45 tedu Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ char	statushelp[] =	"show current status";
 char	structhelp[] =	"set file transfer structure";
 char	suniquehelp[] = "toggle store unique on remote machine";
 char	systemhelp[] =  "show remote system type";
-char	tenexhelp[] =	"set tenex file transfer type";
 char	tracehelp[] =	"toggle packet tracing";
 char	typehelp[] =	"set file transfer type";
 char	umaskhelp[] =	"get (set) umask on remote side";
@@ -201,7 +200,6 @@ struct cmd cmdtab[] = {
 	{ "struct",	H(structhelp),	0, 1, 1, CMPL0		setstruct },
 	{ "sunique",	H(suniquehelp),	0, 0, 1, CMPL0		setsunique },
 	{ "system",	H(systemhelp),	0, 1, 1, CMPL0		syst },
-	{ "tenex",	H(tenexhelp),	0, 1, 1, CMPL0		settenex },
 	{ "trace",	H(tracehelp),	0, 0, 0, CMPL0		settrace },
 	{ "type",	H(typehelp),	0, 1, 1, CMPL0		settype },
 	{ "umask",	H(umaskhelp),	0, 1, 1, CMPL0		do_umask },

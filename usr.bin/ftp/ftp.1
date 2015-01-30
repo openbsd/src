@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.94 2014/11/15 14:41:02 bentley Exp $
+.\" 	$OpenBSD: ftp.1,v 1.95 2015/01/30 04:45:45 tedu Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: January 30 2015 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1224,11 +1224,6 @@ The remote server will report the unique name.
 Default value is off.
 .It Ic system
 Show the type of operating system running on the remote machine.
-.It Ic tenex
-Set the file transfer type to that needed to
-talk to
-.Tn TENEX
-machines.
 .It Ic trace Op Ic on | off
 Toggle packet tracing.
 .It Ic type Op Ar type-name
@@ -1525,17 +1520,10 @@ The
 may be one of
 .Dq ascii ,
 .Dq binary ,
-.Dq image ,
-.Dq ebcdic
-.Pq currently not supported
 or
-.Dq tenex
-(local byte size 8, for PDP-10's and PDP-20's mostly).
+.Dq image .
 .Nm
-supports the ASCII and image types of file transfer,
-plus local byte size 8 for
-.Ic tenex
-mode transfers.
+supports the ASCII and image types of file transfer.
 .Pp
 .Nm
 supports only the default values for the remaining
