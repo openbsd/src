@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.1 2015/01/18 19:37:59 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.2 2015/01/30 14:00:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -287,7 +287,8 @@ buffertls_connect(struct buffertls *buftls, int fd, const char *hostname)
 	event_del(&bufev->ev_write);
 
 	buftls->bt_hostname = hostname;
-	buffertls_connectcb(fd, 0, buftls);
+	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_connectcb, buftls);
+	bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 }
 
 /*
