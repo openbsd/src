@@ -1,4 +1,4 @@
-/*	$OpenBSD: libroff.h,v 1.15 2015/01/28 17:30:37 schwarze Exp $ */
+/*	$OpenBSD: libroff.h,v 1.16 2015/01/30 04:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,8 +34,6 @@ struct	tbl_node {
 	struct tbl_span	 *first_span;
 	struct tbl_span	 *current_span;
 	struct tbl_span	 *last_span;
-	struct tbl_head	 *first_head;
-	struct tbl_head	 *last_head;
 	struct tbl_node	 *next;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.23 2015/01/30 02:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.24 2015/01/30 04:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -280,7 +280,7 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p, int pos)
 				if (tbl->opts.lvert < rp->vert)
 					tbl->opts.lvert = rp->vert;
 				if (rp->last != NULL &&
-				    rp->last->head == tbl->last_head &&
+				    rp->last->col + 1 == tbl->opts.cols &&
 				    tbl->opts.rvert < rp->last->vert)
 					tbl->opts.rvert = rp->last->vert;
 
@@ -322,38 +322,19 @@ static struct tbl_cell *
 cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos)
 {
 	struct tbl_cell	*p, *pp;
-	struct tbl_head	*h, *hp;
 
 	p = mandoc_calloc(1, sizeof(*p));
+	p->pos = pos;
 
 	if ((pp = rp->last) != NULL) {
 		pp->next = p;
-		h = pp->head->next;
-	} else {
+		p->col = pp->col + 1;
+	} else
 		rp->first = p;
-		h = tbl->first_head;
-	}
 	rp->last = p;
 
-	p->pos = pos;
+	if (tbl->opts.cols <= p->col)
+		tbl->opts.cols = p->col + 1;
 
-	/* Re-use header. */
-
-	if (h != NULL) {
-		p->head = h;
-		return(p);
-	}
-
-	hp = mandoc_calloc(1, sizeof(*hp));
-	hp->ident = tbl->opts.cols++;
-
-	if (tbl->last_head != NULL) {
-		hp->prev = tbl->last_head;
-		tbl->last_head->next = hp;
-	} else
-		tbl->first_head = hp;
-	tbl->last_head = hp;
-
-	p->head = hp;
 	return(p);
 }

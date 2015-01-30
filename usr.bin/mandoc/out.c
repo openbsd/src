@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.30 2015/01/28 02:23:33 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.31 2015/01/30 04:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -138,7 +138,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 			spans = dp->spans;
 			if (1 < spans)
 				continue;
-			icol = dp->layout->head->ident;
+			icol = dp->layout->col;
 			if (maxcol < icol)
 				maxcol = icol;
 			col = tbl->cols + icol;

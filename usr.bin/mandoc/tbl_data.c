@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.24 2015/01/30 02:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.25 2015/01/30 04:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -42,13 +42,9 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	struct tbl_cell	*cp;
 	int		 sv;
 
+	/* Advance to the next layout cell, skipping spanners. */
+
 	cp = dp->last == NULL ? dp->layout->first : dp->last->layout->next;
-
-	/*
-	 * Skip over spanners, since
-	 * we want to match data with data layout cells in the header.
-	 */
-
 	while (cp != NULL && cp->pos == TBL_CELL_SPAN)
 		cp = cp->next;
 
@@ -170,7 +166,6 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 	dp->line = line;
 	dp->opts = &tbl->opts;
 	dp->layout = rp;
-	dp->head = tbl->first_head;
 	dp->prev = tbl->last_span;
 
 	if (dp->prev == NULL) {

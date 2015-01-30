@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.134 2015/01/28 21:10:28 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.135 2015/01/30 04:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -204,17 +204,6 @@ struct	tbl_opts {
 	int		  rvert; /* width of right vertical line */
 };
 
-/*
- * The head of a table specifies all of its columns.  When formatting a
- * tbl_span, iterate over these and plug in data from the tbl_span when
- * appropriate, using tbl_cell as a guide to placement.
- */
-struct	tbl_head {
-	int		  ident; /* 0 <= unique id < cols */
-	struct tbl_head	 *next;
-	struct tbl_head	 *prev;
-};
-
 enum	tbl_cellt {
 	TBL_CELL_CENTRE, /* c, C */
 	TBL_CELL_RIGHT, /* r, R */
@@ -236,6 +225,7 @@ struct	tbl_cell {
 	int		  vert; /* width of subsequent vertical line */
 	enum tbl_cellt	  pos;
 	size_t		  spacing;
+	int		  col; /* column number, starting from 0 */
 	int		  flags;
 #define	TBL_CELL_TALIGN	 (1 << 0) /* t, T */
 #define	TBL_CELL_BALIGN	 (1 << 1) /* d, D */
@@ -245,7 +235,6 @@ struct	tbl_cell {
 #define	TBL_CELL_UP	 (1 << 5) /* u, U */
 #define	TBL_CELL_WIGN	 (1 << 6) /* z, Z */
 #define	TBL_CELL_WMAX	 (1 << 7) /* x, X */
-	struct tbl_head	 *head;
 };
 
 /*
@@ -290,7 +279,6 @@ enum	tbl_spant {
  */
 struct	tbl_span {
 	struct tbl_opts	 *opts;
-	struct tbl_head	 *head;
 	struct tbl_row	 *layout; /* layout row */
 	struct tbl_dat	 *first;
 	struct tbl_dat	 *last;

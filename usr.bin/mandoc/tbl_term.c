@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.23 2015/01/30 02:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.24 2015/01/30 04:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,12 +58,11 @@ term_tbl_len(size_t sz, void *arg)
 void
 term_tbl(struct termp *tp, const struct tbl_span *sp)
 {
-	const struct tbl_head	*hp;
 	const struct tbl_cell	*cp;
 	const struct tbl_dat	*dp;
 	static size_t		 offset;
 	size_t			 rmargin, maxrmargin, tsz;
-	int			 horiz, spans, vert;
+	int			 ic, horiz, spans, vert;
 
 	rmargin = tp->rmargin;
 	maxrmargin = tp->maxrmargin;
@@ -95,8 +94,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		if (sp->opts->opts & TBL_OPT_CENTRE) {
 			tsz = sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)
 			    ? 2 : !!sp->opts->lvert + !!sp->opts->rvert;
-			for (hp = sp->head; hp != NULL; hp = hp->next)
-				tsz += tp->tbl.cols[hp->ident].width + 3;
+			for (ic = 0; ic < sp->opts->cols; ic++)
+				tsz += tp->tbl.cols[ic].width + 3;
 			tsz -= 3;
 			if (offset + tsz > rmargin)
 				tsz -= 1;
@@ -125,16 +124,14 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 	/*
 	 * Now print the actual data itself depending on the span type.
-	 * Spanner spans get a horizontal rule; data spanners have their
-	 * data printed by matching data to header.
+	 * Match data cells to column numbers.
 	 */
 
 	if (sp->pos == TBL_SPAN_DATA) {
-		/* Iterate over template headers. */
 		cp = sp->layout->first;
 		dp = sp->first;
 		spans = 0;
-		for (hp = sp->head; hp != NULL; hp = hp->next) {
+		for (ic = 0; ic < sp->opts->cols; ic++) {
 
 			/*
 			 * Remeber whether we need a vertical bar
@@ -148,8 +145,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			 */
 
 			if (spans == 0) {
-				tbl_data(tp, sp->opts, dp,
-				    tp->tbl.cols + hp->ident);
+				tbl_data(tp, sp->opts, dp, tp->tbl.cols + ic);
 				if (dp != NULL) {
 					spans = dp->spans;
 					dp = dp->next;
@@ -164,13 +160,13 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			 * of spans and after the last cell.
 			 */
 
-			if (hp->next == NULL || spans)
+			if (ic + 1 == sp->opts->cols || spans)
 				continue;
 
 			tbl_char(tp, ASCII_NBRSP, 1);
 			if (vert > 0)
 				tbl_char(tp, '|', vert);
-			if (vert < 2 && hp->next != NULL)
+			if (vert < 2)
 				tbl_char(tp, ASCII_NBRSP, 2 - vert);
 		}
 	} else if (horiz)
@@ -234,7 +230,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 	if (c2 == c1)
 		c2 = NULL;
 	for (;;) {
-		tbl_char(tp, line, tp->tbl.cols[c1->head->ident].width + 1);
+		tbl_char(tp, line, tp->tbl.cols[c1->col].width + 1);
 		vert = c1->vert;
 		if ((c1 = c1->next) == NULL)
 			 break;
@@ -330,17 +326,16 @@ static void
 tbl_literal(struct termp *tp, const struct tbl_dat *dp,
 		const struct roffcol *col)
 {
-	struct tbl_head		*hp;
-	size_t			 width, len, padl, padr;
-	int			 spans;
+	size_t		 len, padl, padr, width;
+	int		 ic, spans;
 
 	assert(dp->string);
 	len = term_strlen(tp, dp->string);
-
-	hp = dp->layout->head->next;
 	width = col->width;
-	for (spans = dp->spans; spans--; hp = hp->next)
-		width += tp->tbl.cols[hp->ident].width + 3;
+	ic = dp->layout->col;
+	spans = dp->spans;
+	while (spans--)
+		width += tp->tbl.cols[++ic].width + 3;
 
 	padr = width > len ? width - len : 0;
 	padl = 0;
