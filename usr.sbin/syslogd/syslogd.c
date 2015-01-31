@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.145 2015/01/28 19:14:05 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.146 2015/01/31 00:58:35 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -727,7 +727,7 @@ int
 tcp_socket(struct filed *f)
 {
 	int	 s, flags;
-	char	 ebuf[100];
+	char	 ebuf[256];
 
 	if ((s = socket(f->f_un.f_forw.f_addr.ss_family, SOCK_STREAM,
 	    IPPROTO_TCP)) == -1) {
@@ -785,7 +785,7 @@ void
 tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 {
 	struct filed	*f = arg;
-	char		 ebuf[100];
+	char		 ebuf[256];
 
 	if (event & EVBUFFER_EOF)
 		snprintf(ebuf, sizeof(ebuf),
@@ -882,7 +882,7 @@ struct tls *
 tls_socket(struct filed *f)
 {
 	struct tls	*ctx;
-	char		 ebuf[100];
+	char		 ebuf[256];
 
 	if ((ctx = tls_client()) == NULL) {
 		snprintf(ebuf, sizeof(ebuf), "tls_client \"%s\"",
@@ -1425,19 +1425,19 @@ init_signalcb(int signum, short event, void *arg)
 void
 logerror(const char *type)
 {
-	char buf[100];
+	char ebuf[256];
 
 	if (errno)
-		(void)snprintf(buf, sizeof(buf), "syslogd: %s: %s",
+		(void)snprintf(ebuf, sizeof(ebuf), "syslogd: %s: %s",
 		    type, strerror(errno));
 	else
-		(void)snprintf(buf, sizeof(buf), "syslogd: %s", type);
+		(void)snprintf(ebuf, sizeof(ebuf), "syslogd: %s", type);
 	errno = 0;
-	dprintf("%s\n", buf);
+	dprintf("%s\n", ebuf);
 	if (Startup)
-		fprintf(stderr, "%s\n", buf);
+		fprintf(stderr, "%s\n", ebuf);
 	else
-		logmsg(LOG_SYSLOG|LOG_ERR, buf, LocalHostName, ADDDATE);
+		logmsg(LOG_SYSLOG|LOG_ERR, ebuf, LocalHostName, ADDDATE);
 }
 
 void
@@ -1445,7 +1445,7 @@ die(int signo)
 {
 	struct filed *f;
 	int was_initialized = Initialized;
-	char buf[100];
+	char ebuf[256];
 
 	Initialized = 0;		/* Don't log SIGCHLDs */
 	SIMPLEQ_FOREACH(f, &Files, f_next) {
@@ -1456,9 +1456,10 @@ die(int signo)
 	Initialized = was_initialized;
 	if (signo) {
 		dprintf("syslogd: exiting on signal %d\n", signo);
-		(void)snprintf(buf, sizeof buf, "exiting on signal %d", signo);
+		(void)snprintf(ebuf, sizeof(ebuf), "exiting on signal %d",
+		    signo);
 		errno = 0;
-		logerror(buf);
+		logerror(ebuf);
 	}
 	dprintf("[unpriv] syslogd child about to exit\n");
 	exit(0);
@@ -1708,7 +1709,7 @@ cfline(char *line, char *prog)
 	int i, pri;
 	size_t rb_len;
 	char *bp, *p, *q, *proto, *host, *port, *ipproto;
-	char buf[MAXLINE], ebuf[100];
+	char buf[MAXLINE], ebuf[256];
 	struct filed *xf, *f, *d;
 	struct timeval to;
 
@@ -2118,7 +2119,7 @@ int
 unix_socket(char *path, int type, mode_t mode)
 {
 	struct sockaddr_un s_un;
-	char errbuf[512];
+	char ebuf[512];
 	int fd;
 	mode_t old_umask;
 
@@ -2126,9 +2127,8 @@ unix_socket(char *path, int type, mode_t mode)
 	s_un.sun_family = AF_UNIX;
 	if (strlcpy(s_un.sun_path, path, sizeof(s_un.sun_path)) >=
 	    sizeof(s_un.sun_path)) {
-		snprintf(errbuf, sizeof(errbuf), "socket path too long: %s",
-		    path);
-		logerror(errbuf);
+		snprintf(ebuf, sizeof(ebuf), "socket path too long: %s", path);
+		logerror(ebuf);
 		die(0);
 	}
 
@@ -2151,8 +2151,8 @@ unix_socket(char *path, int type, mode_t mode)
 
 	unlink(path);
 	if (bind(fd, (struct sockaddr *)&s_un, SUN_LEN(&s_un)) == -1) {
-		snprintf(errbuf, sizeof(errbuf), "cannot bind %s", path);
-		logerror(errbuf);
+		snprintf(ebuf, sizeof(ebuf), "cannot bind %s", path);
+		logerror(ebuf);
 		umask(old_umask);
 		close(fd);
 		return (-1);
@@ -2161,8 +2161,8 @@ unix_socket(char *path, int type, mode_t mode)
 	umask(old_umask);
 
 	if (chmod(path, mode) == -1) {
-		snprintf(errbuf, sizeof(errbuf), "cannot chmod %s", path);
-		logerror(errbuf);
+		snprintf(ebuf, sizeof(ebuf), "cannot chmod %s", path);
+		logerror(ebuf);
 		close(fd);
 		unlink(path);
 		return (-1);
