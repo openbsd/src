@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.h,v 1.58 2014/12/18 03:09:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.59 2015/01/31 00:11:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -366,7 +366,7 @@ struct	mdoc_node {
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
 	union mdoc_data	 *norm; /* normalised args */
-	const void	 *prev_font; /* before entering this node */
+	int		  prev_font; /* before entering this node */
 	/* FIXME: these can be union'd to shave a few bytes. */
 	struct mdoc_arg	 *args; /* BLOCK/ELEM */
 	struct mdoc_node *pending; /* BLOCK */

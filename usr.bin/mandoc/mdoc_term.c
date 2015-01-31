@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.203 2015/01/30 22:04:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.204 2015/01/31 00:11:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -305,7 +305,7 @@ print_mdoc_node(DECL_ARGS)
 	chld = 1;
 	offset = p->offset;
 	rmargin = p->rmargin;
-	n->prev_font = term_fontq(p);
+	n->prev_font = p->fonti;
 
 	memset(&npair, 0, sizeof(struct termpair));
 	npair.ppair = pair;

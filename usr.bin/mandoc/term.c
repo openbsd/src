@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.103 2015/01/21 20:20:49 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.104 2015/01/31 00:11:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -361,22 +361,14 @@ term_fontpush(struct termp *p, enum termfont f)
 	p->fontq[p->fonti] = f;
 }
 
-/* Retrieve pointer to current font. */
-const enum termfont *
-term_fontq(struct termp *p)
-{
-
-	return(&p->fontq[p->fonti]);
-}
-
 /* Flush to make the saved pointer current again. */
 void
-term_fontpopq(struct termp *p, const enum termfont *key)
+term_fontpopq(struct termp *p, int i)
 {
 
-	while (p->fonti >= 0 && key < p->fontq + p->fonti)
-		p->fonti--;
-	assert(p->fonti >= 0);
+	assert(i >= 0);
+	if (p->fonti > i)
+		p->fonti = i;
 }
 
 /* Pop one font off the stack. */
@@ -566,7 +558,7 @@ encode1(struct termp *p, int c)
 	if (p->col + 6 >= p->maxcols)
 		adjbuf(p, p->col + 6);
 
-	f = *term_fontq(p);
+	f = p->fontq[p->fonti];
 
 	if (TERMFONT_UNDER == f || TERMFONT_BI == f) {
 		p->buf[p->col++] = '_';
@@ -598,7 +590,7 @@ encode(struct termp *p, const char *word, size_t sz)
 	 * character by character.
 	 */
 
-	if (*term_fontq(p) == TERMFONT_NONE) {
+	if (p->fontq[p->fonti] == TERMFONT_NONE) {
 		if (p->col + sz >= p->maxcols)
 			adjbuf(p, p->col + sz);
 		for (i = 0; i < sz; i++)
