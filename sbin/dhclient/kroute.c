@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.69 2015/01/30 14:14:53 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.70 2015/01/31 03:13:04 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -99,7 +99,6 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 			return;
 		}
 		if ((bufp = realloc(buf, needed)) == NULL) {
-			free(buf);
 			errmsg = "routes buf realloc:";
 			break;
 		}
@@ -107,7 +106,6 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
 			if (errno == ENOMEM)
 				continue;
-			free(buf);
 			errmsg = "sysctl retrieval of routes:";
 			break;
 		}
@@ -117,6 +115,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 	if (errmsg) {
 		warning("route cleanup failed - %s %s (msize=%zu)",
 		    errmsg, strerror(errno), needed);
+		free(buf);
 		return;
 	}
 
