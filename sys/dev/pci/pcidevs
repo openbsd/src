@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1754 2015/01/12 12:40:41 jsg Exp $
+$OpenBSD: pcidevs,v 1.1755 2015/01/31 05:21:01 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3301,6 +3301,12 @@ product INTEL I218_LM_2		0x15a0	I218-LM
 product INTEL I218_V_2		0x15a1	I218-V
 product INTEL I218_LM_3		0x15a2	I218-LM
 product INTEL I218_V_3		0x15a3	I218-V
+product INTEL CORE5G_HB_1	0x1604	Core 5G Host
+product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
+product INTEL CORE5G_M_GT2_1	0x1616	HD Graphics 5500
+product INTEL CORE5G_M_GT2_2	0x161e	HD Graphics 5300
+product INTEL CORE5G_M_GT3_15W	0x1626	HD Graphics 6000
+product INTEL CORE5G_M_GT3_28W	0x162b	Iris Graphics 6100
 product INTEL 80960RP_ATU	0x1960	80960RP ATU
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
@@ -4582,8 +4588,13 @@ product INTEL 9SERIES_LP_IDER	0x9cbc	9 Series IDER
 product INTEL 9SERIES_LP_KT	0x9cbd	9 Series KT
 product INTEL 9SERIES_LP_HDA	0x9ca0	9 Series HD Audio
 product INTEL 9SERIES_LP_SMB	0x9ca2	9 Series SMBus
+product INTEL 9SERIES_LP_THERM	0x9ca4	9 Series Thermal
 product INTEL 9SERIES_LP_EHCI	0x9ca6	9 Series USB
 product INTEL 9SERIES_LP_XHCI	0x9cb1	9 Series xHCI
+product INTEL 9SERIES_LP_LPC_1	0x9cc3	9 Series LPC
+product INTEL 9SERIES_LP_LPC_2	0x9cc5	9 Series LPC
+product INTEL 9SERIES_LP_LPC_3	0x9cc7	9 Series LPC
+product INTEL 9SERIES_LP_LPC_4	0x9cc9	9 Series LPC
 product INTEL PINEVIEW_DMI	0xa000  Pineview DMI
 product INTEL PINEVIEW_IGC_1	0xa001	Pineview Video
 product INTEL PINEVIEW_IGC_2	0xa002	Pineview Video
@@ -7067,6 +7078,7 @@ product VMWARE VMCI		0x0740	VMCI
 product VMWARE EHCI		0x0770	EHCI
 product VMWARE UHCI		0x0774	UHCI
 product VMWARE XHCI		0x0778	xHCI
+product VMWARE XHCI_2		0x0779	xHCI
 product VMWARE PCI		0x0790	PCI
 product VMWARE PCIE		0x07a0	PCIE
 product VMWARE NET_3		0x07b0	VMXNET3
