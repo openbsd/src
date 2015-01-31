@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.349 2015/01/31 05:56:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.350 2015/01/31 23:05:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2288,6 +2288,8 @@ clone_lease(struct client_lease *oldlease)
 	}
 
 	for (i = 0; i < 256; i++) {
+		if (oldlease->options[i].len == 0)
+			continue;
 		newlease->options[i].len = oldlease->options[i].len;
 		newlease->options[i].data = calloc(1, newlease->options[i].len);
 		if (newlease->options[i].data == NULL)
