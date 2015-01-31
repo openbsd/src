@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.76 2014/08/18 04:06:16 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.77 2015/01/31 03:06:25 lteo Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 18 2014 $
+.Dd $Mdocdate: January 31 2015 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -148,11 +148,19 @@
 .Ft struct mbuf_queue
 .Fn "MBUF_QUEUE_INITIALIZER" "unsigned int maxlen" "int ipl"
 .Bd -literal
+#define MSIZE           256
+
 #define MLEN            (MSIZE - sizeof(struct m_hdr))
 #define MHLEN           (MLEN - sizeof(struct pkthdr))
 
+#define MAXMCLBYTES     (64 * 1024)
 #define MINCLSIZE       (MHLEN + MLEN + 1)
 #define M_MAXCOMPRESS   (MHLEN / 2)
+
+#define MCLSHIFT        11
+
+#define MCLBYTES        (1 << MCLSHIFT)
+#define MCLOFSET        (MCLBYTES - 1)
 
 #define mtod(m,t)       ((t)((m)-\*(Gtm_data))
 
@@ -236,8 +244,7 @@ but also to get, inject, remove, copy, modify, prepend or append data
 inside these mbufs.
 The size of an
 .Nm
-is MSIZE
-.Pq defined in In sys/param.h .
+is defined by MSIZE.
 .Pp
 An
 .Nm
@@ -327,8 +334,7 @@ variable is valid.
 .Pp
 An external cluster is used when the data to hold in the mbuf is
 large.
-The size of an external cluster is between MCLBYTES and MAXMCLBYTES
-.Pq also defined in In sys/param.h .
+The size of an external cluster is between MCLBYTES and MAXMCLBYTES.
 A cluster should be used when the size of the data reach MINCLSIZE
 (the minimum size to be held by an external cluster).
 .Pp
