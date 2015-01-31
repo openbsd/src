@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getentropy.2,v 1.7 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: getentropy.2,v 1.8 2015/01/31 00:20:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,30 +14,30 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: January 31 2015 $
 .Dt GETENTROPY 2
 .Os
 .Sh NAME
 .Nm getentropy
 .Nd get entropy
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn getentropy "void *buf" "size_t buflen"
 .Sh DESCRIPTION
-.Nm
+.Fn getentropy
 fills a buffer with high-quality entropy, which can be used
 as input for process-context pseudorandom generators like
 .Xr arc4random 3 .
 .Pp
 The maximum buffer size permitted is 256 bytes.
 If
-.Va buflen
+.Fa buflen
 exceeds this, an error of
 .Er EIO
 will be indicated.
 .Pp
-.Nm
+.Fn getentropy
 is not intended for regular code; please use the
 .Xr arc4random 3
 family of functions instead.
@@ -59,6 +59,6 @@ Too many bytes requested, or some other fatal error occurred.
 .Xr arc4random 3
 .Sh HISTORY
 The
-.Nm
+.Fn getentropy
 function appeared in
 .Ox 5.6 .
