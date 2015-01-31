@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.350 2015/01/31 23:05:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.351 2015/01/31 23:18:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1658,16 +1658,12 @@ free_client_lease(struct client_lease *lease)
 	if (lease->is_static)
 		return;
 
-	if (lease->server_name)
-		free(lease->server_name);
-	if (lease->filename)
-		free(lease->filename);
-	if (lease->resolv_conf)
-		free(lease->resolv_conf);
-	for (i = 0; i < 256; i++) {
-		if (lease->options[i].len)
-			free(lease->options[i].data);
-	}
+	free(lease->server_name);
+	free(lease->filename);
+	free(lease->resolv_conf);
+	for (i = 0; i < 256; i++)
+		free(lease->options[i].data);
+
 	free(lease);
 }
 
@@ -2176,8 +2172,7 @@ apply_defaults(struct client_lease *lease)
 
 		switch (config->default_actions[i]) {
 		case ACTION_SUPERSEDE:
-			if (newlease->options[i].len != 0)
-				free(newlease->options[i].data);
+			free(newlease->options[i].data);
 			newlease->options[i].len = config->defaults[i].len;
 			newlease->options[i].data = calloc(1,
 			    config->defaults[i].len);
@@ -2188,8 +2183,7 @@ apply_defaults(struct client_lease *lease)
 			break;
 
 		case ACTION_PREPEND:
-			if (newlease->options[i].len != 0)
-				free(newlease->options[i].data);
+			free(newlease->options[i].data);
 			newlease->options[i].len = config->defaults[i].len +
 			    lease->options[i].len;
 			newlease->options[i].data = calloc(1,
@@ -2204,8 +2198,7 @@ apply_defaults(struct client_lease *lease)
 			break;
 
 		case ACTION_APPEND:
-			if (newlease->options[i].len != 0)
-				free(newlease->options[i].data);
+			free(newlease->options[i].data);
 			newlease->options[i].len = config->defaults[i].len +
 			    lease->options[i].len;
 			newlease->options[i].data = calloc(1,
