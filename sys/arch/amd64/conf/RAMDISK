@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.65 2014/11/24 02:03:36 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.66 2015/01/31 05:27:17 deraadt Exp $
 
 machine		amd64
 maxusers	4
@@ -50,9 +50,11 @@ pci*		at ppb?
 pci*		at pchb?
 #pcib*		at pci?			# PCI-ISA bridge
 
+xhci*		at pci?
 ehci*		at pci?
 uhci*		at pci?
 ohci*		at pci?
+usb*		at xhci?
 usb*		at ehci?
 usb*		at uhci?
 usb*		at ohci?
