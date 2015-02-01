@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.118 2015/02/01 16:46:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.119 2015/02/01 17:30:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1338,7 +1338,6 @@ blk_part_exp(MACRO_PROT_ARGS)
 	int		  la, nl;
 	enum margserr	  ac;
 	struct mdoc_node *head; /* keep track of head */
-	struct mdoc_node *body; /* keep track of body */
 	char		 *p;
 
 	nl = MDOC_NEWLINE & mdoc->flags;
@@ -1350,7 +1349,8 @@ blk_part_exp(MACRO_PROT_ARGS)
 	 */
 
 	mdoc_block_alloc(mdoc, line, ppos, tok, NULL);
-	for (head = body = NULL; ; ) {
+	head = NULL;
+	for (;;) {
 		la = *pos;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN)
@@ -1360,32 +1360,19 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 		if (head == NULL && ac != ARGS_QWORD &&
 		    mdoc_isdelim(p) == DELIM_OPEN) {
-			assert(NULL == body);
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
 			continue;
 		}
 
 		if (head == NULL) {
-			assert(body == NULL);
 			head = mdoc_head_alloc(mdoc, line, ppos, tok);
-		}
-
-		/*
-		 * `Eo' gobbles any data into the head, but most other
-		 * macros just immediately close out and begin the body.
-		 */
-
-		if (body == NULL) {
-			assert(head);
-			/* No check whether it's a macro! */
-			if (tok == MDOC_Eo)
+			if (tok == MDOC_Eo)  /* Not parsed. */
 				dword(mdoc, line, la, p, DELIM_MAX, 0);
-			rew_sub(MDOC_HEAD, mdoc, tok, line, ppos);
-			body = mdoc_body_alloc(mdoc, line, ppos, tok);
+			rew_last(mdoc, head);
+			mdoc_body_alloc(mdoc, line, ppos, tok);
 			if (tok == MDOC_Eo)
 				continue;
 		}
-		assert(head != NULL && body != NULL);
 
 		if (macro_or_word(mdoc, tok, line, la, pos, buf, 1))
 			break;
@@ -1393,11 +1380,8 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 	/* Clean-up to leave in a consistent state. */
 
-	if (head == NULL)
-		mdoc_head_alloc(mdoc, line, ppos, tok);
-
-	if (body == NULL) {
-		rew_sub(MDOC_HEAD, mdoc, tok, line, ppos);
+	if (head == NULL) {
+		rew_last(mdoc, mdoc_head_alloc(mdoc, line, ppos, tok));
 		mdoc_body_alloc(mdoc, line, ppos, tok);
 	}
 	if (nl)
