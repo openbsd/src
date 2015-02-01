@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.26 2014/12/22 02:26:54 tedu Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.27 2015/02/01 15:27:11 miod Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 
 #include <vax/if/if_dereg.h>
 #include <vax/if/if_uba.h>
-#include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
 #define NXMT	3	/* number of transmit buffers */

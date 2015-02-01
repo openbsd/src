@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.38 2014/10/31 10:54:39 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.39 2015/02/01 15:27:12 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -200,8 +200,6 @@ int (*devreg[])(struct device *, void *) = {
 #endif
 	0,
 };
-
-#define	ubreg(x) ((x) & 017777)
 
 void
 device_register(struct device *dev, void *aux)

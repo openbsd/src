@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_mbus.c,v 1.4 2015/02/01 13:18:32 miod Exp $	*/
+/*	$OpenBSD: uba_mbus.c,v 1.5 2015/02/01 15:27:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -61,11 +61,9 @@
 #include <vax/mbus/mbusreg.h>
 #include <vax/mbus/mbusvar.h>
 
+#include <arch/vax/uba/ubareg.h>
 #include <arch/vax/qbus/ubavar.h>
 #include <arch/vax/uba/uba_common.h>
-#include <arch/vax/uba/ubareg.h>
-
-#define	QBASIZE	(8192 * VAX_NBPG)
 
 void	uba_mbus_attach(struct device *, struct device *, void *);
 int	uba_mbus_match(struct device *, void *, void *);

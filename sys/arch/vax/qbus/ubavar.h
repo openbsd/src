@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubavar.h,v 1.8 2011/07/06 18:32:59 miod Exp $	*/
+/*	$OpenBSD: ubavar.h,v 1.9 2015/02/01 15:27:11 miod Exp $	*/
 /*	$NetBSD: ubavar.h,v 1.31 2001/04/26 19:16:07 ragge Exp $	*/
 
 /*
@@ -144,7 +144,6 @@ struct ubinfo {
 /*
  * Some common defines for all subtypes of U/Q-buses/adapters.
  */
-#define	UBAIOSIZE	(8*1024)	/* 8K I/O space */
 #define ubdevreg(addr) ((addr) & 017777)
 
 #ifdef _KERNEL

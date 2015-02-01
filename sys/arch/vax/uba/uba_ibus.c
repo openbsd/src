@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_ibus.c,v 1.3 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: uba_ibus.c,v 1.4 2015/02/01 15:27:12 miod Exp $	*/
 /*	$NetBSD: uba_ibus.c,v 1.1 1999/08/07 10:36:47 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -45,14 +45,9 @@
 #include <machine/cpu.h>
 #include <machine/sgmap.h>
 
+#include <arch/vax/uba/ubareg.h>
 #include <arch/vax/qbus/ubavar.h>
-
 #include <arch/vax/uba/uba_common.h>
-
-/* Some Qbus-specific defines */
-#define	QBASIZE	(8192 * VAX_NBPG)
-#define	QBAMAP	0x20088000
-#define	QIOPAGE	0x20000000
 
 /*
  * The Q22 bus is the main IO bus on MicroVAX II/MicroVAX III systems.
@@ -118,8 +113,6 @@ void
 qba_beforescan(sc)
 	struct uba_softc *sc;
 {
-#define	QIPCR	0x1f40
-#define	Q_LMEAE	0x20
 	bus_space_write_2(sc->uh_tag, sc->uh_ioh, QIPCR, Q_LMEAE);
 }
 

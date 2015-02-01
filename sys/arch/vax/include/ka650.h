@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.h,v 1.12 2011/09/19 21:53:02 miod Exp $	*/
+/*	$OpenBSD: ka650.h,v 1.13 2015/02/01 15:27:11 miod Exp $	*/
 /*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -142,15 +142,6 @@ struct ka650_ipcr {
 #define KA650_IPCR	0x20001e00
 
 #endif /* _LOCORE */
-
-/*
- * Physical start address of the Qbus memory.
- * The q-bus memory size is 4 meg.
- * Physical start address of the I/O space (where the 8Kbyte I/O page is).
- */
-#define KA650_QMEM	0x30000000
-#define KA650_QMEMSIZE	(512*8192)
-#define KA650_QDEVADDR	0x20000000
 
 /*
  * Mapping info for Cache Entries, including

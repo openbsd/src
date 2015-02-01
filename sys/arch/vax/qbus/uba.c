@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.13 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: uba.c,v 1.14 2015/02/01 15:27:11 miod Exp $	*/
 /*	$NetBSD: uba.c,v 1.57 2001/04/26 19:16:07 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -51,6 +51,7 @@
 #include <machine/scb.h>
 #include <machine/cpu.h>
 
+#include <arch/vax/uba/ubareg.h>
 #include <arch/vax/qbus/ubavar.h>
 
 static int ubasearch (struct device *, struct cfdata *, void *);

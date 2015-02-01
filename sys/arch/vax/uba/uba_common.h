@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_common.h,v 1.5 2008/08/18 23:10:39 miod Exp $	*/
+/*	$OpenBSD: uba_common.h,v 1.6 2015/02/01 15:27:12 miod Exp $	*/
 /*	$NetBSD: uba_common.h,v 1.2 1999/06/21 16:23:01 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -39,7 +39,6 @@
 /*
  * VAX-specific parts of the Unibus softc.
  */
-struct uba_regs;
 
 struct	uba_vsoftc {
 	struct	uba_softc uv_sc;/* Common vars from arch/vax/qbus/ubavar.h */
@@ -47,39 +46,6 @@ struct	uba_vsoftc {
 	struct	vax_sgmap uv_sgmap;
 	int	uv_size;	/* Size of UBA addressable memory */
 	paddr_t uv_addr;	/* Physical address of map registers */
-	struct	uba_regs *uv_uba;/* Where applicable */
-	int	uh_ibase;
-	int	uh_zvtime;
-	int	uh_zvtotal;
-	int	uh_zvcnt;
 };
-
-/*
- * Size of unibus memory address space in pages
- * (also number of map registers).
- */
-#define UBAPAGES	496
-#define UBAIOADDR	0760000	 /* start of I/O page */
-#define UBAIOPAGES	16
-
-/*
- * DW780/DW750 hardware registers
- */
-struct uba_regs {
-	int	uba_cnfgr;		/* configuration register */
-	int	uba_cr;			/* control register */
-	int	uba_sr;			/* status register */
-	int	uba_dcr;		/* diagnostic control register */
-	int	uba_fmer;		/* failed map entry register */
-	int	uba_fubar;		/* failed UNIBUS address register */
-	int	pad1[2];
-	int	uba_brsvr[4];
-	int	uba_brrvr[4];		/* receive vector registers */
-	int	uba_dpr[16];		/* buffered data path register */
-	int	pad2[480];
-	pt_entry_t uba_map[UBAPAGES];	/* unibus map register */
-	int	pad3[UBAIOPAGES];	/* no maps for device address space */
-};
-#define	UBA_REGS_DEFINED
 
 void	uba_dma_init(struct uba_vsoftc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubareg.h,v 1.14 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: ubareg.h,v 1.15 2015/02/01 15:27:12 miod Exp $ */
 /*	$NetBSD: ubareg.h,v 1.11 2000/01/24 02:40:36 matt Exp $ */
 
 /*-
@@ -44,63 +44,18 @@
 /*
  * Size of unibus memory address space in pages
  * (also number of map registers).
- * QBAPAGES should be 8192, but we don't need nearly that much
- * address space, and the return from the allocation routine
- * can accommodate at most 2047 (ubavar.h: UBA_MAXMR);
- * QBAPAGES must be at least UBAPAGES.	Choose pragmatically.
- * 
- * Is there ever any need to have QBAPAGES != UBAPAGES???
- * Wont work now anyway, QBAPAGES _must_ be .eq. UBAPAGES.
  */
 #define UBAPAGES	496
-#define NUBMREG		496
-#define	QBAPAGES	1024
-#define UBAIOADDR	0760000		/* start of I/O page */
+#define UBAIOADDR	0760000	 /* start of I/O page */
 #define UBAIOPAGES	16
+#define	UBAIOSIZE	(UBAIOPAGES * VAX_NBPG)	/* 8K I/O space */
 
-#if !defined(_LOCORE) && !defined(UBA_REGS_DEFINED)
-/*
- * DW780/DW750 hardware registers
- */
-struct uba_regs {
-	int	uba_cnfgr;		/* configuration register */
-	int	uba_cr;			/* control register */
-	int	uba_sr;			/* status register */
-	int	uba_dcr;		/* diagnostic control register */
-	int	uba_fmer;		/* failed map entry register */
-	int	uba_fubar;		/* failed UNIBUS address register */
-	int	pad1[2];
-	int	uba_brsvr[4];
-	int	uba_brrvr[4];		/* receive vector registers */
-	int	uba_dpr[16];		/* buffered data path register */
-	int	pad2[480];
-	pt_entry_t uba_map[UBAPAGES];	/* unibus map register */
-	int	pad3[UBAIOPAGES];	/* no maps for device address space */
-};
-#endif
+/* Some Qbus-specific defines */
+#define	QBAPAGES	8192
+#define	QBASIZE		(QBAPAGES * VAX_NBPG)
+#define	QBAMAP		0x20088000
+#define	QIOPAGE		0x20000000
 
-/* uba_mr[] */
-#define UBAMR_MRV	0x80000000	/* map register valid */
-#define UBAMR_BO	0x02000000	/* byte offset bit */
-#define UBAMR_DPDB	0x01e00000	/* data path designator field */
-#define UBAMR_SBIPFN	0x001fffff	/* SBI page address field */
-
-#define UBAMR_DPSHIFT	21		/* shift to data path designator */
-
-/*
- * Number of unibus buffered data paths and possible uba's per cpu type.
- */
-#define NBDPBUA		5
-#define MAXNBDP		15
-
-/*
- * Symbolic BUS addresses for UBAs.
- */
-
-#if VAX630 || VAX650 || VAX60
-#define QBAMAP	0x20088000
-#define QMEM	0x30000000
-#define QIOPAGE	0x20000000
 /*
  * Q-bus control registers
  */
@@ -111,11 +66,3 @@ struct uba_regs {
 #define Q_DBIIE		0x0040		/* doorbell interrupt enable */
 #define Q_AUXHLT	0x0100		/* auxiliary processor halt */
 #define Q_DMAQPE	0x8000		/* Q22 bus address space parity error */
-#endif
-
-/*
- * Macro to offset a UNIBUS device address, often expressed as
- * something like 0172520, by forcing it into the last 8K
- * of UNIBUS memory space.
- */
-#define ubdevreg(addr)	((addr) & 017777)
