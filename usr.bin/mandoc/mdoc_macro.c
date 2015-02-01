@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.119 2015/02/01 17:30:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.120 2015/02/01 23:55:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1319,10 +1319,21 @@ blk_part_imp(MACRO_PROT_ARGS)
 		}
 	}
 	assert(n == body);
-	rew_sub(MDOC_BODY, mdoc, tok, line, ppos);
+	rew_last(mdoc, body);
 	if (nl)
 		append_delims(mdoc, line, pos, buf);
-	rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos);
+	rew_last(mdoc, blk);
+
+	/*
+	 * The current block extends an enclosing block.
+	 * Now that the current block ends, close the enclosing block, too.
+	 */
+
+	while ((blk = blk->pending) != NULL) {
+		rew_last(mdoc, blk);
+		if (blk->type == MDOC_HEAD)
+			mdoc_body_alloc(mdoc, blk->line, blk->pos, blk->tok);
+	}
 
 	/* Move trailing .Ns out of scope. */
 
