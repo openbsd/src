@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.90 2014/11/03 22:06:39 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.91 2015/02/01 18:43:39 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -254,14 +254,12 @@ parse_client_statement(FILE *cfile)
 		break;
 	case TOK_FILENAME:
 		string = parse_string(cfile);
-		if (config->filename)
-			free(config->filename);
+		free(config->filename);
 		config->filename = string;
 		break;
 	case TOK_SERVER_NAME:
 		string = parse_string(cfile);
-		if (config->server_name)
-			free(config->server_name);
+		free(config->server_name);
 		config->server_name = string;
 		break;
 	case TOK_FIXED_ADDR:

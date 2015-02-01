@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.351 2015/01/31 23:18:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.352 2015/02/01 18:43:39 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -877,13 +877,11 @@ bind_lease(void)
 	int seen;
 
 	/*
-	 * If it's been here before (e.g. static lease), clear out any
-	 * old resolv_conf.
+	 * Clear out any old resolv_conf in case the lease has been here
+	 * before (e.g. static lease).
 	 */
-	if (client->new->resolv_conf) {
-		free(client->new->resolv_conf);
-		client->new->resolv_conf = NULL;
-	}
+	free(client->new->resolv_conf);
+	client->new->resolv_conf = NULL;
 
 	lease = apply_defaults(client->new);
 	options = lease->options;
@@ -2144,13 +2142,11 @@ apply_defaults(struct client_lease *lease)
 		error("Unable to clone lease");
 
 	if (config->filename) {
-		if (newlease->filename)
-			free(newlease->filename);
+		free(newlease->filename);
 		newlease->filename = strdup(config->filename);
 	}
 	if (config->server_name) {
-		if (newlease->server_name)
-			free(newlease->server_name);
+		free(newlease->server_name);
 		newlease->server_name = strdup(config->server_name);
 	}
 	if (config->address.s_addr != INADDR_ANY)
