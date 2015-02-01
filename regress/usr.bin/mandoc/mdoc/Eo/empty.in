@@ -1,18 +1,51 @@
-.Dd October 21, 2010
+.Dd February 1, 2015
 .Dt EO-EMPTY 1
 .Os OpenBSD
 .Sh NAME
 .Nm Eo-empty
 .Nd empty implicit enclosure macros
 .Sh DESCRIPTION
-An empty
+completely empty
+.Eo
+.Ec
+closing only
+.Eo
+.Ec >>
+content only
+.Eo
+text
+.Ec
+opening only
+.Eo <<
+.Ec
+no opening
+.Eo
+text
+.Ec >>
+no content
 .Eo <<
 .Ec >>
-and a full
+no closing
 .Eo <<
-user@host
+text
+.Ec
+all
+.Eo <<
+text
 .Ec >>
-quotation.
-And a stray
-.Ec ignore this
-end macro.
+completely empty
+.No prefix Ns Eo
+.Ec
+closing only
+.No prefix Ns Eo
+.Ec >>
+no opening
+.No prefix Ns Eo
+text
+.Ec >>
+no closing
+.Eo <<
+.No prefix Ns Ec
+stray closing
+.Ec >>
+end of file

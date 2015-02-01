@@ -4,7 +4,10 @@ NNAAMMEE
      EEoo--eemmppttyy - empty implicit enclosure macros
 
 DDEESSCCRRIIPPTTIIOONN
-     An empty <<>> and a full <<user@host>> quotation.  And a stray
-     ignore this end macro.
+     completely empty  closing only >> content only text opening only << no
+     opening text>> no content <<>> no closing <<text all <<text>> completely
+     empty prefix closing only prefix>> no opening prefixtext>> no closing
+     <<prefix stray closing
+     >> end of file
 
-OpenBSD                        October 21, 2010                        OpenBSD
+OpenBSD                        February 1, 2015                        OpenBSD

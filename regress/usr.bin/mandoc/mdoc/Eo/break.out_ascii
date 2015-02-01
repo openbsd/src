@@ -4,6 +4,8 @@ NNAAMMEE
      EEoo--bbrreeaakk - breaking a custom enclosure block
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text <<eo [bo ec>> bc] final text
+     break <<eo [bo ec>> bc] no closing <<eo [bo ec bc] no content <<[>> bc]
+     opening only <<[ bc] broken [bo <<eo bc] ec>> no content [bo <<]>> no
+     opening [bo eo bc] ec>> closing only [bo ]>> final text
 
-OpenBSD                        November 27, 2014                       OpenBSD
+OpenBSD                        February 1, 2015                        OpenBSD

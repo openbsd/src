@@ -1,11 +1,11 @@
-.Dd November 27, 2014
+.Dd February 1, 2015
 .Dt EO-BREAK 1
 .Os OpenBSD
 .Sh NAME
 .Nm Eo-break
 .Nd breaking a custom enclosure block
 .Sh DESCRIPTION
-initial text
+break
 .Eo <<
 eo
 .Bo
@@ -14,4 +14,55 @@ ec
 .Ec >>
 bc
 .Bc
+no closing
+.Eo <<
+eo
+.Bo
+bo
+ec
+.Ec
+bc
+.Bc
+no content
+.Eo <<
+.Bo
+.Ec >>
+bc
+.Bc
+opening only
+.Eo <<
+.Bo
+.Ec
+bc
+.Bc
+broken
+.Bo
+bo
+.Eo <<
+eo
+bc
+.Bc
+ec
+.Ec >>
+no content
+.Bo
+bo
+.Eo <<
+.Bc
+.Ec >>
+no opening
+.Bo
+bo
+.Eo
+eo
+bc
+.Bc
+ec
+.Ec >>
+closing only
+.Bo
+bo
+.Eo
+.Bc
+.Ec >>
 final text
