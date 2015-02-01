@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.160 2015/01/11 21:02:55 miod Exp $
+dnl	$OpenBSD: hardware,v 1.161 2015/02/01 07:45:02 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E
 	Ultra 2
@@ -62,8 +62,8 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Netra T2000
 	Netra T5220
 	Netra T5440
+	Sun Fire E2900/E4900/E6900
 dnl XXX uncomment machine entries as they become supported
-dnl	Sun Fire E2900/E4900/E6900
 dnl	Sun Fire 12K/15K
 dnl	Sun Fire E20K/E25K
 	Fujitsu PRIMEPOWER 1
