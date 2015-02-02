@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.2 2014/08/25 17:55:27 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.3 2015/02/02 17:40:24 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -30,6 +30,7 @@ sub new {
 	$args{logfile} ||= "client.log";
 	$args{up} ||= "Openlog";
 	my $self = Proc::new($class, %args);
+	$self->{connectproto} ||= "udp";
 	return $self;
 }
 
@@ -37,16 +38,26 @@ sub child {
 	my $self = shift;
 
 	if (defined($self->{connectdomain})) {
-		my $cs = IO::Socket::INET6->new(
-		    Proto               => "udp",
-		    Domain              => $self->{connectdomain},
-		    PeerAddr            => $self->{connectaddr},
-		    PeerPort            => $self->{connectport},
-		) or die ref($self), " socket connect failed: $!";
-		print STDERR "connect sock: ",$cs->sockhost()," ",
-		    $cs->sockport(),"\n";
-		print STDERR "connect peer: ",$cs->peerhost()," ",
-		    $cs->peerport(),"\n";
+		my $cs;
+		if ($self->{connectdomain} == AF_UNIX) {
+			$cs = IO::Socket::UNIX->new(
+			    Type => SOCK_DGRAM,
+			    Peer => $self->{connectpath} || "/dev/log",
+			) or die ref($self), " socket unix failed: $!";
+			$cs->setsockopt(SOL_SOCKET, SO_SNDBUF, 10000)
+			    or die ref($self), " setsockopt failed: $!";
+		} else {
+			$cs = IO::Socket::INET6->new(
+			    Proto               => $self->{connectproto},
+			    Domain              => $self->{connectdomain},
+			    PeerAddr            => $self->{connectaddr},
+			    PeerPort            => $self->{connectport},
+			) or die ref($self), " socket connect failed: $!";
+			print STDERR "connect sock: ",$cs->sockhost()," ",
+			    $cs->sockport(),"\n";
+			print STDERR "connect peer: ",$cs->peerhost()," ",
+			    $cs->peerport(),"\n";
+		}
 
 		*STDIN = *STDOUT = $self->{cs} = $cs;
 	}

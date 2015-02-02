@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.12 2015/01/22 00:34:32 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.13 2015/02/02 17:40:24 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,6 +16,8 @@
 
 use strict;
 use warnings;
+no warnings 'experimental::smartmatch';
+use feature 'switch';
 use Errno;
 use List::Util qw(first);
 use Socket;
@@ -74,8 +76,18 @@ sub write_message {
 	my $self = shift;
 
 	if (defined($self->{connectdomain})) {
-		print @_;
-		print STDERR @_, "\n";
+		if ($self->{connectproto} eq "udp") {
+			# writing udp packets works only with syswrite()
+			my $msg = join("", @_);
+			defined(my $n = syswrite(STDOUT, $msg))
+			    or die ref($self), " write log line failed: $!";
+			$n == length($msg)
+			    or die ref($self), " short UDP write";
+			print STDERR $msg, "\n";
+		} else {
+			print @_;
+			print STDERR @_, "\n";
+		}
 	} else {
 		syslog(LOG_INFO, @_);
 	}
@@ -87,6 +99,35 @@ sub write_shutdown {
 	setlogsock("native")
 	    or die ref($self), " setlogsock native failed: $!";
 	syslog(LOG_NOTICE, $downlog);
+}
+
+sub write_char {
+	my $self = shift;
+	my @lenghts = @_ || @{$self->{lengths}};
+
+	foreach my $len (@lenghts) {
+		my $tail = $self->{tail} // "";
+		substr($tail, 0, length($tail) - $len, "")
+		    if length($tail) && length($tail) > $len;
+		my $msg = "";
+		my $char = '0';
+		for (my $i = 0; $i < $len - length($tail); $i++) {
+			$msg .= $char;
+			given ($char) {
+				when(/9/)       { $char = 'A' }
+				when(/Z/)       { $char = 'a' }
+				when(/z/)       { $char = '0' }
+				default         { $char++ }
+			}
+		}
+		$msg .= $tail if length($tail);
+		write_message($self, $msg);
+	}
+}
+
+sub write_length {
+	write_char(@_);
+	write_log(@_);
 }
 
 sub write_unix {

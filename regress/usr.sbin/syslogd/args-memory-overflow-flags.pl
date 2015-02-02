@@ -13,7 +13,7 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    foreach (1..4) {
+	    foreach (1..40) {
 		write_message($self, $_ x 1024);
 	    }
 	    write_log($self);
