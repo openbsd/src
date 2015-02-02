@@ -1,3 +1,3 @@
 mandoc: break.in:9:2: WARNING: blocks badly nested: Op breaks Do
 mandoc: break.in:15:7: WARNING: blocks badly nested: Op breaks Do
-mandoc: break.in:15:2: WARNING: blocks badly nested: Op breaks Op
+mandoc: break.in:15:2: WARNING: blocks badly nested: Op breaks Do

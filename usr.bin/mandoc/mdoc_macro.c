@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.124 2015/02/02 18:26:06 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.125 2015/02/02 19:22:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -469,71 +469,64 @@ make_pending(struct mdoc *mdoc, struct mdoc_node *breaker,
 {
 	struct mdoc_node *n;
 
-	/* Iterate backwards, searching for the breaker. */
+	mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse, line, ppos,
+	    "%s breaks %s", mdoc_macronames[breaker->tok],
+	    mdoc_macronames[broken->tok]);
 
-	for (n = broken->parent; ; n = n->parent) {
+	/*
+	 * If the *broken block (Z) is already broken by a block (B)
+	 * contained in the breaker (A), make the breaker pending
+	 * on that inner breaker (B).  Graphically,
+	 *
+	 * breaker=[A! broken=n=[B!->A (old broken=)[Z->B B] A] Z]
+	 *
+	 * In these graphics, "->" indicates the "pending" pointer and
+	 * "!" indicates the MDOC_BREAK flag.  Each of the cases gets
+	 * one additional pointer (B->A) and one additional flag (A!).
+	 */
 
-		/*
-		 * If the *broken block (Z) is already broken and we
-		 * encounter its breaker (B), make the tok block (A)
-		 * pending on that inner breaker (B).
-		 * Graphically, [A n=[B! broken=[Z->B B] tok=A] Z]
-		 * becomes [A broken=[B! [Z->B B] tok=A] Z]
-		 * and finally [A! [B!->A [Z->B B] A] Z].
-		 * In these graphics, "->" indicates the "pending"
-		 * pointer and "!" indicates the MDOC_BREAK flag.
-		 * Each of the cases gets one additional pointer (B->A)
-		 * and one additional flag (A!).
-		 */
-		if (n == broken->pending) {
+	for (n = broken->parent; ; n = n->parent)
+		if (n == broken->pending)
 			broken = n;
-			continue;
-		}
+		else if (n == breaker)
+			break;
 
-		if (n != breaker)
-			continue;
+	/*
+	 * Found the breaker.
+	 *
+	 * If another, outer breaker (X) is already pending on
+	 * the *broken block (B), we must not clobber the link
+	 * to the outer breaker, but make it pending on the new,
+	 * now inner breaker (A).  Graphically,
+	 *
+	 * [X! n=breaker=[A!->X broken=[B(->X)->A X] A] B].
+	 */
 
-		/*
-		 * Found the breaker.
-		 * If another, outer breaker (X) is already pending on
-		 * the *broken block (B), we must not clobber the link
-		 * to the outer breaker, but make it pending on the
-		 * new, now inner breaker (A).
-		 * Graphically, [X! breaker=[A broken=[B->X X] tok=A] B]
-		 * becomes [X! breaker=[A->X broken=[B X] tok=A] B]
-		 * and finally [X! [A!->X [B->A X] A] B].
-		 */
-		if (broken->pending) {
-			struct mdoc_node *taker;
-
-			/*
-			 * If the inner breaker (A) is already broken,
-			 * too, it cannot take on the outer breaker (X)
-			 * but must hand it on to its own breakers (Y):
-			 * [X! [Y! breaker=[A->Y Y] broken=[B->X X] tok=A] B]
-			 * [X! take=[Y!->X brea=[A->Y Y] brok=[B X] tok=A] B]
-			 * and finally [X! [Y!->X [A!->Y Y] [B->A X] A] B].
-			 */
-			taker = breaker;
-			while (taker->pending)
-				taker = taker->pending;
-			taker->pending = broken->pending;
-		}
+	if (broken->pending != NULL) {
+		n = breaker;
 
 		/*
-		 * Now we have reduced the situation to the simplest
-		 * case, which is just breaker=[A broken=[B tok=A] B]
-		 * and becomes [A! [B->A A] B].
+		 * If the inner breaker (A) is already broken, too,
+		 * it cannot take on the outer breaker (X) but must
+		 * hand it on to its own breakers (Y).  Graphically,
+		 *
+		 * [X! n=[Y!->X breaker=[A!->Y Y] broken=[B(->X)->A X] A] B]
 		 */
-		broken->pending = breaker;
-		breaker->flags |= MDOC_BREAK;
-		if (breaker->body != NULL)
-			breaker->body->flags |= MDOC_BREAK;
-		mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse, line, ppos,
-		    "%s breaks %s", mdoc_macronames[breaker->tok],
-		    mdoc_macronames[broken->tok]);
-		return;
+
+		while (n->pending)
+			n = n->pending;
+		n->pending = broken->pending;
 	}
+
+	/*
+	 * Now we have reduced the situation to the simplest case:
+	 * breaker=[A! broken=[B->A A] B].
+	 */
+
+	broken->pending = breaker;
+	breaker->flags |= MDOC_BREAK;
+	if (breaker->body != NULL)
+		breaker->body->flags |= MDOC_BREAK;
 }
 
 static void
