@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.122 2015/02/02 04:26:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.123 2015/02/02 15:02:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,9 +33,7 @@ enum	rew {	/* see rew_dohalt() */
 	REWIND_NONE,
 	REWIND_THIS,
 	REWIND_MORE,
-	REWIND_FORCE,
-	REWIND_LATER,
-	REWIND_ERROR
+	REWIND_FORCE
 };
 
 static	void		blk_full(MACRO_PROT_ARGS);
@@ -364,8 +362,6 @@ rew_alt(enum mdoct tok)
  * REWIND_THIS: *p matches tok, so rewind *p and nothing else.
  * REWIND_MORE: *p is implicit, rewind it and keep searching for tok.
  * REWIND_FORCE: *p is explicit, but tok is full, force rewinding *p.
- * REWIND_LATER: *p is explicit and still open, postpone rewinding.
- * REWIND_ERROR: No tok block is open at all.
  */
 static enum rew
 rew_dohalt(enum mdoct tok, enum mdoc_type type,
@@ -379,9 +375,7 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 * instance anyway.
 	 */
 	if (MDOC_ROOT == p->type)
-		return(MDOC_BLOCK == type &&
-		    MDOC_EXPLICIT & mdoc_macros[tok].flags ?
-		    REWIND_ERROR : REWIND_NONE);
+		return(REWIND_NONE);
 
 	/*
 	 * When starting to rewind, skip plain text
@@ -396,8 +390,7 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 */
 	tok = rew_alt(tok);
 	if (tok == p->tok)
-		return(p->end ? REWIND_NONE :
-		    type == p->type ? REWIND_THIS : REWIND_MORE);
+		return(type == p->type ? REWIND_THIS : REWIND_MORE);
 
 	/*
 	 * While elements do require rewinding for themselves,
@@ -411,23 +404,9 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 * Blocks delimiting our target token get REWIND_NONE.
 	 */
 	switch (tok) {
-	case MDOC_Bl:
-		if (MDOC_It == p->tok)
-			return(REWIND_MORE);
-		break;
 	case MDOC_It:
 		if (MDOC_BODY == p->type && MDOC_Bl == p->tok)
 			return(REWIND_NONE);
-		break;
-	/*
-	 * XXX Badly nested block handling still fails badly
-	 * when one block is breaking two blocks of the same type.
-	 * This is an incomplete and extremely ugly workaround,
-	 * required to let the OpenBSD tree build.
-	 */
-	case MDOC_Oo:
-		if (MDOC_Op == p->tok)
-			return(REWIND_MORE);
 		break;
 	case MDOC_Nm:
 		return(REWIND_NONE);
@@ -450,24 +429,19 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 
 	/*
 	 * Default block rewinding rules.
-	 * In particular, always skip block end markers,
-	 * and let all blocks rewind Nm children.
+	 * In particular, let all blocks rewind Nm children.
 	 * Do not warn again when closing a block,
 	 * since closing the body already warned.
 	 */
-	if (ENDBODY_NOT != p->end || MDOC_Nm == p->tok ||
-	    MDOC_BLOCK == type || (MDOC_BLOCK == p->type &&
-	    ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)))
+	if (MDOC_Nm == p->tok ||
+	    MDOC_BLOCK == type || MDOC_BLOCK == p->type)
 		return(REWIND_MORE);
 
 	/*
 	 * By default, closing out full blocks
-	 * forces closing of broken explicit blocks,
-	 * while closing out partial blocks
-	 * allows delayed rewinding by default.
+	 * forces closing of broken explicit blocks.
 	 */
-	return (&blk_full == mdoc_macros[tok].fp ?
-	    REWIND_FORCE : REWIND_LATER);
+	return (REWIND_FORCE);
 }
 
 static void
@@ -487,7 +461,7 @@ rew_elem(struct mdoc *mdoc, enum mdoct tok)
  * We are trying to close a block identified by tok,
  * but the child block *broken is still open.
  * Thus, postpone closing the tok block
- * until the rew_sub call closing *broken.
+ * until the rew_pending() call closing *broken.
  */
 static int
 make_pending(struct mdoc_node *broken, enum mdoct tok,
@@ -604,16 +578,6 @@ rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 			to = n;
 			n = n->parent;
 			continue;
-		case REWIND_LATER:
-			if (make_pending(n, tok, mdoc, line, ppos) ||
-			    t != MDOC_BLOCK)
-				return;
-			/* FALLTHROUGH */
-		case REWIND_ERROR:
-			mandoc_msg(MANDOCERR_BLK_NOTOPEN,
-			    mdoc->parse, line, ppos,
-			    mdoc_macronames[tok]);
-			return;
 		}
 		break;
 	}
@@ -798,9 +762,9 @@ blk_exp_close(MACRO_PROT_ARGS)
 				break;
 
 			/*
-			 * When there is a pending sub block,
-			 * postpone closing out the current block
-			 * until the rew_sub() closing out the sub-block.
+			 * When there is a pending sub block, postpone
+			 * closing out the current block until the
+			 * rew_pending() closing out the sub-block.
 			 */
 
 			make_pending(later, tok, mdoc, line, ppos);
@@ -858,7 +822,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 			    mdoc->parse, line, ppos,
 			    "%s %s", mdoc_macronames[tok],
 			    buf + *pos);
-		rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos);
+		if (endbody == NULL)
+			rew_pending(mdoc, n);
 		return;
 	}
 
@@ -1173,7 +1138,8 @@ blk_full(MACRO_PROT_ARGS)
 			 * reopen our scope if the last parse was a
 			 * phrase or partial phrase.
 			 */
-			rew_sub(MDOC_BODY, mdoc, tok, line, ppos);
+			if (body != NULL)
+				rew_last(mdoc, body);
 			body = mdoc_body_alloc(mdoc, line, ppos, tok);
 			break;
 		}
@@ -1207,8 +1173,7 @@ blk_full(MACRO_PROT_ARGS)
 			 * head; if we have, rewind that instead.
 			 */
 
-			rew_sub(body ? MDOC_BODY : MDOC_HEAD,
-			    mdoc, tok, line, ppos);
+			rew_last(mdoc, body == NULL ? head : body);
 			body = mdoc_body_alloc(mdoc, line, ppos, tok);
 
 			/*
@@ -1242,7 +1207,7 @@ blk_full(MACRO_PROT_ARGS)
 	/*
 	 * If there is an open (i.e., unvalidated) sub-block requiring
 	 * explicit close-out, postpone switching the current block from
-	 * head to body until the rew_sub() call closing out that
+	 * head to body until the rew_pending() call closing out that
 	 * sub-block.
 	 */
 	for (n = mdoc->last; n && n != head; n = n->parent) {
@@ -1256,12 +1221,12 @@ blk_full(MACRO_PROT_ARGS)
 
 	/* Close out scopes to remain in a consistent state. */
 
-	rew_sub(MDOC_HEAD, mdoc, tok, line, ppos);
-	mdoc_body_alloc(mdoc, line, ppos, tok);
+	rew_last(mdoc, head);
+	body = mdoc_body_alloc(mdoc, line, ppos, tok);
 out:
 	if (mdoc->flags & MDOC_FREECOL) {
-		rew_sub(MDOC_BODY, mdoc, tok, line, ppos);
-		rew_sub(MDOC_BLOCK, mdoc, tok, line, ppos);
+		rew_last(mdoc, body);
+		rew_last(mdoc, blk);
 		mdoc->flags &= ~MDOC_FREECOL;
 	}
 }
@@ -1319,8 +1284,8 @@ blk_part_imp(MACRO_PROT_ARGS)
 
 	/*
 	 * If there is an open sub-block requiring explicit close-out,
-	 * postpone closing out the current block
-	 * until the rew_sub() call closing out the sub-block.
+	 * postpone closing out the current block until the
+	 * rew_pending() call closing out the sub-block.
 	 */
 
 	for (n = mdoc->last; n && n != body && n != blk->parent;
@@ -1562,14 +1527,20 @@ ctx_synopsis(MACRO_PROT_ARGS)
 static void
 phrase_ta(MACRO_PROT_ARGS)
 {
-	struct mdoc_node *n;
+	struct mdoc_node *body, *n;
 
 	/* Make sure we are in a column list or ignore this macro. */
 
-	n = mdoc->last;
-	while (n != NULL &&
-	    (n->tok != MDOC_Bl || n->flags & (MDOC_VALID | MDOC_BREAK)))
-		n = n->parent;
+	body = NULL;
+	for (n = mdoc->last; n != NULL; n = n->parent) {
+		if (n->flags & (MDOC_VALID | MDOC_BREAK))
+			continue;
+		if (n->tok == MDOC_It && n->type == MDOC_BODY)
+			body = n;
+		if (n->tok == MDOC_Bl)
+			break;
+	}
+
 	if (n == NULL || n->norm->Bl.type != LIST_column) {
 		mandoc_msg(MANDOCERR_TA_STRAY, mdoc->parse,
 		    line, ppos, "Ta");
@@ -1578,7 +1549,7 @@ phrase_ta(MACRO_PROT_ARGS)
 
 	/* Advance to the next column. */
 
-	rew_sub(MDOC_BODY, mdoc, MDOC_It, line, ppos);
+	rew_last(mdoc, body);
 	mdoc_body_alloc(mdoc, line, ppos, MDOC_It);
 	parse_rest(mdoc, MDOC_MAX, line, pos, buf);
 }
