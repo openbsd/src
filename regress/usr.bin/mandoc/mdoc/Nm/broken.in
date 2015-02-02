@@ -1,0 +1,10 @@
+.Dd February 2, 2015
+.Dt NM-BROKEN 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nm-broken
+.Nd broken synapsis name block
+.Sh SYNOPSIS
+.Ft int
+.Fo function
+.Nm name Fc tail

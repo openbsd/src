@@ -1,0 +1,11 @@
+NM-BROKEN(1)                General Commands Manual               NM-BROKEN(1)
+
+NNAAMMEE
+     NNmm--bbrrookkeenn - broken synapsis name block
+
+SSYYNNOOPPSSIISS
+     _i_n_t
+     ffuunnccttiioonn(nnaammee);
+      tail
+
+OpenBSD                        February 2, 2015                        OpenBSD

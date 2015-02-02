@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.120 2015/02/01 23:55:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.121 2015/02/02 04:04:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1075,8 +1075,9 @@ blk_full(MACRO_PROT_ARGS)
 {
 	int		  la, nl, parsed;
 	struct mdoc_arg	 *arg;
-	struct mdoc_node *head; /* save of head macro */
-	struct mdoc_node *body; /* save of body macro */
+	struct mdoc_node *blk; /* Our own block. */
+	struct mdoc_node *head; /* Our own head. */
+	struct mdoc_node *body; /* Our own body. */
 	struct mdoc_node *n;
 	enum margserr	  ac, lac;
 	char		 *p;
@@ -1116,7 +1117,7 @@ blk_full(MACRO_PROT_ARGS)
 	 */
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
-	mdoc_block_alloc(mdoc, line, ppos, tok, arg);
+	blk = mdoc_block_alloc(mdoc, line, ppos, tok, arg);
 	head = body = NULL;
 
 	/*
@@ -1216,6 +1217,8 @@ blk_full(MACRO_PROT_ARGS)
 			break;
 	}
 
+	if (blk->flags & MDOC_VALID)
+		return;
 	if (head == NULL)
 		head = mdoc_head_alloc(mdoc, line, ppos, tok);
 	if (nl)
