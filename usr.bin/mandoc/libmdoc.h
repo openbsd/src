@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.67 2014/11/29 03:37:28 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.68 2015/02/02 04:26:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,7 +106,7 @@ struct mdoc_node *mdoc_block_alloc(struct mdoc *, int, int,
 struct mdoc_node *mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
 void		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
 struct mdoc_node *mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
-void		  mdoc_endbody_alloc(struct mdoc *, int, int, enum mdoct,
+struct mdoc_node *mdoc_endbody_alloc(struct mdoc *, int, int, enum mdoct,
 			struct mdoc_node *, enum mdoc_endbody);
 void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
 void		  mdoc_node_relink(struct mdoc *, struct mdoc_node *);
