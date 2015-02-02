@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.167 2015/01/27 02:09:07 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.168 2015/02/02 09:29:53 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -191,16 +191,6 @@
  *   we lock it when adding or removing pmaps from this list.
  *
  */
-
-/*
- * locking data structures
- */
-
-#define PMAP_MAP_TO_HEAD_LOCK()		/* null */
-#define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-
-#define PMAP_HEAD_TO_MAP_LOCK()		/* null */
-#define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
 
 #define PD_MASK         0xffc00000      /* page directory address bits */
 #define PT_MASK         0x003ff000      /* page table address bits */
@@ -1920,7 +1910,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	TAILQ_INIT(&empty_ptps);
 
- 	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes(pmap);	/* locks pmap */
 
 	/*
@@ -1999,7 +1988,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	pmap_tlb_shootwait();
 	pmap_unmap_ptes(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 		uvm_pagefree(ptp);
@@ -2024,8 +2012,6 @@ pmap_page_remove(struct vm_page *pg)
 		return;
 
 	TAILQ_INIT(&empty_ptps);
-
-	PMAP_HEAD_TO_MAP_LOCK();
 
 	for (pve = pg->mdpage.pv_list ; pve != NULL ; pve = pve->pv_next) {
 		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
@@ -2067,7 +2053,6 @@ pmap_page_remove(struct vm_page *pg)
 	}
 	pmap_free_pvs(NULL, pg->mdpage.pv_list);
 	pg->mdpage.pv_list = NULL;
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootwait();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -2099,7 +2084,6 @@ pmap_test_attrs(struct vm_page *pg, int testbits)
 	if (pg->pg_flags & testflags)
 		return (TRUE);
 
-	PMAP_HEAD_TO_MAP_LOCK();
 	mybits = 0;
 	for (pve = pg->mdpage.pv_list; pve != NULL && mybits == 0;
 	    pve = pve->pv_next) {
@@ -2108,7 +2092,6 @@ pmap_test_attrs(struct vm_page *pg, int testbits)
 		pmap_unmap_ptes(pve->pv_pmap);
 		mybits |= (pte & testbits);
 	}
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	if (mybits == 0)
 		return (FALSE);
@@ -2134,8 +2117,6 @@ pmap_clear_attrs(struct vm_page *pg, int clearbits)
 
 	clearflags = pmap_pte2flags(clearbits);	
 
-	PMAP_HEAD_TO_MAP_LOCK();
-
 	result = pg->pg_flags & clearflags;
 	if (result)
 		atomic_clearbits_int(&pg->pg_flags, clearflags);
@@ -2158,7 +2139,6 @@ pmap_clear_attrs(struct vm_page *pg, int clearbits)
 		pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
 	}
 
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootwait();
 
 	return (result != 0);
@@ -2377,9 +2357,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 		freepve = NULL;
 	wired_count = resident_count = ptp_count = 0;
 
-	/* get lock */
-	PMAP_MAP_TO_HEAD_LOCK();
-
 	/*
 	 * map in ptes and get a pointer to our PTP (unless we are the kernel)
 	 */
@@ -2549,7 +2526,6 @@ enter_now:
 
 out:
 	pmap_unmap_ptes(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 	if (freepve)
 		pmap_free_pv(pmap, freepve);
 
@@ -2649,7 +2625,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
 		eva = VM_MAXUSER_ADDRESS;
 
-	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes(pmap);	/* locks pmap */
 
 	/*
@@ -2676,7 +2651,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	pmap_unmap_ptes(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 #endif
 

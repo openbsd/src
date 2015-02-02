@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.26 2014/12/02 18:13:10 tedu Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.27 2015/02/02 09:29:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -413,16 +413,6 @@
  *   we lock it when adding or removing pmaps from this list.
  *
  */
-
-/*
- * locking data structures
- */
-
-#define PMAP_MAP_TO_HEAD_LOCK()		/* null */
-#define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-
-#define PMAP_HEAD_TO_MAP_LOCK()		/* null */
-#define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
 
 #define	PG_FRAME	0xffffff000ULL	/* page frame mask */
 #define	PG_LGFRAME	0xfffe00000ULL	/* large (2M) page frame mask */
@@ -1306,7 +1296,6 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 	TAILQ_INIT(&empty_ptps);
 
- 	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes_pae(pmap);	/* locks pmap */
 	/*
 	 * removing one page?  take shortcut function.
@@ -1384,7 +1373,6 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 		pmap_tlb_shootnow(cpumask);
 		pmap_unmap_ptes_pae(pmap);		/* unlock pmap */
-		PMAP_MAP_TO_HEAD_UNLOCK();
 		while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 			TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 			uvm_pagefree(ptp);
@@ -1478,7 +1466,6 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 	pmap_tlb_shootnow(cpumask);
 	pmap_unmap_ptes_pae(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 		uvm_pagefree(ptp);
@@ -1516,9 +1503,6 @@ pmap_page_remove_pae(struct vm_page *pg)
 	}
 
 	TAILQ_INIT(&empty_ptps);
-
-	/* set pv_head => pmap locking */
-	PMAP_HEAD_TO_MAP_LOCK();
 
 	for (pve = pvh->pvh_list ; pve != NULL ; pve = pve->pv_next) {
 		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
@@ -1595,7 +1579,6 @@ pmap_page_remove_pae(struct vm_page *pg)
 	}
 	pmap_free_pvs(NULL, pvh->pvh_list);
 	pvh->pvh_list = NULL;
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
@@ -1648,8 +1631,6 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 	}
 
 	/* nope, gonna have to do it the hard way */
-	PMAP_HEAD_TO_MAP_LOCK();
-
 	for (pve = pvh->pvh_list; pve != NULL && (*myattrs & testbits) == 0;
 	     pve = pve->pv_next) {
 		ptes = pmap_map_ptes_pae(pve->pv_pmap);
@@ -1662,7 +1643,6 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 	 * note that we will exit the for loop with a non-null pve if
 	 * we have found the bits we are testing for.
 	 */
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	return((*myattrs & testbits) != 0);
 }
 
@@ -1691,7 +1671,6 @@ pmap_change_attrs_pae(struct vm_page *pg, int setbits, int clearbits)
 		return(FALSE);
 	}
 
-	PMAP_HEAD_TO_MAP_LOCK();
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
 
 	myattrs = &vm_physmem[bank].pmseg.attrs[off];
@@ -1718,7 +1697,6 @@ pmap_change_attrs_pae(struct vm_page *pg, int setbits, int clearbits)
 		pmap_unmap_ptes_pae(pve->pv_pmap);	/* unlocks pmap */
 	}
 
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
 
 	return(result != 0);
@@ -1900,9 +1878,6 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		panic("pmap_enter: missing kernel PTP!");
 #endif
 
-	/* get lock */
-	PMAP_MAP_TO_HEAD_LOCK();
-
 	/*
 	 * map in ptes and get a pointer to our PTP (unless we are the kernel)
 	 */
@@ -2064,7 +2039,6 @@ enter_now:
 
 out:
 	pmap_unmap_ptes_pae(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 	return error;
 }
 
@@ -2168,7 +2142,6 @@ pmap_dump_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	 * we lock in the pmap => pv_head direction
 	 */
 
-	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes_pae(pmap);	/* locks pmap */
 
 	/*
@@ -2195,6 +2168,5 @@ pmap_dump_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	pmap_unmap_ptes_pae(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 #endif

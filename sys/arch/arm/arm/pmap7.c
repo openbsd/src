@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.19 2015/01/29 20:10:50 deraadt Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.20 2015/02/02 09:29:53 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -278,15 +278,6 @@ extern caddr_t msgbufaddr;
  * Flag to indicate if pmap_init() has done its thing
  */
 boolean_t pmap_initialized;
-
-/*
- * Misc. locking data structures
- */
-
-#define PMAP_MAP_TO_HEAD_LOCK()		/* null */
-#define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-#define PMAP_HEAD_TO_MAP_LOCK()		/* null */
-#define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
 
 /*
  * Metadata for L1 translation tables.
@@ -995,17 +986,13 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 	    printf("pmap_clearbit: pg %p (0x%08lx) mask 0x%x\n",
 	    pg, pg->phys_addr, maskbits));
 
-	PMAP_HEAD_TO_MAP_LOCK();
-
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
 	pg->mdpage.pvh_attrs &= ~(maskbits & (PVF_MOD | PVF_REF));
 
-	if (pg->mdpage.pvh_list == NULL) {
-		PMAP_HEAD_TO_MAP_UNLOCK();
+	if (pg->mdpage.pvh_list == NULL)
 		return;
-	}
 
 	/*
 	 * If we are changing a writable or modified page to
@@ -1065,8 +1052,6 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 		    printf("pmap_clearbit: pm %p va 0x%lx opte 0x%08x npte 0x%08x\n",
 		    pm, va, opte, npte));
 	}
-
-	PMAP_HEAD_TO_MAP_UNLOCK();
 }
 
 /*
@@ -1168,13 +1153,9 @@ pmap_page_remove(struct vm_page *pg)
 	NPDEBUG(PDB_FOLLOW,
 	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg, pg->phys_addr));
 
-	PMAP_HEAD_TO_MAP_LOCK();
-
 	pv = pg->mdpage.pvh_list;
-	if (pv == NULL) {
-		PMAP_HEAD_TO_MAP_UNLOCK();
+	if (pv == NULL)
 		return;
-	}
 
 	flush = FALSE;
 	flags = 0;
@@ -1236,7 +1217,6 @@ pmap_page_remove(struct vm_page *pg)
 		pv = npv;
 	}
 	pg->mdpage.pvh_list = NULL;
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	if (flush)
 		cpu_cpwait();
@@ -1308,8 +1288,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (flags & PMAP_WIRED)
 		nflags |= PVF_WIRED;
 
-	PMAP_MAP_TO_HEAD_LOCK();
-
 	/*
 	 * Fetch the L2 bucket which maps this page, allocating one if
 	 * necessary for user pmaps.
@@ -1319,10 +1297,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	else
 		l2b = pmap_alloc_l2_bucket(pm, va);
 	if (l2b == NULL) {
-		if (flags & PMAP_CANFAIL) {
-			PMAP_MAP_TO_HEAD_UNLOCK();
+		if (flags & PMAP_CANFAIL)
 			return (ENOMEM);
-		}
+
 		panic("pmap_enter: failed to allocate L2 bucket");
 	}
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
@@ -1422,7 +1399,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 				if (pm != pmap_kernel())
 					pmap_free_l2_bucket(pm, l2b, 0);
-				PMAP_MAP_TO_HEAD_UNLOCK();
+
 				NPDEBUG(PDB_ENTER,
 				    printf("pmap_enter: ENOMEM\n"));
 				return (ENOMEM);
@@ -1510,8 +1487,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (mapped && (prot & PROT_EXEC) != 0 && pmap_is_current(pm))
 		cpu_icache_sync_range(va, PAGE_SIZE);
 
-	PMAP_MAP_TO_HEAD_UNLOCK();
-
 	return (0);
 }
 
@@ -1532,11 +1507,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
 	    pm, sva, eva));
-
-	/*
-	 * we lock in the pmap => pv_head direction
-	 */
-	PMAP_MAP_TO_HEAD_LOCK();
 
 	while (sva < eva) {
 		/*
@@ -1621,8 +1591,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 		pmap_free_l2_bucket(pm, l2b, mappings);
 	}
-
-	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
 /*
@@ -1808,8 +1776,6 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 		return;
 	}
 
-	PMAP_MAP_TO_HEAD_LOCK();
-
 	/*
 	 * OK, at this point, we know we're doing write-protect operation.
 	 */
@@ -1872,8 +1838,6 @@ NPDEBUG(PDB_PROTECT, printf("\n"));
 			ptep++;
 		}
 	}
-
-	PMAP_MAP_TO_HEAD_UNLOCK();
 
 	if (flush < 0) {
 		if (PV_BEEN_EXECD(flags))
@@ -1971,8 +1935,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	paddr_t pa;
 	u_int l1idx;
 	int rv = 0;
-
-	PMAP_MAP_TO_HEAD_LOCK();
 
 	l1idx = L1_IDX(va);
 
@@ -2121,8 +2083,6 @@ printf("%s: va %08lx ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 
 	}
 
 out:
-	PMAP_MAP_TO_HEAD_UNLOCK();
-
 	return (rv);
 }
 
@@ -2173,8 +2133,6 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 
 	NPDEBUG(PDB_WIRING, printf("pmap_unwire: pm %p, va 0x%08lx\n", pm, va));
 
-	PMAP_MAP_TO_HEAD_LOCK();
-
 	l2b = pmap_get_l2_bucket(pm, va);
 	KDASSERT(l2b != NULL);
 
@@ -2188,8 +2146,6 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		/* Update the wired bit in the pv entry for this page. */
 		(void) pmap_modify_pv(pg, pm, va, PVF_WIRED, 0);
 	}
-
-	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
 void

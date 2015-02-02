@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2015/01/28 02:56:50 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2015/02/02 09:29:53 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -211,16 +211,9 @@ long nkptpmax[] = NKPTPMAX_INITIALIZER;
 long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 
-#define PMAP_MAP_TO_HEAD_LOCK()		/* null */
-#define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-
-#define PMAP_HEAD_TO_MAP_LOCK()		/* null */
-#define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
-
 #define pmap_pte_set(p, n)		atomic_swap_64(p, n)
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
 #define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
-
 
 /*
  * global data structures
@@ -1465,7 +1458,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	TAILQ_INIT(&empty_ptps);
 
-	PMAP_MAP_TO_HEAD_LOCK();
 	pmap_map_ptes(pmap, &ptes, &pdes, &scr3);
 	shootself = (scr3 == 0);
 
@@ -1512,7 +1504,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		} else {
 			pmap_unmap_ptes(pmap, scr3);
 		}
-		PMAP_MAP_TO_HEAD_UNLOCK();
 
 		while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 			TAILQ_REMOVE(&empty_ptps, ptp, pageq);
@@ -1582,7 +1573,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	pmap_unmap_ptes(pmap, scr3);
 	pmap_tlb_shootwait();
-	PMAP_MAP_TO_HEAD_UNLOCK();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
@@ -1611,8 +1601,6 @@ pmap_page_remove(struct vm_page *pg)
 	int shootself;
 
 	TAILQ_INIT(&empty_ptps);
-
-	PMAP_HEAD_TO_MAP_LOCK();
 
 	while ((pve = pg->mdpage.pv_list) != NULL) {
 		pg->mdpage.pv_list = pve->pv_next;
@@ -1658,7 +1646,6 @@ pmap_page_remove(struct vm_page *pg)
 		pool_put(&pmap_pv_pool, pve);
 	}
 
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootwait();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -1691,7 +1678,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned int testbits)
 	if (pg->pg_flags & testflags)
 		return (TRUE);
 
-	PMAP_HEAD_TO_MAP_LOCK();
 	mybits = 0;
 	for (pve = pg->mdpage.pv_list; pve != NULL && mybits == 0;
 	    pve = pve->pv_next) {
@@ -1699,7 +1685,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned int testbits)
 		    &offs);
 		mybits |= (ptes[offs] & testbits);
 	}
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	if (mybits == 0)
 		return (FALSE);
@@ -1725,8 +1710,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned long clearbits)
 
 	clearflags = pmap_pte2flags(clearbits);
 
-	PMAP_HEAD_TO_MAP_LOCK();
-
 	result = pg->pg_flags & clearflags;
 	if (result)
 		atomic_clearbits_int(&pg->pg_flags, clearflags);
@@ -1742,8 +1725,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned long clearbits)
 				pmap_is_curpmap(pve->pv_pmap));
 		}
 	}
-
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	pmap_tlb_shootwait();
 
@@ -1954,9 +1935,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 #endif
 
-	/* get lock */
-	PMAP_MAP_TO_HEAD_LOCK();
-
 	/*
 	 * map in ptes and get a pointer to our PTP (unless we are the kernel)
 	 */
@@ -2142,7 +2120,6 @@ enter_now:
 
 out:
 	pmap_unmap_ptes(pmap, scr3);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 
 	return error;
 }
@@ -2372,8 +2349,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
 		eva = VM_MAXUSER_ADDRESS;
 
-
-	PMAP_MAP_TO_HEAD_LOCK();
 	pmap_map_ptes(pmap, &ptes, &pdes, &scr3);
 
 	/*
@@ -2400,7 +2375,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	pmap_unmap_ptes(pmap, scr3);
-	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 #endif
 
