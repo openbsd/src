@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.48 2015/01/11 12:17:44 kirby Exp $
+#	$OpenBSD: airport,v 1.49 2015/02/02 14:27:41 jca Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -124,7 +124,7 @@ AUG:Maine State, Augusta, Maine, USA
 AUH:Abu Dhabi International, Abu Dhabi, United Arab Emirates
 AUS:Austin-Bergstrom International, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
-AVN:Avignon/Caumont, Avignon, France
+AVN:Avignon-Provence, Avignon, France
 AVP:Wilkes-Barre/Scranton International, Pennsylvania, USA
 AVV:Avalon Airport, Victoria, Australia
 AXA:Wallblake, The Valley, Anguilla
@@ -961,6 +961,7 @@ LHE:Lahore, Pakistan
 LHR:Heathrow, London, England, United Kingdom
 LIG:Bellegarde, Limoges, France
 LIH:Lihue, Hawaii, USA
+LIL:Lille-Lesquin, Lille, France
 LIM:Lima Jorge Chavez International, Peru
 LIN:Linate, Milan, Italy
 LIR:Liberia, Costa Rica
@@ -1195,6 +1196,7 @@ NRW:All Airports around Nordrhein-Westfalen, Germany
 NSB:North Seaplane Base, Bimini, Bahamas
 NSI:Nsimalen, Yaounde, Cameroon
 NSN:Nelson, New Zealand
+NTE:Nantes-Atlantique, Nantes, France
 NTL:Williamtown, Newcastle, New South Wales, Australia
 NUE:Nuernberg, Germany
 NVT:Navegantes, Santa Catarina, Brazil
@@ -1287,7 +1289,7 @@ PEW:Peshawar, Pakistan
 PFN:Panama City, Florida, USA
 PFO:Paphos International, Cyprus
 PGA:Page, Arizona, USA
-PGF:Llabanere, Perpignan, France
+PGF:Perpignan-Rivesaltes, Perpignan, France
 PGV:Greenville, North Carolina, USA
 PGX:Perigueux, France
 PHE:Port Hedland, Western Australia, Australia
