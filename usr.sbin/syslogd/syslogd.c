@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.146 2015/01/31 00:58:35 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.147 2015/02/02 17:27:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -53,7 +53,8 @@
  * IPv6, libevent, sending over TCP and TLS by Alexander Bluhm
  */
 
-#define	MAXLINE		1024		/* maximum line length */
+#define MAXLINE		8192		/* maximum line length */
+#define MAX_UDPMSG	1180		/* maximum UDP send size */
 #define MIN_MEMBUF	(MAXLINE * 4)	/* Minimum memory buffer size */
 #define MAX_MEMBUF	(256 * 1024)	/* Maximum memory buffer size */
 #define MAX_MEMBUF_NAME	64		/* Max length of membuf log name */
@@ -98,6 +99,7 @@
 #include <vis.h>
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
@@ -920,7 +922,7 @@ void
 printline(char *hname, char *msg)
 {
 	int pri;
-	char *p, *q, line[MAXLINE + 1];
+	char *p, *q, line[MAXLINE + 4 + 1];  /* message, encoding, NUL */
 
 	/* test for special codes */
 	pri = DEFUPRI;
@@ -943,13 +945,13 @@ printline(char *hname, char *msg)
 	if (LOG_FAC(pri) == LOG_KERN)
 		pri = LOG_USER | LOG_PRI(pri);
 
-	for (q = line; *p && q < &line[sizeof(line) - 4]; p++) {
+	for (q = line; *p && q < &line[MAXLINE]; p++) {
 		if (*p == '\n')
 			*q++ = ' ';
 		else
 			q = vis(q, *p, 0, 0);
 	}
-	*q = '\0';
+	line[MAXLINE] = *q = '\0';
 
 	logmsg(pri, line, hname, 0);
 }
@@ -1181,13 +1183,13 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORWUDP:
 		dprintf(" %s\n", f->f_un.f_forw.f_loghost);
-		l = snprintf(line, sizeof(line), "<%d>%.15s %s%s%s",
-		    f->f_prevpri, (char *)iov[0].iov_base,
+		l = snprintf(line, MINIMUM(MAX_UDPMSG + 1, sizeof(line)),
+		    "<%d>%.15s %s%s%s", f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "",
 		    (char *)iov[4].iov_base);
-		if (l < 0 || (size_t)l >= sizeof(line))
-			l = strlen(line);
+		if (l < 0 || (size_t)l > MINIMUM(MAX_UDPMSG, sizeof(line)))
+			l = MINIMUM(MAX_UDPMSG, sizeof(line));
 		if (sendto(f->f_file, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    f->f_un.f_forw.f_addr.ss_len) != l) {
@@ -2120,7 +2122,7 @@ unix_socket(char *path, int type, mode_t mode)
 {
 	struct sockaddr_un s_un;
 	char ebuf[512];
-	int fd;
+	int fd, optval;
 	mode_t old_umask;
 
 	memset(&s_un, 0, sizeof(s_un));
@@ -2167,6 +2169,11 @@ unix_socket(char *path, int type, mode_t mode)
 		unlink(path);
 		return (-1);
 	}
+
+	optval = MAXLINE + PATH_MAX;
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &optval, sizeof(optval))
+	    == -1)
+		logerror("cannot setsockopt unix");
 
 	return (fd);
 }
