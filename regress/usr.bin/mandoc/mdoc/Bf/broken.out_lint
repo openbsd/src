@@ -1,1 +1,1 @@
-mandoc: broken.in:12:2: WARNING: blocks badly nested: Bc breaks Bf
+mandoc: broken.in:12:2: WARNING: blocks badly nested: Bo breaks Bf

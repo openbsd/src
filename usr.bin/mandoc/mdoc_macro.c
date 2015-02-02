@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.123 2015/02/02 15:02:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.124 2015/02/02 18:26:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,8 +52,8 @@ static	void		append_delims(struct mdoc *, int, int *, char *);
 static	enum mdoct	lookup(struct mdoc *, enum mdoct,
 				int, int, const char *);
 static	int		macro_or_word(MACRO_PROT_ARGS, int);
-static	int		make_pending(struct mdoc_node *, enum mdoct,
-				struct mdoc *, int, int);
+static	void		make_pending(struct mdoc *, struct mdoc_node *,
+				struct mdoc_node *, int, int);
 static	int		parse_rest(struct mdoc *, enum mdoct,
 				int, int *, char *);
 static	enum mdoct	rew_alt(enum mdoct);
@@ -458,44 +458,40 @@ rew_elem(struct mdoc *mdoc, enum mdoct tok)
 }
 
 /*
- * We are trying to close a block identified by tok,
+ * We are trying to close the block *breaker,
  * but the child block *broken is still open.
- * Thus, postpone closing the tok block
+ * Thus, postpone closing the *breaker
  * until the rew_pending() call closing *broken.
  */
-static int
-make_pending(struct mdoc_node *broken, enum mdoct tok,
-		struct mdoc *mdoc, int line, int ppos)
+static void
+make_pending(struct mdoc *mdoc, struct mdoc_node *breaker,
+	struct mdoc_node *broken, int line, int ppos)
 {
-	struct mdoc_node *breaker;
+	struct mdoc_node *n;
 
-	/*
-	 * Iterate backwards, searching for the block matching tok,
-	 * that is, the block breaking the *broken block.
-	 */
-	for (breaker = broken->parent; breaker; breaker = breaker->parent) {
+	/* Iterate backwards, searching for the breaker. */
+
+	for (n = broken->parent; ; n = n->parent) {
 
 		/*
 		 * If the *broken block (Z) is already broken and we
 		 * encounter its breaker (B), make the tok block (A)
 		 * pending on that inner breaker (B).
-		 * Graphically, [A breaker=[B! broken=[Z->B B] tok=A] Z]
-		 * becomes breaker=[A broken=[B! [Z->B B] tok=A] Z]
+		 * Graphically, [A n=[B! broken=[Z->B B] tok=A] Z]
+		 * becomes [A broken=[B! [Z->B B] tok=A] Z]
 		 * and finally [A! [B!->A [Z->B B] A] Z].
 		 * In these graphics, "->" indicates the "pending"
 		 * pointer and "!" indicates the MDOC_BREAK flag.
 		 * Each of the cases gets one additional pointer (B->A)
 		 * and one additional flag (A!).
 		 */
-		if (breaker == broken->pending) {
-			broken = breaker;
+		if (n == broken->pending) {
+			broken = n;
 			continue;
 		}
 
-		if (REWIND_THIS != rew_dohalt(tok, MDOC_BLOCK, breaker))
+		if (n != breaker)
 			continue;
-		if (MDOC_BODY == broken->type)
-			broken = broken->parent;
 
 		/*
 		 * Found the breaker.
@@ -534,16 +530,10 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 		if (breaker->body != NULL)
 			breaker->body->flags |= MDOC_BREAK;
 		mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse, line, ppos,
-		    "%s breaks %s", mdoc_macronames[tok],
+		    "%s breaks %s", mdoc_macronames[breaker->tok],
 		    mdoc_macronames[broken->tok]);
-		return(1);
+		return;
 	}
-
-	/*
-	 * Found no matching block for tok.
-	 * Are you trying to close a block that is not open?
-	 */
-	return(0);
 }
 
 static void
@@ -767,7 +757,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			 * rew_pending() closing out the sub-block.
 			 */
 
-			make_pending(later, tok, mdoc, line, ppos);
+			make_pending(mdoc, n, later, line, ppos);
 
 			/*
 			 * Mark the place where the formatting - but not
@@ -1293,7 +1283,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (n->type == MDOC_BLOCK &&
 		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT &&
 		    ! (n->flags & MDOC_VALID)) {
-			make_pending(n, tok, mdoc, line, ppos);
+			make_pending(mdoc, blk, n, line, ppos);
 			mdoc_endbody_alloc(mdoc, line, ppos,
 			    tok, body, ENDBODY_NOSPACE);
 			return;

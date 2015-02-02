@@ -1,8 +1,8 @@
-mandoc: break.in:14:2: WARNING: blocks badly nested: Ec breaks Bo
-mandoc: break.in:23:2: WARNING: blocks badly nested: Ec breaks Bo
-mandoc: break.in:29:2: WARNING: blocks badly nested: Ec breaks Bo
-mandoc: break.in:35:2: WARNING: blocks badly nested: Ec breaks Bo
-mandoc: break.in:44:2: WARNING: blocks badly nested: Bc breaks Eo
-mandoc: break.in:51:2: WARNING: blocks badly nested: Bc breaks Eo
-mandoc: break.in:59:2: WARNING: blocks badly nested: Bc breaks Eo
-mandoc: break.in:66:2: WARNING: blocks badly nested: Bc breaks Eo
+mandoc: break.in:14:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:23:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:29:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:35:2: WARNING: blocks badly nested: Eo breaks Bo
+mandoc: break.in:44:2: WARNING: blocks badly nested: Bo breaks Eo
+mandoc: break.in:51:2: WARNING: blocks badly nested: Bo breaks Eo
+mandoc: break.in:59:2: WARNING: blocks badly nested: Bo breaks Eo
+mandoc: break.in:66:2: WARNING: blocks badly nested: Bo breaks Eo
