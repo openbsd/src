@@ -1,7 +1,7 @@
-/*	$OpenBSD: tree.c,v 1.27 2014/11/28 05:51:29 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.28 2015/02/03 18:37:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,14 +38,14 @@ void
 tree_mdoc(void *arg, const struct mdoc *mdoc)
 {
 
-	print_mdoc(mdoc_node(mdoc), 0);
+	print_mdoc(mdoc_node(mdoc)->child, 0);
 }
 
 void
 tree_man(void *arg, const struct man *man)
 {
 
-	print_man(man_node(man), 0);
+	print_man(man_node(man)->child, 0);
 }
 
 static void
@@ -55,6 +55,9 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	int		  i, j;
 	size_t		  argc;
 	struct mdoc_argv *argv;
+
+	if (n == NULL)
+		return;
 
 	argv = NULL;
 	argc = 0;
@@ -140,7 +143,7 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		print_span(n->span, indent);
 	} else {
 		for (i = 0; i < indent; i++)
-			putchar('\t');
+			putchar(' ');
 
 		printf("%s (%s)", p, t);
 
@@ -164,9 +167,10 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	}
 
 	if (n->eqn)
-		print_box(n->eqn->root->first, indent + 1);
+		print_box(n->eqn->root->first, indent + 4);
 	if (n->child)
-		print_mdoc(n->child, indent + 1);
+		print_mdoc(n->child, indent +
+		    (n->type == MDOC_BLOCK ? 2 : 4));
 	if (n->next)
 		print_mdoc(n->next, indent);
 }
@@ -176,6 +180,9 @@ print_man(const struct man_node *n, int indent)
 {
 	const char	 *p, *t;
 	int		  i;
+
+	if (n == NULL)
+		return;
 
 	t = p = NULL;
 
@@ -239,7 +246,7 @@ print_man(const struct man_node *n, int indent)
 		print_span(n->span, indent);
 	} else {
 		for (i = 0; i < indent; i++)
-			putchar('\t');
+			putchar(' ');
 		printf("%s (%s) ", p, t);
 		if (MAN_LINE & n->flags)
 			putchar('*');
@@ -247,9 +254,10 @@ print_man(const struct man_node *n, int indent)
 	}
 
 	if (n->eqn)
-		print_box(n->eqn->root->first, indent + 1);
+		print_box(n->eqn->root->first, indent + 4);
 	if (n->child)
-		print_man(n->child, indent + 1);
+		print_man(n->child, indent +
+		    (n->type == MAN_BLOCK ? 2 : 4));
 	if (n->next)
 		print_man(n->next, indent);
 }
@@ -268,7 +276,7 @@ print_box(const struct eqn_box *ep, int indent)
 	if (NULL == ep)
 		return;
 	for (i = 0; i < indent; i++)
-		putchar('\t');
+		putchar(' ');
 
 	t = NULL;
 	switch (ep->type) {
@@ -316,7 +324,7 @@ print_box(const struct eqn_box *ep, int indent)
 		printf(" args=%zu", ep->args);
 	putchar('\n');
 
-	print_box(ep->first, indent + 1);
+	print_box(ep->first, indent + 4);
 	print_box(ep->next, indent);
 }
 
@@ -327,7 +335,7 @@ print_span(const struct tbl_span *sp, int indent)
 	int		 i;
 
 	for (i = 0; i < indent; i++)
-		putchar('\t');
+		putchar(' ');
 
 	switch (sp->pos) {
 	case TBL_SPAN_HORIZ:
