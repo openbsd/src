@@ -1,4 +1,4 @@
-.TH "nsd\-checkconf" "8" "Sep  4, 2014" "NLnet Labs" "nsd 4.1.0"
+.TH "nsd\-checkconf" "8" "Feb  3, 2015" "NLnet Labs" "nsd 4.1.1"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -7,6 +7,7 @@
 .SH "SYNOPSIS"
 .B nsd\-checkconf
 .RB [ \-v ]
+.RB [ \-f ]
 .RB [ \-h ]
 .RB [ \-o
 .IR option ]
@@ -33,6 +34,10 @@ access the nsd config file, using the \-o and \-z options.
 After reading print the options to standard output in configfile 
 format. Without this option, only success or parse errors are 
 reported.
+.TP
+.B \-f
+Print full pathname when used with files, like with \-o pidfile.
+This includes the chroot in the way it is applied to the pidfile.
 .TP
 .B \-h
 Print usage help information and exit.

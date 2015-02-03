@@ -33,14 +33,15 @@ xfrd_pipe_cmp(const void* a, const void* b)
 	if(x == y)
 		return 0;
 	if(y->ip_len != x->ip_len)
+		/* subtraction works because nonnegative and small numbers */
 		return (int)y->ip_len - (int)x->ip_len;
 	r = memcmp(&x->ip, &y->ip, x->ip_len);
 	if(r != 0)
 		return r;
-	/* sort that num_unused is sorted ascending,
-	 * thus, if(x=10, y=1) then result 'bigger', 10-1>0*/
-	if(x->num_unused != y->num_unused)
-		return x->num_unused - y->num_unused;
+	/* sort that num_unused is sorted ascending, */
+	if(x->num_unused != y->num_unused) {
+		return (x->num_unused < y->num_unused) ? -1 : 1;
+	}
 	/* different pipelines are different still, even with same numunused*/
 	return (uintptr_t)x < (uintptr_t)y ? -1 : 1;
 }

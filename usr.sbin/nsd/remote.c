@@ -38,8 +38,8 @@
  *
  * This file contains the remote control functionality for the daemon.
  * The remote control can be performed using either the commandline
- * nsd-control tool, or a SSLv3/TLS capable web browser. 
- * The channel is secured using SSLv3 or TLSv1, and certificates.
+ * nsd-control tool, or a TLS capable web browser. 
+ * The channel is secured using TLSv1, and certificates.
  * Both the server and the client(control tool) have their own keys.
  */
 #include "config.h"
@@ -77,6 +77,7 @@
 #include "nsd.h"
 #include "options.h"
 #include "difffile.h"
+#include "xfrd.h"
 #include "ipc.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -262,9 +263,14 @@ daemon_remote_create(nsd_options_t* cfg)
 		free(rc);
 		return NULL;
 	}
-	/* no SSLv2 because has defects */
+	/* no SSLv2, SSLv3 because has defects */
 	if(!(SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)){
 		log_crypto_err("could not set SSL_OP_NO_SSLv2");
+		daemon_remote_delete(rc);
+		return NULL;
+	}
+	if(!(SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)){
+		log_crypto_err("could not set SSL_OP_NO_SSLv3");
 		daemon_remote_delete(rc);
 		return NULL;
 	}
@@ -1086,6 +1092,20 @@ do_stats(struct daemon_remote* rc, int peek, struct rc_state* rs)
 #endif /* BIND8_STATS */
 }
 
+/** see if we have more zonestatistics entries and it has to be incremented */
+static void
+zonestat_inc_ifneeded(xfrd_state_t* xfrd)
+{
+#ifdef USE_ZONE_STATS
+	if(xfrd->nsd->options->zonestatnames->count != xfrd->zonestat_safe)
+		task_new_zonestat_inc(xfrd->nsd->task[xfrd->nsd->mytask],
+			xfrd->last_task, 
+			xfrd->nsd->options->zonestatnames->count);
+#else
+	(void)xfrd;
+#endif /* USE_ZONE_STATS */
+}
+
 /** do the addzone command */
 static void
 do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
@@ -1137,7 +1157,9 @@ do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	}
 	/* make addzone task and schedule reload */
 	task_new_add_zone(xfrd->nsd->task[xfrd->nsd->mytask],
-		xfrd->last_task, arg, arg2);
+		xfrd->last_task, arg, arg2,
+		getzonestatid(xfrd->nsd->options, zopt));
+	zonestat_inc_ifneeded(xfrd);
 	xfrd_set_reload_now(xfrd);
 	/* add to xfrd - notify (for master and slaves) */
 	init_notify_send(xfrd->notify_zones, xfrd->region, zopt);
@@ -1314,7 +1336,9 @@ add_cfgzone(xfrd_state_t* xfrd, const char* pname)
 
 	/* make addzone task and schedule reload */
 	task_new_add_zone(xfrd->nsd->task[xfrd->nsd->mytask],
-		xfrd->last_task, zopt->name, pname);
+		xfrd->last_task, zopt->name, pname,
+		getzonestatid(xfrd->nsd->options, zopt));
+	/* zonestat_inc is done after the entire config file has been done */
 	xfrd_set_reload_now(xfrd);
 	/* add to xfrd - notify (for master and slaves) */
 	init_notify_send(xfrd->notify_zones, xfrd->region, zopt);
@@ -1595,6 +1619,7 @@ do_repattern(SSL* ssl, xfrd_state_t* xfrd)
 	repat_keys(xfrd, opt);
 	repat_patterns(xfrd, opt);
 	repat_options(xfrd, opt);
+	zonestat_inc_ifneeded(xfrd);
 	send_ok(ssl);
 	region_destroy(region);
 }
@@ -1812,14 +1837,171 @@ print_longnum(SSL* ssl, char* desc, uint64_t x)
 	}
 }
 
+/* print one block of statistics.  n is name and d is delimiter */
 static void
-print_stats(SSL* ssl, xfrd_state_t* xfrd, struct timeval* now)
+print_stat_block(SSL* ssl, char* n, char* d, struct nsdst* st)
 {
 	const char* rcstr[] = {"NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN",
 	    "NOTIMP", "REFUSED", "YXDOMAIN", "YXRRSET", "NXRRSET", "NOTAUTH",
 	    "NOTZONE", "RCODE11", "RCODE12", "RCODE13", "RCODE14", "RCODE15",
 	    "BADVERS"
 	};
+	size_t i;
+	for(i=0; i<= 255; i++) {
+		if(inhibit_zero && st->qtype[i] == 0 &&
+			strncmp(rrtype_to_string(i), "TYPE", 4) == 0)
+			continue;
+		if(!ssl_printf(ssl, "%s%snum.type.%s=%u\n", n, d,
+			rrtype_to_string(i), (unsigned)st->qtype[i]))
+			return;
+	}
+
+	/* opcode */
+	for(i=0; i<6; i++) {
+		if(inhibit_zero && st->opcode[i] == 0 && i != OPCODE_QUERY)
+			continue;
+		if(!ssl_printf(ssl, "%s%snum.opcode.%s=%u\n", n, d,
+			opcode2str(i), (unsigned)st->opcode[i]))
+			return;
+	}
+
+	/* qclass */
+	for(i=0; i<4; i++) {
+		if(inhibit_zero && st->qclass[i] == 0 && i != CLASS_IN)
+			continue;
+		if(!ssl_printf(ssl, "%s%snum.class.%s=%u\n", n, d,
+			rrclass_to_string(i), (unsigned)st->qclass[i]))
+			return;
+	}
+
+	/* rcode */
+	for(i=0; i<17; i++) {
+		if(inhibit_zero && st->rcode[i] == 0 &&
+			i > RCODE_YXDOMAIN) /* NSD does not use larger */
+			continue;
+		if(!ssl_printf(ssl, "%s%snum.rcode.%s=%u\n", n, d, rcstr[i],
+			(unsigned)st->rcode[i]))
+			return;
+	}
+
+	/* edns */
+	if(!ssl_printf(ssl, "%s%snum.edns=%u\n", n, d, (unsigned)st->edns))
+		return;
+
+	/* ednserr */
+	if(!ssl_printf(ssl, "%s%snum.ednserr=%u\n", n, d,
+		(unsigned)st->ednserr))
+		return;
+
+	/* qudp */
+	if(!ssl_printf(ssl, "%s%snum.udp=%u\n", n, d, (unsigned)st->qudp))
+		return;
+	/* qudp6 */
+	if(!ssl_printf(ssl, "%s%snum.udp6=%u\n", n, d, (unsigned)st->qudp6))
+		return;
+	/* ctcp */
+	if(!ssl_printf(ssl, "%s%snum.tcp=%u\n", n, d, (unsigned)st->ctcp))
+		return;
+	/* ctcp6 */
+	if(!ssl_printf(ssl, "%s%snum.tcp6=%u\n", n, d, (unsigned)st->ctcp6))
+		return;
+
+	/* nona */
+	if(!ssl_printf(ssl, "%s%snum.answer_wo_aa=%u\n", n, d,
+		(unsigned)st->nona))
+		return;
+
+	/* rxerr */
+	if(!ssl_printf(ssl, "%s%snum.rxerr=%u\n", n, d, (unsigned)st->rxerr))
+		return;
+
+	/* txerr */
+	if(!ssl_printf(ssl, "%s%snum.txerr=%u\n", n, d, (unsigned)st->txerr))
+		return;
+
+	/* number of requested-axfr, number of times axfr served to clients */
+	if(!ssl_printf(ssl, "%s%snum.raxfr=%u\n", n, d, (unsigned)st->raxfr))
+		return;
+
+	/* truncated */
+	if(!ssl_printf(ssl, "%s%snum.truncated=%u\n", n, d,
+		(unsigned)st->truncated))
+		return;
+
+	/* dropped */
+	if(!ssl_printf(ssl, "%s%snum.dropped=%u\n", n, d,
+		(unsigned)st->dropped))
+		return;
+}
+
+#ifdef USE_ZONE_STATS
+static void
+resize_zonestat(xfrd_state_t* xfrd, size_t num)
+{
+	struct nsdst** a = xalloc_zero(num * sizeof(struct nsdst*));
+	if(xfrd->zonestat_clear_num != 0)
+		memcpy(a, xfrd->zonestat_clear, xfrd->zonestat_clear_num
+			* sizeof(struct nsdst*));
+	free(xfrd->zonestat_clear);
+	xfrd->zonestat_clear = a;
+	xfrd->zonestat_clear_num = num;
+}
+
+static void
+zonestat_print(SSL* ssl, xfrd_state_t* xfrd, int clear)
+{
+	struct zonestatname* n;
+	struct nsdst stat0, stat1;
+	RBTREE_FOR(n, struct zonestatname*, xfrd->nsd->options->zonestatnames){
+		char* name = (char*)n->node.key;
+		if(n->id >= xfrd->zonestat_safe)
+			continue; /* newly allocated and reload has not yet
+				done and replied with new size */
+		if(name == NULL || name[0]==0)
+			continue; /* empty name, do not output */
+		/* the statistics are stored in two blocks, during reload
+		 * the newly forked processes get the other block to use,
+		 * these blocks are mmapped and are currently in use to
+		 * add statistics to */
+		memcpy(&stat0, &xfrd->nsd->zonestat[0][n->id], sizeof(stat0));
+		memcpy(&stat1, &xfrd->nsd->zonestat[1][n->id], sizeof(stat1));
+		stats_add(&stat0, &stat1);
+		
+		/* save a copy of current (cumulative) stats in stat1 */
+		memcpy(&stat1, &stat0, sizeof(stat1));
+		/* subtract last total of stats that was 'cleared' */
+		if(n->id < xfrd->zonestat_clear_num &&
+			xfrd->zonestat_clear[n->id])
+			stats_subtract(&stat0, xfrd->zonestat_clear[n->id]);
+		if(clear) {
+			/* extend storage array if needed */
+			if(n->id >= xfrd->zonestat_clear_num) {
+				if(n->id+1 < xfrd->nsd->options->zonestatnames->count)
+					resize_zonestat(xfrd, xfrd->nsd->options->zonestatnames->count);
+				else
+					resize_zonestat(xfrd, n->id+1);
+			}
+			if(!xfrd->zonestat_clear[n->id])
+				xfrd->zonestat_clear[n->id] = xalloc(
+					sizeof(struct nsdst));
+			/* store last total of stats */
+			memcpy(xfrd->zonestat_clear[n->id], &stat1,
+				sizeof(struct nsdst));
+		}
+
+		/* stat0 contains the details that we want to print */
+		if(!ssl_printf(ssl, "%s%snum.queries=%u\n", name, ".",
+			(unsigned)(stat0.qudp + stat0.qudp6 + stat0.ctcp +
+				stat0.ctcp6)))
+			return;
+		print_stat_block(ssl, name, ".", &stat0);
+	}
+}
+#endif /* USE_ZONE_STATS */
+
+static void
+print_stats(SSL* ssl, xfrd_state_t* xfrd, struct timeval* now, int clear)
+{
 	size_t i;
 	stc_t total = 0;
 	struct timeval elapsed, uptime;
@@ -1857,94 +2039,7 @@ print_stats(SSL* ssl, xfrd_state_t* xfrd, struct timeval* now)
 	if(!print_longnum(ssl, "size.config.mem=", region_get_mem(
 		xfrd->nsd->options->region)))
 		return;
-
-	for(i=0; i<= 255; i++) {
-		if(inhibit_zero && xfrd->nsd->st.qtype[i] == 0 &&
-			strncmp(rrtype_to_string(i), "TYPE", 4) == 0)
-			continue;
-		if(!ssl_printf(ssl, "num.type.%s=%u\n", 
-			rrtype_to_string(i), (unsigned)xfrd->nsd->st.qtype[i]))
-			return;
-	}
-
-	/* opcode */
-	for(i=0; i<6; i++) {
-		if(inhibit_zero && xfrd->nsd->st.opcode[i] == 0 &&
-			i != OPCODE_QUERY)
-			continue;
-		if(!ssl_printf(ssl, "num.opcode.%s=%u\n", opcode2str(i),
-			(unsigned)xfrd->nsd->st.opcode[i]))
-			return;
-	}
-
-	/* qclass */
-	for(i=0; i<4; i++) {
-		if(inhibit_zero && xfrd->nsd->st.qclass[i] == 0 &&
-			i != CLASS_IN)
-			continue;
-		if(!ssl_printf(ssl, "num.class.%s=%u\n", rrclass_to_string(i),
-			(unsigned)xfrd->nsd->st.qclass[i]))
-			return;
-	}
-
-	/* rcode */
-	for(i=0; i<17; i++) {
-		if(inhibit_zero && xfrd->nsd->st.rcode[i] == 0 &&
-			i > RCODE_YXDOMAIN) /* NSD does not use larger */
-			continue;
-		if(!ssl_printf(ssl, "num.rcode.%s=%u\n", rcstr[i],
-			(unsigned)xfrd->nsd->st.rcode[i]))
-			return;
-	}
-
-	/* edns */
-	if(!ssl_printf(ssl, "num.edns=%u\n", (unsigned)xfrd->nsd->st.edns))
-		return;
-
-	/* ednserr */
-	if(!ssl_printf(ssl, "num.ednserr=%u\n",
-		(unsigned)xfrd->nsd->st.ednserr))
-		return;
-
-	/* qudp */
-	if(!ssl_printf(ssl, "num.udp=%u\n", (unsigned)xfrd->nsd->st.qudp))
-		return;
-	/* qudp6 */
-	if(!ssl_printf(ssl, "num.udp6=%u\n", (unsigned)xfrd->nsd->st.qudp6))
-		return;
-	/* ctcp */
-	if(!ssl_printf(ssl, "num.tcp=%u\n", (unsigned)xfrd->nsd->st.ctcp))
-		return;
-	/* ctcp6 */
-	if(!ssl_printf(ssl, "num.tcp6=%u\n", (unsigned)xfrd->nsd->st.ctcp6))
-		return;
-
-	/* nona */
-	if(!ssl_printf(ssl, "num.answer_wo_aa=%u\n",
-		(unsigned)xfrd->nsd->st.nona))
-		return;
-
-	/* rxerr */
-	if(!ssl_printf(ssl, "num.rxerr=%u\n", (unsigned)xfrd->nsd->st.rxerr))
-		return;
-
-	/* txerr */
-	if(!ssl_printf(ssl, "num.txerr=%u\n", (unsigned)xfrd->nsd->st.txerr))
-		return;
-
-	/* number of requested-axfr, number of times axfr served to clients */
-	if(!ssl_printf(ssl, "num.raxfr=%u\n", (unsigned)xfrd->nsd->st.raxfr))
-		return;
-
-	/* truncated */
-	if(!ssl_printf(ssl, "num.truncated=%u\n",
-		(unsigned)xfrd->nsd->st.truncated))
-		return;
-
-	/* dropped */
-	if(!ssl_printf(ssl, "num.dropped=%u\n",
-		(unsigned)xfrd->nsd->st.dropped))
-		return;
+	print_stat_block(ssl, "", "", &xfrd->nsd->st);
 
 	/* zone statistics */
 	if(!ssl_printf(ssl, "zone.master=%u\n",
@@ -1952,6 +2047,11 @@ print_stats(SSL* ssl, xfrd_state_t* xfrd, struct timeval* now)
 		return;
 	if(!ssl_printf(ssl, "zone.slave=%u\n", (unsigned)xfrd->zones->count))
 		return;
+#ifdef USE_ZONE_STATS
+	zonestat_print(ssl, xfrd, clear); /* per-zone statistics */
+#else
+	(void)clear;
+#endif
 }
 
 static void
@@ -1964,6 +2064,9 @@ clear_stats(xfrd_state_t* xfrd)
 		xfrd->nsd->children[i].query_count = 0;
 	}
 	memset(&xfrd->nsd->st, 0, sizeof(struct nsdst));
+	/* zonestats are cleared by storing the cumulative value that
+	 * was last printed in the zonestat_clear array, and subtracting
+	 * that before the next stats printout */
 	xfrd->nsd->st.db_disk = dbd;
 	xfrd->nsd->st.db_mem = dbm;
 }
@@ -1979,7 +2082,7 @@ daemon_remote_process_stats(struct daemon_remote* rc)
 	/* pop one and give it stats */
 	while((s = rc->stats_list)) {
 		assert(s->in_stats_list);
-		print_stats(s->ssl, rc->xfrd, &now);
+		print_stats(s->ssl, rc->xfrd, &now, (s->in_stats_list == 1));
 		if(s->in_stats_list == 1) {
 			clear_stats(rc->xfrd);
 			rc->stats_time = now;

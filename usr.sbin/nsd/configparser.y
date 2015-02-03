@@ -67,7 +67,7 @@ extern config_parser_state_t* cfg_parser;
 %token VAR_RRL_IPV4_PREFIX_LENGTH VAR_RRL_IPV6_PREFIX_LENGTH
 %token VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
 %token VAR_ZONEFILES_CHECK VAR_ZONEFILES_WRITE VAR_LOG_TIME_ASCII
-%token VAR_ROUND_ROBIN
+%token VAR_ROUND_ROBIN VAR_ZONESTATS
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -551,7 +551,7 @@ content_pattern: pattern_name | zone_config_item;
 zone_config_item: zone_zonefile | zone_allow_notify | zone_request_xfr |
 	zone_notify | zone_notify_retry | zone_provide_xfr | 
 	zone_outgoing_interface | zone_allow_axfr_fallback | include_pattern |
-	zone_rrl_whitelist;
+	zone_rrl_whitelist | zone_zonestats;
 pattern_name: VAR_NAME STRING
 	{ 
 		OUTYY(("P(pattern_name:%s)\n", $2)); 
@@ -641,6 +641,15 @@ zone_zonefile: VAR_ZONEFILE STRING
 		assert(cfg_parser->current_pattern);
 #endif
 		cfg_parser->current_pattern->zonefile = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+zone_zonestats: VAR_ZONESTATS STRING
+	{ 
+		OUTYY(("P(zonestats:%s)\n", $2)); 
+#ifndef NDEBUG
+		assert(cfg_parser->current_pattern);
+#endif
+		cfg_parser->current_pattern->zonestats = region_strdup(cfg_parser->opt->region, $2);
 	}
 	;
 zone_allow_notify: VAR_ALLOW_NOTIFY STRING STRING

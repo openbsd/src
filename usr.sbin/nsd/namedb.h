@@ -128,6 +128,7 @@ struct zone
 	char*        filename; /* set if read from file, which file */
 	char*        logstr; /* set for zone xfer, the log string */
 	time_t       mtime; /* time of last modification */
+	unsigned     zonestatid; /* array index for zone stats */
 	unsigned     is_secure : 1; /* zone uses DNSSEC */
 	unsigned     is_ok : 1; /* zone has not expired. */
 	unsigned     is_changed : 1; /* zone was changed by AXFR */

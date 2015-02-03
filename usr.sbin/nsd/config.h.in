@@ -484,6 +484,9 @@
 #endif
 
 
+/* Define this to enable per-zone statistics gathering. */
+#undef USE_ZONE_STATS
+
 /* Define to the NSD version to answer version.server query. */
 #undef VERSION
 

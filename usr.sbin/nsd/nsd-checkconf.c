@@ -41,6 +41,12 @@ extern int optind;
 		return; 			\
 	}
 
+#define ZONE_GET_PATH(FINAL, NAME, VAR, PATTERN) 	\
+	if (strcasecmp(#NAME, (VAR)) == 0) { 		\
+		quotepath(opt, FINAL, PATTERN->NAME); 	\
+		return; 				\
+	}
+
 #define ZONE_GET_BIN(NAME, VAR, PATTERN) 			\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 		\
 		printf("%s\n", (PATTERN->NAME)?"yes":"no"); 	\
@@ -62,6 +68,12 @@ extern int optind;
 #define SERV_GET_STR(NAME, VAR) 		\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
 		quote(opt->NAME); 		\
+		return; 			\
+	}
+
+#define SERV_GET_PATH(FINAL, NAME, VAR) 	\
+	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
+		quotepath(opt, FINAL, opt->NAME); 	\
 		return; 			\
 	}
 
@@ -129,6 +141,7 @@ usage(void)
 	fprintf(stderr, "Use with -o, -z or -s options to query the configuration.\n\n");
 	fprintf(stderr, "-v		Verbose, echo settings that take effect to std output.\n");
 	fprintf(stderr, "-h		Print this help information.\n");
+	fprintf(stderr, "-f		Use with -o to print final pathnames, ie. with chroot.\n");
 	fprintf(stderr, "-o option	Print value of the option specified to stdout.\n");
 	fprintf(stderr, "-p pattern	Print option value for the pattern given.\n");
 	fprintf(stderr, "-z zonename	Print option value for the zone given.\n");
@@ -154,6 +167,21 @@ quote(const char *v)
 		printf("\n");
 	else
 		printf("%s\n", v);
+}
+
+static void
+quotepath(nsd_options_t* opt, int final, const char *f)
+{
+	const char* chr = opt->chroot;
+#ifdef CHROOTDIR
+	if(chr == 0) chr = CHROOTDIR;
+#endif
+	if(f == 0 || f[0] == '/' || !final || !chr || chr[0]==0) {
+		quote(f);
+		return;
+	}
+	/* chroot has had trailing slash applied in check part of checkconf */
+	printf("%s%s\n", chr, f);
 }
 
 static void
@@ -228,7 +256,7 @@ print_acl_ips(const char* varname, acl_options_t* acl)
 
 void
 config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
-	const char *z, const char* pat)
+	const char *z, const char* pat, int final)
 {
 	ip_address_option_t* ip;
 
@@ -269,12 +297,13 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 			return;
 		}
 		ZONE_GET_BIN(part_of_config, o, zone);
-		ZONE_GET_STR(zonefile, o, zone->pattern);
+		ZONE_GET_PATH(final, zonefile, o, zone->pattern);
 		ZONE_GET_ACL(request_xfr, o, zone->pattern);
 		ZONE_GET_ACL(provide_xfr, o, zone->pattern);
 		ZONE_GET_ACL(allow_notify, o, zone->pattern);
 		ZONE_GET_ACL(notify, o, zone->pattern);
 		ZONE_GET_BIN(notify_retry, o, zone->pattern);
+		ZONE_GET_STR(zonestats, o, zone->pattern);
 		ZONE_GET_OUTGOING(outgoing_interface, o, zone->pattern);
 		ZONE_GET_BIN(allow_axfr_fallback, o, zone->pattern);
 #ifdef RATELIMIT
@@ -293,11 +322,13 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 			return;
 		}
 		ZONE_GET_STR(zonefile, o, p);
+		ZONE_GET_PATH(final, zonefile, o, p);
 		ZONE_GET_ACL(request_xfr, o, p);
 		ZONE_GET_ACL(provide_xfr, o, p);
 		ZONE_GET_ACL(allow_notify, o, p);
 		ZONE_GET_ACL(notify, o, p);
 		ZONE_GET_BIN(notify_retry, o, p);
+		ZONE_GET_STR(zonestats, o, p);
 		ZONE_GET_OUTGOING(outgoing_interface, o, p);
 		ZONE_GET_BIN(allow_axfr_fallback, o, p);
 #ifdef RATELIMIT
@@ -318,17 +349,17 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(log_time_ascii, o);
 		SERV_GET_BIN(round_robin, o);
 		/* str */
-		SERV_GET_STR(database, o);
+		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
 		SERV_GET_STR(nsid, o);
-		SERV_GET_STR(logfile, o);
-		SERV_GET_STR(pidfile, o);
+		SERV_GET_PATH(final, logfile, o);
+		SERV_GET_PATH(final, pidfile, o);
 		SERV_GET_STR(chroot, o);
 		SERV_GET_STR(username, o);
-		SERV_GET_STR(zonesdir, o);
-		SERV_GET_STR(xfrdfile, o);
-		SERV_GET_STR(xfrdir, o);
-		SERV_GET_STR(zonelistfile, o);
+		SERV_GET_PATH(final, zonesdir, o);
+		SERV_GET_PATH(final, xfrdfile, o);
+		SERV_GET_PATH(final, xfrdir, o);
+		SERV_GET_PATH(final, zonelistfile, o);
 		SERV_GET_STR(port, o);
 		/* int */
 		SERV_GET_INT(server_count, o);
@@ -389,6 +420,8 @@ static void print_zone_content_elems(pattern_options_t* pat)
 		printf("\tnotify-retry: %d\n", pat->notify_retry);
 	print_acl("notify:", pat->notify);
 	print_acl("provide-xfr:", pat->provide_xfr);
+	if(pat->zonestats)
+		print_string_var("zonestats:", pat->zonestats);
 	print_acl_ips("outgoing-interface:", pat->outgoing_interface);
 	if(!pat->allow_axfr_fallback_is_default)
 		printf("\tallow-axfr-fallback: %s\n",
@@ -567,7 +600,7 @@ additional_checks(nsd_options_t* opt, const char* filename)
 		/* zonesdir must be absolute and within chroot,
 		 * all other pathnames may be relative to zonesdir */
 		if (strncmp(opt->zonesdir, opt->chroot, strlen(opt->chroot)) != 0) {
-			fprintf(stderr, "%s: zonesdir %s is not relative to chroot %s.\n",
+			fprintf(stderr, "%s: zonesdir %s has to be an absolute path that starts with the chroot path %s\n",
 				filename, opt->zonesdir, opt->chroot);
 			errors ++;
                 }
@@ -618,6 +651,7 @@ main(int argc, char* argv[])
 	int c;
 	int verbose = 0;
 	int key_sec = 0;
+	int final = 0;
 	const char * conf_opt = NULL; /* what option do you want? Can be NULL -> print all */
 	const char * conf_zone = NULL; /* what zone are we talking about */
 	const char * conf_key = NULL; /* what key is needed */
@@ -628,7 +662,7 @@ main(int argc, char* argv[])
 	log_init("nsd-checkconf");
 
 	/* Parse the command line... */
-	while ((c = getopt(argc, argv, "vo:a:p:s:z:")) != -1) {
+	while ((c = getopt(argc, argv, "vfo:a:p:s:z:")) != -1) {
 		switch (c) {
 		case 'v':
 			verbose = 1;
@@ -636,6 +670,9 @@ main(int argc, char* argv[])
 			break;
 		case 'o':
 			conf_opt = optarg;
+			break;
+		case 'f':
+			final = 1;
 			break;
 		case 'p':
 			conf_pat = optarg;
@@ -678,7 +715,7 @@ main(int argc, char* argv[])
 	}
 	if (conf_opt || conf_key) {
 		config_print_zone(options, conf_key, key_sec,
-			underscore(conf_opt), conf_zone, conf_pat);
+			underscore(conf_opt), conf_zone, conf_pat, final);
 	} else {
 		if (verbose) {
 			printf("# Read file %s: %d patterns, %d fixed-zones, "

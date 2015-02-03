@@ -1232,6 +1232,9 @@ answer_query(struct nsd *nsd, struct query *q)
 
 	answer_lookup_zone(nsd, q, &answer, 0, exact, closest_match,
 		closest_encloser, q->qname);
+	ZTATUP2(nsd, q->zone, opcode, q->opcode);
+	ZTATUP2(nsd, q->zone, qtype, q->qtype);
+	ZTATUP2(nsd, q->zone, qclass, q->qclass);
 
 	offset = dname_label_offsets(q->qname)[domain_dname(closest_encloser)->label_count - 1] + QHEADERSZ;
 	query_add_compression_domain(q, closest_encloser, offset);
@@ -1435,6 +1438,7 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		}
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);
 		STATUP(nsd, edns);
+		ZTATUP(nsd, q->zone, edns);
 		break;
 	case EDNS_ERROR:
 		if (q->edns.dnssec_ok)	edns->error[7] = 0x80;
@@ -1443,6 +1447,7 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		buffer_write(q->packet, edns->rdata_none, OPT_RDATA);
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);
 		STATUP(nsd, ednserr);
+		ZTATUP(nsd, q->zone, ednserr);
 		break;
 	}
 

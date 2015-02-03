@@ -371,7 +371,7 @@ static void xfrd_write_dname(FILE* out, uint8_t* dname)
 		for(i=0; i<len; i++)
 		{
 			uint8_t ch = *d++;
-			if (isalnum(ch) || ch == '-' || ch == '_') {
+			if (isalnum((unsigned char)ch) || ch == '-' || ch == '_') {
 				fprintf(out, "%c", ch);
 			} else if (ch == '.' || ch == '\\') {
 				fprintf(out, "\\%c", ch);

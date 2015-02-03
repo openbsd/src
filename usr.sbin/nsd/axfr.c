@@ -62,6 +62,7 @@ query_axfr(struct nsd *nsd, struct query *query)
 			RCODE_SET(query->packet, RCODE_NOTAUTH);
 			return QUERY_PROCESSED;
 		}
+		ZTATUP(nsd, query->axfr_zone, raxfr);
 
 		query->axfr_current_domain = qdomain;
 		query->axfr_current_rrset = NULL;

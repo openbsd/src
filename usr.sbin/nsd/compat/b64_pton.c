@@ -153,7 +153,7 @@ b64_initialize_rmap ()
 		if (isspace(i))
 			b64rmap[i] = b64rmap_space;
 		/* Padding: stop parsing */
-		else if (i == Pad64)
+		else if (i == (unsigned char)Pad64)
 			b64rmap[i] = b64rmap_end;
 		/* Non-base64 char */
 		else

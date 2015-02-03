@@ -111,11 +111,11 @@ nsd_strptime(const char *s, const char *format, struct tm *tm)
 	int c, alt_format, ret;
 	int split_year = 0;
 
-	while ((c = (unsigned char)*format) != '\0') {
+	while ((c = *format) != '\0') {
 		alt_format = 0;
 
 		/* whitespace, literal or format */
-		if (isspace(c)) { /* whitespace */
+		if (isspace((unsigned char)c)) { /* whitespace */
 			/** whitespace matches zero or more whitespace characters in the
 			  * input string.
 			 **/

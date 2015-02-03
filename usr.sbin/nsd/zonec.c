@@ -108,7 +108,7 @@ zparser_conv_hex(region_type *region, const char *hex, size_t len)
 				} else {
 					zc_error_prev_line(
 						"illegal hex character '%c'",
-						(int)(unsigned char) *hex);
+						(int) *hex);
 					return NULL;
 				}
 				++hex;
@@ -149,7 +149,7 @@ zparser_conv_hex_length(region_type *region, const char *hex, size_t len)
 				} else {
 					zc_error_prev_line(
 						"illegal hex character '%c'",
-						(int)(unsigned char) *hex);
+						(int) *hex);
 					return NULL;
 				}
 				++hex;
@@ -388,7 +388,6 @@ zparser_conv_ilnp64(region_type *region, const char *text)
 	int ngroups, num;
 	unsigned long hex;
 	const char *ch;
-	int c;
 	char digits[ILNP_MAXDIGITS+1];
 	unsigned int ui[ILNP_NUMGROUPS];
 	uint16_t a[ILNP_NUMGROUPS];
@@ -415,10 +414,9 @@ zparser_conv_ilnp64(region_type *region, const char *text)
 		} else {
 			/* Our grammar is stricter than the one accepted by
 			 * strtol. */
-			c = (unsigned char) *ch;
-			if (!isxdigit(c)) {
+			if (!isxdigit((unsigned char)*ch)) {
 				zc_error_prev_line("ilnp64: invalid "
-					"(non-hexadecimal) character %c", c);
+					"(non-hexadecimal) character %c", *ch);
 				return NULL;
 			}
 			if (num >= ILNP_MAXDIGITS) {
@@ -510,12 +508,11 @@ zparser_conv_eui(region_type *region, const char *text, size_t len)
 	nnum = len/8;
 	num = 1;
 	for (ch = text; *ch != '\0'; ch++) {
-		int c = (unsigned char) *ch;
 		if (*ch == '-') {
 			num++;
-		} else if (!isxdigit(c)) {
+		} else if (!isxdigit((unsigned char)*ch)) {
 			zc_error_prev_line("eui%u: invalid (non-hexadecimal) "
-				"character %c", (unsigned) len, c);
+				"character %c", (unsigned) len, *ch);
 			return NULL;
 		}
 	}
