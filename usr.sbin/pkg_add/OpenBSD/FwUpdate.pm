@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.13 2015/02/03 09:58:15 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.14 2015/02/03 10:26:29 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -72,6 +72,7 @@ sub handle_options
 	if ($state->{fw_verbose}) {
 		$state->say("Path to firmware: #1", $state->{path});
 	}
+	$state->{subst}->add('NO_SCP', 1);
 }
 
 sub finish_init

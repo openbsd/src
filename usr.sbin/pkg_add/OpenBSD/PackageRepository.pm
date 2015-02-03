@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.111 2014/07/13 17:24:06 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.112 2015/02/03 10:26:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -111,6 +111,8 @@ sub parse
 	} elsif ($u =~ m/^https\:/io) {
 		return $class->https->parse_fullurl($r, $state);
 	} elsif ($u =~ m/^scp\:/io) {
+		return undef if $state->defines("NO_SCP");
+
 		require OpenBSD::PackageRepository::SCP;
 
 		return $class->scp->parse_fullurl($r, $state);
