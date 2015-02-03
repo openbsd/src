@@ -86,7 +86,9 @@ struct task_list_d {
 		/** delete pattern */
 		task_del_pattern,
 		/** options change */
-		task_opt_change
+		task_opt_change,
+		/** zonestat increment */
+		task_zonestat_inc
 	} task_type;
 	uint32_t size; /* size of this struct */
 
@@ -115,13 +117,14 @@ void task_new_write_zonefiles(udb_base* udb, udb_ptr* last,
 	const dname_type* zone);
 void task_new_set_verbosity(udb_base* udb, udb_ptr* last, int v);
 void task_new_add_zone(udb_base* udb, udb_ptr* last, const char* zone,
-	const char* pattern);
+	const char* pattern, unsigned zonestatid);
 void task_new_del_zone(udb_base* udb, udb_ptr* last, const dname_type* dname);
 void task_new_add_key(udb_base* udb, udb_ptr* last, key_options_t* key);
 void task_new_del_key(udb_base* udb, udb_ptr* last, const char* name);
 void task_new_add_pattern(udb_base* udb, udb_ptr* last, pattern_options_t* p);
 void task_new_del_pattern(udb_base* udb, udb_ptr* last, const char* name);
 void task_new_opt_change(udb_base* udb, udb_ptr* last, nsd_options_t* opt);
+void task_new_zonestat_inc(udb_base* udb, udb_ptr* last, unsigned sz);
 int task_new_apply_xfr(udb_base* udb, udb_ptr* last, const dname_type* zone,
 	uint32_t old_serial, uint32_t new_serial, uint64_t filenumber);
 void task_process_in_reload(struct nsd* nsd, udb_base* udb, udb_ptr *last_task,

@@ -72,7 +72,6 @@ struct daemon_remote;
 #endif
 
 #ifdef BIND8_STATS
-
 /* Counter for statistics */
 typedef	unsigned long stc_t;
 
@@ -89,6 +88,21 @@ typedef	unsigned long stc_t;
 #define	STATUP2(nsd, stc, i) /* Nothing */
 
 #endif /* BIND8_STATS */
+
+#ifdef USE_ZONE_STATS
+/* increment zone statistic, checks if zone-nonNULL and zone array bounds */
+#define ZTATUP(nsd, zone, stc) ( \
+	(zone && zone->zonestatid < nsd->zonestatsizenow) ? \
+		nsd->zonestatnow[zone->zonestatid].stc++ \
+		: 0)
+#define	ZTATUP2(nsd, zone, stc, i) ( \
+	(zone && zone->zonestatid < nsd->zonestatsizenow) ? \
+		(nsd->zonestatnow[zone->zonestatid].stc[(i) <= (LASTELEM(nsd->zonestatnow[zone->zonestatid].stc) - 1) ? i : LASTELEM(nsd->zonestatnow[zone->zonestatid].stc)]++ ) \
+		: 0)
+#else /* USE_ZONE_STATS */
+#define	ZTATUP(nsd, zone, stc) /* Nothing */
+#define	ZTATUP2(nsd, zone, stc, i) /* Nothing */
+#endif /* USE_ZONE_STATS */
 
 struct nsd_socket
 {
@@ -221,6 +235,18 @@ struct	nsd
 		stc_t 	edns, ednserr, raxfr, nona;
 		uint64_t db_disk, db_mem;
 	} st;
+	/* per zone stats, each an array per zone-stat-idx, stats per zone is
+	 * add of [0][zoneidx] and [1][zoneidx]. */
+	struct nsdst* zonestat[2];
+	/* fd for zonestat mapping (otherwise mmaps cannot be shared between
+	 * processes and resized) */
+	int zonestatfd[2];
+	/* filenames */
+	char* zonestatfname[2];
+	/* size of the mmapped zone stat array (number of array entries) */
+	size_t zonestatsize[2], zonestatdesired, zonestatsizenow;
+	/* current zonestat array to use */
+	struct nsdst* zonestatnow;
 #endif /* BIND8_STATS */
 
 	struct nsd_options* options;
@@ -246,6 +272,11 @@ struct event_base* nsd_child_event_base(void);
 /* extra domain numbers for temporary domains */
 #define EXTRA_DOMAIN_NUMBERS 1024
 #define SLOW_ACCEPT_TIMEOUT 2 /* in seconds */
+/* allocate zonestat structures */
+void server_zonestat_alloc(struct nsd* nsd);
+/* remap the mmaps for zonestat isx, to bytesize sz.  Caller has to set
+ * the zonestatsize */
+void zonestat_remap(struct nsd* nsd, int idx, size_t sz);
 /* allocate and init xfrd variables */
 void server_prepare_xfrd(struct nsd *nsd);
 /* start xfrdaemon (again) */

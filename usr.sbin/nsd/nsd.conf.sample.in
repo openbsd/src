@@ -236,6 +236,10 @@ remote-control:
 	# default is let the OS choose.
 	#outgoing-interface: 10.0.0.10
 
+	# if compiled with --enable-zone-stats, give name of stat block for
+	# this zone (or group of zones).  Output from nsd-control stats.
+	# zonestats: "%s"
+
 	# if you give another pattern name here, at this point the settings
 	# from that pattern are inserted into this one (as if it were a 
 	# macro).  The statement can be given in between other statements,

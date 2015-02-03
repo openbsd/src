@@ -47,6 +47,12 @@ struct nsd_options {
 	/* last offset in file (or 0 if none) */
 	off_t zonelist_off;
 
+	/* tree of zonestat names and their id values, entries are struct
+	 * zonestatname with malloced key=stringname. The number of items
+	 * is the max statnameid, no items are freed from this. 
+	 * kept correct in the xfrd process, and on startup. */
+	rbtree_t* zonestatnames;
+
 	/* rbtree of keys defined, by name */
 	rbtree_t* keys;
 
@@ -133,6 +139,7 @@ struct pattern_options {
 	acl_options_t* notify;
 	acl_options_t* provide_xfr;
 	acl_options_t* outgoing_interface;
+	const char* zonestats;
 #ifdef RATELIMIT
 	uint16_t rrl_whitelist; /* bitmap with rrl types */
 #endif
@@ -232,6 +239,11 @@ struct zonelist_bucket {
 /* default zonefile write interval if database is "", in seconds */
 #define ZONEFILES_WRITE_INTERVAL 3600
 
+struct zonestatname {
+	rbnode_t node; /* key is malloced string with cooked zonestat name */
+	unsigned id; /* index in nsd.zonestat array */
+};
+
 /*
  * Used during options parsing
  */
@@ -299,6 +311,14 @@ zone_options_t* zone_list_zone_insert(nsd_options_t* opt, const char* nm,
 void zone_list_del(nsd_options_t* opt, zone_options_t* zone);
 void zone_list_compact(nsd_options_t* opt);
 void zone_list_close(nsd_options_t* opt);
+
+/* create zonestat name tree , for initially created zones */
+void options_zonestatnames_create(nsd_options_t* opt);
+/* Get zonestat id for zone options, add new entry if necessary.
+ * instantiates the pattern's zonestat string */
+unsigned getzonestatid(nsd_options_t* opt, zone_options_t* zopt);
+/* create string, same options as zonefile but no chroot changes */
+const char* config_cook_string(zone_options_t* zone, const char* input);
 
 #if defined(HAVE_SSL)
 /* tsig must be inited, adds all keys in options to tsig. */

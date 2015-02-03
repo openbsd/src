@@ -28,6 +28,9 @@ void c_error(const char *message);
 static int
 rbtree_strcmp(const void* p1, const void* p2)
 {
+	if(p1 == NULL && p2 == NULL) return 0;
+	if(p1 == NULL) return -1;
+	if(p2 == NULL) return 1;
 	return strcmp((const char*)p1, (const char*)p2);
 }
 
@@ -40,6 +43,7 @@ nsd_options_create(region_type* region)
 	opt->zone_options = rbtree_create(region,
 		(int (*)(const void *, const void *)) dname_compare);
 	opt->configfile = NULL;
+	opt->zonestatnames = rbtree_create(opt->region, rbtree_strcmp);
 	opt->patterns = rbtree_create(region, rbtree_strcmp);
 	opt->keys = rbtree_create(region, rbtree_strcmp);
 	opt->ip_addresses = NULL;
@@ -256,10 +260,34 @@ parse_options_file(nsd_options_t* opt, const char* file,
 	return 1;
 }
 
+void options_zonestatnames_create(nsd_options_t* opt)
+{
+	zone_options_t* zopt;
+	/* allocate "" as zonestat 0, for zones without a zonestat */
+	if(!rbtree_search(opt->zonestatnames, "")) {
+		struct zonestatname* n;
+		n = (struct zonestatname*)xalloc(sizeof(*n));
+		memset(n, 0, sizeof(*n));
+		n->node.key = strdup("");
+		if(!n->node.key) {
+			log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
+			exit(1);
+		}
+		n->id = (unsigned)(opt->zonestatnames->count);
+		rbtree_insert(opt->zonestatnames, (rbnode_t*)n);
+	}
+	RBTREE_FOR(zopt, zone_options_t*, opt->zone_options) {
+		/* insert into tree, so that when read in later id exists */
+		(void)getzonestatid(opt, zopt);
+	}
+}
+
 #define ZONELIST_HEADER "# NSD zone list\n# name pattern\n"
 static int
 comp_zonebucket(const void* a, const void* b)
 {
+	/* the line size is much smaller than max-int, and positive,
+	 * so the subtraction works */
 	return *(const int*)b - *(const int*)a;
 }
 
@@ -751,6 +779,7 @@ pattern_options_create(region_type* region)
 	p->node = *RBTREE_NULL;
 	p->pname = 0;
 	p->zonefile = 0;
+	p->zonestats = 0;
 	p->allow_notify = 0;
 	p->request_xfr = 0;
 	p->notify = 0;
@@ -806,6 +835,9 @@ pattern_options_remove(nsd_options_t* opt, const char* name)
 	if(p->zonefile)
 		region_recycle(opt->region, (void*)p->zonefile,
 			strlen(p->zonefile)+1);
+	if(p->zonestats)
+		region_recycle(opt->region, (void*)p->zonestats,
+			strlen(p->zonestats)+1);
 	acl_list_delete(opt->region, p->allow_notify);
 	acl_list_delete(opt->region, p->request_xfr);
 	acl_list_delete(opt->region, p->notify);
@@ -878,6 +910,9 @@ copy_pat_fixed(region_type* region, pattern_options_t* orig,
 	if(p->zonefile)
 		orig->zonefile = region_strdup(region, p->zonefile);
 	else orig->zonefile = NULL;
+	if(p->zonestats)
+		orig->zonestats = region_strdup(region, p->zonestats);
+	else orig->zonestats = NULL;
 #ifdef RATELIMIT
 	orig->rrl_whitelist = p->rrl_whitelist;
 #endif
@@ -905,6 +940,9 @@ pattern_options_add_modify(nsd_options_t* opt, pattern_options_t* p)
 		if(orig->zonefile)
 			region_recycle(opt->region, (char*)orig->zonefile,
 				strlen(orig->zonefile)+1);
+		if(orig->zonestats)
+			region_recycle(opt->region, (char*)orig->zonestats,
+				strlen(orig->zonestats)+1);
 		copy_pat_fixed(opt->region, orig, p);
 		copy_changed_acl(opt, &orig->allow_notify, p->allow_notify);
 		copy_changed_acl(opt, &orig->request_xfr, p->request_xfr);
@@ -929,6 +967,11 @@ pattern_options_equal(pattern_options_t* p, pattern_options_t* q)
 	else if(p->zonefile && !q->zonefile) return 0;
 	else if(p->zonefile && q->zonefile) {
 		if(strcmp(p->zonefile, q->zonefile) != 0) return 0;
+	}
+	if(!p->zonestats && q->zonestats) return 0;
+	else if(p->zonestats && !q->zonestats) return 0;
+	else if(p->zonestats && q->zonestats) {
+		if(strcmp(p->zonestats, q->zonestats) != 0) return 0;
 	}
 	if(!booleq(p->allow_axfr_fallback, q->allow_axfr_fallback)) return 0;
 	if(!booleq(p->allow_axfr_fallback_is_default,
@@ -1055,6 +1098,7 @@ pattern_options_marshal(struct buffer* b, pattern_options_t* p)
 {
 	marshal_str(b, p->pname);
 	marshal_str(b, p->zonefile);
+	marshal_str(b, p->zonestats);
 #ifdef RATELIMIT
 	marshal_u16(b, p->rrl_whitelist);
 #endif
@@ -1076,6 +1120,7 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	pattern_options_t* p = pattern_options_create(r);
 	p->pname = unmarshal_str(r, b);
 	p->zonefile = unmarshal_str(r, b);
+	p->zonestats = unmarshal_str(r, b);
 #ifdef RATELIMIT
 	p->rrl_whitelist = unmarshal_u16(b);
 #endif
@@ -1548,6 +1593,32 @@ replace_str(char* str, size_t len, const char* one, const char* two)
 }
 
 const char*
+config_cook_string(zone_options_t* zone, const char* input)
+{
+	static char f[1024];
+	/* if not a template, return as-is */
+	if(!strchr(input, '%')) {
+		return input;
+	}
+	strlcpy(f, input, sizeof(f));
+	if(strstr(f, "%1"))
+		replace_str(f, sizeof(f), "%1", get_char(zone->name, 0));
+	if(strstr(f, "%2"))
+		replace_str(f, sizeof(f), "%2", get_char(zone->name, 1));
+	if(strstr(f, "%3"))
+		replace_str(f, sizeof(f), "%3", get_char(zone->name, 2));
+	if(strstr(f, "%z"))
+		replace_str(f, sizeof(f), "%z", get_end_label(zone, 1));
+	if(strstr(f, "%y"))
+		replace_str(f, sizeof(f), "%y", get_end_label(zone, 2));
+	if(strstr(f, "%x"))
+		replace_str(f, sizeof(f), "%x", get_end_label(zone, 3));
+	if(strstr(f, "%s"))
+		replace_str(f, sizeof(f), "%s", zone->name);
+	return f;
+}
+
+const char*
 config_make_zonefile(zone_options_t* zone, struct nsd* nsd)
 {
 	static char f[1024];
@@ -1762,6 +1833,9 @@ config_apply_pattern(const char* name)
 	if(pat->zonefile)
 		a->zonefile = region_strdup(cfg_parser->opt->region,
 			pat->zonefile);
+	if(pat->zonestats)
+		a->zonestats = region_strdup(cfg_parser->opt->region,
+			pat->zonestats);
 	if(!pat->allow_axfr_fallback_is_default) {
 		a->allow_axfr_fallback = pat->allow_axfr_fallback;
 		a->allow_axfr_fallback_is_default = 0;
@@ -1789,4 +1863,34 @@ void
 nsd_options_destroy(nsd_options_t* opt)
 {
 	region_destroy(opt->region);
+}
+
+unsigned getzonestatid(nsd_options_t* opt, zone_options_t* zopt)
+{
+#ifdef USE_ZONE_STATS
+	const char* statname;
+	struct zonestatname* n;
+	rbnode_t* res;
+	/* try to find the instantiated zonestat name */
+	if(!zopt->pattern->zonestats || zopt->pattern->zonestats[0]==0)
+		return 0; /* no zone stats */
+	statname = config_cook_string(zopt, zopt->pattern->zonestats);
+	res = rbtree_search(opt->zonestatnames, statname);
+	if(res)
+		return ((struct zonestatname*)res)->id;
+	/* create it */
+	n = (struct zonestatname*)xalloc(sizeof(*n));
+	memset(n, 0, sizeof(*n));
+	n->node.key = strdup(statname);
+	if(!n->node.key) {
+		log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
+		exit(1);
+	}
+	n->id = (unsigned)(opt->zonestatnames->count);
+	rbtree_insert(opt->zonestatnames, (rbnode_t*)n);
+	return n->id;
+#else /* USE_ZONE_STATS */
+	(void)opt; (void)zopt;
+	return 0;
+#endif /* USE_ZONE_STATS */
 }

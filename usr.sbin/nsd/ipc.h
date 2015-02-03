@@ -89,6 +89,8 @@ void parent_check_all_children_exited(struct nsd* nsd);
 
 /** add stats to total */
 void stats_add(struct nsdst* total, struct nsdst* s);
+/** subtract stats from total */
+void stats_subtract(struct nsdst* total, struct nsdst* s);
 
 /** set event to listen to given mode, no timeout, must be added already */
 void ipc_xfrd_set_listening(struct xfrd_state* xfrd, short mode);

@@ -272,6 +272,7 @@ namedb_zone_create(namedb_type* db, const dname_type* dname,
 	zone->filename = NULL;
 	zone->logstr = NULL;
 	zone->mtime = 0;
+	zone->zonestatid = 0;
 	zone->is_secure = 0;
 	zone->is_changed = 0;
 	zone->is_ok = 1;

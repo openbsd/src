@@ -229,6 +229,7 @@ xfrd-reload-timeout{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_XFRD_RELOAD_
 verbosity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERBOSITY;}
 zone{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONE;}
 zonefile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONEFILE;}
+zonestats{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONESTATS;}
 allow-notify{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALLOW_NOTIFY;}
 request-xfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REQUEST_XFR;}
 notify{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NOTIFY;}
