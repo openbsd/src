@@ -1,4 +1,4 @@
-.Dd December 19, 2014
+.Dd February 3, 2015
 .Dt BL-BREAKINGIT 1
 .Os OpenBSD
 .Sh NAME
@@ -20,6 +20,22 @@ More stray text.
 .It
 Bullet point.
 .El
+.Bl -tag -width Ds
+.It tag
+Tagged text.
+.Ao
+More tagged text.
+.It tag2
+Yet more tagged text.
+.El
+.Bl -bullet
+.It
+Item text.
+.Ao
+More item text.
+.It
+Bullet point.
+.El
 .Ss Breaking full explicit macros
 .Bl -tag -width Ds
 Stray text.
@@ -32,6 +48,22 @@ Tagged text.
 Stray text.
 .Bd -ragged -offset indent
 More stray text.
+.It
+Bullet point.
+.El
+.Bl -tag -width Ds
+.It tag
+Tagged text.
+.Bd -ragged -offset indent
+Display text.
+.It tag2
+More tagged text.
+.El
+.Bl -bullet
+.It
+Item text.
+.Bd -ragged -offset indent
+Display text.
 .It
 Bullet point.
 .El

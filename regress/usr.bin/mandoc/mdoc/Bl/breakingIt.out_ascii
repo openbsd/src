@@ -12,6 +12,14 @@ DDEESSCCRRIIPPTTIIOONN
 
      ++oo   Bullet point.
 
+     tag     Tagged text.  <More tagged text.>
+
+     tag2    Yet more tagged text.
+
+     ++oo   Item text.  <More item text.>
+
+     ++oo   Bullet point.
+
    BBrreeaakkiinngg ffuullll eexxpplliicciitt mmaaccrrooss
      Stray text.
 
@@ -24,4 +32,16 @@ DDEESSCCRRIIPPTTIIOONN
 
      ++oo   Bullet point.
 
-OpenBSD                        December 19, 2014                       OpenBSD
+     tag     Tagged text.
+
+                   Display text.
+
+     tag2    More tagged text.
+
+     ++oo   Item text.
+
+               Display text.
+
+     ++oo   Bullet point.
+
+OpenBSD                        February 3, 2015                        OpenBSD

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.127 2015/02/03 01:13:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.128 2015/02/03 18:19:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -965,6 +965,7 @@ blk_full(MACRO_PROT_ARGS)
 				    "It breaks %s",
 				    mdoc_macronames[blk->tok]);
 				rew_pending(mdoc, blk);
+				blk = NULL;
 			}
 
 			/* Close out prior implicit scopes. */
