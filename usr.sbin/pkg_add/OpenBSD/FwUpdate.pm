@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.14 2015/02/03 10:26:29 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.15 2015/02/03 21:37:54 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -291,12 +291,14 @@ sub process_parameters
 				$state->errsay("#1: unknown driver", $driver);
 				exit(1);
 			}
+			if ($state->opt('d') && 
+			    !$state->is_installed($driver)) {
+				$state->errsay("Can't delete uninstalled driver: #1", $driver);
+				next;
+			}
+
 			my $set = $self->to_add_or_update($state, $driver);
 			if ($state->opt('d')) {
-				if (!$state->is_installed($driver)) {
-					$state->errsay("Can't delete uninstalled driver: #1", $driver);
-					next;
-				}
 				$self->mark_set_for_deletion($set);
 			} 
 		}
