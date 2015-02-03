@@ -183,12 +183,7 @@ to the daemon periodically.
 .B \-t\fI chroot
 Specifies a directory to 
 .I chroot 
-to upon startup. This option requires you to ensure that appropriate 
-syslogd(8) socket (e.g.
-.I chrootdir 
-/dev/log) is available, otherwise
-.B NSD
-won't produce any log output.
+to upon startup.
 .TP
 .B \-u\fI username
 Drop user and group privileges to those of
