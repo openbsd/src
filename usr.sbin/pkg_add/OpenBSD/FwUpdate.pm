@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.12 2015/02/03 09:50:03 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.13 2015/02/03 09:58:15 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -271,6 +271,7 @@ sub process_parameters
 					    $driver);
 				}
 				for my $driver ($state->installed_drivers) {
+					# XXX skip already done up there ^
 					next if $state->is_needed($driver);
 					$self->to_add_or_update($state, 
 					    $driver);
