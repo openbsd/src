@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.1 2015/01/29 23:34:45 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2015/02/03 19:37:25 schwarze Exp $
 
 TBL = /usr/local/bin/tbl
 
-SKIP_TMAN ?= ALL SILENT
+SKIP_TMAN ?= ALL
 
 .for t in ${REGRESS_TARGETS}
 ${t}.out_ascii: ${t}.in

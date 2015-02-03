@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.19 2014/12/30 08:52:55 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.20 2015/02/03 19:37:25 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -68,44 +68,35 @@ htmlval: ${_HTMLVALS}
 		.out_ascii .out_lint .out_utf8
 
 .in.mandoc_ascii:
-	@echo "${MANDOC} ${MOPTS} -Tascii ${.IMPSRC:T} > ${.TARGET}"
 	@${MANDOC} ${MOPTS} -Tascii ${.IMPSRC} > ${.TARGET}
 
 .mandoc_ascii.diff_ascii:
-	@echo "${DIFF} ${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}"
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
 
 .in.mandoc_utf8:
-	@echo "${MANDOC} ${MOPTS} -Tutf8 ${.IMPSRC:T} > ${.TARGET}"
 	@${MANDOC} ${MOPTS} -Tutf8 ${.IMPSRC} > ${.TARGET}
 
 .mandoc_utf8.diff_utf8:
-	@echo "${DIFF} ${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}"
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}
 
 .in.mandoc_html:
-	@echo "${MANDOC} ${MOPTS} -Thtml ${.IMPSRC:T} > ${.TARGET}"
 	@${MANDOC} ${MOPTS} -Thtml ${.IMPSRC} | \
 		sed -n '/^BEGINTEST/,/^ENDTEST/p' > ${.TARGET}
 
 .mandoc_html.diff_html:
-	@echo "${DIFF} ${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}"
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}
 
 .in.in_man:
-	@echo "${MANDOC} ${MOPTS} -Tman ${.IMPSRC:T} > ${.TARGET}"
 	@${MANDOC} ${MOPTS} -Tman ${.IMPSRC} > ${.TARGET}
 
 .in_man.mandoc_man:
-	${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
+	@${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
 
 .in.mandoc_lint:
-	@echo "${MANDOC} ${MOPTS} -Tlint ${.IMPSRC:T} > ${.TARGET} 2>&1"
 	@-${MANDOC} ${MOPTS} -Tlint ${.IMPSRC} 2>&1 | \
 		sed -E 's/^mandoc: \/[^:]+\//mandoc: /' > ${.TARGET}
 
 .mandoc_lint.diff_lint:
-	@echo "${DIFF} ${.IMPSRC:S/mandoc_lint$/out_lint/} ${.IMPSRC}"
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_lint$/out_lint/} ${.IMPSRC}
 
 # --- single-file targets ---
@@ -114,21 +105,15 @@ htmlval: ${_HTMLVALS}
 .  if empty(SKIP_ASCII:MALL) && empty(SKIP_ASCII:M${t})
 .    if empty(SKIP_TMAN:MALL) && empty(SKIP_TMAN:M${t})
 ${t}.diff_man: ${t}.mandoc_man
-	@echo "${DIFF} ${t}.out_ascii ${.ALLSRC}"
 	@${DIFF} ${.CURDIR}/${t}.out_ascii ${.ALLSRC}
 .    else
 ${t}.diff_man:
-.      if empty(SKIP_TMAN:MSILENT)
-	@echo "TODO: -Tman disabled for: ${.TARGET}"
-.      endif
 .    endif
 ${t}: ${t}.diff_ascii ${t}.diff_man
 .  else
 ${t}:
-	@echo "TODO: -Tascii disabled for: ${.TARGET}"
 .  endif
 ${t}.validate_html: ${t}.in
-	@echo "${MANDOC} ${MOPTS} -Thtml ${t}.in | validate"
 	@-${MANDOC} ${MOPTS} -Thtml ${.ALLSRC} | validate
 .endfor
 
@@ -150,27 +135,27 @@ clean: ${_CLEAN_TARGETS}
 
 ascii-clean:
 .if !empty(_ASCIIFILES)
-	rm -f ${_ASCIIFILES}
+	@rm -f ${_ASCIIFILES}
 .endif
 
 utf8-clean:
 .if !empty(_UTF8FILES)
-	rm -f ${_UTF8FILES}
+	@rm -f ${_UTF8FILES}
 .endif
 
 html-clean:
 .if !empty(_HTMLFILES)
-	rm -f ${_HTMLFILES}
+	@rm -f ${_HTMLFILES}
 .endif
 
 tman-clean:
 .if !empty(_MANFILES)
-	rm -f ${_MANFILES}
+	@rm -f ${_MANFILES}
 .endif
 
 lint-clean:
 .if !empty(_LINTFILES)
-	rm -f ${_LINTFILES}
+	@rm -f ${_LINTFILES}
 .endif
 
 .PHONY: ${_ASCIIDIFFS} ${_UTF8DIFFS} ${_HTMLDIFFS} ${_MANDIFFS} \
