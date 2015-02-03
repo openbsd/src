@@ -1,0 +1,11 @@
+.Dd February 3, 2015
+.Dt NM-PAR 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nm-par
+.Nd paragraph macro in a synopsis name block
+.Sh SYNOPSIS
+.Nm
+.Fl a
+.Pp
+.Fl b

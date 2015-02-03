@@ -1,0 +1,23 @@
+.Dd February 3, 2015
+.Dt NM-PAR 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nm-par
+.Nd paragraph macro in a name block
+.Sh DESCRIPTION
+.nr nS 1
+.Nm
+.Fl a
+.Pp
+.Fl b
+.Nm
+.Fl a
+.nr nS 0
+.Pp
+.Fl b
+.nr nS 1
+.Nm
+.Oo Fl a
+.nr nS 0
+.Pp
+.Fl b Oc

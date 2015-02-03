@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.125 2015/02/02 19:22:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.126 2015/02/03 00:48:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1457,10 +1457,17 @@ in_line_argn(MACRO_PROT_ARGS)
 static void
 in_line_eoln(MACRO_PROT_ARGS)
 {
-	struct mdoc_arg	*arg;
+	struct mdoc_node	*n;
+	struct mdoc_arg		*arg;
 
-	if (tok == MDOC_Pp)
-		rew_sub(MDOC_BLOCK, mdoc, MDOC_Nm, line, ppos);
+	if ((tok == MDOC_Pp || tok == MDOC_Lp) &&
+	    ! (mdoc->flags & MDOC_SYNOPSIS)) {
+		n = mdoc->last;
+		if (mdoc->next == MDOC_NEXT_SIBLING)
+			n = n->parent;
+		if (n->tok == MDOC_Nm)
+			rew_last(mdoc, mdoc->last->parent);
+	}
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	mdoc_elem_alloc(mdoc, line, ppos, tok, arg);

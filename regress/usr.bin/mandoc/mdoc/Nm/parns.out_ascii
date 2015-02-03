@@ -1,0 +1,17 @@
+NM-PAR(1)                   General Commands Manual                  NM-PAR(1)
+
+NNAAMMEE
+     NNmm--ppaarr - paragraph macro in a name block
+
+DDEESSCCRRIIPPTTIIOONN
+     NNmm--ppaarr --aa
+
+            --bb
+     NNmm--ppaarr --aa
+
+     --bb
+     NNmm--ppaarr [--aa
+
+            --bb]
+
+OpenBSD                        February 3, 2015                        OpenBSD

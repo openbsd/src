@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.181 2014/12/18 20:15:31 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.182 2015/02/03 00:48:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1038,15 +1038,23 @@ post_vt(POST_ARGS)
 static void
 post_nm(POST_ARGS)
 {
+	struct mdoc_node	*n;
+
+	n = mdoc->last;
+
+	if (n->last != NULL &&
+	    (n->last->tok == MDOC_Pp ||
+	     n->last->tok == MDOC_Lp))
+		mdoc_node_relink(mdoc, n->last);
 
 	if (NULL != mdoc->meta.name)
 		return;
 
-	mdoc_deroff(&mdoc->meta.name, mdoc->last);
+	mdoc_deroff(&mdoc->meta.name, n);
 
 	if (NULL == mdoc->meta.name)
 		mandoc_msg(MANDOCERR_NM_NONAME, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, "Nm");
+		    n->line, n->pos, "Nm");
 }
 
 static void
