@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.11 2015/01/27 09:35:35 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.12 2015/02/03 09:50:03 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -99,6 +99,12 @@ sub machine_drivers
 	return keys %{$self->{machine_drivers}};
 }
 
+sub all_drivers
+{
+	my $self = shift;
+	return keys %{$self->{all_drivers}};
+}
+
 sub is_needed
 {
 	my ($self, $driver) = @_;
@@ -154,6 +160,7 @@ sub find_machine_drivers
 {
 	my ($self, $state) = @_;
 	$state->{machine_drivers} = {};
+	$state->{all_drivers} = \%possible_drivers;
 	my %search = %possible_drivers;
 	if (open(my $f, '<', '/var/run/dmesg.boot')) {
 		$self->parse_dmesg($f, \%search, $state->{machine_drivers});
@@ -253,12 +260,21 @@ sub process_parameters
 				}
 			}
 		} else {
-			for my $driver ($state->machine_drivers) {
-				$self->to_add_or_update($state, $driver);
-			}
-			for my $driver ($state->installed_drivers) {
-				next if $state->is_needed($driver);
-				$self->to_add_or_update($state, $driver);
+			if ($state->opt('a')) {
+				for my $driver ($state->all_drivers) {
+					$self->to_add_or_update($state, 
+					    $driver);
+				}
+			} else {
+				for my $driver ($state->machine_drivers) {
+					$self->to_add_or_update($state, 
+					    $driver);
+				}
+				for my $driver ($state->installed_drivers) {
+					next if $state->is_needed($driver);
+					$self->to_add_or_update($state, 
+					    $driver);
+				}
 			}
 		}
 		if (!(defined $state->{setlist}) && $state->{fw_verbose}) {
