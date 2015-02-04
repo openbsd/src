@@ -1,7 +1,7 @@
-mandoc: badargs.in:9:20: WARNING: empty argument, using 0n: Bd -offset
+mandoc: badargs.in:9:13: WARNING: empty argument, using 0n: Bd -offset
 mandoc: badargs.in:12:2: ERROR: skipping all arguments: Ed tail argument
-mandoc: badargs.in:14:43: WARNING: duplicate argument: Bd -compact
-mandoc: badargs.in:14:51: WARNING: duplicate argument: Bd -offset 6n
+mandoc: badargs.in:14:34: WARNING: duplicate argument: Bd -compact
+mandoc: badargs.in:14:43: WARNING: duplicate argument: Bd -offset 6n
 mandoc: badargs.in:19:2: WARNING: missing display type, using -ragged: Bd
 mandoc: badargs.in:24:2: WARNING: skipping duplicate display type: Bd -unfilled
 mandoc: badargs.in:28:2: WARNING: skipping duplicate display type: Bd -ragged

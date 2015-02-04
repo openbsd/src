@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.55 2014/11/29 03:37:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.56 2015/02/04 18:58:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -337,7 +337,7 @@ mdoc_argv(struct mdoc *mdoc, int line, enum mdoct tok,
 		/* Parse the arguments of the flag. */
 
 		tmpv.line  = line;
-		tmpv.pos   = ipos;
+		tmpv.pos   = *pos;
 		tmpv.sz    = 0;
 		tmpv.value = NULL;
 
