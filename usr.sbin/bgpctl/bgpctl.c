@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.175 2014/10/02 16:37:50 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.176 2015/02/04 23:30:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1653,8 +1653,8 @@ network_bulk(struct parse_result *res)
 	FILE *f;
 
 	if ((f = fdopen(STDIN_FILENO, "r")) != NULL) {
-		lbuf = NULL;
 		while ((buf = fgetln(f, &slen))) {
+			lbuf = NULL;
 			if (buf[slen - 1] == '\n')
 				buf[slen - 1] = '\0';
 			else {
