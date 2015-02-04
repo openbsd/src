@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.61 2014/12/29 02:39:33 brad Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.62 2015/02/04 05:12:13 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -469,12 +469,6 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 #if NBPFILTER > 0
-	/*
-	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 * don't pass it up to the ether_input() layer unless it's
-	 * a broadcast packet, multicast packet, matches our ethernet
-	 * address or the interface is in promiscuous mode.
-	 */
 	if (ifp->if_bpf) {
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 	}
