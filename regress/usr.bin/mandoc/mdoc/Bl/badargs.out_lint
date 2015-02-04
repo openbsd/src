@@ -6,7 +6,13 @@ mandoc: badargs.in:31:11: WARNING: empty argument, using 0n: Bl -width
 mandoc: badargs.in:35:10: WARNING: empty argument, using 0n: Bl -width
 mandoc: badargs.in:41:2: WARNING: skipping duplicate list type: Bl -enum
 mandoc: badargs.in:45:2: WARNING: skipping duplicate list type: Bl -bullet
-mandoc: badargs.in:50:42: WARNING: duplicate argument: Bl -compact
-mandoc: badargs.in:50:51: WARNING: duplicate argument: Bl -offset 2n
-mandoc: badargs.in:50:62: WARNING: duplicate argument: Bl -width 6n
-mandoc: badargs.in:53:2: ERROR: skipping all arguments: El tail argument
+mandoc: badargs.in:50:13: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:54:11: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:58:12: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:62:11: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:66:12: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:70:20: ERROR: skipping excess arguments: Bl ... -bogus
+mandoc: badargs.in:75:42: WARNING: duplicate argument: Bl -compact
+mandoc: badargs.in:75:51: WARNING: duplicate argument: Bl -offset 2n
+mandoc: badargs.in:75:62: WARNING: duplicate argument: Bl -width 6n
+mandoc: badargs.in:78:2: ERROR: skipping all arguments: El tail argument

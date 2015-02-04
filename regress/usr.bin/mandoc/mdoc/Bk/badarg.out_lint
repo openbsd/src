@@ -1,6 +1,6 @@
-mandoc: badarg.in:13:2: WARNING: argument count wrong: want 0 children (have 1)
-mandoc: badarg.in:22:2: WARNING: argument count wrong: want 0 children (have 1)
+mandoc: badarg.in:13:5: ERROR: skipping excess arguments: Bk ... -badarg
+mandoc: badarg.in:22:5: ERROR: skipping excess arguments: Bk ... -lines
 mandoc: badarg.in:24:2: ERROR: skipping all arguments: Ek tail argument
-mandoc: badarg.in:31:2: WARNING: argument count wrong: want 0 children (have 1)
-mandoc: badarg.in:49:2: WARNING: argument count wrong: want 0 children (have 1)
-mandoc: badarg.in:54:2: WARNING: argument count wrong: want more than 0 children (have 0)
+mandoc: badarg.in:31:5: ERROR: skipping excess arguments: Bk ... -line
+mandoc: badarg.in:49:12: ERROR: skipping excess arguments: Bk ... -murks
+mandoc: badarg.in:54:2: WARNING: skipping empty macro: Bk

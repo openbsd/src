@@ -46,7 +46,7 @@
 .Ar x x x x x x x x
 .Ar x x x x x x x x
 .Ar x x x x x x
-.Bk -words -murks
+.Bk -words -murks bogus
 .Op o Ar a
 .Ek
 .Sh DESCRIPTION

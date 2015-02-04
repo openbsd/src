@@ -16,7 +16,7 @@ last
 wins
 .Ed
 no type:
-.Bd -offset 0n
+.Bd -offset 0n -bogus args
 displayed
 text
 .Ed

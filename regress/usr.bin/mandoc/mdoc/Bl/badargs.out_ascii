@@ -23,7 +23,21 @@ DDEESSCCRRIIPPTTIIOONN
      double type:
      ++oo   bullet enum
      1.   enum bullet
+     unknown arguments:
+
+     ++oo   bullet text
+
+     1.   enum text
+
+     inset text
+
+     item text
+
+     ohang
+     text
+
+     tag     text
      double arguments:
        last    wins
 
-OpenBSD                          July 5, 2014                          OpenBSD
+OpenBSD                        February 4, 2015                        OpenBSD

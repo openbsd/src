@@ -1,4 +1,4 @@
-.Dd July 5, 2014
+.Dd February 4, 2015
 .Dt BL-BADARGS 1
 .Os OpenBSD
 .Sh NAME
@@ -45,6 +45,31 @@ bullet enum
 .Bl -enum -compact -bullet
 .It
 enum bullet
+.El
+unknown arguments:
+.Bl -bullet -bogus args
+.It
+bullet text
+.El
+.Bl -enum -bogus args
+.It
+enum text
+.El
+.Bl -inset -bogus args
+.It inset
+text
+.El
+.Bl -item -bogus args
+.It
+item text
+.El
+.Bl -ohang -bogus args
+.It ohang
+text
+.El
+.Bl -tag -width Ds -bogus args
+.It tag
+text
 .El
 double arguments:
 .Bl -tag -compact -offset 20n -width 20n -compact -offset 2n -width 6n

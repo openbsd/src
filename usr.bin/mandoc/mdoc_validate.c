@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.185 2015/02/04 19:11:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.186 2015/02/04 22:29:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,7 +68,6 @@ static	void	 rewrite_macro2len(char **);
 static	void	 bwarn_ge1(POST_ARGS);
 static	void	 ewarn_eq1(POST_ARGS);
 static	void	 ewarn_ge1(POST_ARGS);
-static	void	 hwarn_eq0(POST_ARGS);
 
 static	void	 post_an(POST_ARGS);
 static	void	 post_at(POST_ARGS);
@@ -416,12 +415,6 @@ static void
 ewarn_ge1(POST_ARGS)
 {
 	check_count(mdoc, MDOC_ELEM, CHECK_GT, 0);
-}
-
-static void
-hwarn_eq0(POST_ARGS)
-{
-	check_count(mdoc, MDOC_HEAD, CHECK_EQ, 0);
 }
 
 static void
@@ -1079,8 +1072,6 @@ static void
 post_literal(POST_ARGS)
 {
 
-	if (mdoc->last->tok == MDOC_Bd)
-		hwarn_eq0(mdoc);
 	bwarn_ge1(mdoc);
 
 	/*
@@ -1406,13 +1397,21 @@ post_bl_block_tag(POST_ARGS)
 static void
 post_bl_head(POST_ARGS)
 {
-	struct mdoc_node *np, *nn, *nnp;
+	struct mdoc_node *nbl, *nh, *nch, *nnext;
 	struct mdoc_argv *argv;
 	int		  i, j;
 
-	if (LIST_column != mdoc->last->norm->Bl.type) {
-		/* FIXME: this should be ERROR class... */
-		hwarn_eq0(mdoc);
+	nh = mdoc->last;
+
+	if (nh->norm->Bl.type != LIST_column) {
+		if ((nch = nh->child) == NULL)
+			return;
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
+		    nch->line, nch->pos, "Bl ... %s", nch->string);
+		while (nch != NULL) {
+			mdoc_node_delete(mdoc, nch);
+			nch = nh->child;
+		}
 		return;
 	}
 
@@ -1422,17 +1421,15 @@ post_bl_head(POST_ARGS)
 	 * lists where they're argument values following -column.
 	 */
 
-	if (mdoc->last->child == NULL)
+	if (nh->child == NULL)
 		return;
 
-	np = mdoc->last->parent;
-	assert(np->args);
-
-	for (j = 0; j < (int)np->args->argc; j++)
-		if (MDOC_Column == np->args->argv[j].arg)
+	nbl = nh->parent;
+	for (j = 0; j < (int)nbl->args->argc; j++)
+		if (nbl->args->argv[j].arg == MDOC_Column)
 			break;
 
-	assert(j < (int)np->args->argc);
+	assert(j < (int)nbl->args->argc);
 
 	/*
 	 * Accommodate for new-style groff column syntax.  Shuffle the
@@ -1440,25 +1437,23 @@ post_bl_head(POST_ARGS)
 	 * column field.  Then, delete the head children.
 	 */
 
-	argv = np->args->argv + j;
+	argv = nbl->args->argv + j;
 	i = argv->sz;
-	argv->sz += mdoc->last->nchild;
+	argv->sz += nh->nchild;
 	argv->value = mandoc_reallocarray(argv->value,
 	    argv->sz, sizeof(char *));
 
-	mdoc->last->norm->Bl.ncols = argv->sz;
-	mdoc->last->norm->Bl.cols = (void *)argv->value;
+	nh->norm->Bl.ncols = argv->sz;
+	nh->norm->Bl.cols = (void *)argv->value;
 
-	for (nn = mdoc->last->child; nn; i++) {
-		argv->value[i] = nn->string;
-		nn->string = NULL;
-		nnp = nn;
-		nn = nn->next;
-		mdoc_node_delete(NULL, nnp);
+	for (nch = nh->child; nch != NULL; nch = nnext) {
+		argv->value[i++] = nch->string;
+		nch->string = NULL;
+		nnext = nch->next;
+		mdoc_node_delete(NULL, nch);
 	}
-
-	mdoc->last->nchild = 0;
-	mdoc->last->child = NULL;
+	nh->nchild = 0;
+	nh->child = NULL;
 }
 
 static void
@@ -1544,9 +1539,15 @@ post_bl(POST_ARGS)
 static void
 post_bk(POST_ARGS)
 {
+	struct mdoc_node	*n;
 
-	hwarn_eq0(mdoc);
-	bwarn_ge1(mdoc);
+	n = mdoc->last;
+
+	if (n->type == MDOC_BLOCK && n->body->child == NULL) {
+		mandoc_msg(MANDOCERR_MACRO_EMPTY,
+		    mdoc->parse, n->line, n->pos, "Bk");
+		mdoc_node_delete(mdoc, n);
+	}
 }
 
 static void

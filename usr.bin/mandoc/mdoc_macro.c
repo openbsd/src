@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.129 2015/02/04 18:03:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.130 2015/02/04 22:29:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1040,6 +1040,12 @@ blk_full(MACRO_PROT_ARGS)
 			body = mdoc_body_alloc(mdoc, line, ppos, tok);
 			break;
 		}
+		if (tok == MDOC_Bd || tok == MDOC_Bk) {
+			mandoc_vmsg(MANDOCERR_ARG_EXCESS,
+			    mdoc->parse, line, la, "%s ... %s",
+			    mdoc_macronames[tok], buf + la);
+			break;
+		}
 		if (tok == MDOC_Rs) {
 			mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
 			    line, la, "Rs %s", buf + la);
@@ -1103,7 +1109,7 @@ blk_full(MACRO_PROT_ARGS)
 		return;
 	if (head == NULL)
 		head = mdoc_head_alloc(mdoc, line, ppos, tok);
-	if (nl && tok != MDOC_Rs)
+	if (nl && tok != MDOC_Bd && tok != MDOC_Bl && tok != MDOC_Rs)
 		append_delims(mdoc, line, pos, buf);
 	if (body != NULL)
 		goto out;
