@@ -1,0 +1,13 @@
+ND-PAR(1)                   General Commands Manual                  ND-PAR(1)
+
+NNAAMMEE
+     NNdd--ppaarr - paragraph macro after one-line description
+
+     Usually, there shouldn't be additional text in the NAME section.
+
+DDEESSCCRRIIPPTTIIOONN
+     The text belongs here.  - stray description macro
+
+     Back to normal state.
+
+OpenBSD                        February 3, 2015                        OpenBSD
