@@ -1,0 +1,3 @@
+mandoc: arg.in:9:2: ERROR: skipping all arguments: Pp drop
+mandoc: arg.in:11:2: ERROR: skipping all arguments: br drop
+mandoc: arg.in:13:8: ERROR: skipping excess arguments: sp ... drop

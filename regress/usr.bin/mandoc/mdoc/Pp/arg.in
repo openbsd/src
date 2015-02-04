@@ -1,4 +1,4 @@
-.Dd September 20, 2010
+.Dd February 4, 2015
 .Dt PP-ARG 1
 .Os OpenBSD
 .Sh NAME
@@ -8,3 +8,7 @@
 line 1
 .Pp drop this
 line 2
+.br drop this
+line 3
+.sp 1v drop this
+line 4

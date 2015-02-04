@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.184 2015/02/04 18:03:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.185 2015/02/04 19:11:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1165,14 +1165,15 @@ post_at(POST_ARGS)
 static void
 post_an(POST_ARGS)
 {
-	struct mdoc_node *np;
+	struct mdoc_node *np, *nch;
 
 	np = mdoc->last;
 	if (AUTH__NONE == np->norm->An.auth) {
 		if (0 == np->child)
 			check_count(mdoc, MDOC_ELEM, CHECK_GT, 0);
-	} else if (np->child)
-		check_count(mdoc, MDOC_ELEM, CHECK_EQ, 0);
+	} else if ((nch = np->child) != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
+		    nch->line, nch->pos, "An ... %s", nch->string);
 }
 
 static void
@@ -2125,14 +2126,17 @@ post_par(POST_ARGS)
 {
 	struct mdoc_node *np;
 
-	if (mdoc->last->tok == MDOC_sp)
-		check_count(mdoc, MDOC_ELEM, CHECK_LT, 2);
-	else
-		check_count(mdoc, MDOC_ELEM, CHECK_EQ, 0);
+	np = mdoc->last;
 
-	if (MDOC_ELEM != mdoc->last->type &&
-	    MDOC_BLOCK != mdoc->last->type)
-		return;
+	if (np->tok == MDOC_sp) {
+		if (np->nchild > 1)
+			mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
+			    np->child->next->line, np->child->next->pos,
+			    "sp ... %s", np->child->next->string);
+	} else if (np->child != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_SKIP,
+		    mdoc->parse, np->line, np->pos, "%s %s",
+		    mdoc_macronames[np->tok], np->child->string);
 
 	if (NULL == (np = mdoc->last->prev)) {
 		np = mdoc->last->parent;

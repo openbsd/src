@@ -11,7 +11,7 @@ inline is the default:
 and
 .An Joerg .
 .Pp
-.An -split -nosplit
+.An -split -nosplit bogus
 split mode:
 .An Kristaps
 .An Ingo
@@ -22,7 +22,7 @@ split mode is the default:
 .An Kristaps
 .An Ingo
 .An Joerg
-.An -nosplit -split
+.An -nosplit -split bogus
 .Pp
 inline:
 .An Kristaps ,

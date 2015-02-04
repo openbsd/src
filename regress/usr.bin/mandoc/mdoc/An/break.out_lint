@@ -1,2 +1,4 @@
-mandoc: break.in:14:20: WARNING: skipping duplicate argument: An -nosplit
-mandoc: break.in:25:20: WARNING: skipping duplicate argument: An -split
+mandoc: break.in:14:12: WARNING: skipping duplicate argument: An -nosplit
+mandoc: break.in:14:21: ERROR: skipping excess arguments: An ... bogus
+mandoc: break.in:25:14: WARNING: skipping duplicate argument: An -split
+mandoc: break.in:25:21: ERROR: skipping excess arguments: An ... bogus
