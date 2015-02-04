@@ -1,0 +1,18 @@
+.Dd February 4, 2015
+.Dt RS-ARGS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Rs-args
+.Nd arguments on a reference block header line
+.Sh SEE ALSO
+initial text
+.Rs bogus
+.%A author name
+.%B book title
+.Re
+middle text
+.Rs Sy bogus
+.%A author name
+.%B book title
+.Re
+final text

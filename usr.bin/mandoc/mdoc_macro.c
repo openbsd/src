@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.128 2015/02/03 18:19:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.129 2015/02/04 18:03:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1025,8 +1025,6 @@ blk_full(MACRO_PROT_ARGS)
 		la = *pos;
 		lac = ac;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
-		if (ac == ARGS_PUNCT)
-			break;
 		if (ac == ARGS_EOLN) {
 			if (lac != ARGS_PPHRASE && lac != ARGS_PHRASE)
 				break;
@@ -1042,6 +1040,13 @@ blk_full(MACRO_PROT_ARGS)
 			body = mdoc_body_alloc(mdoc, line, ppos, tok);
 			break;
 		}
+		if (tok == MDOC_Rs) {
+			mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
+			    line, la, "Rs %s", buf + la);
+			break;
+		}
+		if (ac == ARGS_PUNCT)
+			break;
 
 		/*
 		 * Emit leading punctuation (i.e., punctuation before
@@ -1098,7 +1103,7 @@ blk_full(MACRO_PROT_ARGS)
 		return;
 	if (head == NULL)
 		head = mdoc_head_alloc(mdoc, line, ppos, tok);
-	if (nl)
+	if (nl && tok != MDOC_Rs)
 		append_delims(mdoc, line, pos, buf);
 	if (body != NULL)
 		goto out;

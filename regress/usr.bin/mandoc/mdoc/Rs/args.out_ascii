@@ -1,0 +1,13 @@
+RS-ARGS(1)                  General Commands Manual                 RS-ARGS(1)
+
+NNAAMMEE
+     RRss--aarrggss - arguments on a reference block header line
+
+SSEEEE AALLSSOO
+     initial text
+
+     author name, _b_o_o_k _t_i_t_l_e.  middle text
+
+     author name, _b_o_o_k _t_i_t_l_e.  final text
+
+OpenBSD                        February 4, 2015                        OpenBSD

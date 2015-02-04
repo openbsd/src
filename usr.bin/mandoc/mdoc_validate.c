@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.183 2015/02/04 16:38:31 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.184 2015/02/04 18:03:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1649,19 +1649,17 @@ post_st(POST_ARGS)
 static void
 post_rs(POST_ARGS)
 {
-	struct mdoc_node *nn, *next, *prev;
+	struct mdoc_node *np, *nch, *next, *prev;
 	int		  i, j;
 
-	switch (mdoc->last->type) {
-	case MDOC_HEAD:
-		check_count(mdoc, MDOC_HEAD, CHECK_EQ, 0);
+	np = mdoc->last;
+
+	if (np->type != MDOC_BODY)
 		return;
-	case MDOC_BODY:
-		if (mdoc->last->child)
-			break;
-		check_count(mdoc, MDOC_BODY, CHECK_GT, 0);
-		return;
-	default:
+
+	if (np->child == NULL) {
+		mandoc_msg(MANDOCERR_RS_EMPTY, mdoc->parse,
+		    np->line, np->pos, "Rs");
 		return;
 	}
 
@@ -1672,38 +1670,38 @@ post_rs(POST_ARGS)
 	 */
 
 	next = NULL;
-	for (nn = mdoc->last->child->next; nn; nn = next) {
-		/* Determine order of `nn'. */
+	for (nch = np->child->next; nch != NULL; nch = next) {
+		/* Determine order number of this child. */
 		for (i = 0; i < RSORD_MAX; i++)
-			if (rsord[i] == nn->tok)
+			if (rsord[i] == nch->tok)
 				break;
 
 		if (i == RSORD_MAX) {
 			mandoc_msg(MANDOCERR_RS_BAD,
-			    mdoc->parse, nn->line, nn->pos,
-			    mdoc_macronames[nn->tok]);
+			    mdoc->parse, nch->line, nch->pos,
+			    mdoc_macronames[nch->tok]);
 			i = -1;
-		} else if (MDOC__J == nn->tok || MDOC__B == nn->tok)
-			mdoc->last->norm->Rs.quote_T++;
+		} else if (nch->tok == MDOC__J || nch->tok == MDOC__B)
+			np->norm->Rs.quote_T++;
 
 		/*
-		 * Remove `nn' from the chain.  This somewhat
+		 * Remove this child from the chain.  This somewhat
 		 * repeats mdoc_node_unlink(), but since we're
 		 * just re-ordering, there's no need for the
 		 * full unlink process.
 		 */
 
-		if (NULL != (next = nn->next))
-			next->prev = nn->prev;
+		if ((next = nch->next) != NULL)
+			next->prev = nch->prev;
 
-		if (NULL != (prev = nn->prev))
-			prev->next = nn->next;
+		if ((prev = nch->prev) != NULL)
+			prev->next = nch->next;
 
-		nn->prev = nn->next = NULL;
+		nch->prev = nch->next = NULL;
 
 		/*
 		 * Scan back until we reach a node that's
-		 * ordered before `nn'.
+		 * to be ordered before this child.
 		 */
 
 		for ( ; prev ; prev = prev->prev) {
@@ -1719,21 +1717,21 @@ post_rs(POST_ARGS)
 		}
 
 		/*
-		 * Set `nn' back into its correct place in front
-		 * of the `prev' node.
+		 * Set this child back into its correct place
+		 * in front of the `prev' node.
 		 */
 
-		nn->prev = prev;
+		nch->prev = prev;
 
-		if (prev) {
-			if (prev->next)
-				prev->next->prev = nn;
-			nn->next = prev->next;
-			prev->next = nn;
+		if (prev == NULL) {
+			np->child->prev = nch;
+			nch->next = np->child;
+			np->child = nch;
 		} else {
-			mdoc->last->child->prev = nn;
-			nn->next = mdoc->last->child;
-			mdoc->last->child = nn;
+			if (prev->next)
+				prev->next->prev = nch;
+			nch->next = prev->next;
+			prev->next = nch;
 		}
 	}
 }

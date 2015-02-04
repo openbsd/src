@@ -1,0 +1,16 @@
+.Dd February 4, 2015
+.Dt RS-EMPTY 1
+.Os OpenBSD
+.Sh NAME
+.Nm Rs-empty
+.Nd empty reference blocks
+.Sh DESCRIPTION
+initial text
+.Rs
+.Re
+final text
+.Sh SEE ALSO
+initial text
+.Rs
+.Re
+final text
