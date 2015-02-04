@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2015/01/18 17:16:06 mpi Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 2015/02/04 00:43:45 mpi Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -67,6 +67,8 @@ struct hid_data {
 	uint8_t ousage;		/* current "usages_min/max" offset */
 	uint8_t	susage;		/* usage set flags */
 	int32_t	reportid;	/* requested report ID */
+	struct hid_item savedcoll; /* save coll until we know the ID */
+	uint8_t hassavedcoll;
 };
 
 static void
@@ -151,6 +153,7 @@ hid_start_parse(report_desc_t d, int kindset, int id)
 	s->end = d->data + d->size;
 	s->kindset = kindset;
 	s->reportid = id;
+	s->hassavedcoll = 0;
 	return (s);
 }
 
@@ -191,10 +194,20 @@ hid_get_byte(struct hid_data *s, const uint16_t wSize)
 	return (retval);
 }
 
+#define REPORT_SAVED_COLL \
+	do { \
+		if (s->hassavedcoll) { \
+			*h = s->savedcoll; \
+			h->report_ID = c->report_ID; \
+			s->hassavedcoll = 0; \
+			return (1); \
+		} \
+	} while(0)
+
 static int
 hid_get_item_raw(hid_data_t s, hid_item_t *h)
 {
-	hid_item_t *c;
+	hid_item_t nc, *c;
 	unsigned int bTag, bType, bSize;
 	int32_t mask;
 	int32_t dval;
@@ -207,6 +220,7 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
  top:
 	/* check if there is an array of items */
 	if (s->icount < s->ncount) {
+		REPORT_SAVED_COLL;
 		/* get current usage */
 		if (s->iusage < s->nusage) {
 			dval = s->usages_min[s->iusage] + s->ousage;
@@ -328,13 +342,23 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				c->collection = dval;
 				c->collevel++;
 				c->usage = s->usage_last;
-				*h = *c;
-				return (1);
+				nc = *c;
+				if (s->hassavedcoll) {
+					*h = s->savedcoll;
+					h->report_ID = nc.report_ID;
+					s->savedcoll = nc;
+					return (1);
+				} else {
+					s->hassavedcoll = 1;
+					s->savedcoll = nc;
+				}
+				goto top;
 			case 11:	/* Feature */
 				c->kind = hid_feature;
 				c->flags = dval;
 				goto ret;
 			case 12:	/* End collection */
+				REPORT_SAVED_COLL;
 				c->kind = hid_endcollection;
 				if (c->collevel == 0) {
 					/* Invalid end collection. */
