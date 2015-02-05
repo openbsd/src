@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.33 2015/02/05 07:49:25 guenther Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.34 2015/02/05 22:32:20 sthen Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -337,6 +337,8 @@ int
 next_file(ARCHD *arcn)
 {
 	int cnt;
+	time_t atime;
+	time_t mtime;
 
 	/*
 	 * ftree_sel() might have set the ftree_skip flag if the user has the
@@ -391,10 +393,10 @@ next_file(ARCHD *arcn)
 			 * remember to force the time (this is -t on a read
 			 * directory, not a created directory).
 			 */
-			if (!tflag)
+			if (!tflag || (get_atdir(ftent->fts_statp->st_dev,
+			    ftent->fts_statp->st_ino, &mtime, &atime) < 0))
 				continue;
-			do_atdir(ftent->fts_path, ftent->fts_statp->st_dev,
-			    ftent->fts_statp->st_ino);
+			set_ftime(ftent->fts_path, mtime, atime, 1);
 			continue;
 		case FTS_DC:
 			/*

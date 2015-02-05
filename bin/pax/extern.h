@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.43 2015/02/05 07:49:25 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.44 2015/02/05 22:32:20 sthen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -147,8 +147,6 @@ int set_ids(char *, uid_t, gid_t);
 int fset_ids(char *, int, uid_t, gid_t);
 void set_pmode(char *, mode_t);
 void fset_pmode(char *, int, mode_t);
-int set_attr(const struct file_times *, int _force_times, mode_t, int _do_mode,
-    int _in_sig);
 int file_write(int, char *, int, int *, int *, int, char *);
 void file_flush(int, char *, int);
 void rdfile_close(ARCHD *, int *);
@@ -272,7 +270,7 @@ int map_dev(ARCHD *, u_long, u_long);
 int atdir_start(void);
 void atdir_end(void);
 void add_atdir(char *, dev_t, ino_t, time_t, time_t);
-int do_atdir(const char *, dev_t, ino_t);
+int get_atdir(dev_t, ino_t, time_t *, time_t *);
 int dir_start(void);
 void add_dir(char *, struct stat *, int);
 void proc_dir(int _in_sig);

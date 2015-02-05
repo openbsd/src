@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.h,v 1.10 2015/02/05 07:49:25 guenther Exp $	*/
+/*	$OpenBSD: tables.h,v 1.11 2015/02/05 22:32:20 sthen Exp $	*/
 /*	$NetBSD: tables.h,v 1.3 1995/03/21 09:07:47 cgd Exp $	*/
 
 /*-
@@ -143,8 +143,12 @@ typedef struct dlist {
  */
 
 typedef struct atdir {
-	struct file_times ft;
+	ino_t ino;
+	time_t mtime;	/* access and mod time to reset to */
+	time_t atime;
+	char *name;	/* name of directory to reset */
 	struct atdir *fow;
+	dev_t dev;	/* dev and inode for fast lookup */
 } ATDIR;
 
 /*
@@ -158,7 +162,9 @@ typedef struct atdir {
  */
 
 typedef struct dirdata {
-	struct file_times ft;
-	u_int16_t mode;		/* file mode to restore */
+	time_t mtime;	/* mtime to set */
+	time_t atime;	/* atime to set */
+	char *name;	/* file name */
+	u_int16_t mode;	/* file mode to restore */
 	u_int16_t frc_mode;	/* do we force mode settings? */
 } DIRDATA;
