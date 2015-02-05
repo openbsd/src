@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2015/02/02 09:29:53 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 2015/02/05 12:12:53 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1982,7 +1982,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				if (pm != pmap_kernel())
 					pmap_free_l2_bucket(pm, l2b, 0);
 
-				    printf("pmap_enter: ENOMEM\n"));
 				return (ENOMEM);
 			}
 
