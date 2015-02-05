@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.25 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.26 2015/02/05 12:04:58 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -285,6 +285,9 @@ zstty_attach(struct device *parent, struct device *self, void *aux)
 
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
+
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_NO_DCD))
+		SET(zst->zst_swflags, TIOCFLAG_SOFTCAR);
 
 	/*
 	 * Check whether we serve as a console device.
@@ -791,6 +794,8 @@ zsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;
+		if (ISSET(zst->zst_hwflags, ZS_HWFLAG_NO_DCD))
+			SET(zst->zst_swflags, TIOCFLAG_SOFTCAR);
 		break;
 
 	case TIOCSDTR:

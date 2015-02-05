@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.54 2013/12/19 20:11:04 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.55 2015/02/05 12:04:58 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ u_char zs_init_reg[16] = {
 	0,	/* 1: No interrupts yet. */
 	0,	/* 2: IVECT */
 	ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
-	ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
+	ZSWR4_CLK_X16 | ZSWR4_ONESB,
 	ZSWR5_TX_8 | ZSWR5_TX_ENABLE,
 	0,	/* 6: TXSYNC/SYNCLO */
 	0,	/* 7: RXSYNC/SYNCHI */
@@ -236,8 +236,7 @@ zs_match(parent, vcf, aux)
 /*
  * Attach a found zs.
  *
- * USE ROM PROPERTIES port-a-ignore-cd AND port-b-ignore-cd FOR
- * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
+ * USE ROM PROPERTY keyboard FOR KEYBOARD/MOUSE?
  */
 void
 zs_attach(parent, self, aux)
@@ -285,6 +284,15 @@ zs_attach(parent, self, aux)
 
 		zsc_args.channel = channel;
 		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
+
+		if ((ca->ca_bustype == BUS_MAIN &&
+		     (CPU_ISSUN4C || CPU_ISSUN4E)) ||
+		    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M)) {
+			if (getproplen(ra->ra_node, channel == 0 ?
+			    "port-a-ignore-cd" : "port-b-ignore-cd") == 0)
+				zsc_args.hwflags |= ZS_HWFLAG_NO_DCD;
+		}
+
 		cs = zsc->zsc_cs[channel] = 
 			(struct zs_chanstate *)&zsc->zsc_cs_store[channel];
 
