@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.12 2015/01/21 21:50:33 deraadt Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.13 2015/02/05 09:42:52 krw Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -72,6 +72,9 @@ pftable_handler()
 		if ((nfds = poll(pfd, 1, -1)) == -1)
 			if (errno != EINTR)
 				error("poll: %m");
+
+		if (nfds > 0 && (pfd[0].revents & POLLHUP))
+			error("pf pipe closed");
 
 		if (nfds > 0 && (pfd[0].revents & POLLIN)) {
 			bzero(&cmd, l);
