@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.352 2015/02/01 18:43:39 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.353 2015/02/05 23:56:06 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	ifi = calloc(1, sizeof(*ifi));
+	ifi = calloc(1, sizeof(struct interface_info));
 	if (ifi == NULL)
 		error("ifi calloc");
 	get_ifname(argv[0]);
@@ -493,12 +493,12 @@ main(int argc, char *argv[])
 		error("no memory for unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
-	config = calloc(1, sizeof(*config));
+	config = calloc(1, sizeof(struct client_config));
 	if (config == NULL)
 		error("config calloc");
 	TAILQ_INIT(&config->reject_list);
 
-	client = calloc(1, sizeof(*client));
+	client = calloc(1, sizeof(struct client_state));
 	if (client == NULL)
 		error("client calloc");
 	TAILQ_INIT(&client->leases);
