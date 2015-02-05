@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.205 2015/02/01 23:10:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.206 2015/02/05 00:13:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -317,12 +317,9 @@ print_mdoc_node(DECL_ARGS)
 	 * invoked in a prior line, revert it to PREKEEP.
 	 */
 
-	if (TERMP_KEEP & p->flags) {
-		if (n->prev ? (n->prev->lastline != n->line) :
-		    (n->parent && n->parent->line != n->line)) {
-			p->flags &= ~TERMP_KEEP;
-			p->flags |= TERMP_PREKEEP;
-		}
+	if (p->flags & TERMP_KEEP && n->flags & MDOC_LINE) {
+		p->flags &= ~TERMP_KEEP;
+		p->flags |= TERMP_PREKEEP;
 	}
 
 	/*

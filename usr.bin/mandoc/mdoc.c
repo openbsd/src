@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.124 2015/02/02 04:26:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.125 2015/02/05 00:13:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -361,7 +361,6 @@ node_alloc(struct mdoc *mdoc, int line, int pos,
 	p->sec = mdoc->lastsec;
 	p->line = line;
 	p->pos = pos;
-	p->lastline = line;
 	p->tok = tok;
 	p->type = type;
 

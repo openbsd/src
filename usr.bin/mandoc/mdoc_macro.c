@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.130 2015/02/04 22:29:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.131 2015/02/05 00:13:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -260,9 +260,6 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 	assert(to);
 	mdoc->next = MDOC_NEXT_SIBLING;
 	while (mdoc->last != to) {
-		if ( ! (mdoc->last->flags & MDOC_VALID))
-			mdoc->last->lastline = to->lastline -
-			    (mdoc->flags & MDOC_NEWLINE ? 1 : 0);
 		/*
 		 * Save the parent here, because we may delete the
 		 * mdoc->last node in the post-validation phase and reset
@@ -576,10 +573,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 		/* Remember the start of our own body. */
 
 		if (n->type == MDOC_BODY && atok == n->tok) {
-			if (n->end == ENDBODY_NOT) {
+			if (n->end == ENDBODY_NOT)
 				body = n;
-				n->lastline = line;
-			}
 			continue;
 		}
 
@@ -592,7 +587,6 @@ blk_exp_close(MACRO_PROT_ARGS)
 		}
 
 		if (atok == n->tok) {
-			n->lastline = line;
 			assert(body);
 
 			/*
