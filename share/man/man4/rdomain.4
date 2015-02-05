@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.2 2015/02/05 10:25:56 sthen Exp $
+.\"	$OpenBSD: rdomain.4,v 1.3 2015/02/05 10:43:49 phessler Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -58,11 +58,33 @@ as the parent.
 An
 .Em rdomain
 contains at least one routing table.
-.\" .Sh EXAMPLES
-.\" make some
-.\" ifconfig em0 rdomain 4
-.\" ifconfig em0 192.0.2.100/24
-.\" route -T4 -n add default 192.0.2.1
+.Sh EXAMPLES
+Set up em0 and lo4 onto
+.Em rdomain 4 ,
+.Pp
+.Dl # ifconfig em0 rdomain 4
+.Dl # ifconfig lo4 rdomain 4
+.Dl # ifconfig lo4 inet 127.0.0.1/8
+.Dl # ifconfig em0 192.0.2.100/24
+.Pp
+Set a default route and localhost reject route within
+.Em rdomain 4 .
+.Pp
+.Dl # route -T4 -qn add -net 127 127.0.0.1 -reject
+.Dl # route -T4 -n add default 192.0.2.1
+.Pp
+Starts an sshd in
+.Em rdomain 4 .
+.Pp
+.Dl # route -T4 exec /usr/sbin/sshd
+.Pp
+pf.conf snippit to block incoming port 80, and nat-to and move to rtable 0
+on interface em1
+.Pp
+.Bd -literal -offset 4n
+block in on rdomain 4 proto tcp to any port 80
+match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
+.Ed
 .Sh SEE ALSO
 .Xr route 4 ,
 .Xr pf.conf 5 ,
