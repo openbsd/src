@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.172 2015/01/30 12:33:03 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.173 2015/02/05 11:46:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -281,6 +281,8 @@ tty_stop_tty(struct tty *tty)
 		else
 			tty_raw(tty, tty_term_string1(tty->term, TTYC_SS, 0));
 	}
+	if (tty->mode & MODE_BRACKETPASTE)
+		tty_raw(tty, "\033[?2004l");
 	tty_raw(tty, tty_term_string(tty->term, TTYC_CR));
 
 	tty_raw(tty, tty_term_string(tty->term, TTYC_CNORM));
