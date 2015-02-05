@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.21 2014/11/26 02:05:58 schwarze Exp $
+.\"	$OpenBSD: sha2.3,v 1.22 2015/02/05 02:33:09 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -20,7 +20,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: November 26 2014 $
+.Dd $Mdocdate: February 5 2015 $
 .Dt SHA2 3
 .Os
 .Sh NAME
@@ -222,11 +222,11 @@ functions the
 .Fa buf
 parameter should either be a string large enough to hold the resulting digest
 (e.g.\&
-.Ev SHA224_DIGEST_STRING_LENGTH ,
-.Ev SHA256_DIGEST_STRING_LENGTH ,
-.Ev SHA384_DIGEST_STRING_LENGTH ,
+.Dv SHA224_DIGEST_STRING_LENGTH ,
+.Dv SHA256_DIGEST_STRING_LENGTH ,
+.Dv SHA384_DIGEST_STRING_LENGTH ,
 or
-.Ev SHA512_DIGEST_STRING_LENGTH ,
+.Dv SHA512_DIGEST_STRING_LENGTH ,
 depending on the function being used)
 or a
 .Dv NULL

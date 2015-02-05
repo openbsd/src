@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn.3,v 1.7 2014/11/30 02:41:43 schwarze Exp $
+.\"	$OpenBSD: posix_spawn.3,v 1.8 2015/02/05 02:33:09 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: February 5 2015 $
 .Dt POSIX_SPAWN 3
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ If
 is a null pointer, file descriptors open in the parent process
 follow the usual rules: they remain open in the child process unless they've
 been marked
-.Ev FD_CLOEXEC
+.Dv FD_CLOEXEC
 with
 .Xr fcntl 2 .
 .Pp
@@ -105,7 +105,7 @@ In case of an error, both functions may return
 or
 .Fn exec
 return values and set
-.Ev errno
+.Va errno
 accordingly.
 .Pp
 Note, however, that after the new process is started, the child

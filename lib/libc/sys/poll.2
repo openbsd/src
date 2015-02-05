@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.28 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: poll.2,v 1.29 2015/02/05 02:33:09 schwarze Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: February 5 2015 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ The arguments are as follows:
 .Bl -tag -width timeout
 .It Fa fds
 Points to an array of
-.Fa pollfd
+.Vt pollfd
 structures, which are defined as:
 .Bd -literal -offset indent
 struct pollfd {
@@ -78,7 +78,7 @@ If
 .Fa fd
 is -1,
 the
-.Fa pollfd
+.Vt pollfd
 structure is considered unused, and
 .Fa revents
 will be cleared.
@@ -91,14 +91,15 @@ members are bitmasks of conditions to monitor and conditions found,
 respectively.
 .It Fa nfds
 An unsigned integer specifying the number of
-.Fa pollfd
+.Vt pollfd
 structures in the array.
 .It Fa timeout
 Maximum interval to wait for the poll to complete, in milliseconds.
 If this value is 0,
 .Fn poll
 will return immediately.
-If this value is INFTIM (-1),
+If this value is
+.Dv INFTIM Pq -1 ,
 .Fn poll
 will block indefinitely until a condition is found.
 .El
@@ -210,18 +211,18 @@ to indicate the error.
 If the timeout interval was reached before any events occurred,
 they return 0.
 Otherwise, they return the number of
-.Fa pollfd
+.Vt pollfd
 structures for which
 .Fa revents
 is non-zero.
 .Sh IDIOMS
 Care must be taken when converting code from
-.Fn select
+.Xr select 2
 to
 .Fn poll
 as they have slightly different semantics.
 The first semantic difference is that, unlike
-.Fn select ,
+.Xr select 2 ,
 .Fn poll
 has a way of indicating that one or more file descriptors is invalid
 by setting a flag in the
@@ -229,9 +230,11 @@ by setting a flag in the
 field of corresponding entry of
 .Fa fds ,
 whereas
-.Fn select
+.Xr select 2
 returns an error (-1) if any of the descriptors with bits set in
-the fd_set are invalid.
+the
+.Vt fd_set
+are invalid.
 The second difference is that on EOF there is no guarantee that
 .Dv POLLIN
 will be set in
@@ -239,11 +242,11 @@ will be set in
 the caller must also check for
 .Dv POLLHUP .
 This differs from
-.Fn select
+.Xr select 2
 where EOF is considered as a read event.
 .Pp
 Consider the following usage of
-.Fn select
+.Xr select 2
 that implements a read from the standard input with a
 60 second time out:
 .Bd -literal -offset indent
