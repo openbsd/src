@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.69 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.70 2015/02/05 10:47:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1199,16 +1199,17 @@ server_httpmethod_cmp(const void *a, const void *b)
 const char *
 server_httperror_byid(u_int id)
 {
-	struct http_error	 error, *res = NULL;
+	struct http_error	 error, *res;
 
 	/* Set up key */
 	error.error_code = (int)id;
 
-	res = bsearch(&error, http_errors,
+	if ((res = bsearch(&error, http_errors,
 	    sizeof(http_errors) / sizeof(http_errors[0]) - 1,
-	    sizeof(http_errors[0]), server_httperror_cmp);
+	    sizeof(http_errors[0]), server_httperror_cmp)) != NULL)
+		return (res->error_name);
 
-	return (res->error_name);
+	return (NULL);
 }
 
 static int
