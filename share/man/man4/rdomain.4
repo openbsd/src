@@ -1,0 +1,80 @@
+.\"	$OpenBSD: rdomain.4,v 1.1 2015/02/05 08:58:10 phessler Exp $
+.\"
+.\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 5 2015 $
+.Dt RDOMAIN 4
+.Os
+.Sh NAME
+.Nm rtable ,
+.Nm rdomain
+.Nd routing tables and routing domains
+.Sh DESCRIPTION
+The traditional kernel routing system had a single table for routes and
+allowed for non-conflicting IP address assignments.
+.Em rtable
+and
+.Em rdomain
+allows us to have seperate lookup tables for routes,
+and assign IP addresses independantly from other interfaces.
+.Pp
+.Sh rtable
+.Em rtable
+allows one to set a different route table for outbound network packets.
+As with the traditional routing system, IP addresses cannot overlap.
+You can have multiple
+.Em rtable
+within the same routing domain.
+Commonly used to set Policy Based Routing.
+.Sh rdomain
+.Em rdomain
+are completely seperate seperate routing domains and tables in the kernel.
+An IP address (e.g. 10.0.0.1/16) can be assigned in multple
+.Em rdomains ,
+but
+cannot be assigned more than once per
+.Em rdomain .
+An interface belongs to one and only one
+.Em rdomain .
+The interface's
+.Em rdomain
+determines which rdomain an incoming packet will
+be in.
+Virtual interfaces do not need to belong to the same
+.Em rdomain
+as the parent.
+An
+.Em rdomain
+contains at least one routing table.
+.\" .Sh EXAMPLES
+.\" make some
+.\" ifconfig em0 rdomain 4
+.\" ifconfig em0 192.0.2.100/24
+.\" route -T4 -n add default 192.0.2.1
+.Sh SEE ALSO
+.Xr route 4 ,
+.Xr pf.conf 5 ,
+.Xr ifconfig 8 ,
+.Xr route 8
+.Sh HISTORY
+.Ox
+support for
+.\" XXX - rdomains, not 'rtable'
+.\" .Nm
+rdomains
+first appeared in
+.Ox 4.9
+and IPv6 support first appeared in
+.Ox 5.5 .
