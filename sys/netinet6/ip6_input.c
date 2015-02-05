@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.135 2015/01/19 13:53:55 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.136 2015/02/05 01:10:57 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -190,8 +190,8 @@ ip6_input(struct mbuf *m)
 	struct ifnet *ifp;
 	struct ip6_hdr *ip6;
 	int off, nest;
-	u_int32_t plen;
-	u_int32_t rtalert = ~0;
+	u_int16_t src_scope, dst_scope;
+	u_int32_t plen, rtalert = ~0;
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
 #if NPF > 0
@@ -324,6 +324,22 @@ ip6_input(struct mbuf *m)
 	 * can be destinated to any local address, not necessarily to
 	 * an address configured on `ifp'.
 	 */
+	if (ifp->if_flags & IFF_LOOPBACK) {
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src)) {
+			src_scope = ip6->ip6_src.s6_addr16[1];
+			ip6->ip6_src.s6_addr16[1] = 0;
+		}
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst)) {
+			dst_scope = ip6->ip6_dst.s6_addr16[1];
+			ip6->ip6_dst.s6_addr16[1] = 0;
+		}
+	}
+
+	/*
+	 * If the packet has been received on a loopback interface it
+	 * can be destinated to any local address, not necessarily to
+	 * an address configured on `ifp'.
+	 */
 	if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
 			ip6->ip6_src.s6_addr16[1] = htons(ifp->if_index);
@@ -344,6 +360,22 @@ ip6_input(struct mbuf *m)
 	ip6 = mtod(m, struct ip6_hdr *);
 	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 #endif
+
+	/*
+	 * Without embedded scope ID we cannot find link-local
+	 * addresses in the routing table.
+	 */
+	if (ifp->if_flags & IFF_LOOPBACK) {
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
+			ip6->ip6_src.s6_addr16[1] = src_scope;
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
+			ip6->ip6_dst.s6_addr16[1] = dst_scope;
+	} else {
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
+			ip6->ip6_src.s6_addr16[1] = htons(ifp->if_index);
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
+			ip6->ip6_dst.s6_addr16[1] = htons(ifp->if_index);
+	}
 
 	/*
 	 * Be more secure than RFC5095 and scan for type 0 routing headers.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.165 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.166 2015/02/05 01:10:57 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	int error = 0;
 	u_long mtu;
 	int alwaysfrag, dontfrag;
+	u_int16_t src_scope, dst_scope;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
 	struct ip6_exthdrs exthdrs;
 	struct in6_addr finaldst;
@@ -661,6 +662,21 @@ reroute:
 	}
 
 	/*
+	 * If this packet is going trough a loopback interface we wont
+	 * be able to restore its scope ID using the interface index.
+	 */
+	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src)) {
+		if (ifp->if_flags & IFF_LOOPBACK)
+			src_scope = ip6->ip6_src.s6_addr16[1];
+		ip6->ip6_src.s6_addr16[1] = 0;
+	}
+	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst)) {
+		if (ifp->if_flags & IFF_LOOPBACK)
+			dst_scope = ip6->ip6_dst.s6_addr16[1];
+		ip6->ip6_dst.s6_addr16[1] = 0;
+	}
+
+	/*
 	 * Fill the outgoing interface to tell the upper layer
 	 * to increment per-interface statistics.
 	 */
@@ -757,6 +773,18 @@ reroute:
 			ip6->ip6_src.s6_addr16[1] = 0;
 		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
 			ip6->ip6_dst.s6_addr16[1] = 0;
+	}
+
+	/*
+	 * If the packet is not going on the wire it can be destinated
+	 * to any local address.  In this case do not clear its scopes
+	 * to let ip6_input() find a matching local route.
+	 */
+	if (ifp->if_flags & IFF_LOOPBACK) {
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
+			ip6->ip6_src.s6_addr16[1] = src_scope;
+		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
+			ip6->ip6_dst.s6_addr16[1] = dst_scope;
 	}
 
 	in6_proto_cksum_out(m, ifp);
