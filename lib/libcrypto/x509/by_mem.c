@@ -1,4 +1,4 @@
-/* $OpenBSD: by_mem.c,v 1.2 2015/01/22 11:16:56 jsing Exp $ */
+/* $OpenBSD: by_mem.c,v 1.3 2015/02/05 01:33:22 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,7 +70,7 @@
 
 static int by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
 
-X509_LOOKUP_METHOD x509_mem_lookup = {
+static X509_LOOKUP_METHOD x509_mem_lookup = {
 	.name = "Load cert from memory",
 	.new_item = NULL,
 	.free = NULL,

@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.34 2015/01/22 11:16:56 jsing Exp $ */
+/* $OpenBSD: by_dir.c,v 1.35 2015/02/05 01:33:22 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,7 +101,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type);
 static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
     X509_OBJECT *ret);
 
-X509_LOOKUP_METHOD x509_dir_lookup = {
+static X509_LOOKUP_METHOD x509_dir_lookup = {
 	.name = "Load certs from files in a directory",
 	.new_item = new_dir,
 	.free = free_dir,
