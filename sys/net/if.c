@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.315 2015/01/27 10:31:19 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.316 2015/02/05 10:28:50 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1235,6 +1235,14 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if ((ifp = ifunit(ifar->ifar_name)) == NULL)
 			return (ENXIO);
 		switch (ifar->ifar_af) {
+		case AF_INET:
+			/* attach is a noop for AF_INET */
+			if (cmd == SIOCIFAFDETACH) {
+				s = splsoftnet();
+				in_ifdetach(ifp);
+				splx(s);
+			}
+			return (0);
 #ifdef INET6
 		case AF_INET6:
 			s = splsoftnet();
