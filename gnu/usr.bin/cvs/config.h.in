@@ -278,6 +278,9 @@
 /* Define if you have the <string.h> header file.  */
 #undef HAVE_STRING_H
 
+/* Define if you have the <stdint.h> header file.  */
+#undef HAVE_STDINT_H
+
 /* Define if you have the <sys/bsdtypes.h> header file.  */
 #undef HAVE_SYS_BSDTYPES_H
 
