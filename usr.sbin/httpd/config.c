@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.32 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.33 2015/02/05 10:46:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -264,7 +264,7 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		parent = &srv->srv_conf;
 
 	if (config_getserver_auth(env, srv_conf) != 0)
-		return (-1);
+		goto fail;
 
 	if (srv_conf->flags & SRVFLAG_LOCATION) {
 		/* Inherit configuration from the parent */
@@ -358,6 +358,11 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 
 	return (0);
+
+ fail:
+	serverconfig_free(srv_conf);
+	free(srv_conf);
+	return (-1);
 }
 
 int
