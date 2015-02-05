@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.6 2015/02/05 23:18:15 uebayasi Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.7 2015/02/05 23:29:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -141,11 +141,11 @@ cn30xxuart_delay(void)
 {
 	int divisor;
 	u_char lcr;
-        static int d = 0;
+	static int d = 0;
 
-        if (!delay_changed)
+	if (!delay_changed)
 		return d;
-        delay_changed = 0;
+	delay_changed = 0;
 	lcr = octeon_xkphys_read_8(MIO_UART0_LCR);
 	octeon_xkphys_write_8(MIO_UART0_LCR, lcr | LCR_DLAB);
 	divisor = octeon_xkphys_read_8(MIO_UART0_DLL) |
@@ -159,7 +159,7 @@ void
 cn30xxuart_wait_txhr_empty(int d)
 {
 	while (((octeon_xkphys_read_8(MIO_UART0_LSR) & LSR_TXRDY) == 0) &&
-        	((octeon_xkphys_read_8(MIO_UART0_USR) & USR_TXFIFO_NOTFULL) == 0))
+	    ((octeon_xkphys_read_8(MIO_UART0_USR) & USR_TXFIFO_NOTFULL) == 0))
 		delay(d);
 }
 
@@ -185,9 +185,9 @@ cn30xxuartcnputc(dev_t dev, int c)
 
 	/* 1/10th the time to transmit 1 character (estimate). */
 	d = cn30xxuart_delay();
-        cn30xxuart_wait_txhr_empty(d);
+	cn30xxuart_wait_txhr_empty(d);
 	octeon_xkphys_write_8(MIO_UART0_RBR, (uint8_t)c);
-        cn30xxuart_wait_txhr_empty(d);
+	cn30xxuart_wait_txhr_empty(d);
 }
 
 int
