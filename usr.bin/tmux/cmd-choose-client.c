@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.21 2014/10/20 23:35:28 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.22 2015/02/05 10:29:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,8 +94,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
 
 		cdata->ft_template = xstrdup(template);
 		format_add(cdata->ft, "line", "%u", i);
-		format_session(cdata->ft, c1->session);
-		format_client(cdata->ft, c1);
+		format_defaults(cdata->ft, c1, NULL, NULL, NULL);
 
 		cdata->command = cmd_template_replace(action, c1->tty.path, 1);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.23 2014/05/13 08:08:32 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.24 2015/02/05 10:29:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -86,8 +86,8 @@ format_window_name(struct window *w)
 	char			*fmt, *name;
 
 	ft = format_create();
-	format_window(ft, w);
-	format_window_pane(ft, w->active);
+	format_defaults_window(ft, w);
+	format_defaults_pane(ft, w->active);
 
 	fmt = options_get_string(&w->options, "automatic-rename-format");
 	name = format_expand(ft, fmt);

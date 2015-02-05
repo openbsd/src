@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.487 2015/02/05 10:26:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.488 2015/02/05 10:29:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1513,14 +1513,12 @@ void printflike(3, 4) format_add(struct format_tree *, const char *,
 		     const char *, ...);
 const char	*format_find(struct format_tree *, const char *);
 char		*format_expand(struct format_tree *, const char *);
-void		 format_session(struct format_tree *, struct session *);
-void		 format_client(struct format_tree *, struct client *);
-void		 format_window(struct format_tree *, struct window *);
-void		 format_winlink(struct format_tree *, struct session *,
-		     struct winlink *);
-void		 format_window_pane(struct format_tree *,
+void		 format_defaults(struct format_tree *, struct client *,
+		     struct session *, struct winlink *, struct window_pane *);
+void		 format_defaults_window(struct format_tree *, struct window *);
+void		 format_defaults_pane(struct format_tree *,
 		     struct window_pane *);
-void		 format_paste_buffer(struct format_tree *,
+void		 format_defaults_paste_buffer(struct format_tree *,
 		     struct paste_buffer *, int);
 
 /* mode-key.c */

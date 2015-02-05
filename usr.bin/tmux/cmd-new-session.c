@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.63 2014/10/20 23:35:28 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.64 2015/02/05 10:29:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -119,8 +119,8 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 	/* Get the new session working directory. */
 	if (args_has(args, 'c')) {
 		ft = format_create();
-		if ((c0 = cmd_find_client(cmdq, NULL, 1)) != NULL)
-			format_client(ft, c0);
+		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), NULL, NULL,
+		    NULL);
 		cp = format_expand(ft, args_get(args, 'c'));
 		format_free(ft);
 
@@ -287,9 +287,8 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 			template = NEW_SESSION_TEMPLATE;
 
 		ft = format_create();
-		if ((c0 = cmd_find_client(cmdq, NULL, 1)) != NULL)
-			format_client(ft, c0);
-		format_session(ft, s);
+		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), s, NULL,
+		    NULL);
 
 		cp = format_expand(ft, template);
 		cmdq_print(cmdq, "%s", cp);

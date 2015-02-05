@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.58 2015/01/15 13:43:13 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.59 2015/02/05 10:29:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -919,7 +919,7 @@ window_choose_add_session(struct window_pane *wp, struct client *c,
 
 	wcd->ft_template = xstrdup(template);
 	format_add(wcd->ft, "line", "%u", idx);
-	format_session(wcd->ft, s);
+	format_defaults(wcd->ft, NULL, s, NULL, NULL);
 
 	wcd->command = cmd_template_replace(action, s->name, 1);
 
@@ -946,9 +946,7 @@ window_choose_add_window(struct window_pane *wp, struct client *c,
 
 	wcd->ft_template = xstrdup(template);
 	format_add(wcd->ft, "line", "%u", idx);
-	format_session(wcd->ft, s);
-	format_winlink(wcd->ft, s, wl);
-	format_window_pane(wcd->ft, wl->window->active);
+	format_defaults(wcd->ft, NULL, s, wl, NULL);
 
 	xasprintf(&expanded, "%s:%d", s->name, wl->idx);
 	wcd->command = cmd_template_replace(action, expanded, 1);
