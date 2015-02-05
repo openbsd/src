@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.295 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.296 2015/02/05 10:30:25 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -420,6 +420,7 @@ const struct	cmd {
 	{ "flowdst",	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
 	{ "pflowproto", NEXTARG,	0,		setpflowproto },
+	{ "-inet",	AF_INET,	0,		removeaf },
 	{ "-inet6",	AF_INET6,	0,		removeaf },
 	{ "keepalive",	NEXTARG2,	0,		NULL, setkeepalive },
 	{ "-keepalive",	1,		0,		unsetkeepalive },
@@ -481,6 +482,7 @@ const struct	cmd {
 	{ "txpower",	NEXTARG,	0,		setignore },
 	{ "nwflag",	NEXTARG,	0,		setignore },
 	{ "rdomain",	NEXTARG,	0,		setignore },
+	{ "-inet",	AF_INET,	0,		removeaf },
 	{ "-inet6",	AF_INET6,	0,		removeaf },
 	{ "description", NEXTARG,	0,		setignore },
 	{ "descr",	NEXTARG,	0,		setignore },

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.250 2015/02/02 08:25:05 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.251 2015/02/05 10:30:25 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 2 2015 $
+.Dd $Mdocdate: February 5 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -288,6 +288,10 @@ The device supports Wake on LAN (WoL).
 .It Sy hardmtu
 The maximum MTU supported.
 .El
+.It Fl inet
+Remove all configured
+.Xr inet 4
+addresses on the given interface.
 .It Fl inet6
 Disable
 .Xr inet6 4
