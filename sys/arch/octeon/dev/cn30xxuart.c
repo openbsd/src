@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.5 2014/06/17 01:33:04 jmatthew Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.6 2015/02/05 23:18:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,6 +42,7 @@
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/uartbusvar.h>
+#include <octeon/dev/cn30xxuartreg.h>
 
 int	cn30xxuart_probe(struct device *, void *, void *);
 void	cn30xxuart_attach(struct device *, struct device *, void *);
@@ -54,13 +55,6 @@ extern struct cfdriver com_cd;
 
 cons_decl(cn30xxuart);
 
-#define  OCTEON_MIO_UART0               0x8001180000000800ull
-#define  OCTEON_MIO_UART0_LSR           0x8001180000000828ull
-#define  OCTEON_MIO_UART0_RBR           0x8001180000000800ull
-#define  OCTEON_MIO_UART0_USR           0x8001180000000938ull
-#define  OCTEON_MIO_UART0_LCR           0x8001180000000818ull
-#define  OCTEON_MIO_UART0_DLL           0x8001180000000880ull
-#define  OCTEON_MIO_UART0_DLH           0x8001180000000888ull
 #define  USR_TXFIFO_NOTFULL		2
 
 /* XXX: What is this used for? Removed from stand/boot/uart.c -r1.2 */
@@ -149,13 +143,14 @@ cn30xxuart_delay(void)
 	u_char lcr;
         static int d = 0;
 
-        if (!delay_changed) return d;
+        if (!delay_changed)
+		return d;
         delay_changed = 0;
-	lcr = (u_char)*(uint64_t*)OCTEON_MIO_UART0_LCR;
-	*(uint64_t*)OCTEON_MIO_UART0_LCR = lcr | LCR_DLAB;
-	divisor = (int)(*(uint64_t*)OCTEON_MIO_UART0_DLL |
-		*(uint64_t*)OCTEON_MIO_UART0_DLH << 8);
-	*(uint64_t*)OCTEON_MIO_UART0_LCR = lcr;
+	lcr = octeon_xkphys_read_8(MIO_UART0_LCR);
+	octeon_xkphys_write_8(MIO_UART0_LCR, lcr | LCR_DLAB);
+	divisor = octeon_xkphys_read_8(MIO_UART0_DLL) |
+		octeon_xkphys_read_8(MIO_UART0_DLH) << 8;
+	octeon_xkphys_write_8(MIO_UART0_LCR, lcr);
 
 	return 10; /* return an approx delay value */
 }
@@ -163,8 +158,8 @@ cn30xxuart_delay(void)
 void
 cn30xxuart_wait_txhr_empty(int d)
 {
-	while (((*(uint64_t*)OCTEON_MIO_UART0_LSR & LSR_TXRDY) == 0) &&
-        	((*(uint64_t*)OCTEON_MIO_UART0_USR & USR_TXFIFO_NOTFULL) == 0))
+	while (((octeon_xkphys_read_8(MIO_UART0_LSR) & LSR_TXRDY) == 0) &&
+        	((octeon_xkphys_read_8(MIO_UART0_USR) & USR_TXFIFO_NOTFULL) == 0))
 		delay(d);
 }
 
@@ -184,29 +179,29 @@ cn30xxuartcnpollc(dev_t dev, int c)
 }
 
 void
-cn30xxuartcnputc (dev_t dev, int c)
+cn30xxuartcnputc(dev_t dev, int c)
 {
 	int d;
 
 	/* 1/10th the time to transmit 1 character (estimate). */
 	d = cn30xxuart_delay();
         cn30xxuart_wait_txhr_empty(d);
-	*(uint64_t*)OCTEON_MIO_UART0_RBR = (uint8_t)c;
+	octeon_xkphys_write_8(MIO_UART0_RBR, (uint8_t)c);
         cn30xxuart_wait_txhr_empty(d);
 }
 
 int
-cn30xxuartcngetc (dev_t dev)
+cn30xxuartcngetc(dev_t dev)
 {
 	int c, d;
 
 	/* 1/10th the time to transmit 1 character (estimate). */
 	d = cn30xxuart_delay();
 
-	while ((*(uint64_t*)OCTEON_MIO_UART0_LSR & LSR_RXRDY) == 0)
+	while ((octeon_xkphys_read_8(MIO_UART0_LSR) & LSR_RXRDY) == 0)
 		delay(d);
 
-	c = (uint8_t)*(uint64_t*)OCTEON_MIO_UART0_RBR;
+	c = (uint8_t)octeon_xkphys_read_8(MIO_UART0_RBR);
 
 	return (c);
 }
