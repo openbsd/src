@@ -4,18 +4,26 @@ NNAAMMEE
      AAnn--bbrreeaakk - line breaking of the author macro
 
 DDEESSCCRRIIPPTTIIOONN
-     inline is the default: Kristaps, Ingo, and Joerg.
+     inline is the default: Kristaps, Ingo, and Joerg.  empty trailing .
 
      split mode:
      Kristaps
      Ingo
      Joerg
 
+     empty
+     trailing
+     .
+
 AAUUTTHHOORRSS
      split mode is the default: Kristaps
      Ingo
      Joerg
 
-     inline: Kristaps, Ingo, and Joerg.
+     empty
+     trailing
+     .
 
-OpenBSD                          July 31, 2014                         OpenBSD
+     inline: Kristaps, Ingo, and Joerg.  empty trailing .
+
+OpenBSD                        February 5, 2015                        OpenBSD
