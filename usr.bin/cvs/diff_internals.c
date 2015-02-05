@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.36 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.37 2015/02/05 12:59:57 millert Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -71,6 +71,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

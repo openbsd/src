@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.23 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.24 2015/02/05 12:59:58 millert Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

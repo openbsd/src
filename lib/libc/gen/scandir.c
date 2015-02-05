@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.18 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: scandir.c,v 1.19 2015/02/05 12:59:57 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
-#include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "telldir.h"

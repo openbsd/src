@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.84 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.85 2015/02/05 12:59:57 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,6 +72,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

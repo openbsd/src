@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.42 2014/12/09 20:28:43 tobias Exp $	*/
+/*	$OpenBSD: inp.c,v 1.43 2015/02/05 12:59:57 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -33,8 +33,8 @@
 
 #include <ctype.h>
 #include <libgen.h>
-#include <limits.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

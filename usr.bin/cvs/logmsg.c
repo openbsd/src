@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.55 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.56 2015/02/05 12:59:57 millert Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <libgen.h>
 #include <paths.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

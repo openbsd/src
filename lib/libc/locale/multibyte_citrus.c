@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_citrus.c,v 1.4 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: multibyte_citrus.c,v 1.5 2015/02/05 12:59:57 millert Exp $ */
 /*	$NetBSD: multibyte_amd1.c,v 1.7 2009/01/11 02:46:28 christos Exp $ */
 
 /*-
@@ -29,7 +29,7 @@
 
 #include <sys/types.h>
 #include <errno.h>
-#include <limits.h>
+#include <stdint.h>
 #include <wchar.h>
 
 #include "citrus_ctype.h"

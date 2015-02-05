@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.264 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.265 2015/02/05 12:59:57 millert Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <libgen.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 

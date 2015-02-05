@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.31 2015/01/16 06:40:11 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.32 2015/02/05 12:59:58 millert Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -17,6 +17,7 @@
 #include <getopt.h>
 #include <limits.h>
 #include <paths.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
