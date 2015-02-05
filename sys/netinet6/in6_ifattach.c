@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.84 2015/01/28 22:10:13 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.85 2015/02/05 03:01:03 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -630,15 +630,7 @@ in6_ifdetach(struct ifnet *ifp)
 	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	rt = rtalloc(sin6tosa(&sin6), 0, ifp->if_rdomain);
 	if (rt && rt->rt_ifp == ifp) {
-		struct rt_addrinfo info;
-
-		bzero(&info, sizeof(info));
-		info.rti_flags = rt->rt_flags;
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
-		    ifp->if_rdomain);
+		rtdeletemsg(rt, ifp->if_rdomain);
 		rtfree(rt);
 	}
 
@@ -650,15 +642,7 @@ in6_ifdetach(struct ifnet *ifp)
 	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	rt = rtalloc(sin6tosa(&sin6), 0, ifp->if_rdomain);
 	if (rt && rt->rt_ifp == ifp) {
-		struct rt_addrinfo info;
-
-		bzero(&info, sizeof(info));
-		info.rti_flags = rt->rt_flags;
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
-		    ifp->if_rdomain);
+		rtdeletemsg(rt, ifp->if_rdomain);
 		rtfree(rt);
 	}
 

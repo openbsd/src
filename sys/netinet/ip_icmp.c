@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.131 2015/01/28 22:10:13 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.132 2015/02/05 03:01:03 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1031,20 +1031,12 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 		struct sockaddr_in sa;
-		struct rt_addrinfo info;
 		int s;
-
-		memset(&info, 0, sizeof(info));
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_flags = rt->rt_flags;   
 
 		sa = *(struct sockaddr_in *)rt_key(rt);
 
 		s = splsoftnet();
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
-		    r->rtt_tableid);
+		rtdeletemsg(rt, r->rtt_tableid);
 
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
@@ -1083,18 +1075,10 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
-		struct rt_addrinfo info;
 		int s;
 
-		memset(&info, 0, sizeof(info));
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_flags = rt->rt_flags;   
-
 		s = splsoftnet();
-		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 
-		    r->rtt_tableid);
+		rtdeletemsg(rt, r->rtt_tableid);
 		splx(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.143 2015/01/28 22:10:13 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.144 2015/02/05 03:01:03 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -832,15 +832,7 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 		if (create) {
 			if (rt->rt_refcnt <= 0 &&
 			    (rt->rt_flags & RTF_CLONED) != 0) {
-				struct rt_addrinfo info;
-
-				memset(&info, 0, sizeof(info));
-				info.rti_info[RTAX_DST] = rt_key(rt);
-				info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-				info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-
-				rtrequest1(RTM_DELETE, &info, rt->rt_priority,
-				    NULL, tableid);
+			    	rtdeletemsg(rt, tableid);
 			}
 		}
 		return (0);
