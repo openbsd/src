@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.4 2015/02/05 20:31:55 schwarze Exp $
+.\"	$OpenBSD: rdomain.4,v 1.5 2015/02/05 20:46:30 sthen Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -76,7 +76,7 @@ Start an sshd in rdomain 4:
 .Pp
 .Dl # route -T4 exec /usr/sbin/sshd
 .Pp
-pf.conf snippit to block incoming port 80, and nat-to and move to rtable 0
+pf.conf snippet to block incoming port 80, and nat-to and move to rtable 0
 on interface em1:
 .Bd -literal -offset indent
 block in on rdomain 4 proto tcp to any port 80
