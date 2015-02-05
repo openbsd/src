@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.55 2015/02/05 10:29:43 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.56 2015/02/05 10:32:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,7 +59,6 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	int			 argc, size, percentage, cwd, fd = -1;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
-	struct client		*c;
 	struct format_tree	*ft;
 	struct environ_entry	*envent;
 

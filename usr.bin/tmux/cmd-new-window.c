@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.44 2015/02/05 10:29:43 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.45 2015/02/05 10:32:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,6 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct args		*args = self->args;
 	struct session		*s;
 	struct winlink		*wl;
-	struct client		*c;
 	const char		*cmd, *path, *template;
 	char		       **argv, *cause, *cp;
 	int			 argc, idx, last, detached, cwd, fd = -1;
