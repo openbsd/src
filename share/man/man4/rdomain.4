@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.3 2015/02/05 10:43:49 phessler Exp $
+.\"	$OpenBSD: rdomain.4,v 1.4 2015/02/05 20:31:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -24,64 +24,61 @@
 .Sh DESCRIPTION
 The traditional kernel routing system had a single table for routes and
 allowed for non-conflicting IP address assignments.
-.Em rtable
+.Nm rtable
 and
-.Em rdomain
+.Nm rdomain
 allows us to have separate lookup tables for routes,
 and assign IP addresses independently from other interfaces.
-.Pp
-.Sh rtable
-.Em rtable
+.Ss Routing tables
+.Nm rtable
 allows one to set a different route table for outbound network packets.
 As with the traditional routing system, IP addresses cannot overlap.
 You can have multiple
-.Em rtable
+.Nm rtable
 within the same routing domain.
 Commonly used to set Policy Based Routing.
-.Sh rdomain
-.Em rdomain
+.Ss Routing domains
+.Nm rdomain
 are completely separate routing domains and tables in the kernel.
-An IP address (e.g. 10.0.0.1/16) can be assigned in multiple
-.Em rdomains ,
+An IP address (e.g. 10.0.0.1/16) can be assigned in more than one
+.Nm rdomain ,
 but
 cannot be assigned more than once per
-.Em rdomain .
+.Nm rdomain .
 An interface belongs to one and only one
-.Em rdomain .
+.Nm rdomain .
 The interface's
-.Em rdomain
+.Nm rdomain
 determines which rdomain an incoming packet will
 be in.
 Virtual interfaces do not need to belong to the same
-.Em rdomain
+.Nm rdomain
 as the parent.
 An
-.Em rdomain
+.Nm rdomain
 contains at least one routing table.
 .Sh EXAMPLES
-Set up em0 and lo4 onto
-.Em rdomain 4 ,
+Set up em0 and lo4 onto rdomain 4:
+.Bd -literal -offset indent
+# ifconfig em0 rdomain 4
+# ifconfig lo4 rdomain 4
+# ifconfig lo4 inet 127.0.0.1/8
+# ifconfig em0 192.0.2.100/24
+.Ed
 .Pp
-.Dl # ifconfig em0 rdomain 4
-.Dl # ifconfig lo4 rdomain 4
-.Dl # ifconfig lo4 inet 127.0.0.1/8
-.Dl # ifconfig em0 192.0.2.100/24
+Set a default route and localhost reject route within rdomain 4:
+.Bd -literal -offset indent
+# route -T4 -qn add -net 127 127.0.0.1 -reject
+# route -T4 -n add default 192.0.2.1
+.Ed
 .Pp
-Set a default route and localhost reject route within
-.Em rdomain 4 .
-.Pp
-.Dl # route -T4 -qn add -net 127 127.0.0.1 -reject
-.Dl # route -T4 -n add default 192.0.2.1
-.Pp
-Starts an sshd in
-.Em rdomain 4 .
+Start an sshd in rdomain 4:
 .Pp
 .Dl # route -T4 exec /usr/sbin/sshd
 .Pp
 pf.conf snippit to block incoming port 80, and nat-to and move to rtable 0
-on interface em1
-.Pp
-.Bd -literal -offset 4n
+on interface em1:
+.Bd -literal -offset indent
 block in on rdomain 4 proto tcp to any port 80
 match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
 .Ed
