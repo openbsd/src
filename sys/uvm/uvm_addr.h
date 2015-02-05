@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.h,v 1.3 2014/06/10 20:08:48 kettenis Exp $	*/
+/*	$OpenBSD: uvm_addr.h,v 1.4 2015/02/05 23:51:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -18,8 +18,6 @@
 
 #ifndef _UVM_UVM_ADDR_H_
 #define _UVM_UVM_ADDR_H_
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Address selection logic.

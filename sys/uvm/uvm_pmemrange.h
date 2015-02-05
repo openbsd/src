@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.11 2011/07/08 18:25:56 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.12 2015/02/05 23:51:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -22,9 +22,6 @@
 
 #ifndef _UVM_UVM_PMEMRANGE_H_
 #define _UVM_UVM_PMEMRANGE_H_
-
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_page.h>
 
 RB_HEAD(uvm_pmr_addr, vm_page);
 RB_HEAD(uvm_pmr_size, vm_page);
