@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.81 2014/12/17 06:58:11 guenther Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.82 2015/02/06 10:58:35 deraadt Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1388,6 +1388,7 @@ Case2:
 			 */
 			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+			atomic_clearbits_int(&pg->pg_flags, PQ_AOBJ);
 		}
 	} else {
 		/* activate it */
