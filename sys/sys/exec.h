@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.28 2015/01/26 22:51:37 kettenis Exp $	*/
+/*	$OpenBSD: exec.h,v 1.29 2015/02/06 23:58:12 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -213,6 +213,9 @@ void	new_vmcmd(struct exec_vmcmd_set *evsp,
 extern struct	execsw execsw[];
 extern int	nexecs;
 extern int	exec_maxhdrsz;
+
+/* Limit on total PT_OPENBSD_RANDOMIZE bytes. */
+#define ELF_RANDOMIZE_LIMIT 64*1024
 
 #endif /* _KERNEL */
 

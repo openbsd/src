@@ -1,4 +1,4 @@
-$OpenBSD: SPECS.randomdata,v 1.1 2012/08/20 23:25:07 matthew Exp $
+$OpenBSD: SPECS.randomdata,v 1.2 2015/02/06 23:58:12 deraadt Exp $
 
 This document describes the OpenBSD operating system supplement for
 adding "random data" sections to the ELF ABI.  These sections can be
@@ -45,4 +45,4 @@ PT_LOAD segments: the kernel handles initializing random data segments
 in executables and program interpreters (i.e., ld.so), while ld.so
 handles initializing them in shared libraries.  Additionally, the
 kernel limits the total number of PT_OPENBSD_RANDOMIZE segment bytes
-in an executable or interpreter to 1024 bytes.
+in an executable or interpreter to 65536 bytes.

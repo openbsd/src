@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.46 2014/12/17 06:58:11 guenther Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.47 2015/02/06 23:58:12 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -289,16 +289,28 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 {
 	char *buf;
 	int error;
+	size_t off = 0, len;
 
 	if (cmd->ev_len == 0)
 		return (0);
-	if (cmd->ev_len > 1024)
+	if (cmd->ev_len > ELF_RANDOMIZE_LIMIT)
 		return (EINVAL);
 
-	buf = malloc(cmd->ev_len, M_TEMP, M_WAITOK);
-	arc4random_buf(buf, cmd->ev_len);
-	error = copyout(buf, (void *)cmd->ev_addr, cmd->ev_len);
-	free(buf, M_TEMP, cmd->ev_len);
+	buf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+	len = cmd->ev_len;
+	do {
+		size_t sublen = MIN(len, PAGE_SIZE);
+
+		arc4random_buf(buf, sublen);
+		error = copyout(buf, (void *)cmd->ev_addr + off, sublen);
+		if (error)
+			break;
+		off += sublen;
+		len -= sublen;
+		if (len)
+			yield();
+	} while (len);
+	free(buf, M_TEMP, PAGE_SIZE);
 
 	return (error);
 }
