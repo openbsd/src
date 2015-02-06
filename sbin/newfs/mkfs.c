@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.89 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.90 2015/02/06 22:29:00 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -182,11 +182,12 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	time(&utime);
 #endif
 	if (mfs) {
-		quad_t sz = (quad_t)fssize * DEV_BSIZE;
-		if (sz > SIZE_T_MAX) {
+		size_t sz;
+		if (fssize > SIZE_MAX / DEV_BSIZE) {
 			errno = ENOMEM;
 			err(12, "mmap");
 		}
+		sz = (size_t)fssize * DEV_BSIZE;
 		membase = mmap(NULL, sz, PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		if (membase == MAP_FAILED)
