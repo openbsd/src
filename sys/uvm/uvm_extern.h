@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.129 2015/02/05 23:51:06 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.130 2015/02/06 11:41:55 beck Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -415,6 +415,7 @@ void			km_free(void *, size_t, const struct kmem_va_mode *,
 			    const struct kmem_pa_mode *);
 int			uvm_map(vm_map_t, vaddr_t *, vsize_t,
 			    struct uvm_object *, voff_t, vsize_t, uvm_flag_t);
+int			uvm_mapanon(vm_map_t, vaddr_t *, vsize_t, vsize_t, uvm_flag_t);
 int			uvm_map_pageable(vm_map_t, vaddr_t, 
 			    vaddr_t, boolean_t, int);
 int			uvm_map_pageable_all(vm_map_t, int, vsize_t);
@@ -433,9 +434,6 @@ struct vmspace		*uvmspace_share(struct process *);
 void			uvm_meter(void);
 int			uvm_sysctl(int *, u_int, void *, size_t *, 
 			    void *, size_t, struct proc *);
-int			uvm_mmap(vm_map_t, vaddr_t *, vsize_t,
-			    vm_prot_t, vm_prot_t, int, 
-			    caddr_t, voff_t, vsize_t, struct proc *);
 struct vm_page		*uvm_pagealloc(struct uvm_object *,
 			    voff_t, struct vm_anon *, int);
 vaddr_t			uvm_pagealloc_contig(vaddr_t, vaddr_t,

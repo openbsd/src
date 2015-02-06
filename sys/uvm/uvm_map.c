@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.183 2015/02/06 09:04:34 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.184 2015/02/06 11:41:55 beck Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -927,6 +927,184 @@ uvm_map_addr_augment(struct vm_map_entry *entry)
 }
 
 /*
+ * uvm_mapanon: establish a valid mapping in map for an anon
+ *
+ * => *addr and sz must be a multiple of PAGE_SIZE.
+ * => *addr is ignored, except if flags contains UVM_FLAG_FIXED.
+ * => map must be unlocked.
+ *
+ * => align: align vaddr, must be a power-of-2.
+ *    Align is only a hint and will be ignored if the alignment fails.
+ */
+int
+uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
+    vsize_t align, uvm_flag_t flags)
+{
+	struct vm_map_entry	*first, *last, *entry, *new;
+	struct uvm_map_deadq	 dead;
+	vm_prot_t		 prot;
+	vm_prot_t		 maxprot;
+	vm_inherit_t		 inherit;
+	int			 advice;
+	int			 error;
+	vaddr_t			 pmap_align, pmap_offset;
+	vaddr_t			 hint;
+
+	KASSERT((map->flags & VM_MAP_ISVMSPACE) == VM_MAP_ISVMSPACE);
+	KASSERT(map != kernel_map);
+	KASSERT((map->flags & UVM_FLAG_HOLE) == 0);
+
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
+	splassert(IPL_NONE);
+
+	/*
+	 * We use pmap_align and pmap_offset as alignment and offset variables.
+	 *
+	 * Because the align parameter takes precedence over pmap prefer,
+	 * the pmap_align will need to be set to align, with pmap_offset = 0,
+	 * if pmap_prefer will not align.
+	 */
+	pmap_align = MAX(align, PAGE_SIZE);
+	pmap_offset = 0;
+
+	/* Decode parameters. */
+	prot = UVM_PROTECTION(flags);
+	maxprot = UVM_MAXPROTECTION(flags);
+	advice = UVM_ADVICE(flags);
+	inherit = UVM_INHERIT(flags);
+	error = 0;
+	hint = trunc_page(*addr);
+	TAILQ_INIT(&dead);
+	KASSERT((sz & (vaddr_t)PAGE_MASK) == 0);
+	KASSERT((align & (align - 1)) == 0);
+
+	/* Check protection. */
+	if ((prot & maxprot) != prot)
+		return EACCES;
+
+	/*
+	 * Before grabbing the lock, allocate a map entry for later
+	 * use to ensure we don't wait for memory while holding the
+	 * vm_map_lock.
+	 */
+	new = uvm_mapent_alloc(map, flags);
+	if (new == NULL)
+		return(ENOMEM);
+
+	if (flags & UVM_FLAG_TRYLOCK) {
+		if (vm_map_lock_try(map) == FALSE) {
+			error = EFAULT;
+			goto out;
+		}
+	} else
+		vm_map_lock(map);
+
+	first = last = NULL;
+	if (flags & UVM_FLAG_FIXED) {
+		/*
+		 * Fixed location.
+		 *
+		 * Note: we ignore align, pmap_prefer.
+		 * Fill in first, last and *addr.
+		 */
+		KASSERT((*addr & PAGE_MASK) == 0);
+
+		/* Check that the space is available. */
+		if (!uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
+			error = ENOMEM;
+			goto unlock;
+		}
+	} else if (*addr != 0 && (*addr & PAGE_MASK) == 0 &&
+	    (align == 0 || (*addr & (align - 1)) == 0) &&
+	    uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
+		/*
+		 * Address used as hint.
+		 *
+		 * Note: we enforce the alignment restriction,
+		 * but ignore pmap_prefer.
+		 */
+	} else if ((maxprot & PROT_EXEC) != 0 &&
+	    map->uaddr_exe != NULL) {
+		/* Run selection algorithm for executables. */
+		error = uvm_addr_invoke(map, map->uaddr_exe, &first, &last,
+		    addr, sz, pmap_align, pmap_offset, prot, hint);
+
+		if (error != 0)
+			goto unlock;
+	} else {
+		/* Update freelists from vmspace. */
+		uvm_map_vmspace_update(map, &dead, flags);
+
+		error = uvm_map_findspace(map, &first, &last, addr, sz,
+		    pmap_align, pmap_offset, prot, hint);
+
+		if (error != 0)
+			goto unlock;
+	}
+
+	/* If we only want a query, return now. */
+	if (flags & UVM_FLAG_QUERY) {
+		error = 0;
+		goto unlock;
+	}
+
+	/*
+	 * Create new entry.
+	 * first and last may be invalidated after this call.
+	 */
+	entry = uvm_map_mkentry(map, first, last, *addr, sz, flags, &dead,
+	    new);
+	if (entry == NULL) {
+		error = ENOMEM;
+		goto unlock;
+	}
+	new = NULL;
+	KDASSERT(entry->start == *addr && entry->end == *addr + sz);
+	entry->object.uvm_obj = NULL;
+	entry->offset = 0;
+	entry->protection = prot;
+	entry->max_protection = maxprot;
+	entry->inheritance = inherit;
+	entry->wired_count = 0;
+	entry->advice = advice;
+	if (flags & UVM_FLAG_NOFAULT)
+		entry->etype |= UVM_ET_NOFAULT;
+	if (flags & UVM_FLAG_COPYONW) {
+		entry->etype |= UVM_ET_COPYONWRITE;
+		if ((flags & UVM_FLAG_OVERLAY) == 0)
+			entry->etype |= UVM_ET_NEEDSCOPY;
+	}
+	if (flags & UVM_FLAG_OVERLAY) {
+		KERNEL_LOCK();
+		entry->aref.ar_pageoff = 0;
+		entry->aref.ar_amap = amap_alloc(sz,
+		    ptoa(flags & UVM_FLAG_AMAPPAD ? UVM_AMAP_CHUNK : 0),
+		    M_WAITOK);
+		KERNEL_UNLOCK();
+	}
+
+	/* Update map and process statistics. */
+	map->size += sz;
+	((struct vmspace *)map)->vm_dused += uvmspace_dused(map, *addr, *addr + sz);
+
+unlock:
+	vm_map_unlock(map);
+
+	/*
+	 * Remove dead entries.
+	 *
+	 * Dead entries may be the result of merging.
+	 * uvm_map_mkentry may also create dead entries, when it attempts to
+	 * destroy free-space entries.
+	 */
+	uvm_unmap_detach(&dead, 0);
+out:
+	if (new)
+		uvm_mapent_free(new);
+	return error;
+}
+
+/*
  * uvm_map: establish a valid mapping in map
  *
  * => *addr and sz must be a multiple of PAGE_SIZE.
@@ -1336,9 +1514,12 @@ void
 uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 {
 	struct vm_map_entry *entry;
-	int waitok;
+	int waitok = flags & UVM_PLA_WAITOK;
 
-	waitok = flags & UVM_PLA_WAITOK;
+	if (TAILQ_EMPTY(deadq))
+		return;
+
+	KERNEL_LOCK();
 	while ((entry = TAILQ_FIRST(deadq)) != NULL) {
 		if (waitok)
 			uvm_pause();
@@ -1363,6 +1544,7 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 		TAILQ_REMOVE(deadq, entry, dfree.deadq);
 		uvm_mapent_free(entry);
 	}
+	KERNEL_UNLOCK();
 }
 
 /*
@@ -1447,6 +1629,7 @@ uvm_map_mkentry(struct vm_map *map, struct vm_map_entry *first,
 	uvm_tree_sanity(map, __FILE__, __LINE__);
 	return entry;
 }
+
 
 /*
  * uvm_mapent_alloc: allocate a map entry
@@ -2598,6 +2781,7 @@ uvm_map_init(void)
 	    0, 0, PR_WAITOK, "vmsppl", NULL);
 	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
 	    0, 0, PR_WAITOK, "vmmpepl", NULL);
+	pool_setipl(&uvm_map_entry_pool, IPL_VM);
 	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
 	    0, 0, 0, "vmmpekpl", NULL);
 	pool_sethiwat(&uvm_map_entry_pool, 8192);
