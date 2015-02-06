@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.167 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.168 2015/02/06 09:27:17 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -389,16 +389,17 @@ initppc(startkernel, endkernel, args)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-	/*
-	 * Replace with real console.
-	 */
-	ofwconprobe();
-	consinit();
 
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	/*
+	 * Replace with real console.
+	 */
+	ofwconprobe();
+	consinit();
 
         pool_init(&ppc_vecpl, sizeof(struct vreg), 16, 0, 0, "ppcvec", NULL);
 
