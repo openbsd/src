@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.188 2015/02/06 01:07:07 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.189 2015/02/06 02:04:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1063,26 +1063,40 @@ post_nd(POST_ARGS)
 static void
 post_d1(POST_ARGS)
 {
+	struct mdoc_node	*n;
 
-	bwarn_ge1(mdoc);
+	n = mdoc->last;
+
+	if (n->type != MDOC_BODY)
+		return;
+
+	if (n->child == NULL)
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    n->line, n->pos, "D1");
+
 	post_hyph(mdoc);
 }
 
 static void
 post_literal(POST_ARGS)
 {
+	struct mdoc_node	*n;
 
-	bwarn_ge1(mdoc);
+	n = mdoc->last;
 
-	/*
-	 * The `Dl' (note "el" not "one") and `Bd' macros unset the
-	 * MDOC_LITERAL flag as they leave.  Note that `Bd' only sets
-	 * this in literal mode, but it doesn't hurt to just switch it
-	 * off in general since displays can't be nested.
-	 */
+	if (n->type != MDOC_BODY)
+		return;
 
-	if (MDOC_BODY == mdoc->last->type)
-		mdoc->flags &= ~MDOC_LITERAL;
+	if (n->child == NULL)
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    n->line, n->pos, mdoc_macronames[n->tok]);
+
+	if (n->tok == MDOC_Bd &&
+	    n->norm->Bd.type != DISP_literal &&
+	    n->norm->Bd.type != DISP_unfilled)
+		return;
+
+	mdoc->flags &= ~MDOC_LITERAL;
 }
 
 static void
@@ -1479,10 +1493,13 @@ post_bl(POST_ARGS)
 		return;
 	}
 
-	bwarn_ge1(mdoc);
-
 	nchild = nbody->child;
-	while (NULL != nchild) {
+	if (nchild == NULL) {
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    nbody->line, nbody->pos, "Bl");
+		return;
+	}
+	while (nchild != NULL) {
 		if (nchild->tok == MDOC_It ||
 		    (nchild->tok == MDOC_Sm &&
 		     nchild->next != NULL &&
@@ -1740,33 +1757,17 @@ post_rs(POST_ARGS)
 static void
 post_hyph(POST_ARGS)
 {
-	struct mdoc_node	*n, *nch;
+	struct mdoc_node	*nch;
 	char			*cp;
 
-	n = mdoc->last;
-	switch (n->type) {
-	case MDOC_HEAD:
-		if (MDOC_Sh == n->tok || MDOC_Ss == n->tok)
-			break;
-		return;
-	case MDOC_BODY:
-		if (MDOC_D1 == n->tok || MDOC_Nd == n->tok)
-			break;
-		return;
-	case MDOC_ELEM:
-		break;
-	default:
-		return;
-	}
-
-	for (nch = n->child; nch; nch = nch->next) {
-		if (MDOC_TEXT != nch->type)
+	for (nch = mdoc->last->child; nch != NULL; nch = nch->next) {
+		if (nch->type != MDOC_TEXT)
 			continue;
 		cp = nch->string;
-		if ('\0' == *cp)
+		if (*cp == '\0')
 			continue;
-		while ('\0' != *(++cp))
-			if ('-' == *cp &&
+		while (*(++cp) != '\0')
+			if (*cp == '-' &&
 			    isalpha((unsigned char)cp[-1]) &&
 			    isalpha((unsigned char)cp[1]))
 				*cp = ASCII_HYPH;
@@ -2060,10 +2061,15 @@ post_ignpar(POST_ARGS)
 {
 	struct mdoc_node *np;
 
-	post_hyph(mdoc);
-
-	if (MDOC_BODY != mdoc->last->type)
+	switch (mdoc->last->type) {
+	case MDOC_HEAD:
+		post_hyph(mdoc);
 		return;
+	case MDOC_BODY:
+		break;
+	default:
+		return;
+	}
 
 	if (NULL != (np = mdoc->last->child))
 		if (MDOC_Pp == np->tok || MDOC_Lp == np->tok) {

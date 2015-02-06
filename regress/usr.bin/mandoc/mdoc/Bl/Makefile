@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2014/12/20 02:26:42 schwarze Exp $
+# $OpenBSD: Makefile,v 1.28 2015/02/06 02:04:35 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column extend nested offset secstart
@@ -8,7 +8,7 @@ REGRESS_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
 REGRESS_TARGETS += bareIt bareTa unclosed break breakingIt broken
 
 LINT_TARGETS	 = column notype badargs
-LINT_TARGETS	+= noIt emptyhead emptytag emptyitem
+LINT_TARGETS	+= empty noIt emptyhead emptytag emptyitem
 LINT_TARGETS	+= bareIt bareTa break breakingIt broken
 
 # groff-1.22.3 defects:

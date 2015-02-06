@@ -1,4 +1,4 @@
-.Dd July 6, 2012
+.Dd February 5, 2015
 .Dt DL-SPACING 1
 .Os OpenBSD
 .Sh NAME
@@ -7,4 +7,6 @@
 .Sh DESCRIPTION
 preceding text
 .Dl spacing  in  and around one-line literal displays
+empty display:
+.Dl
 following text

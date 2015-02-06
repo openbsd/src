@@ -5,4 +5,4 @@ mandoc: blank.in:21:36: WARNING: whitespace at end of input line
 mandoc: blank.in:22:37: WARNING: whitespace at end of input line
 mandoc: blank.in:23:32: WARNING: whitespace at end of input line
 mandoc: blank.in:30:8: WARNING: whitespace at end of input line
-mandoc: blank.in:30:2: WARNING: argument count wrong: want more than 0 children (have 0)
+mandoc: blank.in:30:2: WARNING: skipping empty macro: Dl

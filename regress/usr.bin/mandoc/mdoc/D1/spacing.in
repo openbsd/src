@@ -1,4 +1,4 @@
-.Dd July 6, 2012
+.Dd February 5, 2015
 .Dt D1-SPACING 1
 .Os OpenBSD
 .Sh NAME
@@ -7,4 +7,6 @@
 .Sh DESCRIPTION
 preceding text
 .D1 spacing  in  and around one-line displays
+empty display:
+.D1
 following text
