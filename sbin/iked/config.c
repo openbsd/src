@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.35 2015/02/06 10:39:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <getopt.h>
 #include <signal.h>
 #include <errno.h>
 #include <err.h>
