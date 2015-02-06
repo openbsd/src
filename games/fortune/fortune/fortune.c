@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.38 2015/02/06 10:25:32 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.39 2015/02/06 10:26:06 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ bool	All_forts	= FALSE;	/* any fortune allowed */
 bool	Equal_probs	= FALSE;	/* scatter un-allocted prob equally */
 bool	Match		= FALSE;	/* dump fortunes matching a pattern */
 #ifdef DEBUG
-bool	Debug = FALSE;			/* print debug messages */
+int	Debug = FALSE;			/* print debug messages */
 #endif
 
 char	*Fortbuf = NULL;			/* fortune buffer for -m */
