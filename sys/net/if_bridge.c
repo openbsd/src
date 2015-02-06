@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.231 2014/12/22 03:38:01 tedu Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.232 2015/02/06 22:10:43 benno Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2692,12 +2692,17 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 	if (ifp->if_output == vlan_output) {
 		struct ifvlan	*ifv = ifp->if_softc;
 		struct ifnet	*p = ifv->ifv_p;
+		u_int8_t        prio = m->m_pkthdr.pf.prio;
+
+		/* IEEE 802.1p has prio 0 and 1 swapped */
+		if (prio <= 1)
+			prio = !prio;
 
 		/* should we use the tx tagging hw offload at all? */
 		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
 		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
 			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
-			    (m->m_pkthdr.pf.prio << EVL_PRIO_BITS);
+			    (prio << EVL_PRIO_BITS);
 			m->m_flags |= M_VLANTAG;
 		} else {
 			struct ether_vlan_header evh;
@@ -2706,7 +2711,7 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 			evh.evl_proto = evh.evl_encap_proto;
 			evh.evl_encap_proto = htons(ifv->ifv_type);
 			evh.evl_tag = htons(ifv->ifv_tag +
-			    (m->m_pkthdr.pf.prio << EVL_PRIO_BITS));
+			    (prio << EVL_PRIO_BITS));
 			m_adj(m, ETHER_HDR_LEN);
 			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
 			if (m == NULL) {
