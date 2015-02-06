@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.13 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.14 2015/02/06 06:37:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -539,7 +539,7 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 		m_freem(m);
 		return (ENOBUFS);
 	}
-	IFQ_INC_LEN(ifq);
+	ifq->ifq_len++;
 	cl->cl_hif->hif_packets++;
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
@@ -623,7 +623,7 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 		panic("hfsc_dequeue");
 
 	cl->cl_hif->hif_packets--;
-	IFQ_DEC_LEN(ifq);
+	ifq->ifq_len--;
 	PKTCNTR_INC(&cl->cl_stats.xmit_cnt, m->m_pkthdr.len);
 
 	hfsc_update_vf(cl, m->m_pkthdr.len, cur_time);
@@ -722,7 +722,7 @@ hfsc_purgeq(struct hfsc_class *cl)
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		m_freem(m);
 		cl->cl_hif->hif_packets--;
-		IFQ_DEC_LEN(cl->cl_hif->hif_ifq);
+		cl->cl_hif->hif_ifq->ifq_len--;
 	}
 
 	hfsc_update_vf(cl, 0, 0);	/* remove cl from the actlist */
