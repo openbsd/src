@@ -1,4 +1,4 @@
-.TH CC-BASIC 1 "July 7, 21012" OpenBSD
+.TH CC-BASIC 1 "July 7, 2012" OpenBSD
 .SH NAME
 cc-basic \- basic usage of the cc request
 .SH DESCRIPTION
@@ -9,7 +9,7 @@ second
 line
 :br
 third
-:cc ;
+:cc ;bogus
 line
 ;br
 fourth

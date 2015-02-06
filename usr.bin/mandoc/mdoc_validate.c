@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.191 2015/02/06 07:12:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.192 2015/02/06 16:05:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1212,9 +1212,9 @@ post_it(POST_ARGS)
 				i++;
 
 		if (i < cols || i > cols + 1)
-			mandoc_vmsg(MANDOCERR_ARGCOUNT,
+			mandoc_vmsg(MANDOCERR_BL_COL,
 			    mdoc->parse, nit->line, nit->pos,
-			    "columns == %d (have %d)", cols, i);
+			    "%d columns, %d cells", cols, i);
 		break;
 	default:
 		abort();

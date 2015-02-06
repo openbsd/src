@@ -1,4 +1,4 @@
-mandoc: column.in:71:2: ERROR: argument count wrong: columns == 2 (have 1)
-mandoc: column.in:74:2: ERROR: argument count wrong: columns == 2 (have 4)
-mandoc: column.in:75:2: ERROR: argument count wrong: columns == 2 (have 5)
+mandoc: column.in:71:2: WARNING: wrong number of cells: 2 columns, 1 cells
+mandoc: column.in:74:2: WARNING: wrong number of cells: 2 columns, 4 cells
+mandoc: column.in:75:2: WARNING: wrong number of cells: 2 columns, 5 cells
 mandoc: column.in:78:18: WARNING: skipping -width argument: Bl -column

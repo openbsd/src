@@ -1,0 +1,16 @@
+.TH TR-BASIC 1 "February 6, 2015" OpenBSD
+.SH NAME
+tr-args \- arguments of the tr request
+.SH DESCRIPTION
+no argument:
+.tr
+one character:
+.tr x
+>>x<<
+two characters:
+.tr xy
+>>x<<
+three characters:
+.tr xyz
+>>xz<<
+last line

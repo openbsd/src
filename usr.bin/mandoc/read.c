@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.100 2015/02/06 11:54:03 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.101 2015/02/06 16:05:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -156,12 +156,14 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping duplicate display type",
 	"skipping duplicate list type",
 	"skipping -width argument",
+	"wrong number of cells",
 	"unknown AT&T UNIX version",
 	"comma in function argument",
 	"parenthesis in function name",
 	"invalid content in Rs block",
 	"invalid Boolean argument",
 	"unknown font, skipping request",
+	"odd number of characters in request",
 
 	/* related to plain text */
 	"blank line in fill mode, using .sp",
@@ -206,7 +208,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 	/* related to request and macro arguments */
 	"escaped character not allowed in a name",
-	"argument count wrong",
 	"NOT IMPLEMENTED: Bd -file",
 	"missing list type, using -item",
 	"missing manual name, using \"\"",
