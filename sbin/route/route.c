@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.171 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.172 2015/02/06 03:22:00 reyk Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -678,9 +678,6 @@ show(int argc, char *argv[])
 				break;
 			case K_MPLS:
 				af = AF_MPLS;
-				break;
-			case K_ENCAP:
-				af = PF_KEY;
 				break;
 			case K_GATEWAY:
 				Fflag = 1;

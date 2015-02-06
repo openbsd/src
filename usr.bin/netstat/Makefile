@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2012/08/22 00:11:57 tedu Exp $
+#	$OpenBSD: Makefile,v 1.22 2015/02/06 03:22:00 reyk Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c inet6.c main.c mbuf.c mroute.c route.c \
@@ -7,5 +7,6 @@ BINGRP=	kmem
 BINMODE=2555
 LDADD=	-lkvm -lutil
 DPADD=	${LIBKVM} ${LIBUTIL}
+CFLAGS=	-Wall
 
 .include <bsd.prog.mk>

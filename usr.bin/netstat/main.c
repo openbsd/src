@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.103 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.104 2015/02/06 03:22:00 reyk Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -200,8 +200,6 @@ main(int argc, char *argv[])
 				af = AF_LOCAL;
 			else if (strcmp(optarg, "unix") == 0)
 				af = AF_UNIX;
-			else if (strcmp(optarg, "encap") == 0)
-				af = PF_KEY;
 			else if (strcmp(optarg, "mpls") == 0)
 				af = AF_MPLS;
 			else if (strcmp(optarg, "pflow") == 0)
