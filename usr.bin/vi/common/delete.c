@@ -1,4 +1,4 @@
-/*	$OpenBSD: delete.c,v 1.9 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: delete.c,v 1.10 2015/02/06 22:29:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 
 #include <bitstring.h>
 #include <errno.h>
-#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,17 +113,11 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 	if (db_get(sp, tm->lno, DBG_FATAL, &p, &len))
 		goto err;
 	if (len != 0 && tm->cno != len - 1) {
-		/*
-		 * XXX
-		 * We can overflow memory here, if the total length is greater
-		 * than SIZE_T_MAX.  The only portable way I've found to test
-		 * is depending on the overflow being less than the value.
-		 */
-		nlen = (len - (tm->cno + 1)) + tlen;
-		if (tlen > nlen) {
+		if (len < tm->cno + 1 || len - (tm->cno + 1) > SIZE_MAX - tlen) {
 			msgq(sp, M_ERR, "002|Line length overflow");
 			goto err;
 		}
+		nlen = (len - (tm->cno + 1)) + tlen;
 		if (tlen == 0) {
 			GET_SPACE_RET(sp, bp, blen, nlen);
 		} else
