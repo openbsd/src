@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.13 2010/10/22 14:11:22 millert Exp $	*/
+/*	$OpenBSD: fold.c,v 1.14 2015/02/06 08:53:01 tedu Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 				width = 0;
 			else if (!isdigit(lastch))
 				usage();
-			if (width > INT_MAX / 10)
+			if (width > INT_MAX / 10 - 1)
 				errx(1, "illegal width value, too large");
 			width = (width * 10) + (ch - '0');
 			if (width < 1)
