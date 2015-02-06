@@ -559,6 +559,8 @@
 ./usr/include/dev/pci/if_ipwvar.h
 ./usr/include/dev/pci/if_iwireg.h
 ./usr/include/dev/pci/if_iwivar.h
+./usr/include/dev/pci/if_iwmreg.h
+./usr/include/dev/pci/if_iwmvar.h
 ./usr/include/dev/pci/if_iwnreg.h
 ./usr/include/dev/pci/if_iwnvar.h
 ./usr/include/dev/pci/if_ix.h
