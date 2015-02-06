@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.37 2014/10/27 13:36:21 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.38 2015/02/06 09:16:06 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -26,9 +26,7 @@ void
 dispatch_imsg(struct imsgbuf *ibuf)
 {
 	struct imsg			 imsg;
-	struct imsg_write_file		*wfimsg;
 	ssize_t				 n;
-	size_t				 len;
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -81,22 +79,11 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			}
 			break;
 
-		case IMSG_WRITE_FILE:
-			if (imsg.hdr.len < IMSG_HEADER_SIZE +
-			    sizeof(struct imsg_write_file))
-				warning("short IMSG_WRITE_FILE");
-			else {
-				wfimsg = (struct imsg_write_file *)imsg.data;
-				len = imsg.hdr.len;
-				len -= IMSG_HEADER_SIZE;
-				len -= sizeof(struct imsg_write_file);
-				len -= wfimsg->len;
-				if (len == 0)
-					priv_write_file(wfimsg);
-				else
-					warning("bad IMSG_WRITE_FILE (%zu)",
-					    len);
-			}
+		case IMSG_WRITE_RESOLV_CONF:
+			priv_write_resolv_conf(&imsg);
+			break;
+		case IMSG_WRITE_OPTION_DB:
+			priv_write_option_db(&imsg);
 			break;
 
 		default:

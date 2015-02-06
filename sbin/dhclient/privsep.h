@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.25 2015/02/06 06:47:29 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.26 2015/02/06 09:16:06 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -27,7 +27,8 @@ enum imsg_code {
 	IMSG_FLUSH_ROUTES,
 	IMSG_ADD_ROUTE,
 	IMSG_HUP,
-	IMSG_WRITE_FILE
+	IMSG_WRITE_RESOLV_CONF,
+	IMSG_WRITE_OPTION_DB
 };
 
 struct imsg_delete_address {
@@ -55,19 +56,12 @@ struct imsg_hup {
 	struct	in_addr addr;
 };
 
-struct imsg_write_file {
-	char	path[PATH_MAX];
-	int	flags;
-	mode_t	mode;
-	size_t	len;
-	uid_t	uid;
-	gid_t	gid;
-};
-
 void	dispatch_imsg(struct imsgbuf *);
 void	priv_delete_address(struct imsg_delete_address *);
 void	priv_add_address(struct imsg_add_address *);
 void	priv_flush_routes(struct imsg_flush_routes *);
 void	priv_add_route(struct imsg_add_route *);
 void	priv_cleanup(struct imsg_hup *);
-void	priv_write_file(struct imsg_write_file *);
+void	priv_write_resolv_conf(struct imsg *);
+void	priv_write_option_db(struct imsg *);
+void	priv_write_file(char *, int, mode_t, uid_t, gid_t, u_int8_t *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.354 2015/02/06 06:47:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.355 2015/02/06 09:16:06 reyk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -99,8 +99,9 @@ void		 fork_privchld(int, int);
 void		 get_ifname(char *);
 char		*resolv_conf_contents(struct option_data  *,
 		     struct option_data *);
-void		 write_file(char *, int, mode_t, uid_t, gid_t, u_int8_t *,
-		     size_t);
+void		 write_resolv_conf(u_int8_t *, size_t);
+void		 write_option_db(u_int8_t *, size_t);
+
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 apply_ignore_list(char *);
@@ -356,10 +357,7 @@ routehandler(void)
 				}
 			} else if (strlen(path_option_db)) {
 				/* Let monitoring programs see link loss. */
-				write_file(path_option_db,
-				    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC |
-				    O_EXLOCK | O_NOFOLLOW, S_IRUSR | S_IWUSR |
-				    S_IRGRP, 0, 0, "", 0);
+				write_option_db("", 0);
 				/* No need to wait for anything but link. */
 				cancel_timeout();
 			}
@@ -380,10 +378,7 @@ routehandler(void)
 	/* Something has happened. Try to write out the resolv.conf. */
 	if (client->active && client->active->resolv_conf &&
 	    client->flags & IS_RESPONSIBLE)
-		write_file("/etc/resolv.conf",
-		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
-		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
-		    client->active->resolv_conf,
+		write_resolv_conf(client->active->resolv_conf,
 		    strlen(client->active->resolv_conf));
 
 done:
@@ -1733,9 +1728,7 @@ rewrite_option_db(struct client_lease *offered, struct client_lease *effective)
 	} else
 		warning("cannot make effective lease into string");
 
-	write_file(path_option_db,
-	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK | O_NOFOLLOW,
-	    S_IRUSR | S_IWUSR | S_IRGRP, 0, 0, db, strlen(db));
+	write_option_db(db, strlen(db));
 }
 
 char *
@@ -2337,69 +2330,99 @@ apply_ignore_list(char *ignore_list)
 }
 
 void
-write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
-    u_int8_t *contents, size_t sz)
+write_resolv_conf(u_int8_t *contents, size_t sz)
 {
-	struct iovec iov[2];
-	struct imsg_write_file imsg;
-	size_t rslt;
+	int rslt;
 
-	memset(&imsg, 0, sizeof(imsg));
-
-	rslt = strlcpy(imsg.path, path, sizeof(imsg.path));
-	if (rslt >= sizeof(imsg.path)) {
-		warning("write_file: path too long (%zu)", rslt);
-		return;
-	}
-
-	imsg.len = sz;
-	imsg.flags = flags;
-	imsg.mode = mode;
-	imsg.uid = uid;
-	imsg.gid = gid;
-
-	iov[0].iov_base = &imsg;
-	iov[0].iov_len = sizeof(imsg);
-	iov[1].iov_base = contents;
-	iov[1].iov_len = sz;
-
-	rslt = imsg_composev(unpriv_ibuf, IMSG_WRITE_FILE, 0, 0, -1, iov, 2);
+	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_RESOLV_CONF,
+	    0, 0, -1, contents, sz);
 	if (rslt == -1)
-		warning("write_file: imsg_composev: %s", strerror(errno));
+		warning("write_resolv_conf: imsg_compose: %s", strerror(errno));
 
-	flush_unpriv_ibuf("write_file");
+	flush_unpriv_ibuf("write_resolv_conf");
 }
 
 void
-priv_write_file(struct imsg_write_file *imsg)
+write_option_db(u_int8_t *contents, size_t sz)
+{
+	int rslt;
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_OPTION_DB,
+	    0, 0, -1, contents, sz);
+	if (rslt == -1)
+		warning("write_option_db: imsg_compose: %s", strerror(errno));
+
+	flush_unpriv_ibuf("write_option_db");
+}
+
+void
+priv_write_resolv_conf(struct imsg *imsg)
+{
+	u_int8_t *contents;
+	size_t sz;
+
+	if (imsg->hdr.len < IMSG_HEADER_SIZE) {
+		warning("short IMSG_WRITE_RESOLV_CONF");
+		return;
+	}
+
+	if (!resolv_conf_priority(ifi->rdomain))
+		return;
+
+	contents = imsg->data;
+	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
+
+	priv_write_file("/etc/resolv.conf",
+	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0, contents, sz);
+}
+
+void
+priv_write_option_db(struct imsg *imsg)
+{
+	u_int8_t *contents;
+	size_t sz;
+
+	if (imsg->hdr.len < IMSG_HEADER_SIZE) {
+		warning("short IMSG_WRITE_OPTION_DB");
+		return;
+	}
+
+	contents = imsg->data;
+	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
+
+	priv_write_file(path_option_db,
+	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK | O_NOFOLLOW,
+	    S_IRUSR | S_IWUSR | S_IRGRP, 0, 0, contents, sz);
+}
+
+void
+priv_write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
+    u_int8_t *contents, size_t sz)
 {
 	ssize_t n;
 	int fd;
 
-	if ((strcmp("/etc/resolv.conf", imsg->path) == 0) &&
-	    !resolv_conf_priority(ifi->rdomain))
-		return;
-
-	fd = open(imsg->path, imsg->flags, imsg->mode);
+	fd = open(path, flags, mode);
 	if (fd == -1) {
-		note("Couldn't open '%s': %s", imsg->path, strerror(errno));
+		note("Couldn't open '%s': %s", path, strerror(errno));
 		return;
 	}
 
-	n = write(fd, imsg+1, imsg->len);
+	n = write(fd, contents, sz);
 	if (n == -1)
-		note("Couldn't write contents to '%s': %s", imsg->path,
+		note("Couldn't write contents to '%s': %s", path,
 		    strerror(errno));
-	else if (n < imsg->len)
-		note("Short contents write to '%s' (%zd vs %zu)", imsg->path,
-		    n, imsg->len);
+	else if (n < sz)
+		note("Short contents write to '%s' (%zd vs %zu)", path,
+		    n, sz);
 
-	if (fchmod(fd, imsg->mode) == -1)
-		note("fchmod(fd, 0x%x) of '%s' failed (%s)", imsg->mode,
-		    imsg->path, strerror(errno));
-	if (fchown(fd, imsg->uid, imsg->gid) == -1)
-		note("fchown(fd, %d, %d) of '%s' failed (%s)", imsg->uid,
-		    imsg->gid, imsg->path, strerror(errno));
+	if (fchmod(fd, mode) == -1)
+		note("fchmod(fd, 0x%x) of '%s' failed (%s)", mode,
+		    path, strerror(errno));
+	if (fchown(fd, uid, gid) == -1)
+		note("fchown(fd, %d, %d) of '%s' failed (%s)", uid,
+		    gid, path, strerror(errno));
 
 	close(fd);
 }
