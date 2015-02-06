@@ -1,0 +1,2 @@
+mandoc: args.in:7:5: ERROR: skipping all arguments: nf arg1 arg2 arg3
+mandoc: args.in:10:5: ERROR: skipping all arguments: fi arg1 arg2 arg3
