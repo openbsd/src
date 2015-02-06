@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.30 2014/11/24 16:40:29 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.31 2015/02/06 22:12:19 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2011 Miodrag Vallat.
  *
@@ -533,7 +533,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
 				 */
-				bios_printf("%u MB of memory could not be "
+				bios_printf("%lu MB of memory could not be "
 				    "managed, increase MAXMEMSEGS\n",
 				    ptoa(np) >> 20);
 			}
@@ -580,7 +580,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
 				 */
-				bios_printf("%u MB of memory could not be "
+				bios_printf("%lu MB of memory could not be "
 				    "managed, increase MAXMEMSEGS\n",
 				    ptoa(np) >> 20);
 			}
