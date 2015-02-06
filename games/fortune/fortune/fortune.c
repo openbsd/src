@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.34 2015/02/06 10:04:18 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.35 2015/02/06 10:12:57 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -284,7 +284,7 @@ getargs(int argc, char *argv[])
 #endif /* DEBUG */
 		switch(ch) {
 		case 'a':		/* any fortune */
-			All_forts++;
+			All_forts = TRUE;
 			break;
 # ifdef DEBUG
 		case 'D':
@@ -292,24 +292,24 @@ getargs(int argc, char *argv[])
 			break;
 # endif /* DEBUG */
 		case 'e':
-			Equal_probs++;	/* scatter un-allocted prob equally */
+			Equal_probs = TRUE;	/* scatter un-allocted prob equally */
 			break;
 		case 'f':		/* find fortune files */
-			Find_files++;
+			Find_files = TRUE;
 			break;
 		case 'l':		/* long ones only */
-			Long_only++;
+			Long_only = TRUE;
 			Short_only = FALSE;
 			break;
 		case 'o':		/* offensive ones only */
-			Offend++;
+			Offend = TRUE;
 			break;
 		case 's':		/* short ones only */
-			Short_only++;
+			Short_only = TRUE;
 			Long_only = FALSE;
 			break;
 		case 'w':		/* give time to read */
-			Wait++;
+			Wait = TRUE;
 			break;
 # ifdef	NO_REGEX
 		case 'i':			/* case-insensitive match */
@@ -319,11 +319,11 @@ getargs(int argc, char *argv[])
 			exit(0);
 # else	/* NO_REGEX */
 		case 'm':			/* dump out the fortunes */
-			Match++;
+			Match = TRUE;
 			pat = optarg;
 			break;
 		case 'i':			/* case-insensitive match */
-			ignore_case++;
+			ignore_case = TRUE;
 			break;
 # endif	/* NO_REGEX */
 		case '?':
