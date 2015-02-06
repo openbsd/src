@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.185 2015/01/08 14:29:18 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.186 2015/02/06 16:00:30 benno Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -196,12 +196,17 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 	if ((*m)->m_flags & M_VLANTAG) {
 		struct ifvlan	*ifv = ifp->if_softc;
 		struct ifnet	*p = ifv->ifv_p;
+		u_int8_t	prio = (*m)->m_pkthdr.pf.prio;
+
+		/* IEEE 802.1p has prio 0 and 1 swapped */
+		if (prio <= 1)
+			prio = !prio;
 
 		/* should we use the tx tagging hw offload at all? */
 		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
 		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
 			(*m)->m_pkthdr.ether_vtag = ifv->ifv_tag +
-			    ((*m)->m_pkthdr.pf.prio << EVL_PRIO_BITS);
+			    (prio << EVL_PRIO_BITS);
 			/* don't return, need to add regular ethernet header */
 		} else {
 			struct ether_vlan_header	*evh;
@@ -215,7 +220,7 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 			evh->evl_proto = etype;
 			evh->evl_encap_proto = htons(ifv->ifv_type);
 			evh->evl_tag = htons(ifv->ifv_tag +
-			    ((*m)->m_pkthdr.pf.prio << EVL_PRIO_BITS));
+			    (prio << EVL_PRIO_BITS));
 			(*m)->m_flags &= ~M_VLANTAG;
 			return (0);
 		}
