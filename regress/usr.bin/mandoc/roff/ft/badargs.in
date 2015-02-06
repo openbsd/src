@@ -7,7 +7,7 @@ default font
 bold
 .ft foo
 still bold
-.ft I
+.ft I bogus
 italic
 .ft P
 back to bold

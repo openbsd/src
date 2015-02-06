@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.82 2015/02/06 08:28:03 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.83 2015/02/06 09:38:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,7 +37,6 @@
 typedef	void	(*v_check)(CHKARGS);
 
 static	void	  check_eq2(CHKARGS);
-static	void	  check_le1(CHKARGS);
 static	void	  check_le5(CHKARGS);
 static	void	  check_par(CHKARGS);
 static	void	  check_part(CHKARGS);
@@ -83,7 +82,7 @@ static	v_check man_valids[MAN_MAX] = {
 	check_part, /* RS */
 	NULL,       /* DT */
 	post_UC,    /* UC */
-	check_le1,  /* PD */
+	NULL,       /* PD */
 	post_AT,    /* AT */
 	NULL,       /* in */
 	post_ft,    /* ft */
@@ -180,7 +179,6 @@ check_##name(CHKARGS) \
 }
 
 INEQ_DEFINE(2, ==, eq2)
-INEQ_DEFINE(1, <=, le1)
 INEQ_DEFINE(5, <=, le5)
 
 static void
@@ -238,10 +236,6 @@ post_ft(CHKARGS)
 		    n->line, n->pos, "ft %s", cp);
 		*cp = '\0';
 	}
-
-	if (1 < n->nchild)
-		mandoc_vmsg(MANDOCERR_ARGCOUNT, man->parse, n->line,
-		    n->pos, "want one child (have %d)", n->nchild);
 }
 
 static void
@@ -492,9 +486,6 @@ post_AT(CHKARGS)
 static void
 post_vs(CHKARGS)
 {
-
-	if (n->tok == MAN_sp)
-		check_le1(man, n);
 
 	if (NULL != n->prev)
 		return;

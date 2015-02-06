@@ -1,1 +1,2 @@
 mandoc: badargs.in:8:2: WARNING: unknown font, skipping request: ft foo
+mandoc: badargs.in:10:7: ERROR: skipping excess arguments: ft ... bogus
