@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.147 2015/02/02 17:27:43 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.148 2015/02/06 00:17:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -145,6 +145,7 @@ struct filed {
 			struct tls		*f_ctx;
 			char			*f_host;
 			int			 f_reconnectwait;
+			int			 f_dropped;
 		} f_forw;		/* forwarding address */
 		char	f_fname[PATH_MAX];
 		struct {
@@ -221,6 +222,7 @@ char	*path_ctlsock = NULL;	/* Path to control socket */
 struct	tls_config *tlsconfig;
 const char *CAfile = "/etc/ssl/cert.pem"; /* file containing CA certificates */
 int	NoVerify = 0;		/* do not verify TLS server x509 certificate */
+int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
 
 #define CTL_READING_CMD		1
 #define CTL_WRITING_REPLY	2
@@ -284,6 +286,7 @@ void	 tcp_writecb(struct bufferevent *, void *);
 void	 tcp_errorcb(struct bufferevent *, short, void *);
 void	 tcp_connectcb(int, short, void *);
 struct tls *tls_socket(struct filed *);
+int	 tcpbuf_countmsg(struct bufferevent *bufev);
 void	 die_signalcb(int, short, void *);
 void	 mark_timercb(int, short, void *);
 void	 init_signalcb(int, short, void *);
@@ -775,12 +778,22 @@ void
 tcp_writecb(struct bufferevent *bufev, void *arg)
 {
 	struct filed	*f = arg;
+	char		 ebuf[256];
 
 	/*
 	 * Successful write, connection to server is good, reset wait time.
 	 */
 	dprintf("loghost \"%s\" successful write\n", f->f_un.f_forw.f_loghost);
 	f->f_un.f_forw.f_reconnectwait = 0;
+
+	if (f->f_un.f_forw.f_dropped > 0 &&
+	    EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) < MAX_TCPBUF) {
+		snprintf(ebuf, sizeof(ebuf),
+		    "syslogd: dropped %d messages to loghost \"%s\"",
+		    f->f_un.f_forw.f_dropped, f->f_un.f_forw.f_loghost);
+		f->f_un.f_forw.f_dropped = 0;
+		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
+	}
 }
 
 void
@@ -902,6 +915,21 @@ tls_socket(struct filed *f)
 		}
 	}
 	return (ctx);
+}
+
+int
+tcpbuf_countmsg(struct bufferevent *bufev)
+{
+	char	*p, *buf, *end;
+	int	 i = 0;
+
+	buf = EVBUFFER_DATA(bufev->output);
+	end = buf + EVBUFFER_LENGTH(bufev->output);
+	for (p = buf; p < end; p++) {
+		if (*p == '\n')
+			i++;
+	}
+	return (i);
 }
 
 void
@@ -1211,10 +1239,13 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORWTCP:
 	case F_FORWTLS:
-		dprintf(" %s\n", f->f_un.f_forw.f_loghost);
+		dprintf(" %s", f->f_un.f_forw.f_loghost);
 		if (EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) >=
-		    MAX_TCPBUF)
-			break;  /* XXX log error message */
+		    MAX_TCPBUF) {
+			dprintf(" (dropped)\n");
+			f->f_un.f_forw.f_dropped++;
+			break;
+		}
 		/*
 		 * RFC 6587  3.4.2.  Non-Transparent-Framing
 		 * Use \n to split messages for now.
@@ -1225,9 +1256,13 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "",
 		    (char *)iov[4].iov_base);
-		if (l < 0)
-			break;  /* XXX log error message */
+		if (l < 0) {
+			dprintf(" (dropped)\n");
+			f->f_un.f_forw.f_dropped++;
+			break;
+		}
 		bufferevent_enable(f->f_un.f_forw.f_bufev, EV_WRITE);
+		dprintf("\n");
 		break;
 
 	case F_CONSOLE:
@@ -1414,11 +1449,21 @@ mark_timercb(int unused, short event, void *arg)
 void
 init_signalcb(int signum, short event, void *arg)
 {
+	char	 ebuf[256];
+
 	init();
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart",
 	    LocalHostName, ADDDATE);
 	dprintf("syslogd: restarted\n");
+
+	if (tcpbuf_dropped > 0) {
+		snprintf(ebuf, sizeof(ebuf),
+		    "syslogd: dropped %d messages to remote loghost",
+		    tcpbuf_dropped);
+		tcpbuf_dropped = 0;
+		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
+	}
 }
 
 /*
@@ -1454,8 +1499,22 @@ die(int signo)
 		/* flush any pending output */
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
+		if (f->f_type == F_FORWTLS || f->f_type == F_FORWTCP) {
+			tcpbuf_dropped += f->f_un.f_forw.f_dropped +
+			    tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
+			f->f_un.f_forw.f_dropped = 0;
+		}
 	}
 	Initialized = was_initialized;
+
+	if (tcpbuf_dropped > 0) {
+		snprintf(ebuf, sizeof(ebuf),
+		    "syslogd: dropped %d messages to remote loghost",
+		    tcpbuf_dropped);
+		tcpbuf_dropped = 0;
+		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
+	}
+
 	if (signo) {
 		dprintf("syslogd: exiting on signal %d\n", signo);
 		(void)snprintf(ebuf, sizeof(ebuf), "exiting on signal %d",
@@ -1508,7 +1567,8 @@ init(void)
 			free(f->f_un.f_forw.f_host);
 			/* FALLTHROUGH */
 		case F_FORWTCP:
-			/* XXX Save messages in output buffer for reconnect. */
+			tcpbuf_dropped += f->f_un.f_forw.f_dropped +
+			     tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
 			bufferevent_free(f->f_un.f_forw.f_bufev);
 			/* FALLTHROUGH */
 		case F_FILE:
