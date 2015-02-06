@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.564 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.565 2015/02/06 05:17:48 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3176,10 +3176,8 @@ init386(paddr_t first_avail)
 		panic("no BIOS memory map supplied");
 #endif
  
-#if defined(MULTIPROCESSOR)
 	/* install the lowmem ptp after boot args for 1:1 mappings */
 	pmap_prealloc_lowmem_ptp(round_page((paddr_t)(bootargv + bootargc)));
-#endif
 
 	/*
 	 * account all the memory passed in the map from /boot

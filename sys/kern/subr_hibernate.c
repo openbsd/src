@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.112 2015/01/12 07:11:41 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.113 2015/02/06 05:17:48 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1398,8 +1398,6 @@ hibernate_write_chunks(union hibernate_info *hib)
 							inaddr & PMAP_PA_MASK,
 							PROT_READ);
 
-						pmap_activate(curproc);
-
 						bcopy((caddr_t)hibernate_temp_page,
 							(caddr_t)hibernate_copy_page,
 							PAGE_SIZE);
@@ -1799,10 +1797,7 @@ hibernate_suspend(void)
 	DPRINTF("hibernate @ block %lld max-length %lu blocks\n",
 	    hib.image_offset, ctod(end) - ctod(start));
 
-	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
-		PROT_READ | PROT_WRITE);
 	pmap_activate(curproc);
-
 	DPRINTF("hibernate: writing chunks\n");
 	if (hibernate_write_chunks(&hib)) {
 		DPRINTF("hibernate_write_chunks failed\n");
@@ -1838,6 +1833,10 @@ hibernate_alloc(void)
 	KASSERT(global_piglet_va == 0);
 	KASSERT(hibernate_temp_page == 0);
 
+	pmap_activate(curproc);
+	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
+		PROT_READ | PROT_WRITE);
+
 	/* Allocate a piglet, store its addresses in the supplied globals */
 	if (uvm_pmr_alloc_piglet(&global_piglet_va, &global_piglet_pa,
 	    HIBERNATE_CHUNK_SIZE * 4, HIBERNATE_CHUNK_SIZE))
@@ -1866,6 +1865,8 @@ hibernate_alloc(void)
 void
 hibernate_free(void)
 {
+	pmap_activate(curproc);
+
 	if (global_piglet_va)
 		uvm_pmr_free_piglet(global_piglet_va,
 		    4 * HIBERNATE_CHUNK_SIZE);

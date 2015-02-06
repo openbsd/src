@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.281 2015/01/17 04:18:49 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.282 2015/02/06 05:17:48 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2200,8 +2200,11 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	if (state == ACPI_STATE_S4) {
 		uvmpd_hibernate();
 		hibernate_suspend_bufcache();
-		if (hibernate_alloc())
+		if (hibernate_alloc()) {
+			printf("%s: failed to allocate hibernate memory\n",
+			    sc->sc_dev.dv_xname);
 			goto fail_alloc;
+		}
 	}
 #endif /* HIBERNATE */
 
