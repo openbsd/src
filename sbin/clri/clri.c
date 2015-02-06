@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.15 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: clri.c,v 1.16 2015/02/06 11:49:39 tedu Exp $	*/
 /*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
@@ -97,8 +97,10 @@ main(int argc, char *argv[])
 	/* check that inode numbers are valid */
 	imax = sbp->fs_ncg * sbp->fs_ipg;
 	for (i = 1; i < (argc - 1); i++) {
-		if (atoi(argv[i]) <= 0 || atoi(argv[i]) >= imax) 
-			errx(1, "%s is not a valid inode number", argv[i]);
+		const char *errstr;
+		strtonum(argv[i], 1, imax, &errstr);
+		if (errstr)
+			errx(1, "%s is not a valid inode number: %s", argv[i], errstr);
 	}
 
 	/* clear the clean flag in the superblock */
@@ -112,8 +114,8 @@ main(int argc, char *argv[])
 	/* remaining arguments are inode numbers. */
 	while (*++argv) {
 		/* get the inode number. */
-		inonum = atoi(*argv);
-		(void)printf("clearing %llu\n", (unsigned long long)inonum);
+		inonum = strtonum(*argv, 1, imax, NULL);
+		(void)printf("clearing %u\n", inonum);
 
 		/* read in the appropriate block. */
 		offset = ino_to_fsba(sbp, inonum);	/* inode to fs blk */
