@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.793 2015/01/03 20:39:11 uaa Exp $
+#	$OpenBSD: GENERIC,v 1.794 2015/02/06 20:05:48 stsp Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -620,6 +620,7 @@ ipw*	at pci?				# Intel PRO/Wireless 2100
 iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
 wpi*	at pci?				# Intel PRO/Wireless 3945ABG
 iwn*	at pci?				# Intel WiFi Link 4965/5000/1000/6000
+iwm*	at pci?				# Intel WiFi Link 7xxx
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 rtw*	at pci?				# Realtek 8180
