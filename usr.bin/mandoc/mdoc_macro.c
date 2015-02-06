@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.133 2015/02/06 01:07:07 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.134 2015/02/06 03:31:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1399,6 +1399,12 @@ in_line_eoln(MACRO_PROT_ARGS)
 			n = n->parent;
 		if (n->tok == MDOC_Nm)
 			rew_last(mdoc, mdoc->last->parent);
+	}
+
+	if (buf[*pos] == '\0' && tok == MDOC_Fd) {
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    line, ppos, "Fd");
+		return;
 	}
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);

@@ -1,0 +1,9 @@
+FO-NOHEAD(1)                General Commands Manual               FO-NOHEAD(1)
+
+NNAAMMEE
+     FFoo--nnoohheeaadd - function block macro without head argument
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text _i_n_t(_i_n_t) final text
+
+OpenBSD                        February 5, 2015                        OpenBSD

@@ -1,0 +1,13 @@
+.Dd February 5, 2015
+.Dt FO-NOHEAD 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-nohead
+.Nd function block macro without head argument
+.Sh DESCRIPTION
+initial text
+.Ft int
+.Fo
+.Fa int
+.Fc
+final text

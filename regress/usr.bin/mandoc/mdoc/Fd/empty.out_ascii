@@ -1,0 +1,13 @@
+FD-EMPTY(1)                 General Commands Manual                FD-EMPTY(1)
+
+NNAAMMEE
+     FFdd--eemmppttyy - empty preprocessor directive macros
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
+     ##iinncclluuddee <<ssttddlliibb..hh>>
+
+DDEESSCCRRIIPPTTIIOONN
+     leading text trailing text
+
+OpenBSD                        February 5, 2015                        OpenBSD

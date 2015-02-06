@@ -9,7 +9,7 @@ with arguments:
 .Ft int
 .Fn abs "int i"
 .Ft long
-.Fo labs
+.Fo labs bogus
 .Fa "long i"
 .Fc
 void function arguments:

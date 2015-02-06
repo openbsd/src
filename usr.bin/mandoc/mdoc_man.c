@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.82 2015/02/01 23:10:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.83 2015/02/06 03:31:11 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1282,12 +1282,14 @@ pre_fo(DECL_ARGS)
 		pre_syn(n);
 		break;
 	case MDOC_HEAD:
+		if (n->child == NULL)
+			return(0);
 		if (MDOC_SYNPRETTY & n->flags)
 			print_block(".HP 4n", MMAN_nl);
 		font_push('B');
 		break;
 	case MDOC_BODY:
-		outflags &= ~MMAN_spc;
+		outflags &= ~(MMAN_spc | MMAN_nl);
 		print_word("(");
 		outflags &= ~MMAN_spc;
 		break;
@@ -1303,7 +1305,8 @@ post_fo(DECL_ARGS)
 
 	switch (n->type) {
 	case MDOC_HEAD:
-		font_pop();
+		if (n->child != NULL)
+			font_pop();
 		break;
 	case MDOC_BODY:
 		post_fn(meta, n);

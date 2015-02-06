@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.189 2015/02/06 02:04:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.190 2015/02/06 03:31:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,7 +65,6 @@ static	enum mdoc_sec	a2sec(const char *);
 static	size_t		macro2len(enum mdoct);
 static	void	 rewrite_macro2len(char **);
 
-static	void	 bwarn_ge1(POST_ARGS);
 static	void	 ewarn_eq1(POST_ARGS);
 static	void	 ewarn_ge1(POST_ARGS);
 
@@ -149,7 +148,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ev */
 	{ pre_std, post_ex },			/* Ex */
 	{ NULL, post_fa },			/* Fa */
-	{ NULL, ewarn_ge1 },			/* Fd */
+	{ NULL, NULL },				/* Fd */
 	{ NULL, NULL },				/* Fl */
 	{ NULL, post_fn },			/* Fn */
 	{ NULL, NULL },				/* Ft */
@@ -397,12 +396,6 @@ check_count(struct mdoc *mdoc, enum mdoc_type type,
 	mandoc_vmsg(MANDOCERR_ARGCWARN, mdoc->parse, mdoc->last->line,
 	    mdoc->last->pos, "want %s%d children (have %d)",
 	    p, val, mdoc->last->nchild);
-}
-
-static void
-bwarn_ge1(POST_ARGS)
-{
-	check_count(mdoc, MDOC_BODY, CHECK_GT, 0);
 }
 
 static void
@@ -971,11 +964,27 @@ post_fn(POST_ARGS)
 static void
 post_fo(POST_ARGS)
 {
+	const struct mdoc_node	*n;
 
-	check_count(mdoc, MDOC_HEAD, CHECK_EQ, 1);
-	bwarn_ge1(mdoc);
-	if (mdoc->last->type == MDOC_HEAD && mdoc->last->nchild)
-		post_fname(mdoc);
+	n = mdoc->last;
+
+	if (n->type != MDOC_HEAD)
+		return;
+
+	if (n->child == NULL) {
+		mandoc_msg(MANDOCERR_FO_NOHEAD, mdoc->parse,
+		    n->line, n->pos, "Fo");
+		return;
+	}
+	if (n->child != n->last) {
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
+		    n->child->next->line, n->child->next->pos,
+		    "Fo ... %s", n->child->next->string);
+		while (n->child != n->last)
+			mdoc_node_delete(mdoc, n->last);
+	}
+
+	post_fname(mdoc);
 }
 
 static void

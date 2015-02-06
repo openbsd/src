@@ -1,0 +1,14 @@
+.Dd February 5, 2015
+.Dt FD-EMPTY 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fd-empty
+.Nd empty preprocessor directive macros
+.Sh SYNOPSIS
+.In sys/types.h
+.Fd
+.In stdlib.h
+.Sh DESCRIPTION
+leading text
+.Fd
+trailing text

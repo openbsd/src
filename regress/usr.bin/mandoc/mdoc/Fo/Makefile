@@ -1,11 +1,14 @@
-# $OpenBSD: Makefile,v 1.11 2014/11/20 00:30:34 schwarze Exp $
+# $OpenBSD: Makefile,v 1.12 2015/02/06 03:31:11 schwarze Exp $
 
-REGRESS_TARGETS = basic break eos font noarg obsolete punct section warn
-LINT_TARGETS	= noarg obsolete warn
+REGRESS_TARGETS	 = basic break eos font noarg nohead
+REGRESS_TARGETS += obsolete punct section warn
+LINT_TARGETS	 = noarg nohead obsolete warn
 
-# groff does not handle .nr nS
+# groff-1.22.3 defects:
+# - .Fo without an argument prints unbalanced parentheses
+# - .nr nS is ignored
 
-SKIP_GROFF ?= section
+SKIP_GROFF	 = noarg section
 
 SKIP_TMAN = eos
 

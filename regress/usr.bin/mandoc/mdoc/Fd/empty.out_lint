@@ -1,0 +1,2 @@
+mandoc: empty.in:9:2: WARNING: skipping empty macro: Fd
+mandoc: empty.in:13:2: WARNING: skipping empty macro: Fd
