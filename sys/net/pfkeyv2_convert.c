@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.46 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.47 2015/02/06 03:04:49 blambert Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -466,8 +466,7 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 	flow->sen_family = flowmask->sen_family = PF_KEY;
 	flow->sen_len = flowmask->sen_len = SENT_LEN;
 
-	switch (src->sa.sa_family)
-	{
+	switch (src->sa.sa_family) {
 	case AF_INET:
 		/* netmask handling */
 		rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
