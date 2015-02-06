@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.203 2015/01/28 22:10:13 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.204 2015/02/06 01:21:17 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -826,15 +826,25 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (info->rti_ifa == NULL && (error = rt_getifa(info, tableid)))
 			return (error);
 		ifa = info->rti_ifa;
+		if (prio == 0)
+			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
+#ifndef SMALL_KERNEL
+		if (rn_mpath_capable(rnh)) {
+			/* do not permit exactly the same dst/mask/gw pair */
+			if (rt_mpath_conflict(rnh, info->rti_info[RTAX_DST],
+			    info->rti_info[RTAX_NETMASK],
+			    info->rti_info[RTAX_GATEWAY], prio,
+			    info->rti_flags & RTF_MPATH)) {
+				return (EEXIST);
+			}
+		}
+#endif
 		rt = pool_get(&rtentry_pool, PR_NOWAIT | PR_ZERO);
 		if (rt == NULL)
 			return (ENOBUFS);
 
 		rt->rt_flags = info->rti_flags;
 		rt->rt_tableid = tableid;
-
-		if (prio == 0)
-			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
 		if ((error = rt_setgate(rt, info->rti_info[RTAX_DST],
@@ -851,16 +861,6 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			    info->rti_info[RTAX_DST]->sa_len);
 #ifndef SMALL_KERNEL
 		if (rn_mpath_capable(rnh)) {
-			/* do not permit exactly the same dst/mask/gw pair */
-			if (rt_mpath_conflict(rnh, rt,
-			    info->rti_info[RTAX_NETMASK],
-			    info->rti_flags & RTF_MPATH)) {
-				if (rt->rt_gwroute)
-					rtfree(rt->rt_gwroute);
-				free(rt_key(rt), M_RTABLE, 0);
-				pool_put(&rtentry_pool, rt);
-				return (EEXIST);
-			}
 			/* check the link state since the table supports it */
 			if (LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) &&
 			    ifa->ifa_ifp->if_flags & IFF_UP)

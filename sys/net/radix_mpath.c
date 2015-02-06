@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.27 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.28 2015/02/06 01:21:17 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -204,16 +204,15 @@ rt_mpath_matchgate(struct rtentry *rt, struct sockaddr *gate, u_int8_t prio)
  * check if we have the same key/mask/gateway on the table already.
  */
 int
-rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
-		   struct sockaddr *netmask, int mpathok)
+rt_mpath_conflict(struct radix_node_head *rnh, struct sockaddr *dst,
+    struct sockaddr *netmask, struct sockaddr *gate, u_int8_t prio, int mpathok)
 {
-	struct radix_node *rn, *rn1;
+	struct radix_node *rn1;
 	struct rtentry *rt1;
 	char *p, *q, *eq;
 	int same, l, skip;
 
-	rn = (struct radix_node *)rt;
-	rn1 = rnh->rnh_lookup(rt_key(rt), netmask, rnh);
+	rn1 = rnh->rnh_lookup(dst, netmask, rnh);
 	if (!rn1 || rn1->rn_flags & RNF_ROOT)
 		return 0;
 
@@ -224,8 +223,8 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
 	rt1 = (struct rtentry *)rn1;
 
 	/* compare key. */
-	if (rt_key(rt1)->sa_len != rt_key(rt)->sa_len ||
-	    bcmp(rt_key(rt1), rt_key(rt), rt_key(rt1)->sa_len))
+	if (rt_key(rt1)->sa_len != dst->sa_len ||
+	    bcmp(rt_key(rt1), dst, rt_key(rt1)->sa_len))
 		goto different;
 
 	/* key was the same.  compare netmask.  hairy... */
@@ -277,11 +276,11 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
 	}
 
  maskmatched:
-	if (!mpathok && rt1->rt_priority == rt->rt_priority)
+	if (!mpathok && rt1->rt_priority == prio)
 		return EEXIST;
 
 	/* key/mask were the same.  compare gateway for all multipaths */
-	if (rt_mpath_matchgate(rt1, rt->rt_gateway, rt->rt_priority))
+	if (rt_mpath_matchgate(rt1, gate, prio))
 		/* all key/mask/gateway are the same.  conflicting entry. */
 		return EEXIST;
 
