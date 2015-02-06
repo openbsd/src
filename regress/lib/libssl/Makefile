@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.20 2015/02/06 08:48:39 jsing Exp $
+#	$OpenBSD: Makefile,v 1.21 2015/02/06 09:36:16 doug Exp $
 
 SUBDIR= \
 	asn1 \
+	bytestring \
 	ciphers \
 	ssl
 
