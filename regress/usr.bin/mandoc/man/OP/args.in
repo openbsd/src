@@ -1,0 +1,13 @@
+.TH OP-ARGS 1 "February 6, 2015" OpenBSD
+.SH NAME
+OP-args \- argument handling of the man-ext OP macro
+.SH DESCRIPTION
+no argument:
+.OP
+one argument:
+.OP \-f
+two arguments:
+.OP \-f arg
+three arguments:
+.OP \-f arg bogus
+final text

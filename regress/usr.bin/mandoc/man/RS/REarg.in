@@ -3,7 +3,7 @@
 RS-REarg \- arguments to the RE macro
 .SH DESCRIPTION
 level 1
-.RS 4n
+.RS 4n 2i
 level 2
 .RS 2n
 level 3

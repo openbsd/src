@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.59 2015/02/06 09:38:22 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.60 2015/02/06 11:54:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -335,31 +335,25 @@ blk_close(MACRO_PROT_ARGS)
 void
 blk_exp(MACRO_PROT_ARGS)
 {
-	struct man_node	*n;
-	int		 la;
+	struct man_node	*head;
 	char		*p;
+	int		 la;
 
 	rew_scope(MAN_BLOCK, man, tok);
 	man_block_alloc(man, line, ppos, tok);
 	man_head_alloc(man, line, ppos, tok);
+	head = man->last;
 
-	for (;;) {
-		la = *pos;
-		if ( ! man_args(man, line, pos, buf, &p))
-			break;
+	la = *pos;
+	if (man_args(man, line, pos, buf, &p))
 		man_word_alloc(man, line, la, p);
-	}
 
-	assert(man);
-	assert(tok != MAN_MAX);
+	if (buf[*pos] != '\0')
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS,
+		    man->parse, line, *pos, "%s ... %s",
+		    man_macronames[tok], buf + *pos);
 
-	for (n = man->last; n; n = n->parent)
-		if (n->tok == tok) {
-			assert(n->type == MAN_HEAD);
-			man_unscope(man, n);
-			break;
-		}
-
+	man_unscope(man, head);
 	man_body_alloc(man, line, ppos, tok);
 }
 

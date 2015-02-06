@@ -1,0 +1,2 @@
+mandoc: args.in:6:2: WARNING: missing option string, using "": OP
+mandoc: args.in:12:13: ERROR: skipping excess arguments: OP ... bogus

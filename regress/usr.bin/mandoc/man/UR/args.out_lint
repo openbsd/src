@@ -1,0 +1,5 @@
+mandoc: args.in:12:2: WARNING: empty block: UR
+mandoc: args.in:16:2: WARNING: missing resource identifier, using "": UR
+mandoc: args.in:21:11: ERROR: skipping excess arguments: UR ... second
+mandoc: args.in:26:11: ERROR: skipping excess arguments: UR ... second
+mandoc: args.in:26:2: WARNING: empty block: UR

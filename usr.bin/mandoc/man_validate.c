@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_validate.c,v 1.83 2015/02/06 09:38:22 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.84 2015/02/06 11:54:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,8 +36,6 @@
 
 typedef	void	(*v_check)(CHKARGS);
 
-static	void	  check_eq2(CHKARGS);
-static	void	  check_le5(CHKARGS);
 static	void	  check_par(CHKARGS);
 static	void	  check_part(CHKARGS);
 static	void	  check_root(CHKARGS);
@@ -49,6 +47,7 @@ static	void	  post_vs(CHKARGS);
 static	void	  post_fi(CHKARGS);
 static	void	  post_ft(CHKARGS);
 static	void	  post_nf(CHKARGS);
+static	void	  post_OP(CHKARGS);
 static	void	  post_TH(CHKARGS);
 static	void	  post_UC(CHKARGS);
 static	void	  post_UR(CHKARGS);
@@ -86,7 +85,7 @@ static	v_check man_valids[MAN_MAX] = {
 	post_AT,    /* AT */
 	NULL,       /* in */
 	post_ft,    /* ft */
-	check_eq2,  /* OP */
+	post_OP,    /* OP */
 	post_nf,    /* EX */
 	post_fi,    /* EE */
 	post_UR,    /* UR */
@@ -167,27 +166,27 @@ check_text(CHKARGS)
 		    n->line, n->pos + (p - cp), NULL);
 }
 
-#define	INEQ_DEFINE(x, ineq, name) \
-static void \
-check_##name(CHKARGS) \
-{ \
-	if (n->nchild ineq (x)) \
-		return; \
-	mandoc_vmsg(MANDOCERR_ARGCOUNT, man->parse, n->line, n->pos, \
-	    "line arguments %s %d (have %d)", \
-	    #ineq, (x), n->nchild); \
-}
+static void
+post_OP(CHKARGS)
+{
 
-INEQ_DEFINE(2, ==, eq2)
-INEQ_DEFINE(5, <=, le5)
+	if (n->nchild == 0)
+		mandoc_msg(MANDOCERR_OP_EMPTY, man->parse,
+		    n->line, n->pos, "OP");
+	else if (n->nchild > 2) {
+		n = n->child->next->next;
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
+		    n->line, n->pos, "OP ... %s", n->string);
+	}
+}
 
 static void
 post_UR(CHKARGS)
 {
 
-	if (MAN_HEAD == n->type && 1 != n->nchild)
-		mandoc_vmsg(MANDOCERR_ARGCOUNT, man->parse, n->line,
-		    n->pos, "line arguments eq 1 (have %d)", n->nchild);
+	if (n->type == MAN_HEAD && n->child == NULL)
+		mandoc_vmsg(MANDOCERR_UR_NOHEAD, man->parse,
+		    n->line, n->pos, "UR");
 	check_part(man, n);
 }
 
@@ -301,8 +300,6 @@ post_TH(CHKARGS)
 	struct man_node	*nb;
 	const char	*p;
 
-	check_le5(man, n);
-
 	free(man->meta.title);
 	free(man->meta.vol);
 	free(man->meta.source);
@@ -379,6 +376,10 @@ post_TH(CHKARGS)
 	else if ('\0' != man->meta.msec[0] &&
 	    (NULL != (p = mandoc_a2msec(man->meta.msec))))
 		man->meta.vol = mandoc_strdup(p);
+
+	if (n != NULL && (n = n->next) != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
+		    n->line, n->pos, "TH ... %s", n->string);
 
 	/*
 	 * Remove the `TH' node after we've processed it for our
