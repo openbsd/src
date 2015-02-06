@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.105 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.106 2015/02/06 09:58:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1968,16 +1968,15 @@ ssl3_send_client_key_exchange(SSL *s)
 		} else if (alg_k & SSL_kDHE) {
 			DH *dh_srvr, *dh_clnt;
 
-			if (s->session->sess_cert->peer_dh_tmp != NULL)
-				dh_srvr = s->session->sess_cert->peer_dh_tmp;
-			else {
-				/* We get them from the cert. */
+			/* Ensure that we have an ephemeral key for DHE. */
+			if (s->session->sess_cert->peer_dh_tmp == NULL) {
 				ssl3_send_alert(s, SSL3_AL_FATAL,
 				    SSL_AD_HANDSHAKE_FAILURE);
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
 				goto err;
 			}
+			dh_srvr = s->session->sess_cert->peer_dh_tmp;
 
 			/* Generate a new random key. */
 			if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
@@ -2057,22 +2056,30 @@ ssl3_send_client_key_exchange(SSL *s)
 				 */
 			}
 
-			if (s->session->sess_cert->peer_ecdh_tmp != NULL) {
-				tkey = s->session->sess_cert->peer_ecdh_tmp;
-			} else {
+			/* Ensure that we have an ephemeral key for ECDHE. */
+			if ((alg_k & SSL_kECDHE) &&
+			    s->session->sess_cert->peer_ecdh_tmp == NULL) {
+				ssl3_send_alert(s, SSL3_AL_FATAL,
+				    SSL_AD_HANDSHAKE_FAILURE);
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_INTERNAL_ERROR);
+				goto err;
+			}
+			tkey = s->session->sess_cert->peer_ecdh_tmp;
+
+			if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
 				/* Get the Server Public Key from Cert */
 				srvr_pub_pkey = X509_get_pubkey(s->session-> \
 				    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
-				if ((srvr_pub_pkey == NULL) ||
-				    (srvr_pub_pkey->type != EVP_PKEY_EC) ||
-				    (srvr_pub_pkey->pkey.ec == NULL)) {
-					SSLerr(
-					    SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-					    ERR_R_INTERNAL_ERROR);
-					goto err;
-				}
+				if (srvr_pub_pkey != NULL &&
+				    srvr_pub_pkey->type == EVP_PKEY_EC)
+					tkey = srvr_pub_pkey->pkey.ec;
+			}
 
-				tkey = srvr_pub_pkey->pkey.ec;
+			if (tkey == NULL) {
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_INTERNAL_ERROR);
+				goto err;
 			}
 
 			srvr_group = EC_KEY_get0_group(tkey);
@@ -2314,7 +2321,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_HANDSHAKE_FAILURE);
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-			ERR_R_INTERNAL_ERROR);
+			    ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
 
