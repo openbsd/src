@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.1 2015/02/06 09:36:16 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.2 2015/02/06 10:06:30 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -79,16 +79,6 @@ static int cbb_buffer_add(struct cbb_buffer_st *base, uint8_t **out,
   if (base == NULL) {
     return 0;
   }
-
-#if 0
-  // XXX Added for boringssl patch testing
-  if (len == 0) {
-	  if (out) {
-		  *out = NULL;
-	  }
-	  return 1;
-  }
-#endif
 
   newlen = base->len + len;
   if (newlen < base->len) {
