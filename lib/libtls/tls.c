@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.4 2014/12/17 17:51:33 doug Exp $ */
+/* $OpenBSD: tls.c,v 1.5 2015/02/06 01:37:11 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -116,7 +116,7 @@ tls_configure_keypair(struct tls *ctx)
 			goto err;
 		}
 
-		if (SSL_CTX_use_certificate_chain(ctx->ssl_ctx,
+		if (SSL_CTX_use_certificate_chain_mem(ctx->ssl_ctx,
 		    ctx->config->cert_mem, ctx->config->cert_len) != 1) {
 			tls_set_error(ctx, "failed to load certificate");
 			goto err;

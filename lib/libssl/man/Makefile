@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2015/01/16 01:58:17 schwarze Exp $
+# $OpenBSD: Makefile,v 1.31 2015/02/06 01:37:11 reyk Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -200,6 +200,7 @@ MLINKS+=\
 	SSL_CTX_use_certificate.3 SSL_CTX_use_RSAPrivateKey_file.3 \
 	SSL_CTX_use_certificate.3 SSL_CTX_use_certificate_ASN1.3 \
 	SSL_CTX_use_certificate.3 SSL_CTX_use_certificate_chain_file.3 \
+	SSL_CTX_use_certificate.3 SSL_CTX_use_certificate_chain_mem.3 \
 	SSL_CTX_use_certificate.3 SSL_CTX_use_certificate_file.3 \
 	SSL_CTX_use_certificate.3 SSL_check_private_key.3 \
 	SSL_CTX_use_certificate.3 SSL_use_PrivateKey.3 \

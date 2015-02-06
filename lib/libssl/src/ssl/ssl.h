@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.78 2015/01/26 13:06:39 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.79 2015/02/06 01:37:11 reyk Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1585,7 +1585,7 @@ int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type);
 int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
 int	SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file); /* PEM type */
-int	SSL_CTX_use_certificate_chain(SSL_CTX *ctx, void *buf, int len);
+int	SSL_CTX_use_certificate_chain_mem(SSL_CTX *ctx, void *buf, int len);
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 	    const char *file);
