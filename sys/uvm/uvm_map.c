@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.182 2014/12/23 02:01:57 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.183 2015/02/06 09:04:34 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2122,13 +2122,13 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		uvm_map_pageable_pgon(map, RB_MIN(uvm_map_addr, &map->addr),
 		    NULL, map->min_offset, map->max_offset);
 
-		atomic_clearbits_int(&map->flags, VM_MAP_WIREFUTURE);
+		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
 		vm_map_unlock(map);
 		return 0;
 	}
 
 	if (flags & MCL_FUTURE)
-		atomic_setbits_int(&map->flags, VM_MAP_WIREFUTURE);
+		vm_map_modflags(map, VM_MAP_WIREFUTURE, 0);
 	if (!(flags & MCL_CURRENT)) {
 		vm_map_unlock(map);
 		return 0;
@@ -2209,6 +2209,7 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->flags = flags;
 	map->timestamp = 0;
 	rw_init(&map->lock, "vmmaplk");
+	mtx_init(&map->flags_lock, IPL_VM);
 
 	/* Configure the allocators. */
 	if (flags & VM_MAP_ISVMSPACE)
@@ -4775,10 +4776,22 @@ vm_map_lock_try_ln(struct vm_map *map, char *file, int line)
 	if (map->flags & VM_MAP_INTRSAFE) {
 		rv = TRUE;
 	} else {
+		mtx_enter(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
+			mtx_leave(&map->flags_lock);
 			return (FALSE);
 		}
+		mtx_leave(&map->flags_lock);
 		rv = (rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP) == 0);
+		/* check if the lock is busy and back out if we won the race */
+		if (rv) {
+			mtx_enter(&map->flags_lock);
+			if (map->flags & VM_MAP_BUSY) {
+				rw_exit(&map->lock);
+				rv = FALSE;
+			}
+			mtx_leave(&map->flags_lock);
+		}
 	}
 
 	if (rv) {
@@ -4796,11 +4809,22 @@ vm_map_lock_ln(struct vm_map *map, char *file, int line)
 {
 	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
 		do {
+			mtx_enter(&map->flags_lock);
+tryagain:
 			while (map->flags & VM_MAP_BUSY) {
 				map->flags |= VM_MAP_WANTLOCK;
-				tsleep(&map->flags, PVM, (char *)vmmapbsy, 0);
+				msleep(&map->flags, &map->flags_lock,
+				    PVM, vmmapbsy, 0);
 			}
+			mtx_leave(&map->flags_lock);
 		} while (rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL) != 0);
+		/* check if the lock is busy and back out if we won the race */
+		mtx_enter(&map->flags_lock);
+		if (map->flags & VM_MAP_BUSY) {
+			rw_exit(&map->lock);
+			goto tryagain;
+		}
+		mtx_leave(&map->flags_lock);
 	}
 
 	map->timestamp++;
@@ -4867,7 +4891,9 @@ vm_map_upgrade_ln(struct vm_map *map, char *file, int line)
 void
 vm_map_busy_ln(struct vm_map *map, char *file, int line)
 {
+	mtx_enter(&map->flags_lock);
 	map->flags |= VM_MAP_BUSY;
+	mtx_leave(&map->flags_lock);
 }
 
 void
@@ -4875,8 +4901,10 @@ vm_map_unbusy_ln(struct vm_map *map, char *file, int line)
 {
 	int oflags;
 
+	mtx_enter(&map->flags_lock);
 	oflags = map->flags;
 	map->flags &= ~(VM_MAP_BUSY|VM_MAP_WANTLOCK);
+	mtx_leave(&map->flags_lock);
 	if (oflags & VM_MAP_WANTLOCK)
 		wakeup(&map->flags);
 }
