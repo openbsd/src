@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.1 2015/02/06 09:36:16 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.2 2015/02/06 22:22:33 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -26,96 +26,127 @@ extern "C" {
 
 #include <openssl/opensslconf.h>
 
-/* Bytestrings are used for parsing and building TLS and ASN.1 messages.
+/*
+ * Bytestrings are used for parsing and building TLS and ASN.1 messages.
  *
  * A "CBS" (CRYPTO ByteString) represents a string of bytes in memory and
  * provides utility functions for safely parsing length-prefixed structures
  * like TLS and ASN.1 from it.
  *
  * A "CBB" (CRYPTO ByteBuilder) is a memory buffer that grows as needed and
- * provides utility functions for building length-prefixed messages. */
-
+ * provides utility functions for building length-prefixed messages.
+ */
 
 /* CRYPTO ByteString */
-
 typedef struct cbs_st {
-  const uint8_t *data;
-  size_t len;
+	const uint8_t *data;
+	size_t len;
 } CBS;
 
-/* CBS_init sets |cbs| to point to |data|. It does not take ownership of
- * |data|. */
+/*
+ * CBS_init sets |cbs| to point to |data|. It does not take ownership of
+ * |data|.
+ */
 void CBS_init(CBS *cbs, const uint8_t *data, size_t len);
 
-/* CBS_skip advances |cbs| by |len| bytes. It returns one on success and zero
- * otherwise. */
+/*
+ * CBS_skip advances |cbs| by |len| bytes. It returns one on success and zero
+ * otherwise.
+ */
 int CBS_skip(CBS *cbs, size_t len);
 
-/* CBS_data returns a pointer to the contains of |cbs|. */
+/*
+ * CBS_data returns a pointer to the contains of |cbs|.
+ */
 const uint8_t *CBS_data(const CBS *cbs);
 
-/* CBS_len returns the number of bytes remaining in |cbs|. */
+/*
+ * CBS_len returns the number of bytes remaining in |cbs|.
+ */
 size_t CBS_len(const CBS *cbs);
 
-/* CBS_stow copies the current contents of |cbs| into |*out_ptr| and
+/*
+ * CBS_stow copies the current contents of |cbs| into |*out_ptr| and
  * |*out_len|. If |*out_ptr| is not NULL, the contents are freed with
  * OPENSSL_free. It returns one on success and zero on allocation failure. On
  * success, |*out_ptr| should be freed with OPENSSL_free. If |cbs| is empty,
- * |*out_ptr| will be NULL. */
+ * |*out_ptr| will be NULL.
+ */
 int CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len);
 
-/* CBS_strdup copies the current contents of |cbs| into |*out_ptr| as a
+/*
+ * CBS_strdup copies the current contents of |cbs| into |*out_ptr| as a
  * NUL-terminated C string. If |*out_ptr| is not NULL, the contents are freed
  * with OPENSSL_free. It returns one on success and zero on allocation
  * failure. On success, |*out_ptr| should be freed with OPENSSL_free.
  *
  * NOTE: If |cbs| contains NUL bytes, the string will be truncated. Call
- * |CBS_contains_zero_byte(cbs)| to check for NUL bytes. */
+ * |CBS_contains_zero_byte(cbs)| to check for NUL bytes.
+ */
 int CBS_strdup(const CBS *cbs, char **out_ptr);
 
-/* CBS_contains_zero_byte returns one if the current contents of |cbs| contains
- * a NUL byte and zero otherwise. */
+/*
+ * CBS_contains_zero_byte returns one if the current contents of |cbs| contains
+ * a NUL byte and zero otherwise.
+ */
 int CBS_contains_zero_byte(const CBS *cbs);
 
-/* CBS_mem_equal compares the current contents of |cbs| with the |len| bytes
+/*
+ * CBS_mem_equal compares the current contents of |cbs| with the |len| bytes
  * starting at |data|. If they're equal, it returns one, otherwise zero. If the
- * lengths match, it uses a constant-time comparison. */
-int CBS_mem_equal(const CBS *cbs, const uint8_t *data,
-                                 size_t len);
+ * lengths match, it uses a constant-time comparison.
+ */
+int CBS_mem_equal(const CBS *cbs, const uint8_t *data, size_t len);
 
-/* CBS_get_u8 sets |*out| to the next uint8_t from |cbs| and advances |cbs|. It
- * returns one on success and zero on error. */
+/*
+ * CBS_get_u8 sets |*out| to the next uint8_t from |cbs| and advances |cbs|. It
+ * returns one on success and zero on error.
+ */
 int CBS_get_u8(CBS *cbs, uint8_t *out);
 
-/* CBS_get_u16 sets |*out| to the next, big-endian uint16_t from |cbs| and
- * advances |cbs|. It returns one on success and zero on error. */
+/*
+ * CBS_get_u16 sets |*out| to the next, big-endian uint16_t from |cbs| and
+ * advances |cbs|. It returns one on success and zero on error.
+ */
 int CBS_get_u16(CBS *cbs, uint16_t *out);
 
-/* CBS_get_u24 sets |*out| to the next, big-endian 24-bit value from |cbs| and
- * advances |cbs|. It returns one on success and zero on error. */
+/*
+ * CBS_get_u24 sets |*out| to the next, big-endian 24-bit value from |cbs| and
+ * advances |cbs|. It returns one on success and zero on error.
+ */
 int CBS_get_u24(CBS *cbs, uint32_t *out);
 
-/* CBS_get_u32 sets |*out| to the next, big-endian uint32_t value from |cbs|
- * and advances |cbs|. It returns one on success and zero on error. */
+/*
+ * CBS_get_u32 sets |*out| to the next, big-endian uint32_t value from |cbs|
+ * and advances |cbs|. It returns one on success and zero on error.
+ */
 int CBS_get_u32(CBS *cbs, uint32_t *out);
 
-/* CBS_get_bytes sets |*out| to the next |len| bytes from |cbs| and advances
- * |cbs|. It returns one on success and zero on error. */
+/*
+ * CBS_get_bytes sets |*out| to the next |len| bytes from |cbs| and advances
+ * |cbs|. It returns one on success and zero on error.
+ */
 int CBS_get_bytes(CBS *cbs, CBS *out, size_t len);
 
-/* CBS_get_u8_length_prefixed sets |*out| to the contents of an 8-bit,
+/*
+ * CBS_get_u8_length_prefixed sets |*out| to the contents of an 8-bit,
  * length-prefixed value from |cbs| and advances |cbs| over it. It returns one
- * on success and zero on error. */
+ * on success and zero on error.
+ */
 int CBS_get_u8_length_prefixed(CBS *cbs, CBS *out);
 
-/* CBS_get_u16_length_prefixed sets |*out| to the contents of a 16-bit,
+/*
+ * CBS_get_u16_length_prefixed sets |*out| to the contents of a 16-bit,
  * big-endian, length-prefixed value from |cbs| and advances |cbs| over it. It
- * returns one on success and zero on error. */
+ * returns one on success and zero on error.
+ */
 int CBS_get_u16_length_prefixed(CBS *cbs, CBS *out);
 
-/* CBS_get_u24_length_prefixed sets |*out| to the contents of a 24-bit,
+/*
+ * CBS_get_u24_length_prefixed sets |*out| to the contents of a 24-bit,
  * big-endian, length-prefixed value from |cbs| and advances |cbs| over it. It
- * returns one on success and zero on error. */
+ * returns one on success and zero on error.
+ */
 int CBS_get_u24_length_prefixed(CBS *cbs, CBS *out);
 
 
@@ -133,80 +164,95 @@ int CBS_get_u24_length_prefixed(CBS *cbs, CBS *out);
 #define CBS_ASN1_CONSTRUCTED 0x20
 #define CBS_ASN1_CONTEXT_SPECIFIC 0x80
 
-/* CBS_get_asn1 sets |*out| to the contents of DER-encoded, ASN.1 element (not
+/*
+ * CBS_get_asn1 sets |*out| to the contents of DER-encoded, ASN.1 element (not
  * including tag and length bytes) and advances |cbs| over it. The ASN.1
  * element must match |tag_value|. It returns one on success and zero
  * on error.
  *
- * Tag numbers greater than 31 are not supported. */
+ * Tag numbers greater than 31 are not supported.
+ */
 int CBS_get_asn1(CBS *cbs, CBS *out, unsigned tag_value);
 
-/* CBS_get_asn1_element acts like |CBS_get_asn1| but |out| will include the
- * ASN.1 header bytes too. */
+/*
+ * CBS_get_asn1_element acts like |CBS_get_asn1| but |out| will include the
+ * ASN.1 header bytes too.
+ */
 int CBS_get_asn1_element(CBS *cbs, CBS *out, unsigned tag_value);
 
-/* CBS_peek_asn1_tag looks ahead at the next ASN.1 tag and returns one
+/*
+ * CBS_peek_asn1_tag looks ahead at the next ASN.1 tag and returns one
  * if the next ASN.1 element on |cbs| would have tag |tag_value|. If
  * |cbs| is empty or the tag does not match, it returns zero. Note: if
  * it returns one, CBS_get_asn1 may still fail if the rest of the
- * element is malformed. */
+ * element is malformed.
+ */
 int CBS_peek_asn1_tag(const CBS *cbs, unsigned tag_value);
 
-/* CBS_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
+/*
+ * CBS_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
  * |*cbs| (including header bytes) and advances |*cbs|. It sets |*out_tag| to
  * the tag number and |*out_header_len| to the length of the ASN.1 header. If
  * the element has indefinite length then |*out| will only contain the
  * header. Each of |out|, |out_tag|, and |out_header_len| may be NULL to ignore
  * the value.
  *
- * Tag numbers greater than 31 are not supported. */
-int CBS_get_any_asn1_element(CBS *cbs, CBS *out,
-                                            unsigned *out_tag,
-                                            size_t *out_header_len);
+ * Tag numbers greater than 31 are not supported.
+ */
+int CBS_get_any_asn1_element(CBS *cbs, CBS *out, unsigned *out_tag,
+    size_t *out_header_len);
 
-/* CBS_get_asn1_uint64 gets an ASN.1 INTEGER from |cbs| using |CBS_get_asn1|
+/*
+ * CBS_get_asn1_uint64 gets an ASN.1 INTEGER from |cbs| using |CBS_get_asn1|
  * and sets |*out| to its value. It returns one on success and zero on error,
  * where error includes the integer being negative, or too large to represent
- * in 64 bits. */
+ * in 64 bits.
+ */
 int CBS_get_asn1_uint64(CBS *cbs, uint64_t *out);
 
-/* CBS_get_optional_asn1 gets an optional explicitly-tagged element
+/*
+ * CBS_get_optional_asn1 gets an optional explicitly-tagged element
  * from |cbs| tagged with |tag| and sets |*out| to its contents. If
  * present, it sets |*out_present| to one, otherwise zero. It returns
  * one on success, whether or not the element was present, and zero on
- * decode failure. */
-int CBS_get_optional_asn1(CBS *cbs, CBS *out, int *out_present,
-                                         unsigned tag);
+ * decode failure.
+ */
+int CBS_get_optional_asn1(CBS *cbs, CBS *out, int *out_present, unsigned tag);
 
-/* CBS_get_optional_asn1_octet_string gets an optional
+/*
+ * CBS_get_optional_asn1_octet_string gets an optional
  * explicitly-tagged OCTET STRING from |cbs|. If present, it sets
  * |*out| to the string and |*out_present| to one. Otherwise, it sets
  * |*out| to empty and |*out_present| to zero. |out_present| may be
  * NULL. It returns one on success, whether or not the element was
- * present, and zero on decode failure. */
-int CBS_get_optional_asn1_octet_string(CBS *cbs, CBS *out,
-                                                      int *out_present,
-                                                      unsigned tag);
+ * present, and zero on decode failure.
+ */
+int CBS_get_optional_asn1_octet_string(CBS *cbs, CBS *out, int *out_present,
+    unsigned tag);
 
-/* CBS_get_optional_asn1_uint64 gets an optional explicitly-tagged
+/*
+ * CBS_get_optional_asn1_uint64 gets an optional explicitly-tagged
  * INTEGER from |cbs|. If present, it sets |*out| to the
  * value. Otherwise, it sets |*out| to |default_value|. It returns one
  * on success, whether or not the element was present, and zero on
- * decode failure. */
-int CBS_get_optional_asn1_uint64(CBS *cbs, uint64_t *out,
-                                                unsigned tag,
-                                                uint64_t default_value);
+ * decode failure.
+ */
+int CBS_get_optional_asn1_uint64(CBS *cbs, uint64_t *out, unsigned tag,
+    uint64_t default_value);
 
-/* CBS_get_optional_asn1_bool gets an optional, explicitly-tagged BOOLEAN from
+/*
+ * CBS_get_optional_asn1_bool gets an optional, explicitly-tagged BOOLEAN from
  * |cbs|. If present, it sets |*out| to either zero or one, based on the
  * boolean. Otherwise, it sets |*out| to |default_value|. It returns one on
  * success, whether or not the element was present, and zero on decode
- * failure. */
+ * failure.
+ */
 int CBS_get_optional_asn1_bool(CBS *cbs, int *out, unsigned tag,
-                                              int default_value);
+    int default_value);
 
 
-/* CRYPTO ByteBuilder.
+/*
+ * CRYPTO ByteBuilder.
  *
  * |CBB| objects allow one to build length-prefixed serialisations. A |CBB|
  * object is associated with a buffer and new buffers are created with
@@ -218,111 +264,162 @@ int CBS_get_optional_asn1_bool(CBS *cbs, int *out, unsigned tag,
  * not be used again.
  *
  * If one needs to force a length prefix to be written out because a |CBB| is
- * going out of scope, use |CBB_flush|. */
+ * going out of scope, use |CBB_flush|.
+ */
 
 struct cbb_buffer_st {
-  uint8_t *buf;
-  size_t len;      /* The number of valid bytes. */
-  size_t cap;      /* The size of buf. */
-  char can_resize; /* One iff |buf| is owned by this object. If not then |buf|
-                      cannot be resized. */
+	uint8_t *buf;
+
+	/* The number of valid bytes. */
+	size_t len;
+
+	/* The size of buf. */
+	size_t cap;
+
+	/*
+	 * One iff |buf| is owned by this object. If not then |buf| cannot be
+	 * resized.
+	 */
+	char can_resize;
 };
 
 typedef struct cbb_st {
-  struct cbb_buffer_st *base;
-  /* offset is the offset from the start of |base->buf| to the position of any
-   * pending length-prefix. */
-  size_t offset;
-  /* child points to a child CBB if a length-prefix is pending. */
-  struct cbb_st *child;
-  /* pending_len_len contains the number of bytes in a pending length-prefix,
-   * or zero if no length-prefix is pending. */
-  uint8_t pending_len_len;
-  char pending_is_asn1;
-  /* is_top_level is true iff this is a top-level |CBB| (as opposed to a child
-   * |CBB|). Top-level objects are valid arguments for |CBB_finish|. */
-  char is_top_level;
+	struct cbb_buffer_st *base;
+
+	/*
+	 * offset is the offset from the start of |base->buf| to the position of any
+	 * pending length-prefix.
+	 */
+	size_t offset;
+
+	/* child points to a child CBB if a length-prefix is pending. */
+	struct cbb_st *child;
+
+	/*
+	 * pending_len_len contains the number of bytes in a pending length-prefix,
+	 * or zero if no length-prefix is pending.
+	 */
+	uint8_t pending_len_len;
+
+	char pending_is_asn1;
+
+	/*
+	 * is_top_level is true iff this is a top-level |CBB| (as opposed to a child
+	 * |CBB|). Top-level objects are valid arguments for |CBB_finish|.
+	 */
+	char is_top_level;
 } CBB;
 
-/* CBB_init initialises |cbb| with |initial_capacity|. Since a |CBB| grows as
+/*
+ * CBB_init initialises |cbb| with |initial_capacity|. Since a |CBB| grows as
  * needed, the |initial_capacity| is just a hint. It returns one on success or
- * zero on error. */
+ * zero on error.
+ */
 int CBB_init(CBB *cbb, size_t initial_capacity);
 
-/* CBB_init_fixed initialises |cbb| to write to |len| bytes at |buf|. Since
+/*
+ * CBB_init_fixed initialises |cbb| to write to |len| bytes at |buf|. Since
  * |buf| cannot grow, trying to write more than |len| bytes will cause CBB
- * functions to fail. It returns one on success or zero on error. */
+ * functions to fail. It returns one on success or zero on error.
+ */
 int CBB_init_fixed(CBB *cbb, uint8_t *buf, size_t len);
 
-/* CBB_cleanup frees all resources owned by |cbb| and other |CBB| objects
+/*
+ * CBB_cleanup frees all resources owned by |cbb| and other |CBB| objects
  * writing to the same buffer. This should be used in an error case where a
- * serialisation is abandoned. */
+ * serialisation is abandoned.
+ */
 void CBB_cleanup(CBB *cbb);
 
-/* CBB_finish completes any pending length prefix and sets |*out_data| to a
+/*
+ * CBB_finish completes any pending length prefix and sets |*out_data| to a
  * malloced buffer and |*out_len| to the length of that buffer. The caller
  * takes ownership of the buffer and, unless the buffer was fixed with
  * |CBB_init_fixed|, must call |OPENSSL_free| when done.
  *
  * It can only be called on a "top level" |CBB|, i.e. one initialised with
  * |CBB_init| or |CBB_init_fixed|. It returns one on success and zero on
- * error. */
+ * error.
+ */
 int CBB_finish(CBB *cbb, uint8_t **out_data, size_t *out_len);
 
-/* CBB_flush causes any pending length prefixes to be written out and any child
+/*
+ * CBB_flush causes any pending length prefixes to be written out and any child
  * |CBB| objects of |cbb| to be invalidated. It returns one on success or zero
- * on error. */
+ * on error.
+ */
 int CBB_flush(CBB *cbb);
 
-/* CBB_add_u8_length_prefixed sets |*out_contents| to a new child of |cbb|. The
+/*
+ * CBB_add_u8_length_prefixed sets |*out_contents| to a new child of |cbb|. The
  * data written to |*out_contents| will be prefixed in |cbb| with an 8-bit
- * length. It returns one on success or zero on error. */
+ * length. It returns one on success or zero on error.
+ */
 int CBB_add_u8_length_prefixed(CBB *cbb, CBB *out_contents);
 
-/* CBB_add_u16_length_prefixed sets |*out_contents| to a new child of |cbb|.
+/*
+ * CBB_add_u16_length_prefixed sets |*out_contents| to a new child of |cbb|.
  * The data written to |*out_contents| will be prefixed in |cbb| with a 16-bit,
- * big-endian length. It returns one on success or zero on error. */
+ * big-endian length. It returns one on success or zero on error.
+ */
 int CBB_add_u16_length_prefixed(CBB *cbb, CBB *out_contents);
 
-/* CBB_add_u24_length_prefixed sets |*out_contents| to a new child of |cbb|.
+/*
+ * CBB_add_u24_length_prefixed sets |*out_contents| to a new child of |cbb|.
  * The data written to |*out_contents| will be prefixed in |cbb| with a 24-bit,
- * big-endian length. It returns one on success or zero on error. */
+ * big-endian length. It returns one on success or zero on error.
+ */
 int CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents);
 
-/* CBB_add_asn sets |*out_contents| to a |CBB| into which the contents of an
+/*
+ * CBB_add_asn sets |*out_contents| to a |CBB| into which the contents of an
  * ASN.1 object can be written. The |tag| argument will be used as the tag for
- * the object. It returns one on success or zero on error. */
+ * the object. It returns one on success or zero on error.
+ */
 int CBB_add_asn1(CBB *cbb, CBB *out_contents, uint8_t tag);
 
-/* CBB_add_bytes appends |len| bytes from |data| to |cbb|. It returns one on
- * success and zero otherwise. */
+/*
+ * CBB_add_bytes appends |len| bytes from |data| to |cbb|. It returns one on
+ * success and zero otherwise.
+ */
 int CBB_add_bytes(CBB *cbb, const uint8_t *data, size_t len);
 
-/* CBB_add_space appends |len| bytes to |cbb| and sets |*out_data| to point to
+/*
+ * CBB_add_space appends |len| bytes to |cbb| and sets |*out_data| to point to
  * the beginning of that space. The caller must then write |len| bytes of
  * actual contents to |*out_data|. It returns one on success and zero
- * otherwise. */
+ * otherwise.
+ */
 int CBB_add_space(CBB *cbb, uint8_t **out_data, size_t len);
 
-/* CBB_add_u8 appends an 8-bit number from |value| to |cbb|. It returns one on
- * success and zero otherwise. */
+/*
+ * CBB_add_u8 appends an 8-bit number from |value| to |cbb|. It returns one on
+ * success and zero otherwise.
+ */
 int CBB_add_u8(CBB *cbb, uint8_t value);
 
-/* CBB_add_u8 appends a 16-bit, big-endian number from |value| to |cbb|. It
- * returns one on success and zero otherwise. */
+/*
+ * CBB_add_u8 appends a 16-bit, big-endian number from |value| to |cbb|. It
+ * returns one on success and zero otherwise.
+ */
 int CBB_add_u16(CBB *cbb, uint16_t value);
 
-/* CBB_add_u24 appends a 24-bit, big-endian number from |value| to |cbb|. It
- * returns one on success and zero otherwise. */
+/*
+ * CBB_add_u24 appends a 24-bit, big-endian number from |value| to |cbb|. It
+ * returns one on success and zero otherwise.
+ */
 int CBB_add_u24(CBB *cbb, uint32_t value);
 
-/* CBB_add_asn1_uint64 writes an ASN.1 INTEGER into |cbb| using |CBB_add_asn1|
+/*
+ * CBB_add_asn1_uint64 writes an ASN.1 INTEGER into |cbb| using |CBB_add_asn1|
  * and writes |value| in its contents. It returns one on success and zero on
- * error. */
+ * error.
+ */
 int CBB_add_asn1_uint64(CBB *cbb, uint64_t value);
 
 #ifdef LIBRESSL_INTERNAL
-/* CBS_asn1_ber_to_der reads an ASN.1 structure from |in|. If it finds
+/*
+ * CBS_asn1_ber_to_der reads an ASN.1 structure from |in|. If it finds
  * indefinite-length elements then it attempts to convert the BER data to DER
  * and sets |*out| and |*out_length| to describe a malloced buffer containing
  * the DER data. Additionally, |*in| will be advanced over the ASN.1 data.
@@ -335,7 +432,8 @@ int CBB_add_asn1_uint64(CBB *cbb, uint64_t value);
  * structure itself. However, this sufficies to handle the PKCS#7 and #12 output
  * from NSS.
  *
- * It returns one on success and zero otherwise. */
+ * It returns one on success and zero otherwise.
+ */
 int CBS_asn1_ber_to_der(CBS *in, uint8_t **out, size_t *out_len);
 #endif /* LIBRESSL_INTERNAL */
 
