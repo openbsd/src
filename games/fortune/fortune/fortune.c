@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.33 2015/02/06 09:55:01 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.34 2015/02/06 10:04:18 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -100,7 +100,7 @@ bool	Debug = FALSE;			/* print debug messages */
 
 char	*Fortbuf = NULL;			/* fortune buffer for -m */
 
-int	Fort_len = 0;
+size_t	Fort_len = 0;
 
 int32_t	Seekpts[2];			/* seek pointers to fortunes */
 
@@ -117,7 +117,7 @@ void	 all_forts(FILEDESC *, char *);
 char	*copy(char *, char *);
 void	 display(FILEDESC *);
 void	 do_free(void *);
-void	*do_malloc(u_int);
+void	*do_malloc(size_t);
 int	 form_file_list(char **, int);
 int	 fortlen(void);
 void	 get_fort(void);
@@ -246,8 +246,8 @@ display(FILEDESC *fp)
 int
 fortlen(void)
 {
-	int	nchar;
-	char		line[BUFSIZ];
+	size_t	nchar;
+	char	line[BUFSIZ];
 
 	if (!(Fortfile->tbl.str_flags & (STR_RANDOM | STR_ORDERED)))
 		nchar = (Seekpts[1] - Seekpts[0] <= SLEN);
@@ -433,7 +433,7 @@ add_file(int percent, char *file, char *dir, FILEDESC **head, FILEDESC **tail,
 	} else {
 		size_t len;
 
-		len = (unsigned int) (strlen(dir) + strlen(file) + 2);
+		len = strlen(dir) + strlen(file) + 2;
 		path = do_malloc(len);
 		snprintf(path, len, "%s/%s", dir, file);
 		was_malloc = TRUE;
@@ -548,7 +548,7 @@ new_fp(void)
 {
 	FILEDESC	*fp;
 
-	fp = (FILEDESC *) do_malloc(sizeof *fp);
+	fp = do_malloc(sizeof *fp);
 	fp->datfd = -1;
 	fp->pos = POS_UNKNOWN;
 	fp->inf = NULL;
@@ -777,7 +777,7 @@ copy(char *str, char *suf)
  *	Do a malloc, checking for NULL return.
  */
 void *
-do_malloc(unsigned int size)
+do_malloc(size_t size)
 {
 	void	*new;
 
@@ -1244,9 +1244,9 @@ int
 find_matches(void)
 {
 	Fort_len = maxlen_in_list(File_list);
-	DPRINTF(2, (stderr, "Maximum length is %d\n", Fort_len));
+	DPRINTF(2, (stderr, "Maximum length is %zu\n", Fort_len));
 	/* extra length, "%\n" is appended */
-	Fortbuf = do_malloc((unsigned int) Fort_len + 10);
+	Fortbuf = do_malloc(Fort_len + 10);
 
 	Found_one = FALSE;
 	matches_in_list(File_list);
