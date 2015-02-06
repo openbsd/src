@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.70 2015/02/05 10:47:53 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.71 2015/02/06 13:05:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -617,6 +617,8 @@ server_reset_http(struct client *clt)
 {
 	struct server		*srv = clt->clt_srv;
 
+	server_log(clt, NULL);
+
 	server_httpdesc_free(clt->clt_descreq);
 	server_httpdesc_free(clt->clt_descresp);
 	clt->clt_headerlen = 0;
@@ -627,8 +629,6 @@ server_reset_http(struct client *clt)
 	clt->clt_remote_user = NULL;
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
-
-	server_log(clt, NULL);
 }
 
 ssize_t
@@ -998,7 +998,7 @@ server_getlocation(struct client *clt, const char *path)
 		}
 #endif
 		if ((location->flags & SRVFLAG_LOCATION) &&
-		    location->id == srv_conf->id &&
+		    location->parent_id == srv_conf->parent_id &&
 		    fnmatch(location->location, path, FNM_CASEFOLD) == 0) {
 			/* Replace host configuration */
 			clt->clt_srv_conf = srv_conf = location;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.73 2015/01/21 22:23:24 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.74 2015/02/06 13:05:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -381,6 +381,7 @@ TAILQ_HEAD(serverauth, auth);
 
 struct server_config {
 	u_int32_t		 id;
+	u_int32_t		 parent_id;
 	char			 name[HOST_NAME_MAX+1];
 	char			 location[NAME_MAX];
 	char			 index[NAME_MAX];
