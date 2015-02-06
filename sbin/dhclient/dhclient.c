@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.353 2015/02/05 23:56:06 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.354 2015/02/06 06:47:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1987,8 +1987,6 @@ fork_privchld(int fd, int fd2)
 	 */
 	if (quit != SIGTERM) {
 		memset(&imsg, 0, sizeof(imsg));
-		strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
-		imsg.rdomain = ifi->rdomain;
 		imsg.addr = active_addr;
 		priv_cleanup(&imsg);
 	}
@@ -2354,7 +2352,6 @@ write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
 		return;
 	}
 
-	imsg.rdomain = ifi->rdomain;
 	imsg.len = sz;
 	imsg.flags = flags;
 	imsg.mode = mode;
@@ -2380,7 +2377,7 @@ priv_write_file(struct imsg_write_file *imsg)
 	int fd;
 
 	if ((strcmp("/etc/resolv.conf", imsg->path) == 0) &&
-	    !resolv_conf_priority(imsg->rdomain))
+	    !resolv_conf_priority(ifi->rdomain))
 		return;
 
 	fd = open(imsg->path, imsg->flags, imsg->mode);

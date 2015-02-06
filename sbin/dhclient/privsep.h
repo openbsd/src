@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.24 2015/01/16 06:39:56 deraadt Exp $ */
+/*	$OpenBSD: privsep.h,v 1.25 2015/02/06 06:47:29 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -31,21 +31,15 @@ enum imsg_code {
 };
 
 struct imsg_delete_address {
-	char	ifname[IFNAMSIZ];
-	int	rdomain;
 	struct	in_addr addr;
 };
 
 struct imsg_add_address {
-	char	ifname[IFNAMSIZ];
-	int	rdomain;
 	struct	in_addr	addr;
 	struct	in_addr mask;
 };
 
 struct imsg_flush_routes {
-	char	ifname[IFNAMSIZ];
-	int	rdomain;
 	int	zapzombies;
 };
 
@@ -53,20 +47,16 @@ struct imsg_add_route {
 	struct in_addr	dest;
 	struct in_addr	netmask;
 	struct in_addr	gateway;
-	int		rdomain;
 	int		addrs;
 	int		flags;
 };
 
 struct imsg_hup {
-	char	ifname[IFNAMSIZ];
-	int	rdomain;
 	struct	in_addr addr;
 };
 
 struct imsg_write_file {
 	char	path[PATH_MAX];
-	int	rdomain;
 	int	flags;
 	mode_t	mode;
 	size_t	len;
