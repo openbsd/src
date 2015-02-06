@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.24 2014/02/08 22:13:45 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.25 2015/02/06 22:11:49 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -443,7 +443,8 @@ extern void (*bios_eim)(void);
 int  bios_getchar(void);
 void bios_putchar(char);
 void bios_putstring(char *);
-void bios_printf(const char *, ...);
+void bios_printf(const char *, ...)
+    __attribute__((__format__(__kprintf__,1,2)));
 void bios_ident(void);
 void bios_display_info(int *, int *, int *, int *);
 
