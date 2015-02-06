@@ -3038,6 +3038,7 @@
 ./usr/share/man/man3/SSL_CTX_use_certificate.3
 ./usr/share/man/man3/SSL_CTX_use_certificate_ASN1.3
 ./usr/share/man/man3/SSL_CTX_use_certificate_chain_file.3
+./usr/share/man/man3/SSL_CTX_use_certificate_chain_mem.3
 ./usr/share/man/man3/SSL_CTX_use_certificate_file.3
 ./usr/share/man/man3/SSL_CTX_use_psk_identity_hint.3
 ./usr/share/man/man3/SSL_SESSION_free.3
@@ -5445,6 +5446,7 @@
 ./usr/share/man/man3/store.3
 ./usr/share/man/man3/stpcpy.3
 ./usr/share/man/man3/stpncpy.3
+./usr/share/man/man3/stravis.3
 ./usr/share/man/man3/strcasecmp.3
 ./usr/share/man/man3/strcasestr.3
 ./usr/share/man/man3/strcat.3
