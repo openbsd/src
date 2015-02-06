@@ -1,0 +1,12 @@
+.Dd February 5, 2015
+.Dt SH-NOHEAD 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sh-nohead
+.Nd sections without header lines
+.Sh DESCRIPTION
+empty section header:
+.Sh
+empty subsection header:
+.Ss
+text

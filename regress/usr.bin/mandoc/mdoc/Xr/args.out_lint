@@ -1,0 +1,2 @@
+mandoc: args.in:24:2: WARNING: skipping empty macro: Xr
+mandoc: args.in:26:2: WARNING: skipping empty macro: Xr

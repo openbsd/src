@@ -1,0 +1,2 @@
+mandoc: nohead.in:9:2: WARNING: skipping empty macro: Sh
+mandoc: nohead.in:11:2: WARNING: skipping empty macro: Ss

@@ -1,0 +1,20 @@
+.Dd February 5, 2015
+.Dt IN-NOARG 2
+.Os OpenBSD
+.Sh NAME
+.Nm In-noarg
+.Nd include file macros without argument
+.Sh SYNOPSIS
+.In math.h
+.Ft double
+.Fn sin "double x"
+.In
+.Ft double
+.Fn cos "double x"
+.Sh DESCRIPTION
+.In math.h
+.Ft double
+.Fn sin "double x"
+.In
+.Ft double
+.Fn cos "double x"

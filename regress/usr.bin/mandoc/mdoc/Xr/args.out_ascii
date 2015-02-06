@@ -11,6 +11,6 @@ DDEESSCCRRIIPPTTIIOONN
 
      A call, an echo(1), and another echo(1).
 
-     Finally, half an echo and no echo at all.
+     Finally, half an echo, no echo and no echo at all.
 
 OpenBSD                        December 3, 2011                        OpenBSD

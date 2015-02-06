@@ -19,7 +19,9 @@ another
 .Xr echo 1 .
 .Pp
 Finally, half an
-.Xr echo
+.Xr echo ,
+no echo
+.Xr ,
 and no
 .Xr
 echo at all.
