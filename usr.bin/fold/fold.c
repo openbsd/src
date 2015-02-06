@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.14 2015/02/06 08:53:01 tedu Exp $	*/
+/*	$OpenBSD: fold.c,v 1.15 2015/02/06 09:10:55 tedu Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@
 
 #define	DEFLINEWIDTH	80
 
-static void fold(int);
-static int new_column_position(int, int);
+static void fold(unsigned int);
+static unsigned int new_column_position(unsigned int, int);
 static __dead void usage(void);
 int count_bytes = 0;
 int split_words = 0;
@@ -52,7 +52,8 @@ int split_words = 0;
 int
 main(int argc, char *argv[])
 {
-	int ch, lastch, newarg, prevoptind, width;
+	int ch, lastch, newarg, prevoptind;
+	unsigned int width;
 	const char *errstr;
 
 	width = 0;
@@ -68,7 +69,7 @@ main(int argc, char *argv[])
 			split_words = 1;
 			break;
 		case 'w':
-			width = strtonum(optarg, 1, INT_MAX, &errstr);
+			width = strtonum(optarg, 1, UINT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "illegal width value, %s: %s", errstr, 
 					optarg);
@@ -79,7 +80,7 @@ main(int argc, char *argv[])
 				width = 0;
 			else if (!isdigit(lastch))
 				usage();
-			if (width > INT_MAX / 10 - 1)
+			if (width > UINT_MAX / 10 - 1)
 				errx(1, "illegal width value, too large");
 			width = (width * 10) + (ch - '0');
 			if (width < 1)
@@ -121,12 +122,12 @@ main(int argc, char *argv[])
  * returns embedded in the input stream.
  */
 static void
-fold(int width)
+fold(unsigned int width)
 {
 	static char *buf = NULL;
 	static int   buf_max = 0;
-	int ch, col;
-	int indx;
+	int ch;
+	unsigned int col, indx;
 
 	col = indx = 0;
 	while ((ch = getchar()) != EOF) {
@@ -140,7 +141,7 @@ fold(int width)
 
 		col = new_column_position(col, ch);
 		if (col > width) {
-			int i, last_space;
+			unsigned int i, last_space;
 
 			if (split_words) {
 				for (i = 0, last_space = -1; i < indx; i++)
@@ -191,8 +192,8 @@ fold(int width)
 /*
  * calculate the column position 
  */
-static int
-new_column_position(int col, int ch)
+static unsigned int
+new_column_position(unsigned int col, int ch)
 {
 	if (!count_bytes) {
 		switch (ch) {
