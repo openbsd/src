@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.97 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.98 2015/02/06 10:04:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,7 +149,6 @@
  */
 
 #define REUSE_CIPHER_BUG
-#define NETSCAPE_HANG_BUG
 
 #include <stdio.h>
 
@@ -461,12 +460,7 @@ ssl3_accept(SSL *s)
 				ret = ssl3_send_certificate_request(s);
 				if (ret <= 0)
 					goto end;
-#ifndef NETSCAPE_HANG_BUG
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
-#else
-				s->state = SSL3_ST_SW_FLUSH;
-				s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
-#endif
 				s->init_num = 0;
 			}
 			break;
@@ -1772,21 +1766,6 @@ ssl3_send_certificate_request(SSL *s)
 		/* we should now have things packed up, so lets send it off */
 		s->init_num = n + 4;
 		s->init_off = 0;
-#ifdef NETSCAPE_HANG_BUG
-		if (!BUF_MEM_grow(buf, s->init_num + 4)) {
-			SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,
-			    ERR_R_BUF_LIB);
-			goto err;
-		}
-		p = (unsigned char *)buf->data + s->init_num;
-
-		/* do the header */
-		*(p++) = SSL3_MT_SERVER_DONE;
-		*(p++) = 0;
-		*(p++) = 0;
-		*(p++) = 0;
-		s->init_num += 4;
-#endif
 
 		s->state = SSL3_ST_SW_CERT_REQ_B;
 	}
