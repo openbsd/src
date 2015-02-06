@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.35 2015/02/06 10:12:57 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.36 2015/02/06 10:17:56 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -346,11 +346,8 @@ getargs(int argc, char *argv[])
 
 # ifndef NO_REGEX
 	if (pat != NULL) {
-		if (ignore_case)
-			pat = conv_pat(pat);
-		if (regcomp(&regex, pat, 0)) {
+		if (regcomp(&regex, pat, ignore_case ? REG_ICASE : 0))
 			fprintf(stderr, "bad pattern: %s\n", pat);
-		}
 	}
 # endif	/* NO_REGEX */
 }
@@ -1194,47 +1191,6 @@ print_list(FILEDESC *list, int lev)
 }
 
 #ifndef	NO_REGEX
-/*
- * conv_pat:
- *	Convert the pattern to an ignore-case equivalent.
- */
-char *
-conv_pat(char *orig)
-{
-	char		*sp;
-	unsigned int	cnt;
-	char		*new;
-
-	cnt = 1;	/* allow for '\0' */
-	for (sp = orig; *sp != '\0'; sp++)
-		if (isalpha(*sp))
-			cnt += 4;
-		else
-			cnt++;
-	if ((new = malloc(cnt)) == NULL) {
-		fprintf(stderr, "pattern too long for ignoring case\n");
-		exit(1);
-	}
-
-	for (sp = new; *orig != '\0'; orig++) {
-		if (islower(*orig)) {
-			*sp++ = '[';
-			*sp++ = *orig;
-			*sp++ = toupper(*orig);
-			*sp++ = ']';
-		}
-		else if (isupper(*orig)) {
-			*sp++ = '[';
-			*sp++ = *orig;
-			*sp++ = tolower(*orig);
-			*sp++ = ']';
-		}
-		else
-			*sp++ = *orig;
-	}
-	*sp = '\0';
-	return new;
-}
 
 /*
  * find_matches:
