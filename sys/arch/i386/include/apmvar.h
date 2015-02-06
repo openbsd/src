@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.19 2012/07/08 18:02:45 guenther Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.20 2015/02/06 08:16:49 dcoppa Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -172,6 +172,7 @@
 #define		APM_SYS_STANDBY_RESUME	0x000B
 #define		APM_CAPABILITY_CHANGE	0x000C	/* apm v1.2 */
 /* 0x000d - 0x00ff	Reserved system events */
+#define		APM_USER_HIBERNATE_REQ	0x000D
 /* 0x0100 - 0x01ff	Reserved device events */
 /* 0x0200 - 0x02ff	OEM-defined APM events */
 /* 0x0300 - 0xffff	Reserved */

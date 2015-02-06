@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.74 2015/01/16 06:40:15 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.75 2015/02/06 08:16:50 dcoppa Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -348,7 +348,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *fname = apmdev;
-	int ctl_fd, sock_fd, ch, suspends, standbys, resumes;
+	int ctl_fd, sock_fd, ch, suspends, standbys, hibernates, resumes;
 	int statonly = 0;
 	int powerstatus = 0, powerbak = 0, powerchange = 0;
 	int noacsleep = 0;
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
 			continue;
 
 		if (ev->ident == ctl_fd) {
-			suspends = standbys = resumes = 0;
+			suspends = standbys = hibernates = resumes = 0;
 			syslog(LOG_DEBUG, "apmevent %04x index %d",
 			    (int)APM_EVENT_TYPE(ev->data),
 			    (int)APM_EVENT_INDEX(ev->data));
@@ -502,6 +502,9 @@ main(int argc, char *argv[])
 			case APM_USER_STANDBY_REQ:
 			case APM_STANDBY_REQ:
 				standbys++;
+				break;
+			case APM_USER_HIBERNATE_REQ:
+				hibernates++;
 				break;
 #if 0
 			case APM_CANCEL:
@@ -536,6 +539,8 @@ main(int argc, char *argv[])
 				suspend(ctl_fd);
 			else if (standbys)
 				stand_by(ctl_fd);
+			else if (hibernates)
+				hibernate(ctl_fd);
 			else if (resumes) {
 				do_etc_file(_PATH_APM_ETC_RESUME);
 				syslog(LOG_NOTICE,
