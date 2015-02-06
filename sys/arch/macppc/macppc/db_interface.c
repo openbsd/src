@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2008/09/16 04:20:42 drahn Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2015/02/06 10:54:08 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- *                      
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -13,7 +13,7 @@
  * thereof, and that both notices appear in supporting documentation.
  *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  *
  * Carnegie Mellon requests users of this software to return to
@@ -40,6 +40,7 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_run.h>
 
 #ifdef MULTIPROCESSOR
 struct mutex ddb_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
@@ -121,15 +122,12 @@ db_enter_ddb(void)
 
 	mtx_enter(&ddb_mp_mutex);
 
-#if 0
-	printf("db_enter_ddb %d: state %x pause %x\n", ci->ci_cpuid,
-	    ddb_state, ci->ci_ddb_paused);
-#endif
 	/* If we are first in, grab ddb and stop all other CPUs */
 	if (ddb_state == DDB_STATE_NOT_RUNNING) {
 		ddb_active_cpu = cpu_number();
 		ddb_state = DDB_STATE_RUNNING;
 		ci->ci_ddb_paused = CI_DDB_INDDB;
+		mtx_leave(&ddb_mp_mutex);
 		for (i = 0; i < ncpus; i++) {
 			if (i != cpu_number() &&
 			    cpu_info[i].ci_ddb_paused != CI_DDB_STOPPED) {
@@ -137,7 +135,6 @@ db_enter_ddb(void)
 				ppc_send_ipi(&cpu_info[i], PPC_IPI_DDB);
 			}
 		}
-		mtx_leave(&ddb_mp_mutex);
 		return (1);
 	}
 
@@ -265,7 +262,7 @@ db_ddbproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		    cpu_n != cpu_number()) {
 			db_switch_to_cpu = cpu_n;
 			db_switch_cpu = 1;
-/*			db_cmd_loop_done = 1; */
+			db_cmd_loop_done = 1;
 		} else {
 			db_printf("Invalid cpu %d\n", (int)addr);
 		}
