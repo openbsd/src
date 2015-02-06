@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.40 2015/02/06 10:46:52 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.41 2015/02/06 10:49:32 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -33,37 +33,37 @@
  * SUCH DAMAGE.
  */
 
-# include	<sys/stat.h>
+#include <sys/stat.h>
 
-# include	<dirent.h>
-# include	<fcntl.h>
-# include	<assert.h>
-# include	<unistd.h>
-# include	<stdio.h>
-# include	<ctype.h>
-# include	<stdlib.h>
-# include	<string.h>
-# include	<limits.h>
-# include	<regex.h>
-# include	"strfile.h"
-# include	"pathnames.h"
+#include <dirent.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <regex.h>
+#include "strfile.h"
+#include "pathnames.h"
 
-# define	bool	short
+#define	bool	short
 
-# define	MINW	6		/* minimum wait if desired */
-# define	CPERS	20		/* # of chars for each sec */
-# define	SLEN	160		/* # of chars in short fortune */
+#define	MINW	6		/* minimum wait if desired */
+#define	CPERS	20		/* # of chars for each sec */
+#define	SLEN	160		/* # of chars in short fortune */
 
-# define	POS_UNKNOWN	((int32_t) -1)	/* pos for file unknown */
-# define	NO_PROB		(-1)		/* no prob specified for file */
+#define	POS_UNKNOWN	((int32_t) -1)	/* pos for file unknown */
+#define	NO_PROB		(-1)		/* no prob specified for file */
 
-# ifdef DEBUG
-# define	DPRINTF(l,x)	if (Debug >= l) fprintf x; else
-# undef		NDEBUG
-# else
-# define	DPRINTF(l,x)
-# define	NDEBUG	1
-# endif
+#ifdef DEBUG
+#define	DPRINTF(l,x)	if (Debug >= l) fprintf x; else
+#undef		NDEBUG
+#else
+#define	DPRINTF(l,x)
+#define	NDEBUG	1
+#endif
 
 typedef struct fd {
 	int		percent;
@@ -262,7 +262,7 @@ getargs(int argc, char *argv[])
 
 	ignore_case = 0;
 
-# ifdef DEBUG
+#ifdef DEBUG
 	while ((ch = getopt(argc, argv, "aDefilm:osw")) != -1)
 #else
 	while ((ch = getopt(argc, argv, "aefilm:osw")) != -1)
@@ -271,11 +271,11 @@ getargs(int argc, char *argv[])
 		case 'a':		/* any fortune */
 			All_forts = 1;
 			break;
-# ifdef DEBUG
+#ifdef DEBUG
 		case 'D':
 			Debug++;
 			break;
-# endif /* DEBUG */
+#endif /* DEBUG */
 		case 'e':
 			Equal_probs = 1;	/* scatter un-allocted prob equally */
 			break;
@@ -391,7 +391,7 @@ form_file_list(char **files, int file_cnt)
  */
 int
 add_file(int percent, char *file, char *dir, FILEDESC **head, FILEDESC **tail,
-         FILEDESC *parent)
+    FILEDESC *parent)
 {
 	FILEDESC	*fp;
 	int		fd;
