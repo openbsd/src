@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.17 2015/02/06 06:38:08 henning Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.18 2015/02/06 06:42:36 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -195,7 +195,65 @@ struct ifnet {				/* and the entries */
 #define	if_lastchange	if_data.ifi_lastchange
 #define	if_capabilities	if_data.ifi_capabilities
 
+/*
+ * The ifaddr structure contains information about one address
+ * of an interface.  They are maintained by the different address families,
+ * are allocated and attached when an address is set, and are linked
+ * together so all addresses for an interface can be located.
+ */
+struct ifaddr {
+	struct	sockaddr *ifa_addr;	/* address of interface */
+	struct	sockaddr *ifa_dstaddr;	/* other end of p-to-p link */
+#define	ifa_broadaddr	ifa_dstaddr	/* broadcast address interface */
+	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
+	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
+	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
+					/* check or clean routes (+ or -)'d */
+	void	(*ifa_rtrequest)(int, struct rtentry *);
+	u_int	ifa_flags;		/* interface flags, see below */
+	u_int	ifa_refcnt;		/* number of `rt_ifa` references */
+	int	ifa_metric;		/* cost of going out this interface */
+};
+
+#define	IFA_ROUTE		0x01	/* Auto-magically installed route */
+
+/*
+ * Interface multicast address.
+ */
+struct ifmaddr {
+	struct sockaddr		*ifma_addr;	/* Protocol address */
+	unsigned short		 ifma_ifidx;	/* Index of the interface */
+	unsigned int		 ifma_refcnt;	/* Count of references */
+	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* Per-interface list */
+};
+
+/*
+ * interface groups
+ */
+
+struct ifg_group {
+	char			 ifg_group[IFNAMSIZ];
+	u_int			 ifg_refcnt;
+	caddr_t			 ifg_pf_kif;
+	int			 ifg_carp_demoted;
+	TAILQ_HEAD(, ifg_member) ifg_members;
+	TAILQ_ENTRY(ifg_group)	 ifg_next;
+};
+
+struct ifg_member {
+	TAILQ_ENTRY(ifg_member)	 ifgm_next;
+	struct ifnet		*ifgm_ifp;
+};
+
+struct ifg_list {
+	struct ifg_group	*ifgl_group;
+	TAILQ_ENTRY(ifg_list)	 ifgl_next;
+};
+
 #ifdef _KERNEL
+#define	IFQ_MAXLEN	256
+#define	IFNET_SLOWHZ	1		/* granularity is 1 second */
+
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
  * input routines have queues of messages stored on ifqueue structures
@@ -272,66 +330,6 @@ do {									\
 #define	IF_LEN(ifq)		((ifq)->ifq_len)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
-#define	IFQ_MAXLEN	256
-#define	IFNET_SLOWHZ	1		/* granularity is 1 second */
-#endif
-
-/*
- * The ifaddr structure contains information about one address
- * of an interface.  They are maintained by the different address families,
- * are allocated and attached when an address is set, and are linked
- * together so all addresses for an interface can be located.
- */
-struct ifaddr {
-	struct	sockaddr *ifa_addr;	/* address of interface */
-	struct	sockaddr *ifa_dstaddr;	/* other end of p-to-p link */
-#define	ifa_broadaddr	ifa_dstaddr	/* broadcast address interface */
-	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
-	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
-	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
-					/* check or clean routes (+ or -)'d */
-	void	(*ifa_rtrequest)(int, struct rtentry *);
-	u_int	ifa_flags;		/* interface flags, see below */
-	u_int	ifa_refcnt;		/* number of `rt_ifa` references */
-	int	ifa_metric;		/* cost of going out this interface */
-};
-
-#define	IFA_ROUTE		0x01	/* Auto-magically installed route */
-
-/*
- * Interface multicast address.
- */
-struct ifmaddr {
-	struct sockaddr		*ifma_addr;	/* Protocol address */
-	unsigned short		 ifma_ifidx;	/* Index of the interface */
-	unsigned int		 ifma_refcnt;	/* Count of references */
-	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* Per-interface list */
-};
-
-/*
- * interface groups
- */
-
-struct ifg_group {
-	char			 ifg_group[IFNAMSIZ];
-	u_int			 ifg_refcnt;
-	caddr_t			 ifg_pf_kif;
-	int			 ifg_carp_demoted;
-	TAILQ_HEAD(, ifg_member) ifg_members;
-	TAILQ_ENTRY(ifg_group)	 ifg_next;
-};
-
-struct ifg_member {
-	TAILQ_ENTRY(ifg_member)	 ifgm_next;
-	struct ifnet		*ifgm_ifp;
-};
-
-struct ifg_list {
-	struct ifg_group	*ifgl_group;
-	TAILQ_ENTRY(ifg_list)	 ifgl_next;
-};
-
-#ifdef _KERNEL
 /* XXX pattr unused */
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
