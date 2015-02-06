@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.36 2015/02/06 10:17:56 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.37 2015/02/06 10:18:51 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -91,9 +91,7 @@ bool	Long_only	= FALSE;	/* long fortune desired */
 bool	Offend		= FALSE;	/* offensive fortunes only */
 bool	All_forts	= FALSE;	/* any fortune allowed */
 bool	Equal_probs	= FALSE;	/* scatter un-allocted prob equally */
-#ifndef NO_REGEX
 bool	Match		= FALSE;	/* dump fortunes matching a pattern */
-#endif
 #ifdef DEBUG
 bool	Debug = FALSE;			/* print debug messages */
 #endif
@@ -143,14 +141,12 @@ void	 sum_tbl(STRFILE *, STRFILE *);
 void	 usage(void);
 void	 zero_tbl(STRFILE *);
 
-#ifndef	NO_REGEX
 char	*conv_pat(char *);
 int	 find_matches(void);
 void	 matches_in_list(FILEDESC *);
 int	 maxlen_in_list(FILEDESC *);
 int	 minlen_in_list(FILEDESC *);
 regex_t regex;
-#endif
 
 int
 main(int ac, char *av[])
@@ -161,10 +157,8 @@ main(int ac, char *av[])
 
 	getargs(ac, av);
 
-#ifndef NO_REGEX
 	if (Match)
 		exit(find_matches() != 0);
-#endif
 
 	init_prob();
 	if (Short_only && minlen_in_list(File_list) > SLEN ||
@@ -270,9 +264,7 @@ void
 getargs(int argc, char *argv[])
 {
 	int	ignore_case;
-# ifndef NO_REGEX
 	char	*pat = NULL;
-# endif	/* NO_REGEX */
 	int ch;
 
 	ignore_case = FALSE;
@@ -311,13 +303,6 @@ getargs(int argc, char *argv[])
 		case 'w':		/* give time to read */
 			Wait = TRUE;
 			break;
-# ifdef	NO_REGEX
-		case 'i':			/* case-insensitive match */
-		case 'm':			/* dump out the fortunes */
-			(void) fprintf(stderr,
-			    "fortune: can't match fortunes on this system (Sorry)\n");
-			exit(0);
-# else	/* NO_REGEX */
 		case 'm':			/* dump out the fortunes */
 			Match = TRUE;
 			pat = optarg;
@@ -325,7 +310,6 @@ getargs(int argc, char *argv[])
 		case 'i':			/* case-insensitive match */
 			ignore_case = TRUE;
 			break;
-# endif	/* NO_REGEX */
 		case '?':
 		default:
 			usage();
@@ -344,12 +328,10 @@ getargs(int argc, char *argv[])
 		exit(0);
 	}
 
-# ifndef NO_REGEX
 	if (pat != NULL) {
 		if (regcomp(&regex, pat, ignore_case ? REG_ICASE : 0))
 			fprintf(stderr, "bad pattern: %s\n", pat);
 	}
-# endif	/* NO_REGEX */
 }
 
 /*
@@ -1190,7 +1172,6 @@ print_list(FILEDESC *list, int lev)
 	}
 }
 
-#ifndef	NO_REGEX
 
 /*
  * find_matches:
@@ -1301,7 +1282,6 @@ matches_in_list(FILEDESC *list)
 			}
 	}
 }
-# endif	/* NO_REGEX */
 
 void
 usage(void)
@@ -1311,13 +1291,9 @@ usage(void)
 	(void) fprintf(stderr, "D");
 #endif	/* DEBUG */
 	(void) fprintf(stderr, "f");
-#ifndef	NO_REGEX
 	(void) fprintf(stderr, "i");
-#endif	/* NO_REGEX */
 	(void) fprintf(stderr, "losw]");
-#ifndef	NO_REGEX
 	(void) fprintf(stderr, " [-m pattern]");
-#endif	/* NO_REGEX */
 	(void) fprintf(stderr, " [[N%%] file/directory/all]\n");
 	exit(1);
 }
