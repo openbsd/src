@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.412 2015/01/06 09:12:02 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.413 2015/02/06 15:09:34 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2015 $
+.Dd $Mdocdate: February 6 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2441,22 +2441,6 @@ window.
 .Op Ic on | off
 .Xc
 If enabled, request mouse input as UTF-8 on UTF-8 terminals.
-.It Ic pane-active-border-style Ar style
-Set the pane border style for the currently active pane.
-For how to specify
-.Ar style ,
-see the
-.Ic message-command-style
-option.
-Attributes are ignored.
-.It Ic pane-border-style Ar style
-Set the pane border style for panes aside from the active pane.
-For how to specify
-.Ar style ,
-see the
-.Ic message-command-style
-option.
-Attributes are ignored.
 .It Ic prefix Ar key
 Set the key accepted as a prefix key.
 .It Ic prefix2 Ar key
@@ -2895,10 +2879,28 @@ but set the width of other panes in the
 .Ic main-vertical
 layout.
 .Pp
+.It Ic pane-active-border-style Ar style
+Set the pane border style for the currently active pane.
+For how to specify
+.Ar style ,
+see the
+.Ic message-command-style
+option.
+Attributes are ignored.
+.Pp
 .It Ic pane-base-index Ar index
 Like
 .Ic base-index ,
 but set the starting index for pane numbers.
+.Pp
+.It Ic pane-border-style Ar style
+Set the pane border style for panes aside from the active pane.
+For how to specify
+.Ar style ,
+see the
+.Ic message-command-style
+option.
+Attributes are ignored.
 .Pp
 .It Xo Ic remain-on-exit
 .Op Ic on | off
