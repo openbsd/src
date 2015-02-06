@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.66 2014/12/09 07:28:46 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.67 2015/02/06 05:51:06 doug Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -159,4 +159,4 @@ MLINKS+=tolower.3 _tolower.3
 MLINKS+=toupper.3 _toupper.3
 MLINKS+=ttyname.3 ttyname_r.3 ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=unvis.3 strunvis.3 unvis.3 strnunvis.3
-MLINKS+=vis.3 strvis.3 vis.3 strnvis.3 vis.3 strvisx.3
+MLINKS+=vis.3 strvis.3 vis.3 strnvis.3 vis.3 strvisx.3 vis.3 stravis.3

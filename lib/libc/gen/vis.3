@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.32 2015/01/30 00:01:59 doug Exp $
+.\"	$OpenBSD: vis.3,v 1.33 2015/02/06 05:51:06 doug Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,14 +27,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2015 $
+.Dd $Mdocdate: February 6 2015 $
 .Dt VIS 3
 .Os
 .Sh NAME
 .Nm vis ,
 .Nm strvis ,
 .Nm strnvis ,
-.Nm strvisx
+.Nm strvisx ,
+.Nm stravis
 .Nd visually encode characters
 .Sh SYNOPSIS
 .In stdlib.h
@@ -47,6 +48,8 @@
 .Fn strnvis "char *dst" "const char *src" "size_t dstsize" "int flag"
 .Ft int
 .Fn strvisx "char *dst" "const char *src" "size_t srclen" "int flag"
+.Ft int
+.Fn stravis "char **outp" "const char *src" "int flag"
 .Sh DESCRIPTION
 The
 .Fn vis
@@ -105,6 +108,22 @@ into a buffer
 (which must be at least 4 * srclen + 1 long).
 This
 is useful for encoding a block of data that may contain NULs.
+.Pp
+The
+.Fn stravis
+function writes a visual representation of the string
+.Fa src
+into a newly allocated string
+.Fa outp ;
+it does not attempt to
+.Xr realloc 3
+.Fa outp .
+.Fa outp
+should be passed to
+.Xr free 3
+to release the allocated storage when it is no longer needed.
+.Fn stravis
+checks for integer overflow when allocating memory.
 .Pp
 All forms NUL-terminate
 .Fa dst ,
@@ -301,9 +320,22 @@ the return value of
 .Fn strnvis
 must not be used without checking it against
 .Fa dstsize .
+.Pp
+Upon successful completion,
+.Fn stravis
+returns the number of characters in
+.Pf * Fa outp
+(not including the trailing NUL).
+Otherwise,
+.Fn stravis
+returns -1 and sets
+.Va errno
+to
+.Er ENOMEM .
 .Sh SEE ALSO
 .Xr unvis 1 ,
 .Xr vis 1 ,
+.Xr free 3 ,
 .Xr snprintf 3 ,
 .Xr strlcpy 3 ,
 .Xr unvis 3
@@ -314,11 +346,14 @@ The
 and
 .Fn strvisx
 functions first appeared in
-.Bx 4.4
-and
+.Bx 4.4 ,
 .Fn strnvis
 in
-.Ox 2.9 .
+.Ox 2.9
+and
+.Fn stravis
+in
+.Ox 5.7 .
 .Pp
 The
 .Dv VIS_ALL
