@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.25 2015/01/19 20:25:36 miod Exp $	*/
+/*	$OpenBSD: elf.c,v 1.26 2015/02/06 23:21:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -32,10 +32,10 @@
 #include <elf_abi.h>
 #include <errno.h>
 #include <err.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <ctype.h>
 #include "elfuncs.h"
 #include "util.h"
@@ -454,7 +454,7 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 	for (i = 0; i < eh->e_shnum; i++) {
 		if (!strcmp(shstr + shdr[i].sh_name, strtab)) {
 			*pstabsize = shdr[i].sh_size;
-			if (*pstabsize > SIZE_T_MAX) {
+			if (*pstabsize > SIZE_MAX) {
 				warnx("%s: corrupt file", name);
 				return (1);
 			}

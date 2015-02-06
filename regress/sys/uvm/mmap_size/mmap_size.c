@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_size.c,v 1.2 2006/03/14 09:31:51 mickey Exp $	*/
+/*	$OpenBSD: mmap_size.c,v 1.3 2015/02/06 23:21:58 millert Exp $	*/
 
 /*
  * Public domain. 2005, Otto Moerbeek <otto@drijf.net>
@@ -7,9 +7,9 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <err.h>
-#include <limits.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void
 f(size_t sz)
@@ -37,7 +37,7 @@ main()
 	for (i = 0; i < 0x2000; i += 0x100) {
 		f(i);
 		f(-i);
-		f(SIZE_T_MAX/2 - 0x1000);
+		f(SIZE_MAX/2 - 0x1000);
 	}
 	return (0);
 }

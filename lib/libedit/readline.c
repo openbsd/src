@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.13 2015/01/13 08:33:12 reyk Exp $	*/
+/*	$OpenBSD: readline.c,v 1.14 2015/02/06 23:21:58 millert Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
@@ -2133,7 +2134,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 	}
 	qsort(&list[1], len - 1, sizeof(*list),
 	    (int (*)(const void *, const void *)) strcmp);
-	min = SIZE_T_MAX;
+	min = SIZE_MAX;
 	for (i = 1, a = list[i]; i < len - 1; i++, a = b) {
 		b = list[i + 1];
 		for (j = 0; a[j] && a[j] == b[j]; j++)

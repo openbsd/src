@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.21 2014/08/25 07:50:25 doug Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.22 2015/02/06 23:21:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -23,11 +23,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -266,7 +266,7 @@ handle_cmds(void)
 			debugmsg("CMD_USER received");
 
 			recv_data(fd_slave, &len, sizeof(len));
-			if (len == SIZE_T_MAX)
+			if (len == SIZE_MAX)
 				fatalx("monitor received invalid user length");
 			if ((name = malloc(len + 1)) == NULL)
 				fatalx("malloc: %m");
@@ -281,7 +281,7 @@ handle_cmds(void)
 			debugmsg("CMD_PASS received");
 
 			recv_data(fd_slave, &len, sizeof(len));
-			if (len == SIZE_T_MAX)
+			if (len == SIZE_MAX)
 				fatalx("monitor received invalid pass length");
 			if ((pw = malloc(len + 1)) == NULL)
 				fatalx("malloc: %m");

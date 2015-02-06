@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.12 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.13 2015/02/06 23:21:58 millert Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -685,10 +685,8 @@ rfile(name, lenp)
 	if ((fd = open(name, O_RDONLY, 0)) < 0 ||
 	    fstat(fd, &sb))
 		dberr("%s: %s\n", name, strerror(errno));
-#ifdef NOT_PORTABLE
-	if (sb.st_size > (off_t)SIZE_T_MAX)
+	if (sb.st_size > (off_t)SIZE_MAX)
 		dberr("%s: %s\n", name, strerror(E2BIG));
-#endif
 	if ((p = (void *)malloc((u_int)sb.st_size)) == NULL)
 		dberr("%s", strerror(errno));
 	(void)read(fd, p, (int)sb.st_size);

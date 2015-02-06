@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.16 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.17 2015/02/06 23:21:59 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -54,7 +54,7 @@ mmopen(char *fn, char *mode)
 		goto ouch1;
 	if (fstat(mmf->fd, &st) == -1)
 		goto ouch2;
-	if (st.st_size > SIZE_T_MAX) /* too big to mmap */
+	if (st.st_size > SIZE_MAX) /* too big to mmap */
 		goto ouch2;
 	if (!S_ISREG(st.st_mode)) /* only mmap regular files */
 		goto ouch2;

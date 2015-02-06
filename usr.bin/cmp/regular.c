@@ -1,4 +1,4 @@
-/*      $OpenBSD: regular.c,v 1.11 2015/01/16 06:40:06 deraadt Exp $      */
+/*      $OpenBSD: regular.c,v 1.12 2015/02/06 23:21:59 millert Exp $      */
 /*      $NetBSD: regular.c,v 1.2 1995/09/08 03:22:59 tls Exp $      */
 
 /*-
@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 
 #include <err.h>
-#include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -62,7 +62,7 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 	len2 -= skip2;
 
 	length = MINIMUM(len1, len2);
-	if (length > SIZE_T_MAX) {
+	if (length > SIZE_MAX) {
 	mmap_failed:
 		c_special(fd1, file1, skip1, fd2, file2, skip2);
 		return;

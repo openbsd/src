@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.9 2015/01/21 21:50:33 deraadt Exp $	*/
+/*	$OpenBSD: pf.c,v 1.10 2015/02/06 23:21:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -43,11 +43,11 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 #include <event.h>
 
 #include "snmpd.h"
@@ -145,7 +145,7 @@ pfr_buf_grow(struct pfr_buffer *b, int minsize)
 	} else {
 		if (minsize == 0)
 			minsize = b->pfrb_msize * 2;
-		if (minsize < 0 || (size_t)minsize >= SIZE_T_MAX / bs) {
+		if (minsize < 0 || (size_t)minsize >= SIZE_MAX / bs) {
 			/* msize overflow */
 			return (-1);
 		}

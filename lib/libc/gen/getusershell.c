@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.14 2014/09/15 06:15:48 guenther Exp $ */
+/*	$OpenBSD: getusershell.c,v 1.15 2015/02/06 23:21:58 millert Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <paths.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -101,7 +102,7 @@ initshells(void)
 		(void)fclose(fp);
 		return (okshells);
 	}
-	if (statb.st_size > SIZE_T_MAX) {
+	if (statb.st_size > SIZE_MAX) {
 		(void)fclose(fp);
 		return (okshells);
 	}

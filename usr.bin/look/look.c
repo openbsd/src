@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.15 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: look.c,v 1.16 2015/02/06 23:21:59 millert Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 
 	if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
 		err(2, "%s", file);
-	if (sb.st_size > SIZE_T_MAX)
+	if (sb.st_size > SIZE_MAX)
 		errc(2, EFBIG, "%s", file);
 	if ((front = mmap(NULL,
 	    (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.58 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.59 2015/02/06 23:21:58 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +34,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 #include <a.out.h>		/* pulls in nlist.h */
 
 #ifdef _NLIST_DO_ELF
@@ -111,7 +111,7 @@ __fdnlist(int fd, struct nlist *list)
 	shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
 
 	/* Make sure it's not too big to mmap */
-	if (shdr_size > SIZE_T_MAX) {
+	if (shdr_size > SIZE_MAX) {
 		errno = EFBIG;
 		return (-1);
 	}
@@ -154,7 +154,7 @@ __fdnlist(int fd, struct nlist *list)
 
 	/* Check for files too large to mmap. */
 	/* XXX is this really possible? */
-	if (symstrsize > SIZE_T_MAX) {
+	if (symstrsize > SIZE_MAX) {
 		errno = EFBIG;
 		return (-1);
 	}
