@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.79 2015/02/06 01:37:11 reyk Exp $ */
+/* $OpenBSD: ssl.h,v 1.80 2015/02/06 08:30:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,6 +418,8 @@ struct ssl_method_st {
 	int (*ssl_dispatch_alert)(SSL *s);
 	long (*ssl_ctrl)(SSL *s, int cmd, long larg, void *parg);
 	long (*ssl_ctx_ctrl)(SSL_CTX *ctx, int cmd, long larg, void *parg);
+	const SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
+	int (*put_cipher_by_char)(const SSL_CIPHER *cipher, unsigned char *ptr);
 	int (*ssl_pending)(const SSL *s);
 	int (*num_ciphers)(void);
 	const SSL_CIPHER *(*get_cipher)(unsigned ncipher);

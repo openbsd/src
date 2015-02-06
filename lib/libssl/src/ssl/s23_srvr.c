@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.37 2014/12/10 15:43:31 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.38 2015/02/06 08:30:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,6 +139,8 @@ const SSL_METHOD SSLv23_server_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.ssl_ctrl = ssl3_ctrl,
 	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.ssl_pending = ssl_undefined_const_function,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,

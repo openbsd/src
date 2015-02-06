@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.91 2014/12/16 05:47:28 miod Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.92 2015/02/06 08:30:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2519,7 +2519,42 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	return (1);
 }
 
-SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
+/*
+ * This function needs to check if the ciphers required are actually available.
+ */
+const SSL_CIPHER *
+ssl3_get_cipher_by_char(const unsigned char *p)
+{
+	const SSL_CIPHER *cp;
+	unsigned long id;
+	SSL_CIPHER c;
+
+	id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
+	c.id = id;
+	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+	if (cp == NULL || cp->valid == 0)
+		return NULL;
+	else
+		return cp;
+}
+
+int
+ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
+{
+	long l;
+
+	if (p != NULL) {
+		l = c->id;
+		if ((l & 0xff000000) != 0x03000000)
+			return (0);
+		p[0] = ((unsigned char)(l >> 8L)) & 0xFF;
+		p[1] = ((unsigned char)(l)) & 0xFF;
+	}
+	return (2);
+}
+
+SSL_CIPHER *
+ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr)
 {
 	unsigned long alg_k, alg_a, mask_k, mask_a;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.84 2014/12/15 00:46:53 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.85 2015/02/06 08:30:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -595,6 +595,8 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
 
+const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
+int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 int ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);
 int ssl3_send_newsession_ticket(SSL *s);
