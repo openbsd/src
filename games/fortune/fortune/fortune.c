@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.37 2015/02/06 10:18:51 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.38 2015/02/06 10:25:32 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -177,22 +177,18 @@ main(int ac, char *av[])
 		perror(Fortfile->posfile);
 		exit(1);
 	}
-#ifdef	LOCK_EX
 	/*
 	 * if we can, we exclusive lock, but since it isn't very
 	 * important, we just punt if we don't have easy locking
 	 * available.
 	 */
 	(void) flock(fd, LOCK_EX);
-#endif	/* LOCK_EX */
 	Fortfile->pos = htonl(Fortfile->pos);
 	write(fd, (char *) &Fortfile->pos, sizeof Fortfile->pos);
 	Fortfile->pos = ntohl(Fortfile->pos);
 	if (!Fortfile->was_pos_file)
 		(void) chmod(Fortfile->path, 0666);
-#ifdef	LOCK_EX
 	(void) flock(fd, LOCK_UN);
-#endif	/* LOCK_EX */
 #endif	/* OK_TO_WRITE_DISK */
 	if (Wait) {
 		if (Fort_len == 0)
@@ -200,7 +196,6 @@ main(int ac, char *av[])
 		sleep((unsigned int) max(Fort_len / CPERS, MINW));
 	}
 	exit(0);
-	/* NOTREACHED */
 }
 
 void
@@ -1188,7 +1183,6 @@ find_matches(void)
 	Found_one = FALSE;
 	matches_in_list(File_list);
 	return Found_one;
-	/* NOTREACHED */
 }
 
 /*
