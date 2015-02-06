@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.32 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.33 2015/02/06 09:55:01 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -210,6 +210,19 @@ main(int ac, char *av[])
 }
 
 void
+rot13(char *p, size_t len)
+{
+	while (len--) {
+		char ch = *p;
+		if (isupper(ch))
+			*p = 'A' + (ch - 'A' + 13) % 26;
+		else if (islower(ch))
+			*p = 'a' + (ch - 'a' + 13) % 26;
+		p++;
+	}
+}
+
+void
 display(FILEDESC *fp)
 {
 	char	*p, ch;
@@ -220,11 +233,7 @@ display(FILEDESC *fp)
 	for (Fort_len = 0; fgets(line, sizeof line, fp->inf) != NULL &&
 	    !STR_ENDSTRING(line, fp->tbl); Fort_len++) {
 		if (fp->tbl.str_flags & STR_ROTATED)
-			for (p = line; ch = *p; ++p)
-				if (isupper(ch))
-					*p = 'A' + (ch - 'A' + 13) % 26;
-				else if (islower(ch))
-					*p = 'a' + (ch - 'a' + 13) % 26;
+			rot13(line, strlen(line));
 		fputs(line, stdout);
 	}
 	(void) fflush(stdout);
@@ -1319,6 +1328,8 @@ matches_in_list(FILEDESC *list)
 				sp += strlen(sp);
 			else {
 				*sp = '\0';
+				if (fp->tbl.str_flags & STR_ROTATED)
+					rot13(Fortbuf, sp - Fortbuf);
 				if (regexec(&regex, Fortbuf, 0, NULL, 0) == 0) {
 					printf("%c%c", fp->tbl.str_delim,
 					    fp->tbl.str_delim);
