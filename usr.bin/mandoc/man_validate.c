@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.80 2015/01/24 02:41:32 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.81 2015/02/06 07:12:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -250,9 +250,9 @@ static void
 check_part(CHKARGS)
 {
 
-	if (MAN_BODY == n->type && 0 == n->nchild)
-		mandoc_msg(MANDOCERR_ARGCWARN, man->parse, n->line,
-		    n->pos, "want children (have none)");
+	if (n->type == MAN_BODY && n->child == NULL)
+		mandoc_msg(MANDOCERR_BLK_EMPTY, man->parse,
+		    n->line, n->pos, man_macronames[n->tok]);
 }
 
 static void

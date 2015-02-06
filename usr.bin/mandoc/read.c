@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.98 2015/02/06 03:31:11 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.99 2015/02/06 07:12:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -131,8 +131,8 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping empty request",
 	"conditional request controls empty scope",
 	"skipping empty macro",
+	"empty block",
 	"empty argument, using 0n",
-	"argument count wrong",
 	"missing display type, using -ragged",
 	"list type is not the first argument",
 	"missing -width in -tag list, using 8n",

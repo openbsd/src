@@ -1,2 +1,1 @@
 mandoc: badargs.in:9:2: WARNING: skipping empty macro: Lb
-mandoc: badargs.in:10:2: WARNING: argument count wrong: want 1 children (have 2)
