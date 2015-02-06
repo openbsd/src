@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.6 2015/02/06 01:01:31 schwarze Exp $
+.\"	$OpenBSD: rdomain.4,v 1.7 2015/02/06 03:10:43 phessler Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -60,6 +60,15 @@ as the parent.
 Each
 .Nm rdomain
 contains at least one routing table.
+.Pp
+Network traffic within an
+.Nm rdomain
+stays within the current routing domain.
+.Xr pf 4
+is used to move traffic from one
+.Nm rdomain
+to a different
+.Nm rdomain .
 .Sh EXAMPLES
 Set up em0 and lo4 onto rdomain 4:
 .Bd -literal -offset indent
