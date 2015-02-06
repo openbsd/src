@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.99 2014/12/10 02:34:03 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.100 2015/02/06 04:18:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -391,18 +391,22 @@ subnet_exists(struct client_lease *l)
 		if (mynet.s_addr == (hisaddr.s_addr & mymask.s_addr)) {
 			note("interface %s already has the offered subnet!",
 			    ifa->ifa_name);
-			return (1);
+			break;
 		}
 
 		/* Would my packets go out *his* interface? */
 		if (hisnet.s_addr == (myaddr.s_addr & hismask.s_addr)) {
 			note("interface %s already has the offered subnet!",
 			    ifa->ifa_name);
-			return (1);
+			break;
 		}
 	}
 
 	freeifaddrs(ifap);
 
-	return (0);
+	/* If ifa == NULL we scanned the list without finding a problem. */
+	if (ifa == NULL)
+		return (0);
+	else
+		return (1);
 }
