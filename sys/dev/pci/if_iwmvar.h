@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.1 2015/02/06 19:49:29 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.2 2015/02/06 23:52:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -102,6 +102,40 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+struct iwm_rx_radiotap_header {
+	struct ieee80211_radiotap_header wr_ihdr;
+	uint64_t	wr_tsft;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	int8_t		wr_dbm_antsignal;
+	int8_t		wr_dbm_antnoise;
+} __packed;
+
+#define IWM_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_TSFT) |				\
+	 (1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) |			\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+
+struct iwm_tx_radiotap_header {
+	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint8_t		wt_rate;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
+	uint8_t		wt_hwqueue;
+} __packed;
+
+#define IWM_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_HWQUEUE))
 
 #define IWM_UCODE_SECT_MAX 6
 #define IWM_FWNAME "iwm-7260-9"
@@ -435,6 +469,25 @@ struct iwm_softc {
 	struct iwm_mvm_phy_ctxt sc_phyctxt[IWM_NUM_PHY_CTX];
 
 	struct iwm_notif_statistics sc_stats;
+	int sc_noise;
+
+#if NBPFILTER > 0
+	caddr_t			sc_drvbpf;
+
+	union {
+		struct iwm_rx_radiotap_header th;
+		uint8_t	pad[IEEE80211_RADIOTAP_HDRLEN];
+	} sc_rxtapu;
+#define sc_rxtap	sc_rxtapu.th
+	int			sc_rxtap_len;
+
+	union {
+		struct iwm_tx_radiotap_header th;
+		uint8_t	pad[IEEE80211_RADIOTAP_HDRLEN];
+	} sc_txtapu;
+#define sc_txtap	sc_txtapu.th
+	int			sc_txtap_len;
+#endif
 };
 
 struct iwm_node {

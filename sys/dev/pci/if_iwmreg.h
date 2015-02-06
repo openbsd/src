@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.1 2015/02/06 19:49:29 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.2 2015/02/06 23:52:23 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -2402,9 +2402,12 @@ struct iwm_rx_phy_info {
 	uint64_t timestamp;
 	uint32_t beacon_time_stamp;
 	uint16_t phy_flags;
+#define IWM_PHY_INFO_FLAG_SHPREAMBLE	(1 << 2)
 	uint16_t channel;
 	uint32_t non_cfg_phy[IWM_RX_INFO_PHY_CNT];
-	uint32_t rate_n_flags;
+	uint8_t rate;
+	uint8_t rflags;
+	uint16_t xrflags;
 	uint32_t byte_count;
 	uint16_t mac_active_msk;
 	uint16_t frame_time;
@@ -2641,9 +2644,7 @@ struct iwm_mvm_statistics_rx_non_phy {
 					 * ADC was in saturation */
 	uint32_t ina_detection_search_time;/* total time (in 0.8us) searched
 					  * for INA */
-	uint32_t beacon_silence_rssi_a;	/* RSSI silence after beacon frame */
-	uint32_t beacon_silence_rssi_b;	/* RSSI silence after beacon frame */
-	uint32_t beacon_silence_rssi_c;	/* RSSI silence after beacon frame */
+	uint32_t beacon_silence_rssi[3];/* RSSI silence after beacon frame */
 	uint32_t interference_data_flag;	/* flag for interference data
 					 * availability. 1 when data is
 					 * available. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.1 2015/02/06 19:49:29 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.2 2015/02/06 23:52:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -103,6 +103,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "bpfilter.h"
+
 #include <sys/cdefs.h>
 
 #include <sys/param.h>
@@ -125,7 +127,9 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -323,6 +327,7 @@ int	iwm_mvm_get_signal_strength(struct iwm_softc *,
 					struct iwm_rx_phy_info *);
 void	iwm_mvm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 				struct iwm_rx_data *);
+int	iwm_get_noise(const struct iwm_mvm_statistics_rx_non_phy *);
 void	iwm_mvm_rx_rx_mpdu(struct iwm_softc *, struct iwm_rx_packet *,
 				struct iwm_rx_data *);
 void	iwm_mvm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
@@ -353,7 +358,7 @@ int	iwm_mvm_send_cmd_pdu_status(struct iwm_softc *, uint8_t,
 void	iwm_free_resp(struct iwm_softc *, struct iwm_host_cmd *);
 void	iwm_cmd_done(struct iwm_softc *, struct iwm_rx_packet *);
 void	iwm_update_sched(struct iwm_softc *, int, int, uint8_t, uint16_t);
-void	iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
+const struct iwm_rate *iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
 			struct ieee80211_frame *, struct iwm_tx_cmd *);
 int	iwm_tx(struct iwm_softc *, struct mbuf *, struct ieee80211_node *, int);
 int	iwm_mvm_beacon_filter_send_cmd(struct iwm_softc *,
@@ -426,6 +431,9 @@ int	iwm_match(struct device *, void *, void *);
 int	iwm_preinit(struct iwm_softc *);
 void	iwm_attach_hook(iwm_hookarg_t);
 void	iwm_attach(struct device *, struct device *, void *);
+#if NBPFILTER > 0
+void	iwm_radiotap_attach(struct iwm_softc *);
+#endif
 
 /*
  * Firmware parser.
@@ -2993,6 +3001,27 @@ iwm_mvm_rx_rx_phy_cmd(struct iwm_softc *sc,
 }
 
 /*
+ * Retrieve the average noise (in dBm) among receivers.
+ */
+int
+iwm_get_noise(const struct iwm_mvm_statistics_rx_non_phy *stats)
+{
+	int i, total, nbant, noise;
+
+	total = nbant = noise = 0;
+	for (i = 0; i < 3; i++) {
+		noise = letoh32(stats->beacon_silence_rssi[i]) & 0xff;
+		if (noise) {
+			total += noise;
+			nbant++;
+		}
+	}
+
+	/* There should be at least one antenna but check anyway. */
+	return (nbant == 0) ? -127 : (total / nbant) - 107;
+}
+
+/*
  * iwm_mvm_rx_rx_mpdu - IWM_REPLY_RX_MPDU_CMD handler
  *
  * Handles the actual data of the Rx packet from the fw
@@ -3066,6 +3095,50 @@ iwm_mvm_rx_rx_mpdu(struct iwm_softc *sc,
 	ni = ieee80211_find_rxnode(ic, wh);
 	if (c)
 		ni->ni_chan = c;
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct iwm_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->wr_flags = 0;
+		if (phy_info->phy_flags & htole16(IWM_PHY_INFO_FLAG_SHPREAMBLE))
+			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+		tap->wr_chan_freq =
+		    htole16(ic->ic_channels[phy_info->channel].ic_freq);
+		tap->wr_chan_flags =
+		    htole16(ic->ic_channels[phy_info->channel].ic_flags);
+		tap->wr_dbm_antsignal = (int8_t)rssi;
+		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
+		tap->wr_tsft = phy_info->system_timestamp;
+		switch (phy_info->rate) {
+		/* CCK rates. */
+		case  10: tap->wr_rate =   2; break;
+		case  20: tap->wr_rate =   4; break;
+		case  55: tap->wr_rate =  11; break;
+		case 110: tap->wr_rate =  22; break;
+		/* OFDM rates. */
+		case 0xd: tap->wr_rate =  12; break;
+		case 0xf: tap->wr_rate =  18; break;
+		case 0x5: tap->wr_rate =  24; break;
+		case 0x7: tap->wr_rate =  36; break;
+		case 0x9: tap->wr_rate =  48; break;
+		case 0xb: tap->wr_rate =  72; break;
+		case 0x1: tap->wr_rate =  96; break;
+		case 0x3: tap->wr_rate = 108; break;
+		/* Unknown rate: should not happen. */
+		default:  tap->wr_rate =   0;
+		}
+
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_rxtap_len;
+		mb.m_next = m;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+	}
+#endif
 	ieee80211_input(IC2IFP(ic), m, ni, &rxi);
 	ieee80211_release_node(ic, ni);
 }
@@ -3630,8 +3703,9 @@ iwm_update_sched(struct iwm_softc *sc, int qid, int idx, uint8_t sta_id,
 /*
  * Fill in various bit for management frames, and leave them
  * unfilled for data frames (firmware takes care of that).
+ * Return the selected TX rate.
  */
-void
+const struct iwm_rate *
 iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	struct ieee80211_frame *wh, struct iwm_tx_cmd *tx)
 {
@@ -3652,7 +3726,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		}
                 tx->tx_flags |= htole32(IWM_TX_CMD_FLG_STA_RATE);
 		DPRINTFN(12, ("start with txrate %d\n", tx->initial_rate_index));
-		return;
+		return &iwm_rates[tx->initial_rate_index];
 	}
 
 	/* for non-data, use the lowest supported rate */
@@ -3663,6 +3737,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	if (IWM_RIDX_IS_CCK(ridx))
 		rate_flags |= IWM_RATE_MCS_CCK_MSK;
 	tx->rate_n_flags = htole32(rate_flags | rinfo->plcp);
+
+	return rinfo;
 }
 
 #define TB0_SIZE 16
@@ -3679,6 +3755,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	struct mbuf *m1;
+	const struct iwm_rate *rinfo;
 	uint32_t flags;
 	u_int hdrlen;
 	bus_dma_segment_t *seg;
@@ -3705,6 +3782,42 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	memset(desc, 0, sizeof(*desc));
 	data = &ring->data[ring->cur];
 
+	/* Fill out iwm_tx_cmd to send to the firmware */
+	cmd = &ring->cmd[ring->cur];
+	cmd->hdr.code = IWM_TX_CMD;
+	cmd->hdr.flags = 0;
+	cmd->hdr.qid = ring->qid;
+	cmd->hdr.idx = ring->cur;
+
+	tx = (void *)cmd->data;
+	memset(tx, 0, sizeof(*tx));
+
+	rinfo = iwm_tx_fill_cmd(sc, in, wh, tx);
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct iwm_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
+		tap->wt_rate = rinfo->rate;
+		tap->wt_hwqueue = ac;
+		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
+		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
+			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
+
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
+
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		/* Retrieve key for TX && do software encryption. */
@@ -3715,16 +3828,6 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		wh = mtod(m, struct ieee80211_frame *);
 	}
 	totlen = m->m_pkthdr.len;
-
-	/* Fill out iwm_tx_cmd to send to the firmware */
-	cmd = &ring->cmd[ring->cur];
-	cmd->hdr.code = IWM_TX_CMD;
-	cmd->hdr.flags = 0;
-	cmd->hdr.qid = ring->qid;
-	cmd->hdr.idx = ring->cur;
-
-	tx = (void *)cmd->data;
-	memset(tx, 0, sizeof(*tx));
 
 	flags = 0;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
@@ -3780,8 +3883,6 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	tx->sec_ctl = 0;
 	tx->tx_flags |= htole32(flags);
-
-	iwm_tx_fill_cmd(sc, in, wh, tx);
 
 	/* Trim 802.11 header. */
 	m_adj(m, hdrlen);
@@ -5553,12 +5654,20 @@ iwm_start(struct ifnet *ifp)
                         ifp->if_oerrors++;
                         continue;
                 }
+#if NBPFILTER > 0
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL) {
 			ifp->if_oerrors++;
 			continue;
 		}
 
  sendit:
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
+#endif
 		if (iwm_tx(sc, m, ni, ac) != 0) {
 			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
@@ -5945,6 +6054,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 			struct iwm_notif_statistics *stats;
 			SYNC_RESP_STRUCT(stats, pkt);
 			memcpy(&sc->sc_stats, stats, sizeof(sc->sc_stats));
+			sc->sc_noise = iwm_get_noise(&stats->rx.general);
 			break; }
 
 		case IWM_NVM_ACCESS_CMD:
@@ -6377,6 +6487,9 @@ iwm_attach_hook(iwm_hookarg_t arg)
 	ic->ic_newstate = iwm_newstate;
 	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
 
+#if NBPFILTER > 0
+	iwm_radiotap_attach(sc);
+#endif
 	timeout_set(&sc->sc_calib_to, iwm_calib_timeout, sc);
 
 	return;
@@ -6474,6 +6587,26 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	else
 		iwm_attach_hook(sc);
 }
+
+#if NBPFILTER > 0
+/*
+ * Attach the interface to 802.11 radiotap.
+ */
+void
+iwm_radiotap_attach(struct iwm_softc *sc)
+{
+	bpfattach(&sc->sc_drvbpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
+	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
+
+	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(IWM_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(IWM_TX_RADIOTAP_PRESENT);
+}
+#endif
 
 struct cfdriver iwm_cd = {
 	NULL, "iwm", DV_IFNET
