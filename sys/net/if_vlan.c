@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.111 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.112 2015/02/06 08:07:09 henning Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -295,6 +295,10 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 	/* From now on ether_vtag is fine */
 	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
 	m->m_pkthdr.pf.prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
+
+	/* IEEE 802.1p has prio 0 and 1 swapped */
+	if (m->m_pkthdr.pf.prio <= 1)
+		m->m_pkthdr.pf.prio = !m->m_pkthdr.pf.prio;
 
 	LIST_FOREACH(ifv, &tagh[TAG_HASH(tag)], ifv_list) {
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag &&
