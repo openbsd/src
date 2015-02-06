@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.13 2015/02/02 17:40:24 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.14 2015/02/06 00:27:41 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -27,8 +27,11 @@ use IO::Socket;
 use IO::Socket::INET6;
 
 my $firstlog = "syslogd regress test first message";
+my $secondlog = "syslogd regress test second message";
+my $thirdlog = "syslogd regress test third message";
 my $testlog = "syslogd regress test log message";
 my $downlog = "syslogd regress client shutdown";
+my $charlog = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 sub find_ports {
 	my %args = @_;
@@ -59,7 +62,7 @@ sub write_log {
 	my $self = shift;
 
 	write_message($self, $testlog);
-	write_shutdown($self, @_);
+	write_shutdown($self);
 }
 
 sub write_between2logs {
@@ -69,7 +72,7 @@ sub write_between2logs {
 	write_message($self, $firstlog);
 	$func->($self, @_);
 	write_message($self, $testlog);
-	write_shutdown($self, @_);
+	write_shutdown($self);
 }
 
 sub write_message {
@@ -103,15 +106,16 @@ sub write_shutdown {
 
 sub write_char {
 	my $self = shift;
-	my @lenghts = @_ || @{$self->{lengths}};
+	my @lenghts = @{shift || $self->{lengths}};
+	my $tail = shift // $self->{tail};
 
 	foreach my $len (@lenghts) {
-		my $tail = $self->{tail} // "";
-		substr($tail, 0, length($tail) - $len, "")
-		    if length($tail) && length($tail) > $len;
+		my $t = $tail // "";
+		substr($t, 0, length($t) - $len, "")
+		    if length($t) && length($t) > $len;
 		my $msg = "";
 		my $char = '0';
-		for (my $i = 0; $i < $len - length($tail); $i++) {
+		for (my $i = 0; $i < $len - length($t); $i++) {
 			$msg .= $char;
 			given ($char) {
 				when(/9/)       { $char = 'A' }
@@ -120,14 +124,15 @@ sub write_char {
 				default         { $char++ }
 			}
 		}
-		$msg .= $tail if length($tail);
+		$msg .= $t if length($t);
 		write_message($self, $msg);
 	}
 }
 
 sub write_length {
-	write_char(@_);
-	write_log(@_);
+	my $self = shift;
+	write_char($self, @_);
+	write_log($self);
 }
 
 sub write_unix {
@@ -150,7 +155,7 @@ sub write_unix {
 sub read_log {
 	my $self = shift;
 
-	read_message($self, $downlog, @_);
+	read_message($self, $downlog);
 }
 
 sub read_between2logs {
@@ -158,12 +163,12 @@ sub read_between2logs {
 	my $func = shift;
 
 	unless ($self->{redo}) {
-		read_message($self, $firstlog, @_);
+		read_message($self, $firstlog);
 	}
 	$func->($self, @_);
 	unless ($self->{redo}) {
-		read_message($self, $testlog, @_);
-		read_message($self, $downlog, @_);
+		read_message($self, $testlog);
+		read_message($self, $downlog);
 	}
 }
 
@@ -194,6 +199,22 @@ sub read_message {
 
 sub get_testlog {
 	return $testlog;
+}
+
+sub get_firstlog {
+	return $firstlog;
+}
+
+sub get_secondlog {
+	return $secondlog;
+}
+
+sub get_thirdlog {
+	return $thirdlog;
+}
+
+sub get_charlog {
+	return $charlog;
 }
 
 sub get_between2loggrep {

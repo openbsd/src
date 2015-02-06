@@ -10,13 +10,11 @@ use warnings;
 
 our %args = (
     client => {
-	func => sub {
+	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
-	    write_between2logs($self, sub {
-		${$self->{server}}->loggrep("Signal", 8)
-		    or die ref($self), " no 'Signal' between logs";
-	    });
-	},
+	    ${$self->{server}}->loggrep("Signal", 8)
+		or die ref($self), " no 'Signal' between logs";
+	})},
 	loggrep => { get_between2loggrep() },
     },
     syslogd => {
@@ -28,17 +26,15 @@ our %args = (
 	loggrep => qr/\[unpriv\] syslogd child about to exit/,
     },
     server => {
-	func => sub {
+	func => sub { read_between2logs(shift, sub {
 	    my $self = shift;
-	    read_between2logs($self, sub {
-		${$self->{syslogd}}->kill_syslogd('TERM');
-		my $pattern = "syslogd: exiting on signal 15";
-		${$self->{syslogd}}->loggrep("syslogd: exiting on signal 15", 5)
-		    or die ref($self),
-		    " no 'syslogd: exiting on signal 15' between logs";
-		print STDERR "Signal\n";
-	    });
-	},
+	    ${$self->{syslogd}}->kill_syslogd('TERM');
+	    my $pattern = "syslogd: exiting on signal 15";
+	    ${$self->{syslogd}}->loggrep("syslogd: exiting on signal 15", 5)
+		or die ref($self),
+		" no 'syslogd: exiting on signal 15' between logs";
+	    print STDERR "Signal\n";
+	})},
 	down => qr/syslogd: exiting on signal 15/,
 	loggrep => {
 	    (get_between2loggrep())[0] => 1,

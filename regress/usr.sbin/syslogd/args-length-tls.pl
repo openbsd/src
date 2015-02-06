@@ -9,8 +9,6 @@ use strict;
 use warnings;
 use Socket;
 
-my $msg = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
 our %args = (
     client => {
 	connect => { domain => AF_UNSPEC, addr => "localhost", port => 514 },
@@ -21,14 +19,14 @@ our %args = (
 	loghost => '@tls://localhost:$connectport',
 	options => ["-u"],
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	}
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },
 	# >>> <13>Jan 31 00:10:11 0123456789ABC...567
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	    qr/^>>> .{19} .{8190}$/ => 1,
 	    qr/^>>> .{19} .{8191}$/ => 1,
 	    qr/^>>> .{19} .{8192}$/ => 3,

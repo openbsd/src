@@ -12,13 +12,11 @@ use Socket;
 
 our %args = (
     client => {
-	func => sub {
+	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
-	    write_between2logs($self, sub {
-		${$self->{syslogd}}->loggrep("Connection refused", 5)
-		    or die "no connection refused in syslogd.log";
-	    });
-	},
+	    ${$self->{syslogd}}->loggrep("Connection refused", 5)
+		or die "no connection refused in syslogd.log";
+	})},
     },
     syslogd => {
 	loghost => '@tcp://127.0.0.1:$connectport',
@@ -31,22 +29,20 @@ our %args = (
     server => {
 	listen => { domain => AF_INET, proto => "tcp", addr => "127.0.0.1" },
 	redo => 0,
-	func => sub {
+	func => sub { read_between2logs(shift, sub {
 	    my $self = shift;
-	    read_between2logs($self, sub {
-		if ($self->{redo}) {
-		    $self->{redo}--;
-		    return;
-		}
-		$self->close();
-		shutdown(\*STDOUT, 1)
-		    or die "shutdown write failed: $!";
-		${$self->{syslogd}}->loggrep("Connection refused", 5)
-		    or die "no connection refused in syslogd.log";
-		$self->listen();
-		$self->{redo}++;
-	    });
-	},
+	    if ($self->{redo}) {
+		$self->{redo}--;
+		return;
+	    }
+	    $self->close();
+	    shutdown(\*STDOUT, 1)
+		or die "shutdown write failed: $!";
+	    ${$self->{syslogd}}->loggrep("Connection refused", 5)
+		or die "no connection refused in syslogd.log";
+	    $self->listen();
+	    $self->{redo}++;
+	})},
 	loggrep => {
 	    qr/Accepted/ => 2,
 	    qr/syslogd: loghost .* connection close/ => 1,

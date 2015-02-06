@@ -16,7 +16,7 @@ our %args = (
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("loghost .* connection close", 5)
 		or die "no connection close in syslogd.log";
-	    write_log($self, @_);
+	    write_log($self);
 	},
     },
     syslogd => {

@@ -18,7 +18,7 @@ our %args = (
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("loghost .* did send .* back", 5)
 		or die "no send back in syslogd.log";
-	    write_log($self, @_);
+	    write_log($self);
 	},
     },
     syslogd => {

@@ -10,13 +10,11 @@ use warnings;
 
 our %args = (
     client => {
-	func => sub {
+	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
-	    write_between2logs($self, sub {
-		${$self->{server}}->loggrep("Signal", 8)
-		    or die ref($self), " no 'Signal' between logs";
-	    });
-	},
+	    ${$self->{server}}->loggrep("Signal", 8)
+		or die ref($self), " no 'Signal' between logs";
+	})},
 	loggrep => { get_between2loggrep() },
     },
     syslogd => {
@@ -28,14 +26,12 @@ our %args = (
 	loggrep => { get_between2loggrep() },
     },
     server => {
-	func => sub {
+	func => sub { read_between2logs(shift, sub {
 	    my $self = shift;
-	    read_between2logs($self, sub {
-		${$self->{syslogd}}->kill_syslogd('PIPE');
-		sleep 1;  # schedule syslogd
-		print STDERR "Signal\n";
-	    });
-	},
+	    ${$self->{syslogd}}->kill_syslogd('PIPE');
+	    sleep 1;  # schedule syslogd
+	    print STDERR "Signal\n";
+	})},
 	loggrep => { get_between2loggrep() },
     },
     file => { loggrep => { get_between2loggrep() } },

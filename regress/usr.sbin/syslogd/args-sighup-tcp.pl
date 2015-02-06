@@ -11,13 +11,11 @@ use Socket;
 
 our %args = (
     client => {
-	func => sub {
+	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
-	    write_between2logs($self, sub {
-		${$self->{server}}->loggrep("Signal", 8)
-		    or die ref($self), " no 'Signal' between logs";
-	    });
-	},
+	    ${$self->{server}}->loggrep("Signal", 8)
+		or die ref($self), " no 'Signal' between logs";
+	})},
 	loggrep => { get_between2loggrep() },
     },
     syslogd => {
@@ -38,23 +36,21 @@ our %args = (
     server => {
 	listen => { domain => AF_INET, addr => "127.0.0.1", proto => "tcp" },
 	redo => 0,
-	func => sub {
+	func => sub { read_between2logs(shift, sub {
 	    my $self = shift;
-	    read_between2logs($self, sub {
-		if ($self->{redo}) {
-			$self->{redo}--;
-			return;
-		}
-		${$self->{syslogd}}->rotate();
-		${$self->{syslogd}}->kill_syslogd('HUP');
-		${$self->{syslogd}}->loggrep("syslogd: restarted", 5)
-		    or die ref($self), " no 'syslogd: restarted' between logs";
-		print STDERR "Signal\n";
-		# regeneate fstat file
-		${$self->{syslogd}}->fstat();
-		$self->{redo}++;
-	    });
-	},
+	    if ($self->{redo}) {
+		    $self->{redo}--;
+		    return;
+	    }
+	    ${$self->{syslogd}}->rotate();
+	    ${$self->{syslogd}}->kill_syslogd('HUP');
+	    ${$self->{syslogd}}->loggrep("syslogd: restarted", 5)
+		or die ref($self), " no 'syslogd: restarted' between logs";
+	    print STDERR "Signal\n";
+	    # regenerate fstat file
+	    ${$self->{syslogd}}->fstat();
+	    $self->{redo}++;
+	})},
 	loggrep => {
 	    get_between2loggrep(),
 	    qr/Signal/ => 1,

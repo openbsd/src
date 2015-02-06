@@ -10,8 +10,6 @@ use strict;
 use warnings;
 use Socket;
 
-my $msg = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
 our %args = (
     client => {
 	connect => { domain => AF_UNSPEC, addr => "localhost", port => 514 },
@@ -21,20 +19,20 @@ our %args = (
     syslogd => {
 	options => ["-u"],
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	}
     },
     server => {
 	# >>> <13>Jan 31 00:10:11 0123456789ABC...lmn
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	    qr/^>>> .{1180}$/ => 5,
 	},
     },
     file => {
 	# Jan 31 00:12:39 localhost 0123456789ABC...567
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	    qr/^.{25} .{8190}$/ => 1,
 	    qr/^.{25} .{8191}$/ => 1,
 	    qr/^.{25} .{8192}$/ => 3,

@@ -20,7 +20,7 @@ our %args = (
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
 		or die "no connection error in syslogd.log";
-	    write_log($self, @_);
+	    write_log($self);
 	},
     },
     syslogd => {

@@ -9,8 +9,6 @@ use strict;
 use warnings;
 use Socket;
 
-my $msg = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
 our %args = (
     client => {
 	connect => { domain => AF_UNIX },
@@ -19,13 +17,13 @@ our %args = (
     },
     syslogd => {
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	}
     },
     file => {
 	# Feb  2 00:43:36 hostname 0123456789ABC...567
 	loggrep => {
-	    $msg => 5,
+	    get_charlog() => 5,
 	    qr/^.{15} \S{1,256} .{8190}$/ => 1,
 	    qr/^.{15} \S{1,256} .{8191}$/ => 1,
 	    qr/^.{15} \S{1,256} .{8192}$/ => 3,

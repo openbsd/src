@@ -19,7 +19,7 @@ our %args = (
 	    foreach (1..(MAXUNIX-1)) {
 		write_unix($self, "unix-$_.sock");
 	    }
-	    write_shutdown($self, @_);
+	    write_shutdown($self);
 	},
     },
     syslogd => {
