@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.19 2014/07/13 16:03:54 jsing Exp $
+#	$OpenBSD: Makefile,v 1.20 2015/02/06 08:48:39 jsing Exp $
 
 SUBDIR= \
 	asn1 \
+	ciphers \
 	ssl
 
 install:
