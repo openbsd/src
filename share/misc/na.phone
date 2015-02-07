@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.32 2015/02/07 12:26:31 tedu Exp $
+	$OpenBSD: na.phone,v 1.33 2015/02/07 13:01:10 mlarkin Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -953,7 +953,7 @@
 865:Maryville:Tennessee:TN
 866::Toll-Free:
 867::Northwest Territories:NT
-867::Nunavit:NU
+867::Nunavut:NU
 867::Yukon:YT
 868::Trinidad and Tobago:
 869::St Kitts and Nevis:KN
