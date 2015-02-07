@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.130 2015/02/06 11:41:55 beck Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.131 2015/02/07 08:21:24 miod Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -262,6 +262,8 @@ extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
 extern struct vm_map *phys_map;
 
+/* base of kernel virtual memory */
+extern vaddr_t vm_min_kernel_address;
 
 /* zalloc zeros memory, alloc does not */
 #define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,0,TRUE)

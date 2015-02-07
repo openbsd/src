@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.125 2015/02/06 10:58:35 deraadt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.126 2015/02/07 08:21:24 miod Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -70,8 +70,8 @@
  * overview of kernel memory management:
  *
  * the kernel virtual address space is mapped by "kernel_map."   kernel_map
- * starts at VM_MIN_KERNEL_ADDRESS and goes to VM_MAX_KERNEL_ADDRESS.
- * note that VM_MIN_KERNEL_ADDRESS is equal to vm_map_min(kernel_map).
+ * starts at a machine-dependent address and is VM_KERNEL_SPACE_SIZE bytes
+ * large.
  *
  * the kernel_map has several "submaps."   submaps can only appear in 
  * the kernel_map (user processes can't use them).   submaps "take over"
@@ -98,8 +98,8 @@
  * reference count is set to UVM_OBJ_KERN (thus indicating that the objects
  * are "special" and never die).   all kernel objects should be thought of
  * as large, fixed-sized, sparsely populated uvm_objects.   each kernel 
- * object is equal to the size of kernel virtual address space (i.e. the
- * value "VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS").
+ * object is equal to the size of kernel virtual address space (i.e.
+ * VM_KERNEL_SPACE_SIZE).
  *
  * most kernel private memory lives in kernel_object.   the only exception
  * to this is for memory that belongs to submaps that must be protected
@@ -114,9 +114,9 @@
  * offsets that are managed by the submap.
  *
  * note that the "offset" in a kernel object is always the kernel virtual
- * address minus the VM_MIN_KERNEL_ADDRESS (aka vm_map_min(kernel_map)).
+ * address minus the vm_map_min(kernel_map).
  * example:
- *   suppose VM_MIN_KERNEL_ADDRESS is 0xf8000000 and the kernel does a
+ *   suppose kernel_map starts at 0xf8000000 and the kernel does a
  *   uvm_km_alloc(kernel_map, PAGE_SIZE) [allocate 1 wired down page in the
  *   kernel map].    if uvm_km_alloc returns virtual address 0xf8235000,
  *   then that means that the page at offset 0x235000 in kernel_object is
@@ -152,21 +152,16 @@ static struct vm_map		kernel_map_store;
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
  * KVM already allocated for text, data, bss, and static data structures).
  *
- * => KVM is defined by VM_MIN_KERNEL_ADDRESS/VM_MAX_KERNEL_ADDRESS.
- *    we assume that [min -> start] has already been allocated and that
- *    "end" is the end.
+ * => KVM is defined by [base.. base + VM_KERNEL_SPACE_SIZE].
+ *    we assume that [base -> start] has already been allocated and that
+ *    "end" is the end of the kernel image span.
  */
 void
-uvm_km_init(vaddr_t start, vaddr_t end)
+uvm_km_init(vaddr_t base, vaddr_t start, vaddr_t end)
 {
-	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
-
-	/* next, init kernel memory objects. */
-
 	/* kernel_object: for pageable anonymous kernel memory */
 	uao_init();
-	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
-				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
+	uvm.kernel_object = uao_create(VM_KERNEL_SPACE_SIZE, UAO_FLAG_KERNOBJ);
 
 	/*
 	 * init the map and reserve already allocated kernel space 

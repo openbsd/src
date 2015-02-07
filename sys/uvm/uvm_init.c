@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.37 2014/12/17 06:58:11 guenther Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.38 2015/02/07 08:21:24 miod Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -53,6 +53,12 @@
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
 
+#if defined(VM_MIN_KERNEL_ADDRESS)
+vaddr_t vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS;
+#else
+vaddr_t vm_min_kernel_address;
+#endif
+
 /*
  * local prototypes
  */
@@ -95,7 +101,7 @@ uvm_init(void)
 	 * kmem_object.
 	 */
 
-	uvm_km_init(kvm_start, kvm_end);
+	uvm_km_init(vm_min_kernel_address, kvm_start, kvm_end);
 
 	/*
 	 * step 4.5: init (tune) the fault recovery code.
@@ -138,8 +144,7 @@ uvm_init(void)
 	 * the VM system is now up!  now that malloc is up we can
 	 * enable paging of kernel objects.
 	 */
-	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
-	    UAO_FLAG_KERNSWAP);
+	uao_create(VM_KERNEL_SPACE_SIZE, UAO_FLAG_KERNSWAP);
 
 	/*
 	 * reserve some unmapped space for malloc/pool use after free usage

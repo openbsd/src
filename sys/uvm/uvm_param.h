@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_param.h,v 1.17 2014/07/08 17:19:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.18 2015/02/07 08:21:24 miod Exp $	*/
 /*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -82,6 +82,10 @@ typedef int	boolean_t;
 #define	ptoa(x)		((paddr_t)(x) << PAGE_SHIFT)
 #define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
+
+#if !defined(VM_KERNEL_SPACE_SIZE)
+#define	VM_KERNEL_SPACE_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)
+#endif
 
 #endif /* _KERNEL */
 #endif /* _VM_PARAM_ */
