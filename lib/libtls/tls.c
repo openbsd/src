@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.6 2015/02/07 04:33:51 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.7 2015/02/07 09:50:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -236,7 +236,7 @@ tls_reset(struct tls *ctx)
 	ctx->errmsg = NULL;
 }
 
-static int
+int
 tls_ssl_error(struct tls *ctx, int ssl_ret, const char *prefix)
 {
 	const char *errstr = "unknown error";

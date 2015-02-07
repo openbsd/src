@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.10 2015/01/30 14:25:37 bluhm Exp $ */
+/* $OpenBSD: tls_client.c,v 1.11 2015/02/07 09:50:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -136,7 +136,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 {
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 	X509 *cert = NULL;
-	int ret, ssl_err;
+	int ret, err;
 
 	if (ctx->flags & TLS_CONNECTING)
 		goto connecting;
@@ -216,18 +216,12 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 
  connecting:
 	if ((ret = SSL_connect(ctx->ssl_conn)) != 1) {
-		ssl_err = SSL_get_error(ctx->ssl_conn, ret);
-		switch (ssl_err) {
-		case SSL_ERROR_WANT_READ:
+		err = tls_ssl_error(ctx, ret, "connect");
+		if (err == TLS_READ_AGAIN || err == TLS_WRITE_AGAIN) {
 			ctx->flags |= TLS_CONNECTING;
-			return (TLS_READ_AGAIN);
-		case SSL_ERROR_WANT_WRITE:
-			ctx->flags |= TLS_CONNECTING;
-			return (TLS_WRITE_AGAIN);
-		default:
-			tls_set_error(ctx, "TLS connect failed (%i)", ssl_err);
-			goto err;
+			return (err);
 		}
+		goto err;
 	}
 	ctx->flags &= ~TLS_CONNECTING;
 

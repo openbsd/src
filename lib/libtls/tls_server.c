@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.4 2015/02/07 06:19:26 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.5 2015/02/07 09:50:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -102,7 +102,7 @@ int
 tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
 {
 	struct tls *conn_ctx = *cctx;
-	int ret, ssl_err;
+	int ret, err;
 	
 	if ((ctx->flags & TLS_SERVER) == 0) {
 		tls_set_error(ctx, "not a server context");
@@ -131,16 +131,11 @@ tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
 	}
 
 	if ((ret = SSL_accept(conn_ctx->ssl_conn)) != 1) {
-		ssl_err = SSL_get_error(conn_ctx->ssl_conn, ret);
-		switch (ssl_err) {
-		case SSL_ERROR_WANT_READ:
-			return (TLS_READ_AGAIN);
-		case SSL_ERROR_WANT_WRITE:
-			return (TLS_WRITE_AGAIN);
-		default:
-			tls_set_error(ctx, "TLS accept failed (%i)", ssl_err);
-			goto err;
+		err = tls_ssl_error(conn_ctx, ret, "accept");
+		if (err == TLS_READ_AGAIN || err == TLS_WRITE_AGAIN) {
+			return (err);
 		}
+		goto err;
 	}
 
 	return (0);
