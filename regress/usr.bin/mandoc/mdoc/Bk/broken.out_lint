@@ -1,0 +1,2 @@
+mandoc: broken.in:10:2: ERROR: inserting missing end of block: Sh breaks Bk
+mandoc: broken.in:9:2: WARNING: empty block: Bk

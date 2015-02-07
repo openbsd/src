@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.135 2015/02/06 07:12:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.136 2015/02/07 16:39:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -939,6 +939,7 @@ blk_full(MACRO_PROT_ARGS)
 					    mdoc_macronames[tok],
 					    mdoc_macronames[n->tok]);
 					rew_pending(mdoc, n);
+					n = mdoc->last;
 					continue;
 				case MDOC_It:
 					/* Delay in case it's astray. */
