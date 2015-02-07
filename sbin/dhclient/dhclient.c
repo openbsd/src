@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.355 2015/02/06 09:16:06 reyk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.356 2015/02/07 02:07:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -106,10 +106,10 @@ struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 apply_ignore_list(char *);
 
-void add_direct_route(int, struct in_addr, struct in_addr, struct in_addr);
-void add_default_route(int, struct in_addr, struct in_addr);
-void add_static_routes(int, struct option_data *);
-void add_classless_static_routes(int, struct option_data *, struct in_addr);
+void add_direct_route(struct in_addr, struct in_addr, struct in_addr);
+void add_default_route(struct in_addr, struct in_addr);
+void add_static_routes(struct option_data *);
+void add_classless_static_routes(struct option_data *, struct in_addr);
 
 int compare_lease(struct client_lease *, struct client_lease *);
 void set_lease_times(struct client_lease *);
@@ -305,7 +305,7 @@ routehandler(void)
 			warning("Active address (%s) deleted; exiting",
 			    inet_ntoa(client->active->address));
 			memset(&b, 0, sizeof(b));
-			add_address(ifi->name, 0, b, b);
+			add_address(b, b);
 			/* No need to write resolv.conf now. */
 			client->flags &= ~IS_RESPONSIBLE;
 			quit = INTERNALSIG;
@@ -911,8 +911,8 @@ bind_lease(void)
 	client->new = NULL;
 
 	/* Deleting the addresses also clears out arp entries. */
-	delete_addresses(ifi->name, ifi->rdomain);
-	flush_routes(ifi->name, ifi->rdomain);
+	delete_addresses();
+	flush_routes();
 
 	opt = &options[DHO_SUBNET_MASK];
 	if (opt->len == sizeof(mask))
@@ -924,13 +924,13 @@ bind_lease(void)
 	 * Add address and default route last, so we know when the binding
 	 * is done by the RTM_NEWADDR message being received.
 	 */
-	add_address(ifi->name, ifi->rdomain, client->active->address, mask);
+	add_address(client->active->address, mask);
 	if (options[DHO_CLASSLESS_STATIC_ROUTES].len) {
-		add_classless_static_routes(ifi->rdomain,
+		add_classless_static_routes(
 		    &options[DHO_CLASSLESS_STATIC_ROUTES],
 		    client->active->address);
 	} else if (options[DHO_CLASSLESS_MS_STATIC_ROUTES].len) {
-		add_classless_static_routes(ifi->rdomain,
+		add_classless_static_routes(
 		    &options[DHO_CLASSLESS_MS_STATIC_ROUTES],
 		    client->active->address);
 	} else {
@@ -945,16 +945,14 @@ bind_lease(void)
 			 * direct route for the gateway to make it routable.
 			 */
 			if (mask.s_addr == INADDR_BROADCAST) {
-				add_direct_route(ifi->rdomain, gateway, mask,
+				add_direct_route(gateway, mask,
 				    client->active->address);
 			}
 
-			add_default_route(ifi->rdomain, client->active->address,
-			    gateway);
+			add_default_route(client->active->address, gateway);
 		}
 		if (options[DHO_STATIC_ROUTES].len)
-			add_static_routes(ifi->rdomain,
-			    &options[DHO_STATIC_ROUTES]);
+			add_static_routes(&options[DHO_STATIC_ROUTES]);
 	}
 
 newlease:
@@ -1365,10 +1363,8 @@ send_request(void)
 	 */
 	if (client->state != S_REQUESTING &&
 	    cur_time > client->active->expiry) {
-		if (client->active) {
-			delete_address(ifi->name, ifi->rdomain,
-			    client->active->address);
-		}
+		if (client->active)
+			delete_address(client->active->address);
 		client->state = S_INIT;
 		state_init();
 		return;
@@ -2366,7 +2362,7 @@ priv_write_resolv_conf(struct imsg *imsg)
 		return;
 	}
 
-	if (!resolv_conf_priority(ifi->rdomain))
+	if (!resolv_conf_priority())
 		return;
 
 	contents = imsg->data;
@@ -2433,9 +2429,9 @@ priv_write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
  *     route add -net $dest -netmask $mask -cloning -iface $iface
  */
 void
-add_direct_route(int rdomain, struct in_addr dest, struct in_addr mask, struct in_addr iface)
+add_direct_route(struct in_addr dest, struct in_addr mask, struct in_addr iface)
 {
-	add_route(rdomain, dest, mask, iface,
+	add_route(dest, mask, iface,
 	    RTA_DST | RTA_NETMASK | RTA_GATEWAY, RTF_CLONING | RTF_STATIC);
 }
 
@@ -2449,7 +2445,7 @@ add_direct_route(int rdomain, struct in_addr dest, struct in_addr mask, struct i
  *	route -q $rdomain add default $router
  */
 void
-add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
+add_default_route(struct in_addr addr, struct in_addr gateway)
 {
 	struct in_addr netmask, dest;
 	int addrs, flags;
@@ -2469,11 +2465,11 @@ add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
 		flags |= RTF_GATEWAY | RTF_STATIC;
 	}
 
-	add_route(rdomain, dest, netmask, gateway, addrs, flags);
+	add_route(dest, netmask, gateway, addrs, flags);
 }
 
 void
-add_static_routes(int rdomain, struct option_data *static_routes)
+add_static_routes(struct option_data *static_routes)
 {
 	struct in_addr		 dest, netmask, gateway;
 	struct in_addr		 *addr;
@@ -2491,14 +2487,13 @@ add_static_routes(int rdomain, struct option_data *static_routes)
 		gateway.s_addr = (addr+1)->s_addr;
 
 		/* XXX Order implies priority but we're ignoring that. */
-		add_route(rdomain, dest, netmask, gateway,
+		add_route(dest, netmask, gateway,
 		    RTA_DST | RTA_GATEWAY, RTF_GATEWAY | RTF_STATIC);
 	}
 }
 
 void
-add_classless_static_routes(int rdomain, struct option_data *opt,
-    struct in_addr iface)
+add_classless_static_routes(struct option_data *opt, struct in_addr iface)
 {
 	struct in_addr	 dest, netmask, gateway;
 	int		 bits, bytes, i;
@@ -2528,9 +2523,9 @@ add_classless_static_routes(int rdomain, struct option_data *opt,
 		i += sizeof(gateway);
 
 		if (gateway.s_addr == INADDR_ANY)
-			add_direct_route(rdomain, dest, netmask, iface);
+			add_direct_route(dest, netmask, iface);
 		else
-			add_route(rdomain, dest, netmask, gateway,
+			add_route(dest, netmask, gateway,
 			    RTA_DST | RTA_GATEWAY | RTA_NETMASK,
 			    RTF_GATEWAY | RTF_STATIC);
 	}

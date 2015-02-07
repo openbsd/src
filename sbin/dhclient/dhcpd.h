@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.147 2015/01/16 06:39:56 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.148 2015/02/07 02:07:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -293,17 +293,18 @@ void read_client_conf(void);
 void read_client_leases(void);
 
 /* kroute.c */
-void delete_addresses(char *, int);
-void delete_address(char *, int, struct in_addr);
+void delete_addresses(void);
+void delete_address(struct in_addr);
 
-void add_address(char *, int, struct in_addr, struct in_addr);
+void set_interface_mtu(int);
+void add_address(struct in_addr, struct in_addr);
 
-void flush_routes(char *, int);
+void flush_routes(void);
 
-void add_route(int, struct in_addr, struct in_addr, struct in_addr, int, int);
+void add_route(struct in_addr, struct in_addr, struct in_addr, int, int);
 
 void sendhup(struct client_lease *);
 
-int resolv_conf_priority(int);
+int resolv_conf_priority(void);
 
 void flush_unpriv_ibuf(const char *);

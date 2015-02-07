@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.71 2015/02/06 06:47:29 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.72 2015/02/07 02:07:32 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -49,7 +49,7 @@ void	delete_route(int, struct rt_msghdr *);
  *	arp -dan
  */
 void
-flush_routes(char *ifname, int rdomain)
+flush_routes(void)
 {
 	struct imsg_flush_routes imsg;
 	int			 rslt;
@@ -165,8 +165,8 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 }
 
 void
-add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
-    struct in_addr gateway, int addrs, int flags)
+add_route(struct in_addr dest, struct in_addr netmask, struct in_addr gateway,
+    int addrs, int flags)
 {
 	struct imsg_add_route	 imsg;
 	int			 rslt;
@@ -278,7 +278,7 @@ priv_add_route(struct imsg_add_route *imsg)
  * Delete all existing inet addresses on interface.
  */
 void
-delete_addresses(char *ifname, int rdomain)
+delete_addresses(void)
 {
 	struct in_addr addr;
 	struct ifaddrs *ifap, *ifa;
@@ -297,7 +297,7 @@ delete_addresses(char *ifname, int rdomain)
 		memcpy(&addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
 		    sizeof(addr));
 
-		delete_address(ifi->name, ifi->rdomain, addr);
+		delete_address(addr);
 	}
 
 	freeifaddrs(ifap);
@@ -309,7 +309,7 @@ delete_addresses(char *ifname, int rdomain)
  *	ifconfig <ifname> inet <addr> delete
  */
 void
-delete_address(char *ifname, int rdomain, struct in_addr addr)
+delete_address(struct in_addr addr)
 {
 	struct imsg_delete_address	 imsg;
 	int				 rslt;
@@ -369,8 +369,7 @@ priv_delete_address(struct imsg_delete_address *imsg)
  *	ifconfig <if> inet <addr> netmask <mask> broadcast <addr>
  */
 void
-add_address(char *ifname, int rdomain, struct in_addr addr,
-    struct in_addr mask)
+add_address(struct in_addr addr, struct in_addr mask)
 {
 	struct imsg_add_address imsg;
 	int			rslt;
@@ -482,7 +481,7 @@ priv_cleanup(struct imsg_hup *imsg)
 }
 
 int
-resolv_conf_priority(int domain)
+resolv_conf_priority(void)
 {
 	struct iovec iov[3];
 	struct {
@@ -514,7 +513,7 @@ resolv_conf_priority(int domain)
 	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm);
 	m_rtmsg.m_rtm.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_UP;
 	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
-	m_rtmsg.m_rtm.rtm_tableid = domain;
+	m_rtmsg.m_rtm.rtm_tableid = ifi->rdomain;
 
 	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
 	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
