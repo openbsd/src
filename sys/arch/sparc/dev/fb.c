@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.54 2013/10/21 10:36:18 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.55 2015/02/07 23:29:29 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -417,10 +417,9 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 			if (fw != 12 || sf->sf_width < 12 * 80)
 				ri->ri_flg |= RI_CLEAR | RI_CENTER;
 		}
-	} else {
-		ri->ri_flg |= RI_CENTER;
-	}
+	} else
 #endif
+		ri->ri_flg |= RI_CENTER;
 
 	rasops_init(ri, rows, cols);
 
