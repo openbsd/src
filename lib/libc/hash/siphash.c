@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.2 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: siphash.c,v 1.3 2015/02/07 05:40:59 dlg Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -49,8 +49,8 @@
 #include <string.h>
 #include <siphash.h>
 
-void		SipHash_CRounds(SIPHASH_CTX *, int);
-void		SipHash_Rounds(SIPHASH_CTX *, int);
+static void	SipHash_CRounds(SIPHASH_CTX *, int);
+static void	SipHash_Rounds(SIPHASH_CTX *, int);
 
 void
 SipHash_Init(SIPHASH_CTX *ctx, const SIPHASH_KEY *key)
@@ -148,7 +148,7 @@ SipHash(const SIPHASH_KEY *key, int rc, int rf, const void *src, size_t len)
 
 #define SIP_ROTL(x, b) ((x) << (b)) | ( (x) >> (64 - (b)))
 
-void
+static void
 SipHash_Rounds(SIPHASH_CTX *ctx, int rounds)
 {
 	while (rounds--) {
@@ -172,7 +172,7 @@ SipHash_Rounds(SIPHASH_CTX *ctx, int rounds)
 	}
 }
 
-void
+static void
 SipHash_CRounds(SIPHASH_CTX *ctx, int rounds)
 {
 	u_int64_t m = letoh64(*(u_int64_t *)ctx->buf);
