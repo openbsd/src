@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.565 2015/02/06 05:17:48 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.566 2015/02/07 03:29:27 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1666,6 +1666,14 @@ cyrix3_cpu_name(int model, int step)
  * information; however, the chance of multi-vendor SMP actually
  * ever *working* is sufficiently low that it's probably safe to assume
  * all processors are of the same vendor.
+ *
+ * Note that identifycpu() is called twice for the primary CPU: the first
+ * is very early (right after the "OpenBSD X.Y" line) with the CPUF_PRIMARY
+ * flag *not* set, then again later in the config sequence with CPUF_PRIMARY
+ * set.  Thus, the tests here for ((ci->ci_flags & CPUF_PRIMARY) == 0) are
+ * actually saying "do this on the first call for each CPU".  Don't change
+ * them to use CPU_IS_PRIMARY() because then they would be done on both
+ * calls in the SP build.
  */
 
 void
