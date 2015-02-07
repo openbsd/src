@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.2 2015/02/06 23:52:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.3 2015/02/07 07:10:44 phessler Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -295,6 +295,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_HW_INITED	0x02
 #define IWM_FLAG_STOPPED	0x04
 #define IWM_FLAG_RFKILL		0x08
+#define IWM_FLAG_BUSY		0x10
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
@@ -373,6 +374,8 @@ struct iwm_softc {
 
 	struct ieee80211_amrr sc_amrr;
 	struct timeout sc_calib_to;
+
+	struct task		init_task;
 
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;

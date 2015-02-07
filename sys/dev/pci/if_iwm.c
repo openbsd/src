@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.2 2015/02/06 23:52:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.3 2015/02/07 07:10:44 phessler Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -431,6 +431,10 @@ int	iwm_match(struct device *, void *, void *);
 int	iwm_preinit(struct iwm_softc *);
 void	iwm_attach_hook(iwm_hookarg_t);
 void	iwm_attach(struct device *, struct device *, void *);
+void	iwm_init_task(void *);
+int	iwm_activate(struct device *, int);
+void	iwm_wakeup(struct iwm_softc *);
+
 #if NBPFILTER > 0
 void	iwm_radiotap_attach(struct iwm_softc *);
 #endif
@@ -6491,6 +6495,7 @@ iwm_attach_hook(iwm_hookarg_t arg)
 	iwm_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->sc_calib_to, iwm_calib_timeout, sc);
+	task_set(&sc->init_task, iwm_init_task, sc);
 
 	return;
 
@@ -6608,11 +6613,64 @@ iwm_radiotap_attach(struct iwm_softc *sc)
 }
 #endif
 
+void
+iwm_init_task(void *arg1)
+{
+	struct iwm_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+	
+	s = splnet();
+	while (sc->sc_flags & IWM_FLAG_BUSY)
+		tsleep(&sc->sc_flags, 0, "iwmpwr", 0);
+	sc->sc_flags |= IWM_FLAG_BUSY;
+  
+	iwm_stop(ifp, 0);
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
+		iwm_init(ifp);
+
+	sc->sc_flags &= ~IWM_FLAG_BUSY;
+	wakeup(&sc->sc_flags);
+	splx(s);
+}
+
+void
+iwm_wakeup(struct iwm_softc *sc)
+{
+	pcireg_t reg;
+
+	/* Clear device-specific "PCI retry timeout" register (41h). */
+	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
+
+	iwm_init_task(sc);
+
+}
+
+int
+iwm_activate(struct device *self, int act)
+{
+	struct iwm_softc *sc = (struct iwm_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			iwm_stop(ifp, 0);
+		break;
+	case DVACT_WAKEUP:
+		iwm_wakeup(sc);
+		break;
+	}
+
+	return 0;
+}
+
 struct cfdriver iwm_cd = {
 	NULL, "iwm", DV_IFNET
 };
 
 struct cfattach iwm_ca = {
 	sizeof(struct iwm_softc), iwm_match, iwm_attach,
-	NULL, NULL
+	NULL, iwm_activate
 };
