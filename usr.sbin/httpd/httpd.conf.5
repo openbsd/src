@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.48 2015/02/07 01:23:12 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.49 2015/02/07 06:46:01 jsing Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -349,6 +349,16 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about SSL/TLS cipher suites and preference lists.
+.It Ic dhe Ar params
+Specify the DHE parameters to use for DHE cipher suites.
+Valid parameter values are none, legacy and auto.
+For legacy a fixed key length of 1024 bits is used, whereas for auto the key
+length is determined automatically.
+The default is none, which disables DHE cipher suites.
+.It Ic ecdhe Ar curve
+Specify the ECDHE curve to use for ECDHE cipher suites.
+Valid parameter values are none, auto and the short name of any any known curve.
+The default is auto.
 .It Ic key Ar file
 Specify the private key to use for this server.
 The
