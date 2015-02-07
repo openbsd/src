@@ -1,4 +1,4 @@
-/*	$OpenBSD: endgame.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: endgame.c,v 1.7 2015/02/07 03:32:05 tedu Exp $	*/
 /*	$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/ttydefaults.h>
 #include	"hangman.h"
 
 /*
@@ -56,7 +57,7 @@ endgame(void)
 		mvaddstr(MESGY + 1, MESGX, "Another word? ");
 		leaveok(stdscr, FALSE);
 		refresh();
-		if ((ch = readch()) == 'n')
+		if ((ch = readch()) == 'n' || ch == CTRL('D'))
 			die(0);
 		else if (ch == 'y')
 			break;
