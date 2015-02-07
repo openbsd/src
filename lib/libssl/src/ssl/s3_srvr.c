@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.98 2015/02/06 10:04:07 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.99 2015/02/07 08:56:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -766,23 +766,15 @@ end:
 int
 ssl3_send_hello_request(SSL *s)
 {
-	unsigned char *p;
-
 	if (s->state == SSL3_ST_SW_HELLO_REQ_A) {
-		p = (unsigned char *)s->init_buf->data;
-		*(p++) = SSL3_MT_HELLO_REQUEST;
-		*(p++) = 0;
-		*(p++) = 0;
-		*(p++) = 0;
+		ssl3_handshake_msg_start(s, SSL3_MT_HELLO_REQUEST);
+		ssl3_handshake_msg_finish(s, 0);
 
 		s->state = SSL3_ST_SW_HELLO_REQ_B;
-		/* number of bytes to write */
-		s->init_num = 4;
-		s->init_off = 0;
 	}
 
 	/* SSL3_ST_SW_HELLO_REQ_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
@@ -1217,18 +1209,15 @@ err:
 int
 ssl3_send_server_hello(SSL *s)
 {
-	unsigned char *buf;
+	unsigned char *bufend;
 	unsigned char *p, *d;
-	unsigned long l;
 	int sl;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
-		buf = (unsigned char *)s->init_buf->data;
-		/* Do the message type and length last */
-		d = p= &(buf[4]);
+		d = p = ssl3_handshake_msg_start(s, SSL3_MT_SERVER_HELLO);
 
 		*(p++) = s->version >> 8;
-		*(p++) = s->version&0xff;
+		*(p++) = s->version & 0xff;
 
 		/* Random stuff */
 		memcpy(p, s->s3->server_random, SSL3_RANDOM_SIZE);
@@ -1271,55 +1260,39 @@ ssl3_send_server_hello(SSL *s)
 
 		/* put the compression method */
 		*(p++) = 0;
+
 		if (ssl_prepare_serverhello_tlsext(s) <= 0) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    SSL_R_SERVERHELLO_TLSEXT);
 			return (-1);
 		}
-		if ((p = ssl_add_serverhello_tlsext(s, p,
-		    buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
+		bufend = (unsigned char *)s->init_buf->data +
+		    SSL3_RT_MAX_PLAIN_LENGTH;
+		if ((p = ssl_add_serverhello_tlsext(s, p, bufend)) == NULL) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    ERR_R_INTERNAL_ERROR);
 			return (-1);
 		}
-		/* do the header */
-		l = (p - d);
-		d = buf;
-		*(d++) = SSL3_MT_SERVER_HELLO;
-		l2n3(l, d);
 
-		s->state = SSL3_ST_SW_SRVR_HELLO_B;
-		/* number of bytes to write */
-		s->init_num = p - buf;
-		s->init_off = 0;
+		ssl3_handshake_msg_finish(s, p - d);
 	}
 
 	/* SSL3_ST_SW_SRVR_HELLO_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
 ssl3_send_server_done(SSL *s)
 {
-	unsigned char *p;
-
 	if (s->state == SSL3_ST_SW_SRVR_DONE_A) {
-		p = (unsigned char *)s->init_buf->data;
-
-		/* do the header */
-		*(p++) = SSL3_MT_SERVER_DONE;
-		*(p++) = 0;
-		*(p++) = 0;
-		*(p++) = 0;
+		ssl3_handshake_msg_start(s, SSL3_MT_SERVER_DONE);
+		ssl3_handshake_msg_finish(s, 0);
 
 		s->state = SSL3_ST_SW_SRVR_DONE_B;
-		/* number of bytes to write */
-		s->init_num = 4;
-		s->init_off = 0;
 	}
 
 	/* SSL3_ST_SW_SRVR_DONE_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
@@ -2790,37 +2763,32 @@ ssl3_send_newsession_ticket(SSL *s)
 int
 ssl3_send_cert_status(SSL *s)
 {
+	unsigned char *p;
+
 	if (s->state == SSL3_ST_SW_CERT_STATUS_A) {
-		unsigned char *p;
 		/*
 		 * Grow buffer if need be: the length calculation is as
  		 * follows 1 (message type) + 3 (message length) +
  		 * 1 (ocsp response type) + 3 (ocsp response length)
  		 * + (ocsp response)
  		 */
-		if (!BUF_MEM_grow(s->init_buf, 8 + s->tlsext_ocsp_resplen))
+		if (!BUF_MEM_grow(s->init_buf, SSL3_HM_HEADER_LENGTH + 4 +
+		    s->tlsext_ocsp_resplen))
 			return (-1);
 
-		p = (unsigned char *)s->init_buf->data;
+		p = ssl3_handshake_msg_start(s, SSL3_MT_CERTIFICATE_STATUS);
 
-		/* do the header */
-		*(p++) = SSL3_MT_CERTIFICATE_STATUS;
-		/* message length */
-		l2n3(s->tlsext_ocsp_resplen + 4, p);
-		/* status type */
 		*(p++) = s->tlsext_status_type;
-		/* length of OCSP response */
 		l2n3(s->tlsext_ocsp_resplen, p);
-		/* actual response */
 		memcpy(p, s->tlsext_ocsp_resp, s->tlsext_ocsp_resplen);
-		/* number of bytes to write */
-		s->init_num = 8 + s->tlsext_ocsp_resplen;
+
+		ssl3_handshake_msg_finish(s, s->tlsext_ocsp_resplen + 4);
+
 		s->state = SSL3_ST_SW_CERT_STATUS_B;
-		s->init_off = 0;
 	}
 
 	/* SSL3_ST_SW_CERT_STATUS_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 /*

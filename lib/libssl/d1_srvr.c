@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.47 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.48 2015/02/07 08:56:39 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -819,82 +819,65 @@ end:
 int
 dtls1_send_hello_request(SSL *s)
 {
-	unsigned char *p;
-
 	if (s->state == SSL3_ST_SW_HELLO_REQ_A) {
-		p = (unsigned char *)s->init_buf->data;
-		p = dtls1_set_message_header(s, p, SSL3_MT_HELLO_REQUEST, 0, 0, 0);
+		ssl3_handshake_msg_start(s, SSL3_MT_HELLO_REQUEST);
+		ssl3_handshake_msg_finish(s, 0);
 
 		s->state = SSL3_ST_SW_HELLO_REQ_B;
-		/* number of bytes to write */
-		s->init_num = DTLS1_HM_HEADER_LENGTH;
-		s->init_off = 0;
-
-		/* no need to buffer this message, since there are no retransmit
-		 * requests for it */
 	}
 
 	/* SSL3_ST_SW_HELLO_REQ_B */
-	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
 dtls1_send_hello_verify_request(SSL *s)
 {
-	unsigned int msg_len;
-	unsigned char *msg, *buf, *p;
+	unsigned char *d, *p;
 
 	if (s->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A) {
-		buf = (unsigned char *)s->init_buf->data;
+		d = p = ssl3_handshake_msg_start(s,
+		    DTLS1_MT_HELLO_VERIFY_REQUEST);
 
-		msg = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
 		*(p++) = s->version >> 8;
 		*(p++) = s->version & 0xFF;
 
 		if (s->ctx->app_gen_cookie_cb == NULL ||
-			s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-		&(s->d1->cookie_len)) == 0) {
-			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST, ERR_R_INTERNAL_ERROR);
+		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
+			&(s->d1->cookie_len)) == 0) {
+			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
+			    ERR_R_INTERNAL_ERROR);
 			return 0;
 		}
 
 		*(p++) = (unsigned char) s->d1->cookie_len;
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
 		p += s->d1->cookie_len;
-		msg_len = p - msg;
 
-		dtls1_set_message_header(s, buf,
-		DTLS1_MT_HELLO_VERIFY_REQUEST, msg_len, 0, msg_len);
+		ssl3_handshake_msg_finish(s, p - d);
 
 		s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B;
-		/* number of bytes to write */
-		s->init_num = p - buf;
-		s->init_off = 0;
 	}
 
 	/* s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
-	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
 dtls1_send_server_hello(SSL *s)
 {
-	unsigned char *buf;
+	unsigned char *bufend;
 	unsigned char *p, *d;
 	unsigned int sl;
-	unsigned long l;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
-		buf = (unsigned char *)s->init_buf->data;
-		arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
-
-		/* Do the message type and length last */
-		d = p= &(buf[DTLS1_HM_HEADER_LENGTH]);
+		d = p = ssl3_handshake_msg_start(s, SSL3_MT_SERVER_HELLO);
 
 		*(p++) = s->version >> 8;
-		*(p++) = s->version&0xff;
+		*(p++) = s->version & 0xff;
 
 		/* Random stuff */
+		arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 		memcpy(p, s->s3->server_random, SSL3_RANDOM_SIZE);
 		p += SSL3_RANDOM_SIZE;
 
@@ -911,7 +894,8 @@ dtls1_send_server_hello(SSL *s)
 
 		sl = s->session->session_id_length;
 		if (sl > sizeof s->session->session_id) {
-			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO,
+			    ERR_R_INTERNAL_ERROR);
 			return -1;
 		}
 		*(p++) = sl;
@@ -926,52 +910,35 @@ dtls1_send_server_hello(SSL *s)
 		/* put the compression method */
 		*(p++) = 0;
 
-		if ((p = ssl_add_serverhello_tlsext(s, p, buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
-			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+		bufend = (unsigned char *)s->init_buf->data +
+		    SSL3_RT_MAX_PLAIN_LENGTH;
+		if ((p = ssl_add_serverhello_tlsext(s, p, bufend)) == NULL) {
+			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO,
+			    ERR_R_INTERNAL_ERROR);
 			return -1;
 		}
 
-		/* do the header */
-		l = (p - d);
-		d = buf;
-
-		d = dtls1_set_message_header(s, d, SSL3_MT_SERVER_HELLO, l, 0, l);
+		ssl3_handshake_msg_finish(s, p - d);
 
 		s->state = SSL3_ST_SW_SRVR_HELLO_B;
-		/* number of bytes to write */
-		s->init_num = p - buf;
-		s->init_off = 0;
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 0);
 	}
 
 	/* SSL3_ST_SW_SRVR_HELLO_B */
-	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
 dtls1_send_server_done(SSL *s)
 {
-	unsigned char *p;
-
 	if (s->state == SSL3_ST_SW_SRVR_DONE_A) {
-		p = (unsigned char *)s->init_buf->data;
-
-		/* do the header */
-		p = dtls1_set_message_header(s, p, SSL3_MT_SERVER_DONE, 0, 0, 0);
+		ssl3_handshake_msg_start(s, SSL3_MT_SERVER_DONE);
+		ssl3_handshake_msg_finish(s, 0);
 
 		s->state = SSL3_ST_SW_SRVR_DONE_B;
-		/* number of bytes to write */
-		s->init_num = DTLS1_HM_HEADER_LENGTH;
-		s->init_off = 0;
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 0);
 	}
 
 	/* SSL3_ST_SW_SRVR_DONE_B */
-	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
