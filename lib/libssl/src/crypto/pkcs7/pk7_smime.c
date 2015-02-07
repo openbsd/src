@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.19 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.20 2015/02/07 14:21:41 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -287,17 +287,16 @@ PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata,
 		PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_NO_CONTENT);
 		return 0;
 	}
-#if 0
-	/* NB: this test commented out because some versions of Netscape
-	 * illegally include zero length content when signing data.
-	 */
 
+	/*
+	 * Very old Netscape illegally included empty content with
+	 * a detached signature.  Very old users should upgrade.
+	 */
 	/* Check for data and content: two sets of data */
 	if (!PKCS7_get_detached(p7) && indata) {
 		PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CONTENT_AND_DATA_PRESENT);
 		return 0;
 	}
-#endif
 
 	sinfos = PKCS7_get_signer_info(p7);
 
