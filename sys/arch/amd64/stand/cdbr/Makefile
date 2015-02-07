@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2014/07/15 22:14:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2015/02/07 23:23:03 miod Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -20,6 +20,7 @@ BINMODE=644
 
 NOMAN=
 #MAN+=	cdbr.8
+CLEANFILES+=	${PROG}.orig
 
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
