@@ -110,10 +110,70 @@ cipher_get_put_tests(void)
 	return failed;
 }
 
+static int
+cipher_get_by_value_tests(void)
+{
+	STACK_OF(SSL_CIPHER) *ciphers;
+	const SSL_CIPHER *cipher;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	unsigned long id;
+	uint16_t value;
+	int ret = 1;
+	int i;
+
+	if ((ssl_ctx = SSL_CTX_new(SSLv23_method())) == NULL) {
+		fprintf(stderr, "SSL_CTX_new() returned NULL\n");
+		goto failure;
+	}
+	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
+		fprintf(stderr, "SSL_new() returned NULL\n");
+		goto failure;
+	}
+
+	if ((ciphers = SSL_get_ciphers(ssl)) == NULL) {
+		fprintf(stderr, "no ciphers\n");
+		goto failure;
+	}
+
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		cipher = sk_SSL_CIPHER_value(ciphers, i);
+
+		id = SSL_CIPHER_get_id(cipher);
+		if (SSL_CIPHER_get_by_id(id) == NULL) {
+			fprintf(stderr, "SSL_CIPHER_get_by_id() failed "
+			    "for %s (0x%lx)\n", SSL_CIPHER_get_name(cipher),
+			    id);
+			goto failure;
+		}
+
+		value = SSL_CIPHER_get_value(cipher);
+		if (SSL_CIPHER_get_by_value(value) == NULL) {
+			fprintf(stderr, "SSL_CIPHER_get_by_value() failed "
+			    "for %s (0x%04hx)\n", SSL_CIPHER_get_name(cipher),
+			    value);
+			goto failure;
+		}
+	}
+
+	ret = 0;
+
+failure:
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+
+	return (ret);
+}
+
 int
 main(int argc, char **argv)
 {
+	int failed = 0;
+
 	SSL_library_init();
 
-	return cipher_get_put_tests();
+	failed |= cipher_get_put_tests();
+	failed |= cipher_get_by_value_tests();
+
+	return (failed);
 }
