@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2015/02/02 09:29:53 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2015/02/07 01:46:27 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1224,45 +1224,6 @@ pmap_flush_cache(vaddr_t addr, vsize_t len)
 	for (i = addr; i < addr + len; i += curcpu()->ci_cflushsz)
 		clflush(i);
 	mfence();
-}
-
-/*
- * pmap_pagezeroidle: the same, for the idle loop page zero'er.
- * Returns TRUE if the page was zero'd, FALSE if we aborted for
- * some reason.
- */
-
-boolean_t
-pmap_pageidlezero(struct vm_page *pg)
-{
-	vaddr_t va = pmap_map_direct(pg);
-	boolean_t rv = TRUE;
-	long *ptr;
-	int i;
-
-	/*
-	 * XXX - We'd really like to do this uncached. But at this moment
- 	 *       we're never called, so just pretend that this works.
-	 *       It shouldn't be too hard to create a second direct map
-	 *       with uncached mappings.
-	 */
-	for (i = 0, ptr = (long *) va; i < PAGE_SIZE / sizeof(long); i++) {
-		if (!curcpu_is_idle()) {
-
-			/*
-			 * A process has become ready.  Abort now,
-			 * so we don't keep it waiting while we
-			 * do slow memory access to finish this
-			 * page.
-			 */
-
-			rv = FALSE;
-			break;
-		}
-		*ptr++ = 0;
-	}
-
-	return (rv);
 }
 
 /*

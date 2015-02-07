@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.51 2014/12/15 05:05:24 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.52 2015/02/07 01:46:27 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -414,12 +414,6 @@ void	pmap_flush_cache(vaddr_t, vsize_t);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
-
-/*
- * Do idle page zero'ing uncached to avoid polluting the cache.
- */
-boolean_t	pmap_pageidlezero(struct vm_page *);
-#define	PMAP_PAGEIDLEZERO(pg)	pmap_pageidlezero((pg))
 
 /*
  * inline functions

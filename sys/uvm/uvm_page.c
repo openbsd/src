@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.133 2015/02/06 10:58:35 deraadt Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.134 2015/02/07 01:46:27 kettenis Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1153,85 +1153,6 @@ uvm_page_own(struct vm_page *pg, char *tag)
 	return;
 }
 #endif
-
-/*
- * uvm_pageidlezero: zero free pages while the system is idle.
- *
- * => we do at least one iteration per call, if we are below the target.
- * => we loop until we either reach the target or whichqs indicates that
- *	there is a process ready to run.
- */
-void
-uvm_pageidlezero(void)
-{
-#if 0 /* disabled: need new code */
-	struct vm_page *pg;
-	struct pgfreelist *pgfl;
-	int free_list;
-
-	do {
-		uvm_lock_fpageq();
-
-		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
-			uvm.page_idle_zero = FALSE;
-			uvm_unlock_fpageq();
-			return;
-		}
-
-		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
-			pgfl = &uvm.page_free[free_list];
-			if ((pg = TAILQ_FIRST(&pgfl->pgfl_queues[
-			    PGFL_UNKNOWN])) != NULL)
-				break;
-		}
-
-		if (pg == NULL) {
-			/*
-			 * No non-zero'd pages; don't bother trying again
-			 * until we know we have non-zero'd pages free.
-			 */
-			uvm.page_idle_zero = FALSE;
-			uvm_unlock_fpageq();
-			return;
-		}
-
-		TAILQ_REMOVE(&pgfl->pgfl_queues[PGFL_UNKNOWN], pg, pageq);
-		uvmexp.free--;
-		uvm_unlock_fpageq();
-
-#ifdef PMAP_PAGEIDLEZERO
-		if (PMAP_PAGEIDLEZERO(pg) == FALSE) {
-			/*
-			 * The machine-dependent code detected some
-			 * reason for us to abort zeroing pages,
-			 * probably because there is a process now
-			 * ready to run.
-			 */
-			uvm_lock_fpageq();
-			TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_UNKNOWN],
-			    pg, pageq);
-			uvmexp.free++;
-			uvmexp.zeroaborts++;
-			uvm_unlock_fpageq();
-			return;
-		}
-#else
-		/*
-		 * XXX This will toast the cache unless the pmap_zero_page()
-		 * XXX implementation does uncached access.
-		 */
-		pmap_zero_page(pg);
-#endif
-		atomic_setbits_int(&pg->pg_flags, PG_ZERO);
-
-		uvm_lock_fpageq();
-		TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_ZEROS], pg, pageq);
-		uvmexp.free++;
-		uvmexp.zeropages++;
-		uvm_unlock_fpageq();
-	} while (curcpu_is_idle());
-#endif /* 0 */
-}
 
 /*
  * when VM_PHYSSEG_MAX is 1, we can simplify these functions

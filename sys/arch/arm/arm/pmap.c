@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2015/02/05 12:12:53 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 2015/02/07 01:46:27 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3121,61 +3121,6 @@ pmap_zero_page_xscale(struct vm_page *pg)
 }
 #endif /* ARM_MMU_XSCALE == 1 */
 
-/* pmap_pageidlezero()
- *
- * The same as above, except that we assume that the page is not
- * mapped.  This means we never have to flush the cache first.  Called
- * from the idle loop.
- */
-boolean_t
-pmap_pageidlezero(struct vm_page *pg)
-{
-	unsigned int i;
-	int *ptr;
-	boolean_t rv = TRUE;
-	paddr_t phys = VM_PAGE_TO_PHYS(pg);
-#ifdef DEBUG
-	if (pg->mdpage.pvh_list != NULL)
-		panic("pmap_pageidlezero: page has mappings");
-#endif
-
-	KDASSERT((phys & PGOFSET) == 0);
-
-	/*
-	 * Hook in the page, zero it, and purge the cache for that
-	 * zeroed page. Invalidate the TLB as needed.
-	 */
-	*cdst_pte = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
-	PTE_SYNC(cdst_pte);
-	cpu_tlb_flushD_SE(cdstp);
-	cpu_cpwait();
-
-	for (i = 0, ptr = (int *)cdstp;
-			i < (PAGE_SIZE / sizeof(int)); i++) {
-		if (!curcpu_is_idle()) {
-			/*
-			 * A process has become ready.  Abort now,
-			 * so we don't keep it waiting while we
-			 * do slow memory access to finish this
-			 * page.
-			 */
-			rv = FALSE;
-			break;
-		}
-		*ptr++ = 0;
-	}
-
-	if (rv)
-		/* 
-		 * if we aborted we'll rezero this page again later so don't
-		 * purge it unless we finished it
-		 */
-		cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
-
-	return (rv);
-}
- 
 /*
  * pmap_copy_page()
  *

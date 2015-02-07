@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.30 2015/01/29 20:10:52 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.31 2015/02/07 01:46:27 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -279,12 +279,6 @@ vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
 void	pmap_devmap_register(const struct pmap_devmap *);
-
-/*
- * Special page zero routine for use by the idle loop (no cache cleans). 
- */
-boolean_t	pmap_pageidlezero(struct vm_page *);
-#define PMAP_PAGEIDLEZERO(pg)	pmap_pageidlezero((pg))
 
 /*
  * The current top of kernel VM

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.56 2015/02/05 23:51:06 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.57 2015/02/07 01:46:27 kettenis Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -225,7 +225,6 @@ void		uvm_page_own(struct vm_page *, char *);
 #if !defined(PMAP_STEAL_MEMORY)
 boolean_t	uvm_page_physget(paddr_t *);
 #endif
-void		uvm_pageidlezero(void);
 
 void		uvm_pageactivate(struct vm_page *);
 vaddr_t		uvm_pageboot_alloc(vsize_t);
