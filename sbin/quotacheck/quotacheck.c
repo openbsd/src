@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.36 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.37 2015/02/07 02:09:14 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -148,13 +148,13 @@ main(int argc, char *argv[])
 			flags |= CHECK_DEBUG;
 			break;
 		case 'g':
-			gflag++;
+			gflag = 1;
 			break;
 		case 'l':
 			maxrun = atoi(optarg);
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
 			break;
 		case 'v':
 			flags |= CHECK_VERBOSE;

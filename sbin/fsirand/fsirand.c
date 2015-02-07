@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.32 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.33 2015/02/07 02:09:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -56,13 +56,13 @@ main(int argc, char *argv[])
 	while ((n = getopt(argc, argv, "bfp")) != -1) {
 		switch (n) {
 		case 'b':
-			ignorelabel++;
+			ignorelabel = 1;
 			break;
 		case 'p':
-			printonly++;
+			printonly = 1;
 			break;
 		case 'f':
-			force++;
+			force = 1;
 			break;
 		default:
 			usage(1);

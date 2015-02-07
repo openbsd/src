@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.49 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.50 2015/02/07 02:09:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -513,10 +513,10 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "af:i:ms")) != -1)
 		switch (c) {
 		case 'a':
-			aflag++;
+			aflag = 1;
 			break;
 		case 'i':
-			iflag++;
+			iflag = 1;
 
 			errno = 0;
 			ullval = strtoull(optarg, &ep, 10);
@@ -546,10 +546,10 @@ main(int argc, char *argv[])
 			format = optarg;
 			break;
 		case 'm':
-			mflag++;
+			mflag = 1;
 			break;
 		case 's':
-			sflag++;
+			sflag = 1;
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2015/02/07 02:09:13 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			debug++;
+			debug = 1;
 			break;
 
 		case 'f':
@@ -90,16 +90,16 @@ main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			nflag++;
+			nflag = 1;
 			yflag = 0;
 			break;
 
 		case 'p':
-			preen++;
+			preen = 1;
 			break;
 
 		case 'y':
-			yflag++;
+			yflag = 1;
 			nflag = 0;
 			break;
 

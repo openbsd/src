@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.198 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.199 2015/02/07 02:09:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -126,11 +126,11 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "ABEf:F:hRb:cdenp:tvw")) != -1)
 		switch (ch) {
 		case 'A':
-			++aflag;
+			aflag = 1;
 			break;
 #if NUMBOOT > 0
 		case 'B':
-			++installboot;
+			installboot = 1;
 			break;
 		case 'b':
 			xxboot = optarg;
@@ -142,10 +142,10 @@ main(int argc, char *argv[])
 			op = RESTORE;
 			break;
 		case 'c':
-			++cflag;
+			cflag = 1;
 			break;
 		case 'd':
-			++dflag;
+			dflag = 1;
 			break;
 		case 'e':
 			if (op != UNSPEC)
@@ -163,13 +163,13 @@ main(int argc, char *argv[])
 			break;
 		case 'F':
 			fstabfile = optarg;
-			++uidflag;
+			uidflag = 1;
 			break;
 		case 'h':
 			print_unit = '*';
 			break;
 		case 't':
-			++tflag;
+			tflag = 1;
 			break;
 		case 'w':
 			if (op != UNSPEC)
@@ -185,10 +185,10 @@ main(int argc, char *argv[])
 			print_unit = tolower((unsigned char)optarg[0]);
 			break;
 		case 'n':
-			donothing++;
+			donothing = 1;
 			break;
 		case 'v':
-			verbose++;
+			verbose = 1;
 			break;
 		case '?':
 		default:

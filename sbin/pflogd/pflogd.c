@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.50 2014/11/20 15:22:39 tedu Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.51 2015/02/07 02:09:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -605,7 +605,7 @@ main(int argc, char **argv)
 				snaplen = PFLOGD_MAXSNAPLEN;
 			break;
 		case 'x':
-			Xflag++;
+			Xflag = 1;
 			break;
 		default:
 			usage();
