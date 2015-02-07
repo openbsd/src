@@ -5606,7 +5606,8 @@
 ./usr/share/man/man3/tls_config_set_cert_file.3
 ./usr/share/man/man3/tls_config_set_cert_mem.3
 ./usr/share/man/man3/tls_config_set_ciphers.3
-./usr/share/man/man3/tls_config_set_ecdhcurve.3
+./usr/share/man/man3/tls_config_set_dheparams.3
+./usr/share/man/man3/tls_config_set_ecdhecurve.3
 ./usr/share/man/man3/tls_config_set_key_file.3
 ./usr/share/man/man3/tls_config_set_key_mem.3
 ./usr/share/man/man3/tls_config_set_protocols.3
