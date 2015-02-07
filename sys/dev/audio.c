@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.127 2015/01/27 03:17:35 dlg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.128 2015/02/07 01:49:05 kettenis Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -3519,6 +3519,18 @@ wskbd_set_mixervolume_callback(void *xch)
 		error = au_set_gain(sc, ports, gain, balance);
 		if (error != 0) {
 			DPRINTF(("%s: au_set_gain: %d\n", __func__, error));
+			goto done;
+		}
+
+		/*
+		 * Unmute whenever we raise or lower the volume.  This
+		 * mimicks the behaviour of the hardware volume
+		 * buttons on Thinkpads making sure that our software
+		 * mute state follows the hardware mute state.
+		 */
+		error = au_set_mute(sc, ports, 0);
+		if (error != 0) {
+			DPRINTF(("%s: au_set_mute: %d\n", __func__, error));
 			goto done;
 		}
 	}
