@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2015/02/07 01:23:12 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.35 2015/02/07 23:56:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -407,7 +407,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	/* Reset these variables to avoid free'ing invalid pointers */
 	serverconfig_reset(&srv_conf);
 
-	if ((off_t)(IMSG_DATA_SIZE(imsg) - s) <
+	if ((IMSG_DATA_SIZE(imsg) - s) <
 	    (srv_conf.tls_cert_len + srv_conf.tls_key_len)) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;

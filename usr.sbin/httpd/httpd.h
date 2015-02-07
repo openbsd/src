@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.76 2015/02/07 06:26:28 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.77 2015/02/07 23:56:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -401,14 +401,14 @@ struct server_config {
 	u_int32_t		 maxrequests;
 	size_t			 maxrequestbody;
 
-	char			*tls_cert;
-	off_t			 tls_cert_len;
+	u_int8_t		*tls_cert;
+	size_t			 tls_cert_len;
 	char			*tls_cert_file;
 	char			 tls_ciphers[NAME_MAX];
 	char			 tls_dhe_params[NAME_MAX];
 	char			 tls_ecdhe_curve[NAME_MAX];
-	char			*tls_key;
-	off_t			 tls_key_len;
+	u_int8_t		*tls_key;
+	size_t			 tls_key_len;
 	char			*tls_key_file;
 
 	u_int32_t		 flags;
