@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.5 2015/02/07 01:37:30 miod Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.6 2015/02/07 02:56:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -27,7 +27,7 @@
 
 #include "hangman.h"
 
-int	ksyms_elf_parse();
+static int ksyms_elf_parse(void);
 
 void
 sym_getword()
@@ -57,12 +57,17 @@ sym_getword()
 			buflen = symsize - pos;
 		*(end = symbuf + buflen) = '\0';
 
-		for (sym = symbuf; *sym != '\0'; sym++) ;
+		for (sym = symbuf; *sym != '\0'; sym++)
+			;
 		if (sym == end)
 			continue;
 
 		symlen = strlen(++sym);
 		if (symlen < MINLEN || symlen > MAXLEN)
+			continue;
+
+		/* ignore symbols containing dots or dollar signs */
+		if (strchr(sym, '.') != NULL || strchr(sym, '$') != NULL)
 			continue;
 
 		break;
@@ -71,7 +76,7 @@ sym_getword()
 	if (tries >= MAXBADWORDS) {
 		mvcur(0, COLS - 1, LINES -1, 0);
 		endwin();
-		errx(1, "can't seem a suitable kernel symbol in %s",
+		errx(1, "can't seem a suitable symbol in %s",
 		    Dict_name);
 	}
 
