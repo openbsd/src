@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.144 2015/02/05 03:01:03 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.145 2015/02/07 04:01:11 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -368,6 +368,15 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 		if (error) {
 			m_freem(m);
 			return (error);
+		}
+
+		if ((rt->rt_flags & RTF_LLINFO) == 0) {
+			log(LOG_DEBUG, "arpresolve: %s: route contains no arp"
+			    " information\n", inet_ntop(AF_INET,
+				&satosin(rt_key(rt))->sin_addr, addr,
+				sizeof(addr)));
+			m_freem(m);
+			return (EINVAL);
 		}
 
 		la = (struct llinfo_arp *)rt->rt_llinfo;
