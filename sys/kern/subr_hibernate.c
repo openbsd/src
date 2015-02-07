@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.114 2015/02/07 01:19:40 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.115 2015/02/07 02:50:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -53,7 +53,8 @@
  * 4*PAGE_SIZE			final chunk ordering list (24 pages)
  * 28*PAGE_SIZE			RLE utility page
  * 29*PAGE_SIZE			start of hiballoc area
- * 109*PAGE_SIZE		end of hiballoc area (80 pages)
+ * 30*PAGE_SIZE			preserved entropy
+ * 110*PAGE_SIZE		end of hiballoc area (80 pages)
  * ...				unused
  * HIBERNATE_CHUNK_SIZE		start of hibernate chunk table
  * 2*HIBERNATE_CHUNK_SIZE	bounce area for chunks being unpacked
@@ -252,7 +253,11 @@ hib_alloc(struct hiballoc_arena *arena, size_t alloc_sz)
 void
 hib_getentropy(char **bufp, size_t *bufplen)
 {
-	/* fill in */
+	if (!bufp || !bufplen)
+		return;
+
+	*bufp = (char *)(global_piglet_va + (29 * PAGE_SIZE));
+	*bufplen = PAGE_SIZE;
 }
 
 /*
@@ -1000,6 +1005,34 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
 }
 
 /*
+ * Preserve one page worth of random data, generated from the resuming
+ * kernel's arc4random. After resume, this preserved entropy can be used
+ * to further improve the un-hibernated machine's entropy pool. This
+ * random data is stored in the piglet, which is preserved across the
+ * unpack operation, and is restored later in the resume process (see
+ * hib_getentropy)
+ */
+void
+hibernate_preserve_entropy(union hibernate_info *hib)
+{
+	void *entropy;
+
+	entropy = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
+
+	if (!entropy)
+		return;
+
+	pmap_activate(curproc);
+	pmap_kenter_pa((vaddr_t)entropy,
+	    (paddr_t)(hib->piglet_pa + (29 * PAGE_SIZE)),
+	    PROT_READ | PROT_WRITE);
+
+	arc4random_buf((void *)entropy, PAGE_SIZE);
+	pmap_kremove((vaddr_t)entropy, PAGE_SIZE);
+	km_free(entropy, PAGE_SIZE, &kv_any, &kp_none);
+}
+
+/*
  * Reads the signature block from swap, checks against the current machine's
  * information. If the information matches, perform a resume by reading the
  * saved image into the pig area, and unpacking.
@@ -1083,6 +1116,8 @@ hibernate_resume(void)
 		hibernate_enable_intr_machdep();
 		goto fail;
 	}
+
+	hibernate_preserve_entropy(&disk_hib);
 
 	printf("Unpacking image...\n");
 
@@ -1517,7 +1552,7 @@ hibernate_zlib_reset(union hibernate_info *hib, int deflate)
 	 * See piglet layout information at the start of this file for
 	 * information on the zlib page assignments.
 	 */
-	hibernate_zlib_start = (vaddr_t)(pva + (29 * PAGE_SIZE));
+	hibernate_zlib_start = (vaddr_t)(pva + (30 * PAGE_SIZE));
 	hibernate_zlib_size = 80 * PAGE_SIZE;
 
 	memset((void *)hibernate_zlib_start, 0, hibernate_zlib_size);
