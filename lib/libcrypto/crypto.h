@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.32 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.33 2015/02/07 13:19:15 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -141,20 +141,6 @@ extern "C" {
 #define SSLEAY_BUILT_ON		3
 #define SSLEAY_PLATFORM		4
 #define SSLEAY_DIR		5
-
-/* Already declared in ossl_typ.h */
-#if 0
-typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
-/* Called when a new object is created */
-typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-    int idx, long argl, void *argp);
-/* Called when an object is free()ed */
-typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-    int idx, long argl, void *argp);
-/* Called when we need to dup an object */
-typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
-    void *from_d, int idx, long argl, void *argp);
-#endif
 
 /* A generic structure to pass assorted data in a expandable way */
 typedef struct openssl_item_st {

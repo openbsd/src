@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.11 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.12 2015/02/07 13:19:15 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -260,11 +260,6 @@ asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent, const ASN1_ITEM *it,
 		break;
 
 	case ASN1_ITYPE_CHOICE:
-#if 0
-		if (!nohdr &&
-		    !asn1_print_fsname(out, indent, fname, sname, pctx))
-			return 0;
-#endif
 		/* CHOICE type, get selector */
 		i = asn1_get_choice_selector(fld, it);
 		/* This should never happen... */
@@ -394,11 +389,6 @@ asn1_print_fsname(BIO *out, int indent, const char *fname, const char *sname,
 {
 	static char spaces[] = "                    ";
 	const int nspaces = sizeof(spaces) - 1;
-
-#if 0
-	if (!sname && !fname)
-		return 1;
-#endif
 
 	while (indent > nspaces) {
 		if (BIO_write(out, spaces, nspaces) != nspaces)

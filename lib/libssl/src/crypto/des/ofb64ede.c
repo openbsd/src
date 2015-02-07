@@ -1,4 +1,4 @@
-/* $OpenBSD: ofb64ede.c,v 1.5 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: ofb64ede.c,v 1.6 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,8 +105,6 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in,
 		}
 	if (save)
 		{
-/*		v0=ti[0];
-		v1=ti[1];*/
 		iv = &(*ivec)[0];
 		l2c(v0,iv);
 		l2c(v1,iv);
@@ -114,12 +112,3 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in,
 	v0=v1=ti[0]=ti[1]=0;
 	*num=n;
 	}
-
-#ifdef undef /* MACRO */
-void DES_ede2_ofb64_encrypt(unsigned char *in,
-	     unsigned char *out, long length, DES_key_schedule k1,
-	     DES_key_schedule k2, DES_cblock (*ivec), int *num)
-	{
-	DES_ede3_ofb64_encrypt(in, out, length, k1,k2,k1, ivec, num);
-	}
-#endif

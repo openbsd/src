@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.25 2014/07/12 16:33:25 miod Exp $ */
+/* $OpenBSD: t_x509.c,v 1.26 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,14 +172,6 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	if (!(cflag & X509_FLAG_NO_SIGNAME)) {
 		if (X509_signature_print(bp, x->sig_alg, NULL) <= 0)
 			goto err;
-#if 0
-		if (BIO_printf(bp, "%8sSignature Algorithm: ", "") <= 0)
-			goto err;
-		if (i2a_ASN1_OBJECT(bp, ci->signature->algorithm) <= 0)
-			goto err;
-		if (BIO_puts(bp, "\n") <= 0)
-			goto err;
-#endif
 	}
 
 	if (!(cflag & X509_FLAG_NO_ISSUER)) {

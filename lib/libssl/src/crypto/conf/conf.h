@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.13 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: conf.h,v 1.14 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,9 +149,6 @@ struct conf_st {
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 CONF_METHOD *NCONF_WIN32(void);
-#if 0 /* Just to give you an idea of what I have in mind */
-CONF_METHOD *NCONF_XML(void);
-#endif
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
@@ -165,12 +162,7 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 int NCONF_dump_fp(const CONF *conf, FILE *out);
 int NCONF_dump_bio(const CONF *conf, BIO *out);
 
-#if 0 /* The following function has no error checking,
-	 and should therefore be avoided */
-long NCONF_get_number(CONF *conf, char *group, char *name);
-#else
 #define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r)
-#endif
 
 /* Module functions */
 

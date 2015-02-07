@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.25 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.26 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,17 +240,6 @@ extern "C" {
                                                  |  ((b)->flags & ~BN_FLG_MALLOCED) \
                                                  |  BN_FLG_STATIC_DATA \
                                                  |  (n)))
-
-/* Already declared in ossl_typ.h */
-#if 0
-typedef struct bignum_st BIGNUM;
-/* Used for temp variables (declaration hidden in bn_lcl.h) */
-typedef struct bignum_ctx BN_CTX;
-typedef struct bn_blinding_st BN_BLINDING;
-typedef struct bn_mont_ctx_st BN_MONT_CTX;
-typedef struct bn_recp_ctx_st BN_RECP_CTX;
-typedef struct bn_gencb_st BN_GENCB;
-#endif
 
 struct bignum_st {
 	BN_ULONG *d;	/* Pointer to an array of 'BN_BITS2' bit chunks. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_lib.c,v 1.4 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pcy_lib.c,v 1.5 2015/02/07 13:19:15 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -139,16 +139,6 @@ X509_policy_node_get0_policy(const X509_POLICY_NODE *node)
 		return NULL;
 	return node->data->valid_policy;
 }
-
-#if 0
-int
-X509_policy_node_get_critical(const X509_POLICY_NODE *node)
-{
-	if (node_critical(node))
-		return 1;
-	return 0;
-}
-#endif
 
 STACK_OF(POLICYQUALINFO) *
 X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node)

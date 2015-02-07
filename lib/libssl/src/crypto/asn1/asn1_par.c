@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.21 2014/10/03 06:02:38 doug Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.22 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,11 +126,7 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 	/* ASN1_BMPSTRING *bmp=NULL;*/
 	int dump_indent;
 
-#if 0
-	dump_indent = indent;
-#else
 	dump_indent = 6;	/* Because we know BIO_dump_indent() */
-#endif
 	p = *pp;
 	tot = p + length;
 	op = p - 1;

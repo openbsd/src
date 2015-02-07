@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.32 2014/07/11 14:49:12 miod Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.33 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,12 +140,6 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	if (inf && !(ret & V_ASN1_CONSTRUCTED))
 		goto err;
 
-#if 0
-	fprintf(stderr, "p=%d + *plength=%ld > omax=%ld + *pp=%d  (%d > %d)\n",
-	    (int)p, *plength, omax, (int)*pp, (int)(p+ *plength),
-	    (int)(omax+ *pp));
-
-#endif
 	if (*plength > (omax - (p - *pp))) {
 		ASN1err(ASN1_F_ASN1_GET_OBJECT, ASN1_R_TOO_LONG);
 		/* Set this so that even if things are not long enough

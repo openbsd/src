@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_all.c,v 1.26 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: eng_all.c,v 1.27 2015/02/07 13:19:15 doug Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -66,13 +66,6 @@ ENGINE_load_builtin_engines(void)
 {
 	/* Some ENGINEs need this */
 	OPENSSL_cpuid_setup();
-#if 0
-	/* There's no longer any need for an "openssl" ENGINE unless, one day,
-	 * it is the *only* way for standard builtin implementations to be be
-	 * accessed (ie. it would be possible to statically link binaries with
-	 * *no* builtin implementations). */
-	ENGINE_load_openssl();
-#endif
 
 #ifndef OPENSSL_NO_RSAX
 	ENGINE_load_rsax();

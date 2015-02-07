@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.14 2015/01/22 09:06:39 reyk Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.15 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,17 +75,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#if 0
-/* Outer object */
-typedef struct x509_hash_dir_st
-	{
-	int num_dirs;
-	char **dirs;
-	int *dirs_type;
-	int num_dirs_alloced;
-	} X509_HASH_DIR_CTX;
 #endif
 
 typedef struct x509_file_st

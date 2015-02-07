@@ -1,4 +1,4 @@
-/* $OpenBSD: tb_store.c,v 1.4 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: tb_store.c,v 1.5 2015/02/07 13:19:15 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
  *
@@ -92,29 +92,6 @@ ENGINE_register_all_STORE(void)
 	for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
 		ENGINE_register_STORE(e);
 }
-
-/* The following two functions are removed because they're useless. */
-#if 0
-int
-ENGINE_set_default_STORE(ENGINE *e)
-{
-	if (e->store_meth)
-		return engine_table_register(&store_table,
-		    engine_unregister_all_STORE, e, &dummy_nid, 1, 1);
-	return 1;
-}
-#endif
-
-#if 0
-/* Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
- * references). */
-ENGINE *
-ENGINE_get_default_STORE(void)
-{
-	return engine_table_select(&store_table, dummy_nid);
-}
-#endif
 
 /* Obtains an STORE implementation from an ENGINE functional reference */
 const STORE_METHOD *

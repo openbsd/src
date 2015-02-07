@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.23 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.24 2015/02/07 13:19:15 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -328,9 +328,6 @@ X509V3_parse_list(const char *line)
 				*p = 0;
 				ntmp = strip_spaces(q);
 				q = p + 1;
-#if 0
-				printf("%s\n", ntmp);
-#endif
 				if (!ntmp) {
 					X509V3err(X509V3_F_X509V3_PARSE_LIST,
 					    X509V3_R_INVALID_NULL_NAME);
@@ -345,9 +342,6 @@ X509V3_parse_list(const char *line)
 				state = HDR_NAME;
 				*p = 0;
 				vtmp = strip_spaces(q);
-#if 0
-				printf("%s\n", ntmp);
-#endif
 				if (!vtmp) {
 					X509V3err(X509V3_F_X509V3_PARSE_LIST,
 					    X509V3_R_INVALID_NULL_VALUE);
@@ -363,9 +357,6 @@ X509V3_parse_list(const char *line)
 
 	if (state == HDR_VALUE) {
 		vtmp = strip_spaces(q);
-#if 0
-		printf("%s=%s\n", ntmp, vtmp);
-#endif
 		if (!vtmp) {
 			X509V3err(X509V3_F_X509V3_PARSE_LIST,
 			    X509V3_R_INVALID_NULL_VALUE);
@@ -374,9 +365,6 @@ X509V3_parse_list(const char *line)
 		X509V3_add_value(ntmp, vtmp, &values);
 	} else {
 		ntmp = strip_spaces(q);
-#if 0
-		printf("%s\n", ntmp);
-#endif
 		if (!ntmp) {
 			X509V3err(X509V3_F_X509V3_PARSE_LIST,
 			    X509V3_R_INVALID_NULL_NAME);

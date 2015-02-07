@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.8 2015/02/07 13:19:15 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -138,14 +138,6 @@ static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 
 	ret->flags = ret->meth->flags;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
-#if 0
-	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
-	{
-		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
-		free(ret);
-		ret=NULL;
-	}
-#endif	
 	return(ret);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.15 2014/11/11 06:23:43 guenther Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.16 2015/02/07 13:19:15 doug Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -627,11 +627,8 @@ ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
 		}
 	}
 
-#if 1				/* optional; EC_window_bits_for_scalar_size
-				 * assumes we do this step */
 	if (!EC_POINTs_make_affine(group, num_val, val, ctx))
 		goto err;
-#endif
 
 	r_is_at_infinity = 1;
 

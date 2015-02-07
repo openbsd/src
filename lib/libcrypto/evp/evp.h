@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.40 2014/11/09 19:17:13 miod Exp $ */
+/* $OpenBSD: evp.h,v 1.41 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -701,10 +701,6 @@ const EVP_CIPHER *EVP_des_cfb1(void);
 const EVP_CIPHER *EVP_des_cfb8(void);
 const EVP_CIPHER *EVP_des_ede_cfb64(void);
 # define EVP_des_ede_cfb EVP_des_ede_cfb64
-#if 0
-const EVP_CIPHER *EVP_des_ede_cfb1(void);
-const EVP_CIPHER *EVP_des_ede_cfb8(void);
-#endif
 const EVP_CIPHER *EVP_des_ede3_cfb64(void);
 # define EVP_des_ede3_cfb EVP_des_ede3_cfb64
 const EVP_CIPHER *EVP_des_ede3_cfb1(void);

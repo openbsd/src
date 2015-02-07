@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.11 2014/06/23 22:19:02 deraadt Exp $ */
+/* $OpenBSD: conf_api.c,v 1.12 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -164,28 +164,6 @@ _CONF_get_string(const CONF *conf, const char *section, const char *name)
 		return (getenv(name));
 	}
 }
-
-#if 0 /* There's no way to provide error checking with this function, so
-	 force implementors of the higher levels to get a string and read
-	 the number themselves. */
-long
-_CONF_get_number(CONF *conf, char *section, char *name)
-{
-	char *str;
-	long ret = 0;
-
-	str = _CONF_get_string(conf, section, name);
-	if (str == NULL)
-		return (0);
-	for (;;) {
-		if (conf->meth->is_number(conf, *str))
-			ret = ret * 10 + conf->meth->to_int(conf, *str);
-		else
-			return (ret);
-		str++;
-	}
-}
-#endif
 
 static unsigned long
 conf_value_hash(const CONF_VALUE *v)

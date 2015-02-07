@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.24 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_strex.c,v 1.25 2015/02/07 13:19:15 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -84,20 +84,6 @@
 /* Three IO functions for sending data to memory, a BIO and
  * and a FILE pointer.
  */
-#if 0				/* never used */
-static int
-send_mem_chars(void *arg, const void *buf, int len)
-{
-	unsigned char **out = arg;
-
-	if (!out)
-		return 1;
-	memcpy(*out, buf, len);
-	*out += len;
-	return 1;
-}
-#endif
-
 static int
 send_bio_chars(void *arg, const void *buf, int len)
 {

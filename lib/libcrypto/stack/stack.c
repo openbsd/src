@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.18 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: stack.c,v 1.19 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -54,16 +54,6 @@
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- */
-
-/* Code for stacks
- * Author - Eric Young v 1.0
- * 1.2 eay 12-Mar-97 -	Modified sk_find so that it _DOES_ return the
- *			lowest index for the searched item.
- *
- * 1.1 eay - Take from netdb and added to SSLeay
- *
- * 1.0 eay - First version 29/07/92
  */
 
 #include <stdio.h>

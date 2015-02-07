@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_nbio.c,v 1.18 2014/10/22 13:02:03 jsing Exp $ */
+/* $OpenBSD: bf_nbio.c,v 1.19 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,10 +130,8 @@ static int
 nbiof_read(BIO *b, char *out, int outl)
 {
 	int ret = 0;
-#if 1
 	int num;
 	unsigned char n;
-#endif
 
 	if (out == NULL)
 		return (0);
@@ -141,7 +139,7 @@ nbiof_read(BIO *b, char *out, int outl)
 		return (0);
 
 	BIO_clear_retry_flags(b);
-#if 1
+
 	arc4random_buf(&n, 1);
 	num = (n & 0x07);
 
@@ -151,9 +149,7 @@ nbiof_read(BIO *b, char *out, int outl)
 	if (num == 0) {
 		ret = -1;
 		BIO_set_retry_read(b);
-	} else
-#endif
-	{
+	} else {
 		ret = BIO_read(b->next_bio, out, outl);
 		if (ret < 0)
 			BIO_copy_next_retry(b);
@@ -177,7 +173,6 @@ nbiof_write(BIO *b, const char *in, int inl)
 
 	BIO_clear_retry_flags(b);
 
-#if 1
 	if (nt->lwn > 0) {
 		num = nt->lwn;
 		nt->lwn = 0;
@@ -192,9 +187,7 @@ nbiof_write(BIO *b, const char *in, int inl)
 	if (num == 0) {
 		ret = -1;
 		BIO_set_retry_write(b);
-	} else
-#endif
-	{
+	} else {
 		ret = BIO_write(b->next_bio, in, inl);
 		if (ret < 0) {
 			BIO_copy_next_retry(b);

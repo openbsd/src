@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.30 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.31 2015/02/07 13:19:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -482,15 +482,6 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	}
 
 	if (evp_cipher != NULL) {
-#if 0
-		unsigned char key[EVP_MAX_KEY_LENGTH];
-		unsigned char iv[EVP_MAX_IV_LENGTH];
-		unsigned char *p;
-		int keylen, ivlen;
-		int max;
-		X509_OBJECT ret;
-#endif
-
 		if ((etmp = BIO_new(BIO_f_cipher())) == NULL) {
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE, ERR_R_BIO_LIB);
 			goto err;
@@ -594,20 +585,9 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		etmp = NULL;
 	}
 
-#if 1
 	if (PKCS7_is_detached(p7) || (in_bio != NULL)) {
 		bio = in_bio;
 	} else {
-#if 0
-		bio = BIO_new(BIO_s_mem());
-		/* We need to set this so that when we have read all
-		 * the data, the encrypt BIO, if present, will read
-		 * EOF and encode the last few bytes */
-		BIO_set_mem_eof_return(bio, 0);
-
-		if (data_body != NULL && data_body->length > 0)
-			BIO_write(bio, (char *)data_body->data, data_body->length);
-#else
 		if (data_body != NULL && data_body->length > 0)
 			bio = BIO_new_mem_buf(data_body->data, data_body->length);
 		else {
@@ -616,11 +596,10 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		}
 		if (bio == NULL)
 			goto err;
-#endif
 	}
 	BIO_push(out, bio);
 	bio = NULL;
-#endif
+
 	if (0) {
 err:
 		if (ek) {

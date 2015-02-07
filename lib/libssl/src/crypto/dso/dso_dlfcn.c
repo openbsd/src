@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_dlfcn.c,v 1.27 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dso_dlfcn.c,v 1.28 2015/02/07 13:19:15 doug Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -82,12 +82,6 @@ static int dlfcn_load(DSO *dso);
 static int dlfcn_unload(DSO *dso);
 static void *dlfcn_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
-#if 0
-static int dlfcn_unbind(DSO *dso, char *symname, void *symptr);
-static int dlfcn_init(DSO *dso);
-static int dlfcn_finish(DSO *dso);
-static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg);
-#endif
 static char *dlfcn_name_converter(DSO *dso, const char *filename);
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
     const char *filespec2);
