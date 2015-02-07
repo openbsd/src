@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.109 2015/02/07 13:32:12 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.110 2015/02/07 18:52:35 jmc Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -892,8 +892,8 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: make [-BeiknPqrSst] [-C dir] [-D variable] [-d flags] [-f makefile]\n\
-	    [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
+"usage: make [-BeiknpqrSst] [-C directory] [-D variable] [-d flags] [-f mk]\n\
+	    [-I directory] [-j max_processes] [-m directory] [-V variable]\n\
 	    [NAME=value] [target ...]\n");
 	exit(2);
 }
