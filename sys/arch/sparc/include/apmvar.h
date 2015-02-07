@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.3 2012/03/26 16:21:34 deraadt Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.4 2015/02/07 22:16:52 miod Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -72,6 +72,7 @@
 #define		APM_USER_SUSPEND_REQ	0x000A
 #define		APM_SYS_STANDBY_RESUME	0x000B
 #define		APM_CAPABILITY_CHANGE	0x000C	/* apm v1.2 */
+#define		APM_USER_HIBERNATE_REQ	0x000D
 
 #define		APM_EVENT_MASK		0xffff
 
