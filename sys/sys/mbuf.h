@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.184 2015/01/20 18:12:49 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.185 2015/02/07 02:30:00 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -500,6 +500,8 @@ void			ml_init(struct mbuf_list *);
 void			ml_enqueue(struct mbuf_list *, struct mbuf *);
 struct mbuf *		ml_dequeue(struct mbuf_list *);
 struct mbuf *		ml_dechain(struct mbuf_list *);
+struct mbuf *		ml_filter(struct mbuf_list *,
+			    int (*)(void *, const struct mbuf *), void *);
 
 #define	ml_len(_ml)		((_ml)->ml_len)
 #define	ml_empty(_ml)		((_ml)->ml_len == 0)
@@ -527,6 +529,8 @@ struct mbuf *		mq_dequeue(struct mbuf_queue *);
 int			mq_enlist(struct mbuf_queue *, struct mbuf_list *);
 void			mq_delist(struct mbuf_queue *, struct mbuf_list *);
 struct mbuf *		mq_dechain(struct mbuf_queue *);
+struct mbuf *		mq_filter(struct mbuf_queue *,
+			    int (*)(void *, const struct mbuf *), void *);
 
 #define	mq_len(_mq)		ml_len(&(_mq)->mq_list)
 #define	mq_empty(_mq)		ml_empty(&(_mq)->mq_list)
