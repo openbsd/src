@@ -52,7 +52,7 @@ WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
 
 # Alphabetically
 OBJS =		@ISC_EXTRA_OBJS@ \
-		assertions.@O@ base64.@O@ bitstring.@O@ buffer.@O@ \
+		assertions.@O@ base32.@O@ base64.@O@ bitstring.@O@ buffer.@O@ \
 		bufferlist.@O@ commandline.@O@ error.@O@ event.@O@ \
 		shuffle.@O@ \
 		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@\
@@ -66,7 +66,7 @@ OBJS =		@ISC_EXTRA_OBJS@ \
 
 # Alphabetically
 SRCS =		@ISC_EXTRA_SRCS@ \
-		assertions.c base64.c bitstring.c buffer.c \
+		assertions.c base32.c base64.c bitstring.c buffer.c \
 		bufferlist.c commandline.c error.c event.c \
 		shuffle.c \
 		heap.c hex.c hmacmd5.c hmacsha.c \

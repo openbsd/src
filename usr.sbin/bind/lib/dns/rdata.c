@@ -162,6 +162,9 @@ uint16_fromregion(isc_region_t *region);
 static isc_uint8_t
 uint8_fromregion(isc_region_t *region);
 
+static isc_uint8_t
+uint8_consume_fromregion(isc_region_t *region);
+
 static isc_result_t
 mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 
@@ -200,6 +203,9 @@ warn_badname(dns_name_t *name, isc_lex_t *lexer,
 static void
 warn_badmx(isc_token_t *token, isc_lex_t *lexer,
 	   dns_rdatacallbacks_t *callbacks);
+
+static isc_uint16_t
+uint16_consume_fromregion(isc_region_t *region);
 
 static inline int
 getquad(const void *src, struct in_addr *dst,
@@ -1233,6 +1239,14 @@ uint32_fromregion(isc_region_t *region) {
 }
 
 static isc_uint16_t
+uint16_consume_fromregion(isc_region_t *region) {
+	isc_uint16_t r = uint16_fromregion(region);
+
+	isc_region_consume(region, 2);
+	return r;
+}
+
+static isc_uint16_t
 uint16_fromregion(isc_region_t *region) {
 
 	REQUIRE(region->length >= 2);
@@ -1246,6 +1260,14 @@ uint8_fromregion(isc_region_t *region) {
 	REQUIRE(region->length >= 1);
 
 	return (region->base[0]);
+}
+
+static isc_uint8_t
+uint8_consume_fromregion(isc_region_t *region) {
+	isc_uint8_t r = uint8_fromregion(region);
+
+	isc_region_consume(region, 1);
+	return r;
 }
 
 static isc_result_t

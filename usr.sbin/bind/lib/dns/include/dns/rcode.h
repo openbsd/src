@@ -93,6 +93,21 @@ isc_result_t dns_tsigrcode_totext(dns_rcode_t rcode, isc_buffer_t *target);
  *\li	#ISC_R_NOSPACE			target buffer is too small
  */
 
+isc_result_t
+dns_hashalg_fromtext(unsigned char *hashalg, isc_textregion_t *source);
+/*%<
+ * Convert the text 'source' refers to into a has algorithm value.
+ *
+ * Requires:
+ *\li	'hashalg' is a valid pointer.
+ *
+ *\li	'source' is a valid text region.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS			on success
+ *\li	#DNS_R_UNKNOWN			type is unknown
+ */
+
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_RCODE_H */

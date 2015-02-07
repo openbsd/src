@@ -68,6 +68,7 @@ typedef struct dns_fetch			dns_fetch_t;
 typedef struct dns_fixedname			dns_fixedname_t;
 typedef struct dns_forwarders			dns_forwarders_t;
 typedef struct dns_fwdtable			dns_fwdtable_t;
+typedef isc_uint32_t				dns_iterations_t;
 typedef isc_uint16_t				dns_keyflags_t;
 typedef struct dns_keynode			dns_keynode_t;
 typedef struct dns_keytable			dns_keytable_t;
@@ -117,6 +118,10 @@ typedef struct dns_zone				dns_zone_t;
 typedef ISC_LIST(dns_zone_t)			dns_zonelist_t;
 typedef struct dns_zonemgr			dns_zonemgr_t;
 typedef struct dns_zt				dns_zt_t;
+
+typedef enum {
+	dns_hash_sha1 = 1
+} dns_hash_t;
 
 typedef enum {
 	dns_fwdpolicy_none = 0,

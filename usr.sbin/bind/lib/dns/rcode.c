@@ -114,6 +114,10 @@
 	{ 255,    "ALL", 0 }, \
 	{ 0, NULL, 0}
 
+#define	HASHALGNAMES \
+	{ 1, "SHA-1", 0 }, \
+	{ 0, NULL, 0 }
+
 struct tbl {
 	unsigned int    value;
 	const char      *name;
@@ -125,6 +129,7 @@ static struct tbl tsigrcodes[] = { RCODENAMES TSIGRCODENAMES };
 static struct tbl certs[] = { CERTNAMES };
 static struct tbl secalgs[] = { SECALGNAMES };
 static struct tbl secprotos[] = { SECPROTONAMES };
+static struct tbl hashalgs[] = { HASHALGNAMES };
 
 static struct keyflag {
 	const char *name;
@@ -315,6 +320,14 @@ dns_secproto_fromtext(dns_secproto_t *secprotop, isc_textregion_t *source) {
 isc_result_t
 dns_secproto_totext(dns_secproto_t secproto, isc_buffer_t *target) {
 	return (dns_mnemonic_totext(secproto, target, secprotos));
+}
+
+isc_result_t
+dns_hashalg_fromtext(unsigned char *hashalg, isc_textregion_t *source) {
+	unsigned int value;
+	RETERR(dns_mnemonic_fromtext(&value, source, hashalgs, 0xff));
+	*hashalg = value;
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
