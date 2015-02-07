@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.52 2015/01/22 09:06:39 reyk Exp $
+# $OpenBSD: Makefile,v 1.53 2015/02/07 03:23:05 jsing Exp $
 
 LIB=	crypto
 
@@ -149,7 +149,7 @@ SRCS+= m_null.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c
 SRCS+= m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c
 SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
-SRCS+= c_all.c c_allc.c c_alld.c evp_lib.c
+SRCS+= c_all.c evp_lib.c
 SRCS+= evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
 SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
 SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
