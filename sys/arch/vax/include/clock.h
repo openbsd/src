@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.h,v 1.9 2011/09/15 00:48:24 miod Exp $ */
+/*	$OpenBSD: clock.h,v 1.10 2015/02/07 00:09:09 miod Exp $ */
 /*	$NetBSD: clock.h,v 1.4 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -60,6 +60,15 @@
 #define	CSRB_24		0002
 #define	CSRB_DM		0004
 #define	CSRD_VRT	0200
+
+/* ICCS bits */
+
+#define	ICCS_ERR	0x80000000	/* lost tick */
+#define	ICCS_OFLOW	0x00000080	/* icr overflow */
+#define	ICCS_INTENA	0x00000040	/* interrupt enable */
+#define	ICCS_INCR	0x00000020	/* increment (if not running) */
+#define	ICCS_RESET	0x00000010	/* reset to nicr */
+#define	ICCS_RUN	0x00000001	/* enable */
 
 /* Var's used when dealing with clock chip */
 extern	volatile short *clk_page;

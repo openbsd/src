@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.24 2011/09/15 00:48:24 miod Exp $	 */
+/*	$OpenBSD: clock.c,v 1.25 2015/02/07 00:09:09 miod Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -195,7 +195,8 @@ cpu_initclocks()
 	evcount_attach(&clock_intrcnt, "clock", NULL);
 	if (vax_boardtype != VAX_BTYP_VXT)
 		mtpr(-tick, PR_NICR); /* Load in count register */
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	mtpr(ICCS_ERR | ICCS_OFLOW | ICCS_INTENA | ICCS_RESET | ICCS_RUN,
+	    PR_ICCS); /* Reset errors, start clock and enable interrupt */
 }
 
 void
@@ -248,7 +249,7 @@ numtoyear(int num)
 int
 generic_clkread(struct timespec *ts, time_t base)
 {
-	unsigned klocka = mfpr(PR_TODR);
+	uint32_t klocka = mfpr(PR_TODR);
 
 	/*
 	 * Sanity check.
