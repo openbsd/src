@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.74 2015/02/06 13:05:20 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.75 2015/02/07 01:23:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -337,12 +337,14 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_ERROR_LOG	0x00008000
 #define SRVFLAG_AUTH		0x00010000
 #define SRVFLAG_NO_AUTH		0x00020000
+#define SRVFLAG_BLOCK		0x00040000
+#define SRVFLAG_NO_BLOCK	0x00080000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
-	"\21AUTH\22NO_AUTH"
+	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -420,6 +422,10 @@ struct server_config {
 	char			 auth_realm[NAME_MAX];
 	u_int32_t		 auth_id;
 	struct auth		*auth;
+
+	int			 return_code;
+	char			*return_uri;
+	off_t			 return_uri_len;
 
 	TAILQ_ENTRY(server_config) entry;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.33 2015/02/05 10:46:17 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.34 2015/02/07 01:23:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -189,6 +189,10 @@ config_setserver(struct httpd *env, struct server *srv)
 		c = 0;
 		iov[c].iov_base = &s;
 		iov[c++].iov_len = sizeof(s);
+		if (srv->srv_conf.return_uri_len != 0) {
+			iov[c].iov_base = srv->srv_conf.return_uri;
+			iov[c++].iov_len = srv->srv_conf.return_uri_len;
+		}
 		if (srv->srv_conf.tls_cert_len != 0) {
 			iov[c].iov_base = srv->srv_conf.tls_cert;
 			iov[c++].iov_len = srv->srv_conf.tls_cert_len;
@@ -246,12 +250,14 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	struct server_config	*srv_conf, *parent;
 	u_int8_t		*p = imsg->data;
 	u_int			 f;
+	size_t			 s;
 
 	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
 		return (-1);
 
 	IMSG_SIZE_CHECK(imsg, srv_conf);
 	memcpy(srv_conf, p, sizeof(*srv_conf));
+	s = sizeof(*srv_conf);
 
 	/* Reset these variables to avoid free'ing invalid pointers */
 	serverconfig_reset(srv_conf);
@@ -334,6 +340,24 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			(void)strlcpy(srv_conf->errorlog,
 			    parent->errorlog,
 			    sizeof(srv_conf->errorlog));
+		}
+
+		f = SRVFLAG_BLOCK|SRVFLAG_NO_BLOCK;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= parent->flags & f;
+			srv_conf->return_code = parent->return_code;
+			srv_conf->return_uri_len = parent->return_uri_len;
+			if (srv_conf->return_uri_len &&
+			    (srv_conf->return_uri =
+			    strdup(parent->return_uri)) == NULL)
+				goto fail;
+		} else {
+			if (srv_conf->return_uri_len != 0) {
+				if ((srv_conf->return_uri = get_data(p + s,
+				    srv_conf->return_uri_len)) == NULL)
+					goto fail;
+				s += srv_conf->return_uri_len;
+			}
 		}
 
 		memcpy(&srv_conf->timeout, &parent->timeout,
@@ -426,6 +450,12 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	    srv->srv_conf.name, srv->srv_conf.id,
 	    printb_flags(srv->srv_conf.flags, SRVFLAG_BITS));
 
+	if (srv->srv_conf.return_uri_len != 0) {
+		if ((srv->srv_conf.return_uri = get_data(p + s,
+		    srv->srv_conf.return_uri_len)) == NULL)
+			goto fail;
+		s += srv->srv_conf.return_uri_len;
+	}
 	if (srv->srv_conf.tls_cert_len != 0) {
 		if ((srv->srv_conf.tls_cert = get_data(p + s,
 		    srv->srv_conf.tls_cert_len)) == NULL)

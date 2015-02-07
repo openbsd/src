@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2015/02/06 13:05:20 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.61 2015/02/07 01:23:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -133,13 +133,13 @@ typedef struct {
 %token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
 %token	LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT
 %token	SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT TLS TYPES 
-%token	ERROR INCLUDE AUTHENTICATE WITH
+%token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
 %type	<v.number>	opttls
 %type	<v.tv>		timeout
-%type	<v.string>	numberstring
+%type	<v.string>	numberstring optstring
 %type	<v.auth>	authopts
 
 %%
@@ -439,6 +439,7 @@ serveroptsl	: LISTEN ON STRING opttls port {
 		| logformat
 		| fastcgi
 		| authenticate
+		| filter
 		| LOCATION STRING		{
 			struct server	*s;
 
@@ -798,6 +799,50 @@ logstyle	: COMMON		{
 		}
 		;
 
+filter		: block RETURN NUMBER optstring	{
+			if ($3 <= 0 || server_httperror_byid($3) == NULL) {
+				yyerror("invalid return code: %lld", $3);
+				free($4);
+				YYERROR;
+			}
+			srv_conf->return_code = $3;
+
+			if ($4 != NULL) {
+				/* Only for 3xx redirection headers */
+				if ($3 < 300 || $3 > 399) {
+					yyerror("invalid return code for "
+					    "location URI");
+					free($4);
+					YYERROR;
+				}
+				srv_conf->return_uri = $4;
+				srv_conf->return_uri_len = strlen($4) + 1;
+			}
+		}
+		| block DROP			{
+			/* No return code, silently drop the connection */
+			srv_conf->return_code = 0;
+		}
+		| block				{
+			/* Forbidden */
+			srv_conf->return_code = 403;
+		}
+		| PASS				{
+			srv_conf->flags &= ~SRVFLAG_BLOCK;
+			srv_conf->flags |= SRVFLAG_NO_BLOCK;
+		}
+		;
+
+block		: BLOCK				{
+			srv_conf->flags &= ~SRVFLAG_NO_BLOCK;
+			srv_conf->flags |= SRVFLAG_BLOCK;
+		}
+		;
+
+optstring	: /* empty */		{ $$ = NULL; }
+		| STRING		{ $$ = $1; }
+		;
+
 tcpip		: TCP '{' optnl tcpflags_l '}'
 		| TCP tcpflags
 		;
@@ -995,6 +1040,7 @@ lookup(char *s)
 		{ "authenticate",	AUTHENTICATE},
 		{ "auto",		AUTO },
 		{ "backlog",		BACKLOG },
+		{ "block",		BLOCK },
 		{ "body",		BODY },
 		{ "buffer",		BUFFER },
 		{ "certificate",	CERTIFICATE },
@@ -1004,6 +1050,7 @@ lookup(char *s)
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
 		{ "directory",		DIRECTORY },
+		{ "drop",		DROP },
 		{ "error",		ERR },
 		{ "fastcgi",		FCGI },
 		{ "include",		INCLUDE },
@@ -1018,10 +1065,12 @@ lookup(char *s)
 		{ "no",			NO },
 		{ "nodelay",		NODELAY },
 		{ "on",			ON },
+		{ "pass",		PASS },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
 		{ "request",		REQUEST },
 		{ "requests",		REQUESTS },
+		{ "return",		RETURN },
 		{ "root",		ROOT },
 		{ "sack",		SACK },
 		{ "server",		SERVER },
@@ -1809,6 +1858,11 @@ server_inherit(struct server *src, const char *name,
 		fatal("out of memory");
 	dst->srv_conf.tls_cert = NULL;
 	dst->srv_conf.tls_key = NULL;
+
+	if (src->srv_conf.return_uri != NULL &&
+	    (dst->srv_conf.return_uri =
+	    strdup(src->srv_conf.return_uri)) == NULL)
+		fatal("out of memory");
 
 	dst->srv_conf.id = ++last_server_id;
 	dst->srv_conf.parent_id = dst->srv_conf.id;

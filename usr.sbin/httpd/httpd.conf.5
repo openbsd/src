@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.47 2015/01/19 19:37:50 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.48 2015/02/07 01:23:12 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: February 7 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -150,6 +150,20 @@ and must be readable by the www user.
 Use the
 .Ic no authenticate
 directive to disable authentication in a location.
+.It Ic block drop
+Drop the connection without sending an error page.
+.It Ic block Op Ic return Ar code Op uri
+Close the connection and send an error page.
+If the optional return code is not specified,
+.Xr httpd 8
+denies access with a
+.Sq 404 Forbidden
+response.
+The optional
+.Ar uri
+argument can be used with return codes in the 3xx range to send a
+.Sq Location:
+header for redirection to a specified URI.
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
 Valid options are:
@@ -261,6 +275,10 @@ Enable or disable logging to
 .Xr syslog 3
 instead of the log files.
 .El
+.It Ic pass
+Disable any previous
+.Ic block
+in a location.
 .It Ic root Ar option
 Configure the document root and options for the request path.
 Valid options are:
@@ -437,6 +455,20 @@ server "www.b.example.com" {
 server "intranet.example.com" {
 	listen on 10.0.0.1 port 80
 	root "/htdocs/intranet.example.com"
+}
+.Ed
+.Pp
+Simple redirections can be configured with the
+.Ic block
+directive:
+.Bd -literal -offset indent
+server "example.com" {
+	listen on 10.0.0.1 port 80
+	block return 301 "http://www.example.com/"
+}
+
+server "www.example.com" {
+	listen on 10.0.0.1 port 80
 }
 .Ed
 .Pp
