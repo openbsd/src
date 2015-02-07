@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.6 2015/02/07 02:56:00 miod Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.7 2015/02/07 03:07:02 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -85,7 +85,7 @@ sym_getword()
 	for (sym = Known; *sym != '\0'; sym++) {
 		if (*sym == '-')
 			*sym = '_';	/* try not to confuse player */
-		if (isalpha(*sym))
+		if (isalpha((unsigned char)*sym))
 			*sym = '-';
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.10 2015/02/07 01:43:51 tedu Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.11 2015/02/07 03:07:02 tedu Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -49,9 +49,9 @@ getguess(void)
 		move(PROMPTY, PROMPTX + sizeof "Guess: ");
 		refresh();
 		ch = readch();
-		if (isalpha(ch)) {
-			if (isupper(ch))
-				ch = tolower(ch);
+		if (isalpha((unsigned char)ch)) {
+			if (isupper((unsigned char)ch))
+				ch = tolower((unsigned char)ch);
 			if (Guessed[ch - 'a']) {
 				move(MESGY, MESGX);
 				clrtoeol();
