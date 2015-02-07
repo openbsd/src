@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.200 2015/02/07 02:30:00 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.201 2015/02/07 02:52:09 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1385,14 +1385,24 @@ mq_dequeue(struct mbuf_queue *mq)
 int
 mq_enlist(struct mbuf_queue *mq, struct mbuf_list *ml)
 {
-	int full;
+	struct mbuf *m;
+	int dropped = 0;
 
 	mtx_enter(&mq->mq_mtx);
-	ml_join(&mq->mq_list, ml);
-	full = mq_len(mq) >= mq->mq_maxlen;
+	if (mq_len(mq) < mq->mq_maxlen)
+		ml_join(&mq->mq_list, ml);
+	else {
+		dropped = ml_len(ml);
+		mq->mq_drops += dropped;
+	}
 	mtx_leave(&mq->mq_mtx);
 
-	return (full);
+	if (dropped) {
+		while ((m = ml_dequeue(ml)) != NULL)
+			m_freem(m);
+	}
+
+	return (dropped);
 }
 
 void
