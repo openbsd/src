@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.148 2015/02/06 00:17:58 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.149 2015/02/07 22:19:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -322,6 +322,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo	 hints, *res, *res0;
 	struct timeval	 to;
+	const char	*errstr;
 	char		*p;
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
@@ -349,7 +350,10 @@ main(int argc, char *argv[])
 			IncludeHostname = 1;
 			break;
 		case 'm':		/* mark interval */
-			MarkInterval = atoi(optarg) * 60;
+			MarkInterval = strtonum(optarg, 0, 365*24*60, &errstr);
+			if (errstr)
+				errx(1, "mark_interval: %s", errstr, optarg);
+			MarkInterval *= 60;
 			break;
 		case 'n':		/* don't do DNS lookups */
 			NoDNS = 1;
