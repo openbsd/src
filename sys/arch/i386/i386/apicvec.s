@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.28 2013/11/28 19:30:46 brad Exp $ */
+/* $OpenBSD: apicvec.s,v 1.29 2015/02/07 00:26:37 deraadt Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -35,11 +35,7 @@
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
 
-#ifdef __ELF__
 #define XINTR(vec) Xintr##vec
-#else
-#define XINTR(vec) _Xintr##vec
-#endif
 
 	.globl  _C_LABEL(apic_stray)
 

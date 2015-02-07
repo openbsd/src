@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.148 2014/11/23 00:25:05 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.149 2015/02/07 00:26:37 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -184,11 +184,7 @@
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
-#ifdef __ELF__
 	.align NBPG
-#else
-	.align 12
-#endif
 	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
 _C_LABEL(local_apic):
 	.space	LAPIC_ID
