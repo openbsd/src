@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.47 2014/07/11 10:53:07 uebayasi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.48 2015/02/07 00:20:53 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ do { \
 /*
  * This defines the I/O device register space size in pages.
  */
-#define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
+#define	IOSPSZ	((16*1024) / VAX_NBPG)	/* 16Kb == 32 pages */
 
 struct device;
 
