@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.124 2015/02/07 10:45:19 henning Exp $
+.\"	$OpenBSD: spamd.8,v 1.125 2015/02/07 18:05:57 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -35,10 +35,7 @@
 .Op Fl B Ar maxblack
 .Op Fl C Ar file
 .Op Fl c Ar maxcon
-.Oo
-.Fl G
-.Ar passtime : Ns Ar greyexp : Ns Ar whiteexp
-.Oc
+.Op Fl G Ar passtime : Ns Ar greyexp : Ns Ar whiteexp
 .Op Fl h Ar hostname
 .Op Fl K Ar file
 .Op Fl l Ar address
@@ -133,7 +130,7 @@ at.
 .It Fl b
 Run in blacklist-only mode.
 .It Fl C Ar file
-Load the certificate for TLS from the given 
+Load the certificate for TLS from the given
 .Ar file .
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
@@ -162,7 +159,7 @@ to 864 (hours, approximately 36 days).
 .It Fl h Ar hostname
 The hostname that is reported in the SMTP banner.
 .It Fl K Ar file
-Load the private key for TLS from the given 
+Load the private key for TLS from the given
 .Ar file .
 .It Fl l Ar address
 Specify the local address to which
