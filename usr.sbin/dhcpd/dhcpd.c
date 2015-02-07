@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.46 2015/01/16 06:40:16 deraadt Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.47 2015/02/07 10:49:09 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -216,10 +216,12 @@ main(int argc, char *argv[])
 			exit(1);
 		case 0:
 			/* child process. start up table engine */
+			close(pfpipe[1]);
 			pftable_handler();
 			/* NOTREACHED */
 			exit(1);
 		default:
+			close(pfpipe[0]);
 			gotpipe = 1;
 			break;
 		}
