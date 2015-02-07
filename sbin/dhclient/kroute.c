@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.72 2015/02/07 02:07:32 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.73 2015/02/07 10:08:06 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -360,6 +360,47 @@ priv_delete_address(struct imsg_delete_address *imsg)
 		return;
 	}
 
+	close(s);
+}
+
+/*
+ * [priv_]set_interface_mtu is the equivalent of
+ *
+ *      ifconfig <if> mtu <mtu>
+ */
+void
+set_interface_mtu(int mtu)
+{
+	struct imsg_set_interface_mtu imsg;
+	int rslt;
+
+	memset(&imsg, 0, sizeof(imsg));
+
+	imsg.mtu = mtu;
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_INTERFACE_MTU, 0, 0, -1,
+	    &imsg, sizeof(imsg));
+	if (rslt == -1)
+		warning("set_interface_mtu: imsg_compose: %s", strerror(errno));
+
+	flush_unpriv_ibuf("set_interface_mtu");
+}
+
+void
+priv_set_interface_mtu(struct imsg_set_interface_mtu *imsg)
+{
+	struct ifreq ifr;
+	int s;
+
+	memset(&ifr, 0, sizeof(ifr));
+
+	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
+	ifr.ifr_mtu = imsg->mtu;
+
+	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		error("socket open failed: %s", strerror(errno));
+	if (ioctl(s, SIOCSIFMTU, &ifr) < 0)
+		warning("SIOCSIFMTU failed (%d): %s", imsg->mtu, strerror(errno));
 	close(s);
 }
 
