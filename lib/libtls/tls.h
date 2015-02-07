@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.3 2015/01/22 09:16:24 reyk Exp $ */
+/* $OpenBSD: tls.h,v 1.4 2015/02/07 06:19:26 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -48,7 +48,8 @@ int tls_config_set_cert_file(struct tls_config *config, const char *cert_file);
 int tls_config_set_cert_mem(struct tls_config *config, const uint8_t *cert,
     size_t len);
 int tls_config_set_ciphers(struct tls_config *config, const char *ciphers);
-int tls_config_set_ecdhcurve(struct tls_config *config, const char *name);
+int tls_config_set_dheparams(struct tls_config *config, const char *params);
+int tls_config_set_ecdhecurve(struct tls_config *config, const char *name);
 int tls_config_set_key_file(struct tls_config *config, const char *key_file);
 int tls_config_set_key_mem(struct tls_config *config, const uint8_t *key,
     size_t len);

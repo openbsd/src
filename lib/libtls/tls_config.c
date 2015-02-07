@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.2 2015/01/22 09:16:24 reyk Exp $ */
+/* $OpenBSD: tls_config.c,v 1.3 2015/02/07 06:19:26 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -71,7 +71,8 @@ tls_config_new(void)
 		tls_config_free(config);
 		return (NULL);
 	}
-	tls_config_set_ecdhcurve(config, "auto");
+	tls_config_set_dheparams(config, "none");
+	tls_config_set_ecdhecurve(config, "auto");
 	tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT);
 	tls_config_set_verify_depth(config, 6);
 	
@@ -145,18 +146,37 @@ tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
 }
 
 int
-tls_config_set_ecdhcurve(struct tls_config *config, const char *name)
+tls_config_set_dheparams(struct tls_config *config, const char *params)
+{
+	int keylen;
+
+	if (params == NULL || strcasecmp(params, "none") == 0)
+		keylen = 0;
+	else if (strcasecmp(params, "auto") == 0)
+		keylen = -1;
+	else if (strcmp(params, "legacy"))
+		keylen = 1024;
+	else
+		return (-1);
+
+	config->dheparams = keylen;
+
+	return (0);
+}
+
+int
+tls_config_set_ecdhecurve(struct tls_config *config, const char *name)
 {
 	int nid;
 
-	if (name == NULL)
+	if (name == NULL || strcasecmp(name, "none") == 0)
 		nid = NID_undef;
 	else if (strcasecmp(name, "auto") == 0)
 		nid = -1;
 	else if ((nid = OBJ_txt2nid(name)) == NID_undef)
 		return (-1);
 
-	config->ecdhcurve = nid;
+	config->ecdhecurve = nid;
 
 	return (0);
 }
