@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.11 2015/02/07 03:07:02 tedu Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.12 2015/02/07 03:26:20 tedu Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -59,6 +59,14 @@ getguess(void)
 				    ch);
 			} else
 				break;
+		} else if (isdigit((unsigned char)ch)) {
+			if (Guessed[ch - '0' + 26]) {
+				move(MESGY, MESGX);
+				clrtoeol();
+				mvprintw(MESGY, MESGX, "Already guessed '%c'",
+				    ch);
+			} else
+				break;
 		} else
 			if (ch == CTRL('D'))
 				die(0);
@@ -73,9 +81,12 @@ getguess(void)
 	move(MESGY, MESGX);
 	clrtoeol();
 
-	Guessed[ch - 'a'] = TRUE;
+	if (isalpha((unsigned char)ch))
+		Guessed[ch - 'a'] = TRUE;
+	else
+		Guessed[ch - '0' + 26] = TRUE;
 	correct = FALSE;
-	uch = toupper(ch);
+	uch = toupper((unsigned char)ch);
 	for (i = 0; Word[i] != '\0'; i++)
 		if (Word[i] == ch) {
 			Known[i] = ch;

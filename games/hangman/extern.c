@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.7 2015/02/07 01:37:30 miod Exp $	*/
+/*	$OpenBSD: extern.c,v 1.8 2015/02/07 03:26:20 tedu Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/03/23 08:32:41 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include	"hangman.h"
 
-bool	Guessed[26];
+bool	Guessed[26 + 10];
 
 char	Word[BUFSIZ], Known[BUFSIZ];
 const char	*const Noose_pict[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: playgame.c,v 1.9 2015/02/07 01:37:30 miod Exp $	*/
+/*	$OpenBSD: playgame.c,v 1.10 2015/02/07 03:26:20 tedu Exp $	*/
 /*	$NetBSD: playgame.c,v 1.3 1995/03/23 08:32:53 cgd Exp $	*/
 
 /*-
@@ -39,16 +39,15 @@
 void
 playgame(void)
 {
-	bool	*bp;
+	int i;
 
 	if (syms)
 		sym_getword();
 	else
 		getword();
 	Errors = 0;
-	bp = Guessed;
-	while (bp < &Guessed[26])
-		*bp++ = FALSE;
+	for (i = 0; i < 26 + 10; i++)
+		Guessed[i] = FALSE;
 	while (Errors < MAXERRS && strchr(Known, '-') != NULL) {
 		prword();
 		prdata();

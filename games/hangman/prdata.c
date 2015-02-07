@@ -1,4 +1,4 @@
-/*	$OpenBSD: prdata.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: prdata.c,v 1.7 2015/02/07 03:26:20 tedu Exp $	*/
 /*	$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $	*/
 
 /*-
@@ -39,13 +39,15 @@
 void
 prdata(void)
 {
-	bool	*bp;
+	int i;
 
 	move(GUESSY, GUESSX + sizeof "Guessed: ");
-	bp = Guessed;
-	while (bp < &Guessed[26])
-		if (*bp++)
-			addch((bp - Guessed) + 'a' - 1);
+	for (i = 0; i < 26; i++)
+		if (Guessed[i])
+			addch(i + 'a');
+	for (i = 0; i < 10; i++)
+		if (Guessed[i + 26])
+			addch(i + '0');
 	clrtoeol();
 	mvprintw(NUMBERY, NUMBERX + sizeof "Word #:          ", "%d", Wordnum);
 	mvprintw(AVGY, AVGX + sizeof       "Current Average: ", "%.3f",
