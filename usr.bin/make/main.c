@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.108 2015/01/23 22:35:57 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.109 2015/02/07 13:32:12 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #ifndef MAKE_BOOTSTRAP
 #include <sys/utsname.h>
 #endif
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,7 +189,7 @@ MainParseArgs(int argc, char **argv)
 {
 	int c, optend;
 
-#define OPTFLAGS "BD:I:SV:d:ef:ij:km:npqrst"
+#define OPTFLAGS "BC:D:I:SV:d:ef:ij:km:npqrst"
 #define OPTLETTERS "BSiknpqrst"
 
 	optind = 1;	/* since we're called more than once */
@@ -206,6 +207,8 @@ MainParseArgs(int argc, char **argv)
 		}
 		c = optend ? -1 : getopt(argc, argv, OPTFLAGS);
 		switch (c) {
+		case 'C':
+			break;
 		case 'D':
 			Var_Set(optarg, "1");
 			record_option(c, optarg);
@@ -337,7 +340,42 @@ MainParseArgs(int argc, char **argv)
 			posixParseOptLetter(c);
 		}
 	}
+}
 
+static void
+MainParseChdir(int argc, char **argv)
+{
+	int c, optend, oldopterr;
+
+	optind = 1;	/* since we're called more than once */
+	optreset = 1;
+	optend = 0;
+	oldopterr = opterr;
+	opterr = 0;
+	while (optind < argc) {
+		if (!optend && argv[optind][0] == '-') {
+			if (argv[optind][1] == '\0')
+				optind++;	/* ignore "-" */
+			else if (argv[optind][1] == '-' &&
+			    argv[optind][2] == '\0') {
+				optind++;	/* ignore "--" */
+				optend++;	/* "--" denotes end of flags */
+			}
+		}
+		c = optend ? -1 : getopt(argc, argv, OPTFLAGS);
+		switch (c) {
+		case 'C':
+			if (chdir(optarg) == -1)
+				err(1, "chdir(%s)", optarg);
+			break;
+		case -1:
+			optind++;	/* skip over non-option */
+			break;
+		default:
+			break;
+		}
+	}
+	opterr = oldopterr;
 }
 
 /*-
@@ -625,6 +663,7 @@ main(int argc, char **argv)
 	static struct dirs d;
 	bool read_depend = true;/* false if we don't want to read .depend */
 
+	MainParseChdir(argc, argv);
 	setup_CURDIR_OBJDIR(&d, machine);
 
 	esetenv("PWD", d.object);
@@ -853,7 +892,7 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: make [-BeiknPqrSst] [-D variable] [-d flags] [-f makefile]\n\
+"usage: make [-BeiknPqrSst] [-C dir] [-D variable] [-d flags] [-f makefile]\n\
 	    [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
 	    [NAME=value] [target ...]\n");
 	exit(2);
