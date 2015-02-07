@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.80 2015/01/26 13:06:39 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.81 2015/02/07 04:17:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1525,6 +1525,18 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	return (cipherstack);
 }
 
+const SSL_CIPHER *
+SSL_CIPHER_get_by_id(unsigned int id)
+{
+	return ssl3_get_cipher_by_id(id);
+}
+
+const SSL_CIPHER *
+SSL_CIPHER_get_by_value(uint16_t value)
+{
+	return ssl3_get_cipher_by_value(value);
+}
+
 char *
 SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
@@ -1726,6 +1738,12 @@ unsigned long
 SSL_CIPHER_get_id(const SSL_CIPHER *c)
 {
 	return c->id;
+}
+
+uint16_t
+SSL_CIPHER_get_value(const SSL_CIPHER *c)
+{
+	return ssl3_cipher_get_value(c);
 }
 
 void *

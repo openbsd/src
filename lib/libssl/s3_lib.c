@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.92 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.93 2015/02/07 04:17:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1950,7 +1950,14 @@ ssl3_get_cipher_by_id(unsigned int id)
 	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
 	if (cp != NULL && cp->valid == 1)
 		return (cp);
+
 	return (NULL);
+}
+
+const SSL_CIPHER *
+ssl3_get_cipher_by_value(uint16_t value)
+{
+	return ssl3_get_cipher_by_id(SSL3_CK_ID | value);
 }
 
 uint16_t
