@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.24 2015/01/03 03:03:39 lteo Exp $ */
+/* $OpenBSD: apps.c,v 1.25 2015/02/07 04:09:43 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1384,7 +1384,7 @@ static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
 static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
 static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
 
-#define BSIZE 256
+#define BUFLEN 256
 
 BIGNUM *
 load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
@@ -1442,7 +1442,7 @@ int
 save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     ASN1_INTEGER **retai)
 {
-	char buf[1][BSIZE];
+	char buf[1][BUFLEN];
 	BIO *out = NULL;
 	int ret = 0, n;
 	ASN1_INTEGER *ai = NULL;
@@ -1452,12 +1452,12 @@ save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 		j = strlen(serialfile);
 	else
 		j = strlen(serialfile) + strlen(suffix) + 1;
-	if (j >= BSIZE) {
+	if (j >= BUFLEN) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}
 	if (suffix == NULL)
-		n = strlcpy(buf[0], serialfile, BSIZE);
+		n = strlcpy(buf[0], serialfile, BUFLEN);
 	else
 		n = snprintf(buf[0], sizeof buf[0], "%s.%s",
 		    serialfile, suffix);
@@ -1498,14 +1498,14 @@ err:
 int
 rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 {
-	char buf[5][BSIZE];
+	char buf[5][BUFLEN];
 	int i, j;
 
 	i = strlen(serialfile) + strlen(old_suffix);
 	j = strlen(serialfile) + strlen(new_suffix);
 	if (i > j)
 		j = i;
-	if (j + 1 >= BSIZE) {
+	if (j + 1 >= BUFLEN) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}
@@ -1570,7 +1570,7 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 	TXT_DB *tmpdb = NULL;
 	BIO *in = BIO_new(BIO_s_file());
 	CONF *dbattr_conf = NULL;
-	char buf[1][BSIZE];
+	char buf[1][BUFLEN];
 	long errorline = -1;
 
 	if (in == NULL) {
@@ -1650,7 +1650,7 @@ index_index(CA_DB *db)
 int
 save_index(const char *dbfile, const char *suffix, CA_DB *db)
 {
-	char buf[3][BSIZE];
+	char buf[3][BUFLEN];
 	BIO *out = BIO_new(BIO_s_file());
 	int j;
 
@@ -1659,7 +1659,7 @@ save_index(const char *dbfile, const char *suffix, CA_DB *db)
 		goto err;
 	}
 	j = strlen(dbfile) + strlen(suffix);
-	if (j + 6 >= BSIZE) {
+	if (j + 6 >= BUFLEN) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}
@@ -1700,14 +1700,14 @@ err:
 int
 rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 {
-	char buf[5][BSIZE];
+	char buf[5][BUFLEN];
 	int i, j;
 
 	i = strlen(dbfile) + strlen(old_suffix);
 	j = strlen(dbfile) + strlen(new_suffix);
 	if (i > j)
 		j = i;
-	if (j + 6 >= BSIZE) {
+	if (j + 6 >= BUFLEN) {
 		BIO_printf(bio_err, "file name too long\n");
 		goto err;
 	}

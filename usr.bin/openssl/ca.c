@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.3 2014/09/01 20:54:37 doug Exp $ */
+/* $OpenBSD: ca.c,v 1.4 2015/02/07 04:09:43 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,8 +291,8 @@ ca_main(int argc, char **argv)
 	STACK_OF(CONF_VALUE) * attribs = NULL;
 	STACK_OF(X509) * cert_sk = NULL;
 	STACK_OF(OPENSSL_STRING) * sigopts = NULL;
-#define BSIZE 256
-	char buf[3][BSIZE];
+#define BUFLEN 256
+	char buf[3][BUFLEN];
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
