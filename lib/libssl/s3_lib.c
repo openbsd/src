@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.93 2015/02/07 04:17:11 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.94 2015/02/07 05:46:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2532,30 +2532,19 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 const SSL_CIPHER *
 ssl3_get_cipher_by_char(const unsigned char *p)
 {
-	const SSL_CIPHER *cp;
-	unsigned long id;
-	SSL_CIPHER c;
+	uint16_t cipher_value;
 
-	id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
-	c.id = id;
-	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-	if (cp == NULL || cp->valid == 0)
-		return NULL;
-	else
-		return cp;
+	n2s(p, cipher_value);
+	return ssl3_get_cipher_by_value(cipher_value);
 }
 
 int
 ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 {
-	long l;
-
 	if (p != NULL) {
-		l = c->id;
-		if ((l & 0xff000000) != 0x03000000)
+		if ((c->id & ~SSL3_CK_VALUE_MASK) != SSL3_CK_ID)
 			return (0);
-		p[0] = ((unsigned char)(l >> 8L)) & 0xFF;
-		p[1] = ((unsigned char)(l)) & 0xFF;
+		s2n(ssl3_cipher_get_value(c), p); 
 	}
 	return (2);
 }

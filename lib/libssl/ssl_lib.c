@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.95 2015/01/22 09:12:57 reyk Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.96 2015/02/07 05:46:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1420,7 +1420,6 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 	const SSL_CIPHER	*c;
 	STACK_OF(SSL_CIPHER)	*sk;
 	int			 i;
-	unsigned int		 cipher_id;
 	uint16_t		 cipher_value;
 
 	if (s->s3)
@@ -1442,10 +1441,9 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 
 	for (i = 0; i < num; i += SSL3_CIPHER_VALUE_SIZE) {
 		n2s(p, cipher_value);
-		cipher_id = SSL3_CK_ID | cipher_value;
 
 		/* Check for SCSV */
-		if (s->s3 && cipher_id == SSL3_CK_SCSV) {
+		if (s->s3 && (SSL3_CK_ID | cipher_value) == SSL3_CK_SCSV) {
 			/* SCSV is fatal if renegotiating. */
 			if (s->renegotiate) {
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
@@ -1459,8 +1457,7 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 			continue;
 		}
 
-		c = ssl3_get_cipher_by_id(cipher_id);
-		if (c != NULL) {
+		if ((c = ssl3_get_cipher_by_value(cipher_value)) != NULL) {
 			if (!sk_SSL_CIPHER_push(sk, c)) {
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
 				    ERR_R_MALLOC_FAILURE);
