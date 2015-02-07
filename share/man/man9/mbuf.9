@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.80 2015/02/07 02:30:28 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.81 2015/02/07 02:53:04 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -875,8 +875,7 @@ Enqueue all the mbufs on the
 mbuf list on to the end of the
 .Fa mq
 mbuf queue.
-Note, if the number of mbufs placed on the queue exceeds its maximum length,
-the extra mbufs are NOT freed as they are with
+Note, the number of mbufs placed on the queue may exceed its maximum length.
 .Fn mq_enqueue .
 .It Fn "mq_delist" "struct mbuf_queue *mq" "struct mbuf_list *ml"
 Dequeue all the mbufs on the
@@ -996,8 +995,8 @@ mbuf was freed because it would cause the queue to exceed its maximum
 length.
 .Pp
 .Fn mq_enlist
-returns 0 if the new length of the queue after adding the list is less than
-the queue's maximum length, otherwise non-zero.
+returns the number of mbufs that were dropped from the list if the
+length of the queue exceeded its maximum length.
 .Pp
 .Fn mq_drops
 returns the number of mbufs that were freed during
