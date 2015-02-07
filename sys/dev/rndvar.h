@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.35 2014/12/18 16:27:30 deraadt Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.36 2015/02/07 01:19:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -73,7 +73,7 @@ void random_start(void);
 
 void enqueue_randomness(int, int);
 void suspend_randomness(void);
-void resume_randomness(void);
+void resume_randomness(char *, size_t);
 
 #endif /* _KERNEL */
 

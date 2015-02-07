@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.169 2015/01/27 03:17:35 dlg Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.170 2015/02/07 01:19:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -245,6 +245,8 @@ void	extract_entropy(u_int8_t *)
 int	filt_randomread(struct knote *, long);
 void	filt_randomdetach(struct knote *);
 int	filt_randomwrite(struct knote *, long);
+
+static void _rs_seed(u_char *, size_t);
 
 struct filterops randomread_filtops =
 	{ 1, NULL, filt_randomdetach, filt_randomread };
@@ -560,10 +562,12 @@ suspend_randomness(void)
 }
 
 void
-resume_randomness(void)
+resume_randomness(char *buf, size_t buflen)
 {
 	struct timespec ts;
 
+	if (buf && buflen)
+		_rs_seed(buf, sizeof(buf));
 	getnanotime(&ts);
 	add_true_randomness(ts.tv_sec);
 	add_true_randomness(ts.tv_nsec);

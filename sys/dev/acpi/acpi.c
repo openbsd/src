@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.282 2015/02/06 05:17:48 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.283 2015/02/07 01:19:40 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2163,6 +2163,8 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	extern int perflevel;
 	extern int lid_suspend;
 	int error = ENXIO;
+	size_t rndbuflen = 0;
+	char *rndbuf = NULL;
 	int s;
 
 	switch (state) {
@@ -2256,6 +2258,7 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	if (state == ACPI_STATE_S4) {
 		uvm_pmr_dirty_everything();
 		uvm_pmr_zero_everything();
+		hib_getentropy(&rndbuf, &rndbuflen);
 	}
 #endif /* HIBERNATE */
 
@@ -2277,7 +2280,7 @@ fail_suspend:
 	/* 3rd resume AML step: _TTS(runstate) */
 	aml_node_setval(sc, sc->sc_tts, sc->sc_state);
 
-	resume_randomness();		/* force RNG upper level reseed */
+	resume_randomness(rndbuf, rndbuflen);	/* force RNG upper level reseed */
 
 #ifdef MULTIPROCESSOR
 	acpi_resume_mp();

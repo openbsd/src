@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.112 2014/12/18 17:02:35 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.113 2015/02/07 01:19:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -278,7 +278,7 @@ apm_suspend(int state)
 	enable_intr();
 	splx(s);
 
-	resume_randomness();		/* force RNG upper level reseed */
+	resume_randomness(NULL, 0);	/* force RNG upper level reseed */
 	bufq_restart();
 
 	config_suspend_all(DVACT_WAKEUP);

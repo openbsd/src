@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.113 2015/02/06 05:17:48 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.114 2015/02/07 01:19:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -247,6 +247,12 @@ hib_alloc(struct hiballoc_arena *arena, size_t alloc_sz)
 
 	/* Return address managed by entry. */
 	return hib_entry_to_addr(new_entry);
+}
+
+void
+hib_getentropy(char **bufp, size_t *bufplen)
+{
+	/* fill in */
 }
 
 /*
