@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.33 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.34 2015/02/07 22:30:25 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -459,7 +459,7 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 void
 asn1_add_error(const unsigned char *address, int offset)
 {
-	ERR_asprintf_error_data("address=%p offset=%d", address, offset);
+	ERR_asprintf_error_data("offset=%d", offset);
 }
 
 int
