@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.408 2015/01/24 00:29:06 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.409 2015/02/07 06:27:46 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1004,8 +1004,8 @@ struct pf_anchor {
 	int			 refcnt;	/* anchor rules */
 	int			 match;
 };
-RB_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
-RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
+RB_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare)
+RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare)
 
 #define PF_RESERVED_ANCHOR	"_pf"
 
@@ -1185,11 +1185,11 @@ struct pfr_ktable {
 #define pfrkt_tzero	pfrkt_ts.pfrts_tzero
 
 RB_HEAD(pf_state_tree, pf_state_key);
-RB_PROTOTYPE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
+RB_PROTOTYPE(pf_state_tree, pf_state_key, entry, pf_state_compare_key)
 
 RB_HEAD(pf_state_tree_ext_gwy, pf_state_key);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
-    entry_ext_gwy, pf_state_compare_ext_gwy);
+    entry_ext_gwy, pf_state_compare_ext_gwy)
 
 RB_HEAD(pfi_ifhead, pfi_kif);
 
