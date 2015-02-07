@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.2 2015/02/06 22:22:33 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.3 2015/02/07 02:02:28 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -56,7 +56,7 @@ void CBS_init(CBS *cbs, const uint8_t *data, size_t len);
 int CBS_skip(CBS *cbs, size_t len);
 
 /*
- * CBS_data returns a pointer to the contains of |cbs|.
+ * CBS_data returns a pointer to the contents of |cbs|.
  */
 const uint8_t *CBS_data(const CBS *cbs);
 
@@ -170,7 +170,7 @@ int CBS_get_u24_length_prefixed(CBS *cbs, CBS *out);
  * element must match |tag_value|. It returns one on success and zero
  * on error.
  *
- * Tag numbers greater than 31 are not supported.
+ * Tag numbers greater than 30 are not supported (i.e. short form only).
  */
 int CBS_get_asn1(CBS *cbs, CBS *out, unsigned tag_value);
 
@@ -197,7 +197,7 @@ int CBS_peek_asn1_tag(const CBS *cbs, unsigned tag_value);
  * header. Each of |out|, |out_tag|, and |out_header_len| may be NULL to ignore
  * the value.
  *
- * Tag numbers greater than 31 are not supported.
+ * Tag numbers greater than 30 are not supported (i.e. short form only).
  */
 int CBS_get_any_asn1_element(CBS *cbs, CBS *out, unsigned *out_tag,
     size_t *out_header_len);
