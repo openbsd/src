@@ -33,7 +33,7 @@
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/lib/libc.so.78.1
-./usr/lib/libcrypto.so.30.4
+./usr/lib/libcrypto.so.31.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
@@ -62,7 +62,7 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.28.0
-./usr/lib/libssl.so.30.1
+./usr/lib/libssl.so.31.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
