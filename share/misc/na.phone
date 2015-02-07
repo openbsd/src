@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.31 2004/09/01 19:58:12 mickey Exp $
+	$OpenBSD: na.phone,v 1.32 2015/02/07 12:26:31 tedu Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -1112,7 +1112,7 @@
 970:Durango:Colorado:CO
 970:Ft. Collins:Colorado:CO
 970:Grand Junction:Colorado:CO
-970:Steamboat Sprints:Colorado:CO
+970:Steamboat Springs:Colorado:CO
 971:Beaverton:Oregon:OR
 971:Portland:Oregon:OR
 971:Salem:Oregon:OR
