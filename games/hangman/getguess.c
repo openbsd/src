@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.9 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.10 2015/02/07 01:43:51 tedu Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -52,17 +52,22 @@ getguess(void)
 		if (isalpha(ch)) {
 			if (isupper(ch))
 				ch = tolower(ch);
-			if (Guessed[ch - 'a'])
+			if (Guessed[ch - 'a']) {
+				move(MESGY, MESGX);
+				clrtoeol();
 				mvprintw(MESGY, MESGX, "Already guessed '%c'",
 				    ch);
-			else
+			} else
 				break;
 		} else
 			if (ch == CTRL('D'))
 				die(0);
-			else
+			else {
+				move(MESGY, MESGX);
+				clrtoeol();
 				mvprintw(MESGY, MESGX,
 				    "Not a valid guess: '%s'", unctrl(ch));
+			}
 	}
 	leaveok(stdscr, TRUE);
 	move(MESGY, MESGX);
