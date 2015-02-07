@@ -1,6 +1,7 @@
-/* $OpenBSD: tls_util.c,v 1.1 2014/10/31 13:46:17 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.2 2015/02/07 23:25:37 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
+#include <sys/stat.h>
 
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#include "tls.h"
 #include "tls_internal.h"
 
 /*
@@ -78,4 +84,86 @@ done:
 	free(s);
 
 	return (rv);
+}
+
+static int
+tls_password_cb(char *buf, int size, int rwflag, void *u)
+{
+	size_t	len;
+	if (u == NULL) {
+		memset(buf, 0, size);
+		return (0);
+	}
+	if ((len = strlcpy(buf, u, size)) >= (size_t)size)
+		return (0);
+	return (len);
+}
+
+uint8_t *
+tls_load_file(const char *name, size_t *len, char *password)
+{
+	FILE *fp;
+	EVP_PKEY *key = NULL;
+	BIO *bio = NULL;
+	char *data, *buf = NULL;
+	struct stat st;
+	size_t size;
+	int fd = -1;
+
+	*len = 0;
+
+	if ((fd = open(name, O_RDONLY)) == -1)
+		return (NULL);
+
+	/* Just load the file into memory without decryption */
+	if (password == NULL) {
+		if (fstat(fd, &st) != 0)
+			goto fail;
+		size = (size_t)st.st_size;
+		if ((buf = calloc(1, size + 1)) == NULL)
+			goto fail;
+		if (read(fd, buf, size) != size)
+			goto fail;
+		close(fd);
+		goto done;
+	}
+
+	/* Or read the (possibly) encrypted key from file */
+	if ((fp = fdopen(fd, "r")) == NULL)
+		goto fail;
+	fd = -1;
+
+	key = PEM_read_PrivateKey(fp, NULL, tls_password_cb, password);
+	fclose(fp);
+	if (key == NULL)
+		goto fail;
+
+	/* Write unencrypted key to memory buffer */
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		goto fail;
+	if (!PEM_write_bio_PrivateKey(bio, key, NULL, NULL, 0, NULL, NULL))
+		goto fail;
+	if ((size = BIO_get_mem_data(bio, &data)) <= 0)
+		goto fail;
+	if ((buf = calloc(1, size)) == NULL)
+		goto fail;
+	memcpy(buf, data, size);
+
+	BIO_free_all(bio);
+	EVP_PKEY_free(key);
+
+ done:
+	*len = size;
+	return (buf);
+
+ fail:
+	free(buf);
+	if (fd != -1)
+		close(fd);
+	if (bio != NULL)
+		BIO_free_all(bio);
+	if (key != NULL)
+		EVP_PKEY_free(key);
+
+	return (NULL);
 }
