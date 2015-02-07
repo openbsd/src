@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.52 2010/07/02 07:32:16 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.53 2015/02/07 10:07:15 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ volatile sig_atomic_t stop;	/* stop transfer session flag */
 volatile sig_atomic_t quit;	/* same; but on other end */
 volatile sig_atomic_t stoprompt;/* for interrupting a prompt session */
 volatile sig_atomic_t timedout;	/* ~> transfer timedout */
-int	cumode;			/* simulating the "cu" program */
 int	bits8;			/* terminal is 8-bit mode */
 #define STRIP_PAR	(bits8 ? 0377 : 0177)
 
@@ -191,9 +190,6 @@ void	 suspend(int);
 void	 timeout(int);
 void	 tipabort(char *);
 void	 variable(int);
-
-/* cu.c */
-void	 cumain(int, char **);
 
 /* hunt.c */
 int	 hunt(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.54 2012/12/04 19:31:17 kettenis Exp $	*/
+/*	$OpenBSD: tip.c,v 1.55 2015/02/07 10:07:15 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -33,8 +33,6 @@
 /*
  * tip - UNIX link to other systems
  *  tip [-v] [-speed] system-name
- * or
- *  cu phone-number [-s speed] [-l line]
  */
 
 #include <sys/types.h>
@@ -58,12 +56,6 @@ main(int argc, char *argv[])
 
 	/* XXX preserve previous braindamaged behavior */
 	vsetnum(DC, 1);
-
-	if (strcmp(__progname, "cu") == 0) {
-		cumode = 1;
-		cumain(argc, argv);
-		goto cucommon;
-	}
 
 	if (argc > 4) {
 		fprintf(stderr, "usage: tip [-nv] [-speed] [system-name]\n");
@@ -119,12 +111,6 @@ main(int argc, char *argv[])
 	}
 	con();
 
-cucommon:
-	/*
-	 * From here down the code is shared with
-	 * the "cu" version of tip.
-	 */
-
 	i = fcntl(FD, F_GETFL);
 	if (i == -1) {
 		perror("fcntl");
@@ -169,7 +155,7 @@ cucommon:
 	 *	internal data structures (variables)
 	 * so, fork one process for local side and one for remote.
 	 */
-	printf(cumode ? "Connected\r\n" : "\07connected\r\n");
+	printf("\07connected\r\n");
 	tipin_pid = getpid();
 	switch (tipout_pid = fork()) {
 	case -1:
@@ -305,7 +291,7 @@ tipin(void)
 				if (!(gch = escape()))
 					continue;
 			}
-		} else if (!cumode && gch == vgetnum(RAISECHAR)) {
+		} else if (gch == vgetnum(RAISECHAR)) {
 			vsetnum(RAISE, !vgetnum(RAISE));
 			continue;
 		} else if (gch == '\r') {
@@ -315,7 +301,7 @@ tipin(void)
 			if (vgetnum(HALFDUPLEX))
 				printf("\r\n");
 			continue;
-		} else if (!cumode && gch == vgetnum(FORCE)) {
+		} else if (gch == vgetnum(FORCE)) {
 			gch = getchar();
 			if (gch == EOF)
 				cleanup(0);
