@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.33 2015/02/07 13:01:10 mlarkin Exp $
+	$OpenBSD: na.phone,v 1.34 2015/02/07 16:15:01 bentley Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -384,7 +384,7 @@
 504:Kenner:Louisiana:LA
 504:Matairie:Louisiana:LA
 504:New Orleans:Louisiana:LA
-505::New Mexico:NM
+505:Albuquerque (metro):New Mexico:NM
 506::New Brunswick:NB
 507:Fairbault:Minnesota:MN
 507:Rochester:Minnesota:MN
@@ -519,6 +519,7 @@
 573:Cape Girardeau:Missouri:MO
 573:Columbia:Missouri:MO
 573:Hannibal:Missouri:MO
+575::New Mexico:NM
 580:Enid:Oklahoma:OK
 580:Lawton:Oklahoma:OK
 580:Ponca City:Oklahoma:OK
