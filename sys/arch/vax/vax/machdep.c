@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.147 2014/12/22 02:26:54 tedu Exp $ */
+/* $OpenBSD: machdep.c,v 1.148 2015/02/07 23:30:13 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -784,7 +784,7 @@ process_sstep(p, sstep)
  * allocated from the kernel map instead.
  *
  * It is known that the first page in the iospace area is unused; it may
- * be use by console device drivers (before the map system is inied).
+ * be use by console device drivers (before the map system is initted).
  */
 vaddr_t
 vax_map_physmem(phys, size)

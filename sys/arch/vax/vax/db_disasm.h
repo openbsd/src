@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.h,v 1.4 2003/11/07 10:16:45 jmc Exp $ */
+/*	$OpenBSD: db_disasm.h,v 1.5 2015/02/07 23:30:13 miod Exp $ */
 /*	$NetBSD: db_disasm.h,v 1.1 1996/01/28 11:31:27 ragge Exp $ */
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -46,7 +46,7 @@
  * may be as short as one byte and as long as needed depending on the type 
  * of instruction. [...] Each instruction consists of an opcode followed 
  * by zero to six operand specifiers whose number and type depend on the 
- * opcode. All operand specidiers are, themselves, of the same format -- 
+ * opcode. All operand specifiers are, themselves, of the same format -- 
  * i.e. an address mode plus additional information.
  *
  * [VAX Architecture Handbook, p.52:  Instruction Format]
