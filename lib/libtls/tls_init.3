@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.9 2015/02/07 06:19:26 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.10 2015/02/07 23:45:06 reyk Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -38,6 +38,7 @@
 .Nm tls_config_insecure_noverifyhost ,
 .Nm tls_config_insecure_noverifycert ,
 .Nm tls_config_verify ,
+.Nm tls_load_file ,
 .Nm tls_client ,
 .Nm tls_server ,
 .Nm tls_configure ,
@@ -47,6 +48,7 @@
 .Nm tls_connect ,
 .Nm tls_connect_fds ,
 .Nm tls_connect_socket ,
+.Nm tls_accept_socket ,
 .Nm tls_read ,
 .Nm tls_write
 .Nd TLS client and server API
@@ -92,6 +94,8 @@
 .Fn tls_config_insecure_noverifycert "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_verify "struct tls_config *config"
+.Ft "uint8_t *"
+.Fn tls_load_file "const char *file" "size_t *len" "char *password"
 .Ft "struct tls *"
 .Fn tls_client void
 .Ft "struct tls *"
@@ -110,6 +114,8 @@
 .Fn tls_connect_fds "struct tls *ctx" "int fd_read" "int fd_write" "const char *hostname"
 .Ft "int"
 .Fn tls_connect_socket "struct tls *ctx" "int s" "const char *hostname"
+.Ft "int"
+.Fn tls_accept_socket "struct tls *tls" "struct tls **cctx" "int socket"
 .Ft "int"
 .Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen" "size_t *outlen"
 .Ft "int"
@@ -158,6 +164,10 @@ An already existing socket can be upgraded to a secure connection by calling
 Alternatively, a secure connection can be established over a pair of existing
 file descriptors by calling
 .Fn tls_connect_fds .
+.Pp
+A server can accept a new client connection by calling
+.Fn tls_accept_socket
+on an already established socket connection.
 .Pp
 Two functions are provided for input and output,
 .Fn tls_read
@@ -262,6 +272,17 @@ Be extremely careful when using this option.
 .Fn tls_config_verify
 reenables hostname and certificate verification.
 .Em (Client)
+.It
+.Fn tls_load_keys
+loads a certificate or key from disk into memory to be loaded with
+.Fn tls_config_set_ca_mem ,
+.Fn tls_config_set_cert_mem
+or
+.Fn tls_config_set_key_mem .
+A private key will be decrypted if the optional
+.Ar password
+argument is specified.
+.Em (Client and server)
 .El
 .Pp
 The following functions create, prepare, and free a connection context.
@@ -305,6 +326,9 @@ connects a client context to a pair of existing file descriptors.
 .It
 .Fn tls_connect_socket
 connects a client context to an already established socket connection.
+.It
+.Fn tls_accept_socket
+accepts a client context on an already established socket connection.
 .It
 .Fn tls_read
 reads
