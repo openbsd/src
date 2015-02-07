@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.9 2015/01/01 19:43:10 miod Exp $ */
+/* $OpenBSD: md_init.h,v 1.10 2015/02/07 04:57:22 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -160,7 +160,7 @@ struct kframe {
 #define	MD_START_ARGS		struct kframe *kfp, void (*cleanup)(void)
 #define	MD_START_SETUP				\
 	char	**argv, **envp;			\
-	int	argc;				\
+	long	argc;				\
 						\
 	argc = kfp->kargc;			\
 	argv = &kfp->kargv[0];			\
