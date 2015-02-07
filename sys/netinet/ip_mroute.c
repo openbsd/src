@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.74 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.75 2015/02/07 07:56:41 dlg Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -94,6 +94,8 @@
 
 #include <sys/stdarg.h>
 
+#include <crypto/siphash.h>
+
 #define IP_MULTICASTOPTS 0
 #define	M_PULLUP(m, len)						 \
 	do {								 \
@@ -111,11 +113,12 @@ int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 #define NO_RTE_FOUND	0x1
 #define RTE_FOUND	0x2
 
-#define	MFCHASH(a, g)							\
-	((((a).s_addr >> 20) ^ ((a).s_addr >> 10) ^ (a).s_addr ^	\
-	    ((g).s_addr >> 20) ^ ((g).s_addr >> 10) ^ (g).s_addr) & mfchash)
+u_int32_t _mfchash(struct in_addr, struct in_addr);
+
+#define	MFCHASH(a, g) _mfchash((a), (g))
 LIST_HEAD(mfchashhdr, mfc) *mfchashtbl;
 u_long	mfchash;
+SIPHASH_KEY mfchashkey;
 
 u_char		nexpire[MFCTBLSIZ];
 struct vif	viftable[MAXVIFS];
@@ -282,8 +285,10 @@ static struct mfc *
 mfc_find(struct in_addr *o, struct in_addr *g)
 {
 	struct mfc *rt;
+	u_int32_t hash;
 
-	LIST_FOREACH(rt, &mfchashtbl[MFCHASH(*o, *g)], mfc_hash) {
+	hash = MFCHASH(*o, *g);
+	LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
 		if (in_hosteq(rt->mfc_origin, *o) &&
 		    in_hosteq(rt->mfc_mcastgrp, *g) &&
 		    (rt->mfc_stall == NULL))
@@ -499,6 +504,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	ip_mrouter = so;
 
 	mfchashtbl = hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash);
+	arc4random_buf(&mfchashkey, sizeof(mfchashkey));
 	memset(nexpire, 0, sizeof(nexpire));
 
 	pim_assert = 0;
@@ -510,6 +516,18 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 		log(LOG_DEBUG, "ip_mrouter_init\n");
 
 	return (0);
+}
+
+u_int32_t
+_mfchash(struct in_addr o, struct in_addr g)
+{
+	SIPHASH_CTX ctx;
+
+	SipHash24_Init(&ctx, &mfchashkey);
+	SipHash24_Update(&ctx, &o.s_addr, sizeof(o.s_addr));
+	SipHash24_Update(&ctx, &g.s_addr, sizeof(g.s_addr));
+
+	return (SipHash24_End(&ctx) & mfchash);
 }
 
 /*
