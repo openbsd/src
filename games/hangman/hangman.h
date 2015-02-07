@@ -1,4 +1,4 @@
-/*	$OpenBSD: hangman.h,v 1.7 2008/04/01 21:05:50 miod Exp $	*/
+/*	$OpenBSD: hangman.h,v 1.8 2015/02/07 01:37:30 miod Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -85,16 +85,16 @@ extern FILE *Dict;
 
 extern off_t Dict_size;
 
-extern int ksyms;
-extern int ksymfd;
-extern off_t ksymoffs, ksymsize;
+extern int syms;
+extern int symfd;
+extern off_t symoffs, symsize;
 
 void	die(int);
 void	endgame(void);
 void	getguess(void);
 void	getword(void);
-void	kgetword(void);
-int	ksetup(void);
+void	sym_getword(void);
+int	sym_setup(void);
 void	playgame(void);
 void	prdata(void);
 void	prman(void);

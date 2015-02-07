@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2015/02/07 01:37:30 miod Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -46,13 +46,13 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "d:hk")) != -1) {
 		switch (ch) {
 		case 'd':
-			if (ksyms)
+			if (syms)
 				usage();
 			else
 				Dict_name = optarg;
 			break;
 		case 'k':
-			ksyms = 1;
+			syms = 1;
 			Dict_name = _PATH_KSYMS;
 			break;
 		case 'h':

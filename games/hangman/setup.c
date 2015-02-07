@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.11 2013/08/29 20:22:14 naddy Exp $	*/
+/*	$OpenBSD: setup.c,v 1.12 2015/02/07 01:37:30 miod Exp $	*/
 /*	$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $	*/
 
 /*-
@@ -58,12 +58,16 @@ setup(void)
 		addstr(*sp);
 	}
 
-	if (ksyms) {
-		if (ksetup() != 0) {
+	/* always check for an ELF file */
+	if (sym_setup() != 0) {
+		if (syms) {
 			endwin();
 			err(1, "open %s", Dict_name);
 		}
-	} else {
+	} else
+		syms = 1;
+
+	if (!syms) {
 		if ((Dict = fopen(Dict_name, "r")) == NULL) {
 			endwin();
 			err(1, "fopen %s", Dict_name);

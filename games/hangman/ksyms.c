@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.4 2013/10/15 22:09:29 deraadt Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.5 2015/02/07 01:37:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -30,7 +30,7 @@
 int	ksyms_elf_parse();
 
 void
-kgetword()
+sym_getword()
 {
 	uint tries;
 	off_t pos;
@@ -39,10 +39,10 @@ kgetword()
 	size_t symlen;
 
 	for (tries = 0; tries < MAXBADWORDS; tries++) {
-		pos = arc4random_uniform(ksymsize);
-		if (lseek(ksyms, pos + ksymoffs, SEEK_SET) == -1)
+		pos = arc4random_uniform(symsize);
+		if (lseek(symfd, pos + symoffs, SEEK_SET) == -1)
 			continue;
-		buflen = read(ksyms, symbuf, BUFSIZ);
+		buflen = read(symfd, symbuf, BUFSIZ);
 		if (buflen < 0)
 			continue;
 
@@ -53,8 +53,8 @@ kgetword()
 		 * of the string table. We make sure the buffer will be
 		 * NUL terminated in all cases.
 		 */
-		if (buflen + pos >= ksymsize)
-			buflen = ksymsize - pos;
+		if (buflen + pos >= symsize)
+			buflen = symsize - pos;
 		*(end = symbuf + buflen) = '\0';
 
 		for (sym = symbuf; *sym != '\0'; sym++) ;
@@ -86,15 +86,15 @@ kgetword()
 }
 
 int
-ksetup()
+sym_setup()
 {
-	if ((ksyms = open(Dict_name, O_RDONLY)) < 0)
-		return ksyms;
+	if ((symfd = open(Dict_name, O_RDONLY)) < 0)
+		return -1;
 
 	if (ksyms_elf_parse() == 0)
 		return 0;
 
-	close(ksyms);
+	close(symfd);
 	errno = ENOEXEC;
 	return -1;
 }
@@ -106,23 +106,23 @@ ksyms_elf_parse()
 	Elf_Shdr sh;
 	uint s;
 
-	if (lseek(ksyms, 0, SEEK_SET) == -1)
+	if (lseek(symfd, 0, SEEK_SET) == -1)
 		return -1;
 
-	if (read(ksyms, &eh, sizeof eh) != sizeof eh)
+	if (read(symfd, &eh, sizeof eh) != sizeof eh)
 		return -1;
 
 	if (!IS_ELF(eh))
 		return -1;
 
-	if (lseek(ksyms, eh.e_shoff, SEEK_SET) == -1)
+	if (lseek(symfd, eh.e_shoff, SEEK_SET) == -1)
 		return -1;
 
-	ksymoffs = 0;
-	ksymsize = 0;
+	symoffs = 0;
+	symsize = 0;
 
 	for (s = 0; s < eh.e_shnum; s++) {
-		if (read(ksyms, &sh, sizeof sh) != sizeof sh)
+		if (read(symfd, &sh, sizeof sh) != sizeof sh)
 			return -1;
 
 		/*
@@ -131,15 +131,15 @@ ksyms_elf_parse()
 		 * names. Just pick the largest one.
 		 */
 		if (sh.sh_type == SHT_STRTAB) {
-			if (ksymsize > (off_t)sh.sh_size)
+			if (symsize > (off_t)sh.sh_size)
 				continue;
 
-			ksymoffs = (off_t)sh.sh_offset;
-			ksymsize = (off_t)sh.sh_size;
+			symoffs = (off_t)sh.sh_offset;
+			symsize = (off_t)sh.sh_size;
 		}
 	}
 
-	if (ksymsize == 0)
+	if (symsize == 0)
 		return -1;
 
 	return 0;

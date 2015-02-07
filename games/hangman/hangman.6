@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hangman.6,v 1.16 2008/04/05 07:46:05 jmc Exp $
+.\"	$OpenBSD: hangman.6,v 1.17 2015/02/07 01:37:30 miod Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hangman.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: April 5 2008 $
+.Dd $Mdocdate: February 7 2015 $
 .Dt HANGMAN 6
 .Os
 .Sh NAME
@@ -53,7 +53,9 @@ The options are as follows:
 Use the specified
 .Ar wordlist
 instead of the default.
-A wordlist file must have one word per line.
+If the wordlist file is an ELF binary file, its symbols are used as the
+word list.
+Otherwise, the wordlist file must be a plain text file, with one word per line.
 Only lowercase words of at least a certain length
 .Pq typically 6 characters
 are chosen.
