@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.42 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: execve.2,v 1.43 2015/02/07 08:52:37 tedu Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: February 7 2015 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -93,7 +93,7 @@ is a pointer to a null-terminated array of
 character pointers to NUL-terminated character strings.
 These strings construct the argument list to be made available to the new
 process.
-At least one argument must be present in the array;
+At least one non-null argument must be present in the array;
 by custom, the first element should be
 the name of the executed program (for example, the last component of
 .Fa path ) .
@@ -297,6 +297,9 @@ or
 .Fa envp
 point
 to an illegal address.
+.It Bq Er EINVAL
+.Fa argv
+did not contain at least one element.
 .It Bq Er EIO
 An I/O error occurred while reading from the file system.
 .It Bq Er ENFILE
