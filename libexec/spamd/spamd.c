@@ -1,6 +1,7 @@
-/*	$OpenBSD: spamd.c,v 1.122 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.123 2015/02/07 10:45:19 henning Exp $	*/
 
 /*
+ * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
  *
@@ -22,6 +23,7 @@
 #include <sys/sysctl.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -37,6 +39,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <limits.h>
+#include <tls.h>
 
 #include <netdb.h>
 
@@ -58,6 +61,7 @@ struct con {
 	char caddr[32];
 	char helo[MAX_MAIL], mail[MAX_MAIL], rcpt[MAX_MAIL];
 	struct sdlist **blacklists;
+	struct tls *cctx;
 
 	/*
 	 * we will do stuttering by changing these to time_t's of
@@ -102,6 +106,7 @@ char    *loglists(struct con *);
 void     getcaddr(struct con *);
 void     gethelo(char *, size_t, char *);
 int      read_configline(FILE *);
+void	 spamd_tls_init(char *, char *);
 
 char hostname[HOST_NAME_MAX+1];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
@@ -119,6 +124,8 @@ struct passwd *pw;
 pid_t jail_pid = -1;
 u_short cfg_port;
 u_short sync_port;
+struct tls_config *tlscfg;
+struct tls *tlsctx;
 
 extern struct sdlist *blacklists;
 extern int pfdev;
@@ -157,10 +164,10 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-45bdv] [-B maxblack] [-c maxcon] "
+	    "usage: %s [-45bdv] [-B maxblack] [-C file] [-c maxcon] "
 	    "[-G passtime:greyexp:whiteexp]\n"
-	    "\t[-h hostname] [-l address] [-M address] [-n name] [-p port]\n"
-	    "\t[-S secs] [-s secs] "
+	    "\t[-h hostname] [-K file] [-l address] [-M address] [-n name]\n"
+	    "\t[-p port] [-S secs] [-s secs] "
 	    "[-w window] [-Y synctarget] [-y synclisten]\n",
 	    __progname);
 
@@ -419,6 +426,32 @@ read_configline(FILE *config)
 	return (0);
 }
 
+void
+spamd_tls_init(char *keyfile, char *certfile)
+{
+	if (keyfile == NULL && certfile == NULL)
+		return;
+	if (keyfile == NULL || certfile == NULL)
+		errx(1, "need key and certificate for TLS");
+
+	if (tls_init() != 0)
+		errx(1, "failed to initialise tls");
+	if ((tlscfg = tls_config_new()) == NULL)
+		errx(1, "failed to get tls config");
+	if ((tlsctx = tls_server()) == NULL)
+		errx(1, "failed to get tls server");
+	/* might need user-specified ciphers, tls_config_set_ciphers */
+
+	if (tls_config_set_cert_file(tlscfg, certfile) != 0)
+		err(1, "could not load certificate %s", certfile);
+	if (tls_config_set_key_file(tlscfg, keyfile) != 0)
+		err(1, "could not load key %s", keyfile);
+	if (tls_configure(tlsctx, tlscfg) != 0)
+		errx(1, "failed to configure TLS - %s", tls_error(tlsctx));
+
+	/* set hostname to cert's CN unless explicitely given? */
+}
+
 int
 append_error_string(struct con *cp, size_t off, char *fmt, int af, void *ia)
 {
@@ -675,6 +708,7 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	if (grow_obuf(cp, 0) == NULL)
 		err(1, "malloc");
 	cp->fd = fd;
+	cp->cctx = NULL;
 	if (len > sizeof(cp->ss))
 		errx(1, "sockaddr size");
 	if (sa->sa_family != AF_INET)
@@ -718,7 +752,11 @@ closecon(struct con *cp)
 {
 	time_t tt;
 
-	close(cp->fd);
+	if (cp->cctx) {
+		tls_close(cp->cctx);
+		tls_free(cp->cctx);
+	} else
+		close(cp->fd);
 	slowdowntill = 0;
 
 	time(&tt);
@@ -797,9 +835,16 @@ nextstate(struct con *cp)
 				snprintf(cp->obuf, cp->osize,
 				    "501 helo requires domain name.\r\n");
 			} else {
-				snprintf(cp->obuf, cp->osize,
-				    "250 Hello, spam sender. "
-				    "Pleased to be wasting your time.\r\n");
+				if (tlsctx != NULL && cp->blacklists == NULL &&
+				    match(cp->ibuf, "EHLO")) {
+					snprintf(cp->obuf, cp->osize,
+					    "250 STARTTLS\r\n");
+					nextstate = 7;
+				} else {
+					snprintf(cp->obuf, cp->osize,
+					    "250 Hello, spam sender. Pleased "
+					    "to be wasting your time.\r\n");
+				}
 			}
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
@@ -810,6 +855,7 @@ nextstate(struct con *cp)
 		}
 		goto mail;
 	case 2:
+	tlsinitdone:
 		/* sent 250 Hello, wait for input */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
@@ -885,6 +931,39 @@ nextstate(struct con *cp)
 		cp->state = 5;
 		cp->r = t;
 		break;
+	case 7:
+		/* sent 250 STARTTLS, wait for input */
+		cp->ip = cp->ibuf;
+		cp->il = sizeof(cp->ibuf) - 1;
+		cp->laststate = cp->state;
+		cp->state = 8;
+		cp->r = t;
+		break;
+	case 8:
+		if (tlsctx != NULL && cp->blacklists == NULL &&
+		    cp->cctx == NULL && match(cp->ibuf, "STARTTLS")) {
+			snprintf(cp->obuf, cp->osize,
+			    "220 glad you want to burn more CPU cycles on "
+			    "your spam\r\n");
+			cp->op = cp->obuf;
+			cp->ol = strlen(cp->op);
+			cp->laststate = cp->state;
+			cp->state = 9;
+			cp->w = t + cp->stutter;
+			break;
+		}
+		goto mail;
+	case 9:
+		if (tls_accept_socket(tlsctx, &cp->cctx, cp->fd) == -1) {
+			snprintf(cp->obuf, cp->osize,
+			    "500 STARTTLS failed\r\n");
+			cp->op = cp->obuf;
+			cp->ol = strlen(cp->op);
+			cp->laststate = cp->state;
+			cp->state = 98;
+			goto done;
+		}	
+		goto tlsinitdone;
 
 	case 50:
 	spam:
@@ -993,7 +1072,14 @@ handler(struct con *cp)
 	int n;
 
 	if (cp->r) {
-		n = read(cp->fd, cp->ip, cp->il);
+		if (cp->cctx) {
+			size_t outlen;
+			n = -1;
+			if (tls_read(cp->cctx, cp->ip, cp->il, &outlen) == 0)
+				n = outlen;
+		} else
+			n = read(cp->fd, cp->ip, cp->il);
+
 		if (n == 0)
 			closecon(cp);
 		else if (n == -1) {
@@ -1023,6 +1109,7 @@ void
 handlew(struct con *cp, int one)
 {
 	int n;
+	size_t outlen;
 
 	/* kill stutter on greylisted connections after initial delay */
 	if (cp->stutter && greylist && cp->blacklists == NULL &&
@@ -1032,7 +1119,13 @@ handlew(struct con *cp, int one)
 	if (cp->w) {
 		if (*cp->op == '\n' && !cp->sr) {
 			/* insert \r before \n */
-			n = write(cp->fd, "\r", 1);
+			if (cp->cctx) {
+				n = -1;
+				if (tls_write(cp->cctx, "\r", 1, &outlen) == 0)
+					n = outlen;
+			} else
+				n = write(cp->fd, "\r", 1);
+
 			if (n == 0) {
 				closecon(cp);
 				goto handled;
@@ -1047,7 +1140,14 @@ handlew(struct con *cp, int one)
 			cp->sr = 1;
 		else
 			cp->sr = 0;
-		n = write(cp->fd, cp->op, (one && cp->stutter) ? 1 : cp->ol);
+		if (cp->cctx) {
+			n = -1;
+			if (tls_write(cp->cctx, cp->op, cp->ol, &outlen) == 0)
+				n = outlen;
+		} else
+			n = write(cp->fd, cp->op,
+			   (one && cp->stutter) ? 1 : cp->ol);
+
 		if (n == 0)
 			closecon(cp);
 		else if (n == -1) {
@@ -1100,6 +1200,8 @@ main(int argc, char *argv[])
 	const char *errstr;
 	char *sync_iface = NULL;
 	char *sync_baddr = NULL;
+	char *tlskeyfile = NULL;
+	char *tlscertfile = NULL;
 
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
@@ -1122,7 +1224,7 @@ main(int argc, char *argv[])
 	if (maxblack > maxfiles)
 		maxblack = maxfiles;
 	while ((ch =
-	    getopt(argc, argv, "45l:c:B:p:bdG:h:s:S:M:n:vw:y:Y:")) != -1) {
+	    getopt(argc, argv, "45l:c:B:p:bdG:h:s:S:M:n:vw:y:Y:C:K:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
@@ -1211,6 +1313,12 @@ main(int argc, char *argv[])
 		case 'y':
 			sync_baddr = optarg;
 			syncrecv++;
+			break;
+		case 'C':
+			tlscertfile = optarg;
+			break;
+		case 'K':
+			tlskeyfile = optarg;
 			break;
 		default:
 			usage();
@@ -1360,6 +1468,8 @@ main(int argc, char *argv[])
 	}
 
 jail:
+	spamd_tls_init(tlskeyfile, tlscertfile);
+
 	if (chroot("/var/empty") == -1 || chdir("/") == -1) {
 		syslog(LOG_ERR, "cannot chdir to /var/empty.");
 		exit(1);
