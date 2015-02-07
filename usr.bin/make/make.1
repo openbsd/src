@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.117 2014/11/03 12:48:37 espie Exp $
+.\"	$OpenBSD: make.1,v 1.118 2015/02/07 13:35:00 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: November 3 2014 $
+.Dd $Mdocdate: February 7 2015 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Sh SYNOPSIS
 .Nm make
 .Op Fl BeiknpqrSst
+.Op Fl C Ar directory
 .Op Fl D Ar variable
 .Op Fl d Ar flags
 .Op Fl f Ar mk
@@ -143,6 +144,10 @@ Try to be backwards compatible by executing the commands to make
 the prerequisites in a target rule in sequence.
 This is the default, in the absence of
 .Fl j Ar max_processes .
+.It Fl C Ar directory
+Enter
+.Ar directory
+before doing anything.
 .It Fl D Ar variable
 Define
 .Ar variable
@@ -1532,7 +1537,7 @@ specification,
 though its presence is optional.
 .Pp
 The flags
-.Op Fl BDdIjmV
+.Op Fl BCDdIjmV
 are extensions to that specification.
 .Pp
 Older versions of
