@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.228 2015/01/24 16:20:37 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.229 2015/02/07 23:54:24 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -258,11 +258,12 @@ MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 mtod.9 \
 	mbuf.9 m_dup_pkthdr.9 \
 	mbuf.9 ml_init.9 mbuf.9 ml_enqueue.9 mbuf.9 ml_dequeue.9 \
-	mbuf.9 ml_dechain.9 mbuf.9 ml_len.9 mbuf.9 ml_empty.9 \
+	mbuf.9 ml_dechain.9 mbuf.9 ml_filter.9 mbuf.9 ml_len.9 \
+	mbuf.9 ml_empty.9 \
 	mbuf.9 MBUF_LIST_INITIALIZER.9 mbuf.9 MBUF_LIST_FOREACH.9 \
 	mbuf.9 mq_init.9 mbuf.9 mq_enqueue.9 mbuf.9 mq_dequeue.9 \
 	mbuf.9 mq_enlist.9 mbuf.9 mq_delist.9 mbuf.9 mq_dechain.9 \
-	mbuf.9 mq_len.9 mbuf.9 mq_empty.9 \
+	mbuf.9 mq_filter.9 mbuf.9 mq_len.9 mbuf.9 mq_empty.9 \
 	mbuf.9 mq_drops.9 mbuf.9 mq_set_maxlen.9 \
 	mbuf.9 MBUF_QUEUE_INITIALIZER.9
 MLINKS+=mbuf_tags.9 m_tag_get.9 mbuf_tags.9 m_tag_find.9 \
