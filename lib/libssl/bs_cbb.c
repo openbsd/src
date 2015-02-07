@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.4 2015/02/07 04:37:35 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.5 2015/02/07 06:10:32 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -28,9 +28,8 @@ cbb_init(CBB *cbb, uint8_t *buf, size_t cap)
 	struct cbb_buffer_st *base;
 
 	base = malloc(sizeof(struct cbb_buffer_st));
-	if (base == NULL) {
+	if (base == NULL)
 		return 0;
-	}
 
 	base->buf = buf;
 	base->len = 0;
@@ -148,7 +147,10 @@ CBB_finish(CBB *cbb, uint8_t **out_data, size_t *out_len)
 		return 0;
 
 	if (cbb->base->can_resize && (out_data == NULL || out_len == NULL))
-		/* |out_data| and |out_len| can only be NULL if the CBB is fixed. */
+		/*
+		 * |out_data| and |out_len| can only be NULL if the CBB is
+		 * fixed.
+		 */
 		return 0;
 
 	if (out_data != NULL)
@@ -187,9 +189,11 @@ CBB_flush(CBB *cbb)
 	len = cbb->base->len - child_start;
 
 	if (cbb->pending_is_asn1) {
-		/* For ASN.1 we assume that we'll only need a single byte for the length.
-		 * If that turned out to be incorrect, we have to move the contents along
-		 * in order to make space. */
+		/*
+		 * For ASN.1 we assume that we'll only need a single byte for
+		 * the length.  If that turned out to be incorrect, we have to
+		 * move the contents along in order to make space.
+		 */
 		size_t len_len;
 		uint8_t initial_length_byte;
 
@@ -217,7 +221,10 @@ CBB_flush(CBB *cbb)
 		}
 
 		if (len_len != 1) {
-			/* We need to move the contents along in order to make space. */
+			/*
+			 * We need to move the contents along in order to make
+			 * space.
+			 */
 			size_t extra_bytes = len_len - 1;
 			if (!cbb_buffer_add(cbb->base, NULL, extra_bytes))
 				return 0;
@@ -289,6 +296,10 @@ CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents)
 int
 CBB_add_asn1(CBB *cbb, CBB *out_contents, uint8_t tag)
 {
+	/* Long form identifier octets are not supported. */
+	if ((tag & 0x1f) == 0x1f)
+		return 0;
+
 	if (!CBB_flush(cbb) || !CBB_add_u8(cbb, tag))
 		return 0;
 
@@ -370,8 +381,10 @@ CBB_add_asn1_uint64(CBB *cbb, uint64_t value)
 				/* Don't encode leading zeros. */
 				continue;
 
-			/* If the high bit is set, add a padding byte to make it
-			 * unsigned. */
+			/*
+			 * If the high bit is set, add a padding byte to make it
+			 * unsigned.
+			 */
 			if ((byte & 0x80) && !CBB_add_u8(&child, 0))
 				return 0;
 
