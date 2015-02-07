@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2015/02/07 01:23:12 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.62 2015/02/07 06:26:28 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -130,9 +130,9 @@ typedef struct {
 %}
 
 %token	ACCESS ALIAS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
-%token	COMBINED CONNECTION DIRECTORY ERR FCGI INDEX IP KEY LISTEN LOCATION
-%token	LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS ROOT
-%token	SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT TLS TYPES 
+%token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LISTEN
+%token	LOCATION LOG LOGDIR MAXIMUM NO NODELAY ON PORT PREFORK REQUEST REQUESTS
+%token	ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT TLS TYPES 
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -242,8 +242,15 @@ server		: SERVER STRING		{
 			if ((s->srv_conf.tls_key_file =
 			    strdup(HTTPD_TLS_KEY)) == NULL)
 				fatal("out of memory");
-			strlcpy(s->srv_conf.tls_ciphers, HTTPD_TLS_CIPHERS,
+			strlcpy(s->srv_conf.tls_ciphers,
+			    HTTPD_TLS_CIPHERS,
 			    sizeof(s->srv_conf.tls_ciphers));
+			strlcpy(s->srv_conf.tls_dhe_params,
+			    HTTPD_TLS_DHE_PARAMS,
+			    sizeof(s->srv_conf.tls_dhe_params));
+			strlcpy(s->srv_conf.tls_ecdhe_curve,
+			    HTTPD_TLS_ECDHE_CURVE,
+			    sizeof(s->srv_conf.tls_ecdhe_curve));
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers defined");
@@ -611,6 +618,26 @@ tlsopts		: CERTIFICATE STRING		{
 			    sizeof(srv_conf->tls_ciphers)) >=
 			    sizeof(srv_conf->tls_ciphers)) {
 				yyerror("ciphers too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| DHE STRING			{
+			if (strlcpy(srv_conf->tls_dhe_params, $2,
+			    sizeof(srv_conf->tls_dhe_params)) >=
+			    sizeof(srv_conf->tls_dhe_params)) {
+				yyerror("dhe too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| ECDHE STRING			{
+			if (strlcpy(srv_conf->tls_ecdhe_curve, $2,
+			    sizeof(srv_conf->tls_ecdhe_curve)) >=
+			    sizeof(srv_conf->tls_ecdhe_curve)) {
+				yyerror("ecdhe too long");
 				free($2);
 				YYERROR;
 			}
@@ -1049,8 +1076,10 @@ lookup(char *s)
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
+		{ "dhe",		DHE },
 		{ "directory",		DIRECTORY },
 		{ "drop",		DROP },
+		{ "ecdhe",		ECDHE },
 		{ "error",		ERR },
 		{ "fastcgi",		FCGI },
 		{ "include",		INCLUDE },

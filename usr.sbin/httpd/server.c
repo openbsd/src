@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.55 2015/02/07 01:23:12 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.56 2015/02/07 06:26:28 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -207,6 +207,17 @@ server_tls_init(struct server *srv)
 		log_warn("%s: failed to set tls ciphers", __func__);
 		return (-1);
 	}
+	if (tls_config_set_dheparams(srv->srv_tls_config,
+	    srv->srv_conf.tls_dhe_params) != 0) {
+		log_warn("%s: failed to set tls dhe params", __func__);
+		return (-1);
+	}
+	if (tls_config_set_ecdhecurve(srv->srv_tls_config,
+	    srv->srv_conf.tls_ecdhe_curve) != 0) {
+		log_warn("%s: failed to set tls ecdhe curve", __func__);
+		return (-1);
+	}
+
 	if (tls_config_set_cert_mem(srv->srv_tls_config,
 	    srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len) != 0) {
 		log_warn("%s: failed to set tls cert", __func__);
