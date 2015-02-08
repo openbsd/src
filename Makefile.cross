@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.74 2014/10/09 03:40:12 lteo Exp $
+# $OpenBSD: Makefile.cross,v 1.75 2015/02/08 00:15:22 uebayasi Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -114,6 +114,8 @@ NO_CROSS+=microcode
 NO_CROSS+=groff binutils binutils-2.17 perl texinfo gcc cvs
 NO_CROSS+=nsd
 NO_CROSS+=sqlite3
+NO_CROSS+=bind
+NO_CROSS+=unbound
 
 cross-dirs:	${CROSSDIRS}
 cross-obj:	${CROSSOBJ}
