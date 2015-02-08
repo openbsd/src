@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.103 2015/02/08 00:34:45 uebayasi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.104 2015/02/08 05:36:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1165,7 +1165,7 @@ void stacktrace_subr(struct trap_frame *, int, int (*)(const char*, ...));
  * Print a stack backtrace.
  */
 void
-stacktrace(regs)
+stacktrace(struct trap_frame *regs)
 	struct trap_frame *regs;
 {
 	stacktrace_subr(regs, 6, printf);
@@ -1240,9 +1240,20 @@ loop:
 	 * Watch out for function tail optimizations.
 	 */
 	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
-	db_symbol_values(sym, &symname, 0);
-	if (sym != DB_SYM_NULL)
+	if (sym != DB_SYM_NULL && diff == 0) {
+		instr = kdbpeek(pc - 2 * sizeof(int));
+		i.word = instr;
+		if (i.JType.op == OP_JAL) {
+			sym = db_search_symbol(pc - sizeof(int),
+			    DB_STGY_ANY, &diff);
+			if (sym != DB_SYM_NULL && diff != 0)
+				diff += sizeof(int);
+		}
+	}
+	if (sym != DB_SYM_NULL) {
+		db_symbol_values(sym, &symname, 0);
 		subr = pc - (vaddr_t)diff;
+	}
 #endif
 
 	/*
