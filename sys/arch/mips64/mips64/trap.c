@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.104 2015/02/08 05:36:51 uebayasi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.105 2015/02/08 05:40:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,7 +144,7 @@ int	process_sstep(struct proc *, int);
  * Handle an AST for the current process.
  */
 void
-ast()
+ast(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_curproc;
@@ -847,8 +847,7 @@ fault_common_no_miss:
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trap_frame *trapframe;
@@ -1166,7 +1165,6 @@ void stacktrace_subr(struct trap_frame *, int, int (*)(const char*, ...));
  */
 void
 stacktrace(struct trap_frame *regs)
-	struct trap_frame *regs;
 {
 	stacktrace_subr(regs, 6, printf);
 }
