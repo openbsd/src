@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.6 2015/02/08 16:07:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.7 2015/02/08 23:30:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -541,10 +541,6 @@ iwm_read_firmware(struct iwm_softc *sc)
 
 	if (status == IWM_FW_STATUS_DONE)
 		return 0;
-	else if (status < 0)
-		return -status;
-
-	KASSERT(status == IWM_FW_STATUS_INPROGRESS);
 
 	/*
 	 * Load firmware into driver memory.
@@ -713,12 +709,10 @@ iwm_read_firmware(struct iwm_softc *sc)
 	}
 
  out:
-	if (error) {
-		KASSERT(error > 0);
-		fw->fw_status = -error;
-	} else {
+	if (error)
+		fw->fw_status = IWM_FW_STATUS_NONE;
+	else
 		fw->fw_status = IWM_FW_STATUS_DONE;
-	}
 	wakeup(&sc->sc_fw);
 
 	if (error) {
@@ -2814,6 +2808,7 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
 int
 iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 {
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int error;
 
 	/* do not operate with rfkill switch turned on */
@@ -2835,6 +2830,10 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		}
 		memcpy(&sc->sc_ic.ic_myaddr,
 		    &sc->sc_nvm.hw_addr, ETHER_ADDR_LEN);
+		memcpy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+			&sc->sc_nvm.hw_addr, ETHER_ADDR_LEN);
+		memcpy(LLADDR(ifp->if_sadl), &sc->sc_nvm.hw_addr,
+		    ifp->if_addrlen);
 
 		sc->sc_scan_cmd_len = sizeof(struct iwm_scan_cmd)
 		    + sc->sc_capa_max_probe_len
@@ -5503,7 +5502,7 @@ iwm_init_hw(struct iwm_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error, i, qid;
 
-	if ((error = iwm_prepare_card_hw(sc)) != 0)
+	if ((error = iwm_preinit(sc)) != 0)
 		return error;
 
 	if ((error = iwm_start_hw(sc)) != 0)
@@ -5518,8 +5517,10 @@ iwm_init_hw(struct iwm_softc *sc)
 	 * image just loaded
 	 */
 	iwm_stop_device(sc);
-	if ((error = iwm_start_hw(sc)) != 0)
+	if ((error = iwm_start_hw(sc)) != 0) {
+		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return error;
+	}
 
 	/* omstart, this time with the regular firmware */
 	error = iwm_mvm_load_ucode_wait_alive(sc, IWM_UCODE_TYPE_REGULAR);
@@ -6332,18 +6333,35 @@ int
 iwm_preinit(struct iwm_softc *sc)
 {
 	int error;
+	static int attached;
 
-	if ((error = iwm_prepare_card_hw(sc)) != 0)
-		return error;
-
-	if ((error = iwm_start_hw(sc)) != 0)
-		return error;
-
-	if ((error = iwm_run_init_mvm_ucode(sc, 1)) != 0) {
+	if ((error = iwm_prepare_card_hw(sc)) != 0) {
+		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return error;
 	}
 
+	if (attached)
+		return 0;
+
+	if ((error = iwm_start_hw(sc)) != 0) {
+		printf("%s: could not initialize hardware\n", DEVNAME(sc));
+		return error;
+	}
+
+	error = iwm_run_init_mvm_ucode(sc, 1);
 	iwm_stop_device(sc);
+	if (error)
+		return error;
+
+	/* Print version info and MAC address on first successful fw load. */
+	attached = 1;
+	printf("%s: hw rev: 0x%x, fw ver %d.%d (API ver %d), address %s\n",
+	    DEVNAME(sc), sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
+	    IWM_UCODE_MAJOR(sc->sc_fwver),
+	    IWM_UCODE_MINOR(sc->sc_fwver),
+	    IWM_UCODE_API(sc->sc_fwver),
+	    ether_sprintf(sc->sc_nvm.hw_addr));
+
 	return 0;
 }
 
@@ -6351,12 +6369,83 @@ void
 iwm_attach_hook(iwm_hookarg_t arg)
 {
 	struct iwm_softc *sc = arg;
+
+	KASSERT(!cold);
+
+	iwm_preinit(sc);
+}
+
+void
+iwm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct iwm_softc *sc = (void *)self;
+	struct pci_attach_args *pa = aux;
+	pci_intr_handle_t ih;
+	pcireg_t reg, memtype;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	const char *intrstr;
 	int error;
 	int txq_i, i;
 
-	KASSERT(!cold);
+	sc->sc_pct = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_dmat = pa->pa_dmat;
+
+	task_set(&sc->sc_eswk, iwm_endscan_cb, sc);
+
+	/*
+	 * Get the offset of the PCI Express Capability Structure in PCI
+	 * Configuration Space.
+	 */
+	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
+	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
+	if (error == 0) {
+		printf("%s: PCIe capability structure not found!\n",
+		    DEVNAME(sc));
+		return;
+	}
+
+	/* Clear device-specific "PCI retry timeout" register (41h). */
+	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
+
+	/* Enable bus-mastering and hardware bug workaround. */
+	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE;
+	/* if !MSI */
+	if (reg & PCI_COMMAND_INTERRUPT_DISABLE) {
+		reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
+	}
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, reg);
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	error = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
+	    &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_sz, 0);
+	if (error != 0) {
+		printf("%s: can't map mem space\n", DEVNAME(sc));
+		return;
+	}
+
+	/* Install interrupt handler. */
+	if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
+		printf("%s: can't map interrupt\n", DEVNAME(sc));
+		return;
+	}
+
+	intrstr = pci_intr_string(sc->sc_pct, ih);
+	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc,
+	    DEVNAME(sc));
+
+	if (sc->sc_ih == NULL) {
+		printf("\n");
+		printf("%s: can't establish interrupt", DEVNAME(sc));
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf(", %s\n", intrstr);
 
 	sc->sc_wantresp = -1;
 
@@ -6426,17 +6515,6 @@ iwm_attach_hook(iwm_hookarg_t arg)
 	/* Clear pending interrupts. */
 	IWM_WRITE(sc, IWM_CSR_INT, 0xffffffff);
 
-	if ((error = iwm_preinit(sc)) != 0) {
-		goto fail4;
-	}
-
-	printf("%s: hw rev: 0x%x, fw ver %d.%d (API ver %d), address %s\n",
-	    DEVNAME(sc), sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
-	    IWM_UCODE_MAJOR(sc->sc_fwver),
-	    IWM_UCODE_MINOR(sc->sc_fwver),
-	    IWM_UCODE_API(sc->sc_fwver),
-	    ether_sprintf(sc->sc_nvm.hw_addr));
-	
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
@@ -6489,6 +6567,15 @@ iwm_attach_hook(iwm_hookarg_t arg)
 	timeout_set(&sc->sc_calib_to, iwm_calib_timeout, sc);
 	task_set(&sc->init_task, iwm_init_task, sc);
 
+	/*
+	 * We cannot read the MAC address without loading the
+	 * firmware from disk. Postpone until mountroot is done.
+	 */
+	if (rootvp == NULL)
+		mountroothook_establish(iwm_attach_hook, sc);
+	else
+		iwm_attach_hook(sc);
+
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -6500,89 +6587,6 @@ fail3:	if (sc->ict_dma.vaddr != NULL)
 fail2:	iwm_free_kw(sc);
 fail1:	iwm_free_fwmem(sc);
 	return;
-}
-
-void
-iwm_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct iwm_softc *sc = (void *)self;
-	struct pci_attach_args *pa = aux;
-	pci_intr_handle_t ih;
-	pcireg_t reg, memtype;
-	const char *intrstr;
-	int error;
-
-	sc->sc_pct = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag;
-	sc->sc_dmat = pa->pa_dmat;
-
-	task_set(&sc->sc_eswk, iwm_endscan_cb, sc);
-
-	/*
-	 * Get the offset of the PCI Express Capability Structure in PCI
-	 * Configuration Space.
-	 */
-	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
-	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
-	if (error == 0) {
-		printf("%s: PCIe capability structure not found!\n",
-		    DEVNAME(sc));
-		return;
-	}
-
-	/* Clear device-specific "PCI retry timeout" register (41h). */
-	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
-
-	/* Enable bus-mastering and hardware bug workaround. */
-	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_MASTER_ENABLE;
-	/* if !MSI */
-	if (reg & PCI_COMMAND_INTERRUPT_DISABLE) {
-		reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
-	}
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, reg);
-
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
-	error = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_sz, 0);
-	if (error != 0) {
-		printf("%s: can't map mem space\n", DEVNAME(sc));
-		return;
-	}
-
-	/* Install interrupt handler. */
-	if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", DEVNAME(sc));
-		return;
-	}
-
-	intrstr = pci_intr_string(sc->sc_pct, ih);
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc,
-	    DEVNAME(sc));
-
-	if (sc->sc_ih == NULL) {
-		printf("\n");
-		printf("%s: can't establish interrupt", DEVNAME(sc));
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf(", %s\n", intrstr);
-
-	/*
-	 * We can't do normal attach before the file system is mounted
-	 * because we cannot read the MAC address without loading the
-	 * firmware from disk.  So we postpone until mountroot is done.
-	 * Notably, this will require a full driver unload/load cycle
-	 * (or reboot) in case the firmware is not present when the
-	 * hook runs.
-	 */
-	if (rootvp == NULL)
-		mountroothook_establish(iwm_attach_hook, sc);
-	else
-		iwm_attach_hook(sc);
 }
 
 #if NBPFILTER > 0
