@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.63 2015/01/15 19:55:58 tedu Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.64 2015/02/08 02:58:50 tedu Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -132,13 +132,13 @@ int	 rand(void);
 void	*realloc(void *, size_t);
 void	 srand(unsigned);
 void	 srand_deterministic(unsigned);
-double	 strtod(const char *, char **);
-float	 strtof(const char *, char **);
-long	 strtol(const char *, char **, int);
+double	 strtod(const char *__restrict, char **__restrict);
+float	 strtof(const char *__restrict, char **__restrict);
+long	 strtol(const char *__restrict, char **__restrict, int);
 long double
-	 strtold(const char *, char **);
+	 strtold(const char *__restrict, char **__restrict);
 unsigned long
-	 strtoul(const char *, char **, int);
+	 strtoul(const char *__restrict, char **__restrict, int);
 int	 system(const char *);
 
 /* these are currently just stubs */
@@ -226,9 +226,9 @@ long long
 lldiv_t
 	 lldiv(long long, long long);
 long long
-	 strtoll(const char *, char **, int);
+	 strtoll(const char *__restrict, char **__restrict, int);
 unsigned long long
-	 strtoull(const char *, char **, int);
+	 strtoull(const char *__restrict, char **__restrict, int);
 #endif
 
 /*
@@ -311,8 +311,8 @@ void	 setproctitle(const char *, ...)
 
 quad_t	 qabs(quad_t);
 qdiv_t	 qdiv(quad_t, quad_t);
-quad_t	 strtoq(const char *, char **, int);
-u_quad_t strtouq(const char *, char **, int);
+quad_t	 strtoq(const char *__restrict, char **__restrict, int);
+u_quad_t strtouq(const char *__restrict, char **__restrict, int);
 
 uint32_t arc4random(void);
 uint32_t arc4random_uniform(uint32_t);
