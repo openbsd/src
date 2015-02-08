@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.47 2015/02/06 23:46:30 sthen Exp $
+.\" $OpenBSD: iwn.4,v 1.48 2015/02/08 13:48:37 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2015 $
+.Dd $Mdocdate: February 8 2015 $
 .Dt IWN 4
 .Os
 .Sh NAME
@@ -174,7 +174,7 @@ This should not happen.
 The radio transmitter is off and thus no packet can go out.
 The driver will reset the hardware.
 Make sure the laptop radio switch is on.
-.It "iwn0: error N, could not read firmware ..."
+.It "iwn0: could not read firmware ... (error N)"
 For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
