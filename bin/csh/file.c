@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.18 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.19 2015/02/08 05:47:28 tedu Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -395,8 +395,8 @@ free_items(Char **items, int numitems)
     int i;
 
     for (i = 0; i < numitems; i++)
-	xfree((ptr_t) items[i]);
-    xfree((ptr_t) items);
+	xfree(items[i]);
+    xfree(items);
 }
 
 #define FREE_ITEMS(items) { \
@@ -492,7 +492,7 @@ again:				/* search for matches */
 	return (numitems);
     }
     else {			/* LIST */
-	qsort((ptr_t) items, numitems, sizeof(*items),
+	qsort(items, numitems, sizeof(*items),
 		(int (*)(const void *, const void *)) sortscmp);
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);

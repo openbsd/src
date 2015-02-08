@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 2015/02/08 05:47:28 tedu Exp $	*/
 /*	$NetBSD: parse.c,v 1.6 1995/03/21 09:03:10 cgd Exp $	*/
 
 /*-
@@ -170,7 +170,7 @@ asyn3(struct wordent *p1, struct wordent *p2)
 	Char   *cp = alout.next->word;
 
 	alout.next->word = Strspl(STRQNULL, cp);
-	xfree((ptr_t) cp);
+	xfree(cp);
     }
     p1 = freenod(p1, redid ? p2 : p1->next);
     if (alout.next != &alout) {
@@ -178,8 +178,8 @@ asyn3(struct wordent *p1, struct wordent *p2)
 	alout.prev->prev->next = p1->next;
 	alout.next->prev = p1;
 	p1->next = alout.next;
-	xfree((ptr_t) alout.prev->word);
-	xfree((ptr_t) (alout.prev));
+	xfree(alout.prev->word);
+	xfree((alout.prev));
     }
     reset();			/* throw! */
 }
@@ -190,9 +190,9 @@ freenod(struct wordent *p1, struct wordent *p2)
     struct wordent *retp = p1->prev;
 
     while (p1 != p2) {
-	xfree((ptr_t) p1->word);
+	xfree(p1->word);
 	p1 = p1->next;
-	xfree((ptr_t) (p1->prev));
+	xfree((p1->prev));
     }
     retp->next = p2;
     p2->prev = retp;
@@ -645,15 +645,15 @@ freesyn(struct command *t)
 
     case NODE_COMMAND:
 	for (v = t->t_dcom; *v; v++)
-	    xfree((ptr_t) * v);
-	xfree((ptr_t) (t->t_dcom));
-	xfree((ptr_t) t->t_dlef);
-	xfree((ptr_t) t->t_drit);
+	    xfree(* v);
+	xfree((t->t_dcom));
+	xfree(t->t_dlef);
+	xfree(t->t_drit);
 	break;
     case NODE_PAREN:
 	freesyn(t->t_dspr);
-	xfree((ptr_t) t->t_dlef);
-	xfree((ptr_t) t->t_drit);
+	xfree(t->t_dlef);
+	xfree(t->t_drit);
 	break;
 
     case NODE_AND:
@@ -663,5 +663,5 @@ freesyn(struct command *t)
 	freesyn(t->t_dcar), freesyn(t->t_dcdr);
 	break;
     }
-    xfree((ptr_t) t);
+    xfree(t);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.13 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: set.c,v 1.14 2015/02/08 05:47:28 tedu Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ doset(Char **v, struct command *t)
 	    Setenv(STRHOME, cp);
 	    /* fix directory stack for new tilde home */
 	    dtilde();
-	    xfree((ptr_t) cp);
+	    xfree(cp);
 	}
 #ifdef FILEC
 	else if (eq(vp, STRfilec))
@@ -187,7 +187,7 @@ asx(Char *vp, int subscr, Char *p)
 {
     struct varent *v = getvx(vp, subscr);
 
-    xfree((ptr_t) v->vec[subscr - 1]);
+    xfree(v->vec[subscr - 1]);
     v->vec[subscr - 1] = globone(p, G_APPEND);
 }
 
@@ -282,9 +282,9 @@ dolet(Char **v, struct command *t)
 	    exportpath(adrof(STRpath)->vec);
 	    dohash(NULL, NULL);
 	}
-	xfree((ptr_t) vp);
+	xfree(vp);
 	if (c != '=')
-	    xfree((ptr_t) p);
+	    xfree(p);
     } while ((p = *v++) != NULL);
 }
 
@@ -296,7 +296,7 @@ xset(Char *cp, Char ***vp)
     if (*cp) {
 	dp = Strsave(cp);
 	--(*vp);
-	xfree((ptr_t) ** vp);
+	xfree(** vp);
 	**vp = dp;
     }
     return (putn(expr(vp)));
@@ -543,7 +543,7 @@ unsetv1(struct varent *p)
      * Free associated memory first to avoid complications.
      */
     blkfree(p->vec);
-    xfree((ptr_t) p->v_name);
+    xfree(p->v_name);
     /*
      * If p is missing one child, then we can move the other into where p is.
      * Otherwise, we find the predecessor of p, which is guaranteed to have no
@@ -571,7 +571,7 @@ unsetv1(struct varent *p)
     /*
      * Free the deleted node, and rebalance.
      */
-    xfree((ptr_t) p);
+    xfree(p);
     balance(pp, f, 1);
 }
 

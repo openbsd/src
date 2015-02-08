@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.14 2015/02/08 05:25:16 tedu Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.15 2015/02/08 05:47:28 tedu Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ Malloc(size_t n)
 {
     ptr_t   ptr;
 
-    if ((ptr = malloc(n)) == (ptr_t) 0) {
+    if ((ptr = malloc(n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
     }
@@ -55,7 +55,7 @@ Reallocarray(ptr_t p, size_t c, size_t n)
 {
     ptr_t   ptr;
 
-    if ((ptr = reallocarray(p, c, n)) == (ptr_t) 0) {
+    if ((ptr = reallocarray(p, c, n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
     }
@@ -67,7 +67,7 @@ Calloc(size_t s, size_t n)
 {
     ptr_t   ptr;
 
-    if ((ptr = calloc(s, n)) == (ptr_t) 0) {
+    if ((ptr = calloc(s, n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
     }

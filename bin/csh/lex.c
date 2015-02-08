@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.14 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.15 2015/02/08 05:47:28 tedu Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -211,8 +211,8 @@ freelex(struct wordent *vp)
     while (vp->next != vp) {
 	fp = vp->next;
 	vp->next = fp->next;
-	xfree((ptr_t) fp->word);
-	xfree((ptr_t) fp);
+	xfree(fp->word);
+	xfree(fp);
     }
     vp->prev = vp;
 }
@@ -864,11 +864,11 @@ dosub(int sc, struct wordent *en, bool global)
 			otword = tword;
 			tword = subword(otword, sc, &didone);
 			if (Strcmp(tword, otword) == 0) {
-			    xfree((ptr_t) otword);
+			    xfree(otword);
 			    break;
 			}
 			else
-			    xfree((ptr_t) otword);
+			    xfree(otword);
 		    }
 		}
 	    }
@@ -1428,16 +1428,15 @@ bgetc(void)
 again:
     buf = (int) fseekp / BUFSIZ;
     if (buf >= fblocks) {
-	Char **nfbuf =
-	(Char **) xcalloc((size_t) (fblocks + 2),
+	Char **nfbuf = xcalloc((size_t) (fblocks + 2),
 			  sizeof(Char **));
 
 	if (fbuf) {
 	    (void) blkcpy(nfbuf, fbuf);
-	    xfree((ptr_t) fbuf);
+	    xfree(fbuf);
 	}
 	fbuf = nfbuf;
-	fbuf[fblocks] = (Char *) xcalloc(BUFSIZ, sizeof(Char));
+	fbuf[fblocks] = xcalloc(BUFSIZ, sizeof(Char));
 	fblocks++;
 	if (!intty)
 	    goto again;
@@ -1512,7 +1511,7 @@ bfree(void)
     sb = (int) (fseekp - 1) / BUFSIZ;
     if (sb > 0) {
 	for (i = 0; i < sb; i++)
-	    xfree((ptr_t) fbuf[i]);
+	    xfree(fbuf[i]);
 	(void) blkcpy(fbuf, &fbuf[sb]);
 	fseekp -= BUFSIZ * sb;
 	feobp -= BUFSIZ * sb;

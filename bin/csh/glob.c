@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.15 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: glob.c,v 1.16 2015/02/08 05:47:28 tedu Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ globtilde(Char **nv, Char *s)
 	*b++ = *s++;
     *b = EOS;
     --u;
-    xfree((ptr_t) u);
+    xfree(u);
     return (Strsave(gstart));
 }
 
@@ -228,13 +228,13 @@ expbrace(Char ***nvp, Char ***elp, int size)
 	    int     len;
 
 	    if ((len = globbrace(s, b, &bl)) < 0) {
-		xfree((ptr_t) nv);
+		xfree(nv);
 		stderror(ERR_MISSING, -len);
 	    }
-	    xfree((ptr_t) s);
+	    xfree(s);
 	    if (len == 1) {
 		*vl-- = *bl;
-		xfree((ptr_t) bl);
+		xfree(bl);
 		continue;
 	    }
 	    len = blklen(bl);
@@ -258,7 +258,7 @@ expbrace(Char ***nvp, Char ***elp, int size)
 	    vp++;
 	    for (bp = bl + 1; *bp; *vp++ = *bp++)
 		continue;
-	    xfree((ptr_t) bl);
+	    xfree(bl);
 	}
 
     }
@@ -294,7 +294,7 @@ globexpand(Char **v)
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
-	    xfree((ptr_t) pargv);
+	    xfree(pargv);
 	    pargv = NULL;
 	}
 	else {
@@ -345,9 +345,9 @@ handleone(Char *str, Char **vl, int action)
 	str = Strsave(*vlp++);
 	do {
 	    cp = Strspl(str, STRspace);
-	    xfree((ptr_t) str);
+	    xfree(str);
 	    str = Strspl(cp, *vlp);
-	    xfree((ptr_t) cp);
+	    xfree(cp);
 	}
 	while (*++vlp)
 	    ;
@@ -430,14 +430,14 @@ globone(Char *str, int action)
 	vo = globexpand(v);
 	if (noglob || (gflg & G_GLOB) == 0) {
 	    if (vo[0] == NULL) {
-		xfree((ptr_t) vo);
+		xfree(vo);
 		return (Strsave(STRNULL));
 	    }
 	    if (vo[1] != NULL)
 		return (handleone(str, vo, action));
 	    else {
 		str = strip(vo[0]);
-		xfree((ptr_t) vo);
+		xfree(vo);
 		return (str);
 	    }
 	}
@@ -455,14 +455,14 @@ globone(Char *str, int action)
 	stderror(ERR_NAME | ERR_NOMATCH);
     }
     if (vl[0] == NULL) {
-	xfree((ptr_t) vl);
+	xfree(vl);
 	return (Strsave(STRNULL));
     }
     if (vl[1] != NULL)
 	return (handleone(str, vl, action));
     else {
 	str = strip(*vl);
-	xfree((ptr_t) vl);
+	xfree(vl);
 	return (str);
     }
 }
@@ -695,7 +695,7 @@ backeval(Char *cp, bool literal)
 	execute(t, -1, NULL, NULL);
 	exitstat();
     }
-    xfree((ptr_t) cp);
+    xfree(cp);
     (void) close(pvec[1]);
     c = 0;
     ip = NULL;
