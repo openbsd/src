@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.26 2015/02/05 23:06:22 deraadt Exp $ */
+/* $OpenBSD: vmparam.h,v 1.27 2015/02/08 03:48:25 deraadt Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -82,7 +82,7 @@
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
-#define STACKGAP_RANDOM	2*1024*1024
+#define STACKGAP_RANDOM	256*1024
 
 /*
  * PTEs for mapping user space into the kernel for physio operations.
