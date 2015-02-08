@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.138 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.139 2015/02/08 13:45:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1188,7 +1188,7 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 		    mtod(data->m, void *), IWN_RBUF_SIZE, NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
-			printf("%s: can't not map mbuf (error %d)\n",
+			printf("%s: can't map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
 			goto fail;
 		}
@@ -5738,8 +5738,8 @@ iwn_read_firmware(struct iwn_softc *sc)
 
 	/* Read firmware image from filesystem. */
 	if ((error = loadfirmware(sc->fwname, &fw->data, &fw->size)) != 0) {
-		printf("%s: error, %d, could not read firmware %s\n",
-		    sc->sc_dev.dv_xname, error, sc->fwname);
+		printf("%s: could not read firmware %s (error %d)\n",
+		    sc->sc_dev.dv_xname, sc->fwname, error);
 		return error;
 	}
 	if (fw->size < sizeof (uint32_t)) {
@@ -5997,7 +5997,7 @@ iwn_hw_init(struct iwn_softc *sc)
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
 
 	if ((error = iwn_apm_init(sc)) != 0) {
-		printf("%s: could not power ON adapter\n",
+		printf("%s: could not power on adapter\n",
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
