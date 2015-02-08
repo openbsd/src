@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.18 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.19 2015/02/08 07:00:48 mpi Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -893,16 +893,8 @@ mace_read(struct mc_softc *sc, caddr_t pkt, int len)
 		return;
 	}
 
+	if_input(ifp, m);
 	ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-	/* Pass the packet to any BPF listeners. */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	/* Pass the packet up. */
-	ether_input_mbuf(ifp, m);
 }
 
 /*
@@ -922,7 +914,6 @@ mace_get(struct mc_softc *sc, caddr_t pkt, int totlen)
 	 if (m == NULL)
 		  return (NULL);
 
-	 m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	 m->m_pkthdr.len = totlen;
 	 len = MHLEN;
 	 top = 0;
