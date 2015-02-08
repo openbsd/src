@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.22 2014/10/28 05:46:56 miod Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.23 2015/02/08 22:20:18 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -203,9 +203,16 @@ EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 {
 	EVP_PBE_CTL *pbe_tmp;
 
-	if (!pbe_algs)
+	if (pbe_algs == NULL) {
 		pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-	if (!(pbe_tmp = (EVP_PBE_CTL*)malloc(sizeof(EVP_PBE_CTL)))) {
+		if (pbe_algs == NULL) {
+			EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE,
+			    ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+	}
+	pbe_tmp = malloc(sizeof(EVP_PBE_CTL));
+	if (pbe_tmp == NULL) {
 		EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
