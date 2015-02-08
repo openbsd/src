@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.41 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: evp.h,v 1.42 2015/02/08 22:22:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,6 +154,13 @@ struct evp_pkey_st {
 #define EVP_PKEY_MO_ENCRYPT	0x0004
 #define EVP_PKEY_MO_DECRYPT	0x0008
 
+typedef int evp_sign_method(int type, const unsigned char *m,
+    unsigned int m_length, unsigned char *sigret, unsigned int *siglen,
+    void *key);
+typedef int evp_verify_method(int type, const unsigned char *m,
+    unsigned int m_length, const unsigned char *sigbuf, unsigned int siglen,
+    void *key);
+
 #ifndef EVP_MD
 struct env_md_st {
 	int type;
@@ -166,25 +173,14 @@ struct env_md_st {
 	int (*copy)(EVP_MD_CTX *to, const EVP_MD_CTX *from);
 	int (*cleanup)(EVP_MD_CTX *ctx);
 
-	/* FIXME: prototype these some day */
-	int (*sign)(int type, const unsigned char *m, unsigned int m_length,
-	    unsigned char *sigret, unsigned int *siglen, void *key);
-	int (*verify)(int type, const unsigned char *m, unsigned int m_length,
-	    const unsigned char *sigbuf, unsigned int siglen,
-	    void *key);
+	evp_sign_method *sign;
+	evp_verify_method *verify;
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
 	int ctx_size; /* how big does the ctx->md_data need to be */
 	/* control function */
 	int (*md_ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 } /* EVP_MD */;
-
-typedef int evp_sign_method(int type, const unsigned char *m,
-    unsigned int m_length, unsigned char *sigret, unsigned int *siglen,
-    void *key);
-typedef int evp_verify_method(int type, const unsigned char *m,
-    unsigned int m_length, const unsigned char *sigbuf, unsigned int siglen,
-    void *key);
 
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
