@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.4 2015/02/07 19:04:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.5 2015/02/08 13:43:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -424,7 +424,9 @@ void	iwm_stop(struct ifnet *, int);
 void	iwm_watchdog(struct ifnet *);
 int	iwm_ioctl(struct ifnet *, u_long, iwm_caddr_t);
 const char *iwm_desc_lookup(uint32_t);
+#ifdef IWM_DEBUG
 void	iwm_nic_error(struct iwm_softc *);
+#endif
 void	iwm_notif_intr(struct iwm_softc *);
 int	iwm_intr(void *);
 int	iwm_match(struct device *, void *, void *);
@@ -505,8 +507,8 @@ iwm_set_default_calib(struct iwm_softc *sc, const void *data)
 	uint32_t ucode_type = le32toh(def_calib->ucode_type);
 
 	if (ucode_type >= IWM_UCODE_TYPE_MAX) {
-		printf("%s: Wrong ucode_type %u for default "
-		    "calibration.\n", DEVNAME(sc), ucode_type);
+		DPRINTF(("%s: Wrong ucode_type %u for default "
+		    "calibration.\n", DEVNAME(sc), ucode_type));
 		return EINVAL;
 	}
 
@@ -526,7 +528,8 @@ iwm_read_firmware(struct iwm_softc *sc)
         struct iwm_ucode_tlv tlv;
 	enum iwm_ucode_tlv_type tlv_type;
 	uint8_t *data;
-	int error, status, len;
+	int error, status;
+	size_t len;
 
 	if (fw->fw_status == IWM_FW_STATUS_NONE) {
 		fw->fw_status = IWM_FW_STATUS_INPROGRESS;
@@ -550,8 +553,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 	error = loadfirmware(sc->sc_fwname,
 	    (u_char **)&fw->fw_rawdata, &fw->fw_rawsize);
 	if (error != 0) {
-		printf("%s: could not read firmware %s\n",
-		    DEVNAME(sc), sc->sc_fwname);
+		printf("%s: could not read firmware %s (error %d)\n",
+		    DEVNAME(sc), sc->sc_fwname, error);
 		goto out;
 	}
 
@@ -573,7 +576,7 @@ iwm_read_firmware(struct iwm_softc *sc)
 	len = fw->fw_rawsize - sizeof(*uhdr);
 
 	while (len >= sizeof(tlv)) {
-		uint32_t tlv_len;
+		size_t tlv_len;
 		void *tlv_data;
 
 		memcpy(&tlv, data, sizeof(tlv));
@@ -585,7 +588,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 		tlv_data = data;
 
 		if (len < tlv_len) {
-			printf("%s: firmware image invalid length\n", DEVNAME(sc));
+			printf("%s: firmware too short: %zu bytes\n",
+			    DEVNAME(sc), len);
 			error = EINVAL;
 			goto parse_out;
 		}
@@ -600,8 +604,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 			    = le32toh(*(uint32_t *)tlv_data);
 			/* limit it to something sensible */
 			if (sc->sc_capa_max_probe_len > (1<<16)) {
-				printf("%s: IWM_UCODE_TLV_PROBE_MAX_LEN "
-				    "ridiculous\n", DEVNAME(sc));
+				DPRINTF(("%s: IWM_UCODE_TLV_PROBE_MAX_LEN "
+				    "ridiculous\n", DEVNAME(sc)));
 				error = EINVAL;
 				goto parse_out;
 			}
@@ -642,8 +646,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 				goto parse_out;
 			}
 			if (le32toh(*(uint32_t*)tlv_data) != 1) {
-				printf("%s: driver supports "
-				    "only TLV_NUM_OF_CPU == 1", DEVNAME(sc));
+				DPRINTF(("%s: driver supports "
+				    "only TLV_NUM_OF_CPU == 1", DEVNAME(sc)));
 				error = EINVAL;
 				goto parse_out;
 			}
@@ -685,8 +689,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 			break;
 
 		default:
-			printf("%s: unknown firmware section %d, abort\n",
-			    DEVNAME(sc), tlv_type);
+			DPRINTF(("%s: unknown firmware section %d, abort\n",
+			    DEVNAME(sc), tlv_type));
 			error = EINVAL;
 			goto parse_out;
 		}
@@ -768,7 +772,7 @@ iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 int
 iwm_write_mem(struct iwm_softc *sc, uint32_t addr, const void *buf, int dwords)
 {
-	int offs, ret = 0;
+	int offs;	
 	const uint32_t *vals = buf;
 
 	if (iwm_nic_lock(sc)) {
@@ -780,11 +784,10 @@ iwm_write_mem(struct iwm_softc *sc, uint32_t addr, const void *buf, int dwords)
 		}
 		iwm_nic_unlock(sc);
 	} else {
-		/* let's just say that it's good to notice this failure */
-		printf("%s: WARNING: write_mem failed\n", DEVNAME(sc));
-		ret = EBUSY;
+		DPRINTF(("%s: write_mem failed\n", DEVNAME(sc)));
+		return EBUSY;
 	}
-	return ret;
+	return 0;
 }
 
 int
@@ -1031,7 +1034,6 @@ iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 		}
 
 		if ((error = iwm_rx_addbuf(sc, IWM_RBUF_SIZE, i)) != 0) {
-			printf("%s: could not add mbuf to ring", DEVNAME(sc));
 			goto fail;
 		}
 	}
@@ -1053,10 +1055,6 @@ iwm_reset_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 			    IWM_FH_RSSR_CHNL0_RX_STATUS_CHNL_IDLE)
 				break;
 			DELAY(10);
-		}
-		if (ntries == 1000) {
-			printf("%s: unable to detect idle rx chan after "
-			    "reset\n", DEVNAME(sc));
 		}
 		iwm_nic_unlock(sc);
 	}
@@ -1395,7 +1393,8 @@ iwm_apm_init(struct iwm_softc *sc)
 	if (!iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY, 25000)) {
-		printf("%s: Failed to init the card\n", DEVNAME(sc));
+		printf("%s: timeout waiting for clock stabilization\n",
+		    DEVNAME(sc));
 		goto out;
 	}
 
@@ -1454,7 +1453,7 @@ iwm_apm_stop(struct iwm_softc *sc)
 	if (!iwm_poll_bit(sc, IWM_CSR_RESET,
 	    IWM_CSR_RESET_REG_FLAG_MASTER_DISABLED,
 	    IWM_CSR_RESET_REG_FLAG_MASTER_DISABLED, 100))
-		printf("%s: Master Disable Timed Out, 100 usec\n", DEVNAME(sc));
+		printf("%s: timeout waiting for master\n", DEVNAME(sc));
         DPRINTF(("iwm apm stop\n"));
 }
 
@@ -1513,10 +1512,6 @@ iwm_stop_device(struct iwm_softc *sc)
 				    chnl))
 					break;
 				DELAY(20);
-			}
-			if (ntries == 200) {
-				printf("%s: unable to detect idle tx "
-				    "chan after reset\n", DEVNAME(sc));
 			}
 		}
 		iwm_nic_unlock(sc);
@@ -1734,8 +1729,8 @@ void
 iwm_enable_txq(struct iwm_softc *sc, int qid, int fifo)
 {
 	if (!iwm_nic_lock(sc)) {
-		printf("%s: cannot enable txq %d\n", DEVNAME(sc), qid);
-		return;
+		DPRINTF(("%s: cannot enable txq %d\n", DEVNAME(sc), qid));
+		return; /* XXX return EBUSY */
 	}
 
 	/* unactivate before configuration */
@@ -1783,7 +1778,7 @@ iwm_post_alive(struct iwm_softc *sc)
 		return EBUSY;
 
 	if (sc->sched_base != iwm_read_prph(sc, IWM_SCD_SRAM_BASE_ADDR)) {
-		printf("%s: sched addr mismatch", DEVNAME(sc));
+		DPRINTF(("%s: sched addr mismatch", DEVNAME(sc)));
 		error = EINVAL;
 		goto out;
 	}
@@ -2077,8 +2072,8 @@ iwm_phy_db_send_all_channel_groups(struct iwm_softc *sc,
 		/* Send the requested PHY DB section */
 		err = iwm_send_phy_db_cmd(sc, type, entry->size, entry->data);
 		if (err) {
-			printf("%s: Can't SEND phy_db section %d (%d), err %d",
-				DEVNAME(sc), type, i, err);
+			DPRINTF(("%s: Can't SEND phy_db section %d (%d), "
+			    "err %d", DEVNAME(sc), type, i, err));
 			return err;
 		}
 
@@ -2100,29 +2095,29 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	/* Send PHY DB CFG section */
 	err = iwm_phy_db_get_section_data(sc, IWM_PHY_DB_CFG, &data, &size, 0);
 	if (err) {
-		printf("%s: Cannot get Phy DB cfg section\n", DEVNAME(sc));
+		DPRINTF(("%s: Cannot get Phy DB cfg section\n", DEVNAME(sc)));
 		return err;
 	}
 
 	err = iwm_send_phy_db_cmd(sc, IWM_PHY_DB_CFG, size, data);
 	if (err) {
-		printf("%s: Cannot send HCMD of  Phy DB cfg section\n",
-		    DEVNAME(sc));
+		DPRINTF(("%s: Cannot send HCMD of  Phy DB cfg section\n",
+		    DEVNAME(sc)));
 		return err;
 	}
 
 	err = iwm_phy_db_get_section_data(sc, IWM_PHY_DB_CALIB_NCH,
 	    &data, &size, 0);
 	if (err) {
-		printf("%s: Cannot get Phy DB non specific channel section\n",
-		    DEVNAME(sc));
+		DPRINTF(("%s: Cannot get Phy DB non specific channel section\n",
+		    DEVNAME(sc)));
 		return err;
 	}
 
 	err = iwm_send_phy_db_cmd(sc, IWM_PHY_DB_CALIB_NCH, size, data);
 	if (err) {
-		printf("%s: Cannot send HCMD of Phy DB non specific channel "
-		    "sect, %d\n", DEVNAME(sc), err);
+		DPRINTF(("%s: Cannot send HCMD of Phy DB non specific channel "
+		    "sect, %d\n", DEVNAME(sc), err));
 		return err;
 	}
 
@@ -2130,8 +2125,8 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	err = iwm_phy_db_send_all_channel_groups(sc,
 	    IWM_PHY_DB_CALIB_CHG_PAPD, IWM_NUM_PAPD_CH_GROUPS);
 	if (err) {
-		printf("%s: Cannot send channel specific PAPD groups",
-		    DEVNAME(sc));
+		DPRINTF(("%s: Cannot send channel specific PAPD groups",
+		    DEVNAME(sc)));
 		return err;
 	}
 
@@ -2139,8 +2134,8 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	err = iwm_phy_db_send_all_channel_groups(sc,
 	    IWM_PHY_DB_CALIB_CHG_TXP, IWM_NUM_TXP_CH_GROUPS);
 	if (err) {
-		printf("%s: Cannot send channel specific TX power groups",
-		    DEVNAME(sc));
+		DPRINTF(("%s: Cannot send channel specific TX power groups",
+		    DEVNAME(sc)));
 		return err;
 	}
 
@@ -2234,8 +2229,8 @@ iwm_mvm_time_event_send_add(struct iwm_softc *sc, struct iwm_node *in,
 
 	ret = iwm_mvm_send_time_event_cmd(sc, te_cmd);
 	if (ret) {
-		printf("%s: Couldn't send IWM_TIME_EVENT_CMD: %d\n",
-		    DEVNAME(sc), ret);
+		DPRINTF(("%s: Couldn't send IWM_TIME_EVENT_CMD: %d\n",
+		    DEVNAME(sc), ret));
 	}
 
 	return ret;
@@ -2325,8 +2320,8 @@ iwm_nvm_read_chunk(struct iwm_softc *sc, uint16_t section,
 
 	pkt = cmd.resp_pkt;
 	if (pkt->hdr.flags & IWM_CMD_FAILED_MSK) {
-		printf("%s: Bad return from IWM_NVM_ACCES_COMMAND (0x%08X)\n",
-		    DEVNAME(sc), pkt->hdr.flags);
+		DPRINTF(("%s: Bad return from IWM_NVM_ACCES_COMMAND (0x%08X)\n",
+		    DEVNAME(sc), pkt->hdr.flags));
 		ret = EIO;
 		goto exit;
 	}
@@ -2339,15 +2334,15 @@ iwm_nvm_read_chunk(struct iwm_softc *sc, uint16_t section,
 	offset_read = le16toh(nvm_resp->offset);
 	resp_data = nvm_resp->data;
 	if (ret) {
-		printf("%s: NVM access command failed with status %d\n",
-		    DEVNAME(sc), ret);
+		DPRINTF(("%s: NVM access command failed with status %d\n",
+		    DEVNAME(sc), ret));
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (offset_read != offset) {
-		printf("%s: NVM ACCESS response with invalid offset %d\n",
-		    DEVNAME(sc), offset_read);
+		DPRINTF(("%s: NVM ACCESS response with invalid offset %d\n",
+		    DEVNAME(sc), offset_read));
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2539,9 +2534,9 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 	data->sku_cap_11n_enable = 0;
 
 	if (!data->valid_tx_ant || !data->valid_rx_ant) {
-		printf("%s: invalid antennas (0x%x, 0x%x)\n",
+		DPRINTF(("%s: invalid antennas (0x%x, 0x%x)\n",
 			    DEVNAME(sc), data->valid_tx_ant,
-			    data->valid_rx_ant);
+			    data->valid_rx_ant));
 		return EINVAL;
 	}
 
@@ -2593,7 +2588,7 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 	/* Checking for required sections */
 	if (!sections[IWM_NVM_SECTION_TYPE_SW].data ||
 	    !sections[IWM_NVM_SECTION_TYPE_HW].data) {
-		printf("%s: Can't parse empty NVM sections\n", DEVNAME(sc));
+		DPRINTF(("%s: Can't parse empty NVM sections\n", DEVNAME(sc)));
 		return ENOENT;
 	}
 
@@ -2731,7 +2726,7 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	IWM_WRITE(sc, IWM_CSR_INT, ~0);
 
 	if ((error = iwm_nic_init(sc)) != 0) {
-		printf("%s: Unable to init nic\n", DEVNAME(sc));
+		printf("%s: unable to init nic\n", DEVNAME(sc));
 		return error;
 	}
 
@@ -2823,7 +2818,8 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 
 	/* do not operate with rfkill switch turned on */
 	if ((sc->sc_flags & IWM_FLAG_RFKILL) && !justnvm) {
-		printf("%s: rfkill active, no go\n", DEVNAME(sc));
+		printf("%s: radio is disabled by hardware switch\n",
+		    DEVNAME(sc));
 		return EPERM;
 	}
 
@@ -2858,8 +2854,8 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 	* to start the 16.0 uCode init image internal calibrations.
 	*/
 	if ((error = iwm_send_phy_cfg_cmd(sc)) != 0 ) {
-		printf("%s: Failed to run INIT "
-		    "calibrations: %d\n", DEVNAME(sc), error);
+		DPRINTF(("%s: failed to run internal calibration: %d\n",
+		    DEVNAME(sc), error));
 		return error;
 	}
 
@@ -3186,8 +3182,8 @@ iwm_mvm_rx_tx_cmd(struct iwm_softc *sc,
 	struct iwm_node *in = txd->in;
 
 	if (txd->done) {
-		printf("%s: got tx interrupt that's already been handled!\n",
-		    DEVNAME(sc));
+		DPRINTF(("%s: got tx interrupt that's already been handled!\n",
+		    DEVNAME(sc)));
 		return;
 	}
 
@@ -3254,13 +3250,14 @@ iwm_mvm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	ret = iwm_mvm_send_cmd_pdu_status(sc, IWM_BINDING_CONTEXT_CMD,
 	    sizeof(cmd), &cmd, &status);
 	if (ret) {
-		printf("%s: Failed to send binding (action:%d): %d\n",
-		    DEVNAME(sc), action, ret);
+		DPRINTF(("%s: Failed to send binding (action:%d): %d\n",
+		    DEVNAME(sc), action, ret));
 		return ret;
 	}
 
 	if (status) {
-		printf("%s: Binding command failed: %u\n", DEVNAME(sc), status);
+		DPRINTF(("%s: Binding command failed: %u\n", DEVNAME(sc),
+		    status));
 		ret = EIO;
 	}
 
@@ -3522,7 +3519,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 	    (IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
 	     IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP), 15000)) {
-		printf("%s: acquiring device failed\n", DEVNAME(sc));
+		DPRINTF(("%s: acquiring device failed\n", DEVNAME(sc)));
 		error = EBUSY;
 		goto out;
 	}
@@ -3776,8 +3773,8 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    sizeof (struct ieee80211_frame);
 
 	if (hdrlen != hdrlen2)
-		printf("%s: hdrlen error (%d != %d)\n",
-		    DEVNAME(sc), hdrlen, hdrlen2);
+		DPRINTF(("%s: hdrlen error (%d != %d)\n",
+		    DEVNAME(sc), hdrlen, hdrlen2));
 
 	tid = 0;
 
@@ -4350,8 +4347,8 @@ iwm_mvm_add_int_sta_common(struct iwm_softc *sc, struct iwm_int_sta *sta,
 		DPRINTF(("Internal station added.\n"));
 		return 0;
 	default:
-		printf("%s: Add internal station failed, status=0x%x\n",
-		    DEVNAME(sc), status);
+		DPRINTF(("%s: Add internal station failed, status=0x%x\n",
+		    DEVNAME(sc), status));
 		ret = EIO;
 		break;
 	}
@@ -4511,7 +4508,7 @@ iwm_mvm_scan_fill_channels(struct iwm_softc *sc, struct iwm_scan_cmd *cmd,
 		nchan++;
 	}
 	if (nchan == 0)
-		printf("%s: NO CHANNEL!\n", DEVNAME(sc));
+		DPRINTF(("%s: NO CHANNEL!\n", DEVNAME(sc)));
 	return nchan;
 }
 
@@ -4662,8 +4659,6 @@ iwm_mvm_scan_request(struct iwm_softc *sc, int flags,
 		 * to allocate the time events. Warn on it, but maybe we
 		 * should try to send the command again with different params.
 		 */
-		printf("%s: Scan failed! status 0x%x ret %d\n", DEVNAME(sc),
-		    status, ret);
 		sc->sc_scanband = 0;
 		ret = EIO;
 	}
@@ -4811,8 +4806,8 @@ iwm_mvm_mac_ctxt_send_cmd(struct iwm_softc *sc, struct iwm_mac_ctx_cmd *cmd)
 	int ret = iwm_mvm_send_cmd_pdu(sc, IWM_MAC_CONTEXT_CMD, IWM_CMD_SYNC,
 				       sizeof(*cmd), cmd);
 	if (ret)
-		printf("%s: Failed to send MAC context (action:%d): %d\n",
-		    DEVNAME(sc), le32toh(cmd->action), ret);
+		DPRINTF(("%s: Failed to send MAC context (action:%d): %d\n",
+		    DEVNAME(sc), le32toh(cmd->action), ret));
 	return ret;
 }
 
@@ -5029,7 +5024,7 @@ iwm_mvm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 	ret = iwm_mvm_send_cmd_pdu(sc, IWM_TIME_QUOTA_CMD, IWM_CMD_SYNC,
 	    sizeof(cmd), &cmd);
 	if (ret)
-		printf("%s: Failed to send quota: %d\n", DEVNAME(sc), ret);
+		DPRINTF(("%s: Failed to send quota: %d\n", DEVNAME(sc), ret));
 	return ret;
 }
 
@@ -5056,24 +5051,24 @@ iwm_auth(struct iwm_softc *sc)
 
 	in->in_assoc = 0;
 	if ((error = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
-		printf("%s: failed to add MAC\n", DEVNAME(sc));
+		DPRINTF(("%s: failed to add MAC\n", DEVNAME(sc)));
 		return error;
 	}
 
 	if ((error = iwm_mvm_phy_ctxt_changed(sc, &sc->sc_phyctxt[0],
 	    in->in_ni.ni_chan, 1, 1)) != 0) {
-		printf("%s: failed add phy ctxt\n", DEVNAME(sc));
+		DPRINTF(("%s: failed add phy ctxt\n", DEVNAME(sc)));
 		return error;
 	}
 	in->in_phyctxt = &sc->sc_phyctxt[0];
 
 	if ((error = iwm_mvm_binding_add_vif(sc, in)) != 0) {
-		printf("%s: binding cmd\n", DEVNAME(sc));
+		DPRINTF(("%s: binding cmd\n", DEVNAME(sc)));
 		return error;
 	}
 
 	if ((error = iwm_mvm_add_sta(sc, in)) != 0) {
-		printf("%s: failed to add MAC\n", DEVNAME(sc));
+		DPRINTF(("%s: failed to add MAC\n", DEVNAME(sc)));
 		return error;
 	}
 
@@ -5094,10 +5089,10 @@ iwm_auth(struct iwm_softc *sc)
 		 * second, we have bigger problems
 		 */
 		if (sc->sc_auth_prot == 0) {
-			printf("%s: missed auth window!\n", DEVNAME(sc));
+			DPRINTF(("%s: missed auth window!\n", DEVNAME(sc)));
 			return ETIMEDOUT;
 		} else if (sc->sc_auth_prot == -1) {
-			printf("%s: no time event, denied!\n", DEVNAME(sc));
+			DPRINTF(("%s: no time event, denied!\n", DEVNAME(sc)));
 			sc->sc_auth_prot = 0;
 			return EAUTH;
 		}
@@ -5115,13 +5110,13 @@ iwm_assoc(struct iwm_softc *sc)
 	int error;
 
 	if ((error = iwm_mvm_update_sta(sc, in)) != 0) {
-		printf("%s: failed to update STA\n", DEVNAME(sc));
+		DPRINTF(("%s: failed to update STA\n", DEVNAME(sc)));
 		return error;
 	}
 
 	in->in_assoc = 1;
 	if ((error = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
-		printf("%s: failed to update MAC\n", DEVNAME(sc));
+		DPRINTF(("%s: failed to update MAC\n", DEVNAME(sc)));
 		return error;
 	}
 
@@ -5223,8 +5218,8 @@ iwm_setrates(struct iwm_node *in)
 	int txant = 0;
 
 	if (nrates > nitems(lq->rs_table)) {
-		printf("%s: node supports %d rates, driver handles only %zu\n",
-		    DEVNAME(sc), nrates, nitems(lq->rs_table));
+		DPRINTF(("%s: node supports %d rates, driver handles "
+		    "only %zu\n", DEVNAME(sc), nrates, nitems(lq->rs_table)));
 		return;
 	}
 
@@ -5238,7 +5233,8 @@ iwm_setrates(struct iwm_node *in)
 			if (iwm_rates[ridx].rate == rate)
 				break;
 		if (ridx > IWM_RIDX_MAX)
-			printf("%s: WARNING: device rate for %d not found!\n", DEVNAME(sc), rate);
+			DPRINTF(("%s: WARNING: device rate for %d not found!\n",
+			    DEVNAME(sc), rate));
 		else
 			in->in_ridx[i] = ridx;
 	}
@@ -5381,14 +5377,8 @@ iwm_newstate_cb(void *wk)
 		break;
 
 	case IEEE80211_S_SCAN:
-		if (sc->sc_scanband) {
-			/* how does this print match the clause? */
-			if (ic->ic_state != nstate)
-				printf("%s: scan request(%d) "
-				    "while scanning(%d) ignored\n",
-				    DEVNAME(sc), nstate, ic->ic_state);
+		if (sc->sc_scanband)
 			break;
-		}
 
 		if ((error = iwm_mvm_scan_request(sc, IEEE80211_CHAN_2GHZ,
 		    ic->ic_des_esslen != 0,
@@ -5401,8 +5391,8 @@ iwm_newstate_cb(void *wk)
 
 	case IEEE80211_S_AUTH:
 		if ((error = iwm_auth(sc)) != 0) {
-			printf("%s: could not move to auth state: %d\n",
-			    DEVNAME(sc), error);
+			DPRINTF(("%s: could not move to auth state: %d\n",
+			    DEVNAME(sc), error));
 			return;
 		}
 
@@ -5410,8 +5400,8 @@ iwm_newstate_cb(void *wk)
 
 	case IEEE80211_S_ASSOC:
 		if ((error = iwm_assoc(sc)) != 0) {
-			printf("%s: failed to associate: %d\n", DEVNAME(sc),
-			    error);
+			DPRINTF(("%s: failed to associate: %d\n", DEVNAME(sc),
+			    error));
 			return;
 		}
 		break;
@@ -5431,7 +5421,7 @@ iwm_newstate_cb(void *wk)
 
 		cmd.data[0] = &in->in_lq;
 		if ((error = iwm_send_cmd(sc, &cmd)) != 0) {
-			printf("%s: IWM_LQ_CMD failed\n", DEVNAME(sc));
+			DPRINTF(("%s: IWM_LQ_CMD failed\n", DEVNAME(sc)));
 		}
 
 		timeout_add(&sc->sc_calib_to, hz/2);
@@ -5456,7 +5446,7 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	iwmns = malloc(sizeof(*iwmns), M_DEVBUF, M_NOWAIT);
 	if (!iwmns) {
-		printf("%s: allocating state cb mem failed\n", DEVNAME(sc));
+		DPRINTF(("%s: allocating state cb mem failed\n", DEVNAME(sc)));
 		return ENOMEM;
 	}
 
@@ -5487,8 +5477,7 @@ iwm_endscan_cb(void *arg)
 		if ((error = iwm_mvm_scan_request(sc,
 		    IEEE80211_CHAN_5GHZ, ic->ic_des_esslen != 0,
 		    ic->ic_des_essid, ic->ic_des_esslen)) != 0) {
-			printf("%s: could not initiate 5ghz scan\n",
-			    DEVNAME(sc));
+			printf("%s: could not initiate scan\n", DEVNAME(sc));
 			done = 1;
 		}
 #else
@@ -5535,8 +5524,7 @@ iwm_init_hw(struct iwm_softc *sc)
 	/* omstart, this time with the regular firmware */
 	error = iwm_mvm_load_ucode_wait_alive(sc, IWM_UCODE_TYPE_REGULAR);
 	if (error) {
-		printf("%s: Failed to start RT ucode: %d\n", DEVNAME(sc),
-		    error);
+		printf("%s: could not load firmware\n", DEVNAME(sc));
 		goto error;
 	}
 
@@ -5717,7 +5705,9 @@ iwm_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", DEVNAME(sc));
+#ifdef IWM_DEBUG
 			iwm_nic_error(sc);
+#endif
 			ifp->if_flags &= ~IFF_UP;
 			iwm_stop(ifp, 1);
 			ifp->if_oerrors++;
@@ -5885,6 +5875,7 @@ iwm_desc_lookup(uint32_t num)
 	return advanced_lookup[i].name;
 }
 
+#ifdef IWM_DEBUG
 /*
  * Support for dumping the error log seemed like a good idea ...
  * but it's mostly hex junk and the only sensible thing is the
@@ -5957,6 +5948,7 @@ iwm_nic_error(struct iwm_softc *sc)
 	printf("%s: %08X | timestamp\n", DEVNAME(sc), table.u_timestamp);
 	printf("%s: %08X | flow_handler\n", DEVNAME(sc), table.flow_handler);
 }
+#endif
 
 #define SYNC_RESP_STRUCT(_var_, _pkt_)					\
 do {									\
@@ -6114,7 +6106,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 			struct iwm_error_resp *resp;
 			SYNC_RESP_STRUCT(resp, pkt);
 
-			printf("%s: Firmware error 0x%x, cmd 0x%x\n",
+			printf("%s: firmware error 0x%x, cmd 0x%x\n",
 				DEVNAME(sc), le32toh(resp->error_type),
 				resp->cmd_id);
 			break; }
@@ -6276,8 +6268,8 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
 		handled |= IWM_CSR_INT_BIT_RF_KILL;
 		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
-			printf("%s: rfkill switch, disabling interface\n",
-			    DEVNAME(sc));
+			DPRINTF(("%s: rfkill switch, disabling interface\n",
+			    DEVNAME(sc)));
 			ifp->if_flags &= ~IFF_UP;
 			iwm_stop(ifp, 1);
 		}
@@ -6309,7 +6301,7 @@ iwm_intr(void *arg)
 	}
 
 	if (__predict_false(r1 & ~handled))
-		printf("%s: unhandled interrupts: %x\n", DEVNAME(sc), r1);
+		DPRINTF(("%s: unhandled interrupts: %x\n", DEVNAME(sc), r1));
 	rv = 1;
 
  out_ena:
@@ -6378,7 +6370,7 @@ iwm_attach_hook(iwm_hookarg_t arg)
 
 	sc->sc_hw_rev = IWM_READ(sc, IWM_CSR_HW_REV);
 	if (iwm_prepare_card_hw(sc) != 0) {
-		printf("%s: failed to init hw\n", DEVNAME(sc));
+		printf("%s: could not initialize hardware\n", DEVNAME(sc));
 		return;
 	}
 
