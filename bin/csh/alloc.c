@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.15 2015/02/08 05:47:28 tedu Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.16 2015/02/08 06:01:25 tedu Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
 
 /*-
@@ -38,10 +38,10 @@
 #include "csh.h"
 #include "extern.h"
 
-ptr_t
+void *
 Malloc(size_t n)
 {
-    ptr_t   ptr;
+    void *ptr;
 
     if ((ptr = malloc(n)) == NULL) {
 	child++;
@@ -50,10 +50,10 @@ Malloc(size_t n)
     return (ptr);
 }
 
-ptr_t
-Reallocarray(ptr_t p, size_t c, size_t n)
+void *
+Reallocarray(void * p, size_t c, size_t n)
 {
-    ptr_t   ptr;
+    void *ptr;
 
     if ((ptr = reallocarray(p, c, n)) == NULL) {
 	child++;
@@ -62,10 +62,10 @@ Reallocarray(ptr_t p, size_t c, size_t n)
     return (ptr);
 }
 
-ptr_t
+void *
 Calloc(size_t s, size_t n)
 {
-    ptr_t   ptr;
+    void *ptr;
 
     if ((ptr = calloc(s, n)) == NULL) {
 	child++;
@@ -76,7 +76,7 @@ Calloc(size_t s, size_t n)
 }
 
 void
-Free(ptr_t p)
+Free(void *p)
 {
 	free(p);
 }

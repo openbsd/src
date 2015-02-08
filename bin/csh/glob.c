@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.16 2015/02/08 05:47:28 tedu Exp $	*/
+/*	$OpenBSD: glob.c,v 1.17 2015/02/08 06:01:25 tedu Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -877,7 +877,7 @@ Gcat(Char *s1, Char *s2)
 
 #ifdef FILEC
 int
-sortscmp(ptr_t a, ptr_t b)
+sortscmp(const void *a, const void *b)
 {
 #if defined(NLS) && !defined(NOSTRCOLL)
     char    buf[2048];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 2014/10/17 06:17:37 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2015/02/08 06:01:25 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ void	  rscan(Char **, void (*)(int));
 void	  tglob(Char **);
 void	  trim(Char **);
 #ifdef FILEC
-int	  sortscmp(const ptr_t, const ptr_t);
+int	  sortscmp(const void *, const void *);
 #endif /* FILEC */
 
 /*
@@ -294,10 +294,10 @@ void	psecs(long);
 /*
  * alloc.c
  */
-void	Free(ptr_t);
-ptr_t	Malloc(size_t);
-ptr_t	Reallocarray(ptr_t, size_t, size_t);
-ptr_t	Calloc(size_t, size_t);
+void	Free(void *);
+void *	Malloc(size_t);
+void *	Reallocarray(void *, size_t, size_t);
+void *	Calloc(size_t, size_t);
 
 /*
  * str.c:

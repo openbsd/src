@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.20 2015/01/19 18:20:47 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.21 2015/02/08 06:01:25 tedu Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -74,8 +74,6 @@ typedef char Char;
 #define UNREGISTER(a)	(void) &a
 
 typedef void *ioctl_t;		/* Third arg of ioctl */
-
-typedef void *ptr_t;
 
 #include "const.h"
 #include "char.h"
