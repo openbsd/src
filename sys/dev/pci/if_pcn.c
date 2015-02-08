@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.33 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.34 2015/02/08 06:55:28 mpi Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1410,17 +1410,9 @@ pcn_rxintr(struct pcn_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
-		/* Pass this up to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		if_input(ifp, m);
 		ifp->if_ipackets++;
 	}
 

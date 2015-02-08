@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.173 2015/01/21 10:00:42 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.174 2015/02/08 06:55:28 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1382,7 +1382,6 @@ re_rxeof(struct rl_softc *sc)
 			    (total_len - ETHER_CRC_LEN);
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
 
 		/* Do RX checksumming */
 
@@ -1422,11 +1421,7 @@ re_rxeof(struct rl_softc *sc)
 		}
 #endif
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		if_input(ifp, m);
 	}
 
 	sc->rl_ldata.rl_rx_considx = i;
