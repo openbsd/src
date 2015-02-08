@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.42 2014/07/13 12:11:01 jasper Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.43 2015/02/08 00:30:20 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -130,9 +130,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 extern label_t  *db_recover;
 
 int
-kdb_trap(type, fp)
-	int type;
-	struct trap_frame *fp;
+kdb_trap(int type, struct trap_frame *fp)
 {
 	switch(type) {
 	case T_BREAK:		/* breakpoint */
@@ -249,7 +247,6 @@ db_enter_ddb(void)
 	}
 }
 
-
 void
 db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -284,10 +281,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 #endif
 
 void
-db_read_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t      size;
-	char       *data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	while (size >= sizeof(uint32_t)) {
 		*(uint32_t *)data = kdbpeek(addr);
@@ -308,10 +302,7 @@ db_read_bytes(addr, size, data)
 }
 
 void
-db_write_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t      size;
-	char       *data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	vaddr_t ptr = addr;
 	size_t len = size;
@@ -342,12 +333,8 @@ db_write_bytes(addr, size, data)
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	boolean_t	have_addr;
-	db_expr_t	count;
-	char		*modif;
-	int		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, int (*pr)(const char *, ...))
 {
 	struct trap_frame *regs = &ddb_regs;
 
@@ -376,7 +363,6 @@ next_instr_address(db_addr_t pc, boolean_t bd)
 	return(next);
 }
 
-
 /*
  *  MIPS machine dependent DDB commands.
  */
@@ -397,14 +383,14 @@ db_print_tlb(uint tlbno, uint64_t tlblo)
 #ifndef CPU_R8000
 	/* short description of coherency attributes */
 	static const char *attr[] = {
-	    "CCA 0",
-	    "CCA 1",
-	    "NC   ",
-	    "C    ",
-	    "CEX  ",
-	    "CEXW ",
-	    "CCA 6",
-	    "NCACC"
+		"CCA 0",
+		"CCA 1",
+		"NC   ",
+		"C    ",
+		"CEX  ",
+		"CEXW ",
+		"CCA 6",
+		"NCACC"
 	};
 #endif
 
@@ -528,13 +514,13 @@ struct db_command mips_db_command_table[] = {
 };
 
 void
-db_machine_init()
+db_machine_init(void)
 {
+	extern char *ssym;
 #ifdef MULTIPROCESSOR
 	int i;
 #endif
 
-extern char *ssym;
 	db_machine_commands_install(mips_db_command_table);
 #ifdef MULTIPROCESSOR
 	for (i = 0; i < ncpus; i++) {
@@ -545,7 +531,6 @@ extern char *ssym;
 		ddb_init();	/* Init symbols */
 	}
 }
-
 
 #ifdef MULTIPROCESSOR
 void
