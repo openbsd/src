@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.27 2015/02/08 05:47:28 tedu Exp $       */
+/*    $OpenBSD: func.c,v 1.28 2015/02/08 06:09:50 tedu Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -399,7 +399,7 @@ doforeach(Char **v, struct command *t)
     v = globall(v);
     if (v == 0)
 	stderror(ERR_NAME | ERR_NOMATCH);
-    nwp = (struct whyle *) xcalloc(1, sizeof *nwp);
+    nwp = xcalloc(1, sizeof *nwp);
     nwp->w_fe = nwp->w_fe0 = v;
     gargv = 0;
     btell(&nwp->w_start);
@@ -436,8 +436,7 @@ dowhile(Char **v, struct command *t)
     if (*v)
 	stderror(ERR_NAME | ERR_EXPRESSION);
     if (!again) {
-	struct whyle *nwp =
-	(struct whyle *) xcalloc(1, sizeof(*nwp));
+	struct whyle *nwp = xcalloc(1, sizeof(*nwp));
 
 	nwp->w_start = lineloc;
 	nwp->w_end.type = F_SEEK;

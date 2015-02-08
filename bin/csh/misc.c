@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.14 2015/02/08 05:51:37 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.15 2015/02/08 06:09:50 tedu Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -131,8 +131,7 @@ blkfree(Char **av0)
 Char  **
 saveblk(Char **v)
 {
-    Char **newv =
-    (Char **) xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
+    Char **newv = xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
     Char  **onewv = newv;
 
     while (*v)
@@ -186,8 +185,7 @@ strspl(char *cp, char *dp)
 Char  **
 blkspl(Char **up, Char **vp)
 {
-    Char **wp =
-    (Char **) xcalloc((size_t) (blklen(up) + blklen(vp) + 1),
+    Char **wp = xcalloc((size_t) (blklen(up) + blklen(vp) + 1),
 		      sizeof(Char **));
 
     (void) blkcpy(wp, up);
@@ -320,7 +318,7 @@ number(Char *cp)
 Char  **
 copyblk(Char **v)
 {
-    Char  **nv = (Char **) xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
+    Char  **nv = xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
 
     return (blkcpy(nv, v));
 }

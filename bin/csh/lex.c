@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.15 2015/02/08 05:47:28 tedu Exp $	*/
+/*	$OpenBSD: lex.c,v 1.16 2015/02/08 06:09:50 tedu Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ lex(struct wordent *hp)
     do {
 	struct wordent *new;
 
-	new = (struct wordent *) xmalloc((size_t) sizeof(*wdp));
+	new = xmalloc((size_t) sizeof(*wdp));
 	new->word = 0;
 	new->prev = wdp;
 	new->next = hp;
@@ -192,7 +192,7 @@ copylex(struct wordent *hp, struct wordent *fp)
     do {
 	struct wordent *new;
 
-	new = (struct wordent *) xmalloc((size_t) sizeof(*wdp));
+	new = xmalloc((size_t) sizeof(*wdp));
 	new->prev = wdp;
 	new->next = hp;
 	wdp->next = new;
@@ -843,8 +843,7 @@ dosub(int sc, struct wordent *en, bool global)
 
     wdp = hp;
     while (--i >= 0) {
-	struct wordent *new =
-		(struct wordent *) xcalloc(1, sizeof *wdp);
+	struct wordent *new = xcalloc(1, sizeof *wdp);
 
 	new->word = 0;
 	new->prev = wdp;
@@ -1584,9 +1583,9 @@ settell(void)
 	return;
     if (lseek(SHIN, (off_t) 0, SEEK_CUR) < 0 || errno == ESPIPE)
 	return;
-    fbuf = (Char **) xcalloc(2, sizeof(Char **));
+    fbuf = xcalloc(2, sizeof(Char **));
     fblocks = 1;
-    fbuf[0] = (Char *) xcalloc(BUFSIZ, sizeof(Char));
+    fbuf[0] = xcalloc(BUFSIZ, sizeof(Char));
     fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, SEEK_CUR);
     cantell = 1;
 }

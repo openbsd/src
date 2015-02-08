@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.19 2015/02/08 05:51:37 tedu Exp $	*/
+/*	$OpenBSD: dir.c,v 1.20 2015/02/08 06:09:50 tedu Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ dinit(Char *hp)
 	}
     }
 
-    dp = (struct directory *) xcalloc(1, sizeof(struct directory));
+    dp = xcalloc(1, sizeof(struct directory));
     dp->di_name = Strsave(cp);
     dp->di_count = 0;
     dhead.di_next = dhead.di_prev = dp;
@@ -351,7 +351,7 @@ dochngd(Char **v, struct command *t)
     }
     else
 	cp = dfollow(*v);
-    dp = (struct directory *) xcalloc(1, sizeof(struct directory));
+    dp = xcalloc(1, sizeof(struct directory));
     dp->di_name = cp;
     dp->di_count = 0;
     dp->di_next = dcwd->di_next;
@@ -502,7 +502,7 @@ dopushd(Char **v, struct command *t)
 	Char *ccp;
 
 	ccp = dfollow(*v);
-	dp = (struct directory *) xcalloc(1, sizeof(struct directory));
+	dp = xcalloc(1, sizeof(struct directory));
 	dp->di_name = ccp;
 	dp->di_count = 0;
 	dp->di_prev = dcwd;
