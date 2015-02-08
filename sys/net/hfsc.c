@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.14 2015/02/06 06:37:24 henning Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.15 2015/02/08 03:16:16 henning Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -313,36 +313,6 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	cl->cl_q->qlimit = qlimit;
 	cl->cl_q->qlen = 0;
 	cl->cl_flags = flags;
-#ifdef RED_NOTYET
-	if (flags & HFSC_RED) {
-		int red_flags, red_pkttime;
-		u_int m2;
-
-		m2 = 0;
-		if (rsc != NULL && rsc->m2 > m2)
-			m2 = rsc->m2;
-		if (fsc != NULL && fsc->m2 > m2)
-			m2 = fsc->m2;
-		if (usc != NULL && usc->m2 > m2)
-			m2 = usc->m2;
-
-		red_flags = 0;
-		if (flags & HFSC_ECN)
-			red_flags |= REDF_ECN;
-		if (m2 < 8)
-			red_pkttime = 1000 * 1000 * 1000; /* 1 sec */
-		else
-			red_pkttime = (int64_t)hif->hif_ifq->altq_ifp->if_mtu
-				* 1000 * 1000 * 1000 / (m2 / 8);
-		if (flags & HFSC_RED) {
-			cl->cl_red = red_alloc(0, 0,
-			    qlimit(cl->cl_q) * 10/100,
-			    qlimit(cl->cl_q) * 30/100,
-			    red_flags, red_pkttime);
-			qtype(cl->cl_q) = Q_RED;
-		}
-	}
-#endif /* RED_NOTYET */
 
 	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0)) {
 		cl->cl_rsc = pool_get(&hfsc_internal_sc_pl, PR_WAITOK);
@@ -411,12 +381,6 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 err_ret:
 	if (cl->cl_actc != NULL)
 		hfsc_actlist_destroy(cl->cl_actc);
-#if RED_NOTYET
-	if (cl->cl_red != NULL) {
-		if (q_is_red(cl->cl_q))
-			red_destroy(cl->cl_red);
-	}
-#endif
 	if (cl->cl_fsc != NULL)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_fsc);
 	if (cl->cl_rsc != NULL)
@@ -468,13 +432,6 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	splx(s);
 
 	hfsc_actlist_destroy(cl->cl_actc);
-
-#if RED_NOTYET
-	if (cl->cl_red != NULL) {
-		if (q_is_red(cl->cl_q))
-			red_destroy(cl->cl_red);
-	}
-#endif
 
 	if (cl == cl->cl_hif->hif_rootclass)
 		cl->cl_hif->hif_rootclass = NULL;
@@ -613,13 +570,7 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 		}
 	}
 
-#if RED_NOTYET
-	if (q_is_red(cl->cl_q))
-		m= red_getq(cl->cl_red, cl->cl_q);
-	else
-#endif
-		m = hfsc_getq(cl);
-	if (m == NULL)
+	if ((m = hfsc_getq(cl)) == NULL)
 		panic("hfsc_dequeue");
 
 	cl->cl_hif->hif_packets--;
@@ -667,10 +618,7 @@ int
 hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 {
 	struct mbuf *m0;
-#if RED_NOTYET
-	if (q_is_red(cl->cl_q))
-		return red_addq(cl->cl_red, cl->cl_q, m, cl->cl_pktattr);
-#endif
+
 	if (cl->cl_q->qlen >= cl->cl_q->qlimit)
 		return (-1);
 
@@ -1495,10 +1443,6 @@ hfsc_getclstats(struct hfsc_class_stats *sp, struct hfsc_class *cl)
 	sp->period = cl->cl_stats.period;
 
 	sp->qtype = cl->cl_q->qtype;
-#ifdef RED_NOTYET
-	if (q_is_red(cl->cl_q))
-		red_getstats(cl->cl_red, &sp->red[0]);
-#endif
 }
 
 /* convert a class handle to the corresponding class pointer */
