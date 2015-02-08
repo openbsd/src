@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.3 2014/11/04 18:15:22 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.4 2015/02/08 10:22:45 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,17 +198,6 @@ parseArgs(int argc, char **argv)
 				goto bad;
 			host = *(++argv);
 		}
-#if 0
-		else if (strcmp(*argv, "-host") == 0) {
-			if (--argc < 1)
-				goto bad;
-			host = *(++argv);
-		} else if (strcmp(*argv, "-port") == 0) {
-			if (--argc < 1)
-				goto bad;
-			port = *(++argv);
-		}
-#endif
 		else if (strcmp(*argv, "-reuse") == 0)
 			perform = 2;
 		else if (strcmp(*argv, "-new") == 0)
@@ -550,11 +539,6 @@ doConnection(SSL * scon)
 	}
 
 	SSL_set_bio(serverCon, conn, conn);
-
-#if 0
-	if (scon != NULL)
-		SSL_set_session(serverCon, SSL_get_session(scon));
-#endif
 
 	/* ok, lets connect */
 	for (;;) {

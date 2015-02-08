@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
+/* $OpenBSD: s_cb.c,v 1.3 2015/02/08 10:22:45 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -598,10 +598,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 
 		BIO_printf(bio, "   ");
 		num = len;
-#if 0
-		if (num > 16)
-			num = 16;
-#endif
+
 		for (i = 0; i < num; i++) {
 			if (i % 16 == 0 && i > 0)
 				BIO_printf(bio, "\n   ");

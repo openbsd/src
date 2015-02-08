@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: smime.c,v 1.2 2015/02/08 10:22:45 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -446,10 +446,7 @@ argerr:
 		encerts = sk_X509_new_null();
 		while (*args) {
 			if (!(cert = load_cert(bio_err, *args, FORMAT_PEM,
-				    NULL, e, "recipient certificate file"))) {
-#if 0				/* An appropriate message is already printed */
-				BIO_printf(bio_err, "Can't read recipient certificate file %s\n", *args);
-#endif
+			    NULL, e, "recipient certificate file"))) {
 				goto end;
 			}
 			sk_X509_push(encerts, cert);

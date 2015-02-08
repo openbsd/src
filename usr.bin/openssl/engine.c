@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.2 2014/12/07 15:08:32 jsing Exp $ */
+/* $OpenBSD: engine.c,v 1.3 2015/02/08 10:22:45 doug Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -191,9 +191,6 @@ util_verbose(ENGINE * e, int verbose, BIO * bio_out, const char *indent)
 	if (!ENGINE_ctrl(e, ENGINE_CTRL_HAS_CTRL_FUNCTION, 0, NULL, NULL) ||
 	    ((num = ENGINE_ctrl(e, ENGINE_CTRL_GET_FIRST_CMD_TYPE,
 			0, NULL, NULL)) <= 0)) {
-#if 0
-		BIO_printf(bio_out, "%s<no control commands>\n", indent);
-#endif
 		return 1;
 	}
 	cmds = sk_OPENSSL_STRING_new_null();

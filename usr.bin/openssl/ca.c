@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.4 2015/02/07 04:09:43 bcook Exp $ */
+/* $OpenBSD: ca.c,v 1.5 2015/02/08 10:22:45 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2017,18 +2017,6 @@ write_new_certificate(BIO * bp, X509 * x, int output_der, int notext)
 		(void) i2d_X509_bio(bp, x);
 		return;
 	}
-#if 0
-	/* ??? Not needed since X509_print prints all this stuff anyway */
-	f = X509_NAME_oneline(X509_get_issuer_name(x), buf, 256);
-	BIO_printf(bp, "issuer :%s\n", f);
-
-	f = X509_NAME_oneline(X509_get_subject_name(x), buf, 256);
-	BIO_printf(bp, "subject:%s\n", f);
-
-	BIO_puts(bp, "serial :");
-	i2a_ASN1_INTEGER(bp, x->cert_info->serialNumber);
-	BIO_puts(bp, "\n\n");
-#endif
 	if (!notext)
 		X509_print(bp, x);
 	PEM_write_bio_X509(bp, x);

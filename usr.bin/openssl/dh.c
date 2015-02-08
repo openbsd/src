@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: dh.c,v 1.3 2015/02/08 10:22:45 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -211,15 +211,6 @@ bad:
 	}
 	if (text) {
 		DHparams_print(out, dh);
-#ifdef undef
-		printf("p=");
-		BN_print(stdout, dh->p);
-		printf("\ng=");
-		BN_print(stdout, dh->g);
-		printf("\n");
-		if (dh->length != 0)
-			printf("recommended private length=%ld\n", dh->length);
-#endif
 	}
 	if (check) {
 		if (!DH_check(dh, &i)) {
