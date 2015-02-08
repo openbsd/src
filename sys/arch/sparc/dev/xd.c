@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.71 2015/01/16 20:18:24 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.72 2015/02/08 01:30:09 dlg Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *,
 			    caddr_t, struct buf *);
 void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
 void	xdc_start(struct xdc_softc *, int);
-int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
+int	xdc_startbuf(struct xdc_softc *);
 int	xdc_submit_iorq(struct xdc_softc *, int, int);
 void	xdc_tick(void *);
 void	xdc_xdreset(struct xdc_softc *, struct xd_softc *);
@@ -447,10 +447,7 @@ xdcattach(parent, self, aux)
 	xdc->ndone = 0;
 
 	/* init queue of waiting bufs */
-
-	xdc->sc_wq.b_active = 0;
-	xdc->sc_wq.b_actf = 0;
-	xdc->sc_wq.b_actb = &xdc->sc_wq.b_actf;
+	bufq_init(&xdc->sc_bufq, BUFQ_FIFO);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:
@@ -999,7 +996,6 @@ xdstrategy(bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
-	struct buf *wq;
 	int     s, unit;
 	struct xdc_attach_args xa;
 
@@ -1038,41 +1034,15 @@ xdstrategy(bp)
 	/*
 	 * now we know we have a valid buf structure that we need to do I/O
 	 * on.
-	 *
-	 * note that we don't disksort because the controller has a sorting
-	 * algorithm built into the hardware.
 	 */
-
-	s = splbio();		/* protect the queues */
-
-	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && parent->sc_wq.b_actf)
-		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
+	bufq_queue(&parent->sc_bufq, bp);
+
+	s = splbio();
+	while (parent->nfree > 0 && bufq_peek(&parent->sc_bufq)) {
+		if (xdc_startbuf(parent) != XD_ERR_AOK)
 			break;
-
-	/* if there are no free iorq's, then we just queue and return. the
-	 * buffs will get picked up later by xdcintr().
-	 */
-
-	if (parent->nfree == 0) {
-		wq = &xd->parent->sc_wq;
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
-		splx(s);
-		return;
 	}
-
-	/* now we have free iopb's and we are at splbio... start 'em up */
-	if (xdc_startbuf(parent, xd, bp) != XD_ERR_AOK) {
-		splx(s);
-		return;
-	}
-
-	/* done! */
-
 	splx(s);
 	return;
 
@@ -1111,8 +1081,8 @@ xdcintr(v)
 
 	/* fill up any remaining iorq's with queue'd buffers */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
-		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
+	while (xdcsc->nfree > 0 && bufq_peek(&xdcsc->sc_bufq))
+		if (xdc_startbuf(xdcsc) != XD_ERR_AOK)
 			break;
 
 	return (1);
@@ -1337,16 +1307,15 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
  */
 
 int
-xdc_startbuf(xdcsc, xdsc, bp)
+xdc_startbuf(xdcsc)
 	struct xdc_softc *xdcsc;
-	struct xd_softc *xdsc;
-	struct buf *bp;
 
 {
 	int     rqno, partno;
+	struct xd_softc *xdsc;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
-	struct buf *wq;
+	struct buf *bp;
 	u_long  block;
 	caddr_t dbuf;
 
@@ -1357,19 +1326,11 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	iopb = iorq->iopb;
 
 	/* get buf */
+	bp = bufq_dequeue(&xdcsc->sc_bufq);
+	if (bp == NULL)
+		panic("xdc_startbuf bp");
 
-	if (bp == NULL) {
-		bp = xdcsc->sc_wq.b_actf;
-		if (!bp)
-			panic("xdc_startbuf bp");
-		wq = bp->b_actf;
-		if (wq)
-			wq->b_actb = bp->b_actb;
-		else
-			xdcsc->sc_wq.b_actb = bp->b_actb;
-		*bp->b_actb = wq;
-		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
-	}
+	xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
 	partno = DISKPART(bp->b_dev);
 #ifdef XDC_DEBUG
 	printf("xdc_startbuf: %s%c: %s block %lld\n",
@@ -1395,11 +1356,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		printf("%s: warning: out of DVMA space\n",
 			xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		wq = &xdcsc->sc_wq;	/* put at end of queue */
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		bufq_queue(&xdcsc->sc_bufq, bp); /* put at end of queue */
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
@@ -1600,8 +1557,8 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
-		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
+	while (xdcsc->nfree > 0 && bufq_peek(&xdcsc->sc_bufq))
+		if (xdc_startbuf(xdcsc) != XD_ERR_AOK)
 			break;
 
 	return (retval);
