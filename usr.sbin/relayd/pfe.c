@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.78 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.79 2015/02/08 01:39:06 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -308,8 +308,9 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (s) {
 			TAILQ_REMOVE(&env->sc_sessions, s, se_entry);
 			free(s);
-		} else
-			log_warnx("removal of unpublished session %i", sid);
+		} else {
+			DPRINTF("removal of unpublished session %i", sid);
+		}
 		break;
 	default:
 		return (-1);
