@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.102 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.103 2015/02/08 00:34:45 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1370,8 +1370,13 @@ loop:
 
 end:
 	if (ra) {
+		extern void *kernel_text;
+		extern void *etext;
+
 		if (pc == ra && stksize == 0)
 			(*pr)("stacktrace: loop!\n");
+		else if (ra < (vaddr_t)&kernel_text || ra > (vaddr_t)&etext)
+			(*pr)("stacktrace: ra corrupted!\n");
 		else {
 			pc = ra;
 			sp += stksize;
