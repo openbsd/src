@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.150 2015/02/08 01:30:09 reyk Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.151 2015/02/08 15:17:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -805,6 +805,8 @@ void
 tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 {
 	struct filed	*f = arg;
+	char		*p, *buf, *end;
+	int		 l;
 	char		 ebuf[ERRBUFSIZE];
 
 	if (event & EVBUFFER_EOF)
@@ -828,10 +830,32 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 	f->f_file = -1;
 
 	/*
-	 * XXX The messages in the output buffer may be out of sync.
-	 * Here we should clear the buffer or at least remove partial
-	 * messages from the beginning.
+	 * The messages in the output buffer may be out of sync.
+	 * Check that the buffer starts with "1234 <1234 octets>\n".
+	 * Otherwise remove the partial message from the beginning.
 	 */
+	buf = EVBUFFER_DATA(bufev->output);
+	end = buf + EVBUFFER_LENGTH(bufev->output);
+	for (p = buf; p < end && p < buf + 4; p++) {
+		if (!isdigit(*p))
+			break;
+	}
+	if (buf < end && !(buf + 1 <= p && p < end && *p == ' ' &&
+	    (l = atoi(buf)) > 0 && buf + l < end && buf[l] == '\n')) {
+		for (p = buf; p < end; p++) {
+			if (*p == '\n') {
+				evbuffer_drain(bufev->output, p - buf + 1);
+				break;
+			}
+		}
+		/* Without '\n' discard everything. */
+		if (p == end)
+			evbuffer_drain(bufev->output, p - buf);
+		dprintf("loghost \"%s\" dropped partial message\n",
+		    f->f_un.f_forw.f_loghost);
+		f->f_un.f_forw.f_dropped++;
+	}
+
 	tcp_connectcb(-1, 0, f);
 
 	/* Log the connection error to the fresh buffer after reconnecting. */
@@ -1252,17 +1276,30 @@ fprintlog(struct filed *f, int flags, char *msg)
 			break;
 		}
 		/*
-		 * RFC 6587  3.4.2.  Non-Transparent-Framing
-		 * Use \n to split messages for now.
-		 * 3.4.1.  Octet Counting might be implemented later.
+		 * Syslog over TLS  RFC 5425  4.3.  Sending Data
+		 * Syslog over TCP  RFC 6587  3.4.1.  Octet Counting
+		 * Use an additional '\n' to split messages.  This allows
+		 * buffer synchronisation, helps legacy implementations,
+		 * and makes line based testing easier.
 		 */
+		l = snprintf(line, sizeof(line), "<%d>%.15s %s%s\n",
+		    f->f_prevpri, (char *)iov[0].iov_base,
+		    IncludeHostname ? LocalHostName : "",
+		    IncludeHostname ? " " : "");
+		if (l < 0) {
+			dprintf(" (dropped snprintf)\n");
+			f->f_un.f_forw.f_dropped++;
+			break;
+		}
 		l = evbuffer_add_printf(f->f_un.f_forw.f_bufev->output,
-		    "<%d>%.15s %s%s%s\n", f->f_prevpri, (char *)iov[0].iov_base,
+		    "%zu <%d>%.15s %s%s%s\n",
+		    (size_t)l + strlen(iov[4].iov_base),
+		    f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "",
 		    (char *)iov[4].iov_base);
 		if (l < 0) {
-			dprintf(" (dropped)\n");
+			dprintf(" (dropped evbuffer_add_printf)\n");
 			f->f_un.f_forw.f_dropped++;
 			break;
 		}
