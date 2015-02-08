@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_locl.h,v 1.3 2014/11/17 20:25:50 miod Exp $ */
+/* $OpenBSD: ecs_locl.h,v 1.4 2015/02/08 13:35:07 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
