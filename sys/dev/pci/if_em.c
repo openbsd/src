@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.291 2015/01/28 22:33:02 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.292 2015/02/08 06:02:24 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2960,7 +2960,6 @@ em_rxeof(struct em_softc *sc)
 				ifp->if_ipackets++;
 
 				m = sc->fmp;
-				m->m_pkthdr.rcvif = ifp;
 
 				em_receive_checksum(sc, desc, m);
 #if NVLAN > 0
@@ -2970,14 +2969,8 @@ em_rxeof(struct em_softc *sc)
 					m->m_flags |= M_VLANTAG;
 				}
 #endif
-#if NBPFILTER > 0
-				if (ifp->if_bpf) {
-					bpf_mtap_ether(ifp->if_bpf, m,
-					    BPF_DIRECTION_IN);
-				}
-#endif
 
-				ether_input_mbuf(ifp, m);
+				if_input(ifp, m);
 
 				sc->fmp = NULL;
 				sc->lmp = NULL;
