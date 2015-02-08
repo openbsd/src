@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.159 2015/01/09 11:17:29 yasuoka Exp $ */
+/* $OpenBSD: mfi.c,v 1.160 2015/02/08 12:17:31 yasuoka Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1399,7 +1399,10 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 		mfi_exec(sc, ccb);
 
 	if (dcmd->mdf_header.mfh_cmd_status != MFI_STAT_OK) {
-		rv = EIO;
+		if (dcmd->mdf_header.mfh_cmd_status == MFI_STAT_WRONG_STATE)
+			rv = ENXIO;
+		else
+			rv = EIO;
 		goto done;
 	}
 
@@ -1990,6 +1993,7 @@ int
 mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 {
 	struct mfi_pd_list	*pd;
+	struct mfi_pd_details	*info;
 	int			i, found, rv = EINVAL;
 	uint8_t			mbox[MFI_MBOX_SIZE];
 
@@ -1997,6 +2001,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	    bs->bs_status);
 
 	pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
+	info = malloc(sizeof *info, M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
 	    sizeof(*pd), pd, NULL))
@@ -2015,23 +2020,30 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	memset(mbox, 0, sizeof mbox);
 
 	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;
+	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
+	    sizeof *info, info, mbox))
+		goto done;
+
+	*((uint16_t *)&mbox[0]) = pd->mpl_address[i].mpa_pd_id;
+	*((uint16_t *)&mbox[2]) = info->mpd_pd.mfp_seq;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
-		mbox[2] = MFI_PD_ONLINE;
+		mbox[4] = MFI_PD_ONLINE;
 		break;
 
 	case BIOC_SSOFFLINE:
-		mbox[2] = MFI_PD_OFFLINE;
+		mbox[4] = MFI_PD_OFFLINE;
 		break;
 
 	case BIOC_SSHOTSPARE:
-		mbox[2] = MFI_PD_HOTSPARE;
+		mbox[4] = MFI_PD_HOTSPARE;
 		break;
-/*
+
 	case BIOC_SSREBUILD:
+		mbox[4] = MFI_PD_REBUILD;
 		break;
-*/
+
 	default:
 		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate invalid "
 		    "opcode %x\n", DEVNAME(sc), bs->bs_status);
@@ -2039,12 +2051,14 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	}
 
 
-	if (mfi_mgmt(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL, mbox))
+	if ((rv = mfi_mgmt(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL,
+	    mbox)))
 		goto done;
 
 	rv = 0;
 done:
 	free(pd, M_DEVBUF, 0);
+	free(info, M_DEVBUF, 0);
 	return (rv);
 }
 
