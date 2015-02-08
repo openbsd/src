@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.23 2014/10/22 13:02:03 jsing Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.24 2015/02/08 22:17:49 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -487,6 +487,7 @@ SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 		if (!(hdr = mime_hdr_find(headers, "content-type")) ||
 		    !hdr->value) {
 			sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
+			sk_BIO_pop_free(parts, BIO_vfree);
 			ASN1err(ASN1_F_SMIME_READ_ASN1,
 			    ASN1_R_NO_SIG_CONTENT_TYPE);
 			return NULL;
@@ -606,10 +607,10 @@ SMIME_text(BIO *in, BIO *out)
 	return 1;
 }
 
-/* Split a multipart/XXX message body into component parts: result is
+/*
+ * Split a multipart/XXX message body into component parts: result is
  * canonical parts in a STACK of bios
  */
-
 static int
 multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 {
@@ -626,22 +627,29 @@ multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 	first = 1;
 	parts = sk_BIO_new_null();
 	*ret = parts;
+	if (parts == NULL)
+		return 0;
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 		state = mime_bound_check(linebuf, len, bound, blen);
 		if (state == 1) {
 			first = 1;
 			part++;
 		} else if (state == 2) {
-			sk_BIO_push(parts, bpart);
+			if (sk_BIO_push(parts, bpart) == 0)
+				return 0;
 			return 1;
 		} else if (part) {
 			/* Strip CR+LF from linebuf */
 			next_eol = strip_eol(linebuf, &len);
 			if (first) {
 				first = 0;
-				if (bpart)
-					sk_BIO_push(parts, bpart);
+				if (bpart != NULL) {
+					if (sk_BIO_push(parts, bpart) == 0)
+						return 0;
+				}
 				bpart = BIO_new(BIO_s_mem());
+				if (bpart == NULL)
+					return 0;
 				BIO_set_mem_eof_return(bpart, 0);
 			} else if (eol)
 				BIO_write(bpart, "\r\n", 2);
@@ -650,6 +658,7 @@ multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 				BIO_write(bpart, linebuf, len);
 		}
 	}
+	BIO_free(bpart);
 	return 0;
 }
 
@@ -709,7 +718,11 @@ STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
 					*p = 0;
 					mhdr = mime_hdr_new(ntmp,
 					    strip_ends(q));
-					sk_MIME_HEADER_push(headers, mhdr);
+					if (mhdr == NULL)
+						goto merr;
+					if (sk_MIME_HEADER_push(headers,
+					    mhdr) == 0)
+						goto merr;
 					ntmp = NULL;
 					q = p + 1;
 					state = MIME_NAME;
@@ -762,7 +775,10 @@ STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
 
 		if (state == MIME_TYPE) {
 			mhdr = mime_hdr_new(ntmp, strip_ends(q));
-			sk_MIME_HEADER_push(headers, mhdr);
+			if (mhdr == NULL)
+				goto merr;
+			if (sk_MIME_HEADER_push(headers, mhdr) == 0)
+				goto merr;
 		} else if (state == MIME_VALUE)
 			mime_hdr_addparam(mhdr, ntmp, strip_ends(q));
 
@@ -771,6 +787,12 @@ STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
 	}
 
 	return headers;
+
+merr:
+	if (mhdr != NULL)
+		mime_hdr_free(mhdr);
+	sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
+	return NULL;
 }
 
 static char *
@@ -884,7 +906,10 @@ mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 		goto err;
 	mparam->param_name = tmpname;
 	mparam->param_value = tmpval;
-	sk_MIME_PARAM_push(mhdr->params, mparam);
+	if (sk_MIME_PARAM_push(mhdr->params, mparam) == 0) {
+		free(mparam);
+		goto err;
+	}
 	return 1;
 err:
 	free(tmpname);
