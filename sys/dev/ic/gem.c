@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.108 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: gem.c,v 1.109 2015/02/08 06:02:03 mpi Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -998,16 +998,9 @@ gem_rint(struct gem_softc *sc)
 		m->m_data += 2; /* We're already off by two */
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		if_input(ifp, m);
 	}
 
 	/* Update the receive pointer. */
