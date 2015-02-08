@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.566 2015/02/07 03:29:27 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.567 2015/02/08 04:41:48 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1159,7 +1159,8 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 	case 13: /* C7-M Type D */
 	case 15: /* Nano */
 #if !defined(SMALL_KERNEL)
-		if (model == 10 || model == 13 || model == 15) {
+		if (CPU_IS_PRIMARY(ci) &&
+		    (model == 10 || model == 13 || model == 15)) {
 			/* Setup the sensors structures */
 			strlcpy(ci->ci_sensordev.xname, ci->ci_dev.dv_xname,
 			    sizeof(ci->ci_sensordev.xname));
@@ -1481,7 +1482,7 @@ intel686_cpusensors_setup(struct cpu_info *ci)
 {
 	u_int regs[4];
 
-	if (cpuid_level < 0x06)
+	if (!CPU_IS_PRIMARY(ci) || cpuid_level < 0x06)
 		return;
 
 	/* CPUID.06H.EAX[0] = 1 tells us if we have on-die sensor */

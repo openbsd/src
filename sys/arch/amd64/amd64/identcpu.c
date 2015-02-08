@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.59 2015/02/08 03:01:29 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.60 2015/02/08 04:41:48 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -562,7 +562,8 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
 	}
 
-	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06 ) {
+	if (CPU_IS_PRIMARY(ci) && !strcmp(cpu_vendor, "GenuineIntel") &&
+	    cpuid_level >= 0x06 ) {
 		CPUID(0x06, val, dummy, dummy, dummy);
 		if (val & 0x1) {
 			strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
@@ -579,7 +580,7 @@ identifycpu(struct cpu_info *ci)
 	if (!strcmp(cpu_vendor, "AuthenticAMD"))
 		amd64_errata(ci);
 
-	if (!strcmp(cpu_vendor, "CentaurHauls")) {
+	if (CPU_IS_PRIMARY(ci) && !strcmp(cpu_vendor, "CentaurHauls")) {
 		ci->cpu_setup = via_nano_setup;
 #ifndef SMALL_KERNEL
 		strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
