@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.186 2015/02/06 16:00:30 benno Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.187 2015/02/08 06:00:52 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -445,9 +445,10 @@ bad:
  * the packet is in the mbuf chain m without
  * the ether header, which is provided separately.
  */
-void
-ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
+int
+ether_input(struct ifnet *ifp0, void *hdr, struct mbuf *m)
 {
+	struct ether_header *eh = hdr;
 	struct ifqueue *inq;
 	u_int16_t etype;
 	int s, llcfound = 0;
@@ -474,10 +475,10 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 	while (ifp->if_type == IFT_IEEE8023ADLAG) {
 		if (++i > TRUNK_MAX_STACKING) {
 			m_freem(m);
-			return;
+			return (1);
 		}
 		if (trunk_input(ifp, eh, m) != 0)
-			return;
+			return (1);
 
 		/* Has been set to the trunk interface */
 		ifp = m->m_pkthdr.rcvif;
@@ -486,7 +487,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		return;
+		return (1);
 	}
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 		/*
@@ -497,7 +498,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 			if (memcmp(LLADDR(ifp->if_sadl), eh->ether_shost,
 			    ETHER_ADDR_LEN) == 0) {
 				m_freem(m);
-				return;
+				return (1);
 			}
 		}
 
@@ -529,7 +530,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 #if NVLAN > 0
 	if (((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN ||
 	    etype == ETHERTYPE_QINQ) && (vlan_input(eh, m) == 0))
-		return;
+		return (1);
 #endif
 
 #if NBRIDGE > 0
@@ -545,7 +546,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 		else {
 			m = bridge_input(ifp, eh, m);
 			if (m == NULL)
-				return;
+				return (1);
 			/* The bridge has determined it's for us. */
 			ifp = m->m_pkthdr.rcvif;
 		}
@@ -558,14 +559,14 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 		/* The bridge did not want the vlan frame either, drop it. */
 		ifp->if_noproto++;
 		m_freem(m);
-		return;
+		return (1);
 	}
 #endif /* NVLAN > 0 */
 
 #if NCARP > 0
 	if (ifp->if_carp) {
 		if (ifp->if_type != IFT_CARP && (carp_input(ifp, eh, m) == 0))
-			return;
+			return (1);
 		/* clear mcast if received on a carp IP balanced address */
 		else if (ifp->if_type == IFT_CARP &&
 		    m->m_flags & (M_BCAST|M_MCAST) &&
@@ -581,7 +582,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 	 */
 	if (m->m_flags & M_FILDROP) {
 		m_freem(m);
-		return;
+		return (1);
 	}
 
 	/*
@@ -592,7 +593,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 	    ((ifp->if_flags & IFF_PROMISC) || (ifp0->if_flags & IFF_PROMISC))) {
 		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN)) {
 			m_freem(m);
-			return;
+			return (1);
 		}
 	}
 
@@ -706,6 +707,7 @@ decapsulate:
 	IF_INPUT_ENQUEUE(inq, m);
 done:
 	splx(s);
+	return (1);
 }
 
 /*
@@ -752,6 +754,9 @@ ether_fakeaddr(struct ifnet *ifp)
 void
 ether_ifattach(struct ifnet *ifp)
 {
+	struct arpcom *ac = (struct arpcom *)ifp;
+	struct ifih *ether_ifih;
+
 	/*
 	 * Any interface which provides a MAC address which is obviously
 	 * invalid gets whacked, so that users will notice.
@@ -764,14 +769,18 @@ ether_ifattach(struct ifnet *ifp)
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
+	SLIST_INIT(&ifp->if_inputs);
+
+	ether_ifih = malloc(sizeof(*ether_ifih), M_DEVBUF, M_WAITOK);
+	ether_ifih->ifih_input = ether_input;
+	SLIST_INSERT_HEAD(&ifp->if_inputs, ether_ifih, ifih_next);
 
 	if (ifp->if_hardmtu == 0)
 		ifp->if_hardmtu = ETHERMTU;
 
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), ((struct arpcom *)ifp)->ac_enaddr,
-	    ifp->if_addrlen);
-	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
+	memcpy(LLADDR(ifp->if_sadl), ac->ac_enaddr, ifp->if_addrlen);
+	LIST_INIT(&ac->ac_multiaddrs);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
 #endif
@@ -781,7 +790,15 @@ void
 ether_ifdetach(struct ifnet *ifp)
 {
 	struct arpcom *ac = (struct arpcom *)ifp;
+	struct ifih *ether_ifih;
 	struct ether_multi *enm;
+
+	ether_ifih = SLIST_FIRST(&ifp->if_inputs);
+	SLIST_REMOVE_HEAD(&ifp->if_inputs, ifih_next);
+
+	KASSERT(SLIST_EMPTY(&ifp->if_inputs));
+
+	free(ether_ifih, M_DEVBUF, sizeof(*ether_ifih));
 
 	for (enm = LIST_FIRST(&ac->ac_multiaddrs);
 	    enm != NULL;
