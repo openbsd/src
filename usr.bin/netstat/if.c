@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.70 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.71 2015/02/08 04:25:56 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -208,20 +208,6 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
 
-#if 0
-		if (aflag) {
-			u_long multiaddr;
-			struct in_multi inm;
-
-			multiaddr = (u_long)LIST_FIRST(&ifaddr.in.ia_multiaddrs);
-			while (multiaddr != 0) {
-				kread(multiaddr, &inm, sizeof inm);
-				printf("\n%25s %-17.17s ", "",
-				    routename4(inm.inm_addr.s_addr));
-				multiaddr = (u_long)LIST_NEXT(&inm, inm_list);
-			}
-		}
-#endif
 		break;
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)sa;
@@ -247,40 +233,6 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 		else
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
-#if 0
-		if (aflag) {
-			u_long multiaddr;
-			struct in6_multi inm;
-			struct sockaddr_in6 m6;
-
-			multiaddr = (u_long)LIST_FIRST(&ifaddr.in6.ia6_multiaddrs);
-			while (multiaddr != 0) {
-				kread(multiaddr, &inm, sizeof inm);
-				memset(&m6, 0, sizeof(m6));
-				m6.sin6_len = sizeof(struct sockaddr_in6);
-				m6.sin6_family = AF_INET6;
-				m6.sin6_addr = inm.in6m_addr;
-#ifdef __KAME__
-				if (IN6_IS_ADDR_MC_LINKLOCAL(&m6.sin6_addr) ||
-				    IN6_IS_ADDR_MC_INTFACELOCAL(&m6.sin6_addr)) {
-					m6.sin6_scope_id =
-					    ntohs(*(u_int16_t *)
-					    &m6.sin6_addr.s6_addr[2]);
-					m6.sin6_addr.s6_addr[2] = 0;
-					m6.sin6_addr.s6_addr[3] = 0;
-				}
-#endif
-				cp = routename6(&m6);
-				if (vflag)
-					n = strlen(cp) < 17 ? 17 : strlen(cp);
-				else
-					n = 17;
-				printf("\n%25s %-*.*s ", "",
-				    n, n, cp);
-				multiaddr = (u_long)LIST_NEXT(&inm, in6m_entry);
-			}
-		}
-#endif
 		break;
 	case AF_LINK:
 		sdl = (struct sockaddr_dl *)sa;
