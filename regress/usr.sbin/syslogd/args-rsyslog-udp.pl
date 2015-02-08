@@ -10,7 +10,12 @@ use strict;
 use warnings;
 
 our %args = (
-    rsyslogd => {},
+    rsyslogd => {
+	loggrep => {
+	    get_testlog() => 2,
+	    qr/Error/ => 0,
+	},
+    },
 );
 
 1;

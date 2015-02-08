@@ -16,6 +16,10 @@ our %args = (
     },
     rsyslogd => {
 	listen => { proto => "tcp" },
+	loggrep => {
+	    get_testlog() => 1,
+	    qr/Error/ => 0,
+	},
     },
 );
 

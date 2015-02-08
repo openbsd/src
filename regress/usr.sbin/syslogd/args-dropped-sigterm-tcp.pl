@@ -18,11 +18,7 @@ our %args = (
 	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
 	    write_message($self, get_secondlog());
-	    foreach (1..300) {
-		write_char($self, [1024], $_);
-		# if client sends too fast, syslogd will not see everything
-		sleep .01;
-	    }
+	    write_lines($self, 300, 1024);
 	    write_message($self, get_thirdlog());
 	    ${$self->{server}}->loggrep(get_secondlog(), 8)
 		or die ref($self), " server did not receive second log";
@@ -32,6 +28,7 @@ our %args = (
 	loghost => '@tcp://localhost:$connectport',
 	loggrep => {
 	    get_charlog() => 300,
+	    qr/ \(dropped\)/ => 17,
 	},
     },
     server => {
@@ -53,7 +50,7 @@ our %args = (
 	    get_thirdlog() => 0,
 	    get_testlog() => 0,
 	    qr/syslogd: start/ => 1,
-	    get_charlog() => 43,
+	    get_charlog() => 42,
 	},
     },
     pipe => {
@@ -67,7 +64,7 @@ our %args = (
 	    get_testlog() => 0,
 	    qr/syslogd: start/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 259 messages to remote loghost/ => 1,
+	    qr/syslogd: dropped 260 messages to remote loghost/ => 1,
 	},
     },
 );
