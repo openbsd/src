@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2014/11/20 05:51:21 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2015/02/08 04:50:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1154,6 +1154,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
+	hints.ai_flags = AI_ADDRCONFIG;
 	error = getaddrinfo(s, NULL, &hints, &res0);
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 		return (0);

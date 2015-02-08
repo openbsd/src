@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.151 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.152 2015/02/08 04:50:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2003,6 +2003,7 @@ host_dns(struct listenerlist *al, struct listen_opts *lo)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_ADDRCONFIG;
 	error = getaddrinfo(lo->ifx, NULL, &hints, &res0);
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 		return (0);
