@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.24 2014/10/13 20:55:16 chl Exp $	*/
+/*	$OpenBSD: proc.c,v 1.25 2015/02/08 05:51:37 tedu Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -229,11 +229,11 @@ pwait(void)
     for (pp = (fp = &proclist)->p_next; pp != NULL; pp = (fp = pp)->p_next)
 	if (pp->p_pid == 0) {
 	    fp->p_next = pp->p_next;
-	    xfree((ptr_t) pp->p_command);
+	    xfree(pp->p_command);
 	    if (pp->p_cwd && --pp->p_cwd->di_count == 0)
 		if (pp->p_cwd->di_next == 0)
 		    dfree(pp->p_cwd);
-	    xfree((ptr_t) pp);
+	    xfree(pp);
 	    pp = fp;
 	}
     sigprocmask(SIG_SETMASK, &osigset, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.16 2015/01/16 06:39:31 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.17 2015/02/08 05:51:37 tedu Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -159,8 +159,8 @@ doexec(Char **v, struct command *t)
 
     blkfree(t->t_dcom);
     t->t_dcom = blkspl(pv, av);
-    xfree((ptr_t) pv);
-    xfree((ptr_t) av);
+    xfree(pv);
+    xfree(av);
     av = t->t_dcom;
     trim(av);
 
@@ -216,7 +216,7 @@ doexec(Char **v, struct command *t)
 	    Vdp = dp;
 	    texec(dp, av);
 	    Vdp = 0;
-	    xfree((ptr_t) dp);
+	    xfree(dp);
 	}
 	misses++;
 cont:
@@ -225,7 +225,7 @@ cont:
     } while (*pv);
     hits--;
     Vsav = 0;
-    xfree((ptr_t) sav);
+    xfree(sav);
     pexerr();
 }
 
@@ -236,7 +236,7 @@ pexerr(void)
     if (expath) {
 	setname(vis_str(expath));
 	Vexpath = 0;
-	xfree((ptr_t) expath);
+	xfree(expath);
 	expath = 0;
     }
     else
@@ -320,7 +320,7 @@ texec(Char *sf, Char **st)
 	/* The order for the conversions is significant */
 	t = short2blk(st);
 	f = short2str(sf);
-	xfree((ptr_t) st);
+	xfree(st);
 	Vt = t;
 	(void) execve(f, t, environ);
 	Vt = 0;
@@ -337,7 +337,7 @@ texec(Char *sf, Char **st)
 	if (exerr == 0) {
 	    exerr = strerror(errno);
 	    if (expath)
-		xfree((ptr_t) expath);
+		xfree(expath);
 	    expath = Strsave(sf);
 	    Vexpath = expath;
 	}
@@ -516,13 +516,13 @@ iscommand(Char *name)
 	}
 	if (pv[0][0] == 0 || eq(pv[0], STRdot)) {	/* don't make ./xxx */
 	    if (executable(NULL, name, 0)) {
-		xfree((ptr_t) sav);
+		xfree(sav);
 		return i + 1;
 	    }
 	}
 	else {
 	    if (executable(*pv, sav, 0)) {
-		xfree((ptr_t) sav);
+		xfree(sav);
 		return i + 1;
 	    }
 	}
@@ -530,7 +530,7 @@ cont:
 	pv++;
 	i++;
     } while (*pv);
-    xfree((ptr_t) sav);
+    xfree(sav);
     return 0;
 }
 
@@ -698,7 +698,7 @@ tellmewhat(struct wordent *lexp, Char *str, int len)
 	    if (!slash) {
 		sp->word = Strspl(STRdotsl, sp->word);
 		prlex(cshout, lexp);
-		xfree((ptr_t) sp->word);
+		xfree(sp->word);
 	    }
 	    else
 		prlex(cshout, lexp);
@@ -706,12 +706,12 @@ tellmewhat(struct wordent *lexp, Char *str, int len)
 	else {
 	    s1 = Strspl(*pv, STRslash);
 	    sp->word = Strspl(s1, sp->word);
-	    xfree((ptr_t) s1);
+	    xfree(s1);
 	    if (str == NULL)
 		prlex(cshout, lexp);
 	    else
 		(void) Strlcpy(str, sp->word, len/sizeof(Char));
-	    xfree((ptr_t) sp->word);
+	    xfree(sp->word);
         }
 	found = 1;
     }
@@ -727,6 +727,6 @@ tellmewhat(struct wordent *lexp, Char *str, int len)
 	found = 0;
     }
     sp->word = s0;		/* we save and then restore this */
-    xfree((ptr_t) cmd);
+    xfree(cmd);
     return found;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.8 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: hist.c,v 1.9 2015/02/08 05:51:37 tedu Exp $	*/
 /*	$NetBSD: hist.c,v 1.7 1995/03/21 18:35:44 mycroft Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ hfree(struct Hist *hp)
 {
 
     freelex(&hp->Hlex);
-    xfree((ptr_t) hp);
+    xfree(hp);
 }
 
 void

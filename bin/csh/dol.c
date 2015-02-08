@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.18 2014/10/16 19:43:31 deraadt Exp $	*/
+/*	$OpenBSD: dol.c,v 1.19 2015/02/08 05:51:37 tedu Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -409,7 +409,7 @@ Dgetdol(void)
 	    stderror(ERR_SYNTAX);
 	if (backpid != 0) {
 	    if (dolbang)
-		xfree((ptr_t) dolbang);
+		xfree(dolbang);
 	    setDolp(dolbang = putn(backpid));
 	}
 	goto eatbrac;
@@ -595,7 +595,7 @@ Dgetdol(void)
 	Char   *cp = putn(upb - lwb + 1);
 
 	addla(cp);
-	xfree((ptr_t) cp);
+	xfree(cp);
     }
     else {
 eatmod:
@@ -718,7 +718,7 @@ setDolp(Char *cp)
 		    (void) Strlcat(np, rhsub, len);
 		    (void) Strlcat(np, dp + lhlen, len);
 
-		    xfree((ptr_t) cp);
+		    xfree(cp);
 		    dp = cp = np;
 		    didmod = 1;
 		} else {
@@ -742,12 +742,12 @@ setDolp(Char *cp)
 		if ((dp = domod(cp, dolmod[i]))) {
 		    didmod = 1;
 		    if (Strcmp(cp, dp) == 0) {
-			xfree((ptr_t) cp);
+			xfree(cp);
 			cp = dp;
 			break;
 		    }
 		    else {
-			xfree((ptr_t) cp);
+			xfree(cp);
 			cp = dp;
 		    }
 		}
@@ -765,7 +765,7 @@ setDolp(Char *cp)
 
     if (dp) {
 	addla(dp);
-	xfree((ptr_t) dp);
+	xfree(dp);
     }
     else
 	addla(cp);

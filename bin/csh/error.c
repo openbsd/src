@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.10 2009/11/11 16:15:06 deraadt Exp $	*/
+/*	$OpenBSD: error.c,v 1.11 2015/02/08 05:51:37 tedu Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -347,7 +347,7 @@ stderror(int id, ...)
     }
 
     if (seterr) {
-	xfree((ptr_t) seterr);
+	xfree(seterr);
 	seterr = NULL;
     }
 

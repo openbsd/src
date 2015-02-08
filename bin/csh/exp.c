@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.10 2013/03/28 08:39:54 nicm Exp $	*/
+/*	$OpenBSD: exp.c,v 1.11 2015/02/08 05:51:37 tedu Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -227,12 +227,12 @@ exp2c(Char ***vp, bool ignore)
 		i = !Gmatch(p1, p2);
 		break;
 	    }
-	xfree((ptr_t) p1);
-	xfree((ptr_t) p2);
+	xfree(p1);
+	xfree(p2);
 	return (i);
     }
     i = egetn(p1);
-    xfree((ptr_t) p1);
+    xfree(p1);
     return (i);
 }
 
@@ -273,8 +273,8 @@ exp3(Char ***vp, bool ignore)
 		i = egetn(p1) <= egetn(p2);
 		break;
 	    }
-	xfree((ptr_t) p1);
-	xfree((ptr_t) p2);
+	xfree(p1);
+	xfree(p2);
 	return (putn(i));
     }
     return (p1);
@@ -301,8 +301,8 @@ exp3a(Char ***vp, bool ignore)
 	    i = egetn(p1) << egetn(p2);
 	else
 	    i = egetn(p1) >> egetn(p2);
-	xfree((ptr_t) p1);
-	xfree((ptr_t) p2);
+	xfree(p1);
+	xfree(p2);
 	return (putn(i));
     }
     return (p1);
@@ -336,8 +336,8 @@ exp4(Char ***vp, bool ignore)
 		i = egetn(p1) - egetn(p2);
 		break;
 	    }
-	xfree((ptr_t) p1);
-	xfree((ptr_t) p2);
+	xfree(p1);
+	xfree(p2);
 	return (putn(i));
     }
     return (p1);
@@ -389,8 +389,8 @@ exp5(Char ***vp, bool ignore)
 			i = l % i;
 		break;
 	    }
-	xfree((ptr_t) p1);
-	xfree((ptr_t) p2);
+	xfree(p1);
+	xfree(p2);
 	return (putn(i));
     }
     return (p1);
@@ -411,7 +411,7 @@ exp6(Char ***vp, bool ignore)
 	etracc("exp6 ! cp", cp, vp);
 #endif
 	i = egetn(cp);
-	xfree((ptr_t) cp);
+	xfree(cp);
 	return (putn(!i));
     }
     if (eq(**vp, STRtilde)) {
@@ -421,7 +421,7 @@ exp6(Char ***vp, bool ignore)
 	etracc("exp6 ~ cp", cp, vp);
 #endif
 	i = egetn(cp);
-	xfree((ptr_t) cp);
+	xfree(cp);
 	return (putn(~i));
     }
     if (eq(**vp, STRLparen)) {
@@ -511,7 +511,7 @@ exp6(Char ***vp, bool ignore)
 		cp[1] == 'l' ? lstat(short2str(ep), &stb) :
 #endif
 		stat(short2str(ep), &stb)) {
-		xfree((ptr_t) ep);
+		xfree(ep);
 		return (Strsave(STR0));
 	    }
 	    switch (cp[1]) {
@@ -564,7 +564,7 @@ exp6(Char ***vp, bool ignore)
 #ifdef EDEBUG
 	etraci("exp6 -? i", i, vp);
 #endif
-	xfree((ptr_t) ep);
+	xfree(ep);
 	return (putn(i));
     }
 #ifdef EDEBUG
