@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.2 2015/01/22 17:55:46 mpi Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.3 2015/02/08 06:21:04 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -59,7 +59,14 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 		/* if bus has base of 0 fail. */
 		return EINVAL;
 	}
-	bpa |= POWERPC_BUS_TAG_BASE(t);
+
+	/*
+	 * The address may, or may not, be relative to the
+	 * base address of this bus.
+	 */
+	if (bpa < POWERPC_BUS_TAG_BASE(t))
+		bpa += POWERPC_BUS_TAG_BASE(t);
+
 	if ((error = extent_alloc_region(devio_ex, bpa, size, EX_NOWAIT |
 	    (ppc_malloc_ok ? EX_MALLOCOK : 0))))
 		return error;
@@ -125,7 +132,12 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t off, int prot,
 	if (POWERPC_BUS_TAG_BASE(t) == 0)
 		return (-1);
 
-	bpa |= POWERPC_BUS_TAG_BASE(t);
+	/*
+	 * The address may, or may not, be relative to the
+	 * base address of this bus.
+	 */
+	if (bpa < POWERPC_BUS_TAG_BASE(t))
+		bpa += POWERPC_BUS_TAG_BASE(t);
 
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		pmapflags &= ~PMAP_NOCACHE;
