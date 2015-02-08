@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.5 2015/02/08 13:43:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.6 2015/02/08 16:07:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -2073,7 +2073,7 @@ iwm_phy_db_send_all_channel_groups(struct iwm_softc *sc,
 		err = iwm_send_phy_db_cmd(sc, type, entry->size, entry->data);
 		if (err) {
 			DPRINTF(("%s: Can't SEND phy_db section %d (%d), "
-			    "err %d", DEVNAME(sc), type, i, err));
+			    "err %d\n", DEVNAME(sc), type, i, err));
 			return err;
 		}
 
@@ -2125,7 +2125,7 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	err = iwm_phy_db_send_all_channel_groups(sc,
 	    IWM_PHY_DB_CALIB_CHG_PAPD, IWM_NUM_PAPD_CH_GROUPS);
 	if (err) {
-		DPRINTF(("%s: Cannot send channel specific PAPD groups",
+		DPRINTF(("%s: Cannot send channel specific PAPD groups\n",
 		    DEVNAME(sc)));
 		return err;
 	}
@@ -2134,7 +2134,7 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	err = iwm_phy_db_send_all_channel_groups(sc,
 	    IWM_PHY_DB_CALIB_CHG_TXP, IWM_NUM_TXP_CH_GROUPS);
 	if (err) {
-		DPRINTF(("%s: Cannot send channel specific TX power groups",
+		DPRINTF(("%s: Cannot send channel specific TX power groups\n",
 		    DEVNAME(sc)));
 		return err;
 	}
