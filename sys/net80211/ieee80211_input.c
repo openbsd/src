@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.130 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.131 2015/02/08 06:03:07 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -859,19 +859,19 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	}
 #endif
 	if (m != NULL) {
-#if NBPFILTER > 0
-		/*
-		 * If we forward frame into transmitter of the AP,
-		 * we don't need to duplicate for DLT_EN10MB.
-		 */
-		if (ifp->if_bpf && m1 == NULL)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
 		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
-		    eh->ether_type == htons(ETHERTYPE_PAE))
+		    eh->ether_type == htons(ETHERTYPE_PAE)) {
+#if NBPFILTER > 0
+			/*
+			 * If we forward frame into transmitter of the AP,
+			 * we don't need to duplicate for DLT_EN10MB.
+			 */
+			if (ifp->if_bpf && m1 == NULL)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
 			ieee80211_eapol_key_input(ic, m, ni);
-		else
-			ether_input_mbuf(ifp, m);
+		} else
+			if_input(ifp, m);
 	}
 }
 
