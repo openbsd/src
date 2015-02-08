@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.26 2015/02/08 23:07:49 tedu Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.27 2015/02/08 23:28:48 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "dD:nNf:v")) != -1) {
 		switch (c) {
 		case 'd':
-			debug = 1;
+			debug++;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)

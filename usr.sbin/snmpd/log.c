@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2015/02/08 23:07:49 tedu Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2015/02/08 23:28:48 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,8 +52,7 @@ log_init(int n_debug)
 	extern char	*__progname;
 
 	debug = n_debug;
-	if (debug && !verbose)
-		verbose = 1;
+	verbose = n_debug;
 
 	if (!debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
