@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp224.c,v 1.15 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ecp_nistp224.c,v 1.16 2015/02/08 22:25:03 miod Exp $ */
 /*
  * Written by Emilia Kasper (Google) for the OpenSSL project.
  */
@@ -1298,7 +1298,7 @@ ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP * group,
 	felem z1, z2, x_in, y_in, x_out, y_out;
 	widefelem tmp;
 
-	if (EC_POINT_is_at_infinity(group, point)) {
+	if (EC_POINT_is_at_infinity(group, point) > 0) {
 		ECerr(EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES,
 		    EC_R_POINT_AT_INFINITY);
 		return 0;

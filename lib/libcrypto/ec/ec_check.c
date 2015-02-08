@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_check.c,v 1.4 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ec_check.c,v 1.5 2015/02/08 22:25:03 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -85,7 +85,7 @@ EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
-	if (!EC_POINT_is_on_curve(group, group->generator, ctx)) {
+	if (EC_POINT_is_on_curve(group, group->generator, ctx) <= 0) {
 		ECerr(EC_F_EC_GROUP_CHECK, EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
@@ -100,7 +100,7 @@ EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
 	}
 	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx))
 		goto err;
-	if (!EC_POINT_is_at_infinity(group, point)) {
+	if (EC_POINT_is_at_infinity(group, point) <= 0) {
 		ECerr(EC_F_EC_GROUP_CHECK, EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}

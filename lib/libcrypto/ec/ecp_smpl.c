@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.13 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.14 2015/02/08 22:25:03 miod Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -529,7 +529,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 	const BIGNUM *Z_;
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, point)) {
+	if (EC_POINT_is_at_infinity(group, point) > 0) {
 		ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
 		return 0;
 	}
@@ -637,9 +637,9 @@ ec_GFp_simple_add(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, cons
 
 	if (a == b)
 		return EC_POINT_dbl(group, r, a, ctx);
-	if (EC_POINT_is_at_infinity(group, a))
+	if (EC_POINT_is_at_infinity(group, a) > 0)
 		return EC_POINT_copy(r, b);
-	if (EC_POINT_is_at_infinity(group, b))
+	if (EC_POINT_is_at_infinity(group, b) > 0)
 		return EC_POINT_copy(r, a);
 
 	field_mul = group->meth->field_mul;
@@ -819,7 +819,7 @@ ec_GFp_simple_dbl(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, BN_C
 	BIGNUM *n0, *n1, *n2, *n3;
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, a)) {
+	if (EC_POINT_is_at_infinity(group, a) > 0) {
 		BN_zero(&r->Z);
 		r->Z_is_one = 0;
 		return 1;
@@ -952,7 +952,7 @@ err:
 int 
 ec_GFp_simple_invert(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx)
 {
-	if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(&point->Y))
+	if (EC_POINT_is_at_infinity(group, point) > 0 || BN_is_zero(&point->Y))
 		/* point is its own inverse */
 		return 1;
 
@@ -977,7 +977,7 @@ ec_GFp_simple_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX
 	BIGNUM *rh, *tmp, *Z4, *Z6;
 	int ret = -1;
 
-	if (EC_POINT_is_at_infinity(group, point))
+	if (EC_POINT_is_at_infinity(group, point) > 0)
 		return 1;
 
 	field_mul = group->meth->field_mul;
@@ -1083,10 +1083,10 @@ ec_GFp_simple_cmp(const EC_GROUP * group, const EC_POINT * a, const EC_POINT * b
 	const BIGNUM *tmp1_, *tmp2_;
 	int ret = -1;
 
-	if (EC_POINT_is_at_infinity(group, a)) {
-		return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
+	if (EC_POINT_is_at_infinity(group, a) > 0) {
+		return EC_POINT_is_at_infinity(group, b) > 0 ? 0 : 1;
 	}
-	if (EC_POINT_is_at_infinity(group, b))
+	if (EC_POINT_is_at_infinity(group, b) > 0)
 		return 1;
 
 	if (a->Z_is_one && b->Z_is_one) {
@@ -1175,7 +1175,7 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 	BIGNUM *x, *y;
 	int ret = 0;
 
-	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point))
+	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point) > 0)
 		return 1;
 
 	if (ctx == NULL) {

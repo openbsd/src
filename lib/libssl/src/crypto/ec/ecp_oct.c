@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.6 2015/02/08 22:25:03 miod Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -211,7 +211,7 @@ ec_GFp_simple_point2oct(const EC_GROUP * group, const EC_POINT * point, point_co
 		ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, EC_R_INVALID_FORM);
 		goto err;
 	}
-	if (EC_POINT_is_at_infinity(group, point)) {
+	if (EC_POINT_is_at_infinity(group, point) > 0) {
 		/* encodes to a single 0 octet */
 		if (buf != NULL) {
 			if (len < 1) {
@@ -379,8 +379,8 @@ ec_GFp_simple_oct2point(const EC_GROUP * group, EC_POINT * point,
 			goto err;
 	}
 
-	if (!EC_POINT_is_on_curve(group, point, ctx)) {	/* test required by
-							 * X9.62 */
+	/* test required by X9.62 */
+	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
 		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}

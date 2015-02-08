@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.5 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.6 2015/02/08 22:25:03 miod Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -272,7 +272,7 @@ ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	}
 	/* if result should be point at infinity */
 	if ((scalar == NULL) || BN_is_zero(scalar) || (point == NULL) ||
-	    EC_POINT_is_at_infinity(group, point)) {
+	    EC_POINT_is_at_infinity(group, point) > 0) {
 		return EC_POINT_set_to_infinity(group, r);
 	}
 	/* only support affine coordinates */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.12 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.13 2015/02/08 22:25:03 miod Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -413,7 +413,7 @@ ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 {
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, point)) {
+	if (EC_POINT_is_at_infinity(group, point) > 0) {
 		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
 		return 0;
 	}
@@ -448,12 +448,12 @@ ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 	BIGNUM *x0, *y0, *x1, *y1, *x2, *y2, *s, *t;
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, a)) {
+	if (EC_POINT_is_at_infinity(group, a) > 0) {
 		if (!EC_POINT_copy(r, b))
 			return 0;
 		return 1;
 	}
-	if (EC_POINT_is_at_infinity(group, b)) {
+	if (EC_POINT_is_at_infinity(group, b) > 0) {
 		if (!EC_POINT_copy(r, a))
 			return 0;
 		return 1;
@@ -564,7 +564,7 @@ ec_GF2m_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 int 
 ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
-	if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(&point->Y))
+	if (EC_POINT_is_at_infinity(group, point) > 0 || BN_is_zero(&point->Y))
 		/* point is its own inverse */
 		return 1;
 
@@ -595,7 +595,7 @@ ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX 
 	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
 
-	if (EC_POINT_is_at_infinity(group, point))
+	if (EC_POINT_is_at_infinity(group, point) > 0)
 		return 1;
 
 	field_mul = group->meth->field_mul;
@@ -657,10 +657,10 @@ ec_GF2m_simple_cmp(const EC_GROUP * group, const EC_POINT * a, const EC_POINT * 
 	BN_CTX *new_ctx = NULL;
 	int ret = -1;
 
-	if (EC_POINT_is_at_infinity(group, a)) {
-		return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
+	if (EC_POINT_is_at_infinity(group, a) > 0) {
+		return EC_POINT_is_at_infinity(group, b) > 0 ? 0 : 1;
 	}
-	if (EC_POINT_is_at_infinity(group, b))
+	if (EC_POINT_is_at_infinity(group, b) > 0)
 		return 1;
 
 	if (a->Z_is_one && b->Z_is_one) {
@@ -701,7 +701,7 @@ ec_GF2m_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ct
 	BIGNUM *x, *y;
 	int ret = 0;
 
-	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point))
+	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point) > 0)
 		return 1;
 
 	if (ctx == NULL) {
