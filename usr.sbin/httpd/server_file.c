@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.48 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.49 2015/02/08 00:00:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -349,7 +349,8 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
 			    dp->d_name, dp->d_name,
-			    MAXIMUM(namewidth, 0), " ", tmstr, st->st_size) == -1)
+			    MAXIMUM(namewidth, 0), " ",
+			    tmstr, st->st_size) == -1)
 				skip = 1;
 		}
 		free(dp);
