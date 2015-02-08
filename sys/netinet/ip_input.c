@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.244 2015/01/12 13:51:45 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.245 2015/02/08 04:14:47 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1620,15 +1620,11 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	        return (sysctl_ifq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
 	case IPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &ipstat, sizeof(ipstat)));
 	case IPCTL_MRTSTATS:
 #ifdef MROUTING
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &mrtstat, sizeof(mrtstat)));
 #else
 		return (EOPNOTSUPP);
