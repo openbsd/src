@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.138 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.139 2015/02/08 04:40:50 yasuoka Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -344,6 +344,7 @@ tcp_stats(char *name)
 	p1(tcps_cwr_ecn, "\t\t\tcwr by ecn: %u\n");
 
 	p(tcps_badsyn, "\t%u bad connection attempt%s\n");
+	p(tcps_dropsyn, "\t%u SYN packet%s dropped due to queue or memory full\n");
 	p1(tcps_sc_added, "\t%qd SYN cache entries added\n");
 	p(tcps_sc_collisions, "\t\t%qd hash collision%s\n");
 	p1(tcps_sc_completed, "\t\t%qd completed\n");
