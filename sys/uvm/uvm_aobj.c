@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.77 2015/02/06 10:58:35 deraadt Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.78 2015/02/08 02:17:08 deraadt Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -880,7 +880,6 @@ uao_detach_locked(struct uvm_object *uobj)
 		}
 		pmap_page_protect(pg, PROT_NONE);
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
-		atomic_clearbits_int(&pg->pg_flags, PQ_AOBJ);
 		uvm_pagefree(pg);
 	}
 	uvm_unlock_pageq();
@@ -992,7 +991,6 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			pmap_page_protect(pp, PROT_NONE);
 
 			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
-			atomic_clearbits_int(&pp->pg_flags, PQ_AOBJ);
 			uvm_lock_pageq();
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();

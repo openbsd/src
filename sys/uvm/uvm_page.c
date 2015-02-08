@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.134 2015/02/07 01:46:27 kettenis Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.135 2015/02/08 02:17:08 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1053,7 +1053,7 @@ uvm_pagefree(struct vm_page *pg)
 	}
 
 	/* Clean page state bits. */
-	KASSERT(!(pg->pg_flags & PQ_AOBJ));
+	flags_to_clear |= PQ_AOBJ; /* XXX: find culprit */
 	flags_to_clear |= PQ_ENCRYPT|PG_ZERO|PG_FAKE|PG_BUSY|PG_RELEASED|
 	    PG_CLEAN|PG_CLEANCHK;
 	atomic_clearbits_int(&pg->pg_flags, flags_to_clear);
@@ -1098,12 +1098,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			if (uobj != NULL) {
 				uvm_lock_pageq();
 				pmap_page_protect(pg, PROT_NONE);
-				if (pg->pg_flags & PQ_AOBJ) {
+				/* XXX won't happen right now */
+				if (pg->pg_flags & PQ_AOBJ)
 					uao_dropswap(uobj,
 					    pg->offset >> PAGE_SHIFT);
-					atomic_clearbits_int(&pg->pg_flags,
-					    PQ_AOBJ);
-				}
 				uvm_pagefree(pg);
 				uvm_unlock_pageq();
 			} else {
