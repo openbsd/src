@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.94 2015/02/07 05:46:01 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.95 2015/02/08 22:06:49 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2850,15 +2850,15 @@ ssl3_renegotiate_check(SSL *s)
 	return (ret);
 }
 /*
- * If we are using TLS v1.2 or later and default SHA1+MD5 algorithms switch
- * to new SHA256 PRF and handshake macs
+ * If we are using default SHA1+MD5 algorithms switch to new SHA256 PRF
+ * and handshake macs if required.
  */
 long
 ssl_get_algorithm2(SSL *s)
 {
 	long	alg2 = s->s3->tmp.new_cipher->algorithm2;
 
-	if (s->method->version == TLS1_2_VERSION &&
+	if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF &&
 	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
 		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
 	return alg2;
