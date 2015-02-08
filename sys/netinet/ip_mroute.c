@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.75 2015/02/07 07:56:41 dlg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.76 2015/02/08 03:42:24 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -136,38 +136,39 @@ u_int		mrtdebug = 0;	  /* debug level 	*/
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 struct timeout	expire_upcalls_ch;
 
-static int get_sg_cnt(struct sioc_sg_req *);
-static int get_vif_cnt(struct sioc_vif_req *);
-static int ip_mrouter_init(struct socket *, struct mbuf *);
-static int get_version(struct mbuf *);
-static int set_assert(struct mbuf *);
-static int get_assert(struct mbuf *);
-static int add_vif(struct mbuf *);
-static int del_vif(struct mbuf *);
-static void update_mfc_params(struct mfc *, struct mfcctl2 *);
-static void init_mfc_params(struct mfc *, struct mfcctl2 *);
-static void expire_mfc(struct mfc *);
-static int add_mfc(struct mbuf *);
-static int del_mfc(struct mbuf *);
-static int set_api_config(struct mbuf *); /* chose API capabilities */
-static int get_api_support(struct mbuf *);
-static int get_api_config(struct mbuf *);
-static int socket_send(struct socket *, struct mbuf *,
+int get_sg_cnt(struct sioc_sg_req *);
+int get_vif_cnt(struct sioc_vif_req *);
+int get_vif_ctl(struct vifctl *);
+int ip_mrouter_init(struct socket *, struct mbuf *);
+int get_version(struct mbuf *);
+int set_assert(struct mbuf *);
+int get_assert(struct mbuf *);
+int add_vif(struct mbuf *);
+int del_vif(struct mbuf *);
+void update_mfc_params(struct mfc *, struct mfcctl2 *);
+void init_mfc_params(struct mfc *, struct mfcctl2 *);
+void expire_mfc(struct mfc *);
+int add_mfc(struct mbuf *);
+int del_mfc(struct mbuf *);
+int set_api_config(struct mbuf *); /* chose API capabilities */
+int get_api_support(struct mbuf *);
+int get_api_config(struct mbuf *);
+int socket_send(struct socket *, struct mbuf *,
 			    struct sockaddr_in *);
-static void expire_upcalls(void *);
-static int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
-static void phyint_send(struct ip *, struct vif *, struct mbuf *);
-static void encap_send(struct ip *, struct vif *, struct mbuf *);
-static void send_packet(struct vif *, struct mbuf *);
+void expire_upcalls(void *);
+int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
+void phyint_send(struct ip *, struct vif *, struct mbuf *);
+void encap_send(struct ip *, struct vif *, struct mbuf *);
+void send_packet(struct vif *, struct mbuf *);
 
 #ifdef PIM
-static int pim_register_send(struct ip *, struct vif *,
+int pim_register_send(struct ip *, struct vif *,
 		struct mbuf *, struct mfc *);
-static int pim_register_send_rp(struct ip *, struct vif *,
+int pim_register_send_rp(struct ip *, struct vif *,
 		struct mbuf *, struct mfc *);
-static int pim_register_send_upcall(struct ip *, struct vif *,
+int pim_register_send_upcall(struct ip *, struct vif *,
 		struct mbuf *, struct mfc *);
-static struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
+struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
 #endif
 
 /*
@@ -434,7 +435,7 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 /*
  * returns the packet, byte, rpf-failure count for the source group provided
  */
-static int
+int
 get_sg_cnt(struct sioc_sg_req *req)
 {
 	int s;
@@ -458,7 +459,7 @@ get_sg_cnt(struct sioc_sg_req *req)
 /*
  * returns the input and output packet and byte counts on the vif provided
  */
-static int
+int
 get_vif_cnt(struct sioc_vif_req *req)
 {
 	vifi_t vifi = req->vifi;
@@ -477,7 +478,7 @@ get_vif_cnt(struct sioc_vif_req *req)
 /*
  * Enable multicast routing
  */
-static int
+int
 ip_mrouter_init(struct socket *so, struct mbuf *m)
 {
 	int *v;
@@ -612,7 +613,7 @@ ip_mrouter_detach(struct ifnet *ifp)
 	}
 }
 
-static int
+int
 get_version(struct mbuf *m)
 {
 	int *v = mtod(m, int *);
@@ -625,7 +626,7 @@ get_version(struct mbuf *m)
 /*
  * Set PIM assert processing global
  */
-static int
+int
 set_assert(struct mbuf *m)
 {
 	int *i;
@@ -641,7 +642,7 @@ set_assert(struct mbuf *m)
 /*
  * Get PIM assert processing global
  */
-static int
+int
 get_assert(struct mbuf *m)
 {
 	int *i = mtod(m, int *);
@@ -654,7 +655,7 @@ get_assert(struct mbuf *m)
 /*
  * Configure API capabilities
  */
-static int
+int
 set_api_config(struct mbuf *m)
 {
 	int i;
@@ -696,7 +697,7 @@ set_api_config(struct mbuf *m)
 /*
  * Get API capabilities
  */
-static int
+int
 get_api_support(struct mbuf *m)
 {
 	u_int32_t *apival;
@@ -714,7 +715,7 @@ get_api_support(struct mbuf *m)
 /*
  * Get API configured capabilities
  */
-static int
+int
 get_api_config(struct mbuf *m)
 {
 	u_int32_t *apival;
@@ -734,7 +735,7 @@ static struct sockaddr_in sin = { sizeof(sin), AF_INET };
 /*
  * Add a vif to the vif table
  */
-static int
+int
 add_vif(struct mbuf *m)
 {
 	struct vifctl *vifcp;
@@ -867,7 +868,7 @@ reset_vif(struct vif *vifp)
 /*
  * Delete a vif from the vif table
  */
-static int
+int
 del_vif(struct mbuf *m)
 {
 	vifi_t *vifip;
@@ -938,7 +939,7 @@ vif_delete(struct ifnet *ifp)
 /*
  * update an mfc entry without resetting counters and S,G addresses.
  */
-static void
+void
 update_mfc_params(struct mfc *rt, struct mfcctl2 *mfccp)
 {
 	int i;
@@ -959,7 +960,7 @@ update_mfc_params(struct mfc *rt, struct mfcctl2 *mfccp)
 /*
  * fully initialize an mfc entry from the parameter.
  */
-static void
+void
 init_mfc_params(struct mfc *rt, struct mfcctl2 *mfccp)
 {
 	rt->mfc_origin     = mfccp->mfcc_origin;
@@ -974,7 +975,7 @@ init_mfc_params(struct mfc *rt, struct mfcctl2 *mfccp)
 	timerclear(&rt->mfc_last_assert);
 }
 
-static void
+void
 expire_mfc(struct mfc *rt)
 {
 	struct rtdetq *rte, *nrte;
@@ -992,7 +993,7 @@ expire_mfc(struct mfc *rt)
 /*
  * Add an mfc entry
  */
-static int
+int
 add_mfc(struct mbuf *m)
 {
 	struct mfcctl2 mfcctl2;
@@ -1131,7 +1132,7 @@ add_mfc(struct mbuf *m)
 /*
  * Delete an mfc entry
  */
-static int
+int
 del_mfc(struct mbuf *m)
 {
 	struct mfcctl2 mfcctl2;
@@ -1175,7 +1176,7 @@ del_mfc(struct mbuf *m)
 	return (0);
 }
 
-static int
+int
 socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 {
 	if (s != NULL) {
@@ -1411,7 +1412,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 
 /*ARGSUSED*/
-static void
+void
 expire_upcalls(void *v)
 {
 	int i;
@@ -1450,7 +1451,7 @@ expire_upcalls(void *v)
 /*
  * Packet forwarding routine once entry in the cache is made
  */
-static int
+int
 ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 {
 	struct ip  *ip = mtod(m, struct ip *);
@@ -1580,7 +1581,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	return (0);
 }
 
-static void
+void
 phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
@@ -1599,7 +1600,7 @@ phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	send_packet(vifp, mb_copy);
 }
 
-static void
+void
 encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
@@ -1654,7 +1655,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	send_packet(vifp, mb_copy);
 }
 
-static void
+void
 send_packet(struct vif *vifp, struct mbuf *m)
 {
 	int error;
@@ -1689,7 +1690,7 @@ send_packet(struct vif *vifp, struct mbuf *m)
 /*
  * Send the packet up to the user daemon, or eventually do kernel encapsulation
  */
-static int
+int
 pim_register_send(struct ip *ip, struct vif *vifp,
 	struct mbuf *m, struct mfc *rt)
 {
@@ -1729,7 +1730,7 @@ pim_register_send(struct ip *ip, struct vif *vifp,
  * encapsulation.
  * XXX: Note that in the returned copy the IP header is a valid one.
  */
-static struct mbuf *
+struct mbuf *
 pim_register_prepare(struct ip *ip, struct mbuf *m)
 {
 	struct mbuf *mb_copy = NULL;
@@ -1772,7 +1773,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
 /*
  * Send an upcall with the data packet to the user-level process.
  */
-static int
+int
 pim_register_send_upcall(struct ip *ip, struct vif *vifp,
 	struct mbuf *mb_copy, struct mfc *rt)
 {
@@ -1822,7 +1823,7 @@ pim_register_send_upcall(struct ip *ip, struct vif *vifp,
 /*
  * Encapsulate the data packet in PIM Register message and send it to the RP.
  */
-static int
+int
 pim_register_send_rp(struct ip *ip, struct vif *vifp,
 	struct mbuf *mb_copy, struct mfc *rt)
 {
