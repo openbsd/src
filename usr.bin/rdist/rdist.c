@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.29 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.30 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -189,11 +189,11 @@ main(int argc, char **argv, char **envp)
 			break;
 
 		case 'c':
-			cmdargs++;
+			cmdargs = 1;
 			break;
 
 		case 'n':
-			nflag++;
+			nflag = 1;
 			break;
 
 		case 'V':

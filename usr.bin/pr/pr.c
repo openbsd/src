@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.34 2014/04/15 17:27:37 jmc Exp $	*/
+/*	$OpenBSD: pr.c,v 1.35 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -1789,7 +1789,7 @@ setup(int argc, char *argv[])
 		ferrout("pr: +page number is %s: %s\n", errstr, eoptarg);
 		return(1);
 	    }
-	    ++skipping;
+	    skipping = 1;
 	    break;
 	case '-':
 	    clcnt = strtonum(eoptarg, 1, INT_MAX, &errstr);
@@ -1798,16 +1798,16 @@ setup(int argc, char *argv[])
 		return(1);
 	    }
 	    if (clcnt > 1)
-		++cflag;
+		cflag = 1;
 	    break;
 	case 'a':
-	    ++across;
+	    across = 1;
 	    break;
 	case 'd':
-	    ++dspace;
+	    dspace = 1;
 	    break;
 	case 'e':
-	    ++eflag;
+	    eflag = 1;
 	    if ((eoptarg != NULL) && !isdigit((unsigned char)*eoptarg))
 		inchar = *eoptarg++;
 	    else
@@ -1828,13 +1828,13 @@ setup(int argc, char *argv[])
 	    break;
 	case 'f':
 	case 'F':
-	    ++formfeed;
+	    formfeed = 1;
 	    break;
 	case 'h':
 	    header = eoptarg;
 	    break;
 	case 'i':
-	    ++iflag;
+	    iflag = 1;
 	    if ((eoptarg != NULL) && !isdigit((unsigned char)*eoptarg))
 		ochar = *eoptarg++;
 	    else
@@ -1861,7 +1861,7 @@ setup(int argc, char *argv[])
 	    }
 	    break;
 	case 'm':
-	    ++merge;
+	    merge = 1;
 	    break;
 	case 'n':
 	    if ((eoptarg != NULL) && !isdigit((unsigned char)*eoptarg))
@@ -1888,10 +1888,10 @@ setup(int argc, char *argv[])
 	    }
 	    break;
 	case 'r':
-	    ++nodiag;
+	    nodiag = 1;
 	    break;
 	case 's':
-	    ++sflag;
+	    sflag = 1;
 	    if (eoptarg == NULL)
 		schar = SCHAR;
 	    else {
@@ -1903,10 +1903,10 @@ setup(int argc, char *argv[])
 	    }
 	    break;
 	case 't':
-	    ++nohead;
+	    nohead = 1;
 	    break;
 	case 'w':
-	    ++wflag;
+	    wflag = 1;
 	    pgwd = strtonum(eoptarg, 1, INT_MAX, &errstr);
 	    if (errstr) {
 		ferrout("pr: -w width is %s: %s\n", errstr, eoptarg);
@@ -1984,7 +1984,7 @@ setup(int argc, char *argv[])
      * make sure long enough for headers. if not disable
      */
     if (lines <= HEADLEN + TAILLEN)
-	++nohead;    
+	nohead = 1;
     else if (!nohead)
 	lines -= HEADLEN + TAILLEN;
 

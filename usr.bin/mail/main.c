@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2015/01/24 20:32:46 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ main(int argc, char **argv)
 			/*
 			 * User doesn't want to source /usr/lib/Mail.rc
 			 */
-			nosrc++;
+			nosrc = 1;
 			break;
 		case 'N':
 			/*

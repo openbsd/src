@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 	if (machine) {
 		arch = MACHINE;
 		opts = "a";
-		short_form++;
+		short_form = 1;
 	} else {
 		arch = MACHINE_ARCH;
 		opts = "ks";
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 			arch = MACHINE;
 			break;
 		case 's':
-			short_form++;
+			short_form = 1;
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.29 2009/11/12 07:27:31 ratchov Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.30 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -254,13 +254,13 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "af:nqtvw")) != -1) {
 		switch (ch) {
 		case 'a':
-			aflag++;
+			aflag = 1;
 			break;
 		case 'w':
 			/* compat */
 			break;
 		case 'v':
-			vflag++;
+			vflag = 1;
 			break;
 		case 'n':
 			sep = 0;
@@ -282,7 +282,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0 && tflag == 0)
-		aflag++;
+		aflag = 1;
 		
 	if ((fd = open(file, O_RDWR)) == -1)
 		if ((fd = open(file, O_RDONLY)) == -1)

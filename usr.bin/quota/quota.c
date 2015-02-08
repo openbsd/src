@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.34 2015/01/17 17:22:07 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.35 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -105,16 +105,16 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "ugvq")) != -1) {
 		switch(ch) {
 		case 'g':
-			gflag++;
+			gflag = 1;
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
 			break;
 		case 'v':
-			vflag++;
+			vflag = 1;
 			break;
 		case 'q':
-			qflag++;
+			qflag = 1;
 			break;
 		default:
 			usage();
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (!uflag && !gflag)
-		uflag++;
+		uflag = 1;
 	if (argc == 0) {
 		if (uflag)
 			showuid(getuid());

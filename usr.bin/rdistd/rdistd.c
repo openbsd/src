@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdistd.c,v 1.9 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: rdistd.c,v 1.10 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -68,7 +68,7 @@ main(int argc, char **argv, char **envp)
 	while ((c = getopt(argc, argv, "SDV")) != -1)
 		switch (c) {
 		case 'S':
-			isserver++;
+			isserver = 1;
 			break;
 
 		case 'D':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.28 2012/01/31 08:29:25 otto Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.29 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'b':
-			bodun_always++;
+			bodun_always = 1;
 			break;
 
 		case 'f': /* other calendar file */

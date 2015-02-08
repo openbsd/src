@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.45 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.46 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 			maxrec = (maxrec * 10) + (ch - '0');
 			break;
 		case 'c':
-			calculate++;
+			calculate = 1;
 			break;
 		case 'f':
 			file = optarg;
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 				exit(0);
 			break;
 		case 's':
-			seconds++;
+			seconds = 1;
 			break;
 		case 't':
 			addarg(TTY_TYPE, ttyconv(optarg));

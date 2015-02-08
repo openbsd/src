@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.21 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.22 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -73,16 +73,16 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "AcEef:IiklMm:Ss:t:u")) != -1)
 		switch (ch) {
 		case 'A':
-			Aflag++;
+			Aflag = 1;
 			break;
 		case 'c':
-			cflag++;
+			cflag = 1;
 			break;
 		case 'E':
-			Eflag++;
+			Eflag = 1;
 			break;
 		case 'e':
-			eflag++;
+			eflag = 1;
 			break;
 		case 'f':
 			if (sscanf(optarg, "%x", &func) <= 0 || func < 0 ||
@@ -90,19 +90,19 @@ main(int argc, char **argv)
 				errx(1, "invalid function number");
 			break;
 		case 'I':
-			Iflag++;
+			Iflag = 1;
 			break;
 		case 'i':
-			iflag++;
+			iflag = 1;
 			break;
 		case 'k':
-			kflag++;
+			kflag = 1;
 			break;
 		case 'l':
-			list_mode++;
+			list_mode = 1;
 			break;
 		case 'M':
-			Mflag++;
+			Mflag = 1;
 			break;
 		case 'm':
 			if (sscanf(optarg, "%x", &masku) <= 0 || masku < 0 ||
@@ -110,10 +110,10 @@ main(int argc, char **argv)
 				errx(1, "invalid unit mask number");
 			break;
 		case 'S':
-			Sflag++;
+			Sflag = 1;
 			break;
 		case 's':
-			set_mode++;
+			set_mode = 1;
 			ctr = strtonum(optarg, 0, PCTR_NUM-1, &errstr);
 			if (errstr)
 				errx(1, "counter number is %s: %s", errstr,
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 				errx(1, "threshold is %s: %s", errstr, optarg);
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.22 2015/01/16 06:40:15 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.23 2015/02/08 23:40:35 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -158,10 +158,10 @@ main(int argc, char *argv[])
 			domain = optarg;
 			break;
 		case 't':
-			notrans++;
+			notrans = 1;
 			break;
 		case 'm':
-			mode++;
+			mode = 1;
 			break;
 		default:
 			usage();

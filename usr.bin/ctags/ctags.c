@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.14 2014/12/10 19:44:21 tobias Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.15 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -87,10 +87,10 @@ main(int argc, char *argv[])
 			searchar = '/';
 			break;
 		case 'a':
-			aflag++;
+			aflag = 1;
 			break;
 		case 'd':
-			dflag++;
+			dflag = 1;
 			break;
 		case 'f':
 			outfile = optarg;
@@ -99,15 +99,15 @@ main(int argc, char *argv[])
 			/* backwards compatibility */
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
 			break;
 		case 'w':
-			wflag++;
+			wflag = 1;
 			break;
 		case 'v':
-			vflag++;
+			vflag = 1;
 		case 'x':
-			xflag++;
+			xflag = 1;
 			break;
 		case '?':
 		default:
@@ -148,7 +148,7 @@ usage:		(void)fprintf(stderr,
 					free(cmd);
 					cmd = NULL;
 				}
-				++aflag;
+				aflag = 1;
 			}
 			if (!(outf = fopen(outfile, aflag ? "a" : "w")))
 				err(exit_val, "%s", outfile);

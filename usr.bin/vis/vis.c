@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.15 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: vis.c,v 1.16 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 			eflags |= VIS_ALL;
 			break;
 		case 'n':
-			none++;
+			none = 1;
 			break;
 		case 'w':
 			eflags |= VIS_WHITE;
@@ -86,14 +86,14 @@ main(int argc, char *argv[])
 			}
 			/*FALLTHROUGH*/
 		case 'f':
-			fold++;		/* fold output lines to 80 cols */
+			fold = 1;	/* fold output lines to 80 cols */
 			break;		/* using hidden newline */
 		case 'l':
-			markeol++;	/* mark end of line with \$ */
+			markeol = 1;	/* mark end of line with \$ */
 			break;
 #ifdef DEBUG
 		case 'd':
-			debug++;
+			debug = 1;
 			break;
 #endif
 		case '?':

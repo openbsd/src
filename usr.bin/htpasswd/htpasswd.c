@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.10 2014/03/24 20:33:01 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.11 2015/02/08 23:40:34 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -68,7 +68,7 @@ main(int argc, char** argv)
 	while ((c = getopt(argc, argv, "I")) != -1) {
 		switch (c) {
 		case 'I':
-			batch++;
+			batch = 1;
 			break;
 		default:
 			usage();

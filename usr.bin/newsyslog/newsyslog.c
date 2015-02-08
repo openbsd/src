@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.93 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.94 2015/02/08 23:40:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -434,22 +434,22 @@ parse_args(int argc, char **argv)
 			arcdir = optarg;
 			break;
 		case 'n':
-			noaction++; /* This implies needroot as off */
+			noaction = 1;	/* This implies needroot as off */
 			/* fall through */
 		case 'r':
 			needroot = 0;
 			break;
 		case 'v':
-			verbose++;
+			verbose = 1;
 			break;
 		case 'f':
 			conf = optarg;
 			break;
 		case 'm':
-			monitormode++;
+			monitormode = 1;
 			break;
 		case 'F':
-			force++;
+			force = 1;
 			break;
 		default:
 			usage();

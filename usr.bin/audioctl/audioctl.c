@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.24 2014/09/23 06:47:37 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.25 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
 		switch (ch) {
 		case 'a':
-			aflag++;
+			aflag = 1;
 			break;
 		case 'w':
 			/* backward compatibility */
@@ -363,7 +363,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0)
-		aflag++;
+		aflag = 1;
 
 	if ((fd = open(file, O_RDWR)) < 0) {
 		if ((fd = open(file, O_RDONLY)) < 0)

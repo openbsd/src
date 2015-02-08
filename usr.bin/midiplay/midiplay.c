@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.16 2013/11/12 13:54:51 deraadt Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.17 2015/02/08 23:40:34 deraadt Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -419,10 +419,10 @@ main(int argc, char **argv)
 			file = optarg;
 			break;
 		case 'g':
-			gmreset++;
+			gmreset = 1;
 			break;
 		case 'm':
-			showmeta++;
+			showmeta = 1;
 			break;
 		case 'q':
 			play = 0;
@@ -437,7 +437,7 @@ main(int argc, char **argv)
 			verbose++;
 			break;
 		case 'x':
-			example++;
+			example = 1;
 			break;
 		case '?':
 		default:
