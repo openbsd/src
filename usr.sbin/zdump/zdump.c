@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.4 2015/02/09 13:39:16 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.5 2015/02/09 13:46:22 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -80,33 +80,7 @@
 #define SECSPERNYEAR	(SECSPERDAY * DAYSPERNYEAR)
 #define SECSPERLYEAR	(SECSPERNYEAR + SECSPERDAY)
 
-#ifndef GNUC_or_lint
-#ifdef lint
-#define GNUC_or_lint
-#else /* !defined lint */
-#ifdef __GNUC__
-#define GNUC_or_lint
-#endif /* defined __GNUC__ */
-#endif /* !defined lint */
-#endif /* !defined GNUC_or_lint */
-
-#ifndef INITIALIZE
-#ifdef GNUC_or_lint
-#define INITIALIZE(x)	((x) = 0)
-#else /* !defined GNUC_or_lint */
-#define INITIALIZE(x)
-#endif /* !defined GNUC_or_lint */
-#endif /* !defined INITIALIZE */
-
-/*
-** For the benefit of GNU folk...
-** `_(MSGID)' uses the current locale's message library string for MSGID.
-** The default is to use gettext if available, and use MSGID otherwise.
-*/
-
-#ifndef _
 #define _(msgid) msgid
-#endif /* !defined _ */
 
 #ifndef TZ_DOMAIN
 #define TZ_DOMAIN "tz"
@@ -242,8 +216,8 @@ char *	argv[];
 	struct tm *	tmp;
 	struct tm *	newtmp;
 
-	INITIALIZE(cutlotime);
-	INITIALIZE(cuthitime);
+	cutlotime = 0;
+	cuthitime = 0;
 	progname = argv[0];
 	vflag = 0;
 	cutarg = NULL;

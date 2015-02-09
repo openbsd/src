@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.41 2015/02/09 13:32:51 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.42 2015/02/09 13:46:22 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -824,7 +824,7 @@ const long				offset;
 	register int	i;
 	int		d, m1, yy0, yy1, yy2, dow;
 
-	INITIALIZE(value);
+	value = 0;
 	leapyear = isleap(year);
 	switch (rulep->r_type) {
 
@@ -925,7 +925,7 @@ const int			lastditch;
 	register int			load_result;
 	static struct ttinfo		zttinfo;
 
-	INITIALIZE(dstname);
+	dstname = NULL;
 	stdname = name;
 	if (lastditch) {
 		stdlen = strlen(name);	/* length of standard zone name */

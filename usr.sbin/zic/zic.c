@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.6 2015/02/09 13:42:03 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.7 2015/02/09 13:46:22 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -1998,8 +1998,8 @@ const int			zonecount;
 	startbuf = emalloc(max_abbr_len + 1);
 	ab = emalloc(max_abbr_len + 1);
 	envvar = emalloc(max_envvar_len + 1);
-	INITIALIZE(untiltime);
-	INITIALIZE(starttime);
+	untiltime = 0;
+	starttime = 0;
 	/*
 	** Now. . .finally. . .generate some useful data!
 	*/
@@ -2119,7 +2119,7 @@ wp = ecpyalloc(_("no POSIX environment variable for zone"));
 				zic_t	jtime, ktime;
 				long	offset;
 
-				INITIALIZE(ktime);
+				ktime = 0;
 				if (useuntil) {
 					/*
 					** Turn untiltime into UTC

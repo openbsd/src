@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.32 2015/02/09 13:42:03 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.33 2015/02/09 13:46:22 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -91,39 +91,7 @@ const char *	scheck(const char * string, const char * format);
 	1 + TYPE_SIGNED(type))
 #endif /* !defined INT_STRLEN_MAXIMUM */
 
-/*
-** INITIALIZE(x)
-*/
-
-#ifndef GNUC_or_lint
-#ifdef lint
-#define GNUC_or_lint
-#endif /* defined lint */
-#ifndef lint
-#ifdef __GNUC__
-#define GNUC_or_lint
-#endif /* defined __GNUC__ */
-#endif /* !defined lint */
-#endif /* !defined GNUC_or_lint */
-
-#ifndef INITIALIZE
-#ifdef GNUC_or_lint
-#define INITIALIZE(x)	((x) = 0)
-#endif /* defined GNUC_or_lint */
-#ifndef GNUC_or_lint
-#define INITIALIZE(x)
-#endif /* !defined GNUC_or_lint */
-#endif /* !defined INITIALIZE */
-
-/*
-** For the benefit of GNU folk...
-** `_(MSGID)' uses the current locale's message library string for MSGID.
-** The default is to use gettext if available, and use MSGID otherwise.
-*/
-
-#ifndef _
 #define _(msgid) msgid
-#endif /* !defined _ */
 
 #ifndef TZ_DOMAIN
 #define TZ_DOMAIN "tz"
