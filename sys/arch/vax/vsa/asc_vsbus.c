@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.16 2014/01/21 03:42:21 dlg Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.17 2015/02/09 22:38:18 miod Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -424,9 +424,11 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	} else {
 		asc->sc_flags |= ASC_FROMMEMORY;
 	}
+#ifdef DIAGNOSTIC
 	if ((vaddr_t) *asc->sc_dmaaddr < VM_MIN_KERNEL_ADDRESS)
 		panic("asc_vsbus_dma_setup: dma address (%p) outside of kernel",
 		    *asc->sc_dmaaddr);
+#endif
 
         NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
                 (int)*asc->sc_dmalen, *asc->sc_dmaaddr, (asc->sc_flags & ASC_FROMMEMORY)));
