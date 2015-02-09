@@ -1,4 +1,4 @@
-/* $OpenBSD: nsseq.c,v 1.7 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: nsseq.c,v 1.8 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -80,4 +80,28 @@ ASN1_SEQUENCE_cb(NETSCAPE_CERT_SEQUENCE, nsseq_cb) = {
 	ASN1_EXP_SEQUENCE_OF_OPT(NETSCAPE_CERT_SEQUENCE, certs, X509, 0)
 } ASN1_SEQUENCE_END_cb(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE)
 
-IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_CERT_SEQUENCE)
+
+NETSCAPE_CERT_SEQUENCE *
+d2i_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE **a, const unsigned char **in, long len)
+{
+	return (NETSCAPE_CERT_SEQUENCE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &NETSCAPE_CERT_SEQUENCE_it);
+}
+
+int
+i2d_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_CERT_SEQUENCE_it);
+}
+
+NETSCAPE_CERT_SEQUENCE *
+NETSCAPE_CERT_SEQUENCE_new(void)
+{
+	return (NETSCAPE_CERT_SEQUENCE *)ASN1_item_new(&NETSCAPE_CERT_SEQUENCE_it);
+}
+
+void
+NETSCAPE_CERT_SEQUENCE_free(NETSCAPE_CERT_SEQUENCE *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_CERT_SEQUENCE_it);
+}

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_req.c,v 1.10 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_req.c,v 1.11 2015/02/09 15:05:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,7 +102,31 @@ ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
 	ASN1_IMP_SET_OF_OPT(X509_REQ_INFO, attributes, X509_ATTRIBUTE, 0)
 } ASN1_SEQUENCE_END_enc(X509_REQ_INFO, X509_REQ_INFO)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_REQ_INFO)
+
+X509_REQ_INFO *
+d2i_X509_REQ_INFO(X509_REQ_INFO **a, const unsigned char **in, long len)
+{
+	return (X509_REQ_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_REQ_INFO_it);
+}
+
+int
+i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_REQ_INFO_it);
+}
+
+X509_REQ_INFO *
+X509_REQ_INFO_new(void)
+{
+	return (X509_REQ_INFO *)ASN1_item_new(&X509_REQ_INFO_it);
+}
+
+void
+X509_REQ_INFO_free(X509_REQ_INFO *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_REQ_INFO_it);
+}
 
 ASN1_SEQUENCE_ref(X509_REQ, 0, CRYPTO_LOCK_X509_REQ) = {
 	ASN1_SIMPLE(X509_REQ, req_info, X509_REQ_INFO),
@@ -110,5 +134,29 @@ ASN1_SEQUENCE_ref(X509_REQ, 0, CRYPTO_LOCK_X509_REQ) = {
 	ASN1_SIMPLE(X509_REQ, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509_REQ, X509_REQ)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_REQ)
+
+X509_REQ *
+d2i_X509_REQ(X509_REQ **a, const unsigned char **in, long len)
+{
+	return (X509_REQ *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_REQ_it);
+}
+
+int
+i2d_X509_REQ(X509_REQ *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_REQ_it);
+}
+
+X509_REQ *
+X509_REQ_new(void)
+{
+	return (X509_REQ *)ASN1_item_new(&X509_REQ_it);
+}
+
+void
+X509_REQ_free(X509_REQ *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_REQ_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_REQ)

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.10 2015/02/09 15:05:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,7 +93,31 @@ ASN1_SEQUENCE(X509_ATTRIBUTE) = {
 	ASN1_EX_COMBINE(0, 0, X509_ATTRIBUTE_SET)
 } ASN1_SEQUENCE_END(X509_ATTRIBUTE)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_ATTRIBUTE)
+
+X509_ATTRIBUTE *
+d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a, const unsigned char **in, long len)
+{
+	return (X509_ATTRIBUTE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_ATTRIBUTE_it);
+}
+
+int
+i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_ATTRIBUTE_it);
+}
+
+X509_ATTRIBUTE *
+X509_ATTRIBUTE_new(void)
+{
+	return (X509_ATTRIBUTE *)ASN1_item_new(&X509_ATTRIBUTE_it);
+}
+
+void
+X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_ATTRIBUTE_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_ATTRIBUTE)
 
 X509_ATTRIBUTE *

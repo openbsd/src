@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.22 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.23 2015/02/09 15:05:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,7 +89,31 @@ ASN1_SEQUENCE_cb(X509_PUBKEY, pubkey_cb) = {
 	ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_cb(X509_PUBKEY, X509_PUBKEY)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
+
+X509_PUBKEY *
+d2i_X509_PUBKEY(X509_PUBKEY **a, const unsigned char **in, long len)
+{
+	return (X509_PUBKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_PUBKEY_it);
+}
+
+int
+i2d_X509_PUBKEY(X509_PUBKEY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_PUBKEY_it);
+}
+
+X509_PUBKEY *
+X509_PUBKEY_new(void)
+{
+	return (X509_PUBKEY *)ASN1_item_new(&X509_PUBKEY_it);
+}
+
+void
+X509_PUBKEY_free(X509_PUBKEY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_PUBKEY_it);
+}
 
 int
 X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)

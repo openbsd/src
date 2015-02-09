@@ -1,4 +1,4 @@
-/* $OpenBSD: x_sig.c,v 1.8 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_sig.c,v 1.9 2015/02/09 15:05:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,4 +66,28 @@ ASN1_SEQUENCE(X509_SIG) = {
 	ASN1_SIMPLE(X509_SIG, digest, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(X509_SIG)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_SIG)
+
+X509_SIG *
+d2i_X509_SIG(X509_SIG **a, const unsigned char **in, long len)
+{
+	return (X509_SIG *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_SIG_it);
+}
+
+int
+i2d_X509_SIG(X509_SIG *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_SIG_it);
+}
+
+X509_SIG *
+X509_SIG_new(void)
+{
+	return (X509_SIG *)ASN1_item_new(&X509_SIG_it);
+}
+
+void
+X509_SIG_free(X509_SIG *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_SIG_it);
+}

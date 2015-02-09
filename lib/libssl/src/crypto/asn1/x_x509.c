@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_x509.c,v 1.18 2015/02/09 15:05:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,31 @@ ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
 	ASN1_EXP_SEQUENCE_OF_OPT(X509_CINF, extensions, X509_EXTENSION, 3)
 } ASN1_SEQUENCE_END_enc(X509_CINF, X509_CINF)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
+
+X509_CINF *
+d2i_X509_CINF(X509_CINF **a, const unsigned char **in, long len)
+{
+	return (X509_CINF *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_CINF_it);
+}
+
+int
+i2d_X509_CINF(X509_CINF *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_CINF_it);
+}
+
+X509_CINF *
+X509_CINF_new(void)
+{
+	return (X509_CINF *)ASN1_item_new(&X509_CINF_it);
+}
+
+void
+X509_CINF_free(X509_CINF *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_CINF_it);
+}
 /* X509 top level structure needs a bit of customisation */
 
 extern void policy_cache_free(X509_POLICY_CACHE *cache);
@@ -138,7 +162,31 @@ ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
 	ASN1_SIMPLE(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509)
+
+X509 *
+d2i_X509(X509 **a, const unsigned char **in, long len)
+{
+	return (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_it);
+}
+
+int
+i2d_X509(X509 *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_it);
+}
+
+X509 *
+X509_new(void)
+{
+	return (X509 *)ASN1_item_new(&X509_it);
+}
+
+void
+X509_free(X509 *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
 int

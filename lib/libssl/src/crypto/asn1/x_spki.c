@@ -1,4 +1,4 @@
-/* $OpenBSD: x_spki.c,v 1.8 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_spki.c,v 1.9 2015/02/09 15:05:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,7 +70,31 @@ ASN1_SEQUENCE(NETSCAPE_SPKAC) = {
 	ASN1_SIMPLE(NETSCAPE_SPKAC, challenge, ASN1_IA5STRING)
 } ASN1_SEQUENCE_END(NETSCAPE_SPKAC)
 
-IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
+
+NETSCAPE_SPKAC *
+d2i_NETSCAPE_SPKAC(NETSCAPE_SPKAC **a, const unsigned char **in, long len)
+{
+	return (NETSCAPE_SPKAC *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &NETSCAPE_SPKAC_it);
+}
+
+int
+i2d_NETSCAPE_SPKAC(NETSCAPE_SPKAC *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_SPKAC_it);
+}
+
+NETSCAPE_SPKAC *
+NETSCAPE_SPKAC_new(void)
+{
+	return (NETSCAPE_SPKAC *)ASN1_item_new(&NETSCAPE_SPKAC_it);
+}
+
+void
+NETSCAPE_SPKAC_free(NETSCAPE_SPKAC *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_SPKAC_it);
+}
 
 ASN1_SEQUENCE(NETSCAPE_SPKI) = {
 	ASN1_SIMPLE(NETSCAPE_SPKI, spkac, NETSCAPE_SPKAC),
@@ -78,4 +102,28 @@ ASN1_SEQUENCE(NETSCAPE_SPKI) = {
 	ASN1_SIMPLE(NETSCAPE_SPKI, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(NETSCAPE_SPKI)
 
-IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_SPKI)
+
+NETSCAPE_SPKI *
+d2i_NETSCAPE_SPKI(NETSCAPE_SPKI **a, const unsigned char **in, long len)
+{
+	return (NETSCAPE_SPKI *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &NETSCAPE_SPKI_it);
+}
+
+int
+i2d_NETSCAPE_SPKI(NETSCAPE_SPKI *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_SPKI_it);
+}
+
+NETSCAPE_SPKI *
+NETSCAPE_SPKI_new(void)
+{
+	return (NETSCAPE_SPKI *)ASN1_item_new(&NETSCAPE_SPKI_it);
+}
+
+void
+NETSCAPE_SPKI_free(NETSCAPE_SPKI *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_SPKI_it);
+}

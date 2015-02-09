@@ -1,4 +1,4 @@
-/* $OpenBSD: x_exten.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x_exten.c,v 1.10 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -71,6 +71,30 @@ ASN1_ITEM_TEMPLATE(X509_EXTENSIONS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Extension, X509_EXTENSION)
 ASN1_ITEM_TEMPLATE_END(X509_EXTENSIONS)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_EXTENSION)
+
+X509_EXTENSION *
+d2i_X509_EXTENSION(X509_EXTENSION **a, const unsigned char **in, long len)
+{
+	return (X509_EXTENSION *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_EXTENSION_it);
+}
+
+int
+i2d_X509_EXTENSION(X509_EXTENSION *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_EXTENSION_it);
+}
+
+X509_EXTENSION *
+X509_EXTENSION_new(void)
+{
+	return (X509_EXTENSION *)ASN1_item_new(&X509_EXTENSION_it);
+}
+
+void
+X509_EXTENSION_free(X509_EXTENSION *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_EXTENSION_it);
+}
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_EXTENSIONS, X509_EXTENSIONS, X509_EXTENSIONS)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_EXTENSION)

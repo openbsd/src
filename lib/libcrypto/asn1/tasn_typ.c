@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.6 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.7 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -63,51 +63,411 @@
 
 
 IMPLEMENT_ASN1_TYPE(ASN1_INTEGER)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_INTEGER)
+
+ASN1_INTEGER *
+d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len)
+{
+	return (ASN1_INTEGER *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_INTEGER_it);
+}
+
+int
+i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_INTEGER_it);
+}
+
+ASN1_INTEGER *
+ASN1_INTEGER_new(void)
+{
+	return (ASN1_INTEGER *)ASN1_item_new(&ASN1_INTEGER_it);
+}
+
+void
+ASN1_INTEGER_free(ASN1_INTEGER *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_INTEGER_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_ENUMERATED)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_ENUMERATED)
+
+ASN1_ENUMERATED *
+d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, const unsigned char **in, long len)
+{
+	return (ASN1_ENUMERATED *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_ENUMERATED_it);
+}
+
+int
+i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_ENUMERATED_it);
+}
+
+ASN1_ENUMERATED *
+ASN1_ENUMERATED_new(void)
+{
+	return (ASN1_ENUMERATED *)ASN1_item_new(&ASN1_ENUMERATED_it);
+}
+
+void
+ASN1_ENUMERATED_free(ASN1_ENUMERATED *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ENUMERATED_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_BIT_STRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_BIT_STRING)
+
+ASN1_BIT_STRING *
+d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_BIT_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_BIT_STRING_it);
+}
+
+int
+i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_BIT_STRING_it);
+}
+
+ASN1_BIT_STRING *
+ASN1_BIT_STRING_new(void)
+{
+	return (ASN1_BIT_STRING *)ASN1_item_new(&ASN1_BIT_STRING_it);
+}
+
+void
+ASN1_BIT_STRING_free(ASN1_BIT_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BIT_STRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_OCTET_STRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_OCTET_STRING)
+
+ASN1_OCTET_STRING *
+d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_OCTET_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_OCTET_STRING_it);
+}
+
+int
+i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_OCTET_STRING_it);
+}
+
+ASN1_OCTET_STRING *
+ASN1_OCTET_STRING_new(void)
+{
+	return (ASN1_OCTET_STRING *)ASN1_item_new(&ASN1_OCTET_STRING_it);
+}
+
+void
+ASN1_OCTET_STRING_free(ASN1_OCTET_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_OCTET_STRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_NULL)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_NULL)
+
+ASN1_NULL *
+d2i_ASN1_NULL(ASN1_NULL **a, const unsigned char **in, long len)
+{
+	return (ASN1_NULL *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_NULL_it);
+}
+
+int
+i2d_ASN1_NULL(ASN1_NULL *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_NULL_it);
+}
+
+ASN1_NULL *
+ASN1_NULL_new(void)
+{
+	return (ASN1_NULL *)ASN1_item_new(&ASN1_NULL_it);
+}
+
+void
+ASN1_NULL_free(ASN1_NULL *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_NULL_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_OBJECT)
 
 IMPLEMENT_ASN1_TYPE(ASN1_UTF8STRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_UTF8STRING)
+
+ASN1_UTF8STRING *
+d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_UTF8STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_UTF8STRING_it);
+}
+
+int
+i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_UTF8STRING_it);
+}
+
+ASN1_UTF8STRING *
+ASN1_UTF8STRING_new(void)
+{
+	return (ASN1_UTF8STRING *)ASN1_item_new(&ASN1_UTF8STRING_it);
+}
+
+void
+ASN1_UTF8STRING_free(ASN1_UTF8STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UTF8STRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_PRINTABLESTRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_PRINTABLESTRING)
+
+ASN1_PRINTABLESTRING *
+d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_PRINTABLESTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_PRINTABLESTRING_it);
+}
+
+int
+i2d_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_PRINTABLESTRING_it);
+}
+
+ASN1_PRINTABLESTRING *
+ASN1_PRINTABLESTRING_new(void)
+{
+	return (ASN1_PRINTABLESTRING *)ASN1_item_new(&ASN1_PRINTABLESTRING_it);
+}
+
+void
+ASN1_PRINTABLESTRING_free(ASN1_PRINTABLESTRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_PRINTABLESTRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_T61STRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_T61STRING)
+
+ASN1_T61STRING *
+d2i_ASN1_T61STRING(ASN1_T61STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_T61STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_T61STRING_it);
+}
+
+int
+i2d_ASN1_T61STRING(ASN1_T61STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_T61STRING_it);
+}
+
+ASN1_T61STRING *
+ASN1_T61STRING_new(void)
+{
+	return (ASN1_T61STRING *)ASN1_item_new(&ASN1_T61STRING_it);
+}
+
+void
+ASN1_T61STRING_free(ASN1_T61STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_T61STRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_IA5STRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_IA5STRING)
+
+ASN1_IA5STRING *
+d2i_ASN1_IA5STRING(ASN1_IA5STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_IA5STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_IA5STRING_it);
+}
+
+int
+i2d_ASN1_IA5STRING(ASN1_IA5STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_IA5STRING_it);
+}
+
+ASN1_IA5STRING *
+ASN1_IA5STRING_new(void)
+{
+	return (ASN1_IA5STRING *)ASN1_item_new(&ASN1_IA5STRING_it);
+}
+
+void
+ASN1_IA5STRING_free(ASN1_IA5STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_IA5STRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_GENERALSTRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_GENERALSTRING)
+
+ASN1_GENERALSTRING *
+d2i_ASN1_GENERALSTRING(ASN1_GENERALSTRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_GENERALSTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_GENERALSTRING_it);
+}
+
+int
+i2d_ASN1_GENERALSTRING(ASN1_GENERALSTRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_GENERALSTRING_it);
+}
+
+ASN1_GENERALSTRING *
+ASN1_GENERALSTRING_new(void)
+{
+	return (ASN1_GENERALSTRING *)ASN1_item_new(&ASN1_GENERALSTRING_it);
+}
+
+void
+ASN1_GENERALSTRING_free(ASN1_GENERALSTRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_GENERALSTRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_UTCTIME)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_UTCTIME)
+
+ASN1_UTCTIME *
+d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, const unsigned char **in, long len)
+{
+	return (ASN1_UTCTIME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_UTCTIME_it);
+}
+
+int
+i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_UTCTIME_it);
+}
+
+ASN1_UTCTIME *
+ASN1_UTCTIME_new(void)
+{
+	return (ASN1_UTCTIME *)ASN1_item_new(&ASN1_UTCTIME_it);
+}
+
+void
+ASN1_UTCTIME_free(ASN1_UTCTIME *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UTCTIME_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_GENERALIZEDTIME)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_GENERALIZEDTIME)
+
+ASN1_GENERALIZEDTIME *
+d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a, const unsigned char **in, long len)
+{
+	return (ASN1_GENERALIZEDTIME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_GENERALIZEDTIME_it);
+}
+
+int
+i2d_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_GENERALIZEDTIME_it);
+}
+
+ASN1_GENERALIZEDTIME *
+ASN1_GENERALIZEDTIME_new(void)
+{
+	return (ASN1_GENERALIZEDTIME *)ASN1_item_new(&ASN1_GENERALIZEDTIME_it);
+}
+
+void
+ASN1_GENERALIZEDTIME_free(ASN1_GENERALIZEDTIME *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_GENERALIZEDTIME_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_VISIBLESTRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_VISIBLESTRING)
+
+ASN1_VISIBLESTRING *
+d2i_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_VISIBLESTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_VISIBLESTRING_it);
+}
+
+int
+i2d_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_VISIBLESTRING_it);
+}
+
+ASN1_VISIBLESTRING *
+ASN1_VISIBLESTRING_new(void)
+{
+	return (ASN1_VISIBLESTRING *)ASN1_item_new(&ASN1_VISIBLESTRING_it);
+}
+
+void
+ASN1_VISIBLESTRING_free(ASN1_VISIBLESTRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_VISIBLESTRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_UNIVERSALSTRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_UNIVERSALSTRING)
+
+ASN1_UNIVERSALSTRING *
+d2i_ASN1_UNIVERSALSTRING(ASN1_UNIVERSALSTRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_UNIVERSALSTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_UNIVERSALSTRING_it);
+}
+
+int
+i2d_ASN1_UNIVERSALSTRING(ASN1_UNIVERSALSTRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_UNIVERSALSTRING_it);
+}
+
+ASN1_UNIVERSALSTRING *
+ASN1_UNIVERSALSTRING_new(void)
+{
+	return (ASN1_UNIVERSALSTRING *)ASN1_item_new(&ASN1_UNIVERSALSTRING_it);
+}
+
+void
+ASN1_UNIVERSALSTRING_free(ASN1_UNIVERSALSTRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UNIVERSALSTRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_BMPSTRING)
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_BMPSTRING)
+
+ASN1_BMPSTRING *
+d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_BMPSTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_BMPSTRING_it);
+}
+
+int
+i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_BMPSTRING_it);
+}
+
+ASN1_BMPSTRING *
+ASN1_BMPSTRING_new(void)
+{
+	return (ASN1_BMPSTRING *)ASN1_item_new(&ASN1_BMPSTRING_it);
+}
+
+void
+ASN1_BMPSTRING_free(ASN1_BMPSTRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BMPSTRING_it);
+}
 
 IMPLEMENT_ASN1_TYPE(ASN1_ANY)
 

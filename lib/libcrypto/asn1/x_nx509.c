@@ -1,4 +1,4 @@
-/* $OpenBSD: x_nx509.c,v 1.3 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: x_nx509.c,v 1.4 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -68,4 +68,28 @@ ASN1_SEQUENCE(NETSCAPE_X509) = {
 	ASN1_OPT(NETSCAPE_X509, cert, X509)
 } ASN1_SEQUENCE_END(NETSCAPE_X509)
 
-IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_X509)
+
+NETSCAPE_X509 *
+d2i_NETSCAPE_X509(NETSCAPE_X509 **a, const unsigned char **in, long len)
+{
+	return (NETSCAPE_X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &NETSCAPE_X509_it);
+}
+
+int
+i2d_NETSCAPE_X509(NETSCAPE_X509 *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_X509_it);
+}
+
+NETSCAPE_X509 *
+NETSCAPE_X509_new(void)
+{
+	return (NETSCAPE_X509 *)ASN1_item_new(&NETSCAPE_X509_it);
+}
+
+void
+NETSCAPE_X509_free(NETSCAPE_X509 *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_X509_it);
+}

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.13 2015/01/28 04:14:31 beck Exp $ */
+/* $OpenBSD: x_algor.c,v 1.14 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -70,7 +70,31 @@ ASN1_ITEM_TEMPLATE(X509_ALGORS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
 ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
+
+X509_ALGOR *
+d2i_X509_ALGOR(X509_ALGOR **a, const unsigned char **in, long len)
+{
+	return (X509_ALGOR *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_ALGOR_it);
+}
+
+int
+i2d_X509_ALGOR(X509_ALGOR *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_ALGOR_it);
+}
+
+X509_ALGOR *
+X509_ALGOR_new(void)
+{
+	return (X509_ALGOR *)ASN1_item_new(&X509_ALGOR_it);
+}
+
+void
+X509_ALGOR_free(X509_ALGOR *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &X509_ALGOR_it);
+}
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_ALGORS, X509_ALGORS, X509_ALGORS)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
 

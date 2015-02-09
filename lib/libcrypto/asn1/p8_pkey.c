@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.13 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -82,7 +82,31 @@ ASN1_SEQUENCE_cb(PKCS8_PRIV_KEY_INFO, pkey_cb) = {
 	ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0)
 } ASN1_SEQUENCE_END_cb(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 
-IMPLEMENT_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
+
+PKCS8_PRIV_KEY_INFO *
+d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a, const unsigned char **in, long len)
+{
+	return (PKCS8_PRIV_KEY_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &PKCS8_PRIV_KEY_INFO_it);
+}
+
+int
+i2d_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PKCS8_PRIV_KEY_INFO_it);
+}
+
+PKCS8_PRIV_KEY_INFO *
+PKCS8_PRIV_KEY_INFO_new(void)
+{
+	return (PKCS8_PRIV_KEY_INFO *)ASN1_item_new(&PKCS8_PRIV_KEY_INFO_it);
+}
+
+void
+PKCS8_PRIV_KEY_INFO_free(PKCS8_PRIV_KEY_INFO *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &PKCS8_PRIV_KEY_INFO_it);
+}
 
 int
 PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj, int version,

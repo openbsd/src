@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.18 2014/10/22 13:02:03 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.19 2015/02/09 15:05:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -71,7 +71,31 @@ ASN1_SEQUENCE(PBE2PARAM) = {
 	ASN1_SIMPLE(PBE2PARAM, encryption, X509_ALGOR)
 } ASN1_SEQUENCE_END(PBE2PARAM)
 
-IMPLEMENT_ASN1_FUNCTIONS(PBE2PARAM)
+
+PBE2PARAM *
+d2i_PBE2PARAM(PBE2PARAM **a, const unsigned char **in, long len)
+{
+	return (PBE2PARAM *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &PBE2PARAM_it);
+}
+
+int
+i2d_PBE2PARAM(PBE2PARAM *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PBE2PARAM_it);
+}
+
+PBE2PARAM *
+PBE2PARAM_new(void)
+{
+	return (PBE2PARAM *)ASN1_item_new(&PBE2PARAM_it);
+}
+
+void
+PBE2PARAM_free(PBE2PARAM *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &PBE2PARAM_it);
+}
 
 ASN1_SEQUENCE(PBKDF2PARAM) = {
 	ASN1_SIMPLE(PBKDF2PARAM, salt, ASN1_ANY),
@@ -80,7 +104,31 @@ ASN1_SEQUENCE(PBKDF2PARAM) = {
 	ASN1_OPT(PBKDF2PARAM, prf, X509_ALGOR)
 } ASN1_SEQUENCE_END(PBKDF2PARAM)
 
-IMPLEMENT_ASN1_FUNCTIONS(PBKDF2PARAM)
+
+PBKDF2PARAM *
+d2i_PBKDF2PARAM(PBKDF2PARAM **a, const unsigned char **in, long len)
+{
+	return (PBKDF2PARAM *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &PBKDF2PARAM_it);
+}
+
+int
+i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PBKDF2PARAM_it);
+}
+
+PBKDF2PARAM *
+PBKDF2PARAM_new(void)
+{
+	return (PBKDF2PARAM *)ASN1_item_new(&PBKDF2PARAM_it);
+}
+
+void
+PBKDF2PARAM_free(PBKDF2PARAM *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &PBKDF2PARAM_it);
+}
 
 /* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
  * yes I know this is horrible!

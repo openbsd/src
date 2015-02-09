@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.22 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: a_time.c,v 1.23 2015/02/09 15:05:59 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -71,7 +71,31 @@
 
 IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 
-IMPLEMENT_ASN1_FUNCTIONS(ASN1_TIME)
+
+ASN1_TIME *
+d2i_ASN1_TIME(ASN1_TIME **a, const unsigned char **in, long len)
+{
+	return (ASN1_TIME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_TIME_it);
+}
+
+int
+i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_TIME_it);
+}
+
+ASN1_TIME *
+ASN1_TIME_new(void)
+{
+	return (ASN1_TIME *)ASN1_item_new(&ASN1_TIME_it);
+}
+
+void
+ASN1_TIME_free(ASN1_TIME *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_TIME_it);
+}
 
 ASN1_TIME *
 ASN1_TIME_set(ASN1_TIME *s, time_t t)
