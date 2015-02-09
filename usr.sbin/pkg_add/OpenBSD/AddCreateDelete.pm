@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.32 2015/02/09 09:47:10 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.33 2015/02/09 11:01:08 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -59,7 +59,7 @@ sub handle_options
 {
 	my ($state, $opt_string, @usage) = @_;
 
-	my $i = 0;
+	my $i;
 	$state->{opt}{i} //= sub {
 		$i++;
 	};
