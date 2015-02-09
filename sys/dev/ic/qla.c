@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.48 2015/02/09 03:15:41 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.49 2015/02/09 07:43:08 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -37,8 +37,6 @@
 
 #include <dev/ic/qlareg.h>
 #include <dev/ic/qlavar.h>
-
-#define QLA_DEBUG
 
 #ifdef QLA_DEBUG
 #define DPRINTF(m, f...) do { if ((qladebug & (m)) == (m)) printf(f); } \
