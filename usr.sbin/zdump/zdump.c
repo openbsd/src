@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.2 2015/02/09 12:45:33 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.3 2015/02/09 12:52:45 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -154,12 +154,12 @@ static struct tm *
 my_localtime(tp)
 time_t *	tp;
 {
-	register struct tm *	tmp;
+	struct tm *	tmp;
 
 	tmp = localtime(tp);
 	if (tp != NULL && tmp != NULL) {
 		struct tm	tm;
-		register time_t	t;
+		time_t	t;
 
 		tm = *tmp;
 		t = mktime(&tm);
@@ -189,8 +189,8 @@ abbrok(abbrp, zone)
 const char * const	abbrp;
 const char * const	zone;
 {
-	register const char *	cp;
-	register char *		wp;
+	const char *	cp;
+	char *		wp;
 
 	if (warned)
 		return;
@@ -237,22 +237,22 @@ main(argc, argv)
 int	argc;
 char *	argv[];
 {
-	register int		i;
-	register int		c;
-	register int		vflag;
-	register char *		cutarg;
-	register long		cutloyear = ZDUMP_LO_YEAR;
-	register long		cuthiyear = ZDUMP_HI_YEAR;
-	register time_t		cutlotime;
-	register time_t		cuthitime;
-	register char **	fakeenv;
+	int		i;
+	int		c;
+	int		vflag;
+	char *		cutarg;
+	long		cutloyear = ZDUMP_LO_YEAR;
+	long		cuthiyear = ZDUMP_HI_YEAR;
+	time_t		cutlotime;
+	time_t		cuthitime;
+	char **	fakeenv;
 	time_t			now;
 	time_t			t;
 	time_t			newt;
 	struct tm		tm;
 	struct tm		newtm;
-	register struct tm *	tmp;
-	register struct tm *	newtmp;
+	struct tm *	tmp;
+	struct tm *	newtmp;
 
 	INITIALIZE(cutlotime);
 	INITIALIZE(cuthitime);
@@ -302,8 +302,8 @@ char *	argv[];
 		if (strlen(argv[i]) > longest)
 			longest = strlen(argv[i]);
 	{
-		register int	from;
-		register int	to;
+		int	from;
+		int	to;
 
 		for (i = 0; environ[i] != NULL; ++i)
 			continue;
@@ -430,9 +430,9 @@ static time_t
 yeartot(y)
 const long	y;
 {
-	register long	myy;
-	register long	seconds;
-	register time_t	t;
+	long	myy;
+	long	seconds;
+	time_t	t;
 
 	myy = EPOCH_YEAR;
 	t = 0;
@@ -464,9 +464,9 @@ hunt(char *name, time_t lot, time_t hit)
 	time_t			t;
 	long			diff;
 	struct tm		lotm;
-	register struct tm *	lotmp;
+	struct tm *	lotmp;
 	struct tm		tm;
-	register struct tm *	tmp;
+	struct tm *	tmp;
 	char			loab[MAX_STRING_LENGTH];
 
 	lotmp = my_localtime(&lot);
@@ -510,8 +510,8 @@ delta(newp, oldp)
 struct tm *	newp;
 struct tm *	oldp;
 {
-	register long	result;
-	register int	tmy;
+	long	result;
+	int	tmy;
 
 	if (newp->tm_year < oldp->tm_year)
 		return -delta(oldp, newp);
@@ -531,7 +531,7 @@ struct tm *	oldp;
 static void
 show(char *zone, time_t t, int v)
 {
-	register struct tm *	tmp;
+	struct tm *	tmp;
 
 	(void) printf("%-*s  ", (int) longest, zone);
 	if (v) {
@@ -565,7 +565,7 @@ static char *
 abbr(tmp)
 struct tm *	tmp;
 {
-	register char *	result;
+	char *	result;
 	static char	nada;
 
 	if (tmp->tm_isdst != 0 && tmp->tm_isdst != 1)
@@ -603,7 +603,7 @@ tformat(void)
 
 static void
 dumptime(timeptr)
-register const struct tm *	timeptr;
+const struct tm *	timeptr;
 {
 	static const char	wday_name[][3] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -612,10 +612,10 @@ register const struct tm *	timeptr;
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-	register const char *	wn;
-	register const char *	mn;
-	register int		lead;
-	register int		trail;
+	const char *	wn;
+	const char *	mn;
+	int		lead;
+	int		trail;
 
 	if (timeptr == NULL) {
 		(void) printf("NULL");
