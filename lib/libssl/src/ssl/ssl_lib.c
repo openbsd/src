@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.96 2015/02/07 05:46:01 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.97 2015/02/09 07:17:55 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1355,11 +1355,13 @@ SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 	size_t			 curlen = 0;
 	int			 i;
 
-	if ((s->session == NULL) || (s->session->ciphers == NULL) ||
-		(len < 2))
-	return (NULL);
+	if (s->session == NULL || s->session->ciphers == NULL || len < 2)
+		return (NULL);
 
 	sk = s->session->ciphers;
+	if (sk_SSL_CIPHER_num(sk) == 0)
+		return (NULL);
+
 	buf[0] = '\0';
 	for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
 		c = sk_SSL_CIPHER_value(sk, i);
