@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.184 2015/02/06 11:41:55 beck Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.185 2015/02/09 07:14:38 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4175,7 +4175,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	first = uvm_map_entrybyaddr(&map->addr, start);
 
 	/* Make a first pass to check for holes. */
-	for (entry = first; entry->start < end;
+	for (entry = first; entry != NULL && entry->start < end;
 	    entry = RB_NEXT(uvm_map_addr, &map->addr, entry)) {
 		if (UVM_ET_ISSUBMAP(entry)) {
 			vm_map_unlock_read(map);
