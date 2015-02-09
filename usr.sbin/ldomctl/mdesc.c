@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.7 2012/11/26 20:08:15 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.8 2015/02/09 04:27:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -605,17 +605,25 @@ md_read(const char *path)
 	if (fp == NULL)
 		return NULL;
 
-	if (fseek(fp, 0, SEEK_END) == -1)
+	if (fseek(fp, 0, SEEK_END) == -1) {
+		fclose(fp);
 		return NULL;
+	}
 	size = ftell(fp);
-	if (size == -1)
+	if (size == -1) {
+		fclose(fp);
 		return NULL;
-	if (fseek(fp, 0, SEEK_SET) == -1)
+	}
+	if (fseek(fp, 0, SEEK_SET) == -1) {
+		fclose(fp);
 		return NULL;
+	}
 
 	buf = xmalloc(size);
-	if (fread(buf, size, 1, fp) != 1)
+	if (fread(buf, size, 1, fp) != 1) {
+		fclose(fp);
 		return NULL;
+	}
 
 	fclose(fp);
 
