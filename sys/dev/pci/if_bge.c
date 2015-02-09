@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.364 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.365 2015/02/09 09:51:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3510,7 +3510,6 @@ bge_rxeof(struct bge_softc *sc)
 		}
 #endif
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN;
-		m->m_pkthdr.rcvif = ifp;
 
 		bge_rxcsum(sc, cur_rx, m);
 
