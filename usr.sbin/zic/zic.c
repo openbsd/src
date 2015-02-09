@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.10 2015/02/09 23:14:32 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.11 2015/02/09 23:34:46 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 #include <ctype.h>
+#include <err.h>
 #include <locale.h>
 
 #include "tzfile.h"
@@ -364,11 +365,7 @@ memcheck(ptr)
 void * const	ptr;
 {
 	if (ptr == NULL) {
-		const char *e = strerror(errno);
-
-		fprintf(stderr, _("%s: Memory exhausted: %s\n"),
-			progname, e);
-		exit(EXIT_FAILURE);
+		err(1, "Memory exhausted");
 	}
 	return ptr;
 }
@@ -470,11 +467,6 @@ char *	argv[];
 
 	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
 	progname = argv[0];
-	if (TYPE_BIT(zic_t) < 64) {
-		fprintf(stderr, "%s: %s\n", progname,
-			_("wild compilation-time specification of zic_t"));
-		exit(EXIT_FAILURE);
-	}
 	while ((c = getopt(argc, argv, "d:l:p:L:vy:")) != -1)
 		switch (c) {
 			default:
@@ -483,50 +475,35 @@ char *	argv[];
 				if (directory == NULL)
 					directory = optarg;
 				else {
-					fprintf(stderr,
-						_("%s: More than one -d option specified\n"),
-						progname);
-					exit(EXIT_FAILURE);
+					errx(1, "More than one -d option specified");
 				}
 				break;
 			case 'l':
 				if (lcltime == NULL)
 					lcltime = optarg;
 				else {
-					fprintf(stderr,
-						_("%s: More than one -l option specified\n"),
-						progname);
-					exit(EXIT_FAILURE);
+					errx(1, "More than one -l option specified");
 				}
 				break;
 			case 'p':
 				if (psxrules == NULL)
 					psxrules = optarg;
 				else {
-					fprintf(stderr,
-						_("%s: More than one -p option specified\n"),
-						progname);
-					exit(EXIT_FAILURE);
+					errx(1, "More than one -p option specified");
 				}
 				break;
 			case 'y':
 				if (yitcommand == NULL)
 					yitcommand = optarg;
 				else {
-					fprintf(stderr,
-						_("%s: More than one -y option specified\n"),
-						progname);
-					exit(EXIT_FAILURE);
+					errx(1, "More than one -y option specified");
 				}
 				break;
 			case 'L':
 				if (leapsec == NULL)
 					leapsec = optarg;
 				else {
-					fprintf(stderr,
-						_("%s: More than one -L option specified\n"),
-						progname);
-					exit(EXIT_FAILURE);
+					errx(1, "More than one -L option specified");
 				}
 				break;
 			case 'v':
@@ -621,12 +598,7 @@ const char * const	tofield;
 		if (result != 0 && errno == EXDEV)
 			result = symlink(fromname, toname);
 		if (result != 0) {
-			const char *e = strerror(errno);
-
-			fprintf(stderr,
-				_("%s: Can't link from %s to %s: %s\n"),
-				progname, fromname, toname, e);
-			exit(EXIT_FAILURE);
+			err(1, "Can't link from %s to %s", fromname, toname);
 		}
 	}
 	free(fromname);
@@ -769,11 +741,7 @@ const char *	name;
 		name = _("standard input");
 		fp = stdin;
 	} else if ((fp = fopen(name, "r")) == NULL) {
-		const char *e = strerror(errno);
-
-		fprintf(stderr, _("%s: Can't open %s: %s\n"),
-			progname, name, e);
-		exit(EXIT_FAILURE);
+		err(1, "Can't open %s", name);
 	}
 	wantcont = FALSE;
 	for (num = 1; ; ++num) {
@@ -820,29 +788,22 @@ const char *	name;
 						fprintf(stderr,
 							_("%s: Leap line in non leap seconds file %s\n"),
 							progname, name);
-					else	inleap(fields, nfields);
+						/* no exit? */
+					else
+						inleap(fields, nfields);
 					wantcont = FALSE;
 					break;
 				default:	/* "cannot happen" */
-					fprintf(stderr,
-						_("%s: panic: Invalid l_value %d\n"),
-						progname, lp->l_value);
-					exit(EXIT_FAILURE);
+					errx(1, "panic: Invalid l_value %d", lp->l_value);
 			}
 		}
 		free(fields);
 	}
 	if (ferror(fp)) {
-		fprintf(stderr, _("%s: Error reading %s\n"),
-			progname, filename);
-		exit(EXIT_FAILURE);
+		errx(1, "Error reading %s", filename);
 	}
 	if (fp != stdin && fclose(fp)) {
-		const char *e = strerror(errno);
-
-		fprintf(stderr, _("%s: Error closing %s: %s\n"),
-			progname, filename, e);
-		exit(EXIT_FAILURE);
+		err(1, "Error closing %s", filename);
 	}
 	if (wantcont)
 		error(_("expected continuation line not found"));
@@ -1250,10 +1211,7 @@ const char * const		timep;
 			rp->r_loyear = INT_MAX;
 			break;
 		default:	/* "cannot happen" */
-			fprintf(stderr,
-				_("%s: panic: Invalid l_value %d\n"),
-				progname, lp->l_value);
-			exit(EXIT_FAILURE);
+			errx(1, "panic: Invalid l_value %d", lp->l_value);
 	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_loyear) != 1) {
 		error(_("invalid starting year"));
 		return;
@@ -1272,10 +1230,7 @@ const char * const		timep;
 			rp->r_hiyear = rp->r_loyear;
 			break;
 		default:	/* "cannot happen" */
-			fprintf(stderr,
-				_("%s: panic: Invalid l_value %d\n"),
-				progname, lp->l_value);
-			exit(EXIT_FAILURE);
+			errx(1, "panic: Invalid l_value %d", lp->l_value);
 	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_hiyear) != 1) {
 		error(_("invalid ending year"));
 		return;
@@ -1499,21 +1454,13 @@ const char * const	string;
 	** Remove old file, if any, to snap links.
 	*/
 	if (!itsdir(fullname) && remove(fullname) != 0 && errno != ENOENT) {
-		const char *e = strerror(errno);
-
-		fprintf(stderr, _("%s: Can't remove %s: %s\n"),
-			progname, fullname, e);
-		exit(EXIT_FAILURE);
+		err(1, "Can't remove %s", fullname);
 	}
 	if ((fp = fopen(fullname, "wb")) == NULL) {
 		if (mkdirs(fullname) != 0)
 			exit(EXIT_FAILURE);
 		if ((fp = fopen(fullname, "wb")) == NULL) {
-			const char *e = strerror(errno);
-
-			fprintf(stderr, _("%s: Can't create %s: %s\n"),
-				progname, fullname, e);
-			exit(EXIT_FAILURE);
+			err(1, "Can't create %s", fullname);
 		}
 	}
 	for (pass = 1; pass <= 2; ++pass) {
@@ -1702,9 +1649,7 @@ const char * const	string;
 	}
 	fprintf(fp, "\n%s\n", string);
 	if (ferror(fp) || fclose(fp)) {
-		fprintf(stderr, _("%s: Error writing %s\n"),
-			progname, fullname);
-		exit(EXIT_FAILURE);
+		errx(1, "Error writing %s", fullname);
 	}
 }
 
@@ -2377,9 +2322,7 @@ const char * const	type;
 			return FALSE;
 	}
 	error(_("Wild result from command execution"));
-	fprintf(stderr, _("%s: command was '%s', result was %d\n"),
-		progname, buf, result);
-	exit(EXIT_FAILURE);
+	errx(1, "command was '%s', result was %d", buf, result);
 }
 
 static int
@@ -2700,10 +2643,7 @@ const int	i;
 
 	l = i;
 	if ((i < 0 && l >= 0) || (i == 0 && l != 0) || (i > 0 && l <= 0)) {
-		fprintf(stderr,
-			_("%s: %d did not sign extend correctly\n"),
-			progname, i);
-		exit(EXIT_FAILURE);
+		errx(1, "%d did not sign extend correctly", i);
 	}
 	return l;
 }
