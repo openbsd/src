@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.18 2014/08/14 08:22:38 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.19 2015/02/09 12:18:19 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -111,6 +111,29 @@ struct mfcctl2 {
 #define	MRT_API_FLAGS_ALL		(MRT_MFC_FLAGS_ALL |		     \
 					 MRT_MFC_RP |			     \
 					 MRT_MFC_BW_UPCALL)
+
+/* structure used to get all the mfc entries */
+struct mfcinfo {
+	struct	 in_addr mfc_origin;	/* ip origin of mcasts */
+	struct	 in_addr mfc_mcastgrp;	/* multicast group associated */
+	vifi_t	 mfc_parent;		/* incoming vif */
+	u_long	 mfc_pkt_cnt;		/* pkt count for src-grp */
+	u_long	 mfc_byte_cnt;		/* byte count for src-grp */
+	u_int8_t mfc_ttls[MAXVIFS];	/* forwarding ttls on vifs */
+};
+
+/* structure used to get all the vif entries */
+struct vifinfo {
+	vifi_t	  v_vifi;	    	/* the index of the vif to be added */
+	u_int8_t  v_flags;		/* VIFF_ flags defined above */
+	u_int8_t  v_threshold;		/* min ttl required to forward on vif */
+	struct	  in_addr v_lcl_addr;	/* local interface address */
+	struct	  in_addr v_rmt_addr;	/* remote address (tunnels only) */
+	u_long	  v_pkt_in;		/* # pkts in on interface */
+	u_long	  v_pkt_out;		/* # pkts out on interface */
+	u_long	  v_bytes_in;		/* # bytes in on interface */
+	u_long	  v_bytes_out;		/* # bytes out on interface */
+};
 
 /*
  * Structure for installing or delivering an upcall if the
@@ -285,6 +308,8 @@ struct rtdetq {
 int	ip_mrouter_set(struct socket *, int, struct mbuf **);
 int	ip_mrouter_get(struct socket *, int, struct mbuf **);
 int	mrt_ioctl(struct socket *, u_long, caddr_t);
+int	mrt_sysctl_vif(void *, size_t *);
+int	mrt_sysctl_mfc(void *, size_t *);
 int	ip_mrouter_done(void);
 void	ip_mrouter_detach(struct ifnet *);
 void	reset_vif(struct vif *);

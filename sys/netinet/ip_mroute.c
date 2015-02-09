@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.76 2015/02/08 03:42:24 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.77 2015/02/09 12:18:19 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -471,6 +471,93 @@ get_vif_cnt(struct sioc_vif_req *req)
 	req->ocount = viftable[vifi].v_pkt_out;
 	req->ibytes = viftable[vifi].v_bytes_in;
 	req->obytes = viftable[vifi].v_bytes_out;
+
+	return (0);
+}
+
+int
+mrt_sysctl_vif(void *oldp, size_t *oldlenp)
+{
+	caddr_t where = oldp;
+	size_t needed, given;
+	struct vif *vifp;
+	vifi_t vifi;
+	struct vifinfo vinfo;
+
+	given = *oldlenp;
+	needed = 0;
+	for (vifi = 0; vifi < numvifs; vifi++) {
+		vifp = &viftable[vifi];
+		if (in_nullhost(vifp->v_lcl_addr))
+			continue;	
+
+		vinfo.v_vifi = vifi;
+		vinfo.v_flags = vifp->v_flags;
+		vinfo.v_threshold = vifp->v_threshold;
+		vinfo.v_lcl_addr = vifp->v_lcl_addr;
+		vinfo.v_rmt_addr = vifp->v_rmt_addr;
+		vinfo.v_pkt_in = vifp->v_pkt_in;
+		vinfo.v_pkt_out = vifp->v_pkt_out;
+		vinfo.v_bytes_in = vifp->v_bytes_in;
+		vinfo.v_bytes_out = vifp->v_bytes_out;
+
+		needed += sizeof(vinfo);
+		if (where && needed <= given) { 
+			int error;
+
+			error = copyout(&vinfo, where, sizeof(vinfo));
+			if (error)
+				return (error);
+			where += sizeof(vinfo);
+		}
+	}
+	if (where) {
+		*oldlenp = needed;
+		if (given < needed)
+			return (ENOMEM);
+	} else
+		*oldlenp = (11 * needed) / 10;
+
+	return (0);
+}
+
+int
+mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
+{
+	caddr_t where = oldp;
+	size_t needed, given;
+	u_long i;
+	struct mfc *m;
+	struct mfcinfo minfo;
+
+	given = *oldlenp;
+	needed = 0;
+	for (i = 0; mfchashtbl && i < MFCTBLSIZ; ++i) {
+		LIST_FOREACH(m, &mfchashtbl[i], mfc_hash) {
+			minfo.mfc_origin = m->mfc_origin;
+			minfo.mfc_mcastgrp = m->mfc_mcastgrp;
+			minfo.mfc_parent = m->mfc_parent;
+			minfo.mfc_pkt_cnt = m->mfc_pkt_cnt;
+			minfo.mfc_byte_cnt = m->mfc_byte_cnt;
+			memcpy(minfo.mfc_ttls, m->mfc_ttls, MAXVIFS);
+
+			needed += sizeof(minfo);
+			if (where && needed <= given) { 
+				int error;
+
+				error = copyout(&minfo, where, sizeof(minfo));
+				if (error)
+					return (error);
+				where += sizeof(minfo);
+			}
+		}
+	}
+	if (where) {
+		*oldlenp = needed;
+		if (given < needed)
+			return (ENOMEM);
+	} else
+		*oldlenp = (11 * needed) / 10;
 
 	return (0);
 }

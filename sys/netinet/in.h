@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.111 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: in.h,v 1.112 2015/02/09 12:18:19 claudio Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -679,7 +679,9 @@ struct ip_mreq {
 #define	IPCTL_MRTPROTO		34	/* type of multicast */
 #define	IPCTL_MRTSTATS		35
 #define	IPCTL_ARPQUEUED		36
-#define	IPCTL_MAXID		37
+#define	IPCTL_MRTMFC		37
+#define	IPCTL_MRTVIF		38
+#define	IPCTL_MAXID		39
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -719,6 +721,8 @@ struct ip_mreq {
 	{ "mrtproto", CTLTYPE_INT }, \
 	{ "mrtstats", CTLTYPE_STRUCT }, \
 	{ "arpqueued", CTLTYPE_INT }, \
+	{ "mrtmfc", CTLTYPE_STRUCT }, \
+	{ "mrtvif", CTLTYPE_STRUCT }, \
 }
 #define	IPCTL_VARS { \
 	NULL, \
@@ -757,7 +761,9 @@ struct ip_mreq {
 	NULL, \
 	NULL, \
 	NULL, \
-	&la_hold_total \
+	&la_hold_total, \
+	NULL, \
+	NULL, \
 }
 
 #endif /* __BSD_VISIBLE */

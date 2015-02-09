@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.245 2015/02/08 04:14:47 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.246 2015/02/09 12:18:19 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1622,17 +1622,25 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_STATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &ipstat, sizeof(ipstat)));
-	case IPCTL_MRTSTATS:
 #ifdef MROUTING
+	case IPCTL_MRTSTATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &mrtstat, sizeof(mrtstat)));
-#else
-		return (EOPNOTSUPP);
-#endif
 	case IPCTL_MRTPROTO:
-#ifdef MROUTING
 		return (sysctl_rdint(oldp, oldlenp, newp, ip_mrtproto));
+	case IPCTL_MRTMFC:
+		if (newp)
+			return (EPERM);
+		return mrt_sysctl_mfc(oldp, oldlenp);
+	case IPCTL_MRTVIF:
+		if (newp)
+			return (EPERM);
+		return mrt_sysctl_vif(oldp, oldlenp);
 #else
+	case IPCTL_MRTPROTO:
+	case IPCTL_MRTSTATS:
+	case IPCTL_MRTMFC:
+	case IPCTL_MRTVIF:
 		return (EOPNOTSUPP);
 #endif
 	default:
