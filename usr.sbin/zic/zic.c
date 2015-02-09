@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.8 2015/02/09 14:15:38 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.9 2015/02/09 14:34:44 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -118,7 +118,6 @@ static int	is32(zic_t x);
 static int	itsabbr(const char * abbr, const char * word);
 static int	itsdir(const char * name);
 static int	lowerit(int c);
-static char *	memcheck(char * tocheck);
 static int	mkdirs(char * filename);
 static void	newabbr(const char * abbr);
 static long	oadd(long t1, long t2);
@@ -360,14 +359,14 @@ static char		roll[TZ_MAX_LEAPS];
 ** Memory allocation.
 */
 
-static char *
+static void *
 memcheck(ptr)
-char * const	ptr;
+void * const	ptr;
 {
 	if (ptr == NULL) {
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Memory exhausted: %s\n"),
+		fprintf(stderr, _("%s: Memory exhausted: %s\n"),
 			progname, e);
 		exit(EXIT_FAILURE);
 	}
@@ -412,7 +411,7 @@ eat(name, num)
 const char * const	name;
 const int		num;
 {
-	eats(name, num, (char *) NULL, -1);
+	eats(name, num, NULL, -1);
 }
 
 static void
@@ -424,12 +423,12 @@ const char * const	string;
 	**	zic ... 2>&1 | error -t "*" -v
 	** on BSD systems.
 	*/
-	(void) fprintf(stderr, _("\"%s\", line %d: %s"),
+	fprintf(stderr, _("\"%s\", line %d: %s"),
 		filename, linenum, string);
 	if (rfilename != NULL)
-		(void) fprintf(stderr, _(" (rule from \"%s\", line %d)"),
+		fprintf(stderr, _(" (rule from \"%s\", line %d)"),
 			rfilename, rlinenum);
-	(void) fprintf(stderr, "\n");
+	fprintf(stderr, "\n");
 	++errors;
 }
 
@@ -469,10 +468,10 @@ char *	argv[];
 	int	j;
 	int	c;
 
-	(void) umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
+	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
 	progname = argv[0];
 	if (TYPE_BIT(zic_t) < 64) {
-		(void) fprintf(stderr, "%s: %s\n", progname,
+		fprintf(stderr, "%s: %s\n", progname,
 			_("wild compilation-time specification of zic_t"));
 		exit(EXIT_FAILURE);
 	}
@@ -484,7 +483,7 @@ char *	argv[];
 				if (directory == NULL)
 					directory = optarg;
 				else {
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: More than one -d option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
@@ -494,7 +493,7 @@ char *	argv[];
 				if (lcltime == NULL)
 					lcltime = optarg;
 				else {
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: More than one -l option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
@@ -504,7 +503,7 @@ char *	argv[];
 				if (psxrules == NULL)
 					psxrules = optarg;
 				else {
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: More than one -p option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
@@ -514,7 +513,7 @@ char *	argv[];
 				if (yitcommand == NULL)
 					yitcommand = optarg;
 				else {
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: More than one -y option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
@@ -524,7 +523,7 @@ char *	argv[];
 				if (leapsec == NULL)
 					leapsec = optarg;
 				else {
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: More than one -L option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
@@ -611,7 +610,7 @@ const char * const	tofield;
 	** there's a fair chance of root running us.
 	*/
 	if (!itsdir(toname))
-		(void) remove(toname);
+		remove(toname);
 	if (link(fromname, toname) != 0) {
 		int	result;
 
@@ -624,7 +623,7 @@ const char * const	tofield;
 		if (result != 0) {
 			const char *e = strerror(errno);
 
-			(void) fprintf(stderr,
+			fprintf(stderr,
 				_("%s: Can't link from %s to %s: %s\n"),
 				progname, fromname, toname, e);
 			exit(EXIT_FAILURE);
@@ -687,8 +686,7 @@ associate(void)
 	int		i, j;
 
 	if (nrules != 0) {
-		(void) qsort((void *) rules, (size_t) nrules,
-			(size_t) sizeof *rules, rcomp);
+		qsort(rules, nrules, sizeof *rules, rcomp);
 		for (i = 0; i < nrules - 1; ++i) {
 			if (strcmp(rules[i].r_name,
 				rules[i + 1].r_name) != 0)
@@ -773,14 +771,14 @@ const char *	name;
 	} else if ((fp = fopen(name, "r")) == NULL) {
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Can't open %s: %s\n"),
+		fprintf(stderr, _("%s: Can't open %s: %s\n"),
 			progname, name, e);
 		exit(EXIT_FAILURE);
 	}
 	wantcont = FALSE;
 	for (num = 1; ; ++num) {
 		eat(name, num);
-		if (fgets(buf, (int) sizeof buf, fp) != buf)
+		if (fgets(buf, sizeof buf, fp) != buf)
 			break;
 		cp = strchr(buf, '\n');
 		if (cp == NULL) {
@@ -819,30 +817,30 @@ const char *	name;
 					break;
 				case LC_LEAP:
 					if (name != leapsec)
-						(void) fprintf(stderr,
+						fprintf(stderr,
 							_("%s: Leap line in non leap seconds file %s\n"),
 							progname, name);
 					else	inleap(fields, nfields);
 					wantcont = FALSE;
 					break;
 				default:	/* "cannot happen" */
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: panic: Invalid l_value %d\n"),
 						progname, lp->l_value);
 					exit(EXIT_FAILURE);
 			}
 		}
-		free((char *) fields);
+		free(fields);
 	}
 	if (ferror(fp)) {
-		(void) fprintf(stderr, _("%s: Error reading %s\n"),
+		fprintf(stderr, _("%s: Error reading %s\n"),
 			progname, filename);
 		exit(EXIT_FAILURE);
 	}
 	if (fp != stdin && fclose(fp)) {
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Error closing %s: %s\n"),
+		fprintf(stderr, _("%s: Error closing %s: %s\n"),
 			progname, filename, e);
 		exit(EXIT_FAILURE);
 	}
@@ -922,8 +920,7 @@ const int		nfields;
 	r.r_abbrvar = ecpyalloc(fields[RF_ABBRVAR]);
 	if (max_abbrvar_len < strlen(r.r_abbrvar))
 		max_abbrvar_len = strlen(r.r_abbrvar);
-	rules = (struct rule *) (void *) erealloc((char *) rules,
-		(int) ((nrules + 1) * sizeof *rules));
+	rules = erealloc(rules, (nrules + 1) * sizeof *rules);
 	rules[nrules++] = r;
 }
 
@@ -943,7 +940,7 @@ const int		nfields;
 	if (strcmp(fields[ZF_NAME], TZDEFAULT) == 0 && lcltime != NULL) {
 		len = 132 + strlen(TZDEFAULT);
 		buf = erealloc(buf, len);
-		(void) snprintf(buf, len, _("\"Zone %s\" line and -l option are mutually exclusive"),
+		snprintf(buf, len, _("\"Zone %s\" line and -l option are mutually exclusive"),
 			TZDEFAULT);
 		error(buf);
 		return FALSE;
@@ -951,7 +948,7 @@ const int		nfields;
 	if (strcmp(fields[ZF_NAME], TZDEFRULES) == 0 && psxrules != NULL) {
 		len = 132 + strlen(TZDEFRULES);
 		buf = erealloc(buf, len);
-		(void) snprintf(buf, len, _("\"Zone %s\" line and -p option are mutually exclusive"),
+		snprintf(buf, len, _("\"Zone %s\" line and -p option are mutually exclusive"),
 			TZDEFRULES);
 		error(buf);
 		return FALSE;
@@ -962,7 +959,7 @@ const int		nfields;
 				len = 132 + strlen(fields[ZF_NAME]) +
 					strlen(zones[i].z_filename);
 				buf = erealloc(buf, len);
-				(void) snprintf(buf, len,
+				snprintf(buf, len,
 					_("duplicate zone name %s (file \"%s\", line %d)"),
 					fields[ZF_NAME],
 					zones[i].z_filename,
@@ -1054,8 +1051,7 @@ const int		iscont;
 				return FALSE;
 		}
 	}
-	zones = (struct zone *) (void *) erealloc((char *) zones,
-		(int) ((nzones + 1) * sizeof *zones));
+	zones = erealloc(zones, (nzones + 1) * sizeof *zones);
 	zones[nzones++] = z;
 	/*
 	** If there was an UNTIL field on this line,
@@ -1189,8 +1185,7 @@ const int		nfields;
 	l.l_linenum = linenum;
 	l.l_from = ecpyalloc(fields[LF_FROM]);
 	l.l_to = ecpyalloc(fields[LF_TO]);
-	links = (struct link *) (void *) erealloc((char *) links,
-		(int) ((nlinks + 1) * sizeof *links));
+	links = erealloc(links, (nlinks + 1) * sizeof *links);
 	links[nlinks++] = l;
 }
 
@@ -1255,7 +1250,7 @@ const char * const		timep;
 			rp->r_loyear = INT_MAX;
 			break;
 		default:	/* "cannot happen" */
-			(void) fprintf(stderr,
+			fprintf(stderr,
 				_("%s: panic: Invalid l_value %d\n"),
 				progname, lp->l_value);
 			exit(EXIT_FAILURE);
@@ -1277,7 +1272,7 @@ const char * const		timep;
 			rp->r_hiyear = rp->r_loyear;
 			break;
 		default:	/* "cannot happen" */
-			(void) fprintf(stderr,
+			fprintf(stderr,
 				_("%s: panic: Invalid l_value %d\n"),
 				progname, lp->l_value);
 			exit(EXIT_FAILURE);
@@ -1377,7 +1372,7 @@ FILE * const	fp;
 	char	buf[4];
 
 	convert(val, buf);
-	(void) fwrite((void *) buf, (size_t) sizeof buf, (size_t) 1, fp);
+	fwrite(buf, sizeof buf, 1, fp);
 }
 
 static void
@@ -1388,7 +1383,7 @@ FILE * const	fp;
 	char	buf[8];
 
 	convert64(val, buf);
-	(void) fwrite((void *) buf, (size_t) sizeof buf, (size_t) 1, fp);
+	fwrite(buf, sizeof buf, 1, fp);
 }
 
 static int
@@ -1430,8 +1425,7 @@ const char * const	string;
 	** Sort.
 	*/
 	if (timecnt > 1)
-		(void) qsort((void *) attypes, (size_t) timecnt,
-			(size_t) sizeof *attypes, atcomp);
+		qsort(attypes, timecnt, sizeof *attypes, atcomp);
 	/*
 	** Optimize.
 	*/
@@ -1500,14 +1494,14 @@ const char * const	string;
 	}
 	len = strlen(directory) + 1 + strlen(name) + 1;
 	fullname = erealloc(fullname, len);
-	(void) snprintf(fullname, len, "%s/%s", directory, name);
+	snprintf(fullname, len, "%s/%s", directory, name);
 	/*
 	** Remove old file, if any, to snap links.
 	*/
 	if (!itsdir(fullname) && remove(fullname) != 0 && errno != ENOENT) {
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Can't remove %s: %s\n"),
+		fprintf(stderr, _("%s: Can't remove %s: %s\n"),
 			progname, fullname, e);
 		exit(EXIT_FAILURE);
 	}
@@ -1517,7 +1511,7 @@ const char * const	string;
 		if ((fp = fopen(fullname, "wb")) == NULL) {
 			const char *e = strerror(errno);
 
-			(void) fprintf(stderr, _("%s: Can't create %s: %s\n"),
+			fprintf(stderr, _("%s: Can't create %s: %s\n"),
 				progname, fullname, e);
 			exit(EXIT_FAILURE);
 		}
@@ -1630,16 +1624,15 @@ const char * const	string;
 				if (strcmp(&thischars[j], thisabbr) == 0)
 					break;
 			if (j == thischarcnt) {
-				(void) strlcpy(&thischars[(int) thischarcnt],
+				strlcpy(&thischars[(int) thischarcnt],
 					thisabbr, sizeof(thischars) - thischarcnt);
 				thischarcnt += strlen(thisabbr) + 1;
 			}
 			indmap[abbrinds[i]] = j;
 		}
-#define DO(field)	(void) fwrite((void *) tzh.field, \
-				(size_t) sizeof tzh.field, (size_t) 1, fp)
+#define DO(field)	fwrite(tzh.field, sizeof tzh.field, 1, fp)
 		tzh = tzh0;
-		(void) strncpy(tzh.tzh_magic, TZ_MAGIC, sizeof tzh.tzh_magic);
+		strncpy(tzh.tzh_magic, TZ_MAGIC, sizeof tzh.tzh_magic);
 		tzh.tzh_version[0] = ZIC_VERSION;
 		convert(eitol(thistypecnt), tzh.tzh_ttisgmtcnt);
 		convert(eitol(thistypecnt), tzh.tzh_ttisstdcnt);
@@ -1665,21 +1658,16 @@ const char * const	string;
 			unsigned char	uc;
 
 			uc = typemap[types[i]];
-			(void) fwrite((void *) &uc,
-				(size_t) sizeof uc,
-				(size_t) 1,
-				fp);
+			fwrite(&uc, sizeof uc, 1, fp);
 		}
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i]) {
 				puttzcode(gmtoffs[i], fp);
-				(void) putc(isdsts[i], fp);
-				(void) putc((unsigned char) indmap[abbrinds[i]], fp);
+				putc(isdsts[i], fp);
+				putc((unsigned char) indmap[abbrinds[i]], fp);
 			}
 		if (thischarcnt != 0)
-			(void) fwrite((void *) thischars,
-				(size_t) sizeof thischars[0],
-				(size_t) thischarcnt, fp);
+			fwrite(thischars, sizeof thischars[0], thischarcnt, fp);
 		for (i = thisleapi; i < thisleaplim; ++i) {
 			zic_t	todo;
 
@@ -1707,14 +1695,14 @@ const char * const	string;
 		}
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
-				(void) putc(ttisstds[i], fp);
+				putc(ttisstds[i], fp);
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
-				(void) putc(ttisgmts[i], fp);
+				putc(ttisgmts[i], fp);
 	}
-	(void) fprintf(fp, "\n%s\n", string);
+	fprintf(fp, "\n%s\n", string);
 	if (ferror(fp) || fclose(fp)) {
-		(void) fprintf(stderr, _("%s: Error writing %s\n"),
+		fprintf(stderr, _("%s: Error writing %s\n"),
 			progname, fullname);
 		exit(EXIT_FAILURE);
 	}
@@ -1736,14 +1724,14 @@ const int		doquotes;
 	slashp = strchr(format, '/');
 	if (slashp == NULL) {
 		if (letters == NULL)
-			(void) strlcpy(abbr, format, size);
-		else	(void) snprintf(abbr, size, format, letters);
+			strlcpy(abbr, format, size);
+		else	snprintf(abbr, size, format, letters);
 	} else if (isdst) {
-		(void) strlcpy(abbr, slashp + 1, size);
+		strlcpy(abbr, slashp + 1, size);
 	} else {
 		if (slashp - format + 1 < size)
 			size = slashp - format + 1;
-		(void) strlcpy(abbr, format, size);
+		strlcpy(abbr, format, size);
 	}
 	if (!doquotes)
 		return;
@@ -1784,7 +1772,7 @@ long	offset;
 
 	result[0] = '\0';
 	if (offset < 0) {
-		(void) strlcpy(result, "-", size);
+		strlcpy(result, "-", size);
 		offset = -offset;
 	}
 	seconds = offset % SECSPERMIN;
@@ -1797,13 +1785,13 @@ long	offset;
 		return -1;
 	}
 	ep = end(result, size);
-	(void) snprintf(ep, size - (ep - result), "%d", hours);
+	snprintf(ep, size - (ep - result), "%d", hours);
 	if (minutes != 0 || seconds != 0) {
 		ep = end(result, size);
-		(void) snprintf(ep, size - (ep - result), ":%02d", minutes);
+		snprintf(ep, size - (ep - result), ":%02d", minutes);
 		if (seconds != 0) {
 			ep = end(result, size);
-			(void) snprintf(ep, size - (ep - result), ":%02d", seconds);
+			snprintf(ep, size - (ep - result), ":%02d", seconds);
 		}
 	}
 	return 0;
@@ -1831,7 +1819,7 @@ const long			gmtoff;
 		total = 0;
 		for (month = 0; month < rp->r_month; ++month)
 			total += len_months[0][month];
-		(void) snprintf(result, size, "J%d", total + rp->r_dayofmonth);
+		snprintf(result, size, "J%d", total + rp->r_dayofmonth);
 	} else {
 		int	week;
 
@@ -1848,7 +1836,7 @@ const long			gmtoff;
 				week = rp->r_dayofmonth / DAYSPERWEEK;
 			}
 		} else	return -1;	/* "cannot happen" */
-		(void) snprintf(result, size, "M%d.%d.%d",
+		snprintf(result, size, "M%d.%d.%d",
 			rp->r_month + 1, week, rp->r_wday);
 	}
 	tod = rp->r_tod;
@@ -1861,7 +1849,7 @@ const long			gmtoff;
 		return -1;
 	}
 	if (tod != 2 * SECSPERMIN * MINSPERHOUR) {
-		(void) strlcat(result, "/", size);
+		strlcat(result, "/", size);
 		ep = end(result, size);
 		if (stringoffset(ep, size - (ep - result), tod) != 0)
 			return -1;
@@ -1946,12 +1934,12 @@ const int			zonecount;
 				return;
 		}
 	}
-	(void) strlcat(result, ",", size);
+	strlcat(result, ",", size);
 	if (stringrule(result, size, dstrp, dstrp->r_stdoff, zp->z_gmtoff) != 0) {
 		result[0] = '\0';
 		return;
 	}
-	(void) strlcat(result, ",", size);
+	strlcat(result, ",", size);
 	if (stringrule(result, size, stdrp, dstrp->r_stdoff, zp->z_gmtoff) != 0) {
 		result[0] = '\0';
 		return;
@@ -2077,7 +2065,7 @@ const int			zonecount;
 		if (zp->z_nrules == 0) {
 			stdoff = zp->z_stdoff;
 			doabbr(startbuf, max_abbr_len + 1, zp->z_format,
-				(char *) NULL, stdoff != 0, FALSE);
+				NULL, stdoff != 0, FALSE);
 			type = addtype(oadd(zp->z_gmtoff, stdoff),
 				startbuf, stdoff != 0, startttisstd,
 				startttisgmt);
@@ -2196,7 +2184,7 @@ const int			zonecount;
 				zp->z_format != NULL &&
 				strchr(zp->z_format, '%') == NULL &&
 				strchr(zp->z_format, '/') == NULL)
-					(void) strlcpy(startbuf, zp->z_format,
+					strlcpy(startbuf, zp->z_format,
 					    	       max_abbr_len + 1);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
@@ -2241,7 +2229,7 @@ int		type;
 		ttisgmts[0] = ttisgmts[type];
 		if (abbrinds[type] != 0) {
 			len = strlen(&chars[abbrinds[type]]) + 1;
-			(void) memmove(chars, &chars[abbrinds[type]], len);
+			memmove(chars, &chars[abbrinds[type]], len);
 		}
 		abbrinds[0] = 0;
 		charcnt = strlen(chars) + 1;
@@ -2380,7 +2368,7 @@ const char * const	type;
 		return TRUE;
 	len = 132 + strlen(yitcommand) + strlen(type);
 	buf = erealloc(buf, len);
-	(void) snprintf(buf, len, "%s %d %s", yitcommand, year, type);
+	snprintf(buf, len, "%s %d %s", yitcommand, year, type);
 	result = system(buf);
 	if (WIFEXITED(result)) switch (WEXITSTATUS(result)) {
 		case 0:
@@ -2389,7 +2377,7 @@ const char * const	type;
 			return FALSE;
 	}
 	error(_("Wild result from command execution"));
-	(void) fprintf(stderr, _("%s: command was '%s', result was %d\n"),
+	fprintf(stderr, _("%s: command was '%s', result was %d\n"),
 		progname, buf, result);
 	for ( ; ; )
 		exit(EXIT_FAILURE);
@@ -2469,8 +2457,7 @@ char *	cp;
 
 	if (cp == NULL)
 		return NULL;
-	array = (char **) (void *)
-		emalloc((int) ((strlen(cp) + 1) * sizeof *array));
+	array = emalloc((strlen(cp) + 1) * sizeof *array);
 	nsubs = 0;
 	for ( ; ; ) {
 		while (isascii((unsigned char) *cp) &&
@@ -2597,12 +2584,12 @@ const int			wantedy;
 		}
 		while (wday != eitol(rp->r_wday))
 			if (rp->r_dycode == DC_DOWGEQ) {
-				dayoff = oadd(dayoff, (long) 1);
+				dayoff = oadd(dayoff, 1);
 				if (++wday >= LDAYSPERWEEK)
 					wday = 0;
 				++i;
 			} else {
-				dayoff = oadd(dayoff, (long) -1);
+				dayoff = oadd(dayoff, -1);
 				if (--wday < 0)
 					wday = LDAYSPERWEEK - 1;
 				--i;
@@ -2665,7 +2652,7 @@ wp = _("time zone abbreviation has too many alphabetics");
 		error(_("too many, or too long, time zone abbreviations"));
 		exit(EXIT_FAILURE);
 	}
-	(void) strlcpy(&chars[charcnt], string, sizeof(chars) - charcnt);
+	strlcpy(&chars[charcnt], string, sizeof(chars) - charcnt);
 	charcnt += eitol(i);
 }
 
@@ -2692,7 +2679,7 @@ char *		argname;
 				const char *e = strerror(errno);
 
 				if (errno != EEXIST || !itsdir(name)) {
-					(void) fprintf(stderr,
+					fprintf(stderr,
 						_("%s: Can't create directory %s: %s\n"),
 						progname, name, e);
 					free(name);
@@ -2714,7 +2701,7 @@ const int	i;
 
 	l = i;
 	if ((i < 0 && l >= 0) || (i == 0 && l != 0) || (i > 0 && l <= 0)) {
-		(void) fprintf(stderr,
+		fprintf(stderr,
 			_("%s: %d did not sign extend correctly\n"),
 			progname, i);
 		exit(EXIT_FAILURE);
