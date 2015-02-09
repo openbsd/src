@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.10 2015/02/08 22:25:03 miod Exp $ */
+/* $OpenBSD: ec_key.c,v 1.11 2015/02/09 15:49:22 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -359,8 +359,11 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 	if (tmp_nid == NID_X9_62_characteristic_two_field)
 		is_char_two = 1;
 
-	tx = BN_CTX_get(ctx);
-	ty = BN_CTX_get(ctx);
+	if ((tx = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((ty = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
 #ifndef OPENSSL_NO_EC2M
 	if (is_char_two) {
 		if (!EC_POINT_set_affine_coordinates_GF2m(key->group, point,

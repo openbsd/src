@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.10 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,9 +125,9 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	bn_check_top(in_b);
 
 	BN_CTX_start(ctx);
-	a = BN_CTX_get(ctx);
-	b = BN_CTX_get(ctx);
-	if (a == NULL || b == NULL)
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (BN_copy(a, in_a) == NULL)
@@ -247,14 +247,19 @@ BN_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 	bn_check_top(n);
 
 	BN_CTX_start(ctx);
-	A = BN_CTX_get(ctx);
-	B = BN_CTX_get(ctx);
-	X = BN_CTX_get(ctx);
-	D = BN_CTX_get(ctx);
-	M = BN_CTX_get(ctx);
-	Y = BN_CTX_get(ctx);
-	T = BN_CTX_get(ctx);
-	if (T == NULL)
+	if ((A = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((B = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((X = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((D = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((M = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((T = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (in == NULL)
@@ -537,14 +542,19 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	bn_check_top(n);
 
 	BN_CTX_start(ctx);
-	A = BN_CTX_get(ctx);
-	B = BN_CTX_get(ctx);
-	X = BN_CTX_get(ctx);
-	D = BN_CTX_get(ctx);
-	M = BN_CTX_get(ctx);
-	Y = BN_CTX_get(ctx);
-	T = BN_CTX_get(ctx);
-	if (T == NULL)
+	if ((A = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((B = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((X = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((D = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((M = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((T = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (in == NULL)

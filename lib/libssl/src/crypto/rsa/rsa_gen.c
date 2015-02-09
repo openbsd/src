@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.16 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.17 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,11 +99,13 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	if (ctx == NULL)
 		goto err;
 	BN_CTX_start(ctx);
-	r0 = BN_CTX_get(ctx);
-	r1 = BN_CTX_get(ctx);
-	r2 = BN_CTX_get(ctx);
-	r3 = BN_CTX_get(ctx);
-	if (r3 == NULL)
+	if ((r0 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((r1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((r2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((r3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	bitsp = (bits + 1) / 2;

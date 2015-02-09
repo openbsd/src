@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.6 2015/02/08 22:25:03 miod Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.7 2015/02/09 15:49:22 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -109,11 +109,13 @@ ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point
 	y_bit = (y_bit != 0) ? 1 : 0;
 
 	BN_CTX_start(ctx);
-	tmp = BN_CTX_get(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	z = BN_CTX_get(ctx);
-	if (z == NULL)
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((z = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!BN_GF2m_mod_arr(x, x_, group->poly))
@@ -212,10 +214,11 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		}
 		BN_CTX_start(ctx);
 		used_ctx = 1;
-		x = BN_CTX_get(ctx);
-		y = BN_CTX_get(ctx);
-		yxi = BN_CTX_get(ctx);
-		if (yxi == NULL)
+		if ((x = BN_CTX_get(ctx)) == NULL)
+			goto err;
+		if ((y = BN_CTX_get(ctx)) == NULL)
+			goto err;
+		if ((yxi = BN_CTX_get(ctx)) == NULL)
 			goto err;
 
 		if (!EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx))
@@ -329,10 +332,11 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	yxi = BN_CTX_get(ctx);
-	if (yxi == NULL)
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((yxi = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!BN_bin2bn(buf + 1, field_len, x))

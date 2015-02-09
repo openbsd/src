@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp2.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_exp2.c,v 1.10 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,11 +150,13 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	bits = (bits1 > bits2) ? bits1 : bits2;
 
 	BN_CTX_start(ctx);
-	d = BN_CTX_get(ctx);
-	r = BN_CTX_get(ctx);
-	val1[0] = BN_CTX_get(ctx);
-	val2[0] = BN_CTX_get(ctx);
-	if (!d || !r || !val1[0] || !val2[0])
+	if ((d = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((r = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((val1[0] = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((val2[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (in_mont != NULL)

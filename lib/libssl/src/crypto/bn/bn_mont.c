@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.23 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.24 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,8 +149,7 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 #endif
 
 	BN_CTX_start(ctx);
-	tmp = BN_CTX_get(ctx);
-	if (tmp == NULL)
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	bn_check_top(tmp);
@@ -288,9 +287,9 @@ BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx)
 	BIGNUM *t1, *t2;
 
 	BN_CTX_start(ctx);
-	t1 = BN_CTX_get(ctx);
-	t2 = BN_CTX_get(ctx);
-	if (t1 == NULL || t2 == NULL)
+	if ((t1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((t2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!BN_copy(t1, a))

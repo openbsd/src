@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.19 2014/07/11 15:01:49 miod Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.20 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -272,9 +272,9 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	BN_CTX_start(ctx);
-	aa = BN_CTX_get(ctx);
-	val[0] = BN_CTX_get(ctx);
-	if (!aa || !val[0])
+	if ((aa = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((val[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	BN_RECP_CTX_init(&recp);
@@ -408,10 +408,11 @@ BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	BN_CTX_start(ctx);
-	d = BN_CTX_get(ctx);
-	r = BN_CTX_get(ctx);
-	val[0] = BN_CTX_get(ctx);
-	if (!d || !r || !val[0])
+	if ((d = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((r = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((val[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/* If this is not done, things will break in the montgomery
@@ -885,10 +886,11 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	BN_CTX_start(ctx);
-	d = BN_CTX_get(ctx);
-	r = BN_CTX_get(ctx);
-	t = BN_CTX_get(ctx);
-	if (d == NULL || r == NULL || t == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((r = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (in_mont != NULL)
@@ -1003,9 +1005,9 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	BN_CTX_start(ctx);
-	d = BN_CTX_get(ctx);
-	val[0] = BN_CTX_get(ctx);
-	if (!d || !val[0])
+	if ((d = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((val[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!BN_nnmod(val[0],a,m,ctx))

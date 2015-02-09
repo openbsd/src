@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.14 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.15 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,9 +115,9 @@ dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb)
 	if (ctx == NULL)
 		goto err;
 	BN_CTX_start(ctx);
-	t1 = BN_CTX_get(ctx);
-	t2 = BN_CTX_get(ctx);
-	if (t1 == NULL || t2 == NULL)
+	if ((t1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((t2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/* Make sure 'ret' has the necessary elements */

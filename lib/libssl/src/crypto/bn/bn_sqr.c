@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.11 2014/07/11 13:26:31 miod Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.12 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	BN_CTX_start(ctx);
 	rr = (a != r) ? r : BN_CTX_get(ctx);
 	tmp = BN_CTX_get(ctx);
-	if (!rr || !tmp)
+	if (rr == NULL || tmp == NULL)
 		goto err;
 
 	max = 2 * al; /* Non-zero (from above) */

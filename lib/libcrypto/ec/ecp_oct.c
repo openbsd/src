@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.6 2015/02/08 22:25:03 miod Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.7 2015/02/09 15:49:22 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -67,8 +67,8 @@
 #include "ec_lcl.h"
 
 int 
-ec_GFp_simple_set_compressed_coordinates(const EC_GROUP * group, EC_POINT * point,
-    const BIGNUM * x_, int y_bit, BN_CTX * ctx)
+ec_GFp_simple_set_compressed_coordinates(const EC_GROUP * group,
+    EC_POINT * point, const BIGNUM * x_, int y_bit, BN_CTX * ctx)
 {
 	BN_CTX *new_ctx = NULL;
 	BIGNUM *tmp1, *tmp2, *x, *y;
@@ -85,11 +85,13 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP * group, EC_POINT * poin
 	y_bit = (y_bit != 0);
 
 	BN_CTX_start(ctx);
-	tmp1 = BN_CTX_get(ctx);
-	tmp2 = BN_CTX_get(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	if (y == NULL)
+	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/*
@@ -239,9 +241,9 @@ ec_GFp_simple_point2oct(const EC_GROUP * group, const EC_POINT * point, point_co
 		}
 		BN_CTX_start(ctx);
 		used_ctx = 1;
-		x = BN_CTX_get(ctx);
-		y = BN_CTX_get(ctx);
-		if (y == NULL)
+		if ((x = BN_CTX_get(ctx)) == NULL)
+			goto err;
+		if ((y = BN_CTX_get(ctx)) == NULL)
 			goto err;
 
 		if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx))
@@ -348,9 +350,9 @@ ec_GFp_simple_oct2point(const EC_GROUP * group, EC_POINT * point,
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	if (y == NULL)
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!BN_bin2bn(buf + 1, field_len, x))

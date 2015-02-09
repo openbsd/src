@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.14 2015/02/08 22:25:03 miod Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.15 2015/02/09 15:49:22 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -188,8 +188,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP * group,
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	tmp_a = BN_CTX_get(ctx);
-	if (tmp_a == NULL)
+	if ((tmp_a = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/* group->field */
@@ -294,12 +293,15 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 		}
 	}
 	BN_CTX_start(ctx);
-	a = BN_CTX_get(ctx);
-	b = BN_CTX_get(ctx);
-	tmp_1 = BN_CTX_get(ctx);
-	tmp_2 = BN_CTX_get(ctx);
-	order = BN_CTX_get(ctx);
-	if (order == NULL)
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp_1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp_2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((order = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (group->meth->field_decode) {
@@ -539,11 +541,13 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	Z = BN_CTX_get(ctx);
-	Z_1 = BN_CTX_get(ctx);
-	Z_2 = BN_CTX_get(ctx);
-	Z_3 = BN_CTX_get(ctx);
-	if (Z_3 == NULL)
+	if ((Z = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z_1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z_2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z_3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/* transform  (X, Y, Z)  into  (x, y) := (X/Z^2, Y/Z^3) */
@@ -652,14 +656,19 @@ ec_GFp_simple_add(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, cons
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	n0 = BN_CTX_get(ctx);
-	n1 = BN_CTX_get(ctx);
-	n2 = BN_CTX_get(ctx);
-	n3 = BN_CTX_get(ctx);
-	n4 = BN_CTX_get(ctx);
-	n5 = BN_CTX_get(ctx);
-	n6 = BN_CTX_get(ctx);
-	if (n6 == NULL)
+	if ((n0 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((n1 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((n2 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((n3 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((n4 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((n5 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((n6 = BN_CTX_get(ctx)) == NULL)
 		goto end;
 
 	/*
@@ -834,11 +843,13 @@ ec_GFp_simple_dbl(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, BN_C
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	n0 = BN_CTX_get(ctx);
-	n1 = BN_CTX_get(ctx);
-	n2 = BN_CTX_get(ctx);
-	n3 = BN_CTX_get(ctx);
-	if (n3 == NULL)
+	if ((n0 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((n1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((n2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((n3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/*
@@ -990,11 +1001,13 @@ ec_GFp_simple_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX
 			return -1;
 	}
 	BN_CTX_start(ctx);
-	rh = BN_CTX_get(ctx);
-	tmp = BN_CTX_get(ctx);
-	Z4 = BN_CTX_get(ctx);
-	Z6 = BN_CTX_get(ctx);
-	if (Z6 == NULL)
+	if ((rh = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z4 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z6 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/*
@@ -1101,11 +1114,13 @@ ec_GFp_simple_cmp(const EC_GROUP * group, const EC_POINT * a, const EC_POINT * b
 			return -1;
 	}
 	BN_CTX_start(ctx);
-	tmp1 = BN_CTX_get(ctx);
-	tmp2 = BN_CTX_get(ctx);
-	Za23 = BN_CTX_get(ctx);
-	Zb23 = BN_CTX_get(ctx);
-	if (Zb23 == NULL)
+	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((tmp2 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((Za23 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((Zb23 = BN_CTX_get(ctx)) == NULL)
 		goto end;
 
 	/*
@@ -1184,9 +1199,9 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	if (y == NULL)
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx))
@@ -1225,9 +1240,9 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 			return 0;
 	}
 	BN_CTX_start(ctx);
-	tmp0 = BN_CTX_get(ctx);
-	tmp1 = BN_CTX_get(ctx);
-	if (tmp0 == NULL || tmp1 == NULL)
+	if ((tmp0 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/*

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.17 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.18 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,14 +148,22 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 		goto err;
 
 	BN_CTX_start(ctx);
-	r0 = BN_CTX_get(ctx);
-	g = BN_CTX_get(ctx);
-	W = BN_CTX_get(ctx);
-	q = BN_CTX_get(ctx);
-	X = BN_CTX_get(ctx);
-	c = BN_CTX_get(ctx);
-	p = BN_CTX_get(ctx);
-	test = BN_CTX_get(ctx);
+	if ((r0 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((g = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((W = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((q = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((X = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((c = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((test = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
 	if (!BN_lshift(test, BN_value_one(), bits - 1))
 		goto err;

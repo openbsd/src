@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.22 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.23 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,7 +170,7 @@ BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		res = BN_CTX_get(ctx);
 	else
 		res = dv;
-	if (sdiv == NULL || res == NULL || tmp == NULL || snum == NULL)
+	if (tmp == NULL || snum == NULL || sdiv == NULL || res == NULL)
 		goto err;
 
 	/* First we normalise the numbers */

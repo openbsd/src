@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.5 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.6 2015/02/09 15:49:22 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -79,9 +79,9 @@ BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	bn_check_top(b);
 
 	BN_CTX_start(ctx);
-	A = BN_CTX_get(ctx);
-	B = BN_CTX_get(ctx);
-	if (B == NULL)
+	if ((A = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((B = BN_CTX_get(ctx)) == NULL)
 		goto end;
 
 	err = !BN_copy(A, a);

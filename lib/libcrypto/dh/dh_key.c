@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.22 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: dh_key.c,v 1.23 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,7 +195,8 @@ compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	if (ctx == NULL)
 		goto err;
 	BN_CTX_start(ctx);
-	tmp = BN_CTX_get(ctx);
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	
 	if (dh->priv_key == NULL) {
 		DHerr(DH_F_COMPUTE_KEY, DH_R_NO_PRIVATE_VALUE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.19 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.20 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1012,8 +1012,7 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 			j = 1 << (j - 1);
 			assert(j <= al || j <= bl);
 			k = j + j;
-			t = BN_CTX_get(ctx);
-			if (t == NULL)
+			if ((t = BN_CTX_get(ctx)) == NULL)
 				goto err;
 			if (al > j || bl > j) {
 				if (bn_wexpand(t, k * 4) == NULL)
@@ -1057,7 +1056,8 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 			j = BN_num_bits_word((BN_ULONG)al);
 			j = 1 << (j - 1);
 			k = j + j;
-			t = BN_CTX_get(ctx);
+			if ((t = BN_CTX_get(ctx)) == NULL)
+				goto err;
 			if (al == j) /* exact multiple */
 			{
 				if (bn_wexpand(t, k * 2) == NULL)

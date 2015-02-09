@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.16 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.17 2015/02/09 15:49:22 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -753,8 +753,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 			goto err;
 	}
 	BN_CTX_start(ctx);
-	order = BN_CTX_get(ctx);
-	if (order == NULL)
+	if ((order = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!EC_GROUP_get_order(group, order, ctx))

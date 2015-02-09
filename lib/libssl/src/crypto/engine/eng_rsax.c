@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_rsax.c,v 1.12 2014/11/19 13:35:37 krw Exp $ */
+/* $OpenBSD: eng_rsax.c,v 1.13 2015/02/09 15:49:22 jsing Exp $ */
 /* Copyright (c) 2010-2010 Intel Corp.
  *   Author: Vinodh.Gopal@intel.com
  *           Jim Guilford
@@ -519,9 +519,12 @@ e_rsax_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	int ret = 0;
 
 	BN_CTX_start(ctx);
-	r1 = BN_CTX_get(ctx);
-	m1 = BN_CTX_get(ctx);
-	vrfy = BN_CTX_get(ctx);
+	if ((r1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((m1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((vrfy = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
 	{
 		BIGNUM local_p, local_q;
