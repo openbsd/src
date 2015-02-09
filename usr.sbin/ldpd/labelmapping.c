@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.30 2015/01/20 18:09:12 deraadt Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.31 2015/02/09 11:53:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -121,7 +121,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 {
 	struct ldp_msg		 	 lm;
 	struct tlv			 ft;
-	u_int32_t			 label, reqid;
+	u_int32_t			 label, reqid = 0;
 	u_int8_t			 flags = 0;
 
 	int				 feclen, lbllen, tlen;
