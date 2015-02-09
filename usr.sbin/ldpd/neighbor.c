@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.43 2013/10/17 17:47:04 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.44 2015/02/09 11:54:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -469,14 +469,12 @@ nbr_establish_connection(struct nbr *nbr)
 	struct sockaddr_in	remote_sa;
 	struct adj		*adj;
 
-	nbr->fd = socket(AF_INET, SOCK_STREAM, 0);
+	nbr->fd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0);
 	if (nbr->fd == -1) {
 		log_warn("nbr_establish_connection: error while "
 		    "creating socket");
 		return (-1);
 	}
-
-	session_socket_blockmode(nbr->fd, BM_NONBLOCK);
 
 	bzero(&local_sa, sizeof(local_sa));
 	local_sa.sin_family = AF_INET;

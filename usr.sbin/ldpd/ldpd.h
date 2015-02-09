@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.42 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.43 2015/02/09 11:54:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -244,11 +244,6 @@ enum {
 	PROC_LDE_ENGINE
 } ldpd_process;
 
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
-
 enum hello_type {
 	HELLO_LINK,
 	HELLO_TARGETED
@@ -359,9 +354,6 @@ struct ctl_rt {
 /* parse.y */
 struct ldpd_conf	*parse_config(char *, int);
 int			 cmdline_symset(char *);
-
-/* control.c */
-void	session_socket_blockmode(int, enum blockmodes);
 
 /* kroute.c */
 int		 kif_init(void);
