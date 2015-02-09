@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.4 2015/02/09 13:21:42 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.5 2015/02/09 13:39:16 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -470,13 +470,6 @@ char *	argv[];
 	int	c;
 
 	(void) umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
-#if HAVE_GETTEXT
-	(void) setlocale(LC_ALL, "");
-#ifdef TZ_DOMAINDIR
-	(void) bindtextdomain(TZ_DOMAIN, TZ_DOMAINDIR);
-#endif /* defined TEXTDOMAINDIR */
-	(void) textdomain(TZ_DOMAIN);
-#endif /* HAVE_GETTEXT */
 	progname = argv[0];
 	if (TYPE_BIT(zic_t) < 64) {
 		(void) fprintf(stderr, "%s: %s\n", progname,

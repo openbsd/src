@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.30 2015/02/09 13:27:36 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.31 2015/02/09 13:39:16 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -29,8 +29,6 @@
 
 #define HAVE_ADJTIME		1
 
-#define HAVE_GETTEXT		0
-
 #define HAVE_SETTIMEOFDAY	3
 
 #define HAVE_SYMLINK		1
@@ -55,9 +53,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-#if HAVE_GETTEXT
-#include "libintl.h"
-#endif /* HAVE_GETTEXT */
 
 #include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
 
@@ -156,11 +151,7 @@ const char *	scheck(const char * string, const char * format);
 */
 
 #ifndef _
-#if HAVE_GETTEXT
-#define _(msgid) gettext(msgid)
-#else /* !HAVE_GETTEXT */
 #define _(msgid) msgid
-#endif /* !HAVE_GETTEXT */
 #endif /* !defined _ */
 
 #ifndef TZ_DOMAIN

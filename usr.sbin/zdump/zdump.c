@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.3 2015/02/09 12:52:45 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.4 2015/02/09 13:39:16 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -80,14 +80,6 @@
 #define SECSPERNYEAR	(SECSPERDAY * DAYSPERNYEAR)
 #define SECSPERLYEAR	(SECSPERNYEAR + SECSPERDAY)
 
-#ifndef HAVE_GETTEXT
-#define HAVE_GETTEXT 0
-#endif
-#if HAVE_GETTEXT
-#include "locale.h"	/* for setlocale */
-#include "libintl.h"
-#endif /* HAVE_GETTEXT */
-
 #ifndef GNUC_or_lint
 #ifdef lint
 #define GNUC_or_lint
@@ -113,11 +105,7 @@
 */
 
 #ifndef _
-#if HAVE_GETTEXT
-#define _(msgid) gettext(msgid)
-#else /* !HAVE_GETTEXT */
 #define _(msgid) msgid
-#endif /* !HAVE_GETTEXT */
 #endif /* !defined _ */
 
 #ifndef TZ_DOMAIN
@@ -256,13 +244,6 @@ char *	argv[];
 
 	INITIALIZE(cutlotime);
 	INITIALIZE(cuthitime);
-#if HAVE_GETTEXT
-	(void) setlocale(LC_ALL, "");
-#ifdef TZ_DOMAINDIR
-	(void) bindtextdomain(TZ_DOMAIN, TZ_DOMAINDIR);
-#endif /* defined TEXTDOMAINDIR */
-	(void) textdomain(TZ_DOMAIN);
-#endif /* HAVE_GETTEXT */
 	progname = argv[0];
 	vflag = 0;
 	cutarg = NULL;
