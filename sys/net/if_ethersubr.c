@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.187 2015/02/08 06:00:52 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.188 2015/02/09 00:21:58 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -769,7 +769,6 @@ ether_ifattach(struct ifnet *ifp)
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	SLIST_INIT(&ifp->if_inputs);
 
 	ether_ifih = malloc(sizeof(*ether_ifih), M_DEVBUF, M_WAITOK);
 	ether_ifih->ifih_input = ether_input;

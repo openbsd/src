@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.317 2015/02/08 06:00:52 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.318 2015/02/09 00:21:58 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -405,6 +405,8 @@ if_attach_common(struct ifnet *ifp)
 	    M_WAITOK|M_ZERO);
 	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
 	    M_TEMP, M_WAITOK|M_ZERO);
+
+	SLIST_INIT(&ifp->if_inputs);
 }
 
 void
