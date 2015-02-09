@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.31 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.32 2015/02/09 23:00:14 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -92,19 +92,19 @@ main(int argc, char **argv)
 			break;
 
 		case 'p':
-			pr++;
+			pr = 1;
 			break;
 
 		case 's':
-			silent++;
+			silent = 1;
 			break;
 
 		case 'a':
-			slidetime++;
+			slidetime = 1;
 			break;
 
 		case 'n':
-			ntp++;
+			ntp = 1;
 			break;
 
 		case 'o':
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'v':
-			verbose++;
+			verbose = 1;
 			break;
 
 		default:

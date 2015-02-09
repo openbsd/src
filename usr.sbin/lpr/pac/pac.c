@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.23 2015/01/16 14:36:44 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.24 2015/02/09 23:00:14 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -127,14 +127,14 @@ main(int argc, char **argv)
 			/*
 			 * Summarize and compress accounting file.
 			 */
-			summarize++;
+			summarize = 1;
 			continue;
 
 		case 'c':
 			/*
 			 * Sort by cost.
 			 */
-			sort++;
+			sort = 1;
 			continue;
 
 		case 'm':
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 			/*
 			 * Reverse sorting order.
 			 */
-			reverse++;
+			reverse = 1;
 			continue;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.57 2015/01/16 06:40:18 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.58 2015/02/09 23:00:14 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 			options |= SO_DEBUG;
 			break;
 		case 'l':
-			lflag++;
+			lflag = 1;
 			break;
 		case 'n':
 			child_max = strtol(optarg, &cp, 10);
@@ -185,10 +185,10 @@ main(int argc, char **argv)
 				    optarg);
 			break;
 		case 'r':
-			rflag++;
+			rflag = 1;
 			break;
 		case 's':
-			sflag++;
+			sflag = 1;
 			break;
 		case 'w':
 			l = strtol(optarg, &cp, 10);

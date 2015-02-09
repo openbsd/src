@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.38 2015/01/16 06:40:23 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.39 2015/02/09 23:00:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "cd:fh:s:C:")) != -1)
 		switch (ch) {
 		case 'c':
-			cflag++;
+			cflag = 1;
 			break;
 		case 'd':
 			if (strchr(optarg, '/')) /* Ha ha, we are not listening */
@@ -365,7 +365,7 @@ main(int argc, char *argv[])
 			domain = optarg;
 			break;
 		case 'f':
-			fflag++;
+			fflag = 1;
 			break;
 		case 'h':
 			host = optarg;
@@ -378,7 +378,7 @@ main(int argc, char *argv[])
 		case 'C':
 			if (optind + 3 >= argc)
 				usage();
-			Cflag++;
+			Cflag = 1;
 			tid = optarg;
 			prog = argv[optind++];
 			ipadd = argv[optind++];

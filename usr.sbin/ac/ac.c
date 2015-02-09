@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 		switch (c) {
 #ifdef DEBUG
 		case 'D':
-			Debug++;
+			Debug = 1;
 			break;
 #endif
 		case 'd':

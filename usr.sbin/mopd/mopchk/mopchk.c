@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.17 2014/12/13 14:44:59 miod Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.18 2015/02/09 23:00:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -69,10 +69,10 @@ main(argc, argv)
 	while ((op = getopt(argc, argv, "av")) != -1) {
 		switch (op) {
 		case 'a':
-			AllFlag++;
+			AllFlag = 1;
 			break;
 		case 'v':
-			VersionFlag++;
+			VersionFlag = 1;
 			break;
 		default:
 			Usage();

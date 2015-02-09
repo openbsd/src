@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.13 2008/05/17 23:31:52 sobrado Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.14 2015/02/09 23:00:15 deraadt Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -86,14 +86,14 @@ main(int argc, char *argv[])
 			wsdev = optarg;
 			break;
 		case 'd':
-			delete++;
+			delete = 1;
 			break;
 		case 'k':
-			kbd++;
+			kbd = 1;
 			break;
 		case 'm':
-			mux++;
-			kbd++;
+			mux = 1;
+			kbd = 1;
 			break;
 		case 't':
 			strlcpy(asd.screentype, optarg, WSSCREEN_NAME_SIZE);

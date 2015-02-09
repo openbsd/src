@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.30 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.31 2015/02/09 23:00:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -135,14 +135,14 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "afjM:N:p:st")) != -1) {
 		switch (ch) {
 		case 'a':
-			++aflag;
+			aflag = 1;
 			break;
 		case 'f':
-			++follow;
+			follow = 1;
 			setvbuf(stdout, NULL, _IOLBF, 0);
 			break;
 		case 'j':
-			++jflag;
+			jflag = 1;
 			break;
 		case 'p':
 			if (npcbs >= TCP_NDEBUG)
@@ -156,10 +156,10 @@ main(int argc, char *argv[])
 			npcbs++;
 			break;
 		case 's':
-			++sflag;
+			sflag = 1;
 			break;
 		case 't':
-			++tflag;
+			tflag = 1;
 			break;
 		case 'N':
 			sys = optarg;

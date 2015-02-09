@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.136 2015/01/20 18:44:16 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.137 2015/02/09 23:00:15 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ main(int argc, char *argv[])
 	    "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
 		switch (ch) {
 		case 'A':
-			Aflag++;
+			Aflag = 1;
 			break;
 		case 'c':
 			incflag = 0;
@@ -480,7 +480,7 @@ main(int argc, char *argv[])
 			proto = IPPROTO_ICMP;
 			break;
 		case 'l':
-			ttl_flag++;
+			ttl_flag = 1;
 			break;
 		case 'm':
 			errno = 0;
@@ -493,7 +493,7 @@ main(int argc, char *argv[])
 			max_ttl = (u_int8_t)l;
 			break;
 		case 'n':
-			nflag++;
+			nflag = 1;
 			break;
 		case 'p':
 			errno = 0;
@@ -559,7 +559,7 @@ main(int argc, char *argv[])
 			last_tos = tos;
 			break;
 		case 'v':
-			verbose++;
+			verbose = 1;
 			break;
 		case 'V':
 			rtableid = (unsigned int)strtonum(optarg, 0,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.11 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.12 2015/02/09 23:00:14 deraadt Exp $	*/
 
 /*
  * print PPP statistics:
@@ -318,19 +318,19 @@ main(argc, argv)
 	while ((c = getopt(argc, argv, "advrzc:w:")) != -1) {
 		switch (c) {
 		case 'a':
-			++aflag;
+			aflag = 1;
 			break;
 		case 'd':
-			++dflag;
+			dflag = 1;
 			break;
 		case 'v':
-			++vflag;
+			vflag = 1;
 			break;
 		case 'r':
-			++rflag;
+			rflag = 1;
 			break;
 		case 'z':
-			++zflag;
+			zflag = 1;
 			break;
 		case 'c':
 			count = atoi(optarg);

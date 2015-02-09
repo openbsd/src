@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.18 2013/07/05 21:02:07 miod Exp $ */
+/*	$OpenBSD: mopd.c,v 1.19 2015/02/09 23:00:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -75,22 +75,22 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "34adfv")) != -1)
 		switch (c) {
 		case '3':
-			Not3Flag++;
+			Not3Flag = 1;
 			break;
 		case '4':
-			Not4Flag++;
+			Not4Flag = 1;
 			break;
 		case 'a':
-			AllFlag++;
+			AllFlag = 1;
 			break;
 		case 'd':
 			DebugFlag++;
 			break;
 		case 'f':
-			ForegroundFlag++;
+			ForegroundFlag = 1;
 			break;
 		case 'v':
-			VersionFlag++;
+			VersionFlag = 1;
 			break;
 		default:
 			Usage();

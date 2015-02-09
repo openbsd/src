@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.47 2015/01/16 06:40:18 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.48 2015/02/09 23:00:14 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -209,19 +209,19 @@ main(int argc, char **argv)
 			break;
 
 		case 'm':		/* send mail when done */
-			mailflg++;
+			mailflg = 1;
 			break;
 
 		case 'q':		/* just q job */
-			qflag++;
+			qflag = 1;
 			break;
 
 		case 'r':		/* remove file when done */
-			rflag++;
+			rflag = 1;
 			break;
 
 		case 's':		/* try to link files */
-			sflag++;
+			sflag = 1;
 			break;
 
 		case 'w':		/* versatec page width */

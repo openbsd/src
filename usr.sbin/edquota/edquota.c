@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 		switch(ch) {
 		case 'p':
 			protoname = optarg;
-			pflag++;
+			pflag = 1;
 			break;
 		case 'g':
 			quotatype = GRPQUOTA;
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 			quotatype = USRQUOTA;
 			break;
 		case 't':
-			tflag++;
+			tflag = 1;
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopprobe.c,v 1.14 2013/07/05 21:02:07 miod Exp $ */
+/*	$OpenBSD: mopprobe.c,v 1.15 2015/02/09 23:00:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -75,19 +75,19 @@ main(int argc, char *argv[])
 	while ((op = getopt(argc, argv, "34aov")) != -1) {
 		switch (op) {
 		case '3':
-			Not3Flag++;
+			Not3Flag = 1;
 			break;
 		case '4':
-			Not4Flag++;
+			Not4Flag = 1;
 			break;
 		case 'a':
-			AllFlag++;
+			AllFlag = 1;
 			break;
 		case 'o':
-			OnceFlag++;
+			OnceFlag = 1;
 			break;
 		case 'v':
-			VerboseFlag++;
+			VerboseFlag = 1;
 			break;
 		default:
 			Usage();

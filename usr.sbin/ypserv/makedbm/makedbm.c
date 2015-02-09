@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.32 2015/01/16 06:40:23 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.33 2015/02/09 23:00:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -313,39 +313,39 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "Ublsui:o:m:d:")) != -1)
 		switch (ch) {
 		case 'U':
-			uflag++;
-			Uflag++;
+			uflag = 1;
+			Uflag = 1;
 			break;
 		case 'b':
-			bflag++;
-			aflag++;
+			bflag = 1;
+			aflag = 1;
 			break;
 		case 'l':
-			lflag++;
-			aflag++;
+			lflag = 1;
+			aflag = 1;
 			break;
 		case 's':
-			sflag++;
-			aflag++;
+			sflag = 1;
+			aflag = 1;
 			break;
 		case 'i':
 			yp_input_file = optarg;
-			aflag++;
+			aflag = 1;
 			break;
 		case 'o':
 			yp_output_file = optarg;
-			aflag++;
+			aflag = 1;
 			break;
 		case 'm':
 			yp_master_name = optarg;
-			aflag++;
+			aflag = 1;
 			break;
 		case 'd':
 			yp_domain_name = optarg;
-			aflag++;
+			aflag = 1;
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
 			break;
 		default:
 			usage();

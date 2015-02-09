@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.21 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.22 2015/02/09 23:00:14 deraadt Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -88,10 +88,10 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "alP:w:")) != -1) {
 		switch(ch) {
 		case 'a':
-			++aflag;
+			aflag = 1;
 			break;
 		case 'l':			/* long output */
-			++lflag;
+			lflag = 1;
 			break;
 		case 'P':		/* printer name */
 			printer = optarg;

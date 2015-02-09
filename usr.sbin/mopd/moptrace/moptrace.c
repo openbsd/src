@@ -1,4 +1,4 @@
-/*	$OpenBSD: moptrace.c,v 1.12 2013/07/05 21:02:07 miod Exp $ */
+/*	$OpenBSD: moptrace.c,v 1.13 2015/02/09 23:00:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -69,13 +69,13 @@ main(int argc, char *argv[])
 	while ((op = getopt(argc, argv, "34ad")) != -1) {
 		switch (op) {
 		case '3':
-			Not3Flag++;
+			Not3Flag = 1;
 			break;
 		case '4':
-			Not4Flag++;
+			Not4Flag = 1;
 			break;
 		case 'a':
-			AllFlag++;
+			AllFlag = 1;
 			break;
 		case 'd':
 			DebugFlag++;

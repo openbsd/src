@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.13 2013/10/20 16:09:25 miod Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.14 2015/02/09 23:00:15 deraadt Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 			f.encoding = getencoding(optarg);
 			break;
 		case 'l':
-			list++;
+			list = 1;
 			break;
 		case 'N':
 			strlcpy(f.name, optarg, WSFONT_NAME_SIZE);

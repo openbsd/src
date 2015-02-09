@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.27 2015/01/23 02:37:25 tedu Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.28 2015/02/09 23:00:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -160,7 +160,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 		/*
 		 * Pending jobs have the user execute bit set.
 		 */
-		if (statbuf.st_mode & S_IXUSR) 	{
+		if (statbuf.st_mode & S_IXUSR) {
 			/* new job to run */
 			if (isupper(job->queue)) {
 				/* we run one batch job per atrun() call */

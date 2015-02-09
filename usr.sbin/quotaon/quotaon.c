@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	if (whoami == (char *)1)
 		whoami = *argv;
 	if (strcmp(whoami, "quotaoff") == 0)
-		offmode++;
+		offmode = 1;
 	else if (strcmp(whoami, "quotaon") != 0) {
 		fprintf(stderr, "Name must be quotaon or quotaoff not %s\n",
 			whoami);
@@ -81,16 +81,16 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "avug")) != -1) {
 		switch (ch) {
 		case 'a':
-			aflag++;
+			aflag = 1;
 			break;
 		case 'g':
-			gflag++;
+			gflag = 1;
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
 			break;
 		case 'v':
-			vflag++;
+			vflag = 1;
 			break;
 		default:
 			usage(whoami);
@@ -101,8 +101,8 @@ main(int argc, char *argv[])
 	if (argc <= 0 && !aflag)
 		usage(whoami);
 	if (!gflag && !uflag) {
-		gflag++;
-		uflag++;
+		gflag = 1;
+		uflag = 1;
 	}
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
