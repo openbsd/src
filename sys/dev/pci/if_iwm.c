@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.8 2015/02/09 00:26:27 phessler Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.9 2015/02/09 03:51:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6505,10 +6505,10 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		goto fail4;
 	}
 
-	sc->sc_eswq = taskq_create("iwmes", 1, IPL_NET);
+	sc->sc_eswq = taskq_create("iwmes", 1, IPL_NET, 0);
 	if (sc->sc_eswq == NULL)
 		goto fail4;
-	sc->sc_nswq = taskq_create("iwmns", 1, IPL_NET);
+	sc->sc_nswq = taskq_create("iwmns", 1, IPL_NET, 0);
 	if (sc->sc_nswq == NULL)
 		goto fail4;
 
