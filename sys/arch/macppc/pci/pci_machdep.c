@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.4 2015/01/24 20:59:42 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.5 2015/02/09 23:37:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -254,7 +254,8 @@ ofw_enumerate_pcibus(struct pci_softc *sc,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct ofw_pci_register reg;
-	int node, b, d, f, ret;
+	int len, node, b, d, f, ret;
+	char compat[32];
 	pcireg_t bhlcr;
 	pcitag_t tag;
 
@@ -262,6 +263,15 @@ ofw_enumerate_pcibus(struct pci_softc *sc,
 		node = PCITAG_NODE(*sc->sc_bridgetag);
 	else
 		node = pc->pc_node;
+
+	/* The AGP bridge is not in the device-tree. */
+	len = OF_getprop(node, "compatible", compat, sizeof(compat));
+	if (len > 0 && strcmp(compat, "u3-agp") == 0) {
+		tag = PCITAG_CREATE(0, sc->sc_bus, 11, 0);
+		ret = pci_probe_device(sc, tag, match, pap);
+		if (match != NULL && ret != 0)
+			return (ret);
+	}
 
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) < sizeof(reg))
