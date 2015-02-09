@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.27 2015/02/09 08:25:11 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.28 2015/02/09 11:29:19 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -158,13 +158,6 @@ extern char *	asctime_r(struct tm const *, char *);
 ** Private function declarations.
 */
 
-char *		icalloc(int nelem, int elsize);
-char *		icatalloc(char * old, const char * new);
-char *		icpyalloc(const char * string);
-char *		imalloc(int n);
-void *		irealloc(void * pointer, int size);
-void		icfree(char * pointer);
-void		ifree(char * pointer);
 const char *	scheck(const char * string, const char * format);
 
 /*

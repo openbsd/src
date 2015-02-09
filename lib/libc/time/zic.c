@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.36 2015/02/09 08:25:11 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.37 2015/02/09 11:29:19 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -382,10 +382,21 @@ char * const	ptr;
 	return ptr;
 }
 
-#define emalloc(size)		memcheck(imalloc(size))
-#define erealloc(ptr, size)	memcheck(irealloc((ptr), (size)))
-#define ecpyalloc(ptr)		memcheck(icpyalloc(ptr))
-#define ecatalloc(oldp, newp)	memcheck(icatalloc((oldp), (newp)))
+static char *
+ecatalloc(char *start, const char *tail)
+{
+	size_t len;
+	char *str;
+
+	len = strlen(start) + strlen(tail) + 1;
+	str = memcheck(realloc(start, len));
+	strlcat(str, tail, len);
+	return str;
+}
+
+#define emalloc(size)		memcheck(malloc(size))
+#define erealloc(ptr, size)	memcheck(realloc((ptr), (size)))
+#define ecpyalloc(ptr)		memcheck(strdup(ptr))
 
 /*
 ** Error handling.
@@ -439,7 +450,7 @@ const char * const	string;
 	cp = ecpyalloc(_("warning: "));
 	cp = ecatalloc(cp, string);
 	error(cp);
-	ifree(cp);
+	free(cp);
 	--errors;
 }
 
@@ -636,8 +647,8 @@ const char * const	tofield;
 			exit(EXIT_FAILURE);
 		}
 	}
-	ifree(fromname);
-	ifree(toname);
+	free(fromname);
+	free(toname);
 }
 
 #define TIME_T_BITS_IN_FILE	64
@@ -663,7 +674,7 @@ const char * const	name;
 	myname = ecpyalloc(name);
 	myname = ecatalloc(myname, "/.");
 	accres = access(myname, F_OK);
-	ifree(myname);
+	free(myname);
 	return accres == 0;
 }
 
@@ -838,7 +849,7 @@ _("%s: panic: Invalid l_value %d\n"),
 					exit(EXIT_FAILURE);
 			}
 		}
-		ifree((char *) fields);
+		free((char *) fields);
 	}
 	if (ferror(fp)) {
 		(void) fprintf(stderr, _("%s: Error reading %s\n"),
@@ -1257,7 +1268,7 @@ const char * const		timep;
 		}
 	}
 	rp->r_tod = gethms(dp, _("invalid time of day"), FALSE);
-	ifree(dp);
+	free(dp);
 	/*
 	** Year work.
 	*/
@@ -1341,12 +1352,12 @@ const char * const		timep;
 			*ep++ = 0;
 			if (*ep++ != '=') {
 				error(_("invalid day of month"));
-				ifree(dp);
+				free(dp);
 				return;
 			}
 			if ((lp = byword(dp, wday_names)) == NULL) {
 				error(_("invalid weekday name"));
-				ifree(dp);
+				free(dp);
 				return;
 			}
 			rp->r_wday = lp->l_value;
@@ -1355,11 +1366,11 @@ const char * const		timep;
 			rp->r_dayofmonth <= 0 ||
 			(rp->r_dayofmonth > len_months[1][rp->r_month])) {
 				error(_("invalid day of month"));
-				ifree(dp);
+				free(dp);
 				return;
 		}
 	}
-	ifree(dp);
+	free(dp);
 }
 
 static void
@@ -2049,7 +2060,7 @@ wp = ecpyalloc(_("no POSIX environment variable for zone"));
 		wp = ecatalloc(wp, " ");
 		wp = ecatalloc(wp, zpfirst->z_name);
 		warning(wp);
-		ifree(wp);
+		free(wp);
 	}
 	if (envvar[0] == '\0') {
 		if (min_year >= INT_MIN + YEARSPERREPEAT)
@@ -2238,9 +2249,9 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 		}
 	}
 	writezone(zpfirst->z_name, envvar);
-	ifree(startbuf);
-	ifree(ab);
-	ifree(envvar);
+	free(startbuf);
+	free(ab);
+	free(envvar);
 }
 
 static void
@@ -2681,7 +2692,7 @@ wp = _("time zone abbreviation differs from POSIX standard");
 			wp = ecatalloc(wp, string);
 			wp = ecatalloc(wp, ")");
 			warning(wp);
-			ifree(wp);
+			free(wp);
 		}
 	}
 	i = strlen(string) + 1;
@@ -2719,14 +2730,14 @@ char *		argname;
 					(void) fprintf(stderr,
 _("%s: Can't create directory %s: %s\n"),
 						progname, name, e);
-					ifree(name);
+					free(name);
 					return -1;
 				}
 			}
 		}
 		*cp = '/';
 	}
-	ifree(name);
+	free(name);
 	return 0;
 }
 
