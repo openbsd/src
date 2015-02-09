@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2013/11/28 10:33:37 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2015/02/09 09:09:30 jsg Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -638,6 +638,13 @@ unwind(int i)
 
 		default:
 			quitenv(NULL);
+			/*
+			 * quitenv() may have reclaimed the memory
+			 * used by source which will end badly when
+			 * we jump to a function that expects it to
+			 * be valid
+			 */
+			source = NULL;
 		}
 	}
 }
