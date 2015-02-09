@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.14 2015/02/09 03:24:48 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.15 2015/02/09 08:36:53 jmc Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -68,9 +68,10 @@ will be called against the created taskq.
 See
 .Xr spl 9
 for a list of the IPLs.
-You can or the following defines into the
+The operational characteristics of the taskq
+can be altered by OR'ing the following defines into the
 .Fa flags
-argument do change the operational characteristics of the taskq:
+argument:
 .Bl -tag -width xxx -offset indent
 .It Dv TASKQ_MPSAFE
 The threads servicing the taskq will be run without the kernel big lock.
