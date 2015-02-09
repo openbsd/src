@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.14 2014/07/11 07:38:05 deraadt Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.15 2015/02/09 22:23:47 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ _kvm_initvtop(kvm_t *kd)
 
 	/*
 	 * Older kernels might not have this symbol; in which case
-	 * we use the value of VM_MIN_KERNE_ADDRESS they must have.
+	 * we use the value of VM_MIN_KERNEL_ADDRESS they must have.
 	 */
 
 	nl[0].n_name = "Sysmapbase";
