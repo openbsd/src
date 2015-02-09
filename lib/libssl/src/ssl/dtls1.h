@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.16 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: dtls1.h,v 1.17 2015/02/09 10:53:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -95,9 +95,6 @@ extern "C" {
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
-#ifndef OPENSSL_NO_SCTP
-#define DTLS1_SCTP_AUTH_LABEL	"EXPORTER_DTLS_OVER_SCTP"
-#endif
 
 typedef struct dtls1_bitmap_st {
 	unsigned long map;		/* track 32 packets on 32-bit systems
@@ -225,12 +222,6 @@ typedef struct dtls1_state_st {
 	unsigned int retransmitting;
 	unsigned int change_cipher_spec_ok;
 
-#ifndef OPENSSL_NO_SCTP
-	/* used when SSL_ST_XX_FLUSH is entered */
-	int next_state;
-
-	int shutdown_received;
-#endif
 
 } DTLS1_STATE;
 
@@ -239,9 +230,6 @@ typedef struct dtls1_record_data_st {
 	unsigned int   packet_length;
 	SSL3_BUFFER    rbuf;
 	SSL3_RECORD    rrec;
-#ifndef OPENSSL_NO_SCTP
-	struct bio_dgram_sctp_rcvinfo recordinfo;
-#endif
 } DTLS1_RECORD_DATA;
 
 #endif
