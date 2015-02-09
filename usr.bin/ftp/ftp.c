@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.90 2015/01/30 04:45:45 tedu Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.91 2015/02/09 08:24:20 tedu Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -184,11 +184,7 @@ hookup(char *host, char *port)
 	
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
-#if 0	/*old behavior*/
-		if (res != res0)	/* not on the first address */
-#else
 		if (res0->ai_next)	/* if we have multiple possibilities */
-#endif
 		{
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
@@ -266,13 +262,11 @@ hookup(char *host, char *port)
 		code = -1;
 		goto bad;
 	}
-#if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (hisctladdr.su_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 	}
-#endif
 	cin = fdopen(s, "r");
 	cout = fdopen(s, "w");
 	if (cin == NULL || cout == NULL) {
@@ -294,7 +288,6 @@ hookup(char *host, char *port)
 		code = -1;
 		goto bad;
 	}
-#ifdef SO_OOBINLINE
 	{
 	int ret, on = 1;
 
@@ -304,7 +297,6 @@ hookup(char *host, char *port)
 		warn("setsockopt");
 #endif /* !SMALL */
 	}
-#endif /* SO_OOBINLINE */
 
 	return (hostname);
 bad:
@@ -808,12 +800,6 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			}
 			(void)putc(c, dout);
 			bytes++;
-#if 0	/* this violates RFC */
-			if (c == '\r') {
-				(void)putc('\0', dout);
-				bytes++;
-			}
-#endif
 		}
 		if (ferror(fin) || ferror(dout))
 			serrno = errno;
@@ -1539,14 +1525,12 @@ reinit:
 			warn("connect");
 			goto bad;
 		}
-#if defined(IPPROTO_IP) && defined(IP_TOS)
 		if (data_addr.su_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 				       sizeof(int)) < 0)
 				warn("setsockopt TOS (ignored)");
 		}
-#endif
 		return (0);
 	}
 
@@ -1680,14 +1664,12 @@ noport:
 	}
 	if (tmpno)
 		sendport = 1;
-#if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 	}
-#endif
 	return (0);
 bad:
 	(void)close(data), data = -1;
@@ -1714,7 +1696,6 @@ dataconn(const char *lmode)
 	}
 	(void)close(data);
 	data = s;
-#if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (from.su_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
@@ -1722,7 +1703,6 @@ dataconn(const char *lmode)
 			warn("setsockopt TOS (ignored)");
 		}
 	}
-#endif
 	return (fdopen(data, lmode));
 }
 

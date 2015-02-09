@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.96 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.97 2015/02/09 08:24:21 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -170,8 +170,8 @@ main(volatile int argc, char *argv[])
 	if (strcmp(__progname, "gate-ftp") == 0)
 		gatemode = 1;
 	gateserver = getenv("FTPSERVER");
-	if (gateserver == NULL || *gateserver == '\0')
-		gateserver = GATE_SERVER;
+	if (gateserver == NULL)
+		gateserver = "";
 	if (gatemode) {
 		if (*gateserver == '\0') {
 			warnx(

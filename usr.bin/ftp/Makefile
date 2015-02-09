@@ -1,15 +1,7 @@
-#	$OpenBSD: Makefile,v 1.27 2014/10/31 13:48:21 jsing Exp $
+#	$OpenBSD: Makefile,v 1.28 2015/02/09 08:24:20 tedu Exp $
 
 # Define SMALL to disable command line editing and https support
 #CFLAGS+=-DSMALL
-
-# Uncomment the following to provide defaults for gate-ftp operation
-#CFLAGS+=-DGATE_SERVER=\"ftp-gw.host\" # -DGATE_PORT=21
-
-.if (defined(USE_SOCKS) && ${USE_SOCKS:L} == "yes")
-CFLAGS += -DSOCKS -I/usr/local/include
-LDADD += -L/usr/local/lib -lsocks
-.endif
 
 PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c cookie.c domacro.c fetch.c ftp.c \

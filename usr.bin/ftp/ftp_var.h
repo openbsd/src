@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.37 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.38 2015/02/09 08:24:21 tedu Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -73,11 +73,6 @@
 #include <histedit.h>
 #endif /* !SMALL */
 
-#ifdef SOCKS
-#include <socks.h>
-int fclose(FILE *);
-#endif
-
 #include <tls.h>
 
 #include "stringlist.h"
@@ -90,15 +85,10 @@ int fclose(FILE *);
 #define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
 
 #define	FTP_PORT	21	/* default if ! getservbyname("ftp/tcp") */
+#define	GATE_PORT	21	/* default if ! getservbyname("ftpgate/tcp") */
 #define	HTTP_PORT	80	/* default if ! getservbyname("http/tcp") */
 #define	HTTPS_PORT	443	/* default if ! getservbyname("https/tcp") */
 #define	HTTP_USER_AGENT	"User-Agent: OpenBSD ftp"	/* User-Agent string sent to web server */
-#ifndef	GATE_PORT
-#define	GATE_PORT	21	/* default if ! getservbyname("ftpgate/tcp") */
-#endif
-#ifndef	GATE_SERVER
-#define	GATE_SERVER	""	/* default server */
-#endif
 
 #define PAGER		"more"	/* default pager if $PAGER isn't set */
 
