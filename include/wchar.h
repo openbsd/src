@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.27 2015/01/12 20:58:07 millert Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.28 2015/02/09 23:02:25 millert Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -152,10 +152,6 @@ wchar_t	*wmemmove(wchar_t *, const wchar_t *, size_t)
 wchar_t	*wmemset(wchar_t *, wchar_t, size_t)
 		__attribute__ ((__bounded__(__wcstring__,1,3)));
 
-size_t	wcslcat(wchar_t *, const wchar_t *, size_t)
-		__attribute__ ((__bounded__(__wcstring__,1,3)));
-size_t	wcslcpy(wchar_t *, const wchar_t *, size_t)
-		__attribute__ ((__bounded__(__wcstring__,1,3)));
 int	wcswidth(const wchar_t *, size_t);
 int	wctob(wint_t);
 int	wcwidth(wchar_t);
@@ -201,7 +197,6 @@ unsigned long long int wcstoull(const wchar_t * __restrict,
 
 wint_t ungetwc(wint_t, FILE *);
 wint_t fgetwc(FILE *);
-wchar_t *fgetwln(FILE * __restrict, size_t * __restrict);
 wchar_t *fgetws(wchar_t * __restrict, int, FILE * __restrict)
 		__attribute__ ((__bounded__(__wcstring__,1,2)));
 wint_t getwc(FILE *);
@@ -227,6 +222,14 @@ int vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict, __va_list);
 int vwscanf(const wchar_t * __restrict, __va_list);
 int wscanf(const wchar_t * __restrict, ...);
+
+#if __BSD_VISIBLE
+wchar_t *fgetwln(FILE * __restrict, size_t * __restrict);
+size_t	wcslcat(wchar_t *, const wchar_t *, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
+size_t	wcslcpy(wchar_t *, const wchar_t *, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
+#endif
 
 #define getwc(f) fgetwc(f)
 #define getwchar() getwc(stdin)
