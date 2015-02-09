@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.173 2014/12/19 22:44:59 guenther Exp $ */
+/*	$OpenBSD: ehci.c,v 1.174 2015/02/09 22:14:43 uebayasi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ ehci_pcd(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	for (i = 1; i <= m; i++) {
 		/* Pick out CHANGE bits from the status reg. */
 		if (EOREAD4(sc, EHCI_PORTSC(i)) & EHCI_PS_CLEAR)
-			p[i/8] |= 1 << (i%8);
+			p[i / 8] |= 1 << (i % 8);
 	}
 	DPRINTF(("ehci_pcd: change=0x%02x\n", *p));
 	xfer->actlen = xfer->length;
@@ -1401,7 +1401,7 @@ ehci_dump_itd(struct ehci_soft_itd *itd)
 
 	printf("ITD: next phys=%X\n", itd->itd.itd_next);
 
-	for (i = 0; i < 8;i++) {
+	for (i = 0; i < 8; i++) {
 		t = letoh32(itd->itd.itd_ctl[i]);
 		printf("ITDctl %d: stat=%X len=%X ioc=%X pg=%X offs=%X\n", i,
 		    EHCI_ITD_GET_STATUS(t), EHCI_ITD_GET_LEN(t),
@@ -3647,7 +3647,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 		 * and what to not.
 		 */
 
-		for (j=0; j < 7; j++) {
+		for (j = 0; j < 7; j++) {
 			/*
 			 * Don't try to lookup a page that's past the end
 			 * of buffer
