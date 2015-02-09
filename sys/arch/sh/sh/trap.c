@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2015/02/09 09:32:53 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -416,8 +416,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	/* User stack extension */
 	if (map != kernel_map &&
-	    (va >= (vaddr_t)p->p_vmspace->vm_maxsaddr) &&
-	    (va < USRSTACK)) {
+	    va >= (vaddr_t)p->p_vmspace->vm_maxsaddr) {
 		if (err == 0)
 			uvm_grow(p, va);
 		else if (err == EACCES)
