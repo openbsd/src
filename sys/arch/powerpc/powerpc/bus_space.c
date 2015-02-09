@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.3 2015/02/08 06:21:04 mpi Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.4 2015/02/09 13:34:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ extern struct extent *devio_ex;
 
 int bus_mem_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 bus_addr_t bus_space_unmap_p(bus_space_tag_t, bus_space_handle_t,  bus_size_t);
+void bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 
 /* BUS functions */
@@ -100,27 +101,28 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	bus_size_t off, len;
 	bus_addr_t bpa;
 
+	/* should this verify that the proper size is freed? */
 	sva = trunc_page(bsh);
 	off = bsh - sva;
-	len = round_page(size+off);
+	len = size+off;
 
 	if (pmap_extract(pmap_kernel(), sva, &bpa) == TRUE) {
-		if (extent_free(devio_ex, bpa | (bsh & PAGE_MASK), size,
-		    EX_NOWAIT | (ppc_malloc_ok ? EX_MALLOCOK : 0)))
+		if (extent_free(devio_ex, bpa | (bsh & PAGE_MASK), size, EX_NOWAIT |
+			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
 		{
 			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}
 	}
-
-	pmap_kremove(sva, len);
-	pmap_update(pmap_kernel());
-
 	/* do not free memory which was stolen from the vm system */
 	if (ppc_malloc_ok &&
 	    ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS)))
-		km_free((void *)sva, len, &kv_any, &kp_none);
+		uvm_km_free(kernel_map, sva, len);
+	else {
+		pmap_remove(pmap_kernel(), sva, sva + len);
+		pmap_update(pmap_kernel());
+	}
 }
 
 paddr_t
@@ -153,46 +155,48 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 {
 	bus_addr_t vaddr;
 	bus_addr_t spa, epa;
-	bus_size_t off, len;
-	int pmapflags;
+	bus_size_t off;
+	int len;
 
 	spa = trunc_page(bpa);
 	epa = bpa + size;
 	off = bpa - spa;
-	len = round_page(size+off);
+	len = size+off;
 
-#ifdef DIAGNOSTIC
-	if (epa <= spa && epa != 0)
+#if 0
+	if (epa <= spa) {
 		panic("bus_mem_add_mapping: overflow");
+	}
 #endif
-
 	if (ppc_malloc_ok == 0) {
+		bus_size_t alloc_size;
+
 		/* need to steal vm space before kernel vm is initialized */
+		alloc_size = round_page(len);
+
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
-		ppc_kvm_stolen += len;
+		ppc_kvm_stolen += alloc_size;
 		if (ppc_kvm_stolen > PPC_SEGMENT_LENGTH) {
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
-		vaddr = (vaddr_t)km_alloc(len, &kv_any, &kp_none, &kd_nowait);
+		vaddr = uvm_km_valloc(kernel_map, len);
 		if (vaddr == 0)
 			return (ENOMEM);
 	}
 	*bshp = vaddr + off;
-
-	if (flags & BUS_SPACE_MAP_CACHEABLE)
-		pmapflags = PMAP_WT;
-	else
-		pmapflags = PMAP_NOCACHE;
-
+#ifdef DEBUG_BUS_MEM_ADD_MAPPING
+	printf("mapping %x size %x to %x vbase %x\n",
+		bpa, size, *bshp, spa);
+#endif
 	for (; len > 0; len -= PAGE_SIZE) {
-		pmap_kenter_pa(vaddr, spa | pmapflags, PROT_READ | PROT_WRITE);
+		pmap_kenter_cache(vaddr, spa, PROT_READ | PROT_WRITE,
+		    (flags & BUS_SPACE_MAP_CACHEABLE) ?
+		      PMAP_CACHE_WT : PMAP_CACHE_CI);
 		spa += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}
-	pmap_update(pmap_kernel());
-
-	return (0);
+	return 0;
 }
 
 int
@@ -230,18 +234,18 @@ mapiodev(paddr_t pa, psize_t len)
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
-		va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, &kd_nowait);
-		if (va == 0)
-			return (NULL);
+		va = uvm_km_valloc(kernel_map, size);
 	}
 
+	if (va == 0)
+		return NULL;
+
 	for (vaddr = va; size > 0; size -= PAGE_SIZE) {
-		pmap_kenter_pa(vaddr, spa, PROT_READ | PROT_WRITE);
+		pmap_kenter_cache(vaddr, spa,
+		    PROT_READ | PROT_WRITE, PMAP_CACHE_DEFAULT);
 		spa += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}
-	pmap_update(pmap_kernel());
-
 	return (void *) (va+off);
 }
 
@@ -251,14 +255,17 @@ unmapiodev(void *kva, psize_t p_size)
 	vaddr_t vaddr;
 	int size;
 
-	size = round_page(p_size);
+	size = p_size;
 
 	vaddr = trunc_page((vaddr_t)kva);
 
-	pmap_kremove(vaddr, size);
-	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, vaddr, size);
 
-	km_free((void *)vaddr, size, &kv_any, &kp_none);
+	for (; size > 0; size -= PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), vaddr, vaddr + PAGE_SIZE - 1);
+		vaddr += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
 }
 
 
