@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.116 2013/05/30 20:29:27 florian Exp $ */
+/*	$OpenBSD: session.h,v 1.117 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,11 +63,6 @@ enum session_events {
 	EVNT_RCVD_KEEPALIVE,
 	EVNT_RCVD_UPDATE,
 	EVNT_RCVD_NOTIFICATION
-};
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
 };
 
 enum msg_type {
@@ -291,7 +286,6 @@ void	print_config(struct bgpd_config *, struct rib_names *,
 pid_t	 rde_main(int[2], int[2], int[2], int[2], int);
 
 /* session.c */
-void		 session_socket_blockmode(int, enum blockmodes);
 pid_t		 session_main(int[2], int[2], int[2], int[2]);
 void		 bgp_fsm(struct peer *, enum session_events);
 int		 session_neighbor_rrefresh(struct peer *p);

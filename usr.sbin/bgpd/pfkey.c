@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.42 2014/10/08 16:15:37 deraadt Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.43 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -734,7 +734,7 @@ pfkey_remove(struct peer *p)
 int
 pfkey_init(struct bgpd_sysdep *sysdep)
 {
-	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) {
+	if ((fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC, PF_KEY_V2)) == -1) {
 		if (errno == EPROTONOSUPPORT) {
 			log_warnx("PF_KEY not available, disabling ipsec");
 			sysdep->no_pfkey = 1;

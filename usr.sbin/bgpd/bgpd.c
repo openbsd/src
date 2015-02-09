@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.174 2013/11/13 20:41:01 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.175 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -192,22 +192,18 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_m2s) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2r) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_m2r) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	     PF_UNSPEC, pipe_s2r) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r_c) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	     PF_UNSPEC, pipe_s2r_c) == -1)
 		fatal("socketpair");
-	session_socket_blockmode(pipe_m2s[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_m2s[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_m2r[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_m2r[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_s2r[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_s2r[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_s2r_c[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_s2r_c[1], BM_NONBLOCK);
 
 	/* fork children */
 	rde_pid = rde_main(pipe_m2r, pipe_s2r, pipe_m2s, pipe_s2r_c, debug);

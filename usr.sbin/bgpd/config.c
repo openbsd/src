@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.57 2013/11/13 09:14:48 florian Exp $ */
+/*	$OpenBSD: config.c,v 1.58 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -275,7 +275,8 @@ prepare_listeners(struct bgpd_config *conf)
 		if (la->reconf != RECONF_REINIT)
 			continue;
 
-		if ((la->fd = socket(la->sa.ss_family, SOCK_STREAM,
+		if ((la->fd = socket(la->sa.ss_family,
+		    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 		    IPPROTO_TCP)) == -1) {
 			if (la->flags & DEFAULT_LISTENER && (errno ==
 			    EAFNOSUPPORT || errno == EPROTONOSUPPORT)) {

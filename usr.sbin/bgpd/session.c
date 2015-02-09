@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.337 2014/12/04 19:55:49 sthen Exp $ */
+/*	$OpenBSD: session.c,v 1.338 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -167,8 +167,6 @@ setup_listeners(u_int *la_cnt)
 			log_warn("setup_listeners setsockopt hoplimit");
 			continue;
 		}
-
-		session_socket_blockmode(la->fd, BM_NONBLOCK);
 
 		if (listen(la->fd, MAX_BACKLOG)) {
 			close(la->fd);
@@ -1038,8 +1036,9 @@ session_accept(int listenfd)
 	struct peer		*p = NULL;
 
 	len = sizeof(cliaddr);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&cliaddr, &len)) == -1) {
+	if ((connfd = accept4(listenfd,
+	    (struct sockaddr *)&cliaddr, &len,
+	    SOCK_CLOEXEC | SOCK_NONBLOCK)) == -1) {
 		if (errno == ENFILE || errno == EMFILE)
 			pauseaccept = getmonotime();
 		else if (errno != EWOULDBLOCK && errno != EINTR &&
@@ -1100,7 +1099,6 @@ open:
 			close(connfd);
 			return;
 		}
-		session_socket_blockmode(connfd, BM_NONBLOCK);
 		bgp_fsm(p, EVNT_CON_OPEN);
 		return;
 	} else if (p != NULL && p->state == STATE_ESTABLISHED &&
@@ -1129,8 +1127,8 @@ session_connect(struct peer *peer)
 	if (peer->fd != -1)
 		return (-1);
 
-	if ((peer->fd = socket(aid2af(peer->conf.remote_addr.aid), SOCK_STREAM,
-	    IPPROTO_TCP)) == -1) {
+	if ((peer->fd = socket(aid2af(peer->conf.remote_addr.aid),
+	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_TCP)) == -1) {
 		log_peer_warn(&peer->conf, "session_connect socket");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
@@ -1172,8 +1170,6 @@ session_connect(struct peer *peer)
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
 	}
-
-	session_socket_blockmode(peer->fd, BM_NONBLOCK);
 
 	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT);
 	if (connect(peer->fd, sa, sa->sa_len) == -1) {
@@ -1278,23 +1274,6 @@ session_setup_socket(struct peer *p)
 	}
 
 	return (0);
-}
-
-void
-session_socket_blockmode(int fd, enum blockmodes bm)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-
-	if (bm == BM_NONBLOCK)
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.75 2013/11/13 20:41:01 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.76 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,8 @@ control_init(int restricted, char *path)
 	int			 fd;
 	mode_t			 old_umask, mode;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	     0)) == -1) {
 		log_warn("control_init: socket");
 		return (-1);
 	}
@@ -82,8 +83,6 @@ control_init(int restricted, char *path)
 		return (-1);
 	}
 
-	session_socket_blockmode(fd, BM_NONBLOCK);
-
 	return (fd);
 }
 
@@ -120,8 +119,9 @@ control_accept(int listenfd, int restricted)
 	struct ctl_conn		*ctl_conn;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
+	if ((connfd = accept4(listenfd,
+	    (struct sockaddr *)&sun, &len,
+	    SOCK_NONBLOCK | SOCK_CLOEXEC)) == -1) {
 		if (errno == ENFILE || errno == EMFILE) {
 			pauseaccept = getmonotime();
 			return (0);
@@ -130,8 +130,6 @@ control_accept(int listenfd, int restricted)
 			log_warn("control_accept: accept");
 		return (0);
 	}
-
-	session_socket_blockmode(connfd, BM_NONBLOCK);
 
 	if ((ctl_conn = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		log_warn("control_accept");

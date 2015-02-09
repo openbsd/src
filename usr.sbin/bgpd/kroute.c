@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.199 2014/10/08 16:15:37 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.200 2015/02/09 11:37:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,7 +199,8 @@ kr_init(void)
 	unsigned int	tid = RTABLE_ANY;
 	socklen_t	optlen;
 
-	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
+	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC,
+	    0)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
