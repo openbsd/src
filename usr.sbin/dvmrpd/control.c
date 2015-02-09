@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.19 2014/07/11 16:43:33 krw Exp $ */
+/*	$OpenBSD: control.c,v 1.20 2015/02/09 11:45:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,8 @@ control_init(void)
 	int			 fd;
 	mode_t			 old_umask;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    0)) == -1) {
 		log_warn("control_init: socket");
 		return (-1);
 	}
@@ -78,7 +79,6 @@ control_init(void)
 		return (-1);
 	}
 
-	session_socket_blockmode(fd, BM_NONBLOCK);
 	control_state.fd = fd;
 
 	return (0);
@@ -123,8 +123,8 @@ control_accept(int listenfd, short event, void *bula)
 		return;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
+	if ((connfd = accept4(listenfd, (struct sockaddr *)&sun, &len,
+	    SOCK_NONBLOCK | SOCK_CLOEXEC)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -139,8 +139,6 @@ control_accept(int listenfd, short event, void *bula)
 			log_warn("control_accept: accept");
 		return;
 	}
-
-	session_socket_blockmode(connfd, BM_NONBLOCK);
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
 		log_warn("control_accept");
@@ -313,21 +311,4 @@ control_imsg_relay(struct imsg *imsg)
 
 	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
 	    -1, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
-}
-
-void
-session_socket_blockmode(int fd, enum blockmodes bm)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-
-	if (bm == BM_NONBLOCK)
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.3 2012/04/10 07:56:54 deraadt Exp $ */
+/*	$OpenBSD: control.h,v 1.4 2015/02/09 11:45:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,5 @@ void	control_accept(int, short, void *);
 void	control_dispatch_imsg(int, short, void *);
 int	control_imsg_relay(struct imsg *);
 void	control_cleanup(void);
-
-void	session_socket_blockmode(int, enum blockmodes);
 
 #endif	/* _CONTROL_H_ */
