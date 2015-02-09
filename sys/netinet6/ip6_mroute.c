@@ -96,6 +96,8 @@
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 
+#include <crypto/siphash.h>
+
 #include <net/if.h>
 #include <net/if_var.h>
 
@@ -131,6 +133,7 @@ struct mrt6stat	mrt6stat;
 #define RTE_FOUND	0x2
 
 struct mf6c	*mf6ctable[MF6CTBLSIZ];
+SIPHASH_KEY	mf6chashkey;
 u_char		n6expire[MF6CTBLSIZ];
 struct mif6 mif6table[MAXMIFS];
 #ifdef MRT6DEBUG
@@ -175,10 +178,8 @@ static int pim6;
 /*
  * Hash function for a source, group entry
  */
-#define MF6CHASH(a, g) MF6CHASHMOD((a).s6_addr32[0] ^ (a).s6_addr32[1] ^ \
-				   (a).s6_addr32[2] ^ (a).s6_addr32[3] ^ \
-				   (g).s6_addr32[0] ^ (g).s6_addr32[1] ^ \
-				   (g).s6_addr32[2] ^ (g).s6_addr32[3])
+u_int32_t _mf6chash(const struct in6_addr *, const struct in6_addr *);
+#define MF6CHASH(a, g) _mf6chash(&(a), &(g))
 
 /*
  * Find a route for a given origin IPv6 address and Multicast group address.
@@ -413,6 +414,7 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 	ip6_mrouter_ver = cmd;
 
 	bzero((caddr_t)mf6ctable, sizeof(mf6ctable));
+	arc4random_buf(&mf6chashkey, sizeof(mf6chashkey));
 	bzero((caddr_t)n6expire, sizeof(n6expire));
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
@@ -1834,3 +1836,15 @@ pim6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* NOTREACHED */
 }
 #endif /* PIM */
+
+u_int32_t
+_mf6chash(const struct in6_addr *a, const struct in6_addr *g)
+{
+	SIPHASH_CTX ctx;
+
+	SipHash24_Init(&ctx, &mf6chashkey);
+	SipHash24_Update(&ctx, a, sizeof(*a));
+	SipHash24_Update(&ctx, g, sizeof(*g));
+
+	return (MF6CHASHMOD(SipHash24_End(&ctx)));
+}
