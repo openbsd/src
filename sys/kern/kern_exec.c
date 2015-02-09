@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.159 2015/02/09 09:39:09 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.160 2015/02/09 11:52:47 miod Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ int exec_sigcode_map(struct process *, struct emul *);
 
 /*
  * If non-zero, stackgap_random specifies the upper limit of the random gap size
- * added to the fixed stack gap. Must be n^2.
+ * added to the fixed stack position. Must be n^2.
  */
 int stackgap_random = STACKGAP_RANDOM;
 
@@ -402,8 +402,14 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	dp = (char *)(((long)dp + _STACKALIGNBYTES) & ~_STACKALIGNBYTES);
 
 	sgap = STACKGAPLEN;
+
+	/*
+	 * If we have enabled random stackgap, the stack itself has already
+	 * been moved from a random location, but is still aligned to a page
+	 * boundary.  Provide the lower bits of random placement now.
+	 */
 	if (stackgap_random != 0) {
-		sgap += arc4random() & (stackgap_random - 1);
+		sgap += arc4random() & PAGE_MASK;
 		sgap = (sgap + _STACKALIGNBYTES) & ~_STACKALIGNBYTES;
 	}
 

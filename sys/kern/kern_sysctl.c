@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.279 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.280 2015/02/09 11:52:47 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -264,7 +264,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	dev_t dev;
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
-	extern int stackgap_random;
 	extern int maxlocksperuid;
 	extern int pool_debug;
 

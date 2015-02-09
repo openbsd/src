@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.29 2015/02/06 23:58:12 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.30 2015/02/09 11:52:47 miod Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -213,6 +213,12 @@ void	new_vmcmd(struct exec_vmcmd_set *evsp,
 extern struct	execsw execsw[];
 extern int	nexecs;
 extern int	exec_maxhdrsz;
+
+/*
+ * If non-zero, stackgap_random specifies the upper limit of the random gap size
+ * added to the fixed stack position. Must be n^2.
+ */
+extern int	stackgap_random;
 
 /* Limit on total PT_OPENBSD_RANDOMIZE bytes. */
 #define ELF_RANDOMIZE_LIMIT 64*1024

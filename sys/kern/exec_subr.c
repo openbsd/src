@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.47 2015/02/06 23:58:12 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.48 2015/02/09 11:52:47 miod Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -330,6 +330,7 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 int
 exec_setup_stack(struct proc *p, struct exec_package *epp)
 {
+	vaddr_t sgap;
 
 #ifdef MACHINE_STACK_GROWS_UP
 	epp->ep_maxsaddr = USRSTACK;
@@ -339,6 +340,14 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	epp->ep_minsaddr = USRSTACK;
 #endif
 	epp->ep_ssize = round_page(p->p_rlimit[RLIMIT_STACK].rlim_cur);
+
+	if (stackgap_random != 0) {
+		sgap = arc4random() & (stackgap_random - 1);
+		sgap = trunc_page(sgap);
+
+		epp->ep_maxsaddr -= sgap;
+		epp->ep_minsaddr -= sgap;
+	}
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

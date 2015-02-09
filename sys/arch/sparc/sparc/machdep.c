@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.167 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.168 2015/02/09 11:52:47 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -143,11 +143,8 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 
-	if (CPU_ISSUN4M) {
-		extern int stackgap_random;
-
+	if (CPU_ISSUN4M)
 		stackgap_random = STACKGAP_RANDOM_SUN4M;
-	}
 
 	/*
 	 * Re-map the message buffer from its temporary address
