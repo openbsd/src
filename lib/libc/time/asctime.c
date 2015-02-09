@@ -1,4 +1,4 @@
-/*	$OpenBSD: asctime.c,v 1.17 2015/02/09 08:25:11 tedu Exp $ */
+/*	$OpenBSD: asctime.c,v 1.18 2015/02/09 13:32:51 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -9,8 +9,6 @@
 ** the output of strftime is supposed to be locale specific
 ** whereas the output of asctime is supposed to be constant.
 */
-
-/*LINTLIBRARY*/
 
 #include "private.h"
 #include "tzfile.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.40 2015/02/09 13:03:59 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.41 2015/02/09 13:32:51 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -10,11 +10,11 @@
 */
 
 #include <ctype.h>
+#include <fcntl.h>
+#include <float.h>	/* for FLT_MAX and DBL_MAX */
 
 #include "private.h"
 #include "tzfile.h"
-#include "fcntl.h"
-#include "float.h"	/* for FLT_MAX and DBL_MAX */
 #include "thread_private.h"
 
 #ifndef TZ_ABBR_MAX_LEN

@@ -1,6 +1,4 @@
-/*	$OpenBSD: wcsftime.c,v 1.3 2014/05/06 15:49:45 tedu Exp $ */
-#include "private.h"
-
+/*	$OpenBSD: wcsftime.c,v 1.4 2015/02/09 13:32:51 tedu Exp $ */
 /*
 ** Based on the UCB version with the ID appearing below.
 ** This is ANSIish only when "multibyte character == plain character".
@@ -33,10 +31,12 @@
 ** SUCH DAMAGE.
 */
 
-#include "tzfile.h"
-#include "fcntl.h"
+#include <fcntl.h>
 #include <locale.h>
 #include <wchar.h>
+
+#include "private.h"
+#include "tzfile.h"
 
 struct lc_time_T {
 	const wchar_t *	mon[MONSPERYEAR];
