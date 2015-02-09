@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.42 2015/02/09 13:46:22 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.43 2015/02/09 14:00:03 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -307,8 +307,7 @@ differ_by_repeat(t1, t0)
 const time_t	t1;
 const time_t	t0;
 {
-	if (TYPE_INTEGRAL(time_t) &&
-		TYPE_BIT(time_t) - TYPE_SIGNED(time_t) < SECSPERREPEAT_BITS)
+	if (TYPE_BIT(time_t) - 1 < SECSPERREPEAT_BITS)
 			return 0;
 	return (int64_t)t1 - t0 == SECSPERREPEAT;
 }
@@ -483,23 +482,10 @@ register const int		doextend;
 		for (i = 0; i < sp->timecnt - 2; ++i)
 			if (sp->ats[i] > sp->ats[i + 1]) {
 				++i;
-				if (TYPE_SIGNED(time_t)) {
-					/*
-					** Ignore the end (easy).
-					*/
-					sp->timecnt = i;
-				} else {
-					/*
-					** Ignore the beginning (harder).
-					*/
-					register int	j;
-
-					for (j = 0; j + i < sp->timecnt; ++j) {
-						sp->ats[j] = sp->ats[j + i];
-						sp->types[j] = sp->types[j + i];
-					}
-					sp->timecnt = j;
-				}
+				/*
+				** Ignore the end (easy).
+				*/
+				sp->timecnt = i;
 				break;
 			}
 		/*
@@ -513,7 +499,7 @@ register const int		doextend;
 		/*
 		** If this is a narrow integer time_t system, we're done.
 		*/
-		if (stored >= (int) sizeof(time_t) && TYPE_INTEGRAL(time_t))
+		if (stored >= (int) sizeof(time_t))
 			break;
 	}
 	if (doextend && nread > 2 &&
@@ -1807,20 +1793,10 @@ const int		do_norm_secs;
 	/*
 	** Do a binary search (this works whatever time_t's type is).
 	*/
-	if (!TYPE_SIGNED(time_t)) {
-		lo = 0;
-		hi = lo - 1;
-	} else if (!TYPE_INTEGRAL(time_t)) {
-		if (sizeof(time_t) > sizeof(float))
-			hi = (time_t) DBL_MAX;
-		else	hi = (time_t) FLT_MAX;
-		lo = -hi;
-	} else {
-		lo = 1;
-		for (i = 0; i < (int) TYPE_BIT(time_t) - 1; ++i)
-			lo *= 2;
-		hi = -(lo + 1);
-	}
+	lo = 1;
+	for (i = 0; i < (int) TYPE_BIT(time_t) - 1; ++i)
+		lo *= 2;
+	hi = -(lo + 1);
 	for ( ; ; ) {
 		t = lo / 2 + hi / 2;
 		if (t < lo)

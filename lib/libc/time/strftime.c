@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.23 2015/02/09 13:32:51 tedu Exp $ */
+/*	$OpenBSD: strftime.c,v 1.24 2015/02/09 14:00:03 tedu Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -306,11 +306,8 @@ label:
 
 					tm = *t;
 					mkt = mktime(&tm);
-					if (TYPE_SIGNED(time_t))
-						(void) snprintf(buf, sizeof buf,
-						    "%ld", (long) mkt);
-					else	(void) snprintf(buf, sizeof buf,
-						    "%lu", (unsigned long) mkt);
+					(void) snprintf(buf, sizeof buf,
+					    "%ld", (long) mkt);
 					pt = _add(buf, pt, ptlim);
 				}
 				continue;
