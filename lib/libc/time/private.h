@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.31 2015/02/09 13:39:16 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.32 2015/02/09 13:42:03 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -14,8 +14,6 @@
 #define PCTS			1
 #define ALL_STATE		1
 #define STD_INSPIRED		1
-#define HAVE_STRERROR		1
-#define HAVE_STDINT_H		1
 
 /*
 ** This header is for use ONLY with the time conversion code.
@@ -26,20 +24,6 @@
 */
 
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
-
-#define HAVE_ADJTIME		1
-
-#define HAVE_SETTIMEOFDAY	3
-
-#define HAVE_SYMLINK		1
-
-#define HAVE_SYS_STAT_H		1
-
-#define HAVE_SYS_WAIT_H		1
-
-#define HAVE_UNISTD_H		1
-
-#define HAVE_UTMPX_H		0
 
 /*
 ** Nested includes
@@ -59,19 +43,6 @@
 #include <unistd.h>	/* for F_OK, R_OK, and other POSIX goodness */
 
 #include <stdint.h>
-
-#ifndef INT_FAST64_MAX
-/* Pre-C99 GCC compilers define __LONG_LONG_MAX__ instead of LLONG_MAX.  */
-#if defined LLONG_MAX || defined __LONG_LONG_MAX__
-typedef long long	int_fast64_t;
-#else /* ! (defined LLONG_MAX || defined __LONG_LONG_MAX__) */
-#if (LONG_MAX >> 31) < 0xffffffff
-Please use a compiler that supports a 64-bit integer type (or wider);
-you may need to compile with "-DHAVE_STDINT_H".
-#endif /* (LONG_MAX >> 31) < 0xffffffff */
-typedef long		int_fast64_t;
-#endif /* ! (defined LLONG_MAX || defined __LONG_LONG_MAX__) */
-#endif /* !defined INT_FAST64_MAX */
 
 /*
 ** Private function declarations.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.5 2015/02/09 13:39:16 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.6 2015/02/09 13:42:03 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -619,10 +619,8 @@ const char * const	tofield;
 			exit(EXIT_FAILURE);
 
 		result = link(fromname, toname);
-#if HAVE_SYMLINK
 		if (result != 0 && errno == EXDEV)
 			result = symlink(fromname, toname);
-#endif /* HAVE_SYMLINK */
 		if (result != 0) {
 			const char *e = strerror(errno);
 
