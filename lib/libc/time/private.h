@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.29 2015/02/09 13:03:59 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.30 2015/02/09 13:27:36 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -27,69 +27,33 @@
 
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
-/*
-** Defaults for preprocessor symbols.
-** You can override these in your C compiler options, e.g. `-DHAVE_ADJTIME=0'.
-*/
-
-#ifndef HAVE_ADJTIME
 #define HAVE_ADJTIME		1
-#endif /* !defined HAVE_ADJTIME */
 
-#ifndef HAVE_GETTEXT
 #define HAVE_GETTEXT		0
-#endif /* !defined HAVE_GETTEXT */
 
-#ifndef HAVE_INCOMPATIBLE_CTIME_R
-#define HAVE_INCOMPATIBLE_CTIME_R	0
-#endif /* !defined INCOMPATIBLE_CTIME_R */
-
-#ifndef HAVE_SETTIMEOFDAY
 #define HAVE_SETTIMEOFDAY	3
-#endif /* !defined HAVE_SETTIMEOFDAY */
 
-#ifndef HAVE_SYMLINK
 #define HAVE_SYMLINK		1
-#endif /* !defined HAVE_SYMLINK */
 
-#ifndef HAVE_SYS_STAT_H
 #define HAVE_SYS_STAT_H		1
-#endif /* !defined HAVE_SYS_STAT_H */
 
-#ifndef HAVE_SYS_WAIT_H
 #define HAVE_SYS_WAIT_H		1
-#endif /* !defined HAVE_SYS_WAIT_H */
 
-#ifndef HAVE_UNISTD_H
 #define HAVE_UNISTD_H		1
-#endif /* !defined HAVE_UNISTD_H */
 
-#ifndef HAVE_UTMPX_H
 #define HAVE_UTMPX_H		0
-#endif /* !defined HAVE_UTMPX_H */
-
-#if 0
-#ifndef LOCALE_HOME
-#define LOCALE_HOME		"/usr/share/locale"
-#endif /* !defined LOCALE_HOME */
-#endif
-
-#if HAVE_INCOMPATIBLE_CTIME_R
-#define asctime_r _incompatible_asctime_r
-#define ctime_r _incompatible_ctime_r
-#endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 /*
 ** Nested includes
 */
 
-#include "sys/types.h"	/* for time_t */
-#include "stdio.h"
-#include "errno.h"
-#include "string.h"
-#include "limits.h"	/* for CHAR_BIT et al. */
-#include "time.h"
-#include "stdlib.h"
+#include <sys/types.h>	/* for time_t */
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <limits.h>	/* for CHAR_BIT et al. */
+#include <time.h>
+#include <stdlib.h>
 
 #if HAVE_GETTEXT
 #include "libintl.h"
@@ -97,23 +61,9 @@
 
 #include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
 
-#ifndef WIFEXITED
-#define WIFEXITED(status)	(((status) & 0xff) == 0)
-#endif /* !defined WIFEXITED */
-#ifndef WEXITSTATUS
-#define WEXITSTATUS(status)	(((status) >> 8) & 0xff)
-#endif /* !defined WEXITSTATUS */
+#include <unistd.h>	/* for F_OK, R_OK, and other POSIX goodness */
 
-#include "unistd.h"	/* for F_OK, R_OK, and other POSIX goodness */
-
-#ifndef F_OK
-#define F_OK	0
-#endif /* !defined F_OK */
-#ifndef R_OK
-#define R_OK	4
-#endif /* !defined R_OK */
-
-#include "stdint.h"
+#include <stdint.h>
 
 #ifndef INT_FAST64_MAX
 /* Pre-C99 GCC compilers define __LONG_LONG_MAX__ instead of LLONG_MAX.  */
@@ -127,29 +77,6 @@ you may need to compile with "-DHAVE_STDINT_H".
 typedef long		int_fast64_t;
 #endif /* ! (defined LLONG_MAX || defined __LONG_LONG_MAX__) */
 #endif /* !defined INT_FAST64_MAX */
-
-#ifndef INT32_MAX
-#define INT32_MAX 0x7fffffff
-#endif /* !defined INT32_MAX */
-#ifndef INT32_MIN
-#define INT32_MIN (-1 - INT32_MAX)
-#endif /* !defined INT32_MIN */
-
-/*
-** Workarounds for compilers/systems.
-*/
-
-#if 0
-/*
-** Some time.h implementations don't declare asctime_r.
-** Others might define it as a macro.
-** Fix the former without affecting the latter.
-*/
-
-#ifndef asctime_r
-extern char *	asctime_r(struct tm const *, char *);
-#endif
-#endif
 
 /*
 ** Private function declarations.
@@ -239,13 +166,6 @@ const char *	scheck(const char * string, const char * format);
 #ifndef TZ_DOMAIN
 #define TZ_DOMAIN "tz"
 #endif /* !defined TZ_DOMAIN */
-
-#if HAVE_INCOMPATIBLE_CTIME_R
-#undef asctime_r
-#undef ctime_r
-char *asctime_r(struct tm const *, char *);
-char *ctime_r(time_t const *, char *);
-#endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 #ifndef YEARSPERREPEAT
 #define YEARSPERREPEAT		400	/* years before a Gregorian repeat */
