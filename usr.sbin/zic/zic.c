@@ -1,12 +1,15 @@
-/*	$OpenBSD: zic.c,v 1.1 2015/02/09 12:37:47 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.2 2015/02/09 12:45:33 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
 */
 
+#include <sys/stat.h>
+#include <ctype.h>
+#include <locale.h>
+#include <tzfile.h>
+
 #include "private.h"
-#include "locale.h"
-#include "tzfile.h"
 
 #define	ZIC_VERSION	'2'
 
@@ -16,18 +19,7 @@ typedef int_fast64_t	zic_t;
 #define ZIC_MAX_ABBR_LEN_WO_WARN	6
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
 
-#include <sys/stat.h>
 #define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
-
-/*
-** On some ancient hosts, predicates like `isspace(C)' are defined
-** only if isascii(C) || C == EOF. Modern hosts obey the C Standard,
-** which says they are defined only if C == ((unsigned char) C) || C == EOF.
-** Neither the C Standard nor Posix require that `isascii' exist.
-** For portability, we check both ancient and modern requirements.
-** If isascii is not defined, the isascii check succeeds trivially.
-*/
-#include "ctype.h"
 
 #define OFFSET_STRLEN_MAXIMUM	(7 + INT_STRLEN_MAXIMUM(long))
 #define RULE_STRLEN_MAXIMUM	8	/* "Mdd.dd.d" */

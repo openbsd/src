@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.1 2015/02/09 12:37:47 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.2 2015/02/09 12:45:33 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -10,14 +10,12 @@
 ** You can use this code to help in verifying other implementations.
 */
 
-#include "stdio.h"	/* for stdout, stderr, perror */
-#include "string.h"	/* for strlcpy */
-#include "ctype.h"	/* for isascii, isalpha, isdigit */
-#include "sys/types.h"	/* for time_t */
-#include "time.h"	/* for struct tm */
-#include "stdlib.h"	/* for exit, malloc, atoi */
-#include "float.h"	/* for FLT_MAX and DBL_MAX */
-#include "ctype.h"	/* for isalpha et al. */
+#include <ctype.h>	/* for isalpha et al. */
+#include <float.h>	/* for FLT_MAX and DBL_MAX */
+#include <stdio.h>	/* for stdout, stderr, perror */
+#include <string.h>	/* for strlcpy */
+#include <stdlib.h>	/* for exit, malloc, atoi */
+#include <time.h>	/* for struct tm */
 
 #ifndef ZDUMP_LO_YEAR
 #define ZDUMP_LO_YEAR	(-500)
