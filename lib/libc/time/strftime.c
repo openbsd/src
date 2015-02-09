@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.24 2015/02/09 14:00:03 tedu Exp $ */
+/*	$OpenBSD: strftime.c,v 1.25 2015/02/09 14:52:28 tedu Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -592,8 +592,8 @@ const int		convert_yy;
 char *			pt;
 const char * const	ptlim;
 {
-	register int	lead;
-	register int	trail;
+	int	lead;
+	int	trail;
 
 #define DIVISOR	100
 	trail = a % DIVISOR + b % DIVISOR;

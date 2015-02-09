@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsftime.c,v 1.5 2015/02/09 14:00:03 tedu Exp $ */
+/*	$OpenBSD: wcsftime.c,v 1.6 2015/02/09 14:52:28 tedu Exp $ */
 /*
 ** Based on the UCB version with the ID appearing below.
 ** This is ANSIish only when "multibyte character == plain character".
@@ -524,8 +524,8 @@ static wchar_t *
 _yconv(int a, int b, int convert_top, int convert_yy, wchar_t *pt, 
     const wchar_t *ptlim)
 {
-	register int	lead;
-	register int	trail;
+	int	lead;
+	int	trail;
 
 #define DIVISOR	100
 	trail = a % DIVISOR + b % DIVISOR;
