@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.43 2015/02/09 14:00:03 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.44 2015/02/09 14:46:40 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -168,17 +168,9 @@ static int		tzload(const char * name, struct state * sp,
 static int		tzparse(const char * name, struct state * sp,
 				int lastditch);
 
-#ifdef ALL_STATE
 static struct state *	lclptr;
 static struct state *	gmtptr;
-#endif /* defined ALL_STATE */
 
-#ifndef ALL_STATE
-static struct state	lclmem;
-static struct state	gmtmem;
-#define lclptr		(&lclmem)
-#define gmtptr		(&gmtmem)
-#endif /* State Farm */
 
 #ifndef TZ_STRLEN_MAX
 #define TZ_STRLEN_MAX 255
@@ -255,12 +247,10 @@ settzname(void)
 #ifdef ALTZONE
 	altzone = 0;
 #endif /* defined ALTZONE */
-#ifdef ALL_STATE
 	if (sp == NULL) {
 		tzname[0] = tzname[1] = (char *)gmt;
 		return;
 	}
-#endif /* defined ALL_STATE */
 	/*
 	** And to get the latest zone names into tzname. . .
 	*/
@@ -329,16 +319,11 @@ register const int		doextend;
 					2 * sizeof *sp +
 					4 * TZ_MAX_TIMES];
 	} u_t;
-#ifdef ALL_STATE
 	register u_t *			up;
 
 	up = (u_t *) calloc(1, sizeof *up);
 	if (up == NULL)
 		return -1;
-#else /* !defined ALL_STATE */
-	u_t				u;
-	register u_t * const		up = &u;
-#endif /* !defined ALL_STATE */
 
 	sp->goback = sp->goahead = FALSE;
 	if (name != NULL && issetugid() != 0)
@@ -553,14 +538,10 @@ register const int		doextend;
 					break;
 		}
 	}
-#ifdef ALL_STATE
 	(void) free((void *) up);
-#endif /* defined ALL_STATE */
 	return 0;
 oops:
-#ifdef ALL_STATE
 	(void) free((void *) up);
-#endif /* defined ALL_STATE */
 	return -1;
 }
 
@@ -1144,7 +1125,6 @@ tzsetwall_basic(void)
 		return;
 	lcl_is_set = -1;
 
-#ifdef ALL_STATE
 	if (lclptr == NULL) {
 		lclptr = (struct state *) calloc(1, sizeof *lclptr);
 		if (lclptr == NULL) {
@@ -1152,7 +1132,6 @@ tzsetwall_basic(void)
 			return;
 		}
 	}
-#endif /* defined ALL_STATE */
 	if (tzload((char *) NULL, lclptr, TRUE) != 0)
 		gmtload(lclptr);
 	settzname();
@@ -1191,7 +1170,6 @@ tzset_basic(void)
 	if (lcl_is_set)
 		(void) strlcpy(lcl_TZname, name, sizeof lcl_TZname);
 
-#ifdef ALL_STATE
 	if (lclptr == NULL) {
 		lclptr = (struct state *) calloc(1, sizeof *lclptr);
 		if (lclptr == NULL) {
@@ -1199,7 +1177,6 @@ tzset_basic(void)
 			return;
 		}
 	}
-#endif /* defined ALL_STATE */
 	if (*name == '\0') {
 		/*
 		** User wants it fast rather than right.
@@ -1248,10 +1225,8 @@ struct tm * const	tmp;
 	const time_t			t = *timep;
 
 	sp = lclptr;
-#ifdef ALL_STATE
 	if (sp == NULL)
 		return gmtsub(timep, offset, tmp);
-#endif /* defined ALL_STATE */
 	if ((sp->goback && t < sp->ats[0]) ||
 		(sp->goahead && t > sp->ats[sp->timecnt - 1])) {
 			time_t			newt = t;
@@ -1370,10 +1345,8 @@ struct tm * const	tmp;
 	_THREAD_PRIVATE_MUTEX_LOCK(gmt);
 	if (!gmt_is_set) {
 		gmt_is_set = TRUE;
-#ifdef ALL_STATE
 		gmtptr = (struct state *) calloc(1, sizeof *gmtptr);
 		if (gmtptr != NULL)
-#endif /* defined ALL_STATE */
 			gmtload(gmtptr);
 	}
 	_THREAD_PRIVATE_MUTEX_UNLOCK(gmt);
@@ -1387,14 +1360,9 @@ struct tm * const	tmp;
 	if (offset != 0)
 		tmp->TM_ZONE = wildabbr;
 	else {
-#ifdef ALL_STATE
 		if (gmtptr == NULL)
 			tmp->TM_ZONE = (char *)gmt;
 		else	tmp->TM_ZONE = gmtptr->chars;
-#endif /* defined ALL_STATE */
-#ifndef ALL_STATE
-		tmp->TM_ZONE = gmtptr->chars;
-#endif /* State Farm */
 	}
 #endif /* defined TM_ZONE */
 	return result;
@@ -1470,12 +1438,7 @@ register struct tm * const		tmp;
 
 	corr = 0;
 	hit = 0;
-#ifdef ALL_STATE
 	i = (sp == NULL) ? 0 : sp->leapcnt;
-#endif /* defined ALL_STATE */
-#ifndef ALL_STATE
-	i = sp->leapcnt;
-#endif /* State Farm */
 	while (--i >= 0) {
 		lp = &sp->lsis[i];
 		if (*timep >= lp->ls_trans) {
@@ -1840,10 +1803,8 @@ const int		do_norm_secs;
 		*/
 		sp = (const struct state *)
 			((funcp == localsub) ? lclptr : gmtptr);
-#ifdef ALL_STATE
 		if (sp == NULL)
 			return WRONG;
-#endif /* defined ALL_STATE */
 		for (i = sp->typecnt - 1; i >= 0; --i) {
 			if (sp->ttis[i].tt_isdst != yourtm.tm_isdst)
 				continue;
@@ -1938,10 +1899,8 @@ const long		offset;
 	** type they need.
 	*/
 	sp = (const struct state *) ((funcp == localsub) ?  lclptr : gmtptr);
-#ifdef ALL_STATE
 	if (sp == NULL)
 		return WRONG;
-#endif /* defined ALL_STATE */
 	for (i = 0; i < sp->typecnt; ++i)
 		seen[i] = FALSE;
 	nseen = 0;
