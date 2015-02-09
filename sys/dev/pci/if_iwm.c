@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.7 2015/02/08 23:30:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.8 2015/02/09 00:26:27 phessler Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6521,6 +6521,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set device capabilities. */
 	ic->ic_caps =
+	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN |		/* WPA/RSN */
 	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
