@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.7 2015/02/09 13:46:22 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.8 2015/02/09 14:15:38 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -485,7 +485,7 @@ char *	argv[];
 					directory = optarg;
 				else {
 					(void) fprintf(stderr,
-_("%s: More than one -d option specified\n"),
+						_("%s: More than one -d option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
 				}
@@ -495,7 +495,7 @@ _("%s: More than one -d option specified\n"),
 					lcltime = optarg;
 				else {
 					(void) fprintf(stderr,
-_("%s: More than one -l option specified\n"),
+						_("%s: More than one -l option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
 				}
@@ -505,7 +505,7 @@ _("%s: More than one -l option specified\n"),
 					psxrules = optarg;
 				else {
 					(void) fprintf(stderr,
-_("%s: More than one -p option specified\n"),
+						_("%s: More than one -p option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
 				}
@@ -515,7 +515,7 @@ _("%s: More than one -p option specified\n"),
 					yitcommand = optarg;
 				else {
 					(void) fprintf(stderr,
-_("%s: More than one -y option specified\n"),
+						_("%s: More than one -y option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
 				}
@@ -525,7 +525,7 @@ _("%s: More than one -y option specified\n"),
 					leapsec = optarg;
 				else {
 					(void) fprintf(stderr,
-_("%s: More than one -L option specified\n"),
+						_("%s: More than one -L option specified\n"),
 						progname);
 					exit(EXIT_FAILURE);
 				}
@@ -820,14 +820,14 @@ const char *	name;
 				case LC_LEAP:
 					if (name != leapsec)
 						(void) fprintf(stderr,
-_("%s: Leap line in non leap seconds file %s\n"),
+							_("%s: Leap line in non leap seconds file %s\n"),
 							progname, name);
 					else	inleap(fields, nfields);
 					wantcont = FALSE;
 					break;
 				default:	/* "cannot happen" */
 					(void) fprintf(stderr,
-_("%s: panic: Invalid l_value %d\n"),
+						_("%s: panic: Invalid l_value %d\n"),
 						progname, lp->l_value);
 					exit(EXIT_FAILURE);
 			}
@@ -894,11 +894,6 @@ const int		signable;
 		error(_("time overflow"));
 		return 0;
 	}
-	if (noise && hh == HOURSPERDAY && mm == 0 && ss == 0)
-		warning(_("24:00 not handled by pre-1998 versions of zic"));
-	if (noise && (hh > HOURSPERDAY ||
-		(hh == HOURSPERDAY && (mm != 0 || ss != 0))))
-warning(_("values over 24 hours not handled by pre-2007 versions of zic"));
 	return oadd(eitol(sign) * hh * eitol(SECSPERHOUR),
 		    eitol(sign) * (eitol(mm) * eitol(SECSPERMIN) + eitol(ss)));
 }
@@ -948,8 +943,7 @@ const int		nfields;
 	if (strcmp(fields[ZF_NAME], TZDEFAULT) == 0 && lcltime != NULL) {
 		len = 132 + strlen(TZDEFAULT);
 		buf = erealloc(buf, len);
-		(void) snprintf(buf, len,
-_("\"Zone %s\" line and -l option are mutually exclusive"),
+		(void) snprintf(buf, len, _("\"Zone %s\" line and -l option are mutually exclusive"),
 			TZDEFAULT);
 		error(buf);
 		return FALSE;
@@ -957,8 +951,7 @@ _("\"Zone %s\" line and -l option are mutually exclusive"),
 	if (strcmp(fields[ZF_NAME], TZDEFRULES) == 0 && psxrules != NULL) {
 		len = 132 + strlen(TZDEFRULES);
 		buf = erealloc(buf, len);
-		(void) snprintf(buf, len,
-_("\"Zone %s\" line and -p option are mutually exclusive"),
+		(void) snprintf(buf, len, _("\"Zone %s\" line and -p option are mutually exclusive"),
 			TZDEFRULES);
 		error(buf);
 		return FALSE;
@@ -970,7 +963,7 @@ _("\"Zone %s\" line and -p option are mutually exclusive"),
 					strlen(zones[i].z_filename);
 				buf = erealloc(buf, len);
 				(void) snprintf(buf, len,
-_("duplicate zone name %s (file \"%s\", line %d)"),
+					_("duplicate zone name %s (file \"%s\", line %d)"),
 					fields[ZF_NAME],
 					zones[i].z_filename,
 					zones[i].z_linenum);
@@ -1057,9 +1050,7 @@ const int		iscont;
 			zones[nzones - 1].z_untiltime > min_time &&
 			zones[nzones - 1].z_untiltime < max_time &&
 			zones[nzones - 1].z_untiltime >= z.z_untiltime) {
-				error(_(
-"Zone continuation line end time is not after end time of previous line"
-					));
+				error(_( "Zone continuation line end time is not after end time of previous line"));
 				return FALSE;
 		}
 	}
@@ -1168,9 +1159,7 @@ const int		nfields;
 			return;
 		}
 		if ((lp = byword(fields[LP_ROLL], leap_types)) == NULL) {
-			error(_(
-				"illegal Rolling/Stationary field on Leap line"
-				));
+			error(_( "illegal Rolling/Stationary field on Leap line"));
 			return;
 		}
 		leapadd(tadd(t, tod), positive, lp->l_value, count);
@@ -2039,7 +2028,7 @@ const int			zonecount;
 	if (noise && envvar[0] == '\0') {
 		char *	wp;
 
-wp = ecpyalloc(_("no POSIX environment variable for zone"));
+		wp = ecpyalloc(_("no POSIX environment variable for zone"));
 		wp = ecatalloc(wp, " ");
 		wp = ecatalloc(wp, zpfirst->z_name);
 		warning(wp);
@@ -2211,7 +2200,7 @@ wp = ecpyalloc(_("no POSIX environment variable for zone"));
 					    	       max_abbr_len + 1);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
-error(_("can't determine time zone abbreviation to use just after until time"));
+				error(_("can't determine time zone abbreviation to use just after until time"));
 			else	addtt(starttime,
 					addtype(startoff, startbuf,
 						startoff != zp->z_gmtoff,
@@ -2497,9 +2486,7 @@ char *	cp;
 				if (*dp != '\0')
 					++dp;
 				else {
-					error(_(
-						"Odd number of quotation marks"
-						));
+					error(_( "Odd number of quotation marks"));
 					exit(1);
 				}
 		} while (*cp != '\0' && *cp != '#' &&
@@ -2620,11 +2607,6 @@ const int			wantedy;
 					wday = LDAYSPERWEEK - 1;
 				--i;
 			}
-		if (i < 0 || i >= len_months[isleap(y)][m]) {
-			if (noise)
-				warning(_("rule goes past start/end of month--\
-will not work with pre-2004 versions of zic"));
-		}
 	}
 	if (dayoff < min_time / SECSPERDAY)
 		return min_time;
@@ -2668,7 +2650,7 @@ wp = _("time zone abbreviation has too many alphabetics");
 							++cp;
 		}
 		if (*cp != '\0')
-wp = _("time zone abbreviation differs from POSIX standard");
+			wp = _("time zone abbreviation differs from POSIX standard");
 		if (wp != NULL) {
 			wp = ecpyalloc(wp);
 			wp = ecatalloc(wp, " (");
@@ -2711,7 +2693,7 @@ char *		argname;
 
 				if (errno != EEXIST || !itsdir(name)) {
 					(void) fprintf(stderr,
-_("%s: Can't create directory %s: %s\n"),
+						_("%s: Can't create directory %s: %s\n"),
 						progname, name, e);
 					free(name);
 					return -1;
