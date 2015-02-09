@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.33 2014/12/17 15:23:42 deraadt Exp $ */
+/* $OpenBSD: pmap.h,v 1.34 2015/02/09 22:35:06 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -145,7 +145,6 @@ typedef struct pv_entry {
 
 #define	PGU_ISPTPAGE(pgu)	((pgu) >= PGU_L1PT)
 
-#ifndef _LKM
 #if defined(NEW_SCC_DRIVER)
 #if defined(DEC_KN8AE)
 #define	_PMAP_MAY_USE_PROM_CONSOLE
@@ -172,7 +171,6 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
 #define	PMAP_TLB_SHOOTNOW()			/* nothing */
 #endif /* MULTIPROCESSOR */
-#endif /* _LKM */
  
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
