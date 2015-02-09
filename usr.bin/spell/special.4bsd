@@ -849,8 +849,7 @@ pd
 pdiff
 pdx
 perl
-perl5.6.0
-perl5.6.1
+perl5.20.1
 perlbug
 perlcc
 perldoc
