@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_test.c,v 1.4 2013/08/09 21:07:22 bluhm Exp $ */
+/*	$OpenBSD: pf_print_test.c,v 1.5 2015/02/09 12:01:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008, 2013 Alexander Bluhm <bluhm@openbsd.org>
@@ -21,10 +21,11 @@
 #include <sys/wait.h>
 
 #include <net/if.h>
-#include <net/pfvar.h>
 #include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <net/pfvar.h>
 
 #include <err.h>
 #include <stdio.h>
