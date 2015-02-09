@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.151 2015/02/09 13:41:24 pelikan Exp $
+;	$OpenBSD: syscalls.master,v 1.152 2015/02/09 13:54:23 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -529,7 +529,7 @@
 308	OBSOL		fstatfs53
 309	OBSOL		fhstatfs53
 310	STD		{ int sys_setrtable(int rtableid); }
-311	STD		{ int sys_getrtable(void); }
+311	STD NOLOCK	{ int sys_getrtable(void); }
 312	OBSOL		t32_getdirentries
 313	STD		{ int sys_faccessat(int fd, const char *path, \
 			    int amode, int flag); }
