@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.24 2015/01/16 06:40:20 deraadt Exp $ */
+/*	$OpenBSD: ripd.c,v 1.25 2015/02/09 12:13:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -207,19 +207,15 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_parent2ripe) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_parent2ripe) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2rde) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_parent2rde) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_ripe2rde) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_ripe2rde) == -1)
 		fatal("socketpair");
-	session_socket_blockmode(pipe_parent2ripe[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2ripe[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2rde[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2rde[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_ripe2rde[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_ripe2rde[1], BM_NONBLOCK);
 
 	/* start children */
 	rde_pid = rde(conf, pipe_parent2rde, pipe_ripe2rde, pipe_parent2ripe);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.11 2011/07/04 04:34:14 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.12 2015/02/09 12:13:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -405,7 +405,8 @@ if_new(struct kif *kif)
 
 	/* set up ifreq */
 	strlcpy(ifr->ifr_name, kif->ifname, sizeof(ifr->ifr_name));
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    0)) < 0)
 		err(1, "if_new: socket");
 
 	/* get type */
