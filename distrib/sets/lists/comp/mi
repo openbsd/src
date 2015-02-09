@@ -5593,6 +5593,7 @@
 ./usr/share/man/man3/timezone.3
 ./usr/share/man/man3/timingsafe_bcmp.3
 ./usr/share/man/man3/timingsafe_memcmp.3
+./usr/share/man/man3/tls_accept_socket.3
 ./usr/share/man/man3/tls_client.3
 ./usr/share/man/man3/tls_close.3
 ./usr/share/man/man3/tls_config_clear_keys.3
@@ -5619,6 +5620,7 @@
 ./usr/share/man/man3/tls_error.3
 ./usr/share/man/man3/tls_free.3
 ./usr/share/man/man3/tls_init.3
+./usr/share/man/man3/tls_load_file.3
 ./usr/share/man/man3/tls_read.3
 ./usr/share/man/man3/tls_reset.3
 ./usr/share/man/man3/tls_server.3
@@ -6429,6 +6431,7 @@
 ./usr/share/man/man9/ml_dequeue.9
 ./usr/share/man/man9/ml_empty.9
 ./usr/share/man/man9/ml_enqueue.9
+./usr/share/man/man9/ml_filter.9
 ./usr/share/man/man9/ml_init.9
 ./usr/share/man/man9/ml_len.9
 ./usr/share/man/man9/mono_time.9
@@ -6441,6 +6444,7 @@
 ./usr/share/man/man9/mq_empty.9
 ./usr/share/man/man9/mq_enlist.9
 ./usr/share/man/man9/mq_enqueue.9
+./usr/share/man/man9/mq_filter.9
 ./usr/share/man/man9/mq_init.9
 ./usr/share/man/man9/mq_len.9
 ./usr/share/man/man9/mq_set_maxlen.9
