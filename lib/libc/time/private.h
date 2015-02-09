@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.26 2014/05/06 15:49:45 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.27 2015/02/09 08:25:11 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -95,9 +95,7 @@
 #include "libintl.h"
 #endif /* HAVE_GETTEXT */
 
-#if HAVE_SYS_WAIT_H
 #include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
-#endif /* HAVE_SYS_WAIT_H */
 
 #ifndef WIFEXITED
 #define WIFEXITED(status)	(((status) & 0xff) == 0)
@@ -106,9 +104,7 @@
 #define WEXITSTATUS(status)	(((status) >> 8) & 0xff)
 #endif /* !defined WEXITSTATUS */
 
-#if HAVE_UNISTD_H
 #include "unistd.h"	/* for F_OK, R_OK, and other POSIX goodness */
-#endif /* HAVE_UNISTD_H */
 
 #ifndef F_OK
 #define F_OK	0
@@ -120,9 +116,7 @@
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
-#if HAVE_STDINT_H
 #include "stdint.h"
-#endif /* !HAVE_STDINT_H */
 
 #ifndef INT_FAST64_MAX
 /* Pre-C99 GCC compilers define __LONG_LONG_MAX__ instead of LLONG_MAX.  */

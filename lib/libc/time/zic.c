@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.35 2013/11/24 23:51:29 deraadt Exp $	*/
+/*	$OpenBSD: zic.c,v 1.36 2015/02/09 08:25:11 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -16,14 +16,8 @@ typedef int_fast64_t	zic_t;
 #define ZIC_MAX_ABBR_LEN_WO_WARN	6
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
 
-#if HAVE_SYS_STAT_H
-#include "sys/stat.h"
-#endif
-#ifdef S_IRUSR
+#include <sys/stat.h>
 #define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
-#else
-#define MKDIR_UMASK 0755
-#endif
 
 /*
 ** On some ancient hosts, predicates like `isspace(C)' are defined
@@ -34,9 +28,6 @@ typedef int_fast64_t	zic_t;
 ** If isascii is not defined, the isascii check succeeds trivially.
 */
 #include "ctype.h"
-#ifndef isascii
-#define isascii(x) 1
-#endif
 
 #define OFFSET_STRLEN_MAXIMUM	(7 + INT_STRLEN_MAXIMUM(long))
 #define RULE_STRLEN_MAXIMUM	8	/* "Mdd.dd.d" */
@@ -475,9 +466,7 @@ char *	argv[];
 	register int	j;
 	register int	c;
 
-#ifdef unix
 	(void) umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
-#endif /* defined unix */
 #if HAVE_GETTEXT
 	(void) setlocale(LC_ALL, "");
 #ifdef TZ_DOMAINDIR
@@ -2716,16 +2705,6 @@ char *		argname;
 	cp = name = ecpyalloc(argname);
 	while ((cp = strchr(cp + 1, '/')) != 0) {
 		*cp = '\0';
-#ifndef unix
-		/*
-		** DOS drive specifier?
-		*/
-		if (isalpha((unsigned char) name[0]) &&
-			name[1] == ':' && name[2] == '\0') {
-				*cp = '/';
-				continue;
-		}
-#endif /* !defined unix */
 		if (!itsdir(name)) {
 			/*
 			** It doesn't seem to exist, so we try to create it.

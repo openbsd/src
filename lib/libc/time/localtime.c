@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.38 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.39 2015/02/09 08:25:11 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -29,17 +29,6 @@
 #ifndef TZ_ABBR_ERR_CHAR
 #define TZ_ABBR_ERR_CHAR	'_'
 #endif /* !defined TZ_ABBR_ERR_CHAR */
-
-/*
-** SunOS 4.1.1 headers lack O_BINARY.
-*/
-
-#ifdef O_BINARY
-#define OPEN_MODE	(O_RDONLY | O_BINARY)
-#endif /* defined O_BINARY */
-#ifndef O_BINARY
-#define OPEN_MODE	O_RDONLY
-#endif /* !defined O_BINARY */
 
 #ifndef WILDABBR
 /*
@@ -390,7 +379,7 @@ register const int		doextend;
 		}
 		if (doaccess && access(name, R_OK) != 0)
 			goto oops;
-		if ((fid = open(name, OPEN_MODE)) == -1)
+		if ((fid = open(name, O_RDONLY)) == -1)
 			goto oops;
 	}
 	nread = read(fid, up->buf, sizeof up->buf);

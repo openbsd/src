@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.22 2010/08/23 22:35:34 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.23 2015/02/09 08:25:11 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -41,14 +41,6 @@
 #ifndef FALSE
 #define FALSE		0
 #endif /* !defined FALSE */
-
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS	0
-#endif /* !defined EXIT_SUCCESS */
-
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE	1
-#endif /* !defined EXIT_FAILURE */
 
 #ifndef SECSPERMIN
 #define SECSPERMIN	60
