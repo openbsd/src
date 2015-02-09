@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.137 2015/02/09 09:50:00 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.138 2015/02/09 12:04:27 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1405,9 +1405,9 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #endif
 	int error, s;
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
+	/* Almost all sysctl names at this level are terminal. */
+	if (namelen != 1 && name[0] != IPV6CTL_IFQUEUE)
+		return (ENOTDIR);
 
 	switch (name[0]) {
 	case IPV6CTL_V6ONLY:
@@ -1444,6 +1444,9 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			splx(s);
 		}
 		return (error);
+	case IPV6CTL_IFQUEUE:
+		return (sysctl_ifq(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, &ip6intrq));
 	default:
 		if (name[0] < IPV6CTL_MAXID)
 			return (sysctl_int_arr(ipv6ctl_vars, name, namelen,
