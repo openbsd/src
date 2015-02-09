@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.136 2015/02/05 01:10:57 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.137 2015/02/09 09:50:00 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -333,18 +333,6 @@ ip6_input(struct mbuf *m)
 			dst_scope = ip6->ip6_dst.s6_addr16[1];
 			ip6->ip6_dst.s6_addr16[1] = 0;
 		}
-	}
-
-	/*
-	 * If the packet has been received on a loopback interface it
-	 * can be destinated to any local address, not necessarily to
-	 * an address configured on `ifp'.
-	 */
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = htons(ifp->if_index);
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = htons(ifp->if_index);
 	}
 
 #if NPF > 0
