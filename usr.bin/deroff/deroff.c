@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.10 2015/02/09 11:35:41 tedu Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.11 2015/02/09 11:39:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -431,7 +431,7 @@ getfname(void)
 			return;
 		}
 
-	q = (struct chain *) malloc(sizeof(struct chain));
+	q = malloc(sizeof(struct chain));
 	if (q == NULL)
 		err(1, NULL);
 	q->nextp = namechain;
@@ -1586,7 +1586,7 @@ buildtab(struct mactab **r_back, int *r_size)
 	}
 	size += sizetab(p1);
 	size += sizetab(p2);
-	back = (struct mactab *)calloc(size+2, sizeof(struct mactab));
+	back = calloc(size+2, sizeof(struct mactab));
 	if (back == NULL)
 		err(1, NULL);
 
