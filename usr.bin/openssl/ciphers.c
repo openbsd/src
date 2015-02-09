@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.2 2015/02/09 01:15:28 jsing Exp $ */
+/* $OpenBSD: ciphers.c,v 1.3 2015/02/09 05:22:56 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -68,7 +68,7 @@ struct option ciphers_options[] = {
 		.opt.value = &ciphers_config.verbose,
 		.value = 2,
 	},
-	{},
+	{ NULL },
 };
 
 static void
@@ -90,6 +90,8 @@ ciphers_main(int argc, char **argv)
 	uint16_t value;
 	int i, rv = 0;
 	char *desc;
+
+	memset(&ciphers_config, 0, sizeof(ciphers_config));
 
 	if (options_parse(argc, argv, ciphers_options, &cipherlist,
 	    NULL) != 0) {
