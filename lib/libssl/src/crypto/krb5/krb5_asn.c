@@ -1,4 +1,4 @@
-/* $OpenBSD: krb5_asn.c,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: krb5_asn.c,v 1.3 2015/02/09 16:04:46 jsing Exp $ */
 /* Written by Vern Staats <staatsvr@asc.hpc.mil> for the OpenSSL project,
 ** using ocsp/{*.h,*asn*.c} as a starting point
 */
@@ -66,7 +66,31 @@ ASN1_SEQUENCE(KRB5_ENCDATA) = {
 	ASN1_EXP(KRB5_ENCDATA, cipher,		ASN1_OCTET_STRING,2)
 } ASN1_SEQUENCE_END(KRB5_ENCDATA)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_ENCDATA)
+
+KRB5_ENCDATA *
+d2i_KRB5_ENCDATA(KRB5_ENCDATA **a, const unsigned char **in, long len)
+{
+	return (KRB5_ENCDATA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_ENCDATA_it);
+}
+
+int
+i2d_KRB5_ENCDATA(KRB5_ENCDATA *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_ENCDATA_it);
+}
+
+KRB5_ENCDATA *
+KRB5_ENCDATA_new(void)
+{
+	return (KRB5_ENCDATA *)ASN1_item_new(&KRB5_ENCDATA_it);
+}
+
+void
+KRB5_ENCDATA_free(KRB5_ENCDATA *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_ENCDATA_it);
+}
 
 
 ASN1_SEQUENCE(KRB5_PRINCNAME) = {
@@ -74,7 +98,31 @@ ASN1_SEQUENCE(KRB5_PRINCNAME) = {
 	ASN1_EXP_SEQUENCE_OF(KRB5_PRINCNAME, namestring, ASN1_GENERALSTRING, 1)
 } ASN1_SEQUENCE_END(KRB5_PRINCNAME)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_PRINCNAME)
+
+KRB5_PRINCNAME *
+d2i_KRB5_PRINCNAME(KRB5_PRINCNAME **a, const unsigned char **in, long len)
+{
+	return (KRB5_PRINCNAME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_PRINCNAME_it);
+}
+
+int
+i2d_KRB5_PRINCNAME(KRB5_PRINCNAME *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_PRINCNAME_it);
+}
+
+KRB5_PRINCNAME *
+KRB5_PRINCNAME_new(void)
+{
+	return (KRB5_PRINCNAME *)ASN1_item_new(&KRB5_PRINCNAME_it);
+}
+
+void
+KRB5_PRINCNAME_free(KRB5_PRINCNAME *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_PRINCNAME_it);
+}
 
 
 /* [APPLICATION 1] = 0x61 */
@@ -85,7 +133,31 @@ ASN1_SEQUENCE(KRB5_TKTBODY) = {
 	ASN1_EXP(KRB5_TKTBODY, encdata,		KRB5_ENCDATA,	  3)
 } ASN1_SEQUENCE_END(KRB5_TKTBODY)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_TKTBODY)
+
+KRB5_TKTBODY *
+d2i_KRB5_TKTBODY(KRB5_TKTBODY **a, const unsigned char **in, long len)
+{
+	return (KRB5_TKTBODY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_TKTBODY_it);
+}
+
+int
+i2d_KRB5_TKTBODY(KRB5_TKTBODY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_TKTBODY_it);
+}
+
+KRB5_TKTBODY *
+KRB5_TKTBODY_new(void)
+{
+	return (KRB5_TKTBODY *)ASN1_item_new(&KRB5_TKTBODY_it);
+}
+
+void
+KRB5_TKTBODY_free(KRB5_TKTBODY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_TKTBODY_it);
+}
 
 
 ASN1_ITEM_TEMPLATE(KRB5_TICKET) = 
@@ -93,7 +165,31 @@ ASN1_ITEM_TEMPLATE(KRB5_TICKET) =
 			KRB5_TICKET, KRB5_TKTBODY)
 ASN1_ITEM_TEMPLATE_END(KRB5_TICKET)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_TICKET)
+
+KRB5_TICKET *
+d2i_KRB5_TICKET(KRB5_TICKET **a, const unsigned char **in, long len)
+{
+	return (KRB5_TICKET *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_TICKET_it);
+}
+
+int
+i2d_KRB5_TICKET(KRB5_TICKET *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_TICKET_it);
+}
+
+KRB5_TICKET *
+KRB5_TICKET_new(void)
+{
+	return (KRB5_TICKET *)ASN1_item_new(&KRB5_TICKET_it);
+}
+
+void
+KRB5_TICKET_free(KRB5_TICKET *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_TICKET_it);
+}
 
 
 /* [APPLICATION 14] = 0x6e */
@@ -105,14 +201,62 @@ ASN1_SEQUENCE(KRB5_APREQBODY) = {
 	ASN1_EXP(KRB5_APREQBODY, authenticator,	KRB5_ENCDATA,	  4),
 } ASN1_SEQUENCE_END(KRB5_APREQBODY)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_APREQBODY)
+
+KRB5_APREQBODY *
+d2i_KRB5_APREQBODY(KRB5_APREQBODY **a, const unsigned char **in, long len)
+{
+	return (KRB5_APREQBODY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_APREQBODY_it);
+}
+
+int
+i2d_KRB5_APREQBODY(KRB5_APREQBODY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_APREQBODY_it);
+}
+
+KRB5_APREQBODY *
+KRB5_APREQBODY_new(void)
+{
+	return (KRB5_APREQBODY *)ASN1_item_new(&KRB5_APREQBODY_it);
+}
+
+void
+KRB5_APREQBODY_free(KRB5_APREQBODY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_APREQBODY_it);
+}
 
 ASN1_ITEM_TEMPLATE(KRB5_APREQ) = 
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_EXPTAG|ASN1_TFLG_APPLICATION, 14,
 			KRB5_APREQ, KRB5_APREQBODY)
 ASN1_ITEM_TEMPLATE_END(KRB5_APREQ)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_APREQ)
+
+KRB5_APREQ *
+d2i_KRB5_APREQ(KRB5_APREQ **a, const unsigned char **in, long len)
+{
+	return (KRB5_APREQ *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_APREQ_it);
+}
+
+int
+i2d_KRB5_APREQ(KRB5_APREQ *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_APREQ_it);
+}
+
+KRB5_APREQ *
+KRB5_APREQ_new(void)
+{
+	return (KRB5_APREQ *)ASN1_item_new(&KRB5_APREQ_it);
+}
+
+void
+KRB5_APREQ_free(KRB5_APREQ *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_APREQ_it);
+}
 
 
 /*  Authenticator stuff 	*/
@@ -122,7 +266,31 @@ ASN1_SEQUENCE(KRB5_CHECKSUM) = {
 	ASN1_EXP(KRB5_CHECKSUM, checksum,	ASN1_OCTET_STRING,1)
 } ASN1_SEQUENCE_END(KRB5_CHECKSUM)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_CHECKSUM)
+
+KRB5_CHECKSUM *
+d2i_KRB5_CHECKSUM(KRB5_CHECKSUM **a, const unsigned char **in, long len)
+{
+	return (KRB5_CHECKSUM *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_CHECKSUM_it);
+}
+
+int
+i2d_KRB5_CHECKSUM(KRB5_CHECKSUM *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_CHECKSUM_it);
+}
+
+KRB5_CHECKSUM *
+KRB5_CHECKSUM_new(void)
+{
+	return (KRB5_CHECKSUM *)ASN1_item_new(&KRB5_CHECKSUM_it);
+}
+
+void
+KRB5_CHECKSUM_free(KRB5_CHECKSUM *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_CHECKSUM_it);
+}
 
 
 ASN1_SEQUENCE(KRB5_ENCKEY) = {
@@ -130,7 +298,31 @@ ASN1_SEQUENCE(KRB5_ENCKEY) = {
 	ASN1_EXP(KRB5_ENCKEY,	keyvalue,	ASN1_OCTET_STRING,1)
 } ASN1_SEQUENCE_END(KRB5_ENCKEY)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_ENCKEY)
+
+KRB5_ENCKEY *
+d2i_KRB5_ENCKEY(KRB5_ENCKEY **a, const unsigned char **in, long len)
+{
+	return (KRB5_ENCKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_ENCKEY_it);
+}
+
+int
+i2d_KRB5_ENCKEY(KRB5_ENCKEY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_ENCKEY_it);
+}
+
+KRB5_ENCKEY *
+KRB5_ENCKEY_new(void)
+{
+	return (KRB5_ENCKEY *)ASN1_item_new(&KRB5_ENCKEY_it);
+}
+
+void
+KRB5_ENCKEY_free(KRB5_ENCKEY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_ENCKEY_it);
+}
 
 
 /* SEQ OF SEQ; see ASN1_EXP_SEQUENCE_OF_OPT() below */
@@ -139,7 +331,31 @@ ASN1_SEQUENCE(KRB5_AUTHDATA) = {
 	ASN1_EXP(KRB5_AUTHDATA,	addata, 	ASN1_OCTET_STRING,1)
 } ASN1_SEQUENCE_END(KRB5_AUTHDATA)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_AUTHDATA)
+
+KRB5_AUTHDATA *
+d2i_KRB5_AUTHDATA(KRB5_AUTHDATA **a, const unsigned char **in, long len)
+{
+	return (KRB5_AUTHDATA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_AUTHDATA_it);
+}
+
+int
+i2d_KRB5_AUTHDATA(KRB5_AUTHDATA *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_AUTHDATA_it);
+}
+
+KRB5_AUTHDATA *
+KRB5_AUTHDATA_new(void)
+{
+	return (KRB5_AUTHDATA *)ASN1_item_new(&KRB5_AUTHDATA_it);
+}
+
+void
+KRB5_AUTHDATA_free(KRB5_AUTHDATA *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_AUTHDATA_it);
+}
 
 
 /* [APPLICATION 2] = 0x62 */
@@ -156,12 +372,60 @@ ASN1_SEQUENCE(KRB5_AUTHENTBODY) = {
 		    (KRB5_AUTHENTBODY,	authorization,	KRB5_AUTHDATA, 8),
 } ASN1_SEQUENCE_END(KRB5_AUTHENTBODY)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_AUTHENTBODY)
+
+KRB5_AUTHENTBODY *
+d2i_KRB5_AUTHENTBODY(KRB5_AUTHENTBODY **a, const unsigned char **in, long len)
+{
+	return (KRB5_AUTHENTBODY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_AUTHENTBODY_it);
+}
+
+int
+i2d_KRB5_AUTHENTBODY(KRB5_AUTHENTBODY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_AUTHENTBODY_it);
+}
+
+KRB5_AUTHENTBODY *
+KRB5_AUTHENTBODY_new(void)
+{
+	return (KRB5_AUTHENTBODY *)ASN1_item_new(&KRB5_AUTHENTBODY_it);
+}
+
+void
+KRB5_AUTHENTBODY_free(KRB5_AUTHENTBODY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_AUTHENTBODY_it);
+}
 
 ASN1_ITEM_TEMPLATE(KRB5_AUTHENT) = 
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_EXPTAG|ASN1_TFLG_APPLICATION, 2,
 			KRB5_AUTHENT, KRB5_AUTHENTBODY)
 ASN1_ITEM_TEMPLATE_END(KRB5_AUTHENT)
 
-IMPLEMENT_ASN1_FUNCTIONS(KRB5_AUTHENT)
+
+KRB5_AUTHENT *
+d2i_KRB5_AUTHENT(KRB5_AUTHENT **a, const unsigned char **in, long len)
+{
+	return (KRB5_AUTHENT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &KRB5_AUTHENT_it);
+}
+
+int
+i2d_KRB5_AUTHENT(KRB5_AUTHENT *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &KRB5_AUTHENT_it);
+}
+
+KRB5_AUTHENT *
+KRB5_AUTHENT_new(void)
+{
+	return (KRB5_AUTHENT *)ASN1_item_new(&KRB5_AUTHENT_it);
+}
+
+void
+KRB5_AUTHENT_free(KRB5_AUTHENT *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &KRB5_AUTHENT_it);
+}
 

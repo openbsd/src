@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.10 2015/02/09 16:04:46 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -105,7 +105,31 @@ ASN1_SEQUENCE(RSA_PSS_PARAMS) = {
 	ASN1_EXP_OPT(RSA_PSS_PARAMS, trailerField, ASN1_INTEGER, 3)
 } ASN1_SEQUENCE_END(RSA_PSS_PARAMS)
 
-IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
+
+RSA_PSS_PARAMS *
+d2i_RSA_PSS_PARAMS(RSA_PSS_PARAMS **a, const unsigned char **in, long len)
+{
+	return (RSA_PSS_PARAMS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &RSA_PSS_PARAMS_it);
+}
+
+int
+i2d_RSA_PSS_PARAMS(RSA_PSS_PARAMS *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &RSA_PSS_PARAMS_it);
+}
+
+RSA_PSS_PARAMS *
+RSA_PSS_PARAMS_new(void)
+{
+	return (RSA_PSS_PARAMS *)ASN1_item_new(&RSA_PSS_PARAMS_it);
+}
+
+void
+RSA_PSS_PARAMS_free(RSA_PSS_PARAMS *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &RSA_PSS_PARAMS_it);
+}
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
 
