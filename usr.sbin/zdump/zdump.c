@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.6 2015/02/09 15:02:30 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.7 2015/02/09 22:49:10 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -336,46 +336,22 @@ char *	argv[];
 static void
 setabsolutes(void)
 {
-	if (0.5 == (time_t) 0.5) {
-		/*
-		** time_t is floating.
-		*/
-		if (sizeof (time_t) == sizeof (float)) {
-			absolute_min_time = (time_t) -FLT_MAX;
-			absolute_max_time = (time_t) FLT_MAX;
-		} else if (sizeof (time_t) == sizeof (double)) {
-			absolute_min_time = (time_t) -DBL_MAX;
-			absolute_max_time = (time_t) DBL_MAX;
-		} else {
-			(void) fprintf(stderr,
-_("%s: use of -v on system with floating time_t other than float or double\n"),
-				progname);
-			exit(EXIT_FAILURE);
-		}
-	} else if (0 > (time_t) -1) {
-		/*
-		** time_t is signed.  Assume overflow wraps around.
-		*/
-		time_t t = 0;
-		time_t t1 = 1;
+	/*
+	** time_t is signed.  Assume overflow wraps around.
+	*/
+	time_t t = 0;
+	time_t t1 = 1;
 
-		while (t < t1) {
-			t = t1;
-			t1 = 2 * t1 + 1;
-		}
-
-		absolute_max_time = t;
-		t = -t;
-		absolute_min_time = t - 1;
-		if (t < absolute_min_time)
-			absolute_min_time = t;
-	} else {
-		/*
-		** time_t is unsigned.
-		*/
-		absolute_min_time = 0;
-		absolute_max_time = absolute_min_time - 1;
+	while (t < t1) {
+		t = t1;
+		t1 = 2 * t1 + 1;
 	}
+
+	absolute_max_time = t;
+	t = -t;
+	absolute_min_time = t - 1;
+	if (t < absolute_min_time)
+		absolute_min_time = t;
 }
 
 static time_t
@@ -534,23 +510,7 @@ struct tm *	tmp;
 static const char *
 tformat(void)
 {
-	if (0.5 == (time_t) 0.5) {	/* floating */
-		if (sizeof (time_t) > sizeof (double))
-			return "%Lg";
-		return "%g";
-	}
-	if (0 > (time_t) -1) {		/* signed */
-		if (sizeof (time_t) > sizeof (long))
-			return "%lld";
-		if (sizeof (time_t) > sizeof (int))
-			return "%ld";
-		return "%d";
-	}
-	if (sizeof (time_t) > sizeof (unsigned long))
-		return "%llu";
-	if (sizeof (time_t) > sizeof (unsigned int))
-		return "%lu";
-	return "%u";
+	return "%lld";
 }
 
 static void
