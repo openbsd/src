@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.26 2015/01/16 06:40:20 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.27 2015/02/09 12:34:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -113,7 +113,8 @@ kr_init(int fs, u_int rdomain)
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
 
-	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
+	if ((kr_state.fd = socket(AF_ROUTE,
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
