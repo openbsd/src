@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.13 2015/01/27 03:17:35 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.14 2015/02/09 03:24:48 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2015 $
+.Dd $Mdocdate: February 9 2015 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -28,7 +28,12 @@
 .Sh SYNOPSIS
 .In sys/task.h
 .Ft struct taskq *
-.Fn "taskq_create" "const char *name" "unsigned int nthreads" "int ipl"
+.Fo "taskq_create"
+.Fa "const char *name"
+.Fa "unsigned int nthreads"
+.Fa "int ipl"
+.Fa "unsigned int flags"
+.Fc
 .Ft void
 .Fn "taskq_destroy" "struct taskq *tq"
 .Ft void
@@ -63,6 +68,15 @@ will be called against the created taskq.
 See
 .Xr spl 9
 for a list of the IPLs.
+You can or the following defines into the
+.Fa flags
+argument do change the operational characteristics of the taskq:
+.Bl -tag -width xxx -offset indent
+.It Dv TASKQ_MPSAFE
+The threads servicing the taskq will be run without the kernel big lock.
+.It Dv TASKQ_CANTSLEEP
+The tasks run via the taskq cannot sleep.
+.El
 .Pp
 .Fn taskq_destroy
 causes the resources associated with a previously created taskq to be freed.
