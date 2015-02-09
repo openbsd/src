@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.16 2015/01/17 07:09:50 deraadt Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.17 2015/02/09 12:25:03 claudio Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -65,37 +65,32 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/protosw.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#include <net/if_var.h>
-
 #include <netinet/in.h>
-
-#define _KERNEL
 #include <netinet6/ip6_mroute.h>
-#undef _KERNEL
 
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <util.h>
 #include "netstat.h"
 
 #define	WID_ORG	(lflag ? 39 : (nflag ? 29 : 18)) /* width of origin column */
 #define	WID_GRP	(lflag ? 18 : (nflag ? 16 : 18)) /* width of group column */
 
 void
-mroute6pr(u_long mfcaddr, u_long mifaddr)
+mroute6pr(void)
 {
-	int banner_printed, saved_nflag, waitings, i;
-	struct mf6c *mf6ctable[MF6CTBLSIZ], *mfcp;
-	struct mif6 mif6table[MAXMIFS], *mifp;
-	struct rtdetq rte, *rtep;
-	mifi_t maxmif = 0, mifi;
-	struct mf6c mfc;
+	char *buf;
+	char fmtbuf[FMT_SCALED_STRSIZE];
+	struct mf6cinfo *mfc;
+	struct mif6info *mif;
+	size_t needed, mifi, nummifs, mfci, nummfcs;
+	int banner_printed, saved_nflag;
+	mifi_t maxmif = 0;
 	u_int mrtproto;
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
 	size_t len = sizeof(int);
@@ -118,29 +113,23 @@ mroute6pr(u_long mfcaddr, u_long mifaddr)
 		return;
 	}
 
-	if (mfcaddr == 0) {
-		printf("mf6ctable: symbol not in namelist\n");
-		return;
-	}
-	if (mifaddr == 0) {
-		printf("miftable: symbol not in namelist\n");
-		return;
-	}
-
 	saved_nflag = nflag;
 	nflag = 1;
 
-	kread(mifaddr, &mif6table, sizeof(mif6table));
+	mib[3] = IPV6CTL_MRTMIF;
+	needed = get_sysctl(mib, sizeof(mib) / sizeof(mib[0]), &buf);
+	nummifs = needed / sizeof(*mif);
+	mif = (struct mif6info *)buf;
+	if (nummifs)
+		maxmif = mif[nummifs - 1].m6_mifi;
+
 	banner_printed = 0;
-	for (mifi = 0, mifp = mif6table; mifi < MAXMIFS; ++mifi, ++mifp) {
-		struct ifnet ifnet;
+	for (mifi = 0; mifi < nummifs; ++mifi, ++mif) {
 		char ifname[IFNAMSIZ];
 
-		if (mifp->m6_ifp == NULL)
+		if (mif->m6_ifindex == 0)
 			continue;
 
-		kread((u_long)mifp->m6_ifp, &ifnet, sizeof(ifnet));
-		maxmif = mifi;
 		if (!banner_printed) {
 			printf("\nIPv6 Multicast Interface Table\n"
 			    " Mif   Rate   PhyIF   "
@@ -149,55 +138,49 @@ mroute6pr(u_long mfcaddr, u_long mifaddr)
 		}
 
 		printf("  %2u   %4d",
-		    mifi, mifp->m6_rate_limit);
-		printf("   %5s", (mifp->m6_flags & MIFF_REGISTER) ?
-		    "reg0" : if_indextoname(ifnet.if_index, ifname));
+		    mif->m6_mifi, mif->m6_rate_limit);
+		printf("   %5s", (mif->m6_flags & MIFF_REGISTER) ?
+		    "reg0" : if_indextoname(mif->m6_ifindex, ifname));
 
-		printf(" %9llu  %9llu\n", mifp->m6_pkt_in, mifp->m6_pkt_out);
+		printf(" %9llu  %9llu\n", mif->m6_pkt_in, mif->m6_pkt_out);
 	}
 	if (!banner_printed)
 		printf("IPv6 Multicast Interface Table is empty\n");
 
-	kread(mfcaddr, &mf6ctable, sizeof(mf6ctable));
+	mib[3] = IPV6CTL_MRTMFC;
+	needed = get_sysctl(mib, sizeof(mib) / sizeof(mib[0]), &buf);
+	nummfcs = needed / sizeof(*mfc);
+	mfc = (struct mf6cinfo *)buf;
+
 	banner_printed = 0;
-	for (i = 0; i < MF6CTBLSIZ; ++i) {
-		mfcp = mf6ctable[i];
-		while (mfcp) {
-			kread((u_long)mfcp, &mfc, sizeof(mfc));
-			if (!banner_printed) {
-				printf("\nIPv6 Multicast Forwarding Cache\n");
-				printf(" %-*.*s %-*.*s %s",
-				    WID_ORG, WID_ORG, "Origin",
-				    WID_GRP, WID_GRP, "Group",
-				    "  Packets Waits In-Mif  Out-Mifs\n");
-				banner_printed = 1;
-			}
-
-			printf(" %-*.*s", WID_ORG, WID_ORG,
-			    routename6(&mfc.mf6c_origin));
-			printf(" %-*.*s", WID_GRP, WID_GRP,
-			    routename6(&mfc.mf6c_mcastgrp));
-			printf(" %9llu", mfc.mf6c_pkt_cnt);
-
-			for (waitings = 0, rtep = mfc.mf6c_stall; rtep; ) {
-				waitings++;
-				kread((u_long)rtep, &rte, sizeof(rte));
-				rtep = rte.next;
-			}
-			printf("   %3d", waitings);
-
-			if (mfc.mf6c_parent == MF6C_INCOMPLETE_PARENT)
-				printf("  ---   ");
-			else
-				printf("  %3d   ", mfc.mf6c_parent);
-			for (mifi = 0; mifi <= MAXMIFS; mifi++) {
-				if (IF_ISSET(mifi, &mfc.mf6c_ifset))
-					printf(" %u", mifi);
-			}
-			printf("\n");
-
-			mfcp = mfc.mf6c_next;
+	for (mfci = 0; mfci < nummfcs; ++mfci, ++mfc) {
+		if (!banner_printed) {
+			printf("\nIPv6 Multicast Forwarding Cache\n");
+			printf(" %-*.*s %-*.*s %s",
+			    WID_ORG, WID_ORG, "Origin",
+			    WID_GRP, WID_GRP, "Group",
+			    "  Packets Waits In-Mif  Out-Mifs\n");
+			banner_printed = 1;
 		}
+
+		printf(" %-*.*s", WID_ORG, WID_ORG,
+		    routename6(&mfc->mf6c_origin));
+		printf(" %-*.*s", WID_GRP, WID_GRP,
+		    routename6(&mfc->mf6c_mcastgrp));
+		fmt_scaled(mfc->mf6c_pkt_cnt, fmtbuf);
+		printf(" %9s", fmtbuf);
+
+		printf("   %3llu", mfc->mf6c_stall_cnt);
+
+		if (mfc->mf6c_parent == MF6C_INCOMPLETE_PARENT)
+			printf("  ---   ");
+		else
+			printf("  %3d   ", mfc->mf6c_parent);
+		for (mifi = 0; mifi <= MAXMIFS; mifi++) {
+			if (IF_ISSET(mifi, &mfc->mf6c_ifset))
+				printf(" %zu", mifi);
+		}
+		printf("\n");
 	}
 	if (!banner_printed)
 		printf("IPv6 Multicast Routing Table is empty");

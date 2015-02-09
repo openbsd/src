@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.104 2015/02/06 03:22:00 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.105 2015/02/09 12:25:03 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -58,18 +58,6 @@ struct nlist nl[] = {
 	{ "_tcbtable" },
 #define N_UDBTABLE	1
 	{ "_udbtable" },
-
-#define N_MFCHASHTBL	2
-	{ "_mfchashtbl" },
-#define N_MFCHASH	3
-	{ "_mfchash" },
-#define N_VIFTABLE	4
-	{ "_viftable" },
-
-#define N_MF6CTABLE	5
-	{ "_mf6ctable" },
-#define N_MIF6TABLE	6
-	{ "_mif6table" },
 
 #define N_RTREE		7
 	{ "_rt_tables"},
@@ -331,8 +319,8 @@ main(int argc, char *argv[])
 #endif
 
 	need_nlist = !mflag && (pflag || nlistf != NULL || memf != NULL ||
-	    (!iflag && !sflag && (rflag ? Aflag :
-	    (gflag || af != AF_UNIX || Pflag))));
+	    (!iflag && !sflag && !gflag && (rflag ? Aflag :
+	    (af != AF_UNIX || Pflag))));
 
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
@@ -393,12 +381,9 @@ main(int argc, char *argv[])
 				mrt6_stats();
 		} else {
 			if (af == AF_INET || af == AF_UNSPEC)
-				mroutepr(nl[N_MFCHASHTBL].n_value,
-				    nl[N_MFCHASH].n_value,
-				    nl[N_VIFTABLE].n_value);
+				mroutepr();
 			if (af == AF_INET6 || af == AF_UNSPEC)
-				mroute6pr(nl[N_MF6CTABLE].n_value,
-				    nl[N_MIF6TABLE].n_value);
+				mroute6pr();
 		}
 		exit(0);
 	}

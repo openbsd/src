@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.23 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.24 2015/02/09 12:25:03 claudio Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -44,58 +44,33 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/protosw.h>
 #include <sys/sysctl.h>
 
-#include <net/if.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/igmp.h>
-#define _KERNEL
 #include <netinet/ip_mroute.h>
-#undef _KERNEL
 
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <util.h>
 #include "netstat.h"
 
-static char *
-pktscale(u_long n)
-{
-	static char buf[8];
-	char t;
-
-	if (n < 1024)
-		t = ' ';
-	else if (n < 1024 * 1024) {
-		t = 'k';
-		n /= 1024;
-	} else {
-		t = 'm';
-		n /= 1048576;
-	}
-
-	snprintf(buf, sizeof buf, "%lu%c", n, t);
-	return (buf);
-}
-
 void
-mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
+mroutepr(void)
 {
 	u_int mrtproto;
-	LIST_HEAD(, mfc) *mfchashtbl;
-	u_long mfchash;
-	struct vif viftable[MAXVIFS], *v;
-	struct mfc *mfcp, mfc;
-	vifi_t vifi;
+	struct vifinfo *v;
+	struct mfcinfo *m;
+	size_t needed, numvifs, nummfcs, vifi, mfci;
+	char *buf = NULL;
+	char fmtbuf[FMT_SCALED_STRSIZE];
+	vifi_t maxvif = 0;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_MRTPROTO };
 	size_t len = sizeof(int);
-	int i, banner_printed = 0, saved_nflag, numvifs = 0;
-	int nmfc;		/* No. of cache entries */
+	int banner_printed = 0, saved_nflag;
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &mrtproto, &len, NULL, 0) == -1) {
@@ -114,29 +89,17 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 		return;
 	}
 
-	if (mfchashtbladdr == 0) {
-		printf("mfchashtbl: symbol not in namelist\n");
-		return;
-	}
-	if (mfchashaddr == 0) {
-		printf("mfchash: symbol not in namelist\n");
-		return;
-	}
-	if (vifaddr == 0) {
-		printf("viftable: symbol not in namelist\n");
-		return;
-	}
-
 	saved_nflag = nflag;
 	nflag = 1;
 
-	kread(vifaddr, &viftable, sizeof(viftable));
+	mib[3] = IPCTL_MRTVIF;
+	needed = get_sysctl(mib, sizeof(mib) / sizeof(mib[0]), &buf);
+	numvifs = needed / sizeof(*v);
+	v = (struct vifinfo *)buf;
+	if (numvifs)
+		maxvif = v[numvifs - 1].v_vifi;
 
-	for (vifi = 0, v = viftable; vifi < MAXVIFS; ++vifi, ++v) {
-		if (v->v_lcl_addr.s_addr == 0)
-			continue;
-		numvifs = vifi;
-
+	for (vifi = 0; vifi < numvifs; ++vifi, ++v) {
 		if (!banner_printed) {
 			printf("\nVirtual Interface Table\n %s%s",
 			    "Vif  Thresh  Limit  Local-Address    ",
@@ -145,7 +108,7 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 		}
 
 		printf(" %3u     %3u  %-15.15s",
-		    vifi, v->v_threshold,
+		    v->v_vifi, v->v_threshold,
 		    routename4(v->v_lcl_addr.s_addr));
 		printf("  %-15.15s  %6lu  %7lu\n", (v->v_flags & VIFF_TUNNEL) ?
 		    routename4(v->v_rmt_addr.s_addr) : "",
@@ -154,43 +117,37 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 	if (!banner_printed)
 		printf("Virtual Interface Table is empty\n");
 
-	kread(mfchashtbladdr, &mfchashtbl, sizeof(mfchashtbl));
-	kread(mfchashaddr, &mfchash, sizeof(mfchash));
 	banner_printed = 0;
-	nmfc = 0;
 
-	if (mfchashtbl != 0)
-		for (i = 0; i <= mfchash; ++i) {
-			kread((u_long)&mfchashtbl[i], &mfcp, sizeof(mfcp));
+	mib[3] = IPCTL_MRTMFC;
+	needed = get_sysctl(mib, sizeof(mib) / sizeof(mib[0]), &buf);
+	nummfcs = needed / sizeof(*m);
+	m = (struct mfcinfo *)buf;
 
-			for (; mfcp != 0; mfcp = LIST_NEXT(&mfc, mfc_hash)) {
-				if (!banner_printed) {
-					printf("\nMulticast Forwarding Cache\n %s%s",
-					    "Hash  Origin           Mcastgroup       ",
-					    "Traffic  In-Vif  Out-Vifs/Forw-ttl\n");
-					banner_printed = 1;
-				}
-
-				kread((u_long)mfcp, &mfc, sizeof(mfc));
-				printf("  %3u  %-15.15s",
-				    i, routename4(mfc.mfc_origin.s_addr));
-				printf("  %-15.15s  %7s     %3u ",
-				    routename4(mfc.mfc_mcastgrp.s_addr),
-				    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
-				for (vifi = 0; vifi <= numvifs; ++vifi)
-					if (mfc.mfc_ttls[vifi])
-						printf(" %u/%u", vifi,
-						    mfc.mfc_ttls[vifi]);
-
-				printf("\n");
-
-				nmfc++;
-			}
+	for (mfci = 0; mfci < nummfcs; ++mfci, ++m) {
+		if (!banner_printed) {
+			printf("\nMulticast Forwarding Cache\n %s%s",
+			    "Hash  Origin           Mcastgroup       ",
+			    "Traffic  In-Vif  Out-Vifs/Forw-ttl\n");
+			banner_printed = 1;
 		}
+
+		printf("  %3zu  %-15.15s",
+		    mfci, routename4(m->mfc_origin.s_addr));
+		fmt_scaled(m->mfc_pkt_cnt, fmtbuf);
+		printf("  %-15.15s  %7s     %3u ",
+		    routename4(m->mfc_mcastgrp.s_addr),
+		    buf, m->mfc_parent);
+		for (vifi = 0; vifi <= maxvif; ++vifi)
+			if (m->mfc_ttls[vifi])
+				printf(" %zu/%u", vifi, m->mfc_ttls[vifi]);
+
+		printf("\n");
+	}
 	if (!banner_printed)
 		printf("Multicast Forwarding Cache is empty\n");
 	else
-		printf("\nTotal no. of entries in cache: %d\n", nmfc);
+		printf("\nTotal no. of entries in cache: %zu\n", nummfcs);
 
 	printf("\n");
 	nflag = saved_nflag;

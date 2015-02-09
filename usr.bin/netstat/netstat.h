@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.66 2013/10/22 16:40:28 guenther Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.67 2015/02/09 12:25:03 claudio Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -113,11 +113,12 @@ void	icmp6_ifstats(char *);
 void	pim6_stats(char *);
 void	div6_stats(char *);
 void	rip6_stats(char *);
-void	mroute6pr(u_long, u_long);
+void	mroute6pr(void);
 void	mrt6_stats(void);
 char	*routename6(struct sockaddr_in6 *);
 char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
 
+size_t	get_sysctl(const int *, u_int, char **);
 void	p_rttables(int, u_int);
 void	p_flags(int, char *);
 void	p_addr(struct sockaddr *, struct sockaddr *, int);
@@ -136,5 +137,5 @@ void	intpr(int, int);
 
 void	unixpr(kvm_t *, u_long);
 
-void	mroutepr(u_long, u_long, u_long);
+void	mroutepr(void);
 void	mrt_stats(void);

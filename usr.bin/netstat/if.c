@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.71 2015/02/08 04:25:56 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.72 2015/02/09 12:25:03 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ intpr(int interval, int repeatcount)
 	struct if_msghdr ifm;
 	int mib[6] = { CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
 	char name[IFNAMSIZ + 1];	/* + 1 for the '*' */
-	char *buf, *next, *lim, *cp;
+	char *buf = NULL, *next, *lim, *cp;
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;
 	struct if_data *ifd;
@@ -88,12 +88,7 @@ intpr(int interval, int repeatcount)
 		return;
 	}
 
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
-		err(1, "sysctl");
-	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
-	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
-		err(1, "sysctl");
+	len = get_sysctl(mib, 6, &buf);
 
 	printf("%-7.7s %-5.5s %-11.11s %-17.17s ",
 	    "Name", "Mtu", "Network", "Address");
@@ -514,12 +509,7 @@ fetchifs(void)
 	int takeit = 0;
 	int foundone = 0;
 
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
-		err(1, "sysctl");
-	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
-	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
-		err(1, "sysctl");
+	len = get_sysctl(mib, 6, &buf);
 
 	memset(&ip_cur, 0, sizeof(ip_cur));
 	lim = buf + len;

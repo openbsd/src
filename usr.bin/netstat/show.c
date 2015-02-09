@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.45 2015/02/06 03:22:00 reyk Exp $	*/
+/*	$OpenBSD: show.c,v 1.46 2015/02/09 12:25:03 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -103,6 +103,29 @@ void	 p_flags(int, char *);
 char	*routename4(in_addr_t);
 char	*routename6(struct sockaddr_in6 *);
 
+size_t
+get_sysctl(const int *mib, u_int mcnt, char **buf)
+{
+	size_t needed;
+
+	while (1) {
+		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
+			err(1, "sysctl-estimate");
+		if (needed == 0)
+			break;
+		if ((*buf = realloc(*buf, needed)) == NULL)
+			err(1, NULL);
+		if (sysctl(mib, mcnt, *buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			err(1, "sysctl");
+		}
+		break;
+	}
+
+	return needed;
+}
+
 /*
  * Print routing tables.
  */
@@ -123,21 +146,9 @@ p_rttables(int af, u_int tableid)
 	mib[5] = 0;
 	mib[6] = tableid;
 	mcnt = 7;
-	while (1) {
-		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
-			err(1, "route-sysctl-estimate");
-		if (needed == 0)
-			break;
-		if ((buf = realloc(buf, needed)) == NULL)
-			err(1, NULL);
-		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) == -1) {
-			if (errno == ENOMEM)
-				continue;
-			err(1, "sysctl of routing table");
-		}
-		lim = buf + needed;
-		break;
-	}
+
+	needed = get_sysctl(mib, mcnt, &buf);
+	lim = buf + needed;
 
 	printf("Routing tables\n");
 
