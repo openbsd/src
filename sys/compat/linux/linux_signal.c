@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.17 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.18 2015/02/09 13:41:24 pelikan Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -584,7 +584,6 @@ linux_sys_sigprocmask(p, v, retval)
 	linux_old_sigset_t ss;
 	sigset_t bs;
 	int error = 0;
-	int s;
 
 	*retval = 0;
 
@@ -604,27 +603,24 @@ linux_sys_sigprocmask(p, v, retval)
 
 	linux_old_to_bsd_sigset(&ss, &bs);
 
-	s = splhigh();
-
+	bs &= ~sigcantmask;
 	switch (SCARG(uap, how)) {
 	case LINUX_SIG_BLOCK:
-		p->p_sigmask |= bs & ~sigcantmask;
+		atomic_setbits_int(&p->p_sigmask, bs);
 		break;
 
 	case LINUX_SIG_UNBLOCK:
-		p->p_sigmask &= ~bs;
+		atomic_clearbits_int(&p->p_sigmask, bs);
 		break;
 
 	case LINUX_SIG_SETMASK:
-		p->p_sigmask = bs & ~sigcantmask;
+		p->p_sigmask = bs;
 		break;
 
 	default:
 		error = EINVAL;
 		break;
 	}
-
-	splx(s);
 
 	return (error);
 }
@@ -644,7 +640,6 @@ linux_sys_rt_sigprocmask(p, v, retval)
 	linux_sigset_t ls;
 	sigset_t bs;
 	int error = 0;
-	int s;
 
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
 		return (EINVAL);
@@ -667,27 +662,24 @@ linux_sys_rt_sigprocmask(p, v, retval)
 
 	linux_to_bsd_sigset(&ls, &bs);
 
-	s = splhigh();
-
+	bs &= ~sigcantmask;
 	switch (SCARG(uap, how)) {
 	case LINUX_SIG_BLOCK:
-		p->p_sigmask |= bs & ~sigcantmask;
+		atomic_setbits_int(&p->p_sigmask, bs);
 		break;
 
 	case LINUX_SIG_UNBLOCK:
-		p->p_sigmask &= ~bs;
+		atomic_clearbits_int(&p->p_sigmask, bs);
 		break;
 
 	case LINUX_SIG_SETMASK:
-		p->p_sigmask = bs & ~sigcantmask;
+		p->p_sigmask = bs;
 		break;
 
 	default:
 		error = EINVAL;
 		break;
 	}
-
-	splx(s);
 
 	return (error);
 }
@@ -727,16 +719,13 @@ linux_sys_sigsetmask(p, v, retval)
 	} */ *uap = v;
 	linux_old_sigset_t mask;
 	sigset_t bsdsig;
-	int s;
 
 	bsd_to_linux_old_sigset(&p->p_sigmask, (linux_old_sigset_t *)retval);
 
 	mask = SCARG(uap, mask);
 	bsd_to_linux_old_sigset(&bsdsig, &mask);
 
-	s = splhigh();
 	p->p_sigmask = bsdsig & ~sigcantmask;
-	splx(s);
 
 	return (0);
 }

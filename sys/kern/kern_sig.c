@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.177 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.178 2015/02/09 13:41:24 pelikan Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -439,28 +439,25 @@ sys_sigprocmask(struct proc *p, void *v, register_t *retval)
 		syscallarg(sigset_t) mask;
 	} */ *uap = v;
 	int error = 0;
-	int s;
 	sigset_t mask;
 
 	*retval = p->p_sigmask;
-	mask = SCARG(uap, mask);
-	s = splhigh();
+	mask = SCARG(uap, mask) &~ sigcantmask;
 
 	switch (SCARG(uap, how)) {
 	case SIG_BLOCK:
-		p->p_sigmask |= mask &~ sigcantmask;
+		atomic_setbits_int(&p->p_sigmask, mask);
 		break;
 	case SIG_UNBLOCK:
-		p->p_sigmask &= ~mask;
+		atomic_clearbits_int(&p->p_sigmask, mask);
 		break;
 	case SIG_SETMASK:
-		p->p_sigmask = mask &~ sigcantmask;
+		p->p_sigmask = mask;
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-	splx(s);
 	return (error);
 }
 
@@ -754,7 +751,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		p->p_ru.ru_nsignals++;
 		(*pr->ps_emul->e_sendsig)(ps->ps_sigact[signum], signum,
 		    p->p_sigmask, trapno, code, sigval);
-		p->p_sigmask |= ps->ps_catchmask[signum];
+		atomic_setbits_int(&p->p_sigmask, ps->ps_catchmask[signum]);
 		if ((ps->ps_sigreset & mask) != 0) {
 			ps->ps_sigcatch &= ~mask;
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
@@ -1378,7 +1375,7 @@ postsig(int signum)
 		} else {
 			returnmask = p->p_sigmask;
 		}
-		p->p_sigmask |= ps->ps_catchmask[signum];
+		atomic_setbits_int(&p->p_sigmask, ps->ps_catchmask[signum]);
 		if ((ps->ps_sigreset & mask) != 0) {
 			ps->ps_sigcatch &= ~mask;
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)

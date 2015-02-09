@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.162 2015/02/09 13:34:49 deraadt Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.163 2015/02/09 13:41:24 pelikan Exp $	*/
 
 /*
  * System call switch table.
@@ -124,7 +124,7 @@ struct sysent sysent[] = {
 	    sys_sigaction },			/* 46 = sigaction */
 	{ 0, 0, SY_NOLOCK | 0,
 	    sys_getgid },			/* 47 = getgid */
-	{ 2, s(struct sys_sigprocmask_args), 0,
+	{ 2, s(struct sys_sigprocmask_args), SY_NOLOCK | 0,
 	    sys_sigprocmask },			/* 48 = sigprocmask */
 	{ 2, s(struct sys_getlogin_args), 0,
 	    sys_getlogin },			/* 49 = getlogin */
