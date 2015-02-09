@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.167 2014/12/10 15:29:52 mikeb Exp $ */
+/* $OpenBSD: machdep.c,v 1.168 2015/02/09 08:48:23 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1429,11 +1429,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	}
 
 	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to uvm_grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
+	 * Allocate space for the signal handler context.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
@@ -1441,8 +1437,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		    p->p_sigstk.ss_size - rndfsize);
 	else
 		scp = (struct sigcontext *)(oldsp - rndfsize);
-	if ((u_long)scp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
-		(void)uvm_grow(p, (u_long)scp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,

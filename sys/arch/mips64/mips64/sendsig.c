@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.23 2015/01/02 22:38:46 sebastia Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.24 2015/02/09 08:48:23 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,11 +118,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	regs = p->p_md.md_regs;
 
 	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in data space, the
-	 * call to grow() is a nop, and the copyout()
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
+	 * Allocate space for the signal handler context.
 	 */
 	fsize = sizeof(struct sigframe);
 	if (!(psp->ps_siginfo & sigmask(sig)))
@@ -133,8 +129,6 @@ sendsig(catcher, sig, mask, code, type, val)
 					 p->p_sigstk.ss_size - fsize);
 	else
 		fp = (struct sigframe *)(regs->sp - fsize);
-	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
-		(void)uvm_grow(p, (vaddr_t)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))

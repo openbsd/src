@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.22 2014/06/05 21:57:12 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.23 2015/02/09 08:48:23 miod Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -123,10 +123,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 		fsize = offsetof(struct sigframe, sf_si);
 
 	/*
-	 * Allocate and validate space for the signal handler context.
-	 * Note that if the stack is in data space, the call to grow()
-	 * will be a nop, and the copyout() will fail if the process has
-	 * not already allocated the space.
+	 * Allocate space for the signal handler context.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig))) {
@@ -134,9 +131,6 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 		    (vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size, fsize);
 	} else
 		addr = local_stack_frame(tf, tf->tf_r[31], fsize);
-
-	if (addr <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
-		(void)uvm_grow(p, addr);
 
 	fp = (struct sigframe *)addr;
 
