@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.115 2014/12/15 10:04:18 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.116 2015/02/09 12:47:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -263,7 +263,7 @@ window_find_by_id(u_int id)
 
 	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
 		w = ARRAY_ITEM(&windows, i);
-		if (w->id == id)
+		if (w != NULL && w->id == id)
 			return (w);
 	}
 	return (NULL);
