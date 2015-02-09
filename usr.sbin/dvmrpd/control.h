@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.4 2015/02/09 11:45:22 claudio Exp $ */
+/*	$OpenBSD: control.h,v 1.5 2015/02/09 11:46:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,11 +28,6 @@ struct {
 	struct event	evt;
 	int		fd;
 } control_state;
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
