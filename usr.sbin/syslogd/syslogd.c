@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.151 2015/02/08 15:17:30 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.152 2015/02/09 09:28:56 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -353,7 +353,7 @@ main(int argc, char *argv[])
 		case 'm':		/* mark interval */
 			MarkInterval = strtonum(optarg, 0, 365*24*60, &errstr);
 			if (errstr)
-				errx(1, "mark_interval: %s", errstr, optarg);
+				errx(1, "mark_interval %s: %s", errstr, optarg);
 			MarkInterval *= 60;
 			break;
 		case 'n':		/* don't do DNS lookups */
