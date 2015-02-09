@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.30 2015/01/16 00:03:37 deraadt Exp $	 */
+/* $OpenBSD: pftop.c,v 1.31 2015/02/09 02:00:38 jsg Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1337,10 +1337,8 @@ print_rule(struct pf_rule *pr)
 		print_fld_str(FLD_KST, "Keep");
 	else if (pr->keep_state == PF_STATE_MODULATE)
 		print_fld_str(FLD_KST, "Mod");
-#ifdef PF_STATE_SYNPROXY
-	else if (pr->keep_state == PF_STATE_MODULATE)
+	else if (pr->keep_state == PF_STATE_SYNPROXY)
 		print_fld_str(FLD_KST, "Syn");
-#endif
 	if (pr->log == 1)
 		print_fld_str(FLD_LOG, "Log");
 	else if (pr->log == 2)
