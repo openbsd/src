@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.69 2015/01/30 04:45:45 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.70 2015/02/09 04:10:50 tedu Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@
 /*
  * FTP User Program -- Misc support routines
  */
-#include <sys/param.h>	/* BSD */
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <arpa/ftp.h>
@@ -169,11 +168,6 @@ setpeer(int argc, char *argv[])
 		if (autologin)
 			(void)ftp_login(argv[1], NULL, NULL);
 
-#if (defined(unix) || defined(BSD)) && NBBY == 8
-/*
- * this ifdef is to keep someone form "porting" this to an incompatible
- * system and not checking this out. This way they have to think about it.
- */
 		overbose = verbose;
 #ifndef SMALL
 		if (!debug)
@@ -211,7 +205,6 @@ setpeer(int argc, char *argv[])
 				unix_server = 0;
 		}
 		verbose = overbose;
-#endif /* unix || BSD */
 	}
 }
 
