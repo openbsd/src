@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.195 2015/02/09 03:15:41 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.196 2015/02/09 03:46:12 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -364,7 +364,6 @@ struct proc {
 #define	P_PROFPEND	0x000002	/* SIGPROF needs to be posted */
 #define	P_ALRMPEND	0x000004	/* SIGVTALRM needs to be posted */
 #define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/
-
 #define	P_CANTSLEEP	0x000010	/* insomniac thread */
 #define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
 #define	P_SINTR		0x000080	/* Sleep is interruptible. */
