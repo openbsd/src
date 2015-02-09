@@ -1,10 +1,10 @@
-/*	$OpenBSD: scheck.c,v 1.1 2015/02/09 12:37:47 tedu Exp $ */
+/*	$OpenBSD: scheck.c,v 1.2 2015/02/09 13:03:59 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
 */
 
-/*LINTLIBRARY*/
+#include <ctype.h>
 
 #include "private.h"
 
@@ -13,11 +13,11 @@ scheck(string, format)
 const char * const	string;
 const char * const	format;
 {
-	register char *		fbuf;
-	register const char *	fp;
-	register char *		tp;
-	register int		c;
-	register const char *	result;
+	char *		fbuf;
+	const char *	fp;
+	char *		tp;
+	int		c;
+	const char *	result;
 	char			dummy;
 
 	result = "";
@@ -38,7 +38,7 @@ const char * const	format;
 		*tp++ = '*';
 		if (*fp == '*')
 			++fp;
-		while (is_digit(*fp))
+		while (isdigit((unsigned char)*fp))
 			*tp++ = *fp++;
 		if (*fp == 'l' || *fp == 'h')
 			*tp++ = *fp++;

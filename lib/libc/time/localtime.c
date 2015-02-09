@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.39 2015/02/09 08:25:11 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.40 2015/02/09 13:03:59 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -9,7 +9,7 @@
 ** POSIX-style TZ environment variable handling from Guy Harris.
 */
 
-/*LINTLIBRARY*/
+#include <ctype.h>
 
 #include "private.h"
 #include "tzfile.h"
@@ -624,7 +624,7 @@ register const char *	strp;
 {
 	register char	c;
 
-	while ((c = *strp) != '\0' && !is_digit(c) && c != ',' && c != '-' &&
+	while ((c = *strp) != '\0' && !isdigit((unsigned char)c) && c != ',' && c != '-' &&
 		c != '+')
 			++strp;
 	return strp;
@@ -666,7 +666,7 @@ const int		max;
 	register char	c;
 	register int	num;
 
-	if (strp == NULL || !is_digit(c = *strp))
+	if (strp == NULL || !isdigit((unsigned char)(c = *strp)))
 		return NULL;
 	num = 0;
 	do {
@@ -674,7 +674,7 @@ const int		max;
 		if (num > max)
 			return NULL;	/* illegal value */
 		c = *++strp;
-	} while (is_digit(c));
+	} while (isdigit((unsigned char)c));
 	if (num < min)
 		return NULL;		/* illegal value */
 	*nump = num;
@@ -787,7 +787,7 @@ register struct rule * const	rulep;
 		if (*strp++ != '.')
 			return NULL;
 		strp = getnum(strp, &rulep->r_day, 0, DAYSPERWEEK - 1);
-	} else if (is_digit(*strp)) {
+	} else if (isdigit((unsigned char)*strp)) {
 		/*
 		** Day of year.
 		*/

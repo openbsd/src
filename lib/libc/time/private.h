@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.28 2015/02/09 11:29:19 tedu Exp $	*/
+/*	$OpenBSD: private.h,v 1.29 2015/02/09 13:03:59 tedu Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -112,9 +112,6 @@
 #ifndef R_OK
 #define R_OK	4
 #endif /* !defined R_OK */
-
-/* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
-#define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
 #include "stdint.h"
 
