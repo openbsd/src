@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.47 2015/01/27 03:17:36 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.48 2015/02/09 03:15:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -648,7 +648,7 @@ qla_attach(struct qla_softc *sc)
 		goto free_scratch;
 	}
 
-	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO);
+	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO, 0);
 	task_set(&sc->sc_update_task, qla_do_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */

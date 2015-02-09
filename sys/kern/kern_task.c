@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.13 2015/01/27 03:17:36 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.14 2015/02/09 03:15:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -33,7 +33,7 @@ struct taskq {
 	}		tq_state;
 	unsigned int	tq_running;
 	unsigned int	tq_nthreads;
-	unsigned int	tq_unlocked;
+	unsigned int	tq_flags;
 	const char	*tq_name;
 
 	struct mutex	tq_mtx;
@@ -54,18 +54,23 @@ struct taskq taskq_sys_mp = {
 	TQ_S_CREATED,
 	0,
 	1,
-	1,
+	TASKQ_MPSAFE,
 	"systqmp",
 	MUTEX_INITIALIZER(IPL_HIGH),
 	TAILQ_HEAD_INITIALIZER(taskq_sys_mp.tq_worklist)
 };
+
+typedef int (*sleepfn)(const volatile void *, struct mutex *, int,
+    const char *, int);
 
 struct taskq *const systq = &taskq_sys;
 struct taskq *const systqmp = &taskq_sys_mp;
 
 void	taskq_init(void); /* called in init_main.c */
 void	taskq_create_thread(void *);
-int	taskq_next_work(struct taskq *, struct task *);
+int	taskq_sleep(const volatile void *, struct mutex *, int,
+	    const char *, int);
+int	taskq_next_work(struct taskq *, struct task *, sleepfn);
 void	taskq_thread(void *);
 
 void
@@ -76,7 +81,8 @@ taskq_init(void)
 }
 
 struct taskq *
-taskq_create(const char *name, unsigned int nthreads, int ipl)
+taskq_create(const char *name, unsigned int nthreads, int ipl,
+    unsigned int flags)
 {
 	struct taskq *tq;
 
@@ -88,12 +94,7 @@ taskq_create(const char *name, unsigned int nthreads, int ipl)
 	tq->tq_running = 0;
 	tq->tq_nthreads = nthreads;
 	tq->tq_name = name;
-
-	if (ipl & IPL_MPSAFE)
-		tq->tq_unlocked = 1;
-	else
-		tq->tq_unlocked = 0;
-	ipl &= ~IPL_MPSAFE;
+	tq->tq_flags = flags;
 
 	mtx_init(&tq->tq_mtx, ipl);
 	TAILQ_INIT(&tq->tq_worklist);
@@ -190,6 +191,9 @@ task_add(struct taskq *tq, struct task *w)
 {
 	int rv = 0;
 
+	if (ISSET(w->t_flags, TASK_ONQUEUE))
+		return (0);
+
 	mtx_enter(&tq->tq_mtx);
 	if (!ISSET(w->t_flags, TASK_ONQUEUE)) {
 		rv = 1;
@@ -209,6 +213,9 @@ task_del(struct taskq *tq, struct task *w)
 {
 	int rv = 0;
 
+	if (!ISSET(w->t_flags, TASK_ONQUEUE))
+		return (0);
+
 	mtx_enter(&tq->tq_mtx);
 	if (ISSET(w->t_flags, TASK_ONQUEUE)) {
 		rv = 1;
@@ -221,7 +228,21 @@ task_del(struct taskq *tq, struct task *w)
 }
 
 int
-taskq_next_work(struct taskq *tq, struct task *work)
+taskq_sleep(const volatile void *ident, struct mutex *mtx, int priority,
+    const char *wmesg, int tmo)
+{
+	u_int *flags = &curproc->p_flag;
+	int rv;
+
+	atomic_clearbits_int(flags, P_CANTSLEEP);
+	rv = msleep(ident, mtx, priority, wmesg, tmo);
+	atomic_setbits_int(flags, P_CANTSLEEP);
+
+	return (tmo);
+}
+
+int
+taskq_next_work(struct taskq *tq, struct task *work, sleepfn tqsleep)
 {
 	struct task *next;
 
@@ -232,7 +253,7 @@ taskq_next_work(struct taskq *tq, struct task *work)
 			return (0);
 		}
 
-		msleep(tq, &tq->tq_mtx, PWAIT, "bored", 0);
+		tqsleep(tq, &tq->tq_mtx, PWAIT, "bored", 0);
 	}
 
 	TAILQ_REMOVE(&tq->tq_worklist, next, t_entry);
@@ -252,14 +273,20 @@ taskq_next_work(struct taskq *tq, struct task *work)
 void
 taskq_thread(void *xtq)
 {
+	sleepfn tqsleep = msleep;
 	struct taskq *tq = xtq;
 	struct task work;
 	int last;
 
-	if (tq->tq_unlocked)
+	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
 		KERNEL_UNLOCK();
 
-	while (taskq_next_work(tq, &work)) {
+	if (ISSET(tq->tq_flags, TASKQ_CANTSLEEP)) {
+		tqsleep = taskq_sleep;
+		atomic_setbits_int(&curproc->p_flag, P_CANTSLEEP);
+	}
+
+	while (taskq_next_work(tq, &work, tqsleep)) {
 		(*work.t_func)(work.t_arg);
 		sched_pause();
 	}
@@ -268,8 +295,11 @@ taskq_thread(void *xtq)
 	last = (--tq->tq_running == 0);
 	mtx_leave(&tq->tq_mtx);
 
-	if (tq->tq_unlocked)
+	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
 		KERNEL_LOCK();
+
+	if (ISSET(tq->tq_flags, TASKQ_CANTSLEEP))
+		atomic_clearbits_int(&curproc->p_flag, P_CANTSLEEP);
 
 	if (last)
 		wakeup_one(&tq->tq_running);

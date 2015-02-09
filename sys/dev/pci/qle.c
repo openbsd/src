@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.33 2015/01/27 03:17:36 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.34 2015/02/09 03:15:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -625,7 +625,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		goto free_scratch;
 	}
 
-	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO);
+	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO, 0);
 	task_set(&sc->sc_update_task, qle_do_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */

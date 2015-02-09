@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.348 2015/01/27 03:17:35 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.349 2015/02/09 03:15:41 dlg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3297,7 +3297,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK | M_ZERO);
 	sd->sd_sc = sc;
 	SLIST_INIT(&sd->sd_meta_opt);
-	sd->sd_taskq = taskq_create("srdis", 1, IPL_BIO);
+	sd->sd_taskq = taskq_create("srdis", 1, IPL_BIO, 0);
 	if (sd->sd_taskq == NULL) {
 		sr_error(sc, "could not create discipline taskq");
 		goto unwind;

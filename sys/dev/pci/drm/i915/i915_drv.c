@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.70 2015/01/27 03:17:36 dlg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.71 2015/02/09 03:15:41 dlg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -940,7 +940,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->mm.retire_taskq = taskq_create("intelrel", 1, IPL_TTY);
+	dev_priv->mm.retire_taskq = taskq_create("intelrel", 1, IPL_TTY, 0);
 	if (dev_priv->mm.retire_taskq == NULL) {
 		printf("couldn't create taskq\n");
 		return;

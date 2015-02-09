@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.194 2015/01/26 22:51:37 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.195 2015/02/09 03:15:41 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -364,6 +364,8 @@ struct proc {
 #define	P_PROFPEND	0x000002	/* SIGPROF needs to be posted */
 #define	P_ALRMPEND	0x000004	/* SIGVTALRM needs to be posted */
 #define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/
+
+#define	P_CANTSLEEP	0x000010	/* insomniac thread */
 #define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
 #define	P_SINTR		0x000080	/* Sleep is interruptible. */
 #define	P_SYSTEM	0x000200	/* No sigs, stats or swapping. */
@@ -379,7 +381,7 @@ struct proc {
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
 
 #define	P_BITS \
-    ("\20\01INKTR\02PROFPEND\03ALRMPEND\04SIGSUSPEND\07SELECT" \
+    ("\20\01INKTR\02PROFPEND\03ALRMPEND\04SIGSUSPEND\05CANTSLEEP\07SELECT" \
      "\010SINTR\012SYSTEM" \
      "\013TIMEOUT\016WEXIT\020OWEUPC\024SUSPSINGLE" \
      "\027SYSTRACE\030CONTINUED\033THREAD" \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.116 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.117 2015/02/09 03:15:41 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -191,6 +191,8 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	struct proc *p = curproc;
 
 #ifdef DIAGNOSTIC
+	if (p->p_flag & P_CANTSLEEP)
+		panic("sleep: %s failed insomnia", p->p_comm);
 	if (ident == NULL)
 		panic("tsleep: no ident");
 	if (p->p_stat != SONPROC)

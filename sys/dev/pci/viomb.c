@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.11 2015/01/27 03:17:36 dlg Exp $	 */
+/* $OpenBSD: viomb.c,v 1.12 2015/02/09 03:15:41 dlg Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -202,7 +202,7 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 		goto err_dmamap;
 	}
 
-	sc->sc_taskq = taskq_create("viomb", 1, IPL_BIO);
+	sc->sc_taskq = taskq_create("viomb", 1, IPL_BIO, 0);
 	if (sc->sc_taskq == NULL)
 		goto err_dmamap;
 	task_set(&sc->sc_task, viomb_worker, sc);

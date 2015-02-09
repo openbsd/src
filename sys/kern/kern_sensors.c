@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.34 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.35 2015/02/09 03:15:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -193,7 +193,7 @@ sensor_task_register(void *arg, void (*func)(void *), unsigned int period)
 #endif
 
 	if (sensors_taskq == NULL &&
-	    (sensors_taskq = taskq_create("sensors", 1, IPL_HIGH)) == NULL)
+	    (sensors_taskq = taskq_create("sensors", 1, IPL_HIGH, 0)) == NULL)
 		sensors_taskq = systq;
 
 	st = malloc(sizeof(*st), M_DEVBUF, M_NOWAIT);
