@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.45 2015/02/09 14:52:28 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.46 2015/02/09 14:58:08 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -256,8 +256,7 @@ settzname(void)
 	*/
 	for (i = 0; i < sp->timecnt; ++i) {
 		const struct ttinfo * const	ttisp =
-							&sp->ttis[
-								sp->types[i]];
+			&sp->ttis[sp->types[i]];
 
 		tzname[ttisp->tt_isdst] =
 			&sp->chars[ttisp->tt_abbrind];
@@ -321,7 +320,7 @@ const int		doextend;
 	} u_t;
 	u_t *			up;
 
-	up = (u_t *) calloc(1, sizeof *up);
+	up = calloc(1, sizeof *up);
 	if (up == NULL)
 		return -1;
 
@@ -351,9 +350,9 @@ const int		doextend;
 				goto oops;
 			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
 				goto oops;
-			(void) strlcpy(fullname, p, sizeof fullname);
-			(void) strlcat(fullname, "/", sizeof fullname);
-			(void) strlcat(fullname, name, sizeof fullname);
+			strlcpy(fullname, p, sizeof fullname);
+			strlcat(fullname, "/", sizeof fullname);
+			strlcat(fullname, name, sizeof fullname);
 			/*
 			** Set doaccess if '.' (as in "../") shows up in name.
 			*/
@@ -484,7 +483,7 @@ const int		doextend;
 		/*
 		** If this is a narrow integer time_t system, we're done.
 		*/
-		if (stored >= (int) sizeof(time_t))
+		if (stored >= sizeof(time_t))
 			break;
 	}
 	if (doextend && nread > 2 &&
@@ -538,10 +537,10 @@ const int		doextend;
 					break;
 		}
 	}
-	(void) free((void *) up);
+	free(up);
 	return 0;
 oops:
-	(void) free((void *) up);
+	free(up);
 	return -1;
 }
 
@@ -1126,13 +1125,13 @@ tzsetwall_basic(void)
 	lcl_is_set = -1;
 
 	if (lclptr == NULL) {
-		lclptr = (struct state *) calloc(1, sizeof *lclptr);
+		lclptr = calloc(1, sizeof *lclptr);
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
 			return;
 		}
 	}
-	if (tzload((char *) NULL, lclptr, TRUE) != 0)
+	if (tzload(NULL, lclptr, TRUE) != 0)
 		gmtload(lclptr);
 	settzname();
 }
@@ -1168,10 +1167,10 @@ tzset_basic(void)
 		return;
 	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
-		(void) strlcpy(lcl_TZname, name, sizeof lcl_TZname);
+		strlcpy(lcl_TZname, name, sizeof lcl_TZname);
 
 	if (lclptr == NULL) {
-		lclptr = (struct state *) calloc(1, sizeof *lclptr);
+		lclptr = calloc(1, sizeof *lclptr);
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
 			return;
@@ -1187,10 +1186,10 @@ tzset_basic(void)
 		lclptr->ttis[0].tt_isdst = 0;
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
-		(void) strlcpy(lclptr->chars, gmt, sizeof lclptr->chars);
+		strlcpy(lclptr->chars, gmt, sizeof lclptr->chars);
 	} else if (tzload(name, lclptr, TRUE) != 0)
 		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
-			(void) gmtload(lclptr);
+			gmtload(lclptr);
 	settzname();
 }
 
