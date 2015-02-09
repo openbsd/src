@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.53 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.54 2015/02/09 09:39:09 miod Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -279,27 +279,32 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 			vaddr_t addr;
 			vsize_t size;
 			vm_prot_t prot;
+			struct vmspace *vm = p->p_vmspace;
 
 			if (limp->rlim_cur > alimp->rlim_cur) {
 				prot = PROT_READ | PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
 #ifdef MACHINE_STACK_GROWS_UP
-				addr = USRSTACK + alimp->rlim_cur;
+				addr = (vaddr_t)vm->vm_maxsaddr +
+				    alimp->rlim_cur;
 #else
-				addr = USRSTACK - limp->rlim_cur;
+				addr = (vaddr_t)vm->vm_minsaddr -
+				    limp->rlim_cur;
 #endif
 			} else {
 				prot = PROT_NONE;
 				size = alimp->rlim_cur - limp->rlim_cur;
 #ifdef MACHINE_STACK_GROWS_UP
-				addr = USRSTACK + limp->rlim_cur;
+				addr = (vaddr_t)vm->vm_maxsaddr +
+				    limp->rlim_cur;
 #else
-				addr = USRSTACK - alimp->rlim_cur;
+				addr = (vaddr_t)vm->vm_minsaddr -
+				    alimp->rlim_cur;
 #endif
 			}
 			addr = trunc_page(addr);
 			size = round_page(size);
-			(void) uvm_map_protect(&p->p_vmspace->vm_map,
+			(void) uvm_map_protect(&vm->vm_map,
 					      addr, addr+size, prot, FALSE);
 		}
 	}
