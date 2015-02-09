@@ -1114,6 +1114,17 @@ main(int argc, char **argv)
 	    (UDP_MODE && (ptb->kvars || nconn != 1)))
 		usage();
 
+	if (ptb->kvars) {
+		if ((ptb->kvmh = kvm_openfiles(NULL, NULL, NULL,
+		    O_RDONLY, kerr)) == NULL)
+			errx(1, "kvm_open: %s", kerr);
+		drop_gid();
+		if (kvm_nlist(ptb->kvmh, nl) < 0 || nl[0].n_type == 0)
+			errx(1, "kvm: no namelist");
+		ptb->ktcbtab = nl[0].n_value;
+	} else
+		drop_gid();
+
 	if (!ptb->sflag)
 		host = argv[0];
 	/*
@@ -1157,16 +1168,6 @@ main(int argc, char **argv)
 		else
 			errx(1, "getaddrinfo: %s", gai_strerror(herr));
 	}
-	if (ptb->kvars) {
-		if ((ptb->kvmh = kvm_openfiles(NULL, NULL, NULL,
-		    O_RDONLY, kerr)) == NULL)
-			errx(1, "kvm_open: %s", kerr);
-		drop_gid();
-		if (kvm_nlist(ptb->kvmh, nl) < 0 || nl[0].n_type == 0)
-			errx(1, "kvm: no namelist");
-		ptb->ktcbtab = nl[0].n_value;
-	} else
-		drop_gid();
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		err(1, "getrlimit");
