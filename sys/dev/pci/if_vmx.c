@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.22 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.23 2015/02/09 11:06:52 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -664,7 +664,7 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 
 		sop = ring->next;
 		if (ring->m[sop] == NULL)
-			panic("vmxnet3_txintr");
+			panic("%s: NULL ring->m[%u]", __func__, sop);
 		m_freem(ring->m[sop]);
 		ring->m[sop] = NULL;
 		bus_dmamap_unload(sc->sc_dmat, ring->dmap[sop]);
@@ -719,7 +719,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		bus_dmamap_unload(sc->sc_dmat, ring->dmap[idx]);
 
 		if (m == NULL)
-			panic("NULL mbuf");
+			panic("%s: NULL ring->m[%u]", __func__, idx);
 
 		if (letoh32((rxd->rx_word2 >> VMXNET3_RX_BTYPE_S) &
 		    VMXNET3_RX_BTYPE_M) != VMXNET3_BTYPE_HEAD) {
@@ -732,13 +732,11 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 			goto skip_buffer;
 		}
 		if (len < VMXNET3_MIN_MTU) {
-			printf("%s: short packet (%d)\n", ifp->if_xname, len);
 			m_freem(m);
 			goto skip_buffer;
 		}
 
 		ifp->if_ipackets++;
-		ifp->if_ibytes += len;
 
 		vmxnet3_rx_csum(rxcd, m);
 		m->m_pkthdr.rcvif = ifp;
