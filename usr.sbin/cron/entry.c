@@ -1,11 +1,7 @@
-/*	$OpenBSD: entry.c,v 1.39 2015/01/23 19:07:27 tedu Exp $	*/
+/*	$OpenBSD: entry.c,v 1.40 2015/02/09 22:35:08 deraadt Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
- * All rights reserved
- */
-
-/*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *

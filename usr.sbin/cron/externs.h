@@ -1,10 +1,6 @@
-/*	$OpenBSD: externs.h,v 1.15 2015/01/14 17:30:53 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.16 2015/02/09 22:35:08 deraadt Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
- * All rights reserved
- */
-
-/*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *
