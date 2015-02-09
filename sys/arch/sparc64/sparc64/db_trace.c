@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2007/08/15 20:10:08 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2015/02/09 09:21:30 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -47,7 +47,7 @@ void db_dump_ts(db_expr_t, int, db_expr_t, char *);
 void db_print_window(u_int64_t);
 
 #if 0
-#define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
+#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS) /* Not really true, y'know */
 #else
 #define INKERNEL(va)	1	/* Everything's in the kernel now. 8^) */
 #endif

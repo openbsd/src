@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.23 2011/09/03 20:04:04 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.24 2015/02/09 09:21:30 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -72,7 +72,6 @@ include <sparc/dev/fdvar.h>
 # general constants
 export	SUN4_PGSHIFT
 export	SUN4CM_PGSHIFT
-export	USRSTACK
 export	IOSPACE_BASE
 export	VM_MIN_KERNEL_ADDRESS
 

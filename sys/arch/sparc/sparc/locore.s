@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.96 2014/11/22 22:49:44 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.97 2015/02/09 09:21:30 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -3765,7 +3765,7 @@ startmap_done:
 	sethi	%hi(_C_LABEL(u0) + PCB_WIM), %g2
 	st	%g1, [%g2 + %lo(_C_LABEL(u0) + PCB_WIM)]
 
-	set	USRSTACK - CCFSZ, %fp	! as if called from user code
+	set	VM_MIN_KERNEL_ADDRESS - CCFSZ, %fp	! as if called from user code
 	set	estack0 - CCFSZ - 80, %sp ! via syscall(boot_me_up) or somesuch
 	rd	%psr, %l0
 	wr	%l0, PSR_ET, %psr
