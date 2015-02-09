@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.34 2015/02/08 06:55:28 mpi Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.35 2015/02/09 03:09:57 dlg Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1298,8 +1298,10 @@ pcn_rxintr(struct pcn_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct pcn_rxsoft *rxs;
 	struct mbuf *m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	uint32_t rmd1;
 	int i, len;
+	int rv = 0;
 
 	for (i = sc->sc_rxptr;; i = PCN_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1324,7 +1326,8 @@ pcn_rxintr(struct pcn_softc *sc)
 			    (LE_R1_STP|LE_R1_ENP)) {
 				printf("%s: packet spilled into next buffer\n",
 				    sc->sc_dev.dv_xname);
-				return (1);	/* pcn_intr() will re-init */
+				rv = 1; /* pcn_intr() will re-init */
+				goto done;
 			}
 
 			/*
@@ -1412,13 +1415,15 @@ pcn_rxintr(struct pcn_softc *sc)
 
 		m->m_pkthdr.len = m->m_len = len;
 
-		if_input(ifp, m);
+		ml_enqueue(&ml, m);
 		ifp->if_ipackets++;
 	}
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
-	return (0);
+done:
+	if_input(ifp, &ml);
+	return (rv);
 }
 
 /*

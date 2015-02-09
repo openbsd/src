@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.363 2015/01/24 02:36:03 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.364 2015/02/09 03:09:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3415,6 +3415,7 @@ bge_reset(struct bge_softc *sc)
 void
 bge_rxeof(struct bge_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp;
 	uint16_t rx_prod, rx_cons;
 	int stdcnt = 0, jumbocnt = 0;
@@ -3521,15 +3522,7 @@ bge_rxeof(struct bge_softc *sc)
 		}
 #endif
 
-#if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	sc->bge_rx_saved_considx = rx_cons;
@@ -3542,6 +3535,8 @@ bge_rxeof(struct bge_softc *sc)
 		if_rxr_put(&sc->bge_jumbo_ring, jumbocnt);
 		bge_fill_rx_ring_jumbo(sc);
 	}
+
+	if_input(ifp, &ml);
 }
 
 void

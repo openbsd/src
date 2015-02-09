@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.19 2015/02/08 06:00:52 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.20 2015/02/09 03:09:57 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <sys/time.h>
 
 struct mbuf;
+struct mbuf_list;
 struct proc;
 struct rtentry;
 struct socket;
@@ -396,7 +397,7 @@ extern struct ifnet_head ifnet;
 extern struct ifnet *lo0ifp;
 
 void	if_start(struct ifnet *);
-void	if_input(struct ifnet *, struct mbuf *);
+void	if_input(struct ifnet *, struct mbuf_list *);
 
 #define	ether_input_mbuf(ifp, m)        ether_input((ifp), NULL, (m))
 

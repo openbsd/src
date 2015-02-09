@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.318 2015/02/09 00:21:58 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.319 2015/02/09 03:09:57 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -433,23 +433,26 @@ if_start(struct ifnet *ifp)
 }
 
 void
-if_input(struct ifnet *ifp, struct mbuf *m)
+if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
+	struct mbuf *m;
 	struct ifih *ifih;
 
 	splassert(IPL_NET);
 
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	while ((m = ml_dequeue(ml)) != NULL) {
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
+		if (ifp->if_bpf)
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-	SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
-		if ((*ifih->ifih_input)(ifp, NULL, m))
-			break;
+		SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
+			if ((*ifih->ifih_input)(ifp, NULL, m))
+				break;
+		}
 	}
 }
 

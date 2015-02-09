@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.23 2015/02/09 00:27:58 pelikan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.24 2015/02/09 03:09:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -973,6 +973,7 @@ vio_rxeof(struct vio_softc *sc)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct virtqueue *vq = &sc->sc_vq[VQRX];
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m, *m0 = NULL, *mlast;
 	int r = 0;
 	int slot, len, bufs_left;
@@ -1009,7 +1010,7 @@ vio_rxeof(struct vio_softc *sc)
 
 		if (bufs_left == 0) {
 			ifp->if_ipackets++;
-			if_input(ifp, m0);
+			ml_enqueue(&ml, m0);
 			m0 = NULL;
 		}
 	}
@@ -1019,6 +1020,8 @@ vio_rxeof(struct vio_softc *sc)
 		ifp->if_ierrors++;
 		m_freem(m0);
 	}
+
+	if_input(ifp, &ml);
 	return r;
 }
 

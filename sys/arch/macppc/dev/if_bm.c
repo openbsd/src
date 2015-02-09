@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.30 2015/02/08 07:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.31 2015/02/09 03:09:57 dlg Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -500,6 +500,7 @@ bmac_rint(void *v)
 {
 	struct bmac_softc *sc = v;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	dbdma_command_t *cmd;
 	int status, resid, count, datalen;
@@ -547,7 +548,7 @@ bmac_rint(void *v)
 			goto next;
 		}
 
-		if_input(ifp, m);
+		ml_enqueue(&ml, m);
 		ifp->if_ipackets++;
 
 next:
@@ -560,6 +561,7 @@ next:
 	}
 	dbdma_continue(sc->sc_rxdma);
 
+	if_input(ifp, &ml);
 	return (1);
 }
 

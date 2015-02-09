@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.292 2015/02/08 06:02:24 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.293 2015/02/09 03:09:57 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2844,6 +2844,7 @@ void
 em_rxeof(struct em_softc *sc)
 {
 	struct ifnet	    *ifp = &sc->interface_data.ac_if;
+	struct mbuf_list    ml = MBUF_LIST_INITIALIZER();
 	struct mbuf	    *m;
 	u_int8_t	    accept_frame = 0;
 	u_int8_t	    eop = 0;
@@ -2969,8 +2970,7 @@ em_rxeof(struct em_softc *sc)
 					m->m_flags |= M_VLANTAG;
 				}
 #endif
-
-				if_input(ifp, m);
+				ml_enqueue(&ml, m);
 
 				sc->fmp = NULL;
 				sc->lmp = NULL;
@@ -2995,6 +2995,8 @@ em_rxeof(struct em_softc *sc)
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
 	    0, sizeof(*desc) * sc->num_rx_desc,
 	    BUS_DMASYNC_PREREAD);
+
+	if_input(ifp, &ml);
 
 	sc->next_rx_desc_to_check = i;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.131 2015/02/08 06:03:07 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.132 2015/02/09 03:09:57 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -870,8 +870,11 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 			ieee80211_eapol_key_input(ic, m, ni);
-		} else
-			if_input(ifp, m);
+		} else {
+			struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+			ml_enqueue(&ml, m);
+			if_input(ifp, &ml);
+		}
 	}
 }
 

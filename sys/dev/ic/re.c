@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.174 2015/02/08 06:55:28 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.175 2015/02/09 03:09:57 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1272,6 +1272,7 @@ re_rx_list_fill(struct rl_softc *sc)
 int
 re_rxeof(struct rl_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf	*m;
 	struct ifnet	*ifp;
 	int		i, total_len, rx = 0;
@@ -1421,11 +1422,13 @@ re_rxeof(struct rl_softc *sc)
 		}
 #endif
 
-		if_input(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	sc->rl_ldata.rl_rx_considx = i;
 	re_rx_list_fill(sc);
+
+	if_input(ifp, &ml);
 
 	return (rx);
 }

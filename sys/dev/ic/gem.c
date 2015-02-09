@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.109 2015/02/08 06:02:03 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.110 2015/02/09 03:09:57 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -945,6 +945,7 @@ gem_rint(struct gem_softc *sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
 	struct gem_rxsoft *rxs;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_int64_t rxstat;
 	int i, len;
@@ -1000,7 +1001,7 @@ gem_rint(struct gem_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.len = m->m_len = len;
 
-		if_input(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	/* Update the receive pointer. */
@@ -1010,6 +1011,8 @@ gem_rint(struct gem_softc *sc)
 
 	DPRINTF(sc, ("gem_rint: done sc->sc_rx_cons %d, complete %d\n",
 		sc->sc_rx_cons, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
+
+	if_input(ifp, &ml);
 
 	return (1);
 }
