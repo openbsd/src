@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.85 2015/02/09 12:37:18 dlg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.86 2015/02/09 13:38:50 dlg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/atomic.h>
 
 #include "hotplug.h"
 #include "mpath.h"
