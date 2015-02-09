@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.141 2015/02/09 13:34:49 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.142 2015/02/09 13:35:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -153,9 +153,9 @@ void pmap_hash_remove(struct pte_desc *);
 void pte_insert32(struct pte_desc *) __noprof;
 void pte_insert64(struct pte_desc *) __noprof;
 void pmap_fill_pte64(pmap_t, vaddr_t, paddr_t, struct pte_desc *, vm_prot_t,
-    int, int) __noprof;
+    int) __noprof;
 void pmap_fill_pte32(pmap_t, vaddr_t, paddr_t, struct pte_desc *, vm_prot_t,
-    int, int) __noprof;
+    int) __noprof;
 
 void pmap_syncicache_user_virt(pmap_t pm, vaddr_t va);
 
@@ -535,10 +535,14 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pte_desc *pted;
 	struct vm_page *pg;
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
+	boolean_t wt = (pa & PMAP_WT) != 0;
 	int s;
 	int need_sync = 0;
 	int cache;
 	int error;
+
+	KASSERT(!(wt && nocache));
+	pa &= PMAP_PA_MASK;
 
 	/* MP - Acquire lock for this pmap */
 
@@ -571,19 +575,19 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 	}
 
-	pa &= PMAP_PA_MASK;
-
-	/* Calculate PTE */
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg != NULL && !nocache)
-		cache = PMAP_CACHE_WB; /* managed memory is cacheable */
+	if (wt)
+		cache = PMAP_CACHE_WT;
+	else if (pg != NULL && !(pg->pg_flags & PG_DEV) && !nocache)
+		cache = PMAP_CACHE_WB;
 	else
 		cache = PMAP_CACHE_CI;
 
+	/* Calculate PTE */
 	if (ppc_proc_is_64b)
-		pmap_fill_pte64(pm, va, pa, pted, prot, flags, cache);
+		pmap_fill_pte64(pm, va, pa, pted, prot, cache);
 	else
-		pmap_fill_pte32(pm, va, pa, pted, prot, flags, cache);
+		pmap_fill_pte32(pm, va, pa, pted, prot, cache);
 
 	if (pg != NULL) {
 		pmap_enter_pv(pted, pg); /* only managed mem */
@@ -760,12 +764,17 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
  * 
  */
 void
-_pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct pte_desc *pted;
 	struct vm_page *pg;
-	int s;
+	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
+	boolean_t wt = (pa & PMAP_WT) != 0;
 	pmap_t pm;
+	int cache, s;
+
+	KASSERT(!(wt && nocache));
+	pa &= PMAP_PA_MASK;
 
 	pm = pmap_kernel();
 
@@ -777,6 +786,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		pmap_remove_pg(pm, va); /* pted is reused */
 
 	pm->pm_stats.resident_count++;
+
 	if (prot & PROT_WRITE) {
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg != NULL)
@@ -789,19 +799,19 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		    va, pa);
 	}
 
-	if (cache == PMAP_CACHE_DEFAULT) {
-		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg != NULL && (pg->pg_flags & PG_DEV) == 0)
-			cache = PMAP_CACHE_WB;
-		else
-			cache = PMAP_CACHE_CI;
-	}
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (wt)
+		cache = PMAP_CACHE_WT;
+	else if (pg != NULL && !(pg->pg_flags & PG_DEV) && !nocache)
+		cache = PMAP_CACHE_WB;
+	else
+		cache = PMAP_CACHE_CI;
 
 	/* Calculate PTE */
 	if (ppc_proc_is_64b)
-		pmap_fill_pte64(pm, va, pa, pted, prot, flags, cache);
+		pmap_fill_pte64(pm, va, pa, pted, prot, cache);
 	else
-		pmap_fill_pte32(pm, va, pa, pted, prot, flags, cache);
+		pmap_fill_pte32(pm, va, pa, pted, prot, cache);
 
 	/*
 	 * Insert into HTAB
@@ -824,18 +834,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	}
 
 	splx(s);
-}
-
-void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
-{
-	_pmap_kenter_pa(va, pa, prot, 0, PMAP_CACHE_DEFAULT);
-}
-
-void
-pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable)
-{
-	_pmap_kenter_pa(va, pa, prot, 0, cacheable);
 }
 
 /*
@@ -951,7 +949,7 @@ pmap_hash_remove(struct pte_desc *pted)
  */
 void
 pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
-	vm_prot_t prot, int flags, int cache)
+	vm_prot_t prot, int cache)
 {
 	sr_t sr;
 	struct pte_64 *pte64;
@@ -991,7 +989,7 @@ pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
  */
 void
 pmap_fill_pte32(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
-	vm_prot_t prot, int flags, int cache)
+	vm_prot_t prot, int cache)
 {
 	sr_t sr;
 	struct pte_32 *pte32;
@@ -1713,24 +1711,24 @@ pmap_deactivate(struct proc *p)
 {
 }
 
-/* 
- * Get the physical page address for the given pmap/virtual address.
- */ 
+/*
+ * pmap_extract: extract a PA for the given VA
+ */
+
 boolean_t
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 {
 	struct pte_desc *pted;
 
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL || !PTED_VALID(pted)) {
-		if (pm == pmap_kernel() && va < 0x80000000) {
-			/* XXX - this is not true without BATs */
-			/* if in kernel, va==pa for 0-0x80000000 */
-			*pa = va;
-			return TRUE;
-		}
-		return FALSE;
+	if (pm == pmap_kernel() && va < physmaxaddr) {
+		*pa = va;
+		return TRUE;
 	}
+
+	pted = pmap_vp_lookup(pm, va);
+	if (pted == NULL || !PTED_VALID(pted))
+		return FALSE;
+
 	if (ppc_proc_is_64b)
 		*pa = (pted->p.pted_pte64.pte_lo & PTE_RPGN_64) |
 		    (va & ~PTE_RPGN_64);
@@ -2244,12 +2242,12 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 		aligned_va = trunc_page(va);
 		if (ppc_proc_is_64b) {
 			pmap_fill_pte64(pm, aligned_va, aligned_va,
-			    pted, prot, 0, PMAP_CACHE_WB);
+			    pted, prot, PMAP_CACHE_WB);
 			pte_insert64(pted);
 			return 1;
 		} else {
 			pmap_fill_pte32(pm, aligned_va, aligned_va,
-			    pted, prot, 0, PMAP_CACHE_WB);
+			    pted, prot, PMAP_CACHE_WB);
 			pte_insert32(pted);
 			return 1;
 		}
