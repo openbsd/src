@@ -15,6 +15,7 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    get_testlog() => 1,
+	    qr/syslogd: loghost .* connection error: connect failed:/ => 0,
 	},
 	cacrt => "ca.crt",
     },

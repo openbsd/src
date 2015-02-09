@@ -15,7 +15,8 @@ our %args = (
 	loggrep => {
 	    qr/CAfile empty, size 0/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
-	    qr/error: ssl verify memory setup failure/ => 2,
+	    qr/syslogd: loghost .* connection error: /.
+		qr/ssl verify memory setup failure/ => 2,
 	    get_testlog() => 1,
 	},
 	cacrt => "empty",

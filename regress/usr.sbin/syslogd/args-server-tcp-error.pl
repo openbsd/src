@@ -42,8 +42,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: $errors/
-		=> 1,
+	    qr/syslogd: loghost .* connection error: $errors/ => 1,
 	},
     },
 );

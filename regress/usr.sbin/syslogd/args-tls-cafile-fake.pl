@@ -15,7 +15,8 @@ our %args = (
 	loggrep => {
 	    qr/CAfile fake-ca.crt/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
-	    qr/connection error: TLS connect failed \(1\)/ => 2,
+	    qr/syslogd: loghost .* connection error: connect failed: error:.*/.
+		qr/RSA_padding_check_PKCS1_type_1:block type is not 01/ => 2,
 	    get_testlog() => 1,
 	},
 	cacrt => "fake-ca.crt",

@@ -9,6 +9,10 @@
 use strict;
 use warnings;
 use Socket;
+use Errno ':POSIX';
+
+my @errors = (ECONNRESET);
+my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
     client => {
@@ -38,7 +42,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: read failed \(5\)/ => 1,
+	    qr/syslogd: loghost .* connection error: read failed: $errors/ => 1,
 	},
     },
 );

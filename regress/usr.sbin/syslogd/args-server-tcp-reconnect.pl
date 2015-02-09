@@ -9,6 +9,10 @@
 use strict;
 use warnings;
 use Socket;
+use Errno ':POSIX';
+
+my @errors = (ECONNREFUSED);
+my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
     client => {
@@ -22,7 +26,7 @@ our %args = (
 	loghost => '@tcp://127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORWTCP \@tcp:\/\/127.0.0.1:\d+/ => '>=6',
-	    qr/syslogd: connect .* Connection refused/ => '>=2',
+	    qr/syslogd: connect .*: $errors/ => '>=2',
 	    get_between2loggrep(),
 	},
     },
@@ -46,13 +50,13 @@ our %args = (
 	loggrep => {
 	    qr/Accepted/ => 2,
 	    qr/syslogd: loghost .* connection close/ => 1,
-	    qr/syslogd: connect .* Connection refused/ => 1,
+	    qr/syslogd: connect .*: $errors/ => 1,
 	    get_between2loggrep(),
 	},
     },
     file => {
 	loggrep => {
-	    qr/syslogd: connect .* Connection refused/ => '>=1',
+	    qr/syslogd: connect .*: $errors/ => '>=1',
 	    get_between2loggrep(),
 	},
     },
