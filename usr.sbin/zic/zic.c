@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.3 2015/02/09 12:52:45 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.4 2015/02/09 13:21:42 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -7,8 +7,8 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <locale.h>
-#include <tzfile.h>
 
+#include "tzfile.h"
 #include "private.h"
 
 #define	ZIC_VERSION	'2'
