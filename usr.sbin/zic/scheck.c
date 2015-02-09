@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheck.c,v 1.2 2015/02/09 13:03:59 tedu Exp $ */
+/*	$OpenBSD: scheck.c,v 1.3 2015/02/09 14:42:44 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -23,7 +23,7 @@ const char * const	format;
 	result = "";
 	if (string == NULL || format == NULL)
 		return result;
-	fbuf = malloc((int) (2 * strlen(format) + 4));
+	fbuf = malloc(2 * strlen(format) + 4);
 	if (fbuf == NULL)
 		return result;
 	fp = format;
@@ -52,7 +52,7 @@ const char * const	format;
 	*tp++ = 'c';
 	*tp = '\0';
 	if (sscanf(string, fbuf, &dummy) != 1)
-		result = (char *) format;
+		result = format;
 	free(fbuf);
 	return result;
 }
