@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.9 2015/02/09 14:34:44 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.10 2015/02/09 23:14:32 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -137,7 +137,7 @@ static void 	stringzone(char * result, size_t size,
 			const struct zone * zp, int ntzones);
 static void	setboundaries(void);
 static zic_t	tadd(zic_t t1, long t2);
-static void	usage(FILE *stream, int status);
+static void	usage(void);
 static void	writezone(const char * name, const char * string);
 static int	yearistype(int year, const char * type);
 
@@ -446,11 +446,11 @@ const char * const	string;
 }
 
 static void
-usage(FILE *stream, int status)
+usage(void)
 {
-	(void) fprintf(stream, _("usage: %s [-v] [-d directory] [-L leapsecondfilename] [-l timezone]\n\t[-p timezone] [-y command] [filename ...]\n"),
+	fprintf(stderr, _("usage: %s [-v] [-d directory] [-L leapsecondfilename] [-l timezone]\n\t[-p timezone] [-y command] [filename ...]\n"),
 		progname);
-	exit(status);
+	exit(EXIT_FAILURE);
 }
 
 static const char *	psxrules;
@@ -478,7 +478,7 @@ char *	argv[];
 	while ((c = getopt(argc, argv, "d:l:p:L:vy:")) != -1)
 		switch (c) {
 			default:
-				usage(stderr, EXIT_FAILURE);
+				usage();
 			case 'd':
 				if (directory == NULL)
 					directory = optarg;
@@ -534,7 +534,7 @@ char *	argv[];
 				break;
 		}
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
-		usage(stderr, EXIT_FAILURE);	/* usage message by request */
+		usage();	/* usage message by request */
 	if (directory == NULL)
 		directory = TZDIR;
 	if (yitcommand == NULL)
@@ -2379,8 +2379,7 @@ const char * const	type;
 	error(_("Wild result from command execution"));
 	fprintf(stderr, _("%s: command was '%s', result was %d\n"),
 		progname, buf, result);
-	for ( ; ; )
-		exit(EXIT_FAILURE);
+	exit(EXIT_FAILURE);
 }
 
 static int
@@ -2474,7 +2473,7 @@ char *	cp;
 					++dp;
 				else {
 					error(_( "Odd number of quotation marks"));
-					exit(1);
+					exit(EXIT_FAILURE);
 				}
 		} while (*cp != '\0' && *cp != '#' &&
 			(!isascii((unsigned char)*cp) || !isspace((unsigned char) *cp)));

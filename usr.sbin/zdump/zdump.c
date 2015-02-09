@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.7 2015/02/09 22:49:10 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.8 2015/02/09 23:14:32 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -184,12 +184,10 @@ const char * const	zone;
 }
 
 static void
-usage(stream, status)
-FILE * const	stream;
-const int	status;
+usage(void)
 {
-	fprintf(stream, _("usage: %s [-v] [-c [loyear,]hiyear] zonename ...\n"), progname);
-	exit(status);
+	fprintf(stderr, _("usage: %s [-v] [-c [loyear,]hiyear] zonename ...\n"), progname);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -225,7 +223,7 @@ char *	argv[];
 		else	cutarg = optarg;
 	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
-			usage(stderr, EXIT_FAILURE);
+			usage();
 	}
 	if (vflag) {
 		if (cutarg != NULL) {
@@ -328,9 +326,7 @@ char *	argv[];
 		perror(_("Error writing to standard output"));
 		exit(EXIT_FAILURE);
 	}
-	exit(EXIT_SUCCESS);
-	/* If exit fails to exit... */
-	return EXIT_FAILURE;
+	return 0;
 }
 
 static void
