@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheck.c,v 1.11 2015/02/09 11:29:19 tedu Exp $ */
+/*	$OpenBSD: scheck.c,v 1.1 2015/02/09 12:37:47 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.

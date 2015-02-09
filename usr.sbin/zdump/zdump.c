@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.24 2015/02/09 10:45:56 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.1 2015/02/09 12:37:47 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
