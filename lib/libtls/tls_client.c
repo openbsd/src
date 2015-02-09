@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.12 2015/02/08 04:12:34 reyk Exp $ */
+/* $OpenBSD: tls_client.c,v 1.13 2015/02/09 09:23:39 reyk Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -44,10 +44,45 @@ tls_client(void)
 	return (ctx);
 }
 
+static int
+tls_connect_host(struct tls *ctx, const char *host, const char *port,
+    int af, int flag)
+{
+	struct addrinfo hints, *res, *res0;
+	int s = -1;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = af;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = flag;
+
+	if ((s = getaddrinfo(host, port, &hints, &res0)) != 0) {
+		tls_set_error(ctx, "%s", gai_strerror(s));
+		return (-1);
+	}
+	for (res = res0; res; res = res->ai_next) {
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s == -1) {
+			tls_set_error(ctx, "socket");
+			continue;
+		}
+		if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
+			tls_set_error(ctx, "connect");
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		break;  /* Connected. */
+	}
+	freeaddrinfo(res0);
+
+	return (s);
+}
+
 int
 tls_connect(struct tls *ctx, const char *host, const char *port)
 {
-	struct addrinfo hints, *res, *res0;
 	const char *h = NULL, *p = NULL;
 	char *hs = NULL, *ps = NULL;
 	int rv = -1, s = -1, ret;
@@ -79,33 +114,18 @@ tls_connect(struct tls *ctx, const char *host, const char *port)
 	h = (hs != NULL) ? hs : host;
 	p = (ps != NULL) ? ps : port;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_ADDRCONFIG;
-
-	if ((ret = getaddrinfo(h, p, &hints, &res0)) != 0) {
-		tls_set_error(ctx, "%s", gai_strerror(ret));
-		goto err;
-	}
-	for (res = res0; res; res = res->ai_next) {
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (s == -1) {
-			tls_set_error(ctx, "socket");
-			continue;
-		}
-		if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
-			tls_set_error(ctx, "connect");
-			close(s);
-			s = -1;
-			continue;
-		}
-
-		break;  /* Connected. */
-	}
-	freeaddrinfo(res0);
-
-	if (s == -1)
+	/*
+	 * First check if the host is specified as a numeric IP address,
+	 * either IPv4 or IPv6, before trying to resolve the host.
+	 * The AI_ADDRCONFIG resolver option will not return IPv4 or IPv6
+	 * records if it is not configured on an interface;  not considering
+	 * loopback addresses.  Checking the numeric addresses first makes
+	 * sure that connection attempts to numeric addresses and especially
+	 * 127.0.0.1 or ::1 loopback addresses are always possible.
+	 */
+	if ((s = tls_connect_host(ctx, h, p, AF_INET, AI_NUMERICHOST)) == -1 &&
+	    (s = tls_connect_host(ctx, h, p, AF_INET6, AI_NUMERICHOST)) == -1 &&
+	    (s = tls_connect_host(ctx, h, p, AF_UNSPEC, AI_ADDRCONFIG)) == -1)
 		goto err;
 
 	if (tls_connect_socket(ctx, s, h) != 0) {
