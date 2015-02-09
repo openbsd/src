@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pku.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_pku.c,v 1.10 2015/02/09 16:03:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -80,7 +80,31 @@ ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
 	ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notAfter, ASN1_GENERALIZEDTIME, 1)
 } ASN1_SEQUENCE_END(PKEY_USAGE_PERIOD)
 
-IMPLEMENT_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
+
+PKEY_USAGE_PERIOD *
+d2i_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD **a, const unsigned char **in, long len)
+{
+	return (PKEY_USAGE_PERIOD *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &PKEY_USAGE_PERIOD_it);
+}
+
+int
+i2d_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PKEY_USAGE_PERIOD_it);
+}
+
+PKEY_USAGE_PERIOD *
+PKEY_USAGE_PERIOD_new(void)
+{
+	return (PKEY_USAGE_PERIOD *)ASN1_item_new(&PKEY_USAGE_PERIOD_it);
+}
+
+void
+PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &PKEY_USAGE_PERIOD_it);
+}
 
 static int
 i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage,

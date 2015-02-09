@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_extku.c,v 1.10 2014/10/28 05:46:56 miod Exp $ */
+/* $OpenBSD: v3_extku.c,v 1.11 2015/02/09 16:03:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -96,7 +96,31 @@ ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) =
 	ASN1_OBJECT)
 ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
 
-IMPLEMENT_ASN1_FUNCTIONS(EXTENDED_KEY_USAGE)
+
+EXTENDED_KEY_USAGE *
+d2i_EXTENDED_KEY_USAGE(EXTENDED_KEY_USAGE **a, const unsigned char **in, long len)
+{
+	return (EXTENDED_KEY_USAGE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &EXTENDED_KEY_USAGE_it);
+}
+
+int
+i2d_EXTENDED_KEY_USAGE(EXTENDED_KEY_USAGE *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &EXTENDED_KEY_USAGE_it);
+}
+
+EXTENDED_KEY_USAGE *
+EXTENDED_KEY_USAGE_new(void)
+{
+	return (EXTENDED_KEY_USAGE *)ASN1_item_new(&EXTENDED_KEY_USAGE_it);
+}
+
+void
+EXTENDED_KEY_USAGE_free(EXTENDED_KEY_USAGE *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &EXTENDED_KEY_USAGE_it);
+}
 
 static STACK_OF(CONF_VALUE) *
 i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method, void *a,

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.13 2014/10/05 18:27:58 miod Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.14 2015/02/09 16:03:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -383,7 +383,31 @@ ASN1_CHOICE_cb(DIST_POINT_NAME, dpn_cb) = {
 } ASN1_CHOICE_END_cb(DIST_POINT_NAME, DIST_POINT_NAME, type)
 
 
-IMPLEMENT_ASN1_FUNCTIONS(DIST_POINT_NAME)
+
+DIST_POINT_NAME *
+d2i_DIST_POINT_NAME(DIST_POINT_NAME **a, const unsigned char **in, long len)
+{
+	return (DIST_POINT_NAME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DIST_POINT_NAME_it);
+}
+
+int
+i2d_DIST_POINT_NAME(DIST_POINT_NAME *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DIST_POINT_NAME_it);
+}
+
+DIST_POINT_NAME *
+DIST_POINT_NAME_new(void)
+{
+	return (DIST_POINT_NAME *)ASN1_item_new(&DIST_POINT_NAME_it);
+}
+
+void
+DIST_POINT_NAME_free(DIST_POINT_NAME *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &DIST_POINT_NAME_it);
+}
 
 ASN1_SEQUENCE(DIST_POINT) = {
 	ASN1_EXP_OPT(DIST_POINT, distpoint, DIST_POINT_NAME, 0),
@@ -391,14 +415,62 @@ ASN1_SEQUENCE(DIST_POINT) = {
 	ASN1_IMP_SEQUENCE_OF_OPT(DIST_POINT, CRLissuer, GENERAL_NAME, 2)
 } ASN1_SEQUENCE_END(DIST_POINT)
 
-IMPLEMENT_ASN1_FUNCTIONS(DIST_POINT)
+
+DIST_POINT *
+d2i_DIST_POINT(DIST_POINT **a, const unsigned char **in, long len)
+{
+	return (DIST_POINT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DIST_POINT_it);
+}
+
+int
+i2d_DIST_POINT(DIST_POINT *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DIST_POINT_it);
+}
+
+DIST_POINT *
+DIST_POINT_new(void)
+{
+	return (DIST_POINT *)ASN1_item_new(&DIST_POINT_it);
+}
+
+void
+DIST_POINT_free(DIST_POINT *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &DIST_POINT_it);
+}
 
 ASN1_ITEM_TEMPLATE(CRL_DIST_POINTS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, CRLDistributionPoints,
 	DIST_POINT)
 ASN1_ITEM_TEMPLATE_END(CRL_DIST_POINTS)
 
-IMPLEMENT_ASN1_FUNCTIONS(CRL_DIST_POINTS)
+
+CRL_DIST_POINTS *
+d2i_CRL_DIST_POINTS(CRL_DIST_POINTS **a, const unsigned char **in, long len)
+{
+	return (CRL_DIST_POINTS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &CRL_DIST_POINTS_it);
+}
+
+int
+i2d_CRL_DIST_POINTS(CRL_DIST_POINTS *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CRL_DIST_POINTS_it);
+}
+
+CRL_DIST_POINTS *
+CRL_DIST_POINTS_new(void)
+{
+	return (CRL_DIST_POINTS *)ASN1_item_new(&CRL_DIST_POINTS_it);
+}
+
+void
+CRL_DIST_POINTS_free(CRL_DIST_POINTS *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &CRL_DIST_POINTS_it);
+}
 
 ASN1_SEQUENCE(ISSUING_DIST_POINT) = {
 	ASN1_EXP_OPT(ISSUING_DIST_POINT, distpoint, DIST_POINT_NAME, 0),
@@ -409,7 +481,31 @@ ASN1_SEQUENCE(ISSUING_DIST_POINT) = {
 	ASN1_IMP_OPT(ISSUING_DIST_POINT, onlyattr, ASN1_FBOOLEAN, 5)
 } ASN1_SEQUENCE_END(ISSUING_DIST_POINT)
 
-IMPLEMENT_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
+
+ISSUING_DIST_POINT *
+d2i_ISSUING_DIST_POINT(ISSUING_DIST_POINT **a, const unsigned char **in, long len)
+{
+	return (ISSUING_DIST_POINT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ISSUING_DIST_POINT_it);
+}
+
+int
+i2d_ISSUING_DIST_POINT(ISSUING_DIST_POINT *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ISSUING_DIST_POINT_it);
+}
+
+ISSUING_DIST_POINT *
+ISSUING_DIST_POINT_new(void)
+{
+	return (ISSUING_DIST_POINT *)ASN1_item_new(&ISSUING_DIST_POINT_it);
+}
+
+void
+ISSUING_DIST_POINT_free(ISSUING_DIST_POINT *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ISSUING_DIST_POINT_it);
+}
 
 static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
     int indent);

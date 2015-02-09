@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.12 2015/02/09 16:03:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -95,14 +95,62 @@ ASN1_SEQUENCE(SXNETID) = {
 	ASN1_SIMPLE(SXNETID, user, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(SXNETID)
 
-IMPLEMENT_ASN1_FUNCTIONS(SXNETID)
+
+SXNETID *
+d2i_SXNETID(SXNETID **a, const unsigned char **in, long len)
+{
+	return (SXNETID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &SXNETID_it);
+}
+
+int
+i2d_SXNETID(SXNETID *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &SXNETID_it);
+}
+
+SXNETID *
+SXNETID_new(void)
+{
+	return (SXNETID *)ASN1_item_new(&SXNETID_it);
+}
+
+void
+SXNETID_free(SXNETID *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &SXNETID_it);
+}
 
 ASN1_SEQUENCE(SXNET) = {
 	ASN1_SIMPLE(SXNET, version, ASN1_INTEGER),
 	ASN1_SEQUENCE_OF(SXNET, ids, SXNETID)
 } ASN1_SEQUENCE_END(SXNET)
 
-IMPLEMENT_ASN1_FUNCTIONS(SXNET)
+
+SXNET *
+d2i_SXNET(SXNET **a, const unsigned char **in, long len)
+{
+	return (SXNET *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &SXNET_it);
+}
+
+int
+i2d_SXNET(SXNET *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &SXNET_it);
+}
+
+SXNET *
+SXNET_new(void)
+{
+	return (SXNET *)ASN1_item_new(&SXNET_it);
+}
+
+void
+SXNET_free(SXNET *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &SXNET_it);
+}
 
 static int
 sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent)

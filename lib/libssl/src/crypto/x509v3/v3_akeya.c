@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akeya.c,v 1.5 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_akeya.c,v 1.6 2015/02/09 16:03:11 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -69,4 +69,28 @@ ASN1_SEQUENCE(AUTHORITY_KEYID) = {
 	ASN1_IMP_OPT(AUTHORITY_KEYID, serial, ASN1_INTEGER, 2)
 } ASN1_SEQUENCE_END(AUTHORITY_KEYID)
 
-IMPLEMENT_ASN1_FUNCTIONS(AUTHORITY_KEYID)
+
+AUTHORITY_KEYID *
+d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, const unsigned char **in, long len)
+{
+	return (AUTHORITY_KEYID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &AUTHORITY_KEYID_it);
+}
+
+int
+i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &AUTHORITY_KEYID_it);
+}
+
+AUTHORITY_KEYID *
+AUTHORITY_KEYID_new(void)
+{
+	return (AUTHORITY_KEYID *)ASN1_item_new(&AUTHORITY_KEYID_it);
+}
+
+void
+AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &AUTHORITY_KEYID_it);
+}

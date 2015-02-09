@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_asid.c,v 1.11 2014/07/13 16:03:10 beck Exp $ */
+/* $OpenBSD: v3_asid.c,v 1.12 2015/02/09 16:03:11 jsing Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -98,10 +98,106 @@ ASN1_SEQUENCE(ASIdentifiers) = {
 	ASN1_EXP_OPT(ASIdentifiers, rdi,   ASIdentifierChoice, 1)
 } ASN1_SEQUENCE_END(ASIdentifiers)
 
-IMPLEMENT_ASN1_FUNCTIONS(ASRange)
-IMPLEMENT_ASN1_FUNCTIONS(ASIdOrRange)
-IMPLEMENT_ASN1_FUNCTIONS(ASIdentifierChoice)
-IMPLEMENT_ASN1_FUNCTIONS(ASIdentifiers)
+
+ASRange *
+d2i_ASRange(ASRange **a, const unsigned char **in, long len)
+{
+	return (ASRange *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASRange_it);
+}
+
+int
+i2d_ASRange(ASRange *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASRange_it);
+}
+
+ASRange *
+ASRange_new(void)
+{
+	return (ASRange *)ASN1_item_new(&ASRange_it);
+}
+
+void
+ASRange_free(ASRange *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASRange_it);
+}
+
+ASIdOrRange *
+d2i_ASIdOrRange(ASIdOrRange **a, const unsigned char **in, long len)
+{
+	return (ASIdOrRange *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASIdOrRange_it);
+}
+
+int
+i2d_ASIdOrRange(ASIdOrRange *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASIdOrRange_it);
+}
+
+ASIdOrRange *
+ASIdOrRange_new(void)
+{
+	return (ASIdOrRange *)ASN1_item_new(&ASIdOrRange_it);
+}
+
+void
+ASIdOrRange_free(ASIdOrRange *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASIdOrRange_it);
+}
+
+ASIdentifierChoice *
+d2i_ASIdentifierChoice(ASIdentifierChoice **a, const unsigned char **in, long len)
+{
+	return (ASIdentifierChoice *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASIdentifierChoice_it);
+}
+
+int
+i2d_ASIdentifierChoice(ASIdentifierChoice *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASIdentifierChoice_it);
+}
+
+ASIdentifierChoice *
+ASIdentifierChoice_new(void)
+{
+	return (ASIdentifierChoice *)ASN1_item_new(&ASIdentifierChoice_it);
+}
+
+void
+ASIdentifierChoice_free(ASIdentifierChoice *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASIdentifierChoice_it);
+}
+
+ASIdentifiers *
+d2i_ASIdentifiers(ASIdentifiers **a, const unsigned char **in, long len)
+{
+	return (ASIdentifiers *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASIdentifiers_it);
+}
+
+int
+i2d_ASIdentifiers(ASIdentifiers *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASIdentifiers_it);
+}
+
+ASIdentifiers *
+ASIdentifiers_new(void)
+{
+	return (ASIdentifiers *)ASN1_item_new(&ASIdentifiers_it);
+}
+
+void
+ASIdentifiers_free(ASIdentifiers *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASIdentifiers_it);
+}
 
 /*
  * i2r method for an ASIdentifierChoice.

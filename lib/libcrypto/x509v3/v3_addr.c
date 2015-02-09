@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_addr.c,v 1.14 2014/11/18 03:28:05 tedu Exp $ */
+/* $OpenBSD: v3_addr.c,v 1.15 2015/02/09 16:03:11 jsing Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -102,10 +102,106 @@ ASN1_ITEM_TEMPLATE(IPAddrBlocks) =
 	IPAddrBlocks, IPAddressFamily)
 ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
 
-IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
-IMPLEMENT_ASN1_FUNCTIONS(IPAddressOrRange)
-IMPLEMENT_ASN1_FUNCTIONS(IPAddressChoice)
-IMPLEMENT_ASN1_FUNCTIONS(IPAddressFamily)
+
+IPAddressRange *
+d2i_IPAddressRange(IPAddressRange **a, const unsigned char **in, long len)
+{
+	return (IPAddressRange *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &IPAddressRange_it);
+}
+
+int
+i2d_IPAddressRange(IPAddressRange *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressRange_it);
+}
+
+IPAddressRange *
+IPAddressRange_new(void)
+{
+	return (IPAddressRange *)ASN1_item_new(&IPAddressRange_it);
+}
+
+void
+IPAddressRange_free(IPAddressRange *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressRange_it);
+}
+
+IPAddressOrRange *
+d2i_IPAddressOrRange(IPAddressOrRange **a, const unsigned char **in, long len)
+{
+	return (IPAddressOrRange *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &IPAddressOrRange_it);
+}
+
+int
+i2d_IPAddressOrRange(IPAddressOrRange *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressOrRange_it);
+}
+
+IPAddressOrRange *
+IPAddressOrRange_new(void)
+{
+	return (IPAddressOrRange *)ASN1_item_new(&IPAddressOrRange_it);
+}
+
+void
+IPAddressOrRange_free(IPAddressOrRange *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressOrRange_it);
+}
+
+IPAddressChoice *
+d2i_IPAddressChoice(IPAddressChoice **a, const unsigned char **in, long len)
+{
+	return (IPAddressChoice *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &IPAddressChoice_it);
+}
+
+int
+i2d_IPAddressChoice(IPAddressChoice *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressChoice_it);
+}
+
+IPAddressChoice *
+IPAddressChoice_new(void)
+{
+	return (IPAddressChoice *)ASN1_item_new(&IPAddressChoice_it);
+}
+
+void
+IPAddressChoice_free(IPAddressChoice *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressChoice_it);
+}
+
+IPAddressFamily *
+d2i_IPAddressFamily(IPAddressFamily **a, const unsigned char **in, long len)
+{
+	return (IPAddressFamily *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &IPAddressFamily_it);
+}
+
+int
+i2d_IPAddressFamily(IPAddressFamily *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressFamily_it);
+}
+
+IPAddressFamily *
+IPAddressFamily_new(void)
+{
+	return (IPAddressFamily *)ASN1_item_new(&IPAddressFamily_it);
+}
+
+void
+IPAddressFamily_free(IPAddressFamily *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressFamily_it);
+}
 
 /*
  * How much buffer space do we need for a raw address?
