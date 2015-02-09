@@ -361,6 +361,101 @@ get_mif6_cnt(struct sioc_mif_req6 *req)
 	return 0;
 }
 
+int
+mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
+{
+	caddr_t where = oldp;
+	size_t needed, given;
+	struct mif6 *mifp;
+	mifi_t mifi;
+	struct mif6info minfo;
+
+	given = *oldlenp;
+	needed = 0;
+	for (mifi = 0; mifi < nummifs; mifi++) {
+		mifp = &mif6table[mifi];
+		if (mifp->m6_ifp == NULL)
+			continue;	
+
+		minfo.m6_mifi = mifi;
+		minfo.m6_flags = mifp->m6_flags;
+		minfo.m6_lcl_addr = mifp->m6_lcl_addr;
+		minfo.m6_ifindex = mifp->m6_ifp->if_index;
+		minfo.m6_pkt_in = mifp->m6_pkt_in;
+		minfo.m6_pkt_out = mifp->m6_pkt_out;
+		minfo.m6_bytes_in = mifp->m6_bytes_in;
+		minfo.m6_bytes_out = mifp->m6_bytes_out;
+		minfo.m6_rate_limit = mifp->m6_rate_limit;
+
+		needed += sizeof(minfo);
+		if (where && needed <= given) { 
+			int error;
+
+			error = copyout(&minfo, where, sizeof(minfo));
+			if (error)
+				return (error);
+			where += sizeof(minfo);
+		}
+	}
+	if (where) {
+		*oldlenp = needed;
+		if (given < needed)
+			return (ENOMEM);
+	} else
+		*oldlenp = (11 * needed) / 10;
+
+	return (0);
+}
+
+int
+mrt6_sysctl_mfc(void *oldp, size_t *oldlenp)
+{
+	caddr_t where = oldp;
+	size_t needed, given;
+	u_long i;
+	u_int64_t waitings;
+	struct mf6c *m;
+	struct mf6cinfo minfo;
+	struct rtdetq *r;
+
+	given = *oldlenp;
+	needed = 0;
+	for (i = 0; i < MF6CTBLSIZ; ++i) {
+		m = mf6ctable[i];
+		while (m) {
+			minfo.mf6c_origin = m->mf6c_origin;
+			minfo.mf6c_mcastgrp = m->mf6c_mcastgrp;
+			minfo.mf6c_parent = m->mf6c_parent;
+			minfo.mf6c_ifset = m->mf6c_ifset;
+			minfo.mf6c_pkt_cnt = m->mf6c_pkt_cnt;
+			minfo.mf6c_byte_cnt = m->mf6c_byte_cnt;
+
+			for (waitings = 0, r = m->mf6c_stall; r; r = r->next)
+				waitings++;
+			minfo.mf6c_stall_cnt = waitings;
+
+			needed += sizeof(minfo);
+			if (where && needed <= given) { 
+				int error;
+
+				error = copyout(&minfo, where, sizeof(minfo));
+				if (error)
+					return (error);
+				where += sizeof(minfo);
+			}
+			m = m->mf6c_next;
+		}
+	}
+	if (where) {
+		*oldlenp = needed;
+		if (given < needed)
+			return (ENOMEM);
+	} else
+		*oldlenp = (11 * needed) / 10;
+
+	return (0);
+}
+
 /*
  * Get PIM processiong global
  */

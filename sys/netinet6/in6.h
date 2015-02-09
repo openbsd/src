@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.79 2015/02/09 12:04:27 dlg Exp $	*/
+/*	$OpenBSD: in6.h,v 1.80 2015/02/09 12:23:22 claudio Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -607,7 +607,9 @@ ifatoia6(struct ifaddr *ifa)
 #define IPV6CTL_DAD_PENDING	49
 #define IPV6CTL_MTUDISCTIMEOUT	50
 #define IPV6CTL_IFQUEUE		51
-#define IPV6CTL_MAXID		52
+#define IPV6CTL_MRTMIF		52
+#define IPV6CTL_MRTMFC		53
+#define IPV6CTL_MAXID		54
 
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
@@ -665,6 +667,8 @@ ifatoia6(struct ifaddr *ifa)
 	{ "dad_pending", CTLTYPE_INT }, \
 	{ "mtudisctimeout", CTLTYPE_INT }, \
 	{ "ifq", CTLTYPE_NODE }, \
+	{ "mrtmif", CTLTYPE_STRUCT }, \
+	{ "mrtmfc", CTLTYPE_STRUCT }, \
 }
 
 #define IPV6CTL_VARS { \
@@ -717,6 +721,9 @@ ifatoia6(struct ifaddr *ifa)
 	&ip6_maxifprefixes, \
 	&ip6_maxifdefrouters, \
 	&ip6_maxdynroutes, \
+	NULL, \
+	NULL, \
+	NULL, \
 	NULL, \
 	NULL, \
 }

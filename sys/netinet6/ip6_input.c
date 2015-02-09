@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.138 2015/02/09 12:04:27 dlg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.139 2015/02/09 12:23:22 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1419,19 +1419,27 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			return (EPERM);
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    &ip6stat, sizeof(ip6stat)));
-	case IPV6CTL_MRTSTATS:
 #ifdef MROUTING
+	case IPV6CTL_MRTSTATS:
 		if (newp != NULL)
 			return (EPERM);
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    &mrt6stat, sizeof(mrt6stat)));
-#else
-		return (EOPNOTSUPP);
-#endif
 	case IPV6CTL_MRTPROTO:
-#ifdef MROUTING
 		return sysctl_rdint(oldp, oldlenp, newp, ip6_mrtproto);
+	case IPV6CTL_MRTMIF:
+		if (newp)
+			return (EPERM);
+		return mrt6_sysctl_mif(oldp, oldlenp);
+	case IPV6CTL_MRTMFC:
+		if (newp)
+			return (EPERM);
+		return mrt6_sysctl_mfc(oldp, oldlenp);
 #else
+	case IPV6CTL_MRTSTATS:
+	case IPV6CTL_MRTPROTO:
+	case IPV6CTL_MRTMIF:
+	case IPV6CTL_MRTMFC:
 		return (EOPNOTSUPP);
 #endif
 	case IPV6CTL_MTUDISCTIMEOUT:

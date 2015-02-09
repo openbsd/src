@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.14 2014/07/09 15:35:53 mpi Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.15 2015/02/09 12:23:22 claudio Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -93,6 +93,8 @@ struct mif6ctl {
 
 #define	MIFF_REGISTER	0x1	/* mif represents a register end-point */
 
+#define MF6C_INCOMPLETE_PARENT ((mifi_t)-1)
+
 /*
  * Argument structure for MRT6_ADD_MFC and MRT6_DEL_MFC
  */
@@ -101,6 +103,31 @@ struct mf6cctl {
 	struct sockaddr_in6 mf6cc_mcastgrp; /* multicast group associated */
 	mifi_t		mf6cc_parent;	/* incoming ifindex */
 	struct if_set	mf6cc_ifset;	/* set of forwarding ifs */
+};
+
+/* structure used to get all the mif entries via sysctl */
+struct mif6info {
+	struct in6_addr	m6_lcl_addr;   	/* local interface address           */
+	u_int16_t 	m6_ifindex;    	/* interface index                   */
+	u_int64_t	m6_pkt_in;	/* # pkts in on interface            */
+	u_int64_t	m6_pkt_out;	/* # pkts out on interface           */
+	u_int64_t	m6_bytes_in;	/* # bytes in on interface	     */
+	u_int64_t	m6_bytes_out;	/* # bytes out on interface	     */
+	u_int      	m6_rate_limit; 	/* max rate			     */
+	mifi_t		m6_mifi;
+        u_char   	m6_flags;     	/* MIFF_ flags defined above         */
+};
+
+/* structure used to get all the mf6c entries via sysctl */
+struct mf6cinfo {
+	struct sockaddr_in6  mf6c_origin;	/* IPv6 origin of mcasts     */
+	struct sockaddr_in6  mf6c_mcastgrp;	/* multicast group associated*/
+	mifi_t	    	 mf6c_parent; 		/* incoming IF               */
+	struct if_set	 mf6c_ifset;		/* set of outgoing IFs */
+
+	u_int64_t    	mf6c_pkt_cnt;		/* pkt count for src-grp     */
+	u_int64_t    	mf6c_byte_cnt;		/* byte count for src-grp    */
+	u_int64_t    	mf6c_stall_cnt;		/* pkt-cnt waiting for route */
 };
 
 /*
@@ -200,8 +227,6 @@ struct mf6c {
 	struct mf6c    *mf6c_next;		/* hash table linkage */
 };
 
-#define MF6C_INCOMPLETE_PARENT ((mifi_t)-1)
-
 /*
  * Argument structure used for pkt info. while upcall is made
  */
@@ -227,6 +252,8 @@ int	ip6_mrouter_get(int, struct socket *, struct mbuf **);
 int	ip6_mrouter_done(void);
 void	ip6_mrouter_detach(struct ifnet *);
 int	mrt6_ioctl(u_long, caddr_t);
+int	mrt6_sysctl_mif(void *, size_t *);
+int	mrt6_sysctl_mfc(void *, size_t *);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_MROUTE_H_ */
