@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.35 2014/03/31 22:03:29 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.36 2015/02/09 04:27:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -81,7 +81,7 @@ USER_init(struct disk *disk, struct mbr *tt, int preserve)
 int modified;
 
 int
-USER_modify(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
+USER_edit(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 {
 	static int editlevel;
 	struct dos_mbr dos_mbr;

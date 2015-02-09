@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.64 2015/01/03 15:50:50 jsing Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.65 2015/02/09 04:27:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -76,7 +76,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, fd, error;
-	int i_flag = 0, m_flag = 0, u_flag = 0;
+	int i_flag = 0, e_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	struct disk disk;
 	u_int32_t l_arg = 0;
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 			u_flag = 1;
 			break;
 		case 'e':
-			m_flag = 1;
+			e_flag = 1;
 			break;
 		case 'f':
 			mbrfile = optarg;
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 		    "to specify.");
 
 	/* Print out current MBRs on disk */
-	if ((i_flag + u_flag + m_flag) == 0)
+	if ((i_flag + u_flag + e_flag) == 0)
 		exit(USER_print_disk(&disk));
 
 	/* Parse mbr template, to pass on later */
@@ -202,8 +202,8 @@ main(int argc, char *argv[])
 		if (USER_init(&disk, &mbr, u_flag) == -1)
 			err(1, "error initializing MBR");
 
-	if (m_flag)
-		USER_modify(&disk, &mbr, 0, 0);
+	if (e_flag)
+		USER_edit(&disk, &mbr, 0, 0);
 
 	return (0);
 }
