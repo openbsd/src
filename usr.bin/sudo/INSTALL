@@ -104,6 +104,16 @@ Directory and file names:
   --srcdir=DIR
 	Find the sources in DIR [configure dir or ..]
 
+  --with-tzdir=DIR
+	Set the directory to the system's time zone data files.  This
+	is only used when sanitizing the TZ environment variable to
+	allow for fully-qualified paths in TZ.
+	By default, configure will look for an existing "zoneinfo"
+	directory in the following locations:
+	    /usr/share /usr/share/lib /usr/lib /etc
+	If no zoneinfo directory is found, the TZ variable may not
+	contain a fully-qualified path.
+
 Special features/options:
   --with-CC=PATH
 	Specifies path to C compiler you wish to use.

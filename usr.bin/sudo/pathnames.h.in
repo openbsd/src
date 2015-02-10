@@ -129,3 +129,7 @@
 #ifndef _PATH_NETSVC_CONF
 #undef	_PATH_NETSVC_CONF
 #endif /* _PATH_NETSVC_CONF */
+
+#ifndef _PATH_ZONEINFO
+#undef	_PATH_ZONEINFO
+#endif /* _PATH_ZONEINFO */

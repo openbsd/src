@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: February 15 2014 $
+.Dd $Mdocdate: February 10 2015 $
 .Dt SUDOERS @mansectform@
 .Os
 .Sh NAME
@@ -2143,7 +2143,13 @@ The default value is
 .Sy Lists that can be used in a boolean context :
 .Bl -tag -width 16n
 .It env_check
-Environment variables to be removed from the user's environment if
+Environment variables to be removed from the user's environment
+unless they are considered
+.Dq safe .
+For all variables except
+Li TZ ,
+.Dq safe
+means that the variable's value does not contain any
 the variable's value contains
 .Ql %
 or
@@ -2151,6 +2157,26 @@ or
 characters.
 This can be used to guard against printf-style format vulnerabilities
 in poorly-written programs.
+The
+.Li TZ
+variable is considerd unsafe if any of the following are true:
+.Bl -bullet
+.It
+It consists of a fully-qualified path name that does not match
+the location of the
+.Pa zoneinfo
+directory.
+.It
+It contains a
+.Pa ..
+path element.
+.It
+It contains white space or non-printable characters.
+.It
+It is longer than the value of
+.Li PATH_MAX .
+.El
+.Pp
 The argument may be a double-quoted, space-separated list or a
 single value without double-quotes.
 The list can be replaced, added to, deleted from, or disabled by using

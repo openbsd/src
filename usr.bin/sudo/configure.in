@@ -694,6 +694,12 @@ AC_ARG_WITH(timedir, [AS_HELP_STRING([--with-timedir], [path to the sudo timesta
 		;;
 esac])
 
+AC_ARG_WITH(tzdir, [AS_HELP_STRING([--with-tzdir=DIR], [path to the time zone data directory])],
+[case $with_tzdir in
+    yes)	AC_MSG_ERROR(["must give --with-tzdir an argument."])
+		;;
+esac])
+
 AC_ARG_WITH(sendmail, [AS_HELP_STRING([--with-sendmail], [set path to sendmail])
 AS_HELP_STRING([--without-sendmail], [do not send mail at all])],
 [case $with_sendmail in
@@ -2560,6 +2566,7 @@ dnl Check for log file and timestamp locations
 dnl
 SUDO_LOGFILE
 SUDO_TIMEDIR
+SUDO_TZDIR
 
 dnl
 dnl Use passwd (and secureware) auth modules?

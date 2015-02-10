@@ -186,6 +186,7 @@ static const char *initial_checkenv_table[] = {
     "LC_*",
     "LINGUAS",
     "TERM",
+    "TZ",
     NULL
 };
 
@@ -203,7 +204,6 @@ static const char *initial_keepenv_table[] = {
     "PATH",
     "PS1",
     "PS2",
-    "TZ",
     "XAUTHORITY",
     "XAUTHORIZATION",
     NULL
@@ -513,6 +513,54 @@ matches_env_delete(var)
 }
 
 /*
+ * Sanity-check the TZ environment variable.
+ * On many systems it is possible to set this to a pathname.
+ */
+static int
+tz_is_sane(tzval)
+    const char *tzval;
+{
+    const char *cp;
+    char lastch;
+
+    /* tzcode treats a value beginning with a ':' as a path. */
+    if (tzval[0] == ':')
+	tzval++;
+
+    /* Reject fully-qualified TZ that doesn't being with the zoneinfo dir. */
+    if (tzval[0] == '/') {
+#ifdef _PATH_ZONEINFO
+	if (strncmp(tzval, _PATH_ZONEINFO, sizeof(_PATH_ZONEINFO) - 1) != 0 ||
+	    tzval[sizeof(_PATH_ZONEINFO) - 1] != '/')
+	    return FALSE;
+#else
+	/* Assume the worst. */
+	return FALSE;
+#endif
+    }
+
+    /*
+     * Make sure TZ only contains printable non-space characters
+     * and does not contain a '..' path element.
+     */
+    lastch = '/';
+    for (cp = tzval; *cp != '\0'; cp++) {
+	if (isspace((unsigned char)*cp) || !isprint((unsigned char)*cp))
+	    return FALSE;
+	if (lastch == '/' && cp[0] == '.' && cp[1] == '.' &&
+	    (cp[2] == '/' || cp[2] == '\0'))
+	    return FALSE;
+	lastch = *cp;
+    }
+
+    /* Reject extra long TZ values (even if not a path). */
+    if ((size_t)(cp - tzval) >= PATH_MAX)
+	return FALSE;
+
+    return TRUE;
+}
+
+/*
  * Apply the env_check list.
  * Returns TRUE if the variable is allowed, FALSE if denied
  * or -1 if no match.
@@ -535,7 +583,12 @@ matches_env_check(var)
 	    iswild = FALSE;
 	if (strncmp(cur->value, var, len) == 0 &&
 	    (iswild || var[len] == '=')) {
-	    keepit = !strpbrk(var, "/%");
+	    if (strncmp(var, "TZ=", 3) == 0) {
+		/* Special case for TZ */
+		keepit = tz_is_sane(var + 3);
+	    } else {
+		keepit = !strpbrk(var, "/%");
+	    }
 	    break;
 	}
     }

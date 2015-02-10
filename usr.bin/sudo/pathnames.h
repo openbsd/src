@@ -132,3 +132,7 @@
 #ifndef _PATH_NETSVC_CONF
 /* #undef	_PATH_NETSVC_CONF */
 #endif /* _PATH_NETSVC_CONF */
+
+#ifndef _PATH_ZONEINFO
+#define	_PATH_ZONEINFO "/usr/share/zoneinfo"
+#endif /* _PATH_ZONEINFO */
