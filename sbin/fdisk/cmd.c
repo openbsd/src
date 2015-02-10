@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.72 2015/02/09 04:27:15 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.73 2015/02/10 01:20:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,6 +43,8 @@
 #include "user.h"
 #include "cmd.h"
 
+int reinited;
+
 int
 Xreinit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -54,6 +56,7 @@ Xreinit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	MBR_parse(disk, &dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
 	MBR_init(disk, mbr);
+	reinited = 1;
 
 	/* Tell em we did something */
 	printf("In memory copy is initialized to:\n");
@@ -305,10 +308,15 @@ Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		errno = saved_errno;
 		return (CMD_CONT);
 	}
-	close(fd);
+
+	/* Make sure GPT doesn't get in the way. */
+	if (reinited)
+		MBR_zapgpt(fd, &dos_mbr, disk->size - 1);
 
 	/* Refresh in memory copy to reflect what was just written. */
 	MBR_parse(disk, &dos_mbr, mbr->offset, mbr->reloffset, mbr);
+
+	close(fd);
 
 	return (CMD_CLEAN);
 }

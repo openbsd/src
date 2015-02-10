@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.42 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.43 2015/02/10 01:20:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -179,31 +179,14 @@ MBR_print(struct mbr *mbr, char *units)
 int
 MBR_read(int fd, off_t where, struct dos_mbr *dos_mbr)
 {
-	const int secsize = unit_types[SECTORS].conversion;
-	ssize_t len;
-	off_t off;
 	char *secbuf;
 
-	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
-	if (off != where)
-		return (-1);
-
-	secbuf = calloc(1, secsize);
+	secbuf = MBR_readsector(fd, where);
 	if (secbuf == NULL)
 		return (-1);
 
-	len = read(fd, secbuf, secsize);
 	memcpy(dos_mbr, secbuf, sizeof(*dos_mbr));
 	free(secbuf);
-
-	if (len == -1)
-		return (-1);
-	if (len < sizeof(*dos_mbr)) {
-		/* short read */
-		errno = EIO;
-		return (-1);
-	}
 
 	return (0);
 }
@@ -211,47 +194,22 @@ MBR_read(int fd, off_t where, struct dos_mbr *dos_mbr)
 int
 MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 {
-	const int secsize = unit_types[SECTORS].conversion;
-	ssize_t len;
-	off_t off;
 	char *secbuf;
 
-	/* Read the sector we want to store the MBR in. */
-	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
-	if (off != where)
-		return (-1);
-
-	secbuf = calloc(1, secsize);
+	secbuf = MBR_readsector(fd, where);
 	if (secbuf == NULL)
 		return (-1);
-
-	len = read(fd, secbuf, secsize);
-	if (len == -1 || len != secsize)
-		goto done;
 
 	/*
 	 * Place the new MBR at the start of the sector and
 	 * write the sector back to "disk".
 	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
-	off = lseek(fd, where, SEEK_SET);
-	if (off == where)
-		len = write(fd, secbuf, secsize);
-	else
-		len = -1;
-
-done:
-	free(secbuf);
-	if (len == -1)
-		return (-1);
-	if (len != secsize) {
-		/* short read or write */
-		errno = EIO;
-		return (-1);
-	}
-
+	MBR_writesector(fd, secbuf, where);
 	ioctl(fd, DIOCRLDINFO, 0);
+
+	free(secbuf);
+
 	return (0);
 }
 
@@ -277,4 +235,104 @@ MBR_pcopy(struct disk *disk, struct mbr *mbr)
 
 	for (i = 0; i < NDOSPART; i++)
 		PRT_parse(disk, &dos_parts[i], 0, 0, &mbr->part[i]);
+}
+
+/*
+ * Read the sector at 'where' into a sector sized buf and return the latter.
+ */
+char *
+MBR_readsector(int fd, off_t where)
+{
+	char *secbuf;
+	const int secsize = unit_types[SECTORS].conversion;
+	ssize_t len;
+	off_t off;
+
+	where *= secsize;
+	off = lseek(fd, where, SEEK_SET);
+	if (off != where)
+		return (NULL);
+
+	secbuf = calloc(1, secsize);
+	if (secbuf == NULL)
+		return (NULL);
+
+	len = read(fd, secbuf, secsize);
+	if (len == -1 || len != secsize) {
+		free(secbuf);
+		return (NULL);
+	}
+
+	return (secbuf);
+}
+
+/*
+ * Write the sector sized 'secbuf' to the sector at 'where'.
+ */
+int
+MBR_writesector(int fd, char *secbuf, off_t where)
+{
+	const int secsize = unit_types[SECTORS].conversion;
+	ssize_t len;
+	off_t off;
+
+	len = -1;
+
+	where *= secsize;
+	off = lseek(fd, where, SEEK_SET);
+	if (off == where)
+		len = write(fd, secbuf, secsize);
+
+	if (len == -1 || len != secsize) {
+		/* short read or write */
+		errno = EIO;
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * If *dos_mbr has a 0xee or 0xef partition, nothing needs to happen. If no
+ * such partition is present but the first or last sector on the disk has a
+ * GPT, zero the GPT to ensure the MBR takes priority and fewer BIOSes get
+ * confused.
+ */
+void
+MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
+{
+	const int secsize = unit_types[SECTORS].conversion;
+	struct dos_partition dos_parts[NDOSPART];
+	char *secbuf;
+	uint64_t sig;
+	int i;
+
+	memcpy(dos_parts, dos_mbr->dmbr_parts, sizeof(dos_parts));
+
+	for (i = 0; i < NDOSPART; i++)
+		if ((dos_parts[i].dp_typ == DOSPTYP_EFI) ||
+		    (dos_parts[i].dp_typ == DOSPTYP_EFISYS))
+			return;
+
+	secbuf = MBR_readsector(fd, GPTSECTOR);
+	if (secbuf == NULL)
+		return;
+
+	memcpy(&sig, secbuf, sizeof(sig));
+	if (sig == GPTSIGNATURE) {
+		memset(secbuf, 0, sizeof(sig));
+		MBR_writesector(fd, secbuf, GPTSECTOR);
+	}
+	free(secbuf);
+
+	secbuf = MBR_readsector(fd, lastsec);
+	if (secbuf == NULL)
+		return;
+
+	memcpy(&sig, secbuf, sizeof(sig));
+	if (sig == GPTSIGNATURE) {
+		memset(secbuf, 0, sizeof(sig));
+		MBR_writesector(fd, secbuf, lastsec);
+	}
+	free(secbuf);
 }
