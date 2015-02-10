@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.9 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.10 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -225,7 +225,7 @@ static int create_default_context(struct drm_i915_private *dev_priv)
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int ret;
 
-	rw_assert_wrlock(&dev->dev_lock);
+	rw_assert_wrlock(&dev->struct_mutex);
 
 	ctx = create_hw_context(dev, NULL);
 	if (IS_ERR(ctx))
@@ -520,7 +520,7 @@ int i915_gem_context_create_ioctl(struct drm_device *dev, void *data,
 		return ret;
 
 	ctx = create_hw_context(dev, file_priv);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
 
@@ -547,13 +547,13 @@ int i915_gem_context_destroy_ioctl(struct drm_device *dev, void *data,
 
 	ctx = i915_gem_context_get(file_priv, args->ctx_id);
 	if (!ctx) {
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 		return -ENOENT;
 	}
 
 	do_destroy(ctx);
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 	DRM_DEBUG_DRIVER("HW context %d destroyed\n", args->ctx_id);
 	return 0;

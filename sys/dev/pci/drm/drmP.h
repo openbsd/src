@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.178 2014/07/12 18:48:52 tedu Exp $ */
+/* $OpenBSD: drmP.h,v 1.179 2015/02/10 01:39:32 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -85,10 +85,6 @@
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
 #define DRM_CURRENTPID		curproc->p_pid
-#define DRM_LOCK()		rw_enter_write(&dev->dev_lock)
-#define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
-#define DRM_READLOCK()		rw_enter_read(&dev->dev_lock)
-#define DRM_READUNLOCK()	rw_exit_read(&dev->dev_lock)
 #define DRM_MAXUNITS		8
 
 /* DRM_SUSER returns true if the user is superuser */
@@ -799,7 +795,7 @@ struct drm_device {
 	
 	int		  if_version;	/* Highest interface version set */
 				/* Locks */
-	struct rwlock	  dev_lock;	/* protects everything else */
+	struct rwlock	  struct_mutex;	/* protects everything else */
 
 				/* Usage Counters */
 	int		  open_count;	/* Outstanding files open	   */
@@ -808,7 +804,7 @@ struct drm_device {
 	SPLAY_HEAD(drm_file_tree, drm_file)	files;
 	drm_magic_t	  magicid;
 
-	/* Linked list of mappable regions. Protected by dev_lock */
+	/* Linked list of mappable regions. Protected by struct_mutex */
 	struct extent				*handle_ext;
 	TAILQ_HEAD(drm_map_list, drm_local_map)	 maplist;
 
@@ -1071,9 +1067,9 @@ drm_gem_object_unreference_unlocked(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	drm_unref(&obj->uobj);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 }
 
 static __inline__ int drm_core_check_feature(struct drm_device *dev,

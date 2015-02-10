@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sprite.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_sprite.c,v 1.5 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Copyright © 2011 Intel Corporation
  *
@@ -504,7 +504,7 @@ intel_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	    (crtc_w == primary_w) && (crtc_h == primary_h))
 		disable_primary = true;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	ret = intel_pin_and_fence_fb_obj(dev, obj, NULL);
 	if (ret)
@@ -534,15 +534,15 @@ intel_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 		 * do the pin & ref bookkeeping.
 		 */
 		if (old_obj != obj) {
-			DRM_UNLOCK();
+			mutex_unlock(&dev->struct_mutex);
 			intel_wait_for_vblank(dev, to_intel_crtc(crtc)->pipe);
-			DRM_LOCK();
+			mutex_lock(&dev->struct_mutex);
 		}
 		intel_unpin_fb_obj(old_obj);
 	}
 
 out_unlock:
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 out:
 	return ret;
 }
@@ -561,10 +561,10 @@ intel_disable_plane(struct drm_plane *plane)
 	if (!intel_plane->obj)
 		goto out;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	intel_unpin_fb_obj(intel_plane->obj);
 	intel_plane->obj = NULL;
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 out:
 
 	return ret;

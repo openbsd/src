@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.31 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.32 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -536,7 +536,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 		drm_gem_object_unreference(&obj->base);
 	}
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 	total = 0;
 	for (i = 0; i < count; i++)
@@ -548,7 +548,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 	if (reloc == NULL || reloc_offset == NULL) {
 		drm_free(reloc);
 		drm_free(reloc_offset);
-		DRM_LOCK();
+		mutex_lock(&dev->struct_mutex);
 		return -ENOMEM;
 	}
 
@@ -563,7 +563,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 		if (DRM_COPY_FROM_USER(reloc+total, user_relocs,
 				   exec[i].relocation_count * sizeof(*reloc))) {
 			ret = -EFAULT;
-			DRM_LOCK();
+			mutex_lock(&dev->struct_mutex);
 			goto err;
 		}
 
@@ -581,7 +581,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 					 &invalid_offset,
 					 sizeof(invalid_offset))) {
 				ret = -EFAULT;
-				DRM_LOCK();
+				mutex_lock(&dev->struct_mutex);
 				goto err;
 			}
 		}
@@ -592,7 +592,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret) {
-		DRM_LOCK();
+		mutex_lock(&dev->struct_mutex);
 		goto err;
 	}
 
@@ -961,14 +961,14 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 		goto pre_mutex_err;
 
 	if (dev_priv->mm.suspended) {
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 		ret = -EBUSY;
 		goto pre_mutex_err;
 	}
 
 	eb = eb_create(args->buffer_count);
 	if (eb == NULL) {
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 		ret = -ENOMEM;
 		goto pre_mutex_err;
 	}
@@ -1019,7 +1019,7 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 								&objects, eb,
 								exec,
 								args->buffer_count);
-			rw_assert_wrlock(&dev->dev_lock);
+			rw_assert_wrlock(&dev->struct_mutex);
 		}
 		if (ret)
 			goto err;
@@ -1113,7 +1113,7 @@ err:
 		drm_gem_object_unreference(&obj->base);
 	}
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 pre_mutex_err:
 #ifdef __linux

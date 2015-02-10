@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.14 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.15 2015/02/10 01:39:32 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -414,7 +414,7 @@ static void ivybridge_parity_work(void *arg1)
 	 * In order to prevent a get/put style interface, acquire struct mutex
 	 * any time we access those registers.
 	 */
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	misccpctl = I915_READ(GEN7_MISCCPCTL);
 	I915_WRITE(GEN7_MISCCPCTL, misccpctl & ~GEN7_DOP_CLOCK_GATE_ENABLE);
@@ -436,7 +436,7 @@ static void ivybridge_parity_work(void *arg1)
 	I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 	mtx_leave(&dev_priv->irq_lock);
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 #if 0
 	parity_event[0] = "L3_PARITY_ERROR=1";

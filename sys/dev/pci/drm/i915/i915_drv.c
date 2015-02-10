@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.71 2015/02/09 03:15:41 dlg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.72 2015/02/10 01:39:32 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -539,11 +539,11 @@ __i915_drm_thaw(struct drm_device *dev)
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		intel_init_pch_refclk(dev);
 
-		DRM_LOCK();
+		mutex_lock(&dev->struct_mutex);
 		dev_priv->mm.suspended = 0;
 
 		error = i915_gem_init_hw(dev);
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 
 		intel_modeset_init_hw(dev);
 		drm_mode_config_reset(dev);
@@ -566,9 +566,9 @@ i915_drm_thaw(struct drm_device *dev)
 	intel_gt_sanitize(dev);
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-		DRM_LOCK();
+		mutex_lock(&dev->struct_mutex);
 		i915_gem_restore_gtt_mappings(dev);
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 	}
 
 	__i915_drm_thaw(dev);
@@ -1584,7 +1584,7 @@ int i915_reset(struct drm_device *dev)
 		return 0;
 #endif
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	i915_gem_reset(dev);
 
@@ -1597,7 +1597,7 @@ int i915_reset(struct drm_device *dev)
 	dev_priv->last_gpu_reset = time_second;
 	if (ret) {
 		DRM_ERROR("Failed to reset chip.\n");
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 		return ret;
 	}
 
@@ -1638,12 +1638,12 @@ int i915_reset(struct drm_device *dev)
 		 * some unknown reason, this blows up my ilk, so don't.
 		 */
 
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 
 		drm_irq_uninstall(dev);
 		drm_irq_install(dev);
 	} else {
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 	}
 
 	return 0;

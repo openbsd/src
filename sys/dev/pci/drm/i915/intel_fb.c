@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.10 2014/01/30 15:10:48 kettenis Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.11 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -67,7 +67,7 @@ static int intelfb_create(struct intel_fbdev *ifbdev,
 		goto out;
 	}
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	/* Flush everything out, we'll be doing GTT only from now on */
 	ret = intel_pin_and_fence_fb_obj(dev, obj, false);
@@ -175,7 +175,7 @@ static int intelfb_create(struct intel_fbdev *ifbdev,
 		      fb->width, fb->height,
 		      obj->gtt_offset, obj);
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 #if 1
 	DRM_DEBUG_KMS("skipping call to vga_switcheroo_client_fb_set\n");
 #else
@@ -187,7 +187,7 @@ out_unpin:
 	i915_gem_object_unpin(obj);
 out_unref:
 	drm_gem_object_unreference(&obj->base);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 out:
 	return ret;
 }

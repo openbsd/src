@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.16 2014/02/18 02:36:49 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.17 2015/02/10 01:39:32 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -357,9 +357,9 @@ i915_load_modeset_init(struct drm_device *dev)
 cleanup_irq:
 	drm_irq_uninstall(dev);
 cleanup_gem:
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	i915_gem_cleanup_ringbuffer(dev);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 	i915_gem_cleanup_aliasing_ppgtt(dev);
 cleanup_gem_stolen:
 #ifdef notyet
@@ -407,9 +407,9 @@ i915_driver_close(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	i915_gem_context_close(dev, file);
 	i915_gem_release(dev, file);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 	kfree(file_priv);
 }

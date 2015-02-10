@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.55 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.56 2015/02/10 01:39:32 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -378,13 +378,13 @@ int drm_irq_install(struct drm_device *dev)
 
 	DRM_DEBUG("irq=%d\n", dev->irq);
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	if (dev->irq_enabled) {
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 		return (EBUSY);
 	}
 	dev->irq_enabled = 1;
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 	if (dev->driver->irq_install) {
 		if ((ret = dev->driver->irq_install(dev)) != 0)
@@ -398,9 +398,9 @@ int drm_irq_install(struct drm_device *dev)
 
 	return (0);
 err:
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	dev->irq_enabled = 0;
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 	return (ret);
 }
 EXPORT_SYMBOL(drm_irq_install);
@@ -416,14 +416,14 @@ int drm_irq_uninstall(struct drm_device *dev)
 {
 	int i;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	if (!dev->irq_enabled) {
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 		return (EINVAL);
 	}
 
 	dev->irq_enabled = 0;
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 	/*
 	 * Ick. we're about to turn of vblanks, so make sure anyone waiting

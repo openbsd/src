@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.8 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.9 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -264,7 +264,7 @@ static void radeon_pm_set_clocks(struct radeon_device *rdev)
 	    (rdev->pm.requested_power_state_index == rdev->pm.current_power_state_index))
 		return;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	rw_enter_write(&rdev->pm.mclk_lock);
 	rw_enter_write(&rdev->ring_lock);
 
@@ -279,7 +279,7 @@ static void radeon_pm_set_clocks(struct radeon_device *rdev)
 			/* needs a GPU reset dont reset here */
 			rw_exit_write(&rdev->ring_lock);
 			rw_exit_write(&rdev->pm.mclk_lock);
-			DRM_UNLOCK();
+			mutex_unlock(&dev->struct_mutex);
 			return;
 		}
 	}
@@ -315,7 +315,7 @@ static void radeon_pm_set_clocks(struct radeon_device *rdev)
 
 	rw_exit_write(&rdev->ring_lock);
 	rw_exit_write(&rdev->pm.mclk_lock);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 }
 
 static void radeon_pm_print_states(struct radeon_device *rdev)

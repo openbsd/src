@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.22 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.23 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -281,7 +281,7 @@ static void intel_fbc_work_fn(void *arg1)
 	struct drm_device *dev = work->crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 	if (work == dev_priv->fbc_work) {
 		/* Double check that we haven't switched fb without cancelling
 		 * the prior work.
@@ -297,7 +297,7 @@ static void intel_fbc_work_fn(void *arg1)
 
 		dev_priv->fbc_work = NULL;
 	}
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 	kfree(work);
 }
@@ -2310,7 +2310,7 @@ err_unpin:
 	i915_gem_object_unpin(ctx);
 err_unref:
 	drm_gem_object_unreference(&ctx->base);
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 	return NULL;
 }
 
@@ -4118,7 +4118,7 @@ void intel_init_power_wells(struct drm_device *dev)
 	if (!IS_HASWELL(dev))
 		return;
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	for (i = 0; i < ARRAY_SIZE(power_wells); i++) {
 		int well = I915_READ(power_wells[i]);
@@ -4135,7 +4135,7 @@ void intel_init_power_wells(struct drm_device *dev)
 		}
 	}
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 }
 
 /* Set up chip specific power management-related functions */
@@ -4491,11 +4491,11 @@ void intel_gt_init(struct drm_device *dev)
 		 * (correctly) interpreted by the test below as MT
 		 * forcewake being disabled.
 		 */
-		DRM_LOCK();
+		mutex_lock(&dev->struct_mutex);
 		__gen6_gt_force_wake_mt_get(dev_priv);
 		ecobus = I915_READ_NOTRACE(ECOBUS);
 		__gen6_gt_force_wake_mt_put(dev_priv);
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 
 		if (ecobus & FORCEWAKE_MT_ENABLE) {
 			dev_priv->gt.force_wake_get =

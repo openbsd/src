@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_suspend.c,v 1.4 2013/08/13 10:23:50 jsg Exp $	*/
+/*	$OpenBSD: i915_suspend.c,v 1.5 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  *
  * Copyright 2008 (c) Intel Corporation
@@ -811,7 +811,7 @@ int i915_save_state(struct drm_device *dev)
 
 	dev_priv->regfile.saveLBB = pci_conf_read(dev_priv->pc, dev_priv->tag, LBB);
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	i915_save_display(dev);
 
@@ -849,7 +849,7 @@ int i915_save_state(struct drm_device *dev)
 	for (i = 0; i < 3; i++)
 		dev_priv->regfile.saveSWF2[i] = I915_READ(SWF30 + (i << 2));
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 	return 0;
 }
@@ -861,7 +861,7 @@ int i915_restore_state(struct drm_device *dev)
 
 	pci_conf_write(dev_priv->pc, dev_priv->tag, LBB, dev_priv->regfile.saveLBB);
 
-	DRM_LOCK();
+	mutex_lock(&dev->struct_mutex);
 
 	i915_restore_display(dev);
 
@@ -894,7 +894,7 @@ int i915_restore_state(struct drm_device *dev)
 	for (i = 0; i < 3; i++)
 		I915_WRITE(SWF30 + (i << 2), dev_priv->regfile.saveSWF2[i]);
 
-	DRM_UNLOCK();
+	mutex_unlock(&dev->struct_mutex);
 
 #ifdef notyet
 	intel_i2c_reset(dev);

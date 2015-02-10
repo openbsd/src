@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.4 2014/07/06 08:16:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.5 2015/02/10 01:39:32 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -311,7 +311,7 @@ void radeon_bo_force_delete(struct radeon_device *rdev)
 	}
 	DRM_ERROR("Userspace still has active objects !\n");
 	list_for_each_entry_safe(bo, n, &rdev->gem.objects, list) {
-		DRM_LOCK();
+		mutex_lock(&dev->struct_mutex);
 #ifdef notyet
 		DRM_ERROR("%p %p %lu %lu force free\n",
 			&bo->gem_base, bo, (unsigned long)bo->gem_base.size,
@@ -322,7 +322,7 @@ void radeon_bo_force_delete(struct radeon_device *rdev)
 		rw_exit_write(&bo->rdev->gem.rwlock);
 		/* this should unref the ttm bo */
 		drm_gem_object_unreference(&bo->gem_base);
-		DRM_UNLOCK();
+		mutex_unlock(&dev->struct_mutex);
 	}
 }
 
