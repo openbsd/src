@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.72 2015/01/19 18:37:19 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.73 2015/02/10 21:56:09 miod Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -211,7 +211,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 	rw_enter_write(&fst->lock);
 	systrace_unlock();
 	if ((process = TAILQ_FIRST(&fst->messages)) != NULL) {
-		error = uiomove((caddr_t)&process->msg,
+		error = uiomovei((caddr_t)&process->msg,
 		    sizeof(struct str_message), uio);
 		if (!error) {
 			TAILQ_REMOVE(&fst->messages, process, msg_next);

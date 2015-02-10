@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.82 2014/12/29 05:29:27 miod Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.83 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ spec_read(void *v)
 				brelse(bp);
 				return (error);
 			}
-			error = uiomove((char *)bp->b_data + on, n, uio);
+			error = uiomovei((char *)bp->b_data + on, n, uio);
 			brelse(bp);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
@@ -338,7 +338,7 @@ spec_write(void *v)
 				brelse(bp);
 				return (error);
 			}
-			error = uiomove((char *)bp->b_data + on, n, uio);
+			error = uiomovei((char *)bp->b_data + on, n, uio);
 			if (n + on == bsize)
 				bawrite(bp);
 			else

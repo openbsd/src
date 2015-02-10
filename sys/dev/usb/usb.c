@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.105 2015/02/09 12:45:12 uebayasi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.106 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -643,7 +643,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			uio.uio_procp = p;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
-				error = uiomove(ptr, len, &uio);
+				error = uiomovei(ptr, len, &uio);
 				if (error)
 					goto ret;
 			}
@@ -660,7 +660,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			len = ur->ucr_actlen;
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
-				error = uiomove(ptr, len, &uio);
+				error = uiomovei(ptr, len, &uio);
 				if (error)
 					goto ret;
 			}
@@ -788,7 +788,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
-		error = uiomove((void *)cdesc, len, &uio);
+		error = uiomovei((void *)cdesc, len, &uio);
 		free(cdesc, M_TEMP, 0);
 		return (error);
 	}

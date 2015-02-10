@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.16 2014/12/24 22:48:27 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.17 2015/02/10 21:56:09 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -954,7 +954,7 @@ vmerw(struct vme_softc *sc, int awidth, int dwidth, struct uio *uio, int flags)
 			break;
 
 		/* XXX wrap this because of dwidth */
-		rc = uiomove((caddr_t)vmepg + delta, len, uio);
+		rc = uiomovei((caddr_t)vmepg + delta, len, uio);
 
 		/* inline vme_unmap */
 		pmap_kremove(vmepg, PAGE_SIZE);

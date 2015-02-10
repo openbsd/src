@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.68 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.69 2015/02/10 21:56:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -317,7 +317,7 @@ pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 				size = rpipe->pipe_buffer.cnt;
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
-			error = uiomove(&rpipe->pipe_buffer.buffer[rpipe->pipe_buffer.out],
+			error = uiomovei(&rpipe->pipe_buffer.buffer[rpipe->pipe_buffer.out],
 					size, uio);
 			if (error) {
 				break;
@@ -516,7 +516,7 @@ retrywrite:
 
 				/* Transfer first segment */
 
-				error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
+				error = uiomovei(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
 						segsize, uio);
 
 				if (error == 0 && segsize < size) {
@@ -531,7 +531,7 @@ retrywrite:
 						panic("Expected pipe buffer wraparound disappeared");
 #endif
 
-					error = uiomove(&wpipe->pipe_buffer.buffer[0],
+					error = uiomovei(&wpipe->pipe_buffer.buffer[0],
 							size - segsize, uio);
 				}
 				if (error == 0) {

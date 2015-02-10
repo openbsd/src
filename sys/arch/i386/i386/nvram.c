@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.3 2004/11/11 08:28:28 jcs Exp $ */
+/*	$OpenBSD: nvram.c,v 1.4 2015/02/10 21:56:09 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Joshua Stein <jcs@openbsd.org>
@@ -115,7 +115,7 @@ nvramread(dev_t dev, struct uio *uio, int flags)
 	printf("nvramread read %d bytes (%s)\n", (tmp - buf), tmp);
 #endif
 
-	ret = uiomove((caddr_t)buf, (tmp - buf), uio);
+	ret = uiomovei((caddr_t)buf, (tmp - buf), uio);
 
 	uio->uio_offset += uio->uio_resid;
 

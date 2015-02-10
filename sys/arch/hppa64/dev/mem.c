@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 2014/04/08 09:34:23 mpi Exp $	*/
+/*	$OpenBSD: mem.c,v 1.8 2015/02/10 21:56:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -193,7 +193,7 @@ mmrw(dev, uio, flags)
 			}
 			c = ptoa(physmem) - v;
 			c = min(c, uio->uio_resid);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomovei((caddr_t)v, c, uio);
 			break;
 
 		case 1:				/*  /dev/kmem  */
@@ -206,7 +206,7 @@ mmrw(dev, uio, flags)
 				/* this will break us out of the loop */
 				continue;
 			}
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomovei((caddr_t)v, c, uio);
 			break;
 
 		case 2:				/*  /dev/null  */
@@ -228,7 +228,7 @@ mmrw(dev, uio, flags)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
+			error = uiomovei(zeropage, c, uio);
 			break;
 
 		default:

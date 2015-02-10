@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.11 2015/01/11 02:57:09 deraadt Exp $ */
+/* $OpenBSD: wsevent.c,v 1.12 2015/02/10 21:56:09 miod Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -160,7 +160,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[ev->get],
+	error = uiomovei((caddr_t)&ev->q[ev->get],
 	    cnt * sizeof(struct wscons_event), uio);
 	n -= cnt;
 	/*
@@ -173,7 +173,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[0],
+	error = uiomovei((caddr_t)&ev->q[0],
 	    cnt * sizeof(struct wscons_event), uio);
 	ev->get = cnt;
 	return (error);

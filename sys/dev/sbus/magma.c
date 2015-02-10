@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.24 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: magma.c,v 1.25 2015/02/10 21:56:09 miod Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1549,7 +1549,7 @@ mbpp_rw(dev_t dev, struct uio *uio)
 		ptr = buffer;
 
 		if (uio->uio_rw == UIO_WRITE) {
-			error = uiomove(ptr, len, uio);
+			error = uiomovei(ptr, len, uio);
 			if (error)
 				break;
 		}
@@ -1569,7 +1569,7 @@ mbpp_rw(dev_t dev, struct uio *uio)
 
 		if (uio->uio_rw == UIO_READ) {
 			if (cnt) {
-				error = uiomove(ptr, cnt, uio);
+				error = uiomovei(ptr, cnt, uio);
 				if (error)
 					break;
 				gotdata++;

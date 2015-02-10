@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2010/12/31 21:38:08 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.2 2015/02/10 21:56:09 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,7 +111,7 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			error = uiomove((caddr_t)v, uio->uio_resid, uio);
+			error = uiomovei((caddr_t)v, uio->uio_resid, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -126,7 +126,7 @@ mmrw(dev, uio, flags)
 			} else if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomovei((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -145,7 +145,7 @@ mmrw(dev, uio, flags)
 				zpage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zpage, c, uio);
+			error = uiomovei(zpage, c, uio);
 			continue;
 
 		default:

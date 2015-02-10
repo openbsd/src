@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.78 2014/12/18 20:59:21 tedu Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.79 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ again:
 	    if (n > 0) {
 		if (!baddr)
 			baddr = bp->b_data;
-		error = uiomove(baddr + on, (int)n, uio);
+		error = uiomovei(baddr + on, (int)n, uio);
 	    }
 
 	    if (vp->v_type == VLNK)
@@ -350,7 +350,7 @@ again:
 			goto again;
 		}
 
-		error = uiomove((char *)bp->b_data + on, n, uio);
+		error = uiomovei((char *)bp->b_data + on, n, uio);
 		if (error) {
 			bp->b_flags |= B_ERROR;
 			brelse(bp);

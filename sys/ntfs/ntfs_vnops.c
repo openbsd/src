@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.37 2014/12/16 19:56:33 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.38 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ ntfs_readdir(void *v)
 		cde.d_off = sizeof(struct dirent);
 		cde.d_name[0] = '.';
 		cde.d_name[1] = '\0';
-		error = uiomove(&cde, sizeof(struct dirent), uio);
+		error = uiomovei(&cde, sizeof(struct dirent), uio);
 		if (error)
 			goto out;
 	}
@@ -513,7 +513,7 @@ ntfs_readdir(void *v)
 		cde.d_name[0] = '.';
 		cde.d_name[1] = '.';
 		cde.d_name[2] = '\0';
-		error = uiomove(&cde, sizeof(struct dirent), uio);
+		error = uiomovei(&cde, sizeof(struct dirent), uio);
 		if (error)
 			goto out;
 	}
@@ -559,7 +559,7 @@ ntfs_readdir(void *v)
 			cde.d_off = uio->uio_offset + sizeof(struct dirent);
 			DPRINTF("%s\n", cde.d_type == DT_DIR ? "dir" : "reg");
 
-			error = uiomove(&cde, sizeof(struct dirent), uio);
+			error = uiomovei(&cde, sizeof(struct dirent), uio);
 			if (error)
 				goto out;
 			num++;

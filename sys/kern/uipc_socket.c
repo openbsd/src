@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.135 2014/12/11 19:21:57 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.136 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -514,7 +514,7 @@ nopages:
 					if (atomic && top == 0 && len < mlen)
 						MH_ALIGN(m, len);
 				}
-				error = uiomove(mtod(m, caddr_t), (int)len,
+				error = uiomovei(mtod(m, caddr_t), (int)len,
 				    uio);
 				resid = uio->uio_resid;
 				m->m_len = len;
@@ -640,7 +640,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (error)
 			goto bad;
 		do {
-			error = uiomove(mtod(m, caddr_t),
+			error = uiomovei(mtod(m, caddr_t),
 			    (int) min(uio->uio_resid, m->m_len), uio);
 			m = m_free(m);
 		} while (uio->uio_resid && error == 0 && m);
@@ -852,7 +852,7 @@ dontblock:
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
 			splx(s);
-			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
+			uio_error = uiomovei(mtod(m, caddr_t) + moff, len, uio);
 			s = splsoftnet();
 			if (uio_error)
 				uio->uio_resid = resid - len;

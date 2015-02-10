@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.34 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.35 2015/02/10 21:56:09 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1028,7 +1028,7 @@ video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
 
 	status = tsleep(BKTR_SLEEP, BKTRPRI, "captur", 0);
 	if (!status)		/* successful capture */
-		status = uiomove((caddr_t)bktr->bigbuf, count, uio);
+		status = uiomovei((caddr_t)bktr->bigbuf, count, uio);
 	else
 		printf ("%s: read: tsleep error %d\n",
 			bktr_name(bktr), status);
@@ -1078,12 +1078,12 @@ vbi_read(bktr_ptr_t bktr, struct uio *uio, int ioflag)
 		/* We need to wrap around */
 
 		readsize2 = VBI_BUFFER_SIZE - bktr->vbistart;
-		status = uiomove((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize2, uio);
+		status = uiomovei((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize2, uio);
 		if (status == 0)
-			status = uiomove((caddr_t)bktr->vbibuffer, (readsize - readsize2), uio);
+			status = uiomovei((caddr_t)bktr->vbibuffer, (readsize - readsize2), uio);
 	} else {
 		/* We do not need to wrap around */
-		status = uiomove((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize, uio);
+		status = uiomovei((caddr_t)bktr->vbibuffer + bktr->vbistart, readsize, uio);
 	}
 
 	/* Update the number of bytes left to read */

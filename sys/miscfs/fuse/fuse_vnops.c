@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.21 2014/12/16 18:30:04 tedu Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.22 2015/02/10 21:56:10 miod Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -726,7 +726,7 @@ fusefs_readdir(void *v)
 			break;
 		}
 
-		if ((error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio))) {
+		if ((error = uiomovei(fbuf->fb_dat, fbuf->fb_len, uio))) {
 			fb_delete(fbuf);
 			break;
 		}
@@ -805,7 +805,7 @@ fusefs_readlink(void *v)
 		return (error);
 	}
 
-	error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio);
+	error = uiomovei(fbuf->fb_dat, fbuf->fb_len, uio);
 	fb_delete(fbuf);
 
 	return (error);
@@ -1054,7 +1054,7 @@ fusefs_read(void *v)
 		if (error)
 			break;
 
-		error = uiomove(fbuf->fb_dat, MIN(size, fbuf->fb_len), uio);
+		error = uiomovei(fbuf->fb_dat, MIN(size, fbuf->fb_len), uio);
 		if (error)
 			break;
 
@@ -1108,7 +1108,7 @@ fusefs_write(void *v)
 		fbuf->fb_io_off = uio->uio_offset;
 		fbuf->fb_io_len = len;
 
-		if ((error = uiomove(fbuf->fb_dat, len, uio))) {
+		if ((error = uiomovei(fbuf->fb_dat, len, uio))) {
 			printf("fusefs: uio error %i\n", error);
 			break;
 		}

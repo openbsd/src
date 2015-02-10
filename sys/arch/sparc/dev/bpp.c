@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpp.c,v 1.5 2010/08/06 00:00:38 miod Exp $	*/
+/*	$OpenBSD: bpp.c,v 1.6 2015/02/10 21:56:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -273,7 +273,7 @@ bppwrite(dev, uio, flags)
 	int error = 0;
 
 	while ((n = min(BPP_BSIZE, uio->uio_resid)) != 0) {
-		error = uiomove(bpp->sc_cp = bpp->sc_inbuf->b_data, n, uio);
+		error = uiomovei(bpp->sc_cp = bpp->sc_inbuf->b_data, n, uio);
 		if (error != 0)
 			return error;
 		bpp->sc_count = n;

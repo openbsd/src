@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uiomove.9,v 1.14 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: uiomove.9,v 1.15 2015/02/10 21:56:08 miod Exp $
 .\"	$NetBSD: uiomove.9,v 1.6 2001/12/26 00:16:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 10 2015 $
 .Dt UIOMOVE 9
 .Os
 .Sh NAME
@@ -34,7 +34,9 @@
 .Sh SYNOPSIS
 .In sys/systm.h
 .Ft int
-.Fn uiomove "void *buf" "int n" "struct uio *uio"
+.Fn uiomove "void *buf" "size_t n" "struct uio *uio"
+.Ft int
+.Fn uiomovei "void *buf" "int n" "struct uio *uio"
 .Sh DESCRIPTION
 The
 .Nm
@@ -130,8 +132,17 @@ to point that much farther into the region described.
 This allows multiple calls to
 .Nm
 to easily be used to fill or drain the region of data.
+.Pp
+The
+.Nm uiomovei
+function is a similar to
+.Nm uiomove ,
+but uses a signed integer as the byte count.
+It is a temporary legacy interface and should not be used in new code.
 .Sh RETURN VALUES
 .Nm
-returns 0 on success or EFAULT if a bad address is encountered.
+and
+.Nm uiomovei
+return 0 on success or EFAULT if a bad address is encountered.
 .Sh SEE ALSO
 .Xr copy 9

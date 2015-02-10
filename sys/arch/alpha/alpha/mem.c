@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.25 2010/12/26 15:40:58 miod Exp $ */
+/* $OpenBSD: mem.c,v 1.26 2015/02/10 21:56:08 miod Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -163,7 +163,7 @@ kmemphys:
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error =
-			    uiomove((caddr_t)ALPHA_PHYS_TO_K0SEG(v), c, uio);
+			    uiomovei((caddr_t)ALPHA_PHYS_TO_K0SEG(v), c, uio);
 			break;
 
 /* minor device 1 is kernel memory */
@@ -179,7 +179,7 @@ kmemphys:
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomovei((caddr_t)v, c, uio);
 			break;
 
 /* minor device 2 is EOF/rathole */
@@ -202,7 +202,7 @@ kmemphys:
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
+			error = uiomovei(zeropage, c, uio);
 			break;
 
 		default:

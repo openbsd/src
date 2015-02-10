@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.59 2014/12/11 18:39:27 mpi Exp $ */
+/*	$OpenBSD: uhid.c,v 1.60 2015/02/10 21:56:09 miod Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 		    UHID_INPUT_REPORT, sc->sc_hdev.sc_report_id, buffer,
 		    sc->sc_hdev.sc_isize) != sc->sc_hdev.sc_isize)
 			return (EIO);
-		return (uiomove(buffer, sc->sc_hdev.sc_isize, uio));
+		return (uiomovei(buffer, sc->sc_hdev.sc_isize, uio));
 	}
 
 	s = splusb();
@@ -302,7 +302,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 		DPRINTFN(5, ("uhidread: got %lu chars\n", (u_long)length));
 
 		/* Copy the data to the user process. */
-		if ((error = uiomove(buffer, length, uio)) != 0)
+		if ((error = uiomovei(buffer, length, uio)) != 0)
 			break;
 	}
 
@@ -339,7 +339,7 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 	error = 0;
 	if (uio->uio_resid != size)
 		return (EINVAL);
-	error = uiomove(sc->sc_obuf, size, uio);
+	error = uiomovei(sc->sc_obuf, size, uio);
 	if (!error) {
 		if (uhidev_set_report(sc->sc_hdev.sc_parent,
 		    UHID_OUTPUT_REPORT, sc->sc_hdev.sc_report_id, sc->sc_obuf,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.30 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.31 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
     splx(s);
 
     for (m = m0; m && uio->uio_resid; m = m->m_next)
-	if ((error = uiomove(mtod(m, u_char *), m->m_len, uio)) != 0)
+	if ((error = uiomovei(mtod(m, u_char *), m->m_len, uio)) != 0)
 	    break;
     m_freem(m0);
     return (error);
@@ -369,7 +369,7 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
 	len = M_TRAILINGSPACE(m);
 	if (len > uio->uio_resid)
 	    len = uio->uio_resid;
-	if ((error = uiomove(mtod(m, u_char *), len, uio)) != 0) {
+	if ((error = uiomovei(mtod(m, u_char *), len, uio)) != 0) {
 	    m_freem(m0);
 	    return (error);
 	}

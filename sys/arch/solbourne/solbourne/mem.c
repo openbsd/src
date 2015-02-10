@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2015/02/10 21:56:09 miod Exp $	*/
 /*	OpenBSD: mem.c,v 1.21 2003/06/02 23:27:55 millert Exp 	*/
 
 /*
@@ -144,7 +144,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)mem_page + o, c, uio);
+			error = uiomovei((caddr_t)mem_page + o, c, uio);
 			pmap_remove(pmap_kernel(), mem_page, mem_page + NBPG);
 			pmap_update(pmap_kernel());
 			continue;
@@ -166,7 +166,7 @@ mmrw(dev, uio, flags)
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
 			}
-			error = uiomove((caddr_t)va, c, uio);
+			error = uiomovei((caddr_t)va, c, uio);
 			continue;
 
 		/* minor device 2 is EOF/RATHOLE */
@@ -187,7 +187,7 @@ mmrw(dev, uio, flags)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
+			error = uiomovei(zeropage, c, uio);
 			continue;
 
 		default:

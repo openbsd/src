@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.17 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.18 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -433,7 +433,7 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
 		return (ENXIO);
 	else {
 		n = min(DEV_BSIZE, uio->uio_resid);
-		error = uiomove(spkr_inbuf, n, uio);
+		error = uiomovei(spkr_inbuf, n, uio);
 		if (!error)
 			playstring((char *)spkr_inbuf, n);
 		return (error);

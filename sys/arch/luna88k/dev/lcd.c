@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.5 2014/06/07 11:55:35 aoyama Exp $ */
+/* $OpenBSD: lcd.c,v 1.6 2015/02/10 21:56:09 miod Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -172,7 +172,7 @@ lcdwrite(dev_t dev, struct uio *uio, int flag)
 		return EIO;
 
 	while (n > 0) {
-		error = uiomove(buf, n, uio);
+		error = uiomovei(buf, n, uio);
 		if (error)
 			return EIO;
 		n = uio->uio_resid;

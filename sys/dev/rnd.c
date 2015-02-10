@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.170 2015/02/07 01:19:40 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.171 2015/02/10 21:56:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -863,7 +863,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 			chacha_encrypt_bytes(&lctx, buf, buf, n);
 		} else
 			arc4random_buf(buf, n);
-		ret = uiomove(buf, n, uio);
+		ret = uiomovei(buf, n, uio);
 		if (ret == 0 && uio->uio_resid > 0)
 			yield();
 	}
@@ -888,7 +888,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	while (ret == 0 && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
 
-		ret = uiomove(buf, n, uio);
+		ret = uiomovei(buf, n, uio);
 		if (ret != 0)
 			break;
 		while (n % sizeof(u_int32_t))

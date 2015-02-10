@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2008/11/05 06:32:47 matthieu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -121,14 +121,14 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = uio->uio_resid;
 			/* This doesn't allow device mapping!	XXX */
 			pmap_real_memory(&v, &c);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomovei((caddr_t)v, c, uio);
 			continue;
 
 		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomovei((caddr_t)v, c, uio);
 			continue;
 
 		/* minor device 2 is EOF/RATHOLE */
@@ -149,7 +149,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
+			error = uiomovei(zeropage, c, uio);
 			continue;
 
 		default:

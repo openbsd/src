@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.97 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.98 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -577,7 +577,7 @@ msdosfs_read(void *v)
 			brelse(bp);
 			return (error);
 		}
-		error = uiomove(bp->b_data + on, (int) n, uio);
+		error = uiomovei(bp->b_data + on, (int) n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	if (!isadir && !(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -735,7 +735,7 @@ msdosfs_write(void *v)
 		/*
 		 * Copy the data from user space into the buf header.
 		 */
-		error = uiomove(bp->b_data + croffset, n, uio);
+		error = uiomovei(bp->b_data + croffset, n, uio);
 
 		/*
 		 * If they want this synchronous then write it and wait for
@@ -1558,7 +1558,7 @@ msdosfs_readdir(void *v)
 				    sizeof(struct direntry);
 				if (uio->uio_resid < dirbuf.d_reclen)
 					goto out;
-				error = uiomove(&dirbuf, dirbuf.d_reclen, uio);
+				error = uiomovei(&dirbuf, dirbuf.d_reclen, uio);
 				if (error)
 					goto out;
 				offset = dirbuf.d_off;
@@ -1686,7 +1686,7 @@ msdosfs_readdir(void *v)
 				goto out;
 			}
 			wlast = -1;
-			error = uiomove(&dirbuf, dirbuf.d_reclen, uio);
+			error = uiomovei(&dirbuf, dirbuf.d_reclen, uio);
 			if (error) {
 				brelse(bp);
 				goto out;

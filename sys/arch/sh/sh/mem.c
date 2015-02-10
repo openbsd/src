@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (__mm_mem_addr(v)) {
 				o = v & PGOFSET;
 				c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-				error = uiomove((caddr_t)SH3_PHYS_TO_P1SEG(v),
+				error = uiomovei((caddr_t)SH3_PHYS_TO_P1SEG(v),
 				    c, uio);
 			} else {
 				return (EFAULT);
@@ -171,7 +171,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 					return (EFAULT);
 			*/
 				c = min(iov->iov_len, MAXPHYS);
-				error = uiomove((caddr_t)v, c, uio);
+				error = uiomovei((caddr_t)v, c, uio);
 			} else if (v < SH3_P3SEG_BASE)		/* P2 */
 				return (EFAULT);
 			else {					/* P3 */
@@ -179,7 +179,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				if (!uvm_kernacc((void *)v, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
-				error = uiomove((caddr_t)v, c, uio);
+				error = uiomovei((caddr_t)v, c, uio);
 			}
 			break;
 
@@ -197,7 +197,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
+			error = uiomovei(zeropage, c, uio);
 			break;
 
 		default:

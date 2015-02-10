@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.34 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: video.c,v 1.35 2015/02/10 21:56:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -173,7 +173,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 		size = sc->sc_fsize;
 	else
 		size = uio->uio_resid;
-	error = uiomove(sc->sc_fbuffer, size, uio);
+	error = uiomovei(sc->sc_fbuffer, size, uio);
 	sc->sc_frames_ready--;
 	if (error)
 		return (error);

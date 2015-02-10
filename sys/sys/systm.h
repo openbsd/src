@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.106 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: systm.h,v 1.107 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -296,7 +296,8 @@ void	dohooks(struct hook_desc_head *, int);
 #define domountroothooks() dohooks(&mountroothook_list, HOOK_REMOVE|HOOK_FREE)
 
 struct uio;
-int	uiomove(void *, int, struct uio *);
+int	uiomove(void *, size_t, struct uio *);
+int	uiomovei(void *, int, struct uio *);
 
 #if defined(_KERNEL)
 __returns_twice int	setjmp(label_t *);

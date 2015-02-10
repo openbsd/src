@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.41 2014/12/16 19:56:33 tedu Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.42 2015/02/10 21:56:10 miod Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1457,7 +1457,7 @@ ntfs_writentvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 				}
 			}
 			if (uio) {
-				error = uiomove(bp->b_data + off, tocopy, uio);
+				error = uiomovei(bp->b_data + off, tocopy, uio);
 				if (error != 0)
 					break;
 			} else
@@ -1555,7 +1555,7 @@ ntfs_readntvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 						return (error);
 					}
 					if (uio) {
-						error = uiomove(bp->b_data + off,
+						error = uiomovei(bp->b_data + off,
 							tocopy, uio);
 						if (error != 0)
 							break;
@@ -1582,7 +1582,7 @@ ntfs_readntvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 				if (uio) {
 					size_t remains = tocopy;
 					for(; remains; remains--) {
-						error = uiomove("", 1, uio);
+						error = uiomovei("", 1, uio);
 						if (error != 0)
 							break;
 					}
@@ -1601,7 +1601,7 @@ ntfs_readntvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 	} else {
 		DDPRINTF("ntfs_readnvattr_plain: data is in mft record\n");
 		if (uio) 
-			error = uiomove(vap->va_datap + roff, rsize, uio);
+			error = uiomovei(vap->va_datap + roff, rsize, uio);
 		else
 			memcpy(rdata, vap->va_datap + roff, rsize);
 		*initp += rsize;
@@ -1712,14 +1712,14 @@ ntfs_readattr(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t attrnum,
 
 			if (init == ntfs_cntob(NTFS_COMPUNIT_CL)) {
 				if (uio)
-					error = uiomove(cup + off, tocopy, uio);
+					error = uiomovei(cup + off, tocopy, uio);
 				else
 					memcpy(data, cup + off, tocopy);
 			} else if (init == 0) {
 				if (uio) {
 					size_t remains = tocopy;
 					for(; remains; remains--) {
-						error = uiomove("", 1, uio);
+						error = uiomovei("", 1, uio);
 						if (error != 0)
 							break;
 					}
@@ -1731,7 +1731,7 @@ ntfs_readattr(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t attrnum,
 				if (error)
 					break;
 				if (uio)
-					error = uiomove(uup + off, tocopy, uio);
+					error = uiomovei(uup + off, tocopy, uio);
 				else
 					memcpy(data, uup + off, tocopy);
 			}

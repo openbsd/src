@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.48 2014/10/19 16:35:53 stsp Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.49 2015/02/10 21:56:09 miod Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -624,7 +624,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	}
 	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		ulpt_statusmsg(ulpt_status(sc), sc);
-		error = uiomove(bufp, n, uio);
+		error = uiomovei(bufp, n, uio);
 		if (error)
 			break;
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));

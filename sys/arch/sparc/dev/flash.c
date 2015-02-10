@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.5 2006/03/15 20:03:06 miod Exp $	*/
+/*	$OpenBSD: flash.c,v 1.6 2015/02/10 21:56:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -181,7 +181,7 @@ flashrw(dev, uio, flags)
 	if (cnt > (FLASH_REGS_SIZE - off))
 		cnt = FLASH_REGS_SIZE - off;
 
-	return (uiomove(&sc->sc_regs->regs[0] + off, cnt, uio));
+	return (uiomovei(&sc->sc_regs->regs[0] + off, cnt, uio));
 }
 
 int

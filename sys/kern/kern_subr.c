@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.42 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.43 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <sys/resourcevar.h>
 
 int
-uiomove(void *cp, int n, struct uio *uio)
+uiomove(void *cp, size_t n, struct uio *uio)
 {
 	struct iovec *iov;
 	size_t cnt;
@@ -102,6 +102,15 @@ uiomove(void *cp, int n, struct uio *uio)
 		n -= cnt;
 	}
 	return (error);
+}
+
+int
+uiomovei(void *cp, int n, struct uio *uio)
+{
+	if (n < 0)
+		return 0;
+
+	return uiomove(cp, (size_t)n, uio);
 }
 
 /*

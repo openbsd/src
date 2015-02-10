@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.13 2007/08/01 13:18:18 martin Exp $	*/
+/*	$OpenBSD: joy.c,v 1.14 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ joyread(dev_t dev, struct uio *uio, int flag)
 	state >>= 4;
 	c.b1 = ~state & 1;
 	c.b2 = ~(state >> 1) & 1;
-	return uiomove((caddr_t) & c, sizeof(struct joystick), uio);
+	return uiomovei((caddr_t) & c, sizeof(struct joystick), uio);
 }
 
 int

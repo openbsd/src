@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.128 2015/02/07 01:49:05 kettenis Exp $	*/
+/*	$OpenBSD: audio.c,v 1.129 2015/02/10 21:56:09 miod Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1496,7 +1496,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
 		if (sc->sc_rparams.sw_code)
 			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
-		error = uiomove(outp, cc / sc->sc_rparams.factor, uio);
+		error = uiomovei(outp, cc / sc->sc_rparams.factor, uio);
 		if (error)
 			return error;
 	}
@@ -1635,7 +1635,7 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 	error = 0;
 	while (n > 0 && uio->uio_resid > 0 && !error) {
 		k = min(n, min(uio->uio_resid, sizeof zerobuf));
-		error = uiomove(zerobuf, k, uio);
+		error = uiomovei(zerobuf, k, uio);
 		n -= k;
 	}
 	return (error);
@@ -1739,7 +1739,7 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 		cc /= sc->sc_pparams.factor;
 		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%zd\n",
 		    cc, inp, uio->uio_resid));
-		error = uiomove(inp, cc, uio);
+		error = uiomovei(inp, cc, uio);
 		if (error)
 			return 0;
 		if (sc->sc_pparams.sw_code) {
