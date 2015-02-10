@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.34 2015/01/16 06:40:17 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.35 2015/02/10 01:03:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -154,7 +154,8 @@ kr_init(int fs)
 
 	kr_state.fib_sync = fs;
 
-	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
+	if ((kr_state.fd = socket(AF_ROUTE,
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
