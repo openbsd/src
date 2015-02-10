@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.4 2015/02/09 10:16:44 jmc Exp $
+.\" $OpenBSD: iwm.4,v 1.5 2015/02/10 20:37:15 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 9 2015 $
+.Dd $Mdocdate: February 10 2015 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -103,27 +103,27 @@ dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.\" .It "iwm0: device timeout"
-.\" A frame dispatched to the hardware for transmission did not complete in time.
-.\" The driver will reset the hardware.
-.\" This should not happen.
-.\" .It "iwm0: fatal firmware error"
-.\" For some reason, the firmware crashed.
-.\" The driver will reset the hardware.
-.\" This should not happen.
-.\" .It "iwm0: radio is disabled by hardware switch"
-.\" The radio transmitter is off and thus no packet can go out.
-.\" The driver will reset the hardware.
-.\" Make sure the laptop radio switch is on.
-.It "iwm0: could not read firmware ..."
+.It "iwm0: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.It "iwm0: fatal firmware error"
+For some reason, the firmware crashed.
+The driver will reset the hardware.
+This should not happen.
+.It "iwm0: radio is disabled by hardware switch"
+The radio transmitter is off and thus no packet can go out.
+The driver will reset the hardware.
+Make sure the laptop radio switch is on.
+.It "iwm0: could not read firmware ... (error N)"
 For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
-.\" .It "iwm0: firmware file too short: N bytes"
-.\" The firmware image is corrupted and can't be loaded into the adapter.
-.\" .It "iwm0: could not load firmware"
-.\" An attempt to load the firmware into the adapter failed.
-.\" The driver will reset the hardware.
+.It "iwm0: firmware too short: N bytes"
+The firmware image is corrupted and can't be loaded into the adapter.
+.It "iwm0: could not load firmware"
+An attempt to load the firmware into the adapter failed.
+The driver will reset the hardware.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
