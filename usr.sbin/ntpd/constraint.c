@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.2 2015/02/10 11:36:37 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.3 2015/02/10 23:52:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -262,7 +262,7 @@ constraint_check_child(void)
 
 		if ((cstr = constraint_bypid(pid)) != NULL) {
 			if (fail) {
-				log_info("no constraint reply from %s"
+				log_debug("no constraint reply from %s"
 				    " received in time, next query %ds",
 				    log_sockaddr((struct sockaddr *)
 				    &cstr->addr->ss), CONSTRAINT_SCAN_INTERVAL);
@@ -548,7 +548,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 
 	if (tls_connect(httpsdate->tls_ctx,
 	    httpsdate->tls_host, httpsdate->tls_port) == -1) {
-		log_warnx("tls failed: %s: %s", httpsdate->tls_host,
+		log_debug("tls failed: %s: %s", httpsdate->tls_host,
 		    tls_error(httpsdate->tls_ctx));
 		goto fail;
 	}
