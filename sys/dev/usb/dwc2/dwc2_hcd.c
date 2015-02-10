@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.9 2015/02/10 23:38:13 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.10 2015/02/10 23:43:46 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -2316,9 +2316,9 @@ error1:
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
 	free(hsotg->last_frame_num_array, M_DEVBUF,
-		sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+	      sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
 	free(hsotg->frame_num_array, M_DEVBUF,
-		sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+		  sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
 #endif
 
 	dev_err(hsotg->dev, "%s() FAILED, returning %d\n", __func__, retval);

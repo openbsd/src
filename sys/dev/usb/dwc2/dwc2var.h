@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.8 2015/02/10 23:38:13 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.9 2015/02/10 23:43:46 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -35,18 +35,24 @@
 
 #include <sys/pool.h>
 
+struct task;
+
 #define DWC2_MAXISOCPACKETS	16
 struct dwc2_hsotg;
 struct dwc2_qtd;
 
 struct dwc2_xfer {
-	struct usbd_xfer xfer;			/* Needs to be first */
+	struct usbd_xfer *xfer;			/* Needs to be first */
 	struct usb_task	abort_task;
 
 	struct dwc2_hcd_urb *urb;
 	int packet_count;
 
 	TAILQ_ENTRY(dwc2_xfer) xnext;		/* list of complete xfers */
+
+	u_int32_t flags;
+#define DWC2_XFER_ABORTING	0x0001	/* xfer is aborting. */
+#define DWC2_XFER_ABORTWAIT	0x0002	/* abort completion is being awaited. */
 };
 
 struct dwc2_pipe {
@@ -56,11 +62,11 @@ struct dwc2_pipe {
 	void *priv;			/* QH */
 
 	 /* DMA buffer for control endpoint requests */
-	struct usb_dma * req_dma;
+	struct usb_dma req_dma;
 };
 
 
-#define	DWC2_BUS2SC(bus)	((bus)->hci_private)
+#define	DWC2_BUS2SC(bus)	((void *)(bus))
 #define	DWC2_PIPE2SC(pipe)	DWC2_BUS2SC((pipe)->device->bus)
 #define	DWC2_XFER2SC(xfer)	DWC2_PIPE2SC((xfer)->pipe)
 #define	DWC2_DPIPE2SC(d)	DWC2_BUS2SC((d)->pipe.device->bus)
@@ -72,7 +78,7 @@ struct dwc2_pipe {
 
 
 typedef struct dwc2_softc {
-	struct device *sc_dev;
+	struct usbd_bus		sc_bus;
 
  	bus_space_tag_t		sc_iot;
  	bus_space_handle_t	sc_ioh;
@@ -83,7 +89,6 @@ typedef struct dwc2_softc {
 	 * Private
 	 */
 
-	struct usbd_bus sc_bus;
 	struct dwc2_hsotg *sc_hsotg;
 
 	struct mutex sc_lock;
@@ -95,7 +100,9 @@ typedef struct dwc2_softc {
 
 	struct device *sc_child;		/* /dev/usb# device */
 	char sc_dying;
+#if 0
 	struct usb_dma_reserve sc_dma_reserve;
+#endif
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
