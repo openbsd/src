@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.22 2014/07/12 22:26:01 miod Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.23 2015/02/10 04:01:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,7 +94,31 @@ ASN1_BROKEN_SEQUENCE(NETSCAPE_ENCRYPTED_PKEY) = {
 
 DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY, NETSCAPE_ENCRYPTED_PKEY)
-IMPLEMENT_ASN1_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY)
+
+NETSCAPE_ENCRYPTED_PKEY *
+d2i_NETSCAPE_ENCRYPTED_PKEY(NETSCAPE_ENCRYPTED_PKEY **a, const unsigned char **in, long len)
+{
+	return (NETSCAPE_ENCRYPTED_PKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &NETSCAPE_ENCRYPTED_PKEY_it);
+}
+
+int
+i2d_NETSCAPE_ENCRYPTED_PKEY(const NETSCAPE_ENCRYPTED_PKEY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_ENCRYPTED_PKEY_it);
+}
+
+NETSCAPE_ENCRYPTED_PKEY *
+NETSCAPE_ENCRYPTED_PKEY_new(void)
+{
+	return (NETSCAPE_ENCRYPTED_PKEY *)ASN1_item_new(&NETSCAPE_ENCRYPTED_PKEY_it);
+}
+
+void
+NETSCAPE_ENCRYPTED_PKEY_free(NETSCAPE_ENCRYPTED_PKEY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_ENCRYPTED_PKEY_it);
+}
 
 ASN1_SEQUENCE(NETSCAPE_PKEY) = {
 	ASN1_SIMPLE(NETSCAPE_PKEY, version, LONG),
@@ -104,7 +128,31 @@ ASN1_SEQUENCE(NETSCAPE_PKEY) = {
 
 DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_PKEY, NETSCAPE_PKEY)
-IMPLEMENT_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
+
+NETSCAPE_PKEY *
+d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a, const unsigned char **in, long len)
+{
+	return (NETSCAPE_PKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &NETSCAPE_PKEY_it);
+}
+
+int
+i2d_NETSCAPE_PKEY(const NETSCAPE_PKEY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_PKEY_it);
+}
+
+NETSCAPE_PKEY *
+NETSCAPE_PKEY_new(void)
+{
+	return (NETSCAPE_PKEY *)ASN1_item_new(&NETSCAPE_PKEY_it);
+}
+
+void
+NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_PKEY_it);
+}
 
 static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
     int (*cb)(char *buf, int len, const char *prompt, int verify), int sgckey);

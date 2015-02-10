@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.7 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.8 2015/02/10 04:01:26 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -474,18 +474,114 @@ IMPLEMENT_ASN1_TYPE(ASN1_ANY)
 /* Just swallow an ASN1_SEQUENCE in an ASN1_STRING */
 IMPLEMENT_ASN1_TYPE(ASN1_SEQUENCE)
 
-IMPLEMENT_ASN1_FUNCTIONS_fname(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
+
+ASN1_TYPE *
+d2i_ASN1_TYPE(ASN1_TYPE **a, const unsigned char **in, long len)
+{
+	return (ASN1_TYPE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_ANY_it);
+}
+
+int
+i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_ANY_it);
+}
+
+ASN1_TYPE *
+ASN1_TYPE_new(void)
+{
+	return (ASN1_TYPE *)ASN1_item_new(&ASN1_ANY_it);
+}
+
+void
+ASN1_TYPE_free(ASN1_TYPE *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ANY_it);
+}
 
 /* Multistring types */
 
 IMPLEMENT_ASN1_MSTRING(ASN1_PRINTABLE, B_ASN1_PRINTABLE)
-IMPLEMENT_ASN1_FUNCTIONS_name(ASN1_STRING, ASN1_PRINTABLE)
+
+ASN1_STRING *
+d2i_ASN1_PRINTABLE(ASN1_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_PRINTABLE_it);
+}
+
+int
+i2d_ASN1_PRINTABLE(ASN1_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_PRINTABLE_it);
+}
+
+ASN1_STRING *
+ASN1_PRINTABLE_new(void)
+{
+	return (ASN1_STRING *)ASN1_item_new(&ASN1_PRINTABLE_it);
+}
+
+void
+ASN1_PRINTABLE_free(ASN1_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_PRINTABLE_it);
+}
 
 IMPLEMENT_ASN1_MSTRING(DISPLAYTEXT, B_ASN1_DISPLAYTEXT)
-IMPLEMENT_ASN1_FUNCTIONS_name(ASN1_STRING, DISPLAYTEXT)
+
+ASN1_STRING *
+d2i_DISPLAYTEXT(ASN1_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DISPLAYTEXT_it);
+}
+
+int
+i2d_DISPLAYTEXT(ASN1_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DISPLAYTEXT_it);
+}
+
+ASN1_STRING *
+DISPLAYTEXT_new(void)
+{
+	return (ASN1_STRING *)ASN1_item_new(&DISPLAYTEXT_it);
+}
+
+void
+DISPLAYTEXT_free(ASN1_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &DISPLAYTEXT_it);
+}
 
 IMPLEMENT_ASN1_MSTRING(DIRECTORYSTRING, B_ASN1_DIRECTORYSTRING)
-IMPLEMENT_ASN1_FUNCTIONS_name(ASN1_STRING, DIRECTORYSTRING)
+
+ASN1_STRING *
+d2i_DIRECTORYSTRING(ASN1_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DIRECTORYSTRING_it);
+}
+
+int
+i2d_DIRECTORYSTRING(ASN1_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DIRECTORYSTRING_it);
+}
+
+ASN1_STRING *
+DIRECTORYSTRING_new(void)
+{
+	return (ASN1_STRING *)ASN1_item_new(&DIRECTORYSTRING_it);
+}
+
+void
+DIRECTORYSTRING_free(ASN1_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &DIRECTORYSTRING_it);
+}
 
 /* Three separate BOOLEAN type: normal, DEFAULT TRUE and DEFAULT FALSE */
 IMPLEMENT_ASN1_TYPE_ex(ASN1_BOOLEAN, ASN1_BOOLEAN, -1)

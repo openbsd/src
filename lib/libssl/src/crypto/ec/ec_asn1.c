@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.10 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.11 2015/02/10 04:01:26 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -258,7 +258,31 @@ ASN1_CHOICE(ECPKPARAMETERS) = {
 } ASN1_CHOICE_END(ECPKPARAMETERS)
 DECLARE_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
-IMPLEMENT_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
+
+ECPKPARAMETERS *
+d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len)
+{
+	return (ECPKPARAMETERS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ECPKPARAMETERS_it);
+}
+
+int
+i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ECPKPARAMETERS_it);
+}
+
+ECPKPARAMETERS *
+ECPKPARAMETERS_new(void)
+{
+	return (ECPKPARAMETERS *)ASN1_item_new(&ECPKPARAMETERS_it);
+}
+
+void
+ECPKPARAMETERS_free(ECPKPARAMETERS *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ECPKPARAMETERS_it);
+}
 
 ASN1_SEQUENCE(EC_PRIVATEKEY) = {
 	ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
@@ -268,7 +292,31 @@ ASN1_SEQUENCE(EC_PRIVATEKEY) = {
 } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
 DECLARE_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(EC_PRIVATEKEY, EC_PRIVATEKEY)
-IMPLEMENT_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
+
+EC_PRIVATEKEY *
+d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len)
+{
+	return (EC_PRIVATEKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &EC_PRIVATEKEY_it);
+}
+
+int
+i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &EC_PRIVATEKEY_it);
+}
+
+EC_PRIVATEKEY *
+EC_PRIVATEKEY_new(void)
+{
+	return (EC_PRIVATEKEY *)ASN1_item_new(&EC_PRIVATEKEY_it);
+}
+
+void
+EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);
+}
 /* some declarations of internal function */
 
 /* ec_asn1_group2field() sets the values in a X9_62_FIELDID object */

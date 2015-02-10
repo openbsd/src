@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_asn1.c,v 1.5 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: ts_asn1.c,v 1.6 2015/02/10 04:01:26 jsing Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -66,7 +66,31 @@ ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
 	ASN1_SIMPLE(TS_MSG_IMPRINT, hashed_msg, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(TS_MSG_IMPRINT)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(TS_MSG_IMPRINT)
+
+TS_MSG_IMPRINT *
+d2i_TS_MSG_IMPRINT(TS_MSG_IMPRINT **a, const unsigned char **in, long len)
+{
+	return (TS_MSG_IMPRINT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &TS_MSG_IMPRINT_it);
+}
+
+int
+i2d_TS_MSG_IMPRINT(const TS_MSG_IMPRINT *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_MSG_IMPRINT_it);
+}
+
+TS_MSG_IMPRINT *
+TS_MSG_IMPRINT_new(void)
+{
+	return (TS_MSG_IMPRINT *)ASN1_item_new(&TS_MSG_IMPRINT_it);
+}
+
+void
+TS_MSG_IMPRINT_free(TS_MSG_IMPRINT *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &TS_MSG_IMPRINT_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_MSG_IMPRINT)
 
 #ifndef OPENSSL_NO_BIO
@@ -106,7 +130,31 @@ ASN1_SEQUENCE(TS_REQ) = {
 	ASN1_IMP_SEQUENCE_OF_OPT(TS_REQ, extensions, X509_EXTENSION, 0)
 } ASN1_SEQUENCE_END(TS_REQ)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(TS_REQ)
+
+TS_REQ *
+d2i_TS_REQ(TS_REQ **a, const unsigned char **in, long len)
+{
+	return (TS_REQ *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &TS_REQ_it);
+}
+
+int
+i2d_TS_REQ(const TS_REQ *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_REQ_it);
+}
+
+TS_REQ *
+TS_REQ_new(void)
+{
+	return (TS_REQ *)ASN1_item_new(&TS_REQ_it);
+}
+
+void
+TS_REQ_free(TS_REQ *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &TS_REQ_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_REQ)
 
 #ifndef OPENSSL_NO_BIO
@@ -141,7 +189,31 @@ ASN1_SEQUENCE(TS_ACCURACY) = {
 	ASN1_IMP_OPT(TS_ACCURACY, micros, ASN1_INTEGER, 1)
 } ASN1_SEQUENCE_END(TS_ACCURACY)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(TS_ACCURACY)
+
+TS_ACCURACY *
+d2i_TS_ACCURACY(TS_ACCURACY **a, const unsigned char **in, long len)
+{
+	return (TS_ACCURACY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &TS_ACCURACY_it);
+}
+
+int
+i2d_TS_ACCURACY(const TS_ACCURACY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_ACCURACY_it);
+}
+
+TS_ACCURACY *
+TS_ACCURACY_new(void)
+{
+	return (TS_ACCURACY *)ASN1_item_new(&TS_ACCURACY_it);
+}
+
+void
+TS_ACCURACY_free(TS_ACCURACY *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &TS_ACCURACY_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_ACCURACY)
 
 ASN1_SEQUENCE(TS_TST_INFO) = {
@@ -157,7 +229,31 @@ ASN1_SEQUENCE(TS_TST_INFO) = {
 	ASN1_IMP_SEQUENCE_OF_OPT(TS_TST_INFO, extensions, X509_EXTENSION, 1)
 } ASN1_SEQUENCE_END(TS_TST_INFO)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(TS_TST_INFO)
+
+TS_TST_INFO *
+d2i_TS_TST_INFO(TS_TST_INFO **a, const unsigned char **in, long len)
+{
+	return (TS_TST_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &TS_TST_INFO_it);
+}
+
+int
+i2d_TS_TST_INFO(const TS_TST_INFO *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_TST_INFO_it);
+}
+
+TS_TST_INFO *
+TS_TST_INFO_new(void)
+{
+	return (TS_TST_INFO *)ASN1_item_new(&TS_TST_INFO_it);
+}
+
+void
+TS_TST_INFO_free(TS_TST_INFO *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &TS_TST_INFO_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_TST_INFO)
 
 #ifndef OPENSSL_NO_BIO
@@ -194,7 +290,31 @@ ASN1_SEQUENCE(TS_STATUS_INFO) = {
 	ASN1_OPT(TS_STATUS_INFO, failure_info, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(TS_STATUS_INFO)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(TS_STATUS_INFO)
+
+TS_STATUS_INFO *
+d2i_TS_STATUS_INFO(TS_STATUS_INFO **a, const unsigned char **in, long len)
+{
+	return (TS_STATUS_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &TS_STATUS_INFO_it);
+}
+
+int
+i2d_TS_STATUS_INFO(const TS_STATUS_INFO *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_STATUS_INFO_it);
+}
+
+TS_STATUS_INFO *
+TS_STATUS_INFO_new(void)
+{
+	return (TS_STATUS_INFO *)ASN1_item_new(&TS_STATUS_INFO_it);
+}
+
+void
+TS_STATUS_INFO_free(TS_STATUS_INFO *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &TS_STATUS_INFO_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_STATUS_INFO)
 
 static int
@@ -247,7 +367,31 @@ ASN1_SEQUENCE_cb(TS_RESP, ts_resp_cb) = {
 	ASN1_OPT(TS_RESP, token, PKCS7),
 } ASN1_SEQUENCE_END_cb(TS_RESP, TS_RESP)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(TS_RESP)
+
+TS_RESP *
+d2i_TS_RESP(TS_RESP **a, const unsigned char **in, long len)
+{
+	return (TS_RESP *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &TS_RESP_it);
+}
+
+int
+i2d_TS_RESP(const TS_RESP *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_RESP_it);
+}
+
+TS_RESP *
+TS_RESP_new(void)
+{
+	return (TS_RESP *)ASN1_item_new(&TS_RESP_it);
+}
+
+void
+TS_RESP_free(TS_RESP *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &TS_RESP_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_RESP)
 
 #ifndef OPENSSL_NO_BIO
@@ -281,7 +425,31 @@ ASN1_SEQUENCE(ESS_ISSUER_SERIAL) = {
 	ASN1_SIMPLE(ESS_ISSUER_SERIAL, serial, ASN1_INTEGER)
 } ASN1_SEQUENCE_END(ESS_ISSUER_SERIAL)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(ESS_ISSUER_SERIAL)
+
+ESS_ISSUER_SERIAL *
+d2i_ESS_ISSUER_SERIAL(ESS_ISSUER_SERIAL **a, const unsigned char **in, long len)
+{
+	return (ESS_ISSUER_SERIAL *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ESS_ISSUER_SERIAL_it);
+}
+
+int
+i2d_ESS_ISSUER_SERIAL(const ESS_ISSUER_SERIAL *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_ISSUER_SERIAL_it);
+}
+
+ESS_ISSUER_SERIAL *
+ESS_ISSUER_SERIAL_new(void)
+{
+	return (ESS_ISSUER_SERIAL *)ASN1_item_new(&ESS_ISSUER_SERIAL_it);
+}
+
+void
+ESS_ISSUER_SERIAL_free(ESS_ISSUER_SERIAL *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ESS_ISSUER_SERIAL_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_ISSUER_SERIAL)
 
 ASN1_SEQUENCE(ESS_CERT_ID) = {
@@ -289,7 +457,31 @@ ASN1_SEQUENCE(ESS_CERT_ID) = {
 	ASN1_OPT(ESS_CERT_ID, issuer_serial, ESS_ISSUER_SERIAL)
 } ASN1_SEQUENCE_END(ESS_CERT_ID)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(ESS_CERT_ID)
+
+ESS_CERT_ID *
+d2i_ESS_CERT_ID(ESS_CERT_ID **a, const unsigned char **in, long len)
+{
+	return (ESS_CERT_ID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ESS_CERT_ID_it);
+}
+
+int
+i2d_ESS_CERT_ID(const ESS_CERT_ID *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_CERT_ID_it);
+}
+
+ESS_CERT_ID *
+ESS_CERT_ID_new(void)
+{
+	return (ESS_CERT_ID *)ASN1_item_new(&ESS_CERT_ID_it);
+}
+
+void
+ESS_CERT_ID_free(ESS_CERT_ID *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ESS_CERT_ID_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_CERT_ID)
 
 ASN1_SEQUENCE(ESS_SIGNING_CERT) = {
@@ -297,7 +489,31 @@ ASN1_SEQUENCE(ESS_SIGNING_CERT) = {
 	ASN1_SEQUENCE_OF_OPT(ESS_SIGNING_CERT, policy_info, POLICYINFO)
 } ASN1_SEQUENCE_END(ESS_SIGNING_CERT)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(ESS_SIGNING_CERT)
+
+ESS_SIGNING_CERT *
+d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a, const unsigned char **in, long len)
+{
+	return (ESS_SIGNING_CERT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ESS_SIGNING_CERT_it);
+}
+
+int
+i2d_ESS_SIGNING_CERT(const ESS_SIGNING_CERT *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_SIGNING_CERT_it);
+}
+
+ESS_SIGNING_CERT *
+ESS_SIGNING_CERT_new(void)
+{
+	return (ESS_SIGNING_CERT *)ASN1_item_new(&ESS_SIGNING_CERT_it);
+}
+
+void
+ESS_SIGNING_CERT_free(ESS_SIGNING_CERT *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ESS_SIGNING_CERT_it);
+}
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT)
 
 /* Getting encapsulated TS_TST_INFO object from PKCS7. */
