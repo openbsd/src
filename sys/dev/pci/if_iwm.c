@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.12 2015/02/10 22:09:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.13 2015/02/10 22:32:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6350,13 +6350,13 @@ iwm_preinit(struct iwm_softc *sc)
 	/* Reattach net80211 so MAC address and channel map are picked up. */
 	ieee80211_ifdetach(ifp);
 	ieee80211_ifattach(ifp);
-	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
 
 	ic->ic_node_alloc = iwm_node_alloc;
 
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwm_newstate;
+	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
 
 	return 0;
 }
