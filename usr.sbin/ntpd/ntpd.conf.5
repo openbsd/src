@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.26 2015/02/10 07:19:52 reyk Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.27 2015/02/10 19:21:16 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -192,7 +192,7 @@ near the constraint will be discarded and such NTP
 will be marked as invalid.
 .Bl -tag -width Ds
 .It Ic constraint from Ar url
-Specify the URL, IP address or the hostname of a HTTPS server to
+Specify the URL, IP address or the hostname of an HTTPS server to
 provide a constraint.
 If multiple
 .Ic constraint
@@ -206,7 +206,7 @@ constraint www.example.com
 .It Ic constraints from Ar url
 As with
 .Ic constraint ,
-specify the URL, IP address or the hostname of a HTTPS server to
+specify the URL, IP address or the hostname of an HTTPS server to
 provide a constraint.
 Should the hostname resolve to multiple IP addresses,
 .Xr ntpd 8
