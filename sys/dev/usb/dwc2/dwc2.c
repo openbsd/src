@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.8 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.9 2015/02/10 14:15:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -449,7 +449,7 @@ dwc2_timeout_task(void *addr)
 usbd_status
 dwc2_open(struct usbd_pipe * pipe)
 {
-	struct usbd_device * dev = pipe->device;
+	struct usbd_device *dev = pipe->device;
 	struct dwc2_softc *sc = DWC2_PIPE2SC(pipe);
 	struct dwc2_pipe *dpipe = DWC2_PIPE2DPIPE(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
@@ -571,7 +571,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	}
 
 	/*
-	 * Step 1: Make the stack ignore it and stop the callout.
+	 * Step 1: Make the stack ignore it and stop the timeout.
 	 */
 	mtx_enter(&hsotg->lock);
 	xfer->hcflags |= UXFER_ABORTING;
@@ -1108,7 +1108,7 @@ static usbd_status
 dwc2_device_intr_start(struct usbd_xfer *xfer)
 {
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer)
-	struct usbd_device * dev = dpipe->pipe.device;
+	struct usbd_device *dev = dpipe->pipe.device;
 	struct dwc2_softc *sc = dev->bus->hci_private;
 	usbd_status err;
 
@@ -1188,7 +1188,7 @@ usbd_status
 dwc2_device_isoc_start(struct usbd_xfer *xfer)
 {
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
-	struct usbd_device * dev = dpipe->pipe.device;
+	struct usbd_device *dev = dpipe->pipe.device;
 	struct dwc2_softc *sc = dev->bus->hci_private;
 	usbd_status err;
 
@@ -1240,7 +1240,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
         struct dwc2_hcd_urb *dwc2_urb;
 
-	struct usbd_device * dev = xfer->pipe->device;
+	struct usbd_device *dev = xfer->pipe->device;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
 	uint8_t addr = dev->address;
 	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
@@ -1524,7 +1524,7 @@ dwc2_detach(struct dwc2_softc *sc, int flags)
 }
 
 bool
-dwc2_shutdown(device_t self, int flags)
+dwc2_shutdown(struct device *self, int flags)
 {
 	struct dwc2_softc *sc = device_private(self);
 
@@ -1534,7 +1534,7 @@ dwc2_shutdown(device_t self, int flags)
 }
 
 void
-dwc2_childdet(device_t self, device_t child)
+dwc2_childdet(struct device *self, struct device *child)
 {
 	struct dwc2_softc *sc = device_private(self);
 
@@ -1542,7 +1542,7 @@ dwc2_childdet(device_t self, device_t child)
 }
 
 int
-dwc2_activate(device_t self, enum devact act)
+dwc2_activate(struct device *self, enum devact act)
 {
 	struct dwc2_softc *sc = device_private(self);
 
@@ -1552,7 +1552,7 @@ dwc2_activate(device_t self, enum devact act)
 }
 
 bool
-dwc2_resume(device_t dv, const pmf_qual_t *qual)
+dwc2_resume(struct device *dv, const pmf_qual_t *qual)
 {
 	struct dwc2_softc *sc = device_private(dv);
 
@@ -1562,7 +1562,7 @@ dwc2_resume(device_t dv, const pmf_qual_t *qual)
 }
 
 bool
-dwc2_suspend(device_t dv, const pmf_qual_t *qual)
+dwc2_suspend(struct device *dv, const pmf_qual_t *qual)
 {
 	struct dwc2_softc *sc = device_private(dv);
 
@@ -1648,7 +1648,7 @@ static const char * const intnames[32] = {
 
 
 void
-dw_callout(void *arg)
+dw_timeout(void *arg)
 {
 	struct delayed_work *dw = arg;
 
@@ -1660,7 +1660,7 @@ void dwc2_host_hub_info(struct dwc2_hsotg *hsotg, void *context, int *hub_addr,
 {
 	struct usbd_xfer *xfer = context;
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
-	struct usbd_device * dev = dpipe->pipe.device;
+	struct usbd_device *dev = dpipe->pipe.device;
 
 	*hub_addr = dev->myhsport->parent->address;
  	*hub_port = dev->myhsport->portno;
@@ -1670,7 +1670,7 @@ int dwc2_host_get_speed(struct dwc2_hsotg *hsotg, void *context)
 {
 	struct usbd_xfer *xfer = context;
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
-	struct usbd_device * dev = dpipe->pipe.device;
+	struct usbd_device *dev = dpipe->pipe.device;
 
 	return dev->speed;
 }

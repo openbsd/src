@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.4 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.5 2015/02/10 14:15:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -205,12 +205,12 @@ udelay(unsigned long usecs)
 
 #define NS_TO_US(ns)	((ns + 500L) / 1000L)
 
-void dw_callout(void *);
+void dw_timeout(void *);
 void dwc2_worker(struct task *, void *);
 
 struct delayed_work {
 	struct task work;
-	struct callout dw_timer;
+	struct timeout dw_timer;
 
 	struct taskq *dw_wq;
 };
@@ -224,7 +224,7 @@ INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct task *))
 static inline void
 queue_delayed_work(struct taskq *wq, struct delayed_work *dw, int j)
 {
-	timeout_reset(&dw->dw_timer, j, dw_callout, dw);
+	timeout_reset(&dw->dw_timer, j, dw_timeout, dw);
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.5 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.6 2015/02/10 14:15:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ struct dwc2_pipe {
 
 
 typedef struct dwc2_softc {
-	device_t sc_dev;
+	struct device *sc_dev;
 
  	bus_space_tag_t		sc_iot;
  	bus_space_handle_t	sc_ioh;
@@ -91,9 +91,9 @@ typedef struct dwc2_softc {
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
 
-	struct usbd_xfer * sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
-	device_t sc_child;		/* /dev/usb# device */
+	struct device *sc_child;		/* /dev/usb# device */
 	char sc_dying;
 	struct usb_dma_reserve sc_dma_reserve;
 
@@ -114,11 +114,11 @@ typedef struct dwc2_softc {
 int		dwc2_init(struct dwc2_softc *);
 int		dwc2_intr(void *);
 int		dwc2_detach(dwc2_softc_t *, int);
-bool		dwc2_shutdown(device_t, int);
-void		dwc2_childdet(device_t, device_t);
-int		dwc2_activate(device_t, enum devact);
-bool		dwc2_resume(device_t, const pmf_qual_t *);
-bool		dwc2_suspend(device_t, const pmf_qual_t *);
+bool		dwc2_shutdown(struct device *, int);
+void		dwc2_childdet(struct device *, struct device *);
+int		dwc2_activate(struct device *, enum devact);
+bool		dwc2_resume(struct device *, const pmf_qual_t *);
+bool		dwc2_suspend(struct device *, const pmf_qual_t *);
 
 void		dwc2_worker(struct task *, void *);
 

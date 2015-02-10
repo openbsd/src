@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.h,v 1.5 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.h,v 1.6 2015/02/10 14:15:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_core.h,v 1.5 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -405,7 +405,7 @@ struct dwc2_hw_params {
  * @frame_list_dma:     Frame list DMA address
  */
 struct dwc2_hsotg {
-	device_t dev;
+	struct device *dev;
 	struct dwc2_softc *hsotg_sc;
 	/** Params detected from hardware */
 	struct dwc2_hw_params hw_params;
@@ -418,7 +418,7 @@ struct dwc2_hsotg {
 
 	struct taskq *wq_otg;
 	struct task wf_otg;
-	struct callout wkp_timer;
+	struct timeout wkp_timer;
 	enum dwc2_lx_state lx_state;
 
 	union dwc2_hcd_internal_flags {
