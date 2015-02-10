@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.1 2015/02/10 06:40:08 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.2 2015/02/10 11:36:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -129,23 +129,33 @@ constraint_query(struct constraint *cstr)
 	struct iovec	 iov[2];
 
 	now = getmonotime();
-	if (cstr->state >= STATE_REPLY_RECEIVED) {
-		if (cstr->last + CONSTRAINT_SCAN_INTERVAL > now) {
-			/* Nothing to do */
-			return (-1);
-		}
 
-		/* Reset */
-		cstr->senderrors = 0;
-		constraint_close(cstr->fd);
-	} else if (cstr->state == STATE_QUERY_SENT) {
+	switch (cstr->state) {
+	case STATE_DNS_DONE:
+		/* Proceed and query the time */
+		break;
+	case STATE_QUERY_SENT:
 		if (cstr->last + CONSTRAINT_SCAN_TIMEOUT > now) {
 			/* The caller should expect a reply */
 			return (0);
 		}
 
-		/* Timeout, just kill the process to reset it */
+		/* Timeout, just kill the process to reset it. */
 		kill(cstr->pid, SIGTERM);
+		return (-1);
+	case STATE_INVALID:
+		if (cstr->last + CONSTRAINT_SCAN_INTERVAL > now) {
+			/* Nothing to do */
+			return (-1);
+		}
+
+		/* Reset and retry */
+		cstr->senderrors = 0;
+		constraint_close(cstr->fd);
+		break;
+	case STATE_REPLY_RECEIVED:
+	default:
+		/* Nothing to do */
 		return (-1);
 	}
 
