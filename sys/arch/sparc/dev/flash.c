@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.6 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: flash.c,v 1.7 2015/02/10 23:50:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -170,18 +170,18 @@ flashrw(dev, uio, flags)
 	int flags;
 {
 	struct flash_softc *sc = flash_cd.cd_devs[0];
-	u_int cnt;
-	int off;
+	size_t cnt;
+	off_t off;
 
 	off = uio->uio_offset;
-	if (off >= FLASH_REGS_SIZE)
+	if (off < 0 || off >= FLASH_REGS_SIZE)
 		return (EFAULT);
 
 	cnt = uio->uio_resid;
 	if (cnt > (FLASH_REGS_SIZE - off))
 		cnt = FLASH_REGS_SIZE - off;
 
-	return (uiomovei(&sc->sc_regs->regs[0] + off, cnt, uio));
+	return (uiomove(&sc->sc_regs->regs[0] + off, cnt, uio));
 }
 
 int
