@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.117 2015/02/09 03:15:41 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.118 2015/02/10 03:40:18 blambert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -350,6 +350,8 @@ endtsleep(void *arg)
 void
 unsleep(struct proc *p)
 {
+	SCHED_ASSERT_LOCKED();
+
 	if (p->p_wchan) {
 		TAILQ_REMOVE(&slpque[LOOKUP(p->p_wchan)], p, p_runq);
 		p->p_wchan = NULL;
