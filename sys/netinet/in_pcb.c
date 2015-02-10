@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.167 2015/02/10 01:36:59 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.168 2015/02/10 03:07:56 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		wild = INPLOOKUP_WILDCARD;
 	if (nam) {
 		sin = mtod(nam, struct sockaddr_in *);
-		if (nam->m_len != sizeof (*sin))
+		if (nam->m_len != sizeof(*sin))
 			return (EINVAL);
 #ifdef notdef
 		/*
@@ -323,7 +323,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
 			/* ... must also clear the zeropad in the sockaddr */
-			bzero(sin->sin_zero, sizeof(sin->sin_zero));
+			memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 
 			if (!((so->so_options & SO_BINDANY) ||
 			    (sin->sin_addr.s_addr == INADDR_BROADCAST &&
@@ -451,7 +451,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 		panic("IPv6 pcb passed into in_pcbconnect");
 #endif /* INET6 */
 
-	if (nam->m_len != sizeof (*sin))
+	if (nam->m_len != sizeof(*sin))
 		return (EINVAL);
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
@@ -576,9 +576,9 @@ in_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in *sin;
 
-	nam->m_len = sizeof (*sin);
+	nam->m_len = sizeof(*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof (*sin));
+	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_port = inp->inp_lport;
@@ -597,9 +597,9 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 	}
 #endif /* INET6 */
 
-	nam->m_len = sizeof (*sin);
+	nam->m_len = sizeof(*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof (*sin));
+	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_port = inp->inp_fport;
@@ -670,7 +670,7 @@ in_losing(struct inpcb *inp)
 	if ((rt = inp->inp_route.ro_rt)) {
 		inp->inp_route.ro_rt = 0;
 
-		bzero((caddr_t)&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_flags = rt->rt_flags;
 		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -810,9 +810,9 @@ in_pcbrtentry(struct inpcb *inp)
 	 */
 	if (ro->ro_rt == NULL) {
 #ifdef INET6
-		bzero(ro, sizeof(struct route_in6));
+		memset(ro, 0, sizeof(struct route_in6));
 #else
-		bzero(ro, sizeof(struct route));
+		memset(ro, 0, sizeof(struct route));
 #endif
 
 		switch(sotopf(inp->inp_socket)) {
@@ -904,11 +904,11 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		ro->ro_rt = rtalloc_mpath(&ro->ro_dst, NULL, ro->ro_tableid);
 
 		/*
-		 * It is important to bzero out the rest of the
+		 * It is important to zero out the rest of the
 		 * struct sockaddr_in when mixing v6 & v4!
 		 */
 		sin2 = (struct sockaddr_in *)&ro->ro_dst;
-		bzero(sin2->sin_zero, sizeof(sin2->sin_zero));
+		memset(sin2->sin_zero, 0, sizeof(sin2->sin_zero));
 	}
 	/*
 	 * If we found a route, use the address
