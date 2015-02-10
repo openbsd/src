@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2015/01/04 01:11:24 bcook Exp $ */
+/*	$OpenBSD: util.c,v 1.17 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -46,6 +46,12 @@ gettime(void)
 		fatal("gettimeofday");
 
 	return (tv.tv_sec + JAN_1970 + 1.0e-6 * tv.tv_usec);
+}
+
+double
+gettime_from_timeval(struct timeval *tv)
+{
+	return (tv->tv_sec + JAN_1970 + 1.0e-6 * tv->tv_usec);
 }
 
 time_t

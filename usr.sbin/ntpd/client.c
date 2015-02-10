@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.98 2015/01/19 20:47:03 bcook Exp $ */
+/*	$OpenBSD: client.c,v 1.99 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -320,6 +320,15 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	 * consider every answer with a timestamp beyond january 2030 bogus.
 	 */
 	if (T2 > JAN_2030 || T3 > JAN_2030) {
+		set_next(p, error_interval());
+		return (0);
+	}
+
+	/* Detect liars */
+	if (conf->constraint_median != 0 &&
+	    (constraint_check(T2) != 0 || constraint_check(T3) != 0)) {
+		log_info("reply from %s: constraint check failed",
+		    log_sockaddr((struct sockaddr *)&p->addr->ss));
 		set_next(p, error_interval());
 		return (0);
 	}

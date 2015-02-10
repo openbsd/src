@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.117 2015/01/13 02:28:56 bcook Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.118 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -72,8 +72,17 @@
 #define	SENSOR_DATA_MAXAGE		(15*60)
 #define	SENSOR_QUERY_INTERVAL		15
 #define	SENSOR_QUERY_INTERVAL_SETTIME	(SETTIME_TIMEOUT/3)
-#define	SENSOR_SCAN_INTERVAL		(5*60)
+#define	SENSOR_SCAN_INTERVAL		(1*60)
 #define	SENSOR_DEFAULT_REFID		"HARD"
+
+#define CONSTRAINT_ERROR_MARGIN		(4)
+#define CONSTRAINT_SCAN_INTERVAL	(15*60)
+#define CONSTRAINT_SCAN_TIMEOUT		(10)
+#define CONSTRAINT_MARGIN		(2.0*60)
+#define CONSTRAINT_PORT			"443"	/* HTTPS port */
+#define	CONSTRAINT_MAXHEADERLENGTH	8192
+#define CONSTRAINT_PASSFD		(STDERR_FILENO + 1)
+#define CONSTRAINT_CA			"/etc/ssl/cert.pem"
 
 enum client_state {
 	STATE_NONE,
@@ -81,7 +90,8 @@ enum client_state {
 	STATE_DNS_TEMPFAIL,
 	STATE_DNS_DONE,
 	STATE_QUERY_SENT,
-	STATE_REPLY_RECEIVED
+	STATE_REPLY_RECEIVED,
+	STATE_INVALID
 };
 
 struct listen_addr {
@@ -99,6 +109,7 @@ struct ntp_addr {
 
 struct ntp_addr_wrap {
 	char			*name;
+	char			*path;
 	struct ntp_addr		*a;
 	u_int8_t		 pool;
 };
@@ -160,6 +171,20 @@ struct ntp_sensor {
 	u_int8_t			 shift;
 };
 
+struct constraint {
+	TAILQ_ENTRY(constraint)		 entry;
+	struct ntp_addr_wrap		 addr_head;
+	struct ntp_addr			*addr;
+	int				 senderrors;
+	enum client_state		 state;
+	u_int32_t			 id;
+	int				 fd;
+	pid_t				 pid;
+	struct imsgbuf			 ibuf;
+	time_t				 last;
+	time_t				 constraint;
+};
+
 struct ntp_conf_sensor {
 	TAILQ_ENTRY(ntp_conf_sensor)		 entry;
 	char					*device;
@@ -182,6 +207,7 @@ struct ntpd_conf {
 	TAILQ_HEAD(ntp_peers, ntp_peer)			ntp_peers;
 	TAILQ_HEAD(ntp_sensors, ntp_sensor)		ntp_sensors;
 	TAILQ_HEAD(ntp_conf_sensors, ntp_conf_sensor)	ntp_conf_sensors;
+	TAILQ_HEAD(constraints, constraint)		constraints;
 	struct ntp_status				status;
 	struct ntp_freq					freq;
 	u_int32_t					scale;
@@ -190,6 +216,11 @@ struct ntpd_conf {
 	u_int8_t					debug;
 	u_int8_t					noaction;
 	u_int8_t					filters;
+	time_t						constraint_last;
+	time_t						constraint_median;
+	u_int						constraint_errors;
+	u_int8_t					*ca;
+	size_t						ca_len;
 };
 
 struct ctl_show_status {
@@ -200,6 +231,9 @@ struct ctl_show_status {
 	u_int8_t	 synced;
 	u_int8_t	 stratum;
 	double		 clock_offset;
+	time_t		 constraint_median;
+	time_t		 constraint_last;
+	u_int		 constraint_errors;
 };
 
 struct ctl_show_peer {
@@ -245,6 +279,7 @@ enum imsg_type {
 	IMSG_ADJFREQ,
 	IMSG_SETTIME,
 	IMSG_HOST_DNS,
+	IMSG_CONSTRAINT,
 	IMSG_CTL_SHOW_STATUS,
 	IMSG_CTL_SHOW_PEERS,
 	IMSG_CTL_SHOW_PEERS_END,
@@ -284,6 +319,7 @@ int			 host_dns(const char *, struct ntp_addr **);
 void			 host_dns_free(struct ntp_addr *);
 struct ntp_peer		*new_peer(void);
 struct ntp_conf_sensor	*new_sensor(char *);
+struct constraint	*new_constraint(void);
 
 /* ntp_msg.c */
 int	ntp_getmsg(struct sockaddr *, char *, ssize_t, struct ntp_msg *);
@@ -303,8 +339,16 @@ int	client_dispatch(struct ntp_peer *, u_int8_t);
 void	client_log_error(struct ntp_peer *, const char *, int);
 void	set_next(struct ntp_peer *, time_t);
 
+/* constraint.c */
+int	 constraint_init(struct constraint *);
+int	 constraint_query(struct constraint *);
+int	 constraint_dispatch_msg(struct pollfd *);
+void	 constraint_check_child(void);
+int	 constraint_check(double);
+
 /* util.c */
 double			 gettime_corrected(void);
+double			 gettime_from_timeval(struct timeval *);
 double			 getoffset(void);
 double			 gettime(void);
 time_t			 getmonotime(void);

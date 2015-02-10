@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpctl.8,v 1.6 2014/01/22 02:55:15 benno Exp $
+.\" $OpenBSD: ntpctl.8,v 1.7 2015/02/10 06:40:08 reyk Exp $
 .\"
 .\" Copyright (c) 2012 Mike Miller <mmiller@mgm51.com>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: February 10 2015 $
 .Dt NTPCTL 8
 .Os
 .Sh NAME
@@ -53,6 +53,7 @@ When the system clock is not synced, the offset of the system clock,
 as reported by the
 .Xr adjtime 2
 system call, is displayed.
+When the median constraint is set, the offset to the local time is displayed.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/ntpd.sockXXX" -compact

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.88 2015/01/21 03:14:10 bcook Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.89 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -709,6 +709,7 @@ show_status_msg(struct imsg *imsg)
 {
 	struct ctl_show_status	*cstatus;
 	double			 clock_offset;
+	struct timeval		 tv;
 
 	if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(struct ctl_show_status))
 		fatalx("invalid IMSG_CTL_SHOW_STATUS received");
@@ -722,6 +723,18 @@ show_status_msg(struct imsg *imsg)
 	if (cstatus->sensorcnt > 0)
 		printf("%d/%d sensors valid, ",
 		    cstatus->valid_sensors, cstatus->sensorcnt);
+
+	if (cstatus->constraint_median) {
+		tv.tv_sec = cstatus->constraint_median +
+                    (getmonotime() - cstatus->constraint_last);
+		tv.tv_usec = 0;
+		printf("constraint offset %f",
+		    gettime_from_timeval(&tv) - gettime());
+		if (cstatus->constraint_errors)
+			printf(" (%d errors)",
+			    cstatus->constraint_errors);
+		printf(", ");
+	}
 
 	if (cstatus->peercnt + cstatus->sensorcnt == 0)
 		printf("no peers and no sensors configured\n");

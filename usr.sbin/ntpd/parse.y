@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2015/01/10 13:47:05 tedu Exp $ */
+/*	$OpenBSD: parse.y,v 1.58 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,12 +80,12 @@ typedef struct {
 
 %}
 
-%token	LISTEN ON
+%token	LISTEN ON CONSTRAINT CONSTRAINTS FROM
 %token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID STRATUM WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.addr>		address
+%type	<v.addr>		address url
 %type	<v.opts>		listen_opts listen_opts_l listen_opt
 %type	<v.opts>		server_opts server_opts_l server_opt
 %type	<v.opts>		sensor_opts sensor_opts_l sensor_opt
@@ -208,6 +208,82 @@ main		: LISTEN ON address listen_opts	{
 			free($2->name);
 			free($2);
 		}
+		| CONSTRAINTS FROM url		{
+			struct constraint	*p;
+			struct ntp_addr		*h, *next;
+
+			h = $3->a;
+			do {
+				if (h != NULL) {
+					next = h->next;
+					if (h->ss.ss_family != AF_INET &&
+					    h->ss.ss_family != AF_INET6) {
+						yyerror("IPv4 or IPv6 address "
+						    "or hostname expected");
+						free(h);
+						free($3->name);
+						free($3->path);
+						free($3);
+						YYERROR;
+					}
+					h->next = NULL;
+				} else
+					next = NULL;
+
+				p = new_constraint();
+				p->addr = h;
+				p->addr_head.a = h;
+				p->addr_head.pool = 1;
+				p->addr_head.name = strdup($3->name);
+				p->addr_head.path = strdup($3->path);
+				if (p->addr_head.name == NULL ||
+				    p->addr_head.path == NULL)
+					fatal(NULL);
+				if (p->addr != NULL)
+					p->state = STATE_DNS_DONE;
+				TAILQ_INSERT_TAIL(&conf->constraints,
+				    p, entry);
+				h = next;
+			} while (h != NULL);
+
+			free($3->name);
+			free($3);
+		}
+		| CONSTRAINT FROM url		{
+			struct constraint	*p;
+			struct ntp_addr		*h, *next;
+
+			p = new_constraint();
+			for (h = $3->a; h != NULL; h = next) {
+				next = h->next;
+				if (h->ss.ss_family != AF_INET &&
+				    h->ss.ss_family != AF_INET6) {
+					yyerror("IPv4 or IPv6 address "
+					    "or hostname expected");
+					free(h);
+					free(p);
+					free($3->name);
+					free($3->path);
+					free($3);
+					YYERROR;
+				}
+				h->next = p->addr;
+				p->addr = h;
+			}
+
+			p->addr_head.a = p->addr;
+			p->addr_head.pool = 0;
+			p->addr_head.name = strdup($3->name);
+			p->addr_head.path = strdup($3->path);
+			if (p->addr_head.name == NULL ||
+			    p->addr_head.path == NULL)
+				fatal(NULL);
+			if (p->addr != NULL)
+				p->state = STATE_DNS_DONE;
+			TAILQ_INSERT_TAIL(&conf->constraints, p, entry);
+			free($3->name);
+			free($3);
+		}
 		| SENSOR STRING	sensor_opts {
 			struct ntp_conf_sensor	*s;
 
@@ -227,6 +303,45 @@ address		: STRING		{
 				fatal(NULL);
 			host($1, &$$->a);
 			$$->name = $1;
+		}
+		;
+
+url		: STRING		{
+			char	*hname, *path;
+
+			if (($$ = calloc(1, sizeof(struct ntp_addr_wrap))) ==
+			    NULL)
+				fatal("calloc");
+
+			if (strncmp("https://", $1,
+			    strlen("https://")) != 0) {
+				host($1, &$$->a);
+				$$->name = $1;
+				if (($$->path = strdup("/")) == NULL)
+					fatal("strdup");
+			} else {
+				hname = $1 + strlen("https://");
+
+				path = hname + strcspn(hname, "/\\");
+				if (*path == '\0')
+					path = "/";
+				if (($$->path = strdup(path)) == NULL)
+					fatal("strdup");
+				*path = '\0';
+				host(hname, &$$->a);
+				if (($$->name = strdup(hname)) == NULL)
+					fatal("strdup");
+			}
+
+			if ($$->a == NULL &&
+			    (host_dns($$->name, &$$->a) == -1 ||
+			    $$->a == NULL)) {
+				yyerror("could not resolve \"%s\"", $$->name);
+				free($$->name);
+				free($$->path);
+				free($$);
+				YYERROR;
+			}
 		}
 		;
 
@@ -358,7 +473,10 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "constraint",		CONSTRAINT},
+		{ "constraints",	CONSTRAINTS},
 		{ "correction",		CORRECTION},
+		{ "from",		FROM},
 		{ "listen",		LISTEN},
 		{ "on",			ON},
 		{ "refid",		REFID},
@@ -646,6 +764,7 @@ parse_config(const char *filename, struct ntpd_conf *xconf)
 	TAILQ_INIT(&conf->listen_addrs);
 	TAILQ_INIT(&conf->ntp_peers);
 	TAILQ_INIT(&conf->ntp_conf_sensors);
+	TAILQ_INIT(&conf->constraints);
 
 	if ((file = pushfile(filename)) == NULL) {
 		return (-1);

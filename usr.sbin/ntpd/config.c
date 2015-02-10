@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.25 2015/02/08 04:54:15 reyk Exp $ */
+/*	$OpenBSD: config.c,v 1.26 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,7 @@ struct ntp_addr	*host_v4(const char *);
 struct ntp_addr	*host_v6(const char *);
 
 static u_int32_t		 maxid = 0;
+static u_int32_t		 constraint_maxid = 0;
 
 void
 host(const char *s, struct ntp_addr **hn)
@@ -193,3 +194,16 @@ new_sensor(char *device)
 
 	return (s);
 }
+
+struct constraint *
+new_constraint(void)
+{
+	struct constraint	*p;
+
+	if ((p = calloc(1, sizeof(struct constraint))) == NULL)
+		fatal("new_constraint calloc");
+	p->id = ++constraint_maxid;
+
+	return (p);
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2015/01/09 07:35:37 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.5 2015/02/10 06:40:08 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -309,6 +309,9 @@ build_show_status(struct ctl_show_status *cs)
 	cs->synced = conf->status.synced;
 	cs->stratum = conf->status.stratum;
 	cs->clock_offset = getoffset() * 1000.0;
+	cs->constraint_median = conf->constraint_median;
+	cs->constraint_last = conf->constraint_last;
+	cs->constraint_errors = conf->constraint_errors;
 }
 
 void
