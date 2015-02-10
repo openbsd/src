@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: asn1t.h,v 1.10 2015/02/10 08:05:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -766,6 +766,7 @@ typedef struct ASN1_STREAM_ARG_st {
 		#sname \
 	ASN1_ITEM_end(sname)
 
+#ifndef LIBRESSL_INTERNAL
 /* Macro to implement standard functions in terms of ASN1_ITEM structures */
 
 #define IMPLEMENT_ASN1_FUNCTIONS(stname) IMPLEMENT_ASN1_FUNCTIONS_fname(stname, stname, stname)
@@ -857,6 +858,8 @@ typedef struct ASN1_STREAM_ARG_st {
 #define IMPLEMENT_ASN1_FUNCTIONS_const_fname(stname, itname, fname) \
 	IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(stname, itname, fname) \
 	IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname)
+
+#endif /* !LIBRESSL_INTERNAL */
 
 /* external definitions for primitive types */
 
