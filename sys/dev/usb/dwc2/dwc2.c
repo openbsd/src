@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.13 2015/02/10 23:19:34 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.14 2015/02/10 23:25:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -362,7 +362,7 @@ dwc2_softintr(void *v)
 		 */
 		/*XXXNH not tested */
 		if (dxfer->xfer.hcflags & UXFER_ABORTING) {
-			cv_broadcast(&dxfer->xfer.hccv);
+			wakeup(&dxfer->flags);
 			continue;
 		}
 
@@ -566,7 +566,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		xfer->status = status;
 		xfer->hcflags |= UXFER_ABORTWAIT;
 		while (xfer->hcflags & UXFER_ABORTING)
-			cv_wait(&xfer->hccv, &sc->sc_lock);
+			tsleep(&dxfer->flags, PZERO, "dwc2xfer", 0);
 		return;
 	}
 
@@ -601,7 +601,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	usb_transfer_complete(xfer);
 	if (wake) {
-		cv_broadcast(&xfer->hccv);
+		wakeup(&dxfer->flags);
 	}
 }
 
@@ -1460,7 +1460,7 @@ Debugger();
 			dwc2_start_standard_chain(xfer);
 		}
 		dxfer->queued = false;
-		cv_broadcast(&xfer->hccv);
+		wakeup(&dxfer->flags);
 #endif
 	}
 	mtx_leave(&sc->sc_lock);
