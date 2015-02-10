@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.47 2015/02/07 10:49:09 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.48 2015/02/10 23:06:13 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -47,7 +47,7 @@
 
 void usage(void);
 
-time_t cur_time;
+time_t cur_time, last_scan;
 struct group root_group;
 
 u_int16_t server_port;
@@ -349,10 +349,10 @@ periodic_scan(void *p)
 		for (g = n->group; g; g = g->next)
 			for (s = g->shared_network; s; s = s->next)
 				for (l = s->leases; l && l->ends; l = l->next)
-					if (cur_time >= l->ends){
-						release_lease(l);
-						pfmsg('R', l);
-					}
+					if (cur_time >= l->ends)
+						if (l->ends > last_scan)
+							pfmsg('R', l);
 
+	last_scan = cur_time;
 	add_timeout(cur_time + y, periodic_scan, NULL);
 }

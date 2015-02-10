@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.22 2014/06/11 16:45:15 pelikan Exp $ */
+/*	$OpenBSD: memory.c,v 1.23 2015/02/10 23:06:13 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -626,6 +626,7 @@ release_lease(struct lease *lease)
 		supersede_lease(lease, &lt, 1);
 		note("Released lease for IP address %s",
 		    piaddr(lease->ip_addr));
+		pfmsg('R', lease);
 	}
 }
 
