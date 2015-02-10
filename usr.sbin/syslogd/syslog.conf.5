@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.27 2015/01/20 22:10:37 bluhm Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.28 2015/02/10 09:48:24 sthen Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: January 20 2015 $
+.Dd $Mdocdate: February 10 2015 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -217,9 +217,12 @@ sign).
 Selected messages are forwarded to the
 .Xr syslogd 8
 program on the named host.
-A port number may be optionally specified using the
+A port number may be specified using the
 .Ar host:port
 syntax.
+This is optional for UDP and TLS.
+There is no well-known port for syslog over TCP, so in this case it
+is mandatory to specify the port..
 IPv6 addresses can be used by surrounding the address portion with
 square brackets
 .Po
