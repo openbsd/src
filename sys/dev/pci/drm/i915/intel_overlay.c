@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.10 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.11 2015/02/10 03:39:41 jsg Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -710,7 +710,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 #ifdef notyet
 	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
 #endif
-	rw_assert_wrlock(&dev->mode_config.rwl);
+	rw_assert_wrlock(&dev->mode_config.mutex);
 	BUG_ON(!overlay);
 
 	ret = intel_overlay_release_old_vid(overlay);
@@ -817,7 +817,7 @@ int intel_overlay_switch_off(struct intel_overlay *overlay)
 #ifdef notyet
 	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
 #endif
-	rw_assert_wrlock(&dev->mode_config.rwl);
+	rw_assert_wrlock(&dev->mode_config.mutex);
 
 	ret = intel_overlay_recover_from_interrupt(overlay);
 	if (ret != 0)
@@ -1069,13 +1069,13 @@ int intel_overlay_put_image(struct drm_device *dev, void *data,
 	}
 
 	if (!(put_image_rec->flags & I915_OVERLAY_ENABLE)) {
-		rw_enter_write(&dev->mode_config.rwl);
+		mutex_lock(&dev->mode_config.mutex);
 		mutex_lock(&dev->struct_mutex);
 
 		ret = intel_overlay_switch_off(overlay);
 
 		mutex_unlock(&dev->struct_mutex);
-		rw_exit_write(&dev->mode_config.rwl);
+		mutex_unlock(&dev->mode_config.mutex);
 
 		return ret;
 	}
@@ -1099,7 +1099,7 @@ int intel_overlay_put_image(struct drm_device *dev, void *data,
 		goto out_free;
 	}
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	mutex_lock(&dev->struct_mutex);
 
 	if (new_bo->tiling_mode) {
@@ -1181,7 +1181,7 @@ int intel_overlay_put_image(struct drm_device *dev, void *data,
 		goto out_unlock;
 
 	mutex_unlock(&dev->struct_mutex);
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 
 	kfree(params);
 
@@ -1189,7 +1189,7 @@ int intel_overlay_put_image(struct drm_device *dev, void *data,
 
 out_unlock:
 	mutex_unlock(&dev->struct_mutex);
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 	drm_gem_object_unreference_unlocked(&new_bo->base);
 out_free:
 	kfree(params);
@@ -1264,7 +1264,7 @@ int intel_overlay_attrs(struct drm_device *dev, void *data,
 		return -ENODEV;
 	}
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	mutex_lock(&dev->struct_mutex);
 
 	ret = -EINVAL;
@@ -1330,7 +1330,7 @@ int intel_overlay_attrs(struct drm_device *dev, void *data,
 	ret = 0;
 out_unlock:
 	mutex_unlock(&dev->struct_mutex);
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.6 2014/03/09 11:07:18 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.7 2015/02/10 03:39:41 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -334,7 +334,7 @@ void drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode)
 	/*
 	 * For each CRTC in this fb, turn the connectors on/off.
 	 */
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	for (i = 0; i < fb_helper->crtc_count; i++) {
 		crtc = fb_helper->crtc_info[i].mode_set.crtc;
 
@@ -349,7 +349,7 @@ void drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode)
 				dev->mode_config.dpms_property, dpms_mode);
 		}
 	}
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 }
 
 #if 0
@@ -1394,7 +1394,7 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 	if (!fb_helper->fb)
 		return 0;
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
 		if (crtc->fb)
 			crtcs_bound++;
@@ -1404,7 +1404,7 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 
 	if (bound < crtcs_bound) {
 		fb_helper->delayed_hotplug = true;
-		rw_exit_write(&dev->mode_config.rwl);
+		mutex_unlock(&dev->mode_config.mutex);
 		return 0;
 	}
 	DRM_DEBUG_KMS("\n");
@@ -1416,7 +1416,7 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 	count = drm_fb_helper_probe_connector_modes(fb_helper, max_width,
 						    max_height);
 	drm_setup_crtcs(fb_helper);
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 
 	return drm_fb_helper_single_fb_probe(fb_helper, bpp_sel);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.11 2014/01/22 22:33:24 jsg Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.12 2015/02/10 03:39:41 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -542,9 +542,9 @@ static int intel_lid_notify(struct notifier_block *nb, unsigned long val,
 
 	dev_priv->modeset_on_lid = 0;
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	intel_modeset_setup_hw_state(dev, true);
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 
 	return NOTIFY_OK;
 }

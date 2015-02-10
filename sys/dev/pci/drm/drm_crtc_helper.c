@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.8 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.9 2015/02/10 03:39:41 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -977,7 +977,7 @@ static void drm_output_poll_execute(void *arg1)
 	if (!drm_kms_helper_poll)
 		return;
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 
 		/* Ignore forced connectors. */
@@ -1008,7 +1008,7 @@ static void drm_output_poll_execute(void *arg1)
 		}
 	}
 
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 
 	if (changed)
 		drm_kms_helper_hotplug_event(dev);
@@ -1081,7 +1081,7 @@ void drm_helper_hpd_irq_event(struct drm_device *dev)
 	if (!dev->mode_config.poll_enabled)
 		return;
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 
 		/* Only handle HPD capable connectors. */
@@ -1099,7 +1099,7 @@ void drm_helper_hpd_irq_event(struct drm_device *dev)
 			changed = true;
 	}
 
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 
 	if (changed)
 		drm_kms_helper_hotplug_event(dev);

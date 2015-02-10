@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.11 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.12 2015/02/10 03:39:41 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -292,7 +292,7 @@ void intel_fb_restore_mode(struct drm_device *dev)
 	struct drm_mode_config *config = &dev->mode_config;
 	struct drm_plane *plane;
 
-	rw_enter_write(&dev->mode_config.rwl);
+	mutex_lock(&dev->mode_config.mutex);
 
 	ret = drm_fb_helper_restore_fbdev_mode(&dev_priv->fbdev->helper);
 	if (ret)
@@ -302,5 +302,5 @@ void intel_fb_restore_mode(struct drm_device *dev)
 	list_for_each_entry(plane, &config->plane_list, head)
 		plane->funcs->disable_plane(plane);
 
-	rw_exit_write(&dev->mode_config.rwl);
+	mutex_unlock(&dev->mode_config.mutex);
 }

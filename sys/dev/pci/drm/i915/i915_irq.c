@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.15 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.16 2015/02/10 03:39:41 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -285,14 +285,14 @@ static void i915_hotplug_work_func(void *arg1)
 	struct drm_mode_config *mode_config = &dev->mode_config;
 	struct intel_encoder *encoder;
 
-	rw_enter_write(&mode_config->rwl);
+	mutex_lock(&mode_config->mutex);
 	DRM_DEBUG_KMS("running encoder hotplug functions\n");
 
 	list_for_each_entry(encoder, &mode_config->encoder_list, base.head)
 		if (encoder->hot_plug)
 			encoder->hot_plug(encoder);
 
-	rw_exit_write(&mode_config->rwl);
+	mutex_unlock(&mode_config->mutex);
 
 	/* Just fire off a uevent and let userspace tell us what to do */
 	drm_helper_hpd_irq_event(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.h,v 1.3 2015/02/10 03:39:41 jsg Exp $	*/
 /*
  * Copyright © 2006 Keith Packard
  * Copyright © 2007-2008 Dave Airlie
@@ -768,7 +768,7 @@ struct drm_mode_group {
  * global restrictions are also here, e.g. dimension restrictions.
  */
 struct drm_mode_config {
-	struct rwlock rwl; /* protects configuration (mode lists etc.) */
+	struct rwlock mutex; /* protects configuration (mode lists etc.) */
 	struct rwlock idr_rwl; /* for IDR management */
 	SPLAY_HEAD(drm_mode_tree, drm_mode_handle) mode_tree; /* use this idr for all IDs, fb, crtc, connector, modes - just makes life easier */
 	uint32_t		 mode_obj_id;
