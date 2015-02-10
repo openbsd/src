@@ -1,8 +1,9 @@
-/* $OpenBSD: progs.h,v 1.1 2014/08/26 17:47:25 jsing Exp $ */
+/* $OpenBSD: progs.h,v 1.2 2015/02/10 15:29:34 jsing Exp $ */
 /* Public domain */
 
 extern int asn1parse_main(int argc, char *argv[]);
 extern int ca_main(int argc, char *argv[]);
+extern int certhash_main(int argc, char *argv[]);
 extern int ciphers_main(int argc, char *argv[]);
 extern int cms_main(int argc, char *argv[]);
 extern int crl2pkcs7_main(int argc, char *argv[]);
@@ -66,6 +67,7 @@ FUNCTION functions[] = {
 	/* General functions. */
 	{ FUNC_TYPE_GENERAL, "asn1parse", asn1parse_main },
 	{ FUNC_TYPE_GENERAL, "ca", ca_main },
+	{ FUNC_TYPE_GENERAL, "certhash", certhash_main },
 	{ FUNC_TYPE_GENERAL, "ciphers", ciphers_main },
 #ifndef OPENSSL_NO_CMS
 	{ FUNC_TYPE_GENERAL, "cms", cms_main },
