@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.124 2015/02/07 06:27:53 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.125 2015/02/10 08:05:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -543,7 +543,7 @@ found:
 	fprintf(stderr, "%s: outdated mandoc.db lacks %s(%s) entry,\n"
 	    "     consider running  # makewhatis %s\n",
 	    progname, name, sec, paths->paths[ipath]);
-	
+
 	*res = mandoc_reallocarray(*res, ++*ressz, sizeof(struct manpage));
 	page = *res + (*ressz - 1);
 	page->file = file;
