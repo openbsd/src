@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.55 2015/02/10 11:37:58 jsing Exp $
+# $OpenBSD: Makefile,v 1.56 2015/02/10 13:28:17 jsing Exp $
 
 LIB=	crypto
 
@@ -258,7 +258,6 @@ SRCS+= v3_prn.c v3_utl.c v3err.c v3_genn.c v3_alt.c v3_skey.c v3_akey.c v3_pku.c
 SRCS+= v3_int.c v3_enum.c v3_sxnet.c v3_cpols.c v3_crld.c v3_purp.c v3_info.c
 SRCS+= v3_ocsp.c v3_akeya.c v3_pmaps.c v3_pcons.c v3_ncons.c v3_pcia.c v3_pci.c
 SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
-SRCS+= v3_asid.c v3_addr.c
 
 .PATH:	${.CURDIR}/arch/${MACHINE_CPU} \
 	${LCRYPTO_SRC} \

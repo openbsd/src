@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.20 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: x_x509.c,v 1.21 2015/02/10 13:28:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,10 +121,6 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		ret->ex_pathlen = -1;
 		ret->skid = NULL;
 		ret->akid = NULL;
-#ifndef OPENSSL_NO_RFC3779
-		ret->rfc3779_addr = NULL;
-		ret->rfc3779_asid = NULL;
-#endif
 		ret->aux = NULL;
 		ret->crldp = NULL;
 		CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
@@ -144,10 +140,6 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		policy_cache_free(ret->policy_cache);
 		GENERAL_NAMES_free(ret->altname);
 		NAME_CONSTRAINTS_free(ret->nc);
-#ifndef OPENSSL_NO_RFC3779
-		sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
-		ASIdentifiers_free(ret->rfc3779_asid);
-#endif
 		free(ret->name);
 		ret->name = NULL;
 		break;
