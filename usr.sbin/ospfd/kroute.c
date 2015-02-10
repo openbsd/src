@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.96 2015/02/10 05:24:48 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.97 2015/02/10 08:26:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1307,6 +1307,8 @@ dispatch_rtmsg(void)
 	ssize_t			 n;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (0);
 		log_warn("dispatch_rtmsg: read error");
 		return (-1);
 	}
