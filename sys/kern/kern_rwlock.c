@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.23 2014/09/01 03:37:10 guenther Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.24 2015/02/10 10:04:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -74,10 +74,6 @@ static const struct rwlock_op {
 	},
 };
 
-#ifndef __HAVE_MD_RWLOCK
-/*
- * Simple cases that should be in MD code and atomic.
- */
 void
 rw_enter_read(struct rwlock *rwl)
 {
@@ -138,8 +134,6 @@ rw_cas(volatile unsigned long *p, unsigned long o, unsigned long n)
 
 	return (0);
 }
-#endif
-
 #endif
 
 #ifdef DIAGNOSTIC

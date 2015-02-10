@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.16 2014/07/09 13:32:00 guenther Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.17 2015/02/10 10:04:27 dlg Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -30,10 +30,7 @@
  * When write locked, the upper bits contain the struct proc * pointer to
  * the writer, otherwise they count the number of readers.
  *
- * We provide a simple machine independent implementation that can be
- * optimized by machine dependent code when __HAVE_MD_RWLOCK is defined.
- *
- * MD code that defines __HAVE_MD_RWLOCK and implement four functions:
+ * We provide a simple machine independent implementation:
  *
  * void rw_enter_read(struct rwlock *)
  *  atomically test for RWLOCK_WRLOCK and if not set, increment the lock
@@ -52,8 +49,6 @@
  * void rw_exit_write(struct rwlock *);
  *  atomically swap the contents of the lock with 0 and if RWLOCK_WAIT was
  *  set, call rw_exit_waiters with the old contents of the lock.
- *
- * (XXX - the rest of the API for this is not invented yet).
  */
 
 #ifndef SYS_RWLOCK_H
