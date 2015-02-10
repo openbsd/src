@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb_enc.c,v 1.12 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: cfb_enc.c,v 1.13 2015/02/10 09:46:30 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,6 @@
  */
 
 #include "des_locl.h"
-#include <assert.h>
 #include <machine/endian.h>
 
 /* The input and output are loaded in multiples of 8 bits.
@@ -82,11 +81,6 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 #else
 	unsigned int  sh[4];
 	unsigned char *ovec=(unsigned char *)sh;
-
-	/* I kind of count that compiler optimizes away this assertioni,*/
-	assert (sizeof(sh[0])==4);	/* as this holds true for all,	*/
-					/* but 16-bit platforms...	*/
-					
 #endif
 
 	if (numbits<=0 || numbits > 64) return;

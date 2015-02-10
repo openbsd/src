@@ -1,4 +1,4 @@
-/* $OpenBSD: cbc128.c,v 1.3 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: cbc128.c,v 1.4 2015/02/10 09:46:30 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -58,7 +58,6 @@
 #  define NDEBUG
 # endif
 #endif
-#include <assert.h>
 
 #undef STRICT_ALIGNMENT
 #ifdef __STRICT_ALIGNMENT
@@ -73,8 +72,6 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 {
 	size_t n;
 	const unsigned char *iv = ivec;
-
-	assert(in && out && key && ivec);
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (STRICT_ALIGNMENT &&
@@ -122,8 +119,6 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
 {
 	size_t n;
 	union { size_t t[16/sizeof(size_t)]; unsigned char c[16]; } tmp;
-
-	assert(in && out && key && ivec);
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (in != out) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_x86core.c,v 1.7 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: aes_x86core.c,v 1.8 2015/02/10 09:46:30 miod Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -40,7 +40,6 @@
 #  define NDEBUG
 # endif
 #endif
-#include <assert.h>
 
 #include <stdlib.h>
 #include <openssl/aes.h>
@@ -661,7 +660,6 @@ AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	u32 s0, s1, s2, s3, t[4];
 	int r;
 
-	assert(in && out && key);
 	rk = key->rd_key;
 
 	/*
@@ -881,7 +879,6 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	u32 s0, s1, s2, s3, t[4];
 	int r;
 
-	assert(in && out && key);
 	rk = key->rd_key;
 
 	/*

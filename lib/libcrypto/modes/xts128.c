@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.5 2014/07/09 16:06:13 miod Exp $ */
+/* $OpenBSD: xts128.c,v 1.6 2015/02/10 09:46:30 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -58,7 +58,6 @@
 #  define NDEBUG
 # endif
 #endif
-#include <assert.h>
 
 int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	const unsigned char *inp, unsigned char *out,
