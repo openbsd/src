@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.46 2014/04/01 20:27:14 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.47 2015/02/10 08:56:28 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 struct mem_region64 {
 	uint64_t start;
 	uint32_t size;
-};
+} __packed;
 
 static struct mem_region64 OFmem64[OFMEM_REGIONS + 1];
 
@@ -114,9 +114,9 @@ ppc_mem_regions(struct mem_region **memp, struct mem_region **availp)
 		panic("no memory?");
 	rhandle = OF_parent(phandle);
 
-	if (OF_getprop(phandle, "#address-cells", &address_cells, 4) <= 0)
+	if (OF_getprop(rhandle, "#address-cells", &address_cells, 4) <= 0)
 		address_cells = 1;
-	if (OF_getprop(phandle, "#size-cells", &size_cells, 4) <= 0)
+	if (OF_getprop(rhandle, "#size-cells", &size_cells, 4) <= 0)
 		size_cells = 1;
 
 	if (size_cells != 1)
@@ -130,7 +130,7 @@ ppc_mem_regions(struct mem_region **memp, struct mem_region **availp)
 		    sizeof(OFmem[0]) * OFMEM_REGIONS) / sizeof(OFmem[0]);
 		break;
 	case 2:
-		nreg = OF_getprop(phandle, "reg", OFmem,
+		nreg = OF_getprop(phandle, "reg", OFmem64,
 		    sizeof(OFmem64[0]) * OFMEM_REGIONS) / sizeof(OFmem64[0]);
 		break;
 	}
