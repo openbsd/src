@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.35 2015/02/10 01:03:54 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.36 2015/02/10 08:25:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -103,7 +103,7 @@ int		send_rtmsg(int, int, struct kroute *, u_int32_t);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
 int		fetchifs(u_short);
-int		rtmsg_process(char *, int);
+int		rtmsg_process(char *, size_t);
 
 RB_HEAD(kroute_tree, kroute_node)	krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
@@ -1174,6 +1174,8 @@ dispatch_rtmsg(void)
 	ssize_t			 n;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (0);
 		log_warn("dispatch_rtmsg: read error");
 		return (-1);
 	}
@@ -1187,7 +1189,7 @@ dispatch_rtmsg(void)
 }
 
 int
-rtmsg_process(char *buf, int len)
+rtmsg_process(char *buf, size_t len)
 {
 	struct rt_msghdr	*rtm;
 	struct if_msghdr	 ifm;
@@ -1199,13 +1201,15 @@ rtmsg_process(char *buf, int len)
 	u_int8_t		 prefixlen, prio;
 	int			 flags, mpath;
 	u_short			 ifindex = 0;
-
-	int			 offset;
+	size_t			 offset;
 	char			*next;
 
 	for (offset = 0; offset < len; offset += rtm->rtm_msglen) {
 		next = buf + offset;
 		rtm = (struct rt_msghdr *)next;
+		if (len < offset + sizeof(*rtm) ||
+		    len < offset + rtm->rtm_msglen)
+			fatalx("rtmsg_process: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
 		log_rtmsg(rtm->rtm_type);
