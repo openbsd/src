@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcons.c,v 1.5 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_pcons.c,v 1.6 2015/02/10 05:43:09 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -88,7 +88,18 @@ ASN1_SEQUENCE(POLICY_CONSTRAINTS) = {
 	ASN1_IMP_OPT(POLICY_CONSTRAINTS, inhibitPolicyMapping, ASN1_INTEGER, 1)
 } ASN1_SEQUENCE_END(POLICY_CONSTRAINTS)
 
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
+
+POLICY_CONSTRAINTS *
+POLICY_CONSTRAINTS_new(void)
+{
+	return (POLICY_CONSTRAINTS*)ASN1_item_new(&POLICY_CONSTRAINTS_it);
+}
+
+void
+POLICY_CONSTRAINTS_free(POLICY_CONSTRAINTS *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &POLICY_CONSTRAINTS_it);
+}
 
 static STACK_OF(CONF_VALUE) *
 i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,

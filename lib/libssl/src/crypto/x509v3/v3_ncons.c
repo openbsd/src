@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.5 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.6 2015/02/10 05:43:09 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -103,8 +103,30 @@ ASN1_SEQUENCE(NAME_CONSTRAINTS) = {
 } ASN1_SEQUENCE_END(NAME_CONSTRAINTS)
 
 
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
+
+GENERAL_SUBTREE *
+GENERAL_SUBTREE_new(void)
+{
+	return (GENERAL_SUBTREE*)ASN1_item_new(&GENERAL_SUBTREE_it);
+}
+
+void
+GENERAL_SUBTREE_free(GENERAL_SUBTREE *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &GENERAL_SUBTREE_it);
+}
+
+NAME_CONSTRAINTS *
+NAME_CONSTRAINTS_new(void)
+{
+	return (NAME_CONSTRAINTS*)ASN1_item_new(&NAME_CONSTRAINTS_it);
+}
+
+void
+NAME_CONSTRAINTS_free(NAME_CONSTRAINTS *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &NAME_CONSTRAINTS_it);
+}
 
 static void *
 v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
