@@ -1,4 +1,4 @@
-/* $OpenBSD: ex_data.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: ex_data.c,v 1.18 2015/02/10 11:22:21 jsing Exp $ */
 
 /*
  * Overhaul notes;
@@ -636,5 +636,3 @@ CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
 	else
 		return (sk_void_value(ad->sk, idx));
 }
-
-IMPLEMENT_STACK_OF(CRYPTO_EX_DATA_FUNCS)

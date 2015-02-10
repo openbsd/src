@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.19 2014/12/06 19:26:37 doug Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.20 2015/02/10 11:22:21 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -89,8 +89,6 @@ static X509_TRUST trstandard[] = {
 };
 
 #define X509_TRUST_COUNT	(sizeof(trstandard)/sizeof(X509_TRUST))
-
-IMPLEMENT_STACK_OF(X509_TRUST)
 
 static STACK_OF(X509_TRUST) *trtable = NULL;
 

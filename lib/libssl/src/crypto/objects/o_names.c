@@ -1,4 +1,4 @@
-/* $OpenBSD: o_names.c,v 1.19 2014/10/28 05:46:56 miod Exp $ */
+/* $OpenBSD: o_names.c,v 1.20 2015/02/10 11:22:21 jsing Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +24,6 @@ typedef struct name_funcs_st {
 } NAME_FUNCS;
 
 DECLARE_STACK_OF(NAME_FUNCS)
-IMPLEMENT_STACK_OF(NAME_FUNCS)
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 

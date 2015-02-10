@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.21 2014/07/25 06:05:32 doug Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.22 2015/02/10 11:22:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -622,5 +622,3 @@ BIO_number_written(BIO *bio)
 		return bio->num_write;
 	return 0;
 }
-
-IMPLEMENT_STACK_OF(BIO)

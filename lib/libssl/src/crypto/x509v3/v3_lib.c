@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.14 2015/02/10 11:22:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -343,5 +343,3 @@ err:
 		X509V3err(X509V3_F_X509V3_ADD1_I2D, errcode);
 	return 0;
 }
-
-IMPLEMENT_STACK_OF(X509V3_EXT_METHOD)
