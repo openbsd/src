@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.19 2015/02/10 04:21:50 jsing Exp $ */
+/* $OpenBSD: x_x509.c,v 1.20 2015/02/10 05:25:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,7 +191,7 @@ X509_free(X509 *a)
 X509 *
 X509_dup(X509 *x)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509), x);
+	return ASN1_item_dup(&X509_it, x);
 }
 
 int

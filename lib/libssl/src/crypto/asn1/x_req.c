@@ -1,4 +1,4 @@
-/* $OpenBSD: x_req.c,v 1.12 2015/02/10 04:21:50 jsing Exp $ */
+/* $OpenBSD: x_req.c,v 1.13 2015/02/10 05:25:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,5 +163,5 @@ X509_REQ_free(X509_REQ *a)
 X509_REQ *
 X509_REQ_dup(X509_REQ *x)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_REQ), x);
+	return ASN1_item_dup(&X509_REQ_it, x);
 }

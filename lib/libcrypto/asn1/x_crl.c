@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.20 2015/02/10 04:21:50 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.21 2015/02/10 05:25:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -416,7 +416,7 @@ X509_CRL_free(X509_CRL *a)
 X509_CRL *
 X509_CRL_dup(X509_CRL *x)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_CRL), x);
+	return ASN1_item_dup(&X509_CRL_it, x);
 }
 
 static int

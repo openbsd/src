@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.9 2015/02/10 04:21:50 jsing Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.10 2015/02/10 05:25:45 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -146,7 +146,7 @@ IMPLEMENT_ASN1_NDEF_FUNCTION(PKCS7)
 PKCS7 *
 PKCS7_dup(PKCS7 *x)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(PKCS7), x);
+	return ASN1_item_dup(&PKCS7_it, x);
 }
 
 ASN1_NDEF_SEQUENCE(PKCS7_SIGNED) = {

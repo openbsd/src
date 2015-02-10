@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.22 2015/02/10 04:21:50 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.23 2015/02/10 05:25:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,7 +121,7 @@ X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
 X509_NAME_ENTRY *
 X509_NAME_ENTRY_dup(X509_NAME_ENTRY *x)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_NAME_ENTRY), x);
+	return ASN1_item_dup(&X509_NAME_ENTRY_it, x);
 }
 
 /* For the "Name" type we need a SEQUENCE OF { SET OF X509_NAME_ENTRY }
@@ -183,7 +183,7 @@ X509_NAME_free(X509_NAME *a)
 X509_NAME *
 X509_NAME_dup(X509_NAME *x)
 {
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_NAME), x);
+	return ASN1_item_dup(&X509_NAME_it, x);
 }
 
 static int
