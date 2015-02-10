@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.16 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: x_algor.c,v 1.17 2015/02/10 06:36:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -95,7 +95,19 @@ X509_ALGOR_free(X509_ALGOR *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_ALGOR_it);
 }
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_ALGORS, X509_ALGORS, X509_ALGORS)
+
+X509_ALGORS *
+d2i_X509_ALGORS(X509_ALGORS **a, const unsigned char **in, long len)
+{
+	return (X509_ALGORS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_ALGORS_it);
+}
+
+int
+i2d_X509_ALGORS(X509_ALGORS *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_ALGORS_it);
+}
 
 X509_ALGOR *
 X509_ALGOR_dup(X509_ALGOR *x)

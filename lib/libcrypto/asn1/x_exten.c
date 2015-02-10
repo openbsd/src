@@ -1,4 +1,4 @@
-/* $OpenBSD: x_exten.c,v 1.12 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: x_exten.c,v 1.13 2015/02/10 06:36:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -96,7 +96,19 @@ X509_EXTENSION_free(X509_EXTENSION *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_EXTENSION_it);
 }
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_EXTENSIONS, X509_EXTENSIONS, X509_EXTENSIONS)
+
+X509_EXTENSIONS *
+d2i_X509_EXTENSIONS(X509_EXTENSIONS **a, const unsigned char **in, long len)
+{
+	return (X509_EXTENSIONS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &X509_EXTENSIONS_it);
+}
+
+int
+i2d_X509_EXTENSIONS(X509_EXTENSIONS *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_EXTENSIONS_it);
+}
 
 X509_EXTENSION *
 X509_EXTENSION_dup(X509_EXTENSION *x)
