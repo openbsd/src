@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.10 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.11 2015/02/10 06:37:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -141,7 +141,12 @@ PKCS7_free(PKCS7 *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_it);
 }
-IMPLEMENT_ASN1_NDEF_FUNCTION(PKCS7)
+
+int
+i2d_PKCS7_NDEF(PKCS7 *a, unsigned char **out)
+{
+	return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, &PKCS7_it);
+}
 
 PKCS7 *
 PKCS7_dup(PKCS7 *x)
@@ -498,4 +503,10 @@ ASN1_ITEM_TEMPLATE(PKCS7_ATTR_VERIFY) =
 	ASN1_TFLG_UNIVERSAL, V_ASN1_SET, PKCS7_ATTRIBUTES, X509_ATTRIBUTE)
 ASN1_ITEM_TEMPLATE_END(PKCS7_ATTR_VERIFY)
 
-IMPLEMENT_ASN1_PRINT_FUNCTION(PKCS7)
+
+int
+PKCS7_print_ctx(BIO *out, PKCS7 *x, int indent, const ASN1_PCTX *pctx)
+{
+	return ASN1_item_print(out, (ASN1_VALUE *)x, indent,
+	    &PKCS7_it, pctx);
+}
