@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.32 2015/02/08 00:00:59 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.33 2015/02/10 08:12:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -669,6 +669,62 @@ path_info(char *path)
 	}
 
 	return (p - start);
+}
+
+char*
+escape_uri(const char *src)
+{
+	static char	 hex[] = "0123456789ABCDEF";
+	char		*dp, *dst;
+	unsigned char	 c;
+
+	/* We need 3 times the memory if every letter is encoded. */
+	if ((dst = calloc(3, strlen(src) + 1)) == NULL)
+		return NULL;
+
+	for (dp = dst; *src != 0; src++) {
+		c = (unsigned char) *src;
+		if (c == ' ' || c == '#' || c == '%' || c == '?' || c == '"' ||
+		    c == '&' || c == '<' || c <= 0x1f || c >= 0x7f) {
+			*dp++ = '%';
+			*dp++ = hex[c >> 4];
+			*dp++ = hex[c & 0x0f];
+		} else
+			*dp++ = *src;
+	}
+	return (dst);
+}
+
+char*
+escape_html(const char* src)
+{
+	char		*dp, *dst;
+
+	/* We need 5 times the memory if every letter is "<" or ">". */
+	if ((dst = calloc(5, strlen(src) + 1)) == NULL)
+		return NULL;
+
+	for (dp = dst; *src != 0; src++) {
+		if (*src == '<') {
+			*dp++ = '&';
+			*dp++ = 'l';
+			*dp++ = 't';
+			*dp++ = ';';
+		} else if (*src == '>') {
+			*dp++ = '&';
+			*dp++ = 'g';
+			*dp++ = 't';
+			*dp++ = ';';
+		} else if (*src == '&') {
+			*dp++ = '&';
+			*dp++ = 'a';
+			*dp++ = 'm';
+			*dp++ = 'p';
+			*dp++ = ';';
+		} else
+			*dp++ = *src;
+	}
+	return (dst);
 }
 
 void

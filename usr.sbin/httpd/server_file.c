@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.49 2015/02/08 00:00:59 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.50 2015/02/10 08:12:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -274,6 +274,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	struct evbuffer		 *evb = NULL;
 	struct media_type	 *media;
 	const char		 *stripped, *style;
+	char			 *escapeduri, *escapedhtml, *escapedpath;
 	struct tm		  tm;
 	time_t			  t, dir_mtime;
 
@@ -304,6 +305,9 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	/* Indicate failure but continue going through the list */
 	skip = 0;
 
+	if ((escapedpath = escape_html(desc->http_path)) == NULL)
+		goto fail;
+
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
 	    "sans-serif; }\nhr { border: 0; border-bottom: 1px dashed; }\n";
@@ -318,8 +322,10 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	    "<body>\n"
 	    "<h1>Index of %s</h1>\n"
 	    "<hr>\n<pre>\n",
-	    desc->http_path, style, desc->http_path) == -1)
+	    escapedpath, style, escapedpath) == -1)
 		skip = 1;
+
+	free(escapedpath);
 
 	for (i = 0; i < namesize; i++) {
 		dp = namelist[i];
@@ -335,6 +341,11 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 		strftime(tmstr, sizeof(tmstr), "%d-%h-%Y %R", &tm);
 		namewidth = 51 - strlen(dp->d_name);
 
+		if ((escapeduri = escape_uri(dp->d_name)) == NULL)
+			goto fail;
+		if ((escapedhtml = escape_html(dp->d_name)) == NULL)
+			goto fail;
+
 		if (dp->d_name[0] == '.' &&
 		    !(dp->d_name[1] == '.' && dp->d_name[2] == '\0')) {
 			/* ignore hidden files starting with a dot */
@@ -342,17 +353,19 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 			namewidth -= 1; /* trailing slash */
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s/</a>%*s%s%20s\n",
-			    dp->d_name, dp->d_name,
+			    escapeduri, escapedhtml,
 			    MAXIMUM(namewidth, 0), " ", tmstr, "-") == -1)
 				skip = 1;
 		} else if (S_ISREG(st->st_mode)) {
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
-			    dp->d_name, dp->d_name,
+			    escapeduri, escapedhtml,
 			    MAXIMUM(namewidth, 0), " ",
 			    tmstr, st->st_size) == -1)
 				skip = 1;
 		}
+		free(escapeduri);
+		free(escapedhtml);
 		free(dp);
 	}
 	free(namelist);
