@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.179 2015/01/22 05:09:41 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.180 2015/02/10 06:16:13 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ struct pool_item_header {
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
+	caddr_t			ph_colored;	/* page's colored address */
 	u_long			ph_magic;
 	int			ph_tick;
 };
@@ -216,7 +217,7 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
-	int off = 0;
+	int off = 0, space;
 	unsigned int pgsize = PAGE_SIZE, items;
 #ifdef DIAGNOSTIC
 	struct pool *iter;
@@ -288,6 +289,15 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
 	RB_INIT(&pp->pr_phtree);
+
+	/*
+	 * Use the space between the chunks and the page header
+	 * for cache coloring.
+	 */
+	space = POOL_INPGHDR(pp) ? pp->pr_phoffset : pp->pr_pgsize;
+	space -= pp->pr_itemsperpage * pp->pr_size;
+	pp->pr_align = align;
+	pp->pr_maxcolors = (space / align) + 1;
 
 	pp->pr_nget = 0;
 	pp->pr_nfail = 0;
@@ -754,6 +764,8 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 
 	XSIMPLEQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = addr;
+	addr += pp->pr_align * (pp->pr_npagealloc % pp->pr_maxcolors);
+	ph->ph_colored = addr;
 	ph->ph_nmissing = 0;
 	arc4random_buf(&ph->ph_magic, sizeof(ph->ph_magic));
 #ifdef DIAGNOSTIC
@@ -1000,8 +1012,8 @@ pool_print_pagelist(struct pool_pagelist *pl,
 	struct pool_item *pi;
 
 	TAILQ_FOREACH(ph, pl, ph_pagelist) {
-		(*pr)("\t\tpage %p, nmissing %d\n",
-		    ph->ph_page, ph->ph_nmissing);
+		(*pr)("\t\tpage %p, color %p, nmissing %d\n",
+		    ph->ph_page, ph->ph_colored, ph->ph_nmissing);
 		XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 			if (pi->pi_magic != POOL_IMAGIC(ph, pi)) {
 				(*pr)("\t\t\titem %p, magic 0x%lx\n",
@@ -1025,7 +1037,8 @@ pool_print1(struct pool *pp, const char *modif,
 		modif++;
 	}
 
-	(*pr)("POOL %s: size %u\n", pp->pr_wchan, pp->pr_size);
+	(*pr)("POOL %s: size %u maxcolors %u\n", pp->pr_wchan, pp->pr_size,
+	    pp->pr_maxcolors);
 	(*pr)("\talloc %p\n", pp->pr_alloc);
 	(*pr)("\tminitems %u, minpages %u, maxpages %u, npages %u\n",
 	    pp->pr_minitems, pp->pr_minpages, pp->pr_maxpages, pp->pr_npages);
@@ -1233,7 +1246,7 @@ pool_walk(struct pool *pp, int full,
 	int n;
 
 	TAILQ_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
-		cp = ph->ph_page;
+		cp = ph->ph_colored;
 		n = ph->ph_nmissing;
 
 		while (n--) {
@@ -1243,7 +1256,7 @@ pool_walk(struct pool *pp, int full,
 	}
 
 	TAILQ_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
-		cp = ph->ph_page;
+		cp = ph->ph_colored;
 		n = ph->ph_nmissing;
 
 		do {
