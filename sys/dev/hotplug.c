@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.13 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.14 2015/02/10 21:58:16 miod Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -151,7 +151,7 @@ hotplugread(dev_t dev, struct uio *uio, int flags)
 
 again:
 	if (hotplug_get_event(&he) == 0)
-		return (uiomovei(&he, sizeof(he), uio));
+		return (uiomove(&he, sizeof(he), uio));
 	if (flags & IO_NDELAY)
 		return (EAGAIN);
 
