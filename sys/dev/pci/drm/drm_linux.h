@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.2 2014/09/20 21:17:43 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.3 2015/02/10 00:23:53 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -16,6 +16,32 @@
  */
 
 #define __force
+
+static inline void
+spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)
+{
+	mtx_enter(mtxp);
+}
+static inline void
+spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
+{
+	mtx_leave(mtxp);
+}
+#define spin_lock(mtxp)			mtx_enter(mtxp)
+#define spin_unlock(mtxp)		mtx_leave(mtxp)
+#define spin_lock_irq(mtxp)		mtx_enter(mtxp)
+#define spin_unlock_irq(mtxp)		mtx_leave(mtxp)
+#define mutex_lock_interruptible(rwl)	-rw_enter(rwl, RW_WRITE | RW_INTR)
+#define mutex_lock(rwl)			rw_enter_write(rwl)
+#define mutex_unlock(rwl)		rw_exit_write(rwl)
+#define down_read(rwl)			rw_enter_read(rwl)
+#define up_read(rwl)			rw_exit_read(rwl)
+#define down_write(rwl)			rw_enter_write(rwl)
+#define up_write(rwl)			rw_exit_write(rwl)
+#define read_lock(rwl)			rw_enter_read(rwl)
+#define read_unlock(rwl)		rw_exit_read(rwl)
+#define write_lock(rwl)			rw_enter_write(rwl)
+#define write_unlock(rwl)		rw_exit_write(rwl)
 
 #if defined(__i386__) || defined(__amd64__)
 
