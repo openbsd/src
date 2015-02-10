@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.14 2015/02/10 23:25:14 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.15 2015/02/10 23:38:13 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -549,7 +549,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	DPRINTF("xfer=%p\n", xfer);
 
 	KASSERT(mtx_owned(&sc->sc_lock));
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	//KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if (sc->sc_dying) {
 		xfer->status = status;
@@ -1478,7 +1478,7 @@ int dwc2_intr(void *p)
 	hsotg = sc->sc_hsotg;
 	mtx_enter(&hsotg->lock);
 
-	if (sc->sc_dying || !device_has_power(sc->sc_dev))
+	if (sc->sc_dying)
 		goto done;
 
 	if (sc->sc_bus.use_polling) {
@@ -1526,7 +1526,7 @@ dwc2_detach(struct dwc2_softc *sc, int flags)
 bool
 dwc2_shutdown(struct device *self, int flags)
 {
-	struct dwc2_softc *sc = device_private(self);
+	struct dwc2_softc *sc = (void *)self;
 
 	sc = sc;
 
@@ -1536,15 +1536,15 @@ dwc2_shutdown(struct device *self, int flags)
 void
 dwc2_childdet(struct device *self, struct device *child)
 {
-	struct dwc2_softc *sc = device_private(self);
+	struct dwc2_softc *sc = (void *)self;
 
 	sc = sc;
 }
 
 int
-dwc2_activate(struct device *self, enum devact act)
+dwc2_activate(struct device *self, int act)
 {
-	struct dwc2_softc *sc = device_private(self);
+	struct dwc2_softc *sc = (void *)self;
 
 	sc = sc;
 
@@ -1554,7 +1554,7 @@ dwc2_activate(struct device *self, enum devact act)
 bool
 dwc2_resume(struct device *dv, const pmf_qual_t *qual)
 {
-	struct dwc2_softc *sc = device_private(dv);
+	struct dwc2_softc *sc = (void *)dv;
 
 	sc = sc;
 
@@ -1564,7 +1564,7 @@ dwc2_resume(struct device *dv, const pmf_qual_t *qual)
 bool
 dwc2_suspend(struct device *dv, const pmf_qual_t *qual)
 {
-	struct dwc2_softc *sc = device_private(dv);
+	struct dwc2_softc *sc = (void *)dv;
 
 	sc = sc;
 
@@ -1583,11 +1583,11 @@ dwc2_init(struct dwc2_softc *sc)
 	sc->sc_bus.pipe_size = sizeof(struct dwc2_pipe);
 	sc->sc_hcdenabled = false;
 
-	mtx_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mtx_init(&sc->sc_lock, IPL_SOFTUSB);
 
 	TAILQ_INIT(&sc->sc_complete);
 
-	sc->sc_rhc_si = softintr_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	sc->sc_rhc_si = softintr_establish(IPL_SOFTNET,
 	    dwc2_rhc, sc);
 
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,

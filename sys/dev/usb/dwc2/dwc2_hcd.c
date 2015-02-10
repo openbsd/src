@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.8 2015/02/10 23:10:21 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.9 2015/02/10 23:38:13 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -2228,8 +2228,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 	/* Create new workqueue and init work */
 	retval = -ENOMEM;
 	hsotg->wq_otg = taskq_create("dwc2", 1, IPL_USB);
-
-	if (err) {
+	if (hsotg->wq_otg == NULL) {
 		dev_err(hsotg->dev, "Failed to create workqueue\n");
 		goto error2;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.7 2015/02/10 23:10:21 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.8 2015/02/10 23:38:13 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -116,9 +116,11 @@ int		dwc2_intr(void *);
 int		dwc2_detach(dwc2_softc_t *, int);
 bool		dwc2_shutdown(struct device *, int);
 void		dwc2_childdet(struct device *, struct device *);
-int		dwc2_activate(struct device *, enum devact);
+int		dwc2_activate(struct device *, int);
+#if 0
 bool		dwc2_resume(struct device *, const pmf_qual_t *);
 bool		dwc2_suspend(struct device *, const pmf_qual_t *);
+#endif
 
 void		dwc2_worker(struct task *, void *);
 
@@ -131,6 +133,19 @@ dwc2_root_intr(dwc2_softc_t *sc)
 
 	softintr_schedule(sc->sc_rhc_si);
 }
+
+// XXX compat
+
+#define	mtx_owned(x)	1
+#define	ENOSR		90
+#define	EPROTO		96
+
+#ifndef mstohz
+#define mstohz(ms) \
+	(__predict_false((ms) >= 0x20000) ? \
+	    ((ms +0u) / 1000u) * hz : \
+	    ((ms +0u) * hz) / 1000u)
+#endif
 
 #define	timeout_reset(x, t, f, a) \
 do { \
