@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.46 2015/02/09 14:58:08 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.47 2015/02/10 00:46:27 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -1974,26 +1974,6 @@ const long		offset;
 }
 
 #endif /* defined STD_INSPIRED */
-
-#ifdef CMUCS
-
-/*
-** The following is supplied for compatibility with
-** previous versions of the CMUCS runtime library.
-*/
-
-long
-gtime(tmp)
-struct tm * const	tmp;
-{
-	const time_t	t = mktime(tmp);
-
-	if (t == WRONG)
-		return -1;
-	return t;
-}
-
-#endif /* defined CMUCS */
 
 /*
 ** XXX--is the below the right way to conditionalize??
