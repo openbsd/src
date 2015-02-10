@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.219 2015/01/20 09:46:31 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.220 2015/02/10 06:19:44 dlg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -662,33 +662,13 @@ azalia_pci_detach(struct device *self, int flags)
 	return 0;
 }
 
-/*
-#define AZALIA_LOG_MP
-*/
-#ifdef AZALIA_LOG_MP
-#include <machine/lock.h>
-#include <machine/cpufunc.h>
-#endif
-
 int
 azalia_intr(void *v)
 {
-#ifdef AZALIA_LOG_MP
-	volatile struct cpu_info *ci;
-#endif
 	azalia_t *az = v;
 	uint32_t intsts;
 	int ret = 0;
 
-#ifdef AZALIA_LOG_MP
-	ci = kernel_lock.mpl_cpu;
-	if (ci == NULL)
-		printf("azalia_intr: mp not held\n");
-	else {
-		printf("azalia_intr: lock held by %p, id = %u\n",
-		    ci, ci->ci_cpuid);
-	}
-#endif
 	mtx_enter(&audio_lock);
 	intsts = AZ_READ_4(az, INTSTS);
 	if (intsts == 0 || intsts == 0xffffffff) {
