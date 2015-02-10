@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.18 2015/02/09 11:45:22 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.19 2015/02/10 08:49:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -221,7 +221,8 @@ main(int argc, char *argv[])
 	    pipe_parent2rde);
 
 	/* create the raw ip socket */
-	if ((conf->mroute_socket = socket(AF_INET, SOCK_RAW,
+	if ((conf->mroute_socket = socket(AF_INET,
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    IPPROTO_IGMP)) == -1)
 		fatal("error creating raw socket");
 

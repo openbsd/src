@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.13 2014/11/18 20:54:28 krw Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.14 2015/02/10 08:49:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -85,7 +85,8 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	}
 
 	/* create the raw ip socket */
-	if ((xconf->dvmrp_socket = socket(AF_INET, SOCK_RAW,
+	if ((xconf->dvmrp_socket = socket(AF_INET,
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    IPPROTO_IGMP)) == -1)
 		fatal("error creating raw socket");
 

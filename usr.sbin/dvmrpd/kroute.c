@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2015/01/16 06:40:16 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.10 2015/02/10 08:49:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -84,7 +84,8 @@ kr_init(void)
 {
 	int opt, fd;
 
-	if ((fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
+	if ((fd = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    0)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
@@ -376,8 +377,11 @@ kr_dispatch_msg(int fd, short event, void *bula)
 	struct rt_msghdr	*rtm;
 	struct if_msghdr	 ifm;
 
-	if ((n = read(fd, &buf, sizeof(buf))) == -1)
+	if ((n = read(fd, &buf, sizeof(buf))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return;
 		fatal("dispatch_rtmsg: read error");
+	}
 
 	if (n == 0)
 		fatalx("routing socket closed");
@@ -385,6 +389,9 @@ kr_dispatch_msg(int fd, short event, void *bula)
 	lim = buf + n;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (lim < next + sizeof(*rtm) ||
+		    lim < next + rtm->rtm_msglen)
+			fatalx("dispatch_rtmsg: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
 
