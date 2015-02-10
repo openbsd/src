@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.c,v 1.2 2015/02/10 12:58:47 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.c,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -48,27 +48,30 @@
 __KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $");
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/bus.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
-#include <sys/callout.h>
+#include <sys/timeout.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
-#include <sys/workqueue.h>
+#include <sys/task.h>
+
+#include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <linux/kernel.h>
-#include <linux/list.h>
+#include <dev/usb/dwc2/linux/kernel.h>
+#include <dev/usb/dwc2/linux/list.h>
 
-#include <dwc2/dwc2.h>
-#include <dwc2/dwc2var.h>
+#include <dev/usb/dwc2/dwc2.h>
+#include <dev/usb/dwc2/dwc2var.h>
 
-#include "dwc2_core.h"
-#include "dwc2_hcd.h"
+#include <dev/usb/dwc2/dwc2_core.h>
+#include <dev/usb/dwc2/dwc2_hcd.h>
 
 /**
  * dwc2_enable_common_interrupts() - Initializes the commmon interrupts,

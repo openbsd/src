@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.2 2015/02/10 12:58:47 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -36,12 +36,14 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
-#include <sys/workqueue.h>
-#include <sys/callout.h>
+#include <sys/task.h>
+#include <sys/timeout.h>
 
-#include <linux/list.h>
+#include <dev/usb/dwc2/linux/list.h>
 
+#if 0
 #include "opt_usb.h"
+#endif
 // #define VERBOSE_DEBUG
 // #define DWC2_DUMP_FRREM
 // #define CONFIG_USB_DWC2_TRACK_MISSED_SOFS
