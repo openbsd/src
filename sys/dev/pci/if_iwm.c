@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.14 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.15 2015/02/10 23:40:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -174,6 +174,7 @@ const uint8_t iwm_nvm_channels[] = {
 };
 #define IWM_NUM_2GHZ_CHANNELS	14
 
+/* It looks like 11a TX is broken, unfortunately. */
 #define IWM_NO_5GHZ		1
 
 const struct iwm_rate {
@@ -2512,7 +2513,11 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 
 	sku = le16_to_cpup(nvm_sw + IWM_SKU);
 	data->sku_cap_band_24GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_24GHZ;
+#ifndef IWM_NO_5GHZ
 	data->sku_cap_band_52GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_52GHZ;
+#else
+	data->sku_cap_band_52GHz_enable = 0;
+#endif
 	data->sku_cap_11n_enable = 0;
 
 	if (!data->valid_tx_ant || !data->valid_rx_ant) {
@@ -5451,7 +5456,7 @@ iwm_endscan_cb(void *arg)
 	DPRINTF(("scan ended\n"));
 
 	if (sc->sc_scanband == IEEE80211_CHAN_2GHZ) {
-#ifndef IWM_NO_5GHZ /* for quick testing, makes scan few sec faster */
+#ifndef IWM_NO_5GHZ
 		int error;
 		done = 0;
 		if ((error = iwm_mvm_scan_request(sc,
@@ -6521,7 +6526,9 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
+#ifndef IWM_NO_5GHZ
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
+#endif
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
