@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.90 2015/02/10 11:16:47 reyk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.91 2015/02/10 11:46:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,7 +89,8 @@ usage(void)
 	extern char *__progname;
 
 	if (strcmp(__progname, "ntpctl") == 0)
-		fprintf(stderr, "usage: ntpctl [-s all | peers | Sensors | status]\n");
+		fprintf(stderr,
+		    "usage: ntpctl [-s all | peers | Sensors | status]\n");
 	else
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
@@ -112,7 +113,7 @@ main(int argc, char *argv[])
 	extern char		*__progname;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
-		ctl_main (argc, argv);
+		ctl_main(argc, argv);
 		/* NOTREACHED */
 	}
 
@@ -580,7 +581,7 @@ ctl_main(int argc, char *argv[])
 			break;
 		}
 	}
-	if (action == -1) 
+	if (action == -1)
 		usage();
 		/* NOTREACHED */
 
@@ -686,7 +687,7 @@ ctl_main(int argc, char *argv[])
 	}
 	close(fd);
 	free(ibuf_ctl);
-	exit (0);
+	exit(0);
 }
 
 const char *
@@ -726,7 +727,7 @@ show_status_msg(struct imsg *imsg)
 
 	if (cstatus->constraint_median) {
 		tv.tv_sec = cstatus->constraint_median +
-                    (getmonotime() - cstatus->constraint_last);
+		    (getmonotime() - cstatus->constraint_last);
 		tv.tv_usec = 0;
 		d_to_tv(gettime_from_timeval(&tv) - gettime(), &tv);
 		printf("constraint offset %llds", (long long)tv.tv_sec);
@@ -789,7 +790,7 @@ show_peer_msg(struct imsg *imsg, int calledfromshowall)
 	if (cpeer->stratum > 0)
 		snprintf(stratum, sizeof(stratum), "%2u", cpeer->stratum);
 	else
-		strlcpy (stratum, " -", sizeof (stratum));
+		strlcpy(stratum, " -", sizeof (stratum));
 
 	printf("%s\n %1s %2u %2u %2s %4llds %4llds",
 	    cpeer->peer_desc, cpeer->syncedto == 1 ? "*" : " ",

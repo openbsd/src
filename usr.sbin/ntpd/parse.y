@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.58 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.59 2015/02/10 11:46:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -423,7 +423,8 @@ weight		: WEIGHT NUMBER	{
 		}
 rtable		: RTABLE NUMBER {
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
-				yyerror("rtable must be between 1 and RT_TABLEID_MAX");
+				yyerror("rtable must be between 1"
+				    " and RT_TABLEID_MAX");
 				YYERROR;
 			}
 			opts.rtable = $2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.40 2015/01/09 07:35:37 deraadt Exp $ */
+/*	$OpenBSD: server.c,v 1.41 2015/02/10 11:46:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,9 +62,9 @@ setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 				fd = socket(AF_INET, SOCK_DGRAM, 0);
 				if (ioctl(fd, SIOCGIFRDOMAIN,
 				    (caddr_t)&ifr) == -1)
-			                rdomain = 0;
-			        else
-			                rdomain = ifr.ifr_rdomainid;
+					rdomain = 0;
+				else
+					rdomain = ifr.ifr_rdomainid;
 				close(fd);
 
 				if (lap->rtable != -1 && rdomain != lap->rtable)

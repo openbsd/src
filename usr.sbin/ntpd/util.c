@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: util.c,v 1.18 2015/02/10 11:46:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -134,5 +134,5 @@ print_rtable(int r)
 	if (r > 0)
 		snprintf(b, sizeof(b), "rtable %d", r);
 
-	return(b);
+	return (b);
 }
