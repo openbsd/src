@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.h,v 1.4 2015/02/10 13:30:27 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.h,v 1.5 2015/02/10 13:36:13 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.h,v 1.9 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -621,7 +621,7 @@ static inline u32 dwc2_hcd_urb_get_iso_desc_actual_length(
 }
 
 static inline int dwc2_hcd_is_bandwidth_allocated(struct dwc2_hsotg *hsotg,
-						  struct usbd_xfer * xfer)
+						  struct usbd_xfer *xfer)
 {
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
 	struct dwc2_qh *qh = dpipe->priv;
