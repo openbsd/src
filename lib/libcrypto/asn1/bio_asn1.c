@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.10 2014/07/10 13:58:22 jsing Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.11 2015/02/10 09:52:35 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -200,7 +200,7 @@ static int
 asn1_bio_write(BIO *b, const char *in , int inl)
 {
 	BIO_ASN1_BUF_CTX *ctx;
-	int wrmax, wrlen, ret;
+	int wrmax, wrlen, ret, buflen;
 	unsigned char *p;
 
 	if (!in || (inl < 0) || (b->next_bio == NULL))
@@ -231,9 +231,10 @@ asn1_bio_write(BIO *b, const char *in , int inl)
 			break;
 
 		case ASN1_STATE_HEADER:
-			ctx->buflen =
-			    ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
-			OPENSSL_assert(ctx->buflen <= ctx->bufsize);
+			buflen = ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
+			if (buflen <= 0 || buflen > ctx->bufsize)
+				return -1;
+			ctx->buflen = buflen;
 			p = ctx->buf;
 			ASN1_put_object(&p, 0, inl,
 			    ctx->asn1_tag, ctx->asn1_class);

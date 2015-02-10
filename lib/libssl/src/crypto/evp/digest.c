@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.24 2014/11/09 19:12:18 miod Exp $ */
+/* $OpenBSD: digest.c,v 1.25 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,7 +249,10 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 {
 	int ret;
 
-	OPENSSL_assert(ctx->digest->md_size <= EVP_MAX_MD_SIZE);
+	if ((size_t)ctx->digest->md_size > EVP_MAX_MD_SIZE) {
+		EVPerr(EVP_F_EVP_DIGESTFINAL_EX, EVP_R_TOO_LARGE);
+		return 0;
+	}
 	ret = ctx->digest->final(ctx, md);
 	if (size != NULL)
 		*size = ctx->digest->md_size;

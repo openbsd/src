@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.14 2014/07/13 12:46:44 miod Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.15 2015/02/10 09:52:35 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -134,9 +134,15 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 		if (!EVP_DigestFinal_ex (&ctx, md_tmp, NULL))
 			goto err;
 	}
-	OPENSSL_assert(EVP_CIPHER_key_length(cipher) <= (int)sizeof(md_tmp));
+	if ((size_t)EVP_CIPHER_key_length(cipher) > sizeof(md_tmp)) {
+		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_BAD_KEY_LENGTH);
+		goto err;
+	}
 	memcpy(key, md_tmp, EVP_CIPHER_key_length(cipher));
-	OPENSSL_assert(EVP_CIPHER_iv_length(cipher) <= 16);
+	if ((size_t)EVP_CIPHER_iv_length(cipher) > 16) {
+		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_IV_TOO_LARGE);
+		goto err;
+	}
 	memcpy(iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
 	    EVP_CIPHER_iv_length(cipher));
 	if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, iv, en_de))

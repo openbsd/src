@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.25 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.26 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,10 +140,6 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 			const EVP_CIPHER *c =
 			    ENGINE_get_cipher(impl, cipher->nid);
 			if (!c) {
-				/* One positive side-effect of US's export
-				 * control history, is that we should at least
-				 * be able to avoid using US mispellings of
-				 * "initialisation"? */
 				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
 				    EVP_R_INITIALIZATION_ERROR);
 				return 0;
@@ -186,9 +182,12 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 skip_to_init:
 #endif
 	/* we assume block size is a power of 2 in *cryptUpdate */
-	OPENSSL_assert(ctx->cipher->block_size == 1 ||
-	    ctx->cipher->block_size == 8 ||
-	    ctx->cipher->block_size == 16);
+	if (ctx->cipher->block_size != 1 &&
+	    ctx->cipher->block_size != 8 &&
+	    ctx->cipher->block_size != 16) {
+		EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_BAD_BLOCK_LENGTH);
+		return 0;
+	}
 
 	if (!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
 		switch (EVP_CIPHER_CTX_mode(ctx)) {
@@ -205,8 +204,12 @@ skip_to_init:
 
 		case EVP_CIPH_CBC_MODE:
 
-			OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
-			    (int)sizeof(ctx->iv));
+			if ((size_t)EVP_CIPHER_CTX_iv_length(ctx) >
+			    sizeof(ctx->iv)) {
+				EVPerr(EVP_F_EVP_CIPHERINIT_EX,
+				    EVP_R_IV_TOO_LARGE);
+				return 0;
+			}
 			if (iv)
 				memcpy(ctx->oiv, iv,
 				    EVP_CIPHER_CTX_iv_length(ctx));
@@ -325,7 +328,11 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	}
 	i = ctx->buf_len;
 	bl = ctx->cipher->block_size;
-	OPENSSL_assert(bl <= (int)sizeof(ctx->buf));
+	if ((size_t)bl > sizeof(ctx->buf)) {
+		EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_BAD_BLOCK_LENGTH);
+		*outl = 0;
+		return 0;
+	}
 	if (i != 0) {
 		if (i + inl < bl) {
 			memcpy(&(ctx->buf[i]), in, inl);
@@ -383,7 +390,10 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	}
 
 	b = ctx->cipher->block_size;
-	OPENSSL_assert(b <= sizeof ctx->buf);
+	if (b > sizeof ctx->buf) {
+		EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_BAD_BLOCK_LENGTH);
+		return 0;
+	}
 	if (b == 1) {
 		*outl = 0;
 		return 1;
@@ -437,7 +447,10 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
 	b = ctx->cipher->block_size;
-	OPENSSL_assert(b <= sizeof ctx->final);
+	if (b > sizeof ctx->final) {
+		EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_BAD_BLOCK_LENGTH);
+		return 0;
+	}
 
 	if (ctx->final_used) {
 		memcpy(out, ctx->final, b);
@@ -506,7 +519,11 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			    EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 			return (0);
 		}
-		OPENSSL_assert(b <= sizeof ctx->final);
+		if (b > sizeof ctx->final) {
+			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,
+			    EVP_R_BAD_BLOCK_LENGTH);
+			return 0;
+		}
 		n = ctx->final[b - 1];
 		if (n == 0 || n > (int)b) {
 			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_BAD_DECRYPT);

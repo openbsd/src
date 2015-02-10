@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.10 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.11 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,7 +187,11 @@ rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(c);
-		OPENSSL_assert(l <= sizeof(iv));
+		if (l > sizeof(iv)) {
+			EVPerr(EVP_F_RC2_GET_ASN1_TYPE_AND_IV,
+			    EVP_R_IV_TOO_LARGE);
+			return -1;
+		}
 		i = ASN1_TYPE_get_int_octetstring(type, &num, iv, l);
 		if (i != (int)l)
 			return (-1);

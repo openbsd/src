@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.17 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.18 2015/02/10 09:52:35 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -255,7 +255,10 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		goto err;
 	}
 	keylen = EVP_CIPHER_CTX_key_length(ctx);
-	OPENSSL_assert(keylen <= sizeof key);
+	if (keylen > sizeof key) {
+		EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_BAD_KEY_LENGTH);
+		goto err;
+	}
 
 	/* Decode parameter */
 

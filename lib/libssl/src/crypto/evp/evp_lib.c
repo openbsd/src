@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.13 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.14 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,7 +99,11 @@ EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(c);
-		OPENSSL_assert(l <= sizeof(c->iv));
+		if (l > sizeof(c->iv)) {
+			EVPerr(EVP_F_EVP_CIPHER_GET_ASN1_IV,
+			     EVP_R_IV_TOO_LARGE);
+			return 0;
+		}
 		i = ASN1_TYPE_get_octetstring(type, c->oiv, l);
 		if (i != (int)l)
 			return (-1);
@@ -117,7 +121,11 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (type != NULL) {
 		j = EVP_CIPHER_CTX_iv_length(c);
-		OPENSSL_assert(j <= sizeof(c->iv));
+		if (j > sizeof(c->iv)) {
+			EVPerr(EVP_F_EVP_CIPHER_SET_ASN1_IV,
+			     EVP_R_IV_TOO_LARGE);
+			return 0;
+		}
 		i = ASN1_TYPE_set_octetstring(type, c->oiv, j);
 	}
 	return (i);

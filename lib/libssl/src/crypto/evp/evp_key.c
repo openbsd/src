@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.20 2014/08/06 04:28:21 guenther Exp $ */
+/* $OpenBSD: evp_key.c,v 1.21 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/ui.h>
@@ -129,10 +130,18 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 	int niv, nkey, addmd = 0;
 	unsigned int mds = 0, i;
 	int rv = 0;
+
 	nkey = type->key_len;
 	niv = type->iv_len;
-	OPENSSL_assert(nkey <= EVP_MAX_KEY_LENGTH);
-	OPENSSL_assert(niv <= EVP_MAX_IV_LENGTH);
+
+	if ((size_t)nkey > EVP_MAX_KEY_LENGTH) {
+		EVPerr(EVP_F_EVP_BYTESTOKEY, EVP_R_BAD_KEY_LENGTH);
+		return 0;
+	}
+	if ((size_t)niv > EVP_MAX_IV_LENGTH) {
+		EVPerr(EVP_F_EVP_BYTESTOKEY, EVP_R_IV_TOO_LARGE);
+		return 0;
+	}
 
 	if (data == NULL)
 		return (nkey);

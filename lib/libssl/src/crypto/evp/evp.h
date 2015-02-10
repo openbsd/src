@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.42 2015/02/08 22:22:13 miod Exp $ */
+/* $OpenBSD: evp.h,v 1.43 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1353,13 +1353,19 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_AEAD_CTX_INIT				 180
 #define EVP_F_EVP_AEAD_CTX_OPEN				 190
 #define EVP_F_EVP_AEAD_CTX_SEAL				 191
+#define EVP_F_EVP_BYTESTOKEY				 200
 #define EVP_F_EVP_CIPHERINIT_EX				 123
 #define EVP_F_EVP_CIPHER_CTX_COPY			 163
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
+#define EVP_F_EVP_CIPHER_GET_ASN1_IV			 201
+#define EVP_F_EVP_CIPHER_SET_ASN1_IV			 202
 #define EVP_F_EVP_DECRYPTFINAL_EX			 101
+#define EVP_F_EVP_DECRYPTUPDATE				 199
+#define EVP_F_EVP_DIGESTFINAL_EX			 196
 #define EVP_F_EVP_DIGESTINIT_EX				 128
 #define EVP_F_EVP_ENCRYPTFINAL_EX			 127
+#define EVP_F_EVP_ENCRYPTUPDATE				 198
 #define EVP_F_EVP_MD_CTX_COPY_EX			 110
 #define EVP_F_EVP_MD_CTX_CTRL				 195
 #define EVP_F_EVP_MD_SIZE				 162
@@ -1415,6 +1421,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN			 164
 #define EVP_F_PKCS8_SET_BROKEN				 112
 #define EVP_F_PKEY_SET_TYPE				 158
+#define EVP_F_RC2_GET_ASN1_TYPE_AND_IV			 197
 #define EVP_F_RC2_MAGIC_TO_METH				 109
 #define EVP_F_RC5_CTRL					 125
 

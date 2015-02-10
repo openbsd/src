@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.19 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pem_info.c,v 1.20 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -361,8 +361,12 @@ PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 			}
 
 			/* create the right magic header stuff */
-			OPENSSL_assert(strlen(objstr) + 23 +
-			    2 * enc->iv_len + 13 <= sizeof buf);
+			if (strlen(objstr) + 23 + 2 * enc->iv_len + 13 >
+			    sizeof buf) {
+				PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,
+				    ASN1_R_BUFFER_TOO_SMALL);
+				goto err;
+			}
 			buf[0] = '\0';
 			PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
 			PEM_dek_info(buf, objstr, enc->iv_len, (char *)iv);

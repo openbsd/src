@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.21 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: hmac.c,v 1.22 2015/02/10 09:52:35 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/err.h>
 #include <openssl/hmac.h>
 
 int
@@ -78,7 +79,10 @@ HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,
 	if (key != NULL) {
 		reset = 1;
 		j = EVP_MD_block_size(md);
-		OPENSSL_assert(j <= (int)sizeof(ctx->key));
+		if ((size_t)j > sizeof(ctx->key)) {
+			EVPerr(EVP_F_HMAC_INIT_EX, EVP_R_BAD_BLOCK_LENGTH);
+			goto err;
+		}
 		if (j < len) {
 			if (!EVP_DigestInit_ex(&ctx->md_ctx, md, impl))
 				goto err;
@@ -88,8 +92,11 @@ HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,
 			    &ctx->key_length))
 				goto err;
 		} else {
-			OPENSSL_assert(len >= 0 &&
-			    len <= (int)sizeof(ctx->key));
+			if ((size_t)len > sizeof(ctx->key)) {
+				EVPerr(EVP_F_HMAC_INIT_EX,
+				    EVP_R_BAD_KEY_LENGTH);
+				goto err;
+			}
 			memcpy(ctx->key, key, len);
 			ctx->key_length = len;
 		}
