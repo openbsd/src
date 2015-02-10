@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.14 2015/02/10 05:44:50 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.15 2015/02/10 05:45:46 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -94,6 +94,7 @@ static int	addtype(long gmtoff, const char * abbr, int isdst,
 static void	leapadd(zic_t t, int positive, int rolling, int count);
 static void	adjleap(void);
 static void	associate(void);
+static int	ciequal(const char * ap, const char * bp);
 static void	convert(long val, char * buf);
 static void	convert64(zic_t val, char * buf);
 static void	dolink(const char * fromfield, const char * tofield);
@@ -115,7 +116,9 @@ static int	inzcont(char ** fields, int nfields);
 static int	inzone(char ** fields, int nfields);
 static int	inzsub(char ** fields, int nfields, int iscont);
 static int	is32(zic_t x);
+static int	itsabbr(const char * abbr, const char * word);
 static int	itsdir(const char * name);
+static int	lowerit(int c);
 static int	mkdirs(char * filename);
 static void	newabbr(const char * abbr);
 static long	oadd(long t1, long t2);
@@ -1187,7 +1190,7 @@ const char * const		timep;
 	dp = ecpyalloc(timep);
 	if (*dp != '\0') {
 		ep = dp + strlen(dp) - 1;
-		switch (tolower((unsigned char)*ep)) {
+		switch (lowerit(*ep)) {
 			case 's':	/* Standard */
 				rp->r_todisstd = TRUE;
 				rp->r_todisgmt = FALSE;
@@ -2292,30 +2295,64 @@ yearistype(int year, const char *type)
 	errx(1, "command was '%s', result was %d", buf, result);
 }
 
+static int
+lowerit(a)
+int	a;
+{
+	a = (unsigned char) a;
+	return (isascii(a) && isupper(a)) ? tolower(a) : a;
+}
+
+static int
+ciequal(ap, bp)		/* case-insensitive equality */
+const char *	ap;
+const char *	bp;
+{
+	while (lowerit(*ap) == lowerit(*bp++))
+		if (*ap++ == '\0')
+			return TRUE;
+	return FALSE;
+}
+
+static int
+itsabbr(abbr, word)
+const char *	abbr;
+const char *	word;
+{
+	if (lowerit(*abbr) != lowerit(*word))
+		return FALSE;
+	++word;
+	while (*++abbr != '\0')
+		do {
+			if (*word == '\0')
+				return FALSE;
+		} while (lowerit(*word++) != lowerit(*abbr));
+	return TRUE;
+}
+
 static const struct lookup *
 byword(const char *word, const struct lookup *table)
 {
 	const struct lookup *	foundlp;
 	const struct lookup *	lp;
 
-	if (word == NULL || *word == '\0' || table == NULL)
+	if (word == NULL || table == NULL)
 		return NULL;
 	/*
 	** Look for exact match.
 	*/
 	for (lp = table; lp->l_word != NULL; ++lp)
-		if (strcasecmp(word, lp->l_word) == 0)
+		if (ciequal(word, lp->l_word))
 			return lp;
 	/*
 	** Look for inexact match.
 	*/
 	foundlp = NULL;
 	for (lp = table; lp->l_word != NULL; ++lp)
-		if (strncasecmp(word, lp->l_word, strlen(word)) == 0) {
+		if (itsabbr(word, lp->l_word)) {
 			if (foundlp == NULL)
 				foundlp = lp;
-			else
-				return NULL;	/* multiple inexact matches */
+			else	return NULL;	/* multiple inexact matches */
 		}
 	return foundlp;
 }
