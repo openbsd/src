@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.111 2015/02/06 23:58:12 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.112 2015/02/10 23:39:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -213,7 +213,7 @@ void
 ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	Elf_Phdr *ph, Elf_Addr *addr, Elf_Addr *size, int *prot, int flags)
 {
-	u_long uaddr, msize, lsize, psize, rm, rf;
+	u_long msize, lsize, psize, rm, rf;
 	long diff, offset, bdiff;
 	Elf_Addr base;
 
@@ -227,19 +227,18 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 			/* page align vaddr */
 			base = *addr + trunc_page(ph->p_vaddr) 
 			    - ELF_TRUNC(ph->p_vaddr, ph->p_align);
-
-			bdiff = ph->p_vaddr - trunc_page(ph->p_vaddr);
-
-		} else
+		} else {
 			diff = 0;
+			base = *addr + trunc_page(ph->p_vaddr) - ph->p_vaddr;
+		}
 	} else {
-		*addr = uaddr = ph->p_vaddr;
+		*addr = ph->p_vaddr;
 		if (ph->p_align > 1)
-			*addr = ELF_TRUNC(uaddr, ph->p_align);
-		base = trunc_page(uaddr);
-		bdiff = uaddr - base;
-		diff = uaddr - *addr;
+			*addr = ELF_TRUNC(*addr, ph->p_align);
+		base = trunc_page(ph->p_vaddr);
+		diff = ph->p_vaddr - *addr;
 	}
+	bdiff = ph->p_vaddr - trunc_page(ph->p_vaddr);
 
 	*prot |= (ph->p_flags & PF_R) ? PROT_READ : 0;
 	*prot |= (ph->p_flags & PF_W) ? PROT_WRITE : 0;
