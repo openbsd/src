@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.126 2015/01/13 02:23:33 bcook Exp $ */
+/*	$OpenBSD: ntp.c,v 1.127 2015/02/10 06:03:43 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,10 +121,13 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	ntp_dns(pipe_dns, nconf, pw);
 	close(pipe_dns[1]);
 
-	if (stat(pw->pw_dir, &stb) == -1)
-		fatal("stat");
-	if (stb.st_uid != 0 || (stb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
-		fatalx("bad privsep dir permissions");
+	if (stat(pw->pw_dir, &stb) == -1) {
+		fatal("privsep dir %s could not be opened", pw->pw_dir);
+	}
+	if (stb.st_uid != 0 || (stb.st_mode & (S_IWGRP|S_IWOTH)) != 0) {
+		fatalx("bad privsep dir %s permissions: %o",
+		    pw->pw_dir, stb.st_mode);
+	}
 	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
