@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.101 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.102 2015/02/10 10:15:30 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1757,7 +1757,7 @@ cache_flush(struct trapframe *tf)
 	va = tf->tf_r[2];
 	len = tf->tf_r[3];
 
-	if (/* va < VM_MIN_ADDRESS || */ va >= VM_MAXUSER_ADDRESS ||
+	if (va < VM_MIN_ADDRESS || va >= VM_MAXUSER_ADDRESS ||
 	    va + len <= va || va + len >= VM_MAXUSER_ADDRESS)
 		len = 0;
 
