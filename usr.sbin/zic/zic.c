@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.12 2015/02/10 03:07:17 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.13 2015/02/10 03:35:46 tedu Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -358,8 +358,7 @@ static char		roll[TZ_MAX_LEAPS];
 */
 
 static void *
-memcheck(ptr)
-void * const	ptr;
+memcheck(void *ptr)
 {
 	if (ptr == NULL) {
 		err(1, "Memory exhausted");
@@ -388,11 +387,7 @@ ecatalloc(char *start, const char *tail)
 */
 
 static void
-eats(name, num, rname, rnum)
-const char * const	name;
-const int		num;
-const char * const	rname;
-const int		rnum;
+eats(const char *name, int num, const char *rname, int rnum)
 {
 	filename = name;
 	linenum = num;
@@ -401,16 +396,13 @@ const int		rnum;
 }
 
 static void
-eat(name, num)
-const char * const	name;
-const int		num;
+eat(const char *name, int num)
 {
 	eats(name, num, NULL, -1);
 }
 
 static void
-error(string)
-const char * const	string;
+error(const char *string)
 {
 	/*
 	** Match the format of "cc" to allow sh users to
@@ -427,8 +419,7 @@ const char * const	string;
 }
 
 static void
-warning(string)
-const char * const	string;
+warning(const char *string)
 {
 	char *	cp;
 
@@ -454,9 +445,7 @@ static const char *	leapsec;
 static const char *	yitcommand;
 
 int
-main(argc, argv)
-int	argc;
-char *	argv[];
+main(int argc, char **argv)
 {
 	int	i;
 	int	j;
@@ -558,9 +547,7 @@ char *	argv[];
 }
 
 static void
-dolink(fromfield, tofield)
-const char * const	fromfield;
-const char * const	tofield;
+dolink(const char *fromfield, const char *tofield)
 {
 	char *	fromname;
 	char *	toname;
@@ -616,8 +603,7 @@ setboundaries(void)
 }
 
 static int
-itsdir(name)
-const char * const	name;
+itsdir(const char *name)
 {
 	char *	myname;
 	int	accres;
@@ -638,9 +624,7 @@ const char * const	name;
 */
 
 static int
-rcomp(cp1, cp2)
-const void *	cp1;
-const void *	cp2;
+rcomp(const void *cp1, const void *cp2)
 {
 	return strcmp(((const struct rule *) cp1)->r_name,
 		((const struct rule *) cp2)->r_name);
@@ -722,8 +706,7 @@ associate(void)
 }
 
 static void
-infile(name)
-const char *	name;
+infile(const char *name)
 {
 	FILE *			fp;
 	char **		fields;
@@ -815,10 +798,7 @@ const char *	name;
 */
 
 static long
-gethms(string, errstring, signable)
-const char *		string;
-const char * const	errstring;
-const int		signable;
+gethms(const char *string, const char *errstring, int signable)
 {
 	long	hh;
 	int	mm, ss, sign;
@@ -855,9 +835,7 @@ const int		signable;
 }
 
 static void
-inrule(fields, nfields)
-char ** const	fields;
-const int		nfields;
+inrule(char **fields, int nfields)
 {
 	static struct rule	r;
 
@@ -883,9 +861,7 @@ const int		nfields;
 }
 
 static int
-inzone(fields, nfields)
-char ** const	fields;
-const int		nfields;
+inzone(char **fields, int nfields)
 {
 	int	i;
 	static char *	buf;
@@ -929,9 +905,7 @@ const int		nfields;
 }
 
 static int
-inzcont(fields, nfields)
-char ** const	fields;
-const int		nfields;
+inzcont(char **fields, int nfields)
 {
 	if (nfields < ZONEC_MINFIELDS || nfields > ZONEC_MAXFIELDS) {
 		error(_("wrong number of fields on Zone continuation line"));
@@ -941,10 +915,7 @@ const int		nfields;
 }
 
 static int
-inzsub(fields, nfields, iscont)
-char ** const	fields;
-const int		nfields;
-const int		iscont;
+inzsub(char **fields, int nfields, int iscont)
 {
 	char *		cp;
 	static struct zone	z;
@@ -1019,9 +990,7 @@ const int		iscont;
 }
 
 static void
-inleap(fields, nfields)
-char ** const	fields;
-const int		nfields;
+inleap(char **fields, int nfields)
 {
 	const char *		cp;
 	const struct lookup *	lp;
@@ -1121,9 +1090,7 @@ const int		nfields;
 }
 
 static void
-inlink(fields, nfields)
-char ** const	fields;
-const int		nfields;
+inlink(char **fields, int nfields)
 {
 	struct link	l;
 
@@ -1293,9 +1260,7 @@ const char * const		timep;
 }
 
 static void
-convert(val, buf)
-const long	val;
-char * const	buf;
+convert(long val, char *buf)
 {
 	int	i;
 	int	shift;
@@ -1305,9 +1270,7 @@ char * const	buf;
 }
 
 static void
-convert64(val, buf)
-const zic_t	val;
-char * const	buf;
+convert64(zic_t val, char *buf)
 {
 	int	i;
 	int	shift;
@@ -1317,9 +1280,7 @@ char * const	buf;
 }
 
 static void
-puttzcode(val, fp)
-const long	val;
-FILE * const	fp;
+puttzcode(long val, FILE *fp)
 {
 	char	buf[4];
 
@@ -1328,9 +1289,7 @@ FILE * const	fp;
 }
 
 static void
-puttzcode64(val, fp)
-const zic_t	val;
-FILE * const	fp;
+puttzcode64(zic_t val, FILE *fp)
 {
 	char	buf[8];
 
@@ -1339,9 +1298,7 @@ FILE * const	fp;
 }
 
 static int
-atcomp(avp, bvp)
-const void *	avp;
-const void *	bvp;
+atcomp(const void *avp, const void *bvp)
 {
 	const zic_t	a = ((const struct attype *) avp)->at;
 	const zic_t	b = ((const struct attype *) bvp)->at;
@@ -1350,16 +1307,13 @@ const void *	bvp;
 }
 
 static int
-is32(x)
-const zic_t	x;
+is32(zic_t x)
 {
 	return INT32_MIN <= x && x <= INT32_MAX;
 }
 
 static void
-writezone(name, string)
-const char * const	name;
-const char * const	string;
+writezone(const char *name, const char *string)
 {
 	FILE *			fp;
 	int			i, j;
@@ -1651,13 +1605,7 @@ const char * const	string;
 }
 
 static void
-doabbr(abbr, size, format, letters, isdst, doquotes)
-char * const		abbr;
-size_t			size;
-const char * const	format;
-const char * const	letters;
-const int		isdst;
-const int		doquotes;
+doabbr(char *abbr, size_t size, const char *format, const char *letters, int isdst, int doquotes)
 {
 	char *	cp;
 	char *	slashp;
@@ -1692,8 +1640,7 @@ const int		doquotes;
 }
 
 static void
-updateminmax(x)
-const int	x;
+updateminmax(int x)
 {
 	if (min_year > x)
 		min_year = x;
@@ -1702,10 +1649,7 @@ const int	x;
 }
 
 static int
-stringoffset(result, size, offset)
-char *	result;
-size_t	size;
-long	offset;
+stringoffset(char *result, size_t size, long offset)
 {
 	int	hours;
 	int	minutes;
@@ -1740,12 +1684,7 @@ long	offset;
 }
 
 static int
-stringrule(result, size, rp, dstoff, gmtoff)
-char *				result;
-size_t				size;
-const struct rule * const	rp;
-const long			dstoff;
-const long			gmtoff;
+stringrule(char *result, size_t size, const struct rule *rp, long dstoff, long gmtoff)
 {
 	long	tod;
 	char *	ep;
@@ -1800,11 +1739,7 @@ const long			gmtoff;
 }
 
 static void
-stringzone(result, size, zpfirst, zonecount)
-char *				result;
-size_t				size;
-const struct zone * const	zpfirst;
-const int			zonecount;
+stringzone(char *result, size_t size, const struct zone *zpfirst, int zonecount)
 {
 	const struct zone *	zp;
 	struct rule *		rp;
@@ -1889,9 +1824,7 @@ const int			zonecount;
 }
 
 static void
-outzone(zpfirst, zonecount)
-const struct zone * const	zpfirst;
-const int			zonecount;
+outzone(const struct zone *zpfirst, int zonecount)
 {
 	const struct zone *	zp;
 	struct rule *		rp;
@@ -2189,12 +2122,7 @@ int		type;
 }
 
 static int
-addtype(gmtoff, abbr, isdst, ttisstd, ttisgmt)
-const long		gmtoff;
-const char * const	abbr;
-const int		isdst;
-const int		ttisstd;
-const int		ttisgmt;
+addtype(long gmtoff, const char *abbr, int isdst, int ttisstd, int ttisgmt)
 {
 	int	i, j;
 
@@ -2249,11 +2177,7 @@ const int		ttisgmt;
 }
 
 static void
-leapadd(t, positive, rolling, count)
-const zic_t	t;
-const int	positive;
-const int	rolling;
-int		count;
+leapadd(zic_t t, int positive, int rolling, int count)
 {
 	int	i, j;
 
@@ -2298,9 +2222,7 @@ adjleap(void)
 }
 
 static int
-yearistype(year, type)
-const int		year;
-const char * const	type;
+yearistype(int year, const char *type)
 {
 	static char *	buf;
 	int		result;
@@ -2323,9 +2245,7 @@ const char * const	type;
 }
 
 static const struct lookup *
-byword(word, table)
-const char * const		word;
-const struct lookup * const	table;
+byword(const char *word, const struct lookup *table)
 {
 	const struct lookup *	foundlp;
 	const struct lookup *	lp;
@@ -2353,8 +2273,7 @@ const struct lookup * const	table;
 }
 
 static char **
-getfields(cp)
-char *	cp;
+getfields(char *cp)
 {
 	char *		dp;
 	char **	array;
@@ -2392,9 +2311,7 @@ char *	cp;
 }
 
 static long
-oadd(t1, t2)
-const long	t1;
-const long	t2;
+oadd(long t1, long t2)
 {
 	long	t;
 
@@ -2407,9 +2324,7 @@ const long	t2;
 }
 
 static zic_t
-tadd(t1, t2)
-const zic_t	t1;
-const long	t2;
+tadd(zic_t t1, long t2)
 {
 	zic_t	t;
 
@@ -2431,9 +2346,7 @@ const long	t2;
 */
 
 static zic_t
-rpytime(rp, wantedy)
-const struct rule * const	rp;
-const int			wantedy;
+rpytime(const struct rule *rp, int wantedy)
 {
 	int	y, m, i;
 	long	dayoff;			/* with a nod to Margaret O. */
@@ -2509,8 +2422,7 @@ const int			wantedy;
 }
 
 static void
-newabbr(string)
-const char * const	string;
+newabbr(const char *string)
 {
 	int	i;
 
@@ -2562,8 +2474,7 @@ wp = _("time zone abbreviation has too many alphabetics");
 }
 
 static int
-mkdirs(argname)
-char *		argname;
+mkdirs(char *argname)
 {
 	char *	name;
 	char *	cp;
@@ -2599,8 +2510,7 @@ char *		argname;
 }
 
 static long
-eitol(i)
-const int	i;
+eitol(int i)
 {
 	long	l;
 
