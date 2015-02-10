@@ -1,3 +1,4 @@
+/*	$OpenBSD: dwc2_hcdqueue.c,v 1.2 2015/02/10 12:58:47 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -41,8 +42,10 @@
  * Transfer Descriptors for Host mode
  */
 
+#if 0
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/kmem.h>

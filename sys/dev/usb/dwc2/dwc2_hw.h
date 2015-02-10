@@ -1,3 +1,4 @@
+/*	$OpenBSD: dwc2_hw.h,v 1.2 2015/02/10 12:58:47 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hw.h,v 1.2 2013/09/25 06:19:22 skrll Exp $	*/
 
 /*

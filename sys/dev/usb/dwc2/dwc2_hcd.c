@@ -1,3 +1,4 @@
+/*	$OpenBSD: dwc2_hcd.c,v 1.2 2015/02/10 12:58:47 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -41,8 +42,10 @@
  * API
  */
 
+#if 0
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/kmem.h>
