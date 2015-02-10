@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.10 2015/02/10 20:34:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.11 2015/02/10 20:52:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -198,18 +198,6 @@ const struct iwm_rate {
 #define IWM_RIDX_MAX	(nitems(iwm_rates)-1)
 #define IWM_RIDX_IS_CCK(_i_) ((_i_) < IWM_RIDX_OFDM)
 #define IWM_RIDX_IS_OFDM(_i_) ((_i_) >= IWM_RIDX_OFDM)
-
-/*
- * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
- */
-const struct ieee80211_rateset iwm_rateset_11a =
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
-
-const struct ieee80211_rateset iwm_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-
-const struct ieee80211_rateset iwm_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 struct iwm_newstate_state {
 	struct task ns_wk;
@@ -6527,9 +6515,9 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
-	ic->ic_sup_rates[IEEE80211_MODE_11A] = iwm_rateset_11a;
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwm_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = iwm_rateset_11g;
+	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
 	for (i = 0; i < nitems(sc->sc_phyctxt); i++) {
 		sc->sc_phyctxt[i].id = i;
