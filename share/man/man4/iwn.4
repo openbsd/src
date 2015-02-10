@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.48 2015/02/08 13:48:37 stsp Exp $
+.\" $OpenBSD: iwn.4,v 1.49 2015/02/10 20:38:58 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 8 2015 $
+.Dd $Mdocdate: February 10 2015 $
 .Dt IWN 4
 .Os
 .Sh NAME
@@ -178,7 +178,7 @@ Make sure the laptop radio switch is on.
 For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
-.It "iwn0: firmware file too short: N bytes"
+.It "iwn0: firmware too short: N bytes"
 The firmware image is corrupted and can't be loaded into the adapter.
 .It "iwn0: could not load firmware"
 An attempt to load the firmware into the adapter failed.
