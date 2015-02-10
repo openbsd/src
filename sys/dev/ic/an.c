@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.63 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: an.c,v 1.64 2015/02/10 23:25:46 mpi Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -441,7 +441,6 @@ an_rxeof(struct an_softc *sc)
 	    len;
 
 	memcpy(m->m_data, &frmhdr.an_whdr, sizeof(struct ieee80211_frame));
-	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 
 #if NBPFILTER > 0

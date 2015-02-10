@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.78 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.79 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1292,7 +1292,6 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		rxwi = mtod(m, struct rt2860_rxwi *);
 
 		/* finalize mbuf */
-		m->m_pkthdr.rcvif = ifp;
 		m->m_data = (caddr_t)(rxwi + 1);
 		m->m_pkthdr.len = m->m_len = letoh16(rxwi->len) & 0xfff;
 

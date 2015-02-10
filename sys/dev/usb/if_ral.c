@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.130 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.131 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -767,7 +767,6 @@ ural_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->buf = mtod(data->m, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
 
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.122 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.123 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -923,7 +923,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	CSR_WRITE_4(sc, data->reg, data->map->dm_segs[0].ds_addr);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = sizeof (struct iwi_hdr) +
 	    sizeof (struct iwi_frame) + letoh16(frame->len);
 	m_adj(m, sizeof (struct iwi_hdr) + sizeof (struct iwi_frame));

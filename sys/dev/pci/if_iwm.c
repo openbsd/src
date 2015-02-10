@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.13 2015/02/10 22:32:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.14 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3063,8 +3063,6 @@ iwm_mvm_rx_rx_mpdu(struct iwm_softc *sc,
 	/* replenish ring for the buffer we're going to feed to the sharks */
 	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
 		return;
-
-	m->m_pkthdr.rcvif = IC2IFP(ic);
 
 	if (sc->sc_scanband == IEEE80211_CHAN_5GHZ) {
 		if (le32toh(phy_info->channel) < nitems(ic->ic_channels))

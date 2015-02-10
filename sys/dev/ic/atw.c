@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.85 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: atw.c,v 1.86 2015/02/10 23:25:46 mpi Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3129,7 +3129,6 @@ atw_rxintr(struct atw_softc *sc)
 
 		if (sc->sc_opmode & ATW_NAR_PR)
 			len -= IEEE80211_CRC_LEN;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
 		if (rate0 >= sizeof(rate_tbl) / sizeof(rate_tbl[0]))

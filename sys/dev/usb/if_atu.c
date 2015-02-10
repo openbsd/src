@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.110 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.111 2015/02/10 23:25:46 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1694,7 +1694,6 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	m = c->atu_mbuf;
 	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = len;
 
 	wh = mtod(m, struct ieee80211_frame *);

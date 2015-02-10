@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.106 2015/01/27 04:49:01 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.107 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -879,7 +879,6 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	sbd->bd->physaddr = htole32(sbuf->map->dm_segs[0].ds_addr);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = letoh32(status->len);
 
 #if NBPFILTER > 0

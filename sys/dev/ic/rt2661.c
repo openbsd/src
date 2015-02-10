@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.78 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.79 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1248,7 +1248,6 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 		desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 
 		/* finalize mbuf */
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len =
 		    (letoh32(desc->flags) >> 16) & 0xfff;
 

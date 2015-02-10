@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.44 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.45 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1143,7 +1143,6 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 		}
 	}
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_data += align;
 	memcpy(mtod(m, caddr_t), wh, mlen);
 	m->m_pkthdr.len = m->m_len = mlen;

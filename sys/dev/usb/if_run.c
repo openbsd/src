@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.106 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.107 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2243,7 +2243,6 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 		}
 	}
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
 	memcpy(mtod(m, caddr_t), wh, len);
 	m->m_pkthdr.len = m->m_len = len;
 

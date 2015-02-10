@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.139 2015/02/08 13:45:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.140 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2002,7 +2002,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_data = head;
 	m->m_pkthdr.len = m->m_len = len;
 

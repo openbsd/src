@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.106 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.107 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1953,7 +1953,6 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 		}
 	}
 	bcopy(plcp + 1, mtod(m, caddr_t), len);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = len;
 
 #if NBPFILTER > 0

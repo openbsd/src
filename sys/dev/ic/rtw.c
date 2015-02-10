@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.89 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.90 2015/02/10 23:25:46 mpi Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1237,7 +1237,6 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		 * Note well: now we cannot recycle the rs_mbuf unless
 		 * we restore its original length.
 		 */
-		m->m_pkthdr.rcvif = &sc->sc_if;
 		m->m_pkthdr.len = m->m_len = len;
 
 		wh = mtod(m, struct ieee80211_frame *);

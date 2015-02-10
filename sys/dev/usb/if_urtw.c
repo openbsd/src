@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.50 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.51 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -3166,7 +3166,6 @@ urtw_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->buf = mtod(mnew, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = flen - 4;
 
 	s = splnet();

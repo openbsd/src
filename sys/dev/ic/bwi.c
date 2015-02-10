@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.115 2015/01/10 10:45:46 stsp Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.116 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8436,7 +8436,6 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		bcopy((uint8_t *)(hdr + 1) + hdr_extra, &plcp, sizeof(plcp));
 		rssi = bwi_calc_rssi(sc, hdr);
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_len = m->m_pkthdr.len = buflen + sizeof(*hdr);
 		m_adj(m, sizeof(*hdr) + wh_ofs);
 

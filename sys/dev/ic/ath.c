@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.103 2014/12/22 02:28:51 tedu Exp $  */
+/*      $OpenBSD: ath.c,v 1.104 2015/02/10 23:25:46 mpi Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1954,7 +1954,6 @@ ath_rx_proc(void *arg, int npending)
 
 		bus_dmamap_unload(sc->sc_dmat, bf->bf_dmamap);
 		bf->bf_m = NULL;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.69 2014/12/22 02:28:51 tedu Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.70 2015/02/10 23:25:46 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1165,7 +1165,6 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 
 		/* finalize mbuf */
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len =
 		    (letoh32(desc->flags) >> 16) & 0xfff;
 

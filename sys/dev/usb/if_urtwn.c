@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.41 2015/02/07 21:21:44 mpi Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1565,7 +1565,6 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		}
 	}
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
 	wh = (struct ieee80211_frame *)((uint8_t *)&stat[1] + infosz);
 	memcpy(mtod(m, uint8_t *), wh, pktlen);
 	m->m_pkthdr.len = m->m_len = pktlen;

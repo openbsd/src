@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.25 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.26 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1680,7 +1680,6 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 		goto skip;
 
 	m_adj(m, sizeof(*rs));	/* Strip Rx status. */
-	m->m_pkthdr.rcvif = ifp;
 
 	s = splnet();
 

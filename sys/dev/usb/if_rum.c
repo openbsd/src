@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.108 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.109 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -839,7 +839,6 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->buf = mtod(data->m, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
 	m->m_data = (caddr_t)(desc + 1);
 	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
 
