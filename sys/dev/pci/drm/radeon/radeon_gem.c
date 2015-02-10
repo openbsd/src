@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.4 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.5 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -94,9 +94,9 @@ retry:
 	}
 	*obj = &robj->gem_base;
 
-	rw_enter_write(&rdev->gem.rwlock);
+	mutex_lock(&rdev->gem.mutex);
 	list_add_tail(&robj->list, &rdev->gem.objects);
-	rw_exit_write(&rdev->gem.rwlock);
+	mutex_unlock(&rdev->gem.mutex);
 
 	return 0;
 }
@@ -263,14 +263,14 @@ int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
 	uint32_t handle;
 	int r;
 
-	rw_enter_read(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
 	/* create a gem object to contain this object in */
 	args->size = roundup(args->size, PAGE_SIZE);
 	r = radeon_gem_object_create(rdev, args->size, args->alignment,
 					args->initial_domain, false,
 					false, &gobj);
 	if (r) {
-		rw_exit_read(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		r = radeon_gem_handle_lockup(rdev, r);
 		return r;
 	}
@@ -278,12 +278,12 @@ int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_unreference_unlocked(gobj);
 	if (r) {
-		rw_exit_read(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		r = radeon_gem_handle_lockup(rdev, r);
 		return r;
 	}
 	args->handle = handle;
-	rw_exit_read(&rdev->exclusive_lock);
+	up_read(&rdev->exclusive_lock);
 	return 0;
 }
 
@@ -300,12 +300,12 @@ int radeon_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 
 	/* for now if someone requests domain CPU -
 	 * just make sure the buffer is finished with */
-	rw_enter_read(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
 
 	/* just do a BO wait for now */
 	gobj = drm_gem_object_lookup(dev, filp, args->handle);
 	if (gobj == NULL) {
-		rw_exit_read(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		return -ENOENT;
 	}
 	robj = gem_to_radeon_bo(gobj);
@@ -313,7 +313,7 @@ int radeon_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	r = radeon_gem_set_domain(gobj, args->read_domains, args->write_domain);
 
 	drm_gem_object_unreference_unlocked(gobj);
-	rw_exit_read(&rdev->exclusive_lock);
+	up_read(&rdev->exclusive_lock);
 	r = radeon_gem_handle_lockup(robj->rdev, r);
 	return r;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.6 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.7 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -771,7 +771,7 @@ int radeon_atombios_init(struct radeon_device *rdev)
 	atom_card_info->pll_write = cail_pll_write;
 
 	rdev->mode_info.atom_context = atom_parse(atom_card_info, rdev->bios);
-	rw_init(&rdev->mode_info.atom_context->rwlock, "atomcon");
+	rw_init(&rdev->mode_info.atom_context->mutex, "atomcon");
 	radeon_atom_initialize_bios_scratch_regs(rdev->ddev);
 	atom_allocate_fb_scratch(rdev->mode_info.atom_context);
 	return 0;
@@ -1033,14 +1033,14 @@ int radeon_device_init(struct radeon_device *rdev,
 		radeon_family_name[rdev->family], pdev->vendor, pdev->device,
 		pdev->subsystem_vendor, pdev->subsystem_device);
 
-	/* rwlock initialization are all done here so we
+	/* mutex initialization are all done here so we
 	 * can recall function without having locking issues */
 	rw_init(&rdev->ring_lock, "ring");
-	rw_init(&rdev->dc_hw_i2c_rwlock, "dciic");
+	rw_init(&rdev->dc_hw_i2c_mutex, "dciic");
 	atomic_set(&rdev->ih.lock, 0);
-	rw_init(&rdev->gem.rwlock, "gem");
-	rw_init(&rdev->pm.rwlock, "pm");
-	rw_init(&rdev->gpu_clock_rwlock, "gpuclk");
+	rw_init(&rdev->gem.mutex, "gem");
+	rw_init(&rdev->pm.mutex, "pm");
+	rw_init(&rdev->gpu_clock_mutex, "gpuclk");
 	rw_init(&rdev->pm.mclk_lock, "mclk");
 	rw_init(&rdev->exclusive_lock, "rdnexc");
 #ifdef notyet
@@ -1275,7 +1275,7 @@ int radeon_suspend_kms(struct drm_device *dev)
 	/* evict vram memory */
 	radeon_bo_evict_vram(rdev);
 
-	rw_enter_write(&rdev->ring_lock);
+	mutex_lock(&rdev->ring_lock);
 	/* wait for gpu to finish processing current batch */
 	for (i = 0; i < RADEON_NUM_RINGS; i++) {
 		r = radeon_fence_wait_empty_locked(rdev, i);
@@ -1287,7 +1287,7 @@ int radeon_suspend_kms(struct drm_device *dev)
 	if (force_completion) {
 		radeon_fence_driver_force_completion(rdev);
 	}
-	rw_exit_write(&rdev->ring_lock);
+	mutex_unlock(&rdev->ring_lock);
 
 	radeon_save_bios_scratch_regs(rdev);
 
@@ -1400,7 +1400,7 @@ int radeon_gpu_reset(struct radeon_device *rdev)
 	int i, r;
 	int resched;
 
-	rw_enter_write(&rdev->exclusive_lock);
+	down_write(&rdev->exclusive_lock);
 	radeon_save_bios_scratch_regs(rdev);
 	/* block TTM */
 	resched = ttm_bo_lock_delayed_workqueue(&rdev->mman.bdev);
@@ -1457,7 +1457,7 @@ retry:
 		dev_info(rdev->dev, "GPU reset failed\n");
 	}
 
-	rw_exit_write(&rdev->exclusive_lock);
+	up_write(&rdev->exclusive_lock);
 	return r;
 }
 

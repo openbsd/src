@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.10 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.11 2015/02/10 06:19:36 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -325,7 +325,7 @@ void ttm_bo_unreserve(struct ttm_buffer_object *bo)
 EXPORT_SYMBOL(ttm_bo_unreserve);
 
 /*
- * Call bo->rwlock locked.
+ * Call bo->mutex locked.
  */
 static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 {
@@ -335,7 +335,7 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 	uint32_t page_flags = 0;
 
 #ifdef notyet
-	rw_assert_wrlock(&bo->rwlock);
+	rw_assert_wrlock(&bo->mutex);
 #endif
 	bo->ttm = NULL;
 
@@ -728,14 +728,14 @@ static void ttm_bo_release(struct ttm_buffer_object *bo)
 	struct ttm_bo_device *bdev = bo->bdev;
 	struct ttm_mem_type_manager *man = &bdev->man[bo->mem.mem_type];
 
-	rw_enter_write(&bdev->vm_lock);
+	write_lock(&bdev->vm_lock);
 	if (likely(bo->vm_node != NULL)) {
 		RB_REMOVE(ttm_bo_device_buffer_objects,
 		    &bdev->addr_space_rb, bo);
 		drm_mm_put_block(bo->vm_node);
 		bo->vm_node = NULL;
 	}
-	rw_exit_write(&bdev->vm_lock);
+	write_unlock(&bdev->vm_lock);
 	ttm_mem_io_lock(man, false);
 	ttm_mem_io_free_vm(bo);
 	ttm_mem_io_unlock(man);
@@ -1436,7 +1436,7 @@ int ttm_bo_init_mm(struct ttm_bo_device *bdev, unsigned type,
 	BUG_ON(man->has_type);
 	man->io_reserve_fastpath = true;
 	man->use_io_reserve_lru = false;
-	rw_init(&man->io_reserve_rwlock, "ttm_iores");
+	rw_init(&man->io_reserve_mutex, "ttm_iores");
 	INIT_LIST_HEAD(&man->io_reserve_lru);
 
 	ret = bdev->driver->init_mem_type(bdev, type, man);
@@ -1484,7 +1484,7 @@ int ttm_bo_global_init(struct drm_global_reference *ref)
 	struct ttm_bo_global *glob = ref->object;
 	int ret;
 
-	rw_init(&glob->device_list_rwlock, "ttm_devlist");
+	rw_init(&glob->device_list_mutex, "ttm_devlist");
 	mtx_init(&glob->lru_lock, IPL_NONE);
 	glob->mem_glob = bo_ref->mem_glob;
 	glob->dummy_read_page = km_alloc(PAGE_SIZE, &kv_any, &kp_dma_zero,
@@ -1539,9 +1539,9 @@ int ttm_bo_device_release(struct ttm_bo_device *bdev)
 		}
 	}
 
-	rw_enter_write(&glob->device_list_rwlock);
+	mutex_lock(&glob->device_list_mutex);
 	list_del(&bdev->device_list);
-	rw_exit_write(&glob->device_list_rwlock);
+	mutex_unlock(&glob->device_list_mutex);
 
 	timeout_del(&bdev->to);
 	task_del(systq, &bdev->task);
@@ -1558,9 +1558,9 @@ int ttm_bo_device_release(struct ttm_bo_device *bdev)
 	mtx_leave(&glob->lru_lock);
 
 	BUG_ON(!drm_mm_clean(&bdev->addr_space_mm));
-	rw_enter_write(&bdev->vm_lock);
+	write_lock(&bdev->vm_lock);
 	drm_mm_takedown(&bdev->addr_space_mm);
-	rw_exit_write(&bdev->vm_lock);
+	write_unlock(&bdev->vm_lock);
 
 	return ret;
 }
@@ -1600,9 +1600,9 @@ int ttm_bo_device_init(struct ttm_bo_device *bdev,
 	bdev->need_dma32 = need_dma32;
 	bdev->val_seq = 0;
 	mtx_init(&bdev->fence_lock, IPL_NONE);
-	rw_enter_write(&glob->device_list_rwlock);
+	mutex_lock(&glob->device_list_mutex);
 	list_add_tail(&bdev->device_list, &glob->device_list);
-	rw_exit_write(&glob->device_list_rwlock);
+	mutex_unlock(&glob->device_list_mutex);
 
 	return 0;
 out_no_addr_mm:
@@ -1704,7 +1704,7 @@ retry_pre_get:
 	if (unlikely(ret != 0))
 		return ret;
 
-	rw_enter_write(&bdev->vm_lock);
+	write_lock(&bdev->vm_lock);
 	bo->vm_node = drm_mm_search_free(&bdev->addr_space_mm,
 					 bo->mem.num_pages, 0, 0);
 
@@ -1717,17 +1717,17 @@ retry_pre_get:
 					      bo->mem.num_pages, 0);
 
 	if (unlikely(bo->vm_node == NULL)) {
-		rw_exit_write(&bdev->vm_lock);
+		write_unlock(&bdev->vm_lock);
 		goto retry_pre_get;
 	}
 
 	ttm_bo_vm_insert_rb(bo);
-	rw_exit_write(&bdev->vm_lock);
+	write_unlock(&bdev->vm_lock);
 	bo->addr_space_offset = ((uint64_t) bo->vm_node->start) << PAGE_SHIFT;
 
 	return 0;
 out_unlock:
-	rw_exit_write(&bdev->vm_lock);
+	write_unlock(&bdev->vm_lock);
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.80 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.81 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -159,7 +159,7 @@ int i915_mutex_lock_interruptible(struct drm_device *dev)
 	if (ret)
 		return ret;
 
-	ret = -rw_enter(&dev->struct_mutex, RW_WRITE | RW_INTR);
+	ret = mutex_lock_interruptible(&dev->struct_mutex);
 	if (ret)
 		return ret;
 

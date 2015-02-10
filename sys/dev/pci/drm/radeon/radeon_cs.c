@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_cs.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_cs.c,v 1.3 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Jerome Glisse.
  * All Rights Reserved.
@@ -468,8 +468,8 @@ static int radeon_cs_ib_vm_chunk(struct radeon_device *rdev,
 		return r;
 	}
 
-	rw_enter_write(&rdev->vm_manager.lock);
-	rw_enter_write(&vm->rwlock);
+	mutex_lock(&rdev->vm_manager.lock);
+	mutex_lock(&vm->mutex);
 	r = radeon_vm_alloc_pt(rdev, vm);
 	if (r) {
 		goto out;
@@ -495,8 +495,8 @@ static int radeon_cs_ib_vm_chunk(struct radeon_device *rdev,
 
 out:
 	radeon_vm_add_to_lru(rdev, vm);
-	rw_exit_write(&vm->rwlock);
-	rw_exit_write(&rdev->vm_manager.lock);
+	mutex_unlock(&vm->mutex);
+	mutex_unlock(&rdev->vm_manager.lock);
 	return r;
 }
 
@@ -516,9 +516,9 @@ int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 	struct radeon_cs_parser parser;
 	int r;
 
-	rw_enter_read(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
 	if (!rdev->accel_working) {
-		rw_exit_read(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		return -EBUSY;
 	}
 	/* initialize parser */
@@ -533,7 +533,7 @@ int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 	if (r) {
 		DRM_ERROR("Failed to initialize parser !\n");
 		radeon_cs_parser_fini(&parser, r);
-		rw_exit_read(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		r = radeon_cs_handle_lockup(rdev, r);
 		return r;
 	}
@@ -542,7 +542,7 @@ int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 		if (r != -ERESTARTSYS)
 			DRM_ERROR("Failed to parse relocation %d!\n", r);
 		radeon_cs_parser_fini(&parser, r);
-		rw_exit_read(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		r = radeon_cs_handle_lockup(rdev, r);
 		return r;
 	}
@@ -556,7 +556,7 @@ int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 	}
 out:
 	radeon_cs_parser_fini(&parser, r);
-	rw_exit_read(&rdev->exclusive_lock);
+	up_read(&rdev->exclusive_lock);
 	r = radeon_cs_handle_lockup(rdev, r);
 	return r;
 }

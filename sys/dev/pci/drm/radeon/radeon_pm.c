@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.9 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.10 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,10 +83,10 @@ void radeon_pm_acpi_event_handler(struct radeon_device *rdev)
 {
 	if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
 		if (rdev->pm.profile == PM_PROFILE_AUTO) {
-			rw_enter_write(&rdev->pm.rwlock);
+			mutex_lock(&rdev->pm.mutex);
 			radeon_pm_update_profile(rdev);
 			radeon_pm_set_clocks(rdev);
-			rw_exit_write(&rdev->pm.rwlock);
+			mutex_unlock(&rdev->pm.mutex);
 		}
 	}
 }
@@ -256,7 +256,6 @@ static void radeon_set_power_state(struct radeon_device *rdev)
 
 static void radeon_pm_set_clocks(struct radeon_device *rdev)
 {
-	struct drm_device *dev = rdev->ddev;
 	int i, r;
 
 	/* no need to take locks, etc. if nothing's going to change */
@@ -264,9 +263,9 @@ static void radeon_pm_set_clocks(struct radeon_device *rdev)
 	    (rdev->pm.requested_power_state_index == rdev->pm.current_power_state_index))
 		return;
 
-	mutex_lock(&dev->struct_mutex);
-	rw_enter_write(&rdev->pm.mclk_lock);
-	rw_enter_write(&rdev->ring_lock);
+	mutex_lock(&rdev->ddev->struct_mutex);
+	down_write(&rdev->pm.mclk_lock);
+	mutex_lock(&rdev->ring_lock);
 
 	/* wait for the rings to drain */
 	for (i = 0; i < RADEON_NUM_RINGS; i++) {
@@ -277,9 +276,9 @@ static void radeon_pm_set_clocks(struct radeon_device *rdev)
 		r = radeon_fence_wait_empty_locked(rdev, i);
 		if (r) {
 			/* needs a GPU reset dont reset here */
-			rw_exit_write(&rdev->ring_lock);
-			rw_exit_write(&rdev->pm.mclk_lock);
-			mutex_unlock(&dev->struct_mutex);
+			mutex_unlock(&rdev->ring_lock);
+			up_write(&rdev->pm.mclk_lock);
+			mutex_unlock(&rdev->ddev->struct_mutex);
 			return;
 		}
 	}
@@ -313,9 +312,9 @@ static void radeon_pm_set_clocks(struct radeon_device *rdev)
 
 	rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
 
-	rw_exit_write(&rdev->ring_lock);
-	rw_exit_write(&rdev->pm.mclk_lock);
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&rdev->ring_lock);
+	up_write(&rdev->pm.mclk_lock);
+	mutex_unlock(&rdev->ddev->struct_mutex);
 }
 
 static void radeon_pm_print_states(struct radeon_device *rdev)
@@ -378,7 +377,7 @@ radeon_set_pm_profile(struct device *dev,
 	struct drm_device *ddev = pci_get_drvdata(to_pci_dev(dev));
 	struct radeon_device *rdev = ddev->dev_private;
 
-	rw_enter_write(&rdev->pm.rwlock);
+	mutex_lock(&rdev->pm.mutex);
 	if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
 		if (strncmp("default", buf, strlen("default")) == 0)
 			rdev->pm.profile = PM_PROFILE_DEFAULT;
@@ -400,7 +399,7 @@ radeon_set_pm_profile(struct device *dev,
 		count = -EINVAL;
 
 fail:
-	rw_exit_write(&rdev->pm.rwlock);
+	mutex_unlock(&rdev->pm.mutex);
 
 	return count;
 }
@@ -429,18 +428,18 @@ radeon_set_pm_method(struct device *dev,
 
 
 	if (strncmp("dynpm", buf, strlen("dynpm")) == 0) {
-		rw_enter_write(&rdev->pm.rwlock);
+		mutex_lock(&rdev->pm.mutex);
 		rdev->pm.pm_method = PM_METHOD_DYNPM;
 		rdev->pm.dynpm_state = DYNPM_STATE_PAUSED;
 		rdev->pm.dynpm_planned_action = DYNPM_ACTION_DEFAULT;
-		rw_exit_write(&rdev->pm.rwlock);
+		mutex_unlock(&rdev->pm.mutex);
 	} else if (strncmp("profile", buf, strlen("profile")) == 0) {
-		rw_enter_write(&rdev->pm.rwlock);
+		mutex_lock(&rdev->pm.mutex);
 		/* disable dynpm */
 		rdev->pm.dynpm_state = DYNPM_STATE_DISABLED;
 		rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
 		rdev->pm.pm_method = PM_METHOD_PROFILE;
-		rw_exit_write(&rdev->pm.rwlock);
+		mutex_unlock(&rdev->pm.mutex);
 		timeout_del(&rdev->pm.dynpm_idle_to);
 		task_del(systq, &rdev->pm.dynpm_idle_task);
 	} else {
@@ -565,12 +564,12 @@ static void radeon_hwmon_fini(struct radeon_device *rdev)
 
 void radeon_pm_suspend(struct radeon_device *rdev)
 {
-	rw_enter_write(&rdev->pm.rwlock);
+	mutex_lock(&rdev->pm.mutex);
 	if (rdev->pm.pm_method == PM_METHOD_DYNPM) {
 		if (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE)
 			rdev->pm.dynpm_state = DYNPM_STATE_SUSPENDED;
 	}
-	rw_exit_write(&rdev->pm.rwlock);
+	mutex_unlock(&rdev->pm.mutex);
 
 	timeout_del(&rdev->pm.dynpm_idle_to);
 	task_del(systq, &rdev->pm.dynpm_idle_task);
@@ -594,7 +593,7 @@ void radeon_pm_resume(struct radeon_device *rdev)
 			radeon_set_memory_clock(rdev, rdev->pm.default_mclk);
 	}
 	/* asic init will reset the default power state */
-	rw_enter_write(&rdev->pm.rwlock);
+	mutex_lock(&rdev->pm.mutex);
 	rdev->pm.current_power_state_index = rdev->pm.default_power_state_index;
 	rdev->pm.current_clock_mode_index = 0;
 	rdev->pm.current_sclk = rdev->pm.default_sclk;
@@ -608,7 +607,7 @@ void radeon_pm_resume(struct radeon_device *rdev)
 		rdev->pm.dynpm_state = DYNPM_STATE_ACTIVE;
 		timeout_add_msec(&rdev->pm.dynpm_idle_to, RADEON_IDLE_LOOP_MS);
 	}
-	rw_exit_write(&rdev->pm.rwlock);
+	mutex_unlock(&rdev->pm.mutex);
 	radeon_pm_compute_clocks(rdev);
 }
 
@@ -688,7 +687,7 @@ int radeon_pm_init(struct radeon_device *rdev)
 void radeon_pm_fini(struct radeon_device *rdev)
 {
 	if (rdev->pm.num_power_states > 1) {
-		rw_enter_write(&rdev->pm.rwlock);
+		mutex_lock(&rdev->pm.mutex);
 		if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
 			rdev->pm.profile = PM_PROFILE_DEFAULT;
 			radeon_pm_update_profile(rdev);
@@ -699,7 +698,7 @@ void radeon_pm_fini(struct radeon_device *rdev)
 			rdev->pm.dynpm_planned_action = DYNPM_ACTION_DEFAULT;
 			radeon_pm_set_clocks(rdev);
 		}
-		rw_exit_write(&rdev->pm.rwlock);
+		mutex_unlock(&rdev->pm.mutex);
 
 		timeout_del(&rdev->pm.dynpm_idle_to);
 		task_del(systq, &rdev->pm.dynpm_idle_task);
@@ -725,7 +724,7 @@ void radeon_pm_compute_clocks(struct radeon_device *rdev)
 	if (rdev->pm.num_power_states < 2)
 		return;
 
-	rw_enter_write(&rdev->pm.rwlock);
+	mutex_lock(&rdev->pm.mutex);
 
 	rdev->pm.active_crtcs = 0;
 	rdev->pm.active_crtc_count = 0;
@@ -784,7 +783,7 @@ void radeon_pm_compute_clocks(struct radeon_device *rdev)
 		}
 	}
 
-	rw_exit_write(&rdev->pm.rwlock);
+	mutex_unlock(&rdev->pm.mutex);
 }
 
 static bool radeon_pm_in_vbl(struct radeon_device *rdev)
@@ -835,7 +834,7 @@ radeon_dynpm_idle_work_handler(void *arg1)
 	int resched;
 
 	resched = ttm_bo_lock_delayed_workqueue(&rdev->mman.bdev);
-	rw_enter_write(&rdev->pm.rwlock);
+	mutex_lock(&rdev->pm.mutex);
 	if (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE) {
 		int not_processed = 0;
 		int i;
@@ -883,7 +882,7 @@ radeon_dynpm_idle_work_handler(void *arg1)
 
 		timeout_add_msec(&rdev->pm.dynpm_idle_to, RADEON_IDLE_LOOP_MS);
 	}
-	rw_exit_write(&rdev->pm.rwlock);
+	mutex_unlock(&rdev->pm.mutex);
 	ttm_bo_unlock_delayed_workqueue(&rdev->mman.bdev, resched);
 }
 

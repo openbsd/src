@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.6 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.7 2015/02/10 06:19:36 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -87,9 +87,9 @@ int ttm_mem_io_lock(struct ttm_mem_type_manager *man, bool interruptible)
 		return 0;
 
 	if (interruptible)
-		return rw_enter(&man->io_reserve_rwlock, RW_WRITE | RW_INTR);
+		return mutex_lock_interruptible(&man->io_reserve_mutex);
 
-	rw_enter_write(&man->io_reserve_rwlock);
+	mutex_lock(&man->io_reserve_mutex);
 	return 0;
 }
 
@@ -98,7 +98,7 @@ void ttm_mem_io_unlock(struct ttm_mem_type_manager *man)
 	if (likely(man->io_reserve_fastpath))
 		return;
 
-	rw_exit_write(&man->io_reserve_rwlock);
+	mutex_unlock(&man->io_reserve_mutex);
 }
 
 static int ttm_mem_io_evict(struct ttm_mem_type_manager *man)

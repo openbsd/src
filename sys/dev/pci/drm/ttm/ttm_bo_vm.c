@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.2 2014/09/23 05:57:14 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.3 2015/02/10 06:19:36 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -305,11 +305,11 @@ ttm_bo_mmap(voff_t off, vsize_t size, struct ttm_bo_device *bdev)
 	struct ttm_buffer_object *bo;
 	int ret;
 
-	rw_enter_read(&bdev->vm_lock);
+	read_lock(&bdev->vm_lock);
 	bo = ttm_bo_vm_lookup_rb(bdev, off >> PAGE_SHIFT, size >> PAGE_SHIFT);
 	if (likely(bo != NULL))
 		refcount_acquire(&bo->kref);
-	rw_exit_read(&bdev->vm_lock);
+	read_unlock(&bdev->vm_lock);
 
 	if (unlikely(bo == NULL)) {
 //		pr_err("Could not find buffer object to map\n");
@@ -378,11 +378,11 @@ ssize_t ttm_bo_io(struct ttm_bo_device *bdev, struct file *filp,
 	bool no_wait = false;
 	bool dummy;
 
-	rw_enter_read(&bdev->vm_lock);
+	read_lock(&bdev->vm_lock);
 	bo = ttm_bo_vm_lookup_rb(bdev, dev_offset, 1);
 	if (likely(bo != NULL))
 		ttm_bo_reference(bo);
-	rw_exit_read(&bdev->vm_lock);
+	read_unlock(&bdev->vm_lock);
 
 	if (unlikely(bo == NULL))
 		return -EFAULT;

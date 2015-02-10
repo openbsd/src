@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.23 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.24 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -3480,9 +3480,9 @@ void intel_disable_gt_powersave(struct drm_device *dev)
 	} else if (INTEL_INFO(dev)->gen >= 6 && !IS_VALLEYVIEW(dev)) {
 		timeout_del(&dev_priv->rps.delayed_resume_to);
 		task_del(systq, &dev_priv->rps.delayed_resume_task);
-		rw_enter_write(&dev_priv->rps.hw_lock);
+		mutex_lock(&dev_priv->rps.hw_lock);
 		gen6_disable_rps(dev);
-		rw_exit_write(&dev_priv->rps.hw_lock);
+		mutex_unlock(&dev_priv->rps.hw_lock);
 	}
 }
 
@@ -3491,10 +3491,10 @@ static void intel_gen6_powersave_work(void *arg1)
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 
-	rw_enter_write(&dev_priv->rps.hw_lock);
+	mutex_lock(&dev_priv->rps.hw_lock);
 	gen6_enable_rps(dev);
 	gen6_update_ring_freq(dev);
-	rw_exit_write(&dev_priv->rps.hw_lock);
+	mutex_unlock(&dev_priv->rps.hw_lock);
 }
 
 static void

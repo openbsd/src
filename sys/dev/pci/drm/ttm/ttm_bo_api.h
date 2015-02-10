@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_api.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_api.h,v 1.2 2015/02/10 06:19:36 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -320,7 +320,7 @@ ttm_bo_reference(struct ttm_buffer_object *bo)
  * @interruptible:  Use interruptible wait.
  * @no_wait:  Return immediately if buffer is busy.
  *
- * This function must be called with the bo::rwlock held, and makes
+ * This function must be called with the bo::mutex held, and makes
  * sure any previous rendering to the buffer is completed.
  * Note: It might be necessary to block validations before the
  * wait by reserving the buffer.

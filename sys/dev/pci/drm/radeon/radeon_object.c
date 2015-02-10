@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.5 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.6 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -63,9 +63,9 @@ static void radeon_ttm_bo_destroy(struct ttm_buffer_object *tbo)
 	struct radeon_bo *bo;
 
 	bo = container_of(tbo, struct radeon_bo, tbo);
-	rw_enter_write(&bo->rdev->gem.rwlock);
+	mutex_lock(&bo->rdev->gem.mutex);
 	list_del_init(&bo->list);
-	rw_exit_write(&bo->rdev->gem.rwlock);
+	mutex_unlock(&bo->rdev->gem.mutex);
 	radeon_bo_clear_surface_reg(bo);
 	radeon_bo_clear_va(bo);
 	drm_gem_object_release(&bo->gem_base);
@@ -151,11 +151,11 @@ int radeon_bo_create(struct radeon_device *rdev,
 	INIT_LIST_HEAD(&bo->va);
 	radeon_ttm_placement_from_domain(bo, domain);
 	/* Kernel allocation are uninterruptible */
-	rw_enter_read(&rdev->pm.mclk_lock);
+	down_read(&rdev->pm.mclk_lock);
 	r = ttm_bo_init(&rdev->mman.bdev, &bo->tbo, size, type,
 			&bo->placement, page_align, !kernel, NULL,
 			acc_size, sg, &radeon_ttm_bo_destroy);
-	rw_exit_read(&rdev->pm.mclk_lock);
+	up_read(&rdev->pm.mclk_lock);
 	if (unlikely(r != 0)) {
 		return r;
 	}
@@ -209,9 +209,9 @@ void radeon_bo_unref(struct radeon_bo **bo)
 		return;
 	rdev = (*bo)->rdev;
 	tbo = &((*bo)->tbo);
-	rw_enter_read(&rdev->pm.mclk_lock);
+	down_read(&rdev->pm.mclk_lock);
 	ttm_bo_unref(&tbo);
-	rw_exit_read(&rdev->pm.mclk_lock);
+	up_read(&rdev->pm.mclk_lock);
 	if (tbo == NULL)
 		*bo = NULL;
 }
@@ -303,7 +303,6 @@ int radeon_bo_evict_vram(struct radeon_device *rdev)
 
 void radeon_bo_force_delete(struct radeon_device *rdev)
 {
-	struct drm_device *dev = rdev->ddev;
 	struct radeon_bo *bo, *n;
 
 	if (list_empty(&rdev->gem.objects)) {
@@ -311,18 +310,18 @@ void radeon_bo_force_delete(struct radeon_device *rdev)
 	}
 	DRM_ERROR("Userspace still has active objects !\n");
 	list_for_each_entry_safe(bo, n, &rdev->gem.objects, list) {
-		mutex_lock(&dev->struct_mutex);
+		mutex_lock(&rdev->ddev->struct_mutex);
 #ifdef notyet
 		DRM_ERROR("%p %p %lu %lu force free\n",
 			&bo->gem_base, bo, (unsigned long)bo->gem_base.size,
 			*((unsigned long *)&bo->gem_base.refcount));
 #endif
-		rw_enter_write(&bo->rdev->gem.rwlock);
+		mutex_lock(&bo->rdev->gem.mutex);
 		list_del_init(&bo->list);
-		rw_exit_write(&bo->rdev->gem.rwlock);
+		mutex_unlock(&bo->rdev->gem.mutex);
 		/* this should unref the ttm bo */
 		drm_gem_object_unreference(&bo->gem_base);
-		mutex_unlock(&dev->struct_mutex);
+		mutex_unlock(&rdev->ddev->struct_mutex);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atom.c,v 1.4 2014/06/20 06:50:04 jsg Exp $	*/
+/*	$OpenBSD: atom.c,v 1.5 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
@@ -1227,7 +1227,7 @@ int atom_execute_table(struct atom_context *ctx, int index, uint32_t * params)
 {
 	int r;
 
-	rw_enter_write(&ctx->rwlock);
+	mutex_lock(&ctx->mutex);
 	/* reset data block */
 	ctx->data_block = 0;
 	/* reset reg block */
@@ -1240,7 +1240,7 @@ int atom_execute_table(struct atom_context *ctx, int index, uint32_t * params)
 	ctx->divmul[0] = 0;
 	ctx->divmul[1] = 0;
 	r = atom_execute_table_locked(ctx, index, params);
-	rw_exit_write(&ctx->rwlock);
+	mutex_unlock(&ctx->mutex);
 	return r;
 }
 

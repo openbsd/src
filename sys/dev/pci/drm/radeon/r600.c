@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600.c,v 1.10 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: r600.c,v 1.11 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -4364,10 +4364,10 @@ uint64_t r600_get_gpu_clock(struct radeon_device *rdev)
 {
 	uint64_t clock;
 
-	rw_enter_write(&rdev->gpu_clock_rwlock);
+	mutex_lock(&rdev->gpu_clock_mutex);
 	WREG32(RLC_CAPTURE_GPU_CLOCK_COUNT, 1);
 	clock = (uint64_t)RREG32(RLC_GPU_CLOCK_COUNT_LSB) |
 	        ((uint64_t)RREG32(RLC_GPU_CLOCK_COUNT_MSB) << 32ULL);
-	rw_exit_write(&rdev->gpu_clock_rwlock);
+	mutex_unlock(&rdev->gpu_clock_mutex);
 	return clock;
 }

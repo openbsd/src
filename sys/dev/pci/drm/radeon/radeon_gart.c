@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gart.c,v 1.4 2014/02/09 23:57:04 jsg Exp $	*/
+/*	$OpenBSD: radeon_gart.c,v 1.5 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -503,7 +503,7 @@ int radeon_vm_manager_init(struct radeon_device *rdev)
  *
  * Free the page table of a specific vm (cayman+).
  *
- * Global and local rwlock must be lock!
+ * Global and local mutex must be lock!
  */
 static void radeon_vm_free_pt(struct radeon_device *rdev,
 				    struct radeon_vm *vm)
@@ -545,18 +545,18 @@ void radeon_vm_manager_fini(struct radeon_device *rdev)
 	if (!rdev->vm_manager.enabled)
 		return;
 
-	rw_enter_write(&rdev->vm_manager.lock);
+	mutex_lock(&rdev->vm_manager.lock);
 	/* free all allocated page tables */
 	list_for_each_entry_safe(vm, tmp, &rdev->vm_manager.lru_vm, list) {
-		rw_enter_write(&vm->rwlock);
+		mutex_lock(&vm->mutex);
 		radeon_vm_free_pt(rdev, vm);
-		rw_exit_write(&vm->rwlock);
+		mutex_unlock(&vm->mutex);
 	}
 	for (i = 0; i < RADEON_NUM_VM; ++i) {
 		radeon_fence_unref(&rdev->vm_manager.active[i]);
 	}
 	radeon_asic_vm_fini(rdev);
-	rw_exit_write(&rdev->vm_manager.lock);
+	mutex_unlock(&rdev->vm_manager.lock);
 
 	radeon_sa_bo_manager_suspend(rdev, &rdev->vm_manager.sa_manager);
 	radeon_sa_bo_manager_fini(rdev, &rdev->vm_manager.sa_manager);
@@ -572,7 +572,7 @@ void radeon_vm_manager_fini(struct radeon_device *rdev)
  * Evict a VM from the lru, making sure that it isn't @vm. (cayman+).
  * Returns 0 for success, -ENOMEM for failure.
  *
- * Global and local rwlock must be locked!
+ * Global and local mutex must be locked!
  */
 static int radeon_vm_evict(struct radeon_device *rdev, struct radeon_vm *vm)
 {
@@ -586,9 +586,9 @@ static int radeon_vm_evict(struct radeon_device *rdev, struct radeon_vm *vm)
 	if (vm_evict == vm)
 		return -ENOMEM;
 
-	rw_enter_write(&vm_evict->rwlock);
+	mutex_lock(&vm_evict->mutex);
 	radeon_vm_free_pt(rdev, vm_evict);
-	rw_exit_write(&vm_evict->rwlock);
+	mutex_unlock(&vm_evict->mutex);
 	return 0;
 }
 
@@ -601,7 +601,7 @@ static int radeon_vm_evict(struct radeon_device *rdev, struct radeon_vm *vm)
  * Allocate a page table for the requested vm (cayman+).
  * Returns 0 for success, error for failure.
  *
- * Global and local rwlock must be locked!
+ * Global and local mutex must be locked!
  */
 int radeon_vm_alloc_pt(struct radeon_device *rdev, struct radeon_vm *vm)
 {
@@ -658,7 +658,7 @@ retry:
  *
  * Add the allocated page table to the LRU list (cayman+).
  *
- * Global rwlock must be locked!
+ * Global mutex must be locked!
  */
 void radeon_vm_add_to_lru(struct radeon_device *rdev, struct radeon_vm *vm)
 {
@@ -676,7 +676,7 @@ void radeon_vm_add_to_lru(struct radeon_device *rdev, struct radeon_vm *vm)
  * Allocate an id for the vm (cayman+).
  * Returns the fence we need to sync to (if any).
  *
- * Global and local rwlock must be locked!
+ * Global and local mutex must be locked!
  */
 struct radeon_fence *radeon_vm_grab_id(struct radeon_device *rdev,
 				       struct radeon_vm *vm, int ring)
@@ -730,7 +730,7 @@ struct radeon_fence *radeon_vm_grab_id(struct radeon_device *rdev,
  * Fence the vm (cayman+).
  * Set the fence used to protect page table and id.
  *
- * Global and local rwlock must be locked!
+ * Global and local mutex must be locked!
  */
 void radeon_vm_fence(struct radeon_device *rdev,
 		     struct radeon_vm *vm,
@@ -801,10 +801,10 @@ struct radeon_bo_va *radeon_vm_bo_add(struct radeon_device *rdev,
 	INIT_LIST_HEAD(&bo_va->bo_list);
 	INIT_LIST_HEAD(&bo_va->vm_list);
 
-	rw_enter_write(&vm->rwlock);
+	mutex_lock(&vm->mutex);
 	list_add(&bo_va->vm_list, &vm->va);
 	list_add_tail(&bo_va->bo_list, &bo->va);
-	rw_exit_write(&vm->rwlock);
+	mutex_unlock(&vm->mutex);
 
 	return bo_va;
 }
@@ -853,7 +853,7 @@ int radeon_vm_bo_set_addr(struct radeon_device *rdev,
 		eoffset = last_pfn = 0;
 	}
 
-	rw_enter_write(&vm->rwlock);
+	mutex_lock(&vm->mutex);
 	head = &vm->va;
 	last_offset = 0;
 	list_for_each_entry(tmp, &vm->va, vm_list) {
@@ -871,7 +871,7 @@ int radeon_vm_bo_set_addr(struct radeon_device *rdev,
 			dev_err(rdev->dev, "bo %p va 0x%08X conflict with (bo %p 0x%08X 0x%08X)\n",
 				bo_va->bo, (unsigned)bo_va->soffset, tmp->bo,
 				(unsigned)tmp->soffset, (unsigned)tmp->eoffset);
-			rw_exit_write(&vm->rwlock);
+			mutex_unlock(&vm->mutex);
 			return -EINVAL;
 		}
 		last_offset = tmp->eoffset;
@@ -884,7 +884,7 @@ int radeon_vm_bo_set_addr(struct radeon_device *rdev,
 	bo_va->valid = false;
 	list_move(&bo_va->vm_list, head);
 
-	rw_exit_write(&vm->rwlock);
+	mutex_unlock(&vm->mutex);
 	return 0;
 }
 
@@ -923,7 +923,7 @@ uint64_t radeon_vm_map_gart(struct radeon_device *rdev, uint64_t addr)
  * and updates the page directory (cayman+).
  * Returns 0 for success, error for failure.
  *
- * Global and local rwlock must be locked!
+ * Global and local mutex must be locked!
  */
 static int radeon_vm_update_pdes(struct radeon_device *rdev,
 				 struct radeon_vm *vm,
@@ -1003,7 +1003,7 @@ retry:
  *
  * Update the page tables in the range @start - @end (cayman+).
  *
- * Global and local rwlock must be locked!
+ * Global and local mutex must be locked!
  */
 static void radeon_vm_update_ptes(struct radeon_device *rdev,
 				  struct radeon_vm *vm,
@@ -1070,7 +1070,7 @@ static void radeon_vm_update_ptes(struct radeon_device *rdev,
  * Fill in the page table entries for @bo (cayman+).
  * Returns 0 for success, -EINVAL for failure.
  *
- * Object have to be reserved & global and local rwlock must be locked!
+ * Object have to be reserved & global and local mutex must be locked!
  */
 int radeon_vm_bo_update_pte(struct radeon_device *rdev,
 			    struct radeon_vm *vm,
@@ -1209,14 +1209,14 @@ int radeon_vm_bo_rmv(struct radeon_device *rdev,
 {
 	int r = 0;
 
-	rw_enter_write(&rdev->vm_manager.lock);
-	rw_enter_write(&bo_va->vm->rwlock);
+	mutex_lock(&rdev->vm_manager.lock);
+	mutex_lock(&bo_va->vm->mutex);
 	if (bo_va->soffset) {
 		r = radeon_vm_bo_update_pte(rdev, bo_va->vm, bo_va->bo, NULL);
 	}
-	rw_exit_write(&rdev->vm_manager.lock);
+	mutex_unlock(&rdev->vm_manager.lock);
 	list_del(&bo_va->vm_list);
-	rw_exit_write(&bo_va->vm->rwlock);
+	mutex_unlock(&bo_va->vm->mutex);
 	list_del(&bo_va->bo_list);
 
 	kfree(bo_va);
@@ -1254,7 +1254,7 @@ void radeon_vm_init(struct radeon_device *rdev, struct radeon_vm *vm)
 {
 	vm->id = 0;
 	vm->fence = NULL;
-	rw_init(&vm->rwlock, "vmlk");
+	rw_init(&vm->mutex, "vmlk");
 	INIT_LIST_HEAD(&vm->list);
 	INIT_LIST_HEAD(&vm->va);
 }
@@ -1273,10 +1273,10 @@ void radeon_vm_fini(struct radeon_device *rdev, struct radeon_vm *vm)
 	struct radeon_bo_va *bo_va, *tmp;
 	int r;
 
-	rw_enter_write(&rdev->vm_manager.lock);
-	rw_enter_write(&vm->rwlock);
+	mutex_lock(&rdev->vm_manager.lock);
+	mutex_lock(&vm->mutex);
 	radeon_vm_free_pt(rdev, vm);
-	rw_exit_write(&rdev->vm_manager.lock);
+	mutex_unlock(&rdev->vm_manager.lock);
 
 	if (!list_empty(&vm->va)) {
 		dev_err(rdev->dev, "still active bo inside vm\n");
@@ -1292,5 +1292,5 @@ void radeon_vm_fini(struct radeon_device *rdev, struct radeon_vm *vm)
 	}
 	radeon_fence_unref(&vm->fence);
 	radeon_fence_unref(&vm->last_flush);
-	rw_exit_write(&vm->rwlock);
+	mutex_unlock(&vm->mutex);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.10 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.11 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -411,7 +411,7 @@ struct radeon_sa_bo {
  * GEM objects.
  */
 struct radeon_gem {
-	struct rwlock		rwlock;
+	struct rwlock		mutex;
 	struct list_head	objects;
 };
 
@@ -692,7 +692,7 @@ struct radeon_vm {
 	/* array of page tables, one for each page directory entry */
 	struct radeon_sa_bo		**page_tables;
 
-	struct rwlock			rwlock;
+	struct rwlock			mutex;
 	/* last fence for cs using this vm */
 	struct radeon_fence		*fence;
 	/* last flush or NULL if we still need to flush */
@@ -1060,7 +1060,7 @@ struct radeon_power_state {
 #define RADEON_MODE_OVERCLOCK_MARGIN 500 /* 5 MHz */
 
 struct radeon_pm {
-	struct rwlock 		rwlock;
+	struct rwlock 		mutex;
 	/* write locked while reprogramming mclk */
 	struct rwlock		mclk_lock;
 	u32			active_crtcs;
@@ -1658,7 +1658,7 @@ struct radeon_device {
 	struct task hotplug_task;
 	struct task audio_task;
 	int num_crtc; /* number of crtcs */
-	struct rwlock dc_hw_i2c_rwlock; /* display controller hw i2c rwlock */
+	struct rwlock dc_hw_i2c_mutex; /* display controller hw i2c mutex */
 	bool audio_enabled;
 	struct r600_audio audio_status; /* audio stuff */
 #ifdef notyet
@@ -1674,7 +1674,7 @@ struct radeon_device {
 	unsigned 		debugfs_count;
 	/* virtual memory */
 	struct radeon_vm_manager	vm_manager;
-	struct rwlock		gpu_clock_rwlock;
+	struct rwlock		gpu_clock_mutex;
 	/* ACPI interface */
 	struct radeon_atif		atif;
 	struct radeon_atcs		atcs;

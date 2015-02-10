@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.7 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.8 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -895,10 +895,10 @@ radeon_ttm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 
 	bo = (struct ttm_buffer_object *)ufi->entry->object.uvm_obj;
 	rdev = radeon_get_rdev(bo->bdev);
-	rw_enter_read(&rdev->pm.mclk_lock);
+	down_read(&rdev->pm.mclk_lock);
 	r = ttm_vm_ops->pgo_fault(ufi, vaddr, pps, npages, centeridx,
 				  fault_type, access_type, flags);
-	rw_exit_read(&rdev->pm.mclk_lock);
+	up_read(&rdev->pm.mclk_lock);
 	return r;
 }
 

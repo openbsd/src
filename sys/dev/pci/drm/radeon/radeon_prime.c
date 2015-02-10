@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_prime.c,v 1.3 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_prime.c,v 1.4 2015/02/10 06:19:36 jsg Exp $	*/
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
@@ -38,10 +38,10 @@ static struct sg_table *radeon_gem_map_dma_buf(struct dma_buf_attachment *attach
 	struct sg_table *sg;
 	int nents;
 
-	rw_enter_write(&dev->struct_rwlock);
+	mutex_lock(&dev->struct_mutex);
 	sg = drm_prime_pages_to_sg(bo->tbo.ttm->pages, npages);
 	nents = dma_map_sg(attachment->dev, sg->sgl, sg->nents, dir);
-	rw_exit_write(&dev->struct_rwlock);
+	mutex_unlock(&dev->struct_mutex);
 	return sg;
 }
 
@@ -94,7 +94,7 @@ static void *radeon_gem_prime_vmap(struct dma_buf *dma_buf)
 	struct drm_device *dev = bo->rdev->ddev;
 	int ret;
 
-	rw_enter_write(&dev->struct_rwlock);
+	mutex_lock(&dev->struct_mutex);
 	if (bo->vmapping_count) {
 		bo->vmapping_count++;
 		goto out_unlock;
@@ -103,12 +103,12 @@ static void *radeon_gem_prime_vmap(struct dma_buf *dma_buf)
 	ret = ttm_bo_kmap(&bo->tbo, 0, bo->tbo.num_pages,
 			  &bo->dma_buf_vmap);
 	if (ret) {
-		rw_exit_write(&dev->struct_rwlock);
+		mutex_unlock(&dev->struct_mutex);
 		return ERR_PTR(ret);
 	}
 	bo->vmapping_count = 1;
 out_unlock:
-	rw_exit_write(&dev->struct_rwlock);
+	mutex_unlock(&dev->struct_mutex);
 	return bo->dma_buf_vmap.virtual;
 }
 
@@ -117,12 +117,12 @@ static void radeon_gem_prime_vunmap(struct dma_buf *dma_buf, void *vaddr)
 	struct radeon_bo *bo = dma_buf->priv;
 	struct drm_device *dev = bo->rdev->ddev;
 
-	rw_enter_write(&dev->struct_rwlock);
+	mutex_lock(&dev->struct_mutex);
 	bo->vmapping_count--;
 	if (bo->vmapping_count == 0) {
 		ttm_bo_kunmap(&bo->dma_buf_vmap);
 	}
-	rw_exit_write(&dev->struct_rwlock);
+	mutex_unlock(&dev->struct_mutex);
 }
 const static struct dma_buf_ops radeon_dmabuf_ops =  {
 	.map_dma_buf = radeon_gem_map_dma_buf,
@@ -153,9 +153,9 @@ static int radeon_prime_create(struct drm_device *dev,
 	bo = *pbo;
 	bo->gem_base.driver_private = bo;
 
-	rw_enter_write(&rdev->gem.rwlock);
+	mutex_lock(&rdev->gem.mutex);
 	list_add_tail(&bo->list, &rdev->gem.objects);
-	rw_exit_write(&rdev->gem.rwlock);
+	mutex_unlock(&rdev->gem.mutex);
 
 	return 0;
 }

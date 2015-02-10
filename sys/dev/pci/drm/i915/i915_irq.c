@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.16 2015/02/10 03:39:41 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.17 2015/02/10 06:19:36 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -375,7 +375,7 @@ static void gen6_pm_rps_work(void *arg1)
 	if ((pm_iir & GEN6_PM_DEFERRED_EVENTS) == 0)
 		return;
 
-	rw_enter_write(&dev_priv->rps.hw_lock);
+	mutex_lock(&dev_priv->rps.hw_lock);
 
 	if (pm_iir & GEN6_PM_RP_UP_THRESHOLD)
 		new_delay = dev_priv->rps.cur_delay + 1;
@@ -390,7 +390,7 @@ static void gen6_pm_rps_work(void *arg1)
 		gen6_set_rps(dev, new_delay);
 	}
 
-	rw_exit_write(&dev_priv->rps.hw_lock);
+	mutex_unlock(&dev_priv->rps.hw_lock);
 }
 
 /**
