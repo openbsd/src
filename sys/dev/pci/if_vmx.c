@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.23 2015/02/09 11:06:52 pelikan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.24 2015/02/10 02:57:32 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -687,6 +687,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	struct vmxnet3_rxdesc *rxd;
 	struct vmxnet3_rxcompdesc *rxcd;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	int idx, len;
 	u_int slots;
@@ -736,10 +737,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 			goto skip_buffer;
 		}
 
-		ifp->if_ipackets++;
-
 		vmxnet3_rx_csum(rxcd, m);
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_VLAN)) {
 			m->m_flags |= M_VLANTAG;
@@ -747,11 +745,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 			    VMXNET3_RXC_VLANTAG_S) & VMXNET3_RXC_VLANTAG_M);
 		}
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 skip_buffer:
 #ifdef VMXNET3_STAT
@@ -770,6 +764,9 @@ skip_buffer:
 			}
 		}
 	}
+
+	ifp->if_ipackets += ml_len(&ml);
+	if_input(ifp, &ml);
 
 	/* XXX Should we (try to) allocate buffers for ring 2 too? */
 	ring = &rq->cmd_ring[0];

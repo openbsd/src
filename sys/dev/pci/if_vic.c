@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.83 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.84 2015/02/10 02:57:32 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -814,6 +814,7 @@ vic_rx_proc(struct vic_softc *sc, int q)
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 	struct vic_rxdesc		*rxd;
 	struct vic_rxbuf		*rxb;
+	struct mbuf_list		 ml = MBUF_LIST_INITIALIZER();
 	struct mbuf			*m;
 	int				len, idx;
 
@@ -865,18 +866,14 @@ vic_rx_proc(struct vic_softc *sc, int q)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
+		ml_enqueue(&ml, m);
 
-		ether_input_mbuf(ifp, m);
-
-nextp:
+ nextp:
 		if_rxr_put(&sc->sc_rxq[q].ring, 1);
 		VIC_INC(sc->sc_data->vd_rx[q].nextidx, sc->sc_nrxbuf);
 	}
 
+	if_input(ifp, &ml);
 	vic_rx_fill(sc, q);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
