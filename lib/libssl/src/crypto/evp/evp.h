@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.43 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: evp.h,v 1.44 2015/02/10 11:45:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -745,13 +745,6 @@ const EVP_CIPHER *EVP_cast5_cbc(void);
 const EVP_CIPHER *EVP_cast5_cfb64(void);
 # define EVP_cast5_cfb EVP_cast5_cfb64
 const EVP_CIPHER *EVP_cast5_ofb(void);
-#endif
-#ifndef OPENSSL_NO_RC5
-const EVP_CIPHER *EVP_rc5_32_12_16_cbc(void);
-const EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
-const EVP_CIPHER *EVP_rc5_32_12_16_cfb64(void);
-# define EVP_rc5_32_12_16_cfb EVP_rc5_32_12_16_cfb64
-const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #endif
 #ifndef OPENSSL_NO_AES
 const EVP_CIPHER *EVP_aes_128_ecb(void);

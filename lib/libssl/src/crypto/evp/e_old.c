@@ -1,4 +1,4 @@
-/* $OpenBSD: e_old.c,v 1.7 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: e_old.c,v 1.8 2015/02/10 11:45:09 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2004.
  */
@@ -129,16 +129,6 @@ const EVP_CIPHER *
 EVP_cast5_cfb(void)
 {
 	return EVP_cast5_cfb64();
-}
-#endif
-
-#ifndef OPENSSL_NO_RC5
-#undef EVP_rc5_32_12_16_cfb
-const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
-const EVP_CIPHER *
-EVP_rc5_32_12_16_cfb(void)
-{
-	return EVP_rc5_32_12_16_cfb64();
 }
 #endif
 

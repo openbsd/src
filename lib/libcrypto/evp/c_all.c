@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.15 2015/02/07 03:23:05 jsing Exp $ */
+/* $OpenBSD: c_all.c,v 1.16 2015/02/10 11:45:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,15 +146,6 @@ OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_cast5_cbc, "cast");
 	EVP_add_cipher_alias(SN_cast5_cbc, "CAST-cbc");
 	EVP_add_cipher_alias(SN_cast5_cbc, "cast-cbc");
-#endif
-
-#ifndef OPENSSL_NO_RC5
-	EVP_add_cipher(EVP_rc5_32_12_16_ecb());
-	EVP_add_cipher(EVP_rc5_32_12_16_cfb());
-	EVP_add_cipher(EVP_rc5_32_12_16_ofb());
-	EVP_add_cipher(EVP_rc5_32_12_16_cbc());
-	EVP_add_cipher_alias(SN_rc5_cbc, "rc5");
-	EVP_add_cipher_alias(SN_rc5_cbc, "RC5");
 #endif
 
 #ifndef OPENSSL_NO_AES
