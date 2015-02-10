@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.9 2015/02/09 03:51:59 guenther Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.10 2015/02/10 20:34:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6240,7 +6240,7 @@ iwm_intr(void *arg)
 		DPRINTF(("  802.11 state %d\n", sc->sc_ic.ic_state));
 #endif
 
-		printf("%s: firmware error, stopping device\n", DEVNAME(sc));
+		printf("%s: fatal firmware error\n", DEVNAME(sc));
 		ifp->if_flags &= ~IFF_UP;
 		iwm_stop(ifp, 1);
 		rv = 1;
