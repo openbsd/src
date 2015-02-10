@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.53 2015/02/07 03:23:05 jsing Exp $
+# $OpenBSD: Makefile,v 1.54 2015/02/10 11:16:33 jsing Exp $
 
 LIB=	crypto
 
@@ -233,9 +233,6 @@ SRCS+= sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
 # stack/
 SRCS+= stack.c
 
-# store/
-#SRCS+= str_err.c str_lib.c str_meth.c str_mem.c
-
 # ts/
 SRCS+= ts_err.c ts_req_utils.c ts_req_print.c ts_rsp_utils.c ts_rsp_print.c
 SRCS+= ts_rsp_sign.c ts_rsp_verify.c ts_verify_ctx.c ts_lib.c ts_conf.c
@@ -316,7 +313,6 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/rsa \
 	${LCRYPTO_SRC}/sha \
 	${LCRYPTO_SRC}/stack \
-	${LCRYPTO_SRC}/store \
 	${LCRYPTO_SRC}/threads \
 	${LCRYPTO_SRC}/ts \
 	${LCRYPTO_SRC}/txt_db \
@@ -382,7 +378,6 @@ HDRS=\
 	crypto/sha/sha.h \
 	crypto/stack/safestack.h \
 	crypto/stack/stack.h \
-	crypto/store/store.h \
 	crypto/ts/ts.h \
 	crypto/txt_db/txt_db.h \
 	crypto/ui/ui.h \
