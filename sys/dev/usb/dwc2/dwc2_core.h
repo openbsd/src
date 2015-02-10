@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.h,v 1.4 2015/02/10 13:30:27 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.h,v 1.5 2015/02/10 13:49:48 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_core.h,v 1.5 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -416,8 +416,8 @@ struct dwc2_hsotg {
 	unsigned int queuing_high_bandwidth:1;
 	unsigned int srp_success:1;
 
-	struct workqueue *wq_otg;
-	struct work wf_otg;
+	struct taskq *wq_otg;
+	struct task wf_otg;
 	struct callout wkp_timer;
 	enum dwc2_lx_state lx_state;
 

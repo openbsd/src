@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.4 2015/02/10 13:30:27 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.5 2015/02/10 13:49:48 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ typedef struct dwc2_softc {
 	struct usbd_bus sc_bus;
 	struct dwc2_hsotg *sc_hsotg;
 
-	kmutex_t sc_lock;
+	struct mutex sc_lock;
 
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
@@ -105,9 +105,9 @@ typedef struct dwc2_softc {
 	uint8_t sc_addr;		/* device address */
 	uint8_t sc_conf;		/* device configuration */
 
-	pool_cache_t sc_xferpool;
-	pool_cache_t sc_qhpool;
-	pool_cache_t sc_qtdpool;
+	struct pool sc_xferpool;
+	struct pool sc_qhpool;
+	struct pool sc_qtdpool;
 
 } dwc2_softc_t;
 
@@ -120,7 +120,7 @@ int		dwc2_activate(device_t, enum devact);
 bool		dwc2_resume(device_t, const pmf_qual_t *);
 bool		dwc2_suspend(device_t, const pmf_qual_t *);
 
-void		dwc2_worker(struct work *, void *);
+void		dwc2_worker(struct task *, void *);
 
 void		dwc2_host_complete(struct dwc2_hsotg *, struct dwc2_qtd *,
 				   int);
@@ -129,7 +129,7 @@ static inline void
 dwc2_root_intr(dwc2_softc_t *sc)
 {
 
-	softint_schedule(sc->sc_rhc_si);
+	softintr_schedule(sc->sc_rhc_si);
 }
 
 #endif	/* _DWC_OTGVAR_H_ */

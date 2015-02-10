@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.4 2015/02/10 13:49:48 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -121,16 +121,16 @@ enum usb_otg_state {
 
 #define usleep_range(l, u)	do { DELAY(u); } while (0)
 
-#define spinlock_t		kmutex_t
-#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_SCHED)
-#define	spin_lock(l)		do { mutex_spin_enter(l); } while (0)
-#define	spin_unlock(l)		do { mutex_spin_exit(l); } while (0)
+#define spinlock_t		struct mutex
+#define spin_lock_init(lock)	mtx_init(lock, MUTEX_DEFAULT, IPL_SCHED)
+#define	spin_lock(l)		do { mtx_enter(l); } while (0)
+#define	spin_unlock(l)		do { mtx_leave(l); } while (0)
 
 #define	spin_lock_irqsave(l, f)		\
-	do { mutex_spin_enter(l); (void)(f); } while (0)
+	do { mtx_enter(l); (void)(f); } while (0)
 
 #define	spin_unlock_irqrestore(l, f)	\
-	do { mutex_spin_exit(l); (void)(f); } while (0)
+	do { mtx_leave(l); (void)(f); } while (0)
 
 #define	IRQ_RETVAL(r)	(r)
 
@@ -206,25 +206,25 @@ udelay(unsigned long usecs)
 #define NS_TO_US(ns)	((ns + 500L) / 1000L)
 
 void dw_callout(void *);
-void dwc2_worker(struct work *, void *);
+void dwc2_worker(struct task *, void *);
 
 struct delayed_work {
-	struct work work;
+	struct task work;
 	struct callout dw_timer;
 
-	struct workqueue *dw_wq;
+	struct taskq *dw_wq;
 };
 
 static inline void
-INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work *))
+INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct task *))
 {
-	callout_init(&dw->dw_timer, CALLOUT_MPSAFE);
+	timeout_init(&dw->dw_timer, CALLOUT_MPSAFE);
 }
 
 static inline void
-queue_delayed_work(struct workqueue *wq, struct delayed_work *dw, int j)
+queue_delayed_work(struct taskq *wq, struct delayed_work *dw, int j)
 {
-	callout_reset(&dw->dw_timer, j, dw_callout, dw);
+	timeout_reset(&dw->dw_timer, j, dw_callout, dw);
 }
 
 #endif

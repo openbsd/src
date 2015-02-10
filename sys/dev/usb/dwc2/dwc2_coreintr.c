@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_coreintr.c,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_coreintr.c,v 1.4 2015/02/10 13:49:48 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 	 * scheduling.
 	 */
 	spin_unlock(&hsotg->lock);
-	workqueue_enqueue(hsotg->wq_otg, &hsotg->wf_otg, NULL);
+	taskq_enqueue(hsotg->wq_otg, &hsotg->wf_otg, NULL);
 	spin_lock(&hsotg->lock);
 
 	/* Clear interrupt */
@@ -361,7 +361,7 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 			/* Restart the Phy Clock */
 			pcgcctl &= ~PCGCTL_STOPPCLK;
 			DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
-			callout_reset(&hsotg->wkp_timer, mstohz(71),
+			timeout_reset(&hsotg->wkp_timer, mstohz(71),
 			    dwc2_wakeup_detected, hsotg);
 		} else {
 			/* Change to L0 state */
@@ -489,7 +489,7 @@ irqreturn_t dwc2_handle_common_intr(void *dev)
 		goto out;
 	}
 
-	KASSERT(mutex_owned(&hsotg->lock));
+	KASSERT(mtx_owned(&hsotg->lock));
 
 	gintsts = dwc2_read_common_intr(hsotg);
 	if (gintsts & ~GINTSTS_PRTINT)
