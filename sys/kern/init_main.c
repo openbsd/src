@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.234 2015/02/09 09:39:09 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.235 2015/02/10 05:28:18 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -257,15 +257,16 @@ main(void *framep)
 	 */
 	kqueue_init();
 
+	/* Create credentials. */
+	p->p_ucred = crget();
+	p->p_ucred->cr_ngroups = 1;	/* group 0 */
+
 	/*
 	 * Create process 0 (the swapper).
 	 */
+	pr = &process0;
+	process_initialize(pr, p);
 
-	process0.ps_mainproc = p;
-	TAILQ_INIT(&process0.ps_threads);
-	TAILQ_INSERT_TAIL(&process0.ps_threads, p, p_thr_link);
-	process0.ps_refcnt = 1;
-	p->p_p = pr = &process0;
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
 	atomic_setbits_int(&pr->ps_flags, PS_SYSTEM);
 
@@ -291,14 +292,6 @@ main(void *framep)
 
 	/* Init timeouts. */
 	timeout_set(&p->p_sleep_to, endtsleep, p);
-	timeout_set(&pr->ps_realit_to, realitexpire, pr);
-
-	/* Create credentials. */
-	pr->ps_ucred = crget();
-	pr->ps_ucred->cr_ngroups = 1;	/* group 0 */
-
-	p->p_ucred = pr->ps_ucred;	/* prime the thread's cache */
-	crhold(p->p_ucred);
 
 	/* Initialize signal state for process 0. */
 	signal_init();
