@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.89 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.90 2015/02/10 11:16:47 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -728,8 +728,8 @@ show_status_msg(struct imsg *imsg)
 		tv.tv_sec = cstatus->constraint_median +
                     (getmonotime() - cstatus->constraint_last);
 		tv.tv_usec = 0;
-		printf("constraint offset %f",
-		    gettime_from_timeval(&tv) - gettime());
+		d_to_tv(gettime_from_timeval(&tv) - gettime(), &tv);
+		printf("constraint offset %llds", (long long)tv.tv_sec);
 		if (cstatus->constraint_errors)
 			printf(" (%d errors)",
 			    cstatus->constraint_errors);
