@@ -1177,6 +1177,12 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/tc/tcreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/tc/tcvar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/dwc2
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/dwc2/dwc2.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/dwc2/dwc2_core.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/dwc2/dwc2_hcd.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/dwc2/dwc2_hw.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/dwc2/dwc2var.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/ehcireg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/ehcivar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/usb/hid.ph
@@ -1806,7 +1812,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rc4.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rc5.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/safestack.ph
@@ -1817,7 +1822,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ssl23.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ssl3.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/stack.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/store.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/tls1.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ts.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/txt_db.ph
