@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.27 2015/02/07 10:08:06 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.28 2015/02/10 04:20:26 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@ struct imsg_add_route {
 	struct in_addr	dest;
 	struct in_addr	netmask;
 	struct in_addr	gateway;
+	struct in_addr	ifa;
 	int		addrs;
 	int		flags;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.357 2015/02/07 10:08:06 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.358 2015/02/10 04:20:26 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -108,7 +108,7 @@ void		 apply_ignore_list(char *);
 
 void add_direct_route(struct in_addr, struct in_addr, struct in_addr);
 void add_default_route(struct in_addr, struct in_addr);
-void add_static_routes(struct option_data *);
+void add_static_routes(struct option_data *, struct in_addr);
 void add_classless_static_routes(struct option_data *, struct in_addr);
 
 int compare_lease(struct client_lease *, struct client_lease *);
@@ -964,7 +964,8 @@ bind_lease(void)
 			add_default_route(client->active->address, gateway);
 		}
 		if (options[DHO_STATIC_ROUTES].len)
-			add_static_routes(&options[DHO_STATIC_ROUTES]);
+			add_static_routes(&options[DHO_STATIC_ROUTES],
+			    client->active->address);
 	}
 
 newlease:
@@ -2443,7 +2444,9 @@ priv_write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
 void
 add_direct_route(struct in_addr dest, struct in_addr mask, struct in_addr iface)
 {
-	add_route(dest, mask, iface,
+	struct in_addr ifa = { INADDR_ANY };
+
+	add_route(dest, mask, iface, ifa,
 	    RTA_DST | RTA_NETMASK | RTA_GATEWAY, RTF_CLONING | RTF_STATIC);
 }
 
@@ -2473,15 +2476,15 @@ add_default_route(struct in_addr addr, struct in_addr gateway)
 	 * claiming there is no gateway address to use.
 	 */
 	if (bcmp(&gateway, &addr, sizeof(addr)) != 0) {
-		addrs |= RTA_GATEWAY;
+		addrs |= RTA_GATEWAY | RTA_IFA;
 		flags |= RTF_GATEWAY | RTF_STATIC;
 	}
 
-	add_route(dest, netmask, gateway, addrs, flags);
+	add_route(dest, netmask, gateway, addr, addrs, flags);
 }
 
 void
-add_static_routes(struct option_data *static_routes)
+add_static_routes(struct option_data *static_routes, struct in_addr iface)
 {
 	struct in_addr		 dest, netmask, gateway;
 	struct in_addr		 *addr;
@@ -2499,8 +2502,8 @@ add_static_routes(struct option_data *static_routes)
 		gateway.s_addr = (addr+1)->s_addr;
 
 		/* XXX Order implies priority but we're ignoring that. */
-		add_route(dest, netmask, gateway,
-		    RTA_DST | RTA_GATEWAY, RTF_GATEWAY | RTF_STATIC);
+		add_route(dest, netmask, gateway, iface,
+		    RTA_DST | RTA_GATEWAY | RTA_IFA, RTF_GATEWAY | RTF_STATIC);
 	}
 }
 
@@ -2537,8 +2540,8 @@ add_classless_static_routes(struct option_data *opt, struct in_addr iface)
 		if (gateway.s_addr == INADDR_ANY)
 			add_direct_route(dest, netmask, iface);
 		else
-			add_route(dest, netmask, gateway,
-			    RTA_DST | RTA_GATEWAY | RTA_NETMASK,
+			add_route(dest, netmask, gateway, iface,
+			    RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFA,
 			    RTF_GATEWAY | RTF_STATIC);
 	}
 }

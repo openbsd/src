@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.74 2015/02/08 01:20:40 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.75 2015/02/10 04:20:26 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -162,8 +162,8 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 }
 
 void
-add_route(struct in_addr dest, struct in_addr netmask, struct in_addr gateway,
-    int addrs, int flags)
+add_route(struct in_addr dest, struct in_addr netmask,
+    struct in_addr gateway, struct in_addr ifa, int addrs, int flags)
 {
 	struct imsg_add_route	 imsg;
 	int			 rslt;
@@ -171,6 +171,7 @@ add_route(struct in_addr dest, struct in_addr netmask, struct in_addr gateway,
 	imsg.dest = dest;
 	imsg.gateway = gateway;
 	imsg.netmask = netmask;
+	imsg.ifa = ifa;
 	imsg.addrs = addrs;
 	imsg.flags = flags;
 
@@ -186,9 +187,9 @@ void
 priv_add_route(struct imsg_add_route *imsg)
 {
 	struct rt_msghdr rtm;
-	struct sockaddr_in dest, gateway, mask;
+	struct sockaddr_in dest, gateway, mask, ifa;
 	struct sockaddr_rtlabel label;
-	struct iovec iov[5];
+	struct iovec iov[6];
 	int s, i, iovcnt = 0;
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
@@ -246,6 +247,19 @@ priv_add_route(struct imsg_add_route *imsg)
 
 		iov[iovcnt].iov_base = &mask;
 		iov[iovcnt++].iov_len = sizeof(mask);
+	}
+
+	if (imsg->addrs & RTA_IFA) {
+		memset(&ifa, 0, sizeof(ifa));
+
+		ifa.sin_len = sizeof(ifa);
+		ifa.sin_family = AF_INET;
+		ifa.sin_addr.s_addr = imsg->ifa.s_addr;
+
+		rtm.rtm_msglen += sizeof(ifa);
+
+		iov[iovcnt].iov_base = &ifa;
+		iov[iovcnt++].iov_len = sizeof(ifa);
 	}
 
 	/* Add our label so we can identify the route as our creation. */
