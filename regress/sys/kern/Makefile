@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2014/04/27 22:18:25 guenther Exp $
+#	$OpenBSD: Makefile,v 1.63 2015/02/10 00:45:31 claudio Exp $
 
 SUBDIR+= __syscall access accept dup2 dup2_self exec_self execve exit extent
 SUBDIR+= fchdir
@@ -15,7 +15,7 @@ SUBDIR+= sosplice
 SUBDIR+= syscall sysvmsg sysvsem
 SUBDIR+= sysvshm unalign unfdpass wait
 SUBDIR+= sig-stop
-SUBDIR+= unixsock
+SUBDIR+= unixsock bind
 
 install:
 
