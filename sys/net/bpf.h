@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.47 2014/10/07 11:16:23 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.48 2015/02/10 00:53:55 pelikan Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -119,6 +119,8 @@ struct bpf_version {
 #define BIOCGDLTLIST	_IOWR('B',123, struct bpf_dltlist)
 #define BIOCGDIRFILT	_IOR('B',124, u_int)
 #define BIOCSDIRFILT	_IOW('B',125, u_int)
+#define BIOCGQUEUE	_IOR('B',126, u_int)
+#define BIOCSQUEUE	_IOW('B',127, u_int)
 
 /*
  * Direction filters for BIOCSDIRFILT/BIOCGDIRFILT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.116 2015/01/29 19:44:32 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.117 2015/02/10 00:53:55 pelikan Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -840,6 +840,14 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    (BPF_DIRECTION_IN|BPF_DIRECTION_OUT);
 		break;
 
+	case BIOCGQUEUE:	/* get queue */
+		*(u_int *)addr = d->bd_queue;
+		break;
+
+	case BIOCSQUEUE:	/* set queue */
+		d->bd_queue = *(u_int *)addr;
+		break;
+
 	case FIONBIO:		/* Non-blocking I/O */
 		if (*(int *)addr)
 			d->bd_rtout = -1;
@@ -1186,6 +1194,8 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 	for (d = bp->bif_dlist; d != NULL; d = d->bd_next) {
 		++d->bd_rcount;
 		if ((direction & d->bd_dirfilt) != 0)
+			slen = 0;
+		else if (d->bd_queue && m->m_pkthdr.pf.qid != d->bd_queue)
 			slen = 0;
 		else
 			slen = bpf_filter(d->bd_rfilter, (u_char *)m,
