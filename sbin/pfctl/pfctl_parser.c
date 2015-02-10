@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.302 2015/02/07 23:35:27 tedu Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.303 2015/02/10 06:45:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -853,6 +853,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	}
 	if (r->tos)
 		printf(" tos 0x%2.2x", r->tos);
+	if (r->prio != 0xff)
+		printf(" prio %u", r->prio);
 
 	if (r->scrub_flags & PFSTATE_SETMASK || r->qname[0]) {
 		char *comma = "";

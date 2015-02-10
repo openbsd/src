@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.644 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.645 2015/02/10 06:45:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -230,6 +230,7 @@ struct filter_opts {
 #define FOM_SCRUB_TCP	0x0200
 #define FOM_SETPRIO	0x0400
 #define FOM_ONCE	0x1000
+#define FOM_PRIO	0x2000
 	struct node_uid		*uid;
 	struct node_gid		*gid;
 	struct node_if		*rcv;
@@ -254,6 +255,7 @@ struct filter_opts {
 	char			*match_tag;
 	u_int8_t		 match_tag_not;
 	u_int			 rtableid;
+	u_int8_t		 prio;
 	u_int8_t		 set_prio[2];
 	struct {
 		struct node_host	*addr;
@@ -881,6 +883,10 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 					YYERROR;
 				}
 			r.match_tag_not = $9.match_tag_not;
+			if ($9.marker & FOM_PRIO)
+				r.prio = $9.prio;
+			else
+				r.prio = 0xff;
 			if ($9.marker & FOM_SETPRIO) {
 				r.set_prio[0] = $9.set_prio[0];
 				r.set_prio[1] = $9.set_prio[1];
@@ -1484,6 +1490,10 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if ($8.marker & FOM_SCRUB_TCP)
 				r.scrub_flags |= PFSTATE_SCRUB_TCP;
+			if ($8.marker & FOM_PRIO)
+				r.prio = $8.prio;
+			else
+				r.prio = 0xff;
 			if ($8.marker & FOM_SETPRIO) {
 				r.set_prio[0] = $8.set_prio[0];
 				r.set_prio[1] = $8.set_prio[1];
@@ -1913,6 +1923,18 @@ filter_opt	: USER uids {
 			}
 			filter_opts.marker |= FOM_ICMP;
 			filter_opts.icmpspec = $1;
+		}
+		| PRIO NUMBER {
+			if (filter_opts.marker & FOM_PRIO) {
+				yyerror("prio cannot be redefined");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > IFQ_MAXPRIO) {
+				yyerror("prio must be 0 - %u", IFQ_MAXPRIO);
+				YYERROR;
+			}
+			filter_opts.marker |= FOM_PRIO;
+			filter_opts.prio = $2;
 		}
 		| TOS tos {
 			if (filter_opts.marker & FOM_TOS) {

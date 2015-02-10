@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.281 2015/01/24 00:29:06 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.282 2015/02/10 06:45:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2459,6 +2459,7 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->divert.port = from->divert.port;
 	to->divert_packet.addr = from->divert_packet.addr;
 	to->divert_packet.port = from->divert_packet.port;
+	to->prio = from->prio;
 	to->set_prio[0] = from->set_prio[0];
 	to->set_prio[1] = from->set_prio[1];
 
