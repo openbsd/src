@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_ctx.c,v 1.13 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bn_ctx.c,v 1.14 2015/02/10 09:50:12 miod Exp $ */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -60,7 +60,6 @@
 #endif
 #endif
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 

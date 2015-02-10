@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.26 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.27 2015/02/10 09:50:12 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -49,7 +49,6 @@
  *
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
