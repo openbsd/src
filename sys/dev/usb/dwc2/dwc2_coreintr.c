@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_coreintr.c,v 1.4 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_coreintr.c,v 1.5 2015/02/10 23:10:21 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 	 * scheduling.
 	 */
 	spin_unlock(&hsotg->lock);
-	taskq_enqueue(hsotg->wq_otg, &hsotg->wf_otg, NULL);
+	task_add(hsotg->wq_otg, &hsotg->wf_otg);
 	spin_lock(&hsotg->lock);
 
 	/* Clear interrupt */

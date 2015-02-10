@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.11 2015/02/10 14:34:14 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.12 2015/02/10 23:10:21 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -553,7 +553,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	if (sc->sc_dying) {
 		xfer->status = status;
-		timeout_stop(&xfer->timeout_handle);
+		timeout_del(&xfer->timeout_handle);
 		usb_transfer_complete(xfer);
 		return;
 	}
@@ -577,7 +577,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	xfer->hcflags |= UXFER_ABORTING;
 
 	xfer->status = status;	/* make software ignore it */
-	timeout_stop(&xfer->timeout_handle);
+	timeout_del(&xfer->timeout_handle);
 
 	/* XXXNH suboptimal */
 	TAILQ_FOREACH_SAFE(d, &sc->sc_complete, xnext, tmp) {
@@ -1656,7 +1656,8 @@ dw_timeout(void *arg)
 {
 	struct delayed_work *dw = arg;
 
-	taskq_enqueue(dw->dw_wq, &dw->work, NULL);
+	task_set(&dw->work, dw->dw_fn, arg);
+	task_add(dw->dw_wq, &dw->work);
 }
 
 void dwc2_host_hub_info(struct dwc2_hsotg *hsotg, void *context, int *hub_addr,
@@ -1778,7 +1779,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	}
 
 	qtd->urb = NULL;
-	timeout_stop(&xfer->timeout_handle);
+	timeout_del(&xfer->timeout_handle);
 
 	KASSERT(mtx_owned(&hsotg->lock));
 

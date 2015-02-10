@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.6 2015/02/10 14:15:14 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.7 2015/02/10 23:10:21 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -131,5 +131,11 @@ dwc2_root_intr(dwc2_softc_t *sc)
 
 	softintr_schedule(sc->sc_rhc_si);
 }
+
+#define	timeout_reset(x, t, f, a) \
+do { \
+	timeout_set((x), (f), (a)); \
+	timeout_add((x), (t)); \
+} while (0)
 
 #endif	/* _DWC_OTGVAR_H_ */
