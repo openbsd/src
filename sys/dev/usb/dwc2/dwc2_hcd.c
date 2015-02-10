@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.5 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.6 2015/02/10 14:18:34 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 		}
 	}
 
-	qtd = pool_get(sc->sc_qtdpool, PR_NOWAIT);
+	qtd = pool_get(&sc->sc_qtdpool, PR_NOWAIT);
 	if (!qtd)
 		return -ENOMEM;
 
@@ -411,7 +411,7 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 		dev_err(hsotg->dev,
 			"DWC OTG HCD URB Enqueue failed adding QTD. Error status %d\n",
 			retval);
-		pool_put(sc->sc_qtdpool, qtd);
+		pool_put(&sc->sc_qtdpool, qtd);
 		return retval;
 	}
 

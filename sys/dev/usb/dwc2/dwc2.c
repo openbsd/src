@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.9 2015/02/10 14:15:14 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.10 2015/02/10 14:18:34 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ dwc2_allocx(struct usbd_bus *bus)
 	DPRINTFN(10, "\n");
 
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolget);
-	dxfer = pool_get(sc->sc_xferpool, PR_NOWAIT);
+	dxfer = pool_get(&sc->sc_xferpool, PR_NOWAIT);
 	if (dxfer != NULL) {
 		memset(dxfer, 0, sizeof(*dxfer));
 
@@ -300,7 +300,7 @@ dwc2_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 #endif
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolput);
 	dwc2_hcd_urb_free(sc->sc_hsotg, dxfer->urb, DWC2_MAXISOCPACKETS);
-	pool_put(sc->sc_xferpool, xfer);
+	pool_put(&sc->sc_xferpool, xfer);
 }
 
 static void
@@ -1593,12 +1593,15 @@ dwc2_init(struct dwc2_softc *sc)
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 		USB_MEM_RESERVE);
 
-	sc->sc_xferpool = pool_init(sizeof(struct dwc2_xfer), 0, 0, 0,
-	    "dwc2xfer", NULL, IPL_USB, NULL, NULL, NULL);
-	sc->sc_qhpool = pool_init(sizeof(struct dwc2_qh), 0, 0, 0,
-	    "dwc2qh", NULL, IPL_USB, NULL, NULL, NULL);
-	sc->sc_qtdpool = pool_init(sizeof(struct dwc2_qtd), 0, 0, 0,
-	    "dwc2qtd", NULL, IPL_USB, NULL, NULL, NULL);
+	pool_init(&sc->sc_xferpool, sizeof(struct dwc2_xfer), 0, 0, 0,
+	    "dwc2xfer", NULL);
+	pool_setipl(&sc->sc_xferpool, IPL_USB);
+	pool_init(&sc->sc_qhpool, sizeof(struct dwc2_qh), 0, 0, 0,
+	    "dwc2qh", NULL);
+	pool_setipl(&sc->sc_qhpool, IPL_USB);
+	pool_init(&sc->sc_qtdpool, sizeof(struct dwc2_qtd), 0, 0, 0,
+	    "dwc2qtd", NULL);
+	pool_setipl(&sc->sc_qtdpool, IPL_USB);
 
 	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), KM_SLEEP);
 	if (sc->sc_hsotg == NULL) {
