@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.903 2015/02/10 06:45:55 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.904 2015/02/10 09:28:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1142,6 +1142,8 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 	sp->max_mss = htons(st->max_mss);
 	sp->min_ttl = st->min_ttl;
 	sp->set_tos = st->set_tos;
+	sp->set_prio[0] = st->set_prio[0];
+	sp->set_prio[1] = st->set_prio[1];
 }
 
 /* END state table stuff */

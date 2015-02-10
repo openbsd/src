@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.410 2015/02/10 06:45:55 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.411 2015/02/10 09:28:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -915,7 +915,7 @@ struct pfsync_state {
 	u_int8_t	 min_ttl;
 	u_int8_t	 set_tos;
 	u_int16_t	 state_flags;
-	u_int8_t	 pad[2];
+	u_int8_t	 set_prio[2];
 } __packed;
 
 #define PFSYNC_FLAG_SRCNODE	0x04

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.216 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.217 2015/02/10 09:28:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -594,6 +594,8 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	st->max_mss = ntohs(sp->max_mss);
 	st->min_ttl = sp->min_ttl;
 	st->set_tos = sp->set_tos;
+	st->set_prio[0] = sp->set_prio[0];
+	st->set_prio[1] = sp->set_prio[1];
 
 	st->id = sp->id;
 	st->creatorid = sp->creatorid;
