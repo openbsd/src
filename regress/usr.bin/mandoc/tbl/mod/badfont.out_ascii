@@ -1,0 +1,18 @@
+TBL-MOD-BADFONT(1)          General Commands Manual         TBL-MOD-BADFONT(1)
+
+
+
+NNAAMMEE
+       tbl-mod-badfont - invalid font modifiers in table layouts
+
+DDEESSCCRRIIPPTTIIOONN
+       normal text
+
+       +----------------+
+       |bboolldd     none   |
+       |_i_t_a_l_i_c   none   |
+       |bboolldd     _i_t_a_l_i_c |
+       +----------------+
+
+
+OpenBSD                        February 10, 2015            TBL-MOD-BADFONT(1)

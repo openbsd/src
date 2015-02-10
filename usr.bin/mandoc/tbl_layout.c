@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.24 2015/01/30 04:08:37 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.25 2015/02/10 11:02:19 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -95,12 +95,8 @@ mod:
 
 	switch (tolower((unsigned char)p[(*pos)++])) {
 	case 'b':
-		/* FALLTHROUGH */
-	case 'i':
-		/* FALLTHROUGH */
-	case 'r':
-		(*pos)--;
-		break;
+		cp->flags |= TBL_CELL_BOLD;
+		goto mod;
 	case 'd':
 		cp->flags |= TBL_CELL_BALIGN;
 		goto mod;
@@ -109,6 +105,9 @@ mod:
 		goto mod;
 	case 'f':
 		break;
+	case 'i':
+		cp->flags |= TBL_CELL_ITALIC;
+		goto mod;
 	case 'm':
 		mandoc_msg(MANDOCERR_TBLLAYOUT_MOD, tbl->parse,
 		    ln, *pos, "m");
@@ -148,20 +147,37 @@ mod:
 		goto mod;
 	}
 
-	switch (tolower((unsigned char)p[(*pos)++])) {
+	/* Ignore parenthised font names for now. */
+
+	if (p[*pos] == '(')
+		goto mod;
+
+	/* Support only one-character font-names for now. */
+
+	if (p[*pos] == '\0' || (p[*pos + 1] != ' ' && p[*pos + 1] != '.')) {
+		mandoc_vmsg(MANDOCERR_FT_BAD, tbl->parse,
+		    ln, *pos, "TS %s", p + *pos - 1);
+		if (p[*pos] != '\0')
+			(*pos)++;
+		if (p[*pos] != '\0')
+			(*pos)++;
+		goto mod;
+	}
+
+	switch (p[(*pos)++]) {
 	case '3':
 		/* FALLTHROUGH */
-	case 'b':
+	case 'B':
 		cp->flags |= TBL_CELL_BOLD;
 		goto mod;
 	case '2':
 		/* FALLTHROUGH */
-	case 'i':
+	case 'I':
 		cp->flags |= TBL_CELL_ITALIC;
 		goto mod;
 	case '1':
 		/* FALLTHROUGH */
-	case 'r':
+	case 'R':
 		goto mod;
 	default:
 		mandoc_vmsg(MANDOCERR_FT_BAD, tbl->parse,

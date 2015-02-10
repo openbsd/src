@@ -1,0 +1,14 @@
+.TH TBL-MOD-BADFONT 1 "February 10, 2015" OpenBSD
+.SH NAME
+tbl-mod-badfont \- invalid font modifiers in table layouts
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+lfB lf
+lfI lf.
+lfB lfI.
+bold:none
+italic:none
+bold:italic
+.TE
