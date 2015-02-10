@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.8 2015/02/09 23:14:32 tedu Exp $ */
+/*	$OpenBSD: zdump.c,v 1.9 2015/02/10 22:44:29 deraadt Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -258,7 +258,7 @@ char *	argv[];
 
 		for (i = 0; environ[i] != NULL; ++i)
 			continue;
-		fakeenv = malloc((size_t) ((i + 2) * sizeof *fakeenv));
+		fakeenv = reallocarray(NULL, i + 2, sizeof *fakeenv);
 		if (fakeenv == NULL ||
 			(fakeenv[0] = malloc(longest + 4)) == NULL) {
 				perror(progname);
