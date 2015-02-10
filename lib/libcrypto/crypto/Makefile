@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.54 2015/02/10 11:16:33 jsing Exp $
+# $OpenBSD: Makefile,v 1.55 2015/02/10 11:37:58 jsing Exp $
 
 LIB=	crypto
 
@@ -144,7 +144,7 @@ SRCS+= err.c err_all.c err_prn.c
 SRCS+= encode.c digest.c evp_enc.c evp_key.c
 SRCS+= e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c
 SRCS+= e_rc4.c e_aes.c names.c
-SRCS+= e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c
+SRCS+= e_xcbc_d.c e_rc2.c e_cast.c
 SRCS+= m_null.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c
 SRCS+= m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c
 SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
@@ -214,9 +214,6 @@ SRCS+= randfile.c rand_lib.c rand_err.c
 
 # rc2/
 SRCS+= rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c rc2ofb64.c
-
-# rc5/
-#SRCS+= rc5_skey.c rc5_ecb.c rc5cfb64.c rc5ofb64.c
 
 # ripemd/
 SRCS+= rmd_dgst.c rmd_one.c
@@ -308,7 +305,6 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/rand \
 	${LCRYPTO_SRC}/rc2 \
 	${LCRYPTO_SRC}/rc4 \
-	${LCRYPTO_SRC}/rc5 \
 	${LCRYPTO_SRC}/ripemd \
 	${LCRYPTO_SRC}/rsa \
 	${LCRYPTO_SRC}/sha \
@@ -372,7 +368,6 @@ HDRS=\
 	crypto/rand/rand.h \
 	crypto/rc2/rc2.h \
 	crypto/rc4/rc4.h \
-	crypto/rc5/rc5.h \
 	crypto/ripemd/ripemd.h \
 	crypto/rsa/rsa.h \
 	crypto/sha/sha.h \
@@ -434,7 +429,6 @@ SRCS+= bn_asm.c
 SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 SRCS+= des_enc.c fcrypt_b.c
 SRCS+= rc4_enc.c rc4_skey.c
-#SRCS+= rc5_enc.c
 SRCS+= wp_block.c
 .endif
 
