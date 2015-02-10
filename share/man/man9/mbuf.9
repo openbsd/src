@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.82 2015/02/10 03:50:30 lteo Exp $
+.\"     $OpenBSD: mbuf.9,v 1.83 2015/02/10 04:08:00 lteo Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -311,10 +311,19 @@ mbuf has associated external storage.
 the mbuf is the first that forms a packet.
 .It Dv M_EOR
 end of record.
-.It Dv M_CLUSTER
-the external storage is a cluster.
+.It Dv M_EXTWR
+external storage is writable.
 .It Dv M_PROTO1
 protocol-specific.
+.It Dv M_VLANTAG
+.Fa m_pkthdr.ether_vtag
+variable is valid.
+.It Dv M_LOOP
+for mbuf statistics.
+.It Dv M_FILDROP
+dropped by
+.Xr bpf 4
+filter.
 .It Dv M_BCAST
 packet send/received as link-level broadcast.
 .It Dv M_MCAST
@@ -323,22 +332,15 @@ packet send/received as link-level multicast.
 packet was encrypted (ESP-transport).
 .It Dv M_AUTH
 packet was authenticated (AH or ESP).
+.It Dv M_TUNNEL
+header was IP-in-IP encapsulated by tunnel mode IPsec.
 .It Dv M_ZEROIZE
 Zero the data part of the mbufs in the mbuf chain pointed to by
 .Nm m_free .
-.It Dv M_TUNNEL
-header was IP-in-IP encapsulated by tunnel mode IPsec.
+.It Dv M_COMP
+header was decompressed.
 .It Dv M_LINK0
 link layer specific flag.
-.It Dv M_LOOP
-for mbuf statistics.
-.It Dv M_FILDROP
-dropped by
-.Xr bpf 4
-filter.
-.It Dv M_VLANTAG
-.Fa m_pkthdr.ether_vtag
-variable is valid.
 .El
 .Pp
 An external cluster is used when the data to hold in the mbuf is
