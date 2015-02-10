@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.11 2015/02/10 20:52:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.12 2015/02/10 22:09:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -2796,7 +2796,6 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
 int
 iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 {
-	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int error;
 
 	/* do not operate with rfkill switch turned on */
@@ -2818,10 +2817,6 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		}
 		memcpy(&sc->sc_ic.ic_myaddr,
 		    &sc->sc_nvm.hw_addr, ETHER_ADDR_LEN);
-		memcpy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			&sc->sc_nvm.hw_addr, ETHER_ADDR_LEN);
-		memcpy(LLADDR(ifp->if_sadl), &sc->sc_nvm.hw_addr,
-		    ifp->if_addrlen);
 
 		sc->sc_scan_cmd_len = sizeof(struct iwm_scan_cmd)
 		    + sc->sc_capa_max_probe_len
@@ -6320,6 +6315,8 @@ iwm_match(struct device *parent, iwm_match_t match __unused, void *aux)
 int
 iwm_preinit(struct iwm_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	int error;
 	static int attached;
 
@@ -6349,6 +6346,17 @@ iwm_preinit(struct iwm_softc *sc)
 	    IWM_UCODE_MINOR(sc->sc_fwver),
 	    IWM_UCODE_API(sc->sc_fwver),
 	    ether_sprintf(sc->sc_nvm.hw_addr));
+
+	/* Reattach net80211 so MAC address and channel map are picked up. */
+	ieee80211_ifdetach(ifp);
+	ieee80211_ifattach(ifp);
+	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
+
+	ic->ic_node_alloc = iwm_node_alloc;
+
+	/* Override 802.11 state transition machine. */
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = iwm_newstate;
 
 	return 0;
 }
@@ -6542,12 +6550,6 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
-
-	ic->ic_node_alloc = iwm_node_alloc;
-
-	/* Override 802.11 state transition machine. */
-	sc->sc_newstate = ic->ic_newstate;
-	ic->ic_newstate = iwm_newstate;
 	ieee80211_media_init(ifp, iwm_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
