@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2015/02/10 21:56:09 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.3 2015/02/10 22:44:35 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@ mmrw(dev, uio, flags)
 	int flags;
 {
 	vaddr_t v;
-	int c;
+	size_t c;
 	struct iovec *iov;
 	int error = 0;
 
@@ -111,13 +111,13 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			error = uiomovei((caddr_t)v, uio->uio_resid, uio);
+			error = uiomove((caddr_t)v, uio->uio_resid, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
+			c = ulmin(iov->iov_len, MAXPHYS);
 			if (v >= (vaddr_t)&kernelstart &&
 			    v < (vaddr_t)first_addr) {
 				if (v < (vaddr_t)etext &&
@@ -126,7 +126,7 @@ mmrw(dev, uio, flags)
 			} else if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomovei((caddr_t)v, c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -144,8 +144,8 @@ mmrw(dev, uio, flags)
 			if (zpage == NULL)
 				zpage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
-			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomovei(zpage, c, uio);
+			c = ulmin(iov->iov_len, PAGE_SIZE);
+			error = uiomove(zpage, c, uio);
 			continue;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.9 2015/02/10 22:44:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -166,10 +166,10 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct iovec	*iov;
+	struct iovec *iov;
 	vaddr_t	v, o;
 	int error = 0;
-	u_int	c;
+	size_t c;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -192,21 +192,21 @@ mmrw(dev, uio, flags)
 				continue;
 			}
 			c = ptoa(physmem) - v;
-			c = min(c, uio->uio_resid);
-			error = uiomovei((caddr_t)v, c, uio);
+			c = ulmin(c, uio->uio_resid);
+			error = uiomove((caddr_t)v, c, uio);
 			break;
 
 		case 1:				/*  /dev/kmem  */
 			v = uio->uio_offset;
 			o = v & PAGE_MASK;
-			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
+			c = ulmin(uio->uio_resid, (int)(PAGE_SIZE - o));
 			if (atop(v) > physmem && !uvm_kernacc((caddr_t)v,
 			    c, (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE)) {
 				error = EFAULT;
 				/* this will break us out of the loop */
 				continue;
 			}
-			error = uiomovei((caddr_t)v, c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			break;
 
 		case 2:				/*  /dev/null  */
@@ -227,8 +227,8 @@ mmrw(dev, uio, flags)
 			if (zeropage == NULL)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
-			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomovei(zeropage, c, uio);
+			c = ulmin(iov->iov_len, PAGE_SIZE);
+			error = uiomove(zeropage, c, uio);
 			break;
 
 		default:

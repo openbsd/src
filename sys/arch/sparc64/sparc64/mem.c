@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.13 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.14 2015/02/10 22:44:35 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -88,7 +88,7 @@ mmrw(dev, uio, flags)
 	int flags;
 {
 	vaddr_t o, v;
-	int c;
+	size_t c;
 	struct iovec *iov;
 	int error = 0;
 	static int physlock;
@@ -135,8 +135,8 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomovei((caddr_t)vmmap + o, c, uio);
+			c = ulmin(uio->uio_resid, NBPG - o);
+			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + NBPG);
 			pmap_update(pmap_kernel());
@@ -145,11 +145,11 @@ mmrw(dev, uio, flags)
 		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
+			c = ulmin(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomovei((caddr_t)v, c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			break;
 
 		/* minor device 2 is EOF/RATHOLE */
@@ -172,8 +172,8 @@ mmrw(dev, uio, flags)
 			if (zeropage == NULL)
 				zeropage = malloc(NBPG, M_TEMP,
 				    M_WAITOK | M_ZERO);
-			c = min(iov->iov_len, NBPG);
-			error = uiomovei(zeropage, c, uio);
+			c = ulmin(iov->iov_len, NBPG);
+			error = uiomove(zeropage, c, uio);
 			break;
 
 		default:

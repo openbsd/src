@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.19 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.20 2015/02/10 22:44:35 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (v + c < v || v + c > ptoa((psize_t)physmem))
 				return (EFAULT);
 			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_NONCOHERENT);
-			error = uiomovei((caddr_t)v, c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -147,7 +147,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE);
 
 			if (allowed) {
-				error = uiomovei((caddr_t)v, c, uio);
+				error = uiomove((caddr_t)v, c, uio);
 				continue;
 			} else {
 				return (EFAULT);
@@ -169,7 +169,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			c = ulmin(iov->iov_len, PAGE_SIZE);
-			error = uiomovei(zeropage, c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:

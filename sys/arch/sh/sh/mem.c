@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2015/02/10 22:44:35 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.21 2006/07/23 22:06:07 ad Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	struct iovec *iov;
 	vaddr_t v, o;
-	int c;
+	size_t c;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && !error) {
@@ -152,8 +152,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			/* Physical address */
 			if (__mm_mem_addr(v)) {
 				o = v & PGOFSET;
-				c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-				error = uiomovei((caddr_t)SH3_PHYS_TO_P1SEG(v),
+				c = ulmin(uio->uio_resid, PAGE_SIZE - o);
+				error = uiomove((caddr_t)SH3_PHYS_TO_P1SEG(v),
 				    c, uio);
 			} else {
 				return (EFAULT);
@@ -170,16 +170,16 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				    == FALSE)
 					return (EFAULT);
 			*/
-				c = min(iov->iov_len, MAXPHYS);
-				error = uiomovei((caddr_t)v, c, uio);
+				c = ulmin(iov->iov_len, MAXPHYS);
+				error = uiomove((caddr_t)v, c, uio);
 			} else if (v < SH3_P3SEG_BASE)		/* P2 */
 				return (EFAULT);
 			else {					/* P3 */
-				c = min(iov->iov_len, MAXPHYS);
+				c = ulmin(iov->iov_len, MAXPHYS);
 				if (!uvm_kernacc((void *)v, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
-				error = uiomovei((caddr_t)v, c, uio);
+				error = uiomove((caddr_t)v, c, uio);
 			}
 			break;
 
@@ -196,8 +196,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (zeropage == NULL)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
-			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomovei(zeropage, c, uio);
+			c = ulmin(iov->iov_len, PAGE_SIZE);
+			error = uiomove(zeropage, c, uio);
 			break;
 
 		default:
