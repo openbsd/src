@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.200 2015/02/09 11:37:31 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.201 2015/02/10 05:18:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,8 +199,8 @@ kr_init(void)
 	unsigned int	tid = RTABLE_ANY;
 	socklen_t	optlen;
 
-	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC,
-	    0)) == -1) {
+	if ((kr_state.fd = socket(AF_ROUTE,
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
@@ -3024,6 +3024,8 @@ dispatch_rtmsg(void)
 	struct ktable		*kt;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (0);
 		log_warn("dispatch_rtmsg: read error");
 		return (-1);
 	}
@@ -3036,6 +3038,9 @@ dispatch_rtmsg(void)
 	lim = buf + n;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (lim < next + sizeof(*rtm) ||
+		    lim < next + rtm->rtm_msglen)
+			fatalx("dispatch_rtmsg: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
 

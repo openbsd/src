@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.43 2015/02/09 11:37:31 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.44 2015/02/10 05:18:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -407,6 +407,8 @@ pfkey_read(int sd, struct sadb_msg *h)
 	struct sadb_msg hdr;
 
 	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (0);
 		log_warn("pfkey peek");
 		return (-1);
 	}
@@ -421,6 +423,8 @@ pfkey_read(int sd, struct sadb_msg *h)
 
 	/* not ours, discard */
 	if (read(sd, &hdr, sizeof(hdr)) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (0);
 		log_warn("pfkey read");
 		return (-1);
 	}
@@ -734,7 +738,8 @@ pfkey_remove(struct peer *p)
 int
 pfkey_init(struct bgpd_sysdep *sysdep)
 {
-	if ((fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC, PF_KEY_V2)) == -1) {
+	if ((fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_KEY_V2)) == -1) {
 		if (errno == EPROTONOSUPPORT) {
 			log_warnx("PF_KEY not available, disabling ipsec");
 			sysdep->no_pfkey = 1;
