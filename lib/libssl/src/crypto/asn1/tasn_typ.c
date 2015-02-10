@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.9 2015/02/10 05:12:23 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.10 2015/02/10 09:39:13 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -62,7 +62,16 @@
 /* Declarations for string types */
 
 
-IMPLEMENT_ASN1_TYPE(ASN1_INTEGER)
+
+const ASN1_ITEM ASN1_INTEGER_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_INTEGER,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_INTEGER",
+};
 
 ASN1_INTEGER *
 d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len)
@@ -89,7 +98,16 @@ ASN1_INTEGER_free(ASN1_INTEGER *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_INTEGER_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_ENUMERATED)
+
+const ASN1_ITEM ASN1_ENUMERATED_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_ENUMERATED,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_ENUMERATED",
+};
 
 ASN1_ENUMERATED *
 d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, const unsigned char **in, long len)
@@ -116,7 +134,16 @@ ASN1_ENUMERATED_free(ASN1_ENUMERATED *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ENUMERATED_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_BIT_STRING)
+
+const ASN1_ITEM ASN1_BIT_STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_BIT_STRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_BIT_STRING",
+};
 
 ASN1_BIT_STRING *
 d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len)
@@ -143,7 +170,16 @@ ASN1_BIT_STRING_free(ASN1_BIT_STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BIT_STRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_OCTET_STRING)
+
+const ASN1_ITEM ASN1_OCTET_STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_OCTET_STRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_OCTET_STRING",
+};
 
 ASN1_OCTET_STRING *
 d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a, const unsigned char **in, long len)
@@ -170,7 +206,16 @@ ASN1_OCTET_STRING_free(ASN1_OCTET_STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_OCTET_STRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_NULL)
+
+const ASN1_ITEM ASN1_NULL_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_NULL,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_NULL",
+};
 
 ASN1_NULL *
 d2i_ASN1_NULL(ASN1_NULL **a, const unsigned char **in, long len)
@@ -197,9 +242,27 @@ ASN1_NULL_free(ASN1_NULL *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_NULL_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_OBJECT)
 
-IMPLEMENT_ASN1_TYPE(ASN1_UTF8STRING)
+const ASN1_ITEM ASN1_OBJECT_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_OBJECT,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_OBJECT",
+};
+
+
+const ASN1_ITEM ASN1_UTF8STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_UTF8STRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_UTF8STRING",
+};
 
 ASN1_UTF8STRING *
 d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a, const unsigned char **in, long len)
@@ -226,7 +289,16 @@ ASN1_UTF8STRING_free(ASN1_UTF8STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UTF8STRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_PRINTABLESTRING)
+
+const ASN1_ITEM ASN1_PRINTABLESTRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_PRINTABLESTRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_PRINTABLESTRING",
+};
 
 ASN1_PRINTABLESTRING *
 d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a, const unsigned char **in, long len)
@@ -253,7 +325,16 @@ ASN1_PRINTABLESTRING_free(ASN1_PRINTABLESTRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_PRINTABLESTRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_T61STRING)
+
+const ASN1_ITEM ASN1_T61STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_T61STRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_T61STRING",
+};
 
 ASN1_T61STRING *
 d2i_ASN1_T61STRING(ASN1_T61STRING **a, const unsigned char **in, long len)
@@ -280,7 +361,16 @@ ASN1_T61STRING_free(ASN1_T61STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_T61STRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_IA5STRING)
+
+const ASN1_ITEM ASN1_IA5STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_IA5STRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_IA5STRING",
+};
 
 ASN1_IA5STRING *
 d2i_ASN1_IA5STRING(ASN1_IA5STRING **a, const unsigned char **in, long len)
@@ -307,7 +397,16 @@ ASN1_IA5STRING_free(ASN1_IA5STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_IA5STRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_GENERALSTRING)
+
+const ASN1_ITEM ASN1_GENERALSTRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_GENERALSTRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_GENERALSTRING",
+};
 
 ASN1_GENERALSTRING *
 d2i_ASN1_GENERALSTRING(ASN1_GENERALSTRING **a, const unsigned char **in, long len)
@@ -334,7 +433,16 @@ ASN1_GENERALSTRING_free(ASN1_GENERALSTRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_GENERALSTRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_UTCTIME)
+
+const ASN1_ITEM ASN1_UTCTIME_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_UTCTIME,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_UTCTIME",
+};
 
 ASN1_UTCTIME *
 d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, const unsigned char **in, long len)
@@ -361,7 +469,16 @@ ASN1_UTCTIME_free(ASN1_UTCTIME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UTCTIME_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_GENERALIZEDTIME)
+
+const ASN1_ITEM ASN1_GENERALIZEDTIME_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_GENERALIZEDTIME,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_GENERALIZEDTIME",
+};
 
 ASN1_GENERALIZEDTIME *
 d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a, const unsigned char **in, long len)
@@ -388,7 +505,16 @@ ASN1_GENERALIZEDTIME_free(ASN1_GENERALIZEDTIME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_GENERALIZEDTIME_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_VISIBLESTRING)
+
+const ASN1_ITEM ASN1_VISIBLESTRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_VISIBLESTRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_VISIBLESTRING",
+};
 
 ASN1_VISIBLESTRING *
 d2i_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING **a, const unsigned char **in, long len)
@@ -415,7 +541,16 @@ ASN1_VISIBLESTRING_free(ASN1_VISIBLESTRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_VISIBLESTRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_UNIVERSALSTRING)
+
+const ASN1_ITEM ASN1_UNIVERSALSTRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_UNIVERSALSTRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_UNIVERSALSTRING",
+};
 
 ASN1_UNIVERSALSTRING *
 d2i_ASN1_UNIVERSALSTRING(ASN1_UNIVERSALSTRING **a, const unsigned char **in, long len)
@@ -442,7 +577,16 @@ ASN1_UNIVERSALSTRING_free(ASN1_UNIVERSALSTRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UNIVERSALSTRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_BMPSTRING)
+
+const ASN1_ITEM ASN1_BMPSTRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_BMPSTRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_BMPSTRING",
+};
 
 ASN1_BMPSTRING *
 d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, const unsigned char **in, long len)
@@ -469,10 +613,28 @@ ASN1_BMPSTRING_free(ASN1_BMPSTRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BMPSTRING_it);
 }
 
-IMPLEMENT_ASN1_TYPE(ASN1_ANY)
+
+const ASN1_ITEM ASN1_ANY_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_ANY,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_ANY",
+};
 
 /* Just swallow an ASN1_SEQUENCE in an ASN1_STRING */
-IMPLEMENT_ASN1_TYPE(ASN1_SEQUENCE)
+
+const ASN1_ITEM ASN1_SEQUENCE_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_SEQUENCE",
+};
 
 
 ASN1_TYPE *
@@ -584,13 +746,49 @@ DIRECTORYSTRING_free(ASN1_STRING *a)
 }
 
 /* Three separate BOOLEAN type: normal, DEFAULT TRUE and DEFAULT FALSE */
-IMPLEMENT_ASN1_TYPE_ex(ASN1_BOOLEAN, ASN1_BOOLEAN, -1)
-IMPLEMENT_ASN1_TYPE_ex(ASN1_TBOOLEAN, ASN1_BOOLEAN, 1)
-IMPLEMENT_ASN1_TYPE_ex(ASN1_FBOOLEAN, ASN1_BOOLEAN, 0)
+
+const ASN1_ITEM ASN1_BOOLEAN_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_BOOLEAN,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = -1,
+	.sname = "ASN1_BOOLEAN",
+};
+
+const ASN1_ITEM ASN1_TBOOLEAN_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_BOOLEAN,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 1,
+	.sname = "ASN1_TBOOLEAN",
+};
+
+const ASN1_ITEM ASN1_FBOOLEAN_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_BOOLEAN,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_FBOOLEAN",
+};
 
 /* Special, OCTET STRING with indefinite length constructed support */
 
-IMPLEMENT_ASN1_TYPE_ex(ASN1_OCTET_STRING_NDEF, ASN1_OCTET_STRING, ASN1_TFLG_NDEF)
+
+const ASN1_ITEM ASN1_OCTET_STRING_NDEF_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_OCTET_STRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = ASN1_TFLG_NDEF,
+	.sname = "ASN1_OCTET_STRING_NDEF",
+};
 
 ASN1_ITEM_TEMPLATE(ASN1_SEQUENCE_ANY) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, ASN1_SEQUENCE_ANY, ASN1_ANY)
