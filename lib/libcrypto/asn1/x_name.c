@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.21 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.22 2015/02/10 04:21:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,12 @@ X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_NAME_ENTRY_it);
 }
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME_ENTRY)
+
+X509_NAME_ENTRY *
+X509_NAME_ENTRY_dup(X509_NAME_ENTRY *x)
+{
+	return ASN1_item_dup(ASN1_ITEM_rptr(X509_NAME_ENTRY), x);
+}
 
 /* For the "Name" type we need a SEQUENCE OF { SET OF X509_NAME_ENTRY }
  * so declare two template wrappers for this
@@ -174,7 +179,12 @@ X509_NAME_free(X509_NAME *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_NAME_it);
 }
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
+
+X509_NAME *
+X509_NAME_dup(X509_NAME *x)
+{
+	return ASN1_item_dup(ASN1_ITEM_rptr(X509_NAME), x);
+}
 
 static int
 x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)

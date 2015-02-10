@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.10 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.11 2015/02/10 04:21:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,7 +118,12 @@ X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_ATTRIBUTE_it);
 }
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ATTRIBUTE)
+
+X509_ATTRIBUTE *
+X509_ATTRIBUTE_dup(X509_ATTRIBUTE *x)
+{
+	return ASN1_item_dup(ASN1_ITEM_rptr(X509_ATTRIBUTE), x);
+}
 
 X509_ATTRIBUTE *
 X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
