@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.5 2012/04/10 07:56:54 deraadt Exp $ */
+/*	$OpenBSD: control.h,v 1.6 2015/02/10 05:24:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,11 +29,6 @@ struct {
 	int		fd;
 } control_state;
 
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
-
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
 	struct imsgev		iev;
@@ -45,7 +40,5 @@ void	control_accept(int, short, void *);
 void	control_dispatch_imsg(int, short, void *);
 int	control_imsg_relay(struct imsg *);
 void	control_cleanup(char *);
-
-void	session_socket_blockmode(int, enum blockmodes);
 
 #endif	/* _CONTROL_H_ */

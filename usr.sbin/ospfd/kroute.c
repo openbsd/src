@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.95 2015/01/16 06:40:19 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.96 2015/02/10 05:24:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -106,7 +106,7 @@ int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
 int		fetchifs(u_short);
-int		rtmsg_process(char *, int);
+int		rtmsg_process(char *, size_t);
 void		kr_fib_reload_timer(int, short, void *);
 void		kr_fib_reload_arm_timer(int);
 
@@ -141,7 +141,8 @@ kr_init(int fs, u_int rdomain)
 	kr_state.fib_sync = fs;
 	kr_state.rdomain = rdomain;
 
-	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1) {
+	if ((kr_state.fd = socket(AF_ROUTE,
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, AF_INET)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
@@ -1319,7 +1320,7 @@ dispatch_rtmsg(void)
 }
 
 int
-rtmsg_process(char *buf, int len)
+rtmsg_process(char *buf, size_t len)
 {
 	struct rt_msghdr	*rtm;
 	struct if_msghdr	 ifm;
@@ -1334,12 +1335,15 @@ rtmsg_process(char *buf, int len)
 	u_short			 ifindex = 0;
 	int			 rv, delay;
 
-	int			 offset;
+	size_t			 offset;
 	char			*next;
 
 	for (offset = 0; offset < len; offset += rtm->rtm_msglen) {
 		next = buf + offset;
 		rtm = (struct rt_msghdr *)next;
+		if (len < offset + sizeof(*rtm) ||
+		    len < offset + rtm->rtm_msglen)
+			fatalx("rtmsg_process: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
 

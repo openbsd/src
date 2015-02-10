@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.82 2015/01/16 06:40:19 deraadt Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.83 2015/02/10 05:24:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -228,19 +228,15 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_parent2ospfe) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_parent2ospfe) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_parent2rde) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_parent2rde) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_ospfe2rde) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_ospfe2rde) == -1)
 		fatal("socketpair");
-	session_socket_blockmode(pipe_parent2ospfe[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2ospfe[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2rde[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2rde[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_ospfe2rde[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_ospfe2rde[1], BM_NONBLOCK);
 
 	/* start children */
 	rde_pid = rde(ospfd_conf, pipe_parent2rde, pipe_ospfe2rde,
