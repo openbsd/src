@@ -1,0 +1,14 @@
+.Dd February 10, 2015
+.Dt ST-CALL 1
+.Os OpenBSD
+.Sh NAME
+.Nm St-call
+.Nd the standard macro calling other macros
+.Sh STANDARDS
+calling another macro:
+.St Fl called
+.Pp
+valid argument:
+.St -p1003.1-2004
+.Pp
+end of file

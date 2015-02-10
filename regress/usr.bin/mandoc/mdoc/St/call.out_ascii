@@ -1,0 +1,13 @@
+ST-CALL(1)                  General Commands Manual                 ST-CALL(1)
+
+NNAAMMEE
+     SStt--ccaallll - the standard macro calling other macros
+
+SSTTAANNDDAARRDDSS
+     calling another macro: --ccaalllleedd
+
+     valid argument: IEEE Std 1003.1-2004 (``POSIX.1'')
+
+     end of file
+
+OpenBSD                        February 10, 2015                       OpenBSD

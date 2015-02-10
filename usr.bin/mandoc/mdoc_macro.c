@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.136 2015/02/07 16:39:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.137 2015/02/10 17:47:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1283,11 +1283,12 @@ blk_part_exp(MACRO_PROT_ARGS)
 static void
 in_line_argn(MACRO_PROT_ARGS)
 {
-	int		 la, flushed, j, maxargs, nl;
-	enum margserr	 ac;
 	struct mdoc_arg	*arg;
 	char		*p;
+	enum margserr	 ac;
 	enum mdoct	 ntok;
+	int		 state; /* arg#; -1: not yet open; -2: closed */
+	int		 la, maxargs, nl;
 
 	nl = mdoc->flags & MDOC_NEWLINE;
 
@@ -1321,67 +1322,76 @@ in_line_argn(MACRO_PROT_ARGS)
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 
+	state = -1;
 	p = NULL;
-	flushed = j = 0;
 	for (;;) {
 		la = *pos;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
+
+		if (ac == ARGS_WORD && state == -1 &&
+		    ! (mdoc_macros[tok].flags & MDOC_IGNDELIM) &&
+		    mdoc_isdelim(p) == DELIM_OPEN) {
+			dword(mdoc, line, la, p, DELIM_OPEN, 0);
+			continue;
+		}
+
+		if (state == -1 && tok != MDOC_In &&
+		    tok != MDOC_St && tok != MDOC_Xr) {
+			mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
+			state = 0;
+		}
+
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN) {
-			if (j < 2 && tok == MDOC_Pf)
+			if (abs(state) < 2 && tok == MDOC_Pf)
 				mandoc_vmsg(MANDOCERR_PF_SKIP,
 				    mdoc->parse, line, ppos, "Pf %s",
 				    p == NULL ? "at eol" : p);
 			break;
 		}
 
-		if ( ! (mdoc_macros[tok].flags & MDOC_IGNDELIM) &&
-		    ac != ARGS_QWORD && j == 0 &&
-		    mdoc_isdelim(p) == DELIM_OPEN) {
-			dword(mdoc, line, la, p, DELIM_OPEN, 0);
-			continue;
-		} else if (j == 0)
-		       mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
-
-		if (j == maxargs && ! flushed) {
+		if (state == maxargs) {
 			rew_elem(mdoc, tok);
-			flushed = 1;
+			state = -2;
 		}
 
-		ntok = (ac == ARGS_QWORD || (tok == MDOC_Pf && j == 0)) ?
+		ntok = (ac == ARGS_QWORD || (tok == MDOC_Pf && state == 0)) ?
 		    MDOC_MAX : lookup(mdoc, tok, line, la, p);
 
 		if (ntok != MDOC_MAX) {
-			if ( ! flushed)
+			if (state >= 0) {
 				rew_elem(mdoc, tok);
-			flushed = 1;
+				state = -2;
+			}
 			mdoc_macro(mdoc, ntok, line, la, pos, buf);
-			j++;
 			break;
 		}
 
-		if ( ! (mdoc_macros[tok].flags & MDOC_IGNDELIM) &&
-		    ac != ARGS_QWORD && ! flushed &&
-		    mdoc_isdelim(p) != DELIM_NONE) {
+		if (ac == ARGS_QWORD ||
+		    mdoc_macros[tok].flags & MDOC_IGNDELIM ||
+		    mdoc_isdelim(p) == DELIM_NONE) {
+			if (state == -1) {
+				mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
+				state = 1;
+			} else if (state >= 0)
+				state++;
+		} else if (state >= 0) {
 			rew_elem(mdoc, tok);
-			flushed = 1;
+			state = -2;
 		}
 
 		dword(mdoc, line, la, p, DELIM_MAX,
 		    MDOC_JOIN & mdoc_macros[tok].flags);
-		j++;
 	}
 
-	if (j == 0) {
-		if (tok == MDOC_In || tok == MDOC_St || tok == MDOC_Xr) {
-			mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
-			    line, ppos, mdoc_macronames[tok]);
-			return;
-		}
-		mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
-		if (ac == ARGS_PUNCT && tok == MDOC_Pf)
-			append_delims(mdoc, line, pos, buf);
+	if (state == -1) {
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    line, ppos, mdoc_macronames[tok]);
+		return;
 	}
-	if ( ! flushed)
+
+	if (state == 0 && tok == MDOC_Pf)
+		append_delims(mdoc, line, pos, buf);
+	if (state >= 0)
 		rew_elem(mdoc, tok);
 	if (nl)
 		append_delims(mdoc, line, pos, buf);
