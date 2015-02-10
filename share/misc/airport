@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.49 2015/02/02 14:27:41 jca Exp $
+#	$OpenBSD: airport,v 1.50 2015/02/10 09:30:37 sthen Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -988,7 +988,7 @@ LOV:Monclova, Coahuila, Mexico
 LPA:Aeropuerto De Gran Canaria, Canary Islands, Spain
 LPB:El Alto, La Paz, Bolivia
 LPI:Saab, Linkoping, Sweden
-LPL:Liverpool, England, United Kingdom
+LPL:John Lennon, Liverpool, England, United Kingdom
 LRA:Larisa, Greece
 LRD:Laredo, Texas, USA
 LRH:Laleu, La Rochelle, France
