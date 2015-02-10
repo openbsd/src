@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2014/10/09 04:01:27 tedu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.14 2015/02/10 10:02:55 tedu Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -74,7 +74,7 @@
 #endif
 
 /* user/kernel map constants */
-#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t)0x20000000000UL)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x1000000000UL)
