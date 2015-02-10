@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.11 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.12 2015/02/10 22:04:00 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -391,7 +391,7 @@ retry:
 	}
 	splx(s);
 
-	ret = uiomovei(lc->lc_rxq->lq_va + rx_head, 64, uio);
+	ret = uiomove(lc->lc_rxq->lq_va + rx_head, 64, uio);
 
 	rx_head += 64;
 	rx_head &= ((lc->lc_rxq->lq_nentries * 64) - 1);
@@ -457,7 +457,7 @@ retry:
 	}
 	splx(s);
 
-	ret = uiomovei(lc->lc_txq->lq_va + tx_tail, 64, uio);
+	ret = uiomove(lc->lc_txq->lq_va + tx_tail, 64, uio);
 
 	err = hv_ldc_tx_set_qtail(lc->lc_id, next_tx_tail);
 	if (err != H_EOK) {

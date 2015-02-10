@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.42 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.43 2015/02/10 22:04:00 miod Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1582,7 +1582,7 @@ ntfs_readntvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 				if (uio) {
 					size_t remains = tocopy;
 					for(; remains; remains--) {
-						error = uiomovei("", 1, uio);
+						error = uiomove("", 1, uio);
 						if (error != 0)
 							break;
 					}
@@ -1719,7 +1719,7 @@ ntfs_readattr(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t attrnum,
 				if (uio) {
 					size_t remains = tocopy;
 					for(; remains; remains--) {
-						error = uiomovei("", 1, uio);
+						error = uiomove("", 1, uio);
 						if (error != 0)
 							break;
 					}

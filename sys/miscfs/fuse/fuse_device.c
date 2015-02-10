@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.17 2015/02/10 21:58:16 miod Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.18 2015/02/10 22:04:00 miod Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -429,7 +429,7 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 	bzero(&fbuf->fb_next, sizeof(fbuf->fb_next));
 	tmpaddr = fbuf->fb_dat;
 	fbuf->fb_dat = NULL;
-	error = uiomovei(fbuf, FUSEBUFSIZE, uio);
+	error = uiomove(fbuf, FUSEBUFSIZE, uio);
 	if (error)
 		goto end;
 
