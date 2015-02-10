@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.4 2015/02/10 13:30:27 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ static int dwc2_frame_list_alloc(struct dwc2_hsotg *hsotg, gfp_t mem_flags)
 
 static void dwc2_frame_list_free(struct dwc2_hsotg *hsotg)
 {
-	usb_dma_t frame_list_usbdma;
+	struct usb_dma * frame_list_usbdma;
 	unsigned long flags;
 
 	spin_lock_irqsave(&hsotg->lock, flags);

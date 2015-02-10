@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.3 2015/02/10 13:27:55 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.4 2015/02/10 13:30:27 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ struct dwc2_pipe {
 	void *priv;			/* QH */
 
 	 /* DMA buffer for control endpoint requests */
-	usb_dma_t req_dma;
+	struct usb_dma * req_dma;
 };
 
 

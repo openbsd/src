@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.5 2015/02/10 13:27:54 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.6 2015/02/10 13:30:27 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -95,8 +95,8 @@ static void		dwc2_poll(struct usbd_bus *);
 static void		dwc2_softintr(void *);
 static void		dwc2_waitintr(struct dwc2_softc *, struct usbd_xfer *);
 
-static usbd_status	dwc2_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-static void		dwc2_freem(struct usbd_bus *, usb_dma_t *);
+static usbd_status	dwc2_allocm(struct usbd_bus *, struct usb_dma *, uint32_t);
+static void		dwc2_freem(struct usbd_bus *, struct usb_dma *);
 
 static struct usbd_xfer *	dwc2_allocx(struct usbd_bus *);
 static void		dwc2_freex(struct usbd_bus *, struct usbd_xfer *);
@@ -234,7 +234,7 @@ static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 };
 
 static usbd_status
-dwc2_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
+dwc2_allocm(struct usbd_bus *bus, struct usb_dma *dma, uint32_t size)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 	usbd_status status;
@@ -248,7 +248,7 @@ dwc2_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 }
 
 static void
-dwc2_freem(struct usbd_bus *bus, usb_dma_t *dma)
+dwc2_freem(struct usbd_bus *bus, struct usb_dma *dma)
 {
         struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 

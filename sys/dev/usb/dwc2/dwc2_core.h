@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.h,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.h,v 1.4 2015/02/10 13:30:27 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_core.h,v 1.5 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ struct dwc2_hsotg {
 	int non_periodic_channels;
 	int available_host_channels;
 	struct dwc2_host_chan *hc_ptr_array[MAX_EPS_CHANNELS];
-	usb_dma_t status_buf_usbdma;
+	struct usb_dma * status_buf_usbdma;
 	u8 *status_buf;
 	dma_addr_t status_buf_dma;
 #define DWC2_HCD_STATUS_BUF_SIZE 64
@@ -471,7 +471,7 @@ struct dwc2_hsotg {
 	spinlock_t lock;
 	void *priv;
 	u8 otg_port;
-	usb_dma_t frame_list_usbdma;
+	struct usb_dma * frame_list_usbdma;
 	u32 *frame_list;
 	dma_addr_t frame_list_dma;
 
