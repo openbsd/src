@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.14 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.15 2015/02/10 08:33:10 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -354,9 +354,6 @@ err:
 	sk_DIST_POINT_pop_free(crld, DIST_POINT_free);
 	return NULL;
 }
-
-IMPLEMENT_STACK_OF(DIST_POINT)
-IMPLEMENT_ASN1_SET_OF(DIST_POINT)
 
 static int
 dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.24 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.25 2015/02/10 08:33:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -461,6 +461,3 @@ ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
 		BN_set_negative(ret, 1);
 	return (ret);
 }
-
-IMPLEMENT_STACK_OF(ASN1_INTEGER)
-IMPLEMENT_ASN1_SET_OF(ASN1_INTEGER)

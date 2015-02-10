@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.38 2014/09/29 04:20:14 miod Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.39 2015/02/10 08:33:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2202,11 +2202,3 @@ X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
 		X509_VERIFY_PARAM_free(ctx->param);
 	ctx->param = param;
 }
-
-IMPLEMENT_STACK_OF(X509)
-IMPLEMENT_ASN1_SET_OF(X509)
-
-IMPLEMENT_STACK_OF(X509_NAME)
-
-IMPLEMENT_STACK_OF(X509_ATTRIBUTE)
-IMPLEMENT_ASN1_SET_OF(X509_ATTRIBUTE)

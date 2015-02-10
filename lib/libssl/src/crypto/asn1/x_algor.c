@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.17 2015/02/10 06:36:30 jsing Exp $ */
+/* $OpenBSD: x_algor.c,v 1.18 2015/02/10 08:33:10 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -114,9 +114,6 @@ X509_ALGOR_dup(X509_ALGOR *x)
 {
 	return ASN1_item_dup(&X509_ALGOR_it, x);
 }
-
-IMPLEMENT_STACK_OF(X509_ALGOR)
-IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
 
 int
 X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)

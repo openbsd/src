@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.23 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.24 2015/02/10 08:33:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -577,6 +577,3 @@ X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 	}
 	return (*xn != NULL);
 }
-
-IMPLEMENT_STACK_OF(X509_NAME_ENTRY)
-IMPLEMENT_ASN1_SET_OF(X509_NAME_ENTRY)

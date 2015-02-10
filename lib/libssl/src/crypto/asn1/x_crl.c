@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.21 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.22 2015/02/10 08:33:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -586,8 +586,3 @@ X509_CRL_get_meth_data(X509_CRL *crl)
 {
 	return crl->meth_data;
 }
-
-IMPLEMENT_STACK_OF(X509_REVOKED)
-IMPLEMENT_ASN1_SET_OF(X509_REVOKED)
-IMPLEMENT_STACK_OF(X509_CRL)
-IMPLEMENT_ASN1_SET_OF(X509_CRL)

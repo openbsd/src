@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.12 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.13 2015/02/10 08:33:10 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -333,6 +333,3 @@ SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 	}
 	return NULL;
 }
-
-IMPLEMENT_STACK_OF(SXNETID)
-IMPLEMENT_ASN1_SET_OF(SXNETID)

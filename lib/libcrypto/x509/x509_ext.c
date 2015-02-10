@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ext.c,v 1.8 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_ext.c,v 1.9 2015/02/10 08:33:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,6 +230,3 @@ X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
 {
 	return X509V3_add1_i2d(&x->extensions, nid, value, crit, flags);
 }
-
-IMPLEMENT_STACK_OF(X509_EXTENSION)
-IMPLEMENT_ASN1_SET_OF(X509_EXTENSION)
