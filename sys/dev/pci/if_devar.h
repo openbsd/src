@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.32 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.33 2015/02/10 03:51:58 mpi Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -863,5 +863,5 @@ TULIP_PERFREAD(
 	 && ((u_int16_t *)a1)[1] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[2] == 0xFFFFU)
 
-#define TULIP_GETCTX(m, t)	((t) (m)->m_pkthdr.rcvif + 0)
-#define TULIP_SETCTX(m, c)	((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
+#define TULIP_GETCTX(m, t)	((t) (m)->m_pkthdr.ph_cookie + 0)
+#define TULIP_SETCTX(m, c)	((void) ((m)->m_pkthdr.ph_cookie = (void *)(c)))
