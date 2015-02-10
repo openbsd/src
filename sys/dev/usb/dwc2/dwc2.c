@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.3 2015/02/10 13:19:07 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.4 2015/02/10 13:23:30 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -90,67 +90,67 @@ int dwc2debug = 0;
 #define	DPRINTFN(...) do { } while (0)
 #endif
 
-Static usbd_status	dwc2_open(usbd_pipe_handle);
-Static void		dwc2_poll(struct usbd_bus *);
-Static void		dwc2_softintr(void *);
-Static void		dwc2_waitintr(struct dwc2_softc *, usbd_xfer_handle);
+static usbd_status	dwc2_open(usbd_pipe_handle);
+static void		dwc2_poll(struct usbd_bus *);
+static void		dwc2_softintr(void *);
+static void		dwc2_waitintr(struct dwc2_softc *, usbd_xfer_handle);
 
-Static usbd_status	dwc2_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-Static void		dwc2_freem(struct usbd_bus *, usb_dma_t *);
+static usbd_status	dwc2_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
+static void		dwc2_freem(struct usbd_bus *, usb_dma_t *);
 
-Static usbd_xfer_handle	dwc2_allocx(struct usbd_bus *);
-Static void		dwc2_freex(struct usbd_bus *, usbd_xfer_handle);
-Static void		dwc2_get_lock(struct usbd_bus *, kmutex_t **);
+static usbd_xfer_handle	dwc2_allocx(struct usbd_bus *);
+static void		dwc2_freex(struct usbd_bus *, usbd_xfer_handle);
+static void		dwc2_get_lock(struct usbd_bus *, kmutex_t **);
 
-Static usbd_status	dwc2_root_ctrl_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_root_ctrl_start(usbd_xfer_handle);
-Static void		dwc2_root_ctrl_abort(usbd_xfer_handle);
-Static void		dwc2_root_ctrl_close(usbd_pipe_handle);
-Static void		dwc2_root_ctrl_done(usbd_xfer_handle);
+static usbd_status	dwc2_root_ctrl_transfer(usbd_xfer_handle);
+static usbd_status	dwc2_root_ctrl_start(usbd_xfer_handle);
+static void		dwc2_root_ctrl_abort(usbd_xfer_handle);
+static void		dwc2_root_ctrl_close(usbd_pipe_handle);
+static void		dwc2_root_ctrl_done(usbd_xfer_handle);
 
-Static usbd_status	dwc2_root_intr_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_root_intr_start(usbd_xfer_handle);
-Static void		dwc2_root_intr_abort(usbd_xfer_handle);
-Static void		dwc2_root_intr_close(usbd_pipe_handle);
-Static void		dwc2_root_intr_done(usbd_xfer_handle);
+static usbd_status	dwc2_root_intr_transfer(usbd_xfer_handle);
+static usbd_status	dwc2_root_intr_start(usbd_xfer_handle);
+static void		dwc2_root_intr_abort(usbd_xfer_handle);
+static void		dwc2_root_intr_close(usbd_pipe_handle);
+static void		dwc2_root_intr_done(usbd_xfer_handle);
 
-Static usbd_status	dwc2_device_ctrl_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_device_ctrl_start(usbd_xfer_handle);
-Static void		dwc2_device_ctrl_abort(usbd_xfer_handle);
-Static void		dwc2_device_ctrl_close(usbd_pipe_handle);
-Static void		dwc2_device_ctrl_done(usbd_xfer_handle);
+static usbd_status	dwc2_device_ctrl_transfer(usbd_xfer_handle);
+static usbd_status	dwc2_device_ctrl_start(usbd_xfer_handle);
+static void		dwc2_device_ctrl_abort(usbd_xfer_handle);
+static void		dwc2_device_ctrl_close(usbd_pipe_handle);
+static void		dwc2_device_ctrl_done(usbd_xfer_handle);
 
-Static usbd_status	dwc2_device_bulk_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_device_bulk_start(usbd_xfer_handle);
-Static void		dwc2_device_bulk_abort(usbd_xfer_handle);
-Static void		dwc2_device_bulk_close(usbd_pipe_handle);
-Static void		dwc2_device_bulk_done(usbd_xfer_handle);
+static usbd_status	dwc2_device_bulk_transfer(usbd_xfer_handle);
+static usbd_status	dwc2_device_bulk_start(usbd_xfer_handle);
+static void		dwc2_device_bulk_abort(usbd_xfer_handle);
+static void		dwc2_device_bulk_close(usbd_pipe_handle);
+static void		dwc2_device_bulk_done(usbd_xfer_handle);
 
-Static usbd_status	dwc2_device_intr_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_device_intr_start(usbd_xfer_handle);
-Static void		dwc2_device_intr_abort(usbd_xfer_handle);
-Static void		dwc2_device_intr_close(usbd_pipe_handle);
-Static void		dwc2_device_intr_done(usbd_xfer_handle);
+static usbd_status	dwc2_device_intr_transfer(usbd_xfer_handle);
+static usbd_status	dwc2_device_intr_start(usbd_xfer_handle);
+static void		dwc2_device_intr_abort(usbd_xfer_handle);
+static void		dwc2_device_intr_close(usbd_pipe_handle);
+static void		dwc2_device_intr_done(usbd_xfer_handle);
 
-Static usbd_status	dwc2_device_isoc_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_device_isoc_start(usbd_xfer_handle);
-Static void		dwc2_device_isoc_abort(usbd_xfer_handle);
-Static void		dwc2_device_isoc_close(usbd_pipe_handle);
-Static void		dwc2_device_isoc_done(usbd_xfer_handle);
+static usbd_status	dwc2_device_isoc_transfer(usbd_xfer_handle);
+static usbd_status	dwc2_device_isoc_start(usbd_xfer_handle);
+static void		dwc2_device_isoc_abort(usbd_xfer_handle);
+static void		dwc2_device_isoc_close(usbd_pipe_handle);
+static void		dwc2_device_isoc_done(usbd_xfer_handle);
 
-Static usbd_status	dwc2_device_start(usbd_xfer_handle);
+static usbd_status	dwc2_device_start(usbd_xfer_handle);
 
-Static void		dwc2_close_pipe(usbd_pipe_handle);
-Static void		dwc2_abort_xfer(usbd_xfer_handle, usbd_status);
+static void		dwc2_close_pipe(usbd_pipe_handle);
+static void		dwc2_abort_xfer(usbd_xfer_handle, usbd_status);
 
-Static void		dwc2_device_clear_toggle(usbd_pipe_handle);
-Static void		dwc2_noop(usbd_pipe_handle pipe);
+static void		dwc2_device_clear_toggle(usbd_pipe_handle);
+static void		dwc2_noop(usbd_pipe_handle pipe);
 
-Static int		dwc2_interrupt(struct dwc2_softc *);
-Static void		dwc2_rhc(void *);
+static int		dwc2_interrupt(struct dwc2_softc *);
+static void		dwc2_rhc(void *);
 
-Static void		dwc2_timeout(void *);
-Static void		dwc2_timeout_task(void *);
+static void		dwc2_timeout(void *);
+static void		dwc2_timeout_task(void *);
 
 
 
@@ -168,7 +168,7 @@ dwc2_free_bus_bandwidth(struct dwc2_hsotg *hsotg, u16 bw,
 
 #define DWC2_INTR_ENDPT 1
 
-Static const struct usbd_bus_methods dwc2_bus_methods = {
+static const struct usbd_bus_methods dwc2_bus_methods = {
 	.open_pipe =	dwc2_open,
 	.soft_intr =	dwc2_softintr,
 	.do_poll =	dwc2_poll,
@@ -179,7 +179,7 @@ Static const struct usbd_bus_methods dwc2_bus_methods = {
 	.get_lock =	dwc2_get_lock,
 };
 
-Static const struct usbd_pipe_methods dwc2_root_ctrl_methods = {
+static const struct usbd_pipe_methods dwc2_root_ctrl_methods = {
 	.transfer =	dwc2_root_ctrl_transfer,
 	.start =	dwc2_root_ctrl_start,
 	.abort =	dwc2_root_ctrl_abort,
@@ -188,7 +188,7 @@ Static const struct usbd_pipe_methods dwc2_root_ctrl_methods = {
 	.done =		dwc2_root_ctrl_done,
 };
 
-Static const struct usbd_pipe_methods dwc2_root_intr_methods = {
+static const struct usbd_pipe_methods dwc2_root_intr_methods = {
 	.transfer =	dwc2_root_intr_transfer,
 	.start =	dwc2_root_intr_start,
 	.abort =	dwc2_root_intr_abort,
@@ -197,7 +197,7 @@ Static const struct usbd_pipe_methods dwc2_root_intr_methods = {
 	.done =		dwc2_root_intr_done,
 };
 
-Static const struct usbd_pipe_methods dwc2_device_ctrl_methods = {
+static const struct usbd_pipe_methods dwc2_device_ctrl_methods = {
 	.transfer =	dwc2_device_ctrl_transfer,
 	.start =	dwc2_device_ctrl_start,
 	.abort =	dwc2_device_ctrl_abort,
@@ -206,7 +206,7 @@ Static const struct usbd_pipe_methods dwc2_device_ctrl_methods = {
 	.done =		dwc2_device_ctrl_done,
 };
 
-Static const struct usbd_pipe_methods dwc2_device_intr_methods = {
+static const struct usbd_pipe_methods dwc2_device_intr_methods = {
 	.transfer =	dwc2_device_intr_transfer,
 	.start =	dwc2_device_intr_start,
 	.abort =	dwc2_device_intr_abort,
@@ -215,7 +215,7 @@ Static const struct usbd_pipe_methods dwc2_device_intr_methods = {
 	.done =		dwc2_device_intr_done,
 };
 
-Static const struct usbd_pipe_methods dwc2_device_bulk_methods = {
+static const struct usbd_pipe_methods dwc2_device_bulk_methods = {
 	.transfer =	dwc2_device_bulk_transfer,
 	.start =	dwc2_device_bulk_start,
 	.abort =	dwc2_device_bulk_abort,
@@ -224,7 +224,7 @@ Static const struct usbd_pipe_methods dwc2_device_bulk_methods = {
 	.done =		dwc2_device_bulk_done,
 };
 
-Static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
+static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 	.transfer =	dwc2_device_isoc_transfer,
 	.start =	dwc2_device_isoc_start,
 	.abort =	dwc2_device_isoc_abort,
@@ -233,7 +233,7 @@ Static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 	.done =		dwc2_device_isoc_done,
 };
 
-Static usbd_status
+static usbd_status
 dwc2_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
@@ -247,7 +247,7 @@ dwc2_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 	return status;
 }
 
-Static void
+static void
 dwc2_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
         struct dwc2_softc *sc = DWC2_BUS2SC(bus);
@@ -303,7 +303,7 @@ dwc2_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
-Static void
+static void
 dwc2_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
@@ -311,7 +311,7 @@ dwc2_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 	*lock = &sc->sc_lock;
 }
 
-Static void
+static void
 dwc2_rhc(void *addr)
 {
 	struct dwc2_softc *sc = addr;
@@ -340,7 +340,7 @@ dwc2_rhc(void *addr)
 	mutex_exit(&sc->sc_lock);
 }
 
-Static void
+static void
 dwc2_softintr(void *v)
 {
 	struct usbd_bus *bus = v;
@@ -375,7 +375,7 @@ dwc2_softintr(void *v)
 	mutex_spin_exit(&hsotg->lock);
 }
 
-Static void
+static void
 dwc2_waitintr(struct dwc2_softc *sc, usbd_xfer_handle xfer)
 {
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
@@ -409,7 +409,7 @@ dwc2_waitintr(struct dwc2_softc *sc, usbd_xfer_handle xfer)
 	mutex_exit(&sc->sc_lock);
 }
 
-Static void
+static void
 dwc2_timeout(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
@@ -433,7 +433,7 @@ dwc2_timeout(void *addr)
 	    USB_TASKQ_HC);
 }
 
-Static void
+static void
 dwc2_timeout_task(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
@@ -508,7 +508,7 @@ dwc2_open(usbd_pipe_handle pipe)
 	return USBD_NORMAL_COMPLETION;
 }
 
-Static void
+static void
 dwc2_poll(struct usbd_bus *bus)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
@@ -523,7 +523,7 @@ dwc2_poll(struct usbd_bus *bus)
  * Close a reqular pipe.
  * Assumes that there are no pending transactions.
  */
-Static void
+static void
 dwc2_close_pipe(usbd_pipe_handle pipe)
 {
 #ifdef DIAGNOSTIC
@@ -536,7 +536,7 @@ dwc2_close_pipe(usbd_pipe_handle pipe)
 /*
  * Abort a device request.
  */
-Static void
+static void
 dwc2_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
 	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
@@ -605,13 +605,13 @@ dwc2_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 }
 
-Static void
+static void
 dwc2_noop(usbd_pipe_handle pipe)
 {
 
 }
 
-Static void
+static void
 dwc2_device_clear_toggle(usbd_pipe_handle pipe)
 {
 
@@ -624,7 +624,7 @@ dwc2_device_clear_toggle(usbd_pipe_handle pipe)
  * Data structures and routines to emulate the root hub.
  */
 
-Static const usb_device_descriptor_t dwc2_devd = {
+static const usb_device_descriptor_t dwc2_devd = {
 	.bLength = sizeof(usb_device_descriptor_t),
 	.bDescriptorType = UDESC_DEVICE,
 	.bcdUSB = {0x00, 0x02},
@@ -644,7 +644,7 @@ struct dwc2_config_desc {
 	usb_endpoint_descriptor_t endpd;
 } __packed;
 
-Static const struct dwc2_config_desc dwc2_confd = {
+static const struct dwc2_config_desc dwc2_confd = {
 	.confd = {
 		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 		.bDescriptorType = UDESC_CONFIG,
@@ -679,7 +679,7 @@ Static const struct dwc2_config_desc dwc2_confd = {
 #define	HSETW(ptr, val) ptr = { (uint8_t)(val), (uint8_t)((val) >> 8) }
 #if 0
 /* appears to be unused */
-Static const usb_hub_descriptor_t dwc2_hubd = {
+static const usb_hub_descriptor_t dwc2_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
 	.bNbrPorts = 1,
@@ -690,7 +690,7 @@ Static const usb_hub_descriptor_t dwc2_hubd = {
 };
 #endif
 
-Static usbd_status
+static usbd_status
 dwc2_root_ctrl_transfer(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -705,7 +705,7 @@ dwc2_root_ctrl_transfer(usbd_xfer_handle xfer)
 	return dwc2_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
-Static usbd_status
+static usbd_status
 dwc2_root_ctrl_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -852,7 +852,7 @@ fail:
 	return USBD_IN_PROGRESS;
 }
 
-Static void
+static void
 dwc2_root_ctrl_abort(usbd_xfer_handle xfer)
 {
 	DPRINTFN(10, "\n");
@@ -860,7 +860,7 @@ dwc2_root_ctrl_abort(usbd_xfer_handle xfer)
 	/* Nothing to do, all transfers are synchronous. */
 }
 
-Static void
+static void
 dwc2_root_ctrl_close(usbd_pipe_handle pipe)
 {
 	DPRINTFN(10, "\n");
@@ -868,7 +868,7 @@ dwc2_root_ctrl_close(usbd_pipe_handle pipe)
 	/* Nothing to do. */
 }
 
-Static void
+static void
 dwc2_root_ctrl_done(usbd_xfer_handle xfer)
 {
 	DPRINTFN(10, "\n");
@@ -876,7 +876,7 @@ dwc2_root_ctrl_done(usbd_xfer_handle xfer)
 	/* Nothing to do. */
 }
 
-Static usbd_status
+static usbd_status
 dwc2_root_intr_transfer(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -895,7 +895,7 @@ dwc2_root_intr_transfer(usbd_xfer_handle xfer)
 	return dwc2_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
-Static usbd_status
+static usbd_status
 dwc2_root_intr_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -914,7 +914,7 @@ dwc2_root_intr_start(usbd_xfer_handle xfer)
 }
 
 /* Abort a root interrupt request. */
-Static void
+static void
 dwc2_root_intr_abort(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -930,7 +930,7 @@ dwc2_root_intr_abort(usbd_xfer_handle xfer)
 	usb_transfer_complete(xfer);
 }
 
-Static void
+static void
 dwc2_root_intr_close(usbd_pipe_handle pipe)
 {
 	struct dwc2_softc *sc = DWC2_PIPE2SC(pipe);
@@ -942,7 +942,7 @@ dwc2_root_intr_close(usbd_pipe_handle pipe)
 	sc->sc_intrxfer = NULL;
 }
 
-Static void
+static void
 dwc2_root_intr_done(usbd_xfer_handle xfer)
 {
 
@@ -951,7 +951,7 @@ dwc2_root_intr_done(usbd_xfer_handle xfer)
 
 /***********************************************************************/
 
-Static usbd_status
+static usbd_status
 dwc2_device_ctrl_transfer(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -970,7 +970,7 @@ dwc2_device_ctrl_transfer(usbd_xfer_handle xfer)
 	return dwc2_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
-Static usbd_status
+static usbd_status
 dwc2_device_ctrl_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -992,7 +992,7 @@ dwc2_device_ctrl_start(usbd_xfer_handle xfer)
 	return USBD_IN_PROGRESS;
 }
 
-Static void
+static void
 dwc2_device_ctrl_abort(usbd_xfer_handle xfer)
 {
 #ifdef DIAGNOSTIC
@@ -1004,7 +1004,7 @@ dwc2_device_ctrl_abort(usbd_xfer_handle xfer)
 	dwc2_abort_xfer(xfer, USBD_CANCELLED);
 }
 
-Static void
+static void
 dwc2_device_ctrl_close(usbd_pipe_handle pipe)
 {
 
@@ -1012,7 +1012,7 @@ dwc2_device_ctrl_close(usbd_pipe_handle pipe)
 	dwc2_close_pipe(pipe);
 }
 
-Static void
+static void
 dwc2_device_ctrl_done(usbd_xfer_handle xfer)
 {
 
@@ -1021,7 +1021,7 @@ dwc2_device_ctrl_done(usbd_xfer_handle xfer)
 
 /***********************************************************************/
 
-Static usbd_status
+static usbd_status
 dwc2_device_bulk_transfer(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -1040,7 +1040,7 @@ dwc2_device_bulk_transfer(usbd_xfer_handle xfer)
 	return dwc2_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
-Static usbd_status
+static usbd_status
 dwc2_device_bulk_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -1055,7 +1055,7 @@ dwc2_device_bulk_start(usbd_xfer_handle xfer)
 	return err;
 }
 
-Static void
+static void
 dwc2_device_bulk_abort(usbd_xfer_handle xfer)
 {
 #ifdef DIAGNOSTIC
@@ -1067,7 +1067,7 @@ dwc2_device_bulk_abort(usbd_xfer_handle xfer)
 	dwc2_abort_xfer(xfer, USBD_CANCELLED);
 }
 
-Static void
+static void
 dwc2_device_bulk_close(usbd_pipe_handle pipe)
 {
 
@@ -1076,7 +1076,7 @@ dwc2_device_bulk_close(usbd_pipe_handle pipe)
 	dwc2_close_pipe(pipe);
 }
 
-Static void
+static void
 dwc2_device_bulk_done(usbd_xfer_handle xfer)
 {
 
@@ -1085,7 +1085,7 @@ dwc2_device_bulk_done(usbd_xfer_handle xfer)
 
 /***********************************************************************/
 
-Static usbd_status
+static usbd_status
 dwc2_device_intr_transfer(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
@@ -1104,7 +1104,7 @@ dwc2_device_intr_transfer(usbd_xfer_handle xfer)
 	return dwc2_device_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 }
 
-Static usbd_status
+static usbd_status
 dwc2_device_intr_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer)
@@ -1127,7 +1127,7 @@ dwc2_device_intr_start(usbd_xfer_handle xfer)
 }
 
 /* Abort a device interrupt request. */
-Static void
+static void
 dwc2_device_intr_abort(usbd_xfer_handle xfer)
 {
 #ifdef DIAGNOSTIC
@@ -1142,7 +1142,7 @@ dwc2_device_intr_abort(usbd_xfer_handle xfer)
 	dwc2_abort_xfer(xfer, USBD_CANCELLED);
 }
 
-Static void
+static void
 dwc2_device_intr_close(usbd_pipe_handle pipe)
 {
 
@@ -1151,7 +1151,7 @@ dwc2_device_intr_close(usbd_pipe_handle pipe)
 	dwc2_close_pipe(pipe);
 }
 
-Static void
+static void
 dwc2_device_intr_done(usbd_xfer_handle xfer)
 {
 
