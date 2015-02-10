@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.8 2015/02/10 04:01:26 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.9 2015/02/10 05:12:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -600,5 +600,29 @@ ASN1_ITEM_TEMPLATE(ASN1_SET_ANY) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_OF, 0, ASN1_SET_ANY, ASN1_ANY)
 ASN1_ITEM_TEMPLATE_END(ASN1_SET_ANY)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ASN1_SEQUENCE_ANY, ASN1_SET_ANY, ASN1_SET_ANY)
+
+ASN1_SEQUENCE_ANY *
+d2i_ASN1_SEQUENCE_ANY(ASN1_SEQUENCE_ANY **a, const unsigned char **in, long len)
+{
+	return (ASN1_SEQUENCE_ANY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_SEQUENCE_ANY_it);
+}
+
+int
+i2d_ASN1_SEQUENCE_ANY(const ASN1_SEQUENCE_ANY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_SEQUENCE_ANY_it);
+}
+
+ASN1_SEQUENCE_ANY *
+d2i_ASN1_SET_ANY(ASN1_SEQUENCE_ANY **a, const unsigned char **in, long len)
+{
+	return (ASN1_SEQUENCE_ANY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_SET_ANY_it);
+}
+
+int
+i2d_ASN1_SET_ANY(const ASN1_SEQUENCE_ANY *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_SET_ANY_it);
+}

@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_asn1.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dh_asn1.c,v 1.7 2015/02/10 05:12:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -86,7 +86,19 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
 	ASN1_OPT(DH, length, ZLONG),
 } ASN1_SEQUENCE_END_cb(DH, DHparams)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
+
+DH *
+d2i_DHparams(DH **a, const unsigned char **in, long len)
+{
+	return (DH *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DHparams_it);
+}
+
+int
+i2d_DHparams(const DH *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DHparams_it);
+}
 
 DH *
 DHparams_dup(DH *dh)

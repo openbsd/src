@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.14 2015/01/28 04:14:31 beck Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.15 2015/02/10 05:12:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -89,7 +89,19 @@ ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
 	ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
 } ASN1_SEQUENCE_END_cb(DSA_SIG, DSA_SIG)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG, DSA_SIG, DSA_SIG)
+
+DSA_SIG *
+d2i_DSA_SIG(DSA_SIG **a, const unsigned char **in, long len)
+{
+	return (DSA_SIG *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DSA_SIG_it);
+}
+
+int
+i2d_DSA_SIG(const DSA_SIG *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSA_SIG_it);
+}
 
 /* Override the default free and new methods */
 static int
@@ -117,7 +129,19 @@ ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
 	ASN1_SIMPLE(DSA, priv_key, BIGNUM)
 } ASN1_SEQUENCE_END_cb(DSA, DSAPrivateKey)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPrivateKey, DSAPrivateKey)
+
+DSA *
+d2i_DSAPrivateKey(DSA **a, const unsigned char **in, long len)
+{
+	return (DSA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DSAPrivateKey_it);
+}
+
+int
+i2d_DSAPrivateKey(const DSA *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSAPrivateKey_it);
+}
 
 ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
 	ASN1_SIMPLE(DSA, p, BIGNUM),
@@ -125,7 +149,19 @@ ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
 	ASN1_SIMPLE(DSA, g, BIGNUM),
 } ASN1_SEQUENCE_END_cb(DSA, DSAparams)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
+
+DSA *
+d2i_DSAparams(DSA **a, const unsigned char **in, long len)
+{
+	return (DSA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DSAparams_it);
+}
+
+int
+i2d_DSAparams(const DSA *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSAparams_it);
+}
 
 /*
  * DSA public key is a bit trickier... its effectively a CHOICE type
@@ -146,7 +182,19 @@ ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
 	ASN1_EX_COMBINE(0, 0, dsa_pub_internal)
 } ASN1_CHOICE_END_cb(DSA, DSAPublicKey, write_params)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
+
+DSA *
+d2i_DSAPublicKey(DSA **a, const unsigned char **in, long len)
+{
+	return (DSA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &DSAPublicKey_it);
+}
+
+int
+i2d_DSAPublicKey(const DSA *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSAPublicKey_it);
+}
 
 DSA *
 DSAparams_dup(DSA *dsa)
