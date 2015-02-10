@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.31 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.32 2015/02/10 22:49:16 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -163,7 +163,7 @@ static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
 int	eeprom_take(void);
 void	eeprom_give(void);
-int	eeprom_update(char *, int, int);
+int	eeprom_update(char *, size_t, size_t);
 #endif
 
 int	eeprom_match(struct device *, void *, void *);
@@ -1083,15 +1083,15 @@ eeprom_uio(uio)
 {
 #if defined(SUN4)
 	int error;
-	int off;	/* NOT off_t */
-	u_int cnt, bcnt;
+	off_t off;
+	size_t cnt, bcnt;
 	caddr_t buf = NULL;
 
 	if (!CPU_ISSUN4)
 		return (ENODEV);
 
 	off = uio->uio_offset;
-	if (off > EEPROM_SIZE)
+	if (off < 0 || off > EEPROM_SIZE)
 		return (EFAULT);
 
 	cnt = uio->uio_resid;
@@ -1118,11 +1118,11 @@ eeprom_uio(uio)
 		for (bcnt = 0; bcnt < EEPROM_SIZE; ++bcnt)
 			*(char *)(buf + bcnt) = *(char *)(eeprom_va + bcnt);
 
-	if ((error = uiomovei(buf + off, (int)cnt, uio)) != 0)
+	if ((error = uiomove(buf + off, cnt, uio)) != 0)
 		goto out;
 
 	if (uio->uio_rw != UIO_READ)
-		error = eeprom_update(buf, off, cnt);
+		error = eeprom_update(buf, (size_t)off, cnt);
 
  out:
 	if (buf)
@@ -1141,7 +1141,7 @@ eeprom_uio(uio)
 int
 eeprom_update(buf, off, cnt)
 	char *buf;
-	int off, cnt;
+	size_t off, cnt;
 {
 	int error = 0;
 	volatile char *ep;
