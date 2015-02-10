@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.17 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.18 2015/02/10 22:42:35 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -944,8 +944,8 @@ vmerw(struct vme_softc *sc, int awidth, int dwidth, struct uio *uio, int flags)
 		}
 
 		delta = uio->uio_offset & PAGE_MASK;
-		len = min(uio->uio_resid, PAGE_SIZE - delta);
-		/* len = min(len, (off_t)r->vr_end - uio->uio_offset); */
+		len = ulmin(uio->uio_resid, PAGE_SIZE - delta);
+		/* len = ulmin(len, (off_t)r->vr_end - uio->uio_offset); */
 
 		rc = vme_map_r(r, trunc_page(uio->uio_offset), PAGE_SIZE, 0,
 		    uio->uio_rw == UIO_READ ? PROT_READ : PROT_READ | PROT_WRITE,
@@ -954,7 +954,7 @@ vmerw(struct vme_softc *sc, int awidth, int dwidth, struct uio *uio, int flags)
 			break;
 
 		/* XXX wrap this because of dwidth */
-		rc = uiomovei((caddr_t)vmepg + delta, len, uio);
+		rc = uiomove((caddr_t)vmepg + delta, len, uio);
 
 		/* inline vme_unmap */
 		pmap_kremove(vmepg, PAGE_SIZE);

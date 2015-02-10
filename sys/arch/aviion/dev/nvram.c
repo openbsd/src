@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.10 2015/02/10 21:56:09 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.11 2015/02/10 22:42:35 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -68,7 +68,7 @@ struct cfdriver nvram_cd = {
 };
 
 time_t	chiptotime(int, int, int, int, int, int);
-int	nvramrw(caddr_t, int, struct uio *, int);
+int	nvramrw(caddr_t, size_t, struct uio *, int);
 
 int
 nvrammatch(parent, vcf, args)
@@ -116,7 +116,7 @@ nvramattach(parent, self, args)
 
 	sc->sc_ioh = ioh;
 
-	printf(": MK48T0%ld\n", sc->sc_len / 1024);
+	printf(": MK48T0%zu\n", sc->sc_len / 1024);
 }
 
 #define	LEAPYEAR(y)	(((y) & 3) == 0)
@@ -448,12 +448,15 @@ read_nvram(struct nvramsoftc *sc)
 
 /*ARGSUSED*/
 int
-nvramrw(caddr_t base, int len, struct uio *uio, int flags)
+nvramrw(caddr_t base, size_t len, struct uio *uio, int flags)
 {
 	vaddr_t v;
-	int c;
+	size_t c;
 	struct iovec *iov;
 	int error = 0;
+
+	if (uio->uio_offset < 0)
+		return EINVAL;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -468,12 +471,15 @@ nvramrw(caddr_t base, int len, struct uio *uio, int flags)
 		}
 
 		v = uio->uio_offset;
-		c = min(iov->iov_len, MAXPHYS);
-		if (v + c > len)
-			c = len - v;	/* till end of dev */
+		if (v <= len) {
+			c = ulmin(iov->iov_len, MAXPHYS);
+			if (c > len - v)
+				c = len - v;	/* till end of dev */
+		} else
+			c = 0;
 		if (c == 0)
 			return (0);
-		error = uiomovei(base + v, c, uio);
+		error = uiomove(base + v, c, uio);
 	}
 	return (error);
 }
