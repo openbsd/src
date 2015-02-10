@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.12 2015/02/10 23:10:21 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.13 2015/02/10 23:19:34 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -250,15 +250,15 @@ dwc2_allocm(struct usbd_bus *bus, struct usb_dma *dma, uint32_t size)
 static void
 dwc2_freem(struct usbd_bus *bus, struct usb_dma *dma)
 {
-        struct dwc2_softc *sc = DWC2_BUS2SC(bus);
+	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 
 	DPRINTFN(10, "\n");
 
-        if (dma->block->flags & USB_DMA_RESERVE) {
-                usb_reserve_freem(&sc->sc_dma_reserve, dma);
-                return;
-        }
-        usb_freemem(&sc->sc_bus, dma);
+	if (dma->block->flags & USB_DMA_RESERVE) {
+		usb_reserve_freem(&sc->sc_dma_reserve, dma);
+		return;
+	}
+	usb_freemem(&sc->sc_bus, dma);
 }
 
 struct usbd_xfer *
@@ -353,7 +353,7 @@ dwc2_softintr(void *v)
 	mtx_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 
-    		KASSERTMSG(!timeout_pending(&dxfer->xfer.timeout_handle), 
+		KASSERTMSG(!timeout_pending(&dxfer->xfer.timeout_handle), 
 		    "xfer %p pipe %p\n", dxfer, dxfer->xfer.pipe);
 
 		/*
@@ -830,7 +830,7 @@ dwc2_root_ctrl_start(struct usbd_xfer *xfer)
 	case C(UR_SYNCH_FRAME, UT_WRITE_ENDPOINT):
 		break;
 	default:
-	    	/* Hub requests - XXXNH len check? */
+		/* Hub requests - XXXNH len check? */
 		err = dwc2_hcd_hub_control(sc->sc_hsotg,
 		    C(req->bRequest, req->bmRequestType), value, index,
 		    buf, len);
@@ -1080,7 +1080,7 @@ static void
 dwc2_device_bulk_done(struct usbd_xfer *xfer)
 {
 
-    	DPRINTF("xfer=%p\n", xfer);
+	DPRINTF("xfer=%p\n", xfer);
 }
 
 /***********************************************************************/
@@ -1238,7 +1238,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-        struct dwc2_hcd_urb *dwc2_urb;
+	struct dwc2_hcd_urb *dwc2_urb;
 
 	struct usbd_device *dev = xfer->pipe->device;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
@@ -1303,7 +1303,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 
 	dwc2_urb = dxfer->urb;
 	if (!dwc2_urb)
-		    return USBD_NOMEM;
+		return USBD_NOMEM;
 
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
 	    sizeof(dwc2_urb->iso_descs[0]) * DWC2_MAXISOCPACKETS);
@@ -1327,7 +1327,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	 * everything else does.
 	 */
 	if (!(xfertype == UE_CONTROL && len == 0)) {
-    		dwc2_urb->usbdma = &xfer->dmabuf;
+		dwc2_urb->usbdma = &xfer->dmabuf;
 		dwc2_urb->buf = KERNADDR(dwc2_urb->usbdma, 0);
 		dwc2_urb->dma = DMAADDR(dwc2_urb->usbdma, 0);
  	}
@@ -1687,7 +1687,7 @@ int dwc2_host_get_speed(struct dwc2_hsotg *hsotg, void *context)
  * Must be called with interrupt disabled and spinlock held
  */
 void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
-                        int status)
+			int status)
 {
 	struct usbd_xfer *xfer;
 	struct dwc2_xfer *dxfer;
