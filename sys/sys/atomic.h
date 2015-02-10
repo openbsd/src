@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.2 2015/01/23 09:50:45 dlg Exp $ */
+/*	$OpenBSD: atomic.h,v 1.3 2015/02/10 11:39:18 dlg Exp $ */
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
  *
@@ -31,7 +31,7 @@
 
 #ifndef atomic_cas_uint
 static inline unsigned int
-atomic_cas_uint(unsigned int *p, unsigned int o, unsigned int n)
+atomic_cas_uint(volatile unsigned int *p, unsigned int o, unsigned int n)
 {
 	return __sync_val_compare_and_swap(p, o, n);
 }
@@ -39,7 +39,7 @@ atomic_cas_uint(unsigned int *p, unsigned int o, unsigned int n)
 
 #ifndef atomic_cas_ulong
 static inline unsigned long
-atomic_cas_ulong(unsigned long *p, unsigned long o, unsigned long n)
+atomic_cas_ulong(volatile unsigned long *p, unsigned long o, unsigned long n)
 {
 	return __sync_val_compare_and_swap(p, o, n);
 }
@@ -47,9 +47,10 @@ atomic_cas_ulong(unsigned long *p, unsigned long o, unsigned long n)
 
 #ifndef atomic_cas_ptr
 static inline void *
-atomic_cas_ptr(void *p, void *o, void *n)
+atomic_cas_ptr(volatile void *pp, void *o, void *n)
 {
-	return __sync_val_compare_and_swap((void **)p, o, n);
+	void * volatile *p = pp;
+	return __sync_val_compare_and_swap(p, o, n);
 }
 #endif
 
@@ -59,7 +60,7 @@ atomic_cas_ptr(void *p, void *o, void *n)
 
 #ifndef atomic_swap_uint
 static inline unsigned int
-atomic_swap_uint(unsigned int *p, unsigned int v)
+atomic_swap_uint(volatile unsigned int *p, unsigned int v)
 {
 	return __sync_lock_test_and_set(p, v);
 }
@@ -67,7 +68,7 @@ atomic_swap_uint(unsigned int *p, unsigned int v)
 
 #ifndef atomic_swap_ulong
 static inline unsigned long
-atomic_swap_ulong(unsigned long *p, unsigned long v)
+atomic_swap_ulong(volatile unsigned long *p, unsigned long v)
 {
 	return __sync_lock_test_and_set(p, v);
 }
@@ -75,9 +76,10 @@ atomic_swap_ulong(unsigned long *p, unsigned long v)
 
 #ifndef atomic_swap_ptr
 static inline void *
-atomic_swap_ptr(void *p, void *v)
+atomic_swap_ptr(volatile void *pp, void *v)
 {
-	return __sync_lock_test_and_set((void **)p, v);
+	void * volatile *p = pp;
+	return __sync_lock_test_and_set(p, v);
 }
 #endif
 
@@ -95,7 +97,7 @@ atomic_add_int_nv(volatile unsigned int *p, unsigned int v)
 
 #ifndef atomic_add_long_nv
 static inline unsigned long
-atomic_add_long_nv(unsigned long *p, unsigned long v)
+atomic_add_long_nv(volatile unsigned long *p, unsigned long v)
 {
 	return __sync_add_and_fetch(p, v);
 }
