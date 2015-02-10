@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.166 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.167 2015/02/10 01:36:59 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -322,6 +322,9 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
+			/* ... must also clear the zeropad in the sockaddr */
+			bzero(sin->sin_zero, sizeof(sin->sin_zero));
+
 			if (!((so->so_options & SO_BINDANY) ||
 			    (sin->sin_addr.s_addr == INADDR_BROADCAST &&
 			     so->so_type == SOCK_DGRAM))) {
