@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.7 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -986,9 +986,9 @@ static bool radeon_switcheroo_can_switch(struct pci_dev *pdev)
 	struct drm_device *dev = pci_get_drvdata(pdev);
 	bool can_switch;
 
-	mtx_enter(&dev->count_lock);
+	spin_lock(&dev->count_lock);
 	can_switch = (dev->open_count == 0);
-	mtx_leave(&dev->count_lock);
+	spin_unlock(&dev->count_lock);
 	return can_switch;
 }
 

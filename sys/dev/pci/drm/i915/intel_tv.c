@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_tv.c,v 1.7 2014/05/03 05:19:37 jsg Exp $	*/
+/*	$OpenBSD: intel_tv.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright © 2006-2008 Intel Corporation
  *   Jesse Barnes <jesse.barnes@intel.com>
@@ -1172,17 +1172,18 @@ intel_tv_detect_type(struct intel_tv *intel_tv,
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	unsigned long irqflags;
 	u32 tv_ctl, save_tv_ctl;
 	u32 tv_dac, save_tv_dac;
 	int type;
 
 	/* Disable TV interrupts around load detect or we'll recurse */
 	if (connector->polled & DRM_CONNECTOR_POLL_HPD) {
-		mtx_enter(&dev_priv->irq_lock);
+		spin_lock_irqsave(&dev_priv->irq_lock, irqflags);
 		i915_disable_pipestat(dev_priv, 0,
 				      PIPE_HOTPLUG_INTERRUPT_ENABLE |
 				      PIPE_HOTPLUG_TV_INTERRUPT_ENABLE);
-		mtx_leave(&dev_priv->irq_lock);
+		spin_unlock_irqrestore(&dev_priv->irq_lock, irqflags);
 	}
 
 	save_tv_dac = tv_dac = I915_READ(TV_DAC);
@@ -1255,11 +1256,11 @@ intel_tv_detect_type(struct intel_tv *intel_tv,
 
 	/* Restore interrupt config */
 	if (connector->polled & DRM_CONNECTOR_POLL_HPD) {
-		mtx_enter(&dev_priv->irq_lock);
+		spin_lock_irqsave(&dev_priv->irq_lock, irqflags);
 		i915_enable_pipestat(dev_priv, 0,
 				     PIPE_HOTPLUG_INTERRUPT_ENABLE |
 				     PIPE_HOTPLUG_TV_INTERRUPT_ENABLE);
-		mtx_leave(&dev_priv->irq_lock);
+		spin_unlock_irqrestore(&dev_priv->irq_lock, irqflags);
 	}
 
 	return type;

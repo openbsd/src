@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.h,v 1.3 2015/02/10 10:50:49 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -112,13 +112,13 @@ static inline void ttm_mem_init_shrink(struct ttm_mem_shrink *shrink,
 static inline int ttm_mem_register_shrink(struct ttm_mem_global *glob,
 					  struct ttm_mem_shrink *shrink)
 {
-	mtx_enter(&glob->lock);
+	spin_lock(&glob->lock);
 	if (glob->shrink != NULL) {
-		mtx_leave(&glob->lock);
+		spin_unlock(&glob->lock);
 		return -EBUSY;
 	}
 	glob->shrink = shrink;
-	mtx_leave(&glob->lock);
+	spin_unlock(&glob->lock);
 	return 0;
 }
 
@@ -133,10 +133,10 @@ static inline int ttm_mem_register_shrink(struct ttm_mem_global *glob,
 static inline void ttm_mem_unregister_shrink(struct ttm_mem_global *glob,
 					     struct ttm_mem_shrink *shrink)
 {
-	mtx_enter(&glob->lock);
+	spin_lock(&glob->lock);
 	BUG_ON(glob->shrink != shrink);
 	glob->shrink = NULL;
-	mtx_leave(&glob->lock);
+	spin_unlock(&glob->lock);
 }
 
 extern int ttm_mem_global_init(struct ttm_mem_global *glob);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.33 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.34 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1235,6 +1235,7 @@ u32 radeon_get_vblank_counter_kms(struct drm_device *dev, int crtc)
 int radeon_enable_vblank_kms(struct drm_device *dev, int crtc)
 {
 	struct radeon_device *rdev = dev->dev_private;
+	unsigned long irqflags;
 	int r;
 
 	if (crtc < 0 || crtc >= rdev->num_crtc) {
@@ -1242,10 +1243,10 @@ int radeon_enable_vblank_kms(struct drm_device *dev, int crtc)
 		return -EINVAL;
 	}
 
-	mtx_enter(&rdev->irq.lock);
+	spin_lock_irqsave(&rdev->irq.lock, irqflags);
 	rdev->irq.crtc_vblank_int[crtc] = true;
 	r = radeon_irq_set(rdev);
-	mtx_leave(&rdev->irq.lock);
+	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
 	return r;
 }
 
@@ -1260,16 +1261,17 @@ int radeon_enable_vblank_kms(struct drm_device *dev, int crtc)
 void radeon_disable_vblank_kms(struct drm_device *dev, int crtc)
 {
 	struct radeon_device *rdev = dev->dev_private;
+	unsigned long irqflags;
 
 	if (crtc < 0 || crtc >= rdev->num_crtc) {
 		DRM_ERROR("Invalid crtc %d\n", crtc);
 		return;
 	}
 
-	mtx_enter(&rdev->irq.lock);
+	spin_lock_irqsave(&rdev->irq.lock, irqflags);
 	rdev->irq.crtc_vblank_int[crtc] = false;
 	radeon_irq_set(rdev);
-	mtx_leave(&rdev->irq.lock);
+	spin_unlock_irqrestore(&rdev->irq.lock, irqflags);
 }
 
 /**

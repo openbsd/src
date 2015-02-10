@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.39 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.40 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -408,10 +408,11 @@ static const intel_limit_t intel_limits_vlv_dp = {
 
 u32 intel_dpio_read(struct drm_i915_private *dev_priv, int reg)
 {
+	unsigned long flags;
 	u32 val = 0;
 	int retries;
 
-	mtx_enter(&dev_priv->dpio_lock);
+	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
 	for (retries = 50; retries > 0; retries--) {
 		if ((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0)
 			break;
@@ -437,16 +438,17 @@ u32 intel_dpio_read(struct drm_i915_private *dev_priv, int reg)
 	val = I915_READ(DPIO_DATA);
 
 out_unlock:
-	mtx_leave(&dev_priv->dpio_lock);
+	spin_unlock_irqrestore(&dev_priv->dpio_lock, flags);
 	return val;
 }
 
 static void intel_dpio_write(struct drm_i915_private *dev_priv, int reg,
 			     u32 val)
 {
+	unsigned long flags;
 	int retries;
 
-	mtx_enter(&dev_priv->dpio_lock);
+	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
 	for (retries = 50; retries > 0; retries--) {
 		if ((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0)
 			break;
@@ -470,7 +472,7 @@ static void intel_dpio_write(struct drm_i915_private *dev_priv, int reg,
 		DRM_ERROR("DPIO write wait timed out\n");
 
 out_unlock:
-       mtx_leave(&dev_priv->dpio_lock);
+       spin_unlock_irqrestore(&dev_priv->dpio_lock, flags);
 }
 
 static void vlv_init_dpio(struct drm_device *dev)
@@ -1553,10 +1555,11 @@ static void
 intel_sbi_write(struct drm_i915_private *dev_priv, u16 reg, u32 value,
 		enum intel_sbi_destination destination)
 {
+	unsigned long flags;
 	u32 tmp;
 	int retries;
 
-	mtx_enter(&dev_priv->dpio_lock);
+	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
 	for (retries = 100; retries > 0; retries--) {
 		if ((I915_READ(SBI_CTL_STAT) & SBI_BUSY) == 0)
 			break;
@@ -1587,17 +1590,18 @@ intel_sbi_write(struct drm_i915_private *dev_priv, u16 reg, u32 value,
 	}
 
 out_unlock:
-	mtx_leave(&dev_priv->dpio_lock);
+	spin_unlock_irqrestore(&dev_priv->dpio_lock, flags);
 }
 
 static u32
 intel_sbi_read(struct drm_i915_private *dev_priv, u16 reg,
 	       enum intel_sbi_destination destination)
 {
+	unsigned long flags;
 	u32 value = 0;
 	int retries;
 
-	mtx_enter(&dev_priv->dpio_lock);
+	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
 	for (retries = 100; retries > 0; retries--) {
 		if ((I915_READ(SBI_CTL_STAT) & SBI_BUSY) == 0)
 			break;
@@ -1629,7 +1633,7 @@ intel_sbi_read(struct drm_i915_private *dev_priv, u16 reg,
 	value = I915_READ(SBI_DATA);
 
 out_unlock:
-	mtx_leave(&dev_priv->dpio_lock);
+	spin_unlock_irqrestore(&dev_priv->dpio_lock, flags);
 	return value;
 }
 
@@ -3038,14 +3042,15 @@ static bool intel_crtc_has_pending_flip(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	unsigned long flags;
 	bool pending;
 
 	if (atomic_read(&dev_priv->mm.wedged))
 		return false;
 
-	mtx_enter(&dev->event_lock);
+	spin_lock_irqsave(&dev->event_lock, flags);
 	pending = to_intel_crtc(crtc)->unpin_work != NULL;
-	mtx_leave(&dev->event_lock);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 
 	return pending;
 }
@@ -7168,11 +7173,12 @@ static void intel_crtc_destroy(struct drm_crtc *crtc)
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct drm_device *dev = crtc->dev;
 	struct intel_unpin_work *work;
+	unsigned long flags;
 
-	mtx_enter(&dev->event_lock);
+	spin_lock_irqsave(&dev->event_lock, flags);
 	work = intel_crtc->unpin_work;
 	intel_crtc->unpin_work = NULL;
-	mtx_leave(&dev->event_lock);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 
 	if (work) {
 		task_del(systq, &work->task);
@@ -7210,19 +7216,20 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_unpin_work *work;
 	struct drm_i915_gem_object *obj;
+	unsigned long flags;
 
 	/* Ignore early vblank irqs */
 	if (intel_crtc == NULL)
 		return;
 
-	mtx_enter(&dev->event_lock);
+	spin_lock_irqsave(&dev->event_lock, flags);
 	work = intel_crtc->unpin_work;
 
 	/* Ensure we don't miss a work->pending update ... */
 	DRM_READMEMORYBARRIER();
 
 	if (work == NULL || atomic_read(&work->pending) < INTEL_FLIP_COMPLETE) {
-		mtx_leave(&dev->event_lock);
+		spin_unlock_irqrestore(&dev->event_lock, flags);
 		return;
 	}
 
@@ -7236,7 +7243,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 
 	drm_vblank_put(dev, intel_crtc->pipe);
 
-	mtx_leave(&dev->event_lock);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 
 	obj = work->old_fb_obj;
 
@@ -7269,15 +7276,16 @@ void intel_prepare_page_flip(struct drm_device *dev, int plane)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc =
 		to_intel_crtc(dev_priv->plane_to_crtc_mapping[plane]);
+	unsigned long flags;
 
 	/* NB: An MMIO update of the plane base pointer will also
 	 * generate a page-flip completion irq, i.e. every modeset
 	 * is also accompanied by a spurious intel_prepare_page_flip().
 	 */
-	mtx_enter(&dev->event_lock);
+	spin_lock_irqsave(&dev->event_lock, flags);
 	if (intel_crtc->unpin_work)
 		atomic_inc_not_zero(&intel_crtc->unpin_work->pending);
-	mtx_leave(&dev->event_lock);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 }
 
 static inline void intel_mark_page_flip_active(struct intel_crtc *intel_crtc)
@@ -7554,6 +7562,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 	struct drm_i915_gem_object *obj = to_intel_framebuffer(fb)->obj;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_unpin_work *work;
+	unsigned long flags;
 	int ret;
 
 	/* Can't change pixel format via MI display flips. */
@@ -7583,9 +7592,9 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 		goto free_work;
 
 	/* We borrow the event spin lock for protecting unpin_work */
-	mtx_enter(&dev->event_lock);
+	spin_lock_irqsave(&dev->event_lock, flags);
 	if (intel_crtc->unpin_work) {
-		mtx_leave(&dev->event_lock);
+		spin_unlock_irqrestore(&dev->event_lock, flags);
 		kfree(work);
 		drm_vblank_put(dev, intel_crtc->pipe);
 
@@ -7593,7 +7602,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 		return -EBUSY;
 	}
 	intel_crtc->unpin_work = work;
-	mtx_leave(&dev->event_lock);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 
 #ifdef notyet
 	if (atomic_read(&intel_crtc->unpin_work_count) >= 2)
@@ -7641,9 +7650,9 @@ cleanup_pending:
 	mutex_unlock(&dev->struct_mutex);
 
 cleanup:
-	mtx_enter(&dev->event_lock);
+	spin_lock_irqsave(&dev->event_lock, flags);
 	intel_crtc->unpin_work = NULL;
-	mtx_leave(&dev->event_lock);
+	spin_unlock_irqrestore(&dev->event_lock, flags);
 
 	drm_vblank_put(dev, intel_crtc->pipe);
 free_work:

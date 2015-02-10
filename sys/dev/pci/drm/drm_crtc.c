@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.9 2015/02/10 03:39:41 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.10 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -3619,6 +3619,7 @@ int drm_mode_page_flip_ioctl(struct drm_device *dev,
 	struct drm_crtc *crtc;
 	struct drm_framebuffer *fb;
 	struct drm_pending_vblank_event *e = NULL;
+	unsigned long flags;
 	int hdisplay, vdisplay;
 	int ret = -EINVAL;
 
@@ -3675,19 +3676,19 @@ int drm_mode_page_flip_ioctl(struct drm_device *dev,
 
 	if (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT) {
 		ret = -ENOMEM;
-		mtx_enter(&dev->event_lock);
+		spin_lock_irqsave(&dev->event_lock, flags);
 		if (file_priv->event_space < sizeof e->event) {
-			mtx_leave(&dev->event_lock);
+			spin_unlock_irqrestore(&dev->event_lock, flags);
 			goto out;
 		}
 		file_priv->event_space -= sizeof e->event;
-		mtx_leave(&dev->event_lock);
+		spin_unlock_irqrestore(&dev->event_lock, flags);
 
 		e = kzalloc(sizeof *e, GFP_KERNEL);
 		if (e == NULL) {
-			mtx_enter(&dev->event_lock);
+			spin_lock_irqsave(&dev->event_lock, flags);
 			file_priv->event_space += sizeof e->event;
-			mtx_leave(&dev->event_lock);
+			spin_unlock_irqrestore(&dev->event_lock, flags);
 			goto out;
 		}
 
@@ -3703,9 +3704,9 @@ int drm_mode_page_flip_ioctl(struct drm_device *dev,
 	ret = crtc->funcs->page_flip(crtc, fb, e);
 	if (ret) {
 		if (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT) {
-			mtx_enter(&dev->event_lock);
+			spin_lock_irqsave(&dev->event_lock, flags);
 			file_priv->event_space += sizeof e->event;
-			mtx_leave(&dev->event_lock);
+			spin_unlock_irqrestore(&dev->event_lock, flags);
 			kfree(e);
 		}
 	}

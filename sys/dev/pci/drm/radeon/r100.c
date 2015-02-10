@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.8 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: r100.c,v 1.9 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -4196,14 +4196,15 @@ uint32_t r100_mm_rreg(struct radeon_device *rdev, uint32_t reg,
 		return bus_space_read_4(rdev->memt, rdev->rmmio, reg);
 		    
 	else {
+		unsigned long flags;
 		uint32_t ret;
 
-		mtx_enter(&rdev->mmio_idx_lock);
+		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
 		bus_space_write_4(rdev->memt, rdev->rmmio,
 		    RADEON_MM_INDEX, reg);
 		ret = bus_space_read_4(rdev->memt, rdev->rmmio,
 		    RADEON_MM_DATA);
-		mtx_leave(&rdev->mmio_idx_lock);
+		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 
 		return ret;
 	}
@@ -4215,12 +4216,14 @@ void r100_mm_wreg(struct radeon_device *rdev, uint32_t reg, uint32_t v,
 	if (reg < rdev->rmmio_size && !always_indirect)
 		bus_space_write_4(rdev->memt, rdev->rmmio, reg, v);
 	else {
-		mtx_enter(&rdev->mmio_idx_lock);
+		unsigned long flags;
+
+		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
 		bus_space_write_4(rdev->memt, rdev->rmmio,
 		    RADEON_MM_INDEX, reg);
 		bus_space_write_4(rdev->memt, rdev->rmmio,
 		    RADEON_MM_DATA, v);
-		mtx_leave(&rdev->mmio_idx_lock);
+		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.8 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.9 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -944,9 +944,9 @@ static int radeon_mm_dump_table(struct seq_file *m, void *data)
 	int ret;
 	struct ttm_bo_global *glob = rdev->mman.bdev.glob;
 
-	mtx_enter(&glob->lru_lock);
+	spin_lock(&glob->lru_lock);
 	ret = drm_mm_dump_table(m, mm);
-	mtx_leave(&glob->lru_lock);
+	spin_unlock(&glob->lru_lock);
 	return ret;
 }
 #endif

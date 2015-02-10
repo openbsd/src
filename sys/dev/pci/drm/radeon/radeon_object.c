@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.6 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.7 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -632,12 +632,12 @@ int radeon_bo_wait(struct radeon_bo *bo, u32 *mem_type, bool no_wait)
 	r = ttm_bo_reserve(&bo->tbo, true, no_wait, false, 0);
 	if (unlikely(r != 0))
 		return r;
-	mtx_enter(&bo->tbo.bdev->fence_lock);
+	spin_lock(&bo->tbo.bdev->fence_lock);
 	if (mem_type)
 		*mem_type = bo->tbo.mem.mem_type;
 	if (bo->tbo.sync_obj)
 		r = ttm_bo_wait(&bo->tbo, true, true, no_wait);
-	mtx_leave(&bo->tbo.bdev->fence_lock);
+	spin_unlock(&bo->tbo.bdev->fence_lock);
 	ttm_bo_unreserve(&bo->tbo);
 	return r;
 }

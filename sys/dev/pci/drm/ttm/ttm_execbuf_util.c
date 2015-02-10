@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_execbuf_util.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_execbuf_util.c,v 1.2 2015/02/10 10:50:49 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -87,9 +87,9 @@ static int ttm_eu_wait_unreserved_locked(struct list_head *list,
 	int ret;
 
 	ttm_eu_del_from_lru_locked(list);
-	mtx_leave(&glob->lru_lock);
+	spin_unlock(&glob->lru_lock);
 	ret = ttm_bo_wait_unreserved(bo, true);
-	mtx_enter(&glob->lru_lock);
+	spin_lock(&glob->lru_lock);
 	if (unlikely(ret != 0))
 		ttm_eu_backoff_reservation_locked(list);
 	return ret;
@@ -106,9 +106,9 @@ void ttm_eu_backoff_reservation(struct list_head *list)
 
 	entry = list_first_entry(list, struct ttm_validate_buffer, head);
 	glob = entry->bo->glob;
-	mtx_enter(&glob->lru_lock);
+	spin_lock(&glob->lru_lock);
 	ttm_eu_backoff_reservation_locked(list);
-	mtx_leave(&glob->lru_lock);
+	spin_unlock(&glob->lru_lock);
 }
 EXPORT_SYMBOL(ttm_eu_backoff_reservation);
 
@@ -144,7 +144,7 @@ int ttm_eu_reserve_buffers(struct list_head *list)
 	glob = entry->bo->glob;
 
 retry:
-	mtx_enter(&glob->lru_lock);
+	spin_lock(&glob->lru_lock);
 	val_seq = entry->bo->bdev->val_seq++;
 
 	list_for_each_entry(entry, list, head) {
@@ -158,14 +158,14 @@ retry_this_bo:
 		case -EBUSY:
 			ret = ttm_eu_wait_unreserved_locked(list, bo);
 			if (unlikely(ret != 0)) {
-				mtx_leave(&glob->lru_lock);
+				spin_unlock(&glob->lru_lock);
 				ttm_eu_list_ref_sub(list);
 				return ret;
 			}
 			goto retry_this_bo;
 		case -EAGAIN:
 			ttm_eu_backoff_reservation_locked(list);
-			mtx_leave(&glob->lru_lock);
+			spin_unlock(&glob->lru_lock);
 			ttm_eu_list_ref_sub(list);
 			ret = ttm_bo_wait_unreserved(bo, true);
 			if (unlikely(ret != 0))
@@ -173,7 +173,7 @@ retry_this_bo:
 			goto retry;
 		default:
 			ttm_eu_backoff_reservation_locked(list);
-			mtx_leave(&glob->lru_lock);
+			spin_unlock(&glob->lru_lock);
 			ttm_eu_list_ref_sub(list);
 			return ret;
 		}
@@ -181,14 +181,14 @@ retry_this_bo:
 		entry->reserved = true;
 		if (unlikely(atomic_read(&bo->cpu_writers) > 0)) {
 			ttm_eu_backoff_reservation_locked(list);
-			mtx_leave(&glob->lru_lock);
+			spin_unlock(&glob->lru_lock);
 			ttm_eu_list_ref_sub(list);
 			return -EBUSY;
 		}
 	}
 
 	ttm_eu_del_from_lru_locked(list);
-	mtx_leave(&glob->lru_lock);
+	spin_unlock(&glob->lru_lock);
 	ttm_eu_list_ref_sub(list);
 
 	return 0;
@@ -211,8 +211,8 @@ void ttm_eu_fence_buffer_objects(struct list_head *list, void *sync_obj)
 	driver = bdev->driver;
 	glob = bo->glob;
 
-	mtx_enter(&glob->lru_lock);
-	mtx_enter(&bdev->fence_lock);
+	spin_lock(&glob->lru_lock);
+	spin_lock(&bdev->fence_lock);
 
 	list_for_each_entry(entry, list, head) {
 		bo = entry->bo;
@@ -221,8 +221,8 @@ void ttm_eu_fence_buffer_objects(struct list_head *list, void *sync_obj)
 		ttm_bo_unreserve_locked(bo);
 		entry->reserved = false;
 	}
-	mtx_leave(&bdev->fence_lock);
-	mtx_leave(&glob->lru_lock);
+	spin_unlock(&bdev->fence_lock);
+	spin_unlock(&glob->lru_lock);
 
 	list_for_each_entry(entry, list, head) {
 		if (entry->old_sync_obj)

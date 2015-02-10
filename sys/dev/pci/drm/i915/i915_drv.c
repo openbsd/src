@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.72 2015/02/10 01:39:32 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.73 2015/02/10 10:50:49 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1485,12 +1485,13 @@ static int gen6_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = 0;
+	unsigned long irqflags;
 	int retries;
 
 	/* Hold gt_lock across reset to prevent any register access
 	 * with forcewake not set correctly
 	 */
-	mtx_enter(&dev_priv->gt_lock);
+	spin_lock_irqsave(&dev_priv->gt_lock, irqflags);
 
 	/* Reset the chip */
 
@@ -1520,7 +1521,7 @@ static int gen6_do_reset(struct drm_device *dev)
 	/* Restore fifo count */
 	dev_priv->gt_fifo_count = I915_READ_NOTRACE(GT_FIFO_FREE_ENTRIES);
 
-	mtx_leave(&dev_priv->gt_lock);
+	spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags);
 	return ret;
 }
 
@@ -2180,8 +2181,9 @@ ilk_dummy_write(struct drm_i915_private *dev_priv)
 #define __i915_read(x, y) \
 u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev; \
+	unsigned long irqflags; \
 	u##x val = 0; \
-	mtx_enter(&dev_priv->gt_lock); \
+	spin_lock_irqsave(&dev_priv->gt_lock, irqflags); \
 	if (IS_GEN5(dev)) \
 		ilk_dummy_write(dev_priv); \
 	if (NEEDS_FORCE_WAKE((dev), (reg))) { \
@@ -2195,7 +2197,7 @@ u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
 	} else { \
 		val = read##x(dev_priv, reg); \
 	} \
-	mtx_leave(&dev_priv->gt_lock); \
+	spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags); \
 	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
 	return val; \
 }
@@ -2208,10 +2210,11 @@ __i915_read(64, q)
 
 #define __i915_write(x, y) \
 void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
+	unsigned long irqflags; \
 	u32 __fifo_ret = 0; \
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev; \
 	trace_i915_reg_rw(true, reg, val, sizeof(val)); \
-	mtx_enter(&dev_priv->gt_lock); \
+	spin_lock_irqsave(&dev_priv->gt_lock, irqflags); \
 	if (NEEDS_FORCE_WAKE((dev), (reg))) { \
 		__fifo_ret = __gen6_gt_wait_for_fifo(dev_priv); \
 	} \
@@ -2233,7 +2236,7 @@ void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
 		DRM_ERROR("Unclaimed write to %x\n", reg); \
 		write32(dev_priv, GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED);	\
 	} \
-	mtx_leave(&dev_priv->gt_lock); \
+	spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags); \
 }
 __i915_write(8, b)
 __i915_write(16, w)

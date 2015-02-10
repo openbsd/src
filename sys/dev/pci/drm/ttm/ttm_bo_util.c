@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.7 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -463,12 +463,12 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	fbo->vm_node = NULL;
 	atomic_set(&fbo->cpu_writers, 0);
 
-	mtx_enter(&bdev->fence_lock);
+	spin_lock(&bdev->fence_lock);
 	if (bo->sync_obj)
 		fbo->sync_obj = driver->sync_obj_ref(bo->sync_obj);
 	else
 		fbo->sync_obj = NULL;
-	mtx_leave(&bdev->fence_lock);
+	spin_unlock(&bdev->fence_lock);
 	refcount_init(&fbo->list_kref, 1);
 	refcount_init(&fbo->kref, 1);
 	fbo->destroy = &ttm_transfered_destroy;
@@ -705,7 +705,7 @@ int ttm_bo_move_accel_cleanup(struct ttm_buffer_object *bo,
 	struct ttm_buffer_object *ghost_obj;
 	void *tmp_obj = NULL;
 
-	mtx_enter(&bdev->fence_lock);
+	spin_lock(&bdev->fence_lock);
 	if (bo->sync_obj) {
 		tmp_obj = bo->sync_obj;
 		bo->sync_obj = NULL;
@@ -713,7 +713,7 @@ int ttm_bo_move_accel_cleanup(struct ttm_buffer_object *bo,
 	bo->sync_obj = driver->sync_obj_ref(sync_obj);
 	if (evict) {
 		ret = ttm_bo_wait(bo, false, false, false);
-		mtx_leave(&bdev->fence_lock);
+		spin_unlock(&bdev->fence_lock);
 		if (tmp_obj)
 			driver->sync_obj_unref(&tmp_obj);
 		if (ret)
@@ -736,7 +736,7 @@ int ttm_bo_move_accel_cleanup(struct ttm_buffer_object *bo,
 		 */
 
 		set_bit(TTM_BO_PRIV_FLAG_MOVING, &bo->priv_flags);
-		mtx_leave(&bdev->fence_lock);
+		spin_unlock(&bdev->fence_lock);
 		if (tmp_obj)
 			driver->sync_obj_unref(&tmp_obj);
 

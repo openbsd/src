@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.3 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.4 2015/02/10 10:50:49 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -160,17 +160,17 @@ ttm_bo_vm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	 * move.
 	 */
 
-	mtx_enter(&bdev->fence_lock);
+	spin_lock(&bdev->fence_lock);
 	if (test_bit(TTM_BO_PRIV_FLAG_MOVING, &bo->priv_flags)) {
 		ret = ttm_bo_wait(bo, false, true, false);
-		mtx_leave(&bdev->fence_lock);
+		spin_unlock(&bdev->fence_lock);
 		if (unlikely(ret != 0)) {
 			retval = (ret != -ERESTARTSYS) ?
 			    VM_PAGER_ERROR : VM_PAGER_REFAULT;
 			goto out_unlock;
 		}
 	} else
-		mtx_leave(&bdev->fence_lock);
+		spin_unlock(&bdev->fence_lock);
 
 	ret = ttm_mem_io_lock(man, true);
 	if (unlikely(ret != 0)) {

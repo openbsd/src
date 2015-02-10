@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_manager.c,v 1.2 2014/02/09 10:57:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_manager.c,v 1.3 2015/02/10 10:50:49 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
@@ -64,19 +64,19 @@ static int ttm_bo_man_get_node(struct ttm_mem_type_manager *man,
 		if (unlikely(ret))
 			return ret;
 
-		mtx_enter(&rman->lock);
+		spin_lock(&rman->lock);
 		node = drm_mm_search_free_in_range(mm,
 					mem->num_pages, mem->page_alignment,
 					placement->fpfn, lpfn, 1);
 		if (unlikely(node == NULL)) {
-			mtx_leave(&rman->lock);
+			spin_unlock(&rman->lock);
 			return 0;
 		}
 		node = drm_mm_get_block_atomic_range(node, mem->num_pages,
 						     mem->page_alignment,
 						     placement->fpfn,
 						     lpfn);
-		mtx_leave(&rman->lock);
+		spin_unlock(&rman->lock);
 	} while (node == NULL);
 
 	mem->mm_node = node;
@@ -90,9 +90,9 @@ static void ttm_bo_man_put_node(struct ttm_mem_type_manager *man,
 	struct ttm_range_manager *rman = (struct ttm_range_manager *) man->priv;
 
 	if (mem->mm_node) {
-		mtx_enter(&rman->lock);
+		spin_lock(&rman->lock);
 		drm_mm_put_block(mem->mm_node);
-		mtx_leave(&rman->lock);
+		spin_unlock(&rman->lock);
 		mem->mm_node = NULL;
 	}
 }
@@ -123,15 +123,15 @@ static int ttm_bo_man_takedown(struct ttm_mem_type_manager *man)
 	struct ttm_range_manager *rman = (struct ttm_range_manager *) man->priv;
 	struct drm_mm *mm = &rman->mm;
 
-	mtx_enter(&rman->lock);
+	spin_lock(&rman->lock);
 	if (drm_mm_clean(mm)) {
 		drm_mm_takedown(mm);
-		mtx_leave(&rman->lock);
+		spin_unlock(&rman->lock);
 		kfree(rman);
 		man->priv = NULL;
 		return 0;
 	}
-	mtx_leave(&rman->lock);
+	spin_unlock(&rman->lock);
 	return -EBUSY;
 }
 
@@ -142,9 +142,9 @@ static void ttm_bo_man_debug(struct ttm_mem_type_manager *man,
 #ifdef notyet
 	struct ttm_range_manager *rman = (struct ttm_range_manager *) man->priv;
 
-	mtx_enter(&rman->lock);
+	spin_lock(&rman->lock);
 	drm_mm_debug_table(&rman->mm, prefix);
-	mtx_leave(&rman->lock);
+	spin_unlock(&rman->lock);
 #endif
 }
 

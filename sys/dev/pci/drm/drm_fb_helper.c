@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.7 2015/02/10 03:39:41 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -1433,9 +1433,9 @@ static int __init drm_fb_helper_modinit(void)
 	const char *name = "fbcon";
 	struct module *fbcon;
 
-	mtx_enter(&module_mutex);
+	mutex_lock(&module_mutex);
 	fbcon = find_module(name);
-	mtx_leave(&module_mutex);
+	mutex_unlock(&module_mutex);
 
 	if (!fbcon)
 		request_module_nowait(name);
