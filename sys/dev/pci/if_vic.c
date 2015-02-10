@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.84 2015/02/10 02:57:32 pelikan Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.85 2015/02/10 23:22:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1132,7 +1132,6 @@ int
 vic_load_txb(struct vic_softc *sc, struct vic_txbuf *txb, struct mbuf *m)
 {
 	bus_dmamap_t			dmap = txb->txb_dmamap;
-	struct mbuf			*m0 = NULL;
 	int				error;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m, BUS_DMA_NOWAIT);
@@ -1141,33 +1140,16 @@ vic_load_txb(struct vic_softc *sc, struct vic_txbuf *txb, struct mbuf *m)
 		txb->txb_m = m;
 		break;
 
-	case EFBIG: /* mbuf chain is too fragmented */
-		MGETHDR(m0, M_DONTWAIT, MT_DATA);
-		if (m0 == NULL)
-			return (ENOBUFS);
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGETI(m0, M_DONTWAIT, NULL, m->m_pkthdr.len);
-			if (!(m0->m_flags & M_EXT)) {
-				m_freem(m0);
-				return (ENOBUFS);
-			}
+	case EFBIG:
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m,
+		    BUS_DMA_NOWAIT) == 0) {
+			txb->txb_m = m;
+			break;
 		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
-		m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m0,
-		    BUS_DMA_NOWAIT);
-		if (error != 0) {
-			m_freem(m0);
-			printf("%s: tx dmamap load error %d\n", DEVNAME(sc),
-			    error);
-			return (ENOBUFS);
-		}
-		m_freem(m);
-		txb->txb_m = m0;
-		break;
 
+		/* FALLTHROUGH */
 	default:
-		printf("%s: tx dmamap load error %d\n", DEVNAME(sc), error);
 		return (ENOBUFS);
 	}
 
