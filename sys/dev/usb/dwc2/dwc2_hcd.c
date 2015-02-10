@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.6 2015/02/10 14:18:34 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.7 2015/02/10 14:34:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -1779,7 +1779,7 @@ dwc2_hcd_urb_alloc(struct dwc2_hsotg *hsotg, int iso_desc_count,
 	u32 size = sizeof(*urb) + iso_desc_count *
 		   sizeof(struct dwc2_hcd_iso_packet_desc);
 
-	urb = malloc(size, mem_flags);
+	urb = malloc(size, M_DEVBUF, M_ZERO | mem_flags);
 	if (urb)
 		urb->packet_count = iso_desc_count;
 	return urb;
@@ -1793,7 +1793,7 @@ dwc2_hcd_urb_free(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 	u32 size = sizeof(*urb) + iso_desc_count *
 		   sizeof(struct dwc2_hcd_iso_packet_desc);
 
-	free(urb, size);
+	free(urb, M_DEVBUF, size);
 }
 
 void
@@ -2103,7 +2103,7 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 			dev_dbg(hsotg->dev, "HCD Free channel #%i, chan=%p\n",
 				i, chan);
 			hsotg->hc_ptr_array[i] = NULL;
-			free(chan, sizeof(*chan));
+			free(chan, M_DEVBUF, sizeof(*chan));
 		}
 	}
 
@@ -2114,7 +2114,7 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 			hsotg->status_buf = NULL;
 		}
 	} else {
-		free(hsotg->status_buf,DWC2_HCD_STATUS_BUF_SIZE);
+		free(hsotg->status_buf, M_DEVBUF, DWC2_HCD_STATUS_BUF_SIZE);
 		hsotg->status_buf = NULL;
 	}
 
@@ -2135,7 +2135,7 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 		taskq_destroy(hsotg->wq_otg);
 	}
 
-	free(hsotg->core_params, sizeof(*hsotg->core_params));
+	free(hsotg->core_params, M_DEVBUF, sizeof(*hsotg->core_params));
 	hsotg->core_params = NULL;
 	timeout_destroy(&hsotg->wkp_timer);
 }
@@ -2190,18 +2190,20 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
 	hsotg->frame_num_array = malloc(sizeof(*hsotg->frame_num_array) *
-					 FRAME_NUM_ARRAY_SIZE, KM_SLEEP);
+					FRAME_NUM_ARRAY_SIZE, M_DEVBUF,
+					M_ZERO | M_WAITOK);
 	if (!hsotg->frame_num_array)
 		goto error1;
 	hsotg->last_frame_num_array = malloc(
 			sizeof(*hsotg->last_frame_num_array) *
-			FRAME_NUM_ARRAY_SIZE, KM_SLEEP);
+			FRAME_NUM_ARRAY_SIZE, M_DEVBUF, M_ZERO | M_WAITOK);
 	if (!hsotg->last_frame_num_array)
 		goto error1;
 	hsotg->last_frame_num = HFNUM_MAX_FRNUM;
 #endif
 
-	hsotg->core_params = malloc(sizeof(*hsotg->core_params), KM_SLEEP);
+	hsotg->core_params = malloc(sizeof(*hsotg->core_params), M_DEVBUF,
+				    M_ZERO | M_WAITOK);
 	if (!hsotg->core_params)
 		goto error1;
 
@@ -2256,7 +2258,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 	memset(&hsotg->hc_ptr_array[0], 0, sizeof(hsotg->hc_ptr_array));
 
 	for (i = 0; i < num_channels; i++) {
-		channel = malloc(sizeof(*channel), KM_SLEEP);
+		channel = malloc(sizeof(*channel), M_DEVBUF, M_ZERO | M_WAITOK);
 		if (channel == NULL)
 			goto error3;
 		channel->hc_num = i;
@@ -2288,8 +2290,8 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 			hsotg->status_buf_dma = DMAADDR(&hsotg->status_buf_usbdma, 0);
 		}
 	} else
-		hsotg->status_buf = malloc(DWC2_HCD_STATUS_BUF_SIZE,
-					  KM_SLEEP);
+		hsotg->status_buf = malloc(DWC2_HCD_STATUS_BUF_SIZE, M_DEVBUF,
+					   M_ZERO | M_WAITOK);
 
 	if (!hsotg->status_buf)
 		goto error3;
@@ -2314,13 +2316,13 @@ error3:
 	dwc2_hcd_release(hsotg);
 error2:
 error1:
-	free(hsotg->core_params, sizeof(*hsotg->core_params));
+	free(hsotg->core_params, M_DEVBUF, sizeof(*hsotg->core_params));
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
-	free(hsotg->last_frame_num_array,
-	      sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
-	free(hsotg->frame_num_array,
-		  sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+	free(hsotg->last_frame_num_array, M_DEVBUF,
+		sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+	free(hsotg->frame_num_array, M_DEVBUF,
+		sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
 #endif
 
 	dev_err(hsotg->dev, "%s() FAILED, returning %d\n", __func__, retval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.10 2015/02/10 14:18:34 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.11 2015/02/10 14:34:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1603,7 +1603,8 @@ dwc2_init(struct dwc2_softc *sc)
 	    "dwc2qtd", NULL);
 	pool_setipl(&sc->sc_qtdpool, IPL_USB);
 
-	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), KM_SLEEP);
+	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), M_DEVBUF,
+	    M_ZERO | M_WAITOK);
 	if (sc->sc_hsotg == NULL) {
 		err = ENOMEM;
 		goto fail1;
@@ -1622,7 +1623,7 @@ dwc2_init(struct dwc2_softc *sc)
 	return 0;
 
 fail2:
-	free(sc->sc_hsotg, sizeof(struct dwc2_hsotg));
+	free(sc->sc_hsotg, M_DEVBUF, sizeof(struct dwc2_hsotg));
 fail1:
 	softintr_disestablish(sc->sc_rhc_si);
 

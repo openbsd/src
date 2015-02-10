@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.5 2015/02/10 13:49:48 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.6 2015/02/10 14:34:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -124,7 +124,8 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	memset(qh->desc_list, 0,
 	       sizeof(struct dwc2_hcd_dma_desc) * dwc2_max_desc_num(qh));
 
-	qh->n_bytes = malloc(sizeof(u32) * dwc2_max_desc_num(qh), KM_SLEEP);
+	qh->n_bytes = malloc(sizeof(u32) * dwc2_max_desc_num(qh), M_DEVBUF,
+	    M_ZERO | M_WAITOK);
 	if (!qh->n_bytes) {
 		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->desc_list_usbdma);
 		qh->desc_list = NULL;
@@ -141,7 +142,7 @@ static void dwc2_desc_list_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		qh->desc_list = NULL;
 	}
 
-	free(qh->n_bytes, sizeof(u32) * dwc2_max_desc_num(qh));
+	free(qh->n_bytes, M_DEVBUF, sizeof(u32) * dwc2_max_desc_num(qh));
 	qh->n_bytes = NULL;
 }
 

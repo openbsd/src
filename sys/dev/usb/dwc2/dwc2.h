@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.5 2015/02/10 14:15:14 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.6 2015/02/10 14:34:14 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ extern int dwc2debug;
 #define msecs_to_jiffies	mstohz
 
 #define gfp_t		int
-#define GFP_KERNEL	 KM_SLEEP
+#define GFP_KERNEL	 M_WAITOK
 #define GFP_ATOMIC	 KM_NOSLEEP
 
 enum usb_otg_state {
