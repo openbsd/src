@@ -1,0 +1,15 @@
+#	$NetBSD$
+
+# DesignWare HS OTG Controller
+#
+device dwctwo: usbus, usbroothub, usb_dma
+file	external/bsd/dwc2/dwc2.c			dwctwo	needs-flag
+
+makeoptions	dwctwo	CPPFLAGS+=" -I$S/external/bsd/common/include -I$S/external/bsd -I$S/external/bsd/dwc2/dist"
+
+file	external/bsd/dwc2/dist/dwc2_core.c		dwctwo
+file	external/bsd/dwc2/dist/dwc2_coreintr.c		dwctwo
+file	external/bsd/dwc2/dist/dwc2_hcd.c		dwctwo
+file	external/bsd/dwc2/dist/dwc2_hcdddma.c		dwctwo
+file	external/bsd/dwc2/dist/dwc2_hcdintr.c		dwctwo
+file	external/bsd/dwc2/dist/dwc2_hcdqueue.c		dwctwo
