@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.27 2015/02/09 12:34:07 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.28 2015/02/10 08:23:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1025,6 +1025,8 @@ dispatch_rtmsg(void)
 	u_int8_t		 metric, prio;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (0);
 		log_warn("dispatch_rtmsg: read error");
 		return (-1);
 	}
@@ -1037,6 +1039,9 @@ dispatch_rtmsg(void)
 	lim = buf + n;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (lim < next + sizeof(*rtm) ||
+		    lim < next + rtm->rtm_msglen)
+			fatalx("dispatch_rtmsg: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
 
