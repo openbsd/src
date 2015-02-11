@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.22 2015/02/05 22:32:20 sthen Exp $	*/
+/*	$OpenBSD: pax.h,v 1.23 2015/02/11 23:14:46 guenther Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -211,6 +211,20 @@ typedef struct {
 } FSUB;
 
 /*
+ * Time data for a given file.  This is usually embedded in a structure
+ * indexed by dev+ino, by name, by order in the archive, etc.  set_attr()
+ * takes one of these and will only change the times or mode if the file
+ * at the given name has the indicated dev+ino.
+ */
+struct file_times {
+	ino_t	ft_ino;		/* inode number to verify */
+	time_t	ft_mtime;	/* times to set */
+	time_t	ft_atime;
+	char	*ft_name;	/* name of file to set the times on */
+	dev_t	ft_dev;		/* device number to verify */
+};
+
+/*
  * Format Specific Options List
  *
  * Used to pass format options to the format options handler
@@ -228,6 +242,10 @@ typedef struct oplist {
 #define MAJOR(x)	major(x)
 #define MINOR(x)	minor(x)
 #define TODEV(x, y)	makedev((x), (y))
+
+#define FILEBITS		(S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
+#define SETBITS			(S_ISUID | S_ISGID)
+#define ABITS			(FILEBITS | SETBITS)
 
 /*
  * General Defines
