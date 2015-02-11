@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.47 2015/02/10 08:56:28 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.48 2015/02/11 06:19:20 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -65,20 +65,36 @@
 #include <dev/rasops/rasops.h>
 #endif
 
-/* XXX, called from asm */
-int save_ofw_mapping(void);
-
 extern char *hw_prod;
-
-#define	OFMEM_REGIONS	32
-static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 
 struct mem_region64 {
 	uint64_t start;
 	uint32_t size;
 } __packed;
 
+#define	OFMEM_REGIONS	32
+static struct mem_region   OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 static struct mem_region64 OFmem64[OFMEM_REGIONS + 1];
+
+/*
+ * Section 5.1.7. Memory Management Unit properties.
+ */
+struct ofw_map {
+	uint32_t	om_virt;
+	uint32_t	om_size;
+	uint32_t	om_phys;
+	uint32_t	om_mode;
+} __packed;
+
+struct ofw_map64 {
+	uint32_t	om_virt;
+	uint32_t	om_size;
+	uint64_t	om_phys;
+	uint32_t	om_mode;
+} __packed;
+
+static struct ofw_map	ofw_maps[OFMEM_REGIONS];
+static struct ofw_map64	ofw_maps64[OFMEM_REGIONS];
 
 #if NWSDISPLAY > 0
 struct ofwfb {
@@ -90,6 +106,10 @@ struct ofwfb {
 static struct ofwfb ofwfb;
 #endif
 
+int	save_ofw_mapping(void);
+void	ofw_open_inputs(int);
+void	ofw_read_mem_regions(int, int, int);
+
 /*
  * This is called during initppc, before the system is really initialized.
  * It shall provide the total and the available regions of RAM.
@@ -100,28 +120,22 @@ static struct ofwfb ofwfb;
 void
 ppc_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	int phandle, rhandle;
+	*memp = OFmem;
+
+	/* HACK */
+	if (OFmem[0].size == 0) {
+		*memp = OFavail;
+	}
+
+	*availp = OFavail;
+}
+
+void
+ofw_read_mem_regions(int phandle, int address_cells, int size_cells)
+{
 	int nreg, navail;
 	int i, j;
-	uint32_t address_cells, size_cells;
 	uint physpages;
-
-	/*
-	 * Get memory.
-	 */
-	phandle = OF_finddevice("/memory");
-	if (phandle == -1)
-		panic("no memory?");
-	rhandle = OF_parent(phandle);
-
-	if (OF_getprop(rhandle, "#address-cells", &address_cells, 4) <= 0)
-		address_cells = 1;
-	if (OF_getprop(rhandle, "#size-cells", &size_cells, 4) <= 0)
-		size_cells = 1;
-
-	if (size_cells != 1)
-		panic("unexpected memory layout %d:%d",
-		    address_cells, size_cells);
 
 	switch (address_cells) {
 	default:
@@ -174,48 +188,90 @@ ppc_mem_regions(struct mem_region **memp, struct mem_region **availp)
 		physmem = physpages;
 		break;
 	}
-
-	*memp = OFmem;
-
-	/* HACK */
-	if (OFmem[0].size == 0) {
-		*memp = OFavail;
-	}
-
-	*availp = OFavail;
 }
 
 typedef void (fwcall_f)(int, int);
 extern fwcall_f *fwcall;
 fwcall_f fwentry;
-extern u_int32_t ofmsr;
 
 int OF_stdout;
 int OF_stdin;
 
-/* code to save and create the necessary mappings for BSD to handle
- * the vm-setup for OpenFirmware
+/*
+ * Called early in the boot process, we are still running on the stack
+ * provided by the bootloader using the firmware's page table.
  */
-
 int
-save_ofw_mapping()
+save_ofw_mapping(void)
 {
-	int chosen;
+	int chosen, memory, root, mmui, mmu = -1;
+	int acells, scells;
+	int i, len;
+
+	if ((chosen = OF_finddevice("/chosen")) == -1)
+		return (0);
+
+	ofw_open_inputs(chosen);
+
+	/* Get memory node. */
+	memory = OF_finddevice("/memory");
+	if (memory == -1)
+		panic("no memory?");
+
+	/* Are physical addresses encoded in 32 or 64 bits? */
+	root = OF_parent(memory);
+	if (OF_getprop(root, "#address-cells", &acells, 4) <= 0)
+		acells = 1;
+	if (OF_getprop(root, "#size-cells", &scells, 4) <= 0)
+		scells = 1;
+
+	if (scells != 1)
+		panic("unexpected memory layout %d:%d", acells, scells);
+
+	ofw_read_mem_regions(memory, acells, scells);
+
+	/* Get firmware mappings. */
+	if (OF_getprop(chosen, "mmu", &mmui, sizeof(int)) != -1)
+		mmu = OF_instance_to_package(mmui);
+	if (mmu != -1)
+		len = OF_getproplen(mmu, "translations");
+	if (len <= 0)
+		return (0);
+
+	switch (acells) {
+	case 2:
+		OF_getprop(mmu, "translations", ofw_maps64, sizeof(ofw_maps64));
+
+		for (i = 0; i < nitems(ofw_maps64); i++) {
+			if (ofw_maps64[i].om_phys >= 1ULL << 32)
+				continue;
+
+			ofw_maps[i].om_virt = ofw_maps64[i].om_virt;
+			ofw_maps[i].om_size = ofw_maps64[i].om_size;
+			ofw_maps[i].om_phys = (uint32_t)ofw_maps64[i].om_phys;
+			ofw_maps[i].om_mode = ofw_maps64[i].om_mode;
+		}
+		break;
+	case 1:
+	default:
+		OF_getprop(mmu, "translations", ofw_maps, sizeof(ofw_maps));
+		break;
+	}
+
+	return (0);
+}
+
+void
+ofw_open_inputs(int chosen)
+{
 	int stdout, stdin;
 
-	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		return 0;
-	}
-
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof stdin) != sizeof stdin) {
-		return 0;
-	}
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(int)) != sizeof(int)) 
+		return;
 
 	OF_stdin = stdin;
-	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout)
-	    != sizeof stdout) {
-		return 0;
-	}
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof(int)) != sizeof(int))
+		return;
 
 	if (stdout == 0) {
 		/* If the screen is to be console, but not active, open it */
@@ -224,7 +280,6 @@ save_ofw_mapping()
 	OF_stdout = stdout;
 
 	fwcall = &fwentry;
-	return 0;
 }
 
 bus_space_handle_t cons_display_mem_h;
