@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.176 2015/02/04 23:30:37 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.177 2015/02/11 23:47:25 phessler Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,7 @@ void		 show_mrt_state(struct mrt_bgp_state *, void *);
 void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
 void		 mrt_to_bgpd_addr(union mrt_addr *, struct bgpd_addr *);
 void		 network_bulk(struct parse_result *);
+const char	*print_auth_method(enum auth_method);
 
 /* parser.c */
 int		 parse_prefix(const char *, struct bgpd_addr *, u_int8_t *);
@@ -619,6 +620,26 @@ show_neighbor_terse(struct imsg *imsg)
 	return (0);
 }
 
+const char *
+print_auth_method(enum auth_method method)
+{
+	switch (method) {
+	case AUTH_MD5SIG:
+		return ", using md5sig";
+	case AUTH_IPSEC_MANUAL_ESP:
+		return ", using ipsec manual esp";
+	case AUTH_IPSEC_MANUAL_AH:
+		return ", using ipsec manual ah";
+	case AUTH_IPSEC_IKE_ESP:
+		return ", using ipsec ike esp";
+	case AUTH_IPSEC_IKE_AH:
+		return ", using ipsec ike ah";
+	case AUTH_NONE:	/* FALLTHROUGH */
+	default:
+		return "";
+	}
+}
+
 int
 show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
@@ -670,8 +691,9 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 				    p->conf.max_prefix_restart);
 			printf("\n");
 		}
-		printf("  BGP version 4, remote router-id %s\n",
+		printf("  BGP version 4, remote router-id %s",
 		    inet_ntoa(ina));
+		printf("%s\n", print_auth_method(p->auth.method));
 		printf("  BGP state = %s", statenames[p->state]);
 		if (p->stats.last_updown != 0)
 			printf(", %s for %s",
