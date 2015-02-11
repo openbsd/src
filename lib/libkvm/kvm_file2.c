@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.42 2015/02/11 03:03:08 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.43 2015/02/11 04:00:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -236,7 +236,7 @@ kvm_deadfile_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 		if (file.f_count == 0)
 			continue;
-		if (arg && file.f_type != arg)
+		if (arg != 0 && file.f_type != arg)
 			continue;
 		if (fill_file(kd, &kf, &file, (u_long)fp, NULL, NULL, 0, 0)
 		    == -1)
