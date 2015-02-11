@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2014/12/17 15:26:21 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2015/02/11 03:24:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -580,7 +580,7 @@ pmap_init(void)
 
 #ifdef PMAP_STEAL_MEMORY
 vaddr_t
-pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp, int zero)
+pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	vaddr_t va;
 	int npg;
@@ -602,8 +602,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp, int zero)
 	vm_physmem[0].end -= npg;
 	vm_physmem[0].avail_end -= npg;
 	va = ptoa(vm_physmem[0].avail_end);
-	if (zero)
-		bzero((void *)va, size);
+	bzero((void *)va, size);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_steal_memory: 0x%lx\n", va));
 
@@ -636,7 +635,7 @@ pmap_growkernel(vaddr_t kva)
 			} else {
 				paddr_t pa;
 
-				pa = pmap_steal_memory(PAGE_SIZE, NULL, NULL, 1);
+				pa = pmap_steal_memory(PAGE_SIZE, NULL, NULL);
 				if (pa)
 					panic("pmap_growkernel: out of memory");
 				pmap_pde_set(pmap_kernel(), va, pa);
