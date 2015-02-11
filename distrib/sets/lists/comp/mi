@@ -6670,6 +6670,7 @@
 ./usr/share/man/man9/uao_reference.9
 ./usr/share/man/man9/uio.9
 ./usr/share/man/man9/uiomove.9
+./usr/share/man/man9/uiomovei.9
 ./usr/share/man/man9/ulmax.9
 ./usr/share/man/man9/ulmin.9
 ./usr/share/man/man9/uprintf.9
