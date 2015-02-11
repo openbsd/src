@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.156 2015/01/13 12:14:00 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.157 2015/02/11 23:34:43 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -750,8 +750,8 @@ report:
 					newgate = 1;
 				}
 			if (info.rti_info[RTAX_GATEWAY] != NULL &&
-			    (error = rt_setgate(rt, rt_key(rt),
-			    info.rti_info[RTAX_GATEWAY], tableid)))
+			    (error = rt_setgate(rt, info.rti_info[RTAX_GATEWAY],
+			     tableid)))
 				goto flush;
 			/*
 			 * new gateway could require new ifaddr, ifp;

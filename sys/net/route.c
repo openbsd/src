@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.205 2015/02/10 03:04:11 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.206 2015/02/11 23:34:43 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -373,6 +373,8 @@ rtfree(struct rtentry *rt)
 		if (rt->rt_flags & RTF_MPLS)
 			free(rt->rt_llinfo, M_TEMP, 0);
 #endif
+		if (rt->rt_gateway)
+			free(rt->rt_gateway, M_RTABLE, 0);
 		free(rt_key(rt), M_RTABLE, 0);
 		pool_put(&rtentry_pool, rt);
 	}
@@ -495,7 +497,7 @@ create:
 			rt->rt_flags |= RTF_MODIFIED;
 			flags |= RTF_MODIFIED;
 			stat = &rtstat.rts_newgateway;
-			rt_setgate(rt, rt_key(rt), gateway, rdomain);
+			rt_setgate(rt, gateway, rdomain);
 		}
 	} else
 		error = EHOSTUNREACH;
@@ -716,7 +718,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct ifaddr		*ifa;
 	struct sockaddr		*ndst;
 	struct sockaddr_rtlabel	*sa_rl, sa_rl2;
-	int			 error;
+	int			 dlen, error;
 #ifdef MPLS
 	struct sockaddr_mpls	*sa_mpls;
 #endif
@@ -843,22 +845,30 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (rt == NULL)
 			return (ENOBUFS);
 
+		dlen = info->rti_info[RTAX_DST]->sa_len;
+		ndst = malloc(dlen, M_RTABLE, M_NOWAIT);
+		if (ndst == NULL) {
+			pool_put(&rtentry_pool, rt);
+			return (ENOBUFS);
+		}
+
 		rt->rt_flags = info->rti_flags;
 		rt->rt_tableid = tableid;
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
-		if ((error = rt_setgate(rt, info->rti_info[RTAX_DST],
-		    info->rti_info[RTAX_GATEWAY], tableid))) {
+		rt->rt_nodes->rn_key = (caddr_t)ndst;
+		memcpy(ndst, info->rti_info[RTAX_DST], dlen);
+
+		if ((error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY],
+		    tableid))) {
 			pool_put(&rtentry_pool, rt);
 			return (error);
 		}
-		ndst = rt_key(rt);
-		if (info->rti_info[RTAX_NETMASK] != NULL) {
+
+		if (info->rti_info[RTAX_NETMASK] != NULL)
 			rt_maskedcopy(info->rti_info[RTAX_DST], ndst,
 			    info->rti_info[RTAX_NETMASK]);
-		} else
-			memcpy(ndst, info->rti_info[RTAX_DST],
-			    info->rti_info[RTAX_DST]->sa_len);
+
 #ifndef SMALL_KERNEL
 		if (rn_mpath_capable(rnh)) {
 			/* check the link state since the table supports it */
@@ -894,6 +904,8 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			if (rt->rt_llinfo == NULL) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
+				if (rt->rt_gateway)
+					free(rt->rt_gateway, M_RTABLE, 0);
 				free(rt_key(rt), M_RTABLE, 0);
 				pool_put(&rtentry_pool, rt);
 				return (ENOMEM);
@@ -964,6 +976,8 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
+			if (rt->rt_gateway)
+				free(rt->rt_gateway, M_RTABLE, 0);
 			free(rt_key(rt), M_RTABLE, 0);
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
@@ -989,28 +1003,20 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 }
 
 int
-rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
-    u_int tableid)
+rt_setgate(struct rtentry *rt, struct sockaddr *gate, unsigned int tableid)
 {
-	caddr_t	new, old;
-	int	dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
+	int glen = ROUNDUP(gate->sa_len);
+	struct sockaddr *sa;
 
 	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
-		old = (caddr_t)rt_key(rt);
-		new = malloc(dlen + glen, M_RTABLE, M_NOWAIT);
-		if (new == NULL)
+		sa = malloc(glen, M_RTABLE, M_NOWAIT);
+		if (sa == NULL)
 			return (ENOBUFS);
-		rt->rt_nodes->rn_key = new;
-	} else {
-		new = rt->rt_nodes->rn_key;
-		old = NULL;
+		free(rt->rt_gateway, M_RTABLE, 0);
+		rt->rt_gateway = sa;
 	}
-	rt->rt_gateway = (struct sockaddr *)(new + dlen);
 	memmove(rt->rt_gateway, gate, glen);
-	if (old) {
-		memmove(new, dst, dlen);
-		free(old, M_RTABLE, 0);
-	}
+
 	if (rt->rt_gwroute != NULL) {
 		rtfree(rt->rt_gwroute);
 		rt->rt_gwroute = NULL;

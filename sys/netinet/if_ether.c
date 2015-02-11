@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.145 2015/02/07 04:01:11 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.146 2015/02/11 23:34:43 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 			/*
 			 * Case 1: This route should come from a route to iface.
 			 */
-			rt_setgate(rt, rt_key(rt), (struct sockaddr *)&null_sdl,
+			rt_setgate(rt, (struct sockaddr *)&null_sdl,
 			    ifp->if_rdomain);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = ifp->if_type;
