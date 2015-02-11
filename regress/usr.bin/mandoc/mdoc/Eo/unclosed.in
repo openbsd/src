@@ -1,0 +1,9 @@
+.Dd February 11, 2015
+.Dt EO-UNCLOSED 1
+.Os OpenBSD
+.Sh NAME
+.Nm Eo-unclosed
+.Nd unclosed custom enclosure block
+.Sh DESCRIPTION
+before block
+.Eo <<

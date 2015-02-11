@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.207 2015/02/05 01:46:38 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.208 2015/02/11 14:14:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1987,9 +1987,8 @@ termp_eo_pre(DECL_ARGS)
 	    n->child->end != ENDBODY_NOT)
 		term_word(p, "\\&");
 	else if (n->end != ENDBODY_NOT ? n->child != NULL :
-	     n->parent->head->child != NULL &&
-	     (n->parent->body->child != NULL ||
-	      n->parent->tail->child != NULL))
+	     n->parent->head->child != NULL && (n->child != NULL ||
+	     (n->parent->tail != NULL && n->parent->tail->child != NULL)))
 		p->flags |= TERMP_NOSPACE;
 
 	return(1);
