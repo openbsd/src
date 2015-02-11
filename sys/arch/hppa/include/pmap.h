@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.47 2014/12/17 15:01:47 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.48 2015/02/11 06:43:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -158,9 +158,6 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #endif /* _KERNEL */
 
 #if !defined(_LOCORE)
-
-#include <sys/lock.h>
-
 struct pv_entry;
 struct vm_page_md {
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
