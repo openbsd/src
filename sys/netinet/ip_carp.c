@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.245 2015/01/21 11:20:48 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.246 2015/02/11 04:29:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -806,9 +806,19 @@ int
 carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
+	struct arpcom *ac = (struct arpcom *)ifp;
+	struct ether_multi *enm;
 
 	carpdetach(sc);
-	ether_ifdetach(ifp);
+
+	/* XXX should be converted to ether_ifattach() and ether_ifdetach() */
+	for (enm = LIST_FIRST(&ac->ac_multiaddrs);
+	    enm != NULL;
+	    enm = LIST_FIRST(&ac->ac_multiaddrs)) {
+		LIST_REMOVE(enm, enm_list);
+		free(enm, M_IFMADDR, 0);
+	}
+
 	if_detach(ifp);
 	carp_destroy_vhosts(ifp->if_softc);
 	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
