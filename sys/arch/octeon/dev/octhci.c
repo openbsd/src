@@ -1,4 +1,4 @@
-/*	$OpenBSD: octhci.c,v 1.16 2014/07/13 17:19:17 pirofti Exp $	*/
+/*	$OpenBSD: octhci.c,v 1.17 2015/02/11 01:40:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <pirofti@openbsd.org>
@@ -74,7 +74,6 @@ struct pool *octhcixfer;
 struct octhci_xfer {
 	struct usbd_xfer	 xfer;
 };
-
 
 int octhci_match(struct device *, void *, void *);
 void octhci_attach(struct device *, struct device *, void *);
@@ -158,7 +157,6 @@ struct usbd_pipe_methods octhci_root_intr_methods = {
 	.close = octhci_root_intr_close,
 	.done = octhci_root_intr_done,
 };
-
 
 int
 octhci_match(struct device *parent, void *match, void *aux)
@@ -627,7 +625,7 @@ octhci_allocx(struct usbd_bus *bus)
 	xx = pool_get(octhcixfer, PR_NOWAIT | PR_ZERO);
 #ifdef DIAGNOSTIC
 	if (xx != NULL)
-		xx->xfer.busy_free = XFER_BUSY;
+		xx->xfer.busy_free = XFER_ONQU;
 #endif
 	return ((struct usbd_xfer *)xx);
 }
@@ -638,7 +636,7 @@ octhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	struct octhci_xfer *xx = (struct octhci_xfer*)xfer;
 
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
+	if (xfer->busy_free != XFER_ONQU) {
 		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
 		    xfer->busy_free);
 		return;
