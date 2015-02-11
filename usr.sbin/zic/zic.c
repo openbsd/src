@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.16 2015/02/10 09:17:02 tedu Exp $	*/
+/*	$OpenBSD: zic.c,v 1.17 2015/02/11 01:07:37 deraadt Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -380,6 +380,7 @@ ecatalloc(char *start, const char *tail)
 }
 
 #define emalloc(size)		memcheck(malloc(size))
+#define ereallocarray(ptr, nmemb, size)		memcheck(reallocarray(ptr, nmemb, size))
 #define erealloc(ptr, size)	memcheck(realloc((ptr), (size)))
 #define ecpyalloc(ptr)		memcheck(strdup(ptr))
 
@@ -445,7 +446,7 @@ scheck(const char *string, const char *format)
 	result = "";
 	if (string == NULL || format == NULL)
 		return result;
-	fbuf = malloc(2 * strlen(format) + 4);
+	fbuf = reallocarray(NULL, strlen(format) + 2, 2);
 	if (fbuf == NULL)
 		return result;
 	fp = format;
@@ -905,7 +906,7 @@ inrule(char **fields, int nfields)
 	r.r_abbrvar = ecpyalloc(fields[RF_ABBRVAR]);
 	if (max_abbrvar_len < strlen(r.r_abbrvar))
 		max_abbrvar_len = strlen(r.r_abbrvar);
-	rules = erealloc(rules, (nrules + 1) * sizeof *rules);
+	rules = ereallocarray(rules, nrules + 1, sizeof *rules);
 	rules[nrules++] = r;
 }
 
@@ -1029,7 +1030,7 @@ inzsub(char **fields, int nfields, int iscont)
 				return FALSE;
 		}
 	}
-	zones = erealloc(zones, (nzones + 1) * sizeof *zones);
+	zones = ereallocarray(zones, nzones + 1, sizeof *zones);
 	zones[nzones++] = z;
 	/*
 	** If there was an UNTIL field on this line,
@@ -1159,7 +1160,7 @@ inlink(char **fields, int nfields)
 	l.l_linenum = linenum;
 	l.l_from = ecpyalloc(fields[LF_FROM]);
 	l.l_to = ecpyalloc(fields[LF_TO]);
-	links = erealloc(links, (nlinks + 1) * sizeof *links);
+	links = ereallocarray(links, nlinks + 1, sizeof *links);
 	links[nlinks++] = l;
 }
 
@@ -2348,7 +2349,7 @@ getfields(char *cp)
 
 	if (cp == NULL)
 		return NULL;
-	array = emalloc((strlen(cp) + 1) * sizeof *array);
+	array = ereallocarray(NULL, strlen(cp) + 1, sizeof *array);
 	nsubs = 0;
 	for ( ; ; ) {
 		while (isascii((unsigned char) *cp) &&
