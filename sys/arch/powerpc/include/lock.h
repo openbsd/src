@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 2013/05/21 20:05:30 tedu Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2015/02/11 00:14:11 dlg Exp $	*/
 /*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
 
-#define rw_cas __cpu_cas
 static __inline int
 __cpu_cas(volatile unsigned long *addr, unsigned long old, unsigned long new)
 {

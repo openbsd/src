@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.9 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: lock.h,v 1.10 2015/02/11 00:14:11 dlg Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 
 #ifdef _KERNEL
 extern int rw_cas_486(volatile unsigned long *, unsigned long, unsigned long);
-#define rw_cas rw_cas_486
 #endif
 
 #endif /* _MACHINE_LOCK_H_ */

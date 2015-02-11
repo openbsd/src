@@ -1,4 +1,4 @@
-/* $OpenBSD: lock.h,v 1.7 2014/03/29 18:09:28 guenther Exp $	*/
+/* $OpenBSD: lock.h,v 1.8 2015/02/11 00:14:11 dlg Exp $	*/
 /* $NetBSD: lock.h,v 1.16 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -61,7 +61,6 @@ do {									\
 } while (0)
 #endif /* MULTIPROCESSOR */
 
-#define	rw_cas	__cpu_cas
 static inline int
 __cpu_cas(volatile unsigned long *addr, unsigned long old, unsigned long new)
 {
