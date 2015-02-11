@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.6 2015/02/11 04:02:23 tedu Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.7 2015/02/11 07:21:10 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -62,12 +62,12 @@ The
 .Fa pref
 argument identifies the preferred hashing algorithm and parameters.
 Possible values are:
-.Bl -tag
+.Bl -tag -width Ds
 .It Dq blowfish,<rounds>
 The bcrypt algorithm, where the value of rounds can be between 4 and 31 and
 specifies the base 2 logarithm of the number of rounds.
 The special rounds value
-.Dq a
+.Sq a
 automatically selects rounds based on system performance.
 .El
 .Sh RETURN VALUES
