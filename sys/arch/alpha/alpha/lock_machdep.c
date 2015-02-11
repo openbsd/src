@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.2 2015/02/11 01:10:48 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.3 2015/02/11 03:56:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -18,14 +18,44 @@
 
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 
 #include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/lock.h>
 
+#if defined(MP_LOCKDEBUG)
+#ifndef DDB
+#error "MP_LOCKDEBUG requires DDB"
+#endif
 #include <ddb/db_output.h>
+
+/* CPU-dependent timing, needs this to be settable from ddb. */
+extern int __mp_lock_spinout;
+#endif
+
+static inline int
+__cpu_cas(volatile unsigned long *addr, unsigned long old, unsigned long new)
+{
+	unsigned long t0, v0;
+
+	__asm volatile(
+		"1:	ldq_l	%1, 0(%2)	\n"	/* v0 = *addr */
+		"	cmpeq	%1, %3, %0	\n"	/* t0 = v0 == old */
+		"	beq	%0, 2f		\n"
+		"	mov	%4, %0		\n"	/* t0 = new */
+		"	stq_c	%0, 0(%2)	\n"	/* *addr = new */
+		"	beq	%0, 3f		\n"
+		"	mb			\n"
+		"2:	br	4f		\n"
+		"3:	br	1b		\n"	/* update failed */
+		"4:				\n"
+		: "=&r" (t0), "=&r" (v0)
+		: "r" (addr), "r" (old), "r" (new)
+		: "memory");
+
+	return (v0 != old);
+}
 
 void
 __mp_lock_init(struct __mp_lock *lock)
@@ -33,15 +63,6 @@ __mp_lock_init(struct __mp_lock *lock)
 	lock->mpl_cpu = NULL;
 	lock->mpl_count = 0;
 }
-
-#if defined(MP_LOCKDEBUG)
-#ifndef DDB
-#error "MP_LOCKDEBUG requires DDB"
-#endif
-
-/* CPU-dependent timing, needs this to be settable from ddb. */
-extern int __mp_lock_spinout;
-#endif
 
 static inline void
 __mp_lock_spin(struct __mp_lock *mpl)
