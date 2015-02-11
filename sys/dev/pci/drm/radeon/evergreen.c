@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.12 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.13 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -1240,7 +1240,7 @@ void evergreen_pcie_gart_tlb_flush(struct radeon_device *rdev)
 		tmp = RREG32(VM_CONTEXT0_REQUEST_RESPONSE);
 		tmp = (tmp & RESPONSE_TYPE_MASK) >> RESPONSE_TYPE_SHIFT;
 		if (tmp == 2) {
-			DRM_ERROR("[drm] r600 flush TLB failed\n");
+			printk(KERN_WARNING "[drm] r600 flush TLB failed\n");
 			return;
 		}
 		if (tmp) {

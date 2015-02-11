@@ -1,4 +1,4 @@
-/*	$OpenBSD: r300.c,v 1.4 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: r300.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -354,7 +354,7 @@ static void r300_gpu_init(struct radeon_device *rdev)
 	WREG32(R300_GB_TILE_CONFIG, gb_tile_config);
 
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 
@@ -366,17 +366,15 @@ static void r300_gpu_init(struct radeon_device *rdev)
 	       R300_DC_DC_DISABLE_IGNORE_PE);
 
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 	if (r300_mc_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait MC idle while "
+		printk(KERN_WARNING "Failed to wait MC idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
-#ifdef DRMDEBUG
 	DRM_INFO("radeon: %d quad pipes, %d Z pipes initialized.\n",
 		 rdev->num_gb_pipes, rdev->num_z_pipes);
-#endif
 }
 
 int r300_asic_reset(struct radeon_device *rdev)
@@ -1138,7 +1136,7 @@ static int r300_packet0_check(struct radeon_cs_parser *p,
 	}
 	return 0;
 fail:
-	DRM_ERROR( "Forbidden register 0x%04X in cs at %d (val=%08x)\n",
+	printk(KERN_ERR "Forbidden register 0x%04X in cs at %d (val=%08x)\n",
 	       reg, idx, idx_value);
 	return -EINVAL;
 }

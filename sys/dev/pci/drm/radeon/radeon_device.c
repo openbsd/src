@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.9 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1014,7 +1014,9 @@ static const struct vga_switcheroo_client_ops radeon_switcheroo_ops = {
 int radeon_device_init(struct radeon_device *rdev,
 		       struct drm_device *ddev)
 {
+#ifdef DRMDEBUG
 	struct pci_dev *pdev = ddev->pdev;
+#endif
 	int r, i;
 	int dma_bits;
 

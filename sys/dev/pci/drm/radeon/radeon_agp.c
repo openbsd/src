@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_agp.c,v 1.2 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_agp.c,v 1.3 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
@@ -154,7 +154,7 @@ int radeon_agp_init(struct radeon_device *rdev)
 
 	if ((ddev->agp->info.ai_aperture_size >> 20) < 32) {
 		drm_agp_release(rdev->ddev);
-		DRM_ERROR("AGP aperture too small (%zuM) "
+		dev_warn(rdev->dev, "AGP aperture too small (%zuM) "
 			"need at least 32M, disabling AGP\n",
 			ddev->agp->info.ai_aperture_size >> 20);
 		return -EINVAL;

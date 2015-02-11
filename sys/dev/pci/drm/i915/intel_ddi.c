@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.11 2014/02/15 09:37:03 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.12 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -819,7 +819,7 @@ static void intel_ddi_calculate_wrpll(int clock, int *p, int *n2, int *r2)
 	*r2 = wrpll_tmds_clock_table[i].r2;
 
 	if (wrpll_tmds_clock_table[i].clock != clock)
-		printf("WRPLL: using settings for %dKHz on %dKHz mode\n",
+		DRM_INFO("WRPLL: using settings for %dKHz on %dKHz mode\n",
 			 wrpll_tmds_clock_table[i].clock, clock);
 
 	DRM_DEBUG_KMS("WRPLL: %dKHz refresh rate with p=%d, n2=%d r2=%d\n",

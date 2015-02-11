@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.16 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.17 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -321,9 +321,7 @@ static int si_init_microcode(struct radeon_device *rdev)
 	default: BUG();
 	}
 
-#ifdef DRMDEBUG
 	DRM_INFO("Loading %s Microcode\n", chip_name);
-#endif
 
 	snprintf(fw_name, sizeof(fw_name), "radeon-%s_pfp", chip_name);
 	err = loadfirmware(fw_name, &rdev->pfp_fw, &rdev->pfp_fw_size);
@@ -384,7 +382,7 @@ static int si_init_microcode(struct radeon_device *rdev)
 out:
 	if (err) {
 		if (err != -EINVAL)
-			DRM_ERROR(
+			printk(KERN_ERR
 			       "si_cp: Failed to load firmware \"%s\"\n",
 			       fw_name);
 		if (rdev->pfp_fw) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600.c,v 1.11 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: r600.c,v 1.12 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -855,7 +855,7 @@ void r600_pcie_gart_tlb_flush(struct radeon_device *rdev)
 		tmp = RREG32(VM_CONTEXT0_REQUEST_RESPONSE);
 		tmp = (tmp & RESPONSE_TYPE_MASK) >> RESPONSE_TYPE_SHIFT;
 		if (tmp == 2) {
-			DRM_ERROR("[drm] r600 flush TLB failed\n");
+			printk(KERN_WARNING "[drm] r600 flush TLB failed\n");
 			return;
 		}
 		if (tmp) {
@@ -1977,7 +1977,7 @@ int r600_init_microcode(struct radeon_device *rdev)
 	pdev = platform_device_register_simple("radeon_cp", 0, NULL, 0);
 	err = IS_ERR(pdev);
 	if (err) {
-		DRM_ERROR( "radeon_cp: Failed to register firmware\n");
+		printk(KERN_ERR "radeon_cp: Failed to register firmware\n");
 		return -EINVAL;
 	}
 #endif
@@ -2071,9 +2071,7 @@ int r600_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = RLC_UCODE_SIZE * 4;
 	}
 
-#ifdef DRMDEBUG
 	DRM_INFO("Loading %s Microcode\n", chip_name);
-#endif
 
 	snprintf(fw_name, sizeof(fw_name), "radeon-%s_pfp", chip_name);
 	err = loadfirmware(fw_name, &rdev->pfp_fw, &rdev->pfp_fw_size);
@@ -2112,7 +2110,7 @@ int r600_init_microcode(struct radeon_device *rdev)
 out:
 	if (err) {
 		if (err != -EINVAL)
-			DRM_ERROR(
+			printk(KERN_ERR
 			       "r600_cp: Failed to load firmware \"%s\"\n",
 			       fw_name);
 		if (rdev->pfp_fw) {
@@ -2465,9 +2463,7 @@ int r600_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		udelay(1);
 	}
 	if (i < rdev->usec_timeout) {
-#ifdef DRMDEBUG
 		DRM_INFO("ring test on %d succeeded in %d usecs\n", ring->idx, i);
-#endif
 	} else {
 		DRM_ERROR("radeon: ring %d test failed (scratch(0x%04X)=0x%08X)\n",
 			  ring->idx, scratch, tmp);
@@ -2522,9 +2518,7 @@ int r600_dma_ring_test(struct radeon_device *rdev,
 	}
 
 	if (i < rdev->usec_timeout) {
-#ifdef DRMDEBUG
 		DRM_INFO("ring test on %d succeeded in %d usecs\n", ring->idx, i);
-#endif
 	} else {
 		DRM_ERROR("radeon: ring %d test failed (0x%08X)\n",
 			  ring->idx, tmp);
@@ -3100,9 +3094,7 @@ int r600_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		udelay(1);
 	}
 	if (i < rdev->usec_timeout) {
-#ifdef DRMDEBUG
 		DRM_INFO("ib test on ring %d succeeded in %u usecs\n", ib.fence->ring, i);
-#endif
 	} else {
 		DRM_ERROR("radeon: ib test failed (scratch(0x%04X)=0x%08X)\n",
 			  scratch, tmp);
@@ -3170,9 +3162,7 @@ int r600_dma_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		udelay(1);
 	}
 	if (i < rdev->usec_timeout) {
-#ifdef DRMDEBUG
 		DRM_INFO("ib test on ring %d succeeded in %u usecs\n", ib.fence->ring, i);
-#endif
 	} else {
 		DRM_ERROR("radeon: ib test failed (0x%08X)\n", tmp);
 		r = -EINVAL;

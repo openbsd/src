@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.9 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.10 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -815,20 +815,16 @@ int radeon_ttm_init(struct radeon_device *rdev)
 		radeon_bo_unref(&rdev->stollen_vga_memory);
 		return r;
 	}
-#ifdef DRMDEBUG
 	DRM_INFO("radeon: %uM of VRAM memory ready\n",
 		 (unsigned) (rdev->mc.real_vram_size / (1024 * 1024)));
-#endif
 	r = ttm_bo_init_mm(&rdev->mman.bdev, TTM_PL_TT,
 				rdev->mc.gtt_size >> PAGE_SHIFT);
 	if (r) {
 		DRM_ERROR("Failed initializing GTT heap.\n");
 		return r;
 	}
-#ifdef DRMDEBUG
 	DRM_INFO("radeon: %uM of GTT memory ready.\n",
 		 (unsigned)(rdev->mc.gtt_size / (1024 * 1024)));
-#endif
 #ifdef notyet
 	rdev->mman.bdev.dev_mapping = rdev->ddev->dev_mapping;
 #endif

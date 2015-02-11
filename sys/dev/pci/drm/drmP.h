@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.179 2015/02/10 01:39:32 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.180 2015/02/11 07:01:36 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -394,7 +394,11 @@ mdelay(unsigned long msecs)
 	    curproc->p_pid, __func__ , ## arg)
 
 
+#ifdef DRM_DEBUG
 #define DRM_INFO(fmt, arg...)  printf("drm: " fmt, ## arg)
+#else
+#define DRM_INFO(fmt, arg...) do { } while(/* CONSTCOND */ 0)
+#endif
 
 #ifdef DRMDEBUG
 #undef DRM_DEBUG
@@ -438,18 +442,6 @@ mdelay(unsigned long msecs)
 #else
 #define DRM_DEBUG_DRIVER(fmt, arg...) do { } while(/* CONSTCOND */ 0)
 #endif
-
-#define dev_warn(dev, fmt, arg...) do {					\
-	DRM_ERROR(fmt, ## arg);						\
-} while(0)
-
-#define dev_err(dev, fmt, arg...) do {					\
-	DRM_ERROR(fmt, ## arg);						\
-} while(0)
-
-#define dev_info(dev, fmt, arg...) do {					\
-	printf("%s: " fmt, dev.dv_xname, ## arg);			\
-} while(0)
 
 #define PCI_ANY_ID (uint16_t) (~0U)
 

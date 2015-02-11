@@ -1,4 +1,4 @@
-/*	$OpenBSD: ni.c,v 1.8 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: ni.c,v 1.9 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -335,9 +335,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 	default: BUG();
 	}
 
-#ifdef DRMDEBUG
 	DRM_INFO("Loading %s Microcode\n", chip_name);
-#endif
 
 	snprintf(fw_name, sizeof(fw_name), "radeon-%s_pfp", chip_name);
 	err = loadfirmware(fw_name, &rdev->pfp_fw, &rdev->pfp_fw_size);

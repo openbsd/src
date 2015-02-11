@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_test.c,v 1.3 2014/02/10 01:08:34 jsg Exp $	*/
+/*	$OpenBSD: radeon_test.c,v 1.4 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2009 VMware, Inc.
  *
@@ -241,7 +241,7 @@ out_cleanup:
 		radeon_fence_unref(&fence);
 	}
 	if (r) {
-		DRM_ERROR("Error while testing BO move.\n");
+		printk(KERN_WARNING "Error while testing BO move.\n");
 	}
 }
 
@@ -340,7 +340,7 @@ out_cleanup:
 		radeon_fence_unref(&fence2);
 
 	if (r)
-		DRM_ERROR("Error while testing ring sync (%d).\n", r);
+		printk(KERN_WARNING "Error while testing ring sync (%d).\n", r);
 }
 
 static void radeon_test_ring_sync2(struct radeon_device *rdev,
@@ -455,7 +455,7 @@ out_cleanup:
 		radeon_fence_unref(&fenceB);
 
 	if (r)
-		DRM_ERROR("Error while testing ring sync (%d).\n", r);
+		printk(KERN_WARNING "Error while testing ring sync (%d).\n", r);
 }
 
 void radeon_test_syncing(struct radeon_device *rdev)

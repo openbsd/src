@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.5 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.6 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -74,7 +74,7 @@ int radeon_gem_object_create(struct radeon_device *rdev, int size,
 	/* maximun bo size is the minimun btw visible vram and gtt size */
 	max_size = min(rdev->mc.visible_vram_size, rdev->mc.gtt_size);
 	if (size > max_size) {
-		printf("%s:%d alloc size %dMb bigger than %ldMb limit\n",
+		printk(KERN_WARNING "%s:%d alloc size %dMb bigger than %ldMb limit\n",
 		       __func__, __LINE__, size >> 20, max_size >> 20);
 		return -ENOMEM;
 	}
@@ -117,14 +117,14 @@ int radeon_gem_set_domain(struct drm_gem_object *gobj,
 	}
 	if (!domain) {
 		/* Do nothings */
-		DRM_ERROR("Set domain without domain !\n");
+		printk(KERN_WARNING "Set domain without domain !\n");
 		return 0;
 	}
 	if (domain == RADEON_GEM_DOMAIN_CPU) {
 		/* Asking for cpu access wait for object idle */
 		r = radeon_bo_wait(robj, NULL, false);
 		if (r) {
-			DRM_ERROR("Failed to wait for object !\n");
+			printk(KERN_ERR "Failed to wait for object !\n");
 			return r;
 		}
 	}
@@ -191,7 +191,7 @@ void radeon_gem_object_close(struct drm_gem_object *obj,
 
 	r = radeon_bo_reserve(rbo, true);
 	if (r) {
-		DRM_ERROR("leaking bo va because "
+		dev_err(rdev->dev, "leaking bo va because "
 			"we fail to reserve bo (%d)\n", r);
 		return;
 	}
@@ -481,13 +481,13 @@ int radeon_gem_va_ioctl(struct drm_device *dev, void *data,
 	 */
 	invalid_flags = RADEON_VM_PAGE_VALID | RADEON_VM_PAGE_SYSTEM;
 	if ((args->flags & invalid_flags)) {
-		DRM_ERROR("invalid flags 0x%08X vs 0x%08X\n",
+		dev_err(&dev->pdev->dev, "invalid flags 0x%08X vs 0x%08X\n",
 			args->flags, invalid_flags);
 		args->operation = RADEON_VA_RESULT_ERROR;
 		return -EINVAL;
 	}
 	if (!(args->flags & RADEON_VM_PAGE_SNOOPED)) {
-		DRM_ERROR("only supported snooped mapping for now\n");
+		dev_err(&dev->pdev->dev, "only supported snooped mapping for now\n");
 		args->operation = RADEON_VA_RESULT_ERROR;
 		return -EINVAL;
 	}
@@ -497,7 +497,7 @@ int radeon_gem_va_ioctl(struct drm_device *dev, void *data,
 	case RADEON_VA_UNMAP:
 		break;
 	default:
-		DRM_ERROR("unsupported operation %d\n",
+		dev_err(&dev->pdev->dev, "unsupported operation %d\n",
 			args->operation);
 		args->operation = RADEON_VA_RESULT_ERROR;
 		return -EINVAL;

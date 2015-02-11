@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.73 2015/02/10 10:50:49 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.74 2015/02/11 07:01:36 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -504,7 +504,8 @@ i915_drm_freeze(struct drm_device *dev)
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		int error = i915_gem_idle(dev);
 		if (error) {
-			printf("GEM idle failed, resume might fail\n");
+			dev_err(&dev->pdev->dev,
+				"GEM idle failed, resume might fail\n");
 			return error;
 		}
 

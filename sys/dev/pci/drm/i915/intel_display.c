@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.40 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.41 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -488,7 +488,7 @@ static void vlv_init_dpio(struct drm_device *dev)
 
 static int intel_dual_link_lvds_callback(const struct dmi_system_id *id)
 {
-	printf("Forcing lvds to dual link mode on %s\n", id->ident);
+	DRM_INFO("Forcing lvds to dual link mode on %s\n", id->ident);
 	return 1;
 }
 
@@ -9010,7 +9010,7 @@ struct intel_dmi_quirk {
 #ifdef notyet
 static int intel_dmi_reverse_brightness(const struct dmi_system_id *id)
 {
-	printf("Backlight polarity reversed on %s\n", id->ident);
+	DRM_INFO("Backlight polarity reversed on %s\n", id->ident);
 	return 1;
 }
 #endif

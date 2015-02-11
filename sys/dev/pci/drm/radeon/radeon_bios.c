@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.3 2014/07/06 08:19:33 jsg Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.4 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -712,7 +712,7 @@ bool radeon_get_bios(struct radeon_device *rdev)
 		return false;
 	}
 	if (rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) {
-		printf("BIOS signature incorrect %x %x\n", rdev->bios[0], rdev->bios[1]);
+		printk("BIOS signature incorrect %x %x\n", rdev->bios[0], rdev->bios[1]);
 		goto free_bios;
 	}
 

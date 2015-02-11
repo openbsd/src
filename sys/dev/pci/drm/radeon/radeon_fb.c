@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.6 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.7 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -133,7 +133,7 @@ radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 				       false, true,
 				       &gobj);
 	if (ret) {
-		DRM_ERROR( "failed to allocate framebuffer (%d)\n",
+		printk(KERN_ERR "failed to allocate framebuffer (%d)\n",
 		       aligned_size);
 		return -ENOMEM;
 	}

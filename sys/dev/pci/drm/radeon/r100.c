@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.9 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.10 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -994,17 +994,13 @@ static int r100_cp_init_microcode(struct radeon_device *rdev)
 	if ((rdev->family == CHIP_R100) || (rdev->family == CHIP_RV100) ||
 	    (rdev->family == CHIP_RV200) || (rdev->family == CHIP_RS100) ||
 	    (rdev->family == CHIP_RS200)) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading R100 Microcode\n");
-#endif
 		fw_name = FIRMWARE_R100;
 	} else if ((rdev->family == CHIP_R200) ||
 		   (rdev->family == CHIP_RV250) ||
 		   (rdev->family == CHIP_RV280) ||
 		   (rdev->family == CHIP_RS300)) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading R200 Microcode\n");
-#endif
 		fw_name = FIRMWARE_R200;
 	} else if ((rdev->family == CHIP_R300) ||
 		   (rdev->family == CHIP_R350) ||
@@ -1012,27 +1008,19 @@ static int r100_cp_init_microcode(struct radeon_device *rdev)
 		   (rdev->family == CHIP_RV380) ||
 		   (rdev->family == CHIP_RS400) ||
 		   (rdev->family == CHIP_RS480)) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading R300 Microcode\n");
-#endif
 		fw_name = FIRMWARE_R300;
 	} else if ((rdev->family == CHIP_R420) ||
 		   (rdev->family == CHIP_R423) ||
 		   (rdev->family == CHIP_RV410)) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading R400 Microcode\n");
-#endif
 		fw_name = FIRMWARE_R420;
 	} else if ((rdev->family == CHIP_RS690) ||
 		   (rdev->family == CHIP_RS740)) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading RS690/RS740 Microcode\n");
-#endif
 		fw_name = FIRMWARE_RS690;
 	} else if (rdev->family == CHIP_RS600) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading RS600 Microcode\n");
-#endif
 		fw_name = FIRMWARE_RS600;
 	} else if ((rdev->family == CHIP_RV515) ||
 		   (rdev->family == CHIP_R520) ||
@@ -1040,9 +1028,7 @@ static int r100_cp_init_microcode(struct radeon_device *rdev)
 		   (rdev->family == CHIP_R580) ||
 		   (rdev->family == CHIP_RV560) ||
 		   (rdev->family == CHIP_RV570)) {
-#ifdef DRMDEBUG
 		DRM_INFO("Loading R500 Microcode\n");
-#endif
 		fw_name = FIRMWARE_R520;
 	}
 
@@ -1070,7 +1056,7 @@ static void r100_cp_load_microcode(struct radeon_device *rdev)
 	int i, size;
 
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 
@@ -1156,9 +1142,7 @@ int r100_cp_init(struct radeon_device *rdev, unsigned ring_size)
 	WREG32(RADEON_CP_RB_CNTL, tmp | RADEON_RB_NO_UPDATE);
 
 	/* Set ring address */
-#ifdef DRMDEBUG
 	DRM_INFO("radeon: ring at 0x%016lX\n", (unsigned long)ring->gpu_addr);
-#endif
 	WREG32(RADEON_CP_RB_BASE, ring->gpu_addr);
 	/* Force read & write ptr to 0 */
 	WREG32(RADEON_CP_RB_CNTL, tmp | RADEON_RB_RPTR_WR_ENA | RADEON_RB_NO_UPDATE);
@@ -1235,7 +1219,7 @@ void r100_cp_disable(struct radeon_device *rdev)
 	WREG32(RADEON_CP_CSQ_CNTL, 0);
 	WREG32(R_000770_SCRATCH_UMSK, 0);
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 }
@@ -1981,7 +1965,7 @@ static int r100_packet0_check(struct radeon_cs_parser *p,
 		track->tex_dirty = true;
 		break;
 	default:
-		DRM_ERROR("Forbidden register 0x%04X in cs at %d\n",
+		printk(KERN_ERR "Forbidden register 0x%04X in cs at %d\n",
 		       reg, idx);
 		return -EINVAL;
 	}
@@ -2587,7 +2571,7 @@ int r100_gui_wait_for_idle(struct radeon_device *rdev)
 	uint32_t tmp;
 
 	if (r100_rbbm_fifo_wait_for_entry(rdev, 64)) {
-		DRM_ERROR("radeon: wait for empty RBBM fifo failed !"
+		printk(KERN_WARNING "radeon: wait for empty RBBM fifo failed !"
 		       " Bad things might happen.\n");
 	}
 	for (i = 0; i < rdev->usec_timeout; i++) {
@@ -2855,9 +2839,7 @@ r100_get_accessible_vram(struct radeon_device *rdev)
 	    rdev->family >= CHIP_RV350) {
 		WREG32_P(RADEON_HOST_PATH_CNTL, RADEON_HDP_APER_CNTL,
 		       ~RADEON_HDP_APER_CNTL);
-#ifdef DRMDEBUG
 		DRM_INFO("Generation 2 PCI interface, using max accessible memory\n");
-#endif
 		return aper_size * 2;
 	}
 
@@ -3763,9 +3745,7 @@ int r100_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		udelay(1);
 	}
 	if (i < rdev->usec_timeout) {
-#ifdef DRMDEBUG
 		DRM_INFO("ring test succeeded in %d usecs\n", i);
-#endif
 	} else {
 		DRM_ERROR("radeon: ring test failed (scratch(0x%04X)=0x%08X)\n",
 			  scratch, tmp);
@@ -3836,9 +3816,7 @@ int r100_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		udelay(1);
 	}
 	if (i < rdev->usec_timeout) {
-#ifdef DRMDEBUG
 		DRM_INFO("ib test succeeded in %u usecs\n", i);
-#endif
 	} else {
 		DRM_ERROR("radeon: ib test failed (scratch(0x%04X)=0x%08X)\n",
 			  scratch, tmp);

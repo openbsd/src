@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.10 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.11 2015/02/11 07:01:36 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -345,7 +345,8 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 		}
 
 		if (i == 4 && print_bad_edid) {
-			printf("%s: Ignoring invalid EDID block %d.\n",
+			dev_warn(connector->dev->dev,
+			 "%s: Ignoring invalid EDID block %d.\n",
 			 drm_get_connector_name(connector), j);
 
 			connector->bad_edid_counter++;
@@ -368,7 +369,7 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 
 carp:
 	if (print_bad_edid) {
-		printf("%s: EDID block %d invalid.\n",
+		dev_warn(connector->dev->dev, "%s: EDID block %d invalid.\n",
 		    drm_get_connector_name(connector), j);
 	}
 	connector->bad_edid_counter++;
@@ -893,11 +894,11 @@ static struct drm_display_mode *drm_mode_detailed(struct drm_device *dev,
 		return NULL;
 
 	if (pt->misc & DRM_EDID_PT_STEREO) {
-		printf("stereo mode not supported\n");
+		printk(KERN_WARNING "stereo mode not supported\n");
 		return NULL;
 	}
 	if (!(pt->misc & DRM_EDID_PT_SEPARATE_SYNC)) {
-		printf("composite sync not supported\n");
+		printk(KERN_WARNING "composite sync not supported\n");
 	}
 
 	/* it is incorrect if hsync/vsync width is zero */
@@ -1988,7 +1989,7 @@ int drm_add_edid_modes(struct drm_connector *connector, struct edid *edid)
 		return 0;
 	}
 	if (!drm_edid_is_valid(edid)) {
-		printf("%s: EDID invalid.\n",
+		dev_warn(connector->dev->dev, "%s: EDID invalid.\n",
 			 drm_get_connector_name(connector));
 		return 0;
 	}

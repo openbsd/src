@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.10 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.11 2015/02/11 07:01:36 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -2991,7 +2991,7 @@ void drm_object_attach_property(struct drm_mode_object *obj,
 	int count = obj->properties->count;
 
 	if (count == DRM_OBJECT_MAX_PROPERTY) {
-		printf("Failed to attach object property (type: 0x%x). Please "
+		WARN(1, "Failed to attach object property (type: 0x%x). Please "
 			"increase DRM_OBJECT_MAX_PROPERTY by 1 for each time "
 			"you see this message on the same object type.\n",
 			obj->type);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_combios.c,v 1.5 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_combios.c,v 1.6 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -2634,11 +2634,13 @@ bool radeon_get_legacy_connector_info_from_bios(struct drm_device *dev)
 	return true;
 }
 
+#ifdef DRMDEBUG
 static const char *thermal_controller_names[] = {
 	"NONE",
 	"lm63",
 	"adm1032",
 };
+#endif
 
 void radeon_combios_get_power_modes(struct radeon_device *rdev)
 {

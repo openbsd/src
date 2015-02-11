@@ -1,4 +1,4 @@
-/*	$OpenBSD: atom.c,v 1.5 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: atom.c,v 1.6 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
@@ -87,15 +87,15 @@ static int debug_depth = 0;
 static void debug_print_spaces(int n)
 {
 	while (n--)
-		printf("   ");
+		printk("   ");
 }
 
 #ifdef DEBUG
 #undef DEBUG
 #endif
 
-#define DEBUG(...) do if (atom_debug) { printf(__FILE__ __VA_ARGS__); } while (0)
-#define SDEBUG(...) do if (atom_debug) { printf(__FILE__); debug_print_spaces(debug_depth); printf(__VA_ARGS__); } while (0)
+#define DEBUG(...) do if (atom_debug) { printk(__FILE__ __VA_ARGS__); } while (0)
+#define SDEBUG(...) do if (atom_debug) { printk(__FILE__); debug_print_spaces(debug_depth); printf(__VA_ARGS__); } while (0)
 #else
 #define DEBUG(...) do { } while (0)
 #define SDEBUG(...) do { } while (0)
@@ -171,7 +171,7 @@ static uint32_t atom_iio_execute(struct atom_context *ctx, int base,
 		case ATOM_IIO_END:
 			return temp;
 		default:
-			DRM_INFO("Unknown IIO opcode.\n");
+			printk(KERN_INFO "Unknown IIO opcode.\n");
 			return 0;
 		}
 }
@@ -195,20 +195,20 @@ static uint32_t atom_get_src_int(atom_exec_context *ctx, uint8_t attr,
 			val = gctx->card->reg_read(gctx->card, idx);
 			break;
 		case ATOM_IO_PCI:
-			DRM_INFO(
+			printk(KERN_INFO
 			       "PCI registers are not implemented.\n");
 			return 0;
 		case ATOM_IO_SYSIO:
-			DRM_INFO(
+			printk(KERN_INFO
 			       "SYSIO registers are not implemented.\n");
 			return 0;
 		default:
 			if (!(gctx->io_mode & 0x80)) {
-				DRM_INFO( "Bad IO mode.\n");
+				printk(KERN_INFO "Bad IO mode.\n");
 				return 0;
 			}
 			if (!gctx->iio[gctx->io_mode & 0x7F]) {
-				DRM_INFO(
+				printk(KERN_INFO
 				       "Undefined indirect IO read method %d.\n",
 				       gctx->io_mode & 0x7F);
 				return 0;
@@ -478,20 +478,20 @@ static void atom_put_dst(atom_exec_context *ctx, int arg, uint8_t attr,
 				gctx->card->reg_write(gctx->card, idx, val);
 			break;
 		case ATOM_IO_PCI:
-			DRM_INFO(
+			printk(KERN_INFO
 			       "PCI registers are not implemented.\n");
 			return;
 		case ATOM_IO_SYSIO:
-			DRM_INFO(
+			printk(KERN_INFO
 			       "SYSIO registers are not implemented.\n");
 			return;
 		default:
 			if (!(gctx->io_mode & 0x80)) {
-				DRM_INFO( "Bad IO mode.\n");
+				printk(KERN_INFO "Bad IO mode.\n");
 				return;
 			}
 			if (!gctx->iio[gctx->io_mode & 0xFF]) {
-				DRM_INFO(
+				printk(KERN_INFO
 				       "Undefined indirect IO write method %d.\n",
 				       gctx->io_mode & 0x7F);
 				return;
@@ -620,7 +620,7 @@ static void atom_op_and(atom_exec_context *ctx, int *ptr, int arg)
 
 static void atom_op_beep(atom_exec_context *ctx, int *ptr, int arg)
 {
-	printf("ATOM BIOS beeped!\n");
+	printk("ATOM BIOS beeped!\n");
 }
 
 static void atom_op_calltable(atom_exec_context *ctx, int *ptr, int arg)
@@ -824,17 +824,17 @@ static void atom_op_postcard(atom_exec_context *ctx, int *ptr, int arg)
 
 static void atom_op_repeat(atom_exec_context *ctx, int *ptr, int arg)
 {
-	DRM_INFO( "unimplemented!\n");
+	printk(KERN_INFO "unimplemented!\n");
 }
 
 static void atom_op_restorereg(atom_exec_context *ctx, int *ptr, int arg)
 {
-	DRM_INFO( "unimplemented!\n");
+	printk(KERN_INFO "unimplemented!\n");
 }
 
 static void atom_op_savereg(atom_exec_context *ctx, int *ptr, int arg)
 {
-	DRM_INFO( "unimplemented!\n");
+	printk(KERN_INFO "unimplemented!\n");
 }
 
 static void atom_op_setdatablock(atom_exec_context *ctx, int *ptr, int arg)
@@ -997,7 +997,7 @@ static void atom_op_switch(atom_exec_context *ctx, int *ptr, int arg)
 			}
 			(*ptr) += 2;
 		} else {
-			DRM_INFO( "Bad case.\n");
+			printk(KERN_INFO "Bad case.\n");
 			return;
 		}
 	(*ptr) += 2;
@@ -1031,7 +1031,7 @@ static void atom_op_xor(atom_exec_context *ctx, int *ptr, int arg)
 
 static void atom_op_debug(atom_exec_context *ctx, int *ptr, int arg)
 {
-	DRM_INFO( "unimplemented!\n");
+	printk(KERN_INFO "unimplemented!\n");
 }
 
 static struct {
@@ -1276,14 +1276,14 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 	ctx->bios = bios;
 
 	if (CU16(0) != ATOM_BIOS_MAGIC) {
-		DRM_INFO( "Invalid BIOS magic.\n");
+		printk(KERN_INFO "Invalid BIOS magic.\n");
 		kfree(ctx);
 		return NULL;
 	}
 	if (strncmp
 	    (CSTR(ATOM_ATI_MAGIC_PTR), ATOM_ATI_MAGIC,
 	     strlen(ATOM_ATI_MAGIC))) {
-		DRM_INFO( "Invalid ATI magic.\n");
+		printk(KERN_INFO "Invalid ATI magic.\n");
 		kfree(ctx);
 		return NULL;
 	}
@@ -1292,7 +1292,7 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 	if (strncmp
 	    (CSTR(base + ATOM_ROM_MAGIC_PTR), ATOM_ROM_MAGIC,
 	     strlen(ATOM_ROM_MAGIC))) {
-		DRM_INFO( "Invalid ATOM magic.\n");
+		printk(KERN_INFO "Invalid ATOM magic.\n");
 		kfree(ctx);
 		return NULL;
 	}
@@ -1313,7 +1313,7 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 			break;
 		}
 	}
-	DRM_INFO( "ATOM BIOS: %s\n", name);
+	printk(KERN_INFO "ATOM BIOS: %s\n", name);
 #endif
 
 	return ctx;

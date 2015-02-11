@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.12 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.13 2015/02/11 07:01:37 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -71,13 +71,13 @@ static void ttm_mem_type_debug(struct ttm_bo_device *bdev, int mem_type)
 {
 	struct ttm_mem_type_manager *man = &bdev->man[mem_type];
 
-	printf("    has_type: %d\n", man->has_type);
-	printf("    use_type: %d\n", man->use_type);
-	printf("    flags: 0x%08X\n", man->flags);
-	printf("    gpu_offset: 0x%08lX\n", man->gpu_offset);
-	printf("    size: %llu\n", man->size);
-	printf("    available_caching: 0x%08X\n", man->available_caching);
-	printf("    default_caching: 0x%08X\n", man->default_caching);
+	pr_err("    has_type: %d\n", man->has_type);
+	pr_err("    use_type: %d\n", man->use_type);
+	pr_err("    flags: 0x%08X\n", man->flags);
+	pr_err("    gpu_offset: 0x%08lX\n", man->gpu_offset);
+	pr_err("    size: %llu\n", man->size);
+	pr_err("    available_caching: 0x%08X\n", man->available_caching);
+	pr_err("    default_caching: 0x%08X\n", man->default_caching);
 	if (mem_type != TTM_PL_SYSTEM)
 		(*man->func->debug)(man, TTM_PFX);
 }
@@ -87,7 +87,7 @@ static void ttm_bo_mem_space_debug(struct ttm_buffer_object *bo,
 {
 	int i, ret, mem_type;
 
-	printf("No space for %p (%lu pages, %luK, %luM)\n",
+	pr_err("No space for %p (%lu pages, %luK, %luM)\n",
 	       bo, bo->mem.num_pages, bo->mem.size >> 10,
 	       bo->mem.size >> 20);
 	for (i = 0; i < placement->num_placement; i++) {
@@ -95,7 +95,7 @@ static void ttm_bo_mem_space_debug(struct ttm_buffer_object *bo,
 						&mem_type);
 		if (ret)
 			return;
-		printf("  placement[%d]=0x%08X (%d)\n",
+		pr_err("  placement[%d]=0x%08X (%d)\n",
 		       i, placement->placement[i], mem_type);
 		ttm_mem_type_debug(bo->bdev, mem_type);
 	}
@@ -363,7 +363,7 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 		bo->ttm->sg = bo->sg;
 		break;
 	default:
-		printf("Illegal buffer object type\n");
+		pr_err("Illegal buffer object type\n");
 		ret = -EINVAL;
 		break;
 	}
@@ -453,7 +453,7 @@ moved:
 		if (bdev->driver->invalidate_caches) {
 			ret = bdev->driver->invalidate_caches(bdev, bo->mem.placement);
 			if (ret)
-				printf("Can not flush read caches\n");
+				pr_err("Can not flush read caches\n");
 		}
 		bo->evicted = false;
 	}
@@ -783,8 +783,8 @@ static int ttm_bo_evict(struct ttm_buffer_object *bo, bool interruptible,
 	spin_unlock(&bdev->fence_lock);
 
 	if (unlikely(ret != 0)) {
-		if (ret != -ERESTART) {
-			printf("Failed to expire sync object before buffer eviction\n");
+		if (ret != -ERESTARTSYS) {
+			pr_err("Failed to expire sync object before buffer eviction\n");
 		}
 		goto out;
 	}
@@ -804,8 +804,8 @@ static int ttm_bo_evict(struct ttm_buffer_object *bo, bool interruptible,
 	ret = ttm_bo_mem_space(bo, &placement, &evict_mem, interruptible,
 				no_wait_gpu);
 	if (ret) {
-		if (ret != -ERESTART) {
-			printf("Failed to find memory space for buffer 0x%p eviction\n",
+		if (ret != -ERESTARTSYS) {
+			pr_err("Failed to find memory space for buffer 0x%p eviction\n",
 			       bo);
 			ttm_bo_mem_space_debug(bo, &placement);
 		}
@@ -815,8 +815,8 @@ static int ttm_bo_evict(struct ttm_buffer_object *bo, bool interruptible,
 	ret = ttm_bo_handle_move_mem(bo, &evict_mem, true, interruptible,
 				     no_wait_gpu);
 	if (ret) {
-		if (ret != -ERESTART)
-			printf("Buffer eviction failed\n");
+		if (ret != -ERESTARTSYS)
+			pr_err("Buffer eviction failed\n");
 		ttm_bo_mem_put(bo, &evict_mem);
 		goto out;
 	}
@@ -1210,7 +1210,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 
 	ret = ttm_mem_global_alloc(mem_glob, acc_size, false, false);
 	if (ret) {
-		printf("Out of kernel memory\n");
+		pr_err("Out of kernel memory\n");
 		if (destroy)
 			(*destroy)(bo);
 		else
@@ -1220,7 +1220,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 
 	num_pages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	if (num_pages == 0) {
-		printf("Illegal buffer object size\n");
+		pr_err("Illegal buffer object size\n");
 		if (destroy)
 			(*destroy)(bo);
 		else
@@ -1367,7 +1367,7 @@ static int ttm_bo_force_list_clean(struct ttm_bo_device *bdev,
 			if (allow_errors) {
 				return ret;
 			} else {
-				printf("Cleanup eviction failed\n");
+				pr_err("Cleanup eviction failed\n");
 			}
 		}
 		spin_lock(&glob->lru_lock);
@@ -1382,13 +1382,13 @@ int ttm_bo_clean_mm(struct ttm_bo_device *bdev, unsigned mem_type)
 	int ret = -EINVAL;
 
 	if (mem_type >= TTM_NUM_MEM_TYPES) {
-		printf("Illegal memory type %d\n", mem_type);
+		pr_err("Illegal memory type %d\n", mem_type);
 		return ret;
 	}
 	man = &bdev->man[mem_type];
 
 	if (!man->has_type) {
-		printf("Trying to take down uninitialized memory manager type %u\n",
+		pr_err("Trying to take down uninitialized memory manager type %u\n",
 		       mem_type);
 		return ret;
 	}
@@ -1412,12 +1412,12 @@ int ttm_bo_evict_mm(struct ttm_bo_device *bdev, unsigned mem_type)
 	struct ttm_mem_type_manager *man = &bdev->man[mem_type];
 
 	if (mem_type == 0 || mem_type >= TTM_NUM_MEM_TYPES) {
-		printf("Illegal memory manager memory type %u\n", mem_type);
+		pr_err("Illegal memory manager memory type %u\n", mem_type);
 		return -EINVAL;
 	}
 
 	if (!man->has_type) {
-		printf("Memory type %u has not been initialized\n", mem_type);
+		pr_err("Memory type %u has not been initialized\n", mem_type);
 		return 0;
 	}
 
@@ -1501,7 +1501,7 @@ int ttm_bo_global_init(struct drm_global_reference *ref)
 	ttm_mem_init_shrink(&glob->shrink, ttm_bo_swapout);
 	ret = ttm_mem_register_shrink(glob->mem_glob, &glob->shrink);
 	if (unlikely(ret != 0)) {
-		printf("Could not register buffer object swapout\n");
+		pr_err("Could not register buffer object swapout\n");
 		goto out_no_shrink;
 	}
 
@@ -1532,7 +1532,7 @@ int ttm_bo_device_release(struct ttm_bo_device *bdev)
 			man->use_type = false;
 			if ((i != TTM_PL_SYSTEM) && ttm_bo_clean_mm(bdev, i)) {
 				ret = -EBUSY;
-				printf("DRM memory manager type %d is not clean\n",
+				pr_err("DRM memory manager type %d is not clean\n",
 				       i);
 			}
 			man->has_type = false;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_cs.c,v 1.4 2015/01/28 05:29:30 jsg Exp $	*/
+/*	$OpenBSD: r600_cs.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1079,7 +1079,7 @@ static int r600_packet0_check(struct radeon_cs_parser *p,
 		}
 		break;
 	default:
-		DRM_ERROR( "Forbidden register 0x%04X in cs at %d\n",
+		printk(KERN_ERR "Forbidden register 0x%04X in cs at %d\n",
 		       reg, idx);
 		return -EINVAL;
 	}

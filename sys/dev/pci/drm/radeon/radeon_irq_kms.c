@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.6 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.7 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -268,7 +268,7 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 		int ret = pci_enable_msi(rdev->pdev);
 		if (!ret) {
 			rdev->msi_enabled = 1;
-			dev_info(rdev->ddev, "radeon: using MSI.\n");
+			dev_info(rdev->dev, "radeon: using MSI.\n");
 		}
 	}
 #endif
@@ -278,7 +278,7 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 		rdev->irq.installed = false;
 		return r;
 	}
-	DRM_DEBUG("radeon: irq initialized.\n");
+	DRM_INFO("radeon: irq initialized.\n");
 	return 0;
 }
 

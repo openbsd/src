@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.9 2014/05/03 05:22:38 jsg Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.10 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -716,7 +716,7 @@ static const struct drm_encoder_funcs intel_crt_enc_funcs = {
 
 static int __init intel_no_crt_dmi_callback(const struct dmi_system_id *id)
 {
-	printf("Skipping CRT initialization for %s\n", id->ident);
+	DRM_INFO("Skipping CRT initialization for %s\n", id->ident);
 	return 1;
 }
 

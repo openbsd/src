@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_modes.c,v 1.3 2013/09/02 06:25:28 jsg Exp $	*/
+/*	$OpenBSD: drm_modes.c,v 1.4 2015/02/11 07:01:36 jsg Exp $	*/
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
  * Copyright © 2007 Dave Airlie
@@ -1136,7 +1136,8 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 	}
 done:
 	if (i >= 0) {
-		printf("parse error at position %i in video mode '%s'\n",
+		printk(KERN_WARNING
+			"parse error at position %i in video mode '%s'\n",
 			i, name);
 		mode->specified = false;
 		return false;

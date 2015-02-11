@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.18 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.19 2015/02/11 07:01:37 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -1364,7 +1364,7 @@ static void i915_report_and_clear_eir(struct drm_device *dev)
 	if (!eir)
 		return;
 
-	printf("render error detected, EIR: 0x%08x\n", eir);
+	pr_err("render error detected, EIR: 0x%08x\n", eir);
 
 	i915_get_extra_instdone(dev, instdone);
 
@@ -1372,19 +1372,19 @@ static void i915_report_and_clear_eir(struct drm_device *dev)
 		if (eir & (GM45_ERROR_MEM_PRIV | GM45_ERROR_CP_PRIV)) {
 			u32 ipeir = I915_READ(IPEIR_I965);
 
-			printf("  IPEIR: 0x%08x\n", I915_READ(IPEIR_I965));
-			printf("  IPEHR: 0x%08x\n", I915_READ(IPEHR_I965));
+			pr_err("  IPEIR: 0x%08x\n", I915_READ(IPEIR_I965));
+			pr_err("  IPEHR: 0x%08x\n", I915_READ(IPEHR_I965));
 			for (i = 0; i < ARRAY_SIZE(instdone); i++)
-				printf("  INSTDONE_%d: 0x%08x\n", i, instdone[i]);
-			printf("  INSTPS: 0x%08x\n", I915_READ(INSTPS));
-			printf("  ACTHD: 0x%08x\n", I915_READ(ACTHD_I965));
+				pr_err("  INSTDONE_%d: 0x%08x\n", i, instdone[i]);
+			pr_err("  INSTPS: 0x%08x\n", I915_READ(INSTPS));
+			pr_err("  ACTHD: 0x%08x\n", I915_READ(ACTHD_I965));
 			I915_WRITE(IPEIR_I965, ipeir);
 			POSTING_READ(IPEIR_I965);
 		}
 		if (eir & GM45_ERROR_PAGE_TABLE) {
 			u32 pgtbl_err = I915_READ(PGTBL_ER);
-			printf("page table error\n");
-			printf("  PGTBL_ER: 0x%08x\n", pgtbl_err);
+			pr_err("page table error\n");
+			pr_err("  PGTBL_ER: 0x%08x\n", pgtbl_err);
 			I915_WRITE(PGTBL_ER, pgtbl_err);
 			POSTING_READ(PGTBL_ER);
 		}
@@ -1393,40 +1393,40 @@ static void i915_report_and_clear_eir(struct drm_device *dev)
 	if (!IS_GEN2(dev)) {
 		if (eir & I915_ERROR_PAGE_TABLE) {
 			u32 pgtbl_err = I915_READ(PGTBL_ER);
-			printf("page table error\n");
-			printf("  PGTBL_ER: 0x%08x\n", pgtbl_err);
+			pr_err("page table error\n");
+			pr_err("  PGTBL_ER: 0x%08x\n", pgtbl_err);
 			I915_WRITE(PGTBL_ER, pgtbl_err);
 			POSTING_READ(PGTBL_ER);
 		}
 	}
 
 	if (eir & I915_ERROR_MEMORY_REFRESH) {
-		printf("memory refresh error:\n");
+		pr_err("memory refresh error:\n");
 		for_each_pipe(pipe)
-			printf("pipe %c stat: 0x%08x\n",
+			pr_err("pipe %c stat: 0x%08x\n",
 			       pipe_name(pipe), I915_READ(PIPESTAT(pipe)));
 		/* pipestat has already been acked */
 	}
 	if (eir & I915_ERROR_INSTRUCTION) {
-		printf("instruction error\n");
-		printf("  INSTPM: 0x%08x\n", I915_READ(INSTPM));
+		pr_err("instruction error\n");
+		pr_err("  INSTPM: 0x%08x\n", I915_READ(INSTPM));
 		for (i = 0; i < ARRAY_SIZE(instdone); i++)
-			printf("  INSTDONE_%d: 0x%08x\n", i, instdone[i]);
+			pr_err("  INSTDONE_%d: 0x%08x\n", i, instdone[i]);
 		if (INTEL_INFO(dev)->gen < 4) {
 			u32 ipeir = I915_READ(IPEIR);
 
-			printf("  IPEIR: 0x%08x\n", I915_READ(IPEIR));
-			printf("  IPEHR: 0x%08x\n", I915_READ(IPEHR));
-			printf("  ACTHD: 0x%08x\n", I915_READ(ACTHD));
+			pr_err("  IPEIR: 0x%08x\n", I915_READ(IPEIR));
+			pr_err("  IPEHR: 0x%08x\n", I915_READ(IPEHR));
+			pr_err("  ACTHD: 0x%08x\n", I915_READ(ACTHD));
 			I915_WRITE(IPEIR, ipeir);
 			POSTING_READ(IPEIR);
 		} else {
 			u32 ipeir = I915_READ(IPEIR_I965);
 
-			printf("  IPEIR: 0x%08x\n", I915_READ(IPEIR_I965));
-			printf("  IPEHR: 0x%08x\n", I915_READ(IPEHR_I965));
-			printf("  INSTPS: 0x%08x\n", I915_READ(INSTPS));
-			printf("  ACTHD: 0x%08x\n", I915_READ(ACTHD_I965));
+			pr_err("  IPEIR: 0x%08x\n", I915_READ(IPEIR_I965));
+			pr_err("  IPEHR: 0x%08x\n", I915_READ(IPEHR_I965));
+			pr_err("  INSTPS: 0x%08x\n", I915_READ(INSTPS));
+			pr_err("  ACTHD: 0x%08x\n", I915_READ(ACTHD_I965));
 			I915_WRITE(IPEIR_I965, ipeir);
 			POSTING_READ(IPEIR_I965);
 		}

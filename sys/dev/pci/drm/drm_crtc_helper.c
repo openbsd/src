@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.9 2015/02/10 03:39:41 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.10 2015/02/11 07:01:36 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -316,8 +316,7 @@ static bool drm_encoder_crtc_ok(struct drm_encoder *encoder,
 	struct drm_crtc *tmp;
 	int crtc_mask = 1;
 
-	if (crtc == NULL)
-		printf("%s checking null crtc?\n", __func__);
+	WARN(!crtc, "checking null crtc?\n");
 
 	dev = crtc->dev;
 

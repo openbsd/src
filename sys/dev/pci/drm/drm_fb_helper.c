@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.9 2015/02/11 07:01:36 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -811,7 +811,7 @@ int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	if (crtc_count == 0 || sizes.fb_width == -1 || sizes.fb_height == -1) {
 		/* hmm everyone went away - assume VGA cable just fell out
 		   and will come back later. */
-		printf("Cannot find any crtc or sizes - going 1024x768\n");
+		DRM_INFO("Cannot find any crtc or sizes - going 1024x768\n");
 		sizes.fb_width = sizes.surface_width = 1024;
 		sizes.fb_height = sizes.surface_height = 768;
 	}
@@ -1137,7 +1137,7 @@ static bool drm_target_cloned(struct drm_fb_helper *fb_helper,
 		DRM_DEBUG_KMS("can clone using 1024x768\n");
 		return true;
 	}
-	printf("kms: can't enable cloning when we probably wanted to.\n");
+	DRM_INFO("kms: can't enable cloning when we probably wanted to.\n");
 	return false;
 }
 
@@ -1361,7 +1361,7 @@ bool drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel)
 	 * we shouldn't end up with no modes here.
 	 */
 	if (count == 0)
-		printf("No connectors reported connected with modes\n");
+		dev_info(fb_helper->dev->dev, "No connectors reported connected with modes\n");
 
 	drm_setup_crtcs(fb_helper);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_benchmark.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_benchmark.c,v 1.2 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  *
@@ -93,7 +93,7 @@ radeon_benchmark_log_results(int n, unsigned size,
 #ifdef DRMDEBUG
 	unsigned int throughput = (n * (size >> 10)) / time;
 #endif
-	DRM_DEBUG("radeon: %s %u bo moves of %u kB from"
+	DRM_INFO("radeon: %s %u bo moves of %u kB from"
 		 " %d to %d in %u ms, throughput: %u Mb/s or %u MB/s\n",
 		 kind, n, size >> 10, sdomain, ddomain, time,
 		 throughput * 8, throughput);

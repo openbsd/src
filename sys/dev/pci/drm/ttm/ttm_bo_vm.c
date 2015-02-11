@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.4 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -312,7 +312,7 @@ ttm_bo_mmap(voff_t off, vsize_t size, struct ttm_bo_device *bdev)
 	read_unlock(&bdev->vm_lock);
 
 	if (unlikely(bo == NULL)) {
-//		pr_err("Could not find buffer object to map\n");
+		pr_err("Could not find buffer object to map\n");
 		return NULL;
 	}
 

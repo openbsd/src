@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.7 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.8 2015/02/11 07:01:37 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -73,7 +73,7 @@ static struct attribute ttm_mem_used = {
 static void ttm_mem_zone_kobj_release(struct ttm_mem_zone *zone)
 {
 
-	DRM_INFO("Zone %7s: Used memory at exit: %llu kiB\n",
+	pr_info("Zone %7s: Used memory at exit: %llu kiB\n",
 		zone->name, (unsigned long long)zone->used_mem >> 10);
 	kfree(zone);
 }
@@ -359,7 +359,7 @@ int ttm_mem_global_init(struct ttm_mem_global *glob)
 #ifdef DRMDEBUG
 	for (i = 0; i < glob->num_zones; ++i) {
 		zone = glob->zones[i];
-		DRM_INFO("Zone %7s: Available graphics memory: %llu kiB\n",
+		pr_info("Zone %7s: Available graphics memory: %llu kiB\n",
 			zone->name, (unsigned long long)zone->max_mem >> 10);
 	}
 #endif

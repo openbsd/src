@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.c,v 1.4 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2009 VMware, Inc., Palo Alto, CA., USA
@@ -230,7 +230,7 @@ struct ttm_base_object *ttm_base_object_lookup(struct ttm_object_file *tfile,
 		return NULL;
 
 	if (tfile != base->tfile && !base->shareable) {
-		DRM_ERROR("Attempted access of non-shareable object\n");
+		pr_err("Attempted access of non-shareable object\n");
 		ttm_base_object_unref(&base);
 		return NULL;
 	}

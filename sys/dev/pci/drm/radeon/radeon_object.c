@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.7 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.8 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -262,7 +262,7 @@ int radeon_bo_pin_restricted(struct radeon_bo *bo, u32 domain, u64 max_offset,
 			*gpu_addr = radeon_bo_gpu_offset(bo);
 	}
 	if (unlikely(r != 0))
-		DRM_ERROR("%p pin failed\n", bo);
+		dev_err(bo->rdev->dev, "%p pin failed\n", bo);
 	return r;
 }
 
@@ -276,7 +276,7 @@ int radeon_bo_unpin(struct radeon_bo *bo)
 	int r, i;
 
 	if (!bo->pin_count) {
-		DRM_ERROR("%p unpin not necessary\n", bo);
+		dev_warn(bo->rdev->dev, "%p unpin not necessary\n", bo);
 		return 0;
 	}
 	bo->pin_count--;
@@ -286,7 +286,7 @@ int radeon_bo_unpin(struct radeon_bo *bo)
 		bo->placements[i] &= ~TTM_PL_FLAG_NO_EVICT;
 	r = ttm_bo_validate(&bo->tbo, &bo->placement, false, false);
 	if (unlikely(r != 0))
-		DRM_ERROR("%p validate failed for unpin\n", bo);
+		dev_err(bo->rdev->dev, "%p validate failed for unpin\n", bo);
 	return r;
 }
 
@@ -308,11 +308,11 @@ void radeon_bo_force_delete(struct radeon_device *rdev)
 	if (list_empty(&rdev->gem.objects)) {
 		return;
 	}
-	DRM_ERROR("Userspace still has active objects !\n");
+	dev_err(rdev->dev, "Userspace still has active objects !\n");
 	list_for_each_entry_safe(bo, n, &rdev->gem.objects, list) {
 		mutex_lock(&rdev->ddev->struct_mutex);
 #ifdef notyet
-		DRM_ERROR("%p %p %lu %lu force free\n",
+		dev_err(rdev->dev, "%p %p %lu %lu force free\n",
 			&bo->gem_base, bo, (unsigned long)bo->gem_base.size,
 			*((unsigned long *)&bo->gem_base.refcount));
 #endif
@@ -659,7 +659,7 @@ int radeon_bo_reserve(struct radeon_bo *bo, bool no_intr)
 	r = ttm_bo_reserve(&bo->tbo, !no_intr, false, false, 0);
 	if (unlikely(r != 0)) {
 		if (r != -ERESTARTSYS)
-			DRM_ERROR("%p reserve failed\n", bo);
+			dev_err(bo->rdev->dev, "%p reserve failed\n", bo);
 		return r;
 	}
 	return 0;

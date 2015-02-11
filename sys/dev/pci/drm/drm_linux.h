@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.3 2015/02/10 00:23:53 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.4 2015/02/11 07:01:36 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -16,6 +16,58 @@
  */
 
 #define __force
+#define KERN_INFO
+#define KERN_WARNING
+#define KERN_NOTICE
+#define KERN_DEBUG
+#define KERN_CRIT
+#define KERN_ERR
+
+#define KBUILD_MODNAME "drm"
+
+#ifndef pr_fmt
+#define pr_fmt(fmt) fmt
+#endif
+
+#define printk(fmt, arg...)	printf(fmt, ## arg)
+#define pr_warn(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+#define pr_notice(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+#define pr_crit(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+#define pr_err(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+
+#ifdef DRMDEBUG
+#define pr_info(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+#define pr_debug(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+#else
+#define pr_info(fmt, arg...)	do { } while(0)
+#define pr_debug(fmt, arg...)	do { } while(0)
+#endif
+
+#define dev_warn(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_pid,	\
+	    __func__ , ## arg)
+#define dev_notice(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *NOTICE* " fmt, curproc->p_pid,	\
+	    __func__ , ## arg)
+#define dev_crit(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_pid,	\
+	    __func__ , ## arg)
+#define dev_err(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_pid,	\
+	    __func__ , ## arg)
+
+#ifdef DRMDEBUG
+#define dev_info(dev, fmt, arg...)				\
+	printf("drm: " fmt, ## arg)
+#define dev_debug(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *DEBUG* " fmt, curproc->p_pid,	\
+	    __func__ , ## arg)
+#else
+#define dev_info(dev, fmt, arg...) 				\
+	    do { } while(0)
+#define dev_debug(dev, fmt, arg...) 				\
+	    do { } while(0)
+#endif
 
 static inline void
 spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.57 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.58 2015/02/11 07:01:36 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -236,7 +236,7 @@ static void vblank_disable_fn(void *arg)
 		spin_lock_irqsave(&dev->vbl_lock, irqflags);
 		if (atomic_read(&dev->vblank_refcount[i]) == 0 &&
 		    dev->vblank_enabled[i]) {
-			DPRINTF("disabling vblank on crtc %d\n", i);
+			DRM_DEBUG("disabling vblank on crtc %d\n", i);
 			vblank_disable_and_save(dev, i);
 		}
 		spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
@@ -312,13 +312,13 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 	if (!dev->_vblank_time)
 		goto err;
 
-	DRM_DEBUG("Supports vblank timestamp caching Rev 1 (10.10.2010).\n");
+	DRM_INFO("Supports vblank timestamp caching Rev 1 (10.10.2010).\n");
 
 	/* Driver specific high-precision vblank timestamping supported? */
 	if (dev->driver->get_vblank_timestamp)
-		DRM_DEBUG("Driver supports precise vblank timestamp query.\n");
+		DRM_INFO("Driver supports precise vblank timestamp query.\n");
 	else
-		DRM_DEBUG("No driver support for vblank timestamp query.\n");
+		DRM_INFO("No driver support for vblank timestamp query.\n");
 
 	/* Zero per-crtc vblank stuff */
 	for (i = 0; i < num_crtcs; i++) {
@@ -1198,7 +1198,7 @@ static int drm_queue_vblank_event(struct drm_device *dev, int pipe,
 		vblwait->reply.sequence = vblwait->request.sequence;
 	}
 
-	DPRINTF("event on vblank count %d, current %d, crtc %d\n",
+	DRM_DEBUG("event on vblank count %d, current %d, crtc %d\n",
 		  vblwait->request.sequence, seq, pipe);
 
 #if 0
@@ -1305,7 +1305,7 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 		vblwait->request.sequence = seq + 1;
 	}
 
-	DPRINTF("waiting on vblank count %d, crtc %d\n",
+	DRM_DEBUG("waiting on vblank count %d, crtc %d\n",
 		  vblwait->request.sequence, crtc);
 	dev->last_vblank_wait[crtc] = vblwait->request.sequence;
 	DRM_WAIT_ON(ret, &dev->vbl_queue[crtc], &dev->vbl_lock, 3 * hz,
@@ -1320,10 +1320,10 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 		vblwait->reply.tval_sec = now.tv_sec;
 		vblwait->reply.tval_usec = now.tv_usec;
 
-		DPRINTF("returning %d to client\n",
+		DRM_DEBUG("returning %d to client\n",
 			  vblwait->reply.sequence);
 	} else {
-		DPRINTF("vblank wait interrupted by signal\n");
+		DRM_DEBUG("vblank wait interrupted by signal\n");
 	}
 
 done:

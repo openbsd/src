@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.34 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.35 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -671,7 +671,7 @@ radeondrm_attachhook(void *xsc)
 	 */
 	r = radeon_device_init(rdev, rdev->ddev);
 	if (r) {
-		printf(": Fatal error during GPU init\n");
+		dev_err(&dev->pdev->dev, "Fatal error during GPU init\n");
 		radeon_fatal_error = 1;
 		radeondrm_forcedetach(rdev);
 		return;
@@ -683,7 +683,7 @@ radeondrm_attachhook(void *xsc)
 	 */
 	r = radeon_modeset_init(rdev);
 	if (r)
-		printf("Fatal error during modeset init\n");
+		dev_err(&dev->pdev->dev, "Fatal error during modeset init\n");
 
 	/* Call ACPI methods: require modeset init
 	 * but failure is not fatal

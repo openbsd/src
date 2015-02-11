@@ -1,4 +1,4 @@
-/*	$OpenBSD: r420.c,v 1.4 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: r420.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -91,7 +91,7 @@ void r420_pipes_init(struct radeon_device *rdev)
 	       (1 << 2) | (1 << 3));
 	/* add idle wait as per freedesktop.org bug 24041 */
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 	/* get max number of pipes */
@@ -127,7 +127,7 @@ void r420_pipes_init(struct radeon_device *rdev)
 	tmp |= R300_TILE_SIZE_16 | R300_ENABLE_TILING;
 	WREG32(R300_GB_TILE_CONFIG, tmp);
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 
@@ -140,7 +140,7 @@ void r420_pipes_init(struct radeon_device *rdev)
 	       R300_DC_DC_DISABLE_IGNORE_PE);
 
 	if (r100_gui_wait_for_idle(rdev)) {
-		DRM_ERROR("Failed to wait GUI idle while "
+		printk(KERN_WARNING "Failed to wait GUI idle while "
 		       "programming pipes. Bad things might happen.\n");
 	}
 
@@ -153,10 +153,8 @@ void r420_pipes_init(struct radeon_device *rdev)
 	} else
 		rdev->num_z_pipes = 1;
 
-#ifdef DRMDEBUG
 	DRM_INFO("radeon: %d quad pipes, %d z pipes initialized.\n",
 		 rdev->num_gb_pipes, rdev->num_z_pipes);
-#endif
 }
 
 u32 r420_mc_rreg(struct radeon_device *rdev, u32 reg)
