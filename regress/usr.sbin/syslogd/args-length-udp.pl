@@ -13,8 +13,11 @@ use Socket;
 our %args = (
     client => {
 	connect => { domain => AF_UNSPEC, addr => "localhost", port => 514 },
-	func => \&write_length,
-	lengths => [ 8190..8193,9000 ],
+	func => sub {
+	    my $self = shift;
+	    write_lengths($self, 8190..8193,9000);
+	    write_log($self);
+	},
     },
     syslogd => {
 	options => ["-u"],

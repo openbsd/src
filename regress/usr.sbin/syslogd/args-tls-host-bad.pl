@@ -15,7 +15,7 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/127.0.0.1:\d+/ => '>=4',
 	    qr/syslogd: loghost .* connection error: /.
-		qr/host `127.0.0.1' not present in server/ => '>=1',
+		qr/name `127.0.0.1' not present in server/ => '>=1',
 	    get_testlog() => 1,
 	},
 	cacrt => "ca.crt",

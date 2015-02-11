@@ -28,7 +28,7 @@ our %args = (
 	loghost => '@tls://localhost:$connectport',
 	loggrep => {
 	    get_charlog() => 300,
-	    qr/ \(dropped\)/ => 19,
+	    qr/ \(dropped\)/ => '~19',
 	},
     },
     server => {
@@ -64,7 +64,7 @@ our %args = (
 	    get_testlog() => 0,
 	    qr/syslogd: start/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 262 messages to remote loghost/ => 1,
+	    qr/syslogd: dropped 2[56][0-9] messages to remote loghost/ => 1,
 	},
     },
 );
