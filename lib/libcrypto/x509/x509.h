@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.21 2015/01/28 04:14:31 beck Exp $ */
+/* $OpenBSD: x509.h,v 1.22 2015/02/11 02:17:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,10 +291,6 @@ struct x509_st
 	STACK_OF(DIST_POINT) *crldp;
 	STACK_OF(GENERAL_NAME) *altname;
 	NAME_CONSTRAINTS *nc;
-#ifndef OPENSSL_NO_RFC3779
-	STACK_OF(IPAddressFamily) *rfc3779_addr;
-	struct ASIdentifiers_st *rfc3779_asid;
-#endif
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif

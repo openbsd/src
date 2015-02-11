@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.39 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.40 2015/02/11 02:17:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,16 +376,6 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ok = internal_verify(ctx);
 	if (!ok)
 		goto end;
-
-#ifndef OPENSSL_NO_RFC3779
-	/* RFC 3779 path validation, now that CRL check has been done */
-	ok = v3_asid_validate_path(ctx);
-	if (!ok)
-		goto end;
-	ok = v3_addr_validate_path(ctx);
-	if (!ok)
-		goto end;
-#endif
 
 	/* If we get this far evaluate policies */
 	if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
