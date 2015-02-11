@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.103 2014/08/14 17:55:28 tobias Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.104 2015/02/11 07:05:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -121,7 +121,6 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <machine/intr.h>
 #include <sys/sched.h>
 

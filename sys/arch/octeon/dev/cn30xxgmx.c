@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.17 2014/12/09 06:58:28 doug Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.18 2015/02/11 07:05:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -35,7 +35,6 @@
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 

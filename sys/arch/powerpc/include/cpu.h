@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2015/01/04 13:01:42 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.60 2015/02/11 07:05:39 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <machine/frame.h>
 
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/sched.h>
 
 struct cpu_info {

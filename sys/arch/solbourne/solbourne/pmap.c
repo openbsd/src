@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 2014/12/17 15:27:17 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 2015/02/11 07:05:39 dlg Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>

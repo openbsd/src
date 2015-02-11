@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2015/02/11 07:05:39 dlg Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 
 #include <sys/device.h>
 #include <sys/evcount.h>
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sh/psl.h>

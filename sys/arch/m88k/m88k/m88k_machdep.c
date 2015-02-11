@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.63 2014/07/15 16:28:11 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.64 2015/02/11 07:05:39 dlg Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,7 +52,6 @@
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
 #include <sys/errno.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #ifdef MULTIPROCESSOR
 #include <sys/mplock.h>
@@ -61,6 +60,7 @@
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
 #include <machine/atomic.h>
+#include <machine/lock.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>

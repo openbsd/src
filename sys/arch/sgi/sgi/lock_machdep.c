@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.6 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.7 2015/02/11 07:05:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -18,7 +18,6 @@
 
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 
