@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.1 2014/01/26 17:40:09 miod Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.2 2015/02/11 01:10:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -43,7 +43,7 @@ __mp_lock_init(struct __mp_lock *lock)
 extern int __mp_lock_spinout;
 #endif
 
-static __inline void
+static inline void
 __mp_lock_spin(struct __mp_lock *mpl)
 {
 #ifndef MP_LOCKDEBUG
@@ -117,7 +117,6 @@ __mp_unlock(struct __mp_lock *mpl)
 		alpha_mb();
 		mpl->mpl_count = 0;
 	}
-
 	splx(s);
 }
 
@@ -169,5 +168,5 @@ __mp_acquire_count(struct __mp_lock *mpl, int count)
 int
 __mp_lock_held(struct __mp_lock *mpl)
 {
-	return mpl->mpl_cpu == curcpu();
+	return (mpl->mpl_cpu == curcpu());
 }
