@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcireg.h,v 1.3 2014/04/14 04:42:22 dlg Exp $ */
+/*	$OpenBSD: ahcireg.h,v 1.4 2015/02/11 07:08:34 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -62,6 +62,7 @@
 #define  AHCI_REG_VS_1_1		0x00010100 /* 1.1 */
 #define  AHCI_REG_VS_1_2		0x00010200 /* 1.2 */
 #define  AHCI_REG_VS_1_3		0x00010300 /* 1.3 */
+#define  AHCI_REG_VS_1_3_1		0x00010301 /* 1.3.1 */
 #define AHCI_REG_CCC_CTL	0x014 /* Coalescing Control */
 #define  AHCI_REG_CCC_CTL_INT(_r)	(((_r) & 0xf8) >> 3) /* CCC INT slot */
 #define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
