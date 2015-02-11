@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.294 2015/02/11 21:27:08 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.295 2015/02/11 23:21:47 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -3199,6 +3199,8 @@ em_disable_aspm(struct em_softc *sc)
 	pcireg_t val;
 
 	switch (sc->hw.mac_type) {
+		case em_82571:
+		case em_82572:
 		case em_82573:
 		case em_82574:
 			break;
@@ -3213,7 +3215,21 @@ em_disable_aspm(struct em_softc *sc)
 	/* Disable PCIe Active State Power Management (ASPM). */
 	val = pci_conf_read(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
 	    offset + PCI_PCIE_LCSR);
-	val &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1);
+
+	switch (sc->hw.mac_type) {
+		case em_82571:
+		case em_82572:
+			val &= ~PCI_PCIE_LCSR_ASPM_L1;
+			break;
+		case em_82573:
+		case em_82574:
+			val &= ~(PCI_PCIE_LCSR_ASPM_L0S |
+			    PCI_PCIE_LCSR_ASPM_L1);
+			break;
+		default:
+			break;
+	}
+
 	pci_conf_write(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
 	    offset + PCI_PCIE_LCSR, val);
 }
