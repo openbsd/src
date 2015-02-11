@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.5 2014/07/10 22:45:56 jsing Exp $ */
+/* $OpenBSD: cms.h,v 1.6 2015/02/11 03:55:42 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -58,9 +58,7 @@
 
 #include <openssl/x509.h>
 
-#ifdef OPENSSL_NO_CMS
 #error CMS is disabled.
-#endif
 
 #ifdef __cplusplus
 extern "C" {

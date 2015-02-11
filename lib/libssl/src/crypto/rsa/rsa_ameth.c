@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.12 2014/07/11 12:59:10 miod Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.13 2015/02/11 03:55:42 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -66,9 +66,6 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_CMS
-#include <openssl/cms.h>
-#endif
 
 #include "asn1_locl.h"
 
@@ -420,17 +417,6 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		if (arg1 == 0)
 			PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
 		break;
-#ifndef OPENSSL_NO_CMS
-	case ASN1_PKEY_CTRL_CMS_SIGN:
-		if (arg1 == 0)
-			CMS_SignerInfo_get0_algs(arg2, NULL, NULL, NULL, &alg);
-		break;
-
-	case ASN1_PKEY_CTRL_CMS_ENVELOPE:
-		if (arg1 == 0)
-			CMS_RecipientInfo_ktri_get0_algs(arg2, NULL, NULL, &alg);
-		break;
-#endif
 
 	case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
 		*(int *)arg2 = NID_sha1;

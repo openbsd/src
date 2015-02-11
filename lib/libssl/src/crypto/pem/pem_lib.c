@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.37 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.38 2015/02/11 03:55:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,15 +264,6 @@ check_pem(const char *nm, const char *name)
 	    !strcmp(name, PEM_STRING_PKCS7))
 		return 1;
 
-#ifndef OPENSSL_NO_CMS
-	if (!strcmp(nm, PEM_STRING_X509) &&
-	    !strcmp(name, PEM_STRING_CMS))
-		return 1;
-	/* Allow CMS to be read from PKCS#7 headers */
-	if (!strcmp(nm, PEM_STRING_PKCS7) &&
-	    !strcmp(name, PEM_STRING_CMS))
-		return 1;
-#endif
 
 	return 0;
 }
