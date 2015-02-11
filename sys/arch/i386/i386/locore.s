@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.149 2015/02/07 00:26:37 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.150 2015/02/11 00:16:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -398,6 +398,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$0,  RELOC(_C_LABEL(cpu_vendor))+12
 
 	movl	$1,%eax
+	xorl	%ecx,%ecx
 	cpuid
 	movl	%eax,RELOC(_C_LABEL(cpu_id))	# store cpu_id and features
 	movl	%ebx,RELOC(_C_LABEL(cpu_miscinfo))
