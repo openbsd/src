@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.10 2015/02/11 06:25:20 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.11 2015/02/11 22:55:25 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ struct dwc2_hsotg;
 struct dwc2_qtd;
 
 struct dwc2_xfer {
-	struct usbd_xfer *xfer;			/* Needs to be first */
+	struct usbd_xfer xfer;			/* Needs to be first */
 	struct usb_task	abort_task;
 
 	struct dwc2_hcd_urb *urb;
@@ -82,7 +82,6 @@ typedef struct dwc2_softc {
 
  	bus_space_tag_t		sc_iot;
  	bus_space_handle_t	sc_ioh;
- 	bus_dma_tag_t		sc_dmat;
 	struct dwc2_core_params *sc_params;
 
 	/*

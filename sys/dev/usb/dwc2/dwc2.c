@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.17 2015/02/11 06:25:20 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.18 2015/02/11 22:55:25 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -286,7 +286,7 @@ dwc2_allocx(struct usbd_bus *bus)
 		    DWC2_MAXISOCPACKETS, GFP_KERNEL);
 
 #ifdef DWC2_DEBUG
-		dxfer->xfer->busy_free = XFER_ONQU;
+		dxfer->xfer.busy_free = XFER_ONQU;
 #endif
 	}
 	return (struct usbd_xfer *)dxfer;
@@ -363,8 +363,8 @@ dwc2_softintr(void *v)
 	mtx_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 
-		KASSERTMSG(!timeout_pending(&dxfer->xfer->timeout_handle), 
-		    "xfer %p pipe %p\n", dxfer, dxfer->xfer->pipe);
+		KASSERTMSG(!timeout_pending(&dxfer->xfer.timeout_handle), 
+		    "xfer %p pipe %p\n", dxfer, dxfer->xfer.pipe);
 
 		/*
 		 * dwc2_abort_xfer will remove this transfer from the
@@ -379,7 +379,7 @@ dwc2_softintr(void *v)
 		TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
 
 		mtx_leave(&hsotg->lock);
-		usb_transfer_complete(dxfer->xfer);
+		usb_transfer_complete(&dxfer->xfer);
 		mtx_enter(&hsotg->lock);
 	}
 	mtx_leave(&hsotg->lock);
@@ -431,7 +431,7 @@ dwc2_timeout(void *addr)
 
 	if (sc->sc_dying) {
 		mtx_enter(&sc->sc_lock);
-		dwc2_abort_xfer(dxfer->xfer, USBD_TIMEOUT);
+		dwc2_abort_xfer(&dxfer->xfer, USBD_TIMEOUT);
 		mtx_leave(&sc->sc_lock);
 		return;
 	}
@@ -439,7 +439,7 @@ dwc2_timeout(void *addr)
 	/* Execute the abort in a process context. */
 	usb_init_task(&dxfer->abort_task, dwc2_timeout_task, addr,
 	    USB_TASK_TYPE_GENERIC);
-	usb_add_task(dxfer->xfer->pipe->device, &dxfer->abort_task);
+	usb_add_task(dxfer->xfer.pipe->device, &dxfer->abort_task);
 }
 
 static void
