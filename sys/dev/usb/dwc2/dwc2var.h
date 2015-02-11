@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.9 2015/02/10 23:43:46 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.10 2015/02/11 06:25:20 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -143,7 +143,8 @@ dwc2_root_intr(dwc2_softc_t *sc)
 
 // XXX compat
 
-#define	mtx_owned(x)	1
+#define	mtx_owned(x)	((void)(x), 1)
+
 #define	ENOSR		90
 #define	EPROTO		96
 
@@ -159,5 +160,7 @@ do { \
 	timeout_set((x), (f), (a)); \
 	timeout_add((x), (t)); \
 } while (0)
+
+#define	device_xname(d)	((d)->dv_xname)
 
 #endif	/* _DWC_OTGVAR_H_ */
