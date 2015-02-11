@@ -857,18 +857,21 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 {
 	GCM128_CONTEXT ctx;
 	AES_KEY key;
-	uint8_t *out;
+	uint8_t *out = NULL;
 	size_t out_len;
 	int ret = 1;
 
 	out_len = tv->P_len;
-	out = malloc(out_len);
-	if (out == NULL)
-		err(1, "malloc");
+	if (out_len != 0) {
+		out = malloc(out_len);
+		if (out == NULL)
+			err(1, "malloc");
+	}
 
 	AES_set_encrypt_key(tv->K, tv->K_len * 8, &key);
 
-	memset(out, 0, out_len);
+	if (out_len != 0)
+		memset(out, 0, out_len);
 	CRYPTO_gcm128_init(&ctx, &key, (block128_f)AES_encrypt);
 	CRYPTO_gcm128_setiv(&ctx, tv->IV, tv->IV_len);
 	if (tv->A_len > 0)
@@ -885,7 +888,8 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 		goto fail;
 	}
 
-	memset(out, 0, out_len);
+	if (out_len != 0)
+		memset(out, 0, out_len);
 	CRYPTO_gcm128_setiv(&ctx, tv->IV, tv->IV_len);
 	if (tv->A_len > 0)
 		CRYPTO_gcm128_aad(&ctx, tv->A, tv->A_len);
