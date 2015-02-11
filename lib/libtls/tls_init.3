@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.10 2015/02/07 23:45:06 reyk Exp $
+.\" $OpenBSD: tls_init.3,v 1.11 2015/02/11 06:46:33 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2015 $
+.Dd $Mdocdate: February 11 2015 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -111,9 +111,9 @@
 .Ft "int"
 .Fn tls_connect "struct tls *ctx" "const char *host" "const char *port"
 .Ft "int"
-.Fn tls_connect_fds "struct tls *ctx" "int fd_read" "int fd_write" "const char *hostname"
+.Fn tls_connect_fds "struct tls *ctx" "int fd_read" "int fd_write" "const char *servername"
 .Ft "int"
-.Fn tls_connect_socket "struct tls *ctx" "int s" "const char *hostname"
+.Fn tls_connect_socket "struct tls *ctx" "int s" "const char *servername"
 .Ft "int"
 .Fn tls_accept_socket "struct tls *tls" "struct tls **cctx" "int socket"
 .Ft "int"

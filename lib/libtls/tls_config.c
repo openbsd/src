@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.3 2015/02/07 06:19:26 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.4 2015/02/11 06:46:33 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -208,10 +208,11 @@ tls_config_set_verify_depth(struct tls_config *config, int verify_depth)
 	config->verify_depth = verify_depth;
 }
 
+/* XXX - rename to noverifyname. */
 void
 tls_config_insecure_noverifyhost(struct tls_config *config)
 {
-	config->verify_host = 0;
+	config->verify_name = 0;
 }
 
 void
@@ -223,6 +224,6 @@ tls_config_insecure_noverifycert(struct tls_config *config)
 void
 tls_config_verify(struct tls_config *config)
 {
-	config->verify_host = 1;
 	config->verify_cert = 1;
+	config->verify_name = 1;
 }

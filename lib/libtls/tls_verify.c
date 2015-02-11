@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.6 2014/12/17 17:51:33 doug Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.7 2015/02/11 06:46:33 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -26,20 +26,20 @@
 
 #include "tls_internal.h"
 
-int tls_match_hostname(const char *cert_hostname, const char *hostname);
-int tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host);
-int tls_check_common_name(struct tls *ctx, X509 *cert, const char *host);
+int tls_match_name(const char *cert_name, const char *name);
+int tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name);
+int tls_check_common_name(struct tls *ctx, X509 *cert, const char *name);
 
 int
-tls_match_hostname(const char *cert_hostname, const char *hostname)
+tls_match_name(const char *cert_name, const char *name)
 {
 	const char *cert_domain, *domain, *next_dot;
 
-	if (strcasecmp(cert_hostname, hostname) == 0)
+	if (strcasecmp(cert_name, name) == 0)
 		return 0;
 
 	/* Wildcard match? */
-	if (cert_hostname[0] == '*') {
+	if (cert_name[0] == '*') {
 		/*
 		 * Valid wildcards:
 		 * - "*.domain.tld"
@@ -48,7 +48,7 @@ tls_match_hostname(const char *cert_hostname, const char *hostname)
 		 * Reject "*.tld".
 		 * No attempt to prevent the use of eg. "*.co.uk".
 		 */
-		cert_domain = &cert_hostname[1];
+		cert_domain = &cert_name[1];
 		/* Disallow "*"  */
 		if (cert_domain[0] == '\0')
 			return -1;
@@ -66,9 +66,9 @@ tls_match_hostname(const char *cert_hostname, const char *hostname)
 		if (next_dot[1] == '.')
 			return -1;
 
-		domain = strchr(hostname, '.');
+		domain = strchr(name, '.');
 
-		/* No wildcard match against a hostname with no domain part. */
+		/* No wildcard match against a name with no domain part. */
 		if (domain == NULL || strlen(domain) == 1)
 			return -1;
 
@@ -80,7 +80,7 @@ tls_match_hostname(const char *cert_hostname, const char *hostname)
 }
 
 int
-tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
+tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 {
 	STACK_OF(GENERAL_NAME) *altname_stack = NULL;
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
@@ -93,10 +93,10 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
 	if (altname_stack == NULL)
 		return -1;
 
-	if (inet_pton(AF_INET, host, &addrbuf) == 1) {
+	if (inet_pton(AF_INET, name, &addrbuf) == 1) {
 		type = GEN_IPADD;
 		addrlen = 4;
-	} else if (inet_pton(AF_INET6, host, &addrbuf) == 1) {
+	} else if (inet_pton(AF_INET6, name, &addrbuf) == 1) {
 		type = GEN_IPADD;
 		addrlen = 16;
 	} else {
@@ -124,15 +124,15 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
 
 				if (len < 0 || len != strlen(data)) {
 					tls_set_error(ctx,
-					    "error verifying host '%s': "
+					    "error verifying name '%s': "
 					    "NUL byte in subjectAltName, "
 					    "probably a malicious certificate",
-					    host);
+					    name);
 					rv = -2;
 					break;
 				}
 
-				if (tls_match_hostname(data, host) == 0) {
+				if (tls_match_name(data, name) == 0) {
 					rv = 0;
 					break;
 				}
@@ -172,20 +172,20 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *host)
 }
 
 int
-tls_check_common_name(struct tls *ctx, X509 *cert, const char *host)
+tls_check_common_name(struct tls *ctx, X509 *cert, const char *name)
 {
-	X509_NAME *name;
+	X509_NAME *subject_name;
 	char *common_name = NULL;
 	int common_name_len;
 	int rv = -1;
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 
-	name = X509_get_subject_name(cert);
-	if (name == NULL)
+	subject_name = X509_get_subject_name(cert);
+	if (subject_name == NULL)
 		goto out;
 
-	common_name_len = X509_NAME_get_text_by_NID(name, NID_commonName,
-	    NULL, 0);
+	common_name_len = X509_NAME_get_text_by_NID(subject_name,
+	    NID_commonName, NULL, 0);
 	if (common_name_len < 0)
 		goto out;
 
@@ -193,32 +193,32 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *host)
 	if (common_name == NULL)
 		goto out;
 
-	X509_NAME_get_text_by_NID(name, NID_commonName, common_name,
+	X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name,
 	    common_name_len + 1);
 
 	/* NUL bytes in CN? */
 	if (common_name_len != strlen(common_name)) {
-		tls_set_error(ctx, "error verifying host '%s': "
+		tls_set_error(ctx, "error verifying name '%s': "
 		    "NUL byte in Common Name field, "
-		    "probably a malicious certificate.", host);
+		    "probably a malicious certificate", name);
 		rv = -2;
 		goto out;
 	}
 
-	if (inet_pton(AF_INET,  host, &addrbuf) == 1 ||
-	    inet_pton(AF_INET6, host, &addrbuf) == 1) {
+	if (inet_pton(AF_INET,  name, &addrbuf) == 1 ||
+	    inet_pton(AF_INET6, name, &addrbuf) == 1) {
 		/*
 		 * We don't want to attempt wildcard matching against IP
 		 * addresses, so perform a simple comparison here.
 		 */
-		if (strcmp(common_name, host) == 0)
+		if (strcmp(common_name, name) == 0)
 			rv = 0;
 		else
 			rv = -1;
 		goto out;
 	}
 
-	if (tls_match_hostname(common_name, host) == 0)
+	if (tls_match_name(common_name, name) == 0)
 		rv = 0;
 out:
 	free(common_name);
@@ -226,13 +226,13 @@ out:
 }
 
 int
-tls_check_hostname(struct tls *ctx, X509 *cert, const char *host)
+tls_check_servername(struct tls *ctx, X509 *cert, const char *servername)
 {
 	int	rv;
 
-	rv = tls_check_subject_altname(ctx, cert, host);
+	rv = tls_check_subject_altname(ctx, cert, servername);
 	if (rv == 0 || rv == -2)
 		return rv;
 
-	return tls_check_common_name(ctx, cert, host);
+	return tls_check_common_name(ctx, cert, servername);
 }

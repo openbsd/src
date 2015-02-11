@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.13 2015/02/09 09:23:39 reyk Exp $ */
+/* $OpenBSD: tls_client.c,v 1.14 2015/02/11 06:46:33 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -144,16 +144,16 @@ err:
 }
 
 int
-tls_connect_socket(struct tls *ctx, int s, const char *hostname)
+tls_connect_socket(struct tls *ctx, int s, const char *servername)
 {
 	ctx->socket = s;
 
-	return tls_connect_fds(ctx, s, s, hostname);
+	return tls_connect_fds(ctx, s, s, servername);
 }
 
 int
 tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
-    const char *hostname)
+    const char *servername)
 {
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
 	X509 *cert = NULL;
@@ -180,8 +180,8 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	if (tls_configure_ssl(ctx) != 0)
 		goto err;
 
-	if (ctx->config->verify_host) {
-		if (hostname == NULL) {
+	if (ctx->config->verify_name) {
+		if (servername == NULL) {
 			tls_set_error(ctx, "server name not specified");
 			goto err;
 		}
@@ -226,11 +226,11 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	 * RFC4366 (SNI): Literal IPv4 and IPv6 addresses are not
 	 * permitted in "HostName".
 	 */
-	if (hostname != NULL &&
-	    inet_pton(AF_INET, hostname, &addrbuf) != 1 &&
-	    inet_pton(AF_INET6, hostname, &addrbuf) != 1) {
-		if (SSL_set_tlsext_host_name(ctx->ssl_conn, hostname) == 0) {
-			tls_set_error(ctx, "SNI host name failed");
+	if (servername != NULL &&
+	    inet_pton(AF_INET, servername, &addrbuf) != 1 &&
+	    inet_pton(AF_INET6, servername, &addrbuf) != 1) {
+		if (SSL_set_tlsext_host_name(ctx->ssl_conn, servername) == 0) {
+			tls_set_error(ctx, "server name indication failure");
 			goto err;
 		}
 	}
@@ -246,16 +246,16 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	}
 	ctx->flags &= ~TLS_CONNECTING;
 
-	if (ctx->config->verify_host) {
+	if (ctx->config->verify_name) {
 		cert = SSL_get_peer_certificate(ctx->ssl_conn);
 		if (cert == NULL) {
 			tls_set_error(ctx, "no server certificate");
 			goto err;
 		}
-		if ((ret = tls_check_hostname(ctx, cert, hostname)) != 0) {
+		if ((ret = tls_check_servername(ctx, cert, servername)) != 0) {
 			if (ret != -2)
-				tls_set_error(ctx, "host `%s' not present in"
-				    " server certificate", hostname);
+				tls_set_error(ctx, "name `%s' not present in"
+				    " server certificate", servername);
 			goto err;
 		}
 	}
