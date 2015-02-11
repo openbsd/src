@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.34 2014/12/18 05:33:48 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.35 2015/02/11 00:56:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/kcore.h>
+#include <sys/atomic.h>
 
 #include <dev/acpi/acpivar.h>
 
