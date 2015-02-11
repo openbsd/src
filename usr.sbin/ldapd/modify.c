@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.15 2014/09/21 05:33:49 daniel Exp $ */
+/*	$OpenBSD: modify.c,v 1.16 2015/02/11 04:04:30 pelikan Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -216,7 +216,8 @@ ldap_modify(struct request *req)
 	char			*dn;
 	long long		 op;
 	char			*attr;
-	struct ber_element	*mods, *entry, *mod, *vals, *a, *set, *prev = NULL;
+	struct ber_element	*mods, *entry, *mod, *a, *set;
+	struct ber_element	*vals = NULL, *prev = NULL;
 	struct namespace	*ns;
 	struct attr_type	*at;
 	struct referrals	*refs;
