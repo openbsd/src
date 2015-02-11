@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.36 2015/02/10 08:25:51 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.37 2015/02/11 05:56:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1207,7 +1207,7 @@ rtmsg_process(char *buf, size_t len)
 	for (offset = 0; offset < len; offset += rtm->rtm_msglen) {
 		next = buf + offset;
 		rtm = (struct rt_msghdr *)next;
-		if (len < offset + sizeof(*rtm) ||
+		if (len < offset + sizeof(u_short) ||
 		    len < offset + rtm->rtm_msglen)
 			fatalx("rtmsg_process: partial rtm in buffer");
 		if (rtm->rtm_version != RTM_VERSION)
