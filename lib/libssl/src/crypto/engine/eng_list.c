@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.16 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: eng_list.c,v 1.17 2015/02/11 03:19:37 doug Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -65,6 +65,8 @@
 #include <unistd.h>
 
 #include <openssl/opensslconf.h>
+
+#include <openssl/err.h>
 
 #include "cryptlib.h"
 #include "eng_int.h"

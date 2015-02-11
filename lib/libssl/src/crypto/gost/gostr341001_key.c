@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.3 2014/11/13 20:29:55 miod Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.4 2015/02/11 03:19:37 doug Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -52,6 +52,7 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_GOST
+#include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/gost.h>
 #include <openssl/objects.h>

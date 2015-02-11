@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.5 2014/11/18 21:18:56 miod Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.6 2015/02/11 03:19:37 doug Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -54,6 +54,7 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_GOST
+#include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>

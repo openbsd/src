@@ -1,4 +1,4 @@
-/* $OpenBSD: d2i_pr.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: d2i_pr.c,v 1.13 2015/02/11 03:19:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>

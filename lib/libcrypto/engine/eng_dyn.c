@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_dyn.c,v 1.12 2014/07/13 16:03:09 beck Exp $ */
+/* $OpenBSD: eng_dyn.c,v 1.13 2015/02/11 03:19:37 doug Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2001.
  */
@@ -57,6 +57,8 @@
  */
 
 #include <string.h>
+
+#include <openssl/err.h>
 
 #include "eng_int.h"
 #include <openssl/dso.h>

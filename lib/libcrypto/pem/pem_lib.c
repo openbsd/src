@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.36 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.37 2015/02/11 03:19:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,7 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/buffer.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_conf.c,v 1.8 2014/10/28 05:46:56 miod Exp $ */
+/* $OpenBSD: ts_conf.c,v 1.9 2015/02/11 03:19:37 doug Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -61,6 +61,7 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/ts.h>
 

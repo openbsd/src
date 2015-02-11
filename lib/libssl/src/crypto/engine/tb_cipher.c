@@ -1,4 +1,4 @@
-/* $OpenBSD: tb_cipher.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: tb_cipher.c,v 1.7 2015/02/11 03:19:37 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
@@ -52,6 +52,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/err.h>
 
 #include "eng_int.h"
 

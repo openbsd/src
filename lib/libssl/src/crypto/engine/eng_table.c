@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_table.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: eng_table.c,v 1.8 2015/02/11 03:19:37 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *
@@ -53,6 +53,7 @@
  *
  */
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 

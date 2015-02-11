@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_pkey.c,v 1.5 2014/06/22 12:05:09 jsing Exp $ */
+/* $OpenBSD: eng_pkey.c,v 1.6 2015/02/11 03:19:37 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -52,6 +52,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/err.h>
 
 #include "eng_int.h"
 

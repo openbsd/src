@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.20 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.21 2015/02/11 03:19:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#include <openssl/err.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>

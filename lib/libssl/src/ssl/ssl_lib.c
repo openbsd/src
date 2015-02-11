@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.97 2015/02/09 07:17:55 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.98 2015/02/11 03:19:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,6 +144,7 @@
 
 #include "ssl_locl.h"
 
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
