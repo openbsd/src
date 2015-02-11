@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.17 2015/02/11 00:57:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -104,8 +104,6 @@
  */
 
 #include "bpfilter.h"
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/conf.h>
