@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.154 2015/01/13 10:07:58 mpf Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.155 2015/02/11 05:09:33 claudio Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -753,6 +753,11 @@ struct kinfo_file {
 	uint64_t	unp_nextref;	/* PTR: link to next connected socket */
 	uint64_t	unp_addr;	/* PTR: address of the socket address */
 	char		unp_path[KI_UNPPATHLEN];
+	uint32_t	inp_proto;	/* CHAR: raw protocol id */
+	uint32_t	t_state;	/* SHORT: tcp state */
+	uint64_t	t_rcv_wnd;	/* ULONG: tcp receive window */
+	uint64_t	t_snd_wnd;	/* ULONG: tcp send window */
+	uint64_t	t_snd_cwnd;	/* ULONG: congestion-controlled win */
 };
 
 /*

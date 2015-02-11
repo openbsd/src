@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.282 2015/02/11 04:00:05 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.283 2015/02/11 05:09:33 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -88,6 +88,9 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #include <netinet6/ip6_var.h>
 
 #ifdef DDB
@@ -1102,6 +1105,15 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_fport = inpcb->inp_fport;
 			kf->inp_faddru[0] = inpcb->inp_faddr.s_addr;
 			kf->inp_rtableid = inpcb->inp_rtableid;
+			if (so->so_type == SOCK_RAW)
+				kf->inp_proto = inpcb->inp_ip.ip_p;
+			if (so->so_proto->pr_protocol == IPPROTO_TCP) {
+				struct tcpcb *tcpcb = (void *)inpcb->inp_ppcb;
+				kf->t_rcv_wnd = tcpcb->rcv_wnd;
+				kf->t_snd_wnd = tcpcb->snd_wnd;
+				kf->t_snd_cwnd = tcpcb->snd_cwnd;
+				kf->t_state = tcpcb->t_state;
+			}
 			break;
 		    }
 		case AF_INET6: {
@@ -1119,6 +1131,14 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_faddru[2] = inpcb->inp_faddr6.s6_addr32[2];
 			kf->inp_faddru[3] = inpcb->inp_faddr6.s6_addr32[3];
 			kf->inp_rtableid = inpcb->inp_rtableid;
+			if (so->so_type == SOCK_RAW)
+				kf->inp_proto = inpcb->inp_ipv6.ip6_nxt;
+			if (so->so_proto->pr_protocol == IPPROTO_TCP) {
+				struct tcpcb *tcpcb = (void *)inpcb->inp_ppcb;
+				kf->t_rcv_wnd = tcpcb->rcv_wnd;
+				kf->t_snd_wnd = tcpcb->snd_wnd;
+				kf->t_state = tcpcb->t_state;
+			}
 			break;
 		    }
 		case AF_UNIX: {
