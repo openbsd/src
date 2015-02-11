@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1755 2015/01/31 05:21:01 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1756 2015/02/11 07:09:55 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11672,6 +11672,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801ER SATA",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_1,
+	    "Dual Band Wireless AC 8260",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_2,
+	    "Dual Band Wireless AC 8260",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_HB,
 	    "82820 Host",
 	},
@@ -13634,6 +13642,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3124,
 	    "3124 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_1,
+	    "Dual Band Wireless AC 3165",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
