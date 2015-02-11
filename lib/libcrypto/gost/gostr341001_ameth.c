@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.7 2015/02/11 03:55:42 beck Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.8 2015/02/11 04:05:14 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -61,6 +61,9 @@
 #include <openssl/x509.h>
 #include <openssl/gost.h>
 
+#ifndef OPENSSL_NO_CMS
+#include <openssl/cms.h>
+#endif
 
 #include "asn1_locl.h"
 #include "gost_locl.h"
@@ -653,6 +656,17 @@ pkey_ctrl_gost01(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		if (arg1 == 0)
 			PKCS7_RECIP_INFO_get0_alg(arg2, &alg3);
 		break;
+#ifndef OPENSSL_NO_CMS
+	case ASN1_PKEY_CTRL_CMS_SIGN:
+		if (arg1 == 0)
+			CMS_SignerInfo_get0_algs(arg2, NULL, NULL, &alg1, &alg2);
+		break;
+
+	case ASN1_PKEY_CTRL_CMS_ENVELOPE:
+		if (arg1 == 0)
+			CMS_RecipientInfo_ktri_get0_algs(arg2, NULL, NULL, &alg3);
+		break;
+#endif
 	case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
 		*(int *)arg2 = GostR3410_get_md_digest(digest);
 		return 2;

@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.9 2015/02/11 03:55:42 beck Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.10 2015/02/11 04:05:14 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -597,6 +597,11 @@ pkey_gost01_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 	case EVP_PKEY_CTRL_PKCS7_SIGN:
 	case EVP_PKEY_CTRL_DIGESTINIT:
+#ifndef OPENSSL_NO_CMS
+	case EVP_PKEY_CTRL_CMS_ENCRYPT:
+	case EVP_PKEY_CTRL_CMS_DECRYPT:
+	case EVP_PKEY_CTRL_CMS_SIGN:
+#endif
 		return 1;
 
 	case EVP_PKEY_CTRL_GOST_PARAMSET:
