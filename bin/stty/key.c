@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.14 2009/10/28 20:58:38 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.15 2015/02/11 12:36:40 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -210,8 +210,13 @@ f_extproc(struct info *ip)
 void
 f_ispeed(struct info *ip)
 {
-
-	cfsetispeed(&ip->t, atoi(ip->arg));
+	const char *errstr;
+	speed_t speed;
+	
+	speed = strtonum(ip->arg, 0, UINT_MAX, &errstr);
+	if (errstr)
+		err(1, "ispeed %s", ip->arg);
+	cfsetispeed(&ip->t, speed);
 	ip->set = 1;
 }
 
@@ -247,8 +252,13 @@ f_nl(struct info *ip)
 void
 f_ospeed(struct info *ip)
 {
-
-	cfsetospeed(&ip->t, atoi(ip->arg));
+	const char *errstr;
+	speed_t speed;
+	
+	speed = strtonum(ip->arg, 0, UINT_MAX, &errstr);
+	if (errstr)
+		err(1, "ospeed %s", ip->arg);
+	cfsetospeed(&ip->t, speed);
 	ip->set = 1;
 }
 
