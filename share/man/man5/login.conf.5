@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.58 2015/01/16 17:20:24 schwarze Exp $
+.\" $OpenBSD: login.conf.5,v 1.59 2015/02/11 04:03:40 tedu Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: February 11 2015 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -161,10 +161,9 @@ See
 .Pp
 .It localcipher Ta string Ta blowfish,8 Ta
 The cipher to use for encrypting passwords.
-Possible values are:
-.Dq blowfish,<rounds>
-where the value of rounds can be between 4 and 31.
-It specifies the base 2 logarithm of the number of rounds.
+Refer to
+.Xr crypt_newhash 3
+for possible values.
 .\"
 .Pp
 .It login-backoff Ta number Ta 3 Ta
