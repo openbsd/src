@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.12 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.13 2015/02/11 01:15:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,9 +28,9 @@
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
 
 #include <machine/intr.h>
+#include <machine/lock.h>
 
 #include <ddb/db_output.h>
 
