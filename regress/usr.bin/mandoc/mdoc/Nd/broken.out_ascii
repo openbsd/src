@@ -1,0 +1,17 @@
+ND-BROKEN(1)                General Commands Manual               ND-BROKEN(1)
+
+NNAAMMEE
+     [NNdd--bbrrookkeenn - description lines ended] by explicit blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     Start nested lists:
+
+     inner tag
+             inner text - inner description
+     back to outer list
+
+     outer tag
+             outer text
+     end of file
+
+OpenBSD                        February 11, 2015                       OpenBSD

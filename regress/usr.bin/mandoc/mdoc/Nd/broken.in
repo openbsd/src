@@ -1,0 +1,22 @@
+.Dd February 11, 2015
+.Dt ND-BROKEN 1
+.Os OpenBSD
+.Sh NAME
+.Oo
+.Nm Nd-broken
+.Nd description lines ended
+.Oc
+by explicit blocks
+.Sh DESCRIPTION
+Start nested lists:
+.Bl -tag -width Ds
+.Bl -tag -width Ds
+.It inner tag
+inner text
+.Nd inner description
+.El
+back to outer list
+.It outer tag
+outer text
+.El
+end of file

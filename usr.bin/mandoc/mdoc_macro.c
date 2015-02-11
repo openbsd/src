@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.137 2015/02/10 17:47:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.138 2015/02/11 13:37:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -626,6 +626,13 @@ blk_exp_close(MACRO_PROT_ARGS)
 			if (maxargs)
 				mdoc->next = MDOC_NEXT_CHILD;
 			break;
+		}
+
+		/* Explicit blocks close out description lines. */
+
+		if (n->tok == MDOC_Nd) {
+			rew_last(mdoc, n);
+			continue;
 		}
 
 		/*
