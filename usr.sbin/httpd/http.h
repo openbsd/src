@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.11 2015/01/13 09:21:15 reyk Exp $	*/
+/*	$OpenBSD: http.h,v 1.12 2015/02/11 12:52:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -172,7 +172,8 @@ struct http_error {
 	{ 415,	"Unsupported Media Type" },		\
 	{ 416,	"Range Not Satisfiable" },		\
 	{ 417,	"Expectation Failed" },			\
-	/* 418-421 unassigned */			\
+	{ 418,	"I'm a teapot" },			\
+	/* 419-421 unassigned */			\
 	{ 420,	"Enhance Your Calm" },			\
 	{ 422,	"Unprocessable Entity" },		\
 	{ 423,	"Locked" },				\
@@ -184,7 +185,9 @@ struct http_error {
 	{ 429,	"Too Many Requests" },			\
 	/* 430 unassigned */				\
 	{ 431,	"Request Header Fields Too Large" },	\
-	/* 432-499 unassigned */			\
+	/* 432-450 unassigned */			\
+	{ 451,	"Unavailable For Legal Reasons" },	\
+	/* 452-499 unassigned */			\
 	{ 500,	"Internal Server Error" },		\
 	{ 501,	"Not Implemented" },			\
 	{ 502,	"Bad Gateway" },			\
