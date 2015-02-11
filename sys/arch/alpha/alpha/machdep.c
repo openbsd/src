@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.168 2015/02/09 08:48:23 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.169 2015/02/11 01:14:16 dlg Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -104,6 +104,9 @@
 #include <machine/cpuconf.h>
 #ifndef NO_IEEE
 #include <machine/ieeefp.h>
+#endif
+#ifdef MULTIPROCESSOR
+#include <machine/lock.h>
 #endif
 
 #include <dev/pci/pcivar.h>
