@@ -7,17 +7,12 @@
 
 use strict;
 use warnings;
-use Time::HiRes 'sleep';
 
 our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    foreach (1..300) {
-		write_message($self, $_ x 1024);
-		# if client sends too fast, syslogd will not see everything
-		sleep .01;
-	    }
+	    write_lines($self, 300, 2000);
 	    write_log($self);
 	},
     },

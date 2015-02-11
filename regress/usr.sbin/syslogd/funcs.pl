@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.15 2015/02/08 15:24:14 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.16 2015/02/11 17:28:42 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,6 +23,7 @@ use List::Util qw(first);
 use Socket;
 use Socket6;
 use Sys::Syslog qw(:standard :extended :macros);
+use Time::HiRes 'sleep';
 use IO::Socket;
 use IO::Socket::INET6;
 

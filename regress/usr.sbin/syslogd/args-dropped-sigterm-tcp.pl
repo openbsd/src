@@ -36,7 +36,7 @@ our %args = (
 	redo => 0,
 	func => sub {
 	    my $self = shift;
-	    ${$self->{client}}->loggrep(get_thirdlog(), 5)
+	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
 		or die ref($self), " client did not send third log";
 	    ${$self->{syslogd}}->kill_syslogd('TERM');
 	    ${$self->{syslogd}}->loggrep("syslogd: exiting", 5)

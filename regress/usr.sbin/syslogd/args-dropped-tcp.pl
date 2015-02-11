@@ -36,7 +36,7 @@ our %args = (
 	listen => { domain => AF_UNSPEC, proto => "tcp", addr => "localhost" },
 	func => sub {
 	    my $self = shift;
-	    ${$self->{client}}->loggrep(get_thirdlog(), 5)
+	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
 		or die ref($self), " client did not send third log";
 	    read_log($self);
 	},
