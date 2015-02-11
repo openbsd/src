@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.33 2014/07/08 05:35:18 dlg Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.34 2015/02/11 21:36:02 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -376,6 +376,7 @@ struct sis_desc {
 #define SIS_TXSTAT_UNDERRUN	0x02000000
 #define SIS_TXSTAT_TX_ABORT	0x04000000
 
+#define SIS_MAXTXSEGS		16
 #define SIS_RX_LIST_CNT		64
 #define SIS_TX_LIST_CNT		128
 
