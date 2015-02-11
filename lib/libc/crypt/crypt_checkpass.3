@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.5 2014/12/02 07:39:58 schwarze Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.6 2015/02/11 04:02:23 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2014 $
+.Dd $Mdocdate: February 11 2015 $
 .Dt CRYPT_CHECKPASS 3
 .Os
 .Sh NAME
@@ -61,8 +61,15 @@ is randomly salted and hashed and stored in
 The
 .Fa pref
 argument identifies the preferred hashing algorithm and parameters.
-Refer to
-.Xr login.conf 5 .
+Possible values are:
+.Bl -tag
+.It Dq blowfish,<rounds>
+The bcrypt algorithm, where the value of rounds can be between 4 and 31 and
+specifies the base 2 logarithm of the number of rounds.
+The special rounds value
+.Dq a
+automatically selects rounds based on system performance.
+.El
 .Sh RETURN VALUES
 .Rv -std crypt_checkpass crypt_newhash
 .Sh ERRORS
