@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.293 2015/02/09 03:09:57 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.294 2015/02/11 21:27:08 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -222,6 +222,7 @@ void em_disable_intr(struct em_softc *);
 void em_free_transmit_structures(struct em_softc *);
 void em_free_receive_structures(struct em_softc *);
 void em_update_stats_counters(struct em_softc *);
+void em_disable_aspm(struct em_softc *);
 void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
@@ -1835,6 +1836,8 @@ em_hardware_init(struct em_softc *sc)
 	sc->hw.fc_send_xon = TRUE;
 	sc->hw.fc = E1000_FC_FULL;
 
+	em_disable_aspm(sc);
+
 	if ((ret_val = em_init_hw(&sc->hw)) != 0) {
 		if (ret_val == E1000_DEFER_INIT) {
 			INIT_DEBUGOUT("\nHardware Initialization Deferred ");
@@ -3184,6 +3187,35 @@ em_fill_descriptors(u_int64_t address, u_int32_t length,
         desc_array->descriptor[1].length = 4;
         desc_array->elements = 2;
         return desc_array->elements;
+}
+
+/*
+ * Disable the L0S and L1 LINK states.
+ */
+void
+em_disable_aspm(struct em_softc *sc)
+{
+	int offset;
+	pcireg_t val;
+
+	switch (sc->hw.mac_type) {
+		case em_82573:
+		case em_82574:
+			break;
+		default:
+			return;
+	}
+
+	if (!pci_get_capability(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
+	    PCI_CAP_PCIEXPRESS, &offset, NULL))
+		return;
+
+	/* Disable PCIe Active State Power Management (ASPM). */
+	val = pci_conf_read(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
+	    offset + PCI_PCIE_LCSR);
+	val &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1);
+	pci_conf_write(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
+	    offset + PCI_PCIE_LCSR, val);
 }
 
 #ifndef SMALL_KERNEL
