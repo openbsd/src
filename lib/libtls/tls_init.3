@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.11 2015/02/11 06:46:33 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.12 2015/02/11 07:01:10 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -47,6 +47,7 @@
 .Nm tls_free ,
 .Nm tls_connect ,
 .Nm tls_connect_fds ,
+.Nm tls_connect_servername ,
 .Nm tls_connect_socket ,
 .Nm tls_accept_socket ,
 .Nm tls_read ,
@@ -112,6 +113,7 @@
 .Fn tls_connect "struct tls *ctx" "const char *host" "const char *port"
 .Ft "int"
 .Fn tls_connect_fds "struct tls *ctx" "int fd_read" "int fd_write" "const char *servername"
+.Fn tls_connect_servername "struct tls *ctx" "const char *host" "const char *port" "const char *servername"
 .Ft "int"
 .Fn tls_connect_socket "struct tls *ctx" "int s" "const char *servername"
 .Ft "int"
@@ -159,6 +161,12 @@ A client connection is initiated after configuration by calling
 .Fn tls_connect .
 This function will create a new socket, connect to the specified host and
 port, and then establish a secure connection.
+The
+.Fn tls_connect_servername
+function has the same behaviour, however the name to use for verification is
+explicitly provided, rather than being inferred from the
+.Ar host
+value.
 An already existing socket can be upgraded to a secure connection by calling
 .Fn tls_connect_socket .
 Alternatively, a secure connection can be established over a pair of existing
