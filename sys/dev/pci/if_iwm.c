@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.16 2015/02/11 00:53:37 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.17 2015/02/11 00:57:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5718,6 +5718,18 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, iwm_caddr_t data)
 
 	s = splnet();
 
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	while ((sc->sc_flags & IWM_FLAG_BUSY) && error == 0)
+		error = tsleep(&sc->sc_flags, PCATCH, "iwmioc", 0);
+	if (error != 0) {
+		splx(s);
+		return error;
+	}
+	sc->sc_flags |= IWM_FLAG_BUSY;
+
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -5760,6 +5772,8 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, iwm_caddr_t data)
 		}
 	}
 
+	sc->sc_flags &= ~IWM_FLAG_BUSY;
+	wakeup(&sc->sc_flags);
 	splx(s);
 	return error;
 }
