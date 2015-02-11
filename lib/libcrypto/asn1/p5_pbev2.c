@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.19 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.20 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -66,10 +66,32 @@
 
 /* PKCS#5 v2.0 password based encryption structures */
 
-ASN1_SEQUENCE(PBE2PARAM) = {
-	ASN1_SIMPLE(PBE2PARAM, keyfunc, X509_ALGOR),
-	ASN1_SIMPLE(PBE2PARAM, encryption, X509_ALGOR)
-} ASN1_SEQUENCE_END(PBE2PARAM)
+static const ASN1_TEMPLATE PBE2PARAM_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PBE2PARAM, keyfunc),
+		.field_name = "keyfunc",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PBE2PARAM, encryption),
+		.field_name = "encryption",
+		.item = &X509_ALGOR_it,
+	},
+};
+
+const ASN1_ITEM PBE2PARAM_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PBE2PARAM_seq_tt,
+	.tcount = sizeof(PBE2PARAM_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PBE2PARAM),
+	.sname = "PBE2PARAM",
+};
 
 
 PBE2PARAM *
@@ -97,12 +119,46 @@ PBE2PARAM_free(PBE2PARAM *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PBE2PARAM_it);
 }
 
-ASN1_SEQUENCE(PBKDF2PARAM) = {
-	ASN1_SIMPLE(PBKDF2PARAM, salt, ASN1_ANY),
-	ASN1_SIMPLE(PBKDF2PARAM, iter, ASN1_INTEGER),
-	ASN1_OPT(PBKDF2PARAM, keylength, ASN1_INTEGER),
-	ASN1_OPT(PBKDF2PARAM, prf, X509_ALGOR)
-} ASN1_SEQUENCE_END(PBKDF2PARAM)
+static const ASN1_TEMPLATE PBKDF2PARAM_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PBKDF2PARAM, salt),
+		.field_name = "salt",
+		.item = &ASN1_ANY_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PBKDF2PARAM, iter),
+		.field_name = "iter",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PBKDF2PARAM, keylength),
+		.field_name = "keylength",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PBKDF2PARAM, prf),
+		.field_name = "prf",
+		.item = &X509_ALGOR_it,
+	},
+};
+
+const ASN1_ITEM PBKDF2PARAM_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PBKDF2PARAM_seq_tt,
+	.tcount = sizeof(PBKDF2PARAM_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PBKDF2PARAM),
+	.sname = "PBKDF2PARAM",
+};
 
 
 PBKDF2PARAM *

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.23 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.24 2015/02/11 03:39:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,10 +84,40 @@ pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(X509_PUBKEY, pubkey_cb) = {
-	ASN1_SIMPLE(X509_PUBKEY, algor, X509_ALGOR),
-	ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END_cb(X509_PUBKEY, X509_PUBKEY)
+static const ASN1_AUX X509_PUBKEY_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = pubkey_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE X509_PUBKEY_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_PUBKEY, algor),
+		.field_name = "algor",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_PUBKEY, public_key),
+		.field_name = "public_key",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
+
+const ASN1_ITEM X509_PUBKEY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_PUBKEY_seq_tt,
+	.tcount = sizeof(X509_PUBKEY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_PUBKEY_aux,
+	.size = sizeof(X509_PUBKEY),
+	.sname = "X509_PUBKEY",
+};
 
 
 X509_PUBKEY *

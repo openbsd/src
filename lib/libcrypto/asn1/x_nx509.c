@@ -1,4 +1,4 @@
-/* $OpenBSD: x_nx509.c,v 1.4 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: x_nx509.c,v 1.5 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -63,10 +63,32 @@
 
 /* Old netscape certificate wrapper format */
 
-ASN1_SEQUENCE(NETSCAPE_X509) = {
-	ASN1_SIMPLE(NETSCAPE_X509, header, ASN1_OCTET_STRING),
-	ASN1_OPT(NETSCAPE_X509, cert, X509)
-} ASN1_SEQUENCE_END(NETSCAPE_X509)
+static const ASN1_TEMPLATE NETSCAPE_X509_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_X509, header),
+		.field_name = "header",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_X509, cert),
+		.field_name = "cert",
+		.item = &X509_it,
+	},
+};
+
+const ASN1_ITEM NETSCAPE_X509_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NETSCAPE_X509_seq_tt,
+	.tcount = sizeof(NETSCAPE_X509_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(NETSCAPE_X509),
+	.sname = "NETSCAPE_X509",
+};
 
 
 NETSCAPE_X509 *

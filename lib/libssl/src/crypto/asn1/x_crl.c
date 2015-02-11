@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.22 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.23 2015/02/11 03:39:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,11 +71,39 @@ static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
     const X509_REVOKED * const *b);
 static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
 
-ASN1_SEQUENCE(X509_REVOKED) = {
-	ASN1_SIMPLE(X509_REVOKED, serialNumber, ASN1_INTEGER),
-	ASN1_SIMPLE(X509_REVOKED, revocationDate, ASN1_TIME),
-	ASN1_SEQUENCE_OF_OPT(X509_REVOKED, extensions, X509_EXTENSION)
-} ASN1_SEQUENCE_END(X509_REVOKED)
+static const ASN1_TEMPLATE X509_REVOKED_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REVOKED, serialNumber),
+		.field_name = "serialNumber",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REVOKED, revocationDate),
+		.field_name = "revocationDate",
+		.item = &ASN1_TIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_REVOKED, extensions),
+		.field_name = "extensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM X509_REVOKED_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_REVOKED_seq_tt,
+	.tcount = sizeof(X509_REVOKED_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(X509_REVOKED),
+	.sname = "X509_REVOKED",
+};
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r);
 static int def_crl_lookup(X509_CRL *crl, X509_REVOKED **ret,
@@ -111,15 +139,75 @@ crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 }
 
 
-ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
-	ASN1_OPT(X509_CRL_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(X509_CRL_INFO, sig_alg, X509_ALGOR),
-	ASN1_SIMPLE(X509_CRL_INFO, issuer, X509_NAME),
-	ASN1_SIMPLE(X509_CRL_INFO, lastUpdate, ASN1_TIME),
-	ASN1_OPT(X509_CRL_INFO, nextUpdate, ASN1_TIME),
-	ASN1_SEQUENCE_OF_OPT(X509_CRL_INFO, revoked, X509_REVOKED),
-	ASN1_EXP_SEQUENCE_OF_OPT(X509_CRL_INFO, extensions, X509_EXTENSION, 0)
-} ASN1_SEQUENCE_END_enc(X509_CRL_INFO, X509_CRL_INFO)
+static const ASN1_AUX X509_CRL_INFO_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_ENCODING,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = crl_inf_cb,
+	.enc_offset = offsetof(X509_CRL_INFO, enc),
+};
+static const ASN1_TEMPLATE X509_CRL_INFO_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, sig_alg),
+		.field_name = "sig_alg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, issuer),
+		.field_name = "issuer",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, lastUpdate),
+		.field_name = "lastUpdate",
+		.item = &ASN1_TIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, nextUpdate),
+		.field_name = "nextUpdate",
+		.item = &ASN1_TIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, revoked),
+		.field_name = "revoked",
+		.item = &X509_REVOKED_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CRL_INFO, extensions),
+		.field_name = "extensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM X509_CRL_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_CRL_INFO_seq_tt,
+	.tcount = sizeof(X509_CRL_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_CRL_INFO_aux,
+	.size = sizeof(X509_CRL_INFO),
+	.sname = "X509_CRL_INFO",
+};
 
 /* Set CRL entry issuer according to CRL certificate issuer extension.
  * Check for unhandled critical CRL entry extensions.
@@ -331,11 +419,47 @@ setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 	DIST_POINT_set_dpname(idp->distpoint, X509_CRL_get_issuer(crl));
 }
 
-ASN1_SEQUENCE_ref(X509_CRL, crl_cb, CRYPTO_LOCK_X509_CRL) = {
-	ASN1_SIMPLE(X509_CRL, crl, X509_CRL_INFO),
-	ASN1_SIMPLE(X509_CRL, sig_alg, X509_ALGOR),
-	ASN1_SIMPLE(X509_CRL, signature, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END_ref(X509_CRL, X509_CRL)
+static const ASN1_AUX X509_CRL_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_REFCOUNT,
+	.ref_offset = offsetof(X509_CRL, references),
+	.ref_lock = CRYPTO_LOCK_X509_CRL,
+	.asn1_cb = crl_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE X509_CRL_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CRL, crl),
+		.field_name = "crl",
+		.item = &X509_CRL_INFO_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CRL, sig_alg),
+		.field_name = "sig_alg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CRL, signature),
+		.field_name = "signature",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
+
+const ASN1_ITEM X509_CRL_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_CRL_seq_tt,
+	.tcount = sizeof(X509_CRL_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_CRL_aux,
+	.size = sizeof(X509_CRL),
+	.sname = "X509_CRL",
+};
 
 
 X509_REVOKED *

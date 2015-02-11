@@ -1,4 +1,4 @@
-/* $OpenBSD: x_spki.c,v 1.9 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: x_spki.c,v 1.10 2015/02/11 03:39:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,10 +65,32 @@
 #include <openssl/x509.h>
 #include <openssl/asn1t.h>
 
-ASN1_SEQUENCE(NETSCAPE_SPKAC) = {
-	ASN1_SIMPLE(NETSCAPE_SPKAC, pubkey, X509_PUBKEY),
-	ASN1_SIMPLE(NETSCAPE_SPKAC, challenge, ASN1_IA5STRING)
-} ASN1_SEQUENCE_END(NETSCAPE_SPKAC)
+static const ASN1_TEMPLATE NETSCAPE_SPKAC_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_SPKAC, pubkey),
+		.field_name = "pubkey",
+		.item = &X509_PUBKEY_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_SPKAC, challenge),
+		.field_name = "challenge",
+		.item = &ASN1_IA5STRING_it,
+	},
+};
+
+const ASN1_ITEM NETSCAPE_SPKAC_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NETSCAPE_SPKAC_seq_tt,
+	.tcount = sizeof(NETSCAPE_SPKAC_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(NETSCAPE_SPKAC),
+	.sname = "NETSCAPE_SPKAC",
+};
 
 
 NETSCAPE_SPKAC *
@@ -96,11 +118,39 @@ NETSCAPE_SPKAC_free(NETSCAPE_SPKAC *a)
 	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_SPKAC_it);
 }
 
-ASN1_SEQUENCE(NETSCAPE_SPKI) = {
-	ASN1_SIMPLE(NETSCAPE_SPKI, spkac, NETSCAPE_SPKAC),
-	ASN1_SIMPLE(NETSCAPE_SPKI, sig_algor, X509_ALGOR),
-	ASN1_SIMPLE(NETSCAPE_SPKI, signature, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END(NETSCAPE_SPKI)
+static const ASN1_TEMPLATE NETSCAPE_SPKI_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_SPKI, spkac),
+		.field_name = "spkac",
+		.item = &NETSCAPE_SPKAC_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_SPKI, sig_algor),
+		.field_name = "sig_algor",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_SPKI, signature),
+		.field_name = "signature",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
+
+const ASN1_ITEM NETSCAPE_SPKI_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NETSCAPE_SPKI_seq_tt,
+	.tcount = sizeof(NETSCAPE_SPKI_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(NETSCAPE_SPKI),
+	.sname = "NETSCAPE_SPKI",
+};
 
 
 NETSCAPE_SPKI *

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_exten.c,v 1.13 2015/02/10 06:36:30 jsing Exp $ */
+/* $OpenBSD: x_exten.c,v 1.14 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,11 +61,39 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 
-ASN1_SEQUENCE(X509_EXTENSION) = {
-	ASN1_SIMPLE(X509_EXTENSION, object, ASN1_OBJECT),
-	ASN1_OPT(X509_EXTENSION, critical, ASN1_BOOLEAN),
-	ASN1_SIMPLE(X509_EXTENSION, value, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(X509_EXTENSION)
+static const ASN1_TEMPLATE X509_EXTENSION_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_EXTENSION, object),
+		.field_name = "object",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_EXTENSION, critical),
+		.field_name = "critical",
+		.item = &ASN1_BOOLEAN_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_EXTENSION, value),
+		.field_name = "value",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM X509_EXTENSION_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_EXTENSION_seq_tt,
+	.tcount = sizeof(X509_EXTENSION_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(X509_EXTENSION),
+	.sname = "X509_EXTENSION",
+};
 
 ASN1_ITEM_TEMPLATE(X509_EXTENSIONS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Extension, X509_EXTENSION)

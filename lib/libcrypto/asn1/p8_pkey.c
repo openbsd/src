@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.13 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.14 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -75,12 +75,54 @@ pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(PKCS8_PRIV_KEY_INFO, pkey_cb) = {
-	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkeyalg, X509_ALGOR),
-	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkey, ASN1_ANY),
-	ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0)
-} ASN1_SEQUENCE_END_cb(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
+static const ASN1_AUX PKCS8_PRIV_KEY_INFO_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = pkey_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE PKCS8_PRIV_KEY_INFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS8_PRIV_KEY_INFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS8_PRIV_KEY_INFO, pkeyalg),
+		.field_name = "pkeyalg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS8_PRIV_KEY_INFO, pkey),
+		.field_name = "pkey",
+		.item = &ASN1_ANY_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS8_PRIV_KEY_INFO, attributes),
+		.field_name = "attributes",
+		.item = &X509_ATTRIBUTE_it,
+	},
+};
+
+const ASN1_ITEM PKCS8_PRIV_KEY_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS8_PRIV_KEY_INFO_seq_tt,
+	.tcount = sizeof(PKCS8_PRIV_KEY_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &PKCS8_PRIV_KEY_INFO_aux,
+	.size = sizeof(PKCS8_PRIV_KEY_INFO),
+	.sname = "PKCS8_PRIV_KEY_INFO",
+};
 
 
 PKCS8_PRIV_KEY_INFO *

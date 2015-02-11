@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.21 2015/02/10 13:28:17 jsing Exp $ */
+/* $OpenBSD: x_x509.c,v 1.22 2015/02/11 03:39:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,18 +65,96 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
-	ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
-	ASN1_SIMPLE(X509_CINF, serialNumber, ASN1_INTEGER),
-	ASN1_SIMPLE(X509_CINF, signature, X509_ALGOR),
-	ASN1_SIMPLE(X509_CINF, issuer, X509_NAME),
-	ASN1_SIMPLE(X509_CINF, validity, X509_VAL),
-	ASN1_SIMPLE(X509_CINF, subject, X509_NAME),
-	ASN1_SIMPLE(X509_CINF, key, X509_PUBKEY),
-	ASN1_IMP_OPT(X509_CINF, issuerUID, ASN1_BIT_STRING, 1),
-	ASN1_IMP_OPT(X509_CINF, subjectUID, ASN1_BIT_STRING, 2),
-	ASN1_EXP_SEQUENCE_OF_OPT(X509_CINF, extensions, X509_EXTENSION, 3)
-} ASN1_SEQUENCE_END_enc(X509_CINF, X509_CINF)
+static const ASN1_AUX X509_CINF_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_ENCODING,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = 0,
+	.enc_offset = offsetof(X509_CINF, enc),
+};
+static const ASN1_TEMPLATE X509_CINF_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, serialNumber),
+		.field_name = "serialNumber",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, signature),
+		.field_name = "signature",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, issuer),
+		.field_name = "issuer",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, validity),
+		.field_name = "validity",
+		.item = &X509_VAL_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, subject),
+		.field_name = "subject",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_CINF, key),
+		.field_name = "key",
+		.item = &X509_PUBKEY_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(X509_CINF, issuerUID),
+		.field_name = "issuerUID",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 2,
+		.offset = offsetof(X509_CINF, subjectUID),
+		.field_name = "subjectUID",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 3,
+		.offset = offsetof(X509_CINF, extensions),
+		.field_name = "extensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM X509_CINF_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_CINF_seq_tt,
+	.tcount = sizeof(X509_CINF_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_CINF_aux,
+	.size = sizeof(X509_CINF),
+	.sname = "X509_CINF",
+};
 
 
 X509_CINF *
@@ -148,11 +226,47 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
-	ASN1_SIMPLE(X509, cert_info, X509_CINF),
-	ASN1_SIMPLE(X509, sig_alg, X509_ALGOR),
-	ASN1_SIMPLE(X509, signature, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END_ref(X509, X509)
+static const ASN1_AUX X509_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_REFCOUNT,
+	.ref_offset = offsetof(X509, references),
+	.ref_lock = CRYPTO_LOCK_X509,
+	.asn1_cb = x509_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE X509_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509, cert_info),
+		.field_name = "cert_info",
+		.item = &X509_CINF_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509, sig_alg),
+		.field_name = "sig_alg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509, signature),
+		.field_name = "signature",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
+
+const ASN1_ITEM X509_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_seq_tt,
+	.tcount = sizeof(X509_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_aux,
+	.size = sizeof(X509),
+	.sname = "X509",
+};
 
 
 X509 *

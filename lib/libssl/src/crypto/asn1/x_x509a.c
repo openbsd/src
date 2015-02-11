@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.11 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.12 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -71,13 +71,53 @@
 
 static X509_CERT_AUX *aux_get(X509 *x);
 
-ASN1_SEQUENCE(X509_CERT_AUX) = {
-	ASN1_SEQUENCE_OF_OPT(X509_CERT_AUX, trust, ASN1_OBJECT),
-	ASN1_IMP_SEQUENCE_OF_OPT(X509_CERT_AUX, reject, ASN1_OBJECT, 0),
-	ASN1_OPT(X509_CERT_AUX, alias, ASN1_UTF8STRING),
-	ASN1_OPT(X509_CERT_AUX, keyid, ASN1_OCTET_STRING),
-	ASN1_IMP_SEQUENCE_OF_OPT(X509_CERT_AUX, other, X509_ALGOR, 1)
-} ASN1_SEQUENCE_END(X509_CERT_AUX)
+static const ASN1_TEMPLATE X509_CERT_AUX_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CERT_AUX, trust),
+		.field_name = "trust",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CERT_AUX, reject),
+		.field_name = "reject",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CERT_AUX, alias),
+		.field_name = "alias",
+		.item = &ASN1_UTF8STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CERT_AUX, keyid),
+		.field_name = "keyid",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(X509_CERT_AUX, other),
+		.field_name = "other",
+		.item = &X509_ALGOR_it,
+	},
+};
+
+const ASN1_ITEM X509_CERT_AUX_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_CERT_AUX_seq_tt,
+	.tcount = sizeof(X509_CERT_AUX_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(X509_CERT_AUX),
+	.sname = "X509_CERT_AUX",
+};
 
 
 X509_CERT_AUX *
@@ -217,10 +257,32 @@ X509_reject_clear(X509 *x)
 	}
 }
 
-ASN1_SEQUENCE(X509_CERT_PAIR) = {
-	ASN1_EXP_OPT(X509_CERT_PAIR, forward, X509, 0),
-	ASN1_EXP_OPT(X509_CERT_PAIR, reverse, X509, 1)
-} ASN1_SEQUENCE_END(X509_CERT_PAIR)
+static const ASN1_TEMPLATE X509_CERT_PAIR_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_CERT_PAIR, forward),
+		.field_name = "forward",
+		.item = &X509_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(X509_CERT_PAIR, reverse),
+		.field_name = "reverse",
+		.item = &X509_it,
+	},
+};
+
+const ASN1_ITEM X509_CERT_PAIR_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_CERT_PAIR_seq_tt,
+	.tcount = sizeof(X509_CERT_PAIR_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(X509_CERT_PAIR),
+	.sname = "X509_CERT_PAIR",
+};
 
 
 X509_CERT_PAIR *

@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.23 2015/02/10 04:01:26 jsing Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.24 2015/02/11 03:39:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,10 +87,40 @@ typedef struct netscape_encrypted_pkey_st {
 } NETSCAPE_ENCRYPTED_PKEY;
 
 
-ASN1_BROKEN_SEQUENCE(NETSCAPE_ENCRYPTED_PKEY) = {
-	ASN1_SIMPLE(NETSCAPE_ENCRYPTED_PKEY, os, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(NETSCAPE_ENCRYPTED_PKEY, enckey, X509_SIG)
-} ASN1_BROKEN_SEQUENCE_END(NETSCAPE_ENCRYPTED_PKEY)
+static const ASN1_AUX NETSCAPE_ENCRYPTED_PKEY_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_BROKEN,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = NULL,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE NETSCAPE_ENCRYPTED_PKEY_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_ENCRYPTED_PKEY, os),
+		.field_name = "os",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_ENCRYPTED_PKEY, enckey),
+		.field_name = "enckey",
+		.item = &X509_SIG_it,
+	},
+};
+
+const ASN1_ITEM NETSCAPE_ENCRYPTED_PKEY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NETSCAPE_ENCRYPTED_PKEY_seq_tt,
+	.tcount = sizeof(NETSCAPE_ENCRYPTED_PKEY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &NETSCAPE_ENCRYPTED_PKEY_aux,
+	.size = sizeof(NETSCAPE_ENCRYPTED_PKEY),
+	.sname = "NETSCAPE_ENCRYPTED_PKEY",
+};
 
 DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY, NETSCAPE_ENCRYPTED_PKEY)
@@ -120,11 +150,39 @@ NETSCAPE_ENCRYPTED_PKEY_free(NETSCAPE_ENCRYPTED_PKEY *a)
 	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_ENCRYPTED_PKEY_it);
 }
 
-ASN1_SEQUENCE(NETSCAPE_PKEY) = {
-	ASN1_SIMPLE(NETSCAPE_PKEY, version, LONG),
-	ASN1_SIMPLE(NETSCAPE_PKEY, algor, X509_ALGOR),
-	ASN1_SIMPLE(NETSCAPE_PKEY, private_key, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(NETSCAPE_PKEY)
+static const ASN1_TEMPLATE NETSCAPE_PKEY_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_PKEY, version),
+		.field_name = "version",
+		.item = &LONG_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_PKEY, algor),
+		.field_name = "algor",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(NETSCAPE_PKEY, private_key),
+		.field_name = "private_key",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM NETSCAPE_PKEY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NETSCAPE_PKEY_seq_tt,
+	.tcount = sizeof(NETSCAPE_PKEY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(NETSCAPE_PKEY),
+	.sname = "NETSCAPE_PKEY",
+};
 
 DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_PKEY, NETSCAPE_PKEY)

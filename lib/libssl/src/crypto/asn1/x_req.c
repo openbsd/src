@@ -1,4 +1,4 @@
-/* $OpenBSD: x_req.c,v 1.13 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: x_req.c,v 1.14 2015/02/11 03:39:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,15 +92,57 @@ rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
-	ASN1_SIMPLE(X509_REQ_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(X509_REQ_INFO, subject, X509_NAME),
-	ASN1_SIMPLE(X509_REQ_INFO, pubkey, X509_PUBKEY),
+static const ASN1_AUX X509_REQ_INFO_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_ENCODING,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = rinf_cb,
+	.enc_offset = offsetof(X509_REQ_INFO, enc),
+};
+static const ASN1_TEMPLATE X509_REQ_INFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REQ_INFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REQ_INFO, subject),
+		.field_name = "subject",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REQ_INFO, pubkey),
+		.field_name = "pubkey",
+		.item = &X509_PUBKEY_it,
+	},
 	/* This isn't really OPTIONAL but it gets round invalid
 	 * encodings
 	 */
-	ASN1_IMP_SET_OF_OPT(X509_REQ_INFO, attributes, X509_ATTRIBUTE, 0)
-} ASN1_SEQUENCE_END_enc(X509_REQ_INFO, X509_REQ_INFO)
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_REQ_INFO, attributes),
+		.field_name = "attributes",
+		.item = &X509_ATTRIBUTE_it,
+	},
+};
+
+const ASN1_ITEM X509_REQ_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_REQ_INFO_seq_tt,
+	.tcount = sizeof(X509_REQ_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_REQ_INFO_aux,
+	.size = sizeof(X509_REQ_INFO),
+	.sname = "X509_REQ_INFO",
+};
 
 
 X509_REQ_INFO *
@@ -128,11 +170,47 @@ X509_REQ_INFO_free(X509_REQ_INFO *a)
 	ASN1_item_free((ASN1_VALUE *)a, &X509_REQ_INFO_it);
 }
 
-ASN1_SEQUENCE_ref(X509_REQ, 0, CRYPTO_LOCK_X509_REQ) = {
-	ASN1_SIMPLE(X509_REQ, req_info, X509_REQ_INFO),
-	ASN1_SIMPLE(X509_REQ, sig_alg, X509_ALGOR),
-	ASN1_SIMPLE(X509_REQ, signature, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END_ref(X509_REQ, X509_REQ)
+static const ASN1_AUX X509_REQ_aux = {
+	.app_data = NULL,
+	.flags = ASN1_AFLG_REFCOUNT,
+	.ref_offset = offsetof(X509_REQ, references),
+	.ref_lock = CRYPTO_LOCK_X509_REQ,
+	.asn1_cb = 0,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE X509_REQ_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REQ, req_info),
+		.field_name = "req_info",
+		.item = &X509_REQ_INFO_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REQ, sig_alg),
+		.field_name = "sig_alg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_REQ, signature),
+		.field_name = "signature",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
+
+const ASN1_ITEM X509_REQ_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_REQ_seq_tt,
+	.tcount = sizeof(X509_REQ_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &X509_REQ_aux,
+	.size = sizeof(X509_REQ),
+	.sname = "X509_REQ",
+};
 
 
 X509_REQ *

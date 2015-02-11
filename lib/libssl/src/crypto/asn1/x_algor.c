@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.18 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: x_algor.c,v 1.19 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,10 +61,32 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 
-ASN1_SEQUENCE(X509_ALGOR) = {
-	ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
-	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
-} ASN1_SEQUENCE_END(X509_ALGOR)
+static const ASN1_TEMPLATE X509_ALGOR_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(X509_ALGOR, algorithm),
+		.field_name = "algorithm",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(X509_ALGOR, parameter),
+		.field_name = "parameter",
+		.item = &ASN1_ANY_it,
+	},
+};
+
+const ASN1_ITEM X509_ALGOR_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = X509_ALGOR_seq_tt,
+	.tcount = sizeof(X509_ALGOR_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(X509_ALGOR),
+	.sname = "X509_ALGOR",
+};
 
 ASN1_ITEM_TEMPLATE(X509_ALGORS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)

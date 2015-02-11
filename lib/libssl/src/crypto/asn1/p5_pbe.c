@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.18 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.19 2015/02/11 03:39:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -66,10 +66,32 @@
 
 /* PKCS#5 password based encryption structure */
 
-ASN1_SEQUENCE(PBEPARAM) = {
-	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PBEPARAM)
+static const ASN1_TEMPLATE PBEPARAM_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PBEPARAM, salt),
+		.field_name = "salt",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PBEPARAM, iter),
+		.field_name = "iter",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM PBEPARAM_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PBEPARAM_seq_tt,
+	.tcount = sizeof(PBEPARAM_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PBEPARAM),
+	.sname = "PBEPARAM",
+};
 
 
 PBEPARAM *
