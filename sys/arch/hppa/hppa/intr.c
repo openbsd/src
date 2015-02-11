@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.44 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.45 2015/02/11 01:36:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -32,6 +32,7 @@
 #include <sys/device.h>
 #include <sys/evcount.h>
 #include <sys/malloc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
