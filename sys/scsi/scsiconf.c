@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.189 2014/12/15 02:11:57 tedu Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.190 2015/02/11 00:50:03 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #include <sys/pool.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/lock.h>
+#include <sys/atomic.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
