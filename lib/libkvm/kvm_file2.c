@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.41 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.42 2015/02/11 03:03:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -178,11 +178,6 @@ kvm_getfiles(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	    deadway:
 		switch (op) {
 		case KERN_FILE_BYFILE:
-			if (arg != 0) {
-				_kvm_err(kd, kd->program,
-				    "%d: invalid argument", arg);
-				return (NULL);
-			}
 			return (kvm_deadfile_byfile(kd, op, arg, esize, cnt));
 			break;
 		case KERN_FILE_BYPID:
@@ -239,6 +234,10 @@ kvm_deadfile_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			_kvm_err(kd, kd->program, "can't read kfp");
 			return (NULL);
 		}
+		if (file.f_count == 0)
+			continue;
+		if (arg && file.f_type != arg)
+			continue;
 		if (fill_file(kd, &kf, &file, (u_long)fp, NULL, NULL, 0, 0)
 		    == -1)
 			return (NULL);

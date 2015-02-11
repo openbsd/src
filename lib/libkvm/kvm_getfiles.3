@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getfiles.3,v 1.16 2013/10/22 16:40:27 guenther Exp $
+.\"	$OpenBSD: kvm_getfiles.3,v 1.17 2015/02/11 03:03:08 guenther Exp $
 .\"	$NetBSD: kvm_getfiles.3,v 1.3 1996/03/18 22:33:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getfiles.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 22 2013 $
+.Dd $Mdocdate: February 11 2015 $
 .Dt KVM_GETFILES 3
 .Os
 .Sh NAME
@@ -62,7 +62,9 @@ describes the filtering predicate as follows:
 .Pp
 .Bl -tag -width 20n -offset indent -compact
 .It Dv KERN_FILE_BYFILE
-all open files
+all open files with type
+.Fa arg
+(0 for all files)
 .It Dv KERN_FILE_BYPID
 files opened by process ID
 .Fa arg
@@ -70,10 +72,29 @@ files opened by process ID
 .It Dv KERN_FILE_BYUID
 files opened by processes with effective user ID
 .Fa arg
+(\-1 for all users)
 .El
 .Pp
 Files associated with a process will include information about
 the process that has the file open.
+.Pp
+For
+.Dv KERN_FILE_BYFILE
+the recognized file types are defined in
+.In sys/file.h :
+.Pp
+.Bl -tag -width 20n -offset indent -compact
+.It Dv DTYPE_VNODE
+files and devices
+.It Dv DTYPE_SOCKET
+sockets, regardless of domain
+.It Dv DTYPE_PIPE
+pipes and FIFOs
+.It Dv DTYPE_KQUEUE
+kqueues
+.It Dv DTYPE_SYSTRACE
+systrace control files
+.El
 .Pp
 Only the first
 .Fa elemsize

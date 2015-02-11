@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.280 2015/02/09 11:52:47 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.281 2015/02/11 03:03:08 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1231,13 +1231,10 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 
 	switch (op) {
 	case KERN_FILE_BYFILE:
-		if (arg != 0) {
-			/* no arg in file mode */
-			error = EINVAL;
-			break;
-		}
 		LIST_FOREACH(fp, &filehead, f_list) {
 			if (fp->f_count == 0)
+				continue;
+			if (arg && fp->f_type != arg)
 				continue;
 			FILLIT(fp, NULL, 0, NULL, NULL);
 		}
