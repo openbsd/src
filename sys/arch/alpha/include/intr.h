@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.43 2014/02/01 21:19:39 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.44 2015/02/11 01:13:22 dlg Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -62,7 +62,6 @@
 #define _MACHINE_INTR_H_
 
 #include <sys/evcount.h>
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <machine/atomic.h>
