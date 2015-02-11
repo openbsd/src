@@ -1,6 +1,6 @@
-/*	$OpenBSD: vnet.c,v 1.37 2015/01/25 21:42:13 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.38 2015/02/11 04:15:50 kettenis Exp $	*/
 /*
- * Copyright (c) 2009 Mark Kettenis
+ * Copyright (c) 2009, 2015 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -162,11 +163,10 @@ struct vnet_softc {
 	uint64_t	sc_dring_ident;
 	uint64_t	sc_seq_no;
 
-	int		sc_tx_cnt;
-	int		sc_tx_prod;
-	int		sc_tx_cons;
+	u_int		sc_tx_prod;
+	u_int		sc_tx_cons;
 
-	uint8_t		sc_peer_state;
+	u_int		sc_peer_state;
 
 	struct ldc_map	*sc_lm;
 	struct vnet_dring *sc_vd;
@@ -282,6 +282,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	lc->lc_rx_data = vio_rx_data;
 
 	timeout_set(&sc->sc_handshake_to, vnet_handshake, sc);
+	sc->sc_peer_state = VIO_DP_STOPPED;
 
 	lc->lc_txq = ldc_queue_alloc(sc->sc_dmatag, VNET_TX_ENTRIES);
 	if (lc->lc_txq == NULL) {
@@ -303,6 +304,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	 * Each interface gets its own pool.
 	 */
 	pool_init(&sc->sc_pool, 2048, 0, 0, 0, sc->sc_dv.dv_xname, NULL);
+	pool_setipl(&sc->sc_pool, IPL_NET);
 
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
@@ -696,6 +698,7 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 	caddr_t buf;
 	paddr_t pa;
 	psize_t nbytes;
+	u_int cons;
 	int err;
 
 	switch(tag->stype) {
@@ -748,14 +751,14 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			return;
 		}
 
-		map->lm_slot[sc->sc_vsd[sc->sc_tx_cons].vsd_map_idx].entry = 0;
-		map->lm_count--;
+		cons = sc->sc_tx_cons & (sc->sc_vd->vd_nentries - 1);
 
-		pool_put(&sc->sc_pool, sc->sc_vsd[sc->sc_tx_cons].vsd_buf);
+		map->lm_slot[sc->sc_vsd[cons].vsd_map_idx].entry = 0;
+		atomic_dec_int(&map->lm_count);
+
+		pool_put(&sc->sc_pool, sc->sc_vsd[cons].vsd_buf);
 
 		sc->sc_tx_cons++;
-		sc->sc_tx_cons &= (sc->sc_vd->vd_nentries - 1);
-		sc->sc_tx_cnt--;
 		break;
 
 	case VIO_SUBTYPE_NACK:
@@ -856,29 +859,29 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 	case VIO_SUBTYPE_ACK:
 	{
 		struct ldc_map *map = sc->sc_lm;
-		int cons;
+		u_int cons, count;
 
 		sc->sc_peer_state = dm->proc_state;
 
-		cons = sc->sc_tx_cons;
+		cons = sc->sc_tx_cons & (sc->sc_vd->vd_nentries - 1);
 		while (sc->sc_vd->vd_desc[cons].hdr.dstate == VIO_DESC_DONE) {
 			map->lm_slot[sc->sc_vsd[cons].vsd_map_idx].entry = 0;
-			map->lm_count--;
+			atomic_dec_int(&map->lm_count);
 
 			pool_put(&sc->sc_pool, sc->sc_vsd[cons].vsd_buf);
 
-			sc->sc_vd->vd_desc[cons++].hdr.dstate = VIO_DESC_FREE;
-			cons &= (sc->sc_vd->vd_nentries - 1);
-			sc->sc_tx_cnt--;
+			sc->sc_vd->vd_desc[cons].hdr.dstate = VIO_DESC_FREE;
+			sc->sc_tx_cons++;
+			cons = sc->sc_tx_cons & (sc->sc_vd->vd_nentries - 1);
 		}
-		sc->sc_tx_cons = cons;
 
-		if (sc->sc_tx_cnt > 0 && sc->sc_peer_state != VIO_DP_ACTIVE)
-			vnet_send_dring_data(sc, sc->sc_tx_cons);
+		count = sc->sc_tx_prod - sc->sc_tx_cons;
+		if (count > 0 && sc->sc_peer_state != VIO_DP_ACTIVE)
+			vnet_send_dring_data(sc, cons);
 
-		if (sc->sc_tx_cnt < sc->sc_vd->vd_nentries)
+		if (count < (sc->sc_vd->vd_nentries - 1))
 			ifp->if_flags &= ~IFF_OACTIVE;
-		if (sc->sc_tx_cnt == 0)
+		if (count == 0)
 			ifp->if_timer = 0;
 
 		vnet_start(ifp);
@@ -887,6 +890,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_NACK:
 		DPRINTF(("DATA/NACK/DRING_DATA\n"));
+		sc->sc_peer_state = VIO_DP_STOPPED;
 		break;
 
 	default:
@@ -901,7 +905,8 @@ vnet_ldc_reset(struct ldc_conn *lc)
 	struct vnet_softc *sc = lc->lc_sc;
 
 	timeout_del(&sc->sc_handshake_to);
-	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
+	sc->sc_tx_prod = sc->sc_tx_cons = 0;
+	sc->sc_peer_state = VIO_DP_STOPPED;
 	sc->sc_vio_state = 0;
 	vnet_link_state(sc);
 }
@@ -1009,6 +1014,11 @@ void
 vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
 {
 	struct vio_dring_msg dm;
+	u_int peer_state;
+
+	peer_state = atomic_swap_uint(&sc->sc_peer_state, VIO_DP_ACTIVE);
+	if (peer_state == VIO_DP_ACTIVE)
+		return;
 
 	bzero(&dm, sizeof(dm));
 	dm.tag.type = VIO_TYPE_DATA;
@@ -1020,8 +1030,6 @@ vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
 	dm.start_idx = start_idx;
 	dm.end_idx = -1;
 	vnet_sendmsg(sc, &dm, sizeof(dm));
-
-	sc->sc_peer_state = VIO_DP_ACTIVE;
 }
 
 void
@@ -1034,7 +1042,8 @@ vnet_start(struct ifnet *ifp)
 	paddr_t pa;
 	caddr_t buf;
 	uint64_t tx_head, tx_tail, tx_state;
-	int err, desc;
+	u_int start, prod, count;
+	int err;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1069,13 +1078,14 @@ vnet_start(struct ifnet *ifp)
 		return;
 	}
 
-	desc = sc->sc_tx_prod;
-	while (sc->sc_vd->vd_desc[desc].hdr.dstate == VIO_DESC_FREE) {
+	start = prod = sc->sc_tx_prod & (sc->sc_vd->vd_nentries - 1);
+	while (sc->sc_vd->vd_desc[prod].hdr.dstate == VIO_DESC_FREE) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		if (sc->sc_tx_cnt >= sc->sc_vd->vd_nentries ||
+		count = sc->sc_tx_prod - sc->sc_tx_cons;
+		if (count >= (sc->sc_vd->vd_nentries - 1) ||
 		    map->lm_count >= map->lm_nentries) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1106,32 +1116,31 @@ vnet_start(struct ifnet *ifp)
 		}
 		map->lm_slot[map->lm_next].entry = (pa & LDC_MTE_RA_MASK);
 		map->lm_slot[map->lm_next].entry |= LDC_MTE_CPR;
-		map->lm_count++;
+		atomic_inc_int(&map->lm_count);
 
-		sc->sc_vd->vd_desc[desc].nbytes = max(m->m_pkthdr.len, 60);
-		sc->sc_vd->vd_desc[desc].ncookies = 1;
-		sc->sc_vd->vd_desc[desc].cookie[0].addr =
+		sc->sc_vd->vd_desc[prod].nbytes = max(m->m_pkthdr.len, 60);
+		sc->sc_vd->vd_desc[prod].ncookies = 1;
+		sc->sc_vd->vd_desc[prod].cookie[0].addr =
 		    map->lm_next << PAGE_SHIFT | (pa & PAGE_MASK);
-		sc->sc_vd->vd_desc[desc].cookie[0].size = 2048;
-		membar(Sync);
-		sc->sc_vd->vd_desc[desc].hdr.dstate = VIO_DESC_READY;
+		sc->sc_vd->vd_desc[prod].cookie[0].size = 2048;
+		membar_producer();
+		sc->sc_vd->vd_desc[prod].hdr.dstate = VIO_DESC_READY;
 
-		sc->sc_vsd[desc].vsd_map_idx = map->lm_next;
-		sc->sc_vsd[desc].vsd_buf = buf;
+		sc->sc_vsd[prod].vsd_map_idx = map->lm_next;
+		sc->sc_vsd[prod].vsd_buf = buf;
 
-		desc++;
-		desc &= (sc->sc_vd->vd_nentries - 1);
-		sc->sc_tx_cnt++;
+		sc->sc_tx_prod++;
+		prod = sc->sc_tx_prod & (sc->sc_vd->vd_nentries - 1);
 
 		m_freem(m);
 	}
 
-	if (sc->sc_tx_cnt > 0 && sc->sc_peer_state != VIO_DP_ACTIVE) {
-		vnet_send_dring_data(sc, sc->sc_tx_prod);
+	membar_producer();
+
+	if (start != prod && sc->sc_peer_state != VIO_DP_ACTIVE) {
+		vnet_send_dring_data(sc, start);
 		ifp->if_timer = 5;
 	}
-
-	sc->sc_tx_prod = desc;
 }
 
 void
@@ -1143,13 +1152,15 @@ vnet_start_desc(struct ifnet *ifp)
 	struct mbuf *m;
 	paddr_t pa;
 	caddr_t buf;
+	u_int prod, count;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		if (sc->sc_tx_cnt >= sc->sc_vd->vd_nentries ||
+		count = sc->sc_tx_prod - sc->sc_tx_cons;
+		if (count >= (sc->sc_vd->vd_nentries - 1) ||
 		    map->lm_count >= map->lm_nentries) {
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
@@ -1180,10 +1191,11 @@ vnet_start_desc(struct ifnet *ifp)
 		}
 		map->lm_slot[map->lm_next].entry = (pa & LDC_MTE_RA_MASK);
 		map->lm_slot[map->lm_next].entry |= LDC_MTE_CPR;
-		map->lm_count++;
+		atomic_inc_int(&map->lm_count);
 
-		sc->sc_vsd[sc->sc_tx_prod].vsd_map_idx = map->lm_next;
-		sc->sc_vsd[sc->sc_tx_prod].vsd_buf = buf;
+		prod = sc->sc_tx_prod & (sc->sc_vd->vd_nentries - 1);
+		sc->sc_vsd[prod].vsd_map_idx = map->lm_next;
+		sc->sc_vsd[prod].vsd_buf = buf;
 
 		bzero(&dm, sizeof(dm));
 		dm.tag.type = VIO_TYPE_DATA;
@@ -1201,7 +1213,6 @@ vnet_start_desc(struct ifnet *ifp)
 
 		sc->sc_tx_prod++;
 		sc->sc_tx_prod &= (sc->sc_vd->vd_nentries - 1);
-		sc->sc_tx_cnt++;
 
 		m_freem(m);
 	}
