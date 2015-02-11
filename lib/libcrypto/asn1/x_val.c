@@ -1,4 +1,4 @@
-/* $OpenBSD: x_val.c,v 1.10 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: x_val.c,v 1.11 2015/02/11 04:00:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,15 +63,11 @@
 
 static const ASN1_TEMPLATE X509_VAL_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_VAL, notBefore),
 		.field_name = "notBefore",
 		.item = &ASN1_TIME_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_VAL, notAfter),
 		.field_name = "notAfter",
 		.item = &ASN1_TIME_it,
@@ -83,7 +79,6 @@ const ASN1_ITEM X509_VAL_it = {
 	.utype = V_ASN1_SEQUENCE,
 	.templates = X509_VAL_seq_tt,
 	.tcount = sizeof(X509_VAL_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
 	.size = sizeof(X509_VAL),
 	.sname = "X509_VAL",
 };

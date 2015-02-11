@@ -1,4 +1,4 @@
-/* $OpenBSD: x_sig.c,v 1.10 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: x_sig.c,v 1.11 2015/02/11 04:00:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,15 +63,11 @@
 
 static const ASN1_TEMPLATE X509_SIG_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_SIG, algor),
 		.field_name = "algor",
 		.item = &X509_ALGOR_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_SIG, digest),
 		.field_name = "digest",
 		.item = &ASN1_OCTET_STRING_it,
@@ -83,7 +79,6 @@ const ASN1_ITEM X509_SIG_it = {
 	.utype = V_ASN1_SEQUENCE,
 	.templates = X509_SIG_seq_tt,
 	.tcount = sizeof(X509_SIG_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
 	.size = sizeof(X509_SIG),
 	.sname = "X509_SIG",
 };

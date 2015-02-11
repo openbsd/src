@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.19 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.20 2015/02/11 04:00:39 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,15 +68,11 @@
 
 static const ASN1_TEMPLATE PBEPARAM_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(PBEPARAM, salt),
 		.field_name = "salt",
 		.item = &ASN1_OCTET_STRING_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(PBEPARAM, iter),
 		.field_name = "iter",
 		.item = &ASN1_INTEGER_it,
@@ -88,7 +84,6 @@ const ASN1_ITEM PBEPARAM_it = {
 	.utype = V_ASN1_SEQUENCE,
 	.templates = PBEPARAM_seq_tt,
 	.tcount = sizeof(PBEPARAM_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
 	.size = sizeof(PBEPARAM),
 	.sname = "PBEPARAM",
 };

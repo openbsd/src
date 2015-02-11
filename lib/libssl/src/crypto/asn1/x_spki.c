@@ -1,4 +1,4 @@
-/* $OpenBSD: x_spki.c,v 1.10 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: x_spki.c,v 1.11 2015/02/11 04:00:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,15 +67,11 @@
 
 static const ASN1_TEMPLATE NETSCAPE_SPKAC_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(NETSCAPE_SPKAC, pubkey),
 		.field_name = "pubkey",
 		.item = &X509_PUBKEY_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(NETSCAPE_SPKAC, challenge),
 		.field_name = "challenge",
 		.item = &ASN1_IA5STRING_it,
@@ -87,7 +83,6 @@ const ASN1_ITEM NETSCAPE_SPKAC_it = {
 	.utype = V_ASN1_SEQUENCE,
 	.templates = NETSCAPE_SPKAC_seq_tt,
 	.tcount = sizeof(NETSCAPE_SPKAC_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
 	.size = sizeof(NETSCAPE_SPKAC),
 	.sname = "NETSCAPE_SPKAC",
 };

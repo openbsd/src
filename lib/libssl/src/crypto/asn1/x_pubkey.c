@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.24 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.25 2015/02/11 04:00:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,24 +85,15 @@ pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 }
 
 static const ASN1_AUX X509_PUBKEY_aux = {
-	.app_data = NULL,
-	.flags = 0,
-	.ref_offset = 0,
-	.ref_lock = 0,
 	.asn1_cb = pubkey_cb,
-	.enc_offset = 0,
 };
 static const ASN1_TEMPLATE X509_PUBKEY_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_PUBKEY, algor),
 		.field_name = "algor",
 		.item = &X509_ALGOR_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_PUBKEY, public_key),
 		.field_name = "public_key",
 		.item = &ASN1_BIT_STRING_it,

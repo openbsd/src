@@ -1,4 +1,4 @@
-/* $OpenBSD: nsseq.c,v 1.9 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: nsseq.c,v 1.10 2015/02/11 04:00:39 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -76,24 +76,16 @@ nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 /* Netscape certificate sequence structure */
 
 static const ASN1_AUX NETSCAPE_CERT_SEQUENCE_aux = {
-	.app_data = NULL,
-	.flags = 0,
-	.ref_offset = 0,
-	.ref_lock = 0,
 	.asn1_cb = nsseq_cb,
-	.enc_offset = 0,
 };
 static const ASN1_TEMPLATE NETSCAPE_CERT_SEQUENCE_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(NETSCAPE_CERT_SEQUENCE, type),
 		.field_name = "type",
 		.item = &ASN1_OBJECT_it,
 	},
 	{
 		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
-		.tag = 0,
 		.offset = offsetof(NETSCAPE_CERT_SEQUENCE, certs),
 		.field_name = "certs",
 		.item = &X509_it,

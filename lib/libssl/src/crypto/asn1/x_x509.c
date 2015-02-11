@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.22 2015/02/11 03:39:51 jsing Exp $ */
+/* $OpenBSD: x_x509.c,v 1.23 2015/02/11 04:00:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,59 +66,42 @@
 #include <openssl/x509v3.h>
 
 static const ASN1_AUX X509_CINF_aux = {
-	.app_data = NULL,
 	.flags = ASN1_AFLG_ENCODING,
-	.ref_offset = 0,
-	.ref_lock = 0,
-	.asn1_cb = 0,
 	.enc_offset = offsetof(X509_CINF, enc),
 };
 static const ASN1_TEMPLATE X509_CINF_seq_tt[] = {
 	{
 		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, version),
 		.field_name = "version",
 		.item = &ASN1_INTEGER_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, serialNumber),
 		.field_name = "serialNumber",
 		.item = &ASN1_INTEGER_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, signature),
 		.field_name = "signature",
 		.item = &X509_ALGOR_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, issuer),
 		.field_name = "issuer",
 		.item = &X509_NAME_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, validity),
 		.field_name = "validity",
 		.item = &X509_VAL_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, subject),
 		.field_name = "subject",
 		.item = &X509_NAME_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509_CINF, key),
 		.field_name = "key",
 		.item = &X509_PUBKEY_it,
@@ -138,7 +121,8 @@ static const ASN1_TEMPLATE X509_CINF_seq_tt[] = {
 		.item = &ASN1_BIT_STRING_it,
 	},
 	{
-		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF |
+		    ASN1_TFLG_OPTIONAL,
 		.tag = 3,
 		.offset = offsetof(X509_CINF, extensions),
 		.field_name = "extensions",
@@ -232,26 +216,19 @@ static const ASN1_AUX X509_aux = {
 	.ref_offset = offsetof(X509, references),
 	.ref_lock = CRYPTO_LOCK_X509,
 	.asn1_cb = x509_cb,
-	.enc_offset = 0,
 };
 static const ASN1_TEMPLATE X509_seq_tt[] = {
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509, cert_info),
 		.field_name = "cert_info",
 		.item = &X509_CINF_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509, sig_alg),
 		.field_name = "sig_alg",
 		.item = &X509_ALGOR_it,
 	},
 	{
-		.flags = 0,
-		.tag = 0,
 		.offset = offsetof(X509, signature),
 		.field_name = "signature",
 		.item = &ASN1_BIT_STRING_it,
