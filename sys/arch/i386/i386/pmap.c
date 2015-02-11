@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.168 2015/02/02 09:29:53 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.169 2015/02/11 05:54:48 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/atomic.h>
+#include <machine/lock.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
