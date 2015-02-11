@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.15 2015/02/10 23:40:43 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.16 2015/02/11 00:53:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -2078,22 +2078,23 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	/* Send PHY DB CFG section */
 	err = iwm_phy_db_get_section_data(sc, IWM_PHY_DB_CFG, &data, &size, 0);
 	if (err) {
-		DPRINTF(("%s: Cannot get Phy DB cfg section\n", DEVNAME(sc)));
+		DPRINTF(("%s: Cannot get Phy DB cfg section, %d\n",
+		    DEVNAME(sc), err));
 		return err;
 	}
 
 	err = iwm_send_phy_db_cmd(sc, IWM_PHY_DB_CFG, size, data);
 	if (err) {
-		DPRINTF(("%s: Cannot send HCMD of  Phy DB cfg section\n",
-		    DEVNAME(sc)));
+		DPRINTF(("%s: Cannot send HCMD of Phy DB cfg section, %d\n",
+		    DEVNAME(sc), err));
 		return err;
 	}
 
 	err = iwm_phy_db_get_section_data(sc, IWM_PHY_DB_CALIB_NCH,
 	    &data, &size, 0);
 	if (err) {
-		DPRINTF(("%s: Cannot get Phy DB non specific channel section\n",
-		    DEVNAME(sc)));
+		DPRINTF(("%s: Cannot get Phy DB non specific channel section, "
+		    "%d\n", DEVNAME(sc), err));
 		return err;
 	}
 
@@ -2108,8 +2109,8 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	err = iwm_phy_db_send_all_channel_groups(sc,
 	    IWM_PHY_DB_CALIB_CHG_PAPD, IWM_NUM_PAPD_CH_GROUPS);
 	if (err) {
-		DPRINTF(("%s: Cannot send channel specific PAPD groups\n",
-		    DEVNAME(sc)));
+		DPRINTF(("%s: Cannot send channel specific PAPD groups, %d\n",
+		    DEVNAME(sc), err));
 		return err;
 	}
 
@@ -2117,8 +2118,8 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 	err = iwm_phy_db_send_all_channel_groups(sc,
 	    IWM_PHY_DB_CALIB_CHG_TXP, IWM_NUM_TXP_CH_GROUPS);
 	if (err) {
-		DPRINTF(("%s: Cannot send channel specific TX power groups\n",
-		    DEVNAME(sc)));
+		DPRINTF(("%s: Cannot send channel specific TX power groups, "
+		    "%d\n", DEVNAME(sc), err));
 		return err;
 	}
 
