@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.123 2015/02/07 10:45:19 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.124 2015/02/12 04:23:17 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -441,6 +441,8 @@ spamd_tls_init(char *keyfile, char *certfile)
 	if ((tlsctx = tls_server()) == NULL)
 		errx(1, "failed to get tls server");
 	/* might need user-specified ciphers, tls_config_set_ciphers */
+
+	tls_config_set_protocols(tlscfg, TLS_PROTOCOLS_ALL);
 
 	if (tls_config_set_cert_file(tlscfg, certfile) != 0)
 		err(1, "could not load certificate %s", certfile);

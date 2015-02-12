@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.153 2015/02/10 18:30:20 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.154 2015/02/12 04:23:17 jsing Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -525,6 +525,8 @@ main(int argc, char *argv[])
 		tls_config_insecure_noverifycert(tlsconfig);
 	} else {
 		struct stat sb;
+
+		tls_config_set_protocols(tlsconfig, TLS_PROTOCOLS_ALL);
 
 		fd = -1;
 		p = NULL;

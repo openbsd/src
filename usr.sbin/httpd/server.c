@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.57 2015/02/07 23:56:02 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.58 2015/02/12 04:23:17 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -174,6 +174,8 @@ server_tls_init(struct server *srv)
 		log_warn("%s: failed to get tls server", __func__);
 		return (-1);
 	}
+
+	tls_config_set_protocols(srv->srv_tls_config, TLS_PROTOCOLS_ALL);
 
 	if (tls_config_set_ciphers(srv->srv_tls_config,
 	    srv->srv_conf.tls_ciphers) != 0) {

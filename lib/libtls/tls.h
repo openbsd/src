@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.7 2015/02/11 07:01:10 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.8 2015/02/12 04:23:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -25,7 +25,9 @@
 #define TLS_PROTOCOL_TLSv1_2	(1 << 3)
 #define TLS_PROTOCOL_TLSv1 \
 	(TLS_PROTOCOL_TLSv1_0|TLS_PROTOCOL_TLSv1_1|TLS_PROTOCOL_TLSv1_2)
-#define TLS_PROTOCOLS_DEFAULT TLS_PROTOCOL_TLSv1
+
+#define TLS_PROTOCOLS_ALL TLS_PROTOCOL_TLSv1
+#define TLS_PROTOCOLS_DEFAULT TLS_PROTOCOL_TLSv1_2
 
 #define TLS_READ_AGAIN	-2
 #define TLS_WRITE_AGAIN	-3

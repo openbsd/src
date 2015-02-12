@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.97 2015/02/09 08:24:21 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.98 2015/02/12 04:23:17 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -312,6 +312,8 @@ main(volatile int argc, char *argv[])
 				tls_config = tls_config_new();
 				if (tls_config == NULL)
 					errx(1, "tls config failed");
+				tls_config_set_protocols(tls_config,
+				    TLS_PROTOCOLS_ALL);
 			}
 
 			cp = optarg;
