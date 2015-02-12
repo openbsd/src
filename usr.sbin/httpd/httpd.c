@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.33 2015/02/10 08:12:29 florian Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.34 2015/02/12 10:05:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -671,8 +671,8 @@ path_info(char *path)
 	return (p - start);
 }
 
-char*
-escape_uri(const char *src)
+char *
+url_encode(const char *src)
 {
 	static char	 hex[] = "0123456789ABCDEF";
 	char		*dp, *dst;
@@ -680,7 +680,7 @@ escape_uri(const char *src)
 
 	/* We need 3 times the memory if every letter is encoded. */
 	if ((dst = calloc(3, strlen(src) + 1)) == NULL)
-		return NULL;
+		return (NULL);
 
 	for (dp = dst; *src != 0; src++) {
 		c = (unsigned char) *src;

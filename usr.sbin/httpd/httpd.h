@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.79 2015/02/12 04:40:23 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.80 2015/02/12 10:05:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -585,10 +585,10 @@ void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);
 const char	*url_decode(char *);
+char		*url_encode(const char *);
 const char	*canonicalize_host(const char *, char *, size_t);
 const char	*canonicalize_path(const char *, char *, size_t);
 size_t		 path_info(char *);
-char		*escape_uri(const char *);
 char		*escape_html(const char *);
 void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
