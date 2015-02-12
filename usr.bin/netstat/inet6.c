@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.47 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.48 2015/02/12 01:49:02 claudio Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -66,7 +66,6 @@
 struct	socket sockb;
 
 char	*inet6name(struct in6_addr *);
-void	inet6print(struct in6_addr *, int, char *);
 
 static	char *ip6nh[] = {
 	"hop by hop",
@@ -1063,7 +1062,7 @@ div6_stats(char *name)
  */
 
 void
-inet6print(struct in6_addr *in6, int port, char *proto)
+inet6print(struct in6_addr *in6, int port, const char *proto)
 {
 
 #define GETSERVBYPORT6(port, proto, ret) do { \

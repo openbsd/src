@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.97 2015/02/06 03:22:00 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.98 2015/02/12 01:49:02 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ again:
 	kread((u_long)rn, &rnode, sizeof(rnode));
 	if (rnode.rn_b < 0) {
 		if (Aflag)
-			printf("%-16p ", hideroot ? 0 : rn);
+			printf("%-16p ", rn);
 		if (rnode.rn_flags & RNF_ROOT) {
 			if (Aflag)
 				printf("(root node)%s",
@@ -185,7 +185,7 @@ again:
 			goto again;
 	} else {
 		if (Aflag && do_rtent) {
-			printf("%-16p ", hideroot ? 0 : rn);
+			printf("%-16p ", rn);
 			p_rtnode();
 		}
 		rn = rnode.rn_r;
@@ -217,10 +217,8 @@ p_rtnode(void)
 	struct radix_mask *rm = rnode.rn_mklist;
 
 	if (rnode.rn_b < 0) {
-		snprintf(nbuf, sizeof nbuf, " => %p",
-		    hideroot ? 0 : rnode.rn_dupedkey);
-		printf("\t  (%p)%s", hideroot ? 0 : rnode.rn_p,
-		    rnode.rn_dupedkey ? nbuf : "");
+		snprintf(nbuf, sizeof nbuf, " => %p", rnode.rn_dupedkey);
+		printf("\t  (%p)%s", rnode.rn_p, rnode.rn_dupedkey ? nbuf : "");
 		if (rnode.rn_mask) {
 			printf(" mask ");
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_mask),
@@ -232,9 +230,7 @@ p_rtnode(void)
 	} else {
 		snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
 		printf("%6.6s (%p) %16p : %16p", nbuf,
-		    hideroot ? 0 : rnode.rn_p,
-		    hideroot ? 0 : rnode.rn_l,
-		    hideroot ? 0 : rnode.rn_r);
+		    rnode.rn_p, rnode.rn_l, rnode.rn_r);
 	}
 
 	putchar(' ');
@@ -243,15 +239,14 @@ p_rtnode(void)
 	while (rm) {
 		kread((u_long)rm, &rmask, sizeof(rmask));
 		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
-		printf("\n\tmk = %p {(%d),%s",
-		    hideroot ? 0 : rm,
-		    -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
+		printf("\n\tmk = %p {(%d),%s", rm, -1 - rmask.rm_b,
+		    rmask.rm_refs ? nbuf : " ");
 		p_rtflags(rmask.rm_flags);
 		printf(", ");
 		if (rmask.rm_flags & RNF_NORMAL) {
 			struct radix_node rnode_aux;
 
-			printf("leaf = %p ", hideroot ? 0 : rmask.rm_leaf);
+			printf("leaf = %p ", rmask.rm_leaf);
 			kread((u_long)rmask.rm_leaf, &rnode_aux, sizeof(rnode_aux));
 			p_sockaddr(kgetsa((struct sockaddr *)rnode_aux.rn_mask),
 			    0, 0, -1);

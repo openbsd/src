@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.67 2015/02/09 12:25:03 claudio Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.68 2015/02/12 01:49:02 claudio Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
 /* What is the max length of a pointer printed with %p (including 0x)? */
 #define PLEN	(LONG_BIT / 4 + 2)
 
+/* a bit of magic to print addresses as they should */
+#define	FAKE_PTR(p)	(PLEN - ((p) ? 0 : 2)), p, ((p) ? "" : "x0")
+
 int	Aflag;		/* show addresses of protocol control block */
 int	aflag;		/* show all sockets (including servers) */
 int	Bflag;		/* show TCP send and receive buffer sizes */
@@ -66,13 +69,19 @@ int	af;		/* address family */
 
 extern	char *__progname; /* program name, from crt0.o */
 
-extern int hideroot;
-
 int	kread(u_long addr, void *buf, int size);
 char	*plural(u_int64_t);
 char	*plurales(u_int64_t);
 
-void	protopr(u_long, char *, int, u_int, u_long);
+void	protopr(kvm_t *, u_long, u_int, int);
+
+struct kinfo_file;
+void	netdomainpr(struct kinfo_file *, int);
+void	unixdomainpr(struct kinfo_file *);
+
+void	socket_dump(u_long);
+void	unpcb_dump(u_long);
+
 void	tcp_stats(char *);
 void	udp_stats(char *);
 void	ip_stats(char *);
@@ -91,9 +100,6 @@ void	ipcomp_stats(char *);
 
 void	net80211_ifstats(char *);
 
-void	socket_dump(u_long);
-void	unpcb_dump(u_long);
-
 void	mbpr(void);
 
 void	hostpr(u_long, u_long);
@@ -104,8 +110,6 @@ void	pr_rthdr(int, int);
 void	pr_encaphdr(void);
 void	pr_family(int);
 
-struct in6_addr;
-struct sockaddr_in6;
 void	ip6_stats(char *);
 void	ip6_ifstats(char *);
 void	icmp6_stats(char *);
@@ -115,6 +119,10 @@ void	div6_stats(char *);
 void	rip6_stats(char *);
 void	mroute6pr(void);
 void	mrt6_stats(void);
+
+struct in6_addr;
+struct sockaddr_in6;
+void	inet6print(struct in6_addr *, int, const char *);
 char	*routename6(struct sockaddr_in6 *);
 char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
 
@@ -134,8 +142,6 @@ void	routepr(u_long, u_long, u_long, u_long, u_int);
 void	nsprotopr(u_long, char *);
 
 void	intpr(int, int);
-
-void	unixpr(kvm_t *, u_long);
 
 void	mroutepr(void);
 void	mrt_stats(void);

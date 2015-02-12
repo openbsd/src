@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.105 2015/02/09 12:25:03 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.106 2015/02/12 01:49:02 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -54,79 +54,58 @@
 #include "netstat.h"
 
 struct nlist nl[] = {
-#define N_TCBTABLE	0
-	{ "_tcbtable" },
-#define N_UDBTABLE	1
-	{ "_udbtable" },
-
-#define N_RTREE		7
+#define N_RTREE		0
 	{ "_rt_tables"},
-#define N_RTMASK	8
+#define N_RTMASK	1
 	{ "_mask_rnhead" },
-#define N_AF2RTAFIDX	9
+#define N_AF2RTAFIDX	2
 	{ "_af2rtafidx" },
-#define N_RTBLIDMAX	10
+#define N_RTBLIDMAX	3
 	{ "_rtbl_id_max" },
-
-#define N_RAWIPTABLE	11
-	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	12
-	{ "_rawin6pcbtable" },
-#define N_DIVBTABLE	13
-	{ "_divbtable" },
-#define N_DIVB6TABLE	14
-	{ "_divb6table" },
 
 	{ "" }
 };
 
 struct protox {
-	u_char	pr_index;		/* index into nlist of cb head */
-	void	(*pr_cblocks)(u_long, char *, int, u_int, u_long);
-					/* control blocks printing routine */
 	void	(*pr_stats)(char *);	/* statistics printing routine */
 	char	*pr_name;		/* well-known name */
+	int	pr_proto;		/* protocol number */
 } protox[] = {
-	{ N_TCBTABLE,	protopr,	tcp_stats,	"tcp" },
-	{ N_UDBTABLE,	protopr,	udp_stats,	"udp" },
-	{ N_RAWIPTABLE,	protopr,	ip_stats,	"ip" },
-	{ N_DIVBTABLE,	protopr,	div_stats,	"divert" },
-	{ -1,		NULL,		icmp_stats,	"icmp" },
-	{ -1,		NULL,		igmp_stats,	"igmp" },
-	{ -1,		NULL,		ah_stats,	"ah" },
-	{ -1,		NULL,		esp_stats,	"esp" },
-	{ -1,		NULL,		ipip_stats,	"ipencap" },
-	{ -1,		NULL,		etherip_stats,	"etherip" },
-	{ -1,		NULL,		ipcomp_stats,	"ipcomp" },
-	{ -1,		NULL,		carp_stats,	"carp" },
-	{ -1,		NULL,		pfsync_stats,	"pfsync" },
-	{ -1,		NULL,		pim_stats,	"pim" },
-	{ -1,		NULL,		pflow_stats,	"pflow" },
-	{ -1,		NULL,		NULL,		NULL }
+	{ ip_stats,	"ip",	IPPROTO_IPV4 },
+	{ icmp_stats,	"icmp", 0 },
+	{ igmp_stats,	"igmp", 0 },
+	{ ipip_stats,	"ipencap", 0 },
+	{ tcp_stats,	"tcp",	IPPROTO_TCP },
+	{ udp_stats,	"udp",	IPPROTO_UDP },
+	{ esp_stats,	"esp", 0 },
+	{ ah_stats,	"ah", 0 },
+	{ etherip_stats,"etherip", 0 },
+	{ ipcomp_stats,	"ipcomp", 0 },
+	{ carp_stats,	"carp", 0 },
+	{ pfsync_stats,	"pfsync", 0 },
+	{ div_stats,	"divert", IPPROTO_DIVERT },
+	{ pim_stats,	"pim", 0 },
+	{ pflow_stats,	"pflow", 0 },
+	{ NULL,		NULL, 0 }
 };
 
 struct protox ip6protox[] = {
-	{ N_TCBTABLE,	protopr,	NULL,		"tcp" },
-	{ N_UDBTABLE,	protopr,	NULL,		"udp" },
-	{ N_RAWIP6TABLE,protopr,	ip6_stats,	"ip6" },
-	{ N_DIVB6TABLE,	protopr,	div6_stats,	"divert6" },
-	{ -1,		NULL,		icmp6_stats,	"icmp6" },
-	{ -1,		NULL,		pim6_stats,	"pim6" },
-	{ -1,		NULL,		rip6_stats,	"rip6" },
-	{ -1,		NULL,		NULL,		NULL }
+	{ ip6_stats,	"ip6", IPPROTO_IPV6 },
+	{ div6_stats,	"divert6", IPPROTO_DIVERT },
+	{ icmp6_stats,	"icmp6", 0 },
+	{ pim6_stats,	"pim6", 0 },
+	{ rip6_stats,	"rip6", 0 },
+	{ NULL,		NULL, 0 }
 };
 
 struct protox *protoprotox[] = {
 	protox, ip6protox, NULL
 };
 
-static void printproto(struct protox *, char *, int, u_int, u_long);
 static void usage(void);
 static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
 u_int gettable(const char *);
-
-int hideroot;
 
 kvm_t *kvmd;
 
@@ -136,19 +115,16 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 	const char *errstr;
-	struct protoent *p;
 	struct protox *tp = NULL; /* for printing cblocks & stats */
 	int ch;
 	char *nlistf = NULL, *memf = NULL, *ep;
 	char buf[_POSIX2_LINE_MAX];
-	gid_t gid;
 	u_long pcbaddr = 0;
 	u_int tableid;
 	int Tflag = 0;
 	int repeatcount = 0;
+	int proto = 0;
 	int need_nlist;
-
-	hideroot = getuid();
 
 	af = AF_UNSPEC;
 	tableid = getrtable();
@@ -190,8 +166,6 @@ main(int argc, char *argv[])
 				af = AF_UNIX;
 			else if (strcmp(optarg, "mpls") == 0)
 				af = AF_MPLS;
-			else if (strcmp(optarg, "pflow") == 0)
-				af = PF_PFLOW;
 			else if (strcmp(optarg, "mask") == 0)
 				af = 0xff;
 			else {
@@ -289,17 +263,6 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-	/*
-	 * Show per-interface statistics which don't need access to
-	 * kernel memory (they're using IOCTLs)
-	 */
-	if (Wflag) {
-		if (interface == NULL)
-			usage();
-		net80211_ifstats(interface);
-		exit(0);
-	}
-
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
@@ -318,54 +281,72 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	need_nlist = !mflag && (pflag || nlistf != NULL || memf != NULL ||
-	    (!iflag && !sflag && !gflag && (rflag ? Aflag :
-	    (af != AF_UNIX || Pflag))));
-
 	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 * Dumping PCB info is also restricted.
+	 * Show per-interface statistics which don't need access to
+	 * kernel memory (they're using IOCTLs)
 	 */
-	gid = getgid();
-	if (nlistf != NULL || memf != NULL || Pflag)
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-
-	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY |
-	    (need_nlist ? 0 : KVM_NO_FILES), buf)) == NULL) {
-		fprintf(stderr, "%s: kvm_openfiles: %s\n", __progname, buf);
-		exit(1);
-	}
-
-	if (nlistf == NULL && memf == NULL && !Pflag)
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-
-	if (need_nlist && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
-		if (nlistf)
-			fprintf(stderr, "%s: %s: no namelist\n", __progname,
-			    nlistf);
-		else
-			fprintf(stderr, "%s: no namelist\n", __progname);
-		exit(1);
-	}
-	if (mflag) {
-		mbpr();
+	if (Wflag) {
+		if (interface == NULL)
+			usage();
+		net80211_ifstats(interface);
 		exit(0);
 	}
-	if (pflag) {
-		printproto(tp, tp->pr_name, af, tableid, pcbaddr);
+
+	if (mflag) {
+		mbpr();
 		exit(0);
 	}
 	if (iflag) {
 		intpr(interval, repeatcount);
 		exit(0);
 	}
-	if (rflag) {
-		if (sflag)
+	if (sflag) {
+		if (rflag) {
 			rt_stats();
-		else if (Aflag || nlistf != NULL || memf != NULL)
+		} else if (gflag) {
+			if (af == AF_INET || af == AF_UNSPEC)
+				mrt_stats();
+			if (af == AF_INET6 || af == AF_UNSPEC)
+				mrt6_stats();
+		} else if (pflag && tp->pr_name) {
+			(*tp->pr_stats)(tp->pr_name);
+		} else {
+			if (af == AF_INET || af == AF_UNSPEC)
+				for (tp = protox; tp->pr_name; tp++)
+					(*tp->pr_stats)(tp->pr_name);
+			if (af == AF_INET6 || af == AF_UNSPEC)
+				for (tp = ip6protox; tp->pr_name; tp++)
+					(*tp->pr_stats)(tp->pr_name);
+		}
+		exit(0);
+	}
+	if (gflag) {
+		if (af == AF_INET || af == AF_UNSPEC)
+			mroutepr();
+		if (af == AF_INET6 || af == AF_UNSPEC)
+			mroute6pr();
+		exit(0);
+	}
+
+	/*
+	 * The remaining code may need kvm so lets try to open it.
+	 * -r and -P are the only bits left that actually can use this.
+	 */
+	need_nlist = nlistf != NULL || memf != NULL || Pflag || (Aflag && rflag);
+
+	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY |
+	    (need_nlist ? 0 : KVM_NO_FILES), buf)) == NULL)
+		errx(1, "kvm_openfiles: %s", buf);
+
+	if (need_nlist && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
+		if (nlistf)
+			errx(1, "%s: no namelist", nlistf);
+		else
+			errx(1, "no namelist");
+	}
+
+	if (rflag) {
+		if (Aflag || nlistf != NULL || memf != NULL)
 			routepr(nl[N_RTREE].n_value, nl[N_RTMASK].n_value,
 			    nl[N_AF2RTAFIDX].n_value, nl[N_RTBLIDMAX].n_value,
 			    tableid);
@@ -373,67 +354,17 @@ main(int argc, char *argv[])
 			p_rttables(af, tableid);
 		exit(0);
 	}
-	if (gflag) {
-		if (sflag) {
-			if (af == AF_INET || af == AF_UNSPEC)
-				mrt_stats();
-			if (af == AF_INET6 || af == AF_UNSPEC)
-				mrt6_stats();
-		} else {
-			if (af == AF_INET || af == AF_UNSPEC)
-				mroutepr();
-			if (af == AF_INET6 || af == AF_UNSPEC)
-				mroute6pr();
-		}
-		exit(0);
-	}
-	if (af == AF_INET || af == AF_UNSPEC) {
-		setprotoent(1);
-		setservent(1);
-		/* ugh, this is O(MN) ... why do we do this? */
-		while ((p = getprotoent())) {
-			for (tp = protox; tp->pr_name; tp++)
-				if (strcmp(tp->pr_name, p->p_name) == 0)
-					break;
-			if (tp->pr_name == 0)
-				continue;
-			printproto(tp, p->p_name, AF_INET, tableid, pcbaddr);
-		}
-		endprotoent();
-	}
-	if (af == PF_PFLOW || af == AF_UNSPEC) {
-		tp = name2protox("pflow");
-		printproto(tp, tp->pr_name, af, tableid, pcbaddr);
-	}
-	if (af == AF_INET6 || af == AF_UNSPEC)
-		for (tp = ip6protox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name, AF_INET6, tableid,
-			    pcbaddr);
-	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
-		unixpr(kvmd, pcbaddr);
-	exit(0);
-}
 
-/*
- * Print out protocol statistics or control blocks (per sflag).
- * If the interface was not specifically requested, and the symbol
- * is not in the namelist, ignore this one.
- */
-static void
-printproto(struct protox *tp, char *name, int af, u_int tableid,
-    u_long pcbaddr)
-{
-	if (sflag) {
-		if (tp->pr_stats != NULL)
-			(*tp->pr_stats)(name);
-	} else {
-		u_char i = tp->pr_index;
-		if (tp->pr_cblocks != NULL &&
-		    i < sizeof(nl) / sizeof(nl[0]) &&
-		    (nl[i].n_value || af != AF_UNSPEC))
-			(*tp->pr_cblocks)(nl[i].n_value, name, af, tableid,
-			    pcbaddr);
+	if (pflag) {
+		if (tp->pr_proto == 0)
+			errx(1, "no protocol handler for protocol %s",
+			    tp->pr_name);
+		else
+			proto = tp->pr_proto;
 	}
+
+	protopr(kvmd, pcbaddr, tableid, proto);
+	exit(0);
 }
 
 /*

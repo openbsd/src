@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.139 2015/02/08 04:40:50 yasuoka Exp $	*/
+/*	$OpenBSD: inet.c,v 1.140 2015/02/12 01:49:02 claudio Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,10 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#define _KERNEL
+#include <sys/ucred.h>
+#include <sys/file.h>
+#undef _KERNEL
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -87,15 +91,117 @@ struct	tcpcb tcpcb;
 struct	socket sockb;
 
 char	*inetname(struct in_addr *);
-void	inetprint(struct in_addr *, in_port_t, char *, int);
+void	inetprint(struct in_addr *, in_port_t, const char *, int);
 char	*inet6name(struct in6_addr *);
-void	inet6print(struct in6_addr *, int, char *);
 void	sosplice_dump(u_long);
 void	sockbuf_dump(struct sockbuf *, const char *);
 void	protosw_dump(u_long, u_long);
 void	domain_dump(u_long, u_long, short);
 void	inpcb_dump(u_long, short, int);
 void	tcpcb_dump(u_long);
+
+int type_map[] = { -1, 2, 3, 1, 4, 5 };
+
+int
+kf_comp(const void *a, const void *b)
+{
+	const struct kinfo_file *ka = a, *kb = b;
+
+	if (ka->so_family != kb->so_family) {
+		/* AF_INET < AF_INET6 < AF_LOCAL */
+		if (ka->so_family == AF_INET)
+			return (-1);
+		if (ka->so_family == AF_LOCAL)
+			return (1);
+		if (kb->so_family == AF_LOCAL)
+			return (-1);
+		return (1);
+	}
+	if (ka->so_family == AF_LOCAL) {
+		if (type_map[ka->so_type] < type_map[kb->so_type])
+			return (-1);
+		if (type_map[ka->so_type] > type_map[kb->so_type])
+			return (1);
+	} else if (ka->so_family == AF_INET || ka->so_family == AF_INET6) {
+		if (ka->so_protocol < kb->so_protocol)
+			return (-1);
+		if (ka->so_protocol > kb->so_protocol)
+			return (1);
+		if (ka->so_type == SOCK_DGRAM || ka->so_type == SOCK_STREAM) {
+			/* order sockets by remote port desc */
+			if (ka->inp_fport > kb->inp_fport)
+				return (-1);
+			if (ka->inp_fport < kb->inp_fport)
+				return (1);
+		} else if (ka->so_type == SOCK_RAW) {
+			if (ka->inp_proto > kb->inp_proto)
+				return (-1);
+			if (ka->inp_proto < kb->inp_proto)
+				return (1);
+		}
+	}
+	return (0);
+}
+
+void
+protopr(kvm_t *kvmd, u_long pcbaddr, u_int tableid, int proto)
+{
+	struct kinfo_file *kf;
+	int i, fcnt;
+
+	kf = kvm_getfiles(kvmd, KERN_FILE_BYFILE, DTYPE_SOCKET,
+	    sizeof(*kf), &fcnt);
+	if (kf == NULL) {
+		printf("Out of memory (file table).\n");
+		return;
+	}
+	
+	/* sort sockets by AF and type */
+	qsort(kf, fcnt, sizeof(*kf), kf_comp);
+
+	for (i = 0; i < fcnt; i++) {
+		if (Pflag) {
+			switch (kf[i].so_family) {
+			case AF_INET:
+			case AF_INET6:
+				/*
+				 * XXX at the moment fstat returns the pointer
+				 * to the so_pcb or for tcp sockets the tcpcb
+				 * pointer (inp_ppcb) so check both.
+				 */
+				if (pcbaddr == kf[i].so_pcb) {
+					inpcb_dump(pcbaddr, kf[i].so_protocol,
+					    kf[i].so_family);
+					return;
+				} else if (pcbaddr == kf[i].inp_ppcb &&
+				    kf[i].so_protocol == IPPROTO_TCP) {
+					tcpcb_dump(pcbaddr);
+					return;
+				}
+				break;
+			case AF_UNIX:
+				if (pcbaddr == kf[i].so_pcb) {
+					unpcb_dump(pcbaddr);
+					return;
+				}
+				break;
+			}
+			continue;
+		}
+		if (kf[i].so_family == AF_LOCAL && (kf[i].so_pcb != 0 ||
+		    kf[i].unp_path[0] != '\0'))
+			if ((af == AF_LOCAL || af == AF_UNSPEC) && !proto)
+				unixdomainpr(&kf[i]);
+		if (kf[i].so_family == AF_INET && kf[i].so_pcb != 0 &&
+		    kf[i].inp_rtableid == tableid)
+			if (af == AF_INET || af == AF_UNSPEC)
+				netdomainpr(&kf[i], proto);
+		if (kf[i].so_family == AF_INET6 && kf[i].so_pcb != 0 &&
+		    kf[i].inp_rtableid == tableid)
+			if (af == AF_INET6 || af == AF_UNSPEC)
+				netdomainpr(&kf[i], proto);
+	}
+}
 
 /*
  * Print a summary of connections related to an Internet
@@ -104,144 +210,136 @@ void	tcpcb_dump(u_long);
  * -a (all) flag is specified.
  */
 void
-protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
+netdomainpr(struct kinfo_file *kf, int proto)
 {
-	struct inpcbtable table;
-	struct inpcb *prev, *next;
-	struct inpcb inpcb, prevpcb;
-	int istcp, israw, isany;
+	static int af = 0, type = 0;
+	struct in_addr laddr, faddr;
+	struct in6_addr laddr6, faddr6;
+	const char *name, *name6;
 	int addrlen = 22;
-	int first = 1;
-	char *name0;
-	char namebuf[20];
+	int isany = 0;
+	int istcp = 0;
+	int isip6 = 0;
 
-	name0 = name;
-	if (off == 0)
-		return;
-	istcp = strcmp(name, "tcp") == 0;
-	israw = strncmp(name, "ip", 2) == 0;
-	kread(off, &table, sizeof table);
-	prev = NULL;
-	next = TAILQ_FIRST(&table.inpt_queue);
+	/* XXX should fix kinfo_file instead but not now */
+	if (kf->so_pcb == -1)
+		kf->so_pcb = 0;
 
-	while (next != NULL) {
-		kread((u_long)next, &inpcb, sizeof inpcb);
-		if (prev != NULL) {
-			kread((u_long)prev, &prevpcb, sizeof prevpcb);
-			if (TAILQ_NEXT(&prevpcb, inp_queue) != next) {
-				printf("PCB list changed\n");
-				break;
-			}
-		}
-		prev = next;
-		next = TAILQ_NEXT(&inpcb, inp_queue);
-
-		switch (af) {
-		case AF_INET:
-			if ((inpcb.inp_flags & INP_IPV6) != 0)
-				continue;
-			isany = inet_lnaof(inpcb.inp_faddr) == INADDR_ANY;
-			break;
-		case AF_INET6:
-			if ((inpcb.inp_flags & INP_IPV6) == 0)
-				continue;
-			isany = IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6);
-			break;
-		default:
-			isany = 0;
-			break;
-		}
-
-		if (Pflag) {
-			if (istcp && pcbaddr == (u_long)inpcb.inp_ppcb) {
-				if (vflag)
-					socket_dump((u_long)inpcb.inp_socket);
-				else
-					tcpcb_dump(pcbaddr);
-			} else if (pcbaddr == (u_long)prev) {
-				if (vflag)
-					socket_dump((u_long)inpcb.inp_socket);
-				else
-					inpcb_dump(pcbaddr, 0, af);
-			}
-			continue;
-		}
-
-		if (inpcb.inp_rtableid != tableid)
-			continue;
-
-		kread((u_long)inpcb.inp_socket, &sockb, sizeof (sockb));
-		if (istcp) {
-			kread((u_long)inpcb.inp_ppcb, &tcpcb, sizeof (tcpcb));
-			if (!aflag && tcpcb.t_state <= TCPS_LISTEN)
-				continue;
-		} else if (!aflag && isany)
-			continue;
-		if (first) {
-			printf("Active Internet connections");
-			if (aflag)
-				printf(" (including servers)");
-			putchar('\n');
-			if (Aflag) {
-				addrlen = 18;
-				printf("%-*.*s ", PLEN, PLEN, "PCB");
-			}
-			printf("%-7.7s %-6.6s %-6.6s ",
-			    "Proto", "Recv-Q", "Send-Q");
-			if (Bflag && istcp)
-				printf("%-6.6s %-6.6s %-6.6s ",
-				    "Recv-W", "Send-W", "Cgst-W");
-			printf(" %-*.*s %-*.*s %s\n",
-			    addrlen, addrlen, "Local Address",
-			    addrlen, addrlen, "Foreign Address", "(state)");
-			first = 0;
-		}
-		if (Aflag) {
-			if (istcp)
-				printf("%*p ", PLEN, hideroot ? 0 : inpcb.inp_ppcb);
-			else
-				printf("%*p ", PLEN, hideroot ? 0 : prev);
-		}
-		if (inpcb.inp_flags & INP_IPV6 && !israw) {
-			strlcpy(namebuf, name0, sizeof namebuf);
-			strlcat(namebuf, "6", sizeof namebuf);
-			name = namebuf;
-		} else
-			name = name0;
-		printf("%-7.7s %6lu %6lu ",
-		    name, sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc);
-		if (Bflag && istcp)
-			printf("%6lu %6lu %6lu ", tcpcb.rcv_wnd, tcpcb.snd_wnd,
-			    (tcpcb.t_state == TCPS_ESTABLISHED) ?
-			    tcpcb.snd_cwnd : 0);
-
-		if (inpcb.inp_flags & INP_IPV6) {
-			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
-			    name);
-			inet6print(&inpcb.inp_faddr6, (int)inpcb.inp_fport,
-			    name);
-		} else {
-			inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport,
-			    name, 1);
-			inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport,
-			    name, 0);
-		}
-		if (istcp) {
-			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
-				printf(" %d", tcpcb.t_state);
-			else
-				printf(" %s", tcpstates[tcpcb.t_state]);
-		} else if (israw) {
-			u_int8_t proto;
-
-			if (inpcb.inp_flags & INP_IPV6)
-				proto = inpcb.inp_ipv6.ip6_nxt;
-			else
-				proto = inpcb.inp_ip.ip_p;
-			printf(" %u", proto);
-		}
-		putchar('\n');
+	switch (proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+	case IPPROTO_DIVERT:
+		if (kf->so_protocol != proto)
+			return;
+		break;
+	case IPPROTO_IPV4:
+		if (kf->so_type != SOCK_RAW || kf->so_family != AF_INET)
+			return;
+		break;
+	case IPPROTO_IPV6:
+		if (kf->so_type != SOCK_RAW || kf->so_family != AF_INET6)
+			return;
+		break;
 	}
+
+	/* make in_addr6 access a bit easier */
+#define s6_addr32 __u6_addr.__u6_addr32
+	laddr.s_addr = kf->inp_laddru[0];
+	laddr6.s6_addr32[0] = kf->inp_laddru[0];
+	laddr6.s6_addr32[1] = kf->inp_laddru[1];
+	laddr6.s6_addr32[2] = kf->inp_laddru[2];
+	laddr6.s6_addr32[3] = kf->inp_laddru[3];
+
+	faddr.s_addr = kf->inp_faddru[0];
+	faddr6.s6_addr32[0] = kf->inp_faddru[0];
+	faddr6.s6_addr32[1] = kf->inp_faddru[1];
+	faddr6.s6_addr32[2] = kf->inp_faddru[2];
+	faddr6.s6_addr32[3] = kf->inp_faddru[3];
+#undef s6_addr32
+
+	switch (kf->so_family) {
+	case AF_INET:
+		isany = faddr.s_addr == INADDR_ANY;
+		break;
+	case AF_INET6:
+		isany = IN6_IS_ADDR_UNSPECIFIED(&faddr6);
+		isip6 = 1;
+		break;
+	}
+
+	switch (kf->so_protocol) {
+	case IPPROTO_TCP:
+		name = "tcp";
+		name6 = "tcp6";
+		istcp = 1;
+		break;
+	case IPPROTO_UDP:
+		name = "udp";
+		name6 = "udp6";
+		break;
+	case IPPROTO_DIVERT:
+		name = "divert";
+		name6 = "divert6";
+		break;
+	default:
+		name = "ip";
+		name6 = "ip6";
+		break;
+	}
+
+	/* filter listening sockets out unless -a is set */
+	if (!aflag && istcp && kf->t_state <= TCPS_LISTEN)
+		return;
+	else if (!aflag && isany)
+		return;
+
+	if (af != kf->so_family || type != kf->so_type) {
+		af = kf->so_family;
+		type = kf->so_type;
+		printf("Active Internet connections");
+		if (aflag)
+			printf(" (including servers)");
+		putchar('\n');
+		if (Aflag) {
+			addrlen = 18;
+			printf("%-*.*s ", PLEN, PLEN, "PCB");
+		}
+		printf("%-7.7s %-6.6s %-6.6s ",
+		    "Proto", "Recv-Q", "Send-Q");
+		if (Bflag && istcp)
+			printf("%-6.6s %-6.6s %-6.6s ",
+			    "Recv-W", "Send-W", "Cgst-W");
+		printf(" %-*.*s %-*.*s %s\n",
+		    addrlen, addrlen, "Local Address",
+		    addrlen, addrlen, "Foreign Address", "(state)");
+	}
+
+	if (Aflag)
+		printf("%#*llx%s ", FAKE_PTR(kf->so_pcb));
+
+	printf("%-7.7s %6llu %6llu ",
+	    isip6 ? name6: name, kf->so_rcv_cc, kf->so_snd_cc);
+	if (Bflag && istcp)
+		printf("%6llu %6llu %6llu ", kf->t_rcv_wnd, kf->t_snd_wnd,
+		    (kf->t_state == TCPS_ESTABLISHED) ?
+		    kf->t_snd_cwnd : 0);
+
+	if (isip6) {
+		inet6print(&laddr6, kf->inp_lport, name);
+		inet6print(&faddr6, kf->inp_fport, name);
+	} else {
+		inetprint(&laddr, kf->inp_lport, name, 1);
+		inetprint(&faddr, kf->inp_fport, name, 0);
+	}
+	if (istcp) {
+		if (kf->t_state < 0 || kf->t_state >= TCP_NSTATES)
+			printf(" %d", kf->t_state);
+		else
+			printf(" %s", tcpstates[kf->t_state]);
+	} else if (kf->so_type == SOCK_RAW) {
+		printf(" %u", kf->inp_proto);
+	}
+	putchar('\n');
 }
 
 /*
@@ -767,7 +865,7 @@ getrpcportnam(in_port_t port, int proto)
  * If the nflag was specified, use numbers instead of names.
  */
 void
-inetprint(struct in_addr *in, in_port_t port, char *proto, int local)
+inetprint(struct in_addr *in, in_port_t port, const char *proto, int local)
 {
 	struct servent *sp = 0;
 	char line[80], *cp, *nam;
@@ -1167,8 +1265,8 @@ socket_dump(u_long off)
 	kread(off, &so, sizeof(so));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, so.v);
-#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : so.v);
-	printf("socket %#lx\n ", hideroot ? 0 : off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, so.v);
+	printf("socket %#lx\n ", off);
 	p("%#.4x", so_type, "\n ");
 	p("%#.4x", so_options, "\n ");
 	p("%d", so_linger, "\n ");
@@ -1197,8 +1295,6 @@ socket_dump(u_long off)
 #undef	p
 #undef	pp
 
-	if (!vflag)
-		return;
 	protosw_dump((u_long)so.so_proto, (u_long)so.so_pcb);
 }
 
@@ -1216,7 +1312,7 @@ sosplice_dump(u_long off)
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, ssp.v);
 #define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) ssp.v);
-#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : ssp.v);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, ssp.v);
 	pp("%p", ssp_socket, ", ");
 	pp("%p", ssp_soback, "\n ");
 	p("%lld", ssp_len, ", ");
@@ -1264,8 +1360,8 @@ protosw_dump(u_long off, u_long pcb)
 	kread(off, &proto, sizeof(proto));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, proto.v);
-#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : proto.v);
-	printf("protosw %#lx\n ", hideroot ? 0 : off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, proto.v);
+	printf("protosw %#lx\n ", off);
 	p("%#.4x", pr_type, "\n ");
 	pp("%p", pr_domain, "\n ");
 	p("%d", pr_protocol, "\n ");
@@ -1291,20 +1387,10 @@ domain_dump(u_long off, u_long pcb, short protocol)
 	kread((u_long)dom.dom_name, name, sizeof(name));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, dom.v);
-	printf("domain %#lx\n ", hideroot ? 0 : off);
+	printf("domain %#lx\n ", off);
 	p("%d", dom_family, "\n ");
 	printf("dom_name %.*s\n", (int)sizeof(name), name);
 #undef	p
-
-	switch (dom.dom_family) {
-	case AF_INET:
-	case AF_INET6:
-		inpcb_dump(pcb, protocol, dom.dom_family);
-		break;
-	case AF_UNIX:
-		unpcb_dump(pcb);
-		break;
-	}
 }
 
 /*
@@ -1319,6 +1405,10 @@ inpcb_dump(u_long off, short protocol, int af)
 	if (off == 0)
 		return;
 	kread(off, &inp, sizeof(inp));
+
+	if (vflag)
+		socket_dump((u_long)inp.inp_socket);
+
 	switch (af) {
 	case AF_INET:
 		inet_ntop(af, &inp.inp_faddr, faddr, sizeof(faddr));
@@ -1333,8 +1423,8 @@ inpcb_dump(u_long off, short protocol, int af)
 	}
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, inp.v);
-#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : inp.v);
-	printf("inpcb %#lx\n ", hideroot ? 0 : off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, inp.v);
+	printf("inpcb %#lx\n ", off);
 	pp("%p", inp_table, "\n ");
 	printf("inp_faddru %s, inp_laddru %s\n ", faddr, laddr);
 	HTONS(inp.inp_fport);
@@ -1385,8 +1475,8 @@ tcpcb_dump(u_long off)
 	kread(off, (char *)&tcpcb, sizeof (tcpcb));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, tcpcb.v);
-#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : tcpcb.v);
-	printf("tcpcb %#lx\n ", hideroot ? 0 : off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, tcpcb.v);
+	printf("tcpcb %#lx\n ", off);
 	pp("%p", t_inpcb, "\n ");
 	p("%d", t_state, "");
 	if (tcpcb.t_state >= 0 && tcpcb.t_state < TCP_NSTATES)

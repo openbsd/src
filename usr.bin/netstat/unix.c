@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.25 2015/01/20 18:26:57 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.26 2015/02/12 01:49:02 claudio Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -53,40 +53,17 @@
 #include <kvm.h>
 #include "netstat.h"
 
-static	void unixdomainpr(const struct kinfo_file *, u_long);
-
-void
-unixpr(kvm_t *kvmd, u_long pcbaddr)
-{
-	struct kinfo_file *kf;
-	int i, fcnt;
-
-	kf = kvm_getfiles(kvmd, KERN_FILE_BYFILE, 0, sizeof(*kf), &fcnt);
-	if (kf == NULL) {
-		printf("Out of memory (file table).\n");
-		return;
-	}
-	for (i = 0; i < fcnt; i++) {
-		if (kf[i].f_count != 0 && kf[i].f_type == DTYPE_SOCKET &&
-		    kf[i].so_family == AF_LOCAL && (kf[i].so_pcb != 0 ||
-		    kf[i].unp_path[0] != '\0'))
-			unixdomainpr(&kf[i], pcbaddr);
-	}
-}
-
 static	const char *socktype[] =
     { "#0", "stream", "dgram", "raw", "rdm", "seqpacket" };
 
-static void
-unixdomainpr(const struct kinfo_file *kf, u_long pcbaddr)
+void
+unixdomainpr(struct kinfo_file *kf)
 {
 	static int first = 1;
 
-	if (Pflag) {
-		if (pcbaddr == kf->f_data)
-			socket_dump(pcbaddr);
-		return;
-	}
+	/* XXX should fix kinfo_file instead but not now */
+	if (kf->so_pcb == -1)
+		kf->so_pcb = 0;
 
 	if (first) {
 		printf("Active UNIX domain sockets\n");
@@ -97,9 +74,8 @@ unixdomainpr(const struct kinfo_file *kf, u_long pcbaddr)
 		first = 0;
 	}
 
-#define	FAKE_PTR(p)	(PLEN - ((p) ? 0 : 2)), p, ((p) ? "" : "x0")
 	printf("%#*llx%s %-6.6s %6llu %6llu %#*llx%s %#*llx%s %#*llx%s %#*llx%s",
-	    FAKE_PTR(kf->f_data), socktype[kf->so_type],
+	    FAKE_PTR(kf->so_pcb), socktype[kf->so_type],
 	    kf->so_rcv_cc, kf->so_snd_cc,
 	    FAKE_PTR(kf->v_un),
 	    FAKE_PTR(kf->unp_conn),
@@ -122,11 +98,14 @@ unpcb_dump(u_long off)
 		return;
 	kread(off, &unp, sizeof(unp));
 
+	if (vflag)
+		socket_dump((u_long)unp.unp_socket);
+
 #define	p(fmt, v, sep) printf(#v " " fmt sep, unp.v);
 #define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) unp.v);
 #define	pull(fmt, v, sep) printf(#v " " fmt sep, (unsigned long long) unp.v);
-#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : unp.v);
-	printf("unpcb %#lx\n ", hideroot ? 0 : off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, unp.v);
+	printf("unpcb %#lx\n ", off);
 	pp("%p", unp_socket, "\n ");
 	pp("%p", unp_vnode, ", ");
 	pull("%llu", unp_ino, "\n ");

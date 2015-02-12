@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.74 2015/02/08 04:29:53 claudio Exp $
+.\"	$OpenBSD: netstat.1,v 1.75 2015/02/12 01:49:02 claudio Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: February 8 2015 $
+.Dd $Mdocdate: February 12 2015 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -110,6 +110,10 @@ show the address of any protocol control blocks associated with sockets; used
 for debugging, e.g. with the
 .Fl P
 flag.
+When used with the
+.Fl -r
+flag it shows the internal pointers of the routing table.
+Only the super-user can use this option.
 .It Fl a
 With the default display,
 show the state of all sockets; normally sockets used by
@@ -155,7 +159,6 @@ The following address families are recognized:
 .It "inet6" Ta Dv "AF_INET6" Ta "IP Version 6"
 .It "local" Ta Dv "AF_LOCAL" Ta "Local to Host (i.e., pipes)"
 .It "mpls" Ta Dv "AF_MPLS" Ta "MPLS"
-.It "pflow" Ta Dv "PF_FLOW" Ta "pflow data export"
 .It "unix" Ta Dv "AF_UNIX" Ta "Local to Host (i.e., pipes)"
 .El
 .It Fl h
@@ -219,7 +222,7 @@ interprets addresses and attempts to display them
 symbolically).
 This option may be used with any of the display formats.
 .It Fl P Ar pcbaddr
-Display the contents of the socket or protocol control block (PCB)
+Display the contents of the protocol control block (PCB)
 located at the kernel virtual address
 .Ar pcbaddr .
 PCB addresses can be obtained using the
@@ -228,6 +231,7 @@ flag.
 When used with the
 .Fl v
 option, also print socket, domain and protocol specific structures.
+Only the super-user can use this option.
 .It Fl p Ar protocol
 Restrict the output to
 .Ar protocol ,
