@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2015/02/10 11:46:39 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.60 2015/02/12 01:54:57 reyk Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -251,11 +251,10 @@ main		: LISTEN ON address listen_opts	{
 		}
 		| CONSTRAINT FROM url		{
 			struct constraint	*p;
-			struct ntp_addr		*h, *next;
+			struct ntp_addr		*h;
 
 			p = new_constraint();
-			for (h = $3->a; h != NULL; h = next) {
-				next = h->next;
+			if ((h = $3->a) != NULL) {
 				if (h->ss.ss_family != AF_INET &&
 				    h->ss.ss_family != AF_INET6) {
 					yyerror("IPv4 or IPv6 address "
@@ -267,8 +266,8 @@ main		: LISTEN ON address listen_opts	{
 					free($3);
 					YYERROR;
 				}
-				h->next = p->addr;
 				p->addr = h;
+				host_dns_free(h->next);
 			}
 
 			p->addr_head.a = p->addr;
@@ -331,16 +330,6 @@ url		: STRING		{
 				host(hname, &$$->a);
 				if (($$->name = strdup(hname)) == NULL)
 					fatal("strdup");
-			}
-
-			if ($$->a == NULL &&
-			    (host_dns($$->name, &$$->a) == -1 ||
-			    $$->a == NULL)) {
-				yyerror("could not resolve \"%s\"", $$->name);
-				free($$->name);
-				free($$->path);
-				free($$);
-				YYERROR;
 			}
 		}
 		;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.128 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.129 2015/02/12 01:54:57 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@ struct ntpd_conf	*conf;
 struct ctl_conns	 ctl_conns;
 u_int			 peer_cnt;
 u_int			 sensors_cnt;
+u_int			 constraint_cnt;
 time_t			 lastreport;
 
 void	ntp_sighdlr(int);
@@ -84,7 +85,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	int			 ctls, boundaries;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
-	u_int			 ctl_cnt, constraint_cnt;
+	u_int			 ctl_cnt;
 	pid_t			 pid;
 	struct pollfd		*pfd = NULL;
 	struct servent		*se;
@@ -582,6 +583,10 @@ ntp_dispatch_imsg_dns(void)
 			else
 				client_addr_init(peer);
 			break;
+		case IMSG_CONSTRAINT_DNS:
+			constraint_dns(imsg.hdr.peerid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
 		default:
 			break;
 		}
@@ -762,12 +767,12 @@ priv_settime(double offset)
 }
 
 void
-priv_host_dns(char *name, u_int32_t peerid)
+priv_dns(int cmd, char *name, u_int32_t peerid)
 {
 	u_int16_t	dlen;
 
 	dlen = strlen(name) + 1;
-	imsg_compose(ibuf_dns, IMSG_HOST_DNS, peerid, 0, -1, name, dlen);
+	imsg_compose(ibuf_dns, cmd, peerid, 0, -1, name, dlen);
 }
 
 void

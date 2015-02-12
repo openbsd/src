@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.3 2015/02/10 23:52:41 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.4 2015/02/12 01:54:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,8 @@
 
 int	 constraint_addr_init(struct constraint *);
 struct constraint *
+	 constraint_byid(u_int32_t);
+struct constraint *
 	 constraint_byfd(int);
 struct constraint *
 	 constraint_bypid(pid_t);
@@ -51,6 +53,8 @@ int	 constraint_close(int);
 void	 constraint_update(void);
 void	 constraint_reset(void);
 int	 constraint_cmp(const void *, const void *);
+void	 constraint_add(struct constraint *);
+void	 constraint_remove(struct constraint *);
 
 struct httpsdate *
 	 httpsdate_init(const char *, const char *, const char *,
@@ -62,6 +66,8 @@ void	*httpsdate_query(const char *, const char *, const char *,
 	    struct timeval *, struct timeval *);
 
 char	*tls_readline(struct tls *, size_t *, size_t *, struct timeval *);
+
+extern u_int constraint_cnt;
 
 struct httpsdate {
 	char			*tls_host;
@@ -91,31 +97,37 @@ constraint_addr_init(struct constraint *cstr)
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
 	struct ntp_addr		*h;
-	int			 cnt = 0;
 
-	for (h = cstr->addr; h != NULL; h = h->next) {
-		switch (h->ss.ss_family) {
-		case AF_INET:
-			sa_in = (struct sockaddr_in *)&h->ss;
-			if (ntohs(sa_in->sin_port) == 0)
-				sa_in->sin_port = htons(443);
-			cstr->state = STATE_DNS_DONE;
-			break;
-		case AF_INET6:
-			sa_in6 = (struct sockaddr_in6 *)&h->ss;
-			if (ntohs(sa_in6->sin6_port) == 0)
-				sa_in6->sin6_port = htons(443);
-			cstr->state = STATE_DNS_DONE;
-			break;
-		default:
-			/* XXX king bula sez it? */
-			fatalx("wrong AF in constraint_addr_init");
-			/* NOTREACHED */
-		}
-		cnt++;
+	if (cstr->state == STATE_DNS_INPROGRESS)
+		return (0);
+
+	if (cstr->addr_head.a == NULL) {
+		priv_dns(IMSG_CONSTRAINT_DNS, cstr->addr_head.name, cstr->id);
+		cstr->state = STATE_DNS_INPROGRESS;
+		return (0);
 	}
 
-	return (cnt);
+	h = cstr->addr;
+	switch (h->ss.ss_family) {
+	case AF_INET:
+		sa_in = (struct sockaddr_in *)&h->ss;
+		if (ntohs(sa_in->sin_port) == 0)
+			sa_in->sin_port = htons(443);
+		cstr->state = STATE_DNS_DONE;
+		break;
+	case AF_INET6:
+		sa_in6 = (struct sockaddr_in6 *)&h->ss;
+		if (ntohs(sa_in6->sin6_port) == 0)
+			sa_in6->sin6_port = htons(443);
+		cstr->state = STATE_DNS_DONE;
+		break;
+	default:
+		/* XXX king bula sez it? */
+		fatalx("wrong AF in constraint_addr_init");
+		/* NOTREACHED */
+	}
+
+	return (1);
 }
 
 int
@@ -134,6 +146,10 @@ constraint_query(struct constraint *cstr)
 	case STATE_DNS_DONE:
 		/* Proceed and query the time */
 		break;
+	case STATE_DNS_TEMPFAIL:
+		/* Retry resolving the address */
+		constraint_init(cstr);		
+		return (-1);
 	case STATE_QUERY_SENT:
 		if (cstr->last + CONSTRAINT_SCAN_TIMEOUT > now) {
 			/* The caller should expect a reply */
@@ -278,6 +294,19 @@ constraint_check_child(void)
 }
 
 struct constraint *
+constraint_byid(u_int32_t id)
+{
+	struct constraint	*cstr;
+
+	TAILQ_FOREACH(cstr, &conf->constraints, entry) {
+		if (cstr->id == id)
+			return (cstr);
+	}
+
+	return (NULL);
+}
+
+struct constraint *
 constraint_byfd(int fd)
 {
 	struct constraint	*cstr;
@@ -324,6 +353,23 @@ constraint_close(int fd)
 	cstr->last = getmonotime();
 
 	return (1);
+}
+
+void
+constraint_add(struct constraint *cstr)
+{
+	TAILQ_INSERT_TAIL(&conf->constraints, cstr, entry);
+	constraint_cnt += constraint_init(cstr);
+}
+
+void
+constraint_remove(struct constraint *cstr)
+{
+	TAILQ_REMOVE(&conf->constraints, cstr, entry);
+	free(cstr->addr_head.name);
+	free(cstr->addr_head.path);
+	free(cstr);
+	constraint_cnt--;
 }
 
 int
@@ -381,6 +427,54 @@ constraint_dispatch_msg(struct pollfd *pfd)
 	}
 
 	return (0);
+}
+
+void
+constraint_dns(u_int32_t id, u_int8_t *data, size_t len)
+{
+	struct constraint	*cstr, *ncstr;
+	u_int8_t		*p;
+	struct ntp_addr		*h;
+
+	if ((cstr = constraint_byid(id)) == NULL) {
+		log_warnx("IMSG_CONSTRAINT_DNS with invalid constraint id");
+		return;
+	}
+	if (cstr->addr != NULL) {
+		log_warnx("IMSG_CONSTRAINT_DNS but addr != NULL!");
+		return;
+	}
+	if (len == 0) {
+		log_debug("%s FAILED", __func__);
+		cstr->state = STATE_DNS_TEMPFAIL;
+		return;
+	}
+
+	if ((len % sizeof(struct sockaddr_storage)) != 0)
+		fatalx("IMSG_CONSTRAINT_DNS len");
+
+	p = data;
+	do {
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal("calloc ntp_addr");
+		memcpy(&h->ss, p, sizeof(h->ss));
+		p += sizeof(h->ss);
+		len -= sizeof(h->ss);
+
+		ncstr = new_constraint();
+		ncstr->addr = h;
+		ncstr->addr_head.a = h;
+		ncstr->addr_head.name = strdup(cstr->addr_head.name);
+		ncstr->addr_head.path = strdup(cstr->addr_head.path);
+		if (ncstr->addr_head.name == NULL ||
+		    ncstr->addr_head.path == NULL)
+			fatal("calloc name");
+		ncstr->addr_head.pool = cstr->addr_head.pool;
+
+		constraint_add(ncstr);
+	} while (len && cstr->addr_head.pool);
+
+	constraint_remove(cstr);
 }
 
 int

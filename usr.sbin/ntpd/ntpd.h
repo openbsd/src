@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.118 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.119 2015/02/12 01:54:57 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -280,6 +280,7 @@ enum imsg_type {
 	IMSG_SETTIME,
 	IMSG_HOST_DNS,
 	IMSG_CONSTRAINT,
+	IMSG_CONSTRAINT_DNS,
 	IMSG_CTL_SHOW_STATUS,
 	IMSG_CTL_SHOW_PEERS,
 	IMSG_CTL_SHOW_PEERS_END,
@@ -302,7 +303,7 @@ enum ctl_actions {
 pid_t	 ntp_main(int[2], int, struct ntpd_conf *, struct passwd *);
 int	 priv_adjtime(void);
 void	 priv_settime(double);
-void	 priv_host_dns(char *, u_int32_t);
+void	 priv_dns(int, char *, u_int32_t);
 int	 offset_compare(const void *, const void *);
 void	 update_scale(double);
 time_t	 scale_interval(time_t);
@@ -345,6 +346,7 @@ int	 constraint_query(struct constraint *);
 int	 constraint_dispatch_msg(struct pollfd *);
 void	 constraint_check_child(void);
 int	 constraint_check(double);
+void	 constraint_dns(u_int32_t, u_int8_t *, size_t);
 
 /* util.c */
 double			 gettime_corrected(void);

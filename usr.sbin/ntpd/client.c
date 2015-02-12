@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.99 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: client.c,v 1.100 2015/02/12 01:54:57 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,7 +107,7 @@ client_nextaddr(struct ntp_peer *p)
 		return (-1);
 
 	if (p->addr_head.a == NULL) {
-		priv_host_dns(p->addr_head.name, p->id);
+		priv_dns(IMSG_HOST_DNS, p->addr_head.name, p->id);
 		p->state = STATE_DNS_INPROGRESS;
 		return (-1);
 	}
