@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.10 2015/02/12 06:46:23 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.11 2015/02/12 07:51:51 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -63,11 +63,6 @@ typedef int irqreturn_t;
 #define	u64	uint64_t
 
 #define	dma_addr_t	bus_addr_t
-
-#define DWC2_READ_4(hsotg, reg) \
-    bus_space_read_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg))
-#define DWC2_WRITE_4(hsotg, reg, data)  \
-    bus_space_write_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg), (data));
 
 #ifdef DWC2_DEBUG
 extern int dwc2debug;
