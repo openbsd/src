@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.12 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.13 2015/02/12 02:12:02 kettenis Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -707,10 +707,8 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 	struct drm_device *dev = overlay->dev;
 	u32 swidth, swidthsw, sheight, ostride;
 
-#ifdef notyet
 	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
-#endif
-	rw_assert_wrlock(&dev->mode_config.mutex);
+	BUG_ON(!mutex_is_locked(&dev->mode_config.mutex));
 	BUG_ON(!overlay);
 
 	ret = intel_overlay_release_old_vid(overlay);
@@ -814,10 +812,8 @@ int intel_overlay_switch_off(struct intel_overlay *overlay)
 	struct drm_device *dev = overlay->dev;
 	int ret;
 
-#ifdef notyet
 	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
-#endif
-	rw_assert_wrlock(&dev->mode_config.mutex);
+	BUG_ON(!mutex_is_locked(&dev->mode_config.mutex));
 
 	ret = intel_overlay_recover_from_interrupt(overlay);
 	if (ret != 0)

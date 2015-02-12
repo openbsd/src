@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.32 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.33 2015/02/12 02:12:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1019,7 +1019,7 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 								&objects, eb,
 								exec,
 								args->buffer_count);
-			rw_assert_wrlock(&dev->struct_mutex);
+			BUG_ON(!mutex_is_locked(&dev->struct_mutex));
 		}
 		if (ret)
 			goto err;

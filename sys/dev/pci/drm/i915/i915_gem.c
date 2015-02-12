@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.82 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.83 2015/02/12 02:12:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1098,7 +1098,7 @@ i915_gem_check_olr(struct intel_ring_buffer *ring, u32 seqno)
 {
 	int ret;
 
-//	BUG_ON(!mutex_is_locked(&ring->dev->struct_mutex));
+	BUG_ON(!mutex_is_locked(&ring->dev->struct_mutex));
 
 	ret = 0;
 	if (seqno == ring->outstanding_lazy_request)
@@ -1227,7 +1227,7 @@ i915_wait_seqno(struct intel_ring_buffer *ring, uint32_t seqno)
 	bool interruptible = dev_priv->mm.interruptible;
 	int ret;
 
-//	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
+	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
 	BUG_ON(seqno == 0);
 
 	ret = i915_gem_check_wedge(dev_priv, interruptible);
@@ -1288,7 +1288,7 @@ i915_gem_object_wait_rendering__nonblocking(struct drm_i915_gem_object *obj,
 	u32 seqno;
 	int ret;
 
-	rw_assert_wrlock(&dev->struct_mutex);
+	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
 	BUG_ON(!dev_priv->mm.interruptible);
 
 	seqno = readonly ? obj->last_write_seqno : obj->last_read_seqno;

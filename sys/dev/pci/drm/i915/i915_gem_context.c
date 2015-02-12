@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.10 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.11 2015/02/12 02:12:02 kettenis Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -225,7 +225,7 @@ static int create_default_context(struct drm_i915_private *dev_priv)
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int ret;
 
-	rw_assert_wrlock(&dev->struct_mutex);
+	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
 
 	ctx = create_hw_context(dev, NULL);
 	if (IS_ERR(ctx))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.11 2015/02/11 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.12 2015/02/12 02:12:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -342,11 +342,9 @@ static void drm_framebuffer_free(struct drm_framebuffer *fb)
  */
 void drm_framebuffer_unreference(struct drm_framebuffer *fb)
 {
-//	struct drm_device *dev = fb->dev;
+	struct drm_device *dev = fb->dev;
 	DRM_DEBUG("FB ID: %d\n", fb->base.id);
-#ifdef notyet
 	WARN_ON(!mutex_is_locked(&dev->mode_config.mutex));
-#endif
 	if (refcount_release(&fb->refcount))
 		drm_framebuffer_free(fb);
 }
