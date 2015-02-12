@@ -7,6 +7,13 @@ DDEESSCCRRIIPPTTIIOONN
      before both [before list
 
            1.   inside both] after bracket
-     after both
+     after list [before list
 
-OpenBSD                        November 10, 2012                       OpenBSD
+           1.   inside list
+
+                      inside display] after bracket
+
+           2.   next item
+     after list
+
+OpenBSD                        February 12, 2015                       OpenBSD

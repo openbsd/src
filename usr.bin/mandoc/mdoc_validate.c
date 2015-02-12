@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.193 2015/02/10 08:05:07 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.194 2015/02/12 12:20:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -323,7 +323,7 @@ mdoc_valid_post(struct mdoc *mdoc)
 	n = mdoc->last;
 	if (n->flags & MDOC_VALID)
 		return;
-	n->flags |= MDOC_VALID;
+	n->flags |= MDOC_VALID | MDOC_ENDED;
 
 	switch (n->type) {
 	case MDOC_TEXT:
@@ -414,24 +414,13 @@ pre_display(PRE_ARGS)
 static void
 pre_bl(PRE_ARGS)
 {
-	struct mdoc_node *np;
 	struct mdoc_argv *argv, *wa;
 	int		  i;
 	enum mdocargt	  mdoclt;
 	enum mdoc_list	  lt;
 
-	if (MDOC_BLOCK != n->type) {
-		if (ENDBODY_NOT != n->end) {
-			assert(n->pending);
-			np = n->pending->parent;
-		} else
-			np = n->parent;
-
-		assert(np);
-		assert(MDOC_BLOCK == np->type);
-		assert(MDOC_Bl == np->tok);
+	if (n->type != MDOC_BLOCK)
 		return;
-	}
 
 	/*
 	 * First figure out which kind of list to use: bind ourselves to
@@ -607,25 +596,14 @@ pre_bl(PRE_ARGS)
 static void
 pre_bd(PRE_ARGS)
 {
-	struct mdoc_node *np;
 	struct mdoc_argv *argv;
 	int		  i;
 	enum mdoc_disp	  dt;
 
 	pre_literal(mdoc, n);
 
-	if (MDOC_BLOCK != n->type) {
-		if (ENDBODY_NOT != n->end) {
-			assert(n->pending);
-			np = n->pending->parent;
-		} else
-			np = n->parent;
-
-		assert(np);
-		assert(MDOC_BLOCK == np->type);
-		assert(MDOC_Bd == np->tok);
+	if (n->type != MDOC_BLOCK)
 		return;
-	}
 
 	for (i = 0; n->args && i < (int)n->args->argc; i++) {
 		argv = n->args->argv + i;
@@ -795,22 +773,10 @@ post_bf(POST_ARGS)
 	 * element, which contains the goods.
 	 */
 
-	if (MDOC_HEAD != mdoc->last->type) {
-		if (ENDBODY_NOT != mdoc->last->end) {
-			assert(mdoc->last->pending);
-			np = mdoc->last->pending->parent->head;
-		} else if (MDOC_BLOCK != mdoc->last->type) {
-			np = mdoc->last->parent->head;
-		} else
-			np = mdoc->last->head;
-
-		assert(np);
-		assert(MDOC_HEAD == np->type);
-		assert(MDOC_Bf == np->tok);
-		return;
-	}
-
 	np = mdoc->last;
+	if (MDOC_HEAD != np->type)
+		return;
+
 	assert(MDOC_BLOCK == np->parent->type);
 	assert(MDOC_Bf == np->parent->tok);
 

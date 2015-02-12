@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc.c,v 1.125 2015/02/05 00:13:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.126 2015/02/12 12:20:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -417,8 +417,10 @@ mdoc_endbody_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok,
 {
 	struct mdoc_node *p;
 
+	body->flags |= MDOC_ENDED;
+	body->parent->flags |= MDOC_ENDED;
 	p = node_alloc(mdoc, line, pos, tok, MDOC_BODY);
-	p->pending = body;
+	p->body = body;
 	p->norm = body->norm;
 	p->end = end;
 	node_append(mdoc, p);

@@ -1,6 +1,7 @@
-/*	$OpenBSD: mdoc.h,v 1.60 2015/02/05 00:13:34 schwarze Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.61 2015/02/12 12:20:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -355,11 +356,11 @@ struct	mdoc_node {
 	enum mdoct	  tok; /* tok or MDOC__MAX if none */
 	int		  flags;
 #define	MDOC_VALID	 (1 << 0) /* has been validated */
-#define	MDOC_BREAK	 (1 << 1) /* has broken another block */
+#define	MDOC_ENDED	 (1 << 1) /* gone past body end mark */
 #define	MDOC_EOS	 (1 << 2) /* at sentence boundary */
 #define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
 #define	MDOC_SYNPRETTY	 (1 << 4) /* SYNOPSIS-style formatting */
-#define	MDOC_ENDED	 (1 << 5) /* rendering has been ended */
+#define	MDOC_BROKEN	 (1 << 5) /* must validate parent when ending */
 #define	MDOC_DELIMO	 (1 << 6)
 #define	MDOC_DELIMC	 (1 << 7)
 	enum mdoc_type	  type; /* AST node type */
@@ -368,9 +369,8 @@ struct	mdoc_node {
 	int		  prev_font; /* before entering this node */
 	/* FIXME: these can be union'd to shave a few bytes. */
 	struct mdoc_arg	 *args; /* BLOCK/ELEM */
-	struct mdoc_node *pending; /* BLOCK */
 	struct mdoc_node *head; /* BLOCK */
-	struct mdoc_node *body; /* BLOCK */
+	struct mdoc_node *body; /* BLOCK/ENDBODY */
 	struct mdoc_node *tail; /* BLOCK */
 	char		 *string; /* TEXT */
 	const struct tbl_span *span; /* TBL */

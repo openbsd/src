@@ -1,4 +1,4 @@
-.Dd November 10, 2012
+.Dd February 12, 2015
 .Dt BL-BROKEN 1
 .Os OpenBSD
 .Sh NAME
@@ -13,4 +13,16 @@ inside both
 .Bc
 after bracket
 .El
-after both
+after list
+.Bo before list
+.Bl -enum -offset indent
+.It
+inside list
+.Bd -ragged -offset indent
+inside display
+.Bc
+after bracket
+.It
+next item
+.El
+after list
