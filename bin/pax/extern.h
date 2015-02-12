@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.45 2015/02/11 23:14:46 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.46 2015/02/12 01:30:47 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -266,9 +266,15 @@ int chk_ftime(ARCHD *);
 int name_start(void);
 int add_name(char *, int, char *);
 void sub_name(char *, int *, size_t);
+#ifndef NOCPIO
 int dev_start(void);
 int add_dev(ARCHD *);
 int map_dev(ARCHD *, u_long, u_long);
+#else
+# define dev_start()	0
+# define add_dev(x)	0
+# define map_dev(x,y,z)	0
+#endif /* NOCPIO */
 int atdir_start(void);
 void atdir_end(void);
 void add_atdir(char *, dev_t, ino_t, time_t, time_t);

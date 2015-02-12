@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.40 2015/02/11 23:14:46 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.41 2015/02/12 01:30:47 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -72,8 +72,6 @@ static DIRDATA *dirp = NULL;	/* storage for setting created dir time/mode */
 static size_t dirsize;		/* size of dirp table */
 static size_t dircnt = 0;	/* entries in dir time/mode storage */
 static int ffd = -1;		/* tmp file for file time table name storage */
-
-static DEVT *chk_dev(dev_t, int);
 
 /*
  * hard link table routines
@@ -607,6 +605,7 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
 	 */
 }
 
+#ifndef NOCPIO
 /*
  * device/inode mapping table routines
  * (used with formats that store device and inodes fields)
@@ -646,6 +645,8 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
  * device truncation we remap the device number to a non truncated value.
  * (for more info see table.h for the data structures involved).
  */
+
+static DEVT *chk_dev(dev_t, int);
 
 /*
  * dev_start()
@@ -872,6 +873,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 	paxwarn(0, "Archive may create improper hard links when extracted");
 	return(0);
 }
+#endif /* NOCPIO */
 
 /*
  * directory access/mod time reset table routines (for directories READ by pax)
