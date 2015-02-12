@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.78 2015/02/10 08:12:29 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.79 2015/02/12 04:40:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -410,6 +410,7 @@ struct server_config {
 	u_int8_t		*tls_key;
 	size_t			 tls_key_len;
 	char			*tls_key_file;
+	u_int32_t		 tls_protocols;
 
 	u_int32_t		 flags;
 	int			 strip;
