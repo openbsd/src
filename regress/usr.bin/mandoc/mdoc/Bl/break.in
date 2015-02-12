@@ -43,6 +43,18 @@ inside both
 stray item
 .Ed
 after both
+.Bl -enum -offset indent
+.It
+before table
+.Bl -column column
+.It column
+.Bd -ragged -offset indent
+inside display
+.El
+first line after table
+second line after table
+.El
+after list
 .Sh CAVEATS
 .Bl -hang
 .It before broken block Bo inside both

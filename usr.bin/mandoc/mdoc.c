@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.126 2015/02/12 12:20:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.127 2015/02/12 13:00:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -599,8 +599,8 @@ mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 	 * process within its context in the normal way).
 	 */
 
-	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-	    LIST_column == n->norm->Bl.type) {
+	if (n->tok == MDOC_Bl && n->type == MDOC_BODY &&
+	    n->end == ENDBODY_NOT && n->norm->Bl.type == LIST_column) {
 		/* `Bl' is open without any children. */
 		mdoc->flags |= MDOC_FREECOL;
 		mdoc_macro(mdoc, MDOC_It, line, offs, &offs, buf);
@@ -776,8 +776,8 @@ mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 	 * context around the parsed macro.
 	 */
 
-	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-	    LIST_column == n->norm->Bl.type) {
+	if (n->tok == MDOC_Bl && n->type == MDOC_BODY &&
+	    n->end == ENDBODY_NOT && n->norm->Bl.type == LIST_column) {
 		mdoc->flags |= MDOC_FREECOL;
 		mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf);
 		return(1);
