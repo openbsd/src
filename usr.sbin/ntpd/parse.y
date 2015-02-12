@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2015/02/12 01:54:57 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.61 2015/02/12 23:07:52 reyk Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -316,21 +316,22 @@ url		: STRING		{
 			    strlen("https://")) != 0) {
 				host($1, &$$->a);
 				$$->name = $1;
-				if (($$->path = strdup("/")) == NULL)
-					fatal("strdup");
 			} else {
 				hname = $1 + strlen("https://");
 
 				path = hname + strcspn(hname, "/\\");
-				if (*path == '\0')
-					path = "/";
-				if (($$->path = strdup(path)) == NULL)
-					fatal("strdup");
-				*path = '\0';
+				if (*path != '\0') {
+					if (($$->path = strdup(path)) == NULL)
+						fatal("strdup");
+					*path = '\0';
+				}
 				host(hname, &$$->a);
 				if (($$->name = strdup(hname)) == NULL)
 					fatal("strdup");
 			}
+			if ($$->path == NULL &&
+			    ($$->path = strdup("/")) == NULL)
+				fatal("strdup");
 		}
 		;
 
