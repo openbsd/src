@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_hdmi.c,v 1.10 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: intel_hdmi.c,v 1.11 2015/02/12 06:52:11 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2009 Intel Corporation
@@ -792,7 +792,7 @@ intel_hdmi_detect(struct drm_connector *connector, bool force)
 						drm_detect_hdmi_monitor(edid);
 			intel_hdmi->has_audio = drm_detect_monitor_audio(edid);
 		}
-		free(edid, M_DRM, 0);
+		kfree(edid);
 	}
 
 	if (status == connector_status_connected) {
@@ -833,7 +833,7 @@ intel_hdmi_detect_audio(struct drm_connector *connector)
 	if (edid) {
 		if (edid->input & DRM_EDID_INPUT_DIGITAL)
 			has_audio = drm_detect_monitor_audio(edid);
-		free(edid, M_DRM, 0);
+		kfree(edid);
 	}
 
 	return has_audio;
@@ -899,7 +899,7 @@ static void intel_hdmi_destroy(struct drm_connector *connector)
 {
 	drm_sysfs_connector_remove(connector);
 	drm_connector_cleanup(connector);
-	free(connector, M_DRM, 0);
+	kfree(connector);
 }
 
 static const struct drm_encoder_helper_funcs intel_hdmi_helper_funcs = {

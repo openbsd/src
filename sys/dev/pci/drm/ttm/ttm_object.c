@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.c,v 1.6 2015/02/12 06:52:11 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2009 VMware, Inc., Palo Alto, CA., USA
@@ -127,6 +127,7 @@ static void ttm_object_file_destroy(struct ttm_object_file *tfile)
 	kfree(tfile);
 }
 
+
 static inline void ttm_object_file_unref(struct ttm_object_file **p_tfile)
 {
 	struct ttm_object_file *tfile = *p_tfile;
@@ -189,7 +190,7 @@ static void ttm_release_base(struct ttm_base_object *base)
 	/*
 	 * Note: We don't use synchronize_rcu() here because it's far
 	 * too slow. It's up to the user to free the object using
-	 * call_rcu() or ttm_base_object_free().
+	 * call_rcu() or ttm_base_object_kfree().
 	 */
 
 	if (base->refcount_release) {
