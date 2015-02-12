@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.206 2015/02/11 23:34:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.207 2015/02/12 11:19:57 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1613,6 +1613,9 @@ rt_if_remove(struct ifnet *ifp)
 	struct radix_node_head	*rnh;
 
 	for (tid = 0; tid <= rtbl_id_max; tid++) {
+		/* skip rtables that are not in the rdomain of the ifp */
+		if (rtable_l2(tid) != ifp->if_rdomain)
+			continue;
 		for (i = 1; i <= AF_MAX; i++) {
 			if ((rnh = rtable_get(tid, i)) != NULL)
 				while ((*rnh->rnh_walktree)(rnh,
