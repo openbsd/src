@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.46 2015/02/09 12:25:03 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.47 2015/02/12 23:31:12 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -162,9 +162,8 @@ p_rttables(int af, u_int tableid)
 				continue;
 			p_rtentry(rtm);
 		}
-		free(buf);
-		buf = NULL;
 	}
+	free(buf);
 }
 
 /*
