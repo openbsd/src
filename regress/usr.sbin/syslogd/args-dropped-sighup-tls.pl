@@ -30,6 +30,7 @@ our %args = (
 	    get_between2loggrep(),
 	    get_charlog() => 300,
 	    qr/ \(dropped\)/ => '~16',
+	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
     server => {
@@ -41,8 +42,8 @@ our %args = (
 		    $self->{redo}--;
 		    return;
 	    }
-	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
-		or die ref($self), " client did not send third log";
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
+		or die ref($self), " syslogd did not receive third log";
 	    ${$self->{syslogd}}->kill_syslogd('HUP');
 	    ${$self->{syslogd}}->loggrep("syslogd: restarted", 5)
 		or die ref($self), " no 'syslogd: restarted' between logs";

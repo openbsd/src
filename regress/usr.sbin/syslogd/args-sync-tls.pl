@@ -44,8 +44,8 @@ our %args = (
 		$self->{redo}--;
 		return;
 	    }
-	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
-		or die ref($self), " client did not send third log";
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
+		or die ref($self), " syslogd did not receive third log";
 	    shutdown(\*STDOUT, 1)
 		or die "shutdown write failed: $!";
 	    $self->{redo}++;

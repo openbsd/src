@@ -36,8 +36,8 @@ our %args = (
 	redo => 0,
 	func => sub {
 	    my $self = shift;
-	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
-		or die ref($self), " client did not send third log";
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
+		or die ref($self), " syslogd did not receive third log";
 	    ${$self->{syslogd}}->kill_syslogd('TERM');
 	    ${$self->{syslogd}}->loggrep("syslogd: exiting", 5)
 		or die ref($self), " no 'syslogd: exiting' between logs";
@@ -50,7 +50,7 @@ our %args = (
 	    get_thirdlog() => 0,
 	    get_testlog() => 0,
 	    qr/syslogd: start/ => 1,
-	    get_charlog() => 42,
+	    get_charlog() => '~42',
 	},
     },
     pipe => {

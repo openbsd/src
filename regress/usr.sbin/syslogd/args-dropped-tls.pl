@@ -22,6 +22,8 @@ our %args = (
 	    write_message($self, get_thirdlog());
 	    ${$self->{server}}->loggrep(get_secondlog(), 5)
 		or die ref($self), " server did not receive second log";
+	    ${$self->{syslogd}}->loggrep(qr/dropped \d+ messages/, 5)
+		or die ref($self), " syslogd did not write dropped message";
 	})},
     },
     syslogd => {
@@ -29,23 +31,24 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    get_charlog() => 300,
-	    qr/ \(dropped\)/ => 16,
+	    qr/ \(dropped\)/ => '~16',
+	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },
 	func => sub {
 	    my $self = shift;
-	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
-		or die ref($self), " client did not send third log";
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
+		or die ref($self), " syslogd did not receive third log";
 	    read_log($self);
 	},
 	loggrep => {
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
-	    get_charlog() => 285,
-	    qr/syslogd: dropped 16 messages to loghost "\@tls:.*"/ => 1,
+	    get_charlog() => '~285',
+	    qr/syslogd: dropped 1[0-9] messages to loghost "\@tls:.*"/ => 1,
 	},
     },
     file => {
@@ -54,7 +57,7 @@ our %args = (
 	    get_secondlog() => 1,
 	    get_thirdlog() => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 16 messages to loghost "\@tls:.*"/ => 1,
+	    qr/syslogd: dropped 1[0-9] messages to loghost "\@tls:.*"/ => 1,
 	},
     },
 );

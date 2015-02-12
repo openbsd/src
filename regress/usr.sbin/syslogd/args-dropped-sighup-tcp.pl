@@ -41,8 +41,8 @@ our %args = (
 		    $self->{redo}--;
 		    return;
 	    }
-	    ${$self->{client}}->loggrep(get_thirdlog(), 20)
-		or die ref($self), " client did not send third log";
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
+		or die ref($self), " syslogd did not receive third log";
 	    ${$self->{syslogd}}->kill_syslogd('HUP');
 	    ${$self->{syslogd}}->loggrep("syslogd: restarted", 5)
 		or die ref($self), " no 'syslogd: restarted' between logs";
@@ -56,7 +56,7 @@ our %args = (
 	    get_thirdlog() => 0,
 	    qr/syslogd: start/ => 1,
 	    qr/syslogd: restart/ => 1,
-	    get_charlog() => 43,
+	    get_charlog() => '~43',
 	    qr/syslogd: dropped 2[56][0-9] messages to remote loghost/ => 1,
 	},
     },

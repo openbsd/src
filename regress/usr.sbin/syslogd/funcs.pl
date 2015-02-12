@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.17 2015/02/11 21:51:13 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.18 2015/02/12 23:16:02 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -269,7 +269,7 @@ sub compare($$) {
 	} elsif (/^<=(\d+)/) {
 		return $_[0] <= $1;
 	} elsif (/^~(\d+)/) {
-		return $1 * 0.9 <= $_[0] && $_[0] <= $1 * 1.1;
+		return $1 * 0.8 <= $_[0] && $_[0] <= $1 * 1.2;
 	}
 	die "bad compare operator: $_";
 }
