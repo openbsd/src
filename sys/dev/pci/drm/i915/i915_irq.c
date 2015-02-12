@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.20 2015/02/12 04:56:03 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.21 2015/02/12 11:11:45 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -33,9 +33,6 @@
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
 #include "intel_drv.h"
-
-#define IRQ_NONE	0
-#define IRQ_HANDLED	1
 
 /* For display hotplug interrupt */
 static void

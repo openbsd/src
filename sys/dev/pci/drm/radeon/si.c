@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.18 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.19 2015/02/12 11:11:45 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -3729,16 +3729,16 @@ int si_irq_process(struct radeon_device *rdev)
 	bool queue_hotplug = false;
 
 	if (!rdev->ih.enabled || rdev->shutdown)
-		return (0);
+		return IRQ_NONE;
 
 	wptr = si_get_ih_wptr(rdev);
 
 	if (wptr == rdev->ih.rptr)
-		return (0);
+		return IRQ_NONE;
 restart_ih:
 	/* is somebody else already processing irqs? */
 	if (atomic_xchg(&rdev->ih.lock, 1))
-		return (0);
+		return IRQ_NONE;
 
 	rptr = rdev->ih.rptr;
 	DRM_DEBUG("si_irq_process start: rptr %d, wptr %d\n", rptr, wptr);
@@ -4026,7 +4026,7 @@ restart_ih:
 	if (wptr != rptr)
 		goto restart_ih;
 
-	return (1);
+	return IRQ_HANDLED;
 }
 
 /**

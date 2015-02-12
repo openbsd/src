@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.6 2015/02/12 06:30:56 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.7 2015/02/12 11:11:45 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define IRQ_NONE	0
+#define IRQ_HANDLED	1
 
 #define __force
 #define KERN_INFO

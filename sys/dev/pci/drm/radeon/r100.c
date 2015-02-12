@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.10 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.11 2015/02/12 11:11:45 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -774,10 +774,10 @@ int r100_irq_process(struct radeon_device *rdev)
 
 	status = r100_irq_ack(rdev);
 	if (!status) {
-		return (0);
+		return IRQ_NONE;
 	}
 	if (rdev->shutdown) {
-		return (0);
+		return IRQ_NONE;
 	}
 	while (status) {
 		/* SW interrupt */
@@ -828,7 +828,7 @@ int r100_irq_process(struct radeon_device *rdev)
 			break;
 		}
 	}
-	return (1);
+	return IRQ_HANDLED;
 }
 
 u32 r100_get_vblank_counter(struct radeon_device *rdev, int crtc)
