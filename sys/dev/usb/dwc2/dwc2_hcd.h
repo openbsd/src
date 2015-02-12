@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.h,v 1.10 2015/02/12 11:38:42 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.h,v 1.11 2015/02/12 11:42:58 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.h,v 1.9 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ enum dwc2_transaction_type {
  *                      descriptor
  * @tt_buffer_dirty     True if clear_tt_buffer_complete is pending
  *
- * A Queue Head (QH) holds the STATIC characteristics of an endpoint and
+ * A Queue Head (QH) holds the static characteristics of an endpoint and
  * maintains a list of transfers (QTDs) for that endpoint. A QH structure may
  * be entered in either the non-periodic or periodic schedule.
  */
@@ -514,7 +514,7 @@ extern void dwc2_hcd_qh_free_ddma(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh);
 STATIC_INLINE bool dbg_hc(struct dwc2_host_chan *hc) { return true; }
 STATIC_INLINE bool dbg_qh(struct dwc2_qh *qh) { return true; }
 STATIC_INLINE bool dbg_perio(void) { return true; }
-#else /* !CONFIG_USB_DWC2_DEBUG_PERIODIC */
+#else /* !DWC2_DEBUG */
 STATIC_INLINE bool dbg_hc(struct dwc2_host_chan *hc)
 {
 	return hc->ep_type == USB_ENDPOINT_XFER_BULK ||

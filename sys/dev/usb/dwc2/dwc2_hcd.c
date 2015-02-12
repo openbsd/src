@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.13 2015/02/12 11:38:42 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.14 2015/02/12 11:42:58 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -852,7 +852,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 	struct dwc2_qh *qh;
 	int num_channels;
 
-#ifdef DWC2_DEBUG_SOF
+#ifdef DWC2_DEBUG
 	dev_vdbg(hsotg->dev, "  Select Transactions\n");
 #endif
 
@@ -1284,7 +1284,7 @@ next:
 void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 				 enum dwc2_transaction_type tr_type)
 {
-#ifdef DWC2_DEBUG_SOF
+#ifdef DWC2_DEBUG
 	dev_vdbg(hsotg->dev, "Queue Transactions\n");
 #endif
 	/* Process host channels associated with periodic transfers */
@@ -1759,7 +1759,7 @@ int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg)
 {
 	u32 hfnum = DWC2_READ_4(hsotg, HFNUM);
 
-#ifdef DWC2_DEBUG_SOF
+#ifdef DWC2_DEBUG
 	dev_vdbg(hsotg->dev, "DWC OTG HCD GET FRAME NUMBER %d\n",
 		 (hfnum & HFNUM_FRNUM_MASK) >> HFNUM_FRNUM_SHIFT);
 #endif
@@ -2165,7 +2165,7 @@ void dwc2_set_all_params(struct dwc2_core_params *params, int value)
 
 /*
  * Initializes the HCD. This function allocates memory for and initializes the
- * STATIC parts of the usb_hcd and dwc2_hsotg structures. It also registers the
+ * static parts of the usb_hcd and dwc2_hsotg structures. It also registers the
  * USB bus with the core and calls the hc_driver->start() function. It returns
  * a negative error on failure.
  */
