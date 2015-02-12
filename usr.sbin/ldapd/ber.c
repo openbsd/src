@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.7 2015/01/16 16:04:38 deraadt Exp $ */
+/*	$OpenBSD: ber.c,v 1.8 2015/02/12 00:30:38 pelikan Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -538,15 +538,18 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 		case 'B':
 			p = va_arg(ap, void *);
 			len = va_arg(ap, size_t);
-			ber = ber_add_bitstring(ber, p, len);
+			if ((ber = ber_add_bitstring(ber, p, len)) == NULL)
+				goto fail;
 			break;
 		case 'b':
 			d = va_arg(ap, int);
-			ber = ber_add_boolean(ber, d);
+			if ((ber = ber_add_boolean(ber, d)) == NULL)
+				goto fail;
 			break;
 		case 'd':
 			d = va_arg(ap, int);
-			ber = ber_add_integer(ber, d);
+			if ((ber = ber_add_integer(ber, d)) == NULL)
+				goto fail;
 			break;
 		case 'e':
 			e = va_arg(ap, struct ber_element *);
@@ -554,23 +557,28 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 			break;
 		case 'E':
 			i = va_arg(ap, long long);
-			ber = ber_add_enumerated(ber, i);
+			if ((ber = ber_add_enumerated(ber, i)) == NULL)
+				goto fail;
 			break;
 		case 'i':
 			i = va_arg(ap, long long);
-			ber = ber_add_integer(ber, i);
+			if ((ber = ber_add_integer(ber, i)) == NULL)
+				goto fail;
 			break;
 		case 'O':
 			o = va_arg(ap, struct ber_oid *);
-			ber = ber_add_oid(ber, o);
+			if ((ber = ber_add_oid(ber, o)) == NULL)
+				goto fail;
 			break;
 		case 'o':
 			s = va_arg(ap, char *);
-			ber = ber_add_oidstring(ber, s);
+			if ((ber = ber_add_oidstring(ber, s)) == NULL)
+				goto fail;
 			break;
 		case 's':
 			s = va_arg(ap, char *);
-			ber = ber_add_string(ber, s);
+			if ((ber = ber_add_string(ber, s)) == NULL)
+				goto fail;
 			break;
 		case 't':
 			class = va_arg(ap, int);
@@ -580,23 +588,29 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 		case 'x':
 			s = va_arg(ap, char *);
 			len = va_arg(ap, size_t);
-			ber = ber_add_nstring(ber, s, len);
+			if ((ber = ber_add_nstring(ber, s, len)) == NULL)
+				goto fail;
 			break;
 		case '0':
-			ber = ber_add_null(ber);
+			if ((ber = ber_add_null(ber)) == NULL)
+				goto fail;
 			break;
 		case '{':
-			ber = sub = ber_add_sequence(ber);
+			if ((ber = sub = ber_add_sequence(ber)) == NULL)
+				goto fail;
 			break;
 		case '(':
-			ber = sub = ber_add_set(ber);
+			if ((ber = sub = ber_add_set(ber)) == NULL)
+				goto fail;
 			break;
 		case '}':
 		case ')':
 			ber = sub;
 			break;
 		case '.':
-			ber = ber_add_eoc(ber);
+			if ((e = ber_add_eoc(ber)) == NULL)
+				goto fail;
+			ber = e;
 			break;
 		default:
 			break;
@@ -605,6 +619,9 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 	va_end(ap);
 
 	return (ber);
+ fail:
+	ber_free_elements(ber);
+	return (NULL);
 }
 
 int
