@@ -1,0 +1,14 @@
+.Dd December 23, 2014
+.Dt BREAK-BROKENBREAKER 1
+.Os OpenBSD
+.Sh NAME
+.Nm break-brokenbreaker
+.Nd a broken block breaking another block
+.Sh DESCRIPTION
+.Po po
+.Ao ao pc
+.Pc
+.Bo bo pc
+.Pc ac
+.Ac bc
+.Bc

@@ -1,3 +1,8 @@
-mandoc: twice.in:10:2: WARNING: blocks badly nested: Po breaks Ao
-mandoc: twice.in:12:2: ERROR: skipping end of block that is not open: Pc
-mandoc: twice.in:13:2: WARNING: blocks badly nested: Ao breaks Bo
+mandoc: twice.in:12:2: WARNING: blocks badly nested: Bro breaks Ao
+mandoc: twice.in:13:2: WARNING: blocks badly nested: Bo breaks Ao
+mandoc: twice.in:19:12: WARNING: blocks badly nested: Bro breaks Aq
+mandoc: twice.in:19:19: WARNING: blocks badly nested: Bo breaks Aq
+mandoc: twice.in:25:2: WARNING: blocks badly nested: Bo breaks Ao
+mandoc: twice.in:26:2: WARNING: blocks badly nested: Bo breaks Ao
+mandoc: twice.in:32:11: WARNING: blocks badly nested: Bo breaks Aq
+mandoc: twice.in:32:17: WARNING: blocks badly nested: Bo breaks Aq

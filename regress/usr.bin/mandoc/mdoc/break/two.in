@@ -1,0 +1,42 @@
+.Dd February 12, 2015
+.Dt BREAK-TWO 1
+.Os OpenBSD
+.Sh NAME
+.Nm break-two
+.Nd the same block breaking two other blocks
+.Sh DESCRIPTION
+Standard case, explicit:
+.Ao ao
+.Bo bo
+.Bro bro ac
+.Ac brc
+.Brc bc
+.Bc
+.Pp
+Standard case, implicit:
+.Aq aq Bo bo Bro bro eol
+.Brc bc Bc
+.Pp
+Reverse closing, explicit:
+.Ao ao
+.Bo bo
+.Bro bro ac
+.Ac bc
+.Bc brc
+.Brc
+.Pp
+Reverse closing, implicit:
+.Aq aq Bo bo Bro bro eol
+.Bc brc Brc
+.Pp
+Two of the same kind, explicit:
+.Ao ao
+.Bo bo
+.Bo bo ac
+.Ac bc
+.Bc bc
+.Bc
+.Pp
+Two of the same kind, implicit:
+.Aq aq Bo bo Bo bo eol
+.Bc bc Bc
