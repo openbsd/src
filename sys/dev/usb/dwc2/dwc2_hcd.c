@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.12 2015/02/12 06:46:23 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.13 2015/02/12 11:38:42 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -2323,4 +2323,11 @@ error1:
 
 	dev_err(hsotg->dev, "%s() FAILED, returning %d\n", __func__, retval);
 	return retval;
+}
+
+int dwc2_hcd_dma_config(struct dwc2_hsotg *hsotg,
+			struct dwc2_core_dma_config *config)
+{
+	hsotg->core_dma_config = config;
+	return 0;
 }

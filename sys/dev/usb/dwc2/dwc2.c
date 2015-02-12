@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.20 2015/02/12 06:46:23 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.21 2015/02/12 11:38:42 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1638,6 +1638,13 @@ fail1:
 	softintr_disestablish(sc->sc_rhc_si);
 
 	return err;
+}
+
+int
+dwc2_dma_config(struct dwc2_softc *sc, struct dwc2_core_dma_config *config)
+{
+	sc->sc_dma_config = config;
+	return dwc2_hcd_dma_config(sc->sc_hsotg, sc->sc_dma_config);
 }
 
 #if 0

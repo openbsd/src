@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.h,v 1.7 2015/02/10 23:43:46 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.h,v 1.8 2015/02/12 11:38:42 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_core.h,v 1.5 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -308,6 +308,11 @@ struct dwc2_hw_params {
 	u32 snpsid;
 };
 
+struct dwc2_core_dma_config {
+	int (*set_dma_addr)(void *, dma_addr_t, int);
+	void *set_dma_addr_data;
+};
+
 /**
  * struct dwc2_hsotg - Holds the state of the driver, including the non-periodic
  * and periodic schedules
@@ -411,6 +416,7 @@ struct dwc2_hsotg {
 	struct dwc2_hw_params hw_params;
 	/** Params to actually use */
 	struct dwc2_core_params *core_params;
+	struct dwc2_core_dma_config *core_dma_config;
 	enum usb_otg_state op_state;
 
 	unsigned int queuing_high_bandwidth:1;

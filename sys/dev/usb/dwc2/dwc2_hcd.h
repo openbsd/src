@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.h,v 1.9 2015/02/12 06:46:23 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.h,v 1.10 2015/02/12 11:38:42 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.h,v 1.9 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -462,6 +462,8 @@ STATIC_INLINE u8 dwc2_hcd_is_pipe_out(struct dwc2_hcd_pipe_info *pipe)
 
 extern int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 			 const struct dwc2_core_params *params);
+extern int dwc2_hcd_dma_config(struct dwc2_hsotg *hsotg,
+			       struct dwc2_core_dma_config *config);
 extern void dwc2_hcd_remove(struct dwc2_hsotg *hsotg);
 extern void dwc2_set_parameters(struct dwc2_hsotg *hsotg,
 				const struct dwc2_core_params *params);
