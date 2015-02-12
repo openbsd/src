@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.95 2014/12/10 02:44:47 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.96 2015/02/12 22:27:04 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -935,7 +935,6 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	struct pollfd pfds[4], *pl = pfds;
 	struct timespec ats, rts, tts;
 	int timo, ncoll, i, s, error;
-	extern int nselcoll, selwait;
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
 	if (nfds > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles))
