@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.116 2015/01/20 12:56:50 kettenis Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.117 2015/02/12 04:58:59 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -2787,6 +2787,7 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct ix_softc 	*sc = que->sc;
 	struct rx_ring		*rxr = que->rxr;
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
+	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct mbuf    		*mp, *sendmp;
 	uint8_t		    	 eop = 0;
 	uint16_t		 len, vtag;
@@ -2895,7 +2896,6 @@ ixgbe_rxeof(struct ix_queue *que)
 			sendmp = NULL;
 			mp->m_next = nxbuf->buf;
 		} else { /* Sending this frame? */
-			sendmp->m_pkthdr.rcvif = ifp;
 			ifp->if_ipackets++;
 			rxr->rx_packets++;
 			/* capture data for AIM */
@@ -2904,13 +2904,7 @@ ixgbe_rxeof(struct ix_queue *que)
 
 			ixgbe_rx_checksum(staterr, sendmp, ptype);
 
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap_ether(ifp->if_bpf, sendmp,
-				    BPF_DIRECTION_IN);
-#endif
-
-			ether_input_mbuf(ifp, sendmp);
+			ml_enqueue(&ml, sendmp);
 		}
 next_desc:
 		if_rxr_put(&rxr->rx_ring, 1);
@@ -2923,6 +2917,8 @@ next_desc:
 			i = 0;
 	}
 	rxr->next_to_check = i;
+
+	if_input(ifp, &ml);
 
 	if (!(staterr & IXGBE_RXD_STAT_DD))
 		return FALSE;
