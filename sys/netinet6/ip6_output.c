@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.166 2015/02/05 01:10:57 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.167 2015/02/12 12:12:45 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -762,18 +762,6 @@ reroute:
 		goto reroute;
 	}
 #endif
-
-	/*
-	 * If the packet is not going on the wire it can be destinated
-	 * to any local address.  In this case do not clear its scopes
-	 * to let ip6_input() find a matching local route.
-	 */
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
-	}
 
 	/*
 	 * If the packet is not going on the wire it can be destinated
