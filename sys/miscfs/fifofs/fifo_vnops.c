@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.44 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.45 2015/02/12 14:31:02 millert Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -227,9 +227,6 @@ fifo_read(void *v)
 		    ap->a_vp->v_fifoinfo->fi_writers == 0)
 			error = 0;
 	}
-	/* Clear EOF indicator so we have a clean slate for a new writer. */
-	if (error == 0)
-		rso->so_state &= ~(SS_CANTRCVMORE|SS_ISDISCONNECTED);
 	return (error);
 }
 
@@ -293,17 +290,21 @@ fifo_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 	struct file filetmp;
+	const int events = ap->a_events;
 	int revents = 0;
 
-	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+	if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
+			revents |= soo_poll(&filetmp, events, ap->a_p);
 	}
-	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
-		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
-		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
+	/* POLLHUP and POLLOUT/POLLWRNORM/POLLWRBAND are mutually exclusive */
+	if (!(revents & POLLHUP)) {
+		if (events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
+			filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
+			if (filetmp.f_data)
+				revents |= soo_poll(&filetmp, events, ap->a_p);
+		}
 	}
 	return (revents);
 }
