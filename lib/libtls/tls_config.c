@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.5 2015/02/12 04:31:27 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.6 2015/02/12 04:35:17 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -106,6 +107,64 @@ tls_config_clear_keys(struct tls_config *config)
 	tls_config_set_ca_mem(config, NULL, 0);
 	tls_config_set_cert_mem(config, NULL, 0);
 	tls_config_set_key_mem(config, NULL, 0);
+}
+
+int
+tls_config_parse_protocols(uint32_t *protocols, const char *protostr)
+{
+	uint32_t proto, protos = 0;
+	char *s, *p, *q;
+	int negate;
+
+	if ((s = strdup(protostr)) == NULL)
+		return (-1);
+
+	q = s;
+	while ((p = strsep(&q, ",:")) != NULL) {
+		while (*p == ' ' || *p == '\t')
+			p++;
+
+		negate = 0;
+		if (*p == '!') {
+			negate = 1;
+			p++;
+		}
+
+		if (negate && protos == 0)
+			protos = TLS_PROTOCOLS_ALL;
+
+		proto = 0;
+		if (strcasecmp(p, "all") == 0 ||
+		    strcasecmp(p, "legacy") == 0)
+			proto = TLS_PROTOCOLS_ALL;
+		else if (strcasecmp(p, "default") == 0 ||
+		    strcasecmp(p, "secure") == 0)
+			proto = TLS_PROTOCOLS_DEFAULT;
+		if (strcasecmp(p, "tlsv1") == 0)
+			proto = TLS_PROTOCOL_TLSv1;
+		else if (strcasecmp(p, "tlsv1.0") == 0)
+			proto = TLS_PROTOCOL_TLSv1_0;
+		else if (strcasecmp(p, "tlsv1.1") == 0)
+			proto = TLS_PROTOCOL_TLSv1_1;
+		else if (strcasecmp(p, "tlsv1.2") == 0)
+			proto = TLS_PROTOCOL_TLSv1_2;
+
+		if (proto == 0) {
+			free(s);
+			return (-1);
+		}
+
+		if (negate)
+			protos &= ~proto;
+		else
+			protos |= proto;
+	}
+
+	*protocols = protos;
+
+	free(s);
+
+	return (0);
 }
 
 int
