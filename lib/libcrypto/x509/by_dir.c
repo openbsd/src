@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.35 2015/02/05 01:33:22 reyk Exp $ */
+/* $OpenBSD: by_dir.c,v 1.36 2015/02/12 03:54:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,9 +70,7 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
-#endif
 
 typedef struct lookup_dir_hashes_st {
 	unsigned long hash;
@@ -344,13 +342,11 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			(void) snprintf(b->data, b->max, "%s/%08lx.%s%d",
 			    ent->dir, h, postfix, k);
 
-#ifndef OPENSSL_NO_POSIX_IO
 			{
 				struct stat st;
 				if (stat(b->data, &st) < 0)
 					break;
 			}
-#endif
 			/* found one. */
 			if (type == X509_LU_X509) {
 				if ((X509_load_cert_file(xl, b->data,
