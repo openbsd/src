@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.81 2015/02/07 04:17:11 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.82 2015/02/12 03:45:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -848,7 +848,6 @@ struct ssl_ctx_st {
 
 
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Next protocol negotiation information */
 	/* (for experimental NPN extension). */
 
@@ -863,7 +862,6 @@ struct ssl_ctx_st {
 	    unsigned char *outlen, const unsigned char *in,
 	    unsigned int inlen, void *arg);
 	void *next_proto_select_cb_arg;
-# endif
 
 	/*
 	 * ALPN information
@@ -962,7 +960,6 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
     int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie,
     unsigned int cookie_len));
-#ifndef OPENSSL_NO_NEXTPROTONEG
 void
 SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s, int (*cb)(SSL *ssl,
     const unsigned char **out, unsigned int *outlen, void *arg), void *arg);
@@ -979,7 +976,6 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
 #define OPENSSL_NPN_UNSUPPORTED	0
 #define OPENSSL_NPN_NEGOTIATED	1
 #define OPENSSL_NPN_NO_OVERLAP	2
-#endif
 
 int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
     unsigned int protos_len);
@@ -1198,7 +1194,6 @@ struct ssl_st {
 
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Next protocol negotiation. For the client, this is the protocol that
 	 * we sent in NextProtocol and is set when handling ServerHello
 	 * extensions.
@@ -1208,7 +1203,6 @@ struct ssl_st {
 	 * before the Finished message. */
 	unsigned char *next_proto_negotiated;
 	unsigned char next_proto_negotiated_len;
-#endif
 
 #define session_ctx initial_ctx
 

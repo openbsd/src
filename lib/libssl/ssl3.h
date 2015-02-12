@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.34 2015/02/09 10:53:28 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.35 2015/02/12 03:45:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -480,11 +480,9 @@ typedef struct ssl3_state_st {
 	unsigned char previous_server_finished_len;
 	int send_connection_binding; /* TODOEKR */
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Set if we saw the Next Protocol Negotiation extension from our peer.
 	 */
 	int next_proto_neg_seen;
-#endif
 
 	/*
 	 * ALPN information
@@ -539,10 +537,8 @@ typedef struct ssl3_state_st {
 #define SSL3_ST_CW_CERT_VRFY_B			(0x191|SSL_ST_CONNECT)
 #define SSL3_ST_CW_CHANGE_A			(0x1A0|SSL_ST_CONNECT)
 #define SSL3_ST_CW_CHANGE_B			(0x1A1|SSL_ST_CONNECT)
-#ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_ST_CW_NEXT_PROTO_A			(0x200|SSL_ST_CONNECT)
 #define SSL3_ST_CW_NEXT_PROTO_B			(0x201|SSL_ST_CONNECT)
-#endif
 #define SSL3_ST_CW_FINISHED_A			(0x1B0|SSL_ST_CONNECT)
 #define SSL3_ST_CW_FINISHED_B			(0x1B1|SSL_ST_CONNECT)
 /* read from server */
@@ -588,10 +584,8 @@ typedef struct ssl3_state_st {
 #define SSL3_ST_SR_CERT_VRFY_B			(0x1A1|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CHANGE_A			(0x1B0|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CHANGE_B			(0x1B1|SSL_ST_ACCEPT)
-#ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_ST_SR_NEXT_PROTO_A			(0x210|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_NEXT_PROTO_B			(0x211|SSL_ST_ACCEPT)
-#endif
 #define SSL3_ST_SR_FINISHED_A			(0x1C0|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_FINISHED_B			(0x1C1|SSL_ST_ACCEPT)
 /* write to client */
@@ -617,9 +611,7 @@ typedef struct ssl3_state_st {
 #define SSL3_MT_FINISHED			20
 #define SSL3_MT_CERTIFICATE_STATUS		22
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_MT_NEXT_PROTO			67
-#endif
 
 #define DTLS1_MT_HELLO_VERIFY_REQUEST		3
 

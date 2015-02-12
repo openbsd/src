@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.23 2014/12/16 05:47:28 miod Exp $ */
+/* $OpenBSD: tls1.h,v 1.24 2015/02/12 03:45:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -252,10 +252,8 @@ extern "C" {
 /* Temporary extension type */
 #define TLSEXT_TYPE_renegotiate                 0xff01
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 /* This is not an IANA defined extension number */
 #define TLSEXT_TYPE_next_proto_neg		13172
-#endif
 
 /* NameType value from RFC 3546. */
 #define TLSEXT_NAMETYPE_host_name 0
