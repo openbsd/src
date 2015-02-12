@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.71 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_url.c,v 1.72 2015/02/12 09:08:47 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -912,6 +912,7 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct url_chain *c = priv;
 	struct url_softc *sc = c->url_sc;
 	struct ifnet *ifp = GET_IFP(sc);
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_int32_t total_len;
 	url_rxhdr_t rxhdr;
@@ -970,7 +971,7 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	m = c->url_mbuf;
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
+	ml_enqueue(&ml, m);
 
 	s = splnet();
 
@@ -979,14 +980,9 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 	DPRINTF(("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
 		 __func__, m->m_len));
-	ether_input_mbuf(ifp, m);
+	if_input(ifp, &ml);
 
  done1:
 	splx(s);
