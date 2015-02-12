@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.h,v 1.7 2015/02/10 23:43:46 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.h,v 1.8 2015/02/12 05:11:57 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.h,v 1.9 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -508,7 +508,7 @@ extern void dwc2_hcd_qh_free_ddma(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh);
 	((_qh_ptr_)->ep_type == USB_ENDPOINT_XFER_BULK || \
 	 (_qh_ptr_)->ep_type == USB_ENDPOINT_XFER_CONTROL)
 
-#ifdef CONFIG_USB_DWC2_DEBUG_PERIODIC
+#ifdef DWC2_DEBUG
 static inline bool dbg_hc(struct dwc2_host_chan *hc) { return true; }
 static inline bool dbg_qh(struct dwc2_qh *qh) { return true; }
 static inline bool dbg_perio(void) { return true; }
