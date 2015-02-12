@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.118 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.119 2015/02/12 09:08:00 mpi Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -785,6 +785,7 @@ fxp_intr(void *arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	u_int16_t statack;
 	bus_dmamap_t rxmap;
 	int claimed = 0;
@@ -911,15 +912,8 @@ rcvloop:
 						goto rcvloop;
 					}
 
-					m->m_pkthdr.rcvif = ifp;
-					m->m_pkthdr.len = m->m_len =
-					    total_len;
-#if NBPFILTER > 0
-					if (ifp->if_bpf)
-						bpf_mtap(ifp->if_bpf, m,
-						    BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-					ether_input_mbuf(ifp, m);
+					m->m_pkthdr.len = m->m_len = total_len;
+					ml_enqueue(&ml, m);
 				}
 				goto rcvloop;
 			}
@@ -935,6 +929,9 @@ rcvloop:
 
 		}
 	}
+
+	if_input(ifp, &ml);
+
 	return (claimed);
 }
 
