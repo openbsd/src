@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.12 2015/02/12 07:51:51 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.13 2015/02/12 07:55:50 uebayasi Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ void		dwc2_host_complete(struct dwc2_hsotg *, struct dwc2_qtd *,
     (reg))
 #define DWC2_WRITE_4(hsotg, reg, data)  \
     bus_space_write_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, \
-    (reg), (data));
+    (reg), (data))
 
 static inline void
 dwc2_root_intr(dwc2_softc_t *sc)
