@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.84 2015/02/12 04:56:03 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.85 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2658,7 +2658,7 @@ static void i915_gem_object_finish_gtt(struct drm_i915_gem_object *obj)
 	u32 old_write_domain, old_read_domains;
 
 	/* Act a barrier for all accesses through the GTT */
-	DRM_MEMORYBARRIER();
+	mb();
 
 	/* Force a pagefault for domain tracking on next user access */
 	i915_gem_release_mmap(obj);
@@ -2939,7 +2939,7 @@ i915_gem_object_flush_fence(struct drm_i915_gem_object *obj)
 	 * and all writes before removing the fence.
 	 */
 	if (obj->base.read_domains & I915_GEM_DOMAIN_GTT)
-		DRM_WRITEMEMORYBARRIER();
+		mb();
 
 	obj->fenced_gpu_access = false;
 	return 0;
@@ -3273,7 +3273,7 @@ i915_gem_object_flush_gtt_write_domain(struct drm_i915_gem_object *obj)
 	 * the GTT land before any writes to the device, such as updates to
 	 * the GATT itself.
 	 */
-	DRM_WRITEMEMORYBARRIER();
+	wmb();
 
 	old_write_domain = obj->base.write_domain;
 	obj->base.write_domain = 0;

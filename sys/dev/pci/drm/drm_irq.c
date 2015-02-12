@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.58 2015/02/11 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.59 2015/02/12 08:48:32 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -838,7 +838,7 @@ u32 drm_vblank_count_and_time(struct drm_device *dev, int crtc,
 	do {
 		cur_vblank = atomic_read(&dev->_vblank_count[crtc]);
 		*vblanktime = vblanktimestamp(dev, crtc, cur_vblank);
-		DRM_READMEMORYBARRIER();
+		smp_rmb();
 	} while (cur_vblank != atomic_read(&dev->_vblank_count[crtc]));
 
 	return cur_vblank;

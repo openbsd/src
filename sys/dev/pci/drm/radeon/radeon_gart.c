@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gart.c,v 1.5 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_gart.c,v 1.6 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -246,7 +246,7 @@ void radeon_gart_unbind(struct radeon_device *rdev, unsigned offset,
 			}
 		}
 	}
-	DRM_MEMORYBARRIER();
+	mb();
 	radeon_gart_tlb_flush(rdev);
 }
 
@@ -289,7 +289,7 @@ int radeon_gart_bind(struct radeon_device *rdev, unsigned offset,
 			}
 		}
 	}
-	DRM_MEMORYBARRIER();
+	mb();
 	radeon_gart_tlb_flush(rdev);
 	return 0;
 }
@@ -317,7 +317,7 @@ void radeon_gart_restore(struct radeon_device *rdev)
 			page_base += RADEON_GPU_PAGE_SIZE;
 		}
 	}
-	DRM_MEMORYBARRIER();
+	mb();
 	radeon_gart_tlb_flush(rdev);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.8 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.9 2015/02/12 08:48:32 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -389,7 +389,7 @@ int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
 		if (ret)
 			goto out1;
 	}
-	DRM_MEMORYBARRIER();
+	mb();
 out2:
 	old_copy = *old_mem;
 	*old_mem = *new_mem;

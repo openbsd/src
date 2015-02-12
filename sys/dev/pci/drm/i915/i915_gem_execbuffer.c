@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.34 2015/02/12 06:52:11 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.35 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -703,7 +703,7 @@ i915_gem_execbuffer_move_to_gpu(struct intel_ring_buffer *ring,
 		i915_gem_chipset_flush(ring->dev);
 
 	if (flush_domains & I915_GEM_DOMAIN_GTT)
-		DRM_WRITEMEMORYBARRIER();
+		wmb();
 
 	/* Unconditionally invalidate gpu caches and ensure that we do flush
 	 * any residual writes from the previous batch.

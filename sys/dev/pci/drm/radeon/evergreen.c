@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.13 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.14 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -3056,7 +3056,7 @@ restart_ih:
 	DRM_DEBUG("r600_irq_process start: rptr %d, wptr %d\n", rptr, wptr);
 
 	/* Order reading of wptr vs. reading of IH ring data */
-	DRM_READMEMORYBARRIER();
+	rmb();
 
 	/* display interrupts */
 	evergreen_irq_ack(rdev);

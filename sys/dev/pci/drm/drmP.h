@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.180 2015/02/11 07:01:36 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.181 2015/02/12 08:48:32 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -323,6 +323,13 @@ div_u64(uint64_t x, uint32_t y)
 #define smp_mb__after_atomic_dec()	DRM_MEMORYBARRIER()
 #define smp_mb__before_atomic_inc()	DRM_MEMORYBARRIER()
 #define smp_mb__after_atomic_inc()	DRM_MEMORYBARRIER()
+
+#define mb()				DRM_MEMORYBARRIER()
+#define rmb()				DRM_READMEMORYBARRIER()
+#define wmb()				DRM_WRITEMEMORYBARRIER()
+#define smp_rmb()			DRM_READMEMORYBARRIER()
+#define smp_wmb()			DRM_WRITEMEMORYBARRIER()
+#define mmiowb()			DRM_WRITEMEMORYBARRIER()
 
 #define	DRM_COPY_TO_USER(user, kern, size)	copyout(kern, user, size)
 #define	DRM_COPY_FROM_USER(kern, user, size)	copyin(user, kern, size)

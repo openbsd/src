@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600.c,v 1.12 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: r600.c,v 1.13 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -3872,7 +3872,7 @@ restart_ih:
 	DRM_DEBUG("r600_irq_process start: rptr %d, wptr %d\n", rptr, wptr);
 
 	/* Order reading of wptr vs. reading of IH ring data */
-	DRM_READMEMORYBARRIER();
+	rmb();
 
 	/* display interrupts */
 	r600_irq_ack(rdev);

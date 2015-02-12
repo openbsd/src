@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.42 2015/02/12 04:56:03 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.43 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7204,7 +7204,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 	work = intel_crtc->unpin_work;
 
 	/* Ensure we don't miss a work->pending update ... */
-	DRM_READMEMORYBARRIER();
+	smp_rmb();
 
 	if (work == NULL || atomic_read(&work->pending) < INTEL_FLIP_COMPLETE) {
 		spin_unlock_irqrestore(&dev->event_lock, flags);
@@ -7212,7 +7212,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 	}
 
 	/* and that the unpin work is consistent wrt ->pending. */
-	DRM_READMEMORYBARRIER();
+	smp_rmb();
 
 	intel_crtc->unpin_work = NULL;
 
@@ -7269,10 +7269,10 @@ void intel_prepare_page_flip(struct drm_device *dev, int plane)
 static inline void intel_mark_page_flip_active(struct intel_crtc *intel_crtc)
 {
 	/* Ensure that the work item is consistent when activating it ... */
-	DRM_WRITEMEMORYBARRIER();
+	smp_wmb();
 	atomic_set(&intel_crtc->unpin_work->pending, INTEL_FLIP_PENDING);
 	/* and that it is marked active as soon as the irq could fire. */
-	DRM_WRITEMEMORYBARRIER();
+	smp_wmb();
 }
 
 static int intel_gen2_queue_flip(struct drm_device *dev,

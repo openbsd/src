@@ -1,4 +1,4 @@
-/*	$OpenBSD: r300.c,v 1.5 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: r300.c,v 1.6 2015/02/12 08:48:32 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -65,7 +65,7 @@ void rv370_pcie_gart_tlb_flush(struct radeon_device *rdev)
 		(void)RREG32_PCIE(RADEON_PCIE_TX_GART_CNTL);
 		WREG32_PCIE(RADEON_PCIE_TX_GART_CNTL, tmp);
 	}
-	DRM_MEMORYBARRIER();
+	mb();
 }
 
 #define R300_PTE_WRITEABLE (1 << 2)
