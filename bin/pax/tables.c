@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.41 2015/02/12 01:30:47 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.42 2015/02/12 23:44:57 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -459,6 +460,330 @@ chk_ftime(ARCHD *arcn)
 		free(pt);
 	return(-1);
 }
+
+/*
+ * escaping (absolute or w/"..") symlink table routines
+ *
+ * By default, an archive shouldn't be able extract to outside of the
+ * current directory.  What should we do if the archive contains a symlink
+ * whose value is either absolute or contains ".." components?  What we'll
+ * do is initially create the path as an empty file (to block attempts to
+ * reference _through_ it) and instead record its path and desired
+ * final value and mode.  Then once all the other archive
+ * members are created (but before the pass to set timestamps on
+ * directories) we'll process those records, replacing the placeholder with
+ * the correct symlink and setting them to the correct mode, owner, group,
+ * and timestamps.
+ *
+ * Note: we also need to handle hardlinks to symlinks (barf) as well as
+ * hardlinks whose target is replaced by a later entry in the archive (barf^2).
+ *
+ * So we track things by dev+ino of the placeholder file, associating with
+ * that the value and mode of the final symlink and a list of paths that
+ * should all be hardlinks of that.  We'll 'store' the symlink's desired
+ * timestamps, owner, and group by setting them on the placeholder file.
+ *
+ * The operations are:
+ * a) create an escaping symlink: create the placeholder file and add an entry
+ *    for the new link
+ * b) create a hardlink: do the link.  If the target turns out to be a
+ *    zero-length file whose dev+ino are in the symlink table, then add this
+ *    path to the list of names for that link
+ * c) perform deferred processing: for each entry, check each associated path:
+ *    if it's a zero-length file with the correct dev+ino then recreate it as
+ *    the specified symlink or hardlink to the first such
+ */
+
+struct slpath {
+	char	*sp_path;
+	struct	slpath *sp_next;
+};
+struct slinode {
+	ino_t	sli_ino;
+	char	*sli_value;
+	struct	slpath sli_paths;
+	struct	slinode *sli_fow;		/* hash table chain */
+	dev_t	sli_dev;
+	mode_t	sli_mode;
+};
+
+static struct slinode **slitab = NULL;
+
+/*
+ * sltab_start()
+ *	create the hash table
+ * Return:
+ *	0 if the table and file was created ok, -1 otherwise
+ */
+
+int
+sltab_start(void)
+{
+
+	if ((slitab = calloc(SL_TAB_SZ, sizeof *slitab)) == NULL) {
+		syswarn(1, errno, "symlink table");
+		return(-1);
+	}
+
+	return(0);
+}
+
+/*
+ * sltab_add_sym()
+ *	Create the placeholder and tracking info for an escaping symlink.
+ * Return:
+ *	0 on success, -1 otherwise
+ */
+
+int
+sltab_add_sym(const char *path0, const char *value0, mode_t mode)
+{
+	struct stat sb;
+	struct slinode *s;
+	struct slpath *p;
+	char *path, *value;
+	u_int indx;
+	int fd;
+
+	/* create the placeholder */
+	fd = open(path0, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+	if (fd == -1)
+		return (-1);
+	if (fstat(fd, &sb) == -1) {
+		unlink(path0);
+		close(fd);
+		return (-1);
+	}
+	close(fd);
+
+	if ((path = strdup(path0)) == NULL) {
+		syswarn(1, errno, "defered symlink path");
+		unlink(path0);
+		return (-1);
+	}
+	if ((value = strdup(value0)) == NULL) {
+		syswarn(1, errno, "defered symlink value");
+		unlink(path);
+		free(path);
+		return (-1);
+	}
+
+	/* now check the hash table for conflicting entry */
+	indx = (sb.st_ino ^ sb.st_dev) % SL_TAB_SZ;
+	for (s = slitab[indx]; s != NULL; s = s->sli_fow) {
+		if (s->sli_ino != sb.st_ino || s->sli_dev != sb.st_dev)
+			continue;
+
+		/*
+		 * One of our placeholders got removed behind our back and
+		 * we've reused the inode.  Weird, but clean up the mess.
+		 */
+		free(s->sli_value);
+		free(s->sli_paths.sp_path);
+		p = s->sli_paths.sp_next;
+		while (p != NULL) {
+			struct slpath *next_p = p->sp_next;
+
+			free(p->sp_path);
+			free(p);
+			p = next_p;
+		}
+		goto set_value;
+	}
+
+	/* Normal case: create a new node */
+	if ((s = malloc(sizeof *s)) == NULL) {
+		syswarn(1, errno, "defered symlink");
+		unlink(path);
+		free(path);
+		free(value);
+		return (-1);
+	}
+	s->sli_ino = sb.st_ino;
+	s->sli_dev = sb.st_dev;
+	s->sli_fow = slitab[indx];
+	slitab[indx] = s;
+
+set_value:
+	s->sli_paths.sp_path = path;
+	s->sli_paths.sp_next = NULL;
+	s->sli_value = value;
+	s->sli_mode = mode;
+	return (0);
+}
+
+/*
+ * sltab_add_link()
+ *	A hardlink was created; if it looks like a placeholder, handle the
+ *	tracking.
+ * Return:
+ *	0 if things are ok, -1 if something went wrong
+ */
+
+int
+sltab_add_link(const char *path, const struct stat *sb)
+{
+	struct slinode *s;
+	struct slpath *p;
+	u_int indx;
+
+	if (!S_ISREG(sb->st_mode) || sb->st_size != 0)
+		return (1);
+
+	/* find the hash table entry for this hardlink */
+	indx = (sb->st_ino ^ sb->st_dev) % SL_TAB_SZ;
+	for (s = slitab[indx]; s != NULL; s = s->sli_fow) {
+		if (s->sli_ino != sb->st_ino || s->sli_dev != sb->st_dev)
+			continue;
+
+		if ((p = malloc(sizeof *p)) == NULL) {
+			syswarn(1, errno, "deferred symlink hardlink");
+			return (-1);
+		}
+		if ((p->sp_path = strdup(path)) == NULL) {
+			syswarn(1, errno, "defered symlink hardlink path");
+			free(p);
+			return (-1);
+		}
+
+		/* link it in */
+		p->sp_next = s->sli_paths.sp_next;
+		s->sli_paths.sp_next = p;
+		return (0);
+	}
+
+	/* not found */
+	return (1);
+}
+
+
+static int
+sltab_process_one(struct slinode *s, struct slpath *p, const char *first,
+    int in_sig)
+{
+	struct stat sb;
+	char *path = p->sp_path;
+	mode_t mode;
+	int err;
+
+	/*
+	 * is it the expected placeholder?  This can fail legimately
+	 * if the archive overwrote the link with another, later entry,
+	 * so don't warn.
+	 */
+	if (stat(path, &sb) != 0 || !S_ISREG(sb.st_mode) || sb.st_size != 0 ||
+	    sb.st_ino != s->sli_ino || sb.st_dev != s->sli_dev)
+		return (0);
+
+	if (unlink(path) && errno != ENOENT) {
+		if (!in_sig)
+			syswarn(1, errno, "deferred symlink removal");
+		return (0);
+	}
+
+	err = 0;
+	if (first != NULL) {
+		/* add another hardlink to the existing symlink */
+		if (linkat(AT_FDCWD, first, AT_FDCWD, path, 0) == 0)
+			return (0);
+
+		/*
+		 * Couldn't hardlink the symlink for some reason, so we'll
+		 * try creating it as its own symlink, but save the error
+		 * for reporting if that fails.
+		 */
+		err = errno;
+	}
+
+	if (symlink(s->sli_value, path)) {
+		if (!in_sig) {
+			const char *qualifier = "";
+			if (err)
+				qualifier = " hardlink";
+			else
+				err = errno;
+
+			syswarn(1, err, "deferred symlink%s: %s",
+			    qualifier, path);
+		}
+		return (0);
+	}
+
+	/* success, so set the id, mode, and times */
+	mode = s->sli_mode;
+	if (pids) {
+		/* if can't set the ids, force the set[ug]id bits off */
+		if (set_ids(path, sb.st_uid, sb.st_gid))
+			mode &= ~(SETBITS);
+	}
+
+	if (pmode)
+		set_pmode(path, mode);
+
+	if (patime || pmtime)
+		set_ftime(path, sb.st_mtime, sb.st_atime, 0);
+
+	/*
+	 * If we tried to link to first but failed, then this new symlink
+	 * might be a better one to try in the future.  Guess from the errno.
+	 */
+	if (err == 0 || err == ENOENT || err == EMLINK || err == EOPNOTSUPP)
+		return (1);
+	return (0);
+}
+
+/*
+ * sltab_process()
+ *	Do all the delayed process for escape symlinks
+ */
+
+void
+sltab_process(int in_sig)
+{
+	struct slinode *s;
+	struct slpath *p;
+	char *first;
+	u_int indx;
+
+	if (slitab == NULL)
+		return;
+
+	/* walk across the entire hash table */
+	for (indx = 0; indx < SL_TAB_SZ; indx++) {
+		while ((s = slitab[indx]) != NULL) {
+			/* pop this entry */
+			slitab[indx] = s->sli_fow;
+
+			first = NULL;
+			p = &s->sli_paths;
+			while (1) {
+				struct slpath *next_p;
+
+				if (sltab_process_one(s, p, first, in_sig)) {
+					if (!in_sig)
+						free(first);
+					first = p->sp_path;
+				} else if (!in_sig)
+					free(p->sp_path);
+
+				if ((next_p = p->sp_next) == NULL)
+					break;
+				*p = *next_p;
+				if (!in_sig)
+					free(next_p);
+			}
+			if (!in_sig) {
+				free(first);
+				free(s->sli_value);
+				free(s);
+			}
+		}
+	}
+	if (!in_sig)
+		free(slitab);
+	slitab = NULL;
+}
+
 
 /*
  * Interactive rename table routines

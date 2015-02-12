@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.h,v 1.12 2015/02/11 23:14:46 guenther Exp $	*/
+/*	$OpenBSD: tables.h,v 1.13 2015/02/12 23:44:57 guenther Exp $	*/
 /*	$NetBSD: tables.h,v 1.3 1995/03/21 09:07:47 cgd Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #define N_TAB_SZ	541		/* interactive rename hash table */
 #define D_TAB_SZ	317		/* unique device mapping table */
 #define A_TAB_SZ	317		/* ftree dir access time reset table */
+#define SL_TAB_SZ	317		/* escape symlink tables */
 #define MAXKEYLEN	64		/* max number of chars for hash */
 #define DIRP_SIZE	64		/* initial size of created dir table */
 

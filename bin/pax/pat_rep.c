@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.35 2015/02/12 23:01:58 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.36 2015/02/12 23:44:57 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -580,6 +580,25 @@ range_match(char *pattern, int test)
 			ok = 1;
 	}
 	return (ok == negate ? NULL : pattern);
+}
+
+/*
+ * has_dotdot()
+ *	Returns true iff the supplied path contains a ".." component.
+ */
+
+int
+has_dotdot(const char *path)
+{
+	const char *p = path;
+
+	while ((p = strstr(p, "..")) != NULL) {
+		if ((p == path || p[-1] == '/') &&
+		    (p[2] == '/' || p[2] == '\0'))
+			return (1);
+		p += 2;
+	}
+	return (0);
 }
 
 /*
