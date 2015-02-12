@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.19 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.20 2015/02/12 04:56:03 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -282,7 +282,7 @@ static int i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 static void i915_hotplug_work_func(void *arg1)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)arg1;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	struct drm_mode_config *mode_config = &dev->mode_config;
 	struct intel_encoder *encoder;
 
@@ -363,7 +363,6 @@ static void notify_ring(struct drm_device *dev,
 static void gen6_pm_rps_work(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 pm_iir, pm_imr;
 	u8 new_delay;
 
@@ -389,11 +388,12 @@ static void gen6_pm_rps_work(void *arg1)
 	 */
 	if (!(new_delay > dev_priv->rps.max_delay ||
 	      new_delay < dev_priv->rps.min_delay)) {
-		gen6_set_rps(dev, new_delay);
+		gen6_set_rps(dev_priv->dev, new_delay);
 	}
 
 	mutex_unlock(&dev_priv->rps.hw_lock);
 }
+
 
 /**
  * ivybridge_parity_work - Workqueue called when a parity error interrupt
@@ -407,7 +407,6 @@ static void gen6_pm_rps_work(void *arg1)
 static void ivybridge_parity_work(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 error_status, row, bank, subbank;
 //	char *parity_event[5];
 	uint32_t misccpctl;
@@ -417,7 +416,7 @@ static void ivybridge_parity_work(void *arg1)
 	 * In order to prevent a get/put style interface, acquire struct mutex
 	 * any time we access those registers.
 	 */
-	mutex_lock(&dev->struct_mutex);
+	mutex_lock(&dev_priv->dev->struct_mutex);
 
 	misccpctl = I915_READ(GEN7_MISCCPCTL);
 	I915_WRITE(GEN7_MISCCPCTL, misccpctl & ~GEN7_DOP_CLOCK_GATE_ENABLE);
@@ -439,7 +438,7 @@ static void ivybridge_parity_work(void *arg1)
 	I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&dev_priv->dev->struct_mutex);
 
 #if 0
 	parity_event[0] = "L3_PARITY_ERROR=1";
@@ -447,9 +446,7 @@ static void ivybridge_parity_work(void *arg1)
 	parity_event[2] = kasprintf(GFP_KERNEL, "BANK=%d", bank);
 	parity_event[3] = kasprintf(GFP_KERNEL, "SUBBANK=%d", subbank);
 	parity_event[4] = NULL;
-#endif
 
-#ifdef notyet
 	kobject_uevent_env(&dev_priv->dev->primary->kdev.kobj,
 			   KOBJ_CHANGE, parity_event);
 #endif
@@ -458,9 +455,9 @@ static void ivybridge_parity_work(void *arg1)
 		  row, bank, subbank);
 
 #if 0
-	free(parity_event[3], M_DRM, 0);
-	free(parity_event[2], M_DRM, 0);
-	free(parity_event[1], M_DRM, 0);
+	kfree(parity_event[3]);
+	kfree(parity_event[2]);
+	kfree(parity_event[1]);
 #endif
 }
 
@@ -531,7 +528,7 @@ static void gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 static int valleyview_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	u32 iir, gt_iir, pm_iir;
 	int ret = IRQ_NONE;
 	unsigned long irqflags;
@@ -686,7 +683,7 @@ static void cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 static int ivybridge_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	u32 de_iir, gt_iir, de_ier, pm_iir;
 	int ret = IRQ_NONE;
 	int i;
@@ -759,7 +756,7 @@ static void ilk_gt_irq_handler(struct drm_device *dev,
 static int ironlake_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	int ret = IRQ_NONE;
 	u32 de_iir, gt_iir, de_ier, pch_iir, pm_iir;
 
@@ -842,7 +839,7 @@ done:
 static void i915_error_work_func(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 #if 0
 	char *error_event[] = { "ERROR=1", NULL };
 	char *reset_event[] = { "RESET=1", NULL };
@@ -1744,7 +1741,7 @@ static bool i915_hangcheck_hung(struct drm_device *dev)
 void i915_hangcheck_elapsed(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	uint32_t acthd[I915_NUM_RINGS], instdone[I915_NUM_INSTDONE_REG];
 	struct intel_ring_buffer *ring;
 	bool err = false, idle;
@@ -2158,7 +2155,7 @@ static int i8xx_irq_postinstall(struct drm_device *dev)
 static int i8xx_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	u16 iir, new_iir;
 	u32 pipe_stats[2];
 	unsigned long irqflags;
@@ -2336,7 +2333,7 @@ static int i915_irq_postinstall(struct drm_device *dev)
 static int i915_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	u32 iir, new_iir, pipe_stats[I915_MAX_PIPES];
 	unsigned long irqflags;
 	u32 flip_mask =
@@ -2573,7 +2570,7 @@ static int i965_irq_postinstall(struct drm_device *dev)
 static int i965_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	u32 iir, new_iir;
 	u32 pipe_stats[I915_MAX_PIPES];
 	unsigned long irqflags;

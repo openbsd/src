@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.83 2015/02/12 02:12:02 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.84 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2472,7 +2472,7 @@ i915_gem_retire_work_handler(void *arg1)
 	bool idle;
 	int i;
 
-	dev = (struct drm_device *)dev_priv->drmdev;
+	dev = dev_priv->dev;
 
 	/* Come back later if the device is busy... */
 	if (rw_enter(&dev->struct_mutex, RW_NOSLEEP | RW_WRITE)) {

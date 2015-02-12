@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.11 2015/02/12 02:12:02 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.12 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -222,12 +222,11 @@ static inline bool is_default_context(struct i915_hw_context *ctx)
 static int create_default_context(struct drm_i915_private *dev_priv)
 {
 	struct i915_hw_context *ctx;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int ret;
 
-	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
+	BUG_ON(!mutex_is_locked(&dev_priv->dev->struct_mutex));
 
-	ctx = create_hw_context(dev, NULL);
+	ctx = create_hw_context(dev_priv->dev, NULL);
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.24 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.25 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -883,7 +883,7 @@ void intel_ring_setup_status_page(struct intel_ring_buffer *ring)
 			mmio = BSD_HWS_PGA_GEN7;
 			break;
 		}
-	} else if (IS_GEN6(dev)) {
+	} else if (IS_GEN6(dev_priv->dev)) {
 		mmio = RING_HWS_PGA_GEN6(ring->mmio_base);
 	} else {
 		mmio = RING_HWS_PGA(ring->mmio_base);

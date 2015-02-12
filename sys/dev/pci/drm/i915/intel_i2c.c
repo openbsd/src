@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.3 2013/03/31 11:43:23 kettenis Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.4 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -276,7 +276,7 @@ intel_gpio_write_byte(void *cookie, u_int8_t byte, int flags)
 int
 intel_setup_gmbus(struct inteldrm_softc *dev_priv)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	int i;
 
 	if (HAS_PCH_SPLIT(dev))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.41 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.42 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -1105,11 +1105,10 @@ static void assert_pch_pll(struct drm_i915_private *dev_priv,
 			   struct intel_crtc *crtc,
 			   bool state)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 val;
 	bool cur_state;
 
-	if (HAS_PCH_LPT(dev)) {
+	if (HAS_PCH_LPT(dev_priv->dev)) {
 		DRM_DEBUG_DRIVER("LPT detected: skipping PCH PLL test\n");
 		return;
 	}
@@ -1125,7 +1124,7 @@ static void assert_pch_pll(struct drm_i915_private *dev_priv,
 	     pll->pll_reg, state_string(state), state_string(cur_state), val);
 
 	/* Make sure the selected PLL is correctly attached to the transcoder */
-	if (crtc && HAS_PCH_CPT(dev)) {
+	if (crtc && HAS_PCH_CPT(dev_priv->dev)) {
 		u32 pch_dpll;
 
 		pch_dpll = I915_READ(PCH_DPLL_SEL);
@@ -1149,14 +1148,13 @@ static void assert_pch_pll(struct drm_i915_private *dev_priv,
 static void assert_fdi_tx(struct drm_i915_private *dev_priv,
 			  enum pipe pipe, bool state)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int reg;
 	u32 val;
 	bool cur_state;
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
 								      pipe);
 
-	if (HAS_DDI(dev)) {
+	if (HAS_DDI(dev_priv->dev)) {
 		/* DDI does not have a specific FDI_TX register */
 		reg = TRANS_DDI_FUNC_CTL(cpu_transcoder);
 		val = I915_READ(reg);
@@ -1193,7 +1191,6 @@ static void assert_fdi_rx(struct drm_i915_private *dev_priv,
 static void assert_fdi_tx_pll_enabled(struct drm_i915_private *dev_priv,
 				      enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int reg;
 	u32 val;
 
@@ -1202,7 +1199,7 @@ static void assert_fdi_tx_pll_enabled(struct drm_i915_private *dev_priv,
 		return;
 
 	/* On Haswell, DDI ports are responsible for the FDI PLL setup */
-	if (HAS_DDI(dev))
+	if (HAS_DDI(dev_priv->dev))
 		return;
 
 	reg = FDI_TX_CTL(pipe);
@@ -1224,13 +1221,12 @@ static void assert_fdi_rx_pll_enabled(struct drm_i915_private *dev_priv,
 static void assert_panel_unlocked(struct drm_i915_private *dev_priv,
 				  enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int pp_reg, lvds_reg;
 	u32 val;
 	enum pipe panel_pipe = PIPE_A;
 	bool locked = true;
 
-	if (HAS_PCH_SPLIT(dev)) {
+	if (HAS_PCH_SPLIT(dev_priv->dev)) {
 		pp_reg = PCH_PP_CONTROL;
 		lvds_reg = PCH_LVDS;
 	} else {
@@ -1293,13 +1289,12 @@ static void assert_plane(struct drm_i915_private *dev_priv,
 static void assert_planes_disabled(struct drm_i915_private *dev_priv,
 				   enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int reg, i;
 	u32 val;
 	int cur_pipe;
 
 	/* Planes are fixed to pipes on ILK+ */
-	if (HAS_PCH_SPLIT(dev)) {
+	if (HAS_PCH_SPLIT(dev_priv->dev)) {
 		reg = DSPCNTR(pipe);
 		val = I915_READ(reg);
 		WARN((val & DISPLAY_PLANE_ENABLE),
@@ -1322,11 +1317,10 @@ static void assert_planes_disabled(struct drm_i915_private *dev_priv,
 
 static void assert_pch_refclk_enabled(struct drm_i915_private *dev_priv)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 val;
 	bool enabled;
 
-	if (HAS_PCH_LPT(dev)) {
+	if (HAS_PCH_LPT(dev_priv->dev)) {
 		DRM_DEBUG_DRIVER("LPT does not has PCH refclk, skipping check\n");
 		return;
 	}
@@ -1355,12 +1349,10 @@ static void assert_transcoder_disabled(struct drm_i915_private *dev_priv,
 static bool dp_pipe_enabled(struct drm_i915_private *dev_priv,
 			    enum pipe pipe, u32 port_sel, u32 val)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-
 	if ((val & DP_PORT_EN) == 0)
 		return false;
 
-	if (HAS_PCH_CPT(dev)) {
+	if (HAS_PCH_CPT(dev_priv->dev)) {
 		u32	trans_dp_ctl_reg = TRANS_DP_CTL(pipe);
 		u32	trans_dp_ctl = I915_READ(trans_dp_ctl_reg);
 		if ((trans_dp_ctl & TRANS_DP_PORT_SEL_MASK) != port_sel)
@@ -1375,12 +1367,10 @@ static bool dp_pipe_enabled(struct drm_i915_private *dev_priv,
 static bool hdmi_pipe_enabled(struct drm_i915_private *dev_priv,
 			      enum pipe pipe, u32 val)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-
 	if ((val & PORT_ENABLE) == 0)
 		return false;
 
-	if (HAS_PCH_CPT(dev)) {
+	if (HAS_PCH_CPT(dev_priv->dev)) {
 		if ((val & PORT_TRANS_SEL_MASK) != PORT_TRANS_SEL_CPT(pipe))
 			return false;
 	} else {
@@ -1393,12 +1383,10 @@ static bool hdmi_pipe_enabled(struct drm_i915_private *dev_priv,
 static bool lvds_pipe_enabled(struct drm_i915_private *dev_priv,
 			      enum pipe pipe, u32 val)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-
 	if ((val & LVDS_PORT_EN) == 0)
 		return false;
 
-	if (HAS_PCH_CPT(dev)) {
+	if (HAS_PCH_CPT(dev_priv->dev)) {
 		if ((val & PORT_TRANS_SEL_MASK) != PORT_TRANS_SEL_CPT(pipe))
 			return false;
 	} else {
@@ -1411,11 +1399,9 @@ static bool lvds_pipe_enabled(struct drm_i915_private *dev_priv,
 static bool adpa_pipe_enabled(struct drm_i915_private *dev_priv,
 			      enum pipe pipe, u32 val)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-
 	if ((val & ADPA_DAC_ENABLE) == 0)
 		return false;
-	if (HAS_PCH_CPT(dev)) {
+	if (HAS_PCH_CPT(dev_priv->dev)) {
 		if ((val & PORT_TRANS_SEL_MASK) != PORT_TRANS_SEL_CPT(pipe))
 			return false;
 	} else {
@@ -1428,13 +1414,12 @@ static bool adpa_pipe_enabled(struct drm_i915_private *dev_priv,
 static void assert_pch_dp_disabled(struct drm_i915_private *dev_priv,
 				   enum pipe pipe, int reg, u32 port_sel)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 val = I915_READ(reg);
 	WARN(dp_pipe_enabled(dev_priv, pipe, port_sel, val),
 	     "PCH DP (0x%08x) enabled on transcoder %c, should be disabled\n",
 	     reg, pipe_name(pipe));
 
-	WARN(HAS_PCH_IBX(dev) && (val & DP_PORT_EN) == 0
+	WARN(HAS_PCH_IBX(dev_priv->dev) && (val & DP_PORT_EN) == 0
 	     && (val & DP_PIPEB_SELECT),
 	     "IBX PCH dp port still using transcoder B\n");
 }
@@ -1442,13 +1427,12 @@ static void assert_pch_dp_disabled(struct drm_i915_private *dev_priv,
 static void assert_pch_hdmi_disabled(struct drm_i915_private *dev_priv,
 				     enum pipe pipe, int reg)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 val = I915_READ(reg);
 	WARN(hdmi_pipe_enabled(dev_priv, pipe, val),
 	     "PCH HDMI (0x%08x) enabled on transcoder %c, should be disabled\n",
 	     reg, pipe_name(pipe));
 
-	WARN(HAS_PCH_IBX(dev) && (val & PORT_ENABLE) == 0
+	WARN(HAS_PCH_IBX(dev_priv->dev) && (val & PORT_ENABLE) == 0
 	     && (val & SDVO_PIPE_B_SELECT),
 	     "IBX PCH hdmi port still using transcoder B\n");
 }
@@ -1495,15 +1479,14 @@ static void assert_pch_ports_disabled(struct drm_i915_private *dev_priv,
  */
 static void intel_enable_pll(struct drm_i915_private *dev_priv, enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int reg;
 	u32 val;
 
 	/* No really, not for ILK+ */
-	BUG_ON(!IS_VALLEYVIEW(dev) && dev_priv->info->gen >= 5);
+	BUG_ON(!IS_VALLEYVIEW(dev_priv->dev) && dev_priv->info->gen >= 5);
 
 	/* PLL is protected by panel, make sure we can write it */
-	if (IS_MOBILE(dev) && !IS_I830(dev))
+	if (IS_MOBILE(dev_priv->dev) && !IS_I830(dev_priv->dev))
 		assert_panel_unlocked(dev_priv, pipe);
 
 	reg = DPLL(pipe);
@@ -1732,7 +1715,7 @@ static void intel_disable_pch_pll(struct intel_crtc *intel_crtc)
 static void ironlake_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 					   enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
 	uint32_t reg, val, pipeconf_val;
 	int retries;
@@ -1762,7 +1745,7 @@ static void ironlake_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 	val = I915_READ(reg);
 	pipeconf_val = I915_READ(PIPECONF(pipe));
 
-	if (HAS_PCH_IBX(dev)) {
+	if (HAS_PCH_IBX(dev_priv->dev)) {
 		/*
 		 * make the BPC in transcoder be consistent with
 		 * that in pipeconf reg.
@@ -1773,7 +1756,7 @@ static void ironlake_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 
 	val &= ~TRANS_INTERLACE_MASK;
 	if ((pipeconf_val & PIPECONF_INTERLACE_MASK) == PIPECONF_INTERLACED_ILK)
-		if (HAS_PCH_IBX(dev) &&
+		if (HAS_PCH_IBX(dev_priv->dev) &&
 		    intel_pipe_has_type(crtc, INTEL_OUTPUT_SDVO))
 			val |= TRANS_LEGACY_INTERLACED_ILK;
 		else
@@ -1831,7 +1814,7 @@ static void lpt_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 static void ironlake_disable_pch_transcoder(struct drm_i915_private *dev_priv,
 					    enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	uint32_t reg, val;
 	int retries;
 
@@ -1904,14 +1887,13 @@ static void lpt_disable_pch_transcoder(struct drm_i915_private *dev_priv)
 static void intel_enable_pipe(struct drm_i915_private *dev_priv, enum pipe pipe,
 			      bool pch_port)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
 								      pipe);
 	enum transcoder pch_transcoder;
 	int reg;
 	u32 val;
 
-	if (IS_HASWELL(dev))
+	if (IS_HASWELL(dev_priv->dev))
 		pch_transcoder = TRANSCODER_A;
 	else
 		pch_transcoder = pipe;
@@ -1921,7 +1903,7 @@ static void intel_enable_pipe(struct drm_i915_private *dev_priv, enum pipe pipe,
 	 * a plane.  On ILK+ the pipe PLLs are integrated, so we don't
 	 * need the check.
 	 */
-	if (!HAS_PCH_SPLIT(dev))
+	if (!HAS_PCH_SPLIT(dev_priv->dev))
 		assert_pll_enabled(dev_priv, pipe);
 	else {
 		if (pch_port) {
@@ -1938,7 +1920,7 @@ static void intel_enable_pipe(struct drm_i915_private *dev_priv, enum pipe pipe,
 		return;
 
 	I915_WRITE(reg, val | PIPECONF_ENABLE);
-	intel_wait_for_vblank(dev, pipe);
+	intel_wait_for_vblank(dev_priv->dev, pipe);
 }
 
 /**
@@ -1956,7 +1938,6 @@ static void intel_enable_pipe(struct drm_i915_private *dev_priv, enum pipe pipe,
 static void intel_disable_pipe(struct drm_i915_private *dev_priv,
 			       enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
 								      pipe);
 	int reg;
@@ -1978,7 +1959,7 @@ static void intel_disable_pipe(struct drm_i915_private *dev_priv,
 		return;
 
 	I915_WRITE(reg, val & ~PIPECONF_ENABLE);
-	intel_wait_for_pipe_off(dev, pipe);
+	intel_wait_for_pipe_off(dev_priv->dev, pipe);
 }
 
 /*
@@ -2005,7 +1986,6 @@ void intel_flush_display_plane(struct drm_i915_private *dev_priv,
 static void intel_enable_plane(struct drm_i915_private *dev_priv,
 			       enum plane plane, enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int reg;
 	u32 val;
 
@@ -2019,7 +1999,7 @@ static void intel_enable_plane(struct drm_i915_private *dev_priv,
 
 	I915_WRITE(reg, val | DISPLAY_PLANE_ENABLE);
 	intel_flush_display_plane(dev_priv, plane);
-	intel_wait_for_vblank(dev, pipe);
+	intel_wait_for_vblank(dev_priv->dev, pipe);
 }
 
 /**
@@ -2033,7 +2013,6 @@ static void intel_enable_plane(struct drm_i915_private *dev_priv,
 static void intel_disable_plane(struct drm_i915_private *dev_priv,
 				enum plane plane, enum pipe pipe)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	int reg;
 	u32 val;
 
@@ -2044,7 +2023,7 @@ static void intel_disable_plane(struct drm_i915_private *dev_priv,
 
 	I915_WRITE(reg, val & ~DISPLAY_PLANE_ENABLE);
 	intel_flush_display_plane(dev_priv, plane);
-	intel_wait_for_vblank(dev, pipe);
+	intel_wait_for_vblank(dev_priv->dev, pipe);
 }
 
 int
@@ -3337,7 +3316,6 @@ static void intel_put_pch_pll(struct intel_crtc *intel_crtc)
 static struct intel_pch_pll *intel_get_pch_pll(struct intel_crtc *intel_crtc, u32 dpll, u32 fp)
 {
 	struct drm_i915_private *dev_priv = intel_crtc->base.dev->dev_private;
-	struct drm_device *dev = intel_crtc->base.dev;
 	struct intel_pch_pll *pll;
 	int i;
 
@@ -3348,7 +3326,7 @@ static struct intel_pch_pll *intel_get_pch_pll(struct intel_crtc *intel_crtc, u3
 		goto prepare;
 	}
 
-	if (HAS_PCH_IBX(dev)) {
+	if (HAS_PCH_IBX(dev_priv->dev)) {
 		/* Ironlake PCH has a fixed PLL->PCH pipe mapping. */
 		i = intel_crtc->pipe;
 		pll = &dev_priv->pch_plls[i];

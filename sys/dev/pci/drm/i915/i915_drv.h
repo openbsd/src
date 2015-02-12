@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.55 2015/01/27 03:17:36 dlg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.56 2015/02/12 04:56:03 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -532,8 +532,8 @@ struct intel_l3_parity {
  * XXX fence lock ,object lock
  */
 struct inteldrm_softc {
-	struct device		 dev;
-	struct device		*drmdev;
+	struct device		 sc_dev;
+	struct drm_device	*dev;
 	bus_dma_tag_t		 dmat;
 	bus_space_tag_t		 bst;
 	struct agp_map		*agph;

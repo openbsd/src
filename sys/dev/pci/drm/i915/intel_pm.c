@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.27 2015/02/12 02:12:02 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.28 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2604,7 +2604,7 @@ static void gen6_enable_rps(struct drm_device *dev)
 	I915_WRITE(GEN6_RC6pp_THRESHOLD, 64000); /* unused */
 
 	/* Check if we are enabling RC6 */
-	rc6_mode = intel_enable_rc6(dev);
+	rc6_mode = intel_enable_rc6(dev_priv->dev);
 	if (rc6_mode & INTEL_RC6_ENABLE)
 		rc6_mask |= GEN6_RC_CTL_RC6_ENABLE;
 
@@ -2665,7 +2665,7 @@ static void gen6_enable_rps(struct drm_device *dev)
 		DRM_DEBUG_DRIVER("Failed to set the min frequency\n");
 	}
 
-	gen6_set_rps(dev, (gt_perf_status & 0xff00) >> 8);
+	gen6_set_rps(dev_priv->dev, (gt_perf_status & 0xff00) >> 8);
 
 	/* requires MSI enabled */
 	I915_WRITE(GEN6_PMIER, GEN6_PM_DEFERRED_EVENTS);
@@ -3335,7 +3335,6 @@ out_unlock:
 bool i915_gpu_turbo_disable(void)
 {
 	struct drm_i915_private *dev_priv;
-	struct drm_device *dev;
 	bool ret = true;
 
 	spin_lock_irq(&mchdev_lock);
@@ -3344,10 +3343,10 @@ bool i915_gpu_turbo_disable(void)
 		goto out_unlock;
 	}
 	dev_priv = i915_mch_dev;
-	dev = (struct drm_device *)dev_priv->drmdev;
+
 	dev_priv->ips.max_delay = dev_priv->ips.fstart;
 
-	if (!ironlake_set_drps(dev, dev_priv->ips.fstart))
+	if (!ironlake_set_drps(dev_priv->dev, dev_priv->ips.fstart))
 		ret = false;
 
 out_unlock:
@@ -3394,7 +3393,7 @@ void intel_gpu_ips_teardown(void)
 	spin_lock_irq(&mchdev_lock);
 	i915_mch_dev = NULL;
 	spin_unlock_irq(&mchdev_lock);
-} 
+}
 static void intel_init_emon(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -3485,7 +3484,7 @@ void intel_disable_gt_powersave(struct drm_device *dev)
 static void intel_gen6_powersave_work(void *arg1)
 {
 	drm_i915_private_t *dev_priv = arg1;
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 
 	mutex_lock(&dev_priv->rps.hw_lock);
 	gen6_enable_rps(dev);
@@ -4260,11 +4259,10 @@ void intel_init_pm(struct drm_device *dev)
 
 static void __gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 gt_thread_status_mask;
 	int retries;
 
-	if (IS_HASWELL(dev))
+	if (IS_HASWELL(dev_priv->dev))
 		gt_thread_status_mask = GEN6_GT_THREAD_STATUS_CORE_MASK_HSW;
 	else
 		gt_thread_status_mask = GEN6_GT_THREAD_STATUS_CORE_MASK;
@@ -4290,11 +4288,10 @@ static void __gen6_gt_force_wake_reset(struct drm_i915_private *dev_priv)
 
 static void __gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 forcewake_ack;
 	int count;
 
-	if (IS_HASWELL(dev))
+	if (IS_HASWELL(dev_priv->dev))
 		forcewake_ack = FORCEWAKE_ACK_HSW;
 	else
 		forcewake_ack = FORCEWAKE_ACK;
@@ -4322,11 +4319,10 @@ static void __gen6_gt_force_wake_mt_reset(struct drm_i915_private *dev_priv)
 
 static void __gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 forcewake_ack;
 	int count;
 
-	if (IS_HASWELL(dev))
+	if (IS_HASWELL(dev_priv->dev))
 		forcewake_ack = FORCEWAKE_ACK_HSW;
 	else
 		forcewake_ack = FORCEWAKE_MT_ACK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.8 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.9 2015/02/12 04:56:03 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -342,7 +342,7 @@ static void
 parse_general_features(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	struct bdb_general_features *general;
 
 	general = find_section(bdb, BDB_GENERAL_FEATURES);
@@ -479,7 +479,7 @@ static void
 parse_driver_features(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 	struct bdb_driver_features *driver;
 
 	driver = find_section(bdb, BDB_DRIVER_FEATURES);
@@ -497,14 +497,13 @@ parse_driver_features(struct drm_i915_private *dev_priv,
 static void
 parse_edp(struct drm_i915_private *dev_priv, struct bdb_header *bdb)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	struct bdb_edp *edp;
 	struct edp_power_seq *edp_pps;
 	struct edp_link_params *edp_link_params;
 
 	edp = find_section(bdb, BDB_EDP);
 	if (!edp) {
-		if (SUPPORTS_EDP(dev) && dev_priv->edp.support)
+		if (SUPPORTS_EDP(dev_priv->dev) && dev_priv->edp.support)
 			DRM_DEBUG_KMS("No eDP BDB found but eDP panel supported.\n");
 		return;
 	}
@@ -639,7 +638,7 @@ parse_device_mapping(struct drm_i915_private *dev_priv,
 static void
 init_vbt_defaults(struct drm_i915_private *dev_priv)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	struct drm_device *dev = dev_priv->dev;
 
 	dev_priv->crt_ddc_pin = GMBUS_PORT_VGADDC;
 
