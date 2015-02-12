@@ -121,7 +121,8 @@ hashinfo_compare(const void *a, const void *b)
 	rv = hia->hash - hib->hash;
 	if (rv != 0)
 		return (rv);
-	rv = bcmp(hia->fingerprint, hib->fingerprint, sizeof(hia->fingerprint));
+	rv = memcmp(hia->fingerprint, hib->fingerprint,
+	    sizeof(hia->fingerprint));
 	if (rv != 0)
 		return (rv);
 	return strcmp(hia->filename, hib->filename);
@@ -404,7 +405,8 @@ certhash_index(struct hashinfo *head, const char *name)
 	for (entry = head; entry != NULL; entry = entry->next) {
 		if (last != NULL) {
 			if (entry->hash == last->hash) {
-				if (bcmp(entry->fingerprint, last->fingerprint,
+				if (memcmp(entry->fingerprint,
+				    last->fingerprint,
 				    sizeof(entry->fingerprint)) == 0) {
 					fprintf(stderr, "WARNING: duplicate %s "
 					    "in %s (using %s), ignoring...\n",
