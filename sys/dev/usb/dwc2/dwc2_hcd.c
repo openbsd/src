@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.11 2015/02/11 01:26:52 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.12 2015/02/12 06:46:23 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $");
  * is integrated and the driver is stable
  */
 #ifdef VERBOSE_DEBUG
-static void dwc2_dump_channel_info(struct dwc2_hsotg *hsotg,
+STATIC void dwc2_dump_channel_info(struct dwc2_hsotg *hsotg,
 				   struct dwc2_host_chan *chan)
 {
 	int num_channels = hsotg->core_params->host_channels;
@@ -142,7 +142,7 @@ static void dwc2_dump_channel_info(struct dwc2_hsotg *hsotg,
  *
  * Must be called with interrupt disabled and spinlock held
  */
-static void dwc2_kill_urbs_in_qh_list(struct dwc2_hsotg *hsotg,
+STATIC void dwc2_kill_urbs_in_qh_list(struct dwc2_hsotg *hsotg,
 				      struct list_head *qh_list)
 {
 	struct dwc2_qh *qh, *qh_tmp;
@@ -157,7 +157,7 @@ static void dwc2_kill_urbs_in_qh_list(struct dwc2_hsotg *hsotg,
 	}
 }
 
-static void dwc2_qh_list_free(struct dwc2_hsotg *hsotg,
+STATIC void dwc2_qh_list_free(struct dwc2_hsotg *hsotg,
 			      struct list_head *qh_list)
 {
 	struct dwc2_qtd *qtd, *qtd_tmp;
@@ -197,7 +197,7 @@ static void dwc2_qh_list_free(struct dwc2_hsotg *hsotg,
  *
  * Must be called with interrupt disabled and spinlock held
  */
-static void dwc2_kill_all_urbs(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_kill_all_urbs(struct dwc2_hsotg *hsotg)
 {
 	dwc2_kill_urbs_in_qh_list(hsotg, &hsotg->non_periodic_sched_inactive);
 	dwc2_kill_urbs_in_qh_list(hsotg, &hsotg->non_periodic_sched_active);
@@ -232,7 +232,7 @@ void dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 }
 
 /* Must be called with interrupt disabled and spinlock held */
-static void dwc2_hcd_cleanup_channels(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_hcd_cleanup_channels(struct dwc2_hsotg *hsotg)
 {
 	int num_channels = hsotg->core_params->host_channels;
 	struct dwc2_host_chan *channel;
@@ -333,7 +333,7 @@ void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg)
  *
  * @hsotg: Pointer to struct dwc2_hsotg
  */
-static void dwc2_hcd_rem_wakeup(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_hcd_rem_wakeup(struct dwc2_hsotg *hsotg)
 {
 	if (hsotg->lx_state == DWC2_L2)
 		hsotg->flags.b.port_suspend_change = 1;
@@ -538,7 +538,7 @@ dwc2_hcd_reinit(struct dwc2_hsotg *hsotg)
 	dwc2_core_host_init(hsotg);
 }
 
-static void dwc2_hc_init_split(struct dwc2_hsotg *hsotg,
+STATIC void dwc2_hc_init_split(struct dwc2_hsotg *hsotg,
 			       struct dwc2_host_chan *chan,
 			       struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 {
@@ -552,7 +552,7 @@ static void dwc2_hc_init_split(struct dwc2_hsotg *hsotg,
 	chan->hub_port = (u8)hub_port;
 }
 
-static void *dwc2_hc_init_xfer_data(struct dwc2_hsotg *hsotg,
+STATIC void *dwc2_hc_init_xfer_data(struct dwc2_hsotg *hsotg,
 			       struct dwc2_host_chan *chan,
 			       struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 {
@@ -570,7 +570,7 @@ static void *dwc2_hc_init_xfer_data(struct dwc2_hsotg *hsotg,
 	return NULL;
 }
 
-static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
+STATIC void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 			       struct dwc2_host_chan *chan,
 			       struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 {
@@ -671,7 +671,7 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 	return bufptr;
 }
 
-static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
+STATIC int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 				   struct dwc2_host_chan *chan, void *bufptr)
 {
 	u32 buf_size;
@@ -719,7 +719,7 @@ static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
  * @qh:    Transactions from the first QTD for this QH are selected and assigned
  *         to a free host channel
  */
-static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
+STATIC int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	struct dwc2_host_chan *chan;
 	struct dwc2_hcd_urb *urb;
@@ -960,7 +960,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
  *
  * Must be called with interrupt disabled and spinlock held
  */
-static int dwc2_queue_transaction(struct dwc2_hsotg *hsotg,
+STATIC int dwc2_queue_transaction(struct dwc2_hsotg *hsotg,
 				  struct dwc2_host_chan *chan,
 				  u16 fifo_dwords_avail)
 {
@@ -1017,7 +1017,7 @@ static int dwc2_queue_transaction(struct dwc2_hsotg *hsotg,
  *
  * Must be called with interrupt disabled and spinlock held
  */
-static void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 {
 	struct list_head *qh_ptr;
 	struct dwc2_qh *qh;
@@ -1157,7 +1157,7 @@ static void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
  *
  * Must be called with interrupt disabled and spinlock held
  */
-static void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 {
 	struct list_head *orig_qh_ptr;
 	struct dwc2_qh *qh;
@@ -1393,7 +1393,7 @@ void dwc2_wakeup_detected(void * data)
 }
 
 /* Must NOT be called with interrupt disabled or spinlock held */
-static void dwc2_port_suspend(struct dwc2_hsotg *hsotg, u16 windex)
+STATIC void dwc2_port_suspend(struct dwc2_hsotg *hsotg, u16 windex)
 {
 	unsigned long flags;
 	u32 hprt0;
@@ -2079,7 +2079,7 @@ dwc2_hcd_reset_func(struct task *work)
  * Frees secondary storage associated with the dwc2_hsotg structure contained
  * in the struct usb_hcd field
  */
-static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 {
 	u32 ahbcfg;
 	u32 dctl;
@@ -2140,7 +2140,7 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 	timeout_del(&hsotg->wkp_timer);
 }
 
-static void dwc2_hcd_release(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_hcd_release(struct dwc2_hsotg *hsotg)
 {
 	/* Turn off all host-specific interrupts */
 	dwc2_disable_host_interrupts(hsotg);
@@ -2165,7 +2165,7 @@ void dwc2_set_all_params(struct dwc2_core_params *params, int value)
 
 /*
  * Initializes the HCD. This function allocates memory for and initializes the
- * static parts of the usb_hcd and dwc2_hsotg structures. It also registers the
+ * STATIC parts of the usb_hcd and dwc2_hsotg structures. It also registers the
  * USB bus with the core and calls the hc_driver->start() function. It returns
  * a negative error on failure.
  */

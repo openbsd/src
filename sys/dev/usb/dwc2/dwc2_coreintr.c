@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_coreintr.c,v 1.5 2015/02/10 23:10:21 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_coreintr.c,v 1.6 2015/02/12 06:46:23 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp 
 #include <dev/usb/dwc2/dwc2_hcd.h>
 
 #ifdef DWC2_DEBUG
-static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
+STATIC const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 {
 	switch (hsotg->op_state) {
 	case OTG_STATE_A_HOST:
@@ -95,7 +95,7 @@ static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
  *
  * @hsotg: Programming view of DWC_otg controller
  */
-static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
 {
 	u32 hprt0 = DWC2_READ_4(hsotg, HPRT0);
 
@@ -113,7 +113,7 @@ static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
  *
  * @hsotg: Programming view of DWC_otg controller
  */
-static void dwc2_handle_mode_mismatch_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_mode_mismatch_intr(struct dwc2_hsotg *hsotg)
 {
 	dev_warn(hsotg->dev, "Mode Mismatch Interrupt: currently in %s mode\n",
 		 dwc2_is_host_mode(hsotg) ? "Host" : "Device");
@@ -128,7 +128,7 @@ static void dwc2_handle_mode_mismatch_intr(struct dwc2_hsotg *hsotg)
  *
  * @hsotg: Programming view of DWC_otg controller
  */
-static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 {
 	u32 gotgint;
 	u32 gotgctl;
@@ -288,7 +288,7 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
  * Device to Host Mode transition or a Host to Device Mode transition. This only
  * occurs when the cable is connected/removed from the PHY connector.
  */
-static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 {
 	u32 gintmsk = DWC2_READ_4(hsotg, GINTMSK);
 
@@ -323,7 +323,7 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
  * in low power mode, this handler brings the controller out of low power mode
  * before turning on bus power.
  */
-static void dwc2_handle_session_req_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_session_req_intr(struct dwc2_hsotg *hsotg)
 {
 	dev_dbg(hsotg->dev, "++Session Request Interrupt++\n");
 
@@ -338,7 +338,7 @@ static void dwc2_handle_session_req_intr(struct dwc2_hsotg *hsotg)
  * power mode. The controller automatically begins resume signaling.
  * The handler schedules a time to stop resume signaling.
  */
-static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 {
 	dev_dbg(hsotg->dev, "++Resume or Remote Wakeup Detected Interrupt++\n");
 	dev_dbg(hsotg->dev, "%s lxstate = %d\n", __func__, hsotg->lx_state);
@@ -377,7 +377,7 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
  * This interrupt indicates that a device has been disconnected from the
  * root port
  */
-static void dwc2_handle_disconnect_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_disconnect_intr(struct dwc2_hsotg *hsotg)
 {
 	dev_dbg(hsotg->dev, "++Disconnect Detected Interrupt++ (%s) %s\n",
 		dwc2_is_host_mode(hsotg) ? "Host" : "Device",
@@ -397,7 +397,7 @@ static void dwc2_handle_disconnect_intr(struct dwc2_hsotg *hsotg)
  *
  * When power management is enabled the core will be put in low power mode.
  */
-static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
+STATIC void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 {
 	dev_dbg(hsotg->dev, "USB SUSPEND\n");
 
@@ -443,7 +443,7 @@ static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 /*
  * This function returns the Core Interrupt register
  */
-static u32 dwc2_read_common_intr(struct dwc2_hsotg *hsotg)
+STATIC u32 dwc2_read_common_intr(struct dwc2_hsotg *hsotg)
 {
 	u32 gintsts;
 	u32 gintmsk;

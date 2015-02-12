@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdqueue.c,v 1.5 2015/02/10 14:18:34 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcdqueue.c,v 1.6 2015/02/12 06:46:23 uebayasi Exp $	*/
 /*	$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp
 #include <dev/usb/dwc2/dwc2_core.h>
 #include <dev/usb/dwc2/dwc2_hcd.h>
 
-static u32 dwc2_calc_bus_time(struct dwc2_hsotg *, int, int, int, int);
+STATIC u32 dwc2_calc_bus_time(struct dwc2_hsotg *, int, int, int, int);
 
 /**
  * dwc2_qh_init() - Initializes a QH structure
@@ -78,7 +78,7 @@ static u32 dwc2_calc_bus_time(struct dwc2_hsotg *, int, int, int, int);
  *         the QH
  */
 #define SCHEDULE_SLOP 10
-static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
+STATIC void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			 struct dwc2_hcd_urb *urb)
 {
 	int dev_speed, hub_addr, hub_port;
@@ -210,7 +210,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
  *
  * Return: Pointer to the newly allocated QH, or NULL on error
  */
-static struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
+STATIC struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 					  struct dwc2_hcd_urb *urb,
 					  gfp_t mem_flags)
 {
@@ -270,7 +270,7 @@ void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
  *
  * Return: 0 if successful, negative error code otherwise
  */
-static int dwc2_periodic_channel_available(struct dwc2_hsotg *hsotg)
+STATIC int dwc2_periodic_channel_available(struct dwc2_hsotg *hsotg)
 {
 	/*
 	 * Currently assuming that there is a dedicated host channel for
@@ -308,7 +308,7 @@ static int dwc2_periodic_channel_available(struct dwc2_hsotg *hsotg)
  * For simplicity, this calculation assumes that all the transfers in the
  * periodic schedule may occur in the same (micro)frame
  */
-static int dwc2_check_periodic_bandwidth(struct dwc2_hsotg *hsotg,
+STATIC int dwc2_check_periodic_bandwidth(struct dwc2_hsotg *hsotg,
 					 struct dwc2_qh *qh)
 {
 	int status;
@@ -346,7 +346,7 @@ static int dwc2_check_periodic_bandwidth(struct dwc2_hsotg *hsotg,
  * keep each qh use in qh->frame_usecs
  * when surrendering the qh then donate the time back
  */
-static const unsigned short max_uframe_usecs[] = {
+STATIC const unsigned short max_uframe_usecs[] = {
 	100, 100, 100, 100, 100, 100, 30, 0
 };
 
@@ -358,7 +358,7 @@ void dwc2_hcd_init_usecs(struct dwc2_hsotg *hsotg)
 		hsotg->frame_usecs[i] = max_uframe_usecs[i];
 }
 
-static int dwc2_find_single_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
+STATIC int dwc2_find_single_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	unsigned short utime = qh->usecs;
 	int i;
@@ -377,7 +377,7 @@ static int dwc2_find_single_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 /*
  * use this for FS apps that can span multiple uframes
  */
-static int dwc2_find_multi_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
+STATIC int dwc2_find_multi_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	unsigned short utime = qh->usecs;
 	unsigned short xtime;
@@ -433,7 +433,7 @@ static int dwc2_find_multi_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	return -ENOSPC;
 }
 
-static int dwc2_find_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
+STATIC int dwc2_find_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	int ret;
 
@@ -460,7 +460,7 @@ static int dwc2_find_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
  *
  * Return: 0 if successful, negative error code otherwise
  */
-static int dwc2_check_max_xfer_size(struct dwc2_hsotg *hsotg,
+STATIC int dwc2_check_max_xfer_size(struct dwc2_hsotg *hsotg,
 				    struct dwc2_qh *qh)
 {
 	u32 max_xfer_size;
@@ -490,7 +490,7 @@ static int dwc2_check_max_xfer_size(struct dwc2_hsotg *hsotg,
  *
  * Return: 0 if successful, negative error code otherwise
  */
-static int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
+STATIC int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	int status;
 
@@ -563,7 +563,7 @@ static int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
  * @hsotg: The HCD state structure for the DWC OTG controller
  * @qh:	   QH for the periodic transfer
  */
-static void dwc2_deschedule_periodic(struct dwc2_hsotg *hsotg,
+STATIC void dwc2_deschedule_periodic(struct dwc2_hsotg *hsotg,
 				     struct dwc2_qh *qh)
 {
 	int i;
@@ -662,7 +662,7 @@ void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 /*
  * Schedule the next continuing periodic split transfer
  */
-static void dwc2_sched_periodic_split(struct dwc2_hsotg *hsotg,
+STATIC void dwc2_sched_periodic_split(struct dwc2_hsotg *hsotg,
 				      struct dwc2_qh *qh, u16 frame_number,
 				      int sched_next_periodic_split)
 {
@@ -859,7 +859,7 @@ void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
 #define FS_LS_HOST_DELAY	1000	/* nanoseconds */
 #define HUB_LS_SETUP		333	/* nanoseconds */
 
-static u32 dwc2_calc_bus_time(struct dwc2_hsotg *hsotg, int speed, int is_in,
+STATIC u32 dwc2_calc_bus_time(struct dwc2_hsotg *hsotg, int speed, int is_in,
 			      int is_isoc, int bytecount)
 {
 	unsigned long retval;
