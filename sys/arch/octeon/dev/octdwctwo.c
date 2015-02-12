@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.2 2015/02/12 00:23:58 uebayasi Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.3 2015/02/12 11:49:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -46,11 +46,12 @@
 
 struct octdwctwo_softc {
 	struct dwc2_softc	sc_dwc2;
-#if 0
+
 	/* USBN bus space */
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_regh;
-#endif
+	bus_space_handle_t	sc_regh2;
+
 	void			*sc_ih;
 };
 
@@ -58,6 +59,10 @@ int			octdwctwo_match(struct device *, void *, void *);
 void			octdwctwo_attach(struct device *, struct device *,
 			    void *);
 void			octdwctwo_attach_deferred(struct device *);
+int			octdwctwo_set_dma_addr(void *, dma_addr_t, int);
+u_int64_t		octdwctwo_reg2_rd(struct octdwctwo_softc *, bus_size_t);
+void			octdwctwo_reg2_wr(struct octdwctwo_softc *, bus_size_t,
+			    u_int64_t);
 
 const struct cfattach octdwctwo_ca = {
 	sizeof(struct octdwctwo_softc), octdwctwo_match, octdwctwo_attach,
@@ -95,6 +100,10 @@ static struct dwc2_core_params octdwctwo_params = {
 	.uframe_sched = 1,
 };
 
+static struct dwc2_core_dma_config octdwctwo_dma_config = {
+	.set_dma_addr = octdwctwo_set_dma_addr,
+};
+
 int
 octdwctwo_match(struct device *parent, void *match, void *aux)
 {
@@ -117,12 +126,13 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	    0, &sc->sc_dwc2.sc_ioh);
 	KASSERT(rc == 0);
 
-#if 0
 	sc->sc_bust = aa->aa_bust;
-	rc = bus_space_map(aa->aa_bust, USBN_2_BASE, USBN_2_SIZE,
+	rc = bus_space_map(sc->sc_bust, USBN_BASE, USBN_SIZE,
 	    0, &sc->sc_regh);
 	KASSERT(rc == 0);
-#endif
+	rc = bus_space_map(sc->sc_bust, USBN_2_BASE, USBN_2_SIZE,
+	    0, &sc->sc_regh2);
+	KASSERT(rc == 0);
 
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, dwc2_intr,
 	    (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
@@ -142,6 +152,39 @@ octdwctwo_attach_deferred(struct device *self)
 	error = dwc2_init(&sc->sc_dwc2);
 	if (error != 0)
 		return;
+	octdwctwo_dma_config.set_dma_addr_data = sc;
+	error = dwc2_dma_config(&sc->sc_dwc2, &octdwctwo_dma_config);
+	if (error != 0)
+		return;
 	sc->sc_dwc2.sc_child = config_found(&sc->sc_dwc2.sc_bus.bdev,
 	    &sc->sc_dwc2.sc_bus, usbctlprint);
+}
+
+int
+octdwctwo_set_dma_addr(void *data, dma_addr_t dma_addr, int ch)
+{
+	struct octdwctwo_softc *sc = data;
+
+	octdwctwo_reg2_wr(sc,
+	    USBN_DMA0_INB_CHN0_OFFSET + ch * 0x8, dma_addr);
+	octdwctwo_reg2_wr(sc,
+	    USBN_DMA0_OUTB_CHN0_OFFSET + ch * 0x8, dma_addr);
+	return 0;
+}
+
+u_int64_t
+octdwctwo_reg2_rd(struct octdwctwo_softc *sc, bus_size_t offset)
+{
+	u_int64_t value;
+
+	value = bus_space_read_8(sc->sc_bust, sc->sc_regh2, offset);
+	return value;
+}
+
+void
+octdwctwo_reg2_wr(struct octdwctwo_softc *sc, bus_size_t offset, u_int64_t value)
+{
+	bus_space_write_8(sc->sc_bust, sc->sc_regh2, offset, value);
+	/* guarantee completion of the store operation on RSL registers*/
+	bus_space_read_8(sc->sc_bust, sc->sc_regh2, offset);
 }
