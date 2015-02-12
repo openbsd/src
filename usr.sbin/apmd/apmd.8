@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.46 2014/12/31 11:37:40 dcoppa Exp $
+.\"	$OpenBSD: apmd.8,v 1.47 2015/02/12 14:03:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 31 2014 $
+.Dd $Mdocdate: February 12 2015 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -145,15 +145,15 @@ connected or not) changes, as well as after a resume (if the power
 status changed in the mean time).
 .Sh FILES
 .Bl -tag -width "/etc/apm/powerdownXX" -compact
-.It /dev/apmctl
+.It Pa /dev/apmctl
 Default device used to control the APM kernel driver.
 .Pp
-.It /etc/apm/suspend
-.It /etc/apm/hibernate
-.It /etc/apm/standby
-.It /etc/apm/resume
-.It /etc/apm/powerup
-.It /etc/apm/powerdown
+.It Pa /etc/apm/suspend
+.It Pa /etc/apm/hibernate
+.It Pa /etc/apm/standby
+.It Pa /etc/apm/resume
+.It Pa /etc/apm/powerup
+.It Pa /etc/apm/powerdown
 These files contain the host's customized actions.
 Each file must be an executable binary or shell script.
 A single program or script can be used to control all transitions
@@ -167,7 +167,7 @@ powerup,
 or
 powerdown.
 .Pp
-.It /var/run/apmdev
+.It Pa /var/run/apmdev
 Default
 .Ux Ns -domain
 socket used for communication with
