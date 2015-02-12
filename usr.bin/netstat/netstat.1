@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.75 2015/02/12 01:49:02 claudio Exp $
+.\"	$OpenBSD: netstat.1,v 1.76 2015/02/12 13:14:54 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -105,15 +105,15 @@ the specified wireless (802.11) device.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-With the default display,
-show the address of any protocol control blocks associated with sockets; used
-for debugging, e.g. with the
+Show the address of any protocol control blocks associated with sockets;
+useful for debugging e.g. with the
 .Fl P
 flag.
 When used with the
-.Fl -r
-flag it shows the internal pointers of the routing table.
-Only the super-user can use this option.
+.Fl r
+flag it shows the internal addresses of the routing table.
+Only the super-user can see these addresses;
+unprivileged users will see them as 0x0.
 .It Fl a
 With the default display,
 show the state of all sockets; normally sockets used by
@@ -231,7 +231,9 @@ flag.
 When used with the
 .Fl v
 option, also print socket, domain and protocol specific structures.
-Only the super-user can use this option.
+Only the super-user can use the
+.Fl P
+option.
 .It Fl p Ar protocol
 Restrict the output to
 .Ar protocol ,
