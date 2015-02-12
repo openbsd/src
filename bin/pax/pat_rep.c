@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.34 2014/05/24 18:51:00 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.35 2015/02/12 23:01:58 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -630,6 +630,30 @@ mod_name(ARCHD *arcn)
 		if (rmleadslash < 2) {
 			rmleadslash = 2;
 			paxwarn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+	if (rmleadslash) {
+		const char *last = NULL;
+		const char *p = arcn->name;
+
+		while ((p = strstr(p, "..")) != NULL) {
+			if ((p == arcn->name || p[-1] == '/') &&
+			    (p[2] == '/' || p[2] == '\0'))
+				last = p + 2;
+			p += 2;
+		}
+		if (last != NULL) {
+			last++;
+			paxwarn(1, "Removing leading \"%.*s\"",
+			    (int)(last - arcn->name), arcn->name);
+			arcn->nlen = strlen(last);
+			if (arcn->nlen > 0)
+				memmove(arcn->name, last, arcn->nlen + 1);
+			else {
+				arcn->name[0] = '.';
+				arcn->name[1] = '\0';
+				arcn->nlen = 1;
+			}
 		}
 	}
 
