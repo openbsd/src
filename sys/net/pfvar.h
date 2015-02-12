@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.411 2015/02/10 09:28:40 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.412 2015/02/12 01:24:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1815,7 +1815,7 @@ void	pf_change_a(struct pf_pdesc *, void *, u_int32_t);
 int	pf_check_proto_cksum(struct pf_pdesc *, int, int, u_int8_t,
 	    sa_family_t);
 int	pflog_packet(struct pf_pdesc *, u_int8_t, struct pf_rule *,
-	    struct pf_rule *, struct pf_ruleset *);
+	    struct pf_rule *, struct pf_ruleset *, struct pf_rule *);
 void	pf_send_deferred_syn(struct pf_state *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, sa_family_t);

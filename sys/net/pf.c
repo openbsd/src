@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.904 2015/02/10 09:28:40 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.905 2015/02/12 01:24:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -232,6 +232,9 @@ int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 void			 pf_counters_inc(int, struct pf_pdesc *,
 			    struct pf_state *, struct pf_rule *,
 			    struct pf_rule *);
+void			 pf_log_matches(struct pf_pdesc *, struct pf_rule *,
+			    struct pf_rule *, struct pf_ruleset *,
+			    struct pf_rule_slist *);
 
 extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
@@ -3254,9 +3257,10 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 					REASON_SET(&reason, PFRES_TRANSLATE);
 					goto cleanup;
 				}
-				if (r->log || act.log & PF_LOG_MATCHES) {
+				if (r->log) {
 					REASON_SET(&reason, PFRES_MATCH);
-					PFLOG_PACKET(pd, reason, r, a, ruleset);
+					PFLOG_PACKET(pd, reason, r, a, ruleset,
+					    NULL);
 				}
 			} else {
 				match = asd;
@@ -3264,11 +3268,10 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				*am = a;
 				*rsm = ruleset;
 				arsm = aruleset;
-				if (act.log & PF_LOG_MATCHES) {
-					REASON_SET(&reason, PFRES_MATCH);
-					PFLOG_PACKET(pd, reason, r, a, ruleset);
-				}
 			}
+
+			if (act.log & PF_LOG_MATCHES)
+				pf_log_matches(pd, r, a, ruleset, &rules);
 
 			if (r->quick)
 				break;
@@ -3298,8 +3301,10 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	}
 	REASON_SET(&reason, PFRES_MATCH);
 
-	if (r->log || act.log & PF_LOG_MATCHES)
-		PFLOG_PACKET(pd, reason, r, a, ruleset);
+	if (r->log)
+		PFLOG_PACKET(pd, reason, r, a, ruleset, NULL);
+	if (act.log & PF_LOG_MATCHES)
+		pf_log_matches(pd, r, a, ruleset, &rules);
 
 	if (pd->virtual_proto != PF_VPROTO_FRAGMENT &&
 	    (r->action == PF_DROP) &&
@@ -6549,12 +6554,12 @@ done:
 		struct pf_rule_item	*ri;
 
 		if (pd.pflog & PF_LOG_FORCE || r->log & PF_LOG_ALL)
-			PFLOG_PACKET(&pd, reason, r, a, ruleset);
+			PFLOG_PACKET(&pd, reason, r, a, ruleset, NULL);
 		if (s) {
 			SLIST_FOREACH(ri, &s->match_rules, entry)
 				if (ri->r->log & PF_LOG_ALL)
 					PFLOG_PACKET(&pd, reason, ri->r, a,
-					    ruleset);
+					    ruleset, NULL);
 		}
 	}
 
@@ -6683,4 +6688,19 @@ void
 pf_pkt_addr_changed(struct mbuf *m)
 {
 	m->m_pkthdr.pf.statekey = NULL;
+}
+
+void
+pf_log_matches(struct pf_pdesc *pd, struct pf_rule *rm, struct pf_rule *am,
+    struct pf_ruleset *ruleset, struct pf_rule_slist *matchrules)
+{
+	struct pf_rule_item	*ri;
+
+	/* if this is the log(matches) rule, packet has been logged already */
+	if (rm->log & PF_LOG_MATCHES)
+		return;
+
+	SLIST_FOREACH(ri, matchrules, entry)
+		if (ri->r->log & PF_LOG_MATCHES)
+			PFLOG_PACKET(pd, PFRES_MATCH, rm, am, ruleset, ri->r);
 }
