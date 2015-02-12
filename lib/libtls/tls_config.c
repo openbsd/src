@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.4 2015/02/11 06:46:33 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.5 2015/02/12 04:31:27 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -154,7 +154,7 @@ tls_config_set_dheparams(struct tls_config *config, const char *params)
 		keylen = 0;
 	else if (strcasecmp(params, "auto") == 0)
 		keylen = -1;
-	else if (strcmp(params, "legacy"))
+	else if (strcasecmp(params, "legacy") == 0)
 		keylen = 1024;
 	else
 		return (-1);
