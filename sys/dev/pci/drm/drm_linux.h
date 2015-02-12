@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.5 2015/02/12 02:12:02 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.6 2015/02/12 06:30:56 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -83,6 +83,7 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 #define spin_unlock(mtxp)		mtx_leave(mtxp)
 #define spin_lock_irq(mtxp)		mtx_enter(mtxp)
 #define spin_unlock_irq(mtxp)		mtx_leave(mtxp)
+#define assert_spin_locked(mtxp)	MUTEX_ASSERT_LOCKED(mtxp)
 #define mutex_lock_interruptible(rwl)	-rw_enter(rwl, RW_WRITE | RW_INTR)
 #define mutex_lock(rwl)			rw_enter_write(rwl)
 #define mutex_unlock(rwl)		rw_exit_write(rwl)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.28 2015/02/12 04:56:03 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.29 2015/02/12 06:30:56 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2326,7 +2326,7 @@ bool ironlake_set_drps(struct drm_device *dev, u8 val)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u16 rgvswctl;
 
-	MUTEX_ASSERT_LOCKED(&mchdev_lock);
+	assert_spin_locked(&mchdev_lock);
 
 	rgvswctl = I915_READ16(MEMSWCTL);
 	if (rgvswctl & MEMCTL_CMD_STS) {
@@ -2901,7 +2901,7 @@ static unsigned long __i915_chipset_val(struct drm_i915_private *dev_priv)
 	unsigned long now = jiffies_to_msecs(ticks), diff1;
 	int i;
 
-	MUTEX_ASSERT_LOCKED(&mchdev_lock);
+	assert_spin_locked(&mchdev_lock);
 
 	diff1 = now - dev_priv->ips.last_time1;
 
@@ -3127,7 +3127,7 @@ static void __i915_update_gfx_val(struct drm_i915_private *dev_priv)
 	unsigned long diffms;
 	u32 count;
 
-	MUTEX_ASSERT_LOCKED(&mchdev_lock);
+	assert_spin_locked(&mchdev_lock);
 
 	nanouptime(&now);
 	timespecsub(&now, &dev_priv->ips.last_time2, &diff1);
@@ -3172,7 +3172,7 @@ static unsigned long __i915_gfx_val(struct drm_i915_private *dev_priv)
 	unsigned long t, corr, state1, corr2, state2;
 	u32 pxvid, ext_v;
 
-	MUTEX_ASSERT_LOCKED(&mchdev_lock);
+	assert_spin_locked(&mchdev_lock);
 
 	pxvid = I915_READ(PXVFREQ_BASE + (dev_priv->rps.cur_delay * 4));
 	pxvid = (pxvid >> 24) & 0x7f;
