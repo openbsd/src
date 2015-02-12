@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.12 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.13 2015/02/12 06:04:24 jsg Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -348,6 +348,10 @@ asn1_cb(const char *elem, int len, void *bitstr)
 		break;
 
 	case ASN1_GEN_FLAG_FORMAT:
+		if (vstart == NULL) {
+			ASN1err(ASN1_F_ASN1_CB, ASN1_R_ILLEGAL_FORMAT);
+			return -1;
+		}
 		if (!strncmp(vstart, "ASCII", 5))
 			arg->format = ASN1_GEN_FORMAT_ASCII;
 		else if (!strncmp(vstart, "UTF8", 4))
