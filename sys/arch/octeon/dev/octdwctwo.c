@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.1 2015/02/11 00:15:41 uebayasi Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.2 2015/02/12 00:23:58 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -31,9 +31,14 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
+#include <dev/usb/usb_quirks.h>
 
+#include <octeon/dev/usb_port.h>
 #include <octeon/dev/iobusvar.h>
-#include <octeon/dev/octhcireg.h>
+#include <octeon/dev/cn30xxusbnvar.h>
+#include <octeon/dev/cn30xxusbcvar.h>
+#include <octeon/dev/cn30xxusbnreg.h>
+#include <octeon/dev/cn30xxusbcreg.h>
 
 #include <dev/usb/dwc2/dwc2var.h>
 #include <dev/usb/dwc2/dwc2.h>
@@ -41,6 +46,11 @@
 
 struct octdwctwo_softc {
 	struct dwc2_softc	sc_dwc2;
+#if 0
+	/* USBN bus space */
+	bus_space_tag_t		sc_bust;
+	bus_space_handle_t	sc_regh;
+#endif
 	void			*sc_ih;
 };
 
@@ -58,6 +68,31 @@ struct cfdriver dwctwo_cd = {
 };
 
 static struct dwc2_core_params octdwctwo_params = {
+	.otg_cap = 2,
+	.otg_ver = 0,
+	.dma_enable = 1,
+	.dma_desc_enable = 0,
+	.speed = 0,
+	.enable_dynamic_fifo = 1,
+	.en_multiple_tx_fifo = 0,
+	.host_rx_fifo_size = 128/*XXX*/,
+	.host_nperio_tx_fifo_size = 128/*XXX*/,
+	.host_perio_tx_fifo_size = 128/*XXX*/,
+	.max_transfer_size = 65535,
+	.max_packet_count = 511,
+	.host_channels = 8,
+	.phy_type = 1,
+	.phy_utmi_width = 16,
+	.phy_ulpi_ddr = 0,
+	.phy_ulpi_ext_vbus = 0,
+	.i2c_enable = 0,
+	.ulpi_fs_ls = 0,
+	.host_support_fs_ls_low_power = 0,
+	.host_ls_low_power_phy_clk = 0,
+	.ts_dline = 0,
+	.reload_ctl = 0,
+	.ahbcfg = 0x7,
+	.uframe_sched = 1,
 };
 
 int
@@ -74,33 +109,28 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	int rc;
 
 	sc->sc_dwc2.sc_iot = aa->aa_bust;
-	rc = bus_space_map(aa->aa_bust, USBN_BASE, USBN_SIZE,
-	    0, &sc->sc_dwc2.sc_ioh);
-	if (rc != 0)
-		panic(": can't map registers");
-
-#if 0
-	rc = bus_space_map(aa->aa_bust, USBN_2_BASE, USBN_2_SIZE,
-	    0, &sc->sc_dma_reg);
-	if (rc != 0)
-		panic(": can't map dma registers");
+	sc->sc_dwc2.sc_bus.pipe_size = sizeof(struct usbd_pipe);
+	sc->sc_dwc2.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc_dwc2.sc_params = &octdwctwo_params;
 
 	rc = bus_space_map(aa->aa_bust, USBC_BASE, USBC_SIZE,
-	    0, &sc->sc_regc);
-	if (rc != 0)
-		panic(": can't map control registers");
+	    0, &sc->sc_dwc2.sc_ioh);
+	KASSERT(rc == 0);
+
+#if 0
+	sc->sc_bust = aa->aa_bust;
+	rc = bus_space_map(aa->aa_bust, USBN_2_BASE, USBN_2_SIZE,
+	    0, &sc->sc_regh);
+	KASSERT(rc == 0);
 #endif
 
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, dwc2_intr,
 	    (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
-	if (sc->sc_ih == NULL)
-		panic(": interrupt establish failed");
+	KASSERT(sc->sc_ih != NULL);
 
-	sc->sc_dwc2.sc_bus.pipe_size = sizeof(struct usbd_pipe);
-	sc->sc_dwc2.sc_dmat = aa->aa_dmat;
-	sc->sc_dwc2.sc_params = &octdwctwo_params;
+	printf("\n");
 
-	config_found((void *)sc, &sc->sc_dwc2.sc_bus.bdev, usbctlprint);
+	config_defer(self, octdwctwo_attach_deferred);
 }
 
 void
