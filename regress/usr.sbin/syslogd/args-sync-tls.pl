@@ -20,7 +20,7 @@ our %args = (
 	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
 	    write_message($self, get_secondlog());
-	    write_lines($self, 300, 3000);
+	    write_lines($self, 300, 2000);
 	    write_message($self, get_thirdlog());
 	    ${$self->{server}}->loggrep("Accepted", 5, 2)
 		or die ref($self), " server did not receive second log";
@@ -33,6 +33,7 @@ our %args = (
 	    get_between2loggrep(),
 	    get_charlog() => 300,
 	    qr/dropped partial message/ => 1,
+	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
     server => {
@@ -44,7 +45,7 @@ our %args = (
 		$self->{redo}--;
 		return;
 	    }
-	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 40)
 		or die ref($self), " syslogd did not receive third log";
 	    shutdown(\*STDOUT, 1)
 		or die "shutdown write failed: $!";

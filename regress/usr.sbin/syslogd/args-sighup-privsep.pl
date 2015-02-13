@@ -43,6 +43,7 @@ our %args = (
     check => sub {
 	my $self = shift;
 	my $r = $self->{syslogd};
+	$r->loggrep("bytes transferred", 1, 2) or sleep 1;
 	foreach my $name (qw(file pipe)) {
 		my $file = $r->{"out$name"}.".1";
 		my $pattern = (get_between2loggrep())[0];

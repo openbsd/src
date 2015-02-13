@@ -3,8 +3,8 @@
 # The syslogd -a passes them via UDP to the loghost.
 # The server receives the messages on its UDP socket.
 # Find the message in client, file, pipe, syslogd, server log.
-# Check that the file log contains a message from every sockets.
-# Check that the one socket above the limit prints an error.
+# Check that the file log contains a message from every socket.
+# Check that no error is printed.
 
 use strict;
 use warnings;
@@ -23,11 +23,9 @@ our %args = (
 	},
     },
     syslogd => {
-	options => [ map { ("-a" => "unix-$_.sock") } (1..MAXUNIX) ],
+	options => [ map { ("-a" => "unix-$_.sock") } (1..(MAXUNIX-1)) ],
 	loggrep => {
-	    qr/syslogd: out of descriptors, ignoring unix-20.sock/ => 0,
-	    qr/syslogd: out of descriptors, ignoring unix-21.sock/ => 1,
-	    qr/syslogd: out of descriptors, ignoring unix-22.sock/ => 0,
+	    qr/out of descriptors/ => 0,
 	},
     },
     file => {
