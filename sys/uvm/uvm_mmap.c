@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.106 2015/02/07 00:42:20 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.107 2015/02/13 13:35:03 millert Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include <sys/conf.h>
 #include <sys/stat.h>
 #include <sys/specdev.h>
+#include <sys/stdint.h>
 
 #include <machine/exec.h>	/* for __LDPGSZ */
 

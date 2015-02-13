@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.70 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.71 2015/02/13 13:35:03 millert Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/disk.h>
+#include <sys/stdint.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/bootsect.h>
