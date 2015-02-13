@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.209 2015/02/09 12:04:27 dlg Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.210 2015/02/13 00:02:21 guenther Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -536,6 +536,8 @@ parse(char *string, int flags)
 
 			if ((mib[2] == IPPROTO_IP && mib[3] == IPCTL_MRTSTATS) ||
 			    (mib[2] == IPPROTO_IP && mib[3] == IPCTL_STATS) ||
+			    (mib[2] == IPPROTO_IP && mib[3] == IPCTL_MRTMFC) ||
+			    (mib[2] == IPPROTO_IP && mib[3] == IPCTL_MRTVIF) ||
 			    (mib[2] == IPPROTO_TCP && mib[3] == TCPCTL_STATS) ||
 			    (mib[2] == IPPROTO_UDP && mib[3] == UDPCTL_STATS) ||
 			    (mib[2] == IPPROTO_ESP && mib[3] == ESPCTL_STATS) ||
@@ -573,6 +575,8 @@ parse(char *string, int flags)
 				return;
 
 			if ((mib[2] == IPPROTO_PIM && mib[3] == PIM6CTL_STATS) ||
+			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMFC) ||
+			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMIF) ||
 			    (mib[2] == IPPROTO_DIVERT && mib[3] == DIVERT6CTL_STATS)) {
 				if (flags == 0)
 					return;
