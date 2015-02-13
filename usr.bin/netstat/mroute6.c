@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.19 2015/02/12 23:31:12 claudio Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.20 2015/02/13 13:28:17 dcoppa Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -75,6 +75,7 @@
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <util.h>
 #include "netstat.h"
 
