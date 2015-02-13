@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2015/02/12 04:23:17 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.99 2015/02/13 08:41:34 sthen Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -198,6 +198,14 @@ main(volatile int argc, char *argv[])
 
 #ifndef SMALL
 	cookiefile = getenv("http_cookies");
+	if (tls_config == NULL) {
+		tls_config = tls_config_new();
+		if (tls_config == NULL)
+			errx(1, "tls config failed");
+		tls_config_set_protocols(tls_config,
+		    TLS_PROTOCOLS_ALL);
+	}
+
 #endif /* !SMALL */
 	httpuseragent = NULL;
 
@@ -308,14 +316,6 @@ main(volatile int argc, char *argv[])
 
 		case 'S':
 #ifndef SMALL
-			if (tls_config == NULL) {
-				tls_config = tls_config_new();
-				if (tls_config == NULL)
-					errx(1, "tls config failed");
-				tls_config_set_protocols(tls_config,
-				    TLS_PROTOCOLS_ALL);
-			}
-
 			cp = optarg;
 			while (*cp) {
 				char	*str;
