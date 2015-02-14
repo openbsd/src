@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.20 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.21 2015/02/14 15:13:24 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -164,7 +164,7 @@ BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	ret = 1;
 
 err:
-	if (r != rr)
+	if (r != rr && rr != NULL)
 		BN_copy(r, rr);
 	BN_CTX_end(ctx);
 	bn_check_top(r);
