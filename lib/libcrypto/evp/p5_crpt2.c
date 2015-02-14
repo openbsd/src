@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.18 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.19 2015/02/14 15:45:21 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,13 +70,6 @@
 #include <openssl/x509.h>
 
 #include "evp_locl.h"
-
-/* set this to print out info about the keygen algorithm */
-/* #define DEBUG_PKCS5V2 */
-
-#ifdef DEBUG_PKCS5V2
-static void h__dump (const unsigned char *p, int len);
-#endif
 
 /* This is an implementation of PKCS#5 v2.0 password based encryption key
  * derivation function PBKDF2.
@@ -153,15 +146,6 @@ PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
 		p += cplen;
 	}
 	HMAC_CTX_cleanup(&hctx_tpl);
-#ifdef DEBUG_PKCS5V2
-	fprintf(stderr, "Password:\n");
-	h__dump (pass, passlen);
-	fprintf(stderr, "Salt:\n");
-	h__dump (salt, saltlen);
-	fprintf(stderr, "Iteration count %d\n", iter);
-	fprintf(stderr, "Key:\n");
-	h__dump (out, keylen);
-#endif
 	return 1;
 }
 
@@ -323,12 +307,4 @@ err:
 	return rv;
 }
 
-#ifdef DEBUG_PKCS5V2
-static void h__dump (const unsigned char *p, int len)
-{
-	for (; len --; p++)
-		fprintf(stderr, "%02X ", *p);
-	fprintf(stderr, "\n");
-}
-#endif
 #endif
