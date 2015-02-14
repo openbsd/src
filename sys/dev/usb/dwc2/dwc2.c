@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.21 2015/02/12 11:38:42 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.22 2015/02/14 05:52:19 uebayasi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1820,6 +1820,9 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 	hsotg->op_state = OTG_STATE_A_HOST;
 
 	dwc2_hcd_reinit(hsotg);
+
+	/* Try to enable port. */
+	dwc2_handle_hcd_intr(hsotg);
 
 	/*XXXNH*/
 	delay(50);
