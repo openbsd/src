@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.13 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.14 2015/02/14 15:28:39 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -214,13 +214,21 @@ X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
 {
 	X509_CERT_AUX *aux;
 	ASN1_OBJECT *objtmp;
+	int rc;
+
 	if (!(objtmp = OBJ_dup(obj)))
 		return 0;
 	if (!(aux = aux_get(x)))
-		return 0;
+		goto err;
 	if (!aux->trust && !(aux->trust = sk_ASN1_OBJECT_new_null()))
-		return 0;
-	return sk_ASN1_OBJECT_push(aux->trust, objtmp);
+		goto err;
+	rc = sk_ASN1_OBJECT_push(aux->trust, objtmp);
+	if (rc != 0)
+		return rc;
+
+err:
+	ASN1_OBJECT_free(objtmp);
+	return 0;
 }
 
 int
@@ -228,13 +236,21 @@ X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
 {
 	X509_CERT_AUX *aux;
 	ASN1_OBJECT *objtmp;
+	int rc;
+
 	if (!(objtmp = OBJ_dup(obj)))
 		return 0;
 	if (!(aux = aux_get(x)))
-		return 0;
+		goto err;
 	if (!aux->reject && !(aux->reject = sk_ASN1_OBJECT_new_null()))
-		return 0;
-	return sk_ASN1_OBJECT_push(aux->reject, objtmp);
+		goto err;
+	rc = sk_ASN1_OBJECT_push(aux->reject, objtmp);
+	if (rc != 0)
+		return rc;
+
+err:
+	ASN1_OBJECT_free(objtmp);
+	return 0;
 }
 
 void
