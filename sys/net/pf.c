@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.905 2015/02/12 01:24:10 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.906 2015/02/14 23:32:41 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3233,8 +3233,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		PF_TEST_ATTRIB((r->rcv_kif && pf_match_rcvif(pd->m, r) ==
 		    r->rcvifnot),
 			TAILQ_NEXT(r, entries));
-		PF_TEST_ATTRIB((r->prio != 0xff &&
-		    r->prio != pd->m->m_pkthdr.pf.prio),
+		PF_TEST_ATTRIB((r->prio &&
+		    (r->prio == PF_PRIO_ZERO ? 0 : r->prio) != pd->m->m_pkthdr.pf.prio),
 			TAILQ_NEXT(r, entries));
 
 		/* FALLTHROUGH */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.645 2015/02/10 06:45:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.646 2015/02/14 23:32:41 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -883,10 +883,12 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 					YYERROR;
 				}
 			r.match_tag_not = $9.match_tag_not;
-			if ($9.marker & FOM_PRIO)
-				r.prio = $9.prio;
-			else
-				r.prio = 0xff;
+			if ($9.marker & FOM_PRIO) {
+				if ($9.prio == 0)
+					r.prio = PF_PRIO_ZERO;
+				else
+					r.prio = $9.prio;
+			}
 			if ($9.marker & FOM_SETPRIO) {
 				r.set_prio[0] = $9.set_prio[0];
 				r.set_prio[1] = $9.set_prio[1];
@@ -1490,10 +1492,12 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if ($8.marker & FOM_SCRUB_TCP)
 				r.scrub_flags |= PFSTATE_SCRUB_TCP;
-			if ($8.marker & FOM_PRIO)
-				r.prio = $8.prio;
-			else
-				r.prio = 0xff;
+			if ($8.marker & FOM_PRIO) {
+				if ($8.prio == 0)
+					r.prio = PF_PRIO_ZERO;
+				else
+					r.prio = $8.prio;
+			}
 			if ($8.marker & FOM_SETPRIO) {
 				r.set_prio[0] = $8.set_prio[0];
 				r.set_prio[1] = $8.set_prio[1];
