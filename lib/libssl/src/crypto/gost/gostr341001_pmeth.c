@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.11 2015/02/14 06:40:04 jsing Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.12 2015/02/14 15:08:37 miod Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -184,9 +184,9 @@ static int
 pkey_gost01_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
-	EC_GROUP *group;
-	GOST_KEY *gost;
-	int ret;
+	EC_GROUP *group = NULL;
+	GOST_KEY *gost = NULL;
+	int ret = 0;
 
 	if (data->sign_param_nid == NID_undef ||
 	    data->digest_nid == NID_undef) {
@@ -196,23 +196,23 @@ pkey_gost01_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 	group = EC_GROUP_new_by_curve_name(data->sign_param_nid);
 	if (group == NULL)
-		return 0;
+		goto done;
 
 	EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
 
 	gost = GOST_KEY_new();
 	if (gost == NULL)
-		return 0;
+		goto done;
 
 	if (GOST_KEY_set_digest(gost, data->digest_nid) == 0)
-		return 0;
+		goto done;
 
-	ret = GOST_KEY_set_group(gost, group);
-	if (ret != 0)
+	if (GOST_KEY_set_group(gost, group) != 0)
 		ret = EVP_PKEY_assign_GOST(pkey, gost);
+
+done:
 	if (ret == 0)
 		GOST_KEY_free(gost);
-
 	EC_GROUP_free(group);
 	return ret;
 }
