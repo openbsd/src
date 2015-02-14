@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.26 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: rsa.h,v 1.27 2015/02/14 15:10:39 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -444,6 +444,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_PKEY_RSA_VERIFYRECOVER			 141
 #define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
+#define RSA_F_RSA_EAY_MOD_EXP				 157
 #define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
 #define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 102
 #define RSA_F_RSA_EAY_PUBLIC_DECRYPT			 103

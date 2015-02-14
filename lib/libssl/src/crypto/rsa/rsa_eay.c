@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.37 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.38 2015/02/14 15:10:39 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -730,6 +730,10 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	r1 = BN_CTX_get(ctx);
 	m1 = BN_CTX_get(ctx);
 	vrfy = BN_CTX_get(ctx);
+	if (r1 == NULL || m1 == NULL || vrfy == NULL) {
+		RSAerr(RSA_F_RSA_EAY_MOD_EXP, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	{
 		BIGNUM local_p, local_q;
