@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.49 2014/11/07 13:56:29 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.50 2015/02/14 06:18:58 uebayasi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -430,6 +430,7 @@ typedef struct {
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
 #define UPS_SUPER_SPEED			0x0800
+#define UPS_PORT_TEST			0x0800
 #define UPS_PORT_INDICATOR		0x1000
 
 	uWord		wPortChange;
