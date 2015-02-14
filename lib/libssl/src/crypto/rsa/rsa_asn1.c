@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.11 2015/02/10 05:12:23 jsing Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.12 2015/02/14 15:06:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -80,30 +80,166 @@ rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
-	ASN1_SIMPLE(RSA, version, LONG),
-	ASN1_SIMPLE(RSA, n, BIGNUM),
-	ASN1_SIMPLE(RSA, e, BIGNUM),
-	ASN1_SIMPLE(RSA, d, BIGNUM),
-	ASN1_SIMPLE(RSA, p, BIGNUM),
-	ASN1_SIMPLE(RSA, q, BIGNUM),
-	ASN1_SIMPLE(RSA, dmp1, BIGNUM),
-	ASN1_SIMPLE(RSA, dmq1, BIGNUM),
-	ASN1_SIMPLE(RSA, iqmp, BIGNUM)
-} ASN1_SEQUENCE_END_cb(RSA, RSAPrivateKey)
+static const ASN1_AUX RSAPrivateKey_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = rsa_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE RSAPrivateKey_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, version),
+		.field_name = "version",
+		.item = &LONG_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, n),
+		.field_name = "n",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, e),
+		.field_name = "e",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, d),
+		.field_name = "d",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, p),
+		.field_name = "p",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, q),
+		.field_name = "q",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, dmp1),
+		.field_name = "dmp1",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, dmq1),
+		.field_name = "dmq1",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, iqmp),
+		.field_name = "iqmp",
+		.item = &BIGNUM_it,
+	},
+};
+
+const ASN1_ITEM RSAPrivateKey_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = RSAPrivateKey_seq_tt,
+	.tcount = sizeof(RSAPrivateKey_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &RSAPrivateKey_aux,
+	.size = sizeof(RSA),
+	.sname = "RSA",
+};
 
 
-ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
-	ASN1_SIMPLE(RSA, n, BIGNUM),
-	ASN1_SIMPLE(RSA, e, BIGNUM),
-} ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey)
+static const ASN1_AUX RSAPublicKey_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = rsa_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE RSAPublicKey_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, n),
+		.field_name = "n",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(RSA, e),
+		.field_name = "e",
+		.item = &BIGNUM_it,
+	},
+};
 
-ASN1_SEQUENCE(RSA_PSS_PARAMS) = {
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, hashAlgorithm, X509_ALGOR, 0),
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, maskGenAlgorithm, X509_ALGOR, 1),
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, saltLength, ASN1_INTEGER, 2),
-	ASN1_EXP_OPT(RSA_PSS_PARAMS, trailerField, ASN1_INTEGER, 3)
-} ASN1_SEQUENCE_END(RSA_PSS_PARAMS)
+const ASN1_ITEM RSAPublicKey_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = RSAPublicKey_seq_tt,
+	.tcount = sizeof(RSAPublicKey_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &RSAPublicKey_aux,
+	.size = sizeof(RSA),
+	.sname = "RSA",
+};
+
+static const ASN1_TEMPLATE RSA_PSS_PARAMS_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(RSA_PSS_PARAMS, hashAlgorithm),
+		.field_name = "hashAlgorithm",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(RSA_PSS_PARAMS, maskGenAlgorithm),
+		.field_name = "maskGenAlgorithm",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 2,
+		.offset = offsetof(RSA_PSS_PARAMS, saltLength),
+		.field_name = "saltLength",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 3,
+		.offset = offsetof(RSA_PSS_PARAMS, trailerField),
+		.field_name = "trailerField",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM RSA_PSS_PARAMS_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = RSA_PSS_PARAMS_seq_tt,
+	.tcount = sizeof(RSA_PSS_PARAMS_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(RSA_PSS_PARAMS),
+	.sname = "RSA_PSS_PARAMS",
+};
 
 
 RSA_PSS_PARAMS *

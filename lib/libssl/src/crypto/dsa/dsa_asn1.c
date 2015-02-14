@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.15 2015/02/10 05:12:23 jsing Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.16 2015/02/14 15:06:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -84,10 +84,40 @@ sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
-	ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
-	ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
-} ASN1_SEQUENCE_END_cb(DSA_SIG, DSA_SIG)
+static const ASN1_AUX DSA_SIG_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = sig_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE DSA_SIG_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA_SIG, r),
+		.field_name = "r",
+		.item = &CBIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA_SIG, s),
+		.field_name = "s",
+		.item = &CBIGNUM_it,
+	},
+};
+
+const ASN1_ITEM DSA_SIG_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = DSA_SIG_seq_tt,
+	.tcount = sizeof(DSA_SIG_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &DSA_SIG_aux,
+	.size = sizeof(DSA_SIG),
+	.sname = "DSA_SIG",
+};
 
 
 DSA_SIG *
@@ -120,14 +150,68 @@ dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
-	ASN1_SIMPLE(DSA, version, LONG),
-	ASN1_SIMPLE(DSA, p, BIGNUM),
-	ASN1_SIMPLE(DSA, q, BIGNUM),
-	ASN1_SIMPLE(DSA, g, BIGNUM),
-	ASN1_SIMPLE(DSA, pub_key, BIGNUM),
-	ASN1_SIMPLE(DSA, priv_key, BIGNUM)
-} ASN1_SEQUENCE_END_cb(DSA, DSAPrivateKey)
+static const ASN1_AUX DSAPrivateKey_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = dsa_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE DSAPrivateKey_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, version),
+		.field_name = "version",
+		.item = &LONG_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, p),
+		.field_name = "p",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, q),
+		.field_name = "q",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, g),
+		.field_name = "g",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, pub_key),
+		.field_name = "pub_key",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, priv_key),
+		.field_name = "priv_key",
+		.item = &BIGNUM_it,
+	},
+};
+
+const ASN1_ITEM DSAPrivateKey_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = DSAPrivateKey_seq_tt,
+	.tcount = sizeof(DSAPrivateKey_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &DSAPrivateKey_aux,
+	.size = sizeof(DSA),
+	.sname = "DSA",
+};
 
 
 DSA *
@@ -143,11 +227,47 @@ i2d_DSAPrivateKey(const DSA *a, unsigned char **out)
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DSAPrivateKey_it);
 }
 
-ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
-	ASN1_SIMPLE(DSA, p, BIGNUM),
-	ASN1_SIMPLE(DSA, q, BIGNUM),
-	ASN1_SIMPLE(DSA, g, BIGNUM),
-} ASN1_SEQUENCE_END_cb(DSA, DSAparams)
+static const ASN1_AUX DSAparams_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = dsa_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE DSAparams_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, p),
+		.field_name = "p",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, q),
+		.field_name = "q",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, g),
+		.field_name = "g",
+		.item = &BIGNUM_it,
+	},
+};
+
+const ASN1_ITEM DSAparams_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = DSAparams_seq_tt,
+	.tcount = sizeof(DSAparams_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &DSAparams_aux,
+	.size = sizeof(DSA),
+	.sname = "DSA",
+};
 
 
 DSA *
@@ -170,17 +290,81 @@ i2d_DSAparams(const DSA *a, unsigned char **out)
  * in a SEQUENCE
  */
 
-ASN1_SEQUENCE(dsa_pub_internal) = {
-	ASN1_SIMPLE(DSA, pub_key, BIGNUM),
-	ASN1_SIMPLE(DSA, p, BIGNUM),
-	ASN1_SIMPLE(DSA, q, BIGNUM),
-	ASN1_SIMPLE(DSA, g, BIGNUM)
-} ASN1_SEQUENCE_END_name(DSA, dsa_pub_internal)
+static const ASN1_TEMPLATE dsa_pub_internal_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, pub_key),
+		.field_name = "pub_key",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, p),
+		.field_name = "p",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, q),
+		.field_name = "q",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, g),
+		.field_name = "g",
+		.item = &BIGNUM_it,
+	},
+};
 
-ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
-	ASN1_SIMPLE(DSA, pub_key, BIGNUM),
-	ASN1_EX_COMBINE(0, 0, dsa_pub_internal)
-} ASN1_CHOICE_END_cb(DSA, DSAPublicKey, write_params)
+const ASN1_ITEM dsa_pub_internal_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = dsa_pub_internal_seq_tt,
+	.tcount = sizeof(dsa_pub_internal_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(DSA),
+	.sname = "DSA",
+};
+
+static const ASN1_AUX DSAPublicKey_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = dsa_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE DSAPublicKey_ch_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(DSA, pub_key),
+		.field_name = "pub_key",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0 | ASN1_TFLG_COMBINE,
+		.tag = 0,
+		.offset = 0,
+		.field_name = NULL,
+		.item = &dsa_pub_internal_it,
+	},
+};
+
+const ASN1_ITEM DSAPublicKey_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(DSA, write_params),
+	.templates = DSAPublicKey_ch_tt,
+	.tcount = sizeof(DSAPublicKey_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &DSAPublicKey_aux,
+	.size = sizeof(DSA),
+	.sname = "DSA",
+};
 
 
 DSA *
