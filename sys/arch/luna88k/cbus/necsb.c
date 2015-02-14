@@ -1,4 +1,4 @@
-/*	$OpenBSD: necsb.c,v 1.1 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: necsb.c,v 1.2 2015/02/14 14:54:13 aoyama Exp $	*/
 /*	$NecBSD: nec86_isa.c,v 1.9 1998/09/26 11:31:11 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -67,6 +67,7 @@ struct luna88k_bus_space_tag necsb_bst = {
 	0,
 	0,
 	0,
+	0,	/* no offset */
 };
 
 int
