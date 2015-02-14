@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.15 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.16 2015/02/14 15:19:04 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -204,10 +204,10 @@ set_reasons(ASN1_BIT_STRING **preas, char *value)
 	const char *bnam;
 	int i, ret = 0;
 
-	rsk = X509V3_parse_list(value);
-	if (!rsk)
+	if (*preas != NULL)
 		return 0;
-	if (*preas)
+	rsk = X509V3_parse_list(value);
+	if (rsk == NULL)
 		return 0;
 	for (i = 0; i < sk_CONF_VALUE_num(rsk); i++) {
 		bnam = sk_CONF_VALUE_value(rsk, i)->name;
