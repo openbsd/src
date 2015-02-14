@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.194 2015/02/12 12:20:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.195 2015/02/14 13:22:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -296,7 +296,8 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 
 	switch (n->type) {
 	case MDOC_TEXT:
-		check_text(mdoc, n->line, n->pos, n->string);
+		if (n->sec != SEC_SYNOPSIS || n->parent->tok != MDOC_Fd)
+			check_text(mdoc, n->line, n->pos, n->string);
 		/* FALLTHROUGH */
 	case MDOC_TBL:
 		/* FALLTHROUGH */
