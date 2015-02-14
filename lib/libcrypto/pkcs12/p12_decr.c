@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.14 2015/02/14 12:43:07 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -166,19 +166,23 @@ PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
 	if (!in) {
 		PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT,
 		    PKCS12_R_ENCODE_ERROR);
-		return NULL;
+		goto err;
 	}
 	if (!PKCS12_pbe_crypt(algor, pass, passlen, in, inlen, &oct->data,
 	    &oct->length, 1)) {
 		PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT,
 		    PKCS12_R_ENCRYPT_ERROR);
-		free(in);
-		return NULL;
+		goto err;
 	}
 	if (zbuf)
 		OPENSSL_cleanse(in, inlen);
 	free(in);
 	return oct;
+
+err:
+	free(in);
+	M_ASN1_OCTET_STRING_free(oct);
+	return NULL;
 }
 
 IMPLEMENT_PKCS12_STACK_OF(PKCS7)
