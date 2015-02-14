@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.12 2015/02/14 13:32:46 jsing Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.13 2015/02/14 15:15:27 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -351,7 +351,8 @@ ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 	default:
 		str = ASN1_STRING_type_new(utype);
-		if (it->itype == ASN1_ITYPE_MSTRING && str)
+		if (it != NULL && it->itype == ASN1_ITYPE_MSTRING &&
+		    str != NULL)
 			str->flags |= ASN1_STRING_FLAG_MSTRING;
 		*pval = (ASN1_VALUE *)str;
 		break;
