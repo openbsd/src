@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.155 2015/02/13 21:09:38 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.156 2015/02/14 09:02:15 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -220,7 +220,7 @@ int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 
 char	*path_ctlsock = NULL;	/* Path to control socket */
 
-struct	tls_config *tlsconfig;
+struct	tls_config *tlsconfig = NULL;
 const char *CAfile = "/etc/ssl/cert.pem"; /* file containing CA certificates */
 int	NoVerify = 0;		/* do not verify TLS server x509 certificate */
 int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
@@ -523,8 +523,6 @@ main(int argc, char *argv[])
 	} else {
 		struct stat sb;
 
-		tls_config_set_protocols(tlsconfig, TLS_PROTOCOLS_ALL);
-
 		fd = -1;
 		p = NULL;
 		errno = 0;
@@ -547,6 +545,8 @@ main(int argc, char *argv[])
 		free(p);
 		close(fd);
 	}
+	if (tlsconfig)
+		tls_config_set_protocols(tlsconfig, TLS_PROTOCOLS_ALL);
 
 	dprintf("off & running....\n");
 
