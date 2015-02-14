@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.126 2014/10/30 16:08:31 tedu Exp $ */
+/* $OpenBSD: netcat.c,v 1.127 2015/02/14 22:40:22 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -113,7 +113,7 @@ int	udptest(int);
 int	unix_bind(char *);
 int	unix_connect(char *);
 int	unix_listen(char *);
-void	set_common_sockopts(int);
+void	set_common_sockopts(int, int);
 int	map_tos(char *, int *);
 void	report_connect(const struct sockaddr *, socklen_t);
 void	usage(int);
@@ -619,7 +619,7 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 			freeaddrinfo(ares);
 		}
 
-		set_common_sockopts(s);
+		set_common_sockopts(s, res0->ai_family);
 
 		if (timeout_connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
@@ -712,7 +712,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		if (ret == -1)
 			err(1, NULL);
 
-		set_common_sockopts(s);
+		set_common_sockopts(s, res0->ai_family);
 
 		if (bind(s, (struct sockaddr *)res0->ai_addr,
 		    res0->ai_addrlen) == 0)
@@ -1128,7 +1128,7 @@ udptest(int s)
 }
 
 void
-set_common_sockopts(int s)
+set_common_sockopts(int s, int af)
 {
 	int x = 1;
 
@@ -1143,8 +1143,17 @@ set_common_sockopts(int s)
 			err(1, NULL);
 	}
 	if (Tflag != -1) {
-		if (setsockopt(s, IPPROTO_IP, IP_TOS,
-		    &Tflag, sizeof(Tflag)) == -1)
+		int proto, option;
+
+		if (af == AF_INET6) {
+			proto = IPPROTO_IPV6;
+			option = IPV6_TCLASS;
+		} else {
+			proto = IPPROTO_IP;
+			option = IP_TOS;
+		}
+
+		if (setsockopt(s, proto, option, &Tflag, sizeof(Tflag)) == -1)
 			err(1, "set IP ToS");
 	}
 	if (Iflag) {
