@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.26 2014/04/17 15:28:26 guenther Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.27 2015/02/14 20:15:05 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -161,6 +161,8 @@ struct asr {
 
 #define	ASYNC_EXTOBUF		0x00002000
 
+#define	ASYNC_NO_INET		0x00010000
+#define	ASYNC_NO_INET6		0x00020000
 
 struct asr_query {
 	int		(*as_run)(struct asr_query *, struct asr_result *);

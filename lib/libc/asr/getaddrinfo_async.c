@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.33 2015/01/30 16:41:43 gilles Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.34 2015/02/14 20:15:05 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -131,7 +131,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 	char		 fqdn[MAXDNAME];
 	const char	*str;
 	struct addrinfo	*ai;
-	int		 i, family, r, v4, v6;
+	int		 i, family, r;
 	FILE		*f;
 	struct ifaddrs	*ifa, *ifa0;
 	union {
@@ -213,32 +213,21 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 				async_set_state(as, ASR_STATE_HALT);
 				break;
 			}
-			v4 = 0;
-			v6 = 0;
+
+			as->as.ai.flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
 			for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 				if (ifa->ifa_flags & IFF_LOOPBACK)
 					continue;
 				if (ifa->ifa_addr == NULL)
 					continue;
 				if (ifa->ifa_addr->sa_family == PF_INET)
-					v4 = 1;
+					as->as.ai.flags &= ~ASYNC_NO_INET;
 				else if (ifa->ifa_addr->sa_family == PF_INET6 &&
 				    !IN6_IS_ADDR_LINKLOCAL(&((struct
 				    sockaddr_in6 *)ifa->ifa_addr)->sin6_addr))
-					v6 = 1;
+					as->as.ai.flags &= ~ASYNC_NO_INET6;
 			}
 			freeifaddrs(ifa0);
-			if ((ai->ai_family == PF_UNSPEC && !v4 && !v6) ||
-			    (ai->ai_family == PF_INET && !v4) ||
-			    (ai->ai_family == PF_INET6 && !v6)) {
-				ar->ar_gai_errno = EAI_NONAME;
-				async_set_state(as, ASR_STATE_HALT);
-				break;
-			}
-			if (ai->ai_family == PF_UNSPEC && v4 && !v6)
-				ai->ai_family = PF_INET;
-			if (ai->ai_family == PF_UNSPEC && !v4 && v6)
-				ai->ai_family = PF_INET6;
 		}
 
 		/* Make sure there is at least a valid combination */
@@ -395,6 +384,16 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
 			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
+
+			if (family == AF_INET &&
+			    as->as.ai.flags & ASYNC_NO_INET) {
+				async_set_state(as, ASR_STATE_NEXT_FAMILY);
+				break;
+			} else if (family == AF_INET6 &&
+			    as->as.ai.flags & ASYNC_NO_INET6) {
+				async_set_state(as, ASR_STATE_NEXT_FAMILY);
+				break;
+			}
 
 			as->as.ai.subq = res_query_async_ctx(as->as.ai.fqdn,
 			    C_IN, (family == AF_INET6) ? T_AAAA : T_A,
