@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.3 2015/02/12 11:49:13 uebayasi Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.4 2015/02/14 06:46:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -58,7 +58,6 @@ struct octdwctwo_softc {
 int			octdwctwo_match(struct device *, void *, void *);
 void			octdwctwo_attach(struct device *, struct device *,
 			    void *);
-void			octdwctwo_attach_deferred(struct device *);
 int			octdwctwo_set_dma_addr(void *, dma_addr_t, int);
 u_int64_t		octdwctwo_reg2_rd(struct octdwctwo_softc *, bus_size_t);
 void			octdwctwo_reg2_wr(struct octdwctwo_softc *, bus_size_t,
@@ -134,30 +133,21 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	    0, &sc->sc_regh2);
 	KASSERT(rc == 0);
 
+	rc = dwc2_init(&sc->sc_dwc2);
+	if (rc != 0)
+		return;
+	octdwctwo_dma_config.set_dma_addr_data = sc;
+	rc = dwc2_dma_config(&sc->sc_dwc2, &octdwctwo_dma_config);
+	if (rc != 0)
+		return;
+	sc->sc_dwc2.sc_child = config_found(&sc->sc_dwc2.sc_bus.bdev,
+	    &sc->sc_dwc2.sc_bus, usbctlprint);
+
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, dwc2_intr,
 	    (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
 
 	printf("\n");
-
-	config_defer(self, octdwctwo_attach_deferred);
-}
-
-void
-octdwctwo_attach_deferred(struct device *self)
-{
-	struct octdwctwo_softc *sc = (struct octdwctwo_softc *)self;
-	int error;
-
-	error = dwc2_init(&sc->sc_dwc2);
-	if (error != 0)
-		return;
-	octdwctwo_dma_config.set_dma_addr_data = sc;
-	error = dwc2_dma_config(&sc->sc_dwc2, &octdwctwo_dma_config);
-	if (error != 0)
-		return;
-	sc->sc_dwc2.sc_child = config_found(&sc->sc_dwc2.sc_bus.bdev,
-	    &sc->sc_dwc2.sc_bus, usbctlprint);
 }
 
 int
