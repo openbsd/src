@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.8 2015/02/11 04:05:14 beck Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.9 2015/02/14 06:40:04 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -347,9 +347,9 @@ pub_print_gost01(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx)
 		return 0;
 	}
 	BN_CTX_start(ctx);
-	X = BN_CTX_get(ctx);
-	Y = BN_CTX_get(ctx);
-	if (X == NULL || Y == NULL)
+	if ((X = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	pubkey = GOST_KEY_get0_public_key(pkey->pkey.gost);
 	group = GOST_KEY_get0_group(pkey->pkey.gost);

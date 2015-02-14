@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.10 2015/02/11 04:05:14 beck Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.11 2015/02/14 06:40:04 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -324,10 +324,11 @@ gost01_VKO_key(EVP_PKEY *pub_key, EVP_PKEY *priv_key, const unsigned char *ukm,
 		return 0;
 
 	BN_CTX_start(ctx);
-	UKM = BN_CTX_get(ctx);
-	X = BN_CTX_get(ctx);
-	Y = BN_CTX_get(ctx);
-	if (Y == NULL)
+	if ((UKM = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((X = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	GOST_le2bn(ukm, 8, UKM);
