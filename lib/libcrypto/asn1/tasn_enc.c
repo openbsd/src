@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.15 2015/02/14 15:21:49 miod Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.16 2015/02/14 15:23:57 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -131,9 +131,7 @@ ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
     int tag, int aclass)
 {
 	const ASN1_TEMPLATE *tt = NULL;
-	unsigned char *p = NULL;
 	int i, seqcontlen, seqlen, ndef = 1;
-	const ASN1_COMPAT_FUNCS *cf;
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_aux_cb *asn1_cb = 0;
@@ -177,19 +175,6 @@ ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 		/* If new style i2d it does all the work */
 		ef = it->funcs;
 		return ef->asn1_ex_i2d(pval, out, it, tag, aclass);
-
-	case ASN1_ITYPE_COMPAT:
-		/* old style hackery... */
-		cf = it->funcs;
-		if (out)
-			p = *out;
-		i = cf->asn1_i2d(*pval, out);
-		/* Fixup for IMPLICIT tag: note this messes up for tags > 30,
-		 * but so did the old code. Tags > 30 are very rare anyway.
-		 */
-		if (out && (tag != -1))
-			*p = aclass | tag | (*p & V_ASN1_CONSTRUCTED);
-		return i;
 
 	case ASN1_ITYPE_NDEF_SEQUENCE:
 		/* Use indefinite length constructed if requested */
