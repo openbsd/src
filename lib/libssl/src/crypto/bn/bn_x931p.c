@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.6 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.7 2015/02/14 15:07:54 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -107,11 +107,11 @@ BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2, const BIGNUM *Xp,
 		return 0;
 
 	BN_CTX_start(ctx);
-	if (p1 != NULL) {
+	if (p1 == NULL) {
 		if ((p1 = BN_CTX_get(ctx)) == NULL)
 			goto err;
 	}
-	if (p2 != NULL) {
+	if (p2 == NULL) {
 		if ((p2 = BN_CTX_get(ctx)) == NULL)
 			goto err;
 	}
@@ -252,11 +252,11 @@ BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2, BIGNUM *Xp1,
 	int ret = 0;
 
 	BN_CTX_start(ctx);
-	if (Xp1 != NULL) {
+	if (Xp1 == NULL) {
 		if ((Xp1 = BN_CTX_get(ctx)) == NULL)
 			goto error;
 	}
-	if (Xp2 != NULL) {
+	if (Xp2 == NULL) {
 		if ((Xp2 = BN_CTX_get(ctx)) == NULL)
 			goto error;
 	}
