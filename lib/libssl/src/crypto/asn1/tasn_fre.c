@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.12 2014/07/10 12:24:25 tedu Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.13 2015/02/14 13:32:46 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -86,16 +86,14 @@ asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_COMPAT_FUNCS *cf;
 	const ASN1_AUX *aux = it->funcs;
-	ASN1_aux_cb *asn1_cb;
+	ASN1_aux_cb *asn1_cb = NULL;
 	int i;
 
 	if (pval == NULL || *pval == NULL)
 		return;
 
-	if (aux && aux->asn1_cb)
+	if (aux != NULL && aux->asn1_cb != NULL)
 		asn1_cb = aux->asn1_cb;
-	else
-		asn1_cb = 0;
 
 	switch (it->itype) {
 	case ASN1_ITYPE_PRIMITIVE:

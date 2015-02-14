@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.11 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.12 2015/02/14 13:32:46 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -94,14 +94,12 @@ asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 	const ASN1_COMPAT_FUNCS *cf;
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_AUX *aux = it->funcs;
-	ASN1_aux_cb *asn1_cb;
+	ASN1_aux_cb *asn1_cb = NULL;
 	ASN1_VALUE **pseqval;
 	int i;
 
-	if (aux && aux->asn1_cb)
+	if (aux != NULL && aux->asn1_cb != NULL)
 		asn1_cb = aux->asn1_cb;
-	else
-		asn1_cb = 0;
 
 	if (!combine)
 		*pval = NULL;
