@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.28 2015/02/14 15:25:08 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.29 2015/02/14 15:29:29 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -454,7 +454,11 @@ x509_name_canon(X509_NAME *a)
 			set = entry->set;
 		}
 		tmpentry = X509_NAME_ENTRY_new();
+		if (tmpentry == NULL)
+			goto err;
 		tmpentry->object = OBJ_dup(entry->object);
+		if (tmpentry->object == NULL)
+			goto err;
 		if (!asn1_string_canon(tmpentry->value, entry->value))
 			goto err;
 		if (!sk_X509_NAME_ENTRY_push(entries, tmpentry))
