@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.27 2015/02/14 15:16:59 miod Exp $ */
+/* $OpenBSD: x_name.c,v 1.28 2015/02/14 15:25:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,8 +169,15 @@ const ASN1_EXTERN_FUNCS x509_name_ff = {
 	x509_name_ex_print
 };
 
-IMPLEMENT_EXTERN_ASN1(X509_NAME, V_ASN1_SEQUENCE, x509_name_ff)
-
+const ASN1_ITEM X509_NAME_it = {
+	.itype = ASN1_ITYPE_EXTERN,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &x509_name_ff,
+	.size = 0,
+	.sname = "X509_NAME",
+};
 
 X509_NAME *
 d2i_X509_NAME(X509_NAME **a, const unsigned char **in, long len)
