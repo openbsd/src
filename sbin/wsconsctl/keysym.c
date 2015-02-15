@@ -1,4 +1,4 @@
-/*	$OpenBSD: keysym.c,v 1.7 2012/07/14 08:25:12 shadchin Exp $	*/
+/*	$OpenBSD: keysym.c,v 1.8 2015/02/15 01:56:16 tedu Exp $	*/
 /*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -82,58 +82,22 @@ static const u_char latin1_to_upper[256] = {
 	0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x00,		/* f */
 };
 
-static int qcmp_name(const void *, const void *);
-static int qcmp_ksym(const void *, const void *);
-static int bcmp_name(const void *, const void *);
-static int bcmp_ksym(const void *, const void *);
-static int bcmp_ksym_enc(const void *, const void *);
-
 static void sort_ksym_tab(void);
 
 static int
-qcmp_name(const void *a, const void *b)
+cmp_name(const void *a, const void *b)
 {
 	return(strcmp(((struct ksym *) a)->name, ((struct ksym *) b)->name));
 }
 
 static int
-qcmp_ksym(const void *a, const void *b)
+cmp_ksym(const void *a, const void *b)
 {
 	int i;
 
 	i=((struct ksym *) b)->value - ((struct ksym *) a)->value;
 	if (i == 0) {
 		i=((struct ksym *) a)->enc - ((struct ksym *) b)->enc;
-	}
-	return(i);
-}
-
-static int
-bcmp_name(const void *a, const void *b)
-{
-	return(strcmp((char *) a, ((struct ksym *) b)->name));
-}
-
-static int
-bcmp_ksym(const void *a, const void *b)
-{
-	int i;
-
-	i=((struct ksym *) b)->value - *((int *) a);
-	if (i == 0) {
-		i=KEYSYM_ENC_ISO - ((struct ksym *) b)->enc;
-	}
-	return(i);
-}
-
-static int
-bcmp_ksym_enc(const void *a, const void *b)
-{
-	int i;
-
-	i=((struct ksym *) b)->value - *((int *) a);
-	if (i == 0) {
-		i=encoding - ((struct ksym *) b)->enc;
 	}
 	return(i);
 }
@@ -146,8 +110,8 @@ sort_ksym_tab(void)
 	for (i = 0; i < NUMKSYMS; i++)
 		ksym_tab_by_ksym[i] = ksym_tab_by_name[i];
 
-	qsort(ksym_tab_by_name, NUMKSYMS, sizeof(struct ksym), qcmp_name);
-	qsort(ksym_tab_by_ksym, NUMKSYMS, sizeof(struct ksym), qcmp_ksym);
+	qsort(ksym_tab_by_name, NUMKSYMS, sizeof(struct ksym), cmp_name);
+	qsort(ksym_tab_by_ksym, NUMKSYMS, sizeof(struct ksym), cmp_ksym);
 
 	first_time = 0;
 }
@@ -157,16 +121,20 @@ ksym2name(int k)
 {
 	static char tmp[20];
 	struct ksym *r;
+	struct ksym key;
 
 	if (first_time)
 		sort_ksym_tab();
 
-	r = bsearch(&k, ksym_tab_by_ksym,
-		    NUMKSYMS, sizeof(struct ksym), bcmp_ksym_enc);
+	key.value = k;
+	key.enc = encoding;
+	r = bsearch(&key, ksym_tab_by_ksym,
+		    NUMKSYMS, sizeof(struct ksym), cmp_ksym);
 
 	if (r == NULL) {
-		r = bsearch(&k, ksym_tab_by_ksym,
-			    NUMKSYMS, sizeof(struct ksym), bcmp_ksym);
+		key.enc = KEYSYM_ENC_ISO;
+		r = bsearch(&key, ksym_tab_by_ksym,
+			    NUMKSYMS, sizeof(struct ksym), cmp_ksym);
 	}
 
 	if (r != NULL)
@@ -182,12 +150,14 @@ name2ksym(char *n)
 {
 	int res;
 	struct ksym *r;
+	struct ksym key;
 
 	if (first_time)
 		sort_ksym_tab();
 
-	r = bsearch(n, ksym_tab_by_name,
-		    NUMKSYMS, sizeof(struct ksym), bcmp_name);
+	key.name = n;
+	r = bsearch(&key, ksym_tab_by_name,
+		    NUMKSYMS, sizeof(struct ksym), cmp_name);
 
 	if (r != NULL)
 		return(r->value);
