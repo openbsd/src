@@ -139,7 +139,7 @@ aead_from_name(const EVP_AEAD **aead, const char *name)
 		return -1;
 	}
 
-	if (aead == NULL)
+	if (*aead == NULL)
 		return 0;
 
 	return 1;
