@@ -68,10 +68,11 @@ AES_wrap_unwrap_test(const unsigned char *kek, int keybits,
 	unsigned char *otmp = NULL, *ptmp = NULL;
 	int r, ret = 0;
 	AES_KEY wctx;
+
 	otmp = malloc(keylen + 8);
 	ptmp = malloc(keylen);
-	if (!otmp || !ptmp)
-		return 0;
+	if (otmp == NULL || ptmp == NULL)
+		goto err;
 	if (AES_set_encrypt_key(kek, keybits, &wctx))
 		goto err;
 	r = AES_wrap_key(&wctx, iv, otmp, key, keylen);
