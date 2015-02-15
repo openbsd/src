@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.131 2015/01/29 00:33:14 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.132 2015/02/15 17:57:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1778,17 +1778,18 @@ is preferred for displaying code; the
 .Sx \&Ic
 macro is used when referring to specific instructions.
 .Ss \&In
-An
-.Dq include
-file.
+The name of an include file.
+This macro is most often used in section 2, 3, and 9 manual pages.
+.Pp
 When invoked as the first macro on an input line in the
 .Em SYNOPSIS
 section, the argument is displayed in angle brackets
 and preceded by
-.Dq #include ,
+.Qq #include ,
 and a blank line is inserted in front if there is a preceding
 function declaration.
-This is most often used in section 2, 3, and 9 manual pages.
+In other sections, it only encloses its argument in angle brackets
+and causes no line break.
 .Pp
 Examples:
 .Dl \&.In sys/types.h
