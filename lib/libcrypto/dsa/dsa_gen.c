@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.18 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.19 2015/02/15 08:48:24 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,12 +126,10 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 
 	bits = (bits + 63) / 64 * 64;
 
-	/*
-	 * NB: seed_len == 0 is special case: copy generated seed to
- 	 * seed_in if it is not NULL.
- 	 */
-	if (seed_len && seed_len < (size_t)qsize)
+	if (seed_len < (size_t)qsize) {
 		seed_in = NULL;		/* seed buffer too small -- ignore */
+		seed_len = 0;
+	}
 	/*
 	 * App. 2.2 of FIPS PUB 186 allows larger SEED,
 	 * but our internal buffers are restricted to 160 bits
@@ -176,7 +174,7 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 			if (!BN_GENCB_call(cb, 0, m++))
 				goto err;
 
-			if (!seed_len) {
+			if (seed_len == 0) {
 				arc4random_buf(seed, qsize);
 				seed_is_random = 1;
 			} else {
@@ -344,7 +342,7 @@ err:
 			*counter_ret = counter;
 		if (h_ret != NULL)
 			*h_ret = h;
-		if (seed_out)
+		if (seed_out != NULL)
 			memcpy(seed_out, seed, qsize);
 	}
 	if (ctx) {
