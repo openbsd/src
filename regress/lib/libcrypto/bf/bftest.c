@@ -351,7 +351,7 @@ static int test(void)
 		data[0]=bf_plain[n][0];
 		data[1]=bf_plain[n][1];
 		BF_encrypt(data,&key);
-		if (memcmp(&(bf_cipher[n][0]),&(data[0]),8) != 0)
+		if (memcmp(&(bf_cipher[n][0]),&(data[0]), sizeof data) != 0)
 			{
 			printf("BF_encrypt error encrypting\n");
 			printf("got     :");
@@ -423,8 +423,7 @@ static int test(void)
 		{
 		BF_set_key(&key,n,key_test);
 		BF_ecb_encrypt(key_data,out,&key,BF_ENCRYPT);
-		/* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
-		if (memcmp(out,&(key_out[i=n-1][0]),8) != 0)
+		if (memcmp(out,&(key_out[n-1][0]),8) != 0)
 			{
 			printf("blowfish setkey error\n");
 			err=1;
