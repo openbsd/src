@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.12 2015/02/11 07:01:10 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.13 2015/02/15 13:33:14 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2015 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm tls_error ,
 .Nm tls_config_new ,
 .Nm tls_config_free ,
+.Nm tls_config_parse_protocols ,
 .Nm tls_config_set_ca_file ,
 .Nm tls_config_set_ca_path ,
 .Nm tls_config_set_ca_mem ,
@@ -63,6 +64,8 @@
 .Fn tls_config_new "void"
 .Ft "void"
 .Fn tls_config_free "struct tls_config *config"
+.Ft "int"
+.Fn tls_config_parse_protocols "uint32_t *protocols" "const char *protostr"
 .Ft "int"
 .Fn tls_config_set_ca_file "struct tls_config *config" "const char *ca_file"
 .Ft "int"
@@ -208,6 +211,22 @@ allocates a new default configuration object.
 frees a configuration object.
 .El
 .Pp
+The
+.Fn tls_config_parse_protocols
+function parses a protocol string and returns the corresponding value via the
+.Ar protocols
+argument.
+This value can then be passed to the
+.Fn tls_config_set_protocols
+function.
+The protocol string is a comma or colon separated list of keywords.
+Valid keywords are tlsv1.0, tlsv1.1, tlsv1.2, all (all supported protocols),
+default (an alias for secure), legacy (an alias for all) and secure (currently
+TLSv1.2 only).
+If a value has a negative prefix (in the form of a leading exclamation mark)
+then it is removed from the list of available protocols, rather than being
+added to it.
+.Pp
 The following functions modify a configuration by setting parameters.
 Configuration options may apply to only clients or only servers or both.
 .Bl -bullet -offset four
@@ -258,9 +277,11 @@ Possible values are the bitwise OR of:
 .Pp
 Additionally, the values
 .Dv TLS_PROTOCOL_TLSv1
-(all TLS versions) and
+(TLSv1.0, TLSv1.1 and TLSv1.2),
+.Dv TLS_PROTOCOLS_ALL
+(all supported protocols) and
 .Dv TLS_PROTOCOLS_DEFAULT
-(currently all TLS versions) may be used.
+(TLSv1.2 only) may be used.
 .Em (Client and server)
 .It
 .Fn tls_config_clear_keys
