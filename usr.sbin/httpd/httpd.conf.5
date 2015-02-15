@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.50 2015/02/07 08:12:30 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.51 2015/02/15 13:43:32 jsing Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2015 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -367,6 +367,14 @@ should contain a PEM encoded private key and reside outside of the
 .Xr chroot 2
 root directory of
 .Nm httpd .
+.It Ic protocols Ar string
+Specify the TLS protocols to enable for this server.
+If not specified, the default value
+.Qq all
+will be used (all available protocols).
+Refer to the
+.Xr tls_config_parse_protocols 3
+function for other valid protocol string values.
 .El
 .El
 .Sh TYPES
