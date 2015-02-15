@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2014/12/17 15:27:17 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2015/02/15 21:34:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -71,7 +71,7 @@ extern struct pmap kernel_pmap_store;
 #define	pmap_resident_count(p)		((p)->pm_stats.resident_count)
 #define	pmap_update(p)			do { /* nothing */ } while (0)
 #define	pmap_wired_count(p)		((p)->pm_stats.wired_count)
-#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
+#define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
 

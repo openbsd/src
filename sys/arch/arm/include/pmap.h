@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.31 2015/02/07 01:46:27 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.32 2015/02/15 21:34:33 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_copy(dp, sp, da, l, sa)	do { /* nothing */ } while (0)
 
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
-#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
+#define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
 /*
  * Functions that we need to export

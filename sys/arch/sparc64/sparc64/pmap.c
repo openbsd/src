@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2015/02/10 01:59:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2015/02/15 21:34:33 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2901,9 +2901,10 @@ pmap_free_page(paddr_t pa, struct pmap *pm)
 }
 
 void
-pmap_remove_holes(struct vm_map *map)
+pmap_remove_holes(struct vmspace *vm)
 {
 	vaddr_t shole, ehole;
+	struct vm_map *map = &vm->vm_map;
 
 	/*
 	 * Although the hardware only supports 44-bit virtual addresses

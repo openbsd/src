@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2014/12/17 06:58:10 guenther Exp $ */
+/*	$OpenBSD: pmap.c,v 1.75 2015/02/15 21:34:33 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -851,8 +851,9 @@ pmap_create()
 }
 
 void
-pmap_remove_holes(struct vm_map *map)
+pmap_remove_holes(struct vmspace *vm)
 {
+	struct vm_map *map = &vm->vm_map;
 	struct pmap *pmap = map->pmap;
 	vaddr_t shole, ehole;
 
@@ -860,7 +861,7 @@ pmap_remove_holes(struct vm_map *map)
 		return;
 
 	shole = MAXTSIZ + MAXDSIZ + BRKSIZ;
-	ehole = VM_MAXUSER_ADDRESS - MAXSSIZ;
+	ehole = (vaddr_t)vm->vm_maxsaddr;
 	shole = max(vm_map_min(map), shole);
 	ehole = min(vm_map_max(map), ehole);
 

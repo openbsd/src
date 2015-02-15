@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.35 2015/02/11 01:13:22 dlg Exp $ */
+/* $OpenBSD: pmap.h,v 1.36 2015/02/15 21:34:33 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -179,7 +179,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */
-#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
+#define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 

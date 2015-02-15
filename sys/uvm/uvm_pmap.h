@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.23 2014/11/16 12:31:01 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.24 2015/02/15 21:34:33 miod Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -159,7 +159,7 @@ void		 pmap_reference(pmap_t);
 void		 pmap_remove(pmap_t, vaddr_t, vaddr_t);
 #endif
 #if !defined(pmap_remove_holes)
-void		pmap_remove_holes(struct vm_map *);
+void		pmap_remove_holes(struct vmspace *);
 #endif
 #if !defined(pmap_update)
 void		 pmap_update(pmap_t);
