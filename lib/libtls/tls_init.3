@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.13 2015/02/15 13:33:14 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.14 2015/02/15 13:36:06 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -302,7 +302,7 @@ Be extremely careful when using this option.
 reenables hostname and certificate verification.
 .Em (Client)
 .It
-.Fn tls_load_keys
+.Fn tls_load_file
 loads a certificate or key from disk into memory to be loaded with
 .Fn tls_config_set_ca_mem ,
 .Fn tls_config_set_cert_mem
