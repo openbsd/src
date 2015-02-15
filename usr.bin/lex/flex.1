@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.37 2014/03/23 16:28:29 jmc Exp $
+.\"	$OpenBSD: flex.1,v 1.38 2015/02/15 22:26:45 bentley Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -3460,7 +3460,7 @@ defaults to generating the scanner to the file
 instead of
 .Pa lex.yy.c .
 The generated scanner includes the header file
-.Aq Pa g++/FlexLexer.h ,
+.In g++/FlexLexer.h ,
 which defines the interface to two C++ classes.
 .Pp
 The first class,
@@ -3510,7 +3510,7 @@ and
 object pointer).
 .Pp
 The second class defined in
-.Aq Pa g++/FlexLexer.h
+.In g++/FlexLexer.h
 is
 .Fa yyFlexLexer ,
 which is derived from
@@ -3707,7 +3707,7 @@ to rename each
 .Fa yyFlexLexer
 to some other
 .Fa xxFlexLexer .
-.Aq Pa g++/FlexLexer.h
+.In g++/FlexLexer.h
 can then be included in other sources once per lexer class, first renaming
 .Fa yyFlexLexer
 as follows:
@@ -4109,7 +4109,7 @@ on some systems).
 .It lex.yy.cc
 Generated C++ scanner class, when using
 .Fl + .
-.It Aq g++/FlexLexer.h
+.It In g++/FlexLexer.h
 Header file defining the C++ scanner base class,
 .Fa FlexLexer ,
 and its derived class,
@@ -4394,7 +4394,7 @@ token.
 .Pp
 Due to both buffering of input and read-ahead,
 it is not possible to intermix calls to
-.Aq Pa stdio.h
+.In stdio.h
 routines, such as, for example,
 .Fn getchar ,
 with

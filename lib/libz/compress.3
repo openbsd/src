@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.14 2013/07/16 15:21:11 schwarze Exp $
+.\"	$OpenBSD: compress.3,v 1.15 2015/02/15 22:26:45 bentley Exp $
 .\"
 .\"  Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler
 .\"
@@ -23,7 +23,7 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -229,7 +229,7 @@ and
 for consistency.
 If the first character differs, the library code actually used is
 not compatible with the
-.Aq Pa zlib.h
+.In zlib.h
 header file used by the application.
 This check is automatically made by
 .Fn deflateInit
@@ -889,7 +889,7 @@ memLevel=1 uses minimum memory but is slow and reduces compression ratio;
 memLevel=9 uses maximum memory for optimal speed.
 The default value is 8.
 See
-.Aq Pa zconf.h
+.In zconf.h
 for total memory usage as a function of
 .Fa windowBits
 and
@@ -2588,7 +2588,7 @@ and
 must be able to allocate exactly 65536 bytes,
 but will not be required to allocate more than this if the symbol MAXSEG_64K
 is defined (see
-.Aq Pa zconf.h ) .
+.In zconf.h ) .
 .Pp
 WARNING: On MSDOS, pointers returned by
 .Fa zalloc
@@ -2598,7 +2598,7 @@ The default allocation function provided by this library ensures this (see
 To reduce memory requirements and avoid any allocation of 64K objects,
 at the expense of compression ratio,
 compile the library with -DMAX_WBITS=14 (see
-.Aq Pa zconf.h ) .
+.In zconf.h ) .
 .Pp
 The fields
 .Fa total_in
@@ -2739,7 +2739,7 @@ version and the compiler's view of
 .Re
 .Sh HISTORY
 This manual page is based on an HTML version of
-.Aq Pa zlib.h
+.In zlib.h
 converted by
 .An piaip Aq Mt piaip@csie.ntu.edu.tw
 and was converted to mdoc format by the

@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.34 2013/01/17 21:29:14 jmc Exp $
+.\" $OpenBSD: file.1,v 1.35 2015/02/15 22:26:45 bentley Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) Ian F. Darwin 1986-1995.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -91,16 +91,16 @@ Any known file types,
 such as sockets, symbolic links, and named pipes (FIFOs),
 are intuited if they are defined in
 the system header file
-.Aq Pa sys/stat.h .
+.In sys/stat.h .
 .Pp
 The magic tests are used to check for files with data in
 particular fixed formats.
 The canonical example of this is a binary executable (compiled program)
 a.out file, whose format is defined in
-.Aq Pa elf.h ,
-.Aq Pa a.out.h ,
+.In elf.h ,
+.In a.out.h ,
 and possibly
-.Aq Pa exec.h
+.In exec.h
 in the standard include directory.
 These files have a
 .Dq magic number
@@ -154,7 +154,7 @@ has determined the character set used in a text-type file,
 it will
 attempt to determine in what language the file is written.
 The language tests look for particular strings (cf.\&
-.Aq Pa names.h )
+.In names.h )
 that can appear anywhere in the first few blocks of a file.
 For example, the keyword
 .Em .br

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtc.4,v 1.7 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: mtc.4,v 1.8 2015/02/15 22:26:45 bentley Exp $
 .\"	$NetBSD: mtc.4,v 1.4 2001/04/11 19:23:01 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)uda.4	6.6 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt MTC 4 vax
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@ communicates with the host through
 a packet protocol known as the Mass Storage Control Protocol
 .Pq Tn MSCP .
 Consult the file
-.Aq Pa mscp/mscp.h
+.In mscp/mscp.h
 for a detailed description of this protocol.
 .Sh SEE ALSO
 .Xr intro 4 ,
