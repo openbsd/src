@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.16 2015/02/06 20:40:35 sthen Exp $
+# $OpenBSD: FwUpdate.pm,v 1.17 2015/02/15 09:54:21 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -45,13 +45,16 @@ sub find_path
 sub handle_options
 {
 	my $state = shift;
-	$state->OpenBSD::State::handle_options('adnp:', 
-	    '[-adnv] [-D keyword] [-p path] [driver...]');
+	$state->OpenBSD::State::handle_options('adinp:', 
+	    '[-adinv] [-D keyword] [-p path] [driver...]');
 	$state->{not} = $state->opt('n');
 	if ($state->opt('p')) {
 		$state->{path} = $state->opt('p');
 	} else {
 		$state->find_path;
+	}
+	if ($state->opt('i')) {
+		$state->{not} = 1;
 	}
 	$main::not = $state->{not};
 	$state->progress->setup(0, 0, $state);
@@ -177,12 +180,17 @@ sub find_machine_drivers
 	}
 }
 
+sub driver2firmware
+{
+	return shift."-firmware";
+}
+
 sub find_installed_drivers
 {
 	my ($self, $state) = @_;
 	my $inst = $state->repo->installed;
 	for my $driver (keys %possible_drivers) {	
-		my $search = OpenBSD::Search::Stem->new("$driver-firmware");
+		my $search = OpenBSD::Search::Stem->new(driver2firmware($driver));
 		my $l = $inst->match_locations($search);
 		if (@$l > 0) {
 			$state->{installed_drivers}{$driver} = 
@@ -201,7 +209,7 @@ sub new_state
 sub find_handle
 {
 	my ($self, $state, $driver) = @_;
-	my $pkgname = "$driver-firmware";
+	my $pkgname = driver2firmware($driver);
 	my $set;
 	my $h = $state->is_installed($driver);
 	if ($h) {
@@ -245,6 +253,28 @@ sub to_add_or_update
 	return $set;
 }
 
+sub show_info
+{
+	my ($self, $state) = @_;
+	my (@installed, @unneeded, @needed);
+	for my $d ($state->installed_drivers) {
+		my $h = $state->is_installed($d)->pkgname;
+		if ($state->is_needed($d)) {
+			push(@installed, $h);
+		} else {
+			push(@unneeded, $h);
+		}
+	}
+	for my $d ($state->machine_drivers) {
+		if (!$state->is_installed($d)) {
+			push(@needed, driver2firmware($d));
+		} 
+	}
+	$state->fw_status("Installed", \@installed);
+	$state->fw_status("Installed, extra", \@unneeded);
+	$state->fw_status("Missing", \@needed);
+}
+
 sub process_parameters
 {
 	my ($self, $state) = @_;
@@ -252,6 +282,10 @@ sub process_parameters
 	$self->find_machine_drivers($state);
 	$self->find_installed_drivers($state);
 
+	if ($state->opt('i')) {
+		$self->show_info($state);
+		exit(0);
+	}
 	if (@ARGV == 0) {
 		if ($state->opt('d')) {
 			for my $driver ($state->installed_drivers) {
@@ -287,6 +321,7 @@ sub process_parameters
 		}
 	} else {
 		for my $driver (@ARGV) {
+			$driver =~ s/\-firmware(\-\d.*)?$//;
 			if (!$possible_drivers{$driver}) {
 				$state->errsay("#1: unknown driver", $driver);
 				exit(1);

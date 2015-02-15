@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.1 2015/01/11 22:34:08 espie Exp $
+.\" $OpenBSD: fw_update.1,v 1.2 2015/02/15 09:54:21 espie Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 11 2015 $
+.Dd $Mdocdate: February 15 2015 $
 .Dt FW_UPDATE 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd install non-free firmware packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl adnv
+.Op Fl adinv
 .Op Fl p Ar path
 .Op Ar driver ...
 .Sh DESCRIPTION
@@ -54,10 +54,14 @@ arguments.
 .It Fl d
 Delete firmware for
 .Ar driver .
-If used without parameters, delete unneeded drivers.
+If used without parameters, delete all firmware that is not required by
+a driver.
 If used in conjunction with
 .Fl a ,
 delete firmware for all drivers.
+.It Fl i
+Display information about firmware which are installed (and whether they
+appear to not be required by a driver) or missing.
 .It Fl n
 Dry run.
 Do not actually install or update any firmware packages;
