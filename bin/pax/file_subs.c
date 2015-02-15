@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.42 2015/02/12 23:44:57 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.43 2015/02/15 22:18:29 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -299,6 +299,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 				syswarn(1, errno, "Unable to remove %s", from);
 				return(-1);
 			}
+			delete_dir(sb.st_dev, sb.st_ino);
 		} else if (unlink(from) < 0) {
 			if (!ign) {
 				syswarn(1, errno, "Unable to remove %s", from);
@@ -564,6 +565,7 @@ unlnk_exist(char *name, int type)
 			syswarn(1,errno,"Unable to remove directory %s", name);
 			return(-1);
 		}
+		delete_dir(sb.st_dev, sb.st_ino);
 		return(0);
 	}
 
