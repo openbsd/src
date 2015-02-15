@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.358 2015/02/10 04:20:26 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.359 2015/02/15 01:56:42 tedu Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2475,7 +2475,7 @@ add_default_route(struct in_addr addr, struct in_addr gateway)
 	 * to emulate the '-iface' variant of 'route'. This is done by
 	 * claiming there is no gateway address to use.
 	 */
-	if (bcmp(&gateway, &addr, sizeof(addr)) != 0) {
+	if (memcmp(&gateway, &addr, sizeof(addr)) != 0) {
 		addrs |= RTA_GATEWAY | RTA_IFA;
 		flags |= RTF_GATEWAY | RTF_STATIC;
 	}

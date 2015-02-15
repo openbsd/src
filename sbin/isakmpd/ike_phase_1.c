@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.73 2014/08/22 07:59:52 doug Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.74 2015/02/15 01:56:42 tedu Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -1070,7 +1070,7 @@ ike_phase_1_recv_ID(struct message *msg)
 		}
 
 		/* Compare expected/desired and received remote ID */
-		if (bcmp(rid, payload->p + ISAKMP_ID_DATA_OFF, sz)) {
+		if (memcmp(rid, payload->p + ISAKMP_ID_DATA_OFF, sz) != 0) {
 			free(rid);
 			log_print("ike_phase_1_recv_ID: "
 			    "received remote ID other than expected %s", p);
