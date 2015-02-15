@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.412 2015/02/12 01:24:10 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.413 2015/02/15 10:40:53 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1433,6 +1433,8 @@ struct pf_status {
 
 #define PF_REASS_ENABLED	0x01
 #define PF_REASS_NODF		0x02
+
+#define PF_PRIO_ZERO		0xff		/* match "prio 0" packets */
 
 struct pf_queue_bwspec {
 	u_int		absolute;
