@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.48 2013/12/17 16:37:05 deraadt Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.49 2015/02/16 01:44:41 tedu Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -331,7 +331,7 @@ x_emacs(char *buf, size_t len)
 				if (at > k->len)
 					continue;
 
-				if (!bcmp(k->seq, line, at)) {
+				if (memcmp(k->seq, line, at) == 0) {
 					/* sub match */
 					submatch++;
 					if (k->len == at)
@@ -1296,7 +1296,7 @@ kb_match(char *s)
 		if (len > k->len)
 			continue;
 
-		if (!bcmp(k->seq, s, len))
+		if (memcmp(k->seq, s, len) == 0)
 			return (1);
 	}
 
