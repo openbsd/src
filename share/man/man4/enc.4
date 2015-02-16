@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.28 2010/06/29 21:28:37 reyk Exp $
+.\"	$OpenBSD: enc.4,v 1.29 2015/02/16 16:38:54 naddy Exp $
 .\"
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 29 2010 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt ENC 4
 .Os
 .Sh NAME
@@ -111,11 +111,11 @@ For example:
 tcpdump: WARNING: enc0: no IPv4 address assigned
 tcpdump: listening on enc0, link-type ENC
 15:05:08.934708 (authentic,confidential): SPI 0x6bcac587: \e
-	172.25.0.45 \*(Gt 1.2.3.4: 10.9.9.28.7001 \*(Gt 10.0.0.33.7000: \e
+	172.25.0.45 > 1.2.3.4: 10.9.9.28.7001 > 10.0.0.33.7000: \e
 	[udp sum ok] udp 52 (ttl 64, id 5672, len 80) \e
 	(ttl 64, id 30009, len 100, bad cksum 0!)
 15:05:09.063517 (authentic,confidential): SPI 0x4b70c05a: \e
-	1.2.3.4 \*(Gt 172.25.0.45: 10.0.0.33.7000 \*(Gt 10.9.9.28.7001: \e
+	1.2.3.4 > 172.25.0.45: 10.0.0.33.7000 > 10.9.9.28.7001: \e
 	[udp sum ok] udp 156 (ttl 63, id 14880, len 184) \e
 	(ttl 51, id 19689, len 204)
 .Ed
@@ -130,7 +130,7 @@ Negotiations can be watched on the physical interface too:
 # tcpdump -envps 1500 -i wi0 port 500 or port 4500
 tcpdump: listening on wi0, link-type EN10MB
 15:15:58.188747 0:2:6f:3a:3f:3e 0:10:f3:3:bd:8a 0800 226: \e
-    172.25.0.45.500 \*(Gt 1.2.3.4.500: [udp sum ok] \e
+    172.25.0.45.500 > 1.2.3.4.500: [udp sum ok] \e
 [...]
 	attribute ENCRYPTION_ALGORITHM = AES_CBC
 	attribute HASH_ALGORITHM = SHA
@@ -141,7 +141,7 @@ tcpdump: listening on wi0, link-type EN10MB
 	attribute KEY_LENGTH = 128
 [...]
 15:15:59.080058 0:10:f3:3:bd:8a 0:2:6f:3a:3f:3e 0800 226: \e
-    1.2.3.4.500 \*(Gt 172.25.0.45.500: [udp sum ok] \e
+    1.2.3.4.500 > 172.25.0.45.500: [udp sum ok] \e
 [...]
 	attribute ENCRYPTION_ALGORITHM = AES_CBC
 	attribute HASH_ALGORITHM = SHA

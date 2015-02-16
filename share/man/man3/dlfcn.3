@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dlfcn.3,v 1.27 2013/11/02 09:41:58 espie Exp $
+.\"	$OpenBSD: dlfcn.3,v 1.28 2015/02/16 16:38:53 naddy Exp $
 .\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2013 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt DLFCN 3
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@ shared library searches.
 .Pp
 Shared libraries take the following form:
 .Pp
-.Dl lib\*(Ltname\*(Gt.so[.xx[.yy]]
+.Dl lib<name>.so[.xx[.yy]]
 .Pp
 When a shared library is specified without a version or with a partial version,
 the same library search rules apply that are used for

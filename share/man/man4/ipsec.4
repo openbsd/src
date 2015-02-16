@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.82 2015/01/29 07:48:51 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.83 2015/02/16 16:38:54 naddy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -216,7 +216,7 @@ where two firewalls use IPsec
 to secure the traffic of all the hosts behind them.
 For example:
 .Bd -literal -offset indent
-Net A \*(Lt----\*(Gt Firewall 1 \*(Lt--- Internet ---\*(Gt Firewall 2 \*(Lt----\*(Gt Net B
+Net A <----> Firewall 1 <--- Internet ---> Firewall 2 <----> Net B
 .Ed
 .Pp
 Firewall 1 and Firewall 2 can protect all communications between Net A
@@ -233,8 +233,8 @@ interfaces, but special care should be taken because of the interactions
 between NAT and the IPsec flow matching, especially on the packet output path.
 Inside the TCP/IP stack, packets go through the following stages:
 .Bd -literal -offset indent
-UL/R -\*(Gt [X] -\*(Gt PF/NAT(enc0) -\*(Gt IPsec -\*(Gt PF/NAT(IF) -\*(Gt IF
-UL/R \*(Lt-------- PF/NAT(enc0) \*(Lt- IPsec \*(Lt- PF/NAT(IF) \*(Lt- IF
+UL/R -> [X] -> PF/NAT(enc0) -> IPsec -> PF/NAT(IF) -> IF
+UL/R <-------- PF/NAT(enc0) <- IPsec <- PF/NAT(IF) <- IF
 .Ed
 .Pp
 With IF being the real interface and UL/R the Upper Layer or Routing code.

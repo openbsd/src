@@ -24,10 +24,10 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: multicast.4,v 1.9 2014/01/21 03:15:46 schwarze Exp $
+.\" $OpenBSD: multicast.4,v 1.10 2015/02/16 16:38:54 naddy Exp $
 .\" $NetBSD: multicast.4,v 1.3 2004/09/12 13:12:26 wiz Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt MULTICAST 4
 .Os
 .\"
@@ -303,7 +303,7 @@ memset(&mc, 0, sizeof(mc));
 memcpy(&mc.mfcc_origin, &source_addr, sizeof(mc.mfcc_origin));
 memcpy(&mc.mfcc_mcastgrp, &group_addr, sizeof(mc.mfcc_mcastgrp));
 mc.mfcc_parent = iif_index;
-for (i = 0; i \*(Lt maxvifs; i++)
+for (i = 0; i < maxvifs; i++)
     mc.mfcc_ttls[i] = oifs_ttl[i];
 setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_MFC,
            (void *)&mc, sizeof(mc));
@@ -315,8 +315,8 @@ memset(&mc, 0, sizeof(mc));
 memcpy(&mc.mf6cc_origin, &source_addr, sizeof(mc.mf6cc_origin));
 memcpy(&mc.mf6cc_mcastgrp, &group_addr, sizeof(mf6cc_mcastgrp));
 mc.mf6cc_parent = iif_index;
-for (i = 0; i \*(Lt maxvifs; i++)
-    if (oifs_ttl[i] \*(Gt 0)
+for (i = 0; i < maxvifs; i++)
+    if (oifs_ttl[i] > 0)
         IF_SET(i, &mc.mf6cc_ifset);
 setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_ADD_MFC,
            (void *)&mc, sizeof(mc));
@@ -513,15 +513,15 @@ should be called right after
 .Pp
 Currently, the following set of new features is defined:
 .Bd -literal
-#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 \*(Lt\*(Lt 0)/*disable WRONGVIF signals*/
-#define	MRT_MFC_FLAGS_BORDER_VIF   (1 \*(Lt\*(Lt 1)  /* border vif              */
-#define MRT_MFC_RP                 (1 \*(Lt\*(Lt 8)  /* enable RP address	*/
-#define MRT_MFC_BW_UPCALL          (1 \*(Lt\*(Lt 9)  /* enable bw upcalls	*/
+#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 << 0)/*disable WRONGVIF signals*/
+#define	MRT_MFC_FLAGS_BORDER_VIF   (1 << 1)  /* border vif              */
+#define MRT_MFC_RP                 (1 << 8)  /* enable RP address	*/
+#define MRT_MFC_BW_UPCALL          (1 << 9)  /* enable bw upcalls	*/
 .Ed
 .\" .Pp
 .\" In the future there might be:
 .\" .Bd -literal
-.\" #define MRT_MFC_GROUP_SPECIFIC     (1 \*(Lt\*(Lt 10) /* allow (*,G) MFC entries */
+.\" #define MRT_MFC_GROUP_SPECIFIC     (1 << 10) /* allow (*,G) MFC entries */
 .\" .Ed
 .\" .Pp
 .\" to allow (*,G) MFC entries (i.e., group-specific entries) in the kernel.
@@ -572,8 +572,8 @@ field is used to set various flags per
 interface per (S,G) entry.
 Currently, the defined flags are:
 .Bd -literal
-#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 \*(Lt\*(Lt 0)/*disable WRONGVIF signals*/
-#define	MRT_MFC_FLAGS_BORDER_VIF       (1 \*(Lt\*(Lt 1) /* border vif          */
+#define	MRT_MFC_FLAGS_DISABLE_WRONGVIF (1 << 0)/*disable WRONGVIF signals*/
+#define	MRT_MFC_FLAGS_BORDER_VIF       (1 << 1) /* border vif          */
 .Ed
 .Pp
 The
@@ -699,14 +699,14 @@ There can be
 more than one filter per (S,G).
 .It
 Instead of supporting all possible comparison operations
-(i.e., \*(Lt \*(Lt= == != \*(Gt \*(Gt= ), there is support only for the
-\*(Lt= and \*(Gt= operations,
+(i.e., < <= == != > >= ), there is support only for the
+<= and >= operations,
 because this makes the kernel-level implementation simpler,
 and because practically we need only those two.
 Furthermore, the missing operations can be simulated by secondary
-user-level filtering of those \*(Lt= and \*(Gt= filters.
+user-level filtering of those <= and >= filters.
 For example, to simulate !=, then we need to install filter
-.Dq bw \*(Lt= 0xffffffff ,
+.Dq bw <= 0xffffffff ,
 and after an
 upcall is received, we need to check whether
 .Dq measured_bw != expected_bw .
@@ -746,14 +746,14 @@ the following:
  *
  * Measurement works as follows:
  *
- * For \*(Gt= measurements:
+ * For >= measurements:
  * The first packet marks the start of a measurement interval.
  * During an interval we count packets and bytes, and when we
  * pass the threshold we deliver an upcall and we are done.
  * The first packet after the end of the interval resets the
  * count and restarts the measurement.
  *
- * For \*(Lt= measurement:
+ * For <= measurement:
  * We start a timer to fire at the end of the interval, and
  * then for each incoming packet we count packets and bytes.
  * When the timer fires, we compare the value with the threshold,
@@ -771,11 +771,11 @@ struct bw_upcall {
         struct in_addr  bu_src;         /* source address            */
         struct in_addr  bu_dst;         /* destination address       */
         uint32_t        bu_flags;       /* misc flags (see below)    */
-#define BW_UPCALL_UNIT_PACKETS (1 \*(Lt\*(Lt 0) /* threshold (in packets)    */
-#define BW_UPCALL_UNIT_BYTES   (1 \*(Lt\*(Lt 1) /* threshold (in bytes)      */
-#define BW_UPCALL_GEQ          (1 \*(Lt\*(Lt 2) /* upcall if bw \*(Gt= threshold */
-#define BW_UPCALL_LEQ          (1 \*(Lt\*(Lt 3) /* upcall if bw \*(Lt= threshold */
-#define BW_UPCALL_DELETE_ALL   (1 \*(Lt\*(Lt 4) /* delete all upcalls for s,d*/
+#define BW_UPCALL_UNIT_PACKETS (1 << 0) /* threshold (in packets)    */
+#define BW_UPCALL_UNIT_BYTES   (1 << 1) /* threshold (in bytes)      */
+#define BW_UPCALL_GEQ          (1 << 2) /* upcall if bw >= threshold */
+#define BW_UPCALL_LEQ          (1 << 3) /* upcall if bw <= threshold */
+#define BW_UPCALL_DELETE_ALL   (1 << 4) /* delete all upcalls for s,d*/
         struct bw_data  bu_threshold;   /* the bw threshold          */
         struct bw_data  bu_measured;    /* the measured bw           */
 };
@@ -802,19 +802,19 @@ argument,
 and that filter will trigger an upcall according to the following
 pseudo-algorithm:
 .Bd -literal
- if (bw_upcall_oper IS "\*(Gt=") {
+ if (bw_upcall_oper IS ">=") {
     if (((bw_upcall_unit & PACKETS == PACKETS) &&
-         (measured_packets \*(Gt= threshold_packets)) ||
+         (measured_packets >= threshold_packets)) ||
         ((bw_upcall_unit & BYTES == BYTES) &&
-         (measured_bytes \*(Gt= threshold_bytes)))
-       SEND_UPCALL("measured bandwidth is \*(Gt= threshold");
+         (measured_bytes >= threshold_bytes)))
+       SEND_UPCALL("measured bandwidth is >= threshold");
   }
-  if (bw_upcall_oper IS "\*(Lt=" && measured_interval \*(Gt= threshold_interval) {
+  if (bw_upcall_oper IS "<=" && measured_interval >= threshold_interval) {
     if (((bw_upcall_unit & PACKETS == PACKETS) &&
-         (measured_packets \*(Lt= threshold_packets)) ||
+         (measured_packets <= threshold_packets)) ||
         ((bw_upcall_unit & BYTES == BYTES) &&
-         (measured_bytes \*(Lt= threshold_bytes)))
-       SEND_UPCALL("measured bandwidth is \*(Lt= threshold");
+         (measured_bytes <= threshold_bytes)))
+       SEND_UPCALL("measured bandwidth is <= threshold");
   }
 .Ed
 .Pp
@@ -823,18 +823,18 @@ In the same
 the unit can be specified in both BYTES and PACKETS.
 However, the GEQ and LEQ flags are mutually exclusive.
 .Pp
-Basically, an upcall is delivered if the measured bandwidth is \*(Gt= or
-\*(Lt= the threshold bandwidth (within the specified measurement
+Basically, an upcall is delivered if the measured bandwidth is >= or
+<= the threshold bandwidth (within the specified measurement
 interval).
 For practical reasons, the smallest value for the measurement
 interval is 3 seconds.
 If smaller values are allowed, then the bandwidth
 estimation may be less accurate, or the potentially very high frequency
 of the generated upcalls may introduce too much overhead.
-For the \*(Gt= operation, the answer may be known before the end of
+For the >= operation, the answer may be known before the end of
 .Va threshold_interval ,
 therefore the upcall may be delivered earlier.
-For the \*(Lt= operation however, we must wait
+For the <= operation however, we must wait
 until the threshold interval has expired to know the answer.
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -910,10 +910,10 @@ the particular intervals are measured, the user should be careful how
 is used.
 For example, if the
 filter is installed to trigger an upcall if the number of packets
-is \*(Gt= 1, then
+is >= 1, then
 .Va bu_measured
 may have a value of zero in the upcalls after the
-first one, because the measured interval for \*(Gt= filters is
+first one, because the measured interval for >= filters is
 .Dq clocked
 by the forwarded packets.
 Hence, this upcall mechanism should not be used for measuring
@@ -930,7 +930,7 @@ Note that the upcalls for a filter are delivered until the specific
 filter is deleted, but no more frequently than once per
 .Va bu_threshold.b_time .
 For example, if the filter is specified to
-deliver a signal if bw \*(Gt= 1 packet, the first packet will trigger a
+deliver a signal if bw >= 1 packet, the first packet will trigger a
 signal, but the next upcall will be triggered no earlier than
 .Va bu_threshold.b_time
 after the previous upcall.

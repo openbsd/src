@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.38 2014/11/27 13:15:54 stsp Exp $
+.\"	$OpenBSD: softraid.4,v 1.39 2015/02/16 16:38:54 naddy Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2014 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -141,7 +141,7 @@ Assemble the RAID volume:
 The console will show what device was added to the system:
 .Bd -literal -offset indent
 scsibus0 at softraid0: 1 targets
-sd0 at scsibus0 targ 0 lun 0: \*(LtOPENBSD, SR RAID 1, 001\*(Gt SCSI2
+sd0 at scsibus0 targ 0 lun 0: <OPENBSD, SR RAID 1, 001> SCSI2
 sd0: 1MB, 0 cyl, 255 head, 63 sec, 512 bytes/sec, 3714 sec total
 .Ed
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.76 2014/03/18 22:36:31 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.77 2015/02/16 16:38:54 naddy Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: March 18 2014 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ is set to 2.
 .Nm
 prompts for commands on the console with:
 .Pp
-.Dl ddb\*(Gt
+.Dl ddb>
 .Pp
 The general syntax of a
 .Nm
@@ -192,7 +192,7 @@ exchange the two characters to the left of the cursor
 .El
 .Sh COMMANDS
 The following commands may be typed at the
-.Ql ddb\*(Gt
+.Ql ddb>
 prompt.
 Some commands consist of more than one word, and if only the first word
 or words are entered, the possible alternatives to complete the command
