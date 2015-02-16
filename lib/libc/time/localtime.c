@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.50 2015/02/16 17:44:03 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.51 2015/02/16 17:51:48 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -271,9 +271,10 @@ settzname(void)
 	** Finally, scrub the abbreviations.
 	** First, replace bogus characters.
 	*/
-	for (i = 0; i < sp->charcnt; ++i)
+	for (i = 0; i < sp->charcnt; ++i) {
 		if (strchr(TZ_ABBR_CHAR_SET, sp->chars[i]) == NULL)
 			sp->chars[i] = TZ_ABBR_ERR_CHAR;
+	}
 	/*
 	** Second, truncate long abbreviations.
 	*/
@@ -318,10 +319,11 @@ tzload(const char *name, struct state *sp, int doextend)
 		return -1;
 
 	sp->goback = sp->goahead = FALSE;
-	if (name != NULL && issetugid() != 0)
+	if (name != NULL && issetugid() != 0) {
 		if ((name[0] == ':' && (strchr(name, '/') || strstr(name, ".."))) ||
 		    name[0] == '/' || strchr(name, '.'))
 			name = NULL;
+	}
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		goto oops;
 
@@ -410,7 +412,7 @@ tzload(const char *name, struct state *sp, int doextend)
 
 			lsisp = &sp->lsis[i];
 			lsisp->ls_trans = (stored == 4) ?
-				detzcode(p) : detzcode64(p);
+			    detzcode(p) : detzcode64(p);
 			p += stored;
 			lsisp->ls_corr = detzcode(p);
 			p += 4;
@@ -505,13 +507,14 @@ tzload(const char *name, struct state *sp, int doextend)
 		}
 	}
 	if (sp->timecnt > 1) {
-		for (i = 1; i < sp->timecnt; ++i)
+		for (i = 1; i < sp->timecnt; ++i) {
 			if (typesequiv(sp, sp->types[i], sp->types[0]) &&
 			    differ_by_repeat(sp->ats[i], sp->ats[0])) {
 				sp->goback = TRUE;
 				break;
 			}
-		for (i = sp->timecnt - 2; i >= 0; --i)
+		}
+		for (i = sp->timecnt - 2; i >= 0; --i) {
 			if (typesequiv(sp, sp->types[sp->timecnt - 1],
 			    sp->types[i]) &&
 			    differ_by_repeat(sp->ats[sp->timecnt - 1],
@@ -519,6 +522,7 @@ tzload(const char *name, struct state *sp, int doextend)
 				sp->goahead = TRUE;
 				break;
 			}
+		}
 	}
 	free(up);
 	return 0;
@@ -1151,9 +1155,10 @@ tzset_basic(void)
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
 		strlcpy(lclptr->chars, gmt, sizeof lclptr->chars);
-	} else if (tzload(name, lclptr, TRUE) != 0)
+	} else if (tzload(name, lclptr, TRUE) != 0) {
 		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
 			gmtload(lclptr);
+	}
 	settzname();
 }
 
@@ -1231,11 +1236,12 @@ localsub(const time_t *timep, long offset, struct tm *tmp)
 	}
 	if (sp->timecnt == 0 || t < sp->ats[0]) {
 		i = 0;
-		while (sp->ttis[i].tt_isdst)
+		while (sp->ttis[i].tt_isdst) {
 			if (++i >= sp->typecnt) {
 				i = 0;
 				break;
 			}
+		}
 	} else {
 		int	lo = 1;
 		int	hi = sp->timecnt;
@@ -1395,7 +1401,7 @@ timesub(const time_t *timep, long offset, const struct state *sp, struct tm *tmp
 			if (*timep == lp->ls_trans) {
 				hit = ((i == 0 && lp->ls_corr > 0) ||
 				    lp->ls_corr > sp->lsis[i - 1].ls_corr);
-				if (hit)
+				if (hit) {
 					while (i > 0 &&
 					    sp->lsis[i].ls_trans ==
 					    sp->lsis[i - 1].ls_trans + 1 &&
@@ -1404,6 +1410,7 @@ timesub(const time_t *timep, long offset, const struct state *sp, struct tm *tmp
 						++hit;
 						--i;
 					}
+				}
 			}
 			corr = lp->ls_corr;
 			break;
@@ -1733,7 +1740,7 @@ time2sub(struct tm *tmp, struct tm *(*funcp)(const time_t *, long, struct tm *),
 		** gets checked.
 		*/
 		sp = (const struct state *)
-			((funcp == localsub) ? lclptr : gmtptr);
+		    ((funcp == localsub) ? lclptr : gmtptr);
 		if (sp == NULL)
 			return WRONG;
 		for (i = sp->typecnt - 1; i >= 0; --i) {
@@ -1830,11 +1837,12 @@ time1(struct tm *tmp, struct tm * (*funcp)(const time_t *, long, struct tm *),
 	for (i = 0; i < sp->typecnt; ++i)
 		seen[i] = FALSE;
 	nseen = 0;
-	for (i = sp->timecnt - 1; i >= 0; --i)
+	for (i = sp->timecnt - 1; i >= 0; --i) {
 		if (!seen[sp->types[i]]) {
 			seen[sp->types[i]] = TRUE;
 			types[nseen++] = sp->types[i];
 		}
+	}
 	for (sameind = 0; sameind < nseen; ++sameind) {
 		samei = types[sameind];
 		if (sp->ttis[samei].tt_isdst != tmp->tm_isdst)
