@@ -5605,6 +5605,7 @@
 ./usr/share/man/man3/tls_config_insecure_noverifycert.3
 ./usr/share/man/man3/tls_config_insecure_noverifyhost.3
 ./usr/share/man/man3/tls_config_new.3
+./usr/share/man/man3/tls_config_parse_protocols.3
 ./usr/share/man/man3/tls_config_set_ca_file.3
 ./usr/share/man/man3/tls_config_set_ca_mem.3
 ./usr/share/man/man3/tls_config_set_ca_path.3
@@ -5620,6 +5621,8 @@
 ./usr/share/man/man3/tls_config_verify.3
 ./usr/share/man/man3/tls_configure.3
 ./usr/share/man/man3/tls_connect.3
+./usr/share/man/man3/tls_connect_fds.3
+./usr/share/man/man3/tls_connect_servername.3
 ./usr/share/man/man3/tls_connect_socket.3
 ./usr/share/man/man3/tls_error.3
 ./usr/share/man/man3/tls_free.3
