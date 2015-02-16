@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.125 2015/02/10 08:05:07 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.126 2015/02/16 16:18:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,7 +94,6 @@ static	enum mandoclevel  passthrough(const char *, int, int);
 static	void		  spawn_pager(void);
 static	int		  toptions(struct curparse *, char *);
 static	void		  usage(enum argmode) __attribute__((noreturn));
-static	void		  version(void) __attribute__((noreturn));
 static	int		  woptions(struct curparse *, char *);
 
 static	const int sec_prios[] = {1, 4, 5, 8, 6, 3, 7, 2, 9};
@@ -247,9 +246,6 @@ main(int argc, char *argv[])
 		case 'w':
 			outmode = OUTMODE_FLN;
 			break;
-		case 'V':
-			version();
-			/* NOTREACHED */
 		default:
 			show_usage = 1;
 			break;
@@ -465,37 +461,29 @@ out:
 }
 
 static void
-version(void)
-{
-
-	printf("mandoc %s\n", VERSION);
-	exit((int)MANDOCLEVEL_OK);
-}
-
-static void
 usage(enum argmode argmode)
 {
 
 	switch (argmode) {
 	case ARG_FILE:
-		fputs("usage: mandoc [-acfhklV] [-Ios=name] "
+		fputs("usage: mandoc [-acfhkl] [-Ios=name] "
 		    "[-Kencoding] [-mformat] [-Ooption]\n"
 		    "\t      [-Toutput] [-Wlevel] [file ...]\n", stderr);
 		break;
 	case ARG_NAME:
-		fputs("usage: man [-acfhklVw] [-C file] [-I os=name] "
+		fputs("usage: man [-acfhklw] [-C file] [-I os=name] "
 		    "[-K encoding] [-M path] [-m path]\n"
 		    "\t   [-O option=value] [-S subsection] [-s section] "
 		    "[-T output] [-W level]\n"
 		    "\t   [section] name ...\n", stderr);
 		break;
 	case ARG_WORD:
-		fputs("usage: whatis [-acfhklVw] [-C file] "
+		fputs("usage: whatis [-acfhklw] [-C file] "
 		    "[-M path] [-m path] [-O outkey] [-S arch]\n"
 		    "\t      [-s section] name ...\n", stderr);
 		break;
 	case ARG_EXPR:
-		fputs("usage: apropos [-acfhklVw] [-C file] "
+		fputs("usage: apropos [-acfhklw] [-C file] "
 		    "[-M path] [-m path] [-O outkey] [-S arch]\n"
 		    "\t       [-s section] expression ...\n", stderr);
 		break;
