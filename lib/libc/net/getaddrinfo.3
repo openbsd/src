@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.56 2014/08/23 07:25:54 jmc Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.57 2015/02/16 18:26:56 jca Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2014 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -128,6 +128,8 @@ configured on an interface, and IPv6 addresses will be returned only if an IPv6
 address is configured on an interface.
 Addresses on a loopback interface and link-local IPv6 addresses are not
 considered valid as configured addresses.
+This bit is only considered when determining whether a DNS query should
+be performed or not.
 .It Dv AI_CANONNAME
 If the
 .Dv AI_CANONNAME
