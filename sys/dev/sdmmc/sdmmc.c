@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.36 2014/11/01 16:32:06 jsg Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.37 2015/02/16 17:35:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -749,7 +749,7 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 	struct sdmmc_command *ucmd;
 	struct sdmmc_command cmd;
 	void *data;
-	int error;
+	int error = 0;
 
 	switch (request) {
 #ifdef SDMMC_DEBUG
@@ -784,8 +784,9 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 			    M_WAITOK | M_CANFAIL);
 			if (data == NULL)
 				return ENOMEM;
-			if (copyin(ucmd->c_data, data, ucmd->c_datalen))
-				return EFAULT;
+			error = copyin(ucmd->c_data, data, ucmd->c_datalen);
+			if (error != 0)
+				goto exec_done;
 
 			cmd.c_data = data;
 			cmd.c_datalen = ucmd->c_datalen;
@@ -804,10 +805,12 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 		ucmd->c_flags = cmd.c_flags;
 		ucmd->c_error = cmd.c_error;
 
-		if (ucmd->c_data && copyout(data, ucmd->c_data,
-		    ucmd->c_datalen))
-			return EFAULT;
+		if (ucmd->c_data)
+			error = copyout(data, ucmd->c_data, ucmd->c_datalen);
+		else
+			error = 0;
 
+exec_done:
 		if (ucmd->c_data)
 			free(data, M_TEMP, 0);
 		break;
@@ -815,7 +818,7 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 	default:
 		return ENOTTY;
 	}
-	return 0;
+	return error;
 }
 #endif
 
