@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2015/02/14 14:09:01 schwarze Exp $
+# $OpenBSD: Makefile,v 1.18 2015/02/16 16:42:14 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -21,8 +21,6 @@ MAN=	\
 	BIO_f_null.3 \
 	BIO_find_type.3 \
 	BIO_new.3 \
-
-GENMAN= \
 	BIO_push.3 \
 	BIO_read.3 \
 	BIO_s_accept.3 \
@@ -35,6 +33,8 @@ GENMAN= \
 	BIO_s_socket.3 \
 	BIO_set_callback.3 \
 	BIO_should_retry.3 \
+
+GENMAN= \
 	BN_BLINDING_new.3 \
 	BN_CTX_new.3 \
 	BN_CTX_start.3 \
