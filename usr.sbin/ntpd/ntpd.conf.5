@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.27 2015/02/10 19:21:16 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.28 2015/02/16 12:56:43 reyk Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2015 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@ keywords are used,
 will calculate a median constraint from all the servers specified.
 .Bd -literal -offset indent
 server ntp.example.org
-constraint www.example.com
+constraint from www.example.com
 .Ed
 .It Ic constraints from Ar url
 As with
