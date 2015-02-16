@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.8 2014/03/17 17:16:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.9 2015/02/16 06:28:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -199,6 +199,8 @@ void dev_del(struct dev *);
 void dev_adjpar(struct dev *, int, int, int, int, int);
 int  dev_init(struct dev *);
 void dev_done(struct dev *);
+int dev_ref(struct dev *);
+void dev_unref(struct dev *);
 int  dev_getpos(struct dev *);
 unsigned int dev_roundof(struct dev *, unsigned int);
 
