@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.14 2014/11/21 09:05:38 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.15 2015/02/16 06:35:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -514,7 +514,6 @@ sock_wdata(struct sock *f)
 {
 	static unsigned char dummy[AMSG_DATAMAX];
 	unsigned char *data = NULL;
-	struct abuf *buf = NULL;
 	int n, count;
 
 #ifdef DEBUG
@@ -539,19 +538,21 @@ sock_wdata(struct sock *f)
 #endif
 		return 1;
 	}
-	if (f->slot)
-		buf = &f->slot->sub.buf;
-	else
-		buf = &f->midi->obuf;
 	while (f->wtodo > 0) {
-		data = abuf_rgetblk(buf, &count);
+		if (f->slot)
+			data = abuf_rgetblk(&f->slot->sub.buf, &count);
+		else if (f->midi)
+			data = abuf_rgetblk(&f->midi->obuf, &count);
 		if (count > f->wtodo)
 			count = f->wtodo;
 		n = sock_fdwrite(f, data, count);
 		if (n == 0)
 			return 0;
 		f->wtodo -= n;
-		abuf_rdiscard(buf, n);
+		if (f->slot)
+			abuf_rdiscard(&f->slot->sub.buf, n);
+		else if (f->midi)
+			abuf_rdiscard(&f->midi->obuf, n);
 	}
 	if (f->slot)
 		slot_read(f->slot);
@@ -1002,7 +1003,7 @@ sock_execmsg(struct sock *f)
 			log_puts(": START message\n");
 		}
 #endif
-		if (f->pstate != SOCK_INIT) {
+		if (f->pstate != SOCK_INIT || s == NULL) {
 #ifdef DEBUG
 			if (log_level >= 1) {
 				sock_log(f);
@@ -1103,7 +1104,7 @@ sock_execmsg(struct sock *f)
 			log_puts(": SETPAR message\n");
 		}
 #endif
-		if (f->pstate != SOCK_INIT) {
+		if (f->pstate != SOCK_INIT || s == NULL) {
 #ifdef DEBUG
 			if (log_level >= 1) {
 				sock_log(f);
@@ -1127,7 +1128,7 @@ sock_execmsg(struct sock *f)
 			log_puts(": GETPAR message\n");
 		}
 #endif
-		if (f->pstate != SOCK_INIT) {
+		if (f->pstate != SOCK_INIT || s == NULL) {
 #ifdef DEBUG
 			if (log_level >= 1) {
 				sock_log(f);
@@ -1168,7 +1169,7 @@ sock_execmsg(struct sock *f)
 			log_puts(": SETVOL message\n");
 		}
 #endif
-		if (f->pstate < SOCK_INIT) {
+		if (f->pstate < SOCK_INIT || s == NULL) {
 #ifdef DEBUG
 			if (log_level >= 1) {
 				sock_log(f);
@@ -1192,8 +1193,8 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
 		f->lastvol = ctl; /* dont trigger feedback message */
-		dev_midi_vol(s->dev, s);
 		slot_setvol(s, ctl);
+		dev_midi_vol(s->dev, s);
 		break;
 	case AMSG_AUTH:
 #ifdef DEBUG
