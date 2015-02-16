@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.48 2015/02/09 11:52:47 miod Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.49 2015/02/16 05:23:43 miod Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -345,8 +345,13 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 		sgap = arc4random() & (stackgap_random - 1);
 		sgap = trunc_page(sgap);
 
+#ifdef MACHINE_STACK_GROWS_UP
+		epp->ep_maxsaddr += sgap;
+		epp->ep_minsaddr += sgap;
+#else
 		epp->ep_maxsaddr -= sgap;
 		epp->ep_minsaddr -= sgap;
+#endif
 	}
 
 	/*
