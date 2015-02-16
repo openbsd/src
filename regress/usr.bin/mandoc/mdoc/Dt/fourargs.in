@@ -1,0 +1,8 @@
+.Dd February 16, 2015
+.Dt DT-FOURARGS 1 amd64 bogus
+.Os OpenBSD
+.Sh NAME
+.Nm Dt-fourargs
+.Nd too many arguments after the \&Dt macro
+.Sh DESCRIPTION
+some text

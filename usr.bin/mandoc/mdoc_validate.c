@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.195 2015/02/14 13:22:12 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.196 2015/02/16 19:02:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -2147,70 +2147,68 @@ post_dt(POST_ARGS)
 	mdoc->meta.vol = NULL;
 	mdoc->meta.arch = NULL;
 
-	/* First check that all characters are uppercase. */
+	/* Mandatory first argument: title. */
 
-	if (NULL != (nn = n->child))
-		for (p = nn->string; *p; p++) {
-			if (toupper((unsigned char)*p) == *p)
-				continue;
-			mandoc_vmsg(MANDOCERR_TITLE_CASE,
-			    mdoc->parse, nn->line,
-			    nn->pos + (p - nn->string),
-			    "Dt %s", nn->string);
-			break;
-		}
-
-	/* No argument: msec and arch remain NULL. */
-
-	if (NULL == (nn = n->child)) {
+	nn = n->child;
+	if (nn == NULL || *nn->string == '\0') {
 		mandoc_msg(MANDOCERR_DT_NOTITLE,
 		    mdoc->parse, n->line, n->pos, "Dt");
 		mdoc->meta.title = mandoc_strdup("UNTITLED");
-		mdoc->meta.vol = mandoc_strdup("LOCAL");
-		goto out;
+	} else {
+		mdoc->meta.title = mandoc_strdup(nn->string);
+
+		/* Check that all characters are uppercase. */
+
+		for (p = nn->string; *p != '\0'; p++)
+			if (islower((unsigned char)*p)) {
+				mandoc_vmsg(MANDOCERR_TITLE_CASE,
+				    mdoc->parse, nn->line,
+				    nn->pos + (p - nn->string),
+				    "Dt %s", nn->string);
+				break;
+			}
 	}
 
-	/* One argument: msec and arch remain NULL. */
+	/* Mandatory second argument: section. */
 
-	mdoc->meta.title = mandoc_strdup(
-	    '\0' == nn->string[0] ? "UNTITLED" : nn->string);
+	if (nn != NULL)
+		nn = nn->next;
 
-	if (NULL == (nn = nn->next)) {
+	if (nn == NULL) {
 		mandoc_vmsg(MANDOCERR_MSEC_MISSING,
 		    mdoc->parse, n->line, n->pos,
 		    "Dt %s", mdoc->meta.title);
 		mdoc->meta.vol = mandoc_strdup("LOCAL");
-		goto out;
+		goto out;  /* msec and arch remain NULL. */
 	}
 
-	/* Handles: `.Dt TITLE SEC'
-	 * title = TITLE,
-	 * volume = SEC is msec ? format(msec) : SEC,
-	 * msec = SEC is msec ? atoi(msec) : 0,
-	 * arch = NULL
-	 */
+	mdoc->meta.msec = mandoc_strdup(nn->string);
+
+	/* Infer volume title from section number. */
 
 	cp = mandoc_a2msec(nn->string);
-	if (cp) {
-		mdoc->meta.vol = mandoc_strdup(cp);
-		mdoc->meta.msec = mandoc_strdup(nn->string);
-	} else {
+	if (cp == NULL) {
 		mandoc_vmsg(MANDOCERR_MSEC_BAD, mdoc->parse,
 		    nn->line, nn->pos, "Dt ... %s", nn->string);
 		mdoc->meta.vol = mandoc_strdup(nn->string);
-		mdoc->meta.msec = mandoc_strdup(nn->string);
-	}
+	} else
+		mdoc->meta.vol = mandoc_strdup(cp);
 
-	/* Handle an optional architecture */
+	/* Optional third argument: architecture. */
 
-	if ((nn = nn->next) != NULL) {
-		for (p = nn->string; *p; p++)
-			*p = tolower((unsigned char)*p);
-		mdoc->meta.arch = mandoc_strdup(nn->string);
-	}
+	if ((nn = nn->next) == NULL)
+		goto out;
 
-	/* Ignore any subsequent parameters... */
-	/* FIXME: warn about subsequent parameters. */
+	for (p = nn->string; *p != '\0'; p++)
+		*p = tolower((unsigned char)*p);
+	mdoc->meta.arch = mandoc_strdup(nn->string);
+
+	/* Ignore fourth and later arguments. */
+
+	if ((nn = nn->next) != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
+		    nn->line, nn->pos, "Dt ... %s", nn->string);
+
 out:
 	mdoc_node_delete(mdoc, n);
 }

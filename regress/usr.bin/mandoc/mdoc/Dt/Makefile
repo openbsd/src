@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.5 2014/11/28 18:07:38 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2015/02/16 19:02:32 schwarze Exp $
 
-REGRESS_TARGETS	 = badsec case dupe late
+REGRESS_TARGETS	 = badsec case dupe fourargs late
 REGRESS_TARGETS	+= missing noarg nobody nosec order
-LINT_TARGETS	 = badsec case dupe late
+LINT_TARGETS	 = badsec case dupe fourargs late
 LINT_TARGETS	+= missing noarg nobody nosec order
 
 SKIP_GROFF	 = badsec nobody
@@ -15,6 +15,6 @@ SKIP_ASCII	 = badsec
 # Hence, there is no bug-compatible translation from mdoc(7)
 # to man(7) for this case.  That's not mandoc(1)'s fault.
 
-SKIP_TMAN	 = late missing noarg nosec
+SKIP_TMAN	 = fourargs late missing noarg nosec
 
 .include <bsd.regress.mk>
