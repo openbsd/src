@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.28 2015/02/16 12:56:43 reyk Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.29 2015/02/16 19:25:35 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -187,16 +187,15 @@ thereby reducing the impact of unauthenticated NTP
 .Sq Man-In-The-Middle
 attacks.
 Received NTP packets with time information falling outside of a range
-near the constraint will be discarded and such NTP
-.Ic servers
+near the constraint will be discarded and such NTP servers
 will be marked as invalid.
 .Bl -tag -width Ds
 .It Ic constraint from Ar url
 Specify the URL, IP address or the hostname of an HTTPS server to
 provide a constraint.
-If multiple
-.Ic constraint
-keywords are used,
+If
+.Ic constraint from
+is used more than once,
 .Xr ntpd 8
 will calculate a median constraint from all the servers specified.
 .Bd -literal -offset indent
@@ -205,7 +204,7 @@ constraint from www.example.com
 .Ed
 .It Ic constraints from Ar url
 As with
-.Ic constraint ,
+.Ic constraint from ,
 specify the URL, IP address or the hostname of an HTTPS server to
 provide a constraint.
 Should the hostname resolve to multiple IP addresses,
