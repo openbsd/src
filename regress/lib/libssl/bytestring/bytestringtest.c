@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.2 2015/02/06 22:22:33 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.3 2015/02/16 06:48:17 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -314,8 +314,9 @@ static int
 test_cbb_finish_child(void)
 {
 	CBB cbb, child;
-	uint8_t *out_buf;
+	uint8_t *out_buf = NULL;
 	size_t out_size;
+	int ret = 0;
 
 	if (!CBB_init(&cbb, 16) ||
 	    !CBB_add_u8_length_prefixed(&cbb, &child) ||
@@ -323,10 +324,13 @@ test_cbb_finish_child(void)
 	    !CBB_finish(&cbb, &out_buf, &out_size) ||
 	    out_size != 1 ||
 	    out_buf[0] != 0)
-		return 0;
+		goto err;
 
+	ret = 1;
+
+err:
 	free(out_buf);
-	return 1;
+	return ret;
 }
 
 static int
@@ -334,10 +338,10 @@ test_cbb_prefixed(void)
 {
 	static const uint8_t kExpected[] = {0, 1, 1, 0, 2, 2, 3, 0, 0, 3,
 	    4, 5, 6, 5, 4, 1, 0, 1, 2};
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 	size_t buf_len;
 	CBB cbb, contents, inner_contents, inner_inner_contents;
-	int ok;
+	int ok = 0;
 
 	if (!CBB_init(&cbb, 0) ||
 	    !CBB_add_u8_length_prefixed(&cbb, &contents) ||
@@ -354,10 +358,12 @@ test_cbb_prefixed(void)
 	    &inner_inner_contents) ||
 	    !CBB_add_u8(&inner_inner_contents, 2) ||
 	    !CBB_finish(&cbb, &buf, &buf_len))
-		return 0;
+		goto err;
 
 	ok = buf_len == sizeof(kExpected) && memcmp(buf, kExpected, buf_len)
 	    == 0;
+
+err:
 	free(buf);
 	return ok;
 }
@@ -366,8 +372,9 @@ static int
 test_cbb_misuse(void)
 {
 	CBB cbb, child, contents;
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 	size_t buf_len;
+	int ret = 0;
 
 	if (!CBB_init(&cbb, 0) ||
 	    !CBB_add_u8_length_prefixed(&cbb, &child) ||
@@ -392,78 +399,88 @@ test_cbb_misuse(void)
 
 	if (!CBB_finish(&cbb, &buf, &buf_len) || buf_len != 3 ||
 	    memcmp(buf, "\x01\x01\x02", 3) != 0)
-		return 0;
+		goto err;
 
+	ret = 1;
+
+err:
 	free(buf);
-
-	return 1;
+	return ret;
 }
 
 static int
 test_cbb_asn1(void)
 {
 	static const uint8_t kExpected[] = {0x30, 3, 1, 2, 3};
-	uint8_t *buf, *test_data;
+	uint8_t *buf = NULL, *test_data = NULL;
 	size_t buf_len;
 	CBB cbb, contents, inner_contents;
+	int ret = 0;
 
 	if (!CBB_init(&cbb, 0) ||
 	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
 	    !CBB_add_bytes(&contents, (const uint8_t*) "\x01\x02\x03", 3) ||
 	    !CBB_finish(&cbb, &buf, &buf_len))
-		return 0;
+		goto err;
 
 	if (buf_len != sizeof(kExpected) || memcmp(buf, kExpected, buf_len)
 	    != 0)
-		return 0;
+		goto err;
 
 	free(buf);
+	buf = NULL;
 
-	test_data = malloc(100000);
+	if ((test_data = malloc(100000)) == NULL)
+		goto err;
 	memset(test_data, 0x42, 100000);
 
 	if (!CBB_init(&cbb, 0) ||
 	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
 	    !CBB_add_bytes(&contents, test_data, 130) ||
 	    !CBB_finish(&cbb, &buf, &buf_len))
-		return 0;
+		goto err;
 
 	if (buf_len != 3 + 130 ||
 	    memcmp(buf, "\x30\x81\x82", 3) != 0 ||
 	    memcmp(buf + 3, test_data, 130) != 0) {
-		return 0;
+		goto err;
 	}
 	free(buf);
+	buf = NULL;
 
 	if (!CBB_init(&cbb, 0) ||
 	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
 	    !CBB_add_bytes(&contents, test_data, 1000) ||
 	    !CBB_finish(&cbb, &buf, &buf_len))
-		return 0;
+		goto err;
 
 	if (buf_len != 4 + 1000 ||
 	    memcmp(buf, "\x30\x82\x03\xe8", 4) != 0 ||
 	    memcmp(buf + 4, test_data, 1000)) {
-		return 0;
+		goto err;
 	}
 	free(buf);
+	buf = NULL;
 
 	if (!CBB_init(&cbb, 0) ||
 	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
 	    !CBB_add_asn1(&contents, &inner_contents, 0x30) ||
 	    !CBB_add_bytes(&inner_contents, test_data, 100000) ||
 	    !CBB_finish(&cbb, &buf, &buf_len))
-		return 0;
+		goto err;
 
 	if (buf_len != 5 + 5 + 100000 ||
 	    memcmp(buf, "\x30\x83\x01\x86\xa5\x30\x83\x01\x86\xa0", 10) != 0 ||
 	    memcmp(buf + 10, test_data, 100000))
-		return 0;
+		goto err;
 
+	ret = 1;
+
+err:
 	free(buf);
 	free(test_data);
 
-	return 1;
+	return ret;
 }
 
 static int
@@ -471,13 +488,14 @@ do_ber_convert(const char *name, const uint8_t *der_expected, size_t der_len,
     const uint8_t *ber, size_t ber_len)
 {
 	CBS in;
-	uint8_t *out;
+	uint8_t *out = NULL;
 	size_t out_len;
+	int ret = 0;
 
 	CBS_init(&in, ber, ber_len);
 	if (!CBS_asn1_ber_to_der(&in, &out, &out_len)) {
 		fprintf(stderr, "%s: CBS_asn1_ber_to_der failed.\n", name);
-		return 0;
+		goto end;
 	}
 
 	if (out == NULL) {
@@ -493,11 +511,14 @@ do_ber_convert(const char *name, const uint8_t *der_expected, size_t der_len,
 
 	if (out_len != der_len || memcmp(out, der_expected, der_len) != 0) {
 		fprintf(stderr, "%s: incorrect converted result.\n", name);
-		return 0;
+		goto end;
 	}
 
+	ret = 1;
+
+end:
 	free(out);
-	return 1;
+	return ret;
 }
 
 static int
