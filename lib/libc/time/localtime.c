@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.49 2015/02/16 17:35:38 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.50 2015/02/16 17:44:03 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -310,6 +310,8 @@ tzload(const char *name, struct state *sp, int doextend)
 				    4 * TZ_MAX_TIMES];
 	} u_t;
 	u_t *			up;
+	int			doaccess;
+	char			fullname[FILENAME_MAX];
 
 	up = calloc(1, sizeof *up);
 	if (up == NULL)
@@ -322,40 +324,30 @@ tzload(const char *name, struct state *sp, int doextend)
 			name = NULL;
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		goto oops;
-	{
-		int	doaccess;
-		/*
-		** Section 4.9.1 of the C standard says that
-		** "FILENAME_MAX expands to an integral constant expression
-		** that is the size needed for an array of char large enough
-		** to hold the longest file name string that the implementation
-		** guarantees can be opened."
-		*/
-		char		fullname[FILENAME_MAX];
 
-		if (name[0] == ':')
-			++name;
-		doaccess = name[0] == '/';
-		if (!doaccess) {
-			if ((p = TZDIR) == NULL)
-				goto oops;
-			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
-				goto oops;
-			strlcpy(fullname, p, sizeof fullname);
-			strlcat(fullname, "/", sizeof fullname);
-			strlcat(fullname, name, sizeof fullname);
-			/*
-			** Set doaccess if '.' (as in "../") shows up in name.
-			*/
-			if (strchr(name, '.') != NULL)
-				doaccess = TRUE;
-			name = fullname;
-		}
-		if (doaccess && access(name, R_OK) != 0)
+	if (name[0] == ':')
+		++name;
+	doaccess = name[0] == '/';
+	if (!doaccess) {
+		if ((p = TZDIR) == NULL)
 			goto oops;
-		if ((fid = open(name, O_RDONLY)) == -1)
+		if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
 			goto oops;
+		strlcpy(fullname, p, sizeof fullname);
+		strlcat(fullname, "/", sizeof fullname);
+		strlcat(fullname, name, sizeof fullname);
+		/*
+		** Set doaccess if '.' (as in "../") shows up in name.
+		*/
+		if (strchr(name, '.') != NULL)
+			doaccess = TRUE;
+		name = fullname;
 	}
+	if (doaccess && access(name, R_OK) != 0)
+		goto oops;
+	if ((fid = open(name, O_RDONLY)) == -1)
+		goto oops;
+
 	nread = read(fid, up->buf, sizeof up->buf);
 	if (close(fid) < 0 || nread <= 0)
 		goto oops;
@@ -1387,11 +1379,12 @@ timesub(const time_t *timep, long offset, const struct state *sp, struct tm *tmp
 	time_t			tdays;
 	int			idays;	/* unsigned would be so 2003 */
 	long			rem;
-	int				y;
+	int			y;
 	const int *		ip;
 	long			corr;
 	int			hit;
 	int			i;
+	long			seconds;
 
 	corr = 0;
 	hit = 0;
@@ -1440,13 +1433,11 @@ timesub(const time_t *timep, long offset, const struct state *sp, struct tm *tmp
 		tdays -= leapdays;
 		y = newy;
 	}
-	{
-		long	seconds;
 
-		seconds = tdays * SECSPERDAY + 0.5;
-		tdays = seconds / SECSPERDAY;
-		rem += seconds - tdays * SECSPERDAY;
-	}
+	seconds = tdays * SECSPERDAY + 0.5;
+	tdays = seconds / SECSPERDAY;
+	rem += seconds - tdays * SECSPERDAY;
+
 	/*
 	** Given the range, we can now fearlessly cast...
 	*/
