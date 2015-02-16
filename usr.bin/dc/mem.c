@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2014/12/01 13:13:00 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2015/02/16 20:53:34 jca Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ssl/err.h>
+#include <openssl/err.h>
 
 #include <err.h>
 #include <stdlib.h>
