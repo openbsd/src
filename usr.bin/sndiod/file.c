@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 2014/03/17 17:17:01 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 2015/02/16 06:26:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -274,7 +274,6 @@ file_del(struct file *f)
 int
 file_poll(void)
 {
-	nfds_t nfds, n;
 	struct pollfd pfds[MAXFDS];
 	struct file *f, **pf;
 	struct timespec ts;
@@ -282,10 +281,10 @@ file_poll(void)
 	struct timespec sleepts;
 	struct timespec ts0, ts1;
 	long us;
-	int i;
+	int i, n, nfds;
 #endif
 	long long delta_nsec;
-	int revents, res;
+	int revents, res, immed;
 
 	/*
 	 * cleanup zombies
@@ -313,6 +312,7 @@ file_poll(void)
 		log_puts("poll:");
 #endif
 	nfds = 0;
+	immed = 0;
 	for (f = file_list; f != NULL; f = f->next) {
 #ifdef DEBUG
 		if (log_level >= 4) {
@@ -324,6 +324,10 @@ file_poll(void)
 		if (n == 0) {
 			f->pfd = NULL;
 			continue;
+		}
+		if (n < 0) {
+			immed = 1;
+			n = 0;
 		}
 		f->pfd = pfds + nfds;
 		nfds += n;
@@ -348,19 +352,22 @@ file_poll(void)
 	file_utime += 1000000000LL * (sleepts.tv_sec - file_ts.tv_sec);
 	file_utime += sleepts.tv_nsec - file_ts.tv_nsec;
 #endif
-	res = poll(pfds, nfds, -1);
-	if (res < 0 && errno != EINTR)
-		err(1, "poll");
+	if (!immed) {
+		res = poll(pfds, nfds, -1);
+		if (res < 0 && errno != EINTR)
+			err(1, "poll");
 #ifdef DEBUG
-	if (log_level >= 4) {
-		log_puts("poll: return:");
-		for (i = 0; i < nfds; i++) {
-			log_puts(" ");
-			log_putx(pfds[i].revents);
+		if (log_level >= 4 && res >= 0) {
+			log_puts("poll: return:");
+			for (i = 0; i < nfds; i++) {
+				log_puts(" ");
+				log_putx(pfds[i].revents);
+			}
+			log_puts("\n");
 		}
-		log_puts("\n");
-	}
 #endif
+	} else
+		res = 0;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 #ifdef DEBUG
 	file_wtime += 1000000000LL * (ts.tv_sec - sleepts.tv_sec);
@@ -379,7 +386,7 @@ file_poll(void)
 		if (log_level >= 2)
 			log_puts("ignored huge clock delta\n");
 	}
-	if (res <= 0)
+	if (!immed && res <= 0)
 		return 1;
 
 	for (f = file_list; f != NULL; f = f->next) {
