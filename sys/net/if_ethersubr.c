@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.188 2015/02/09 00:21:58 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.189 2015/02/16 18:24:02 markus Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -202,6 +202,16 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 		if (prio <= 1)
 			prio = !prio;
 
+#if NBRIDGE > 0
+		/*
+		 * The bridge might send on non-vlan interfaces -- which
+		 * do not need this header -- or add the vlan-header itself
+		 * in bridge_ifenqueue -- which would add a second header.
+		 */
+		if (ifp->if_bridgeport)
+			(*m)->m_flags &= ~M_VLANTAG;
+		else
+#endif
 		/* should we use the tx tagging hw offload at all? */
 		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
 		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
