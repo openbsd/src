@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.644 2015/01/09 20:41:48 kettenis Exp $
+$OpenBSD: usbdevs,v 1.645 2015/02/16 14:51:44 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -609,6 +609,7 @@ vendor RTSYSTEMS	0x2100	RT Systems
 vendor DLINK3		0x2101	D-Link
 vendor VIALABS		0x2109	VIA Labs
 vendor MOTOROLA2	0x22b8	Motorola
+vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
@@ -977,6 +978,9 @@ product APPLE ISIGHT		0x8502	iSight
 
 /* Araneus Information Systems products */
 product ARANEUS ALEA		0x0001	True Random Number Generator
+
+/* Arduino SA product */
+product ARDUINO LEONARDO	0x8036	Leonardo
 
 /* Arkmicro products */
 product ARKMICRO ARK3116	0x0232	ARK3116 Serial
