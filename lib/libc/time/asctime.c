@@ -1,4 +1,4 @@
-/*	$OpenBSD: asctime.c,v 1.19 2015/02/09 14:52:28 tedu Exp $ */
+/*	$OpenBSD: asctime.c,v 1.20 2015/02/16 17:11:54 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -56,10 +56,7 @@
 #define MAX_ASCTIME_BUF_SIZE	(2*3+5*INT_STRLEN_MAXIMUM(int)+7+2+1+1)
 
 static char *
-asctime3(timeptr, buf, bufsize)
-const struct tm *	timeptr;
-char *				buf;
-int				bufsize;
+asctime3(const struct tm *timeptr, char *buf, int bufsize)
 {
 	static const char	wday_name[][4] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -110,9 +107,7 @@ int				bufsize;
 */
 
 char *
-asctime_r(timeptr, buf)
-const struct tm *	timeptr;
-char *				buf;
+asctime_r(const struct tm *timeptr, char *buf)
 {
 	/*
 	** P1003 8.3.5.2 says that asctime_r() can only assume at most
@@ -126,8 +121,7 @@ char *				buf;
 */
 
 char *
-asctime(timeptr)
-const struct tm *	timeptr;
+asctime(const struct tm *timeptr)
 {
 	static char result[MAX_ASCTIME_BUF_SIZE];
 	_THREAD_PRIVATE_KEY(asctime);

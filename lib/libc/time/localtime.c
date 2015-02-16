@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.47 2015/02/10 00:46:27 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.48 2015/02/16 17:11:54 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -207,8 +207,7 @@ time_t			altzone = 0;
 #endif /* defined ALTZONE */
 
 static long
-detzcode(codep)
-const char * const	codep;
+detzcode(const char *codep)
 {
 	long	result;
 	int	i;
@@ -220,8 +219,7 @@ const char * const	codep;
 }
 
 static time_t
-detzcode64(codep)
-const char * const	codep;
+detzcode64(const char *codep)
 {
 	time_t	result;
 	int	i;
@@ -292,9 +290,7 @@ settzname(void)
 }
 
 static int
-differ_by_repeat(t1, t0)
-const time_t	t1;
-const time_t	t0;
+differ_by_repeat(time_t t1, time_t t0)
 {
 	if (TYPE_BIT(time_t) - 1 < SECSPERREPEAT_BITS)
 			return 0;
@@ -302,10 +298,7 @@ const time_t	t0;
 }
 
 static int
-tzload(name, sp, doextend)
-const char *		name;
-struct state * const	sp;
-const int		doextend;
+tzload(const char *name, struct state *sp, int doextend)
 {
 	const char *		p;
 	int			i;
@@ -545,10 +538,7 @@ oops:
 }
 
 static int
-typesequiv(sp, a, b)
-const struct state * const	sp;
-const int			a;
-const int			b;
+typesequiv(const struct state *sp, int a, int b)
 {
 	int	result;
 
@@ -585,8 +575,7 @@ static const int	year_lengths[2] = {
 */
 
 static const char *
-getzname(strp)
-const char *	strp;
+getzname(const char *strp)
 {
 	char	c;
 
@@ -623,11 +612,7 @@ getqzname(const char *strp, const int delim)
 */
 
 static const char *
-getnum(strp, nump, min, max)
-const char *	strp;
-int * const		nump;
-const int		min;
-const int		max;
+getnum(const char *strp, int *nump, int min, int max)
 {
 	char	c;
 	int	num;
@@ -656,9 +641,7 @@ const int		max;
 */
 
 static const char *
-getsecs(strp, secsp)
-const char *	strp;
-long * const		secsp;
+getsecs(const char *strp, long *secsp)
 {
 	int	num;
 
@@ -698,9 +681,7 @@ long * const		secsp;
 */
 
 static const char *
-getoffset(strp, offsetp)
-const char *	strp;
-long * const		offsetp;
+getoffset(const char *strp, long *offsetp)
 {
 	int	neg = 0;
 
@@ -725,9 +706,7 @@ long * const		offsetp;
 */
 
 static const char *
-getrule(strp, rulep)
-const char *			strp;
-struct rule * const	rulep;
+getrule(const char *strp, struct rule *rulep)
 {
 	if (*strp == 'J') {
 		/*
@@ -779,11 +758,7 @@ struct rule * const	rulep;
 */
 
 static time_t
-transtime(janfirst, year, rulep, offset)
-const time_t				janfirst;
-const int				year;
-const struct rule * const	rulep;
-const long				offset;
+transtime(time_t janfirst, int year, const struct rule *rulep, long offset)
 {
 	int	leapyear;
 	time_t	value;
@@ -874,10 +849,7 @@ const long				offset;
 */
 
 static int
-tzparse(name, sp, lastditch)
-const char *			name;
-struct state * const	sp;
-const int			lastditch;
+tzparse(const char *name, struct state *sp, int lastditch)
 {
 	const char *			stdname;
 	const char *			dstname;
@@ -1110,14 +1082,13 @@ const int			lastditch;
 }
 
 static void
-gmtload(sp)
-struct state * const	sp;
+gmtload(struct state *sp)
 {
 	if (tzload(gmt, sp, TRUE) != 0)
 		(void) tzparse(gmt, sp, TRUE);
 }
-static
-void
+
+static void
 tzsetwall_basic(void)
 {
 	if (lcl_is_set < 0)
@@ -1151,8 +1122,7 @@ tzsetwall(void)
 	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
 }
 
-static
-void
+static void
 tzset_basic(void)
 {
 	const char *	name;
@@ -1212,10 +1182,7 @@ tzset(void)
 
 /*ARGSUSED*/
 static struct tm *
-localsub(timep, offset, tmp)
-const time_t * const	timep;
-const long		offset;
-struct tm * const	tmp;
+localsub(const time_t *timep, long offset, struct tm *tmp)
 {
 	struct state *		sp;
 	const struct ttinfo *	ttisp;
@@ -1306,9 +1273,7 @@ struct tm * const	tmp;
 */
 
 struct tm *
-localtime_r(timep, p_tm)
-const time_t * const	timep;
-struct tm *p_tm;
+localtime_r(const time_t *timep, struct tm *p_tm)
 {
 	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
 	tzset_basic();
@@ -1318,8 +1283,7 @@ struct tm *p_tm;
 }
 
 struct tm *
-localtime(timep)
-const time_t * const	timep;
+localtime(const time_t *timep)
 {
 	_THREAD_PRIVATE_KEY(localtime);
 	struct tm * p_tm = (struct tm*)_THREAD_PRIVATE(localtime, tm, NULL);
@@ -1334,10 +1298,7 @@ const time_t * const	timep;
 */
 
 static struct tm *
-gmtsub(timep, offset, tmp)
-const time_t * const	timep;
-const long		offset;
-struct tm * const	tmp;
+gmtsub(const time_t *timep, long offset, struct tm *tmp)
 {
 	struct tm *	result;
 
@@ -1372,17 +1333,14 @@ struct tm * const	tmp;
 */
 
 struct tm *
-gmtime_r(timep, p_tm)
-const time_t *		timep;
-struct tm *		p_tm;
+gmtime_r(const time_t *timep, struct tm *p_tm)
 {
 	gmtsub(timep, 0L, p_tm);
 	return p_tm;
 }
 
 struct tm *
-gmtime(timep)
-const time_t * const	timep;
+gmtime(const time_t *timep)
 {
 	_THREAD_PRIVATE_KEY(gmtime);
 	struct tm * p_tm = (struct tm*) _THREAD_PRIVATE(gmtime, tm, NULL);
@@ -1396,9 +1354,7 @@ const time_t * const	timep;
 #ifdef STD_INSPIRED
 
 struct tm *
-offtime(timep, offset)
-const time_t * const	timep;
-const long		offset;
+offtime(const time_t *timep, long offset)
 {
 	return gmtsub(timep, offset, &tm);
 }
@@ -1411,19 +1367,14 @@ const long		offset;
 */
 
 static int
-leaps_thru_end_of(y)
-const int	y;
+leaps_thru_end_of(int y)
 {
 	return (y >= 0) ? (y / 4 - y / 100 + y / 400) :
 		-(leaps_thru_end_of(-(y + 1)) + 1);
 }
 
 static struct tm *
-timesub(timep, offset, sp, tmp)
-const time_t * const			timep;
-const long				offset;
-const struct state * const	sp;
-struct tm * const		tmp;
+timesub(const time_t *timep, long offset, const struct state *sp, struct tm *tmp)
 {
 	const struct lsinfo *	lp;
 	time_t			tdays;
@@ -1548,8 +1499,7 @@ struct tm * const		tmp;
 }
 
 char *
-ctime(timep)
-const time_t * const	timep;
+ctime(const time_t *timep)
 {
 /*
 ** Section 4.12.3.2 of X3.159-1989 requires that
@@ -1561,9 +1511,7 @@ const time_t * const	timep;
 }
 
 char *
-ctime_r(timep, buf)
-const time_t * const	timep;
-char *			buf;
+ctime_r(const time_t *timep, char *buf)
 {
 	struct tm	mytm;
 
@@ -1588,9 +1536,7 @@ char *			buf;
 */
 
 static int
-increment_overflow(ip, j)
-int * const	ip;
-int		j;
+increment_overflow(int *ip, int j)
 {
 	int const	i = *ip;
 
@@ -1607,9 +1553,7 @@ int		j;
 }
 
 static int
-long_increment_overflow(lp, m)
-long * const	lp;
-int const	m;
+long_increment_overflow(long *lp, int m)
 {
 	long const	l = *lp;
 
@@ -1620,10 +1564,7 @@ int const	m;
 }
 
 static int
-normalize_overflow(tensptr, unitsptr, base)
-int * const	tensptr;
-int * const	unitsptr;
-const int	base;
+normalize_overflow(int *tensptr, int *unitsptr, int base)
 {
 	int	tensdelta;
 
@@ -1635,10 +1576,7 @@ const int	base;
 }
 
 static int
-long_normalize_overflow(tensptr, unitsptr, base)
-long * const	tensptr;
-int * const	unitsptr;
-const int	base;
+long_normalize_overflow(long *tensptr, int *unitsptr, int base)
 {
 	int	tensdelta;
 
@@ -1650,9 +1588,7 @@ const int	base;
 }
 
 static int
-tmcomp(atmp, btmp)
-const struct tm * const atmp;
-const struct tm * const btmp;
+tmcomp(const struct tm *atmp, const struct tm *btmp)
 {
 	int	result;
 
@@ -1666,12 +1602,8 @@ const struct tm * const btmp;
 }
 
 static time_t
-time2sub(tmp, funcp, offset, okayp, do_norm_secs)
-struct tm * const	tmp;
-struct tm * (* const	funcp)(const time_t*, long, struct tm*);
-const long		offset;
-int * const		okayp;
-const int		do_norm_secs;
+time2sub(struct tm *tmp, struct tm *(*funcp)(const time_t *, long, struct tm *),
+    long offset, int *okayp, int do_norm_secs)
 {
 	const struct state *	sp;
 	int			dir;
@@ -1838,11 +1770,8 @@ label:
 }
 
 static time_t
-time2(tmp, funcp, offset, okayp)
-struct tm * const	tmp;
-struct tm * (* const	funcp)(const time_t*, long, struct tm*);
-const long		offset;
-int * const		okayp;
+time2(struct tm *tmp, struct tm * (*funcp)(const time_t *, long, struct tm *),
+    long offset, int *okayp)
 {
 	time_t	t;
 
@@ -1856,10 +1785,8 @@ int * const		okayp;
 }
 
 static time_t
-time1(tmp, funcp, offset)
-struct tm * const	tmp;
-struct tm * (* const	funcp)(const time_t *, long, struct tm *);
-const long		offset;
+time1(struct tm *tmp, struct tm * (*funcp)(const time_t *, long, struct tm *),
+    long offset)
 {
 	time_t			t;
 	const struct state *	sp;
@@ -1931,8 +1858,7 @@ const long		offset;
 }
 
 time_t
-mktime(tmp)
-struct tm * const	tmp;
+mktime(struct tm *tmp)
 {
 	time_t ret;
 
@@ -1946,8 +1872,7 @@ struct tm * const	tmp;
 #ifdef STD_INSPIRED
 
 time_t
-timelocal(tmp)
-struct tm * const	tmp;
+timelocal(struct tm *tmp)
 {
 	if (tmp != NULL)
 		tmp->tm_isdst = -1;	/* in case it wasn't initialized */
@@ -1955,8 +1880,7 @@ struct tm * const	tmp;
 }
 
 time_t
-timegm(tmp)
-struct tm * const	tmp;
+timegm(struct tm *tmp)
 {
 	if (tmp != NULL)
 		tmp->tm_isdst = 0;
@@ -1964,9 +1888,7 @@ struct tm * const	tmp;
 }
 
 time_t
-timeoff(tmp, offset)
-struct tm * const	tmp;
-const long		offset;
+timeoff(struct tm *tmp, long offset)
 {
 	if (tmp != NULL)
 		tmp->tm_isdst = 0;
@@ -1990,8 +1912,7 @@ const long		offset;
 */
 
 static long
-leapcorr(timep)
-time_t *	timep;
+leapcorr(time_t *timep)
 {
 	struct state *		sp;
 	struct lsinfo *	lp;
@@ -2008,16 +1929,14 @@ time_t *	timep;
 }
 
 time_t
-time2posix(t)
-time_t	t;
+time2posix(time_t t)
 {
 	tzset();
 	return t - leapcorr(&t);
 }
 
 time_t
-posix2time(t)
-time_t	t;
+posix2time(time_t t)
 {
 	time_t	x;
 	time_t	y;
