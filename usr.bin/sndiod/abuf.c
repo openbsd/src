@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.3 2015/02/16 06:11:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -72,7 +72,7 @@ abuf_done(struct abuf *buf)
 unsigned char *
 abuf_rgetblk(struct abuf *buf, int *rsize)
 {
-	unsigned int count;
+	int count;
 
 	count = buf->len - buf->start;
 	if (count > buf->used)
