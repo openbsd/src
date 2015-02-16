@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zic.8,v 1.1 2015/02/09 12:37:47 tedu Exp $
-.Dd $Mdocdate: February 9 2015 $
+.\"	$OpenBSD: zic.8,v 1.2 2015/02/16 16:21:25 bentley Exp $
+.Dd $Mdocdate: February 16 2015 $
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -154,9 +154,9 @@ the fifth of the month
 the last Sunday in the month
 .It lastMon
 the last Monday in the month
-.It Sun\*(Ge8
+.It Sun>=8
 first Sunday on or after the eighth
-.It Sun\*(Le25
+.It Sun<=25
 last Sunday on or before the 25th
 .El
 .Pp
@@ -370,10 +370,10 @@ input, intended to illustrate many of its features.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
 Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
-Rule	Swiss	1941	1942	-	May	Sun\*(Ge1	2:00	1:00	S
-Rule	Swiss	1941	1942	-	Oct	Sun\*(Ge1	0:00	0
+Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
+Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
 
-Rule	EU	1977	1980	-	Apr	Sun\*(Ge1	1:00u	1:00	S
+Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
 Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
 Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
 Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-

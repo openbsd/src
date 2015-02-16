@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.43 2014/08/05 16:35:37 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.44 2015/02/16 16:21:25 bentley Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 5 2014 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt HOSTAPD.CONF 5
 .Os
 .Sh NAME
@@ -125,8 +125,8 @@ The following configuration settings are understood:
 .Bl -tag -width Ds
 .It Xo
 .Ic set hostap interface
-.Ar interface \*(Ba\ \&
-.Pf { Ar interface0 , interface1 , ... No }
+.Ar interface |
+.Brq Ar interface0 , interface1 , ...
 .Xc
 Specify the wireless interface running in Host AP mode.
 This option could be omitted to use
@@ -149,8 +149,8 @@ Capture plain IEEE 802.11 frames.
 .El
 .It Xo
 .Ic set hostap hopper interface
-.Ar interface \*(Ba\ \&
-.Pf { Ar interface0 , interface1 , ... No }
+.Ar interface |
+.Brq Ar interface0 , interface1 , ...
 .Xc
 Enable a channel hopper on the selected wireless interface.
 Multiple hostap interfaces may be specified as a comma-separated list,
@@ -166,17 +166,17 @@ network because there is no authentication and an attacker could force
 disassociation of selected stations on all listening access points.
 .It Xo
 .Ic set iapp
-.Op Ic address \*(Ba\ route
+.Op Ic address | route
 .Ic roaming table
-.Aq Ar table
+.Pf < Ar table Ns >
 .Xc
 Specify a table used for
 .Em IP Roaming
 lookups of link layer address to IP address or subnet assignments.
 .It Xo
 .Ic set iapp handle subtype
-.Ar subtype \*(Ba\ \&
-.Pf { Ar subtype0 , subtype1 , ... No }
+.Ar subtype |
+.Brq Ar subtype0 , subtype1 , ...
 .Xc
 Specify the IAPP subtypes to use:
 .Pp
@@ -199,7 +199,7 @@ messages.
 This option is enabled by default.
 .It Xo
 .Op Ic not
-.Op Ic address \*(Ba\ route
+.Op Ic address |\ route
 .Ic roaming
 .Xc
 Enable dynamic roaming of IP addresses or routes.
@@ -397,7 +397,7 @@ Match the signal quality of the received frame.
 .It Xo
 .Ic freq
 .Op Ic operator
-.Ar value Ic ( GHz \*(Ba MHz )
+.Ar value Ic ( GHz | MHz )
 .Xc
 Match the transmit rate of the received frame.
 .It Xo
@@ -414,10 +414,10 @@ If omitted, the specified value will be checked if it is equal or not.
 .Bd -literal -offset indent
 =	(equal)
 !=	(not equal)
-\*(Lt	(less than)
-\*(Le	(less than or equal)
-\*(Gt	(greater than)
-\*(Ge	(greater than or equal)
+<	(less than)
+<=	(less than or equal)
+>	(greater than)
+>=	(greater than or equal)
 .Ed
 .Pp
 The
@@ -428,22 +428,22 @@ parameters specify the IEEE 802.11 address fields to match on.
 They can be specified in the following ways:
 .Bl -tag -width Ds
 .It Xo
-.Ic ( from \*(Ba to \*(Ba bssid ) Ic any
+.Ic ( from | to | bssid ) Ic any
 .Xc
 Allow all addresses for the specified address field.
 .It Xo
-.Ic ( from \*(Ba to \*(Ba bssid )
+.Ic ( from | to | bssid )
 .Op Ic not
-.Aq Ar table
+.Pf < Ar table Ns >
 .Xc
 Allow allow addresses from the given
-.Aq Ar table
+.Ar table
 (see
 .Sx Tables
 above)
 for the specified address field.
 .It Xo
-.Ic ( from \*(Ba to \*(Ba bssid )
+.Ic ( from | to | bssid )
 .Op Ic not
 .Ar lladdr
 .Xc
@@ -565,7 +565,7 @@ keyword:
 .Bd -filled -offset indent
 .Ic limit
 .Ar number
-.Ic sec \*(Ba usec
+.Ic sec | usec
 .Ed
 .Pp
 In some cases it is absolutely necessary to use limited matching
@@ -625,7 +625,7 @@ An association response frame.
 .It Ic subtype atim
 An announcement traffic indication message (ATIM frame).
 .It Xo
-.Ic subtype auth Op Ic open request \*(Ba response
+.Ic subtype auth Op Ic open request | response
 .Xc
 An authentication frame.
 .It Ic subtype probe request

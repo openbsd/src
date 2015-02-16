@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.543 2015/02/12 01:29:14 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.544 2015/02/16 16:21:25 bentley Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 12 2015 $
+.Dd $Mdocdate: February 16 2015 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -384,17 +384,17 @@ Ports and ranges of ports are specified using these operators:
 .Bd -literal -offset indent
 =	(equal)
 !=	(unequal)
-\*(Lt	(less than)
-\*(Le	(less than or equal)
-\*(Gt	(greater than)
-\*(Ge	(greater than or equal)
+<	(less than)
+<=	(less than or equal)
+>	(greater than)
+>=	(greater than or equal)
 :	(range including boundaries)
-\*(Gt\*(Lt	(range excluding boundaries)
-\*(Lt\*(Gt	(except range)
+><	(range excluding boundaries)
+<>	(except range)
 .Ed
 .Pp
-.Sq \*(Gt\*(Lt ,
-.Sq \*(Lt\*(Gt
+.Sq >< ,
+.Sq <>
 and
 .Sq \&:
 are binary operators (they take two arguments).
@@ -402,15 +402,15 @@ For instance:
 .Bl -tag -width Ds
 .It port 2000:2004
 means
-.Sq all ports \*(Ge 2000 and \*(Le 2004 ,
+.Sq all ports \(>= 2000 and \(<= 2004 ,
 hence ports 2000, 2001, 2002, 2003, and 2004.
-.It port 2000 \*(Gt\*(Lt 2004
+.It port 2000 >< 2004
 means
-.Sq all ports \*(Gt 2000 and \*(Lt 2004 ,
+.Sq all ports > 2000 and < 2004 ,
 hence ports 2001, 2002, and 2003.
-.It port 2000 \*(Lt\*(Gt 2004
+.It port 2000 <> 2004
 means
-.Sq all ports \*(Lt 2000 or \*(Gt 2004 ,
+.Sq all ports < 2000 or > 2004 ,
 hence ports 1\(en1999 and 2005\(en65535.
 .El
 .Pp
@@ -427,9 +427,9 @@ as in the following examples:
 .Bd -literal -offset indent
 pass in all
 pass in from any to any
-pass in proto tcp from any port \*(Lt 1024 to any
+pass in proto tcp from any port < 1024 to any
 pass in proto tcp from any to any port 25
-pass in proto tcp from 10.0.0.0/8 port \*(Ge 1024 \e
+pass in proto tcp from 10.0.0.0/8 port >= 1024 \e
       to ! 10.1.2.3 port != ssh
 pass in proto tcp from any os "OpenBSD"
 pass in proto tcp from route "DTAG"
@@ -600,15 +600,15 @@ For example:
 .Bd -literal -offset indent -compact
 ips = "{ 1.2.3.4, 1.2.3.5 }"
 pass in proto tcp from any to $ips \e
-      port \*(Gt 1023 label "$dstaddr:$dstport"
+      port > 1023 label "$dstaddr:$dstport"
 .Ed
 .Pp
 Expands to:
 .Bd -literal -offset indent -compact
 pass in inet proto tcp from any to 1.2.3.4 \e
-      port \*(Gt 1023 label "1.2.3.4:\*(Gt1023"
+      port > 1023 label "1.2.3.4:>1023"
 pass in inet proto tcp from any to 1.2.3.5 \e
-      port \*(Gt 1023 label "1.2.3.5:\*(Gt1023"
+      port > 1023 label "1.2.3.5:>1023"
 .Ed
 .Pp
 The macro expansion for the
@@ -801,7 +801,7 @@ The following example allows only selected users to open outgoing
 connections:
 .Bd -literal -offset indent
 block out proto tcp all
-pass  out proto tcp from self user { \*(Lt 1000, dhartmei }
+pass  out proto tcp from self user { < 1000, dhartmei }
 .Ed
 .El
 .Ss Translation
@@ -1641,9 +1641,9 @@ which is initially empty.
 A filter rule is set up to block all traffic coming from addresses listed in
 either table:
 .Bd -literal -offset indent
-table \*(Ltprivate\*(Gt const { 10/8, 172.16/12, 192.168/16 }
-table \*(Ltbadhosts\*(Gt persist
-block on fxp0 from { \*(Ltprivate\*(Gt, \*(Ltbadhosts\*(Gt } to any
+table <private> const { 10/8, 172.16/12, 192.168/16 }
+table <badhosts> persist
+block on fxp0 from { <private>, <badhosts> } to any
 .Ed
 .Pp
 The private table cannot have its contents changed and the badhosts table
@@ -1656,8 +1656,8 @@ these hosts can be blocked by using the following:
 A table can also be initialized with an address list specified in one or more
 external files, using the following syntax:
 .Bd -literal -offset indent
-table \*(Ltspam\*(Gt persist file "/etc/spammers" file "/etc/openrelays"
-block on fxp0 from \*(Ltspam\*(Gt to any
+table <spam> persist file "/etc/spammers" file "/etc/openrelays"
+block on fxp0 from <spam> to any
 .Ed
 .Pp
 The files
@@ -2126,9 +2126,9 @@ table and have all states originating from it flushed.
 Any new packets arriving from this host will be dropped unconditionally
 by the block rule.
 .Bd -literal -offset indent
-block quick from \*(Ltbad_hosts\*(Gt
+block quick from <bad_hosts>
 pass in on $ext_if proto tcp to $webserver port www keep state \e
-      (max-src-conn-rate 100/10, overload \*(Ltbad_hosts\*(Gt flush global)
+      (max-src-conn-rate 100/10, overload <bad_hosts> flush global)
 .Ed
 .Sh TRAFFIC NORMALISATION
 Traffic normalisation is a broad umbrella term
@@ -2484,7 +2484,7 @@ In this example,
 we tag incoming packets as they are redirected to spamd(8).
 The tag is used to pass those packets through the packet filter.
 .Bd -literal -offset 4n
-match in on $ext_if inet proto tcp from \*(Ltspammers\*(Gt to port smtp \e
+match in on $ext_if inet proto tcp from <spammers> to port smtp \e
      tag SPAMD rdr-to 127.0.0.1 port spamd
 
 block in on $ext_if
@@ -2664,7 +2664,7 @@ scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ifspec [ af ] [ "label" string ]
 
-table-rule     = "table" "\*(Lt" string "\*(Gt" [ tableopts ]
+table-rule     = "table" "<" string ">" [ tableopts ]
 tableopts      = tableopt [ tableopts ]
 tableopt       = "persist" | "const" | "counters" |
                  "file" string | "{" [ tableaddrs ] "}"
@@ -2720,7 +2720,7 @@ hosts          = "all" |
 ipspec         = "any" | host | "{" host-list "}"
 host           = [ "!" ] ( address [ "weight" number ] |
                  address [ "/" mask-bits ] [ "weight" number ] |
-                 "\*(Lt" string "\*(Gt" )
+                 "<" string ">" )
 redirhost      = address [ "/" mask-bits ]
 routehost      = host | host "@" interface-name |
                  "(" interface-name [ address [ "/" mask-bits ] ] ")"
@@ -2737,9 +2737,9 @@ os             = "os"  ( os-name | "{" os-list "}" )
 user           = "user" ( unary-op | binary-op | "{" op-list "}" )
 group          = "group" ( unary-op | binary-op | "{" op-list "}" )
 
-unary-op       = [ "=" | "!=" | "\*(Lt" | "\*(Le" | "\*(Gt" | "\*(Ge" ]
+unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
                  ( name | number )
-binary-op      = number ( "\*(Lt\*(Gt" | "\*(Gt\*(Lt" | ":" ) number
+binary-op      = number ( "<>" | "><" | ":" ) number
 op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ]
 
 os-name        = operating-system-name
@@ -2764,7 +2764,7 @@ state-opt      = ( "max" number | "no-sync" | timeout | "sloppy" |
                  "max-src-nodes" number | "max-src-states" number |
                  "max-src-conn" number |
                  "max-src-conn-rate" number "/" number |
-                 "overload" "\*(Lt" string "\*(Gt" [ "flush" [ "global" ] ] |
+                 "overload" "<" string ">" [ "flush" [ "global" ] ] |
                  "if-bound" | "floating" )
 
 timeout-list   = timeout [ [ "," ] timeout-list ]
