@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.14 2014/08/15 03:51:40 guenther Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.15 2015/02/16 06:07:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -60,7 +60,6 @@ _mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 
 	switch (*str) {
 	case '/':
-	case ':': /* XXX: for backward compat */
 		str++;
 		break;
 	default:
