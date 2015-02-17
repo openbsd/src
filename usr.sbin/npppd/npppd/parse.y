@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2014/11/20 05:51:20 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.16 2015/02/17 05:12:51 miod Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -564,7 +564,7 @@ addressport	: address optport {
 
 in4_addr	: STRING {
 			if (inet_aton($1, &($$)) != 1) {
-				yyerror("could not parse the address %s");
+				yyerror("could not parse the address %s", $1);
 				free($1);
 				YYERROR;
 			}
