@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.171 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.172 2015/02/17 22:34:59 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -227,8 +227,8 @@ struct rand_event {
 	u_int re_time;
 	u_int re_val;
 } rnd_event_space[QEVLEN];
-struct rand_event *rnd_event_head = rnd_event_space;
-struct rand_event *rnd_event_tail = rnd_event_space;
+/* index of next free slot */
+int rnd_event_idx;
 
 struct timeout rnd_timeout;
 struct rndstats rndstats;
@@ -256,38 +256,25 @@ struct filterops randomwrite_filtops =
 static __inline struct rand_event *
 rnd_get(void)
 {
-	struct rand_event *p = rnd_event_tail;
-
-	if (p == rnd_event_head)
+	if (rnd_event_idx == 0)
 		return NULL;
 
-	if (p + 1 >= &rnd_event_space[QEVLEN])
-		rnd_event_tail = rnd_event_space;
-	else
-		rnd_event_tail++;
-
-	return p;
+	return &rnd_event_space[--rnd_event_idx];
 }
 
 static __inline struct rand_event *
 rnd_put(void)
 {
-	struct rand_event *p = rnd_event_head + 1;
-
-	if (p >= &rnd_event_space[QEVLEN])
-		p = rnd_event_space;
-
-	if (p == rnd_event_tail)
+	if (rnd_event_idx == QEVLEN)
 		return NULL;
 
-	return rnd_event_head = p;
+	return &rnd_event_space[rnd_event_idx++];
 }
 
 static __inline int
 rnd_qlen(void)
 {
-	int len = rnd_event_head - rnd_event_tail;
-	return (len < 0)? -len : len;
+	return rnd_event_idx;
 }
 
 /*
