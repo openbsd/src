@@ -56,6 +56,10 @@
 #endif
 #include <fcntl.h>
 
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+
 /** number of queued TCP connections for listen() */
 #define TCP_BACKLOG 256 
 
@@ -368,29 +372,47 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
  * (and also uses the interface mtu to determine the size of the packets).
  * So there won't be any EMSGSIZE error.  Against DNS fragmentation attacks.
  * FreeBSD already has same semantics without setting the option. */
-#    if defined(IP_PMTUDISC_OMIT)
-		int action = IP_PMTUDISC_OMIT;
-#    else
-		int action = IP_PMTUDISC_DONT;
-#    endif
+		int omit_set = 0;
+		int action;
+#   if defined(IP_PMTUDISC_OMIT)
+		action = IP_PMTUDISC_OMIT;
 		if (setsockopt(s, IPPROTO_IP, IP_MTU_DISCOVER, 
 			&action, (socklen_t)sizeof(action)) < 0) {
-			log_err("setsockopt(..., IP_MTU_DISCOVER, "
-#    if defined(IP_PMTUDISC_OMIT)
-				"IP_PMTUDISC_OMIT"
-#    else
-				"IP_PMTUDISC_DONT"
-#    endif
-				"...) failed: %s",
-				strerror(errno));
+
+			if (errno != EINVAL) {
+				log_err("setsockopt(..., IP_MTU_DISCOVER, IP_PMTUDISC_OMIT...) failed: %s",
+					strerror(errno));
+
 #    ifndef USE_WINSOCK
-			close(s);
+				close(s);
 #    else
-			closesocket(s);
+				closesocket(s);
 #    endif
-			*noproto = 0;
-			*inuse = 0;
-			return -1;
+				*noproto = 0;
+				*inuse = 0;
+				return -1;
+			}
+		}
+		else
+		{
+		    omit_set = 1;
+		}
+#   endif
+		if (omit_set == 0) {
+   			action = IP_PMTUDISC_DONT;
+			if (setsockopt(s, IPPROTO_IP, IP_MTU_DISCOVER,
+				&action, (socklen_t)sizeof(action)) < 0) {
+				log_err("setsockopt(..., IP_MTU_DISCOVER, IP_PMTUDISC_DONT...) failed: %s",
+					strerror(errno));
+#    ifndef USE_WINSOCK
+				close(s);
+#    else
+				closesocket(s);
+#    endif
+				*noproto = 0;
+				*inuse = 0;
+				return -1;
+			}
 		}
 #  elif defined(IP_DONTFRAG)
 		int off = 0;
@@ -570,6 +592,63 @@ create_tcp_accept_sock(struct addrinfo *addr, int v6only, int* noproto,
 	}
 	return s;
 }
+
+int
+create_local_accept_sock(const char *path, int* noproto)
+{
+#ifdef HAVE_SYS_UN_H
+	int s;
+	struct sockaddr_un usock;
+
+	verbose(VERB_ALGO, "creating unix socket %s", path);
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+	/* this member exists on BSDs, not Linux */
+	usock.sun_len = (socklen_t)sizeof(usock);
+#endif
+	usock.sun_family = AF_LOCAL;
+	/* length is 92-108, 104 on FreeBSD */
+	(void)strlcpy(usock.sun_path, path, sizeof(usock.sun_path));
+
+	if ((s = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1) {
+		log_err("Cannot create local socket %s (%s)",
+			path, strerror(errno));
+		return -1;
+	}
+
+	if (unlink(path) && errno != ENOENT) {
+		/* The socket already exists and cannot be removed */
+		log_err("Cannot remove old local socket %s (%s)",
+			path, strerror(errno));
+		return -1;
+	}
+
+	if (bind(s, (struct sockaddr *)&usock,
+		(socklen_t)sizeof(struct sockaddr_un)) == -1) {
+		log_err("Cannot bind local socket %s (%s)",
+			path, strerror(errno));
+		return -1;
+	}
+
+	if (!fd_set_nonblock(s)) {
+		log_err("Cannot set non-blocking mode");
+		return -1;
+	}
+
+	if (listen(s, TCP_BACKLOG) == -1) {
+		log_err("can't listen: %s", strerror(errno));
+		return -1;
+	}
+
+	(void)noproto; /*unused*/
+	return s;
+#else
+	(void)path;
+	log_err("Local sockets are not supported");
+	*noproto = 1;
+	return -1;
+#endif
+}
+
 
 /**
  * Create socket from getaddrinfo results
