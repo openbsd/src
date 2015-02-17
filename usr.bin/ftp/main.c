@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.99 2015/02/13 08:41:34 sthen Exp $	*/
+/*	$OpenBSD: main.c,v 1.100 2015/02/17 22:39:32 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ main(volatile int argc, char *argv[])
 	httpuseragent = NULL;
 
 	while ((ch = getopt(argc, argv,
-		    "46AaCc:dD:Eegik:mno:pP:r:S:s:tU:vV")) != -1) {
+		    "46AaCc:dD:Eegik:Mmno:pP:r:S:s:tU:vV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -275,6 +275,9 @@ main(volatile int argc, char *argv[])
 					optarg);
 				usage();
 			}
+			break;
+		case 'M':
+			progress = 0;
 			break;
 		case 'm':
 			progress = -1;
@@ -875,7 +878,7 @@ usage(void)
 {
 	fprintf(stderr, "usage: "
 #ifndef SMALL
-	    "%1$s [-46AadEegimnptVv] [-D title] [-k seconds] [-P port] "
+	    "%1$s [-46AadEegiMmnptVv] [-D title] [-k seconds] [-P port] "
 	    "[-r seconds]\n"
 	    "           [-s srcaddr] [host [port]]\n"
 	    "       %1$s [-C] [-o output] [-s srcaddr]\n"

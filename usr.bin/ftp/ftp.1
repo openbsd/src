@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.96 2015/01/31 19:33:45 jmc Exp $
+.\"	$OpenBSD: ftp.1,v 1.97 2015/02/17 22:39:32 tedu Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: January 31 2015 $
+.Dd $Mdocdate: February 17 2015 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl 46AadEegimnptVv
+.Op Fl 46AadEegiMmnptVv
 .Op Fl D Ar title
 .Op Fl k Ar seconds
 .Op Fl P Ar port
@@ -181,6 +181,11 @@ transfer.
 By default,
 .Nm
 will send a byte every 60 seconds.
+.It Fl M
+Causes
+.Nm
+to never display the progress meter in cases where it would do
+so by default.
 .It Fl m
 Causes
 .Nm
