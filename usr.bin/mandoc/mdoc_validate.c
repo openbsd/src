@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.196 2015/02/16 19:02:32 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.197 2015/02/17 20:33:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -833,7 +833,7 @@ post_lb(POST_ARGS)
 
 	n = mdoc->last->child;
 	assert(MDOC_TEXT == n->type);
-	mandoc_asprintf(&libname, "library \\(lq%s\\(rq", n->string);
+	mandoc_asprintf(&libname, "library \\(Lq%s\\(Rq", n->string);
 	free(n->string);
 	n->string = libname;
 }

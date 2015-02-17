@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.85 2015/02/12 12:20:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.86 2015/02/17 20:33:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -183,8 +183,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
 	{ NULL, pre_skip, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
-	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Do */
-	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Dq */
+	{ cond_body, pre_enc, post_enc, "\\(Lq", "\\(Rq" }, /* Do */
+	{ cond_body, pre_enc, post_enc, "\\(Lq", "\\(Rq" }, /* Dq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ef */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */

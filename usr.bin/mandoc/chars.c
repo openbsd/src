@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.35 2014/10/29 00:17:01 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.36 2015/02/17 20:33:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -36,7 +36,7 @@ struct	ln {
 	int		  unicode;
 };
 
-#define	LINES_MAX	  330
+#define	LINES_MAX	  332
 
 #define CHAR(in, ch, code) \
 	{ NULL, (in), (ch), (code) },

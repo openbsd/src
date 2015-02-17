@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.209 2015/02/12 12:20:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.210 2015/02/17 20:33:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1871,7 +1871,7 @@ termp_quote_pre(DECL_ARGS)
 	case MDOC_Do:
 		/* FALLTHROUGH */
 	case MDOC_Dq:
-		term_word(p, "\\(lq");
+		term_word(p, "\\(Lq");
 		break;
 	case MDOC_En:
 		if (NULL == n->norm->Es ||
@@ -1940,7 +1940,7 @@ termp_quote_post(DECL_ARGS)
 	case MDOC_Do:
 		/* FALLTHROUGH */
 	case MDOC_Dq:
-		term_word(p, "\\(rq");
+		term_word(p, "\\(Rq");
 		break;
 	case MDOC_En:
 		if (n->norm->Es == NULL ||

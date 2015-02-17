@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.in,v 1.27 2014/12/16 19:48:49 schwarze Exp $ */
+/*	$OpenBSD: chars.in,v 1.28 2015/02/17 20:33:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -70,8 +70,10 @@ CHAR("ti",			"~",		126)
 /* Quotes. */
 CHAR("Bq",			",,",		8222)
 CHAR("bq",			",",		8218)
-CHAR("lq",			"``",		8220)
-CHAR("rq",			"\'\'",		8221)
+CHAR("lq",			"\"",		8220)
+CHAR("rq",			"\"",		8221)
+CHAR("Lq",			"``",		8220)
+CHAR("Rq",			"''",		8221)
 CHAR("oq",			"`",		8216)
 CHAR("cq",			"\'",		8217)
 CHAR("aq",			"\'",		39)
