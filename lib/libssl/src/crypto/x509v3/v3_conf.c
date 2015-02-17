@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.16 2014/10/05 18:26:43 miod Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.17 2015/02/17 05:14:38 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -122,7 +122,6 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 {
 	const X509V3_EXT_METHOD *method;
 	X509_EXTENSION *ext;
-	STACK_OF(CONF_VALUE) *nval;
 	void *ext_struc;
 
 	if (ext_nid == NID_undef) {
@@ -136,6 +135,8 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 	}
 	/* Now get internal extension representation based on type */
 	if (method->v2i) {
+		STACK_OF(CONF_VALUE) *nval;
+
 		if (*value == '@')
 			nval = NCONF_get_section(conf, value + 1);
 		else
@@ -145,30 +146,30 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 			    X509V3_R_INVALID_EXTENSION_STRING);
 			ERR_asprintf_error_data("name=%s,section=%s",
 			    OBJ_nid2sn(ext_nid), value);
+			if (*value != '@')
+				sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 			return NULL;
 		}
 		ext_struc = method->v2i(method, ctx, nval);
 		if (*value != '@')
 			sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
-		if (!ext_struc)
-			return NULL;
 	} else if (method->s2i) {
-		if (!(ext_struc = method->s2i(method, ctx, value)))
-			return NULL;
+		ext_struc = method->s2i(method, ctx, value);
 	} else if (method->r2i) {
 		if (!ctx->db || !ctx->db_meth) {
 			X509V3err(X509V3_F_DO_EXT_NCONF,
 			    X509V3_R_NO_CONFIG_DATABASE);
 			return NULL;
 		}
-		if (!(ext_struc = method->r2i(method, ctx, value)))
-			return NULL;
+		ext_struc = method->r2i(method, ctx, value);
 	} else {
 		X509V3err(X509V3_F_DO_EXT_NCONF,
 		    X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
 		ERR_asprintf_error_data("name=%s", OBJ_nid2sn(ext_nid));
 		return NULL;
 	}
+	if (ext_struc == NULL)
+		return NULL;
 
 	ext = do_ext_i2d(method, ext_nid, crit, ext_struc);
 	if (method->it)
