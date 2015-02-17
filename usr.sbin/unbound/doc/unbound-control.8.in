@@ -1,4 +1,4 @@
-.TH "unbound-control" "8" "Dec  8, 2014" "NLnet Labs" "unbound 1.5.1"
+.TH "unbound-control" "8" "@date@" "NLnet Labs" "unbound @version@"
 .\"
 .\" unbound-control.8 -- unbound remote control manual
 .\"
