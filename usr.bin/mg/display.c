@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.42 2014/10/16 17:36:11 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.43 2015/02/17 00:32:40 tedu Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -247,6 +247,7 @@ vtresize(int force, int newrow, int newcol)
 }
 
 #undef TRYREALLOC
+#undef TRYREALLOCARRAY
 
 /*
  * Initialize the data structures used
