@@ -1,18 +1,27 @@
-.Dd $Mdocdate: July 13 2013 $
+.Dd February 17, 2015
 .Dt IT-TEXT 1
 .Os OpenBSD
 .Sh NAME
 .Nm it-text
 .Nd what an input line trap counts as text
 .Sh DESCRIPTION
-.de mytrap
+.de trap
 traptext
 ..
 initial text
-.it 1 mytrap
-plain text line
-another plain text line
-.it 1 mytrap
+.it 1trap
+first line after 1trap
+second line after 1trap
+.Pp
+.it 1vtrap
+first line after 1vtrap
+second line after 1vtrap
+.Pp
+.it ( + 1c + 1i)trap
+first line after ( + 1c + 1i)trap
+second line after ( + 1c + 1i)trap
+third line after ( + 1c + 1i)trap
+.it 1 trap
 .Pp
 first line after .Pp
 second line after .Pp

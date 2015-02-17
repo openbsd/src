@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.132 2015/02/06 16:05:51 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.133 2015/02/17 17:16:12 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -394,13 +394,13 @@ static	int		 roff_evalcond(struct roff *r, int,
 static	int		 roff_evalnum(struct roff *, int,
 				const char *, int *, int *, int);
 static	int		 roff_evalpar(struct roff *, int,
-				const char *, int *, int *);
+				const char *, int *, int *, int);
 static	int		 roff_evalstrcond(const char *, int *);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
 static	size_t		 roff_getname(struct roff *, char **, int, int);
-static	int		 roff_getnum(const char *, int *, int *);
+static	int		 roff_getnum(const char *, int *, int *, int);
 static	int		 roff_getop(const char *, int *, char *);
 static	int		 roff_getregn(const struct roff *,
 				const char *, size_t);
@@ -438,6 +438,9 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 #define	ASCII_HI	 126
 #define	ASCII_LO	 33
 #define	HASHWIDTH	(ASCII_HI - ASCII_LO + 1)
+
+#define	ROFFNUM_SCALE	(1 << 0)  /* Honour scaling in roff_getnum(). */
+#define	ROFFNUM_WHITE	(1 << 1)  /* Skip whitespace in roff_evalnum(). */
 
 static	struct roffmac	*hash[HASHWIDTH];
 
@@ -1048,7 +1051,8 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		case 'B':
 			npos = 0;
 			ubuf[0] = arg_complete &&
-			    roff_evalnum(r, ln, stnam, &npos, NULL, 0) &&
+			    roff_evalnum(r, ln, stnam, &npos,
+			      NULL, ROFFNUM_SCALE) &&
 			    stnam + npos + 1 == cp ? '1' : '0';
 			ubuf[1] = '\0';
 			break;
@@ -1626,17 +1630,21 @@ roff_cond_text(ROFF_ARGS)
  * Ignore overflows, treat them just like the C language.
  */
 static int
-roff_getnum(const char *v, int *pos, int *res)
+roff_getnum(const char *v, int *pos, int *res, int flags)
 {
-	int	 myres, n, p;
+	int	 myres, scaled, n, p;
 
 	if (NULL == res)
 		res = &myres;
 
 	p = *pos;
 	n = v[p] == '-';
-	if (n)
+	if (n || v[p] == '+')
 		p++;
+
+	if (flags & ROFFNUM_WHITE)
+		while (isspace((unsigned char)v[p]))
+			p++;
 
 	for (*res = 0; isdigit((unsigned char)v[p]); p++)
 		*res = 10 * *res + v[p] - '0';
@@ -1650,39 +1658,40 @@ roff_getnum(const char *v, int *pos, int *res)
 
 	switch (v[p]) {
 	case 'f':
-		*res *= 65536;
+		scaled = *res * 65536;
 		break;
 	case 'i':
-		*res *= 240;
+		scaled = *res * 240;
 		break;
 	case 'c':
-		*res *= 240;
-		*res /= 2.54;
+		scaled = *res * 240 / 2.54;
 		break;
 	case 'v':
 		/* FALLTROUGH */
 	case 'P':
-		*res *= 40;
+		scaled = *res * 40;
 		break;
 	case 'm':
 		/* FALLTROUGH */
 	case 'n':
-		*res *= 24;
+		scaled = *res * 24;
 		break;
 	case 'p':
-		*res *= 10;
-		*res /= 3;
+		scaled = *res * 10 / 3;
 		break;
 	case 'u':
+		scaled = *res;
 		break;
 	case 'M':
-		*res *= 6;
-		*res /= 25;
+		scaled = *res * 6 / 25;
 		break;
 	default:
+		scaled = *res;
 		p--;
 		break;
 	}
+	if (flags & ROFFNUM_SCALE)
+		*res = scaled;
 
 	*pos = p + 1;
 	return(1);
@@ -1772,7 +1781,7 @@ roff_evalcond(struct roff *r, int ln, const char *v, int *pos)
 	}
 
 	savepos = *pos;
-	if (roff_evalnum(r, ln, v, pos, &number, 0))
+	if (roff_evalnum(r, ln, v, pos, &number, ROFFNUM_SCALE))
 		return((number > 0) == wanttrue);
 	else if (*pos == savepos)
 		return(roff_evalstrcond(v, pos) == wanttrue);
@@ -1995,14 +2004,14 @@ roff_getop(const char *v, int *pos, char *res)
  */
 static int
 roff_evalpar(struct roff *r, int ln,
-	const char *v, int *pos, int *res)
+	const char *v, int *pos, int *res, int flags)
 {
 
 	if ('(' != v[*pos])
-		return(roff_getnum(v, pos, res));
+		return(roff_getnum(v, pos, res, flags));
 
 	(*pos)++;
-	if ( ! roff_evalnum(r, ln, v, pos, res, 1))
+	if ( ! roff_evalnum(r, ln, v, pos, res, flags | ROFFNUM_WHITE))
 		return(0);
 
 	/*
@@ -2025,7 +2034,7 @@ roff_evalpar(struct roff *r, int ln,
  */
 static int
 roff_evalnum(struct roff *r, int ln, const char *v,
-	int *pos, int *res, int skipwhite)
+	int *pos, int *res, int flags)
 {
 	int		 mypos, operand2;
 	char		 operator;
@@ -2035,29 +2044,29 @@ roff_evalnum(struct roff *r, int ln, const char *v,
 		pos = &mypos;
 	}
 
-	if (skipwhite)
+	if (flags & ROFFNUM_WHITE)
 		while (isspace((unsigned char)v[*pos]))
 			(*pos)++;
 
-	if ( ! roff_evalpar(r, ln, v, pos, res))
+	if ( ! roff_evalpar(r, ln, v, pos, res, flags))
 		return(0);
 
 	while (1) {
-		if (skipwhite)
+		if (flags & ROFFNUM_WHITE)
 			while (isspace((unsigned char)v[*pos]))
 				(*pos)++;
 
 		if ( ! roff_getop(v, pos, &operator))
 			break;
 
-		if (skipwhite)
+		if (flags & ROFFNUM_WHITE)
 			while (isspace((unsigned char)v[*pos]))
 				(*pos)++;
 
-		if ( ! roff_evalpar(r, ln, v, pos, &operand2))
+		if ( ! roff_evalpar(r, ln, v, pos, &operand2, flags))
 			return(0);
 
-		if (skipwhite)
+		if (flags & ROFFNUM_WHITE)
 			while (isspace((unsigned char)v[*pos]))
 				(*pos)++;
 
@@ -2261,7 +2270,7 @@ roff_nr(ROFF_ARGS)
 	if (sign == '+' || sign == '-')
 		val++;
 
-	if (roff_evalnum(r, ln, val, NULL, &iv, 0))
+	if (roff_evalnum(r, ln, val, NULL, &iv, ROFFNUM_SCALE))
 		roff_setreg(r, key, iv, sign);
 
 	return(ROFF_IGN);
@@ -2316,24 +2325,20 @@ roff_rm(ROFF_ARGS)
 static enum rofferr
 roff_it(ROFF_ARGS)
 {
-	char		*cp;
-	size_t		 len;
 	int		 iv;
 
 	/* Parse the number of lines. */
-	cp = buf->buf + pos;
-	len = strcspn(cp, " \t");
-	cp[len] = '\0';
-	if ((iv = mandoc_strntoi(cp, len, 10)) <= 0) {
+
+	if ( ! roff_evalnum(r, ln, buf->buf, &pos, &iv, 0)) {
 		mandoc_msg(MANDOCERR_IT_NONUM, r->parse,
 		    ln, ppos, buf->buf + 1);
 		return(ROFF_IGN);
 	}
-	cp += len + 1;
 
 	/* Arm the input line trap. */
+
 	roffit_lines = iv;
-	roffit_macro = mandoc_strdup(cp);
+	roffit_macro = mandoc_strdup(buf->buf + pos);
 	return(ROFF_IGN);
 }
 

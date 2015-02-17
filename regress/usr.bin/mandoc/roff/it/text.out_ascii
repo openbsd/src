@@ -4,8 +4,13 @@ NNAAMMEE
      iitt--tteexxtt - what an input line trap counts as text
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text plain text line traptext another plain text line
+     initial text first line after 1trap traptext second line after 1trap
+
+     first line after 1vtrap traptext second line after 1vtrap
+
+     first line after ( + 1c + 1i)trap second line after ( + 1c + 1i)trap
+     traptext third line after ( + 1c + 1i)trap
 
      first line after .Pp traptext second line after .Pp
 
-OpenBSD                          July 13, 2013                         OpenBSD
+OpenBSD                        February 17, 2015                       OpenBSD

@@ -30,6 +30,8 @@ DDEESSCCRRIIPPTTIIOONN
 
        operator ":": 00 (f) 01 (t) 10 (t) 11 (t)
 
+       with scaling units: 1i>2c (t) 1i-6P (f)
+
        unmatched parenthesis: (f) one (t)
 
        negated unmatched parenthesis: (f) zero (t)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.49 2015/01/29 00:33:14 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.50 2015/02/17 17:16:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: February 17 2015 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1194,13 +1194,18 @@ This is a Heirloom extension and currently unsupported.
 Set an input line trap.
 Its syntax is as follows:
 .Pp
-.D1 Pf . Cm it Ar number macro
+.D1 Pf . Cm it Ar expression macro
 .Pp
 The named
 .Ar macro
-will be invoked after processing the specified
-.Ar number
-of input text lines.
+will be invoked after processing the number of input text lines
+specified by the numerical
+.Ar expression .
+While evaluating the
+.Ar expression ,
+the unit suffixes described below
+.Sx Scaling Widths
+are ignored.
 .Ss \&itc
 Set an input line trap, not counting lines ending with \ec.
 Currently unsupported.

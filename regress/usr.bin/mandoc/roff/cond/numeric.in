@@ -127,6 +127,14 @@ operator ":":
 .ie 1:1 (t)
 .el (f)
 .PP
+with scaling units:
+1i>2c
+.ie 1i>2c (t)
+.el (f)
+1i-6P
+.ie 1i-6P (t)
+.el (f)
+.PP
 unmatched parenthesis:
 .ie (
 (t)
