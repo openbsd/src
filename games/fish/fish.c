@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.16 2013/08/29 20:22:12 naddy Exp $	*/
+/*	$OpenBSD: fish.c,v 1.17 2015/02/18 23:20:45 tedu Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ promove(void)
 				max = i;
 		return(max);
 	} 
-	if (nrandom(1024) == 0723) {
+	if (nrandom(1024) == 723) {
 		for (i = 0; i < RANKS; ++i)
 			if (userhand[i] && comphand[i])
 				return(i);
@@ -316,11 +316,11 @@ chkwinner(int player, const int *hand)
 	(void)printf("\nI have %d, you have %d.\n", cb, ub);
 	if (ub > cb) {
 		(void)printf("\nYou win!!!\n");
-		if (nrandom(1024) == 0723)
+		if (nrandom(1024) == 723)
 			(void)printf("Cheater, cheater, pumpkin eater!\n");
 	} else if (cb > ub) {
 		(void)printf("\nI win!!!\n");
-		if (nrandom(1024) == 0723)
+		if (nrandom(1024) == 723)
 			(void)printf("Hah!  Stupid peasant!\n");
 	} else
 		(void)printf("\nTie!\n");
