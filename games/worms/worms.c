@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.21 2013/08/29 20:22:21 naddy Exp $	*/
+/*	$OpenBSD: worms.c,v 1.22 2015/02/18 23:16:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 	sleeptime.tv_nsec = delay * 500000;
 	timespecadd(&sleeptime, &sleeptime, &sleeptime);
 
-	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
+	if (!(worm = calloc(number, sizeof(struct worm))))
 		nomem();
 	initscr();
 	curs_set(0);
@@ -234,8 +234,8 @@ main(int argc, char *argv[])
 	LI = LINES;
 	last = CO - 1;
 	bottom = LI - 1;
-	if (!(ip = malloc((size_t)(LI * CO * sizeof(short)))) ||
-	    !(ref = calloc((size_t)LI, sizeof(short *)))) {
+	if (!(ip = reallocarray(NULL, LI, CO * sizeof(short))) ||
+	    !(ref = calloc(LI, sizeof(short *)))) {
 		endwin();
 		nomem();
 	}
@@ -247,14 +247,14 @@ main(int argc, char *argv[])
 		*ip++ = 0;
 	for (n = number, w = &worm[0]; --n >= 0; w++) {
 		w->orientation = w->head = 0;
-		if (!(ip = calloc((size_t)length, sizeof(short)))) {
+		if (!(ip = calloc(length, sizeof(short)))) {
 			endwin();
 			nomem();
 		}
 		w->xpos = ip;
 		for (x = length; --x >= 0;)
 			*ip++ = -1;
-		if (!(ip = calloc((size_t)length, sizeof(short)))) {
+		if (!(ip = calloc(length, sizeof(short)))) {
 			endwin();
 			nomem();
 		}
