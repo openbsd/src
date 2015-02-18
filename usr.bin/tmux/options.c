@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.11 2014/10/20 23:57:14 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.12 2015/02/18 15:32:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -167,20 +167,26 @@ options_set_style(struct options *oo, const char *name, const char *value,
     int append)
 {
 	struct options_entry	*o;
+	struct grid_cell	 tmpgc;
 
-	if ((o = options_find1(oo, name)) == NULL) {
+	o = options_find1(oo, name);
+	if (o == NULL || !append)
+		memcpy(&tmpgc, &grid_default_cell, sizeof tmpgc);
+	else
+		memcpy(&tmpgc, &o->style, sizeof tmpgc);
+
+	if (style_parse(&grid_default_cell, &tmpgc, value) == -1)
+		return (NULL);
+
+	if (o == NULL) {
 		o = xmalloc(sizeof *o);
 		o->name = xstrdup(name);
 		RB_INSERT(options_tree, &oo->tree, o);
 	} else if (o->type == OPTIONS_STRING)
 		free(o->str);
 
-	if (!append)
-		memcpy(&o->style, &grid_default_cell, sizeof o->style);
-
 	o->type = OPTIONS_STYLE;
-	if (style_parse(&grid_default_cell, &o->style, value) == -1)
-		return (NULL);
+	memcpy(&o->style, &tmpgc, sizeof o->style);
 	return (o);
 }
 
