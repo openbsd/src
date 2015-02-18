@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.19 2014/07/11 21:12:39 halex Exp $
+#	$OpenBSD: ksh.kshrc,v 1.20 2015/02/18 08:39:32 rpe Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -33,8 +33,6 @@
 case "$-" in
 *i*)	# we are interactive
 	# we may have su'ed so reset these
-	# NOTE: SCO-UNIX doesn't have whoami,
-	#	install whoami.sh
 	USER=`whoami 2>/dev/null`
 	USER=${USER:-`id | sed 's/^[^(]*(\([^)]*\)).*/\1/'`}
 	UID=`id -u`
@@ -60,15 +58,7 @@ case "$-" in
 
 	alias ls='ls -CF'
 	alias h='fc -l | more'
-	# the PD ksh is not 100% compatible
-	case "$KSH_VERSION" in
-	*PD*)	# PD ksh
-		;;
-	*)	# real ksh ?
-		[ -r $HOME/.functions ] && . $HOME/.functions
-		set -o trackall
-		;;
-	esac
+
 	case "$TERM" in
 	sun*-s)
 		# sun console with status line
@@ -127,18 +117,8 @@ case "$-" in
 	alias p='ps -l'
 	alias j=jobs
 	alias o='fg %-'
-
-# add your favourite aliases here
-	OS=${OS:-`uname -s`}
-	case $OS in
-	HP-UX)
-		alias ls='ls -CF'
-		;;
-	*BSD)
-		alias df='df -k'
-		alias du='du -k'
-		;;
-	esac
+	alias df='df -k'
+	alias du='du -k'
 	alias rsize='eval `resize`'
 ;;
 *)	# non-interactive
