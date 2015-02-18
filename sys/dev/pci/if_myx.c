@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.72 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.73 2015/02/18 09:57:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -166,6 +166,7 @@ struct myx_softc {
 
 int	 myx_match(struct device *, void *, void *);
 void	 myx_attach(struct device *, struct device *, void *);
+int	 myx_pcie_dc(struct myx_softc *, struct pci_attach_args *);
 int	 myx_query(struct myx_softc *sc, char *, size_t);
 u_int	 myx_ether_aton(char *, u_int8_t *, u_int);
 void	 myx_attachhook(void *);
@@ -332,6 +333,9 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 		    0, 0, 0, "myxbufs", &pool_allocator_nointr);
 	}
 
+	if (myx_pcie_dc(sc, pa) != 0)
+		printf("%s: unable to configure PCI Express\n", DEVNAME(sc));
+
 	if (mountroothook_establish(myx_attachhook, sc) == NULL) {
 		printf("%s: unable to establish mountroot hook\n", DEVNAME(sc));
 		goto unmap;
@@ -342,6 +346,29 @@ myx_attach(struct device *parent, struct device *self, void *aux)
  unmap:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 	sc->sc_mems = 0;
+}
+
+int
+myx_pcie_dc(struct myx_softc *sc, struct pci_attach_args *pa)
+{
+	pcireg_t dcsr;
+	pcireg_t mask = PCI_PCIE_DCSR_MPS | PCI_PCIE_DCSR_ERO;
+	pcireg_t dc = ((fls(4096) - 8) << 12) | PCI_PCIE_DCSR_ERO;
+	int reg;
+
+	if (pci_get_capability(sc->sc_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    &reg, NULL) == 0)
+		return (-1);
+
+	reg += PCI_PCIE_DCSR;
+	dcsr = pci_conf_read(sc->sc_pc, pa->pa_tag, reg);
+	if ((dcsr & mask) != dc) {
+		CLR(dcsr, mask);
+		SET(dcsr, dc);
+		pci_conf_write(sc->sc_pc, pa->pa_tag, reg, dcsr);
+	}
+
+	return (0);
 }
 
 u_int
