@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.3 2014/12/31 11:38:27 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.4 2015/02/18 22:42:04 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -71,8 +71,6 @@ struct cfdriver cbus_cd = {
 };
 
 /* prototypes */
-int cbus_isrlink(int (*)(void *), void *, int, const char *);
-int cbus_isrunlink(int (*)(void *), int);
 void cbus_isrdispatch(int);
 int cbus_intr(void *);
 
@@ -101,10 +99,11 @@ cbus_attach(struct device *parent, struct device *self, void *args)
 		struct cbus_isr_t *ci = &sc->cbus_isr[i];
 		ci->isr_func = NULL;
 		ci->isr_arg = NULL;
-		ci->isr_intlevel = -1;
+		ci->isr_intlevel = ci->isr_ipl = -1;
 		/* clearing interrupt flags (INT0-INT6) */
-		*cbus_isreg = (u_int8_t)i;
+		*cbus_isreg = (u_int8_t)(6 - i);
 	}
+	sc->registered = 0x00;
 
 	/* register C-bus interrupt service routine on mainbus */
 	isrlink_autovec(cbus_intr, (void *)self, ma->ma_ilvl,
@@ -135,7 +134,8 @@ cbus_print(void *aux, const char *pnp)
  * Register a C-bus interrupt service routine.
  */
 int
-cbus_isrlink(int (*func)(void *), void *arg, int ipl, const char *name)
+cbus_isrlink(int (*func)(void *), void *arg, int intlevel, int ipl,
+    const char *name)
 {
 	struct cbus_softc *sc = NULL;
 	struct cbus_isr_t *ci;
@@ -146,25 +146,27 @@ cbus_isrlink(int (*func)(void *), void *arg, int ipl, const char *name)
 		panic("cbus_isrlink: can't find cbus_softc");
 
 #ifdef DIAGNOSTIC
-	if (ipl < 0 || ipl >= NCBUSISR) {
-		printf("cbus_isrlink: bad ipl %d\n", ipl);
+	if (intlevel < 0 || intlevel >= NCBUSISR) {
+		printf("cbus_isrlink: bad INT level %d\n", intlevel);
 		return -1;
 	}
 #endif
 
-	ci = &sc->cbus_isr[ipl];
+	ci = &sc->cbus_isr[intlevel];
 
 	if (ci->isr_func != NULL) {
-		printf("cbus_isrlink: isr already assigned on INT%d\n", ipl);
+		printf("cbus_isrlink: isr already assigned on INT%d\n",
+		    intlevel);
 		return -1;
 	}
 
 	/* set the entry */
 	ci->isr_func = func;
 	ci->isr_arg = arg;
-	ci->isr_intlevel = ipl;
+	ci->isr_intlevel = intlevel;
+	ci->isr_ipl = ipl;
 	evcount_attach(&ci->isr_count, name, &ci->isr_intlevel);
-	sc->registered |= (1 << (6 - ipl));
+	sc->registered |= (1 << (6 - intlevel));
 #ifdef CBUS_DEBUG
 	printf("cbus_isrlink: sc->registered = 0x%02x\n", sc->registered);
 #endif
@@ -176,7 +178,7 @@ cbus_isrlink(int (*func)(void *), void *arg, int ipl, const char *name)
  * Unregister a C-bus interrupt service routine.
  */
 int
-cbus_isrunlink(int (*func)(void *), int ipl)
+cbus_isrunlink(int (*func)(void *), int intlevel)
 {
 	struct cbus_softc *sc = NULL;
 	struct cbus_isr_t *ci;
@@ -187,25 +189,28 @@ cbus_isrunlink(int (*func)(void *), int ipl)
 		panic("cbus_isrunlink: can't find cbus_softc");
 
 #ifdef DIAGNOSTIC
-	if (ipl < 0 || ipl >= NCBUSISR) {
-		printf("cbus_isrunlink: bad ipl %d\n", ipl);
+	if (intlevel < 0 || intlevel >= NCBUSISR) {
+		printf("cbus_isrunlink: bad INT level %d\n", intlevel);
 		return -1;
 	}
 #endif
 
-	ci = &sc->cbus_isr[ipl];
+	ci = &sc->cbus_isr[intlevel];
 
 	if (ci->isr_func == NULL) {
-		printf("cbus_isrunlink: isr not assigned on INT%d\n", ipl);
+		printf("cbus_isrunlink: isr not assigned on INT%d\n", intlevel);
 		return -1;
 	}
 
 	/* reset the entry */
 	ci->isr_func = NULL;
 	ci->isr_arg = NULL;
-	ci->isr_intlevel = -1;
+	ci->isr_intlevel = ci->isr_ipl = -1;
 	evcount_detach(&ci->isr_count);
-	sc->registered &= ~(1 << (6 - ipl));
+	sc->registered &= ~(1 << (6 - intlevel));
+
+	/* clear interrupt flags */
+	*cbus_isreg = (u_int8_t)(6 - intlevel);
 #ifdef CBUS_DEBUG
 	printf("cbus_isrunlink: sc->registered = 0x%02x\n", sc->registered);
 #endif
@@ -217,9 +222,9 @@ cbus_isrunlink(int (*func)(void *), int ipl)
  * Dispatch C-bus interrupt service routines.
  */
 void
-cbus_isrdispatch(int ipl)
+cbus_isrdispatch(int intlevel)
 {
-	int rc;
+	int rc, s;
 	static int straycount, unexpected;
 	struct cbus_softc *sc = NULL;
 	struct cbus_isr_t *ci;
@@ -230,20 +235,23 @@ cbus_isrdispatch(int ipl)
 		panic("cbus_isrdispatch: can't find cbus_softc");
 
 #ifdef DIAGNOSTIC
-	if (ipl < 0 || ipl >= NCBUSISR)
-		panic("cbus_isrdispatch: bad ipl 0x%d", ipl);
+	if (intlevel < 0 || intlevel >= NCBUSISR)
+		panic("cbus_isrdispatch: bad INT level 0x%d", intlevel);
 #endif
 
-	ci = &sc->cbus_isr[ipl];
+	ci = &sc->cbus_isr[intlevel];
 
 	if (ci->isr_func == NULL) {
-		printf("cbus_isrdispatch: ipl %d unexpected\n", ipl);
+		printf("cbus_isrdispatch: INT%d unexpected\n", intlevel);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
 		return;
 	}
 
+	s = raiseipl(ci->isr_ipl);	/* splraise() */
 	rc = ci->isr_func(ci->isr_arg);
+	splx(s);
+
 	if (rc != 0)
 		ci->isr_count.ec_count++;
 
@@ -252,7 +260,24 @@ cbus_isrdispatch(int ipl)
 	else if (++straycount > 50)
 		panic("cbus_isrdispatch: too many stray interrupts");
 	else
-		printf("cbus_isrdispatch: stray level %d interrupt\n", ipl);
+		printf("cbus_isrdispatch: stray INT%d, IPL=%d\n", intlevel,
+		    ci->isr_ipl);
+}
+
+/*
+ * Return registered status of interrupt service routines.
+ */
+u_int8_t
+cbus_intr_registered(void)
+{
+	struct cbus_softc *sc = NULL;
+
+	if (cbus_cd.cd_ndevs != 0)
+		sc = cbus_cd.cd_devs[0];
+	if (sc == NULL)
+		panic("cbus_intr_used: can't find cbus_softc");
+
+	return sc->registered;
 }
 
 /*
@@ -261,7 +286,7 @@ cbus_isrdispatch(int ipl)
  * PC-9801 extension board slot bus (so-called 'C-bus' in Japan) use 8 own
  * interrupt levels, INT0-INT6, and NMI.  On LUNA-88K2, they all trigger
  * level 4 interrupt on mainbus, so we need to check the dedicated interrupt
- * status  register to know which C-bus interrupt is occurred.
+ * status register to know which C-bus interrupt is occurred.
  *
  * The interrupt status register for C-bus is located at
  * (u_int8_t *)CBUS_INTR_STAT. Each bit of the register becomes 0 when

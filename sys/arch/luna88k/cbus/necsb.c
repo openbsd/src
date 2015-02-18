@@ -1,4 +1,4 @@
-/*	$OpenBSD: necsb.c,v 1.2 2015/02/14 14:54:13 aoyama Exp $	*/
+/*	$OpenBSD: necsb.c,v 1.3 2015/02/18 22:42:04 aoyama Exp $	*/
 /*	$NecBSD: nec86_isa.c,v 1.9 1998/09/26 11:31:11 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -114,5 +114,6 @@ necsb_attach(struct device *parent, struct device *self, void *aux)
 		panic("necsb_attach: bad INT level");
 
 	/* XXX: check return value ? */
-	cbus_isrlink(nec86hw_intr, ysc, nsc->sc_intlevel, self->dv_xname);
+	cbus_isrlink(nec86hw_intr, ysc, nsc->sc_intlevel, IPL_AUDIO,
+	    self->dv_xname);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbusvar.h,v 1.3 2014/12/31 11:38:27 aoyama Exp $	*/
+/*	$OpenBSD: cbusvar.h,v 1.4 2015/02/18 22:42:04 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -35,12 +35,13 @@ struct cbus_isr_t {
 	int		(*isr_func)(void *);
 	void		*isr_arg;
 	int		isr_intlevel;
+	int		isr_ipl;
 	struct evcount	isr_count;
 };
 
-int	cbus_isrlink(int (*)(void *), void *, int, const char *);
+int	cbus_isrlink(int (*)(void *), void *, int, int, const char *);
 int	cbus_isrunlink(int (*)(void *), int);
-void	cbus_isrdispatch(int);
+u_int8_t	cbus_intr_registered(void);
 
 struct cbus_attach_args {
 	char	*ca_name;

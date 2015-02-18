@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcex.c,v 1.2 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: pcex.c,v 1.3 2015/02/18 22:42:04 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -164,7 +164,7 @@ pcex_set_int(struct pcex_softc *sc, u_int level)
 		return EINVAL;	/* Duplicate */
 
 	sc->intr_use[level] = 1;
-	cbus_isrlink(pcex_intr, &(sc->intr_use[level]), level,
+	cbus_isrlink(pcex_intr, &(sc->intr_use[level]), level, IPL_NET,
 	    sc->sc_dev.dv_xname);
 
 	return 0;
