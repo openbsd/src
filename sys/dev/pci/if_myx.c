@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.73 2015/02/18 09:57:33 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.74 2015/02/18 23:58:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -92,6 +92,7 @@ struct myx_buf_list {
 };
 
 struct pool *myx_buf_pool;
+struct pool *myx_mcl_pool;
 
 struct myx_ring_lock {
 	struct mutex		mrl_mtx;
@@ -164,6 +165,9 @@ struct myx_softc {
 	volatile u_int8_t	 sc_linkdown;
 };
 
+#define MYX_RXSMALL_SIZE	MCLBYTES
+#define MYX_RXBIG_SIZE		(9 * 1024)
+
 int	 myx_match(struct device *, void *, void *);
 void	 myx_attach(struct device *, struct device *, void *);
 int	 myx_pcie_dc(struct myx_softc *, struct pci_attach_args *);
@@ -218,6 +222,8 @@ int			myx_bufs_empty(struct myx_buf_list *);
 struct myx_buf *	myx_buf_get(struct myx_buf_list *);
 void			myx_buf_put(struct myx_buf_list *, struct myx_buf *);
 struct myx_buf *	myx_buf_fill(struct myx_softc *, int);
+struct mbuf *		myx_mcl_small(void);
+struct mbuf *		myx_mcl_big(void);
 
 void			myx_rx_zero(struct myx_softc *, int);
 int			myx_rx_fill(struct myx_softc *, int);
@@ -322,6 +328,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 
 	/* this is sort of racy */
 	if (myx_buf_pool == NULL) {
+		extern struct kmem_pa_mode kp_dma_contig;
+
 		myx_buf_pool = malloc(sizeof(*myx_buf_pool), M_DEVBUF,
 		    M_WAITOK);
 		if (myx_buf_pool == NULL) {
@@ -331,6 +339,19 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 		}
 		pool_init(myx_buf_pool, sizeof(struct myx_buf),
 		    0, 0, 0, "myxbufs", &pool_allocator_nointr);
+		pool_setipl(myx_buf_pool, IPL_NONE);
+
+		myx_mcl_pool = malloc(sizeof(*myx_mcl_pool), M_DEVBUF,
+		    M_WAITOK);
+		if (myx_mcl_pool == NULL) {
+			printf("%s: unable to allocate mcl pool\n",
+			    DEVNAME(sc));
+			goto unmap;
+		}
+		pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY, 0,
+		    0, "myxmcl", NULL);
+		pool_setipl(myx_mcl_pool, IPL_NET);
+		pool_set_constraints(myx_mcl_pool, &kp_dma_contig);
 	}
 
 	if (myx_pcie_dc(sc, pa) != 0)
@@ -996,12 +1017,12 @@ myx_rxrinfo(struct myx_softc *sc, struct if_rxrinfo *ifri)
 
 	memset(ifr, 0, sizeof(ifr));
 
-	ifr[0].ifr_size = MCLBYTES;
+	ifr[0].ifr_size = MYX_RXSMALL_SIZE;
 	mtx_enter(&sc->sc_rx_ring_lock[0].mrl_mtx);
 	ifr[0].ifr_info = sc->sc_rx_ring[0];
 	mtx_leave(&sc->sc_rx_ring_lock[0].mrl_mtx);
 
-	ifr[1].ifr_size = 12 * 1024;
+	ifr[1].ifr_size = MYX_RXBIG_SIZE;
 	mtx_enter(&sc->sc_rx_ring_lock[1].mrl_mtx);
 	ifr[1].ifr_info = sc->sc_rx_ring[1];
 	mtx_leave(&sc->sc_rx_ring_lock[1].mrl_mtx);
@@ -1209,7 +1230,7 @@ myx_up(struct myx_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_rx_ring_count; i++) {
-		mb = myx_buf_alloc(sc, MCLBYTES, 1, 4096, 4096);
+		mb = myx_buf_alloc(sc, MYX_RXSMALL_SIZE, 1, 4096, 4096);
 		if (mb == NULL)
 			goto free_rxsmall_bufs;
 
@@ -1240,7 +1261,7 @@ myx_up(struct myx_softc *sc)
 	}
 
 	memset(&mc, 0, sizeof(mc));
-	mc.mc_data0 = htobe32(MCLBYTES - ETHER_ALIGN);
+	mc.mc_data0 = htobe32(MYX_RXSMALL_SIZE - ETHER_ALIGN);
 	if (myx_cmd(sc, MYXCMD_SET_SMALLBUFSZ, &mc, NULL) != 0) {
 		printf("%s: failed to set small buf size\n", DEVNAME(sc));
 		goto free_rxbig;
@@ -1826,7 +1847,7 @@ myx_rxeof(struct myx_softc *sc)
 		if (++sc->sc_intrq_idx >= sc->sc_intrq_count)
 			sc->sc_intrq_idx = 0;
 
-		ring = (len <= (MCLBYTES - ETHER_ALIGN)) ?
+		ring = (len <= (MYX_RXSMALL_SIZE - ETHER_ALIGN)) ?
 		    MYX_RXSMALL : MYX_RXBIG;
 
 		mb = myx_buf_get(&sc->sc_rx_buf_list[ring]);
@@ -1973,18 +1994,53 @@ myx_rx_fill(struct myx_softc *sc, int ring)
 	return (rv);
 }
 
+struct mbuf *
+myx_mcl_small(void)
+{
+	struct mbuf *m;
+
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MYX_RXSMALL_SIZE);
+	if (m == NULL)
+		return (NULL);
+
+	m->m_len = m->m_pkthdr.len = MYX_RXSMALL_SIZE;
+
+	return (m);
+}
+
+struct mbuf *
+myx_mcl_big(void)
+{
+	struct mbuf *m;
+	void *mcl;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (NULL);
+
+	mcl = pool_get(myx_mcl_pool, PR_NOWAIT);
+	if (mcl == NULL) {
+		m_free(m);
+		return (NULL);
+	}
+
+	MEXTADD(m, mcl, MYX_RXBIG_SIZE, M_EXTWR, m_extfree_pool, myx_mcl_pool);
+	m->m_len = m->m_pkthdr.len = MYX_RXBIG_SIZE;
+
+	return (m);
+}
+
 struct myx_buf *
 myx_buf_fill(struct myx_softc *sc, int ring)
 {
-	static size_t sizes[2] = { MCLBYTES, 12 * 1024 };
+	struct mbuf *(*mclget[2])(void) = { myx_mcl_small, myx_mcl_big };
 	struct myx_buf *mb;
 	struct mbuf *m;
 	int rv;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, sizes[ring]);
+	m = (*mclget[ring])();
 	if (m == NULL)
 		return (NULL);
-	m->m_len = m->m_pkthdr.len = sizes[ring];
 
 	mb = myx_buf_get(&sc->sc_rx_buf_free[ring]);
 	if (mb == NULL)

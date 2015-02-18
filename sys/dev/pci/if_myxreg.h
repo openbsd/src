@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.7 2015/02/18 10:08:19 dlg Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.8 2015/02/18 23:58:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 
 #define MYXALIGN_CMD		64
 #define MYXALIGN_DATA		PAGE_SIZE
+#define MYX_BOUNDARY		4096
 
 #define MYX_ADDRHIGH(_v)	(((u_int64_t)_v >> 32) & 0xffffffff)
 #define MYX_ADDRLOW(_v)		((u_int64_t)_v & 0xffffffff)
