@@ -191,6 +191,7 @@ hashinfo_chain_sort(struct hashinfo **head)
 	}
 	entry->next = NULL;
 
+	free(list);
 	return (0);
 }
 
@@ -483,7 +484,7 @@ certhash_link(int dfd, struct dirent *dep, struct hashinfo **links)
 	if (!S_ISLNK(sb.st_mode))
 		return (0);
 
-	n = readlinkat(dfd, dep->d_name, target, sizeof(target));
+	n = readlinkat(dfd, dep->d_name, target, sizeof(target) - 1);
 	if (n == -1) {
 		fprintf(stderr, "failed to readlink %s\n", dep->d_name);
 		return (-1);
