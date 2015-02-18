@@ -1,4 +1,4 @@
-/*	$OpenBSD: grammar.y,v 1.6 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.7 2015/02/18 22:33:51 tedu Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -163,13 +163,9 @@ Bpoint:
 	'(' ConstOp ConstOp ')'
 		{
 		if (sp->num_beacons % REALLOC == 0) {
-			if (sp->beacon == NULL)
-				sp->beacon = (BEACON *) calloc((sp->num_beacons
-					+ REALLOC), sizeof (BEACON));
-			else
-				sp->beacon = (BEACON *) realloc(sp->beacon,
-					(sp->num_beacons + REALLOC) * 
-					sizeof (BEACON));
+			sp->beacon = reallocarray(sp->beacon,
+				(sp->num_beacons + REALLOC) , 
+				sizeof (BEACON));
 			if (sp->beacon == NULL)
 				return (yyerror("No memory available."));
 		}
@@ -193,13 +189,9 @@ Epoint:
 		int	dir;
 
 		if (sp->num_exits % REALLOC == 0) {
-			if (sp->exit == NULL)
-				sp->exit = (EXIT *) calloc((sp->num_exits + 
-					REALLOC), sizeof (EXIT));
-			else
-				sp->exit = (EXIT *) realloc(sp->exit,
-					(sp->num_exits + REALLOC) * 
-					sizeof (EXIT));
+			sp->exit = reallocarray(sp->exit,
+				(sp->num_exits + REALLOC) , 
+				sizeof (EXIT));
 			if (sp->exit == NULL)
 				return (yyerror("No memory available."));
 		}
@@ -226,13 +218,9 @@ Apoint:
 		int	dir;
 
 		if (sp->num_airports % REALLOC == 0) {
-			if (sp->airport == NULL)
-				sp->airport=(AIRPORT *)calloc((sp->num_airports
-					+ REALLOC), sizeof(AIRPORT));
-			else
-				sp->airport = (AIRPORT *) realloc(sp->airport,
-					(sp->num_airports + REALLOC) * 
-					sizeof(AIRPORT));
+			sp->airport = reallocarray(sp->airport,
+				(sp->num_airports + REALLOC) , 
+				sizeof(AIRPORT));
 			if (sp->airport == NULL)
 				return (yyerror("No memory available."));
 		}
@@ -257,13 +245,9 @@ Lline:
 	'[' '(' ConstOp ConstOp ')' '(' ConstOp ConstOp ')' ']'
 		{
 		if (sp->num_lines % REALLOC == 0) {
-			if (sp->line == NULL)
-				sp->line = (LINE *) calloc((sp->num_lines + 
-					REALLOC), sizeof (LINE));
-			else
-				sp->line = (LINE *) realloc(sp->line,
-					(sp->num_lines + REALLOC) *
-					sizeof (LINE));
+			sp->line = reallocarray(sp->line,
+				(sp->num_lines + REALLOC) ,
+				sizeof (LINE));
 			if (sp->line == NULL)
 				return (yyerror("No memory available."));
 		}
