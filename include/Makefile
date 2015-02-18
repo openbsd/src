@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.199 2015/02/16 14:06:15 tedu Exp $
+#	$OpenBSD: Makefile,v 1.200 2015/02/18 15:31:10 sthen Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -89,7 +89,7 @@ includes:
 			${INSTALL} ${INSTALL_COPY} -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
 		done; \
 	done
-	@ln -sf openssl ${DESTDIR}/usr/include/ssl
+	@ln -sfh openssl ${DESTDIR}/usr/include/ssl
 	@echo installing ${LFILES}
 	@for i in ${LFILES}; do \
 		rm -f ${DESTDIR}/usr/include/$$i && \
