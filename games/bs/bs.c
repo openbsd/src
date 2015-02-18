@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.26 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: bs.c,v 1.27 2015/02/18 23:41:31 tedu Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -456,7 +456,8 @@ static void initgame(void)
 
     ss = (ship_t *)NULL;
     do {
-	char c, docked[SHIPTYPES + 2], *cp = docked;
+	char docked[SHIPTYPES + 2], *cp = docked;
+	int c;
 
 	/* figure which ships still wait to be placed */
 	*cp++ = 'R';
@@ -484,27 +485,21 @@ static void initgame(void)
 	    prompt(1, "Type one of [hjklrR] to place your %s.", ss->name);
 	    pgoto(cury, curx);
 	}
-
-	do {
-	    c = getch();
-	} while
-	    (!strchr("hjklrR", c) || c == FF);
-
-	if (c == FF)
-	{
+regetchar:
+	c = getch();
+	switch (c) {
+	case FF:
 	    (void)clearok(stdscr, TRUE);
 	    (void)refresh();
-	}
-	else if (c == 'r')
-	{
+	    break;
+	case 'r':
 	    prompt(1, "Random-placing your %s", ss->name);
 	    randomplace(PLAYER, ss);
 	    placeship(PLAYER, ss, TRUE);
 	    error((char *)NULL);
 	    ss->placed = TRUE;
-	}
-	else if (c == 'R')
-	{
+	    break;
+	case 'R':
 	    prompt(1, "Placing the rest of your fleet at random...", "");
 	    for (ss = plyship; ss < plyship + SHIPTYPES; ss++)
 		if (!ss->placed)
@@ -514,18 +509,20 @@ static void initgame(void)
 		    ss->placed = TRUE;
 		}
 	    error((char *)NULL);
-	}
-	else if (strchr("hjkl8462", c))
-	{
+	    break;
+
+	case 'k': case 'j': case 'h': case 'l':
+	case '8': case '2': case '4': case '6':
+	case KEY_LEFT: case KEY_RIGHT: case KEY_UP: case KEY_DOWN:
 	    ss->x = curx;
 	    ss->y = cury;
 
 	    switch(c)
 	    {
-	    case 'k': case '8': ss->dir = N; break;
-	    case 'j': case '2': ss->dir = S; break;
-	    case 'h': case '4': ss->dir = W; break;
-	    case 'l': case '6': ss->dir = E; break;
+	    case 'k': case '8': case KEY_UP: ss->dir = N; break;
+	    case 'j': case '2': case KEY_DOWN: ss->dir = S; break;
+	    case 'h': case '4': case KEY_LEFT: ss->dir = W; break;
+	    case 'l': case '6': case KEY_RIGHT: ss->dir = E; break;
 	    }
 
 	    if (checkplace(PLAYER, ss, TRUE))
@@ -534,6 +531,9 @@ static void initgame(void)
 		error((char *)NULL);
 		ss->placed = TRUE;
 	    }
+	    break;
+	default:
+	    goto regetchar;
 	}
 
 	for (unplaced = i = 0; i < SHIPTYPES; i++)
