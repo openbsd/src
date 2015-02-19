@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.84 2015/02/16 16:38:54 naddy Exp $
+.\"     $OpenBSD: mbuf.9,v 1.85 2015/02/19 05:53:46 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: February 19 2015 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -877,7 +877,6 @@ mbuf list on to the end of the
 .Fa mq
 mbuf queue.
 Note, the number of mbufs placed on the queue may exceed its maximum length.
-.Fn mq_enqueue .
 .It Fn "mq_delist" "struct mbuf_queue *mq" "struct mbuf_list *ml"
 Dequeue all the mbufs on the
 .Fa mq
