@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.16 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.17 2015/02/19 06:10:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,9 +123,14 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	unsigned char *buf = NULL;
 	int ret = 0, bit, bytes, mask;
 
+	if (rnd == NULL) {
+		BNerr(BN_F_BNRAND, ERR_R_PASSED_NULL_PARAMETER);
+		return (0);
+	}
+
 	if (bits == 0) {
 		BN_zero(rnd);
-		return 1;
+		return (1);
 	}
 
 	bytes = (bits + 7) / 8;
@@ -175,7 +180,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	buf[0] &= ~mask;
 	if (bottom) /* set bottom bit if requested */
 		buf[bytes - 1] |= 1;
-	if (!BN_bin2bn(buf, bytes, rnd))
+	if (BN_bin2bn(buf, bytes, rnd) == NULL)
 		goto err;
 	ret = 1;
 
