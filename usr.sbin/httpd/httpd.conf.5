@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.51 2015/02/15 13:43:32 jsing Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.52 2015/02/19 09:19:01 florian Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2015 $
+.Dd $Mdocdate: February 19 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -157,7 +157,7 @@ Close the connection and send an error page.
 If the optional return code is not specified,
 .Xr httpd 8
 denies access with a
-.Sq 404 Forbidden
+.Sq 403 Forbidden
 response.
 The optional
 .Ar uri
