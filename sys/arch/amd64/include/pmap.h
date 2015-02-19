@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.53 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.54 2015/02/19 03:19:11 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -329,18 +329,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-};
-
-/*
- * pmap_remove_record: a record of VAs that have been unmapped, used to
- * flush TLB.  if we have more than PMAP_RR_MAX then we stop recording.
- */
-
-#define PMAP_RR_MAX	16	/* max of 16 pages (64K) */
-
-struct pmap_remove_record {
-	int prr_npages;
-	vaddr_t prr_vas[PMAP_RR_MAX];
 };
 
 /*
