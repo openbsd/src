@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.22 2015/02/10 21:56:10 miod Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.23 2015/02/19 10:22:20 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -686,7 +686,7 @@ fusefs_readdir(void *v)
 	struct vnode *vp;
 	struct proc *p;
 	struct uio *uio;
-	int error = 0;
+	int error = 0, eofflag = 0;
 
 	vp = ap->a_vp;
 	uio = ap->a_uio;
@@ -720,8 +720,9 @@ fusefs_readdir(void *v)
 			break;
 		}
 
-		/*ack end of readdir */
+		/* ack end of readdir */
 		if (fbuf->fb_len == 0) {
+			eofflag = 1;
 			fb_delete(fbuf);
 			break;
 		}
@@ -733,6 +734,9 @@ fusefs_readdir(void *v)
 
 		fb_delete(fbuf);
 	}
+
+	if (!error && ap->a_eofflag != NULL)
+		*ap->a_eofflag = eofflag;
 
 	return (error);
 }
