@@ -1709,14 +1709,10 @@ test_kron(BIO *bp, BN_CTX *ctx)
 	fflush(stderr);
 	ret = 1;
 err:
-	if (a != NULL)
-		BN_free(a);
-	if (b != NULL)
-		BN_free(b);
-	if (r != NULL)
-		BN_free(r);
-	if (t != NULL)
-		BN_free(t);
+	BN_free(a);
+	BN_free(b);
+	BN_free(r);
+	BN_free(t);
 	return ret;
 }
 
@@ -1803,12 +1799,9 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 	}
 	ret = 1;
 err:
-	if (a != NULL)
-		BN_free(a);
-	if (p != NULL)
-		BN_free(p);
-	if (r != NULL)
-		BN_free(r);
+	BN_free(a);
+	BN_free(p);
+	BN_free(r);
 	return ret;
 }
 
