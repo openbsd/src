@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.101 2015/02/06 16:05:51 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.102 2015/02/20 22:40:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -394,7 +394,8 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 				    MANDOCERR_CHAR_UNSUPP,
 				    curp, curp->line, pos, "0x%x", c);
 				i++;
-				ln.buf[pos++] = '?';
+				if (c != '\r')
+					ln.buf[pos++] = '?';
 				continue;
 			}
 
