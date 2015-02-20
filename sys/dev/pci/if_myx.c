@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.74 2015/02/18 23:58:34 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.75 2015/02/20 23:24:30 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1862,7 +1862,6 @@ myx_rxeof(struct myx_softc *sc)
 
 		m = mb->mb_m;
 		m->m_data += ETHER_ALIGN;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
 		ml_enqueue(&ml, m);
@@ -1891,15 +1890,7 @@ myx_rxeof(struct myx_softc *sc)
 	ifp->if_ipackets += ml_len(&ml);
 
 	KERNEL_LOCK();
-#if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		MBUF_LIST_FOREACH(&ml, m)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-	}
-#endif
-
-	while ((m = ml_dequeue(&ml)) != NULL)
-		ether_input_mbuf(ifp, m);
+	if_input(ifp, &ml);
 	KERNEL_UNLOCK();
 }
 
