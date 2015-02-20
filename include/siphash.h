@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: siphash.h,v 1.2 2014/12/20 05:43:26 guenther Exp $
+ * $OpenBSD: siphash.h,v 1.3 2015/02/20 11:51:03 tedu Exp $
  */
 
 /*
@@ -52,21 +52,21 @@
 #define SIPHASH_DIGEST_LENGTH	 8
 
 typedef struct _SIPHASH_CTX {
-	u_int64_t	v[4];
-	u_int8_t	buf[SIPHASH_BLOCK_LENGTH];
-	u_int32_t	bytes;
+	uint64_t	v[4];
+	uint8_t		buf[SIPHASH_BLOCK_LENGTH];
+	uint32_t	bytes;
 } SIPHASH_CTX;
 
 typedef struct {
-	u_int64_t	k0;
-	u_int64_t	k1;
+	uint64_t	k0;
+	uint64_t	k1;
 } SIPHASH_KEY;
 
 void		SipHash_Init(SIPHASH_CTX *, const SIPHASH_KEY *);
 void		SipHash_Update(SIPHASH_CTX *, int, int, const void *, size_t);
-u_int64_t	SipHash_End(SIPHASH_CTX *, int, int);
+uint64_t	SipHash_End(SIPHASH_CTX *, int, int);
 void		SipHash_Final(void *, SIPHASH_CTX *, int, int);
-u_int64_t	SipHash(const SIPHASH_KEY *, int, int, const void *, size_t);
+uint64_t	SipHash(const SIPHASH_KEY *, int, int, const void *, size_t);
 
 #define SipHash24_Init(_c, _k)		SipHash_Init((_c), (_k))
 #define SipHash24_Update(_c, _p, _l)	SipHash_Update((_c), 2, 4, (_p), (_l))

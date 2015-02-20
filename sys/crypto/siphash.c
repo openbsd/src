@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.2 2015/02/07 05:45:06 dlg Exp $ */
+/*	$OpenBSD: siphash.c,v 1.3 2015/02/20 11:51:03 tedu Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -71,8 +71,8 @@ SipHash_Init(SIPHASH_CTX *ctx, const SIPHASH_KEY *key)
 void
 SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
 {
-	const u_int8_t *ptr = src;
-	size_t free, used;
+	const uint8_t *ptr = src;
+	size_t left, used;
 
 	if (len == 0)
 		return;
@@ -81,13 +81,13 @@ SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
 	ctx->bytes += len;
 
 	if (used > 0) {
-		free = sizeof(ctx->buf) - used;
+		left = sizeof(ctx->buf) - used;
 
-		if (len >= free) {
-			memcpy(&ctx->buf[used], ptr, free);
+		if (len >= left) {
+			memcpy(&ctx->buf[used], ptr, left);
 			SipHash_CRounds(ctx, rc);
-			len -= free;
-			ptr += free;
+			len -= left;
+			ptr += left;
 		} else {
 			memcpy(&ctx->buf[used], ptr, len);
 			return;
@@ -108,22 +108,22 @@ SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
 void
 SipHash_Final(void *dst, SIPHASH_CTX *ctx, int rc, int rf)
 {
-	u_int64_t r;
+	uint64_t r;
 
 	r = SipHash_End(ctx, rc, rf);
 
-	htolem64((u_int64_t *)dst, r);
+	htolem64((uint64_t *)dst, r);
 }
 
-u_int64_t
+uint64_t
 SipHash_End(SIPHASH_CTX *ctx, int rc, int rf)
 {
-	u_int64_t r;
-	size_t free, used;
+	uint64_t r;
+	size_t left, used;
 
 	used = ctx->bytes % sizeof(ctx->buf);
-	free = sizeof(ctx->buf) - used;
-	memset(&ctx->buf[used], 0, free - 1);
+	left = sizeof(ctx->buf) - used;
+	memset(&ctx->buf[used], 0, left - 1);
 	ctx->buf[7] = ctx->bytes;
 
 	SipHash_CRounds(ctx, rc);
@@ -135,7 +135,7 @@ SipHash_End(SIPHASH_CTX *ctx, int rc, int rf)
 	return (r);
 }
 
-u_int64_t
+uint64_t
 SipHash(const SIPHASH_KEY *key, int rc, int rf, const void *src, size_t len)
 {
 	SIPHASH_CTX ctx;
@@ -174,7 +174,7 @@ SipHash_Rounds(SIPHASH_CTX *ctx, int rounds)
 static void
 SipHash_CRounds(SIPHASH_CTX *ctx, int rounds)
 {
-	u_int64_t m = lemtoh64((u_int64_t *)ctx->buf);
+	uint64_t m = lemtoh64((uint64_t *)ctx->buf);
 
 	ctx->v[3] ^= m;
 	SipHash_Rounds(ctx, rounds);

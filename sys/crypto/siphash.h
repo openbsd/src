@@ -1,4 +1,4 @@
-/* $OpenBSD: siphash.h,v 1.4 2015/01/04 09:07:44 miod Exp $ */
+/* $OpenBSD: siphash.h,v 1.5 2015/02/20 11:51:03 tedu Exp $ */
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
  * All rights reserved.
@@ -53,23 +53,23 @@
 #define SIPHASH_DIGEST_LENGTH	 8
 
 typedef struct _SIPHASH_CTX {
-	u_int64_t	v[4];
-	u_int8_t	buf[SIPHASH_BLOCK_LENGTH];
-	u_int32_t	bytes;
+	uint64_t	v[4];
+	uint8_t	buf[SIPHASH_BLOCK_LENGTH];
+	uint32_t	bytes;
 } SIPHASH_CTX;
 
 typedef struct {
-	u_int64_t	k0;
-	u_int64_t	k1;
+	uint64_t	k0;
+	uint64_t	k1;
 } SIPHASH_KEY;
 
 void		SipHash_Init(SIPHASH_CTX *, const SIPHASH_KEY *);
 void		SipHash_Update(SIPHASH_CTX *, int, int, const void *, size_t)
 		    __bounded((__buffer__, 4, 5));
-u_int64_t	SipHash_End(SIPHASH_CTX *, int, int);
+uint64_t	SipHash_End(SIPHASH_CTX *, int, int);
 void		SipHash_Final(void *, SIPHASH_CTX *, int, int)
 		    __bounded((__minbytes__, 1, SIPHASH_DIGEST_LENGTH));
-u_int64_t	SipHash(const SIPHASH_KEY *, int, int, const void *, size_t)
+uint64_t	SipHash(const SIPHASH_KEY *, int, int, const void *, size_t)
 		    __bounded((__buffer__, 4, 5));
 
 #define SipHash24_Init(_c, _k)		SipHash_Init((_c), (_k))
