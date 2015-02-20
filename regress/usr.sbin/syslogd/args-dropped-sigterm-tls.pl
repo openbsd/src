@@ -28,7 +28,7 @@ our %args = (
 	loghost => '@tls://localhost:$connectport',
 	loggrep => {
 	    get_charlog() => 300,
-	    qr/ \(dropped\)/ => '~19',
+	    qr/ \(dropped.*\)/ => '~42',
 	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
