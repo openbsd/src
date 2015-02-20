@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.156 2015/02/14 09:02:15 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.157 2015/02/20 00:56:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1265,8 +1265,22 @@ fprintlog(struct filed *f, int flags, char *msg)
 		}
 		break;
 
-	case F_FORWTCP:
 	case F_FORWTLS:
+		if (f->f_un.f_forw.f_buftls.bt_flags & BT_WRITE_AGAIN) {
+			/*
+			 * After an OpenSSL SSL_ERROR_WANT_WRITE you must not
+			 * modify the buffer pointer or length until the next
+			 * successful write.  Otherwise there will be an
+			 * error SSL3_WRITE_PENDING:bad write retry.
+			 * XXX This should be handled in the buffertls layer.
+			 */
+			dprintf(" %s (dropped tls write again)\n",
+			    f->f_un.f_forw.f_loghost);
+			f->f_un.f_forw.f_dropped++;
+			break;
+		}
+		/* FALLTHROUGH */
+	case F_FORWTCP:
 		dprintf(" %s", f->f_un.f_forw.f_loghost);
 		if (EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) >=
 		    MAX_TCPBUF) {

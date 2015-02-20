@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.h,v 1.1 2015/01/18 19:37:59 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.h,v 1.2 2015/02/20 00:56:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Alexander Bluhm <bluhm@openbsd.org>
@@ -28,6 +28,8 @@ struct buffertls {
 	struct bufferevent	*bt_bufev;
 	struct tls		*bt_ctx;
 	const char		*bt_hostname;
+	int			 bt_flags;
+#define BT_WRITE_AGAIN		0x1
 };
 
 void	buffertls_set(struct buffertls *, struct bufferevent *, struct tls *,
