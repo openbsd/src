@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.282 2015/02/10 06:45:55 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.283 2015/02/20 11:08:31 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1032,10 +1032,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(&q->queue, qs, sizeof(*qs));
 		qs->qid = pf_qname2qid(qs->qname, 1);
 		if (qs->parent[0] && (qs->parent_qid =
-		    pf_qname2qid(qs->parent, 0)) == 0)
-			return (ESRCH);
+		    pf_qname2qid(qs->parent, 0)) == 0) {
+			pool_put(&pf_queue_pl, qs);
+			error = ESRCH;
+			break;
+		}
 		qs->kif = pfi_kif_get(qs->ifname);
-		if (!qs->kif->pfik_ifp) {
+		if (qs->kif == NULL) {
+			pool_put(&pf_queue_pl, qs);
 			error = ESRCH;
 			break;
 		}
