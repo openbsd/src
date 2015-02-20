@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.19 2015/02/20 13:39:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -251,6 +251,7 @@ int	iwm_prepare_card_hw(struct iwm_softc *);
 void	iwm_apm_config(struct iwm_softc *);
 int	iwm_apm_init(struct iwm_softc *);
 void	iwm_apm_stop(struct iwm_softc *);
+int	iwm_allow_mcast(struct iwm_softc *);
 int	iwm_start_hw(struct iwm_softc *);
 void	iwm_stop_device(struct iwm_softc *);
 void	iwm_set_pwr(struct iwm_softc *);
@@ -5034,6 +5035,11 @@ iwm_auth(struct iwm_softc *sc)
 	int error;
 
 	in->in_assoc = 0;
+
+	error = iwm_allow_mcast(sc);
+	if (error)
+		return error;
+
 	if ((error = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
 		DPRINTF(("%s: failed to add MAC\n", DEVNAME(sc)));
 		return error;
@@ -5552,6 +5558,32 @@ iwm_init_hw(struct iwm_softc *sc)
 
  error:
 	iwm_stop_device(sc);
+	return error;
+}
+
+/* Allow multicast from our BSSID. */
+int
+iwm_allow_mcast(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwm_mcast_filter_cmd *cmd;
+	size_t size;
+	int error;
+
+	size = roundup(sizeof(*cmd), 4);
+	cmd = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cmd == NULL)
+		return ENOMEM;
+	cmd->filter_own = 1;
+	cmd->port_id = 0;
+	cmd->count = 0;
+	cmd->pass_all = 1;
+	IEEE80211_ADDR_COPY(cmd->bssid, ni->ni_bssid);
+
+	error = iwm_mvm_send_cmd_pdu(sc, IWM_MCAST_FILTER_CMD,
+	    IWM_CMD_SYNC, size, cmd);
+	free(cmd, M_DEVBUF, size);
 	return error;
 }
 
@@ -6126,6 +6158,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 			}
 			wakeup(&sc->sc_auth_prot);
 			break; }
+
+		case IWM_MCAST_FILTER_CMD:
+			break;
 
 		default:
 			printf("%s: frame %d/%d %x UNHANDLED (this should "
