@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.16 2015/02/21 19:58:39 tedu Exp $
+.\" $OpenBSD: tls_init.3,v 1.17 2015/02/21 21:41:00 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -358,7 +358,14 @@ connects a client context to a pair of existing file descriptors.
 connects a client context to an already established socket connection.
 .It
 .Fn tls_accept_socket
-accepts a client context on an already established socket connection.
+creates a new context suitable for reading and writing on an already
+established socket connection and returns it in
+.Fa *cctx .
+A configured server context should be passed in
+.Fa ctx
+and
+.Fa *cctx
+should be initialized to NULL.
 .It
 .Fn tls_read
 reads
