@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.8 2015/02/21 10:04:15 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.9 2015/02/21 11:48:01 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -142,7 +142,7 @@ Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
 .Sh BUGS
-The firmware crashes if the MAC address is changed with
+The firmware stops passing traffic if the MAC address is changed with
 .Dl # ifconfig iwm0 lladdr ...
 .Pp
 Occasionally, firmware errors occur before association to a wireless
