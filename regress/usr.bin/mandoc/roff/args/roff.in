@@ -1,7 +1,13 @@
-.TH ARGS-ROFF 1 "January 1, 2011"
+.TH ARGS-ROFF 1 "February 21, 2015"
 .SH NAME
 args-roff - arguments to roff macros
 .SH DESCRIPTION
+.de test
+.BI (\\$1) "(\\$2)"
+.br
+..
+arguments containing quotes:
+.test a"b a"b
 .de test
 (\\$1) (\\$2)
 .br

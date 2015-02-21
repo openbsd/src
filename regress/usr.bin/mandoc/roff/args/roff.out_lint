@@ -1,11 +1,11 @@
-mandoc: roff.in:24:15: WARNING: whitespace at end of input line
-mandoc: roff.in:26:16: WARNING: whitespace at end of input line
-mandoc: roff.in:28:17: WARNING: whitespace at end of input line
-mandoc: roff.in:48:27: WARNING: whitespace at end of input line
-mandoc: roff.in:50:28: WARNING: whitespace at end of input line
-mandoc: roff.in:52:29: WARNING: whitespace at end of input line
-mandoc: roff.in:57:11: WARNING: unterminated quoted argument
-mandoc: roff.in:60:11: WARNING: unterminated quoted argument
-mandoc: roff.in:60:16: WARNING: whitespace at end of input line
+mandoc: roff.in:30:15: WARNING: whitespace at end of input line
+mandoc: roff.in:32:16: WARNING: whitespace at end of input line
+mandoc: roff.in:34:17: WARNING: whitespace at end of input line
+mandoc: roff.in:54:27: WARNING: whitespace at end of input line
+mandoc: roff.in:56:28: WARNING: whitespace at end of input line
+mandoc: roff.in:58:29: WARNING: whitespace at end of input line
 mandoc: roff.in:63:11: WARNING: unterminated quoted argument
-mandoc: roff.in:63:17: WARNING: whitespace at end of input line
+mandoc: roff.in:66:11: WARNING: unterminated quoted argument
+mandoc: roff.in:66:16: WARNING: whitespace at end of input line
+mandoc: roff.in:69:11: WARNING: unterminated quoted argument
+mandoc: roff.in:69:17: WARNING: whitespace at end of input line

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.134 2015/02/17 17:55:12 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.135 2015/02/21 14:46:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -2651,14 +2651,16 @@ roff_so(ROFF_ARGS)
 static enum rofferr
 roff_userdef(ROFF_ARGS)
 {
-	const char	 *arg[9];
+	const char	 *arg[9], *ap;
 	char		 *cp, *n1, *n2;
 	int		  i;
+	size_t		  asz, rsz;
 
 	/*
 	 * Collect pointers to macro argument strings
 	 * and NUL-terminate them.
 	 */
+
 	cp = buf->buf + pos;
 	for (i = 0; i < 9; i++)
 		arg[i] = *cp == '\0' ? "" :
@@ -2667,31 +2669,89 @@ roff_userdef(ROFF_ARGS)
 	/*
 	 * Expand macro arguments.
 	 */
-	buf->sz = 0;
-	n1 = cp = mandoc_strdup(r->current_string);
-	while ((cp = strstr(cp, "\\$")) != NULL) {
-		i = cp[2] - '1';
-		if (0 > i || 8 < i) {
-			/* Not an argument invocation. */
-			cp += 2;
+
+	buf->sz = strlen(r->current_string) + 1;
+	n1 = cp = mandoc_malloc(buf->sz);
+	memcpy(n1, r->current_string, buf->sz);
+	while (*cp != '\0') {
+
+		/* Scan ahead for the next argument invocation. */
+
+		if (*cp++ != '\\')
 			continue;
+		if (*cp++ != '$')
+			continue;
+		i = *cp - '1';
+		if (0 > i || 8 < i)
+			continue;
+		cp -= 2;
+
+		/*
+		 * Determine the size of the expanded argument,
+		 * taking escaping of quotes into account.
+		 */
+
+		asz = 0;
+		for (ap = arg[i]; *ap != '\0'; ap++) {
+			asz++;
+			if (*ap == '"')
+				asz += 3;
 		}
-		*cp = '\0';
-		buf->sz = mandoc_asprintf(&n2, "%s%s%s",
-		    n1, arg[i], cp + 3) + 1;
-		cp = n2 + (cp - n1);
-		free(n1);
-		n1 = n2;
+		if (asz != 3) {
+
+			/*
+			 * Determine the size of the rest of the
+			 * unexpanded macro, including the NUL.
+			 */
+
+			rsz = buf->sz - (cp - n1) - 3;
+
+			/*
+			 * When shrinking, move before
+			 * releasing the storage.
+			 */
+
+			if (asz < 3)
+				memmove(cp + asz, cp + 3, rsz);
+
+			/*
+			 * Resize the storage for the macro
+			 * and readjust the parse pointer.
+			 */
+
+			buf->sz += asz - 3;
+			n2 = mandoc_realloc(n1, buf->sz);
+			cp = n2 + (cp - n1);
+			n1 = n2;
+
+			/*
+			 * When growing, make room
+			 * for the expanded argument.
+			 */
+
+			if (asz > 3)
+				memmove(cp + asz, cp + 3, rsz);
+		}
+
+		/* Copy the expanded argument, escaping quotes. */
+
+		n2 = cp;
+		for (ap = arg[i]; *ap != '\0'; ap++) {
+			if (*ap == '"') {
+				memcpy(n2, "\\(dq", 4);
+				n2 += 4;
+			} else
+				*n2++ = *ap;
+		}
 	}
 
 	/*
 	 * Replace the macro invocation
 	 * by the expanded macro.
 	 */
+
 	free(buf->buf);
 	buf->buf = n1;
-	if (buf->sz == 0)
-		buf->sz = strlen(buf->buf) + 1;
 	*offs = 0;
 
 	return(buf->sz > 1 && buf->buf[buf->sz - 2] == '\n' ?

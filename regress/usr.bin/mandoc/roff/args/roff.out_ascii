@@ -6,6 +6,7 @@ NNAAMMEE
        args-roff - arguments to roff macros
 
 DDEESSCCRRIIPPTTIIOONN
+       arguments containing quotes: ((aa""bb))_(_a_"_b_)
        standard unquoted: (one) (two)
        escaped blanks: (one one) (two two)
        escaped 'e' character: (one\one) (two)
@@ -36,4 +37,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-                                January 1, 2011                   ARGS-ROFF(1)
+                               February 21, 2015                  ARGS-ROFF(1)
