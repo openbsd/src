@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.20 2015/02/20 14:08:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.21 2015/02/21 09:53:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -1281,7 +1281,7 @@ iwm_prepare_card_hw(struct iwm_softc *sc)
 	int rv = 0;
 	int t = 0;
 
-	if (!iwm_set_hw_ready(sc))
+	if (iwm_set_hw_ready(sc))
 		goto out;
 
 	/* If HW is not ready, prepare the conditions to check again */
