@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.5 2015/02/10 20:37:15 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.6 2015/02/21 08:36:43 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2015 $
+.Dd $Mdocdate: February 21 2015 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -141,3 +141,13 @@ the adapters.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
+.Sh BUGS
+The firmware crashes if the MAC address is changed with
+.Dl # ifconfig iwm0 lladdr ...
+.Pp
+Occasionally, firmware errors occur before association to a wireless
+network has completed. Several attempts may be required before link
+is successfully established.
+.Pp
+802.11a support is disabled because transmitting packets in this mode
+does not work yet.
