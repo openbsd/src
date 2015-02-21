@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.43 2015/02/15 22:18:29 millert Exp $	*/
+/*	$OpenBSD: tables.c,v 1.44 2015/02/21 22:48:23 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -73,6 +72,8 @@ static DIRDATA *dirp = NULL;	/* storage for setting created dir time/mode */
 static size_t dirsize;		/* size of dirp table */
 static size_t dircnt = 0;	/* entries in dir time/mode storage */
 static int ffd = -1;		/* tmp file for file time table name storage */
+
+static DEVT *chk_dev(dev_t, int);
 
 /*
  * hard link table routines
@@ -462,343 +463,6 @@ chk_ftime(ARCHD *arcn)
 }
 
 /*
- * escaping (absolute or w/"..") symlink table routines
- *
- * By default, an archive shouldn't be able extract to outside of the
- * current directory.  What should we do if the archive contains a symlink
- * whose value is either absolute or contains ".." components?  What we'll
- * do is initially create the path as an empty file (to block attempts to
- * reference _through_ it) and instead record its path and desired
- * final value and mode.  Then once all the other archive
- * members are created (but before the pass to set timestamps on
- * directories) we'll process those records, replacing the placeholder with
- * the correct symlink and setting them to the correct mode, owner, group,
- * and timestamps.
- *
- * Note: we also need to handle hardlinks to symlinks (barf) as well as
- * hardlinks whose target is replaced by a later entry in the archive (barf^2).
- *
- * So we track things by dev+ino of the placeholder file, associating with
- * that the value and mode of the final symlink and a list of paths that
- * should all be hardlinks of that.  We'll 'store' the symlink's desired
- * timestamps, owner, and group by setting them on the placeholder file.
- *
- * The operations are:
- * a) create an escaping symlink: create the placeholder file and add an entry
- *    for the new link
- * b) create a hardlink: do the link.  If the target turns out to be a
- *    zero-length file whose dev+ino are in the symlink table, then add this
- *    path to the list of names for that link
- * c) perform deferred processing: for each entry, check each associated path:
- *    if it's a zero-length file with the correct dev+ino then recreate it as
- *    the specified symlink or hardlink to the first such
- */
-
-struct slpath {
-	char	*sp_path;
-	struct	slpath *sp_next;
-};
-struct slinode {
-	ino_t	sli_ino;
-	char	*sli_value;
-	struct	slpath sli_paths;
-	struct	slinode *sli_fow;		/* hash table chain */
-	dev_t	sli_dev;
-	mode_t	sli_mode;
-};
-
-static struct slinode **slitab = NULL;
-
-/*
- * sltab_start()
- *	create the hash table
- * Return:
- *	0 if the table and file was created ok, -1 otherwise
- */
-
-int
-sltab_start(void)
-{
-
-	if ((slitab = calloc(SL_TAB_SZ, sizeof *slitab)) == NULL) {
-		syswarn(1, errno, "symlink table");
-		return(-1);
-	}
-
-	return(0);
-}
-
-/*
- * sltab_add_sym()
- *	Create the placeholder and tracking info for an escaping symlink.
- * Return:
- *	0 on success, -1 otherwise
- */
-
-int
-sltab_add_sym(const char *path0, const char *value0, mode_t mode)
-{
-	struct stat sb;
-	struct slinode *s;
-	struct slpath *p;
-	char *path, *value;
-	u_int indx;
-	int fd;
-
-	/* create the placeholder */
-	fd = open(path0, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
-	if (fd == -1)
-		return (-1);
-	if (fstat(fd, &sb) == -1) {
-		unlink(path0);
-		close(fd);
-		return (-1);
-	}
-	close(fd);
-
-	if (havechd && *path0 != '/') {
-		if ((path = realpath(path0, NULL)) == NULL) {
-			syswarn(1, errno, "Cannot canonicalize %s", path0);
-			unlink(path0);
-			return (-1);
-		}
-	} else if ((path = strdup(path0)) == NULL) {
-		syswarn(1, errno, "defered symlink path");
-		unlink(path0);
-		return (-1);
-	}
-	if ((value = strdup(value0)) == NULL) {
-		syswarn(1, errno, "defered symlink value");
-		unlink(path);
-		free(path);
-		return (-1);
-	}
-
-	/* now check the hash table for conflicting entry */
-	indx = (sb.st_ino ^ sb.st_dev) % SL_TAB_SZ;
-	for (s = slitab[indx]; s != NULL; s = s->sli_fow) {
-		if (s->sli_ino != sb.st_ino || s->sli_dev != sb.st_dev)
-			continue;
-
-		/*
-		 * One of our placeholders got removed behind our back and
-		 * we've reused the inode.  Weird, but clean up the mess.
-		 */
-		free(s->sli_value);
-		free(s->sli_paths.sp_path);
-		p = s->sli_paths.sp_next;
-		while (p != NULL) {
-			struct slpath *next_p = p->sp_next;
-
-			free(p->sp_path);
-			free(p);
-			p = next_p;
-		}
-		goto set_value;
-	}
-
-	/* Normal case: create a new node */
-	if ((s = malloc(sizeof *s)) == NULL) {
-		syswarn(1, errno, "defered symlink");
-		unlink(path);
-		free(path);
-		free(value);
-		return (-1);
-	}
-	s->sli_ino = sb.st_ino;
-	s->sli_dev = sb.st_dev;
-	s->sli_fow = slitab[indx];
-	slitab[indx] = s;
-
-set_value:
-	s->sli_paths.sp_path = path;
-	s->sli_paths.sp_next = NULL;
-	s->sli_value = value;
-	s->sli_mode = mode;
-	return (0);
-}
-
-/*
- * sltab_add_link()
- *	A hardlink was created; if it looks like a placeholder, handle the
- *	tracking.
- * Return:
- *	0 if things are ok, -1 if something went wrong
- */
-
-int
-sltab_add_link(const char *path, const struct stat *sb)
-{
-	struct slinode *s;
-	struct slpath *p;
-	u_int indx;
-
-	if (!S_ISREG(sb->st_mode) || sb->st_size != 0)
-		return (1);
-
-	/* find the hash table entry for this hardlink */
-	indx = (sb->st_ino ^ sb->st_dev) % SL_TAB_SZ;
-	for (s = slitab[indx]; s != NULL; s = s->sli_fow) {
-		if (s->sli_ino != sb->st_ino || s->sli_dev != sb->st_dev)
-			continue;
-
-		if ((p = malloc(sizeof *p)) == NULL) {
-			syswarn(1, errno, "deferred symlink hardlink");
-			return (-1);
-		}
-		if (havechd && *path != '/') {
-			if ((p->sp_path = realpath(path, NULL)) == NULL) {
-				syswarn(1, errno, "Cannot canonicalize %s",
-				    path);
-				free(p);
-				return (-1);
-			}
-		} else if ((p->sp_path = strdup(path)) == NULL) {
-			syswarn(1, errno, "defered symlink hardlink path");
-			free(p);
-			return (-1);
-		}
-
-		/* link it in */
-		p->sp_next = s->sli_paths.sp_next;
-		s->sli_paths.sp_next = p;
-		return (0);
-	}
-
-	/* not found */
-	return (1);
-}
-
-
-static int
-sltab_process_one(struct slinode *s, struct slpath *p, const char *first,
-    int in_sig)
-{
-	struct stat sb;
-	char *path = p->sp_path;
-	mode_t mode;
-	int err;
-
-	/*
-	 * is it the expected placeholder?  This can fail legimately
-	 * if the archive overwrote the link with another, later entry,
-	 * so don't warn.
-	 */
-	if (stat(path, &sb) != 0 || !S_ISREG(sb.st_mode) || sb.st_size != 0 ||
-	    sb.st_ino != s->sli_ino || sb.st_dev != s->sli_dev)
-		return (0);
-
-	if (unlink(path) && errno != ENOENT) {
-		if (!in_sig)
-			syswarn(1, errno, "deferred symlink removal");
-		return (0);
-	}
-
-	err = 0;
-	if (first != NULL) {
-		/* add another hardlink to the existing symlink */
-		if (linkat(AT_FDCWD, first, AT_FDCWD, path, 0) == 0)
-			return (0);
-
-		/*
-		 * Couldn't hardlink the symlink for some reason, so we'll
-		 * try creating it as its own symlink, but save the error
-		 * for reporting if that fails.
-		 */
-		err = errno;
-	}
-
-	if (symlink(s->sli_value, path)) {
-		if (!in_sig) {
-			const char *qualifier = "";
-			if (err)
-				qualifier = " hardlink";
-			else
-				err = errno;
-
-			syswarn(1, err, "deferred symlink%s: %s",
-			    qualifier, path);
-		}
-		return (0);
-	}
-
-	/* success, so set the id, mode, and times */
-	mode = s->sli_mode;
-	if (pids) {
-		/* if can't set the ids, force the set[ug]id bits off */
-		if (set_ids(path, sb.st_uid, sb.st_gid))
-			mode &= ~(SETBITS);
-	}
-
-	if (pmode)
-		set_pmode(path, mode);
-
-	if (patime || pmtime)
-		set_ftime(path, sb.st_mtime, sb.st_atime, 0);
-
-	/*
-	 * If we tried to link to first but failed, then this new symlink
-	 * might be a better one to try in the future.  Guess from the errno.
-	 */
-	if (err == 0 || err == ENOENT || err == EMLINK || err == EOPNOTSUPP)
-		return (1);
-	return (0);
-}
-
-/*
- * sltab_process()
- *	Do all the delayed process for escape symlinks
- */
-
-void
-sltab_process(int in_sig)
-{
-	struct slinode *s;
-	struct slpath *p;
-	char *first;
-	u_int indx;
-
-	if (slitab == NULL)
-		return;
-
-	/* walk across the entire hash table */
-	for (indx = 0; indx < SL_TAB_SZ; indx++) {
-		while ((s = slitab[indx]) != NULL) {
-			/* pop this entry */
-			slitab[indx] = s->sli_fow;
-
-			first = NULL;
-			p = &s->sli_paths;
-			while (1) {
-				struct slpath *next_p;
-
-				if (sltab_process_one(s, p, first, in_sig)) {
-					if (!in_sig)
-						free(first);
-					first = p->sp_path;
-				} else if (!in_sig)
-					free(p->sp_path);
-
-				if ((next_p = p->sp_next) == NULL)
-					break;
-				*p = *next_p;
-				if (!in_sig)
-					free(next_p);
-			}
-			if (!in_sig) {
-				free(first);
-				free(s->sli_value);
-				free(s);
-			}
-		}
-	}
-	if (!in_sig)
-		free(slitab);
-	slitab = NULL;
-}
-
-
-/*
  * Interactive rename table routines
  *
  * The interactive rename table keeps track of the new names that the user
@@ -943,7 +607,6 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
 	 */
 }
 
-#ifndef NOCPIO
 /*
  * device/inode mapping table routines
  * (used with formats that store device and inodes fields)
@@ -983,8 +646,6 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
  * device truncation we remap the device number to a non truncated value.
  * (for more info see table.h for the data structures involved).
  */
-
-static DEVT *chk_dev(dev_t, int);
 
 /*
  * dev_start()
@@ -1211,7 +872,6 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 	paxwarn(0, "Archive may create improper hard links when extracted");
 	return(0);
 }
-#endif /* NOCPIO */
 
 /*
  * directory access/mod time reset table routines (for directories READ by pax)
@@ -1278,7 +938,7 @@ atdir_end(void)
 		 * not read by pax. Read time reset is controlled by -t.
 		 */
 		for (; pt != NULL; pt = pt->fow)
-			set_attr(&pt->ft, 1, 0, 0, 0);
+			set_ftime(pt->name, pt->mtime, pt->atime, 1);
 	}
 }
 
@@ -1308,7 +968,7 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 	indx = ((unsigned)ino) % A_TAB_SZ;
 	if ((pt = atab[indx]) != NULL) {
 		while (pt != NULL) {
-			if ((pt->ft.ft_ino == ino) && (pt->ft.ft_dev == dev))
+			if ((pt->ino == ino) && (pt->dev == dev))
 				break;
 			pt = pt->fow;
 		}
@@ -1326,11 +986,11 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 	sigfillset(&allsigs);
 	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
 	if ((pt = malloc(sizeof *pt)) != NULL) {
-		if ((pt->ft.ft_name = strdup(fname)) != NULL) {
-			pt->ft.ft_dev = dev;
-			pt->ft.ft_ino = ino;
-			pt->ft.ft_mtime = mtime;
-			pt->ft.ft_atime = atime;
+		if ((pt->name = strdup(fname)) != NULL) {
+			pt->dev = dev;
+			pt->ino = ino;
+			pt->mtime = mtime;
+			pt->atime = atime;
 			pt->fow = atab[indx];
 			atab[indx] = pt;
 			sigprocmask(SIG_SETMASK, &savedsigs, NULL);
@@ -1355,7 +1015,7 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
  */
 
 int
-do_atdir(const char *name, dev_t dev, ino_t ino)
+get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 {
 	ATDIR *pt;
 	ATDIR **ppt;
@@ -1373,7 +1033,7 @@ do_atdir(const char *name, dev_t dev, ino_t ino)
 
 	ppt = &(atab[indx]);
 	while (pt != NULL) {
-		if ((pt->ft.ft_ino == ino) && (pt->ft.ft_dev == dev))
+		if ((pt->ino == ino) && (pt->dev == dev))
 			break;
 		/*
 		 * no match, go to next one
@@ -1385,19 +1045,19 @@ do_atdir(const char *name, dev_t dev, ino_t ino)
 	/*
 	 * return if we did not find it.
 	 */
-	if (pt == NULL || pt->ft.ft_name == NULL ||
-	    strcmp(name, pt->ft.ft_name) == 0)
+	if (pt == NULL)
 		return(-1);
 
 	/*
-	 * found it. set the times and remove the entry from the table.
+	 * found it. return the times and remove the entry from the table.
 	 */
-	set_attr(&pt->ft, 1, 0, 0, 0);
 	sigfillset(&allsigs);
 	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
 	*ppt = pt->fow;
 	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
-	free(pt->ft.ft_name);
+	*mtime = pt->mtime;
+	*atime = pt->atime;
+	free(pt->name);
 	free(pt);
 	return(0);
 }
@@ -1417,8 +1077,12 @@ do_atdir(const char *name, dev_t dev, ino_t ino)
  * times and file permissions specified by the archive are stored. After all
  * files have been extracted (or copied), these directories have their times
  * and file modes reset to the stored values. The directory info is restored in
- * reverse order as entries were added from root to leaf: to restore atime
- * properly, we must go backwards.
+ * reverse order as entries were added to the data file from root to leaf. To
+ * restore atime properly, we must go backwards. The data file consists of
+ * records with two parts, the file name followed by a DIRDATA trailer. The
+ * fixed sized trailer contains the size of the name plus the off_t location in
+ * the file. To restore we work backwards through the file reading the trailer
+ * then the file name.
  */
 
 /*
@@ -1486,49 +1150,18 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 		sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 	}
 	dblk = &dirp[dircnt];
-	if ((dblk->ft.ft_name = strdup(name)) == NULL) {
+	if ((dblk->name = strdup(name)) == NULL) {
 		paxwarn(1, "Unable to store mode and times for created"
 		    " directory: %s", name);
 		return;
 	}
-	dblk->ft.ft_mtime = psb->st_mtime;
-	dblk->ft.ft_atime = psb->st_atime;
-	dblk->ft.ft_ino = psb->st_ino;
-	dblk->ft.ft_dev = psb->st_dev;
-	dblk->mode = psb->st_mode & ABITS;
+	dblk->mode = psb->st_mode & 0xffff;
+	dblk->mtime = psb->st_mtime;
+	dblk->atime = psb->st_atime;
 	dblk->frc_mode = frc_mode;
 	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
 	++dircnt;
 	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
-}
-
-/*
- * delete_dir()
- *	When we rmdir a directory, we may want to make sure we don't
- *	later warn about being unable to set its mode and times.
- */
-
-void
-delete_dir(dev_t dev, ino_t ino)
-{
-	DIRDATA *dblk;
-	char *name;
-	size_t i;
-
-	if (dirp == NULL)
-		return;
-	for (i = 0; i < dircnt; i++) {
-		dblk = &dirp[i];
-
-		if (dblk->ft.ft_name == NULL)
-			continue;
-		if (dblk->ft.ft_dev == dev && dblk->ft.ft_ino == ino) {
-			name = dblk->ft.ft_name;
-			dblk->ft.ft_name = NULL;
-			free(name);
-			break;
-		}
-	}
 }
 
 /*
@@ -1551,22 +1184,17 @@ proc_dir(int in_sig)
 	 */
 	cnt = dircnt;
 	while (cnt-- > 0) {
-		dblk = &dirp[cnt];
-		/*
-		 * If we remove a directory we created, we replace the
-		 * ft_name with NULL.  Ignore those.
-		 */
-		if (dblk->ft.ft_name == NULL)
-			continue;
-
 		/*
 		 * frc_mode set, make sure we set the file modes even if
 		 * the user didn't ask for it (see file_subs.c for more info)
 		 */
-		set_attr(&dblk->ft, 0, dblk->mode, pmode || dblk->frc_mode,
-		    in_sig);
+		dblk = &dirp[cnt];
+		if (pmode || dblk->frc_mode)
+			set_pmode(dblk->name, dblk->mode);
+		if (patime || pmtime)
+			set_ftime(dblk->name, dblk->mtime, dblk->atime, 0);
 		if (!in_sig)
-			free(dblk->ft.ft_name);
+			free(dblk->name);
 	}
 
 	if (!in_sig)

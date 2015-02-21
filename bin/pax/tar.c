@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.54 2015/01/29 19:41:49 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.55 2015/02/21 22:48:23 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
 static int uqd_oct(u_quad_t, char *, int, int);
 #ifndef SMALL
-static int rd_xheader(ARCHD *arcn, int, off_t);
+static int rd_xheader(ARCHD *, char *, off_t, char);
 #endif
 
 static uid_t uid_nobody;
@@ -734,7 +734,7 @@ ustar_id(char *blk, int size)
 int
 ustar_rd(ARCHD *arcn, char *buf)
 {
-	HD_USTAR *hd = (HD_USTAR *)buf;
+	HD_USTAR *hd;
 	char *dest;
 	int cnt = 0;
 	dev_t devmajor;
@@ -746,30 +746,18 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 */
 	if (ustar_id(buf, BLKMULT) < 0)
 		return(-1);
-
-#ifndef SMALL
-reset:
-#endif
 	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
 	arcn->sb.st_nlink = 1;
+	hd = (HD_USTAR *)buf;
 
 #ifndef SMALL
-	/* Process Extended headers. */
+	/* Process the Extended header. */
 	if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE) {
-		if (rd_xheader(arcn, hd->typeflag == GHDRTYPE,
-		    (off_t)asc_ul(hd->size, sizeof(hd->size), OCT)) < 0)
+		if (rd_xheader(arcn, buf,
+		    (off_t)asc_ul(hd->size, sizeof(hd->size), OCT),
+		    hd->typeflag) < 0)
 			return (-1);
-
-		/* Update and check the ustar header. */
-		if (rd_wrbuf(buf, BLKMULT) != BLKMULT)
-			return (-1);
-		if (ustar_id(buf, BLKMULT) < 0)
-			return(-1);
-
-		/* if the next block is another extension, reset the values */
-		if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE)
-			goto reset;
 	}
 #endif
 
@@ -1205,84 +1193,51 @@ expandname(char *buf, size_t len, char **gnu_name, const char *name,
 
 #ifndef SMALL
 
-/* shortest possible extended record: "5 a=\n" */
-#define MINXHDRSZ	5
-
-/* longest record we'll accept */
-#define MAXXHDRSZ	BLKMULT
+#define MINXHDRSZ	6
 
 static int
-rd_xheader(ARCHD *arcn, int global, off_t size)
+rd_xheader(ARCHD *arcn, char *buf, off_t size, char typeflag)
 {
-	char buf[MAXXHDRSZ];
-	unsigned long len;
+	off_t len;
 	char *delim, *keyword;
-	char *nextp, *p, *end;
-	int pad, ret = 0;
+	char *nextp, *p;
 
-	/* before we alter size, make note of how much we have to skip */
-	pad = TAR_PAD((unsigned)size);
+	if (size < MINXHDRSZ) {
+		paxwarn(1, "Invalid extended header length");
+		return (-1);
+	}
+	if (rd_wrbuf(buf, size) != size)
+		return (-1);
+	if (rd_skip((off_t)BLKMULT - size) < 0)
+		return (-1);
 
-	p = end = buf;
-	while (size > 0 || p < end) {
-		if (size > 0) {
-			int rdlen;
-
-			/* shift stuff down */
-			if (p > buf) {
-				memmove(buf, p, end - p);
-				end -= p - buf;
-				p = buf;
-			}
-
-			/* fill starting at end */
-			rdlen = MINIMUM(size, (buf + sizeof buf) - end);
-			if (rd_wrbuf(end, rdlen) != rdlen) {
-				ret = -1;
-				break;
-			}
-			size -= rdlen;
-			end += rdlen;
-		}
-
-		/* [p, end) is good */
-		if (memchr(p, ' ', end - p) == NULL ||
-		    !isdigit((unsigned char)*p)) {
+	for (p = buf; size > 0; size -= len, p = nextp) {
+		if (!isdigit((unsigned char)*p)) {
 			paxwarn(1, "Invalid extended header record");
-			ret = -1;
-			break;
+			return (-1);
 		}
 		errno = 0;
-		len = strtoul(p, &delim, 10);
-		if (*delim != ' ' || (errno == ERANGE && len == ULONG_MAX) ||
+		len = strtoll(p, &delim, 10);
+		if (*delim != ' ' || (errno == ERANGE &&
+		    (len == LLONG_MIN || len == LLONG_MAX)) ||
 		    len < MINXHDRSZ) {
 			paxwarn(1, "Invalid extended header record length");
-			ret = -1;
-			break;
+			return (-1);
 		}
-		if (len > end - p) {
-			paxwarn(1, "Extended header record length %lu is "
-			    "out of range", len);
-			/* if we can just toss this record, do so */
-			len -= end - p;
-			if (len <= size && rd_skip(len) == 0) {
-				size -= len;
-				p = end = buf;
-				continue;
-			}
-			ret = -1;
-			break;
+		if (len > size) {
+			paxwarn(1, "Extended header record length %lld is "
+			    "out of range", (long long)len);
+			return (-1);
 		}
 		nextp = p + len;
 		keyword = p = delim + 1;
 		p = memchr(p, '=', len);
 		if (!p || nextp[-1] != '\n') {
 			paxwarn(1, "Malformed extended header record");
-			ret = -1;
-			break;
+			return (-1);
 		}
 		*p++ = nextp[-1] = '\0';
-		if (!global) {
+		if (typeflag == XHDRTYPE) {
 			if (!strcmp(keyword, "path")) {
 				arcn->nlen = strlcpy(arcn->name, p,
 				    sizeof(arcn->name));
@@ -1291,11 +1246,11 @@ rd_xheader(ARCHD *arcn, int global, off_t size)
 				    sizeof(arcn->ln_name));
 			}
 		}
-		p = nextp;
 	}
 
-	if (rd_skip(size + pad) < 0)
+	/* Update the ustar header. */
+	if (rd_wrbuf(buf, BLKMULT) != BLKMULT)
 		return (-1);
-	return (ret);
+	return (0);
 }
 #endif

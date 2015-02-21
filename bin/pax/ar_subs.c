@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.40 2015/02/12 23:44:57 guenther Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.41 2015/02/21 22:48:23 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -164,8 +164,6 @@ extract(void)
 	struct stat sb;
 	int fd;
 	time_t now;
-
-	sltab_start();
 
 	arcn = &archd;
 	/*
@@ -362,7 +360,6 @@ popd:
 	(void)(*frmt->end_rd)();
 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close(0);
-	sltab_process(0);
 	proc_dir(0);
 	pat_chk();
 }
@@ -761,8 +758,6 @@ copy(void)
 	ARCHD archd;
 	char dirbuf[PAXPATHLEN+1];
 
-	sltab_start();
-
 	arcn = &archd;
 	/*
 	 * set up the destination dir path and make sure it is a directory. We
@@ -974,7 +969,6 @@ copy(void)
 	 */
 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close(0);
-	sltab_process(0);
 	proc_dir(0);
 	ftree_chk();
 }
