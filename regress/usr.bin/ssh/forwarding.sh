@@ -1,4 +1,4 @@
-#	$OpenBSD: forwarding.sh,v 1.12 2014/07/15 15:54:15 millert Exp $
+#	$OpenBSD: forwarding.sh,v 1.13 2015/02/21 20:51:02 djm Exp $
 #	Placed in the Public Domain.
 
 tid="local and remote forwarding"
@@ -103,8 +103,8 @@ for p in 2; do
 	fi
 done
 
-echo "LocalForward ${base}01 127.0.0.1:$PORT" >> ssh_config
-echo "RemoteForward ${base}02 127.0.0.1:${base}01" >> ssh_config
+echo "LocalForward ${base}01 127.0.0.1:$PORT" >> $OBJ/ssh_config
+echo "RemoteForward ${base}02 127.0.0.1:${base}01" >> $OBJ/ssh_config
 for p in 1 2; do
 	trace "config file: start forwarding, fork to background"
 	${SSH} -$p -F $OBJ/ssh_config -f somehost sleep 10
