@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.15 2015/02/21 19:54:59 tedu Exp $
+.\" $OpenBSD: tls_init.3,v 1.16 2015/02/21 19:58:39 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -86,9 +86,9 @@
 .Fn tls_config_set_key_file "struct tls_config *config" "const char *key_file"
 .Ft "int"
 .Fn tls_config_set_key_mem "struct tls_config *config" "const uint8_t *key" "size_t len"
-.Ft "int"
+.Ft "void"
 .Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
-.Ft "int"
+.Ft "void"
 .Fn tls_config_set_verify_depth "struct tls_config *config" "int verify_depth"
 .Ft "void"
 .Fn tls_config_clear_keys "struct tls_config *config"
