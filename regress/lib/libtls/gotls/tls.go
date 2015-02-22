@@ -63,9 +63,9 @@ func (c *TLSConfig) InsecureNoVerifyCert() {
 	C.tls_config_insecure_noverifycert(c.tlsCfg)
 }
 
-// InsecureNoVerifyHost disables hostname verification for the connection.
-func (c *TLSConfig) InsecureNoVerifyHost() {
-	C.tls_config_insecure_noverifyhost(c.tlsCfg)
+// InsecureNoVerifyName disables server name verification for the connection.
+func (c *TLSConfig) InsecureNoVerifyName() {
+	C.tls_config_insecure_noverifyname(c.tlsCfg)
 }
 
 // SetSecure enables verification for the connection.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: verifytest.c,v 1.2 2014/12/07 16:56:17 bcook Exp $	*/
+/*	$OpenBSD: verifytest.c,v 1.3 2015/02/22 15:14:32 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -22,81 +22,81 @@
 #include <openssl/x509v3.h>
 #include <tls.h>
 
-extern int tls_check_hostname(struct tls *ctx, X509 *cert, const char *host);
+extern int tls_check_servername(struct tls *ctx, X509 *cert, const char *name);
 
 struct verify_test {
 	const char common_name[128];
 	const char alt_name[128];
 	int alt_name_len;
 	int alt_name_type;
-	const char hostname[128];
+	const char servername[128];
 	int want;
 };
 
 struct verify_test verify_tests[] = {
 	{
 		.common_name = "www.openbsd.org",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = 0,
 	},
 	{
 		.common_name = "www.openbsd.org",
-		.hostname = "",
+		.servername = "",
 		.want = -1,
 	},
 	{
 		.common_name = "*.openbsd.org",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = 0,
 	},
 	{
 		.common_name = "www.openbsdfoundation.org",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "w*.openbsd.org",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "www.*.org",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "www.openbsd.*",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "*",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "*.org",
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "*.org",
-		.hostname = "openbsd.org",
+		.servername = "openbsd.org",
 		.want = -1,
 	},
 	{
 		.common_name = "1.2.3.4",
-		.hostname = "1.2.3.4",
+		.servername = "1.2.3.4",
 		.want = 0,
 	},
 	{
 		.common_name = "*.2.3.4",
-		.hostname = "1.2.3.4",
+		.servername = "1.2.3.4",
 		.want = -1,
 	},
 	{
 		.common_name = "cafe::beef",
-		.hostname = "cafe::beef",
+		.servername = "cafe::beef",
 		.want = 0,
 	},
 	{
@@ -104,7 +104,7 @@ struct verify_test verify_tests[] = {
 		.alt_name = "ftp.openbsd.org",
 		.alt_name_len = -1,
 		.alt_name_type = GEN_DNS,
-		.hostname = "ftp.openbsd.org",
+		.servername = "ftp.openbsd.org",
 		.want = 0,
 	},
 	{
@@ -112,7 +112,7 @@ struct verify_test verify_tests[] = {
 		.alt_name = "*.openbsd.org",
 		.alt_name_len = -1,
 		.alt_name_type = GEN_DNS,
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = 0,
 	},
 	{
@@ -120,7 +120,7 @@ struct verify_test verify_tests[] = {
 		.alt_name = "*.org",
 		.alt_name_len = -1,
 		.alt_name_type = GEN_DNS,
-		.hostname = "www.openbsd.org",
+		.servername = "www.openbsd.org",
 		.want = -1,
 	},
 	{
@@ -128,7 +128,7 @@ struct verify_test verify_tests[] = {
 		.alt_name = "1.2.3.4",
 		.alt_name_len = -1,
 		.alt_name_type = GEN_DNS,
-		.hostname = "1.2.3.4",
+		.servername = "1.2.3.4",
 		.want = -1,
 	},
 	{
@@ -136,7 +136,7 @@ struct verify_test verify_tests[] = {
 		.alt_name = {0x1, 0x2, 0x3, 0x4},
 		.alt_name_len = 4,
 		.alt_name_type = GEN_IPADD,
-		.hostname = "1.2.3.4",
+		.servername = "1.2.3.4",
 		.want = 0,
 	},
 	{
@@ -147,7 +147,7 @@ struct verify_test verify_tests[] = {
 		},
 		.alt_name_len = 16,
 		.alt_name_type = GEN_IPADD,
-		.hostname = "cafe::beef",
+		.servername = "cafe::beef",
 		.want = 0,
 	},
 };
@@ -213,10 +213,10 @@ do_verify_test(int test_no, struct verify_test *vt)
 		sk_GENERAL_NAME_pop_free(alt_name_stack, GENERAL_NAME_free);
 	}
 
-	if (tls_check_hostname(tls, cert, vt->hostname) != vt->want) {
+	if (tls_check_servername(tls, cert, vt->servername) != vt->want) {
 		fprintf(stderr, "FAIL: test %i failed with common name "
-		    "'%s', alt name '%s' and hostname '%s'\n", test_no,
-		    vt->common_name, vt->alt_name, vt->hostname);
+		    "'%s', alt name '%s' and servername '%s'\n", test_no,
+		    vt->common_name, vt->alt_name, vt->servername);
 		return (1);
 	}
 
