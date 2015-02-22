@@ -5603,7 +5603,7 @@
 ./usr/share/man/man3/tls_config_clear_keys.3
 ./usr/share/man/man3/tls_config_free.3
 ./usr/share/man/man3/tls_config_insecure_noverifycert.3
-./usr/share/man/man3/tls_config_insecure_noverifyhost.3
+./usr/share/man/man3/tls_config_insecure_noverifyname.3
 ./usr/share/man/man3/tls_config_new.3
 ./usr/share/man/man3/tls_config_parse_protocols.3
 ./usr/share/man/man3/tls_config_set_ca_file.3
