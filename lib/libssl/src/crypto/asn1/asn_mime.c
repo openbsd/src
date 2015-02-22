@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.25 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.26 2015/02/22 15:19:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -87,7 +87,6 @@ typedef struct {
 } MIME_HEADER;
 
 DECLARE_STACK_OF(MIME_HEADER)
-IMPLEMENT_STACK_OF(MIME_HEADER)
 
 static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
     const ASN1_ITEM *it);

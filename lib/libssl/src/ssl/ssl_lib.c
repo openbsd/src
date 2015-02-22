@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.98 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.99 2015/02/22 15:19:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3068,5 +3068,4 @@ SSL_cache_hit(SSL *s)
 	return (s->hit);
 }
 
-IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
