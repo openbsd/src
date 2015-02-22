@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.99 2015/02/22 15:19:56 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.100 2015/02/22 15:29:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1406,12 +1406,8 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
 	 * If p == q, no ciphers and caller indicates an error. Otherwise
 	 * add SCSV if not renegotiating.
 	 */
-	if (p != q && !s->renegotiate) {
-		static SSL_CIPHER scsv = {
-			0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		};
-		s2n(ssl3_cipher_get_value(&scsv), p);
-	}
+	if (p != q && !s->renegotiate)
+		s2n(SSL3_CK_SCSV & SSL3_CK_VALUE_MASK, p);
 
 	return (p - q);
 }
