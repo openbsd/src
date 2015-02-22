@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.35 2015/02/12 03:45:25 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.36 2015/02/22 15:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,8 +125,11 @@
 extern "C" {
 #endif
 
-/* Signalling cipher suite value: from draft-ietf-tls-renegotiation-03.txt */
+/* TLS_EMPTY_RENEGOTIATION_INFO_SCSV from RFC 5746. */
 #define SSL3_CK_SCSV				0x030000FF
+
+/* TLS_FALLBACK_SCSV from draft-ietf-tls-downgrade-scsv-03. */
+#define SSL3_CK_FALLBACK_SCSV			0x03005600
 
 #define SSL3_CK_RSA_NULL_MD5			0x03000001
 #define SSL3_CK_RSA_NULL_SHA			0x03000002

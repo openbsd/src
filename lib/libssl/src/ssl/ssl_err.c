@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.28 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.29 2015/02/22 15:54:27 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -385,6 +385,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_HTTPS_PROXY_REQUEST)   , "https proxy request"},
 	{ERR_REASON(SSL_R_HTTP_REQUEST)          , "http request"},
 	{ERR_REASON(SSL_R_ILLEGAL_PADDING)       , "illegal padding"},
+	{ERR_REASON(SSL_R_INAPPROPRIATE_FALLBACK), "inappropriate fallback"},
 	{ERR_REASON(SSL_R_INCONSISTENT_COMPRESSION), "inconsistent compression"},
 	{ERR_REASON(SSL_R_INVALID_CHALLENGE_LENGTH), "invalid challenge length"},
 	{ERR_REASON(SSL_R_INVALID_COMMAND)       , "invalid command"},
@@ -530,6 +531,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_TLSV1_ALERT_DECRYPTION_FAILED), "tlsv1 alert decryption failed"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_DECRYPT_ERROR), "tlsv1 alert decrypt error"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION), "tlsv1 alert export restriction"},
+	{ERR_REASON(SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK), "tlsv1 alert inappropriate fallback"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY), "tlsv1 alert insufficient security"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_INTERNAL_ERROR), "tlsv1 alert internal error"},
 	{ERR_REASON(SSL_R_TLSV1_ALERT_NO_RENEGOTIATION), "tlsv1 alert no renegotiation"},
