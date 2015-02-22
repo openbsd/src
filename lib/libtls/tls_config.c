@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.7 2015/02/22 14:50:41 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.8 2015/02/22 14:59:37 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -68,22 +68,25 @@ tls_config_new(void)
 	/*
 	 * Default configuration.
 	 */
-	if (tls_config_set_ca_file(config, _PATH_SSL_CA_FILE) != 0) {
-		tls_config_free(config);
-		return (NULL);
-	}
-	tls_config_set_dheparams(config, "none");
-	tls_config_set_ecdhecurve(config, "auto");
-	if (tls_config_set_ciphers(config, "secure") != 0) {
-		tls_config_free(config);
-		return (NULL);
-	}
+	if (tls_config_set_ca_file(config, _PATH_SSL_CA_FILE) != 0)
+		goto err;
+	if (tls_config_set_dheparams(config, "none") != 0)
+		goto err;
+	if (tls_config_set_ecdhecurve(config, "auto") != 0)
+		goto err;
+	if (tls_config_set_ciphers(config, "secure") != 0)
+		goto err;
+
 	tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT);
 	tls_config_set_verify_depth(config, 6);
 	
 	tls_config_verify(config);
 
 	return (config);
+
+err:
+	tls_config_free(config);
+	return (NULL);
 }
 
 void
