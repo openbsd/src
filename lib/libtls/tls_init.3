@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.17 2015/02/21 21:41:00 tedu Exp $
+.\" $OpenBSD: tls_init.3,v 1.18 2015/02/22 15:09:54 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 21 2015 $
+.Dd $Mdocdate: February 22 2015 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -36,8 +36,8 @@
 .Nm tls_config_set_protocols ,
 .Nm tls_config_set_verify_depth ,
 .Nm tls_config_clear_keys ,
-.Nm tls_config_insecure_noverifyhost ,
 .Nm tls_config_insecure_noverifycert ,
+.Nm tls_config_insecure_noverifyname ,
 .Nm tls_config_verify ,
 .Nm tls_load_file ,
 .Nm tls_client ,
@@ -93,9 +93,9 @@
 .Ft "void"
 .Fn tls_config_clear_keys "struct tls_config *config"
 .Ft "void"
-.Fn tls_config_insecure_noverifyhost "struct tls_config *config"
-.Ft "void"
 .Fn tls_config_insecure_noverifycert "struct tls_config *config"
+.Ft "void"
+.Fn tls_config_insecure_noverifyname "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_verify "struct tls_config *config"
 .Ft "uint8_t *"
@@ -289,18 +289,18 @@ Additionally, the values
 clears any secret keys from memory.
 .Em (Server)
 .It
-.Fn tls_config_insecure_noverifyhost
-disables hostname verification.
-Be careful when using this option.
-.Em (Client)
-.It
 .Fn tls_config_insecure_noverifycert
 disables certificate verification.
 Be extremely careful when using this option.
 .Em (Client)
 .It
+.Fn tls_config_insecure_noverifyname
+disables server name verification.
+Be careful when using this option.
+.Em (Client)
+.It
 .Fn tls_config_verify
-reenables hostname and certificate verification.
+reenables server name and certificate verification.
 .Em (Client)
 .It
 .Fn tls_load_file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.101 2015/02/22 14:55:41 jsing Exp $	*/
+/*	$OpenBSD: main.c,v 1.102 2015/02/22 15:09:54 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -347,9 +347,9 @@ main(volatile int argc, char *argv[])
 						errx(1, "tls ciphers failed");
 					break;
 				case SSL_DONTVERIFY:
-					tls_config_insecure_noverifyhost(
-					    tls_config);
 					tls_config_insecure_noverifycert(
+					    tls_config);
+					tls_config_insecure_noverifyname(
 					    tls_config);
 					break;
 				case SSL_DOVERIFY:

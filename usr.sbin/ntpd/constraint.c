@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.5 2015/02/22 14:55:41 jsing Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.6 2015/02/22 15:09:54 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -599,7 +599,7 @@ httpsdate_init(const char *hname, const char *port, const char *name,
 		goto fail;
 
 	/* XXX we have to pre-resolve, so name and host are not equal */
-	tls_config_insecure_noverifyhost(httpsdate->tls_config);
+	tls_config_insecure_noverifyname(httpsdate->tls_config);
 
 	if (ca == NULL || ca_len == 0)
 		tls_config_insecure_noverifycert(httpsdate->tls_config);
