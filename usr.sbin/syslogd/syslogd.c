@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.157 2015/02/20 00:56:32 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.158 2015/02/22 14:55:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -545,8 +545,11 @@ main(int argc, char *argv[])
 		free(p);
 		close(fd);
 	}
-	if (tlsconfig)
+	if (tlsconfig) {
 		tls_config_set_protocols(tlsconfig, TLS_PROTOCOLS_ALL);
+		if (tls_config_set_ciphers(tlsconfig, "compat") != 0)
+			logerror("tls set ciphers");
+	}
 
 	dprintf("off & running....\n");
 
