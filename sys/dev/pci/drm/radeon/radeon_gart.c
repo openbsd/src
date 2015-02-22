@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gart.c,v 1.6 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: radeon_gart.c,v 1.7 2015/02/22 13:09:46 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -75,8 +75,8 @@ int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
 		flags |= BUS_DMA_NOCACHE;
 	}
 #endif
-	dmah = drm_dmamem_alloc(rdev->dmat, rdev->gart.table_size, 0,
-				1, rdev->gart.table_size, flags, 0);
+	dmah = drm_dmamem_alloc(rdev->dmat, rdev->gart.table_size,
+	    rdev->gart.table_size, 1, rdev->gart.table_size, flags, 0);
 	if (dmah == NULL) {
 		return -ENOMEM;
 	}
