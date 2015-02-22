@@ -470,21 +470,21 @@ certhash_merge(struct hashinfo **links, struct hashinfo **certs,
 }
 
 static int
-certhash_link(int dfd, struct dirent *dep, struct hashinfo **links)
+certhash_link(struct dirent *dep, struct hashinfo **links)
 {
 	struct hashinfo *hi = NULL;
 	char target[MAXPATHLEN];
 	struct stat sb;
 	int n;
 
-	if (fstatat(dfd, dep->d_name, &sb, AT_SYMLINK_NOFOLLOW) == -1) {
+	if (lstat(dep->d_name, &sb) == -1) {
 		fprintf(stderr, "failed to stat %s\n", dep->d_name);
 		return (-1);
 	}
 	if (!S_ISLNK(sb.st_mode))
 		return (0);
 
-	n = readlinkat(dfd, dep->d_name, target, sizeof(target) - 1);
+	n = readlink(dep->d_name, target, sizeof(target) - 1);
 	if (n == -1) {
 		fprintf(stderr, "failed to readlink %s\n", dep->d_name);
 		return (-1);
@@ -503,27 +503,24 @@ certhash_link(int dfd, struct dirent *dep, struct hashinfo **links)
 }
 
 static int
-certhash_file(int dfd, struct dirent *dep, struct hashinfo **certs,
+certhash_file(struct dirent *dep, struct hashinfo **certs,
     struct hashinfo **crls)
 {
 	struct hashinfo *hi = NULL;
 	int has_cert, has_crl;
-	int ffd, ret = -1;
+	int ret = -1;
 	BIO *bio = NULL;
 	FILE *f;
 
 	has_cert = has_crl = 0;
 
-	if ((ffd = openat(dfd, dep->d_name, O_RDONLY)) == -1) {
-		fprintf(stderr, "failed to open %s\n", dep->d_name);
-		goto err;
-	}
-	if ((f = fdopen(ffd, "r")) == NULL) {
-		fprintf(stderr, "failed to fdopen %s\n", dep->d_name);
+	if ((f = fopen(dep->d_name, "r")) == NULL) {
+		fprintf(stderr, "failed to fopen %s\n", dep->d_name);
 		goto err;
 	}
 	if ((bio = BIO_new_fp(f, BIO_CLOSE)) == NULL) {
 		fprintf(stderr, "failed to create bio\n");
+		fclose(f);
 		goto err;
 	}
 
@@ -550,8 +547,6 @@ certhash_file(int dfd, struct dirent *dep, struct hashinfo **certs,
 
 err:
 	BIO_free(bio);
-	if (ffd != -1)
-		close(ffd);
 
 	return (ret);
 }
@@ -560,15 +555,11 @@ static int
 certhash_directory(const char *path)
 {
 	struct hashinfo *links = NULL, *certs = NULL, *crls = NULL, *link;
-	int dfd = -1, ret = 0;
+	int ret = 0;
 	struct dirent *dep;
 	DIR *dip = NULL;
 
-	if ((dfd = open(path, O_DIRECTORY)) == -1) {
-		fprintf(stderr, "failed to open directory %s\n", path);
-		goto err;
-	}
-	if ((dip = fdopendir(dfd)) == NULL) {
+	if ((dip = opendir(".")) == NULL) {
 		fprintf(stderr, "failed to open directory %s\n", path);
 		goto err;
 	}
@@ -579,11 +570,11 @@ certhash_directory(const char *path)
 	/* Create lists of existing hash links, certs and CRLs. */
 	while ((dep = readdir(dip)) != NULL) {
 		if (filename_is_hash(dep->d_name)) {
-			if (certhash_link(dfd, dep, &links) == -1)
+			if (certhash_link(dep, &links) == -1)
 				goto err;
 		}
 		if (filename_is_pem(dep->d_name)) {
-			if (certhash_file(dfd, dep, &certs, &crls) == -1)
+			if (certhash_file(dep, &certs, &crls) == -1)
 				goto err;
 		}
 	}
@@ -604,7 +595,7 @@ certhash_directory(const char *path)
 				"removing"), link->filename, link->target);
 		if (certhash_config.dryrun)
 			continue;
-		if (unlinkat(dfd, link->filename, 0) == -1) {
+		if (unlink(link->filename) == -1) {
 			fprintf(stderr, "failed to remove link %s\n",
 			    link->filename);
 			goto err;
@@ -622,8 +613,7 @@ certhash_directory(const char *path)
 			    link->reference->filename);
 		if (certhash_config.dryrun)
 			continue;
-		if (symlinkat(link->reference->filename, dfd,
-		    link->filename) == -1) {
+		if (symlink(link->reference->filename, link->filename) == -1) {
 			fprintf(stderr, "failed to create link %s -> %s\n",
 			    link->filename, link->reference->filename);
 			goto err;
@@ -642,9 +632,6 @@ done:
 
 	if (dip != NULL)
 		closedir(dip);
-	else if (dfd != -1)
-		close(dfd);
-
 	return (ret);
 }
 
@@ -661,7 +648,7 @@ int
 certhash_main(int argc, char **argv)
 {
 	int argsused;
-	int i, ret = 0;
+	int i, cwdfd, ret = 0;
 
 	memset(&certhash_config, 0, sizeof(certhash_config));
 
@@ -670,8 +657,27 @@ certhash_main(int argc, char **argv)
                 return (1);
         }
 
-	for (i = argsused; i < argc; i++)
+	if ((cwdfd = open(".", O_DIRECTORY)) == -1) {
+		perror("failed to open current directory");
+		return (1);
+	}
+
+	for (i = argsused; i < argc; i++) {
+		if (chdir(argv[i]) == -1) {
+			fprintf(stderr,
+			    "failed to change to directory %s: %s\n",
+			    argv[i], strerror(errno));
+			ret = 1;
+			continue;
+		}
 		ret |= certhash_directory(argv[i]);
+		if (fchdir(cwdfd) == -1) {
+			perror("failed to restore current directory");
+			ret = 1;
+			break;		/* can't continue safely */
+		}
+	}
+	close(cwdfd);
 
 	return (ret);
 }
