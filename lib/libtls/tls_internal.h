@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.10 2015/02/11 06:46:33 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.11 2015/02/22 14:50:41 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -24,6 +24,9 @@
 #define HTTPS_PORT "443"
 
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
+
+#define TLS_CIPHERS_COMPAT	"ALL:!aNULL:!eNULL"
+#define TLS_CIPHERS_DEFAULT	"TLSv1.2+AEAD+ECDHE:TLSv1.2+AEAD+DHE"
 
 struct tls_config {
 	const char *ca_file;

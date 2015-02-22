@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.6 2015/02/12 04:35:17 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.7 2015/02/22 14:50:41 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -74,6 +74,10 @@ tls_config_new(void)
 	}
 	tls_config_set_dheparams(config, "none");
 	tls_config_set_ecdhecurve(config, "auto");
+	if (tls_config_set_ciphers(config, "secure") != 0) {
+		tls_config_free(config);
+		return (NULL);
+	}
 	tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT);
 	tls_config_set_verify_depth(config, 6);
 	
@@ -201,6 +205,14 @@ tls_config_set_cert_mem(struct tls_config *config, const uint8_t *cert,
 int
 tls_config_set_ciphers(struct tls_config *config, const char *ciphers)
 {
+	if (ciphers == NULL ||
+	    strcasecmp(ciphers, "default") == 0 ||
+	    strcasecmp(ciphers, "secure") == 0)
+		ciphers = TLS_CIPHERS_DEFAULT;
+	else if (strcasecmp(ciphers, "compat") == 0 ||
+	    strcasecmp(ciphers, "legacy") == 0)
+		ciphers = TLS_CIPHERS_COMPAT;
+
 	return set_string(&config->ciphers, ciphers);
 }
 
