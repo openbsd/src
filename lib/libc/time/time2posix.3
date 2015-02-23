@@ -1,5 +1,5 @@
-.\"	$OpenBSD: time2posix.3,v 1.19 2013/06/05 03:39:23 tedu Exp $
-.Dd $Mdocdate: June 5 2013 $
+.\"	$OpenBSD: time2posix.3,v 1.20 2015/02/23 19:05:36 bentley Exp $
+.Dd $Mdocdate: February 23 2015 $
 .Dt TIME2POSIX 3
 .Os
 .Sh NAME
@@ -16,11 +16,12 @@
 .Sh DESCRIPTION
 .St -p1003.1
 legislates that a
-.Fa time_t
+.Vt time_t
 value of
-536457599 shall correspond to "Wed Dec 31 23:59:59 UTC 1986."
+536457599 shall correspond to
+.Dq Wed Dec 31 23:59:59 UTC 1986 .
 This effectively implies that a POSIX
-.Fa time_t
+.Vt time_t
 cannot include leap seconds and, therefore,
 that the system time must be adjusted as each leap occurs.
 .Pp
@@ -28,7 +29,7 @@ If the time package is configured with leap-second support
 enabled,
 however,
 no such adjustment is needed and
-.Fa time_t
+.Vt time_t
 values continue to increase over leap events
 .Po
 as a true
@@ -39,11 +40,11 @@ This means that these values will differ from those required by POSIX
 by the net number of leap seconds inserted since the Epoch.
 .Pp
 Typically this is not a problem as the type
-.Fa time_t
+.Vt time_t
 is intended to be
 .Pq mostly
 opaque.
-.Fa time_t
+.Vt time_t
 values should only be obtained from and
 passed to functions such as
 .Xr time 3 ,
@@ -54,13 +55,13 @@ and
 However,
 POSIX gives an arithmetic
 expression for directly computing a
-.Fa time_t
+.Vt time_t
 value from a given date/time,
 and the same relationship is assumed by some
 .Pq usually older
 applications.
 Any programs creating/dissecting
-.Fa time_t
+.Vt time_t
 values
 using such a relationship will typically not handle intervals
 over leap seconds correctly.
@@ -70,10 +71,10 @@ The
 and
 .Fn posix2time
 functions are provided to address this
-.Fa time_t
+.Vt time_t
 mismatch by converting
 between local
-.Fa time_t
+.Vt time_t
 values and their POSIX equivalents.
 This is done by accounting for the number of time-base changes that
 would have taken place on a POSIX system as leap seconds were inserted
@@ -86,15 +87,15 @@ or when communicating with POSIX-compliant systems.
 is single-valued.
 That is,
 every local
-.Fa time_t
+.Vt time_t
 corresponds to a single POSIX
-.Fa time_t .
+.Vt time_t .
 .Fn posix2time
 is less well-behaved:
 for a positive leap second hit the result is not unique,
 and for a negative leap second hit the corresponding
 POSIX
-.Fa time_t
+.Vt time_t
 doesn't exist so an adjacent value is returned.
 Both of these are good indicators of the inferiority of the
 POSIX representation.
@@ -104,30 +105,29 @@ T and its conversion to,
 and back from,
 the POSIX representation over the leap second inserted at the end of June,
 1993.
-.Bd -ragged -offset indent
-.ta \w'93/06/30 'u +\w'23:59:59 'u +\w'A+0 'u +\w'X=time2posix(T) 'u
-DATE	TIME	T	X=time2posix(T)	posix2time(X)
-93/06/30	23:59:59	A+0	B+0	A+0
-93/06/30	23:59:60	A+1	B+1	A+1 or A+2
-93/07/01	00:00:00	A+2	B+1	A+1 or A+2
-93/07/01	00:00:01	A+3	B+2	A+3
-.sp
+.Bl -column 93/06/30 23:59:59 A+0 X=time2posix(T) posix2time(X) -offset indent
+.It Em DATE Ta Em TIME Ta Em T Ta Em X=time2posix(T) Ta Em posix2time(X)
+.It 93/06/30 Ta 23:59:59 Ta A+0 Ta B+0 Ta A+0
+.It 93/06/30 Ta 23:59:60 Ta A+1 Ta B+1 Ta A+1 or A+2
+.It 93/07/01 Ta 00:00:00 Ta A+2 Ta B+1 Ta A+1 or A+2
+.It 93/07/01 Ta 00:00:01 Ta A+3 Ta B+2 Ta A+3
+.El
+.Pp
 A leap second deletion would look like...
-.sp
-DATE	TIME	T	X=time2posix(T)	posix2time(X)
-??/06/30	23:59:58	A+0	B+0	A+0
-??/07/01	00:00:00	A+1	B+2	A+1
-??/07/01	00:00:01	A+2	B+3	A+2
-.sp
-.ce
-	[Note: posix2time(B+1) => A+0 or A+1]
-.Ed
+.Bl -column ??/06/30 23:59:58 A+0 X=time2posix(T) posix2time(X) -offset indent
+.It Em DATE Ta Em TIME Ta Em T Ta Em X=time2posix(T) Ta Em posix2time(X)
+.It ??/06/30 Ta 23:59:58 Ta A+0 Ta B+0 Ta A+0
+.It ??/07/01 Ta 00:00:00 Ta A+1 Ta B+2 Ta A+1
+.It ??/07/01 Ta 00:00:01 Ta A+2 Ta B+3 Ta A+2
+.El
+.Pp
+[Note: posix2time(B+1) => A+0 or A+1]
 .Pp
 If leap-second support is not enabled, local
-.Fa time_t
+.Vt time_t
 and
 POSIX
-.Fa time_t
+.Vt time_t
 are equivalent, and both
 .Fn time2posix
 and
