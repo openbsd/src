@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.59 2015/02/12 04:40:23 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.60 2015/02/23 09:52:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -323,6 +323,7 @@ serverconfig_reset(struct server_config *srv_conf)
 {
 	srv_conf->tls_cert_file = srv_conf->tls_key_file = NULL;
 	srv_conf->tls_cert = srv_conf->tls_key = NULL;
+	srv_conf->return_uri = NULL;
 	srv_conf->auth = NULL;
 }
 
