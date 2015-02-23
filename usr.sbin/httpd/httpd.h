@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.80 2015/02/12 10:05:29 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.81 2015/02/23 18:43:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -584,6 +584,7 @@ int	 fcgi_add_stdin(struct client *, struct evbuffer *);
 void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);
+int		 expand_string(char *, size_t, const char *, const char *);
 const char	*url_decode(char *);
 char		*url_encode(const char *);
 const char	*canonicalize_host(const char *, char *, size_t);

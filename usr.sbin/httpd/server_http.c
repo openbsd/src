@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.74 2015/02/08 00:00:59 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.75 2015/02/23 18:43:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,7 +42,9 @@ static int	 server_httpmethod_cmp(const void *, const void *);
 static int	 server_httperror_cmp(const void *, const void *);
 void		 server_httpdesc_free(struct http_descriptor *);
 int		 server_http_authenticate(struct server_config *,
-    struct client *);
+		    struct client *);
+char		*server_expand_http(struct client *, const char *,
+		    char *, size_t);
 
 static struct httpd	*env = NULL;
 
@@ -735,6 +737,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	const char		*httperr = NULL, *style;
 	char			*httpmsg, *body = NULL, *extraheader = NULL;
 	char			 tmbuf[32], hbuf[128];
+	char			 buf[IBUF_READ_SIZE], *ptr = NULL;
 	int			 bodylen;
 
 	if (code == 0) {
@@ -762,10 +765,20 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	switch (code) {
 	case 301:
 	case 302:
-		if (asprintf(&extraheader, "Location: %s\r\n", msg) == -1) {
+	case 303:
+		if (msg == NULL)
+			break;
+		memset(buf, 0, sizeof(buf));
+		if ((ptr = server_expand_http(clt, msg,
+		    buf, sizeof(buf))) == NULL)
+			goto done;
+		if ((ptr = url_encode(ptr)) == NULL)
+			goto done;
+		if (asprintf(&extraheader, "Location: %s\r\n", ptr) == -1) {
 			code = 500;
 			extraheader = NULL;
 		}
+		msg = ptr;
 		break;
 	case 401:
 		if (asprintf(&extraheader,
@@ -829,12 +842,15 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
  done:
 	free(body);
 	free(extraheader);
+	if (msg == NULL)
+		msg = "\"\"";
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
 		server_close(clt, msg);
 	} else {
 		server_close(clt, httpmsg);
 		free(httpmsg);
 	}
+	free(ptr);
 }
 
 void
@@ -853,6 +869,94 @@ server_close_http(struct client *clt)
 	clt->clt_descresp = NULL;
 	free(clt->clt_remote_user);
 	clt->clt_remote_user = NULL;
+}
+
+char *
+server_expand_http(struct client *clt, const char *val, char *buf,
+    size_t len)
+{
+	struct http_descriptor	*desc = clt->clt_descreq;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
+	char			 ibuf[128], *str;
+
+	if (strlcpy(buf, val, len) >= len)
+		return (NULL);
+
+	if (strstr(val, "$DOCUMENT_URI") != NULL) {
+		if (expand_string(buf, len, "$DOCUMENT_URI",
+		    desc->http_path) != 0)
+			return (NULL);
+	}
+	if (strstr(val, "$QUERY_STRING") != NULL) {
+		if (expand_string(buf, len, "$QUERY_STRING",
+		    desc->http_query == NULL ? "" :
+		    desc->http_query) != 0)
+			return (NULL);
+	}
+	if (strstr(val, "$REMOTE_") != NULL) {
+		if (strstr(val, "$REMOTE_ADDR") != NULL) {
+			if (print_host(&clt->clt_ss,
+			    ibuf, sizeof(ibuf)) == NULL)
+				return (NULL);
+			if (expand_string(buf, len,
+			    "$REMOTE_ADDR", ibuf) != 0)
+				return (NULL);
+		}
+		if (strstr(val, "$REMOTE_PORT") != NULL) {
+			snprintf(ibuf, sizeof(ibuf),
+			    "%u", ntohs(clt->clt_port));
+			if (expand_string(buf, len,
+			    "$REMOTE_PORT", ibuf) != 0)
+				return (NULL);
+		}
+		if (strstr(val, "$REMOTE_USER") != NULL) {
+			if ((srv_conf->flags & SRVFLAG_AUTH) &&
+			    clt->clt_remote_user != NULL)
+				str = clt->clt_remote_user;
+			else
+				str = "";
+			if (expand_string(buf, len,
+			    "$REMOTE_USER", str) != 0)
+				return (NULL);
+		}
+	}
+	if (strstr(val, "$REQUEST_URI") != NULL) {
+		if (desc->http_query == NULL) {
+			if ((str = strdup(desc->http_path)) == NULL)
+				return (NULL);
+		} else if (asprintf(&str, "%s?%s",
+		    desc->http_path, desc->http_query) == -1)
+			return (NULL);
+		if (expand_string(buf, len, "$REQUEST_URI", str) != 0) {
+			free(str);
+			return (NULL);
+		}
+		free(str);
+	}
+	if (strstr(val, "$SERVER_") != NULL) {
+		if (strstr(val, "$SERVER_ADDR") != NULL) {
+			if (print_host(&srv_conf->ss,
+			    ibuf, sizeof(ibuf)) == NULL)
+				return (NULL);
+			if (expand_string(buf, len,
+			    "$SERVER_ADDR", ibuf) != 0)
+				return (NULL);
+		}
+		if (strstr(val, "$SERVER_PORT") != NULL) {
+			snprintf(ibuf, sizeof(ibuf), "%u",
+			    ntohs(srv_conf->port));
+			if (expand_string(buf, len,
+			    "$SERVER_PORT", ibuf) != 0)
+				return (NULL);
+		}
+		if (strstr(val, "$SERVER_NAME") != NULL) {
+			if (expand_string(buf, len,
+			    "$SERVER_NAME", srv_conf->name) != 0)
+				return (NULL);
+		}
+	}
+
+	return (buf);
 }
 
 int

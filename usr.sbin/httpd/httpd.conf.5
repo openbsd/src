@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.52 2015/02/19 09:19:01 florian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.53 2015/02/23 18:43:18 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 19 2015 $
+.Dd $Mdocdate: February 23 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -164,6 +164,31 @@ The optional
 argument can be used with return codes in the 3xx range to send a
 .Sq Location:
 header for redirection to a specified URI.
+.Pp
+The
+.Ar url
+may contain predefined macros that will be expanded at runtime:
+.Pp
+.Bl -tag -width $DOCUMENT_URI -offset indent -compact
+.It Ic $DOCUMENT_URI
+The request path.
+.It Ic $QUERY_STRING
+The optional query string of the request.
+.It Ic $REMOTE_ADDR
+The IP address of the connected client.
+.It Ic $REMOTE_PORT
+The TCP source port of the connected client.
+.It Ic $REMOTE_USER
+The remote user for HTTP authentication.
+.It Ic $REQUEST_URI
+The request path and optional query string.
+.It Ic $SERVER_ADDR
+The configured IP address of the relay.
+.It Ic $SERVER_PORT
+The configured TCP server port of the relay.
+.It Ic $SERVER_NAME
+The name of the server.
+.El
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
 Valid options are:

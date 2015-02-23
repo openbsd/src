@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.34 2015/02/12 10:05:29 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.35 2015/02/23 18:43:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -492,6 +492,39 @@ event_again(struct event *ev, int fd, short event,
 	event_del(ev);
 	event_set(ev, fd, event, fn, arg);
 	event_add(ev, &tv);
+}
+
+int
+expand_string(char *label, size_t len, const char *srch, const char *repl)
+{
+	char *tmp;
+	char *p, *q;
+
+	if ((tmp = calloc(1, len)) == NULL) {
+		log_debug("%s: calloc", __func__);
+		return (-1);
+	}
+	p = q = label;
+	while ((q = strstr(p, srch)) != NULL) {
+		*q = '\0';
+		if ((strlcat(tmp, p, len) >= len) ||
+		    (strlcat(tmp, repl, len) >= len)) {
+			log_debug("%s: string too long", __func__);
+			free(tmp);
+			return (-1);
+		}
+		q += strlen(srch);
+		p = q;
+	}
+	if (strlcat(tmp, p, len) >= len) {
+		log_debug("%s: string too long", __func__);
+		free(tmp);
+		return (-1);
+	}
+	(void)strlcpy(label, tmp, len);	/* always fits */
+	free(tmp);
+
+	return (0);
 }
 
 const char *
