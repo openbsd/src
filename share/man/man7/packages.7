@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.36 2014/11/11 00:32:55 brad Exp $
+.\" $OpenBSD: packages.7,v 1.37 2015/02/23 20:52:49 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 11 2014 $
+.Dd $Mdocdate: February 23 2015 $
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -73,6 +73,18 @@ packages are now signed using
 .Xr pkg_sign 1 :
 understand that this is only a basic guarantee that the binary package
 can't be tampered with while in transit.
+.Pp
+Starting with
+.Ox 5.6 ,
+the special package
+.Ar quirks
+is always updated, and its signature date displayed.
+Among other things it contains a list of older packages that have
+security issues and
+.Xr pkg_add 1
+will warn if those are installed and cannot be updated.
+This prevents a scenario where a bad guy would maintain a partial mirror
+with outdated packages.
 .Sh MANAGING FILES
 The package system offers some strong warranties.
 .Ss "Installing a package won't erase existing files"
