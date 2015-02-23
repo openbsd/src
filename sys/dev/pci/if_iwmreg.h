@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.2 2015/02/06 23:52:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.3 2015/02/23 10:25:20 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -5231,9 +5231,9 @@ struct iwm_cmd_header {
 } __packed;
 
 enum iwm_power_scheme {
-        IWM_POWER_SCHEME_CAM = 1,
-        IWM_POWER_SCHEME_BPS,
-        IWM_POWER_SCHEME_LP
+	IWM_POWER_SCHEME_CAM = 1,
+	IWM_POWER_SCHEME_BPS,
+	IWM_POWER_SCHEME_LP
 };
 
 #define IWM_DEF_CMD_PAYLOAD_SIZE 320
@@ -5246,19 +5246,19 @@ struct iwm_device_cmd {
 } __packed;
 
 struct iwm_rx_packet {
-        /*
-         * The first 4 bytes of the RX frame header contain both the RX frame
-         * size and some flags.
-         * Bit fields:
-         * 31:    flag flush RB request
-         * 30:    flag ignore TC (terminal counter) request
-         * 29:    flag fast IRQ request
-         * 28-14: Reserved
-         * 13-00: RX frame size
-         */
-        uint32_t len_n_flags;
-        struct iwm_cmd_header hdr;
-        uint8_t data[];
+	/*
+	 * The first 4 bytes of the RX frame header contain both the RX frame
+	 * size and some flags.
+	 * Bit fields:
+	 * 31:    flag flush RB request
+	 * 30:    flag ignore TC (terminal counter) request
+	 * 29:    flag fast IRQ request
+	 * 28-14: Reserved
+	 * 13-00: RX frame size
+	 */
+	uint32_t len_n_flags;
+	struct iwm_cmd_header hdr;
+	uint8_t data[];
 } __packed;
 
 #define	IWM_FH_RSCSR_FRAME_SIZE_MSK	0x00003fff
@@ -5267,14 +5267,14 @@ static uint32_t
 iwm_rx_packet_len(const struct iwm_rx_packet *pkt)
 {
 
-        return le32toh(pkt->len_n_flags) & IWM_FH_RSCSR_FRAME_SIZE_MSK;
+	return le32toh(pkt->len_n_flags) & IWM_FH_RSCSR_FRAME_SIZE_MSK;
 }
 
 static uint32_t
 iwm_rx_packet_payload_len(const struct iwm_rx_packet *pkt)
 {
 
-        return iwm_rx_packet_len(pkt) - sizeof(pkt->hdr);
+	return iwm_rx_packet_len(pkt) - sizeof(pkt->hdr);
 }
 
 
