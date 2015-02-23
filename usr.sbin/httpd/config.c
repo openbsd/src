@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2015/02/07 23:56:02 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2015/02/23 11:48:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -272,6 +272,17 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	if (config_getserver_auth(env, srv_conf) != 0)
 		goto fail;
 
+	/*
+	 * Get variable-length values for the virtual host.  The tls_* ones
+	 * aren't needed in the virtual hosts unless we implement SNI.
+	 */
+	if (srv_conf->return_uri_len != 0) {
+		if ((srv_conf->return_uri = get_data(p + s,
+		    srv_conf->return_uri_len)) == NULL)
+			goto fail;
+		s += srv_conf->return_uri_len;
+	}
+
 	if (srv_conf->flags & SRVFLAG_LOCATION) {
 		/* Inherit configuration from the parent */
 		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
@@ -344,6 +355,7 @@ config_getserver_config(struct httpd *env, struct server *srv,
 
 		f = SRVFLAG_BLOCK|SRVFLAG_NO_BLOCK;
 		if ((srv_conf->flags & f) == 0) {
+			free(srv_conf->return_uri);
 			srv_conf->flags |= parent->flags & f;
 			srv_conf->return_code = parent->return_code;
 			srv_conf->return_uri_len = parent->return_uri_len;
@@ -351,13 +363,6 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			    (srv_conf->return_uri =
 			    strdup(parent->return_uri)) == NULL)
 				goto fail;
-		} else {
-			if (srv_conf->return_uri_len != 0) {
-				if ((srv_conf->return_uri = get_data(p + s,
-				    srv_conf->return_uri_len)) == NULL)
-					goto fail;
-				s += srv_conf->return_uri_len;
-			}
 		}
 
 		memcpy(&srv_conf->timeout, &parent->timeout,
@@ -408,7 +413,8 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	serverconfig_reset(&srv_conf);
 
 	if ((IMSG_DATA_SIZE(imsg) - s) <
-	    (srv_conf.tls_cert_len + srv_conf.tls_key_len)) {
+	    (srv_conf.tls_cert_len + srv_conf.tls_key_len +
+	    srv_conf.return_uri_len)) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
@@ -450,6 +456,9 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	    srv->srv_conf.name, srv->srv_conf.id,
 	    printb_flags(srv->srv_conf.flags, SRVFLAG_BITS));
 
+	/*
+	 * Get all variable-length values for the parent server.
+	 */
 	if (srv->srv_conf.return_uri_len != 0) {
 		if ((srv->srv_conf.return_uri = get_data(p + s,
 		    srv->srv_conf.return_uri_len)) == NULL)
