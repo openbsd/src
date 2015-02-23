@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.3 2015/02/07 07:10:44 phessler Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.4 2015/02/23 09:40:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -169,9 +169,6 @@ struct iwm_fw_info {
 			void *fws_data;
 			uint32_t fws_len;
 			uint32_t fws_devoff; 
-
-			void *fws_alloc;
-			size_t fws_allocsize;
 		} fw_sect[IWM_UCODE_SECT_MAX];
 		size_t fw_totlen;
 		int fw_count;

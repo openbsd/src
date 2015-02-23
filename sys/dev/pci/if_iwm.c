@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.21 2015/02/21 09:53:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.22 2015/02/23 09:40:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -210,7 +210,8 @@ int	iwm_store_cscheme(struct iwm_softc *, uint8_t *, size_t);
 int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
 					uint8_t *, size_t);
 int	iwm_set_default_calib(struct iwm_softc *, const void *);
-int	iwm_read_firmware(struct iwm_softc *);
+void	iwm_fw_info_free(struct iwm_fw_info *);
+int	iwm_read_firmware(struct iwm_softc *, enum iwm_ucode_type);
 uint32_t iwm_read_prph(struct iwm_softc *, uint32_t);
 void	iwm_write_prph(struct iwm_softc *, uint32_t, uint32_t);
 int	iwm_read_mem(struct iwm_softc *, uint32_t, void *, int);
@@ -472,10 +473,6 @@ iwm_firmware_store_section(struct iwm_softc *sc,
 	fwone->fws_data = data + sizeof(uint32_t);
 	fwone->fws_len = dlen - sizeof(uint32_t);
 
-	/* for freeing the buffer during driver unload */
-	fwone->fws_alloc = data;
-	fwone->fws_allocsize = dlen;
-
 	fws->fw_count++;
 	fws->fw_totlen += fwone->fws_len;
 
@@ -508,27 +505,37 @@ iwm_set_default_calib(struct iwm_softc *sc, const void *data)
 	return 0;
 }
 
+void
+iwm_fw_info_free(struct iwm_fw_info *fw)
+{
+	free(fw->fw_rawdata, M_DEVBUF, fw->fw_rawsize);
+	fw->fw_rawdata = NULL;
+	fw->fw_rawsize = 0;
+	/* don't touch fw->fw_status */
+	memset(fw->fw_sects, 0, sizeof(fw->fw_sects));
+}
+
 int
-iwm_read_firmware(struct iwm_softc *sc)
+iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
 	struct iwm_fw_info *fw = &sc->sc_fw;
 	struct iwm_tlv_ucode_header *uhdr;
 	struct iwm_ucode_tlv tlv;
 	enum iwm_ucode_tlv_type tlv_type;
 	uint8_t *data;
-	int error, status;
+	int error;
 	size_t len;
 
-	if (fw->fw_status == IWM_FW_STATUS_NONE) {
-		fw->fw_status = IWM_FW_STATUS_INPROGRESS;
-	} else {
-		while (fw->fw_status == IWM_FW_STATUS_INPROGRESS)
-			tsleep(&sc->sc_fw, 0, "iwmfwp", 0);
-	}
-	status = fw->fw_status;
-
-	if (status == IWM_FW_STATUS_DONE)
+	if (fw->fw_status == IWM_FW_STATUS_DONE &&
+	    ucode_type != IWM_UCODE_TYPE_INIT)
 		return 0;
+
+	while (fw->fw_status == IWM_FW_STATUS_INPROGRESS)
+		tsleep(&sc->sc_fw, 0, "iwmfwp", 0);
+	fw->fw_status = IWM_FW_STATUS_INPROGRESS;
+
+	if (fw->fw_rawdata != NULL)
+		iwm_fw_info_free(fw);
 
 	/*
 	 * Load firmware into driver memory.
@@ -687,8 +694,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 
  parse_out:
 	if (error) {
-		printf("%s: firmware parse error, "
-		    "section type %d\n", DEVNAME(sc), tlv_type);
+		printf("%s: firmware parse error %d, "
+		    "section type %d\n", DEVNAME(sc), error, tlv_type);
 	}
 
 	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_PM_CMD_SUPPORT)) {
@@ -697,16 +704,14 @@ iwm_read_firmware(struct iwm_softc *sc)
 	}
 
  out:
-	if (error)
+	if (error) {
 		fw->fw_status = IWM_FW_STATUS_NONE;
-	else
+		if (fw->fw_rawdata != NULL)
+			iwm_fw_info_free(fw);
+	} else
 		fw->fw_status = IWM_FW_STATUS_DONE;
 	wakeup(&sc->sc_fw);
 
-	if (error) {
-		free(fw->fw_rawdata, M_DEVBUF, fw->fw_rawsize);
-		fw->fw_rawdata = NULL;
-	}
 	return error;
 }
 
@@ -2778,7 +2783,7 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
 	enum iwm_ucode_type old_type = sc->sc_uc_current;
 	int error;
 
-	if ((error = iwm_read_firmware(sc)) != 0)
+	if ((error = iwm_read_firmware(sc, ucode_type)) != 0)
 		return error;
 
 	sc->sc_uc_current = ucode_type;
