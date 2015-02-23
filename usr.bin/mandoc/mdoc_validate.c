@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.197 2015/02/17 20:33:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.198 2015/02/23 13:30:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1739,34 +1739,34 @@ static void
 post_sh_name(POST_ARGS)
 {
 	struct mdoc_node *n;
+	int hasnm, hasnd;
 
-	/*
-	 * Warn if the NAME section doesn't contain the `Nm' and `Nd'
-	 * macros (can have multiple `Nm' and one `Nd').  Note that the
-	 * children of the BODY declaration can also be "text".
-	 */
+	hasnm = hasnd = 0;
 
-	if (NULL == (n = mdoc->last->child)) {
-		mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, "empty");
-		return;
+	for (n = mdoc->last->child; n != NULL; n = n->next) {
+		switch (n->tok) {
+		case MDOC_Nm:
+			hasnm = 1;
+			break;
+		case MDOC_Nd:
+			hasnd = 1;
+			if (n->next != NULL)
+				mandoc_msg(MANDOCERR_NAMESEC_ND,
+				    mdoc->parse, n->line, n->pos, NULL);
+			break;
+		default:
+			mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
+			    n->line, n->pos, mdoc_macronames[n->tok]);
+			break;
+		}
 	}
 
-	for ( ; n && n->next; n = n->next) {
-		if (MDOC_ELEM == n->type && MDOC_Nm == n->tok)
-			continue;
-		if (MDOC_TEXT == n->type)
-			continue;
-		mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
-		    n->line, n->pos, mdoc_macronames[n->tok]);
-	}
-
-	assert(n);
-	if (MDOC_BLOCK == n->type && MDOC_Nd == n->tok)
-		return;
-
-	mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
-	    n->line, n->pos, mdoc_macronames[n->tok]);
+	if ( ! hasnm)
+		mandoc_msg(MANDOCERR_NAMESEC_NONM, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, NULL);
+	if ( ! hasnd)
+		mandoc_msg(MANDOCERR_NAMESEC_NOND, mdoc->parse,
+		    mdoc->last->line, mdoc->last->pos, NULL);
 }
 
 static void

@@ -1,4 +1,6 @@
-mandoc: broken.in:5:2: WARNING: bad NAME section contents: Oo
-mandoc: broken.in:9:1: WARNING: bad NAME section contents: text
+mandoc: broken.in:5:2: WARNING: bad NAME section content: Oo
+mandoc: broken.in:9:1: WARNING: bad NAME section content: text
+mandoc: broken.in:4:2: WARNING: NAME section without name
+mandoc: broken.in:4:2: WARNING: NAME section without description
 mandoc: broken.in:13:2: WARNING: moving content out of list: Bl
 mandoc: broken.in:18:1: WARNING: moving content out of list: text

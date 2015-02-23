@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.102 2015/02/20 22:40:05 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.103 2015/02/23 13:30:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -104,7 +104,10 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no document body",
 	"content before first section header",
 	"first section is not \"NAME\"",
-	"bad NAME section contents",
+	"NAME section without name",
+	"NAME section without description",
+	"description not at the end of NAME",
+	"bad NAME section content",
 	"missing description line, using \"\"",
 	"sections out of conventional order",
 	"duplicate section title",

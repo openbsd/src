@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.132 2015/02/15 17:57:26 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.133 2015/02/23 13:30:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2015 $
+.Dd $Mdocdate: February 23 2015 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1950,11 +1950,9 @@ Examples:
 .Dl \&.An Kristaps Dzonsons \&Aq \&Mt kristaps@bsd.lv
 .Ss \&Nd
 A one line description of the manual's content.
-This may only be invoked in the
-.Em SYNOPSIS
-section subsequent the
-.Sx \&Nm
-macro.
+This is the mandatory last macro of the
+.Em NAME
+section and not appropriate for other sections.
 .Pp
 Examples:
 .Dl Pf . Sx \&Nd mdoc language reference

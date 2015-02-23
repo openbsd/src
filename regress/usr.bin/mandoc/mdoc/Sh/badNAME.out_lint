@@ -1,2 +1,2 @@
-mandoc: badNAME.in:5:2: WARNING: bad NAME section contents: Em
-mandoc: badNAME.in:6:2: WARNING: bad NAME section contents: Nm
+mandoc: badNAME.in:5:2: WARNING: bad NAME section content: Em
+mandoc: badNAME.in:4:2: WARNING: NAME section without description

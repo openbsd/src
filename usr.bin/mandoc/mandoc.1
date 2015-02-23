@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.78 2015/02/16 19:02:32 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.79 2015/02/23 13:30:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: February 23 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -771,17 +771,27 @@ This may confuse
 .Xr makewhatis 8
 and
 .Xr apropos 1 .
-.It Sy "bad NAME section contents"
+.It Sy "NAME section without name"
 .Pq mdoc
-The last node in the NAME section is not an
+The NAME section does not contain any
+.Ic \&Nm
+child macro.
+.It Sy "NAME section without description"
+.Pq mdoc
+The NAME section lacks the mandatory
 .Ic \&Nd
-macro, or any preceding macro is not
-.Ic \&Nm ,
-or the NAME section is completely empty.
-This may confuse
-.Xr makewhatis 8
+child macro.
+.It Sy "description not at the end of NAME"
+.Pq mdoc
+The NAME section does contain an
+.Ic \&Nd
+child macro, but other content follows it.
+.It Sy "bad NAME section content"
+.Pq mdoc
+The NAME section contains plain text or macros other than
+.Ic \&Nm
 and
-.Xr apropos 1 .
+.Ic \&Nd .
 .It Sy "missing description line, using \(dq\(dq"
 .Pq mdoc
 The
