@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.35 2015/02/10 00:20:51 deraadt Exp $
+#	$OpenBSD: list,v 1.36 2015/02/23 08:09:47 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS sys/arch/vax/stand
@@ -13,7 +13,6 @@ LINK	instbin					bin/cp
 LINK	instbin					bin/dd
 LINK	instbin					bin/df
 LINK	instbin					bin/ed
-LINK	instbin					bin/expr
 LINK	instbin					bin/ksh bin/sh
 ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
