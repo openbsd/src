@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.412 2014/12/23 14:05:16 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.413 2015/02/24 14:05:50 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 23 2014 $
+.Dd $Mdocdate: February 24 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1198,7 +1198,7 @@ Defaults to empty, set to
 .Pa /cdrom/distfiles/${DIST_SUBDIR}
 to check that path.
 Distribution files are still copied or linked (see
-.Ev FETCH_SYMLINK_DISFILES )
+.Ev FETCH_SYMLINK_DISTFILES )
 into
 .Ev DISTDIR
 if they are found under CDROM_SITE.
