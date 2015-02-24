@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.38 2015/01/15 17:34:15 chl Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.39 2015/02/24 18:45:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -63,10 +63,12 @@ print_passwd(char *string, int operation, char *extra)
 {
 	char buffer[_PASSWORD_LEN];
 	const char *pref;
-	char prefbuf[16];
+	char prefbuf[64];
 
 	if (operation == DO_BLF) {
-		snprintf(prefbuf, sizeof(prefbuf), "blowfish,%s", extra);
+		if (snprintf(prefbuf, sizeof(prefbuf), "blowfish,%s", extra) >=
+		    sizeof(prefbuf))
+			errx(1, "pref too long");
 		pref = prefbuf;
 	} else {
 		login_cap_t *lc;
