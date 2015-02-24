@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.7 2015/02/11 07:21:10 jmc Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.8 2015/02/24 19:22:12 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2015 $
+.Dd $Mdocdate: February 24 2015 $
 .Dt CRYPT_CHECKPASS 3
 .Os
 .Sh NAME
@@ -87,8 +87,6 @@ function sets
 .Va errno
 to
 .Er EINVAL
-or any of the errors specified for
-.Xr strtonum 3
 if
 .Fa pref
 is unsupported.
