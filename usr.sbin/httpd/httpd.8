@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.49 2014/12/12 14:45:59 reyk Exp $
+.\"	$OpenBSD: httpd.8,v 1.50 2015/02/24 07:56:06 bentley Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2014 $
+.Dd $Mdocdate: February 24 2015 $
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -69,19 +69,19 @@ options increases the verbosity.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ssl/private/server.key" -compact
-.It /etc/httpd.conf
+.It Pa /etc/httpd.conf
 Default configuration file.
-.It /etc/ssl/private/server.key
+.It Pa /etc/ssl/private/server.key
 Default SSL/TLS server key.
-.It /etc/ssl/server.crt
+.It Pa /etc/ssl/server.crt
 Default SSL/TLS server certificate.
-.It /var/run/httpd.sock
+.It Pa /var/run/httpd.sock
 .Ux Ns -domain
 socket used for communication with
 .Nm .
-.It /var/www/logs/access.log
+.It Pa /var/www/logs/access.log
 Default access log file.
-.It /var/www/logs/error.log
+.It Pa /var/www/logs/error.log
 Default error log file.
 .El
 .Sh SEE ALSO
