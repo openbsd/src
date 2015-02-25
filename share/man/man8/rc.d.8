@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.d.8,v 1.27 2015/01/15 09:20:37 ajacoutot Exp $
+.\"	$OpenBSD: rc.d.8,v 1.28 2015/02/25 23:01:28 rpe Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: February 25 2015 $
 .Dt RC.D 8
 .Os
 .Sh NAME
@@ -137,13 +137,13 @@ with the name of the script.
 For example, postgres is managed through
 .Pa /etc/rc.d/postgresql :
 .Pp
-.Dl daemon_flags=-l /var/postgresql/logfile
+.Dl daemon_flags=-w -l /var/postgresql/logfile
 .Pp
 To override this and increase the debug log level (keeping the existing
-logfile path), define the following in
+flags), define the following in
 .Xr rc.conf.local 8 :
 .Pp
-.Dl postgresql_flags=-l /var/postgresql/logfile -d 5
+.Dl postgresql_flags=-w -l /var/postgresql/logfile -d 5
 .Pp
 Each script may define its own defaults, as explained in
 .Xr rc.subr 8 .
