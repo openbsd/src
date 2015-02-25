@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.99 2015/02/07 08:56:39 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.100 2015/02/25 03:49:21 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2190,7 +2190,7 @@ ssl3_get_cert_verify(SSL *s)
 
 	if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE_VERIFY) {
 		s->s3->tmp.reuse_message = 1;
-		if ((peer != NULL) && (type & EVP_PKT_SIGN)) {
+		if (peer != NULL) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
 			    SSL_R_MISSING_VERIFY_MESSAGE);
