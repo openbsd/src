@@ -29,7 +29,6 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    get_charlog() => 300,
-	    qr/ \(dropped.*\)/ => '~38',
 	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
@@ -58,7 +57,7 @@ our %args = (
 	    qr/syslogd: start/ => 1,
 	    qr/syslogd: restart/ => 1,
 	    get_charlog() => '~41',
-	    qr/syslogd: dropped 2[56][0-9] messages to remote loghost/ => 1,
+	    qr/syslogd: dropped 2[0-9][0-9] messages to remote loghost/ => 1,
 	},
     },
     file => {
@@ -69,7 +68,7 @@ our %args = (
 	    qr/syslogd: start/ => 1,
 	    qr/syslogd: restart/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 2[56][0-9] messages to remote loghost/ => 1,
+	    qr/syslogd: dropped 2[0-9][0-9] messages to remote loghost/ => 1,
 	},
     },
 );
