@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2013/10/10 21:24:59 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.21 2015/02/25 17:41:22 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -289,19 +289,16 @@ GLOBAL(secondary_start)
 	stcr	%r11, CPU
 
 	/*
-	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
-	 * to call secondary_pre_main() to determine its cpu number.
-	 * After that, however, it should allocate its own stack and switch
-	 * to it.
+	 * While holding the cpu_mutex, the secondary cpu can use the
+	 * slavestack to call secondary_pre_main() to determine its cpu
+	 * number. That function will also return the proper stack to
+	 * use and we'll switch to it.
 	 */
 
 	bsr	_C_LABEL(secondary_pre_main)	/* set cpu number */
 
-	ldcr	%r1,  CPU
-	st	%r2,  %r1, CI_CURPCB	/* save stack as curpcb for traps */
-
 	bsr.n	_C_LABEL(secondary_main)
-	 addu	%r31, %r2, USPACE			/* switch to startup stack */
+	 addu	%r31, %r2, USPACE		/* switch to idle stack */
 
 	/*
 	 * Dummy mp_atomic_begin() and mp_atomic_end() routine, so that

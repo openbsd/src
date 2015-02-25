@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2014/12/23 10:59:29 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2015/02/25 17:41:22 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -124,7 +124,7 @@ char	*nvram_by_symbol(char *);
 void	powerdown(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
-vaddr_t	secondary_pre_main(void);
+void   *secondary_pre_main(void);
 void	setlevel(u_int);
 vaddr_t size_memory(void);
 
@@ -203,7 +203,8 @@ struct vm_map *phys_map = NULL;
 __cpu_simple_lock_t cpu_hatch_mutex = __SIMPLELOCK_UNLOCKED;
 #ifdef MULTIPROCESSOR
 __cpu_simple_lock_t cpu_boot_mutex = __SIMPLELOCK_LOCKED;
-int hatch_pending_count;
+unsigned int hatch_pending_count;
+vaddr_t hatch_stacks[MAXCPUS - 1];
 #endif
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
@@ -666,9 +667,27 @@ void
 cpu_setup_secondary_processors()
 {
 #ifdef MULTIPROCESSOR
+	unsigned int cpu;
+
 	hatch_pending_count = ncpusfound - 1;
+
+	/*
+	 * Allocate idle stack for all the secondary processors here.
+	 *
+	 * We can't have this done by the secondaries themselves, because
+	 * the main processor owns the kernel lock at this point; and we
+	 * can't know in advance which cpuid our secondary processors will
+	 * have, so we can't fill m88k_cpus[] directly.
+	 *
+	 * Allocation failure will be checked by the secondary processors
+	 * so that we can still run in degraded mode if hell gets loose.
+	 */
+	for (cpu = 0; cpu < hatch_pending_count; cpu++)
+		hatch_stacks[cpu] = uvm_km_zalloc(kernel_map, USPACE);
 #endif
+
 	__cpu_simple_unlock(&cpu_hatch_mutex);
+
 #ifdef MULTIPROCESSOR
 	while (hatch_pending_count != 0)
 		delay(10000);	/* 10ms */
@@ -688,15 +707,14 @@ cpu_boot_secondary_processors()
 
 /*
  * Secondary CPU early initialization routine.
- * Determine CPU number and set it, then allocate the startup stack.
+ * Determine CPU number and set it, then return the startup stack.
  *
  * Running on a minimal stack here, with interrupts disabled; do nothing fancy.
  */
-vaddr_t
+void *
 secondary_pre_main()
 {
 	struct cpu_info *ci;
-	vaddr_t init_stack;
 
         /*
          * Invoke the CMMU initialization routine as early as possible,
@@ -721,18 +739,17 @@ secondary_pre_main()
 	pmap_bootstrap_cpu(ci->ci_cpuid);
 
 	/*
-	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
+	 * Return our idle stack for the caller to switch to it.
 	 */
-	init_stack = uvm_km_zalloc(kernel_map, USPACE);
-	if (init_stack == (vaddr_t)NULL) {
-		printf("cpu%d: unable to allocate startup stack\n",
-		    ci->ci_cpuid);
+	ci->ci_curpcb = (void *)hatch_stacks[hatch_pending_count - 1];
+	if (ci->ci_curpcb == NULL) {
+		printf("cpu%d: unable to get startup stack\n", ci->ci_cpuid);
 		hatch_pending_count--;
 		__cpu_simple_unlock(&cpu_hatch_mutex);
 		for (;;) ;
 	}
 
-	return (init_stack);
+	return ci->ci_curpcb;
 }
 
 /*

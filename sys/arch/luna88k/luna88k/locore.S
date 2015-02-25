@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.29 2013/11/02 17:49:19 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.30 2015/02/25 17:41:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -301,20 +301,16 @@ ASLOCAL(secondary_init)
 	/*
 	 * While holding the cpu_hatch_mutex, the secondary cpu can use the
 	 * slavestack to call secondary_pre_main() to determine its cpu
-	 * number.
-	 * After that, however, it should allocate its own stack and switch
-	 * to it.
+	 * number. That function will also return the proper stack to
+	 * use and we'll switch to it.
 	 */
 
 	or.u	%r31, %r0,  %hi16(_ASM_LABEL(slavestack_end))
 	bsr.n	_C_LABEL(secondary_pre_main)	/* set cpu number */
 	 or	%r31, %r31, %lo16(_ASM_LABEL(slavestack_end))
 
-	ldcr	%r1,  CPU
-	st	%r2,  %r1, CI_CURPCB	/* save stack as curpcb for traps */
-
 	bsr.n	_C_LABEL(secondary_main)
-	 addu	%r31, %r2, USPACE			/* switch to startup stack */
+	 addu	%r31, %r2, USPACE		/* switch to idle stack */
 
 #else
 
