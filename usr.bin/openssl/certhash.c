@@ -658,7 +658,7 @@ certhash_main(int argc, char **argv)
                 return (1);
         }
 
-	if ((cwdfd = open(".", O_DIRECTORY)) == -1) {
+	if ((cwdfd = open(".", O_RDONLY)) == -1) {
 		perror("failed to open current directory");
 		return (1);
 	}
