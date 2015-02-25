@@ -91,6 +91,9 @@ hashinfo(const char *filename, unsigned long hash, unsigned char *fingerprint)
 static void
 hashinfo_free(struct hashinfo *hi)
 {
+	if (hi == NULL)
+		return;
+
 	free(hi->filename);
 	free(hi->target);
 	free(hi);
@@ -359,10 +362,8 @@ certhash_addlink(struct hashinfo **links, struct hashinfo *hi)
 	if ((link = hashinfo(NULL, hi->hash, hi->fingerprint)) == NULL)
 		goto err;
 
-printf("hi->is_crl = %i\n", hi->is_crl);
 	if ((link->filename = hashinfo_linkname(hi)) == NULL)
 		goto err;
-printf("filename = %s\n", link->filename);
 
 	link->reference = hi;
 	link->changed = 1;
