@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.39 2015/02/24 18:45:51 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.40 2015/02/26 17:46:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -79,7 +79,7 @@ print_passwd(char *string, int operation, char *extra)
 		pref = login_getcapstr(lc, "localcipher", NULL, NULL);
 	}
 	if (crypt_newhash(string, pref, buffer, sizeof(buffer)) != 0)
-		errx(1, "can't generate hash");
+		err(1, "can't generate hash");
 
 	fputs(buffer, stdout);
 }
@@ -90,7 +90,7 @@ main(int argc, char **argv)
 	int opt;
 	int operation = -1;
 	int prompt = 0;
-	char *extra = NULL;		/* Store salt or number of rounds */
+	char *extra = NULL;	/* Store login class or number of rounds */
 	const char *errstr;
 
 	while ((opt = getopt(argc, argv, "pb:c:")) != -1) {
@@ -105,7 +105,8 @@ main(int argc, char **argv)
 			if (strcmp(optarg, "a") != 0) {
 				(void)strtonum(optarg, 4, 31, &errstr);
 				if (errstr != NULL)
-					errx(1, "rounds is %s: %s", errstr, optarg);
+					errx(1, "rounds is %s: %s", errstr,
+					    optarg);
 			}
 			extra = optarg;
 			break;
@@ -153,14 +154,14 @@ main(int argc, char **argv)
 		if ((string = strdup(argv[optind])) == NULL)
 			err(1, NULL);
 		/* Wipe the argument. */
-		memset(argv[optind], 0, strlen(argv[optind]));
+		explicit_bzero(argv[optind], strlen(argv[optind]));
 
 		print_passwd(string, operation, extra);
 
 		(void)fputc('\n', stdout);
 
 		/* Wipe our copy, before we free it. */
-		memset(string, 0, strlen(string));
+		explicit_bzero(string, strlen(string));
 		free(string);
 	}
 	exit(0);
