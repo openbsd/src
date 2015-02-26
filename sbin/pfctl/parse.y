@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.646 2015/02/14 23:32:41 sthen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.647 2015/02/26 18:27:45 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1364,7 +1364,7 @@ scspec		: bandwidth					{
 			$$.m2 = $1;
 			$$.d = 0;
 			if ($$.m2.bw_percent) {
-				yyerror("no bandwidth in % yet");
+				yyerror("no bandwidth in %% yet");
 				YYERROR;
 			}
 		}
@@ -1383,7 +1383,7 @@ scspec		: bandwidth					{
 			$$.m2 = $1;
 
 			if ($$.m1.bw_percent || $$.m2.bw_percent) {
-				yyerror("no bandwidth in % yet");
+				yyerror("no bandwidth in %% yet");
 				YYERROR;
 			}
 		}
