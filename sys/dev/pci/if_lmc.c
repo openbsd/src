@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.27 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.28 2015/02/27 05:10:46 dlg Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ lmc_srom_read(lmc_softc_t * const sc)
 	}
 	lmc_srom_idle(sc);
 }
-
+
 #define MII_EMIT    do { LMC_CSR_WRITE(sc, csr_srom_mii, csr); lmc_delay_300ns(sc); } while (0)
 
 static inline void
@@ -307,7 +307,7 @@ lmc_mii_writereg(lmc_softc_t * const sc, u_int32_t devaddr,
     lmc_mii_turnaround(sc, MII_WRCMD);
     lmc_mii_writebits(sc, data, 16);
 }
-
+
 int
 lmc_read_macaddr(lmc_softc_t * const sc)
 {
@@ -317,7 +317,7 @@ lmc_read_macaddr(lmc_softc_t * const sc)
 
 	return 0;
 }
-
+
 /*
  * Check to make certain there is a signal from the modem, and flicker
  * lights as needed.
@@ -741,7 +741,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			sc->lmc_flags &= ~LMC_RXBUFSLOW;
 	}
 }
-
+
 static int
 lmc_tx_intr(lmc_softc_t * const sc)
 {
@@ -806,7 +806,7 @@ lmc_tx_intr(lmc_softc_t * const sc)
 
     return descs;
 }
-
+
 static void
 lmc_print_abnormal_interrupt (lmc_softc_t * const sc, u_int32_t csr)
 {
@@ -917,7 +917,7 @@ lmc_intr_normal(void *arg)
 	return progress;
 #endif
 }
-
+
 static struct mbuf *
 lmc_mbuf_compress(struct mbuf *m)
 {
@@ -973,7 +973,7 @@ lmc_mbuf_compress(struct mbuf *m)
 	m_freem(m);
 	return m0;
 }
-
+
 /*
  * queue the mbuf handed to us for the interface.  If we cannot
  * queue it, return the mbuf.  Return NULL if the mbuf was queued.
@@ -1200,7 +1200,7 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 
 	return m;
 }
-
+
 
 /*
  * This routine is entered at splnet()
