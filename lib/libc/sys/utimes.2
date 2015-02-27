@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.23 2015/01/19 15:54:12 millert Exp $
+.\"	$OpenBSD: utimes.2,v 1.24 2015/02/27 23:56:03 millert Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: February 27 2015 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -96,7 +96,10 @@ take two timespec values instead of two timeval values.
 Further, either of the
 .Fa tv_nsec
 fields can be set to one of the following special values defined in
-.In sys/stat.h :
+.In sys/stat.h ,
+in which case the value of
+.Fa tv_sec
+is ignored:
 .Pp
 .Bl -tag -width UTIME_OMIT -offset indent -compact
 .It Dv UTIME_NOW
