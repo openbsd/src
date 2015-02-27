@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.137 2015/01/15 04:26:06 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.138 2015/02/27 16:21:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -658,7 +658,8 @@ treescan(void)
 					say(path, "Skip pdf");
 				continue;
 			} else if ( ! use_all &&
-			    ((FORM_SRC == dform && strcmp(fsec, dsec)) ||
+			    ((FORM_SRC == dform &&
+			      strncmp(fsec, dsec, strlen(dsec))) ||
 			     (FORM_CAT == dform && strcmp(fsec, "0")))) {
 				if (warnings)
 					say(path, "Wrong filename suffix");
