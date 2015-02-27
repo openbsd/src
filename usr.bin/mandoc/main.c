@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.126 2015/02/16 16:18:02 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.127 2015/02/27 16:00:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <glob.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -496,16 +497,16 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	const char *sec, const char *arch, const char *name,
 	struct manpage **res, size_t *ressz)
 {
+	glob_t		 globinfo;
 	struct manpage	*page;
 	char		*file;
-	int		 form;
+	int		 form, globres;
 
+	form = FORM_SRC;
 	mandoc_asprintf(&file, "%s/man%s/%s.%s",
 	    paths->paths[ipath], sec, name, sec);
-	if (access(file, R_OK) != -1) {
-		form = FORM_SRC;
+	if (access(file, R_OK) != -1)
 		goto found;
-	}
 	free(file);
 
 	mandoc_asprintf(&file, "%s/cat%s/%s.0",
@@ -519,13 +520,23 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	if (arch != NULL) {
 		mandoc_asprintf(&file, "%s/man%s/%s/%s.%s",
 		    paths->paths[ipath], sec, arch, name, sec);
-		if (access(file, R_OK) != -1) {
-			form = FORM_SRC;
+		if (access(file, R_OK) != -1)
 			goto found;
-		}
 		free(file);
 	}
-	return(0);
+
+	mandoc_asprintf(&file, "%s/man%s/%s.*",
+	    paths->paths[ipath], sec, name);
+	globres = glob(file, 0, NULL, &globinfo);
+	if (globres != 0 && globres != GLOB_NOMATCH)
+		fprintf(stderr, "%s: %s: glob: %s\n",
+		    progname, file, strerror(errno));
+	free(file);
+	if (globres == 0)
+		file = mandoc_strdup(*globinfo.gl_pathv);
+	globfree(&globinfo);
+	if (globres != 0)
+		return(0);
 
 found:
 	fprintf(stderr, "%s: outdated mandoc.db lacks %s(%s) entry,\n"

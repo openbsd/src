@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.40 2015/01/20 18:19:39 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.41 2015/02/27 16:00:54 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <glob.h>
 #include <limits.h>
 #include <regex.h>
 #include <stdio.h>
@@ -404,14 +405,15 @@ buildnames(const struct mansearch *search, struct manpage *mpage,
 		sqlite3 *db, sqlite3_stmt *s,
 		uint64_t pageid, const char *path, int form)
 {
-	char		*newnames, *prevsec, *prevarch;
+	glob_t		 globinfo;
+	char		*firstname, *newnames, *prevsec, *prevarch;
 	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch, *fsec;
 	size_t		 i;
-	int		 c;
+	int		 c, globres;
 
 	mpage->file = NULL;
 	mpage->names = NULL;
-	prevsec = prevarch = NULL;
+	firstname = prevsec = prevarch = NULL;
 	i = 1;
 	SQL_BIND_INT64(db, s, i, pageid);
 	while (SQLITE_ROW == (c = sqlite3_step(s))) {
@@ -486,10 +488,33 @@ buildnames(const struct mansearch *search, struct manpage *mpage,
 		sep2 = *arch == '\0' ? "" : "/";
 		mandoc_asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s",
 		    path, sep1, sec, sep2, arch, name, fsec);
+		if (access(mpage->file, R_OK) != -1)
+			continue;
+
+		/* Handle unusual file name extensions. */
+
+		if (firstname == NULL)
+			firstname = mpage->file;
+		else
+			free(mpage->file);
+		mandoc_asprintf(&mpage->file, "%s/%s%s%s%s/%s.*",
+		    path, sep1, sec, sep2, arch, name);
+		globres = glob(mpage->file, 0, NULL, &globinfo);
+		free(mpage->file);
+		mpage->file = globres ? NULL :
+		    mandoc_strdup(*globinfo.gl_pathv);
+		globfree(&globinfo);
 	}
 	if (c != SQLITE_DONE)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 	sqlite3_reset(s);
+
+	/* If none of the files is usable, use the first name. */
+
+	if (mpage->file == NULL)
+		mpage->file = firstname;
+	else if (mpage->file != firstname)
+		free(firstname);
 
 	/* Append one final section to the names. */
 
