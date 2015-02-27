@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.137 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.138 2015/02/27 17:38:19 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -104,9 +104,10 @@ static int	redirect_loop;
  * 	- Unsafe characters.
  */
 static int
-unsafe_char(const char *c)
+unsafe_char(const char *c0)
 {
 	const char *unsafe_chars = " <>\"#{}|\\^~[]`";
+	const unsigned char *c = (const unsigned char *)c0;
 
 	/*
 	 * No corresponding graphic US-ASCII.
@@ -154,7 +155,8 @@ url_encode(const char *path)
 	 */
 	for (i = 0; i < length; i++)
 		if (unsafe_char(path + i)) {
-			snprintf(epathp, 4, "%%" "%02x", path[i]);
+			snprintf(epathp, 4, "%%" "%02x",
+			    (unsigned char)path[i]);
 			epathp += 3;
 		} else
 			*(epathp++) = path[i];
