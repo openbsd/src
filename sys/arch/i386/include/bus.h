@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.65 2015/01/24 15:13:55 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.66 2015/02/27 18:59:43 guenther Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -458,6 +458,7 @@ struct i386_bus_space_ops {
 		case 2:	i386_space_copy1(a1,a2,cnt,"movsw","std");break;\
 		case 4:	i386_space_copy1(a1,a2,cnt,"movsl","std");break;\
 		}							\
+		__asm volatile("cld");	/* must restore before func ret */ \
 	} else								\
 		switch (sz) {						\
 		case 1:	i386_space_copy1(a1,a2,cnt,"movsb","cld");break;\
