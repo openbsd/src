@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.60 2014/09/08 01:27:55 schwarze Exp $
+.\" $OpenBSD: cdio.1,v 1.61 2015/02/28 21:51:56 bentley Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -267,13 +267,9 @@ Set the volume of the left channel to
 .Ar left_channel
 and the volume of the right channel to
 .Ar right_channel .
-Allowed values are in the range 0\-255.
+Allowed values are in the range 0\(en255.
 .It Xo Ic volume
-.Ic left \*(Ba
-.Ic right \*(Ba
-.Ic mono \*(Ba
-.Ic stereo \*(Ba
-.Ic mute
+.Ic left | right | mono | stereo | mute
 .Xc
 Respectively:
 play the left subtrack on both left and right channels;

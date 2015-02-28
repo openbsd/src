@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.132 2014/11/10 20:48:33 miod Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.133 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -579,8 +579,7 @@ There are several neighbor properties:
 .It Xo
 .Ic announce
 .Sm off
-.Po Ic all \*(Ba none \*(Ba
-.Ic self \*(Ba default-route Pc
+.Pq Ic all | none | self | default-route
 .Sm on
 .Xc
 If set to
@@ -1402,9 +1401,7 @@ otherwise it will be set to
 .It Xo
 .Ic origin
 .Sm off
-.Po Ic igp \*(Ba
-.Ic egp \*(Ba
-.Ic incomplete Pc
+.Pq Ic igp | egp | incomplete
 .Sm on
 .Xc
 Set the
@@ -1416,11 +1413,7 @@ or being an aggregated route.
 .It Xo
 .Ic nexthop
 .Sm off
-.Po Ar address \*(Ba
-.Ic blackhole \*(Ba
-.Ic reject \*(Ba
-.Ic self \*(Ba
-.Ic no-modify Pc
+.Pq Ar address | Ic blackhole | reject | self | no-modify
 .Sm on
 .Xc
 Set the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.99 2014/10/24 10:18:50 schwarze Exp $
+.\"	$OpenBSD: systat.1,v 1.100 2015/02/28 21:51:57 bentley Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: October 24 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -186,26 +186,26 @@ Quit
 Reverse the selected ordering if supported by the view.
 .It Ic \&,
 Print numbers with thousand separators, where applicable.
-.It Ic ^A \*(Ba Aq Ic Home
+.It Ic ^A | Aq Ic Home
 Jump to the beginning of the current view.
-.It Ic ^B \*(Ba Aq Ic right arrow
+.It Ic ^B | Aq Ic right arrow
 Select the previous view.
-.It Ic ^E \*(Ba Aq Ic End
+.It Ic ^E | Aq Ic End
 Jump to the end of the current view.
-.It Ic ^F \*(Ba Aq Ic left arrow
+.It Ic ^F | Aq Ic left arrow
 Select the next view.
 .It Ic ^G
 Print the name of the current
 view being shown and the refresh interval.
 .It Ic ^L
 Refresh the screen.
-.It Ic ^N \*(Ba Aq Ic down arrow
+.It Ic ^N | Aq Ic down arrow
 Scroll current view down by one line.
-.It Ic ^P \*(Ba Aq Ic up arrow
+.It Ic ^P | Aq Ic up arrow
 Scroll current view up by one line.
-.It Ic ^V \*(Ba Aq Ic Page Down
+.It Ic ^V | Aq Ic Page Down
 Scroll current view down by one page.
-.It Ic Alt-V \*(Ba Aq Ic Page Up
+.It Ic Alt-V | Aq Ic Page Up
 Scroll current view up by one page.
 .It Ic ^Z
 Suspend
@@ -257,8 +257,8 @@ The
 column has the format
 .Sm off
 .Xo
-.Cm up \*(Ba dn
-.Bq : Cm U \*(Ba D .
+.Cm up | dn
+.Bq : Cm U | D .
 .Xc
 .Sm on
 .Sq up
@@ -329,7 +329,7 @@ Display network addresses numerically.
 .It Cm reset
 Reset matching mechanisms to the default.
 .\".It Cm show Oo
-.\".Ar protocols \*(Ba ports \*(Ba hosts
+.\".Ar protocols | ports | hosts
 .\".Oc
 .\"Show, on the command line, the currently selected protocols,
 .\"hosts, and ports.
@@ -338,7 +338,7 @@ Reset matching mechanisms to the default.
 .\"If an argument is supplied to
 .\".Cm show ,
 .\"then only the requested information will be displayed.
-.It Cm tcp \*(Ba udp
+.It Cm tcp | udp
 Display only network connections using the indicated protocol.
 .El
 .It Ic nfsclient
@@ -450,11 +450,11 @@ and swapped out but desiring to run
 Below the queue length listing is a numerical listing and
 a bar graph showing the amount of
 interrupt (shown as
-.Ql \*(Ba ) ,
+.Ql | ) ,
 system (shown as
 .Ql = ) ,
 user (shown as
-.Ql \*(Gt ) ,
+.Ql > ) ,
 nice (shown as
 .Ql - ) ,
 and idle time (shown as

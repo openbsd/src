@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.12 2015/02/08 17:33:35 nicm Exp $
+.\"	$OpenBSD: cu.1,v 1.13 2015/02/28 21:51:56 bentley Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tip.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: February 8 2015 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl l Ar line
-.Op Fl s Ar speed \*(Ba Fl Ar speed
+.Op Fl s Ar speed | Fl Ar speed
 .Nm
 .Op Ar host
 .Sh DESCRIPTION
@@ -69,7 +69,7 @@ Users in group
 are permitted to use
 .Xr cua 4
 devices by default.
-.It Fl s Ar speed \*(Ba Fl Ar speed
+.It Fl s Ar speed | Fl Ar speed
 Set the speed of the connection.
 The default is 9600.
 .El

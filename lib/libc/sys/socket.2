@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.38 2014/08/31 01:42:36 guenther Exp $
+.\"	$OpenBSD: socket.2,v 1.39 2015/02/28 21:51:57 bentley Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -114,7 +114,8 @@ Normally only a single protocol exists to support a particular
 socket type within a given protocol family.
 However, it is possible that many protocols may exist,
 in which case a particular protocol must be specified in this manner.
-The protocol number to use is particular to the \*(lqcommunication domain\*(rq
+The protocol number to use is particular to the
+.Dq communication domain
 in which communication is to take place; see
 .Xr protocols 5 .
 A value of 0 for

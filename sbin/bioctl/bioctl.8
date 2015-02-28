@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.93 2014/01/18 09:11:12 jsing Exp $
+.\"	$OpenBSD: bioctl.8,v 1.94 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 18 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
 .Op Fl H Ar channel:target[.lun]
-.Op Fl R Ar device \*(Ba channel:target[.lun]
+.Op Fl R Ar device | channel:target[.lun]
 .Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -48,9 +48,9 @@
 .Op Fl c Ar raidlevel
 .Op Fl k Ar keydisk
 .Op Fl l Ar special[,special,...]
-.Op Fl O Ar device \*(Ba channel:target[.lun]
+.Op Fl O Ar device | channel:target[.lun]
 .Op Fl p Ar passfile
-.Op Fl R Ar device \*(Ba channel:target[.lun]
+.Op Fl R Ar device | channel:target[.lun]
 .Op Fl r Ar rounds
 .Ar device
 .Ek
@@ -131,7 +131,7 @@ Enumerate the selected RAID devices.
 This is the default if no other option is given.
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
-.It Fl R Ar device \*(Ba channel:target[.lun]
+.It Fl R Ar device | channel:target[.lun]
 Manually kick off a rebuild of a RAID volume, using
 .Ar device
 or
@@ -224,7 +224,7 @@ device list to create within the
 framework.
 Requires
 .Fl c .
-.It Fl O Ar device \*(Ba channel:target[.lun]
+.It Fl O Ar device | channel:target[.lun]
 Set the state of
 .Ar device
 or

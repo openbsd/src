@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.20 2014/12/09 15:37:14 schwarze Exp $
+.\"	$OpenBSD: re_format.7,v 1.21 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)re_format.7	8.3 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: December 9 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt RE_FORMAT 7
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ and then discusses differences between them and basic regular expressions.
 An ERE is one** or more non-empty**
 .Em branches ,
 separated by
-.Sq \*(Ba .
+.Sq | .
 It matches anything that matches one of the branches.
 .Pp
 A branch is one** or more
@@ -510,11 +510,11 @@ times.
 If the comma is also omitted, then it matches exactly
 .Ar n
 times.
-.It \*(Ba
+.It |
 Used to separate patterns.
 For example,
 the pattern
-.Sq cat\*(Badog
+.Sq cat|dog
 matches either
 .Sq cat
 or
@@ -524,7 +524,7 @@ or
 Basic regular expressions differ in several respects:
 .Bl -bullet -offset 3n
 .It
-.Sq \*(Ba ,
+.Sq | ,
 .Sq + ,
 and
 .Sq ?\&

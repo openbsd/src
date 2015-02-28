@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.71 2015/01/13 14:02:30 schwarze Exp $
+.\"	$OpenBSD: printf.3,v 1.72 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 13 2015 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -451,7 +451,7 @@ The
 .Li double
 argument is rounded and converted in the style
 .Sm off
-.Pf [\-]d Cm \&. No ddd Cm e No \*(Pmdd
+.Pf [\-]d Cm \&. No ddd Cm e No \(+-dd
 .Sm on
 where there is one digit before the
 decimal-point character
@@ -542,7 +542,7 @@ The
 .Li double
 argument is rounded and converted to hexadecimal notation in the style
 .Sm off
-.Pf [\-]0xh Cm \&. No hhh Cm p No [\*(Pm]d
+.Pf [\-]0xh Cm \&. No hhh Cm p No [\(+-]d
 .Sm on
 where the number of digits after the hexadecimal-point character
 is equal to the precision specification.

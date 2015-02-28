@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.37 2015/01/15 11:54:31 sobrado Exp $
+.\" $OpenBSD: iked.conf.5,v 1.38 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -599,7 +599,7 @@ Interface for IKE traffic and encapsulated IPsec traffic.
 IKE traffic on the external interface.
 .It proto udp port 4500
 IKE NAT-Traversal traffic on the external interface.
-.It proto ah \*(Ba esp
+.It proto ah | esp
 Encapsulated IPsec traffic
 on the external interface.
 .It enc0

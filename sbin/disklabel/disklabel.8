@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.111 2014/07/16 13:46:30 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.112 2015/02/28 21:51:57 bentley Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 16 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -304,7 +304,7 @@ At prompts that request a size,
 may be entered to indicate the rest of the available space.
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
-.It Cm \&? \*(Ba h
+.It Cm \&? | h
 Display help message with all available commands.
 There is also
 .Pq simple

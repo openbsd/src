@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.21 2013/07/16 11:13:33 schwarze Exp $
+.\" $OpenBSD: ikectl.8,v 1.22 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -149,7 +149,7 @@ as the currently active CA or into the specified
 .It Xo
 .Cm ca Ar name Cm certificate Ar host
 .Cm create
-.Op Ic server \*(Ba client
+.Op Ic server | client
 .Xc
 Create a private key and certificate for
 .Ar host

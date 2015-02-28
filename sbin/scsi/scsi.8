@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.34 2012/09/04 05:36:26 jmc Exp $
+.\"	$OpenBSD: scsi.8,v 1.35 2015/02/28 21:51:57 bentley Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -40,7 +40,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 4 2012 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt SCSI 8
 .Os
 .Sh NAME
@@ -339,7 +339,7 @@ The
 command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
 and user SCSI commands.
 .Sh BUGS
-.Ic scsi\ -f /dev/rsd0c -c \*q4 0 0 0 0 0\*q
+.Ic scsi\ -f /dev/rsd0c -c \(dq4 0 0 0 0 0\(dq
 permits anyone who can write to
 .Pa /dev/rsd0c
 to format the disk drive.

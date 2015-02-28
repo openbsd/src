@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrusage.2,v 1.16 2014/12/10 07:16:58 guenther Exp $
+.\"	$OpenBSD: getrusage.2,v 1.17 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getrusage.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt GETRUSAGE 2
 .Os
 .Sh NAME
@@ -88,7 +88,9 @@ of the process(es).
 .It Fa ru_maxrss
 the maximum resident set size utilized (in kilobytes).
 .It Fa ru_ixrss
-an \*(lqintegral\*(rq value indicating the amount of memory used
+an
+.Dq integral
+value indicating the amount of memory used
 by the text segment
 that was also shared among other processes.
 This value is expressed in units of kilobytes * ticks-of-execution.
@@ -102,13 +104,16 @@ stack segment of a process (expressed in units of
 kilobytes * ticks-of-execution).
 .It Fa ru_minflt
 the number of page faults serviced without any I/O activity; here
-I/O activity is avoided by \*(lqreclaiming\*(rq a page frame from
+I/O activity is avoided by
+.Dq reclaiming
+a page frame from
 the list of pages awaiting reallocation.
 .It Fa ru_majflt
 the number of page faults serviced that required I/O activity.
 .It Fa ru_nswap
-the number of times a process was \*(lqswapped\*(rq out of main
-memory.
+the number of times a process was
+.Dq swapped
+out of main memory.
 .It Fa ru_inblock
 the number of times the file system had to perform input.
 .It Fa ru_oublock

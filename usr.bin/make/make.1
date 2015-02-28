@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.118 2015/02/07 13:35:00 espie Exp $
+.\"	$OpenBSD: make.1,v 1.119 2015/02/28 21:51:57 bentley Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 7 2015 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -995,7 +995,7 @@ are identical constructs.
 Files are included with either
 .Ql .include <file>
 or
-.Ql .include \*qfile\*q .
+.Ql .include Qq file .
 Variables between the angle brackets or double quotes are expanded
 to form the file name.
 If angle brackets are used, the included makefile is expected to be in
@@ -1514,13 +1514,13 @@ utility exits with one of the following values:
 Normal behavior.
 .It 1
 The target was not up-to date.
-.It \*(Gt1
+.It >1
 An error occurred.
 .El
 .Pp
 Otherwise, the
 .Nm
-utility exits with a value of 0 on success, and \*(Gt0 if an error occurred.
+utility exits with a value of 0 on success, and >0 if an error occurred.
 .Sh SEE ALSO
 .Xr ed 1 ,
 .Xr mkdep 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.83 2014/06/03 02:57:29 lteo Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.84 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 3 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -203,7 +203,7 @@ but may truncate protocol information from name server and NFS packets
 Packets truncated because of a limited
 .Ar snaplen
 are indicated in the output with
-.Dq Op \*(Ba Ns Em proto ,
+.Dq Op | Ns Em proto ,
 where
 .Em proto
 is the name of the protocol level at which the truncation has occurred.
@@ -1485,7 +1485,7 @@ Other flag characters that might appear are
 .Em not
 set)
 and
-.Sq \*(Ba
+.Sq |
 .Pq truncated message, TC, set .
 If the question section doesn't contain exactly one entry,
 .Dq Bq Ar n Ns q

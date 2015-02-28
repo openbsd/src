@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.89 2014/12/03 19:39:57 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.90 2015/02/28 21:51:56 bentley Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 3 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -389,10 +389,7 @@ If the mode is symbolic, a starting value of zero is assumed and the
 mode sets or clears permissions without regard to the process's file mode
 creation mask.
 If the mode is octal, only bits 07777
-.Po
-.Dv S_ISUID \*(Ba S_ISGID \*(Ba S_ISTXT \*(Ba
-.Dv S_IRWXU \*(Ba S_IRWXG \*(Ba S_IRWXO
-.Pc
+.Pq Dv S_ISUID | S_ISGID | S_ISTXT | S_IRWXU | S_IRWXG | S_IRWXO
 of the file's mode bits participate
 in the comparison.
 If the mode is preceded by a dash

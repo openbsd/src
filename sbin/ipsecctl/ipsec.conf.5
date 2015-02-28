@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.147 2015/01/10 15:03:50 sobrado Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.148 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 10 2015 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -473,7 +473,7 @@ Interface for ISAKMP traffic and encapsulated IPsec traffic.
 ISAKMP traffic on the external interface.
 .It proto udp port 4500
 ISAKMP NAT-Traversal traffic on the external interface.
-.It proto ah \*(Ba esp
+.It proto ah | esp
 Encapsulated IPsec traffic
 on the external interface.
 .It enc0

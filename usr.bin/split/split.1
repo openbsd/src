@@ -1,4 +1,4 @@
-.\"	$OpenBSD: split.1,v 1.21 2014/05/27 13:52:30 jmc Exp $
+.\"	$OpenBSD: split.1,v 1.22 2015/02/28 21:51:56 bentley Exp $
 .\"	$NetBSD: split.1,v 1.5 1994/12/21 08:20:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)split.1	8.3 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: May 27 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt SPLIT 1
 .Os
 .Sh NAME
@@ -43,10 +43,10 @@
 .Oo
 .Fl b
 .Sm off
-.Ar byte_count Op Cm k \*(Ba m
+.Ar byte_count Op Cm k | m
 .Sm on
-.No \*(Ba Fl l Ar line_count
-.No \*(Ba Fl p Ar pattern
+.No \&| Fl l Ar line_count
+.No \&| Fl p Ar pattern
 .Oc
 .Op Ar file Op Ar name
 .Sh DESCRIPTION
@@ -71,7 +71,7 @@ The default suffix length is 2.
 .Fl b
 .Sm off
 .Ar byte_count
-.Op Cm k \*(Ba m
+.Op Cm k | m
 .Sm on
 .Xc
 Create files

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.24 2014/12/09 15:37:14 schwarze Exp $
+.\"	$OpenBSD: tr.1,v 1.25 2015/02/28 21:51:57 bentley Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 9 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -271,15 +271,15 @@ The following examples are shown as given to the shell:
 Create a list of the words in file1, one per line, where a word is taken to
 be a maximal string of letters.
 .Pp
-.Dl $ tr -cs \*q[:alpha:]\*q \*q\en\*q < file1
+.Dl $ tr -cs Qo [:alpha:] Qc Qo \en Qc < file1
 .Pp
 Translate the contents of file1 to upper-case.
 .Pp
-.Dl $ tr \*q[:lower:]\*q \*q[:upper:]\*q < file1
+.Dl $ tr Qo [:lower:] Qc Qo [:upper:] Qc < file1
 .Pp
 Strip out non-printable characters from file1.
 .Pp
-.Dl $ tr -cd \*q[:print:]\*q < file1
+.Dl $ tr -cd Qo [:print:] Qc < file1
 .Sh SEE ALSO
 .Xr sed 1
 .Sh STANDARDS

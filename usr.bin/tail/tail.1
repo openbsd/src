@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tail.1,v 1.20 2014/06/03 19:27:31 guenther Exp $
+.\"	$OpenBSD: tail.1,v 1.21 2015/02/28 21:51:57 bentley Exp $
 .\"	$NetBSD: tail.1,v 1.4 1994/11/23 07:42:13 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)tail.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 3 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt TAIL 1
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ The
 option is ignored if there are no
 .Fa file
 arguments and the standard input is a pipe or a FIFO.
-.It Fl n Ar number \*(Ba Fl Ns Ar number
+.It Fl n Ar number | Fl Ns Ar number
 The location is
 .Ar number
 lines.

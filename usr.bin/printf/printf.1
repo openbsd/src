@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.28 2014/10/22 21:00:05 schwarze Exp $
+.\"	$OpenBSD: printf.1,v 1.29 2015/02/28 21:51:57 bentley Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: October 22 2014 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -251,7 +251,7 @@ The
 .Ar argument
 is printed in the style
 .Sm off
-.Pf [\-]d Cm \&. No ddd Cm e No \*(Pmdd
+.Pf [\-]d Cm \&. No ddd Cm e No \(+-dd
 .Sm on
 where there
 is one digit before the decimal point and the number after is equal to
@@ -300,7 +300,7 @@ The
 .Ar argument
 is printed in style
 .Sm off
-.Pf [\-]0xh Cm \&. No hhh Cm p No [\*(Pm]d
+.Pf [\-]0xh Cm \&. No hhh Cm p No [\(+-]d
 .Sm on
 where there is one digit before the hexadecimal point and the number
 after is equal to the precision specification for the argument.
