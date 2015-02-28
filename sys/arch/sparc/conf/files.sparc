@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.97 2014/11/22 22:48:38 miod Exp $
+#	$OpenBSD: files.sparc,v 1.98 2015/02/28 17:54:54 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -294,6 +294,7 @@ file	arch/sparc/fpu/fpu_subr.c
 file	arch/sparc/sparc/autoconf.c		!solbourne
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
+file	arch/sparc/sparc/consinit.c
 file	arch/sparc/sparc/disksubr.c
 file	arch/sparc/sparc/emul.c
 file	arch/sparc/sparc/in_cksum.c		inet
