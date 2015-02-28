@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.174 2015/02/09 22:14:43 uebayasi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.175 2015/02/28 09:22:59 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -206,11 +206,7 @@ void		ehci_dump_exfer(struct ehci_xfer *);
 #define ehci_add_intr_list(sc, ex) \
 	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ex), inext);
 #define ehci_del_intr_list(sc, ex) \
-	do { \
-		TAILQ_REMOVE(&sc->sc_intrhead, (ex), inext); \
-		(ex)->inext.tqe_prev = NULL; \
-	} while (0)
-#define ehci_active_intr_list(ex) ((ex)->inext.tqe_prev != NULL)
+	TAILQ_REMOVE(&(sc)->sc_intrhead, (ex), inext);
 
 struct usbd_bus_methods ehci_bus_methods = {
 	.open_pipe = ehci_open,
@@ -753,6 +749,7 @@ ehci_check_qh_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	}
  done:
 	DPRINTFN(12, ("ehci_check_intr: ex=%p done\n", ex));
+	ehci_del_intr_list(sc, ex);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
 	ehci_idone(xfer);
@@ -803,6 +800,7 @@ ehci_check_itd_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	return;
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
+	ehci_del_intr_list(sc, ex);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
 	ehci_idone(xfer);
@@ -2722,6 +2720,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
+		ehci_del_intr_list(sc, ex);
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
 #ifdef DIAGNOSTIC
@@ -2759,6 +2758,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	s = splusb();
 	ex->ehci_xfer_flags |= EHCI_XFER_ABORTING;
 	xfer->status = status;	/* make software ignore it */
+	ehci_del_intr_list(sc, ex);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);
 	splx(s);
@@ -2830,6 +2830,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (sc->sc_bus.dying) {
 		s = splusb();
 		xfer->status = status;
+		ehci_del_intr_list(sc, ex);
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
@@ -2852,9 +2853,10 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 			tsleep(&ex->ehci_xfer_flags, PZERO, "ehciiaw", 0);
 		return;
 	}
-	ex->ehci_xfer_flags |= EHCI_XFER_ABORTING;
 
+	ex->ehci_xfer_flags |= EHCI_XFER_ABORTING;
 	xfer->status = status;
+	ehci_del_intr_list(sc, ex);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);
 
@@ -2998,8 +3000,7 @@ ehci_device_ctrl_done(struct usbd_xfer *xfer)
 	}
 #endif
 
-	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex);	/* remove from active list */
+	if (xfer->status != USBD_NOMEM) {
 		ehci_free_sqtd_chain(sc, ex);
 	}
 
@@ -3283,8 +3284,7 @@ ehci_device_bulk_done(struct usbd_xfer *xfer)
 	DPRINTFN(10,("ehci_bulk_done: xfer=%p, actlen=%d\n",
 	    xfer, xfer->actlen));
 
-	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex);	/* remove from active list */
+	if (xfer->status != USBD_NOMEM) {
 		ehci_free_sqtd_chain(sc, ex);
 		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 		    usbd_xfer_isread(xfer) ?
@@ -3480,11 +3480,10 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 			timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
 			timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 		}
-		splx(s);
-
+		ehci_add_intr_list(sc, ex);
 		xfer->status = USBD_IN_PROGRESS;
-	} else if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex); /* remove from active list */
+		splx(s);
+	} else if (xfer->status != USBD_NOMEM) {
 		ehci_free_sqtd_chain(sc, ex);
 		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 		    usbd_xfer_isread(xfer) ?
@@ -3789,8 +3788,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 
 	s = splusb();
 	epipe->u.isoc.cur_xfers--;
-	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex);
+	if (xfer->status != USBD_NOMEM) {
 		ehci_rem_free_itd_chain(sc, ex);
 	}
 	splx(s);
