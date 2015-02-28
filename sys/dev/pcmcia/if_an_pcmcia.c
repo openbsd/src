@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.22 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.23 2015/02/28 00:16:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -130,6 +130,7 @@ an_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
+	sc->sc_enabled = 1;
 
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc,
 	    sc->sc_dev.dv_xname);
@@ -145,6 +146,7 @@ an_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_enabled = 0;
 	psc->sc_state = AN_PCMCIA_ATTACHED;
 }
 
