@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.69 2015/01/22 10:27:47 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.70 2015/02/28 08:42:41 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 #include <dev/usb/hid.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -747,15 +748,17 @@ void
 uhidev_get_report_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
 {
 	struct uhidev_async_info *info = priv;
+	char *buf;
 	int len = -1;
 
 	if (err == USBD_NORMAL_COMPLETION || err == USBD_SHORT_XFER) {
 		len = xfer->actlen;
+		buf = KERNADDR(&xfer->dmabuf, 0);
 		if (info->id > 0) {
 			len--;
-			memcpy(info->data, xfer->buffer + 1, len);
+			memcpy(info->data, buf + 1, len);
 		} else {
-			memcpy(info->data, xfer->buffer, len);
+			memcpy(info->data, buf, len);
 		}
 	}
 	info->callback(info->priv, info->id, info->data, len);
@@ -803,7 +806,7 @@ uhidev_get_report_async(struct uhidev_softc *sc, int type, int id, void *data,
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	if (usbd_request_async(xfer, &req, priv, uhidev_get_report_async_cb)) {
+	if (usbd_request_async(xfer, &req, info, uhidev_get_report_async_cb)) {
 		free(info, M_TEMP, sizeof(*info));
 		actlen = -1;
 	}
