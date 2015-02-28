@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.41 2015/01/13 03:43:57 lteo Exp $
+.\"	$OpenBSD: an.4,v 1.42 2015/02/28 05:47:36 mlarkin Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/an.4,v 1.5 2000/03/02 14:53:45 sheldonh Exp $
 .\"
-.Dd $Mdocdate: January 13 2015 $
+.Dd $Mdocdate: February 28 2015 $
 .Dt AN 4
 .Os
 .Sh NAME
@@ -121,10 +121,6 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh EXAMPLES
-The following example scans for available networks:
-.Pp
-.Dl # ifconfig an0 scan
-.Pp
 The following
 .Xr hostname.if 5
 example configures an0 to join network
