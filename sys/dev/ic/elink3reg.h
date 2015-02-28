@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3reg.h,v 1.15 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: elink3reg.h,v 1.16 2015/02/28 11:25:49 miod Exp $	*/
 /*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
 
 /*
@@ -163,18 +163,6 @@
 #define TX_AFTER_X_COLLISIONS	0x02
 #define TX_NO_SQE		0x01
 #define TX_CD_LOST		0x00
-
-/*
- * Window 7 registers.
- * Address and length for a single bus-master DMA transfer.
- */
-#define EP_W7_MASTER_ADDDRES	0x00
-#define EP_W7_RX_ERROR		0x04
-#define EP_W7_MASTER_LEN	0x06
-#define EP_W7_RX_STATUS		0x08
-#define EP_W7_TIMER		0x0a
-#define EP_W7_TX_STATUS		0x0b
-#define EP_W7_MASTER_STATUS	0x0c
 
 /*
  * Window 7 registers.
