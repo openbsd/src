@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.22 2015/02/23 09:40:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.23 2015/03/01 14:56:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4681,8 +4681,8 @@ iwm_mvm_ack_rates(struct iwm_softc *sc, struct iwm_node *in,
 	for (i = IWM_FIRST_OFDM_RATE; i <= IWM_LAST_NON_HT_RATE; i++) {
 		int adj = i - IWM_FIRST_OFDM_RATE;
 		ofdm |= (1 << adj);
-		if (lowest_present_cck > adj)
-			lowest_present_cck = adj;
+		if (lowest_present_ofdm > adj)
+			lowest_present_ofdm = adj;
 	}
 
 	/*
