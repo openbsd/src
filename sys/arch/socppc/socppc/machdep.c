@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2015/01/20 18:34:00 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2015/03/01 17:22:17 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	pargs = -roundup(-stack + 8, 16);
 	newstack = (u_int32_t)(pargs - 32);
 
-	copyin ((void *)(VM_MAX_ADDRESS-0x10), &args, 0x10);
+	copyin ((void *)p->p_p->ps_strings, &args, 0x10);
 
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = newstack;
