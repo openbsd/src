@@ -1,4 +1,4 @@
-/* $OpenBSD: canohost.c,v 1.71 2014/07/15 15:54:14 millert Exp $ */
+/* $OpenBSD: canohost.c,v 1.72 2015/03/01 15:44:40 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -224,19 +224,24 @@ get_socket_address(int sock, int remote, int flags)
 			return NULL;
 	}
 
-	if (addr.ss_family == AF_UNIX) {
+	switch (addr.ss_family) {
+	case AF_INET:
+	case AF_INET6:
+		/* Get the address in ascii. */
+		if ((r = getnameinfo((struct sockaddr *)&addr, addrlen, ntop,
+		    sizeof(ntop), NULL, 0, flags)) != 0) {
+			error("get_socket_address: getnameinfo %d failed: %s",
+			    flags, ssh_gai_strerror(r));
+			return NULL;
+		}
+		return xstrdup(ntop);
+	case AF_UNIX:
 		/* Get the Unix domain socket path. */
 		return xstrdup(((struct sockaddr_un *)&addr)->sun_path);
-	}
-
-	/* Get the address in ascii. */
-	if ((r = getnameinfo((struct sockaddr *)&addr, addrlen, ntop,
-	    sizeof(ntop), NULL, 0, flags)) != 0) {
-		error("get_socket_address: getnameinfo %d failed: %s", flags,
-		    ssh_gai_strerror(r));
+	default:
+		/* We can't look up remote Unix domain sockets. */
 		return NULL;
 	}
-	return xstrdup(ntop);
 }
 
 char *
@@ -345,8 +350,8 @@ get_sock_port(int sock, int local)
 		}
 	}
 
-	/* Unix domain sockets don't have a port number. */
-	if (from.ss_family == AF_UNIX)
+	/* Non-inet sockets don't have a port number. */
+	if (from.ss_family != AF_INET && from.ss_family != AF_INET6)
 		return 0;
 
 	/* Return port number. */
