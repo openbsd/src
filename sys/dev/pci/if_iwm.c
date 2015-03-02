@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.30 2015/03/02 22:19:12 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.31 2015/03/02 22:31:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4789,7 +4789,8 @@ iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 		cmd->ac[txf].edca_txop = 0;
 	}
 
-	cmd->protection_flags |= htole32(IWM_MAC_PROT_FLG_TGG_PROTECT);
+	if (ic->ic_flags & IEEE80211_F_USEPROT)
+		cmd->protection_flags |= htole32(IWM_MAC_PROT_FLG_TGG_PROTECT);
 
 	cmd->filter_flags = htole32(IWM_MAC_FILTER_ACCEPT_GRP);
 }
