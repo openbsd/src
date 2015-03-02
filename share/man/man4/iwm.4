@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.9 2015/02/21 11:48:01 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.10 2015/03/02 16:50:21 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 21 2015 $
+.Dd $Mdocdate: March 2 2015 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless 7260 PCIe Mini Card network adapters.
+Wireless 7260, 7265, and 3160 PCIe Mini Card network adapters.
 .Pp
 These are the modes the
 .Nm
@@ -70,9 +70,9 @@ The driver needs one of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.\".It Pa /etc/firmware/iwm-3160-9
+.It Pa /etc/firmware/iwm-3160-9
 .It Pa /etc/firmware/iwm-7260-9
-.\".It Pa /etc/firmware/iwm-7265-9
+.It Pa /etc/firmware/iwm-7265-9
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
