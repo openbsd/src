@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.29 2015/02/05 02:33:09 schwarze Exp $
+.\"	$OpenBSD: poll.2,v 1.30 2015/03/02 21:17:00 millert Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: February 5 2015 $
+.Dd $Mdocdate: March 2 2015 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -174,6 +174,14 @@ member.
 .Pp
 The significance and semantics of normal, priority, and high-priority
 data are device-specific.
+For example, on
+.Ox ,
+the
+.Dv POLLPRI
+and
+.Dv POLLRDBAND
+flags may be used to detect when out-of-band socket data may be read
+without blocking.
 .Pp
 In addition to I/O multiplexing,
 .Fn poll
@@ -354,6 +362,11 @@ As a result, the
 and
 .Dv POLLRDNORM
 flags are equivalent.
+Similarly, the
+.Dv POLLPRI
+and
+.Dv POLLRDBAND
+flags are also equivalent.
 .Pp
 Internally to the kernel,
 .Fn poll
