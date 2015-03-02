@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.26 2015/03/02 13:53:41 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.27 2015/03/02 13:56:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3408,7 +3408,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	struct mbuf *m;
 	bus_addr_t paddr;
 	uint32_t addr_lo;
-	int error, i, paylen, off, s;
+	int error = 0, i, paylen, off, s;
 	int code;
 	int async, wantresp;
 
