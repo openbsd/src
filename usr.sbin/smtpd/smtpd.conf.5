@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.123 2014/12/13 13:36:03 millert Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.124 2015/03/02 20:20:17 bentley Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 13 2014 $
+.Dd $Mdocdate: March 2 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ and may be omitted.
 .Ic from
 .Op Ic \&!
 .Ic source
-.Aq Ar table
+.Pf < Ar table Ns >
 .Xc
 The rule matches if the connection is made from a client whose address
 is declared in the table
@@ -121,7 +121,7 @@ In addition, finer filtering may be achieved on the sender if desired:
 .It Xo
 .Ic sender
 .Op Ic \&!
-.Aq Ar senders
+.Pf < Ar senders Ns >
 .Xc
 If specified, the rule will only be matched if the sender email address
 is found in the table
@@ -132,12 +132,12 @@ domain if prefixed with @.
 .Pp
 Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
-.It Ic for any Op Ic alias Aq Ar aliases
+.It Ic for any Op Ic alias No < Ns Ar aliases Ns >
 Make the rule match regardless of the domain it is sent to.
 If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for all addresses.
-.It Ic for any virtual Aq Ar vmap
+.It Ic for any virtual No < Ns Ar vmap Ns >
 Make the rule match regardless of the domain it is sent to.
 The
 .Ar vmap
@@ -147,7 +147,7 @@ table will be used as the virtual domain mapping.
 .Op Ic \&!
 .Ic domain
 .Ar domain
-.Op Ic alias Aq Ar aliases
+.Op Ic alias No < Ns Ar aliases Ns >
 .Xc
 This rule applies to mail destined for the specified
 .Ar domain .
@@ -167,8 +167,8 @@ is used for looking up alternative destinations for addresses in this
 .Ic for
 .Op Ic \&!
 .Ic domain
-.Aq Ar domains
-.Op Ic alias Aq Ar aliases
+.Pf < Ar domains Ns >
+.Op Ic alias No < Ns Ar aliases Ns >
 .Xc
 This rule applies to mail destined to domains which are part of the table
 .Ar domains .
@@ -182,7 +182,7 @@ is used for looking up alternative destinations for addresses in these
 .Op Ic \&!
 .Ic domain
 .Ar domain
-.Ic virtual Aq Ar users
+.Ic virtual No < Ns Ar users Ns >
 .Xc
 This rule applies to mail destined for the specified virtual
 .Ar domain .
@@ -206,8 +206,7 @@ table, see
 .Ic for
 .Op Ic \&!
 .Ic domain
-.Ao Ar domains
-.Ac Ic virtual Aq Ar users
+.Pf < Ar domains Ns > Ic virtual No < Ns Ar users Ns >
 .Xc
 This rule applies to mail destined for the virtual domains specified
 in the table
@@ -224,7 +223,7 @@ table, see
 .Ic for
 .Op Ic \&!
 .Ic local
-.Op Ic alias Aq Ar aliases
+.Op Ic alias No < Ns Ar aliases Ns >
 .Xc
 This rule applies to mail destined to
 .Dq localhost
@@ -238,7 +237,7 @@ below for details of how the server name is determined.
 .Ic for
 .Op Ic \&!
 .Ic local
-.Ic virtual Aq Ar vmap
+.Ic virtual No < Ns Ar vmap Ns >
 .Xc
 This rule applies to mail destined to
 .Dq localhost
@@ -253,7 +252,7 @@ Further filtering may be achieved on specific recipients if desired:
 .It Xo
 .Ic recipient
 .Op Ic \&!
-.Aq Ar recipients
+.Pf < Ar recipients Ns >
 .Xc
 If specified, the rule will only be matched if the recipient email address
 is found in the table
@@ -266,7 +265,7 @@ domain if prefixed with
 If the method of delivery is local, a user database may be
 specified to override the system database:
 .Bl -tag -width Ds
-.It Op Ic userbase Aq Ar table
+.It Op Ic userbase No < Ns Ar table Ns >
 Look up users in the table
 .Ar table
 instead of performing system lookups using the
@@ -308,9 +307,9 @@ This parameter may use conversion specifiers that are expanded before use
 .Ic relay
 .Op Ic backup Op Ar mx
 .Op Ic as Ar address
-.Op Ic source Aq Ar source
+.Op Ic source No < Ns Ar source Ns >
 .Op Ic hostname Ar name
-.Op Ic hostnames Aq Ar names
+.Op Ic hostnames No < Ns Ar names Ns >
 .Op Ic pki Ar pkiname
 .Op Ic tls | verify
 .Ek
@@ -406,11 +405,11 @@ as they will prevent proper relaying on the Internet.
 .It Xo
 .Ic relay via
 .Ar host
-.Op Ic auth Aq Ar auth
+.Op Ic auth No < Ns Ar auth Ns >
 .Op Ic as Ar address
-.Op Ic source Aq Ar source
+.Op Ic source No < Ns Ar source Ns >
 .Op Ic hostname Ar name
-.Op Ic hostnames Aq Ar names
+.Op Ic hostnames No < Ns Ar names Ns >
 .Op Ic pki Ar pkiname
 .Op Ic verify
 .Xc
@@ -479,7 +478,7 @@ If the
 parameter is specified,
 .Xr smtpd 8
 will explicitly bind to an address found in the table referenced by
-.Aq Ar source
+.Pf < Ar source Ns >
 when connecting to the relay.
 If the table contains more than one address, they are picked in turn each
 time a new connection is opened.
@@ -594,10 +593,10 @@ Changing the default value might degrade performances.
 .Op Ic port Ar port
 .Op Ic tls | tls-require | tls-require verify | smtps | secure
 .Op Ic pki Ar pkiname
-.Op Ic auth | auth-optional Op Aq Ar authtable
+.Op Ic auth | auth-optional Op < Ns Ar authtable Ns >
 .Op Ic tag Ar tag
 .Op Ic hostname Ar hostname
-.Op Ic hostnames Aq Ar names
+.Op Ic hostnames No < Ns Ar names Ns >
 .Op Ic mask-source
 .Op Ic no-dsn
 .Ek
@@ -652,7 +651,9 @@ then a client may only start an SMTP transaction after a
 successful authentication.
 Any remote sender that passed SMTPAUTH is treated as if
 it was the server's local user that was sending the mail.
-This means that filter rules using "from local" will be matched.
+This means that filter rules using
+.Ic from local
+will be matched.
 If
 .Ic auth-optional
 is specified, then SMTPAUTH is not required to establish an
@@ -694,8 +695,11 @@ if it is found in the mapping.
 .Pp
 If the
 .Ic mask-source
-parameter is used, then the listener will skip the "from" part
-when prepending the "Received" header.
+parameter is used, then the listener will skip the
+.Ic from
+part when prepending the
+.Dq Received
+header.
 .Pp
 If the
 .Ic no-dsn
@@ -768,7 +772,9 @@ parameter is not specified, it is read with
 at startup.
 If
 .Ar key
-is "stdin", then it is read from the standard input at startup.
+is
+.Ic stdin ,
+then it is read from the standard input at startup.
 .Pp
 The only supported algorithm is AES-256 in GCM mode.
 Envelopes and messages may be inspected using the
@@ -839,54 +845,60 @@ descriptions.
 .Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
 Such directives (for example
-.Ar deliver to maildir ,
-.Ar deliver to mda )
+.Ic deliver to maildir ,
+.Ic deliver to mda )
 may use format specifiers which will be expanded before delivery or
 relaying.
 The following formats are currently supported:
-.Bd -literal -offset indent
-%{sender}	     sender email address
-%{sender.user}	     user part of the sender email address
-%{sender.domain}     domain part of the sender email address
-%{rcpt}              recipient email address
-%{rcpt.user}	     user part of the recipient email address
-%{rcpt.domain}	     domain part of the recipient email address
-%{dest}              recipient email address after expansion
-%{dest.user}	     user part after expansion
-%{dest.domain}	     domain part after expansion
-%{user.username}     local user
-%{user.directory}    home directory of the local user
-.Ed
+.Bl -column %{user.directory} -offset indent
+.It %{sender}         Ta sender email address
+.It %{sender.user}    Ta user part of the sender email address
+.It %{sender.domain}  Ta domain part of the sender email address
+.It %{rcpt}           Ta recipient email address
+.It %{rcpt.user}      Ta user part of the recipient email address
+.It %{rcpt.domain}    Ta domain part of the recipient email address
+.It %{dest}           Ta recipient email address after expansion
+.It %{dest.user}      Ta user part after expansion
+.It %{dest.domain}    Ta domain part after expansion
+.It %{user.username}  Ta local user
+.It %{user.directory} Ta home directory of the local user
+.El
 .Pp
 Expansion formats also support partial expansion using the optional
 bracket notations with substring offset.
-For example, with recipient domain "example.org":
-.Bd -literal -offset indent
-%{rcpt.domain[0]}	expands to "e"
-%{rcpt.domain[1]}	expands to "x"
-%{rcpt.domain[8:]}	expands to "org"
-%{rcpt.domain[-3:]}	expands to "org"
-%{rcpt.domain[0:6]}	expands to "example"
-%{rcpt.domain[0:-4]}	expands to "example"
-.Ed
+For example, with recipient domain
+.Dq example.org :
+.Bl -column %{rcpt.domain[0:-4]} -offset indent
+.It %{rcpt.domain[0]}    Ta expands to Dq e
+.It %{rcpt.domain[1]}    Ta expands to Dq x
+.It %{rcpt.domain[8:]}   Ta expands to Dq org
+.It %{rcpt.domain[-3:]}  Ta expands to Dq org
+.It %{rcpt.domain[0:6]}  Ta expands to Dq example
+.It %{rcpt.domain[0:-4]} Ta expands to Dq example
+.El
 .Pp
 In addition, modifiers may be applied to the token.
-For example, with recipient "User+Tag@Example.org":
-.Bd -literal -offset indent
-%{rcpt:lowercase}	expands to "user+tag@example.org"
-%{rcpt:uppercase}	expands to "USER+TAG@EXAMPLE.ORG"
-%{rcpt:strip}		expands to "User@Example.org"
-%{rcpt:lowercase|strip}	expands to "user@example.org"
-.Ed
+For example, with recipient
+.Dq User+Tag@Example.org :
+.Bl -column %{rcpt:lowercase|strip} -offset indent
+.It %{rcpt:lowercase}       Ta expands to Dq user+tag@example.org
+.It %{rcpt:uppercase}       Ta expands to Dq USER+TAG@EXAMPLE.ORG
+.It %{rcpt:strip}           Ta expands to Dq User@Example.org
+.It %{rcpt:lowercase|strip} Ta expands to Dq user@example.org
+.El
 .Pp
 For security concerns, expanded values are sanitized and potentially
-dangerous characters are replaced with ":".
-In situations where they are desirable, the "raw" modifier may be applied.
-For example, with recipient "user+t?g@example.org":
-.Bd -literal -offset indent
-%{rcpt}		expands to "user+t:g@example.org"
-%{rcpt:raw}	expands to "user+t?g@example.org"
-.Ed
+dangerous characters are replaced with
+.Sq \&: .
+In situations where they are desirable, the
+.Dq raw
+modifier may be applied.
+For example, with recipient
+.Dq user+t?g@example.org :
+.Bl -column %{rcpt:raw} -offset indent
+.It %{rcpt}     Ta expands to Dq user+t:g@example.org
+.It %{rcpt:raw} Ta expands to Dq user+t?g@example.org
+.El
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX"
 .It Pa /etc/mail/smtpd.conf
