@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.5 2015/02/23 10:25:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.6 2015/03/02 13:46:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -138,7 +138,6 @@ struct iwm_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_HWQUEUE))
 
 #define IWM_UCODE_SECT_MAX 6
-#define IWM_FWNAME "iwm-7260-9"
 #define IWM_FWDMASEGSZ (192*1024)
 /* sanity check value */
 #define IWM_FWMAXSIZE (2*1024*1024)

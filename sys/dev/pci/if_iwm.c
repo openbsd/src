@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.23 2015/03/01 14:56:34 kettenis Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.24 2015/03/02 13:46:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6501,8 +6501,23 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wantresp = -1;
 
-	/* only one firmware possibility for now */
-	sc->sc_fwname = IWM_FWNAME;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_WL_3160_1:
+	case PCI_PRODUCT_INTEL_WL_3160_2:
+		sc->sc_fwname = "iwm-3160-9";
+		break;
+	case PCI_PRODUCT_INTEL_WL_7260_1:
+	case PCI_PRODUCT_INTEL_WL_7260_2:
+		sc->sc_fwname = "iwm-7260-9";
+		break;
+	case PCI_PRODUCT_INTEL_WL_7265_1:
+	case PCI_PRODUCT_INTEL_WL_7265_2:
+		sc->sc_fwname = "iwm-7265-9";
+		break;
+	default:
+		printf("%s: unknown adapter type\n", DEVNAME(sc));
+		return;
+	}
 	sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 
 	/*
