@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.28 2015/03/02 13:59:38 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.29 2015/03/02 22:12:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3715,7 +3715,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 
 	/* for data frames, use RS table */
 	if (type == IEEE80211_FC0_TYPE_DATA) {
-		if (sc->sc_fixed_ridx != -1) {
+		if (sc->sc_ic.ic_fixed_rate != -1) {
 			tx->initial_rate_index = sc->sc_fixed_ridx;
 		} else {
 			tx->initial_rate_index = (nrates-1) - in->in_ni.ni_txrate;
