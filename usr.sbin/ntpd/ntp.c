@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.129 2015/02/12 01:54:57 reyk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.130 2015/03/02 10:31:17 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 {
 	int			 a, b, nfds, i, j, idx_peers, timeout;
 	int			 hotplugfd, nullfd, pipe_dns[2], idx_clients;
-	int			 ctls, boundaries;
+	int			 ctls;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
 	u_int			 ctl_cnt;
@@ -353,7 +353,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		}
 		ctls = i;
 
-		boundaries = 0;
 		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
 			if (constraint_query(cstr) == -1)
 				continue;
@@ -361,7 +360,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 			pfd[i].events = POLLIN;
 			i++;
 		}
-		boundaries = i;
 
 		now = getmonotime();
 		if (constraint_cnt)
