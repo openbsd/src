@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.27 2015/03/02 13:08:18 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.28 2015/03/02 13:13:51 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -438,18 +438,26 @@ athn_usb_open_pipes(struct athn_usb_softc *usc)
 void
 athn_usb_close_pipes(struct athn_usb_softc *usc)
 {
-	if (usc->tx_data_pipe != NULL)
+	if (usc->tx_data_pipe != NULL) {
 		usbd_close_pipe(usc->tx_data_pipe);
-	if (usc->rx_data_pipe != NULL)
-		usbd_close_pipe(usc->rx_data_pipe);
-	if (usc->tx_intr_pipe != NULL)
-		usbd_close_pipe(usc->tx_intr_pipe);
-	if (usc->rx_intr_pipe != NULL) {
-		usbd_abort_pipe(usc->rx_intr_pipe);
-		usbd_close_pipe(usc->rx_intr_pipe);
+		usc->tx_data_pipe = NULL;
 	}
-	if (usc->ibuf != NULL)
+	if (usc->rx_data_pipe != NULL) {
+		usbd_close_pipe(usc->rx_data_pipe);
+		usc->rx_data_pipe = NULL;
+	}
+	if (usc->tx_intr_pipe != NULL) {
+		usbd_close_pipe(usc->tx_intr_pipe);
+		usc->tx_intr_pipe = NULL;
+	}
+	if (usc->rx_intr_pipe != NULL) {
+		usbd_close_pipe(usc->rx_intr_pipe);
+		usc->rx_intr_pipe = NULL;
+	}
+	if (usc->ibuf != NULL) {
 		free(usc->ibuf, M_USBDEV, 0);
+		usc->ibuf = NULL;
+	}
 }
 
 int
