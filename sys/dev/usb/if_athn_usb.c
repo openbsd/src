@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.30 2015/03/02 14:46:02 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.31 2015/03/02 15:05:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1042,7 +1042,9 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
 	uint32_t reg, imask;
+#ifndef IEEE80211_STA_ONLY
 	uint8_t sta_index;
+#endif
 	int s, error;
 
 	timeout_del(&sc->calib_to);
@@ -1052,9 +1054,19 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	DPRINTF(("newstate %d -> %d\n", ostate, cmd->state));
 
 	if (ostate == IEEE80211_S_RUN) {
-		sta_index = ((struct athn_node *)ic->ic_bss)->sta_index;
-		(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
-		    &sta_index, sizeof(sta_index), NULL);
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			/* XXX really needed? */
+			sta_index = ((struct athn_node *)ic->ic_bss)->sta_index;
+			(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
+			    &sta_index, sizeof(sta_index), NULL);
+		}
+#endif
+		reg = AR_READ(sc, AR_RX_FILTER);
+		reg = (reg & ~AR_RX_FILTER_MYBEACON) |
+		    AR_RX_FILTER_BEACON;
+		AR_WRITE(sc, AR_RX_FILTER, reg);
+		AR_WRITE_BARRIER(sc);
 	}
 	switch (cmd->state) {
 	case IEEE80211_S_INIT:
@@ -1079,8 +1091,13 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
 
-		/* Create node entry for our BSS. */
-		error = athn_usb_create_node(usc, ic->ic_bss);
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			/* Create node entry for our BSS */
+			/* XXX really needed? breaks station mode on down/up */
+			error = athn_usb_create_node(usc, ic->ic_bss);
+		}
+#endif
 
 		athn_set_bss(sc, ic->ic_bss);
 		athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
