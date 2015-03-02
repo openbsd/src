@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcat.c,v 1.14 2015/01/15 03:54:12 millert Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.15 2015/03/02 21:41:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -24,7 +24,7 @@
  * full size of dst, not space left).  At most dsize-1 characters
  * will be copied.  Always NUL terminates (unless dsize <= strlen(dst)).
  * Returns strlen(src) + MIN(dsize, strlen(initial dst)).
- * If retval >= siz, truncation occurred.
+ * If retval >= dsize, truncation occurred.
  */
 size_t
 strlcat(char *dst, const char *src, size_t dsize)
