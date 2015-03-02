@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.28 2015/03/02 13:13:51 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.29 2015/03/02 13:47:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -126,6 +126,7 @@ uint32_t	athn_usb_read(struct athn_softc *, uint32_t);
 void		athn_usb_write(struct athn_softc *, uint32_t, uint32_t);
 void		athn_usb_write_barrier(struct athn_softc *);
 int		athn_usb_media_change(struct ifnet *);
+void		athn_usb_next_scan(void *);
 int		athn_usb_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		athn_usb_newstate_cb(struct athn_usb_softc *, void *);
@@ -350,10 +351,7 @@ athn_usb_attachhook(void *xsc)
 #endif
 	ic->ic_newstate = athn_usb_newstate;
 	ic->ic_media.ifm_change = athn_usb_media_change;
-
-	/* Firmware cannot handle more than 8 STAs. */
-	if (ic->ic_max_nnodes > AR_USB_MAX_STA)
-		ic->ic_max_nnodes = AR_USB_MAX_STA;
+	timeout_set(&sc->scan_to, athn_usb_next_scan, usc);
 
 	ops->rx_enable = athn_usb_rx_enable;
 	splx(s);
@@ -984,6 +982,27 @@ athn_usb_media_change(struct ifnet *ifp)
 	return (error);
 }
 
+void
+athn_usb_next_scan(void *arg)
+{
+	struct athn_usb_softc *usc = arg;
+	struct athn_softc *sc = &usc->sc_sc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
+
+	if (usbd_is_dying(usc->sc_udev))
+		return;
+
+	usbd_ref_incr(usc->sc_udev);
+
+	s = splnet();
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		ieee80211_next_scan(&ic->ic_if);
+	splx(s);
+
+	usbd_ref_decr(usc->sc_udev);
+}
+
 int
 athn_usb_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
     int arg)
@@ -1124,6 +1143,7 @@ athn_usb_node_leave_cb(struct athn_usb_softc *usc, void *arg)
 
 	(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
 	    &sta_index, sizeof(sta_index), NULL);
+	usc->nnodes--;
 }
 
 int
@@ -1191,6 +1211,10 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	struct ar_htc_target_rate rate;
 	int error;
 
+	/* Firmware cannot handle more than 8 STAs. */
+	if (usc->nnodes > AR_USB_MAX_STA)
+		return ENOBUFS;
+
 	an->sta_index = IEEE80211_AID(ni->ni_associd);
 
 	/* Create node entry on target. */
@@ -1207,6 +1231,7 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	    &sta, sizeof(sta), NULL);
 	if (error != 0)
 		return (error);
+	usc->nnodes++;
 
 	/* Setup supported rates. */
 	memset(&rate, 0, sizeof(rate));
@@ -2240,6 +2265,7 @@ athn_usb_init(struct ifnet *ifp)
 	    &sta, sizeof(sta), NULL);
 	if (error != 0)
 		goto fail;
+	usc->nnodes++;
 
 	/* Update target capabilities. */
 	memset(&hic, 0, sizeof(hic));
@@ -2322,6 +2348,7 @@ athn_usb_stop(struct ifnet *ifp)
 	sta_index = 0;
 	(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
 	    &sta_index, sizeof(sta_index), NULL);
+	usc->nnodes--;
 
 	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_DRAIN_TXQ_ALL);
