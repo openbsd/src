@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.3 2015/02/09 05:22:56 jsing Exp $ */
+/* $OpenBSD: ciphers.c,v 1.4 2015/03/02 07:51:25 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -138,7 +138,7 @@ ciphers_main(int argc, char **argv)
 		}
 		if (ciphers_config.verbose > 1) {
 			value = SSL_CIPHER_get_value(cipher);
-			fprintf(stdout, "%-*s0x%02hX,0x%02hX - ", 10, "",
+			fprintf(stdout, "%-*s0x%02X,0x%02X - ", 10, "",
 				((value >> 8) & 0xff), (value & 0xff));
 		}
 		desc = SSL_CIPHER_description(cipher, NULL, 0);
