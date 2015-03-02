@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.26 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.27 2015/03/02 13:08:18 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -290,6 +290,8 @@ athn_usb_detach(struct device *self, int flags)
 
 	/* Wait for all async commands to complete. */
 	athn_usb_wait_async(usc);
+
+	usbd_ref_wait(usc->sc_udev);
 
 	/* Abort and close Tx/Rx pipes. */
 	athn_usb_close_pipes(usc);
@@ -956,7 +958,11 @@ athn_usb_write_barrier(struct athn_softc *sc)
 int
 athn_usb_media_change(struct ifnet *ifp)
 {
+	struct athn_usb_softc *usc = (struct athn_usb_softc *)ifp->if_softc;
 	int error;
+
+	if (usbd_is_dying(usc->sc_udev))
+		return ENXIO;
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
@@ -1014,7 +1020,8 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		/* Make the LED blink while scanning. */
 		athn_set_led(sc, !sc->led_state);
 		(void)athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
-		timeout_add_msec(&sc->scan_to, 200);
+		if (!usbd_is_dying(usc->sc_udev))
+			timeout_add_msec(&sc->scan_to, 200);
 		break;
 	case IEEE80211_S_AUTH:
 		athn_set_led(sc, 0);
@@ -2048,10 +2055,16 @@ int
 athn_usb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct athn_softc *sc = ifp->if_softc;
+	struct athn_usb_softc *usc = (struct athn_usb_softc *)sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error = 0;
+
+	if (usbd_is_dying(usc->sc_udev))
+		return ENXIO;
+
+	usbd_ref_incr(usc->sc_udev);
 
 	s = splnet();
 
@@ -2105,6 +2118,9 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 	}
 	splx(s);
+
+	usbd_ref_decr(usc->sc_udev);
+
 	return (error);
 }
 
