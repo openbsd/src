@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.65 2015/03/01 18:38:05 sebastia Exp $
+# $OpenBSD: rcctl.sh,v 1.66 2015/03/02 06:58:42 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -133,7 +133,7 @@ svc_is_base()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	grep "start_daemon " /etc/rc | cut -d ' ' -f2- | grep -qw -- ${_svc}
+	grep -E 'start_daemon[[:space:]]+[[:alnum:]]' /etc/rc | cut -d ' ' -f2- | grep -qw -- ${_svc}
 }
 
 svc_is_special()
