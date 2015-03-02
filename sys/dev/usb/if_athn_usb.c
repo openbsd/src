@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.32 2015/03/02 15:18:37 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.33 2015/03/02 15:23:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -895,7 +895,7 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 	error = tsleep(&usc->wait_cmd_id, 0, "athnwmi", ATHN_USB_CMD_TIMEOUT);
 	if (error) {
 		if (error == EWOULDBLOCK) {
-			printf("%s: firmware command 0x%x timed out)\n",
+			printf("%s: firmware command 0x%x timed out\n",
 			    usc->usb_dev.dv_xname, cmd_id);
 			error = ETIMEDOUT;
 		}
