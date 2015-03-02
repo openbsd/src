@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.103 2015/02/23 13:30:02 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.104 2015/03/02 14:48:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -846,6 +846,7 @@ mparse_wait(struct mparse *curp)
 		perror("wait");
 		exit((int)MANDOCLEVEL_SYSERR);
 	}
+	curp->child = 0;
 	if (WIFSIGNALED(status)) {
 		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
 		    "gunzip died from signal %d", WTERMSIG(status));
