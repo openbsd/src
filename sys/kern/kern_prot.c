@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.62 2015/01/17 17:49:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.63 2015/03/02 20:46:50 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -988,15 +988,18 @@ crdup(struct ucred *cr)
 /*
  * Convert the userspace xucred to a kernel ucred
  */
-void
+int
 crfromxucred(struct ucred *cr, const struct xucred *xcr)
 {
+	if (xcr->cr_ngroups < 0 || xcr->cr_ngroups > NGROUPS_MAX)
+		return (EINVAL);
 	cr->cr_ref = 1;
 	cr->cr_uid = xcr->cr_uid;
 	cr->cr_gid = xcr->cr_gid;
 	cr->cr_ngroups = xcr->cr_ngroups;
 	memcpy(cr->cr_groups, xcr->cr_groups,
 	    sizeof(cr->cr_groups[0]) * xcr->cr_ngroups);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucred.h,v 1.10 2015/01/15 23:58:39 deraadt Exp $	*/
+/*	$OpenBSD: ucred.h,v 1.11 2015/03/02 20:46:50 guenther Exp $	*/
 /*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ struct xucred {
 
 #define SUSER_NOACCT	0x1	/* don't mark accounting flags */
 
-void		crfromxucred(struct ucred *, const struct xucred *);
+int		crfromxucred(struct ucred *, const struct xucred *);
 void		crset(struct ucred *, const struct ucred *);
 struct ucred	*crcopy(struct ucred *cr);
 struct ucred	*crdup(struct ucred *cr);
