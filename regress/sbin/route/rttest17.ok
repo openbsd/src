@@ -1,0 +1,5 @@
+Routing tables
+
+Internet:
+Destination        Gateway            Flags   Refs      Use   Mtu  Prio Iface
+10.8.1/24          192.0.2.4          UGS        0        0 32768     8 lo10004

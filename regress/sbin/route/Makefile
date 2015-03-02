@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2014/11/26 11:55:08 mpi Exp $
+# $OpenBSD: Makefile,v 1.6 2015/03/02 21:43:28 claudio Exp $
 
 RDOMAIN?=	5
 
@@ -203,6 +203,39 @@ rttest${n}:
 	${RCMD} change fd88::666 -ifp lo10002
 	${RCMD} show -inet6 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Removing 2nd-last multipath route (head)
+n=	17
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} delete -mpath 10.8.1/24 192.0.2.3
+	${RCMD} show -inet -gateway 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Removing 2nd-last multipath route (tail)
+n=	18
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} delete -mpath 10.8.1/24 192.0.2.4
+	${RCMD} show -inet -gateway 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Removing 2nd-last multipath route (head of dupedkey chain)
+n=	19
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add 10.8.1/24 192.0.2.1
+	${RCMD} add -mpath 10.8.1/25 192.0.2.3
+	${RCMD} add -mpath 10.8.1/25 192.0.2.4
+	${RCMD} add 10.8.1/26 192.0.2.2
+	${RCMD} delete -mpath 10.8.1/25 192.0.2.3
+	${RCMD} show -inet -gateway 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
