@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.6 2015/03/02 13:46:40 jsg Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.7 2015/03/02 13:51:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -469,6 +469,8 @@ struct iwm_softc {
 
 	struct iwm_notif_statistics sc_stats;
 	int sc_noise;
+
+	int host_interrupt_operation_mode;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

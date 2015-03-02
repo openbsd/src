@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.24 2015/03/02 13:46:40 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.25 2015/03/02 13:51:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -1385,25 +1385,27 @@ iwm_apm_init(struct iwm_softc *sc)
 		goto out;
 	}
 
-	/*
-	 * This is a bit of an abuse - This is needed for 7260 / 3160
-	 * only check host_interrupt_operation_mode even if this is
-	 * not related to host_interrupt_operation_mode.
-	 *
-	 * Enable the oscillator to count wake up time for L1 exit. This
-	 * consumes slightly more power (100uA) - but allows to be sure
-	 * that we wake up from L1 on time.
-	 *
-	 * This looks weird: read twice the same register, discard the
-	 * value, set a bit, and yet again, read that same register
-	 * just to discard the value. But that's the way the hardware
-	 * seems to like it.
-	 */
-	iwm_read_prph(sc, IWM_OSC_CLK);
-	iwm_read_prph(sc, IWM_OSC_CLK);
-	iwm_set_bits_prph(sc, IWM_OSC_CLK, IWM_OSC_CLK_FORCE_CONTROL);
-	iwm_read_prph(sc, IWM_OSC_CLK);
-	iwm_read_prph(sc, IWM_OSC_CLK);
+	if (sc->host_interrupt_operation_mode) {
+		/*
+		 * This is a bit of an abuse - This is needed for 7260 / 3160
+		 * only check host_interrupt_operation_mode even if this is
+		 * not related to host_interrupt_operation_mode.
+		 *
+		 * Enable the oscillator to count wake up time for L1 exit. This
+		 * consumes slightly more power (100uA) - but allows to be sure
+		 * that we wake up from L1 on time.
+		 *
+		 * This looks weird: read twice the same register, discard the
+		 * value, set a bit, and yet again, read that same register
+		 * just to discard the value. But that's the way the hardware
+		 * seems to like it.
+		 */
+		iwm_read_prph(sc, IWM_OSC_CLK);
+		iwm_read_prph(sc, IWM_OSC_CLK);
+		iwm_set_bits_prph(sc, IWM_OSC_CLK, IWM_OSC_CLK_FORCE_CONTROL);
+		iwm_read_prph(sc, IWM_OSC_CLK);
+		iwm_read_prph(sc, IWM_OSC_CLK);
+	}
 
 	/*
 	 * Enable DMA clock and wait for it to stabilize.
@@ -1628,7 +1630,10 @@ iwm_nic_rx_init(struct iwm_softc *sc)
 	    IWM_RX_QUEUE_SIZE_LOG << IWM_FH_RCSR_RX_CONFIG_RBDCB_SIZE_POS);
 
 	IWM_WRITE_1(sc, IWM_CSR_INT_COALESCING, IWM_HOST_INT_TIMEOUT_DEF);
-	IWM_SETBITS(sc, IWM_CSR_INT_COALESCING, IWM_HOST_INT_OPER_MODE);
+
+	/* W/A for interrupt coalescing bug in 7260 and 3160 */
+	if (sc->host_interrupt_operation_mode)
+		IWM_SETBITS(sc, IWM_CSR_INT_COALESCING, IWM_HOST_INT_OPER_MODE);
 
 	/*
 	 * Thus sayeth el jefe (iwlwifi) via a comment:
@@ -6505,14 +6510,17 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_WL_3160_1:
 	case PCI_PRODUCT_INTEL_WL_3160_2:
 		sc->sc_fwname = "iwm-3160-9";
+		sc->host_interrupt_operation_mode = 1;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7260_1:
 	case PCI_PRODUCT_INTEL_WL_7260_2:
 		sc->sc_fwname = "iwm-7260-9";
+		sc->host_interrupt_operation_mode = 1;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7265_1:
 	case PCI_PRODUCT_INTEL_WL_7265_2:
 		sc->sc_fwname = "iwm-7265-9";
+		sc->host_interrupt_operation_mode = 0;
 		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
