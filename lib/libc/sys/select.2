@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.37 2014/03/13 10:12:11 florian Exp $
+.\"	$OpenBSD: select.2,v 1.38 2015/03/02 21:15:34 millert Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: March 13 2014 $
+.Dd $Mdocdate: March 2 2015 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -57,6 +57,8 @@ and
 to see if some of their descriptors
 are ready for reading, are ready for writing, or have an exceptional
 condition pending, respectively.
+Exceptional conditions include the presence of out-of-band data
+on a socket.
 The first
 .Fa nfds
 descriptors are checked in each set;
