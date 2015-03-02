@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.29 2015/03/02 13:47:08 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.30 2015/03/02 14:46:02 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -117,8 +117,6 @@ int		athn_usb_htc_msg(struct athn_usb_softc *, uint16_t, void *,
 int		athn_usb_htc_setup(struct athn_usb_softc *);
 int		athn_usb_htc_connect_svc(struct athn_usb_softc *, uint16_t,
 		    uint8_t, uint8_t, uint8_t *);
-void		athn_usb_wmieof(struct usbd_xfer *, void *,
-		    usbd_status);
 int		athn_usb_wmi_xcmd(struct athn_usb_softc *, uint16_t, void *,
 		    int, void *);
 int		athn_usb_read_rom(struct athn_softc *);
@@ -598,7 +596,6 @@ athn_usb_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % ATHN_USB_HOST_CMD_RING_COUNT;
 	}
-	wakeup(ring);
 	splx(s);
 }
 
@@ -610,8 +607,11 @@ athn_usb_do_async(struct athn_usb_softc *usc,
 	struct athn_usb_host_cmd *cmd;
 	int s;
 
-	if (ring->queued)
+	if (ring->queued == ATHN_USB_HOST_CMD_RING_COUNT) {
+		printf("%s: host cmd queue overrun\n", usc->usb_dev.dv_xname);
 		return;	/* XXX */
+	}
+	
 	s = splusb();
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
@@ -629,8 +629,7 @@ void
 athn_usb_wait_async(struct athn_usb_softc *usc)
 {
 	/* Wait for all queued asynchronous commands to complete. */
-	while (usc->cmdq.queued > 0)
-		tsleep(&usc->cmdq, 0, "cmdq", 0);
+	usb_wait_task(usc->sc_udev, &usc->sc_task);
 }
 
 int
@@ -838,19 +837,6 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 	return (0);
 }
 
-void
-athn_usb_wmieof(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
-{
-	struct athn_usb_softc *usc = priv;
-
-	if (__predict_false(status == USBD_STALLED))
-		usbd_clear_endpoint_stall_async(usc->tx_intr_pipe);
-
-	usc->wmi_done = 1;
-	wakeup(&usc->wmi_done);
-}
-
 int
 athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
     int ilen, void *obuf)
@@ -859,6 +845,24 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 	struct ar_htc_frame_hdr *htc;
 	struct ar_wmi_cmd_hdr *wmi;
 	int s, error;
+
+	if (usbd_is_dying(usc->sc_udev))
+		return ENXIO;
+
+	s = splusb();
+	while (usc->wait_cmd_id) {
+		/* 
+		 * The previous USB transfer is not done yet. We can't use
+		 * data->xfer until it is done or we'll cause major confusion
+		 * in the USB stack.
+		 */
+		tsleep(&usc->wait_cmd_id, 0, "athnwmx", ATHN_USB_CMD_TIMEOUT);
+		if (usbd_is_dying(usc->sc_udev)) {
+			splx(s);
+			return ENXIO;
+		}
+	}
+	splx(s);
 
 	htc = (struct ar_htc_frame_hdr *)data->buf;
 	memset(htc, 0, sizeof(*htc));
@@ -872,12 +876,11 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 
 	memcpy(&wmi[1], ibuf, ilen);
 
-	usbd_setup_xfer(data->xfer, usc->tx_intr_pipe, usc, data->buf,
+	usbd_setup_xfer(data->xfer, usc->tx_intr_pipe, NULL, data->buf,
 	    sizeof(*htc) + sizeof(*wmi) + ilen,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY, ATHN_USB_CMD_TIMEOUT,
-	    athn_usb_wmieof);
+	    NULL);
 	s = splusb();
-	usc->wmi_done = 0;
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0)) {
 		splx(s);
@@ -885,12 +888,26 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 	}
 	usc->obuf = obuf;
 	usc->wait_cmd_id = cmd_id;
-	/* Wait for WMI command to complete. */
-	error = tsleep(&usc->wait_cmd_id, 0, "athnwmi", hz);
+	/* 
+	 * Wait for WMI command complete interrupt. In case it does not fire
+	 * wait until the USB transfer times out to avoid racing the transfer.
+	 */
+	error = tsleep(&usc->wait_cmd_id, 0, "athnwmi", ATHN_USB_CMD_TIMEOUT);
+	if (error) {
+		if (error == EWOULDBLOCK) {
+			printf("%s: firmware command 0x%x timed out)\n",
+			    usc->usb_dev.dv_xname, cmd_id);
+			error = ETIMEDOUT;
+		}
+	}
+
+	/* 
+	 * Both the WMI command and transfer are done or have timed out.
+	 * Allow other threads to enter this function and use data->xfer.
+	 */
 	usc->wait_cmd_id = 0;
-	/* Most of the time this would have complete already. */
-	while (__predict_false(!usc->wmi_done))
-		tsleep(&usc->wmi_done, 0, "athnwmi", 0);
+	wakeup(&usc->wait_cmd_id);
+
 	splx(s);
 	return (error);
 }
@@ -1520,7 +1537,6 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, int len)
 			memcpy(usc->obuf, &wmi[1], len - sizeof(*wmi));
 		}
 		/* Notify caller of completion. */
-		usc->wait_cmd_id = 0;
 		wakeup(&usc->wait_cmd_id);
 		return;
 	}
@@ -1558,6 +1574,15 @@ athn_usb_intr(struct usbd_xfer *xfer, void *priv,
 		DPRINTF(("intr status=%d\n", status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(usc->rx_intr_pipe);
+		else if (status == USBD_IOERROR) {
+			/*
+			 * The device has gone away. If async commands are
+			 * pending or running ensure the device dies ASAP
+			 * and any blocked processes are woken up.
+			 */
+			if (usc->cmdq.queued > 0)
+				usbd_deactivate(usc->sc_udev);
+		}
 		return;
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);

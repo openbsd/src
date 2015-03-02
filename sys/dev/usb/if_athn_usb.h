@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.5 2015/03/02 13:47:08 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.6 2015/03/02 14:46:02 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -438,7 +438,6 @@ struct athn_usb_softc {
 	struct ar_wmi_cmd_reg_write	wbuf[AR_MAX_WRITE_COUNT];
 	int				wcount;
 
-	int				wmi_done;
 	uint16_t			wmi_seq_no;
 	uint16_t			wait_cmd_id;
 	uint16_t			wait_msg_id;
