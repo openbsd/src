@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.31 2015/03/02 15:05:11 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.32 2015/03/02 15:18:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1804,6 +1804,8 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
 {
 	struct athn_usb_rx_data *data = priv;
 	struct athn_usb_softc *usc = data->sc;
+	struct athn_softc *sc = &usc->sc_sc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct athn_usb_rx_stream *stream = &usc->rx_stream;
 	uint8_t *buf = data->buf;
 	struct ar_stream_hdr *hdr;
@@ -1872,6 +1874,10 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
 			}
 		} else	/* Drop frames larger than MCLBYTES. */
 			m = NULL;
+
+		if (m == NULL)
+			ifp->if_ierrors++;
+
 		/*
 		 * NB: m can be NULL, in which case the next pktlen bytes
 		 * will be discarded from the Rx stream.
