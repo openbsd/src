@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.74 2014/12/14 14:34:43 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.75 2015/03/02 13:43:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,7 +395,7 @@ tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
 	*pcurveslen = s->tlsext_ellipticcurvelist_length;
 	if (*pcurves == NULL) {
 		*pcurves = eccurves_default;
-		*pcurveslen = sizeof(eccurves_default);
+		*pcurveslen = sizeof(eccurves_default) / 2;
 	}
 }
 
