@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1758 2015/02/27 15:27:23 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1759 2015/03/03 09:09:52 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3548,6 +3548,8 @@
 #define	PCI_PRODUCT_INTEL_82801ER_SATA	0x24df		/* 82801ER SATA */
 #define	PCI_PRODUCT_INTEL_WL_8260_1	0x24f3		/* Dual Band Wireless AC 8260 */
 #define	PCI_PRODUCT_INTEL_WL_8260_2	0x24f4		/* Dual Band Wireless AC 8260 */
+#define	PCI_PRODUCT_INTEL_WL_4165_1	0x24f5		/* Dual Band Wireless AC 4165 */
+#define	PCI_PRODUCT_INTEL_WL_4165_2	0x24f6		/* Dual Band Wireless AC 4165 */
 #define	PCI_PRODUCT_INTEL_82820_HB	0x2501		/* 82820 Host */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
