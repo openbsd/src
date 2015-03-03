@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2014/04/16 12:01:33 aoyama Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2015/03/03 23:50:37 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * All rights reserved.
@@ -38,6 +38,13 @@ cdev_decl(sio);
 cdev_decl(lcd);
 
 cdev_decl(pcex);
+
+/* devices on PCMCIA */
+/* block devices */
+bdev_decl(wd);
+/* character devices */
+cdev_decl(com);
+cdev_decl(wd);
 
 /* open, close, write, ioctl */
 #define	cdev_lcd_init(c,n) { \

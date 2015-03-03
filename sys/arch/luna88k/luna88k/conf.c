@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2015/03/03 23:50:37 aoyama Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -51,10 +51,12 @@
 #include "sd.h"
 #include "st.h"
 #include "uk.h"
+#include "wd.h"
 
 #include "ksyms.h"
 
 #include "audio.h"
+#include "com.h"
 #include "lcd.h"
 #include "pcex.h"
 #include "siotty.h"
@@ -81,7 +83,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_disk_init(NRD,rd),		/* 7: ramdisk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_notdef(),			/* 9: was: concatenated disk driver */
+	bdev_disk_init(NWD,wd),		/* 9: IDE disk (on PCMCIA) */
 	bdev_notdef(),			/* 10 */
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
@@ -125,8 +127,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 24 was LKM */
 	cdev_pcex_init(NPCEX, pcex),	/* 25: PC-9801 extension board slot */
 	cdev_audio_init(NAUDIO, audio),	/* 26: generic audio I/O */
-	cdev_notdef(),			/* 27 */
-	cdev_notdef(),			/* 28 */
+	cdev_tty_init(NCOM, com),	/* 27: serial port (on PCMCIA) */
+	cdev_disk_init(NWD,wd),		/* 28: IDE disk (on PCMCIA) */
 	cdev_notdef(),			/* 29 */
 	cdev_notdef(),			/* 30 */
 	cdev_notdef(),			/* 31 */

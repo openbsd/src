@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.25 2015/01/17 08:26:10 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.26 2015/03/03 23:50:37 aoyama Exp $
 #
 maxpartitions 16
 
@@ -52,6 +52,7 @@ major {st = 5}
 major {cd = 6}
 major {rd = 7}
 major {vnd = 8}
+major {wd = 9}
 
 device spc: scsi
 attach spc at mainbus
@@ -67,11 +68,25 @@ attach	pcex at cbus
 file	arch/luna88k/cbus/pcex.c			pcex needs-flag
 
 # NEC PC-9801-86 sound board
-device necsb: audio, auconv, mulaw
-attach necsb at cbus
-file arch/luna88k/cbus/necsb.c				necsb needs-flag
-file arch/luna88k/cbus/nec86.c				necsb needs-flag
-file arch/luna88k/cbus/nec86hw.c			necsb needs-flag
+device	necsb: audio, auconv, mulaw
+attach	necsb at cbus
+file	arch/luna88k/cbus/necsb.c			necsb needs-flag
+file	arch/luna88k/cbus/nec86.c			necsb needs-flag
+file	arch/luna88k/cbus/nec86hw.c			necsb needs-flag
+
+# PCMCIA devices via NEC PC-9801-102 / PC-9821X[AE]-E01
+device	pcic: pcmciabus
+attach	pcic at cbus with pcic_cbus
+file	dev/ic/i82365.c					pcic needs-flag
+file	arch/luna88k/cbus/i82365_cbus.c			pcic needs-flag
+include "dev/pcmcia/files.pcmcia"
+
+# Media Independent Interface (mii), used with PCMCIA
+include "dev/mii/files.mii"
+
+# Machine-independent ATAPI drivers, used with PCMCIA
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
 
 # list of standard files
 file	arch/luna88k/luna88k/clock.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 2015/02/14 14:54:13 aoyama Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 2015/03/03 23:50:37 aoyama Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -79,7 +79,14 @@ struct luna88k_bus_space_tag {
 	uint8_t bs_stride_4;
 	uint8_t	bs_stride_8;
 	bus_size_t bs_offset;
+	uint	bs_flags;
+#define	TAG_LITTLE_ENDIAN	0x01
 };
+
+#define	SET_TAG_BIG_ENDIAN(t)		((t))->bs_flags &= ~TAG_LITTLE_ENDIAN
+#define	SET_TAG_LITTLE_ENDIAN(t)	((t))->bs_flags |= TAG_LITTLE_ENDIAN
+
+#define	IS_TAG_LITTLE_ENDIAN(t)		((t)->bs_flags & TAG_LITTLE_ENDIAN)
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -171,11 +178,21 @@ bus_space_free(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 #define	bus_space_read_1(t, h, o)					\
     (*(volatile u_int8_t *)((h) + (t->bs_stride_1) * (o)))
 
-#define	bus_space_read_2(t, h, o)					\
+#define	__bus_space_read_2(t, h, o)					\
     (*(volatile u_int16_t *)((h) + (t->bs_stride_2) * (o)))
 
-#define	bus_space_read_4(t, h, o)					\
+#define	__bus_space_read_4(t, h, o)					\
     (*(volatile u_int32_t *)((h) + (t->bs_stride_4) * (o)))
+
+#define bus_space_read_2(t, h, o)					\
+    ((IS_TAG_LITTLE_ENDIAN(t)) ? 					\
+	letoh16(__bus_space_read_2(t, h, o)) :				\
+	__bus_space_read_2(t, h, o))
+	
+#define bus_space_read_4(t, h, o)					\
+    ((IS_TAG_LITTLE_ENDIAN(t)) ? 					\
+	letoh32(__bus_space_read_4(t, h, o)) :				\
+	__bus_space_read_4(t, h, o))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -225,7 +242,7 @@ bus_space_read_raw_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
 	size >>= 1;
 	while ((int)--size >= 0) {
 		*(u_int16_t *)dest =
-		    bus_space_read_2(tag, handle, offset);
+		    __bus_space_read_2(tag, handle, offset);
 		dest += 2;
 	}
 }
@@ -237,7 +254,7 @@ bus_space_read_raw_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 	size >>= 2;
 	while ((int)--size >= 0) {
 		*(u_int32_t *)dest =
-		    bus_space_read_4(tag, handle, offset);
+		    __bus_space_read_4(tag, handle, offset);
 		dest += 4;
 	}
 }
@@ -296,11 +313,19 @@ bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
 #define	bus_space_write_1(t, h, o, v)					\
     ((void)(*(volatile u_int8_t *)((h) + (t->bs_stride_1) * (o)) = (v)))
 
-#define	bus_space_write_2(t, h, o, v)					\
+#define	__bus_space_write_2(t, h, o, v)					\
     ((void)(*(volatile u_int16_t *)((h) + (t->bs_stride_2) * (o)) = (v)))
 
-#define	bus_space_write_4(t, h, o, v)					\
+#define	__bus_space_write_4(t, h, o, v)					\
     ((void)(*(volatile u_int32_t *)((h) + (t->bs_stride_4) * (o)) = (v)))
+
+#define	bus_space_write_2(t, h, o, v)					\
+    __bus_space_write_2(t, h, o,					\
+	(IS_TAG_LITTLE_ENDIAN(t)) ? htole16(v) : (v))
+
+#define	bus_space_write_4(t, h, o, v)					\
+    __bus_space_write_4(t, h, o,					\
+	(IS_TAG_LITTLE_ENDIAN(t)) ? htole32(v) : (v))
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
@@ -350,7 +375,7 @@ bus_space_write_raw_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 1;
 	while ((int)--size >= 0) {
-		bus_space_write_2(tag, handle, offset,*(u_int16_t *)dest);
+		__bus_space_write_2(tag, handle, offset,*(u_int16_t *)dest);
 		dest += 2;
 	}
 }
@@ -361,7 +386,7 @@ bus_space_write_raw_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 2;
 	while ((int)--size >= 0) {
-		bus_space_write_4(tag, handle, offset, *(u_int32_t *)dest);
+		__bus_space_write_4(tag, handle, offset, *(u_int32_t *)dest);
 		dest += 4;
 	}
 }

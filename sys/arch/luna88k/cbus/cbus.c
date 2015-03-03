@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.4 2015/02/18 22:42:04 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.5 2015/03/03 23:50:36 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -37,10 +37,14 @@
 #endif
 
 #include "necsb.h"
+#include "pcic.h"
 
 static struct cbus_attach_args cbus_devs[] = {
 #if NNECSB > 0
 	{ "necsb",	-1 },	/* PC-9801-86 sound board */
+#endif
+#if NPCIC > 0
+	{ "pcic",	-1 },	/* PC-9801-102 & PC-9821X[AE]-01 PCMCIA board */
 #endif
 	{ "pcex",	-1 }	/* C-bus "generic" driver */
 };
