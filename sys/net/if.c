@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.319 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.320 2015/03/03 07:54:32 brad Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1351,7 +1351,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			RS_LHCOOKIE(ifp) = hook_establish(
 			    ifp->if_linkstatehooks, 1, nd6_rs_dev_state, ifp);
 			if (!timeout_pending(&nd6_rs_output_timer))
-				nd6_rs_output_set_timo(nd6_rs_output_timeout);
+				nd6_rs_output_set_timo(
+				    ND6_RS_OUTPUT_QUICK_INTERVAL);
 		}
 
 		if ((ifp->if_xflags & IFXF_AUTOCONF6) &&
