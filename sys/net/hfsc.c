@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.15 2015/02/08 03:16:16 henning Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.16 2015/03/03 11:14:00 henning Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -163,7 +163,7 @@ hfsc_attach(struct ifnet *ifp)
 
 	tblsize = HFSC_DEFAULT_CLASSES * sizeof(void *);
 
-	if (ifp->if_snd.ifq_hfsc != NULL)
+	if (ifp == NULL || ifp->if_snd.ifq_hfsc != NULL)
 		return (0);
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -184,8 +184,12 @@ hfsc_attach(struct ifnet *ifp)
 int
 hfsc_detach(struct ifnet *ifp)
 {
-	struct hfsc_if *hif = ifp->if_snd.ifq_hfsc;
+	struct hfsc_if *hif;
 
+	if (ifp == NULL)
+		return (0);
+
+	hif = ifp->if_snd.ifq_hfsc;
 	timeout_del(&hif->hif_defer);
 	ifp->if_snd.ifq_hfsc = NULL;
 
@@ -202,6 +206,9 @@ hfsc_addqueue(struct pf_queuespec *q)
 	struct hfsc_if *hif;
 	struct hfsc_class *cl, *parent;
 	struct hfsc_sc rtsc, lssc, ulsc;
+
+	if (q->kif->pfik_ifp == NULL)
+		return (0);
 
 	if ((hif = q->kif->pfik_ifp->if_snd.ifq_hfsc) == NULL)
 		return (EINVAL);
@@ -242,6 +249,9 @@ hfsc_delqueue(struct pf_queuespec *q)
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
 
+	if (q->kif->pfik_ifp == NULL)
+		return (0);
+
 	if ((hif = q->kif->pfik_ifp->if_snd.ifq_hfsc) == NULL)
 		return (EINVAL);
 
@@ -258,6 +268,9 @@ hfsc_qstats(struct pf_queuespec *q, void *ubuf, int *nbytes)
 	struct hfsc_class *cl;
 	struct hfsc_class_stats stats;
 	int error = 0;
+
+	if (q->kif->pfik_ifp == NULL)
+		return (EBADF);
 
 	if ((hif = q->kif->pfik_ifp->if_snd.ifq_hfsc) == NULL)
 		return (EBADF);
