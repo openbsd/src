@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.33 2015/03/03 06:56:12 kettenis Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.34 2015/03/03 20:14:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4881,7 +4881,9 @@ iwm_mvm_mac_ctxt_cmd_station(struct iwm_softc *sc, struct iwm_node *in,
 	/* Fill the common data for all mac context types */
 	iwm_mvm_mac_ctxt_cmd_common(sc, in, &cmd, action);
 
-	if (in->in_assoc)
+	/* Allow beacons to pass through as long as we are not associated,or we
+	 * do not have dtim period information */
+	if (!in->in_assoc || !sc->sc_ic.ic_dtim_period)
 		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_BEACON);
 	else
 		cmd.filter_flags &= ~htole32(IWM_MAC_FILTER_IN_BEACON);
