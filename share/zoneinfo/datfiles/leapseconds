@@ -1,4 +1,4 @@
-# $OpenBSD: leapseconds,v 1.29 2014/11/11 21:09:56 millert Exp $
+# $OpenBSD: leapseconds,v 1.30 2015/03/03 16:26:10 millert Exp $
 # Allowance for leap seconds added to each time zone file.
 
 # This file is in the public domain.
@@ -55,3 +55,7 @@ Leap	1998	Dec	31	23:59:60	+	S
 Leap	2005	Dec	31	23:59:60	+	S
 Leap	2008	Dec	31	23:59:60	+	S
 Leap	2012	Jun	30	23:59:60	+	S
+Leap	2015	Jun	30	23:59:60	+	S
+
+#	Updated through IERS Bulletin C49
+#	File expires on:  28 December 2015
