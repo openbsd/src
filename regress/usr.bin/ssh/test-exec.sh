@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.50 2015/01/18 19:50:15 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.51 2015/03/03 22:35:19 markus Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -89,6 +89,11 @@ if [ "x$TEST_SSH_PUTTYGEN" != "x" ]; then
 fi
 if [ "x$TEST_SSH_CONCH" != "x" ]; then
 	CONCH="${TEST_SSH_CONCH}"
+fi
+
+SSH_PROTOCOLS=`$SSH -Q protocol-version`
+if [ "x$TEST_SSH_PROTOCOLS" != "x" ]; then
+	SSH_PROTOCOLS="${TEST_SSH_PROTOCOLS}"
 fi
 
 # Path to sshd must be absolute for rexec
@@ -234,15 +239,26 @@ fatal ()
 	exit $RESULT
 }
 
+ssh_version ()
+{
+	echo ${SSH_PROTOCOLS} | grep -q "$1"
+}
+
 RESULT=0
 PIDFILE=$OBJ/pidfile
 
 trap fatal 3 2
 
+if ssh_version 1; then
+	PROTO="2,1"
+else
+	PROTO="2"
+fi
+
 # create server config
 cat << EOF > $OBJ/sshd_config
 	Port			$PORT
-	Protocol		2,1
+	Protocol		$PROTO
 	AddressFamily		inet
 	ListenAddress		127.0.0.1
 	#ListenAddress		::1
@@ -268,7 +284,7 @@ echo 'StrictModes no' >> $OBJ/sshd_proxy
 # create client config
 cat << EOF > $OBJ/ssh_config
 Host *
-	Protocol		2,1
+	Protocol		$PROTO
 	Hostname		127.0.0.1
 	HostKeyAlias		localhost-with-alias
 	Port			$PORT
@@ -293,8 +309,13 @@ fi
 
 rm -f $OBJ/known_hosts $OBJ/authorized_keys_$USER
 
+if ssh_version 1; then
+	SSH_KEYTYPES="rsa rsa1"
+else
+	SSH_KEYTYPES="rsa ed25519"
+fi
 trace "generate keys"
-for t in rsa rsa1; do
+for t in ${SSH_KEYTYPES}; do
 	# generate user key
 	if [ ! -f $OBJ/$t ] || [ ${SSHKEYGEN} -nt $OBJ/$t ]; then
 		rm -f $OBJ/$t
