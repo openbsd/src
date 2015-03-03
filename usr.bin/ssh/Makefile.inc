@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.46 2014/04/29 18:01:49 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.47 2015/03/03 21:21:13 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -39,9 +39,18 @@ CDIAGFLAGS+=	-Wno-unused-parameter # Not clean for this yet
 
 WARNINGS=yes
 
+SSH1?=		yes
 OPENSSL?=	yes
+
 .if (${OPENSSL:L} == "yes")
-CFLAGS+=	-DWITH_OPENSSL -DWITH_SSH1
+CFLAGS+=	-DWITH_OPENSSL
+.else
+# SSH v.1 requires OpenSSL.
+SSH1=		no
+.endif
+
+.if (${SSH1:L} == "yes")
+CFLAGS+=	-DWITH_SSH1
 .endif
 
 CFLAGS+=	-DENABLE_PKCS11
