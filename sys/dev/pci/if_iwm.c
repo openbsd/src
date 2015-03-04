@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.34 2015/03/03 20:14:34 kettenis Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.35 2015/03/04 15:18:12 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5717,6 +5717,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 	if (ic->ic_state != IEEE80211_S_INIT)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	timeout_del(&sc->sc_calib_to);
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	iwm_stop_device(sc);
 }
