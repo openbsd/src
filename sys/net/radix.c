@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.43 2014/12/02 18:11:56 tedu Exp $	*/
+/*	$OpenBSD: radix.c,v 1.44 2015/03/04 15:53:29 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -1009,8 +1009,13 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 				tp->rn_l = x;
 			else
 				tp->rn_r = x;
+			/* head changed adjust dupedkey pointer */
+			dupedkey_tt = x;
 		} else {
 			x = saved_tt;
+			/* dupedkey will change so adjust pointer */
+			if (dupedkey_tt == tt)
+				dupedkey_tt = tt->rn_dupedkey;
 			tp->rn_dupedkey = tt->rn_dupedkey;
 			if (tt->rn_dupedkey)
 				tt->rn_dupedkey->rn_p = tp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.28 2015/02/06 01:21:17 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.29 2015/03/04 15:53:29 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -145,6 +145,9 @@ void
 rn_mpath_adj_mpflag(struct radix_node *rn, u_int8_t prio)
 {
 	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (!rn)
+		return;
 
 	prio &= RTP_MASK;
 	rt = rt_mpath_matchgate(rt, NULL, prio);
