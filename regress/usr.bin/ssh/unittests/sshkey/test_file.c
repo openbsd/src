@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_file.c,v 1.2 2014/12/22 02:15:52 djm Exp $ */
+/* 	$OpenBSD: test_file.c,v 1.3 2015/03/04 23:22:35 djm Exp $ */
 /*
  * Regress test for sshkey.h key management API
  *
@@ -45,6 +45,7 @@ sshkey_file_tests(void)
 	pw = load_text_file("pw");
 	TEST_DONE();
 
+#ifdef WITH_SSH1
 	TEST_START("parse RSA1 from private");
 	buf = load_file("rsa1_1");
 	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", "rsa1_1",
@@ -93,6 +94,7 @@ sshkey_file_tests(void)
 	TEST_DONE();
 
 	sshkey_free(k1);
+#endif
 
 	TEST_START("parse RSA from private");
 	buf = load_file("rsa_1");
