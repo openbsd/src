@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.246 2015/02/11 04:29:29 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.247 2015/03/04 10:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1036,12 +1036,12 @@ carp_send_ad(void *v)
 
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_family = AF_INET;
+		/* Prefer addresses on the parent interface as source for AD. */
 		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
 		if (ifa == NULL)
-			ip->ip_src.s_addr = 0;
-		else
-			ip->ip_src.s_addr =
-			    ifatoia(ifa)->ia_addr.sin_addr.s_addr;
+			ifa = ifaof_ifpforaddr(&sa, &sc->sc_if);
+		KASSERT(ifa != NULL);
+		ip->ip_src.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
 		ip->ip_dst.s_addr = sc->sc_peer.s_addr;
 		if (IN_MULTICAST(ip->ip_dst.s_addr))
 			m->m_flags |= M_MCAST;
@@ -1123,12 +1123,13 @@ carp_send_ad(void *v)
 		/* set the source address */
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_family = AF_INET6;
+		/* Prefer addresses on the parent interface as source for AD. */
 		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
-		if (ifa == NULL)	/* This should never happen with IPv6 */
-			memset(&ip6->ip6_src, 0, sizeof(struct in6_addr));
-		else
-			bcopy(ifatoia6(ifa)->ia_addr.sin6_addr.s6_addr,
-			    &ip6->ip6_src, sizeof(struct in6_addr));
+		if (ifa == NULL)
+			ifa = ifaof_ifpforaddr(&sa, &sc->sc_if);
+		KASSERT(ifa != NULL);
+		bcopy(ifatoia6(ifa)->ia_addr.sin6_addr.s6_addr,
+		    &ip6->ip6_src, sizeof(struct in6_addr));
 		/* set the multicast destination */
 
 		ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
