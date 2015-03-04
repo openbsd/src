@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.72 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.73 2015/03/04 11:10:55 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
 	/* KAME hack: recover scopeid */
-	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
+	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, NULL);
 
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)

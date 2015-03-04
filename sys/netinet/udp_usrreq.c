@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.195 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.196 2015/03/04 11:10:55 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 		struct sockaddr_in6 sin6;
 #endif /* INET6 */
-	} srcsa, dstsa;
+	} srcsa;
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
@@ -353,12 +353,6 @@ udp_input(struct mbuf *m, ...)
 		srcsa.sin.sin_family = AF_INET;
 		srcsa.sin.sin_port = uh->uh_sport;
 		srcsa.sin.sin_addr = ip->ip_src;
-
-		bzero(&dstsa, sizeof(struct sockaddr_in));
-		dstsa.sin.sin_len = sizeof(struct sockaddr_in);
-		dstsa.sin.sin_family = AF_INET;
-		dstsa.sin.sin_port = uh->uh_dport;
-		dstsa.sin.sin_addr = ip->ip_dst;
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -370,16 +364,7 @@ udp_input(struct mbuf *m, ...)
 		srcsa.sin6.sin6_flowinfo = htonl(0x0fffffff) & ip6->ip6_flow;
 #endif
 		/* KAME hack: recover scopeid */
-		(void)in6_recoverscope(&srcsa.sin6, &ip6->ip6_src,
-		    m->m_pkthdr.rcvif);
-
-		bzero(&dstsa, sizeof(struct sockaddr_in6));
-		dstsa.sin6.sin6_len = sizeof(struct sockaddr_in6);
-		dstsa.sin6.sin6_family = AF_INET6;
-		dstsa.sin6.sin6_port = uh->uh_dport;
-		/* KAME hack: recover scopeid */
-		(void)in6_recoverscope(&dstsa.sin6, &ip6->ip6_dst,
-		    m->m_pkthdr.rcvif);
+		(void)in6_recoverscope(&srcsa.sin6, &ip6->ip6_src, NULL);
 		break;
 #endif /* INET6 */
 	}
