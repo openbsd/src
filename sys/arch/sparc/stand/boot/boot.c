@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.12 2014/03/30 19:48:04 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.13 2015/03/05 20:46:13 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -161,7 +161,7 @@ loadk(char *file, u_long *marks)
 	/*
 	 * Regardless of the address where we load the kernel, we need to
 	 * make sure it has enough valid space to use during pmap_bootstrap.
-	 * locore.s tries to map the 512KB following the kernel image, and
+	 * locore.s tries to use the 512KB following the kernel image, and
 	 * we need to make sure this extra room does not overwrite PROM data
 	 * (such as the PROM page tables which are immediately below 4MB on
 	 * most sun4c).
@@ -242,8 +242,10 @@ loadk(char *file, u_long *marks)
 	 * breathing room after it.
 	 */
 	size = minsize + extra;
+	if (CPU_ISSUN4M || CPU_ISSUN4D)
+		size += 1024 * 1024;
 	if (compat != 0) {
-		if (minsize + extra <= RELOC2 - LOWSTACK)
+		if (size <= RELOC2 - LOWSTACK)
 			size = RELOC2 - LOWSTACK;
 		else
 			compat = 0;
