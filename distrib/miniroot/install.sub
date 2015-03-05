@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.812 2015/01/24 00:20:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.813 2015/03/05 17:56:35 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1672,10 +1672,12 @@ munge_fstab() {
 
 		# Change read-only ffs to read-write since we'll potentially
 		# write to these filesystems.
-		[[ $_fstype == ffs ]] && _opt=$(echo $_opt | sed 's/ro/rw/')
+		[[ $_fstype == ffs ]] &&
+			_opt=$(echo $_opt | sed 's/[[:<:]]ro[[:>:]]/rw/')
 
 		# Mount non-ffs filesystems read only.
-		[[ $_fstype == ffs ]] || _opt=$(echo $_opt | sed 's/rw/ro/')
+		[[ $_fstype == ffs ]] ||
+			_opt=$(echo $_opt | sed 's/[[:<:]]rw[[:>:]]/ro/')
 
 		# Write fs entry in fstab.
 		# 1) prepend '/mnt' to the mount point.
