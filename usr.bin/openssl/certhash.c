@@ -121,7 +121,7 @@ hashinfo_compare(const void *a, const void *b)
 	struct hashinfo *hib = *(struct hashinfo **)b;
 	int rv;
 
-	rv = hia->hash - hib->hash;
+	rv = hia->hash < hib->hash ? -1 : hia->hash > hib->hash;
 	if (rv != 0)
 		return (rv);
 	rv = memcmp(hia->fingerprint, hib->fingerprint,
