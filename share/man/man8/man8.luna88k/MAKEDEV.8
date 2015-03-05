@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.42 2014/12/29 22:01:19 aoyama Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.43 2015/03/05 21:42:34 aoyama Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.24 2014/12/29 21:55:10 aoyama Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
+.\"	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.25 2015/03/05 21:37:38 aoyama Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 29 2014 $
+.Dd $Mdocdate: March 5 2015 $
 .Dt MAKEDEV 8 luna88k
 .Os
 .Sh NAME
@@ -88,6 +88,10 @@ SCSI disks, including flopticals, see
 .Dq file
 pseudo-disk devices, see
 .Xr vnd 4 .
+.It Ar wd*
+.Dq winchester
+disk drives (ST506, IDE, ESDI, RLL, ...), see
+.Xr wd 4 .
 .El
 .Pp
 .Sy Tapes
@@ -105,6 +109,9 @@ SCSI tape drives, see
 .It Ar ttya
 On-board serial console port, see
 .Xr sio 4 .
+.It Ar tty[0-7][0-9a-f]
+NS16x50 serial ports, see
+.Xr com 4 .
 .El
 .Pp
 .Sy Pseudo terminals

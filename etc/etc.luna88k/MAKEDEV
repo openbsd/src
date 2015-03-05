@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.24 2014/12/29 21:55:10 aoyama Exp 
-#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.25 2015/03/05 21:37:38 aoyama Exp 
+#	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -34,11 +34,13 @@
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
 #	vnd*	"file" pseudo-disk devices
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
 # Tapes:
 #	ch*	SCSI media changers
 #	st*	SCSI tape drives
 # Terminal ports:
 #	ttya	On-board serial console port
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
@@ -345,6 +347,13 @@ ptm)
 	M ptm c 52 0 666
 	;;
 
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 27 $o 660 dialer uucp
+	M cua$U c 27 $(($o+128)) 660 dialer uucp
+	;;
+
 ttya)
 		M ttya c 12 0 660 dialer uucp
 	M cuaa c 12 128 660 dialer uucp 
@@ -381,19 +390,22 @@ local)
 	;;
 
 ramdisk)
-	R diskmap bio pty0 ttya rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3
-	R sd4 bpf0 std
+	R diskmap bio pty0 ttya rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3
+	R wd4 sd0 sd1 sd2 sd3 sd4 tty00 tty01 bpf0 std
 	;;
 
 all)
 	R pcex audio0 lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3
 	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse
-	R pppx ptm local wscons uk0 random pf systrace std st0 st1 fd
+	R pppx ptm local wscons uk0 random tty00 tty01 tty02 tty03
+	R tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf systrace
+	R wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
-sd*)
+wd*|sd*)
 	case $i in
+	wd*) dodisk wd $U 9 28 $U 0;;
 	sd*) dodisk sd $U 4 8 $U 0;;
 	esac
 	;;
