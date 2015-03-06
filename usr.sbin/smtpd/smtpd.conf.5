@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.124 2015/03/02 20:20:17 bentley Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.125 2015/03/06 17:36:47 millert Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 2 2015 $
+.Dd $Mdocdate: March 6 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -976,7 +976,7 @@ listen on egress tls pki mail.example.com auth
 table aliases db:/etc/mail/aliases.db
 
 accept for local alias <aliases> deliver to mda "/path/to/mda \-f \-"
-accept from any for domain example.org \e
+accept from any for domain example.com \e
 	deliver to mda "/path/to/mda \-f \-"
 accept for any relay
 .Ed
@@ -991,10 +991,33 @@ The signed messages are received on port 10028 and tagged for relaying.
 .Bd -literal -offset indent
 listen on lo0
 listen on lo0 port 10028 tag DKIM
+
 table aliases db:/etc/mail/aliases.db
+
 accept for local alias <aliases> deliver to mbox
 accept tagged DKIM for any relay
 accept from local for any relay via smtp://127.0.0.1:10027
+.Ed
+.Pp
+Sites that accept non-local messages may be able to cut down on the
+volume of spam received by rejecting forged messages that claim
+to be from the local domain.
+The table
+.Em other-relays
+can be used to specify the IP addresses of relays that may legitimately
+originate mail with your domain as the sender.
+.Bd -literal -offset indent
+listen on lo0
+listen on egress
+
+table aliases   db:/etc/mail/aliases.db
+table other-relays "/etc/mail/other-relays"
+
+accept for local alias <aliases> deliver to mbox
+accept from local for any relay
+reject from ! source <other-relays> sender "@example.com" for any
+accept from any for domain example.com \e
+	alias <aliases> deliver to mbox
 .Ed
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,
