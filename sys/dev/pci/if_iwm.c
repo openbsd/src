@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.35 2015/03/04 15:18:12 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.36 2015/03/06 18:39:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -3699,31 +3699,31 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	struct ieee80211_frame *wh, struct iwm_tx_cmd *tx)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = &in->in_ni;
 	const struct iwm_rate *rinfo;
 	int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	int ridx, rate_flags;
-	int nrates = in->in_ni.ni_rates.rs_nrates;
+	int nrates = ni->ni_rates.rs_nrates;
 
 	tx->rts_retry_limit = IWM_RTS_DFAULT_RETRY_LIMIT;
 	tx->data_retry_limit = IWM_DEFAULT_TX_RETRY;
 
-	/* for data frames, use RS table */
-	if (type == IEEE80211_FC0_TYPE_DATA) {
-		if (ic->ic_fixed_rate != -1) {
-			tx->initial_rate_index = sc->sc_fixed_ridx;
-		} else {
-			tx->initial_rate_index = (nrates-1) - in->in_ni.ni_txrate;
-		}
+	if (type != IEEE80211_FC0_TYPE_DATA) {
+		/* for non-data, use the lowest supported rate */
+		ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
+	} else if (ic->ic_fixed_rate != -1) {
+		ridx = sc->sc_fixed_ridx;
+	} else {
+		/* for data frames, use RS table */
+		tx->initial_rate_index = (nrates - 1) - ni->ni_txrate;
 		tx->tx_flags |= htole32(IWM_TX_CMD_FLG_STA_RATE);
 		DPRINTFN(12, ("start with txrate %d\n", tx->initial_rate_index));
-		return &iwm_rates[tx->initial_rate_index];
+		ridx = in->in_ridx[ni->ni_txrate];
+		return &iwm_rates[ridx];
 	}
 
-	/* for non-data, use the lowest supported rate */
-	ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
-	    IWM_RIDX_OFDM : IWM_RIDX_CCK;
 	rinfo = &iwm_rates[ridx];
-
 	rate_flags = 1 << IWM_RATE_MCS_ANT_POS;
 	if (IWM_RIDX_IS_CCK(ridx))
 		rate_flags |= IWM_RATE_MCS_CCK_MSK;
