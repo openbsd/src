@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.258 2014/12/15 02:11:57 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.259 2015/03/08 20:49:38 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1714,7 +1714,7 @@ validate:
 		break;
 	default:
 		SC_DEBUG(sc->sc_link, SDEV_DB1,
-		    ("sd_get_parms: bad secsize: %#x\n", dp->secsize));
+		    ("sd_get_parms: bad secsize: %#lx\n", dp->secsize));
 		return (SDGP_RESULT_OFFLINE);
 	}
 

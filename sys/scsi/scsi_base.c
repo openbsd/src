@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.218 2015/01/27 03:17:37 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.219 2015/03/08 20:49:38 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2501,7 +2501,7 @@ scsi_xs_show(struct scsi_xfer *xs)
 	printf("retr(0x%x)", xs->retries);
 	printf("timo(0x%x)", xs->timeout);
 	printf("data(%p)", xs->data);
-	printf("res(0x%x)", xs->resid);
+	printf("res(0x%zx)", xs->resid);
 	printf("err(0x%x)", xs->error);
 	printf("bp(%p)\n", xs->bp);
 
