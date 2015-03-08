@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.26 2015/02/17 18:40:48 miod Exp $
+#	$OpenBSD: install.md,v 1.27 2015/03/08 13:13:48 deraadt Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -19,7 +19,7 @@ md_installboot() {
 md_prep_disklabel() {
 	local _disk=$1 _f _op
 
-	md_installboot $_disk
+	installboot $_disk
 
 	_f=/tmp/fstab.$_disk
 	if [[ $_disk == $ROOTDISK ]]; then
