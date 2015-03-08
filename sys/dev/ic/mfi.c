@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.160 2015/02/08 12:17:31 yasuoka Exp $ */
+/* $OpenBSD: mfi.c,v 1.161 2015/03/08 04:33:44 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1259,9 +1259,12 @@ complete:
 u_int
 mfi_default_sgd_load(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 	union mfi_sgl		*sgl = ccb->ccb_sgl;
 	bus_dma_segment_t	*sgd = ccb->ccb_dmamap->dm_segs;
 	int			 i;
+
+	hdr->mfh_flags |= sc->sc_sgl_flags;
 
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
 		if (sc->sc_64bit_dma) {
@@ -1318,7 +1321,6 @@ mfi_create_sgl(struct mfi_softc *sc, struct mfi_ccb *ccb, int flags)
 		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	}
 
-	hdr->mfh_flags |= sc->sc_sgl_flags;
 	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
 
@@ -2563,7 +2565,7 @@ mfi_skinny_sgd_load(struct mfi_softc *sc, struct mfi_ccb *ccb)
 			sgl->sg_skinny[i].len = htole32(sgd[i].ds_len);
 			sgl->sg_skinny[i].flag = 0;
 		}
-		hdr->mfh_flags |= MFI_FRAME_IEEE;
+		hdr->mfh_flags |= MFI_FRAME_IEEE | MFI_FRAME_SGL64;
 
 		return (ccb->ccb_dmamap->dm_nsegs * sizeof(sgl->sg_skinny));
 	default:
