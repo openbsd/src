@@ -65,6 +65,11 @@
 #include <pwd.h>
 #endif
 
+/** from cfg username, after daemonise setup performed */
+uid_t cfg_uid = (uid_t)-1;
+/** from cfg username, after daemonise setup performed */
+gid_t cfg_gid = (gid_t)-1;
+
 /** global config during parsing */
 struct config_parser_state* cfg_parser = 0;
 
@@ -136,8 +141,6 @@ config_create(void)
 		goto error_exit;
 	init_outgoing_availports(cfg->outgoing_avail_ports, 65536);
 	if(!(cfg->username = strdup(UB_USERNAME))) goto error_exit;
-	cfg->uid = (uid_t)-1;
-	cfg->gid = (gid_t)-1;
 #ifdef HAVE_CHROOT
 	if(!(cfg->chrootdir = strdup(CHROOT_DIR))) goto error_exit;
 #endif
@@ -1209,9 +1212,9 @@ void config_lookup_uid(struct config_file* cfg)
 	if(cfg->username && cfg->username[0]) {
 		struct passwd *pwd;
 		if((pwd = getpwnam(cfg->username)) == NULL)
-			log_err("user '%s' does not exist.", cfg->username);
-		cfg->uid = pwd->pw_uid;
-		cfg->gid = pwd->pw_gid;
+			fatal_exit("user '%s' does not exist.", cfg->username);
+		cfg_uid = pwd->pw_uid;
+		cfg_gid = pwd->pw_gid;
 	}
 #else
 	(void)cfg;
