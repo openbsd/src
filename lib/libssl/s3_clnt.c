@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.107 2015/02/07 05:46:01 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.108 2015/03/08 16:48:47 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1267,6 +1267,17 @@ ssl3_get_key_exchange(SSL *s)
 		}
 		p += i;
 		n -= param_len;
+
+		/*
+		 * Check the strength of the DH key just constructed.
+		 * Discard keys weaker than 1024 bits.
+		 */
+
+		if (DH_size(dh) < 1024 / 8) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_DH_P_LENGTH);
+			goto err;
+		}
 
 		if (alg_a & SSL_aRSA)
 			pkey = X509_get_pubkey(
