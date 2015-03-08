@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2015/02/23 08:09:46 deraadt Exp $
+#	$OpenBSD: list,v 1.32 2015/03/08 15:47:28 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -62,6 +62,7 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 
 # for disklabel(8) -B
 COPY	${DESTDIR}/usr/mdec/sdboot		usr/mdec/sdboot
+LINK	usr/mdec/sdboot				usr/mdec/boot.lif
 
 # and the installation scripts
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
