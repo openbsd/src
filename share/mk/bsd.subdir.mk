@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.subdir.mk,v 1.20 2015/01/16 01:58:17 schwarze Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.21 2015/03/08 21:59:48 espie Exp $
 #	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
@@ -12,7 +12,7 @@ SKIPDIR?=
 _SUBDIRUSE: .USE
 .if defined(SUBDIR)
 	@for entry in ${SUBDIR}; do \
-		(set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
+		set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
 			_newdir_="$${entry}.${MACHINE}"; \
 		else \
 			_newdir_="$${entry}"; \
@@ -39,12 +39,12 @@ _SUBDIRUSE: .USE
 		done; \
 		if [ X$${skipdir} = X -o X$${subentry} != X ]; then \
 			echo "===> $${_nextdir_}"; \
-			cd ${.CURDIR}/$${_newdir_}; \
-			exec ${MAKE} SKIPDIR="$${subskipdir}" \
+			${MAKE} -C ${.CURDIR}/$${_newdir_} \
+			    SKIPDIR="$${subskipdir}" \
 			    $${_makefile_spec_} _THISDIR_="$${_nextdir_}" \
 			    ${MAKE_FLAGS} \
 			    ${.TARGET:S/^real//}; \
-		fi); \
+		fi; \
 	done
 
 ${SUBDIR}::
@@ -58,8 +58,8 @@ ${SUBDIR}::
 		_makefile_spec_="-f Makefile.bsd-wrapper"; \
 	fi; \
 	echo "===> $${_newdir_}"; \
-	cd ${.CURDIR}/$${_newdir_}; \
-	exec ${MAKE} ${MAKE_FLAGS} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
+	exec ${MAKE} -C ${.CURDIR}/$${_newdir_} ${MAKE_FLAGS} \
+	    $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
 .endif
 
 .if !target(install)
