@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.27 2014/11/03 22:14:54 deraadt Exp $	*/
+/*	$OpenBSD: worm.c,v 1.28 2015/03/09 19:52:02 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -60,6 +60,7 @@ struct body {
 	struct body *next;
 } *head, *tail, goody;
 int growing = 0;
+int growthscale = 1;
 int running = 0;
 int slow = 0;
 int score = 0;
@@ -106,6 +107,9 @@ main(int argc, char **argv)
 		endwin();
 		errx(1, "screen too small");
 	}
+	growthscale = COLS * LINES / 2000;
+	if (growthscale == 0)
+		growthscale = 1;
 	if (argc >= 2) {
 		start_len = strtonum(argv[1], 1, ((LINES-3) * (COLS-2)) / 3,
 		    &errstr);
@@ -301,9 +305,10 @@ process(int ch)
 	wmove(tv, y, x);
 	if (isdigit(ch = winch(tv)))
 	{
-		growing += ch-'0';
+		int amt = ch - '0';
+		growing += amt * growthscale;
 		prize();
-		score += growing;
+		score += amt;
 		running = 0;
 		wmove(stw, 0, COLS - 12);
 		wprintw(stw, "Score: %3d", score);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: worm.6,v 1.13 2014/01/28 14:28:44 jmc Exp $
+.\"	$OpenBSD: worm.6,v 1.14 2015/03/09 19:52:02 tedu Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)worm.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: January 28 2014 $
+.Dd $Mdocdate: March 9 2015 $
 .Dt WORM 6
 .Os
 .Sh NAME
@@ -52,7 +52,8 @@ several of the corresponding lower case key (9 for HL and 5 for JK, or
 until you run into a digit, whichever comes first).
 .Pp
 On the screen you will see a digit.
-If your worm eats the digit it will grow longer by that number of "o"'s.
+If your worm eats the digit it will grow longer by that number of "o"'s,
+scaled to screen size.
 The object of the game is to see how long you can make the worm grow.
 .Pp
 The game ends when the worm runs into either the sides of the screen
