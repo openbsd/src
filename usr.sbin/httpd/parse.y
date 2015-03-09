@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2015/02/12 04:40:23 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2015/03/09 15:46:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -237,7 +237,7 @@ server		: SERVER STRING		{
 			s->srv_conf.maxrequestbody = SERVER_MAXREQUESTBODY;
 			s->srv_conf.flags |= SRVFLAG_LOG;
 			s->srv_conf.logformat = LOG_FORMAT_COMMON;
-			s->srv_conf.tls_protocols = TLS_PROTOCOLS_ALL;
+			s->srv_conf.tls_protocols = TLS_PROTOCOLS_DEFAULT;
 			if ((s->srv_conf.tls_cert_file =
 			    strdup(HTTPD_TLS_CERT)) == NULL)
 				fatal("out of memory");
