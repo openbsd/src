@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.48 2014/05/24 18:51:00 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.49 2015/03/09 04:25:28 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -181,7 +181,7 @@ ar_open(const char *name)
 		artyp = ISREG;
 
 	/*
-	 * make sure we beyond any doubt that we only can unlink regular files
+	 * make sure beyond any doubt that we can unlink only regular files
 	 * we created
 	 */
 	if (artyp != ISREG)
