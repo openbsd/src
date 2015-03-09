@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.127 2014/09/29 00:07:55 dlg Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.128 2015/03/09 18:50:08 miod Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -929,16 +929,16 @@ wdcintr(void *arg)
 	u_int8_t st = 0;
 	int ret = 0;
 
-	/* Acknowledge interrupt by reading status */
-	if (chp->_vtbl == 0)
-		st = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-		    wdr_status & _WDC_REGMASK);
-	else
-		st = CHP_READ_REG(chp, wdr_status);
-	if (st == 0xff)
-		return (-1);
-
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
+		/* Acknowledge interrupt by reading status */
+		if (chp->_vtbl == 0)
+			st = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wdr_status & _WDC_REGMASK);
+		else
+			st = CHP_READ_REG(chp, wdr_status);
+		if (st == 0xff)
+			return (-1);
+
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
 		return ret;
 	}
