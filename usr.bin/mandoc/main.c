@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.127 2015/02/27 16:00:54 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.128 2015/03/09 21:30:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -293,11 +293,11 @@ main(int argc, char *argv[])
 				argc = 1;
 			}
 		} else if (argc > 1 &&
-		    ((uc = argv[0]) != NULL) &&
+		    ((uc = (unsigned char *)argv[0]) != NULL) &&
 		    ((isdigit(uc[0]) && (uc[1] == '\0' ||
 		      (isalpha(uc[1]) && uc[2] == '\0'))) ||
 		     (uc[0] == 'n' && uc[1] == '\0'))) {
-			search.sec = uc;
+			search.sec = (char *)uc;
 			argv++;
 			argc--;
 		}
