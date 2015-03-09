@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.27 2015/03/09 17:30:29 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.28 2015/03/09 17:41:36 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,9 +63,6 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	static size_t		 offset;
 	size_t			 rmargin, maxrmargin, tsz;
 	int			 ic, horiz, spans, vert;
-
-	if (tp->tbl.cols == NULL)
-		term_flushln(tp);
 
 	rmargin = tp->rmargin;
 	maxrmargin = tp->maxrmargin;

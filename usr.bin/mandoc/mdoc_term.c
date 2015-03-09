@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.211 2015/03/09 17:37:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.212 2015/03/09 17:41:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -346,6 +346,8 @@ print_mdoc_node(DECL_ARGS)
 			p->flags |= TERMP_NOSPACE;
 		break;
 	case MDOC_TBL:
+		if (p->tbl.cols == NULL)
+			term_newln(p);
 		term_tbl(p, n->span);
 		break;
 	default:
