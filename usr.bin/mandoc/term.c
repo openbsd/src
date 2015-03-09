@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.104 2015/01/31 00:11:52 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.105 2015/03/09 17:35:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -411,6 +411,7 @@ term_word(struct termp *p, const char *word)
 		p->flags |= TERMP_NOSPACE;
 
 	p->flags &= ~(TERMP_SENTENCE | TERMP_NONEWLINE);
+	p->skipvsp = 0;
 
 	while ('\0' != *word) {
 		if ('\\' != *word) {
