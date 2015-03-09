@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.98 2015/02/19 22:24:20 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.99 2015/03/09 18:09:50 mikeb Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1376,12 +1376,13 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	}
 
 	if ((!autoconf || ((ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0 &&
-	    !tempaddr_preferred)) && new->ndpr_vltime != 0 &&
+	     !tempaddr_preferred)) &&
+	    new->ndpr_vltime != 0 && new->ndpr_pltime != 0 &&
 	    !((ifp->if_xflags & IFXF_INET6_NOPRIVACY) && statique)) {
 		/*
 		 * There is no SLAAC address and/or there is no preferred RFC
-		 * 4941 temporary address. And the valid prefix lifetime is
-		 * non-zero. And there is no static address in the same prefix.
+		 * 4941 temporary address. And prefix lifetimes are non-zero.
+		 * And there is no static address in the same prefix.
 		 * Create new addresses in process context.
 		 * Increment prefix refcount to ensure the prefix is not
 		 * removed before the task is done.
