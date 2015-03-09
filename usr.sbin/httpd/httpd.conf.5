@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.54 2015/03/06 05:10:18 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.55 2015/03/09 15:51:17 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2015 $
+.Dd $Mdocdate: March 9 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -394,9 +394,9 @@ root directory of
 .Nm httpd .
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
-If not specified, the default value
-.Qq all
-will be used (all available protocols).
+If not specified, the value
+.Qq default
+will be used (secure protocols; TLSv1.2-only).
 Refer to the
 .Xr tls_config_parse_protocols 3
 function for other valid protocol string values.
