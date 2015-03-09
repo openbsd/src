@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.210 2015/02/17 20:33:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.211 2015/03/09 17:37:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1806,7 +1806,7 @@ static int
 termp_sp_pre(DECL_ARGS)
 {
 	struct roffsu	 su;
-	size_t		 i, len;
+	int		 i, len;
 
 	switch (n->tok) {
 	case MDOC_sp:
@@ -1827,8 +1827,11 @@ termp_sp_pre(DECL_ARGS)
 
 	if (0 == len)
 		term_newln(p);
-	for (i = 0; i < len; i++)
-		term_vspace(p);
+	else if (len < 0)
+		p->skipvsp -= len;
+	else
+		for (i = 0; i < len; i++)
+			term_vspace(p);
 
 	return(0);
 }
