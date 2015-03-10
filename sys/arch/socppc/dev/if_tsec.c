@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.34 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.35 2015/03/10 11:17:55 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -838,6 +838,7 @@ tsec_rx_proc(struct tsec_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct tsec_desc *rxd;
 	struct tsec_buf *rxb;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	int idx, len;
 
@@ -870,17 +871,11 @@ tsec_rx_proc(struct tsec_softc *sc)
 
 		m = rxb->tb_m;
 		rxb->tb_m = NULL;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 		if_rxr_put(&sc->sc_rx_ring, 1);
 		if (rxd->td_status & TSEC_RX_W)
@@ -894,6 +889,8 @@ tsec_rx_proc(struct tsec_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, TSEC_DMA_MAP(sc->sc_rxring), 0,
 	    TSEC_DMA_LEN(sc->sc_rxring),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if_input(ifp, &ml);
 }
 
 void
