@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.38 2015/02/11 04:15:50 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.39 2015/03/10 09:26:24 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -694,6 +694,7 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct ldc_map *map = sc->sc_lm;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	caddr_t buf;
 	paddr_t pa;
@@ -729,13 +730,10 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
 		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
+		if_input(ifp, &ml);
+
 
 	skip:
 		dm->tag.stype = VIO_SUBTYPE_ACK;
@@ -789,6 +787,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		uint64_t cookie;
 		paddr_t desc_pa;
 		int idx, ack_end_idx = -1;
+		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
 		idx = dm->start_idx;
 		for (;;) {
@@ -810,7 +809,6 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			if (!m)
 				break;
 			ifp->if_ipackets++;
-			m->m_pkthdr.rcvif = ifp;
 			m->m_len = m->m_pkthdr.len = desc.nbytes;
 			nbytes = roundup(desc.nbytes + VNET_ETHER_ALIGN, 8);
 
@@ -823,13 +821,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			}
 			m->m_data += VNET_ETHER_ALIGN;
 
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
-			/* Pass it on. */
-			ether_input_mbuf(ifp, m);
+			ml_enqueue(&ml, m);
 
 		skip:
 			desc.hdr.dstate = VIO_DESC_DONE;
@@ -843,6 +835,8 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			if (++idx == sc->sc_peer_dring_nentries)
 				idx = 0;
 		}
+
+		if_input(ifp, &ml);
 
 		if (ack_end_idx == -1) {
 			dm->tag.stype = VIO_SUBTYPE_NACK;
