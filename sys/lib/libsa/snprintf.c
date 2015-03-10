@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.5 2012/12/05 23:20:23 deraadt Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.6 2015/03/10 21:07:43 miod Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@ extern void kdoprnt(void (*)(int), const char *, va_list);
 static void sputchar(int);
 
 static char *sbuf, *sbuf_end;
-static size_t sbuf_len;
 
 void
 sputchar(int c)
@@ -60,7 +59,6 @@ snprintf(char *buf, size_t len, const char *fmt, ...)
 	va_list ap;
 
 	sbuf = buf;
-	sbuf_len = len;
 	sbuf_end = sbuf + len;
 	va_start(ap, fmt);
 	kdoprnt(sputchar, fmt, ap);
