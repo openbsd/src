@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.10 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: search.c,v 1.11 2015/03/10 00:10:59 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -144,7 +144,7 @@ f_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
 	recno_t lno;
 	regmatch_t match[1];
 	size_t coff, len;
-	int cnt, eval, rval, wrapped;
+	int cnt, eval, rval, wrapped = 0;
 	char *l;
 
 	if (search_init(sp, FORWARD, ptrn, plen, eptrn, flags))
@@ -183,13 +183,14 @@ f_search(SCR *sp, MARK *fm, MARK *rm, char *ptrn, size_t plen, char **eptrn,
 					return (1);
 				}
 				lno = 1;
+				wrapped = 1;
 			}
 		} else
 			coff = fm->cno + 1;
 	}
 
 	btype = BUSY_ON;
-	for (cnt = INTERRUPT_CHECK, rval = 1, wrapped = 0;; ++lno, coff = 0) {
+	for (cnt = INTERRUPT_CHECK, rval = 1;; ++lno, coff = 0) {
 		if (cnt-- == 0) {
 			if (INTERRUPTED(sp))
 				break;
