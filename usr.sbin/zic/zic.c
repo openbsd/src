@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.17 2015/02/11 01:07:37 deraadt Exp $	*/
+/*	$OpenBSD: zic.c,v 1.18 2015/03/11 22:26:03 deraadt Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -81,12 +81,6 @@ struct zone {
 	struct rule	z_untilrule;
 	zic_t		z_untiltime;
 };
-
-extern int	getopt(int argc, char * const argv[],
-			const char * options);
-extern int	link(const char * fromname, const char * toname);
-extern char *	optarg;
-extern int	optind;
 
 static void	addtt(zic_t starttime, int type);
 static int	addtype(long gmtoff, const char * abbr, int isdst,
