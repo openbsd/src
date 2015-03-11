@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.52 2014/01/05 01:16:52 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.76 2014/08/20 11:23:40 mikeb Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.54 2015/03/11 18:13:47 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -221,7 +221,7 @@ std)
 	M stderr	c 24 2
 	M ksyms		c 122 0 640 kmem
 	M klog		c 16 0 600
-	M eeprom	c 3 11	640 kmem
+	M eeprom	c 3 11	600
 	M openprom	c 70 0	640 kmem
 	;;
 
