@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.114 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.115 2015/03/11 03:35:17 dlg Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -614,10 +614,13 @@ pinger(void)
 	CLR(ntohs(icp->icmp_seq) % mx_dup_ck);
 
 	if (timing) {
+		struct timespec ts;
 		struct timeval tv;
 		struct tv32 tv32;
 
-		(void)gettimeofday(&tv, (struct timezone *)NULL);
+		if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+			err(1, "clock_gettime(CLOCK_MONOTONIC)");
+		TIMESPEC_TO_TIMEVAL(&tv, &ts);
 		tv32.tv32_sec = htonl(tv.tv_sec);	/* XXX 2038 */
 		tv32.tv32_usec = htonl(tv.tv_usec);
 		memcpy(&outpack[8], &tv32, sizeof tv32);
@@ -670,12 +673,15 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
 	struct ip *ip, *ip2;
+	struct timespec ts;
 	struct timeval tv, tp;
 	char *pkttime;
 	quad_t triptime = 0;
 	int hlen, hlen2, dupflag;
 
-	(void)gettimeofday(&tv, (struct timezone *)NULL);
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+		err(1, "clock_gettime(CLOCK_MONOTONIC)");
+	TIMESPEC_TO_TIMEVAL(&tv, &ts);
 
 	/* Check the IP header */
 	ip = (struct ip *)buf;
