@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.447 2015/01/22 19:00:24 krw Exp $
+#	$OpenBSD: rc,v 1.448 2015/03/11 14:48:58 krw Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -501,7 +501,7 @@ start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd spamd spamlogd sndiod
 echo '.'
 
-# If rc.firstime exists, run it just once, and make sure it is deleted
+# If rc.firsttime exists, run it just once, and make sure it is deleted
 if [ -f /etc/rc.firsttime ]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
 	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
