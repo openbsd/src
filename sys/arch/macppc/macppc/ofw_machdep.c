@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.48 2015/02/11 06:19:20 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.49 2015/03/11 07:55:40 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -282,16 +282,10 @@ ofw_open_inputs(int chosen)
 	fwcall = &fwentry;
 }
 
-bus_space_handle_t cons_display_mem_h;
 static int display_ofh;
 int cons_brightness;
 int cons_backlight_available;
 int fbnode;
-
-struct usb_kbd_ihandles {
-        struct usb_kbd_ihandles *next;
-	int ihandle;
-};
 
 void of_display_console(void);
 
