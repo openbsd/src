@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.413 2015/02/06 15:09:34 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.414 2015/03/11 08:17:37 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2015 $
+.Dd $Mdocdate: March 11 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2499,9 +2499,9 @@ variable is set.
 String used to set the window title if
 .Ic set-titles
 is on.
-Character sequences are replaced as for the
-.Ic status-left
-option.
+Formats are expanded, see the
+.Sx FORMATS
+section.
 .It Xo Ic status
 .Op Ic on | off
 .Xc
