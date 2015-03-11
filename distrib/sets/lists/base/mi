@@ -540,7 +540,6 @@
 ./usr/bin/systat
 ./usr/bin/tail
 ./usr/bin/talk
-./usr/bin/tcopy
 ./usr/bin/tcpbench
 ./usr/bin/tee
 ./usr/bin/telnet
