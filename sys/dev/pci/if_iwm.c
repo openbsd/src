@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.36 2015/03/06 18:39:24 kettenis Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.37 2015/03/11 12:24:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6360,6 +6360,8 @@ iwm_intr(void *arg)
 typedef void *iwm_match_t;
 
 static const struct pci_matchid iwm_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1 },
