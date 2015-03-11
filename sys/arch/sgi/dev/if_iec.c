@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.12 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.13 2015/03/11 22:14:43 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1139,7 +1139,6 @@ iec_get(struct iec_softc *sc, uint8_t *data, size_t datalen)
 		return NULL;
 	}
 
-	m->m_pkthdr.rcvif = &sc->sc_ac.ac_if;
 	m->m_pkthdr.len = datalen;
 
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
@@ -1237,6 +1236,7 @@ iec_rxintr(struct iec_softc *sc, uint32_t stat)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	struct iec_rxdesc *rxd;
 	uint64_t rxstat;
@@ -1304,17 +1304,7 @@ dropit:
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it is for us.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	/* Update RX index pointers. */
@@ -1323,6 +1313,8 @@ dropit:
 	    (sc->sc_rxpi * sizeof(uint64_t)) | IOC3_ENET_PIR_SET);
 	DPRINTF(IEC_DEBUG_RXINTR, ("iec_rxintr: new rxci %d rxpi %d\n",
 	    sc->sc_rxci, sc->sc_rxpi));
+
+	if_input(ifp, &ml);
 }
 
 void
