@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.27 2015/02/23 08:09:46 deraadt Exp $
+#	$OpenBSD: list,v 1.28 2015/03/11 15:27:31 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -6,9 +6,9 @@ SRCDIRS distrib/special
 COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/arch
 LINK	instbin					bin/cat
-LINK	instbin					bin/date
 LINK	instbin					bin/chmod bin/chgrp sbin/chown
 LINK	instbin					bin/cp
+LINK	instbin					bin/date
 LINK	instbin					bin/dd
 LINK	instbin					bin/df
 LINK	instbin					bin/ed
@@ -27,6 +27,7 @@ LINK	instbin					bin/rm
 LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
+LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/dmesg
@@ -53,12 +54,12 @@ LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/encrypt
 LINK	instbin					usr/bin/ftp
-LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
-LINK	instbin					sbin/bioctl
+LINK	instbin					usr/sbin/chroot
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

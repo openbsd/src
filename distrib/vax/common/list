@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.36 2015/02/23 08:09:47 deraadt Exp $
+#	$OpenBSD: list,v 1.37 2015/03/11 15:27:33 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS sys/arch/vax/stand
@@ -7,13 +7,15 @@ SRCDIRS sys/arch/vax/stand
 COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/arch
 LINK	instbin					bin/cat
-LINK	instbin					bin/date
 LINK	instbin					bin/chmod bin/chgrp sbin/chown
 LINK	instbin					bin/cp
+LINK	instbin					bin/date
 LINK	instbin					bin/dd
 LINK	instbin					bin/df
 LINK	instbin					bin/ed
+LINK	instbin					bin/hostname
 LINK	instbin					bin/ksh bin/sh
+LINK	instbin					bin/pax bin/tar
 ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
@@ -30,7 +32,6 @@ LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
-LINK	instbin					sbin/halt
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
@@ -40,20 +41,19 @@ LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
-LINK	instbin					sbin/reboot
+LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
-LINK	instbin					sbin/shutdown
-LINK	instbin					sbin/slattach
 LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
-LINK	instbin					usr/bin/awk
 LINK	instbin					usr/bin/encrypt
 LINK	instbin					usr/bin/ftp
-LINK	instbin					usr/bin/more
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
-LINK	instbin					usr/bin/tar
 #LINK	instbin					usr/sbin/bad144
+LINK	instbin					usr/sbin/chroot
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
