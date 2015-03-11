@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.47 2012/08/29 19:39:26 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.48 2015/03/11 08:05:11 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 29 2012 $
+.Dd $Mdocdate: March 11 2015 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -225,7 +225,7 @@ option is automatically enabled if either the
 .Xr sysctl 8
 variable
 .Va net.inet.ip.forwarding
-is set to a value different to 1 or if the FIB is not coupled.
+is set to a value other than 1 or if the FIB is not coupled.
 .El
 .Sh AREAS
 Areas are used for grouping interfaces.
