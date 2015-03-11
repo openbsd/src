@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.92 2015/02/11 03:16:57 reyk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.93 2015/03/11 19:38:48 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,7 +90,7 @@ usage(void)
 
 	if (strcmp(__progname, "ntpctl") == 0)
 		fprintf(stderr,
-		    "usage: ntpctl [-s all | peers | Sensors | status]\n");
+		    "usage: ntpctl -s all | peers | Sensors | status\n");
 	else
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
