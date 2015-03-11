@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.108 2015/03/08 16:48:47 miod Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.109 2015/03/11 19:34:06 tedu Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1168,8 +1168,6 @@ ssl3_get_key_exchange(SSL *s)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
-	EVP_MD_CTX_init(&md_ctx);
-
 	/*
 	 * Use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped.
@@ -1178,6 +1176,8 @@ ssl3_get_key_exchange(SSL *s)
 	    SSL3_ST_CR_KEY_EXCH_B, -1, s->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);
+	
+	EVP_MD_CTX_init(&md_ctx);
 
 	if (s->s3->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
 		/*
@@ -1192,6 +1192,7 @@ ssl3_get_key_exchange(SSL *s)
 		}
 
 		s->s3->tmp.reuse_message = 1;
+		EVP_MD_CTX_cleanup(&md_ctx);
 		return (1);
 	}
 
