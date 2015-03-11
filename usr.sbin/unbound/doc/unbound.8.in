@@ -45,10 +45,20 @@ nameserver 127.0.0.1
 into
 .IR resolv.conf (5).
 .P
-If authoritative DNS is needed as well using
-.IR nsd (8),
-careful setup is required because authoritative nameservers and
-resolvers are using the same port number (53).
+.B Unbound
+can serve local zones authoritatively to resolver clients.
+This can be used for split horizon setups.
+See
+.B local\-zone
+or
+.B stub\-zone
+in
+.IR unbound.conf (5).
+.B Unbound
+must not be used to serve authoritative data to the internet at large.
+Consider running 
+.IR nsd (8)
+on a different machine or on a different IP address.
 .P
 The available options are:
 .TP
