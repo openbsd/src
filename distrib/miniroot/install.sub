@@ -1,6 +1,6 @@
-#	$OpenBSD: install.sub,v 1.815 2015/03/08 13:15:00 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.816 2015/03/11 21:00:35 krw Exp $
 #
-# Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1990,6 +1990,112 @@ __EOT
 	$AUTO && >/ai.done
 }
 
+# Show device name, label and size for the provided list of devices
+diskinfo() {
+	local _d
+	for _d; do
+		makedev $_d
+		echo -n "$_d: "
+		disklabel -dpg $_d 2>/dev/null |
+		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;H;d;}' \
+			-e '/.*# total bytes: \(.*\)/{s//(\1)/;H;}' \
+			-e '$!d;x;s/\n/ /'
+		rm -f /dev/{r,}$_d?
+	done
+}
+
+# Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
+get_rootinfo() {
+	while :; do
+		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
+		_ask "Which disk is the root disk? ('?' for details)" \
+			$(get_dkdevs | sed 's/ .*//') || continue
+		case $resp in
+		"?")	diskinfo $(get_dkdevs);;
+		'')	;;
+		*)	isin "$resp" $(get_dkdevs) && break
+			echo "no such disk";;
+		esac
+	done
+	makedev $resp || exit
+
+	ROOTDISK=$resp
+	ROOTDEV=${ROOTDISK}a
+	SWAPDEV=${ROOTDISK}b
+}
+
+# Fetch response file for autoinstall.
+get_responsefile() {
+	local _rf _ifdev _mac _mode _server _lf
+	action=
+
+	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
+	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
+	[[ -f $_rf ]] && cp $_rf /ai.$_mode.conf && action=$_mode && return
+
+	# Select a network interface for initial dhcp request.
+	# Ask if multiple were found and system was not netbooted.
+	# Extract server ip address and installer mode from lease file.
+	# Prime hostname with host-name option.
+	for _ifdev in ''; do
+		[[ -x /sbin/dhclient ]] || break
+		set -- $(get_ifdevs netboot)
+		(($# == 0)) && set -- $(get_ifdevs)
+		(($# == 1)) && _ifdev=$1
+		while (($# > 1)); do
+			ask_which "network interface" \
+				"should be used for the initial DHCP request" "$*"
+			isin "$resp" $* && _ifdev=$resp && break
+		done
+		[[ -n $_ifdev ]] && dhclient $_ifdev || break
+		_lf=/var/db/dhclient.leases.$_ifdev
+		_server=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
+		_mode=$(sed -E '/^ *filename "auto_(install|upgrade)";$/!d;s//\1/;q' $_lf)
+		hostname "$(sed -E '/^ *option host-name "(.*)";$/!d;s//\1/;q' $_lf)"
+	done
+
+	# Fetch response file if server and mode are known, otherwise tell which
+	# one was missing. First try to fetch mac-mode.conf, then mode.conf.
+	if [[ -n $_server && -n $_mode ]]; then
+		_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
+		for _rf in {$_mac-,}$_mode; do
+			_url=http://$_server/$_rf.conf
+			echo "Fetching $_url"
+			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
+				action=$_mode
+				ifconfig $_ifdev delete down 2>/dev/null
+				return 0
+			fi
+		done
+	else
+		[[ -z $_server ]] && echo "Could not determine next-server."
+		[[ -z $_mode ]] && echo "Could not determine auto mode."
+	fi
+
+	# Ask for url or local path to response file. Provide a default url if
+	# server was found in lease file.
+	while :; do
+		ask "Response file location?" \
+			"${_server:+http://$_server/install.conf}"
+		[[ -n $resp ]] && _rf=$resp && break
+	done
+
+	# Ask for the installer mode only if auto-detection failed.
+	_mode=$(echo "$_rf" | sed -En 's/^.*(install|upgrade).conf$/\1/p')
+	while [[ -z $_mode ]]; do
+		ask "(I)nstall or (U)pgrade?"
+		[[ $resp == [iI]* ]] && _mode=install
+		[[ $resp == [uU]* ]] && _mode=upgrade
+	done
+
+	echo "Fetching $_rf"
+	[[ -f $_rf ]] && _rf="file://$_rf"
+	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && action=$_mode
+	ifconfig $_ifdev delete down 2>/dev/null
+	[[ -n $action ]]
+}
+
+
 # #######################################################################
 #
 # Initial actions common to both installs and upgrades.
@@ -2077,77 +2183,6 @@ for _ifs in $(get_ifdevs dhcp); do
 	ifconfig $_ifs delete down -group dhcp 2>/dev/null
 done
 
-# Fetch response file for autoinstall.
-get_responsefile() {
-	local _rf _ifdev _mac _mode _server _lf
-	action=
-
-	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
-	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
-	[[ -f $_rf ]] && cp $_rf /ai.$_mode.conf && action=$_mode && return
-
-	# Select a network interface for initial dhcp request.
-	# Ask if multiple were found and system was not netbooted.
-	# Extract server ip address and installer mode from lease file.
-	# Prime hostname with host-name option.
-	for _ifdev in ''; do
-		[[ -x /sbin/dhclient ]] || break
-		set -- $(get_ifdevs netboot)
-		(($# == 0)) && set -- $(get_ifdevs)
-		(($# == 1)) && _ifdev=$1
-		while (($# > 1)); do
-			ask_which "network interface" \
-				"should be used for the initial DHCP request" "$*"
-			isin "$resp" $* && _ifdev=$resp && break
-		done
-		[[ -n $_ifdev ]] && dhclient $_ifdev || break
-		_lf=/var/db/dhclient.leases.$_ifdev
-		_server=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
-		_mode=$(sed -E '/^ *filename "auto_(install|upgrade)";$/!d;s//\1/;q' $_lf)
-		hostname "$(sed -E '/^ *option host-name "(.*)";$/!d;s//\1/;q' $_lf)"
-	done
-
-	# Fetch response file if server and mode are known, otherwise tell which
-	# one was missing. First try to fetch mac-mode.conf, then mode.conf.
-	if [[ -n $_server && -n $_mode ]]; then
-		_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
-		for _rf in {$_mac-,}$_mode; do
-			_url=http://$_server/$_rf.conf
-			echo "Fetching $_url"
-			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
-				action=$_mode
-				ifconfig $_ifdev delete down 2>/dev/null
-				return 0
-			fi
-		done
-	else
-		[[ -z $_server ]] && echo "Could not determine next-server."
-		[[ -z $_mode ]] && echo "Could not determine auto mode."
-	fi
-
-	# Ask for url or local path to response file. Provide a default url if
-	# server was found in lease file.
-	while :; do
-		ask "Response file location?" \
-			"${_server:+http://$_server/install.conf}"
-		[[ -n $resp ]] && _rf=$resp && break
-	done
-
-	# Ask for the installer mode only if auto-detection failed.
-	_mode=$(echo "$_rf" | sed -En 's/^.*(install|upgrade).conf$/\1/p')
-	while [[ -z $_mode ]]; do
-		ask "(I)nstall or (U)pgrade?"
-		[[ $resp == [iI]* ]] && _mode=install
-		[[ $resp == [uU]* ]] && _mode=upgrade
-	done
-
-	echo "Fetching $_rf"
-	[[ -f $_rf ]] && _rf="file://$_rf"
-	ftp -Vo "/ai.$_mode.conf" "$_rf" 2>/dev/null && action=$_mode
-	ifconfig $_ifdev delete down 2>/dev/null
-	[[ -n $action ]]
-}
-
 # Interactive or automatic installation?
 if ! $AUTO; then
 	cat <<__EOT
@@ -2187,64 +2222,3 @@ fi
 
 # Configure the terminal and keyboard.
 set_term
-
-if [[ $MODE == install ]]; then
-	ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
-	[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
-	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
-
-	echo
-	donetconfig
-
-	((NIFS != 0)) && startcgiinfo
-
-	echo
-	while :; do
-		askpassword "Password for root account?"
-		_rootpass="$_password"
-		[[ -n "$_password" ]] && break
-		echo "The root password must be set."
-	done
-
-	rootkey=
-	$AUTO && ask "Public ssh key for root account?" none &&
-		[[ $resp != none ]] && rootkey=$resp
-
-	questions
-	user_setup
-
-	set_timezone /var/tzlist
-	echo
-fi
-
-# Show device name, label and size for the provided list of devices
-diskinfo() {
-	local _d
-	for _d; do
-		makedev $_d
-		echo -n "$_d: "
-		disklabel -dpg $_d 2>/dev/null |
-		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;H;d;}' \
-			-e '/.*# total bytes: \(.*\)/{s//(\1)/;H;}' \
-			-e '$!d;x;s/\n/ /'
-		rm -f /dev/{r,}$_d?
-	done
-}
-
-# Get ROOTDISK, ROOTDEV and SWAPDEV.
-while :; do
-	echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
-	_ask "Which disk is the root disk? ('?' for details)" \
-		$(get_dkdevs | sed 's/ .*//') || continue
-	case $resp in
-	"?")	diskinfo $(get_dkdevs);;
-	'')	;;
-	*)	isin "$resp" $(get_dkdevs) && break
-		echo "no such disk";;
-	esac
-done
-makedev $resp || exit
-
-ROOTDISK=$resp
-ROOTDEV=${ROOTDISK}a
-SWAPDEV=${ROOTDISK}b

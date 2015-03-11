@@ -1,8 +1,8 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.259 2015/01/02 22:38:50 rpe Exp $
+#	$OpenBSD: install.sh,v 1.260 2015/03/11 21:00:35 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
-# Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -60,6 +60,36 @@ MODE=install
 
 # include common subroutines and initialization code
 . install.sub
+
+ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
+[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
+THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+
+echo
+donetconfig
+
+((NIFS != 0)) && startcgiinfo
+
+echo
+while :; do
+	askpassword "Password for root account?"
+	_rootpass="$_password"
+	[[ -n "$_password" ]] && break
+	echo "The root password must be set."
+done
+
+rootkey=
+$AUTO && ask "Public ssh key for root account?" none &&
+	[[ $resp != none ]] && rootkey=$resp
+
+questions
+user_setup
+
+set_timezone /var/tzlist
+echo
+
+# Configure disks
+get_rootinfo
 
 DISK=
 DISKS_DONE=

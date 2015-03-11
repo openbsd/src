@@ -1,8 +1,8 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.82 2015/01/30 17:11:00 sthen Exp $
+#	$OpenBSD: upgrade.sh,v 1.83 2015/03/11 21:00:35 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
-# Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ MODE=upgrade
 . install.sub
 
 # Have the user confirm that $ROOTDEV is the root filesystem.
+get_rootinfo
 while :; do
 	ask "Root filesystem?" $ROOTDEV
 	resp=${resp##*/}
