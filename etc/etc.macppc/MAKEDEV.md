@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.63 2014/12/11 19:48:03 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.64 2015/03/11 18:43:11 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -100,7 +100,7 @@ divert(__mddivert)dnl
 dnl
 _std(1, 2, 43, 6)
 	M xf86		c 2 4 600
-	M openprom	c 82 0 640 kmem
+	M openprom	c 82 0 600
 	;;
 
 dnl
