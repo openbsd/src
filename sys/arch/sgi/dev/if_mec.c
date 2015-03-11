@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.28 2014/12/22 02:26:53 tedu Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.29 2015/03/11 16:08:54 mpi Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1206,6 +1206,7 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	struct mec_rxdesc *rxd;
 	uint64_t rxstat;
@@ -1305,22 +1306,11 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 		MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
 		bus_space_write_8(st, sh, MEC_MCL_RX_FIFO, MEC_CDRXADDR(sc, i));
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len - ETHER_CRC_LEN;
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it is for us.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	/* Update RX pointer. */
@@ -1329,6 +1319,8 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 	bus_space_write_8(st, sh, MEC_RX_ALIAS,
 	    (MEC_NRXDESC << MEC_DMA_RX_INT_THRESH_SHIFT) |
 	    MEC_DMA_RX_INT_ENABLE);
+
+	if_input(ifp, &ml);
 }
 
 void
