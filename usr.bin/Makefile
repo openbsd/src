@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.148 2014/10/09 03:39:51 tedu Exp $
+#	$OpenBSD: Makefile,v 1.149 2015/03/11 22:32:48 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	sdiff script sed sendbug shar showmount signify skey \
 	skeyaudit skeyinfo skeyinit sndiod \
 	sort spell split sqlite3 ssh stat su systat \
-	sudo tail talk tcopy tcpbench tee telnet tftp tic tip time \
+	sudo tail talk tcpbench tee telnet tftp tic tip time \
 	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
