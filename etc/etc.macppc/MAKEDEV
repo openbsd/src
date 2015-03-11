@@ -222,7 +222,7 @@ std)
 	M ksyms		c 43 0 640 kmem
 	M klog		c 6 0 600
 	M xf86		c 2 4 600
-	M openprom	c 82 0 640 kmem
+	M openprom	c 82 0 600
 	;;
 
 

@@ -222,7 +222,7 @@ std)
 	M ksyms		c 122 0 640 kmem
 	M klog		c 16 0 600
 	M eeprom	c 3 11	600
-	M openprom	c 70 0	640 kmem
+	M openprom	c 70 0	600
 	;;
 
 vscsi*)
