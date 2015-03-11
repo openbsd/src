@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.98 2015/02/10 11:16:04 miod Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.99 2015/03/11 14:59:04 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -141,7 +141,6 @@ main(int argc, char *argv[])
 	const char *dformat = NULL;
 	extern char *optarg;
 	extern int optind;
-	gid_t gid;
 	int i, need_nlist;
 
 	hideroot = getuid();
@@ -191,17 +190,10 @@ main(int argc, char *argv[])
 	if ((dformat == 0 && argc > 0) || (dformat && argc == 0))
 		usage();
 
-	need_nlist = vnodeflag || totalflag || dformat;
+	need_nlist = vnodeflag || dformat;
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	gid = getgid();
 	if (nlistf != NULL || memf != NULL) {
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-		if (fileflag || totalflag)
+		if (fileflag)
 			need_nlist = 1;
 	}
 
@@ -210,9 +202,6 @@ main(int argc, char *argv[])
 		    O_RDONLY | (need_nlist ? 0 : KVM_NO_FILES), buf)) == 0)
 			errx(1, "kvm_openfiles: %s", buf);
 
-	if (nlistf == NULL && memf == NULL)
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
 	if (dformat) {
 		struct nlist *nl;
 		int longformat = 0, stringformat = 0, error = 0, n;
@@ -819,6 +808,8 @@ kinfo_vnodes(int *avnodes)
 	} else
 		KGET(V_NUMV, numvnodes);
 	*avnodes = numvnodes;
+	if (totalflag)
+		return NULL;
 	if ((vbuf = calloc(numvnodes + 20,
 	    sizeof(struct vnode *) + sizeof(struct vnode))) == NULL)
 		err(1, "malloc: vnode buffer");
