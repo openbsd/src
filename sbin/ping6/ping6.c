@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.101 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.102 2015/03/11 03:38:56 dlg Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1072,10 +1072,13 @@ pinger(void)
 		icp->icmp6_id = htons(ident);
 		icp->icmp6_seq = ntohs(seq);
 		if (timing) {
+			struct timespec ts;
 			struct timeval tv;
 			struct tv32 tv32;
 
-			(void)gettimeofday(&tv, NULL);
+			if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+				err(1, "clock_gettime(CLOCK_MONOTONIC)");
+			TIMESPEC_TO_TIMEVAL(&tv, &ts);
 			tv32.tv32_sec = htonl(tv.tv_sec);	/* XXX 2038 */
 			tv32.tv32_usec = htonl(tv.tv_usec);
 			bcopy(&tv32, &outpack[ICMP6ECHOLEN], sizeof(tv32));
@@ -1206,6 +1209,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	int fromlen;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
+	struct timespec ts;
 	struct timeval tv, tp;
 	struct tv32 tv32;
 	double triptime = 0;
@@ -1215,7 +1219,9 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	u_int16_t seq;
 	char dnsname[MAXDNAME + 1];
 
-	(void)gettimeofday(&tv, NULL);
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+		err(1, "clock_gettime(CLOCK_MONOTONIC)");
+	TIMESPEC_TO_TIMEVAL(&tv, &ts);
 
 	if (!mhdr || !mhdr->msg_name ||
 	    mhdr->msg_namelen != sizeof(struct sockaddr_in6) ||
