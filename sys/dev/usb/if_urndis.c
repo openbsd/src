@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.52 2015/01/09 20:45:40 kettenis Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.53 2015/03/11 16:07:22 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -779,6 +779,7 @@ void
 urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 {
 	struct mbuf		*m;
+	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct urndis_packet_msg	*msg;
 	struct ifnet		*ifp;
 	int			 s;
@@ -869,27 +870,20 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		m->m_pkthdr.len = m->m_len = letoh32(msg->rm_datalen);
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
-
-		s = splnet();
 
 		if (urndis_newbuf(sc, c) == ENOBUFS) {
 			ifp->if_ierrors++;
 		} else {
-
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-			ether_input_mbuf(ifp, m);
-
+			ml_enqueue(&ml, m);
 		}
-		splx(s);
 
 		offset += letoh32(msg->rm_len);
 		len -= letoh32(msg->rm_len);
 	}
+
+	s = splnet();
+	if_input(ifp, &ml);
+	splx(s);
 }
 
 int
