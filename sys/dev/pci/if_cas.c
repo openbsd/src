@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.37 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.38 2015/03/11 22:15:22 mpi Exp $	*/
 
 /*
  *
@@ -1164,6 +1164,7 @@ cas_rint(struct cas_softc *sc)
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
 	struct cas_rxsoft *rxs;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_int64_t word[4];
 	int len, off, idx;
@@ -1197,23 +1198,13 @@ cas_rint(struct cas_softc *sc)
 
 			cp = rxs->rxs_kva + off * 256 + ETHER_ALIGN;
 			m = m_devget(cp, len, ETHER_ALIGN, ifp);
-			
+
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-
-#if NBPFILTER > 0
-				/*
-				 * Pass this up to any BPF listeners, but only
-				 * pass it up the stack if its for us.
-				 */
-				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
 				ifp->if_ipackets++;
-				ether_input_mbuf(ifp, m);
+				ml_enqueue(&ml, m);
 			} else
 				ifp->if_ierrors++;
 		}
@@ -1238,17 +1229,8 @@ cas_rint(struct cas_softc *sc)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-#if NBPFILTER > 0
-				/*
-				 * Pass this up to any BPF listeners, but only
-				 * pass it up the stack if its for us.
-				 */
-				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
 				ifp->if_ipackets++;
-				ether_input_mbuf(ifp, m);
+				ml_enqueue(&ml, m);
 			} else
 				ifp->if_ierrors++;
 		}
@@ -1275,6 +1257,8 @@ cas_rint(struct cas_softc *sc)
 
 	DPRINTF(sc, ("cas_rint: done sc->rxptr %d, complete %d\n",
 		sc->sc_rxptr, bus_space_read_4(t, h, CAS_RX_COMPLETION)));
+
+	if_input(ifp, &ml);
 
 	return (1);
 }
