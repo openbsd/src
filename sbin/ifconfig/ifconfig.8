@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.252 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.253 2015/03/12 18:28:34 benno Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: March 12 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -813,10 +813,8 @@ Each node is specified as a
 .Ar vhid:advskew
 tuple in a comma separated list.
 .It Cm carpdev Ar iface
-Attach to
+Attach to parent interface
 .Ar iface .
-If not specified, the kernel will attempt to select an interface with
-a subnet matching that of the carp interface.
 .It Cm carppeer Ar peer_address
 Send the carp advertisements to a specified
 point-to-point peer or multicast group instead of sending the messages
