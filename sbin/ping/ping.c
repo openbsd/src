@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.116 2015/03/12 00:14:29 dlg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.117 2015/03/12 09:54:11 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ struct itimerval interstr;	/* interval structure for use with setitimer */
 
 /* timing */
 int timing;			/* flag to do timing */
+int timinginfo;
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 quad_t tmin = 999999999;	/* minimum round trip time in usec */
 quad_t tmax = 0;		/* maximum round trip time in usec */
@@ -696,9 +697,10 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		if (icp->icmp_id != ident)
 			return;			/* 'Twas not our ECHO */
 		++nreceived;
-		if (timing) {
+		if (cc >= 8 + sizeof(struct tv64)) {
 			struct tv64 tv64;
 
+			timinginfo++;
 			pkttime = (char *)icp->icmp_data;
 			memcpy(&tv64, pkttime, sizeof(tv64));
 			tp.tv_sec = betoh64(tv64.tv64_sec);
@@ -733,7 +735,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			    inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
 			    ntohs(icp->icmp_seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
-			if (timing)
+			if (cc >= 8 + sizeof(struct tv64))
 				(void)printf(" time=%d.%03d ms",
 				    (int)(triptime / 1000),
 				    (int)(triptime % 1000));
@@ -951,10 +953,9 @@ summary(int header, int insig)
 		strlcat(buf, buft, sizeof buf);
 	}
 	strlcat(buf, "\n", sizeof buf);
-	if (nreceived && timing) {
-		quad_t num = nreceived + nrepeats;
-		quad_t avg = tsum / num;
-		quad_t dev = qsqrt(tsumsq / num - avg * avg);
+	if (timinginfo) {
+		quad_t avg = tsum / timinginfo;
+		quad_t dev = qsqrt(tsumsq / timinginfo - avg * avg);
 
 		snprintf(buft, sizeof buft, "round-trip min/avg/max/std-dev = "
 		    "%d.%03d/%d.%03d/%d.%03d/%d.%03d ms\n",
