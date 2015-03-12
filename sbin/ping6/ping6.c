@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.102 2015/03/11 03:38:56 dlg Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.103 2015/03/12 00:30:38 dlg Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1081,7 +1081,7 @@ pinger(void)
 			TIMESPEC_TO_TIMEVAL(&tv, &ts);
 			tv32.tv32_sec = htonl(tv.tv_sec);	/* XXX 2038 */
 			tv32.tv32_usec = htonl(tv.tv_usec);
-			bcopy(&tv32, &outpack[ICMP6ECHOLEN], sizeof(tv32));
+			memcpy(&outpack[ICMP6ECHOLEN], &tv32, sizeof(tv32));
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
@@ -1255,7 +1255,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			bcopy(icp + 1, &tv32, sizeof(tv32));
+			memcpy(&tv32, icp + 1, sizeof(tv32));
 			tp.tv_sec = ntohl(tv32.tv32_sec);
 			tp.tv_usec = ntohl(tv32.tv32_usec);
 			tvsub(&tv, &tp);
@@ -2389,7 +2389,7 @@ nigroup(char *name)
 
 	if (inet_pton(AF_INET6, "ff02::2:0000:0000", &in6) != 1)
 		return NULL;	/*XXX*/
-	bcopy(digest, &in6.s6_addr[12], 4);
+	memcpy(&in6.s6_addr[12], digest, 4);
 
 	if (inet_ntop(AF_INET6, &in6, hbuf, sizeof(hbuf)) == NULL)
 		return NULL;
