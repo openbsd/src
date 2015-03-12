@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.194 2015/02/17 15:43:34 sthen Exp $
+# $OpenBSD: sysmerge.sh,v 1.195 2015/03/12 12:46:01 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -366,7 +366,7 @@ sm_merge_loop() {
 	_tomerge=true
 	while ${_tomerge}; do
 		cp -p ${COMPFILE} ${COMPFILE}.merged
-		sdiff -as -w $(tput cols) -o ${COMPFILE}.merged \
+		sdiff -as -w $(tput -T ${TERM:=vt100} cols) -o ${COMPFILE}.merged \
 			${TARGET} ${COMPFILE}
 		_instmerged=v
 		while [[ ${_instmerged} == v ]]; do
