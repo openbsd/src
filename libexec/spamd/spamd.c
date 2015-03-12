@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.125 2015/02/22 14:55:40 jsing Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.126 2015/03/12 20:07:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <poll.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,10 +52,11 @@ extern int server_lookup(struct sockaddr *, struct sockaddr *,
     struct sockaddr *);
 
 struct con {
-	int fd;
+	struct pollfd *pfd;
 	int state;
 	int laststate;
 	int af;
+	int il;
 	struct sockaddr_storage ss;
 	void *ia;
 	char addr[32];
@@ -73,7 +75,6 @@ struct con {
 
 	char ibuf[8192];
 	char *ip;
-	int il;
 	char rend[5];	/* any chars in here causes input termination */
 
 	char *obuf;
@@ -661,7 +662,7 @@ getcaddr(struct con *cp)
 	int error;
 
 	cp->caddr[0] = '\0';
-	if (getsockname(cp->fd, sep, &len) == -1)
+	if (getsockname(cp->pfd->fd, sep, &len) == -1)
 		return;
 	if (server_lookup((struct sockaddr *)&cp->ss, sep, odp) != 0)
 		return;
@@ -696,28 +697,23 @@ gethelo(char *p, size_t len, char *f)
 void
 initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
-	socklen_t len = sa->sa_len;
-	time_t tt;
+	struct pollfd *pfd = cp->pfd;
 	char ctimebuf[26];
+	time_t tt;
 	int error;
+
+	if (sa->sa_family != AF_INET)
+		errx(1, "not supported yet");
 
 	time(&tt);
 	free(cp->obuf);
-	cp->obuf = NULL;
-	cp->osize = 0;
 	free(cp->blacklists);
-	cp->blacklists = NULL;
 	free(cp->lists);
-	cp->lists = NULL;
-	bzero(cp, sizeof(struct con));
+	memset(cp, 0, sizeof(*cp));
 	if (grow_obuf(cp, 0) == NULL)
 		err(1, "malloc");
-	cp->fd = fd;
-	cp->cctx = NULL;
-	if (len > sizeof(cp->ss))
-		errx(1, "sockaddr size");
-	if (sa->sa_family != AF_INET)
-		errx(1, "not supported yet");
+	cp->pfd = pfd;
+	cp->pfd->fd = fd;
 	memcpy(&cp->ss, sa, sa->sa_len);
 	cp->af = sa->sa_family;
 	cp->ia = &((struct sockaddr_in *)&cp->ss)->sin_addr;
@@ -761,7 +757,9 @@ closecon(struct con *cp)
 		tls_close(cp->cctx);
 		tls_free(cp->cctx);
 	} else
-		close(cp->fd);
+		close(cp->pfd->fd);
+	cp->pfd->fd = -1;
+
 	slowdowntill = 0;
 
 	time(&tt);
@@ -787,7 +785,6 @@ closecon(struct con *cp)
 		cp->osize = 0;
 	}
 	clients--;
-	cp->fd = -1;
 }
 
 int
@@ -959,7 +956,7 @@ nextstate(struct con *cp)
 		}
 		goto mail;
 	case 9:
-		if (tls_accept_socket(tlsctx, &cp->cctx, cp->fd) == -1) {
+		if (tls_accept_socket(tlsctx, &cp->cctx, cp->pfd->fd) == -1) {
 			snprintf(cp->obuf, cp->osize,
 			    "500 STARTTLS failed\r\n");
 			cp->op = cp->obuf;
@@ -977,8 +974,8 @@ nextstate(struct con *cp)
 			    "354 Enter spam, end with \".\" on a line by "
 			    "itself\r\n");
 			cp->state = 60;
-			if (window && setsockopt(cp->fd, SOL_SOCKET, SO_RCVBUF,
-			    &window, sizeof(window)) == -1) {
+			if (window && setsockopt(cp->pfd->fd, SOL_SOCKET,
+			    SO_RCVBUF, &window, sizeof(window)) == -1) {
 				syslog_r(LOG_DEBUG, &sdata,"setsockopt: %m");
 				/* don't fail if this doesn't work. */
 			}
@@ -1083,7 +1080,7 @@ handler(struct con *cp)
 			if (tls_read(cp->cctx, cp->ip, cp->il, &outlen) == 0)
 				n = outlen;
 		} else
-			n = read(cp->fd, cp->ip, cp->il);
+			n = read(cp->pfd->fd, cp->ip, cp->il);
 
 		if (n == 0)
 			closecon(cp);
@@ -1129,7 +1126,7 @@ handlew(struct con *cp, int one)
 				if (tls_write(cp->cctx, "\r", 1, &outlen) == 0)
 					n = outlen;
 			} else
-				n = write(cp->fd, "\r", 1);
+				n = write(cp->pfd->fd, "\r", 1);
 
 			if (n == 0) {
 				closecon(cp);
@@ -1150,7 +1147,7 @@ handlew(struct con *cp, int one)
 			if (tls_write(cp->cctx, cp->op, cp->ol, &outlen) == 0)
 				n = outlen;
 		} else
-			n = write(cp->fd, cp->op,
+			n = write(cp->pfd->fd, cp->op,
 			   (one && cp->stutter) ? 1 : cp->ol);
 
 		if (n == 0)
@@ -1190,13 +1187,21 @@ get_maxfiles(void)
 		return(maxfiles - 200);
 }
 
+/* Symbolic indexes for pfd[] below */
+#define PFD_SMTPLISTEN	0
+#define PFD_CONFLISTEN	1
+#define PFD_SYNCFD	2
+#define PFD_CONFFD	3
+#define PFD_TRAPFD	4
+#define PFD_FIRSTCON	5
+
 int
 main(int argc, char *argv[])
 {
-	fd_set *fdsr = NULL, *fdsw = NULL;
+	struct pollfd *pfd;
 	struct sockaddr_in sin;
 	struct sockaddr_in lin;
-	int ch, s, conflisten = 0, syncfd = 0, i, omax = 0, one = 1;
+	int ch, smtplisten, conflisten, syncfd = -1, i, one = 1;
 	u_short port;
 	long long passt, greyt, whitet;
 	struct servent *ent;
@@ -1344,6 +1349,10 @@ main(int argc, char *argv[])
 	if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
 		err(1, "setrlimit");
 
+	pfd = reallocarray(NULL, PFD_FIRSTCON + maxcon, sizeof(*pfd));
+	if (pfd == NULL)
+		err(1, "reallocarray");
+
 	con = calloc(maxcon, sizeof(*con));
 	if (con == NULL)
 		err(1, "calloc");
@@ -1354,16 +1363,18 @@ main(int argc, char *argv[])
 		err(1, "malloc");
 	con->osize = 8192;
 
-	for (i = 0; i < maxcon; i++)
-		con[i].fd = -1;
+	for (i = 0; i < maxcon; i++) {
+		con[i].pfd = &pfd[PFD_FIRSTCON + i];
+		con[i].pfd->fd = -1;
+	}
 
 	signal(SIGPIPE, SIG_IGN);
 
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s == -1)
+	smtplisten = socket(AF_INET, SOCK_STREAM, 0);
+	if (smtplisten == -1)
 		err(1, "socket");
 
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one,
+	if (setsockopt(smtplisten, SOL_SOCKET, SO_REUSEADDR, &one,
 	    sizeof(one)) == -1)
 		return (-1);
 
@@ -1385,7 +1396,7 @@ main(int argc, char *argv[])
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
-	if (bind(s, (struct sockaddr *)&sin, sizeof sin) == -1)
+	if (bind(smtplisten, (struct sockaddr *)&sin, sizeof sin) == -1)
 		err(1, "bind");
 
 	memset(&lin, 0, sizeof sin);
@@ -1486,7 +1497,7 @@ jail:
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			err(1, "failed to drop privs");
 
-	if (listen(s, 10) == -1)
+	if (listen(smtplisten, 10) == -1)
 		err(1, "listen");
 
 	if (listen(conflisten, 10) == -1)
@@ -1496,90 +1507,79 @@ jail:
 		printf("listening for incoming connections.\n");
 	syslog_r(LOG_WARNING, &sdata, "listening for incoming connections.");
 
-	while (1) {
-		struct timeval tv, *tvp;
-		int max, n;
-		int writers;
+	/* We always check for trap and sync events if configured. */
+	if (trapfd != -1) {
+		pfd[PFD_TRAPFD].fd = trapfd;
+		pfd[PFD_TRAPFD].events = POLLIN;
+	} else {
+		pfd[PFD_TRAPFD].fd = -1;
+		pfd[PFD_TRAPFD].events = 0;
+	}
+	if (syncrecv) {
+		pfd[PFD_SYNCFD].fd = syncfd;
+		pfd[PFD_SYNCFD].events = POLLIN;
+	} else {
+		pfd[PFD_SYNCFD].fd = -1;
+		pfd[PFD_SYNCFD].events = 0;
+	}
 
-		max = MAXIMUM(s, conflisten);
-		if (syncrecv)
-			max = MAXIMUM(max, syncfd);
-		max = MAXIMUM(max, conffd);
-		max = MAXIMUM(max, trapfd);
+	/* events and pfd entries for con[] are filled in below. */
+	pfd[PFD_SMTPLISTEN].fd = smtplisten;
+	pfd[PFD_CONFLISTEN].fd = conflisten;
+
+	while (1) {
+		int numcon = 0, n, timeout, writers;
 
 		time(&t);
-		for (i = 0; i < maxcon; i++)
-			if (con[i].fd != -1)
-				max = MAXIMUM(max, con[i].fd);
-
-		if (max > omax) {
-			free(fdsr);
-			fdsr = NULL;
-			free(fdsw);
-			fdsw = NULL;
-			fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
-			    sizeof(fd_mask));
-			if (fdsr == NULL)
-				err(1, "calloc");
-			fdsw = (fd_set *)calloc(howmany(max+1, NFDBITS),
-			    sizeof(fd_mask));
-			if (fdsw == NULL)
-				err(1, "calloc");
-			omax = max;
-		} else {
-			memset(fdsr, 0, howmany(max+1, NFDBITS) *
-			    sizeof(fd_mask));
-			memset(fdsw, 0, howmany(max+1, NFDBITS) *
-			    sizeof(fd_mask));
-		}
 
 		writers = 0;
 		for (i = 0; i < maxcon; i++) {
-			if (con[i].fd != -1 && con[i].r) {
+			if (con[i].pfd->fd == -1)
+				continue;
+			con[i].pfd->events = 0;
+			if (con[i].r) {
 				if (con[i].r + MAXTIME <= t) {
 					closecon(&con[i]);
 					continue;
 				}
-				FD_SET(con[i].fd, fdsr);
+				con[i].pfd->events |= POLLIN;
 			}
-			if (con[i].fd != -1 && con[i].w) {
+			if (con[i].w) {
 				if (con[i].w + MAXTIME <= t) {
 					closecon(&con[i]);
 					continue;
 				}
 				if (con[i].w <= t)
-					FD_SET(con[i].fd, fdsw);
+					con[i].pfd->events |= POLLOUT;
 				writers = 1;
 			}
+			if (i + 1 > numcon)
+				numcon = i + 1;
 		}
+		pfd[PFD_SMTPLISTEN].events = 0;
+		pfd[PFD_CONFLISTEN].events = 0;
+		pfd[PFD_CONFFD].events = 0;
+		pfd[PFD_CONFFD].fd = conffd;
 		if (slowdowntill == 0) {
-			FD_SET(s, fdsr);
+			pfd[PFD_SMTPLISTEN].events = POLLIN;
 
 			/* only one active config conn at a time */
 			if (conffd == -1)
-				FD_SET(conflisten, fdsr);
+				pfd[PFD_CONFLISTEN].events = POLLIN;
 			else
-				FD_SET(conffd, fdsr);
+				pfd[PFD_CONFFD].events = POLLIN;
 		}
-
-		if (trapfd != -1)
-			FD_SET(trapfd, fdsr);
-		if (syncrecv)
-			FD_SET(syncfd, fdsr);
 
 		/* If we are not listening, wake up at least once a second */
-		if (writers == 0 && slowdowntill == 0) {
-			tvp = NULL;
-		} else {
-			tv.tv_sec = 1;
-			tv.tv_usec = 0;
-			tvp = &tv;
-		}
+		if (writers == 0 && slowdowntill == 0)
+			timeout = INFTIM;
+		else
+			timeout = 1000;
 
-		n = select(max+1, fdsr, fdsw, NULL, tvp);
+		n = poll(pfd, PFD_FIRSTCON + numcon, timeout);
 		if (n == -1) {
 			if (errno != EINTR)
-				err(1, "select");
+				err(1, "poll");
 			continue;
 		}
 
@@ -1588,17 +1588,23 @@ jail:
 			slowdowntill = 0;
 
 		for (i = 0; i < maxcon; i++) {
-			if (con[i].fd != -1 && FD_ISSET(con[i].fd, fdsr))
+			if (con[i].pfd->fd == -1)
+				continue;
+			if (pfd[PFD_FIRSTCON + i].revents & POLLHUP) {
+				closecon(&con[i]);
+				continue;
+			}
+			if (pfd[PFD_FIRSTCON + i].revents & POLLIN)
 				handler(&con[i]);
-			if (con[i].fd != -1 && FD_ISSET(con[i].fd, fdsw))
+			if (pfd[PFD_FIRSTCON + i].revents & POLLOUT)
 				handlew(&con[i], clients + 5 < maxcon);
 		}
-		if (FD_ISSET(s, fdsr)) {
+		if (pfd[PFD_SMTPLISTEN].revents & (POLLIN|POLLHUP)) {
 			socklen_t sinlen;
 			int s2;
 
 			sinlen = sizeof(sin);
-			s2 = accept(s, (struct sockaddr *)&sin, &sinlen);
+			s2 = accept(smtplisten, (struct sockaddr *)&sin, &sinlen);
 			if (s2 == -1) {
 				switch (errno) {
 				case EINTR:
@@ -1614,7 +1620,7 @@ jail:
 			} else {
 				/* Check if we hit the chosen fd limit */
 				for (i = 0; i < maxcon; i++)
-					if (con[i].fd == -1)
+					if (con[i].pfd->fd == -1)
 						break;
 				if (i == maxcon) {
 					close(s2);
@@ -1632,7 +1638,7 @@ jail:
 				}
 			}
 		}
-		if (FD_ISSET(conflisten, fdsr)) {
+		if (pfd[PFD_CONFLISTEN].revents & (POLLIN|POLLHUP)) {
 			socklen_t sinlen;
 
 			sinlen = sizeof(lin);
@@ -1655,11 +1661,11 @@ jail:
 				conffd = -1;
 				slowdowntill = 0;
 			}
-		} else if (conffd != -1 && FD_ISSET(conffd, fdsr))
+		} else if (pfd[PFD_CONFFD].revents & (POLLIN|POLLHUP))
 			do_config();
-		if (trapfd != -1 && FD_ISSET(trapfd, fdsr))
+		if (pfd[PFD_TRAPFD].revents & (POLLIN|POLLHUP))
 			read_configline(trapcfg);
-		if (syncrecv && FD_ISSET(syncfd, fdsr))
+		if (pfd[PFD_SYNCFD].revents & (POLLIN|POLLHUP))
 			sync_recv();
 	}
 	exit(1);
