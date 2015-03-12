@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.17 2013/10/25 18:31:29 millert Exp $	*/
+/*	$OpenBSD: crib.c,v 1.18 2015/03/12 02:19:10 bentley Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -48,15 +48,6 @@ main(int argc, char *argv[])
 {
 	bool playing;
 	int ch;
-#ifdef LOGGING
-	FILE *f;
-	gid_t egid;
-
-	egid = getegid();
-	setegid(getgid());
-#else
-	setgid(getgid());
-#endif
 
 	while ((ch = getopt(argc, argv, "emqr")) != -1)
 		switch (ch) {
@@ -121,20 +112,7 @@ main(int argc, char *argv[])
 		playing = (getuchar() == 'Y');
 	} while (playing);
 
-#ifdef LOGGING
-	setegid(egid);
-	if ((f = fopen(_PATH_LOG, "a")) != NULL) {
-		(void)fprintf(f, "%s: won %5.5d, lost %5.5d\n",
-		    getlogin(), cgames, pgames);
-		(void) fclose(f);
-	}
-	setegid(getgid());
 	bye();
-	if (!f)
-		errx(1, "can't open %s", _PATH_LOG);
-#else
-	bye();
-#endif
 	exit(0);
 }
 
