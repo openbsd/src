@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.38 2014/07/24 22:38:19 mpi Exp $ */
+/* $OpenBSD: pckbd.c,v 1.39 2015/03/12 20:28:26 deraadt Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -79,6 +79,7 @@
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdreg.h>
 #include <dev/pckbc/pckbdvar.h>
+#include <dev/pckbc/pmsreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -1033,6 +1034,10 @@ pckbd_cnpollc(void *v, int on)
 		/* Just to be sure. */
 		cmd[0] = KBC_ENABLE;
 		pckbc_poll_cmd(t->t_kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
+		cmd[0] = KBC_RESET;
+		pckbc_poll_cmd(t->t_kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
+		cmd[0] = PMS_RESET;
+		pckbc_poll_cmd(t->t_kbctag, PCKBC_AUX_SLOT, cmd, 1, 0, NULL, 0);
 	}
 }
 
