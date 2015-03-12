@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.44 2015/01/20 18:26:57 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.45 2015/03/12 01:03:00 claudio Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -34,30 +34,23 @@
  * netstat
  */
 
-#include <sys/signal.h>
+#include <kvm.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
+#define _KERNEL
+#include <sys/file.h>
+#undef _KERNEL
 
 #include <netinet/in.h>
-#include <net/route.h>
-#include <netinet/ip.h>
-#include <netinet/in_pcb.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/icmp_var.h>
-#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
-#include <netinet/udp.h>
-#include <netinet/udp_var.h>
 #include <arpa/inet.h>
 
 #include <netdb.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
@@ -65,6 +58,10 @@
 #include <paths.h>
 #include "systat.h"
 #include "engine.h"
+
+#define	TCP	0x1
+#define	UDP	0x2
+#define	OTHER	0x4
 
 struct netinfo {
 	union {
@@ -75,13 +72,14 @@ struct netinfo {
 		struct	in_addr	nif_faddr;	/* foreign address */
 		struct	in6_addr nif_faddr6;	/* foreign address */
 	} f;
-	char	*nif_proto;		/* protocol */
 	long	nif_rcvcc;		/* rcv buffer character count */
 	long	nif_sndcc;		/* snd buffer character count */
 	short	nif_lport;		/* local port */
 	short	nif_fport;		/* foreign port */
 	short	nif_state;		/* tcp state */
 	short	nif_family;
+	short	nif_proto;		/* protocol */
+	short	nif_ipproto;
 };
 
 #define nif_laddr  l.nif_laddr
@@ -89,7 +87,8 @@ struct netinfo {
 #define nif_faddr  f.nif_faddr
 #define nif_faddr6 f.nif_faddr6
 
-static void enter(struct inpcb *, struct socket *, int, char *);
+static void enter(struct kinfo_file *);
+static int kf_comp(const void *, const void *);
 static void inetprint(struct in_addr *, int, char *, field_def *);
 static void inet6print(struct in6_addr *, int, char *, field_def *);
 static void shownetstat(struct netinfo *p);
@@ -103,15 +102,7 @@ int ns_keyboard_callback(int);
 
 static	int aflag = 0;
 
-static struct nlist namelist[] = {
-#define	X_TCBTABLE	0		/* no sysctl */
-	{ "_tcbtable" },
-#define	X_UDBTABLE	1		/* no sysctl */
-	{ "_udbtable" },
-	{ "" },
-};
 #define ADD_ALLOC  1000
-
 
 int protos;
 
@@ -175,33 +166,84 @@ next_ns(void)
 }
 
 static void
-enter(struct inpcb *inp, struct socket *so, int state, char *proto)
+enter(struct kinfo_file *kf)
 {
+#define s6_addr32 __u6_addr.__u6_addr32
 	struct netinfo *p;
 
+	/* first filter out unwanted sockets */
+	if (kf->so_family != AF_INET && kf->so_family != AF_INET6)
+		return;
+
+	switch (kf->so_protocol) {
+	case IPPROTO_TCP:
+		if ((protos & TCP) == 0)
+			return;
+		break;
+	case IPPROTO_UDP:
+		if ((protos & UDP) == 0)
+			return;
+		break;
+	default:
+		if ((protos & OTHER) == 0)
+			return;
+		break;
+	}
+
+	if (!aflag) {
+		struct in6_addr faddr6;
+
+		switch (kf->so_family) {
+		case AF_INET:
+			if (kf->inp_faddru[0] == INADDR_ANY)
+				return;
+			break;
+		case AF_INET6:
+			faddr6.s6_addr32[0] = kf->inp_faddru[0];
+			faddr6.s6_addr32[1] = kf->inp_faddru[1];
+			faddr6.s6_addr32[2] = kf->inp_faddru[2];
+			faddr6.s6_addr32[3] = kf->inp_faddru[3];
+			if (IN6_IS_ADDR_UNSPECIFIED(&faddr6))
+				return;
+			break;
+		}
+	}
+
+	/* finally enter the socket to the table */
 	p = next_ns();
 	if (p == NULL) {
 		error("Out of Memory!");
 		return;
 	}
 
-	p->nif_lport = inp->inp_lport;
-	p->nif_fport = inp->inp_fport;
-	p->nif_proto = proto;
-	
-	if (inp->inp_flags & INP_IPV6) {
-		p->nif_laddr6 = inp->inp_laddr6;
-		p->nif_faddr6 = inp->inp_faddr6;
-		p->nif_family = AF_INET6;
-	} else {
-		p->nif_laddr = inp->inp_laddr;
-		p->nif_faddr = inp->inp_faddr;
+	p->nif_lport = kf->inp_lport;
+	p->nif_fport = kf->inp_fport;
+	p->nif_proto = kf->so_protocol;
+	p->nif_ipproto = kf->inp_proto;
+
+	switch (kf->so_family) {
+	case AF_INET:
 		p->nif_family = AF_INET;
+		p->nif_laddr.s_addr = kf->inp_laddru[0];
+		p->nif_faddr.s_addr = kf->inp_faddru[0];
+		break;
+	case AF_INET6:
+		p->nif_family = AF_INET6;
+		p->nif_laddr6.s6_addr32[0] = kf->inp_laddru[0];
+		p->nif_laddr6.s6_addr32[1] = kf->inp_laddru[1];
+		p->nif_laddr6.s6_addr32[2] = kf->inp_laddru[2];
+		p->nif_laddr6.s6_addr32[3] = kf->inp_laddru[3];
+		p->nif_faddr6.s6_addr32[0] = kf->inp_faddru[0];
+		p->nif_faddr6.s6_addr32[1] = kf->inp_faddru[1];
+		p->nif_faddr6.s6_addr32[2] = kf->inp_faddru[2];
+		p->nif_faddr6.s6_addr32[3] = kf->inp_faddru[3];
+		break;
 	}
 
-	p->nif_rcvcc = so->so_rcv.sb_cc;
-	p->nif_sndcc = so->so_snd.sb_cc;
-	p->nif_state = state;
+	p->nif_rcvcc = kf->so_rcv_cc;
+	p->nif_sndcc = kf->so_snd_cc;
+	p->nif_state = kf->t_state;
+#undef s6_addr32
 }
 
 
@@ -210,85 +252,78 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 int
 select_ns(void)
 {
-	if (kd == NULL) {
-		num_disp = 1;
-		return (0);
-	}
 	num_disp = num_ns;
 	return (0);
 }
 
+static int type_map[] = { -1, 2, 3, 1, 4, 5 };
+
+static int
+kf_comp(const void *a, const void *b)
+{
+	const struct kinfo_file *ka = a, *kb = b;
+
+	if (ka->so_family != kb->so_family) {
+		/* AF_INET < AF_INET6 < AF_LOCAL */
+		if (ka->so_family == AF_INET)
+			return (-1);
+		if (ka->so_family == AF_LOCAL)
+			return (1);
+		if (kb->so_family == AF_LOCAL)
+			return (-1);
+		return (1);
+	}
+	if (ka->so_family == AF_LOCAL) {
+		if (type_map[ka->so_type] < type_map[kb->so_type])
+			return (-1);
+		if (type_map[ka->so_type] > type_map[kb->so_type])
+			return (1);
+	} else if (ka->so_family == AF_INET || ka->so_family == AF_INET6) {
+		if (ka->so_protocol < kb->so_protocol)
+			return (-1);
+		if (ka->so_protocol > kb->so_protocol)
+			return (1);
+		if (ka->so_type == SOCK_DGRAM || ka->so_type == SOCK_STREAM) {
+			/* order sockets by remote port desc */
+			if (ka->inp_fport > kb->inp_fport)
+				return (-1);
+			if (ka->inp_fport < kb->inp_fport)
+				return (1);
+		} else if (ka->so_type == SOCK_RAW) {
+			if (ka->inp_proto > kb->inp_proto)
+				return (-1);
+			if (ka->inp_proto < kb->inp_proto)
+				return (1);
+		}
+	}
+	return (0);
+}
+
+
 int
 read_ns(void)
 {
-	struct inpcbtable pcbtable;
-	struct inpcb *next, *prev;
-	struct inpcb inpcb, prevpcb;
-	struct socket sockb;
-	struct tcpcb tcpcb;
-	void *off;
-	int istcp;
+	struct kinfo_file *kf;
+	int i, fcnt;
 
 	if (kd == NULL) {
+		error("Failed to initialize KVM!");
+		return (0);
+	}
+	kf = kvm_getfiles(kd, KERN_FILE_BYFILE, DTYPE_SOCKET,
+	    sizeof(*kf), &fcnt);
+	if (kf == NULL) {
+		error("Out of Memory!");
 		return (0);
 	}
 
+	/* sort sockets by AF, proto and type */
+	qsort(kf, fcnt, sizeof(*kf), kf_comp);
+
 	num_ns = 0;
 
-	if (namelist[X_TCBTABLE].n_value == 0)
-		return 0;
-
-	if (protos & TCP) {
-		off = NPTR(X_TCBTABLE);
-		istcp = 1;
-	} else if (protos & UDP) {
-		off = NPTR(X_UDBTABLE);
-		istcp = 0;
-	} else {
-		error("No protocols to display");
-		return 0;
-	}
-
-again:
-	KREAD(off, &pcbtable, sizeof (struct inpcbtable));
-
-	prev = NULL;
-	next = TAILQ_FIRST(&pcbtable.inpt_queue);
-
-	while (next != NULL) {
-		KREAD(next, &inpcb, sizeof (inpcb));
-		if (prev != NULL) {
-			KREAD(prev, &prevpcb, sizeof (prevpcb));
-			if (TAILQ_NEXT(&prevpcb, inp_queue) != next) {
-				error("Kernel state in transition");
-				return 0;
-			}
-		}
-		prev = next;
-		next = TAILQ_NEXT(&inpcb, inp_queue);
-
-		if (!aflag) {
-			if (!(inpcb.inp_flags & INP_IPV6) &&
-			    inet_lnaof(inpcb.inp_faddr) == INADDR_ANY)
-				continue;
-			if ((inpcb.inp_flags & INP_IPV6) &&
-			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6))
-				continue;
-		}
-		KREAD(inpcb.inp_socket, &sockb, sizeof (sockb));
-		if (istcp) {
-			KREAD(inpcb.inp_ppcb, &tcpcb, sizeof (tcpcb));
-			if (!aflag && tcpcb.t_state <= TCPS_LISTEN)
-				continue;
-			enter(&inpcb, &sockb, tcpcb.t_state, "tcp");
-		} else
-			enter(&inpcb, &sockb, 0, "udp");
-	}
-	if (istcp && (protos & UDP)) {
-		istcp = 0;
-		off = NPTR(X_UDBTABLE);
-		goto again;
-	}
+	for (i = 0; i < fcnt; i++)
+		enter(&kf[i]);
 
 	num_disp = num_ns;
 	return 0;
@@ -298,13 +333,6 @@ void
 print_ns(void)
 {
 	int n, count = 0;
-
-	if (kd == NULL) {
-		print_fld_str(FLD_NS_LOCAL, "Failed to initialize KVM!");
-		print_fld_str(FLD_NS_FOREIGN, "Failed to initialize KVM!");
-		end_line();
-		return;
-	}
 
 	for (n = dispstart; n < num_disp; n++) {
 		shownetstat(netinfos + n);
@@ -319,21 +347,8 @@ int
 initnetstat(void)
 {
 	field_view *v;
-	int ret;
 
-	if (kd) {
-		if ((ret = kvm_nlist(kd, namelist)) == -1)
-			errx(1, "%s", kvm_geterr(kd));
-		else if (ret)
-			nlisterr(namelist);
-
-		if (namelist[X_TCBTABLE].n_value == 0) {
-			error("No symbols in namelist");
-			return(0);
-		}
-	}
-	protos = TCP|UDP;
-
+	protos = TCP|UDP|OTHER;
 	for (v = views_ns; v->name != NULL; v++)
 		add_view(v);
 
@@ -343,32 +358,56 @@ initnetstat(void)
 static void
 shownetstat(struct netinfo *p)
 {
+	char *proto = NULL;
+
+	switch (p->nif_proto) {
+	case IPPROTO_TCP:
+		proto = "tcp";
+		break;
+	case IPPROTO_UDP:
+		proto = "udp";
+		break;
+	}
+
 	switch (p->nif_family) {
 	case AF_INET:
 		inetprint(&p->nif_laddr, p->nif_lport,
-			  p->nif_proto, FLD_NS_LOCAL);
+			  proto, FLD_NS_LOCAL);
 		inetprint(&p->nif_faddr, p->nif_fport,
-			  p->nif_proto, FLD_NS_FOREIGN);
+			  proto, FLD_NS_FOREIGN);
 		break;
 	case AF_INET6:
 		inet6print(&p->nif_laddr6, p->nif_lport,
-			   p->nif_proto, FLD_NS_LOCAL);
+			   proto, FLD_NS_LOCAL);
 		inet6print(&p->nif_faddr6, p->nif_fport,
-			   p->nif_proto, FLD_NS_FOREIGN);
+			   proto, FLD_NS_FOREIGN);
 		break;
 	}
  
 	tb_start();
-	tbprintf("%s", p->nif_proto);
-	if (p->nif_family == AF_INET6)
-		tbprintf("6");
+	switch (p->nif_proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		tbprintf(proto);
+		if (p->nif_family == AF_INET6)
+			tbprintf("6");
+		break;
+	case IPPROTO_DIVERT:
+		tbprintf("divert");
+		if (p->nif_family == AF_INET6)
+			tbprintf("6");
+		break;
+	default:
+		tbprintf("%d", p->nif_ipproto);
+		break;
+	}
 
 	print_fld_tb(FLD_NS_PROTO);
 
 	print_fld_size(FLD_NS_RECV_Q, p->nif_rcvcc);
 	print_fld_size(FLD_NS_SEND_Q, p->nif_sndcc);
 
-	if (streq(p->nif_proto, "tcp")) {
+	if (p->nif_proto == IPPROTO_TCP) {
 		if (p->nif_state < 0 || p->nif_state >= TCP_NSTATES)
 			print_fld_uint(FLD_NS_STATE, p->nif_state);
 		else
@@ -418,18 +457,6 @@ inet6print(struct in6_addr *in6, int port, char *proto, field_def *fld)
 }
 
 int
-kvm_ckread(void *a, void *b, size_t l)
-{
-	if (kvm_read(kd, (u_long)a, b, l) != l) {
-		if (verbose)
-			error("error reading kmem\n");
-		return (0);
-	} else
-		return (1);
-}
-
-
-int
 ns_keyboard_callback(int ch)
 {
 	switch (ch) {
@@ -439,6 +466,10 @@ ns_keyboard_callback(int ch)
 		break;
 	case 'n':
 		nflag = !nflag;
+		gotsig_alarm = 1;
+		break;
+	case 'o':
+		protos ^= OTHER;
 		gotsig_alarm = 1;
 		break;
 	case 'r':

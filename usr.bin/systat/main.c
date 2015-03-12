@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.61 2015/01/16 00:03:37 deraadt Exp $	 */
+/* $Id: main.c,v 1.62 2015/03/12 01:03:00 claudio Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
 		warn("No utmp");
 	}
 
-	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 
 	gid = getgid();
 	if (setresgid(gid, gid, gid) == -1)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2014/07/16 20:06:27 okan Exp $
+#	$OpenBSD: Makefile,v 1.27 2015/03/12 01:03:00 claudio Exp $
 
 PROG=	systat
 
@@ -13,7 +13,5 @@ SRCS=	dkstats.c engine.c if.c inetname.c iostat.c main.c mbufs.c netstat.c \
 
 DPADD=	${LIBCURSES} ${LIBM} ${LIBKVM}
 LDADD=	-lcurses -lm -lkvm
-BINGRP=	kmem
-BINMODE=2555
 
 .include <bsd.prog.mk>

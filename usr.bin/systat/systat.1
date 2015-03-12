@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.100 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: systat.1,v 1.101 2015/03/12 01:03:00 claudio Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: March 12 2015 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -338,7 +338,7 @@ Reset matching mechanisms to the default.
 .\"If an argument is supplied to
 .\".Cm show ,
 .\"then only the requested information will be displayed.
-.It Cm tcp | udp
+.It Cm tcp | udp | other
 Display only network connections using the indicated protocol.
 .El
 .It Ic nfsclient
