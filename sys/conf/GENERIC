@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.215 2015/03/04 14:36:19 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.216 2015/03/12 23:54:15 sthen Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -17,7 +17,7 @@ option		KMEMSTATS	# collect malloc(9) statistics
 option		PTRACE		# ptrace(2) system call
 
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
-#option		POOL_DEBUG	# pool corruption detection
+option		POOL_DEBUG	# pool corruption detection
 #option		VFSLCKDEBUG	# VFS locking checks
 
 option		CRYPTO		# Cryptographic framework
