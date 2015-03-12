@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.19 2015/02/11 07:13:44 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.20 2015/03/12 14:24:02 brynet Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -640,6 +640,25 @@ nomem:
 
 	DPRINTF(AHCI_D_VERBOSE, "%s: detected device on port %d; %d\n",
 	    DEVNAME(sc), port, rc);
+
+	/* Read current link speed */
+	const char *speed;
+	switch(ahci_pread(ap, AHCI_PREG_SSTS) & AHCI_PREG_SSTS_SPD) {
+	case AHCI_PREG_SSTS_SPD_GEN1:
+		speed = "1.5Gbps";
+		break;
+	case AHCI_PREG_SSTS_SPD_GEN2:
+		speed = "3Gbps";
+		break;
+	case AHCI_PREG_SSTS_SPD_GEN3:
+		speed = "6Gbps";
+		break;
+	default:
+		speed = NULL;
+		break;
+	}
+	if (speed != NULL)
+		printf("%s: port %d, at %s\n", PORTNAME(ap), port, speed);
 
 	/* Enable command transfers on port */
 	if (ahci_port_start(ap, 0)) {
