@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.42 2015/03/09 04:23:29 guenther Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.43 2015/03/12 04:15:03 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -1216,7 +1216,7 @@ get_arc(void)
 		 * important).
 		 */
 		for (i = 0; ford[i] >= 0; ++i) {
-			if (fsub[ford[i]].name == NULL ||
+			if (fsub[ford[i]].id == NULL ||
 			    (*fsub[ford[i]].id)(hdbuf, hdsz) < 0)
 				continue;
 			frmt = &(fsub[ford[i]]);
