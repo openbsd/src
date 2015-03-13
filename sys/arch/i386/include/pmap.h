@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.71 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.72 2015/03/13 23:23:13 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -40,102 +40,6 @@
 #endif
 #include <machine/pte.h>
 #include <uvm/uvm_object.h>
-
-/*
- * See pte.h for a description of i386 MMU terminology and hardware
- * interface.
- *
- * A pmap describes a process' 4GB virtual address space.  This
- * virtual address space can be broken up into 1024 4MB regions which
- * are described by PDEs in the PDP.  The PDEs are defined as follows:
- *
- * Ranges are inclusive -> exclusive, just like vm_map_entry start/end.
- * The following assumes that KERNBASE is 0xd0000000.
- *
- * PDE#s	VA range		Usage
- * 0->831	0x0 -> 0xcfc00000	user address space, note that the
- *					max user address is 0xcfbfe000
- *					the final two pages in the last 4MB
- *					used to be reserved for the UAREA
- *					but now are no longer used.
- * 831		0xcfc00000->		recursive mapping of PDP (used for
- *			0xd0000000	linear mapping of PTPs).
- * 832->1023	0xd0000000->		kernel address space (constant
- *			0xffc00000	across all pmaps/processes).
- * 1023		0xffc00000->		"alternate" recursive PDP mapping
- *			<end>		(for other pmaps).
- *
- *
- * Note: A recursive PDP mapping provides a way to map all the PTEs for
- * a 4GB address space into a linear chunk of virtual memory.  In other
- * words, the PTE for page 0 is the first int mapped into the 4MB recursive
- * area.  The PTE for page 1 is the second int.  The very last int in the
- * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
- * address).
- *
- * All pmaps' PDs must have the same values in slots 832->1023 so that
- * the kernel is always mapped in every process.  These values are loaded
- * into the PD at pmap creation time.
- *
- * At any one time only one pmap can be active on a processor.  This is
- * the pmap whose PDP is pointed to by processor register %cr3.  This pmap
- * will have all its PTEs mapped into memory at the recursive mapping
- * point (slot #831 as show above).  When the pmap code wants to find the
- * PTE for a virtual address, all it has to do is the following:
- *
- * Address of PTE = (831 * 4MB) + (VA / PAGE_SIZE) * sizeof(pt_entry_t)
- *                = 0xcfc00000 + (VA / 4096) * 4
- *
- * What happens if the pmap layer is asked to perform an operation
- * on a pmap that is not the one which is currently active?  In that
- * case we take the PA of the PDP of non-active pmap and put it in
- * slot 1023 of the active pmap.  This causes the non-active pmap's
- * PTEs to get mapped in the final 4MB of the 4GB address space
- * (e.g. starting at 0xffc00000).
- *
- * The following figure shows the effects of the recursive PDP mapping:
- *
- *   PDP (%cr3)
- *   +----+
- *   |   0| -> PTP#0 that maps VA 0x0 -> 0x400000
- *   |    |
- *   |    |
- *   | 831| -> points back to PDP (%cr3) mapping VA 0xcfc00000 -> 0xd0000000
- *   | 832| -> first kernel PTP (maps 0xd0000000 -> 0xe0400000)
- *   |    |
- *   |1023| -> points to alternate pmap's PDP (maps 0xffc00000 -> end)
- *   +----+
- *
- * Note that the PDE#831 VA (0xcfc00000) is defined as "PTE_BASE".
- * Note that the PDE#1023 VA (0xffc00000) is defined as "APTE_BASE".
- *
- * Starting at VA 0xcfc00000 the current active PDP (%cr3) acts as a
- * PTP:
- *
- * PTP#831 == PDP(%cr3) => maps VA 0xcfc00000 -> 0xd0000000
- *   +----+
- *   |   0| -> maps the contents of PTP#0 at VA 0xcfc00000->0xcfc01000
- *   |    |
- *   |    |
- *   | 831| -> maps the contents of PTP#831 (the PDP) at VA 0xcff3f000
- *   | 832| -> maps the contents of first kernel PTP
- *   |    |
- *   |1023|
- *   +----+
- *
- * Note that mapping of the PDP at PTP#831's VA (0xcff3f000) is
- * defined as "PDP_BASE".... within that mapping there are two
- * defines:
- *   "PDP_PDE" (0xcff3fcfc) is the VA of the PDE in the PDP
- *      which points back to itself.
- *   "APDP_PDE" (0xcff3fffc) is the VA of the PDE in the PDP which
- *      establishes the recursive mapping of the alternate pmap.
- *      To set the alternate PDP, one just has to put the correct
- *	PA info in *APDP_PDE.
- *
- * Note that in the APTE_BASE space, the APDP appears at VA
- * "APDP_BASE" (0xfffff000).
- */
 
 /*
  * The following defines identify the slots used as described above.

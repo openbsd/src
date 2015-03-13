@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.170 2015/03/09 07:46:03 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.171 2015/03/13 23:23:13 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -75,15 +75,6 @@
 #include <stand/boot/bootarg.h>
 
 /*
- * general info:
- *
- *  - for an explanation of how the i386 MMU hardware works see
- *    the comments in <machine/pte.h>.
- *
- *  - for an explanation of the general memory structure used by
- *    this pmap (including the recursive mapping), see the comments
- *    in <machine/pmap.h>.
- *
  * this file contains the code for the "pmap module."   the module's
  * job is to manage the hardware's virtual to physical address mappings.
  * note that there are two levels of mapping in the VM system:
@@ -117,6 +108,182 @@
  *      such as pmap_page_protect() [change protection on _all_ mappings
  *      of a page]
  */
+/*
+ * i386 MMU hardware structure:
+ *
+ * the i386 MMU is a two-level MMU which maps 4GB of virtual memory.
+ * the pagesize is 4K (4096 [0x1000] bytes), although newer pentium
+ * processors can support a 4MB pagesize as well.
+ *
+ * the first level table (segment table?) is called a "page directory"
+ * and it contains 1024 page directory entries (PDEs).   each PDE is
+ * 4 bytes (an int), so a PD fits in a single 4K page.   this page is
+ * the page directory page (PDP).  each PDE in a PDP maps 4MB of space
+ * (1024 * 4MB = 4GB).   a PDE contains the physical address of the
+ * second level table: the page table.   or, if 4MB pages are being used,
+ * then the PDE contains the PA of the 4MB page being mapped.
+ *
+ * a page table consists of 1024 page table entries (PTEs).  each PTE is
+ * 4 bytes (an int), so a page table also fits in a single 4K page.  a
+ * 4K page being used as a page table is called a page table page (PTP).
+ * each PTE in a PTP maps one 4K page (1024 * 4K = 4MB).   a PTE contains
+ * the physical address of the page it maps and some flag bits (described
+ * below).
+ *
+ * the processor has a special register, "cr3", which points to the
+ * the PDP which is currently controlling the mappings of the virtual
+ * address space.
+ *
+ * the following picture shows the translation process for a 4K page:
+ *
+ * %cr3 register [PA of PDP]
+ *      |
+ *      |
+ *      |   bits <31-22> of VA         bits <21-12> of VA   bits <11-0>
+ *      |   index the PDP (0 - 1023)   index the PTP        are the page offset
+ *      |         |                           |                  |
+ *      |         v                           |                  |
+ *      +--->+----------+                     |                  |
+ *           | PD Page  |   PA of             v                  |
+ *           |          |---PTP-------->+------------+           |
+ *           | 1024 PDE |               | page table |--PTE--+   |
+ *           | entries  |               | (aka PTP)  |       |   |
+ *           +----------+               | 1024 PTE   |       |   |
+ *                                      | entries    |       |   |
+ *                                      +------------+       |   |
+ *                                                           |   |
+ *                                                bits <31-12>   bits <11-0>
+ *                                                p h y s i c a l  a d d r
+ *
+ * the i386 caches PTEs in a TLB.   it is important to flush out old
+ * TLB mappings when making a change to a mappings.   writing to the
+ * %cr3 will flush the entire TLB.    newer processors also have an
+ * instruction that will invalidate the mapping of a single page (which
+ * is useful if you are changing a single mappings because it preserves
+ * all the cached TLB entries).
+ *
+ * as shows, bits 31-12 of the PTE contain PA of the page being mapped.
+ * the rest of the PTE is defined as follows:
+ *   bit#	name	use
+ *   11		n/a	available for OS use, hardware ignores it
+ *   10		n/a	available for OS use, hardware ignores it
+ *   9		n/a	available for OS use, hardware ignores it
+ *   8		G	global bit (see discussion below)
+ *   7		PS	page size [for PDEs] (0=4k, 1=4M <if supported>)
+ *   6		D	dirty (modified) page
+ *   5		A	accessed (referenced) page
+ *   4		PCD	cache disable
+ *   3		PWT	prevent write through (cache)
+ *   2		U/S	user/supervisor bit (0=supervisor only, 1=both u&s)
+ *   1		R/W	read/write bit (0=read only, 1=read-write)
+ *   0		P	present (valid)
+ *
+ * notes:
+ *  - on the i386 the R/W bit is ignored if processor is in supervisor
+ *    state (bug!)
+ *  - PS is only supported on newer processors
+ *  - PTEs with the G bit are global in the sense that they are not
+ *    flushed from the TLB when %cr3 is written (to flush, use the
+ *    "flush single page" instruction).   this is only supported on
+ *    newer processors.    this bit can be used to keep the kernel's
+ *    TLB entries around while context switching.   since the kernel
+ *    is mapped into all processes at the same place it does not make
+ *    sense to flush these entries when switching from one process'
+ *    pmap to another.
+ */
+/*
+ * A pmap describes a process' 4GB virtual address space.  This
+ * virtual address space can be broken up into 1024 4MB regions which
+ * are described by PDEs in the PDP.  The PDEs are defined as follows:
+ *
+ * Ranges are inclusive -> exclusive, just like vm_map_entry start/end.
+ * The following assumes that KERNBASE is 0xd0000000.
+ *
+ * PDE#s	VA range		Usage
+ * 0->831	0x0 -> 0xcfc00000	user address space, note that the
+ *					max user address is 0xcfbfe000
+ *					the final two pages in the last 4MB
+ *					used to be reserved for the UAREA
+ *					but now are no longer used.
+ * 831		0xcfc00000->		recursive mapping of PDP (used for
+ *			0xd0000000	linear mapping of PTPs).
+ * 832->1023	0xd0000000->		kernel address space (constant
+ *			0xffc00000	across all pmaps/processes).
+ * 1023		0xffc00000->		"alternate" recursive PDP mapping
+ *			<end>		(for other pmaps).
+ *
+ *
+ * Note: A recursive PDP mapping provides a way to map all the PTEs for
+ * a 4GB address space into a linear chunk of virtual memory.  In other
+ * words, the PTE for page 0 is the first int mapped into the 4MB recursive
+ * area.  The PTE for page 1 is the second int.  The very last int in the
+ * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
+ * address).
+ *
+ * All pmaps' PDs must have the same values in slots 832->1023 so that
+ * the kernel is always mapped in every process.  These values are loaded
+ * into the PD at pmap creation time.
+ *
+ * At any one time only one pmap can be active on a processor.  This is
+ * the pmap whose PDP is pointed to by processor register %cr3.  This pmap
+ * will have all its PTEs mapped into memory at the recursive mapping
+ * point (slot #831 as show above).  When the pmap code wants to find the
+ * PTE for a virtual address, all it has to do is the following:
+ *
+ * Address of PTE = (831 * 4MB) + (VA / PAGE_SIZE) * sizeof(pt_entry_t)
+ *                = 0xcfc00000 + (VA / 4096) * 4
+ *
+ * What happens if the pmap layer is asked to perform an operation
+ * on a pmap that is not the one which is currently active?  In that
+ * case we take the PA of the PDP of non-active pmap and put it in
+ * slot 1023 of the active pmap.  This causes the non-active pmap's
+ * PTEs to get mapped in the final 4MB of the 4GB address space
+ * (e.g. starting at 0xffc00000).
+ *
+ * The following figure shows the effects of the recursive PDP mapping:
+ *
+ *   PDP (%cr3)
+ *   +----+
+ *   |   0| -> PTP#0 that maps VA 0x0 -> 0x400000
+ *   |    |
+ *   |    |
+ *   | 831| -> points back to PDP (%cr3) mapping VA 0xcfc00000 -> 0xd0000000
+ *   | 832| -> first kernel PTP (maps 0xd0000000 -> 0xe0400000)
+ *   |    |
+ *   |1023| -> points to alternate pmap's PDP (maps 0xffc00000 -> end)
+ *   +----+
+ *
+ * Note that the PDE#831 VA (0xcfc00000) is defined as "PTE_BASE".
+ * Note that the PDE#1023 VA (0xffc00000) is defined as "APTE_BASE".
+ *
+ * Starting at VA 0xcfc00000 the current active PDP (%cr3) acts as a
+ * PTP:
+ *
+ * PTP#831 == PDP(%cr3) => maps VA 0xcfc00000 -> 0xd0000000
+ *   +----+
+ *   |   0| -> maps the contents of PTP#0 at VA 0xcfc00000->0xcfc01000
+ *   |    |
+ *   |    |
+ *   | 831| -> maps the contents of PTP#831 (the PDP) at VA 0xcff3f000
+ *   | 832| -> maps the contents of first kernel PTP
+ *   |    |
+ *   |1023|
+ *   +----+
+ *
+ * Note that mapping of the PDP at PTP#831's VA (0xcff3f000) is
+ * defined as "PDP_BASE".... within that mapping there are two
+ * defines:
+ *   "PDP_PDE" (0xcff3fcfc) is the VA of the PDE in the PDP
+ *      which points back to itself.
+ *   "APDP_PDE" (0xcff3fffc) is the VA of the PDE in the PDP which
+ *      establishes the recursive mapping of the alternate pmap.
+ *      To set the alternate PDP, one just has to put the correct
+ *	PA info in *APDP_PDE.
+ *
+ * Note that in the APTE_BASE space, the APDP appears at VA
+ * "APDP_BASE" (0xfffff000).
+ */
+
 /*
  * memory allocation
  *
@@ -152,24 +319,6 @@
  * [C] pv_entry structures
  *	call pool_get()
  *	If we fail, we simply let pmap_enter() tell UVM about it.
- */
-/*
- * locking
- *
- * we have the following locks that we must contend with:
- *
- * "simple" locks:
- *
- * - pmap lock (per pmap, part of uvm_object)
- *   this lock protects the fields in the pmap structure including
- *   the non-kernel PDEs in the PDP, and the PTEs.  it also locks
- *   in the alternate PTE space (since that is determined by the
- *   entry in the PDP).
- *
- * - pmaps_lock
- *   this lock protects the list of active pmaps (headed by "pmaps").
- *   we lock it when adding or removing pmaps from this list.
- *
  */
 
 #define PD_MASK         0xffc00000      /* page directory address bits */
