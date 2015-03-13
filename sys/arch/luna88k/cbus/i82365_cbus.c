@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.2 2015/03/13 12:10:14 aoyama Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.3 2015/03/13 12:12:42 aoyama Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ pcic_cbus_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 		ioaddr = start;
 		if (bus_space_map(iot, start, size, 0, &ioh))
 			return (1);
-		DPRINTF(("pcic_chip_io_alloc map port %lx+%lx\n",
+		DPRINTF(("pcic_cbus_chip_io_alloc map port %lx+%lx\n",
 		    (u_long)ioaddr, (u_long)size));
 	} else if (sc->ranges) {
  		/*
@@ -497,7 +497,7 @@ pcic_cbus_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 			if (fin < beg || fin - beg < size)
 				continue;
 
-			DPRINTF(("pcic_chip_io_alloc beg-fin %lx-%lx\n",
+			DPRINTF(("pcic_cbus_chip_io_alloc beg-fin %lx-%lx\n",
 			    (u_long)beg, (u_long)fin));
 			if (bus_space_map(iot, beg, size, 0, &ioh) == 0) {
 				ioaddr = beg;
@@ -506,13 +506,13 @@ pcic_cbus_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 		}
 		if (range->start == 0)
 			return (1);
-		DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
+		DPRINTF(("pcic_cbus_chip_io_alloc alloc port %lx+%lx\n",
 		    (u_long)ioaddr, (u_long)size));
 	} else {
 		if (bus_space_map(iot, sc->iobase, size, 0, &ioh))
 			return (1);
 		ioaddr = sc->iobase;
-		DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
+		DPRINTF(("pcic_cbus_chip_io_alloc alloc port %lx+%lx\n",
 		    (u_long)ioaddr, (u_long)size));
 	}
 
