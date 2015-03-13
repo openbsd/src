@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.75 2015/02/06 01:37:11 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.76 2015/03/13 13:42:54 giovanni Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -524,6 +524,7 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 		EVP_PKEY_free(pkey);
 	if (x509 != NULL)
 		X509_free(x509);
+	free(exdata);
 
 	return (0);
 }
