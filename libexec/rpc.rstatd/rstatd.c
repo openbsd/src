@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.25 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.26 2015/03/13 03:24:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -41,9 +41,6 @@
 #include <rpc/rpc.h>
 #include <rpcsvc/rstat.h>
 
-extern int __svc_fdsetsize;
-extern fd_set *__svc_fdset;
-extern void svc_getreqset2(fd_set *, int);
 extern void rstat_service(struct svc_req *, SVCXPRT *);
 
 void my_svc_run(void);
