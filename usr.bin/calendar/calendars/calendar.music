@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.30 2013/11/26 15:25:56 sobrado Exp $
+ * $OpenBSD: calendar.music,v 1.31 2015/03/13 16:38:46 sthen Exp $
  */
 
 #ifndef _calendar_music_
@@ -26,6 +26,7 @@
 01/11	Maurice Durufle is born in Louviers, France, 1902
 01/11	Reinhold Gliere is born in Kiev, Russia, 1875
 01/13	Eric Clapton plays the "Rainbow Concert" in London, 1973
+01/13	Daevid Allen (Gong) is born in Melbourne, 1938
 01/17	Led Zeppelin's first album is released, 1969
 01/19	Janis Joplin is born in Port Arthur, Texas, 1943
 01/20	Walter Piston is born in Rockland, Maine, 1894
@@ -123,6 +124,7 @@
 03/13	Cesar Cui dies in Smolensk, Russia, 1918
 03/14	Georg Philipp Telemann is born in Magdeburg, 1681
 03/15	Sly Stone born, 1944
+03/15	Daevid Allen (Gong) dies, 2015
 03/16	Enrique Granados drowns in the English Channel, 1916
 03/17	Paul Kantner (Jefferson Airplane) is born in San Francisco, 1942
 03/18	Nikolai Rimsky-Korsakov is born Tikhvin, Russia, 1844
