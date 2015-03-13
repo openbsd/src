@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.58 2014/03/06 17:36:28 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.59 2015/03/13 18:08:31 sthen Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -107,6 +107,7 @@
 03/11	Robert Treat Paine born, 1731
 03/11	Vannevar Bush born, 1890
 03/12	Gustav Robert Kirchhoff born, 1824, physicist
+03/12	Terry Pratchett (Sir) dies, 2015, author
 03/14	Albert Einstein born, 1879
 03/14	Casey Jones born, 1864
 03/14	Giovanni Virginio Schiaparelli born, 1835, astronomer;
@@ -160,6 +161,7 @@
 04/23	Shakespeare born, 1564
 04/28	James Monroe born, 1758
 04/28	Mussolini executed, 1945
+04/28	Terry Pratchett (Sir) born, 1948, author
 04/29	Jules Henri Poincare born, 1854, founder of topology
 04/29	William Randolph Hearst born in San Francisco, 1863
 04/29	Albert Hofmann died, 2008
