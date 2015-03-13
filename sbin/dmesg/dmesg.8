@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dmesg.8,v 1.15 2015/01/13 10:07:58 mpf Exp $
+.\"	$OpenBSD: dmesg.8,v 1.16 2015/03/13 16:15:08 deraadt Exp $
 .\"	$NetBSD: dmesg.8,v 1.9 1995/03/18 14:54:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)dmesg.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 13 2015 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt DMESG 8
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@
 .Nm
 displays the contents of the system message buffer.
 It is most commonly used to review system startup messages.
+On some systems the message buffer can survive reboot and be
+retained (in the hope of exposing information from a crash).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
