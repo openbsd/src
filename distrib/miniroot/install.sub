@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.816 2015/03/11 21:00:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.817 2015/03/13 15:02:14 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1956,7 +1956,7 @@ finish_up() {
 	# dynamic.  That is highly discouraged, but let us play it safe.
 	rm -f /mnt/var/run/ld.so.hints
 
-	[[ -x /mnt/$MODE.site ]] && /mnt/usr/sbin/chroot /mnt /$MODE.site
+	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
 
 	# In case this is a softraid device, make sure all underlying
 	# device nodes exist.
