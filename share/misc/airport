@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.50 2015/02/10 09:30:37 sthen Exp $
+#	$OpenBSD: airport,v 1.51 2015/03/13 17:51:25 giovanni Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -91,7 +91,7 @@ ANK:Etimesgut, Ankara, Turkey
 ANR:Antwerp International, Antwerp, Belgium
 ANU:V.C. Bird International, Saint Johns / Antigua, Antigua And Barbuda
 ANV:Anvik, Alaska, USA
-AOI:Falconara, Ancona, Italy
+AOI:Aeroporto delle Marche, Ancona, Italy
 AOJ:Aomori, Japan
 AOK:Karpathos, Karpathos, Greece
 AOO:Altoona/Blair County, Altoona, Pennsylvania, USA
