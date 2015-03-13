@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.24 2013/06/01 09:51:28 miod Exp $
+.\"	$OpenBSD: ktrace.1,v 1.25 2015/03/13 19:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ A traced process can generate enormous amounts of log data quickly;
 it is strongly suggested that users memorize how to disable tracing before
 attempting to trace a process.
 The following command is sufficient to disable tracing on all user owned
-processes, and, if executed by root, all processes:
+processes and, if executed by root, all processes:
 .Pp
 .Dl $ ktrace -C
 .Pp
@@ -85,7 +85,7 @@ This eliminates the resulting
 .Xr ld.so 1
 relocation sequences.
 .It Fl C
-Disable tracing on all user owned processes, and, if executed by root, all
+Disable tracing on all user owned processes and, if executed by root, all
 processes in the system.
 .It Fl c
 Clear the trace points associated with the trace file or any specified

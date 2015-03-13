@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vipw.8,v 1.11 2007/11/19 22:07:37 jmc Exp $
+.\"	$OpenBSD: vipw.8,v 1.12 2015/03/13 19:58:41 jmc Exp $
 .\"	$NetBSD: vipw.8,v 1.4 1995/01/20 19:19:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)vipw.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 19 2007 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt VIPW 8
 .Os
 .Sh NAME
@@ -67,8 +67,8 @@ Once the information has been verified,
 uses
 .Xr pwd_mkdb 8
 to update the user database.
-This is run in the background, and,
-at very large sites could take several minutes.
+This is run in the background and,
+at very large sites, could take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.

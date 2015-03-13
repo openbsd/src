@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.23 2014/07/02 22:22:35 matthew Exp $
+.\"	$OpenBSD: msync.2,v 1.24 2015/03/13 19:58:40 jmc Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)msync.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ The
 system call writes all pages with shared modifications
 in the specified
 region of the process's address space back to permanent
-storage, and, if requested, invalidates cached data mapped
+storage and, if requested, invalidates cached data mapped
 in the region.
 If
 .Fa len

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.28 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: trunk.4,v 1.29 2015/03/13 19:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ This protocol requires a switch which supports LACP.
 Distributes outgoing traffic through all active ports
 and accepts incoming traffic from any active port.
 A hash of the protocol header is used to maintain packet ordering.
-The hash includes the Ethernet source and destination address, and, if
+The hash includes the Ethernet source and destination address and, if
 available, the VLAN tag, and the IP source and destination address.
 .It Ic none
 This protocol is intended to do nothing: it disables any traffic without

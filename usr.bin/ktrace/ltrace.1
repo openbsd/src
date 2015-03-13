@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.5 2014/04/04 21:34:47 miod Exp $
+.\"	$OpenBSD: ltrace.1,v 1.6 2015/03/13 19:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 4 2014 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@ A traced process can generate enormous amounts of log data quickly;
 it is strongly suggested that users memorize how to disable tracing before
 attempting to trace a process.
 The following command is sufficient to disable tracing on all user owned
-processes, and, if executed by root, all processes:
+processes and, if executed by root, all processes:
 .Pp
 .Dl $ ktrace -C
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.54 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: telnet.1,v 1.55 2015/03/13 19:58:41 jmc Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -408,7 +408,7 @@ mode will be entered.
 .It Ic character
 Disable the
 .Dv TELNET LINEMODE
-option, or, if the remote side does not understand the
+option or, if the remote side does not understand the
 .Dv LINEMODE
 option, then enter
 .Dq character at a time
@@ -416,7 +416,7 @@ mode.
 .It Ic line
 Enable the
 .Dv TELNET LINEMODE
-option, or, if the remote side does not understand the
+option or, if the remote side does not understand the
 .Dv LINEMODE
 option, then attempt to enter
 .Dq old line by line

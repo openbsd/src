@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.32 2015/02/05 02:33:09 schwarze Exp $
+.\"	$OpenBSD: fts.3,v 1.33 2015/03/13 19:58:40 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: February 5 2015 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -558,8 +558,8 @@ structures returned by
 .Fn fts_read
 may be overwritten after a call to
 .Fn fts_close
-on the same file hierarchy stream, or, after a call to
-.Fn fts_read
+on the same file hierarchy stream or, after a call to
+.Fn fts_read ,
 on the same file hierarchy stream unless they represent a file of type
 directory, in which case they will not be overwritten until after a call to
 .Fn fts_read

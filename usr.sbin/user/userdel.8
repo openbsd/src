@@ -1,4 +1,4 @@
-.\" $OpenBSD: userdel.8,v 1.16 2013/07/16 11:13:34 schwarze Exp $
+.\" $OpenBSD: userdel.8,v 1.17 2015/03/13 19:58:41 jmc Exp $
 .\" $NetBSD: userdel.8,v 1.24 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt USERDEL 8
 .Os
 .Sh NAME
@@ -118,8 +118,8 @@ Once the information has been verified,
 uses
 .Xr pwd_mkdb 8
 to update the user database.
-This is run in the background, and,
-at very large sites could take several minutes.
+This is run in the background and,
+at very large sites, could take several minutes.
 Until this update is completed, the password file is unavailable for other
 updates and the new information is not available to programs.
 .Sh FILES

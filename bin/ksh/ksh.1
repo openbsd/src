@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.156 2015/01/16 15:32:32 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.157 2015/03/13 19:58:40 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1491,7 +1491,7 @@ The list is colon separated, and each file may be followed by a
 .Ql \&?
 and a message to be printed if new mail has arrived.
 Command, parameter, and
-arithmetic substitution is performed on the message, and, during substitution,
+arithmetic substitution is performed on the message and, during substitution,
 the parameter
 .Ic $_
 contains the name of the file.
@@ -2827,7 +2827,7 @@ The
 .Fl x
 option sets
 .Pq Ic +x No clears
-the export attribute of an alias, or, if no names are given, lists the aliases
+the export attribute of an alias or, if no names are given, lists the aliases
 with the export attribute (exporting an alias has no effect).
 .Pp
 .It Ic bg Op Ar job ...
@@ -4557,7 +4557,7 @@ sign
 Other percent sequences can also be used to refer to jobs:
 .Bl -tag -width "%+ | %% | %XX"
 .It %+ \*(Ba %% \*(Ba %
-The most recently stopped job, or, if there are no stopped jobs, the oldest
+The most recently stopped job or, if there are no stopped jobs, the oldest
 running job.
 .It %-
 The job that would be the

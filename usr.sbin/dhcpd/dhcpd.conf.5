@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.15 2014/01/03 16:21:58 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.16 2015/03/13 19:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -472,7 +472,7 @@ declarations are matched to actual DHCP or BOOTP clients by matching the
 .Ic dhcp-client-identifier
 option specified in the
 .Ic host
-declaration to the one supplied by the client, or, if the
+declaration to the one supplied by the client or, if the
 .Ic host
 declaration or the client does not provide a
 .Ic dhcp-client-identifier

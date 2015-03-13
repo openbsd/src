@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.26 2014/11/22 18:15:41 deraadt Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.27 2015/03/13 19:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: November 22 2014 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -383,7 +383,7 @@ to configure its network interface (e.g., subnet mask), and also how
 the client can access various network services (e.g., DNS, IP routers,
 and so on).
 .Pp
-These options can be specified on a per-subnet basis, and, for BOOTP
+These options can be specified on a per-subnet basis and, for BOOTP
 clients, also on a per-client basis.
 In the event that a BOOTP client declaration specifies options that are
 also specified in its subnet declaration, the options specified in the

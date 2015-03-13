@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cleanup_pop.3,v 1.9 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_cleanup_pop.3,v 1.10 2015/03/13 19:58:41 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: pthread_cleanup_pop.3,v 1.4 1999/08/28 00:03:02 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 13 2015 $
 .Dt PTHREAD_CLEANUP_POP 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 The
 .Fn pthread_cleanup_pop
 function pops the top cleanup routine off of the current thread's cleanup
-routine stack, and, if
+routine stack and, if
 .Fa execute
 is non-zero, it will execute the function.
 If there is no cleanup routine then
