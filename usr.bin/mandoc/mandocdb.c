@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.138 2015/02/27 16:21:42 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.139 2015/03/13 00:18:45 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -924,6 +924,7 @@ mlink_add(struct mlink *mlink, const struct stat *st)
 	assert(NULL == ohash_find(&mlinks, slot));
 	ohash_insert(&mlinks, slot, mlink);
 
+	memset(&inodev, 0, sizeof(inodev));  /* Clear padding. */
 	inodev.st_ino = st->st_ino;
 	inodev.st_dev = st->st_dev;
 	slot = ohash_lookup_memory(&mpages, (char *)&inodev,
