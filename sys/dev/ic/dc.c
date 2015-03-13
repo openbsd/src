@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.137 2015/01/23 12:49:13 dlg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.138 2015/03/13 15:57:43 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2072,6 +2072,7 @@ dc_rxeof(struct dc_softc *sc)
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct dc_desc *cur_rx;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int i, offset, total_len = 0;
 	u_int32_t rxstat;
 
@@ -2143,7 +2144,6 @@ dc_rxeof(struct dc_softc *sc)
 		/* No errors; receive the packet. */	
 		total_len -= ETHER_CRC_LEN;
 
-		m->m_pkthdr.rcvif = ifp;
 		m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN, ifp);
 		dc_newbuf(sc, i, m);
 		DC_INC(i, DC_RX_LIST_CNT);
@@ -2154,14 +2154,12 @@ dc_rxeof(struct dc_softc *sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	sc->dc_cdata.dc_rx_prod = i;
+
+	if_input(ifp, &ml);
 }
 
 /*
