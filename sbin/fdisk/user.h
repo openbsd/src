@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.12 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: user.h,v 1.13 2015/03/14 18:32:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -20,8 +20,8 @@
 #define _USER_H
 
 /* Prototypes */
-int USER_init(struct disk *, struct mbr *, int);
-int USER_edit(struct disk *, struct mbr *, off_t, off_t);
-int USER_print_disk(struct disk *);
+void USER_init(struct disk *, struct mbr *, int);
+void USER_edit(struct disk *, struct mbr *, off_t, off_t);
+void USER_print_disk(struct disk *);
 
 #endif /* _USER_H */

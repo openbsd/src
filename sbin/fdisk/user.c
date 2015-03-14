@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.37 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.38 2015/03/14 18:32:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -50,7 +51,7 @@ struct cmd cmd_table[] = {
 	{NULL,     NULL,	NULL}
 };
 
-int
+void
 USER_init(struct disk *disk, struct mbr *tt, int preserve)
 {
 	char *query;
@@ -64,14 +65,12 @@ USER_init(struct disk *disk, struct mbr *tt, int preserve)
 	}
 
 	if (ask_yn(query))
-		Xwrite(NULL, disk, tt, NULL, 0); 
-
-	return (0);
+		Xwrite(NULL, disk, tt, NULL, 0);
 }
 
 int modified;
 
-int
+void
 USER_edit(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 {
 	static int editlevel;
@@ -96,14 +95,14 @@ USER_edit(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 	printf("Enter 'help' for information\n");
 
 	/* Edit cycle */
-	do {
 again:
+	do {
 		printf("fdisk:%c%d> ", (modified)?'*':' ', editlevel);
 		fflush(stdout);
 		ask_cmd(&cmd, &args);
 
 		if (cmd[0] == '\0')
-			goto again;
+			continue;
 		for (i = 0; cmd_table[i].cmd != NULL; i++)
 			if (strstr(cmd_table[i].cmd, cmd) == cmd_table[i].cmd)
 				break;
@@ -135,7 +134,7 @@ again:
 	/* Write out MBR */
 	if (modified) {
 		if (st == CMD_SAVE) {
-			if (Xwrite(NULL, disk, &mbr, NULL, offset) == CMD_CONT) 
+			if (Xwrite(NULL, disk, &mbr, NULL, offset) == CMD_CONT)
 				goto again;
 			close(fd);
 		} else
@@ -145,11 +144,9 @@ again:
 done:
 	/* One level less */
 	editlevel -= 1;
-
-	return (0);
 }
 
-int
+void
 USER_print_disk(struct disk *disk)
 {
 	off_t offset, firstoff;
@@ -181,5 +178,7 @@ USER_print_disk(struct disk *disk)
 			}
 	} while (offset);
 
-	return (close(fd));
+	error = close(fd);
+	if (error == -1)
+		err(1, "Unable to close disk");
 }

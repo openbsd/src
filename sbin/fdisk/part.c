@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.67 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.68 2015/03/14 18:32:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -211,9 +211,9 @@ PRT_check_chs(struct prt *partn)
 		(partn->esect >63) ||
 		(partn->ecyl > 1023) )
 	{
-		return 0;
+		return (0);
 	}
-	return 1;
+	return (1);
 }
 
 void
@@ -274,6 +274,7 @@ PRT_print(int num, struct prt *partn, char *units)
 {
 	double size;
 	int i;
+
 	i = unit_lookup(units);
 
 	if (partn == NULL) {

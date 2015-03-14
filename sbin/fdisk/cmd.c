@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.74 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.75 2015/03/14 18:32:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -148,11 +148,6 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	/* Edit partition type */
 	ret = Xsetpid(args, disk, mbr, tt, offset);
 
-#define	EDIT(p, v, n, m)					\
-	if ((num = ask_num(p, v, n, m)) != v)	\
-		ret = CMD_DIRTY;				\
-	v = num;
-
 	/* Unused, so just zero out */
 	if (pp->id == DOSPTYP_UNUSED) {
 		memset(pp, 0, sizeof(*pp));
@@ -170,12 +165,17 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		maxsect = disk->sectors;
 
 		/* Get data */
+#define	EDIT(p, v, n, m)			\
+	if ((num = ask_num(p, v, n, m)) != v)	\
+		ret = CMD_DIRTY;		\
+	v = num;
 		EDIT("BIOS Starting cylinder", pp->scyl,  0, maxcyl);
 		EDIT("BIOS Starting head",     pp->shead, 0, maxhead);
 		EDIT("BIOS Starting sector",   pp->ssect, 1, maxsect);
 		EDIT("BIOS Ending cylinder",   pp->ecyl,  0, maxcyl);
 		EDIT("BIOS Ending head",       pp->ehead, 0, maxhead);
 		EDIT("BIOS Ending sector",     pp->esect, 1, maxsect);
+#undef EDIT
 		/* Fix up off/size values */
 		PRT_fix_BN(disk, pp, pn);
 		/* Fix up CHS values for LBA */
@@ -188,7 +188,7 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
 	}
-#undef EDIT
+
 	return (ret);
 }
 
@@ -217,6 +217,7 @@ Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		return (CMD_CONT);
 
 	pp->id = num;
+
 	return (CMD_DIRTY);
 }
 
@@ -257,6 +258,7 @@ Xselect(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 
 	/* Recursion is beautiful! */
 	USER_edit(disk, tt, off, firstoff);
+
 	return (CMD_CONT);
 }
 
@@ -316,8 +318,6 @@ int
 Xquit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
-
-	/* Nothing to do here */
 	return (CMD_SAVE);
 }
 
@@ -326,17 +326,12 @@ Xabort(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
 	exit(0);
-
-	/* NOTREACHED */
-	return (CMD_CONT);
 }
 
 int
 Xexit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
-
-	/* Nothing to do here */
 	return (CMD_EXIT);
 }
 
@@ -400,6 +395,7 @@ Xflag(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		mbr->part[pn].flag = val;
 		printf("Partition %d flag value set to 0x%x.\n", pn, val);
 	}
+
 	return (CMD_DIRTY);
 }
 
@@ -427,5 +423,6 @@ Xmanual(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	}
 
 	signal(SIGPIPE, opipe);
+
 	return (CMD_CONT);
 }

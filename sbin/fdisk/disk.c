@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.43 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.44 2015/03/14 18:32:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,8 +37,8 @@ struct disklabel dl;
 int
 DISK_open(char *disk, int mode)
 {
-	int fd;
 	struct stat st;
+	int fd;
 
 	fd = opendev(disk, mode, OPENDEV_PART, NULL);
 	if (fd == -1)
@@ -47,6 +47,7 @@ DISK_open(char *disk, int mode)
 		err(1, "%s", disk);
 	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
 		errx(1, "%s is not a character device or a regular file", disk);
+
 	return (fd);
 }
 
