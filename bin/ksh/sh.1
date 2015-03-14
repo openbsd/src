@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.101 2015/03/14 08:13:52 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.102 2015/03/14 18:54:50 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -73,14 +73,14 @@ meaning to unset the option.
 They can also be set or unset using the
 .Ic set
 command.
-The first word used in the options description below
-is its long name,
+Some options have equivalent long names,
+where indicated,
 which can be used with the
 .Fl o
 option.
 .Bl -tag -width Ds
 .It Fl a
-Allexport.
+allexport.
 Variable assignments are exported to all child processes
 of the running shell.
 If the assignment precedes a command it does not persist
@@ -92,15 +92,15 @@ or
 .Ic read
 makes the assignment.
 .It Fl b
-Notify.
+notify.
 The user is given notice asynchronously when background jobs complete.
 .It Fl C
-Noclobber.
+noclobber.
 Do not permit the redirection operator
 .Pq Sq >
 to clobber (overwrite) existing files.
 .It Fl e
-Errexit.
+errexit.
 Exit the shell immediately should an error occur or a command fail.
 For pipelines and
 .Cm &&
@@ -116,7 +116,7 @@ and
 lists and pipelines beginning
 .Sq !\& .
 .It Fl f
-Noglob.
+noglob.
 Do not expand file name patterns.
 .It Fl h
 When a utility is first executed,
@@ -129,7 +129,7 @@ Enable behaviour convenient for an interactive shell.
 This option is set by default
 if the session is attached to a terminal.
 .It Fl m
-Monitor.
+monitor.
 Fully enable job control:
 enable the
 .Ic bg
@@ -142,7 +142,7 @@ and report when a job changes status.
 The processes of a job share their own process group.
 This option is set by default for interactive shells.
 .It Fl n
-Noexec.
+noexec.
 Read commands but do not execute them \-
 useful for checking syntax errors in scripts.
 This option is ignored for interactive shells.
@@ -167,7 +167,7 @@ Enable
 command line editing.
 .El
 .It Fl u
-Nounset.
+nounset.
 If a command references an unset parameter,
 write an error to standard output instead of executing the command.
 This option is ignored for the special parameters
@@ -177,10 +177,10 @@ and
 If the shell is not interactive,
 immediately exit.
 .It Fl v
-Verbose.
+verbose.
 Write input to standard error after reading it.
 .It Fl x
-Xtrace.
+xtrace.
 Write a trace for each command to standard error after expanding it,
 and before executing it.
 .El
