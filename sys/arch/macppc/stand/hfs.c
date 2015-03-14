@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfs.c,v 1.5 2011/11/19 16:15:11 mpi Exp $	*/
+/*	$OpenBSD: hfs.c,v 1.6 2015/03/14 20:52:41 miod Exp $	*/
 /*	$NetBSD: hfs.c,v 1.1 2000/11/14 11:25:35 tsubai Exp $	*/
 
 /*-
@@ -103,4 +103,10 @@ int
 hfs_stat(struct open_file *f, struct stat *sb)
 {
 	return 0;
+}
+
+int
+hfs_readdir(struct open_file *f, char *name)
+{
+	return ENXIO;
 }

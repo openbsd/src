@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.20 2013/03/21 21:57:15 deraadt Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.21 2015/03/14 20:52:41 miod Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ devclose(struct open_file *of)
 		    op->dmabuf, MAXBSIZE);
 
 	OF_close(op->handle);
-	op->handle = -1;
+	free(op, sizeof *op);
 }
 
 struct devsw devsw[1] = {
@@ -138,25 +138,24 @@ struct devsw devsw[1] = {
 int ndevs = sizeof devsw / sizeof devsw[0];
 
 static struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
+	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat,
+	ufs_readdir
 };
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	    cd9660_stat
+	cd9660_stat, cd9660_readdir
 };
 static struct fs_ops file_system_hfs = {
-	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat
+	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat,
+	hfs_readdir
 };
 static struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
+	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat,
+	nfs_readdir
 };
 
 struct fs_ops file_system[3];
 int nfsys;
-
-static struct of_dev ofdev = {
-	-1,
-};
 
 static u_long
 get_long(p)
@@ -292,6 +291,7 @@ search_label(devp, off, buf, lp, off0)
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
+	struct of_dev *ofdev;
 	char fname[256];
 	char buf[DEV_BSIZE];
 	struct disklabel label;
@@ -299,8 +299,6 @@ devopen(struct open_file *of, const char *name, char **file)
 	size_t read;
 	int error = 0;
 
-	if (ofdev.handle != -1)
-		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
 
@@ -320,24 +318,30 @@ devopen(struct open_file *of, const char *name, char **file)
 		 * (:0 in OpenFirmware)
 		 */
 		strlcat(fname, ":0", sizeof fname);
-	if ((handle = OF_open(fname)) == -1)
+	if ((ofdev = alloc(sizeof *ofdev)) == NULL)
+		return ENOMEM;
+	bzero(ofdev, sizeof *ofdev);
+
+	if ((handle = OF_open(fname)) == -1) {
+		free(ofdev, sizeof *ofdev);
 		return ENXIO;
-	bzero(&ofdev, sizeof ofdev);
-	ofdev.handle = handle;
-	ofdev.dmabuf = NULL;
-	OF_call_method("dma-alloc", handle, 1, 1, MAXBSIZE, &ofdev.dmabuf);
+	}
+
+	ofdev->handle = handle;
+	ofdev->dmabuf = NULL;
+	OF_call_method("dma-alloc", handle, 1, 1, MAXBSIZE, &ofdev->dmabuf);
 	if (!strcmp(buf, "block")) {
-		ofdev.type = OFDEV_DISK;
-		ofdev.bsize = DEV_BSIZE;
+		ofdev->type = OFDEV_DISK;
+		ofdev->bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
-		if (strategy(&ofdev, F_READ,
+		if (strategy(ofdev, F_READ,
 		    LABELSECTOR, DEV_BSIZE, buf, &read) != 0 ||
 		    read != DEV_BSIZE ||
 		    getdisklabel(buf, &label)) {
 			/* Else try MBR partitions */
-			error = read_mac_label(&ofdev, buf, &label);
+			error = read_mac_label(ofdev, buf, &label);
 			if (error == ERDLAB)
-				error = search_label(&ofdev, 0, buf, &label, 0);
+				error = search_label(ofdev, 0, buf, &label, 0);
 
 			if (error && error != ERDLAB)
 				goto bad;
@@ -345,14 +349,14 @@ devopen(struct open_file *of, const char *name, char **file)
 
 		if (error == ERDLAB) {
 			/* No label, just use complete disk */
-			ofdev.partoff = 0;
+			ofdev->partoff = 0;
 		} else {
 			part = 0; /* how to pass this parameter */
-			ofdev.partoff = label.d_partitions[part].p_offset;
+			ofdev->partoff = label.d_partitions[part].p_offset;
 		}
 
 		of->f_dev = devsw;
-		of->f_devdata = &ofdev;
+		of->f_devdata = ofdev;
 		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
 		bcopy(&file_system_cd9660, file_system + 1,
 		    sizeof file_system[0]);
@@ -362,18 +366,18 @@ devopen(struct open_file *of, const char *name, char **file)
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {
-		ofdev.type = OFDEV_NET;
+		ofdev->type = OFDEV_NET;
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
 		nfsys = 1;
-		if (error = net_open(&ofdev))
+		if (error = net_open(ofdev))
 			goto bad;
 		return 0;
 	}
 	error = EFTYPE;
 bad:
 	OF_close(handle);
-	ofdev.handle = -1;
+	free(ofdev, sizeof *ofdev);
 	return error;
 }
