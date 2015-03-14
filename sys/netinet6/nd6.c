@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.131 2015/02/11 23:34:43 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.132 2015/03/14 17:13:44 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1868,13 +1868,11 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (EINVAL);
 	}
 	sdl = SDL(rt->rt_gateway);
-	if (sdl->sdl_alen == 0) {
+	if (sdl->sdl_alen != ETHER_ADDR_LEN) {
 		char addr[INET6_ADDRSTRLEN];
-		/* this should be impossible, but we bark here for debugging */
-		printf("nd6_storelladdr: sdl_alen == 0, dst=%s, if=%s\n",
+		log(LOG_DEBUG, "%s: %s: incorrect nd6 information\n", __func__,
 		    inet_ntop(AF_INET6, &satosin6(dst)->sin6_addr,
-			addr, sizeof(addr)),
-		    ifp->if_xname);
+			addr, sizeof(addr)));
 		m_freem(m);
 		return (EINVAL);
 	}

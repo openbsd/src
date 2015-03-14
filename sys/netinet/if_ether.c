@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.147 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.148 2015/03/14 17:13:44 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -399,6 +399,13 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 		return (EINVAL);
 	}
 	sdl = SDL(rt->rt_gateway);
+	if (sdl->sdl_alen > 0 && sdl->sdl_alen != ETHER_ADDR_LEN) {
+		log(LOG_DEBUG, "%s: %s: incorrect arp information\n", __func__,
+		    inet_ntop(AF_INET, &satosin(dst)->sin_addr,
+			addr, sizeof(addr)));
+		m_freem(m);
+		return (EINVAL);
+	}
 	/*
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
