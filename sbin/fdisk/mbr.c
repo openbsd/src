@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.44 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.45 2015/03/14 16:58:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -292,7 +292,6 @@ MBR_writesector(int fd, char *secbuf, off_t where)
 void
 MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
 {
-	const int secsize = unit_types[SECTORS].conversion;
 	struct dos_partition dos_parts[NDOSPART];
 	char *secbuf;
 	uint64_t sig;
