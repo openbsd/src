@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.59 2015/03/14 02:32:35 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.60 2015/03/14 02:43:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -42,14 +42,11 @@ int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
     struct peer *peer_l, struct listen_addrs *listen_addrs)
 {
-	struct listen_addr			*nla, *ola, *next;
+	struct listen_addr	*nla, *ola, *next;
 
 	/*
 	 * merge the freshly parsed conf into the running xconf
 	 */
-
-	/* preserve cmd line opts */
-	conf->opts = xconf->opts;
 
 	if (!conf->as) {
 		log_warnx("configuration error: AS not given");

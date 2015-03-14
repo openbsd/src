@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.276 2015/03/14 02:32:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.277 2015/03/14 02:43:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -306,7 +306,7 @@ yesno		:  STRING			{
 		;
 
 varset		: STRING '=' string		{
-			if (conf->opts & BGPD_OPT_VERBOSE)
+			if (cmd_opts & BGPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
@@ -1302,7 +1302,7 @@ peeropts	: REMOTEAS as4number	{
 			}
 			free($2);
 			if (carp_demote_init(curpeer->conf.demote_group,
-			    conf->opts & BGPD_OPT_FORCE_DEMOTE) == -1) {
+			    cmd_opts & BGPD_OPT_FORCE_DEMOTE) == -1) {
 				yyerror("error initializing group \"%s\"",
 				    curpeer->conf.demote_group);
 				YYERROR;
@@ -1972,7 +1972,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			$$->type = ACTION_PFTABLE;
-			if (!(conf->opts & BGPD_OPT_NOACTION) &&
+			if (!(cmd_opts & BGPD_OPT_NOACTION) &&
 			    pftable_exists($2) != 0) {
 				yyerror("pftable name does not exist");
 				free($2);
@@ -2582,7 +2582,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 
-	conf->opts = xconf->opts;
 	conf->csock = strdup(SOCKET_NAME);
 
 	if ((file = pushfile(filename, 1)) == NULL) {
@@ -2631,7 +2630,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if ((conf->opts & BGPD_OPT_VERBOSE2) && !sym->used)
+		if ((cmd_opts & BGPD_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro \"%s\" not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {

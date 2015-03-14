@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.175 2015/02/09 11:37:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.176 2015/03/14 02:43:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -97,6 +97,8 @@ usage(void)
 #define POLL_MAX		3
 #define MAX_TIMEOUT		3600
 
+int	cmd_opts;
+
 int
 main(int argc, char *argv[])
 {
@@ -128,7 +130,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
 		switch (ch) {
 		case 'c':
-			conf.opts |= BGPD_OPT_FORCE_DEMOTE;
+			cmd_opts |= BGPD_OPT_FORCE_DEMOTE;
 			break;
 		case 'd':
 			debug = 1;
@@ -142,12 +144,12 @@ main(int argc, char *argv[])
 			conffile = optarg;
 			break;
 		case 'n':
-			conf.opts |= BGPD_OPT_NOACTION;
+			cmd_opts |= BGPD_OPT_NOACTION;
 			break;
 		case 'v':
-			if (conf.opts & BGPD_OPT_VERBOSE)
-				conf.opts |= BGPD_OPT_VERBOSE2;
-			conf.opts |= BGPD_OPT_VERBOSE;
+			if (cmd_opts & BGPD_OPT_VERBOSE)
+				cmd_opts |= BGPD_OPT_VERBOSE2;
+			cmd_opts |= BGPD_OPT_VERBOSE;
 			log_verbose(1);
 			break;
 		default:
@@ -161,7 +163,7 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	if (conf.opts & BGPD_OPT_NOACTION) {
+	if (cmd_opts & BGPD_OPT_NOACTION) {
 		struct network_head	net_l;
 		struct rdomain_head	rdom_l;
 		struct filter_head	rules_l;
@@ -170,7 +172,7 @@ main(int argc, char *argv[])
 		    &rules_l, &rdom_l))
 			exit(1);
 
-		if (conf.opts & BGPD_OPT_VERBOSE)
+		if (cmd_opts & BGPD_OPT_VERBOSE)
 			print_config(&conf, &ribnames, &net_l, peer_l, &rules_l,
 			    &mrt_l, &rdom_l);
 		else
@@ -185,7 +187,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", BGPD_USER);
 
 	log_init(debug);
-	log_verbose(conf.opts & BGPD_OPT_VERBOSE);
+	log_verbose(cmd_opts & BGPD_OPT_VERBOSE);
 
 	if (!debug)
 		daemon(1, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.282 2014/11/03 16:55:59 bluhm Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.283 2015/03/14 02:43:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,7 +199,6 @@ struct bgpd_config {
 	struct listen_addrs			*listen_addrs;
 	char					*csock;
 	char					*rcsock;
-	int					 opts;
 	int					 flags;
 	int					 log;
 	u_int32_t				 bgpid;
@@ -211,6 +210,8 @@ struct bgpd_config {
 	u_int16_t				 connectretry;
 	u_int8_t				 fib_priority;
 };
+
+extern int cmd_opts;
 
 enum announce_type {
 	ANNOUNCE_UNDEF,
