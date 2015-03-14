@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.6 2015/02/22 15:09:54 jsing Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.7 2015/03/14 05:10:11 bcook Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -148,7 +148,7 @@ constraint_query(struct constraint *cstr)
 		break;
 	case STATE_DNS_TEMPFAIL:
 		/* Retry resolving the address */
-		constraint_init(cstr);		
+		constraint_init(cstr);
 		return (-1);
 	case STATE_QUERY_SENT:
 		if (cstr->last + CONSTRAINT_SCAN_TIMEOUT > now) {
@@ -254,7 +254,6 @@ constraint_check_child(void)
 	struct constraint	*cstr;
 	int			 status;
 	int			 fail;
-	char			*cause;
 	pid_t			 pid;
 
 	do {
@@ -265,14 +264,9 @@ constraint_check_child(void)
 		fail = 0;
 		if (WIFSIGNALED(status)) {
 			fail = 1;
-			asprintf(&cause, "terminated; signal %d",
-			    WTERMSIG(status));
 		} else if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status) != 0) {
+			if (WEXITSTATUS(status) != 0)
 				fail = 1;
-				asprintf(&cause, "exited abnormally");
-			} else
-				asprintf(&cause, "exited okay");
 		} else
 			fatalx("unexpected cause of SIGCHLD");
 
@@ -289,7 +283,6 @@ constraint_check_child(void)
 				constraint_close(cstr->fd);
 			}
 		}
-		free(cause);
 	} while (pid > 0 || (pid == -1 && errno == EINTR));
 }
 
