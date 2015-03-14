@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.16 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.17 2015/03/14 05:48:17 tedu Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /* 
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
