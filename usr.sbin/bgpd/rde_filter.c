@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.71 2014/01/24 06:07:13 phessler Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.72 2015/03/14 03:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -440,7 +440,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 }
 
 void
-rde_free_filter(struct filter_head *fh)
+filterlist_free(struct filter_head *fh)
 {
 	struct filter_rule	*r;
 

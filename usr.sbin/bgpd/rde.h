@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.147 2013/08/14 20:34:26 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.148 2015/03/14 03:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -326,7 +326,6 @@ u_int32_t	 rde_local_as(void);
 int		 rde_noevaluate(void);
 int		 rde_decisionflags(void);
 int		 rde_as4byte(struct rde_peer *);
-void		 rde_free_filter(struct filter_head *);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,

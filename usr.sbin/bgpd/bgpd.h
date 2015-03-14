@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.283 2015/03/14 02:43:02 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.284 2015/03/14 03:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -930,7 +930,8 @@ void	control_cleanup(const char *);
 int	control_imsg_relay(struct imsg *);
 
 /* config.c */
-int	 host(const char *, struct bgpd_addr *, u_int8_t *);
+void	filterlist_free(struct filter_head *);
+int	host(const char *, struct bgpd_addr *, u_int8_t *);
 
 /* kroute.c */
 int		 kr_init(void);

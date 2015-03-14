@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.277 2015/03/14 02:43:02 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.278 2015/03/14 03:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,6 +135,7 @@ int		 neighbor_consistent(struct peer *);
 int		 merge_filterset(struct filter_set_head *, struct filter_set *);
 void		 copy_filterset(struct filter_set_head *,
 		    struct filter_set_head *);
+void		 merge_filter_lists(struct filter_head *, struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
 int		 getcommunity(char *);
@@ -2574,7 +2575,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct peer		*p, *pnext;
 	struct listen_addr	*la;
 	struct network		*n;
-	struct filter_rule	*r;
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
 	int			 errors = 0;
@@ -2663,23 +2663,10 @@ parse_config(char *filename, struct bgpd_config *xconf,
 			free(n);
 		}
 
-		while ((r = TAILQ_FIRST(filter_l)) != NULL) {
-			TAILQ_REMOVE(filter_l, r, entry);
-			filterset_free(&r->set);
-			free(r);
-		}
+		filterlist_free(filter_l);
+		filterlist_free(peerfilter_l);
+		filterlist_free(groupfilter_l);
 
-		while ((r = TAILQ_FIRST(peerfilter_l)) != NULL) {
-			TAILQ_REMOVE(peerfilter_l, r, entry);
-			filterset_free(&r->set);
-			free(r);
-		}
-
-		while ((r = TAILQ_FIRST(groupfilter_l)) != NULL) {
-			TAILQ_REMOVE(groupfilter_l, r, entry);
-			filterset_free(&r->set);
-			free(r);
-		}
 		while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
 			free(rr);
@@ -2712,25 +2699,16 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		 * together. Static group sets come first then peer sets
 		 * last normal filter rules.
 		 */
-		while ((r = TAILQ_FIRST(groupfilter_l)) != NULL) {
-			TAILQ_REMOVE(groupfilter_l, r, entry);
-			TAILQ_INSERT_TAIL(xfilter_l, r, entry);
-		}
-		while ((r = TAILQ_FIRST(peerfilter_l)) != NULL) {
-			TAILQ_REMOVE(peerfilter_l, r, entry);
-			TAILQ_INSERT_TAIL(xfilter_l, r, entry);
-		}
-		while ((r = TAILQ_FIRST(filter_l)) != NULL) {
-			TAILQ_REMOVE(filter_l, r, entry);
-			TAILQ_INSERT_TAIL(xfilter_l, r, entry);
-		}
+		merge_filter_lists(xfilter_l, groupfilter_l);
+		merge_filter_lists(xfilter_l, peerfilter_l);
+		merge_filter_lists(xfilter_l, filter_l);
+		free(filter_l);
+		free(peerfilter_l);
+		free(groupfilter_l);
 	}
 
 	free(conf);
 	free(mrtconf);
-	free(filter_l);
-	free(peerfilter_l);
-	free(groupfilter_l);
 
 	return (errors ? -1 : 0);
 }
@@ -3560,6 +3538,17 @@ copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
 			fatal(NULL);
 		memcpy(t, s, sizeof(struct filter_set));
 		TAILQ_INSERT_TAIL(dest, t, entry);
+	}
+}
+
+void
+merge_filter_lists(struct filter_head *dst, struct filter_head *src)
+{
+	struct filter_rule *r;
+
+	while ((r = TAILQ_FIRST(src)) != NULL) {
+		TAILQ_REMOVE(src, r, entry);
+		TAILQ_INSERT_TAIL(dst, r, entry);
 	}
 }
 

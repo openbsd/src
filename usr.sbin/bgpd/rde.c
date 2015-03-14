@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.329 2014/10/08 16:15:37 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.330 2015/03/14 03:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2669,12 +2669,12 @@ rde_reload_done(void)
 			/* dump the full table to neighbors that changed rib */
 			peer_dump(peer->conf.id, AID_UNSPEC);
 	}
-	rde_free_filter(out_rules_tmp);
+	filterlist_free(out_rules_tmp);
 	out_rules_tmp = NULL;
 	for (rid = 0; rid < rib_size; rid++) {
 		if (*ribs[rid].name == '\0')
 			continue;
-		rde_free_filter(ribs[rid].in_rules_tmp);
+		filterlist_free(ribs[rid].in_rules_tmp);
 		ribs[rid].in_rules_tmp = NULL;
 		ribs[rid].state = RECONF_NONE;
 	}
@@ -3542,11 +3542,11 @@ rde_shutdown(void)
 			peer_down(p->conf.id);
 
 	/* free filters */
-	rde_free_filter(out_rules);
+	filterlist_free(out_rules);
 	for (i = 0; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		rde_free_filter(ribs[i].in_rules);
+		filterlist_free(ribs[i].in_rules);
 	}
 
 	nexthop_shutdown();

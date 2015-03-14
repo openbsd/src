@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.141 2014/12/18 19:28:44 tedu Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.142 2015/03/14 03:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -150,8 +150,8 @@ rib_free(struct rib *rib)
 				break;
 		}
 	}
-	rde_free_filter(rib->in_rules_tmp);
-	rde_free_filter(rib->in_rules);
+	filterlist_free(rib->in_rules_tmp);
+	filterlist_free(rib->in_rules);
 	bzero(rib, sizeof(struct rib));
 }
 
