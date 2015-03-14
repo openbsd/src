@@ -1,4 +1,4 @@
-/* $OpenBSD: xform_ipcomp.c,v 1.5 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: xform_ipcomp.c,v 1.6 2015/03/14 14:35:00 logan Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -29,7 +29,7 @@
 
 /*
  * This file contains a wrapper around the deflate algo compression
- * functions using the zlib library (see net/zlib.{c,h})
+ * functions using the zlib library 
  */
 
 #include <sys/types.h>
