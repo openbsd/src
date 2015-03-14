@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.275 2014/11/20 05:51:20 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.276 2015/03/14 02:32:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2578,9 +2578,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
 	int			 errors = 0;
-	u_int8_t		 old_prio;
-
-	old_prio = xconf->fib_priority;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -2735,13 +2732,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	free(filter_l);
 	free(peerfilter_l);
 	free(groupfilter_l);
-
-	if (!errors && old_prio != RTP_NONE && old_prio !=
-	    xconf->fib_priority) {
-		kr_fib_decouple_all(old_prio);
-		kr_fib_update_prio_all(xconf->fib_priority);
-		kr_fib_couple_all(xconf->fib_priority);
-	}
 
 	return (errors ? -1 : 0);
 }
