@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.46 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.47 2015/03/14 18:00:31 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -616,9 +616,9 @@ terr:		errx(1, "out of range or illegal time specification: "
 void
 onintr(int signo)
 {
-	char str[1024], *ct;
+	char str[1024], *ct, ctbuf[26];
 
-	ct = ctime(&buf[0].ut_time);	/* XXX signal race */
+	ct = ctime_r(&buf[0].ut_time, ctbuf);
 	snprintf(str, sizeof str, "\ninterrupted %10.10s %8.8s \n",
 	    ct, ct + 11);
 	write(STDOUT_FILENO, str, strlen(str));
