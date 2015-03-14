@@ -1,4 +1,4 @@
-/*	$OpenBSD: timezone.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: timezone.c,v 1.11 2015/03/14 22:23:47 millert Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,10 +30,10 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tzfile.h>
 
 char *_tztab(int, int);
 
@@ -45,7 +45,7 @@ char *_tztab(int, int);
  *	application code, by a call to localtime.
  */
 
-static char	czone[TZ_MAX_CHARS];		/* space for zone name */
+static char	czone[PATH_MAX];		/* space for zone name */
 
 char *
 timezone(int zone, int dst)
