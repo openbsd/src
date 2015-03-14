@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.17 2015/01/21 09:51:23 guenther Exp $	*/
+/*	$OpenBSD: am.h,v 1.18 2015/03/14 23:02:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -46,6 +46,7 @@
 #include <rpc/rpc.h>
 #include <sys/mount.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include "nfs_prot.h"
 #include <assert.h>
