@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.38 2011/05/09 12:24:41 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.39 2015/03/14 02:22:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -118,6 +118,7 @@ u_int32_t	 rde_router_id(void);
 struct area	*rde_backbone_area(void);
 void		 rde_send_change_kroute(struct rt_node *);
 void		 rde_send_delete_kroute(struct rt_node *);
+void		 rde_nbr_iface_del(struct iface *);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 struct rde_nbr	*rde_nbr_self(struct area *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.83 2015/02/10 05:24:48 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.84 2015/03/14 02:22:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -821,6 +821,8 @@ merge_interfaces(struct area *a, struct area *xa)
 			    i->name);
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				if_fsm(i, IF_EVT_DOWN);
+			else if (ospfd_process == PROC_RDE_ENGINE)
+				rde_nbr_iface_del(i);
 			LIST_REMOVE(i, entry);
 			if_del(i);
 		}

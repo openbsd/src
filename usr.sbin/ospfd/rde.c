@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.96 2014/07/12 20:16:38 krw Exp $ */
+/*	$OpenBSD: rde.c,v 1.97 2015/03/14 02:22:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -960,6 +960,22 @@ rde_nbr_new(u_int32_t peerid, struct rde_nbr *new)
 	LIST_INSERT_HEAD(&area->nbr_list, nbr, entry);
 
 	return (nbr);
+}
+
+void
+rde_nbr_iface_del(struct iface *iface)
+{
+	struct rde_nbr_head	*head;
+	struct rde_nbr		*nbr, *xnbr;
+	u_int32_t		 i;
+
+	for (i = 0; i <= rdenbrtable.hashmask; i++) {
+		head = &rdenbrtable.hashtbl[i];
+		LIST_FOREACH_SAFE(nbr, head, hash, xnbr) {
+			if (nbr->iface == iface)
+				rde_nbr_del(nbr);
+		}
+	}
 }
 
 void
