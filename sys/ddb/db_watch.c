@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.13 2014/11/16 12:30:59 deraadt Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.14 2015/03/14 03:38:46 jsg Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
@@ -38,7 +38,6 @@
 #include <ddb/db_break.h>
 #include <ddb/db_watch.h>
 #include <ddb/db_lex.h>
-#include <ddb/db_access.h>
 #include <ddb/db_run.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>

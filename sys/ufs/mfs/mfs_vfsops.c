@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.47 2013/12/12 19:00:10 tedu Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.48 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/mount.h>

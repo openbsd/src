@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.82 2014/12/06 03:01:42 jsg Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.83 2015/03/14 03:38:49 jsg Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -80,8 +80,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/pci/agpvar.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

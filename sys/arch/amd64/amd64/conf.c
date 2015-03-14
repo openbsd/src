@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.49 2014/12/11 19:44:16 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.50 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.35 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.36 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
-#include <sys/exec.h>
 #include <uvm/uvm.h>
 
 #ifdef UVM_SWAP_ENCRYPT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.11 2011/12/17 14:07:49 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.12 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@
 
 #include <machine/psl.h>
 #include <machine/reg.h>
-#include <machine/segments.h>
 #include <machine/fpu.h>
 
 static __inline struct trapframe *process_frame(struct proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.247 2015/03/04 10:59:52 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.248 2015/03/14 03:38:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -63,7 +63,6 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
 
-#include <net/if_enc.h>
 #include <net/if_dl.h>
 
 #ifdef INET6

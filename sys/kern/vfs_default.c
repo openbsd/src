@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.40 2014/09/14 14:17:26 jsg Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.41 2015/03/14 03:38:51 jsg Exp $  */
 
 /*
  * Portions of this code are:
@@ -41,7 +41,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/event.h>
 #include <sys/specdev.h>

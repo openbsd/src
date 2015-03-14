@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.28 2015/01/11 03:04:53 deraadt Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.29 2015/03/14 03:38:50 jsg Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -60,7 +60,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wseventvar.h>
-#include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsmuxvar.h>
 
 #ifdef WSMUX_DEBUG

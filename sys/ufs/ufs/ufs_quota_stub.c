@@ -1,11 +1,10 @@
-/*	$OpenBSD: ufs_quota_stub.c,v 1.7 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: ufs_quota_stub.c,v 1.8 2015/03/14 03:38:53 jsg Exp $	*/
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 

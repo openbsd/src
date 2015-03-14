@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.65 2015/01/15 20:36:17 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.66 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/shm.h>
 #include <sys/proc.h>
 #include <sys/uio.h>

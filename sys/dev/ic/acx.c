@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.110 2015/02/10 23:25:46 mpi Exp $ */
+/*	$OpenBSD: acx.c,v 1.111 2015/03/14 03:38:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -104,7 +104,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>

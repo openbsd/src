@@ -1,6 +1,5 @@
 #include <sys/types.h>
 #include <sys/malloc.h>
-#include <lib/libz/zutil.h>
 
 /*
  * Space allocation and freeing routines for use by zlib routines.

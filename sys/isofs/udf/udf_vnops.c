@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.59 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.60 2015/03/14 03:38:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/stat.h>

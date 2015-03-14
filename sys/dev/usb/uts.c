@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.35 2014/12/19 22:44:59 guenther Exp $ */
+/*	$OpenBSD: uts.c,v 1.36 2015/03/14 03:38:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -28,7 +28,6 @@
 #include <sys/device.h>
 #include <sys/endian.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/usb/usb.h>

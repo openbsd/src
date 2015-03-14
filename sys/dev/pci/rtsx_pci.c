@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.8 2015/02/23 20:40:47 phessler Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.9 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

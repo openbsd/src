@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwmcode.c,v 1.6 2014/09/14 14:17:25 jsg Exp $ */
+/*	$OpenBSD: adwmcode.c,v 1.7 2015/03/14 03:38:47 jsg Exp $ */
 /*      $NetBSD: adwmcode.c,v 1.5 2000/05/27 18:24:50 dante Exp $        */
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/buf.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <uvm/uvm_extern.h>
 

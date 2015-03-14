@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.88 2014/12/18 23:59:28 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.89 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/disklabel.h>
-#include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/rwlock.h>

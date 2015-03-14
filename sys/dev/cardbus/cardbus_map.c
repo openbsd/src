@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.14 2010/03/27 23:36:36 jsg Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 
 #include <machine/bus.h>
 

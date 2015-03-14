@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.201 2015/02/07 02:52:09 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.202 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -91,7 +91,6 @@
 
 #ifdef DDB
 #include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
 #endif
 
 struct	mbstat mbstat;		/* mbuf stats */

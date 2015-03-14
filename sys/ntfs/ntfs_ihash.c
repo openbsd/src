@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.18 2015/01/09 05:01:57 tedu Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.19 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

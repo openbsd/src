@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.13 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -38,7 +38,6 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
-#include <ddb/db_interface.h>
 
 /*
  * Size attributes

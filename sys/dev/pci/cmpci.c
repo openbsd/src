@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.37 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.38 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -67,7 +67,6 @@ int cmpcidebug = 0;
 #include <dev/pci/cmpcireg.h>
 #include <dev/pci/cmpcivar.h>
 
-#include <dev/ic/mpuvar.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.108 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.109 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 #include <sys/kernel.h>
 
 #include <net/route.h>
-#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>

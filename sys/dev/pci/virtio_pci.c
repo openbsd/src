@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.8 2014/12/15 20:15:48 brad Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.9 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -29,7 +29,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 

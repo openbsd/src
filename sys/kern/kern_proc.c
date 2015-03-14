@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.63 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.64 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -410,7 +410,6 @@ proc_printit(struct proc *p, const char *modif,
 }
 #include <machine/db_machdep.h>
 
-#include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
 void

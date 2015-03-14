@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.43 2015/02/10 22:04:00 miod Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.44 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 #include <sys/lock.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
 #include <sys/specdev.h>

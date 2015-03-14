@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.42 2014/11/16 12:31:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.43 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/pool.h>
 
 #include <uvm/uvm_extern.h>

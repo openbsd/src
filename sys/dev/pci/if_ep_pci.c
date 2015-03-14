@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.31 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.32 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/ic/elink3var.h>

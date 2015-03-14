@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.59 2014/12/11 19:21:57 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.60 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>
-#include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.12 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: ti.c,v 1.13 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -85,7 +85,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>

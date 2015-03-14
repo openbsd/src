@@ -1,4 +1,4 @@
-/*	$OpenBSD: skgpio.c,v 1.2 2014/12/11 20:24:48 miod Exp $ */
+/*	$OpenBSD: skgpio.c,v 1.3 2015/03/14 03:38:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2014 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -26,7 +26,6 @@
 #include <sys/gpio.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 

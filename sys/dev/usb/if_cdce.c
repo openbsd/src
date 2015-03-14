@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.62 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.63 2015/03/14 03:38:49 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -51,7 +51,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <net/bpf.h>
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isa.c,v 1.5 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.6 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -37,7 +37,6 @@
 #include <machine/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>

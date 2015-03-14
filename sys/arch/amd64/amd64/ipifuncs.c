@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.25 2014/07/11 10:56:52 mlarkin Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.26 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -52,7 +52,6 @@
 #include <machine/fpu.h>
 #include <machine/mplock.h>
 
-#include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 
 void x86_64_ipi_nop(struct cpu_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.22 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.23 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
-#include <isofs/cd9660/cd9660_rrip.h>
 
 struct	nchstats iso_nchstats;
 

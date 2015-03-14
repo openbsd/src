@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_seeprom.c,v 1.5 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: aic7xxx_seeprom.c,v 1.6 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*       
@@ -47,7 +47,7 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@netbsd.org>
  * 
- * $Id: aic7xxx_seeprom.c,v 1.5 2014/07/12 18:48:17 tedu Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.6 2015/03/14 03:38:47 jsg Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -60,7 +60,6 @@
 #include <sys/device.h>
 #include <sys/reboot.h>		/* for AB_* needed by bootverbose */
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <scsi/scsi_all.h>

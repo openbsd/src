@@ -1,4 +1,4 @@
-/*	$OpenBSD: owctr.c,v 1.6 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: owctr.c,v 1.7 2015/03/14 03:38:48 jsg Exp $	*/
 /*
  * Copyright (c) 2010 John L. Scarfone <john@scarfone.net>
  *
@@ -25,7 +25,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.81 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.82 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -70,7 +70,6 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

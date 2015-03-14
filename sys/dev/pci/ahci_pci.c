@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.10 2015/02/27 15:29:18 kettenis Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.11 2015/03/14 03:38:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -35,7 +35,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ata/atascsi.h>
 #include <dev/ata/pmreg.h>
 
 #include <dev/ic/ahcireg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.83 2015/02/08 02:17:08 deraadt Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.84 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/user.h>
 
 #include <uvm/uvm.h>
 

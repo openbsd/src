@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.38 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.39 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/tree.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

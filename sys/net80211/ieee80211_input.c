@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.132 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.133 2015/03/14 03:38:51 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -46,7 +46,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_arp.h>
 #include <net/if_llc.h>
 
 #if NBPFILTER > 0

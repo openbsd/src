@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.3 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.4 2015/03/14 03:38:46 jsg Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -28,7 +28,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/amltypes.h>

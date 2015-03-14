@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.136 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.137 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/unpcb.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
-#include <sys/resourcevar.h>
 #include <net/if.h>
 #include <sys/pool.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.26 2014/10/27 13:55:05 mpi Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.27 2015/03/14 03:38:50 jsg Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -93,7 +93,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 #include <dev/wscons/wseventvar.h>
-#include <dev/wscons/wsdisplayvar.h>
 #include <dev/rndvar.h>
 
 #include "wsmux.h"

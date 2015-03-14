@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.35 2015/02/11 00:56:14 dlg Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.36 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -34,7 +34,6 @@
 #include <uvm/uvm_pmemrange.h>
 
 #include <machine/cpu.h>
-#include <machine/hibernate.h>
 #include <machine/hibernate_var.h>
 #include <machine/kcore.h>
 #include <machine/pte.h>

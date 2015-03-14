@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.95 2014/12/07 03:59:25 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.96 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/ic/comreg.h>
 
 const struct puc_device_description puc_devs[] = {
 

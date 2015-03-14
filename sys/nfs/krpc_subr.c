@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.25 2014/12/18 20:59:21 tedu Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.26 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 
 #include <nfs/rpcv2.h>

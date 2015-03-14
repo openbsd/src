@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.17 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.18 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#include <net/if.h>
 #include <net/netisr.h>
 #include <net/raw_cb.h>
 

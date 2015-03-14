@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.25 2014/07/14 08:54:13 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.26 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/resourcevar.h>
 #include <sys/specdev.h>
 
 #include <ufs/ufs/quota.h>

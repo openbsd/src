@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.12 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: umidi_quirks.c,v 1.13 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/uaudioreg.h>
 #include <dev/usb/umidireg.h>
 #include <dev/usb/umidivar.h>
 #include <dev/usb/umidi_quirks.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.25 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.26 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -42,8 +42,6 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
-
-#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

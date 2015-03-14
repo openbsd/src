@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.53 2015/03/11 16:07:22 mpi Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.54 2015/03/14 03:38:49 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -49,7 +49,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usbcdc.h>
 
 #include <dev/usb/if_urndisreg.h>
 

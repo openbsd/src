@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.349 2015/02/09 03:15:41 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.350 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -42,8 +42,6 @@
 #include <sys/task.h>
 #include <sys/kthread.h>
 #include <sys/dkio.h>
-
-#include <crypto/cryptodev.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

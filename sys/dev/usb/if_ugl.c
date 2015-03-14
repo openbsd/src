@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.9 2015/02/04 05:12:13 mpi Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.10 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -65,7 +65,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/if_dl.h>
 #include <net/netisr.h>
 
 #if NBPFILTER > 0

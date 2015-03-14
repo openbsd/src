@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.99 2015/03/02 11:55:52 sthen Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.100 2015/03/14 03:38:48 jsg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -22,7 +22,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>

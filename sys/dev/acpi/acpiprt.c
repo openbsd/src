@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.46 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.47 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,7 +30,6 @@
 #include <dev/acpi/dsdt.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
 #include <machine/i82093reg.h>

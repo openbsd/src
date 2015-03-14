@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.73 2014/07/14 08:11:34 beck Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.74 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>

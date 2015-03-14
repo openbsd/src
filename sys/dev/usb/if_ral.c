@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.131 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.132 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -35,7 +35,6 @@
 #include <sys/device.h>
 #include <sys/endian.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #if NBPFILTER > 0

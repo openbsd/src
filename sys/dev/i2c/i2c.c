@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.15 2007/10/09 16:57:47 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.16 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/event.h>
-#include <sys/conf.h>
 
 #define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>

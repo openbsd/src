@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.24 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.25 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -37,7 +37,6 @@
 #include <sys/sockio.h>
 #include <sys/timeout.h>
 
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/virtioreg.h>

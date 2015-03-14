@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.51 2015/01/19 18:05:41 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.52 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/lock.h>
 #include <sys/mount.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>

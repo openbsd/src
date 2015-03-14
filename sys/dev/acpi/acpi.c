@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.283 2015/02/07 01:19:40 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.284 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -51,7 +51,6 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-#include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
 #include <machine/apmvar.h>

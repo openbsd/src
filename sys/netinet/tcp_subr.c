@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.139 2014/12/19 17:14:40 tedu Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.140 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 #include <sys/pool.h>
 
 #include <net/route.h>
-#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>

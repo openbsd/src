@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulconf.c,v 1.8 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: wsemulconf.c,v 1.9 2015/03/14 03:38:50 jsg Exp $ */
 /* $NetBSD: wsemulconf.c,v 1.4 2000/01/05 11:19:37 drochner Exp $ */
 
 /*
@@ -40,7 +40,6 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsemulvar.h>
-#include <dev/wscons/wscons_callbacks.h>
 
 static const struct wsemul_ops *wsemul_conf[] = {
 #ifdef WSEMUL_SUN

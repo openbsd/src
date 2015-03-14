@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.68 2015/02/04 05:12:13 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.69 2015/03/14 03:38:49 jsg Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -68,7 +68,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

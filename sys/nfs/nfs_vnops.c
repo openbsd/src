@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.161 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.162 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.61 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.62 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/task.h>
 #include <sys/timeout.h>

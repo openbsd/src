@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.20 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.21 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>

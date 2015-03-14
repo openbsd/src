@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.28 2010/08/07 16:55:38 canacar Exp $ */
+/* $OpenBSD: acpiac.c,v 1.29 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -27,7 +27,6 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
-#include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
 #include <sys/sensors.h>

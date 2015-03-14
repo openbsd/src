@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.22 2014/12/15 01:53:45 tedu Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.23 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/gdt.h>
 #include <machine/tss.h>
 #include <machine/pcb.h>
 

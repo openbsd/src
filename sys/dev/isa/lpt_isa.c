@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.14 2013/06/12 19:07:39 deraadt Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -58,7 +58,6 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/lptreg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.219 2015/03/08 20:49:38 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.220 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/errno.h>
 #include <sys/device.h>

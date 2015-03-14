@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.41 2014/08/08 14:16:43 mpi Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.42 2015/03/14 03:38:50 jsg Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdevs.h>
 
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_scsi.h>

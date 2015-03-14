@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.37 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.38 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h> 
 
 #include <netinet/in.h> 

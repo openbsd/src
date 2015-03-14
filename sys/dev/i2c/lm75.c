@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.18 2008/04/17 19:01:48 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.19 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/sensors.h>
 
 #include <dev/i2c/i2cvar.h>

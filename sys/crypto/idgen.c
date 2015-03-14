@@ -25,8 +25,6 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 
-#include <dev/rndvar.h>
-
 #include <crypto/idgen.h>
 
 static const u_int8_t idgen32_ftable[256] = { 

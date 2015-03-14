@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.37 2015/02/16 17:35:17 miod Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.38 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -33,7 +33,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <dev/sdmmc/sdmmc_ioreg.h>
 #include <dev/sdmmc/sdmmc_scsi.h>
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>

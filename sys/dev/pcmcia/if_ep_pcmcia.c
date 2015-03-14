@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.44 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.45 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -93,7 +93,6 @@
 #include <dev/mii/miivar.h>
 
 #include <dev/ic/elink3var.h>
-#include <dev/ic/elink3reg.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

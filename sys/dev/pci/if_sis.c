@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.123 2015/02/11 21:36:02 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.124 2015/03/14 03:38:48 jsg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -86,7 +86,6 @@
 
 #include <sys/device.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/pci/pcireg.h>

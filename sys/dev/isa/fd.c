@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.101 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.102 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/conf.h>
 #include <machine/intr.h>
 #include <machine/ioctl_fd.h>
 

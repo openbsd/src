@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.119 2015/02/12 09:08:00 mpi Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.120 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
 

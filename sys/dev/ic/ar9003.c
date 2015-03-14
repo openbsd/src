@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.32 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.33 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -39,7 +39,6 @@
 #include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

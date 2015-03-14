@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.121 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: xl.c,v 1.122 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,7 +121,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <machine/bus.h>

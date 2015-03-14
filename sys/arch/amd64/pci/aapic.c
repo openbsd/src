@@ -1,4 +1,4 @@
-/*	$OpenBSD: aapic.c,v 1.5 2008/04/24 20:47:05 thib Exp $	*/
+/*	$OpenBSD: aapic.c,v 1.6 2015/03/14 03:38:46 jsg Exp $	*/
 /* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
 
 /*
@@ -6,7 +6,6 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcireg.h>

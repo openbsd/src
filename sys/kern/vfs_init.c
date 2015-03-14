@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.35 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.36 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/systm.h>
 #include <sys/pool.h>
 
 struct pool namei_pool;

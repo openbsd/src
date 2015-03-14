@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.26 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.27 2015/03/14 03:38:49 jsg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,7 +61,6 @@
 
 #include <dev/pcmcia/if_cnwreg.h>
 
-#include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.116 2015/01/19 01:19:17 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.117 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/ucred.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/event.h>

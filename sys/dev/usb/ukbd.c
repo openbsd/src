@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.70 2015/01/19 20:16:10 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.71 2015/03/14 03:38:50 jsg Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -74,7 +74,6 @@
 #include <dev/wscons/wsksymvar.h>
 
 #include <dev/usb/hidkbdsc.h>
-#include <dev/usb/hidkbdvar.h>
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	do { if (ukbddebug) printf x; } while (0)

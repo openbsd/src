@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.70 2015/02/10 23:25:46 mpi Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.71 2015/03/14 03:38:47 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -43,7 +43,6 @@
 #include <net/bpf.h>
 #endif
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>

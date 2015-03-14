@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.16 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.17 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -38,7 +38,6 @@
 
 #include <machine/db_machdep.h>		/* type definitions */
 
-#include <ddb/db_lex.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_break.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.64 2014/05/06 09:44:31 mpi Exp $ */
+/*	$OpenBSD: ucom.c,v 1.65 2015/03/14 03:38:49 jsg Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
 

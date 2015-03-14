@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.c,v 1.6 2014/12/22 02:28:52 tedu Exp $ */
+/* $OpenBSD: ixgb_hw.c,v 1.7 2015/03/14 03:38:48 jsg Exp $ */
 
 /* ixgb_hw.c
  * Shared functions for accessing and configuring the adapter
@@ -57,7 +57,6 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/pci/ixgb_hw.h> 
 #include <dev/pci/ixgb_ids.h> 

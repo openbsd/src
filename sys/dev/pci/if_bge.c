@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.365 2015/02/09 09:51:16 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.366 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -110,7 +110,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/brgphyreg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.28 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.29 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/file.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
-#include <sys/conf.h>
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/filedesc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.142 2014/12/19 22:44:59 guenther Exp $ */
+/*	$OpenBSD: ohci.c,v 1.143 2015/03/14 03:38:49 jsg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>

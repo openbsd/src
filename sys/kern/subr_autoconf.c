@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.86 2015/02/09 13:38:50 dlg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.87 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/hotplug.h>
-#include <sys/limits.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.61 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: acpibat.c,v 1.62 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include <sys/malloc.h>
 #include <sys/sensors.h>
 
-#include <machine/bus.h>
 #include <machine/apmvar.h>
 
 #include <dev/acpi/acpireg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.23 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: puc.c,v 1.24 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
-
-#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

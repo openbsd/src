@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.24 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.25 2015/03/14 03:38:48 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -52,7 +52,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 

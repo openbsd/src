@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.24 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.25 2015/03/14 03:38:48 jsg Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -62,9 +62,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -82,10 +79,6 @@
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/netisr.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <net/if_sppp.h>
 

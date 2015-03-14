@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.101 2015/01/06 10:42:16 mpi Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.102 2015/03/14 03:38:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -29,7 +29,6 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/usbcdc.h>

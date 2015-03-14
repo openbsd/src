@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.21 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.22 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -26,7 +26,6 @@
 
 #include <dev/sdmmc/sdmmc_ioreg.h>
 #include <dev/sdmmc/sdmmcchip.h>
-#include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
 struct sdmmc_intr_handler {

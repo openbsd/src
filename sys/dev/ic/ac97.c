@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.78 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.79 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -64,7 +64,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

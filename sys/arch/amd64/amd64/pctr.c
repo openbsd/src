@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.5 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.6 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -32,7 +32,6 @@
 #include <sys/ioccom.h>
 #include <sys/systm.h>
 
-#include <machine/psl.h>
 #include <machine/pctr.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>

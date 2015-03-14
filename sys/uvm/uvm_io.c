@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.24 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.25 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mman.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 
 #include <uvm/uvm.h>

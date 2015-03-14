@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.27 2014/08/30 08:48:23 mpi Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.28 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.16 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.17 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

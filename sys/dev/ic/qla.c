@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.49 2015/02/09 07:43:08 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.50 2015/03/14 03:38:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -19,7 +19,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>

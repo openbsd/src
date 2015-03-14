@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.27 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.28 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <net/if.h>
 
 /* ARGSUSED */
 int

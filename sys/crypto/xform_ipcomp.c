@@ -1,4 +1,4 @@
-/* $OpenBSD: xform_ipcomp.c,v 1.4 2014/07/12 18:50:00 tedu Exp $ */
+/* $OpenBSD: xform_ipcomp.c,v 1.5 2015/03/14 03:38:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -34,7 +34,6 @@
 
 #include <sys/types.h>
 #include <sys/malloc.h>
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <lib/libz/zutil.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.41 2015/01/06 01:49:45 jsg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.42 2015/03/14 03:38:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,7 +54,6 @@
 #include <sys/stdint.h>
 
 #include <crypto/siphash.h>
-#include <crypto/md5.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

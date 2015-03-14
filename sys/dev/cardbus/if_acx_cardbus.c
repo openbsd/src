@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.20 2014/12/22 02:28:51 tedu Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.21 2015/03/14 03:38:47 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -49,7 +49,6 @@
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/acxvar.h>
-#include <dev/ic/acxreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

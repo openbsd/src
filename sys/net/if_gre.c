@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.73 2014/12/19 17:14:39 tedu Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.74 2015/03/14 03:38:51 jsg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -54,7 +54,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

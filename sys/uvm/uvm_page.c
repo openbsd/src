@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.136 2015/02/28 06:11:04 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.137 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -69,7 +69,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sched.h>
-#include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>

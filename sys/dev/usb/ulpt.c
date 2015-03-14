@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.49 2015/02/10 21:56:09 miod Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.50 2015/03/14 03:38:50 jsg Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -39,7 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/uio.h>
 #include <sys/conf.h>

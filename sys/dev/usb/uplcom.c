@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.65 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.66 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
 

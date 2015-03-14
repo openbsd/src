@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.11 2015/01/19 20:16:27 guenther Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.12 2015/03/14 03:38:51 jsg Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -43,7 +43,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/unistd.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.129 2014/12/22 02:28:52 tedu Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.130 2015/03/14 03:38:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -46,7 +46,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
 

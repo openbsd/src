@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.12 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.13 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/buf.h>
-#include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/mount.h>

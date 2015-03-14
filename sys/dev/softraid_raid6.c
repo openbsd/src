@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.63 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.64 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -42,7 +42,6 @@
 #include <scsi/scsi_disk.h>
 
 #include <dev/softraidvar.h>
-#include <dev/rndvar.h>
 
 uint8_t *gf_map[256];
 uint8_t	gf_pow[768];

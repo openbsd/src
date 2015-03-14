@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.40 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.41 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/uaudioreg.h>
 #include <dev/usb/umidireg.h>
 #include <dev/usb/umidivar.h>

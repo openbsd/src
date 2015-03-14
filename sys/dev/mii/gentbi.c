@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentbi.c,v 1.10 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: gentbi.c,v 1.11 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/miidevs.h>
 
 int	gentbimatch(struct device *, void *, void *);
 void	gentbiattach(struct device *, struct device *, void *);

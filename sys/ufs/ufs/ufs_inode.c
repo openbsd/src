@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.40 2014/09/14 14:17:27 jsg Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.41 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
 

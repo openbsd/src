@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.39 2015/02/10 21:58:16 miod Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.40 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>

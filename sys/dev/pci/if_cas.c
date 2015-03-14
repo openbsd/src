@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.38 2015/03/11 22:15:22 mpi Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.39 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  *
@@ -73,7 +73,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/mii_bitbang.h>
 
 #include <dev/pci/if_casreg.h>
 #include <dev/pci/if_casvar.h>

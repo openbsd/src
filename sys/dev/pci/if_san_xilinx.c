@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.32 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.33 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -46,7 +46,6 @@
 #include <sys/time.h>
 #include <sys/timeout.h>
 
-#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_media.h>

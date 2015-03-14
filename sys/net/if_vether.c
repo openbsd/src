@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.22 2014/12/19 17:14:40 tedu Exp $ */
+/* $OpenBSD: if_vether.c,v 1.23 2015/03/14 03:38:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -24,7 +24,6 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

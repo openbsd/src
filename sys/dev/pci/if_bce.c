@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.42 2015/01/27 00:59:39 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.43 2015/03/14 03:38:48 jsg Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -64,7 +64,6 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-#include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bcereg.h>
 

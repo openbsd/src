@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.102 2014/09/24 08:35:12 mpi Exp $	*/
+/*	$OpenBSD: auich.c,v 1.103 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -36,7 +36,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 

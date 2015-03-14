@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.29 2015/01/09 05:04:22 tedu Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.30 2015/03/14 03:38:50 jsg Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -25,8 +25,6 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-
-#include <sys/disklabel.h>
 
 SLIST_HEAD(, bufq)	bufqs = SLIST_HEAD_INITIALIZER(bufqs);
 struct mutex		bufqs_mtx = MUTEX_INITIALIZER(IPL_NONE);

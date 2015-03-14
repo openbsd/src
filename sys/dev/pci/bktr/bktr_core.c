@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.35 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.36 2015/03/14 03:38:49 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -100,7 +100,6 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
-#include <sys/stdint.h>		/* uintptr_t */
 
 #include <uvm/uvm_extern.h>
 

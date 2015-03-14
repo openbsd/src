@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.63 2014/07/12 20:26:33 mpi Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.64 2015/03/14 03:38:49 jsg Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -73,7 +73,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.18 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.19 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>

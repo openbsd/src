@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.44 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: twe.c,v 1.45 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.14 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.22 2014/07/12 20:26:33 mpi Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.23 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 

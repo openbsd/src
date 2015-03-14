@@ -1,4 +1,4 @@
-/*	$OpenBSD: auconv.c,v 1.9 2008/10/17 18:30:20 okan Exp $ */
+/*	$OpenBSD: auconv.c,v 1.10 2015/03/14 03:38:46 jsg Exp $ */
 /*	$NetBSD: auconv.c,v 1.3 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*
@@ -29,7 +29,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/audioio.h>
 #include <dev/auconv.h>
 
 void

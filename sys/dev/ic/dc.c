@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.138 2015/03/13 15:57:43 jasper Exp $	*/
+/*	$OpenBSD: dc.c,v 1.139 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -104,7 +104,6 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>

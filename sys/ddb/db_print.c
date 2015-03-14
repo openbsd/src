@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_print.c,v 1.14 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_print.c,v 1.15 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_print.c,v 1.5 1996/02/05 01:57:11 christos Exp $	*/
 
 /* 
@@ -38,7 +38,6 @@
 
 #include <machine/db_machdep.h>
 
-#include <ddb/db_lex.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>

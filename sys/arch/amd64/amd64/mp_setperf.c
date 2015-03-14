@@ -1,4 +1,4 @@
-/* $OpenBSD: mp_setperf.c,v 1.5 2014/09/12 09:52:45 kettenis Exp $ */
+/* $OpenBSD: mp_setperf.c,v 1.6 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include <sys/sysctl.h>
 #include <sys/mutex.h>
 
-#include <machine/cpu.h>
 #include <machine/intr.h>
 
 struct mutex setperf_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.35 2014/12/09 06:58:28 doug Exp $ */
+/*	$OpenBSD: est.c,v 1.36 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -67,7 +67,6 @@
 
 #if NACPICPU > 0
 #include <dev/acpi/acpidev.h>
-#include <dev/acpi/acpivar.h>
 #endif
 
 /* Possible bus speeds (multiplied by 100 for rounding) */

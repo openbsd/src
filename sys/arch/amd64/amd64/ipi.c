@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.13 2015/01/06 12:50:47 dlg Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 #include <machine/intr.h>
 #include <machine/atomic.h>
 #include <machine/cpuvar.h>
-#include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 

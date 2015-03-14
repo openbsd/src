@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.23 2015/02/28 00:16:36 jsg Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.24 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -43,8 +43,6 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
-
-#include <machine/bus.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

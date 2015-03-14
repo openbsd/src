@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.38 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.39 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 

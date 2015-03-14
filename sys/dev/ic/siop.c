@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.69 2014/12/19 22:44:58 guenther Exp $ */
+/*	$OpenBSD: siop.c,v 1.70 2015/03/14 03:38:47 jsg Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/endian.h>
 

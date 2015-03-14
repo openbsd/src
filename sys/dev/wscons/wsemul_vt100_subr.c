@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.19 2013/10/18 22:06:41 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.20 2015/03/14 03:38:50 jsg Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -30,7 +30,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsdisplayvar.h>

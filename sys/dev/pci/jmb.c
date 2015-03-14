@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.8 2010/04/08 00:23:53 tedu Exp $ */
+/*	$OpenBSD: jmb.c,v 1.9 2015/03/14 03:38:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -23,8 +23,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

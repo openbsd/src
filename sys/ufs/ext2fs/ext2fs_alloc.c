@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.34 2014/09/14 14:17:26 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.35 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 
 #include <ufs/ufs/quota.h>

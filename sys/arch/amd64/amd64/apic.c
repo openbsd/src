@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.5 2009/08/13 13:24:48 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.6 2015/03/14 03:38:46 jsg Exp $	*/
 /* $NetBSD: apic.c,v 1.1 2003/02/26 21:26:11 fvdl Exp $ */
 
 /*-
@@ -37,7 +37,6 @@
 
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#include <machine/apicvar.h>
 
 void
 apic_format_redir(char *where1, char *where2, int idx, u_int32_t redirhi,

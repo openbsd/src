@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.199 2015/01/27 03:17:36 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.200 2015/03/14 03:38:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>

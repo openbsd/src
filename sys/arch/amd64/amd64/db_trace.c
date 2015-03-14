@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -40,7 +40,6 @@
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
-#include <ddb/db_interface.h>
 
 #if 1
 #define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)

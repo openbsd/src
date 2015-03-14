@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.86 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.87 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h"
 #include "bridge.h"
 
 #include <sys/param.h>
@@ -49,10 +48,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

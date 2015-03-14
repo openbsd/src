@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.24 2011/04/04 10:17:13 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.25 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -30,7 +30,6 @@
 #include <machine/bus.h>
 #include <sys/event.h>
 
-#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #ifdef __i386__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.71 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.72 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #include <netinet/ip_esp.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
-#include <net/pfkeyv2.h>
 #endif
 
 struct	route_in6 ip6_forward_rt;

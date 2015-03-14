@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.22 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.23 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@
 #include <machine/intr.h>
 
 #include <dev/ic/atwreg.h>
-#include <dev/ic/rf3000reg.h>
 #include <dev/ic/si4136reg.h>
 #include <dev/ic/atwvar.h>
 

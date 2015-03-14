@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.36 2014/12/21 16:27:08 mlarkin Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.37 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -35,7 +35,6 @@
 #include <ddb/db_lex.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
-#include <ddb/db_extern.h>
 #include <ddb/db_command.h>
 
 /*

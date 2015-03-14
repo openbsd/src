@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.22 2015/02/10 22:44:35 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.23 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -55,7 +55,6 @@
 #include <sys/fcntl.h>
 
 #include <machine/cpu.h>
-#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 

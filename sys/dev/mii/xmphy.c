@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.21 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.22 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -42,7 +42,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>

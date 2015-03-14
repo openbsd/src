@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.79 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.80 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

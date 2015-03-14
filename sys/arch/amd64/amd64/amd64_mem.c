@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.10 2014/12/15 01:53:45 tedu Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.11 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -28,7 +28,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>

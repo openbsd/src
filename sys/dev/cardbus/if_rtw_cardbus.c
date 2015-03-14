@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.24 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.25 2015/03/14 03:38:47 jsg Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -94,7 +94,6 @@
 #endif 
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/ic/rtwreg.h>
 #include <dev/ic/rtwvar.h>

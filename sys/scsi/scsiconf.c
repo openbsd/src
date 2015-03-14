@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.190 2015/02/11 00:50:03 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.191 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#include <scsi/mpathvar.h>
 
 #if NBIO > 0
 #include <sys/ioctl.h>

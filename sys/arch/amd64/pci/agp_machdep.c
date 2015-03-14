@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.13 2014/09/20 16:15:16 kettenis Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -49,7 +49,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/pci/agpvar.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.8 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.9 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 
-#include <net/if.h>
 #include <net/raw_cb.h>
 #include <netinet/in.h>
 

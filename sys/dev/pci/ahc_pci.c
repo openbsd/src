@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.56 2014/05/08 18:09:22 sf Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.57 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.56 2014/05/08 18:09:22 sf Exp $
+ * $Id: ahc_pci.c,v 1.57 2015/03/14 03:38:48 jsg Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -71,8 +71,6 @@
 
 #include <dev/ic/aic7xxx_openbsd.h>
 #include <dev/ic/aic7xxx_inline.h>
-
-#include <dev/ic/smc93cx6var.h>
 
 #ifndef __i386__
 #define AHC_ALLOW_MEMIO

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.104 2015/02/10 23:25:46 mpi Exp $  */
+/*      $OpenBSD: ath.c,v 1.105 2015/03/14 03:38:47 jsg Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/if_arp.h>
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif

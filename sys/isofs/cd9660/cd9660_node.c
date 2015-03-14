@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.28 2015/01/09 05:01:56 tedu Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.29 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
-#include <isofs/cd9660/iso_rrip.h>
 
 /*
  * Structures associated with iso_node caching.

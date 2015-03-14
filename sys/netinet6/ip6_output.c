@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.167 2015/02/12 12:12:45 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.168 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -106,7 +106,6 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#include <net/pfkeyv2.h>
 #endif /* IPSEC */
 
 struct ip6_exthdrs {

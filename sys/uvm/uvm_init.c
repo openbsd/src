@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.38 2015/02/07 08:21:24 miod Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.39 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
 #include <sys/mman.h>

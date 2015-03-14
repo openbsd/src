@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.71 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.72 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/mount.h>

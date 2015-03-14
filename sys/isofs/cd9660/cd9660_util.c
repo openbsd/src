@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_util.c,v 1.8 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: cd9660_util.c,v 1.9 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 #include <sys/dirent.h>
 
 #include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
 
 /*
  * XXX: limited support for loading of Unicode

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.85 2015/02/10 23:22:39 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.86 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -37,7 +37,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
 

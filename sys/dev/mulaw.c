@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.c,v 1.14 2007/10/23 19:54:36 jakemsr Exp $ */
+/*	$OpenBSD: mulaw.c,v 1.15 2015/03/14 03:38:46 jsg Exp $ */
 /*	$NetBSD: mulaw.c,v 1.15 2001/01/18 20:28:20 jdolecek Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/audioio.h>
 #include <dev/mulaw.h>
 
 /*

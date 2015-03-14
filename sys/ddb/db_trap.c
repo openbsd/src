@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.18 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.19 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -40,7 +40,6 @@
 
 #include <ddb/db_run.h>
 #include <ddb/db_command.h>
-#include <ddb/db_break.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>

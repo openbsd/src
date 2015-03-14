@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.51 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: adw.c,v 1.52 2015/03/14 03:38:47 jsg Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>

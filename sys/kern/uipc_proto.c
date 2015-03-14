@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.6 2011/07/06 06:31:38 matthew Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.7 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/un.h> 
 #include <sys/socketvar.h>
                         
-#include <net/if.h>
 #include <net/raw_cb.h>
 
 /*

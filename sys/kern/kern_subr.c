@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.43 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.44 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/sched.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/kernel.h>
 #include <sys/resourcevar.h>
 
 int

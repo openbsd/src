@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.96 2015/01/12 04:49:41 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.97 2015/03/14 03:38:49 jsg Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -100,7 +100,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/usb/usb.h>

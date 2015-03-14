@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.118 2015/02/10 03:40:18 blambert Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.119 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/buf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>

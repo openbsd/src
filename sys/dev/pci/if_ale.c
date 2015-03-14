@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.35 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.36 2015/03/14 03:38:48 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -56,7 +56,6 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 
-#include <net/if_types.h>
 #include <net/if_vlan_var.h>
 
 #if NBPFILTER > 0

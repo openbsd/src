@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.46 2015/01/28 20:16:04 tedu Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.47 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 
 /*

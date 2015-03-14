@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.43 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.44 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -55,7 +55,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

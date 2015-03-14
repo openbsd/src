@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.48 2014/11/18 23:55:01 krw Exp $	*/
+/*	$OpenBSD: yds.c,v 1.49 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 #include <dev/ic/ac97.h>
-#include <dev/ic/mpuvar.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

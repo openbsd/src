@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.18 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.19 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -37,8 +37,6 @@
 #include <sys/kthread.h>
 #include <sys/pool.h>
 #include <sys/task.h>
-
-#include <machine/bus.h>
 
 #include <dev/cardbus/cardslotvar.h>
 #include <dev/cardbus/cardbusvar.h>

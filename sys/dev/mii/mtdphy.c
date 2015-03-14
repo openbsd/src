@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphy.c,v 1.14 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.15 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -44,7 +44,6 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-#include <dev/mii/mtdphyreg.h>
 
 int	mtdphymatch(struct device *, void *, void *);
 void	mtdphyattach(struct device *, struct device *, void *);

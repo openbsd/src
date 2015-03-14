@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.74 2015/02/10 22:03:11 miod Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.75 2015/03/14 03:38:46 jsg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -35,7 +35,6 @@
 #include <sys/syscall.h>
 #include <sys/vnode.h>
 #include <sys/errno.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_common.c,v 1.14 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: if_lmc_common.c,v 1.15 2015/03/14 03:38:48 jsg Exp $ */
 /*	$NetBSD: if_lmc_common.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -74,8 +74,6 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-
-#include <dev/pci/pcidevs.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

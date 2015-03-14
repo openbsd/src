@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.44 2015/03/12 20:24:16 deraadt Exp $ */
+/* $OpenBSD: pckbc.c,v 1.45 2015/03/14 03:38:47 jsg Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -34,7 +34,6 @@
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

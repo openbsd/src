@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.117 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.118 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 #include <machine/intr.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 #include <dev/ic/dc21040reg.h>
 
 /*

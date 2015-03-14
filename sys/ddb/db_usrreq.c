@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.16 2014/07/08 13:02:57 deraadt Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.17 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -27,7 +27,6 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/sysctl.h>

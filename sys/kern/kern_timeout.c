@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.41 2013/11/27 04:28:32 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.42 2015/03/14 03:38:50 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -36,7 +36,6 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
-#include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #endif

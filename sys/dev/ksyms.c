@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.27 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.28 2015/03/14 03:38:46 jsg Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -26,7 +26,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
 #include <sys/uio.h>

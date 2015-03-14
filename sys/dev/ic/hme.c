@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.70 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: hme.c,v 1.71 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

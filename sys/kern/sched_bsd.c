@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.40 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.41 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <uvm/uvm_extern.h>

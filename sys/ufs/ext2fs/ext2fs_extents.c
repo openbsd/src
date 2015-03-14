@@ -34,7 +34,6 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_i2c.c,v 1.3 2011/07/26 18:43:36 deraadt Exp $	*/
+/*	$OpenBSD: lm78_i2c.c,v 1.4 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -20,8 +20,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
-
-#include <machine/bus.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/ic/lm78var.h>

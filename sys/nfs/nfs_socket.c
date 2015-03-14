@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.107 2015/01/17 17:49:27 deraadt Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.108 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
 /* External data, mostly RPC constants in XDR form. */

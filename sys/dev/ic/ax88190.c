@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax88190.c,v 1.5 2014/07/22 13:12:11 mpi Exp $	*/
+/*	$OpenBSD: ax88190.c,v 1.6 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -56,7 +56,6 @@
 #include <dev/ic/ne2000var.h>
 
 #include <dev/ic/ax88190reg.h>
-#include <dev/ic/ax88190var.h>
 
 int	ax88190_mii_readreg(struct device *, int, int);
 void	ax88190_mii_writereg(struct device *, int, int, int);

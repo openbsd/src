@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.174 2015/02/08 01:29:19 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.175 2015/03/14 03:38:51 jsg Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -52,7 +52,6 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
-#include <net/bpf.h>
 #include <net/if_pflog.h>
 
 #ifdef INET6

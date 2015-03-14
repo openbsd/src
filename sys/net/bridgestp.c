@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.51 2014/12/19 17:14:39 tedu Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.52 2015/03/14 03:38:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -49,7 +49,6 @@
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/if_llc.h>
-#include <net/if_media.h>
 #include <net/netisr.h>
 
 #include <netinet/in.h>

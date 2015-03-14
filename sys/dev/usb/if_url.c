@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.72 2015/02/12 09:08:47 mpi Exp $ */
+/*	$OpenBSD: if_url.c,v 1.73 2015/03/14 03:38:49 jsg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -54,7 +54,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 

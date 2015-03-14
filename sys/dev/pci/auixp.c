@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.33 2014/07/12 18:48:51 tedu Exp $ */
+/* $OpenBSD: auixp.c,v 1.34 2015/03/14 03:38:48 jsg Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -63,7 +63,6 @@
 #include <sys/queue.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

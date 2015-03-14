@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/specialreg.h>
 #include <machine/fpu.h>
 
 void setredzone(struct proc *);

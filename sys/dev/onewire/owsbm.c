@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.9 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.10 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -26,7 +26,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.19 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.20 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>

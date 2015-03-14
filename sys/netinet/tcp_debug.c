@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.22 2014/11/20 14:51:42 krw Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.23 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -83,7 +83,6 @@
 #include <sys/protosw.h>
 
 #include <net/route.h>
-#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

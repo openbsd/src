@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdpcib.c,v 1.2 2010/04/20 22:05:43 tedu Exp $	*/
+/*      $OpenBSD: amdpcib.c,v 1.3 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -28,7 +28,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 

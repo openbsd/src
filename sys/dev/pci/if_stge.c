@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.58 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.59 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -70,7 +70,6 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
 

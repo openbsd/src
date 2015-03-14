@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.24 2015/02/10 02:57:32 pelikan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.25 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -44,7 +44,6 @@
 
 #include <dev/pci/if_vmxreg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
 #define NRXQUEUE 1

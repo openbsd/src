@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.19 2014/09/14 14:17:23 jsg Exp $	*/
+/*      $OpenBSD: criov.c,v 1.20 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -30,8 +30,6 @@
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-
-#include <crypto/cryptodev.h>
 
 void
 cuio_copydata(struct uio *uio, int off, int len, caddr_t cp)

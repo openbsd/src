@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.116 2014/12/19 17:15:16 tedu Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.117 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -42,7 +42,6 @@
 #include <sys/dkio.h>
 
 #include <crypto/cryptodev.h>
-#include <crypto/cryptosoft.h>
 #include <crypto/rijndael.h>
 #include <crypto/md5.h>
 #include <crypto/sha1.h>

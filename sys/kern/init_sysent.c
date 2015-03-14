@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.164 2015/02/09 13:55:04 deraadt Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.165 2015/03/14 03:38:50 jsg Exp $	*/
 
 /*
  * System call switch table.
@@ -13,7 +13,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/poll.h>
-#include <sys/event.h>
 
 #define	s(type)	sizeof(type)
 

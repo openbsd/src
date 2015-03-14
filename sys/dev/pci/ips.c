@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.110 2014/07/13 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: ips.c,v 1.111 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -24,7 +24,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>

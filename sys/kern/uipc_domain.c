@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.39 2014/12/23 03:26:24 tedu Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.40 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/timeout.h>

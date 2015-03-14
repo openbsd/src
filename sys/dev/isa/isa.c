@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.42 2014/07/12 18:48:18 tedu Exp $	*/
+/*	$OpenBSD: isa.c,v 1.43 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -62,8 +62,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-
-#include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

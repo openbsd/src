@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.43 2014/12/16 19:56:33 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.44 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_vfsops.h>
 #include <ntfs/ntfs_ihash.h>
-#include <ntfs/ntfsmount.h>
 
 int	ntfs_mount(struct mount *, const char *, void *,
 				struct nameidata *, struct proc *);

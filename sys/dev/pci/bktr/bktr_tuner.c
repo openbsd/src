@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.8 2015/03/14 03:38:49 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -54,7 +54,6 @@
 #include <dev/ic/bt8xx.h>	/* OpenBSD .h file location */
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_tuner.h>
-#include <dev/pci/bktr/bktr_card.h>
 #include <dev/pci/bktr/bktr_core.h>
 
 #if defined( TUNER_AFC )

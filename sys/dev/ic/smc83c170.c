@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.18 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.19 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_post.c,v 1.8 2014/11/16 12:30:56 deraadt Exp $ */
+/* $OpenBSD: vga_post.c,v 1.9 2015/03/14 03:38:46 jsg Exp $ */
 /* $NetBSD: vga_post.c,v 1.12 2009/03/15 21:32:36 cegger Exp $ */
 
 /*-
@@ -37,7 +37,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
-#include <machine/vga_post.h>
 
 #include <dev/x86emu/x86emu.h>
 #include <dev/x86emu/x86emu_regs.h>

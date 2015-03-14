@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.62 2015/02/04 05:12:13 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.63 2015/03/14 03:38:49 jsg Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/if_dl.h>
 #include <net/netisr.h>
 
 #if NBPFILTER > 0

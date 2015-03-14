@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_write_cmd.c,v 1.13 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: db_write_cmd.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_write_cmd.c,v 1.6 1996/02/05 01:57:25 christos Exp $	*/
 
 /* 
@@ -35,7 +35,6 @@
 
 #include <machine/db_machdep.h>
 
-#include <ddb/db_lex.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>

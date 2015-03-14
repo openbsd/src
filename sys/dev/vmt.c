@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.28 2015/02/07 01:19:40 deraadt Exp $ */
+/*	$OpenBSD: vmt.c,v 1.29 2015/03/14 03:38:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -41,7 +41,6 @@
 #include <netinet/in.h>
 
 #include <dev/rndvar.h>
-#include <dev/vmtvar.h>
 
 /* "The" magic number, always occupies the EAX register. */
 #define VM_MAGIC			0x564D5868

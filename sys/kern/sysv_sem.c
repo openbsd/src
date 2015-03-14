@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.52 2014/12/19 05:59:21 tedu Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.53 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sem.h>
 #include <sys/sysctl.h>

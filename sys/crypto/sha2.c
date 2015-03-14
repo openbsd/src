@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.17 2014/12/31 16:56:55 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.18 2015/03/14 03:38:46 jsg Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -34,7 +34,6 @@
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <crypto/sha2.h>

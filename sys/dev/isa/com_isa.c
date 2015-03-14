@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isa.c,v 1.7 2013/12/09 19:52:00 deraadt Exp $	*/
+/*	$OpenBSD: com_isa.c,v 1.8 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -64,7 +64,6 @@
 #include <sys/tty.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>

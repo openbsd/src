@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.23 2011/12/06 16:06:07 mpf Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.24 2015/03/14 03:38:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -22,7 +22,6 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
-#include <machine/bus.h>
 
 #include <dev/ic/lm78var.h>
 #include <dev/isa/wbsioreg.h>

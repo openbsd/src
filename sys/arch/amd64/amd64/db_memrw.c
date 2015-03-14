@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.6 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.7 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*-
@@ -57,8 +57,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
-
-#include <ddb/db_access.h>
 
 /*
  * Read bytes from kernel address space for debugger.

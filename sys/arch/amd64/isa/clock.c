@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -107,7 +107,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/i8253reg.h>
 #include <amd64/isa/nvram.h>
-#include <dev/clock_subr.h>
 #include <machine/specialreg.h>
 
 /* Timecounter on the i8254 */

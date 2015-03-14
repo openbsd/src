@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.49 2015/02/16 05:23:43 miod Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.50 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
-#include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/mman.h>
 #include <sys/resourcevar.h>

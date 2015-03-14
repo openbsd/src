@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.125 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.126 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/stat.h>
 #include <sys/pool.h>
 #include <sys/time.h>
-#include <sys/specdev.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

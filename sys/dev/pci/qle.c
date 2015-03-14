@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.34 2015/02/09 03:15:41 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.35 2015/03/14 03:38:49 jsg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -20,7 +20,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/sensors.h>

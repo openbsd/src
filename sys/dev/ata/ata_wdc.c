@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.47 2014/09/14 14:17:24 jsg Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.48 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>

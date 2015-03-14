@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.19 2014/01/18 22:33:59 dlg Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.20 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/buf.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

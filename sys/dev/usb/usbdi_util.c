@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.40 2014/12/08 22:00:11 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.41 2015/03/14 03:38:50 jsg Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -45,7 +45,6 @@
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdivar.h>
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	do { if (usbdebug) printf x; } while (0)

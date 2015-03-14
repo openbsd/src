@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.5 2014/12/11 18:39:27 mpi Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.6 2015/03/14 03:38:50 jsg Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -33,7 +33,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
 #include "uoak.h"
 
 #define UOAK_RETRY_DELAY	 100 /* 100ms, XXX too long? */

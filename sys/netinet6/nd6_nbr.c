@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.88 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.89 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/sockio.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>

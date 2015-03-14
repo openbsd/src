@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.97 2014/11/24 02:03:37 brad Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.98 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
 
-#include <dev/ic/dl10019reg.h>
 #include <dev/ic/dl10019var.h>
 
 #include <dev/ic/rtl80x9reg.h>

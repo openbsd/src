@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.13 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.14 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/conf.h>
 
 

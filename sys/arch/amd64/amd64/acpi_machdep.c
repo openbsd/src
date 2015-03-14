@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.68 2015/01/06 12:50:47 dlg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.69 2015/03/14 03:38:46 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -50,7 +50,6 @@
 #endif
 
 #if NLAPIC > 0
-#include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif

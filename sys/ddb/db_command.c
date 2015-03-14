@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.64 2014/07/11 14:36:44 uebayasi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.65 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -51,7 +51,6 @@
 #include <ddb/db_run.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
 #include <uvm/uvm_ddb.h>

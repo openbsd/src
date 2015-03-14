@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.32 2014/07/12 21:24:33 mpi Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.33 2015/03/14 03:38:50 jsg Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -53,7 +53,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
 

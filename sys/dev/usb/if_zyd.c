@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.107 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.108 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -34,8 +34,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
-
-#include <machine/bus.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.10 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.11 2015/03/14 03:38:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -75,7 +75,6 @@
 #include <net/bpf.h>
 #endif
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/pci/pcidevs.h>

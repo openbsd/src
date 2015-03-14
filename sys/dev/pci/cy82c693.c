@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy82c693.c,v 1.7 2010/04/24 08:32:15 kettenis Exp $	*/
+/*	$OpenBSD: cy82c693.c,v 1.8 2015/03/14 03:38:48 jsg Exp $	*/
 /* $NetBSD: cy82c693.c,v 1.1 2000/06/06 03:07:39 thorpej Exp $ */
 
 /*-
@@ -41,7 +41,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <dev/pci/cy82c693reg.h>

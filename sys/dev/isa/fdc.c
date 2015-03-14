@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.19 2011/07/04 05:41:48 matthew Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.20 2015/03/14 03:38:47 jsg Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 #include <machine/ioctl_fd.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 #include <dev/isa/fdreg.h>
 
 #if defined(__i386__) || defined(__amd64__)	/* XXX */

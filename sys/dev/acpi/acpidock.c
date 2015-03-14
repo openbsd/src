@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.43 2014/08/21 21:49:37 kspillner Exp $ */
+/* $OpenBSD: acpidock.c,v 1.44 2015/03/14 03:38:46 jsg Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -23,7 +23,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/amltypes.h>

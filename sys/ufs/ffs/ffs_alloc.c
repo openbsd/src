@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.103 2014/11/18 02:37:31 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.104 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/stdint.h>
 #include <sys/time.h>

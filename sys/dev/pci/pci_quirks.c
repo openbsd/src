@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_quirks.c,v 1.5 2007/07/02 07:19:54 dlg Exp $	*/
+/*	$OpenBSD: pci_quirks.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: pci_quirks.c,v 1.1 1998/05/31 06:03:44 cgd Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

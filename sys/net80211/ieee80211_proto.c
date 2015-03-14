@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.50 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.51 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -34,8 +34,6 @@
  * IEEE 802.11 protocol support.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -51,10 +49,6 @@
 #include <net/if_media.h>
 #include <net/if_arp.h>
 #include <net/if_llc.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

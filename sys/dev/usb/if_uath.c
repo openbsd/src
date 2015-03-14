@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.66 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.67 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -56,8 +56,6 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
-
-#include <crypto/arc4.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

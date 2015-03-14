@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.19 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.20 2015/03/14 03:38:48 jsg Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #ifdef __sparc64__

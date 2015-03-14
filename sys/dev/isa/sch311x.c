@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.14 2014/12/10 12:27:57 mikeb Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -29,7 +29,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 /* Device identifiers */

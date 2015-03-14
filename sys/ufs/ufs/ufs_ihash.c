@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.21 2015/01/09 05:01:57 tedu Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.22 2015/03/14 03:38:53 jsg Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 
-#include <dev/rndvar.h>
 #include <crypto/siphash.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.42 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.43 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -47,10 +47,6 @@
 #include <netinet/ip_var.h>
 #include <netinet/in_gif.h>
 #include <netinet/ip_ipsp.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #include "gif.h"
 #include "bridge.h"

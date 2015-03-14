@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.1 2014/12/04 11:05:26 mpi Exp $ */
+/* $OpenBSD: umcs.c,v 1.2 2015/03/14 03:38:50 jsg Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 

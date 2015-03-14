@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.14 2013/06/02 16:38:05 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.15 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>

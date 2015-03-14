@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.59 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.60 2015/03/14 03:38:47 jsg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -72,7 +72,6 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/pool.h>

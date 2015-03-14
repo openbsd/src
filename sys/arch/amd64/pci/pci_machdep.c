@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.61 2015/01/24 15:13:55 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.62 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -83,7 +83,6 @@
 #include <machine/biosvar.h>
 
 #include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>

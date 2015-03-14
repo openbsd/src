@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.19 2014/12/15 01:53:45 tedu Exp $	*/
+/*	$OpenBSD: via.c,v 1.20 2015/03/14 03:38:46 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
-#include <machine/biosvar.h>
 
 #include <dev/rndvar.h>
 

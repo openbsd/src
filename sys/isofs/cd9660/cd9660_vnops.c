@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.70 2015/02/10 21:56:09 miod Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.71 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 #include <sys/dirent.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
-#include <sys/cdio.h>
 #include <sys/poll.h>
 #include <sys/specdev.h>
 #include <sys/unistd.h>

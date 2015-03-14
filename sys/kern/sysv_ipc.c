@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_ipc.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: sysv_ipc.c,v 1.8 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: sysv_ipc.c,v 1.10 1995/06/03 05:53:28 mycroft Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/ipc.h>
 #include <sys/systm.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.160 2015/02/09 11:52:47 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.161 2015/03/14 03:38:50 jsg Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -60,8 +60,6 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/reg.h>
 
 #ifdef __HAVE_MD_TCB
 # include <machine/tcb.h>

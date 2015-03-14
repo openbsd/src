@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.146 2015/02/11 23:34:43 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.147 2015/03/14 03:38:51 jsg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -1058,7 +1058,6 @@ revarpwhoami(struct in_addr *in, struct ifnet *ifp)
 #ifdef DDB
 
 #include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.7 2011/11/15 22:27:53 deraadt Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.8 2015/03/14 03:38:49 jsg Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pucvar.h>
-#include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
 
 int	lpt_puc_probe(struct device *, void *, void *);

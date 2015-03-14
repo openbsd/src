@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.84 2014/12/23 01:53:33 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.85 2015/03/14 03:38:52 jsg Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/mbuf.h>
 #include <sys/file.h>
