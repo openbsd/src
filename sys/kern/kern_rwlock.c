@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.26 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.27 2015/03/14 07:33:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/limits.h>
+#include <sys/atomic.h>
 
 /* XXX - temporary measure until proc0 is properly aligned */
 #define RW_PROC(p) (((long)p) & ~RWLOCK_MASK)
