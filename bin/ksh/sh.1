@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.105 2015/03/15 15:54:35 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.106 2015/03/15 23:03:26 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -701,8 +701,9 @@ with
 .Sq #
 set to the number of positional parameters.
 The sequence
-.Qq set\ --
-can be used to delimit arguments;
+.Qq set --
+indicates an end to option processing
+(i.e. only arguments follow);
 .Qq set --
 by itself unsets all positional parameters
 and sets
