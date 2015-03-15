@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.104 2015/03/15 11:45:07 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.105 2015/03/15 15:54:35 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -396,7 +396,7 @@ command are as follows:
 List all exported variables in a manner that can be reinput to the shell.
 .El
 .It Ic false
-Exit with a non-zero status.
+Return a false (non-zero) value.
 .It Xo
 .Ic fc
 .Op Fl lnr
@@ -733,7 +733,7 @@ not change occurs.
 Display accumulated process times for the shell (user and system)
 and all child processes (user and system).
 .It Ic true
-Exit with a zero status.
+Return a true (zero) value.
 .It Ic trap Op Ar action signal ...
 Perform
 .Ar action
