@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.103 2015/03/15 11:15:55 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.104 2015/03/15 11:45:07 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -345,7 +345,7 @@ are given,
 the exit status is 0 on success,
 or >0 if an error occurs.
 .It Ic continue Op Ar n
-Return to the top of the innermost
+Go directly to the next iteration of the innermost
 .Ic for , while ,
 or
 .Ic until
