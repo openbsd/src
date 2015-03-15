@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.817 2015/03/13 15:02:14 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.818 2015/03/15 00:09:50 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1487,8 +1487,9 @@ install_mounted_fs() {
 }
 
 install_cdrom() {
-	get_drive "CD-ROM" '$(get_cddevs)' || return
-	mount_mnt2 $resp || return
+	local _drive=$1
+
+	mount_mnt2 $_drive || return
 
 	install_mounted_fs
 }
@@ -1598,31 +1599,36 @@ sane_install() {
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
-	local _d _locs="disk http"
+	local _cddevs=$(get_cddevs) _d _locs="disk http"
 
 	echo
 
 	_d=$CGI_METHOD
 
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
-	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs"; : ${_d:=cd}; }
+	[[ -n $_cddevs ]] && : ${_d:=cd0}
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	: ${_d:=http}
 
-	if ! isin "$_d" $_locs; then
-		for a in http cd nfs disk; do
-			isin $a $_locs && _d=$a && break
+	if ! isin "$_d" $_cddevs $_locs; then
+		for a in http $_cddevs nfs disk; do
+			isin $a $_cddevs $_locs && _d=$a && break
 		done
 	fi
 
 	echo "Let's $MODE the sets!"
 	while :; do
+		_cddevs=$(get_cddevs)
 		umount -f /mnt2 >/dev/null 2>&1
 
-		ask "Location of sets? ($_locs or 'done')" "$_d"
+		ask "Location of sets? (${_cddevs:+$_cddevs }$_locs or 'done')" "$_d"
 		case $resp in
 		done)	sane_install && return;;
-		c*|C*)	isin cd $_locs && install_cdrom && METHOD=cd;;
+		c*|C*)	if [[ -n $_cddevs ]]; then
+				set -- $_cddevs
+				[[ $resp == @(c|C|cd|CD|Cd|cD) ]] && resp=$1
+				install_cdrom $resp && METHOD=$resp
+			fi;;
 		d*|D*)	install_disk && METHOD=disk;;
 		h*|H*)	isin http $_locs && install_http && METHOD=http;;
 		n*|N*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
