@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.181 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.182 2015/03/15 15:13:31 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -64,6 +64,10 @@
 
 #include <dev/rndvar.h>
 #include <dev/cons.h>
+
+#ifdef GPT
+#include <lib/libz/zlib.h>
+#endif
 
 #include "softraid.h"
 
