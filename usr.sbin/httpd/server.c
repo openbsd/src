@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.60 2015/02/23 09:52:28 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.61 2015/03/15 22:08:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -66,6 +66,7 @@ void		 server_tls_writecb(int, short, void *);
 void		 server_accept(int, short, void *);
 void		 server_accept_tls(int, short, void *);
 void		 server_input(struct client *);
+void		 server_inflight_dec(struct client *, const char *);
 
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
@@ -918,13 +919,12 @@ server_accept(int fd, short event, void *arg)
  err:
 	if (s != -1) {
 		close(s);
-		if (clt != NULL)
-			free(clt);
+		free(clt);
 		/*
 		 * the client struct was not completly set up, but still
 		 * counted as an inflight client. account for this.
 		 */
-		server_inflight_dec(clt, __func__);
+		server_inflight_dec(NULL, __func__);
 	}
 }
 
