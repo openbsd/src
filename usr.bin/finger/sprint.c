@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.14 2014/10/17 20:19:15 millert Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.15 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,6 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <tzfile.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,11 +100,12 @@ sflag_print(void)
 			} else
 				(void)printf("    *  ");
 			p = ctime(&w->loginat);
-			if (now - w->loginat < SECSPERDAY * (DAYSPERWEEK - 1))
+
+			if (now - w->loginat < SECSPERDAY * 6)
 				(void)printf("   %.3s", p);
 			else
 				(void)printf("%.6s", p + 4);
-			if (now - w->loginat >= SECSPERDAY * DAYSPERNYEAR / 2)
+			if (now - w->loginat >= SIXMONTHS)
 				(void)printf(" %.4s ", p + 20);
 			else
 				(void)printf(" %.5s", p + 11);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.11 2014/10/17 20:19:15 millert Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.12 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,7 +36,6 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <tzfile.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -181,7 +180,7 @@ lprint(PERSON *pn)
 			tp = localtime(&w->loginat);
 			t = asctime(tp);
 			tzn = tp->tm_zone;
-			if (now - w->loginat > SECSPERDAY * DAYSPERNYEAR / 2)
+			if (now - w->loginat > SIXMONTHS)
 				cpr =
 				    printf("Last login %.16s %.4s (%s) on %s",
 				    t, t + 20, tzn, w->tty);

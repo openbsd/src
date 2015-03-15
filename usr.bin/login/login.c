@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.63 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.64 2015/03/15 00:41:28 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -90,7 +90,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <ttyent.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <utmp.h>
@@ -116,6 +115,9 @@ extern int check_failedlogin(uid_t);
 extern void log_failedlogin(uid_t, char *, char *, char *);
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
+
+#define	SECSPERDAY	(24 * 60 * 60)
+#define	TWOWEEKS	(2 * 7 * SECSPERDAY)
 
 /*
  * This bounds the time given to login; may be overridden by /etc/login.conf.
@@ -656,7 +658,7 @@ failed:
 		quickexit(1);
 	} else if (expire > 0 && !quietlog) {
 		warning = login_getcaptime(lc, "expire-warn",
-		    2 * DAYSPERWEEK * SECSPERDAY, 2 * DAYSPERWEEK * SECSPERDAY);
+		    TWOWEEKS, TWOWEEKS);
 		if (expire < warning)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));

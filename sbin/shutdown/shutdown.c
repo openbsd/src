@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.40 2015/01/21 19:38:53 naddy Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.41 2015/03/15 00:41:27 millert Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.44 2015/02/07 02:09:13 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.45 2015/03/15 00:41:27 millert Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <locale.h>
 #include <syslog.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.42 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.43 2015/03/15 00:41:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #include "find.h"

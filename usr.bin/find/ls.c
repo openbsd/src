@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.16 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.17 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <utmp.h>
@@ -53,7 +52,6 @@ static void printtime(time_t);
 
 #define NAME_WIDTH	8
 #define	DATELEN		64
-#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
 
 void
 printlong(char *name, char *accpath, struct stat *sb)

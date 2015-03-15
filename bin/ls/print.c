@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.33 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.34 2015/03/15 00:41:27 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <util.h>
@@ -63,7 +62,9 @@ static int	compute_columns(DISPLAY *, int *);
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
 #define	DATELEN		64
-#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
+
+#define	SECSPERDAY	(24 * 60 * 60)
+#define	SIXMONTHS	(SECSPERDAY * 365 / 2)
 
 void
 printscol(DISPLAY *dp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.32 2015/01/20 18:26:58 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.33 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #include "interface.h"
@@ -701,7 +700,7 @@ priv_localtime(const time_t *t)
 {
 	static struct tm lt, gt0;
 	static struct tm *gt = NULL;
-	static char zone[TZ_MAX_CHARS];
+	static char zone[PATH_MAX];
 
 	if (gt != NULL) {
 		gt = gmtime(t);

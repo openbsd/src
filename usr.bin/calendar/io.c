@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.37 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.38 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 

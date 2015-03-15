@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.10 2014/08/25 07:50:25 doug Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.11 2015/03/15 00:41:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -45,13 +45,15 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
-#include <tzfile.h>
 #include <login_cap.h>
 #include <bsd_auth.h>
 
 #include "util.h"
 
 static char *pwd_update(const struct passwd *, const struct passwd *);
+
+#define SECSPERDAY	(24 * 60 * 60)
+#define TWOWEEKS	(2 * 7 * SECSPERDAY)
 
 int
 login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
@@ -85,8 +87,7 @@ login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
 		} else {
 			dead = login_getcaptime(lc, "password-dead", 0, 0);
 			warn = login_getcaptime(lc, "password-warn",
-			    2 * DAYSPERWEEK * SECSPERDAY,
-			    2 * DAYSPERWEEK * SECSPERDAY);
+			    TWOWEEKS, TWOWEEKS);
 			if (dead < 0) {
 				syslog(LOG_ERR, "class %s password-dead is %qd",
 					lc->lc_class, dead);

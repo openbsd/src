@@ -1,4 +1,4 @@
-/*	$OpenBSD: pesach.c,v 1.3 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: pesach.c,v 1.4 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -18,7 +18,6 @@
  */
 
 #include <stdio.h>
-#include <tzfile.h>
 
 #include "calendar.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.20 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.21 2015/03/15 00:41:28 millert Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <struct.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <utmp.h>
 #include <pwd.h>
@@ -53,6 +52,9 @@ char	*flagbits(int);
 char	*getdev(dev_t);
 int	 requested(char *[], struct acct *);
 void	 usage(void);
+
+#define SECSPERMIN	(60)
+#define SECSPERHOUR	(60 * 60)
 
 int
 main(int argc, char *argv[])

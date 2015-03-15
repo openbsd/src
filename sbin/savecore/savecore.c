@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.50 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.51 2015/03/15 00:41:27 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <zlib.h>
@@ -569,7 +568,8 @@ get_crashtime(void)
 		return (0);
 	}
 	(void)printf("savecore: system went down at %s", ctime(&dumptime));
-#define	LEEWAY	(7 * SECSPERDAY)
+#define	SECSPERDAY	(24 * 60 * 60)
+#define	LEEWAY		(7 * SECSPERDAY)
 	if (dumptime < now - LEEWAY || dumptime > now + LEEWAY) {
 		(void)printf("dump time is unreasonable\n");
 		return (0);

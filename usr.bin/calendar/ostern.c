@@ -1,4 +1,4 @@
-/*	$OpenBSD: ostern.c,v 1.7 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: ostern.c,v 1.8 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -25,12 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: ostern.c,v 1.7 2009/10/27 23:59:36 deraadt Exp $
+ * 	$Id: ostern.c,v 1.8 2015/03/15 00:41:28 millert Exp $
  */
 
 #include <stdio.h>
 #include <time.h>
-#include <tzfile.h>
 
 #include "calendar.h"
 

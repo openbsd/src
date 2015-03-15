@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.70 2015/02/09 04:10:50 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.71 2015/03/15 00:41:28 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -82,7 +82,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #include "ftp_var.h"

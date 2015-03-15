@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.57 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.58 2015/03/15 00:41:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <utmp.h>
@@ -398,7 +397,7 @@ pr_header(time_t *nowp, int nusers)
 			uptime %= SECSPERDAY;
 			hrs = uptime / SECSPERHOUR;
 			uptime %= SECSPERHOUR;
-			mins = uptime / SECSPERMIN;
+			mins = uptime / 60;
 			(void)printf(" up");
 			if (days > 0)
 				(void)printf(" %d day%s,", days,

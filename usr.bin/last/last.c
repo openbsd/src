@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.47 2015/03/14 18:00:31 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.48 2015/03/15 00:41:28 millert Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <utmp.h>
@@ -90,6 +89,8 @@ void	 usage(void);
 
 #define NAME_WIDTH	9
 #define HOST_WIDTH	24
+
+#define SECSPERDAY	(24 * 60 * 60)
 
 int
 main(int argc, char *argv[])

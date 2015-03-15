@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.59 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.60 2015/03/15 00:41:27 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <pwd.h>
@@ -407,6 +406,9 @@ started(const struct kinfo_proc *kp, VARENT *ve)
 		(void)printf("%-*s", v->width, "-");
 		return;
 	}
+
+#define SECSPERHOUR	(60 * 60)
+#define SECSPERDAY	(24 * 60 * 60)
 
 	startt = kp->p_ustart_sec;
 	tp = localtime(&startt);

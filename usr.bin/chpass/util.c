@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2015/03/15 00:41:28 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #include "chpass.h"

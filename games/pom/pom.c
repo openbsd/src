@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.14 2009/12/31 13:02:08 sobrado Exp $	*/
+/*	$OpenBSD: pom.c,v 1.15 2015/03/15 00:41:27 millert Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -52,7 +52,6 @@
 #include <string.h>
 #include <math.h>
 #include <err.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #ifndef M_PI
@@ -66,6 +65,8 @@
 #define	lzero	  318.351648	/* lunar mean long at EPOCH */
 #define	Pzero	  36.340410	/* lunar mean long of perigee at EPOCH */
 #define	Nzero	  318.510107	/* lunar mean long of node at EPOCH */
+
+#define	isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
 void	adj360(double *);
 double	dtor(double);

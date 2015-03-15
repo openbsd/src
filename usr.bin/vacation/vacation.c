@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.35 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.36 2015/03/15 00:41:28 millert Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <db.h>
 #include <time.h>
 #include <syslog.h>
-#include <tzfile.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -82,6 +81,8 @@ void sendmessage(char *);
 void setinterval(time_t);
 void setreply(void);
 void usage(void);
+
+#define	SECSPERDAY	(24 * 60 * 60)
 
 int
 main(int argc, char *argv[])
@@ -391,7 +392,7 @@ recent(void)
 	key.data = VIT;
 	key.size = sizeof(VIT);
 	if ((db->get)(db, &key, &data, 0))
-		next = SECSPERDAY * DAYSPERWEEK;
+		next = SECSPERDAY * 7;
 	else
 		bcopy(data.data, &next, sizeof(next));
 

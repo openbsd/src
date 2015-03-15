@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.29 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.30 2015/03/15 00:41:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #include "pathnames.h"

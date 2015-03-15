@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_time.c,v 1.15 2013/11/11 23:06:51 deraadt Exp $	*/
+/*	$OpenBSD: pr_time.c,v 1.16 2015/03/15 00:41:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <tzfile.h>
 
 #include "extern.h"
 
@@ -56,7 +55,7 @@ pr_attime(time_t *started, time_t *now)
 	diff = *now - *started;
 
 	/* If more than a week, use day-month-year. */
-	if (diff > SECSPERDAY * DAYSPERWEEK)
+	if (diff > SECSPERDAY * 7)
 		fmt = "%d%b%y";
 
 	/* If not today, use day-hour-am/pm. */
@@ -97,9 +96,9 @@ pr_idle(time_t idle)
 	else if (idle >= SECSPERHOUR)
 		(void)printf(" %2lld:%02lld ",
 		    (long long)idle / SECSPERHOUR,
-		    ((long long)idle % SECSPERHOUR) / SECSPERMIN);
+		    ((long long)idle % SECSPERHOUR) / 60);
 
 	/* Else print the minutes idle. */
 	else
-		(void)printf("    %2lld ", (long long)idle / SECSPERMIN);
+		(void)printf("    %2lld ", (long long)idle / 60);
 }

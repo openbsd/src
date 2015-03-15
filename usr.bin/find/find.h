@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.h,v 1.16 2015/01/19 15:30:52 krw Exp $ */
+/*	$OpenBSD: find.h,v 1.17 2015/03/15 00:41:28 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -132,5 +132,8 @@ typedef struct _option {
 #define	O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC || N_EXECDIR */
 	int flags;
 } OPTION;
+
+#define	SECSPERDAY	(24 * 60 * 60)
+#define	SIXMONTHS	(SECSPERDAY * 365 / 2)
 
 #include "extern.h"

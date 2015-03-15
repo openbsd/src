@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.35 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.36 2015/03/15 00:41:27 millert Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
 #include <utmp.h>
@@ -359,6 +358,8 @@ fstabsearch(char *key)
 	}
 	return (NULL);
 }
+
+#define SECSPERDAY	(24 * 60 * 60)
 
 /*
  *	Tell the operator what to do
