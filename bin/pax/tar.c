@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.56 2015/03/09 04:23:29 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.57 2015/03/15 19:47:27 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ static gid_t gid_warn;
  * Routines common to all versions of tar
  */
 
-static int tar_nodir;			/* do not write dirs under old tar */
+int tar_nodir;				/* do not write dirs under old tar */
 char *gnu_name_string;			/* GNU ././@LongLink hackery name */
 char *gnu_link_string;			/* GNU ././@LongLink hackery link */
 

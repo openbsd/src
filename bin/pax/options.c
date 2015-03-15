@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.87 2015/03/12 04:15:03 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.88 2015/03/15 19:47:27 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -722,6 +722,7 @@ tar_options(int argc, char **argv)
 			break;
 		case 'o':
 			Oflag = 2;
+			tar_nodir = 1;
 			break;
 		case 'p':
 			/*
@@ -955,9 +956,6 @@ tar_options(int argc, char **argv)
 	case ARCHIVE:
 	case APPND:
 		frmt = &(fsub[Oflag ? F_OTAR : F_TAR]);
-
-		if (Oflag == 2 && opt_add("write_opt=nodir") < 0)
-			tar_usage();
 
 		if (chdname != NULL) {	/* initial chdir() */
 			if (ftree_add(chdname, 1) < 0)
