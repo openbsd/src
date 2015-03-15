@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.51 2015/03/15 19:47:27 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.52 2015/03/15 21:53:09 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ void options(int, char **);
 OPLIST * opt_next(void);
 int opt_add(const char *);
 int bad_opt(void);
-char *chdname;
+extern char *chdname;
 
 /*
  * pat_rep.c

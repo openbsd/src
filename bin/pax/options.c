@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.88 2015/03/15 19:47:27 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.89 2015/03/15 21:53:09 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -170,9 +170,10 @@ FSUB fsub[] = {
 int ford[] = {5, 4, 9, 8, 7, 6, 3, 2, 1, 0, -1};
 
 /*
- * Do we have -C anywhere?
+ * Do we have -C anywhere and what is it?
  */
 int havechd = 0;
+char *chdname = NULL;
 
 /*
  * options()
