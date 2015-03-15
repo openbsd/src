@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtoltest.c,v 1.2 2014/09/19 12:32:08 schwarze Exp $	*/
+/*	$OpenBSD: strtoltest.c,v 1.3 2015/03/15 07:26:27 phessler Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -42,7 +42,7 @@ struct strtol_test strtol_tests[] = {
 	{"-080000000",	-2147483648L,	'\0',	16,	0},
 	{"deadbeefdeadbeef", LONG_MAX,	'\0',	16,	ERANGE},
 	{"deadzbeef",	57005L,		'z',	16,	0},
-	{"-quitebig",	LONG_MIN,	'\0',	32,	ERANGE},
+	{"-quitebigmchuge", LONG_MIN,	'\0',	32,	ERANGE},
 	{"zzz",		46655L,		'\0',	36,	0},
 	{"1234567890",	0L,		'1',	37, 	EINVAL},
 	{"1234567890",	0L,		'1',	123,	EINVAL},
