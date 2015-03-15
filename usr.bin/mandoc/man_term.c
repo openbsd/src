@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.122 2015/03/09 17:41:36 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.123 2015/03/15 16:51:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -741,7 +741,8 @@ pre_SS(DECL_ARGS)
 
 		do {
 			n = n->prev;
-		} while (n != NULL && termacts[n->tok].flags & MAN_NOTEXT);
+		} while (n != NULL && n->tok != MAN_MAX &&
+		    termacts[n->tok].flags & MAN_NOTEXT);
 		if (n == NULL || (n->tok == MAN_SS && n->body->child == NULL))
 			break;
 
