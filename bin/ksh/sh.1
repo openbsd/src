@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.107 2015/03/15 23:09:10 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.108 2015/03/16 13:18:20 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 15 2015 $
+.Dd $Mdocdate: March 16 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -697,7 +697,7 @@ in a format suitable to be reinput to the shell,
 a command suitable to achieve the current option settings.
 .Pp
 Any arguments are assigned to the positional parameters,
-with
+with the variable
 .Sq #
 set to the number of positional parameters.
 The sequence
