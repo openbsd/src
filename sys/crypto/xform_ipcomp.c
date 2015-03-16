@@ -1,4 +1,4 @@
-/* $OpenBSD: xform_ipcomp.c,v 1.6 2015/03/14 14:35:00 logan Exp $ */
+/* $OpenBSD: xform_ipcomp.c,v 1.7 2015/03/16 20:26:24 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -32,7 +32,7 @@
  * functions using the zlib library 
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <lib/libz/zutil.h>
