@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.907 2015/03/14 03:38:51 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.908 2015/03/16 02:40:55 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4279,6 +4279,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	int			 copyback = 0;
 	struct pf_state_peer	*src, *dst;
 	int			 action = PF_PASS;
+	struct inpcb		*inp;
 
 	key.af = pd->af;
 	key.proto = pd->virtual_proto;
@@ -4287,6 +4288,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 	PF_ACPY(&key.addr[pd->didx], pd->dst, key.af);
 	key.port[pd->sidx] = pd->osport;
 	key.port[pd->didx] = pd->odport;
+	inp = pd->m->m_pkthdr.pf.inp;
 
 	STATE_LOOKUP(pd->kif, &key, pd->dir, *state, pd->m);
 
@@ -4315,6 +4317,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 			(*state)->src.state = (*state)->dst.state = TCPS_CLOSED;
 			pf_unlink_state(*state);
 			*state = NULL;
+			pd->m->m_pkthdr.pf.inp = inp;
 			return (PF_DROP);
 		}
 
