@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.45 2015/03/14 03:38:47 jsg Exp $ */
+/* $OpenBSD: pckbc.c,v 1.46 2015/03/16 01:49:11 jcs Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -277,12 +277,6 @@ pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot, int force)
 		if (t->t_slotdata[slot] == NULL)
 			return 0;
 		pckbc_init_slotdata(t->t_slotdata[slot]);
-	} else if (!found && slot == PCKBC_AUX_SLOT) {
-		u_char cmd[1] = { PMS_RESET };
-
-		(void) pckbc_poll_cmd(t, PCKBC_AUX_SLOT, cmd, sizeof cmd,
-		    0, NULL, 1);
-		pckbc_slot_enable(t, PCKBC_AUX_SLOT, 0);
 	}
 	return (found);
 }
