@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.47 2013/05/31 18:03:44 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.48 2015/03/16 13:47:48 bcallah Exp $	*/
 
 /* This file is in the public domain */
 
@@ -129,7 +129,7 @@ static struct funmap functnames[] = {
 	{markbuffer, "mark-whole-buffer",},
 	{do_meta, "meta-key-mode",},	/* better name, anyone? */
 	{negative_argument, "negative-argument",},
-	{newline, "newline",},
+	{enewline, "newline",},
 	{lfindent, "newline-and-indent",},
 	{forwline, "next-line",},
 #ifdef NOTAB

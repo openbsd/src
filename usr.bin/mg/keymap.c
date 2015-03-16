@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.52 2014/08/14 12:22:58 bcallah Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.53 2015/03/16 13:47:48 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -359,7 +359,7 @@ static PF fund_CJ[] = {
 	lfindent,		/* ^J */
 	killline,		/* ^K */
 	reposition,		/* ^L */
-	newline,		/* ^M */
+	enewline,		/* ^M */
 	forwline,		/* ^N */
 	openline,		/* ^O */
 	backline,		/* ^P */
@@ -444,7 +444,7 @@ static struct KEYMAPE (1 + IMAPEXT) fillmap = {
 };
 
 static PF indent_lf[] = {
-	newline,		/* ^J */
+	enewline,		/* ^J */
 	rescan,			/* ^K */
 	rescan,			/* ^L */
 	lfindent		/* ^M */

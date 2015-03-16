@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.12 2015/01/13 17:02:28 bcallah Exp $ */
+/* $OpenBSD: cmode.c,v 1.13 2015/03/16 13:47:48 bcallah Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -201,7 +201,7 @@ cc_lfindent(int f, int n)
 {
 	if (n < 0)
 		return (FALSE);
-	if (newline(FFRAND, 1) == FALSE)
+	if (enewline(FFRAND, 1) == FALSE)
 		return (FALSE);
 	return (cc_indent(FFRAND, n));
 }

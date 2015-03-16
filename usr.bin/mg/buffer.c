@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.94 2014/06/12 16:29:41 bcallah Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.95 2015/03/16 13:47:48 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -761,7 +761,7 @@ bufferinsert(int f, int n)
 				return (FALSE);
 		if ((clp = lforw(clp)) == bp->b_headp)
 			break;
-		if (newline(FFRAND, 1) == FALSE)	/* fake newline */
+		if (enewline(FFRAND, 1) == FALSE)	/* fake newline */
 			return (FALSE);
 		nline++;
 	}
