@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.78 2015/01/26 06:12:18 djm Exp $
+#	$OpenBSD: Makefile,v 1.79 2015/03/16 22:46:14 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -76,7 +76,7 @@ INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #LTESTS= 	cipher-speed
 
 USER!=		id -un
-CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
+CLEANFILES+=	*.core authorized_keys_${USER} known_hosts pidfile \
 		ssh_config sshd_config.orig ssh_proxy sshd_config sshd_proxy \
 		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
@@ -88,7 +88,10 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		sshd_proxy.* authorized_keys_${USER}.* revoked-* krl-* \
 		ssh.log failed-ssh.log sshd.log failed-sshd.log \
 		regress.log failed-regress.log ssh-log-wrapper.sh \
-		sftp-server.sh sftp-server.log sftp.log kh.*
+		sftp-server.sh sftp-server.log sftp.log kh.* hkr.* \
+		user_key* user_ca* host_* key.* agent-key.* ed25519-agent* \
+		known_hosts.* data modpipe ssh_proxy keys-command-args \
+		scp-ssh-wrapper.scp ssh_proxy_bak
 
 SUDO_CLEAN+=	/var/run/testdata_${USER} /var/run/keycommand_${USER}
 
