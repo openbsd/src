@@ -390,7 +390,20 @@ static const sqlite3_api_routines sqlite3Apis = {
   sqlite3_uri_int64,
   sqlite3_uri_parameter,
   sqlite3_vsnprintf,
-  sqlite3_wal_checkpoint_v2
+  sqlite3_wal_checkpoint_v2,
+  /* Version 3.8.7 and later */
+  sqlite3_auto_extension,
+  sqlite3_bind_blob64,
+  sqlite3_bind_text64,
+  sqlite3_cancel_auto_extension,
+  sqlite3_load_extension,
+  sqlite3_malloc64,
+  sqlite3_msize,
+  sqlite3_realloc64,
+  sqlite3_reset_auto_extension,
+  sqlite3_result_blob64,
+  sqlite3_result_text64,
+  sqlite3_strglob
 };
 
 /*
@@ -749,7 +762,7 @@ void sqlite3AutoLoadExtensions(sqlite3 *db){
     sqlite3_mutex_leave(mutex);
     zErrmsg = 0;
     if( xInit && (rc = xInit(db, &zErrmsg, &sqlite3Apis))!=0 ){
-      sqlite3Error(db, rc,
+      sqlite3ErrorWithMsg(db, rc,
             "automatic extension loading failed: %s", zErrmsg);
       go = 0;
     }
