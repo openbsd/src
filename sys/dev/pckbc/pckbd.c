@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.40 2015/03/14 03:38:49 jsg Exp $ */
+/* $OpenBSD: pckbd.c,v 1.41 2015/03/16 01:54:47 jcs Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1028,15 +1028,12 @@ pckbd_cnpollc(void *v, int on)
 	if (t->t_table == 0) {
 		char cmd[1];
 
+		pckbc_flush(t->t_kbctag, t->t_kbcslot);
 		pckbd_set_xtscancode(t->t_kbctag, t->t_kbcslot, t);
 
 		/* Just to be sure. */
 		cmd[0] = KBC_ENABLE;
 		pckbc_poll_cmd(t->t_kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
-		cmd[0] = KBC_RESET;
-		pckbc_poll_cmd(t->t_kbctag, PCKBC_KBD_SLOT, cmd, 1, 0, NULL, 0);
-		cmd[0] = PMS_RESET;
-		pckbc_poll_cmd(t->t_kbctag, PCKBC_AUX_SLOT, cmd, 1, 0, NULL, 0);
 	}
 }
 
