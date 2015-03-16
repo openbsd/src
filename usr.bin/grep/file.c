@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2015/03/16 13:27:59 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,6 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <zlib.h>
 
 #include "grep.h"
