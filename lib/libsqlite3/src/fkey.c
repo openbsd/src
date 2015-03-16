@@ -173,7 +173,7 @@
 **
 **   4) No parent key columns were provided explicitly as part of the
 **      foreign key definition, and the PRIMARY KEY of the parent table 
-**      consists of a a different number of columns to the child key in 
+**      consists of a different number of columns to the child key in 
 **      the child table.
 **
 ** then non-zero is returned, and a "foreign key mismatch" error loaded
@@ -659,8 +659,7 @@ static void fkScanChildren(
 ** table).
 */
 FKey *sqlite3FkReferences(Table *pTab){
-  int nName = sqlite3Strlen30(pTab->zName);
-  return (FKey *)sqlite3HashFind(&pTab->pSchema->fkeyHash, pTab->zName, nName);
+  return (FKey *)sqlite3HashFind(&pTab->pSchema->fkeyHash, pTab->zName);
 }
 
 /*
@@ -1338,7 +1337,7 @@ void sqlite3FkDelete(sqlite3 *db, Table *pTab){
       }else{
         void *p = (void *)pFKey->pNextTo;
         const char *z = (p ? pFKey->pNextTo->zTo : pFKey->zTo);
-        sqlite3HashInsert(&pTab->pSchema->fkeyHash, z, sqlite3Strlen30(z), p);
+        sqlite3HashInsert(&pTab->pSchema->fkeyHash, z, p);
       }
       if( pFKey->pNextTo ){
         pFKey->pNextTo->pPrevTo = pFKey->pPrevTo;
