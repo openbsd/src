@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.44 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.45 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,6 +32,7 @@
 #include "disk.h"
 #include "misc.h"
 
+struct disk disk;
 struct disklabel dl;
 
 int
@@ -52,29 +53,29 @@ DISK_open(char *disk, int mode)
 }
 
 void
-DISK_getlabelgeometry(struct disk *disk)
+DISK_getlabelgeometry(void)
 {
 	u_int64_t sz, spc;
 	int fd;
 
 	/* Get label geometry. */
-	if ((fd = DISK_open(disk->name, O_RDONLY)) != -1) {
+	if ((fd = DISK_open(disk.name, O_RDONLY)) != -1) {
 		if (ioctl(fd, DIOCGPDINFO, &dl) == -1) {
 			warn("DIOCGPDINFO");
 		} else {
-			disk->cylinders = dl.d_ncylinders;
-			disk->heads = dl.d_ntracks;
-			disk->sectors = dl.d_nsectors;
+			disk.cylinders = dl.d_ncylinders;
+			disk.heads = dl.d_ntracks;
+			disk.sectors = dl.d_nsectors;
 			/* MBR handles only first UINT32_MAX sectors. */
-			spc = (u_int64_t)disk->heads * disk->sectors;
+			spc = (u_int64_t)disk.heads * disk.sectors;
 			sz = DL_GETDSIZE(&dl);
 			if (sz > UINT32_MAX) {
-				disk->cylinders = UINT32_MAX / spc;
-				disk->size = disk->cylinders * spc;
+				disk.cylinders = UINT32_MAX / spc;
+				disk.size = disk.cylinders * spc;
 				warnx("disk too large (%llu sectors)."
 				    " size truncated.", sz);
 			} else
-				disk->size = sz;
+				disk.size = sz;
 			unit_types[SECTORS].conversion = dl.d_secsize;
 		}
 		close(fd);
@@ -86,18 +87,18 @@ DISK_getlabelgeometry(struct disk *disk)
  * to indicate the units that should be used for display.
  */
 int
-DISK_printgeometry(struct disk *disk, char *units)
+DISK_printgeometry(char *units)
 {
 	const int secsize = unit_types[SECTORS].conversion;
 	double size;
 	int i;
 
 	i = unit_lookup(units);
-	size = ((double)disk->size * secsize) / unit_types[i].conversion;
-	printf("Disk: %s\t", disk->name);
-	if (disk->size) {
-		printf("geometry: %d/%d/%d [%.0f ", disk->cylinders,
-		    disk->heads, disk->sectors, size);
+	size = ((double)disk.size * secsize) / unit_types[i].conversion;
+	printf("Disk: %s\t", disk.name);
+	if (disk.size) {
+		printf("geometry: %d/%d/%d [%.0f ", disk.cylinders,
+		    disk.heads, disk.sectors, size);
 		if (i == SECTORS && secsize != sizeof(struct dos_mbr))
 			printf("%d-byte ", secsize);
 		printf("%s]\n", unit_types[i].lname);

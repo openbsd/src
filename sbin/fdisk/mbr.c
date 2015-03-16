@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.46 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.47 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,7 +36,7 @@
 #include "mbr.h"
 
 void
-MBR_init_GPT(struct disk *disk, struct mbr *mbr)
+MBR_init_GPT(struct mbr *mbr)
 {
 	/* Initialize a protective MBR for GPT. */
 	bzero(&mbr->part, sizeof(mbr->part));
@@ -44,21 +44,21 @@ MBR_init_GPT(struct disk *disk, struct mbr *mbr)
 	/* Use whole disk, starting after MBR. */
 	mbr->part[0].id = DOSPTYP_EFI;
 	mbr->part[0].bs = 1;
-	mbr->part[0].ns = disk->size - 1;
+	mbr->part[0].ns = disk.size - 1;
 
 	/* Fix up start/length fields. */
-	PRT_fix_CHS(disk, &mbr->part[0]);
+	PRT_fix_CHS(&mbr->part[0]);
 }
 
 void
-MBR_init(struct disk *disk, struct mbr *mbr)
+MBR_init(struct mbr *mbr)
 {
 	extern int g_flag;
 	u_int64_t adj;
 	daddr_t i;
 
 	if (g_flag) {
-		MBR_init_GPT(disk, mbr);
+		MBR_init_GPT(mbr);
 		return;
 	}
 
@@ -72,23 +72,23 @@ MBR_init(struct disk *disk, struct mbr *mbr)
 
 	/* Use whole disk. Reserve first track, or first cyl, if possible. */
 	mbr->part[3].id = DOSPTYP_OPENBSD;
-	if (disk->heads > 1)
+	if (disk.heads > 1)
 		mbr->part[3].shead = 1;
 	else
 		mbr->part[3].shead = 0;
-	if (disk->heads < 2 && disk->cylinders > 1)
+	if (disk.heads < 2 && disk.cylinders > 1)
 		mbr->part[3].scyl = 1;
 	else
 		mbr->part[3].scyl = 0;
 	mbr->part[3].ssect = 1;
 
 	/* Go right to the end */
-	mbr->part[3].ecyl = disk->cylinders - 1;
-	mbr->part[3].ehead = disk->heads - 1;
-	mbr->part[3].esect = disk->sectors;
+	mbr->part[3].ecyl = disk.cylinders - 1;
+	mbr->part[3].ehead = disk.heads - 1;
+	mbr->part[3].esect = disk.sectors;
 
 	/* Fix up start/length fields */
-	PRT_fix_BN(disk, &mbr->part[3], 3);
+	PRT_fix_BN(&mbr->part[3], 3);
 
 #if defined(__powerpc__) || defined(__mips__)
 	/* Now fix up for the MS-DOS boot partition on PowerPC. */
@@ -97,7 +97,7 @@ MBR_init(struct disk *disk, struct mbr *mbr)
 	mbr->part[3].ns += mbr->part[3].bs;
 	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
 	mbr->part[3].ns -= mbr->part[3].bs;
-	PRT_fix_CHS(disk, &mbr->part[3]);
+	PRT_fix_CHS(&mbr->part[3]);
 	if ((mbr->part[3].shead != 1) || (mbr->part[3].ssect != 1)) {
 		/* align the partition on a cylinder boundary */
 		mbr->part[3].shead = 0;
@@ -105,7 +105,7 @@ MBR_init(struct disk *disk, struct mbr *mbr)
 		mbr->part[3].scyl += 1;
 	}
 	/* Fix up start/length fields */
-	PRT_fix_BN(disk, &mbr->part[3], 3);
+	PRT_fix_BN(&mbr->part[3], 3);
 #endif
 
 	/* Start OpenBSD MBR partition on a power of 2 block number. */
@@ -115,12 +115,11 @@ MBR_init(struct disk *disk, struct mbr *mbr)
 	adj = DL_BLKTOSEC(&dl, i) - mbr->part[3].bs;
 	mbr->part[3].bs += adj;
 	mbr->part[3].ns -= adj; 
-	PRT_fix_CHS(disk, &mbr->part[3]);
+	PRT_fix_CHS(&mbr->part[3]);
 }
 
 void
-MBR_parse(struct disk *disk, struct dos_mbr *dos_mbr, off_t offset,
-    off_t reloff, struct mbr *mbr)
+MBR_parse(struct dos_mbr *dos_mbr, off_t offset, off_t reloff, struct mbr *mbr)
 {
 	struct dos_partition dos_parts[NDOSPART];
 	int i;
@@ -133,7 +132,7 @@ MBR_parse(struct disk *disk, struct dos_mbr *dos_mbr, off_t offset,
 	memcpy(dos_parts, dos_mbr->dmbr_parts, sizeof(dos_parts));
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(disk, &dos_parts[i], offset, reloff, &mbr->part[i]);
+		PRT_parse(&dos_parts[i], offset, reloff, &mbr->part[i]);
 }
 
 void
@@ -209,13 +208,13 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
  * untouched.
  */
 void
-MBR_pcopy(struct disk *disk, struct mbr *mbr)
+MBR_pcopy(struct mbr *mbr)
 {
 	struct dos_partition dos_parts[NDOSPART];
 	struct dos_mbr dos_mbr;
 	int i, fd, error;
 
-	fd = DISK_open(disk->name, O_RDONLY);
+	fd = DISK_open(disk.name, O_RDONLY);
 	error = MBR_read(fd, 0, &dos_mbr);
 	close(fd);
 
@@ -225,7 +224,7 @@ MBR_pcopy(struct disk *disk, struct mbr *mbr)
 	memcpy(dos_parts, dos_mbr.dmbr_parts, sizeof(dos_parts));
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(disk, &dos_parts[i], 0, 0, &mbr->part[i]);
+		PRT_parse(&dos_parts[i], 0, 0, &mbr->part[i]);
 }
 
 /*

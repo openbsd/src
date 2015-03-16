@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.75 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.76 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,16 +37,15 @@
 int reinited;
 
 int
-Xreinit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xreinit(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	struct dos_mbr dos_mbr;
 
 	/* Copy template MBR */
 	MBR_make(tt, &dos_mbr);
-	MBR_parse(disk, &dos_mbr, mbr->offset, mbr->reloffset, mbr);
+	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
-	MBR_init(disk, mbr);
+	MBR_init(mbr);
 	reinited = 1;
 
 	/* Tell em we did something */
@@ -59,15 +58,14 @@ Xreinit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xdisk(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xdisk(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	int maxcyl  = 1024;
 	int maxhead = 256;
 	int maxsec  = 63;
 
 	/* Print out disk info */
-	DISK_printgeometry(disk, args);
+	DISK_printgeometry(args);
 
 #if defined (__powerpc__) || defined (__mips__)
 	maxcyl  = 9999999;
@@ -77,22 +75,21 @@ Xdisk(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 
 	/* Ask for new info */
 	if (ask_yn("Change disk geometry?")) {
-		disk->cylinders = ask_num("BIOS Cylinders",
-		    disk->cylinders, 1, maxcyl);
-		disk->heads = ask_num("BIOS Heads",
-		    disk->heads, 1, maxhead);
-		disk->sectors = ask_num("BIOS Sectors",
-		    disk->sectors, 1, maxsec);
+		disk.cylinders = ask_num("BIOS Cylinders",
+		    disk.cylinders, 1, maxcyl);
+		disk.heads = ask_num("BIOS Heads",
+		    disk.heads, 1, maxhead);
+		disk.sectors = ask_num("BIOS Sectors",
+		    disk.sectors, 1, maxsec);
 
-		disk->size = disk->cylinders * disk->heads * disk->sectors;
+		disk.size = disk.cylinders * disk.heads * disk.sectors;
 	}
 
 	return (CMD_CONT);
 }
 
 int
-Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xswap(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	const char *errstr;
 	char *from, *to;
@@ -131,8 +128,7 @@ Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xedit(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	const char *errstr;
 	int pn, num, ret;
@@ -146,7 +142,7 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	pp = &mbr->part[pn];
 
 	/* Edit partition type */
-	ret = Xsetpid(args, disk, mbr, tt, offset);
+	ret = Xsetpid(args, mbr, tt, offset);
 
 	/* Unused, so just zero out */
 	if (pp->id == DOSPTYP_UNUSED) {
@@ -160,9 +156,9 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		int maxcyl, maxhead, maxsect;
 
 		/* Shorter */
-		maxcyl = disk->cylinders - 1;
-		maxhead = disk->heads - 1;
-		maxsect = disk->sectors;
+		maxcyl = disk.cylinders - 1;
+		maxhead = disk.heads - 1;
+		maxsect = disk.sectors;
 
 		/* Get data */
 #define	EDIT(p, v, n, m)			\
@@ -177,24 +173,23 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		EDIT("BIOS Ending sector",     pp->esect, 1, maxsect);
 #undef EDIT
 		/* Fix up off/size values */
-		PRT_fix_BN(disk, pp, pn);
+		PRT_fix_BN(pp, pn);
 		/* Fix up CHS values for LBA */
-		PRT_fix_CHS(disk, pp);
+		PRT_fix_CHS(pp);
 	} else {
-		pp->bs = getuint(disk, "Partition offset", pp->bs,
-		    disk->size);
-		pp->ns = getuint(disk, "Partition size", pp->ns,
-		    disk->size - pp->bs);
+		pp->bs = getuint("Partition offset", pp->bs,
+		    disk.size);
+		pp->ns = getuint("Partition size", pp->ns,
+		    disk.size - pp->bs);
 		/* Fix up CHS values */
-		PRT_fix_CHS(disk, pp);
+		PRT_fix_CHS(pp);
 	}
 
 	return (ret);
 }
 
 int
-Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xsetpid(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	const char *errstr;
 	int pn, num;
@@ -222,8 +217,7 @@ Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xselect(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xselect(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	const char *errstr;
 	static int firstoff = 0;
@@ -257,17 +251,16 @@ Xselect(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	}
 
 	/* Recursion is beautiful! */
-	USER_edit(disk, tt, off, firstoff);
+	USER_edit(tt, off, firstoff);
 
 	return (CMD_CONT);
 }
 
 int
-Xprint(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xprint(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 
-	DISK_printgeometry(disk, args);
+	DISK_printgeometry(args);
 	printf("Offset: %d\t", offset);
 	MBR_print(mbr, args);
 
@@ -275,8 +268,7 @@ Xprint(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xwrite(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	struct dos_mbr dos_mbr;
 	int fd, i, n;
@@ -290,7 +282,7 @@ Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 			return (CMD_CONT);
 	}
 
-	fd = DISK_open(disk->name, O_RDWR);
+	fd = DISK_open(disk.name, O_RDWR);
 	MBR_make(mbr, &dos_mbr);
 
 	printf("Writing MBR at offset %d.\n", offset);
@@ -304,10 +296,10 @@ Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 
 	/* Make sure GPT doesn't get in the way. */
 	if (reinited)
-		MBR_zapgpt(fd, &dos_mbr, disk->size - 1);
+		MBR_zapgpt(fd, &dos_mbr, disk.size - 1);
 
 	/* Refresh in memory copy to reflect what was just written. */
-	MBR_parse(disk, &dos_mbr, mbr->offset, mbr->reloffset, mbr);
+	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
 	close(fd);
 
@@ -315,29 +307,25 @@ Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xquit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xquit(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	return (CMD_SAVE);
 }
 
 int
-Xabort(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xabort(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	exit(0);
 }
 
 int
-Xexit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xexit(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	return (CMD_EXIT);
 }
 
 int
-Xhelp(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xhelp(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	int i;
 
@@ -347,8 +335,7 @@ Xhelp(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xupdate(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xupdate(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	/* Update code */
 	memcpy(mbr->code, tt->code, sizeof(mbr->code));
@@ -358,8 +345,7 @@ Xupdate(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xflag(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xflag(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	const char *errstr;
 	int i, pn = -1, val = -1;
@@ -400,8 +386,7 @@ Xflag(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 int
-Xmanual(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
-    int offset)
+Xmanual(char *args, struct mbr *mbr, struct mbr *tt, int offset)
 {
 	char *pager = "/usr/bin/less";
 	char *p;

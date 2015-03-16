@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.23 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.24 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,6 +33,6 @@ int ask_cmd(char **, char **);
 int ask_num(const char *, int, int, int);
 int ask_pid(int);
 int ask_yn(const char *);
-u_int32_t getuint(struct disk *, char *, u_int32_t, u_int32_t);
+u_int32_t getuint(char *, u_int32_t, u_int32_t);
 
 #endif /* _MISC_H */

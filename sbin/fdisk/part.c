@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.68 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.69 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -166,8 +166,8 @@ PRT_ascii_id(int id)
 }
 
 void
-PRT_parse(struct disk *disk, struct dos_partition *prt, off_t offset,
-    off_t reloff, struct prt *partn)
+PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
+    struct prt *partn)
 {
 	off_t off;
 	u_int32_t t;
@@ -198,7 +198,7 @@ PRT_parse(struct disk *disk, struct dos_partition *prt, off_t offset,
 	partn->ns = letoh32(t);
 #endif
 
-	PRT_fix_CHS(disk, partn);
+	PRT_fix_CHS(partn);
 }
 
 int
@@ -296,7 +296,7 @@ PRT_print(int num, struct prt *partn, char *units)
 }
 
 void
-PRT_fix_BN(struct disk *disk, struct prt *part, int pn)
+PRT_fix_BN(struct prt *part, int pn)
 {
 	u_int32_t spt, tpc, spc;
 	u_int32_t start = 0;
@@ -309,8 +309,8 @@ PRT_fix_BN(struct disk *disk, struct prt *part, int pn)
 	}
 
 	/* Disk geometry. */
-	spt = disk->sectors;
-	tpc = disk->heads;
+	spt = disk.sectors;
+	tpc = disk.heads;
 	spc = spt * tpc;
 
 	start += part->scyl * spc;
@@ -330,7 +330,7 @@ PRT_fix_BN(struct disk *disk, struct prt *part, int pn)
 }
 
 void
-PRT_fix_CHS(struct disk *disk, struct prt *part)
+PRT_fix_CHS(struct prt *part)
 {
 	u_int32_t spt, tpc, spc;
 	u_int32_t start, end, size;
@@ -343,8 +343,8 @@ PRT_fix_CHS(struct disk *disk, struct prt *part)
 	}
 
 	/* Disk geometry. */
-	spt = disk->sectors;
-	tpc = disk->heads;
+	spt = disk.sectors;
+	tpc = disk.heads;
 	spc = spt * tpc;
 
 	start = part->bs;

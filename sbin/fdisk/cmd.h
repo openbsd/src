@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.14 2015/03/14 15:21:53 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.15 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,26 +27,25 @@
 
 struct cmd {
 	char *cmd;
-	int (*fcn)(char *, struct disk *, struct mbr *, struct mbr *,
-	    int);
+	int (*fcn)(char *, struct mbr *, struct mbr *, int);
 	char *help;
 };
 extern struct cmd cmd_table[];
 
-int Xreinit(char *, struct  disk *, struct mbr *, struct mbr *, int);
-int Xdisk(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xmanual(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xedit(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xsetpid(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xselect(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xswap(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xprint(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xwrite(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xexit(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xquit(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xabort(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xhelp(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xflag(char *, struct disk *, struct mbr *, struct mbr *, int);
-int Xupdate(char *, struct disk *, struct mbr *, struct mbr *, int);
+int Xreinit(char *, struct mbr *, struct mbr *, int);
+int Xdisk(char *, struct mbr *, struct mbr *, int);
+int Xmanual(char *, struct mbr *, struct mbr *, int);
+int Xedit(char *, struct mbr *, struct mbr *, int);
+int Xsetpid(char *, struct mbr *, struct mbr *, int);
+int Xselect(char *, struct mbr *, struct mbr *, int);
+int Xswap(char *, struct mbr *, struct mbr *, int);
+int Xprint(char *, struct mbr *, struct mbr *, int);
+int Xwrite(char *, struct mbr *, struct mbr *, int);
+int Xexit(char *, struct mbr *, struct mbr *, int);
+int Xquit(char *, struct mbr *, struct mbr *, int);
+int Xabort(char *, struct mbr *, struct mbr *, int);
+int Xhelp(char *, struct mbr *, struct mbr *, int);
+int Xflag(char *, struct mbr *, struct mbr *, int);
+int Xupdate(char *, struct mbr *, struct mbr *, int);
 
 #endif /* _CMD_H */

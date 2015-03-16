@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.44 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.45 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -192,7 +192,7 @@ ask_yn(const char *str)
  * adapted from sbin/disklabel/editor.c
  */
 u_int32_t
-getuint(struct disk *disk, char *prompt, u_int32_t oval, u_int32_t maxval)
+getuint(char *prompt, u_int32_t oval, u_int32_t maxval)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	size_t n;
@@ -204,7 +204,7 @@ getuint(struct disk *disk, char *prompt, u_int32_t oval, u_int32_t maxval)
 	if (oval > maxval)
 		oval = maxval;
 
-	secpercyl = disk->sectors * disk->heads;
+	secpercyl = disk.sectors * disk.heads;
 
 	do {
 		printf("%s: [%u] ", prompt, oval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.68 2015/03/16 18:45:51 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.69 2015/03/16 23:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -70,7 +70,6 @@ main(int argc, char *argv[])
 	int ch, fd, error;
 	int i_flag = 0, e_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
-	struct disk disk;
 	u_int32_t l_arg = 0;
 	char *query;
 #ifdef HAS_MBR
@@ -146,7 +145,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Start with the disklabel geometry and get the sector size. */
-	DISK_getlabelgeometry(&disk);
+	DISK_getlabelgeometry();
 
 	if (c_arg | h_arg | s_arg) {
 		/* Use supplied geometry if it is completely specified. */
@@ -172,7 +171,7 @@ main(int argc, char *argv[])
 
 	/* Print out current MBRs on disk */
 	if ((i_flag + u_flag + e_flag) == 0)
-		USER_print_disk(&disk);
+		USER_print_disk();
 
 	/* Parse mbr template, to pass on later */
 	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
@@ -188,21 +187,21 @@ main(int argc, char *argv[])
 			err(1, "Unable to read MBR");
 		close(fd);
 	}
-	MBR_parse(&disk, &dos_mbr, 0, 0, &mbr);
+	MBR_parse(&dos_mbr, 0, 0, &mbr);
 
 	query = NULL;
 	if (i_flag) {
-		MBR_init(&disk, &mbr);
+		MBR_init(&mbr);
 		query = "Do you wish to write new MBR and partition table?";
 	} else if (u_flag) {
-		MBR_pcopy(&disk, &mbr);
+		MBR_pcopy(&mbr);
 		query = "Do you wish to write new MBR?";
 	}
 	if (query && ask_yn(query))
-		Xwrite(NULL, &disk, &mbr, NULL, 0);
+		Xwrite(NULL, &mbr, NULL, 0);
 
 	if (e_flag)
-		USER_edit(&disk, &mbr, 0, 0);
+		USER_edit(&mbr, 0, 0);
 
 	return (0);
 }
