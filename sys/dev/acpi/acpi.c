@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.284 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.285 2015/03/16 20:31:46 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -100,31 +100,44 @@ void 	acpi_gpe_task(void *, int);
 void	acpi_sbtn_task(void *, int);
 void	acpi_pbtn_task(void *, int);
 
+int	acpi_enabled;
+
+void	acpi_init_gpes(struct acpi_softc *);
+void	acpi_disable_allgpes(struct acpi_softc *);
+struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
+void	acpi_enable_onegpe(struct acpi_softc *, int);
+int	acpi_gpe(struct acpi_softc *, int, void *);
+
+void	acpi_enable_rungpes(struct acpi_softc *);
+void	acpi_enable_wakegpes(struct acpi_softc *, int);
+
+
+int	acpi_foundec(struct aml_node *, void *);
+int	acpi_foundsony(struct aml_node *node, void *arg);
+
+void	acpi_thread(void *);
+void	acpi_create_thread(void *);
+
 #ifndef SMALL_KERNEL
 
 int	acpi_thinkpad_enabled;
 int	acpi_toshiba_enabled;
 int	acpi_asus_enabled;
 int	acpi_saved_boothowto;
-int	acpi_enabled;
+
+void	acpi_indicator(struct acpi_softc *, int);
 
 int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 	    const char *driver);
 
-void	acpi_thread(void *);
-void	acpi_create_thread(void *);
 void	acpi_init_pm(struct acpi_softc *);
-void	acpi_init_gpes(struct acpi_softc *);
-void	acpi_indicator(struct acpi_softc *, int);
 
 int	acpi_founddock(struct aml_node *, void *);
 int	acpi_foundpss(struct aml_node *, void *);
 int	acpi_foundhid(struct aml_node *, void *);
-int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_foundvideo(struct aml_node *, void *);
-int	acpi_foundsony(struct aml_node *node, void *arg);
 
 int	acpi_foundide(struct aml_node *node, void *arg);
 int	acpiide_notify(struct aml_node *, int, void *);
@@ -143,33 +156,6 @@ struct idechnl {
 
 int	acpi_add_device(struct aml_node *node, void *arg);
 
-struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
-void	acpi_enable_onegpe(struct acpi_softc *, int);
-int	acpi_gpe(struct acpi_softc *, int, void *);
-
-void	acpi_enable_rungpes(struct acpi_softc *);
-void	acpi_enable_wakegpes(struct acpi_softc *, int);
-void	acpi_disable_allgpes(struct acpi_softc *);
-
-#endif /* SMALL_KERNEL */
-
-/* XXX move this into dsdt softc at some point */
-extern struct aml_node aml_root;
-
-struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach
-};
-
-struct cfdriver acpi_cd = {
-	NULL, "acpi", DV_DULL
-};
-
-struct acpi_softc *acpi_softc;
-
-#define acpi_bus_space_map	_bus_space_map
-#define acpi_bus_space_unmap	_bus_space_unmap
-
-#ifndef SMALL_KERNEL
 /*
  * This is a list of Synaptics devices with a 'top button area'
  * based on the list in Linux supplied by Synaptics
@@ -216,7 +202,23 @@ static const char *sbtn_pnp[] = {
 };
 
 int	mouse_has_softbtn;
-#endif
+#endif /* SMALL_KERNEL */
+
+/* XXX move this into dsdt softc at some point */
+extern struct aml_node aml_root;
+
+struct cfattach acpi_ca = {
+	sizeof(struct acpi_softc), acpi_match, acpi_attach
+};
+
+struct cfdriver acpi_cd = {
+	NULL, "acpi", DV_DULL
+};
+
+struct acpi_softc *acpi_softc;
+
+#define acpi_bus_space_map	_bus_space_map
+#define acpi_bus_space_unmap	_bus_space_unmap
 
 int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
@@ -332,12 +334,10 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			printf("%s: WARNING EC not initialized\n", DEVNAME(sc));
 			return (-1);
 		}
-#ifndef SMALL_KERNEL
 		if (iodir == ACPI_IOREAD)
 			acpiec_read(sc->sc_ec, (u_int8_t)address, len, buffer);
 		else
 			acpiec_write(sc->sc_ec, (u_int8_t)address, len, buffer);
-#endif
 		break;
 	}
 	return (0);
@@ -462,7 +462,6 @@ _acpi_matchhids(const char *hid, const char *hids[])
 	return (0);
 }
 
-#ifndef SMALL_KERNEL
 int
 acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
     const char *driver)
@@ -476,7 +475,6 @@ acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 
 	return (0);
 }
-#endif /* SMALL_KERNEL */
 
 /* Map ACPI device node to PCI */
 int
@@ -767,11 +765,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	int wakeup_dev_ct;
 	struct acpi_wakeq *wentry;
 	struct device *dev;
-	struct acpi_ac *ac;
-	struct acpi_bat *bat;
-	int s;
 #endif /* SMALL_KERNEL */
 	paddr_t facspa;
+	int s;
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_memt = ba->ba_memt;
@@ -885,10 +881,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Perform post-parsing fixups */
 	aml_postparse();
 
+
+#ifndef SMALL_KERNEL
 	/* Find available sleeping states */
 	acpi_init_states(sc);
 
-#ifndef SMALL_KERNEL
 	/* Find available sleep/resume related methods. */
 	acpi_init_pm(sc);
 #endif /* SMALL_KERNEL */
@@ -896,7 +893,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Map Power Management registers */
 	acpi_map_pmregs(sc);
 
-#ifndef SMALL_KERNEL
 	/* Initialize GPE handlers */
 	s = spltty();
 	acpi_init_gpes(sc);
@@ -906,7 +902,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_dev_timeout, acpi_poll, sc);
 
 	acpi_enabled = 1;
-#endif /* SMALL_KERNEL */
 
 	/*
 	 * Take over ACPI control.  Note that once we do this, we
@@ -988,9 +983,12 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach pci interrupt routing tables */
 	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
 
-#ifndef SMALL_KERNEL
 	aml_find_node(&aml_root, "_HID", acpi_foundec, sc);
 
+	/* check if we're running on a sony */
+	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
+
+#ifndef SMALL_KERNEL
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
 
 	/* attach battery, power supply and button devices */
@@ -1004,9 +1002,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
 
-	/* check if we're running on a sony */
-	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
-
 	/* attach video only if this is not a stinkpad or toshiba */
 	if (!acpi_thinkpad_enabled && !acpi_toshiba_enabled &&
 	    !acpi_asus_enabled)
@@ -1017,15 +1012,21 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->sc_bat);
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
 		if (!strcmp(dev->dv_cfdata->cf_driver->cd_name, "acpiac")) {
+			struct acpi_ac *ac;
+
 			ac = malloc(sizeof(*ac), M_DEVBUF, M_WAITOK | M_ZERO);
 			ac->aac_softc = (struct acpiac_softc *)dev;
 			SLIST_INSERT_HEAD(&sc->sc_ac, ac, aac_link);
 		} else if (!strcmp(dev->dv_cfdata->cf_driver->cd_name, "acpibat")) {
+			struct acpi_bat *bat;
+
 			bat = malloc(sizeof(*bat), M_DEVBUF, M_WAITOK | M_ZERO);
 			bat->aba_softc = (struct acpibat_softc *)dev;
 			SLIST_INSERT_HEAD(&sc->sc_bat, bat, aba_link);
 		}
 	}
+
+#endif /* SMALL_KERNEL */
 
 	/* Setup threads */
 	sc->sc_thread = malloc(sizeof(struct acpi_thread), M_DEVBUF, M_WAITOK);
@@ -1038,7 +1039,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_attach_machdep(sc);
 
 	kthread_create_deferred(acpi_create_thread, sc);
-#endif /* SMALL_KERNEL */
 }
 
 int
@@ -1428,29 +1428,6 @@ acpi_enable(struct acpi_softc *sc)
 	return 0;
 }
 
-void
-acpi_init_states(struct acpi_softc *sc)
-{
-	struct aml_value res;
-	char name[8];
-	int i;
-
-	printf("\n%s: sleep states", DEVNAME(sc));
-	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
-		snprintf(name, sizeof(name), "_S%d_", i);
-		sc->sc_sleeptype[i].slp_typa = -1;
-		sc->sc_sleeptype[i].slp_typb = -1;
-		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
-			if (res.type == AML_OBJTYPE_PACKAGE) {
-				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
-				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
-				printf(" S%d", i);
-			}
-			aml_freevalue(&res);
-		}
-	}
-}
-
 /* ACPI Workqueue support */
 SIMPLEQ_HEAD(,acpi_taskq) acpi_taskq =
     SIMPLEQ_HEAD_INITIALIZER(acpi_taskq);
@@ -1500,6 +1477,7 @@ acpi_dotask(struct acpi_softc *sc)
 }
 
 #ifndef SMALL_KERNEL
+
 int
 is_ata(struct aml_node *node)
 {
@@ -1611,6 +1589,27 @@ acpi_foundide(struct aml_node *node, void *arg)
 #endif /* NWD > 0 */
 
 void
+acpi_sleep_task(void *arg0, int sleepmode)
+{
+	struct acpi_softc *sc = arg0;
+	struct acpi_ac *ac;
+	struct acpi_bat *bat;
+
+	/* System goes to sleep here.. */
+	acpi_sleep_state(sc, sleepmode);
+
+	/* AC and battery information needs refreshing */
+	SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
+		aml_notify(ac->aac_softc->sc_devnode,
+		    0x80);
+	SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
+		aml_notify(bat->aba_softc->sc_devnode,
+		    0x80);
+}
+
+#endif /* SMALL_KERNEL */
+
+void
 acpi_reset(void)
 {
 	u_int32_t		 reset_as, reset_len;
@@ -1705,25 +1704,6 @@ acpi_powerdown_task(void *arg0, int dummy)
 		allowpowerdown = 0;
 		prsignal(initprocess, SIGUSR2);
 	}
-}
-
-void
-acpi_sleep_task(void *arg0, int sleepmode)
-{
-	struct acpi_softc *sc = arg0;
-	struct acpi_ac *ac;
-	struct acpi_bat *bat;
-
-	/* System goes to sleep here.. */
-	acpi_sleep_state(sc, sleepmode);
-
-	/* AC and battery information needs refreshing */
-	SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
-		aml_notify(ac->aac_softc->sc_devnode,
-		    0x80);
-	SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
-		aml_notify(bat->aba_softc->sc_devnode,
-		    0x80);
 }
 
 int
@@ -2045,6 +2025,31 @@ acpi_init_pm(struct acpi_softc *sc)
 	sc->sc_sst = aml_searchname(&aml_root, "_SI_._SST");
 }
 
+#ifndef SMALL_KERNEL
+
+void
+acpi_init_states(struct acpi_softc *sc)
+{
+	struct aml_value res;
+	char name[8];
+	int i;
+
+	printf("\n%s: sleep states", DEVNAME(sc));
+	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
+		snprintf(name, sizeof(name), "_S%d_", i);
+		sc->sc_sleeptype[i].slp_typa = -1;
+		sc->sc_sleeptype[i].slp_typb = -1;
+		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
+			if (res.type == AML_OBJTYPE_PACKAGE) {
+				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
+				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
+				printf(" S%d", i);
+			}
+			aml_freevalue(&res);
+		}
+	}
+}
+
 void
 acpi_sleep_pm(struct acpi_softc *sc, int state)
 {
@@ -2155,6 +2160,7 @@ acpi_indicator(struct acpi_softc *sc, int led_state)
 		save_led_state = led_state;
 	}
 }
+
 
 int
 acpi_sleep_state(struct acpi_softc *sc, int state)
@@ -2319,15 +2325,6 @@ fail_tts:
 	return (error);
 }
 
-void
-acpi_wakeup(void *arg)
-{
-	struct acpi_softc  *sc = (struct acpi_softc *)arg;
-
-	sc->sc_threadwaiting = 0;
-	wakeup(sc);
-}
-
 /* XXX
  * We are going to do AML execution but are not in the acpi thread.
  * We do not know if the acpi thread is sleeping on acpiec in some
@@ -2360,6 +2357,45 @@ acpi_powerdown(void)
 	while (1)
 		;
 }
+
+int
+acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas, bus_addr_t base,
+    bus_size_t size, bus_space_handle_t *pioh, bus_space_tag_t *piot)
+{
+	int iospace = GAS_SYSTEM_IOSPACE;
+
+	/* No GAS structure, default to I/O space */
+	if (gas != NULL) {
+		base += gas->address;
+		iospace = gas->address_space_id;
+	}
+	switch (iospace) {
+	case GAS_SYSTEM_MEMORY:
+		*piot = sc->sc_memt;
+		break;
+	case GAS_SYSTEM_IOSPACE:
+		*piot = sc->sc_iot;
+		break;
+	default:
+		return -1;
+	}
+	if (bus_space_map(*piot, base, size, 0, pioh))
+		return -1;
+
+	return 0;
+}
+
+#endif /* SMALL_KERNEL */
+
+void
+acpi_wakeup(void *arg)
+{
+	struct acpi_softc  *sc = (struct acpi_softc *)arg;
+
+	sc->sc_threadwaiting = 0;
+	wakeup(sc);
+}
+
 
 void
 acpi_thread(void *arg)
@@ -2438,33 +2474,6 @@ acpi_create_thread(void *arg)
 }
 
 int
-acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas, bus_addr_t base,
-    bus_size_t size, bus_space_handle_t *pioh, bus_space_tag_t *piot)
-{
-	int iospace = GAS_SYSTEM_IOSPACE;
-
-	/* No GAS structure, default to I/O space */
-	if (gas != NULL) {
-		base += gas->address;
-		iospace = gas->address_space_id;
-	}
-	switch (iospace) {
-	case GAS_SYSTEM_MEMORY:
-		*piot = sc->sc_memt;
-		break;
-	case GAS_SYSTEM_IOSPACE:
-		*piot = sc->sc_iot;
-		break;
-	default:
-		return -1;
-	}
-	if (bus_space_map(*piot, base, size, 0, pioh))
-		return -1;
-
-	return 0;
-}
-
-int
 acpi_foundec(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -2506,6 +2515,26 @@ acpi_foundec(struct aml_node *node, void *arg)
 
 	return 0;
 }
+
+int
+acpi_foundsony(struct aml_node *node, void *arg)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)arg;
+	struct device *self = (struct device *)arg;
+	struct acpi_attach_args aaa;
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_name = "acpisony";
+
+	config_found(self, &aaa, acpi_print);
+
+	return 0;
+}
+
+#ifndef SMALL_KERNEL
 
 int
 acpi_foundhid(struct aml_node *node, void *arg)
@@ -2639,24 +2668,6 @@ acpi_foundvideo(struct aml_node *node, void *arg)
 	config_found(self, &aaa, acpi_print);
 
 	return (0);
-}
-
-int
-acpi_foundsony(struct aml_node *node, void *arg)
-{
-	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	struct device *self = (struct device *)arg;
-	struct acpi_attach_args aaa;
-
-	memset(&aaa, 0, sizeof(aaa));
-	aaa.aaa_iot = sc->sc_iot;
-	aaa.aaa_memt = sc->sc_memt;
-	aaa.aaa_node = node->parent;
-	aaa.aaa_name = "acpisony";
-
-	config_found(self, &aaa, acpi_print);
-
-	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.215 2015/03/14 03:38:47 jsg Exp $ */
+/* $OpenBSD: dsdt.c,v 1.216 2015/03/16 20:31:46 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -516,7 +516,6 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 /*
  * @@@: Notify functions
  */
-#ifndef SMALL_KERNEL
 void
 acpi_poll(void *arg)
 {
@@ -530,7 +529,6 @@ acpi_poll(void *arg)
 
 	timeout_add_sec(&acpi_softc->sc_dev_timeout, 10);
 }
-#endif
 
 void
 aml_notify_task(void *node, int notify_value)
@@ -578,7 +576,6 @@ aml_notify(struct aml_node *node, int notify_value)
 	acpi_addtask(acpi_softc, aml_notify_task, node, notify_value);
 }
 
-#ifndef SMALL_KERNEL
 void
 aml_notify_dev(const char *pnpid, int notify_value)
 {
@@ -601,7 +598,6 @@ acpi_poll_notify_task(void *arg0, int arg1)
 		if (pdata->cbproc && pdata->poll)
 			pdata->cbproc(pdata->node, 0, pdata->cbarg);
 }
-#endif
 
 /*
  * @@@: Namespace functions

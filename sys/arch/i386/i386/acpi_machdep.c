@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.57 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.58 2015/03/16 20:31:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -222,8 +222,6 @@ acpi_release_glk(uint32_t *lock)
 	return ((old & GL_BIT_PENDING) != 0);
 }
 
-#ifndef SMALL_KERNEL
-
 void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
@@ -231,11 +229,13 @@ acpi_attach_machdep(struct acpi_softc *sc)
 
 	sc->sc_interrupt = isa_intr_establish(NULL, sc->sc_fadt->sci_int,
 	    IST_LEVEL, IPL_TTY, acpi_interrupt, sc, sc->sc_dev.dv_xname);
+	cpuresetfn = acpi_reset;
+
+#ifndef SMALL_KERNEL
 	acpiapm_open = acpiopen;
 	acpiapm_close = acpiclose;
 	acpiapm_ioctl = acpiioctl;
 	acpiapm_kqfilter = acpikqfilter;
-	cpuresetfn = acpi_reset;
 
 	/*
 	 * Sanity check before setting up trampoline.
@@ -245,7 +245,10 @@ acpi_attach_machdep(struct acpi_softc *sc)
 
 	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE,
 	    acpi_resume_end - acpi_real_mode_resume);
+#endif /* SMALL_KERNEL */
 }
+
+#ifndef SMALL_KERNEL
 
 #if NLAPIC > 0
 int	save_lapic_tpr;
