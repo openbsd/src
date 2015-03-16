@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.125 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.126 2015/03/16 04:09:53 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2768,7 +2768,7 @@ wpi_run(struct wpi_softc *sc)
 
 	/* Start periodic calibration timer. */
 	sc->calib_cnt = 0;
-	timeout_add(&sc->calib_to, hz / 2);
+	timeout_add_msec(&sc->calib_to, 500);
 
 	/* Link LED always on while associated. */
 	wpi_set_led(sc, WPI_LED_LINK, 0, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.37 2015/03/11 12:24:44 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.38 2015/03/16 04:09:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5203,7 +5203,7 @@ iwm_calib_timeout(void *arg)
 	}
 	splx(s);
 
-	timeout_add(&sc->sc_calib_to, hz/2);
+	timeout_add_msec(&sc->sc_calib_to, 500);
 }
 
 void
@@ -5425,7 +5425,7 @@ iwm_newstate_cb(void *wk)
 			DPRINTF(("%s: IWM_LQ_CMD failed\n", DEVNAME(sc)));
 		}
 
-		timeout_add(&sc->sc_calib_to, hz/2);
+		timeout_add_msec(&sc->sc_calib_to, 500);
 
 		break; }
 
