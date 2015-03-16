@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.78 2015/03/14 15:21:53 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.79 2015/03/16 18:45:51 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2015 $
+.Dd $Mdocdate: March 16 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -23,7 +23,8 @@
 .Nd MBR partition maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl egiuy
+.Op Fl i | u
+.Op Fl egy
 .Oo
 .Fl c Ar cylinders
 .Fl h Ar heads
@@ -121,6 +122,12 @@ This mode is designed to initialize the MBR the very first time.
 If the
 .Fl g
 flag is also specified, a protective MBR for GPT will be created.
+.Pp
+Only one of
+.Fl i
+or
+.Fl u
+can be specified.
 .It Fl l Ar blocks
 Specify the number of blocks in the disk, and force the MBR to be in LBA
 mode only.
@@ -135,6 +142,12 @@ This is useful for writing new MBR bootcode onto an existing drive, and is
 equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
+.Pp
+Only one of
+.Fl i
+or
+.Fl u
+can be specified.
 .It Fl y
 Avoid asking yes/no questions when not desirable.
 .It Ar disk

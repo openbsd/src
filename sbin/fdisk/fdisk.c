@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.67 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.68 2015/03/16 18:45:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -31,6 +31,7 @@
 #include "part.h"
 #include "mbr.h"
 #include "misc.h"
+#include "cmd.h"
 #include "user.h"
 
 #define _PATH_MBR _PATH_BOOTDIR "mbr"
@@ -47,7 +48,7 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-egiuy] [-c cylinders -h heads -s sectors] [-f mbrfile] "
+	    "[-i|-u] [-egy] [-c # -h # -s #] [-f mbrfile] "
 	    "[-l blocks] disk\n"
 	    "\t-i: initialize disk with virgin MBR\n"
 	    "\t-u: update MBR code, preserve partition table\n"
@@ -71,6 +72,7 @@ main(int argc, char *argv[])
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	struct disk disk;
 	u_int32_t l_arg = 0;
+	char *query;
 #ifdef HAS_MBR
 	char *mbrfile = _PATH_MBR;
 #else
@@ -133,7 +135,7 @@ main(int argc, char *argv[])
 	memset(&disk, 0, sizeof(disk));
 
 	/* Argument checking */
-	if (argc != 1)
+	if (argc != 1 || (i_flag && u_flag))
 		usage();
 	else
 		disk.name = argv[0];
@@ -188,9 +190,16 @@ main(int argc, char *argv[])
 	}
 	MBR_parse(&disk, &dos_mbr, 0, 0, &mbr);
 
-	/* Now do what we are supposed to */
-	if (i_flag || u_flag)
-		USER_init(&disk, &mbr, u_flag);
+	query = NULL;
+	if (i_flag) {
+		MBR_init(&disk, &mbr);
+		query = "Do you wish to write new MBR and partition table?";
+	} else if (u_flag) {
+		MBR_pcopy(&disk, &mbr);
+		query = "Do you wish to write new MBR?";
+	}
+	if (query && ask_yn(query))
+		Xwrite(NULL, &disk, &mbr, NULL, 0);
 
 	if (e_flag)
 		USER_edit(&disk, &mbr, 0, 0);

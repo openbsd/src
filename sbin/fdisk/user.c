@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.38 2015/03/14 18:32:29 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.39 2015/03/16 18:45:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -51,22 +51,6 @@ struct cmd cmd_table[] = {
 	{NULL,     NULL,	NULL}
 };
 
-void
-USER_init(struct disk *disk, struct mbr *tt, int preserve)
-{
-	char *query;
-
-	if (preserve) {
-		MBR_pcopy(disk, tt);
-		query = "Do you wish to write new MBR?";
-	} else {
-		MBR_init(disk, tt);
-		query = "Do you wish to write new MBR and partition table?";
-	}
-
-	if (ask_yn(query))
-		Xwrite(NULL, disk, tt, NULL, 0);
-}
 
 int modified;
 
