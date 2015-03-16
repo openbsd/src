@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.24 2014/12/22 02:26:53 tedu Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.25 2015/03/16 16:21:21 mpi Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -977,6 +977,7 @@ cpsw_rxintr(void *arg)
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	struct cpsw_cpdma_bd bd;
 	bus_dmamap_t dm;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_int i;
 	u_int len, off;
@@ -998,7 +999,7 @@ cpsw_rxintr(void *arg)
 
 		if (bd.flags & CPDMA_BD_TDOWNCMPLT) {
 			sc->sc_rxrun = false;
-			return 1;
+			goto done;
 		}
 
 		if ((bd.flags & (CPDMA_BD_SOP|CPDMA_BD_EOP)) !=
@@ -1022,17 +1023,12 @@ cpsw_rxintr(void *arg)
 		if (bd.flags & CPDMA_BD_PASSCRC)
 			len -= ETHER_CRC_LEN;
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_data += off;
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 next:
 		sc->sc_rxhead = RXDESC_NEXT(sc->sc_rxhead);
@@ -1051,7 +1047,11 @@ next:
 		/* Debugger(); */
 	}
 
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR,
+	    CPSW_INTROFF_RX);
+
+done:
+	if_input(ifp, &ml);
 
 	return 1;
 }
