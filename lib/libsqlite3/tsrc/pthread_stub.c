@@ -16,6 +16,8 @@ static int _sqlite_zero_stub()
 }
 
 WEAKALIAS(pthread_t pthread_self(void), _sqlite_self_stub);
+WEAKALIAS(int pthread_join(pthread_t, void **), _sqlite_zero_stub);
+WEAKALIAS(int pthread_create(pthread_t *, const pthread_attr_t *, void *(*) (void *), void *), _sqlite_zero_stub);
 WEAKALIAS(int pthread_mutex_init(pthread_mutex_t *a, const pthread_mutexattr_t *b), _sqlite_zero_stub);
 WEAKALIAS(int pthread_mutex_destroy(pthread_mutex_t *a), _sqlite_zero_stub);
 WEAKALIAS(int pthread_mutex_lock(pthread_mutex_t *a), _sqlite_zero_stub);

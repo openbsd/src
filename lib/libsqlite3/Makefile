@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2014/03/24 01:47:26 jturner Exp $
+# $OpenBSD: Makefile,v 1.13 2015/03/16 00:12:37 jturner Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ SRCS =	alter.c analyze.c attach.c auth.c \
 	notify.c opcodes.c os.c os_unix.c \
 	pager.c parse.c pcache.c pcache1.c pragma.c prepare.c printf.c \
 	random.c resolve.c rowset.c rtree.c select.c status.c \
-	table.c tokenize.c trigger.c \
+	table.c threads.c okenize.c trigger.c \
 	update.c util.c vacuum.c \
 	vdbe.c vdbeapi.c vdbeaux.c vdbeblob.c vdbemem.c vdbesort.c \
 	vdbetrace.c wal.c walker.c where.c utf.c vtab.c
