@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.291 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.292 2015/03/17 19:11:55 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -580,7 +580,7 @@ again:
 	/* bump max swap based on phys mem, little physmem gets 2x swap */
 	if (index == 0) {
 		if (physmem < MEG(256))
-			alloc[1].maxsz = 2 * physmem;
+			alloc[1].minsz = alloc[1].maxsz = 2 * physmem;
 		else
 			alloc[1].maxsz += physmem;
 		/* bump max /var to make room for 2 crash dumps */
