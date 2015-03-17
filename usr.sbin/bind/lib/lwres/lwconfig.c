@@ -242,8 +242,10 @@ lwres_conf_init(lwres_context_t *ctx) {
 	confdata->ndots = 1;
 	confdata->no_tld_query = 0;
 
-	for (i = 0; i < LWRES_CONFMAXNAMESERVERS; i++)
+	for (i = 0; i < LWRES_CONFMAXNAMESERVERS; i++) {
 		lwres_resetaddr(&confdata->nameservers[i]);
+		confdata->nameserverports[i] = 0;
+	}
 
 	for (i = 0; i < LWRES_CONFMAXSEARCH; i++)
 		confdata->search[i] = NULL;
