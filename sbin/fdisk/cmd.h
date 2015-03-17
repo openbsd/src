@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.15 2015/03/16 23:51:50 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.16 2015/03/17 21:42:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,25 +27,25 @@
 
 struct cmd {
 	char *cmd;
-	int (*fcn)(char *, struct mbr *, struct mbr *, int);
+	int (*fcn)(char *, struct mbr *, struct mbr *);
 	char *help;
 };
 extern struct cmd cmd_table[];
 
-int Xreinit(char *, struct mbr *, struct mbr *, int);
-int Xdisk(char *, struct mbr *, struct mbr *, int);
-int Xmanual(char *, struct mbr *, struct mbr *, int);
-int Xedit(char *, struct mbr *, struct mbr *, int);
-int Xsetpid(char *, struct mbr *, struct mbr *, int);
-int Xselect(char *, struct mbr *, struct mbr *, int);
-int Xswap(char *, struct mbr *, struct mbr *, int);
-int Xprint(char *, struct mbr *, struct mbr *, int);
-int Xwrite(char *, struct mbr *, struct mbr *, int);
-int Xexit(char *, struct mbr *, struct mbr *, int);
-int Xquit(char *, struct mbr *, struct mbr *, int);
-int Xabort(char *, struct mbr *, struct mbr *, int);
-int Xhelp(char *, struct mbr *, struct mbr *, int);
-int Xflag(char *, struct mbr *, struct mbr *, int);
-int Xupdate(char *, struct mbr *, struct mbr *, int);
+int Xreinit(char *, struct mbr *, struct mbr *);
+int Xdisk(char *, struct mbr *, struct mbr *);
+int Xmanual(char *, struct mbr *, struct mbr *);
+int Xedit(char *, struct mbr *, struct mbr *);
+int Xsetpid(char *, struct mbr *, struct mbr *);
+int Xselect(char *, struct mbr *, struct mbr *);
+int Xswap(char *, struct mbr *, struct mbr *);
+int Xprint(char *, struct mbr *, struct mbr *);
+int Xwrite(char *, struct mbr *, struct mbr *);
+int Xexit(char *, struct mbr *, struct mbr *);
+int Xquit(char *, struct mbr *, struct mbr *);
+int Xabort(char *, struct mbr *, struct mbr *);
+int Xhelp(char *, struct mbr *, struct mbr *);
+int Xflag(char *, struct mbr *, struct mbr *);
+int Xupdate(char *, struct mbr *, struct mbr *);
 
 #endif /* _CMD_H */

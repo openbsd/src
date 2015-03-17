@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.69 2015/03/16 23:51:50 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.70 2015/03/17 21:42:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -198,7 +198,7 @@ main(int argc, char *argv[])
 		query = "Do you wish to write new MBR?";
 	}
 	if (query && ask_yn(query))
-		Xwrite(NULL, &mbr, NULL, 0);
+		Xwrite(NULL, &mbr, NULL);
 
 	if (e_flag)
 		USER_edit(&mbr, 0, 0);

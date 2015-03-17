@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.40 2015/03/16 23:51:50 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.41 2015/03/17 21:42:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -102,7 +102,7 @@ again:
 		}
 
 		/* Call function */
-		st = cmd_table[i].fcn(args, &mbr, tt, offset);
+		st = cmd_table[i].fcn(args, &mbr, tt);
 
 		/* Update status */
 		if (st == CMD_EXIT)
@@ -118,7 +118,7 @@ again:
 	/* Write out MBR */
 	if (modified) {
 		if (st == CMD_SAVE) {
-			if (Xwrite(NULL, &mbr, NULL, offset) == CMD_CONT)
+			if (Xwrite(NULL, &mbr, NULL) == CMD_CONT)
 				goto again;
 			close(fd);
 		} else
