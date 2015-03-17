@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.189 2015/02/16 18:24:02 markus Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.190 2015/03/17 14:51:27 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -293,6 +293,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		    (IFF_UP|IFF_RUNNING))
 			senderr(ENETDOWN);
 	}
+
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
+		esrc = carp_get_srclladdr(ifp0, esrc);
 #endif /* NCARP > 0 */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -371,11 +374,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	/* XXX Should we feed-back an unencrypted IPsec packet ? */
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
-
-#if NCARP > 0
-	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
-		esrc = carp_get_srclladdr(ifp0, esrc);
-#endif
 
 	if (ether_addheader(&m, ifp, etype, esrc, edst) == -1)
 		senderr(ENOBUFS);
