@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.58 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.59 2015/03/17 10:08:18 bentley Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: March 17 2015 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -198,7 +198,7 @@ and that is the
 .Aq escape
 key.
 .Pp
-Key names are written using less-than and greater-than signs, e.g.\&
+Key names are written using angle brackets, e.g.\&
 .Aq escape
 means the
 .Dq escape
@@ -348,10 +348,10 @@ version of regular expressions:
 .It
 An empty regular expression is equivalent to the last regular expression used.
 .It
-.Sq \e\(la
+.Sq \e<
 matches the beginning of the word.
 .It
-.Sq \e\(ra
+.Sq \e>
 matches the end of the word.
 .It
 .Sq \(a~
