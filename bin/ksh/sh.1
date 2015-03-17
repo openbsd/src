@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.110 2015/03/17 07:02:48 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.111 2015/03/17 10:01:16 bentley Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -143,7 +143,7 @@ The processes of a job share their own process group.
 This option is set by default for interactive shells.
 .It Fl n
 noexec.
-Read commands but do not execute them \-
+Read commands but do not execute them \(en
 useful for checking syntax errors in scripts.
 This option is ignored for interactive shells.
 .It Fl o Ar option
@@ -372,7 +372,7 @@ or 127 if
 .Ar command
 could not be found.
 If no command is given but a redirection happens,
-the exit status is 1\-125;
+the exit status is 1\(en125;
 otherwise
 .Ic exec
 returns 0.
@@ -722,7 +722,7 @@ and so on.
 Parameters
 .Sq #
 to
-.Sq Po #- Ns Ar n Pc Ns +1
+.Sq Po #\(mi Ns Ar n Pc Ns +1
 and downwards are unset and
 .Sq #
 is updated to the new number of positional parameters.
@@ -832,7 +832,7 @@ If no
 is specified,
 wait until all processes have terminated.
 The exit status is 0 on success,
-1\-126 if an error occurs,
+1\(en126 if an error occurs,
 or 127 if
 .Ar pid
 was unknown.
@@ -1143,7 +1143,7 @@ Some characters have special meaning to the shell and need
 if the user wants to indicate to the shell not to interpret them as such.
 The following characters need quoting if their literal meaning is desired:
 .Bd -literal -offset indent
-| & ; < > ( ) $ ` \e " ' <space> <tab> <newline>
+| & ; < > ( ) $ \` \e " \(aq <space> <tab> <newline>
 * ?  [ # ~ = %
 .Ed
 .Pp
@@ -1154,14 +1154,14 @@ If a newline follows a backslash the shell removes them both,
 effectively making the following line part of the current one.
 .Pp
 A group of characters can be enclosed within single quotes
-.Pq '
+.Pq \(aq
 to quote every character within the quotes.
 .Pp
 A group of characters can be enclosed within double quotes
 .Pq \&"
 to quote every character within the quotes
 except a backquote
-.Pq `
+.Pq \`
 or a dollar sign
 .Pq $ ,
 both of which retain their special meaning.
@@ -1315,7 +1315,7 @@ The basic format is:
 .Pp
 .D1 $ Ns Pq Ar command
 or
-.D1 ` Ns Ar command Ns `
+.D1 \` Ns Ar command Ns \`
 .Pp
 The results are subject to field splitting and pathname expansion;
 no other form of expansion happens.
@@ -1538,7 +1538,7 @@ parameter, command, and arithmetic expansions are performed on
 .Ar block ,
 and backslashes escape the special meaning of
 .Sq $ ,
-.Sq ` ,
+.Sq \` ,
 and
 .Sq \e .
 If multiple here documents are used on the same command line,
@@ -1614,7 +1614,7 @@ where commands are executed in the order given.
 The exit status of a sequential list is that of the last command executed.
 The format for a sequential list is:
 .Pp
-.D1 Ar command No ; Ar command Op ; Ar ...
+.D1 Ar command ; Ar command Op ; Ar ...
 .Pp
 A series of commands separated by
 .Sq &
@@ -2106,10 +2106,10 @@ is set.
 The
 .Nm
 utility exits with one of:
-.Bl -tag -width "1\-125"
+.Bl -tag -width "1-125"
 .It 0
 The script being executed contained only blank lines or comments.
-.It 1\-125
+.It 1\(en125
 A non-interactive shell detected an error other than
 .Ar file
 not found.
