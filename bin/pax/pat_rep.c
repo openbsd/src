@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.38 2015/03/09 04:23:29 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.39 2015/03/17 03:23:17 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -638,7 +638,7 @@ mod_name(ARCHD *arcn)
 		}
 	}
 	while (rmleadslash && arcn->ln_name[0] == '/' &&
-	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
+	    PAX_IS_HARDLINK(arcn->type)) {
 		if (arcn->ln_name[1] == '\0') {
 			arcn->ln_name[0] = '.';
 		} else {
@@ -703,10 +703,11 @@ mod_name(ARCHD *arcn)
 		if ((res = rep_name(arcn->name, sizeof(arcn->name), &(arcn->nlen), 1)) != 0)
 			return(res);
 
-		if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
-		    (arcn->type == PAX_HRG)) &&
-		    ((res = rep_name(arcn->ln_name, sizeof(arcn->ln_name), &(arcn->ln_nlen), 0)) != 0))
-			return(res);
+		if (PAX_IS_LINK(arcn->type)) {
+			if ((res = rep_name(arcn->ln_name,
+			    sizeof(arcn->ln_name), &(arcn->ln_nlen), 0)) != 0)
+				return(res);
+		}
 	}
 
 	if (iflag) {
@@ -715,9 +716,9 @@ mod_name(ARCHD *arcn)
 		 */
 		if ((res = tty_rename(arcn)) != 0)
 			return(res);
-		if ((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
-		    (arcn->type == PAX_HRG))
-			sub_name(arcn->ln_name, &(arcn->ln_nlen), sizeof(arcn->ln_name));
+		if (PAX_IS_LINK(arcn->type))
+			sub_name(arcn->ln_name, &(arcn->ln_nlen),
+			    sizeof(arcn->ln_name));
 	}
 	return(res);
 }
@@ -810,7 +811,7 @@ set_dest(ARCHD *arcn, char *dest_dir, int dir_len)
 	 * if the name they point was moved (or will be moved). It is best to
 	 * leave them alone.
 	 */
-	if ((arcn->type != PAX_HLK) && (arcn->type != PAX_HRG))
+	if (!PAX_IS_HARDLINK(arcn->type))
 		return(0);
 
 	if (fix_path(arcn->ln_name, &(arcn->ln_nlen), dest_dir, dir_len) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.27 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.28 2015/03/17 03:23:17 guenther Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	(void)fputs(f_date, fp);
 	(void)putc(' ', fp);
 	safe_print(arcn->name, fp);
-	if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
+	if (PAX_IS_HARDLINK(arcn->type)) {
 		fputs(" == ", fp);
 		safe_print(arcn->ln_name, fp);
 	} else if (arcn->type == PAX_SLK) {

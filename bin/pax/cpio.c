@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.25 2014/02/19 03:59:47 guenther Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.26 2015/03/17 03:23:17 guenther Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -456,8 +456,7 @@ cpio_wr(ARCHD *arcn)
 	 * if this file has data, we are done. The caller will write the file
 	 * data, if we are link tell caller we are done, go to next file
 	 */
-	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG) ||
-	    (arcn->type == PAX_HRG))
+	if (PAX_IS_REG(arcn->type) || (arcn->type == PAX_HRG))
 		return(0);
 	if (arcn->type != PAX_SLK)
 		return(1);
@@ -777,8 +776,7 @@ vcpio_wr(ARCHD *arcn)
 	/*
 	 * if we have file data, tell the caller we are done, copy the file
 	 */
-	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG) ||
-	    (arcn->type == PAX_HRG))
+	if (PAX_IS_REG(arcn->type) || (arcn->type == PAX_HRG))
 		return(0);
 
 	/*
@@ -1095,8 +1093,7 @@ bcpio_wr(ARCHD *arcn)
 	/*
 	 * if we have file data, tell the caller we are done
 	 */
-	if ((arcn->type == PAX_CTG) || (arcn->type == PAX_REG) ||
-	    (arcn->type == PAX_HRG))
+	if (PAX_IS_REG(arcn->type) || (arcn->type == PAX_HRG))
 		return(0);
 
 	/*

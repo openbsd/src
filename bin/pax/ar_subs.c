@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.43 2015/03/12 04:15:03 guenther Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.44 2015/03/17 03:23:17 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -301,13 +301,13 @@ extract(void)
 		/*
 		 * all ok, extract this member based on type
 		 */
-		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) {
+		if (!PAX_IS_REG(arcn->type)) {
 			/*
 			 * process archive members that are not regular files.
 			 * throw out padding and any data that might follow the
 			 * header (as determined by the format).
 			 */
-			if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
+			if (PAX_IS_HARDLINK(arcn->type))
 				res = lnk_creat(arcn);
 			else
 				res = node_creat(arcn);
@@ -449,8 +449,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		if (hlk && (chk_lnk(arcn) < 0))
 			break;
 
-		if ((arcn->type == PAX_REG) || (arcn->type == PAX_HRG) ||
-		    (arcn->type == PAX_CTG)) {
+		if (PAX_IS_REG(arcn->type) || (arcn->type == PAX_HRG)) {
 			/*
 			 * we will have to read this file. by opening it now we
 			 * can avoid writing a header to the archive for a file
@@ -921,11 +920,11 @@ copy(void)
 		/*
 		 * have to create a new file
 		 */
-		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) {
+		if (!PAX_IS_REG(arcn->type)) {
 			/*
 			 * create a link or special file
 			 */
-			if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
+			if (PAX_IS_HARDLINK(arcn->type))
 				res = lnk_creat(arcn);
 			else
 				res = node_creat(arcn);
