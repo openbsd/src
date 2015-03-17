@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.h,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: mem.h,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -37,6 +37,7 @@
 /*
  * mem.c
  */
+void *sort_calloc(size_t nmemb, size_t size);
 void *sort_malloc(size_t);
 void sort_free(void *ptr);
 void *sort_realloc(void *, size_t);

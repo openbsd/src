@@ -1,4 +1,4 @@
-/*	$OpenBSD: radixsort.c,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: radixsort.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
 
 /*-
  * Copyright (C) 2012 Oleg Moskalenko <mom040267@gmail.com>
@@ -119,9 +119,7 @@ add_to_sublevel(struct sort_level *sl, struct sort_list_item *item, size_t indx)
 	ssl = sl->sublevels[indx];
 
 	if (ssl == NULL) {
-		ssl = sort_malloc(sizeof(struct sort_level));
-		memset(ssl, 0, sizeof(struct sort_level));
-
+		ssl = sort_calloc(1, sizeof(struct sort_level));
 		ssl->level = sl->level + 1;
 		sl->sublevels[indx] = ssl;
 
@@ -274,9 +272,7 @@ run_sort_level_next(struct sort_level *sl)
 	}
 
 	sl->sln = 256;
-	sl->sublevels = sort_malloc(slsz);
-	memset(sl->sublevels, 0, slsz);
-
+	sl->sublevels = sort_calloc(1, slsz);
 	sl->real_sln = 0;
 
 	tosort_num = sl->tosort_num;
@@ -391,8 +387,7 @@ run_top_sort_level(struct sort_level *sl)
 
 	sl->start_position = 0;
 	sl->sln = 256;
-	sl->sublevels = sort_malloc(slsz);
-	memset(sl->sublevels, 0, slsz);
+	sl->sublevels = sort_calloc(1, slsz);
 
 	for (i = 0; i < sl->tosort_num; ++i)
 		place_item(sl, i);
@@ -459,9 +454,7 @@ rxsort(struct sort_list_item **base, size_t nmemb)
 {
 	struct sort_level *sl;
 
-	sl = sort_malloc(sizeof(struct sort_level));
-	memset(sl, 0, sizeof(struct sort_level));
-
+	sl = sort_calloc(1, sizeof(struct sort_level));
 	sl->tosort = base;
 	sl->tosort_num = nmemb;
 	sl->tosort_sz = nmemb;

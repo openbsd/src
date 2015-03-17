@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -621,8 +621,7 @@ file_reader_init(const char *fsrc)
 	if (fsrc == NULL)
 		fsrc = "-";
 
-	ret = sort_malloc(sizeof(struct file_reader));
-	memset(ret, 0, sizeof(struct file_reader));
+	ret = sort_calloc(1, sizeof(struct file_reader));
 
 	ret->elsymb = '\n';
 	if (sort_opts_vals.zflag)

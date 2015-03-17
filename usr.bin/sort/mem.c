@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -43,6 +43,19 @@ sort_malloc(size_t size)
 	void *ptr;
 
 	if ((ptr = malloc(size)) == NULL)
+		err(2, NULL);
+	return ptr;
+}
+
+/*
+ * calloc() wrapper.
+ */
+void *
+sort_calloc(size_t nmemb, size_t size)
+{
+	void *ptr;
+
+	if ((ptr = calloc(nmemb, size)) == NULL)
 		err(2, NULL);
 	return ptr;
 }
