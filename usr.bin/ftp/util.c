@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.71 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.72 2015/03/17 19:31:30 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -645,7 +645,7 @@ remotemodtime(const char *file, int noisy)
 		timebuf.tm_hour = hour;
 		timebuf.tm_mday = day;
 		timebuf.tm_mon = mo - 1;
-		timebuf.tm_year = yy - TM_YEAR_BASE;
+		timebuf.tm_year = yy - 1900;
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
 		if (rtime == -1 && (noisy

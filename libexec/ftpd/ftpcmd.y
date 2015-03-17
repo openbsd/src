@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.58 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.59 2015/03/17 19:31:30 millert Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -624,7 +624,7 @@ cmd
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
 					    "%04d%02d%02d%02d%02d%02d",
-					    TM_YEAR_BASE + t->tm_year,
+					    1900 + t->tm_year,
 					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}

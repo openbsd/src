@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.15 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: pom.c,v 1.16 2015/03/17 19:31:30 millert Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -99,10 +99,10 @@ main(int argc, char *argv[])
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
 	    (GMT->tm_min / 60.0) + (GMT->tm_sec / 3600.0)) / 24.0);
 	for (cnt = EPOCH; cnt < GMT->tm_year; ++cnt)
-		days += isleap(cnt + TM_YEAR_BASE) ? 366 : 365;
+		days += isleap(cnt + 1900) ? 366 : 365;
 	/* Selected time could be before EPOCH */
 	for (cnt = GMT->tm_year; cnt < EPOCH; ++cnt)
-		days -= isleap(cnt + TM_YEAR_BASE) ? 366 : 365;
+		days -= isleap(cnt + 1900) ? 366 : 365;
 	today = potm(days) + 0.5;
 	(void)printf("The Moon is ");
 	if ((int)today == 100)
@@ -218,14 +218,14 @@ parsetime(char *p)
 	switch (strlen(p)) {
 	case 10:				/* yyyy */
 		bigyear = ATOI2(p);
-		lt->tm_year = bigyear * 100 - TM_YEAR_BASE;
+		lt->tm_year = (bigyear * 100) - 1900;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 8:					/* yy */
 		if (yearset) {
 			lt->tm_year += ATOI2(p);
 		} else {
-			lt->tm_year = ATOI2(p) + 1900 - TM_YEAR_BASE;
+			lt->tm_year = ATOI2(p);
 			if (lt->tm_year < 69)		/* hack for 2000 */
 				lt->tm_year += 100;
 		}

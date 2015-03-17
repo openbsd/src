@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.45 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: date.c,v 1.46 2015/03/17 19:31:30 millert Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ setthetime(char *p)
 
 	switch (strlen(p)) {
 	case 12:				/* cc */
-		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
+		lt->tm_year = (ATOI2(p) * 100) - 1900;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:				/* yy */

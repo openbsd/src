@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.27 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: cal.c,v 1.28 2015/03/17 19:31:30 millert Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 				errx(1, "illegal year value: use 1-9999");
 			(void)time(&now);
 			local_time = localtime(&now);
-			year = local_time->tm_year + TM_YEAR_BASE;
+			year = local_time->tm_year + 1900;
 		} else {
 			year = strtonum(*argv, 1, 9999, &errstr);
 			if (errstr)
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	case 0:
 		(void)time(&now);
 		local_time = localtime(&now);
-		year = local_time->tm_year + TM_YEAR_BASE;
+		year = local_time->tm_year + 1900;
 		if (!yflag)
 			month = local_time->tm_mon + 1;
 		break;

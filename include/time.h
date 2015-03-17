@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.26 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.27 2015/03/17 19:31:30 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -166,11 +166,6 @@ int clock_getcpuclockid(pid_t, clockid_t *);
 #endif
 
 #if __BSD_VISIBLE
-
-#ifndef TM_YEAR_BASE
-#define TM_YEAR_BASE	1900
-#endif
-
 char *timezone(int, int);
 void tzsetwall(void);
 time_t timelocal(struct tm *);

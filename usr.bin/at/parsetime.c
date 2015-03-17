@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.21 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.22 2015/03/17 19:31:30 millert Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -463,8 +463,8 @@ assign_date(struct tm *tm, int mday, int mon, int year)
 	 * We may be given the year in 2 digit, 4 digit, or tm_year format.
 	 */
 	if (year != -1) {
-		if (year >= TM_YEAR_BASE)
-			year -= TM_YEAR_BASE;	/* convert from 4 digit year */
+		if (year >= 1900)
+			year -= 1900;	/* convert from 4 digit year */
 		else if (year < 100) {
 			/* Convert to tm_year assuming current century */
 			year += (tm->tm_year / 100) * 100;
@@ -587,7 +587,7 @@ month(struct tm *tm)
 			}
 		} else if (tlen == 6 || tlen == 8) {
 			if (tlen == 8) {
-				year = (mon % 10000) - TM_YEAR_BASE;
+				year = (mon % 10000) - 1900;
 				mon /= 10000;
 			} else {
 				year = mon % 100;
