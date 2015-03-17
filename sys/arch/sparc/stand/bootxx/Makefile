@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2013/11/03 21:36:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2015/03/17 19:59:39 miod Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 .PATH:	${.CURDIR}/../common
@@ -15,8 +15,11 @@ CLEANFILES+=${PROG}.aout ${PROG}.elf elfclean
 .PATH:	${S}/lib/libkern/arch/sparc ${S}/lib/libkern
 SRCS+=	__main.o bzero.o urem.o udiv.o
 
+.PATH:	${S}/lib/libsa
+SRCS+=	printf.c
+
 # pre-built bits of libsa
-SOBJS=	alloc.o exit.o printf.o memcpy.o memset.o
+SOBJS=	alloc.o exit.o memcpy.o memset.o
 _SOBJS=${SOBJS:S,^,${LIBSAOBJDIR}/,g}
 
 CFLAGS= -fno-pie -O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
@@ -40,3 +43,5 @@ srt0.o: srt0.S
 	${CC} ${CFLAGS} -D_LOCORE -c ${.IMPSRC}
 
 .include <bsd.prog.mk>
+# for libsa printf
+DEFS+=	-DSTRIPPED
