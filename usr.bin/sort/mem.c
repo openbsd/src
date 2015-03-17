@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.h,v 1.9 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -27,83 +27,66 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(__BSD_SORT_H__)
-#define	__BSD_SORT_H__
+#include <err.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <sysexits.h>
-#include <wchar.h>
-
-#include <sys/types.h>
-#include <md5.h>
-
-#define	VERSION	"2.3-OpenBSD"
+#include "mem.h"
 
 /*
- * If true, we output some debug information.
+ * malloc() wrapper.
  */
-extern bool debug_sort;
+void *
+sort_malloc(size_t size)
+{
+	void *ptr;
+
+	if ((ptr = malloc(size)) == NULL)
+		err(2, NULL);
+	return ptr;
+}
 
 /*
- * MD5 context for random hash function
+ * free() wrapper.
  */
-extern MD5_CTX md5_ctx;
+void
+sort_free(void *ptr)
+{
+
+	free(ptr);
+}
 
 /*
- * sort.c
+ * realloc() wrapper.
  */
+void *
+sort_realloc(void *ptr, size_t size)
+{
+
+	if ((ptr = realloc(ptr, size)) == NULL)
+		err(2, NULL);
+	return ptr;
+}
 
 /*
- * This structure holds main sort options which are NOT affecting the sort ordering.
+ * reallocarray() wrapper.
  */
-struct sort_opts {
-	wint_t		field_sep;
-	int		sort_method;
-	bool		cflag;
-	bool		csilentflag;
-	bool		kflag;
-	bool		mflag;
-	bool		sflag;
-	bool		uflag;
-	bool		zflag;
-	bool		tflag;
-	bool		complex_sort;
-};
+void *
+sort_reallocarray(void *ptr, size_t nmemb, size_t size)
+{
 
-/*
- * Key value structure forward declaration
- */
-struct key_value;
+	if ((ptr = reallocarray(ptr, nmemb, size)) == NULL)
+		err(2, NULL);
+	return ptr;
+}
 
-/*
- * Cmp function
- */
-typedef int (*cmpcoll_t)(struct key_value *kv1, struct key_value *kv2, size_t offset);
+char *
+sort_strdup(const char *str)
+{
+	char *dup;
 
-/*
- * This structure holds "sort modifiers" - options which are affecting the sort ordering.
- */
-struct sort_mods {
-	cmpcoll_t	func;
-	bool		bflag;
-	bool		dflag;
-	bool		fflag;
-	bool		gflag;
-	bool		iflag;
-	bool		Mflag;
-	bool		nflag;
-	bool		rflag;
-	bool		Rflag;
-	bool		Vflag;
-	bool		hflag;
-};
-
-extern bool need_hint;
-
-extern struct sort_opts sort_opts_vals;
-
-extern struct sort_mods * const default_sort_mods;
-
-#endif /* __BSD_SORT_H__ */
+	if ((dup = strdup(str)) == NULL)
+		err(2, NULL);
+	return dup;
+}

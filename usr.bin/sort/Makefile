@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2012/12/21 06:17:29 deraadt Exp $
+# $OpenBSD: Makefile,v 1.6 2015/03/17 17:45:13 millert Exp $
 
 PROG=	sort
-SRCS=	append.c fields.c files.c fsort.c init.c msort.c sort.c tmp.c
+
+SRCS=	bwstring.c coll.c file.c mem.c radixsort.c sort.c vsort.c
 
 .include <bsd.prog.mk>
