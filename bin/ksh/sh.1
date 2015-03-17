@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.111 2015/03/17 10:01:16 bentley Exp $
+.\"	$OpenBSD: sh.1,v 1.112 2015/03/17 14:30:35 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1135,7 +1135,7 @@ with the command name itself assigned parameter 0.
 .It
 If the command is not being run in the background,
 the shell waits for it to complete
-and notes its exit status.
+and collects its exit status.
 .El
 .Ss Quoting
 Some characters have special meaning to the shell and need
