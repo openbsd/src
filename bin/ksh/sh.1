@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.109 2015/03/17 06:59:48 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.110 2015/03/17 07:02:48 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1172,8 +1172,10 @@ but only when followed by a backquote, dollar sign,
 double quote, or another backslash.
 An at sign
 .Pq @
-within double quotes has a special meaning,
-described below.
+within double quotes has a special meaning
+(see
+.Sx SPECIAL PARAMETERS ,
+below).
 .Pp
 Similarly command words need to be quoted
 if they are not to be interpreted as such.
