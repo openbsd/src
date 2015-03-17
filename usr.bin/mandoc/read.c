@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.106 2015/03/11 13:04:10 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.107 2015/03/17 07:32:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -824,6 +825,7 @@ mparse_open(struct mparse *curp, int *fd, const char *file)
 			perror("dup");
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
+		signal(SIGPIPE, SIG_DFL);
 		execlp("gunzip", "gunzip", "-c", file, NULL);
 		perror("exec");
 		exit((int)MANDOCLEVEL_SYSERR);
