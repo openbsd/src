@@ -1,4 +1,4 @@
-/*	$OpenBSD: chrdef.h,v 1.7 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: chrdef.h,v 1.8 2015/03/17 18:08:52 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -45,7 +45,6 @@
 #define	METACH		CCHR('[')
 #endif
 
-#ifdef XKEYS
 #define	K00		256
 #define	K01		257
 #define	K02		258
@@ -78,4 +77,3 @@
 #define	K1D		285
 #define	K1E		286
 #define	K1F		287
-#endif

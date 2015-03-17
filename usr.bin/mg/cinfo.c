@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.16 2011/11/28 04:41:39 lum Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.17 2015/03/17 18:08:52 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -124,11 +124,9 @@ getkeyname(char *cp, size_t len, int k)
 		np = "DEL";
 		break;
 	default:
-#ifdef	FKEYS
 		if (k >= KFIRST && k <= KLAST &&
 		    (np = keystrings[k - KFIRST]) != NULL)
 			break;
-#endif
 		if (k > CCHR('?')) {
 			*cp++ = '0';
 			*cp++ = ((k >> 6) & 7) + '0';

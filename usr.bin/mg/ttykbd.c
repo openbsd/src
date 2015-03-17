@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.16 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.17 2015/03/17 18:08:52 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,19 +11,13 @@
 #include "def.h"
 #include "kbd.h"
 
-#ifdef	XKEYS
 #include <term.h>
 
-#ifdef  FKEYS
 /*
  * Get keyboard character.  Very simple if you use keymaps and keys files.
- * Bob was right -- the old XKEYS code is not the right solution.
- * FKEYS code is not useful other than to help debug FKEYS code in
- * extend.c.
  */
 
 char	*keystrings[] = {NULL};
-#endif /* FKEYS */
 
 /*
  * Turn on function keys using keypad_xmit, then load a keys file, if
@@ -35,7 +29,6 @@ ttykeymapinit(void)
 {
 	char	*cp;
 
-#ifdef FKEYS
 	/* Bind keypad function keys. */
 	if (key_left)
 		dobindkey(fundamental_map, "backward-char", key_left);
@@ -57,7 +50,6 @@ ttykeymapinit(void)
 		dobindkey(fundamental_map, "scroll-down", key_ppage);
 	if (key_dc)
 		dobindkey(fundamental_map, "delete-char", key_dc);
-#endif /* FKEYS */
 
 	if ((cp = getenv("TERM"))) {
 		if (((cp = startupfile(cp)) != NULL) && (load(cp) != TRUE))
@@ -79,11 +71,3 @@ ttykeymaptidy(void)
 		putpad(keypad_local, 1);
 }
 
-#else
-
-void
-ttykeymapinit(void)
-{
-}
-
-#endif /* XKEYS */
