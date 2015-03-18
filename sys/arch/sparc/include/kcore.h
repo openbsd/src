@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.3 2015/03/18 20:56:40 miod Exp $	*/
 /*	$NetBSD: kcore.h,v 1.1 1996/11/09 22:52:22 pk Exp $	*/
 
 /*-
@@ -46,5 +46,5 @@ typedef struct cpu_kcore_hdr {
 	int	npmeg;			/* # of PMEGs; [sun4/sun4c] only */
 	int	pmegoffset;		/* start of pmeg array (relative */
 					/*  to the start of this header) */
-	struct	segmap segmap_store[NKREG*NSEGRG];	/* MMU data... */
+	struct	segmap segmap_store[NKREG_MAX*NSEGRG];	/* MMU data... */
 } cpu_kcore_hdr_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.57 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.58 2015/03/18 20:56:40 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -131,8 +131,14 @@
  * pointers to each other. These must (unfortunately) be kept in sync.
  *
  */
-#define NKREG	((int)((-(unsigned)VM_MIN_KERNEL_ADDRESS) / NBPRG))	/* 8 */
-#define NUREG	(256 - NKREG)					      /* 248 */
+#define NKREG_4C \
+	((unsigned int)(-VM_MIN_KERNEL_ADDRESS_OLD / NBPRG))	/* 8 */
+#define NUREG_4C	(256 - NKREG_4C)		      /* 248 */
+#define NKREG_4M \
+	 ((unsigned int)(-VM_MIN_KERNEL_ADDRESS_SRMMU / NBPRG))	/* 64 */
+#define NUREG_4M	(256 - NKREG_4M)		      /* 192 */
+
+#define	NKREG_MAX	NKREG_4M
 
 struct regmap {
 	struct segmap	*rg_segmap;	/* point to NSGPRG PMEGs */
@@ -180,15 +186,6 @@ struct pmap {
 };
 
 typedef struct pmap *pmap_t;
-
-#if 0
-struct kvm_cpustate {
-	int		kvm_npmemarr;
-	struct memarr	kvm_pmemarr[MA_SIZE];
-	int		kvm_seginval;			/* [4,4c] */
-	struct segmap	kvm_segmap_store[NKREG*NSEGRG];	/* [4,4c] */
-}/*not yet used*/;
-#endif
 
 #define PMAP_NULL	((pmap_t)0)
 

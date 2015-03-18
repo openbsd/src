@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.97 2014/11/22 22:48:38 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.98 2015/03/18 20:56:40 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -159,6 +159,11 @@ struct promvec promvecdat;
 struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 #endif
 
+#if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
+    (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
+vaddr_t vm_kernel_space_size;
+#endif
+
 /*
  * locore.s code calls bootstrap() just before calling main(), after double
  * mapping the kernel to high memory and setting up the trap base register.
@@ -237,6 +242,20 @@ bootstrap()
 			*oldpvec->vector_cmd = oldmon_w_cmd;
 	}
 #endif /* SUN4 */
+
+	/*
+	 * Decide upon which address space partition to use if it could not
+	 * be decided at compile-time (i.e. for GENERIC kernels supporting
+	 * both the old Sun MMU and the SRMMU).
+	 */
+#if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
+    (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
+	if (CPU_ISSUN4OR4COR4E)
+		vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_OLD;
+	else
+		vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_SRMMU;
+	vm_kernel_space_size = VM_MAX_KERNEL_ADDRESS - vm_min_kernel_address;
+#endif
 
 	bzero(&cpuinfo, sizeof(struct cpu_softc));
 	cpuinfo.master = 1;

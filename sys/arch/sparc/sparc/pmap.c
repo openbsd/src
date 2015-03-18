@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.175 2015/03/18 20:49:40 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.176 2015/03/18 20:56:40 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -81,6 +81,19 @@
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
+
+#ifdef SMALL_KERNEL
+/*
+ * Force the SRMMU code to be limited to the Sun-4 compatible VM layout.
+ * (this is done here to allow installation kernels to be loaded by older
+ *  boot blocks which do not map enough data after the kernel image to
+ *  cover pmap_bootstrap() needs.)
+ */
+#undef	NUREG_4M
+#undef	NKREG_4M
+#define	NUREG_4M	NUREG_4C
+#define	NKREG_4M	NKREG_4C
+#endif
 
 #ifdef DEBUG
 #define PTE_BITS "\20\40V\37W\36S\35NC\33IO\32U\31M"
@@ -183,6 +196,20 @@ pvhead(int pnum)
 }
 
 struct pool pvpool;
+
+unsigned int nureg, nkreg;
+#if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
+    !(defined(SUN4D) || defined(SUN4M))
+#define	NUREG	NUREG_4C
+#define	NKREG	NKREG_4C
+#elif (defined(SUN4D) || defined(SUN4M)) && \
+      !(defined(SUN4) || defined(SUN4C) || defined(SUN4E))
+#define	NUREG	NUREG_4M
+#define	NKREG	NKREG_4M
+#else
+#define	NUREG	nureg
+#define	NKREG	nkreg
+#endif
 
 #if defined(SUN4M)
 /*
@@ -361,13 +388,13 @@ caddr_t	vpage[2];		/* two reserved MD virtual pages */
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
 
 struct pmap	kernel_pmap_store;		/* the kernel's pmap */
-struct regmap	kernel_regmap_store[NKREG];	/* the kernel's regmap */
-struct segmap	kernel_segmap_store[NKREG*NSEGRG];/* the kernel's segmaps */
+struct regmap	kernel_regmap_store[NKREG_MAX];	/* the kernel's regmap */
+struct segmap	kernel_segmap_store[NKREG_MAX*NSEGRG];/* the kernel's segmaps */
 
 #if defined(SUN4M)
-u_int 	*kernel_regtable_store;		/* 1k of storage to map the kernel */
-u_int	*kernel_segtable_store;		/* 2k of storage to map the kernel */
-u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
+u_int 	*kernel_regtable_store;		/* 8k of storage to map the kernel */
+u_int	*kernel_segtable_store;		/* 16k of storage to map the kernel */
+u_int	*kernel_pagtable_store;		/* 1M of storage to map the kernel */
 #endif
 
 struct	memarr *pmemarr;		/* physical memory regions */
@@ -860,7 +887,7 @@ pmap_page_upload(void)
 			if (end < chop)
 				chop = end;
 #ifdef DEBUG
-			prom_printf("bootstrap gap: start %lx, chop %lx, end %lx\n",
+			printf("bootstrap gap: start %lx, chop %lx, end %lx\n",
 				start, chop, end);
 #endif
 			uvm_page_physload(atop(start), atop(chop),
@@ -1086,18 +1113,21 @@ mmu_setup4m_L1(regtblptd, kpmap)
 	/*
 	 * Here we scan the region table to copy any entries which appear.
 	 * We are only concerned with regions in kernel space and above
-	 * (i.e. regions VA_VREG(VM_MIN_KERNEL_ADDRESS)+1 to 0xff). We ignore
-	 * the first region (at VA_VREG(VM_MIN_KERNEL_ADDRESS)), since that
-	 * is the 16MB L1 mapping that the ROM used to map the kernel in
-	 * initially. Later, we will rebuild a new L3 mapping for the kernel
-	 * and install it before switching to the new pagetables.
+	 * (i.e. regions VA_VREG(VM_MIN_KERNEL_ADDRESS_SRMMU) == NUREG to 0xff).
 	 */
-	regtblrover =
-		((regtblptd & ~SRMMU_TETYPE) << SRMMU_PPNPASHIFT) +
-		(VA_VREG(VM_MIN_KERNEL_ADDRESS)+1) * sizeof(long);	/* kernel only */
+	regtblrover = ((regtblptd & ~SRMMU_TETYPE) << SRMMU_PPNPASHIFT) +
+	    NUREG_4M * sizeof(long); /* kernel only */
 
-	for (i = VA_VREG(VM_MIN_KERNEL_ADDRESS) + 1; i < SRMMU_L1SIZE;
-	     i++, regtblrover += sizeof(long)) {
+	for (i = NUREG_4M; i < SRMMU_L1SIZE; i++, regtblrover += sizeof(long)) {
+		/*
+		 * Ignore the region spanning the area where the kernel has
+		 * been loaded, since this is the 16MB L1 mapping that the ROM
+		 * used to map the kernel in initially.
+		 * Later, we will rebuild a new L3 mapping for the kernel
+		 * and install it before switching to the new pagetables.
+		 */
+		if (i == VA_VREG(KERNBASE))
+			continue;
 
 		/* The region we're dealing with */
 		rp = &kpmap->pm_regmap[i];
@@ -1660,7 +1690,7 @@ mmu_pagein(pm, va, prot)
 	rp = &pm->pm_regmap[vr];
 #ifdef DEBUG
 if (pm == pmap_kernel())
-printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
+printf("mmu_pagein: kernel wants map at va 0x%lx, vr %d, vs %d\n", va, vr, vs);
 #endif
 
 	/* return 0 if we have no PMEGs to load */
@@ -1798,7 +1828,7 @@ ctx_alloc(pm)
 			cache_flush_context();
 
 		rp = pm->pm_regmap;
-		for (va = 0, i = NUREG; --i >= 0; ) {
+		for (va = 0, i = NUREG_4C; --i >= 0; ) {
 			if (VA_VREG(va) >= gap_start) {
 				va = VRTOVA(gap_end);
 				i -= gap_end - gap_start;
@@ -1806,7 +1836,7 @@ ctx_alloc(pm)
 				if (i < 0)
 					break;
 				/* mustn't re-enter this branch */
-				gap_start = NUREG;
+				gap_start = NUREG_4C;
 			}
 			if (HASSUN4_MMU3L) {
 				setregmap(va, rp++->rg_smeg);
@@ -2241,7 +2271,7 @@ pv_link4_4c(pv, pm, va, nc)
 					printf(
 			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
-					va, npv->pv_va, -1); /* XXX -1 */
+					va, npv->pv_va, (vaddr_t)-1); /* XXX -1 */
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pmap_stats.ps_alias_uncache++;
@@ -2567,7 +2597,7 @@ pv_link4m(pv, pm, va, nc)
 					printf(
 			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
-					va, npv->pv_va, -1); /* XXX -1 */
+					va, npv->pv_va, (vaddr_t)-1); /* XXX -1 */
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pmap_stats.ps_alias_uncache++;
@@ -2706,6 +2736,9 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	int lastpage;
 	extern char kernel_text[];
 
+	nureg = NUREG_4C;
+	nkreg = NKREG_4C;
+
 	/*
 	 * Compute `va2pa_offset'.
 	 * Use `kernel_text' to probe the MMU translation since
@@ -2740,7 +2773,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 #endif
 #endif
 
-#if defined(SUN4M) /* We're in a dual-arch kernel. Setup 4/4c fn. ptrs */
+#if defined(SUN4D) || defined(SUN4M) /* We're in a dual-arch kernel. Setup 4/4c fn. ptrs */
 	pmap_clear_modify_p 	=	pmap_clear_modify4_4c;
 	pmap_clear_reference_p 	= 	pmap_clear_reference4_4c;
 	pmap_copy_page_p 	=	pmap_copy_page4_4c;
@@ -2778,8 +2811,8 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 #endif
 	TAILQ_INIT(&kernel_pmap_store.pm_seglist);
 
-	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
-	for (i = NKREG; --i >= 0;) {
+	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG_4C];
+	for (i = NKREG_4C; --i >= 0;) {
 #if defined(SUN4_MMU3L)
 		kernel_regmap_store[i].rg_smeg = reginval;
 #endif
@@ -2886,9 +2919,9 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 		 */
 		lastpage = NPTESG;
 
-	p = (caddr_t)VM_MIN_KERNEL_ADDRESS;	/* first va */
-	vs = VA_VSEG(VM_MIN_KERNEL_ADDRESS);	/* first virtual segment */
-	vr = VA_VREG(VM_MIN_KERNEL_ADDRESS);	/* first virtual region */
+	p = (caddr_t)VM_MIN_KERNEL_ADDRESS_OLD;	/* first va */
+	vs = VA_VSEG(VM_MIN_KERNEL_ADDRESS_OLD);/* first virtual segment */
+	vr = VA_VREG(VM_MIN_KERNEL_ADDRESS_OLD);/* first virtual region */
 	rp = &pmap_kernel()->pm_regmap[vr];
 
 	/* Get region/segment where kernel addresses start */
@@ -3031,10 +3064,10 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	for (i = 1; i < ncontext; i++) {
 		setcontext4(i);
 		if (HASSUN4_MMU3L)
-			for (p = 0, j = NUREG; --j >= 0; p += NBPRG)
+			for (p = 0, j = NUREG_4C; --j >= 0; p += NBPRG)
 				setregmap(p, reginval);
 		else
-			for (p = 0, vr = 0; vr < NUREG; vr++) {
+			for (p = 0, vr = 0; vr < NUREG_4C; vr++) {
 				if (VA_INHOLE(p)) {
 					p = (caddr_t)MMU_HOLE_END;
 					vr = VA_VREG(p);
@@ -3087,6 +3120,9 @@ pmap_bootstrap4m(void *top)
 	extern char kernel_text[];
 	extern caddr_t reserve_dumppages(caddr_t);
 
+	nureg = NUREG_4M;
+	nkreg = NKREG_4M;
+
 	/*
 	 * Compute `va2pa_offset'.
 	 * Use `kernel_text' to probe the MMU translation since
@@ -3118,17 +3154,17 @@ pmap_bootstrap4m(void *top)
 	kernel_pmap_store.pm_refcount = 1;
 
 	/*
-	 * Set up pm_regmap for kernel to point NUREG *below* the beginning
+	 * Set up pm_regmap for kernel to point NUREG_4M *below* the beginning
 	 * of kernel regmap storage. Since the kernel only uses regions
-	 * above NUREG, we save storage space and can index kernel and
+	 * above NUREG_4M, we save storage space and can index kernel and
 	 * user regions in the same way
 	 */
-	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
+	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG_4M];
 	kernel_pmap_store.pm_reg_ptps = NULL;
 	kernel_pmap_store.pm_reg_ptps_pa = 0;
-	bzero(kernel_regmap_store, NKREG * sizeof(struct regmap));
-	bzero(kernel_segmap_store, NKREG * NSEGRG * sizeof(struct segmap));
-	for (i = NKREG; --i >= 0;) {
+	bzero(kernel_regmap_store, NKREG_4M * sizeof(struct regmap));
+	bzero(kernel_segmap_store, NKREG_4M * NSEGRG * sizeof(struct segmap));
+	for (i = NKREG_4M; --i >= 0;) {
 		kernel_regmap_store[i].rg_segmap =
 			&kernel_segmap_store[i * NSEGRG];
 		kernel_regmap_store[i].rg_seg_ptps = NULL;
@@ -3169,14 +3205,14 @@ pmap_bootstrap4m(void *top)
 	 * Allocate context table.
 	 * To keep supersparc happy, minimum alignment is on a 4K boundary.
 	 */
-	ctxtblsize = max(ncontext,1024) * sizeof(int);
+	ctxtblsize = max(ncontext, 1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
 	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
 	qzero(cpuinfo.ctx_tbl, ctxtblsize);
 
 	/*
 	 * Reserve memory for segment and page tables needed to map the entire
-	 * kernel. This takes (2k + NKREG * 16k) of space, but
+	 * kernel. This takes (2k + NKREG_4M * 16k) of space, but
 	 * unfortunately is necessary since pmap_enk *must* be able to enter
 	 * a kernel mapping without resorting to malloc, or else the
 	 * possibility of deadlock arises (pmap_enk4m is called to enter a
@@ -3192,12 +3228,12 @@ pmap_bootstrap4m(void *top)
 
 	p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(long));
 	kernel_segtable_store = (u_int *)p;
-	p += (SRMMU_L2SIZE * sizeof(long)) * NKREG;
+	p += (SRMMU_L2SIZE * sizeof(long)) * NKREG_4M;
 	bzero(kernel_segtable_store, p - (caddr_t)kernel_segtable_store);
 
 	p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(long));
 	kernel_pagtable_store = (u_int *)p;
-	p += ((SRMMU_L3SIZE * sizeof(long)) * NKREG) * NSEGRG;
+	p += ((SRMMU_L3SIZE * sizeof(long)) * NKREG_4M) * NSEGRG;
 	bzero(kernel_pagtable_store, p - (caddr_t)kernel_pagtable_store);
 
 	/* Round to next page and mark end of stolen pages */
@@ -3225,7 +3261,7 @@ pmap_bootstrap4m(void *top)
 	/* XXX:rethink - Store pointer to region table address */
 	cpuinfo.L1_ptps = pmap_kernel()->pm_reg_ptps;
 
-	for (reg = 0; reg < NKREG; reg++) {
+	for (reg = 0; reg < NKREG_4M; reg++) {
 		struct regmap *rp;
 		caddr_t kphyssegtbl;
 
@@ -3233,12 +3269,12 @@ pmap_bootstrap4m(void *top)
 		 * Entering new region; install & build segtbl
 		 */
 
-		rp = &pmap_kernel()->pm_regmap[reg + VA_VREG(VM_MIN_KERNEL_ADDRESS)];
+		rp = &pmap_kernel()->pm_regmap[reg + NUREG];
 
 		kphyssegtbl = (caddr_t)
 		    &kernel_segtable_store[reg * SRMMU_L2SIZE];
 
-		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg + VA_VREG(VM_MIN_KERNEL_ADDRESS)],
+		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg + NUREG],
 		    (PMAP_BOOTSTRAP_VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) |
 		    SRMMU_TEPTD);
 
@@ -3305,11 +3341,11 @@ pmap_bootstrap4m(void *top)
 #ifdef DEBUG			/* Sanity checks */
 	if ((u_int)p % NBPG != 0)
 		panic("pmap_bootstrap4m: p misaligned?!?");
-	if (VM_MIN_KERNEL_ADDRESS % NBPRG != 0)
+	if (VM_MIN_KERNEL_ADDRESS_SRMMU % NBPRG != 0)
 		panic("pmap_bootstrap4m: VM_MIN_KERNEL_ADDRESS not region-aligned");
 #endif
 
-	for (q = (caddr_t) VM_MIN_KERNEL_ADDRESS; q < p; q += NBPG) {
+	for (q = (caddr_t) KERNBASE; q < p; q += NBPG) {
 		struct regmap *rp;
 		struct segmap *sp;
 		int pte, *ptep;
@@ -3567,7 +3603,7 @@ pmap_create()
 		TAILQ_INIT(&pm->pm_reglist);
 		if (HASSUN4_MMU3L) {
 			int i;
-			for (i = NUREG; --i >= 0;)
+			for (i = NUREG_4C; --i >= 0;)
 				pm->pm_regmap[i].rg_smeg = reginval;
 		}
 #endif
@@ -3591,13 +3627,13 @@ pmap_create()
 		pm->pm_reg_ptps_pa = VA2PA(urp);
 
 		/* Invalidate user mappings */
-		for (i = 0; i < NUREG; i++)
+		for (i = 0; i < NUREG_4M; i++)
 			setpgt4m(&pm->pm_reg_ptps[i], SRMMU_TEINVALID);
 
 		/* Copy kernel regions */
-		for (i = 0; i < NKREG; i++) {
-			setpgt4m(&pm->pm_reg_ptps[VA_VREG(VM_MIN_KERNEL_ADDRESS) + i],
-				 cpuinfo.L1_ptps[VA_VREG(VM_MIN_KERNEL_ADDRESS) + i]);
+		for (i = 0; i < NKREG_4M; i++) {
+			setpgt4m(&pm->pm_reg_ptps[NUREG_4M + i],
+				 cpuinfo.L1_ptps[NUREG_4M + i]);
 		}
 	}
 #endif
@@ -4317,7 +4353,7 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == PROT_NONE))
-		printf("pmap_page_protect(0x%lx, 0x%x)\n", pg, prot);
+		printf("pmap_page_protect(%p, 0x%x)\n", pg, prot);
 #endif
 	pv = &pg->mdpage.pv_head;
 	/*
@@ -4712,7 +4748,7 @@ pmap_page_protect4m(struct vm_page *pg, vm_prot_t prot)
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == PROT_NONE))
-		printf("pmap_page_protect(0x%lx, 0x%x)\n", pg, prot);
+		printf("pmap_page_protect(%p, 0x%x)\n", pg, prot);
 #endif
 	pv = &pg->mdpage.pv_head;
 	/*
@@ -5447,7 +5483,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 	int wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
-	if (va < VM_MIN_KERNEL_ADDRESS)
+	if (VA_VREG(va) < NUREG_4M)
 		panic("pmap_enk4m: can't enter va 0x%lx below VM_MIN_KERNEL_ADDRESS", va);
 #endif
 	rp = &pm->pm_regmap[VA_VREG(va)];
@@ -5528,7 +5564,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 	int wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
-	if (VM_MIN_KERNEL_ADDRESS < va)
+	if (VA_VREG(va) >= NUREG_4M)
 		panic("pmap_enu4m: can't enter va 0x%lx above VM_MIN_KERNEL_ADDRESS", va);
 #endif
 

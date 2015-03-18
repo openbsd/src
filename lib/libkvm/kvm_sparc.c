@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc.c,v 1.13 2013/11/01 15:57:56 deraadt Exp $ */
+/*	$OpenBSD: kvm_sparc.c,v 1.14 2015/03/18 20:56:38 miod Exp $ */
 /*	$NetBSD: kvm_sparc.c,v 1.9 1996/04/01 19:23:03 cgd Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ _kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (va < KERNBASE)
+	if (va < VM_MIN_KERNEL_ADDRESS_OLD)
 		goto err;
 
 	/*
@@ -151,7 +151,7 @@ _kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 
-	sp = &cpup->segmap_store[(vr-NUREG)*NSEGRG + vs];
+	sp = &cpup->segmap_store[(vr-NUREG_4C)*NSEGRG + vs];
 	if (sp->sg_npte == 0)
 		goto err;
 	if (sp->sg_pmeg == cpup->npmeg - 1) /* =seginval */
@@ -178,7 +178,7 @@ _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 	int vr, vs, pte;
 	off_t foff;
 
-	if (va < KERNBASE)
+	if (va < VM_MIN_KERNEL_ADDRESS_SRMMU)
 		goto err;
 
 	/*
@@ -190,7 +190,7 @@ _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 
-	sp = &cpup->segmap_store[(vr-NUREG)*NSEGRG + vs];
+	sp = &cpup->segmap_store[(vr-NUREG_4M)*NSEGRG + vs];
 	if (sp->sg_npte == 0)
 		goto err;
 

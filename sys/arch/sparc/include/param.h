@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.49 2013/03/26 05:04:10 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.50 2015/03/18 20:56:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,8 +89,6 @@
 #define	KERNBASE	0xf8000000
 
 #ifdef _KERNEL
-
-#define	KERNTEXTOFF	0xf8004000		/* start of kernel text */
 
 #define	NBPG		PAGE_SIZE		/* bytes/page */
 #define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */

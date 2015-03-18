@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.168 2015/02/09 11:52:47 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.169 2015/03/18 20:56:40 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -174,6 +174,17 @@ cpu_startup()
 	/*identifycpu();*/
 	printf("real mem = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
+
+#if (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
+	/*
+	 * uvm_km_init() has allocated all the virtual memory below the
+	 * end of the kernel image. If VM_MIN_KERNEL_ADDRESS is below
+	 * KERNBASE, we need to reclaim that range.
+	 */
+	if (vm_min_kernel_address < (vaddr_t)KERNBASE) {
+		uvm_unmap(kernel_map, vm_min_kernel_address, (vaddr_t)KERNBASE);
+	}
+#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

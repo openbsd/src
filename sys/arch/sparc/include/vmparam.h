@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.42 2014/05/31 20:11:11 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.43 2015/03/18 20:56:40 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -45,15 +45,8 @@
 #define _MACHINE_VMPARAM_H_
 
 /*
- * Machine dependent constants for Sun-4c SPARC
+ * Machine dependent constants for SPARC
  */
-
-/*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
- */
-#define	USRTEXT		0x2000			/* Start of user text */
-#define	USRSTACK	VM_MIN_KERNEL_ADDRESS	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -92,10 +85,39 @@
  * IO space virtual base, which must be the same as VM_MAX_KERNEL_ADDRESS:
  * tread with care.
  */
+
+#define	VM_MIN_KERNEL_ADDRESS_OLD	((vaddr_t)KERNBASE)
+#define	VM_MIN_KERNEL_ADDRESS_SRMMU	((vaddr_t)0xc0000000)
+
+#if defined(SMALL_KERNEL)
+/* limit to small KVA regardless of the cpu type */
+#define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS_OLD
+#define VM_MAXUSER_ADDRESS	VM_MIN_KERNEL_ADDRESS
+#define VM_MAX_ADDRESS		VM_MIN_KERNEL_ADDRESS
+#define	USRSTACK		VM_MIN_KERNEL_ADDRESS
+#elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
+      (defined(SUN4D) || defined(SUN4M))
+/* user/kernel bound will de determined at run time */
+extern vsize_t vm_kernel_space_size;
+#define	VM_KERNEL_SPACE_SIZE	vm_kernel_space_size
+#define VM_MAXUSER_ADDRESS	vm_min_kernel_address
+#define VM_MAX_ADDRESS		vm_min_kernel_address
+#define	USRSTACK		vm_min_kernel_address
+#elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E))
+/* old Sun MMU with address hole */
+#define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS_OLD
+#define VM_MAXUSER_ADDRESS	VM_MIN_KERNEL_ADDRESS
+#define VM_MAX_ADDRESS		VM_MIN_KERNEL_ADDRESS
+#define	USRSTACK		VM_MIN_KERNEL_ADDRESS
+#else
+/* SRMMU without address hole */
+#define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS_SRMMU
+#define VM_MAXUSER_ADDRESS	VM_MIN_KERNEL_ADDRESS
+#define VM_MAX_ADDRESS		VM_MIN_KERNEL_ADDRESS
+#define	USRSTACK		VM_MIN_KERNEL_ADDRESS
+#endif
+
 #define VM_MIN_ADDRESS		((vaddr_t)0x2000)
-#define VM_MAX_ADDRESS		((vaddr_t)VM_MIN_KERNEL_ADDRESS)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)VM_MIN_KERNEL_ADDRESS)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfe000000)
 
 #define	IOSPACE_BASE		VM_MAX_KERNEL_ADDRESS
@@ -105,11 +127,12 @@
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
-#if defined (_KERNEL) && !defined(_LOCORE)
+#if defined (_KERNEL)
 struct vm_map;
 #define		dvma_mapin(map,va,len,canwait)	dvma_mapin_space(map,va,len,canwait,0)
 vaddr_t		dvma_mapin_space(struct vm_map *, vaddr_t, int, int, int);
 void		dvma_mapout(vaddr_t, vaddr_t, int);
+
 #endif
 
 #endif /* _MACHINE_VMPARAM_H_ */
