@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.123 2015/01/16 06:39:56 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.124 2015/03/18 07:42:13 uebayasi Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:O:Pp:qr:R:svu:")) !=
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:O:Pp:qr:R:su:v")) !=
 	    -1) {
 		switch (ch) {
 		case 'a': /* alarm */
