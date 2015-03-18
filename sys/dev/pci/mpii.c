@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.100 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.101 2015/03/18 12:23:25 mikeb Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -775,7 +775,7 @@ mpii_load_xs(struct mpii_ccb *ccb)
 			    MPII_SGE_FL_SIZE_64 | len);
 			/* address of the next sge */
 			mpii_dvatosge(csge, ccb->ccb_cmd_dva +
-			    (caddr_t)nsge - (caddr_t)io);
+			    ((caddr_t)nsge - (caddr_t)io));
 		}
 
 		sge = nsge;
