@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.70 2015/03/17 21:42:15 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.71 2015/03/18 14:46:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 	if ((i_flag + u_flag + e_flag) == 0)
 		USER_print_disk();
 
-	/* Parse mbr template, to pass on later */
+	/* Create initial/default MBR. */
 	if (mbrfile != NULL && (fd = open(mbrfile, O_RDONLY)) == -1) {
 		warn("%s", mbrfile);
 		warnx("using builtin MBR");
@@ -187,21 +187,21 @@ main(int argc, char *argv[])
 			err(1, "Unable to read MBR");
 		close(fd);
 	}
-	MBR_parse(&dos_mbr, 0, 0, &mbr);
+	MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
 
 	query = NULL;
 	if (i_flag) {
-		MBR_init(&mbr);
+		MBR_init(&initial_mbr);
 		query = "Do you wish to write new MBR and partition table?";
 	} else if (u_flag) {
-		MBR_pcopy(&mbr);
+		MBR_pcopy(&initial_mbr);
 		query = "Do you wish to write new MBR?";
 	}
 	if (query && ask_yn(query))
-		Xwrite(NULL, &mbr, NULL);
+		Xwrite(NULL, &initial_mbr);
 
 	if (e_flag)
-		USER_edit(&mbr, 0, 0);
+		USER_edit(0, 0);
 
 	return (0);
 }

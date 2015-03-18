@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.77 2015/03/17 21:42:15 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.78 2015/03/18 14:46:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,12 +37,11 @@
 int reinited;
 
 int
-Xreinit(char *args, struct mbr *mbr, struct mbr *tt)
+Xreinit(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
 
-	/* Copy template MBR */
-	MBR_make(tt, &dos_mbr);
+	MBR_make(&initial_mbr, &dos_mbr);
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
 	MBR_init(mbr);
@@ -58,7 +57,7 @@ Xreinit(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xdisk(char *args, struct mbr *mbr, struct mbr *tt)
+Xdisk(char *args, struct mbr *mbr)
 {
 	int maxcyl  = 1024;
 	int maxhead = 256;
@@ -89,7 +88,7 @@ Xdisk(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xswap(char *args, struct mbr *mbr, struct mbr *tt)
+Xswap(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	char *from, *to;
@@ -128,7 +127,7 @@ Xswap(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xedit(char *args, struct mbr *mbr, struct mbr *tt)
+Xedit(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	int pn, num, ret;
@@ -142,7 +141,7 @@ Xedit(char *args, struct mbr *mbr, struct mbr *tt)
 	pp = &mbr->part[pn];
 
 	/* Edit partition type */
-	ret = Xsetpid(args, mbr, tt);
+	ret = Xsetpid(args, mbr);
 
 	/* Unused, so just zero out */
 	if (pp->id == DOSPTYP_UNUSED) {
@@ -189,7 +188,7 @@ Xedit(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xsetpid(char *args, struct mbr *mbr, struct mbr *tt)
+Xsetpid(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	int pn, num;
@@ -217,7 +216,7 @@ Xsetpid(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xselect(char *args, struct mbr *mbr, struct mbr *tt)
+Xselect(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	static int firstoff = 0;
@@ -251,13 +250,13 @@ Xselect(char *args, struct mbr *mbr, struct mbr *tt)
 	}
 
 	/* Recursion is beautiful! */
-	USER_edit(tt, off, firstoff);
+	USER_edit(off, firstoff);
 
 	return (CMD_CONT);
 }
 
 int
-Xprint(char *args, struct mbr *mbr, struct mbr *tt)
+Xprint(char *args, struct mbr *mbr)
 {
 
 	DISK_printgeometry(args);
@@ -268,7 +267,7 @@ Xprint(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xwrite(char *args, struct mbr *mbr, struct mbr *tt)
+Xwrite(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
 	int fd, i, n;
@@ -307,25 +306,25 @@ Xwrite(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xquit(char *args, struct mbr *mbr, struct mbr *tt)
+Xquit(char *args, struct mbr *mbr)
 {
 	return (CMD_SAVE);
 }
 
 int
-Xabort(char *args, struct mbr *mbr, struct mbr *tt)
+Xabort(char *args, struct mbr *mbr)
 {
 	exit(0);
 }
 
 int
-Xexit(char *args, struct mbr *mbr, struct mbr *tt)
+Xexit(char *args, struct mbr *mbr)
 {
 	return (CMD_EXIT);
 }
 
 int
-Xhelp(char *args, struct mbr *mbr, struct mbr *tt)
+Xhelp(char *args, struct mbr *mbr)
 {
 	int i;
 
@@ -335,17 +334,17 @@ Xhelp(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xupdate(char *args, struct mbr *mbr, struct mbr *tt)
+Xupdate(char *args, struct mbr *mbr)
 {
 	/* Update code */
-	memcpy(mbr->code, tt->code, sizeof(mbr->code));
+	memcpy(mbr->code, initial_mbr.code, sizeof(mbr->code));
 	mbr->signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
 	return (CMD_DIRTY);
 }
 
 int
-Xflag(char *args, struct mbr *mbr, struct mbr *tt)
+Xflag(char *args, struct mbr *mbr)
 {
 	const char *errstr;
 	int i, pn = -1, val = -1;
@@ -386,7 +385,7 @@ Xflag(char *args, struct mbr *mbr, struct mbr *tt)
 }
 
 int
-Xmanual(char *args, struct mbr *mbr, struct mbr *tt)
+Xmanual(char *args, struct mbr *mbr)
 {
 	char *pager = "/usr/bin/less";
 	char *p;

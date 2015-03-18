@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.41 2015/03/17 21:42:15 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.42 2015/03/18 14:46:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -55,7 +55,7 @@ struct cmd cmd_table[] = {
 int modified;
 
 void
-USER_edit(struct mbr *tt, off_t offset, off_t reloff)
+USER_edit(off_t offset, off_t reloff)
 {
 	static int editlevel;
 	struct dos_mbr dos_mbr;
@@ -102,7 +102,7 @@ again:
 		}
 
 		/* Call function */
-		st = cmd_table[i].fcn(args, &mbr, tt);
+		st = cmd_table[i].fcn(args, &mbr);
 
 		/* Update status */
 		if (st == CMD_EXIT)
@@ -118,7 +118,7 @@ again:
 	/* Write out MBR */
 	if (modified) {
 		if (st == CMD_SAVE) {
-			if (Xwrite(NULL, &mbr, NULL) == CMD_CONT)
+			if (Xwrite(NULL, &mbr) == CMD_CONT)
 				goto again;
 			close(fd);
 		} else
