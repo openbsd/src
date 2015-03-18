@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.2 2015/03/18 22:39:41 millert Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.3 2015/03/18 22:53:27 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -69,14 +69,9 @@ initialise_months(void)
 				tmp = nl_langinfo(item[i]);
 				if (debug_sort)
 					printf("month[%d]=%s\n", i, tmp);
-				len = strlen(tmp);
-				if (len < 1)
+				if (*tmp == '\0')
 					continue;
-				while (isblank((unsigned char)*tmp))
-					++tmp;
-				m = sort_malloc(len + 1);
-				memcpy(m, tmp, len + 1);
-				m[len] = '\0';
+				m = sort_strdup(tmp);
 				for (j = 0; j < len; j++)
 					m[j] = toupper(m[j]);
 				cmonths[i] = m;
@@ -94,14 +89,14 @@ initialise_months(void)
 				tmp = nl_langinfo(item[i]);
 				if (debug_sort)
 					printf("month[%d]=%s\n", i, tmp);
+				if (*tmp == '\0')
+					continue;
 				len = strlen(tmp);
-				if (len < 1)
-					continue;
-				while (isblank((unsigned char)*tmp))
-					++tmp;
 				m = sort_malloc(SIZEOF_WCHAR_STRING(len + 1));
-				if (mbstowcs(m, tmp, len) == (size_t)-1)
+				if (mbstowcs(m, tmp, len) == (size_t)-1) {
+					sort_free(m);
 					continue;
+				}
 				m[len] = L'\0';
 				for (j = 0; j < len; j++)
 					m[j] = towupper(m[j]);
