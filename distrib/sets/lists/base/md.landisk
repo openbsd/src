@@ -979,7 +979,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/fmsvar.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/gcu.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/gcu_var.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/gcu_reg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/glxreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/pci/glxvar.ph
@@ -2126,7 +2126,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ttyent.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/tzfile.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ufs
 ./usr/libdata/perl5/site_perl/sh-openbsd/ufs/ext2fs
 ./usr/libdata/perl5/site_perl/sh-openbsd/ufs/ext2fs/ext2fs.ph

@@ -1020,7 +1020,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/fmsvar.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/gcu.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/gcu_var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/gcu_reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/glxreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/glxvar.ph
@@ -2148,7 +2148,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/tls.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ttyent.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/tzfile.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ext2fs
 ./usr/libdata/perl5/site_perl/i386-openbsd/ufs/ext2fs/ext2fs.ph

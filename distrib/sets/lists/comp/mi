@@ -533,7 +533,7 @@
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/fmsreg.h
 ./usr/include/dev/pci/fmsvar.h
-./usr/include/dev/pci/gcu.h
+./usr/include/dev/pci/gcu_var.h
 ./usr/include/dev/pci/gcu_reg.h
 ./usr/include/dev/pci/glxreg.h
 ./usr/include/dev/pci/glxvar.h
@@ -1452,7 +1452,6 @@
 ./usr/include/time.h
 ./usr/include/tls.h
 ./usr/include/ttyent.h
-./usr/include/tzfile.h
 ./usr/include/ufs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ext2fs/ext2fs.h
