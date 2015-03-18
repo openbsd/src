@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.20 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.21 2015/03/18 12:23:15 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -108,7 +108,6 @@ struct	ifqueue {
 	int			 ifq_maxlen;
 	int			 ifq_drops;
 	struct hfsc_if		*ifq_hfsc;
-	struct timeout		*ifq_congestion;
 };
 
 /*
@@ -320,8 +319,7 @@ do {									\
 	if (IF_QFULL(ifq)) {						\
 		IF_DROP(ifq);						\
 		m_freem(m);						\
-		if (!(ifq)->ifq_congestion)				\
-			if_congestion(ifq);				\
+		if_congestion();					\
 	} else								\
 		IF_ENQUEUE(ifq, m);					\
 } while (/* CONSTCOND */0)
@@ -423,7 +421,6 @@ void	if_clone_detach(struct if_clone *);
 int	if_clone_create(const char *);
 int	if_clone_destroy(const char *);
 
-void	if_congestion(struct ifqueue *);
 int     sysctl_ifq(int *, u_int, void *, size_t *, void *, size_t,
 	    struct ifqueue *);
 

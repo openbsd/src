@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.160 2015/02/08 06:00:52 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.161 2015/03/18 12:23:15 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -463,6 +463,8 @@ void	if_group_routechange(struct sockaddr *, struct sockaddr *);
 struct	ifnet *ifunit(const char *);
 struct	ifnet *if_get(unsigned int);
 void	ifnewlladdr(struct ifnet *);
+void	if_congestion(void);
+int	if_congested(void);
 
 #endif /* _KERNEL */
 

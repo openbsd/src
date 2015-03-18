@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.908 2015/03/16 02:40:55 yasuoka Exp $ */
+/*	$OpenBSD: pf.c,v 1.909 2015/03/18 12:23:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -221,7 +221,6 @@ int			 pf_compare_state_keys(struct pf_state_key *,
 struct pf_state		*pf_find_state(struct pfi_kif *,
 			    struct pf_state_key_cmp *, u_int, struct mbuf *);
 int			 pf_src_connlimit(struct pf_state **);
-int			 pf_check_congestion(struct ifqueue *);
 int			 pf_match_rcvif(struct mbuf *, struct pf_rule *);
 void			 pf_step_into_anchor(int *, struct pf_ruleset **,
 			    struct pf_rule **, struct pf_rule **);
@@ -3076,7 +3075,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	struct tcphdr		*th = pd->hdr.tcp;
 	struct pf_state_key	*skw = NULL, *sks = NULL;
 	struct pf_rule_actions	 act;
-	struct ifqueue		*ifq = &ipintrq;
 	u_short			 reason;
 	int			 rewrite = 0;
 	int			 tag = -1;
@@ -3091,12 +3089,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	act.rtableid = pd->rdomain;
 	SLIST_INIT(&rules);
 
-#ifdef INET6
-	if (pd->af == AF_INET6)
-		ifq = &ip6intrq;
-#endif
-
-	if (pd->dir == PF_IN && pf_check_congestion(ifq)) {
+	if (pd->dir == PF_IN && if_congested()) {
 		REASON_SET(&reason, PFRES_CONGEST);
 		return (PF_DROP);
 	}
@@ -6640,15 +6633,6 @@ done:
 	}
 
 	return (action);
-}
-
-int
-pf_check_congestion(struct ifqueue *ifq)
-{
-	if (ifq->ifq_congestion)
-		return (1);
-	else
-		return (0);
 }
 
 void

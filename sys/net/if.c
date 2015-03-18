@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.321 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.322 2015/03/18 12:23:15 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ int	if_setgroupattribs(caddr_t);
 int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
 
-void	if_congestion_clear(void *);
 int	if_group_egress_build(void);
 
 void	if_link_state_change_task(void *);
@@ -154,6 +153,7 @@ int if_cloners_count;
 struct timeout net_tick_to;
 void	net_tick(void *);
 int	net_livelocked(void);
+int	ifq_congestion;
 
 /*
  * Network interface utility routines.
@@ -786,33 +786,22 @@ if_clone_list(struct if_clonereq *ifcr)
 }
 
 /*
- * set queue congestion marker and register timeout to clear it
+ * set queue congestion marker
  */
 void
-if_congestion(struct ifqueue *ifq)
+if_congestion(void)
 {
-	/* Not currently needed, all callers check this */
-	if (ifq->ifq_congestion)
-		return;
+	extern int ticks;
 
-	ifq->ifq_congestion = malloc(sizeof(struct timeout), M_TEMP, M_NOWAIT);
-	if (ifq->ifq_congestion == NULL)
-		return;
-	timeout_set(ifq->ifq_congestion, if_congestion_clear, ifq);
-	timeout_add(ifq->ifq_congestion, hz / 100);
+	ifq_congestion = ticks;
 }
 
-/*
- * clear the congestion flag
- */
-void
-if_congestion_clear(void *arg)
+int
+if_congested(void)
 {
-	struct ifqueue *ifq = arg;
-	struct timeout *to = ifq->ifq_congestion;
+	extern int ticks;
 
-	ifq->ifq_congestion = NULL;
-	free(to, M_TEMP, sizeof(*to));
+	return (ticks - ifq_congestion <= (hz / 100));
 }
 
 #define	equal(a1, a2)	\
