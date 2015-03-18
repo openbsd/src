@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.114 2015/03/18 22:09:22 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.115 2015/03/18 22:11:21 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1578,6 +1578,10 @@ Open
 for reading and writing on file descriptor
 .Ar n ,
 by default standard input.
+If
+.Ar file
+does not exist,
+create it.
 .El
 .Sh COMMANDS
 The shell first expands
