@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.2 2015/03/18 22:39:41 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -67,8 +67,6 @@ initialise_months(void)
 			for (i = 0; i < 12; i++) {
 				cmonths[i] = NULL;
 				tmp = nl_langinfo(item[i]);
-				if (tmp == NULL)
-					continue;
 				if (debug_sort)
 					printf("month[%d]=%s\n", i, tmp);
 				len = strlen(tmp);
@@ -94,8 +92,6 @@ initialise_months(void)
 			for (i = 0; i < 12; i++) {
 				wmonths[i] = NULL;
 				tmp = nl_langinfo(item[i]);
-				if (tmp == NULL)
-					continue;
 				if (debug_sort)
 					printf("month[%d]=%s\n", i, tmp);
 				len = strlen(tmp);
