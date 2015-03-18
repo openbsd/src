@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.52 2014/12/19 17:14:40 tedu Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.53 2015/03/18 01:12:16 mcbride Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -145,14 +145,22 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 			 *   GRE tunnel is precisely a IP-in-GRE tunnel that differs
 			 *   only in its protocol number.  At least, it works for me.
 			 *
-			 *   The Internet Draft can be found if you look for
+			 *   The Internet Drafts can be found if you look for
+			 *   the following:
 			 *     draft-forster-wrec-wccp-v1-00.txt
+			 *     draft-wilson-wrec-wccp-v2-01.txt
 			 *
 			 *   So yes, we're doing a fall-through (unless, of course,
 			 *   net.inet.gre.wccp is 0).
 			 */
 			if (!gre_wccp)
 				return (0);
+			/*
+			 * For WCCPv2, additionally skip the 4 byte
+			 * redirect header.
+			 */
+			if (gre_wccp == 2) 
+				hlen += 4;
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
 			ifq = &ipintrq;          /* we are in ip_input */
 			af = AF_INET;
