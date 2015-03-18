@@ -11,12 +11,10 @@ to learn another editor.  (But probably will, at least long enough to
 port Mg...)  Mg was formerly named MicroGnuEmacs, the name change was
 done at the request of Richard Stallman.
 
-Mg is not associated with the GNU project, and most of it does not
-have the copyright restrictions present in GNU Emacs.  (However, some
-of the system dependent modules and the regular expression module do
-have copyright notices.  Look at the source code for exact
-copyright restrictions.)  The Mg authors individually may or may not
-agree with the opinions expressed by Richard Stallman in "The GNU
+Mg is not associated with the GNU project, and it does not have the
+copyright restrictions present in GNU Emacs.  (However, some modules
+do have copyright notices.)  The Mg authors individually may or may
+not agree with the opinions expressed by Richard Stallman in "The GNU
 Manifesto".
 
 This program is intended to be a small, fast, and portable editor for
