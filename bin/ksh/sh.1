@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.115 2015/03/18 22:11:21 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.116 2015/03/18 22:18:19 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1592,13 +1592,13 @@ It sets up redirections, if any,
 and then expands variable assignments, if any.
 It then attempts to run the command.
 .Pp
-Next, if the command is a special built-in
+Firstly, if the command is a special built-in
 it invokes the built-in.
-If it is a shell function
+If not, but it is a shell function,
 it then invokes that.
-If it is a regular built-in
+If not, but it is a regular built-in,
 it then invokes that.
-Finally it uses the value of
+Failing that, it uses the value of
 .Ev PATH
 to search for the command.
 If it finds a match which is a regular built-in or function it invokes it.
