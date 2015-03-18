@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.112 2015/03/17 14:30:35 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.113 2015/03/18 16:20:05 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2015 $
+.Dd $Mdocdate: March 18 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1457,24 +1457,23 @@ inclusive.
 Slashes and full stops do not match the patterns above
 because of their use as path and filename characters.
 .Ss Redirection
-Redirection is used to open and close files.
-Open files are represented by numbers,
-referred to as
+Redirection is used to open, close, or otherwise manipulate files,
+using redirection operators in combination with numerical
 .Em file descriptors .
-Standard input is usually file descriptor 0,
+A minimum of ten (0\-9) descriptors are supported;
+by convention
+standard input is file descriptor 0,
 standard output file descriptor 1,
 and standard error file descriptor 2.
 In the examples given below,
 .Ar n
 represents a numerical file descriptor.
-If it is quoted,
-it is not recognised as a file descriptor.
 The target for redirection is
-.Ar file ;
-it is subject to all forms of expansion as listed above,
+.Ar file
+and it is subject to all forms of expansion as listed above,
 except pathname expansion.
-If any part of the redirection operator is quoted,
-it is also not recognised.
+If any part of the file descriptor or redirection operator is quoted,
+they are not recognised.
 .Bl -tag -width Ds
 .It Oo Ar n Oc Ns < Ns Ar file
 Open
