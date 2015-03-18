@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.172 2015/02/06 03:22:00 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.173 2015/03/18 22:31:22 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -896,8 +896,8 @@ getaddr(int which, char *s, struct hostent **hpp)
 	    }
 
 	case AF_LINK:
-		su->sa.sa_len = sizeof(struct sockaddr_dl);
-		link_addr(s, &su->sdl);
+		su->sdl.sdl_index = if_nametoindex(s);
+		memset(&su->sdl.sdl_data, 0, sizeof(su->sdl.sdl_data));
 		return (1);
 	case AF_MPLS:
 		errx(1, "mpls labels require -in or -out switch");
