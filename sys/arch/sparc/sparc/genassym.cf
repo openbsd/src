@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.24 2015/02/09 09:21:30 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.25 2015/03/18 20:49:40 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -73,7 +73,9 @@ include <sparc/dev/fdvar.h>
 export	SUN4_PGSHIFT
 export	SUN4CM_PGSHIFT
 export	IOSPACE_BASE
+if defined(VM_MIN_KERNEL_ADDRESS)
 export	VM_MIN_KERNEL_ADDRESS
+endif
 
 # proc fields and values
 struct	proc

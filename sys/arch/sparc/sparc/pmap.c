@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.174 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.175 2015/03/18 20:49:40 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6371,12 +6371,12 @@ pm_check_u(s, pm)
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
 		    panic("%s: CHK(vr %d): SRMMU segtbl not installed",s,vr);
 #endif
-		if ((unsigned int)rp < VM_MIN_KERNEL_ADDRESS)
+		if ((unsigned int)rp < vm_min_kernel_address)
 			panic("%s: rp=%p", s, rp);
 		n = 0;
 		for (vs = 0; vs < NSEGRG; vs++) {
 			sp = &rp->rg_segmap[vs];
-			if ((unsigned int)sp < VM_MIN_KERNEL_ADDRESS)
+			if ((unsigned int)sp < vm_min_kernel_address)
 				panic("%s: sp=%p", s, sp);
 			if (sp->sg_npte != 0) {
 				n++;
@@ -6685,8 +6685,8 @@ debug_pagetables()
 	printf("Testing region 0xff: ");
 	test_region(0xff,0,16*1024*1024);
 #if 0	/* XXX avail_start */
-	printf("Testing kernel region 0x%x: ", VA_VREG(VM_MIN_KERNEL_ADDRESS));
-	test_region(VA_VREG(VM_MIN_KERNEL_ADDRESS), 4096, avail_start);
+	printf("Testing kernel region 0x%x: ", VA_VREG(vm_min_kernel_address));
+	test_region(VA_VREG(vm_min_kernel_address), 4096, avail_start);
 #endif
 	cnpollc(1);
 	cngetc();
@@ -6738,7 +6738,7 @@ VA2PAsw(ctx, addr, pte)
 		return 0;
 	}
 	/* L1 */
-	curtbl = ((curpte & ~0x3) << 4) | VM_MIN_KERNEL_ADDRESS; /* correct for krn*/
+	curtbl = ((curpte & ~0x3) << 4) | vm_min_kernel_address; /* correct for krn*/
 	*pte = curpte = curtbl[VA_VREG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L1 table at 0x%x.\nGot L1 pte 0x%x\n",curtbl,curpte);
@@ -6752,7 +6752,7 @@ VA2PAsw(ctx, addr, pte)
 		return 0;
 	}
 	/* L2 */
-	curtbl = ((curpte & ~0x3) << 4) | VM_MIN_KERNEL_ADDRESS; /* correct for krn*/
+	curtbl = ((curpte & ~0x3) << 4) | vm_min_kernel_address; /* correct for krn*/
 	*pte = curpte = curtbl[VA_VSEG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L2 table at 0x%x.\nGot L2 pte 0x%x\n",curtbl,curpte);
@@ -6766,7 +6766,7 @@ VA2PAsw(ctx, addr, pte)
 		return 0;
 	}
 	/* L3 */
-	curtbl = ((curpte & ~0x3) << 4) | VM_MIN_KERNEL_ADDRESS; /* correct for krn*/
+	curtbl = ((curpte & ~0x3) << 4) | vm_min_kernel_address; /* correct for krn*/
 	*pte = curpte = curtbl[VA_VPG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L3 table at 0x%x.\nGot L3 pte 0x%x\n",curtbl,curpte);
@@ -6782,7 +6782,8 @@ VA2PAsw(ctx, addr, pte)
 	printf("Bizarreness with address 0x%x!\n",addr);
 }
 
-void test_region(reg, start, stop)
+void
+test_region(reg, start, stop)
 	int reg;
 	int start, stop;
 {
@@ -6808,7 +6809,7 @@ void test_region(reg, start, stop)
 				printf("Mismatch at address 0x%x.\n",addr);
 				if (cngetc()=='q') break;
 			}
-			if (reg == VA_VREG(VM_MIN_KERNEL_ADDRESS))
+			if (reg == VA_VREG(vm_min_kernel_address))
 				/* kernel permissions are different */
 				continue;
 			if ((pte&SRMMU_PROT_MASK)!=(ptesw&SRMMU_PROT_MASK)) {
