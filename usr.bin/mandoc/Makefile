@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.92 2015/03/14 21:33:18 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.93 2015/03/18 18:04:12 pascal Exp $
 
 .include <bsd.own.mk>
 
@@ -54,7 +54,7 @@ CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
 cgi.o: main.h mandoc.h mandoc_aux.h manpath.h mansearch.h cgi.h
 
 man.cgi: ${CGI_OBJS}
-	${CC} ${LDFLAGS} -static -o ${.TARGET} ${CGI_OBJS} ${LDADD}
+	${CC} ${LDFLAGS} ${STATIC} -o ${.TARGET} ${CGI_OBJS} ${LDADD}
 
 installcgi: man.cgi
 	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/var/www/cgi-bin
