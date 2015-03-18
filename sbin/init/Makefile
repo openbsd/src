@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2002/06/09 08:13:06 todd Exp $
-
-STATIC=	-static
+#	$OpenBSD: Makefile,v 1.8 2015/03/18 19:55:52 pascal Exp $
 
 PROG=	init
 MAN=	init.8
