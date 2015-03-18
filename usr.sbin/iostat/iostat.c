@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.37 2014/10/28 05:48:22 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.38 2015/03/18 15:14:47 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -416,7 +416,10 @@ selectdrives(char *argv[])
 				continue;
 			cur.dk_select[i] = 1;
 			++ndrives;
+			break;
 		}
+		if (i == dk_ndrive)
+			errx(1, "invalid interval or drive name: %s", *argv);
 	}
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
