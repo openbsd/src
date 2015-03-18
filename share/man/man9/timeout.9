@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.38 2014/12/22 04:43:38 dlg Exp $
+.\"	$OpenBSD: timeout.9,v 1.39 2015/03/18 11:53:38 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 22 2014 $
+.Dd $Mdocdate: March 18 2015 $
 .Dt TIMEOUT 9
 .Os
 .Sh NAME
@@ -81,7 +81,6 @@ The granularity of the time is limited by the granularity of the
 timer which executes
 .Xr hz 9
 times a second.
-The function will be called at softclock interrupt level.
 .Pp
 It is the responsibility of the caller to provide these functions with
 pre-allocated timeout structures.
@@ -205,6 +204,13 @@ context.
 can be called during autoconf, from process context, or from any
 interrupt context at or below
 .Dv IPL_CLOCK .
+.Pp
+When the timeout runs, the
+.Fa fn
+argument to
+.Fn timeout_set
+will be called in an interrupt context at
+.Dv IPL_SOFTCLOCK .
 .Sh RETURN VALUES
 .Fn timeout_add ,
 .Fn timeout_add_sec ,
