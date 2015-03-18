@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.113 2015/03/18 16:20:05 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.114 2015/03/18 22:09:22 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1512,8 +1512,7 @@ create it.
 This form of redirection,
 called a
 .Em here document ,
-is used to copy the lines from
-.Ar block
+is used to copy a block of lines
 to a temporary file until a line matching
 .Ar delimiter
 is read.
@@ -1524,9 +1523,9 @@ or standard input by default.
 The basic format is:
 .Bd -unfilled -offset indent
 .Oo Ar n Oc Ns << Ns Ar delimiter
-.Ar block
-.Ar block
-.Ar ...
+text
+text
+\&...
 .Ar delimiter
 .Ed
 .Pp
@@ -1534,7 +1533,7 @@ Provided
 .Ar delimiter
 doesn't contain any quoted characters,
 parameter, command, and arithmetic expansions are performed on
-.Ar block ,
+the text block,
 and backslashes escape the special meaning of
 .Sq $ ,
 .Sq \` ,
