@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.h,v 1.1 2009/11/25 13:28:13 dms Exp $	*/
+/*	$OpenBSD: gcu_var.h,v 1.1 2015/03/18 12:04:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>

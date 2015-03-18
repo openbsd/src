@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_em_soc.c,v 1.2 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: if_em_soc.c,v 1.3 2015/03/18 12:04:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -19,8 +19,10 @@
 #include <dev/pci/if_em.h>
 #include <dev/pci/if_em_hw.h>
 #include <dev/pci/if_em_soc.h>
-#include <dev/pci/gcu.h>
+#include <dev/pci/gcu_var.h>
 #include <dev/pci/gcu_reg.h>
+
+#include "gcu.h"
 
 void em_media_status(struct ifnet *, struct ifmediareq *);
 int em_media_change(struct ifnet *);
@@ -28,15 +30,13 @@ int em_media_change(struct ifnet *);
 void *
 em_lookup_gcu(struct device *self)
 {
-	struct device *dev;
+#if NGCU > 0
+	extern struct cfdriver gcu_cd;
 
-	INIT_DEBUGOUT("em_lookup_gcu");
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (strcmp(dev->dv_xname, "gcu0") == 0) {
-			return dev;
-		}
-	}
-	return 0;
+	return (device_lookup(&gcu_cd, 0));
+#else
+	return (NULL);
+#endif
 }
 
 int
