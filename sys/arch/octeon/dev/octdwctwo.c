@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.4 2015/02/14 06:46:03 uebayasi Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.5 2015/03/19 10:44:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -19,26 +19,18 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/pool.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
 
+#include <octeon/dev/iobusvar.h>
+#include <octeon/dev/octhcireg.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
-#include <dev/usb/usb_quirks.h>
-
-#include <octeon/dev/usb_port.h>
-#include <octeon/dev/iobusvar.h>
-#include <octeon/dev/cn30xxusbnvar.h>
-#include <octeon/dev/cn30xxusbcvar.h>
-#include <octeon/dev/cn30xxusbnreg.h>
-#include <octeon/dev/cn30xxusbcreg.h>
 
 #include <dev/usb/dwc2/dwc2var.h>
 #include <dev/usb/dwc2/dwc2.h>
