@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.3 2015/03/18 22:53:27 millert Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.4 2015/03/19 15:20:46 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -72,6 +72,7 @@ initialise_months(void)
 				if (*tmp == '\0')
 					continue;
 				m = sort_strdup(tmp);
+				len = strlen(tmp);
 				for (j = 0; j < len; j++)
 					m[j] = toupper(m[j]);
 				cmonths[i] = m;
