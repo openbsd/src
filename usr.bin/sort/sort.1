@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.41 2015/03/17 17:45:13 millert Exp $
+.\"	$OpenBSD: sort.1,v 1.42 2015/03/19 11:38:12 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 3, 2012
+.Dd $Mdocdate: March 19 2015 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -40,15 +40,11 @@
 .Nd sort, merge, or sequence check text and binary files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl bcCdfghiRMmnrsuVz
-.Sm off
-.Op Fl k\ \& Ar field1 Op , Ar field2
-.Sm on
+.Op Fl bCcdfgHhiMnRrsuVz
+.Op Fl k Ar field1 Ns Op , Ns Ar field2
 .Op Fl o Ar output
-.Op Fl S Ar memsize
-.Bk -words
+.Op Fl S Ar size
 .Op Fl T Ar dir
-.Ek
 .Op Fl t Ar char
 .Op Ar
 .Sh DESCRIPTION
@@ -87,7 +83,7 @@ Write the output to the
 .Ar output
 file instead of the standard output.
 This file can be the same as one of the input files.
-.It Fl S Ar size, Fl Fl buffer-size Ns = Ns Ar size
+.It Fl S Ar size , Fl Fl buffer-size Ns = Ns Ar size
 Use a memory buffer no larger than
 .Ar size .
 The modifiers %, b, K, M, G, T, P, E, Z, and Y can be used.
@@ -96,6 +92,10 @@ If no memory limit is specified,
 may use up to about 90% of available memory.
 If the input is too big to fit into the memory buffer,
 temporary files are used.
+.It Fl s
+Stable sort; maintains the original record order of records that have
+and equal key.
+This is a non-standard feature, but it is widely accepted and used.
 .It Fl T Ar dir , Fl Fl temporary-directory Ns = Ns Ar dir
 Store temporary files in the directory
 .Ar dir .
@@ -115,10 +115,6 @@ or
 .Fl c ,
 .Nm
 also checks that there are no lines with duplicate keys.
-.It Fl s
-Stable sort; maintains the original record order of records that have
-and equal key.
-This is a non-standard feature, but it is widely accepted and used.
 .It Fl Fl version
 Print the version and exit.
 .It Fl Fl help
@@ -234,9 +230,8 @@ can be attached independently to each
 .Ar field
 argument of the key specifications.
 .It Xo
-.Sm off
-.Fl k\ \& Ar field1 Op , Ar field2 , Fl Fl key Ns = Ns Ar field1 Op , Ar field2
-.Sm on
+.Fl k Ar field1 Ns Op , Ns Ar field2 ,
+.Fl Fl key Ns = Ns Ar field1 Ns Op , Ns Ar field2
 .Xc
 Define a restricted sort key that has the starting position
 .Ar field1 ,
