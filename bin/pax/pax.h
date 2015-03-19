@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.26 2015/03/17 03:23:17 guenther Exp $	*/
+/*	$OpenBSD: pax.h,v 1.27 2015/03/19 05:14:24 guenther Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -221,11 +221,11 @@ typedef struct {
  * at the given name has the indicated dev+ino.
  */
 struct file_times {
-	ino_t	ft_ino;		/* inode number to verify */
-	time_t	ft_mtime;	/* times to set */
-	time_t	ft_atime;
-	char	*ft_name;	/* name of file to set the times on */
-	dev_t	ft_dev;		/* device number to verify */
+	ino_t	ft_ino;			/* inode number to verify */
+	struct	timespec ft_mtim;	/* times to set */
+	struct	timespec ft_atim;
+	char	*ft_name;		/* name of file to set the times on */
+	dev_t	ft_dev;			/* device number to verify */
 };
 
 /*

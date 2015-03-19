@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.44 2015/03/17 03:23:17 guenther Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.45 2015/03/19 05:14:24 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -148,6 +148,26 @@ list(void)
 	pat_chk();
 }
 
+static int
+cmp_file_times(int mtime_flag, int ctime_flag, ARCHD *arcn, struct stat *sbp)
+{
+	struct stat sb;
+
+	if (sbp == NULL) {
+		if (lstat(arcn->name, &sb) != 0)
+			return (0);
+		sbp = &sb;
+	}
+
+	if (ctime_flag && mtime_flag)
+		return (timespeccmp(&arcn->sb.st_mtim, &sbp->st_mtim, <=) &&
+		        timespeccmp(&arcn->sb.st_ctim, &sbp->st_ctim, <=));
+	else if (ctime_flag)
+		return (timespeccmp(&arcn->sb.st_ctim, &sbp->st_ctim, <=));
+	else
+		return (timespeccmp(&arcn->sb.st_mtim, &sbp->st_mtim, <=));
+}
+
 /*
  * extract()
  *	extract the member(s) of an archive as specified by user supplied
@@ -161,7 +181,6 @@ extract(void)
 	int res;
 	off_t cnt;
 	ARCHD archd;
-	struct stat sb;
 	int fd;
 	time_t now;
 
@@ -227,22 +246,10 @@ extract(void)
 		 * file AFTER the name mod. In honesty the pax spec is probably
 		 * flawed in this respect.
 		 */
-		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0))) {
-			if (uflag && Dflag) {
-				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
-				    (arcn->sb.st_ctime <= sb.st_ctime)) {
-					(void)rd_skip(arcn->skip + arcn->pad);
-					continue;
-				}
-			} else if (Dflag) {
-				if (arcn->sb.st_ctime <= sb.st_ctime) {
-					(void)rd_skip(arcn->skip + arcn->pad);
-					continue;
-				}
-			} else if (arcn->sb.st_mtime <= sb.st_mtime) {
-				(void)rd_skip(arcn->skip + arcn->pad);
-				continue;
-			}
+		if ((uflag || Dflag) &&
+		    cmp_file_times(uflag, Dflag, arcn, NULL)) {
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
 		}
 
 		/*
@@ -263,22 +270,10 @@ extract(void)
 		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip
 		 */
-		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
-			if (Yflag && Zflag) {
-				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
-				    (arcn->sb.st_ctime <= sb.st_ctime)) {
-					(void)rd_skip(arcn->skip + arcn->pad);
-					continue;
-				}
-			} else if (Yflag) {
-				if (arcn->sb.st_ctime <= sb.st_ctime) {
-					(void)rd_skip(arcn->skip + arcn->pad);
-					continue;
-				}
-			} else if (arcn->sb.st_mtime <= sb.st_mtime) {
-				(void)rd_skip(arcn->skip + arcn->pad);
-				continue;
-			}
+		if ((Yflag || Zflag) &&
+		    cmp_file_times(Yflag, Zflag, arcn, NULL)) {
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
 		}
 
 		if (vflag) {
@@ -851,14 +846,7 @@ copy(void)
 
 			if (res == 0) {
 				ftree_skipped_newer(arcn);
-				if (uflag && Dflag) {
-					if ((arcn->sb.st_mtime<=sb.st_mtime) &&
-					    (arcn->sb.st_ctime<=sb.st_ctime))
-						continue;
-				} else if (Dflag) {
-					if (arcn->sb.st_ctime <= sb.st_ctime)
-						continue;
-				} else if (arcn->sb.st_mtime <= sb.st_mtime)
+				if (cmp_file_times(uflag, Dflag, arcn, &sb))
 					continue;
 			}
 		}
@@ -883,17 +871,9 @@ copy(void)
 		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip
 		 */
-		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
-			if (Yflag && Zflag) {
-				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
-				    (arcn->sb.st_ctime <= sb.st_ctime))
-					continue;
-			} else if (Yflag) {
-				if (arcn->sb.st_ctime <= sb.st_ctime)
-					continue;
-			} else if (arcn->sb.st_mtime <= sb.st_mtime)
-				continue;
-		}
+		if ((Yflag || Zflag) &&
+		    cmp_file_times(Yflag, Zflag, arcn, NULL))
+			continue;
 
 		if (vflag) {
 			(void)safe_print(arcn->name, listf);

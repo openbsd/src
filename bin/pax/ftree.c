@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.37 2015/03/09 04:23:29 guenther Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.38 2015/03/19 05:14:24 guenther Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -443,8 +443,8 @@ next_file(ARCHD *arcn)
 			if (!tflag)
 				break;
 			add_atdir(ftent->fts_path, arcn->sb.st_dev,
-			    arcn->sb.st_ino, arcn->sb.st_mtime,
-			    arcn->sb.st_atime);
+			    arcn->sb.st_ino, &arcn->sb.st_mtim,
+			    &arcn->sb.st_atim);
 			break;
 		case S_IFCHR:
 			arcn->type = PAX_CHR;

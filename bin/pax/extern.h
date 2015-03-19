@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.52 2015/03/15 21:53:09 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.53 2015/03/19 05:14:24 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -141,8 +141,10 @@ int chk_same(ARCHD *);
 int node_creat(ARCHD *);
 int unlnk_exist(char *, int);
 int chk_path(char *, uid_t, gid_t);
-void set_ftime(char *fnm, time_t mtime, time_t atime, int frc);
-void fset_ftime(char *fnm, int, time_t mtime, time_t atime, int frc);
+void set_ftime(const char *, const struct timespec *,
+    const struct timespec *, int);
+void fset_ftime(const char *, int, const struct timespec *,
+    const struct timespec *, int);
 int set_ids(char *, uid_t, gid_t);
 int fset_ids(char *, int, uid_t, gid_t);
 void set_pmode(char *, mode_t);
@@ -282,7 +284,8 @@ int map_dev(ARCHD *, u_long, u_long);
 #endif /* NOCPIO */
 int atdir_start(void);
 void atdir_end(void);
-void add_atdir(char *, dev_t, ino_t, time_t, time_t);
+void add_atdir(char *, dev_t, ino_t, const struct timespec *,
+    const struct timespec *);
 int do_atdir(const char *, dev_t, ino_t);
 int dir_start(void);
 void add_dir(char *, struct stat *, int);

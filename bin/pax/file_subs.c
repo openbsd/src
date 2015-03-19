@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.46 2015/03/15 06:05:59 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.47 2015/03/19 05:14:24 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -147,8 +147,8 @@ file_close(ARCHD *arcn, int fd)
 	if (pmode)
 		fset_pmode(arcn->name, fd, arcn->sb.st_mode);
 	if (patime || pmtime)
-		fset_ftime(arcn->name, fd, arcn->sb.st_mtime,
-		    arcn->sb.st_atime, 0);
+		fset_ftime(arcn->name, fd, &arcn->sb.st_mtim,
+		    &arcn->sb.st_atim, 0);
 	if (close(fd) < 0)
 		syswarn(0, errno, "Unable to close file descriptor on %s",
 		    arcn->name);
@@ -525,7 +525,7 @@ badlink:
 	}
 
 	if (patime || pmtime)
-		set_ftime(nm, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+		set_ftime(nm, &arcn->sb.st_mtim, &arcn->sb.st_atim, 0);
 	return(0);
 }
 
@@ -676,14 +676,14 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
  */
 
 void
-set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
+set_ftime(const char *fnm, const struct timespec *mtimp,
+    const struct timespec *atimp, int frc)
 {
 	struct timespec tv[2];
 
-	tv[0].tv_sec = atime;
-	tv[0].tv_nsec = 0L;
-	tv[1].tv_sec = mtime;
-	tv[1].tv_nsec = 0L;
+	tv[0] = *atimp;
+	tv[1] = *mtimp;
+
 	if (!frc) {
 		/*
 		 * if we are not forcing, only set those times the user wants
@@ -704,14 +704,15 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 }
 
 void
-fset_ftime(char *fnm, int fd, time_t mtime, time_t atime, int frc)
+fset_ftime(const char *fnm, int fd, const struct timespec *mtimp,
+    const struct timespec *atimp, int frc)
 {
 	struct timespec tv[2];
 
-	tv[0].tv_sec = atime;
-	tv[0].tv_nsec = 0L;
-	tv[1].tv_sec = mtime;
-	tv[1].tv_nsec = 0L;
+	
+	tv[0] = *atimp;
+	tv[1] = *mtimp;
+
 	if (!frc) {
 		/*
 		 * if we are not forcing, only set those times the user wants
@@ -834,10 +835,12 @@ set_attr(const struct file_times *ft, int force_times, mode_t mode,
 		/* Whew, it's a match!  Is there anything to change? */
 		if (do_mode && (mode & ABITS) != (sb.st_mode & ABITS))
 			fset_pmode(ft->ft_name, fd, mode);
-		if (((force_times || patime) && ft->ft_atime != sb.st_atime) ||
-		    ((force_times || pmtime) && ft->ft_mtime != sb.st_mtime))
-			fset_ftime(ft->ft_name, fd, ft->ft_mtime,
-			    ft->ft_atime, force_times);
+		if (((force_times || patime) &&
+		    timespeccmp(&ft->ft_atim, &sb.st_atim, !=)) ||
+		    ((force_times || pmtime) &&
+		    timespeccmp(&ft->ft_mtim, &sb.st_mtim, !=)))
+			fset_ftime(ft->ft_name, fd, &ft->ft_mtim,
+			    &ft->ft_atim, force_times);
 		r = 0;
 	}
 	close(fd);
@@ -1042,8 +1045,8 @@ rdfile_close(ARCHD *arcn, int *fd)
 	 * user wants last access time reset
 	 */
 	if (tflag)
-		fset_ftime(arcn->org_name, *fd, arcn->sb.st_mtime,
-		    arcn->sb.st_atime, 1);
+		fset_ftime(arcn->org_name, *fd, &arcn->sb.st_mtim,
+		    &arcn->sb.st_atim, 1);
 
 	(void)close(*fd);
 	*fd = -1;
@@ -1100,7 +1103,7 @@ set_crc(ARCHD *arcn, int fd)
 		paxwarn(1, "File changed size %s", arcn->org_name);
 	else if (fstat(fd, &sb) < 0)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
-	else if (arcn->sb.st_mtime != sb.st_mtime)
+	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, !=))
 		paxwarn(1, "File %s was modified during read", arcn->org_name);
 	else if (lseek(fd, (off_t)0L, SEEK_SET) < 0)
 		syswarn(1, errno, "File rewind failed on: %s", arcn->org_name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.46 2015/03/17 03:23:17 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.47 2015/03/19 05:14:24 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -420,11 +420,11 @@ chk_ftime(ARCHD *arcn)
 			/*
 			 * found the file, compare the times, save the newer
 			 */
-			if (arcn->sb.st_mtime > pt->mtime) {
+			if (timespeccmp(&arcn->sb.st_mtim, &pt->mtim, >)) {
 				/*
 				 * file is newer
 				 */
-				pt->mtime = arcn->sb.st_mtime;
+				pt->mtim = arcn->sb.st_mtim;
 				return(0);
 			}
 			/*
@@ -444,7 +444,7 @@ chk_ftime(ARCHD *arcn)
 		 */
 		if ((pt->seek = lseek(ffd, (off_t)0, SEEK_END)) >= 0) {
 			if (write(ffd, arcn->name, namelen) == namelen) {
-				pt->mtime = arcn->sb.st_mtime;
+				pt->mtim = arcn->sb.st_mtim;
 				pt->namelen = namelen;
 				pt->fow = ftab[indx];
 				ftab[indx] = pt;
@@ -734,7 +734,7 @@ sltab_process_one(struct slinode *s, struct slpath *p, const char *first,
 		set_pmode(path, mode);
 
 	if (patime || pmtime)
-		set_ftime(path, sb.st_mtime, sb.st_atime, 0);
+		set_ftime(path, &sb.st_mtim, &sb.st_atim, 0);
 
 	/*
 	 * If we tried to link to first but failed, then this new symlink
@@ -1289,7 +1289,8 @@ atdir_end(void)
  */
 
 void
-add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
+add_atdir(char *fname, dev_t dev, ino_t ino, const struct timespec *mtimp,
+    const struct timespec *atimp)
 {
 	ATDIR *pt;
 	sigset_t allsigs, savedsigs;
@@ -1329,8 +1330,8 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 		if ((pt->ft.ft_name = strdup(fname)) != NULL) {
 			pt->ft.ft_dev = dev;
 			pt->ft.ft_ino = ino;
-			pt->ft.ft_mtime = mtime;
-			pt->ft.ft_atime = atime;
+			pt->ft.ft_mtim = *mtimp;
+			pt->ft.ft_atim = *atimp;
 			pt->fow = atab[indx];
 			atab[indx] = pt;
 			sigprocmask(SIG_SETMASK, &savedsigs, NULL);
@@ -1491,8 +1492,8 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 		    " directory: %s", name);
 		return;
 	}
-	dblk->ft.ft_mtime = psb->st_mtime;
-	dblk->ft.ft_atime = psb->st_atime;
+	dblk->ft.ft_mtim = psb->st_mtim;
+	dblk->ft.ft_atim = psb->st_atim;
 	dblk->ft.ft_ino = psb->st_ino;
 	dblk->ft.ft_dev = psb->st_dev;
 	dblk->mode = psb->st_mode & ABITS;
