@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.14 2015/03/19 21:22:15 bcallah Exp $ */
+/* $OpenBSD: cmode.c,v 1.15 2015/03/19 21:48:05 bcallah Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -66,18 +66,18 @@ static PF cmode_spec[] = {
 	cc_char,	/* : */
 };
 
-static struct KEYMAPE (1 + IMAPEXT) cmode_cmap = {
+static struct KEYMAPE (1) cmode_cmap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{ 'P', 'P', cmode_cCP, NULL }
 	}
 };
 
-static struct KEYMAPE (3 + IMAPEXT) cmodemap = {
+static struct KEYMAPE (3) cmodemap = {
 	3,
-	3 + IMAPEXT,
+	3,
 	rescan,
 	{
 		{ CCHR('C'), CCHR('M'), cmode_cc, (KEYMAP *) &cmode_cmap },

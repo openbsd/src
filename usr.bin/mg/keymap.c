@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.54 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.55 2015/03/19 21:48:05 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -31,9 +31,9 @@ static PF cHa[] = {
 	desckey			/* c */
 };
 
-struct KEYMAPE (2 + IMAPEXT) helpmap = {
+struct KEYMAPE (2) helpmap = {
 	2,
-	2 + IMAPEXT,
+	2,
 	rescan,
 	{
 		{
@@ -66,9 +66,9 @@ static PF cCsc[] = {
 	csfindtext		/* t */
 };
 
-static struct KEYMAPE (1 + IMAPEXT) cCsmap = {
+static struct KEYMAPE (1) cCsmap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{
@@ -81,9 +81,9 @@ static PF cCs[] = {
 	NULL			/* s */
 };
 
-struct KEYMAPE (2 + IMAPEXT) ccmap = {
+struct KEYMAPE (2) ccmap = {
 	2,
-	2 + IMAPEXT,
+	2,
 	rescan,
 	{
 		{
@@ -106,9 +106,9 @@ static PF cX4b[] = {
 	rescan,			/* e */
 	poptofile		/* f */
 };
-static struct KEYMAPE (2 + IMAPEXT) cX4map = {
+static struct KEYMAPE (2) cX4map = {
 	2,
-	2 + IMAPEXT,
+	2,
 	rescan,
 	{
 		{
@@ -189,9 +189,9 @@ static PF cXcar[] = {
 	undo			/* u */
 };
 
-struct KEYMAPE (6 + IMAPEXT) cXmap = {
+struct KEYMAPE (6) cXmap = {
 	6,
-	6 + IMAPEXT,
+	6,
 	rescan,
 	{
 		{
@@ -301,9 +301,9 @@ static PF metatilde[] = {
 	delbword		/* DEL */
 };
 
-struct KEYMAPE (1 + IMAPEXT) metasqlmap = {
+struct KEYMAPE (1) metasqlmap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{
@@ -312,9 +312,9 @@ struct KEYMAPE (1 + IMAPEXT) metasqlmap = {
 	}
 };
 
-struct KEYMAPE (8 + IMAPEXT) metamap = {
+struct KEYMAPE (8) metamap = {
 	8,
-	8 + IMAPEXT,
+	8,
 	rescan,
 	{
 		{
@@ -397,13 +397,9 @@ static PF fund_cb[] = {
 	showmatch		/* ) ] }  */
 };
 
-#ifndef	FUND_XMAPS
-#define NFUND_XMAPS	0	/* extra map sections after normal ones */
-#endif
-
-static struct KEYMAPE (8 + NFUND_XMAPS + IMAPEXT) fundmap = {
-	8 + NFUND_XMAPS,
-	8 + NFUND_XMAPS + IMAPEXT,
+static struct KEYMAPE (8) fundmap = {
+	8,
+	8,
 	selfinsert,
 	{
 		{
@@ -430,9 +426,6 @@ static struct KEYMAPE (8 + NFUND_XMAPS + IMAPEXT) fundmap = {
 		{
 			CCHR('?'), CCHR('?'), fund_del, NULL
 		},
-#ifdef FUND_XMAPS
-		FUND_XMAPS,
-#endif /* FUND_XMAPS */
 	}
 };
 
@@ -440,9 +433,9 @@ static PF fill_sp[] = {
 	fillword		/* ' ' */
 };
 
-static struct KEYMAPE (1 + IMAPEXT) fillmap = {
+static struct KEYMAPE (1) fillmap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{ ' ', ' ', fill_sp, NULL }
@@ -456,9 +449,9 @@ static PF indent_lf[] = {
 	lfindent		/* ^M */
 };
 
-static struct KEYMAPE (1 + IMAPEXT) indntmap = {
+static struct KEYMAPE (1) indntmap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{
@@ -472,9 +465,9 @@ static PF notab_tab[] = {
 	space_to_tabstop	/* ^I */
 };
 
-static struct KEYMAPE (1 + IMAPEXT) notabmap = {
+static struct KEYMAPE (1) notabmap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{
@@ -484,9 +477,9 @@ static struct KEYMAPE (1 + IMAPEXT) notabmap = {
 };
 #endif /* NOTAB */
 
-static struct KEYMAPE (1 + IMAPEXT) overwmap = {
+static struct KEYMAPE (1) overwmap = {
 	0,
-	1 + IMAPEXT,		/* 1 to avoid 0 sized array */
+	1,		/* 1 to avoid 0 sized array */
 	rescan,
 	{
 		/* unused dummy entry for VMS C */
