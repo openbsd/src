@@ -177,13 +177,6 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 	/* given "af" can be PF_UNSPEC, we need the real af for "s" */
 	af = r->ai_family;
 	freeaddrinfo(res);
-#if 0
-	/*
-	 * try to rresvport() to the same port. This will make rresvport()
-	 * fail it's first bind, resulting in it choosing a random port.
-	 */
-	lport--;
-#endif
 	if (fd2p == 0) {
 		write(s, "", 1);
 		lport = 0;
