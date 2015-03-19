@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.78 2015/03/18 14:46:59 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.79 2015/03/19 22:48:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -295,7 +295,7 @@ Xwrite(char *args, struct mbr *mbr)
 
 	/* Make sure GPT doesn't get in the way. */
 	if (reinited)
-		MBR_zapgpt(fd, &dos_mbr, disk.size - 1);
+		MBR_zapgpt(fd, &dos_mbr, DL_GETDSIZE(&dl) - 1);
 
 	/* Refresh in memory copy to reflect what was just written. */
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
