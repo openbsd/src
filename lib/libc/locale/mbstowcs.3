@@ -1,4 +1,4 @@
-.\" $OpenBSD: mbstowcs.3,v 1.5 2013/06/05 03:39:22 tedu Exp $
+.\" $OpenBSD: mbstowcs.3,v 1.6 2015/03/19 12:41:51 jmc Exp $
 .\" $NetBSD: mbstowcs.3,v 1.6 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 19 2015 $
 .Dt MBSTOWCS 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -46,9 +46,9 @@ converts a null-terminated multibyte character string pointed to by
 to the corresponding wide-character string and stores it in the array
 pointed to by
 .Fa pwcs .
-This function may modify the first at most
+Up to
 .Fa n
-elements of the array pointed to by
+elements are stored in
 .Fa pwcs .
 Each character will be converted as if
 .Xr mbtowc 3
