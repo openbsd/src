@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.117 2015/03/19 22:34:59 zhuk Exp $
+.\"	$OpenBSD: sh.1,v 1.118 2015/03/19 22:38:28 zhuk Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1416,7 +1416,14 @@ is used to split fields;
 any
 .Ev IFS
 characters at the beginning and end of input are ignored.
-If the value of
+If
+.Ev IFS
+is unset, the default value consisting of
+.Aq space ,
+.Aq tab
+and
+.Aq newline
+is used; if the value of
 .Ev IFS
 is null, no field splitting is performed.
 .Pp
