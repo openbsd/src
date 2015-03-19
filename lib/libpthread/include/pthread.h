@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.40 2013/06/17 19:11:54 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.41 2015/03/19 21:18:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -163,14 +163,7 @@ struct pthread_once {
 #define PTHREAD_PRIO_PROTECT	2
 
 /*
- * Mutex types (Single UNIX Specification, Version 2, 1997).
- *
- * Note that a mutex attribute with one of the following types:
- *
- *	PTHREAD_MUTEX_NORMAL
- *	PTHREAD_MUTEX_RECURSIVE
- *
- * will deviate from POSIX specified semantics.
+ * Mutex types.
  */
 enum pthread_mutextype {
 	PTHREAD_MUTEX_ERRORCHECK	= 1,	/* Error checking mutex */
@@ -180,6 +173,10 @@ enum pthread_mutextype {
 	PTHREAD_MUTEX_TYPE_MAX
 };
 
+#define PTHREAD_MUTEX_ERRORCHECK	PTHREAD_MUTEX_ERRORCHECK
+#define PTHREAD_MUTEX_RECURSIVE		PTHREAD_MUTEX_RECURSIVE
+#define PTHREAD_MUTEX_NORMAL		PTHREAD_MUTEX_NORMAL
+#define PTHREAD_MUTEX_STRICT_NP		PTHREAD_MUTEX_STRICT_NP
 #define PTHREAD_MUTEX_DEFAULT		PTHREAD_MUTEX_STRICT_NP
 
 /*
