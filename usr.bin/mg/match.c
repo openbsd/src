@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.17 2013/05/31 18:03:44 lum Exp $	*/
+/*	$OpenBSD: match.c,v 1.18 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,6 +9,10 @@
  * other characters.  It would be better to have a full-blown syntax table,
  * but there's enough overhead in the editor as it is.
  */
+
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdio.h>
 
 #include "def.h"
 #include "key.h"

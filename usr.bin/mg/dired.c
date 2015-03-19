@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.69 2014/12/30 22:05:32 bcallah Exp $	*/
+/*	$OpenBSD: dired.c,v 1.70 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,24 +6,28 @@
  * by Robert A. Larson
  */
 
+#include <sys/queue.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "def.h"
 #include "funmap.h"
 #include "kbd.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-
-#include <ctype.h>
-#include <limits.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <err.h>
-#include <errno.h>
-#include <libgen.h>
-#include <stdarg.h>
 
 void		 dired_init(void);
 static int	 dired(int, int);

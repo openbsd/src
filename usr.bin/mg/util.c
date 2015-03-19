@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2015/03/16 13:47:48 bcallah Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,9 +9,12 @@
  * are all command processors.
  */
 
-#include "def.h"
-
+#include <sys/queue.h>
 #include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+
+#include "def.h"
 
 /*
  * Display a bunch of useful information about the current location of dot.

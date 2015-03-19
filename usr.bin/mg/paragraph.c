@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.35 2014/11/16 04:16:41 guenther Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.36 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -7,8 +7,12 @@
  * and GNU-ified by mwm@ucbvax.	 Several bug fixes by blarson@usc-oberon.
  */
 
+#include <sys/queue.h>
 #include <ctype.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "def.h"
 

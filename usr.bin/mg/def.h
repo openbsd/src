@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.142 2015/03/16 13:47:48 bcallah Exp $	*/
+/*	$OpenBSD: def.h,v 1.143 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -10,9 +10,8 @@
  * per-terminal definitions are in special header files.
  */
 
-#include	"sysdef.h"	/* Order is critical.		 */
-#include	"ttydef.h"
 #include	"chrdef.h"
+#include	"ttydef.h"
 
 typedef int	(*PF)(int, int);	/* generally useful type */
 
@@ -106,6 +105,12 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define KREG	0x04		/* This is a region-based kill */
 
 #define MAX_TOKEN 64
+
+/*
+ * Previously from sysdef.h
+ */
+typedef int	RSIZE;		/* Type for file/region sizes    */
+typedef short	KCHAR;		/* Type for internal keystrokes  */
 
 /*
  * This structure holds the starting position
@@ -233,6 +238,17 @@ struct mgwin {
 
 struct undo_rec;
 TAILQ_HEAD(undoq, undo_rec);
+
+/*
+ * Previously from sysdef.h
+ * Only used in struct buffer.
+ */
+struct fileinfo {
+        uid_t           fi_uid;
+        gid_t           fi_gid;
+        mode_t          fi_mode;
+        struct timespec fi_mtime;       /* Last modified time */
+};
 
 /*
  * Text is kept in buffers. A buffer header, described

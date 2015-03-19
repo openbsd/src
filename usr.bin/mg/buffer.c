@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.95 2015/03/16 13:47:48 bcallah Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.96 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,11 +6,18 @@
  *		Buffer handling.
  */
 
+#include <sys/queue.h>
+#include <errno.h>
+#include <libgen.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "def.h"
 #include "kbd.h"		/* needed for modes */
-
-#include <libgen.h>
-#include <stdarg.h>
 
 #ifndef DIFFTOOL
 #define DIFFTOOL "/usr/bin/diff"

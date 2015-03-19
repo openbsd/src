@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.8 2014/11/16 04:16:41 guenther Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.9 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -6,17 +6,19 @@
  * Author: Sunil Nimmagadda <sunil@sunilnimmagadda.com>
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/queue.h>
-
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "def.h"
 

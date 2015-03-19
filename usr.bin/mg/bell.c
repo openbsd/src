@@ -1,4 +1,4 @@
-/*	$OpenBSD: bell.c,v 1.2 2014/03/22 11:05:37 lum Exp $	*/
+/*	$OpenBSD: bell.c,v 1.3 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -10,6 +10,11 @@
 /*
  * Control how mg communicates with the user.
  */
+
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "def.h"
 

@@ -1,16 +1,22 @@
-/*	$OpenBSD: grep.c,v 1.42 2014/11/16 04:16:41 guenther Exp $	*/
+/*	$OpenBSD: grep.c,v 1.43 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain */
 
-#include "def.h"
-#include "kbd.h"
-#include "funmap.h"
-
+#include <sys/queue.h>
 #include <sys/types.h>
 #include <ctype.h>
 #include <libgen.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <unistd.h>
+
+#include "def.h"
+#include "kbd.h"
+#include "funmap.h"
 
 int	 globalwd = FALSE;
 static int	 compile_goto_error(int, int);

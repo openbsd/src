@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.17 2015/03/17 18:08:52 bcallah Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.18 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,7 +9,13 @@
  * and let me ask some questions the standard macros (in
  * ctype.h) don't let you ask.
  */
-#include	"def.h"
+
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "def.h"
 
 /*
  * This table, indexed by a character drawn

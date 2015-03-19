@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.44 2015/02/17 00:34:33 tedu Exp $	*/
+/*	$OpenBSD: display.c,v 1.45 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -10,10 +10,16 @@
  * that can be done; the "vtputc" interface is a real
  * pig.
  */
+
+#include <sys/queue.h>
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "def.h"
 #include "kbd.h"
-
-#include <ctype.h>
 
 /*
  * You can change these back to the types

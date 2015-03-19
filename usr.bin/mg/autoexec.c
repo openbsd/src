@@ -1,11 +1,16 @@
-/* $OpenBSD: autoexec.c,v 1.15 2014/10/11 03:03:44 doug Exp $ */
+/* $OpenBSD: autoexec.c,v 1.16 2015/03/19 21:22:15 bcallah Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
+#include <sys/queue.h>
+#include <fnmatch.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "def.h"
 #include "funmap.h"
-
-#include <fnmatch.h>
 
 struct autoexec {
 	SLIST_ENTRY(autoexec) next;	/* link in the linked list */

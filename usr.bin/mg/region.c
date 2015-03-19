@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.34 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: region.c,v 1.35 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,11 +9,15 @@
  * internal use.
  */
 
-#include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
-
+#include <sys/types.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

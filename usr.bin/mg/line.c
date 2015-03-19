@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.54 2014/11/16 04:16:41 guenther Exp $	*/
+/*	$OpenBSD: line.c,v 1.55 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -17,11 +17,14 @@
  * nonsense.
  */
 
-#include "def.h"
-
+#include <sys/queue.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "def.h"
 
 /*
  * Allocate a new line of size `used'.  lrealloc() can be called if the line

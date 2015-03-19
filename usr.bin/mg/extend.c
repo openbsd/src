@@ -1,22 +1,27 @@
-/*	$OpenBSD: extend.c,v 1.59 2015/03/17 18:08:52 bcallah Exp $	*/
+/*	$OpenBSD: extend.c,v 1.60 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
  */
-#include "chrdef.h"
-#include "def.h"
-#include "kbd.h"
-#include "funmap.h"
 
+#include <sys/queue.h>
 #include <sys/types.h>
 #include <ctype.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "chrdef.h"
+#include "def.h"
+#include "funmap.h"
+#include "kbd.h"
+#include "key.h"
 #include "macro.h"
 
-#include "key.h"
 #ifndef	BINDKEY
 #define	BINDKEY			/* bindkey is used by FKEYS startup code */
 #endif /* !BINDKEY */

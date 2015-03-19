@@ -1,4 +1,4 @@
-/*	$OpenBSD: spawn.c,v 1.11 2006/08/01 22:16:03 jason Exp $	*/
+/*	$OpenBSD: spawn.c,v 1.12 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -7,10 +7,13 @@
  * Assumes POSIX job control.
  */
 
-#include "def.h"
-
-#include <termios.h>
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdio.h>
 #include <term.h>
+#include <termios.h>
+
+#include "def.h"
 
 /*
  * This causes mg to send itself a stop signal.  It assumes the parent

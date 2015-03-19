@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.35 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.36 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,15 +9,23 @@
  * keyboard characters, and write characters to the display in a barely
  * buffered fashion.
  */
-#include "def.h"
 
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <termios.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <term.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include "def.h"
 
 #define NOBUF	512			/* Output buffer size. */
 

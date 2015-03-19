@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.13 2015/03/16 13:47:48 bcallah Exp $ */
+/* $OpenBSD: cmode.c,v 1.14 2015/03/19 21:22:15 bcallah Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -9,11 +9,15 @@
  * Implement an non-irritating KNF-compliant mode for editing
  * C code.
  */
+
+#include <sys/queue.h>
 #include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
 
 #include "def.h"
-#include "kbd.h"
 #include "funmap.h"
+#include "kbd.h"
 
 /* Pull in from modes.c */
 extern int changemode(int, int, char *);

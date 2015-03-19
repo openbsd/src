@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.57 2014/11/16 04:16:41 guenther Exp $	*/
+/*	$OpenBSD: echo.c,v 1.58 2015/03/19 21:22:15 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,14 +9,18 @@
  * of the display screen. Used by the entire known universe.
  */
 
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <term.h>
+
 #include "def.h"
+#include "funmap.h"
 #include "key.h"
 #include "macro.h"
-
-#include "funmap.h"
-
-#include <stdarg.h>
-#include <term.h>
 
 static char	*veread(const char *, char *, size_t, int, va_list);
 static int	 complt(int, int, char *, size_t, int, int *);

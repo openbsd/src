@@ -1,7 +1,13 @@
-/* $OpenBSD: undo.c,v 1.55 2014/03/20 07:47:29 lum Exp $ */
+/* $OpenBSD: undo.c,v 1.56 2015/03/19 21:22:15 bcallah Exp $ */
 /*
  * This file is in the public domain
  */
+
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "def.h"
 #include "kbd.h"
