@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.144 2015/03/16 13:47:48 bcallah Exp $	*/
+/*	$OpenBSD: theo.c,v 1.145 2015/03/19 21:22:15 bcallah Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -24,9 +24,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/queue.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "def.h"
-#include "kbd.h"
 #include "funmap.h"
+#include "kbd.h"
 
 void		theo_init(void);
 static int	theo_analyze(int, int);
