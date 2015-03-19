@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.145 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: theo.c,v 1.146 2015/03/19 21:48:05 bcallah Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -42,9 +42,9 @@ static PF theo_pf[] = {
 	theo_analyze
 };
 
-static struct KEYMAPE (1 + IMAPEXT) theomap = {
+static struct KEYMAPE (1) theomap = {
 	1,
-	1 + IMAPEXT,
+	1,
 	rescan,
 	{
 		{ CCHR('M'), CCHR('M'), theo_pf, NULL }
