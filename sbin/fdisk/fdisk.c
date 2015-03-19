@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.71 2015/03/18 14:46:59 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.72 2015/03/19 15:44:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -77,7 +77,6 @@ main(int argc, char *argv[])
 #else
 	char *mbrfile = NULL;
 #endif
-	struct mbr mbr;
 	struct dos_mbr dos_mbr;
 
 	while ((ch = getopt(argc, argv, "ieguf:c:h:s:l:y")) != -1) {
