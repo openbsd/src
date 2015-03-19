@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.116 2015/03/18 22:18:19 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.117 2015/03/19 22:34:59 zhuk Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2015 $
+.Dd $Mdocdate: March 19 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -857,8 +857,7 @@ In this mode text is entered normally.
 A
 .Aq newline
 executes the current command line.
-The command line is entered into command history,
-providing it is not empty.
+The command line, unless empty, is entered into command history.
 The
 .Aq ESC
 key is used to enter command mode,
