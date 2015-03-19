@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.43 2015/03/19 13:11:05 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.44 2015/03/19 13:36:01 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -199,18 +199,19 @@ zeros are ignored in version numbers, see example below).
 If an input string does not match the pattern, then it is compared
 using the byte compare function.
 All string comparisons are performed in the C locale.
-.Bl -tag -width indent
-.It Example:
-.It $ ls sort* | sort -V
-.It sort-1.022.tgz
-.It sort-1.23.tgz
-.It sort-1.23.1.tgz
-.It sort-1.024.tgz
-.It sort-1.024.003.
-.It sort-1.024.003.tgz
-.It sort-1.024.07.tgz
-.It sort-1.024.009.tgz
-.El
+.Pp
+For example:
+.Bd -literal -offset indent
+$ ls sort* | sort -V
+sort-1.022.tgz
+sort-1.23.tgz
+sort-1.23.1.tgz
+sort-1.024.tgz
+sort-1.024.003.
+sort-1.024.003.tgz
+sort-1.024.07.tgz
+sort-1.024.009.tgz
+.Ed
 .El
 .Pp
 The treatment of field separators can be altered using these options:
@@ -324,7 +325,7 @@ Print some extra information about the sorting process to the
 standard output.
 .It Fl Fl files0-from Ns = Ns Ar filename
 Take the input file list from the file
-.Ar filename.
+.Ar filename .
 The file names must be separated by NUL
 (like the output produced by the command
 .Dq find ... -print0 ) .
@@ -600,9 +601,8 @@ A
 command appeared in
 .At v3 .
 .Sh AUTHORS
-Gabor Kovesdan <gabor@FreeBSD.org>
-.br
-Oleg Moskalenko <mom040267@gmail.com>
+.An Gabor Kovesdan Aq Mt gabor@FreeBSD.org
+.An Oleg Moskalenko Aq Mt mom040267@gmail.com
 .Sh NOTES
 This implementation of
 .Nm
