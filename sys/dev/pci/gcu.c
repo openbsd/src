@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.c,v 1.3 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: gcu.c,v 1.4 2015/03/19 00:18:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -28,7 +28,7 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/pci/pcidevs.h>
-#include <dev/pci/gcu.h>
+#include <dev/pci/gcu_var.h>
 
 int gcu_probe(struct device *, void *, void *);
 void gcu_attach(struct device *, struct device *, void *);
