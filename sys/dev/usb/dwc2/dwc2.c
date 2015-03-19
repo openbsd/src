@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.23 2015/03/19 10:29:16 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.24 2015/03/19 10:31:29 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -463,7 +463,7 @@ dwc2_timeout(void *addr)
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&dxfer->abort_task, dwc2_timeout_task, addr,
-	    USB_TASK_TYPE_GENERIC);
+	    USB_TASK_TYPE_ABORT);
 	usb_add_task(dxfer->xfer.pipe->device, &dxfer->abort_task);
 }
 
