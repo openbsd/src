@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.24 2015/03/19 10:31:29 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.25 2015/03/19 10:39:17 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1029,7 +1029,7 @@ dwc2_device_ctrl_start(struct usbd_xfer *xfer)
 STATIC void
 dwc2_device_ctrl_abort(struct usbd_xfer *xfer)
 {
-#ifdef DWC2_DEBUG
+#ifdef DIAGNOSTIC
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 #endif
 	KASSERT(mtx_owned(&sc->sc_lock));
@@ -1092,7 +1092,7 @@ dwc2_device_bulk_start(struct usbd_xfer *xfer)
 STATIC void
 dwc2_device_bulk_abort(struct usbd_xfer *xfer)
 {
-#ifdef DWC2_DEBUG
+#ifdef DIAGNOSTIC
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 #endif
 	KASSERT(mtx_owned(&sc->sc_lock));
@@ -1163,7 +1163,7 @@ dwc2_device_intr_start(struct usbd_xfer *xfer)
 STATIC void
 dwc2_device_intr_abort(struct usbd_xfer *xfer)
 {
-#ifdef DWC2_DEBUG
+#ifdef DIAGNOSTIC
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 #endif
 
@@ -1238,7 +1238,7 @@ dwc2_device_isoc_start(struct usbd_xfer *xfer)
 void
 dwc2_device_isoc_abort(struct usbd_xfer *xfer)
 {
-#ifdef DWC2_DEBUG
+#ifdef DIAGNOSTIC
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 #endif
 	KASSERT(mtx_owned(&sc->sc_lock));
