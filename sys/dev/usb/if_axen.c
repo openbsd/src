@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.11 2015/01/22 10:23:47 mpi Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.12 2015/03/20 11:58:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -948,6 +948,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct axen_softc	*sc = c->axen_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	u_char			*buf = c->axen_buf;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	u_int32_t		total_len;
 	u_int32_t		rx_hdr, pkt_hdr;
@@ -1053,7 +1054,6 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		/* skip pseudo header (2byte) */
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = pkt_len - 2;
 
 #ifdef AXEN_TOE
@@ -1078,14 +1078,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		memcpy(mtod(m, char *), buf + 2, pkt_len - 2);
 
-		/* push the packet up */
-		s = splnet();
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
-		splx(s);
+		ml_enqueue(&ml, m);
 
 nextpkt:
 		/*
@@ -1100,6 +1093,11 @@ nextpkt:
 	} while( pkt_count > 0);
 
 done:
+	/* push the packet up */
+	s = splnet();
+	if_input(ifp, &ml);
+	splx(s);
+
 	/* clear buffer for next transaction */
 	memset(c->axen_buf, 0, sc->axen_bufsz);
 
