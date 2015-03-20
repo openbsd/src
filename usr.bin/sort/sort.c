@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.46 2015/03/19 13:11:05 jmc Exp $	*/
+/*	$OpenBSD: sort.c,v 1.47 2015/03/20 00:26:38 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -167,32 +167,36 @@ usage(int exit_val)
 static void
 read_fns_from_file0(const char *fn)
 {
-	if (fn) {
-		struct file0_reader f0r;
-		FILE *f;
+	FILE *f;
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
 
-		f = fopen(fn, "r");
-		if (f == NULL)
-			err(2, "%s", fn);
+	if (fn == NULL)
+		return;
 
-		memset(&f0r, 0, sizeof(f0r));
-		f0r.f = f;
+	f = fopen(fn, "r");
+	if (f == NULL)
+		err(2, "%s", fn);
 
-		while (!feof(f)) {
-			char *line = read_file0_line(&f0r);
-
-			if (line && *line) {
-				if (argc_from_file0 == (size_t)-1)
-					argc_from_file0 = 0;
-				++argc_from_file0;
-				argv_from_file0 = sort_reallocarray(argv_from_file0,
-				    argc_from_file0, sizeof(char *));
-				argv_from_file0[argc_from_file0 - 1] =
-				    sort_strdup(line);
-			}
+	while ((linelen = getdelim(&line, &linesize, '\0', f)) != -1) {
+		if (*line != '\0') {
+			if (argc_from_file0 == (size_t)-1)
+				argc_from_file0 = 0;
+			++argc_from_file0;
+			argv_from_file0 = sort_reallocarray(argv_from_file0,
+			    argc_from_file0, sizeof(char *));
+			argv_from_file0[argc_from_file0 - 1] = line;
+		} else {
+			free(line);
 		}
-		closefile(f, fn);
+		line = NULL;
+		linesize = 0;
 	}
+	if (ferror(f))
+		err(2, "%s: getdelim", fn);
+
+	closefile(f, fn);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.3 2015/03/20 00:26:38 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -159,41 +159,6 @@ file_is_tmp(const char *fn)
 	}
 
 	return ret;
-}
-
-/*
- * Read zero-terminated line from a file
- */
-char *
-read_file0_line(struct file0_reader *f0r)
-{
-	size_t pos = 0;
-	int c;
-
-	if (f0r->f == NULL || feof(f0r->f))
-		return NULL;
-
-	if (f0r->current_line && f0r->current_sz > 0)
-		f0r->current_line[0] = 0;
-
-	while (!feof(f0r->f)) {
-		c = fgetc(f0r->f);
-		if (feof(f0r->f) || c == EOF)
-			break;
-		if ((pos + 1) >= f0r->current_sz) {
-			f0r->current_line = sort_reallocarray(f0r->current_line,
-			    f0r->current_sz + 2, 2);
-			f0r->current_sz = (f0r->current_sz + 2) * 2;
-		}
-		f0r->current_line[pos] = (char)c;
-		if (c == 0)
-			break;
-		else
-			f0r->current_line[pos + 1] = 0;
-		++pos;
-	}
-
-	return f0r->current_line;
 }
 
 /*
