@@ -1,0 +1,33 @@
+PD-NEXTLINE(1)              General Commands Manual             PD-NEXTLINE(1)
+
+
+
+NNAAMMEE
+       PD-nextline - paragraph distance macro in next-line scope
+
+DDEESSCCRRIIPPTTIIOONN
+       some text
+
+NNEEXXTT SSEECCTTIIOONN
+       first paragraph
+       second paragraph
+
+       third paragraph
+
+   SSuubbsseeccttiioonn
+       first paragraph
+       second paragraph
+
+       third paragraph
+
+       tag   list text
+       tag   list text
+
+       tag   list text
+
+       normal text bboolldd tteexxtt normal text
+       final paragraph
+
+
+
+OpenBSD                         March 20, 2015                  PD-NEXTLINE(1)
