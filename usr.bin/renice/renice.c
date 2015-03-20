@@ -1,7 +1,7 @@
-/*	$OpenBSD: renice.c,v 1.16 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: renice.c,v 1.17 2015/03/20 19:42:29 millert Exp $	*/
 
 /*
- * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2009, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,9 +30,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#define	RENICE_NONE		0
+#define	RENICE_ABSOLUTE		1
+#define	RENICE_INCREMENT	2
+
 struct renice_param {
 	int pri;
-	int type;
+	short pri_type;
+	short id_type;
 	id_t id;
 };
 
@@ -45,26 +50,30 @@ main(int argc, char **argv)
 {
 	struct renice_param *params, *p;
 	struct passwd *pw;
-	int ch, type = PRIO_PROCESS;
-	int nflag = 0, pri = 0;
+	int ch, id_type = PRIO_PROCESS;
+	int pri = 0, pri_type = RENICE_NONE;
 	char *ep, *idstr;
 	const char *errstr;
-	long l;
 
 	if (argc < 3)
 		usage();
 
 	/* Allocate enough space for the worst case. */
-	params = p = calloc(argc - 1, sizeof(*params));
+	params = p = reallocarray(NULL, argc - 1, sizeof(*params));
 	if (params == NULL)
 		err(1, NULL);
 
 	/* Backwards compatibility: first arg may be priority. */
 	if (isdigit((unsigned char)argv[1][0]) ||
-	    (argv[1][0] == '-' && isdigit((unsigned char)argv[1][1]))) {
-		argv[0] = "-n";
-		argc++;
-		argv--;
+	    ((argv[1][0] == '+' || argv[1][0] == '-') &&
+	    isdigit((unsigned char)argv[1][1]))) {
+		pri = (int)strtol(argv[1], &ep, 10);
+		if (*ep != '\0' || ep == argv[1]) {
+			warnx("invalid priority %s", argv[1]);
+			usage();
+		}
+		pri_type = RENICE_ABSOLUTE;
+		optind = 2;
 	}
 
 	/*
@@ -75,33 +84,32 @@ main(int argc, char **argv)
 		if ((ch = getopt(argc, argv, "g:n:p:u:")) != -1) {
 			switch (ch) {
 			case 'g':
-				type = PRIO_PGRP;
+				id_type = PRIO_PGRP;
 				idstr = optarg;
 				break;
 			case 'n':
-				l = strtol(optarg, &ep, 10);
+				pri = (int)strtol(optarg, &ep, 10);
 				if (*ep != '\0' || ep == optarg) {
 					warnx("invalid increment %s", optarg);
 					usage();
 				}
-				pri = l > PRIO_MAX ? PRIO_MAX :
-				    l < PRIO_MIN ? PRIO_MIN : (int)l;
 
 				/* Set priority for previous entries? */
-				if (!nflag) {
+				if (pri_type == RENICE_NONE) {
 					struct renice_param *pp;
 					for (pp = params; pp != p; pp++) {
 						pp->pri = pri;
+						pp->pri_type = RENICE_INCREMENT;
 					}
 				}
-				nflag = 1;
+				pri_type = RENICE_INCREMENT;
 				continue;
 			case 'p':
-				type = PRIO_PROCESS;
+				id_type = PRIO_PROCESS;
 				idstr = optarg;
 				break;
 			case 'u':
-				type = PRIO_USER;
+				id_type = PRIO_USER;
 				idstr = optarg;
 				break;
 			default:
@@ -113,9 +121,10 @@ main(int argc, char **argv)
 			if (idstr == NULL)
 				break;
 		}
-		p->type = type;
+		p->id_type = id_type;
 		p->pri = pri;
-		if (type == PRIO_USER) {
+		p->pri_type = pri_type;
+		if (id_type == PRIO_USER) {
 			if ((pw = getpwnam(idstr)) == NULL) {
 				uid_t id = strtonum(idstr, 0, UID_MAX, &errstr);
 				if (!errstr)
@@ -135,7 +144,7 @@ main(int argc, char **argv)
 		}
 		p++;
 	}
-	if (!nflag)
+	if (pri_type == RENICE_NONE)
 		usage();
 	exit(renice(params, p));
 }
@@ -143,23 +152,27 @@ main(int argc, char **argv)
 static int
 renice(struct renice_param *p, struct renice_param *end)
 {
-	int old, errors = 0;
+	int new, old, errors = 0;
 
 	for (; p < end; p++) {
 		errno = 0;
-		old = getpriority(p->type, p->id);
+		old = getpriority(p->id_type, p->id);
 		if (errno) {
 			warn("getpriority: %d", p->id);
 			errors++;
 			continue;
 		}
-		if (setpriority(p->type, p->id, p->pri) == -1) {
+		if (p->pri_type == RENICE_INCREMENT)
+			p->pri += old;
+		new = p->pri > PRIO_MAX ? PRIO_MAX :
+		    p->pri < PRIO_MIN ? PRIO_MIN : p->pri;
+		if (setpriority(p->id_type, p->id, new) == -1) {
 			warn("setpriority: %d", p->id);
 			errors++;
 			continue;
 		}
 		printf("%d: old priority %d, new priority %d\n",
-		    p->id, old, p->pri);
+		    p->id, old, new);
 	}
 	return (errors);
 }

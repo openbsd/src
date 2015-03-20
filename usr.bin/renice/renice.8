@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.23 2014/05/23 06:40:57 jmc Exp $
+.\"	$OpenBSD: renice.8,v 1.24 2015/03/20 19:42:29 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 23 2014 $
+.Dd $Mdocdate: March 20 2015 $
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ utility is compliant with the
 specification,
 except the way in which processes are specified differs.
 .Pp
-The historical behavior of passing the increment as the first
+The historical behavior of passing the priority as the first
 argument is supported for backwards compatibility.
 .Sh HISTORY
 The
