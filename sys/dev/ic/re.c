@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.176 2015/03/20 11:55:10 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.177 2015/03/20 12:04:09 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -173,6 +173,8 @@ void	re_watchdog(struct ifnet *);
 int	re_ifmedia_upd(struct ifnet *);
 void	re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
+void	re_set_jumbo(struct rl_softc *);
+
 void	re_eeprom_putbyte(struct rl_softc *, int);
 void	re_eeprom_getword(struct rl_softc *, int, u_int16_t *);
 void	re_read_eeprom(struct rl_softc *, caddr_t, int, int);
@@ -209,6 +211,10 @@ struct cfdriver re_cd = {
 #define EE_CLR(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
 		CSR_READ_1(sc, RL_EECMD) & ~x)
+
+#define RL_FRAMELEN(mtu)				\
+	(mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +		\
+		ETHER_VLAN_ENCAP_LEN)
 
 static const struct re_revision {
 	u_int32_t		re_chipid;
@@ -1026,8 +1032,10 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	/* Create DMA maps for RX buffers */
 	for (i = 0; i < RL_RX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, 0, &sc->rl_ldata.rl_rxsoft[i].rxs_dmamap);
+		error = bus_dmamap_create(sc->sc_dmat,
+		    RL_FRAMELEN(sc->rl_max_mtu), 1,
+		    RL_FRAMELEN(sc->rl_max_mtu), 0, 0,
+		    &sc->rl_ldata.rl_rxsoft[i].rxs_dmamap);
 		if (error) {
 			printf("%s: can't create DMA map for RX\n",
 			    sc->sc_dev.dv_xname);
@@ -1042,8 +1050,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	ifp->if_ioctl = re_ioctl;
 	ifp->if_start = re_start;
 	ifp->if_watchdog = re_watchdog;
-	if ((sc->rl_flags & RL_FLAG_JUMBOV2) == 0)
-		ifp->if_hardmtu = sc->rl_max_mtu;
+	ifp->if_hardmtu = sc->rl_max_mtu;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -1163,7 +1170,7 @@ re_newbuf(struct rl_softc *sc)
 	u_int32_t	cmdstat;
 	int		error, idx;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, RL_FRAMELEN(sc->rl_max_mtu));
 	if (!m)
 		return (ENOBUFS);
 
@@ -1172,7 +1179,7 @@ re_newbuf(struct rl_softc *sc)
 	 * alignment so that the frame payload is
 	 * longword aligned on strict alignment archs.
 	 */
-	m->m_len = m->m_pkthdr.len = RE_RX_DESC_BUFLEN;
+	m->m_len = m->m_pkthdr.len = RL_FRAMELEN(sc->rl_max_mtu);
 	m->m_data += RE_ETHER_ALIGN;
 
 	idx = sc->rl_ldata.rl_rx_prodidx;
@@ -1311,8 +1318,12 @@ re_rxeof(struct rl_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
 
-		if (!(rxstat & RL_RDESC_STAT_EOF)) {
-			m->m_len = RE_RX_DESC_BUFLEN;
+		if ((sc->rl_flags & RL_FLAG_JUMBOV2) != 0 &&
+		    (rxstat & (RL_RDESC_STAT_SOF | RL_RDESC_STAT_EOF)) !=
+		    (RL_RDESC_STAT_SOF | RL_RDESC_STAT_EOF)) {
+			continue;
+		} else if (!(rxstat & RL_RDESC_STAT_EOF)) {
+			m->m_len = RL_FRAMELEN(sc->rl_max_mtu);
 			if (sc->rl_head == NULL)
 				sc->rl_head = sc->rl_tail = m;
 			else {
@@ -1346,8 +1357,9 @@ re_rxeof(struct rl_softc *sc)
 		 * if total_len > 2^13-1, both _RXERRSUM and _GIANT will be
 		 * set, but if CRC is clear, it will still be a valid frame.
 		 */
-		if (rxstat & RL_RDESC_STAT_RXERRSUM && !(total_len > 8191 &&
-		    (rxstat & RL_RDESC_STAT_ERRS) == RL_RDESC_STAT_GIANT)) {
+		if ((rxstat & RL_RDESC_STAT_RXERRSUM) != 0 &&
+	 	    !(rxstat & RL_RDESC_STAT_RXERRSUM && !(total_len > 8191 &&
+		    (rxstat & RL_RDESC_STAT_ERRS) == RL_RDESC_STAT_GIANT))) {
 			ifp->if_ierrors++;
 			/*
 			 * If this is part of a multi-fragment packet,
@@ -1361,9 +1373,9 @@ re_rxeof(struct rl_softc *sc)
 		}
 
 		if (sc->rl_head != NULL) {
-			m->m_len = total_len % RE_RX_DESC_BUFLEN;
+			m->m_len = total_len % RL_FRAMELEN(sc->rl_max_mtu);
 			if (m->m_len == 0)
-				m->m_len = RE_RX_DESC_BUFLEN;
+				m->m_len = RL_FRAMELEN(sc->rl_max_mtu);
 			/* 
 			 * Special case: if there's 4 bytes or less
 			 * in this buffer, the mbuf can be discarded:
@@ -1942,6 +1954,9 @@ re_init(struct ifnet *ifp)
 	    htole32(*(u_int32_t *)(&eaddr.eaddr[0])));
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
+	if ((sc->rl_flags & RL_FLAG_JUMBOV2) != 0)
+		re_set_jumbo(sc);
+
 	/*
 	 * For C+ mode, initialize the RX descriptors and mbufs.
 	 */
@@ -2005,7 +2020,8 @@ re_init(struct ifnet *ifp)
 	 * size so we can receive jumbo frames.
 	 */
 	if (sc->sc_hwrev != RL_HWREV_8139CPLUS) {
-		if (sc->rl_flags & RL_FLAG_PCIE)
+		if (sc->rl_flags & RL_FLAG_PCIE &&
+		    (sc->rl_flags & RL_FLAG_JUMBOV2) == 0)
 			CSR_WRITE_2(sc, RL_MAXRXPKTLEN, RE_RX_DESC_BUFLEN);
 		else
 			CSR_WRITE_2(sc, RL_MAXRXPKTLEN, 16383);
@@ -2090,7 +2106,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, MCLBYTES, &sc->rl_ldata.rl_rx_ring);
+		    NULL, RL_FRAMELEN(sc->rl_max_mtu), &sc->rl_ldata.rl_rx_ring);
  		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
@@ -2308,6 +2324,29 @@ re_config_imtype(struct rl_softc *sc, int imtype)
 		panic("%s: unknown imtype %d",
 		      sc->sc_dev.dv_xname, imtype);
 	}
+}
+
+void
+re_set_jumbo(struct rl_softc *sc)
+{
+	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
+	CSR_WRITE_1(sc, RL_CFG3, CSR_READ_1(sc, RL_CFG3) |
+	    RL_CFG3_JUMBO_EN0);
+
+	switch (sc->sc_hwrev) {
+	case RL_HWREV_8168DP:
+		break;
+	case RL_HWREV_8168E:
+		CSR_WRITE_1(sc, RL_CFG4, CSR_READ_1(sc, RL_CFG4) |
+		    RL_CFG4_8168E_JUMBO_EN1);
+		break;
+	default:
+		CSR_WRITE_1(sc, RL_CFG4, CSR_READ_1(sc, RL_CFG4) |
+		    RL_CFG4_JUMBO_EN1);
+		break;
+	}
+
+	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 }
 
 void

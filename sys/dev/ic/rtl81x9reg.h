@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.92 2015/03/08 01:54:04 tobiasu Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.93 2015/03/20 12:04:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -442,6 +442,7 @@
 #define RL_CFG3_GRANTSEL	0x80
 #define RL_CFG3_WOL_MAGIC	0x20
 #define RL_CFG3_WOL_LINK	0x10
+#define RL_CFG3_JUMBO_EN0	0x04
 #define RL_CFG3_FAST_B2B	0x01
 
 /*
@@ -449,6 +450,8 @@
  */
 #define RL_CFG4_LWPTN		0x04
 #define RL_CFG4_LWPME		0x10
+#define RL_CFG4_JUMBO_EN1	0x02
+#define RL_CFG4_8168E_JUMBO_EN1 0x01
 
 /*
  * Config 5 register
@@ -742,8 +745,7 @@ struct rl_stats {
 #define RL_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
 #define RL_ADDR_HI(y)	((u_int64_t) (y) >> 32)
 
-/* see comment in dev/ic/re.c */
-#define RL_JUMBO_FRAMELEN	7440
+#define RL_JUMBO_FRAMELEN 	(9 * 1024)	
 #define RL_JUMBO_MTU_4K		\
 	((4 * 1024) - ETHER_HDR_LEN - ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 #define RL_JUMBO_MTU_6K		\
