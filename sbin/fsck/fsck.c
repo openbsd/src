@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.33 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.34 2015/03/20 01:53:05 millert Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 		else
 			rl.rlim_cur = rl.rlim_max;
 		if (setrlimit(RLIMIT_DATA, &rl) < 0)
-			warn("Can't get resource limit to max data size");
+			warn("Can't set resource limit to max data size");
 	} else
 		warn("Can't get resource limit for data size");
 
