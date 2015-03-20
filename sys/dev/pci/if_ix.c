@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.117 2015/02/12 04:58:59 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.118 2015/03/20 10:41:15 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2049,6 +2049,8 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 #ifdef notyet
 	struct ip6_hdr *ip6;
 #endif
+	struct mbuf *m;
+	int	ipoff;
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0;
 	int 	ehdrlen, ip_hlen = 0;
 	uint16_t etype;
@@ -2094,9 +2096,13 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	 * Jump over vlan headers if already present,
 	 * helpful for QinQ too.
 	 */
+	if (mp->m_len < sizeof(struct ether_header))
+		return (1);
 #if NVLAN > 0
 	eh = mtod(mp, struct ether_vlan_header *);
 	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) {
+		if (mp->m_len < sizeof(struct ether_vlan_header))
+			return (1);
 		etype = ntohs(eh->evl_proto);
 		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 	} else {
@@ -2114,15 +2120,23 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	switch (etype) {
 	case ETHERTYPE_IP:
-		ip = (struct ip *)(mp->m_data + ehdrlen);
+		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip))
+			return (1);
+		m = m_getptr(mp, ehdrlen, &ipoff);
+		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip));
+		ip = (struct ip *)(m->m_data + ipoff);
 		ip_hlen = ip->ip_hl << 2;
 		ipproto = ip->ip_p;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
 		break;
 #ifdef notyet
 	case ETHERTYPE_IPV6:
-		ip6 = (struct ip6_hdr *)(mp->m_data + ehdrlen);
-		ip_hlen = sizeof(struct ip6_hdr);
+		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip6))
+			return (1);
+		m = m_getptr(mp, ehdrlen, &ipoff);
+		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip6));
+		ip6 = (struct ip6 *)(m->m_data + ipoff);
+		ip_hlen = sizeof(*ip6);
 		/* XXX-BZ this will go badly in case of ext hdrs. */
 		ipproto = ip6->ip6_nxt;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
