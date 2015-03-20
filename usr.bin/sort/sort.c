@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.47 2015/03/20 00:26:38 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.48 2015/03/20 23:04:07 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -27,7 +27,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/types.h>
 
 #include <err.h>
@@ -205,24 +207,33 @@ read_fns_from_file0(const char *fn)
 static void
 set_hw_params(void)
 {
-	long pages, psize;
+	long long user_memory;
+	struct rlimit rl;
+	size_t len;
+	int mib[] = { CTL_HW, HW_USERMEM64 };
 
-	pages = sysconf(_SC_PHYS_PAGES);
-	if (pages < 1) {
-		warn("sysconf pages");
-		pages = 1;
-	}
-	psize = sysconf(_SC_PAGESIZE);
-	if (psize < 1) {
-		warn("sysconf psize");
-		psize = 4096;
-	}
+	/* Get total user (non-kernel) memory. */
+	len = sizeof(user_memory);
+	if (sysctl(mib, 2, &user_memory, &len, NULL, 0) == -1)
+	    user_memory = -1;
 
-	free_memory = (unsigned long long) pages * (unsigned long long) psize;
+	/* Increase our data size to the max */
+	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+		free_memory = (unsigned long long)rl.rlim_cur;
+		rl.rlim_cur = rl.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &rl) == 0) {
+			free_memory = (unsigned long long)rl.rlim_max;
+		} else {
+			warn("Can't set resource limit to max data size");
+		}
+	} else
+		warn("Can't get resource limit for data size");
+
+	/* We prefer to use temp files rather than swap space. */
+	if (user_memory != -1 && free_memory > user_memory)
+		free_memory = user_memory;
+
 	available_free_memory = free_memory / 2;
-
-	if (available_free_memory < 1024)
-		available_free_memory = 1024;
 }
 
 /*
