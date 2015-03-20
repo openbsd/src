@@ -270,8 +270,7 @@ _C_LABEL(acpi_protected_mode_resume):
 
 	/*
 	 * Everything is almost reset back to the way it was immediately before
-	 * suspend. There are a few more registers to restore - this is
-	 * done in acpi_restorecpu. We'll jump to that routine, and after
+	 * suspend. There are a few more registers to restore, and after
 	 * that, jump back to the OS. There's still some things
 	 * to do there, like re-enable interrupts, resume devices, APICs,
 	 * etc.
