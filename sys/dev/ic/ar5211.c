@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.46 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.47 2015/03/20 11:05:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1932,6 +1932,10 @@ ar5k_ar5211_reset_key(struct ath_hal *hal, u_int16_t entry)
 
 	for (i = 0; i < AR5K_AR5211_KEYCACHE_SIZE; i++)
 		AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_OFF(entry, i), 0);
+
+	/* Set NULL encryption */
+	AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_TYPE(entry),
+	    AR5K_AR5211_KEYTABLE_TYPE_NULL);
 
 	return (AH_FALSE);
 }
