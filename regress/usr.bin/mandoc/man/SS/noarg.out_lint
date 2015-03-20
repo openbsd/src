@@ -1,0 +1,15 @@
+mandoc: noarg.in:4:2: WARNING: line scope broken: SH breaks SS
+mandoc: noarg.in:8:2: WARNING: line scope broken: SS breaks SS
+mandoc: noarg.in:11:2: WARNING: line scope broken: TP breaks SS
+mandoc: noarg.in:15:2: WARNING: line scope broken: IP breaks SS
+mandoc: noarg.in:18:2: WARNING: line scope broken: HP breaks SS
+mandoc: noarg.in:22:2: WARNING: line scope broken: PP breaks SS
+mandoc: noarg.in:25:2: WARNING: line scope broken: RS breaks SS
+mandoc: noarg.in:28:2: WARNING: line scope broken: RE breaks SS
+mandoc: noarg.in:29:2: ERROR: skipping end of block that is not open: RE
+mandoc: noarg.in:31:2: WARNING: line scope broken: UR breaks SS
+mandoc: noarg.in:34:2: WARNING: line scope broken: UE breaks SS
+mandoc: noarg.in:35:2: ERROR: skipping end of block that is not open: UE
+mandoc: noarg.in:37:2: WARNING: line scope broken: nf breaks SS
+mandoc: noarg.in:40:2: WARNING: line scope broken: fi breaks SS
+mandoc: noarg.in:41:2: WARNING: fill mode already enabled, skipping: fi

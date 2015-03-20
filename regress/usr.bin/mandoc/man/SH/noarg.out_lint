@@ -1,6 +1,15 @@
-mandoc: noarg.in:6:2: WARNING: line scope broken: PP breaks SH
-mandoc: noarg.in:9:2: WARNING: line scope broken: PP breaks SS
-mandoc: noarg.in:12:2: WARNING: line scope broken: RE breaks SH
-mandoc: noarg.in:13:2: ERROR: skipping end of block that is not open: RE
-mandoc: noarg.in:15:2: WARNING: line scope broken: RE breaks SS
-mandoc: noarg.in:16:2: ERROR: skipping end of block that is not open: RE
+mandoc: noarg.in:4:2: WARNING: line scope broken: SH breaks SH
+mandoc: noarg.in:8:2: WARNING: line scope broken: SS breaks SH
+mandoc: noarg.in:11:2: WARNING: line scope broken: TP breaks SH
+mandoc: noarg.in:15:2: WARNING: line scope broken: IP breaks SH
+mandoc: noarg.in:18:2: WARNING: line scope broken: HP breaks SH
+mandoc: noarg.in:22:2: WARNING: line scope broken: PP breaks SH
+mandoc: noarg.in:25:2: WARNING: line scope broken: RS breaks SH
+mandoc: noarg.in:28:2: WARNING: line scope broken: RE breaks SH
+mandoc: noarg.in:29:2: ERROR: skipping end of block that is not open: RE
+mandoc: noarg.in:31:2: WARNING: line scope broken: UR breaks SH
+mandoc: noarg.in:34:2: WARNING: line scope broken: UE breaks SH
+mandoc: noarg.in:35:2: ERROR: skipping end of block that is not open: UE
+mandoc: noarg.in:37:2: WARNING: line scope broken: nf breaks SH
+mandoc: noarg.in:40:2: WARNING: line scope broken: fi breaks SH
+mandoc: noarg.in:41:2: WARNING: fill mode already enabled, skipping: fi

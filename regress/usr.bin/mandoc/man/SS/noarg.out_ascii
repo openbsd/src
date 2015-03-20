@@ -1,9 +1,9 @@
-SH-NOARG(1)                 General Commands Manual                SH-NOARG(1)
+SS-NOARG(1)                 General Commands Manual                SS-NOARG(1)
 
 
 
 NNAAMMEE
-       SH-noarg - empty header lines
+       SS-noarg - empty subsection header lines
 
 DDEESSCCRRIIPPTTIIOONN
        initial text
@@ -27,4 +27,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                         March 20, 2015                     SH-NOARG(1)
+OpenBSD                         March 20, 2015                     SS-NOARG(1)

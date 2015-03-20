@@ -1,0 +1,6 @@
+.TH SS-BROKEN 1 "July 30, 2014" OpenBSD
+.SH NAME
+SS-broken \- section header line scope broken by end of file
+.SH DESCRIPTION
+some text
+.SS

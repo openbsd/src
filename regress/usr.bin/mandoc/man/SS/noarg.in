@@ -1,42 +1,42 @@
-.TH SH-NOARG 1 "March 20, 2015" OpenBSD
+.TH SS-NOARG 1 "March 20, 2015" OpenBSD
 .SH NAME
-SH-noarg \- empty header lines
-.SH
+SS-noarg \- empty subsection header lines
+.SS
 .SH
 DESCRIPTION
 initial text
-.SH
+.SS
 .SS Subsection
 subsection text
-.SH
+.SS
 .TP 6n
 tag
 tagged list
-.SH
+.SS
 .IP tag 6n
 indented list
-.SH
+.SS
 .HP 6n
 This is a hanged paragraph.
 A bit more text is needed to see the effect.
-.SH
+.SS
 .PP
 normal paragraph
-.SH
+.SS
 .RS 6n
 indented paragraph
-.SH
+.SS
 .RE
 after the end of the indented paragraph
-.SH
+.SS
 .UR www.openbsd.org
 hyperlink
-.SH
+.SS
 .UE
 after the end of the hyperlink
-.SH
+.SS
 .nf
 no-fill mode
-.SH
+.SS
 .fi
 back in fill mode
