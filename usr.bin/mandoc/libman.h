@@ -1,7 +1,7 @@
-/*	$OpenBSD: libman.h,v 1.42 2014/12/28 14:39:08 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.43 2015/03/20 12:53:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,13 +47,10 @@ struct	man {
 struct	man_macro {
 	void		(*fp)(MACRO_PROT_ARGS);
 	int		  flags;
-#define	MAN_SCOPED	 (1 << 0)
-#define	MAN_EXPLICIT	 (1 << 1)	/* See blk_imp(). */
-#define	MAN_FSCOPED	 (1 << 2)	/* See blk_imp(). */
-#define	MAN_NSCOPED	 (1 << 3)	/* See in_line_eoln(). */
-#define	MAN_NOCLOSE	 (1 << 4)	/* See blk_exp(). */
-#define	MAN_BSCOPE	 (1 << 5)	/* Break BLINE scope. */
-#define	MAN_JOIN	 (1 << 6)	/* Join arguments together. */
+#define	MAN_SCOPED	 (1 << 0)  /* Optional next-line scope. */
+#define	MAN_NSCOPED	 (1 << 1)  /* Allowed in next-line element scope. */
+#define	MAN_BSCOPE	 (1 << 2)  /* Break next-line block scope. */
+#define	MAN_JOIN	 (1 << 3)  /* Join arguments together. */
 };
 
 extern	const struct man_macro *const man_macros;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.60 2015/02/06 11:54:03 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.61 2015/03/20 12:53:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -53,7 +53,7 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_BSCOPE }, /* TH */
 	{ blk_imp, MAN_BSCOPE | MAN_SCOPED }, /* SH */
 	{ blk_imp, MAN_BSCOPE | MAN_SCOPED }, /* SS */
-	{ blk_imp, MAN_BSCOPE | MAN_SCOPED | MAN_FSCOPED }, /* TP */
+	{ blk_imp, MAN_BSCOPE | MAN_SCOPED }, /* TP */
 	{ blk_imp, MAN_BSCOPE }, /* LP */
 	{ blk_imp, MAN_BSCOPE }, /* PP */
 	{ blk_imp, MAN_BSCOPE }, /* P */
@@ -74,7 +74,7 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_BSCOPE }, /* nf */
 	{ in_line_eoln, MAN_BSCOPE }, /* fi */
 	{ blk_close, MAN_BSCOPE }, /* RE */
-	{ blk_exp, MAN_BSCOPE | MAN_EXPLICIT }, /* RS */
+	{ blk_exp, MAN_BSCOPE }, /* RS */
 	{ in_line_eoln, 0 }, /* DT */
 	{ in_line_eoln, 0 }, /* UC */
 	{ in_line_eoln, 0 }, /* PD */
@@ -84,7 +84,7 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* OP */
 	{ in_line_eoln, MAN_BSCOPE }, /* EX */
 	{ in_line_eoln, MAN_BSCOPE }, /* EE */
-	{ blk_exp, MAN_BSCOPE | MAN_EXPLICIT }, /* UR */
+	{ blk_exp, MAN_BSCOPE }, /* UR */
 	{ blk_close, MAN_BSCOPE }, /* UE */
 	{ in_line_eoln, 0 }, /* ll */
 };
@@ -123,7 +123,7 @@ man_unscope(struct man *man, const struct man_node *to)
 				continue;
 			}
 			if (n->type == MAN_BLOCK &&
-			    man_macros[n->tok].flags & MAN_EXPLICIT)
+			    man_macros[n->tok].fp == blk_exp)
 				mandoc_msg(MANDOCERR_BLK_NOEND,
 				    man->parse, n->line, n->pos,
 				    man_macronames[n->tok]);
@@ -188,7 +188,7 @@ rew_dohalt(enum mant tok, enum man_type type, const struct man_node *n)
 
 	/* First: rewind to ourselves. */
 	if (type == n->type && tok == n->tok) {
-		if (MAN_EXPLICIT & man_macros[n->tok].flags)
+		if (man_macros[n->tok].fp == blk_exp)
 			return(REW_HALT);
 		else
 			return(REW_REWIND);
@@ -385,18 +385,20 @@ blk_imp(MACRO_PROT_ARGS)
 		man_word_alloc(man, line, la, p);
 	}
 
-	/* Close out head and open body (unless MAN_SCOPE). */
+	/*
+	 * For macros having optional next-line scope,
+	 * keep the head open if there were no arguments.
+	 * For `TP', always keep the head open.
+	 */
 
-	if (man_macros[tok].flags & MAN_SCOPED) {
-		/* If we're forcing scope (`TP'), keep it open. */
-		if (man_macros[tok].flags & MAN_FSCOPED) {
-			man->flags |= MAN_BLINE;
-			return;
-		} else if (n == man->last) {
-			man->flags |= MAN_BLINE;
-			return;
-		}
+	if (man_macros[tok].flags & MAN_SCOPED &&
+	    (tok == MAN_TP || n == man->last)) {
+		man->flags |= MAN_BLINE;
+		return;
 	}
+
+	/* Close out the head and open the body. */
+
 	rew_scope(MAN_HEAD, man, tok);
 	man_body_alloc(man, line, ppos, tok);
 }
