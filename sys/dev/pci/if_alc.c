@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.31 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.32 2015/03/20 16:48:13 mpi Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1897,6 +1897,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct alc_rxdesc *rxd;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mp, *m;
 	uint32_t rdinfo, status;
 	int count, nsegs, rx_cons;
@@ -1984,7 +1985,6 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 				}
 			} else
 				m->m_len = m->m_pkthdr.len;
-			m->m_pkthdr.rcvif = ifp;
 			/*
 			 * Due to hardware bugs, Rx checksum offloading
 			 * was intentionally disabled.
@@ -1997,18 +1997,12 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 			}
 #endif
 
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap_ether(ifp->if_bpf, m,
-				    BPF_DIRECTION_IN);
-#endif
 
-			{
-			/* Pass it on. */
-			ether_input_mbuf(ifp, m);
-			}
+			ml_enqueue(&ml, m);
 		}
 	}
+	if_input(ifp, &ml);
+
 	/* Reset mbuf chains. */
 	ALC_RXCHAIN_RESET(sc);
 }
