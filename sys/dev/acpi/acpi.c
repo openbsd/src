@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.285 2015/03/16 20:31:46 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.286 2015/03/20 20:25:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -308,6 +308,21 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		 *    bits 32..47 = device
 		 *    bits 48..63 = bus
 		 */
+
+		/*
+		 * The ACPI standard says that a function number of
+		 * FFFF can be used to refer to all functions on a
+		 * device.  This makes no sense though in the context
+		 * of accessing PCI config space.  Yet there is AML
+		 * out there that does this.  We simulate a read from
+		 * a nonexistent device here.  Writes will panic when
+		 * we try to construct the tag below.
+		 */
+		if (ACPI_PCI_FN(address) == 0xffff && iodir == ACPI_IOREAD) {
+			memset(buffer, 0xff, len);
+			return (0);
+		}
+
 		pc = NULL;
 		tag = pci_make_tag(pc,
 		    ACPI_PCI_BUS(address), ACPI_PCI_DEV(address),
