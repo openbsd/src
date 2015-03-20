@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.175 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.176 2015/03/20 11:55:10 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -128,6 +128,8 @@
 #include <net/if_media.h>
 
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
 
 #if NVLAN > 0
@@ -193,6 +195,8 @@ void	re_setup_intr(struct rl_softc *, int, int);
 #ifndef SMALL_KERNEL
 int	re_wol(struct ifnet*, int);
 #endif
+
+void	in_delayed_cksum(struct mbuf *);
 
 struct cfdriver re_cd = {
 	0, "re", DV_IFNET
@@ -1601,7 +1605,10 @@ int
 re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t	map;
+	struct mbuf	*mp, mh;
 	int		error, seg, nsegs, uidx, startidx, curidx, lastidx, pad;
+	int		off;
+	struct ip	*ip;
 	struct rl_desc	*d;
 	u_int32_t	cmdstat, vlanctl = 0, csum_flags = 0;
 	struct rl_txq	*txq;
@@ -1618,6 +1625,27 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	 * is requested.  Otherwise, RL_TDESC_CMD_TCPCSUM/
 	 * RL_TDESC_CMD_UDPCSUM does not take affect.
 	 */
+
+	if ((sc->rl_flags & RL_FLAG_JUMBOV2) &&
+	    m->m_pkthdr.len > RL_MTU &&
+	    (m->m_pkthdr.csum_flags &
+	    (M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) != 0) {
+		mp = m_getptr(m, ETHER_HDR_LEN, &off);
+		mh.m_flags = 0;
+		mh.m_data = mtod(mp, caddr_t) + off;
+		mh.m_next = mp->m_next;
+		mh.m_pkthdr.len = mp->m_pkthdr.len - ETHER_HDR_LEN;
+		mh.m_len = mp->m_len - off;
+		ip = (struct ip *)mh.m_data;
+
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			ip->ip_sum = in_cksum(&mh, sizeof(struct ip)); 
+		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
+			in_delayed_cksum(&mh);
+
+		m->m_pkthdr.csum_flags &=
+		    ~(M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT);
+	}
 
 	if ((m->m_pkthdr.csum_flags &
 	    (M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) != 0) {
