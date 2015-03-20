@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.4 2015/03/19 15:20:46 millert Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.5 2015/03/20 15:55:22 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -230,7 +230,7 @@ bwsdup(const struct bwstring *s)
 }
 
 /*
- * Create a new binary string from a raw binary buffer.
+ * Create a new binary string from a wide character buffer.
  */
 struct bwstring *
 bwssbdup(const wchar_t *str, size_t len)
