@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.352 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.353 2015/03/21 13:42:06 mpi Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4525,14 +4525,14 @@ sii3112_drv_probe(struct channel_softc *chp)
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
 
-		printf("%s: port %d: device present",
+		printf("%s: port %d",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
 		switch ((sstatus & SStatus_SPD_mask) >> SStatus_SPD_shift) {
 		case 1:
-			printf(", speed: 1.5Gb/s");
+			printf(": 1.5Gb/s");
 			break;
 		case 2:
-			printf(", speed: 3.0Gb/s");
+			printf(": 3.0Gb/s");
 			break;
 		}
 		printf("\n");
@@ -7283,14 +7283,14 @@ pdc205xx_drv_probe(struct channel_softc *chp)
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
 #if 0
-		printf("%s: port %d: device present",
+		printf("%s: port %d",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
 		switch ((sstatus & SStatus_SPD_mask) >> SStatus_SPD_shift) {
 		case 1:
-			printf(", speed: 1.5Gb/s");
+			printf(": 1.5Gb/s");
 			break;
 		case 2:
-			printf(", speed: 3.0Gb/s");
+			printf(": 3.0Gb/s");
 			break;
 		}
 		printf("\n");
@@ -7984,14 +7984,14 @@ svwsata_drv_probe(struct channel_softc *chp)
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
 
-		printf("%s: port %d: device present",
+		printf("%s: port %d",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
 		switch ((sstatus & SStatus_SPD_mask) >> SStatus_SPD_shift) {
 		case 1:
-			printf(", speed: 1.5Gb/s");
+			printf(": 1.5Gb/s");
 			break;
 		case 2:
-			printf(", speed: 3.0Gb/s");
+			printf(": 3.0Gb/s");
 			break;
 		}
 		printf("\n");
