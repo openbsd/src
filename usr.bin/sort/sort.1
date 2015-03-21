@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.46 2015/03/21 21:15:12 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.47 2015/03/21 21:18:02 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -182,7 +182,7 @@ This is a random permutation of the inputs with the exception that
 equal keys sort together.
 It is implemented by hashing the input keys and sorting the hash values.
 The hash function is randomized with data from
-.Fn arc4random_buf ,
+.Xr arc4random_buf 3 ,
 or by file content if one is specified via
 .Fl Fl random-source .
 If multiple sort fields are specified,
@@ -568,8 +568,7 @@ An error occurred.
 .Sh SEE ALSO
 .Xr comm 1 ,
 .Xr join 1 ,
-.Xr uniq 1 ,
-.Xr arc4random_buf 3
+.Xr uniq 1
 .Sh STANDARDS
 The
 .Nm
