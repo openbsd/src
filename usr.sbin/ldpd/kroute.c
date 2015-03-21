@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.38 2015/03/21 18:20:19 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.39 2015/03/21 18:32:01 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -136,7 +136,7 @@ kif_redistribute(void)
 	struct kif_addr		*ka;
 
 	RB_FOREACH(kif, kif_tree, &kit) {
-		main_imsg_compose_ldpe(IMSG_IFUP, 0, &kif->k,
+		main_imsg_compose_ldpe(IMSG_IFSTATUS, 0, &kif->k,
 		    sizeof(struct kif));
 
 		TAILQ_FOREACH(ka, &kif->addrs, entry)
@@ -855,18 +855,17 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 	link_new = (kif->k.flags & IFF_UP) &&
 	    LINK_STATE_IS_UP(kif->k.link_state);
 
-	if (link_new == link_old) {
-		main_imsg_compose_ldpe(IMSG_IFSTATUS, 0, &kif->k,
-		    sizeof(struct kif));
+	if (link_new == link_old)
 		return;
-	} else if (link_new) {
-		main_imsg_compose_ldpe(IMSG_IFUP, 0, &kif->k,
+
+	if (link_new) {
+		main_imsg_compose_ldpe(IMSG_IFSTATUS, 0, &kif->k,
 		    sizeof(struct kif));
 		TAILQ_FOREACH(ka, &kif->addrs, entry)
 			main_imsg_compose_ldpe(IMSG_NEWADDR, 0, &ka->addr,
 			    sizeof(struct kaddr));
 	} else {
-		main_imsg_compose_ldpe(IMSG_IFDOWN, 0, &kif->k,
+		main_imsg_compose_ldpe(IMSG_IFSTATUS, 0, &kif->k,
 		    sizeof(struct kif));
 		TAILQ_FOREACH(ka, &kif->addrs, entry)
 			main_imsg_compose_ldpe(IMSG_DELADDR, 0, &ka->addr,

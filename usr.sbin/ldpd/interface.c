@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.21 2015/03/21 18:25:08 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.22 2015/03/21 18:32:01 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,98 +41,9 @@
 
 extern struct ldpd_conf        *leconf;
 
-int		 if_act_start(struct iface *);
-int		 if_act_reset(struct iface *);
-int		 if_act_update(struct iface *);
 void		 if_hello_timer(int, short, void *);
 void		 if_start_hello_timer(struct iface *);
 void		 if_stop_hello_timer(struct iface *);
-struct nbr	*if_elect(struct nbr *, struct nbr *);
-
-struct {
-	int			state;
-	enum iface_event	event;
-	enum iface_action	action;
-	int			new_state;
-} iface_fsm[] = {
-    /* current state	event that happened	action to take	resulting state */
-    {IF_STA_DOWN,	IF_EVT_DOWN,		IF_ACT_NOTHING,	0},
-    {IF_STA_DOWN,	IF_EVT_UP,		IF_ACT_UPDATE,	0},
-    {IF_STA_DOWN,	IF_EVT_NEWADDR,		IF_ACT_UPDATE,	0},
-    {IF_STA_DOWN,	IF_EVT_DELADDR,		IF_ACT_NOTHING,	0},
-    {IF_STA_ACTIVE,	IF_EVT_DOWN,		IF_ACT_RST,	IF_STA_DOWN},
-    {IF_STA_ACTIVE,	IF_EVT_NEWADDR,		IF_ACT_NOTHING,	0},
-    {IF_STA_ACTIVE,	IF_EVT_DELADDR,		IF_ACT_UPDATE,	0},
-    {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
-};
-
-const char * const if_event_names[] = {
-	"NOTHING",
-	"UP",
-	"DOWN",
-	"NEWADDR",
-	"DELADDR"
-};
-
-const char * const if_action_names[] = {
-	"NOTHING",
-	"UPDATE",
-	"RESET"
-};
-
-int
-if_fsm(struct iface *iface, enum iface_event event)
-{
-	int	old_state;
-	int	new_state = 0;
-	int	i, ret = 0;
-
-	old_state = iface->state;
-
-	for (i = 0; iface_fsm[i].state != -1; i++)
-		if ((iface_fsm[i].state & old_state) &&
-		    (iface_fsm[i].event == event)) {
-			new_state = iface_fsm[i].new_state;
-			break;
-		}
-
-	if (iface_fsm[i].state == -1) {
-		/* event outside of the defined fsm, ignore it. */
-		log_debug("if_fsm: interface %s, "
-		    "event %s not expected in state %s", iface->name,
-		    if_event_names[event], if_state_name(old_state));
-		return (0);
-	}
-
-	switch (iface_fsm[i].action) {
-	case IF_ACT_UPDATE:
-		ret = if_act_update(iface);
-		break;
-	case IF_ACT_RST:
-		ret = if_act_reset(iface);
-		break;
-	case IF_ACT_NOTHING:
-		/* do nothing */
-		break;
-	}
-
-	if (ret) {
-		log_debug("if_fsm: error changing state for interface %s, "
-		    "event %s, state %s", iface->name, if_event_names[event],
-		    if_state_name(old_state));
-		return (-1);
-	}
-
-	if (new_state != 0)
-		iface->state = new_state;
-
-	log_debug("if_fsm: event %s resulted in action %s and changing "
-	    "state for interface %s from %s to %s",
-	    if_event_names[event], if_action_names[iface_fsm[i].action],
-	    iface->name, if_state_name(old_state), if_state_name(iface->state));
-
-	return (ret);
-}
 
 struct iface *
 if_new(struct kif *kif)
@@ -168,7 +79,7 @@ if_del(struct iface *iface)
 	struct if_addr		*if_addr;
 
 	if (iface->state == IF_STA_ACTIVE)
-		if_act_reset(iface);
+		if_reset(iface);
 
 	log_debug("if_del: interface %s", iface->name);
 
@@ -237,12 +148,13 @@ if_stop_hello_timer(struct iface *iface)
 		fatal("if_stop_hello_timer");
 }
 
-/* actions */
 int
-if_act_start(struct iface *iface)
+if_start(struct iface *iface)
 {
 	struct in_addr		 addr;
 	struct timeval		 now;
+
+	log_debug("if_start: %s", iface->name);
 
 	gettimeofday(&now, NULL);
 	iface->uptime = now.tv_sec;
@@ -257,10 +169,12 @@ if_act_start(struct iface *iface)
 }
 
 int
-if_act_reset(struct iface *iface)
+if_reset(struct iface *iface)
 {
 	struct in_addr		 addr;
 	struct adj		*adj;
+
+	log_debug("if_reset: %s", iface->name);
 
 	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL) {
 		LIST_REMOVE(adj, iface_entry);
@@ -277,26 +191,26 @@ if_act_reset(struct iface *iface)
 }
 
 int
-if_act_update(struct iface *iface)
+if_update(struct iface *iface)
 {
 	int ret;
 
 	if (iface->state == IF_STA_DOWN) {
-		if (!((iface->flags & IFF_UP) &&
-		    LINK_STATE_IS_UP(iface->linkstate)))
-			return (0);
-
-		if (LIST_EMPTY(&iface->addr_list))
+		if (!(iface->flags & IFF_UP) ||
+		    !LINK_STATE_IS_UP(iface->linkstate) ||
+		    LIST_EMPTY(&iface->addr_list))
 			return (0);
 
 		iface->state = IF_STA_ACTIVE;
-		ret = if_act_start(iface);
+		ret = if_start(iface);
 	} else {
-		if (!LIST_EMPTY(&iface->addr_list))
+		if ((iface->flags & IFF_UP) &&
+		    LINK_STATE_IS_UP(iface->linkstate) &&
+		    !LIST_EMPTY(&iface->addr_list))
 			return (0);
 
 		iface->state = IF_STA_DOWN;
-		ret = if_act_reset(iface);
+		ret = if_reset(iface);
 	}
 
 	return (ret);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.32 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.33 2015/03/21 18:32:01 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -136,7 +136,9 @@ void		 ldpe_fib_update(int);
 void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
 
 /* interface.c */
-int		 if_fsm(struct iface *, enum iface_event);
+int		 if_start(struct iface *);
+int		 if_reset(struct iface *);
+int		 if_update(struct iface *);
 
 struct iface	*if_new(struct kif *);
 void		 if_del(struct iface *);

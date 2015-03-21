@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.43 2015/02/09 11:54:24 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.44 2015/03/21 18:32:01 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -85,8 +85,6 @@ enum imsg_type {
 	IMSG_KLABEL_CHANGE,
 	IMSG_KLABEL_DELETE,
 	IMSG_IFSTATUS,
-	IMSG_IFUP,
-	IMSG_IFDOWN,
 	IMSG_NEWADDR,
 	IMSG_DELADDR,
 	IMSG_LABEL_MAPPING,
@@ -117,23 +115,6 @@ enum imsg_type {
 #define	IF_STA_NEW		0x00	/* dummy state for reload */
 #define	IF_STA_DOWN		0x01
 #define	IF_STA_ACTIVE		0x02
-#define	IF_STA_ANY		(IF_STA_DOWN | IF_STA_ACTIVE)
-
-/* interface events */
-enum iface_event {
-	IF_EVT_NOTHING,
-	IF_EVT_UP,
-	IF_EVT_DOWN,
-	IF_EVT_NEWADDR,
-	IF_EVT_DELADDR
-};
-
-/* interface actions */
-enum iface_action {
-	IF_ACT_NOTHING,
-	IF_ACT_UPDATE,
-	IF_ACT_RST
-};
 
 /* interface types */
 enum iface_type {
