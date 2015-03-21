@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.819 2015/03/17 15:21:02 rpe Exp $
+#	$OpenBSD: install.sub,v 1.820 2015/03/21 16:45:53 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -69,7 +69,7 @@ while getopts "af:" opt; do
 	esac
 done
 shift $((OPTIND-1))
-[ $# = 0 ] || usage
+(($# == 0)) || usage
 
 # Include machine-dependent functions and definitions.
 #
@@ -1114,7 +1114,7 @@ enable_network() {
 
 	# Copy any network configuration files. N.B.: hosts already copied.
 	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
-		if [ -f /mnt/etc/$_f ]; then
+		if [[ -f /mnt/etc/$_f ]]; then
 			cp /mnt/etc/$_f /etc/$_f
 		fi
 	done
