@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.45 2015/03/19 13:51:10 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.46 2015/03/21 21:15:12 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 19 2015 $
+.Dd $Mdocdate: March 21 2015 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -494,6 +494,27 @@ which has no
 equivalent.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
+.It Ev GNUSORT_NUMERIC_COMPATIBILITY
+If defined
+.Fl t
+will not override the locale numeric symbols, that is, thousand
+separators and decimal separators.
+By default, if we specify
+.Fl t
+with the same symbol as the thousand separator or decimal point,
+the symbol will be treated as the field separator.
+Older behavior was less definite; the symbol was treated as both field
+separator and numeric separator, simultaneously.
+This environment variable enables the old behavior.
+.It Ev LANG
+Used as a last resort to determine different kinds of locale-specific
+behavior if neither the respective environment variable, nor
+.Ev LC_ALL
+are set.
+.It Ev LC_ALL
+Locale settings that override all of the above locale settings.
+This environment variable can be used to set all these settings
+to the same value at once.
 .It Ev LC_COLLATE
 Locale settings to be used to determine the collation for
 sorting records.
@@ -510,15 +531,6 @@ prints out.
 Locale settings that determine the number format used in numeric sort.
 .It Ev LC_TIME
 Locale settings that determine the month format used in month sort.
-.It Ev LC_ALL
-Locale settings that override all of the above locale settings.
-This environment variable can be used to set all these settings
-to the same value at once.
-.It Ev LANG
-Used as a last resort to determine different kinds of locale-specific
-behavior if neither the respective environment variable, nor
-.Ev LC_ALL
-are set.
 .It Ev TMPDIR
 Path to the directory in which temporary files will be stored.
 Note that
@@ -526,18 +538,6 @@ Note that
 may be overridden by the
 .Fl T
 option.
-.It Ev GNUSORT_NUMERIC_COMPATIBILITY
-If defined
-.Fl t
-will not override the locale numeric symbols, that is, thousand
-separators and decimal separators.
-By default, if we specify
-.Fl t
-with the same symbol as the thousand separator or decimal point,
-the symbol will be treated as the field separator.
-Older behavior was less definite; the symbol was treated as both field
-separator and numeric separator, simultaneously.
-This environment variable enables the old behavior.
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
