@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.20 2013/10/15 20:41:09 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.21 2015/03/21 18:25:08 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -165,15 +165,13 @@ if_new(struct kif *kif)
 void
 if_del(struct iface *iface)
 {
-	struct adj		*adj;
 	struct if_addr		*if_addr;
+
+	if (iface->state == IF_STA_ACTIVE)
+		if_act_reset(iface);
 
 	log_debug("if_del: interface %s", iface->name);
 
-	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL) {
-		LIST_REMOVE(adj, iface_entry);
-		adj_del(adj);
-	}
 	while ((if_addr = LIST_FIRST(&iface->addr_list)) != NULL)
 		LIST_REMOVE(if_addr, iface_entry);
 
@@ -262,6 +260,12 @@ int
 if_act_reset(struct iface *iface)
 {
 	struct in_addr		 addr;
+	struct adj		*adj;
+
+	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL) {
+		LIST_REMOVE(adj, iface_entry);
+		adj_del(adj);
+	}
 
 	if_stop_hello_timer(iface);
 
