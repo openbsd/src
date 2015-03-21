@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.821 2015/03/21 18:27:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.822 2015/03/21 21:13:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1582,10 +1582,6 @@ install_sets() {
 	done
 }
 
-update_firmware() {
-	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
-}
-
 # Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
 # comment lines and dropping all filesystems which
 #
@@ -1918,7 +1914,8 @@ finish_up() {
 		mv /mnt/bsd.mp /mnt/bsd
 	fi
 
-	update_firmware
+	# Ensure that fw_update is run on reboot.
+	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
 
 	store_random
 
