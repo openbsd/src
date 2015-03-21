@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.19 2010/12/26 15:37:20 kettenis Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.20 2015/03/21 19:55:31 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -64,6 +64,7 @@ int sbus_print(void *, const char *);
 /* autoconfiguration driver */
 void	sbus_attach(struct device *, struct device *, void *);
 int	sbus_match(struct device *, void *, void *);
+int	sbus_search(struct device *, void *, void *);
 
 struct cfattach sbus_ca = {
 	sizeof(struct sbus_softc), sbus_match, sbus_attach
@@ -98,7 +99,8 @@ sbus_print(args, sbus)
 	if (getpropint(0, sl, 0) & (1 << ca->ca_slot))
 		printf(" %s", sl);
 	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
-	return (UNCONF);
+
+	return ca->ca_bustype < 0 ? UNSUPP : UNCONF;
 }
 
 int
@@ -178,8 +180,7 @@ sbus_attach(parent, self, aux)
 		sc->sc_nrange = xsc->sc_nrange;
 		sc->sc_range = xsc->sc_range;
 		xsc->sc_attached = 2;
-	}
-	else {
+	} else {
 		if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
 			oca.ca_ra.ra_bp = ra->ra_bp + 1;
 		else
@@ -209,20 +210,36 @@ sbus_attach(parent, self, aux)
 		if (!romprop(&oca.ca_ra, name, node))
 			continue;
 
-		sbus_translate(self, &oca);
-		oca.ca_bustype = BUS_SBUS;
-		(void) config_found(&sc->sc_dev, (void *)&oca, sbus_print);
+		if (sbus_translate(self, &oca) == 0)
+			oca.ca_bustype = BUS_SBUS;
+		else
+			oca.ca_bustype = -1;	/* force attach to fail */
+
+		config_found_sm(&sc->sc_dev, (void *)&oca, sbus_print,
+		    sbus_search);
 	}
 }
 
-void
+int
+sbus_search(struct device *parent, void *vcf, void *args)
+{
+	struct cfdata *cf = vcf;
+	struct confargs *oca = args;
+
+	if (oca->ca_bustype < 0)
+		return 0;
+
+	return (cf->cf_attach->ca_match)(parent, cf, oca);
+}
+
+int
 sbus_translate(dev, ca)
 	struct device *dev;
 	struct confargs *ca;
 {
 	struct sbus_softc *sc = (struct sbus_softc *)dev;
-	register int base, slot;
-	register int i;
+	int base, slot;
+	int i;
 
 	if (sc->sc_nrange == 0) {
 		/* Old-style SBus configuration */
@@ -231,24 +248,25 @@ sbus_translate(dev, ca)
 			ca->ca_slot = SBUS_ABS_TO_SLOT(base);
 			ca->ca_offset = SBUS_ABS_TO_OFFSET(base);
 		} else {
-			if (!CPU_ISSUN4C && !CPU_ISSUN4E)
-				panic("relative sbus addressing not supported");
+			if (!CPU_ISSUN4C && !CPU_ISSUN4E) {
+				printf("%s: relative sbus addressing not supported\n",
+				    dev->dv_xname);
+				return ENXIO;
+			}
 			ca->ca_slot = slot = ca->ca_ra.ra_iospace;
 			ca->ca_offset = base;
-			ca->ca_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
-			ca->ca_ra.ra_iospace = PMAP_OBIO;
 
-			/* Fix any remaining register banks */
-			for (i = 1; i < ca->ca_ra.ra_nreg; i++) {
+			/* Fix all register banks */
+			for (i = 0; i < ca->ca_ra.ra_nreg; i++) {
 				base = (int)ca->ca_ra.ra_reg[i].rr_paddr;
+				if ((base & ~SBUS_PAGE_MASK) != 0)
+					return ENXIO;
 				ca->ca_ra.ra_reg[i].rr_paddr =
 					(void *)SBUS_ADDR(slot, base);
 				ca->ca_ra.ra_reg[i].rr_iospace = PMAP_OBIO;
 			}
 		}
-
 	} else {
-
 		ca->ca_slot = ca->ca_ra.ra_iospace;
 		ca->ca_offset = (int)ca->ca_ra.ra_paddr;
 
@@ -267,6 +285,8 @@ sbus_translate(dev, ca)
 			}
 		}
 	}
+
+	return 0;
 }
 
 /*

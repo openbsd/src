@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.9 2007/05/29 09:54:17 sobrado Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.10 2015/03/21 19:55:31 miod Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.4 1996/04/22 02:35:05 abrown Exp $ */
 
 /*
@@ -63,5 +63,5 @@ struct sbus_softc {
 	int	sc_burst;		/* burst transfer sizes supported */
 };
 
-void	sbus_translate(struct device *, struct confargs *);
+int	sbus_translate(struct device *, struct confargs *);
 int	sbus_testdma(struct sbus_softc *, struct confargs *);
