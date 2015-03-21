@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.820 2015/03/21 16:45:53 rpe Exp $
+#	$OpenBSD: install.sub,v 1.821 2015/03/21 18:27:39 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -57,37 +57,6 @@ usage() {
 	echo "usage: ${0##*/} [-a] [-f filename]" >&2
 	exit 1
 }
-
-# Parse parameters
-AUTO=false
-RESPFILE=
-while getopts "af:" opt; do
-	case $opt in
-	a)	AUTO=true;;
-	f)	RESPFILE=$OPTARG;;
-	*)	usage;;
-	esac
-done
-shift $((OPTIND-1))
-(($# == 0)) || usage
-
-# Include machine-dependent functions and definitions.
-#
-# The following functions must be provided:
-#	md_congrats()		  - display friendly message
-#	md_installboot()	  - install boot-blocks on disk
-#	md_prep_disklabel()	  - put an OpenBSD disklabel on the disk
-#	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
-#
-# The following variables can be provided if required:
-#	MDSETS	    - list of files to add to THESETS
-#	MDTERM      - 'vt220' assumed if not provided
-#	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
-#	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
-#	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
-#	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
-#	NCPU	    - the number of cpus for mp capable arches
-. install.md
 
 set_term() {
 	local _layouts
@@ -219,9 +188,6 @@ askpass() {
 	echo
 }
 
-# Make sure lock is initially released
-rm -df /tmp/lock
-
 # Acquire lock
 lock() {
 	while ! mkdir /tmp/lock 2>/dev/null && sleep .1; do done
@@ -237,30 +203,6 @@ retrap() {
 	trap 'kill -KILL $cppid 2>/dev/null; echo; stty echo; exit 0' \
 		INT EXIT TERM
 }
-
-# The dmesg listener will check for the existance of this file and send a
-# signal to the child process if the dmesg output differs from the contents
-# of that file
-rm -f /tmp/update
-
-if ! $AUTO; then
-	# Start listener process looking for dmesg changes
-	(
-		while :; do
-			lock
-			if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
-				dmesg >/tmp/update
-				kill -TERM 2>/dev/null $$ || exit 1
-			fi
-			unlock
-			sleep .5
-		done
-	) |&
-	cppid=$!
-
-	# Kill the child on exit
-	retrap
-fi
 
 # Issue a read into the global variable $resp. If the dmesg output is
 # changed while inside this function, the current read will be aborted
@@ -2112,6 +2054,64 @@ get_responsefile() {
 # code here rather than at the top of the file.
 #
 # #######################################################################
+
+# Parse parameters
+AUTO=false
+RESPFILE=
+while getopts "af:" opt; do
+	case $opt in
+	a)	AUTO=true;;
+	f)	RESPFILE=$OPTARG;;
+	*)	usage;;
+	esac
+done
+shift $((OPTIND-1))
+(($# == 0)) || usage
+
+# Include machine-dependent functions and definitions.
+#
+# The following functions must be provided:
+#	md_congrats()		  - display friendly message
+#	md_installboot()	  - install boot-blocks on disk
+#	md_prep_disklabel()	  - put an OpenBSD disklabel on the disk
+#	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
+#
+# The following variables can be provided if required:
+#	MDSETS	    - list of files to add to THESETS
+#	MDTERM      - 'vt220' assumed if not provided
+#	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
+#	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
+#	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
+#	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
+#	NCPU	    - the number of cpus for mp capable arches
+. install.md
+
+# Make sure lock is initially released
+rm -df /tmp/lock
+
+# The dmesg listener will check for the existance of this file and send a
+# signal to the child process if the dmesg output differs from the contents
+# of that file
+rm -f /tmp/update
+
+if ! $AUTO; then
+	# Start listener process looking for dmesg changes
+	(
+		while :; do
+			lock
+			if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
+				dmesg >/tmp/update
+				kill -TERM 2>/dev/null $$ || exit 1
+			fi
+			unlock
+			sleep .5
+		done
+	) |&
+	cppid=$!
+
+	# Kill the child on exit
+	retrap
+fi
 
 ROOTDISK=
 ROOTDEV=
