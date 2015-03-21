@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.48 2015/03/21 21:19:25 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.49 2015/03/21 21:30:58 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,6 +63,14 @@ By default, if keys are not given,
 .Nm
 uses entire lines for comparison.
 .Pp
+If no
+.Ar file
+is specified, or if
+.Ar file
+is
+.Sq - ,
+the standard input is used.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl C, Fl Fl check=silent|quiet
@@ -115,10 +123,6 @@ or
 .Fl c ,
 .Nm
 also checks that there are no lines with duplicate keys.
-.It Fl Fl version
-Print the version and exit.
-.It Fl Fl help
-Print the help text and exit.
 .El
 .Pp
 The following options override the default ordering rules.
@@ -309,6 +313,41 @@ The
 and
 .Xr gzip 1
 utilities meet these requirements.
+.It Fl Fl debug
+Print some extra information about the sorting process to the
+standard output.
+.It Fl Fl files0-from Ns = Ns Ar filename
+Take the input file list from the file
+.Ar filename .
+The file names must be separated by NUL
+(like the output produced by the command
+.Dq find ... -print0 ) .
+.It Fl Fl heapsort
+Try to use heap sort, if the sort specifications allow.
+This sort algorithm cannot be used with
+.Fl u
+and
+.Fl s .
+.It Fl Fl help
+Print the help text and exit.
+.It Fl Fl mergesort , Fl H
+Use mergesort.
+This is a universal algorithm that can always be used,
+but it is not always the fastest.
+.It Fl Fl mmap
+Try to use file memory mapping system call.
+It may increase speed in some cases.
+.It Fl Fl qsort
+Try to use quick sort, if the sort specifications allow.
+This sort algorithm cannot be used with
+.Fl u
+and
+.Fl s .
+.It Fl Fl radixsort
+Try to use radix sort, if the sort specifications allow.
+The radix sort can only be used for trivial locales (C and POSIX),
+and it cannot be used for numeric or month sort.
+Radix sort is very fast and stable.
 .It Fl Fl random-source Ns = Ns Ar filename
 For random sort, the contents of
 .Ar filename
@@ -320,52 +359,8 @@ produce the same result if the input is also identical.
 By default, the
 .Xr arc4random_buf 3
 function is used instead.
-.It Fl Fl debug
-Print some extra information about the sorting process to the
-standard output.
-.It Fl Fl files0-from Ns = Ns Ar filename
-Take the input file list from the file
-.Ar filename .
-The file names must be separated by NUL
-(like the output produced by the command
-.Dq find ... -print0 ) .
-.It Fl Fl radixsort
-Try to use radix sort, if the sort specifications allow.
-The radix sort can only be used for trivial locales (C and POSIX),
-and it cannot be used for numeric or month sort.
-Radix sort is very fast and stable.
-.It Fl H, Fl Fl mergesort
-Use mergesort.
-This is a universal algorithm that can always be used,
-but it is not always the fastest.
-.It Fl Fl qsort
-Try to use quick sort, if the sort specifications allow.
-This sort algorithm cannot be used with
-.Fl u
-and
-.Fl s .
-.It Fl Fl heapsort
-Try to use heap sort, if the sort specifications allow.
-This sort algorithm cannot be used with
-.Fl u
-and
-.Fl s .
-.It Fl Fl mmap
-Try to use file memory mapping system call.
-It may increase speed in some cases.
-.El
-.Pp
-The following operands are available:
-.Bl -tag -width indent
-.It Ar file
-The pathname of a file to be sorted, merged, or checked.
-If no
-.Ar file
-operands are specified, or if a
-.Ar file
-operand is
-.Fl ,
-the standard input is used.
+.It Fl Fl version
+Print the version and exit.
 .El
 .Pp
 A field is defined as a maximal sequence of characters other than the
