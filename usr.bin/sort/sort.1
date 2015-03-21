@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.49 2015/03/21 21:30:58 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.50 2015/03/21 21:47:37 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,7 @@ If the input is too big to fit into the memory buffer,
 temporary files are used.
 .It Fl s
 Stable sort; maintains the original record order of records that have
-and equal key.
+an equal key.
 This is a non-standard feature, but it is widely accepted and used.
 .It Fl T Ar dir , Fl Fl temporary-directory Ns = Ns Ar dir
 Store temporary files in the directory
@@ -148,9 +148,10 @@ equivalents to be the same for purposes of comparison.
 Sort by general numerical value.
 As opposed to
 .Fl n ,
-this option handles general floating points, which have a much
-permissive format than those allowed by
-. Fl n ,
+this option handles general floating points.
+It has a more
+permissive format than that allowed by
+.Fl n
 but it has a significant performance drawback.
 .It Fl h, Fl Fl human-numeric-sort, Fl Fl sort=human-numeric
 Sort by numerical value, but take into account the SI suffix,
@@ -498,16 +499,16 @@ By default, if we specify
 .Fl t
 with the same symbol as the thousand separator or decimal point,
 the symbol will be treated as the field separator.
-Older behavior was less definite; the symbol was treated as both field
+Older behavior was less definite: the symbol was treated as both field
 separator and numeric separator, simultaneously.
 This environment variable enables the old behavior.
 .It Ev LANG
 Used as a last resort to determine different kinds of locale-specific
-behavior if neither the respective environment variable, nor
+behavior if neither the respective environment variable nor
 .Ev LC_ALL
 are set.
 .It Ev LC_ALL
-Locale settings that override all of the above locale settings.
+Locale settings that override all of the other locale settings.
 This environment variable can be used to set all these settings
 to the same value at once.
 .It Ev LC_COLLATE
