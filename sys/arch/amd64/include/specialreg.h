@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.32 2015/01/19 16:01:43 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.33 2015/03/21 20:42:38 kettenis Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -90,6 +90,13 @@
 #define	CR4_OSXSAVE	0x00040000	/* enable XSAVE and extended states */
 #define	CR4_SMEP	0x00100000	/* supervisor mode exec protection */
 #define	CR4_SMAP	0x00200000	/* supervisor mode access prevention */
+
+/*
+ * Extended Control Register XCR0
+ */
+#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
+#define	XCR0_SSE	0x00000002	/* SSE state */
+#define	XCR0_AVX	0x00000004	/* AVX state */
 
 /*
  * CPUID "features" bits (CPUID function 0x1):

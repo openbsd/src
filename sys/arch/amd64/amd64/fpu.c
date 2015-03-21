@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.30 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.31 2015/03/21 20:42:38 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -83,6 +83,29 @@
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
+
+uint64_t xsave_mask;
+
+static inline void
+xsave(struct savefpu *addr, uint64_t mask)
+{
+	uint32_t lo, hi;
+
+	lo = mask;
+	hi = mask >> 32;
+	__asm volatile("xsave %0" : "=m" (*addr) : "a" (lo), "d" (hi) :
+	    "memory");
+}
+
+static inline void
+xrstor(struct savefpu *addr, uint64_t mask)
+{
+	uint32_t lo, hi;
+
+	lo = mask;
+	hi = mask >> 32;
+	__asm volatile("xrstor %0" : : "m" (*addr), "a" (lo), "d" (hi));
+}
 
 void fpudna(struct cpu_info *);
 static int x86fpflags_to_siginfo(u_int32_t);
@@ -253,15 +276,19 @@ fpudna(struct cpu_info *ci)
 		fxrstor(&sfp->fp_fxsave);
 		p->p_md.md_flags |= MDP_USEDFPU;
 	} else {
-		static double	zero = 0.0;
+		if (xsave_mask) {
+			xrstor(sfp, xsave_mask);
+		} else {
+			static double	zero = 0.0;
 
-		/*
-		 * amd fpu does not restore fip, fdp, fop on fxrstor
-		 * thus leaking other process's execution history.
-		 */
-		fnclex();
-		__asm volatile("ffree %%st(7)\n\tfldl %0" : : "m" (zero));
-		fxrstor(sfp);
+			/*
+			 * amd fpu does not restore fip, fdp, fop on fxrstor
+			 * thus leaking other process's execution history.
+			 */
+			fnclex();
+			__asm volatile("ffree %%st(7)\n\tfldl %0" : : "m" (zero));
+			fxrstor(sfp);
+		}
 	}
 }
 
@@ -290,7 +317,10 @@ fpusave_cpu(struct cpu_info *ci, int save)
 		  */
 		clts();
 		ci->ci_fpsaving = 1;
-		fxsave(&p->p_addr->u_pcb.pcb_savefpu);
+		if (xsave_mask)
+			xsave(&p->p_addr->u_pcb.pcb_savefpu, xsave_mask);
+		else
+			fxsave(&p->p_addr->u_pcb.pcb_savefpu);
 		ci->ci_fpsaving = 0;
 	}
 
