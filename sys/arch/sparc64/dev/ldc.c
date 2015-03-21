@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.11 2014/09/29 17:43:29 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -474,10 +474,6 @@ ldc_reset(struct ldc_conn *lc)
 	DPRINTF(("Resetting connection\n"));
 
 	mtx_enter(&lc->lc_txq->lq_mtx);
-	hv_ldc_tx_qconf(lc->lc_id, 0, 0);
-	hv_ldc_rx_qconf(lc->lc_id, 0, 0);
-	lc->lc_tx_state = lc->lc_rx_state = LDC_CHANNEL_DOWN;
-
 	err = hv_ldc_tx_qconf(lc->lc_id,
 	    lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
 	if (err != H_EOK)
@@ -490,6 +486,7 @@ ldc_reset(struct ldc_conn *lc)
 
 	lc->lc_tx_seqid = 0;
 	lc->lc_state = 0;
+	lc->lc_tx_state = lc->lc_rx_state = LDC_CHANNEL_DOWN;
 	mtx_leave(&lc->lc_txq->lq_mtx);
 
 	lc->lc_reset(lc);
