@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.37 2015/02/11 05:56:51 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.38 2015/03/21 18:20:19 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1245,6 +1245,10 @@ rtmsg_process(char *buf, size_t len)
 				continue;
 
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+				continue;
+
+			/* LDP should follow the IGP and ignore BGP routes */
+			if (rtm->rtm_priority == RTP_BGP)
 				continue;
 
 			if (rtm->rtm_flags & RTF_MPATH)
