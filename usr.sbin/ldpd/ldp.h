@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.16 2013/10/17 17:52:21 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.17 2015/03/21 18:34:01 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -194,12 +194,6 @@ struct address_list_tlv {
 
 #define	ADDR_IPV4		0x1
 #define	ADDR_IPV6		0x2
-
-/* This struct is badly aligned so use two 32 bit fields */
-struct fec_elm {
-	u_int32_t	hdr;
-	u_int32_t	addr;
-};
 
 #define FEC_ELM_MIN_LEN		4
 #define	FEC_WILDCARD		0x01

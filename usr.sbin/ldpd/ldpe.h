@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.33 2015/03/21 18:32:01 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.34 2015/03/21 18:34:01 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -197,10 +197,6 @@ int	 nbr_pending_connect(struct nbr *);
 int	 nbr_establish_connection(struct nbr *);
 
 void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
-			    struct map *);
-struct mapping_entry	*nbr_mapping_find(struct nbr *, struct mapping_head *,
-			    struct map *);
-void			 nbr_mapping_del(struct nbr *, struct mapping_head *,
 			    struct map *);
 void			 mapping_list_clr(struct mapping_head *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.39 2015/03/21 18:32:01 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.40 2015/03/21 18:34:01 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -112,8 +112,6 @@ RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_HEAD(kif_tree, kif_node)		kit;
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
-
-int		flag_implicit_null = 0;
 
 int
 kif_init(void)
