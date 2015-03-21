@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.15 2015/02/11 07:01:10 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.16 2015/03/21 15:35:15 sthen Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -267,6 +267,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 				    " server certificate", servername);
 			goto err;
 		}
+		X509_free(cert);
 	}
 
 	return (0);
