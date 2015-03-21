@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.39 2015/03/10 09:26:24 mpi Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.40 2015/03/21 18:11:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -309,6 +309,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_link_state = LINK_STATE_DOWN;
 	ifp->if_ioctl = vnet_ioctl;
 	ifp->if_start = vnet_start;
 	ifp->if_watchdog = vnet_watchdog;
@@ -390,6 +391,7 @@ vnet_rx_intr(void *arg)
 			lc->lc_tx_seqid = 0;
 			lc->lc_state = 0;
 			lc->lc_reset(lc);
+			timeout_add_msec(&sc->sc_handshake_to, 500);
 			break;
 		}
 		lc->lc_rx_state = rx_state;
@@ -656,6 +658,8 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 		/* Configure multicast now that we can. */
 		vnet_setmulti(sc, 1);
+
+		ifp->if_flags &= ~IFF_OACTIVE;
 		vnet_start(ifp);
 	}
 }
@@ -897,12 +901,21 @@ void
 vnet_ldc_reset(struct ldc_conn *lc)
 {
 	struct vnet_softc *sc = lc->lc_sc;
+	int i;
 
 	timeout_del(&sc->sc_handshake_to);
 	sc->sc_tx_prod = sc->sc_tx_cons = 0;
 	sc->sc_peer_state = VIO_DP_STOPPED;
 	sc->sc_vio_state = 0;
 	vnet_link_state(sc);
+
+	sc->sc_lm->lm_next = 1;
+	sc->sc_lm->lm_count = 1;
+	for (i = 1; i < sc->sc_lm->lm_nentries; i++)
+		sc->sc_lm->lm_slot[i].entry = 0;
+
+	for (i = 0; i < sc->sc_vd->vd_nentries; i++)
+		sc->sc_vd->vd_desc[i].hdr.dstate = VIO_DESC_FREE;
 }
 
 void
@@ -1391,7 +1404,6 @@ vnet_init(struct ifnet *ifp)
 	ldc_send_vers(lc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 void
@@ -1408,7 +1420,10 @@ vnet_stop(struct ifnet *ifp)
 
 	hv_ldc_tx_qconf(lc->lc_id, 0, 0);
 	hv_ldc_rx_qconf(lc->lc_id, 0, 0);
+	lc->lc_tx_seqid = 0;
+	lc->lc_state = 0;
 	lc->lc_tx_state = lc->lc_rx_state = LDC_CHANNEL_DOWN;
+	vnet_ldc_reset(lc);
 
 	vnet_dring_free(sc->sc_dmatag, sc->sc_vd);
 
