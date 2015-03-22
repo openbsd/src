@@ -97,9 +97,8 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 	hints.ai_flags = AI_CANONNAME;
 	error = getaddrinfo(*ahost, pbuf, &hints, &res);
 	if (error) {
-#if 0
-		warnx("%s: %s", *ahost, gai_strerror(error));
-#endif
+		(void)fprintf(stderr, "rcmd: %s: %s\n", *ahost,
+		    gai_strerror(error));
 		return (-1);
 	}
 	if (res->ai_canonname) {
