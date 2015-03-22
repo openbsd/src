@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2015/03/22 05:41:50 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -277,8 +277,6 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			} else if (name[0] == 'X') {
 				if (!strncmp(name, "Xintr", 5) ||
 				    !strncmp(name, "Xresume", 7) ||
-				    !strncmp(name, "Xstray", 6) ||
-				    !strncmp(name, "Xhold", 5) ||
 				    !strncmp(name, "Xrecurse", 8) ||
 				    !strcmp(name, "Xdoreti") ||
 				    !strncmp(name, "Xsoft", 5)) {
