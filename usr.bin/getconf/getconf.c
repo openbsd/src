@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.16 2013/03/28 03:29:45 guenther Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.17 2015/03/22 01:14:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -164,6 +164,12 @@ const struct conf_variable conf_table[] =
   constant_row(_XOPEN_IOV_MAX)
   constant_row(_XOPEN_NAME_MAX)
   constant_row(_XOPEN_PATH_MAX)
+
+  /* Extensions */
+  sysconf_row(PHYS_PAGES)
+  sysconf_row(AVPHYS_PAGES)
+  sysconf_row(NPROCESSORS_CONF)
+  sysconf_row(NPROCESSORS_ONLN)
 
   { NULL }
 };
