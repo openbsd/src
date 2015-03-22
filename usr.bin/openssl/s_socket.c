@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.3 2014/12/03 22:16:02 bcook Exp $ */
+/* $OpenBSD: s_socket.c,v 1.4 2015/03/22 10:36:22 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,11 +84,6 @@ init_client(int *sock, char *host, char *port, int type, int af)
 {
 	struct addrinfo hints, *ai_top, *ai;
 	int i, s;
-
-	if (BIO_sock_init() != 1) {
-		BIO_printf(bio_err, "BIO_sock_init failed\n");
-		return (0);
-	}
 
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_family = af;
@@ -180,11 +175,6 @@ init_server_long(int *sock, int port, char *ip, int type)
 	int ret = 0;
 	struct sockaddr_in server;
 	int s = -1;
-
-	if (BIO_sock_init() != 1) {
-		BIO_printf(bio_err, "BIO_sock_init failed\n");
-		return (0);
-	}
 
 	memset((char *) &server, 0, sizeof(server));
 	server.sin_family = AF_INET;

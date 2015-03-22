@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.2 2014/10/22 13:54:03 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.3 2015/03/22 10:36:22 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,6 +256,11 @@ main(int argc, char **argv)
 	bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 	if (bio_err == NULL) {
 		fprintf(stderr, "openssl: failed to initialise bio_err\n");
+		exit(1);
+	}
+
+	if (BIO_sock_init() != 1) {
+		BIO_printf(bio_err, "BIO_sock_init failed\n");
 		exit(1);
 	}
 
