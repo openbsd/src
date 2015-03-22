@@ -70,6 +70,7 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 	char c, *p;
 	int refused;
 	in_port_t rport = porta;
+	int numread;
 
 	/* call rcmdsh() with specified remote shell if appropriate. */
 	if (!issetugid() && (p = getenv("RSH")) && *p) {
@@ -264,9 +265,10 @@ again:
 	(void)write(s, locuser, strlen(locuser)+1);
 	(void)write(s, remuser, strlen(remuser)+1);
 	(void)write(s, cmd, strlen(cmd)+1);
-	if (read(s, &c, 1) != 1) {
+	if ((numread = read(s, &c, 1)) != 1) {
 		(void)fprintf(stderr,
-		    "rcmd: %s: %s\n", *ahost, strerror(errno));
+		    "rcmd: %s: %s\n", *ahost,
+		    numread == -1 ? strerror(errno) : "Short read");
 		goto bad2;
 	}
 	if (c != 0) {
