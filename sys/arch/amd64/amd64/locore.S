@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.62 2015/01/16 10:17:51 sf Exp $	*/
+/*	$OpenBSD: locore.S,v 1.63 2015/03/22 05:55:39 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -987,6 +987,16 @@ IDTVEC(syscall32)
  * it can be made faster in the future.
  */
 IDTVEC(syscall)
+	/*
+	 * Enter here with interrupts blocked; %rcx contains the caller's
+	 * %rip and the original rflags has been copied to %r11.  %cs and
+	 * %ss have been updated to the kernel segments, but %rsp is still
+	 * the user-space value.
+	 * First order of business is to swap to the kernel gs.base so that
+	 * we can access our struct cpu_info and use the scratch space there
+	 * to switch to our kernel stack.  Once that's in place we can
+	 * unblock interrupts and save the rest of the syscall frame.
+	 */
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURPCB),%r15
