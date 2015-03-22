@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.21 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: qec.c,v 1.22 2015/03/22 12:45:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -58,7 +58,7 @@
 int	qecprint(void *, const char *);
 int	qecmatch(struct device *, void *, void *);
 void	qecattach(struct device *, struct device *, void *);
-void	qec_fix_range(struct qec_softc *, struct sbus_softc *);
+int	qec_fix_range(struct qec_softc *, struct sbus_softc *);
 void	qec_translate(struct qec_softc *, struct confargs *);
 
 struct cfattach qec_ca = {
@@ -138,7 +138,8 @@ qecattach(parent, self, aux)
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
 
-	qec_fix_range(sc, (struct sbus_softc *)parent);
+	if (qec_fix_range(sc, (struct sbus_softc *)parent) != 0)
+		return;
 
 	/*
 	 * Get transfer burst size from PROM
@@ -193,7 +194,7 @@ qecattach(parent, self, aux)
 	}
 }
 
-void
+int
 qec_fix_range(sc, sbp)
 	struct qec_softc *sc;
 	struct sbus_softc *sbp;
@@ -204,24 +205,48 @@ qec_fix_range(sc, sbp)
 	sc->sc_range =
 		(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_range == NULL) {
-		printf("%s: PROM ranges too large: %d\n",
-				sc->sc_dev.dv_xname, rlen);
-		return;
+		printf(": PROM ranges too large: %d\n", rlen);
+		return EINVAL;
 	}
 	sc->sc_nrange = rlen / sizeof(struct rom_range);
 	(void)getprop(sc->sc_node, "ranges", sc->sc_range, rlen);
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		for (j = 0; j < sbp->sc_nrange; j++) {
-			if (sc->sc_range[i].pspace == sbp->sc_range[j].cspace) {
-				sc->sc_range[i].poffset +=
-				    sbp->sc_range[j].poffset;
-				sc->sc_range[i].pspace =
-				    sbp->sc_range[j].pspace;
-				break;
+	if (sbp->sc_nrange == 0) {
+		/*
+		 * Old-style SBus configuration: we need to compute the
+		 * physical address of the board's base, in order to be
+		 * able to compute proper physical addresses in
+		 * qec_translate() below.
+		 */
+		struct rom_reg rr[RA_MAXREG];
+		int reglen;
+
+		reglen = getprop(sc->sc_node, "reg", rr, sizeof rr);
+		/* shouldn't happen */
+		if (reglen <= 0 || reglen % sizeof(struct rom_reg) != 0) {
+			printf(": unexpected \"reg\" property layout\n");
+			return EINVAL;
+		}
+		for (i = 0; i < sc->sc_nrange; i++) {
+			sc->sc_range[i].poffset +=
+			    sc->sc_paddr - rr[0].rr_paddr;
+		}
+	} else {
+		for (i = 0; i < sc->sc_nrange; i++) {
+			for (j = 0; j < sbp->sc_nrange; j++) {
+				if (sc->sc_range[i].pspace ==
+				    sbp->sc_range[j].cspace) {
+					sc->sc_range[i].poffset +=
+					    sbp->sc_range[j].poffset;
+					sc->sc_range[i].pspace =
+					    sbp->sc_range[j].pspace;
+					break;
+				}
 			}
 		}
 	}
+
+	return 0;
 }
 
 /*
