@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lorder.1,v 1.9 2007/08/06 19:16:06 sobrado Exp $
+.\"	$OpenBSD: lorder.1,v 1.10 2015/03/22 08:31:13 jmc Exp $
 .\"	$NetBSD: lorder.1,v 1.5 1995/08/31 22:42:44 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lorder.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: March 22 2015 $
 .Dt LORDER 1
 .Os
 .Sh NAME
@@ -55,6 +55,15 @@ The output is normally used with
 when a library is created to determine the optimum ordering of the
 object modules so that all references may be resolved in a single
 pass of the loader.
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev NM
+Path to
+.Xr nm 1
+executable to use.
+Defaults to
+.Sq nm .
+.El
 .Sh EXAMPLES
 .Bd -literal
 $ ar cr library.a `lorder ${OBJS} | tsort`
