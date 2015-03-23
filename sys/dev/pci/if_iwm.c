@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.38 2015/03/16 04:09:53 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5471,7 +5471,8 @@ iwm_endscan_cb(void *arg)
 
 	DPRINTF(("scan ended\n"));
 
-	if (sc->sc_scanband == IEEE80211_CHAN_2GHZ) {
+	if (sc->sc_scanband == IEEE80211_CHAN_2GHZ &&
+	    sc->sc_nvm.sku_cap_band_52GHz_enable) {
 		int error;
 		done = 0;
 		if ((error = iwm_mvm_scan_request(sc,
@@ -6409,6 +6410,11 @@ iwm_preinit(struct iwm_softc *sc)
 	    IWM_UCODE_MINOR(sc->sc_fwver),
 	    IWM_UCODE_API(sc->sc_fwver),
 	    ether_sprintf(sc->sc_nvm.hw_addr));
+
+	/* not all hardware can do 5GHz band */
+	if (!sc->sc_nvm.sku_cap_band_52GHz_enable)
+		memset(&ic->ic_sup_rates[IEEE80211_MODE_11A], 0,
+		    sizeof(ic->ic_sup_rates[IEEE80211_MODE_11A]));
 
 	/* Reattach net80211 so MAC address and channel map are picked up. */
 	ieee80211_ifdetach(ifp);
