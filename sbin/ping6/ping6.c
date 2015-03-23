@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.104 2015/03/23 10:09:02 dlg Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.105 2015/03/23 10:36:24 dlg Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -197,6 +197,7 @@ double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
+struct tv64 tv64_offset;	/* random offset for time values */
 
 /* for node addresses */
 u_short naflags;
@@ -803,6 +804,8 @@ main(int argc, char *argv[])
 	    (socklen_t)sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_RECVHOPLIMIT)"); /* XXX err? */
 
+	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
+
 	printf("PING6(%lu=40+8+%lu bytes) ", (unsigned long)(40 + pingerlen()),
 	    (unsigned long)(pingerlen() - 8));
 	printf("%s --> ", pr_addr((struct sockaddr *)&src, sizeof(src)));
@@ -1076,8 +1079,10 @@ pinger(void)
 
 			if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 				err(1, "clock_gettime(CLOCK_MONOTONIC)");
-			tv64.tv64_sec = htobe64(ts.tv_sec);
-			tv64.tv64_nsec = htobe64(ts.tv_nsec);
+			tv64.tv64_sec = htobe64((u_int64_t)ts.tv_sec +
+			    tv64_offset.tv64_sec);
+			tv64.tv64_nsec = htobe64((u_int64_t)ts.tv_nsec +
+			    tv64_offset.tv64_nsec);
 			memcpy(&outpack[ICMP6ECHOLEN], &tv64, sizeof(tv64));
 		}
 		cc = ICMP6ECHOLEN + datalen;
@@ -1251,8 +1256,10 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		++nreceived;
 		if (timing) {
 			memcpy(&tv64, icp + 1, sizeof(tv64));
-			tp.tv_sec = betoh64(tv64.tv64_sec);
-			tp.tv_nsec = betoh64(tv64.tv64_nsec);
+			tp.tv_sec = betoh64(tv64.tv64_sec) -
+			    tv64_offset.tv64_sec;
+			tp.tv_nsec = betoh64(tv64.tv64_nsec) -
+			    tv64_offset.tv64_nsec;
 			timespecsub(&ts, &tp, &ts);
 			triptime = ((double)ts.tv_sec) * 1000.0 +
 			    ((double)ts.tv_nsec) / 1000000.0;
