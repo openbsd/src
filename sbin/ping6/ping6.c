@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.103 2015/03/12 00:30:38 dlg Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.104 2015/03/23 10:09:02 dlg Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -83,7 +83,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -100,6 +99,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
@@ -110,15 +110,15 @@
 
 #include <md5.h>
 
-struct tv32 {
-	u_int32_t tv32_sec;
-	u_int32_t tv32_usec;
+struct tv64 {
+	u_int64_t tv64_sec;
+	u_int64_t tv64_nsec;
 };
 
 #define MAXPACKETLEN	131072
 #define	IP6LEN		40
 #define ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
-#define ICMP6ECHOTMLEN sizeof(struct tv32)
+#define ICMP6ECHOTMLEN sizeof(struct tv64)
 #define ICMP6_NIQLEN	(ICMP6ECHOLEN + 8)
 /* FQDN case, 64 bits of nonce + 32 bits ttl */
 #define ICMP6_NIRLEN	(ICMP6ECHOLEN + 12)
@@ -236,7 +236,6 @@ void	 pr_rthdr(void *);
 int	 pr_bitrange(u_int32_t, int, int);
 void	 pr_retip(struct ip6_hdr *, u_char *);
 void	 summary(int);
-void	 tvsub(struct timeval *, struct timeval *);
 char	*nigroup(char *);
 void	 usage(void);
 
@@ -578,7 +577,7 @@ main(int argc, char *argv[])
 
 
 	if ((options & F_NOUSERDATA) == 0) {
-		if (datalen >= sizeof(struct tv32)) {
+		if (datalen >= sizeof(struct tv64)) {
 			/* we can time transfer */
 			timing = 1;
 		} else
@@ -1073,15 +1072,13 @@ pinger(void)
 		icp->icmp6_seq = ntohs(seq);
 		if (timing) {
 			struct timespec ts;
-			struct timeval tv;
-			struct tv32 tv32;
+			struct tv64 tv64;
 
 			if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 				err(1, "clock_gettime(CLOCK_MONOTONIC)");
-			TIMESPEC_TO_TIMEVAL(&tv, &ts);
-			tv32.tv32_sec = htonl(tv.tv_sec);	/* XXX 2038 */
-			tv32.tv32_usec = htonl(tv.tv_usec);
-			memcpy(&outpack[ICMP6ECHOLEN], &tv32, sizeof(tv32));
+			tv64.tv64_sec = htobe64(ts.tv_sec);
+			tv64.tv64_nsec = htobe64(ts.tv_nsec);
+			memcpy(&outpack[ICMP6ECHOLEN], &tv64, sizeof(tv64));
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
@@ -1209,9 +1206,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	int fromlen;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
-	struct timespec ts;
-	struct timeval tv, tp;
-	struct tv32 tv32;
+	struct timespec ts, tp;
+	struct tv64 tv64;
 	double triptime = 0;
 	int dupflag;
 	size_t off;
@@ -1221,7 +1217,6 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		err(1, "clock_gettime(CLOCK_MONOTONIC)");
-	TIMESPEC_TO_TIMEVAL(&tv, &ts);
 
 	if (!mhdr || !mhdr->msg_name ||
 	    mhdr->msg_namelen != sizeof(struct sockaddr_in6) ||
@@ -1255,12 +1250,12 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			memcpy(&tv32, icp + 1, sizeof(tv32));
-			tp.tv_sec = ntohl(tv32.tv32_sec);
-			tp.tv_usec = ntohl(tv32.tv32_usec);
-			tvsub(&tv, &tp);
-			triptime = ((double)tv.tv_sec) * 1000.0 +
-			    ((double)tv.tv_usec) / 1000.0;
+			memcpy(&tv64, icp + 1, sizeof(tv64));
+			tp.tv_sec = betoh64(tv64.tv64_sec);
+			tp.tv_nsec = betoh64(tv64.tv64_nsec);
+			timespecsub(&ts, &tp, &ts);
+			triptime = ((double)ts.tv_sec) * 1000.0 +
+			    ((double)ts.tv_nsec) / 1000000.0;
 			tsum += triptime;
 			tsumsq += triptime * triptime;
 			if (triptime < tmin)
@@ -1867,21 +1862,6 @@ get_pathmtu(struct msghdr *mhdr)
 }
 
 /*
- * tvsub --
- *	Subtract 2 timeval structs:  out = out - in.  Out is assumed to
- * be >= in.
- */
-void
-tvsub(struct timeval *out, struct timeval *in)
-{
-	if ((out->tv_usec -= in->tv_usec) < 0) {
-		--out->tv_sec;
-		out->tv_usec += 1000000;
-	}
-	out->tv_sec -= in->tv_sec;
-}
-
-/*
  * onint --
  *	SIGINT handler.
  */
@@ -2341,7 +2321,7 @@ fill(char *bp, char *patp)
 /* xxx */
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXDATALEN - (8 + sizeof(struct tv32) + ii);
+		    kk <= MAXDATALEN - (8 + sizeof(struct tv64) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
