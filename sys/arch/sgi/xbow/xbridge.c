@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.93 2014/12/04 21:52:08 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.94 2015/03/23 20:50:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -3295,3 +3295,34 @@ xbridge_set_devio(struct xbpci_softc *xb, int dev, uint32_t devio, int final)
 	    dev, final ? "final " : "", devio);
 #endif
 }
+
+#ifdef DDB
+void xbridge_ddb(void);
+void
+xbridge_ddb()
+{
+	struct xbpci_softc *xb;
+	unsigned int n, intrbit;
+
+	for (n = 0; n < xbpci_cd.cd_ndevs; n++) {
+		xb = xbpci_cd.cd_devs[n];
+		if (xb == NULL)
+			continue;
+
+		printf("%s: ISR %p IER %p xb_ier %p\n",
+		    xb->xb_dev.dv_xname,
+		    (void *)xbridge_read_reg(xb, BRIDGE_ISR),
+		    (void *)xbridge_read_reg(xb, BRIDGE_IER),
+		    (void *)xb->xb_ier);
+
+		printf("mode %p dev %p\n",
+		    (void *)xbridge_read_reg(xb, BRIDGE_INT_MODE),
+		    (void *)xbridge_read_reg(xb, BRIDGE_INT_DEV));
+
+		for (intrbit = 0; intrbit < 8; intrbit++)
+			printf("IRQ%u to %p\n", intrbit,
+			    (void *)xbridge_read_reg(xb,
+			      BRIDGE_INT_ADDR(intrbit)));
+	}
+}
+#endif
