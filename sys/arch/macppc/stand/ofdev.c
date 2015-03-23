@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.21 2015/03/14 20:52:41 miod Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.22 2015/03/23 20:18:52 miod Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (!strcmp(buf, "network")) {
 		ofdev->type = OFDEV_NET;
 		of->f_dev = devsw;
-		of->f_devdata = &ofdev;
+		of->f_devdata = ofdev;
 		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
 		nfsys = 1;
 		if (error = net_open(ofdev))
