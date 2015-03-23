@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.117 2015/03/12 09:54:11 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.118 2015/03/23 09:36:25 dlg Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -153,6 +153,8 @@ quad_t tsum = 0;		/* sum of all times in usec, for doing average */
 quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 
 int bufspace = IP_MAXPACKET;
+
+struct tv64 tv64_offset;
 
 void fill(char *, char *);
 void catcher(int signo);
@@ -337,6 +339,8 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
+
+	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
 
 	memset(&interstr, 0, sizeof(interstr));
 
@@ -620,8 +624,10 @@ pinger(void)
 
 		if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 			err(1, "clock_gettime(CLOCK_MONOTONIC)");
-		tv64.tv64_sec = htobe64(ts.tv_sec);
-		tv64.tv64_nsec = htobe64(ts.tv_nsec);
+		tv64.tv64_sec = htobe64((u_int64_t)ts.tv_sec +
+		    tv64_offset.tv64_sec);
+		tv64.tv64_nsec = htobe64((u_int64_t)ts.tv_nsec +
+		    tv64_offset.tv64_nsec);
 		memcpy(&outpack[8], &tv64, sizeof(tv64));
 	}
 
@@ -703,8 +709,10 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			timinginfo++;
 			pkttime = (char *)icp->icmp_data;
 			memcpy(&tv64, pkttime, sizeof(tv64));
-			tp.tv_sec = betoh64(tv64.tv64_sec);
-			tp.tv_nsec = betoh64(tv64.tv64_nsec);
+			tp.tv_sec = betoh64(tv64.tv64_sec) -
+			    tv64_offset.tv64_sec;
+			tp.tv_nsec = betoh64(tv64.tv64_nsec) -
+			    tv64_offset.tv64_nsec;
 
 			timespecsub(&ts, &tp, &ts);
 			triptime = (ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
