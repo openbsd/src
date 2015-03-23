@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.97 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.98 2015/03/23 12:31:19 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -19,9 +19,7 @@
 #include "def.h"
 #include "kbd.h"		/* needed for modes */
 
-#ifndef DIFFTOOL
 #define DIFFTOOL "/usr/bin/diff"
-#endif /* !DIFFTOOL */
 
 static struct buffer  *makelist(void);
 static struct buffer *bnew(const char *);

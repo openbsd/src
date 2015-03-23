@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.36 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.37 2015/03/23 12:31:19 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -28,10 +28,6 @@
 #include "def.h"
 
 #define NOBUF	512			/* Output buffer size. */
-
-#ifndef TCSASOFT
-#define TCSASOFT	0
-#endif
 
 int	ttstarted;
 char	obuf[NOBUF];			/* Output buffer. */
@@ -80,15 +76,6 @@ ttraw(void)
 	newtty.c_oflag &= ~OPOST;
 	newtty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 
-#if !TCSASOFT
-	/*
-	 * If we don't have TCSASOFT, force terminal to
-	 * 8 bits, no parity.
-	 */
-	newtty.c_iflag &= ~ISTRIP;
-	newtty.c_cflag &= ~(CSIZE | PARENB);
-	newtty.c_cflag |= CS8;
-#endif
 	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &newtty) < 0) {
 		dobeep();
 		ewprintf("ttopen can't tcsetattr");
