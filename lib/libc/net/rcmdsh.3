@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmdsh.3,v 1.16 2014/04/19 18:11:19 tedu Exp $
+.\"	$OpenBSD: rcmdsh.3,v 1.17 2015/03/23 22:29:32 halex Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: March 23 2015 $
 .Dt RCMDSH 3
 .Os
 .Sh NAME
@@ -55,11 +55,11 @@ The
 function looks up the host
 .Fa *ahost
 using
-.Xr gethostbyname 3 ,
-returning \-1 if the host does not exist.
-Otherwise
+.Xr gethostbyname 3
+and, if the host exists,
 .Fa *ahost
-is set to the standard name of the host and a connection is established to
+is set to the standard name of the host.
+A connection is then established to
 a server residing at the well-known Internet port
 .Li shell/tcp
 (or whatever port is used by
