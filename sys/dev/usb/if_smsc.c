@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.17 2015/03/23 08:41:52 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.18 2015/03/23 22:48:51 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -278,6 +278,7 @@ smsc_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	smsc_lock_mii(sc);
 	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(sc, "MII is busy\n");
+		smsc_unlock_mii(sc);
 		return;
 	}
 
