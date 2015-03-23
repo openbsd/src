@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.69 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.70 2015/03/23 08:41:52 mpi Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1060,6 +1060,7 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct udav_softc *sc = c->udav_sc;
 	struct ifnet *ifp = GET_IFP(sc);
 	struct udav_rx_hdr *h;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_int32_t total_len;
 	int s;
@@ -1118,27 +1119,16 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	memcpy(mtod(m, char *), c->udav_buf + UDAV_RX_HDRLEN, total_len);
 
 	ifp->if_ipackets++;
-
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
-
-	s = splnet();
+	ml_enqueue(&ml, m);
 
 	if (udav_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	DPRINTF(("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
-		 __func__, m->m_len));
-	ether_input_mbuf(ifp, m);
-
- done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
 
  done:

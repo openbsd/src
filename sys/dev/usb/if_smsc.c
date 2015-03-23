@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.16 2015/03/19 02:02:43 jsg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.17 2015/03/23 08:41:52 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -1149,6 +1149,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	u_char			*buf = c->sc_buf;
 	uint32_t		total_len;
 	uint16_t		pktlen = 0;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	int			s;
 	uint32_t		rxhdr;
@@ -1219,24 +1220,18 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		}
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = pktlen;
 		m_adj(m, ETHER_ALIGN);
 
 		memcpy(mtod(m, char *), buf, pktlen);
 
-		/* push the packet up */
-		s = splnet();
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
-
-		splx(s);
+		ml_enqueue(&ml, m);
 	} while (total_len > 0);
 
 done:
+	s = splnet();
+	if_input(ifp, &ml);
+	splx(s);
 	memset(c->sc_buf, 0, sc->sc_bufsz);
 
 	/* Setup new transfer. */
