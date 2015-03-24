@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.794 2015/02/06 20:05:48 stsp Exp $
+#	$OpenBSD: GENERIC,v 1.795 2015/03/24 12:00:39 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -533,8 +533,6 @@ le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 sm0	at isa? port 0x300 irq 10		# SMC 91cxx-based ethernet
 ep*	at eisa?			# 3C579 ethernet
-lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
-san*	at pci?				# Sangoma PCI AFT card
 le*	at isapnp?
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
 de*	at pci?				# DC21X4X-based ethernet

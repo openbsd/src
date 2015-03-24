@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.591 2015/02/06 20:19:26 stsp Exp $
+#	$OpenBSD: Makefile,v 1.592 2015/03/24 12:00:39 dlg Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -32,7 +32,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	isa.4 isagpio.4 isapnp.4 isp.4 it.4 itherm.4 iwi.4 iwn.4 iwm.4 \
 	ix.4 ixgb.4 jmb.4 jme.4 jmphy.4 \
 	kate.4 km.4 ksyms.4 kue.4 lc.4 lge.4 lii.4 lisa.4 lm.4 \
-	lmc.4 lmenv.4 lmn.4 lmtemp.4 lo.4 lpt.4 lxtphy.4 luphy.4 \
+	lmenv.4 lmn.4 lmtemp.4 lo.4 lpt.4 lxtphy.4 luphy.4 \
 	maestro.4 mainbus.4 malo.4 maxds.4 maxtmp.4 mbg.4 midi.4 mii.4 mfi.4 \
 	mfii.4 mlphy.4 moscom.4 mos.4 mpe.4 mpath.4 mpi.4 mpii.4 mpu.4 msk.4 \
 	msts.4 mtd.4 mtdphy.4 multicast.4 mtio.4 myx.4 \
@@ -47,7 +47,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	qla.4 qle.4 qlw.4 qsphy.4 radio.4 \
 	ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 ricohrtc.4 \
 	rl.4 rlphy.4 route.4 rsu.4 rt.4 rtsx.4 rum.4 run.4 \
-	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbus.4 schsio.4 \
+	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 sbus.4 schsio.4 \
 	scsi.4 sd.4 \
 	sdmmc.4 sdhc.4 se.4 ses.4 \
 	sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sli.4 \

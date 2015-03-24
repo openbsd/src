@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.384 2015/02/06 19:49:56 stsp Exp $
+#	$OpenBSD: GENERIC,v 1.385 2015/03/24 12:00:39 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -401,8 +401,6 @@ atapiscsi* at wdc?
 atapiscsi* at pciide?
 
 # Networking devices
-lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
-san*	at pci?				# Sangoma PCI AFT card
 de*	at pci?				# DC21X4X-based ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 fxp*	at cardbus?			# Intel PRO/100 ethernet

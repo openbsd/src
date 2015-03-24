@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.246 2015/01/03 21:24:19 uaa Exp $g
+#	$OpenBSD: GENERIC,v 1.247 2015/03/24 12:00:39 dlg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,7 +49,6 @@ ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
 siop*		at pci?
-lmc*		at pci?		# Lan Media Corp SSI/T3/HSSI
 fxp*		at pci?
 de*		at pci?
 #vme*		at pci?
