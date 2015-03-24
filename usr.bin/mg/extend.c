@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.60 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: extend.c,v 1.61 2015/03/24 22:28:10 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,19 +22,13 @@
 #include "key.h"
 #include "macro.h"
 
-#ifndef	BINDKEY
-#define	BINDKEY			/* bindkey is used by FKEYS startup code */
-#endif /* !BINDKEY */
-
 static int	 remap(KEYMAP *, int, PF, KEYMAP *);
 static KEYMAP	*reallocmap(KEYMAP *);
 static void	 fixmap(KEYMAP *, KEYMAP *, KEYMAP *);
 static int	 dobind(KEYMAP *, const char *, int);
 static char	*skipwhite(char *);
 static char	*parsetoken(char *);
-#ifdef	BINDKEY
 static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
-#endif /* BINDKEY */
 
 /*
  * Insert a string, mainly for use from macros (created by selfinsert).
@@ -404,7 +398,6 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
  * calling sequence, should just pass KEYMAP *curmap rather than
  * KEYMAP **mapp.
  */
-#ifdef	BINDKEY
 static int
 bindkey(KEYMAP **mapp, const char *fname, KCHAR *keys, int kcount)
 {
@@ -480,7 +473,6 @@ dobindkey(KEYMAP *map, const char *func, const char *str)
 	key.k_count = i;
 	return (bindkey(&map, func, key.k_chars, key.k_count));
 }
-#endif /* BINDKEY */
 
 /*
  * This function modifies the fundamental keyboard map.

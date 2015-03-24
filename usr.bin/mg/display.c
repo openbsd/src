@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.45 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: display.c,v 1.46 2015/03/24 22:28:10 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -107,10 +107,7 @@ struct video	  blanks;		/* Blank line image.		 */
  */
 struct score *score;			/* [NROW * NROW] */
 
-#ifndef LINENOMODE
-#define LINENOMODE TRUE
-#endif /* !LINENOMODE */
-static int	 linenos = LINENOMODE;
+static int	 linenos = TRUE;
 static int	 colnos = FALSE;
 
 /* Is macro recording enabled? */
@@ -753,9 +750,7 @@ uline(int row, struct video *vvp, struct video *pvp)
 			ttputc(*cp1++);
 			++ttcol;
 		}
-#ifndef MOVE_STANDOUT
 		ttcolor(CTEXT);
-#endif
 		return;
 	}
 	cp1 = &vvp->v_text[0];		/* Compute left match.	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttydef.h,v 1.11 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: ttydef.h,v 1.12 2015/03/24 22:28:10 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,10 +11,6 @@
  */
 
 #define STANDOUT_GLITCH			/* possible standout glitch	 */
-
-#ifdef undef
-#define MOVE_STANDOUT			/* don't move in standout mode	 */
-#endif /* undef */
 
 #define	putpad(str, num)	tputs(str, num, ttputc)
 
