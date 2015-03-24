@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.24 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.25 2015/03/24 16:29:09 mpi Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -84,11 +84,25 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 {
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 	u_int32_t reg[6], intr[6];
+	char compat[32];
+	int child;
 
 	sc->sc_node = OF_child(ca->ca_node);
 	sc->sc_baseaddr = ca->ca_baseaddr;
 
 	OF_getprop(sc->sc_node, "reg", reg, sizeof reg);
+
+	child = OF_child(sc->sc_node);
+	memset(compat, 0, sizeof(compat));
+	OF_getprop(child, "compatible", compat, sizeof(compat));
+
+	/* Deal with broken device-tree on PowerMac7,2 and 7,3. */
+	if (strcmp(compat, "AOAK2") == 0) {
+		reg[0] += ca->ca_reg[0];
+		reg[2] += ca->ca_reg[2];
+		reg[4] += ca->ca_reg[2];
+	}
+
 	reg[0] += sc->sc_baseaddr;
 	reg[2] += sc->sc_baseaddr;
 	reg[4] += sc->sc_baseaddr;
@@ -118,6 +132,9 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 	    sc, sc->sc_dev.dv_xname);
 
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
+
+	/* Need to be explicitly turned on some G5. */
+	macobio_enable(I2SClockOffset, I2S0CLKEN|I2S0EN);
 
 	i2s_set_rate(sc, 44100);
 	sc->sc_mute = 0;
