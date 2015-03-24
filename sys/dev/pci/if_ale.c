@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.36 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.37 2015/03/24 10:09:06 mpi Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1453,6 +1453,7 @@ int
 ale_rxeof(struct ale_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ale_rx_page *rx_page;
 	struct rx_rs *rs;
 	struct mbuf *m;
@@ -1547,17 +1548,12 @@ ale_rxeof(struct ale_softc *sc)
 		}
 #endif
 
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/* Pass it to upper layer. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 		ale_rx_update_page(sc, &rx_page, length, &prod);
 	}
+
+	if_input(ifp, &ml);
 
 	return 0;
 }
