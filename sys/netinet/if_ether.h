@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.54 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.55 2015/03/24 12:58:43 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -164,17 +164,6 @@ struct	arpcom {
 	int	 ac_multirangecnt;		/* number of mcast ranges */
 
 };
-
-struct llinfo_arp {
-	LIST_ENTRY(llinfo_arp) la_list;
-	struct	rtentry *la_rt;
-	struct	mbuf *la_hold_head;	/* packet hold queue */
-	struct	mbuf *la_hold_tail;
-	int	la_hold_count;		/* number of packets queued */
-	long	la_asked;		/* last time we QUERIED for this addr */
-};
-#define MAX_HOLD_QUEUE 10
-#define MAX_HOLD_TOTAL 100
 #endif
 
 struct sockaddr_inarp {

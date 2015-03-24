@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.148 2015/03/14 17:13:44 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.149 2015/03/24 12:58:43 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -69,13 +69,21 @@
 #endif
 
 #define SDL(s) ((struct sockaddr_dl *)s)
-#define SRP(s) ((struct sockaddr_inarp *)s)
 
 /*
  * ARP trailer negotiation.  Trailer protocol is not IP specific,
  * but ARP request/response use IP addresses.
  */
 #define ETHERTYPE_IPTRAILERS ETHERTYPE_TRAIL
+
+struct llinfo_arp {
+	LIST_ENTRY(llinfo_arp)	 la_list;
+	struct rtentry		*la_rt;		/* backpointer to rtentry */
+	long			 la_asked;	/* last time we QUERIED */
+	struct mbuf_list	 la_ml;		/* packet hold queue */
+};
+#define LA_HOLD_QUEUE 10
+#define LA_HOLD_TOTAL 100
 
 /* timer values */
 int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
@@ -227,6 +235,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		}
 		arp_inuse++;
 		arp_allocated++;
+		ml_init(&la->la_ml);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
@@ -282,8 +291,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		LIST_REMOVE(la, la_list);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
-		while ((m = la->la_hold_head) != NULL) {
-			la->la_hold_head = la->la_hold_head->m_nextpkt;
+		while ((m = ml_dequeue(&la->la_ml)) != NULL) {
 			la_hold_total--;
 			m_freem(m);
 		}
@@ -425,32 +433,19 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 	 * response yet. Insert mbuf in hold queue if below limit
 	 * if above the limit free the queue without queuing the new packet.
 	 */
-	if (la_hold_total < MAX_HOLD_TOTAL && la_hold_total < nmbclust / 64) {
-		if (la->la_hold_count >= MAX_HOLD_QUEUE) {
-			mh = la->la_hold_head;
-			la->la_hold_head = la->la_hold_head->m_nextpkt;
-			if (mh == la->la_hold_tail)
-				la->la_hold_tail = NULL;
-			la->la_hold_count--;
+	if (la_hold_total < LA_HOLD_TOTAL && la_hold_total < nmbclust / 64) {
+		if (ml_len(&la->la_ml) >= LA_HOLD_QUEUE) {
+			mh = ml_dequeue(&la->la_ml);
 			la_hold_total--;
 			m_freem(mh);
 		}
-		if (la->la_hold_tail == NULL)
-			la->la_hold_head = m;
-		else
-			la->la_hold_tail->m_nextpkt = m;
-		la->la_hold_tail = m;
-		la->la_hold_count++;
+		ml_enqueue(&la->la_ml, m);
 		la_hold_total++;
 	} else {
-		while ((mh = la->la_hold_head) != NULL) {
-			la->la_hold_head =
-			    la->la_hold_head->m_nextpkt;
+		while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
 			la_hold_total--;
 			m_freem(mh);
 		}
-		la->la_hold_tail = NULL;
-		la->la_hold_count = 0;
 		m_freem(m);
 	}
 
@@ -483,14 +478,10 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
-				while ((mh = la->la_hold_head) != NULL) {
-					la->la_hold_head =
-					    la->la_hold_head->m_nextpkt;
+				while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
 					la_hold_total--;
 					m_freem(mh);
 				}
-				la->la_hold_tail = NULL;
-				la->la_hold_count = 0;
 			}
 		}
 	}
@@ -570,13 +561,14 @@ in_arpinput(struct mbuf *m)
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
-	struct mbuf *mh, *mt;
+	struct mbuf *mh;
 	u_int8_t *enaddr = NULL;
 #if NCARP > 0
 	u_int8_t *ether_shost = NULL;
 #endif
 	char addr[INET_ADDRSTRLEN];
 	int op, changed = 0;
+	unsigned int len;
 
 	ea = mtod(m, struct ether_arp *);
 	op = ntohs(ea->arp_op);
@@ -732,25 +724,19 @@ in_arpinput(struct mbuf *m)
 		if (la->la_asked || changed)
 			rt_sendmsg(rt, RTM_RESOLVE, rt->rt_ifp->if_rdomain);
 		la->la_asked = 0;
-		while ((mh = la->la_hold_head) != NULL) {
-			if ((la->la_hold_head = mh->m_nextpkt) == NULL)
-				la->la_hold_tail = NULL;
-			la->la_hold_count--;
+		while ((len = ml_len(&la->la_ml)) != 0) {
+			mh = ml_dequeue(&la->la_ml);
 			la_hold_total--;
-			mt = la->la_hold_tail;
 
 			(*ac->ac_if.if_output)(&ac->ac_if, mh, rt_key(rt), rt);
 
-			if (la->la_hold_tail == mh) {
+			if (ml_len(&la->la_ml) == len) {
 				/* mbuf is back in queue. Discard. */
-				la->la_hold_tail = mt;
-				if (la->la_hold_tail)
-					la->la_hold_tail->m_nextpkt = NULL;
-				else
-					la->la_hold_head = NULL;
-				la->la_hold_count--;
-				la_hold_total--;
-				m_freem(mh);
+				while ((mh = ml_dequeue(&la->la_ml)) != NULL) {
+					la_hold_total--;
+					m_freem(mh);
+				}
+				break;
 			}
 		}
 	}
@@ -1114,8 +1100,7 @@ db_print_llinfo(caddr_t li)
 	if (li == 0)
 		return;
 	la = (struct llinfo_arp *)li;
-	db_printf("  la_rt=%p la_hold_head=%p, la_asked=0x%lx\n",
-	    la->la_rt, la->la_hold_head, la->la_asked);
+	db_printf("  la_rt=%p la_asked=0x%lx\n", la->la_rt, la->la_asked);
 }
 
 /*
