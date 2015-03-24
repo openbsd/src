@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.122 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: xl.c,v 1.123 2015/03/24 11:23:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1164,6 +1164,7 @@ xl_newbuf(struct xl_softc *sc, struct xl_chain_onefrag *c)
 void
 xl_rxeof(struct xl_softc *sc)
 {
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct xl_chain_onefrag	*cur_rx;
@@ -1226,16 +1227,7 @@ again:
 		}
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
-#if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-		}
-#endif
 
 		if (sc->xl_type == XL_TYPE_905B) {
 			if (!(rxstat & XL_RXSTAT_IPCKERR) &&
@@ -1253,7 +1245,7 @@ again:
 			m->m_pkthdr.csum_flags = sumflags;
 		}
 
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	xl_fill_rx_ring(sc);
@@ -1278,6 +1270,8 @@ again:
 		xl_fill_rx_ring(sc);
 		goto again;
 	}
+
+	if_input(ifp, &ml);
 }
 
 /*
