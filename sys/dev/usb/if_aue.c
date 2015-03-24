@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.97 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.98 2015/03/24 10:02:18 mpi Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1017,6 +1017,7 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct aue_softc	*sc = c->aue_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mbuf		*m;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	u_int32_t		total_len;
 	struct aue_rxpkt	r;
 	int			s;
@@ -1067,32 +1068,15 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	total_len -= ETHER_CRC_LEN + 4;
 	m->m_pkthdr.len = m->m_len = total_len;
 	ifp->if_ipackets++;
+	ml_enqueue(&ml, m);
 
-	m->m_pkthdr.rcvif = ifp;
-
-	s = splnet();
-
-	/* XXX ugly */
 	if (aue_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
-#if NBPFILTER > 0
-	/*
-	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 * don't pass it up to the ether_input() layer unless it's
-	 * a broadcast packet, multicast packet, matches our ethernet
-	 * address or the interface is in promiscuous mode.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	DPRINTFN(10,("%s: %s: deliver %d\n", sc->aue_dev.dv_xname,
-		    __func__, m->m_len));
-	ether_input_mbuf(ifp, m);
- done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
 
  done:
