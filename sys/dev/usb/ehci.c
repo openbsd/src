@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.181 2015/03/25 13:12:45 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.182 2015/03/25 13:23:05 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -200,11 +200,6 @@ void		ehci_dump_exfer(struct ehci_xfer *);
 #endif
 
 #define EHCI_INTR_ENDPT 1
-
-#define ehci_add_intr_list(sc, ex) \
-	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ex), inext);
-#define ehci_del_intr_list(sc, ex) \
-	TAILQ_REMOVE(&sc->sc_intrhead, (ex), inext);
 
 struct usbd_bus_methods ehci_bus_methods = {
 	.open_pipe = ehci_open,
@@ -727,7 +722,7 @@ ehci_check_qh_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
 		return;
 	}
  done:
-	ehci_del_intr_list(sc, ex);
+	TAILQ_REMOVE(&sc->sc_intrhead, ex, inext);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
 	ehci_idone(xfer);
@@ -778,7 +773,7 @@ ehci_check_itd_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	return;
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
-	ehci_del_intr_list(sc, ex);
+	TAILQ_REMOVE(&sc->sc_intrhead, ex, inext);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
 	ehci_idone(xfer);
@@ -2625,7 +2620,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (sc->sc_bus.dying || xfer->status == USBD_NOT_STARTED) {
 		s = splusb();
 		if (xfer->status != USBD_NOT_STARTED)
-			ehci_del_intr_list(sc, ex);
+			TAILQ_REMOVE(&sc->sc_intrhead, ex, inext);
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
@@ -2664,7 +2659,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	s = splusb();
 	ex->ehci_xfer_flags |= EHCI_XFER_ABORTING;
 	xfer->status = status;	/* make software ignore it */
-	ehci_del_intr_list(sc, ex);
+	TAILQ_REMOVE(&sc->sc_intrhead, ex, inext);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);
 	splx(s);
@@ -2733,7 +2728,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (sc->sc_bus.dying || xfer->status == USBD_NOT_STARTED) {
 		s = splusb();
 		if (xfer->status != USBD_NOT_STARTED)
-			ehci_del_intr_list(sc, ex);
+			TAILQ_REMOVE(&sc->sc_intrhead, ex, inext);
 		xfer->status = status;
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
@@ -2760,7 +2755,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	ex->ehci_xfer_flags |= EHCI_XFER_ABORTING;
 	xfer->status = status;
-	ehci_del_intr_list(sc, ex);
+	TAILQ_REMOVE(&sc->sc_intrhead, ex, inext);
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);
 
@@ -2959,7 +2954,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 		timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
-	ehci_add_intr_list(sc, ex);
+	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
 
@@ -3059,7 +3054,7 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 		timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
-	ehci_add_intr_list(sc, ex);
+	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
 
@@ -3178,7 +3173,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 		timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
-	ehci_add_intr_list(sc, ex);
+	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
 
@@ -3250,7 +3245,7 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 			timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
 			timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 		}
-		ehci_add_intr_list(sc, ex);
+		TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 		xfer->status = USBD_IN_PROGRESS;
 		splx(s);
 	} else if (xfer->status != USBD_NOMEM) {
@@ -3518,7 +3513,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	ex->sqtdstart = NULL;
 	ex->sqtdend = NULL;
 
-	ehci_add_intr_list(sc, ex);
+	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 	xfer->status = USBD_IN_PROGRESS;
 	xfer->done = 0;
 	splx(s);
