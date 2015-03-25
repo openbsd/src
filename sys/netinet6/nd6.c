@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.132 2015/03/14 17:13:44 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.133 2015/03/25 17:39:33 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -610,8 +610,7 @@ nd6_purge(struct ifnet *ifp)
 		}
 	}
 
-	/* XXX: too restrictive? */
-	if (!ip6_forwarding && (ifp->if_xflags & IFXF_AUTOCONF6)) {
+	if (ifp->if_xflags & IFXF_AUTOCONF6) {
 		/* refresh default router list */
 		defrouter_select();
 	}
@@ -1574,12 +1573,8 @@ fail:
 	 * defrtrlist_update called the function as well.  However, I believe
 	 * we can compromise the overhead, since it only happens the first
 	 * time.
-	 * XXX: although defrouter_select() should not have a bad effect
-	 * for those are not autoconfigured hosts, we explicitly avoid such
-	 * cases for safety.
 	 */
-	if (do_update && ln->ln_router && !ip6_forwarding &&
-	    (ifp->if_xflags & IFXF_AUTOCONF6))
+	if (do_update && ln->ln_router && (ifp->if_xflags & IFXF_AUTOCONF6))
 		defrouter_select();
 
 	return rt;
