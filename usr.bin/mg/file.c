@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.96 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: file.c,v 1.97 2015/03/25 12:25:36 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -551,10 +551,7 @@ filewrite(int f, int n)
 /*
  * Save the contents of the current buffer back into its associated file.
  */
-#ifndef	MAKEBACKUP
-#define	MAKEBACKUP TRUE
-#endif /* !MAKEBACKUP */
-static int	makebackup = MAKEBACKUP;
+static int	makebackup = TRUE;
 
 /* ARGSUSED */
 int
