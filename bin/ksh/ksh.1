@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.158 2015/03/15 14:33:21 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.159 2015/03/25 12:10:52 jca Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 15 2015 $
+.Dd $Mdocdate: March 25 2015 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4810,7 +4810,10 @@ command above.
 Deletes
 .Ar n
 characters before the cursor.
-.It delete-char-forward: Op Ar n
+.It Xo delete-char-forward:
+.Op Ar n
+.No Delete
+.Xc
 Deletes
 .Ar n
 characters after the cursor.

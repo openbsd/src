@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.49 2015/02/16 01:44:41 tedu Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.50 2015/03/25 12:10:52 jca Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1503,7 +1503,7 @@ x_init_emacs(void)
 	kb_add(x_comp_list,		NULL, CTRL('['), '=', 0);
 	kb_add(x_del_back,		NULL, CTRL('?'), 0);
 	kb_add(x_del_back,		NULL, CTRL('H'), 0);
-	/* x_del_char not assigned by default */
+	kb_add(x_del_char,		NULL, CTRL('['), '[', '3', '~', 0); /* delete */
 	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('?'), 0);
 	kb_add(x_del_bword,		NULL, CTRL('['), CTRL('H'), 0);
 	kb_add(x_del_bword,		NULL, CTRL('['), 'h', 0);
