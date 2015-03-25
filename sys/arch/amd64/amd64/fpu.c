@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.31 2015/03/21 20:42:38 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.32 2015/03/25 21:05:18 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -84,7 +84,10 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-uint64_t xsave_mask;
+/*
+ * The mask of enabled XSAVE features.
+ */
+uint64_t	xsave_mask;
 
 static inline void
 xsave(struct savefpu *addr, uint64_t mask)
@@ -109,6 +112,12 @@ xrstor(struct savefpu *addr, uint64_t mask)
 
 void fpudna(struct cpu_info *);
 static int x86fpflags_to_siginfo(u_int32_t);
+
+/*
+ * Size of the area needed to save the FPU state and other
+ * XSAVE-supported state components.
+ */
+size_t		fpu_save_len = sizeof(struct fxsave64);
 
 /*
  * The mxcsr_mask for this host, taken from fxsave() on the primary CPU

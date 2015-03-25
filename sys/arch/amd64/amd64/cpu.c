@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.80 2015/03/21 20:42:38 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.81 2015/03/25 21:05:18 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -502,8 +502,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
-	extern uint64_t xsave_mask;
-
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
@@ -530,6 +528,8 @@ cpu_init(struct cpu_info *ci)
 		if (eax & XCR0_AVX)
 			xsave_mask |= XCR0_AVX;
 		xsetbv(0, xsave_mask);
+		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
+		fpu_save_len = ebx;
 	}
 
 #ifdef MULTIPROCESSOR
