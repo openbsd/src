@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.27 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.28 2015/03/25 12:29:03 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -15,9 +15,7 @@
 #include "key.h"
 #include "macro.h"
 
-#ifndef METABIT
 #define METABIT 0x80
-#endif /* !METABIT */
 
 #ifndef NO_DPROMPT
 #define PROMPTL 80

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chrdef.h,v 1.9 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: chrdef.h,v 1.10 2015/03/25 12:29:03 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -39,10 +39,6 @@
  * Generally useful thing for chars
  */
 #define CCHR(x)		((x) ^ 0x40)	/* CCHR('?') == DEL */
-
-#ifndef	METACH
-#define	METACH		CCHR('[')
-#endif
 
 #define	K00		256
 #define	K01		257
