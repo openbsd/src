@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.144 2015/03/25 12:25:36 bcallah Exp $	*/
+/*	$OpenBSD: def.h,v 1.145 2015/03/25 20:53:31 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -741,9 +741,7 @@ extern int		 dovisiblebell;
 extern char	 	 cinfo[];
 extern char		*keystrings[];
 extern char		 pat[NPAT];
-#ifndef NO_DPROMPT
 extern char		 prompt[];
-#endif	/* !NO_DPROMPT */
 
 /*
  * Globals.

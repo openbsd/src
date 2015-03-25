@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.32 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: window.c,v 1.33 2015/03/25 20:53:31 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -40,19 +40,13 @@ new_window(struct buffer *bp)
  * Reposition dot in the current window to line "n".  If the argument is
  * positive, it is that line.  If it is negative it is that line from the
  * bottom.  If it is 0 the window is centered (this is what the standard
- * redisplay code does).  If GOSREC is undefined, default is 0, so it acts
- * like GNU.  If GOSREC is defined, with no argument it defaults to 1 and
- * works like in Gosling.
+ * redisplay code does).
  */
 /* ARGSUSED */
 int
 reposition(int f, int n)
 {
-#ifndef GOSREC
 	curwp->w_frame = (f & FFARG) ? (n >= 0 ? n + 1 : n) : 0;
-#else /* !GOSREC */
-	curwp->w_frame = n;
-#endif /* !GOSREC */
 	curwp->w_rflag |= WFFRAME;
 	sgarbf = TRUE;
 	return (TRUE);
