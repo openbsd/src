@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.49 2015/01/19 16:01:43 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.50 2015/03/25 20:59:30 kettenis Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -248,11 +248,11 @@
 #define	CPUID2STEPPING(cpuid)	((cpuid) & 15)
 
 #define	CPUID(code, eax, ebx, ecx, edx)                         \
-	__asm("cpuid"                                           \
+	__asm volatile("cpuid"                                  \
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
 	    : "a" (code));
 #define	CPUID_LEAF(code, leaf, eax, ebx, ecx, edx)		\
-	__asm("cpuid"                                           \
+	__asm volatile("cpuid"                                  \
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
 	    : "a" (code), "c" (leaf));
 
