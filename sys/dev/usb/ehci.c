@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.178 2015/03/25 12:56:11 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.179 2015/03/25 13:00:38 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2891,16 +2891,10 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	usbd_status err;
 
+	KASSERT(xfer->rqflags & URQ_REQUEST);
+
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
-
-#ifdef DIAGNOSTIC
-	if (!(xfer->rqflags & URQ_REQUEST)) {
-		/* XXX panic */
-		printf("ehci_device_ctrl_transfer: not a request\n");
-		return (USBD_INVAL);
-	}
-#endif
 
 	err = ehci_device_request(xfer);
 	if (err)
@@ -2918,13 +2912,7 @@ ehci_device_ctrl_done(struct usbd_xfer *xfer)
 	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	struct ehci_xfer *ex = (struct ehci_xfer *)xfer;
 
-	DPRINTFN(10,("ehci_ctrl_done: xfer=%p\n", xfer));
-
-#ifdef DIAGNOSTIC
-	if (!(xfer->rqflags & URQ_REQUEST)) {
-		panic("ehci_ctrl_done: not a request");
-	}
-#endif
+	KASSERT(xfer->rqflags & URQ_REQUEST);
 
 	if (xfer->status != USBD_NOMEM) {
 		ehci_free_sqtd_chain(sc, ex);
@@ -3090,16 +3078,10 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	usbd_status err;
 	int s;
 
-	DPRINTFN(2, ("ehci_device_bulk_start: xfer=%p len=%u flags=%d\n",
-	    xfer, xfer->length, xfer->flags));
+	KASSERT(!(xfer->rqflags & URQ_REQUEST));
 
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
-
-#ifdef DIAGNOSTIC
-	if (xfer->rqflags & URQ_REQUEST)
-		panic("ehci_device_bulk_start: a request");
-#endif
 
 	sqh = epipe->sqh;
 
@@ -3224,13 +3206,10 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	usbd_status err;
 	int s;
 
+	KASSERT(!(xfer->rqflags & URQ_REQUEST));
+
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
-
-#ifdef DIAGNOSTIC
-	if (xfer->rqflags & URQ_REQUEST)
-		panic("ehci_device_intr_start: a request");
-#endif
 
 	sqh = epipe->sqh;
 
@@ -3370,6 +3349,8 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	int s, trans_count, offs;
 	int frindex;
 
+	KASSERT(!(xfer->rqflags & URQ_REQUEST));
+
 	start = NULL;
 	prev = NULL;
 	itd = NULL;
@@ -3404,9 +3385,6 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	}
 
 #ifdef DIAGNOSTIC
-	if (xfer->rqflags & URQ_REQUEST)
-		panic("ehci_device_isoc_start: request");
-
 	if (!ex->isdone)
 		printf("ehci_device_isoc_start: not done, ex = %p\n", ex);
 	ex->isdone = 0;
