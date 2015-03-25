@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.322 2015/03/18 12:23:15 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.323 2015/03/25 11:49:02 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2132,6 +2132,28 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* NOTREACHED */
 }
 
+int
+sysctl_niq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct niqueue *niq)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IFQCTL_LEN:
+		return (sysctl_rdint(oldp, oldlenp, newp, niq_len(niq)));
+	case IFQCTL_MAXLEN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &niq->ni_q.mq_maxlen)); /* XXX */
+	case IFQCTL_DROPS:
+		return (sysctl_rdint(oldp, oldlenp, newp, niq_drops(niq)));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
 void
 ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 {
@@ -2350,4 +2372,43 @@ if_rxr_ioctl(struct if_rxrinfo *ifri, const char *name, u_int size,
 	ifr.ifr_info = *rxr;
 
 	return (if_rxr_info_ioctl(ifri, 1, &ifr));
+}
+
+/*
+ * Network stack input queues.
+ */
+
+void
+niq_init(struct niqueue *niq, u_int maxlen, u_int isr)
+{
+	mq_init(&niq->ni_q, maxlen, IPL_NET);
+	niq->ni_isr = isr;
+}
+
+int
+niq_enqueue(struct niqueue *niq, struct mbuf *m)
+{
+	int rv;
+
+	rv = mq_enqueue(&niq->ni_q, m);
+	if (rv == 0)
+		schednetisr(niq->ni_isr);
+	else
+		if_congestion();
+
+	return (rv);
+}
+
+int
+niq_enlist(struct niqueue *niq, struct mbuf_list *ml)
+{
+	int rv;
+
+	rv = mq_enlist(&niq->ni_q, ml);
+	if (rv == 0)
+		schednetisr(niq->ni_isr);
+	else
+		if_congestion();
+
+	return (rv);
 }
