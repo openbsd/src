@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.17 2015/03/09 11:09:00 espie Exp $
+# $OpenBSD: Signature.pm,v 1.18 2015/03/26 22:07:58 kili Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -96,13 +96,13 @@ sub string
 
 sub compare
 {
-	my ($a, $b) = @_;
-	return $b->revert_compare($a);
+	my ($a, $b, $shortened) = @_;
+	return $b->revert_compare($a, $shortened);
 }
 
 sub revert_compare
 {
-	my ($b, $a) = @_;
+	my ($b, $a, $shortened) = @_;
 
 	if ($a->{name} eq $b->{name}) {
 		my $awins = 0;
@@ -116,7 +116,7 @@ sub revert_compare
 				next;
 			}
 			$done->{$k} = 1;
-			next if !$v->always;
+			next if $shortened && !$v->always;
 			my $r = $v->compare($b->{extra}{$k});
 			if ($r > 0) {
 				$awins++;
