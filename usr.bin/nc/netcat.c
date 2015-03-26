@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.128 2015/03/26 10:36:03 tobias Exp $ */
+/* $OpenBSD: netcat.c,v 1.129 2015/03/26 21:22:50 tobias Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -44,15 +44,16 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <netdb.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <limits.h>
 #include "atomicio.h"
 
 #ifndef SUN_LEN
@@ -140,6 +141,8 @@ main(int argc, char *argv[])
 	host = NULL;
 	uport = NULL;
 	sv = NULL;
+
+	signal(SIGPIPE, SIG_IGN);
 
 	while ((ch = getopt(argc, argv,
 	    "46DdFhI:i:klNnO:P:p:rSs:tT:UuV:vw:X:x:z")) != -1) {
