@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.6 2014/12/14 17:55:36 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/03/26 23:45:37 schwarze Exp $
 
-MAN=	man.conf.5 help.1
+MAN=	help.1
 
 .include <bsd.prog.mk>

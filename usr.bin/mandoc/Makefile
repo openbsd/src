@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.93 2015/03/18 18:04:12 pascal Exp $
+#	$OpenBSD: Makefile,v 1.94 2015/03/26 23:45:37 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ LINKS =	${BINDIR}/mandoc ${BINDIR}/apropos \
 	${BINDIR}/mandoc /usr/sbin/makewhatis \
 	${BINDIR}/mandoc /usr/libexec/makewhatis
 
-MAN =	apropos.1 man.1 mandoc.1 makewhatis.8
+MAN =	apropos.1 man.1 mandoc.1 man.conf.5 makewhatis.8
 MLINKS=	apropos.1 whatis.1
 
 CLEANFILES += man.cgi cgi.o
