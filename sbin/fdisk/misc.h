@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.25 2015/03/26 14:08:12 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.26 2015/03/26 16:32:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -21,7 +21,7 @@
 
 struct unit_type {
 	char	*abbr;
-	int	conversion;
+	int64_t	 conversion;
 	char	*lname;
 };
 extern struct unit_type unit_types[];
