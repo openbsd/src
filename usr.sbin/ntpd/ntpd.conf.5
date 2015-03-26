@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.29 2015/02/16 19:25:35 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.30 2015/03/26 20:34:54 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: March 26 2015 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -184,8 +184,7 @@ from trusted HTTPS servers via TLS.
 This time information is not used for precision but acts as an
 authenticated constraint,
 thereby reducing the impact of unauthenticated NTP
-.Sq Man-In-The-Middle
-attacks.
+man-in-the-middle attacks.
 Received NTP packets with time information falling outside of a range
 near the constraint will be discarded and such NTP servers
 will be marked as invalid.

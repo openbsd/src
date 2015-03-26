@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.44 2015/02/16 16:21:25 bentley Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.45 2015/03/26 20:34:54 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: March 26 2015 $
 .Dt HOSTAPD.CONF 5
 .Os
 .Sh NAME
@@ -588,7 +588,7 @@ of matched frames.
 .Ed
 .Pp
 This will help to detect excessive flooding of IEEE 802.11 frames.
-For example, de-auth flooding is a DoS (Denial of Service) attack
+For example, de-auth flooding is a denial of service (DoS) attack
 against IEEE 802.11 wireless networks.
 .Ss Management Frame Subtypes
 The
@@ -699,7 +699,7 @@ hostap handle type management subtype probe request \e
     with log
 
 # Detect flooding of management frames except beacons.
-# This will detect some possible Denial of Service attacks
+# This will detect some possible denial of service attacks
 # against the IEEE 802.11 protocol.
 hostap handle skip type management subtype ! beacon \e
     with log \e
