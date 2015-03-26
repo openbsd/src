@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.41 2014/12/22 11:05:53 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.42 2015/03/26 11:02:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -57,7 +57,6 @@ int	mpeioctl(struct ifnet *, u_long, caddr_t);
 void	mpestart(struct ifnet *);
 int	mpe_clone_create(struct if_clone *, int);
 int	mpe_clone_destroy(struct ifnet *);
-int	mpe_newlabel(struct ifnet *, int, struct shim_hdr *);
 
 LIST_HEAD(, mpe_softc)	mpeif_list;
 struct if_clone	mpe_cloner =
@@ -85,7 +84,6 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	mpeif->sc_shim.shim_label = 0;
 	mpeif->sc_unit = unit;
 	ifp = &mpeif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
@@ -105,6 +103,12 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 
+	mpeif->sc_ifa.ifa_ifp = ifp;
+	mpeif->sc_ifa.ifa_rtrequest = link_rtrequest;
+	mpeif->sc_ifa.ifa_addr = (struct sockaddr *) ifp->if_sadl;
+	mpeif->sc_smpls.smpls_len = sizeof(mpeif->sc_smpls);
+	mpeif->sc_smpls.smpls_family = AF_MPLS;
+
 	LIST_INSERT_HEAD(&mpeif_list, mpeif, sc_list);
 
 	return (0);
@@ -114,8 +118,16 @@ int
 mpe_clone_destroy(struct ifnet *ifp)
 {
 	struct mpe_softc	*mpeif = ifp->if_softc;
+	int			s;
 
 	LIST_REMOVE(mpeif, sc_list);
+
+	if (mpeif->sc_smpls.smpls_label) {
+		s = splsoftnet();
+		rt_ifa_del(&mpeif->sc_ifa, RTF_MPLS | RTF_UP,
+		    smplstosa(&mpeif->sc_smpls));
+		splx(s);
+	}
 
 	if_detach(ifp);
 	free(mpeif, M_DEVBUF, 0);
@@ -292,7 +304,7 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGETLABEL:
 		ifm = ifp->if_softc;
 		shim.shim_label =
-		    ((ntohl(ifm->sc_shim.shim_label & MPLS_LABEL_MASK)) >>
+		    ((ntohl(ifm->sc_smpls.smpls_label & MPLS_LABEL_MASK)) >>
 		    MPLS_LABEL_OFFSET);
 		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
@@ -306,11 +318,11 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		shim.shim_label = htonl(shim.shim_label << MPLS_LABEL_OFFSET);
-		if (ifm->sc_shim.shim_label == shim.shim_label)
+		if (ifm->sc_smpls.smpls_label == shim.shim_label)
 			break;
 		LIST_FOREACH(ifm, &mpeif_list, sc_list) {
 			if (ifm != ifp->if_softc &&
-			    ifm->sc_shim.shim_label == shim.shim_label) {
+			    ifm->sc_smpls.smpls_label == shim.shim_label) {
 				error = EEXIST;
 				break;
 			}
@@ -319,25 +331,29 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		ifm = ifp->if_softc;
 		s = splsoftnet();
-		if (ifm->sc_shim.shim_label) {
+		if (ifm->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
-			mpe_newlabel(ifp, RTM_DELETE, &ifm->sc_shim);
+			rt_ifa_del(&ifm->sc_ifa, RTF_MPLS | RTF_UP,
+			    smplstosa(&ifm->sc_smpls));
 		}
 		/* add new MPLS route */
-		error = mpe_newlabel(ifp, RTM_ADD, &shim);
+		ifm->sc_smpls.smpls_label = shim.shim_label;
+		error = rt_ifa_add(&ifm->sc_ifa, RTF_MPLS | RTF_UP,
+		    smplstosa(&ifm->sc_smpls));
 		splx(s);
-		if (error)
+		if (error) {
+			ifm->sc_smpls.smpls_label = 0;
 			break;
-		ifm->sc_shim.shim_label = shim.shim_label;
+		}
 		break;
 	case SIOCSIFRDOMAIN:
 		/* must readd the MPLS "route" for our label */
 		ifm = ifp->if_softc;
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
-			if (ifm->sc_shim.shim_label) {
-				shim.shim_label = ifm->sc_shim.shim_label;
+			if (ifm->sc_smpls.smpls_label) {
 				s = splsoftnet();
-				error = mpe_newlabel(ifp, RTM_ADD, &shim);
+				rt_ifa_add(&ifm->sc_ifa, RTF_MPLS | RTF_UP,
+				    smplstosa(&ifm->sc_smpls));
 				splx(s);
 			}
 		}
@@ -433,38 +449,3 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	splx(s);
 }
 #endif	/* INET6 */
-
-int
-mpe_newlabel(struct ifnet *ifp, int cmd, struct shim_hdr *shim)
-{
-	struct rtentry *nrt;
-	struct sockaddr_mpls dst;
-	struct rt_addrinfo info;
-	int error;
-
-	bzero(&dst, sizeof(dst));
-	dst.smpls_len = sizeof(dst);
-	dst.smpls_family = AF_MPLS;
-	dst.smpls_label = shim->shim_label;
-
-	bzero(&info, sizeof(info));
-	info.rti_flags = RTF_UP | RTF_MPLS;
-	info.rti_mpls = MPLS_OP_POP;
-	info.rti_info[RTAX_DST] = smplstosa(&dst);
-	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)ifp->if_sadl;
-
-	error = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, 0);
-	rt_missmsg(cmd, &info, error ? 0 : nrt->rt_flags, ifp, error, 0);
-	if (cmd == RTM_DELETE) {
-		if (error == 0 && nrt != NULL) {
-			if (nrt->rt_refcnt <= 0) {
-				nrt->rt_refcnt++;
-				rtfree(nrt);
-			}
-		}
-	}
-	if (cmd == RTM_ADD && error == 0 && nrt != NULL) {
-		nrt->rt_refcnt--;
-	}
-	return (error);
-}

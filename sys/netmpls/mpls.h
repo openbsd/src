@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.29 2015/01/15 23:50:31 deraadt Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.30 2015/03/26 11:02:44 mpi Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -141,8 +141,9 @@ extern	struct domain mplsdomain;
 
 struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
+	struct ifaddr		sc_ifa;
 	int			sc_unit;
-	struct shim_hdr		sc_shim;
+	struct sockaddr_mpls	sc_smpls;
 	LIST_ENTRY(mpe_softc)	sc_list;
 };
 

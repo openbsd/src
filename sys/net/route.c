@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.207 2015/02/12 11:19:57 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.208 2015/03/26 11:02:44 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1119,6 +1119,15 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	info.rti_info[RTAX_LABEL] =
 	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
 
+#ifdef MPLS
+	if ((flags & RTF_MPLS) == RTF_MPLS) {
+		info.rti_mpls = MPLS_OP_POP;
+
+		/* MPLS routes only exist in rdomain 0 */
+		rtableid = 0;
+	}
+#endif /* MPLS */
+
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
@@ -1164,6 +1173,12 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
 	u_int8_t		 prio = RTP_CONNECTED;
 	int			 error;
+
+#ifdef MPLS
+	if ((flags & RTF_MPLS) == RTF_MPLS)
+		/* MPLS routes only exist in rdomain 0 */
+		rtableid = 0;
+#endif /* MPLS */
 
 	if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
 		m = m_get(M_DONTWAIT, MT_SONAME);
