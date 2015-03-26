@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.138 2014/12/19 17:14:40 tedu Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.139 2015/03/26 12:21:37 mikeb Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -523,9 +523,6 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa));
 	i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_dst.sa));
 
-	if (sa->tdb_proxy.sa.sa_family)
-		i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_proxy.sa));
-
 	if (sa->tdb_srcid)
 		i += sizeof(struct sadb_ident) + PADUP(sa->tdb_srcid->ref_len);
 
@@ -627,12 +624,6 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	/* Export TDB destination address */
 	headers[SADB_EXT_ADDRESS_DST] = p;
 	export_address(&p, (struct sockaddr *) &sa->tdb_dst);
-
-	/* Export TDB proxy address, if present */
-	if (SA_LEN(&sa->tdb_proxy.sa)) {
-		headers[SADB_EXT_ADDRESS_PROXY] = p;
-		export_address(&p, (struct sockaddr *) &sa->tdb_proxy);
-	}
 
 	/* Export source identity, if present */
 	if (sa->tdb_srcid) {
@@ -1027,8 +1018,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_EXT_ADDRESS_SRC]);
 			import_address((struct sockaddr *) &newsa->tdb_dst,
 			    headers[SADB_EXT_ADDRESS_DST]);
-			import_address((struct sockaddr *) &newsa->tdb_proxy,
-			    headers[SADB_EXT_ADDRESS_PROXY]);
 			import_lifetime(newsa,
 			    headers[SADB_EXT_LIFETIME_CURRENT],
 			    PFKEYV2_LIFETIME_CURRENT);
@@ -1095,8 +1084,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			 * change lifetimes and some other information; we're
 			 * not allowed to change keys, addresses or identities.
 			 */
-			if (headers[SADB_EXT_ADDRESS_PROXY] ||
-			    headers[SADB_EXT_KEY_AUTH] ||
+			if (headers[SADB_EXT_KEY_AUTH] ||
 			    headers[SADB_EXT_KEY_ENCRYPT] ||
 			    headers[SADB_EXT_IDENTITY_SRC] ||
 			    headers[SADB_EXT_IDENTITY_DST] ||
@@ -1193,8 +1181,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_EXT_ADDRESS_SRC]);
 			import_address((struct sockaddr *) &newsa->tdb_dst,
 			    headers[SADB_EXT_ADDRESS_DST]);
-			import_address((struct sockaddr *) &newsa->tdb_proxy,
-			    headers[SADB_EXT_ADDRESS_PROXY]);
 
 			import_lifetime(newsa,
 			    headers[SADB_EXT_LIFETIME_CURRENT],

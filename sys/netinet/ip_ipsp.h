@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.160 2015/01/19 18:36:51 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.161 2015/03/26 12:21:37 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -342,7 +342,6 @@ struct tdb {				/* tunnel descriptor block */
 
 	union sockaddr_union	tdb_dst;	/* Destination address */
 	union sockaddr_union	tdb_src;	/* Source address */
-	union sockaddr_union	tdb_proxy;
 
 	u_int8_t	*tdb_amxkey;	/* Raw authentication key */
 	u_int8_t	*tdb_emxkey;	/* Raw encryption key */

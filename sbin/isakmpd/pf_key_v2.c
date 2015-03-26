@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.191 2014/10/29 06:26:40 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.192 2015/03/26 12:21:37 mikeb Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -798,14 +798,6 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 		    sizeof(struct sockaddr_in6));
 	}
 
-	ext = pf_key_v2_find_ext(ret, SADB_EXT_ADDRESS_PROXY);
-	if (ext) {
-		sa = (struct sockaddr *)ext->seg;
-		memcpy(sa, &ksa.proxy,
-		    sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) :
-		    sizeof(struct sockaddr_in6));
-	}
-
 	ext = pf_key_v2_find_ext(ret, SADB_X_EXT_UDPENCAP);
 	if (ext) {
 		udpencap = (struct sadb_x_udpencap *)ext->seg;
@@ -1204,36 +1196,6 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
-
-#if 0
-	/* XXX I am not sure about what to do here just yet.  */
-	if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL) {
-		len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(dst));
-		addr = calloc(1, len);
-		if (!addr)
-			goto cleanup;
-		addr->sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
-		addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-		addr->sadb_address_reserved = 0;
-		memcpy(addr + 1, dst, SA_LEN(dst));
-		switch (((struct sockaddr *) (addr + 1))->sa_family) {
-		case AF_INET:
-			((struct sockaddr_in *) (addr + 1))->sin_port = 0;
-			break;
-		case AF_INET6:
-			((struct sockaddr_in6 *) (addr + 1))->sin6_port = 0;
-			break;
-		}
-		if (pf_key_v2_msg_add(update, (struct sadb_ext *) addr,
-		    PF_KEY_V2_NODE_MALLOCED) == -1)
-			goto cleanup;
-		addr = 0;
-#if 0
-		msg->em_odst = msg->em_dst;
-		msg->em_osrc = msg->em_src;
-#endif
-	}
-#endif
 
 	if (proto->proto != IPSEC_PROTO_IPCOMP) {
 		/* Setup the KEY extensions.  */

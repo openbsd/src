@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.126 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.127 2015/03/26 12:21:37 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -374,37 +374,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip),
 			    (caddr_t) &ipn);
-
-			/*
-			 * Check that the inner source address is the same as
-			 * the proxy address, if available.
-			 */
-			if ((tdbp->tdb_proxy.sa.sa_family == AF_INET &&
-			    tdbp->tdb_proxy.sin.sin_addr.s_addr !=
-			    INADDR_ANY &&
-			    ipn.ip_src.s_addr !=
-			    tdbp->tdb_proxy.sin.sin_addr.s_addr) ||
-			    (tdbp->tdb_proxy.sa.sa_family != AF_INET &&
-				tdbp->tdb_proxy.sa.sa_family != 0)) {
-#if ENCDEBUG
-				char addr[INET_ADDRSTRLEN];
-#endif
-
-				DPRINTF(("ipsec_common_input_cb(): inner "
-				    "source address %s doesn't correspond to "
-				    "expected proxy source %s, SA %s/%08x\n",
-				    inet_ntop(AF_INET, &ipn.ip_src,
-					addr, sizeof(addr)),
-				    ipsp_address(tdbp->tdb_proxy),
-				    ipsp_address(tdbp->tdb_dst),
-				    ntohl(tdbp->tdb_spi)));
-
-				m_freem(m);
-				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops,
-				    ipcompstat.ipcomps_pdrops);
-				return EACCES;
-			}
 		}
 
 #ifdef INET6
@@ -420,36 +389,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
 			    (caddr_t) &ip6n);
-
-			/*
-			 * Check that the inner source address is the same as
-			 * the proxy address, if available.
-			 */
-			if ((tdbp->tdb_proxy.sa.sa_family == AF_INET6 &&
-			    !IN6_IS_ADDR_UNSPECIFIED(&tdbp->tdb_proxy.sin6.sin6_addr) &&
-			    !IN6_ARE_ADDR_EQUAL(&ip6n.ip6_src,
-				&tdbp->tdb_proxy.sin6.sin6_addr)) ||
-			    (tdbp->tdb_proxy.sa.sa_family != AF_INET6 &&
-				tdbp->tdb_proxy.sa.sa_family != 0)) {
-#if ENCDEBUG
-				char addr[INET6_ADDRSTRLEN];
-#endif
-
-				DPRINTF(("ipsec_common_input_cb(): inner "
-				    "source address %s doesn't correspond to "
-				    "expected proxy source %s, SA %s/%08x\n",
-				    inet_ntop(AF_INET6, &ip6n.ip6_src,
-					addr, sizeof(addr)),
-				    ipsp_address(tdbp->tdb_proxy),
-				    ipsp_address(tdbp->tdb_dst),
-				    ntohl(tdbp->tdb_spi)));
-
-				m_freem(m);
-				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops,
-				    ipcompstat.ipcomps_pdrops);
-				return EACCES;
-			}
 		}
 #endif /* INET6 */
 	}
@@ -487,37 +426,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			}
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip), (caddr_t) &ipn);
-
-			/*
-			 * Check that the inner source address is the same as
-			 * the proxy address, if available.
-			 */
-			if ((tdbp->tdb_proxy.sa.sa_family == AF_INET &&
-			    tdbp->tdb_proxy.sin.sin_addr.s_addr !=
-			    INADDR_ANY &&
-			    ipn.ip_src.s_addr !=
-				tdbp->tdb_proxy.sin.sin_addr.s_addr) ||
-			    (tdbp->tdb_proxy.sa.sa_family != AF_INET &&
-				tdbp->tdb_proxy.sa.sa_family != 0)) {
-#if ENCDEBUG
-				char addr[INET_ADDRSTRLEN];
-#endif
-
-				DPRINTF(("ipsec_common_input_cb(): inner "
-				    "source address %s doesn't correspond to "
-				    "expected proxy source %s, SA %s/%08x\n",
-				    inet_ntop(AF_INET, &ipn.ip_src,
-					addr, sizeof(addr)),
-				    ipsp_address(tdbp->tdb_proxy),
-				    ipsp_address(tdbp->tdb_dst),
-				    ntohl(tdbp->tdb_spi)));
-
-				m_freem(m);
-				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops,
-				    ipcompstat.ipcomps_pdrops);
-				return EACCES;
-			}
 		}
 
 		/* IPv6-in-IP encapsulation */
@@ -532,36 +440,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
 			    (caddr_t) &ip6n);
-
-			/*
-			 * Check that the inner source address is the same as
-			 * the proxy address, if available.
-			 */
-			if ((tdbp->tdb_proxy.sa.sa_family == AF_INET6 &&
-			    !IN6_IS_ADDR_UNSPECIFIED(&tdbp->tdb_proxy.sin6.sin6_addr) &&
-			    !IN6_ARE_ADDR_EQUAL(&ip6n.ip6_src,
-				&tdbp->tdb_proxy.sin6.sin6_addr)) ||
-			    (tdbp->tdb_proxy.sa.sa_family != AF_INET6 &&
-				tdbp->tdb_proxy.sa.sa_family != 0)) {
-#if ENCDEBUG
-				char addr[INET6_ADDRSTRLEN];
-#endif
-
-				DPRINTF(("ipsec_common_input_cb(): inner "
-				    "source address %s doesn't correspond to "
-				    "expected proxy source %s, SA %s/%08x\n",
-				    inet_ntop(AF_INET6, &ip6n.ip6_src,
-					addr, sizeof(addr)),
-				    ipsp_address(tdbp->tdb_proxy),
-				    ipsp_address(tdbp->tdb_dst),
-				    ntohl(tdbp->tdb_spi)));
-
-				m_freem(m);
-				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops,
-				    ipcompstat.ipcomps_pdrops);
-				return EACCES;
-			}
 		}
 	}
 #endif /* INET6 */
