@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.17 2014/11/07 14:02:32 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.18 2015/03/26 19:52:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -350,6 +350,7 @@ struct ikev2_notify {
 #define IKEV2_N_PSK_CONFIRM			16426	/* RFC6631 */
 #define IKEV2_N_ERX_SUPPORTED			16427	/* RFC6867 */
 #define IKEV2_N_IFOM_CAPABILITY			16428	/* OA3GPP */
+#define IKEV2_N_SIGNATURE_HASH_ALGORITHMS	16431	/* RFC7427 */
 
 extern struct iked_constmap ikev2_n_map[];
 
@@ -454,8 +455,19 @@ struct ikev2_auth {
 #define IKEV2_AUTH_ECDSA_384		10	/* RFC4754 */
 #define IKEV2_AUTH_ECDSA_512		11	/* RFC4754 */
 #define IKEV2_AUTH_GSPM			12	/* RFC6467 */
+#define IKEV2_AUTH_SIG			14	/* RFC7427 */
 
 extern struct iked_constmap ikev2_auth_map[];
+
+/* Notifications used together with IKEV2_AUTH_SIG */
+
+#define IKEV2_SIGHASH_RESERVED		0	/* RFC7427 */
+#define IKEV2_SIGHASH_SHA1		1	/* RFC7427 */
+#define IKEV2_SIGHASH_SHA2_256		2	/* RFC7427 */
+#define IKEV2_SIGHASH_SHA2_384		3	/* RFC7427 */
+#define IKEV2_SIGHASH_SHA2_512		4	/* RFC7427 */
+
+extern struct iked_constmap ikev2_sighash_map[];
 
 /*
  * CP payload

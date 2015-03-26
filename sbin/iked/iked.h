@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.83 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: iked.h,v 1.84 2015/03/26 19:52:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -407,6 +407,7 @@ struct iked_sa {
 	struct ibuf			*sa_1stmsg;	/* for initiator AUTH */
 	struct ibuf			*sa_2ndmsg;	/* for responder AUTH */
 	struct iked_id			 sa_localauth;	/* local AUTH message */
+	int				 sa_sigsha2;	/* use SHA2 for signatures */
 
 	struct iked_id			 sa_iid;	/* initiator id */
 	struct iked_id			 sa_rid;	/* responder id */
@@ -732,7 +733,7 @@ struct iked_dsa *
 struct ibuf *
 	 dsa_setkey(struct iked_dsa *, void *, size_t, u_int8_t);
 void	 dsa_free(struct iked_dsa *);
-int	 dsa_init(struct iked_dsa *);
+int	 dsa_init(struct iked_dsa *, const void *, size_t);
 size_t	 dsa_length(struct iked_dsa *);
 int	 dsa_update(struct iked_dsa *, const void *, size_t);
 ssize_t	 dsa_sign_final(struct iked_dsa *, void *, size_t);

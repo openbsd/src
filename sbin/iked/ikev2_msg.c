@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.41 2015/02/15 01:56:42 tedu Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.42 2015/03/26 19:52:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -761,7 +761,7 @@ ikev2_msg_authverify(struct iked *env, struct iked_sa *sa,
 	    print_map(id->id_type, ikev2_cert_map));
 
 	if (dsa_setkey(dsa, key, keylen, keytype) == NULL ||
-	    dsa_init(dsa) != 0 ||
+	    dsa_init(dsa, buf, len) != 0 ||
 	    dsa_update(dsa, ibuf_data(authmsg), ibuf_size(authmsg))) {
 		log_debug("%s: failed to compute digital signature", __func__);
 		goto done;
@@ -833,7 +833,7 @@ ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
 	}
 
 	if (dsa_setkey(dsa, key, keylen, keytype) == NULL ||
-	    dsa_init(dsa) != 0 ||
+	    dsa_init(dsa, NULL, 0) != 0 ||
 	    dsa_update(dsa, ibuf_data(authmsg), ibuf_size(authmsg))) {
 		log_debug("%s: failed to compute digital signature", __func__);
 		goto done;

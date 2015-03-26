@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.49 2015/02/06 10:39:01 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.50 2015/03/26 19:52:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1104,6 +1104,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	u_int16_t		 type;
 	u_int16_t		 group;
 	u_int16_t		 cpi;
+	u_int16_t		 signature_hash;
 	u_int8_t		 transform;
 
 	if (ikev2_validate_notify(msg, offset, left, pld, &n))
@@ -1251,6 +1252,36 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    (transform == IKEV2_IPCOMP_DEFLATE)) {
 			msg->msg_sa->sa_ipcomp = transform;
 			msg->msg_sa->sa_cpi_out = betoh16(cpi);
+		}
+		break;
+	case IKEV2_N_SIGNATURE_HASH_ALGORITHMS:
+		if (msg->msg_e) {
+			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: encrypted",
+			    __func__);
+			return (-1);
+		}
+		if (msg->msg_sa == NULL ||
+		    msg->msg_sa->sa_sigsha2) {
+			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: no SA or "
+			    "duplicate notify", __func__);
+			return (-1);
+		}
+		if (len < sizeof(signature_hash) ||
+		    len % sizeof(signature_hash)) {
+			log_debug("%s: malformed signature hash notification"
+			     "(%zu bytes)", __func__, len);
+			return (0);
+		}
+		while (len >= sizeof(signature_hash)) {
+			memcpy(&signature_hash, buf, sizeof(signature_hash));
+			signature_hash = betoh16(signature_hash);
+			log_debug("%s: signature hash %s (%x)", __func__,
+			    print_map(signature_hash, ikev2_sighash_map),
+			    signature_hash);
+			len -= sizeof(signature_hash);
+			buf += sizeof(signature_hash);
+			if (signature_hash == IKEV2_SIGHASH_SHA2_256)
+				msg->msg_sa->sa_sigsha2 = 1;
 		}
 		break;
 	}
