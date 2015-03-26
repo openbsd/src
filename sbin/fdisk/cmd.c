@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.80 2015/03/26 14:08:12 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.81 2015/03/26 20:32:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -205,8 +205,8 @@ Xsetpid(char *args, struct mbr *mbr)
 	PRT_print(0, NULL, NULL);
 	PRT_print(pn, pp, NULL);
 
-	/* Ask for partition type */
-	num = ask_pid(pp->id);
+	/* Ask for MBR partition type */
+	num = ask_pid(pp->id, 0x01, 0xff);
 	if (num == pp->id)
 		return (CMD_CONT);
 
