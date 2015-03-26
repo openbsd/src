@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.7 2015/02/05 12:59:58 millert Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.8 2015/03/26 15:17:30 okan Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 
 	new_ptr = reallocarray(ptr, nmemb, size);
 	if (new_ptr == NULL)
-		errx(1, "xrealloc: out of memory (new_size %zu bytes)",
+		errx(1, "xreallocarray: out of memory (new_size %zu bytes)",
 		    nmemb * size);
 	return new_ptr;
 }
