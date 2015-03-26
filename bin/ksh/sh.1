@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.119 2015/03/26 09:59:23 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.120 2015/03/26 10:36:59 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -1632,7 +1632,7 @@ it attempts to execute the command in an environment separate from the shell.
 If it is unable to execute the command,
 it tries to run it as a shell script.
 .Pp
-A series of commands separated by
+A series of one or more commands separated by
 .Sq ;\&
 constitute a
 .Em sequential list ,
@@ -1640,9 +1640,9 @@ where commands are executed in the order given.
 The exit status of a sequential list is that of the last command executed.
 The format for a sequential list is:
 .Pp
-.D1 Ar command ; Ar command Op ; Ar ...
+.D1 Ar command\ \& ; Op Ar command ...
 .Pp
-A series of commands separated by
+A series of one or more commands separated by
 .Sq &
 constitute an
 .Em asynchronous list ,
@@ -1651,7 +1651,7 @@ and runs the next command without waiting for the previous one to finish.
 The exit status of an asynchronous list is always zero.
 The format for an asynchronous list is:
 .Pp
-.D1 Ar command No & Ar command Op & Ar ...
+.D1 Ar command No & Op Ar command ...
 .Pp
 A series of commands separated by
 .Sq |
