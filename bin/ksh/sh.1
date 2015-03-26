@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.121 2015/03/26 10:51:15 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.122 2015/03/26 20:08:58 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -107,7 +107,7 @@ For pipelines and
 and
 .Cm ||
 constructs, only exit if the last component fails.
-Errexit is ignored for
+errexit is ignored for
 .Ic while ,
 .Ic until ,
 .Ic if ,
@@ -697,7 +697,7 @@ in a format suitable to be reinput to the shell,
 a command suitable to achieve the current option settings.
 .Pp
 Any arguments are assigned to the positional parameters,
-with the variable
+with the special parameter
 .Sq #
 set to the number of positional parameters.
 The sequence
@@ -774,7 +774,7 @@ or number.
 Set the file mode creation mask to
 .Ar mask .
 The creation mask determines the default permissions
-a newly created file will have.
+a newly created file or directory will have.
 If
 .Ar mask
 is not specified,
@@ -1203,7 +1203,7 @@ Firstly, tilde expansion occurs on words beginning with the
 .Sq ~
 character.
 Any characters following the tilde,
-up to the next colon or slash, if any,
+up to the next colon, slash, or blank,
 are taken as a login name
 and substituted with that user's home directory,
 as defined in
@@ -1953,7 +1953,7 @@ So "1 2" "3" is output as one parameter, "1 2 3".
 .It #
 The number of positional parameters.
 .It ?
-The exit status of the most recent pipeline.
+The exit status of the most recent command.
 .It -
 The current shell options.
 .It $
