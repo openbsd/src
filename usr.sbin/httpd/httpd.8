@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.50 2015/02/24 07:56:06 bentley Exp $
+.\"	$OpenBSD: httpd.8,v 1.51 2015/03/26 19:16:57 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2015 $
+.Dd $Mdocdate: March 26 2015 $
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -85,7 +85,8 @@ Default access log file.
 Default error log file.
 .El
 .Sh SEE ALSO
-.Xr httpd.conf 5
+.Xr httpd.conf 5 ,
+.Xr slowcgi 8
 .Sh HISTORY
 The
 .Nm
