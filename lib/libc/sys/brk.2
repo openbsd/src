@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brk.2,v 1.19 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: brk.2,v 1.20 2015/03/26 00:48:51 bentley Exp $
 .\"	$NetBSD: brk.2,v 1.7 1995/02/27 12:31:57 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)brk.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: March 26 2015 $
 .Dt BRK 2
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ beyond the
 value returned from a call to
 .Xr getrlimit 2 ,
 e.g.,
-.Dq etext + rlp\(->rlim_max
+.Ql etext + rlp->rlim_max
 (see
 .Xr end 3
 for the definition of
