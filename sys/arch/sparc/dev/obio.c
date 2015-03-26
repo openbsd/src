@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.23 2015/01/14 21:35:43 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.24 2015/03/26 18:13:56 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -71,20 +71,20 @@ struct bus_softc {
 
 
 /* autoconfiguration driver */
-static int	busmatch(struct device *, void *, void *);
-static void	obioattach(struct device *, struct device *, void *);
-static void	vmesattach(struct device *, struct device *, void *);
-static void	vmelattach(struct device *, struct device *, void *);
-static void	vmeattach(struct device *, struct device *, void *);
+int	busmatch(struct device *, void *, void *);
+void	obioattach(struct device *, struct device *, void *);
+void	vmesattach(struct device *, struct device *, void *);
+void	vmelattach(struct device *, struct device *, void *);
+void	vmeattach(struct device *, struct device *, void *);
 
-int		busprint(void *, const char *);
-int		vmeprint(void *, const char *);
-static int	busattach(struct device *, void *, void *, int);
-int		obio_scan(struct device *, void *, void *);
-int 		vmes_scan(struct device *, void *, void *);
-int 		vmel_scan(struct device *, void *, void *);
-void		vmebus_translate(struct device *, struct confargs *, int);
-int 		vmeintr(void *);
+int	busprint(void *, const char *);
+int	vmeprint(void *, const char *);
+int	busattach(struct device *, void *, void *, int);
+int	obio_scan(struct device *, void *, void *);
+int 	vmes_scan(struct device *, void *, void *);
+int 	vmel_scan(struct device *, void *, void *);
+void	vmebus_translate(struct device *, struct confargs *, int);
+int 	vmeintr(void *);
 
 struct cfattach obio_ca = {
 	sizeof(struct bus_softc), busmatch, obioattach
