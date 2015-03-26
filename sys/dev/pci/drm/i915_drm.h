@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.21 2014/08/14 03:57:44 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.22 2015/03/26 04:38:58 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -333,6 +333,12 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_HAS_EXEC_HANDLE_LUT	 26
 #define I915_PARAM_HAS_WT     	 	 27
 #define I915_PARAM_CMD_PARSER_VERSION	 28
+#define I915_PARAM_HAS_COHERENT_PHYS_GTT 29
+#define I915_PARAM_MMAP_VERSION          30
+#define I915_PARAM_HAS_BSD2		 31
+#define I915_PARAM_REVISION              32
+#define I915_PARAM_SUBSLICE_TOTAL	 33
+#define I915_PARAM_EU_TOTAL		 34
 
 typedef struct drm_i915_getparam {
 	int param;
