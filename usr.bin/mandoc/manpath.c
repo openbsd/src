@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.12 2015/03/21 17:18:17 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.13 2015/03/26 22:42:01 schwarze Exp $	*/
 /*
  * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
@@ -29,7 +28,6 @@
 #include "manpath.h"
 
 #define MAN_CONF_FILE	"/etc/man.conf"
-#define MAN_CONF_KEY	"_whatdb"
 #define MANPATH_DEFAULT	"/usr/share/man:/usr/X11R6/man:/usr/local/man"
 
 static	void	 manpath_add(struct manpaths *, const char *, int);
@@ -159,33 +157,51 @@ manpath_free(struct manpaths *p)
 void
 manpath_manconf(struct manpaths *dirs, const char *file)
 {
+	const char *const toks[] = { "manpath", "_whatdb" };
+
 	FILE		*stream;
-	char		*p, *q;
-	size_t		 len, keysz;
+	char		*cp, *ep;
+	size_t		 len, tok;
 
-	keysz = strlen(MAN_CONF_KEY);
-	assert(keysz > 0);
-
-	if (NULL == (stream = fopen(file, "r")))
+	if ((stream = fopen(file, "r")) == NULL)
 		return;
 
-	while (NULL != (p = fgetln(stream, &len))) {
-		if (0 == len || '\n' != p[--len])
+	while ((cp = fgetln(stream, &len)) != NULL) {
+		ep = cp + len;
+		if (ep[-1] != '\n')
 			break;
-		p[len] = '\0';
-		while (isspace((unsigned char)*p))
-			p++;
-		if (strncmp(MAN_CONF_KEY, p, keysz))
+		*--ep = '\0';
+		while (isspace((unsigned char)*cp))
+			cp++;
+		if (*cp == '#')
 			continue;
-		p += keysz;
-		while (isspace((unsigned char)*p))
-			p++;
-		if ('\0' == *p)
-			continue;
-		if (NULL == (q = strrchr(p, '/')))
-			continue;
-		*q = '\0';
-		manpath_add(dirs, p, 0);
+
+		for (tok = 0; tok < sizeof(toks)/sizeof(toks[0]); tok++) {
+			len = strlen(toks[tok]);
+			if (cp + len < ep &&
+			    isspace((unsigned char)cp[len]) &&
+			    !strncmp(cp, toks[tok], len)) {
+				cp += len;
+				while (isspace((unsigned char)*cp))
+					cp++;
+				break;
+			}
+		}
+
+		switch (tok) {
+		case 1:  /* _whatdb */
+			while (ep > cp && ep[-1] != '/')
+				ep--;
+			if (ep == cp)
+				continue;
+			*ep = '\0';
+			/* FALLTHROUGH */
+		case 0:  /* manpath */
+			manpath_add(dirs, cp, 0);
+			break;
+		default:
+			break;
+		}
 	}
 
 	fclose(stream);
