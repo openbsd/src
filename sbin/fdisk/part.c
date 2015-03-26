@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.69 2015/03/16 23:51:50 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.70 2015/03/26 14:08:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -222,7 +222,7 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 {
 	off_t off;
 	u_int32_t ecsave, scsave;
-	u_int32_t t;
+	u_int64_t t;
 
 	/* Save (and restore below) cylinder info we may fiddle with. */
 	scsave = partn->scyl;
@@ -255,15 +255,10 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 	prt->dp_flag = partn->flag & 0xFF;
 	prt->dp_typ = partn->id & 0xFF;
 
-#if 0 /* XXX */
-	prt->dp_start = htole32(partn->bs - off);
-	prt->dp_size = htole32(partn->ns);
-#else
-	t = htole32(partn->bs - off);
+	t = htole64(partn->bs - off);
 	memcpy(&prt->dp_start, &t, sizeof(u_int32_t));
-	t = htole32(partn->ns);
+	t = htole64(partn->ns);
 	memcpy(&prt->dp_size, &t, sizeof(u_int32_t));
-#endif
 
 	partn->scyl = scsave;
 	partn->ecyl = ecsave;
@@ -284,7 +279,7 @@ PRT_print(int num, struct prt *partn, char *units)
 	} else {
 		size = ((double)partn->ns * unit_types[SECTORS].conversion) /
 		    unit_types[i].conversion;
-		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u [%12u:%12.0f%s] %s\n",
+		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u [%12llu:%12.0f%s] %s\n",
 		    (partn->flag == 0x80)?'*':' ',
 		    num, partn->id,
 		    partn->scyl, partn->shead, partn->ssect,

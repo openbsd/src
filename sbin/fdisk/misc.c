@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.45 2015/03/16 23:51:50 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.46 2015/03/26 14:08:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -191,8 +191,8 @@ ask_yn(const char *str)
 /*
  * adapted from sbin/disklabel/editor.c
  */
-u_int32_t
-getuint(char *prompt, u_int32_t oval, u_int32_t maxval)
+u_int64_t
+getuint64(char *prompt, u_int64_t oval, u_int64_t maxval)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	size_t n;
@@ -207,7 +207,7 @@ getuint(char *prompt, u_int32_t oval, u_int32_t maxval)
 	secpercyl = disk.sectors * disk.heads;
 
 	do {
-		printf("%s: [%u] ", prompt, oval);
+		printf("%s: [%llu] ", prompt, oval);
 
 		if (fgets(buf, sizeof(buf), stdin) == NULL)
 			errx(1, "eof");
@@ -231,7 +231,7 @@ getuint(char *prompt, u_int32_t oval, u_int32_t maxval)
 			break;
 		case 'b':
 			unit = 'b';
-			mult = -secsize;
+			mult = -(int64_t)secsize;
 			buf[--n] = '\0';
 			break;
 		case 's':
@@ -242,19 +242,24 @@ getuint(char *prompt, u_int32_t oval, u_int32_t maxval)
 		case 'k':
 			unit = 'k';
 			if (secsize > 1024)
-				mult = -secsize / 1024;
+				mult = -(int64_t)secsize / 1024LL;
 			else
-				mult = 1024 / secsize;
+				mult = 1024LL / secsize;
 			buf[--n] = '\0';
 			break;
 		case 'm':
 			unit = 'm';
-			mult = 1048576 / secsize;
+			mult = (1024LL * 1024) / secsize;
 			buf[--n] = '\0';
 			break;
 		case 'g':
 			unit = 'g';
-			mult = 1073741824 / secsize;
+			mult = (1024LL * 1024 * 1024) / secsize;
+			buf[--n] = '\0';
+			break;
+		case 't':
+			unit = 't';
+			mult = (1024LL * 1024 * 1024 * 1024) / secsize;
 			buf[--n] = '\0';
 			break;
 		default:
@@ -301,5 +306,5 @@ getuint(char *prompt, u_int32_t oval, u_int32_t maxval)
 		}
 	} while (1);
 
-	return ((u_int32_t)d);
+	return((u_int64_t)d);
 }

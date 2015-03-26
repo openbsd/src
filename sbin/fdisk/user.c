@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.42 2015/03/18 14:46:59 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.43 2015/03/26 14:08:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -149,7 +149,7 @@ USER_print_disk(void)
 			break;
 		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
 
-		printf("Offset: %lld\t", offset);
+		printf("Offset: %lld\t", (long long)offset);
 		MBR_print(&mbr, NULL);
 
 		/* Print out extended partitions too */
