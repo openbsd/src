@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.52 2015/02/23 19:22:43 chrisz Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.53 2015/03/26 09:01:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -652,10 +652,21 @@ server_fcgi_writeheader(struct client *clt, struct kv *hdr, void *arg)
 			return (-1);
 	}
 
+	/*
+	 * RFC 7230 defines a header field-name as a "token" and a "token"
+	 * is defined as one or more characters for which isalpha or
+	 * isdigit is true plus a list of additional characters.
+	 * According to RFC 3875 a CGI environment variable is created
+	 * by converting all letters to upper case and replacing '-'
+	 * with '_'.
+	 */
 	for (p = name; *p != '\0'; p++) {
 		if (isalpha((unsigned char)*p))
 			*p = toupper((unsigned char)*p);
-		else
+		else if (!(*p == '!' || *p == '#' || *p == '$' || *p == '%' ||
+		    *p == '&' || *p == '\'' || *p == '*' || *p == '+' ||
+		    *p == '.' || *p == '^' || *p == '_' || *p == '`' ||
+		    *p == '|' || *p == '~' || isdigit((unsigned char)*p)))
 			*p = '_';
 	}
 
