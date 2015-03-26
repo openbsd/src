@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.118 2015/03/19 22:38:28 zhuk Exp $
+.\"	$OpenBSD: sh.1,v 1.119 2015/03/26 09:59:23 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2015 $
+.Dd $Mdocdate: March 26 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1598,18 +1598,36 @@ It sets up redirections, if any,
 and then expands variable assignments, if any.
 It then attempts to run the command.
 .Pp
-Firstly, if the command is a special built-in
-it invokes the built-in.
-If not, but it is a shell function,
+Firstly, it determines whether the command name contains any slashes.
+If it does not, and the shell implements the command as a special built-in,
+it then invokes the built-in.
+If not, but it is a non POSIX standard command,
+implemented as a shell function,
 it then invokes that.
-If not, but it is a regular built-in,
+If not, but it is one of the commands
+.Ic alias , bg , cd , command ,
+.Ic false , fc , fg , getopts ,
+.Ic jobs , kill , newgrp , pwd ,
+.Ic read , true , umask , unalias ,
+or
+.Ic wait ,
 it then invokes that.
-Failing that, it uses the value of
+.Pp
+Failing that, the value of
 .Ev PATH
-to search for the command.
-If it finds a match which is a regular built-in or function it invokes it.
-Otherwise if it finds a match,
-or if the command name contains a slash,
+is used to search for the command.
+If it finds a match,
+and it is a POSIX standard command,
+implemented as a built-in or function,
+it then invokes it.
+Otherwise
+it attempts to execute the command in an environment separate from the shell.
+If it is unable to execute the command,
+it tries to run it as a shell script.
+.Pp
+Finally, if the command name does contain a slash,
+and it finds a match in
+.Ev PATH ,
 it attempts to execute the command in an environment separate from the shell.
 If it is unable to execute the command,
 it tries to run it as a shell script.
