@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.10 2013/05/31 19:21:09 jcs Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.11 2015/03/26 01:30:22 jsg Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -74,6 +74,7 @@
 #define SYNAPTICS_QUE_EXT_MODEL			0x09
 #define SYNAPTICS_QUE_EXT_CAPABILITIES		0x0c
 #define SYNAPTICS_QUE_EXT_DIMENSIONS		0x0d
+#define SYNAPTICS_QUE_EXT2_CAPABILITIES		0x10
 
 #define SYNAPTICS_CMD_SET_MODE			0x14
 #define SYNAPTICS_CMD_SEND_CLIENT		0x28
@@ -83,9 +84,12 @@
 #define SYNAPTICS_ID_MODEL(id)			(((id) >>  4) & 0x0f)
 #define SYNAPTICS_ID_MINOR(id)			(((id) >> 16) & 0xff)
 #define SYNAPTICS_ID_MAJOR(id)			((id) & 0x0f)
+#define SYNAPTICS_ID_FULL(id) \
+	(SYNAPTICS_ID_MAJOR(id) << 8 | SYNAPTICS_ID_MINOR(id))
 #define SYNAPTICS_ID_MAGIC			0x47
 
 /* Modes bits */
+#define SYNAPTICS_EXT2_CAP			(1 << 17)
 #define SYNAPTICS_ABSOLUTE_MODE			(1 << 7)
 #define SYNAPTICS_HIGH_RATE			(1 << 6)
 #define SYNAPTICS_SLEEP_MODE			(1 << 3)
@@ -140,6 +144,9 @@
 						 (((d) & 0xf00) >> 7))
 #define SYNAPTICS_DIM_Y(d)			((((d) & 0xff) << 5) | \
 						 (((d) & 0xf000) >> 11))
+
+/* Extended Capability 2 */
+#define SYNAPTICS_EXT2_CAP_BUTTONS_STICK	(1 << 16)
 
 /* Typical bezel limit */
 #define SYNAPTICS_XMIN_BEZEL			1472

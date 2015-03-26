@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.57 2015/02/09 04:05:25 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.58 2015/03/26 01:30:22 jsg Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -82,9 +82,10 @@ struct pms_protocol {
 
 struct synaptics_softc {
 	int identify;
-	int capabilities, ext_capabilities;
+	int capabilities, ext_capabilities, ext2_capabilities;
 	int model, ext_model;
 	int resolution, dimension;
+	int modes;
 
 	int mode;
 
@@ -102,6 +103,7 @@ struct synaptics_softc {
 	int wsmode;
 	int old_x, old_y;
 	u_int old_buttons;
+	u_int sec_buttons;
 #define SYNAPTICS_SCALE		4
 #define SYNAPTICS_PRESSURE	30
 };
@@ -937,6 +939,14 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 	    (syn->ext_capabilities & SYNAPTICS_EXT_CAP_MAX_DIMENSIONS) &&
 	    synaptics_query(sc, SYNAPTICS_QUE_EXT_DIMENSIONS, &syn->dimension))
 		return (-1);
+	if (SYNAPTICS_ID_FULL(syn->identify) >= 0x705) {
+		if (synaptics_query(sc, SYNAPTICS_QUE_MODES, &syn->modes))
+			return (-1);
+		if ((syn->modes & SYNAPTICS_EXT2_CAP) &&
+		    synaptics_query(sc, SYNAPTICS_QUE_EXT2_CAPABILITIES,
+		    &syn->ext2_capabilities))
+			return (-1);
+	}
 
 	syn->res_x = SYNAPTICS_RESOLUTION_X(syn->resolution);
 	syn->res_y = SYNAPTICS_RESOLUTION_Y(syn->resolution);
@@ -946,6 +956,8 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 	    SYNAPTICS_DIM_X(syn->dimension) : SYNAPTICS_XMAX_BEZEL;
 	syn->max_y = (syn->dimension) ?
 	    SYNAPTICS_DIM_Y(syn->dimension) : SYNAPTICS_YMAX_BEZEL;
+
+	syn->sec_buttons = 0;
 
 	if (SYNAPTICS_EXT_MODEL_BUTTONS(syn->ext_model) > 8)
 		syn->ext_model &= ~0xf000;
@@ -967,6 +979,7 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 void
 synaptics_sec_proc(struct pms_softc *sc)
 {
+	struct synaptics_softc *syn = sc->synaptics;
 	u_int buttons;
 	int dx, dy;
 
@@ -974,6 +987,7 @@ synaptics_sec_proc(struct pms_softc *sc)
 		return;
 
 	buttons = butmap[sc->packet[1] & PMS_PS2_BUTTONSMASK];
+	buttons |= syn->sec_buttons;
 	dx = (sc->packet[1] & PMS_PS2_XNEG) ?
 	    (int)sc->packet[4] - 256 : sc->packet[4];
 	dy = (sc->packet[1] & PMS_PS2_YNEG) ?
@@ -1092,7 +1106,8 @@ pms_ioctl_synaptics(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		if ((syn->ext_capabilities & SYNAPTICS_EXT_CAP_CLICKPAD) &&
-		    mouse_has_softbtn)
+		    !(syn->ext2_capabilities & SYNAPTICS_EXT2_CAP_BUTTONS_STICK)
+		    && mouse_has_softbtn)
 			*(u_int *)data = WSMOUSE_TYPE_SYNAP_SBTN;
 		else
 			*(u_int *)data = WSMOUSE_TYPE_SYNAPTICS;
@@ -1185,6 +1200,23 @@ pms_proc_synaptics(struct pms_softc *sc)
 		    WSMOUSE_BUTTON(5) : 0;
 	} else if (SYNAPTICS_EXT_MODEL_BUTTONS(syn->ext_model) &&
 	    ((sc->packet[0] ^ sc->packet[3]) & 0x02)) {
+		if (syn->ext2_capabilities & SYNAPTICS_EXT2_CAP_BUTTONS_STICK) {
+			/*
+			 * Trackstick buttons on this machine are wired to the
+			 * trackpad as extra buttons, so route the event
+			 * through the trackstick interface as normal buttons
+			 */
+			syn->sec_buttons =
+			    (sc->packet[4] & 0x01) ? WSMOUSE_BUTTON(1) : 0;
+			syn->sec_buttons |=
+			    (sc->packet[5] & 0x01) ? WSMOUSE_BUTTON(3) : 0;
+			syn->sec_buttons |=
+			    (sc->packet[4] & 0x02) ? WSMOUSE_BUTTON(2) : 0;
+			wsmouse_input(sc->sc_sec_wsmousedev,
+			    syn->sec_buttons, 0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+			return;
+		}
+
 		buttons |= (sc->packet[4] & 0x01) ? WSMOUSE_BUTTON(6) : 0;
 		buttons |= (sc->packet[5] & 0x01) ? WSMOUSE_BUTTON(7) : 0;
 		buttons |= (sc->packet[4] & 0x02) ? WSMOUSE_BUTTON(8) : 0;
