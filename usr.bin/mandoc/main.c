@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.134 2015/03/27 17:36:56 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.135 2015/03/27 21:17:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -76,7 +76,7 @@ struct	curparse {
 	out_man		  outman;	/* man output ptr */
 	out_free	  outfree;	/* free output ptr */
 	void		 *outdata;	/* data for output */
-	char		  outopts[BUFSIZ]; /* buf of output opts */
+	struct manoutput *outopts;	/* output options */
 };
 
 static	int		  fs_lookup(const struct manpaths *,
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	struct manpage	*res, *resp;
 	char		*conf_file, *defpaths;
 	size_t		 isec, i, sz;
-	int		 prio, best_prio, synopsis_only;
+	int		 prio, best_prio;
 	char		 sec;
 	enum mandoclevel rctmp;
 	enum outmode	 outmode;
@@ -164,12 +164,12 @@ main(int argc, char *argv[])
 	memset(&curp, 0, sizeof(struct curparse));
 	curp.outtype = OUTT_LOCALE;
 	curp.wlevel  = MANDOCLEVEL_BADARG;
+	curp.outopts = &conf.output;
 	options = MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1;
 	defos = NULL;
 
 	pager_pid = 1;
 	show_usage = 0;
-	synopsis_only = 0;
 	outmode = OUTMODE_DEF;
 
 	while (-1 != (c = getopt(argc, argv,
@@ -188,8 +188,7 @@ main(int argc, char *argv[])
 			search.argmode = ARG_WORD;
 			break;
 		case 'h':
-			(void)strlcat(curp.outopts, "synopsis,", BUFSIZ);
-			synopsis_only = 1;
+			conf.output.synopsisonly = 1;
 			pager_pid = 0;
 			outmode = OUTMODE_ALL;
 			break;
@@ -230,8 +229,9 @@ main(int argc, char *argv[])
 			break;
 		case 'O':
 			search.outkey = optarg;
-			(void)strlcat(curp.outopts, optarg, BUFSIZ);
-			(void)strlcat(curp.outopts, ",", BUFSIZ);
+			while (optarg != NULL)
+				manconf_output(&conf.output,
+				    strsep(&optarg, ","));
 			break;
 		case 'S':
 			search.arch = optarg;
@@ -423,7 +423,8 @@ main(int argc, char *argv[])
 				chdir(conf.manpath.paths[resp->ipath]);
 				parse(&curp, fd, resp->file);
 			} else
-				passthrough(resp->file, fd, synopsis_only);
+				passthrough(resp->file, fd,
+				    conf.output.synopsisonly);
 
 			rctmp = mparse_wait(curp.mp);
 			if (rc < rctmp)

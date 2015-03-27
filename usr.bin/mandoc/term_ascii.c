@@ -1,15 +1,15 @@
-/*	$OpenBSD: term_ascii.c,v 1.30 2015/02/16 13:58:32 tedu Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.31 2015/03/27 21:17:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -29,10 +29,11 @@
 #include "mandoc_aux.h"
 #include "out.h"
 #include "term.h"
+#include "manconf.h"
 #include "main.h"
 
-static	struct termp	 *ascii_init(enum termenc,
-				const struct mchars *, char *);
+static	struct termp	 *ascii_init(enum termenc, const struct mchars *,
+				const struct manoutput *);
 static	double		  ascii_hspan(const struct termp *,
 				const struct roffsu *);
 static	size_t		  ascii_width(const struct termp *, int);
@@ -50,13 +51,11 @@ static	size_t		  locale_width(const struct termp *, int);
 
 
 static struct termp *
-ascii_init(enum termenc enc, const struct mchars *mchars, char *outopts)
+ascii_init(enum termenc enc, const struct mchars *mchars,
+	const struct manoutput *outopts)
 {
-	const char	*toks[5];
 	char		*v;
 	struct termp	*p;
-	const char	*errstr;
-	int		num;
 
 	p = mandoc_calloc(1, sizeof(struct termp));
 
@@ -92,62 +91,36 @@ ascii_init(enum termenc enc, const struct mchars *mchars, char *outopts)
 		}
 	}
 
-	toks[0] = "indent";
-	toks[1] = "width";
-	toks[2] = "mdoc";
-	toks[3] = "synopsis";
-	toks[4] = NULL;
-
-	while (outopts && *outopts)
-		switch (getsubopt(&outopts, UNCONST(toks), &v)) {
-		case 0:
-			num = strtonum(v, 0, 1000, &errstr);
-			if (!errstr)
-				p->defindent = num;
-			break;
-		case 1:
-			num = strtonum(v, 0, 1000, &errstr);
-			if (!errstr)
-				p->defrmargin = num;
-			break;
-		case 2:
-			/*
-			 * Temporary, undocumented mode
-			 * to imitate mdoc(7) output style.
-			 */
-			p->mdocstyle = 1;
-			p->defindent = 5;
-			break;
-		case 3:
-			p->synopsisonly = 1;
-			break;
-		default:
-			break;
-		}
-
-	/* Enforce a lower boundary. */
-	if (p->defrmargin < 58)
-		p->defrmargin = 58;
+	if (outopts->mdoc) {
+		p->mdocstyle = 1;
+		p->defindent = 5;
+	}
+	if (outopts->indent)
+		p->defindent = outopts->indent;
+	if (outopts->width)
+		p->defrmargin = outopts->width;
+	if (outopts->synopsisonly)
+		p->synopsisonly = 1;
 
 	return(p);
 }
 
 void *
-ascii_alloc(const struct mchars *mchars, char *outopts)
+ascii_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 
 	return(ascii_init(TERMENC_ASCII, mchars, outopts));
 }
 
 void *
-utf8_alloc(const struct mchars *mchars, char *outopts)
+utf8_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 
 	return(ascii_init(TERMENC_UTF8, mchars, outopts));
 }
 
 void *
-locale_alloc(const struct mchars *mchars, char *outopts)
+locale_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 
 	return(ascii_init(TERMENC_LOCALE, mchars, outopts));

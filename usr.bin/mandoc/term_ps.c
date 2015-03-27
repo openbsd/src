@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ps.c,v 1.37 2015/01/21 19:40:22 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.38 2015/03/27 21:17:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -28,6 +28,7 @@
 #include "mandoc_aux.h"
 #include "out.h"
 #include "term.h"
+#include "manconf.h"
 #include "main.h"
 
 /* These work the buffer used by the header and footer. */
@@ -101,7 +102,8 @@ static	void		  ps_printf(struct termp *, const char *, ...);
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
 static	void		  ps_setwidth(struct termp *, int, size_t);
-static	struct termp	 *pspdf_alloc(const struct mchars *, char *);
+static	struct termp	 *pspdf_alloc(const struct mchars *,
+				const struct manoutput *);
 static	void		  pdf_obj(struct termp *, size_t);
 
 /*
@@ -502,7 +504,7 @@ static	const struct font fonts[TERMFONT__MAX] = {
 };
 
 void *
-pdf_alloc(const struct mchars *mchars, char *outopts)
+pdf_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 	struct termp	*p;
 
@@ -513,7 +515,7 @@ pdf_alloc(const struct mchars *mchars, char *outopts)
 }
 
 void *
-ps_alloc(const struct mchars *mchars, char *outopts)
+ps_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 	struct termp	*p;
 
@@ -524,14 +526,12 @@ ps_alloc(const struct mchars *mchars, char *outopts)
 }
 
 static struct termp *
-pspdf_alloc(const struct mchars *mchars, char *outopts)
+pspdf_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 {
 	struct termp	*p;
 	unsigned int	 pagex, pagey;
 	size_t		 marginx, marginy, lineheight;
-	const char	*toks[2];
 	const char	*pp;
-	char		*v;
 
 	p = mandoc_calloc(1, sizeof(struct termp));
 	p->symtab = mchars;
@@ -550,20 +550,6 @@ pspdf_alloc(const struct mchars *mchars, char *outopts)
 	p->setwidth = ps_setwidth;
 	p->width = ps_width;
 
-	toks[0] = "paper";
-	toks[1] = NULL;
-
-	pp = NULL;
-
-	while (outopts && *outopts)
-		switch (getsubopt(&outopts, UNCONST(toks), &v)) {
-		case 0:
-			pp = v;
-			break;
-		default:
-			break;
-		}
-
 	/* Default to US letter (millimetres). */
 
 	pagex = 216;
@@ -576,6 +562,7 @@ pspdf_alloc(const struct mchars *mchars, char *outopts)
 	 * only happens once, I'm not terribly concerned.
 	 */
 
+	pp = outopts->paper;
 	if (pp && strcasecmp(pp, "letter")) {
 		if (0 == strcasecmp(pp, "a3")) {
 			pagex = 297;

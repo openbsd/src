@@ -1,7 +1,7 @@
-/*	$OpenBSD: cgi.c,v 1.44 2015/03/27 17:36:56 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.45 2015/03/27 21:17:16 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@usta.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -814,12 +814,12 @@ catman(const struct req *req, const char *file)
 static void
 format(const struct req *req, const char *file)
 {
+	struct manoutput conf;
 	struct mparse	*mp;
 	struct mchars	*mchars;
 	struct mdoc	*mdoc;
 	struct man	*man;
 	void		*vp;
-	char		*opts;
 	int		 fd;
 	int		 usepath;
 
@@ -834,9 +834,10 @@ format(const struct req *req, const char *file)
 	mparse_readfd(mp, fd, file);
 	close(fd);
 
+	memset(&conf, 0, sizeof(conf));
+	conf.fragment = 1;
 	usepath = strcmp(req->q.manpath, req->p[0]);
-	mandoc_asprintf(&opts,
-	    "fragment,man=%s?query=%%N&sec=%%S%s%s%s%s",
+	mandoc_asprintf(&conf.man, "%s?query=%%N&sec=%%S%s%s%s%s",
 	    scriptname,
 	    req->q.arch	? "&arch="       : "",
 	    req->q.arch	? req->q.arch    : "",
@@ -853,7 +854,7 @@ format(const struct req *req, const char *file)
 		return;
 	}
 
-	vp = html_alloc(mchars, opts);
+	vp = html_alloc(mchars, &conf);
 
 	if (NULL != mdoc)
 		html_mdoc(vp, mdoc);
@@ -863,7 +864,7 @@ format(const struct req *req, const char *file)
 	html_free(vp);
 	mparse_free(mp);
 	mchars_free(mchars);
-	free(opts);
+	free(conf.man);
 }
 
 static void
