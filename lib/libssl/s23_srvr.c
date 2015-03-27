@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.38 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.39 2015/03/27 12:29:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,20 +207,10 @@ ssl23_accept(SSL *s)
 			/* s->version=SSL3_VERSION; */
 			s->type = SSL_ST_ACCEPT;
 
-			if (s->init_buf == NULL) {
-				BUF_MEM *buf;
-				if ((buf = BUF_MEM_new()) == NULL) {
-					ret = -1;
-					goto end;
-				}
-				if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
-					BUF_MEM_free(buf);
-					ret = -1;
-					goto end;
-				}
-				s->init_buf = buf;
+			if (!ssl3_setup_init_buffer(s)) {
+				ret = -1;
+				goto end;
 			}
-
 			if (!ssl3_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
@@ -255,10 +245,12 @@ ssl23_accept(SSL *s)
 			s->state = new_state;
 		}
 	}
+
 end:
 	s->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_ACCEPT_EXIT, ret);
+
 	return (ret);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.43 2015/02/09 10:53:28 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.44 2015/03/27 12:29:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -176,7 +176,6 @@ dtls1_get_client_method(int ver)
 int
 dtls1_connect(SSL *s)
 {
-	BUF_MEM *buf = NULL;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	int ret = -1;
 	int new_state, state, skip = 0;
@@ -223,25 +222,14 @@ dtls1_connect(SSL *s)
 			/* s->version=SSL3_VERSION; */
 			s->type = SSL_ST_CONNECT;
 
-			if (s->init_buf == NULL) {
-				if ((buf = BUF_MEM_new()) == NULL) {
-					ret = -1;
-					goto end;
-				}
-				if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
-					ret = -1;
-					goto end;
-				}
-				s->init_buf = buf;
-				buf = NULL;
+			if (!ssl3_setup_init_buffer(s)) {
+				ret = -1;
+				goto end;
 			}
-
 			if (!ssl3_setup_buffers(s)) {
 				ret = -1;
 				goto end;
 			}
-
-			/* setup buffing BIO */
 			if (!ssl_init_wbio_buffer(s, 0)) {
 				ret = -1;
 				goto end;
@@ -603,14 +591,12 @@ dtls1_connect(SSL *s)
 		}
 		skip = 0;
 	}
+
 end:
 	s->in_handshake--;
-
-
-	if (buf != NULL)
-		BUF_MEM_free(buf);
 	if (cb != NULL)
 		cb(s, SSL_CB_CONNECT_EXIT, ret);
+
 	return (ret);
 }
 

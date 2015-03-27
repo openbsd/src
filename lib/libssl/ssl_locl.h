@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.88 2015/02/22 15:54:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.89 2015/03/27 12:29:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -637,6 +637,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
 SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
 int	ssl3_setup_buffers(SSL *s);
+int	ssl3_setup_init_buffer(SSL *s);
 int	ssl3_setup_read_buffer(SSL *s);
 int	ssl3_setup_write_buffer(SSL *s);
 int	ssl3_release_read_buffer(SSL *s);

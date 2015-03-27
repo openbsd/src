@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.37 2014/12/14 21:49:29 bcook Exp $ */
+/* $OpenBSD: s3_both.c,v 1.38 2015/03/27 12:29:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -607,6 +607,27 @@ ssl_verify_alarm_type(long type)
 }
 
 int
+ssl3_setup_init_buffer(SSL *s)
+{
+	BUF_MEM *buf = NULL;
+
+	if (s->init_buf != NULL)
+		return (1);
+
+	if ((buf = BUF_MEM_new()) == NULL)
+		goto err;
+	if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH))
+		goto err;
+
+	s->init_buf = buf;
+	return (1);
+
+err:
+	BUF_MEM_free(buf);
+	return (0);
+}
+
+int
 ssl3_setup_read_buffer(SSL *s)
 {
 	unsigned char *p;
@@ -673,7 +694,6 @@ err:
 	return 0;
 }
 
-
 int
 ssl3_setup_buffers(SSL *s)
 {
@@ -699,4 +719,3 @@ ssl3_release_read_buffer(SSL *s)
 	s->s3->rbuf.buf = NULL;
 	return 1;
 }
-
