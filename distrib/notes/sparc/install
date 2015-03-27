@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.76 2015/01/11 21:02:55 miod Exp $
+dnl	$OpenBSD: install,v 1.77 2015/03/27 20:40:36 miod Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
@@ -409,7 +409,7 @@ distribution. Unfortunately, many, if not all, sun4e PROM have a bug and
 fail to load a file which size is a multiple of 512 bytes. If you are
 trying to netboot a sun4e system, simply append some bytes to the
 file, like this:
-	dd if=/dev/zero bs=32b count=1 >> boot.net
+	dd if=/dev/zero bs=32 count=1 >> boot.net
 
 After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through
