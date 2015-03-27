@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.139 2015/03/13 00:18:45 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.140 2015/03/27 17:36:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -40,7 +40,7 @@
 #include "man.h"
 #include "mandoc.h"
 #include "mandoc_aux.h"
-#include "manpath.h"
+#include "manconf.h"
 #include "mansearch.h"
 
 extern int mansearch_keymax;
@@ -328,15 +328,15 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 int
 mandocdb(int argc, char *argv[])
 {
-	int		  ch, i;
-	size_t		  j, sz;
-	const char	 *path_arg;
-	struct manpaths	  dirs;
-	struct mparse	 *mp;
+	struct manconf	  conf;
 	struct ohash_info mpages_info, mlinks_info;
+	struct mparse	 *mp;
+	const char	 *path_arg;
+	size_t		  j, sz;
+	int		  ch, i;
 
+	memset(&conf, 0, sizeof(conf));
 	memset(stmts, 0, STMT__MAX * sizeof(sqlite3_stmt *));
-	memset(&dirs, 0, sizeof(struct manpaths));
 
 	mpages_info.alloc  = mlinks_info.alloc  = hash_alloc;
 	mpages_info.calloc = mlinks_info.calloc = hash_calloc;
@@ -475,18 +475,18 @@ mandocdb(int argc, char *argv[])
 		/*
 		 * If we have arguments, use them as our manpaths.
 		 * If we don't, grok from manpath(1) or however else
-		 * manpath_parse() wants to do it.
+		 * manconf_parse() wants to do it.
 		 */
 		if (argc > 0) {
-			dirs.paths = mandoc_reallocarray(NULL,
+			conf.manpath.paths = mandoc_reallocarray(NULL,
 			    argc, sizeof(char *));
-			dirs.sz = (size_t)argc;
+			conf.manpath.sz = (size_t)argc;
 			for (i = 0; i < argc; i++)
-				dirs.paths[i] = mandoc_strdup(argv[i]);
+				conf.manpath.paths[i] = mandoc_strdup(argv[i]);
 		} else
-			manpath_parse(&dirs, path_arg, NULL, NULL);
+			manconf_parse(&conf, path_arg, NULL, NULL);
 
-		if (0 == dirs.sz) {
+		if (conf.manpath.sz == 0) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say("", "Empty manpath");
 		}
@@ -497,10 +497,10 @@ mandocdb(int argc, char *argv[])
 		 * Ignore zero-length directories and strip trailing
 		 * slashes.
 		 */
-		for (j = 0; j < dirs.sz; j++) {
-			sz = strlen(dirs.paths[j]);
-			if (sz && '/' == dirs.paths[j][sz - 1])
-				dirs.paths[j][--sz] = '\0';
+		for (j = 0; j < conf.manpath.sz; j++) {
+			sz = strlen(conf.manpath.paths[j]);
+			if (sz && conf.manpath.paths[j][sz - 1] == '/')
+				conf.manpath.paths[j][--sz] = '\0';
 			if (0 == sz)
 				continue;
 
@@ -509,7 +509,7 @@ mandocdb(int argc, char *argv[])
 				ohash_init(&mlinks, 6, &mlinks_info);
 			}
 
-			if (0 == set_basedir(dirs.paths[j], argc > 0))
+			if ( ! set_basedir(conf.manpath.paths[j], argc > 0))
 				continue;
 			if (0 == treescan())
 				continue;
@@ -522,7 +522,7 @@ mandocdb(int argc, char *argv[])
 				names_check();
 			dbclose(0);
 
-			if (j + 1 < dirs.sz) {
+			if (j + 1 < conf.manpath.sz) {
 				mpages_free();
 				ohash_delete(&mpages);
 				ohash_delete(&mlinks);
@@ -530,7 +530,7 @@ mandocdb(int argc, char *argv[])
 		}
 	}
 out:
-	manpath_free(&dirs);
+	manconf_free(&conf);
 	mparse_free(mp);
 	mchars_free(mchars);
 	mpages_free();

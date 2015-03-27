@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.133 2015/03/27 16:35:57 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.134 2015/03/27 17:36:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -8,9 +8,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -38,7 +38,7 @@
 #include "main.h"
 #include "mdoc.h"
 #include "man.h"
-#include "manpath.h"
+#include "manconf.h"
 #include "mansearch.h"
 
 enum	outmode {
@@ -109,9 +109,9 @@ static	enum mandoclevel  rc;
 int
 main(int argc, char *argv[])
 {
+	struct manconf	 conf;
 	struct curparse	 curp;
 	struct mansearch search;
-	struct manpaths	 paths;
 	char		*auxpaths;
 	char		*defos;
 	unsigned char	*uc;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 
 	/* Search options. */
 
-	memset(&paths, 0, sizeof(struct manpaths));
+	memset(&conf, 0, sizeof(conf));
 	conf_file = defpaths = NULL;
 	auxpaths = NULL;
 
@@ -324,13 +324,15 @@ main(int argc, char *argv[])
 
 		/* Access the mandoc database. */
 
-		manpath_parse(&paths, conf_file, defpaths, auxpaths);
+		manconf_parse(&conf, conf_file, defpaths, auxpaths);
 		mansearch_setup(1);
-		if( ! mansearch(&search, &paths, argc, argv, &res, &sz))
+		if ( ! mansearch(&search, &conf.manpath,
+		    argc, argv, &res, &sz))
 			usage(search.argmode);
 
 		if (sz == 0 && search.argmode == ARG_NAME)
-			fs_search(&search, &paths, argc, argv, &res, &sz);
+			fs_search(&search, &conf.manpath,
+			    argc, argv, &res, &sz);
 
 		if (sz == 0) {
 			rc = MANDOCLEVEL_BADARG;
@@ -418,7 +420,7 @@ main(int argc, char *argv[])
 				parse(&curp, fd, *argv);
 			else if (resp->form & FORM_SRC) {
 				/* For .so only; ignore failure. */
-				chdir(paths.paths[resp->ipath]);
+				chdir(conf.manpath.paths[resp->ipath]);
 				parse(&curp, fd, resp->file);
 			} else
 				passthrough(resp->file, fd, synopsis_only);
@@ -449,7 +451,7 @@ main(int argc, char *argv[])
 
 out:
 	if (search.argmode != ARG_FILE) {
-		manpath_free(&paths);
+		manconf_free(&conf);
 		mansearch_free(res, sz);
 		mansearch_setup(0);
 	}
