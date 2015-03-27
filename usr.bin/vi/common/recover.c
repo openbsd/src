@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.20 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: recover.c,v 1.21 2015/03/27 04:11:25 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -254,15 +254,12 @@ rcv_sync(SCR *sp, u_int flags)
 
 	/* Sync the file if it's been modified. */
 	if (F_ISSET(ep, F_MODIFIED)) {
-		SIGBLOCK;
 		if (ep->db->sync(ep->db, R_RECNOSYNC)) {
 			F_CLR(ep, F_RCV_ON | F_RCV_NORM);
 			msgq_str(sp, M_SYSERR,
 			    ep->rcv_path, "060|File backup failed: %s");
-			SIGUNBLOCK;
 			return (1);
 		}
-		SIGUNBLOCK;
 
 		/* REQUEST: don't remove backing file on exit. */
 		if (LF_ISSET(RCV_PRESERVE))

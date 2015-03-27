@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: line.c,v 1.14 2015/03/27 04:11:25 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -203,13 +203,11 @@ db_delete(SCR *sp, recno_t lno)
 	/* Update file. */
 	key.data = &lno;
 	key.size = sizeof(lno);
-	SIGBLOCK;
 	if (ep->db->del(ep->db, &key, 0) == 1) {
 		msgq(sp, M_SYSERR,
 		    "003|unable to delete line %lu", (u_long)lno);
 		return (1);
 	}
-	SIGUNBLOCK;
 
 	/* Flush the cache, update line count, before screen update. */
 	if (lno <= ep->c_lno)
@@ -253,13 +251,11 @@ db_append(SCR *sp, int update, recno_t lno, char *p, size_t len)
 	key.size = sizeof(lno);
 	data.data = p;
 	data.size = len;
-	SIGBLOCK;
 	if (ep->db->put(ep->db, &key, &data, R_IAFTER) == -1) {
 		msgq(sp, M_SYSERR,
 		    "004|unable to append to line %lu", (u_long)lno);
 		return (1);
 	}
-	SIGUNBLOCK;
 
 	/* Flush the cache, update line count, before screen update. */
 	if (lno < ep->c_lno)
@@ -323,13 +319,11 @@ db_insert(SCR *sp, recno_t lno, char *p, size_t len)
 	key.size = sizeof(lno);
 	data.data = p;
 	data.size = len;
-	SIGBLOCK;
 	if (ep->db->put(ep->db, &key, &data, R_IBEFORE) == -1) {
 		msgq(sp, M_SYSERR,
 		    "005|unable to insert at line %lu", (u_long)lno);
 		return (1);
 	}
-	SIGUNBLOCK;
 
 	/* Flush the cache, update line count, before screen update. */
 	if (lno >= ep->c_lno)
@@ -387,13 +381,11 @@ db_set(SCR *sp, recno_t lno, char *p, size_t len)
 	key.size = sizeof(lno);
 	data.data = p;
 	data.size = len;
-	SIGBLOCK;
 	if (ep->db->put(ep->db, &key, &data, 0) == -1) {
 		msgq(sp, M_SYSERR,
 		    "006|unable to store line %lu", (u_long)lno);
 		return (1);
 	}
-	SIGUNBLOCK;
 
 	/* Flush the cache, before logging or screen update. */
 	if (lno == ep->c_lno)
