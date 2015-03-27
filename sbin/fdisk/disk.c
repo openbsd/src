@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.45 2015/03/16 23:51:50 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.46 2015/03/27 16:06:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,7 +47,8 @@ DISK_open(char *disk, int mode)
 	if (fstat(fd, &st) == -1)
 		err(1, "%s", disk);
 	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode))
-		errx(1, "%s is not a character device or a regular file", disk);
+		errx(1, "%s is not a character device or a regular file",
+		    disk);
 
 	return (fd);
 }

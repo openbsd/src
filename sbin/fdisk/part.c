@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.71 2015/03/27 15:56:45 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.72 2015/03/27 16:06:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -249,7 +249,8 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 	} else {
 		/* should this really keep flag, id and set others to 0xff? */
 		memset(prt, 0xFF, sizeof(*prt));
-		printf("Warning CHS values out of bounds only saving LBA values\n");
+		printf("Warning CHS values out of bounds only saving "
+		    "LBA values\n");
 	}
 
 	prt->dp_flag = partn->flag & 0xFF;
@@ -273,13 +274,17 @@ PRT_print(int num, struct prt *partn, char *units)
 	i = unit_lookup(units);
 
 	if (partn == NULL) {
-		printf("            Starting         Ending         LBA Info:\n");
-		printf(" #: id      C   H   S -      C   H   S [       start:        size ]\n");
-		printf("-------------------------------------------------------------------------------\n");
+		printf("            Starting         Ending    "
+		    "     LBA Info:\n");
+		printf(" #: id      C   H   S -      C   H   S "
+		    "[       start:        size ]\n");
+		printf("---------------------------------------"
+		    "----------------------------------------\n");
 	} else {
 		size = ((double)partn->ns * unit_types[SECTORS].conversion) /
 		    unit_types[i].conversion;
-		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u [%12llu:%12.0f%s] %s\n",
+		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
+		    "[%12llu:%12.0f%s] %s\n",
 		    (partn->flag == DOSACTIVE)?'*':' ',
 		    num, partn->id,
 		    partn->scyl, partn->shead, partn->ssect,
