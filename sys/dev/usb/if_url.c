@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.73 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_url.c,v 1.74 2015/03/27 19:20:56 uaa Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -972,18 +972,16 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m->m_pkthdr.len = m->m_len = total_len;
 	ml_enqueue(&ml, m);
 
-	s = splnet();
-
 	if (url_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
 	DPRINTF(("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
 		 __func__, m->m_len));
-	if_input(ifp, &ml);
 
- done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
 
  done:
