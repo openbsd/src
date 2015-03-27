@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.24 2014/01/09 19:44:49 miod Exp $
+dnl	$OpenBSD: prep,v 1.25 2015/03/27 20:50:40 miod Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -10,41 +10,6 @@ of the OpenBOOT ROM.  Make sure that the ROM security modes are disabled:
 
     ok setenv security-mode none
 
-
-Please note that while OpenBSD and Solaris have a reasonable degree of
-compatibility between disk labels and filesystems there are some problems
-to watch out for during initial installation or when trying to maintain
-both OpenBSD and Solaris environments on the same system.
-
-    If the OpenBSD fsck(8) utility is used on a Solaris filesystem, it will
-    set OpenBSD "clean flags" and BSD4.4 summary fields in the superblock.
-    Solaris does *not* like this and you will have to do a "fsck -b 32" under
-    Solaris to access an alternate superblock to repair the filesystem.  You
-    should always specify Solaris filesystems with a "pass number" of 0 in
-    their /etc/fstab entry to prevent this, and preferably mount them "RO".
-
-    If Solaris fsck is used on an OpenBSD filesystem in the default OpenBSD
-    (4.4BSD) format, it will first complain about the superblock and then
-    about missing . and .. entries.  Do *not* try to "correct" these
-    problems, as attempting to do so will completely trash the filesystem.
-
-    You should avoid using soft updates (option softdep in /etc/fstab)
-    on your shared filesystems.  Although untested, it is likely that
-    Solaris would be confused by a filesystem with soft update flags
-    enabled.
-
-The OpenBSD "Sun Compatible" disklabel has been extended to support 16
-partitions, which may be compatible with Solaris, but Solaris only sees
-the first 8 partitions and may "lose" information about the extended
-partitions.
-
-
-
-OpenBSD and Sun bootblocks are similar in concept, though implemented
-differently.  The OpenBSD bootblocks are architecture independent and also
-understand the extended disk labels with 16 partitions.  You can use Solaris
-bootblocks, but remember that OpenBSD bootblocks must be installed with
-OpenBSD installboot and Solaris bootblocks with Solaris installboot.
 
 Most of the new Ultras shipped by Sun (or Oracle) with a preinstalled Solaris
 have an initial specific factory setup of the boot ROM, in order to start up

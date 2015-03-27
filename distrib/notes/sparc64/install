@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.49 2015/01/11 21:02:55 miod Exp $
+dnl	$OpenBSD: install,v 1.50 2015/03/27 20:50:40 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -10,10 +10,6 @@ arrange for a diskless setup. This is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (See ``Installing using a diskless setup'' below.)
-
-It is also possible to install OpenBSD "manually" from a running Solaris
-system, using the system tools, as well as gunzip; see ``Installing from
-Solaris'' below.
 
 Booting from the Installation Media:
 
@@ -131,95 +127,6 @@ empty, value, type the following:
 
 
 OpenBSDCongratulations
-
-
-Installing from Solaris:
-
-You need a machine running under Solaris to install OpenBSD.  You will
-also need at least the following pieces:
-
-  - the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz and
-    etc{:--:}OSrev.tgz)
-  - gunzip (GNU gzip) Solaris binary
-  - the OpenBSD boot blocks (bootblk and ofwboot)
-  - an OpenBSD kernel
-
-All these pieces, except gunzip, are supplied in the OpenBSD/MACHINE
-distribution.
-
-You need to format and partition the disk using Solaris (since
-OpenBSD/MACHINE uses Sun compatible disk labels).  Give yourself adequate
-partition sizes.  Here is an example layout:
-
-    solaris# prtvtoc -s /dev/rdsk/c0t1d0s2
-    *                          First     Sector    Last
-    * Partition  Tag  Flags    Sector     Count    Sector  Mount Directory
-           0      2    00          0     80000     79999   /
-           1      3    01      80000    256000    335999
-           2      5    00          0   4165271   4165270
-           3      7    00     336000    100000    435999   /tmp
-           4      7    00     436000    100000    535999   /var
-           5      7    00     536000    400000    935999   /var/tmp
-           6      4    00     936000   3229271   4165270   /usr
-
-Use Solaris to newfs the partitions which will have filesystems on them.
-(OpenBSD's filesystem format is almost identical to Solaris.)
-
-    solaris# newfs /dev/rdsk/c0t1d0s0
-    [... lots of output]
-
-Repeat for any other partition (in this example, /dev/rdsk/c0t1d0s3,
-/dev/rdsk/c0t1d0s4, /dev/rdsk/c0t1d0s5 and /dev/rdsk/c0t1d0s6).
-
-dnl XXX I had no time to check the -O restriction is still necessary.
-NOTE: If you are able to, there is a performance benefit from
-newfs'ing using OpenBSD.  If you newfs using the OpenBSD newfs command,
-be sure to use the -O flag for your / partition, so that newfs will
-use the 4.3BSD filesystem format, rather than the new 4.4BSD filesystem
-format.  If you forget, you will not be able to boot -- the Solaris boot
-blocks do not understand the extended 4.4BSD filesystem format.
-
-Mount those partitions in a tree formation, under /mnt; ie:
-
-    solaris# df -k
-    Filesystem            kbytes    used   avail capacity  Mounted on
-    [...]
-    /dev/dsk/c0t1d0s0      38427       0   38427     0%    /mnt
-    /dev/dsk/c0t1d0s3      48249       0   48249     0%    /mnt/tmp
-    /dev/dsk/c0t1d0s4      48249       0   48249     0%    /mnt/var
-    /dev/dsk/c0t1d0s5     193536       0  193536     0%    /mnt/var/tmp
-    /dev/dsk/c0t1d0s6    1564024       0 1564024     0%    /mnt/usr
-
-Place the boot blocks in /mnt (your new root partition), and use the Solaris
-command "installboot" to make it work.
-The installboot man page says to do something like this:
-
-    solaris# cp bootblk ofwboot /mnt
-    solaris# sync; sync
-    solaris# /usr/sbin/installboot /mnt/bootblk /dev/rdsk/c0t1d0s0
-
-You can now extract the provided "*.tgz" files onto your disk.
-
-    solaris# ls -FC
-    base{:--:}OSrev.tgz     etc{:--:}OSrev.tgz      xbase{:--:}OSrev.tgz     xshare{:--:}OSrev.tgz
-    bsd            game{:--:}OSrev.tgz     xfont{:--:}OSrev.tgz
-    comp{:--:}OSrev.tgz     man{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
-    solaris{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; tar xvpf -)
-    [...] for each set
-
-And finally copy the OpenBSD kernel onto your disk.
-
-    solaris# cp bsd /mnt/bsd
-
-The GNU gunzip program is not distributed as part of Solaris, but may be
-present in your /usr/local/bin.  If not, you will need to obtain it from a
-GNU archive and install before proceeding.
-
-After the files have been extracted, set up /mnt/etc/fstab to match
-your actual disk layout.  (Minus the "/mnt" component of each path, of
-course :-)
-
-Now proceed to reboot the machine and the customize your installation.
 
 
 Net Boot or Diskless Setup Information:
