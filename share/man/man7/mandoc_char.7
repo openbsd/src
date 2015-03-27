@@ -1,8 +1,8 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.23 2015/01/20 18:54:33 tedu Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.24 2015/03/27 00:57:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011, 2013, 2015 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2015 $
+.Dd $Mdocdate: March 27 2015 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -142,6 +142,28 @@ Note that on text lines, literal double-quote characters can be used
 verbatim.
 All other quote-like characters can be used verbatim as well,
 even on request and macro lines.
+.Ss Accents
+In output modes supporting such special output characters, for example 
+.Fl T Cm pdf ,
+some
+.Xr roff 7
+formatters convert the following ASCII input characters to the
+following Unicode special output characters:
+.Bl -column x(ga U+2018 -offset indent
+.It \(ga Ta U+2018 Ta left single quotation mark
+.It \(aq Ta U+2019 Ta right single quotation mark
+.It \(ti Ta U+02DC Ta small tilde
+.El
+.Pp
+In prose, this automatic substitution is often desirable;
+but when these characters have to be displayed as plain ASCII
+characters, for example in source code samples, they require
+escaping to render as follows:
+.Bl -column x(ga U+2018 -offset indent
+.It \e(ga Ta U+0060 Ta grave accent
+.It \e(aq Ta U+0027 Ta apostrophe
+.It \e(ti Ta U+007E Ta tilde
+.El
 .Ss Periods
 The period
 .Pq Sq \&.
