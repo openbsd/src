@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.78 2015/03/27 20:50:40 miod Exp $
+dnl	$OpenBSD: install,v 1.79 2015/03/27 20:55:56 miod Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
@@ -271,3 +271,7 @@ A few configuration files need to be edited:
 			server:/export/exec/sun4.OpenBSD /usr  nfs  rw 0 0
 
 OpenBSDInstNFS
+
+
+
+OpenBSDUnattendedInstallation

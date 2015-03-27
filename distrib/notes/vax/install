@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.26 2014/03/19 01:59:49 tedu Exp $
+dnl	$OpenBSD: install,v 1.27 2015/03/27 20:55:56 miod Exp $
 OpenBSDInstallPrelude({:-MSCP or other non-SCSI disks-:})
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -120,3 +120,7 @@ OpenBSDCommonInstall
 OpenBSDInstallWrapup
 
 OpenBSDCongratulations
+
+
+
+OpenBSDUnattendedInstallation
