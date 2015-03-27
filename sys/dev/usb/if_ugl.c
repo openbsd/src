@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.10 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.11 2015/03/27 19:32:53 mpi Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -436,6 +436,7 @@ ugl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ugl_chain	*c = priv;
 	struct ugl_softc	*sc = c->ugl_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	int			total_len = 0;
 	unsigned int		packet_len, packet_count;
@@ -497,29 +498,15 @@ ugl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = packet_len;
+	ml_enqueue(&ml, m);
 
-	m->m_pkthdr.rcvif = ifp;
-
-	s = splnet();
-
-	/* XXX ugly */
 	if (ugl_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-	}
-#endif
-
-	DPRINTFN(10,("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
-		    __func__, m->m_len));
-
-	ether_input_mbuf(ifp, m);
-
- done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
 
  done:
