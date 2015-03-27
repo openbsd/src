@@ -1,8 +1,8 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.32 2014/12/04 00:07:21 schwarze Exp $
+# $OpenBSD: security,v 1.33 2015/03/27 12:33:36 schwarze Exp $
 #
-# Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
+# Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -336,7 +336,16 @@ sub find_homes {
 	nag !(open my $fh, '<', $filename),
 	    "open: $filename: $!"
 	    and return [];
-	my $homes = [ map [ @{[split /:/]}[0,2,5] ], <$fh> ];
+	my $homes = [];
+	while (<$fh>) {
+		my $entry = [ @{[split /:/]}[0,2,5] ];
+		chomp;
+		nag !defined $entry->[2],
+		    "Incomplete line \"$_\" in $filename."
+		    and next;
+		chomp $entry->[2];
+		push @$homes, $entry;
+	}
 	close $fh;
 	return $homes;
 }
