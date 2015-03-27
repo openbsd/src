@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.98 2015/03/18 20:56:40 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.99 2015/03/27 20:25:39 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -251,7 +251,7 @@ bootstrap()
 #if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
     (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
 	if (CPU_ISSUN4OR4COR4E)
-		vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_OLD;
+		vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_SUN4;
 	else
 		vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_SRMMU;
 	vm_kernel_space_size = VM_MAX_KERNEL_ADDRESS - vm_min_kernel_address;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.169 2015/03/18 20:56:40 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.170 2015/03/27 20:25:39 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -175,7 +175,7 @@ cpu_startup()
 	printf("real mem = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
 
-#if (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
+#if !defined(SMALL_KERNEL)
 	/*
 	 * uvm_km_init() has allocated all the virtual memory below the
 	 * end of the kernel image. If VM_MIN_KERNEL_ADDRESS is below

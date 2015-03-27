@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.176 2015/03/18 20:56:40 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.177 2015/03/27 20:25:39 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -89,10 +89,17 @@
  *  boot blocks which do not map enough data after the kernel image to
  *  cover pmap_bootstrap() needs.)
  */
-#undef	NUREG_4M
+#define	NKREG_OLD \
+	((unsigned int)(-VM_MIN_KERNEL_ADDRESS_OLD / NBPRG))	/* 8 */
+#define	NUREG_OLD	(256 - NKREG_OLD)			/* 248 */
+#undef	NKREG_4C
+#undef	NUREG_4C
 #undef	NKREG_4M
-#define	NUREG_4M	NUREG_4C
-#define	NKREG_4M	NKREG_4C
+#undef	NUREG_4M
+#define	NKREG_4C	NKREG_OLD
+#define	NUREG_4C	NUREG_OLD
+#define	NKREG_4M	NKREG_OLD
+#define	NUREG_4M	NUREG_OLD
 #endif
 
 #ifdef DEBUG
@@ -177,7 +184,7 @@ int	pmapdebug = 0;
 static __inline struct pvlist *pvhead(int);
 
 #if defined(SUN4M)
-static u_int	VA2PA(caddr_t);
+u_int	VA2PA(caddr_t);
 #endif
 
 /*
@@ -492,9 +499,9 @@ void	setpte4m(vaddr_t va, int pte);
  */
 
 #if defined(SUN4M)
-static void mmu_setup4m_L1(int, struct pmap *);
-static void mmu_setup4m_L2(int, struct regmap *);
-static void  mmu_setup4m_L3(int, struct segmap *);
+void mmu_setup4m_L1(int, struct pmap *);
+void mmu_setup4m_L2(int, struct regmap *);
+void  mmu_setup4m_L3(int, struct segmap *);
 void	mmu_reservemon4m(struct pmap *);
 
 void	pmap_rmk4m(struct pmap *, vaddr_t, vaddr_t, int, int);
@@ -585,7 +592,7 @@ void 		(*pmap_rmu_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
  * This routine should work with any level of mapping, as it is used
  * during bootup to interact with the ROM's initial L1 mapping of the kernel.
  */
-static u_int
+u_int
 VA2PA(addr)
 	caddr_t addr;
 {
@@ -684,7 +691,7 @@ setpte4m(va, pte)
 u_int protection_codes[2][8];
 #define pte_prot4m(pm, prot) (protection_codes[pm == pmap_kernel()?0:1][prot])
 
-static void
+void
 sparc_protection_init4m(void)
 {
 	u_int prot, *kp, *up;
@@ -766,7 +773,7 @@ sparc_protection_init4m(void)
 } while (0)
 
 
-static void get_phys_mem(void **);
+void get_phys_mem(void **);
 void	ctx_alloc(struct pmap *);
 void	ctx_free(struct pmap *);
 void	pg_flushcache(struct vm_page *);
@@ -862,7 +869,7 @@ pmap_virtual_space(v_start, v_end)
 /*
  * Helper routine that hands off available physical pages to the VM system.
  */
-static void
+void
 pmap_page_upload(void)
 {
 	int	n;
@@ -2660,10 +2667,10 @@ int nptesg;
 #endif
 
 #if defined(SUN4M)
-static void pmap_bootstrap4m(void *);
+void pmap_bootstrap4m(void *);
 #endif
 #if defined(SUN4) || defined(SUN4C) || defined(SUN4E)
-static void pmap_bootstrap4_4c(void *, int, int, int);
+void pmap_bootstrap4_4c(void *, int, int, int);
 #endif
 
 /*
@@ -2748,6 +2755,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	    ((getpte4(kernel_text) & PG_PFNUM) << PGSHIFT);
 
 	switch (cputyp) {
+	default:
 	case CPU_SUN4C:
 	case CPU_SUN4E:
 		mmu_has_hole = 1;
@@ -2919,9 +2927,9 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 		 */
 		lastpage = NPTESG;
 
-	p = (caddr_t)VM_MIN_KERNEL_ADDRESS_OLD;	/* first va */
-	vs = VA_VSEG(VM_MIN_KERNEL_ADDRESS_OLD);/* first virtual segment */
-	vr = VA_VREG(VM_MIN_KERNEL_ADDRESS_OLD);/* first virtual region */
+	p = (caddr_t)KERNBASE;	/* first kernel va */
+	vs = VA_VSEG((vaddr_t)p);/* first virtual segment */
+	vr = VA_VREG((vaddr_t)p);/* first virtual region */
 	rp = &pmap_kernel()->pm_regmap[vr];
 
 	/* Get region/segment where kernel addresses start */
@@ -3107,7 +3115,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
  *
  * Switches from ROM to kernel page tables, and sets up initial mappings.
  */
-static void
+void
 pmap_bootstrap4m(void *top)
 {
 	int i, j;

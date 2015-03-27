@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.43 2015/03/18 20:56:40 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.44 2015/03/27 20:25:39 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
  */
 
 #define	VM_MIN_KERNEL_ADDRESS_OLD	((vaddr_t)KERNBASE)
+#define	VM_MIN_KERNEL_ADDRESS_SUN4	((vaddr_t)0xf0000000)
 #define	VM_MIN_KERNEL_ADDRESS_SRMMU	((vaddr_t)0xc0000000)
 
 #if defined(SMALL_KERNEL)
@@ -105,7 +106,7 @@ extern vsize_t vm_kernel_space_size;
 #define	USRSTACK		vm_min_kernel_address
 #elif (defined(SUN4) || defined(SUN4C) || defined(SUN4E))
 /* old Sun MMU with address hole */
-#define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS_OLD
+#define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS_SUN4
 #define VM_MAXUSER_ADDRESS	VM_MIN_KERNEL_ADDRESS
 #define VM_MAX_ADDRESS		VM_MIN_KERNEL_ADDRESS
 #define	USRSTACK		VM_MIN_KERNEL_ADDRESS

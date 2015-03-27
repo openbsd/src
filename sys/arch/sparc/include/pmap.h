@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.58 2015/03/18 20:56:40 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.59 2015/03/27 20:25:39 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -132,8 +132,8 @@
  *
  */
 #define NKREG_4C \
-	((unsigned int)(-VM_MIN_KERNEL_ADDRESS_OLD / NBPRG))	/* 8 */
-#define NUREG_4C	(256 - NKREG_4C)		      /* 248 */
+	((unsigned int)(-VM_MIN_KERNEL_ADDRESS_SUN4 / NBPRG))	/* 16 */
+#define NUREG_4C	(256 - NKREG_4C)		      /* 240 */
 #define NKREG_4M \
 	 ((unsigned int)(-VM_MIN_KERNEL_ADDRESS_SRMMU / NBPRG))	/* 64 */
 #define NUREG_4M	(256 - NKREG_4M)		      /* 192 */
