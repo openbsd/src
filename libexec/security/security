@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.33 2015/03/27 12:33:36 schwarze Exp $
+# $OpenBSD: security,v 1.34 2015/03/27 13:26:19 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -537,7 +537,7 @@ sub find_special_files {
 	    "cannot spawn mount: $!"
 	    and return;
 	while (<$fh>) {
-		my ($path, $type) = /on\s+(.*?)\s+type\s+(\w+)/;
+		my ($path, $type) = /\son\s+(.*?)\s+type\s+(\w+)/;
 		$skip{$path} = 1 if $path &&
 		    ($type =~ /^(?:a|nnp|proc)fs$/ || !/\(.*local.*\)/);
 	}
