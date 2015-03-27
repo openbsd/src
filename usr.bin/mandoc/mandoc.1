@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.79 2015/02/23 13:30:02 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.80 2015/03/27 16:35:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 23 2015 $
+.Dd $Mdocdate: March 27 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -24,14 +24,12 @@
 .Sh SYNOPSIS
 .Nm mandoc
 .Op Fl acfhkl
-.Sm off
-.Op Fl I Cm os Li = Ar name
-.Sm on
-.Op Fl K Ns Ar encoding
+.Op Fl I Cm os Ns = Ns Ar name
+.Op Fl K Ar encoding
 .Op Fl m Ns Ar format
-.Op Fl O Ns Ar option
-.Op Fl T Ns Ar output
-.Op Fl W Ns Ar level
+.Op Fl O Ar option
+.Op Fl T Ar output
+.Op Fl W Ar level
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -49,7 +47,7 @@ or
 text from stdin, implying
 .Fl m Ns Cm andoc ,
 and produces
-.Fl T Ns Cm locale
+.Fl T Cm locale
 output.
 .Pp
 The options are as follows:
@@ -77,9 +75,7 @@ This overrides any earlier
 and
 .Fl l
 options.
-.Sm off
-.It Fl I Cm os Li = Ar name
-.Sm on
+.It Fl I Cm os Ns = Ns Ar name
 Override the default operating system
 .Ar name
 for the
@@ -93,7 +89,7 @@ macro.
 Display only the SYNOPSIS lines.
 Implies
 .Fl c .
-.It Fl K Ns Ar encoding
+.It Fl K Ar encoding
 Specify the input encoding.
 The supported
 .Ar encoding
@@ -141,16 +137,16 @@ See
 for available formats.
 Defaults to
 .Fl m Ns Cm andoc .
-.It Fl O Ns Ar option
+.It Fl O Ar option
 Comma-separated output options.
-.It Fl T Ns Ar output
+.It Fl T Ar output
 Output format.
 See
 .Sx Output Formats
 for available formats.
 Defaults to
-.Fl T Ns Cm locale .
-.It Fl W Ns Ar level
+.Fl T Cm locale .
+.It Fl W Ar level
 Specify the minimum message
 .Ar level
 to be reported on the standard error output and to affect the exit status.
@@ -174,7 +170,7 @@ and
 for details.
 .Pp
 The special option
-.Fl W Ns Cm stop
+.Fl W Cm stop
 tells
 .Nm
 to exit after parsing a file that causes warnings or errors of at least
@@ -185,7 +181,7 @@ If both a
 and
 .Cm stop
 are requested, they can be joined with a comma, for example
-.Fl W Ns Cm error , Ns Cm stop .
+.Fl W Cm error , Ns Cm stop .
 .It Ar file
 Read input from zero or more files.
 If unspecified, reads from stdin.
@@ -254,54 +250,54 @@ The
 utility accepts the following
 .Fl T
 arguments, which correspond to output modes:
-.Bl -tag -width "-Tlocale"
-.It Fl T Ns Cm ascii
+.Bl -tag -width "-T locale"
+.It Fl T Cm ascii
 Produce 7-bit ASCII output.
 See
 .Sx ASCII Output .
-.It Fl T Ns Cm html
+.It Fl T Cm html
 Produce HTML5, CSS1, and MathML output.
 See
 .Sx HTML Output .
-.It Fl T Ns Cm lint
+.It Fl T Cm lint
 Parse only: produce no output.
 Implies
-.Fl W Ns Cm warning .
-.It Fl T Ns Cm locale
+.Fl W Cm warning .
+.It Fl T Cm locale
 Encode output using the current locale.
 This is the default.
 See
 .Sx Locale Output .
-.It Fl T Ns Cm man
+.It Fl T Cm man
 Produce
 .Xr man 7
 format output.
 See
 .Sx Man Output .
-.It Fl T Ns Cm pdf
+.It Fl T Cm pdf
 Produce PDF output.
 See
 .Sx PDF Output .
-.It Fl T Ns Cm ps
+.It Fl T Cm ps
 Produce PostScript output.
 See
 .Sx PostScript Output .
-.It Fl T Ns Cm tree
+.It Fl T Cm tree
 Produce an indented parse tree.
-.It Fl T Ns Cm utf8
+.It Fl T Cm utf8
 Encode output in the UTF\-8 multi-byte format.
 See
 .Sx UTF\-8 Output .
-.It Fl T Ns Cm xhtml
+.It Fl T Cm xhtml
 This is a synonym for
-.Fl T Ns Cm html .
+.Fl T Cm html .
 .El
 .Pp
 If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
 .Ss ASCII Output
 Output produced by
-.Fl T Ns Cm ascii
+.Fl T Cm ascii
 is rendered in standard 7-bit ASCII documented in
 .Xr ascii 7 .
 .Pp
@@ -343,7 +339,7 @@ which will normalise to \(>=58.
 .El
 .Ss HTML Output
 Output produced by
-.Fl T Ns Cm html
+.Fl T Cm html
 conforms to HTML5 using optional self-closing tags.
 Default styles use only CSS1.
 Equations rendered from
@@ -354,8 +350,8 @@ The
 .Pa example.style.css
 file documents style-sheet classes available for customising output.
 If a style-sheet is not specified with
-.Fl O Ns Ar style ,
-.Fl T Ns Cm html
+.Fl O Cm style ,
+.Fl T Cm html
 defaults to simple output (via an embedded style-sheet)
 readable in any graphical or text-based web
 browser.
@@ -411,13 +407,13 @@ relative URI.
 .El
 .Ss Locale Output
 Locale-depending output encoding is triggered with
-.Fl T Ns Cm locale .
+.Fl T Cm locale .
 This is the default.
 .Pp
 This option is not available on all systems: systems without locale
 support, or those whose internal representation is not natively UCS-4,
 will fall back to
-.Fl T Ns Cm ascii .
+.Fl T Cm ascii .
 See
 .Sx ASCII Output
 for font style specification and available command-line arguments.
@@ -447,7 +443,7 @@ level controls which
 are displayed before copying the input to the output.
 .Ss PDF Output
 PDF-1.1 output may be generated by
-.Fl T Ns Cm pdf .
+.Fl T Cm pdf .
 See
 .Sx PostScript Output
 for
@@ -457,7 +453,7 @@ arguments and defaults.
 PostScript
 .Qq Adobe-3.0
 Level-2 pages may be generated by
-.Fl T Ns Cm ps .
+.Fl T Cm ps .
 Output pages default to letter sized and are rendered in the Times font
 family, 11-point.
 Margins are calculated as 1/9 the page length and width.
@@ -489,7 +485,7 @@ is used.
 .El
 .Ss UTF\-8 Output
 Use
-.Fl T Ns Cm utf8
+.Fl T Cm utf8
 to force a UTF\-8 locale.
 See
 .Sx Locale Output
@@ -525,21 +521,21 @@ they were lower than the requested
 .Ar level .
 .It 2
 At least one warning occurred, but no error, and
-.Fl W Ns Cm warning
+.Fl W Cm warning
 was specified.
 .It 3
 At least one parsing error occurred,
 but no unsupported feature was encountered, and
-.Fl W Ns Cm error
+.Fl W Cm error
 or
-.Fl W Ns Cm warning
+.Fl W Cm warning
 was specified.
 .It 4
 At least one unsupported feature was encountered, and
-.Fl W Ns Cm unsupp ,
-.Fl W Ns Cm error
+.Fl W Cm unsupp ,
+.Fl W Cm error
 or
-.Fl W Ns Cm warning
+.Fl W Cm warning
 was specified.
 .It 5
 Invalid command line arguments were specified.
@@ -553,28 +549,28 @@ to exit at once, possibly in the middle of parsing or formatting a file.
 .El
 .Pp
 Note that selecting
-.Fl T Ns Cm lint
+.Fl T Cm lint
 output mode implies
-.Fl W Ns Cm warning .
+.Fl W Cm warning .
 .Sh EXAMPLES
 To page manuals to the terminal:
 .Pp
-.Dl $ mandoc \-Wall,stop mandoc.1 2\*(Gt&1 | less
+.Dl $ mandoc \-W all,stop mandoc.1 2\*(Gt&1 | less
 .Dl $ mandoc mandoc.1 mdoc.3 mdoc.7 | less
 .Pp
 To produce HTML manuals with
 .Ar style.css
 as the style-sheet:
 .Pp
-.Dl $ mandoc \-Thtml -Ostyle=style.css mdoc.7 \*(Gt mdoc.7.html
+.Dl $ mandoc \-T html -O style=style.css mdoc.7 \*(Gt mdoc.7.html
 .Pp
 To check over a large set of manuals:
 .Pp
-.Dl $ mandoc \-Tlint `find /usr/src -name \e*\e.[1-9]`
+.Dl $ mandoc \-T lint `find /usr/src -name \e*\e.[1-9]`
 .Pp
 To produce a series of PostScript manuals for A4 paper:
 .Pp
-.Dl $ mandoc \-Tps \-Opaper=a4 mdoc.7 man.7 \*(Gt manuals.ps
+.Dl $ mandoc \-T ps \-O paper=a4 mdoc.7 man.7 \*(Gt manuals.ps
 .Pp
 Convert a modern
 .Xr mdoc 7
@@ -584,7 +580,7 @@ format, for use on systems lacking an
 .Xr mdoc 7
 parser:
 .Pp
-.Dl $ mandoc \-Tman foo.mdoc \*(Gt foo.man
+.Dl $ mandoc \-T man foo.mdoc \*(Gt foo.man
 .Sh DIAGNOSTICS
 Messages displayed by
 .Nm
@@ -651,7 +647,7 @@ levels except those about non-existent or unreadable input files
 are hidden unless their level, or a lower level, is requested using a
 .Fl W
 option or
-.Fl T Ns Cm lint
+.Fl T Cm lint
 output mode.
 .Ss Warnings related to the document prologue
 .Bl -ohang
@@ -1767,6 +1763,7 @@ as if they were a text line.
 .Xr roff 7 ,
 .Xr tbl 7
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 utility was written by
@@ -1775,10 +1772,10 @@ and is maintained by
 .An Ingo Schwarze Aq Mt schwarze@openbsd.org .
 .Sh BUGS
 In
-.Fl T Ns Cm html ,
+.Fl T Cm html ,
 the maximum size of an element attribute is determined by
 .Dv BUFSIZ ,
 which is usually 1024 bytes.
 Be aware of this when setting long link
 formats such as
-.Fl O Ns Cm style Ns = Ns Ar really/long/link .
+.Fl O Cm style Ns = Ns Ar really/long/link .
