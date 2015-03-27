@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.400 2014/12/03 20:13:49 florian Exp $
+#	$OpenBSD: Makefile,v 1.401 2015/03/27 18:49:50 schwarze Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -32,13 +32,14 @@ BINOWN= root
 BINGRP= wheel
 MUTABLE=changelist csh.cshrc csh.login csh.logout daily \
 	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf ftpusers \
-	gettytab group ksh.kshrc locate.rc mailer.conf man.conf \
+	gettytab group ksh.kshrc locate.rc mailer.conf \
 	moduli monthly netstart networks newsyslog.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
 EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports ftpchroot hosts.lpd \
-	httpd.conf ifstated.conf inetd.conf mixerctl.conf mrouted.conf \
+	httpd.conf ifstated.conf inetd.conf \
+	man.conf mixerctl.conf mrouted.conf \
 	ntpd.conf printcap rbootd.conf remote sensorsd.conf
 .if ${MACHINE} != "aviion" 
 EXAMPLES+= wsconsctl.conf

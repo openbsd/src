@@ -19,7 +19,6 @@
 ./etc/mail/smtpd.conf
 ./etc/mail/spamd.conf
 ./etc/mailer.conf
-./etc/man.conf
 ./etc/master.passwd
 ./etc/motd
 ./etc/newsyslog.conf

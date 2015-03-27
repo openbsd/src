@@ -67,6 +67,7 @@
 ./etc/examples/ipsec.conf
 ./etc/examples/ldapd.conf
 ./etc/examples/ldpd.conf
+./etc/examples/man.conf
 ./etc/examples/mixerctl.conf
 ./etc/examples/mrouted.conf
 ./etc/examples/ntpd.conf
