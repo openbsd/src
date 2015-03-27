@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.101 2015/02/22 15:54:27 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.102 2015/03/27 12:26:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,8 +188,7 @@ int
 SSL_clear(SSL *s)
 {
 	if (s->method == NULL) {
-		SSLerr(SSL_F_SSL_CLEAR,
-		    SSL_R_NO_METHOD_SPECIFIED);
+		SSLerr(SSL_F_SSL_CLEAR, SSL_R_NO_METHOD_SPECIFIED);
 		return (0);
 	}
 
@@ -203,8 +202,7 @@ SSL_clear(SSL *s)
 	s->shutdown = 0;
 
 	if (s->renegotiate) {
-		SSLerr(SSL_F_SSL_CLEAR,
-		    ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_CLEAR, ERR_R_INTERNAL_ERROR);
 		return (0);
 	}
 
@@ -217,10 +215,8 @@ SSL_clear(SSL *s)
 	s->rwstate = SSL_NOTHING;
 	s->rstate = SSL_ST_READ_HEADER;
 
-	if (s->init_buf != NULL) {
-		BUF_MEM_free(s->init_buf);
-		s->init_buf = NULL;
-	}
+	BUF_MEM_free(s->init_buf);
+	s->init_buf = NULL;
 
 	ssl_clear_cipher_ctx(s);
 	ssl_clear_hash_ctx(&s->read_hash);
@@ -240,6 +236,7 @@ SSL_clear(SSL *s)
 			return (0);
 	} else
 		s->method->ssl_clear(s);
+
 	return (1);
 }
 
