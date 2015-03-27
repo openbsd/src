@@ -1,4 +1,4 @@
-.\"     $OpenBSD: hme.4,v 1.13 2009/06/20 09:44:03 sthen Exp $
+.\"     $OpenBSD: hme.4,v 1.14 2015/03/27 21:04:04 miod Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2009 $
+.Dd $Mdocdate: March 27 2015 $
 .Dt HME 4
 .Os
 .Sh NAME
@@ -103,5 +103,5 @@ first appeared in
 .Sh CAVEATS
 The
 .Nm
-SBus cards will not function in a sun4c class machine,
-due to PROM limitations.
+SBus cards will not function in a sun4c or sun4e class machine,
+due to SBus limitations on these systems.
