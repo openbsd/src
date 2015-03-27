@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.70 2015/03/26 14:08:12 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.71 2015/03/27 15:56:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -280,7 +280,7 @@ PRT_print(int num, struct prt *partn, char *units)
 		size = ((double)partn->ns * unit_types[SECTORS].conversion) /
 		    unit_types[i].conversion;
 		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u [%12llu:%12.0f%s] %s\n",
-		    (partn->flag == 0x80)?'*':' ',
+		    (partn->flag == DOSACTIVE)?'*':' ',
 		    num, partn->id,
 		    partn->scyl, partn->shead, partn->ssect,
 		    partn->ecyl, partn->ehead, partn->esect,
