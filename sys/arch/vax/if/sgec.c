@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.25 2014/12/22 02:26:54 tedu Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.26 2015/03/28 11:24:25 mpi Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -464,6 +464,7 @@ sgec_rxintr(struct ze_softc *sc)
 {
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_short rdes0;
 	int len;
@@ -489,17 +490,13 @@ sgec_rxintr(struct ze_softc *sc)
 		}
 		ze_add_rxbuf(sc, sc->sc_nextrx);
 		if (m != NULL) {
-			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-			ether_input_mbuf(ifp, m);
+			ml_enqueue(&ml, m);
 		}
 		if (++sc->sc_nextrx == RXDESCS)
 			sc->sc_nextrx = 0;
 	}
+	if_input(ifp, &ml);
 }
 
 void
