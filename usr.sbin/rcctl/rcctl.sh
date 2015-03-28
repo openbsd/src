@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.66 2015/03/02 06:58:42 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.67 2015/03/28 07:41:46 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,6 +37,11 @@ needs_root()
 	[ "$(id -u)" -ne 0 ] && _rc_err "${0##*/} $1: need root privileges"
 }
 
+rcctl_err()
+{
+	_rc_err "${0##*/}: ${1}" ${2}
+}
+
 ls_rcscripts() {
 	local _s
 
@@ -71,9 +76,9 @@ pkg_scripts_order()
 	local _pkg_scripts _svc
 	for _svc in ${_svcs}; do
 		if svc_is_base ${_svc} || svc_is_special ${_svc}; then
-			_rc_err "${0##*/}: ${_svc} is not a pkg script"
+			rcctl_err "${_svc} is not a pkg script"
 		elif ! svc_get ${_svc} status; then
-			_rc_err "${0##*/}: ${_svc} is not enabled"
+			rcctl_err "${_svc} is not enabled"
 		fi
 	done
 	_pkg_scripts=$(echo "${_svcs} ${pkg_scripts}" | tr "[:blank:]" "\n" | \
@@ -100,22 +105,28 @@ pkg_scripts_rm()
 
 rcconf_edit_begin()
 {
-	_TMP_RCCONF=$(mktemp -p /etc -t rc.conf.local.XXXXXXXXXX) || exit 1
+	_TMP_RCCONF=$(mktemp -p /etc -t rc.conf.local.XXXXXXXXXX) || \
+		rcctl_err "cannot create temporary file under /etc"
 	if [ -f /etc/rc.conf.local ]; then
-		# only to keep permissions (file content is not needed)
-		cp -p /etc/rc.conf.local ${_TMP_RCCONF} || exit 1
+		cat /etc/rc.conf.local >${_TMP_RCCONF} || \
+			rcctl_err "cannot append to ${_TMP_RCCONF}"
 	else
-		touch /etc/rc.conf.local || exit 1
+		touch /etc/rc.conf.local || \
+			rcctl_err "cannot create /etc/rc.conf.local"
 	fi
 }
 
 rcconf_edit_end()
 {
-	sort -u -o ${_TMP_RCCONF} ${_TMP_RCCONF} || exit 1
-	mv ${_TMP_RCCONF} /etc/rc.conf.local || exit 1
+	sort -u -o ${_TMP_RCCONF} ${_TMP_RCCONF} || \
+		rcctl_err "cannot modify ${_TMP_RCCONF}"
+	cat ${_TMP_RCCONF} >/etc/rc.conf.local || \
+		rcctl_err "cannot append to /etc/rc.conf.local"
 	if [ ! -s /etc/rc.conf.local ]; then
-		rm /etc/rc.conf.local || exit 1
+		rm /etc/rc.conf.local || \
+			rcctl_err "cannot remove /etc/rc.conf.local"
 	fi
+	rm -f ${_TMP_RCCONF}
 	_rc_parse_conf # reload new values
 }
 
@@ -287,11 +298,11 @@ svc_set()
 			svc_rm ${_svc}
 			return
 		else
-			_rc_err "${0##*/}: invalid status \"${_args}\""
+			rcctl_err "invalid status \"${_args}\""
 		fi
 	else
 		svc_get ${_svc} status || \
-			_rc_err "${0##*/}: ${svc} is not enabled"
+			rcctl_err "${svc} is not enabled"
 	fi
 
 	if svc_is_special ${_svc}; then
@@ -307,11 +318,11 @@ svc_set()
 	if [ -n "${_args}" ]; then
 		if [ "${_var}" = "timeout" ]; then
 			[[ ${_args} != +([[:digit:]]) || ${_args} -le 0 ]] && \
-				_rc_err "${0##*/}: \"${_args}\" is not a positive integer"
+				rcctl_err "\"${_args}\" is not a positive integer"
 		fi
 		if [ "${_var}" = "user" ]; then
 			getent passwd "${_args}" >/dev/null || \
-				_rc_err "${0##*/}: user \"${_args}\" does not exist"
+				rcctl_err "user \"${_args}\" does not exist"
 		fi
 		# unset flags if they match the default enabled ones
 		[ "${_args}" = "$(svc_getdef ${_svc} ${_var})" ] && \
@@ -358,7 +369,7 @@ fi
 if [ -n "${svc}" ]; then
 	[[ ${action} = getall ]] && usage
 	svc_is_avail ${svc} || \
-		_rc_err "${0##*/}: service ${svc} does not exist" 2
+		rcctl_err "service ${svc} does not exist" 2
 elif [[ ${action} != @(getall|order) ]] ; then
 	usage
 fi
@@ -367,11 +378,11 @@ if [ -n "${var}" ]; then
 	[[ ${var} != @(flags|status|timeout|user) ]] && usage
 	[[ ${action} != @(get|getdef|set) ]] && usage
 	[[ ${action} == set && ${var} = flags && ${args} = NO ]] && \
-		_rc_err "${0##*/}: \"flags NO\" contradicts \"${action}\""
+		rcctl_err "\"flags NO\" contradicts \"${action}\""
 	if svc_is_special ${svc}; then
 		if [[ ${action} == set && ${var} != status ]] || \
 			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]] ; then
-			_rc_err "${0##*/}: \"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
+			rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
 		fi
 	fi
 elif [ ${action} = "set" ]; then
@@ -413,7 +424,7 @@ case ${action} in
 		;;
 	start|stop|restart|reload|check)
 		if svc_is_special ${svc}; then
-			_rc_err "${0##*/}: \"${svc}\" is a special variable, no rc.d(8) script"
+			rcctl_err "\"${svc}\" is a special variable, no rc.d(8) script"
 		fi
 		/etc/rc.d/${svc} ${_RC_DEBUG} ${_RC_FORCE} ${action}
 		;;
