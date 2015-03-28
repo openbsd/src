@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.34 2014/01/21 03:42:21 dlg Exp $	*/
+/*	$OpenBSD: esp.c,v 1.35 2015/03/28 19:08:23 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -114,8 +114,8 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
@@ -182,12 +182,15 @@ espmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct cfdata *cf = vcf;
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 
 #if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS) {
+		if (!sbus_testdma((struct sbus_softc *)parent, ca))
+			return (0);
+
 		if (strcmp("SUNW,fas", ra->ra_name) == 0 ||
 		    strcmp("ptscII", ra->ra_name) == 0)
 			return (1);
@@ -196,12 +199,10 @@ espmatch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+
 #if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
-	if (ca->ca_bustype == BUS_SBUS) {
-		if (!sbus_testdma((struct sbus_softc *)parent, ca))
-			return (0);
+	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
-	}
 #endif
 #ifdef SUN4
 	if (cpuinfo.cpu_type == CPUTYP_4_100)
