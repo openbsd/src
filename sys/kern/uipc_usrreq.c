@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.79 2014/12/11 19:21:57 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.80 2015/03/28 23:50:55 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/filedesc.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/unpcb.h>
@@ -380,8 +381,8 @@ unp_detach(struct unpcb *unp)
 	}
 	if (unp->unp_conn)
 		unp_disconnect(unp);
-	while (unp->unp_refs)
-		unp_drop(unp->unp_refs, ECONNRESET);
+	while (!SLIST_EMPTY(&unp->unp_refs))
+		unp_drop(SLIST_FIRST(&unp->unp_refs), ECONNRESET);
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = NULL;
 	m_freem(unp->unp_addr);
@@ -554,8 +555,7 @@ unp_connect2(struct socket *so, struct socket *so2)
 	switch (so->so_type) {
 
 	case SOCK_DGRAM:
-		unp->unp_nextref = unp2->unp_refs;
-		unp2->unp_refs = unp;
+		SLIST_INSERT_HEAD(&unp2->unp_refs, unp, unp_nextref);
 		soisconnected(so);
 		break;
 
@@ -583,20 +583,7 @@ unp_disconnect(struct unpcb *unp)
 	switch (unp->unp_socket->so_type) {
 
 	case SOCK_DGRAM:
-		if (unp2->unp_refs == unp)
-			unp2->unp_refs = unp->unp_nextref;
-		else {
-			unp2 = unp2->unp_refs;
-			for (;;) {
-				if (unp2 == NULL)
-					panic("unp_disconnect");
-				if (unp2->unp_nextref == unp)
-					break;
-				unp2 = unp2->unp_nextref;
-			}
-			unp2->unp_nextref = unp->unp_nextref;
-		}
-		unp->unp_nextref = NULL;
+		SLIST_REMOVE(&unp2->unp_refs, unp, unpcb, unp_nextref);
 		unp->unp_socket->so_state &= ~SS_ISCONNECTED;
 		break;
 

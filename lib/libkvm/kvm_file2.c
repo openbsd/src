@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.44 2015/02/11 05:11:04 claudio Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.45 2015/03/28 23:50:55 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -656,8 +656,10 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 				return (-1);
 			}
 			kf->unp_conn	= PTRTOINT64(unpcb.unp_conn);
-			kf->unp_refs	= PTRTOINT64(unpcb.unp_refs);
-			kf->unp_nextref	= PTRTOINT64(unpcb.unp_nextref);
+			kf->unp_refs	= PTRTOINT64(
+			    SLIST_FIRST(&unpcb.unp_refs));
+			kf->unp_nextref	= PTRTOINT64(
+			    SLIST_NEXT(&unpcb, unp_nextref));
 			kf->v_un	= PTRTOINT64(unpcb.unp_vnode);
 			if (unpcb.unp_addr != NULL) {
 				struct mbuf mb;
