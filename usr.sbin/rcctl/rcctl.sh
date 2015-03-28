@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.67 2015/03/28 07:41:46 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.68 2015/03/28 08:08:52 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -282,6 +282,9 @@ svc_set()
 	shift 2
 	local _args="$*"
 
+	# don't check if we are already enabled or disabled because rc.conf(8)
+	# defaults may have changed in which case we may have a matching
+	# redundant entry in rc.conf.local that we can drop
 	if [ "${_var}" = "status" ]; then
 		if [ "${_args}" = "on" ]; then
 			_var="flags"
