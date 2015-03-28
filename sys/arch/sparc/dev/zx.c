@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.26 2013/10/20 20:07:26 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.27 2015/03/28 19:07:08 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -85,7 +85,6 @@
 #include <machine/fbvar.h>
 
 #include <dev/sbus/zxreg.h>
-#include <sparc/dev/sbusvar.h>
 
 #include <dev/cons.h>	/* for prom console hook */
 

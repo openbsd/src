@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.52 2013/10/20 20:07:26 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.53 2015/03/28 19:07:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
@@ -59,7 +59,6 @@
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
-#include <sparc/dev/sbusvar.h>
 
 #include <dev/ic/ibm525reg.h>
 #include <dev/ic/p9000.h>

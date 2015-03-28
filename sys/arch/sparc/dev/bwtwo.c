@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.39 2013/10/20 20:07:25 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.40 2015/03/28 19:07:07 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -69,7 +69,6 @@
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/bwtworeg.h>
-#include <sparc/dev/sbusvar.h>
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.18 2013/10/20 20:07:26 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.19 2015/03/28 19:07:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2006, 2008, Miodrag Vallat.
@@ -68,8 +68,6 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
-
-#include <sparc/dev/sbusvar.h>
 
 /*
  * The memory layout of the board is as follows:

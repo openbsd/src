@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.24 2013/10/20 20:07:26 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.25 2015/03/28 19:07:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -56,7 +56,6 @@
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/bt445reg.h>
 #include <sparc/dev/bt445var.h>
-#include <sparc/dev/sbusvar.h>
 
 #include <dev/ic/p9000.h>
 

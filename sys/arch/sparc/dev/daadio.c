@@ -1,4 +1,4 @@
-/*	$OpenBSD: daadio.c,v 1.6 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: daadio.c,v 1.7 2015/03/28 19:07:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -49,8 +49,6 @@
 #include <machine/autoconf.h>
 #include <sparc/cpu.h>
 #include <sparc/sparc/cpuvar.h>
-#include <sparc/dev/sbusvar.h>
-#include <sparc/dev/dmareg.h>	/* for SBUS_BURST_* */
 #include <machine/daadioio.h>
 
 #include <sparc/dev/fgareg.h>

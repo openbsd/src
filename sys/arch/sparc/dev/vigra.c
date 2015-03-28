@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.19 2013/10/20 20:07:26 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.20 2015/03/28 19:07:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -57,8 +57,6 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
-
-#include <sparc/dev/sbusvar.h>
 
 /*
  * The hardware information below has been gathered through experiments, as

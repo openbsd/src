@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.16 2013/11/26 20:33:14 deraadt Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.17 2015/03/28 19:07:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -53,8 +53,6 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
-
-#include <sparc/dev/sbusvar.h>
 
 #include <dev/ic/bt463reg.h>
 

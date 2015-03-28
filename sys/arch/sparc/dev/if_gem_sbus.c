@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.3 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.4 2015/03/28 19:07:07 miod Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -54,8 +54,6 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 extern struct sparc_bus_dma_tag *iommu_dmatag;
-
-#include <sparc/dev/sbusvar.h>
 
 #include <dev/ic/gemreg.h>
 #include <dev/ic/gemvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.17 2013/10/20 20:07:26 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.18 2015/03/28 19:07:07 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -65,8 +65,6 @@
 
 #include <dev/ic/vgareg.h>
 #include <dev/ic/atxxreg.h>
-
-#include <sparc/dev/sbusvar.h>
 
 /*
  * MGX PROM register layout

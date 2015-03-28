@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.25 2013/06/11 16:42:11 deraadt Exp $	*/
+/*	$OpenBSD: presto.c,v 1.26 2015/03/28 19:07:07 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -40,8 +40,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
-
-#include <sparc/dev/sbusvar.h>
 
 struct presto_softc {
 	struct	device	sc_dev;

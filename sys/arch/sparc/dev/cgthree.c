@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.36 2013/10/20 20:07:25 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.37 2015/03/28 19:07:07 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -96,7 +96,6 @@
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgthreereg.h>
-#include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
 struct cgthree_softc {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.48 2014/12/22 02:26:54 tedu Exp $	*/
+/*	$OpenBSD: be.c,v 1.49 2015/03/28 19:07:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -55,7 +55,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
 
