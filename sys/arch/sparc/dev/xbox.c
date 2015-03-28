@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbox.c,v 1.5 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: xbox.c,v 1.6 2015/03/28 19:10:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -43,7 +43,6 @@
 #include <sparc/cpu.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/sbusvar.h>
-#include <sparc/dev/dmareg.h>	/* for SBUS_BURST_* */
 
 #include <sparc/dev/xboxreg.h>
 #include <sparc/dev/xboxvar.h>
@@ -67,7 +66,7 @@ xboxmatch(parent, vcf, aux)
 	void *vcf, *aux;
 {
 	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct romaux *ra = &ca->ca_ra;
 
 	if (strcmp("SUNW,xbox", ra->ra_name))
 		return (0);
@@ -85,7 +84,7 @@ xboxattach(parent, self, aux)
 	struct xbox_softc *sc = (struct xbox_softc *)self;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-	int node = ca->ca_ra.ra_node;
+	int node = ra->ra_node;
 	struct confargs oca;
 	char *s;
 
@@ -98,37 +97,32 @@ xboxattach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_regs.xa_write0 = mapiodev(&ca->ca_ra.ra_reg[0], 0,
+	sc->sc_regs.xa_write0 = mapiodev(&ra->ra_reg[0], 0,
 	    sizeof(*sc->sc_regs.xa_write0));
-	sc->sc_regs.xa_errs = mapiodev(&ca->ca_ra.ra_reg[1], 0,
+	sc->sc_regs.xa_errs = mapiodev(&ra->ra_reg[1], 0,
 	    sizeof(*sc->sc_regs.xa_errs));
-	sc->sc_regs.xa_ctl0 = mapiodev(&ca->ca_ra.ra_reg[2], 0,
+	sc->sc_regs.xa_ctl0 = mapiodev(&ra->ra_reg[2], 0,
 	    sizeof(*sc->sc_regs.xa_ctl0));
-	sc->sc_regs.xa_ctl1 = mapiodev(&ca->ca_ra.ra_reg[3], 0,
+	sc->sc_regs.xa_ctl1 = mapiodev(&ra->ra_reg[3], 0,
 	    sizeof(*sc->sc_regs.xa_ctl1));
-	sc->sc_regs.xa_elua = mapiodev(&ca->ca_ra.ra_reg[4], 0,
+	sc->sc_regs.xa_elua = mapiodev(&ra->ra_reg[4], 0,
 	    sizeof(*sc->sc_regs.xa_elua));
-	sc->sc_regs.xa_ella = mapiodev(&ca->ca_ra.ra_reg[5], 0,
+	sc->sc_regs.xa_ella = mapiodev(&ra->ra_reg[5], 0,
 	    sizeof(*sc->sc_regs.xa_ella));
-	sc->sc_regs.xa_rsrv = mapiodev(&ca->ca_ra.ra_reg[6], 0,
+	sc->sc_regs.xa_rsrv = mapiodev(&ra->ra_reg[6], 0,
 	    sizeof(*sc->sc_regs.xa_rsrv));
-	sc->sc_regs.xb_errs = mapiodev(&ca->ca_ra.ra_reg[7], 0,
+	sc->sc_regs.xb_errs = mapiodev(&ra->ra_reg[7], 0,
 	    sizeof(*sc->sc_regs.xb_errs));
-	sc->sc_regs.xb_ctl0 = mapiodev(&ca->ca_ra.ra_reg[8], 0,
+	sc->sc_regs.xb_ctl0 = mapiodev(&ra->ra_reg[8], 0,
 	    sizeof(*sc->sc_regs.xb_ctl0));
-	sc->sc_regs.xb_ctl1 = mapiodev(&ca->ca_ra.ra_reg[9], 0,
+	sc->sc_regs.xb_ctl1 = mapiodev(&ra->ra_reg[9], 0,
 	    sizeof(*sc->sc_regs.xb_ctl1));
-	sc->sc_regs.xb_elua = mapiodev(&ca->ca_ra.ra_reg[10], 0,
+	sc->sc_regs.xb_elua = mapiodev(&ra->ra_reg[10], 0,
 	    sizeof(*sc->sc_regs.xb_elua));
-	sc->sc_regs.xb_ella = mapiodev(&ca->ca_ra.ra_reg[11], 0,
+	sc->sc_regs.xb_ella = mapiodev(&ra->ra_reg[11], 0,
 	    sizeof(*sc->sc_regs.xb_ella));
-	sc->sc_regs.xb_rsrv = mapiodev(&ca->ca_ra.ra_reg[12], 0,
+	sc->sc_regs.xb_rsrv = mapiodev(&ra->ra_reg[12], 0,
 	    sizeof(*sc->sc_regs.xb_rsrv));
-
-	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "SUNW,xbox") == 0)
-		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
-	else
-		oca.ca_ra.ra_bp = NULL;
 
 	sc->sc_key = getpropint(node, "write0-key", -1);
 	sc->sc_node = node;
@@ -145,8 +139,8 @@ xboxattach(parent, self, aux)
 
 	oca = (*ca);
 	oca.ca_bustype = BUS_XBOX;
-	if (ca->ca_ra.ra_bp != NULL)
-		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
+	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "SUNW,xbox") == 0)
+		oca.ca_ra.ra_bp = ra->ra_bp + 1;
 	else
 		oca.ca_ra.ra_bp = NULL;
 
