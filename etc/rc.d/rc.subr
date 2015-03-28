@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.92 2015/01/02 14:44:05 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.93 2015/03/28 07:34:16 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 _rc_err() {
-	echo "$1" 1>&2
+	[ -n "${1}" ] && echo "${1}" 1>&2
 	[ -n "${2}" ] && exit "${2}" || exit 1
 }
 
@@ -191,7 +191,6 @@ rc_cmd() {
 	start)
 		if [ X"${daemon_flags}" = X"NO" ]; then
 			_rc_err "$0: need -f to force $1 since ${_name}_flags=NO"
-			exit 1
 		fi
 		[ -z "${INRC}" ] && _rc_do rc_check && exit 0
 		echo $_n "${INRC:+ }${_name}"
