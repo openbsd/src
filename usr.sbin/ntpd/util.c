@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2015/02/10 11:46:39 reyk Exp $ */
+/*	$OpenBSD: util.c,v 1.19 2015/03/28 03:49:01 bcook Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -45,13 +45,16 @@ gettime(void)
 	if (gettimeofday(&tv, NULL) == -1)
 		fatal("gettimeofday");
 
-	return (tv.tv_sec + JAN_1970 + 1.0e-6 * tv.tv_usec);
+	return (gettime_from_timeval(&tv));
 }
 
 double
 gettime_from_timeval(struct timeval *tv)
 {
-	return (tv->tv_sec + JAN_1970 + 1.0e-6 * tv->tv_usec);
+	/*
+	 * Account for overflow on OSes that have a 32-bit time_t.
+	 */
+	return ((uint64_t)tv->tv_sec + JAN_1970 + 1.0e-6 * tv->tv_usec);
 }
 
 time_t
