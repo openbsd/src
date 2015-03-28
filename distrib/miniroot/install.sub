@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.823 2015/03/27 22:15:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.824 2015/03/28 00:03:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -62,7 +62,7 @@ usage() {
 	exit 1
 }
 
-# Wait for the http process to finish, or be killed after the timeout
+# Wait for the http process to finish, or be killed after the timeout.
 waitcgiinfo() {
 	wait "$CGIPID" 2>/dev/null
 	[[ -s $CGI_INFO ]] || return
@@ -105,7 +105,7 @@ bsort() {
 	bsort $_l
 }
 
-# test the first argument against the remaining ones, return success on a match
+# Test the first argument against the remaining ones, return success on a match.
 isin() {
 	local	_a=$1 _b
 
@@ -116,8 +116,8 @@ isin() {
 	return 1
 }
 
-# add first argument to list formed by the remaining arguments
-# adds to the tail if the element does not already exist
+# Add first argument to list formed by the remaining arguments.
+# Adds to the tail if the element does not already exist.
 addel() {
 	local	_a=$1
 
@@ -127,8 +127,8 @@ addel() {
 	isin "$_a" $* || echo -n " $_a"
 }
 
-# remove all occurrences of first argument from list formed by
-# the remaining arguments
+# Remove all occurrences of first argument from list formed by
+# the remaining arguments.
 rmel() {
 	local	_a=$1 _b
 
@@ -139,7 +139,7 @@ rmel() {
 }
 
 # If possible, print the timestamp received from the ftplist.cgi output,
-# adjusted with the time elapsed since it was received
+# adjusted with the time elapsed since it was received.
 http_time() {
 	local _sec=$(cat $HTTP_SEC 2>/dev/null)
 
@@ -150,14 +150,14 @@ http_time() {
 # Prints the supplied parameters properly escaped for future sh/ksh parsing.
 # Quotes are added if needed, so you should not do that yourself.
 quote() (
-	# Since this is a subshell we won't pollute the calling namespace
+	# Since this is a subshell we won't pollute the calling namespace.
 	for a; do
 		alias Q=$a; a=$(alias Q); print -rn -- " ${a#Q=}"
 	done | sed '1s/ //'
 	echo
 )
 
-# show a list (passed via ordered arguments) in column output using ls
+# Show a list (passed via ordered arguments) in column output using ls.
 showcols() {
 	local _l _cdir=/tmp/cdir
 	set -A _clist
@@ -200,7 +200,7 @@ tmpdir() {
 # Device related functions
 #-------------------------------------------------------------------------------
 
-# Show device name, label and size for the provided list of devices
+# Show device name, label and size for the provided list of devices.
 diskinfo() {
 	local _d
 	for _d; do
@@ -214,7 +214,7 @@ diskinfo() {
 	done
 }
 
-# Create devices passed as arguments
+# Create devices passed as arguments.
 makedev() {
 	[[ -z $(cd /dev && sh MAKEDEV "$@" 2>&1) ]]
 }
@@ -257,7 +257,7 @@ getdevname() {
 	local _dev=$1
 	if [[ ${#_dev} == 18 && $_dev == +([0-9a-f]).[a-p] ||
 		${#_dev} == 16 && $_dev == +([0-9a-f]) ]]; then
-		# Lookup device name matching the disklabel UID
+		# Lookup device name matching the disklabel UID.
 		sysctl -n hw.disknames |
 			sed -nE "s/^(.*,)*(.*):${_dev%.?}.*/\\2/p"
 	else
@@ -271,17 +271,17 @@ getdevname() {
 # Functions for the dmesg listener
 #-------------------------------------------------------------------------------
 
-# Acquire lock
+# Acquire lock.
 lock() {
 	while ! mkdir /tmp/lock 2>/dev/null && sleep .1; do done
 }
 
-# Release lock
+# Release lock.
 unlock() {
 	rm -d /tmp/lock 2>/dev/null
 }
 
-# Add trap to kill the listener process
+# Add trap to kill the listener process.
 retrap() {
 	trap 'kill -KILL $cppid 2>/dev/null; echo; stty echo; exit 0' \
 		INT EXIT TERM
@@ -363,7 +363,7 @@ get_responsefile() {
 	[[ -n $action ]]
 }
 
-# Search question in $RESPFILE, return answer in $resp
+# Search question in $RESPFILE, return answer in $resp.
 #
 # - split question and answer at leftmost =
 # - strip leading/trailing blanks
@@ -473,7 +473,7 @@ ask_yn() {
 # N.B.! $3 and $4 will be "expanded" using eval, so be sure to escape them
 #       if they contain spooky stuff
 #
-# At exit $resp holds selected item, or 'done'
+# At exit $resp holds selected item, or 'done'.
 ask_which() {
 	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef _key _q
 
@@ -483,7 +483,7 @@ ask_which() {
 		eval "_dynlist=\"$_list\""
 		eval "_dyndef=\"$_def\""
 
-		# Clean away whitespace and determine the default
+		# Clean away whitespace and determine the default.
 		set -o noglob
 		set -- $_dyndef; _dyndef="$1"
 		set -- $_dynlist; _dynlist="$*"
@@ -535,7 +535,7 @@ askpass() {
 	echo
 }
 
-# Ask for a password twice, saving the input in $_password
+# Ask for a password twice, saving the input in $_password.
 askpassword() {
 	local _q=$1
 	if $AUTO; then
@@ -562,7 +562,7 @@ askpassword() {
 # Support functions for donetconfig()
 #-------------------------------------------------------------------------------
 
-# Run dhclient, making sure there is a free bpf first
+# Run dhclient, making sure there is a free bpf first.
 dhclient() {
 	local _i=0
 	while makedev bpf$_i && ! </dev/bpf$_i; do
@@ -607,7 +607,7 @@ v4_info() {
 		/inet/s///p'
 }
 
-# Convert a hex value to dotted decimal format
+# Convert a hex value to dotted decimal format.
 hextodec() {
 	local _d _b
 
@@ -746,28 +746,28 @@ v6_config() {
 }
 
 # Perform an 802.11 interface network scan.
-# The result is cached in $WLANLIST
+# The result is cached in $WLANLIST.
 # $1 == interface
 ieee80211_scan() {
-	# N.B. Skipping quoted nwid's for now
+	# N.B. Skipping quoted nwid's for now.
 	[[ -f $WLANLIST ]] ||
 		ifconfig $1 scan |
 		sed -n 's/^		nwid \([^"]\)/\1/p' >$WLANLIST
 	cat $WLANLIST
 }
 
-# Configures an 802.11 interface
+# Configures an 802.11 interface.
 #
 # $1 == interface
 # $2 == hostname
 ieee80211_config() {
 	local _ifs=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
 
-	# Reset 802.11 settings and determine wpa capability
+	# Reset 802.11 settings and determine wpa capability.
 	ifconfig $_ifs -nwid -nwkey
 	ifconfig $_ifs -wpa 2>/dev/null && _haswpa=1
 
-	# Empty scan cache
+	# Empty scan cache.
 	rm -f $WLANLIST
 
 	while [[ -z $_nwid ]]; do
@@ -785,7 +785,7 @@ ieee80211_config() {
 		esac
 	done
 
-	# 'any' implies that only open access points are considered
+	# 'any' implies that only open access points are considered.
 	if [[ $_nwid != any ]]; then
 		ifconfig $_ifs nwid "$_nwid"
 		quote nwid "$_nwid" >>$_hn
@@ -798,7 +798,7 @@ ieee80211_config() {
 			?-[Oo])	break
 				;;
 			?-[Ww])	ask_until "WEP key? (will echo)"
-				# Make sure ifconfig accepts the key
+				# Make sure ifconfig accepts the key.
 				if _err=$(ifconfig $_ifs nwkey "$resp" 2>&1) &&
 					[[ -z $_err ]]; then
 					quote nwkey "$resp" >>$_hn
@@ -807,7 +807,7 @@ ieee80211_config() {
 				echo "$_err"
 				;;
 			1-[Pp])	ask_until "WPA passphrase? (will echo)"
-				# Make sure ifconfig accepts the key
+				# Make sure ifconfig accepts the key.
 				if ifconfig $_ifs wpakey "$resp"; then
 					quote wpakey "$resp" >>$_hn
 					break
@@ -852,7 +852,7 @@ configure_ifs() {
 		rm -f $_hn
 
 		# If the offered vlan is chosen, ask the relevant
-		# questions and bring it up
+		# questions and bring it up.
 		if [[ $_ifs == vlan+([0-9]) ]]; then
 			# Get existing tag for this vlan.
 			_vi=$(ifconfig $_ifs 2>/dev/null |
@@ -877,7 +877,7 @@ configure_ifs() {
 			_vd=${resp%%:*}
 			_vi=${resp##*:}
 
-			# Validate that $_vd is a real interface
+			# Validate that $_vd is a real interface.
 			if ! (isin "$_vd" $_ifdevs && [[ $_vd != vlan+([0-9]) ]]); then
 				echo "Invalid interface choice '$_vd'"
 				_vd=
@@ -905,7 +905,7 @@ configure_ifs() {
 			[[ ${_ifs##vlan} == $_vl ]] && ((_vl++))
 		fi
 
-		# Test if it is an 802.11 interface
+		# Test if it is an 802.11 interface.
 		ifconfig $_ifs 2>/dev/null | grep -q "^[[:space:]]*ieee80211:" &&
 			ieee80211_config $_ifs $_hn
 
@@ -935,7 +935,7 @@ v4_defroute() {
 	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
 	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
 
-	# If only one interface, and it is running dhclient, ask nothing
+	# If only one interface, and it is running dhclient, ask nothing.
 	[[ -f /tmp/dhclient.conf && $NIFS == 1 ]] && return
 
 	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
@@ -1048,7 +1048,7 @@ install_files() {
 	for _f in $THESETS; do
 		isin $_f $_files || continue;
 		_sets=$(addel $_f $_sets)
-		# No displays and X isn't installed ==> skip X sets
+		# No displays and X isn't installed ==> skip X sets.
 		[[ -z $DISPLAY && ! -d /mnt/etc/X11 ]] &&
 			isin ${_f%${VERSION}.tgz} xbase xshare xfont xserv &&
 			continue
@@ -1078,14 +1078,14 @@ install_files() {
 	[[ -n $resp ]] || return
 	_get_sets=$resp
 
-	# Reorder $_get_sets
+	# Reorder $_get_sets.
 	_get_sets=$(for s in $THESETS; do isin $s $_get_sets && echo $s; done)
 
-	# Note which sets didn't verify ok
+	# Note which sets didn't verify ok.
 	_unver=$_get_sets
 
-	# Try to prefetch and control checksum files
-	# use dummy for loop as combined assignment and do { ... } while(0)
+	# Try to prefetch and control checksum files.
+	# Use dummy for loop as combined assignment and do { ... } while(0).
 	for _issue in ''; do
 		! isin SHA256.sig $_files &&
 			_issue="Directory does not contain SHA256.sig" && break
@@ -1120,11 +1120,11 @@ install_files() {
 		_t=Get/Verify
 		[[ $_src == file://* ]] && _srclocal=true _t='Verifying '
 
-		# Fetch signature file
+		# Fetch signature file.
 		! ftp -D "$_t" -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
-		# Verify signature file with public keys
+		# Verify signature file with public keys.
 		! signify -Vep /etc/signify/openbsd-${VERSION}-base.pub \
 			-x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
@@ -1132,7 +1132,7 @@ install_files() {
 		for _f in $_get_sets; do
 			rm -f "$_tmpsrc/h" "$_tmpsrc/fail"
 
-			# Fetch set and create checksum by pipe through sha256
+			# Fetch set and create checksum by pipe through sha256.
 			# Create a flag file in case ftp failed. Sets from net
 			# are written to prefetch area, the output of local sets
 			# is discarded.
@@ -1172,8 +1172,8 @@ install_files() {
 		return
 	fi
 
-	# XXX Delete this chunk after 5.8 (not a supported upgrade path)
-	# XXX Undo old configurations where /var/tmp is a directory
+	# XXX Delete this chunk after 5.8 (not a supported upgrade path).
+	# XXX Undo old configurations where /var/tmp is a directory.
 	[[ $MODE == upgrade ]] && rm -rf /mnt/var/tmp
 
 	for _f in $_get_sets; do
@@ -1222,7 +1222,7 @@ install_http() {
 		_prompt="HTTP Server? (hostname or 'done')"
 	fi
 
-	# Get server IP address or hostname
+	# Get server IP address or hostname.
 	while :; do
 		ask_until "$_prompt" "$HTTP_SERVER"
 		case $resp in
@@ -1268,8 +1268,8 @@ install_http() {
 	_url_base="http://$HTTP_SERVER/$HTTP_DIR"
 
 	# Get list of files from the server.
-	# Assumes index file is "index.txt" for http (or proxy)
-	# We can't use index.html since the format is server-dependent
+	# Assumes index file is "index.txt" for http (or proxy).
+	# We can't use index.html since the format is server-dependent.
 	_file_list=$(ftp -Vo - "$_url_base/index.txt" |
 		sed 's/^.* //' | sed 's///')
 
@@ -1334,10 +1334,10 @@ install_nfs() {
 	ask_until "Filesystem on server to mount?" "$NFS_PATH"
 	NFS_PATH=$resp
 
-	# Determine use of TCP
+	# Determine use of TCP.
 	ask_yn "Use TCP transport? (requires TCP-capable NFS server)" && _tcp=-T
 
-	# Mount the server
+	# Mount the server.
 	mount_nfs $_tcp -o ro -R 5 $NFS_ADDR:$NFS_PATH /mnt2 || return
 
 	install_mounted_fs
@@ -1437,7 +1437,7 @@ donetconfig() {
 	hostname "$(hostname -s).$resp"
 
 	# If only one interface, and it is running dhclient, ask nothing
-	# else Get/Confirm nameservers
+	# else Get/Confirm nameservers.
 	resp="${_ns:=none}"
 	if [[ ! -f /tmp/dhclient.conf || $NIFS != 1 || $resp == none ]]; then
 		ask "DNS nameservers? (IP address list or 'none')" "$resp"
@@ -1548,7 +1548,7 @@ set_timezone() {
 
 	[[ ! -f $_zonefile ]] && return
 
-	# If configured in a previous call, return immediately
+	# If configured in a previous call, return immediately.
 	[[ -n $TZ ]] && return
 
 	if [[ -h /mnt/etc/localtime ]]; then
@@ -1563,7 +1563,7 @@ set_timezone() {
 	fi
 
 	# If neither the base or HTTP_LIST gave a hint, and this is the
-	# early question, give up, and ask after the sets are installed
+	# early question, give up, and ask after the sets are installed.
 	[[ $_zonefile = /var/tzlist && -z $TZ ]] && return
 
 	while :; do
@@ -1727,8 +1727,8 @@ enable_network() {
 	# interface up, automatically invokes the IPv6 address ::1.
 	ifconfig lo0 inet 127.0.0.1/8
 
-	# configure all of the non-loopback interfaces which we know about.
-	# refer to hostname.if(5)
+	# Configure all of the non-loopback interfaces which we know about.
+	# Refer to hostname.if(5)
 	for hn in /mnt/etc/hostname.*; do
 		# Strip off prefix to get interface name.
 		if=${hn#/mnt/etc/hostname.}
@@ -1740,12 +1740,12 @@ enable_network() {
 			vlan)	_vlans="$_vlans $hn"	;;
 			esac
 		else
-			# 'real' interfaces (if available) are done now.
+			# 'Real' interfaces (if available) are done now.
 			ifconfig $if >/dev/null 2>&1 && ifstart $hn
 		fi
 	done
 	# Configure any dynamic interfaces now that 'real' ones are up.
-	# ORDER IS IMPORTANT! (see /etc/netstart)
+	# ORDER IS IMPORTANT! (see /etc/netstart).
 	for hn in $_trunks $_svlans $_vlans; do
 		ifstart $hn
 	done
@@ -1770,10 +1770,10 @@ enable_network() {
 }
 
 startcgiinfo() {
-	# If no networks are configured, we do not need the httplist file
+	# If no networks are configured, we do not need the httplist file.
 	((NIFS < 1)) && return
 
-	# Make sure the ftp subshell gets its own process group
+	# Make sure the ftp subshell gets its own process group.
 	set -m
 	(
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
@@ -1781,15 +1781,15 @@ startcgiinfo() {
 		ftp -Vao - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
 			2>/dev/null >$CGI_INFO
 
-		# Remember finish time for adjusting the received timestamp
+		# Remember finish time for adjusting the received timestamp.
 		echo -n $SECONDS >$HTTP_SEC
 		feed_random
 	) & CGIPID=$!
 	set +m
 
-	# If the ftp process takes more than 12 seconds, kill it
-	# XXX We are relying on the pid space not randomly biting us --
-	# XXX ftp could terminate early, and the pid could be reused
+	# If the ftp process takes more than 12 seconds, kill it.
+	# XXX We are relying on the pid space not randomly biting us.
+	# XXX ftp could terminate early, and the pid could be reused.
 	(sleep 12; kill -INT -$CGIPID >/dev/null 2>&1) &
 }
 
@@ -1900,7 +1900,7 @@ mount_fs() {
 	fi
 }
 
-# Feed the random pool some entropy before we read from it
+# Feed the random pool some entropy before we read from it.
 feed_random() {
 	(dmesg; cat $CGI_INFO /*.conf; sysctl; route -n show; df;
 		ifconfig -A; hostname) >/dev/random 2>&1
@@ -2024,7 +2024,7 @@ finish_up() {
 		done </mnt/etc/fstab
 	fi
 
-	# Create or update pkg.conf with the new package path, if any
+	# Create or update pkg.conf with the new package path, if any.
 	if [[ -n $PACKAGE_PATH ]]; then
 		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>/dev/null >/tmp/pkgconf
 		print -r -- "installpath = $PACKAGE_PATH" >>/tmp/pkgconf
@@ -2091,7 +2091,7 @@ __EOT
 #
 # #######################################################################
 
-# Parse parameters
+# Parse parameters.
 AUTO=false
 RESPFILE=
 while getopts "af:" opt; do
@@ -2122,16 +2122,16 @@ shift $((OPTIND-1))
 #	NCPU	    - the number of cpus for mp capable arches
 . install.md
 
-# Make sure lock is initially released
+# Make sure lock is initially released.
 rm -df /tmp/lock
 
 # The dmesg listener will check for the existance of this file and send a
 # signal to the child process if the dmesg output differs from the contents
-# of that file
+# of that file.
 rm -f /tmp/update
 
 if ! $AUTO; then
-	# Start listener process looking for dmesg changes
+	# Start listener process looking for dmesg changes.
 	(
 		while :; do
 			lock
@@ -2145,7 +2145,7 @@ if ! $AUTO; then
 	) |&
 	cppid=$!
 
-	# Kill the child on exit
+	# Kill the child on exit.
 	retrap
 fi
 
@@ -2171,7 +2171,7 @@ for _opt in d f l m n p s; do
 	ulimit -$_opt unlimited
 done
 
-# Extract and save one boot's worth of dmesg
+# Extract and save one boot's worth of dmesg.
 dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 
 # Are we in a real release, or a snapshot?  If this is a snapshot
@@ -2206,11 +2206,11 @@ for _set in base comp man game xbase xshare xfont xserv site; do
 done
 SANESETS="${SANESETS:-bsd} base${VERSION}.tgz"
 
-# prepare COLUMNS sanely
+# Prepare COLUMNS sanely.
 COLUMNS=$(stty -a </dev/console | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
 ((COLUMNS == 0)) && COLUMNS=80
 
-# decide upon an editor
+# Decide upon an editor.
 : ${EDITOR:=ed}
 [[ -x /usr/bin/vi ]] && EDITOR=vi
 export EDITOR COLUMNS
@@ -2219,7 +2219,7 @@ export EDITOR COLUMNS
 cd /
 umount -af 1>/dev/null 2>&1
 
-# make sure only successful dhcp requests retain their state
+# Make sure only successful dhcp requests retain their state.
 for _ifs in $(get_ifdevs dhcp); do
 	set -- $(v4_info $_ifs)
 	[[ $1 == UP && -n $2 ]] && continue

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.83 2015/03/11 21:00:35 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.84 2015/03/28 00:03:05 rpe Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -35,10 +35,10 @@
 
 #	OpenBSD installation script.
 
-# install.sub needs to know the MODE
+# install.sub needs to know the MODE.
 MODE=upgrade
 
-# include common subroutines and initialization code
+# Include common subroutines and initialization code.
 . install.sub
 
 # Have the user confirm that $ROOTDEV is the root filesystem.

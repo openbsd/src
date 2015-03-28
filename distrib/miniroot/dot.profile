@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.26 2014/10/23 21:33:21 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.27 2015/03/28 00:03:05 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -39,7 +39,7 @@ export OBSD="OpenBSD/$ARCH $VNAME"
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 umask 022
-# emacs-style command line editing
+# emacs-style command line editing.
 set -o emacs
 
 # Extract rootdisk from last 'root on ...' line. e.g.
@@ -52,10 +52,10 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	mount -u /dev/${rootdisk:-rd0a} /
 
-	# Create a fake rc that just returns 1 and throws us back
+	# Create a fake rc that just returns 1 and throws us back.
 	echo ! : > /etc/rc
 
-	# set up some sane defaults
+	# Set up some sane defaults.
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
