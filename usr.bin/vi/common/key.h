@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.4 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: key.h,v 1.5 2015/03/28 12:54:37 bcallah Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -135,19 +135,6 @@ extern KEYLIST keylist[];
 #define	MAPPED_KEYS_WAITING(sp)						\
 	(KEYS_WAITING(sp) &&						\
 	    F_ISSET(&(sp)->gp->i_event[(sp)->gp->i_next].e_ch, CH_MAPPED))
-
-/*
- * Ex/vi commands are generally separated by whitespace characters.  We
- * can't use the standard isspace(3) macro because it returns true for
- * characters like ^K in the ASCII character set.  The 4.4BSD isblank(3)
- * macro does exactly what we want, but it's not portable yet.
- *
- * XXX
- * Note side effect, ch is evaluated multiple times.
- */
-#ifndef isblank
-#define	isblank(ch)	((ch) == ' ' || (ch) == '\t')
-#endif
 
 /* The "standard" tab width, for displaying things to users. */
 #define	STANDARD_TAB	6
