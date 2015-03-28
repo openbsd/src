@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.824 2015/03/28 00:03:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.825 2015/03/28 17:03:11 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -58,7 +58,7 @@
 #-------------------------------------------------------------------------------
 
 usage() {
-	asdfecho "usage: ${0##*/} [-a] [-f filename]" >&2
+	echo "usage: ${0##*/} [-a] [-f filename]" >&2
 	exit 1
 }
 
@@ -1955,8 +1955,7 @@ install_sets() {
 	done
 }
 
-apply()
-{
+apply() {
 	[[ $sshd == n ]] && echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
 	if [[ $sshd_disableroot == y ]]; then
 		sed "/^#\(PermitRootLogin\) yes/s//\1 no/" \
