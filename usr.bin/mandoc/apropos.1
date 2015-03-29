@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apropos.1,v 1.29 2015/02/16 16:18:02 schwarze Exp $
+.\"	$OpenBSD: apropos.1,v 1.30 2015/03/29 21:12:00 bentley Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: March 29 2015 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -210,7 +210,7 @@ This has syntax
 .Sm off
 .Oo
 .Op Ar key Op , Ar key ...
-.Pq Cm = | ~
+.Pq Cm = | \(ti
 .Oc
 .Ar val ,
 .Sm on
@@ -227,7 +227,7 @@ for a list of available keys.
 Operator
 .Cm =
 evaluates a substring, while
-.Cm ~
+.Cm \(ti
 evaluates a regular expression.
 .It Fl i Ar term
 If
@@ -398,7 +398,7 @@ as well:
 .Pp
 Search in names and descriptions using a regular expression:
 .Pp
-.Dl $ apropos '~set.?[ug]id'
+.Dl $ apropos \(aq\(tiset.?[ug]id\(aq
 .Pp
 Search for manuals in the library section mentioning both the
 .Qq optind
@@ -413,15 +413,15 @@ Do exactly the same as calling
 with the argument
 .Qq ssh :
 .Pp
-.Dl $ apropos \-\- \-i 'Nm~[[:<:]]ssh[[:>:]]'
+.Dl $ apropos \-\- \-i \(aqNm\(ti[[:<:]]ssh[[:>:]]\(aq
 .Pp
 The following two invocations are equivalent:
 .Pp
 .D1 Li $ apropos -S Ar arch Li -s Ar section expression
 .Bd -ragged -offset indent
 .Li $ apropos \e( Ar expression Li \e)
-.Li -a arch~^( Ns Ar arch Ns Li |any)$
-.Li -a sec~^ Ns Ar section Ns Li $
+.Li -a arch\(ti^( Ns Ar arch Ns Li |any)$
+.Li -a sec\(ti^ Ns Ar section Ns Li $
 .Ed
 .Sh SEE ALSO
 .Xr man 1 ,
