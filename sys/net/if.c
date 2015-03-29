@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.323 2015/03/25 11:49:02 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.324 2015/03/29 01:05:02 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1742,15 +1742,7 @@ ifconf(u_long cmd, caddr_t data)
 void
 if_detached_start(struct ifnet *ifp)
 {
-	struct mbuf *m;
-
-	while (1) {
-		IF_DEQUEUE(&ifp->if_snd, m);
-
-		if (m == NULL)
-			return;
-		m_freem(m);
-	}
+	IFQ_PURGE(&ifp->if_snd);
 }
 
 int
