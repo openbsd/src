@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.5 2015/01/02 01:57:33 jsg Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.6 2015/03/29 03:24:17 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -464,6 +464,21 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			default:
 				return 0;
 		}
+		return imxgpio_get_bit(gpio) ? 0 : 1;
+	case BOARD_ID_IMX6_SABRESD:
+		switch (sc->unit) {
+			case 1:
+				gpio = 1*32 + 2;
+				break;
+			case 2:
+				gpio = 1*32 + 0;
+				break;
+			case 3:
+				return 1;
+			default:
+				return 0;
+		}
+		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	case BOARD_ID_IMX6_UDOO:
 		switch (sc->unit) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.4 2015/01/02 01:57:33 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.5 2015/03/29 03:24:17 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -102,6 +102,29 @@ struct board_dev sabrelite_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
+	{ "imxesdhc",	2 },
+	{ "imxesdhc",	3 },
+	{ "ehci",	0 },
+	{ "imxenet",	0 },
+	{ "ahci",	0 },
+	{ NULL,		0 }
+};
+
+struct board_dev sabresd_devs[] = {
+	{ "imxocotp",	0 },
+	{ "imxccm",	0 },
+	{ "imxtemp",	0 },
+	{ "imxiomuxc",	0 },
+	{ "imxdog",	0 },
+	{ "imxuart",	0 },
+	{ "imxgpio",	0 },
+	{ "imxgpio",	1 },
+	{ "imxgpio",	2 },
+	{ "imxgpio",	3 },
+	{ "imxgpio",	4 },
+	{ "imxgpio",	5 },
+	{ "imxgpio",	6 },
+	{ "imxesdhc",	1 },
 	{ "imxesdhc",	2 },
 	{ "imxesdhc",	3 },
 	{ "ehci",	0 },
@@ -373,6 +396,11 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 		printf(": i.MX6 SABRE Lite\n");
 		imx6_init();
 		sc->sc_board_devs = sabrelite_devs;
+		break;
+	case BOARD_ID_IMX6_SABRESD:
+		printf(": i.MX6 SABRE SD\n");
+		imx6_init();
+		sc->sc_board_devs = sabresd_devs;
 		break;
 	case BOARD_ID_IMX6_UDOO:
 		printf(": i.MX6 UDOO\n");

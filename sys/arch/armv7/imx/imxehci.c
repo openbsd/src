@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.6 2015/01/17 02:57:16 jsg Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.7 2015/03/29 03:24:17 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -67,6 +67,7 @@
 #define EHCI_NITROGEN6X_USB_HUB_RST	(6*32+12)
 #define EHCI_PHYFLEX_USB_H1_PWR		0
 #define EHCI_PHYFLEX_USB_OTG_PWR	111
+#define EHCI_SABRESD_USB_PWR		(0*32+29)
 #define EHCI_UTILITE_USB_HUB_RST	(6*32+8)
 
 void	imxehci_attach(struct device *, struct device *, void *);
@@ -144,6 +145,11 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 		imxgpio_set_dir(EHCI_NITROGEN6X_USB_HUB_RST, IMXGPIO_DIR_OUT);
 		delay(1000 * 2);
 		imxgpio_set_bit(EHCI_NITROGEN6X_USB_HUB_RST);
+		delay(10);
+		break;
+	case BOARD_ID_IMX6_SABRESD:
+		imxgpio_set_bit(EHCI_SABRESD_USB_PWR);
+		imxgpio_set_dir(EHCI_SABRESD_USB_PWR, IMXGPIO_DIR_OUT);
 		delay(10);
 		break;
 	case BOARD_ID_IMX6_UTILITE:

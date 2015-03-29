@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.11 2015/03/18 13:33:55 mpi Exp $ */
+/* $OpenBSD: imxenet.c,v 1.12 2015/03/29 03:24:17 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -136,6 +136,8 @@
 #define ENET_HUMMINGBOARD_PHY_RST		(3*32+15)
 #define ENET_SABRELITE_PHY			6
 #define ENET_SABRELITE_PHY_RST			(2*32+23)
+#define ENET_SABRESD_PHY			1
+#define ENET_SABRESD_PHY_RST			(0*32+25)
 #define ENET_NITROGEN6X_PHY			6
 #define ENET_NITROGEN6X_PHY_RST			(0*32+27)
 #define ENET_UDOO_PHY				6
@@ -253,6 +255,13 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 		delay(1000 * 10);
 		imxgpio_set_bit(ENET_SABRELITE_PHY_RST);
 		imxgpio_set_bit(ENET_NITROGEN6X_PHY_RST);
+		delay(100);
+		break;
+	case BOARD_ID_IMX6_SABRESD:
+		imxgpio_clear_bit(ENET_SABRESD_PHY_RST);
+		imxgpio_set_dir(ENET_SABRESD_PHY_RST, IMXGPIO_DIR_OUT);
+		delay(1000 * 10);
+		imxgpio_set_bit(ENET_SABRESD_PHY_RST);
 		delay(100);
 		break;
 	case BOARD_ID_IMX6_UDOO:
@@ -398,6 +407,9 @@ imxenet_chip_init(struct imxenet_softc *sc)
 	case BOARD_ID_IMX6_SABRELITE:
 		phy = ENET_SABRELITE_PHY;
 		break;
+	case BOARD_ID_IMX6_SABRESD:
+		phy = ENET_SABRESD_PHY;
+		break;
 	case BOARD_ID_IMX6_UDOO:
 		phy = ENET_UDOO_PHY;
 		break;
@@ -462,6 +474,7 @@ imxenet_chip_init(struct imxenet_softc *sc)
 		break;
 	case BOARD_ID_IMX6_CUBOXI:		/* AR8035 */
 	case BOARD_ID_IMX6_HUMMINGBOARD:	/* AR8035 */
+	case BOARD_ID_IMX6_SABRESD:		/* AR8031 */
 	case BOARD_ID_IMX6_UTILITE:
 	case BOARD_ID_IMX6_WANDBOARD:		/* AR8031 */
 		/* disable SmartEEE */
