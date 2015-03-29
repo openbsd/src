@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.35 2015/03/28 19:08:23 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.36 2015/03/29 15:41:15 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -484,17 +484,19 @@ espattach(parent, self, aux)
 	 * below.
 	 */
 	bp = ca->ca_ra.ra_bp;
-	switch (ca->ca_bustype) {
-	case BUS_SBUS:
-		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
-		    SAME_ESP(sc, bp, ca))
-			bootpath_store(1, bp + 1);
-		break;
-	default:
-		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
-			bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit)
-			bootpath_store(1, bp + 1);
-		break;
+	if (bp != NULL && (strcmp(bp->name, "esp") == 0 ||
+	    strcmp(bp->name, ca->ca_ra.ra_name) == 0)) {
+		switch (ca->ca_bustype) {
+		case BUS_SBUS:
+			if (SAME_ESP(sc, bp, ca))
+				bootpath_store(1, bp + 1);
+			break;
+		default:
+			if (bp->val[0] == -1 &&
+			    bp->val[1] == sc->sc_dev.dv_unit)
+				bootpath_store(1, bp + 1);
+			break;
+		}
 	}
 
 	/* Turn on target selection using the `dma' method */
