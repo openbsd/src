@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.164 2014/11/30 15:53:26 espie Exp $
+# $OpenBSD: Add.pm,v 1.165 2015/03/29 09:42:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -847,6 +847,12 @@ sub copy_info
 }
 
 sub extract
+{
+	my ($self, $state) = @_;
+	$self->may_verify_digest($state);
+}
+
+sub find_extractible
 {
 	my ($self, $state) = @_;
 	$self->may_verify_digest($state);
