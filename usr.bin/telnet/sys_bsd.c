@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.29 2015/02/12 09:50:50 guenther Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.30 2015/03/29 13:42:53 sthen Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ TerminalNewMode(int f)
 	tmp_tc.c_lflag |= ICANON;
     } else {
 	tmp_tc.c_lflag &= ~ICANON;
+	tmp_tc.c_iflag &= ~ICRNL;
 	tmp_tc.c_cc[VMIN] = 1;
 	tmp_tc.c_cc[VTIME] = 0;
     }
