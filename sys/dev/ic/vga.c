@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.64 2015/03/29 17:23:00 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.65 2015/03/29 18:45:22 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -357,7 +357,7 @@ vga_selectfont(struct vga_config *vc, struct vgascreen *scr, const char *name1,
 
 	f1 = f2 = 0;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < VGA_MAXFONT; i++) {
 		struct vgafont *f = vc->vc_fonts[i];
 		if (!f || f->height != type->fontheight)
 			continue;
@@ -503,7 +503,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
 
 	vc->vc_fonts[0] = &vga_builtinfont;
-	for (i = 1; i < 8; i++)
+	for (i = 1; i < VGA_MAXFONT; i++)
 		vc->vc_fonts[i] = NULL;
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
@@ -617,8 +617,10 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_SMODE:
 		mode = *(u_int *)data;
-		if (mode == WSDISPLAYIO_MODE_EMUL)
+		if (mode == WSDISPLAYIO_MODE_EMUL) {
+			vga_restore_fonts(vc);
 			vga_restore_palette(vc);
+		}
 		break;
 
 	case WSDISPLAYIO_GVIDEO:
@@ -863,13 +865,13 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 		return (EINVAL);
 
 	if (data->index < 0) {
-		for (slot = 0; slot < 8; slot++)
+		for (slot = 0; slot < VGA_MAXFONT; slot++)
 			if (!vc->vc_fonts[slot])
 				break;
 	} else
 		slot = data->index;
 
-	if (slot >= 8)
+	if (slot >= VGA_MAXFONT)
 		return (ENOSPC);
 
 	if (vc->vc_fonts[slot] != NULL)
@@ -904,7 +906,7 @@ vga_list_font(void *v, struct wsdisplay_font *data)
 	struct vga_config *vc = v;
 	struct vgafont *f;
 
-	if (data->index < 0 || data->index >= nitems(vc->vc_fonts))
+	if (data->index < 0 || data->index >= VGA_MAXFONT)
 		return EINVAL;
 
 	if ((f = vc->vc_fonts[data->index]) == NULL)
@@ -1221,6 +1223,21 @@ vga_restore_palette(struct vga_config *vc)
 	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
 
 	vga_enable(vh);
+}
+
+void
+vga_restore_fonts(struct vga_config *vc)
+{
+	int slot;
+	struct vgafont *f;
+
+	for (slot = 0; slot < VGA_MAXFONT; slot++) {
+		f = vc->vc_fonts[slot];
+		if (f == NULL || f->fontdata == NULL)
+			continue;
+
+		vga_loadchars(&vc->hdl, slot, 0, 256, f->height, f->fontdata);
+	}
 }
 
 struct cfdriver vga_cd = {

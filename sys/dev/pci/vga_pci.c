@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.83 2015/03/14 03:38:49 jsg Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.84 2015/03/29 18:45:22 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -591,6 +591,7 @@ vga_restore_state(struct vga_pci_softc *sc)
 	for (i = 0; i < sizeof(sc->sc_save_gdc); i++)
 		_vga_gdc_write(vh, i, *buf++);
 
+	vga_restore_fonts(vc);
 	vga_restore_palette(vc);
 
 	/*
