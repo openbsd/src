@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_z.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_z.c,v 1.8 2015/03/29 01:04:23 bcallah Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -51,11 +51,7 @@ ex_z(SCR *sp, EXCMD *cmdp)
 	if (FL_ISSET(cmdp->iflags, E_C_COUNT))
 		cnt = cmdp->count;
 	else
-#ifdef HISTORIC_PRACTICE
-		cnt = O_VAL(sp, O_SCROLL) * 2;
-#else
 		cnt = O_VAL(sp, O_WINDOW) - 1;
-#endif
 
 	equals = 0;
 	eofcheck = 0;
