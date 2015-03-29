@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.49 2015/03/29 19:11:23 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.50 2015/03/29 21:16:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -173,7 +173,7 @@ MBR_read(int fd, off_t where, struct dos_mbr *dos_mbr)
 {
 	char *secbuf;
 
-	secbuf = MBR_readsector(fd, where);
+	secbuf = readsector(fd, where);
 	if (secbuf == NULL)
 		return (-1);
 
@@ -188,7 +188,7 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 {
 	char *secbuf;
 
-	secbuf = MBR_readsector(fd, where);
+	secbuf = readsector(fd, where);
 	if (secbuf == NULL)
 		return (-1);
 
@@ -197,7 +197,7 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 	 * write the sector back to "disk".
 	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
-	MBR_writesector(fd, secbuf, where);
+	writesector(fd, secbuf, where);
 	ioctl(fd, DIOCRLDINFO, 0);
 
 	free(secbuf);
@@ -230,61 +230,6 @@ MBR_pcopy(struct mbr *mbr)
 }
 
 /*
- * Read the sector at 'where' into a sector sized buf and return the latter.
- */
-char *
-MBR_readsector(int fd, off_t where)
-{
-	const int secsize = unit_types[SECTORS].conversion;
-	char *secbuf;
-	ssize_t len;
-	off_t off;
-
-	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
-	if (off != where)
-		return (NULL);
-
-	secbuf = calloc(1, secsize);
-	if (secbuf == NULL)
-		return (NULL);
-
-	len = read(fd, secbuf, secsize);
-	if (len == -1 || len != secsize) {
-		free(secbuf);
-		return (NULL);
-	}
-
-	return (secbuf);
-}
-
-/*
- * Write the sector sized 'secbuf' to the sector at 'where'.
- */
-int
-MBR_writesector(int fd, char *secbuf, off_t where)
-{
-	const int secsize = unit_types[SECTORS].conversion;
-	ssize_t len;
-	off_t off;
-
-	len = -1;
-
-	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
-	if (off == where)
-		len = write(fd, secbuf, secsize);
-
-	if (len == -1 || len != secsize) {
-		/* short read or write */
-		errno = EIO;
-		return (-1);
-	}
-
-	return (0);
-}
-
-/*
  * If *dos_mbr has a 0xee or 0xef partition, nothing needs to happen. If no
  * such partition is present but the first or last sector on the disk has a
  * GPT, zero the GPT to ensure the MBR takes priority and fewer BIOSes get
@@ -305,25 +250,25 @@ MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
 		    (dos_parts[i].dp_typ == DOSPTYP_EFISYS))
 			return;
 
-	secbuf = MBR_readsector(fd, GPTSECTOR);
+	secbuf = readsector(fd, GPTSECTOR);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
-		MBR_writesector(fd, secbuf, GPTSECTOR);
+		writesector(fd, secbuf, GPTSECTOR);
 	}
 	free(secbuf);
 
-	secbuf = MBR_readsector(fd, lastsec);
+	secbuf = readsector(fd, lastsec);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
-		MBR_writesector(fd, secbuf, lastsec);
+		writesector(fd, secbuf, lastsec);
 	}
 	free(secbuf);
 }
