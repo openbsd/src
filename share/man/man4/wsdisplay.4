@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.48 2015/03/29 18:03:27 miod Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.49 2015/03/29 19:26:02 jmc Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
@@ -492,7 +492,7 @@ The
 .Va index
 field is set to the font resource to query.
 For the argument structure, see
-.Dv WSDISPLAYIO_LDFONT.
+.Dv WSDISPLAYIO_LDFONT .
 .\" WSDISPLAYIO_DELFONT Pq Li struct wsdisplay_font
 .It WSDISPLAYIO_USEFONT Pq Li struct wsdisplay_font
 Selects the font specified in the
@@ -502,7 +502,7 @@ An empty
 .Va name
 selects the next available font.
 For the argument structure, see
-.Dv WSDISPLAYIO_LDFONT.
+.Dv WSDISPLAYIO_LDFONT .
 .It Dv WSDISPLAYIO_GBURNER Pq Li struct wsdisplay_burner
 Retrieves the state of the screen burner.
 The returned structure is as follows:
@@ -606,7 +606,7 @@ is -1.
 The screen and emulation types are returned in the same structure
 .Pq see Dv WSDISPLAYIO_GETPARAM .
 .It Dv WSDISPLAYIO_SETSCREEN Pq Li u_int
-Switch to the screen with the given index. 
+Switch to the screen with the given index.
 .It Dv WSDISPLAYIO_WSMOUSED Pq Li struct wscons_event
 This call is used by the
 .Xr wsmoused 8
