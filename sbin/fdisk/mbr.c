@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.48 2015/03/18 14:46:59 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.49 2015/03/29 19:11:23 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -310,7 +310,7 @@ MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
-	if (sig == GPTSIGNATURE) {
+	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
 		MBR_writesector(fd, secbuf, GPTSECTOR);
 	}
@@ -321,7 +321,7 @@ MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
-	if (sig == GPTSIGNATURE) {
+	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
 		MBR_writesector(fd, secbuf, lastsec);
 	}
