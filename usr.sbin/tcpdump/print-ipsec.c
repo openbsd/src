@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.20 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.21 2015/03/29 14:09:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -279,7 +279,7 @@ ah_print (register const u_char *bp, register u_int len,
 	    ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
 
 	if (vflag) {
-	        (void)printf("\n\t[ ");
+	        (void)printf(" [ ");
 
 	        pl_len = (ah->ah_pl_len + 2) << 2; /* RFC2402, sec 2.2 */
 

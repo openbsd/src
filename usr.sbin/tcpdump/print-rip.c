@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rip.c,v 1.14 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-rip.c,v 1.15 2015/03/29 14:09:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
@@ -197,7 +197,7 @@ rip_print(const u_char *dat, u_int length)
 		case RIPCMD_TRACEON:
 			printf(" RIPv%d-traceon %d: \"", rp->rip_vers, length);
 			(void)fn_print((const u_char *)(rp + 1), snapend);
-			fputs("\"\n", stdout);
+			fputs("\"", stdout);
 			break;
 		case RIPCMD_TRACEOFF:
 			printf(" RIPv%d-traceoff %d", rp->rip_vers, length);
