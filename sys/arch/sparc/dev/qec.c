@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.22 2015/03/22 12:45:59 miod Exp $	*/
+/*	$OpenBSD: qec.c,v 1.23 2015/03/29 10:59:47 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -348,8 +348,7 @@ qec_put(buf, m0)
  * we copy into clusters.
  */
 struct mbuf *
-qec_get(ifp, buf, totlen)
-	struct ifnet *ifp;
+qec_get(buf, totlen)
 	u_int8_t *buf;
 	int totlen;
 {
@@ -359,7 +358,6 @@ qec_get(ifp, buf, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	len = MHLEN;
