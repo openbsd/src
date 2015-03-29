@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.12 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.13 2015/03/29 11:03:34 mpi Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -1107,6 +1107,7 @@ void
 sq_rxintr(struct sq_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf* m;
 	struct hpc_dma_desc *rxd, rxd_store;
 	int i, framelen;
@@ -1185,7 +1186,6 @@ sq_rxintr(struct sq_softc *sc)
 
 
 		m->m_data += 2;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = framelen;
 
 		ifp->if_ipackets++;
@@ -1193,14 +1193,10 @@ sq_rxintr(struct sq_softc *sc)
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
 		    sc->sc_dev.dv_xname, i, framelen));
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
+	if_input(ifp, &ml);
 
 	/* If anything happened, move ring start/end pointers to new spot */
 	if (i != sc->sc_nextrx) {
