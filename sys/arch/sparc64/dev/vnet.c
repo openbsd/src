@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.40 2015/03/21 18:11:18 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.41 2015/03/29 14:08:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -715,6 +715,11 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		}
 		nbytes = roundup(dm->nbytes, 8);
 
+		if (dm->nbytes > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
 		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 		    dm->cookie[0].addr, pa, nbytes, &nbytes);
@@ -808,6 +813,11 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 			if (desc.hdr.dstate != VIO_DESC_READY)
 				break;
+
+			if (desc.nbytes > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+				ifp->if_ierrors++;
+				goto skip;
+			}
 
 			m = MCLGETI(NULL, M_DONTWAIT, NULL, desc.nbytes);
 			if (!m)
