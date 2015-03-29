@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
+/*	$OpenBSD: coll.c,v 1.3 2015/03/29 18:47:19 miod Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1075,8 +1075,11 @@ huge_plus(double d, int err1)
 static bool
 is_nan(double d)
 {
-
+#if defined(NAN)
 	return (d == NAN || isnan(d));
+#else
+	return (isnan(d));
+#endif
 }
 
 /*
