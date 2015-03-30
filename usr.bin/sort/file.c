@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.3 2015/03/20 00:26:38 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.4 2015/03/30 19:59:07 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -172,10 +172,8 @@ new_tmp_file_name(void)
 	char *ret;
 	int len;
 
-	len = asprintf(&ret, "%s/%s%d.%lu", tmpdir, fn, (int)getpid(),
+	len = sort_asprintf(&ret, "%s/%s%d.%lu", tmpdir, fn, (int)getpid(),
 	    (unsigned long)(tfcounter++));
-	if (len == -1)
-		err(2, NULL);
 	tmp_file_atexit(ret);
 	return ret;
 }
@@ -528,16 +526,13 @@ openfile(const char *fn, const char *mode)
 			fflush(stdout);
 
 			if (mode[0] == 'r')
-				len = asprintf(&cmd, "cat %s | %s -d",
+				len = sort_asprintf(&cmd, "cat %s | %s -d",
 				    fn, compress_program);
 			else if (mode[0] == 'w')
-				len = asprintf(&cmd, "%s > %s",
+				len = sort_asprintf(&cmd, "%s > %s",
 				    compress_program, fn);
 			else
 				err(2, "Wrong file mode");
-
-			if (len == -1)
-				err(2, NULL);
 
 			if ((file = popen(cmd, mode)) == NULL)
 				err(2, NULL);
