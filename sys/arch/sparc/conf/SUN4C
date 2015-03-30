@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.69 2015/03/30 20:30:20 miod Exp $
+#	$OpenBSD: SUN4C,v 1.70 2015/03/30 20:32:59 miod Exp $
 #	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -94,7 +94,6 @@ esp*	at sbus? flags 0x00ff000f			# two flavours
 esp*	at dma? flags 0x00ff000f			# depending on model
 
 #sun4c, sun4m
-isp*	at sbus?
 qlw*	at sbus?
 #qla*	at sbus?
 

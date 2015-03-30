@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 2014/11/22 22:48:38 miod Exp $
+#	$OpenBSD: GENERIC,v 1.108 2015/03/30 20:32:59 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -153,7 +153,6 @@ esp*	at sbus? flags 0x00ff000f			# two flavours
 esp*	at dma? flags 0x00ff000f			# depending on model
 
 #sun4c, sun4e, sun4m
-isp*	at sbus?
 qlw*	at sbus?
 #qla*	at sbus?
 
