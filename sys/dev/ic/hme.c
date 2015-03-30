@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.71 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: hme.c,v 1.72 2015/03/30 09:47:05 mpi Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -800,6 +800,7 @@ int
 hme_rint(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	struct hme_sxd *sd;
 	unsigned int ri, len;
@@ -844,13 +845,10 @@ hme_rint(struct hme_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	sc->sc_rx_cons = ri;
 	hme_fill_rx_ring(sc);
@@ -1295,7 +1293,6 @@ hme_newbuf(struct hme_softc *sc, struct hme_sxd *d)
 	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 
 	if (bus_dmamap_load(sc->sc_dmatag, sc->sc_rxmap_spare,
 	    mtod(m, caddr_t), MCLBYTES - HME_RX_OFFSET, NULL,
