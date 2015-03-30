@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.48 2015/03/20 23:04:07 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.49 2015/03/30 22:20:18 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -382,8 +382,7 @@ parse_memory_buffer_value(const char *value)
  * Signal handler that clears the temporary files.
  */
 static void
-sig_handler(int sig __unused, siginfo_t *siginfo __unused,
-    void *context __unused)
+sig_handler(int sig __unused)
 {
 
 	clear_tmp_files();
@@ -397,46 +396,19 @@ static void
 set_signal_handler(void)
 {
 	struct sigaction sa;
+	int i, signals[] = {SIGTERM, SIGHUP, SIGINT, SIGQUIT, SIGUSR1, SIGUSR2,
+	    SIGPIPE, SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, 0};
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_sigaction = &sig_handler;
-	sa.sa_flags = SA_SIGINFO;
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sig_handler;
 
-	if (sigaction(SIGTERM, &sa, NULL) < 0) {
-		warn("sigaction(SIGTERM)");
-		return;
-	}
-	if (sigaction(SIGHUP, &sa, NULL) < 0) {
-		warn("sigaction(SIGHUP)");
-		return;
-	}
-	if (sigaction(SIGINT, &sa, NULL) < 0) {
-		warn("sigaction(SIGINT)");
-		return;
-	}
-	if (sigaction(SIGQUIT, &sa, NULL) < 0) {
-		warn("sigaction(SIGQUIT)");
-		return;
-	}
-	if (sigaction(SIGABRT, &sa, NULL) < 0) {
-		warn("sigaction(SIGABRT)");
-		return;
-	}
-	if (sigaction(SIGBUS, &sa, NULL) < 0) {
-		warn("sigaction(SIGBUS)");
-		return;
-	}
-	if (sigaction(SIGSEGV, &sa, NULL) < 0) {
-		warn("sigaction(SIGSEGV)");
-		return;
-	}
-	if (sigaction(SIGUSR1, &sa, NULL) < 0) {
-		warn("sigaction(SIGUSR1)");
-		return;
-	}
-	if (sigaction(SIGUSR2, &sa, NULL) < 0) {
-		warn("sigaction(SIGUSR2)");
-		return;
+	for (i = 0; signals[i] != 0; i++) {
+		if (sigaction(signals[i], &sa, NULL) < 0) {
+			warn("sigaction(%d)", i);
+			continue;
+		}
 	}
 }
 
