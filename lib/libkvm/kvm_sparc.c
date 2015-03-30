@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc.c,v 1.14 2015/03/18 20:56:38 miod Exp $ */
+/*	$OpenBSD: kvm_sparc.c,v 1.15 2015/03/30 04:38:56 miod Exp $ */
 /*	$NetBSD: kvm_sparc.c,v 1.9 1996/04/01 19:23:03 cgd Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <uvm/uvm_extern.h>
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
-#include <machine/autoconf.h>
 #include <machine/kcore.h>
 
 #include <limits.h>
@@ -70,6 +69,8 @@ static int nptesg;	/* [sun4/sun4c] only */
 
 #define VA_OFF(va) (va & (kd->nbpg - 1))
 
+int	_kvm_kvatop44c(kvm_t *, u_long, u_long *);
+int	_kvm_kvatop4m(kvm_t *, u_long, u_long *);
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -133,7 +134,6 @@ _kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int vr, vs, pte, *ptes;
-	struct regmap *rp;
 	struct segmap *sp;
 
 	if (va < VM_MIN_KERNEL_ADDRESS_OLD)
@@ -165,7 +165,7 @@ _kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -173,7 +173,6 @@ int
 _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
-	struct regmap *rp;
 	struct segmap *sp;
 	int vr, vs, pte;
 	off_t foff;
@@ -200,7 +199,7 @@ _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 		return (0);
 
 	if (_kvm_pread(kd, kd->pmfd, (void *)&pte, sizeof(pte), foff) < 0) {
-		_kvm_err(kd, kd->program, "cannot read pte for %x", va);
+		_kvm_err(kd, kd->program, "cannot read pte for %lx", va);
 		return (0);
 	}
 
@@ -212,7 +211,7 @@ _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -243,7 +242,7 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 		off += mp->size;
 	}
 	if (nmem < 0) {
-		_kvm_err(kd, 0, "invalid address (%x)", pa);
+		_kvm_err(kd, 0, "invalid address (%lx)", pa);
 		return (-1);
 	}
 
