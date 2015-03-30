@@ -1492,7 +1492,6 @@
 ./usr/share/man/man4/lii.4
 ./usr/share/man/man4/lisa.4
 ./usr/share/man/man4/lm.4
-./usr/share/man/man4/lmc.4
 ./usr/share/man/man4/lmenv.4
 ./usr/share/man/man4/lmn.4
 ./usr/share/man/man4/lmtemp.4
@@ -1686,7 +1685,6 @@
 ./usr/share/man/man4/run.4
 ./usr/share/man/man4/safe.4
 ./usr/share/man/man4/safte.4
-./usr/share/man/man4/san.4
 ./usr/share/man/man4/sbus.4
 ./usr/share/man/man4/schsio.4
 ./usr/share/man/man4/scsi.4
@@ -2443,7 +2441,6 @@
 ./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/ldpctl.8
 ./usr/share/man/man8/ldpd.8
-./usr/share/man/man8/lmccontrol.8
 ./usr/share/man/man8/locate.updatedb.8
 ./usr/share/man/man8/login_activ.8
 ./usr/share/man/man8/login_chpass.8
