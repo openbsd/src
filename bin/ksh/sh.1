@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.124 2015/03/27 14:22:59 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.125 2015/03/30 19:17:06 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2015 $
+.Dd $Mdocdate: March 30 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -753,7 +753,7 @@ or an integer,
 reset
 .Ar signal
 to its default value;
-if it is null
+if it is empty
 .Pq Qq ,
 ignore
 .Ar signal .
@@ -1240,14 +1240,14 @@ If the colon is omitted,
 .Ar word
 is substituted only if
 .Ar parameter
-is unset (not if it is null).
+is unset (not if it is empty).
 .Bl -tag -width Ds
 .It $ Ns Brq Ar parameter Ns :- Ns Op Ar word
 Substitute
 .Ar parameter .
 If
 .Ar parameter
-is unset or null,
+is unset or empty,
 substitute
 .Ar word .
 .It $ Ns Brq Ar parameter Ns := Ns Op Ar word
@@ -1255,7 +1255,7 @@ Substitute
 .Ar parameter .
 If
 .Ar parameter
-is unset or null,
+is unset or empty,
 first assign the value of
 .Ar word
 to
@@ -1265,7 +1265,7 @@ Substitute
 .Ar parameter .
 If
 .Ar parameter
-is unset or null,
+is unset or empty,
 the result of the expansion of
 .Ar word
 is written to standard error
@@ -1281,8 +1281,8 @@ Substitute
 .Ar word .
 If
 .Ar parameter
-is unset or null,
-substitute null.
+is unset or empty,
+substitute the empty string.
 .It $ Ns Brq # Ns Ar parameter
 The length, in characters, of
 .Ar parameter .
@@ -1373,7 +1373,7 @@ greater than, and greater than or equal to, respectively.
 The result is 1 if true, or 0 otherwise.
 .It == !=
 Equal (the result is 1 if both arguments are equal, and 0 otherwise)
-and not equal (the result is 1 if both arguments are non-zero, and 0 otherwsie),
+and not equal (the result is 1 if both arguments are non-zero, and 0 otherwise),
 respectively.
 .It &
 Bitwise AND.
@@ -1425,7 +1425,7 @@ and
 .Aq newline
 is used; if the value of
 .Ev IFS
-is null, no field splitting is performed.
+is empty, no field splitting is performed.
 .Pp
 After field splitting,
 the shell matches filename patterns.
