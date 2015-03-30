@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.7 2015/01/05 20:09:25 millert Exp $
+#	$OpenBSD: stests,v 1.8 2015/03/30 19:49:09 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -14,7 +14,8 @@
 #On 25H, your answer is as defensible as mine.  (Our suggestion
 #*1 backs mine.)
 
-SORTPROG=sort
+: ${SORTPROG=sort}
+export SORTPROG
 
 # Tests for the Unix sort utility
 # Test Posix features except for locale.
