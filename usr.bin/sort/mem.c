@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 2015/03/30 19:57:36 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -29,7 +29,7 @@
 
 #include <err.h>
 #include <stdint.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "mem.h"
@@ -102,4 +102,19 @@ sort_strdup(const char *str)
 	if ((dup = strdup(str)) == NULL)
 		err(2, NULL);
 	return dup;
+}
+
+int
+sort_asprintf(char **ret, const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vasprintf(ret, fmt, ap);
+	va_end(ap);
+
+	if (len == -1)
+		err(2, NULL);
+	return len;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.h,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
+/*	$OpenBSD: mem.h,v 1.3 2015/03/30 19:57:36 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -31,6 +31,7 @@
 #define	__SORT_MEM_H__
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -43,5 +44,6 @@ void sort_free(void *ptr);
 void *sort_realloc(void *, size_t);
 void *sort_reallocarray(void *, size_t, size_t);
 char *sort_strdup(const char *);
+int sort_asprintf(char **, const char *, ...);
 
 #endif /* __SORT_MEM_H__ */
