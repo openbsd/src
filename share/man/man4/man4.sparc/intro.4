@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.56 2014/09/19 12:24:38 schwarze Exp $
+.\"     $OpenBSD: intro.4,v 1.57 2015/03/30 20:34:47 miod Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -56,7 +56,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2014 $
+.Dd $Mdocdate: March 30 2015 $
 .Dt INTRO 4 sparc
 .Os
 .Sh NAME
@@ -192,8 +192,8 @@ SBus PCMCIA bridge
 .Bl -tag -width 12n -compact -offset ind
 .It Xr esp 4
 ESP NCR 53c94 on-board or SBus SCSI interface
-.It Xr isp 4
-QLogic based SCSI or Fibre Channel SCSI interface
+.It Xr qlw 4
+QLogic ISP1000/1020/1x40/1x80/1x160 SCSI controller
 .It Xr si 4
 NCR 5380 Sun SCSI 3 VME SCSI controller
 .It Xr sw 4
