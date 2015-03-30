@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.124 2015/03/14 03:38:48 jsg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.125 2015/03/30 10:01:21 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1364,6 +1364,7 @@ sis_newbuf(struct sis_softc *sc, struct sis_desc *c)
 void
 sis_rxeof(struct sis_softc *sc)
 {
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct sis_desc		*cur_rx;
@@ -1432,19 +1433,14 @@ sis_rxeof(struct sis_softc *sc)
 			m = m0;
 		}
 #else
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
 #endif
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/* pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	sis_fill_rx_ring(sc);
 }
