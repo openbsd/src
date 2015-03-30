@@ -1,6 +1,7 @@
-/*	$OpenBSD: uni_n.c,v 1.16 2012/11/15 21:50:00 mpi Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.17 2015/03/30 13:45:02 mpi Exp $	*/
 
 /*
+ * Copyright (c) 2013 Martin Pieuchot
  * Copyright (c) 1998-2001 Dale Rahn.
  * All rights reserved.
  *
@@ -34,10 +35,31 @@
 
 #include <dev/ofw/openfirm.h>
 
+#define UNINORTH_CLK_OFFSET	0x20
+#define UNINORTH_POW_OFFSET	0x30
+#define UNINORTH_STA_OFFSET	0x70
+#define UNINORTH_MPIC_OFFSET	0xe0
+
+#define UNINORTH_PCICLOCK_CTL	0x01
+#define UNINORTH_ETHERNET_CTL	0x02
+#define UNINORTH_FIREWIRE_CTL	0x04
+
+#define UNINORTH_POW_NORMAL	0x00
+#define UNINORTH_POW_IDLE	0x01
+#define UNINORTH_POW_SLEEP	0x02
+
+#define UNINORTH_MPIC_RESET	0x02
+#define UNINORTH_MPIC_ENABLE	0x04
+
+#define UNINORTH_SLEEPING	0x01
+#define UNINORTH_RUNNING	0x02
+
+
 struct memc_softc {
 	struct device sc_dev;
 	struct ppc_bus_space sc_membus_space;
 
+	uint8_t *sc_baseaddr;
 };
 
 int	memcmatch(struct device *, void *, void *);
@@ -45,29 +67,30 @@ void	memcattach(struct device *, struct device *, void *);
 void	memc_attach_children(struct memc_softc *sc, int memc_node);
 int	memc_print(void *aux, const char *name);
 
-/* Driver definition */
 struct cfdriver memc_cd = {
 	NULL, "memc", DV_DULL
 };
-/* Driver definition */
-struct cfattach memc_ca = {
+
+const struct cfattach memc_ca = {
 	sizeof(struct memc_softc), memcmatch, memcattach
 };
 
-void uni_n_config(char *, int);
+void memc_sleep(void);
+void memc_resume(void);
+uint32_t memc_read(struct memc_softc *sc, int);
+void memc_write(struct memc_softc *sc, int, uint32_t);
+void memc_enable(struct memc_softc *, int, uint32_t);
+void memc_disable(struct memc_softc *, int, uint32_t);
 
 int
 memcmatch(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
-	static int memc_attached = 0;
 
-	/* allow only one instance */
-	if (memc_attached == 0) {
-		if (0 == strcmp (ca->ca_name, "memc"))
-			return 1;
-	}
-	return 0;
+	if (strcmp(ca->ca_name, "memc") != 0)
+		return (0);
+
+	return (1);
 }
 
 void
@@ -75,19 +98,27 @@ memcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct memc_softc *sc = (struct memc_softc *)self;
 	struct confargs *ca = aux;
-	u_int32_t rev;
-	char name[64];
+	uint32_t rev, reg[2];
+	char name[32];
 	int len;
+
+	OF_getprop(ca->ca_node, "reg", &reg, sizeof(reg));
 
 	len = OF_getprop(ca->ca_node, "name", name, sizeof(name));
 	if (len > 0)
 		name[len] = 0;
 
+	/* Map the first page in order to access the registers */
+	if (strcmp(name, "u3") == 0 || strcmp(name, "u4") == 0)
+		sc->sc_baseaddr = mapiodev(reg[1], PAGE_SIZE);
+	else
+		sc->sc_baseaddr = mapiodev(reg[0], PAGE_SIZE);
+
+	/* Enable the ethernet clock */
+	memc_enable(sc, UNINORTH_CLK_OFFSET, UNINORTH_ETHERNET_CTL);
 	len = OF_getprop(ca->ca_node, "device-rev", &rev, sizeof(rev));
 	if (len < 0)
 		rev = 0;
-
-	uni_n_config(name, ca->ca_node);
 
 	printf (": %s rev 0x%x\n", name, rev);
 
@@ -100,9 +131,8 @@ memc_attach_children(struct memc_softc *sc, int memc_node)
 	struct confargs ca;
 	int node, namelen;
 	u_int32_t reg[20];
+	int32_t intr[8];
 	char	name[32];
-
-        sc->sc_membus_space.bus_base = ca.ca_baseaddr;
 
 	ca.ca_iot = &sc->sc_membus_space;
 	ca.ca_dmat = 0; /* XXX */
@@ -119,10 +149,18 @@ memc_attach_children(struct memc_softc *sc, int memc_node)
 
 		ca.ca_name = name;
 		ca.ca_node = node;
-		ca.ca_nreg  = OF_getprop(node, "reg", reg, sizeof(reg));
+		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg = reg;
-		ca.ca_nintr = 0; /* XXX */
-		ca.ca_intr = NULL; /* XXX */
+		ca.ca_nintr = OF_getprop(node, "AAPL,interrupts", intr,
+				sizeof(intr));
+		if (ca.ca_nintr == -1)
+			ca.ca_nintr = OF_getprop(node, "interrupts", intr,
+					sizeof(intr));
+		ca.ca_intr = intr;
+
+		if (strcmp(ca.ca_name, "mpic") == 0)
+			memc_enable(sc, UNINORTH_MPIC_OFFSET,
+			    UNINORTH_MPIC_RESET|UNINORTH_MPIC_ENABLE);
 
 		config_found((struct device *)sc, &ca, memc_print);
 	}
@@ -141,20 +179,49 @@ memc_print(void *aux, const char *name)
 }
 
 void
-uni_n_config(char *name, int handle)
+memc_sleep(void)
 {
-	char *baseaddr;
-	int *ctladdr;
-	u_int32_t address;
+	struct memc_softc *sc = memc_cd.cd_devs[0];
 
-	/* sanity test */
-	if (strcmp (name, "uni-n") == 0 || strcmp (name, "u3") == 0
-	    || strcmp (name, "u4") == 0) {
-		if (OF_getprop(handle, "reg", &address,
-		    sizeof address) > 0) {
-			baseaddr = mapiodev(address, NBPG);
-			ctladdr = (void *)(baseaddr + 0x20);
-			*ctladdr |= 0x02;
-		}
-	}
+	memc_write(sc, UNINORTH_STA_OFFSET, UNINORTH_SLEEPING);
+	DELAY(10);
+	memc_write(sc, UNINORTH_POW_OFFSET, UNINORTH_POW_SLEEP);
+	DELAY(10);
+}
+
+void
+memc_resume(void)
+{
+	struct memc_softc *sc = memc_cd.cd_devs[0];
+
+	memc_write(sc, UNINORTH_POW_OFFSET, UNINORTH_POW_NORMAL);
+	DELAY(10);
+	memc_write(sc, UNINORTH_STA_OFFSET, UNINORTH_RUNNING);
+	DELAY(100); /* XXX */
+}
+
+uint32_t
+memc_read(struct memc_softc *sc, int offset)
+{
+	return in32(sc->sc_baseaddr + offset);
+}
+
+void
+memc_write(struct memc_softc *sc, int offset, uint32_t value)
+{
+	out32(sc->sc_baseaddr + offset, value);
+}
+
+void
+memc_enable(struct memc_softc *sc, int offset, uint32_t bits)
+{
+	bits |= memc_read(sc, offset);
+	memc_write(sc, offset, bits);
+}
+
+void
+memc_disable(struct memc_softc *sc, int offset, uint32_t bits)
+{
+	bits = memc_read(sc, offset) & ~bits;
+	memc_write(sc, offset, bits);
 }
