@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.53 2015/02/06 09:04:34 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.54 2015/03/30 21:08:40 miod Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ vm_map_t	uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_extract(struct vm_map*, vaddr_t, vsize_t, vaddr_t*,
 		    int);
 vaddr_t		uvm_map_pie(vaddr_t);
-vaddr_t		uvm_map_hint(struct vmspace *, vm_prot_t);
+vaddr_t		uvm_map_hint(struct vmspace *, vm_prot_t, vaddr_t, vaddr_t);
 int		uvm_map_inherit(vm_map_t, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(vm_map_t, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.12 2015/03/30 21:05:17 miod Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.13 2015/03/30 21:08:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -564,6 +564,7 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
     vm_prot_t prot, vaddr_t hint)
 {
 	struct vmspace		*vm;
+	vaddr_t			 minaddr, maxaddr;
 	vaddr_t			 guard_sz;
 	vaddr_t			 low_addr, high_addr;
 	struct vm_map_entry	*entry, *next;
@@ -576,22 +577,25 @@ uaddr_rnd_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 	/* Deal with guardpages: search for space with one extra page. */
 	guard_sz = ((map->flags & VM_MAP_GUARDPAGES) == 0 ? 0 : PAGE_SIZE);
 
+	minaddr = uvm_addr_align_forward(uaddr->uaddr_minaddr, align, offset);
+	maxaddr = uvm_addr_align_backward(uaddr->uaddr_maxaddr - sz - guard_sz,
+	    align, offset);
+
 	/* Quick fail if the allocation won't fit. */
-	if (uaddr->uaddr_maxaddr - uaddr->uaddr_minaddr < sz + guard_sz)
+	if (minaddr >= maxaddr)
 		return ENOMEM;
 
 	/* Select a hint. */
 	if (hint == 0)
-		hint = uvm_map_hint(vm, prot);
+		hint = uvm_map_hint(vm, prot, minaddr, maxaddr);
 	/* Clamp hint to uaddr range. */
-	hint = MIN(MAX(hint, uaddr->uaddr_minaddr),
-	    uaddr->uaddr_maxaddr - sz - guard_sz);
+	hint = MIN(MAX(hint, minaddr), maxaddr);
 
 	/* Align hint to align,offset parameters. */
 	tmp = hint;
 	hint = uvm_addr_align_forward(tmp, align, offset);
 	/* Check for overflow during alignment. */
-	if (hint < tmp || hint > uaddr->uaddr_maxaddr - sz - guard_sz)
+	if (hint < tmp || hint > maxaddr)
 		return ENOMEM; /* Compatibility mode: never look backwards. */
 
 	before_gap = 0;
