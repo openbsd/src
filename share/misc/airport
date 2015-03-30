@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.51 2015/03/13 17:51:25 giovanni Exp $
+#	$OpenBSD: airport,v 1.52 2015/03/30 21:40:20 kspillner Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -34,7 +34,7 @@ ACT:Madison Cooper, Waco, Texas, USA
 ACV:Arcata/Eureka, California, USA
 ACY:Atlantic City International, Atlantic City, New Jersey, USA
 ADA:Adana, Turkey
-ADB:Adnam Menderes, Izmir, Turkey
+ADB:Adnan Menderes, Izmir, Turkey
 ADD:Bole, Addis Ababa, Ethiopia
 ADJ:Marka, Amman, Jordan
 ADL:Adelaide, Adelaide, South Australia, Australia
@@ -193,7 +193,7 @@ BIQ:Biarritz-Anglet-Bayonne, Biarritz, France
 BIS:Bismarck Municipal, North Dakota, USA
 BJI:Bemidji Regional, Bemidji, Minnesota, USA
 BJL:Banjul International, Banjul, Gambia
-BJV:Bodrum, Turkey
+BJV:Milas-Bodrum, Bodrum, Turkey
 BJX:Del Bajio International, Leon/Guanajuato, Guanajuato, Mexico
 BKI:Kota Kinabalu International, Kota Kinabalu, Sabah, Malaysia
 BKK:Suvarnabhumi Airport, Bangkok, Thailand
