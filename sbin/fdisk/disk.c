@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.46 2015/03/27 16:06:00 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.47 2015/03/30 17:11:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <sys/disklabel.h>
 #include <err.h>
+#include <errno.h>
 #include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,6 +106,70 @@ DISK_printgeometry(char *units)
 		printf("%s]\n", unit_types[i].lname);
 	} else
 		printf("geometry: <none>\n");
+
+	return (0);
+}
+
+/*
+ * Read the sector at 'where' from the file descriptor 'fd' into newly 
+ * calloc'd memory. Return a pointer to the memory if it contains the
+ * requested data, or NULL if it does not.
+ *
+ * The caller must free() the memory it gets.
+ */
+char *
+DISK_readsector(int fd, off_t where)
+{
+	int secsize;
+	char *secbuf;
+	ssize_t len;
+	off_t off;
+
+	secsize = dl.d_secsize;
+
+	where *= secsize;
+	off = lseek(fd, where, SEEK_SET);
+	if (off != where)
+		return (NULL);
+
+	secbuf = calloc(1, secsize);
+	if (secbuf == NULL)
+		return (NULL);
+
+	len = read(fd, secbuf, secsize);
+	if (len == -1 || len != secsize) {
+		free(secbuf);
+		return (NULL);
+	}
+
+	return (secbuf);
+}
+
+/*
+ * Write the sector-sized 'secbuf' to the sector 'where' on the file
+ * descriptor 'fd'. Return 0 if the write works. Return -1 and set
+ * errno if the write fails.
+ */
+int
+DISK_writesector(int fd, char *secbuf, off_t where)
+{
+	int secsize;
+	ssize_t len;
+	off_t off;
+
+	len = -1;
+	secsize = dl.d_secsize;
+
+	where *= secsize;
+	off = lseek(fd, where, SEEK_SET);
+	if (off == where)
+		len = write(fd, secbuf, secsize);
+
+	if (len == -1 || len != secsize) {
+		/* short read or write */
+		errno = EIO;
+		return (-1);
+	}
 
 	return (0);
 }

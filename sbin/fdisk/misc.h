@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.29 2015/03/29 21:16:39 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.30 2015/03/30 17:11:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,7 +36,5 @@ char *ask_string(const char *, const char *);
 int ask_yn(const char *);
 u_int64_t getuint64(char *, u_int64_t, u_int64_t);
 u_int32_t crc32(const u_char *, const u_int32_t);
-char *readsector(int, off_t);
-int writesector(int, char *, off_t);
 
 #endif /* _MISC_H */

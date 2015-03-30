@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.50 2015/03/29 21:16:39 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.51 2015/03/30 17:11:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -173,7 +173,7 @@ MBR_read(int fd, off_t where, struct dos_mbr *dos_mbr)
 {
 	char *secbuf;
 
-	secbuf = readsector(fd, where);
+	secbuf = DISK_readsector(fd, where);
 	if (secbuf == NULL)
 		return (-1);
 
@@ -188,7 +188,7 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 {
 	char *secbuf;
 
-	secbuf = readsector(fd, where);
+	secbuf = DISK_readsector(fd, where);
 	if (secbuf == NULL)
 		return (-1);
 
@@ -197,7 +197,7 @@ MBR_write(int fd, off_t where, struct dos_mbr *dos_mbr)
 	 * write the sector back to "disk".
 	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
-	writesector(fd, secbuf, where);
+	DISK_writesector(fd, secbuf, where);
 	ioctl(fd, DIOCRLDINFO, 0);
 
 	free(secbuf);
@@ -250,25 +250,25 @@ MBR_zapgpt(int fd, struct dos_mbr *dos_mbr, uint64_t lastsec)
 		    (dos_parts[i].dp_typ == DOSPTYP_EFISYS))
 			return;
 
-	secbuf = readsector(fd, GPTSECTOR);
+	secbuf = DISK_readsector(fd, GPTSECTOR);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
-		writesector(fd, secbuf, GPTSECTOR);
+		DISK_writesector(fd, secbuf, GPTSECTOR);
 	}
 	free(secbuf);
 
-	secbuf = readsector(fd, lastsec);
+	secbuf = DISK_readsector(fd, lastsec);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, sizeof(sig));
-		writesector(fd, secbuf, lastsec);
+		DISK_writesector(fd, secbuf, lastsec);
 	}
 	free(secbuf);
 }

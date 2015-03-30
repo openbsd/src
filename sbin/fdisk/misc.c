@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.50 2015/03/29 21:16:39 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.51 2015/03/30 17:11:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <err.h>
 #include <errno.h>
 
@@ -364,65 +363,4 @@ crc32(const u_char *buf, const u_int32_t size)
 	}
 
 	return ~crc;
-}
-
-/*
- * Read the sector at 'where' from the file descriptor 'fd' into newly 
- * calloc'd memory. Return a pointer to the memory if it contains the
- * requested data, or NULL if it does not.
- *
- * The caller must free() the memory it gets.
- */
-char *
-readsector(int fd, off_t where)
-{
-	const int secsize = unit_types[SECTORS].conversion;
-	char *secbuf;
-	ssize_t len;
-	off_t off;
-
-	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
-	if (off != where)
-		return (NULL);
-
-	secbuf = calloc(1, secsize);
-	if (secbuf == NULL)
-		return (NULL);
-
-	len = read(fd, secbuf, secsize);
-	if (len == -1 || len != secsize) {
-		free(secbuf);
-		return (NULL);
-	}
-
-	return (secbuf);
-}
-
-/*
- * Write the sector-sized 'secbuf' to the sector 'where' on the file
- * descriptor 'fd'. Return 0 if the write works. Return -1 and set
- * errno if the write fails.
- */
-int
-writesector(int fd, char *secbuf, off_t where)
-{
-	const int secsize = unit_types[SECTORS].conversion;
-	ssize_t len;
-	off_t off;
-
-	len = -1;
-
-	where *= secsize;
-	off = lseek(fd, where, SEEK_SET);
-	if (off == where)
-		len = write(fd, secbuf, secsize);
-
-	if (len == -1 || len != secsize) {
-		/* short read or write */
-		errno = EIO;
-		return (-1);
-	}
-
-	return (0);
 }
