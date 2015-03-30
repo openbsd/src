@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.160 2015/02/24 01:29:49 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.161 2015/03/30 09:21:42 tobias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1591,11 +1591,12 @@ die(int signo)
 void
 init(void)
 {
-	char cline[LINE_MAX], prog[NAME_MAX+1], *p;
+	char prog[NAME_MAX+1], *cline, *p;
 	struct filed_list mb;
 	struct filed *f, *m;
 	FILE *cf;
 	int i;
+	size_t s;
 
 	dprintf("init\n");
 
@@ -1661,9 +1662,10 @@ init(void)
 	/*
 	 *  Foreach line in the conf table, open that file.
 	 */
-	f = NULL;
+	cline = NULL;
+	s = 0;
 	strlcpy(prog, "*", sizeof(prog));
-	while (fgets(cline, sizeof(cline), cf) != NULL) {
+	while (getline(&cline, &s, cf) != -1) {
 		/*
 		 * check for end-of-section, comments, strip off trailing
 		 * spaces and newline character. !prog is treated
@@ -1701,6 +1703,11 @@ init(void)
 		f = cfline(cline, prog);
 		if (f != NULL)
 			SIMPLEQ_INSERT_TAIL(&Files, f, f_next);
+	}
+	free(cline);
+	if (!feof(cf)) {
+		logerror("Unable to read config file");
+		die(0);
 	}
 
 	/* Match and initialize the memory buffers */
