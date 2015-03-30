@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.17 2010/11/11 17:46:58 miod Exp $	*/
+/*	$OpenBSD: fga.c,v 1.18 2015/03/30 20:30:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -43,13 +43,11 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
-#include <machine/pmap.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <sparc/cpu.h>
 #include <sparc/sparc/cpuvar.h>
-#include <sparc/dev/sbusvar.h>
-#include <sparc/dev/dmareg.h>	/* for SBUS_BURST_* */
 
 #include <sparc/dev/fgareg.h>
 #include <sparc/dev/fgavar.h>
@@ -81,6 +79,7 @@ struct fga_softc {
 	int		sc_nrange;		/* number of sbus ranges */
 	struct		rom_range *sc_range;	/* sbus range data */
 	u_int8_t	sc_established;		/* which hw intrs installed */
+	bus_dma_tag_t	sc_dmat;
 };
 
 int	fgaopen(dev_t, int, int, struct proc *);
@@ -163,6 +162,7 @@ fgaattach(parent, self, aux)
 	    ca->ca_ra.ra_reg[0].rr_len);
 
 	sc->sc_node = ca->ca_ra.ra_node;
+	sc->sc_dmat = ca->ca_dmat;
 
 	i = opennode("/iommu/sbus");
 	if (i == 0) {
@@ -285,6 +285,7 @@ fga_vmerangemap(sc, vmebase, vmelen, vmecap, sbusslot, sbusoffset, oca)
 	oca->ca_ra.ra_reg[1].rr_iospace = vmecap;
 	oca->ca_ra.ra_reg[1].rr_paddr = (void *)vmebase;
 	oca->ca_ra.ra_reg[1].rr_len = vmelen;
+	oca->ca_dmat = sc->sc_dmat;
 
 	/* 1. Setup slot select register for this range. */
 	switch (sbusslot) {
@@ -329,7 +330,7 @@ fga_vmerangemap(sc, vmebase, vmelen, vmecap, sbusslot, sbusoffset, oca)
 	    ~(VME_MASTER_CAP_DATA | VME_MASTER_CAP_ADDR);
 	regs->vme_master_cap[range] |= vmecap;
 
-	(void)config_found(&sc->sc_dev, oca, fgaprint);
+	config_found(&sc->sc_dev, oca, fgaprint);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.170 2015/03/27 20:25:39 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.171 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -116,12 +116,6 @@ int	sparc_led_blink = 1;
  */
 int	safepri = 0;
 
-/*
- * dvmamap_extent is used to manage DVMA memory.
- */
-vaddr_t dvma_base, dvma_end;
-struct extent *dvmamap_extent;
-
 void	dumpsys(void);
 void	stackdump(void);
 
@@ -194,17 +188,7 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-	/*
-	 * Allocate a map for physio.  Others use a submap of the kernel
-	 * map, but we want one completely separate, even though it uses
-	 * the same pmap.
-	 */
-	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
-	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
-	dvmamap_extent = extent_create("dvmamap", dvma_base, dvma_end,
-				       M_DEVBUF, NULL, 0, EX_NOWAIT);
-	if (dvmamap_extent == NULL)
-		panic("unable to allocate extent for dvma");
+	dvma_init();
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

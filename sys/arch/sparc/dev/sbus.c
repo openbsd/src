@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.20 2015/03/21 19:55:31 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.21 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -75,42 +75,49 @@ struct cfdriver sbus_cd = {
 };
 
 /*
+ * SBus driver attach arguments.
+ * We carry a few more information than a mere struct confargs internally,
+ * for the sake of sbus_match() and sbus_print().
+ */
+struct sbus_attach_args {
+	struct confargs	sa_ca;
+	int		sa_slave_only;
+	int		sa_unsupported;
+};
+
+static /*const*/ char *sl = "slave-only";
+
+/*
  * Print the location of some sbus-attached device (called just
  * before attaching that device).  If `sbus' is not NULL, the
  * device was found but not configured; print the sbus as well.
  * Return UNCONF (config_find ignores this if the device was configured).
  */
 int
-sbus_print(args, sbus)
-	void *args;
-	const char *sbus;
+sbus_print(void *args, const char *sbus)
 {
-	struct confargs *ca = args;
+	struct sbus_attach_args *sa = args;
 	char *class;
-	static char *sl = "slave-only";
 
 	if (sbus != NULL) {
-		printf("\"%s\" at %s", ca->ca_ra.ra_name, sbus);
-		class = getpropstring(ca->ca_ra.ra_node, "device_type");
+		printf("\"%s\" at %s", sa->sa_ca.ca_ra.ra_name, sbus);
+		class = getpropstring(sa->sa_ca.ca_ra.ra_node, "device_type");
 		if (*class != '\0')
 			printf(" class %s", class);
 	}
-	/* Check root node for 'slave-only' property */
-	if (getpropint(0, sl, 0) & (1 << ca->ca_slot))
+	if (sa->sa_slave_only)
 		printf(" %s", sl);
-	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
+	printf(" slot %d offset 0x%x", sa->sa_ca.ca_slot, sa->sa_ca.ca_offset);
 
-	return ca->ca_bustype < 0 ? UNSUPP : UNCONF;
+	return sa->sa_unsupported != 0 ? UNSUPP : UNCONF;
 }
 
 int
-sbus_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+sbus_match(struct device *parent, void *vcf, void *aux)
 {
-	register struct cfdata *cf = vcf;
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 
 	if (CPU_ISSUN4)
 		return (0);
@@ -134,17 +141,14 @@ sbus_match(parent, vcf, aux)
  * Attach an SBus.
  */
 void
-sbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	register struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
-	register int node;
-	register char *name;
-	struct confargs oca;
+	struct romaux *ra = &ca->ca_ra;
+	int node;
+	char *name;
+	struct sbus_attach_args saa;
 	int rlen;
 
 	/*
@@ -180,22 +184,28 @@ sbus_attach(parent, self, aux)
 		sc->sc_nrange = xsc->sc_nrange;
 		sc->sc_range = xsc->sc_range;
 		xsc->sc_attached = 2;
+
+		sc->sc_slave_only = getpropint(node, sl, 0);
 	} else {
-		if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
-			oca.ca_ra.ra_bp = ra->ra_bp + 1;
-		else
-			oca.ca_ra.ra_bp = NULL;
+		/* Check root node for 'slave-only' property */
+		sc->sc_slave_only = getpropint(0, sl, 0);
 
 		rlen = getproplen(node, "ranges");
 		if (rlen > 0) {
 			sc->sc_nrange = rlen / sizeof(struct rom_range);
 			sc->sc_range =
-				(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
-			if (sc->sc_range == 0)
+			    (struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
+			if (sc->sc_range == NULL)
 				panic("sbus: PROM ranges too large: %d", rlen);
 			(void)getprop(node, "ranges", sc->sc_range, rlen);
 		}
 	}
+
+	if (ca->ca_bustype != BUS_XBOX && ra->ra_bp != NULL &&
+	    strcmp(ra->ra_bp->name, "sbus") == 0)
+		saa.sa_ca.ca_ra.ra_bp = ra->ra_bp + 1;
+	else
+		saa.sa_ca.ca_ra.ra_bp = NULL;
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
@@ -207,15 +217,16 @@ sbus_attach(parent, self, aux)
 		if (CPU_ISSUN4E && strcmp(name, "vm") == 0)
 			continue;
 #endif
-		if (!romprop(&oca.ca_ra, name, node))
+		if (!romprop(&saa.sa_ca.ca_ra, name, node))
 			continue;
 
-		if (sbus_translate(self, &oca) == 0)
-			oca.ca_bustype = BUS_SBUS;
-		else
-			oca.ca_bustype = -1;	/* force attach to fail */
+		saa.sa_ca.ca_bustype = BUS_SBUS;
+		saa.sa_ca.ca_dmat = ca->ca_dmat;
+		saa.sa_unsupported = sbus_translate(self, &saa.sa_ca) != 0;
+		saa.sa_slave_only =
+		    sc->sc_slave_only & (1 << saa.sa_ca.ca_slot);
 
-		config_found_sm(&sc->sc_dev, (void *)&oca, sbus_print,
+		config_found_sm(&sc->sc_dev, (void *)&saa, sbus_print,
 		    sbus_search);
 	}
 }
@@ -224,18 +235,16 @@ int
 sbus_search(struct device *parent, void *vcf, void *args)
 {
 	struct cfdata *cf = vcf;
-	struct confargs *oca = args;
+	struct sbus_attach_args *saa = args;
 
-	if (oca->ca_bustype < 0)
+	if (saa->sa_unsupported != 0)
 		return 0;
 
-	return (cf->cf_attach->ca_match)(parent, cf, oca);
+	return (cf->cf_attach->ca_match)(parent, cf, &saa->sa_ca);
 }
 
 int
-sbus_translate(dev, ca)
-	struct device *dev;
-	struct confargs *ca;
+sbus_translate(struct device *dev, struct confargs *ca)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)dev;
 	int base, slot;
@@ -293,17 +302,11 @@ sbus_translate(dev, ca)
  * Returns true if this sbus slot is capable of dma
  */
 int
-sbus_testdma(sc, ca)
-	struct sbus_softc *sc;
-	struct confargs *ca;
+sbus_testdma(struct sbus_softc *sc, struct confargs *ca)
 {
         struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * XXX how to handle more than one sbus?
-	 */
-
-	if (getpropint(0, "slave-only", 0) & (1 << ca->ca_slot)) {
+	if (sc->sc_slave_only & (1 << ca->ca_slot)) {
 		printf("%s: dma card found in non-dma sbus slot %d"
 			": not supported\n", ra->ra_name, ca->ca_slot);
 		return (0);

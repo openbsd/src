@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.99 2015/03/27 20:25:39 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.100 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -802,6 +802,7 @@ cpu_configure()
 	register char *cp;
 	int s;
 	extern struct user *proc0paddr;
+	extern struct sparc_bus_dma_tag dvma_dmatag;
 
 	/* build the bootpath */
 	bootpath_build();
@@ -859,6 +860,7 @@ cpu_configure()
 
 	oca.ca_ra.ra_node = node;
 	oca.ca_ra.ra_name = cp = "mainbus";
+	oca.ca_dmat = &dvma_dmatag;
 	if (config_rootfound(cp, (void *)&oca) == NULL)
 		panic("mainbus not configured");
 
@@ -1213,11 +1215,13 @@ mainbus_attach(parent, dev, aux)
 		/* Configure the CPU. */
 		bzero(&oca, sizeof(oca));
 		oca.ca_ra.ra_name = "cpu";
-		(void)config_found(dev, (void *)&oca, mbprint);
+		oca.ca_dmat = ca->ca_dmat;
+		config_found(dev, (void *)&oca, mbprint);
 
 		/* Start at the beginning of the bootpath */
 		bzero(&oca, sizeof(oca));
 		oca.ca_ra.ra_bp = bootpath;
+		oca.ca_dmat = ca->ca_dmat;
 
 		oca.ca_bustype = BUS_MAIN;
 		oca.ca_ra.ra_name = "obio";
@@ -1227,7 +1231,7 @@ mainbus_attach(parent, dev, aux)
 		for (ssp = oldmon_special; (sp = *ssp) != NULL; ssp++) {
 			oca.ca_bustype = BUS_MAIN;
 			oca.ca_ra.ra_name = sp;
-			(void)config_found(dev, (void *)&oca, mbprint);
+			config_found(dev, (void *)&oca, mbprint);
 		}
 		return;
 	}
@@ -1275,6 +1279,7 @@ mainbus_attach(parent, dev, aux)
 				oca.ca_ra.ra_name = "cpu";
 				oca.ca_ra.ra_paddr = 0;
 				oca.ca_ra.ra_nreg = 0;
+				oca.ca_dmat = ca->ca_dmat;
 				config_found(dev, (void *)&oca, mbprint);
 			}
 		}
@@ -1284,6 +1289,7 @@ mainbus_attach(parent, dev, aux)
 		oca.ca_ra.ra_name = "cpu";
 		oca.ca_ra.ra_paddr = 0;
 		oca.ca_ra.ra_nreg = 0;
+		oca.ca_dmat = ca->ca_dmat;
 		config_found(dev, (void *)&oca, mbprint);
 	}
 
@@ -1354,7 +1360,7 @@ mainbus_attach(parent, dev, aux)
 				splx(11 << 8);		/*XXX*/
 #endif
 			oca.ca_bustype = BUS_MAIN;
-			(void) config_found(dev, (void *)&oca, mbprint);
+			config_found(dev, (void *)&oca, mbprint);
 		}
 	}
 
@@ -1369,6 +1375,7 @@ mainbus_attach(parent, dev, aux)
 		bzero(&oca, sizeof(oca));
 		oca.ca_bustype = BUS_MAIN;
 		oca.ca_ra.ra_name = "led";
+		oca.ca_dmat = ca->ca_dmat;
 		config_found(dev, (void *)&oca, mbprint);
 	}
 #endif

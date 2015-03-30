@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.23 2015/03/29 10:59:47 mpi Exp $	*/
+/*	$OpenBSD: qec.c,v 1.24 2015/03/30 20:30:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -47,8 +47,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <sparc/autoconf.h>
-#include <sparc/cpu.h>
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
@@ -190,7 +190,8 @@ qecattach(parent, self, aux)
 
 		qec_translate(sc, &oca);
 		oca.ca_bustype = BUS_SBUS;
-		(void) config_found(&sc->sc_dev, (void *)&oca, qecprint);
+		oca.ca_dmat = ca->ca_dmat;
+		config_found(&sc->sc_dev, (void *)&oca, qecprint);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.30 2014/07/28 18:31:39 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.31 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -38,8 +38,8 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 
-#include <sparc/autoconf.h>
-#include <sparc/cpu.h>
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <sparc/sparc/cpuvar.h>
 
@@ -236,15 +236,18 @@ dmaattach(parent, self, aux)
 
 	/* search through children */
 	node = firstchild(devnode);
-	if (node != 0) do {
-		name = getpropstring(node, "name");
-		if (!romprop(&oca.ca_ra, name, node))
-			continue;
+	if (node != 0) {
+		do {
+			name = getpropstring(node, "name");
+			if (!romprop(&oca.ca_ra, name, node))
+				continue;
 
-		sbus_translate(parent, &oca);
-		oca.ca_bustype = BUS_SBUS;
-		(void) config_found(&sc->sc_dev, (void *)&oca, dmaprint);
-	} while ((node = nextsibling(node)) != 0); else
+			sbus_translate(parent, &oca);
+			oca.ca_bustype = BUS_SBUS;
+			oca.ca_dmat = ca->ca_dmat;
+			config_found(&sc->sc_dev, (void *)&oca, dmaprint);
+		} while ((node = nextsibling(node)) != 0);
+	} else
 #endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 
 	if (strcmp(ca->ca_ra.ra_name, "dma") == 0) {

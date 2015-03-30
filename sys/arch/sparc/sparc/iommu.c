@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.28 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.29 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -45,8 +45,6 @@
 #include <sys/mbuf.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/pmap.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -335,12 +333,14 @@ iommu_attach(parent, self, aux)
 	/*
 	 * Loop through ROM children (expect SBus among them).
 	 */
+	oca.ca_dmat = dmat;
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		name = getpropstring(node, "name");
 		if (!romprop(&oca.ca_ra, name, node))
 			continue;
 		oca.ca_bustype = BUS_MAIN; /* ??? */
-		(void) config_found(&sc->sc_dev, (void *)&oca, iommu_print);
+		oca.ca_dmat = dmat;
+		config_found(&sc->sc_dev, (void *)&oca, iommu_print);
 	}
 #endif
 }

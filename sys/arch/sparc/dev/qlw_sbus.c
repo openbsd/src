@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_sbus.c,v 1.2 2014/10/25 18:21:01 miod Exp $	*/
+/*	$OpenBSD: qlw_sbus.c,v 1.3 2015/03/30 20:30:22 miod Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -20,10 +20,9 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/autoconf.h>
-extern struct sparc_bus_dma_tag *iommu_dmatag;
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
@@ -58,10 +57,6 @@ qlw_sbus_match(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-
-	/* XXX this assumes dma through sun4m's iommu */
-	if (!CPU_ISSUN4M)
-		return 0;
 
 	if (strcmp("ptisp", ra->ra_name) == 0 ||
 	    strcmp("PTI,ptisp", ra->ra_name) == 0 ||
@@ -129,7 +124,7 @@ qlw_sbus_attach(struct device *parent, struct device *self, void *aux)
 	qsc->qsc_rr = ra->ra_reg[0];
 	sc->sc_iot = &qsc->qsc_rr;
 	sc->sc_ios = ra->ra_reg[0].rr_len;
-	sc->sc_dmat = iommu_dmatag;
+	sc->sc_dmat = ca->ca_dmat;
 
 	sc->sc_isp_gen = QLW_GEN_ISP1000;
 	sc->sc_isp_type = QLW_ISP1000;

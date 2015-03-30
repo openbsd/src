@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.24 2015/03/26 18:13:56 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.25 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -273,7 +273,8 @@ obioattach(parent, self, args)
 
 		sbus_translate(self, &oca);
 		oca.ca_bustype = BUS_OBIO;
-		(void) config_found(self, (void *)&oca, busprint);
+		oca.ca_dmat = ca->ca_dmat;
+		config_found(self, (void *)&oca, busprint);
 	}
 
 	for (node = node0; node; node = nextsibling(node)) {
@@ -292,7 +293,8 @@ obioattach(parent, self, args)
 		/* Translate into parent address spaces */
 		sbus_translate(self, &oca);
 		oca.ca_bustype = BUS_OBIO;
-		(void) config_found(self, (void *)&oca, busprint);
+		oca.ca_dmat = ca->ca_dmat;
+		config_found(self, (void *)&oca, busprint);
 	}
 #endif
 }
@@ -388,11 +390,13 @@ vmeattach(parent, self, aux)
 
 	oca.ca_ra.ra_name = "vmes";
 	oca.ca_bustype = BUS_MAIN;
-	(void)config_found(self, (void *)&oca, vmeprint);
+	oca.ca_dmat = ca->ca_dmat;
+	config_found(self, (void *)&oca, vmeprint);
 
 	oca.ca_ra.ra_name = "vmel";
 	oca.ca_bustype = BUS_MAIN;
-	(void)config_found(self, (void *)&oca, vmeprint);
+	oca.ca_dmat = ca->ca_dmat;
+	config_found(self, (void *)&oca, vmeprint);
 }
 
 void

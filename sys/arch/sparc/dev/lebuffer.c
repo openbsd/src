@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.9 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.10 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -41,8 +41,8 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 
-#include <sparc/autoconf.h>
-#include <sparc/cpu.h>
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/lebuffervar.h>
@@ -83,7 +83,7 @@ lebufmatch(parent, vcf, aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct romaux *ra = &ca->ca_ra;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return(0);
@@ -155,7 +155,8 @@ lebufattach(parent, self, aux)
 
 		sbus_translate(parent, &oca);
 		oca.ca_bustype = BUS_SBUS;
-		(void) config_found(&sc->sc_dev, (void *)&oca, lebufprint);
+		oca.ca_dmat = ca->ca_dmat;
+		config_found(&sc->sc_dev, (void *)&oca, lebufprint);
 	}
 #endif /* SUN4C || SUN4D || SUN4E || SUN4M */
 }

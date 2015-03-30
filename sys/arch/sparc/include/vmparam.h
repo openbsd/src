@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.44 2015/03/27 20:25:39 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.45 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -129,11 +129,7 @@ extern vsize_t vm_kernel_space_size;
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #if defined (_KERNEL)
-struct vm_map;
-#define		dvma_mapin(map,va,len,canwait)	dvma_mapin_space(map,va,len,canwait,0)
-vaddr_t		dvma_mapin_space(struct vm_map *, vaddr_t, int, int, int);
 void		dvma_mapout(vaddr_t, vaddr_t, int);
-
 #endif
 
 #endif /* _MACHINE_VMPARAM_H_ */

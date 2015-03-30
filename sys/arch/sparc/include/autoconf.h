@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.18 2010/06/29 21:28:08 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.19 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -95,12 +95,25 @@ struct rom_range {		/* Only used on v3 PROMs */
 	u_int32_t	size;		/* Size in bytes of this range */
 };
 
+/*
+ * mapiodev maps an I/O device to a virtual address, returning the address.
+ * mapdev does the real work: you can supply a special virtual address and
+ * it will use that instead of creating one, but you must only do this if
+ * you get it from ../sparc/vaddrs.h.
+ */
+void	*mapdev(struct rom_reg *pa, int va, int offset, int size);
+#define	mapiodev(pa, offset, size) \
+	mapdev(pa, 0, offset, size)
+
+#include <machine/bus.h>
 
 struct confargs {
-	int	ca_bustype;
-	struct	romaux ca_ra;
-	int	ca_slot;
-	int	ca_offset;
+	int		ca_bustype;
+	struct	romaux	ca_ra;
+	int		ca_slot;
+	int		ca_offset;
+
+	bus_dma_tag_t	ca_dmat;
 };
 #define BUS_MAIN	0
 #define BUS_OBIO	1
@@ -119,15 +132,6 @@ struct confargs {
 #define BUS_FGA_A32D16	14
 #define BUS_FGA_A32D32	15
 
-/*
- * mapiodev maps an I/O device to a virtual address, returning the address.
- * mapdev does the real work: you can supply a special virtual address and
- * it will use that instead of creating one, but you must only do this if
- * you get it from ../sparc/vaddrs.h.
- */
-void	*mapdev(struct rom_reg *pa, int va, int offset, int size);
-#define	mapiodev(pa, offset, size) \
-	mapdev(pa, 0, offset, size)
 /*
  * REG2PHYS is provided for drivers with a `d_mmap' function.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2011/09/27 20:47:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2015/03/30 20:30:22 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -39,19 +39,17 @@
 #ifndef	_MACHINE_BUS_H_
 #define	_MACHINE_BUS_H_
 
-#include <machine/autoconf.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <machine/pmap.h>
-
-typedef	u_long	bus_space_handle_t;
-
+typedef	u_long				 bus_space_handle_t;
 /*
  * bus_space_tag_t are pointer to *modified* rom_reg structures.
  * rr_iospace is used to also carry bus endianness information.
  */
-typedef	struct rom_reg 	*bus_space_tag_t;
+typedef	struct rom_reg			*bus_space_tag_t;
+typedef struct sparc_bus_dma_tag	*bus_dma_tag_t;
+typedef struct sparc_bus_dmamap		*bus_dmamap_t;
+
+#include <machine/autoconf.h>
+#include <uvm/uvm_extern.h>
 
 #define	TAG_LITTLE_ENDIAN		0x80000000
 
@@ -525,9 +523,6 @@ struct uio;
 #define	BUS_DMASYNC_POSTREAD	0x02	/* post-read synchronization */
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
-
-typedef struct sparc_bus_dma_tag	*bus_dma_tag_t;
-typedef struct sparc_bus_dmamap		*bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t

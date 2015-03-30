@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.10 2015/03/21 19:55:31 miod Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.11 2015/03/30 20:30:22 miod Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.4 1996/04/22 02:35:05 abrown Exp $ */
 
 /*
@@ -42,25 +42,17 @@
  */
 
 /*
- * S-bus variables.
+ * SBus variables.
  */
-
-/*
- * SBus driver attach arguments.
- */
-struct sbus_attach_args {
-	struct	romaux sa_ra;		/* name, node, addr, etc */
-	int	sa_slot;		/* SBus slot number */
-	int	sa_offset;		/* offset within slot */
-};
 
 /* variables per SBus */
 struct sbus_softc {
-	struct	device sc_dev;		/* base device */
-	int	sc_clockfreq;		/* clock frequency (in Hz) */
+	struct	device	sc_dev;		/* base device */
+	int		sc_clockfreq;	/* clock frequency (in Hz) */
 	struct	rom_range *sc_range;
-	int	sc_nrange;
-	int	sc_burst;		/* burst transfer sizes supported */
+	int		sc_nrange;
+	int		sc_burst;	/* burst transfer sizes supported */
+	int		sc_slave_only;
 };
 
 int	sbus_translate(struct device *, struct confargs *);
