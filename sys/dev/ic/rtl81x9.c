@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.88 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.89 2015/03/30 10:04:11 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -558,6 +558,7 @@ rl_rxeof(struct rl_softc *sc)
 {
 	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf	*m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int		total_len;
 	u_int32_t	rxstat;
 	caddr_t		rxbufpos;
@@ -673,18 +674,13 @@ rl_rxeof(struct rl_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
 		    0, sc->sc_rx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	}
+
+	if_input(ifp, &ml);
 }
 
 /*
