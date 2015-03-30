@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.22 2015/03/29 21:16:39 krw Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.23 2015/03/30 00:39:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -29,7 +29,6 @@ struct mbr {
 
 extern struct mbr initial_mbr;
 
-void MBR_print_disk(char *);
 void MBR_print(struct mbr *, char *);
 void MBR_parse(struct dos_mbr *, off_t, off_t, struct mbr *);
 void MBR_make(struct mbr *, struct dos_mbr *);
