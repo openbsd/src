@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.5 2015/02/09 23:37:16 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.6 2015/03/30 13:54:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -156,7 +156,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct ofw_pci_register reg;
 	int node = PCITAG_NODE(pa->pa_tag);
-	int intr[4], nintr, len;
+	int intr[4], len;
 
 	if (OF_getprop(node, "reg", &reg, sizeof(reg)) < sizeof(reg))
 		return (ENODEV);
@@ -169,14 +169,6 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	len = OF_getprop(node, "interrupts", intr, sizeof(intr));
 	if (len < sizeof(intr[0]))
 		return (ENODEV);
-
-	/*
-	 * If we have multiple interrupts for a device, choose the one
-	 * that corresponds to the PCI function.
-	 */
-	nintr = len / sizeof(intr[0]);
-	if (PCITAG_FUN(pa->pa_tag) < nintr)
-		intr[0] = intr[PCITAG_FUN(pa->pa_tag)];
 
 	reg.size_hi = intr[0];
 	if (ofw_intr_map(OF_parent(node), (uint32_t *)&reg, intr)) {
