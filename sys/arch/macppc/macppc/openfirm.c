@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.10 2007/11/12 19:23:26 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.11 2015/03/31 10:36:52 mpi Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -329,6 +329,23 @@ OF_exit()
 	openfirmware(&args);
 	panic ("OF_exit returned!");		/* just in case */
 	while (1);
+}
+
+void
+OF_quiesce(void)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+	} args = {
+		"quiesce",
+		0,
+		0,
+	};
+
+	ofw_stack();
+	openfirmware(&args);
 }
 
 /* XXX What is the reason to have this instead of bcopy/memcpy? */
