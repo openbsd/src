@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.23 2015/02/09 23:00:15 deraadt Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.24 2015/03/31 13:38:27 mpi Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -39,6 +39,10 @@
 #include <err.h>
 #include <errno.h>
 #include <dev/usb/usb.h>
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define USBDEV "/dev/usb"
 
@@ -123,7 +127,7 @@ usbdev(int f, int a, int rec)
 	}
 	if (!rec)
 		return;
-	for (p = 0; p < di.udi_nports; p++) {
+	for (p = 0; p < di.udi_nports && p < nitems(di.udi_ports); p++) {
 		int s = di.udi_ports[p];
 
 		if (s >= USB_MAX_DEVICES) {
