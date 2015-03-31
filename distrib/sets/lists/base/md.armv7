@@ -39,7 +39,7 @@
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.3.0
+./usr/lib/libtls.so.3.1
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.12.1
 ./usr/lib/libz.so.5.0
