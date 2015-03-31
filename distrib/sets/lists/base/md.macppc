@@ -1015,8 +1015,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/fmsvar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/gcu_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/gcu_reg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/gcu_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/glxreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/glxvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/hifn7751reg.ph

@@ -1013,8 +1013,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/fmsvar.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/gcu_var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/gcu_reg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/gcu_var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/glxreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/glxvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/hifn7751reg.ph

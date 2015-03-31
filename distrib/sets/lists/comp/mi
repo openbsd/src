@@ -533,8 +533,8 @@
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/fmsreg.h
 ./usr/include/dev/pci/fmsvar.h
-./usr/include/dev/pci/gcu_var.h
 ./usr/include/dev/pci/gcu_reg.h
+./usr/include/dev/pci/gcu_var.h
 ./usr/include/dev/pci/glxreg.h
 ./usr/include/dev/pci/glxvar.h
 ./usr/include/dev/pci/hifn7751reg.h
@@ -5596,6 +5596,7 @@
 ./usr/share/man/man3/timezone.3
 ./usr/share/man/man3/timingsafe_bcmp.3
 ./usr/share/man/man3/timingsafe_memcmp.3
+./usr/share/man/man3/tls_accept_fds.3
 ./usr/share/man/man3/tls_accept_socket.3
 ./usr/share/man/man3/tls_client.3
 ./usr/share/man/man3/tls_close.3
